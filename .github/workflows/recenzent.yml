@@ -1,0 +1,55 @@
+# Recenzent Claude na każdy PR (wzór: oficjalny przykład pr-review-comprehensive
+# z anthropics/claude-code-action). Wymaga sekretu CLAUDE_CODE_OAUTH_TOKEN w repo.
+name: Recenzent
+
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review, reopened]
+
+jobs:
+  recenzja:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Recenzja PR
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          track_progress: true
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+
+            Jesteś recenzentem PR w projekcie „sklep-agentow" (sklep z produktami
+            cyfrowymi wpinany w strony statyczne; zaplecze: Cloudflare Worker + D1 + R2;
+            płatności: Stripe Checkout w trybie testowym). Pisz PO POLSKU.
+
+            ZASADA DOWODU (najważniejsza): opis PR musi zawierać DOWÓD działania —
+            wynik uruchomienia na żywych danych testowych (wyjście komendy, zapis
+            z bazy, treść maila), nie deklarację „działa". Brak dowodu = uwaga
+            KRYTYCZNA, niezależnie od jakości kodu.
+
+            Czytaj zmiany na tle dokumentów repo: PLAN-PROJEKTU.md (sekcja 6 —
+            bezpieczeństwo: podpis webhooka, idempotencja, cena z bazy, sekrety poza
+            repo; sekcja 9 — kryteria GOTOWE) oraz ZROZUMIENIE.md (MUST NOT — rzeczy,
+            których w tym projekcie ŚWIADOMIE nie budujemy; nie żądaj ich dodania).
+
+            Na co patrzysz poza tym (sam decydujesz o reszcie):
+            - poprawność: przypadki brzegowe, wyścigi (webhook 2×), padnięcie w połowie,
+            - bezpieczeństwo: wszystko, co dotyka pieniędzy, plików i logowania admina,
+            - prostota: czy nie budujemy więcej, niż wymaga zakres (MUST NOT!),
+            - spójność z planem: implementacja może spełniać dokument, a łamać skutek —
+              wskazuj takie miejsca.
+
+            Uwagi konkretne, każda z wagą (KRYTYCZNA/WAŻNA/DROBNA), inline tam, gdzie
+            dotyczą konkretnych linii. Nie chwal bez powodu. Po przeglądzie: krótkie
+            podsumowanie z listą „czego NIE sprawdziłem".
+          claude_args: |
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"

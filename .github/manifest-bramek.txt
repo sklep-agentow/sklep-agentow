@@ -3,8 +3,10 @@
 # który Dzidek czyta w całości (plik ma być krótki właśnie po to);
 # (3) agent NIE dotyka tego pliku w PR-ach z kodem — pilnuje tego sprawdz-manifest.sh w CI.
 # Format: jedna nazwa joba z quality.yml na linię. Puste linie i # ignorowane.
+#
+# START PROJEKTU sklep-agentow (2026-08-17, stack: statyczny HTML + Cloudflare Worker/JS):
+# bramki testowe dojdą OSOBNYM PR-em razem z kością (testy jednostkowe + testy przepływu),
+# zgodnie z zasadą: nie deklarujemy bramek, których jeszcze fizycznie nie ma —
+# pusty job „na zielono" to teatr, nie kontrola.
 actionlint
-phpcs
-phpstan
-phpunit
-plugin-check
+manifest

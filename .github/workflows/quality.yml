@@ -1,184 +1,38 @@
-# Szkielet CI jakości dla wtyczki WordPress — do `.github/workflows/quality.yml`
+# CI projektu sklep-agentow — wersja startowa (stack: statyczny HTML + Cloudflare Worker).
+# Szablon warsztatowy (PHP/WP) przycięty 2026-08-17: phpcs/phpstan/phpunit/plugin-check
+# nie dotyczą tego stacku. Bramki testowe JS dojdą osobnym PR-em razem z kością
+# (wtedy też rośnie manifest-bramek.txt — osobny PR, czyta Dzidek).
 #
-# Złożony 2026-08-09 z REALNYCH plików CI sześciu dojrzałych projektów:
-# 10up/classifai · Yoast/wordpress-seo · WordPress/plugin-check · woocommerce/woocommerce ·
-# Automattic/jetpack · WordPress/wordpress-develop. Przy każdym kroku komentarz, skąd wzięty.
-#
-# ⛔ PRZED PIERWSZYM UŻYCIEM SPRAWDŹ NUMERY WERSJI AKCJI (`uses: ...@vX`).
-#    Zostały spisane ze zwiadu i mogą być nieaktualne albo błędne; wersje akcji zmieniają się
-#    co kilka miesięcy. Weź aktualne z GitHub Marketplace. Zły numer = workflow nie wystartuje,
-#    a bramka, która cicho nie startuje, ŚWIECI ZIELONO (nasza lekcja z 2026-07).
-#
-# ⛔ PO WRZUCENIU WŁĄCZ BRANCH PROTECTION — bez tego to tylko raport, nie bramka:
-#    Settings → Branches → protect `main`: wymagane statusy CI (te joby),
-#    zakaz bezpośredniego push, zakaz force-push. To jest JEDYNA rzecz tutaj,
-#    która realnie zatrzymuje scalenie.
-
+# ⛔ BRANCH PROTECTION na main = jedyna rzecz, która realnie zatrzymuje scalenie:
+#    wymagane statusy: actionlint + manifest · PR obowiązkowy · zakaz force-push.
 name: Quality
 
 on:
+  pull_request:
   push:
     branches: [main]
-  pull_request:
 
-# źródło: Yoast cs.yml + classifai test.yml — anuluj stare przebiegi tej samej gałęzi
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-permissions: {}   # źródło: 10up/classifai — zero uprawnień domyślnie, nadawane per job
+permissions:
+  contents: read
 
 jobs:
-
-  # ── Lint samych plików CI ──────────────────────────────────────────────────
-  # źródło: Yoast/wordpress-seo (osobny job). ⭐ WEŹ TO — mamy własną wpadkę
-  # „CI YAML dwukropek w nazwie kroku"; actionlint łapie ją przed uruchomieniem.
+  # Lint samych plików CI — łapie literówki YAML zanim cokolwiek ruszy
+  # (własna blizna: „CI YAML dwukropek w nazwie kroku").
   actionlint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: reviewdog/action-actionlint@v1
 
-  # ── Styl kodu ──────────────────────────────────────────────────────────────
-  phpcs:
+  # Strażnik strażników: quality.yml musi zgadzać się z manifestem bramek
+  # (job zniknął / continue-on-error / furtka if: = czerwone).
+  manifest:
     runs-on: ubuntu-latest
-    permissions: { contents: read }
-    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.3'
-          coverage: none
-          tools: cs2pr        # źródło: classifai/Yoast/wordpress-develop — adnotacje wprost w PR
-
-      # źródło: IDENTYCZNY wzorzec w classifai, Yoast i wordpress-develop.
-      # Klucz cache z datą „ostatniego poniedziałku" = cache wygasa co tydzień,
-      # więc stary cache nie maskuje nowych reguł sniffa w nieskończoność.
-      - name: Data ostatniego poniedziałku
-        id: get-date
-        run: echo "date=$(/bin/date -u --date='last Mon' '+%F')" >> "$GITHUB_OUTPUT"
-      - uses: actions/cache@v4
-        with:
-          path: .phpcs-cache.json
-          key: ${{ runner.os }}-date-${{ steps.get-date.outputs.date }}-phpcs-${{ hashFiles('**/composer.json','phpcs.xml.dist') }}
-
-      - uses: ramsey/composer-install@v3
-        with:
-          composer-options: '--prefer-dist'
-
-      - run: phpcs -n --report-full --report-checkstyle=./phpcs-report.xml
-      - if: always()
-        run: cs2pr ./phpcs-report.xml
-
-      # źródło: WordPress/wordpress-develop — sprawdza, czy narzędzie lintujące
-      # nie zmieniło ani nie skasowało wersjonowanych plików w trakcie skanu.
-      - run: git diff --exit-code
-
-  # ── Analiza statyczna ──────────────────────────────────────────────────────
-  phpstan:
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@v4
-      - uses: shivammathur/setup-php@v2
-        with: { php-version: '8.3', tools: cs2pr }
-      - uses: ramsey/composer-install@v3
-      - run: phpstan analyse -vvv --error-format=checkstyle | cs2pr
-
-      # ⭐ źródło: woocommerce/woocommerce — BASELINE MOŻE SIĘ TYLKO KURCZYĆ.
-      # Porównują sumę `count:` w phpstan-baseline.neon między bazą a PR; wzrost = exit 1,
-      # komunikat „adding errors to baseline is not allowed".
-      # Broni przed cichym zamiataniem nowych błędów pod dywan. WEŹ TO, gdy wejdzie baseline.
-
-  # ── Testy ──────────────────────────────────────────────────────────────────
-  phpunit:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false        # źródło: wszystkie sprawdzone repo
-      matrix:
-        php: ['8.3', '8.2', '8.1', '7.4']   # classifai 7.4–8.4 · Yoast 7.4–8.3 · plugin-check 7.4–8.4
-        wp: [latest, trunk]
-    # źródło: Yoast test.yml — testy na nieskończonym WP (trunk) nie blokują scalenia
-    continue-on-error: ${{ matrix.wp == 'trunk' }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: shivammathur/setup-php@v2
-        with: { php-version: '${{ matrix.php }}' }
-      - uses: ramsey/composer-install@v3
-      - run: npm ci && npm run build
-      - run: npm run env start        # źródło: classifai — wp-env
-      - run: npm run test:php
-
-  # ── Paczka: buduj ZIP i sprawdzaj GO, nie repo ─────────────────────────────
-  # ⭐ źródło: 10up/classifai (build-release-zip.yml + plugin-check.yml).
-  # Łapie problemy z .gitignore/.distignore, których w repo NIE WIDAĆ.
-  # Pokrywa się z naszą własną zasadą „testuj paczkę, nie repo" — tu zrobione automatem.
-  build-zip:
-    runs-on: ubuntu-latest
-    permissions: { contents: read }
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ramsey/composer-install@v3
-        with: { composer-options: '--no-dev -o' }
-      - run: npm ci --no-optional && npm run build
-      - uses: actions/upload-artifact@v4
-        with: { name: plugin-zip, path: release }
-
-  plugin-check:
-    needs: build-zip
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/download-artifact@v4
-        with: { name: plugin-zip, path: plugin }
-      # źródło: classifai — oficjalne narzędzie WP.org, uruchamiane NA PACZCE.
-      # `ignore-warnings` i `exclude-checks` ustawiaj ŚWIADOMIE: reguły katalogu WP.org
-      # nie zawsze dotyczą wtyczki, która tam nie idzie. Każde wyłączenie = komentarz dlaczego.
-      - uses: wordpress/plugin-check-action@v1
-        with:
-          build-dir: plugin
-
-# ── DO ROZWAŻENIA (widziane u nich, nieoczywiste) ──────────────────────────
-# · spell-check całego repo (crate-ci/typos — classifai) — łapie literówki w kodzie i docs
-# · dependency-review z license-check na PR (classifai) — pilnuje licencji nowych zależności
-# · osobny, OSTRZEJSZY przebieg PHPCS na katalogu testów: w kodzie warningi ignorowane (`-n`),
-#   w `tests/` liczą się wszystkie (wordpress-develop)
-# · PHPCS tylko na zmienionych liniach w PR, pełny skan na push (classifai) — żeby nie zalewać
-#   pull requesta starym długiem technicznym
-#
-# ── PAKIETY PHPCS, KTÓRYCH NIE UŻYWAMY, A SĄ DARMOWE (zwiad 2026-08-09) ────
-# Wszystkie przez Composer, zero nowej infrastruktury:
-#
-# · yoast/yoastcs — WPCS + PHPCompatibilityWP + VariableAnalysis w JEDNYM pakiecie.
-#   Najprostsze wejście: bierzesz to zamiast składania trzech osobno.
-# · automattic/vipwpcs (VIP-Coding-Standards) — gotowy sniff ZAKAZANYCH FUNKCJI:
-#   sesje PHP, bezpośredni zapis do plików (`file_put_contents`, `fwrite`, `unlink`, `chmod`),
-#   `create_function()`, `setcookie()`. Plus ostrzeżenia: `wp_remote_get()` bez timeoutu
-#   i fallbacku, `get_posts()` bez `suppress_filters => false` (niecache'owane),
-#   `the_field()` z ACF bez escapowania.
-#   ⭐ Reguła warta przeniesienia niezależnie od VIP: KAŻDE żądanie HTTP na zewnątrz
-#      musi mieć timeout i zachowanie awaryjne.
-# · inpsyde/php-coding-standards (Syde) — TWARDE LIMITY ZŁOŻONOŚCI, których nie mamy nigdzie:
-#   długość funkcji, długość linii, poziom zagnieżdżenia (ostrzeżenie od 3, błąd od 5).
-#   Plus `NoTopLevelDefine` — `const` zamiast `define()` (statycznie kompilowane, wspiera OPcache).
-#   ⚠️ Ich `NoElse`/`NoAccessors` (Object Calisthenics) to za dużo dla WP — bierz jako
-#      rekomendację w przeglądzie, nie jako blokadę CI.
-# · sirbrillig/phpcs-variable-analysis — nieużywane zmienne, redefinicje, użycie przed
-#   przypisaniem. Klasa błędów, której WPCS NIE łapie.
-#
-# ── LUKI, KTÓRYCH NIE MAMY W ŻADNEJ POSTACI ───────────────────────────────
-# · SKAN PLIKÓW SVG pod kątem złośliwej zawartości (Automattic VIP robi to na KAŻDYM PR).
-#   SVG to XML — może nieść `<script>` i `onload`. Dotyczy każdego projektu, który
-#   przyjmuje albo dostarcza SVG. U nas: zero kontroli.
-# · TEST WIZUALNEJ REGRESJI (BackstopJS — XWP): zrzuty przed/po. Mamy testy funkcjonalne,
-#   wizualnych zero. Istotne przy motywach i blokach.
-# · Lighthouse w CI — dostępność, wydajność, SEO jednym przebiegiem, za darmo.
-#
-# ── PUNKTY BRAMKI ODDANIA, KTÓRYCH NIE MAMY (wzorzec: kanopi/wp-launch-checklist) ──
-# · DOSTĘPNOŚĆ: kontrast, teksty alternatywne, hierarchia nagłówków. U nas ZERO pozycji —
-#   a to ryzyko prawne (WCAG/EAA), nie kosmetyka.
-# · RODO jako osobne checkboksy: polityka prywatności, ciasteczka, test usuwania danych.
-# · ⭐ BACKUP ZWERYFIKOWANY przed wypchnięciem zmian — nie „zrobiony", tylko SPRAWDZONY,
-#   że da się z niego odtworzyć. (Nasza własna wpadka 1.3.13: backup meldował „Success"
-#   i produkował pusty plik. I dziś, 9.08: katalog kopii demo okazał się pusty.)
-# · Site Health WordPressa + weryfikacja, że zadania cron faktycznie chodzą po wdrożeniu.
+      - name: Manifest bramek zgodny z workflow
+        run: bash narzedzia-qa/sprawdz-manifest.sh
