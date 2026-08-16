@@ -1,76 +1,255 @@
-# PLAN PROJEKTU — „Sklep z agentami AI" (wpinana podstrona dla stron statycznych)
+# PLAN PROJEKTU v2 — „Sklep z agentami AI" (wpinana podstrona dla stron statycznych)
 
-Wersja 1 do krytyki — 2026-08-17. Dokument celowo bez nazw i adresów (bezpieczny do pokazania na zewnątrz).
+Wersja 2 — 2026-08-17, po rundzie krytyki: 5 niezależnych recenzji (własny krytyk + 4 obce
+modele), mapa zbieżności w `krytyki/MAPA-ZBIEZNOSCI.md`. Dokument bez nazw i adresów.
+**Termin egzaminu: 30.08 · 3 próby oddania · pierwsza próba planowana 27.08 (bufor na zwroty).**
 
 ## 1. CO BUDUJEMY I PO CO
 
-Podstrona-sklep sprzedająca **2 produkty cyfrowe** („agenty AI": ChatBot LIVE i Segregator maila — paczki z instrukcjami, diagramami, plikami do wdrożenia). Sklep ma być **wpinany i odpinany jak wtyczka** w istniejące strony STATYCZNE (czysty HTML na darmowym hostingu typu GitHub Pages — strona docelowa to statyczny eksport Next.js). Docelowo ta sama paczka wejdzie na 4 różne strony różnych właścicieli.
+Podstrona-sklep sprzedająca **2 produkty cyfrowe** („agenty AI": ChatBot LIVE i Segregator
+maila — paczki z instrukcjami, diagramami i plikami do wdrożenia). Sklep **wpinany i odpinany**
+w istniejące strony statyczne (GitHub Pages; strona docelowa = statyczny eksport Next.js),
+docelowo na 4 strony różnych właścicieli. Zlecenie egzaminacyjne: ocenia osoba trzecia,
+**zero pytań do zlecającego** (decyzje własne, dokumentowane), całość w **trybie testowym
+płatności**.
 
-**Kontekst:** to zlecenie egzaminacyjne — ocenia je osoba trzecia. Zasady egzaminu: żadnych pytań do zlecającego (wszystkie decyzje podejmujemy sami i dokumentujemy z uzasadnieniem), całość na **trybie testowym płatności** (zero prawdziwych pieniędzy; przejście na produkcję = podmiana kluczy w konfiguracji, poza zakresem egzaminu).
+⭐ **NOWE względem v1 (krytyka C7):** zakres obejmuje też **WYTWORZENIE SAMYCH PRODUKTÓW**
+(treść 2 paczek: instrukcje, diagramy, pliki) z własnym kryterium jakości — sklep nie może
+sprzedawać pustki; egzaminator najpierw otworzy pliki, nie kod.
 
-**Wymagania ze zlecenia (dosłownie):** po zakupie mail do kupującego (potwierdzenie + instrukcje) · 2 różne produkty z cenami i opisem „na zachętę" (co robi, jak działa, ile czasu oszczędza) · panel admina: kiedy, za ile kupili, w jakim czasie (dashboard) · bazy danych: dane kupujących/płatności · produkty z pełnym dodawaniem/usuwaniem/modyfikowaniem · dziennik logowań na konto admina (kto, kiedy, konkrety).
+## 2. WYMAGANIA (siatka: FUNCTIONAL / NON-FUNCTIONAL / SCHEMA)
 
-**MUST NOT (świadomie poza zakresem):** kont/logowania kupujących NIE ma (zakup „z ulicy" na maila; jedno konto admina na stronę) · kursów NIE sprzedajemy · faktur NIE wystawiamy · plików produktów NIE trzymamy w publicznym repo · reszty strony-gospodarza NIE dotykamy · prawdziwych płatności NIE włączamy.
+**FUNCTIONAL (z notatki zlecenia, dosłownie):** po zakupie mail (potwierdzenie + instrukcje) ·
+2 produkty z cenami i opisem „na zachętę" · panel admina: kiedy/za ile kupili/w jakim czasie
+(dashboard) · baza: dane kupujących/płatności · produkty z pełnym dodawaniem/usuwaniem/
+modyfikowaniem · dziennik logowań admina (kto, kiedy, konkrety).
+Interpretacje zapisane w MAPA-SPEC (moment 1 kadencji): „w jakim czasie" = rozkład zakupów
+w czasie (sumy w okresach) · „czas zakupu" = czas webhooka potwierdzającego płatność ·
+„kto" = pole login wpisywane przy logowaniu (jedno konto; przy nieudanej próbie zapisujemy
+wpisaną wartość) — decyzje z uzasadnieniem, nie zgadywanie.
 
-## 2. ARCHITEKTURA (dlaczego taka)
+**NON-FUNCTIONAL (standardy T1-T7 z poprzedniego zlecenia + prawo):** bezpieczeństwo (sekcja 7) ·
+RODO (sekcja 8) · dostępność WCAG-lite: labelki, kontrast, klawiatura+fokus, aria (EAA) ·
+Chrome/Edge/Firefox + pełny RWD (zakup z telefonu) · SEO-minimum: title/description, OpenGraph,
+JSON-LD Product, czytelne adresy; **demo-kopia strony gospodarza = noindex** · szybkość: strona
+statyczna + API bez N+1 · spójny styl kodu (eslint/prettier w CI; zakaz `debugger` i gołych
+`console.log`).
 
-Strona statyczna nie wykona kodu serwerowego, więc sklep = **dwie części**:
+**SCHEMA:** sekcja 5.
 
-**A. WITRYNA** — katalog `sklep/` (czysty HTML/CSS/JS, bez frameworka): lista produktów, strona produktu (układ wg wzorców rynku: problem → co dostajesz → opinie → FAQ → cena → przycisk), strona „dziękujemy", panel admina (aplikacja HTML). Do strony-gospodarza wpinana przez: skopiowanie katalogu + JEDEN punkt zaczepienia (linijka linku w menu albo dołączany skrypt dokładający pozycję menu — wybór po teście, bo strona-gospodarz jest hydrowana Reactem). `config.js` per strona: nazwa, adres zaplecza, klucz publiczny płatności.
+## 3. MUST NOT (świadomie poza zakresem — łapie nadgorliwość i lekcję „16 tabel zamiast 4")
 
-**B. ZAPLECZE** — darmowy plan Cloudflare: **Worker** (API), **D1** (baza SQL), **R2** (prywatny magazyn plików produktów). Limity darmowe (potwierdzone w cenniku 16.08): 100 tys. żądań/dzień, baza 5 GB, magazyn 10 GB — zapas tysiąckrotny przy pojedynczych zakupach dziennie. Każdy właściciel strony = własne darmowe konto (izolacja danych i pieniędzy).
+Kont/logowania kupujących NIE ma · kursów NIE sprzedajemy · faktur NIE wystawiamy · plików
+produktów NIE trzymamy publicznie · reszty strony-gospodarza NIE dotykamy · prawdziwych
+płatności NIE włączamy · **przecen i przekreślonych cen NIE MA** (Omnibus-historia-cen wraca
+tylko na wyraźne życzenie, z tabelą historii) · **sekcji „opinie" NIE MA** (zero zmyślonych
+opinii — prawo; zamiast tego „dla kogo jest ten agent") · samoobsługowego ponownego wysłania
+linku NIE ma (kanał kontaktu właściciela) · monitoringu/alertingu NIE ma w v1 (panel + retry
+wystarczą; wraca przy produkcji) · płatności asynchronicznych NIE obsługujemy (egzamin = karty
+testowe; obsłużone: completed + expired) · multi-tenant NIE ma (izolacja per konto właściciela
+to świadoma architektura).
 
-**C. PŁATNOŚCI** — Stripe Checkout (strona płatności HOSTOWANA przez Stripe; przekierowanie całej karty przeglądarki, nie skrypt osadzony — działa też z adblockiem; nasza strona nigdy nie dotyka danych kart). Tryb testowy: karty testowe, zero KYC. Wzorzec kodu: oficjalny, utrzymywany przykład stripe-samples/checkout-one-time-payments.
+## 4. ARCHITEKTURA v2 (zmiany wytłuszczone)
 
-**D. MAILE** — wysyłka przez HTTP API (Worker nie zestawi SMTP): dostawca darmowy, wybór W KOŚCI (kandydat: Brevo — do 300 maili/dzień, pozwala wysyłać ze zweryfikowanego ADRESU bez własnej domeny; strony na darmowym hostingu domen nie mają). Mail = potwierdzenie + instrukcje + **wygasający, podpisany link do pobrania** (ważność 72 h, limit 5 pobrań — wzorzec z projektu zipsell).
+**A. WITRYNA** — katalog `sklep/` (czysty HTML/CSS/JS): lista produktów, strona produktu
+(układ: problem → co dostajesz → dla kogo → FAQ → cena → przycisk), strona „dziękujemy"
+**odpytująca status zamówienia po id sesji** (koniec z „sprawdź maila" w ciemno).
+**Izolacja CSS: prefiks klas + reset w kontenerze.** `config.js` per strona — WYŁĄCZNIE dane
+publiczne (nazwa, adres zaplecza, klucz publiczny płatności, mail kontaktowy właściciela,
+dane sprzedawcy do regulaminu). **Baner „TRYB TESTOWY — płatności nie są pobierane".**
 
-## 3. PRZEPŁYW ZAKUPU
+**B. PANEL ADMINA — NA ORIGINIE WORKERA, nie na stronie gospodarza** (pewniak #4: wspólny
+origin = kradzież tokena przez skrypty gospodarza). Worker serwuje panel na własnym adresie:
+własny CSP, zero wspólnego magazynu przeglądarki z hostem, adres panelu poza paczką wpinaną.
 
-**Szczęśliwa ścieżka:** kupujący na `/sklep/` (witryna ciągnie produkty z API zaplecza) → klik „Kup" → witryna woła `POST /api/zamow {produkt_id}` → Worker tworzy sesję Stripe Checkout (cena Z BAZY, nie z żądania!) → przekierowanie na stronę Stripe → płatność testowa → Stripe wysyła webhook `checkout.session.completed` → Worker: weryfikuje PODPIS webhooka → sprawdza idempotencję (session_id UNIQUE — webhook wysłany 2× nie robi 2 zamówień) → zapisuje zamówienie (email z sesji, produkt, kwota, czas) → generuje wygasający link do pliku z R2 → wysyła mail → kupujący wraca na `/sklep/dziekujemy` („sprawdź maila").
+**C. ZAPLECZE** — Cloudflare Worker + D1 + R2 (limity darmowe z cennika 16.08: 100 tys.
+żądań/dzień · D1 5 GB, 5 mln odczytów/dzień, 100 tys. zapisów/dzień · R2 10 GB, 1 mln op. A
+i 10 mln op. B/mies. — przy pojedynczych zakupach dziennie zapas tysiąckrotny; **do
+potwierdzenia w kości limity CPU/pamięci wolnego planu** — rejestr założeń). Każdy właściciel =
+własne konto (izolacja danych i pieniędzy) + **własne konto Stripe** (kasa na jego rachunek).
+**Instalacja zaplecza = JEDEN skrypt** (tworzy D1 + migracje + seed + sekrety + deploy +
+hasło admina; hasło ustawiane przez skrypt/seed, NIGDY przez publiczny endpoint — C10).
+**`/api/wersja`** zwraca wersję paczki i stan schematu (utrzymanie 4 instalacji).
 
-**Odnogi i awarie:** przerwana płatność = brak webhooka = brak zamówienia (stan czysty) · mail nie wyszedł = zamówienie ma status „mail_blad", panel pokazuje je na czerwono z przyciskiem „wyślij ponownie" · webhook nie doszedł = Stripe sam ponawia do 3 dni; do decyzji w audycie czy dokładać ręczne „dociągnij zaległe" · API zaplecza leży = witryna pokazuje „sklep chwilowo niedostępny" zamiast pustej strony · link wygasł/limit pobrań = strona błędu z instrukcją kontaktu.
+**D. PŁATNOŚCI** — Stripe Checkout (hostowana strona płatności; pełne przekierowanie —
+odporne na adblock; kart nie dotykamy). **Wzorzec kodu: oficjalny przewodnik Stripe dla
+Cloudflare Workers** (constructEventAsync/Web Crypto — NIE przykład Node/Express; C13).
+Tryb testowy; sekret webhooka per środowisko (CLI ≠ endpoint — do checklisty świeżego
+wdrożenia).
 
-## 4. MODEL DANYCH (D1)
+**E. POBRANIA — ZAWSZE przez endpoint Workera** (pewniak #5): link = token HMAC z terminem
+(72 h), Worker strumieniuje plik z R2 i liczy **atomowym UPDATE z warunkiem** wyłącznie
+**pełne pobrania GET** (HEAD/Range nie zużywa — skanery poczty; C12). Limit: 10 pobrań.
+Presigned URL bezpośrednio do R2 — NIE (nie umie liczyć).
 
-- `produkty`: id, nazwa, opis_krotki, opis_pelny, cena_grosze, waluta, plik_klucz_r2, aktywny, utworzono, zmieniono
-- `zamowienia`: id, stripe_session_id (UNIQUE), produkt_id, email_kupujacego, kwota_grosze, waluta, status (oplacone / mail_wyslany / mail_blad), link_wygasa, pobrania_limit, pobrania_uzyte, utworzono
-- `logowania_admina`: id, czas, wynik (ok/blad), ip, user_agent
-- `konfig`: klucz, wartosc (hash hasła admina, ustawienia linków)
+**F. MAILE** — na egzamin: dostawca w trybie testowym/zweryfikowane adresy + **podgląd treści
+maila w panelu przy zamówieniu** (egzaminator ZOBACZY mail bez skrzynki). Test dostarczalności
+na kilku dostawcach Z folderem spam. **Jawny rozdział „droga do produkcji": wysyłka
+produkcyjna WYMAGA domeny** (opcja: jedna subdomena nadawcza dla 4 instalacji — decyzja
+z właścicielami; nie blokuje egzaminu). Sprawdzić stopkę reklamową darmowego planu (C28) —
+jeśli jest, zmiana dostawcy.
 
-## 5. PANEL ADMINA
+## 5. MODEL DANYCH v2 (D1)
 
-Logowanie jednym hasłem (hash w bazie, ustawiane przy instalacji) → token sesyjny z terminem ważności. **Każda próba logowania — udana i nieudana — do dziennika** (czas, IP, przeglądarka). Ochrona przed zgadywaniem hasła: limit prób na IP. Funkcje: dashboard sprzedaży (lista: kiedy/co/za ile + suma w czasie), pełny CRUD produktów (w tym wgranie pliku do R2), podgląd zamówień + ponowna wysyłka maila, odczyt dziennika logowań.
+- `produkty`: id, nazwa, opis_krotki, opis_pelny (renderowane jako TEKST, nigdy HTML),
+  cena_grosze, waluta, plik_klucz_r2, plik_rozmiar, plik_sha256, aktywny, utworzono, zmieniono.
+  **Usuwanie = deaktywacja** gdy istnieją zamówienia; plik nowej wersji = NOWY klucz
+  (stare zamówienia trzymają swój — wersjonowanie B11).
+- `sesje_checkout` ⭐NOWA (C1): id, stripe_session_id, produkt_id, utworzono, stan
+  (utworzona/oplacona/wygasla) — ślad po NASZEJ stronie zanim przyjdzie webhook; podstawa
+  „dociągnij zaległe" i testu porzuconych.
+- `zamowienia`: id, stripe_session_id UNIQUE, produkt_id, **produkt_nazwa_kupiona,
+  produkt_cena_kupiona, produkt_plik_klucz** (snapshot z chwili zakupu), email_kupujacego,
+  kwota_grosze, waluta, **status: oczekuje → oplacone → mail_wyslany | mail_blad**,
+  **zgoda_tresc, zgoda_czas** (dowód checkboxa per zamówienie — B41), link_wygasa,
+  pobrania_limit, pobrania_uzyte, mail_proby, utworzono (=czas webhooka), zmieniono.
+- `zdarzenia` ⭐NOWA (kartka MP: nieusuwalna oś czasu): id, zamowienie_id NULL, typ, opis,
+  czas — append-only; obejmuje TAKŻE akcje admina (CRUD, resend, eksport, logowanie).
+- `logowania_admina`: id, czas, **login_wpisany**, wynik, ip, user_agent.
+- `konfig`: klucz, wartosc (hash hasła, wersja schematu; ustawienia NOWYCH linków —
+  jawne w panelu, że nie zmieniają już wystawionych; C25).
+Retencja: logi logowań i zdarzenia techniczne czyszczone po 90 dniach (cron); pseudonimizacja
+kupującego na żądanie: email → skrót + usunieto_dnia (kwoty i czasy zostają — dashboard żyje).
 
-## 6. BEZPIECZEŃSTWO I PRAWO (checklist wbudowany w plan)
+## 6. PRZEPŁYW ZAKUPU v2
 
-Podpis webhooka weryfikowany · idempotencja zamówień · pliki wyłącznie przez podpisane wygasające linki · hasło hashowane · limit prób logowania + dziennik · CORS zawężony do domeny witryny · sekrety w magazynie sekretów Workera, NIGDY w repo · cena zawsze z bazy (klient nie może wysłać własnej) · RODO minimum: zbieramy tylko email, polityka prywatności sklepu, możliwość usunięcia danych kupującego z panelu · regulamin sprzedaży + checkbox „zgadzam się na natychmiastowe dostarczenie treści cyfrowej" (utrata prawa odstąpienia — wymóg przy plikach) · przy przekreślonych cenach: „najniższa cena z 30 dni" (Omnibus).
+Strona produktu: **checkbox zgody na natychmiastowe dostarczenie (wymagany)** → „Kup" →
+`POST /api/zamow {produkt_id, zgoda:true, klucz_idempotencji}` (60-sekundowe okno — podwójny
+klik nie tworzy 2 sesji; B20) → Worker: walidacja produktu AKTYWNEGO **z potwierdzonym
+plikiem w R2** (D8), zapis do `sesje_checkout`, sesja Stripe (cena z bazy) → przekierowanie →
+płatność testowa → **webhook**: weryfikacja podpisu → `INSERT ... ON CONFLICT DO NOTHING` →
+**odczyt stanu i WZNOWIENIE od miejsca zatrzymania** (snapshot → link → mail → status po
+POMIARZE skutku; Worker zwraca błąd, dopóki całość niedomknięta — ponowienia Stripe DOKAŃCZAJĄ
+robotę zamiast duplikować; pewniak #6) → strona „dziękujemy" odpytuje status i pokazuje
+„mail wysłany" / „przetwarzamy".
+**Awarie:** mail_blad → cron co 10 min, do 3 prób, potem panel-czerwone + ręczny przycisk ·
+sesja porzucona → widoczna w `sesje_checkout` · API leży → witryna: komunikat · link
+wygasł/limit → strona błędu z mailem kontaktowym właściciela (z config).
 
-## 7. PLAN PRACY (kolejność z bramkami)
+## 7. BEZPIECZEŃSTWO v2 (checklist → każda pozycja ma test w swoim przyrocie)
 
-1. **KOŚĆ** (najpierw!): 1 produkt w bazie → zakup testową kartą → webhook → mail z działającym wygasającym linkiem. Bez panelu. Kość przechodzi = kręgosłup potwierdzony.
-2. Wroga sesja na kości: adblock, zamknięcie karty w trakcie, mail w spamie, podwójny klik, webhook 2×.
-3. Przyrost „panel": logowanie + dziennik + dashboard (na danych z kości).
-4. Przyrost „CRUD": zarządzanie produktami + upload pliku.
-5. Przyrost „witryna": pełne strony produktów (opisy wg wzorców), wpięcie w KOPIĘ strony-gospodarza, test punktu zaczepienia menu.
-6. Audyt końcowy: mutanty przez kalibrator, dosłowne wykonanie instrukcji na czystej kopii, próba obalenia.
-7. Paczka + instrukcja wdrożenia prostym językiem (wpięcie ≤30 min) + demo dla egzaminatora.
+Podpis webhooka (Web Crypto, constructEventAsync) · idempotencja pełna (ON CONFLICT + resume) ·
+cena wyłącznie z bazy · **każdy endpoint admina z własną autoryzacją** (CORS ≠ kontrola
+dostępu; B13) · sesje admina: rekord po stronie serwera, krótkie życie, unieważnianie przy
+wylogowaniu, **zmiana hasła w panelu** + procedura resetu skryptem (D4/B23) · limit prób
+logowania: opóźnienie wykładnicze + dziennik (Turnstile = produkcja) · **rate limit na
+publicznych endpointach** (B19) · opisy/nazwy renderowane jako tekst (XSS; B15) · upload:
+presigned PUT do R2 (limit Workera ominięty; A5), limit rozmiaru + MIME + losowy klucz,
+weryfikacja obecności PO wgraniu (matka H) · linki pobrań: HMAC + wygaśnięcie + atomowy
+licznik pełnych GET · sekrety wyłącznie w magazynie Workera; config.js tylko publiczne (B33) ·
+zakaz logowania sekretów (przegląd przed oddaniem) · CSP panelu (osobny origin) · gitleaks +
+CodeQL/Dependabot w CI.
 
-Rytm: każdy przyrost = branch → test na żywych danych testowych → PR → merge; nie zaczynam następnego, póki poprzedni nie ma potwierdzonego wyniku.
+## 8. PRAWO / RODO v2
 
-## 8. REJESTR ZAŁOŻEŃ NIEPOTWIERDZONYCH (jawny)
+Zgoda na natychmiastowe dostarczenie zapisywana per zamówienie (treść + czas) · regulamin
+i polityka prywatności jako SZABLONY wypełniane danymi sprzedawcy z config (paczka nie
+publikuje cudzego regulaminu; C18) · minimalizacja: tylko email · pseudonimizacja na żądanie ·
+retencja logów 90 dni · polityka wymienia operatora płatności i dostawcę maili jako podmioty
+przetwarzające · **bez przecen → Omnibus-ceny nie dotyczy (jawnie)** · bez opinii → Omnibus-
+opinie nie dotyczy (jawnie) · WCAG-lite (EAA).
 
-- Z1. Symulacja BLIK w trybie testowym Stripe — do sprawdzenia w kości (karta testowa = pewnik).
-- Z2. Darmowy plan Cloudflare a komercja — bez znaczenia dla egzaminu (tryb testowy); potwierdzić w warunkach przed produkcją.
-- Z3. Punkt zaczepienia menu przy stronie hydrowanej Reactem — 2 warianty, wybór po teście na kości.
-- Z4. Dostawca maili bez własnej domeny (kandydat Brevo) — potwierdzić w kości, że mail dochodzi na DOWOLNY adres kupującego.
-- Z5. Panel i API na różnych domenach (hosting statyczny vs Worker) — sesja tokenem w nagłówku, nie cookie; potwierdzić wygodę w kości.
+## 9. PLAN PRACY v2 (harmonogram do terminu; POMIAR czasu per krok)
 
-## 9. KRYTERIA „GOTOWE" (binarne, do rubryki egzaminu)
+- **K0 · 17-18.08 — SPIKE WPIĘCIA (ryzyko nr 1 najpierw; pewniak #1):** na kopii strony
+  gospodarza: wariant A (link w menu w ŹRÓDLE/public) vs B (skrypt + MutationObserver);
+  test hydracji, routera (pełne przeładowanie na /sklep/), CSP, wycieków CSS, zachowania po
+  rebuildzie. **Wynik spike'a = decyzja mechanizmu wpięcia i definicja „czystego diffu"
+  (diff ŹRÓDŁA + wyłączenie zaplecza).** Równolegle startują **PRODUKTY-TREŚĆ** (2 paczki;
+  kryterium: kompletna instrukcja wdrożenia agenta + diagram + pliki; „ile czasu oszczędza"
+  poparte treścią, nie zmyślone).
+- **K1 · 18-19.08 — KOŚĆ + TESTY OD RAZU:** skrypt instalacyjny zaplecza → 1 produkt (seed) →
+  zakup kartą testową → webhook (ON CONFLICT + resume) → mail → pobranie przez Worker.
+  Testy automatyczne od pierwszego dnia (wrangler dev/Miniflare + stripe CLI): webhook 2×,
+  przerwanie przed mailem + ponowienie dokańcza, podmiana ceny, licznik równoległy.
+  **Golden master przelotu** (zapis odpowiedzi/stanów/treści maila — regresja za darmo).
+- **K2 · 19.08 — WROGA SESJA na kości:** adblock, zamknięcie karty, spam-folder, podwójny
+  klik, webhook 2×, pusta baza, seed od zera, odświeżenie „dziękujemy", link po limicie,
+  HEAD/Range, plik usunięty z R2. Audyt pierwszego przelotu: sesje po pytaniu A/B/B2/C/D
+  (E-migracje: N/D w v1 — zapisane).
+- **K3 · 20-21.08 — PANEL (na Workerze):** logowanie (login+hasło, dziennik z loginem),
+  dashboard (lista + sumy w czasie + eksport CSV), podgląd zamówienia Z TREŚCIĄ maila,
+  resend, log zdarzeń (w tym akcje admina), zmiana hasła.
+- **K4 · 22.08 — CRUD:** produkty + presigned upload + walidacje (typ/rozmiar/cena>0/pusta
+  nazwa) + deaktywacja zamiast usuwania + snapshot w zamówieniach nietknięty (test).
+- **K5 · 23-24.08 — WITRYNA:** strony produktów NA TREŚCI z produktów-paczek, WCAG-lite,
+  RWD, JSON-LD, baner trybu testowego, regulamin/polityka z szablonów; sędzia wyglądu 0-100
+  wg kryteriów dziedziny PRZED pokazaniem.
+- **K6 · 25.08 — POWTARZALNOŚĆ (pewniak #7/B51):** DRUGA instalacja od zera na czystej kopii
+  innej strony wg instrukcji — wykonuje NIE-autor (Dzidek): „zestawienie zaplecza" (mierzone
+  osobno, z listą kont) + „wpięcie witryny" ≤30 min; test „ta strona→ten backend→ten Stripe".
+- **K7 · 26.08 — AUDYT KOŃCOWY:** 4 kontrole równolegle (zgodność z MAPA-SPEC · klikanie+
+  wygląd+axe · paczka i repo (gitleaks, instalacja od zera, sweep śmieci .bak/.orig/lorem) ·
+  bezpieczeństwo ATAKUJE — konkretne polecenia omijające walidacje) + **kalibracja: bank
+  mutantów projektu** (5 klas zwróconych przy MP + wyścig + limit-mierzy-nie-to; mutanty
+  zacommitowane na neutralnej gałęzi, zakaz narzędzi historii, próg 2/3) + krytyczny przelot
+  **3/3 (pass^k)** + próba obalenia (osobna sesja: „udowodnij, że NIE nadaje się do wydania").
+  Naprawy KLASAMI (grep całe repo; >5 plików = porcje z zielonym CI; 3. powrót klasy = STOP).
+- **K8 · 27.08 — PACZKA + PRÓBA ODDANIA nr 1:** zamrożenie → docs Z KODU (dwupoziomowe:
+  klient prostym językiem + zrzuty; informatyk: diagram architektury) → JEDNO wydanie (tag,
+  suma kontrolna, opis PL) → bramka ludzka: automat robi 5-6 zrzutów krytycznych ścieżek,
+  **Dzidek ogląda i odblokowuje** → runbook oddania (link działa z zewnątrz, dane demo,
+  collaborator ZAPROSZONY przed linkiem) → oddanie.
+- **28-30.08 — BUFOR na zwroty (próby 2-3).** Zmiana po zamrożeniu = ścieżka hotfix.
 
-1. Zakup testową kartą: od kliknięcia „Kup" do maila z linkiem ≤ 2 minuty; link pobiera WŁAŚCIWY plik; po limicie pobrań/terminie przestaje działać.
-2. Panel pokazuje ten zakup (czas, produkt, kwota) bez grzebania w kodzie.
-3. Dodanie nowego produktu W PANELU = widoczny w sklepie bez zmiany kodu; edycja i usunięcie analogicznie.
-4. Każde logowanie do panelu (udane i nieudane) jest w dzienniku z czasem i IP.
-5. Webhook dostarczony dwukrotnie = JEDNO zamówienie i JEDEN mail.
-6. Wpięcie paczki na czystą kopię innej strony statycznej wg instrukcji ≤ 30 minut; odpięcie wg instrukcji = zero śladu (czysty diff).
-7. Cała powyższa lista przechodzi na ŚWIEŻYM wdrożeniu (nie na środowisku deweloperskim).
+Rytm: branch → test na żywych danych testowych → PR (recenzent-Claude + CI) → merge;
+następny krok dopiero po POTWIERDZONYM wyniku poprzedniego. Bramki CI rosną z kodem
+(manifest przez osobne PR-y). Gdy bramka czerwona — naprawiamy produkt, NIGDY miarę.
+
+## 10. KADENCJA SPRAWDZANIA (ze skilla sprawdzanie-zlecenia, dopasowana)
+
+MOMENT 1 (dziś): **MAPA-SPEC.md** generowana z surowej notatki zlecenia (statusy: dosłowne /
+interpretacja / odstępstwo z datą) — audytor zgodności dostaje POTEM źródło+mapę, nie moje
+streszczenie. MOMENT 2: audyt pierwszego przelotu NA KOŚCI (K2). W TRAKCIE: automaty w CI
+(eslint, testy, gitleaks, CodeQL; znaleziony błąd → w 24 h reguła lintera albo test).
+MOMENT 4 (K7): cztery kontrole + kalibracja + GO/NO-GO z trzech liczb (zero krytycznych
+i dużych · kalibracja ≥ próg · zero rozjazdów) — liczby liczy skrypt, nie proza.
+Audytor: zawsze świeża sesja w zerowym kontekście, jedna soczewka na agenta, znalezisko =
+padający test, „zero z uzasadnieniem" wymagane. Zasada dwóch prób naprawy, potem reset
+i inne podejście.
+
+## 11. REJESTR ZAŁOŻEŃ v2
+
+- Z1. Symulacja BLIK w teście Stripe — sprawdzana w K1 (karta = pewnik).
+- Z2. Limity CPU/pamięci darmowego Workera — mierzone w K1 (żądania/pojemność potwierdzone).
+- Z3. Mechanizm wpięcia — rozstrzyga SPIKE (K0), nie wiara.
+- Z4. Dostawca maili: dostarczalność wielu skrzynek + spam + stopka darmowego planu — K1/K2.
+- Z5. ~~Panel na osobnej domenie~~ ROZSTRZYGNIĘTE: panel na originie Workera.
+- Z6. KTO wykonuje wpięcie u właścicieli: założenie = właściciel z dostępem do ŹRÓDŁA strony
+  (tylko zmiana w źródle przeżywa rebuild) — instrukcja pisana pod to; koszt zmiany: średni.
+- Z7. Wolumen: pojedyncze zakupy dziennie (przy zmianie: limity przeliczyć).
+
+## 12. KRYTERIA „GOTOWE" v2 (binarne; mierzą NASZĄ część; wykonywane NA PACZCE na świeżym wdrożeniu)
+
+1. Zakup kartą testową: zaplecze przekazuje mail dostawcy ≤60 s od webhooka (nasz pomiar);
+   osobno test ręczny: mail w skrzynce (z kontrolą spamu) i **treść maila widoczna w panelu**.
+2. Link pobiera WŁAŚCIWY plik (sha256 zgodny ze snapshotem); po terminie/limicie odmawia;
+   HEAD/Range nie zużywa limitu; 2 równoległe pobrania przy ostatnim slocie → przechodzi 1.
+3. Webhook 2× = jedno zamówienie i jeden mail; ponowienie po przerwaniu W POŁOWIE dokańcza
+   (test z wymuszonym padnięciem przed mailem).
+4. Podmieniona cena/produkt w żądaniu = zignorowane; zakup bez zaznaczonej zgody = niemożliwy;
+   webhook bez ważnego podpisu = odrzucony; endpoint admina bez sesji = odmowa.
+5. Panel: zakup widoczny (czas=webhook, kwota, produkt ze SNAPSHOTU); edycja/deaktywacja
+   produktu NIE zmienia historii; dziennik logowań z loginem (udane i nieudane); log zdarzeń
+   obejmuje akcje admina; eksport CSV działa.
+6. CRUD: nowy produkt widoczny w sklepie bez zmian kodu; produkt bez potwierdzonego pliku
+   nie da się aktywować; walidacje odrzucają cenę ≤0 i pustą nazwę.
+7. DRUGA instalacja: zaplecze skryptem (czas zmierzony, jawny) + wpięcie witryny wg instrukcji
+   przez NIE-autora ≤30 min; zakup na instalacji B ląduje wyłącznie w bazie B.
+8. Odpięcie wg instrukcji: diff źródła strony czysty + zaplecze wyłączone; kupujący przed
+   odpięciem: los linków opisany w instrukcji (decyzja właściciela).
+9. Krytyczny przelot (zakup→mail→pobranie) przechodzi **3/3 powtórzeń** (pass^k).
+10. Produkty-treść: obie paczki istnieją, kompletne (instrukcja+diagram+pliki), opis „ile czasu
+    oszczędza" ma pokrycie w treści paczki.
+11. WCAG-lite: formularze z labelkami, obsługa klawiaturą, fokus widoczny; RWD na telefonie;
+    strony działają w Chrome/Edge/Firefox.
+12. Kalibracja audytu ≥ próg (2/3 mutantów) — inaczej audyt nieważny, nie oddajemy.
+
+## 13. CO ODDZIELA TRYB TESTOWY OD PRODUKCJI (jawna lista — nie obietnica „podmiany kluczy")
+
+Aktywacja kont Stripe właścicieli (KYC, rachunek) · webhook produkcyjny z nowym sekretem ·
+domena nadawcza maili (bez niej produkcyjna wysyłka NIE działa) · VAT od treści cyfrowych
+dla konsumentów UE (możliwy OSS — właściciele konsultują księgowość; my NIE doradzamy
+podatkowo) · regulamin/polityka z danymi konkretnego sprzedawcy · warunki darmowego planu
+Cloudflare przy działalności zarobkowej · usunięcie banera trybu testowego · przegląd
+limitów przy realnym ruchu. **Ta lista trafia do instrukcji właściciela jako osobny rozdział.**

@@ -7,6 +7,12 @@
 Wszystkie niejasności rozstrzygamy SAMI i dokumentujemy w rejestrze decyzji (PLAN-ETAP1.md).
 „Kursy" = egzamin DRUGIEGO zdającego, nie nasz temat. Koło ratunkowe (1 telefon) = na prawdziwy zator.
 
+## ⏰ TERMIN I ZASADY OCENY (Dzidek 17.08 ~02:20)
+**Termin: 30.08.2026 · 3 próby oddania · ocenia kolega (zasady jak przy MP).**
+Mamy 13 dni. Plan: PIERWSZA próba oddania z ZAPASEM (~26-27.08), nie 30-go wieczorem —
+lekcja MP: oddanie w dzień terminu = zero bufora na zwrot. 3 próby to zasób, nie ozdoba:
+próba 1 wcześnie łapie to, czego nasz audyt nie widzi.
+
 ## ⭐ CEL I ZAKRES (decyzja Dzidka 16.08 ~23:45)
 **CEL NR 1 = ZDAĆ EGZAMIN u kolegi. Budujemy WSZYSTKO w trybie testowym płatności — zero prawdziwych pieniędzy, zero prawdziwych kont właścicieli.**
 Odłożone NA PÓŹNIEJ (po egzaminie, osobna robota): aktywacja prawdziwych kont Stripe u 4 właścicieli · domeny i maile produkcyjne · wdrożenia na 4 żywe strony. Projekt ZOSTAJE multi-site-ready (config per strona), bo to tanie teraz, a wymagane później.
