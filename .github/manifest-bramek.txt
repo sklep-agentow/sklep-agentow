@@ -1,0 +1,10 @@
+# MANIFEST BRAMEK — lista bramek, które MUSZĄ być aktywne w tym repo.
+# ZASADY: (1) plik pisany RAZ, na starcie projektu; (2) każda zmiana = osobny PR,
+# który Dzidek czyta w całości (plik ma być krótki właśnie po to);
+# (3) agent NIE dotyka tego pliku w PR-ach z kodem — pilnuje tego sprawdz-manifest.sh w CI.
+# Format: jedna nazwa joba z quality.yml na linię. Puste linie i # ignorowane.
+actionlint
+phpcs
+phpstan
+phpunit
+plugin-check

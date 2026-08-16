@@ -1,0 +1,16 @@
+# MAPA RYZYKA — obszary, w których znalezisko automatycznie dostaje wagę DUŻĄ.
+# Powstaje w DNIU 1 projektu (etap zrozumienia), konkretna dla projektu.
+# Format: jeden PREFIKS ścieżki albo nazwa pliku na linię (dopasowanie: początek ścieżki
+# względnej w repo LUB sam plik gdziekolwiek). # i puste linie ignorowane.
+# Kategorie do wypełnienia per projekt (przykłady — ZASTĄP realnymi ścieżkami):
+# (a) dane osobowe i ich usuwanie:
+includes/Privacy
+uninstall.php
+# (b) pieniądze i rozliczenia:
+includes/Payments
+# (c) uwierzytelnianie i uprawnienia (tokeny, nonce, capability):
+includes/Front/Login
+includes/Auth
+# (d) migracje i schemat bazy (utrata danych):
+includes/Migrations
+includes/Schema
