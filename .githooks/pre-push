@@ -1,0 +1,11 @@
+#!/bin/bash
+# Zastępstwo za branch protection (darmowy GitHub nie da jej na prywatnym repo).
+# Blokuje bezpośredni push na main — praca idzie branch → PR → merge (PRZEPIS-AUTOMAT).
+while read -r local_ref local_sha remote_ref remote_sha; do
+  if [ "$remote_ref" = "refs/heads/main" ]; then
+    echo "⛔ pre-push: bezpośredni push na main zablokowany. Rób branch → PR → merge." >&2
+    echo "   Świadomy wyjątek: git push --no-verify (odnotuj w PR/commit czemu)." >&2
+    exit 1
+  fi
+done
+exit 0
