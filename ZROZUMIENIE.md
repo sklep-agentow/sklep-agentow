@@ -10,11 +10,32 @@
 > „tak całą ta strona bedzie przekonwertowana na worpresa czaisz ? wiec te nasze zlecenie ten sklep i 3 pluginy bedą wyczkami do worpresa ogarniasz ?"
 > [okienko, zaplecze:] „Wszystko w WordPressie" (wtyczka z własnymi tabelami, panel w wp-admin, Stripe i maile z serwera WP)
 > „poukładaj wszytsko ładnie zaraz bedzie jesze inna wiadomośc tez wazna dosyc i nam ułatwi jak cos troche wszytsko"
+> „do zlecenia jesze 2 testowe boty są do wystawienie jako produty na tym skielepi"
+
+**⭐ NOTATKA ZLECENIA — WERSJA AKTUALNA (Dzidek, czat 17.08 ~23:20, verbatim; polecenie: „zapisz to gdzies ładnie to zlecenie i ze to wtyczki do worpresa"):**
+> sklep - szczegoly:
+> 1. Po zakupie, klienta na maila potwierxze, instrukcje,
+> 2. Dwa rozne, ceny, co robi - na zachete klienta, jak dziala jak funkcjonuje, jak skraca czas pracy w firmie
+> 3. Admin panel - widok kiedy za ile kupili w jakim czasie/ dashboard
+> Dzidek - 1. ChatBot LIVE
+> Dzidem - 2. Segregator maila
+> BAZY DANYCH 1. Dane uzytkownikow / platnksci /
+> BAZY DANYCH 2. ZAPIS AGENTOW DO BAZY DANYCH NAWET PRZY DODAWANIU NOWYCH I USUWANIU I MODYFIKOWANIU
+> BAZY DANYCH - KTO KIESY SIE LOGOWAL NA KONTO ADMINA DATY CZAS KONKRETY
+
+Różnice wobec notatki 16.08 (niżej w HISTORII): **wypadło „I KURSOW"** (źródło samo potwierdza
+rozstrzygnięcie K1: kursy = egzamin drugiego zdającego) · **nie ma wiersza „Telefon..."**
+(potwierdza S-10: zasada egzaminu, nie funkcja). Reszta treści identyczna.
 
 **FAKTY PIWOTU (P = piwot):**
 - **P1.** Strona-gospodarz będzie PRZEKONWERTOWANA na WordPressa (kto/kiedy konwertuje: OTWARTE — nie zakładam, że my).
 - **P2.** Nasz sklep = **WTYCZKA WordPressa** (nie wpinana podstrona statyczna). Zaplecze CAŁE w WP: własne tabele w bazie WP, panel w wp-admin, Stripe + maile z serwera WP — świat znany z MP.
-- **P3.** Sprzedawane produkty = **3 WTYCZKI WordPressa** (było: 2 paczki cyfrowe z instrukcjami). Dwa znane z notatki: ChatBot LIVE, Segregator maila; TRZECI: OTWARTE (zasada egzaminu: możemy zdecydować same i udokumentować).
+- **P3.** Sprzedawane produkty = **2 TESTOWE BOTY jako wtyczki WordPressa**: ChatBot LIVE
+  i Segregator maila (Dzidek 17.08 ~23:15: „do zlecenia jeszcze 2 testowe boty są do
+  wystawienia jako produkty na tym sklepie" + notatka-wersja-aktualna: „Dwa rozne").
+  Wcześniejsze „3 pluginy" z czatu = **sklep + 2 boty ŁĄCZNIE trzy wtyczki WP**
+  [INTERPRETACJA rozliczona notatką — żaden „trzeci produkt" nie istnieje].
+  Postać produktu: było „paczka plików", jest „wtyczka WP" (bot testowy).
 - **P4.** Termin i zasady egzaminu: przyjmuję BEZ ZMIAN (30.08, 3 próby, próba 1 ~27.08) — Dzidek nie odwołał.
 - **P5.** Zapowiedziana KOLEJNA ważna wiadomość Dzidka („ułatwi trochę wszystko") — dokumenty układane tak, żeby łatwo przyjąć następną zmianę.
 
@@ -25,7 +46,7 @@
 
 **CO ZOSTAJE BEZ ZMIAN:** cel = zdać egzamin · tryb TESTOWY Stripe (konto+klucze mamy) · zero pytań do kolegi · MUST NOT (konta kupujących, kursy, opinie, przeceny) · wymagania funkcjonalne z notatki (mail po zakupie, dashboard, CRUD produktów, dziennik logowań admina) · repo+recenzent+CI · multi-site: 4 wdrożenia (teraz = 4 instalacje wtyczek).
 
-**OTWARTE PO PIWOCIE:** trzeci produkt-wtyczka (co to?) · głębokość działania produktów-wtyczek na egzamin (pełny agent vs działający rdzeń + instrukcja) · kto/kiedy konwertuje stronę na WP · na czym testujemy (nasz Docker WP jest na serwerze) · granica „NIE dotykamy reszty strony" w świecie wtyczki (stary sens: jeden tag script; nowy sens do zdefiniowania w v3: nie ruszamy motywu/innych wtyczek, czysty uninstall — symetria zapis↔sprzątanie) · czekamy na zapowiedzianą wiadomość Dzidka.
+**OTWARTE PO PIWOCIE:** ~~trzeci produkt~~ ✅ rozwiązane (P3: produkty = 2 boty; „3" = łącznie ze sklepem) · głębokość działania botów-wtyczek na egzamin („TESTOWE boty" — pełny agent vs działający rdzeń demo + instrukcja; rozstrzygnięcie w planie v3 z wyceną czasu) · kto/kiedy konwertuje stronę na WP · na czym testujemy (nasz Docker WP jest na serwerze) · granica „NIE dotykamy reszty strony" w świecie wtyczki (stary sens: jeden tag script; nowy sens do zdefiniowania w v3: nie ruszamy motywu/innych wtyczek, czysty uninstall — symetria zapis↔sprzątanie) · czy zapowiedziana „wiadomość, co ułatwi" już padła (nowa notatka?) czy jeszcze przyjdzie.
 
 ---
 **Status (HISTORIA sprzed piwotu): PLAN KLEPNIĘTY w wersji egzaminowej (16.08 ~23:45)** — architektura z `ARCHITEKTURA-PROPOZYCJA.md` zaakceptowana kierunkowo przez Dzidka z twardym zakresem:
