@@ -25,7 +25,7 @@
 
 **CO ZOSTAJE BEZ ZMIAN:** cel = zdać egzamin · tryb TESTOWY Stripe (konto+klucze mamy) · zero pytań do kolegi · MUST NOT (konta kupujących, kursy, opinie, przeceny) · wymagania funkcjonalne z notatki (mail po zakupie, dashboard, CRUD produktów, dziennik logowań admina) · repo+recenzent+CI · multi-site: 4 wdrożenia (teraz = 4 instalacje wtyczek).
 
-**OTWARTE PO PIWOCIE:** trzeci produkt-wtyczka (co to?) · głębokość działania produktów-wtyczek na egzamin (pełny agent vs działający rdzeń + instrukcja) · kto/kiedy konwertuje stronę na WP · na czym testujemy (nasz Docker WP jest na serwerze) · czekamy na zapowiedzianą wiadomość Dzidka.
+**OTWARTE PO PIWOCIE:** trzeci produkt-wtyczka (co to?) · głębokość działania produktów-wtyczek na egzamin (pełny agent vs działający rdzeń + instrukcja) · kto/kiedy konwertuje stronę na WP · na czym testujemy (nasz Docker WP jest na serwerze) · granica „NIE dotykamy reszty strony" w świecie wtyczki (stary sens: jeden tag script; nowy sens do zdefiniowania w v3: nie ruszamy motywu/innych wtyczek, czysty uninstall — symetria zapis↔sprzątanie) · czekamy na zapowiedzianą wiadomość Dzidka.
 
 ---
 **Status (HISTORIA sprzed piwotu): PLAN KLEPNIĘTY w wersji egzaminowej (16.08 ~23:45)** — architektura z `ARCHITEKTURA-PROPOZYCJA.md` zaakceptowana kierunkowo przez Dzidka z twardym zakresem:
