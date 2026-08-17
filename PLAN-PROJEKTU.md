@@ -2,9 +2,10 @@
 
 > # ⛔ PIWOT 17.08 WIECZÓR — TEN PLAN JEST W REWIZJI
 > Dzidek 17.08 ~22:30: strona-gospodarz będzie PRZEKONWERTOWANA na **WordPressa**;
-> **sklep = wtyczka WP, produkty = 3 wtyczki WP, zaplecze CAŁE w WP** (tabele+wp-admin+
-> Stripe+maile; zero Cloudflare). Szczegóły i surowe cytaty: `ZROZUMIENIE.md` §PIWOT,
-> `MAPA-SPEC.md` S-17..S-19, `DECYZJE.md` D16.
+> **ZLECENIE = 3 wtyczki WP ŁĄCZNIE: SKLEP + 2 TESTOWE BOTY jako produkty (ChatBot LIVE,
+> Segregator maila); zaplecze CAŁE w WP** (tabele+wp-admin+Stripe+maile; zero Cloudflare).
+> Szczegóły i surowe cytaty (w tym notatka-wersja-aktualna 17.08): `ZROZUMIENIE.md` §PIWOT,
+> `MAPA-SPEC.md` S-17..S-20, `DECYZJE.md` D16.
 > **NIE budować wg sekcji 4-6 ANI ŻADNEGO kroku harmonogramu §9 w jego architektonicznym
 > kształcie** — K0-K8 są opisane wokół Workera/D1/R2 (K3 „panel na Workerze", K4 presigned
 > R2, K6 „zestawienie zaplecza" CF itd.); nowy harmonogram = plan v3. Model danych §5
