@@ -30,8 +30,8 @@ Kolumna „Dowód" wypełniana w trakcie budowy (plik:linia / test).
 |----|-----------------|--------|-----------------|-------|
 | S-17 | „całą ta strona bedzie przekonwertowana na worpresa" | DOSŁOWNE | platforma docelowa = WordPress; konwersję strony robi NIE-my (założenie do potwierdzenia) | — |
 | S-18 | „ten sklep i 3 pluginy bedą wyczkami do worpresa" + „do zlecenia jesze 2 testowe boty są do wystawienie jako produty na tym skielepi" | INTERPRETACJA (rozliczona źródłem) | sklep = wtyczka WP · produkty = 2 testowe boty jako wtyczki WP (ChatBot LIVE, Segregator maila); „3 pluginy" = sklep+2 boty ŁĄCZNIE — potwierdza notatka-wersja-aktualna 17.08: „Dwa rozne" | ⬜ |
-| S-20 | notatka-wersja-aktualna 17.08 (verbatim w ZROZUMIENIE §PIWOT): „ZAPIS AGENTOW DO BAZY DANYCH..." — BEZ „I KURSOW" | DOSŁOWNE | źródło samo potwierdza K1/S-08: kursów u nas nie ma; status S-08 przestaje być odstępstwem wobec NOWEJ wersji źródła (wobec starej z 16.08 — zostaje jako historia) | — |
 | S-19 | [okienko] zaplecze „Wszystko w WordPressie" | DOSŁOWNE | własne tabele w bazie WP + panel w wp-admin + Stripe/maile z serwera WP; zero Cloudflare | ⬜ |
+| S-20 | notatka-wersja-aktualna 17.08 (verbatim w ZROZUMIENIE §PIWOT): „ZAPIS AGENTOW DO BAZY DANYCH..." — BEZ „I KURSOW" | DOSŁOWNE | źródło samo potwierdza K1/S-08: kursów u nas nie ma; status S-08 przestaje być odstępstwem wobec NOWEJ wersji źródła (wobec starej z 16.08 — zostaje jako historia) | — |
 
 **Wiersze UNIEWAŻNIONE piwotem:** S-11 (podstrona wpinana → wtyczka WP), S-12 („zwykły
 HTML" → WordPress), S-13 w części mechanizmu (idea „przypinamy/odpinamy" ZOSTAJE — realizacja
