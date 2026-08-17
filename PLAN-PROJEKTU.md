@@ -308,6 +308,23 @@ Przy każdej niepewności NAJPIERW te źródła, nie pamięć i nie blogi:
 ⛔ WooCommerce/WordPress docs — NIE dotyczą tego stacku (inny świat; zostają przy zleceniach WP).
 Nazwa narzędzia podana przez model = hipoteza do sprawdzenia w tych źródłach, nie fakt.
 
+**ZASADY RZEMIOSŁA „wtyczkowego" (pytanie Dzidka: skąd reguły typu „co zapisujesz, to po
+odpięciu usuwasz"):**
+- **Nasze skodyfikowane (wykute z MP, obowiązują tu):** SYMETRIA ZAPIS↔SPRZĄTANIE — co
+  automatyzacja zapisuje (klucz, tabela, plik, sekret), to skrypt ODINSTALOWANIA usuwa,
+  dopisywane W TYM SAMYM PR (PRZEPIS-ZLECENIA etap 2; matka A z bramek anty-powtórka) ·
+  zapis stanu PO pomiarze skutku (matka H) · limit mierzy to, co robi szkodę (matka I) ·
+  jedno źródło prawdy dla każdej listy · rzecz wspólna ma właściciela.
+- **Oficjalne, z których te zasady pochodzą:** WordPress Plugin Handbook (rozdział
+  activation/deactivation/**uninstall** — wzorzec myślenia o wtyczce, mimo innego stacku) ·
+  **OWASP Cheat Sheet Series** (sesje, sekrety, walidacja wejść, magazyn haseł) ·
+  **The Twelve-Factor App** (konfiguracja w środowisku, jednorazowość procesów, parytet
+  środowisk) · **Stripe docs: webhook best practices** (podpis, idempotencja, retry) ·
+  Keep a Changelog + SemVer + Conventional Commits (wydania — już stosujemy).
+- Konsekwencja w paczce: obok skryptu INSTALACJI zaplecza jest skrypt **ODINSTALOWANIA**
+  (usuwa Workera, bazę D1, magazyn R2 i sekrety) — „odpięcie = zero śladu" obejmuje
+  zaplecze, nie tylko katalog na stronie (kryterium 8).
+
 ## 13. CO ODDZIELA TRYB TESTOWY OD PRODUKCJI (jawna lista — nie obietnica „podmiany kluczy")
 
 Aktywacja kont Stripe właścicieli (KYC, rachunek) · webhook produkcyjny z nowym sekretem ·
