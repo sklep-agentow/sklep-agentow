@@ -1,6 +1,6 @@
 # PLAN PROJEKTU v2 — „Sklep z agentami AI" (wpinana podstrona dla stron statycznych)
 
-Wersja 2 — 2026-08-17, po rundzie krytyki: 5 niezależnych recenzji (własny krytyk + 4 obce
+Wersja 2.1 — 2026-08-17 (v2 + runda 2: krytyka 6, triage w krytyki/), po rundzie krytyki: 5 niezależnych recenzji (własny krytyk + 4 obce
 modele), mapa zbieżności w `krytyki/MAPA-ZBIEZNOSCI.md`. Dokument bez nazw i adresów.
 **Termin egzaminu: 30.08 · 3 próby oddania · pierwsza próba planowana 27.08 (bufor na zwroty).**
 
@@ -30,8 +30,11 @@ wpisaną wartość) — decyzje z uzasadnieniem, nie zgadywanie.
 
 **NON-FUNCTIONAL (standardy T1-T7 z poprzedniego zlecenia + prawo):** bezpieczeństwo (sekcja 7) ·
 RODO (sekcja 8) · dostępność WCAG-lite: labelki, kontrast, klawiatura+fokus, aria (EAA) ·
-Chrome/Edge/Firefox + pełny RWD (zakup z telefonu) · SEO-minimum: title/description, OpenGraph,
-JSON-LD Product, czytelne adresy; **demo-kopia strony gospodarza = noindex** · szybkość: strona
+Chrome/Edge/Firefox + pełny RWD (zakup z telefonu) · **SEO-minimum ŚWIADOMIE OGRANICZONE**
+(konflikt z wymogiem „nowy produkt bez zmian kodu" — priorytet ma wymóg FUNKCJONALNY z notatki):
+witryna renderuje produkty Z API; meta/OpenGraph statyczne ogólne per podstrona, JSON-LD i treść
+produktów generowane skryptem (współczesne wyszukiwarki wykonują JS; pozycjonowanie poza
+zakresem); **demo-kopia strony gospodarza = noindex** · szybkość: strona
 statyczna + API bez N+1 · spójny styl kodu (eslint/prettier w CI; zakaz `debugger` i gołych
 `console.log`).
 
@@ -69,7 +72,9 @@ potwierdzenia w kości limity CPU/pamięci wolnego planu** — rejestr założe�
 własne konto (izolacja danych i pieniędzy) + **własne konto Stripe** (kasa na jego rachunek).
 **Instalacja zaplecza = JEDEN skrypt** (tworzy D1 + migracje + seed + sekrety + deploy +
 hasło admina; hasło ustawiane przez skrypt/seed, NIGDY przez publiczny endpoint — C10).
-**`/api/wersja`** zwraca wersję paczki i stan schematu (utrzymanie 4 instalacji).
+**`/api/wersja`** zwraca wersję paczki i stan schematu; **API wersjonowane ścieżką (`/v1/`)** —
+przyszłe aktualizacje zaplecza nie łamią starych witryn (pełny proces aktualizacji 4 instalacji =
+po egzaminie, jawna granica zakresu).
 
 **D. PŁATNOŚCI** — Stripe Checkout (hostowana strona płatności; pełne przekierowanie —
 odporne na adblock; kart nie dotykamy). **Wzorzec kodu: oficjalny przewodnik Stripe dla
@@ -78,9 +83,10 @@ Tryb testowy; sekret webhooka per środowisko (CLI ≠ endpoint — do checklist
 wdrożenia).
 
 **E. POBRANIA — ZAWSZE przez endpoint Workera** (pewniak #5): link = token HMAC z terminem
-(72 h), Worker strumieniuje plik z R2 i liczy **atomowym UPDATE z warunkiem** wyłącznie
-**pełne pobrania GET** (HEAD/Range nie zużywa — skanery poczty; C12). Limit: 10 pobrań.
-Presigned URL bezpośrednio do R2 — NIE (nie umie liczyć).
+(72 h), Worker strumieniuje plik z R2; licznik = **atomowy UPDATE z warunkiem PRZY ROZPOCZĘCIU
+pobrania GET** (pełności transferu nie da się wiarygodnie wykryć przy streamingu — decyzja
+jawna; dlatego limit 10 jako zapas). HEAD nie zużywa limitu (skanery poczty; C12); serwujemy
+**bez Accept-Ranges** (jawnie). Presigned URL bezpośrednio do R2 — NIE (nie umie liczyć).
 
 **F. MAILE** — na egzamin: dostawca w trybie testowym/zweryfikowane adresy + **podgląd treści
 maila w panelu przy zamówieniu** (egzaminator ZOBACZY mail bez skrzynki). Test dostarczalności
@@ -108,8 +114,9 @@ jeśli jest, zmiana dostawcy.
 - `logowania_admina`: id, czas, **login_wpisany**, wynik, ip, user_agent.
 - `konfig`: klucz, wartosc (hash hasła, wersja schematu; ustawienia NOWYCH linków —
   jawne w panelu, że nie zmieniają już wystawionych; C25).
-Retencja: logi logowań i zdarzenia techniczne czyszczone po 90 dniach (cron); pseudonimizacja
-kupującego na żądanie: email → skrót + usunieto_dnia (kwoty i czasy zostają — dashboard żyje).
+Retencja: logi logowań i zdarzenia techniczne czyszczone po 90 dniach (cron); anonimizacja
+kupującego na żądanie: **email → NULL + usunieto_dnia** (skrót odpada — to nadal dana osobowa;
+kwoty i czasy zostają — dashboard żyje).
 
 ## 6. PRZEPŁYW ZAKUPU v2
 
@@ -118,9 +125,12 @@ Strona produktu: **checkbox zgody na natychmiastowe dostarczenie (wymagany)** �
 klik nie tworzy 2 sesji; B20) → Worker: walidacja produktu AKTYWNEGO **z potwierdzonym
 plikiem w R2** (D8), zapis do `sesje_checkout`, sesja Stripe (cena z bazy) → przekierowanie →
 płatność testowa → **webhook**: weryfikacja podpisu → `INSERT ... ON CONFLICT DO NOTHING` →
-**odczyt stanu i WZNOWIENIE od miejsca zatrzymania** (snapshot → link → mail → status po
-POMIARZE skutku; Worker zwraca błąd, dopóki całość niedomknięta — ponowienia Stripe DOKAŃCZAJĄ
-robotę zamiast duplikować; pewniak #6) → strona „dziękujemy" odpytuje status i pokazuje
+**odczyt stanu i WZNOWIENIE od miejsca zatrzymania** (snapshot → link → status `mail_w_toku`
+PRZED wysyłką → mail z kluczem idempotencji dostawcy (id zamówienia) → status po POMIARZE
+skutku; Worker zwraca błąd, dopóki całość niedomknięta — ponowienia Stripe DOKAŃCZAJĄ robotę
+zamiast duplikować; pewniak #6). Okno duplikatu maila przy padnięciu tuż PO wysyłce a przed
+zapisem statusu: ŚWIADOMIE zaakceptowane (lepszy podwójny mail potwierdzenia niż żaden);
+test pokrywa OBA punkty przerwania. → strona „dziękujemy" odpytuje status i pokazuje
 „mail wysłany" / „przetwarzamy".
 **Awarie:** mail_blad → cron co 10 min, do 3 prób, potem panel-czerwone + ręczny przycisk ·
 sesja porzucona → widoczna w `sesje_checkout` · API leży → witryna: komunikat · link
@@ -130,8 +140,10 @@ wygasł/limit → strona błędu z mailem kontaktowym właściciela (z config).
 
 Podpis webhooka (Web Crypto, constructEventAsync) · idempotencja pełna (ON CONFLICT + resume) ·
 cena wyłącznie z bazy · **każdy endpoint admina z własną autoryzacją** (CORS ≠ kontrola
-dostępu; B13) · sesje admina: rekord po stronie serwera, krótkie życie, unieważnianie przy
-wylogowaniu, **zmiana hasła w panelu** + procedura resetu skryptem (D4/B23) · limit prób
+dostępu; B13) · sesje admina: **cookie HttpOnly+Secure+SameSite=Strict** (panel i API na tym samym originie
+Workera), rekord po stronie serwera, krótkie życie, unieważnianie przy wylogowaniu, mutacje
+dodatkowo wymagają niestandardowego nagłówka (CSRF), **zmiana hasła w panelu** + procedura
+resetu skryptem (D4/B23) · limit prób
 logowania: opóźnienie wykładnicze + dziennik (Turnstile = produkcja) · **rate limit na
 publicznych endpointach** (B19) · opisy/nazwy renderowane jako tekst (XSS; B15) · upload:
 presigned PUT do R2 (limit Workera ominięty; A5), limit rozmiaru + MIME + losowy klucz,
@@ -144,7 +156,9 @@ CodeQL/Dependabot w CI.
 
 Zgoda na natychmiastowe dostarczenie zapisywana per zamówienie (treść + czas) · regulamin
 i polityka prywatności jako SZABLONY wypełniane danymi sprzedawcy z config (paczka nie
-publikuje cudzego regulaminu; C18) · minimalizacja: tylko email · pseudonimizacja na żądanie ·
+publikuje cudzego regulaminu; C18) · minimalizacja: tylko email · anonimizacja na żądanie
+(email→NULL) · instrukcja właściciela: akceptacja standardowych umów powierzenia (DPA)
+u operatora płatności i dostawcy maili ·
 retencja logów 90 dni · polityka wymienia operatora płatności i dostawcę maili jako podmioty
 przetwarzające · **bez przecen → Omnibus-ceny nie dotyczy (jawnie)** · bez opinii → Omnibus-
 opinie nie dotyczy (jawnie) · WCAG-lite (EAA).
@@ -152,12 +166,14 @@ opinie nie dotyczy (jawnie) · WCAG-lite (EAA).
 ## 9. PLAN PRACY v2 (harmonogram do terminu; POMIAR czasu per krok)
 
 - **K0 · 17-18.08 — SPIKE WPIĘCIA (ryzyko nr 1 najpierw; pewniak #1):** na kopii strony
-  gospodarza: wariant A (link w menu w ŹRÓDLE/public) vs B (skrypt + MutationObserver);
+  gospodarza: **wariant A (link w menu w ŹRÓDLE/public) — PREFEROWANY**; B (skrypt +
+  MutationObserver) tylko jako fallback z jawnym ostrzeżeniem o kruchości;
   test hydracji, routera (pełne przeładowanie na /sklep/), CSP, wycieków CSS, zachowania po
   rebuildzie. **Wynik spike'a = decyzja mechanizmu wpięcia i definicja „czystego diffu"
   (diff ŹRÓDŁA + wyłączenie zaplecza).** Równolegle startują **PRODUKTY-TREŚĆ** (2 paczki;
   kryterium: kompletna instrukcja wdrożenia agenta + diagram + pliki; „ile czasu oszczędza"
-  poparte treścią, nie zmyślone).
+  poparte treścią, nie zmyślone). **Bramka treści: szkic OBU paczek do 19.08, recenzja treści
+  przez Dzidka PRZED K5** — egzaminator najpierw otworzy pliki, nie kod.
 - **K1 · 18-19.08 — KOŚĆ + TESTY OD RAZU:** skrypt instalacyjny zaplecza → 1 produkt (seed) →
   zakup kartą testową → webhook (ON CONFLICT + resume) → mail → pobranie przez Worker.
   Testy automatyczne od pierwszego dnia (wrangler dev/Miniflare + stripe CLI): webhook 2×,
@@ -211,7 +227,11 @@ i inne podejście.
 ## 11. REJESTR ZAŁOŻEŃ v2
 
 - Z1. Symulacja BLIK w teście Stripe — sprawdzana w K1 (karta = pewnik).
-- Z2. Limity CPU/pamięci darmowego Workera — mierzone w K1 (żądania/pojemność potwierdzone).
+- Z2. Limity CPU darmowego Workera: 10 ms CPU/wywołanie (cennik 16.08) — to czas PROCESORA,
+  nie zegara (czekanie na D1/R2/sieć się nie liczy; HMAC i klej API to ułamki ms) → ryzyko
+  niskie, ale MIERZONE w K1 (pass^k 3/3).
+- Z8. Mechanizm wpięcia potwierdzony wyłącznie na stronie egzaminacyjnej — pozostałe 3 strony
+  (przyszłość) dostają checklistę kompatybilności (CSP/router/ścieżki) przy swoim wdrożeniu.
 - Z3. Mechanizm wpięcia — rozstrzyga SPIKE (K0), nie wiara.
 - Z4. Dostawca maili: dostarczalność wielu skrzynek + spam + stopka darmowego planu — K1/K2.
 - Z5. ~~Panel na osobnej domenie~~ ROZSTRZYGNIĘTE: panel na originie Workera.
