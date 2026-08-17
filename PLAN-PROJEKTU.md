@@ -265,6 +265,28 @@ i inne podejście.
     strony działają w Chrome/Edge/Firefox.
 12. Kalibracja audytu ≥ próg (2/3 mutantów) — inaczej audyt nieważny, nie oddajemy.
 
+## 13a. DOKUMENTY PROJEKTU (ten sam komplet co w dziale audytów — kto, gdzie, kiedy powstaje)
+
+**Żywe od startu (już istnieją, aktualizowane na bieżąco):**
+`ZROZUMIENIE.md` (surowe zdania + fakty; build-guard pilnuje) · `MAPA-SPEC.md` (litera źródła ↔
+wykonanie, statusy dosłowne/interpretacja/odstępstwo; wsad dla audytora zgodności) ·
+`DECYZJE.md` (decyzja+uzasadnienie+odrzucone alternatywy — zamiennik pytań do klienta) ·
+`audyt/REJESTR-WERYFIKACJI.md` (co sprawdzone, CZYM, wynik, dowód) · `audyt/POMIAR-CZASU.md` ·
+`audyt/DZIEN-1.md` (checklista bramek) · `.github/manifest-bramek.txt` (rośnie TYLKO osobnym PR)
+· `krytyki/` (zapisy wierne + triage + mapa zbieżności) · rejestr założeń (sekcja 11 planu).
+
+**Powstają w zdefiniowanym momencie:**
+`KONTRAKTY.md` (styki witryna↔API↔Stripe↔mail) + `audyt/mapa-ryzyka.txt` (wagi per
+odpowiedzialność) + `rubryka-GOTOWE.md` (z sekcji 12, zamrożona) — po kości, w projekcie
+technicznym (bramka D) · `mutanty/*.patch` (bank łatek do kalibracji) — przed K7 ·
+raporty audytów (`audyt/`) — K2 i K7 · `CHANGELOG.md` — od pierwszego wydania ·
+`README.md` Z KODU — po zamrożeniu (K8) · dokumentacja klienta (K8): instrukcja wdrożenia
+prostym językiem + zrzuty, diagram architektury dla informatyka, szablony regulaminu
+i polityki, rozdział „test vs produkcja" (sekcja 13).
+
+Zasada wspólna z działem audytów: dokument, którego nie pilnuje skrypt albo bramka,
+umiera — dlatego każdy z powyższych ma właściciela-moment, a nie „będzie się prowadziło".
+
 ## 13. CO ODDZIELA TRYB TESTOWY OD PRODUKCJI (jawna lista — nie obietnica „podmiany kluczy")
 
 Aktywacja kont Stripe właścicieli (KYC, rachunek) · webhook produkcyjny z nowym sekretem ·
