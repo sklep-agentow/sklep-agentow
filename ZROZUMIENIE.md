@@ -28,7 +28,19 @@ rozstrzygnięcie K1: kursy = egzamin drugiego zdającego) · **nie ma wiersza �
 (potwierdza S-10: zasada egzaminu, nie funkcja). Reszta treści identyczna.
 
 **FAKTY PIWOTU (P = piwot):**
-- **P1.** Strona-gospodarz będzie PRZEKONWERTOWANA na WordPressa (kto/kiedy konwertuje: OTWARTE — nie zakładam, że my).
+- **P1.** Strona-gospodarz będzie PRZEKONWERTOWANA na WordPressa — **KONWERSJĘ ROBIMY MY**
+  (Dzidek 17.08 ~23:40: „i tak my mamy przekonwertowac to na worpresa tę cłą strona zaraz
+  to obgadamy i zmieniamy w naszym planie"). Wg podziału Dzidka: EGZAMIN = sklep + 2 boty;
+  konwersja = nasza OSOBNA robota (szczegóły, kolejność i termin — do obgadania, NIE
+  zaplanowane jeszcze).
+- **P6.** REPO STRONY KOLEGI: dodani jako WSPÓŁPRACOWNICY z prawem ZAPISU (potwierdzone
+  `gh` 17.08 ~23:45). Nazwa zmieniana: `matthewplugins.github.io` → `matthewplugins.pl` →
+  **AKTUALNIE `MatthewPlugins/automatic-ai`** (repo PRYWATNE, branch `main`; stare adresy
+  przekierowują). ⛔ **ZASADA (Dzidek, dosłownie: „nic narazie tam nie ruszamy … zeby
+  przepadkiem nic tam nie popchac"):** na razie ZERO działań w tym repo; przyszła praca
+  tam = ostrożna, wyłącznie uzgodniona; przy PIERWSZYM klonowaniu od razu
+  `git remote set-url --push origin BLOKADA-USTAL-Z-DZIDKIEM` (push fizycznie niemożliwy
+  do czasu świadomej decyzji). Klona na serwerze DZIŚ NIE MA (sprawdzone).
 - **P2.** Nasz sklep = **WTYCZKA WordPressa** (nie wpinana podstrona statyczna). Zaplecze CAŁE w WP: własne tabele w bazie WP, panel w wp-admin, Stripe + maile z serwera WP — świat znany z MP.
 - **P3.** Sprzedawane produkty = **2 TESTOWE BOTY jako wtyczki WordPressa**: ChatBot LIVE
   i Segregator maila (Dzidek 17.08 ~23:15: „do zlecenia jeszcze 2 testowe boty są do
@@ -132,8 +144,8 @@ Tekst mały, ale funkcje = mała **aplikacja z zapleczem**: baza + panel z logow
 
 ## OTWARTE PYTANIA
 
-- ~~P1 DOSTĘPY~~ ✅ 16.08 ~23:00: `matthewplugins.github.io` + repo `MatthewPlugins/matthewplugins.github.io` (TYLKO ODCZYT). Zwiad zrobiony sama — wynik i propozycja: `ARCHITEKTURA-PROPOZYCJA.md`. Hosting docelowy: darmowy GitHub Pages (Dzidek: kolega może KIEDYŚ przenieść na płatny — projektujemy przenośnie).
-- **P7. KOLEGA = MatthewPlugins?** — potwierdzić, że egzaminator to właściciel tej strony (MP = MatthewPlugins?). [OTWARTE]
+- ~~P1 DOSTĘPY~~ ✅ 16.08 ~23:00: `matthewplugins.github.io` + repo `MatthewPlugins/matthewplugins.github.io` (TYLKO ODCZYT). Zwiad zrobiony sama — wynik i propozycja: `ARCHITEKTURA-PROPOZYCJA.md`. Hosting docelowy: darmowy GitHub Pages (Dzidek: kolega może KIEDYŚ przenieść na płatny — projektujemy przenośnie). ⚠️ ZDEZAKTUALIZOWANE 17.08: repo przemianowane na `automatic-ai`, dostęp podniesiony do ZAPISU, hosting docelowy = WordPress — patrz §PIWOT P1/P6.
+- ~~P7. KOLEGA = MatthewPlugins?~~ ✅ 17.08: potwierdzone pośrednio — kolega dodał NAS do SWOJEGO repo strony (`MatthewPlugins/automatic-ai`), czyli egzaminator = właściciel strony.
 - **P8. ARCHITEKTURA** — czeka na klepnięcie Dzidka (`ARCHITEKTURA-PROPOZYCJA.md`). [OTWARTE]
 - **K1. KURSY W BAZIE** — potwierdzić odczyt godzący. [OTWARTE]
 - ~~P2 KLIENT/KURSY~~ ✅ egzamin nr 2 od kolegi, 4 strony. ~~P3 POSTAĆ PRODUKTU~~ ✅ paczka cyfrowa (pliki). ~~P5 KONTA~~ ✅ nie robimy, jedno konto admina. ~~P6 TELEFON~~ ✅ zasada egzaminu (FAKT 11), nie funkcja.
