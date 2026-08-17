@@ -1,5 +1,16 @@
 # Recenzent Claude na każdy PR (wzór: oficjalny przykład pr-review-comprehensive
 # z anthropics/claude-code-action). Wymaga sekretu CLAUDE_CODE_OAUTH_TOKEN w repo.
+#
+# 2026-08-17: powrót do CZYSTEJ udokumentowanej konfiguracji po nocy 8 prób
+# (historia: Issue #9). Zmiany względem nocnej wersji:
+#  - usunięte obejścia (ręczny plik poświadczeń, pin CLI, env-dublet) — żadne
+#    nie zmieniło objawu, a zaciemniają diagnozę,
+#  - `show_full_output: true` — akcja DOMYŚLNIE ukrywa treść błędu w logu
+#    (base-action sanitizeSdkOutput; „full output hidden for security"),
+#  - permissions: dodane `actions: read` — bez niego 403 na GET /actions/runs
+#    (nie zabija runa, ale wyłącza serwer MCP github_ci dla track_progress),
+#  - krok upload-artifact (if: always()) zachowuje pełny wynik CLI — treść
+#    błędu, której okrojony log nie pokazuje.
 name: Recenzent
 
 on:
@@ -12,38 +23,20 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
+      actions: read
       id-token: write
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
-      # Obejście #1281 (tokeny Max nie doklejają się w podprocesie):
-      # (C) poświadczenia zapisane wprost w pliku CLI w dokładnym schemacie,
-      # (D) przypięta wersja CLI 2.1.233 — ta sama, która działa z Max na naszym serwerze.
-      - name: Przygotuj CLI i poświadczenia (obejście 1281)
-        id: przygotuj
-        env:
-          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-        run: |
-          npm install -g @anthropic-ai/claude-code@2.1.233 >/dev/null 2>&1
-          mkdir -p ~/.claude
-          cat > ~/.claude/.credentials.json <<EOF
-          {"claudeAiOauth":{"accessToken":"${CLAUDE_CODE_OAUTH_TOKEN}","refreshToken":"","expiresAt":4102444800000,"refreshTokenExpiresAt":4102444800000,"scopes":["user:file_upload","user:inference","user:mcp_servers","user:profile","user:sessions:claude_code"],"subscriptionType":"max","rateLimitTier":"default_claude_max_20x"}}
-          EOF
-          chmod 600 ~/.claude/.credentials.json
-          echo "cli=$(command -v claude)" >> "$GITHUB_OUTPUT"
-
       - name: Recenzja PR
+        id: recenzja
         uses: anthropics/claude-code-action@v1
-        env:
-          # Obejście: tokeny OAuth planu Max potrafią nie dochodzić do podprocesu CLI
-          # (anthropics/claude-code-action issue #1281) — podajemy DODATKOWO przez env.
-          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          path_to_claude_code_executable: ${{ steps.przygotuj.outputs.cli }}
           track_progress: true
+          show_full_output: true
           prompt: |
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ github.event.pull_request.number }}
@@ -72,3 +65,18 @@ jobs:
             Uwagi konkretne, każda z wagą (KRYTYCZNA/WAŻNA/DROBNA), inline tam, gdzie
             dotyczą konkretnych linii. Nie chwal bez powodu. Po przeglądzie: krótkie
             podsumowanie z listą „czego NIE sprawdziłem".
+
+      # Sonda błędu: pełny zapis wykonania CLI (stream NDJSON) — jedyne miejsce,
+      # gdzie ląduje treść błędu przy „niemym zgonie" (log pokazuje tylko is_error).
+      - name: Zachowaj pełny wynik CLI (artefakt)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: claude-execution-output
+          # Dwie ścieżki: log naszego runa mówi RUNNER_TEMP, docs base-action /tmp —
+          # bierzemy obie, upload-artifact wgra tę, która istnieje.
+          path: |
+            /home/runner/work/_temp/claude-execution-output.json
+            /tmp/claude-execution-output.json
+          if-no-files-found: warn
+          retention-days: 7

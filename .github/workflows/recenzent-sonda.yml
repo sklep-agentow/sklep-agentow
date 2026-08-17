@@ -1,0 +1,39 @@
+# SONDA DIAGNOSTYCZNA (tymczasowa — do skasowania po naprawie recenzenta, Issue #9).
+# Minimalny przebieg claude-code-action: bez track_progress, bez recenzji, prompt-zaślepka.
+# Cel: odizolować uwierzytelnienie (token subskrypcji) od reszty konfiguracji recenzenta.
+# Odpalanie ręczne: gh workflow run recenzent-sonda.yml
+name: Recenzent-sonda
+
+on:
+  workflow_dispatch:
+
+jobs:
+  sonda:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Minimalny przebieg Claude
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          show_full_output: true
+          prompt: |
+            Odpowiedz dokładnie jednym słowem: DZIAŁAM
+
+      - name: Zachowaj pełny wynik CLI (artefakt)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sonda-execution-output
+          path: |
+            /home/runner/work/_temp/claude-execution-output.json
+            /tmp/claude-execution-output.json
+          if-no-files-found: warn
+          retention-days: 7
