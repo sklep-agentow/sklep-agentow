@@ -50,9 +50,9 @@ jobs:
             z bazy, treść maila), nie deklarację „działa". Brak dowodu = uwaga
             KRYTYCZNA, niezależnie od jakości kodu.
 
-            Czytaj zmiany na tle dokumentów repo: PLAN-PROJEKTU.md (sekcja 6 —
+            Czytaj zmiany na tle dokumentów repo: PLAN-PROJEKTU.md (sekcja 7 —
             bezpieczeństwo: podpis webhooka, idempotencja, cena z bazy, sekrety poza
-            repo; sekcja 9 — kryteria GOTOWE) oraz ZROZUMIENIE.md (MUST NOT — rzeczy,
+            repo; sekcja 12 — kryteria GOTOWE) oraz ZROZUMIENIE.md (MUST NOT — rzeczy,
             których w tym projekcie ŚWIADOMIE nie budujemy; nie żądaj ich dodania).
 
             Na co patrzysz poza tym (sam decydujesz o reszcie):
