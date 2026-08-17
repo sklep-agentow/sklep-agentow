@@ -27,6 +27,7 @@
 - [ ] Zero konfliktów źródeł i założeń wysokiego ryzyka · wszystko ma źródło+scenariusz+wagę
 - [ ] Manifest zamrożony ✅(manifest-bramek.txt+strażnik) · sekret OAUTH + App recenzenta
       ✅(17.08: recenzja żywa na PR #18, Issue #9 zamknięte) · branch protection ⚠️NIEDOSTĘPNA
-      (repo private+free, API 403) — zastępuje ją dyscyplina cyklu + lokalny pre-push
-      (patrz nagłówek quality.yml); twarda wersja = decyzja Dzidka (public/Pro)
+      (repo private+free, API 403) — zastępuje ją dyscyplina cyklu + hook `.githooks/pre-push`
+      (per klon: `git config core.hooksPath .githooks` — nagłówek quality.yml);
+      twarda wersja = decyzja Dzidka (public/Pro)
 - [ ] POMIAR: audyt/POMIAR-CZASU.md prowadzony od godziny 0

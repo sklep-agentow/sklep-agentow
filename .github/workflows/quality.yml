@@ -7,8 +7,11 @@
 #    NIE UDOSTĘPNIA branch protection ani rulesetów (API: 403 „Upgrade to Pro").
 #    Czerwone CI NIE blokuje scalenia technicznie — trzyma je DYSCYPLINA CYKLU:
 #    scalamy wyłącznie `gh pr merge` PO zielonych actionlint+manifest; bezpośredni
-#    push na main blokuje lokalny hook pre-push w klonie roboczym. Twarda bramka
-#    wróci, gdy repo będzie publiczne albo konto Pro (decyzja Dzidka).
+#    push na main blokuje wersjonowany hook `.githooks/pre-push` — UWAGA: działa
+#    dopiero po JEDNORAZOWEJ aktywacji w każdym klonie:
+#        git config core.hooksPath .githooks
+#    (świeży klon bez tej komendy NIE ma ochrony; świadome obejście: --no-verify).
+#    Twarda bramka wróci, gdy repo będzie publiczne albo konto Pro (decyzja Dzidka).
 name: Quality
 
 on:
