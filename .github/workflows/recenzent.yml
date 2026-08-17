@@ -18,6 +18,22 @@ jobs:
         with:
           fetch-depth: 1
 
+      # Obejście #1281 (tokeny Max nie doklejają się w podprocesie):
+      # (C) poświadczenia zapisane wprost w pliku CLI w dokładnym schemacie,
+      # (D) przypięta wersja CLI 2.1.233 — ta sama, która działa z Max na naszym serwerze.
+      - name: Przygotuj CLI i poświadczenia (obejście 1281)
+        id: przygotuj
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: |
+          npm install -g @anthropic-ai/claude-code@2.1.233 >/dev/null 2>&1
+          mkdir -p ~/.claude
+          cat > ~/.claude/.credentials.json <<EOF
+          {"claudeAiOauth":{"accessToken":"${CLAUDE_CODE_OAUTH_TOKEN}","refreshToken":"","expiresAt":4102444800000,"refreshTokenExpiresAt":4102444800000,"scopes":["user:file_upload","user:inference","user:mcp_servers","user:profile","user:sessions:claude_code"],"subscriptionType":"max","rateLimitTier":"default_claude_max_20x"}}
+          EOF
+          chmod 600 ~/.claude/.credentials.json
+          echo "cli=$(command -v claude)" >> "$GITHUB_OUTPUT"
+
       - name: Recenzja PR
         uses: anthropics/claude-code-action@v1
         env:
@@ -26,6 +42,7 @@ jobs:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          path_to_claude_code_executable: ${{ steps.przygotuj.outputs.cli }}
           track_progress: true
           prompt: |
             REPO: ${{ github.repository }}
