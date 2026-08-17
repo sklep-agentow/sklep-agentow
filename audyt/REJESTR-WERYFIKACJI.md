@@ -15,4 +15,8 @@ Wpis bez dowodu = wrażenie, nie fakt. „Nie ma X" wymaga próby kontrolnej.
 | — | Limit CPU 10 ms darmowego Workera wystarcza dla naszego przepływu | ⬜ pomiar w K1 (pass^k 3/3) | OCZEKUJE | — |
 | — | BLIK w trybie testowym Stripe | ⬜ K1 | OCZEKUJE | — |
 | — | Dostarczalność maili (kilku dostawców + spam + stopka) | ⬜ K1/K2 | OCZEKUJE | — |
-| — | Hydracja/router: link do /sklep/ przeżywa (wariant A) | ⬜ SPIKE K0 | OCZEKUJE | — |
+| 17.08 | Link wstrzyknięty w ZBUDOWANY HTML nav → hydracja React USUWA (błąd #418) | Playwright headless na kopii strony; próba kontrolna faq=3 | NEGATYWNE (wpinanie przez edycję builda ODPADA) | spike-test.js, wynik w czacie 17.08 |
+| 17.08 | Strona-gospodarz MA meta CSP: script-src 'self'+sha256 → inline skrypty blokowane PO CICHU | grep meta CSP + test (inline nie wykonany, zero błędów) | POTWIERDZONE (fakt architektoniczny) | spike, index.html gospodarza |
+| 17.08 | Wariant B': plik /sklep/wtyczka.js (self) dodaje link w nav PO hydracji + przycisk poza drzewem Reacta → PRZEŻYWA hydrację i scroll; klik → /sklep/ pełnym przeładowaniem (router nie przechwytuje) | Playwright: nav=1, float=1 po interakcji; url=/sklep/, marker=1 | POZYTYWNE — mechanizm wpięcia DZIAŁA | spike-test-b.js |
+| 17.08 | CSP gospodarza NIE dziedziczy się na nasze dokumenty /sklep/ (inline JS działa u nas, u hosta blokowany) | marker #sk-inline-dziala=1 w tym samym przebiegu | POTWIERDZONE — izolacja per dokument; fetch API z NASZYCH stron wolny | spike-test-b.js |
+| 17.08 | Reconstruction test (świeża sesja, sama notatka): zrozumienie zbieżne ~95%; RÓŻNICA: „telefon-koło ratunkowe" czyta jako FUNKCJĘ OFERTY dla kupujących (flaga 1×/zakup), nie zasadę egzaminu | subagent bez naszych dokumentów | DIFF DO ROZSTRZYGNIĘCIA przez Dzidka | wynik w czacie 17.08 |

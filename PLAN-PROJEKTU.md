@@ -287,6 +287,27 @@ i polityki, rozdział „test vs produkcja" (sekcja 13).
 Zasada wspólna z działem audytów: dokument, którego nie pilnuje skrypt albo bramka,
 umiera — dlatego każdy z powyższych ma właściciela-moment, a nie „będzie się prowadziło".
 
+## 13b. ŹRÓDŁA OFICJALNE DZIEDZINY (drabina szukania, szczebel 2 — jak docs WP przy MP)
+
+Przy każdej niepewności NAJPIERW te źródła, nie pamięć i nie blogi:
+- **Stripe:** docs.stripe.com — Checkout, webhooks (podpis!), tryb testowy, karty testowe;
+  przewodnik Stripe dla **Cloudflare Workers** (constructEventAsync).
+- **Cloudflare:** developers.cloudflare.com — Workers (limity, sekrety), D1 (SQL, migracje,
+  transakcje), R2 (presigned PUT), Cron Triggers, Wrangler CLI.
+- **Dostawca maili** (kandydat Brevo): oficjalne API docs + polityka darmowego planu
+  (stopka? limity? adres nadawcy).
+- **Next.js:** nextjs.org/docs — static export, hydracja, router (rozumienie
+  strony-GOSPODARZA, nie nasz stack).
+- **GitHub Pages:** docs.github.com — zachowanie hostingu (404, ścieżki, nagłówki).
+- **Google Search Central + schema.org:** dane strukturalne Product/JSON-LD (nasze „SEO-minimum").
+- **MDN:** Web Crypto (HMAC), fetch, cookies (HttpOnly/SameSite) — wzorce webowe.
+- **WCAG / W3C WAI quick reference:** dostępność formularzy (WCAG-lite).
+- **Prawo konsumenckie (UOKiK / ustawa o prawach konsumenta):** odstąpienie od umowy
+  o treści cyfrowe — brzmienie zgody w checkboxie i regulaminie.
+- **Playwright docs:** testy E2E + axe (dostępność automatyczna).
+⛔ WooCommerce/WordPress docs — NIE dotyczą tego stacku (inny świat; zostają przy zleceniach WP).
+Nazwa narzędzia podana przez model = hipoteza do sprawdzenia w tych źródłach, nie fakt.
+
 ## 13. CO ODDZIELA TRYB TESTOWY OD PRODUKCJI (jawna lista — nie obietnica „podmiany kluczy")
 
 Aktywacja kont Stripe właścicieli (KYC, rachunek) · webhook produkcyjny z nowym sekretem ·
