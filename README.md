@@ -13,8 +13,9 @@ właściciela strony (konfigurowalna per strona: 4 wdrożenia docelowe).
 |---|---|
 | `ZROZUMIENIE.md` | Treść zlecenia (verbatim), fakty, MUST NOT, ryzyka |
 | `MAPA-SPEC.md` | Wymagania S-01…S-16 — co dokładnie ma działać |
-| `PLAN-PROJEKTU.md` | Architektura, bezpieczeństwo (§6), kryteria GOTOWE (§9), harmonogram K0–K8 |
+| `PLAN-PROJEKTU.md` | Architektura (§4), bezpieczeństwo (§7), harmonogram (§9), kryteria GOTOWE (§12) |
 | `DECYZJE.md` | Rejestr decyzji D1–D15 (z uzasadnieniami) |
+| `audyt/` | REJESTR-WERYFIKACJI — dowody: co sprawdzone, czym, z wynikiem |
 | `PLAN-ETAP1.md` | Etap bieżący + rejestr rozstrzygnięć niejasności |
 | `KONFIG-TESTOWA.md` | Konfiguracja testowa Stripe (klucz publiczny; sekrety POZA repo) |
 | `ZWIAD-WZORCE.md` | Zwiad: jak takie sklepy robią najlepsi |
