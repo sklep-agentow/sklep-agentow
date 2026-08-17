@@ -8,3 +8,4 @@
 - Recenzent-Claude uzbrojony (App+token): 2026-08-17 ~03:46 — ten PR to jego test dymny
 - Test recenzenta nr 2 (obejscie env z main): 2026-08-17 ~04:20
 - Test recenzenta nr 3 (plan C+D): 2026-08-17 ~04:35
+- Test recenzenta nr 4 (bez claude_args): 2026-08-17 ~04:45
