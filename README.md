@@ -24,7 +24,11 @@ właściciela strony (konfigurowalna per strona: 4 wdrożenia docelowe).
 
 ## CI
 
-- `quality.yml` — actionlint + strażnik manifestu bramek (statusy wymagane na `main`).
+Po sklonowaniu, JEDNORAZOWO: `git config core.hooksPath .githooks` — włącza strażnika
+pre-push (blokada bezpośredniego pusha na `main`; GitHub free+private nie daje branch
+protection, szczegóły w nagłówku `quality.yml`).
+
+- `quality.yml` — actionlint + strażnik manifestu bramek (scalamy TYLKO po ich zieleni).
 - `recenzent.yml` — recenzja Claude na każdym PR (zasada dowodu: opis PR musi
   zawierać dowód działania, nie deklarację).
 
