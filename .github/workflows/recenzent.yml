@@ -72,5 +72,3 @@ jobs:
             Uwagi konkretne, każda z wagą (KRYTYCZNA/WAŻNA/DROBNA), inline tam, gdzie
             dotyczą konkretnych linii. Nie chwal bez powodu. Po przeglądzie: krótkie
             podsumowanie z listą „czego NIE sprawdziłem".
-          claude_args: |
-            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
