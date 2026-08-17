@@ -1,5 +1,21 @@
 # PLAN PROJEKTU v2 — „Sklep z agentami AI" (wpinana podstrona dla stron statycznych)
 
+> # ⛔ PIWOT 17.08 WIECZÓR — TEN PLAN JEST W REWIZJI
+> Dzidek 17.08 ~22:30: strona-gospodarz będzie PRZEKONWERTOWANA na **WordPressa**;
+> **sklep = wtyczka WP, produkty = 3 wtyczki WP, zaplecze CAŁE w WP** (tabele+wp-admin+
+> Stripe+maile; zero Cloudflare). Szczegóły i surowe cytaty: `ZROZUMIENIE.md` §PIWOT,
+> `MAPA-SPEC.md` S-17..S-19, `DECYZJE.md` D16.
+> **NIE budować wg sekcji 4-6 ANI ŻADNEGO kroku harmonogramu §9 w jego architektonicznym
+> kształcie** — K0-K8 są opisane wokół Workera/D1/R2 (K3 „panel na Workerze", K4 presigned
+> R2, K6 „zestawienie zaplecza" CF itd.); nowy harmonogram = plan v3. Model danych §5
+> przenosi się koncepcyjnie do tabel WP. Wymagania (§2), MUST NOT (§3), prawo (§8)
+> i kryteria GOTOWE (§12 — do adaptacji) ZOSTAJĄ. Bezpieczeństwo §7: ZASADY zostają
+> (podpis webhooka, idempotencja, cena z bazy, limity prób), ale pozycje originowe
+> (osobny origin panelu, CSP panelu) tracą przesłankę — panel to wp-admin na originie
+> strony; ochrona = standardy WP (auth rdzenia, capabilities, nonces) — szczegóły w v3.
+> **Plan v3 powstanie po zapowiedzianej KOLEJNEJ wiadomości Dzidka** („ułatwi trochę
+> wszystko") — do tego czasu żadnego kodu poza zaparkowaną gałęzią `kosc-k1`.
+
 Wersja 2.1 — 2026-08-17 (v2 + runda 2: krytyka 6, triage w krytyki/), po rundzie krytyki: 5 niezależnych recenzji (własny krytyk + 4 obce
 modele), mapa zbieżności w `krytyki/MAPA-ZBIEZNOSCI.md`. Dokument bez nazw i adresów.
 **Termin egzaminu: 30.08 · 3 próby oddania · pierwsza próba planowana 27.08 (bufor na zwroty).**

@@ -1,7 +1,34 @@
-# ZROZUMIENIE — sklep z agentami (podstrona /sklep, EGZAMIN nr 2 od kolegi)
+# ZROZUMIENIE — sklep z agentami (EGZAMIN nr 2 od kolegi) — od 17.08: WTYCZKI WORDPRESSA
 
 **Start zegara: 2026-08-16 22:11** (treść od Dzidka w czacie).
-**Status: PLAN KLEPNIĘTY w wersji egzaminowej (16.08 ~23:45)** — architektura z `ARCHITEKTURA-PROPOZYCJA.md` zaakceptowana kierunkowo przez Dzidka z twardym zakresem:
+
+## 🔄 PIWOT 17.08 WIECZÓR — WORDPRESS (unieważnia część niżej; czytaj NAJPIERW)
+
+**Surowe zdania Dzidka (czat 17.08 ~22:30-23:00, verbatim):**
+> „pedzie zmiana planów jak cos ta strona na którą robimy zlecenie bedzie wgrywana na worpresa słuchaj teraz uwaznie"
+> „ok wiec tak narazie zmien wszytsko w zlecenie u w planie itp zebyśmy wiedzieli ze to bedą jednak pluginy do worpresa te wtyczki ok ?"
+> „tak całą ta strona bedzie przekonwertowana na worpresa czaisz ? wiec te nasze zlecenie ten sklep i 3 pluginy bedą wyczkami do worpresa ogarniasz ?"
+> [okienko, zaplecze:] „Wszystko w WordPressie" (wtyczka z własnymi tabelami, panel w wp-admin, Stripe i maile z serwera WP)
+> „poukładaj wszytsko ładnie zaraz bedzie jesze inna wiadomośc tez wazna dosyc i nam ułatwi jak cos troche wszytsko"
+
+**FAKTY PIWOTU (P = piwot):**
+- **P1.** Strona-gospodarz będzie PRZEKONWERTOWANA na WordPressa (kto/kiedy konwertuje: OTWARTE — nie zakładam, że my).
+- **P2.** Nasz sklep = **WTYCZKA WordPressa** (nie wpinana podstrona statyczna). Zaplecze CAŁE w WP: własne tabele w bazie WP, panel w wp-admin, Stripe + maile z serwera WP — świat znany z MP.
+- **P3.** Sprzedawane produkty = **3 WTYCZKI WordPressa** (było: 2 paczki cyfrowe z instrukcjami). Dwa znane z notatki: ChatBot LIVE, Segregator maila; TRZECI: OTWARTE (zasada egzaminu: możemy zdecydować same i udokumentować).
+- **P4.** Termin i zasady egzaminu: przyjmuję BEZ ZMIAN (30.08, 3 próby, próba 1 ~27.08) — Dzidek nie odwołał.
+- **P5.** Zapowiedziana KOLEJNA ważna wiadomość Dzidka („ułatwi trochę wszystko") — dokumenty układane tak, żeby łatwo przyjąć następną zmianę.
+
+**CO PIWOT UNIEWAŻNIA (stare fragmenty niżej i w planie — NIE budować wg nich):**
+- Architektura „statyczny HTML + katalog sklep/ + script src" (spike K0/D15) — mechanizm wpięcia do wyrzucenia; wpięcie = instalacja wtyczki WP.
+- Zaplecze Cloudflare Worker+D1+R2 (D1 z DECYZJE) — zastąpione bazą i serwerem WP. Zwiady CF/Stripe zapisane (ZWIAD-CLOUDFLARE.md na gałęzi kosc-k1, ZWIAD-STRIPE.md — Stripe ZOSTAJE aktualny, płatności są niezależne od platformy).
+- „Produkt = paczka plików (instrukcje, diagramy)" — teraz produkt = działająca wtyczka WP (zakres treści produktów do rozpisania w planie v3; „ile czasu oszczędza" dalej musi mieć pokrycie).
+
+**CO ZOSTAJE BEZ ZMIAN:** cel = zdać egzamin · tryb TESTOWY Stripe (konto+klucze mamy) · zero pytań do kolegi · MUST NOT (konta kupujących, kursy, opinie, przeceny) · wymagania funkcjonalne z notatki (mail po zakupie, dashboard, CRUD produktów, dziennik logowań admina) · repo+recenzent+CI · multi-site: 4 wdrożenia (teraz = 4 instalacje wtyczek).
+
+**OTWARTE PO PIWOCIE:** trzeci produkt-wtyczka (co to?) · głębokość działania produktów-wtyczek na egzamin (pełny agent vs działający rdzeń + instrukcja) · kto/kiedy konwertuje stronę na WP · na czym testujemy (nasz Docker WP jest na serwerze) · granica „NIE dotykamy reszty strony" w świecie wtyczki (stary sens: jeden tag script; nowy sens do zdefiniowania w v3: nie ruszamy motywu/innych wtyczek, czysty uninstall — symetria zapis↔sprzątanie) · czekamy na zapowiedzianą wiadomość Dzidka.
+
+---
+**Status (HISTORIA sprzed piwotu): PLAN KLEPNIĘTY w wersji egzaminowej (16.08 ~23:45)** — architektura z `ARCHITEKTURA-PROPOZYCJA.md` zaakceptowana kierunkowo przez Dzidka z twardym zakresem:
 
 ## ⭐ ZASADA EGZAMINU (Dzidek 17.08 ~00:20): ZERO PYTAŃ DO KOLEGI
 Wszystkie niejasności rozstrzygamy SAMI i dokumentujemy w rejestrze decyzji (PLAN-ETAP1.md).
