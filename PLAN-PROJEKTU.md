@@ -1,5 +1,17 @@
 # PLAN PROJEKTU v2 — „Sklep z agentami AI" (wpinana podstrona dla stron statycznych)
 
+> # ⛔ PIWOT 17.08 WIECZÓR — TEN PLAN JEST W REWIZJI
+> Dzidek 17.08 ~22:30: strona-gospodarz będzie PRZEKONWERTOWANA na **WordPressa**;
+> **sklep = wtyczka WP, produkty = 3 wtyczki WP, zaplecze CAŁE w WP** (tabele+wp-admin+
+> Stripe+maile; zero Cloudflare). Szczegóły i surowe cytaty: `ZROZUMIENIE.md` §PIWOT,
+> `MAPA-SPEC.md` S-17..S-19, `DECYZJE.md` D16.
+> **NIE budować wg sekcji 4-6 i harmonogramu K0-K1 tego planu** — unieważnione w części
+> architektonicznej (spike K0/D15 = wyrzucony mechanizm; Cloudflare = odpada; model danych
+> §5 przenosi się koncepcyjnie do tabel WP). Wymagania (§2), MUST NOT (§3), bezpieczeństwo
+> (§7 — zasady), prawo (§8), kryteria GOTOWE (§12 — do adaptacji) ZOSTAJĄ.
+> **Plan v3 powstanie po zapowiedzianej KOLEJNEJ wiadomości Dzidka** („ułatwi trochę
+> wszystko") — do tego czasu żadnego kodu poza zaparkowaną gałęzią `kosc-k1`.
+
 Wersja 2.1 — 2026-08-17 (v2 + runda 2: krytyka 6, triage w krytyki/), po rundzie krytyki: 5 niezależnych recenzji (własny krytyk + 4 obce
 modele), mapa zbieżności w `krytyki/MAPA-ZBIEZNOSCI.md`. Dokument bez nazw i adresów.
 **Termin egzaminu: 30.08 · 3 próby oddania · pierwsza próba planowana 27.08 (bufor na zwroty).**

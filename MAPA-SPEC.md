@@ -24,6 +24,21 @@ Kolumna „Dowód" wypełniana w trakcie budowy (plik:linia / test).
 | S-15 | (czat) „wdrożymy do mojej i kolegi i 2 innych osób strony" | DOSŁOWNE | paczka konfigurowalna per strona (config.js + własne konta) | ⬜ |
 | S-16 | (czat) „termin do 30-tego i 3 próby oddania" | DOSŁOWNE | harmonogram z próbą 1 dnia 27.08 | — |
 
-⛔ Wiersze INTERPRETACJA wymagają klepnięcia Dzidka (2 minuty): S-04, S-07, S-09.
+## 🔄 PIWOT 17.08 WIECZÓR (źródło: Dzidek, czat — verbatim w ZROZUMIENIE.md §PIWOT)
+
+| ID | Cytat ze źródła | Status | Nasze wykonanie | Dowód |
+|----|-----------------|--------|-----------------|-------|
+| S-17 | „całą ta strona bedzie przekonwertowana na worpresa" | DOSŁOWNE | platforma docelowa = WordPress; konwersję strony robi NIE-my (założenie do potwierdzenia) | — |
+| S-18 | „ten sklep i 3 pluginy bedą wyczkami do worpresa" | DOSŁOWNE | sklep = wtyczka WP · produkty = 3 wtyczki WP (trzeci produkt: nasza decyzja, do rejestru) | ⬜ |
+| S-19 | [okienko] zaplecze „Wszystko w WordPressie" | DOSŁOWNE | własne tabele w bazie WP + panel w wp-admin + Stripe/maile z serwera WP; zero Cloudflare | ⬜ |
+
+**Wiersze UNIEWAŻNIONE piwotem:** S-11 (podstrona wpinana → wtyczka WP), S-12 („zwykły
+HTML" → WordPress), S-13 w części mechanizmu (idea „przypinamy/odpinamy" ZOSTAJE — realizacja
+= instalacja/deinstalacja wtyczki z czystym uninstall). S-01/S-05/S-06: liczba produktów
+2 → **3** (S-18), postać: paczka → wtyczka WP.
+
+⛔ Wiersze INTERPRETACJA wymagają klepnięcia Dzidka (2 minuty): S-04, S-07, S-09
+(treść tych trzech NIE zmienia się przez piwot — dashboard, brak kont, dziennik logowań
+obowiązują tak samo we wtyczce WP).
 Audytor zgodności (moment 4a) dostaje TEN plik + surowe źródło — statusy INTERPRETACJA
 i ODSTĘPSTWO raportuje jako ZNANE, nie jako błędy.
