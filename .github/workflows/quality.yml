@@ -3,8 +3,12 @@
 # nie dotyczą tego stacku. Bramki testowe JS dojdą osobnym PR-em razem z kością
 # (wtedy też rośnie manifest-bramek.txt — osobny PR, czyta Dzidek).
 #
-# ⛔ BRANCH PROTECTION na main = jedyna rzecz, która realnie zatrzymuje scalenie:
-#    wymagane statusy: actionlint + manifest · PR obowiązkowy · zakaz force-push.
+# ⛔ PRAWDA O BRAMCE (zmierzone 17.08): repo PRYWATNE na darmowym koncie = GitHub
+#    NIE UDOSTĘPNIA branch protection ani rulesetów (API: 403 „Upgrade to Pro").
+#    Czerwone CI NIE blokuje scalenia technicznie — trzyma je DYSCYPLINA CYKLU:
+#    scalamy wyłącznie `gh pr merge` PO zielonych actionlint+manifest; bezpośredni
+#    push na main blokuje lokalny hook pre-push w klonie roboczym. Twarda bramka
+#    wróci, gdy repo będzie publiczne albo konto Pro (decyzja Dzidka).
 name: Quality
 
 on:
