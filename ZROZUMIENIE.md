@@ -27,13 +27,22 @@ Różnice wobec notatki 16.08 (niżej w HISTORII): **wypadło „I KURSOW"** (ź
 rozstrzygnięcie K1: kursy = egzamin drugiego zdającego) · **nie ma wiersza „Telefon..."**
 (potwierdza S-10: zasada egzaminu, nie funkcja). Reszta treści identyczna.
 
-**FAKTY PIWOTU (P = piwot):**
-- **P1.** Strona-gospodarz będzie PRZEKONWERTOWANA na WordPressa — **KONWERSJĘ ROBIMY MY**
+**FAKTY PIWOTU (PW = piwot; numeracja osobna od pytań P1-P8 w HISTORII niżej):**
+- **PW-1.** Strona-gospodarz będzie PRZEKONWERTOWANA na WordPressa — **KONWERSJĘ ROBIMY MY**
   (Dzidek 17.08 ~23:40: „i tak my mamy przekonwertowac to na worpresa tę cłą strona zaraz
   to obgadamy i zmieniamy w naszym planie"). Wg podziału Dzidka: EGZAMIN = sklep + 2 boty;
   konwersja = nasza OSOBNA robota (szczegóły, kolejność i termin — do obgadania, NIE
   zaplanowane jeszcze).
-- **P6.** REPO STRONY KOLEGI: dodani jako WSPÓŁPRACOWNICY z prawem ZAPISU (potwierdzone
+- **PW-2.** Nasz sklep = **WTYCZKA WordPressa** (nie wpinana podstrona statyczna). Zaplecze CAŁE w WP: własne tabele w bazie WP, panel w wp-admin, Stripe + maile z serwera WP — świat znany z MP.
+- **PW-3.** Sprzedawane produkty = **2 TESTOWE BOTY jako wtyczki WordPressa**: ChatBot LIVE
+  i Segregator maila (Dzidek 17.08 ~23:15: „do zlecenia jeszcze 2 testowe boty są do
+  wystawienia jako produkty na tym sklepie" + notatka-wersja-aktualna: „Dwa rozne").
+  Wcześniejsze „3 pluginy" z czatu = **sklep + 2 boty ŁĄCZNIE trzy wtyczki WP**
+  [INTERPRETACJA rozliczona notatką — żaden „trzeci produkt" nie istnieje].
+  Postać produktu: było „paczka plików", jest „wtyczka WP" (bot testowy).
+- **PW-4.** Termin i zasady egzaminu: przyjmuję BEZ ZMIAN (30.08, 3 próby, próba 1 ~27.08) — Dzidek nie odwołał.
+- **PW-5.** Zapowiedziana KOLEJNA ważna wiadomość Dzidka („ułatwi trochę wszystko") — dokumenty układane tak, żeby łatwo przyjąć następną zmianę.
+- **PW-6.** REPO STRONY KOLEGI: dodani jako WSPÓŁPRACOWNICY z prawem ZAPISU (potwierdzone
   `gh` 17.08 ~23:45). Nazwa zmieniana: `matthewplugins.github.io` → `matthewplugins.pl` →
   **AKTUALNIE `MatthewPlugins/automatic-ai`** (repo PRYWATNE, branch `main`; stare adresy
   przekierowują). ⛔ **ZASADA (Dzidek, dosłownie: „nic narazie tam nie ruszamy … zeby
@@ -41,15 +50,6 @@ rozstrzygnięcie K1: kursy = egzamin drugiego zdającego) · **nie ma wiersza �
   tam = ostrożna, wyłącznie uzgodniona; przy PIERWSZYM klonowaniu od razu
   `git remote set-url --push origin BLOKADA-USTAL-Z-DZIDKIEM` (push fizycznie niemożliwy
   do czasu świadomej decyzji). Klona na serwerze DZIŚ NIE MA (sprawdzone).
-- **P2.** Nasz sklep = **WTYCZKA WordPressa** (nie wpinana podstrona statyczna). Zaplecze CAŁE w WP: własne tabele w bazie WP, panel w wp-admin, Stripe + maile z serwera WP — świat znany z MP.
-- **P3.** Sprzedawane produkty = **2 TESTOWE BOTY jako wtyczki WordPressa**: ChatBot LIVE
-  i Segregator maila (Dzidek 17.08 ~23:15: „do zlecenia jeszcze 2 testowe boty są do
-  wystawienia jako produkty na tym sklepie" + notatka-wersja-aktualna: „Dwa rozne").
-  Wcześniejsze „3 pluginy" z czatu = **sklep + 2 boty ŁĄCZNIE trzy wtyczki WP**
-  [INTERPRETACJA rozliczona notatką — żaden „trzeci produkt" nie istnieje].
-  Postać produktu: było „paczka plików", jest „wtyczka WP" (bot testowy).
-- **P4.** Termin i zasady egzaminu: przyjmuję BEZ ZMIAN (30.08, 3 próby, próba 1 ~27.08) — Dzidek nie odwołał.
-- **P5.** Zapowiedziana KOLEJNA ważna wiadomość Dzidka („ułatwi trochę wszystko") — dokumenty układane tak, żeby łatwo przyjąć następną zmianę.
 
 **CO PIWOT UNIEWAŻNIA (stare fragmenty niżej i w planie — NIE budować wg nich):**
 - Architektura „statyczny HTML + katalog sklep/ + script src" (spike K0/D15) — mechanizm wpięcia do wyrzucenia; wpięcie = instalacja wtyczki WP.
@@ -58,7 +58,7 @@ rozstrzygnięcie K1: kursy = egzamin drugiego zdającego) · **nie ma wiersza �
 
 **CO ZOSTAJE BEZ ZMIAN:** cel = zdać egzamin · tryb TESTOWY Stripe (konto+klucze mamy) · zero pytań do kolegi · MUST NOT (konta kupujących, kursy, opinie, przeceny) · wymagania funkcjonalne z notatki (mail po zakupie, dashboard, CRUD produktów, dziennik logowań admina) · repo+recenzent+CI · multi-site: 4 wdrożenia (teraz = 4 instalacje wtyczek).
 
-**OTWARTE PO PIWOCIE:** ~~trzeci produkt~~ ✅ rozwiązane (P3: produkty = 2 boty; „3" = łącznie ze sklepem) · głębokość działania botów-wtyczek na egzamin („TESTOWE boty" — pełny agent vs działający rdzeń demo + instrukcja; rozstrzygnięcie w planie v3 z wyceną czasu) · kto/kiedy konwertuje stronę na WP · na czym testujemy (nasz Docker WP jest na serwerze) · granica „NIE dotykamy reszty strony" w świecie wtyczki (stary sens: jeden tag script; nowy sens do zdefiniowania w v3: nie ruszamy motywu/innych wtyczek, czysty uninstall — symetria zapis↔sprzątanie) · czy zapowiedziana „wiadomość, co ułatwi" już padła (nowa notatka?) czy jeszcze przyjdzie.
+**OTWARTE PO PIWOCIE:** ~~trzeci produkt~~ ✅ rozwiązane (PW-3: produkty = 2 boty; „3" = łącznie ze sklepem) · głębokość działania botów-wtyczek na egzamin („TESTOWE boty" — pełny agent vs działający rdzeń demo + instrukcja; rozstrzygnięcie w planie v3 z wyceną czasu) · kto/kiedy konwertuje stronę na WP · na czym testujemy (nasz Docker WP jest na serwerze) · granica „NIE dotykamy reszty strony" w świecie wtyczki (stary sens: jeden tag script; nowy sens do zdefiniowania w v3: nie ruszamy motywu/innych wtyczek, czysty uninstall — symetria zapis↔sprzątanie) · czy zapowiedziana „wiadomość, co ułatwi" już padła (nowa notatka?) czy jeszcze przyjdzie.
 
 ---
 **Status (HISTORIA sprzed piwotu): PLAN KLEPNIĘTY w wersji egzaminowej (16.08 ~23:45)** — architektura z `ARCHITEKTURA-PROPOZYCJA.md` zaakceptowana kierunkowo przez Dzidka z twardym zakresem:
@@ -144,7 +144,7 @@ Tekst mały, ale funkcje = mała **aplikacja z zapleczem**: baza + panel z logow
 
 ## OTWARTE PYTANIA
 
-- ~~P1 DOSTĘPY~~ ✅ 16.08 ~23:00: `matthewplugins.github.io` + repo `MatthewPlugins/matthewplugins.github.io` (TYLKO ODCZYT). Zwiad zrobiony sama — wynik i propozycja: `ARCHITEKTURA-PROPOZYCJA.md`. Hosting docelowy: darmowy GitHub Pages (Dzidek: kolega może KIEDYŚ przenieść na płatny — projektujemy przenośnie). ⚠️ ZDEZAKTUALIZOWANE 17.08: repo przemianowane na `automatic-ai`, dostęp podniesiony do ZAPISU, hosting docelowy = WordPress — patrz §PIWOT P1/P6.
+- ~~P1 DOSTĘPY~~ ✅ 16.08 ~23:00: `matthewplugins.github.io` + repo `MatthewPlugins/matthewplugins.github.io` (TYLKO ODCZYT). Zwiad zrobiony sama — wynik i propozycja: `ARCHITEKTURA-PROPOZYCJA.md`. Hosting docelowy: darmowy GitHub Pages (Dzidek: kolega może KIEDYŚ przenieść na płatny — projektujemy przenośnie). ⚠️ ZDEZAKTUALIZOWANE 17.08: repo przemianowane na `automatic-ai`, dostęp podniesiony do ZAPISU, hosting docelowy = WordPress — patrz §PIWOT PW-1/PW-6.
 - ~~P7. KOLEGA = MatthewPlugins?~~ ✅ 17.08: potwierdzone pośrednio — kolega dodał NAS do SWOJEGO repo strony (`MatthewPlugins/automatic-ai`), czyli egzaminator = właściciel strony.
 - **P8. ARCHITEKTURA** — czeka na klepnięcie Dzidka (`ARCHITEKTURA-PROPOZYCJA.md`). [OTWARTE]
 - **K1. KURSY W BAZIE** — potwierdzić odczyt godzący. [OTWARTE]

@@ -3,7 +3,7 @@
 > ⚠️ **HISTORIA — UNIEWAŻNIONE PIWOTEM 17.08 (D16):** cały ten dokument opisuje wariant
 > „statyczny HTML + Cloudflare", który odpadł (sklep = wtyczka WP, zaplecze w WP).
 > Repo strony przemianowane: `matthewplugins.github.io` → dziś `MatthewPlugins/automatic-ai`
-> (prywatne, mamy ZAPIS — zasady w ZROZUMIENIE §PIWOT P6). Zostaje jako zapis zwiadu.
+> (prywatne, mamy ZAPIS — zasady w ZROZUMIENIE §PIWOT PW-6). Zostaje jako zapis zwiadu.
 
 Status: PROPOZYCJA 16.08.2026 ~23:15. Architektura = „drogo cofnąć" → decyzja Dzidka.
 
