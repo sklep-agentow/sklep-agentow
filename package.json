@@ -1,0 +1,13 @@
+{
+  "name": "sklep-agentow",
+  "version": "1.0.0",
+  "description": "Sklep z agentami AI - wpinana podstrona + zaplecze (Cloudflare Worker/D1/R2, Stripe testowy)",
+  "scripts": {},
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "private": true,
+  "devDependencies": {
+    "wrangler": "^4.86.0"
+  }
+}
