@@ -2,6 +2,7 @@
 
 Źródło: notatka kolegi (verbatim w ZROZUMIENIE.md) + doprecyzowania Dzidka z czatu 16-17.08.
 Statusy: DOSŁOWNE (litera źródła) · INTERPRETACJA (nasza decyzja — wymaga klepnięcia Dzidka) ·
+INTERPRETACJA (rozliczona źródłem) — odczyt nasz, ale POTWIERDZONY późniejszym zdaniem źródła ·
 ODSTĘPSTWO PRZYJĘTE (świadome, z datą i powodem) · NIE-FUNKCJA (nie jest wymaganiem produktu).
 Kolumna „Dowód" wypełniana w trakcie budowy (plik:linia / test).
 
