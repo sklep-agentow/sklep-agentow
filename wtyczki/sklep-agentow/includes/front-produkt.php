@@ -96,6 +96,7 @@ function sklepag_tresc_produktu( $slug ) {
 		'chatbot-live'     => array(
 			'etykieta'     => '[ <span class="sklepag-akcent">BOT</span> · CZAT NA STRONĘ ]',
 			'zdanie'       => 'Odpowiada klientom 24/7. A gdy nie zna odpowiedzi — bierze kontakt i oddaje rozmowę Tobie.',
+			'pasek_glowa'  => 'BOT · ONLINE',
 			'pasek'        => 'ODPOWIADA 24/7',
 			// Człon „przetestuj" tylko gdy bąbelek REALNIE widoczny: wtyczka aktywna
 			// I włącznik w jej ustawieniach ON (recenzja #52 — sama aktywność nie
@@ -136,6 +137,7 @@ function sklepag_tresc_produktu( $slug ) {
 		'segregator-maila' => array(
 			'etykieta'     => '[ <span class="sklepag-akcent">BOT</span> · PORZĄDEK W POCZCIE ]',
 			'zdanie'       => 'Rozdziela pocztę do kategorii według Twoich reguł — i pokazuje raport, ile roboty zrobił za Ciebie.',
+			'pasek_glowa'  => 'SEGREGATOR · GOTOWY',
 			'pasek'        => 'PRÓBKA 30 MAILI W ZESTAWIE',
 			'pasek_zywy'   => '',
 			'problem_t'    => 'Wszystko na jednej kupie.',
@@ -261,7 +263,8 @@ function sklepag_render_produkt( $slug ) {
 	$html .= '<h1 class="sklepag-hero-tytul">' . esc_html( $p->nazwa ) . '</h1>';
 	$html .= '<p class="sklepag-lead">' . esc_html( $t ? $t['zdanie'] : $p->opis_krotki ) . '</p>';
 	if ( $t ) {
-		$html .= '<p class="sklepag-pasek-statusu"><span class="sklepag-kropka" aria-hidden="true"></span>[ <span class="sklepag-akcent">BOT</span> · ONLINE ] ' . esc_html( $t['pasek'] . $t['pasek_zywy'] ) . '</p>';
+		$glowa = explode( ' · ', $t['pasek_glowa'], 2 );
+		$html .= '<p class="sklepag-pasek-statusu"><span class="sklepag-kropka" aria-hidden="true"></span>[ <span class="sklepag-akcent">' . esc_html( $glowa[0] ) . '</span> · ' . esc_html( isset( $glowa[1] ) ? $glowa[1] : '' ) . ' ] ' . esc_html( $t['pasek'] . $t['pasek_zywy'] ) . '</p>';
 	}
 	$html .= $cena;
 	$html .= '<p><a class="sklepag-kup sklepag-kup-kotwica" href="#sklepag-kup-formularz">Kup teraz (płatność testowa)</a></p>';
