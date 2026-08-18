@@ -193,6 +193,15 @@ function sklepag_obsluz_zapis_produktu() {
 		$wroc( 'Nie można włączyć sprzedaży bez POTWIERDZONEGO pliku paczki — wgraj ZIP.' );
 	}
 
+	// Porażka INSERT/UPDATE (np. kolizja UNIQUE slug w wyścigu równoczesnych zapisów)
+	// nie może udawać sukcesu ani zostawić świeżo wgranego zipa bez wiersza w bazie.
+	$padl_zapis = static function () use ( $plik, $wroc ) {
+		if ( $plik && file_exists( $plik['sciezka'] ) ) {
+			wp_delete_file( $plik['sciezka'] );
+		}
+		$wroc( 'Zapis produktu do bazy nie powiódł się — spróbuj ponownie (wgrany plik został usunięty, nic nie zapisano).' );
+	};
+
 	$slug  = sanitize_title( $nazwa );
 	$teraz = current_time( 'mysql' );
 	$dane  = array(
@@ -212,7 +221,9 @@ function sklepag_obsluz_zapis_produktu() {
 
 	// phpcs:disable WordPress.DB.DirectDatabaseQuery -- CRUD na własnej tabeli.
 	if ( $id ) {
-		$wpdb->update( $t, $dane, array( 'id' => $id ) );
+		if ( false === $wpdb->update( $t, $dane, array( 'id' => $id ) ) ) {
+			$padl_zapis();
+		}
 		sklepag_zdarzenie( null, 'produkt_zmieniony', '#' . $id . ' ' . $nazwa . ( $plik ? ' (nowy plik: ' . basename( $sciezka ) . ')' : '' ) );
 	} else {
 		// Slug unikalny: przy kolizji dokładamy przyrostek (UNIQUE w schemacie).
@@ -222,7 +233,9 @@ function sklepag_obsluz_zapis_produktu() {
 		}
 		$dane['slug']      = $slug;
 		$dane['utworzono'] = $teraz;
-		$wpdb->insert( $t, $dane );
+		if ( false === $wpdb->insert( $t, $dane ) ) {
+			$padl_zapis();
+		}
 		$id = (int) $wpdb->insert_id;
 		sklepag_zdarzenie( null, 'produkt_dodany', '#' . $id . ' ' . $nazwa );
 	}
@@ -271,7 +284,7 @@ function sklepag_przyjmij_zip( $wroc ) {
 	}
 
 	// Losowa nazwa BEZ rozszerzenia (warstwa ochrony uploads — §4A).
-	$cel = trailingslashit( $katalog ) . 'produkt-' . wp_generate_password( 20, false, false ) . '.bin';
+	$cel = trailingslashit( $katalog ) . 'produkt-' . wp_generate_password( 20, false, false );
 	// phpcs:ignore WordPress.WP.AlternativeFunctions -- katalog w uploads, przenosimy zaufany upload; WP_Filesystem zbędne.
 	if ( ! move_uploaded_file( $tmp, $cel ) ) {
 		$wroc( 'Zapis do katalogu chronionego nie powiódł się (uprawnienia uploads?).' );
