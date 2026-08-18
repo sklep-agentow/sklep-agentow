@@ -98,23 +98,29 @@ function segm_eksportuj_csv( $przebieg, $wyniki ) {
 	header( 'Content-Type: text/csv; charset=utf-8' );
 	header( 'Content-Disposition: attachment; filename=segregator-przebieg-' . (int) $przebieg->id . '.csv' );
 
-	$out = fopen( 'php://output', 'w' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen
-	fputcsv( $out, array( 'od', 'temat', 'kategoria', 'regula_id', 'kategoria_oczekiwana', 'trafiony' ), ',', '"', '\\' );
+	$porownanie = 'porownaj' === $przebieg->tryb;
+
+	$out      = fopen( 'php://output', 'w' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen
+	$naglowek = array( 'od', 'temat', 'kategoria', 'regula_id', 'kategoria_oczekiwana', 'trafiony' );
+	if ( $porownanie ) {
+		$naglowek[] = 'kategoria_ai';
+		$naglowek[] = 'roznica';
+	}
+	fputcsv( $out, $naglowek, ',', '"', '\\' );
 	foreach ( $wyniki as $w ) {
-		fputcsv(
-			$out,
-			array(
-				segm_csv_komorka( $w['nadawca'] ),
-				segm_csv_komorka( $w['temat'] ),
-				segm_csv_komorka( $w['kategoria'] ),
-				null === $w['regula_id'] ? '' : (int) $w['regula_id'],
-				segm_csv_komorka( $w['oczekiwana'] ),
-				null === $w['trafiony'] ? '' : ( $w['trafiony'] ? 'tak' : 'NIE' ),
-			),
-			',',
-			'"',
-			'\\'
+		$wiersz = array(
+			segm_csv_komorka( $w['nadawca'] ),
+			segm_csv_komorka( $w['temat'] ),
+			segm_csv_komorka( $w['kategoria'] ),
+			null === $w['regula_id'] ? '' : (int) $w['regula_id'],
+			segm_csv_komorka( $w['oczekiwana'] ),
+			null === $w['trafiony'] ? '' : ( $w['trafiony'] ? 'tak' : 'NIE' ),
 		);
+		if ( $porownanie ) {
+			$wiersz[] = segm_csv_komorka( $w['kategoria_ai'] ?? '' );
+			$wiersz[] = empty( $w['roznica'] ) ? '' : 'ROZNICA';
+		}
+		fputcsv( $out, $wiersz, ',', '"', '\\' );
 	}
 	fclose( $out ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
 	exit;
