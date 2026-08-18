@@ -96,6 +96,13 @@ function sklepag_tabele_sql() {
 			PRIMARY KEY  (id),
 			KEY czas (czas)
 		) {$c};",
+
+		"CREATE TABLE {$p}rate_limit (
+			klucz varchar(64) NOT NULL,
+			licznik int(11) unsigned NOT NULL DEFAULT 1,
+			okno_do datetime NOT NULL,
+			PRIMARY KEY  (klucz)
+		) {$c};",
 	);
 }
 

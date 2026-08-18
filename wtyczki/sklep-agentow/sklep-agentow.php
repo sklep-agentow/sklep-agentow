@@ -13,7 +13,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 define( 'SKLEPAG_WERSJA', '0.1.0' );
-define( 'SKLEPAG_WERSJA_SCHEMATU', 1 );
+define( 'SKLEPAG_WERSJA_SCHEMATU', 2 );
+define( 'SKLEPAG_LIMIT_POBRAN', 10 ); // Jedno źródło: INSERT zamówienia + treść maila (recenzja PR #33).
+define( 'SKLEPAG_LINK_GODZIN', 72 );  // Ważność linku pobrania — jw.
 define( 'SKLEPAG_PLIK', __FILE__ );
 define( 'SKLEPAG_KATALOG', plugin_dir_path( __FILE__ ) );
 

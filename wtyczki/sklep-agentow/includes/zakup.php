@@ -10,20 +10,34 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 const SKLEPAG_ZGODA_TRESC = 'Wyrażam zgodę na natychmiastowe dostarczenie treści cyfrowej i przyjmuję do wiadomości utratę prawa odstąpienia od umowy (art. 38 ustawy o prawach konsumenta).';
 
-/* ---------- RATE LIMIT (transient per IP; webhook JAWNIE poza limiterem) ---------- */
+/* ---------- RATE LIMIT (atomowy licznik w tabeli, per IP i okno minutowe;
+   webhook JAWNIE poza limiterem) ---------- */
 
 function sklepag_ip() {
 	return isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '0.0.0.0';
 }
 
 function sklepag_rate_limit( $akcja, $prog = 10 ) {
-	$klucz = 'sklepag_rl_' . $akcja . '_' . md5( sklepag_ip() );
-	$ile   = (int) get_transient( $klucz );
-	if ( $ile >= $prog ) {
-		return false;
+	global $wpdb;
+	$t     = $wpdb->prefix . 'sklepag_rate_limit';
+	$okno  = (int) floor( time() / MINUTE_IN_SECONDS );
+	$klucz = $akcja . '|' . $okno . '|' . md5( sklepag_ip() );
+
+	// Inkrementacja MUSI być atomowa (recenzja PR #33): para get/set transient
+	// gubi żądania równoległe — zmierzone 40/40 przepuszczonych przy progu 30.
+	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
+	$wpdb->query( $wpdb->prepare(
+		"INSERT INTO {$t} (klucz, licznik, okno_do) VALUES (%s, 1, %s)
+		 ON DUPLICATE KEY UPDATE licznik = licznik + 1",
+		$klucz, gmdate( 'Y-m-d H:i:s', ( $okno + 2 ) * MINUTE_IN_SECONDS )
+	) );
+	$ile = (int) $wpdb->get_var( $wpdb->prepare( "SELECT licznik FROM {$t} WHERE klucz = %s", $klucz ) );
+	// phpcs:enable
+
+	if ( 0 === $ile ) {
+		return true; // Awaria zapisu/odczytu licznika — limiter chroni przed spamem, nie może zablokować sklepu (autoryzacje są gdzie indziej: nonce/podpis/token).
 	}
-	set_transient( $klucz, $ile + 1, MINUTE_IN_SECONDS );
-	return true;
+	return $ile <= $prog;
 }
 
 /* ---------- KUP (formularz publiczny) ---------- */
@@ -208,10 +222,11 @@ function sklepag_domknij_zakup( $sesja ) {
 		 (stripe_session_id, produkt_id, produkt_nazwa_kupiona, produkt_cena_kupiona, produkt_plik_kupiony,
 		  email_kupujacego, kwota_grosze, waluta, status, zgoda_tresc, zgoda_czas,
 		  pobrania_limit, utworzono, zmieniono)
-		 VALUES (%s, %d, %s, %d, %s, %s, %d, %s, 'oczekuje', %s, %s, 10, %s, %s)",
+		 VALUES (%s, %d, %s, %d, %s, %s, %d, %s, 'oczekuje', %s, %s, %d, %s, %s)",
 		$sid, $produkt->id, $produkt->nazwa, $produkt->cena_grosze, $produkt->plik_sciezka,
 		$email, $kwota, $waluta, SKLEPAG_ZGODA_TRESC,
 		isset( $sesja['metadata']['zgoda_czas'] ) ? $sesja['metadata']['zgoda_czas'] : $teraz,
+		SKLEPAG_LIMIT_POBRAN,
 		$teraz, $teraz
 	) );
 
@@ -234,6 +249,9 @@ function sklepag_domknij_zakup( $sesja ) {
 		}
 		if ( 'mail_w_toku' === $stan->status ) {
 			// Przejęcie po crashu: claim starszy niż 5 min wolno odebrać (stale-claim).
+			// ŚWIADOMY KOMPROMIS (DECYZJE D5+D24): pad tuż PO wp_mail a PRZED zapisem
+			// stanu = możliwy DRUGI mail po odebraniu claimu — lepszy podwójny niż
+			// żaden. Wyścig RÓWNOCZESNY wyklucza CAS (delta maili = 1, zmierzone E2E).
 			$odebrane = $wpdb->query( $wpdb->prepare(
 				"UPDATE {$pz} SET zmieniono=%s WHERE stripe_session_id=%s AND status='mail_w_toku' AND zmieniono < %s",
 				$teraz, $sid, gmdate( 'Y-m-d H:i:s', strtotime( $teraz ) - 300 )
@@ -250,7 +268,7 @@ function sklepag_domknij_zakup( $sesja ) {
 	$token = bin2hex( random_bytes( 32 ) );
 	$wpdb->query( $wpdb->prepare(
 		"UPDATE {$pz} SET token_pobrania=%s, link_wygasa=%s, zmieniono=%s WHERE stripe_session_id=%s AND status='mail_w_toku'",
-		hash( 'sha256', $token ), gmdate( 'Y-m-d H:i:s', time() + 72 * HOUR_IN_SECONDS ), $teraz, $sid
+		hash( 'sha256', $token ), gmdate( 'Y-m-d H:i:s', time() + SKLEPAG_LINK_GODZIN * HOUR_IN_SECONDS ), $teraz, $sid
 	) );
 
 	$zam = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$pz} WHERE stripe_session_id=%s", $sid ) );
@@ -279,12 +297,12 @@ function sklepag_domknij_zakup( $sesja ) {
 }
 
 function sklepag_zbuduj_mail( $produkt, $zam, $link ) {
-	$dni = 3;
+	$dni = (int) round( SKLEPAG_LINK_GODZIN / 24 );
 	return "Dziękujemy za zakup w sklepie!\n\n"
 		. 'Produkt: ' . $produkt->nazwa . "\n"
 		. 'Kwota: ' . number_format( $zam->kwota_grosze / 100, 2, ',', ' ' ) . ' ' . $zam->waluta . " (TRYB TESTOWY — płatność nie została pobrana)\n\n"
 		. "POBIERZ SWÓJ PRODUKT:\n" . $link . "\n"
-		. 'Link jest ważny ' . $dni . " dni i pozwala na 10 pobrań.\n\n"
+		. 'Link jest ważny ' . $dni . ' dni i pozwala na ' . SKLEPAG_LIMIT_POBRAN . " pobrań.\n\n"
 		. "INSTRUKCJA W SKRÓCIE:\n1. Pobierz paczkę ZIP z linku powyżej.\n2. W kokpicie WordPressa: Wtyczki → Dodaj → Wyślij wtyczkę na serwer → wybierz ZIP.\n3. Aktywuj i działaj — pełna instrukcja jest w paczce.\n\n"
 		. "Masz pytanie? Odpisz na tego maila.\n";
 }
@@ -330,5 +348,31 @@ function sklepag_dociagnij_zalegle() {
 			sklepag_oznacz_sesje( $sid, 'wygasla' );
 		}
 	}
+
+	// 2) ZAMÓWIENIA niedomknięte (KRYTYCZNA z recenzji PR #33): sesja dostaje stan
+	// 'oplacona' zaraz po CAS-ie płatności — ZANIM mail wyjdzie — więc pętla wyżej
+	// nigdy nie widzi zamówień uwięzionych w mail_blad (pad wysyłki) ani mail_w_toku
+	// (pad procesu). Podnosimy je tu TYM SAMYM silnikiem: CAS + stale-claim same
+	// rozstrzygają, mail_proby<3 trzyma plan §6 (3 próby crona → panel-czerwone K3).
+	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
+	$pz           = $wpdb->prefix . 'sklepag_zamowienia';
+	$niedomkniete = $wpdb->get_col( $wpdb->prepare(
+		"SELECT stripe_session_id FROM {$pz} WHERE status IN ('oplacone','mail_w_toku','mail_blad') AND mail_proby < 3 AND zmieniono < %s ORDER BY zmieniono LIMIT 20", $granica
+	) );
+	// phpcs:enable
+	foreach ( $niedomkniete as $sid ) {
+		$sesja = sklepag_stripe_pobierz_sesje( $sid );
+		if ( is_wp_error( $sesja ) ) {
+			sklepag_zdarzenie( null, 'reconciliation_blad', $sid . ': ' . $sesja->get_error_message() );
+			continue;
+		}
+		if ( isset( $sesja['payment_status'] ) && 'unpaid' !== $sesja['payment_status'] ) {
+			sklepag_domknij_zakup( $sesja );
+		}
+	}
+
+	// 3) Sprzątanie liczników rate-limit po oknie (tabela techniczna, wiersz żyje ~2 min).
+	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
+	$wpdb->query( "DELETE FROM {$wpdb->prefix}sklepag_rate_limit WHERE okno_do < UTC_TIMESTAMP()" );
 }
 add_action( 'sklepag_dociagnij_zalegle', 'sklepag_dociagnij_zalegle' );

@@ -71,13 +71,6 @@ function sklepag_stripe_utworz_sesje( $produkt, $zgoda_czas, $klucz_idempotencji
 	$dziekujemy = get_permalink( (int) get_option( 'sklepag_strona_dziekujemy' ) );
 	$sklep      = get_permalink( (int) get_option( 'sklepag_strona_sklep' ) );
 
-	// Stały identyfikator integracji z 8-literowym sufiksem (wymóg wersji dahlia).
-	$integracja = get_option( 'sklepag_integration_id', '' );
-	if ( '' === $integracja ) {
-		$integracja = 'sklepag-wtyczka-' . strtolower( wp_generate_password( 8, false, false ) );
-		update_option( 'sklepag_integration_id', $integracja, false );
-	}
-
 	$dane = array(
 		'mode'                              => 'payment',
 		'line_items[0][price_data][currency]'                  => strtolower( $produkt->waluta ),
@@ -87,7 +80,6 @@ function sklepag_stripe_utworz_sesje( $produkt, $zgoda_czas, $klucz_idempotencji
 		'line_items[0][quantity]'           => 1,
 		'success_url'                       => add_query_arg( 'sesja', '{CHECKOUT_SESSION_ID}', $dziekujemy ),
 		'cancel_url'                        => $sklep,
-		'integration_identifier'            => $integracja,
 		'metadata[produkt_id]'              => (int) $produkt->id,
 		'metadata[zgoda_czas]'              => $zgoda_czas,
 	);
