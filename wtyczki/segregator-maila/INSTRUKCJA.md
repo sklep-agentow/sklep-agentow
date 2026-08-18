@@ -66,7 +66,10 @@ Koszty API ponosi właściciel klucza według cennika dostawcy.
 
 **Import CSV nie wchodzi.**
 Plik musi mieć kolumny w kolejności `od, temat, tresc[, kategoria_oczekiwana]`,
-rozdzielane przecinkami; pierwszy wiersz może być nagłówkiem. Limit: 500 wierszy
+rozdzielane przecinkami albo średnikami (separator wykrywany automatycznie —
+polski Excel przy „Zapisz jako CSV" daje średniki i to działa); pierwszy wiersz
+może być nagłówkiem. Gdy wiersz danych ma mniej niż 3 kolumny, cały import jest
+odrzucany z komunikatem (próbka zostaje nietknięta). Limit: 500 wierszy
 (nadmiar jest pomijany i raportowany).
 
 **Skąd wziąć CSV z mojej skrzynki?**
