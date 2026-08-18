@@ -19,11 +19,13 @@ $wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}chatl_qa" ); // phpcs:ignore 
 $wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}chatl_zgloszenia" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 $wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}chatl_rozmowy" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 $wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}chatl_ai_uzycie" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}chatl_rate_limit" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 delete_option( 'chatl_ustawienia' );
 delete_option( 'chatl_wersja_schematu' );
 delete_option( 'chatl_klucz_api' ); // Sekret właściciela — pełne czyszczenie MUSI go usunąć.
 
-// Transienty rate-limitu (chatl_rl_*): podkreślniki w LIKE escapowane (\_),
+// Transienty rate-limitu (chatl_rl_*) ze STARSZYCH wersji wtyczki (≤1.1.x —
+// od 1.2.0 licznik żyje w tabeli): podkreślniki w LIKE escapowane (\_),
 // żeby nie złapać cudzych wpisów o podobnej nazwie.
 $wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '\_transient\_chatl\_rl\_%' OR option_name LIKE '\_transient\_timeout\_chatl\_rl\_%'" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
