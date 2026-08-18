@@ -10,6 +10,12 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 }
 
 $chatl_ust = get_option( 'chatl_ustawienia', array() );
+
+// Sekret właściciela (klucz API) kasowany ZAWSZE, niezależnie od opcji „usuń dane"
+// (zasada D22: poświadczenia ≠ dane użytkowe; martwa wtyczka nie zostawia klucza
+// w bazie — znalezisko wrogiej sesji botów 19.08, zmierzone na czystym WP).
+delete_option( 'chatl_klucz_api' );
+
 if ( empty( $chatl_ust['usun_dane'] ) ) {
 	return;
 }
@@ -23,7 +29,6 @@ $wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}chatl_rate_limit" ); // phpcs
 
 delete_option( 'chatl_ustawienia' );
 delete_option( 'chatl_wersja_schematu' );
-delete_option( 'chatl_klucz_api' ); // Sekret właściciela — pełne czyszczenie MUSI go usunąć.
 
 // Transienty rate-limitu (chatl_rl_*) ze STARSZYCH wersji wtyczki (≤1.1.x —
 // od 1.2.0 licznik żyje w tabeli): esc_like() eskejpuje podkreślnik (SQL

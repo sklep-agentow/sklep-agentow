@@ -9,6 +9,12 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 }
 
 $segm_ust = get_option( 'segm_ustawienia', array() );
+
+// Sekret właściciela (klucz API) kasowany ZAWSZE, niezależnie od opcji „usuń dane"
+// (zasada D22: poświadczenia ≠ dane użytkowe; martwa wtyczka nie zostawia klucza
+// w bazie — znalezisko wrogiej sesji botów 19.08, zmierzone na czystym WP).
+delete_option( 'segm_klucz_api' );
+
 if ( empty( $segm_ust['usun_dane'] ) ) {
 	return;
 }
@@ -22,4 +28,3 @@ $wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}segm_ai_uzycie" ); // phpcs:i
 
 delete_option( 'segm_ustawienia' );
 delete_option( 'segm_wersja_schematu' );
-delete_option( 'segm_klucz_api' ); // Sekret właściciela — pełne czyszczenie MUSI go usunąć.
