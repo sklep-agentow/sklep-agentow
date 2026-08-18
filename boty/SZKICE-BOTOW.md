@@ -1,0 +1,88 @@
+# SZKICE BOTÓW — do recenzji Dzidka PRZED budową (bramka z planu v3 §9)
+
+Status: SZKIC 18.08. Głębokość wg D19: **działający rdzeń demo + instrukcja** (pełne
+AI / prawdziwa skrzynka = po egzaminie, jawna droga w instrukcji). Z klepniętych
+szkiców od razu powstaje treść sprzedażowa stron produktów (K5).
+
+---
+
+## BOT 1 — ChatBot LIVE (wtyczka `chatbot-live`)
+
+**Co kupuje klient (jedno zdanie):** bot na stronę firmową, który 24/7 odpowiada na
+powtarzalne pytania klientów, a gdy nie zna odpowiedzi — zbiera kontakt, żeby
+właściciel odezwał się na żywo.
+
+**FRONT (co widzi gość strony):**
+- pływający bąbelek czatu w rogu (włącz/wyłącz w ustawieniach; nie rusza motywu),
+- okno czatu: powitanie (konfigurowalne) → gość pisze pytanie → bot odpowiada
+  z bazy pytań-odpowiedzi (dopasowanie po słowach kluczowych i RDZENIACH słów —
+  polskie odmiany: „cena/ceny/cennik" łapie jeden wpis),
+- brak dopasowania → uczciwe „nie znam odpowiedzi — zostaw maila i pytanie,
+  odezwiemy się" → zapis zgłoszenia + (opcja) powiadomienie mailem do właściciela.
+  **To jest człon „LIVE": most do żywego człowieka, nie udawanie wszechwiedzy.**
+
+**ADMIN (wp-admin):**
+- CRUD bazy Q&A: pytanie wzorcowe, słowa kluczowe (z wariantami), odpowiedź,
+- lista zgłoszeń z czatu (kto pytał, o co, mail — do obdzwonienia/odpisania),
+- ustawienia: włącznik, teksty powitania/awaryjny, mail powiadomień,
+- seed demo PL: ~10 par Q&A typowej firmy usługowej (cennik, godziny, kontakt,
+  oferta, dojazd...) — bot DZIAŁA od pierwszej minuty po aktywacji.
+
+**„Ile czasu oszczędza" (pokrycie w treści, nie zmyłka):** odpowiedzi na powtarzalne
+pytania bez udziału człowieka + leady zbierane poza godzinami; instrukcja pokazuje,
+jak wpisać własne Q&A w 15 minut.
+
+**GRANICE na egzamin (jawne):** bez LLM (architektura ma miejsce na dostawcę AI —
+klucz właściciela, po egzaminie; opcjonalnie zbadany klient AI rdzenia WP 7.0 — Z7),
+bez pamięci rozmów między wizytami (sesja przeglądarki), bez czatu operatora na żywo
+w czasie rzeczywistym (kontakt = zgłoszenie + mail).
+
+---
+
+## BOT 2 — Segregator maila (wtyczka `segregator-maila`)
+
+**Co kupuje klient (jedno zdanie):** automat, który porządkuje skrzynkę firmową —
+rozdziela maile do kategorii wg reguł i pokazuje raport, ile roboty zrobił za Ciebie.
+
+**RDZEŃ (co robi w wersji testowej):**
+- reguły segregacji (CRUD): nadawca zawiera / temat zawiera / słowa kluczowe
+  w treści → kategoria + priorytet; kolejność reguł ma znaczenie (pierwsza wygrywa),
+- kategorie (CRUD): np. Oferty, Faktury, Reklamacje, Spam-podejrzane, Reszta,
+- wbudowana PRÓBKA ~30 maili demo PL + **import własnej próbki z CSV**
+  (kolumny: od, temat, treść) — klient może wrzucić eksport ze SWOJEJ skrzynki,
+- przebieg: „przepuść próbkę" → tabela wyników (mail → kategoria → która reguła)
+  + RAPORT: ile do której kategorii, ile niedopasowanych, % pokrycia; eksport CSV.
+
+**ADMIN:** reguły, kategorie, przebiegi (historia raportów), import próbki.
+
+**„Ile czasu oszczędza":** raport z próbki pokazuje NA LICZBACH, jaki % skrzynki
+automat rozdzieli sam; instrukcja: jak ułożyć reguły pod własną firmę w 20 minut.
+
+**GRANICE na egzamin (jawne):** bez podpięcia prawdziwej skrzynki (IMAP/OAuth —
+po egzaminie, droga opisana w instrukcji krok po kroku); działa na próbkach CSV —
+dlatego uczciwie nazywa się „testowy bot", a nie udaje produkcji.
+
+---
+
+## WSPÓLNE ZASADY OBU WTYCZEK (z planu v3)
+
+- własne prefiksy tabel/opcji (`chatl_`, `segm_`), tabele przez dbDelta + wersja
+  schematu; czysty uninstall (domyślnie dane zostają, opcja pełnego czyszczenia),
+- teksty PL wprost (D21), zero zewnętrznych zależności/CDN, WP 7.0 / PHP 8.4,
+- bezpieczeństwo standardami WP: nonce+capability na każdej mutacji, prepare(),
+  sanitize wejść / escape wyjść (czat i import CSV = wejście NIEZAUFANE — XSS!),
+- assety ładowane tylko tam, gdzie bot działa; bump wersji przy każdej zmianie JS/CSS,
+- każda wtyczka: instrukcja użytkownika PL (instalacja → konfiguracja w kwadrans →
+  FAQ → droga rozbudowy) — **zip wtyczki + instrukcja = paczka produktu w sklepie**,
+- wroga sesja botów 23.08 (czysty WP: aktywacja bez błędów/notice'ów, seed działa,
+  uninstall czysty) — kryterium GOTOWE #10.
+
+## CO SPRAWDZI RECENZJA DZIDKA (pytania do Ciebie)
+
+1. Czy taki zakres „testowych botów" pasuje do tego, co kolega miał na myśli?
+2. ChatBot: czy „LIVE = zbieranie kontaktu dla właściciela" czyta się dobrze,
+   czy wolisz inny akcent (np. mocniejsze parcie na zostawienie numeru telefonu)?
+3. Segregator: czy import CSV wystarczy jako „testowość", czy dodać drugą próbkę
+   demo z innej branży?
+4. Nazwy produktów w sklepie zostają dosłownie z notatki: „ChatBot LIVE",
+   „Segregator maila"?
