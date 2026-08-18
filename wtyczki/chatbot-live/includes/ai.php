@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-const CHATL_AI_MODEL         = 'claude-opus-5';
+const CHATL_AI_MODEL         = 'claude-haiku-4-5-20251001';
 const CHATL_AI_MAX_TOKENS    = 1024;
 const CHATL_AI_TIMEOUT       = 9;
 const CHATL_AI_BRAK          = 'BRAK_ODPOWIEDZI';
