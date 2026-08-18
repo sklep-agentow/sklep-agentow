@@ -11,7 +11,8 @@
   PEŁNY przelot E2E po zmianie: mail_wyslany) · **#53 szlif po sędzi** (ikony
   SVG kart, jawne „nie zmyślamy recenzji", FAQ separatory, kropka-glow).
 - **Sędzia wyglądu: 73/100 → 85/100** (dwa świeże przebiegi, przynęty rozbrojone
-  w OBU; 2 zaniżenia rundy 2 = artefakty zestawu zrzutów, odrzucone z dowodem).
+  w OBU; 2 zaniżenia rundy 2 = artefakty zestawu zrzutów, odrzucone z dowodem;
+  PEŁNE werdykty obu rund: komentarze w PR #53 — rekomendacja recenzji #54).
 - Cross-browser 6/6 (chromium+firefox, zero błędów konsoli) · zagadka sitemap
   ROZWIĄZANA: blog_public=0 wyłącza sitemapy w rdzeniu (nie usterka!) → wpis
   do instrukcji K8: na produkcji wyłączyć „Zniechęcaj wyszukiwarki".
