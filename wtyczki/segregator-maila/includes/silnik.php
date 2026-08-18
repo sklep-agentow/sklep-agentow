@@ -117,7 +117,7 @@ function segm_wykonaj_przebieg( $tryb = 'reguly' ) {
 			$wpis['kategoria'] = $kategoria;
 			$wpis['regula_id'] = null;
 			if ( SEGM_KUBEL_DOMYSLNY !== $kategoria ) {
-				$dopasowanych++;
+				++$dopasowanych;
 			}
 		} else {
 			$wynik             = segm_klasyfikuj_mail( $mail, $reguly );
@@ -125,16 +125,16 @@ function segm_wykonaj_przebieg( $tryb = 'reguly' ) {
 			$wpis['kategoria'] = $kategoria;
 			$wpis['regula_id'] = $wynik['regula_id'];
 			if ( null !== $wynik['regula_id'] ) {
-				$dopasowanych++;
+				++$dopasowanych;
 			}
 		}
 
 		$wpis['trafiony'] = null; // null = brak etykiety, nie liczy się do accuracy.
 		if ( '' !== $oczekiwana ) {
-			$etykietowanych++;
+			++$etykietowanych;
 			$wpis['trafiony'] = ( 0 === strcasecmp( $oczekiwana, $kategoria ) );
 			if ( $wpis['trafiony'] ) {
-				$trafionych++;
+				++$trafionych;
 			}
 		}
 

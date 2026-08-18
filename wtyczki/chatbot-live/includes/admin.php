@@ -29,7 +29,7 @@ function chatl_komunikat_ok() {
 		'usunieto'  => 'Usunięto.',
 		'zmieniono' => 'Zmieniono status.',
 	);
-	$klucz = sanitize_key( wp_unslash( $_GET['chatl_ok'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	$klucz  = sanitize_key( wp_unslash( $_GET['chatl_ok'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	if ( isset( $teksty[ $klucz ] ) ) {
 		echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( $teksty[ $klucz ] ) . '</p></div>';
 	}
@@ -392,7 +392,7 @@ function chatl_post_ustawienia_zapisz() {
 	// Klucz API: osobna opcja (autoload=no), nigdy nie wraca do formularza.
 	if ( ! empty( $_POST['usun_klucz'] ) ) {
 		chatl_zapisz_klucz( '' );
-	} elseif ( isset( $_POST['klucz_api'] ) && '' !== trim( (string) wp_unslash( $_POST['klucz_api'] ) ) ) {
+	} elseif ( isset( $_POST['klucz_api'] ) && '' !== trim( (string) wp_unslash( $_POST['klucz_api'] ) ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- warunek tylko bada niepustość; zapisywana wartość przechodzi sanitize_text_field() linijkę niżej.
 		chatl_zapisz_klucz( sanitize_text_field( wp_unslash( $_POST['klucz_api'] ) ) );
 	}
 	if ( '' === $nowe['powitanie'] ) {

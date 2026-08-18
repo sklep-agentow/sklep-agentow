@@ -197,7 +197,7 @@ function segm_ai_klasyfikuj_partie( $maile, $kategorie ) {
 	// Nieznana kategoria / brak wpisu => kubeł domyślny (model nie zgaduje za nas).
 	$wynik = array();
 	foreach ( $maile as $m ) {
-		$kat = $mapa[ (string) $m->id ] ?? '';
+		$kat                   = $mapa[ (string) $m->id ] ?? '';
 		$wynik[ (int) $m->id ] = in_array( $kat, $kategorie, true ) ? $kat : SEGM_KUBEL_DOMYSLNY;
 	}
 	return $wynik;

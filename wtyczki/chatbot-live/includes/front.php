@@ -38,12 +38,14 @@ function chatl_rate_limit( $akcja, $prog ) {
 	$klucz = $akcja . '|' . $okno . '|' . md5( $ip );
 
 	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
-	$wynik = $wpdb->query( $wpdb->prepare(
-		"INSERT INTO {$t} (klucz, licznik, okno_do) VALUES (%s, 1, %s)
+	$wynik = $wpdb->query(
+		$wpdb->prepare(
+			"INSERT INTO {$t} (klucz, licznik, okno_do) VALUES (%s, 1, %s)
 		 ON DUPLICATE KEY UPDATE licznik = LAST_INSERT_ID(licznik + 1)",
-		$klucz,
-		gmdate( 'Y-m-d H:i:s', ( $okno + 2 ) * MINUTE_IN_SECONDS )
-	) );
+			$klucz,
+			gmdate( 'Y-m-d H:i:s', ( $okno + 2 ) * MINUTE_IN_SECONDS )
+		)
+	);
 	if ( 1 === $wynik ) {
 		$ile = 1; // Świeży wiersz w tym oknie (INSERT zwraca 1).
 	} elseif ( 2 === $wynik ) {

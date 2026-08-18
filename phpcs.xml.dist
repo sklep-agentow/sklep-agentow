@@ -2,10 +2,11 @@
 <ruleset name="SklepAgentow">
 	<description>Styl kodu wtyczek (plan §7): WordPress Coding Standards; bez i18n (D21 — teksty polskie wprost).</description>
 
-	<!-- Zakres startowy = wtyczka sklepu (kod aktywnie rozwijany K3-K5). Boty są zamknięte
-	     z paczkami 1.2.0 — dołączą tu przy swojej wrogiej sesji (23.08) jednym ruchem
-	     z przebudową paczek, żeby nie unieważniać zrobionej weryfikacji zipów (D25). -->
+	<!-- Zakres: wszystkie 3 wtyczki. Boty dołączone 19.08 (D25 — jednym ruchem z przebudową
+	     paczek i powtórką weryfikacji zipów, przy wrogiej sesji botów). -->
 	<file>wtyczki/sklep-agentow</file>
+	<file>wtyczki/chatbot-live</file>
+	<file>wtyczki/segregator-maila</file>
 
 	<arg name="extensions" value="php"/>
 	<arg value="ps"/>
@@ -18,6 +19,28 @@
 		     treść komentarzy pilnuje recenzent PR. Zakaz var_dump/error_log zostaje
 		     (WordPress.PHP.DevelopmentFunctions — włączony). -->
 		<exclude name="WordPress-Docs"/>
+	</rule>
+
+	<!-- D25: własny sanitizer chatbota (front.php: allowlist regex ^[a-zA-Z0-9-]{8,64}$,
+	     pusty string przy odrzucie) — sniff ma go uznawać za funkcję sanityzującą. -->
+	<rule ref="WordPress.Security.ValidatedSanitizedInput">
+		<properties>
+			<property name="customSanitizingFunctions" type="array">
+				<element value="chatl_waliduj_sesje"/>
+			</property>
+		</properties>
+	</rule>
+
+	<!-- D25 (uzupełnienie 19.08): boty trzymają CAŁY stan we własnych tabelach
+	     (architektura §4B — sprawdzone: wszystkie 69 trafień sniffa to własne tabele
+	     chatl_*/segm_*), więc rada „użyj API WP / dołóż cache" nie ma tam adresata —
+	     wyłączamy TYLKO ten doradczy sniff i TYLKO dla botów, jedną deklaracją zamiast
+	     ~30 rozsianych bloków disable/enable. Sniffy bezpieczeństwa SQL
+	     (WordPress.DB.PreparedSQL, esc_like przy LIKE) zostają aktywne wszędzie.
+	     Sklep miesza wp_options z tabelami — tam uczciwy zakres to bloki inline. -->
+	<rule ref="WordPress.DB.DirectDatabaseQuery">
+		<exclude-pattern>wtyczki/chatbot-live/*</exclude-pattern>
+		<exclude-pattern>wtyczki/segregator-maila/*</exclude-pattern>
 	</rule>
 
 	<config name="minimum_wp_version" value="6.7"/>

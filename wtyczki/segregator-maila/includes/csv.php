@@ -57,8 +57,8 @@ function segm_importuj_csv( $sciezka ) {
 	$pierwszy  = true;
 	$nr        = 0;
 
-	while ( false !== ( $w = fgetcsv( $uchwyt, 0, $separator, '"', '\\' ) ) ) {
-		$nr++;
+	while ( false !== ( $w = fgetcsv( $uchwyt, 0, $separator, '"', '\\' ) ) ) { // phpcs:ignore Generic.CodeAnalysis.AssignmentInCondition -- kanoniczny idiom czytania CSV; przypisanie jawnie porównane z false.
+		++$nr;
 		if ( $pierwszy ) {
 			$pierwszy = false;
 			// Excel przy zapisie UTF-8 dokleja BOM — zdejmij przed rozpoznaniem nagłówka.
@@ -73,7 +73,7 @@ function segm_importuj_csv( $sciezka ) {
 		// Pustą linię (np. końcówka pliku) pomijamy bez błędu.
 		$niepuste = array_filter( $w, fn( $p ) => '' !== trim( (string) $p ) );
 		if ( ! $niepuste ) {
-			$pominieto++;
+			++$pominieto;
 			continue;
 		}
 		// Wiersz danych z < 3 kolumnami = zły separator/format => twarde odrzucenie.
@@ -91,13 +91,13 @@ function segm_importuj_csv( $sciezka ) {
 			);
 		}
 		if ( count( $wiersze ) >= SEGM_IMPORT_MAX_WIERSZY ) {
-			$pominieto++;
+			++$pominieto;
 			continue;
 		}
-		$od    = sanitize_text_field( (string) $w[0] );
-		$temat = sanitize_text_field( (string) $w[1] );
-		$tresc = sanitize_textarea_field( (string) $w[2] );
-		$oczek = isset( $w[3] ) ? sanitize_text_field( (string) $w[3] ) : '';
+		$od        = sanitize_text_field( (string) $w[0] );
+		$temat     = sanitize_text_field( (string) $w[1] );
+		$tresc     = sanitize_textarea_field( (string) $w[2] );
+		$oczek     = isset( $w[3] ) ? sanitize_text_field( (string) $w[3] ) : '';
 		$wiersze[] = array(
 			'zrodlo'               => 'import',
 			'nadawca'              => mb_substr( $od, 0, 190 ),
