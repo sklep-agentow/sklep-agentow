@@ -38,16 +38,24 @@ if ( $katalog && false !== strpos( $katalog, 'sklepag-chronione-' ) && is_dir( $
 				continue;
 			}
 			$pelna = trailingslashit( $katalog ) . $plik;
+			// Best-effort: plik innego właściciela (deploy FTP userem != PHP) zostaje
+			// bez PHP Warning. @ jest na allowliście WPCS NoSilencedErrors (unlink/rmdir).
 			if ( is_file( $pelna ) ) {
-				unlink( $pelna ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- uninstall, katalog własny wtyczki.
+				@unlink( $pelna ); // phpcs:ignore WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors -- uninstall best-effort, obcy właściciel nie może wywalić deinstalacji.
 			}
 		}
 	}
-	rmdir( $katalog ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+	// rmdir TYLKO gdy katalog realnie pusty — inaczej zostaje bez warninga (nie nasze pliki).
+	$reszta = array_diff( (array) scandir( $katalog ), array( '.', '..' ) );
+	if ( empty( $reszta ) ) {
+		@rmdir( $katalog ); // phpcs:ignore WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors
+	}
 }
 
 // 4. Cron.
 wp_clear_scheduled_hook( 'sklepag_dociagnij_zalegle' );
 
 // 5. Wszystkie opcje wtyczki (na końcu — wcześniej były potrzebne).
-$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE 'sklepag\\_%'" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- uninstall.
+// esc_like() eskejpuje podkreślnik (SQL wildcard) + prepare — wzorzec Handbook,
+// nie skrót WC/EDD (goły LIKE bez prepare łamie regułę WPCS). Chroni cudze opcje.
+$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $wpdb->esc_like( 'sklepag_' ) . '%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- uninstall.
