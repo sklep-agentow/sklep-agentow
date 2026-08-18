@@ -13,11 +13,28 @@ const SEGM_IMPORT_MAX_WIERSZY = 500;
 const SEGM_MAX_POLE           = 2000;
 
 /**
+ * Autodetekcja separatora po PIERWSZEJ linii pliku: polski Excel („Zapisz
+ * jako CSV" przy locale PL) daje średniki, ręczne pliki — przecinki.
+ * Wygrywa separator, który rozcina pierwszą linię na więcej kolumn.
+ *
+ * @param string $linia Pierwsza linia pliku (bez BOM).
+ * @return string ',' albo ';'
+ */
+function segm_wykryj_separator( $linia ) {
+	$przecinkiem = count( str_getcsv( $linia, ',', '"', '\\' ) );
+	$srednikiem  = count( str_getcsv( $linia, ';', '"', '\\' ) );
+	return $srednikiem > $przecinkiem ? ';' : ',';
+}
+
+/**
  * Import CSV: kolumny od,temat,tresc[,kategoria_oczekiwana]; import ZASTĘPUJE
  * bieżącą próbkę (klient wrzuca eksport swojej skrzynki zamiast demo).
+ * Separator (przecinek/średnik) wykrywany automatycznie; BOM UTF-8 zdejmowany;
+ * wiersz danych z mniej niż 3 kolumnami = ODRZUCENIE całego importu (żadnego
+ * cichego importowania śmieci przy złym separatorze).
  *
  * @param string $sciezka Ścieżka tmp wgranego pliku.
- * @return array|WP_Error ['zaimportowano' => int, 'pominieto' => int]
+ * @return array|WP_Error ['zaimportowano' => int, 'pominieto' => int, 'separator' => string]
  */
 function segm_importuj_csv( $sciezka ) {
 	global $wpdb;
@@ -27,30 +44,60 @@ function segm_importuj_csv( $sciezka ) {
 		return new WP_Error( 'segm_csv', 'Nie udało się odczytać pliku.' );
 	}
 
+	$pierwsza_linia = fgets( $uchwyt );
+	if ( false === $pierwsza_linia ) {
+		fclose( $uchwyt ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
+		return new WP_Error( 'segm_csv', 'Plik jest pusty.' );
+	}
+	$separator = segm_wykryj_separator( preg_replace( '/^\xEF\xBB\xBF/', '', $pierwsza_linia ) );
+	rewind( $uchwyt );
+
 	$wiersze   = array();
 	$pominieto = 0;
 	$pierwszy  = true;
+	$nr        = 0;
 
-	while ( false !== ( $w = fgetcsv( $uchwyt, 0, ',', '"', '\\' ) ) ) {
+	while ( false !== ( $w = fgetcsv( $uchwyt, 0, $separator, '"', '\\' ) ) ) {
+		$nr++;
 		if ( $pierwszy ) {
 			$pierwszy = false;
+			// Excel przy zapisie UTF-8 dokleja BOM — zdejmij przed rozpoznaniem nagłówka.
+			if ( isset( $w[0] ) ) {
+				$w[0] = preg_replace( '/^\xEF\xBB\xBF/', '', (string) $w[0] );
+			}
 			// Wiersz nagłówka (od,temat,...) pomijamy.
 			if ( isset( $w[0] ) && 'od' === strtolower( trim( (string) $w[0] ) ) ) {
 				continue;
 			}
 		}
+		// Pustą linię (np. końcówka pliku) pomijamy bez błędu.
+		$niepuste = array_filter( $w, fn( $p ) => '' !== trim( (string) $p ) );
+		if ( ! $niepuste ) {
+			$pominieto++;
+			continue;
+		}
+		// Wiersz danych z < 3 kolumnami = zły separator/format => twarde odrzucenie.
+		if ( count( $w ) < 3 ) {
+			fclose( $uchwyt ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
+			return new WP_Error(
+				'segm_csv',
+				sprintf(
+					'Import odrzucony: wiersz %d ma mniej niż 3 kolumny (wykryty separator: „%s"). Wymagane kolumny: od%stemat%stresc — sprawdź separator i format pliku. Próbka NIE została zmieniona.',
+					$nr,
+					$separator,
+					$separator,
+					$separator
+				)
+			);
+		}
 		if ( count( $wiersze ) >= SEGM_IMPORT_MAX_WIERSZY ) {
 			$pominieto++;
 			continue;
 		}
-		$od    = isset( $w[0] ) ? sanitize_text_field( $w[0] ) : '';
-		$temat = isset( $w[1] ) ? sanitize_text_field( $w[1] ) : '';
-		$tresc = isset( $w[2] ) ? sanitize_textarea_field( $w[2] ) : '';
-		$oczek = isset( $w[3] ) ? sanitize_text_field( $w[3] ) : '';
-		if ( '' === $od && '' === $temat && '' === $tresc ) {
-			$pominieto++;
-			continue;
-		}
+		$od    = sanitize_text_field( (string) $w[0] );
+		$temat = sanitize_text_field( (string) $w[1] );
+		$tresc = sanitize_textarea_field( (string) $w[2] );
+		$oczek = isset( $w[3] ) ? sanitize_text_field( (string) $w[3] ) : '';
 		$wiersze[] = array(
 			'zrodlo'               => 'import',
 			'nadawca'              => mb_substr( $od, 0, 190 ),
@@ -74,6 +121,7 @@ function segm_importuj_csv( $sciezka ) {
 	return array(
 		'zaimportowano' => count( $wiersze ),
 		'pominieto'     => $pominieto,
+		'separator'     => $separator,
 	);
 }
 
