@@ -143,14 +143,17 @@ kod adminowy za `is_admin()`.
 - **ChatBot LIVE** (`chatbot-live`): pływający widget czatu na stronie (bąbelek);
   rdzeń: baza par pytanie-odpowiedź (CRUD w adminie) + dopasowanie słów kluczowych +
   odpowiedź awaryjna „zostaw maila, odezwiemy się" (zapis wiadomości do tabeli —
-  pokrywa też odczyt „LIVE = kontakt na żywo"); seed demo po polsku; architektura z
-  miejscem na dostawcę AI (klucz właściciela) — realne AI = po egzaminie, opisane
-  w instrukcji. [Opcja do ZBADANIA, nie obiecana: klient AI rdzenia WP 7.0.]
+  pokrywa też odczyt „LIVE = kontakt na żywo"); seed demo po polsku; **HYBRYDA
+  (D19 zmienione przez Dzidka 18.08):** DRUGI silnik = prawdziwe AI przez API —
+  klucz WŁAŚCICIELA w ustawieniach (nigdy w paczce), stop-loss (dzienny limit +
+  licznik + zjazd do reguł przy błędzie); bez klucza pełnoprawny tryb regułowy.
+  Szczegóły: boty/SZKICE-BOTOW.md. [Opcja do ZBADANIA: klient AI rdzenia WP 7.0.]
 - **Segregator maila** (`segregator-maila`): reguły segregacji (nadawca/temat/słowa
   kluczowe → kategorie; CRUD w adminie) + wbudowana PRÓBKA maili demo + import
   własnej próbki (CSV) → przebieg segregacji z raportem (ile do której kategorii,
-  które bez dopasowania). Prawdziwa skrzynka (IMAP/OAuth) = po egzaminie — instrukcja
-  opisuje drogę.
+  które bez dopasowania) + TRYB AI (hybryda, jw.): klasyfikacja modelem, przebieg
+  „porównaj reguły vs AI" z raportem różnic. Prawdziwa skrzynka (IMAP/OAuth) =
+  po egzaminie — instrukcja opisuje drogę.
 - Oba boty: własny prefiks tabel/opcji, czysty uninstall, instrukcja użytkownika po
   polsku. **Paczka produktu w sklepie = zip wtyczki + instrukcja** — dokładnie to
   wydaje sklep po zakupie.
@@ -266,7 +269,11 @@ i opinii → Omnibus jawnie nie dotyczy · WCAG-lite (EAA) · przed oddaniem: br
 - **RÓWNOLEGLE K1→K5 (builder1, tmux, worktree) — BOTY:** 18-19.08 SZKICE obu botów
   (spis funkcji rdzenia + koncepcja ekranów) → **RECENZJA DZIDKA szkiców PRZED
   budową witryny (bramka)**; z klepniętych szkiców OD RAZU powstaje treść
-  sprzedażowa dla K5 → 19-22.08 budowa rdzeni + instrukcje + zip → 23.08
+  sprzedażowa dla K5 → **19.08 ZWIAD WZORCÓW botów (warunek Dzidka 18.08):** mocne
+  projekty dobrych firm (drabina: gotowce → GitHub z gwiazdkami → oficjalne docs)
+  → `boty/WZORCE-BOTOW.md` + brief buildera (przed integracją AI builder czyta
+  skill `claude-api`) → **20-23.08 budowa builderem (HYBRYDA: silnik regułowy +
+  AI ze stop-lossem)** + instrukcje + zip → 23.08
   wroga sesja botów (czysty WP: aktywacja bez błędów, seed działa, uninstall czysty).
   Przegląd i scalanie PR-ów buildera = moja STAŁA godzina zamykająca dzień
   (uwzględniona w obłożeniu dni K1-K5, nie „poza czasem").
@@ -378,7 +385,9 @@ Dwie próby naprawy, potem reset i inne podejście.
     kontakt przy braku odpowiedzi; Segregator segreguje próbkę i pokazuje raport);
     instrukcje kompletne; opisy „ile czasu oszczędza" mają pokrycie w treści;
     strona produktu zawiera KOMPLET z S-03: co robi, jak działa, ile czasu
-    oszczędza, cena (+ dla kogo/FAQ z układu §4A).
+    oszczędza, cena (+ dla kogo/FAQ z układu §4A). Tryb regułowy (bez klucza) =
+    test OBOWIĄZKOWY; tryb AI = test ręczny przy dostępnym kluczu (odpowiedź
+    wyłącznie z informacji firmy + zjazd do reguł po odcięciu klucza).
 11. WCAG-lite (labelki, klawiatura, fokus, KONTRAST) + RWD (zakup telefonem) +
     Chrome/Edge/Firefox; baner „TRYB TESTOWY" widoczny na stronach sklepu;
     strony Regulamin i Polityka istnieją jako szablony z polami sprzedawcy
@@ -425,9 +434,12 @@ każdej zmianie JS/CSS · lock przez INSERT, nie add_option.
 ## 14. WYCENA CZASU (rozstrzygnięcie głębokości botów — podstawa D19)
 
 - SKLEP (K1-K8 z audytem i paczką): **~6 dni roboczych** — mieści się do 27.08.
-- BOTY rdzeń demo + instrukcja (równolegle, builder1): **~2 dni** budowy + wroga
-  sesja — mieści się bez naruszania sklepu.
-- BOTY „pełny agent" (LLM na żywo, prawdziwy IMAP/OAuth): **+3-4 dni** i nowe
-  ryzyka (klucze API, koszty, sekrety w paczce) → termin 27.08 pada, bufor znika —
-  **ODRZUCONE na egzamin** (D19); instrukcja jawnie opisuje drogę rozbudowy.
-Decyzja o głębokości ostatecznie: Dzidek klepie ten plan (D19 w DECYZJE.md).
+- BOTY HYBRYDA (D19 po zmianie Dzidka 18.08; równolegle, builder1): silnik
+  regułowy + prawdziwe AI przez API ze stop-lossem — **~3 dni** budowy (20-23.08)
+  + wroga sesja; niesie builder, sklepu nie rusza.
+- BOTY „pełny agent produkcyjny" (prawdziwy IMAP/OAuth, pamięć rozmów, operator
+  na żywo): **+3-4 dni** i nowe ryzyka → termin 27.08 pada — **ODRZUCONE na
+  egzamin**; instrukcja jawnie opisuje drogę rozbudowy.
+Głębokość KLEPNIĘTA przez Dzidka 18.08 (hybryda — D19). Egzamin bez kosztów API
+(tryb regułowy działa bez klucza); ewentualne ~5$ na klucz do demo z żywym AI =
+wyłącznie za osobną zgodą Dzidka.
