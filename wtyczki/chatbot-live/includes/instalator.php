@@ -56,6 +56,14 @@ function chatl_utworz_tabele() {
 		wywolania int(10) unsigned NOT NULL DEFAULT 0,
 		PRIMARY KEY  (dzien)
 	) {$charset};" );
+
+	dbDelta( "CREATE TABLE {$p}chatl_rate_limit (
+		klucz varchar(64) NOT NULL,
+		licznik int(10) unsigned NOT NULL DEFAULT 0,
+		okno_do datetime NOT NULL,
+		PRIMARY KEY  (klucz),
+		KEY okno_do (okno_do)
+	) {$charset};" );
 }
 
 /**

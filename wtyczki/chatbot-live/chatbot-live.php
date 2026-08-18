@@ -2,7 +2,7 @@
 /**
  * Plugin Name: ChatBot LIVE
  * Description: Bot na stronę firmową: 24/7 odpowiada na powtarzalne pytania z bazy Q&A, a gdy nie zna odpowiedzi — zbiera kontakt, żeby właściciel odezwał się na żywo.
- * Version: 1.1.0
+ * Version: 1.2.0
  * Requires at least: 6.0
  * Requires PHP: 8.1
  * Author: Sklep Agentów
@@ -12,8 +12,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'CHATL_WERSJA', '1.1.0' );
-define( 'CHATL_WERSJA_SCHEMATU', '2' );
+define( 'CHATL_WERSJA', '1.2.0' );
+define( 'CHATL_WERSJA_SCHEMATU', '3' );
 define( 'CHATL_KATALOG', plugin_dir_path( __FILE__ ) );
 define( 'CHATL_URL', plugin_dir_url( __FILE__ ) );
 
@@ -42,7 +42,8 @@ function chatl_sprawdz_schemat() {
 add_action( 'plugins_loaded', 'chatl_sprawdz_schemat' );
 
 /**
- * Codzienne czyszczenie historii rozmów starszych niż 90 dni (retencja jak w sklepie).
+ * Codzienne czyszczenie: historia rozmów starsza niż 90 dni (retencja jak
+ * w sklepie) + wygasłe wiersze licznika rate-limitu (okna minutowe).
  */
 function chatl_czyszczenie_historii() {
 	global $wpdb;
@@ -51,6 +52,13 @@ function chatl_czyszczenie_historii() {
 		$wpdb->prepare(
 			"DELETE FROM {$tabela} WHERE utworzono < %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			gmdate( 'Y-m-d H:i:s', time() - 90 * DAY_IN_SECONDS )
+		)
+	);
+	$limity = $wpdb->prefix . 'chatl_rate_limit';
+	$wpdb->query(
+		$wpdb->prepare(
+			"DELETE FROM {$limity} WHERE okno_do < %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			gmdate( 'Y-m-d H:i:s' )
 		)
 	);
 }
