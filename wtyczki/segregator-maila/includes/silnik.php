@@ -61,15 +61,42 @@ function segm_pobierz_reguly() {
 }
 
 /**
- * Przebieg: przepuszcza CAŁĄ próbkę przez reguły, zapisuje wynik + raport.
+ * Przebieg: przepuszcza CAŁĄ próbkę w wybranym trybie, zapisuje wynik + raport.
  *
- * @return int ID przebiegu.
+ * Tryby: 'reguly' | 'ai' | 'porownaj'. Gdy AI zawiedzie (błąd/limit/klucz),
+ * przebieg ZJEŻDŻA do trybu regułowego — jak w ChatBocie.
+ *
+ * @param string $tryb Tryb przebiegu.
+ * @return array ['id' => int, 'zjazd' => bool] Zjazd = chciano AI, wyszły reguły.
  */
-function segm_wykonaj_przebieg() {
+function segm_wykonaj_przebieg( $tryb = 'reguly' ) {
 	global $wpdb;
 
 	$reguly = segm_pobierz_reguly();
 	$maile  = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}segm_maile ORDER BY id ASC" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+	$zjazd   = false;
+	$mapa_ai = null;
+	if ( in_array( $tryb, array( 'ai', 'porownaj' ), true ) ) {
+		// TWARDY limit próbki dla AI (limit PHP 30 s): JAWNY błąd zamiast
+		// fatala w środku pętli albo cichego zjazdu — przebieg NIE startuje.
+		if ( count( $maile ) > SEGM_AI_MAX_PROBKA ) {
+			return array(
+				'id'    => 0,
+				'zjazd' => false,
+				'blad'  => sprintf(
+					'Tryb AI obsługuje próbkę do %d maili (Twoja ma %d): jedno wywołanie API trwa do 18 s (timeout 9 s + jeden retry), a typowy limit czasu żądania na hostingu to 30 s — większa próbka urwałaby przebieg w połowie. Uruchom tryb „reguły" (bez limitu) albo zmniejsz próbkę.',
+					SEGM_AI_MAX_PROBKA,
+					count( $maile )
+				),
+			);
+		}
+		$mapa_ai = segm_ai_dostepny() ? segm_ai_klasyfikuj_probke( $maile ) : null;
+		if ( null === $mapa_ai ) {
+			$tryb  = 'reguly';
+			$zjazd = true;
+		}
+	}
 
 	$wyniki         = array();
 	$dopasowanych   = 0;
@@ -77,36 +104,54 @@ function segm_wykonaj_przebieg() {
 	$trafionych     = 0;
 
 	foreach ( $maile as $mail ) {
-		$wynik = segm_klasyfikuj_mail( $mail, $reguly );
-		if ( null !== $wynik['regula_id'] ) {
-			$dopasowanych++;
+		$oczekiwana = trim( $mail->kategoria_oczekiwana );
+		$wpis       = array(
+			'mail_id'    => (int) $mail->id,
+			'nadawca'    => $mail->nadawca,
+			'temat'      => $mail->temat,
+			'oczekiwana' => $oczekiwana,
+		);
+
+		if ( 'ai' === $tryb ) {
+			$kategoria         = $mapa_ai[ (int) $mail->id ] ?? SEGM_KUBEL_DOMYSLNY;
+			$wpis['kategoria'] = $kategoria;
+			$wpis['regula_id'] = null;
+			if ( SEGM_KUBEL_DOMYSLNY !== $kategoria ) {
+				$dopasowanych++;
+			}
+		} else {
+			$wynik             = segm_klasyfikuj_mail( $mail, $reguly );
+			$kategoria         = $wynik['kategoria'];
+			$wpis['kategoria'] = $kategoria;
+			$wpis['regula_id'] = $wynik['regula_id'];
+			if ( null !== $wynik['regula_id'] ) {
+				$dopasowanych++;
+			}
 		}
 
-		$oczekiwana = trim( $mail->kategoria_oczekiwana );
-		$trafiony   = null; // null = brak etykiety, nie liczy się do accuracy.
+		$wpis['trafiony'] = null; // null = brak etykiety, nie liczy się do accuracy.
 		if ( '' !== $oczekiwana ) {
 			$etykietowanych++;
-			$trafiony = ( 0 === strcasecmp( $oczekiwana, $wynik['kategoria'] ) );
-			if ( $trafiony ) {
+			$wpis['trafiony'] = ( 0 === strcasecmp( $oczekiwana, $kategoria ) );
+			if ( $wpis['trafiony'] ) {
 				$trafionych++;
 			}
 		}
 
-		$wyniki[] = array(
-			'mail_id'    => (int) $mail->id,
-			'nadawca'    => $mail->nadawca,
-			'temat'      => $mail->temat,
-			'kategoria'  => $wynik['kategoria'],
-			'regula_id'  => $wynik['regula_id'],
-			'oczekiwana' => $oczekiwana,
-			'trafiony'   => $trafiony,
-		);
+		if ( 'porownaj' === $tryb ) {
+			$kat_ai               = $mapa_ai[ (int) $mail->id ] ?? SEGM_KUBEL_DOMYSLNY;
+			$wpis['kategoria_ai'] = $kat_ai;
+			$wpis['roznica']      = ( 0 !== strcasecmp( $kategoria, $kat_ai ) );
+			$wpis['trafiony_ai']  = '' === $oczekiwana ? null : ( 0 === strcasecmp( $oczekiwana, $kat_ai ) );
+		}
+
+		$wyniki[] = $wpis;
 	}
 
 	$wpdb->insert(
 		$wpdb->prefix . 'segm_przebiegi',
 		array(
-			'tryb'           => 'reguly',
+			'tryb'           => $tryb,
 			'maili'          => count( $maile ),
 			'dopasowanych'   => $dopasowanych,
 			'etykietowanych' => $etykietowanych,
@@ -117,5 +162,8 @@ function segm_wykonaj_przebieg() {
 		array( '%s', '%d', '%d', '%d', '%d', '%s', '%s' )
 	);
 
-	return (int) $wpdb->insert_id;
+	return array(
+		'id'    => (int) $wpdb->insert_id,
+		'zjazd' => $zjazd,
+	);
 }

@@ -66,12 +66,27 @@ function segm_strona_przebiegi() {
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 			<input type="hidden" name="action" value="segm_przebieg_start">
 			<?php wp_nonce_field( 'segm_przebieg_start' ); ?>
-			<?php submit_button( 'Przepuść próbkę przez reguły', 'primary', 'submit', false ); ?>
+			<?php
+			$ai_jest     = segm_ai_dostepny();
+			$ai_za_duza  = $maili > SEGM_AI_MAX_PROBKA;
+			$ai_mozliwe  = $ai_jest && ! $ai_za_duza;
+			?>
+			<p>
+				<label><input type="radio" name="tryb" value="reguly" checked> reguły (lokalnie, bez klucza, bez limitu próbki)</label><br>
+				<label><input type="radio" name="tryb" value="ai" <?php disabled( ! $ai_mozliwe ); ?>> AI (klasyfikuje model; próbka do <?php echo (int) SEGM_AI_MAX_PROBKA; ?> maili)</label><br>
+				<label><input type="radio" name="tryb" value="porownaj" <?php disabled( ! $ai_mozliwe ); ?>> porównaj oba (raport różnic — co AI łapie ponad reguły; próbka do <?php echo (int) SEGM_AI_MAX_PROBKA; ?> maili)</label>
+			</p>
+			<?php if ( ! $ai_jest ) : ?>
+				<p class="description">Tryby AI nieaktywne: <?php echo '' === segm_klucz_api() ? 'brak klucza API (Ustawienia)' : 'dzienny limit wywołań wyczerpany'; ?>. Przy błędzie AI przebieg i tak zjeżdża do reguł.</p>
+			<?php elseif ( $ai_za_duza ) : ?>
+				<p class="description">Tryby AI nieaktywne: próbka ma <?php echo (int) $maili; ?> maili, a tryb AI obsługuje maks. <?php echo (int) SEGM_AI_MAX_PROBKA; ?> (jedno wywołanie API to do 18 s — timeout 9 s + retry — a typowy limit czasu żądania na hostingu to 30 s). Zmniejsz próbkę albo użyj trybu „reguły".</p>
+			<?php endif; ?>
+			<?php submit_button( 'Przepuść próbkę', 'primary', 'submit', false ); ?>
 		</form>
 
 		<h2>Historia przebiegów</h2>
 		<table class="widefat striped">
-			<thead><tr><th>#</th><th>Kiedy</th><th>Tryb</th><th>Maili</th><th>Złapane regułami</th><th>Pokrycie</th><th>Accuracy</th><th></th></tr></thead>
+			<thead><tr><th>#</th><th>Kiedy</th><th>Tryb</th><th>Maili</th><th>Przypisane (reguły/AI, poza „Reszta")</th><th>Pokrycie</th><th>Accuracy</th><th></th></tr></thead>
 			<tbody>
 			<?php if ( ! $przebiegi ) : ?>
 				<tr><td colspan="8">Jeszcze nie było przebiegu — kliknij przycisk powyżej.</td></tr>
@@ -115,6 +130,8 @@ function segm_widok_raportu( $id ) {
 
 	$per_kategoria = array();
 	$pomylki       = array();
+	$roznice       = array();
+	$trafionych_ai = 0;
 	foreach ( $wyniki as $w ) {
 		$k = $w['kategoria'];
 		if ( ! isset( $per_kategoria[ $k ] ) ) {
@@ -124,6 +141,14 @@ function segm_widok_raportu( $id ) {
 		if ( false === $w['trafiony'] ) {
 			$pomylki[] = $w;
 		}
+		if ( 'porownaj' === $p->tryb ) {
+			if ( ! empty( $w['roznica'] ) ) {
+				$roznice[] = $w;
+			}
+			if ( true === ( $w['trafiony_ai'] ?? null ) ) {
+				$trafionych_ai++;
+			}
+		}
 	}
 	arsort( $per_kategoria );
 
@@ -131,23 +156,53 @@ function segm_widok_raportu( $id ) {
 	foreach ( segm_pobierz_reguly() as $r ) {
 		$reguly_opis[ (int) $r->id ] = '#' . (int) $r->kolejnosc . ' ' . $r->pole . ' zawiera „' . $r->wzorzec . '"';
 	}
+	$nazwy_trybow = array(
+		'reguly'   => 'reguły',
+		'ai'       => 'AI',
+		'porownaj' => 'porównanie reguły vs AI',
+	);
 	?>
 	<div class="wrap">
-		<h1>Raport przebiegu #<?php echo (int) $p->id; ?> (<?php echo esc_html( $p->uruchomiono ); ?>)</h1>
+		<h1>Raport przebiegu #<?php echo (int) $p->id; ?> — <?php echo esc_html( $nazwy_trybow[ $p->tryb ] ?? $p->tryb ); ?> (<?php echo esc_html( $p->uruchomiono ); ?>)</h1>
+		<?php segm_komunikaty(); ?>
 		<p><a href="<?php echo esc_url( admin_url( 'admin.php?page=segm-przebiegi' ) ); ?>">← wróć do przebiegów</a> |
 			<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=segm_eksport_csv&przebieg=' . (int) $p->id ), 'segm_eksport_' . (int) $p->id ) ); ?>">Eksport CSV</a></p>
 
 		<h2>Liczby</h2>
 		<ul style="list-style:disc;padding-left:20px">
 			<li>Maili w próbce: <strong><?php echo (int) $p->maili; ?></strong></li>
-			<li>Złapane regułami: <strong><?php echo (int) $p->dopasowanych; ?></strong> — pokrycie <strong><?php echo esc_html( segm_procent( $p->dopasowanych, $p->maili ) ); ?></strong> (tyle skrzynki automat rozdziela sam)</li>
-			<li>Bez reguły (→ <?php echo esc_html( SEGM_KUBEL_DOMYSLNY ); ?>): <strong><?php echo (int) ( $p->maili - $p->dopasowanych ); ?></strong></li>
+			<li><?php echo 'ai' === $p->tryb ? 'Przypisane przez AI do konkretnej kategorii' : 'Złapane regułami'; ?>: <strong><?php echo (int) $p->dopasowanych; ?></strong> — pokrycie <strong><?php echo esc_html( segm_procent( $p->dopasowanych, $p->maili ) ); ?></strong> (tyle skrzynki automat rozdziela sam)</li>
+			<li>W kuble „<?php echo esc_html( SEGM_KUBEL_DOMYSLNY ); ?>": <strong><?php echo (int) ( $p->maili - $p->dopasowanych ); ?></strong></li>
 			<?php if ( $p->etykietowanych > 0 ) : ?>
-				<li>ACCURACY (maile z etykietą <code>kategoria_oczekiwana</code>): <strong><?php echo esc_html( segm_procent( $p->trafionych, $p->etykietowanych ) ); ?></strong> (<?php echo (int) $p->trafionych; ?>/<?php echo (int) $p->etykietowanych; ?> trafień, pomyłek: <?php echo count( $pomylki ); ?>)</li>
+				<li>ACCURACY<?php echo 'porownaj' === $p->tryb ? ' reguł' : ''; ?> (maile z etykietą <code>kategoria_oczekiwana</code>): <strong><?php echo esc_html( segm_procent( $p->trafionych, $p->etykietowanych ) ); ?></strong> (<?php echo (int) $p->trafionych; ?>/<?php echo (int) $p->etykietowanych; ?> trafień, pomyłek: <?php echo count( $pomylki ); ?>)</li>
+				<?php if ( 'porownaj' === $p->tryb ) : ?>
+					<li>ACCURACY AI: <strong><?php echo esc_html( segm_procent( $trafionych_ai, $p->etykietowanych ) ); ?></strong> (<?php echo (int) $trafionych_ai; ?>/<?php echo (int) $p->etykietowanych; ?> trafień)</li>
+				<?php endif; ?>
 			<?php else : ?>
 				<li>Accuracy: brak etykiet w próbce (dodaj kolumnę <code>kategoria_oczekiwana</code> w CSV, żeby zmierzyć trafność).</li>
 			<?php endif; ?>
+			<?php if ( 'porownaj' === $p->tryb ) : ?>
+				<li>Reguły vs AI: <strong><?php echo (int) ( $p->maili - count( $roznice ) ); ?></strong> zgodnych, <strong><?php echo count( $roznice ); ?></strong> różnic (<?php echo esc_html( segm_procent( count( $roznice ), $p->maili ) ); ?>)</li>
+			<?php endif; ?>
 		</ul>
+
+		<?php if ( 'porownaj' === $p->tryb && $roznice ) : ?>
+			<h2>Różnice reguły vs AI (<?php echo count( $roznice ); ?>) — co AI widzi inaczej niż reguły</h2>
+			<table class="widefat striped">
+				<thead><tr><th>Od</th><th>Temat</th><th>Reguły</th><th>AI</th><th>Etykieta</th></tr></thead>
+				<tbody>
+				<?php foreach ( $roznice as $w ) : ?>
+					<tr>
+						<td><?php echo esc_html( $w['nadawca'] ); ?></td>
+						<td><?php echo esc_html( $w['temat'] ); ?></td>
+						<td><?php echo esc_html( $w['kategoria'] ); ?></td>
+						<td><strong><?php echo esc_html( $w['kategoria_ai'] ); ?></strong></td>
+						<td><?php echo '' === $w['oczekiwana'] ? '—' : esc_html( $w['oczekiwana'] ); ?></td>
+					</tr>
+				<?php endforeach; ?>
+				</tbody>
+			</table>
+		<?php endif; ?>
 
 		<h2>Trafienia per kategoria</h2>
 		<table class="widefat striped" style="max-width:480px">
@@ -177,16 +232,19 @@ function segm_widok_raportu( $id ) {
 			</table>
 		<?php endif; ?>
 
-		<h2>Wszystkie wyniki (mail → kategoria → reguła)</h2>
+		<h2>Wszystkie wyniki (mail → kategoria → <?php echo 'ai' === $p->tryb ? 'AI' : 'reguła'; ?>)</h2>
 		<table class="widefat striped">
-			<thead><tr><th>Od</th><th>Temat</th><th>Kategoria</th><th>Która reguła</th><th>Etykieta</th></tr></thead>
+			<thead><tr><th>Od</th><th>Temat</th><th>Kategoria</th><?php if ( 'porownaj' === $p->tryb ) : ?><th>Kategoria (AI)</th><?php endif; ?><th>Która reguła</th><th>Etykieta</th></tr></thead>
 			<tbody>
 			<?php foreach ( $wyniki as $w ) : ?>
 				<tr>
 					<td><?php echo esc_html( $w['nadawca'] ); ?></td>
 					<td><?php echo esc_html( $w['temat'] ); ?></td>
 					<td><?php echo esc_html( $w['kategoria'] ); ?></td>
-					<td><?php echo null === $w['regula_id'] ? '—' : ( isset( $reguly_opis[ $w['regula_id'] ] ) ? esc_html( $reguly_opis[ $w['regula_id'] ] ) : 'reguła usunięta (#' . (int) $w['regula_id'] . ')' ); ?></td>
+				<?php if ( 'porownaj' === $p->tryb ) : ?>
+						<td><?php echo esc_html( $w['kategoria_ai'] ?? '' ); ?><?php echo ! empty( $w['roznica'] ) ? ' ⚠' : ''; ?></td>
+					<?php endif; ?>
+					<td><?php echo 'ai' === $p->tryb ? 'AI' : ( null === $w['regula_id'] ? '—' : ( isset( $reguly_opis[ $w['regula_id'] ] ) ? esc_html( $reguly_opis[ $w['regula_id'] ] ) : 'reguła usunięta (#' . (int) $w['regula_id'] . ')' ) ); ?></td>
 					<td><?php echo '' === $w['oczekiwana'] ? '—' : esc_html( $w['oczekiwana'] ) . ( $w['trafiony'] ? ' ✔' : ' ✘' ); ?></td>
 				</tr>
 			<?php endforeach; ?>
@@ -202,8 +260,22 @@ function segm_post_przebieg_start() {
 	}
 	check_admin_referer( 'segm_przebieg_start' );
 
-	$id = segm_wykonaj_przebieg();
-	wp_safe_redirect( admin_url( 'admin.php?page=segm-przebiegi&przebieg=' . $id ) );
+	$tryb = isset( $_POST['tryb'] ) ? sanitize_key( wp_unslash( $_POST['tryb'] ) ) : 'reguly';
+	if ( ! in_array( $tryb, array( 'reguly', 'ai', 'porownaj' ), true ) ) {
+		$tryb = 'reguly';
+	}
+
+	$wynik = segm_wykonaj_przebieg( $tryb );
+	if ( ! empty( $wynik['blad'] ) ) {
+		// Próbka ponad limit AI: jawny komunikat, przebieg NIE wystartował.
+		wp_safe_redirect( admin_url( 'admin.php?page=segm-przebiegi&segm_blad=' . rawurlencode( $wynik['blad'] ) ) );
+		exit;
+	}
+	$adres = 'admin.php?page=segm-przebiegi&przebieg=' . (int) $wynik['id'];
+	if ( $wynik['zjazd'] ) {
+		$adres .= '&segm_blad=' . rawurlencode( 'AI nie odpowiedziało (błąd, limit albo brak klucza) — wykonano przebieg regułowy.' );
+	}
+	wp_safe_redirect( admin_url( $adres ) );
 	exit;
 }
 add_action( 'admin_post_segm_przebieg_start', 'segm_post_przebieg_start' );
@@ -608,10 +680,32 @@ function segm_strona_ustawienia() {
 			<input type="hidden" name="action" value="segm_ustawienia_zapisz">
 			<?php wp_nonce_field( 'segm_ustawienia_zapisz' ); ?>
 			<table class="form-table" role="presentation">
+				<tr><th colspan="2"><h2>Tryb AI (hybryda)</h2>
+					<p style="font-weight:normal">Z kluczem API klasyfikację może robić prawdziwy model (Claude) — do wyboru przy przebiegu: reguły / AI / porównaj oba. Bez klucza albo przy błędzie API segregator działa w trybie regułowym.</p></th></tr>
+				<tr>
+					<th scope="row"><label for="segm-klucz">Klucz API (Anthropic)</label></th>
+					<td>
+						<?php $klucz = segm_klucz_api(); ?>
+						<?php if ( '' !== $klucz ) : ?>
+							<p><strong>Klucz zapisany</strong> (…<?php echo esc_html( substr( $klucz, -4 ) ); ?>).
+								<label><input type="checkbox" name="usun_klucz" value="1"> usuń klucz (wyłącza tryby AI)</label></p>
+						<?php endif; ?>
+						<input type="password" id="segm-klucz" name="klucz_api" class="regular-text" value="" autocomplete="off"
+							placeholder="<?php echo '' !== $klucz ? 'wklej, aby podmienić' : 'sk-ant-…'; ?>">
+						<p class="description">Klucz WŁAŚCICIELA — przechowywany tylko w Twojej bazie (bez autoload), wysyłany wyłącznie do api.anthropic.com.</p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><label for="segm-ai-limit">Dzienny limit wywołań AI (stop-loss)</label></th>
+					<td>
+						<input type="number" id="segm-ai-limit" name="ai_limit_dzienny" min="1" max="100000" value="<?php echo (int) $ust['ai_limit_dzienny']; ?>">
+						<p class="description">Jedna partia <?php echo (int) SEGM_AI_PARTIA; ?> maili = 1 wywołanie. Dzisiaj zużyto: <strong><?php echo (int) segm_ai_uzycie_dzis(); ?> / <?php echo (int) $ust['ai_limit_dzienny']; ?></strong>. Po wyczerpaniu limitu przebiegi AI zjeżdżają do reguł do północy. Limit jest miękki: równoległe wywołania mogą go minimalnie przekroczyć.</p>
+					</td>
+				</tr>
 				<tr>
 					<th scope="row">Usuwanie wtyczki</th>
 					<td>
-						<label><input type="checkbox" name="usun_dane" value="1" <?php checked( $ust['usun_dane'] ); ?>> przy odinstalowaniu usuń WSZYSTKIE dane (kategorie, reguły, próbka, przebiegi, ustawienia)</label>
+						<label><input type="checkbox" name="usun_dane" value="1" <?php checked( $ust['usun_dane'] ); ?>> przy odinstalowaniu usuń WSZYSTKIE dane (kategorie, reguły, próbka, przebiegi, klucz API, ustawienia)</label>
 						<p class="description">Domyślnie dane zostają — możesz odinstalować i wrócić bez strat.</p>
 					</td>
 				</tr>
@@ -619,7 +713,7 @@ function segm_strona_ustawienia() {
 			<?php submit_button( 'Zapisz ustawienia' ); ?>
 		</form>
 		<h2>Prywatność</h2>
-		<p>Tryb regułowy: treść maili <strong>nie opuszcza</strong> Twojego WordPressa — segregacja działa lokalnie na próbce. Wtyczka nie łączy się z żadną skrzynką pocztową (działa na próbkach CSV — dlatego to uczciwie „testowy bot").</p>
+		<p>Tryb regułowy: treść maili <strong>nie opuszcza</strong> Twojego WordPressa — segregacja działa lokalnie na próbce. Tryby AI: treść maili z próbki (nadawca, temat, treść) jest wysyłana do API dostawcy modelu (Anthropic) — poinformuj o tym w swojej polityce prywatności. Wtyczka nie łączy się z żadną skrzynką pocztową (działa na próbkach CSV — dlatego to uczciwie „testowy bot").</p>
 	</div>
 	<?php
 }
@@ -633,9 +727,19 @@ function segm_post_ustawienia_zapisz() {
 	$stare = segm_ustawienia();
 	$nowe  = array_merge(
 		$stare,
-		array( 'usun_dane' => empty( $_POST['usun_dane'] ) ? 0 : 1 )
+		array(
+			'usun_dane'        => empty( $_POST['usun_dane'] ) ? 0 : 1,
+			'ai_limit_dzienny' => isset( $_POST['ai_limit_dzienny'] ) ? max( 1, min( 100000, (int) $_POST['ai_limit_dzienny'] ) ) : $stare['ai_limit_dzienny'],
+		)
 	);
 	update_option( 'segm_ustawienia', $nowe );
+
+	// Klucz API: osobna opcja (autoload=no), nigdy nie wraca do formularza.
+	if ( ! empty( $_POST['usun_klucz'] ) ) {
+		segm_zapisz_klucz( '' );
+	} elseif ( isset( $_POST['klucz_api'] ) && '' !== trim( (string) wp_unslash( $_POST['klucz_api'] ) ) ) {
+		segm_zapisz_klucz( sanitize_text_field( wp_unslash( $_POST['klucz_api'] ) ) );
+	}
 
 	wp_safe_redirect( admin_url( 'admin.php?page=segm-ustawienia&segm_ok=zapisano' ) );
 	exit;

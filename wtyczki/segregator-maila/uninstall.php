@@ -18,6 +18,8 @@ $wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}segm_kategorie" ); // phpcs:i
 $wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}segm_reguly" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 $wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}segm_maile" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 $wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}segm_przebiegi" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}segm_ai_uzycie" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 delete_option( 'segm_ustawienia' );
 delete_option( 'segm_wersja_schematu' );
+delete_option( 'segm_klucz_api' ); // Sekret właściciela — pełne czyszczenie MUSI go usunąć.

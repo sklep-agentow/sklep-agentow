@@ -58,6 +58,12 @@ function segm_utworz_tabele() {
 		uruchomiono datetime NOT NULL,
 		PRIMARY KEY  (id)
 	) {$charset};" );
+
+	dbDelta( "CREATE TABLE {$p}segm_ai_uzycie (
+		dzien date NOT NULL,
+		wywolania int(10) unsigned NOT NULL DEFAULT 0,
+		PRIMARY KEY  (dzien)
+	) {$charset};" );
 }
 
 /**
