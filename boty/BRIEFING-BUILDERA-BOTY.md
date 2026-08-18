@@ -72,6 +72,22 @@ sprzed zmiany) / Uwagi** → meldunek → następna pozycja.
   NIE równolegle z koordynatorką — przed ciężkim przebiegiem zapytaj.
 - `WP_DEBUG` włączony przy testach: zero notice'ów = warunek oddania pozycji.
 
+## ŹRÓDŁA OFICJALNE (drabina: gotowce → OFICJALNE docs → GitHub; nazwa z pamięci
+## modelu = HIPOTEZA do sprawdzenia w źródle, nie fakt)
+- **WordPress Plugin Handbook** — developer.wordpress.org/plugins/ (basics,
+  activation/deactivation, **uninstall = posprzątaj opcje/tabele/pliki**,
+  Settings API, security/nonces). Lokalne destylaty:
+  `/root/praca/warsztat/.claude/skills/wp-plugin-development/references/*.md`.
+- **WordPress Coding Standards** — developer.wordpress.org/coding-standards/
+  (styl PHP/JS; w CI pilnuje phpcs).
+- **Plugin Directory Guidelines** — rygor recenzentów katalogu WP (jak przy MP).
+- **REST API Handbook** — developer.wordpress.org/rest-api/ (gdyby bot
+  potrzebował trasy; pamiętaj o `permission_callback`).
+- **Anthropic API** (tryb AI, P2/P4): NAJPIERW skill `claude-api` — modele,
+  parametry, ceny Z DOKUMENTACJI, nie z pamięci.
+- MDN (JS widgetu) · OWASP (walidacja wejść, sekrety).
+⛔ Blogi/StackOverflow = tylko trop; rozstrzyga oficjalne źródło.
+
 ## PUŁAPKI ŚRODOWISKA (sekcja rośnie — dopisuj własne znaleziska!)
 - `wp_mail` w kontenerze bez SMTP ginie bez śladu → na stacku jest mailpit.
 - `__()`/tłumaczenia przy rejestracji wtyczki = notice od WP 6.7 → NIE używamy i18n.
