@@ -4,8 +4,10 @@
  * Bez klucza / po limicie / przy błędzie — pełnoprawny zjazd do trybu regułowego.
  *
  * Stop-loss: dzienny limit wywołań; licznik w TABELI wtyczki (chatl_ai_uzycie),
- * zużywany PO udanym wywołaniu, nie przed.
- * Timeout 15 s + JEDEN retry (tylko błąd połączenia / 5xx) — nigdy pętla.
+ * zużywany PO udanym wywołaniu, nie przed. Limit jest MIĘKKI: równoległe
+ * zapytania mogą go minimalnie przekroczyć (sprawdzenie i inkrement to dwa kroki).
+ * Timeout 9 s + JEDEN retry (tylko błąd połączenia / 5xx) — suma maks. 18 s,
+ * wyraźnie pod limitem PHP hostingu (30 s); nigdy pętla.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -14,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 const CHATL_AI_MODEL         = 'claude-opus-5';
 const CHATL_AI_MAX_TOKENS    = 1024;
-const CHATL_AI_TIMEOUT       = 15;
+const CHATL_AI_TIMEOUT       = 9;
 const CHATL_AI_BRAK          = 'BRAK_ODPOWIEDZI';
 
 /**

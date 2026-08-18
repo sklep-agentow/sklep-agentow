@@ -681,7 +681,7 @@ function segm_strona_ustawienia() {
 					<th scope="row"><label for="segm-ai-limit">Dzienny limit wywołań AI (stop-loss)</label></th>
 					<td>
 						<input type="number" id="segm-ai-limit" name="ai_limit_dzienny" min="1" max="100000" value="<?php echo (int) $ust['ai_limit_dzienny']; ?>">
-						<p class="description">Jedna partia <?php echo (int) SEGM_AI_PARTIA; ?> maili = 1 wywołanie. Dzisiaj zużyto: <strong><?php echo (int) segm_ai_uzycie_dzis(); ?> / <?php echo (int) $ust['ai_limit_dzienny']; ?></strong>. Po wyczerpaniu limitu przebiegi AI zjeżdżają do reguł do północy.</p>
+						<p class="description">Jedna partia <?php echo (int) SEGM_AI_PARTIA; ?> maili = 1 wywołanie. Dzisiaj zużyto: <strong><?php echo (int) segm_ai_uzycie_dzis(); ?> / <?php echo (int) $ust['ai_limit_dzienny']; ?></strong>. Po wyczerpaniu limitu przebiegi AI zjeżdżają do reguł do północy. Limit jest miękki: równoległe wywołania mogą go minimalnie przekroczyć.</p>
 					</td>
 				</tr>
 				<tr>

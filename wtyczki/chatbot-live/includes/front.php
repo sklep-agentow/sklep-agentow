@@ -98,7 +98,7 @@ function chatl_ajax_pytanie() {
 	if ( chatl_ai_dostepny() ) {
 		$ai = chatl_ai_odpowiedz( $pytanie );
 		if ( null !== $ai ) {
-			if ( false !== strpos( $ai, CHATL_AI_BRAK ) ) {
+			if ( CHATL_AI_BRAK === trim( $ai ) ) {
 				// Próg pewności: model nie zgaduje => uczciwe "nie wiem" + zbiórka kontaktu.
 				chatl_zapisz_wymiane( $sesja, 'bot', $ust['tekst_awaryjny'], 'ai' );
 				wp_send_json_success(
