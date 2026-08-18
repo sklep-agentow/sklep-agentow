@@ -172,7 +172,7 @@ function sklepag_delta_html( $teraz, $poprzednio ) {
 			: '<span class="sklepag-delta sklepag-delta-zero">— bez zmian</span>';
 	}
 	$proc = ( $teraz - $poprzednio ) / $poprzednio * 100;
-	$abs  = number_format( abs( $proc ), $proc >= 100 ? 0 : 1, ',', '' );
+	$abs  = number_format( abs( $proc ), abs( $proc ) >= 100 ? 0 : 1, ',', '' );
 	if ( $proc > 0.05 ) {
 		return '<span class="sklepag-delta sklepag-delta-plus">▲ +' . esc_html( $abs ) . '%</span>';
 	}
@@ -194,7 +194,7 @@ function sklepag_dashboard_self_heal() {
 		return;
 	}
 	update_option( 'sklepag_reconciliation_ostatnia', time(), false );
-	sklepag_dociagnij_zalegle();
+	sklepag_dociagnij_zalegle( 8 ); // Budżet czasu: render admina nie może wisieć (PR #44); resztę dociągnie cron.
 }
 
 add_action( 'admin_post_sklepag_dociagnij', 'sklepag_obsluz_dociagnij' );
@@ -210,7 +210,7 @@ function sklepag_obsluz_dociagnij() {
 
 	sklepag_zdarzenie( null, 'reconciliation_reczna', 'przycisk w panelu' );
 	update_option( 'sklepag_reconciliation_ostatnia', time(), false );
-	sklepag_dociagnij_zalegle();
+	sklepag_dociagnij_zalegle( 15 ); // Budżet czasu < limit PHP hostingu (30 s); reszta na cron.
 
 	wp_safe_redirect( add_query_arg( 'sklepag_dociagnieto', '1', admin_url( 'admin.php?page=sklepag' ) ) );
 	exit;
@@ -404,16 +404,19 @@ function sklepag_rozklad_w_czasie( $okres, $g ) {
 			return sprintf( '%02d:00', $k );
 		};
 	} else {
-		$wiersze  = $wpdb->get_results(
+		$wiersze = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT DATE(utworzono) AS klucz, SUM(kwota_grosze) AS suma FROM {$t} WHERE status IN (" . SKLEPAG_STATUSY_OPLACONE . ') AND utworzono >= %s GROUP BY DATE(utworzono)',
 				$g['od']
 			),
 			OBJECT_K
 		);
+		// Od $i=0: dzień $start (kalendarzowa data $g['od'], częściowy) TEŻ dostaje
+		// słupek — zapytanie go łapie (utworzono >= od), a wykres bez niego
+		// przeczyłby karcie KPI (off-by-one — recenzja PR #44). Słupków jest dni+1.
 		$etykiety = array();
 		$start    = strtotime( substr( $g['od'], 0, 10 ) );
-		for ( $i = 1; $i <= $g['dni']; $i++ ) {
+		for ( $i = 0; $i <= $g['dni']; $i++ ) {
 			$etykiety[] = gmdate( 'Y-m-d', $start + $i * DAY_IN_SECONDS );
 		}
 		$format = static function ( $k ) {
