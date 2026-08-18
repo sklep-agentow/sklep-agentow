@@ -13,12 +13,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Produkt bieżącego widoku (null poza stroną produktu).
+ * TYLKO na stronie sklepu (recenzja #52, WAŻNA): bez tego warunku KAŻDY adres
+ * z doklejonym ?sklepag_produkt= przejmował title/canonical/OG/JSON-LD produktu
+ * (zmierzone na /kontakt/ przed naprawą). Slug przez sanitize_title — ta sama
+ * sanityzacja co w renderze (recenzja #52, drobna).
  */
 function sklepag_seo_biezacy_produkt() {
+	if ( ! is_page( (int) get_option( 'sklepag_strona_sklep' ) ) ) {
+		return null;
+	}
 	$slug = get_query_var( 'sklepag_produkt' );
 	if ( ! is_string( $slug ) || '' === $slug ) {
 		return null;
 	}
+	$slug         = sanitize_title( $slug );
 	static $cache = array();
 	if ( ! array_key_exists( $slug, $cache ) ) {
 		$cache[ $slug ] = sklepag_produkt_po_slugu( $slug );

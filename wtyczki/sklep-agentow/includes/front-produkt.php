@@ -97,7 +97,10 @@ function sklepag_tresc_produktu( $slug ) {
 			'etykieta'     => '[ <span class="sklepag-akcent">BOT</span> · CZAT NA STRONĘ ]',
 			'zdanie'       => 'Odpowiada klientom 24/7. A gdy nie zna odpowiedzi — bierze kontakt i oddaje rozmowę Tobie.',
 			'pasek'        => 'ODPOWIADA 24/7',
-			'pasek_zywy'   => function_exists( 'chatl_klucz_api' ) ? ' — PRZETESTUJ: BĄBELEK W ROGU' : '',
+			// Człon „przetestuj" tylko gdy bąbelek REALNIE widoczny: wtyczka aktywna
+			// I włącznik w jej ustawieniach ON (recenzja #52 — sama aktywność nie
+			// gwarantuje widgetu; właściciel może go wyłączyć bez deaktywacji).
+			'pasek_zywy'   => ( function_exists( 'chatl_ustawienia' ) && ! empty( chatl_ustawienia()['wlaczony'] ) ) ? ' — PRZETESTUJ: BĄBELEK W ROGU' : '',
 			'problem_t'    => 'Te same pytania. Codziennie.',
 			'problem'      => 'Cennik? Godziny? Dojazd? Każde z nich to przerwana robota — albo klient, który pisał po godzinach i nie doczekał się odpowiedzi.',
 			'mockup_czatu' => true,
