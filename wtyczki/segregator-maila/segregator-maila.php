@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Segregator maila
  * Description: Testowy bot porządkujący skrzynkę firmową: rozdziela maile do kategorii według reguł (kolejność = pierwsza wygrywa) i pokazuje raport z liczbami — trafienia, % pokrycia, accuracy przy próbce z etykietami.
- * Version: 1.1.0
+ * Version: 1.2.0
  * Requires at least: 6.0
  * Requires PHP: 8.1
  * Author: Sklep Agentów
@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SEGM_WERSJA', '1.1.0' );
+define( 'SEGM_WERSJA', '1.2.0' );
 define( 'SEGM_WERSJA_SCHEMATU', '2' );
 define( 'SEGM_KATALOG', plugin_dir_path( __FILE__ ) );
 

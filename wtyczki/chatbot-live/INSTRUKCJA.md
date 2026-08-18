@@ -1,0 +1,109 @@
+# ChatBot LIVE — instrukcja użytkownika
+
+Bot na stronę firmową: 24/7 odpowiada na powtarzalne pytania klientów z bazy
+pytań-odpowiedzi, a gdy nie zna odpowiedzi — zbiera kontakt, żeby właściciel
+odezwał się osobiście.
+
+**Uczciwie:** to bot regułowy z bazy Q&A + most do maila właściciela — „LIVE"
+znaczy, że żywy człowiek ODPISZE na zebrany kontakt (to nie czat z operatorem
+w czasie rzeczywistym). Opcjonalnie, z własnym kluczem API, odpowiedzi może
+generować prawdziwy model AI — patrz sekcja „Tryb AI".
+
+## 1. Instalacja (2 minuty)
+
+1. W panelu WordPressa wejdź w **Wtyczki → Dodaj nową → Wyślij wtyczkę na serwer**.
+2. Wskaż plik `chatbot-live.zip` i kliknij **Zainstaluj**, potem **Włącz**.
+3. Gotowe — bot od razu działa: na stronie pojawia się bąbelek czatu, a w bazie
+   jest 10 przykładowych par pytanie-odpowiedź typowej firmy usługowej
+   (cennik, godziny, kontakt, dojazd, płatności, terminy, gwarancja, faktury,
+   umówienie wizyty, oferta).
+
+Wymagania: WordPress 6.0+ i PHP 8.1+.
+
+## 2. Konfiguracja w kwadrans
+
+W menu bocznym pojawia się pozycja **ChatBot LIVE**.
+
+1. **Ustawienia** → podmień tekst powitania i tekst awaryjny na własne,
+   wpisz mail do powiadomień o zgłoszeniach (domyślnie mail administratora).
+2. **Baza Q&A** → przejrzyj 10 przykładowych wpisów i podmień treści na
+   dane swojej firmy (telefony, adres, ceny). Każdy wpis to:
+   - *pytanie wzorcowe* — dla Ciebie, żeby wiedzieć, czego dotyczy wpis,
+   - *słowa kluczowe z wariantami* — po nich bot dopasowuje pytanie gościa;
+     rozdzielaj przecinkami i wpisuj odmiany oraz formy bez polskich znaków,
+     np. `cena, ceny, cennik, koszt`. Sztuczka: krótki rdzeń łapie odmiany —
+     `otwart` złapie „otwarte", „otwarci", „otwarta",
+   - *odpowiedź bota* — to, co gość zobaczy w czacie.
+3. Wejdź na swoją stronę i przetestuj: zadaj pytania, na które bot ma
+   odpowiedzieć, i jedno, na które nie ma — powinien uczciwie zaproponować
+   zostawienie maila.
+
+## 3. Jak to działa na co dzień
+
+- Gość pyta → bot odpowiada z bazy Q&A (wygrywa wpis z największą liczbą
+  trafionych słów kluczowych).
+- Brak dopasowania → bot pokazuje tekst awaryjny i formularz „zostaw maila".
+  Przycisk **„Zostaw wiadomość"** jest zresztą widoczny cały czas — gość
+  zawsze ma ścieżkę do człowieka.
+- Zgłoszenia lądują w **ChatBot LIVE → Zgłoszenia** (+ mail do Ciebie, jeśli
+  włączony). Odpisujesz osobiście — to jest człon „LIVE".
+- **Historia rozmów** pokazuje wymiany bot↔gość; wpisy starsze niż **90 dni**
+  są czyszczone automatycznie.
+
+## 4. Tryb AI (opcjonalny — hybryda)
+
+Bez klucza bot działa w pełnoprawnym trybie regułowym. Z kluczem API
+(Anthropic — klucz zdobywasz na własnym koncie na console.anthropic.com)
+odpowiedzi generuje prawdziwy model na podstawie **Twojego opisu firmy**
+i aktywnych wpisów bazy Q&A:
+
+1. **Ustawienia → Tryb AI** → wklej klucz, wypełnij pole „Informacje o firmie".
+2. Model ma zakaz zgadywania: gdy nie zna odpowiedzi, zbiera kontakt zamiast
+   zmyślać ceny czy terminy.
+3. **Stop-loss:** dzienny limit wywołań (domyślnie 100, licznik w ustawieniach;
+   limit jest miękki — równoległe zapytania gości mogą go minimalnie
+   przekroczyć). Po wyczerpaniu limitu, przy błędzie API albo braku klucza bot
+   automatycznie wraca do trybu regułowego — czat nigdy nie przestaje działać.
+
+Koszty API ponosi właściciel klucza według cennika dostawcy.
+
+## 5. FAQ
+
+**Bot nie łapie pytania, choć wpis jest w bazie.**
+Dodaj do wpisu więcej wariantów słów kluczowych (odmiany, formy bez polskich
+znaków). Dopasowanie szuka fragmentów tekstu — `płatnoś` nie złapie „platnosc".
+
+**Czy gość może zalać mnie wiadomościami?**
+Nie — limit to 10 wiadomości na minutę z jednego adresu IP (dotyczy pytań
+i zgłoszeń łącznie). Pytanie ma maks. 500 znaków, wiadomość zgłoszenia 2000.
+
+**Nie przychodzą maile o zgłoszeniach.**
+Zgłoszenia i tak zapisują się w panelu. Mail wymaga działającej wysyłki
+w WordPressie — jeśli nie działa, skonfiguruj wtyczkę SMTP u swojego hostingu.
+
+**Czy bot pamięta rozmowę między wizytami?**
+Nie — sesja czatu żyje w karcie przeglądarki gościa. Historia rozmów jest
+zapisywana po stronie serwera (90 dni) do wglądu właściciela.
+
+**Co się stanie z danymi po odinstalowaniu?**
+Domyślnie wszystko zostaje (możesz wrócić bez strat). Jeśli w ustawieniach
+zaznaczysz „usuń wszystkie dane", odinstalowanie skasuje bazę Q&A, zgłoszenia,
+historię, ustawienia ORAZ klucz API.
+
+## 6. Droga rozbudowy (po zakupie, na życzenie)
+
+- automatyczne łapanie polskich odmian (stemming) zamiast ręcznych wariantów,
+- czat operatora na żywo / powiadomienia push,
+- pamięć rozmowy między wizytami,
+- inne modele AI lub własny serwer proxy (wtyczka ma filtry `chatl_ai_url`
+  i `chatl_ai_model` dla integratorów).
+
+## 7. Deklaracja prywatności (ważne — RODO)
+
+- **Tryb regułowy:** treść rozmów NIE opuszcza Twojego WordPressa — dopasowanie
+  działa lokalnie, dane (rozmowy, zgłoszenia z mailami gości) leżą w Twojej bazie.
+- **Tryb AI:** treść pytania gościa wraz z Twoim opisem firmy i bazą Q&A jest
+  wysyłana do API dostawcy modelu (Anthropic) w celu wygenerowania odpowiedzi.
+- W obu trybach zbierasz maile gości (zgłoszenia) i przechowujesz historię
+  rozmów 90 dni — **dopisz to do polityki prywatności swojej strony** wraz
+  z informacją o dostawcy AI, jeśli włączasz tryb AI.
