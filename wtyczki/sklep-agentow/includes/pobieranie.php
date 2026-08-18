@@ -27,7 +27,11 @@ function sklepag_obsluz_pobranie() {
 	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
 	$zam = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$pz} WHERE id = %d", $id ) );
 
-	$kontakt = 'Skontaktuj się z właścicielem sklepu (odpisz na maila z zakupem).';
+	// Mail kontaktowy właściciela z ustawień (plan §6); bez niego — odesłanie do maila z zakupu.
+	$email_kontaktowy = (string) get_option( 'sklepag_email_kontaktowy', '' );
+	$kontakt          = ( '' !== $email_kontaktowy && is_email( $email_kontaktowy ) )
+		? 'Skontaktuj się z właścicielem sklepu: ' . $email_kontaktowy
+		: 'Skontaktuj się z właścicielem sklepu (odpisz na maila z zakupem).';
 
 	if ( ! $zam || '' === $zam->token_pobrania || 64 !== strlen( $token )
 		|| ! hash_equals( $zam->token_pobrania, hash( 'sha256', $token ) ) ) {

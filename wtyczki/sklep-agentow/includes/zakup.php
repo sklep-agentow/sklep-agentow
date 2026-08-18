@@ -321,7 +321,7 @@ function sklepag_domknij_zakup( $sesja ) {
 
 	$wyslano = false;
 	if ( '' !== $email && is_email( $email ) ) {
-		$wyslano = wp_mail( $email, 'Twój zakup: ' . $produkt->nazwa . ' — potwierdzenie i pobranie', $tresc );
+		$wyslano = sklepag_wyslij_mail_sklepu( $email, 'Twój zakup: ' . $produkt->nazwa . ' — potwierdzenie i pobranie', $tresc );
 	}
 
 	// 6) Stan PO POMIARZE skutku (CAS z mail_w_toku).
@@ -335,6 +335,42 @@ function sklepag_domknij_zakup( $sesja ) {
 	sklepag_zdarzenie( (int) $zam->id, 'mail_blad', '' === $email ? 'brak adresu email w sesji' : 'wp_mail zwrocil false' );
 	return false;
 	// phpcs:enable
+}
+
+/**
+ * Filtry nadawcy jako nazwane funkcje — remove_filter wymaga tej samej
+ * referencji, a nazwana funkcja gwarantuje to bez trzymania closure.
+ */
+function sklepag_filtr_nadawca_email( $from ) {
+	$wlasny = (string) get_option( 'sklepag_nadawca_email', '' );
+	return ( '' !== $wlasny && is_email( $wlasny ) ) ? $wlasny : $from;
+}
+
+function sklepag_filtr_nadawca_nazwa( $name ) {
+	$wlasna = (string) get_option( 'sklepag_nadawca_nazwa', '' );
+	return '' !== $wlasna ? $wlasna : $name;
+}
+
+/**
+ * wp_mail z nadawcą z ustawień sklepu — filtry zakładane WYŁĄCZNIE wokół
+ * NASZEJ wysyłki i zdejmowane od razu (granica planu §3: maile reszty
+ * strony pozostają nietknięte).
+ *
+ * @param string $adresat Adresat.
+ * @param string $temat   Temat.
+ * @param string $tresc   Treść.
+ * @return bool Wynik wp_mail.
+ */
+function sklepag_wyslij_mail_sklepu( $adresat, $temat, $tresc ) {
+	add_filter( 'wp_mail_from', 'sklepag_filtr_nadawca_email' );
+	add_filter( 'wp_mail_from_name', 'sklepag_filtr_nadawca_nazwa' );
+	try {
+		return wp_mail( $adresat, $temat, $tresc );
+	} finally {
+		// Filtry schodzą też przy rzucie z wp_mail — nie mogą wisieć na resztę żądania (recenzja PR #43).
+		remove_filter( 'wp_mail_from', 'sklepag_filtr_nadawca_email' );
+		remove_filter( 'wp_mail_from_name', 'sklepag_filtr_nadawca_nazwa' );
+	}
 }
 
 function sklepag_zbuduj_mail( $produkt, $zam, $link ) {

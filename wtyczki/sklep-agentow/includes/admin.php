@@ -10,6 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 require_once SKLEPAG_KATALOG . 'includes/admin-dziennik.php';
+require_once SKLEPAG_KATALOG . 'includes/admin-ustawienia.php';
 
 add_action( 'admin_menu', 'sklepag_admin_menu' );
 add_action( 'admin_enqueue_scripts', 'sklepag_admin_assety' );
@@ -27,6 +28,7 @@ function sklepag_admin_menu() {
 	// Pierwsza pozycja submenu = czytelna etykieta zamiast powtórki nazwy wtyczki.
 	add_submenu_page( 'sklepag', 'Sklep Agentów — pulpit', 'Pulpit', 'manage_options', 'sklepag', 'sklepag_admin_strona_glowna' );
 	add_submenu_page( 'sklepag', 'Dziennik — logowania i zdarzenia', 'Dziennik', 'manage_options', 'sklepag-dziennik', 'sklepag_admin_dziennik' );
+	add_submenu_page( 'sklepag', 'Ustawienia sklepu', 'Ustawienia', 'manage_options', 'sklepag-ustawienia', 'sklepag_admin_ustawienia' );
 }
 
 /**
