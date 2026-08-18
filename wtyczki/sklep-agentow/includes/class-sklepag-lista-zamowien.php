@@ -47,6 +47,7 @@ class Sklepag_Lista_Zamowien extends WP_List_Table {
 			'kwota_grosze'          => 'Kwota',
 			'pobrania'              => 'Pobrania',
 			'status'                => 'Status',
+			'akcje'                 => 'Akcje',
 		);
 	}
 
@@ -145,6 +146,9 @@ class Sklepag_Lista_Zamowien extends WP_List_Table {
 				return esc_html( (int) $item->pobrania_uzyte . ' / ' . (int) $item->pobrania_limit );
 			case 'status':
 				return sklepag_badge_statusu( $item->status );
+			case 'akcje':
+				// Akcja widoczna bez hovera (uwaga sędziego wyglądu — wzorce §3).
+				return '<a href="' . esc_url( sklepag_url_zamowienia( (int) $item->id ) ) . '" class="button button-small">Szczegóły</a>';
 			default:
 				return '';
 		}

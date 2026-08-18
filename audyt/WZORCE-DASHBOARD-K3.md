@@ -43,3 +43,14 @@ Przycisk **„Export"/„Download"** zawsze w **prawym górnym rogu** ekranu lis
 | 10 | Czas do kluczowej liczby (przychód dziś widoczny <3s, bez scrolla) | 5 |
 
 Źródła kryteriów 6-7: WCAG 2.1 (webaim.org, testparty.ai), Dashicons dev.wordpress.org, WP_List_Table/Settings API handbook. Kryteria 1-5,8-10: synteza wzorców Stripe/WooCommerce/Shopify/EDD powyżej + empty-state UX (eleken.co, pencilandpaper.io).
+
+## 8. Werdykt sędziego (18.08, zimny subagent, przynęty rozbrojone) + świadome odstępstwa
+
+**66/100 przed szlifem**; TOP-braki zaadresowane: kolumna Akcje, pasek proporcji
+statusów, notice-info dla banera, elewacja Przychodu, zrzuty-dowody pustego stanu
+i widocznego przycisku resend (luka DOWODU — kod je miał).
+**Świadomie NIE robimy** (decyzje, nie przeoczenia): metryka „czas od wejścia do
+zakupu" — NIE ŚLEDZIMY wejść (minimalizacja RODO §8, zbieramy tylko email);
+sparkline per karta i bulk actions — przerost przy wolumenie Z6 (pojedyncze
+zakupy dziennie); karty KPI własnym stylem zamiast .postbox — Woo Analytics
+też ma własne karty, spójność trzymają natywne kolory/typografia wp-admin.
