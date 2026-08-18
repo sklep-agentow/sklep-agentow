@@ -129,7 +129,10 @@ class Sklepag_Lista_Zamowien extends WP_List_Table {
 	public function column_default( $item, $column_name ) {
 		switch ( $column_name ) {
 			case 'id':
-				return '#' . (int) $item->id;
+				// Link do szczegółów + row action (natywny wzorzec list tabel WP).
+				$url = sklepag_url_zamowienia( (int) $item->id );
+				return '<a href="' . esc_url( $url ) . '"><strong>#' . (int) $item->id . '</strong></a>'
+					. $this->row_actions( array( 'view' => '<a href="' . esc_url( $url ) . '">Szczegóły</a>' ) );
 			case 'utworzono':
 				// Data wg ustawień WP (spójność z resztą wp-admin — recenzja PR #44).
 				return esc_html( mysql2date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $item->utworzono ) );

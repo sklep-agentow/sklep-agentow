@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Sklep Agentów
  * Description: Sklep z testowymi botami AI — Stripe Checkout (tryb testowy), mail po zakupie, wydanie plików, panel w wp-admin. Zaplecze całe w WordPressie, własne tabele.
- * Version: 0.4.0
+ * Version: 0.5.0
  * Requires at least: 6.7
  * Requires PHP: 8.1
  * Author: Warsztat
@@ -12,8 +12,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SKLEPAG_WERSJA', '0.4.0' );
-define( 'SKLEPAG_WERSJA_SCHEMATU', 3 ); // v3: indeks para_logowania (login,ip,czas) pod opóźnienie wykładnicze.
+define( 'SKLEPAG_WERSJA', '0.5.0' );
+define( 'SKLEPAG_WERSJA_SCHEMATU', 4 ); // v4: kolumna zamowienia.usunieto_dnia (anonimizacja RODO — K3d); v3: indeks para_logowania.
 define( 'SKLEPAG_LIMIT_POBRAN', 10 ); // Jedno źródło: INSERT zamówienia + treść maila (recenzja PR #33).
 define( 'SKLEPAG_LINK_GODZIN', 72 );  // Ważność linku pobrania — jw.
 define( 'SKLEPAG_PLIK', __FILE__ );
