@@ -78,6 +78,19 @@ function segm_wykonaj_przebieg( $tryb = 'reguly' ) {
 	$zjazd   = false;
 	$mapa_ai = null;
 	if ( in_array( $tryb, array( 'ai', 'porownaj' ), true ) ) {
+		// TWARDY limit próbki dla AI (limit PHP 30 s): JAWNY błąd zamiast
+		// fatala w środku pętli albo cichego zjazdu — przebieg NIE startuje.
+		if ( count( $maile ) > SEGM_AI_MAX_PROBKA ) {
+			return array(
+				'id'    => 0,
+				'zjazd' => false,
+				'blad'  => sprintf(
+					'Tryb AI obsługuje próbkę do %d maili (Twoja ma %d): jedno wywołanie API trwa do 18 s (timeout 9 s + jeden retry), a typowy limit czasu żądania na hostingu to 30 s — większa próbka urwałaby przebieg w połowie. Uruchom tryb „reguły" (bez limitu) albo zmniejsz próbkę.',
+					SEGM_AI_MAX_PROBKA,
+					count( $maile )
+				),
+			);
+		}
 		$mapa_ai = segm_ai_dostepny() ? segm_ai_klasyfikuj_probke( $maile ) : null;
 		if ( null === $mapa_ai ) {
 			$tryb  = 'reguly';

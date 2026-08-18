@@ -17,7 +17,19 @@ if ( ! defined( 'ABSPATH' ) ) {
 const SEGM_AI_MODEL      = 'claude-opus-5';
 const SEGM_AI_MAX_TOKENS = 4096;
 const SEGM_AI_TIMEOUT    = 9;
-const SEGM_AI_PARTIA     = 20;
+const SEGM_AI_PARTIA     = 30;
+
+/*
+ * TWARDY limit próbki dla trybów AI/porównaj (recenzja PR #37): jedna partia
+ * to maks. 18 s (timeout 9 s + jeden retry 9 s), a limit PHP hostingu bywa
+ * 30 s wall-clock — z zapasem mieści się dokładnie JEDNO wywołanie na
+ * przebieg (18 s < 30 s, zapas 12 s). Dwa wywołania (36 s) już nie.
+ * Większa próbka w trybie AI = JAWNY błąd dla admina, nigdy cichy fatal
+ * w środku pętli ani cichy zjazd do reguł. Tryb regułowy bez limitu próbki
+ * (działa lokalnie, bez wywołań zewnętrznych).
+ */
+const SEGM_AI_MAX_WYWOLAN_PRZEBIEG = 1;
+const SEGM_AI_MAX_PROBKA           = SEGM_AI_PARTIA * SEGM_AI_MAX_WYWOLAN_PRZEBIEG;
 
 /**
  * Klucz API właściciela (opcja z autoload=no; nigdy w kodzie/paczce/repo).
@@ -149,7 +161,9 @@ function segm_ai_zapytaj( $system, $tresc ) {
  * @return array|null Mapa id => kategoria albo null przy błędzie.
  */
 function segm_ai_klasyfikuj_partie( $maile, $kategorie ) {
-	$lista = implode( ', ', array_map( fn( $k ) => '"' . $k . '"', $kategorie ) );
+	// Nazwy kategorii przez wp_json_encode — cudzysłów/backslash w nazwie
+	// nie rozbije formatu promptu (recenzja PR #37).
+	$lista = implode( ', ', array_map( fn( $k ) => wp_json_encode( $k, JSON_UNESCAPED_UNICODE ), $kategorie ) );
 
 	$system = 'Klasyfikujesz maile firmowe do kategorii. Dozwolone kategorie: ' . $lista . '.' . "\n"
 		. 'ZASADY (bezwzględne):' . "\n"
