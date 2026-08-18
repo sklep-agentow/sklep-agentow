@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-const SEGM_AI_MODEL      = 'claude-opus-5';
+const SEGM_AI_MODEL      = 'claude-haiku-4-5-20251001';
 const SEGM_AI_MAX_TOKENS = 4096;
 const SEGM_AI_TIMEOUT    = 9;
 const SEGM_AI_PARTIA     = 30;
