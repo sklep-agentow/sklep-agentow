@@ -54,7 +54,11 @@ robić prawdziwy model — a najciekawszy jest tryb **„porównaj oba"**:
   oraz accuracy OBU silników — widać czarno na białym, co AI łapie ponad
   Twoje reguły (np. niuans w treści bez słowa kluczowego),
 - model dostaje listę TWOICH kategorii i ma niepewne maile odkładać do „Reszta",
-- **stop-loss:** jedna partia do 20 maili = 1 wywołanie API; dzienny limit
+- **limit próbki w trybach AI: 30 maili** (jedno wywołanie API na przebieg —
+  tak dobrane, żeby przebieg zawsze mieścił się w limicie czasu żądania
+  typowego hostingu); większa próbka = czytelny komunikat i podpowiedź:
+  zmniejsz próbkę albo użyj trybu regułowego (ten limitu nie ma),
+- **stop-loss:** jedna partia do 30 maili = 1 wywołanie API; dzienny limit
   wywołań (domyślnie 100, miękki — równoległe wywołania mogą go minimalnie
   przekroczyć) z licznikiem w ustawieniach; przy błędzie API, braku klucza
   albo wyczerpanym limicie przebieg automatycznie wykonuje się regułami
