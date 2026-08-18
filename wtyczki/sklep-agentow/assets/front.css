@@ -39,7 +39,7 @@
 
 .sklepag-mono-etykieta {
 	font-family: var(--sklepag-mono);
-	font-size: 0.8rem; /* Podbite po sędzi (WCAG-percepcja drobnych wersalików). */
+	font-size: 0.8rem; /* Podbite po sędzi wyglądu — czytelność drobnych wersalików. */
 	letter-spacing: 0.18em;
 	text-transform: uppercase;
 	color: var(--sklepag-pyl);
@@ -72,7 +72,7 @@
 /* Baner trybu testowego — mono-pasek, spokojny (plan §4: nie krzyczący alert). */
 .sklepag-baner-testowy {
 	font-family: var(--sklepag-mono);
-	font-size: 0.78rem;
+	font-size: 0.8rem; /* Spójnie z mono-etykietami (obserwacja recenzji #53). */
 	letter-spacing: 0.14em;
 	text-transform: uppercase;
 	color: var(--sklepag-limonka);
@@ -595,10 +595,6 @@ a.sklepag-kup {
 	display: flex;
 	align-items: center;
 	gap: 0.9rem;
-}
-
-.sklepag-karta-glowa .sklepag-mono-etykieta {
-	margin: 0;
 }
 
 .sklepag-ikona {
