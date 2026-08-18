@@ -186,6 +186,9 @@ branch→PR (recenzent-Claude + CI)→merge.
 - `sklepag_zdarzenia`: id, zamowienie_id NULL, typ, opis, uzytkownik, czas —
   append-only oś czasu; obejmuje TAKŻE akcje admina (CRUD, resend, eksport).
 - `sklepag_logowania`: id, czas, login_wpisany, wynik, ip, user_agent.
+- `sklepag_rate_limit`: klucz PK (akcja|okno|md5 IP), licznik, okno_do — techniczna
+  tabela atomowego limitera (wiersz żyje ~2 min, czyszczona cronem co 10 min;
+  liczniki NIE w wp_options — ściąga kl. 7, a transient nie jest atomowy).
 - Konfiguracja → `wp_options` z prefiksem `sklepag_` (sekrety `autoload=no`);
   wersja schematu w opcji (ścieżka upgrade przy zmianie).
 Retencja: logowania i zdarzenia techniczne czyszczone po 90 dniach (cron);
@@ -211,9 +214,11 @@ Standardy WP: **capability check na KAŻDEJ akcji admina + nonce na KAŻDEJ muta
 każdego SQL (zero sklejania) · sanityzacja wejść (konkretne klucze + `wp_unslash`,
 nigdy całe $_POST), escape wyjść (`esc_html/attr/url`) — sanitize early, escape late ·
 każdy SQL `LIKE`: wartości przez `$wpdb->esc_like()`, w stałych `\_` (podkreślnik
-= wildcard; ściąga kl. 2) · wywołania zewnętrzne: timeout 15 s + JEDEN retry
-(suma << limit PHP 30 s), liczniki limitów zużywane PO sukcesie, nie przed
-(ściąga: uwagi kolegi z catsnboard PR #82) ·
+= wildcard; ściąga kl. 2) · wywołania zewnętrzne: SUMA wszystkich prób w jednym
+żądaniu PHP wyraźnie < limitu 30 s hostingu — sklep: 15 s × 1 próba (ponowienia
+robią Stripe/cron), boty: 9 s × 2 próby = 18 s (korekta 18.08 po recenzji #31:
+2×15=30 nie mieści się pod limitem); liczniki limitów zużywane PO sukcesie,
+nie przed (ściąga: uwagi kolegi z catsnboard PR #82) ·
 podpis webhooka stałoczasowo na surowym body · cena wyłącznie z bazy · sekrety w
 opcjach `autoload=no`, NIE w repo (gitleaks w CI), NIE w logach · pliki produktów
 poza publicznym dostępem warstwami + brama w PHP (§4A) · dziennik prób logowania +
@@ -223,7 +228,9 @@ zablokować egzaminatora) · upload zip: rozszerzenie + MIME + limit rozmiaru
 **20 MB** (realne zipy botów <1 MB; realny `upload_max_filesize` stacka sprawdzany
 w K1) + losowa nazwa docelowa + weryfikacja obecności PO zapisie ·
 XSS: opisy produktów renderowane jako tekst · rate limit publicznych endpointów
-ZAKUPU i POBRAŃ (transient per IP) — **trasa webhooka JAWNIE WYŁĄCZONA z limitera**
+ZAKUPU i POBRAŃ (ATOMOWY licznik w tabeli `rate_limit` per IP i okno minutowe —
+transient odpadł: para get/set gubi żądania równoległe, zmierzone 40/40 przy
+progu 30; recenzja #33) — **trasa webhooka JAWNIE WYŁĄCZONA z limitera**
 (ponowienia Stripe idą ze stałej puli IP; dławienie ich = cichy ubój głównej drogi
 zamaskowany przez reconciliation — krytyka 8; autoryzacją webhooka jest podpis) ·
 CI: php -l + phpcs + phpstan (skill wp-phpstan) + gitleaks +
