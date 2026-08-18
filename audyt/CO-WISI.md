@@ -25,6 +25,11 @@
   `customSanitizingFunctions` (chatl_waliduj_sesje) + rozszerzyć `<file>` na boty +
   przebudowa paczek + POWTÓRKA weryfikacji zipów. 5 trafień sniffa security obejrzane
   18.08 = szum (sanitizer-regex, klucz API sanityzowany przy zapisie), 0 realnych dziur.
+- **Test automatyczny dziennika/opóźnienia** (recenzja #42, drobna): skrypt na żywym
+  stacku (sekwencja czasów + salwa równoległa + retencja) — dołożyć przy K3c/d razem
+  ze skryptem testowym panelu, żeby regresja (np. kolejność hooków) nie przeszła cicho.
+- **Instrukcja wdrożenia (K8): wzmianka fail2ban/WAF** na wp-login.php przy wielu IP
+  (D26 — rezydualne ryzyko poza wtyczką).
 - Wroga sesja botów 23.08 · K6 24.08 · K7 25.08 · K8 27.08 = próba 1.
 
 ## Stan maszyny
