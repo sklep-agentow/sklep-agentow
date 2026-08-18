@@ -66,21 +66,27 @@ function segm_strona_przebiegi() {
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 			<input type="hidden" name="action" value="segm_przebieg_start">
 			<?php wp_nonce_field( 'segm_przebieg_start' ); ?>
-			<?php $ai_jest = segm_ai_dostepny(); ?>
+			<?php
+			$ai_jest     = segm_ai_dostepny();
+			$ai_za_duza  = $maili > SEGM_AI_MAX_PROBKA;
+			$ai_mozliwe  = $ai_jest && ! $ai_za_duza;
+			?>
 			<p>
-				<label><input type="radio" name="tryb" value="reguly" checked> reguły (lokalnie, bez klucza)</label><br>
-				<label><input type="radio" name="tryb" value="ai" <?php disabled( ! $ai_jest ); ?>> AI (klasyfikuje model)</label><br>
-				<label><input type="radio" name="tryb" value="porownaj" <?php disabled( ! $ai_jest ); ?>> porównaj oba (raport różnic — co AI łapie ponad reguły)</label>
+				<label><input type="radio" name="tryb" value="reguly" checked> reguły (lokalnie, bez klucza, bez limitu próbki)</label><br>
+				<label><input type="radio" name="tryb" value="ai" <?php disabled( ! $ai_mozliwe ); ?>> AI (klasyfikuje model; próbka do <?php echo (int) SEGM_AI_MAX_PROBKA; ?> maili)</label><br>
+				<label><input type="radio" name="tryb" value="porownaj" <?php disabled( ! $ai_mozliwe ); ?>> porównaj oba (raport różnic — co AI łapie ponad reguły; próbka do <?php echo (int) SEGM_AI_MAX_PROBKA; ?> maili)</label>
 			</p>
 			<?php if ( ! $ai_jest ) : ?>
 				<p class="description">Tryby AI nieaktywne: <?php echo '' === segm_klucz_api() ? 'brak klucza API (Ustawienia)' : 'dzienny limit wywołań wyczerpany'; ?>. Przy błędzie AI przebieg i tak zjeżdża do reguł.</p>
+			<?php elseif ( $ai_za_duza ) : ?>
+				<p class="description">Tryby AI nieaktywne: próbka ma <?php echo (int) $maili; ?> maili, a tryb AI obsługuje maks. <?php echo (int) SEGM_AI_MAX_PROBKA; ?> (jedno wywołanie API to do 18 s — timeout 9 s + retry — a typowy limit czasu żądania na hostingu to 30 s). Zmniejsz próbkę albo użyj trybu „reguły".</p>
 			<?php endif; ?>
 			<?php submit_button( 'Przepuść próbkę', 'primary', 'submit', false ); ?>
 		</form>
 
 		<h2>Historia przebiegów</h2>
 		<table class="widefat striped">
-			<thead><tr><th>#</th><th>Kiedy</th><th>Tryb</th><th>Maili</th><th>Złapane regułami</th><th>Pokrycie</th><th>Accuracy</th><th></th></tr></thead>
+			<thead><tr><th>#</th><th>Kiedy</th><th>Tryb</th><th>Maili</th><th>Przypisane (reguły/AI, poza „Reszta")</th><th>Pokrycie</th><th>Accuracy</th><th></th></tr></thead>
 			<tbody>
 			<?php if ( ! $przebiegi ) : ?>
 				<tr><td colspan="8">Jeszcze nie było przebiegu — kliknij przycisk powyżej.</td></tr>
@@ -260,6 +266,11 @@ function segm_post_przebieg_start() {
 	}
 
 	$wynik = segm_wykonaj_przebieg( $tryb );
+	if ( ! empty( $wynik['blad'] ) ) {
+		// Próbka ponad limit AI: jawny komunikat, przebieg NIE wystartował.
+		wp_safe_redirect( admin_url( 'admin.php?page=segm-przebiegi&segm_blad=' . rawurlencode( $wynik['blad'] ) ) );
+		exit;
+	}
 	$adres = 'admin.php?page=segm-przebiegi&przebieg=' . (int) $wynik['id'];
 	if ( $wynik['zjazd'] ) {
 		$adres .= '&segm_blad=' . rawurlencode( 'AI nie odpowiedziało (błąd, limit albo brak klucza) — wykonano przebieg regułowy.' );
