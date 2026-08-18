@@ -6,8 +6,9 @@
  *
  * Sekrety (klucz Stripe, sekret webhooka): pole password, wartość NIGDY nie
  * wraca do formularza; puste pole = zostaw bez zmian; usunięcie = checkbox.
- * Opcje sekretne zakładane przy aktywacji z autoload=no (options.php robi
- * update_option, które ZACHOWUJE autoload) — nigdy nie ładują się na froncie.
+ * Opcje sekretne zakładane na admin_init z autoload=no (options.php robi
+ * update_option, które ZACHOWUJE autoload) — nigdy nie ładują się na froncie;
+ * szczegóły przy sklepag_ustawienia_rejestracja().
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
