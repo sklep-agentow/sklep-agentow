@@ -1,5 +1,24 @@
 # CO-WISI — rzeczy oddane komuś / bez strażnika (zasada: oddajesz ⇒ wiersz, wraca ⇒ kasujesz)
 
+## ✅ ZAMKNIĘTE 19.08 (wieczór) — ⭐ K5 WITRYNA KOMPLET, 3 PR-y (#51-#53), wersja 0.8.1
+- **#51 fundament+lista** (wyspa z tokenami zmierzonymi z motywu; mono-etykiety,
+  pille, baner-pigułka; H1 nasz — motyw nie renderuje własnego, zmierzone) ·
+  **#52 strona produktu+SEO** (jedna strona WP + query var; rewrite ze sluga
+  z opcji; sekcje §2B komplet: mockup czatu/PRZED-PO/kroki/dowody/uczciwość/FAQ;
+  SEO: title/desc/canonical/OG/JSON-LD Product+Breadcrumb+FAQPage/okładki PNG/
+  noindex-dziękujemy/sitemap provider [nazwa BEZ myślnika — regex rdzenia];
+  hijack metadanych query varem znaleziony recenzją, zamknięty Z POMIAREM;
+  PEŁNY przelot E2E po zmianie: mail_wyslany) · **#53 szlif po sędzi** (ikony
+  SVG kart, jawne „nie zmyślamy recenzji", FAQ separatory, kropka-glow).
+- **Sędzia wyglądu: 73/100 → 85/100** (dwa świeże przebiegi, przynęty rozbrojone
+  w OBU; 2 zaniżenia rundy 2 = artefakty zestawu zrzutów, odrzucone z dowodem;
+  PEŁNE werdykty obu rund: komentarze w PR #53 — rekomendacja recenzji #54).
+- Cross-browser 6/6 (chromium+firefox, zero błędów konsoli) · zagadka sitemap
+  ROZWIĄZANA: blog_public=0 wyłącza sitemapy w rdzeniu (nie usterka!) → wpis
+  do instrukcji K8: na produkcji wyłączyć „Zniechęcaj wyszukiwarki".
+- Na stacku doszedł REALNY produkt „Segregator maila" (zip 1.2.0) — sklep ma
+  docelowe 2 produkty.
+
 ## ✅ ZAMKNIĘTE 19.08
 - **Uwagi recenzji #49 → PR #50 MERGED (main=19dbcc4, 0.6.1):** dok=kod (.bin
   usunięte + sweep całe repo: seed-demo, adnotacja hist. w K2-WROGA-SESJA) ·
