@@ -76,6 +76,7 @@
 		email.required = true;
 		email.placeholder = 'Twój e-mail';
 		email.maxLength = 190;
+		email.setAttribute('aria-label', 'Twój adres e-mail');
 		f.appendChild(email);
 
 		var tresc = el('textarea', 'chatl-pole');
@@ -83,6 +84,7 @@
 		tresc.placeholder = 'W czym możemy pomóc?';
 		tresc.maxLength = 2000;
 		tresc.rows = 3;
+		tresc.setAttribute('aria-label', 'Treść wiadomości');
 		f.appendChild(tresc);
 
 		var przycisk = el('button', 'chatl-wyslij-zgloszenie', 'Wyślij wiadomość');
@@ -146,6 +148,7 @@
 		polePytania.placeholder = 'Zadaj pytanie…';
 		polePytania.maxLength = 500;
 		polePytania.autocomplete = 'off';
+		polePytania.setAttribute('aria-label', 'Twoje pytanie');
 		formPytania.appendChild(polePytania);
 		var wyslijBtn = el('button', 'chatl-wyslij-pytanie', '➤');
 		wyslijBtn.type = 'submit';
@@ -166,7 +169,7 @@
 							pokazFormularz('Zostaw maila i pytanie — wrócimy z odpowiedzią.');
 						}
 					} else {
-						dodajWiadomosc('bot', 'Coś poszło nie tak. Spróbuj ponownie.');
+						dodajWiadomosc('bot', (odp.data && odp.data.komunikat) || 'Coś poszło nie tak. Spróbuj ponownie.');
 					}
 				})
 				.catch(function () {

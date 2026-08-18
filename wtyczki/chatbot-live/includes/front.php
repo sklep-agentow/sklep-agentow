@@ -10,6 +10,27 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 const CHATL_MAX_PYTANIE   = 500;
 const CHATL_MAX_WIADOMOSC = 2000;
+const CHATL_LIMIT_NA_MIN  = 10;
+
+/**
+ * Rate limit per IP (transient, okno 60 s) — wspólny dla obu endpointów nopriv,
+ * żeby gość z noncem nie zalewał bazy ani nie mail-bombił właściciela.
+ *
+ * @return bool True = wolno obsłużyć, false = limit wyczerpany.
+ */
+function chatl_limit_ip_ok() {
+	$ip = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
+	if ( '' === $ip ) {
+		return false;
+	}
+	$klucz   = 'chatl_rl_' . md5( $ip );
+	$licznik = (int) get_transient( $klucz );
+	if ( $licznik >= CHATL_LIMIT_NA_MIN ) {
+		return false;
+	}
+	set_transient( $klucz, $licznik + 1, MINUTE_IN_SECONDS );
+	return true;
+}
 
 /**
  * Assety tylko na froncie i tylko gdy bot włączony.
@@ -50,6 +71,10 @@ function chatl_waliduj_sesje( $sesja ) {
  */
 function chatl_ajax_pytanie() {
 	check_ajax_referer( 'chatl_front', 'nonce' );
+
+	if ( ! chatl_limit_ip_ok() ) {
+		wp_send_json_error( array( 'komunikat' => 'Za dużo wiadomości w krótkim czasie — odczekaj chwilę i spróbuj ponownie.' ), 429 );
+	}
 
 	$ust = chatl_ustawienia();
 	if ( ! $ust['wlaczony'] ) {
@@ -95,6 +120,10 @@ add_action( 'wp_ajax_nopriv_chatl_pytanie', 'chatl_ajax_pytanie' );
  */
 function chatl_ajax_zgloszenie() {
 	check_ajax_referer( 'chatl_front', 'nonce' );
+
+	if ( ! chatl_limit_ip_ok() ) {
+		wp_send_json_error( array( 'komunikat' => 'Za dużo wiadomości w krótkim czasie — odczekaj chwilę i spróbuj ponownie.' ), 429 );
+	}
 
 	$ust = chatl_ustawienia();
 	if ( ! $ust['wlaczony'] ) {

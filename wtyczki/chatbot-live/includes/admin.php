@@ -237,6 +237,10 @@ function chatl_strona_historia() {
 	global $wpdb;
 	$tabela = $wpdb->prefix . 'chatl_rozmowy';
 
+	// Self-heal retencji: WP-cron to pseudo-cron (bez ruchu nie odpala), więc
+	// wejście admina na Historię też czyści wpisy starsze niż 90 dni (idempotentne).
+	chatl_czyszczenie_historii();
+
 	$sesja = '';
 	if ( isset( $_GET['sesja'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$sesja = chatl_waliduj_sesje( wp_unslash( $_GET['sesja'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended

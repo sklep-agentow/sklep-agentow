@@ -21,3 +21,7 @@ $wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}chatl_rozmowy" ); // phpcs:ig
 
 delete_option( 'chatl_ustawienia' );
 delete_option( 'chatl_wersja_schematu' );
+
+// Transienty rate-limitu (chatl_rl_*): podkreślniki w LIKE escapowane (\_),
+// żeby nie złapać cudzych wpisów o podobnej nazwie.
+$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '\_transient\_chatl\_rl\_%' OR option_name LIKE '\_transient\_timeout\_chatl\_rl\_%'" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery

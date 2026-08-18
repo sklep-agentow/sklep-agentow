@@ -173,8 +173,15 @@
 	border: 0;
 	padding: 10px 12px;
 	font: inherit;
-	outline: none;
 	min-width: 0;
+}
+
+/* Widoczny focus dla nawigacji klawiaturą (WCAG), bez ramki przy kliknięciu myszą. */
+.chatl-korzen button:focus-visible,
+.chatl-korzen input:focus-visible,
+.chatl-korzen textarea:focus-visible {
+	outline: 2px solid #1d4ed8;
+	outline-offset: -2px;
 }
 
 .chatl-wyslij-pytanie {
