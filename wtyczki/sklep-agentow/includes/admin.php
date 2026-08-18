@@ -10,6 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 require_once SKLEPAG_KATALOG . 'includes/admin-dashboard.php';
+require_once SKLEPAG_KATALOG . 'includes/admin-zamowienie.php';
 require_once SKLEPAG_KATALOG . 'includes/admin-dziennik.php';
 require_once SKLEPAG_KATALOG . 'includes/admin-ustawienia.php';
 
@@ -30,6 +31,10 @@ function sklepag_admin_menu() {
 	add_submenu_page( 'sklepag', 'Sklep Agentów — pulpit', 'Pulpit', 'manage_options', 'sklepag', 'sklepag_admin_dashboard' );
 	add_submenu_page( 'sklepag', 'Dziennik — logowania i zdarzenia', 'Dziennik', 'manage_options', 'sklepag-dziennik', 'sklepag_admin_dziennik' );
 	add_submenu_page( 'sklepag', 'Ustawienia sklepu', 'Ustawienia', 'manage_options', 'sklepag-ustawienia', 'sklepag_admin_ustawienia' );
+	// Widok zamówienia: strona zarejestrowana, ale BEZ pozycji w menu (wejście
+	// linkiem „Szczegóły" z tabeli) — wzorzec rdzenia: add + remove_submenu_page.
+	add_submenu_page( 'sklepag', 'Zamówienie', 'Zamówienie', 'manage_options', 'sklepag-zamowienie', 'sklepag_admin_zamowienie' );
+	remove_submenu_page( 'sklepag', 'sklepag-zamowienie' );
 
 	// Screen Options „na stronę" dla tabeli zamówień (natywny wzorzec WP).
 	add_action(

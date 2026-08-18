@@ -66,6 +66,7 @@ function sklepag_tabele_sql() {
 			pobrania_uzyte smallint(5) unsigned NOT NULL DEFAULT 0,
 			mail_proby smallint(5) unsigned NOT NULL DEFAULT 0,
 			mail_tresc longtext,
+			usunieto_dnia datetime DEFAULT NULL,
 			utworzono datetime NOT NULL,
 			zmieniono datetime NOT NULL,
 			PRIMARY KEY  (id),
