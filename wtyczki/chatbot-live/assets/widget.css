@@ -1,4 +1,8 @@
-/* ChatBot LIVE — widget. Własna warstwa (z-index), nie rusza motywu. */
+/* ChatBot LIVE — widget. Własna warstwa (z-index), nie rusza motywu.
+   Paleta 1:1 ze sklepu/strony-gospodarza (front.css .sklepag-wyspa, 19.08):
+   tusz #08090b · węgiel #101116 · papier #f5f5f5 · pył #8f929c · limonka #bfff38
+   · linia rgba(245,245,245,0.08) · hover = pierścień rgba(191,255,56,0.18).
+   Dymki jak mockup strony produktu: bot = limonka na tuszu, gość = jasny na ciemnym. */
 
 .chatl-korzen {
 	position: fixed;
@@ -13,19 +17,21 @@
 .chatl-babelek {
 	width: 56px;
 	height: 56px;
-	border: 0;
+	/* Ciemna obwódka: na ciemnym motywie gospodarza znika (tło = tusz), na jasnej
+	   stronie daje separację od tła (WCAG 1.4.11 — limonka na białym to ~1.2:1). */
+	border: 2px solid #08090b;
 	border-radius: 50%;
-	background: #1d4ed8;
-	color: #fff;
+	background: #bfff38;
+	color: #08090b;
 	font-size: 24px;
 	cursor: pointer;
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
 	display: block;
 	margin-left: auto;
 }
 
 .chatl-babelek:hover {
-	background: #1e40af;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45), 0 0 0 4px rgba(191, 255, 56, 0.18);
 }
 
 .chatl-okno {
@@ -35,9 +41,10 @@
 	height: 440px;
 	max-height: calc(100vh - 120px);
 	margin-bottom: 12px;
-	background: #fff;
+	background: #101116;
+	border: 1px solid rgba(245, 245, 245, 0.08);
 	border-radius: 12px;
-	box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+	box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
 	flex-direction: column;
 	overflow: hidden;
 }
@@ -51,8 +58,9 @@
 	align-items: center;
 	justify-content: space-between;
 	padding: 10px 14px;
-	background: #1d4ed8;
-	color: #fff;
+	background: #08090b;
+	color: #f5f5f5;
+	border-bottom: 1px solid rgba(245, 245, 245, 0.08);
 }
 
 .chatl-tytul {
@@ -62,7 +70,7 @@
 .chatl-zamknij {
 	border: 0;
 	background: none;
-	color: #fff;
+	color: #f5f5f5;
 	font-size: 20px;
 	cursor: pointer;
 	padding: 0 4px;
@@ -72,7 +80,7 @@
 	flex: 1;
 	overflow-y: auto;
 	padding: 12px;
-	background: #f8fafc;
+	background: #101116;
 }
 
 .chatl-wiadomosc {
@@ -88,28 +96,28 @@
 	max-width: 85%;
 	padding: 8px 12px;
 	border-radius: 12px;
-	background: #e2e8f0;
-	color: #0f172a;
+	background: #bfff38;
+	color: #08090b;
 	white-space: pre-wrap;
 	word-break: break-word;
 }
 
 .chatl-gosc .chatl-dymek {
-	background: #1d4ed8;
-	color: #fff;
+	background: rgba(245, 245, 245, 0.08);
+	color: #f5f5f5;
 }
 
 .chatl-pasek-kontakt {
 	padding: 6px 12px;
-	background: #f8fafc;
-	border-top: 1px solid #e2e8f0;
+	background: #101116;
+	border-top: 1px solid rgba(245, 245, 245, 0.08);
 	text-align: center;
 }
 
 .chatl-przycisk-kontakt {
-	border: 1px solid #1d4ed8;
-	background: #fff;
-	color: #1d4ed8;
+	border: 1px solid #bfff38;
+	background: none;
+	color: #bfff38;
 	border-radius: 16px;
 	padding: 4px 14px;
 	cursor: pointer;
@@ -117,14 +125,14 @@
 }
 
 .chatl-przycisk-kontakt:hover {
-	background: #eff6ff;
+	box-shadow: 0 0 0 4px rgba(191, 255, 56, 0.18);
 }
 
 .chatl-formularz {
 	display: none;
 	padding: 10px 12px;
-	background: #eff6ff;
-	border-top: 1px solid #dbeafe;
+	background: #08090b;
+	border-top: 1px solid rgba(245, 245, 245, 0.08);
 }
 
 .chatl-formularz.chatl-otwarty {
@@ -134,7 +142,7 @@
 .chatl-form-tytul {
 	font-size: 13px;
 	margin-bottom: 6px;
-	color: #1e3a8a;
+	color: #f5f5f5;
 }
 
 .chatl-formularz .chatl-pole {
@@ -142,7 +150,9 @@
 	box-sizing: border-box;
 	margin-bottom: 6px;
 	padding: 6px 8px;
-	border: 1px solid #cbd5e1;
+	background: #101116;
+	color: #f5f5f5;
+	border: 1px solid rgba(245, 245, 245, 0.08);
 	border-radius: 6px;
 	font: inherit;
 }
@@ -150,12 +160,16 @@
 .chatl-wyslij-zgloszenie {
 	width: 100%;
 	border: 0;
-	background: #1d4ed8;
-	color: #fff;
+	background: #bfff38;
+	color: #08090b;
 	border-radius: 6px;
 	padding: 7px;
 	cursor: pointer;
 	font: inherit;
+}
+
+.chatl-wyslij-zgloszenie:hover {
+	box-shadow: 0 0 0 4px rgba(191, 255, 56, 0.18);
 }
 
 .chatl-wyslij-zgloszenie:disabled {
@@ -164,30 +178,38 @@
 
 .chatl-form-pytania {
 	display: flex;
-	border-top: 1px solid #e2e8f0;
-	background: #fff;
+	border-top: 1px solid rgba(245, 245, 245, 0.08);
+	background: #08090b;
 }
 
 .chatl-pole-pytania {
 	flex: 1;
 	border: 0;
+	background: none;
+	color: #f5f5f5;
 	padding: 10px 12px;
 	font: inherit;
 	min-width: 0;
+}
+
+.chatl-korzen input::placeholder,
+.chatl-korzen textarea::placeholder {
+	color: #8f929c;
+	opacity: 1;
 }
 
 /* Widoczny focus dla nawigacji klawiaturą (WCAG), bez ramki przy kliknięciu myszą. */
 .chatl-korzen button:focus-visible,
 .chatl-korzen input:focus-visible,
 .chatl-korzen textarea:focus-visible {
-	outline: 2px solid #1d4ed8;
+	outline: 2px solid #bfff38;
 	outline-offset: -2px;
 }
 
 .chatl-wyslij-pytanie {
 	border: 0;
 	background: none;
-	color: #1d4ed8;
+	color: #bfff38;
 	font-size: 18px;
 	padding: 0 14px;
 	cursor: pointer;
