@@ -11,6 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 require_once SKLEPAG_KATALOG . 'includes/admin-dashboard.php';
 require_once SKLEPAG_KATALOG . 'includes/admin-zamowienie.php';
+require_once SKLEPAG_KATALOG . 'includes/admin-produkty.php';
 require_once SKLEPAG_KATALOG . 'includes/admin-dziennik.php';
 require_once SKLEPAG_KATALOG . 'includes/admin-ustawienia.php';
 
@@ -29,6 +30,7 @@ function sklepag_admin_menu() {
 	);
 	// Pierwsza pozycja submenu = czytelna etykieta zamiast powtórki nazwy wtyczki.
 	add_submenu_page( 'sklepag', 'Sklep Agentów — pulpit', 'Pulpit', 'manage_options', 'sklepag', 'sklepag_admin_dashboard' );
+	add_submenu_page( 'sklepag', 'Produkty sklepu', 'Produkty', 'manage_options', 'sklepag-produkty', 'sklepag_admin_produkty' );
 	add_submenu_page( 'sklepag', 'Dziennik — logowania i zdarzenia', 'Dziennik', 'manage_options', 'sklepag-dziennik', 'sklepag_admin_dziennik' );
 	add_submenu_page( 'sklepag', 'Ustawienia sklepu', 'Ustawienia', 'manage_options', 'sklepag-ustawienia', 'sklepag_admin_ustawienia' );
 	// Widok zamówienia: strona zarejestrowana, pozycja w menu ukrywana TYLKO
