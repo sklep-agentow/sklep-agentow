@@ -1,5 +1,16 @@
 # CO-WISI — rzeczy oddane komuś / bez strażnika (zasada: oddajesz ⇒ wiersz, wraca ⇒ kasujesz)
 
+## ✅ ZAMKNIĘTE 19.08
+- **Uwagi recenzji #49 → PR #50 MERGED (main=19dbcc4, 0.6.1):** dok=kod (.bin
+  usunięte + sweep całe repo: seed-demo, adnotacja hist. w K2-WROGA-SESJA) ·
+  wynik $wpdb->insert/update sprawdzany + sierota sprzątana (dowód na żywo:
+  wymuszona awaria INSERT → błąd, nie fałszywy sukces; plików 4→4) · kryterium #6
+  W TEŚCIE produkty-test.js (9/9, z próbą kontrolną „edycja zaszła") · ścieżka
+  zrzutu przez env. Recenzent potwierdził wszystko 2× + własny grep sweepu.
+- **K5 plan wyglądu:** zwiad motywu (paleta/typografia/detale zmierzone) + zwiad
+  wzorców stron produktowych (subagent, źródła w PLAN-WYGLADU-K5.md §5) →
+  `PLAN-WYGLADU-K5.md` CZEKA NA KLEPNIĘCIE Dzidka przed budową.
+
 ## ✅ ZAMKNIĘTE 18.08 (dzień)
 - Model AI botów haiku-4-5 (Dzidek) · timeout AI #37 · **oba boty scalone z haiku**
   (#36 chatbot, #37 segregator) · recenzent zna WP+ściągę+Handbook (#38) · hardening

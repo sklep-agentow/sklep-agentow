@@ -1,0 +1,254 @@
+/**
+ * Front sklepu (K5) — klimat strony-gospodarza Automatic AI (PLAN-WYGLADU-K5.md).
+ * Tokeny zmierzone z motywu 19.08. Wszystko scope'owane pod .sklepag-wyspa:
+ * na stronie gospodarza zlewa się 1:1, na czystym WP (K6) jest spójną ciemną
+ * wyspą. Zero bibliotek, zero CDN, fonty dziedziczone z motywu.
+ */
+
+.sklepag-wyspa {
+	/* Tokeny (PLAN-WYGLADU-K5 §1). */
+	--sklepag-tusz: #08090b;
+	--sklepag-wegiel: #101116;
+	--sklepag-papier: #f5f5f5;
+	--sklepag-pyl: #8f929c;
+	--sklepag-limonka: #bfff38;
+	--sklepag-linia: rgba(245, 245, 245, 0.08);
+	--sklepag-mono: GeistMonoSubset, ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+	background: var(--sklepag-tusz);
+	color: var(--sklepag-papier);
+	/* Górny padding większy: sticky-header motywu gospodarza nachodzi na start treści. */
+	padding: clamp(4rem, 10vw, 5.5rem) clamp(1rem, 4vw, 2.5rem) clamp(2rem, 6vw, 4.5rem);
+	border-radius: 0;
+	line-height: 1.6;
+}
+
+.sklepag-wyspa *,
+.sklepag-wyspa *::before,
+.sklepag-wyspa *::after {
+	box-sizing: border-box;
+}
+
+.sklepag-wyspa :focus-visible {
+	outline: 2px solid var(--sklepag-limonka);
+	outline-offset: 3px;
+	border-radius: 2px;
+}
+
+/* ---------- Detale klimatu ---------- */
+
+.sklepag-mono-etykieta {
+	font-family: var(--sklepag-mono);
+	font-size: 0.78rem;
+	letter-spacing: 0.18em;
+	text-transform: uppercase;
+	color: var(--sklepag-pyl);
+	margin: 0 0 1rem;
+}
+
+.sklepag-mono-etykieta .sklepag-akcent {
+	color: var(--sklepag-limonka);
+}
+
+/* Pulsująca kropka statusu (signature — gaśnie przy reduced-motion). */
+.sklepag-kropka {
+	display: inline-block;
+	width: 0.5em;
+	height: 0.5em;
+	border-radius: 50%;
+	background: var(--sklepag-limonka);
+	margin-right: 0.5em;
+	vertical-align: baseline;
+	animation: sklepag-puls 2.2s ease-in-out infinite;
+}
+
+@keyframes sklepag-puls {
+	0%, 100% { opacity: 1; }
+	50% { opacity: 0.35; }
+}
+
+/* Baner trybu testowego — mono-pasek, spokojny (plan §4: nie krzyczący alert). */
+.sklepag-baner-testowy {
+	font-family: var(--sklepag-mono);
+	font-size: 0.78rem;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	color: var(--sklepag-limonka);
+	background: var(--sklepag-wegiel);
+	border: 1px solid var(--sklepag-linia);
+	border-radius: 999px;
+	padding: 0.55em 1.2em;
+	display: inline-block;
+	margin: 0 0 2.5rem;
+}
+
+/* ---------- Hero listy ---------- */
+
+.sklepag-hero {
+	max-width: 46rem;
+	margin: 0 0 3rem;
+}
+
+.sklepag-hero-tytul {
+	font-size: clamp(2rem, 5vw, 3.4rem);
+	font-weight: 600;
+	line-height: 1.1;
+	letter-spacing: -0.02em;
+	margin: 0 0 1rem;
+	color: var(--sklepag-papier);
+}
+
+.sklepag-hero-tytul .sklepag-akcent {
+	color: var(--sklepag-limonka);
+}
+
+.sklepag-lead {
+	color: var(--sklepag-pyl);
+	font-size: 1.05rem;
+	max-width: 38rem;
+	margin: 0 0 1.8rem;
+}
+
+/* ---------- Karty produktów ---------- */
+
+.sklepag-karty {
+	display: grid;
+	/* Górny limit traku: pojedynczy produkt nie rozciąga się na całą szerokość. */
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 34rem));
+	justify-content: start;
+	gap: 1.5rem;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.sklepag-karta {
+	background: var(--sklepag-wegiel);
+	border: 1px solid var(--sklepag-linia);
+	border-radius: 16px;
+	padding: clamp(1.4rem, 3vw, 2.2rem);
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.9rem;
+	transition: border-color 0.25s ease;
+}
+
+.sklepag-karta:hover {
+	border-color: rgba(191, 255, 56, 0.45);
+}
+
+.sklepag-karta .sklepag-mono-etykieta {
+	margin: 0;
+}
+
+.sklepag-karta-tytul {
+	font-size: clamp(1.4rem, 3vw, 1.9rem);
+	font-weight: 600;
+	line-height: 1.15;
+	margin: 0;
+	color: var(--sklepag-papier);
+}
+
+.sklepag-karta-opis {
+	color: var(--sklepag-pyl);
+	margin: 0;
+	flex-grow: 1;
+}
+
+.sklepag-cena {
+	font-size: clamp(1.5rem, 3vw, 2rem);
+	font-weight: 600;
+	color: var(--sklepag-limonka);
+	margin: 0;
+}
+
+.sklepag-cena .sklepag-cena-waluta {
+	font-size: 0.6em;
+	color: var(--sklepag-pyl);
+	font-weight: 400;
+	margin-left: 0.25em;
+}
+
+/* ---------- Formularz zakupu na karcie ---------- */
+
+.sklepag-zgoda {
+	display: flex;
+	gap: 0.6em;
+	align-items: flex-start;
+	color: var(--sklepag-pyl);
+	font-size: 0.85rem;
+	line-height: 1.5;
+	margin: 0 0 1rem;
+}
+
+.sklepag-zgoda input[type="checkbox"] {
+	width: 1.05em;
+	height: 1.05em;
+	margin-top: 0.2em;
+	flex-shrink: 0;
+	accent-color: var(--sklepag-limonka);
+}
+
+.sklepag-kup {
+	font-family: inherit;
+	font-size: 1rem;
+	font-weight: 600;
+	color: var(--sklepag-tusz);
+	background: var(--sklepag-limonka);
+	border: 0;
+	border-radius: 999px;
+	padding: 0.8em 1.8em;
+	cursor: pointer;
+	transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.sklepag-kup:hover {
+	box-shadow: 0 0 0 4px rgba(191, 255, 56, 0.18);
+}
+
+.sklepag-kup:active {
+	transform: scale(0.98);
+}
+
+/* Stan pusty (uczciwy, z kości). */
+.sklepag-pusto {
+	color: var(--sklepag-pyl);
+	font-family: var(--sklepag-mono);
+	border: 1px dashed var(--sklepag-linia);
+	border-radius: 12px;
+	padding: 2rem;
+	text-align: center;
+}
+
+/* ---------- Strona „Dziękujemy" ---------- */
+
+.sklepag-wyspa .sklepag-status {
+	font-family: var(--sklepag-mono);
+	font-size: 0.95rem;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	color: var(--sklepag-papier);
+	background: var(--sklepag-wegiel);
+	border: 1px solid var(--sklepag-linia);
+	border-radius: 12px;
+	padding: 1.2em 1.6em;
+	margin: 0;
+}
+
+/* ---------- RWD / dostępność ---------- */
+
+@media (max-width: 40rem) {
+	.sklepag-kup {
+		width: 100%;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.sklepag-wyspa *,
+	.sklepag-wyspa *::before,
+	.sklepag-wyspa *::after {
+		animation: none !important;
+		transition: none !important;
+	}
+}
