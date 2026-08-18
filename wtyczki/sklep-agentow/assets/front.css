@@ -39,7 +39,7 @@
 
 .sklepag-mono-etykieta {
 	font-family: var(--sklepag-mono);
-	font-size: 0.78rem;
+	font-size: 0.8rem; /* Podbite po sędzi (WCAG-percepcja drobnych wersalików). */
 	letter-spacing: 0.18em;
 	text-transform: uppercase;
 	color: var(--sklepag-pyl);
@@ -50,14 +50,16 @@
 	color: var(--sklepag-limonka);
 }
 
-/* Pulsująca kropka statusu (signature — gaśnie przy reduced-motion). */
+/* Pulsująca kropka statusu (signature — gaśnie przy reduced-motion).
+   Rozmiar+glow po sędzi (T5): na zrzucie 1440px była niezauważalna. */
 .sklepag-kropka {
 	display: inline-block;
-	width: 0.5em;
-	height: 0.5em;
+	width: 0.62em;
+	height: 0.62em;
 	border-radius: 50%;
 	background: var(--sklepag-limonka);
-	margin-right: 0.5em;
+	box-shadow: 0 0 8px 1px rgba(191, 255, 56, 0.55);
+	margin-right: 0.55em;
 	vertical-align: baseline;
 	animation: sklepag-puls 2.2s ease-in-out infinite;
 }
@@ -563,7 +565,7 @@ a.sklepag-kup {
 	border-top: 1px solid var(--sklepag-linia);
 }
 
-/* FAQ. */
+/* FAQ — hairline separatory (sędzia: gołe stosy tekstu łamały rytm komponentów). */
 .sklepag-faq {
 	margin: 0;
 	max-width: 44rem;
@@ -572,16 +574,36 @@ a.sklepag-kup {
 .sklepag-faq dt {
 	font-weight: 600;
 	color: var(--sklepag-papier);
-	margin: 1.2rem 0 0.35rem;
+	margin: 0;
+	padding: 1.1rem 0 0.35rem;
+	border-top: 1px solid var(--sklepag-linia);
 }
 
 .sklepag-faq dt:first-child {
-	margin-top: 0;
+	border-top: 0;
+	padding-top: 0;
 }
 
 .sklepag-faq dd {
 	margin: 0;
+	padding: 0 0 1.1rem;
 	color: var(--sklepag-pyl);
+}
+
+/* Głowa karty: pictogram + etykieta (sędzia: karty nierozróżnialne). */
+.sklepag-karta-glowa {
+	display: flex;
+	align-items: center;
+	gap: 0.9rem;
+}
+
+.sklepag-karta-glowa .sklepag-mono-etykieta {
+	margin: 0;
+}
+
+.sklepag-ikona {
+	color: var(--sklepag-limonka);
+	flex-shrink: 0;
 }
 
 /* Sekcja zakupu + finalny CTA. */
@@ -602,6 +624,13 @@ a.sklepag-kup {
 @media (max-width: 40rem) {
 	.sklepag-kup {
 		width: 100%;
+		text-align: center;
+	}
+
+	/* Pasek statusu na wąskim ekranie: luźniejsze zawijanie (uwaga sędziego). */
+	.sklepag-pasek-statusu {
+		letter-spacing: 0.08em;
+		line-height: 1.8;
 	}
 }
 

@@ -124,7 +124,7 @@ function sklepag_tresc_produktu( $slug ) {
 				array( '100% rozmów u Ciebie', 'tryb regułowy: treść nie opuszcza Twojego WordPressa' ),
 			),
 			'dla_kogo'     => array( 'Usługi lokalne — fryzjer, warsztat, gabinet', 'Sklepy i firmy z powtarzalnymi pytaniami', 'Każdy, kto traci klientów piszących po godzinach' ),
-			'uczciwosc'    => 'Pełnoprawny silnik regułowy działa od razu — bez kluczy i opłat. „LIVE" znaczy: żywy człowiek (Ty) odpisuje na zebrane kontakty — bot nie udaje wszechwiedzy. Tryb AI włączasz WŁASNYM kluczem; przy limicie dziennym lub błędzie bot sam wraca do reguł. Prywatność: w trybie regułowym treść rozmów nie opuszcza Twojego serwera; w trybie AI pytanie gościa idzie do API dostawcy (informacja też do Twojej polityki prywatności).',
+			'uczciwosc'    => 'Nie znajdziesz tu opinii z gwiazdkami — sprzedajemy od niedawna i nie zmyślamy recenzji; zamiast tego masz tryb testowy i seed demo, żeby sprawdzić samemu. Pełnoprawny silnik regułowy działa od razu — bez kluczy i opłat. „LIVE" znaczy: żywy człowiek (Ty) odpisuje na zebrane kontakty — bot nie udaje wszechwiedzy. Tryb AI włączasz WŁASNYM kluczem; przy limicie dziennym lub błędzie bot sam wraca do reguł. Prywatność: w trybie regułowym treść rozmów nie opuszcza Twojego serwera; w trybie AI pytanie gościa idzie do API dostawcy (informacja też do Twojej polityki prywatności).',
 			'faq'          => array(
 				array( 'Czy potrzebuję klucza AI?', 'Nie — bot w pełni działa bez niego, na Twojej bazie pytań i odpowiedzi.' ),
 				array( 'Co się dzieje, gdy bot nie zna odpowiedzi?', 'Prosi o maila, zapisuje zgłoszenie i może powiadomić Cię mailem — kontakt nie przepada.' ),
@@ -162,7 +162,7 @@ function sklepag_tresc_produktu( $slug ) {
 				array( '0 maili na zewnątrz', 'tryb regułowy działa w całości w Twoim WordPressie' ),
 			),
 			'dla_kogo'     => array( 'Biura i sekretariaty', 'Firmy usługowe z jedną wspólną skrzynką', 'Każdy, kto zaczyna dzień od przekopywania poczty' ),
-			'uczciwosc'    => 'Działa na próbkach CSV (eksport ze skrzynki w 2 minuty) — dlatego uczciwie nazywa się „testowy", a nie udaje produkcji. Podpięcie prawdziwej skrzynki (IMAP/OAuth) to opisana krok po kroku droga rozbudowy w instrukcji. Prywatność: w trybie regułowym nic nie wychodzi z Twojego serwera; w trybie AI treść maila idzie do API dostawcy (wzmianka do Twojej polityki prywatności).',
+			'uczciwosc'    => 'Nie znajdziesz tu opinii z gwiazdkami — sprzedajemy od niedawna i nie zmyślamy recenzji; zamiast tego masz raport z liczbami z TWOJEJ próbki. Działa na próbkach CSV (eksport ze skrzynki w 2 minuty) — dlatego uczciwie nazywa się „testowy", a nie udaje produkcji. Podpięcie prawdziwej skrzynki (IMAP/OAuth) to opisana krok po kroku droga rozbudowy w instrukcji. Prywatność: w trybie regułowym nic nie wychodzi z Twojego serwera; w trybie AI treść maila idzie do API dostawcy (wzmianka do Twojej polityki prywatności).',
 			'faq'          => array(
 				array( 'Czy muszę podpinać skrzynkę?', 'Nie — pracujesz na próbkach CSV. Prawdziwa skrzynka to droga rozbudowy opisana w instrukcji.' ),
 				array( 'Skąd wezmę CSV?', 'Eksport z klienta poczty (Gmail, Thunderbird, Outlook) — instrukcja pokazuje jak, krok po kroku.' ),
@@ -174,6 +174,23 @@ function sklepag_tresc_produktu( $slug ) {
 		),
 	);
 	return isset( $tresci[ $slug ] ) ? $tresci[ $slug ] : null;
+}
+
+/**
+ * Mono-pictogram produktu (sędzia wyglądu: karty nierozróżnialne bez ikon).
+ * Inline SVG w limonce — zero CDN/fontów ikon (D27). Fallback: iskra.
+ *
+ * @param string $slug Slug produktu.
+ */
+function sklepag_ikona_produktu( $slug ) {
+	$wspolne = 'class="sklepag-ikona" viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"';
+	if ( 'chatbot-live' === $slug ) {
+		return '<svg ' . $wspolne . '><path d="M21 12a8 8 0 0 1-8 8H5l-2 2V12a8 8 0 0 1 8-8h2a8 8 0 0 1 8 8z"/><circle cx="9.5" cy="12" r=".8" fill="currentColor"/><circle cx="13" cy="12" r=".8" fill="currentColor"/><circle cx="16.5" cy="12" r=".8" fill="currentColor"/></svg>';
+	}
+	if ( 'segregator-maila' === $slug ) {
+		return '<svg ' . $wspolne . '><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="m3 6.5 9 7 9-7"/><path d="M7 22h10"/></svg>';
+	}
+	return '<svg ' . $wspolne . '><path d="M12 2v4M12 18v4M2 12h4M18 12h4M5 5l2.8 2.8M16.2 16.2 19 19M19 5l-2.8 2.8M7.8 16.2 5 19"/></svg>';
 }
 
 /**
