@@ -1,8 +1,10 @@
 # SZKICE BOTÓW — do recenzji Dzidka PRZED budową (bramka z planu v3 §9)
 
-Status: SZKIC 18.08. Głębokość wg D19: **działający rdzeń demo + instrukcja** (pełne
-AI / prawdziwa skrzynka = po egzaminie, jawna droga w instrukcji). Z klepniętych
-szkiców od razu powstaje treść sprzedażowa stron produktów (K5).
+Status: SZKIC 18.08, **zaktualizowany po decyzji Dzidka (18.08): HYBRYDA** — każdy
+bot ma DWA silniki: regułowy (działa bez klucza, zawsze) + PRAWDZIWE AI przez API
+(klucz właściciela). Warunek Dzidka: **przed budową ZWIAD WZORCÓW mocnych projektów**
+(wyniki → `boty/WZORCE-BOTOW.md` + brief buildera). Prawdziwa skrzynka (IMAP) dalej
+po egzaminie. Z klepniętych szkiców powstaje treść sprzedażowa stron produktów (K5).
 
 ---
 
@@ -35,10 +37,19 @@ pytania bez udziału człowieka + leady zbierane poza godzinami; instrukcja poka
 jak wpisać własne Q&A w kilkanaście minut (czas MIERZONY przez nie-autora we
 wrogiej sesji 23.08 — obietnica z pokryciem, nie z sufitu).
 
-**GRANICE na egzamin (jawne):** bez LLM (architektura ma miejsce na dostawcę AI —
-klucz właściciela, po egzaminie; opcjonalnie zbadany klient AI rdzenia WP 7.0 — Z7),
-bez pamięci rozmów między wizytami (sesja przeglądarki), bez czatu operatora na żywo
-w czasie rzeczywistym (kontakt = zgłoszenie + mail).
+**TRYB AI (hybryda — Dzidek 18.08):** w ustawieniach pole „klucz API" (klucz
+WŁAŚCICIELA — nigdy w paczce/kodzie/repo). Z kluczem odpowiedzi generuje prawdziwy
+model z instrukcją systemową: „jesteś asystentem firmy X; oto informacje o firmie
+[tekst z ustawień]; odpowiadasz TYLKO na ich podstawie, po polsku, krótko; nie
+wiesz → poproś o maila". Bez klucza — pełnoprawny tryb regułowy (nie atrapa).
+**STOP-LOSS:** dzienny limit wywołań + licznik w adminie; błąd/timeout API →
+automatyczny zjazd do trybu regułowego. Builder przed integracją czyta skill
+`claude-api` (model/parametry z docs, nie z pamięci).
+**GRANICE na egzamin (jawne):** bez pamięci rozmów między wizytami (sesja
+przeglądarki), bez czatu operatora na żywo w czasie rzeczywistym (kontakt =
+zgłoszenie + mail — w OBU trybach); bramka `bezpieczenstwo-agenta` przed oddaniem
+(bot czyta niezaufany tekst gości; nie ma narzędzi ani danych poza bazą Q&A —
+ryzyko niskie, ale sprawdzone, nie założone).
 **Uczciwie (to zdanie idzie TEŻ na stronę produktu w K5):** to bot regułowy z bazy
 Q&A + most do maila właściciela — NIE żywa rozmowa z operatorem ani prawdziwe AI;
 „LIVE" znaczy: żywy człowiek ODPISZE na zebrany kontakt.
@@ -67,6 +78,11 @@ rozdziela maile do kategorii wg reguł i pokazuje raport, ile roboty zrobił za 
 automat rozdzieli sam; instrukcja: jak ułożyć reguły pod własną firmę w ~20 minut
 (czas mierzony jak w ChatBocie — wroga sesja 23.08).
 
+**TRYB AI (hybryda — Dzidek 18.08):** z kluczem właściciela klasyfikację robi
+model („przypisz mail do JEDNEJ z kategorii [lista]; niepewny → Reszta") — tryb
+przebiegu do wyboru: reguły / AI / **porównaj oba** (raport pokazuje różnice —
+mocny argument sprzedażowy: widać, co AI łapie ponad reguły). Ten sam stop-loss
+i zjazd do reguł co w ChatBocie.
 **GRANICE na egzamin (jawne):** bez podpięcia prawdziwej skrzynki (IMAP/OAuth —
 po egzaminie, droga opisana w instrukcji krok po kroku); działa na próbkach CSV —
 dlatego uczciwie nazywa się „testowy bot", a nie udaje produkcji.
@@ -89,7 +105,8 @@ dlatego uczciwie nazywa się „testowy bot", a nie udaje produkcji.
 
 ## CO SPRAWDZI RECENZJA DZIDKA (pytania do Ciebie)
 
-1. Czy taki zakres „testowych botów" pasuje do tego, co kolega miał na myśli?
+1. ~~Czy taki zakres pasuje?~~ ✅ CZĘŚCIOWO ROZSTRZYGNIĘTE 18.08: Dzidek wybrał
+   HYBRYDĘ (prawdziwe AI + tryb regułowy bez klucza) z warunkiem zwiadu wzorców.
 2. ChatBot: czy „LIVE = zbieranie kontaktu dla właściciela" czyta się dobrze,
    czy wolisz inny akcent (np. mocniejsze parcie na zostawienie numeru telefonu)?
 3. Segregator: czy import CSV wystarczy jako „testowość", czy dodać drugą próbkę
