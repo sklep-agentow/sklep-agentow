@@ -22,9 +22,9 @@ foreach ( array( 'produkty', 'sesje_checkout', 'zamowienia', 'zdarzenia', 'logow
 
 // 2. Strony wtyczki (twarde usunięcie — utworzyliśmy je my).
 foreach ( array( 'sklepag_strona_sklep', 'sklepag_strona_dziekujemy', 'sklepag_strona_regulamin', 'sklepag_strona_polityka' ) as $opcja ) {
-	$id = (int) get_option( $opcja, 0 );
-	if ( $id ) {
-		wp_delete_post( $id, true );
+	$strona_id = (int) get_option( $opcja, 0 ); // Nie $id — to global WP (sniff GlobalVariablesOverride).
+	if ( $strona_id ) {
+		wp_delete_post( $strona_id, true );
 	}
 }
 

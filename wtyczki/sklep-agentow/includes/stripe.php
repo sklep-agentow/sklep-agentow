@@ -9,8 +9,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-const SKLEPAG_STRIPE_API     = 'https://api.stripe.com';
-const SKLEPAG_STRIPE_WERSJA  = '2026-07-29.dahlia';
+const SKLEPAG_STRIPE_API    = 'https://api.stripe.com';
+const SKLEPAG_STRIPE_WERSJA = '2026-07-29.dahlia';
 
 function sklepag_stripe_klucz() {
 	return (string) get_option( 'sklepag_stripe_klucz_sekretny', '' );
@@ -72,16 +72,16 @@ function sklepag_stripe_utworz_sesje( $produkt, $zgoda_czas, $klucz_idempotencji
 	$sklep      = get_permalink( (int) get_option( 'sklepag_strona_sklep' ) );
 
 	$dane = array(
-		'mode'                              => 'payment',
-		'line_items[0][price_data][currency]'                  => strtolower( $produkt->waluta ),
-		'line_items[0][price_data][unit_amount]'               => (int) $produkt->cena_grosze,
-		'line_items[0][price_data][product_data][name]'        => $produkt->nazwa,
+		'mode'                                          => 'payment',
+		'line_items[0][price_data][currency]'           => strtolower( $produkt->waluta ),
+		'line_items[0][price_data][unit_amount]'        => (int) $produkt->cena_grosze,
+		'line_items[0][price_data][product_data][name]' => $produkt->nazwa,
 		'line_items[0][price_data][product_data][description]' => wp_trim_words( $produkt->opis_krotki, 20 ),
-		'line_items[0][quantity]'           => 1,
-		'success_url'                       => add_query_arg( 'sesja', '{CHECKOUT_SESSION_ID}', $dziekujemy ),
-		'cancel_url'                        => $sklep,
-		'metadata[produkt_id]'              => (int) $produkt->id,
-		'metadata[zgoda_czas]'              => $zgoda_czas,
+		'line_items[0][quantity]'                       => 1,
+		'success_url'                                   => add_query_arg( 'sesja', '{CHECKOUT_SESSION_ID}', $dziekujemy ),
+		'cancel_url'                                    => $sklep,
+		'metadata[produkt_id]'                          => (int) $produkt->id,
+		'metadata[zgoda_czas]'                          => $zgoda_czas,
 	);
 
 	return sklepag_stripe_request( '/v1/checkout/sessions', $dane, $klucz_idempotencji );

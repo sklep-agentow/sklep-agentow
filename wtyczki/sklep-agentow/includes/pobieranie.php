@@ -17,8 +17,10 @@ function sklepag_obsluz_pobranie() {
 		wp_die( 'Za dużo prób. Odczekaj minutę.', 'Sklep Agentów', 429 );
 	}
 
+	// phpcs:disable WordPress.Security.NonceVerification.Recommended -- link pobrania przychodzi Z MAILA: kupujący nie ma sesji WP, nonce niemożliwy; autoryzacją jest token HMAC (porównanie stałoczasowe niżej).
 	$id    = isset( $_GET['z'] ) ? absint( $_GET['z'] ) : 0;
 	$token = isset( $_GET['t'] ) ? sanitize_text_field( wp_unslash( $_GET['t'] ) ) : '';
+	// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 	global $wpdb;
 	$pz = $wpdb->prefix . 'sklepag_zamowienia';
@@ -55,10 +57,13 @@ function sklepag_obsluz_pobranie() {
 	}
 
 	// LICZNIK ATOMOWY przy STARCIE pobrania (UPDATE z warunkiem — D4).
-	$slot = $wpdb->query( $wpdb->prepare(
-		"UPDATE {$pz} SET pobrania_uzyte = pobrania_uzyte + 1, zmieniono = %s WHERE id = %d AND pobrania_uzyte < pobrania_limit",
-		current_time( 'mysql' ), (int) $zam->id
-	) );
+	$slot = $wpdb->query(
+		$wpdb->prepare(
+			"UPDATE {$pz} SET pobrania_uzyte = pobrania_uzyte + 1, zmieniono = %s WHERE id = %d AND pobrania_uzyte < pobrania_limit",
+			current_time( 'mysql' ),
+			(int) $zam->id
+		)
+	);
 	// phpcs:enable
 
 	if ( ! $slot ) {

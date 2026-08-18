@@ -30,7 +30,7 @@ function sklepag_admin_strona_glowna() {
 	global $wpdb;
 	$p = $wpdb->prefix . 'sklepag_';
 
-	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- nazwy tabel z prefiksu WP.
+	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery -- nazwy tabel z prefiksu WP; liczniki z własnych tabel, na żywo.
 	$produkty_wszystkie = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}produkty" );
 	$produkty_aktywne   = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}produkty WHERE aktywny = 1" );
 	$zamowienia         = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}zamowienia" );

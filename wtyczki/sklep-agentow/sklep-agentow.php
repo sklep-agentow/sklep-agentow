@@ -28,13 +28,18 @@ register_activation_hook( __FILE__, 'sklepag_aktywacja' );
 register_deactivation_hook( __FILE__, 'sklepag_deaktywacja' );
 
 // Interwał 10 min dla „dociągnij zaległe" (reconciliation — druga droga domykania).
-add_filter( 'cron_schedules', function ( $harmonogramy ) {
-	$harmonogramy['sklepag_10min'] = array(
-		'interval' => 600,
-		'display'  => 'Co 10 minut (Sklep Agentów)',
-	);
-	return $harmonogramy;
-} );
+// phpcs:disable WordPress.WP.CronInterval.CronSchedulesInterval -- 10 min świadomie (plan §4A): tryb testowy Stripe ponawia webhook tylko 3× w parę godzin, cron domyka zaległe zakupy.
+add_filter(
+	'cron_schedules',
+	function ( $harmonogramy ) {
+		$harmonogramy['sklepag_10min'] = array(
+			'interval' => 600,
+			'display'  => 'Co 10 minut (Sklep Agentów)',
+		);
+		return $harmonogramy;
+	}
+);
+// phpcs:enable WordPress.WP.CronInterval.CronSchedulesInterval
 
 add_action( 'plugins_loaded', 'sklepag_start' );
 
@@ -70,7 +75,8 @@ function sklepag_assety_frontu() {
  */
 function sklepag_shortcode_sklep() {
 	global $wpdb;
-	$tabela   = $wpdb->prefix . 'sklepag_produkty';
+	$tabela = $wpdb->prefix . 'sklepag_produkty';
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- własna tabela wtyczki; lista musi być świeża (CRUD w adminie), cache bez zysku.
 	$produkty = $wpdb->get_results(
 		$wpdb->prepare( "SELECT id, nazwa, slug, opis_krotki, cena_grosze, waluta FROM {$tabela} WHERE aktywny = %d ORDER BY nazwa", 1 ) // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- nazwa tabeli z prefiksu WP, nie z wejścia.
 	);
@@ -85,17 +91,17 @@ function sklepag_shortcode_sklep() {
 
 	$html .= '<ul class="sklepag-lista" style="list-style:none;padding:0">';
 	foreach ( $produkty as $p ) {
-		$cena  = number_format( $p->cena_grosze / 100, 2, ',', ' ' ) . ' ' . esc_html( $p->waluta );
-		$html .= '<li style="margin:0 0 1.5em;padding:1em;border:1px solid #ddd;border-radius:8px">';
-		$html .= '<strong>' . esc_html( $p->nazwa ) . '</strong> — ' . esc_html( $p->opis_krotki ) . ' <em>' . $cena . '</em>';
-		$html .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" style="margin-top:.6em">';
-		$html .= '<input type="hidden" name="action" value="sklepag_kup">';
-		$html .= '<input type="hidden" name="produkt_id" value="' . (int) $p->id . '">';
-		$html .= wp_nonce_field( 'sklepag_kup', '_wpnonce', true, false );
+		$cena     = number_format( $p->cena_grosze / 100, 2, ',', ' ' ) . ' ' . esc_html( $p->waluta );
+		$html    .= '<li style="margin:0 0 1.5em;padding:1em;border:1px solid #ddd;border-radius:8px">';
+		$html    .= '<strong>' . esc_html( $p->nazwa ) . '</strong> — ' . esc_html( $p->opis_krotki ) . ' <em>' . $cena . '</em>';
+		$html    .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" style="margin-top:.6em">';
+		$html    .= '<input type="hidden" name="action" value="sklepag_kup">';
+		$html    .= '<input type="hidden" name="produkt_id" value="' . (int) $p->id . '">';
+		$html    .= wp_nonce_field( 'sklepag_kup', '_wpnonce', true, false );
 		$id_zgody = 'sklepag-zgoda-' . (int) $p->id;
-		$html .= '<label for="' . esc_attr( $id_zgody ) . '" style="display:block;margin:.4em 0"><input type="checkbox" id="' . esc_attr( $id_zgody ) . '" name="zgoda" value="1" required> ' . esc_html( SKLEPAG_ZGODA_TRESC ) . '</label>';
-		$html .= '<button type="submit" class="sklepag-kup">Kup teraz (płatność testowa)</button>';
-		$html .= '</form></li>';
+		$html    .= '<label for="' . esc_attr( $id_zgody ) . '" style="display:block;margin:.4em 0"><input type="checkbox" id="' . esc_attr( $id_zgody ) . '" name="zgoda" value="1" required> ' . esc_html( SKLEPAG_ZGODA_TRESC ) . '</label>';
+		$html    .= '<button type="submit" class="sklepag-kup">Kup teraz (płatność testowa)</button>';
+		$html    .= '</form></li>';
 	}
 	$html .= '</ul></div>';
 	return $html;

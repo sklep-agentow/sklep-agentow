@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 const SKLEPAG_ZGODA_TRESC = 'Wyrażam zgodę na natychmiastowe dostarczenie treści cyfrowej i przyjmuję do wiadomości utratę prawa odstąpienia od umowy (art. 38 ustawy o prawach konsumenta).';
 
 /* ---------- RATE LIMIT (atomowy licznik w tabeli, per IP i okno minutowe;
-   webhook JAWNIE poza limiterem) ---------- */
+	webhook JAWNIE poza limiterem) ---------- */
 
 function sklepag_ip() {
 	return isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '0.0.0.0';
@@ -26,11 +26,14 @@ function sklepag_rate_limit( $akcja, $prog = 10 ) {
 	// Inkrementacja MUSI być atomowa (recenzja PR #33): para get/set transient
 	// gubi żądania równoległe — zmierzone 40/40 przepuszczonych przy progu 30.
 	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
-	$wpdb->query( $wpdb->prepare(
-		"INSERT INTO {$t} (klucz, licznik, okno_do) VALUES (%s, 1, %s)
+	$wpdb->query(
+		$wpdb->prepare(
+			"INSERT INTO {$t} (klucz, licznik, okno_do) VALUES (%s, 1, %s)
 		 ON DUPLICATE KEY UPDATE licznik = licznik + 1",
-		$klucz, gmdate( 'Y-m-d H:i:s', ( $okno + 2 ) * MINUTE_IN_SECONDS )
-	) );
+			$klucz,
+			gmdate( 'Y-m-d H:i:s', ( $okno + 2 ) * MINUTE_IN_SECONDS )
+		)
+	);
 	$ile = (int) $wpdb->get_var( $wpdb->prepare( "SELECT licznik FROM {$t} WHERE klucz = %s", $klucz ) );
 	// phpcs:enable
 
@@ -63,7 +66,7 @@ function sklepag_obsluz_kup() {
 
 	global $wpdb;
 	$t = $wpdb->prefix . 'sklepag_produkty';
-	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- nazwa tabeli z prefiksu.
+	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery -- nazwa tabeli z prefiksu; walidacja zakupu czyta świeży stan produktu.
 	$produkt = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$t} WHERE id = %d AND aktywny = 1", $produkt_id ) );
 
 	if ( ! $produkt || '' === $produkt->plik_sciezka || ! file_exists( $produkt->plik_sciezka ) ) {
@@ -87,10 +90,14 @@ function sklepag_obsluz_kup() {
 	}
 
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery
-	$wpdb->query( $wpdb->prepare(
-		"INSERT IGNORE INTO {$wpdb->prefix}sklepag_sesje_checkout (stripe_session_id, produkt_id, stan, utworzono) VALUES (%s, %d, 'utworzona', %s)", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$sesja['id'], $produkt->id, current_time( 'mysql' )
-	) );
+	$wpdb->query(
+		$wpdb->prepare(
+			"INSERT IGNORE INTO {$wpdb->prefix}sklepag_sesje_checkout (stripe_session_id, produkt_id, stan, utworzono) VALUES (%s, %d, 'utworzona', %s)", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$sesja['id'],
+			$produkt->id,
+			current_time( 'mysql' )
+		)
+	);
 
 	set_transient( $okno, array( 'url' => $sesja['url'] ), MINUTE_IN_SECONDS );
 
@@ -119,23 +126,34 @@ function sklepag_zdarzenie( $zamowienie_id, $typ, $opis ) {
 
 /* ---------- WEBHOOK (REST; autoryzacja = podpis; POZA rate-limiterem) ---------- */
 
-add_action( 'rest_api_init', function () {
-	register_rest_route( 'sklepag/v1', '/webhook', array(
-		'methods'             => 'POST',
-		'callback'            => 'sklepag_webhook',
-		'permission_callback' => '__return_true', // Publiczny endpoint — autoryzacją JEST podpis Stripe.
-	) );
-	register_rest_route( 'sklepag/v1', '/status', array(
-		'methods'             => 'GET',
-		'callback'            => 'sklepag_status_zamowienia',
-		'permission_callback' => '__return_true',
-	) );
-} );
+add_action(
+	'rest_api_init',
+	function () {
+		register_rest_route(
+			'sklepag/v1',
+			'/webhook',
+			array(
+				'methods'             => 'POST',
+				'callback'            => 'sklepag_webhook',
+				'permission_callback' => '__return_true', // Publiczny endpoint — autoryzacją JEST podpis Stripe.
+			)
+		);
+		register_rest_route(
+			'sklepag/v1',
+			'/status',
+			array(
+				'methods'             => 'GET',
+				'callback'            => 'sklepag_status_zamowienia',
+				'permission_callback' => '__return_true',
+			)
+		);
+	}
+);
 
 function sklepag_webhook( WP_REST_Request $zadanie ) {
-	$body    = $zadanie->get_body(); // SUROWE body — żadnych modyfikacji przed podpisem.
+	$body     = $zadanie->get_body(); // SUROWE body — żadnych modyfikacji przed podpisem.
 	$naglowek = $zadanie->get_header( 'stripe_signature' );
-	$sekret  = (string) get_option( 'sklepag_stripe_webhook_sekret', '' );
+	$sekret   = (string) get_option( 'sklepag_stripe_webhook_sekret', '' );
 
 	if ( ! sklepag_stripe_weryfikuj_podpis( $body, (string) $naglowek, $sekret ) ) {
 		sklepag_zdarzenie( null, 'webhook_zly_podpis', 'odrzucono (ip ' . sklepag_ip() . ')' );
@@ -217,27 +235,41 @@ function sklepag_domknij_zakup( $sesja ) {
 	$teraz  = current_time( 'mysql' );
 
 	// 1) UTWORZENIE wiersza — INSERT IGNORE (UNIQUE stripe_session_id chroni tylko utworzenie).
-	$wpdb->query( $wpdb->prepare(
-		"INSERT IGNORE INTO {$pz}
+	$wpdb->query(
+		$wpdb->prepare(
+			"INSERT IGNORE INTO {$pz}
 		 (stripe_session_id, produkt_id, produkt_nazwa_kupiona, produkt_cena_kupiona, produkt_plik_kupiony,
 		  email_kupujacego, kwota_grosze, waluta, status, zgoda_tresc, zgoda_czas,
 		  pobrania_limit, utworzono, zmieniono)
 		 VALUES (%s, %d, %s, %d, %s, %s, %d, %s, 'oczekuje', %s, %s, %d, %s, %s)",
-		$sid, $produkt->id, $produkt->nazwa, $produkt->cena_grosze, $produkt->plik_sciezka,
-		$email, $kwota, $waluta, SKLEPAG_ZGODA_TRESC,
-		isset( $sesja['metadata']['zgoda_czas'] ) ? $sesja['metadata']['zgoda_czas'] : $teraz,
-		SKLEPAG_LIMIT_POBRAN,
-		$teraz, $teraz
-	) );
+			$sid,
+			$produkt->id,
+			$produkt->nazwa,
+			$produkt->cena_grosze,
+			$produkt->plik_sciezka,
+			$email,
+			$kwota,
+			$waluta,
+			SKLEPAG_ZGODA_TRESC,
+			isset( $sesja['metadata']['zgoda_czas'] ) ? $sesja['metadata']['zgoda_czas'] : $teraz,
+			SKLEPAG_LIMIT_POBRAN,
+			$teraz,
+			$teraz
+		)
+	);
 
 	// 2) CAS: oczekuje -> oplacone.
 	$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET status='oplacone', zmieniono=%s WHERE stripe_session_id=%s AND status='oczekuje'", $teraz, $sid ) );
 	sklepag_oznacz_sesje( $sid, 'oplacona' );
 
 	// 3) CAS: przejęcie wysyłki (oplacone/mail_blad -> mail_w_toku). Przegrany wraca bez maila.
-	$przejete = $wpdb->query( $wpdb->prepare(
-		"UPDATE {$pz} SET status='mail_w_toku', zmieniono=%s WHERE stripe_session_id=%s AND status IN ('oplacone','mail_blad') AND mail_proby < 3", $teraz, $sid
-	) );
+	$przejete = $wpdb->query(
+		$wpdb->prepare(
+			"UPDATE {$pz} SET status='mail_w_toku', zmieniono=%s WHERE stripe_session_id=%s AND status IN ('oplacone','mail_blad') AND mail_proby < 3",
+			$teraz,
+			$sid
+		)
+	);
 
 	if ( ! $przejete ) {
 		$stan = $wpdb->get_row( $wpdb->prepare( "SELECT status, zmieniono, mail_proby FROM {$pz} WHERE stripe_session_id=%s", $sid ) );
@@ -252,10 +284,14 @@ function sklepag_domknij_zakup( $sesja ) {
 			// ŚWIADOMY KOMPROMIS (DECYZJE D5+D24): pad tuż PO wp_mail a PRZED zapisem
 			// stanu = możliwy DRUGI mail po odebraniu claimu — lepszy podwójny niż
 			// żaden. Wyścig RÓWNOCZESNY wyklucza CAS (delta maili = 1, zmierzone E2E).
-			$odebrane = $wpdb->query( $wpdb->prepare(
-				"UPDATE {$pz} SET zmieniono=%s WHERE stripe_session_id=%s AND status='mail_w_toku' AND zmieniono < %s",
-				$teraz, $sid, gmdate( 'Y-m-d H:i:s', strtotime( $teraz ) - 300 )
-			) );
+			$odebrane = $wpdb->query(
+				$wpdb->prepare(
+					"UPDATE {$pz} SET zmieniono=%s WHERE stripe_session_id=%s AND status='mail_w_toku' AND zmieniono < %s",
+					$teraz,
+					$sid,
+					gmdate( 'Y-m-d H:i:s', strtotime( $teraz ) - 300 )
+				)
+			);
 			if ( ! $odebrane ) {
 				return false; // Ktoś inny właśnie wysyła — retry wróci.
 			}
@@ -266,10 +302,15 @@ function sklepag_domknij_zakup( $sesja ) {
 
 	// 4) Token pobrania (surowy do maila, skrót do bazy) + termin — dopiero PO przejęciu.
 	$token = bin2hex( random_bytes( 32 ) );
-	$wpdb->query( $wpdb->prepare(
-		"UPDATE {$pz} SET token_pobrania=%s, link_wygasa=%s, zmieniono=%s WHERE stripe_session_id=%s AND status='mail_w_toku'",
-		hash( 'sha256', $token ), gmdate( 'Y-m-d H:i:s', time() + SKLEPAG_LINK_GODZIN * HOUR_IN_SECONDS ), $teraz, $sid
-	) );
+	$wpdb->query(
+		$wpdb->prepare(
+			"UPDATE {$pz} SET token_pobrania=%s, link_wygasa=%s, zmieniono=%s WHERE stripe_session_id=%s AND status='mail_w_toku'",
+			hash( 'sha256', $token ),
+			gmdate( 'Y-m-d H:i:s', time() + SKLEPAG_LINK_GODZIN * HOUR_IN_SECONDS ),
+			$teraz,
+			$sid
+		)
+	);
 
 	$zam = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$pz} WHERE stripe_session_id=%s", $sid ) );
 
@@ -331,9 +372,12 @@ function sklepag_dociagnij_zalegle() {
 
 	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
 	$granica = gmdate( 'Y-m-d H:i:s', strtotime( current_time( 'mysql' ) ) - 120 );
-	$sesje   = $wpdb->get_col( $wpdb->prepare(
-		"SELECT stripe_session_id FROM {$ps} WHERE stan='utworzona' AND utworzono < %s ORDER BY utworzono LIMIT 20", $granica
-	) );
+	$sesje   = $wpdb->get_col(
+		$wpdb->prepare(
+			"SELECT stripe_session_id FROM {$ps} WHERE stan='utworzona' AND utworzono < %s ORDER BY utworzono LIMIT 20",
+			$granica
+		)
+	);
 	// phpcs:enable
 
 	foreach ( $sesje as $sid ) {
@@ -356,9 +400,12 @@ function sklepag_dociagnij_zalegle() {
 	// rozstrzygają, mail_proby<3 trzyma plan §6 (3 próby crona → panel-czerwone K3).
 	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
 	$pz           = $wpdb->prefix . 'sklepag_zamowienia';
-	$niedomkniete = $wpdb->get_col( $wpdb->prepare(
-		"SELECT stripe_session_id FROM {$pz} WHERE status IN ('oplacone','mail_w_toku','mail_blad') AND mail_proby < 3 AND zmieniono < %s ORDER BY zmieniono LIMIT 20", $granica
-	) );
+	$niedomkniete = $wpdb->get_col(
+		$wpdb->prepare(
+			"SELECT stripe_session_id FROM {$pz} WHERE status IN ('oplacone','mail_w_toku','mail_blad') AND mail_proby < 3 AND zmieniono < %s ORDER BY zmieniono LIMIT 20",
+			$granica
+		)
+	);
 	// phpcs:enable
 	foreach ( $niedomkniete as $sid ) {
 		$sesja = sklepag_stripe_pobierz_sesje( $sid );

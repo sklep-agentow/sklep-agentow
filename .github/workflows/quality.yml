@@ -1,12 +1,12 @@
-# CI projektu sklep-agentow — wersja startowa (stack: statyczny HTML + Cloudflare Worker).
-# Szablon warsztatowy (PHP/WP) przycięty 2026-08-17: phpcs/phpstan/phpunit/plugin-check
-# nie dotyczą tego stacku. Bramki testowe JS dojdą osobnym PR-em razem z kością
-# (wtedy też rośnie manifest-bramek.txt — osobny PR, czyta Dzidek).
+# CI projektu sklep-agentow — stack po piwocie D16: 3 wtyczki WordPressa (PHP 8.1+, stack WP 7.0.4/PHP 8.4).
+# Bramki PHP (plan §7): php-lint + phpcs (WPCS, zakres w phpcs.xml.dist) + phpstan (level 5,
+# wszystkie 3 wtyczki) + gitleaks. Testy przelotu E2E biegają na żywym stacku warsztatu
+# (testy/e2e/), nie tutaj — CI nie ma WP+Stripe.
 #
 # ⛔ PRAWDA O BRAMCE (zmierzone 17.08): repo PRYWATNE na darmowym koncie = GitHub
 #    NIE UDOSTĘPNIA branch protection ani rulesetów (API: 403 „Upgrade to Pro").
 #    Czerwone CI NIE blokuje scalenia technicznie — trzyma je DYSCYPLINA CYKLU:
-#    scalamy wyłącznie `gh pr merge` PO zielonych actionlint+manifest; bezpośredni
+#    scalamy wyłącznie `gh pr merge` PO zielonych bramkach; bezpośredni
 #    push na main blokuje wersjonowany hook `.githooks/pre-push` — UWAGA: działa
 #    dopiero po JEDNORAZOWEJ aktywacji w każdym klonie:
 #        git config core.hooksPath .githooks
@@ -43,3 +43,60 @@ jobs:
       - uses: actions/checkout@v4
       - name: Manifest bramek zgodny z workflow
         run: bash narzedzia-qa/sprawdz-manifest.sh
+
+  # Składnia PHP na wersji stacka docelowego (WP 7.0.4 / PHP 8.4).
+  php-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+      - name: php -l na wszystkich plikach wtyczek
+        run: |
+          set -euo pipefail
+          find wtyczki -name '*.php' -print0 | xargs -0 -n1 php -l > /dev/null
+          echo "Skladnia czysta."
+
+  # Styl kodu WPCS (zakres startowy: wtyczka sklepu — patrz phpcs.xml.dist i DECYZJE D25).
+  phpcs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+      - name: Zaleznosci QA
+        run: composer install --no-interaction --no-progress
+      - name: phpcs (WordPress Coding Standards)
+        run: vendor/bin/phpcs
+
+  # Statyka phpstan level 5 — wszystkie 3 wtyczki (stuby WP przez szepeviktor/phpstan-wordpress).
+  phpstan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+      - name: Zaleznosci QA
+        run: composer install --no-interaction --no-progress
+      - name: phpstan analyse
+        run: vendor/bin/phpstan analyse --memory-limit=1G --no-progress
+
+  # Skan sekretów w historii i zmianach (repo prywatne: potrzebne pull-requests: read).
+  gitleaks:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

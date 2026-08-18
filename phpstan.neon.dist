@@ -1,0 +1,17 @@
+# Statyka PHPStan (plan §7) — konfiguracja wg skilla wp-phpstan.
+# Rozszerzenie szepeviktor/phpstan-wordpress ładuje stuby rdzenia WP.
+includes:
+	- vendor/szepeviktor/phpstan-wordpress/extension.neon
+
+parameters:
+	level: 5
+	phpVersion: 80100
+	bootstrapFiles:
+		- phpstan-bootstrap.php
+	# Bez excludePaths: `paths` ogranicza analizę do wtyczki/ — vendor/ i node_modules/
+	# nigdy nie są analizowane, a PHPStan 2.x wymaga, by wpisy excludePaths ISTNIAŁY
+	# (nieistniejąca ścieżka = błąd konfiguracji zamiast analizy; recenzja PR #41).
+	paths:
+		- wtyczki/
+	parallel:
+		maximumNumberOfProcesses: 2
