@@ -2,15 +2,22 @@
 /**
  * Odinstalowanie. Wzorzec dojrzałych sklepów: dane sprzedaży domyślnie ZOSTAJĄ;
  * pełne czyszczenie tylko przy włączonej opcji sklepag_usun_dane_przy_odinstalowaniu.
- * Symetria zapis<->sprzątanie: każda rzecz zapisywana przez wtyczkę ma tu swój wiersz.
+ * WYJĄTEK: sekrety (klucz Stripe, sekret webhooka) to POŚWIADCZENIA, nie dane
+ * sprzedaży — kasowane ZAWSZE (klasa #1 ściągi egzaminatora: „uninstall nie
+ * kasował klucza API"; recenzja PR #43). Symetria zapis<->sprzątanie: każda
+ * rzecz zapisywana przez wtyczkę ma tu swój wiersz.
  */
 
 if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	exit;
 }
 
+// 0. Sekrety ZAWSZE out — martwa wtyczka nie zostawia poświadczeń w bazie.
+delete_option( 'sklepag_stripe_klucz_sekretny' );
+delete_option( 'sklepag_stripe_webhook_sekret' );
+
 if ( ! get_option( 'sklepag_usun_dane_przy_odinstalowaniu' ) ) {
-	return; // Dane zostają — świadoma decyzja domyślna (DECYZJE D22).
+	return; // Reszta danych zostaje — świadoma decyzja domyślna (DECYZJE D22).
 }
 
 global $wpdb;

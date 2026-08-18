@@ -364,10 +364,13 @@ function sklepag_filtr_nadawca_nazwa( $name ) {
 function sklepag_wyslij_mail_sklepu( $adresat, $temat, $tresc ) {
 	add_filter( 'wp_mail_from', 'sklepag_filtr_nadawca_email' );
 	add_filter( 'wp_mail_from_name', 'sklepag_filtr_nadawca_nazwa' );
-	$wynik = wp_mail( $adresat, $temat, $tresc );
-	remove_filter( 'wp_mail_from', 'sklepag_filtr_nadawca_email' );
-	remove_filter( 'wp_mail_from_name', 'sklepag_filtr_nadawca_nazwa' );
-	return $wynik;
+	try {
+		return wp_mail( $adresat, $temat, $tresc );
+	} finally {
+		// Filtry schodzą też przy rzucie z wp_mail — nie mogą wisieć na resztę żądania (recenzja PR #43).
+		remove_filter( 'wp_mail_from', 'sklepag_filtr_nadawca_email' );
+		remove_filter( 'wp_mail_from_name', 'sklepag_filtr_nadawca_nazwa' );
+	}
 }
 
 function sklepag_zbuduj_mail( $produkt, $zam, $link ) {

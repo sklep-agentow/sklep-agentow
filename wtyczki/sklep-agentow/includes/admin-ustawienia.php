@@ -18,8 +18,20 @@ add_action( 'admin_init', 'sklepag_ustawienia_rejestracja' );
 
 /**
  * Rejestracja opcji, sekcji i pól.
+ *
+ * Opcje sekretne zakładane tu PUSTE z autoload=no, ZANIM dotknie ich formularz:
+ * options.php przy zapisie robi update_option, które ZACHOWUJE autoload
+ * istniejącej opcji — bez tego pierwszy zapis dałby autoload=yes i sekrety
+ * ładowałyby się na froncie przy każdym żądaniu (plan §7). Właśnie TU, nie
+ * w aktywacji: hak aktywacji nie odpala przy update-in-place (podmiana plików
+ * bez reaktywacji — recenzja PR #43), a admin_init biegnie przy każdym wejściu
+ * do admina i add_option jest no-opem, gdy opcja już istnieje; na froncie zero
+ * kosztu (admin_init tam nie ma).
  */
 function sklepag_ustawienia_rejestracja() {
+	add_option( 'sklepag_stripe_klucz_sekretny', '', '', false );
+	add_option( 'sklepag_stripe_webhook_sekret', '', '', false );
+
 	// --- Stripe (sekrety — własne callbacki „puste = bez zmian"). ---
 	register_setting(
 		'sklepag_ustawienia',
@@ -211,7 +223,7 @@ function sklepag_sekcja_dane_opis() {
  */
 function sklepag_pole_sekretu( $opcja, $checkbox ) {
 	$ustawiony = '' !== (string) get_option( $opcja, '' );
-	echo '<input type="password" id="' . esc_attr( $opcja ) . '" name="' . esc_attr( $opcja ) . '" value="" class="regular-text" autocomplete="new-password" placeholder="' . ( $ustawiony ? 'ustawiony — zostaw puste, by nie zmieniać' : 'nieustawiony' ) . '">';
+	echo '<input type="password" id="' . esc_attr( $opcja ) . '" name="' . esc_attr( $opcja ) . '" value="" class="regular-text" autocomplete="new-password" placeholder="' . esc_attr( $ustawiony ? 'ustawiony — zostaw puste, by nie zmieniać' : 'nieustawiony' ) . '">';
 	echo $ustawiony
 		? ' <span class="sklepag-badge sklepag-badge-ok">ustawiony</span>'
 		: ' <span class="sklepag-badge sklepag-badge-blad">brak</span>';
