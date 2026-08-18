@@ -208,6 +208,10 @@ Standardy WP: **capability check na KAŻDEJ akcji admina + nonce na KAŻDEJ muta
 (nonce = CSRF, capability = autoryzacja — zawsze PARĄ) · `$wpdb->prepare()` do
 każdego SQL (zero sklejania) · sanityzacja wejść (konkretne klucze + `wp_unslash`,
 nigdy całe $_POST), escape wyjść (`esc_html/attr/url`) — sanitize early, escape late ·
+każdy SQL `LIKE`: wartości przez `$wpdb->esc_like()`, w stałych `\_` (podkreślnik
+= wildcard; ściąga kl. 2) · wywołania zewnętrzne: timeout 15 s + JEDEN retry
+(suma << limit PHP 30 s), liczniki limitów zużywane PO sukcesie, nie przed
+(ściąga: uwagi kolegi z catsnboard PR #82) ·
 podpis webhooka stałoczasowo na surowym body · cena wyłącznie z bazy · sekrety w
 opcjach `autoload=no`, NIE w repo (gitleaks w CI), NIE w logach · pliki produktów
 poza publicznym dostępem warstwami + brama w PHP (§4A) · dziennik prób logowania +
@@ -250,7 +254,8 @@ i opinii → Omnibus jawnie nie dotyczy · WCAG-lite (EAA) · przed oddaniem: br
   webhook 2×, cena z żądania ignorowana, limit pobrań równolegle (2 przy ostatnim
   slocie → 1 przechodzi), HEAD, plik skasowany z dysku, pusta baza, cykl
   aktywacja→deaktywacja→aktywacja bez śmieci i błędów, bezpośredni GET na plik
-  chroniony = odmowa. Wroga sesja idzie na stacku z REALNYM motywem strony po
+  chroniony = odmowa, test LIKE-wildcard: sprzątanie NIE łapie cudzego wpisu
+  o podobnej nazwie (ściąga egzaminatora, klasa 2). Wroga sesja idzie na stacku z REALNYM motywem strony po
   konwersji — kolizje z ich frontem łapiemy CIĄGLE, nie dopiero w K6.
 - **K3 · 20-21.08 — PANEL wp-admin:** NAJPIERW wzorce dziedziny (dashboardy dojrzałych
   sklepów — wytyczna Dzidka „jak robią dobre sklepy"), POTEM budowa: dashboard + CSV,
@@ -283,10 +288,12 @@ i opinii → Omnibus jawnie nie dotyczy · WCAG-lite (EAA) · przed oddaniem: br
   ⛔ Konsekwencja terminowa (krytyka 8): **instrukcja instalacji MUSI istnieć PRZED
   K6** — powstaje przyrostowo do 23.08 (K8 ją tylko finalizuje: zrzuty, diagram,
   changelog); dokumentacja NIE jest robotą ostatniego dnia.
-- **K7 · 25.08 — AUDYT KOŃCOWY (MOMENT 4):** 4 kontrole równolegle (zgodność z
+- **K7 · 25.08 — AUDYT KOŃCOWY (MOMENT 4):** 5 kontroli równolegle (zgodność z
   MAPA-SPEC na źródle · klikanie+wygląd+axe · paczka/repo: gitleaks, instalacja od
-  zera, sweep śmieci · bezpieczeństwo ATAKUJE: konkretne żądania omijające nonce/
-  caps/podpis/cenę) + **KALIBRACJA: bank mutantów projektu** (`mutanty/`, próg 2/3)
+  zera, sweep śmieci ROZSZERZONY o ślady wewnętrzne: notatki QA, TODO/FIXME,
+  adresy dev — ściąga kl. 5 · bezpieczeństwo ATAKUJE: konkretne żądania omijające
+  nonce/caps/podpis/cenę · **DOK-vs-KOD: każda liczba i obietnica z README/
+  instrukcji sprawdzona w kodzie** — ściąga kl. 3, kolega wytknął ×4) + **KALIBRACJA: bank mutantów projektu** (`mutanty/`, próg 2/3)
   + **audyt strażników CI mutacjami jako SKRYPT** (technika Mariusza #62, zbieżna
   z naszym kalibruj.sh: każdą bramkę psujemy dokładnie w tym, co ma łapać — strażnik,
   który nie krzyknie, jest ślepy) + krytyczny przelot **3/3 (pass^k)** + próba
@@ -302,8 +309,12 @@ i opinii → Omnibus jawnie nie dotyczy · WCAG-lite (EAA) · przed oddaniem: br
   (bramka wersji SPRAWDZA wpis w changelogu — lekcja MP) → zipy 3 wtyczek + sumy
   kontrolne → dokumentacja klienta Z KODU (instrukcja prostym językiem + zrzuty
   robione maszynowo; diagram architektury dla informatyka; rozdział „test vs
-  produkcja" §13) → **bramka ludzka: Dzidek ogląda zrzuty krytycznych ścieżek
-  i odblokowuje** → oddanie (próba 1).
+  produkcja" §13) → do paczki
+  `PONAD-SPECYFIKACJE.md` (jawna lista wszystkiego ponad literę notatki — ściąga
+  kl. 6) → **bramka ludzka: Dzidek ogląda zrzuty krytycznych ścieżek
+  i odblokowuje** → oddanie (próba 1) → **runbook: OTWORZYĆ stronę Releases
+  i potwierdzić oczami, że „Latest" = oddawana wersja** (fakt „kolega widzi
+  1.1.0" — ściąga kl. 4).
 - **28-30.08 — BUFOR na zwroty (próby 2-3).** Zmiana po zamrożeniu = ścieżka hotfix.
 
 Dni graniczne kroków (20/21/22.08 należą do dwóch kroków) = świadome pół-dnia +
