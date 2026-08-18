@@ -75,12 +75,24 @@ function sklepag_loguj_nieudane( $username, $error ) {
  * min(2^n, 60) s. Sleep nie wlicza się do max_execution_time (zegar liczy
  * czas CPU skryptu), a sufit 60 s trzyma workera krótko.
  *
+ * ⛔ Amplifikacja przez równoległość (recenzja PR #42): salwa równoczesnych
+ * POST-ów na wp-login.php zajęłaby po workerze na sleep każda — dlatego
+ * ZANIM cokolwiek zaśnie, ciasny limit prób per IP odbija nadmiar
+ * NATYCHMIAST (worker wolny od razu). Człowiek nie zrobi >6 prób/min przy
+ * rosnących opóźnieniach — egzaminatora to nie dotyka (i nie jest to
+ * blokada konta, tylko chwilowy limit adresu). Rezydualne ryzyko
+ * (wiele IP = DDoS) — poza zakresem wtyczki, D26.
+ *
  * @param string $username Login z formularza (przez referencję w rdzeniu — tu tylko czytany).
  */
 function sklepag_opoznij_probe_logowania( $username ) {
 	$login = mb_substr( sanitize_user( (string) $username, true ), 0, 60 );
 	if ( '' === $login ) {
 		return; // Puste nie trafiają do dziennika — nie ma czego liczyć.
+	}
+
+	if ( ! sklepag_rate_limit( 'login', 6 ) ) {
+		wp_die( 'Za dużo prób logowania z tego adresu. Odczekaj minutę i spróbuj ponownie.', 'Logowanie', 429 );
 	}
 
 	global $wpdb;
