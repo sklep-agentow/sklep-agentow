@@ -93,6 +93,32 @@ function chatl_ajax_pytanie() {
 
 	chatl_zapisz_wymiane( $sesja, 'gosc', $pytanie );
 
+	// HYBRYDA: najpierw AI (jest klucz + limit dzienny niewyczerpany);
+	// błąd/timeout/brak klucza => zjazd do trybu regułowego.
+	if ( chatl_ai_dostepny() ) {
+		$ai = chatl_ai_odpowiedz( $pytanie );
+		if ( null !== $ai ) {
+			if ( CHATL_AI_BRAK === trim( $ai ) ) {
+				// Próg pewności: model nie zgaduje => uczciwe "nie wiem" + zbiórka kontaktu.
+				chatl_zapisz_wymiane( $sesja, 'bot', $ust['tekst_awaryjny'], 'ai' );
+				wp_send_json_success(
+					array(
+						'trafiono'  => false,
+						'odpowiedz' => $ust['tekst_awaryjny'],
+					)
+				);
+			}
+			$ai = sanitize_textarea_field( $ai );
+			chatl_zapisz_wymiane( $sesja, 'bot', $ai, 'ai' );
+			wp_send_json_success(
+				array(
+					'trafiono'  => true,
+					'odpowiedz' => $ai,
+				)
+			);
+		}
+	}
+
 	$wynik = chatl_dopasuj( $pytanie );
 	if ( null === $wynik ) {
 		chatl_zapisz_wymiane( $sesja, 'bot', $ust['tekst_awaryjny'] );

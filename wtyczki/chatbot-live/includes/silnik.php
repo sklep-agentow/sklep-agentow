@@ -63,20 +63,22 @@ function chatl_dopasuj( $pytanie ) {
 /**
  * Zapisuje wymianę do historii rozmów.
  *
- * @param string $sesja Identyfikator sesji przeglądarki (już zwalidowany).
- * @param string $rola  'gosc' albo 'bot'.
- * @param string $tresc Treść (już zsanityzowana).
+ * @param string $sesja  Identyfikator sesji przeglądarki (już zwalidowany).
+ * @param string $rola   'gosc' albo 'bot'.
+ * @param string $tresc  Treść (już zsanityzowana).
+ * @param string $silnik 'reguly' albo 'ai' (który silnik odpowiedział).
  */
-function chatl_zapisz_wymiane( $sesja, $rola, $tresc ) {
+function chatl_zapisz_wymiane( $sesja, $rola, $tresc, $silnik = 'reguly' ) {
 	global $wpdb;
 	$wpdb->insert(
 		$wpdb->prefix . 'chatl_rozmowy',
 		array(
 			'sesja'     => $sesja,
 			'rola'      => $rola,
+			'silnik'    => $silnik,
 			'tresc'     => $tresc,
 			'utworzono' => current_time( 'mysql' ),
 		),
-		array( '%s', '%s', '%s', '%s' )
+		array( '%s', '%s', '%s', '%s', '%s' )
 	);
 }

@@ -258,7 +258,7 @@ function chatl_strona_historia() {
 				<?php foreach ( $wymiany as $w ) : ?>
 					<tr>
 						<td><?php echo esc_html( $w->utworzono ); ?></td>
-						<td><?php echo 'gosc' === $w->rola ? 'Gość' : 'Bot'; ?></td>
+						<td><?php echo 'gosc' === $w->rola ? 'Gość' : ( 'ai' === $w->silnik ? 'Bot (AI)' : 'Bot (reguły)' ); ?></td>
 						<td><?php echo esc_html( $w->tresc ); ?></td>
 					</tr>
 				<?php endforeach; ?>
@@ -326,6 +326,35 @@ function chatl_strona_ustawienia() {
 						<p class="description"><label><input type="checkbox" name="powiadomienia" value="1" <?php checked( $ust['powiadomienia'] ); ?>> wysyłaj mail przy każdym nowym zgłoszeniu</label></p>
 					</td>
 				</tr>
+				<tr><th colspan="2"><h2>Tryb AI (hybryda)</h2>
+					<p style="font-weight:normal">Z kluczem API odpowiedzi generuje prawdziwy model (Claude) na podstawie informacji o firmie i bazy Q&amp;A — z zakazem zgadywania (niepewny zbiera kontakt). Bez klucza, po wyczerpaniu limitu albo przy błędzie API bot działa w trybie regułowym.</p></th></tr>
+				<tr>
+					<th scope="row"><label for="chatl-klucz">Klucz API (Anthropic)</label></th>
+					<td>
+						<?php $klucz = chatl_klucz_api(); ?>
+						<?php if ( '' !== $klucz ) : ?>
+							<p><strong>Klucz zapisany</strong> (…<?php echo esc_html( substr( $klucz, -4 ) ); ?>).
+								<label><input type="checkbox" name="usun_klucz" value="1"> usuń klucz (wyłącza tryb AI)</label></p>
+						<?php endif; ?>
+						<input type="password" id="chatl-klucz" name="klucz_api" class="regular-text" value="" autocomplete="off"
+							placeholder="<?php echo '' !== $klucz ? 'wklej, aby podmienić' : 'sk-ant-…'; ?>">
+						<p class="description">Klucz WŁAŚCICIELA strony — przechowywany tylko w Twojej bazie (bez autoload), nigdzie nie wysyłany poza api.anthropic.com.</p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><label for="chatl-ai-info">Informacje o firmie dla AI</label></th>
+					<td>
+						<textarea id="chatl-ai-info" name="ai_informacje" class="large-text" rows="6" placeholder="Opisz firmę własnymi słowami: co robicie, ceny, godziny, adres…"><?php echo esc_textarea( $ust['ai_informacje'] ); ?></textarea>
+						<p class="description">Model odpowiada TYLKO na podstawie tego opisu i aktywnych wpisów bazy Q&amp;A.</p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><label for="chatl-ai-limit">Dzienny limit wywołań AI (stop-loss)</label></th>
+					<td>
+						<input type="number" id="chatl-ai-limit" name="ai_limit_dzienny" min="1" max="100000" value="<?php echo (int) $ust['ai_limit_dzienny']; ?>">
+						<p class="description">Dzisiaj zużyto: <strong><?php echo (int) chatl_ai_uzycie_dzis(); ?> / <?php echo (int) $ust['ai_limit_dzienny']; ?></strong> wywołań. Po wyczerpaniu limitu bot do północy odpowiada z reguł. Limit jest miękki: równoległe zapytania gości mogą go minimalnie przekroczyć.</p>
+					</td>
+				</tr>
 				<tr>
 					<th scope="row">Usuwanie wtyczki</th>
 					<td>
@@ -337,7 +366,7 @@ function chatl_strona_ustawienia() {
 			<?php submit_button( 'Zapisz ustawienia' ); ?>
 		</form>
 		<h2>Prywatność</h2>
-		<p>Tryb regułowy: treść rozmów <strong>nie opuszcza</strong> Twojego WordPressa — dopasowanie działa lokalnie. Historia rozmów jest przechowywana 90 dni.</p>
+		<p>Tryb regułowy: treść rozmów <strong>nie opuszcza</strong> Twojego WordPressa — dopasowanie działa lokalnie. Tryb AI: treść pytania gościa (wraz z informacjami o firmie i bazą Q&amp;A) jest wysyłana do API dostawcy modelu (Anthropic) — poinformuj o tym w swojej polityce prywatności. Historia rozmów jest przechowywana 90 dni.</p>
 	</div>
 	<?php
 }
@@ -356,7 +385,16 @@ function chatl_post_ustawienia_zapisz() {
 		'mail_powiadomien' => isset( $_POST['mail_powiadomien'] ) ? sanitize_email( wp_unslash( $_POST['mail_powiadomien'] ) ) : $stare['mail_powiadomien'],
 		'powiadomienia'    => empty( $_POST['powiadomienia'] ) ? 0 : 1,
 		'usun_dane'        => empty( $_POST['usun_dane'] ) ? 0 : 1,
+		'ai_informacje'    => isset( $_POST['ai_informacje'] ) ? sanitize_textarea_field( wp_unslash( $_POST['ai_informacje'] ) ) : $stare['ai_informacje'],
+		'ai_limit_dzienny' => isset( $_POST['ai_limit_dzienny'] ) ? max( 1, min( 100000, (int) $_POST['ai_limit_dzienny'] ) ) : $stare['ai_limit_dzienny'],
 	);
+
+	// Klucz API: osobna opcja (autoload=no), nigdy nie wraca do formularza.
+	if ( ! empty( $_POST['usun_klucz'] ) ) {
+		chatl_zapisz_klucz( '' );
+	} elseif ( isset( $_POST['klucz_api'] ) && '' !== trim( (string) wp_unslash( $_POST['klucz_api'] ) ) ) {
+		chatl_zapisz_klucz( sanitize_text_field( wp_unslash( $_POST['klucz_api'] ) ) );
+	}
 	if ( '' === $nowe['powitanie'] ) {
 		$nowe['powitanie'] = $stare['powitanie'];
 	}

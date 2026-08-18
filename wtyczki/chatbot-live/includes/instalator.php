@@ -43,11 +43,18 @@ function chatl_utworz_tabele() {
 		id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 		sesja varchar(64) NOT NULL,
 		rola varchar(10) NOT NULL,
+		silnik varchar(10) NOT NULL DEFAULT 'reguly',
 		tresc text NOT NULL,
 		utworzono datetime NOT NULL,
 		PRIMARY KEY  (id),
 		KEY sesja (sesja),
 		KEY utworzono (utworzono)
+	) {$charset};" );
+
+	dbDelta( "CREATE TABLE {$p}chatl_ai_uzycie (
+		dzien date NOT NULL,
+		wywolania int(10) unsigned NOT NULL DEFAULT 0,
+		PRIMARY KEY  (dzien)
 	) {$charset};" );
 }
 
