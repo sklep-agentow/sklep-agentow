@@ -76,10 +76,15 @@ kod adminowy za `is_admin()`.
   `hash_hmac` + porównanie `hash_equals`, tolerancja 5 min — algorytm z ZWIAD-STRIPE,
   „Verify manually" z docs) → idempotencja: UNIQUE na `stripe_session_id` +
   `INSERT IGNORE` (MySQL/MariaDB — odpowiednik „ON CONFLICT" z v2) → **wzorzec
-  RESUME (D5):** odczyt stanu i dokończenie od miejsca zatrzymania (snapshot → token
-  pobrania → status `mail_w_toku` PRZED wysyłką → `wp_mail` → status po POMIARZE
-  skutku); handler zwraca błąd HTTP dopóki całość niedomknięta — ponowienia Stripe
-  DOKAŃCZAJĄ. ⚠️ tryb testowy = tylko 3 ponowienia w parę godzin → **cron „dociągnij
+  RESUME (D5):** dokończenie od miejsca zatrzymania (snapshot → token pobrania →
+  status `mail_w_toku` PRZED wysyłką → `wp_mail` → status po POMIARZE skutku);
+  handler zwraca błąd HTTP dopóki całość niedomknięta — ponowienia Stripe
+  DOKAŃCZAJĄ. ⛔ **KAŻDE przejście stanu zamówienia = atomowy UPDATE z warunkiem
+  (CAS: `SET status='mail_w_toku' WHERE id=? AND status='oplacone'`; 0 zmienionych
+  wierszy = ktoś inny właśnie domyka → wycofaj się BEZ maila).** To rozstrzyga
+  wyścig webhook × reconciliation (krytyka 8, D24): oba silniki używają TEGO
+  SAMEGO przejęcia; `INSERT IGNORE` chroni tylko UTWORZENIE wiersza, przejścia
+  stanu chroni wyłącznie CAS (lekcja MP: lock przez INSERT/add_option ≠ mutex). ⚠️ tryb testowy = tylko 3 ponowienia w parę godzin → **cron „dociągnij
   zaległe"** jest konieczny, nie opcjonalny. Trasa rejestrowana z JAWNYM
   `permission_callback` (`__return_true` — endpoint publiczny, autoryzacją JEST
   podpis Stripe; bez tego WP sypie notice — łamałoby kryterium #1).
@@ -163,7 +168,10 @@ branch→PR (recenzent-Claude + CI)→merge.
   zamówienia; nowy plik = NOWA ścieżka (stare zamówienia trzymają swoją).
 - `sklepag_sesje_checkout`: id, stripe_session_id UNIQUE, produkt_id, stan
   (utworzona/oplacona/wygasla), utworzono — ślad po naszej stronie zanim przyjdzie
-  webhook; podstawa „dociągnij zaległe" i widoku porzuconych.
+  webhook; podstawa „dociągnij zaległe" i widoku porzuconych. **INFORMACYJNA:
+  jedynym źródłem prawdy stanu zakupu jest `zamowienia.status`** (przejścia przez
+  CAS — §4A); stan sesji dopisywany best-effort PO przejściu zamówienia, ewentualny
+  rozjazd jest niegroźny i widoczny w panelu (krytyka 8).
 - `sklepag_zamowienia`: id, stripe_session_id UNIQUE, produkt_id, produkt_nazwa_kupiona,
   produkt_cena_kupiona, produkt_plik_kupiony (snapshot z chwili zakupu), email_kupujacego,
   kwota_grosze, waluta, status (oczekuje → oplacone → mail_w_toku → mail_wyslany |
@@ -206,7 +214,10 @@ zablokować egzaminatora) · upload zip: rozszerzenie + MIME + limit rozmiaru
 **20 MB** (realne zipy botów <1 MB; realny `upload_max_filesize` stacka sprawdzany
 w K1) + losowa nazwa docelowa + weryfikacja obecności PO zapisie ·
 XSS: opisy produktów renderowane jako tekst · rate limit publicznych endpointów
-(transient per IP) · CI: php -l + phpcs + phpstan (skill wp-phpstan) + gitleaks +
+ZAKUPU i POBRAŃ (transient per IP) — **trasa webhooka JAWNIE WYŁĄCZONA z limitera**
+(ponowienia Stripe idą ze stałej puli IP; dławienie ich = cichy ubój głównej drogi
+zamaskowany przez reconciliation — krytyka 8; autoryzacją webhooka jest podpis) ·
+CI: php -l + phpcs + phpstan (skill wp-phpstan) + gitleaks +
 testy przelotu; **manifest bramek rośnie TYLKO osobnym PR**.
 
 ## 8. PRAWO / RODO v3
@@ -262,6 +273,9 @@ i opinii → Omnibus jawnie nie dotyczy · WCAG-lite (EAA) · przed oddaniem: br
 - **K6 · 24.08 — POWTARZALNOŚĆ:** świeży czysty WordPress (drugi stack) → instalacja
   3 wtyczek WG INSTRUKCJI przez NIE-autora (Dzidek; mierzone, cel ≤30 min) → pełny
   zakup end-to-end → deinstalacja: diff bazy/plików przed-po czysty.
+  ⛔ Konsekwencja terminowa (krytyka 8): **instrukcja instalacji MUSI istnieć PRZED
+  K6** — powstaje przyrostowo do 23.08 (K8 ją tylko finalizuje: zrzuty, diagram,
+  changelog); dokumentacja NIE jest robotą ostatniego dnia.
 - **K7 · 25.08 — AUDYT KOŃCOWY (MOMENT 4):** 4 kontrole równolegle (zgodność z
   MAPA-SPEC na źródle · klikanie+wygląd+axe · paczka/repo: gitleaks, instalacja od
   zera, sweep śmieci · bezpieczeństwo ATAKUJE: konkretne żądania omijające nonce/
@@ -340,8 +354,10 @@ Dwie próby naprawy, potem reset i inne podejście.
 3. Link pobrania: właściwy plik (sha256 = snapshot); po terminie/limicie odmowa;
    2 równoległe pobrania przy ostatnim slocie → przechodzi dokładnie 1; HEAD nie
    zużywa limitu.
-4. Webhook 2× = jedno zamówienie i jeden mail; ponowienie po przerwaniu przed mailem
-   DOKAŃCZA (test z wymuszonym padnięciem); zły/brak podpisu = odrzut z błędem.
+4. Webhook 2× = jedno zamówienie i jeden mail; **webhook i reconciliation odpalone
+   RÓWNOLEGLE na tym samym zamówieniu = jeden mail i jeden WAŻNY token** (test
+   wyścigu); ponowienie po przerwaniu przed mailem DOKAŃCZA (test z wymuszonym
+   padnięciem); zły/brak podpisu = odrzut z błędem.
 5. Podmieniona cena/produkt w żądaniu = zignorowane (cena z bazy); zakup bez zgody
    niemożliwy; akcje admina bez zalogowania/capability = odmowa; mutacja bez nonce
    = odmowa; seria żądań zakupu z jednego IP ponad próg = odmowa (rate limit
@@ -383,6 +399,8 @@ hosting z PHP/MySQL dla WP (zestawienie opcji z cenami = OBIECANE Dzidkowi, osob
 dokument po egzaminie) · przełączka strony głównej na wersję WP (decyzja czwórki;
 przy przełączce świeży re-import treści) · 4 konta adminów zakładane przy wdrożeniu ·
 regulamin/polityka wypełnione danymi sprzedawcy · usunięcie banera testowego ·
+jeśli na stronie działa wtyczka bezpieczeństwa/WAF — dopuścić publiczny POST na
+trasę `sklepag/v1/webhook` (autoryzacja = podpis Stripe; krytyka 8) ·
 VAT/OSS = księgowość właścicieli (my nie doradzamy podatkowo) · realne AI w botach
 (klucz właściciela) i prawdziwa skrzynka Segregatora = osobna robota po egzaminie.
 
