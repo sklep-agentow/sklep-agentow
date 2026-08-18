@@ -1,0 +1,17 @@
+# Statyka PHPStan (plan §7) — konfiguracja wg skilla wp-phpstan.
+# Rozszerzenie szepeviktor/phpstan-wordpress ładuje stuby rdzenia WP.
+includes:
+	- vendor/szepeviktor/phpstan-wordpress/extension.neon
+
+parameters:
+	level: 5
+	phpVersion: 80100
+	bootstrapFiles:
+		- phpstan-bootstrap.php
+	paths:
+		- wtyczki/
+	excludePaths:
+		- vendor/
+		- node_modules/
+	parallel:
+		maximumNumberOfProcesses: 2

@@ -8,5 +8,15 @@
 # bramki testowe dojdą OSOBNYM PR-em razem z kością (testy jednostkowe + testy przepływu),
 # zgodnie z zasadą: nie deklarujemy bramek, których jeszcze fizycznie nie ma —
 # pusty job „na zielono" to teatr, nie kontrola.
+#
+# ROZSZERZENIE 2026-08-18 (PR „ci/bramki-php" — realizacja planu v3 §7/§10 po piwocie D16
+# na WordPressa): bramki PHP na 3 wtyczki. Zakres phpcs = wtyczka sklepu na start
+# (boty dołączą przy swojej wrogiej sesji ~23.08 razem z przebudową paczek — DECYZJE D25);
+# phpstan i php-lint obejmują od razu WSZYSTKIE wtyczki. Testy przelotu E2E żyją na
+# stacku warsztatowym (testy/e2e/) — w CI nie ma WP+Stripe, więc ich tu nie deklarujemy.
 actionlint
 manifest
+php-lint
+phpcs
+phpstan
+gitleaks

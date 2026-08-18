@@ -1,46 +1,34 @@
 # CO-WISI — rzeczy oddane komuś / bez strażnika (zasada: oddajesz ⇒ wiersz, wraca ⇒ kasujesz)
 
-## Rozstrzygnięte 18.08
-- **Model AI botów: haiku-4-5** (`claude-haiku-4-5-20251001`) — KLEPNIĘTE przez
-  Dzidka 18.08. Opus zostaje dostępny filtrem (chatl_ai_model / segm_ai_model).
-  Builder zmienia default w obu botach (opus-5 → haiku) + przebudowa zipów.
-- **Timeout AI (#37 WAŻNA): ZROBIONE** — builder b848ed7: tryby AI/porównaj mają
-  twardy limit = 1 wywołanie API na przebieg (max 18 s < 30 s PHP).
+## ✅ ZAMKNIĘTE 18.08 (dzień)
+- Model AI botów haiku-4-5 (Dzidek) · timeout AI #37 · **oba boty scalone z haiku**
+  (#36 chatbot, #37 segregator) · recenzent zna WP+ściągę+Handbook (#38) · hardening
+  uninstall wg Handbook (#39) · chatbot atomowy rate-limit (#40) · **paczki 1.2.0
+  zweryfikowane (haiku + finalny kod w zipie)** (#35). ZERO otwartych PR.
+- **K2 wroga sesja sklepu — 7 ataków obronionych** (audyt/K2-WROGA-SESJA.md).
 
 ## Blokuje wydanie
-- **Live-smoke AI na żywym api.anthropic.com** — Dzidek zaproponował darmowy klucz
-  Gemini; NIE zadziała: boty gadają WYŁĄCZNIE z api.anthropic (kod ai.php pod
-  Messages API, D19 + zasada jednego źródła Anthropic), Gemini = inny dostawca/
-  format. Klucza Gemini i tak NIE MA na maszynie (sprawdzone). DECYZJA: na egzamin
-  idziemy trybem REGUŁOWYM bez klucza (0 zł, plan §14), kształt żądania Anthropic
-  potwierdzony źródłem w #31; live-smoke (~5$ na klucz Anthropic) w ODWODZIE gdyby
-  próba 1 pokazała, że kolega chce zobaczyć żywe AI.
+- (nic pilnego) — Live-smoke AI na żywym api.anthropic.com w ODWODZIE (~5$ za zgodą
+  Dzidka), gdyby próba 1 chciała żywe AI; egzamin trybem regułowym 0 zł.
 
-## W toku
-- **Builder1: allowlist w boty/buduj-paczki.sh (#35)** — zlecone 18.08 ~05:30;
-  dowód: podłożony śmiec ma wywalić budowę.
-- **Builder1: timeout AI segregatora (#37, WAŻNA recenzji)** — 500 wierszy × tryb AI
-  = ~450 s ≫ limit PHP. Naprawa na b1/segregator-ai: twardy niższy limit próbki
-  dla AI/porównaj lub jawny błąd zamiast cichego fatala + test granicy. Drobne:
-  etykieta kolumny „Złapane regułami" przy trybie AI, escaping `"` w nazwie
-  kategorii w prompcie. ⭐ KOLEJNOŚĆ ZIPÓW: timeout PRZED przebudową zipów #35
-  (kod ai.php się zmieni) — budować zipy RAZ, po timeout+allowliście.
-- **#37 (P4 AI, następca #34)** — recenzja pass; NIE scalać: (a) WAŻNA wyżej,
-  (b) decyzja Dzidka o modelu, (c) live-smoke. Scalanie BEZ kasowania gałęzi,
-  potem przeceluj #35 na main, dopiero wtedy kasuj b1/segregator-ai.
-
-## Nie zaczęte
-- **K2 wroga sesja sklepu** (ja) — lista ataków w planie §9; przedtem pamięć
-  INDEKS-styki-metoda.
-- **Skrypt E2E przelot2.js do repo** — dziś żyje w scratchpadzie STAREJ sesji
-  (`/tmp/claude-0/-root-praca-warsztat/4db7b593-.../scratchpad/e2e/`) — ULOTNE;
-  przenieść do repo (np. `testy/e2e/`) przy K2, bo wroga sesja i tak będzie
-  skryptowana. Node_modules NIE do repo — README z `npm i playwright-core`.
-- **Wzorce dashboardów** przed K3 (wytyczna Dzidka „jak robią dobre sklepy").
+## Nie zaczęte (kolejność planu)
+- **K3 PANEL wp-admin** — ⭐ NAJPIERW wzorce dashboardów dobrych sklepów (wytyczna
+  Dzidka), potem budowa: dashboard+CSV, zamówienie+resend, dziennik logowań, ustawienia.
+  Sędzia wyglądu 0-100 PRZED pokazem. GŁÓWNIE MOJA ROBOTA (sklep).
+- **K4 CRUD produktów** (upload zip chroniony + walidacje + snapshot nietykalny).
+- **K5 witryna sklepu** (wzorce stron produktowych → treść ze SZKICÓW botów).
+- **Drobne hardening (nie blokujące, z recenzji #40):** sklep rate-limit → LAST_INSERT_ID
+  (mikro-okno, błądzi bezpiecznie); indeks okno_do nazwać rozszerzeniem; $prog domyślny.
+- ~~Skrypt E2E przelot2.js do repo~~ ✅ 18.08 PR ci/bramki-php: `testy/e2e/przelot2.js`
+  + README (node_modules poza repo).
+- **Boty ↔ phpcs przy wrogiej sesji 23.08 (D25):** phpcbf + adnotacje + w phpcs.xml.dist
+  `customSanitizingFunctions` (chatl_waliduj_sesje) + rozszerzyć `<file>` na boty +
+  przebudowa paczek + POWTÓRKA weryfikacji zipów. 5 trafień sniffa security obejrzane
+  18.08 = szum (sanitizer-regex, klucz API sanityzowany przy zapisie), 0 realnych dziur.
+- Wroga sesja botów 23.08 · K6 24.08 · K7 25.08 · K8 27.08 = próba 1.
 
 ## Stan maszyny
-- `stripe listen` (PID ~337865) forwarduje na :8890/webhook — z sekretem z
-  `/root/.claude/sekrety-sklep.env`; start po padzie:
-  `set -a; . /root/.claude/sekrety-sklep.env; set +a; stripe listen --api-key "$STRIPE_SECRET_KEY" --forward-to http://localhost:8890/wp-json/sklepag/v1/webhook`
+- `stripe listen` forwarduje na :8890/webhook (sekret z `/root/.claude/sekrety-sklep.env`).
+  Start po padzie: `set -a; . /root/.claude/sekrety-sklep.env; set +a; stripe listen --api-key "$STRIPE_SECRET_KEY" --forward-to http://localhost:8890/wp-json/sklepag/v1/webhook`
 - Stack: `strona_wp_wordpress` (:8890), `strona_wp_db`, `sklep_mailpit` (:8025).
-- W bazie stacka: zamówienia testowe id=3,6,7 (mail_wyslany) — dane robocze, nie kasować bez powodu.
+- Builder1: tmux praca:1, worktree sklep-agentow-boty, stoi (boty domknięte).

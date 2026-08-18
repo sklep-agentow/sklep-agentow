@@ -164,7 +164,8 @@ function sklepag_utworz_strony() {
 				'post_type'    => 'page',
 			)
 		);
-		if ( $id && ! is_wp_error( $id ) ) {
+		// Bez 4. argumentu $wp_error wp_insert_post zwraca int (0 = porażka) — is_wp_error tu martwe (phpstan).
+		if ( $id ) {
 			update_option( $opcja, $id, false );
 		}
 	}
@@ -181,7 +182,7 @@ function sklepag_utworz_katalog_chroniony() {
 		return;
 	}
 
-	$upload = wp_upload_dir();
+	$upload  = wp_upload_dir();
 	$sciezka = trailingslashit( $upload['basedir'] ) . 'sklepag-chronione-' . wp_generate_password( 16, false, false );
 
 	if ( ! wp_mkdir_p( $sciezka ) ) {
@@ -192,7 +193,7 @@ function sklepag_utworz_katalog_chroniony() {
 
 	// Próba kontrolna zapisu (docker/uprawnienia) — bez niej cicha ślepota.
 	$test = trailingslashit( $sciezka ) . 'index.php';
-	$ok   = file_put_contents( $test, "<?php // cisza\n" );
+	$ok   = file_put_contents( $test, "<?php // cisza\n" ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- katalog w uploads; WP_Filesystem (abstrakcja FTP) przy aktywacji potrafi pytać o poświadczenia.
 
 	if ( false === $ok ) {
 		// Sprzątamy świeży katalog — bez tego zostaje sierota, której uninstall nie zna (recenzja PR #28).
@@ -202,7 +203,7 @@ function sklepag_utworz_katalog_chroniony() {
 	}
 
 	// Apache 2.4 (Require) i 2.2 (Deny) — hosting docelowy nieznany (Z10); brama i tak w PHP.
-	$ht = file_put_contents(
+	$ht = file_put_contents( // phpcs:ignore WordPress.WP.AlternativeFunctions -- jw.: uploads, bez WP_Filesystem.
 		trailingslashit( $sciezka ) . '.htaccess',
 		"<IfModule mod_authz_core.c>\nRequire all denied\n</IfModule>\n<IfModule !mod_authz_core.c>\nDeny from all\n</IfModule>\n"
 	);

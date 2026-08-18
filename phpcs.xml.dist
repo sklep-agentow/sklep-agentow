@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<ruleset name="SklepAgentow">
+	<description>Styl kodu wtyczek (plan §7): WordPress Coding Standards; bez i18n (D21 — teksty polskie wprost).</description>
+
+	<!-- Zakres startowy = wtyczka sklepu (kod aktywnie rozwijany K3-K5). Boty są zamknięte
+	     z paczkami 1.2.0 — dołączą tu przy swojej wrogiej sesji (23.08) jednym ruchem
+	     z przebudową paczek, żeby nie unieważniać zrobionej weryfikacji zipów (D25). -->
+	<file>wtyczki/sklep-agentow</file>
+
+	<arg name="extensions" value="php"/>
+	<arg value="ps"/>
+	<arg name="parallel" value="4"/>
+
+	<rule ref="WordPress">
+		<!-- D21: świadomie bez i18n/textdomain (mina „textdomain too early" WP 6.7+). -->
+		<exclude name="WordPress.WP.I18n"/>
+		<!-- Format docblocków (@package, @param wszędzie) to wymóg rdzenia WP, nie Handbooka;
+		     treść komentarzy pilnuje recenzent PR. Zakaz var_dump/error_log zostaje
+		     (WordPress.PHP.DevelopmentFunctions — włączony). -->
+		<exclude name="WordPress-Docs"/>
+	</rule>
+
+	<config name="minimum_wp_version" value="6.7"/>
+</ruleset>
