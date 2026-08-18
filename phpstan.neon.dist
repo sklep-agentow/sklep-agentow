@@ -8,10 +8,10 @@ parameters:
 	phpVersion: 80100
 	bootstrapFiles:
 		- phpstan-bootstrap.php
+	# Bez excludePaths: `paths` ogranicza analizę do wtyczki/ — vendor/ i node_modules/
+	# nigdy nie są analizowane, a PHPStan 2.x wymaga, by wpisy excludePaths ISTNIAŁY
+	# (nieistniejąca ścieżka = błąd konfiguracji zamiast analizy; recenzja PR #41).
 	paths:
 		- wtyczki/
-	excludePaths:
-		- vendor/
-		- node_modules/
 	parallel:
 		maximumNumberOfProcesses: 2
