@@ -24,10 +24,14 @@ właściciel odezwał się na żywo.
 - brak dopasowania → uczciwe „nie znam odpowiedzi — zostaw maila i pytanie,
   odezwiemy się" → zapis zgłoszenia + (opcja) powiadomienie mailem do właściciela.
   **To jest człon „LIVE": most do żywego człowieka, nie udawanie wszechwiedzy.**
+- STAŁY przycisk „zostaw wiadomość" widoczny od początku rozmowy (wzorzec
+  Crisp/standard dziedziny: ścieżka do człowieka zawsze, nie tylko po porażce bota).
 
 **ADMIN (wp-admin):**
 - CRUD bazy Q&A: pytanie wzorcowe, słowa kluczowe (z wariantami), odpowiedź,
 - lista zgłoszeń z czatu (kto pytał, o co, mail — do obdzwonienia/odpisania),
+- HISTORIA rozmów (zapis wymian bot↔gość, widok w adminie, retencja 90 dni jak
+  w sklepie — wzorzec „historia w jednym miejscu" z Chatwoot/standardu),
 - ustawienia: włącznik, teksty powitania/awaryjny, mail powiadomień,
 - seed demo PL: ~10 par Q&A typowej firmy usługowej (cennik, godziny, kontakt,
   oferta, dojazd...) — bot DZIAŁA od pierwszej minuty po aktywacji.
@@ -41,7 +45,9 @@ wrogiej sesji 23.08 — obietnica z pokryciem, nie z sufitu).
 WŁAŚCICIELA — nigdy w paczce/kodzie/repo). Z kluczem odpowiedzi generuje prawdziwy
 model z instrukcją systemową: „jesteś asystentem firmy X; oto informacje o firmie
 [tekst z ustawień]; odpowiadasz TYLKO na ich podstawie, po polsku, krótko; nie
-wiesz → poproś o maila". Bez klucza — pełnoprawny tryb regułowy (nie atrapa).
+wiesz → poproś o maila". PRÓG PEWNOŚCI (wzorzec Tidio/standard dziedziny): model
+ma ZAKAZ zgadywania — niepewny odmawia i zbiera kontakt, zamiast konfabulować
+o firmie. Bez klucza — pełnoprawny tryb regułowy (nie atrapa).
 **STOP-LOSS:** dzienny limit wywołań + licznik w adminie; błąd/timeout API →
 automatyczny zjazd do trybu regułowego. Builder przed integracją czyta skill
 `claude-api` (model/parametry z docs, nie z pamięci).
@@ -71,6 +77,8 @@ rozdziela maile do kategorii wg reguł i pokazuje raport, ile roboty zrobił za 
   (kolumny: od, temat, treść) — klient może wrzucić eksport ze SWOJEJ skrzynki,
 - przebieg: „przepuść próbkę" → tabela wyników (mail → kategoria → która reguła)
   + RAPORT: ile do której kategorii, ile niedopasowanych, % pokrycia; eksport CSV.
+  Przy próbce z kolumną `kategoria_oczekiwana`: ACCURACY (% trafień) + lista
+  pomyłek (standard raportów klasyfikacji — egzaminator widzi LICZBĘ, nie „działa").
 
 **ADMIN:** reguły, kategorie, przebiegi (historia raportów), import próbki.
 
@@ -99,6 +107,10 @@ dlatego uczciwie nazywa się „testowy bot", a nie udaje produkcji.
 - assety ładowane tylko tam, gdzie bot działa; bump wersji przy każdej zmianie JS/CSS,
 - każda wtyczka: instrukcja użytkownika PL (instalacja → konfiguracja w kwadrans →
   FAQ → droga rozbudowy) — **zip wtyczki + instrukcja = paczka produktu w sklepie**,
+- JAWNA deklaracja prywatności (wzorzec SaneBox; RODO): tryb regułowy — treść NIE
+  opuszcza WordPressa; tryb AI — treść pytania/maila idzie do API dostawcy.
+  Informacja w instrukcji, na stronie produktu i jako punkt do polityki
+  prywatności właściciela.
 - wroga sesja botów 23.08 (czysty WP: aktywacja bez błędów/notice'ów, seed działa,
   uninstall czysty) — kryterium GOTOWE #10; W TYM pomiar czasu konfiguracji przez
   nie-autora (pokrycie obietnic czasowych z instrukcji i stron produktów).
