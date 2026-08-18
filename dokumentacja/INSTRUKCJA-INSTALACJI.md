@@ -111,8 +111,11 @@ Włącz. Dalej prowadzą instrukcje W paczkach botów (konfiguracja w kwadrans).
 
 ## Ustawienia produkcyjne (gdy strona idzie w świat)
 
-- **Ustawienia → Czytanie → ODZNACZ „Proś wyszukiwarki o nieindeksowanie"** —
-  bez tego WordPress nie wystawia mapy strony (sitemap) i Google nie
+- **Ustawienia → Czytanie → ODZNACZ opcję zniechęcania wyszukiwarek do
+  indeksowania** (oficjalny angielski tekst opcji: „Discourage search engines
+  from indexing this site" — zmierzony na stacku; polskie brzmienie zależy od
+  tłumaczenia Twojego WP, zrzut ekranu dojdzie przy finalizacji instrukcji) —
+  bez odznaczenia WordPress nie wystawia mapy strony (sitemap) i Google nie
   zaindeksuje sklepu.
 - Rozważ ochronę logowania na poziomie serwera (np. fail2ban albo reguła
   WAF na `wp-login.php`) — wtyczka spowalnia zgadywanie haseł i ogranicza
