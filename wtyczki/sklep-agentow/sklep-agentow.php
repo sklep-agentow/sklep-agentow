@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Sklep Agentów
  * Description: Sklep z testowymi botami AI — Stripe Checkout (tryb testowy), mail po zakupie, wydanie plików, panel w wp-admin. Zaplecze całe w WordPressie, własne tabele.
- * Version: 0.7.0
+ * Version: 0.8.0
  * Requires at least: 6.7
  * Requires PHP: 8.1
  * Author: Warsztat
@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SKLEPAG_WERSJA', '0.7.0' );
+define( 'SKLEPAG_WERSJA', '0.8.0' );
 define( 'SKLEPAG_WERSJA_SCHEMATU', 4 ); // v4: kolumna zamowienia.usunieto_dnia (anonimizacja RODO — K3d); v3: indeks para_logowania.
 define( 'SKLEPAG_LIMIT_POBRAN', 10 ); // Jedno źródło: INSERT zamówienia + treść maila (recenzja PR #33).
 define( 'SKLEPAG_LINK_GODZIN', 72 );  // Ważność linku pobrania — jw.
@@ -24,6 +24,8 @@ require_once SKLEPAG_KATALOG . 'includes/stripe.php';
 require_once SKLEPAG_KATALOG . 'includes/zakup.php';
 require_once SKLEPAG_KATALOG . 'includes/pobieranie.php';
 require_once SKLEPAG_KATALOG . 'includes/logowania.php'; // ZAWSZE, nie za is_admin() — hooki logowania żyją na wp-login.php.
+require_once SKLEPAG_KATALOG . 'includes/front-produkt.php'; // K5: widok produktu + rewrite (init) — poza is_admin().
+require_once SKLEPAG_KATALOG . 'includes/front-seo.php';     // K5: title/meta/JSON-LD/sitemap (D27).
 
 register_activation_hook( __FILE__, 'sklepag_aktywacja' );
 register_deactivation_hook( __FILE__, 'sklepag_deaktywacja' );
@@ -90,6 +92,12 @@ function sklepag_baner_testowy() {
  * Uczciwy stan pusty, bez atrap.
  */
 function sklepag_shortcode_sklep() {
+	// Widok produktu na TEJ SAMEJ stronie (query var — PLAN-WYGLADU-K5 §2B/PR 2).
+	$slug_produktu = get_query_var( 'sklepag_produkt' );
+	if ( is_string( $slug_produktu ) && '' !== $slug_produktu ) {
+		return sklepag_render_produkt( sanitize_title( $slug_produktu ) );
+	}
+
 	global $wpdb;
 	$tabela = $wpdb->prefix . 'sklepag_produkty';
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- własna tabela wtyczki; lista musi być świeża (CRUD w adminie), cache bez zysku.
@@ -112,19 +120,13 @@ function sklepag_shortcode_sklep() {
 
 	$html .= '<div class="sklepag-karty">';
 	foreach ( $produkty as $p ) {
-		$html    .= '<article class="sklepag-karta">';
-		$html    .= '<p class="sklepag-mono-etykieta">[ <span class="sklepag-akcent">BOT</span> · TESTOWY ]</p>';
-		$html    .= '<h2 class="sklepag-karta-tytul">' . esc_html( $p->nazwa ) . '</h2>';
-		$html    .= '<p class="sklepag-karta-opis">' . esc_html( $p->opis_krotki ) . '</p>';
-		$html    .= '<p class="sklepag-cena">' . esc_html( number_format( $p->cena_grosze / 100, 2, ',', ' ' ) ) . '<span class="sklepag-cena-waluta">' . esc_html( $p->waluta ) . '</span></p>';
-		$html    .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
-		$html    .= '<input type="hidden" name="action" value="sklepag_kup">';
-		$html    .= '<input type="hidden" name="produkt_id" value="' . (int) $p->id . '">';
-		$html    .= wp_nonce_field( 'sklepag_kup', '_wpnonce', true, false );
-		$id_zgody = 'sklepag-zgoda-' . (int) $p->id;
-		$html    .= '<label class="sklepag-zgoda" for="' . esc_attr( $id_zgody ) . '"><input type="checkbox" id="' . esc_attr( $id_zgody ) . '" name="zgoda" value="1" required> <span>' . esc_html( SKLEPAG_ZGODA_TRESC ) . '</span></label>';
-		$html    .= '<button type="submit" class="sklepag-kup">Kup teraz (płatność testowa)</button>';
-		$html    .= '</form></article>';
+		$html .= '<article class="sklepag-karta">';
+		$html .= '<p class="sklepag-mono-etykieta">[ <span class="sklepag-akcent">BOT</span> · TESTOWY ]</p>';
+		$html .= '<h2 class="sklepag-karta-tytul">' . esc_html( $p->nazwa ) . '</h2>';
+		$html .= '<p class="sklepag-karta-opis">' . esc_html( $p->opis_krotki ) . '</p>';
+		$html .= '<p class="sklepag-cena">' . esc_html( number_format( $p->cena_grosze / 100, 2, ',', ' ' ) ) . '<span class="sklepag-cena-waluta">' . esc_html( $p->waluta ) . '</span></p>';
+		$html .= '<p><a class="sklepag-kup sklepag-kup-kotwica" href="' . esc_url( sklepag_url_produktu_front( $p->slug ) ) . '">Zobacz szczegóły <span aria-hidden="true">→</span></a></p>';
+		$html .= '</article>';
 	}
 	$html .= '</div></div>';
 	return $html;

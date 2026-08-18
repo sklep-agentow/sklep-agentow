@@ -159,11 +159,15 @@ poprawki po krytyku #4-#7 naniesione):
   po transakcji nie powinna być w Google — standard sklepów).
 - Semantyka: jeden H1, logiczne H2, alt-y, landmarki (main/nav/footer).
 - **Sitemap**: własny `WP_Sitemaps_Provider` dla produktów (krytyk #5: produkty
-  to własna tabela, nie CPT — „filtr" nie istnieje; provider to ~40 linii wg
-  oficjalnego API). ⚠️ ZBADANE 19.08: sitemapa gospodarza USZKODZONA
-  (/sitemap.xml → 301 → /wp-sitemap.xml → 404) — przyczynę zbadać w PR SEO;
-  jeśli wyłączona przez motyw celowo, nasz provider czeka gotowy, a decyzja
-  o włączeniu = właściciel (motywu nie ruszamy).
+  to własna tabela, nie CPT — „filtr" nie istnieje). ⚠️ Nazwa providera BEZ
+  myślnika (`sklepagprodukty`) — regex rdzenia `[a-z]+?` tnie nazwę na
+  pierwszym myślniku (zmierzone: „sklepag-produkty" dawało pustą sitemapę).
+  ✅ ROZWIĄZANA zagadka „sitemap 404": to NIE uszkodzenie — stack ma
+  `blog_public=0` („Zniechęcaj wyszukiwarki", słusznie dla kopii dev),
+  a WP od 5.5 wyłącza wtedy CAŁE sitemapy (rdzeń, class-wp-sitemaps.php:89).
+  Dowód: przy blog_public=1 index działa i zawiera naszą sitemapę z ładnym
+  URL-em produktu (zmierzone 19.08, ustawienie przywrócone). → Do instrukcji
+  wdrożenia K8: na produkcji wyłączyć „Zniechęcaj wyszukiwarki".
 - Wydajność = też SEO (Core Web Vitals): assety tylko na stronach sklepu, CSS
   bez bibliotek, wizualizacje CSS-em zamiast ciężkich obrazów — już w planie.
 NIE na egzamin (osobna robota PO wdrożeniu na domenę): keyword research, treści
