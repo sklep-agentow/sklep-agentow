@@ -19,9 +19,10 @@ EDD, Baymard/NNGroup — destylat niżej §5) · układ strony produktu z planu 
 | AKCENT „limonka" | `#BFFF38` | logo „AI", CTA-pille, statusy (153 użycia na stronie) |
 | linie hairline | `rgba(245,245,245,.08)` | dividery |
 
-Typografia: **dziedziczymy z motywu** (GeistSans przez `inherit`; mono-akcenty
-`GeistMono, ui-monospace, monospace`) — zero własnych fontów, zero CDN. Nagłówki
-weight 600, duże (48–64 px na podstronach), oddech ogromny.
+Typografia: **dziedziczymy z motywu** (sans przez `inherit`; mono-akcenty
+`GeistMonoSubset, ui-monospace, …` — NAZWA ZMIERZONA 19.08 computed-stylem na
+mono-etykiecie `[ Usługi ]` motywu, nie zgadywana; uwaga recenzji #51) — zero
+własnych fontów, zero CDN. Nagłówki weight 600, duże (48–64 px), oddech ogromny.
 Detale-klimat (z podstron gospodarza): mono-etykiety `[ SKLEP ]` z `·` separatorem ·
 pulsująca kropka statusu · pille CTA (limonka, ciemny tekst, strzałka →) ·
 hairline dividery · wielkie outline-napisy w stopce.
@@ -133,6 +134,9 @@ akcentem — najbliższy naszemu klimatowi, potwierdza kierunek.
 2 PR: strona produktu (szablon + treść ChatBot + Segregator ze szkiców) →
 3 PR: dziękujemy + szlif RWD/WCAG → sędzia wyglądu 0-100 (kryteria dziedziny,
 przynęty) → poprawki → ZRZUTY dla Dzidka.
+⚠️ STAN PRZEJŚCIOWY (uwaga recenzji #51, dok=kod): PR 1 tymczasowo ZACHOWUJE
+formularz zakupu na kartach listy (stan z K1) — „Zobacz szczegóły" z §2A wchodzi
+dopiero w PR 2 razem ze stroną produktu, żeby między PR-ami sklep zawsze DZIAŁAŁ.
 
 ## 7. SEO PODSTAWOWE — DOBRE (Dzidek 19.08: „musi być dobre podstawowe, nie
 minimum"; ROZSZERZENIE ponad literę notatki → wpis do DECYZJE + PONAD-SPECYFIKACJE)
