@@ -114,6 +114,13 @@ function sklepag_aktywacja() {
 	}
 	update_option( 'sklepag_wersja_schematu', SKLEPAG_WERSJA_SCHEMATU, false );
 
+	// Opcje sekretne zakładane PUSTE z autoload=no ZANIM dotknie ich formularz:
+	// options.php przy zapisie robi update_option, które ZACHOWUJE autoload
+	// istniejącej opcji — bez tego pierwszy zapis z formularza dałby autoload=yes
+	// i sekrety ładowałyby się na froncie przy każdym żądaniu (plan §7).
+	add_option( 'sklepag_stripe_klucz_sekretny', '', '', false );
+	add_option( 'sklepag_stripe_webhook_sekret', '', '', false );
+
 	sklepag_utworz_strony();
 	sklepag_utworz_katalog_chroniony();
 
