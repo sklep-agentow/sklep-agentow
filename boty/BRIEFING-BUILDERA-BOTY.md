@@ -106,3 +106,13 @@ sprzed zmiany) / Uwagi** → meldunek → następna pozycja.
   mutex/stan przez atomowy `UPDATE ... WHERE stan=...` (CAS).
 - Uprawnienia plików w Dockerze: proces PHP = www-data (33); przed pisaniem do
   katalogu zrób próbę kontrolną zapisu.
+- (b1, 18.08) wp-cli NIE jest zainstalowane w kontenerze `strona_wp_wordpress` —
+  dograny phar: `/usr/local/bin/wp` (v2.12.0); wywołanie z `--path=/var/www/html`.
+- (b1, 18.08) mailpit NIE łapał maili z WP: (1) brak drogi SMTP → mu-plugin
+  `wp-content/mu-plugins/mailpit-smtp.php` kieruje PHPMailer na mailpit;
+  (2) PHPMailer ODRZUCA host z podkreśleniem (`sklep_mailpit` = „Invalid host")
+  → w mu-pluginie `gethostbyname("sklep_mailpit")`; (3) From `wordpress@localhost`
+  (siteurl=localhost) też odrzucany → filtr `wp_mail_from` na poprawny adres.
+- (b1, 18.08) WP_DEBUG był wyłączony w wp-config stacku — włączony przez
+  `wp config set WP_DEBUG true --raw` (+ WP_DEBUG_LOG true, WP_DEBUG_DISPLAY false);
+  log: `wp-content/debug.log`.

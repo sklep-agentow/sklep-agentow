@@ -1,0 +1,194 @@
+/* ChatBot LIVE — widget. Własna warstwa (z-index), nie rusza motywu. */
+
+.chatl-korzen {
+	position: fixed;
+	right: 20px;
+	bottom: 20px;
+	z-index: 99999;
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+	font-size: 14px;
+	line-height: 1.4;
+}
+
+.chatl-babelek {
+	width: 56px;
+	height: 56px;
+	border: 0;
+	border-radius: 50%;
+	background: #1d4ed8;
+	color: #fff;
+	font-size: 24px;
+	cursor: pointer;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+	display: block;
+	margin-left: auto;
+}
+
+.chatl-babelek:hover {
+	background: #1e40af;
+}
+
+.chatl-okno {
+	display: none;
+	width: 320px;
+	max-width: calc(100vw - 40px);
+	height: 440px;
+	max-height: calc(100vh - 120px);
+	margin-bottom: 12px;
+	background: #fff;
+	border-radius: 12px;
+	box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+	flex-direction: column;
+	overflow: hidden;
+}
+
+.chatl-okno.chatl-otwarty {
+	display: flex;
+}
+
+.chatl-naglowek {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 10px 14px;
+	background: #1d4ed8;
+	color: #fff;
+}
+
+.chatl-tytul {
+	font-weight: 600;
+}
+
+.chatl-zamknij {
+	border: 0;
+	background: none;
+	color: #fff;
+	font-size: 20px;
+	cursor: pointer;
+	padding: 0 4px;
+}
+
+.chatl-wiadomosci {
+	flex: 1;
+	overflow-y: auto;
+	padding: 12px;
+	background: #f8fafc;
+}
+
+.chatl-wiadomosc {
+	display: flex;
+	margin-bottom: 8px;
+}
+
+.chatl-wiadomosc.chatl-gosc {
+	justify-content: flex-end;
+}
+
+.chatl-dymek {
+	max-width: 85%;
+	padding: 8px 12px;
+	border-radius: 12px;
+	background: #e2e8f0;
+	color: #0f172a;
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+.chatl-gosc .chatl-dymek {
+	background: #1d4ed8;
+	color: #fff;
+}
+
+.chatl-pasek-kontakt {
+	padding: 6px 12px;
+	background: #f8fafc;
+	border-top: 1px solid #e2e8f0;
+	text-align: center;
+}
+
+.chatl-przycisk-kontakt {
+	border: 1px solid #1d4ed8;
+	background: #fff;
+	color: #1d4ed8;
+	border-radius: 16px;
+	padding: 4px 14px;
+	cursor: pointer;
+	font-size: 13px;
+}
+
+.chatl-przycisk-kontakt:hover {
+	background: #eff6ff;
+}
+
+.chatl-formularz {
+	display: none;
+	padding: 10px 12px;
+	background: #eff6ff;
+	border-top: 1px solid #dbeafe;
+}
+
+.chatl-formularz.chatl-otwarty {
+	display: block;
+}
+
+.chatl-form-tytul {
+	font-size: 13px;
+	margin-bottom: 6px;
+	color: #1e3a8a;
+}
+
+.chatl-formularz .chatl-pole {
+	width: 100%;
+	box-sizing: border-box;
+	margin-bottom: 6px;
+	padding: 6px 8px;
+	border: 1px solid #cbd5e1;
+	border-radius: 6px;
+	font: inherit;
+}
+
+.chatl-wyslij-zgloszenie {
+	width: 100%;
+	border: 0;
+	background: #1d4ed8;
+	color: #fff;
+	border-radius: 6px;
+	padding: 7px;
+	cursor: pointer;
+	font: inherit;
+}
+
+.chatl-wyslij-zgloszenie:disabled {
+	opacity: 0.6;
+}
+
+.chatl-form-pytania {
+	display: flex;
+	border-top: 1px solid #e2e8f0;
+	background: #fff;
+}
+
+.chatl-pole-pytania {
+	flex: 1;
+	border: 0;
+	padding: 10px 12px;
+	font: inherit;
+	min-width: 0;
+}
+
+/* Widoczny focus dla nawigacji klawiaturą (WCAG), bez ramki przy kliknięciu myszą. */
+.chatl-korzen button:focus-visible,
+.chatl-korzen input:focus-visible,
+.chatl-korzen textarea:focus-visible {
+	outline: 2px solid #1d4ed8;
+	outline-offset: -2px;
+}
+
+.chatl-wyslij-pytanie {
+	border: 0;
+	background: none;
+	color: #1d4ed8;
+	font-size: 18px;
+	padding: 0 14px;
+	cursor: pointer;
+}
