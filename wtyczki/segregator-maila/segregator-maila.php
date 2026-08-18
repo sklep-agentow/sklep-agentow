@@ -17,11 +17,12 @@ define( 'SEGM_WERSJA_SCHEMATU', '1' );
 define( 'SEGM_KATALOG', plugin_dir_path( __FILE__ ) );
 
 require_once SEGM_KATALOG . 'includes/instalator.php';
-require_once SEGM_KATALOG . 'includes/silnik.php';
 
 register_activation_hook( __FILE__, 'segm_aktywacja' );
 
+// Bot działa wyłącznie w adminie — front nie ładuje nic poza ścieżką upgrade.
 if ( is_admin() ) {
+	require_once SEGM_KATALOG . 'includes/silnik.php';
 	require_once SEGM_KATALOG . 'includes/csv.php';
 	require_once SEGM_KATALOG . 'includes/admin.php';
 }

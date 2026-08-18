@@ -170,7 +170,7 @@ function segm_widok_raportu( $id ) {
 						<td><?php echo esc_html( $w['temat'] ); ?></td>
 						<td><strong><?php echo esc_html( $w['kategoria'] ); ?></strong></td>
 						<td><?php echo esc_html( $w['oczekiwana'] ); ?></td>
-						<td><?php echo null !== $w['regula_id'] && isset( $reguly_opis[ $w['regula_id'] ] ) ? esc_html( $reguly_opis[ $w['regula_id'] ] ) : 'żadna (kubeł domyślny)'; ?></td>
+						<td><?php echo null === $w['regula_id'] ? 'żadna (kubeł domyślny)' : ( isset( $reguly_opis[ $w['regula_id'] ] ) ? esc_html( $reguly_opis[ $w['regula_id'] ] ) : 'reguła usunięta (#' . (int) $w['regula_id'] . ')' ); ?></td>
 					</tr>
 				<?php endforeach; ?>
 				</tbody>
@@ -186,7 +186,7 @@ function segm_widok_raportu( $id ) {
 					<td><?php echo esc_html( $w['nadawca'] ); ?></td>
 					<td><?php echo esc_html( $w['temat'] ); ?></td>
 					<td><?php echo esc_html( $w['kategoria'] ); ?></td>
-					<td><?php echo null !== $w['regula_id'] && isset( $reguly_opis[ $w['regula_id'] ] ) ? esc_html( $reguly_opis[ $w['regula_id'] ] ) : '—'; ?></td>
+					<td><?php echo null === $w['regula_id'] ? '—' : ( isset( $reguly_opis[ $w['regula_id'] ] ) ? esc_html( $reguly_opis[ $w['regula_id'] ] ) : 'reguła usunięta (#' . (int) $w['regula_id'] . ')' ); ?></td>
 					<td><?php echo '' === $w['oczekiwana'] ? '—' : esc_html( $w['oczekiwana'] ) . ( $w['trafiony'] ? ' ✔' : ' ✘' ); ?></td>
 				</tr>
 			<?php endforeach; ?>
@@ -324,7 +324,7 @@ function segm_post_regula_zapisz() {
 	global $wpdb;
 	$id           = isset( $_POST['id'] ) ? (int) $_POST['id'] : 0;
 	$pole         = isset( $_POST['pole'] ) ? sanitize_key( wp_unslash( $_POST['pole'] ) ) : '';
-	$wzorzec      = isset( $_POST['wzorzec'] ) ? sanitize_text_field( wp_unslash( $_POST['wzorzec'] ) ) : '';
+	$wzorzec      = isset( $_POST['wzorzec'] ) ? mb_substr( sanitize_text_field( wp_unslash( $_POST['wzorzec'] ) ), 0, SEGM_MAX_POLE ) : '';
 	$kategoria_id = isset( $_POST['kategoria_id'] ) ? (int) $_POST['kategoria_id'] : 0;
 
 	if ( ! in_array( $pole, array( 'od', 'temat', 'tresc' ), true ) || '' === $wzorzec ) {
@@ -475,6 +475,13 @@ function segm_post_kategoria_zapisz() {
 	}
 	$nazwa = mb_substr( $nazwa, 0, 100 );
 
+	// Duplikat nazwy myliłby w liście rozwijanej reguł (rozstrzyga ID, ale UI po nazwie).
+	$duplikat = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}segm_kategorie WHERE LOWER(nazwa) = LOWER(%s) AND id != %d", $nazwa, $id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	if ( $duplikat > 0 ) {
+		wp_safe_redirect( admin_url( 'admin.php?page=segm-kategorie&segm_blad=' . rawurlencode( 'Kategoria o tej nazwie już istnieje.' ) ) );
+		exit;
+	}
+
 	if ( $id > 0 ) {
 		$wpdb->update( $wpdb->prefix . 'segm_kategorie', array( 'nazwa' => $nazwa ), array( 'id' => $id ), array( '%s' ), array( '%d' ) );
 	} else {
@@ -516,7 +523,7 @@ function segm_strona_probka() {
 	<div class="wrap">
 		<h1>Próbka maili (<?php echo (int) $ile; ?>)</h1>
 		<?php segm_komunikaty(); ?>
-		<p>Segregator testujesz na próbce — bez podpinania żywej skrzynki. Możesz wgrać własny eksport CSV (kolumny: <code>od, temat, tresc</code>, opcjonalnie <code>kategoria_oczekiwana</code> — wtedy raport policzy accuracy). Import <strong>zastępuje</strong> bieżącą próbkę; maks. <?php echo (int) SEGM_IMPORT_MAX_WIERSZY; ?> wierszy.</p>
+		<p>Segregator testujesz na próbce — bez podpinania żywej skrzynki. Możesz wgrać własny eksport CSV (kolumny: <code>od, temat, tresc</code>, opcjonalnie <code>kategoria_oczekiwana</code> — wtedy raport policzy accuracy). Separator: przecinek albo średnik (jak w polskim Excelu) — wykrywany automatycznie. Import <strong>zastępuje</strong> bieżącą próbkę; maks. <?php echo (int) SEGM_IMPORT_MAX_WIERSZY; ?> wierszy.</p>
 
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" enctype="multipart/form-data" style="margin-bottom:12px">
 			<input type="hidden" name="action" value="segm_import_csv">
