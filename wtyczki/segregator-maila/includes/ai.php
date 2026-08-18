@@ -1,8 +1,10 @@
 <?php
 /**
  * Tryb AI (hybryda): klasyfikację robi Claude API z kluczem WŁAŚCICIELA.
- * Ten sam stop-loss co w ChatBocie: dzienny limit, licznik w TABELI wtyczki,
- * zużywany PO sukcesie; timeout 15 s + JEDEN retry; błąd => zjazd do reguł.
+ * Ten sam stop-loss co w ChatBocie: dzienny limit (MIĘKKI — równoległe
+ * wywołania mogą go minimalnie przekroczyć), licznik w TABELI wtyczki,
+ * zużywany PO sukcesie; timeout 9 s + JEDEN retry (maks. 18 s na partię,
+ * pod limitem PHP 30 s); błąd => zjazd do reguł.
  *
  * Próbka idzie partiami (20 maili = 1 wywołanie API) — jedna partia mieści się
  * w limicie czasu, a stop-loss liczy realne wywołania.
@@ -14,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 const SEGM_AI_MODEL      = 'claude-opus-5';
 const SEGM_AI_MAX_TOKENS = 4096;
-const SEGM_AI_TIMEOUT    = 15;
+const SEGM_AI_TIMEOUT    = 9;
 const SEGM_AI_PARTIA     = 20;
 
 /**
