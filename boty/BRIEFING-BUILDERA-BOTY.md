@@ -88,6 +88,17 @@ sprzed zmiany) / Uwagi** → meldunek → następna pozycja.
 - MDN (JS widgetu) · OWASP (walidacja wejść, sekrety).
 ⛔ Blogi/StackOverflow = tylko trop; rozstrzyga oficjalne źródło.
 
+## ⭐ ŚCIĄGA EGZAMINATORA (dopisane 18.08 — patrz audyt/SCIAGA-EGZAMINATORA.md;
+## kolega wytykał te klasy w 2 poprzednich projektach, będzie szukał ZNOWU):
+- Pełne czyszczenie w uninstall MUSI usuwać KLUCZ API właściciela (wytknięte ×2).
+- Każdy SQL `LIKE`: wartości przez `$wpdb->esc_like()`, w stałych `\_` zamiast `_`
+  (podkreślnik to wildcard — skasujesz cudze wpisy o podobnej nazwie).
+- Liczniki/stany często zapisywane (stop-loss AI!) → do TABELI bota, NIE do wp_options.
+- Timeout wywołań zewnętrznych (AI API): 15 s, JEDEN retry — nigdy pętla retry
+  dłuższa niż limit PHP hostingu (30 s); licznik limitu zużywaj PO sukcesie, nie przed.
+- Zero śladów wewnętrznych w paczce: notatek QA, TODO/FIXME, adresów dev.
+- Każda LICZBA w instrukcji/README musi mieć pokrycie w kodzie (kolega porównuje).
+
 ## PUŁAPKI ŚRODOWISKA (sekcja rośnie — dopisuj własne znaleziska!)
 - `wp_mail` w kontenerze bez SMTP ginie bez śladu → na stacku jest mailpit.
 - `__()`/tłumaczenia przy rejestracji wtyczki = notice od WP 6.7 → NIE używamy i18n.
