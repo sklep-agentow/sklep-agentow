@@ -15,8 +15,10 @@ właściciel odezwał się na żywo.
 **FRONT (co widzi gość strony):**
 - pływający bąbelek czatu w rogu (włącz/wyłącz w ustawieniach; nie rusza motywu),
 - okno czatu: powitanie (konfigurowalne) → gość pisze pytanie → bot odpowiada
-  z bazy pytań-odpowiedzi (dopasowanie po słowach kluczowych i RDZENIACH słów —
-  polskie odmiany: „cena/ceny/cennik" łapie jeden wpis),
+  z bazy pytań-odpowiedzi (v1: PROSTE dopasowanie podłańcuchów po polu „słowa
+  kluczowe z wariantami" — odmiany łapiesz wpisując warianty: „cena, ceny, cennik";
+  automatyczny stemming polskich odmian = droga rozbudowy PO egzaminie — recenzja
+  PR #27: bez cichego poszerzania wyceny §14),
 - brak dopasowania → uczciwe „nie znam odpowiedzi — zostaw maila i pytanie,
   odezwiemy się" → zapis zgłoszenia + (opcja) powiadomienie mailem do właściciela.
   **To jest człon „LIVE": most do żywego człowieka, nie udawanie wszechwiedzy.**
@@ -30,12 +32,16 @@ właściciel odezwał się na żywo.
 
 **„Ile czasu oszczędza" (pokrycie w treści, nie zmyłka):** odpowiedzi na powtarzalne
 pytania bez udziału człowieka + leady zbierane poza godzinami; instrukcja pokazuje,
-jak wpisać własne Q&A w 15 minut.
+jak wpisać własne Q&A w kilkanaście minut (czas MIERZONY przez nie-autora we
+wrogiej sesji 23.08 — obietnica z pokryciem, nie z sufitu).
 
 **GRANICE na egzamin (jawne):** bez LLM (architektura ma miejsce na dostawcę AI —
 klucz właściciela, po egzaminie; opcjonalnie zbadany klient AI rdzenia WP 7.0 — Z7),
 bez pamięci rozmów między wizytami (sesja przeglądarki), bez czatu operatora na żywo
 w czasie rzeczywistym (kontakt = zgłoszenie + mail).
+**Uczciwie (to zdanie idzie TEŻ na stronę produktu w K5):** to bot regułowy z bazy
+Q&A + most do maila właściciela — NIE żywa rozmowa z operatorem ani prawdziwe AI;
+„LIVE" znaczy: żywy człowiek ODPISZE na zebrany kontakt.
 
 ---
 
@@ -46,7 +52,9 @@ rozdziela maile do kategorii wg reguł i pokazuje raport, ile roboty zrobił za 
 
 **RDZEŃ (co robi w wersji testowej):**
 - reguły segregacji (CRUD): nadawca zawiera / temat zawiera / słowa kluczowe
-  w treści → kategoria + priorytet; kolejność reguł ma znaczenie (pierwsza wygrywa),
+  w treści → kategoria; JEDEN mechanizm rozstrzygania: kolejność na liście
+  (pierwsza pasująca wygrywa; osobnego pola „priorytet" NIE MA — recenzja PR #27:
+  dwa mechanizmy naraz = niejednoznaczność),
 - kategorie (CRUD): np. Oferty, Faktury, Reklamacje, Spam-podejrzane, Reszta,
 - wbudowana PRÓBKA ~30 maili demo PL + **import własnej próbki z CSV**
   (kolumny: od, temat, treść) — klient może wrzucić eksport ze SWOJEJ skrzynki,
@@ -56,7 +64,8 @@ rozdziela maile do kategorii wg reguł i pokazuje raport, ile roboty zrobił za 
 **ADMIN:** reguły, kategorie, przebiegi (historia raportów), import próbki.
 
 **„Ile czasu oszczędza":** raport z próbki pokazuje NA LICZBACH, jaki % skrzynki
-automat rozdzieli sam; instrukcja: jak ułożyć reguły pod własną firmę w 20 minut.
+automat rozdzieli sam; instrukcja: jak ułożyć reguły pod własną firmę w ~20 minut
+(czas mierzony jak w ChatBocie — wroga sesja 23.08).
 
 **GRANICE na egzamin (jawne):** bez podpięcia prawdziwej skrzynki (IMAP/OAuth —
 po egzaminie, droga opisana w instrukcji krok po kroku); działa na próbkach CSV —
@@ -75,7 +84,8 @@ dlatego uczciwie nazywa się „testowy bot", a nie udaje produkcji.
 - każda wtyczka: instrukcja użytkownika PL (instalacja → konfiguracja w kwadrans →
   FAQ → droga rozbudowy) — **zip wtyczki + instrukcja = paczka produktu w sklepie**,
 - wroga sesja botów 23.08 (czysty WP: aktywacja bez błędów/notice'ów, seed działa,
-  uninstall czysty) — kryterium GOTOWE #10.
+  uninstall czysty) — kryterium GOTOWE #10; W TYM pomiar czasu konfiguracji przez
+  nie-autora (pokrycie obietnic czasowych z instrukcji i stron produktów).
 
 ## CO SPRAWDZI RECENZJA DZIDKA (pytania do Ciebie)
 
