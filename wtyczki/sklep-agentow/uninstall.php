@@ -66,3 +66,7 @@ wp_clear_scheduled_hook( 'sklepag_dociagnij_zalegle' );
 // esc_like() eskejpuje podkreślnik (SQL wildcard) + prepare — wzorzec Handbook,
 // nie skrót WC/EDD (goły LIKE bez prepare łamie regułę WPCS). Chroni cudze opcje.
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $wpdb->esc_like( 'sklepag_' ) . '%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- uninstall.
+
+// 6. User meta wtyczki: Screen Options „na stronę" zapisuje się per użytkownik
+// w wp_usermeta, nie w wp_options (recenzja PR #44 — symetria zapis↔sprzątanie).
+delete_metadata( 'user', 0, 'sklepag_zamowien_na_strone', '', true );

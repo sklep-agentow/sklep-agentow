@@ -402,9 +402,22 @@ function sklepag_status_zamowienia( WP_REST_Request $zadanie ) {
 
 /* ---------- RECONCILIATION — druga droga domykania (cron + self-heal) ---------- */
 
-function sklepag_dociagnij_zalegle() {
+/**
+ * @param int $budzet_s Budżet CZASU ściany w sekundach dla wywołań SYNCHRONICZNYCH
+ *                      (self-heal/przycisk na dashboardzie — recenzja PR #44: worst-case
+ *                      40 requestów × 15 s timeout przekroczyłby max_execution_time
+ *                      hostingu i wywalił render; ściąga egzaminatora: „100 s > 30 s").
+ *                      0 = bez limitu (WP-cron — kontekst tolerancyjny na czas).
+ *                      Niedociągnięte w budżecie zostają na następny bieg (idempotentne).
+ */
+function sklepag_dociagnij_zalegle( $budzet_s = 0 ) {
 	global $wpdb;
-	$ps = $wpdb->prefix . 'sklepag_sesje_checkout';
+	$ps    = $wpdb->prefix . 'sklepag_sesje_checkout';
+	$start = microtime( true );
+
+	$po_budzecie = static function () use ( $budzet_s, $start ) {
+		return $budzet_s > 0 && ( microtime( true ) - $start ) >= $budzet_s;
+	};
 
 	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
 	$granica = gmdate( 'Y-m-d H:i:s', strtotime( current_time( 'mysql' ) ) - 120 );
@@ -417,6 +430,9 @@ function sklepag_dociagnij_zalegle() {
 	// phpcs:enable
 
 	foreach ( $sesje as $sid ) {
+		if ( $po_budzecie() ) {
+			break; // Resztę dociągnie cron — render admina nie może wisieć (PR #44).
+		}
 		$sesja = sklepag_stripe_pobierz_sesje( $sid );
 		if ( is_wp_error( $sesja ) ) {
 			sklepag_zdarzenie( null, 'reconciliation_blad', $sid . ': ' . $sesja->get_error_message() );
@@ -444,6 +460,9 @@ function sklepag_dociagnij_zalegle() {
 	);
 	// phpcs:enable
 	foreach ( $niedomkniete as $sid ) {
+		if ( $po_budzecie() ) {
+			break; // Jw.: budżet czasu wywołań synchronicznych.
+		}
 		$sesja = sklepag_stripe_pobierz_sesje( $sid );
 		if ( is_wp_error( $sesja ) ) {
 			sklepag_zdarzenie( null, 'reconciliation_blad', $sid . ': ' . $sesja->get_error_message() );
