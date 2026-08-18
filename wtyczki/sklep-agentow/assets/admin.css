@@ -53,9 +53,18 @@
 }
 
 /* Dashboard: pasek okresów i akcji. */
-.sklepag-baner-testowy-admin {
-	margin: 4px 0 12px;
-	color: #646970;
+.sklepag-tryb-testowy {
+	display: inline-block;
+	vertical-align: middle;
+	margin-left: 8px;
+	padding: 3px 10px;
+	border: 1px solid #b5d3e7;
+	border-radius: 3px;
+	background: #f0f6fc;
+	color: #043959;
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: 0.4px;
 }
 
 .sklepag-pasek {

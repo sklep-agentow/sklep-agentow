@@ -7,15 +7,32 @@
   zweryfikowane (haiku + finalny kod w zipie)** (#35). ZERO otwartych PR.
 - **K2 wroga sesja sklepu — 7 ataków obronionych** (audyt/K2-WROGA-SESJA.md).
 
+## ✅ ZAMKNIĘTE 18.08 (wieczór) — ⭐ K3 KOMPLET, 7 PR-ów (#41-#47), wersja 0.5.1
+- **#41 bramki CI PHP** (php-lint 8.4 · phpcs WPCS[sklep, boty→23.08 D25] · phpstan L5
+  wszystkie wtyczki · gitleaks; manifest +4; E2E przelot2.js uratowany do repo).
+- **#42 dziennik logowań** (S-09; opóźnienie wykładnicze ZMIERZONE 0.3→2.3→4.3→8.3 s,
+  reset po sukcesie; limit 6/min per IP PRZED sleep — salwa 12: 6×200+6×429 w 0.1 s;
+  retencja 90 dni; schemat v3) · **#43 ustawienia** (Settings API; sekrety autoload=no
+  TAKŻE przy update-in-place; uninstall kasuje sekrety ZAWSZE — klasa #1 ściągi;
+  nadawca wokół naszego wp_mail) · **#44 dashboard** (KPI+delta %, rozkład, tabela,
+  CSV, self-heal Z BUDŻETEM CZASU 8/15 s; suma słupków = KPI co do grosza) ·
+  **#45 zamówienie** (mail+resend ze świeżym tokenem [stary 403/nowy 200],
+  anonimizacja RODO — schemat v4) · **#46 fix ukrytej strony** (bug złapany ZRZUTEM —
+  wp eval go nie widział) · **#47 szlif po sędzi wyglądu**.
+- **Sędzia wyglądu #1: 66/100** (przynęty rozbrojone — wiarygodny); TOP-braki
+  zaadresowane w #47 (pasek statusów, kolumna Akcje, notice, hierarchia KPI,
+  zrzuty-dowody); świadome odstępstwa w WZORCE-DASHBOARD-K3 §8. Sędzia #2 w toku.
+- Zrzuty panelu: scratchpad sesji `zrzuty/` (10 szt.); skrypt `testy/zrzuty-panelu.js`.
+
 ## Blokuje wydanie
 - (nic pilnego) — Live-smoke AI na żywym api.anthropic.com w ODWODZIE (~5$ za zgodą
   Dzidka), gdyby próba 1 chciała żywe AI; egzamin trybem regułowym 0 zł.
 
 ## Nie zaczęte (kolejność planu)
-- **K3 PANEL wp-admin** — ⭐ NAJPIERW wzorce dashboardów dobrych sklepów (wytyczna
-  Dzidka), potem budowa: dashboard+CSV, zamówienie+resend, dziennik logowań, ustawienia.
-  Sędzia wyglądu 0-100 PRZED pokazem. GŁÓWNIE MOJA ROBOTA (sklep).
 - **K4 CRUD produktów** (upload zip chroniony + walidacje + snapshot nietykalny).
+  ⭐ WYTYCZNA DZIDKA do K5: front sklepu MUSI pasować do KLIMATU strony-gospodarza;
+  przed budową witryny POWIEDZIEĆ Dzidkowi plan wyglądu (skille frontend-design +
+  dzial-agencji-stron + wzorce stron produktowych).
 - **K5 witryna sklepu** (wzorce stron produktowych → treść ze SZKICÓW botów).
 - **Drobne hardening (nie blokujące, z recenzji #40):** sklep rate-limit → LAST_INSERT_ID
   (mikro-okno, błądzi bezpiecznie); indeks okno_do nazwać rozszerzeniem; $prog domyślny.
