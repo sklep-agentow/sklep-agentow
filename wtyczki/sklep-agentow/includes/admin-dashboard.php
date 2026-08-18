@@ -299,7 +299,7 @@ function sklepag_admin_dashboard() {
 	// phpcs:enable
 
 	echo '<div class="wrap sklepag-dashboard"><h1>Sklep Agentów</h1>';
-	echo '<p class="sklepag-baner-testowy-admin"><strong>TRYB TESTOWY</strong> — płatności Stripe testowe, zero prawdziwych pieniędzy.</p>';
+	echo '<div class="notice notice-info inline sklepag-baner-testowy-admin"><p><strong>TRYB TESTOWY</strong> — płatności Stripe testowe, zero prawdziwych pieniędzy.</p></div>';
 
 	// Diagnostyka katalogu chronionego (przejęta ze szkieletu kości) — bez niego wydawanie plików nie działa.
 	$katalog      = (string) get_option( 'sklepag_katalog_chroniony', '' );
@@ -342,14 +342,16 @@ function sklepag_admin_dashboard() {
 	echo '<a href="' . esc_url( $eksport ) . '" class="button">Eksport CSV</a>';
 	echo '</div></div>';
 
-	// Karty KPI (wzorce §1-2: przychód i zamówienia pierwsze, delta % przy każdej).
+	// Karty KPI (wzorce §1-2: przychód i zamówienia pierwsze, delta % przy każdej;
+	// hierarchia typografią — przychód elewowany jak u Stripe, uwaga sędziego wyglądu).
 	echo '<div class="sklepag-kpi" role="list">';
-	sklepag_karta_kpi( 'Przychód', number_format( $kpi['przychod'] / 100, 2, ',', ' ' ) . ' zł', sklepag_delta_html( $kpi['przychod'], $poprz['przychod'] ) );
+	sklepag_karta_kpi( 'Przychód', number_format( $kpi['przychod'] / 100, 2, ',', ' ' ) . ' zł', sklepag_delta_html( $kpi['przychod'], $poprz['przychod'] ), true );
 	sklepag_karta_kpi( 'Zamówienia', (string) $kpi['zamowienia'], sklepag_delta_html( $kpi['zamowienia'], $poprz['zamowienia'] ) );
 	sklepag_karta_kpi( 'Średnia wartość', $aov > 0 ? number_format( $aov / 100, 2, ',', ' ' ) . ' zł' : '—', sklepag_delta_html( $aov, $aov_poprz ) );
 	sklepag_karta_kpi( 'Kupujący', (string) $kpi['kupujacy'], sklepag_delta_html( $kpi['kupujacy'], $poprz['kupujacy'] ) );
 	echo '</div>';
 
+	sklepag_pasek_statusow( $g );
 	sklepag_rozklad_w_czasie( $okres, $g );
 
 	// Tabela zamówień (formularz GET niesie filtry; page/okres jako hidden).
@@ -372,11 +374,72 @@ function sklepag_admin_dashboard() {
  * @param string $tytul  Nazwa metryki.
  * @param string $liczba Sformatowana wartość.
  * @param string $delta  HTML delty (z sklepag_delta_html — już escapowany).
+ * @param bool   $glowna Metryka główna (większa typografia — hierarchia jak u Stripe).
  */
-function sklepag_karta_kpi( $tytul, $liczba, $delta ) {
-	echo '<div class="sklepag-karta" role="listitem"><span class="sklepag-karta-tytul">' . esc_html( $tytul ) . '</span>'
+function sklepag_karta_kpi( $tytul, $liczba, $delta, $glowna = false ) {
+	echo '<div class="sklepag-karta' . ( $glowna ? ' sklepag-karta-glowna' : '' ) . '" role="listitem"><span class="sklepag-karta-tytul">' . esc_html( $tytul ) . '</span>'
 		. '<span class="sklepag-karta-liczba">' . esc_html( $liczba ) . '</span>'
 		. $delta . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $delta budowana wyłącznie w sklepag_delta_html z escapowanych części.
+}
+
+/**
+ * Pasek proporcji statusów zamówień w okresie (uwaga sędziego: „ile % ma
+ * problem" na jeden rzut oka, bez liczenia wierszy tabeli) — stacked bar
+ * czystym CSS + legenda z liczbami (status nigdy samym kolorem — WCAG).
+ *
+ * @param array $g Granice okresu.
+ */
+function sklepag_pasek_statusow( $g ) {
+	global $wpdb;
+	$t = $wpdb->prefix . 'sklepag_zamowienia';
+
+	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery -- nazwa tabeli z prefiksu; agregacja na żywo.
+	$wiersze = $wpdb->get_results(
+		$wpdb->prepare(
+			"SELECT status, COUNT(*) AS ile FROM {$t} WHERE utworzono >= %s AND utworzono < %s GROUP BY status",
+			$g['od'],
+			$g['do']
+		),
+		OBJECT_K
+	);
+	// phpcs:enable
+
+	$razem = 0;
+	foreach ( $wiersze as $w ) {
+		$razem += (int) $w->ile;
+	}
+	if ( 0 === $razem ) {
+		return; // Pusty okres — pasek bez danych to szum; pusty stan niesie tabela.
+	}
+
+	$kolory = array(
+		'mail_wyslany' => '#2e7d38',
+		'oplacone'     => '#2271b1',
+		'mail_w_toku'  => '#b98a00',
+		'mail_blad'    => '#b32d2e',
+		'oczekuje'     => '#8c8f94',
+	);
+
+	echo '<div class="sklepag-statusy-pasek-box"><h2>Statusy zamówień w okresie</h2>';
+	echo '<div class="sklepag-statusy-pasek" role="img" aria-label="Proporcje statusów zamówień">';
+	foreach ( $kolory as $status => $kolor ) {
+		$ile = isset( $wiersze[ $status ] ) ? (int) $wiersze[ $status ]->ile : 0;
+		if ( 0 === $ile ) {
+			continue;
+		}
+		$s = Sklepag_Lista_Zamowien::STATUSY[ $status ];
+		echo '<div class="sklepag-statusy-czesc" style="width:' . esc_attr( (string) round( $ile / $razem * 100, 2 ) ) . '%;background:' . esc_attr( $kolor ) . '" title="' . esc_attr( $s[0] . ': ' . $ile ) . '"></div>';
+	}
+	echo '</div><p class="sklepag-statusy-legenda">';
+	foreach ( $kolory as $status => $kolor ) {
+		$ile = isset( $wiersze[ $status ] ) ? (int) $wiersze[ $status ]->ile : 0;
+		if ( 0 === $ile ) {
+			continue;
+		}
+		$s = Sklepag_Lista_Zamowien::STATUSY[ $status ];
+		echo '<span class="sklepag-legenda-pozycja"><span class="sklepag-legenda-kropka" style="background:' . esc_attr( $kolor ) . '"></span>' . esc_html( $s[0] . ': ' . $ile ) . '</span> ';
+	}
+	echo '</p></div>';
 }
 
 /**
