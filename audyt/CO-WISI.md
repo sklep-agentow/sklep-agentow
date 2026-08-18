@@ -55,7 +55,12 @@
   + README (node_modules poza repo).
 - **Boty ↔ phpcs przy wrogiej sesji 23.08 (D25):** phpcbf + adnotacje + w phpcs.xml.dist
   `customSanitizingFunctions` (chatl_waliduj_sesje) + rozszerzyć `<file>` na boty +
-  przebudowa paczek + POWTÓRKA weryfikacji zipów. 5 trafień sniffa security obejrzane
+  przebudowa paczek + POWTÓRKA weryfikacji zipów.
+  **+ DOŁOŻONE po sędzi wyglądu K5 (73/100, top-uwaga #1):** widget chatbota
+  #1d4ed8 (niebieski, zaszyty w widget.css) = jedyny obcy kolor na stronie w
+  systemie limonki — w TYM SAMYM pakiecie przemalować na limonkę/ciemny wariant
+  (jedna przebudowa paczek zamiast dwóch); mockup na stronie produktu już
+  pokazuje limonkowy dymek, po zmianie będzie 1:1. 5 trafień sniffa security obejrzane
   18.08 = szum (sanitizer-regex, klucz API sanityzowany przy zapisie), 0 realnych dziur.
 - **Test automatyczny dziennika/opóźnienia** (recenzja #42, drobna): skrypt na żywym
   stacku (sekwencja czasów + salwa równoległa + retencja) — dołożyć przy K3c/d razem
