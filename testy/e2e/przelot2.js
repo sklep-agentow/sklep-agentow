@@ -17,7 +17,11 @@ async function wypelnijWRamkach(p, dopasowania) {
 }
 
 (async () => {
-  const strona = await (await fetch(BAZA + '/sklep/')).text();
+  // Od K5 (PR 2) formularz zakupu żyje na STRONIE PRODUKTU — nonce bierzemy stamtąd,
+  // idąc linkiem "Zobacz szczegóły" z listy (odporne na permalinki i ich brak).
+  const lista = await (await fetch(BAZA + '/sklep/')).text();
+  const linkProduktu = (lista.match(/href="([^"]*(?:\/produkt\/|sklepag_produkt=)[^"]*)"/) || [])[1].replace(/&#0?38;|&amp;/g, '&');
+  const strona = await (await fetch(linkProduktu)).text();
   const nonce = strona.match(/name="_wpnonce" value="([a-f0-9]+)"/)[1];
   const odp = await fetch(BAZA + '/wp-admin/admin-post.php', {
     method: 'POST', redirect: 'manual',

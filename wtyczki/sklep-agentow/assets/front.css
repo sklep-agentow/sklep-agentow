@@ -236,6 +236,367 @@
 	margin: 0;
 }
 
+/* ---------- Strona produktu (PR 2) ---------- */
+
+.sklepag-okruszki {
+	font-family: var(--sklepag-mono);
+	font-size: 0.78rem;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	color: var(--sklepag-pyl);
+	margin: 0 0 2.2rem;
+}
+
+.sklepag-okruszki a {
+	color: var(--sklepag-pyl);
+	text-decoration: none;
+}
+
+.sklepag-okruszki a:hover,
+.sklepag-link-powrot:hover {
+	color: var(--sklepag-limonka);
+}
+
+.sklepag-link-powrot {
+	color: var(--sklepag-papier);
+	font-family: var(--sklepag-mono);
+	text-decoration: none;
+}
+
+.sklepag-pasek-statusu {
+	font-family: var(--sklepag-mono);
+	font-size: 0.82rem;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	color: var(--sklepag-papier);
+	margin: 0 0 1.4rem;
+}
+
+.sklepag-produkt .sklepag-hero {
+	margin-bottom: 1rem;
+}
+
+a.sklepag-kup {
+	display: inline-block;
+	text-decoration: none;
+}
+
+.sklepag-sekcja {
+	border-top: 1px solid var(--sklepag-linia);
+	padding: clamp(2rem, 5vw, 3.2rem) 0;
+	max-width: 62rem;
+}
+
+.sklepag-sekcja-tytul {
+	font-size: clamp(1.5rem, 3.5vw, 2.2rem);
+	font-weight: 600;
+	line-height: 1.15;
+	margin: 0 0 1rem;
+	color: var(--sklepag-papier);
+}
+
+.sklepag-sekcja-tekst {
+	color: var(--sklepag-pyl);
+	max-width: 44rem;
+	margin: 0;
+}
+
+/* Funkcje + mockup obok siebie (chatbot). */
+.sklepag-funkcje-uklad {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 2rem;
+	align-items: start;
+}
+
+@media (min-width: 60rem) {
+	.sklepag-funkcje-uklad:has(.sklepag-mockup) {
+		grid-template-columns: 1.2fr 1fr;
+	}
+}
+
+.sklepag-funkcje {
+	display: grid;
+	gap: 1.1rem;
+}
+
+.sklepag-funkcja {
+	background: var(--sklepag-wegiel);
+	border: 1px solid var(--sklepag-linia);
+	border-radius: 12px;
+	padding: 1.1rem 1.3rem;
+}
+
+.sklepag-funkcja h3 {
+	font-size: 1.05rem;
+	font-weight: 600;
+	margin: 0 0 0.35rem;
+	color: var(--sklepag-papier);
+}
+
+.sklepag-funkcja p {
+	color: var(--sklepag-pyl);
+	font-size: 0.95rem;
+	margin: 0;
+}
+
+/* Mockup okna czatu (wzór tidio: dymki ZAWSZE w ramce — §5b.1). */
+.sklepag-mockup {
+	background: var(--sklepag-wegiel);
+	border: 1px solid var(--sklepag-linia);
+	border-radius: 16px;
+	overflow: hidden;
+	box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
+	position: sticky;
+	top: 6rem;
+}
+
+.sklepag-mockup-pasek {
+	display: flex;
+	gap: 0.4rem;
+	padding: 0.7rem 1rem;
+	border-bottom: 1px solid var(--sklepag-linia);
+}
+
+.sklepag-mockup-pasek span {
+	width: 0.6rem;
+	height: 0.6rem;
+	border-radius: 50%;
+	background: var(--sklepag-linia);
+}
+
+.sklepag-mockup-tresc {
+	padding: 1.2rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.7rem;
+}
+
+.sklepag-dymek {
+	max-width: 85%;
+	padding: 0.65em 1em;
+	border-radius: 14px;
+	font-size: 0.92rem;
+	margin: 0;
+}
+
+.sklepag-dymek-gosc {
+	align-self: flex-end;
+	background: rgba(245, 245, 245, 0.08);
+	color: var(--sklepag-papier);
+	border-bottom-right-radius: 4px;
+}
+
+.sklepag-dymek-bot {
+	align-self: flex-start;
+	background: var(--sklepag-limonka);
+	color: var(--sklepag-tusz);
+	border-bottom-left-radius: 4px;
+}
+
+.sklepag-pisze {
+	display: flex;
+	gap: 0.3rem;
+	align-items: center;
+}
+
+.sklepag-pisze span {
+	width: 0.4rem;
+	height: 0.4rem;
+	border-radius: 50%;
+	background: var(--sklepag-tusz);
+	animation: sklepag-pisze 1.2s ease-in-out infinite;
+}
+
+.sklepag-pisze span:nth-child(2) { animation-delay: 0.18s; }
+.sklepag-pisze span:nth-child(3) { animation-delay: 0.36s; }
+
+@keyframes sklepag-pisze {
+	0%, 100% { opacity: 0.25; transform: translateY(0); }
+	40% { opacity: 1; transform: translateY(-2px); }
+}
+
+/* Kroki (numeracja = realna sekwencja instalacji). */
+.sklepag-kroki {
+	list-style: none;
+	counter-reset: sklepag-krok;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	gap: 1rem;
+	max-width: 44rem;
+}
+
+.sklepag-kroki li {
+	counter-increment: sklepag-krok;
+	position: relative;
+	padding-left: 3.2rem;
+	color: var(--sklepag-papier);
+	min-height: 2.2rem;
+	display: flex;
+	align-items: center;
+}
+
+.sklepag-kroki li::before {
+	content: "0" counter(sklepag-krok);
+	position: absolute;
+	left: 0;
+	font-family: var(--sklepag-mono);
+	color: var(--sklepag-limonka);
+	font-size: 1.1rem;
+	letter-spacing: 0.08em;
+}
+
+/* Karty-dowody „Ile czasu odzyskujesz" (S-03; liczby z podpisem — §5b.2). */
+.sklepag-dowody {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+	gap: 1.1rem;
+	max-width: 62rem;
+}
+
+.sklepag-dowod {
+	background: var(--sklepag-wegiel);
+	border: 1px solid var(--sklepag-linia);
+	border-radius: 12px;
+	padding: 1.3rem;
+	transition: border-color 0.25s ease;
+}
+
+.sklepag-dowod:hover {
+	border-color: rgba(191, 255, 56, 0.45);
+}
+
+.sklepag-dowod-liczba {
+	font-size: 1.7rem;
+	font-weight: 600;
+	color: var(--sklepag-limonka);
+	margin: 0 0 0.3rem;
+}
+
+.sklepag-dowod-podpis {
+	color: var(--sklepag-pyl);
+	font-size: 0.88rem;
+	margin: 0;
+}
+
+/* PRZED/PO segregacji (§5b.3; etykieta DEMO — krytyk #12). */
+.sklepag-przedpo {
+	margin-top: 2rem;
+}
+
+.sklepag-przedpo-kolumny {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+	gap: 1.2rem;
+	max-width: 54rem;
+}
+
+.sklepag-przedpo-kol {
+	background: var(--sklepag-wegiel);
+	border: 1px solid var(--sklepag-linia);
+	border-radius: 12px;
+	padding: 1.1rem;
+}
+
+.sklepag-przedpo-naglowek {
+	font-family: var(--sklepag-mono);
+	font-size: 0.78rem;
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+	color: var(--sklepag-pyl);
+	margin: 0 0 0.8rem;
+}
+
+.sklepag-mail-chaos,
+.sklepag-mail-po {
+	font-size: 0.88rem;
+	margin: 0 0 0.55rem;
+	padding: 0.45em 0.7em;
+	border-radius: 8px;
+	background: rgba(245, 245, 245, 0.04);
+	color: var(--sklepag-pyl);
+}
+
+.sklepag-tag {
+	font-family: var(--sklepag-mono);
+	font-size: 0.72rem;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--sklepag-tusz);
+	background: var(--sklepag-limonka);
+	border-radius: 999px;
+	padding: 0.15em 0.7em;
+	margin-right: 0.4em;
+	white-space: nowrap;
+}
+
+/* Dla kogo. */
+.sklepag-dla-kogo {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	gap: 0.7rem;
+	max-width: 44rem;
+	color: var(--sklepag-papier);
+}
+
+.sklepag-dla-kogo li {
+	padding-left: 1.5rem;
+	position: relative;
+}
+
+.sklepag-dla-kogo li::before {
+	content: "→";
+	position: absolute;
+	left: 0;
+	color: var(--sklepag-limonka);
+}
+
+/* Uczciwość. */
+.sklepag-uczciwosc {
+	background: var(--sklepag-wegiel);
+	border: 1px solid var(--sklepag-linia);
+	border-radius: 16px;
+	padding: clamp(1.6rem, 4vw, 2.4rem);
+	border-top: 1px solid var(--sklepag-linia);
+}
+
+/* FAQ. */
+.sklepag-faq {
+	margin: 0;
+	max-width: 44rem;
+}
+
+.sklepag-faq dt {
+	font-weight: 600;
+	color: var(--sklepag-papier);
+	margin: 1.2rem 0 0.35rem;
+}
+
+.sklepag-faq dt:first-child {
+	margin-top: 0;
+}
+
+.sklepag-faq dd {
+	margin: 0;
+	color: var(--sklepag-pyl);
+}
+
+/* Sekcja zakupu + finalny CTA. */
+.sklepag-sekcja-zakup .sklepag-zakup {
+	max-width: 34rem;
+}
+
+.sklepag-zakup-notka {
+	margin-top: 1rem;
+}
+
+.sklepag-final {
+	text-align: left;
+}
+
 /* ---------- RWD / dostępność ---------- */
 
 @media (max-width: 40rem) {

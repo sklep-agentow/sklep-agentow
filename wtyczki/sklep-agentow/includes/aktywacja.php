@@ -121,10 +121,19 @@ function sklepag_aktywacja() {
 	if ( ! wp_next_scheduled( 'sklepag_dociagnij_zalegle' ) ) {
 		wp_schedule_event( time() + 600, 'sklepag_10min', 'sklepag_dociagnij_zalegle' );
 	}
+
+	// K5: rewrite strony produktu + flush (strony właśnie powstały, więc slug
+	// sklepu już jest); flush odbudowuje też reguły rdzenia (w tym wp-sitemap —
+	// na stacku były zgubione: /wp-sitemap.xml dawał 404).
+	if ( function_exists( 'sklepag_rejestruj_rewrite' ) ) {
+		sklepag_rejestruj_rewrite();
+	}
+	flush_rewrite_rules( false );
 }
 
 function sklepag_deaktywacja() {
 	wp_clear_scheduled_hook( 'sklepag_dociagnij_zalegle' );
+	flush_rewrite_rules( false ); // Nasze reguły znikają z rejestru — sprzątamy wpisy.
 }
 
 /**
