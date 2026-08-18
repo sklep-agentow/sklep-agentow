@@ -32,7 +32,9 @@ rozstrzygnięcie K1: kursy = egzamin drugiego zdającego) · **nie ma wiersza �
   (Dzidek 17.08 ~23:40: „i tak my mamy przekonwertowac to na worpresa tę cłą strona zaraz
   to obgadamy i zmieniamy w naszym planie"). Wg podziału Dzidka: EGZAMIN = sklep + 2 boty;
   konwersja = nasza OSOBNA robota (szczegóły, kolejność i termin — do obgadania, NIE
-  zaplanowane jeszcze).
+  zaplanowane jeszcze). **✅ WYKONANE nocą 17/18.08:** konwersja 1:1 ODDANA (PR #86
+  scalony do repo strony za zgodą; szczegóły, audyt i podgląd — repo `strona-wp`);
+  środowisko testowe sklepu = pełna kopia strony po konwersji w warsztacie.
 - **PW-2.** Nasz sklep = **WTYCZKA WordPressa** (nie wpinana podstrona statyczna). Zaplecze CAŁE w WP: własne tabele w bazie WP, panel w wp-admin, Stripe + maile z serwera WP — świat znany z MP.
 - **PW-3.** Sprzedawane produkty = **2 TESTOWE BOTY jako wtyczki WordPressa**: ChatBot LIVE
   i Segregator maila (Dzidek 17.08 ~23:15: „do zlecenia jeszcze 2 testowe boty są do
@@ -56,9 +58,9 @@ rozstrzygnięcie K1: kursy = egzamin drugiego zdającego) · **nie ma wiersza �
 - Zaplecze Cloudflare Worker+D1+R2 (D1 z DECYZJE) — zastąpione bazą i serwerem WP. Zwiady CF/Stripe zapisane (ZWIAD-CLOUDFLARE.md na gałęzi kosc-k1, ZWIAD-STRIPE.md — Stripe ZOSTAJE aktualny, płatności są niezależne od platformy).
 - „Produkt = paczka plików (instrukcje, diagramy)" — teraz produkt = działająca wtyczka WP (zakres treści produktów do rozpisania w planie v3; „ile czasu oszczędza" dalej musi mieć pokrycie).
 
-**CO ZOSTAJE BEZ ZMIAN:** cel = zdać egzamin · tryb TESTOWY Stripe (konto+klucze mamy) · zero pytań do kolegi · MUST NOT (konta kupujących, kursy, opinie, przeceny) · wymagania funkcjonalne z notatki (mail po zakupie, dashboard, CRUD produktów, dziennik logowań admina) · repo+recenzent+CI · multi-site: 4 wdrożenia (teraz = 4 instalacje wtyczek).
+**CO ZOSTAJE BEZ ZMIAN:** cel = zdać egzamin · tryb TESTOWY Stripe (konto+klucze mamy) · zero pytań do kolegi · MUST NOT (konta kupujących, kursy, opinie, przeceny) · wymagania funkcjonalne z notatki (mail po zakupie, dashboard, CRUD produktów, dziennik logowań admina) · repo+recenzent+CI · ~~multi-site: 4 wdrożenia (4 instalacje)~~ **SPROSTOWANE nocą 17/18.08 (Dzidek): strona docelowa = JEDNA WSPÓLNA dla całej czwórki, 4 KONTA ADMINÓW przy wdrożeniu — nie 4 osobne instalacje**; wtyczka mimo to konfigurowalna (S-15 w MAPA-SPEC, Z5 w planie v3).
 
-**OTWARTE PO PIWOCIE:** ~~trzeci produkt~~ ✅ rozwiązane (PW-3: produkty = 2 boty; „3" = łącznie ze sklepem) · głębokość działania botów-wtyczek na egzamin („TESTOWE boty" — pełny agent vs działający rdzeń demo + instrukcja; rozstrzygnięcie w planie v3 z wyceną czasu) · kto/kiedy konwertuje stronę na WP · na czym testujemy (nasz Docker WP jest na serwerze) · granica „NIE dotykamy reszty strony" w świecie wtyczki (stary sens: jeden tag script; nowy sens do zdefiniowania w v3: nie ruszamy motywu/innych wtyczek, czysty uninstall — symetria zapis↔sprzątanie) · czy zapowiedziana „wiadomość, co ułatwi" już padła (nowa notatka?) czy jeszcze przyjdzie.
+**OTWARTE PO PIWOCIE — STAN 18.08: WSZYSTKO ZAMKNIĘTE:** ~~trzeci produkt~~ ✅ (PW-3: produkty = 2 boty; „3" = łącznie ze sklepem) · ~~głębokość botów~~ ✅ rozstrzygnięta w planie v3 (§14 wycena + D19): DZIAŁAJĄCY RDZEŃ DEMO + instrukcja, pełne AI/IMAP jawnie po egzaminie — klepnięcie razem z planem · ~~kto/kiedy konwertuje~~ ✅ MY, WYKONANE nocą 17/18.08 (PR #86, patrz PW-1) · ~~na czym testujemy~~ ✅ stack warsztatowy (WP 7.0.4/PHP 8.4, pełna kopia strony po konwersji) + drugi CZYSTY WP do testu instalacji od zera (K6) · ~~granica „NIE dotykamy reszty strony"~~ ✅ zdefiniowana w planie v3 §3: żyjemy we własnych tabelach/opcjach/stronach/shortcode'ach, motyw i cudze wtyczki nietykalne, odpięcie = deinstalacja z czystym uninstall (symetria zapis↔sprzątanie) · ~~czy „wiadomość, co ułatwi" padła~~ ✅ Dzidek 18.08: nic nowszego nie ma, planujemy na stanie 17.08 — ułatwiaczem była notatka-wersja-aktualna ~23:20 + info o 2 botach. **Dodatkowo 18.08: S-04/S-07/S-09 KLEPNIĘTE** („robimy jak dobre sklepy" — wytyczna wiążąca, D12/MAPA-SPEC).
 
 ---
 **Status (HISTORIA sprzed piwotu): PLAN KLEPNIĘTY w wersji egzaminowej (16.08 ~23:45)** — architektura z `ARCHITEKTURA-PROPOZYCJA.md` zaakceptowana kierunkowo przez Dzidka z twardym zakresem:

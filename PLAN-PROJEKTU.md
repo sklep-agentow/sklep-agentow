@@ -1,352 +1,349 @@
-# PLAN PROJEKTU v2 — „Sklep z agentami AI" (wpinana podstrona dla stron statycznych)
+# PLAN PROJEKTU v3 — „Sklep z agentami AI" (3 wtyczki WordPressa)
 
-> # ⛔ PIWOT 17.08 WIECZÓR — TEN PLAN JEST W REWIZJI
-> Dzidek 17.08 ~22:30: strona-gospodarz będzie PRZEKONWERTOWANA na **WordPressa**;
-> **ZLECENIE = 3 wtyczki WP ŁĄCZNIE: SKLEP + 2 TESTOWE BOTY jako produkty (ChatBot LIVE,
-> Segregator maila); zaplecze CAŁE w WP** (tabele+wp-admin+Stripe+maile; zero Cloudflare).
-> Szczegóły i surowe cytaty (w tym notatka-wersja-aktualna 17.08): `ZROZUMIENIE.md` §PIWOT,
-> `MAPA-SPEC.md` S-17..S-20, `DECYZJE.md` D16.
-> **NIE budować wg sekcji 4-6 ANI ŻADNEGO kroku harmonogramu §9 w jego architektonicznym
-> kształcie** — K0-K8 są opisane wokół Workera/D1/R2 (K3 „panel na Workerze", K4 presigned
-> R2, K6 „zestawienie zaplecza" CF itd.); nowy harmonogram = plan v3. Model danych §5
-> przenosi się koncepcyjnie do tabel WP. Wymagania (§2), MUST NOT (§3), prawo (§8)
-> i kryteria GOTOWE (§12 — do adaptacji) ZOSTAJĄ. Bezpieczeństwo §7: ZASADY zostają
-> (podpis webhooka, idempotencja, cena z bazy, limity prób), ale pozycje originowe
-> (osobny origin panelu, CSP panelu) tracą przesłankę — panel to wp-admin na originie
-> strony; ochrona = standardy WP (auth rdzenia, capabilities, nonces) — szczegóły w v3.
-> **Plan v3 powstanie po zapowiedzianej KOLEJNEJ wiadomości Dzidka** („ułatwi trochę
-> wszystko") — do tego czasu żadnego kodu poza zaparkowaną gałęzią `kosc-k1`.
-
-Wersja 2.1 — 2026-08-17 (v2 + runda 2: krytyka 6, triage w krytyki/), po rundzie krytyki: 5 niezależnych recenzji (własny krytyk + 4 obce
-modele), mapa zbieżności w `krytyki/MAPA-ZBIEZNOSCI.md`. Dokument bez nazw i adresów.
-**Termin egzaminu: 30.08 · 3 próby oddania · pierwsza próba planowana 27.08 (bufor na zwroty).**
+Wersja 3.0 — 2026-08-18, po piwocie na WordPressa (DECYZJE D16). Zastępuje v2.1
+(architektura Cloudflare — w historii gita; przeniesione z niej: wymagania, MUST NOT,
+prawo, wzorce Stripe/idempotencji, kadencja, kryteria GOTOWE — wymienione: architektura
+i harmonogram). Dokument bez adresów i sekretów.
+**Termin egzaminu: 30.08 · 3 próby oddania · próba 1 planowana 27.08 (bufor na zwroty).**
 
 ## 1. CO BUDUJEMY I PO CO
 
-Podstrona-sklep sprzedająca **2 produkty cyfrowe** („agenty AI": ChatBot LIVE i Segregator
-maila — paczki z instrukcjami, diagramami i plikami do wdrożenia). Sklep **wpinany i odpinany**
-w istniejące strony statyczne (GitHub Pages; strona docelowa = statyczny eksport Next.js),
-docelowo na 4 strony różnych właścicieli. Zlecenie egzaminacyjne: ocenia osoba trzecia,
-**zero pytań do zlecającego** (decyzje własne, dokumentowane), całość w **trybie testowym
-płatności**.
+**Trzy wtyczki WordPressa:** SKLEP + 2 sprzedawane w nim TESTOWE BOTY (ChatBot LIVE,
+Segregator maila). Sklep sprzedaje boty jako produkty cyfrowe: po opłaceniu (Stripe
+Checkout, TRYB TESTOWY) kupujący dostaje mail z potwierdzeniem, instrukcją i linkiem
+do pobrania paczki (zip wtyczki bota + instrukcja). Zaplecze CAŁE w WordPressie:
+własne tabele w bazie WP, panel w wp-admin, maile z serwera WP (S-19).
 
-⭐ **NOWE względem v1 (krytyka C7):** zakres obejmuje też **WYTWORZENIE SAMYCH PRODUKTÓW**
-(treść 2 paczek: instrukcje, diagramy, pliki) z własnym kryterium jakości — sklep nie może
-sprzedawać pustki; egzaminator najpierw otworzy pliki, nie kod.
+Strona-gospodarz: JEDNA WSPÓLNA strona (Dzidek + 3 kolegów; 4 konta adminów przy
+wdrożeniu — ustalenie 17/18.08, aktualizacja S-15). Konwersja strony na WP = ZROBIONA
+(nasza robota poboczna, PR #86 scalony); sklep budujemy i testujemy na jej pełnej
+kopii w warsztacie (WP 7.0.4, PHP 8.4). Egzamin: ocenia kolega, ZERO pytań do niego,
+wszystkie płatności testowe.
 
-## 2. WYMAGANIA (siatka: FUNCTIONAL / NON-FUNCTIONAL / SCHEMA)
+## 2. WYMAGANIA
 
-**FUNCTIONAL (z notatki zlecenia, dosłownie):** po zakupie mail (potwierdzenie + instrukcje) ·
-2 produkty z cenami i opisem „na zachętę" · panel admina: kiedy/za ile kupili/w jakim czasie
-(dashboard) · baza: dane kupujących/płatności · produkty z pełnym dodawaniem/usuwaniem/
-modyfikowaniem · dziennik logowań admina (kto, kiedy, konkrety).
-Interpretacje zapisane w MAPA-SPEC (moment 1 kadencji): „w jakim czasie" = rozkład zakupów
-w czasie (sumy w okresach) · „czas zakupu" = czas webhooka potwierdzającego płatność ·
-„kto" = pole login wpisywane przy logowaniu (jedno konto; przy nieudanej próbie zapisujemy
-wpisaną wartość) — decyzje z uzasadnieniem, nie zgadywanie.
+**FUNCTIONAL (litera notatki zlecenia — wersja aktualna 17.08):** po zakupie mail
+(potwierdzenie + instrukcje) · 2 produkty z cenami i opisem „na zachętę" (co robi, jak
+działa, jak skraca czas pracy) · panel admina: kiedy/za ile kupili/w jakim czasie
+(dashboard) · baza: dane kupujących/płatności · produkty z pełnym CRUD (zapis przy
+dodawaniu/usuwaniu/modyfikowaniu) · dziennik logowań na konto admina (kto, kiedy,
+konkrety).
+**Interpretacje S-04/S-07/S-09: KLEPNIĘTE przez Dzidka 18.08** z wiążącą wytyczną:
+**„tak jak się robi i jak robią dobre sklepy"** → dashboard, dziennik i strony sklepu
+projektujemy WG WZORCÓW DZIEDZINY e-commerce (przed budową K3/K5 zbieramy wzorce:
+jak to robią dojrzałe sklepy), nie po najmniejszej literze.
 
-**NON-FUNCTIONAL (standardy T1-T7 z poprzedniego zlecenia + prawo):** bezpieczeństwo (sekcja 7) ·
-RODO (sekcja 8) · dostępność WCAG-lite: labelki, kontrast, klawiatura+fokus, aria (EAA) ·
-Chrome/Edge/Firefox + pełny RWD (zakup z telefonu) · **SEO-minimum ŚWIADOMIE OGRANICZONE**
-(konflikt z wymogiem „nowy produkt bez zmian kodu" — priorytet ma wymóg FUNKCJONALNY z notatki):
-witryna renderuje produkty Z API; meta/OpenGraph statyczne ogólne per podstrona, JSON-LD i treść
-produktów generowane skryptem (współczesne wyszukiwarki wykonują JS; pozycjonowanie poza
-zakresem); **demo-kopia strony gospodarza = noindex** · szybkość: strona
-statyczna + API bez N+1 · spójny styl kodu (eslint/prettier w CI; zakaz `debugger` i gołych
-`console.log`).
+**NON-FUNCTIONAL:** bezpieczeństwo standardami WP (sekcja 7) · RODO (sekcja 8) ·
+WCAG-lite: labelki, kontrast, klawiatura+fokus (EAA) · RWD — zakup z telefonu;
+Chrome/Edge/Firefox · wydajność: assety sklepu ładowane TYLKO na stronach sklepu
+(nie spowalniamy reszty strony) · zgodność: WordPress 7.0 / PHP 8.4 (wersje stacka
+docelowego) · spójny styl kodu (phpcs w CI; zakaz gołych var_dump/error_log w paczce).
 
 **SCHEMA:** sekcja 5.
 
-## 3. MUST NOT (świadomie poza zakresem — łapie nadgorliwość i lekcję „16 tabel zamiast 4")
+## 3. MUST NOT (świadomie poza zakresem)
 
-Kont/logowania kupujących NIE ma · kursów NIE sprzedajemy · faktur NIE wystawiamy · plików
-produktów NIE trzymamy publicznie · reszty strony-gospodarza NIE dotykamy · prawdziwych
-płatności NIE włączamy · **przecen i przekreślonych cen NIE MA** (Omnibus-historia-cen wraca
-tylko na wyraźne życzenie, z tabelą historii) · **sekcji „opinie" NIE MA** (zero zmyślonych
-opinii — prawo; zamiast tego „dla kogo jest ten agent") · samoobsługowego ponownego wysłania
-linku NIE ma (kanał kontaktu właściciela) · monitoringu/alertingu NIE ma w v1 (panel + retry
-wystarczą; wraca przy produkcji) · płatności asynchronicznych NIE obsługujemy (egzamin = karty
-testowe; obsłużone: completed + expired) · multi-tenant NIE ma (izolacja per konto właściciela
-to świadoma architektura).
+Kont/logowania KUPUJĄCYCH nie ma (konta w WP mają tylko adminowie) · kursów NIE
+sprzedajemy · faktur NIE wystawiamy · plików produktów NIE serwujemy bezpośrednio
+(tylko brama PHP) · prawdziwych płatności NIE włączamy · przecen i opinii NIE MA
+(Omnibus — jawnie nie dotyczy) · **WooCommerce NIE używamy** (D17 — sklep to nasza
+wtyczka) · **tłumaczeń/i18n NIE robimy** (teksty polskie wprost — D21; omija też minę
+textdomain WP 6.7+) · multisite WP NIE (jedna zwykła instalacja) · monitoringu
+zewnętrznego NIE w v1 · botów z PRAWDZIWYM AI/IMAP NIE na egzamin (D19 — rdzeń demo;
+jawna droga rozbudowy w instrukcji) · **motywu i cudzych wtyczek strony NIE ruszamy**
+— granica „nie dotykamy reszty strony" po piwocie: nasze wtyczki żyją we własnych
+tabelach/opcjach/stronach/shortcode'ach, a odpięcie = deinstalacja z czystym uninstall.
 
-## 4. ARCHITEKTURA v2 (zmiany wytłuszczone)
+## 4. ARCHITEKTURA v3 (WordPress; wg Plugin Handbook + doświadczenia MP)
 
-**A. WITRYNA** — katalog `sklep/` (czysty HTML/CSS/JS): lista produktów, strona produktu
-(układ: problem → co dostajesz → dla kogo → FAQ → cena → przycisk), strona „dziękujemy"
-**odpytująca status zamówienia po id sesji** (koniec z „sprawdź maila" w ciemno).
-**Izolacja CSS: prefiks klas + reset w kontenerze.** `config.js` per strona — WYŁĄCZNIE dane
-publiczne (nazwa, adres zaplecza, klucz publiczny płatności, mail kontaktowy właściciela,
-dane sprzedawcy do regulaminu). **Baner „TRYB TESTOWY — płatności nie są pobierane".**
+**A. WTYCZKA SKLEP** (`sklep-agentow`): jeden plik główny z nagłówkiem (bootstrap
+minimalny, zero ciężkiej roboty przy load — wszystko na hookach), klasy w `includes/`,
+kod adminowy za `is_admin()`.
 
-**B. PANEL ADMINA — NA ORIGINIE WORKERA, nie na stronie gospodarza** (pewniak #4: wspólny
-origin = kradzież tokena przez skrypty gospodarza). Worker serwuje panel na własnym adresie:
-własny CSP, zero wspólnego magazynu przeglądarki z hostem, adres panelu poza paczką wpinaną.
+- **FRONT:** przy aktywacji tworzone strony WP: „Sklep" i „Dziękujemy" (+ szkice
+  „Regulamin"/„Polityka prywatności" — sekcja 8); treść przez shortcode'y
+  (`[sklepag_lista]`, `[sklepag_produkt]` — produkt po query var/slug). Assety
+  (CSS/JS z wersjonowaniem — bump przy każdej zmianie, lekcja MP) tylko gdy shortcode
+  na stronie. **Baner „TRYB TESTOWY — płatności nie są pobierane"** na stronach sklepu.
+  Układ strony produktu: problem → co dostajesz → dla kogo → FAQ → cena → Kup.
+- **CHECKOUT:** „Kup" (checkbox zgody wymagany) → endpoint wtyczki → walidacja
+  produktu aktywnego z istniejącym plikiem → zapis `sesje_checkout` → utworzenie
+  Checkout Session przez **WP HTTP API** (`wp_remote_post` na api.stripe.com,
+  form-encoded, timeout 15 s, klucz sekretny z opcji; D18 — bez SDK, wg ZWIAD-STRIPE)
+  → przekierowanie na hostowaną stronę Stripe (kart nie dotykamy).
+- **WEBHOOK:** trasa REST `POST /wp-json/sklepag/v1/webhook` — SUROWE body, podpis
+  weryfikowany ręcznie (rozbiór nagłówka `Stripe-Signature`, HMAC-SHA256
+  `hash_hmac` + porównanie `hash_equals`, tolerancja 5 min — algorytm z ZWIAD-STRIPE,
+  „Verify manually" z docs) → idempotencja: UNIQUE na `stripe_session_id` +
+  `INSERT IGNORE` (MySQL/MariaDB — odpowiednik „ON CONFLICT" z v2) → **wzorzec
+  RESUME (D5):** odczyt stanu i dokończenie od miejsca zatrzymania (snapshot → token
+  pobrania → status `mail_w_toku` PRZED wysyłką → `wp_mail` → status po POMIARZE
+  skutku); handler zwraca błąd HTTP dopóki całość niedomknięta — ponowienia Stripe
+  DOKAŃCZAJĄ. ⚠️ tryb testowy = tylko 3 ponowienia w parę godzin → **cron „dociągnij
+  zaległe"** jest konieczny, nie opcjonalny.
+- **MAILE:** `wp_mail()` (S-19: maile z serwera WP). Treść maila zapisywana przy
+  zamówieniu — **podgląd w panelu** (egzaminator zobaczy mail bez skrzynki).
+  ⚠️ Z2: kontener WP nie ma wysyłki — w stacku warsztatowym stawiamy ŁAPACZ SMTP
+  (mailpit; narzędzie warsztatu, nie część paczki); na hostingu wysyłką rządzi hosting.
+- **WYDANIE PLIKU:** zipy produktów w katalogu chronionym z losowym sufiksem
+  (`wp-content/uploads/sklepag-chronione-{losowe}/`), **brama WYŁĄCZNIE w PHP**
+  (lekcja MP: nginx ignoruje .htaccess): endpoint pobrania sprawdza token HMAC
+  (ważność 72 h), limit 10 pobrań, **licznik atomowy** (UPDATE z warunkiem) PRZY
+  STARCIE pobrania, bez Accept-Ranges; HEAD nie zużywa limitu (D4 przeniesione 1:1).
+- **PANEL wp-admin** (`add_menu_page`, capability `manage_options`, każda mutacja =
+  nonce + capability): **Dashboard** (lista zamówień: kiedy/za ile/co + sumy w
+  okresach dzień/tydzień/miesiąc + eksport CSV — wzorce „dobrych sklepów" przed
+  budową) · **Zamówienie** (szczegóły, treść maila, przycisk ponownej wysyłki) ·
+  **Produkty** (CRUD, upload zip, deaktywacja zamiast usuwania, snapshot w
+  zamówieniach nietykalny) · **Dziennik** (logowania + akcje) · **Ustawienia**
+  (Settings API: klucze Stripe testowe, sekret webhooka, nadawca maila, waluta;
+  sekrety w opcjach z `autoload=no`, nigdy w kodzie/repo).
+- **DZIENNIK LOGOWAŃ (S-09):** hooki `wp_login` + `wp_login_failed`: login_wpisany
+  (przy 4 kontach adminów „kto" ma pełny sens; nieudane próby też), czas, wynik, IP,
+  przeglądarka + **log AKCJI admina** (CRUD produktów, resend, eksport — append-only).
+- **CRON:** zdarzenie WP-cron co 10 min „dociągnij zaległe" (mail_blad → ponowienie
+  do 3 prób → panel-czerwone; sesje porzucone → wygasłe), idempotentny, z RĘCZNYM
+  przyciskiem w panelu (debug bez czekania na crona).
+- **LIFECYCLE:** aktywacja = `dbDelta` tabel + zapis wersji schematu + utworzenie
+  stron (hooki rejestrowane na top-level pliku głównego — Handbook) · deaktywacja =
+  wyrejestrowanie crona (dane zostają) · **uninstall.php** (z kontrolą
+  `WP_UNINSTALL_PLUGIN`): domyślnie dane sprzedaży ZOSTAJĄ (wzorzec dobrych sklepów —
+  historia sprzedaży to nie śmieć); opcja „usuń wszystkie dane przy odinstalowaniu"
+  (domyślnie OFF) → pełne czyszczenie: tabele, opcje, strony wtyczki, pliki
+  chronione, crony. **Symetria zapis↔sprzątanie:** każda nowa rzecz zapisywana =
+  wpis w uninstall W TYM SAMYM PR; nowa tabela = 3 miejsca (dbDelta + uninstall +
+  ścieżka upgrade) — lekcja MP.
 
-**C. ZAPLECZE** — Cloudflare Worker + D1 + R2 (limity darmowe z cennika 16.08: 100 tys.
-żądań/dzień · D1 5 GB, 5 mln odczytów/dzień, 100 tys. zapisów/dzień · R2 10 GB, 1 mln op. A
-i 10 mln op. B/mies. — przy pojedynczych zakupach dziennie zapas tysiąckrotny; **do
-potwierdzenia w kości limity CPU/pamięci wolnego planu** — rejestr założeń). Każdy właściciel =
-własne konto (izolacja danych i pieniędzy) + **własne konto Stripe** (kasa na jego rachunek).
-**Instalacja zaplecza = JEDEN skrypt** (tworzy D1 + migracje + seed + sekrety + deploy +
-hasło admina; hasło ustawiane przez skrypt/seed, NIGDY przez publiczny endpoint — C10).
-**`/api/wersja`** zwraca wersję paczki i stan schematu; **API wersjonowane ścieżką (`/v1/`)** —
-przyszłe aktualizacje zaplecza nie łamią starych witryn (pełny proces aktualizacji 4 instalacji =
-po egzaminie, jawna granica zakresu).
+**B. WTYCZKI-BOTY (produkty; głębokość wg D19 — działający rdzeń demo + instrukcja):**
+- **ChatBot LIVE** (`chatbot-live`): pływający widget czatu na stronie (bąbelek);
+  rdzeń: baza par pytanie-odpowiedź (CRUD w adminie) + dopasowanie słów kluczowych +
+  odpowiedź awaryjna „zostaw maila, odezwiemy się" (zapis wiadomości do tabeli —
+  pokrywa też odczyt „LIVE = kontakt na żywo"); seed demo po polsku; architektura z
+  miejscem na dostawcę AI (klucz właściciela) — realne AI = po egzaminie, opisane
+  w instrukcji. [Opcja do ZBADANIA, nie obiecana: klient AI rdzenia WP 7.0.]
+- **Segregator maila** (`segregator-maila`): reguły segregacji (nadawca/temat/słowa
+  kluczowe → kategorie; CRUD w adminie) + wbudowana PRÓBKA maili demo + import
+  własnej próbki (CSV) → przebieg segregacji z raportem (ile do której kategorii,
+  które bez dopasowania). Prawdziwa skrzynka (IMAP/OAuth) = po egzaminie — instrukcja
+  opisuje drogę.
+- Oba boty: własny prefiks tabel/opcji, czysty uninstall, instrukcja użytkownika po
+  polsku. **Paczka produktu w sklepie = zip wtyczki + instrukcja** — dokładnie to
+  wydaje sklep po zakupie.
 
-**D. PŁATNOŚCI** — Stripe Checkout (hostowana strona płatności; pełne przekierowanie —
-odporne na adblock; kart nie dotykamy). **Wzorzec kodu: oficjalny przewodnik Stripe dla
-Cloudflare Workers** (constructEventAsync/Web Crypto — NIE przykład Node/Express; C13).
-Tryb testowy; sekret webhooka per środowisko (CLI ≠ endpoint — do checklisty świeżego
-wdrożenia).
+**C. ŚRODOWISKO:** budowa + testy na stacku warsztatowym (WP 7.0.4 / PHP 8.4 / MariaDB,
+pełna kopia strony-gospodarza po konwersji) + DRUGI czysty WP do testu instalacji od
+zera (K6). wp-cli w kontenerze. Repo: `sklep-agentow` (konto klienckie), cykl
+branch→PR (recenzent-Claude + CI)→merge.
 
-**E. POBRANIA — ZAWSZE przez endpoint Workera** (pewniak #5): link = token HMAC z terminem
-(72 h), Worker strumieniuje plik z R2; licznik = **atomowy UPDATE z warunkiem PRZY ROZPOCZĘCIU
-pobrania GET** (pełności transferu nie da się wiarygodnie wykryć przy streamingu — decyzja
-jawna; dlatego limit 10 jako zapas). HEAD nie zużywa limitu (skanery poczty; C12); serwujemy
-**bez Accept-Ranges** (jawnie). Presigned URL bezpośrednio do R2 — NIE (nie umie liczyć).
+## 5. MODEL DANYCH v3 (tabele w bazie WP, prefiks `{$wpdb->prefix}sklepag_`)
 
-**F. MAILE** — na egzamin: dostawca w trybie testowym/zweryfikowane adresy + **podgląd treści
-maila w panelu przy zamówieniu** (egzaminator ZOBACZY mail bez skrzynki). Test dostarczalności
-na kilku dostawcach Z folderem spam. **Jawny rozdział „droga do produkcji": wysyłka
-produkcyjna WYMAGA domeny** (opcja: jedna subdomena nadawcza dla 4 instalacji — decyzja
-z właścicielami; nie blokuje egzaminu). Sprawdzić stopkę reklamową darmowego planu (C28) —
-jeśli jest, zmiana dostawcy.
+- `sklepag_produkty`: id, nazwa, slug, opis_krotki, opis_pelny (render zawsze przez
+  esc_*), cena_grosze, waluta, plik_sciezka (poza publicznym URL), plik_rozmiar,
+  plik_sha256, aktywny, utworzono, zmieniono. Usuwanie = deaktywacja gdy istnieją
+  zamówienia; nowy plik = NOWA ścieżka (stare zamówienia trzymają swoją).
+- `sklepag_sesje_checkout`: id, stripe_session_id UNIQUE, produkt_id, stan
+  (utworzona/oplacona/wygasla), utworzono — ślad po naszej stronie zanim przyjdzie
+  webhook; podstawa „dociągnij zaległe" i widoku porzuconych.
+- `sklepag_zamowienia`: id, stripe_session_id UNIQUE, produkt_id, produkt_nazwa_kupiona,
+  produkt_cena_kupiona, produkt_plik_kupiony (snapshot z chwili zakupu), email_kupujacego,
+  kwota_grosze, waluta, status (oczekuje → oplacone → mail_w_toku → mail_wyslany |
+  mail_blad), zgoda_tresc, zgoda_czas, token_pobrania (skrót), link_wygasa,
+  pobrania_limit, pobrania_uzyte, mail_proby, mail_tresc (podgląd w panelu),
+  utworzono (= czas webhooka), zmieniono.
+- `sklepag_zdarzenia`: id, zamowienie_id NULL, typ, opis, uzytkownik, czas —
+  append-only oś czasu; obejmuje TAKŻE akcje admina (CRUD, resend, eksport).
+- `sklepag_logowania`: id, czas, login_wpisany, wynik, ip, user_agent.
+- Konfiguracja → `wp_options` z prefiksem `sklepag_` (sekrety `autoload=no`);
+  wersja schematu w opcji (ścieżka upgrade przy zmianie).
+Retencja: logowania i zdarzenia techniczne czyszczone po 90 dniach (cron);
+anonimizacja kupującego na żądanie: email → NULL + usunieto_dnia (kwoty i czasy
+zostają — dashboard żyje).
 
-## 5. MODEL DANYCH v2 (D1)
+## 6. PRZEPŁYW ZAKUPU v3
 
-- `produkty`: id, nazwa, opis_krotki, opis_pelny (renderowane jako TEKST, nigdy HTML),
-  cena_grosze, waluta, plik_klucz_r2, plik_rozmiar, plik_sha256, aktywny, utworzono, zmieniono.
-  **Usuwanie = deaktywacja** gdy istnieją zamówienia; plik nowej wersji = NOWY klucz
-  (stare zamówienia trzymają swój — wersjonowanie B11).
-- `sesje_checkout` ⭐NOWA (C1): id, stripe_session_id, produkt_id, utworzono, stan
-  (utworzona/oplacona/wygasla) — ślad po NASZEJ stronie zanim przyjdzie webhook; podstawa
-  „dociągnij zaległe" i testu porzuconych.
-- `zamowienia`: id, stripe_session_id UNIQUE, produkt_id, **produkt_nazwa_kupiona,
-  produkt_cena_kupiona, produkt_plik_klucz** (snapshot z chwili zakupu), email_kupujacego,
-  kwota_grosze, waluta, **status: oczekuje → oplacone → mail_wyslany | mail_blad**,
-  **zgoda_tresc, zgoda_czas** (dowód checkboxa per zamówienie — B41), link_wygasa,
-  pobrania_limit, pobrania_uzyte, mail_proby, utworzono (=czas webhooka), zmieniono.
-- `zdarzenia` ⭐NOWA (kartka MP: nieusuwalna oś czasu): id, zamowienie_id NULL, typ, opis,
-  czas — append-only; obejmuje TAKŻE akcje admina (CRUD, resend, eksport, logowanie).
-- `logowania_admina`: id, czas, **login_wpisany**, wynik, ip, user_agent.
-- `konfig`: klucz, wartosc (hash hasła, wersja schematu; ustawienia NOWYCH linków —
-  jawne w panelu, że nie zmieniają już wystawionych; C25).
-Retencja: logi logowań i zdarzenia techniczne czyszczone po 90 dniach (cron); anonimizacja
-kupującego na żądanie: **email → NULL + usunieto_dnia** (skrót odpada — to nadal dana osobowa;
-kwoty i czasy zostają — dashboard żyje).
+Strona produktu: checkbox zgody na natychmiastowe dostarczenie (wymagany) → „Kup" →
+POST do wtyczki z kluczem idempotencji (okno 60 s — podwójny klik ≠ 2 sesje) →
+walidacja: produkt aktywny + plik istnieje → zapis `sesje_checkout` → Checkout
+Session (CENA WYŁĄCZNIE Z BAZY) → płatność testowa → **webhook** (jak §4A) → strona
+„Dziękujemy" odpytuje status po id sesji (REST) i pokazuje „mail wysłany" /
+„przetwarzamy".
+**Awarie:** mail_blad → cron co 10 min (3 próby) → panel-czerwone + ręczny przycisk ·
+sesja porzucona → widoczna w panelu · link wygasł/limit → strona błędu z mailem
+kontaktowym właściciela (z ustawień).
 
-## 6. PRZEPŁYW ZAKUPU v2
+## 7. BEZPIECZEŃSTWO v3 (checklist — każda pozycja ma test w swoim przyrocie)
 
-Strona produktu: **checkbox zgody na natychmiastowe dostarczenie (wymagany)** → „Kup" →
-`POST /api/zamow {produkt_id, zgoda:true, klucz_idempotencji}` (60-sekundowe okno — podwójny
-klik nie tworzy 2 sesji; B20) → Worker: walidacja produktu AKTYWNEGO **z potwierdzonym
-plikiem w R2** (D8), zapis do `sesje_checkout`, sesja Stripe (cena z bazy) → przekierowanie →
-płatność testowa → **webhook**: weryfikacja podpisu → `INSERT ... ON CONFLICT DO NOTHING` →
-**odczyt stanu i WZNOWIENIE od miejsca zatrzymania** (snapshot → link → status `mail_w_toku`
-PRZED wysyłką → mail z kluczem idempotencji dostawcy (id zamówienia) → status po POMIARZE
-skutku; Worker zwraca błąd, dopóki całość niedomknięta — ponowienia Stripe DOKAŃCZAJĄ robotę
-zamiast duplikować; pewniak #6). Okno duplikatu maila przy padnięciu tuż PO wysyłce a przed
-zapisem statusu: ŚWIADOMIE zaakceptowane (lepszy podwójny mail potwierdzenia niż żaden);
-test pokrywa OBA punkty przerwania. → strona „dziękujemy" odpytuje status i pokazuje
-„mail wysłany" / „przetwarzamy".
-**Awarie:** mail_blad → cron co 10 min, do 3 prób, potem panel-czerwone + ręczny przycisk ·
-sesja porzucona → widoczna w `sesje_checkout` · API leży → witryna: komunikat · link
-wygasł/limit → strona błędu z mailem kontaktowym właściciela (z config).
+Standardy WP: **capability check na KAŻDEJ akcji admina + nonce na KAŻDEJ mutacji**
+(nonce = CSRF, capability = autoryzacja — zawsze PARĄ) · `$wpdb->prepare()` do
+każdego SQL (zero sklejania) · sanityzacja wejść (konkretne klucze + `wp_unslash`,
+nigdy całe $_POST), escape wyjść (`esc_html/attr/url`) — sanitize early, escape late ·
+podpis webhooka stałoczasowo na surowym body · cena wyłącznie z bazy · sekrety w
+opcjach `autoload=no`, NIE w repo (gitleaks w CI), NIE w logach · pliki produktów
+poza publicznym dostępem + brama w PHP (nginx ignoruje .htaccess) · dziennik prób
+logowania + opóźnienie wykładnicze po kolejnych nieudanych · upload zip: rozszerzenie
++ MIME + limit rozmiaru + losowa nazwa docelowa + weryfikacja obecności PO zapisie ·
+XSS: opisy produktów renderowane jako tekst · rate limit publicznych endpointów
+(transient per IP) · CI: php -l + phpcs + phpstan (skill wp-phpstan) + gitleaks +
+testy przelotu; **manifest bramek rośnie TYLKO osobnym PR**.
 
-## 7. BEZPIECZEŃSTWO v2 (checklist → każda pozycja ma test w swoim przyrocie)
+## 8. PRAWO / RODO v3
 
-Podpis webhooka (Web Crypto, constructEventAsync) · idempotencja pełna (ON CONFLICT + resume) ·
-cena wyłącznie z bazy · **każdy endpoint admina z własną autoryzacją** (CORS ≠ kontrola
-dostępu; B13) · sesje admina: **cookie HttpOnly+Secure+SameSite=Strict** (panel i API na tym samym originie
-Workera), rekord po stronie serwera, krótkie życie, unieważnianie przy wylogowaniu, mutacje
-dodatkowo wymagają niestandardowego nagłówka (CSRF), **zmiana hasła w panelu** + procedura
-resetu skryptem (D4/B23) · limit prób
-logowania: opóźnienie wykładnicze + dziennik (Turnstile = produkcja) · **rate limit na
-publicznych endpointach** (B19) · opisy/nazwy renderowane jako tekst (XSS; B15) · upload:
-presigned PUT do R2 (limit Workera ominięty; A5), limit rozmiaru + MIME + losowy klucz,
-weryfikacja obecności PO wgraniu (matka H) · linki pobrań: HMAC + wygaśnięcie + atomowy
-licznik pełnych GET · sekrety wyłącznie w magazynie Workera; config.js tylko publiczne (B33) ·
-zakaz logowania sekretów (przegląd przed oddaniem) · CSP panelu (osobny origin) · gitleaks +
-CodeQL/Dependabot w CI.
+Zgoda na natychmiastowe dostarczenie treści cyfrowej zapisywana per zamówienie
+(treść + czas) · strony „Regulamin" i „Polityka prywatności" tworzone przy aktywacji
+jako SZABLONY z polami sprzedawcy do wypełnienia (paczka nie publikuje cudzego
+regulaminu) · minimalizacja: od kupującego tylko email · anonimizacja na żądanie ·
+retencja logów 90 dni · polityka wymienia Stripe i mechanizm maili jako
+przetwarzających; instrukkcja właściciela: akceptacja DPA u operatorów · bez przecen
+i opinii → Omnibus jawnie nie dotyczy · WCAG-lite (EAA) · przed oddaniem: bramka
+`bezpieczenstwo-danych-klienta` (dane osobowe = mail kupujących + dziennik IP).
 
-## 8. PRAWO / RODO v2
+## 9. PLAN PRACY v3 (harmonogram; POMIAR czasu per krok w audyt/POMIAR-CZASU.md)
 
-Zgoda na natychmiastowe dostarczenie zapisywana per zamówienie (treść + czas) · regulamin
-i polityka prywatności jako SZABLONY wypełniane danymi sprzedawcy z config (paczka nie
-publikuje cudzego regulaminu; C18) · minimalizacja: tylko email · anonimizacja na żądanie
-(email→NULL) · instrukcja właściciela: akceptacja standardowych umów powierzenia (DPA)
-u operatora płatności i dostawcy maili ·
-retencja logów 90 dni · polityka wymienia operatora płatności i dostawcę maili jako podmioty
-przetwarzające · **bez przecen → Omnibus-ceny nie dotyczy (jawnie)** · bez opinii → Omnibus-
-opinie nie dotyczy (jawnie) · WCAG-lite (EAA).
-
-## 9. PLAN PRACY v2 (harmonogram do terminu; POMIAR czasu per krok)
-
-- **K0 · 17-18.08 — SPIKE WPIĘCIA (ryzyko nr 1 najpierw; pewniak #1):** na kopii strony
-  gospodarza: **wariant A (link w menu w ŹRÓDLE/public) — PREFEROWANY**; B (skrypt +
-  MutationObserver) tylko jako fallback z jawnym ostrzeżeniem o kruchości;
-  test hydracji, routera (pełne przeładowanie na /sklep/), CSP, wycieków CSS, zachowania po
-  rebuildzie. **Wynik spike'a = decyzja mechanizmu wpięcia i definicja „czystego diffu"
-  (diff ŹRÓDŁA + wyłączenie zaplecza).** Równolegle startują **PRODUKTY-TREŚĆ** (2 paczki;
-  kryterium: kompletna instrukcja wdrożenia agenta + diagram + pliki; „ile czasu oszczędza"
-  poparte treścią, nie zmyślone). **Bramka treści: szkic OBU paczek do 19.08, recenzja treści
-  przez Dzidka PRZED K5** — egzaminator najpierw otworzy pliki, nie kod.
-- **K1 · 18-19.08 — KOŚĆ + TESTY OD RAZU:** skrypt instalacyjny zaplecza → 1 produkt (seed) →
-  zakup kartą testową → webhook (ON CONFLICT + resume) → mail → pobranie przez Worker.
-  Testy automatyczne od pierwszego dnia (wrangler dev/Miniflare + stripe CLI): webhook 2×,
-  przerwanie przed mailem + ponowienie dokańcza, podmiana ceny, licznik równoległy.
-  **Golden master przelotu** (zapis odpowiedzi/stanów/treści maila — regresja za darmo).
-- **K2 · 19.08 — WROGA SESJA na kości:** adblock, zamknięcie karty, spam-folder, podwójny
-  klik, webhook 2×, pusta baza, seed od zera, odświeżenie „dziękujemy", link po limicie,
-  HEAD/Range, plik usunięty z R2. Audyt pierwszego przelotu: sesje po pytaniu A/B/B2/C/D
-  (E-migracje: N/D w v1 — zapisane).
-- **K3 · 20-21.08 — PANEL (na Workerze):** logowanie (login+hasło, dziennik z loginem),
-  dashboard (lista + sumy w czasie + eksport CSV), podgląd zamówienia Z TREŚCIĄ maila,
-  resend, log zdarzeń (w tym akcje admina), zmiana hasła.
-- **K4 · 22.08 — CRUD:** produkty + presigned upload + walidacje (typ/rozmiar/cena>0/pusta
-  nazwa) + deaktywacja zamiast usuwania + snapshot w zamówieniach nietknięty (test).
-- **K5 · 23-24.08 — WITRYNA:** strony produktów NA TREŚCI z produktów-paczek, WCAG-lite,
-  RWD, JSON-LD, baner trybu testowego, regulamin/polityka z szablonów; sędzia wyglądu 0-100
-  wg kryteriów dziedziny PRZED pokazaniem.
-- **K6 · 25.08 — POWTARZALNOŚĆ (pewniak #7/B51):** DRUGA instalacja od zera na czystej kopii
-  innej strony wg instrukcji — wykonuje NIE-autor (Dzidek): „zestawienie zaplecza" (mierzone
-  osobno, z listą kont) + „wpięcie witryny" ≤30 min; test „ta strona→ten backend→ten Stripe".
-- **K7 · 26.08 — AUDYT KOŃCOWY:** 4 kontrole równolegle (zgodność z MAPA-SPEC · klikanie+
-  wygląd+axe · paczka i repo (gitleaks, instalacja od zera, sweep śmieci .bak/.orig/lorem) ·
-  bezpieczeństwo ATAKUJE — konkretne polecenia omijające walidacje) + **kalibracja: bank
-  mutantów projektu** (5 klas zwróconych przy MP + wyścig + limit-mierzy-nie-to; mutanty
-  zacommitowane na neutralnej gałęzi, zakaz narzędzi historii, próg 2/3) + krytyczny przelot
-  **3/3 (pass^k)** + próba obalenia (osobna sesja: „udowodnij, że NIE nadaje się do wydania").
-  Naprawy KLASAMI (grep całe repo; >5 plików = porcje z zielonym CI; 3. powrót klasy = STOP).
-- **K8 · 27.08 — PACZKA + PRÓBA ODDANIA nr 1:** zamrożenie → docs Z KODU (dwupoziomowe:
-  klient prostym językiem + zrzuty; informatyk: diagram architektury) → JEDNO wydanie (tag,
-  suma kontrolna, opis PL) → bramka ludzka: automat robi 5-6 zrzutów krytycznych ścieżek,
-  **Dzidek ogląda i odblokowuje** → runbook oddania (link działa z zewnątrz, dane demo,
-  collaborator ZAPROSZONY przed linkiem) → oddanie.
+- **K1 · 18-19.08 — KOŚĆ SKLEPU na stacku:** szkielet wtyczki (aktywacja/tabele/
+  wersja schematu/strony) → seed 1 produktu → checkout `wp_remote_post` → webhook
+  (podpis + idempotencja + RESUME) → `wp_mail` (mailpit dołożony do stacka) →
+  wydanie pliku endpointem. **Testy automatyczne od 1. dnia** (skrypty na żywym
+  stacku: pełny przelot = golden master, webhook 2×, podmiana ceny, przerwanie przed
+  mailem + ponowienie dokańcza). Sprawdzenie Z1 (BLIK testowy) i Z7 (klient AI WP 7.0).
+- **K2 · 20.08 — WROGA SESJA + audyt pierwszego przelotu (MOMENT 2):** zły podpis,
+  webhook 2×, cena z żądania ignorowana, limit pobrań równolegle (2 przy ostatnim
+  slocie → 1 przechodzi), HEAD, plik skasowany z dysku, pusta baza, cykl
+  aktywacja→deaktywacja→aktywacja bez śmieci i błędów.
+- **K3 · 20-21.08 — PANEL wp-admin:** NAJPIERW wzorce dziedziny (dashboardy dojrzałych
+  sklepów — wytyczna Dzidka „jak robią dobre sklepy"), POTEM budowa: dashboard + CSV,
+  zamówienie + treść maila + resend, dziennik logowań (hooki), log akcji, ustawienia.
+- **K4 · 21-22.08 — CRUD produktów:** upload do katalogu chronionego + walidacje
+  (typ/rozmiar/cena>0/niepusta nazwa) + deaktywacja zamiast usuwania + test:
+  edycja produktu NIE zmienia snapshotu w zamówieniach.
+- **K5 · 22-23.08 — WITRYNA SKLEPU:** najpierw wzorce stron produktowych dobrych
+  sklepów, potem strony na PRAWDZIWEJ treści botów („ile czasu oszczędza" z pokryciem
+  w treści paczek), WCAG-lite, RWD, baner testowy, regulamin/polityka z szablonów;
+  **sędzia wyglądu 0-100 wg kryteriów dziedziny PRZED pokazaniem Dzidkowi.**
+- **RÓWNOLEGLE K1→K5 (builder1, tmux, worktree) — BOTY:** 18-19.08 SZKICE obu botów
+  (spis funkcji rdzenia + koncepcja ekranów) → **RECENZJA DZIDKA szkiców PRZED
+  budową witryny (bramka)** → 19-22.08 budowa rdzeni + instrukcje + zip → 23.08
+  wroga sesja botów (czysty WP: aktywacja bez błędów, seed działa, uninstall czysty).
+- **K6 · 24.08 — POWTARZALNOŚĆ:** świeży czysty WordPress (drugi stack) → instalacja
+  3 wtyczek WG INSTRUKCJI przez NIE-autora (Dzidek; mierzone, cel ≤30 min) → pełny
+  zakup end-to-end → deinstalacja: diff bazy/plików przed-po czysty.
+- **K7 · 25-26.08 — AUDYT KOŃCOWY (MOMENT 4):** 4 kontrole równolegle (zgodność z
+  MAPA-SPEC na źródle · klikanie+wygląd+axe · paczka/repo: gitleaks, instalacja od
+  zera, sweep śmieci · bezpieczeństwo ATAKUJE: konkretne żądania omijające nonce/
+  caps/podpis/cenę) + **KALIBRACJA: bank mutantów projektu** (`mutanty/`, próg 2/3)
+  + **audyt strażników CI mutacjami jako SKRYPT** (technika Mariusza #62, zbieżna
+  z naszym kalibruj.sh: każdą bramkę psujemy dokładnie w tym, co ma łapać — strażnik,
+  który nie krzyknie, jest ślepy) + krytyczny przelot **3/3 (pass^k)** + próba
+  obalenia świeżą sesją („udowodnij, że NIE nadaje się do wydania"). Naprawy KLASAMI
+  (grep całe repo) + **sweep „co przestało być prawdą"** po każdej naprawie (własna
+  naprawa unieważnia testy i dokumentację — lekcja MP).
+- **K8 · 27.08 — PACZKA + PRÓBA ODDANIA nr 1:** zamrożenie → wersje + CHANGELOG
+  (bramka wersji SPRAWDZA wpis w changelogu — lekcja MP) → zipy 3 wtyczek + sumy
+  kontrolne → dokumentacja klienta Z KODU (instrukcja prostym językiem + zrzuty
+  robione maszynowo; diagram architektury dla informatyka; rozdział „test vs
+  produkcja" §13) → **bramka ludzka: Dzidek ogląda zrzuty krytycznych ścieżek
+  i odblokowuje** → oddanie (próba 1).
 - **28-30.08 — BUFOR na zwroty (próby 2-3).** Zmiana po zamrożeniu = ścieżka hotfix.
 
-Rytm: branch → test na żywych danych testowych → PR (recenzent-Claude + CI) → merge;
-następny krok dopiero po POTWIERDZONYM wyniku poprzedniego. Bramki CI rosną z kodem
-(manifest przez osobne PR-y). Gdy bramka czerwona — naprawiamy produkt, NIGDY miarę.
+Rytm: branch → test na żywym stacku → PR (recenzent-Claude + CI) → merge; następny
+krok po POTWIERDZONYM wyniku poprzedniego. Odbiór recenzji: minuty+koszt+komentarz
+(„pass" w sekundy = self-skip — lekcja z Issue #9). Bramka czerwona = naprawiamy
+produkt, NIGDY miarę.
 
-## 10. KADENCJA SPRAWDZANIA (ze skilla sprawdzanie-zlecenia, dopasowana)
+## 10. KADENCJA SPRAWDZANIA (skill sprawdzanie-zlecenia)
 
-MOMENT 1 (dziś): **MAPA-SPEC.md** generowana z surowej notatki zlecenia (statusy: dosłowne /
-interpretacja / odstępstwo z datą) — audytor zgodności dostaje POTEM źródło+mapę, nie moje
-streszczenie. MOMENT 2: audyt pierwszego przelotu NA KOŚCI (K2). W TRAKCIE: automaty w CI
-(eslint, testy, gitleaks, CodeQL; znaleziony błąd → w 24 h reguła lintera albo test).
-MOMENT 4 (K7): cztery kontrole + kalibracja + GO/NO-GO z trzech liczb (zero krytycznych
-i dużych · kalibracja ≥ próg · zero rozjazdów) — liczby liczy skrypt, nie proza.
-Audytor: zawsze świeża sesja w zerowym kontekście, jedna soczewka na agenta, znalezisko =
-padający test, „zero z uzasadnieniem" wymagane. Zasada dwóch prób naprawy, potem reset
-i inne podejście.
+M1 ✅ zrobione: MAPA-SPEC z surowej notatki (17.08) + klepnięcia interpretacji
+(18.08). M2 = K2 (audyt pierwszego przelotu na kości). W TRAKCIE: automaty w CI
+(php -l, phpcs, phpstan, gitleaks, testy przelotu; znaleziony błąd → w 24 h reguła
+lub test). M4 = K7: GO/NO-GO z trzech liczb liczonych SKRYPTEM (0 krytycznych
+i dużych · kalibracja ≥2/3 · 0 rozjazdów ze spec). Audytor: świeża sesja, jedna
+soczewka na agenta, znalezisko = padający test, „zero z uzasadnieniem" wymagane.
+Dwie próby naprawy, potem reset i inne podejście.
 
-## 11. REJESTR ZAŁOŻEŃ v2
+## 11. REJESTR ZAŁOŻEŃ v3
 
-- Z1. Symulacja BLIK w teście Stripe — sprawdzana w K1 (karta = pewnik).
-- Z2. Limity CPU darmowego Workera: 10 ms CPU/wywołanie (cennik 16.08) — to czas PROCESORA,
-  nie zegara (czekanie na D1/R2/sieć się nie liczy; HMAC i klej API to ułamki ms) → ryzyko
-  niskie, ale MIERZONE w K1 (pass^k 3/3).
-- Z8. Mechanizm wpięcia potwierdzony wyłącznie na stronie egzaminacyjnej — pozostałe 3 strony
-  (przyszłość) dostają checklistę kompatybilności (CSP/router/ścieżki) przy swoim wdrożeniu.
-- Z3. Mechanizm wpięcia — rozstrzyga SPIKE (K0), nie wiara.
-- Z4. Dostawca maili: dostarczalność wielu skrzynek + spam + stopka darmowego planu — K1/K2.
-- Z5. ~~Panel na osobnej domenie~~ ROZSTRZYGNIĘTE: panel na originie Workera.
-- Z6. KTO wykonuje wpięcie u właścicieli: założenie = właściciel z dostępem do ŹRÓDŁA strony
-  (tylko zmiana w źródle przeżywa rebuild) — instrukcja pisana pod to; koszt zmiany: średni.
-- Z7. Wolumen: pojedyncze zakupy dziennie (przy zmianie: limity przeliczyć).
+- Z1. Symulacja BLIK w trybie testowym Stripe — sprawdzana w K1 (karta = pewnik).
+- Z2. `wp_mail` w kontenerze Docker NIE wysyła bez SMTP → w stacku łapacz mailpit
+  (warsztat, nie produkt); na hostingu wysyłka = sprawa hostingu; jawne w instrukcji.
+- Z3. Głębokość botów wg D19 (rdzeń demo + instrukcja). Jeśli egzaminator oczekiwał
+  „prawdziwego AI" — wyłapie to próba 1 (27.08); bufor 3 dni + architektura botów
+  gotowa na podpięcie dostawcy.
+- Z4. Sklep testujemy na kopii strony-gospodarza w warsztacie; wdrożenie na żywą
+  stronę = po egzaminie, za zgodą czwórki (przełączka + świeży re-import treści).
+- Z5. „Jedna wspólna strona, 4 konta adminów" (Dzidek 17/18.08) — wtyczka mimo to
+  konfigurowalna przez Ustawienia (przenośność tania teraz, potrzebna później);
+  test przenośności = K6 na czystym WP.
+- Z6. Wolumen: pojedyncze zakupy dziennie (przy zmianie przeliczyć limity/retencję).
+- Z7. „Klient AI w rdzeniu WP 7.0" (nasza pamięć) — ZBADAĆ w K1 zanim cokolwiek
+  na nim oprzemy; to opcja rozszerzenia botów, NIE założenie planu.
 
-## 12. KRYTERIA „GOTOWE" v2 (binarne; mierzą NASZĄ część; wykonywane NA PACZCE na świeżym wdrożeniu)
+## 12. KRYTERIA „GOTOWE" v3 (binarne; wykonywane NA PACZCE na świeżej instalacji)
 
-1. Zakup kartą testową: zaplecze przekazuje mail dostawcy ≤60 s od webhooka (nasz pomiar);
-   osobno test ręczny: mail w skrzynce (z kontrolą spamu) i **treść maila widoczna w panelu**.
-2. Link pobiera WŁAŚCIWY plik (sha256 zgodny ze snapshotem); po terminie/limicie odmawia;
-   HEAD/Range nie zużywa limitu; 2 równoległe pobrania przy ostatnim slocie → przechodzi 1.
-3. Webhook 2× = jedno zamówienie i jeden mail; ponowienie po przerwaniu W POŁOWIE dokańcza
-   (test z wymuszonym padnięciem przed mailem).
-4. Podmieniona cena/produkt w żądaniu = zignorowane; zakup bez zaznaczonej zgody = niemożliwy;
-   webhook bez ważnego podpisu = odrzucony; endpoint admina bez sesji = odmowa.
-5. Panel: zakup widoczny (czas=webhook, kwota, produkt ze SNAPSHOTU); edycja/deaktywacja
-   produktu NIE zmienia historii; dziennik logowań z loginem (udane i nieudane); log zdarzeń
-   obejmuje akcje admina; eksport CSV działa.
-6. CRUD: nowy produkt widoczny w sklepie bez zmian kodu; produkt bez potwierdzonego pliku
+1. Instalacja 3 wtyczek na czystym WP wg instrukcji przez NIE-autora ≤30 min,
+   bez fatali i notice'ów (WP_DEBUG włączony).
+2. Zakup kartą testową: webhook → zamówienie → mail ≤60 s (pomiar skryptem);
+   mail w łapaczu SMTP; treść maila widoczna w panelu.
+3. Link pobrania: właściwy plik (sha256 = snapshot); po terminie/limicie odmowa;
+   2 równoległe pobrania przy ostatnim slocie → przechodzi dokładnie 1; HEAD nie
+   zużywa limitu.
+4. Webhook 2× = jedno zamówienie i jeden mail; ponowienie po przerwaniu przed mailem
+   DOKAŃCZA (test z wymuszonym padnięciem); zły/brak podpisu = odrzut z błędem.
+5. Podmieniona cena/produkt w żądaniu = zignorowane (cena z bazy); zakup bez zgody
+   niemożliwy; akcje admina bez zalogowania/capability = odmowa; mutacja bez nonce
+   = odmowa.
+6. Dashboard „jak dobre sklepy": zakup widoczny (czas webhooka, kwota, produkt ze
+   SNAPSHOTU), sumy w okresach, eksport CSV; edycja/deaktywacja produktu NIE zmienia
+   historii zamówień.
+7. CRUD: nowy produkt widoczny w sklepie bez zmian kodu; bez potwierdzonego pliku
    nie da się aktywować; walidacje odrzucają cenę ≤0 i pustą nazwę.
-7. DRUGA instalacja: zaplecze skryptem (czas zmierzony, jawny) + wpięcie witryny wg instrukcji
-   przez NIE-autora ≤30 min; zakup na instalacji B ląduje wyłącznie w bazie B.
-8. Odpięcie wg instrukcji: diff źródła strony czysty + zaplecze wyłączone; kupujący przed
-   odpięciem: los linków opisany w instrukcji (decyzja właściciela).
-9. Krytyczny przelot (zakup→mail→pobranie) przechodzi **3/3 powtórzeń** (pass^k).
-10. Produkty-treść: obie paczki istnieją, kompletne (instrukcja+diagram+pliki), opis „ile czasu
-    oszczędza" ma pokrycie w treści paczki.
-11. WCAG-lite: formularze z labelkami, obsługa klawiaturą, fokus widoczny; RWD na telefonie;
-    strony działają w Chrome/Edge/Firefox.
-12. Kalibracja audytu ≥ próg (2/3 mutantów) — inaczej audyt nieważny, nie oddajemy.
+8. Dziennik: logowania wszystkich adminów (udane i nieudane, IP, przeglądarka) +
+   log akcji admina (CRUD/resend/eksport).
+9. Uninstall: domyślnie dane zostają; z włączoną opcją czyszczenia — zero naszych
+   tabel/opcji/stron/plików/cronów (diff przed-po pusty).
+10. Boty: oba rdzenie DZIAŁAJĄ na czystym WP (ChatBot odpowiada z bazy Q&A i zbiera
+    kontakt przy braku odpowiedzi; Segregator segreguje próbkę i pokazuje raport);
+    instrukcje kompletne; opisy „ile czasu oszczędza" mają pokrycie w treści.
+11. WCAG-lite (labelki, klawiatura, fokus) + RWD (zakup telefonem) + Chrome/Edge/
+    Firefox.
+12. Kalibracja audytu ≥2/3 mutantów ORAZ strażnicy CI przechodzą własny audyt
+    mutacyjny — inaczej audyt nieważny, nie oddajemy.
 
-## 13a. DOKUMENTY PROJEKTU (ten sam komplet co w dziale audytów — kto, gdzie, kiedy powstaje)
+Rubryka zamrażana po K2 jako `rubryka-GOTOWE.md`.
 
-**Żywe od startu (już istnieją, aktualizowane na bieżąco):**
-`ZROZUMIENIE.md` (surowe zdania + fakty; build-guard pilnuje) · `MAPA-SPEC.md` (litera źródła ↔
-wykonanie, statusy dosłowne/interpretacja/odstępstwo; wsad dla audytora zgodności) ·
-`DECYZJE.md` (decyzja+uzasadnienie+odrzucone alternatywy — zamiennik pytań do klienta) ·
-`audyt/REJESTR-WERYFIKACJI.md` (co sprawdzone, CZYM, wynik, dowód) · `audyt/POMIAR-CZASU.md` ·
-`audyt/DZIEN-1.md` (checklista bramek) · `.github/manifest-bramek.txt` (rośnie TYLKO osobnym PR)
-· `krytyki/` (zapisy wierne + triage + mapa zbieżności) · rejestr założeń (sekcja 11 planu).
+## 13. CO ODDZIELA TRYB TESTOWY OD PRODUKCJI (jawna lista → rozdział instrukcji)
 
-**Powstają w zdefiniowanym momencie:**
-`KONTRAKTY.md` (styki witryna↔API↔Stripe↔mail) + `audyt/mapa-ryzyka.txt` (wagi per
-odpowiedzialność) + `rubryka-GOTOWE.md` (z sekcji 12, zamrożona) — po kości, w projekcie
-technicznym (bramka D) · `mutanty/*.patch` (bank łatek do kalibracji) — przed K7 ·
-raporty audytów (`audyt/`) — K2 i K7 · `CHANGELOG.md` — od pierwszego wydania ·
-`README.md` Z KODU — po zamrożeniu (K8) · dokumentacja klienta (K8): instrukcja wdrożenia
-prostym językiem + zrzuty, diagram architektury dla informatyka, szablony regulaminu
-i polityki, rozdział „test vs produkcja" (sekcja 13).
+Aktywacja kont Stripe właścicieli (KYC, rachunek) · webhook produkcyjny z nowym
+sekretem · wysyłka maili na hostingu (SMTP/dostawca — bez tego mail NIE wychodzi) ·
+hosting z PHP/MySQL dla WP (zestawienie opcji z cenami = OBIECANE Dzidkowi, osobny
+dokument po egzaminie) · przełączka strony głównej na wersję WP (decyzja czwórki;
+przy przełączce świeży re-import treści) · 4 konta adminów zakładane przy wdrożeniu ·
+regulamin/polityka wypełnione danymi sprzedawcy · usunięcie banera testowego ·
+VAT/OSS = księgowość właścicieli (my nie doradzamy podatkowo) · realne AI w botach
+(klucz właściciela) i prawdziwa skrzynka Segregatora = osobna robota po egzaminie.
 
-Zasada wspólna z działem audytów: dokument, którego nie pilnuje skrypt albo bramka,
-umiera — dlatego każdy z powyższych ma właściciela-moment, a nie „będzie się prowadziło".
+## 13b. ŹRÓDŁA OFICJALNE DZIEDZINY (drabina szukania, szczebel 2)
 
-## 13b. ŹRÓDŁA OFICJALNE DZIEDZINY (drabina szukania, szczebel 2 — jak docs WP przy MP)
+- **developer.wordpress.org** — Plugin Handbook (basics, activation/deactivation,
+  uninstall, Settings API, security/nonces), REST API Handbook, `dbDelta`/creating
+  tables, Plugin Directory guidelines (rygor jak przy MP).
+- **docs.stripe.com** — Checkout Sessions API, webhooks („Verify manually"!),
+  testing (karty testowe), idempotent requests. Destylat: ZWIAD-STRIPE.md (kosc-k1).
+- **OWASP Cheat Sheets** (sesje, walidacja, magazyn sekretów) · **MDN** (nagłówki,
+  cookies) · **WCAG quick reference** (WCAG-lite) · **UOKiK / ustawa o prawach
+  konsumenta** (zgoda na treści cyfrowe) · **WP-CLI docs** (testy na stacku).
+- ⛔ Świat v2 (Cloudflare/Next.js docs) — już NIE dotyczy sklepu; zostaje w historii.
+Nazwa narzędzia podana przez model = hipoteza do sprawdzenia w źródłach, nie fakt.
 
-Przy każdej niepewności NAJPIERW te źródła, nie pamięć i nie blogi:
-- **Stripe:** docs.stripe.com — Checkout, webhooks (podpis!), tryb testowy, karty testowe;
-  przewodnik Stripe dla **Cloudflare Workers** (constructEventAsync).
-- **Cloudflare:** developers.cloudflare.com — Workers (limity, sekrety), D1 (SQL, migracje,
-  transakcje), R2 (presigned PUT), Cron Triggers, Wrangler CLI.
-- **Dostawca maili** (kandydat Brevo): oficjalne API docs + polityka darmowego planu
-  (stopka? limity? adres nadawcy).
-- **Next.js:** nextjs.org/docs — static export, hydracja, router (rozumienie
-  strony-GOSPODARZA, nie nasz stack).
-- **GitHub Pages:** docs.github.com — zachowanie hostingu (404, ścieżki, nagłówki).
-- **Google Search Central + schema.org:** dane strukturalne Product/JSON-LD (nasze „SEO-minimum").
-- **MDN:** Web Crypto (HMAC), fetch, cookies (HttpOnly/SameSite) — wzorce webowe.
-- **WCAG / W3C WAI quick reference:** dostępność formularzy (WCAG-lite).
-- **Prawo konsumenckie (UOKiK / ustawa o prawach konsumenta):** odstąpienie od umowy
-  o treści cyfrowe — brzmienie zgody w checkboxie i regulaminie.
-- **Playwright docs:** testy E2E + axe (dostępność automatyczna).
-⛔ WooCommerce/WordPress docs — NIE dotyczą tego stacku (inny świat; zostają przy zleceniach WP).
-Nazwa narzędzia podana przez model = hipoteza do sprawdzenia w tych źródłach, nie fakt.
+**Zasady rzemiosła (wykute z MP, obowiązują):** symetria zapis↔sprzątanie (ten sam
+PR) · zapis stanu PO pomiarze skutku · limit mierzy to, co robi szkodę · jedno
+źródło prawdy dla każdej listy · nowa tabela = 3 miejsca · bump wersji assetów przy
+każdej zmianie JS/CSS · lock przez INSERT, nie add_option.
 
-**ZASADY RZEMIOSŁA „wtyczkowego" (pytanie Dzidka: skąd reguły typu „co zapisujesz, to po
-odpięciu usuwasz"):**
-- **Nasze skodyfikowane (wykute z MP, obowiązują tu):** SYMETRIA ZAPIS↔SPRZĄTANIE — co
-  automatyzacja zapisuje (klucz, tabela, plik, sekret), to skrypt ODINSTALOWANIA usuwa,
-  dopisywane W TYM SAMYM PR (PRZEPIS-ZLECENIA etap 2; matka A z bramek anty-powtórka) ·
-  zapis stanu PO pomiarze skutku (matka H) · limit mierzy to, co robi szkodę (matka I) ·
-  jedno źródło prawdy dla każdej listy · rzecz wspólna ma właściciela.
-- **Oficjalne, z których te zasady pochodzą:** WordPress Plugin Handbook (rozdział
-  activation/deactivation/**uninstall** — wzorzec myślenia o wtyczce, mimo innego stacku) ·
-  **OWASP Cheat Sheet Series** (sesje, sekrety, walidacja wejść, magazyn haseł) ·
-  **The Twelve-Factor App** (konfiguracja w środowisku, jednorazowość procesów, parytet
-  środowisk) · **Stripe docs: webhook best practices** (podpis, idempotencja, retry) ·
-  Keep a Changelog + SemVer + Conventional Commits (wydania — już stosujemy).
-- Konsekwencja w paczce: obok skryptu INSTALACJI zaplecza jest skrypt **ODINSTALOWANIA**
-  (usuwa Workera, bazę D1, magazyn R2 i sekrety) — „odpięcie = zero śladu" obejmuje
-  zaplecze, nie tylko katalog na stronie (kryterium 8).
+## 14. WYCENA CZASU (rozstrzygnięcie głębokości botów — podstawa D19)
 
-## 13. CO ODDZIELA TRYB TESTOWY OD PRODUKCJI (jawna lista — nie obietnica „podmiany kluczy")
-
-Aktywacja kont Stripe właścicieli (KYC, rachunek) · webhook produkcyjny z nowym sekretem ·
-domena nadawcza maili (bez niej produkcyjna wysyłka NIE działa) · VAT od treści cyfrowych
-dla konsumentów UE (możliwy OSS — właściciele konsultują księgowość; my NIE doradzamy
-podatkowo) · regulamin/polityka z danymi konkretnego sprzedawcy · warunki darmowego planu
-Cloudflare przy działalności zarobkowej · usunięcie banera trybu testowego · przegląd
-limitów przy realnym ruchu. **Ta lista trafia do instrukcji właściciela jako osobny rozdział.**
+- SKLEP (K1-K8 z audytem i paczką): **~6 dni roboczych** — mieści się do 27.08.
+- BOTY rdzeń demo + instrukcja (równolegle, builder1): **~2 dni** budowy + wroga
+  sesja — mieści się bez naruszania sklepu.
+- BOTY „pełny agent" (LLM na żywo, prawdziwy IMAP/OAuth): **+3-4 dni** i nowe
+  ryzyka (klucze API, koszty, sekrety w paczce) → termin 27.08 pada, bufor znika —
+  **ODRZUCONE na egzamin** (D19); instrukcja jawnie opisuje drogę rozbudowy.
+Decyzja o głębokości ostatecznie: Dzidek klepie ten plan (D19 w DECYZJE.md).
