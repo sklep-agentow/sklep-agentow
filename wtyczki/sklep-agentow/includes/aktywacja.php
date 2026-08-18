@@ -96,6 +96,13 @@ function sklepag_tabele_sql() {
 			PRIMARY KEY  (id),
 			KEY czas (czas)
 		) {$c};",
+
+		"CREATE TABLE {$p}rate_limit (
+			klucz varchar(64) NOT NULL,
+			licznik int(11) unsigned NOT NULL DEFAULT 1,
+			okno_do datetime NOT NULL,
+			PRIMARY KEY  (klucz)
+		) {$c};",
 	);
 }
 
@@ -108,6 +115,10 @@ function sklepag_aktywacja() {
 
 	sklepag_utworz_strony();
 	sklepag_utworz_katalog_chroniony();
+
+	if ( ! wp_next_scheduled( 'sklepag_dociagnij_zalegle' ) ) {
+		wp_schedule_event( time() + 600, 'sklepag_10min', 'sklepag_dociagnij_zalegle' );
+	}
 }
 
 function sklepag_deaktywacja() {
@@ -191,10 +202,17 @@ function sklepag_utworz_katalog_chroniony() {
 	}
 
 	// Apache 2.4 (Require) i 2.2 (Deny) — hosting docelowy nieznany (Z10); brama i tak w PHP.
-	file_put_contents(
+	$ht = file_put_contents(
 		trailingslashit( $sciezka ) . '.htaccess',
 		"<IfModule mod_authz_core.c>\nRequire all denied\n</IfModule>\n<IfModule !mod_authz_core.c>\nDeny from all\n</IfModule>\n"
 	);
+	if ( false === $ht ) {
+		// Ta sama próba kontrolna co dla index.php (recenzja PR #28, uwaga 2. rundy).
+		unlink( trailingslashit( $sciezka ) . 'index.php' ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+		rmdir( $sciezka ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+		update_option( 'sklepag_katalog_chroniony_blad', 'zapis .htaccess nieudany — sprawdź uprawnienia uploads', false );
+		return;
+	}
 
 	update_option( 'sklepag_katalog_chroniony', $sciezka, false );
 	delete_option( 'sklepag_katalog_chroniony_blad' );

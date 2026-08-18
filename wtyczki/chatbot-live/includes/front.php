@@ -13,23 +13,57 @@ const CHATL_MAX_WIADOMOSC = 2000;
 const CHATL_LIMIT_NA_MIN  = 10;
 
 /**
- * Rate limit per IP (transient, okno 60 s) — wspólny dla obu endpointów nopriv,
- * żeby gość z noncem nie zalewał bazy ani nie mail-bombił właściciela.
+ * Rate limit per IP na tabeli (wzorzec sklepu: sklepag_rate_limit, recenzja
+ * PR #33) — wspólny dla obu endpointów nopriv, żeby gość z noncem nie zalewał
+ * bazy, nie mail-bombił właściciela ani nie przepalał klucza API w trybie AI.
  *
+ * Poprzednia wersja na transiencie (get/set) NIE była atomowa: równoległe
+ * żądania gubiły inkrementacje i przepuszczały ponad próg (zmierzone 15/25
+ * przy progu 10). Tu inkrementacja jest atomowa (ON DUPLICATE KEY UPDATE),
+ * a odczyt zwraca WŁASNĄ wartość żądania (LAST_INSERT_ID, per połączenie) —
+ * przy N równoległych żądaniach przechodzi DOKŁADNIE próg, nic więcej.
+ *
+ * @param string $akcja Etykieta limitu ('chat' = wspólny kubeł widgetu).
+ * @param int    $prog  Maks. żądań na minutę z jednego IP.
  * @return bool True = wolno obsłużyć, false = limit wyczerpany.
  */
-function chatl_limit_ip_ok() {
+function chatl_rate_limit( $akcja, $prog ) {
+	global $wpdb;
 	$ip = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
 	if ( '' === $ip ) {
 		return false;
 	}
-	$klucz   = 'chatl_rl_' . md5( $ip );
-	$licznik = (int) get_transient( $klucz );
-	if ( $licznik >= CHATL_LIMIT_NA_MIN ) {
-		return false;
+	$t     = $wpdb->prefix . 'chatl_rate_limit';
+	$okno  = (int) floor( time() / MINUTE_IN_SECONDS );
+	$klucz = $akcja . '|' . $okno . '|' . md5( $ip );
+
+	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+	$wynik = $wpdb->query( $wpdb->prepare(
+		"INSERT INTO {$t} (klucz, licznik, okno_do) VALUES (%s, 1, %s)
+		 ON DUPLICATE KEY UPDATE licznik = LAST_INSERT_ID(licznik + 1)",
+		$klucz,
+		gmdate( 'Y-m-d H:i:s', ( $okno + 2 ) * MINUTE_IN_SECONDS )
+	) );
+	if ( 1 === $wynik ) {
+		$ile = 1; // Świeży wiersz w tym oknie (INSERT zwraca 1).
+	} elseif ( 2 === $wynik ) {
+		$ile = (int) $wpdb->get_var( 'SELECT LAST_INSERT_ID()' ); // Inkrement (ODKU zwraca 2).
+	} else {
+		$ile = 0;
 	}
-	set_transient( $klucz, $licznik + 1, MINUTE_IN_SECONDS );
-	return true;
+	// phpcs:enable
+
+	if ( 0 === $ile ) {
+		return true; // Awaria licznika — limiter chroni przed spamem, nie może zablokować czatu (nonce/walidacje są gdzie indziej).
+	}
+	return $ile <= $prog;
+}
+
+/**
+ * Wspólny kubeł limitu dla pytań i zgłoszeń widgetu.
+ */
+function chatl_limit_ip_ok() {
+	return chatl_rate_limit( 'chat', CHATL_LIMIT_NA_MIN );
 }
 
 /**
