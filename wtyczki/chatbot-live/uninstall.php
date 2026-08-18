@@ -26,6 +26,7 @@ delete_option( 'chatl_wersja_schematu' );
 delete_option( 'chatl_klucz_api' ); // Sekret właściciela — pełne czyszczenie MUSI go usunąć.
 
 // Transienty rate-limitu (chatl_rl_*) ze STARSZYCH wersji wtyczki (≤1.1.x —
-// od 1.2.0 licznik żyje w tabeli): podkreślniki w LIKE escapowane (\_),
-// żeby nie złapać cudzych wpisów o podobnej nazwie.
-$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '\_transient\_chatl\_rl\_%' OR option_name LIKE '\_transient\_timeout\_chatl\_rl\_%'" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+// od 1.2.0 licznik żyje w tabeli): esc_like() eskejpuje podkreślnik (SQL
+// wildcard) + prepare — wzorzec Handbook, żeby nie złapać cudzych wpisów
+// o podobnej nazwie.
+$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s", $wpdb->esc_like( '_transient_chatl_rl_' ) . '%', $wpdb->esc_like( '_transient_timeout_chatl_rl_' ) . '%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
