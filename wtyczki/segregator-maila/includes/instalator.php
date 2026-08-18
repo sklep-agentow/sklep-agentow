@@ -18,14 +18,17 @@ function segm_utworz_tabele() {
 	$charset = $wpdb->get_charset_collate();
 	$p       = $wpdb->prefix;
 
-	dbDelta( "CREATE TABLE {$p}segm_kategorie (
+	dbDelta(
+		"CREATE TABLE {$p}segm_kategorie (
 		id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 		nazwa varchar(100) NOT NULL,
 		utworzono datetime NOT NULL,
 		PRIMARY KEY  (id)
-	) {$charset};" );
+	) {$charset};"
+	);
 
-	dbDelta( "CREATE TABLE {$p}segm_reguly (
+	dbDelta(
+		"CREATE TABLE {$p}segm_reguly (
 		id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 		kolejnosc int(10) unsigned NOT NULL DEFAULT 0,
 		pole varchar(10) NOT NULL,
@@ -34,9 +37,11 @@ function segm_utworz_tabele() {
 		utworzono datetime NOT NULL,
 		PRIMARY KEY  (id),
 		KEY kolejnosc (kolejnosc)
-	) {$charset};" );
+	) {$charset};"
+	);
 
-	dbDelta( "CREATE TABLE {$p}segm_maile (
+	dbDelta(
+		"CREATE TABLE {$p}segm_maile (
 		id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 		zrodlo varchar(10) NOT NULL DEFAULT 'demo',
 		nadawca varchar(190) NOT NULL,
@@ -45,9 +50,11 @@ function segm_utworz_tabele() {
 		kategoria_oczekiwana varchar(100) NOT NULL DEFAULT '',
 		utworzono datetime NOT NULL,
 		PRIMARY KEY  (id)
-	) {$charset};" );
+	) {$charset};"
+	);
 
-	dbDelta( "CREATE TABLE {$p}segm_przebiegi (
+	dbDelta(
+		"CREATE TABLE {$p}segm_przebiegi (
 		id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 		tryb varchar(20) NOT NULL DEFAULT 'reguly',
 		maili int(10) unsigned NOT NULL DEFAULT 0,
@@ -57,13 +64,16 @@ function segm_utworz_tabele() {
 		wyniki longtext NOT NULL,
 		uruchomiono datetime NOT NULL,
 		PRIMARY KEY  (id)
-	) {$charset};" );
+	) {$charset};"
+	);
 
-	dbDelta( "CREATE TABLE {$p}segm_ai_uzycie (
+	dbDelta(
+		"CREATE TABLE {$p}segm_ai_uzycie (
 		dzien date NOT NULL,
 		wywolania int(10) unsigned NOT NULL DEFAULT 0,
 		PRIMARY KEY  (dzien)
-	) {$charset};" );
+	) {$charset};"
+	);
 }
 
 /**
@@ -86,13 +96,20 @@ function segm_seed_demo() {
 		$kategorie = array( 'Oferty', 'Faktury', 'Reklamacje', 'Spam-podejrzane', 'Reszta' );
 		$id_kat    = array();
 		foreach ( $kategorie as $nazwa ) {
-			$wpdb->insert( $wpdb->prefix . 'segm_kategorie', array( 'nazwa' => $nazwa, 'utworzono' => $teraz ), array( '%s', '%s' ) );
+			$wpdb->insert(
+				$wpdb->prefix . 'segm_kategorie',
+				array(
+					'nazwa'     => $nazwa,
+					'utworzono' => $teraz,
+				),
+				array( '%s', '%s' )
+			);
 			$id_kat[ $nazwa ] = (int) $wpdb->insert_id;
 		}
 
 		if ( 0 === (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}segm_reguly" ) ) { // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			// Kolejność = jedyny mechanizm rozstrzygania: pierwsza pasująca wygrywa.
-			$reguly = array(
+			$reguly    = array(
 				array( 'od', 'faktury@, ksiegowosc, księgowość, rozliczenia@', 'Faktury' ),
 				array( 'temat', 'faktur, rachunek, płatnoś, platnosc, nota księgowa, nota ksiegowa', 'Faktury' ),
 				array( 'temat', 'reklamac, zwrot, uszkodzon, wadliw', 'Reklamacje' ),

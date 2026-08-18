@@ -1,5 +1,23 @@
 # CO-WISI — rzeczy oddane komuś / bez strażnika (zasada: oddajesz ⇒ wiersz, wraca ⇒ kasujesz)
 
+## ✅ ZAMKNIĘTE 19.08 (dzień) — ⭐ PAKIET BOTÓW (D25, przyciągnięty z 23.08), boty 1.2.1
+- **phpcs na WSZYSTKIE 3 wtyczki:** phpcbf (58 auto-napraw, diff obejrzany — zero zmian
+  semantyki) + 3 adnotacje inline z uzasadnieniem + `customSanitizingFunctions`
+  (chatl_waliduj_sesje) + sniff doradczy DirectDatabaseQuery wyłączony dla botów JEDNĄ
+  deklaracją w ruleset (uzupełnienie D25 — boty w 100% na własnych tabelach; PreparedSQL
+  aktywny wszędzie). Zakres bramki potwierdzony PRÓBĄ KONTROLNĄ (podłożony var_dump
+  w bocie = czerwone). phpcs EXIT 0, phpstan EXIT 0.
+- **Widget chatbota przemalowany na paletę strony** (top-uwaga sędziego K5): limonka
+  #bfff38 / tusz #08090b / węgiel #101116, dymki 1:1 z mockupem strony produktu,
+  hover-pierścień jak CTA sklepu, obwódka bąbelka pod WCAG 1.4.11 na jasnych stronach;
+  zrzuty na stacku gospodarza ORAZ na czystym WP; kolory zmierzone z żywego DOM.
+- **WROGA SESJA BOTÓW na czystym WP** (audyt/WROGA-SESJA-BOTY.md): aktywacja bez
+  jednego notice (WP_DEBUG_LOG), seedy komplet, cykl deakt→akt bez strat, przebieg
+  segregatora działa, pełne czyszczenie = zero tabel/opcji/cronów. 🔴→✅ ZNALEZISKO
+  klasy #1 ściągi: klucz API zostawał w bazie przy DOMYŚLNYM uninstallu — naprawione
+  (delete przed early-return, oba boty), zmierzone przed/po, INSTRUKCJE dok=kod,
+  paczki 1.2.1 przebudowane + powtórka weryfikacji `diff -r` (zip == repo).
+
 ## ✅ ZAMKNIĘTE 19.08 (wieczór) — ⭐ K5 WITRYNA KOMPLET, 3 PR-y (#51-#53), wersja 0.8.1
 - **#51 fundament+lista** (wyspa z tokenami zmierzonymi z motywu; mono-etykiety,
   pille, baner-pigułka; H1 nasz — motyw nie renderuje własnego, zmierzone) ·
@@ -63,30 +81,17 @@
   zamówień stary plik zostaje w katalogu chronionym (nie szkodzi, nie wycieka —
   katalog deny; sprzątanie wymagałoby odróżniania „trzymany snapshotem" od
   „wolny"). Świadomie NIE sprzątamy w v1 → wpis do `PONAD-SPECYFIKACJE.md` w K8.
-- **K4 CRUD produktów** (upload zip chroniony + walidacje + snapshot nietykalny).
-  ⭐ WYTYCZNA DZIDKA do K5: front sklepu MUSI pasować do KLIMATU strony-gospodarza;
-  przed budową witryny POWIEDZIEĆ Dzidkowi plan wyglądu (skille frontend-design +
-  dzial-agencji-stron + wzorce stron produktowych).
-- **K5 witryna sklepu** (wzorce stron produktowych → treść ze SZKICÓW botów).
 - **Drobne hardening (nie blokujące, z recenzji #40):** sklep rate-limit → LAST_INSERT_ID
   (mikro-okno, błądzi bezpiecznie); indeks okno_do nazwać rozszerzeniem; $prog domyślny.
-- ~~Skrypt E2E przelot2.js do repo~~ ✅ 18.08 PR ci/bramki-php: `testy/e2e/przelot2.js`
-  + README (node_modules poza repo).
-- **Boty ↔ phpcs przy wrogiej sesji 23.08 (D25):** phpcbf + adnotacje + w phpcs.xml.dist
-  `customSanitizingFunctions` (chatl_waliduj_sesje) + rozszerzyć `<file>` na boty +
-  przebudowa paczek + POWTÓRKA weryfikacji zipów.
-  **+ DOŁOŻONE po sędzi wyglądu K5 (73/100, top-uwaga #1):** widget chatbota
-  #1d4ed8 (niebieski, zaszyty w widget.css) = jedyny obcy kolor na stronie w
-  systemie limonki — w TYM SAMYM pakiecie przemalować na limonkę/ciemny wariant
-  (jedna przebudowa paczek zamiast dwóch); mockup na stronie produktu już
-  pokazuje limonkowy dymek, po zmianie będzie 1:1. 5 trafień sniffa security obejrzane
-  18.08 = szum (sanitizer-regex, klucz API sanityzowany przy zapisie), 0 realnych dziur.
 - **Test automatyczny dziennika/opóźnienia** (recenzja #42, drobna): skrypt na żywym
-  stacku (sekwencja czasów + salwa równoległa + retencja) — dołożyć przy K3c/d razem
+  stacku (sekwencja czasów + salwa równoległa + retencja) — dołożyć razem
   ze skryptem testowym panelu, żeby regresja (np. kolejność hooków) nie przeszła cicho.
+- **Podmiana zipów produktów na stacku po merge:** produkty w sklepie (stack :8890)
+  trzymają zipy 1.2.0 — po scaleniu PR podmienić przez CRUD na 1.2.1 (stare
+  zamówienia trzymają swój snapshot — tak ma być).
 - **Instrukcja wdrożenia (K8): wzmianka fail2ban/WAF** na wp-login.php przy wielu IP
   (D26 — rezydualne ryzyko poza wtyczką).
-- Wroga sesja botów 23.08 · K6 24.08 · K7 25.08 · K8 27.08 = próba 1.
+- K6 24.08 · K7 25.08 · K8 27.08 = próba 1.
 
 ## Stan maszyny
 - `stripe listen` forwarduje na :8890/webhook (sekret z `/root/.claude/sekrety-sklep.env`).

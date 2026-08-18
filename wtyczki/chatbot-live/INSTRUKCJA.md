@@ -86,9 +86,11 @@ Nie — sesja czatu żyje w karcie przeglądarki gościa. Historia rozmów jest
 zapisywana po stronie serwera (90 dni) do wglądu właściciela.
 
 **Co się stanie z danymi po odinstalowaniu?**
-Domyślnie wszystko zostaje (możesz wrócić bez strat). Jeśli w ustawieniach
-zaznaczysz „usuń wszystkie dane", odinstalowanie skasuje bazę Q&A, zgłoszenia,
-historię, ustawienia ORAZ klucz API.
+Klucz API jest kasowany przy KAŻDYM odinstalowaniu (wtyczka nie zostawia
+Twojego sekretu w bazie; po ponownej instalacji wpisz go na nowo). Reszta
+domyślnie zostaje (możesz wrócić bez strat). Jeśli w ustawieniach zaznaczysz
+„usuń wszystkie dane", odinstalowanie skasuje też bazę Q&A, zgłoszenia,
+historię i ustawienia.
 
 ## 6. Droga rozbudowy (po zakupie, na życzenie)
 

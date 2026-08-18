@@ -30,7 +30,7 @@ function segm_komunikaty() {
 			'usunieto' => 'Usunięto.',
 			'demo'     => 'Przywrócono próbkę demo (30 maili).',
 		);
-		$klucz = sanitize_key( wp_unslash( $_GET['segm_ok'] ) );
+		$klucz  = sanitize_key( wp_unslash( $_GET['segm_ok'] ) );
 		if ( isset( $teksty[ $klucz ] ) ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( $teksty[ $klucz ] ) . '</p></div>';
 		}
@@ -67,9 +67,9 @@ function segm_strona_przebiegi() {
 			<input type="hidden" name="action" value="segm_przebieg_start">
 			<?php wp_nonce_field( 'segm_przebieg_start' ); ?>
 			<?php
-			$ai_jest     = segm_ai_dostepny();
-			$ai_za_duza  = $maili > SEGM_AI_MAX_PROBKA;
-			$ai_mozliwe  = $ai_jest && ! $ai_za_duza;
+			$ai_jest    = segm_ai_dostepny();
+			$ai_za_duza = $maili > SEGM_AI_MAX_PROBKA;
+			$ai_mozliwe = $ai_jest && ! $ai_za_duza;
 			?>
 			<p>
 				<label><input type="radio" name="tryb" value="reguly" checked> reguły (lokalnie, bez klucza, bez limitu próbki)</label><br>
@@ -137,7 +137,7 @@ function segm_widok_raportu( $id ) {
 		if ( ! isset( $per_kategoria[ $k ] ) ) {
 			$per_kategoria[ $k ] = 0;
 		}
-		$per_kategoria[ $k ]++;
+		++$per_kategoria[ $k ];
 		if ( false === $w['trafiony'] ) {
 			$pomylki[] = $w;
 		}
@@ -146,7 +146,7 @@ function segm_widok_raportu( $id ) {
 				$roznice[] = $w;
 			}
 			if ( true === ( $w['trafiony_ai'] ?? null ) ) {
-				$trafionych_ai++;
+				++$trafionych_ai;
 			}
 		}
 	}
@@ -234,7 +234,11 @@ function segm_widok_raportu( $id ) {
 
 		<h2>Wszystkie wyniki (mail → kategoria → <?php echo 'ai' === $p->tryb ? 'AI' : 'reguła'; ?>)</h2>
 		<table class="widefat striped">
-			<thead><tr><th>Od</th><th>Temat</th><th>Kategoria</th><?php if ( 'porownaj' === $p->tryb ) : ?><th>Kategoria (AI)</th><?php endif; ?><th>Która reguła</th><th>Etykieta</th></tr></thead>
+			<thead><tr><th>Od</th><th>Temat</th><th>Kategoria</th>
+			<?php
+			if ( 'porownaj' === $p->tryb ) :
+				?>
+				<th>Kategoria (AI)</th><?php endif; ?><th>Która reguła</th><th>Etykieta</th></tr></thead>
 			<tbody>
 			<?php foreach ( $wyniki as $w ) : ?>
 				<tr>
@@ -361,7 +365,12 @@ function segm_strona_reguly() {
 			<?php if ( ! $reguly ) : ?>
 				<tr><td colspan="5">Brak reguł — wszystko poleci do „<?php echo esc_html( SEGM_KUBEL_DOMYSLNY ); ?>".</td></tr>
 			<?php endif; ?>
-			<?php $ostatnia = count( $reguly ); $i = 0; foreach ( $reguly as $r ) : $i++; ?>
+			<?php
+			$ostatnia = count( $reguly );
+			$i        = 0;
+			foreach ( $reguly as $r ) :
+				++$i;
+				?>
 				<tr>
 					<td><?php echo (int) $r->kolejnosc; ?></td>
 					<td><?php echo esc_html( $pola[ $r->pole ] . ' „' . $r->wzorzec . '"' ); ?></td>
@@ -410,7 +419,11 @@ function segm_post_regula_zapisz() {
 	if ( $id > 0 ) {
 		$wpdb->update(
 			$wpdb->prefix . 'segm_reguly',
-			array( 'pole' => $pole, 'wzorzec' => $wzorzec, 'kategoria_id' => $kategoria_id ),
+			array(
+				'pole'         => $pole,
+				'wzorzec'      => $wzorzec,
+				'kategoria_id' => $kategoria_id,
+			),
 			array( 'id' => $id ),
 			array( '%s', '%s', '%d' ),
 			array( '%d' )
@@ -557,7 +570,14 @@ function segm_post_kategoria_zapisz() {
 	if ( $id > 0 ) {
 		$wpdb->update( $wpdb->prefix . 'segm_kategorie', array( 'nazwa' => $nazwa ), array( 'id' => $id ), array( '%s' ), array( '%d' ) );
 	} else {
-		$wpdb->insert( $wpdb->prefix . 'segm_kategorie', array( 'nazwa' => $nazwa, 'utworzono' => current_time( 'mysql' ) ), array( '%s', '%s' ) );
+		$wpdb->insert(
+			$wpdb->prefix . 'segm_kategorie',
+			array(
+				'nazwa'     => $nazwa,
+				'utworzono' => current_time( 'mysql' ),
+			),
+			array( '%s', '%s' )
+		);
 	}
 
 	wp_safe_redirect( admin_url( 'admin.php?page=segm-kategorie&segm_ok=zapisano' ) );
@@ -737,7 +757,7 @@ function segm_post_ustawienia_zapisz() {
 	// Klucz API: osobna opcja (autoload=no), nigdy nie wraca do formularza.
 	if ( ! empty( $_POST['usun_klucz'] ) ) {
 		segm_zapisz_klucz( '' );
-	} elseif ( isset( $_POST['klucz_api'] ) && '' !== trim( (string) wp_unslash( $_POST['klucz_api'] ) ) ) {
+	} elseif ( isset( $_POST['klucz_api'] ) && '' !== trim( (string) wp_unslash( $_POST['klucz_api'] ) ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- warunek tylko bada niepustość; zapisywana wartość przechodzi sanitize_text_field() linijkę niżej.
 		segm_zapisz_klucz( sanitize_text_field( wp_unslash( $_POST['klucz_api'] ) ) );
 	}
 

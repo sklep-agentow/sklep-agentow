@@ -34,12 +34,12 @@ function chatl_dopasuj( $pytanie ) {
 	$max_dl    = 0;
 
 	foreach ( $wpisy as $wpis ) {
-		$warianty = array_filter( array_map( 'trim', explode( ',', mb_strtolower( $wpis->slowa_kluczowe ) ) ) );
+		$warianty  = array_filter( array_map( 'trim', explode( ',', mb_strtolower( $wpis->slowa_kluczowe ) ) ) );
 		$trafienia = 0;
 		$dlugosc   = 0;
 		foreach ( $warianty as $wariant ) {
 			if ( false !== mb_strpos( $szukane, $wariant ) ) {
-				$trafienia++;
+				++$trafienia;
 				$dlugosc += mb_strlen( $wariant );
 			}
 		}

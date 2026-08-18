@@ -18,7 +18,8 @@ function chatl_utworz_tabele() {
 	$charset = $wpdb->get_charset_collate();
 	$p       = $wpdb->prefix;
 
-	dbDelta( "CREATE TABLE {$p}chatl_qa (
+	dbDelta(
+		"CREATE TABLE {$p}chatl_qa (
 		id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 		pytanie text NOT NULL,
 		slowa_kluczowe text NOT NULL,
@@ -26,9 +27,11 @@ function chatl_utworz_tabele() {
 		aktywne tinyint(1) NOT NULL DEFAULT 1,
 		utworzono datetime NOT NULL,
 		PRIMARY KEY  (id)
-	) {$charset};" );
+	) {$charset};"
+	);
 
-	dbDelta( "CREATE TABLE {$p}chatl_zgloszenia (
+	dbDelta(
+		"CREATE TABLE {$p}chatl_zgloszenia (
 		id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 		email varchar(190) NOT NULL,
 		wiadomosc text NOT NULL,
@@ -37,9 +40,11 @@ function chatl_utworz_tabele() {
 		utworzono datetime NOT NULL,
 		PRIMARY KEY  (id),
 		KEY status (status)
-	) {$charset};" );
+	) {$charset};"
+	);
 
-	dbDelta( "CREATE TABLE {$p}chatl_rozmowy (
+	dbDelta(
+		"CREATE TABLE {$p}chatl_rozmowy (
 		id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 		sesja varchar(64) NOT NULL,
 		rola varchar(10) NOT NULL,
@@ -49,21 +54,26 @@ function chatl_utworz_tabele() {
 		PRIMARY KEY  (id),
 		KEY sesja (sesja),
 		KEY utworzono (utworzono)
-	) {$charset};" );
+	) {$charset};"
+	);
 
-	dbDelta( "CREATE TABLE {$p}chatl_ai_uzycie (
+	dbDelta(
+		"CREATE TABLE {$p}chatl_ai_uzycie (
 		dzien date NOT NULL,
 		wywolania int(10) unsigned NOT NULL DEFAULT 0,
 		PRIMARY KEY  (dzien)
-	) {$charset};" );
+	) {$charset};"
+	);
 
-	dbDelta( "CREATE TABLE {$p}chatl_rate_limit (
+	dbDelta(
+		"CREATE TABLE {$p}chatl_rate_limit (
 		klucz varchar(64) NOT NULL,
 		licznik int(10) unsigned NOT NULL DEFAULT 0,
 		okno_do datetime NOT NULL,
 		PRIMARY KEY  (klucz),
 		KEY okno_do (okno_do)
-	) {$charset};" );
+	) {$charset};"
+	);
 }
 
 /**

@@ -90,8 +90,10 @@ skonfigurowany segregator). Na TWOICH mailach zaczniesz niżej i podniesiesz
 wynik pętlą z punktu 3.
 
 **Co z danymi po odinstalowaniu?**
-Domyślnie zostają. Z opcją „usuń wszystkie dane": kasowane są kategorie,
-reguły, próbka, przebiegi, ustawienia ORAZ klucz API.
+Klucz API jest kasowany przy KAŻDYM odinstalowaniu (wtyczka nie zostawia
+Twojego sekretu w bazie; po ponownej instalacji wpisz go na nowo). Reszta
+domyślnie zostaje. Z opcją „usuń wszystkie dane" kasowane są też kategorie,
+reguły, próbka, przebiegi i ustawienia.
 
 ## 6. Droga rozbudowy (po zakupie, na życzenie)
 

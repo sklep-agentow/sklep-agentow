@@ -41,7 +41,8 @@ protection, szczegóły w nagłówku `quality.yml`).
 ## Status
 
 K1–K5 domknięte (kość → wroga sesja → panel wp-admin → CRUD produktów →
-witryna sklepu z SEO; sklep 0.8.1, boty 1.2.0). Przed nami: pakiet botów
-i wroga sesja botów (23.08) → instalacja od zera na czystym WP (K6, 24.08) →
+witryna sklepu z SEO; sklep 0.8.1, boty 1.2.1 — pakiet botów z 19.08: phpcs
+na wszystkie wtyczki, widget w palecie strony, przebudowane paczki po wrogiej
+sesji na czystym WP). Przed nami: instalacja od zera na czystym WP (K6, 24.08) →
 audyt końcowy (K7) → paczka i próba oddania nr 1 (K8, 27.08).
 Bieżący stan i wiszące sprawy: `audyt/CO-WISI.md`.
