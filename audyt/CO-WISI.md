@@ -29,6 +29,10 @@
   Dzidka), gdyby próba 1 chciała żywe AI; egzamin trybem regułowym 0 zł.
 
 ## Nie zaczęte (kolejność planu)
+- **Nazwany dług (recenzja #49, drobna):** przy podmianie zipa na produkcie BEZ
+  zamówień stary plik zostaje w katalogu chronionym (nie szkodzi, nie wycieka —
+  katalog deny; sprzątanie wymagałoby odróżniania „trzymany snapshotem" od
+  „wolny"). Świadomie NIE sprzątamy w v1 → wpis do `PONAD-SPECYFIKACJE.md` w K8.
 - **K4 CRUD produktów** (upload zip chroniony + walidacje + snapshot nietykalny).
   ⭐ WYTYCZNA DZIDKA do K5: front sklepu MUSI pasować do KLIMATU strony-gospodarza;
   przed budową witryny POWIEDZIEĆ Dzidkowi plan wyglądu (skille frontend-design +

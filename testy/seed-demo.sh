@@ -18,7 +18,7 @@ $produkt = $wpdb->get_row("SELECT * FROM {$tp} WHERE aktywny = 1 ORDER BY id LIM
 if ( ! $produkt ) {
     $kat = get_option("sklepag_katalog_chroniony");
     if ( ! $kat || ! is_dir($kat) ) { echo "BLAD: brak katalogu chronionego — aktywuj wtyczke.\n"; exit(1); }
-    $plik = trailingslashit($kat) . "produkt-seed.bin";
+    $plik = trailingslashit($kat) . "produkt-seed";
     if ( ! file_exists($plik) ) {
         $zip = new ZipArchive(); $zip->open($plik, ZipArchive::CREATE);
         $zip->addFromString("czytaj-mnie.txt", "Paczka DEMO seedu warsztatowego.\n"); $zip->close();
