@@ -174,18 +174,27 @@ function sklepag_utworz_katalog_chroniony() {
 	$sciezka = trailingslashit( $upload['basedir'] ) . 'sklepag-chronione-' . wp_generate_password( 16, false, false );
 
 	if ( ! wp_mkdir_p( $sciezka ) ) {
+		// Ta sama widzialność błędu co niżej — porażka mkdir to też cicha ślepota (recenzja PR #28).
+		update_option( 'sklepag_katalog_chroniony_blad', 'mkdir nieudany — sprawdź uprawnienia uploads', false );
 		return;
 	}
 
 	// Próba kontrolna zapisu (docker/uprawnienia) — bez niej cicha ślepota.
 	$test = trailingslashit( $sciezka ) . 'index.php';
 	$ok   = file_put_contents( $test, "<?php // cisza\n" );
-	file_put_contents( trailingslashit( $sciezka ) . '.htaccess', "Require all denied\n" );
 
 	if ( false === $ok ) {
+		// Sprzątamy świeży katalog — bez tego zostaje sierota, której uninstall nie zna (recenzja PR #28).
+		rmdir( $sciezka ); // phpcs:ignore WordPress.WP.AlternativeFunctions
 		update_option( 'sklepag_katalog_chroniony_blad', 'zapis nieudany — sprawdź uprawnienia uploads', false );
 		return;
 	}
+
+	// Apache 2.4 (Require) i 2.2 (Deny) — hosting docelowy nieznany (Z10); brama i tak w PHP.
+	file_put_contents(
+		trailingslashit( $sciezka ) . '.htaccess',
+		"<IfModule mod_authz_core.c>\nRequire all denied\n</IfModule>\n<IfModule !mod_authz_core.c>\nDeny from all\n</IfModule>\n"
+	);
 
 	update_option( 'sklepag_katalog_chroniony', $sciezka, false );
 	delete_option( 'sklepag_katalog_chroniony_blad' );

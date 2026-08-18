@@ -62,7 +62,9 @@ kod adminowy za `is_admin()`.
 
 - **FRONT:** przy aktywacji tworzone strony WP: „Sklep" i „Dziękujemy" (+ szkice
   „Regulamin"/„Polityka prywatności" — sekcja 8); treść przez shortcode'y
-  (`[sklepag_lista]`, `[sklepag_produkt]` — produkt po query var/slug). Assety
+  (`[sklepag_sklep]` — lista produktów z banerem trybu testowego;
+  `[sklepag_dziekujemy]`; w K5 dojdzie `[sklepag_produkt]` — strona produktu po
+  query var/slug; nazwy ujednolicone z kodem kości — uwaga recenzji PR #28). Assety
   (CSS/JS z wersjonowaniem — bump przy każdej zmianie, lekcja MP) tylko gdy shortcode
   na stronie. **Baner „TRYB TESTOWY — płatności nie są pobierane"** na stronach sklepu.
   Układ strony produktu: problem → co dostajesz → dla kogo → FAQ → cena → Kup.
