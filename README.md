@@ -1,25 +1,30 @@
 # sklep-agentow
 
-Wpinana podstrona **/sklep** dla stron statycznych + zaplecze sprzedaży produktów
-cyfrowych (agenci AI). Stack: statyczny HTML + Cloudflare Worker + D1 + R2,
-płatności Stripe Checkout (tryb TESTOWY — zero prawdziwych pieniędzy).
+**Trzy wtyczki WordPressa** (piwot z 17.08 — D16; wcześniejszy świat
+Cloudflare tylko w historii gita): **SKLEP** (`sklep-agentow` — Stripe
+Checkout w trybie TESTOWYM, mail po zakupie, wydanie plików bramą PHP,
+panel w wp-admin) + 2 sprzedawane w nim testowe boty: **ChatBot LIVE**
+(`chatbot-live`) i **Segregator maila** (`segregator-maila`).
+Zero prawdziwych pieniędzy: wszystko na kluczach testowych Stripe.
 
-Repo robocze zlecenia. Oddanie = paczka wpinana/odpinana + instrukcja dla
-właściciela strony (konfigurowalna per strona: 4 wdrożenia docelowe).
+Repo robocze zlecenia. Oddanie = zipy 3 wtyczek + instrukcja instalacji
+(`dokumentacja/`); stack testowy: WP 7.0.4 / PHP 8.4 (kopia strony-gospodarza).
 
 ## Mapa dokumentów
 
 | Plik | Co trzyma |
 |---|---|
-| `ZROZUMIENIE.md` | Treść zlecenia (verbatim), fakty, MUST NOT, ryzyka |
-| `MAPA-SPEC.md` | Wymagania S-01…S-16 — co dokładnie ma działać |
-| `PLAN-PROJEKTU.md` | Architektura (§4), bezpieczeństwo (§7), harmonogram (§9), kryteria GOTOWE (§12) |
-| `DECYZJE.md` | Rejestr decyzji D1–D15 (z uzasadnieniami) |
-| `audyt/` | REJESTR-WERYFIKACJI — dowody: co sprawdzone, czym, z wynikiem |
-| `PLAN-ETAP1.md` | Etap bieżący + rejestr rozstrzygnięć niejasności |
-| `KONFIG-TESTOWA.md` | Konfiguracja testowa Stripe (klucz publiczny; sekrety POZA repo) |
-| `ZWIAD-WZORCE.md` | Zwiad: jak takie sklepy robią najlepsi |
-| `krytyki/` | Rundy krytyki planu (6 recenzji, mapa zbieżności) |
+| `ZROZUMIENIE.md` | Treść zlecenia (verbatim), piwot na WP, fakty, MUST NOT |
+| `MAPA-SPEC.md` | Wymagania S-01…S-20 — co dokładnie ma działać |
+| `PLAN-PROJEKTU.md` | Plan v3: architektura (§4), bezpieczeństwo (§7), harmonogram (§9), kryteria GOTOWE (§12) |
+| `DECYZJE.md` | Rejestr decyzji D1–D27 (z uzasadnieniami) |
+| `PLAN-WYGLADU-K5.md` | Wygląd witryny: tokeny z motywu, układy, SEO (D27) |
+| `boty/` | Szkice, wzorce, treść stron produktów, paczki zipów botów |
+| `dokumentacja/` | Instrukcja instalacji dla właściciela strony |
+| `audyt/` | CO-WISI (stan), REJESTR-WERYFIKACJI, wroga sesja K2, ściąga egzaminatora |
+| `testy/` | Skrypty na żywy stack: E2E przelotu, CRUD produktów, seed demo, zrzuty |
+| `wtyczki/` | Kod 3 wtyczek |
+| `krytyki/` | Rundy krytyki planu |
 | `narzedzia-qa/` | Strażnicy CI (manifest bramek) |
 
 ## CI
@@ -28,11 +33,15 @@ Po sklonowaniu, JEDNORAZOWO: `git config core.hooksPath .githooks` — włącza 
 pre-push (blokada bezpośredniego pusha na `main`; GitHub free+private nie daje branch
 protection, szczegóły w nagłówku `quality.yml`).
 
-- `quality.yml` — actionlint + strażnik manifestu bramek (scalamy TYLKO po ich zieleni).
+- `quality.yml` — php-lint (8.4) + phpcs (WPCS) + phpstan (L5) + gitleaks +
+  actionlint + strażnik manifestu bramek (scalamy TYLKO po ich zieleni).
 - `recenzent.yml` — recenzja Claude na każdym PR (zasada dowodu: opis PR musi
   zawierać dowód działania, nie deklarację).
 
 ## Status
 
-Etap 1 (plan + spike). Spike K0 zaliczony: wpięcie w zbudowaną stronę
-statyczną = katalog `sklep/` + `sklep/wtyczka.js` + jedna linijka `<script src>`.
+K1–K5 domknięte (kość → wroga sesja → panel wp-admin → CRUD produktów →
+witryna sklepu z SEO; sklep 0.8.1, boty 1.2.0). Przed nami: pakiet botów
+i wroga sesja botów (23.08) → instalacja od zera na czystym WP (K6, 24.08) →
+audyt końcowy (K7) → paczka i próba oddania nr 1 (K8, 27.08).
+Bieżący stan i wiszące sprawy: `audyt/CO-WISI.md`.
