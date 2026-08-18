@@ -94,7 +94,8 @@ function sklepag_tabele_sql() {
 			ip varchar(45) NOT NULL DEFAULT '',
 			user_agent varchar(255) NOT NULL DEFAULT '',
 			PRIMARY KEY  (id),
-			KEY czas (czas)
+			KEY czas (czas),
+			KEY para_logowania (login_wpisany,ip,czas)
 		) {$c};",
 
 		"CREATE TABLE {$p}rate_limit (

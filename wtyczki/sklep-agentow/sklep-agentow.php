@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Sklep Agentów
  * Description: Sklep z testowymi botami AI — Stripe Checkout (tryb testowy), mail po zakupie, wydanie plików, panel w wp-admin. Zaplecze całe w WordPressie, własne tabele.
- * Version: 0.1.0
+ * Version: 0.2.0
  * Requires at least: 6.7
  * Requires PHP: 8.1
  * Author: Warsztat
@@ -12,8 +12,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SKLEPAG_WERSJA', '0.1.0' );
-define( 'SKLEPAG_WERSJA_SCHEMATU', 2 );
+define( 'SKLEPAG_WERSJA', '0.2.0' );
+define( 'SKLEPAG_WERSJA_SCHEMATU', 3 ); // v3: indeks para_logowania (login,ip,czas) pod opóźnienie wykładnicze.
 define( 'SKLEPAG_LIMIT_POBRAN', 10 ); // Jedno źródło: INSERT zamówienia + treść maila (recenzja PR #33).
 define( 'SKLEPAG_LINK_GODZIN', 72 );  // Ważność linku pobrania — jw.
 define( 'SKLEPAG_PLIK', __FILE__ );
@@ -23,6 +23,7 @@ require_once SKLEPAG_KATALOG . 'includes/aktywacja.php';
 require_once SKLEPAG_KATALOG . 'includes/stripe.php';
 require_once SKLEPAG_KATALOG . 'includes/zakup.php';
 require_once SKLEPAG_KATALOG . 'includes/pobieranie.php';
+require_once SKLEPAG_KATALOG . 'includes/logowania.php'; // ZAWSZE, nie za is_admin() — hooki logowania żyją na wp-login.php.
 
 register_activation_hook( __FILE__, 'sklepag_aktywacja' );
 register_deactivation_hook( __FILE__, 'sklepag_deaktywacja' );
