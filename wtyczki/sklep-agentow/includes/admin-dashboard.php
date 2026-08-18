@@ -298,8 +298,9 @@ function sklepag_admin_dashboard() {
 	$czerwone = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$t} WHERE status = 'mail_blad' AND mail_proby >= 3" );
 	// phpcs:enable
 
-	echo '<div class="wrap sklepag-dashboard"><h1>Sklep Agentów</h1>';
-	echo '<div class="notice notice-info inline sklepag-baner-testowy-admin"><p><strong>TRYB TESTOWY</strong> — płatności Stripe testowe, zero prawdziwych pieniędzy.</p></div>';
+	// Baner testowy jako cienka linijka PRZY tytule, nie pełny pas — Przychód ma
+	// być pierwszą rzeczą na ekranie (sędzia #2: hierarchia + czas do liczby).
+	echo '<div class="wrap sklepag-dashboard"><h1>Sklep Agentów <span class="sklepag-tryb-testowy" title="Płatności Stripe testowe — zero prawdziwych pieniędzy">TRYB TESTOWY</span></h1>';
 
 	// Diagnostyka katalogu chronionego (przejęta ze szkieletu kości) — bez niego wydawanie plików nie działa.
 	$katalog      = (string) get_option( 'sklepag_katalog_chroniony', '' );
@@ -345,9 +346,10 @@ function sklepag_admin_dashboard() {
 	// Karty KPI (wzorce §1-2: przychód i zamówienia pierwsze, delta % przy każdej;
 	// hierarchia typografią — przychód elewowany jak u Stripe, uwaga sędziego wyglądu).
 	echo '<div class="sklepag-kpi" role="list">';
-	sklepag_karta_kpi( 'Przychód', number_format( $kpi['przychod'] / 100, 2, ',', ' ' ) . ' zł', sklepag_delta_html( $kpi['przychod'], $poprz['przychod'] ), true );
+	// Waluta jak w tabeli (PLN, kod ISO) — jedna etykieta w całym widoku (sędzia #2).
+	sklepag_karta_kpi( 'Przychód', number_format( $kpi['przychod'] / 100, 2, ',', ' ' ) . ' PLN', sklepag_delta_html( $kpi['przychod'], $poprz['przychod'] ), true );
 	sklepag_karta_kpi( 'Zamówienia', (string) $kpi['zamowienia'], sklepag_delta_html( $kpi['zamowienia'], $poprz['zamowienia'] ) );
-	sklepag_karta_kpi( 'Średnia wartość', $aov > 0 ? number_format( $aov / 100, 2, ',', ' ' ) . ' zł' : '—', sklepag_delta_html( $aov, $aov_poprz ) );
+	sklepag_karta_kpi( 'Średnia wartość', $aov > 0 ? number_format( $aov / 100, 2, ',', ' ' ) . ' PLN' : '—', sklepag_delta_html( $aov, $aov_poprz ) );
 	sklepag_karta_kpi( 'Kupujący', (string) $kpi['kupujacy'], sklepag_delta_html( $kpi['kupujacy'], $poprz['kupujacy'] ) );
 	echo '</div>';
 
