@@ -31,10 +31,17 @@ function sklepag_admin_menu() {
 	add_submenu_page( 'sklepag', 'Sklep Agentów — pulpit', 'Pulpit', 'manage_options', 'sklepag', 'sklepag_admin_dashboard' );
 	add_submenu_page( 'sklepag', 'Dziennik — logowania i zdarzenia', 'Dziennik', 'manage_options', 'sklepag-dziennik', 'sklepag_admin_dziennik' );
 	add_submenu_page( 'sklepag', 'Ustawienia sklepu', 'Ustawienia', 'manage_options', 'sklepag-ustawienia', 'sklepag_admin_ustawienia' );
-	// Widok zamówienia: strona zarejestrowana, ale BEZ pozycji w menu (wejście
-	// linkiem „Szczegóły" z tabeli) — wzorzec rdzenia: add + remove_submenu_page.
+	// Widok zamówienia: strona zarejestrowana, pozycja w menu ukrywana TYLKO
+	// gdy nie jesteśmy na niej. ⛔ Bezwarunkowe remove_submenu_page odcina
+	// dostęp HTTP: rdzeń wyznacza rodzica strony po wpisie w $submenu i bez
+	// niego hook się nie zgadza → „Sorry, you are not allowed" (złapane
+	// zrzutem przez prawdziwą przeglądarkę — wp eval tego nie widzi).
 	add_submenu_page( 'sklepag', 'Zamówienie', 'Zamówienie', 'manage_options', 'sklepag-zamowienie', 'sklepag_admin_zamowienie' );
-	remove_submenu_page( 'sklepag', 'sklepag-zamowienie' );
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- odczyt bieżącej strony menu, bez mutacji.
+	$biezaca = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
+	if ( 'sklepag-zamowienie' !== $biezaca ) {
+		remove_submenu_page( 'sklepag', 'sklepag-zamowienie' );
+	}
 
 	// Screen Options „na stronę" dla tabeli zamówień (natywny wzorzec WP).
 	add_action(
