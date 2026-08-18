@@ -43,6 +43,13 @@ function sklepag_obsluz_resend() {
 	if ( '' === (string) $zam->email_kupujacego ) {
 		wp_die( 'Zamówienie bez adresu e-mail (kupujący zanonimizowany?) — nie ma dokąd wysłać.', 'Sklep Agentów', 400 );
 	}
+	// Tylko stany PO domknięciu wysyłki (recenzja #45): `mail_w_toku` = webhook
+	// właśnie domyka (resend nadpisałby token bez CAS), `oczekuje`/`oplacone` =
+	// silnik zaraz wyśle sam. Utknięte `mail_w_toku` odzyskuje reconciliation
+	// (stale-claim po 5 min) i przestawia status — wtedy resend się odblokuje.
+	if ( ! in_array( $zam->status, array( 'mail_wyslany', 'mail_blad' ), true ) ) {
+		wp_die( 'Zamówienie jest właśnie domykane automatycznie (status: ' . esc_html( $zam->status ) . ') — ponowna wysyłka dostępna, gdy silnik skończy.', 'Sklep Agentów', 409 );
+	}
 
 	// Świeży token + termin, treść odbudowana ze SNAPSHOTU zamówienia.
 	$token = bin2hex( random_bytes( 32 ) );
