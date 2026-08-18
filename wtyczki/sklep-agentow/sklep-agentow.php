@@ -18,20 +18,48 @@ define( 'SKLEPAG_PLIK', __FILE__ );
 define( 'SKLEPAG_KATALOG', plugin_dir_path( __FILE__ ) );
 
 require_once SKLEPAG_KATALOG . 'includes/aktywacja.php';
+require_once SKLEPAG_KATALOG . 'includes/stripe.php';
+require_once SKLEPAG_KATALOG . 'includes/zakup.php';
+require_once SKLEPAG_KATALOG . 'includes/pobieranie.php';
 
 register_activation_hook( __FILE__, 'sklepag_aktywacja' );
 register_deactivation_hook( __FILE__, 'sklepag_deaktywacja' );
+
+// Interwał 10 min dla „dociągnij zaległe" (reconciliation — druga droga domykania).
+add_filter( 'cron_schedules', function ( $harmonogramy ) {
+	$harmonogramy['sklepag_10min'] = array(
+		'interval' => 600,
+		'display'  => 'Co 10 minut (Sklep Agentów)',
+	);
+	return $harmonogramy;
+} );
 
 add_action( 'plugins_loaded', 'sklepag_start' );
 
 function sklepag_start() {
 	sklepag_migruj_schemat_jesli_trzeba();
 
+	// Self-heal harmonogramu (aktualizacja wtyczki nie odpala aktywacji).
+	if ( ! wp_next_scheduled( 'sklepag_dociagnij_zalegle' ) ) {
+		wp_schedule_event( time() + 600, 'sklepag_10min', 'sklepag_dociagnij_zalegle' );
+	}
+
 	add_shortcode( 'sklepag_sklep', 'sklepag_shortcode_sklep' );
 	add_shortcode( 'sklepag_dziekujemy', 'sklepag_shortcode_dziekujemy' );
+	add_action( 'wp_enqueue_scripts', 'sklepag_assety_frontu' );
 
 	if ( is_admin() ) {
 		require_once SKLEPAG_KATALOG . 'includes/admin.php';
+	}
+}
+
+/**
+ * Assety TYLKO na stronach sklepu (nie spowalniamy reszty strony — plan §2).
+ */
+function sklepag_assety_frontu() {
+	if ( is_page( (int) get_option( 'sklepag_strona_dziekujemy' ) ) ) {
+		wp_enqueue_script( 'sklepag-dziekujemy', plugins_url( 'assets/dziekujemy.js', SKLEPAG_PLIK ), array(), SKLEPAG_WERSJA, true );
+		wp_add_inline_script( 'sklepag-dziekujemy', 'window.sklepagRest = ' . wp_json_encode( esc_url_raw( rest_url( 'sklepag/v1/' ) ) ) . ';', 'before' );
 	}
 }
 
@@ -42,7 +70,7 @@ function sklepag_shortcode_sklep() {
 	global $wpdb;
 	$tabela   = $wpdb->prefix . 'sklepag_produkty';
 	$produkty = $wpdb->get_results(
-		$wpdb->prepare( "SELECT nazwa, slug, opis_krotki, cena_grosze, waluta FROM {$tabela} WHERE aktywny = %d ORDER BY nazwa", 1 ) // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- nazwa tabeli z prefiksu WP, nie z wejścia.
+		$wpdb->prepare( "SELECT id, nazwa, slug, opis_krotki, cena_grosze, waluta FROM {$tabela} WHERE aktywny = %d ORDER BY nazwa", 1 ) // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- nazwa tabeli z prefiksu WP, nie z wejścia.
 	);
 
 	$html  = '<div class="sklepag-sklep">';
@@ -53,18 +81,28 @@ function sklepag_shortcode_sklep() {
 		return $html;
 	}
 
-	$html .= '<ul class="sklepag-lista">';
+	$html .= '<ul class="sklepag-lista" style="list-style:none;padding:0">';
 	foreach ( $produkty as $p ) {
 		$cena  = number_format( $p->cena_grosze / 100, 2, ',', ' ' ) . ' ' . esc_html( $p->waluta );
-		$html .= '<li><strong>' . esc_html( $p->nazwa ) . '</strong> — ' . esc_html( $p->opis_krotki ) . ' <em>' . $cena . '</em></li>';
+		$html .= '<li style="margin:0 0 1.5em;padding:1em;border:1px solid #ddd;border-radius:8px">';
+		$html .= '<strong>' . esc_html( $p->nazwa ) . '</strong> — ' . esc_html( $p->opis_krotki ) . ' <em>' . $cena . '</em>';
+		$html .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" style="margin-top:.6em">';
+		$html .= '<input type="hidden" name="action" value="sklepag_kup">';
+		$html .= '<input type="hidden" name="produkt_id" value="' . (int) $p->id . '">';
+		$html .= wp_nonce_field( 'sklepag_kup', '_wpnonce', true, false );
+		$id_zgody = 'sklepag-zgoda-' . (int) $p->id;
+		$html .= '<label for="' . esc_attr( $id_zgody ) . '" style="display:block;margin:.4em 0"><input type="checkbox" id="' . esc_attr( $id_zgody ) . '" name="zgoda" value="1" required> ' . esc_html( SKLEPAG_ZGODA_TRESC ) . '</label>';
+		$html .= '<button type="submit" class="sklepag-kup">Kup teraz (płatność testowa)</button>';
+		$html .= '</form></li>';
 	}
 	$html .= '</ul></div>';
 	return $html;
 }
 
 /**
- * Strona „Dziękujemy" — w kości placeholder statusu; odpytywanie po id sesji dojdzie z checkoutem.
+ * Strona „Dziękujemy" — status odpytywany JS-em po id sesji (assets/dziekujemy.js);
+ * spełnienie i tak robi webhook/reconciliation, nie ta strona (best practice Stripe).
  */
 function sklepag_shortcode_dziekujemy() {
-	return '<div class="sklepag-dziekujemy"><p>Dziękujemy za zakup. Status zamówienia pojawi się tutaj.</p></div>';
+	return '<div class="sklepag-dziekujemy"><p class="sklepag-status" role="status" aria-live="polite">Sprawdzamy status zamówienia…</p></div>';
 }
