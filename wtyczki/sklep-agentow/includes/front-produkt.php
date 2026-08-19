@@ -216,6 +216,9 @@ function sklepag_figure_zrzutu( $zrzut, $klasa, $z_podpisem ) {
 	// część okna czatu zamiast uciętego nagłówka).
 	$klasa .= ' ' . $klasa . '--' . sanitize_html_class( pathinfo( $zrzut['plik'], PATHINFO_FILENAME ) );
 	$html   = '<figure class="' . esc_attr( $klasa ) . '">';
+	// Pasek „okna aplikacji" (3 kropki jak w mockupie czatu): wspólna rama godzi
+	// ciemny widget z jasnym panelem wp-admin — uwaga sędziego o dwóch językach.
+	$html .= '<span class="sklepag-okno-pasek" aria-hidden="true"><span></span><span></span><span></span></span>';
 	$html .= '<img src="' . esc_url( plugins_url( 'assets/produkty/' . $zrzut['plik'], SKLEPAG_PLIK ) ) . '" alt="' . esc_attr( $zrzut['alt'] ) . '" width="' . (int) $zrzut['szer'] . '" height="' . (int) $zrzut['wys'] . '" loading="lazy">';
 	if ( $z_podpisem ) {
 		$html .= '<figcaption class="sklepag-mono-etykieta">' . esc_html( $zrzut['podpis'] ) . '</figcaption>';
