@@ -198,7 +198,7 @@ function sklepag_zrzut_produktu( $slug ) {
 			'alt'    => 'Raport przebiegu Segregatora maila w panelu WordPressa: 30 maili w próbce, pokrycie regułami 80 procent, trafność 100 procent, podział na kategorie',
 			'podpis' => 'PRAWDZIWY RAPORT Z PANELU — PRÓBKA 30 MAILI DEMO, LICZBY BEZ RETUSZU',
 			'szer'   => 1200,
-			'wys'    => 756,
+			'wys'    => 470,
 		),
 	);
 	return isset( $zrzuty[ $slug ] ) ? $zrzuty[ $slug ] : null;

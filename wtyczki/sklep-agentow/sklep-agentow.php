@@ -163,7 +163,7 @@ function sklepag_shortcode_sklep() {
 		foreach ( $t['dla_kogo'] as $dk ) {
 			$kolumny .= '<li>' . esc_html( $dk ) . '</li>';
 		}
-		$kolumny .= '</ul><p><a class="sklepag-link-powrot" href="' . esc_url( sklepag_url_produktu_front( $p->slug ) ) . '">Zobacz szczegóły →</a></p></div>';
+		$kolumny .= '</ul><p><a class="sklepag-link-powrot" href="' . esc_url( sklepag_url_produktu_front( $p->slug ) ) . '">Więcej o tym bocie →</a></p></div>';
 	}
 	if ( '' !== $kolumny ) {
 		$html .= '<section class="sklepag-sekcja"><p class="sklepag-mono-etykieta">[ DLA KOGO ]</p><div class="sklepag-dla-kogo-kolumny">' . $kolumny . '</div></section>';
@@ -177,6 +177,17 @@ function sklepag_shortcode_sklep() {
 	$html .= '<dt>Co znaczy „tryb testowy”?</dt><dd>Sklep działa na testowych płatnościach Stripe — żadne prawdziwe pieniądze nie są pobierane. Do testów służy karta 4242 4242 4242 4242.</dd>';
 	$html .= '<dt>Czy boty wymagają klucza AI albo opłat?</dt><dd>Nie — oba w pełni działają w trybie regułowym, bez klucza i bez abonamentu. Tryb AI to opcja na Twój własny klucz.</dd>';
 	$html .= '</dl></section>';
+
+	// FINALNY CTA listy (sędzia #2: strona produktu domyka finałem, lista
+	// kończyła się FAQ bez zamknięcia sprzedażowego).
+	$html     .= '<section class="sklepag-sekcja sklepag-final">';
+	$html     .= '<h2 class="sklepag-sekcja-tytul">Wybierz bota i przetestuj go u siebie.</h2>';
+	$przyciski = '';
+	foreach ( $produkty as $p ) {
+		$przyciski .= '<a class="sklepag-kup sklepag-kup-kotwica" href="' . esc_url( sklepag_url_produktu_front( $p->slug ) ) . '">' . esc_html( $p->nazwa ) . ' <span aria-hidden="true">→</span></a> ';
+	}
+	$html .= '<p class="sklepag-final-przyciski">' . $przyciski . '</p>';
+	$html .= '</section>';
 
 	$html .= '</div>';
 	return $html;

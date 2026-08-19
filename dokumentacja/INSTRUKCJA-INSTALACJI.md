@@ -147,6 +147,12 @@ Włącz. Dalej prowadzą instrukcje W paczkach botów (konfiguracja w kwadrans).
   ```html
   <li class="menu-item-in" style="--menu-delay: 0.4s;"><a class="flex items-baseline gap-4 py-4 text-3xl font-semibold tracking-tight transition-colors border-b border-line hover:text-volt" href="/sklep/"><span class="font-mono text-xs text-steel">08</span>Sklep</a></li>
   ```
+
+  Nawigacja w STOPCE (`footer.php`, lista „Nawigacja"), zaraz po `<li>` z FAQ:
+
+  ```html
+  <li><a class="text-sm text-steel transition-colors hover:text-fg" href="/sklep/">Sklep</a></li>
+  ```
 - **Ustawienia → Czytanie → ODZNACZ opcję zniechęcania wyszukiwarek do
   indeksowania** (oficjalny angielski tekst opcji: „Discourage search engines
   from indexing this site" — zmierzony na stacku; polskie brzmienie zależy od
