@@ -17,6 +17,20 @@ require_once SKLEPAG_KATALOG . 'includes/admin-ustawienia.php';
 
 add_action( 'admin_menu', 'sklepag_admin_menu' );
 add_action( 'admin_enqueue_scripts', 'sklepag_admin_assety' );
+add_action( 'admin_notices', 'sklepag_ostrzez_permalinki' );
+
+/**
+ * Świeży WordPress ma bezpośrednie odnośniki „Zwykłe" — wtedy /sklep/ po cichu
+ * pokazuje bloga, a trasa webhooka /wp-json/... zwraca 404 (rest_no_route).
+ * Znalezisko testu instalacji K6 (19.08): tester utknąłby tu bez komunikatu.
+ * Notice trwały (nie do zamknięcia), dopóki struktura odnośników jest pusta.
+ */
+function sklepag_ostrzez_permalinki() {
+	if ( ! current_user_can( 'manage_options' ) || '' !== get_option( 'permalink_structure' ) ) {
+		return;
+	}
+	echo '<div class="notice notice-error"><p><strong>Sklep Agentów:</strong> bezpośrednie odnośniki są ustawione na „Zwykłe" — strona sklepu i webhook płatności NIE DZIAŁAJĄ, dopóki tego nie zmienisz. Wejdź w <a href="' . esc_url( admin_url( 'options-permalink.php' ) ) . '">Ustawienia → Bezpośrednie odnośniki</a>, wybierz dowolną strukturę inną niż „Zwykłe" (np. „Nazwa wpisu") i zapisz.</p></div>';
+}
 
 function sklepag_admin_menu() {
 	$pulpit = add_menu_page(

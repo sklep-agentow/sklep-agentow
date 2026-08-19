@@ -26,6 +26,19 @@ instalację całości i uruchomienie sklepu.
   płatności i weryfikacji firmy: <https://dashboard.stripe.com/register>.
 - Dostęp administratora do kokpitu WordPressa (wp-admin).
 
+## Krok 0 — bezpośrednie odnośniki (1 min, WAŻNE na świeżym WordPressie)
+
+Świeży WordPress ma Ustawienia → Bezpośrednie odnośniki na „Zwykłe" — wtedy
+strona sklepu pokazuje po cichu bloga zamiast sklepu, a płatności nie mogą
+zgłosić się do Twojej strony (webhook zwraca 404). ZANIM zainstalujesz sklep:
+
+1. Kokpit → Ustawienia → Bezpośrednie odnośniki.
+2. Wybierz dowolną strukturę INNĄ niż „Zwykłe" (polecamy „Nazwa wpisu").
+3. Zapisz zmiany.
+
+Jeśli o tym zapomnisz — wtyczka pokaże czerwone ostrzeżenie w kokpicie
+z linkiem do tego ustawienia.
+
 ## Krok 1 — instalacja wtyczki sklepu (5 min)
 
 1. Kokpit → Wtyczki → Dodaj nową → Wyślij wtyczkę na serwer →
@@ -82,6 +95,10 @@ Ręczny przycisk „dociągnij zaległe" jest na dashboardzie sklepu.
 3. **Plik paczki (ZIP)** — wgraj zip bota (np. `chatbot-live.zip`).
    Plik ląduje w katalogu chronionym pod losową nazwą — nikt nie pobierze
    go bez opłaconego zamówienia.
+   Ciekawostka: dla obu botów strona produktu w sklepie sama pokazuje
+   rozbudowaną treść sprzedażową (sekcje, FAQ, zrzut rozmowy) — to wbudowana
+   prezentacja produktów, nie musisz jej pisać; Twój opis z formularza
+   uzupełnia listę sklepu.
 4. Zaznacz **„Produkt widoczny i kupowalny w sklepie"** → Zapisz.
    (Bez potwierdzonego pliku nie da się włączyć sprzedaży — to celowe.)
 5. Powtórz dla drugiego bota.
@@ -94,9 +111,9 @@ Ręczny przycisk „dociągnij zaległe" jest na dashboardzie sklepu.
    **4242 4242 4242 4242**, dowolna przyszła data ważności, dowolne CVC.
 3. Po płatności wrócisz na „Dziękujemy" — strona sama odświeża status aż do
    „Mail wysłany".
-4. Sprawdź: Kokpit → Sklep Agentów → **Zamówienia** — zakup jest na liście,
-   a treść maila obejrzysz w szczegółach zamówienia (przycisk „Wyślij
-   ponownie" gdyby mail nie dotarł).
+4. Sprawdź: Kokpit → Sklep Agentów → **Pulpit** — zakup jest na liście
+   zamówień (razem ze statystykami), a treść maila obejrzysz w szczegółach
+   zamówienia (przycisk „Wyślij ponownie" gdyby mail nie dotarł).
 
 ⚠️ **Maile:** wtyczka używa standardowej wysyłki WordPressa. Na hostingu
 wysyłką rządzi hosting — jeśli maile nie wychodzą, skontaktuj się z pomocą
@@ -147,6 +164,13 @@ od produkcji" w dokumentacji projektu.
   produktu.
 - **Strona produktu daje 404 po przenosinach** → Ustawienia → Bezpośrednie
   odnośniki → Zapisz (odświeżenie reguł adresów).
+- **Stripe Dashboard pokazuje błędy 500 przy `checkout.session.completed`,
+  choć zamówienie powstało** → tak wygląda środowisko BEZ działającej poczty:
+  sklep celowo odpowiada Stripe'owi „ponów", dopóki mail z linkiem nie
+  wyjdzie — dzięki temu ponowienia Stripe'a dokańczają wysyłkę same, gdy
+  poczta wróci. Po skonfigurowaniu wysyłki maili (SMTP/hosting) błędy
+  znikają; do tego czasu treść maila i ręczna wysyłka są w panelu przy
+  zamówieniu.
 
 ## Odinstalowanie
 
@@ -156,3 +180,9 @@ Ustawienia sklepu → „Dane przy odinstalowaniu" → włącz „Pełne czyszcz
 PRZED usunięciem wtyczki — wtedy znikają tabele, opcje, strony sklepu,
 pliki chronione i zaplanowane zadania. Klucze Stripe są usuwane ZAWSZE,
 niezależnie od tej opcji.
+
+⚠️ **Boty czyścisz OSOBNO:** ChatBot LIVE i Segregator maila (jeśli były
+zainstalowane jako wtyczki) mają KAŻDY własną opcję „usuń wszystkie dane"
+we WŁASNYCH ustawieniach — opcja sklepu ich nie obejmuje. Bez włączenia
+tych opcji boty zostawią swoje tabele w bazie (dane demo, historia rozmów,
+przebiegi). Klucz API każdego bota jest usuwany ZAWSZE, jak w sklepie.
