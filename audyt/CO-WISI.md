@@ -1,5 +1,18 @@
 # CO-WISI — rzeczy oddane komuś / bez strażnika (zasada: oddajesz ⇒ wiersz, wraca ⇒ kasujesz)
 
+## ✅ ZAMKNIĘTE 19.08 (noc) — ⭐ K6 INSTALACJA OD ZERA (przyciągnięte z 24.08), sklep 0.8.2
+- **NIE-autor = niezależna sesja-tester** (Sonnet, tmux, deny na kod/warsztat —
+  decyzja Dzidka: „tester niezależny przez tmux jak buildery"). Pełna ścieżka
+  ZALICZONA: instalacja→Stripe→produkty→zakup→boty→deinstalacja; czas 26:58
+  brutto / 15-20 min netto (kryterium #1 ≤30 min ✓). Raporty:
+  audyt/K6-INSTALACJA-OD-ZERA.md + K6-RAPORT-TESTERA.md (verbatim).
+- **4 znaleziska naprawione w PR k6/naprawy-po-tescie:** 🔴 permalinki „Zwykłe"
+  na świeżym WP (Krok 0 instrukcji + notice 0.8.2, zmierzony na żywo w obie
+  strony) · 🟠 500 na checkout.session.completed = celowy RESUME (wyjaśnienie
+  w instrukcji) · 🟡 „Zamówienia"→„Pulpit" · 🔴 boty zostają w bazie po
+  deinstalacji wg instrukcji (10 tabel — pomiar zewnętrzny; sekcja
+  Odinstalowanie uzupełniona o osobne czyszczenie botów).
+
 ## ✅ ZAMKNIĘTE 19.08 (dzień) — DROBNICA recenzji #40/#42 (PR #57)
 - **Rate-limit sklepu → LAST_INSERT_ID** (#40): osobny SELECT licznik miał
   mikro-okno wyścigu → wzorzec 1:1 z chatl_rate_limit; komentarz ostrzegawczy
@@ -97,7 +110,7 @@
   recenzent oznaczył jako nieblokujące. Zostaje bez zmian celowo.
 - **Instrukcja wdrożenia (K8): wzmianka fail2ban/WAF** na wp-login.php przy wielu IP
   (D26 — rezydualne ryzyko poza wtyczką).
-- K6 24.08 · K7 25.08 · K8 27.08 = próba 1.
+- K7 25.08 (audyt + mutanty + kalibracja) · K7b 26.08 · K8 27.08 = próba 1. (K6 ✅ 19.08)
 
 ## Stan maszyny
 - `stripe listen` forwarduje na :8890/webhook (sekret z `/root/.claude/sekrety-sklep.env`).
