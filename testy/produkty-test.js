@@ -8,7 +8,7 @@
 const { chromium } = require('playwright-core');
 const { execFileSync } = require('child_process');
 const BAZA = 'http://localhost:8890';
-const ZIP = process.env.ZIP || 'boty/paczki/chatbot-live-1.2.0.zip';
+const ZIP = process.env.ZIP || 'boty/paczki/chatbot-live-1.2.1.zip';
 const ZRZUT = process.env.ZRZUT || require('os').tmpdir() + '/produkty-lista.png';
 
 // wp eval w kontenerze stacka; execFileSync z tablicą argumentów = zero shella i escapowania.

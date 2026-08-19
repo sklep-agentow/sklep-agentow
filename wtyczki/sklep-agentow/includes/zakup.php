@@ -25,16 +25,30 @@ function sklepag_rate_limit( $akcja, $prog = 10 ) {
 
 	// Inkrementacja MUSI być atomowa (recenzja PR #33): para get/set transient
 	// gubi żądania równoległe — zmierzone 40/40 przepuszczonych przy progu 30.
+	// Odczyt WŁASNEJ wartości przez LAST_INSERT_ID(expr) — osobny SELECT licznik
+	// miał mikro-okno wyścigu (A czytał wartość zawyżoną przez równoległe B;
+	// recenzja PR #40, wzorzec przeniesiony z chatl_rate_limit).
 	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
-	$wpdb->query(
+	$wynik = $wpdb->query(
 		$wpdb->prepare(
 			"INSERT INTO {$t} (klucz, licznik, okno_do) VALUES (%s, 1, %s)
-		 ON DUPLICATE KEY UPDATE licznik = licznik + 1",
+		 ON DUPLICATE KEY UPDATE licznik = LAST_INSERT_ID(licznik + 1)",
 			$klucz,
 			gmdate( 'Y-m-d H:i:s', ( $okno + 2 ) * MINUTE_IN_SECONDS )
 		)
 	);
-	$ile = (int) $wpdb->get_var( $wpdb->prepare( "SELECT licznik FROM {$t} WHERE klucz = %s", $klucz ) );
+	// ⚠️ Poprawność zależy od tego, że `licznik` ZAWSZE się zmienia przy update —
+	// wtedy MySQL zwraca 2 (nigdy 0 „bez zmian"). Gdyby ktoś kiedyś zmienił
+	// wyrażenie ON DUPLICATE KEY UPDATE na takie, które może zostawić licznik bez
+	// zmiany, gałąź `else` fałszywie zgłosiłaby awarię i przepuściła nadmiar
+	// (fail-open). Dziś licznik+1 to gwarantuje (uwaga recenzji #57).
+	if ( 1 === $wynik ) {
+		$ile = 1; // Świeży wiersz w tym oknie (INSERT zwraca 1).
+	} elseif ( 2 === $wynik ) {
+		$ile = (int) $wpdb->get_var( 'SELECT LAST_INSERT_ID()' ); // Inkrement (ODKU zwraca 2).
+	} else {
+		$ile = 0;
+	}
 	// phpcs:enable
 
 	if ( 0 === $ile ) {
