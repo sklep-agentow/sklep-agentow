@@ -657,6 +657,12 @@ a.sklepag-kup {
 	object-position: center bottom;
 }
 
+/* Ilustracja SVG w karcie: obie mają IDENTYCZNE proporcje (880x560) —
+   naturalna wysokość zamiast covera, nic nie jest ucinane. */
+.sklepag-karta-ilustracja img {
+	height: auto;
+}
+
 /* Pasek „okna aplikacji" — 3 kropki jak w mockupie czatu (wspólna rama obu zrzutów). */
 .sklepag-okno-pasek {
 	display: flex;

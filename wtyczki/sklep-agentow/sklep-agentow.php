@@ -127,10 +127,12 @@ function sklepag_shortcode_sklep() {
 
 	$html .= '<div class="sklepag-karty">';
 	foreach ( $produkty as $p ) {
-		$zrzut = sklepag_zrzut_produktu( $p->slug );
+		// Karta: ILUSTRACJA w brandzie (D28b); zrzut żywego bota został na
+		// stronie produktu w sekcji „JAK TO WYGLĄDA" jako dowód.
+		$obraz = sklepag_ilustracja_produktu( $p->slug );
 		$html .= '<article class="sklepag-karta">';
-		if ( $zrzut ) {
-			$html .= sklepag_figure_zrzutu( $zrzut, 'sklepag-karta-obraz', false );
+		if ( $obraz ) {
+			$html .= sklepag_figure_zrzutu( $obraz, 'sklepag-karta-obraz sklepag-karta-ilustracja', false, false );
 		}
 		$html .= '<div class="sklepag-karta-glowa">' . sklepag_ikona_produktu( $p->slug ) . '<p class="sklepag-mono-etykieta">[ <span class="sklepag-akcent">BOT</span> · TESTOWY ]</p></div>';
 		$html .= '<h2 class="sklepag-karta-tytul">' . esc_html( $p->nazwa ) . '</h2>';

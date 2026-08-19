@@ -205,20 +205,51 @@ function sklepag_zrzut_produktu( $slug ) {
 }
 
 /**
- * Znacznik <figure> ze zrzutem produktu (wspólny dla karty listy i strony produktu).
+ * Ilustracja produktu do KARTY listy (feedback Dzidka 19.08: „fajne obrazy —
+ * robot segregujący maile, ktoś odpisujący na czacie"). Własne SVG w palecie
+ * strony (limonkowy line-art, roboty-bliźniaki) zamiast generycznego stocka;
+ * zrzut żywego bota zostaje na stronie produktu jako dowód.
  *
- * @param array  $zrzut Dane z sklepag_zrzut_produktu().
+ * @param string $slug Slug produktu.
+ * @return array|null Dane obrazu (plik/alt/szer/wys) albo null.
+ */
+function sklepag_ilustracja_produktu( $slug ) {
+	$ilustracje = array(
+		'chatbot-live'     => array(
+			'plik' => 'chatbot-live.svg',
+			'alt'  => 'Ilustracja: robot odpisuje klientom na czacie — gość pyta, bot odpowiada z Twojej bazy',
+			'szer' => 880,
+			'wys'  => 560,
+		),
+		'segregator-maila' => array(
+			'plik' => 'segregator-maila.svg',
+			'alt'  => 'Ilustracja: robot segreguje maile — koperty trafiają do przegródek Oferty, Faktury i Reszta',
+			'szer' => 880,
+			'wys'  => 560,
+		),
+	);
+	return isset( $ilustracje[ $slug ] ) ? $ilustracje[ $slug ] : null;
+}
+
+/**
+ * Znacznik <figure> z obrazem produktu (wspólny dla karty listy i strony produktu).
+ *
+ * @param array  $zrzut Dane z sklepag_zrzut_produktu()/sklepag_ilustracja_produktu().
  * @param string $klasa Klasa CSS figure.
  * @param bool   $z_podpisem Czy dodać figcaption.
+ * @param bool   $z_paskiem  Czy dodać pasek „okna aplikacji" (tylko dla zrzutów —
+ *                           ilustracja nie udaje okna programu).
  */
-function sklepag_figure_zrzutu( $zrzut, $klasa, $z_podpisem ) {
+function sklepag_figure_zrzutu( $zrzut, $klasa, $z_podpisem, $z_paskiem = true ) {
 	// Modyfikator per produkt (kadr okna karty ustawiany w CSS, np. dolna
 	// część okna czatu zamiast uciętego nagłówka).
 	$klasa .= ' ' . $klasa . '--' . sanitize_html_class( pathinfo( $zrzut['plik'], PATHINFO_FILENAME ) );
 	$html   = '<figure class="' . esc_attr( $klasa ) . '">';
-	// Pasek „okna aplikacji" (3 kropki jak w mockupie czatu): wspólna rama godzi
-	// ciemny widget z jasnym panelem wp-admin — uwaga sędziego o dwóch językach.
-	$html .= '<span class="sklepag-okno-pasek" aria-hidden="true"><span></span><span></span><span></span></span>';
+	if ( $z_paskiem ) {
+		// Pasek „okna aplikacji" (3 kropki jak w mockupie czatu): wspólna rama godzi
+		// ciemny widget z jasnym panelem wp-admin — uwaga sędziego o dwóch językach.
+		$html .= '<span class="sklepag-okno-pasek" aria-hidden="true"><span></span><span></span><span></span></span>';
+	}
 	$html .= '<img src="' . esc_url( plugins_url( 'assets/produkty/' . $zrzut['plik'], SKLEPAG_PLIK ) ) . '" alt="' . esc_attr( $zrzut['alt'] ) . '" width="' . (int) $zrzut['szer'] . '" height="' . (int) $zrzut['wys'] . '" loading="lazy">';
 	if ( $z_podpisem ) {
 		$html .= '<figcaption class="sklepag-mono-etykieta">' . esc_html( $zrzut['podpis'] ) . '</figcaption>';
