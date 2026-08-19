@@ -33,10 +33,41 @@ formularza Stripe — problem narzędzia testera, nie produktu). **Kryterium #1
 
 ## Pomiary zewnętrzne (niezależne od testera)
 - Baseline czystego WP: 12 tabel / 124 opcje → po deinstalacji wg instrukcji:
-  22 tabele / 157 opcji → **znalezisko #4** (rachunek: 10 pozostałych = dokładnie
-  5 chatl_* + 5 segm_*; opcje: `chatl_wersja_schematu`, `segm_wersja_schematu`;
-  klucze API botów skasowane — fix z PR #56 działa też tutaj).
+  22 tabele / 157 opcji → **znalezisko #4** (10 pozostałych tabel botów; opcje:
+  `chatl_wersja_schematu`, `segm_wersja_schematu`; klucze API botów skasowane —
+  fix z PR #56 działa też tutaj).
 - Katalog chroniony sklepu w uploads: USUNIĘTY (pełne czyszczenie sklepu ✓).
+
+### Surowy dowód znaleziska #4 (reprodukcja 19.08, na wniosek recenzji #58)
+Stack sesji testera został zlikwidowany z wolumenami, więc pomiar POWTÓRZONY
+od zera na świeżym WP 7.0.2 (jednorazowy stack `dowod4`): boty zainstalowane
+z zawartości ZWERYFIKOWANYCH paczek 1.2.1 (`diff -r` zip==repo), aktywowane,
+odinstalowane przez ten sam `uninstall.php`, który uruchamia kokpit.
+
+**Runda 1 — ścieżka STAREJ instrukcji (bez dotykania opcji botów).**
+`SHOW TABLES` po deinstalacji (surowo; pogrubienie = nasze):
+```
+wp_chatl_ai_uzycie   wp_chatl_qa        wp_chatl_rate_limit
+wp_chatl_rozmowy     wp_chatl_zgloszenia
+wp_segm_ai_uzycie    wp_segm_kategorie  wp_segm_maile
+wp_segm_przebiegi    wp_segm_reguly
+wp_commentmeta wp_comments wp_links wp_options wp_postmeta wp_posts
+wp_term_relationships wp_term_taxonomy wp_termmeta wp_terms wp_usermeta wp_users
+```
+Nasze opcje po deinstalacji: `chatl_wersja_schematu`, `segm_wersja_schematu`.
+= **dokładnie 5 tabel chatl_* + 5 segm_* + 2 opcje zostają** — zgodnie
+z pomiarem z sesji K6 (10 naszych tabel / 2 opcje).
+
+**Runda 2 — ścieżka NOWEJ instrukcji (opcja „usuń wszystkie dane" włączona
+w ustawieniach KAŻDEGO bota, jak każe uzupełniona sekcja „Odinstalowanie").**
+`SHOW TABLES` po deinstalacji (surowo):
+```
+wp_commentmeta wp_comments wp_links wp_options wp_postmeta wp_posts
+wp_term_relationships wp_term_taxonomy wp_termmeta wp_terms wp_usermeta wp_users
+```
+Nasze opcje po deinstalacji: `(zero)`.
+= **gołe 12 tabel WordPressa, zero śladów** — naprawiona instrukcja prowadzi
+do faktycznego „bez śladu".
 
 ## Kwity operacyjne
 - Tester ubił `pkill -f stripe` także NASZ forwarder webhooków :8890 (miał ten
