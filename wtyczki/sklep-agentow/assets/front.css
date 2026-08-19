@@ -748,6 +748,14 @@ a.sklepag-kup {
 	margin: 0 0 0.6rem;
 }
 
+/* Finalny CTA listy: dwa przyciski produktów obok siebie. */
+.sklepag-final-przyciski {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.8rem;
+	margin: 1.2rem 0 0;
+}
+
 @media (prefers-reduced-motion: reduce) {
 	.sklepag-wyspa *,
 	.sklepag-wyspa *::before,
