@@ -1,5 +1,16 @@
 # CO-WISI — rzeczy oddane komuś / bez strażnika (zasada: oddajesz ⇒ wiersz, wraca ⇒ kasujesz)
 
+## ✅ ZAMKNIĘTE 19.08 (dzień) — DROBNICA recenzji #40/#42 (PR #57)
+- **Rate-limit sklepu → LAST_INSERT_ID** (#40): osobny SELECT licznik miał
+  mikro-okno wyścigu → wzorzec 1:1 z chatl_rate_limit; komentarz ostrzegawczy
+  o fail-open dołożony (uwaga recenzji #57).
+- **Test dziennika/opóźnienia** (#42): `testy/dziennik-test.js` na żywym stacku —
+  salwa/2^n/reset/retencja/konkrety S-09, próba kontrolna (próg 999 → pada).
+- **Indeks okno_do chatbota** nazwany w PONAD-SPECYFIKACJE-BOTY (klasa #6).
+- **Zipy produktów na stacku podmienione na 1.2.1** przez PRAWDZIWY CRUD panelu
+  (sha bazy == sha zipów, zmierzone; snapshot zam#29 nietknięty — stare zamówienia
+  trzymają swój plik, zgodnie z projektem).
+
 ## ✅ ZAMKNIĘTE 19.08 (dzień) — ⭐ PAKIET BOTÓW (D25, przyciągnięty z 23.08), boty 1.2.1
 - **phpcs na WSZYSTKIE 3 wtyczki:** phpcbf (58 auto-napraw, diff obejrzany — zero zmian
   semantyki) + 3 adnotacje inline z uzasadnieniem + `customSanitizingFunctions`
@@ -81,14 +92,9 @@
   zamówień stary plik zostaje w katalogu chronionym (nie szkodzi, nie wycieka —
   katalog deny; sprzątanie wymagałoby odróżniania „trzymany snapshotem" od
   „wolny"). Świadomie NIE sprzątamy w v1 → wpis do `PONAD-SPECYFIKACJE.md` w K8.
-- **Drobne hardening (nie blokujące, z recenzji #40):** sklep rate-limit → LAST_INSERT_ID
-  (mikro-okno, błądzi bezpiecznie); indeks okno_do nazwać rozszerzeniem; $prog domyślny.
-- **Test automatyczny dziennika/opóźnienia** (recenzja #42, drobna): skrypt na żywym
-  stacku (sekwencja czasów + salwa równoległa + retencja) — dołożyć razem
-  ze skryptem testowym panelu, żeby regresja (np. kolejność hooków) nie przeszła cicho.
-- **Podmiana zipów produktów na stacku po merge:** produkty w sklepie (stack :8890)
-  trzymają zipy 1.2.0 — po scaleniu PR podmienić przez CRUD na 1.2.1 (stare
-  zamówienia trzymają swój snapshot — tak ma być).
+- **Świadomie NIE ruszone (recenzja #40, #3):** default `$prog` w `chatl_rate_limit`
+  — sklep ma default 10, bot nie; jedyne wywołanie w bocie podaje oba argumenty,
+  recenzent oznaczył jako nieblokujące. Zostaje bez zmian celowo.
 - **Instrukcja wdrożenia (K8): wzmianka fail2ban/WAF** na wp-login.php przy wielu IP
   (D26 — rezydualne ryzyko poza wtyczką).
 - K6 24.08 · K7 25.08 · K8 27.08 = próba 1.

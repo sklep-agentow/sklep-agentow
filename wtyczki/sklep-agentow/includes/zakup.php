@@ -37,6 +37,11 @@ function sklepag_rate_limit( $akcja, $prog = 10 ) {
 			gmdate( 'Y-m-d H:i:s', ( $okno + 2 ) * MINUTE_IN_SECONDS )
 		)
 	);
+	// ⚠️ Poprawność zależy od tego, że `licznik` ZAWSZE się zmienia przy update —
+	// wtedy MySQL zwraca 2 (nigdy 0 „bez zmian"). Gdyby ktoś kiedyś zmienił
+	// wyrażenie ON DUPLICATE KEY UPDATE na takie, które może zostawić licznik bez
+	// zmiany, gałąź `else` fałszywie zgłosiłaby awarię i przepuściła nadmiar
+	// (fail-open). Dziś licznik+1 to gwarantuje (uwaga recenzji #57).
 	if ( 1 === $wynik ) {
 		$ile = 1; // Świeży wiersz w tym oknie (INSERT zwraca 1).
 	} elseif ( 2 === $wynik ) {

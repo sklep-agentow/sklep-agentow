@@ -26,6 +26,10 @@ const spij = (ms) => new Promise((r) => setTimeout(r, ms));
 // inaczej odbija (429) próby z tego samego IP ZANIM opóźnienie zdąży zadziałać —
 // czyli mierzyłoby OCHRONĘ zamiast wady. Dziennik logowań NIE jest tu ruszany
 // (to on napędza opóźnienie: liczy błędy pary login+IP).
+// Bezpieczne osadzenie wartości w PHP przekazywanym do `wp eval`: literał
+// single-quoted (interpoluje tylko \\ i \'), więc $ i { z loginu env NIE są
+// interpretowane jako zmienne PHP (uwaga recenzji #57).
+const phpStr = (s) => "'" + String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'") + "'";
 const czyscLimiter = () => wpEval('global $wpdb; $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->prefix}sklepag_rate_limit WHERE klucz LIKE %s", $wpdb->esc_like("login|") . "%"));');
 const czyscTestowe = () => wpEval('global $wpdb; $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->prefix}sklepag_logowania WHERE login_wpisany LIKE %s", $wpdb->esc_like("test-") . "%"));');
 
@@ -102,6 +106,10 @@ async function proba(login, haslo) {
   wynik('C reset: 1. zła po sukcesie szybka, 2. już z karą', poResecie < 1500 && poBledzie >= 2000, `po_resecie=${poResecie}ms, po_bledzie=${poBledzie}ms`);
 
   // D. RETENCJA 90 DNI — stary wpis znika, świeże zostają (próba kontrolna).
+  // ⚠️ Retencja nie jest wydzieloną funkcją — żyje w sklepag_dociagnij_zalegle()
+  // (krok 4), więc test woła CAŁĄ reconciliation. Efekt uboczny: dla wiszących
+  // sesji odpali realne GET-y do Stripe. Na stacku warsztatowym (Stripe tryb
+  // testowy + mailpit) nieszkodliwe; uwaga recenzji #57 odnotowana świadomie.
   wpEval('global $wpdb; $wpdb->insert("{$wpdb->prefix}sklepag_logowania", array("czas" => gmdate("Y-m-d H:i:s", strtotime(current_time("mysql")) - 91 * DAY_IN_SECONDS), "login_wpisany" => "test-retencja", "wynik" => "blad", "ip" => "127.0.0.1", "user_agent" => "dziennik-test"));');
   const staryPrzed = Number(wpEval('global $wpdb; echo $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}sklepag_logowania WHERE login_wpisany=\'test-retencja\'");'));
   wpEval('sklepag_dociagnij_zalegle();');
@@ -112,7 +120,7 @@ async function proba(login, haslo) {
   // E. KONKRETY S-09: IP + przeglądarka wypełnione, obie strony wyniku obecne.
   const konkrety = wpEval('global $wpdb; $w = $wpdb->get_row($wpdb->prepare("SELECT ip, user_agent FROM {$wpdb->prefix}sklepag_logowania WHERE login_wpisany=%s ORDER BY id DESC LIMIT 1", "test-salwa")); echo ($w && $w->ip !== "" && $w->user_agent !== "") ? "PELNE:" . $w->user_agent : "PUSTE";');
   wynik('E dziennik: IP i przeglądarka zapisane (S-09)', konkrety.startsWith('PELNE:'), konkrety);
-  const okAdmina = Number(wpEval(`global $wpdb; echo $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->prefix}sklepag_logowania WHERE login_wpisany=%s AND wynik='ok'", ${JSON.stringify(user)}));`));
+  const okAdmina = Number(wpEval(`global $wpdb; echo $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->prefix}sklepag_logowania WHERE login_wpisany=%s AND wynik='ok'", ${phpStr(user)}));`));
   wynik('E dziennik: udane logowanie też zapisane', okAdmina >= 1, `wpisów ok=${okAdmina}`);
 
   // Sprzątanie wpisów testowych (jak produkty-test: atrapy nie zostają w danych).
