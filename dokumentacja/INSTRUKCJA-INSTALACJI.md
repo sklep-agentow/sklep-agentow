@@ -128,6 +128,25 @@ Włącz. Dalej prowadzą instrukcje W paczkach botów (konfiguracja w kwadrans).
 
 ## Ustawienia produkcyjne (gdy strona idzie w świat)
 
+- **Dodaj link „Sklep" do menu strony** — bez niego goście nie trafią do
+  sklepu z nawigacji. Na motywie z menu WordPressa: Wygląd → Menu → dodaj
+  pozycję wskazującą stronę „Sklep". Na motywie z nawigacją wpisaną na
+  sztywno w kod (tak jest na stronie Automatic AI po konwersji): dopisz
+  w `header.php` obok pozycji „FAQ" — w OBU listach (nawigacja główna
+  i mobilna) — gotowe fragmenty:
+
+  Nawigacja główna (desktop), zaraz po `<li>` z FAQ:
+
+  ```html
+  <li class=""><a class="text-sm transition-colors hover:text-fg text-steel" href="/sklep/">Sklep</a></li>
+  ```
+
+  Nawigacja mobilna (szablon `tpl-menu-mobilne`), po pozycji `08` licząc
+  kolejny numer i opóźnienie animacji:
+
+  ```html
+  <li class="menu-item-in" style="--menu-delay: 0.4s;"><a class="flex items-baseline gap-4 py-4 text-3xl font-semibold tracking-tight transition-colors border-b border-line hover:text-volt" href="/sklep/"><span class="font-mono text-xs text-steel">08</span>Sklep</a></li>
+  ```
 - **Ustawienia → Czytanie → ODZNACZ opcję zniechęcania wyszukiwarek do
   indeksowania** (oficjalny angielski tekst opcji: „Discourage search engines
   from indexing this site" — zmierzony na stacku; polskie brzmienie zależy od

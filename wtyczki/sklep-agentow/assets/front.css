@@ -630,6 +630,118 @@ a.sklepag-kup {
 	}
 }
 
+/* ---------- Zrzuty produktów + rozbudowa listy (0.9.0) ---------- */
+
+/* Obraz w karcie: od krawędzi do krawędzi górnej części karty (przykrywa jej
+   padding), stała wysokość okna = równe karty mimo różnych proporcji zrzutów. */
+.sklepag-karta-obraz {
+	margin: calc(-1 * clamp(1.4rem, 3vw, 2.2rem)) calc(-1 * clamp(1.4rem, 3vw, 2.2rem)) 0;
+	border-bottom: 1px solid var(--sklepag-linia);
+	border-radius: 15px 15px 0 0;
+	overflow: hidden;
+	background: var(--sklepag-tusz);
+}
+
+.sklepag-karta-obraz img {
+	display: block;
+	width: 100%;
+	height: 20rem;
+	object-fit: cover;
+	object-position: top center;
+	border-radius: 0;
+	border: 0;
+}
+
+/* Okno czatu w karcie: dolny kadr (cała odpowiedź + pole pytania), nie ucięty nagłówek. */
+.sklepag-karta-obraz--chatbot-live img {
+	object-position: center bottom;
+}
+
+/* Pasek „okna aplikacji" — 3 kropki jak w mockupie czatu (wspólna rama obu zrzutów). */
+.sklepag-okno-pasek {
+	display: flex;
+	gap: 0.4rem;
+	padding: 0.7rem 1rem;
+	border-bottom: 1px solid var(--sklepag-linia);
+	background: var(--sklepag-wegiel);
+}
+
+.sklepag-okno-pasek span {
+	width: 0.6rem;
+	height: 0.6rem;
+	border-radius: 50%;
+	background: var(--sklepag-linia);
+}
+
+/* Zrzut na stronie produktu: ramka jak mockup, podpis mono pod spodem. */
+.sklepag-zrzut {
+	margin: 0;
+	max-width: 44rem;
+	border: 1px solid var(--sklepag-linia);
+	border-radius: 12px;
+	overflow: hidden;
+	background: var(--sklepag-wegiel);
+	box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
+}
+
+.sklepag-zrzut img {
+	display: block;
+	width: 100%;
+	height: auto;
+}
+
+.sklepag-zrzut figcaption {
+	margin: 0;
+	padding: 0.7rem 1rem;
+	border-top: 1px solid var(--sklepag-linia);
+}
+
+/* Pasek konkretów pod hero (mono, rozdzielany kropkami jak pasek statusu). */
+.sklepag-konkrety {
+	list-style: none;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem 0;
+	margin: 1.4rem 0 0;
+	padding: 0;
+	font-family: var(--sklepag-mono);
+	font-size: 0.72rem;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	color: var(--sklepag-pyl);
+}
+
+.sklepag-konkrety li {
+	white-space: nowrap;
+}
+
+.sklepag-konkrety li + li::before {
+	content: "·";
+	color: var(--sklepag-limonka);
+	margin: 0 0.65em;
+}
+
+/* DLA KOGO na liście: kolumna per produkt. */
+.sklepag-dla-kogo-kolumny {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 28rem));
+	justify-content: start;
+	gap: 1.5rem;
+}
+
+.sklepag-dla-kogo-kol {
+	background: var(--sklepag-wegiel);
+	border: 1px solid var(--sklepag-linia);
+	border-radius: 12px;
+	padding: 1.3rem 1.5rem;
+}
+
+.sklepag-dla-kogo-tytul {
+	font-size: 1.05rem;
+	font-weight: 600;
+	margin: 0 0 0.6rem;
+}
+
 @media (prefers-reduced-motion: reduce) {
 	.sklepag-wyspa *,
 	.sklepag-wyspa *::before,
