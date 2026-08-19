@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Sklep Agentów
  * Description: Sklep z testowymi botami AI — Stripe Checkout (tryb testowy), mail po zakupie, wydanie plików, panel w wp-admin. Zaplecze całe w WordPressie, własne tabele.
- * Version: 0.8.2
+ * Version: 0.9.0
  * Requires at least: 6.7
  * Requires PHP: 8.1
  * Author: Warsztat
@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SKLEPAG_WERSJA', '0.8.2' );
+define( 'SKLEPAG_WERSJA', '0.9.0' );
 define( 'SKLEPAG_WERSJA_SCHEMATU', 4 ); // v4: kolumna zamowienia.usunieto_dnia (anonimizacja RODO — K3d); v3: indeks para_logowania.
 define( 'SKLEPAG_LIMIT_POBRAN', 10 ); // Jedno źródło: INSERT zamówienia + treść maila (recenzja PR #33).
 define( 'SKLEPAG_LINK_GODZIN', 72 );  // Ważność linku pobrania — jw.
@@ -111,6 +111,13 @@ function sklepag_shortcode_sklep() {
 	$html .= '<h1 class="sklepag-hero-tytul"><span class="sklepag-akcent">Boty</span>, które robią robotę.</h1>';
 	$html .= '<p class="sklepag-lead">Gotowe wtyczki-boty dla Twojej firmy. Instalujesz jak każdą wtyczkę WordPressa — działają od pierwszej minuty.</p>';
 	$html .= sklepag_baner_testowy();
+	// Pasek konkretów: każda pozycja ma pokrycie w kodzie/pomiarze (dok=kod):
+	// 6.0+ = „Requires at least" obu botów · czysta deinstalacja = zmierzona
+	// we wrogiej sesji botów (diff przed-po pusty) · bez abonamentu = zakup
+	// jednorazowy, żadnych płatności cyklicznych w kodzie.
+	$html .= '<ul class="sklepag-konkrety" aria-label="Najważniejsze informacje o produktach">';
+	$html .= '<li>WordPress 6.0+</li><li>instalacja jak każdej wtyczki</li><li>czysta deinstalacja</li><li>bez abonamentu</li>';
+	$html .= '</ul>';
 	$html .= '</header>';
 
 	if ( empty( $produkty ) ) {
@@ -120,7 +127,11 @@ function sklepag_shortcode_sklep() {
 
 	$html .= '<div class="sklepag-karty">';
 	foreach ( $produkty as $p ) {
+		$zrzut = sklepag_zrzut_produktu( $p->slug );
 		$html .= '<article class="sklepag-karta">';
+		if ( $zrzut ) {
+			$html .= sklepag_figure_zrzutu( $zrzut, 'sklepag-karta-obraz', false );
+		}
 		$html .= '<div class="sklepag-karta-glowa">' . sklepag_ikona_produktu( $p->slug ) . '<p class="sklepag-mono-etykieta">[ <span class="sklepag-akcent">BOT</span> · TESTOWY ]</p></div>';
 		$html .= '<h2 class="sklepag-karta-tytul">' . esc_html( $p->nazwa ) . '</h2>';
 		$html .= '<p class="sklepag-karta-opis">' . esc_html( $p->opis_krotki ) . '</p>';
@@ -128,7 +139,44 @@ function sklepag_shortcode_sklep() {
 		$html .= '<p><a class="sklepag-kup sklepag-kup-kotwica" href="' . esc_url( sklepag_url_produktu_front( $p->slug ) ) . '">Zobacz szczegóły <span aria-hidden="true">→</span></a></p>';
 		$html .= '</article>';
 	}
-	$html .= '</div></div>';
+	$html .= '</div>';
+
+	// OD ZAKUPU DO DZIAŁANIA (wzorzec „ile trwa uruchomienie" — zwiad 19.08;
+	// treść kroków = faktyczny przepływ S-02: mail z instrukcją i linkiem do zipa).
+	$html .= '<section class="sklepag-sekcja"><p class="sklepag-mono-etykieta">[ OD ZAKUPU DO DZIAŁANIA ]</p>';
+	$html .= '<ol class="sklepag-kroki">';
+	$html .= '<li>Kupujesz — płatność testowa Stripe, bez zakładania konta.</li>';
+	$html .= '<li>Dostajesz maila: potwierdzenie, instrukcja i link do paczki (zip wtyczki).</li>';
+	$html .= '<li>Instalujesz jak każdą wtyczkę WordPressa — bot działa od razu, na start z danymi demo.</li>';
+	$html .= '</ol></section>';
+
+	// DLA KOGO — z tych samych treści co strony produktów (jedno źródło, zero rozjazdu).
+	$kolumny = '';
+	foreach ( $produkty as $p ) {
+		$t = sklepag_tresc_produktu( $p->slug );
+		if ( ! $t || empty( $t['dla_kogo'] ) ) {
+			continue;
+		}
+		$kolumny .= '<div class="sklepag-dla-kogo-kol"><h3 class="sklepag-dla-kogo-tytul">' . esc_html( $p->nazwa ) . '</h3><ul class="sklepag-dla-kogo">';
+		foreach ( $t['dla_kogo'] as $dk ) {
+			$kolumny .= '<li>' . esc_html( $dk ) . '</li>';
+		}
+		$kolumny .= '</ul><p><a class="sklepag-link-powrot" href="' . esc_url( sklepag_url_produktu_front( $p->slug ) ) . '">Zobacz szczegóły →</a></p></div>';
+	}
+	if ( '' !== $kolumny ) {
+		$html .= '<section class="sklepag-sekcja"><p class="sklepag-mono-etykieta">[ DLA KOGO ]</p><div class="sklepag-dla-kogo-kolumny">' . $kolumny . '</div></section>';
+	}
+
+	// PYTANIA — FAQ całego sklepu (pytania produktowe są na stronach produktów).
+	// Liczby linku pobrania generowane ze stałych = dok zawsze równy kodowi.
+	$html .= '<section class="sklepag-sekcja"><p class="sklepag-mono-etykieta">[ PYTANIA ]</p><dl class="sklepag-faq">';
+	$html .= '<dt>Co dokładnie dostaję po zakupie?</dt><dd>' . esc_html( sprintf( 'Maila z potwierdzeniem, instrukcją i linkiem do pobrania paczki: zip wtyczki bota z instrukcją po polsku. Link jest ważny %d godziny (limit %d pobrań).', SKLEPAG_LINK_GODZIN, SKLEPAG_LIMIT_POBRAN ) ) . '</dd>';
+	$html .= '<dt>Czy muszę zakładać konto?</dt><dd>Nie. Podajesz tylko adres e-mail przy płatności — na niego przychodzi paczka.</dd>';
+	$html .= '<dt>Co znaczy „tryb testowy”?</dt><dd>Sklep działa na testowych płatnościach Stripe — żadne prawdziwe pieniądze nie są pobierane. Do testów służy karta 4242 4242 4242 4242.</dd>';
+	$html .= '<dt>Czy boty wymagają klucza AI albo opłat?</dt><dd>Nie — oba w pełni działają w trybie regułowym, bez klucza i bez abonamentu. Tryb AI to opcja na Twój własny klucz.</dd>';
+	$html .= '</dl></section>';
+
+	$html .= '</div>';
 	return $html;
 }
 

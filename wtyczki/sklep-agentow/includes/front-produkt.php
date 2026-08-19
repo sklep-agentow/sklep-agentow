@@ -177,6 +177,54 @@ function sklepag_tresc_produktu( $slug ) {
 }
 
 /**
+ * Zrzut ŻYWEGO bota do karty i strony produktu (feedback Dzidka 19.08: „potrzeba
+ * obrazów do produktów"). Zrzuty robione z tej instalacji, bez retuszu — spójne
+ * z sekcją uczciwości. Wymiary wpisane na sztywno = brak CLS przy lazy-load.
+ *
+ * @param string $slug Slug produktu.
+ * @return array|null Dane obrazu (plik/alt/podpis/szer/wys) albo null.
+ */
+function sklepag_zrzut_produktu( $slug ) {
+	$zrzuty = array(
+		'chatbot-live'     => array(
+			'plik'   => 'chatbot-live.jpg',
+			'alt'    => 'Okno rozmowy ChatBota LIVE na stronie: gość pyta o godziny otwarcia, bot odpowiada wpisem z bazy pytań i odpowiedzi',
+			'podpis' => 'PRAWDZIWY ZRZUT Z TEJ STRONY — TRYB REGUŁOWY, BEZ KLUCZA AI',
+			'szer'   => 682,
+			'wys'    => 908,
+		),
+		'segregator-maila' => array(
+			'plik'   => 'segregator-maila.jpg',
+			'alt'    => 'Raport przebiegu Segregatora maila w panelu WordPressa: 30 maili w próbce, pokrycie regułami 80 procent, trafność 100 procent, podział na kategorie',
+			'podpis' => 'PRAWDZIWY RAPORT Z PANELU — PRÓBKA 30 MAILI DEMO, LICZBY BEZ RETUSZU',
+			'szer'   => 1200,
+			'wys'    => 756,
+		),
+	);
+	return isset( $zrzuty[ $slug ] ) ? $zrzuty[ $slug ] : null;
+}
+
+/**
+ * Znacznik <figure> ze zrzutem produktu (wspólny dla karty listy i strony produktu).
+ *
+ * @param array  $zrzut Dane z sklepag_zrzut_produktu().
+ * @param string $klasa Klasa CSS figure.
+ * @param bool   $z_podpisem Czy dodać figcaption.
+ */
+function sklepag_figure_zrzutu( $zrzut, $klasa, $z_podpisem ) {
+	// Modyfikator per produkt (kadr okna karty ustawiany w CSS, np. dolna
+	// część okna czatu zamiast uciętego nagłówka).
+	$klasa .= ' ' . $klasa . '--' . sanitize_html_class( pathinfo( $zrzut['plik'], PATHINFO_FILENAME ) );
+	$html   = '<figure class="' . esc_attr( $klasa ) . '">';
+	$html .= '<img src="' . esc_url( plugins_url( 'assets/produkty/' . $zrzut['plik'], SKLEPAG_PLIK ) ) . '" alt="' . esc_attr( $zrzut['alt'] ) . '" width="' . (int) $zrzut['szer'] . '" height="' . (int) $zrzut['wys'] . '" loading="lazy">';
+	if ( $z_podpisem ) {
+		$html .= '<figcaption class="sklepag-mono-etykieta">' . esc_html( $zrzut['podpis'] ) . '</figcaption>';
+	}
+	$html .= '</figure>';
+	return $html;
+}
+
+/**
  * Mono-pictogram produktu (sędzia wyglądu: karty nierozróżnialne bez ikon).
  * Inline SVG w limonce — zero CDN/fontów ikon (D27). Fallback: iskra.
  *
@@ -313,6 +361,14 @@ function sklepag_render_produkt( $slug ) {
 			$html .= '<li>' . esc_html( $k ) . '</li>';
 		}
 		$html .= '</ol></section>';
+
+		// JAK TO WYGLĄDA — zrzut żywego bota (feedback Dzidka 19.08).
+		$zrzut = sklepag_zrzut_produktu( $slug );
+		if ( $zrzut ) {
+			$html .= '<section class="sklepag-sekcja"><p class="sklepag-mono-etykieta">[ JAK TO WYGLĄDA ]</p>';
+			$html .= sklepag_figure_zrzutu( $zrzut, 'sklepag-zrzut', true );
+			$html .= '</section>';
+		}
 
 		// ILE CZASU ODZYSKUJESZ (S-03; krytyk #9 — dedykowane miejsce).
 		$html .= '<section class="sklepag-sekcja"><p class="sklepag-mono-etykieta">[ ILE CZASU ODZYSKUJESZ ]</p>';
