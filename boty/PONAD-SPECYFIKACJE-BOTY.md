@@ -15,6 +15,9 @@ była w klepniętych szkicach (`boty/SZKICE-BOTOW.md`) albo wynika z ich zasad
 5. **Seed 10 par Q&A** z wariantami-rdzeniami — szkice (bot działa od
    pierwszej minuty).
 6. **Stop-loss AI** (dzienny limit + licznik + zjazd do reguł) — szkice.
+7. **Indeks `KEY okno_do` na tabeli `chatl_rate_limit`** — świadome rozszerzenie
+   ponad wzorzec sklepu (tam go nie ma): przyspiesza cronowe sprzątanie
+   `DELETE … WHERE okno_do < teraz`. Nazwane tu na wniosek recenzji PR #40.
 
 ## Segregator maila
 1. **Tryb AI + „porównaj reguły vs AI"** — decyzja Dzidka 18.08 (szkice §BOT 2).
