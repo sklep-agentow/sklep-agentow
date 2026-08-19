@@ -242,8 +242,11 @@ function sklepag_ilustracja_produktu( $slug ) {
  */
 function sklepag_figure_zrzutu( $zrzut, $klasa, $z_podpisem, $z_paskiem = true ) {
 	// Modyfikator per produkt (kadr okna karty ustawiany w CSS, np. dolna
-	// część okna czatu zamiast uciętego nagłówka).
-	$klasa .= ' ' . $klasa . '--' . sanitize_html_class( pathinfo( $zrzut['plik'], PATHINFO_FILENAME ) );
+	// część okna czatu zamiast uciętego nagłówka). Sufiks ZAWSZE na bazowym
+	// (pierwszym) członie klasy — przy wieloczłonowym $klasa doklejanie do
+	// całości dublowało tokeny i celowało w zły człon (recenzja #60).
+	$czlony = explode( ' ', $klasa );
+	$klasa .= ' ' . $czlony[0] . '--' . sanitize_html_class( pathinfo( $zrzut['plik'], PATHINFO_FILENAME ) );
 	$html   = '<figure class="' . esc_attr( $klasa ) . '">';
 	if ( $z_paskiem ) {
 		// Pasek „okna aplikacji" (3 kropki jak w mockupie czatu): wspólna rama godzi
