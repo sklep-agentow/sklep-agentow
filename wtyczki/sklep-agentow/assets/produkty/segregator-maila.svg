@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 560" role="img" aria-labelledby="segm-il-tytul">
+  <title id="segm-il-tytul">Ilustracja: robot segreguje maile do kategorii</title>
+  <defs>
+    <radialGradient id="segm-poswiata" cx="30%" cy="18%" r="75%">
+      <stop offset="0%" stop-color="#bfff38" stop-opacity="0.10"/>
+      <stop offset="55%" stop-color="#bfff38" stop-opacity="0.03"/>
+      <stop offset="100%" stop-color="#bfff38" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- tlo -->
+  <rect width="880" height="560" fill="#101116"/>
+  <rect width="880" height="560" fill="url(#segm-poswiata)"/>
+  <g stroke="#f5f5f5" stroke-opacity="0.045" stroke-width="1">
+    <path d="M0 140H880M0 280H880M0 420H880"/>
+    <path d="M220 0V560M440 0V560M660 0V560"/>
+  </g>
+
+  <!-- etykieta statusu -->
+  <g font-family="ui-monospace, Menlo, Consolas, monospace" font-size="17" letter-spacing="2">
+    <circle cx="56" cy="52" r="5" fill="#bfff38"/>
+    <text x="74" y="58" fill="#bfff38">[ BOT</text>
+    <text x="142" y="58" fill="#8f929c">· PORZĄDEK W POCZCIE ]</text>
+  </g>
+
+  <!-- stos kopert z lewej (chaos) -->
+  <g stroke="#8f929c" stroke-width="3" fill="#08090b">
+    <g transform="rotate(-8 120 300)">
+      <rect x="76" y="272" width="88" height="58" rx="6"/>
+      <path d="M76 278 l44 30 44 -30" fill="none"/>
+    </g>
+    <g transform="rotate(6 150 380)">
+      <rect x="102" y="352" width="88" height="58" rx="6"/>
+      <path d="M102 358 l44 30 44 -30" fill="none"/>
+    </g>
+    <g transform="rotate(-3 110 460)">
+      <rect x="66" y="430" width="88" height="58" rx="6"/>
+      <path d="M66 436 l44 30 44 -30" fill="none"/>
+    </g>
+  </g>
+
+  <!-- robot w centrum (blizniak chatbota) -->
+  <g stroke="#bfff38" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M430 232 v-26"/>
+    <circle cx="430" cy="198" r="7" fill="#bfff38" stroke="none"/>
+    <rect x="386" y="232" width="88" height="72" rx="20" fill="#101116"/>
+    <circle cx="416" cy="268" r="6" fill="#bfff38" stroke="none"/>
+    <circle cx="444" cy="268" r="6" fill="#bfff38" stroke="none"/>
+    <path d="M418 286 q12 10 24 0"/>
+    <path d="M398 304 v44 a18 18 0 0 0 18 18 h28 a18 18 0 0 0 18 -18 v-44"/>
+    <!-- lewe ramie siega w dol po koperty ze stosu (dlon-kolko) -->
+    <path d="M398 322 q-54 12 -88 52"/>
+    <circle cx="306" cy="378" r="7" fill="#bfff38" stroke="none"/>
+    <!-- prawe ramie podaje koperte do przegrodek (dlon-kolko przy kopercie) -->
+    <path d="M462 322 q62 -20 112 -58"/>
+    <circle cx="578" cy="262" r="7" fill="#bfff38" stroke="none"/>
+  </g>
+
+  <!-- koperta w prawym ramieniu (limonkowa, w locie) -->
+  <g transform="rotate(10 610 246)">
+    <rect x="566" y="220" width="88" height="58" rx="6" fill="#bfff38"/>
+    <path d="M566 226 l44 30 44 -30" fill="none" stroke="#08090b" stroke-width="3"/>
+  </g>
+
+  <!-- tor lotu kopert (kropkowany) -->
+  <path d="M170 300 q120 -60 216 -44" stroke="#8f929c" stroke-width="3" stroke-dasharray="2 10" fill="none" stroke-linecap="round"/>
+  <path d="M660 236 q60 10 88 64" stroke="#bfff38" stroke-width="3" stroke-dasharray="2 10" fill="none" stroke-linecap="round"/>
+
+  <!-- przegrodki z prawej -->
+  <g font-family="ui-monospace, Menlo, Consolas, monospace" font-size="15" letter-spacing="2">
+    <g>
+      <rect x="668" y="316" width="156" height="56" rx="10" fill="#08090b" stroke="#bfff38" stroke-width="3"/>
+      <text x="688" y="350" fill="#bfff38">[ OFERTY ]</text>
+    </g>
+    <g>
+      <rect x="668" y="388" width="156" height="56" rx="10" fill="#08090b" stroke="#8f929c" stroke-width="3"/>
+      <text x="688" y="422" fill="#8f929c">[ FAKTURY ]</text>
+    </g>
+    <g>
+      <rect x="668" y="460" width="156" height="56" rx="10" fill="#08090b" stroke="#8f929c" stroke-width="3"/>
+      <text x="688" y="494" fill="#8f929c">[ RESZTA ]</text>
+    </g>
+  </g>
+
+  <!-- podpis mono na dole -->
+  <g font-family="ui-monospace, Menlo, Consolas, monospace" font-size="15" letter-spacing="2">
+    <text x="56" y="150" fill="#8f929c">TWOJE REGUŁY → KAŻDY MAIL DO SWOJEJ PRZEGRÓDKI</text>
+  </g>
+</svg>

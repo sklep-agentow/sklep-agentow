@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 560" role="img" aria-labelledby="chatl-il-tytul">
+  <title id="chatl-il-tytul">Ilustracja: robot odpisuje klientom na czacie</title>
+  <defs>
+    <radialGradient id="chatl-poswiata" cx="70%" cy="18%" r="75%">
+      <stop offset="0%" stop-color="#bfff38" stop-opacity="0.10"/>
+      <stop offset="55%" stop-color="#bfff38" stop-opacity="0.03"/>
+      <stop offset="100%" stop-color="#bfff38" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- tlo -->
+  <rect width="880" height="560" fill="#101116"/>
+  <rect width="880" height="560" fill="url(#chatl-poswiata)"/>
+  <!-- siatka blueprint -->
+  <g stroke="#f5f5f5" stroke-opacity="0.045" stroke-width="1">
+    <path d="M0 140H880M0 280H880M0 420H880"/>
+    <path d="M220 0V560M440 0V560M660 0V560"/>
+  </g>
+
+  <!-- etykieta statusu -->
+  <g font-family="ui-monospace, Menlo, Consolas, monospace" font-size="17" letter-spacing="2">
+    <circle cx="56" cy="52" r="5" fill="#bfff38"/>
+    <text x="74" y="58" fill="#bfff38">[ BOT</text>
+    <text x="142" y="58" fill="#8f929c">· ODPOWIADA 24/7 ]</text>
+  </g>
+
+  <!-- dymek klienta (ciemny, z prawej) -->
+  <g>
+    <path d="M500 118 h250 a16 16 0 0 1 16 16 v64 a16 16 0 0 1 -16 16 h-198 l-30 26 v-26 h-22 a16 16 0 0 1 -16 -16 v-64 a16 16 0 0 1 16 -16 z"
+          fill="#08090b" stroke="#8f929c" stroke-width="2.5"/>
+    <g stroke="#8f929c" stroke-width="6" stroke-linecap="round">
+      <path d="M528 152 h150"/>
+      <path d="M528 176 h196"/>
+    </g>
+  </g>
+
+  <!-- dymek bota (limonkowy, nizej z lewej, od robota) -->
+  <g>
+    <path d="M420 262 h-240 a16 16 0 0 0 -16 16 v64 a16 16 0 0 0 16 16 h188 l30 26 v-26 h22 a16 16 0 0 0 16 -16 v-64 a16 16 0 0 0 -16 -16 z"
+          fill="#bfff38"/>
+    <g stroke="#08090b" stroke-width="6" stroke-linecap="round">
+      <path d="M192 296 h170"/>
+      <path d="M192 320 h120"/>
+    </g>
+  </g>
+
+  <!-- robot przy laptopie (prawa dolna czesc) -->
+  <g stroke="#bfff38" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <!-- antenka -->
+    <path d="M600 306 v-26"/>
+    <circle cx="600" cy="272" r="7" fill="#bfff38" stroke="none"/>
+    <!-- glowa -->
+    <rect x="556" y="306" width="88" height="72" rx="20" fill="#101116"/>
+    <!-- oczy -->
+    <circle cx="586" cy="342" r="6" fill="#bfff38" stroke="none"/>
+    <circle cx="614" cy="342" r="6" fill="#bfff38" stroke="none"/>
+    <!-- usmiech -->
+    <path d="M588 360 q12 10 24 0"/>
+    <!-- tulow -->
+    <path d="M568 378 v40 a18 18 0 0 0 18 18 h28 a18 18 0 0 0 18 -18 v-40"/>
+    <!-- ramiona do klawiatury (oba lekko do srodka, dlonie-kolka) -->
+    <path d="M568 400 q-34 14 -46 40"/>
+    <circle cx="520" cy="442" r="7" fill="#bfff38" stroke="none"/>
+    <path d="M632 400 q26 16 30 42"/>
+    <circle cx="664" cy="444" r="7" fill="#bfff38" stroke="none"/>
+  </g>
+
+  <!-- laptop -->
+  <g>
+    <path d="M448 470 l38 -62 h124 l-38 62 z" fill="#08090b" stroke="#8f929c" stroke-width="3"/>
+    <g stroke="#bfff38" stroke-width="4" stroke-linecap="round">
+      <path d="M494 438 h42"/>
+      <path d="M486 452 h34"/>
+    </g>
+    <path d="M436 470 h304 a10 10 0 0 1 -10 12 h-284 a10 10 0 0 1 -10 -12 z" fill="#08090b" stroke="#8f929c" stroke-width="3"/>
+  </g>
+
+  <!-- linia od dymka bota do robota (kropkowana, sygnal) -->
+  <path d="M440 330 q80 6 116 -10" stroke="#bfff38" stroke-width="3" stroke-dasharray="2 10" fill="none" stroke-linecap="round"/>
+
+  <!-- podpis mono na dole -->
+  <g font-family="ui-monospace, Menlo, Consolas, monospace" font-size="15" letter-spacing="2">
+    <text x="56" y="516" fill="#8f929c">GOŚĆ PYTA → BOT ODPOWIADA Z TWOJEJ BAZY</text>
+  </g>
+</svg>
