@@ -68,6 +68,42 @@ function segm_utworz_tabele() {
 	);
 
 	dbDelta(
+		"CREATE TABLE {$p}segm_skrz_przebiegi (
+		id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+		tryb varchar(10) NOT NULL DEFAULT 'na_sucho',
+		zrodlo varchar(10) NOT NULL DEFAULT 'reczny',
+		folder_zrodlowy varchar(255) NOT NULL DEFAULT '',
+		sprawdzonych int(10) unsigned NOT NULL DEFAULT 0,
+		dopasowanych int(10) unsigned NOT NULL DEFAULT 0,
+		przeniesionych int(10) unsigned NOT NULL DEFAULT 0,
+		bledow int(10) unsigned NOT NULL DEFAULT 0,
+		cofniety tinyint(1) NOT NULL DEFAULT 0,
+		komunikat text NOT NULL,
+		uruchomiono datetime NOT NULL,
+		PRIMARY KEY  (id)
+	) {$charset};"
+	);
+
+	dbDelta(
+		"CREATE TABLE {$p}segm_skrz_ruchy (
+		id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+		przebieg_id bigint(20) unsigned NOT NULL,
+		uid bigint(20) unsigned NOT NULL DEFAULT 0,
+		message_id varchar(190) NOT NULL DEFAULT '',
+		nadawca varchar(190) NOT NULL DEFAULT '',
+		temat text NOT NULL,
+		folder_z varchar(255) NOT NULL DEFAULT '',
+		folder_do varchar(255) NOT NULL DEFAULT '',
+		stan varchar(20) NOT NULL DEFAULT 'plan',
+		komunikat text NOT NULL,
+		uid_docelowy bigint(20) unsigned NOT NULL DEFAULT 0,
+		utworzono datetime NOT NULL,
+		PRIMARY KEY  (id),
+		KEY przebieg_id (przebieg_id)
+	) {$charset};"
+	);
+
+	dbDelta(
 		"CREATE TABLE {$p}segm_ai_uzycie (
 		dzien date NOT NULL,
 		wywolania int(10) unsigned NOT NULL DEFAULT 0,
@@ -94,6 +130,9 @@ function segm_aktywacja() {
  */
 function segm_deaktywacja() {
 	wp_clear_scheduled_hook( 'segm_czyszczenie_probki' );
+	// Segregacja skrzynki sięga na CUDZY serwer poczty — wyłączona wtyczka nie
+	// ma prawa dalej tam chodzić, nawet gdyby wpis w cronie przetrwał.
+	wp_clear_scheduled_hook( 'segm_skrzynka_cron' );
 }
 
 /**
