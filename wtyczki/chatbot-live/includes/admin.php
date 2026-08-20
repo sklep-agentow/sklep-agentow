@@ -691,7 +691,11 @@ function chatl_strona_ustawienia() {
 							Bez tego wtyczka widzi adres proxy zamiast adresu gościa, więc limit <?php echo (int) CHATL_LIMIT_NA_MIN; ?> wiadomości na minutę
 							obowiązuje <strong>całą witrynę naraz</strong>, a dobowy limit <?php echo (int) CHATL_AI_LIMIT_IP_NA_DOBE; ?> wywołań AI na adres staje się limitem na całą stronę.<br>
 							Domyślnie wyłączone, bo te nagłówki da się <strong>podrobić</strong>: na stronie bez proxy zaufanie im oznaczałoby,
-							że każdy obchodzi limity, podając za każdym razem inny adres. Nie wiesz? Zostaw wyłączone — limity będą co najwyżej surowsze.
+							że każdy obchodzi limity, podając za każdym razem inny adres. Nie wiesz? Zostaw wyłączone — limity będą co najwyżej surowsze.<br>
+							<strong>Sam Cloudflare to za mało.</strong> Jeżeli do Twojego serwera da się dobić <strong>z pominięciem</strong> proxy
+							(wpisując bezpośrednio jego adres IP), podrobiony nagłówek nadal obchodzi limit — bo żądanie nie przechodzi wtedy przez
+							Cloudflare, który normalnie ten nagłówek nadpisuje. Poproś hosting o ograniczenie ruchu do adresów Cloudflare
+							albo zostaw przełącznik wyłączony.
 						</p>
 					</td>
 				</tr>

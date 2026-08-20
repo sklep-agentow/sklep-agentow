@@ -185,6 +185,11 @@ proxy"**. Bez tego wtyczka widzi adres Cloudflare zamiast adresu gościa, więc 
 wywołań AI na adres staje się limitem na całą stronę. Jeśli nie jesteś pewien,
 czy stoisz za proxy — zostaw wyłączone; limity będą wtedy co najwyżej surowsze,
 a włączenie tego na stronie bez proxy pozwoliłoby je obchodzić.
+Uwaga: samo używanie Cloudflare nie wystarczy. Jeżeli do Twojego serwera da się
+połączyć **z pominięciem** proxy (po jego własnym adresie IP), ktoś może podać
+zmyślony nagłówek i limit dalej da się obejść — bo takie żądanie nie przechodzi
+przez Cloudflare, który normalnie ten nagłówek poprawia. Poproś hosting, żeby
+ograniczył ruch do adresów Cloudflare, albo zostaw przełącznik wyłączony.
 
 **Czy gość może zalać mnie wiadomościami?**
 Nie — limit to 10 wiadomości na minutę z jednego adresu IP (dotyczy pytań

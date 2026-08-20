@@ -641,6 +641,19 @@ włączyć i czym to grozi.
 Każdy odczyt przechodzi przez `filter_var( …, FILTER_VALIDATE_IP )`: nagłówek ze
 śmieciem nie może wyłączyć limitu ani stworzyć własnego kubła, więc przy złej
 wartości schodzimy do `REMOTE_ADDR`.
+
+**Warunek, bez którego przełącznik nie daje tego, co obiecuje** (uwaga recenzenta
+do PR #80). `CF-Connecting-IP` jest wiarygodny wyłącznie dlatego, że Cloudflare
+**nadpisuje** ten nagłówek na wejściu. Jeżeli origin jest osiągalny bezpośrednio —
+typowe na hostingu współdzielonym bez reguł zapory — żądanie z podrobionym
+`CF-Connecting-IP` omija Cloudflare w całości i nikt go po drodze nie poprawia.
+Napastnik nie musi wtedy znać niczyjego adresu: wystarczy inna zmyślona wartość
+przy każdym żądaniu, żeby kubeł limitu był za każdym razem nowy. Wtyczka **nie
+weryfikuje** pochodzenia żądania (allowlista zakresów Cloudflare wymagałaby
+aktualizowanej listy adresów i jest poza zakresem tej wersji), więc warunek jest
+po stronie wdrożenia: **włączaj przełącznik tylko wtedy, gdy origin nie przyjmuje
+połączeń z pominięciem proxy** (zapora hostingu ogranicza ruch do adresów
+Cloudflare). Panel mówi to właścicielowi wprost, a nie tylko ta dokumentacja.
 ## 16. Zabezpieczenie formularza a cache strony
 
 Nonce wchodzi do HTML-a strony przez `wp_localize_script()`, a wtyczka albo usługa
