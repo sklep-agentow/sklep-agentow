@@ -105,6 +105,13 @@ W trybie regułowym nie — dopasowanie działa lokalnie. W trybie AI treść py
 wraz z opisem firmy i bazą Q&A idzie do API dostawcy modelu; napisz o tym
 w swojej polityce prywatności.
 
+= Gościom nie działa czat, a w panelu jest czerwone ostrzeżenie o zabezpieczeniu. =
+
+Twoja strona jest podawana gościom z pamięci podręcznej (cache) starszej niż
+ważność zabezpieczenia formularza. Wtyczka radzi sobie z tym sama — odświeża
+zabezpieczenie i powtarza pytanie — ale jeśli liczba w ostrzeżeniu rośnie,
+**wyłącz cache dla strony, na której stoi czat**, albo skróć czas życia cache.
+
 = Statystyki pokazują kreskę zamiast procentu skuteczności. Dlaczego? =
 
 W wybranym okresie nie ma jeszcze ani jednej zmierzonej odpowiedzi — świeża
@@ -126,6 +133,11 @@ w paczce. Poniżej skrót.
 * Naprawione: za Cloudflare albo proxy hostingu limity działały na **całą witrynę
   naraz** zamiast na gościa. Nowe ustawienie „Strona za Cloudflare albo proxy"
   (domyślnie wyłączone — włącz tylko, gdy naprawdę tak jest).
+= 1.4.1 =
+* Naprawione: na stronie z cache (LiteSpeed, WP Rocket, W3TC, Cloudflare) czat mógł
+  przestać działać **wszystkim gościom naraz**, a właściciel nie miał jak tego
+  zauważyć. Widget sam odświeża zabezpieczenie i powtarza pytanie, a panel pokazuje
+  ostrzeżenie, jeśli problem się powtarza.
 
 = 1.4.0 =
 * **Konfigurowalny wygląd widgetu**: kolor główny, kolor paska nagłówka, kolor

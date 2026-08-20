@@ -30,14 +30,11 @@ function segm_klasyfikuj_mail( $mail, $reguly ) {
 		if ( ! isset( $pola[ $regula->pole ] ) ) {
 			continue;
 		}
-		$warianty = array_filter( array_map( 'trim', explode( ',', mb_strtolower( $regula->wzorzec ) ) ) );
-		foreach ( $warianty as $wariant ) {
-			if ( false !== mb_strpos( $pola[ $regula->pole ], $wariant ) ) {
-				return array(
-					'kategoria' => $regula->kategoria,
-					'regula_id' => (int) $regula->id,
-				);
-			}
+		if ( segm_wzorzec_pasuje( $pola[ $regula->pole ], $regula->wzorzec ) ) {
+			return array(
+				'kategoria' => $regula->kategoria,
+				'regula_id' => (int) $regula->id,
+			);
 		}
 	}
 
@@ -45,6 +42,31 @@ function segm_klasyfikuj_mail( $mail, $reguly ) {
 		'kategoria' => SEGM_KUBEL_DOMYSLNY,
 		'regula_id' => null,
 	);
+}
+
+/**
+ * Czy wzorzec reguły pasuje do tekstu pola.
+ *
+ * JEDNO miejsce z regułą dopasowania — wołane i przez silnik (klasyfikacja),
+ * i przez panel (licznik „ile maili złapie ta reguła"). Gdyby panel liczył
+ * po swojemu, prędzej czy później pokazałby liczbę, której przebieg nie
+ * potwierdza — a wtedy klient przestaje wierzyć obu.
+ *
+ * Wzorzec to warianty po przecinku; wystarczy, że JEDEN wystąpi jako fragment
+ * tekstu. To zawieranie podciągu, nie wyrażenie regularne.
+ *
+ * @param string $tekst   Tekst pola, JUŻ sprowadzony do małych liter.
+ * @param string $wzorzec Wzorzec reguły.
+ * @return bool
+ */
+function segm_wzorzec_pasuje( $tekst, $wzorzec ) {
+	$warianty = array_filter( array_map( 'trim', explode( ',', mb_strtolower( (string) $wzorzec ) ) ) );
+	foreach ( $warianty as $wariant ) {
+		if ( false !== mb_strpos( $tekst, $wariant ) ) {
+			return true;
+		}
+	}
+	return false;
 }
 
 /**
