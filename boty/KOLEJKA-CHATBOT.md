@@ -5,6 +5,30 @@ skończonym kawałku. Zasady od koordynatora: osobne PR-y, **nigdy nie scalam**
 (scala koordynator), nie dotykam `wtyczki/segregator-maila` ani
 `wtyczki/sklep-agentow`, bez `push --force`, bez kasowania gałęzi.
 
+## Zrodlo znalezisk
+
+`boty/LUKI-SWIEZA-GLOWA-20-08.md` — przelot koordynatorki po kodzie obu botow
+(20.08), z dowodami `plik:linia`. Dokument lezal poza repo; wjechal tu swiadomie
+razem z PR #78, bo opisy PR-ow sie na niego powoluja, a recenzent nie mial jak
+sprawdzic cytatow. ⛔ To NIE jest audyt: panele admina, statystyki, import CSV
+i instalatory nie byly czytane.
+
+## Naprawy luk — stan PR-ow
+
+| PR | Luka | Co bylo zepsute u klienta | Wersja |
+|---|---|---|---|
+| #78 | **L1** | nonce w cache'owanej stronie — czat padal u WSZYSTKICH gosci naraz, po cichu | 1.4.1 |
+| #79 | **L4** | zly albo wygasly klucz API — bot po cichu odpowiadal z regul, w nieskonczonosc | 1.4.2 |
+
+Pozostale pozycje (L2, L3, L5, L7 oraz B i C z kolejki nizej) ida osobnymi
+PR-ami; ich numery dopisywane sa w gałęziach, ktore je wnosza.
+
+⚠️ Wszystkie galezie odbite od tego samego `main` (2ed694c), wiec przy scalaniu
+konflikty sa **mechaniczne**: linia `Version`/`CHATL_WERSJA` (zostaje najwyzszy
+numer), nazwa pliku paczki oraz liczby w `testy/dokumentacja-zgodnosc.sh`, ktore
+**sumuja sie** miedzy PR-ami. Ten plik tez bywa dotykany w kilku galeziach —
+scalenie polega na zlozeniu wierszy tabeli, nic wiecej.
+
 ## Stan na 2026-08-20
 
 - **PR #73** — gałąź `b1/chatbot-statystyki`, wersja **1.4.0**, schemat bazy **4**.
