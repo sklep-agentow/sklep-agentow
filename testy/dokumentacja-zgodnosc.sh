@@ -174,7 +174,7 @@ spr "wywolan esc_like (bez komentarzy)" "2" "grep -o 'wpdb->esc_like(' $W/uninst
 
 echo
 echo "=== G. Ustawienia: klucze i wartosci domyslne ==="
-spr "kluczy w chatl_ustawienia"   "13"  "sed -n '/\\\$domyslne = array(/,/);/p' $W/chatbot-live.php | grep -cP \"^\t\t'\""
+spr "kluczy w chatl_ustawienia"   "14"  "sed -n '/\\\$domyslne = array(/,/);/p' $W/chatbot-live.php | grep -cP \"^\t\t'\""
 spr "ai_limit_dzienny domyslnie"  "100" "grep -oP \"(?<='ai_limit_dzienny' => )[0-9]+\" $W/chatbot-live.php"
 spr "zakres zapisu limitu (max)"  "100000" "grep -oP '(?<=min\\( )[0-9]+(?=, \\(int\\) \\\$_POST\\[.ai_limit_dzienny)' $W/includes/admin.php"
 spr "wlaczony domyslnie"          "1"  "grep -oP \"(?<='wlaczony'         => )[0-9]+\" $W/chatbot-live.php"
@@ -197,7 +197,21 @@ spr "akcje admin_post"            "9"  "grep -rc \"add_action( 'admin_post_\" $W
 # Liczymy ROZNE nazwy filtrow, nie wywolania: ten sam punkt rozszerzenia bywa
 # uzyty w kilku miejscach (od 1.4.2 chatl_ai_url i chatl_ai_model wolane sa
 # takze przez test klucza), a dokumentacja obiecuje LICZBE PUNKTOW, nie wywolan.
-spr "wystawione filtry (rozne nazwy)" "2"  "grep -oP \"(?<=apply_filters\\( ')[^']*\" $W/includes/ai.php | sort -u | wc -l"
+spr "wystawione filtry AI"        "2"  "grep -oP \"(?<=apply_filters\( ')[^']*\" $W/includes/ai.php | sort -u | wc -l"
+spr "filtr adresu goscia"         "1"  "grep -oP \"(?<=apply_filters\( ')[^']*\" $W/includes/front.php | sort -u | wc -l"
+# Naglowki proxy czytamy WYLACZNIE pod przelacznikiem — gdyby ten warunek znikl,
+# na stronie bez proxy kazdy obchodzilby limity, podajac inny adres.
+spr "naglowki proxy pod przelacznikiem" "1" "grep -c \"if ( ! empty( \\\$ust\['za_proxy'\] ) ) {\" $W/includes/front.php"
+# Uwaga WAZNA recenzenta do PR #80: CF-Connecting-IP jest wiarygodny tylko wtedy,
+# gdy origin nie przyjmuje polaczen z pominieciem proxy. To warunek WDROZENIA,
+# ktorego kod nie umie wymusic — wiec musi stac w panelu, a nie tylko w dokumentacji.
+spr "panel ostrzega o ominieciu proxy" "1" "grep -c 'Sam Cloudflare to za mało' $W/includes/admin.php"
+spr "dokumentacja stawia ten warunek"  "1" "grep -c 'origin nie przyjmuje' $DOK"
+
+# Uwaga DROBNA recenzenta do PR #80: liczenie samego stringu FILTER_VALIDATE_IP
+# lapalo tez wzmianke w komentarzu phpcs:disable — kontrola wywracala sie przy
+# zmianie TRESCI komentarza, nie logiki. Liczymy realne wywolania.
+spr "kazdy adres walidowany"      "2"  "grep -cF \"filter_var( \\\$ip, FILTER_VALIDATE_IP )\" $W/includes/front.php"
 spr "bramek current_user_can"      "8"  "grep -rc \"current_user_can( 'manage_options' )\" $W/includes/admin.php $W/includes/csv.php | awk -F: '{s+=\$2} END {print s}'"
 spr "stron panelu (menu+submenu)"  "6"  "grep -c 'add_menu_page(\|add_submenu_page(' $W/includes/admin.php"
 
