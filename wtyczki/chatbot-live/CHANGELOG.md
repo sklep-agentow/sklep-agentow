@@ -30,6 +30,21 @@ migracja odpala się sama przy pierwszym wejściu do panelu po aktualizacji
   tej informacji i nie są zgadywane wstecz.
 - Wtyczka pokazuje tokeny, **nie kwoty** — stawki sprawdzasz u dostawcy modelu.
 
+## [1.4.4] — 2026-08-20
+
+### Zmienione
+- **Domyślny model to teraz alias bez daty** (`claude-haiku-4-5` zamiast
+  `claude-haiku-4-5-20251001`). Identyfikator z datą wskazuje konkretną migawkę
+  modelu, a te bywają wycofywane — wtedy **każda sprzedana kopia wtyczki traci
+  tryb AI naraz**. Alias przeżywa wymianę migawki.
+
+### Dodane
+- **Wybór modelu w ustawieniach**: lista podpowiedzi (od najtańszego do
+  najmocniejszego) plus pole na własny identyfikator. Do tej pory zmiana modelu
+  wymagała napisania filtru w kodzie — czego kupujący wtyczkę nie robi.
+- Panel mówi wprost, **żeby wpisywać identyfikator bez daty**, i odsyła do
+  dokumentacji dostawcy po aktualną listę modeli i cennik.
+
 ## [1.4.3] — 2026-08-20
 
 ### Naprawione

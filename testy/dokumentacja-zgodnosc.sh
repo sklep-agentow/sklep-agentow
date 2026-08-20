@@ -133,7 +133,7 @@ spr "CHATL_LUKI_POKAZ"            "25"    "grep -oP '(?<=CHATL_LUKI_POKAZ = )[0-
 spr "CHATL_LUKI_PROG"             "50"    "grep -oP '(?<=CHATL_LUKI_PROG = )[0-9]+' $W/includes/statystyki.php"
 spr "CHATL_LUKI_RDZEN"            "4"     "grep -oP '(?<=CHATL_LUKI_RDZEN = )[0-9]+' $W/includes/statystyki.php"
 spr "CHATL_SUGESTIA_RDZEN"        "5"     "grep -oP '(?<=CHATL_SUGESTIA_RDZEN = )[0-9]+' $W/includes/statystyki.php"
-spr "CHATL_AI_MODEL"              "claude-haiku-4-5-20251001" "grep -oP \"(?<=CHATL_AI_MODEL      = ')[^']*\" $W/includes/ai.php"
+spr "CHATL_AI_MODEL"              "claude-haiku-4-5" "grep -oP \"(?<=CHATL_AI_MODEL      = ')[^']*\" $W/includes/ai.php"
 spr "CHATL_AI_BRAK"               "BRAK_ODPOWIEDZI" "grep -oP \"(?<=CHATL_AI_BRAK       = ')[^']*\" $W/includes/ai.php"
 
 echo
@@ -174,7 +174,7 @@ spr "wywolan esc_like (bez komentarzy)" "2" "grep -o 'wpdb->esc_like(' $W/uninst
 
 echo
 echo "=== G. Ustawienia: klucze i wartosci domyslne ==="
-spr "kluczy w chatl_ustawienia"   "15"  "sed -n '/\\\$domyslne = array(/,/);/p' $W/chatbot-live.php | grep -cP \"^\t\t'\""
+spr "kluczy w chatl_ustawienia"   "16"  "sed -n '/\\\$domyslne = array(/,/);/p' $W/chatbot-live.php | grep -cP \"^\t\t'\""
 spr "ai_limit_dzienny domyslnie"  "100" "grep -oP \"(?<='ai_limit_dzienny' => )[0-9]+\" $W/chatbot-live.php"
 spr "zakres zapisu limitu (max)"  "100000" "grep -oP '(?<=min\\( )[0-9]+(?=, \\(int\\) \\\$_POST\\[.ai_limit_dzienny)' $W/includes/admin.php"
 spr "wlaczony domyslnie"          "1"  "grep -oP \"(?<='wlaczony'         => )[0-9]+\" $W/chatbot-live.php"
@@ -212,6 +212,10 @@ spr "dokumentacja stawia ten warunek"  "1" "grep -c 'origin nie przyjmuje' $DOK"
 # lapalo tez wzmianke w komentarzu phpcs:disable — kontrola wywracala sie przy
 # zmianie TRESCI komentarza, nie logiki. Liczymy realne wywolania.
 spr "kazdy adres walidowany"      "2"  "grep -cF \"filter_var( \\\$ip, FILTER_VALIDATE_IP )\" $W/includes/front.php"
+# Model z data w stalej to bomba zegarowa u kazdego kupujacego (luka L5):
+# migawki bywaja wycofywane, a my nie mamy serwera aktualizacji.
+spr "domyslny model BEZ daty"     "0"  "grep -cP \"CHATL_AI_MODEL\s*=\s*'[^']*-[0-9]{8}'\" $W/includes/ai.php"
+spr "zadne modele z listy nie maja daty" "0" "sed -n '/function chatl_ai_modele/,/^}/p' $W/includes/ai.php | grep -cP \"'[a-z0-9-]+-[0-9]{8}'\""
 spr "bramek current_user_can"      "8"  "grep -rc \"current_user_can( 'manage_options' )\" $W/includes/admin.php $W/includes/csv.php | awk -F: '{s+=\$2} END {print s}'"
 spr "stron panelu (menu+submenu)"  "6"  "grep -c 'add_menu_page(\|add_submenu_page(' $W/includes/admin.php"
 

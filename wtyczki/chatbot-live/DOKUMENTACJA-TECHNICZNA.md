@@ -183,6 +183,7 @@ więc **brakujący klucz nigdy nie jest błędem** — nowe pole dostaje wartoś
 | `kolor_tekstu` | `auto` | `auto` = wtyczka dobiera kolor tekstu osobno dla bąbelka i dla nagłówka, biorąc ten o lepszym kontraście. Wartość `#rrggbb` = ten sam kolor na obu. |
 | `pozycja` | `prawo` | `prawo` albo `lewo` — róg strony, w którym stoi widget. |
 | `za_proxy` | `0` | Czy ufać nagłówkom proxy przy ustalaniu adresu gościa. **Domyślnie wyłączone** — `X-Forwarded-For` da się podrobić. |
+| `ai_model` | `''` | Model wybrany przez właściciela. **Pusty = użyj `CHATL_AI_MODEL`** — dzięki temu podniesienie domyślnego modelu w kolejnej wersji dociera do wszystkich, którzy go świadomie nie zmienili. |
 | `adres_polityki` | `''` | Adres polityki prywatności linkowany przy formularzu. Pusty = sama informacja, bez linku. |
 
 ---
@@ -201,9 +202,9 @@ Wszystkie liczby, którymi wtyczka się rządzi, są stałymi — nie ma ich roz
 | `CHATL_LIMIT_NA_MIN` | `10` | `includes/front.php` | wspólny kubeł: żądań na minutę z jednego IP, łącznie dla pytań i zgłoszeń |
 | `CHATL_RETENCJA_DNI` | `90` | `includes/front.php` | okres retencji historii rozmów — **jedno źródło** dla crona, tekstu w widgecie, panelu i eksportu |
 | `CHATL_AI_LIMIT_IP_NA_DOBE` | `20` | `includes/front.php` | osobny, twardszy limit wywołań AI z jednego IP na dobę |
+| `CHATL_AI_MODEL` | `claude-haiku-4-5` | `includes/ai.php` | **domyślny** model — alias BEZ daty, żeby wycofanie migawki nie zabiło trybu AI u wszystkich kupujących. Właściciel wybiera model w ustawieniach, integrator filtrem. |
 | `CHATL_LIMIT_NONCE` | `20` | `includes/front.php` | odświeżeń zabezpieczenia formularza na minutę z jednego IP |
 | `CHATL_NONCE_OKNO_DNI` | `7` | `includes/front.php` | ile dni panel pokazuje ostrzeżenie o odrzuconych zabezpieczeniach |
-| `CHATL_AI_MODEL` | `claude-haiku-4-5-20251001` | `includes/ai.php` | domyślny model (podmienialny filtrem) |
 | `CHATL_AI_MAX_TOKENS` | `1024` | `includes/ai.php` | limit długości odpowiedzi modelu |
 | `CHATL_AI_TIMEOUT` | `9` | `includes/ai.php` | timeout jednego wywołania w sekundach; z jednym ponowieniem daje maks. 18 s, z zapasem pod typowy limit 30 s na hostingu |
 | `CHATL_AI_BRAK` | `BRAK_ODPOWIEDZI` | `includes/ai.php` | sentinel „model nie wie" — sygnał do zbiórki kontaktu zamiast zgadywania |
@@ -657,7 +658,45 @@ po stronie wdrożenia: **włączaj przełącznik tylko wtedy, gdy origin nie prz
 połączeń z pominięciem proxy** (zapora hostingu ogranicza ruch do adresów
 Cloudflare). Panel mówi to właścicielowi wprost, a nie tylko ta dokumentacja.
 
-## 16. Tokeny i koszt trybu AI
+## 16. Wybór modelu
+
+`CHATL_AI_MODEL` to **alias bez daty** (`claude-haiku-4-5`), nie migawka
+(`claude-haiku-4-5-20251001`). Identyfikator z datą wskazuje konkretną migawkę
+modelu, a te bywają wycofywane — wtedy **każda sprzedana kopia traci tryb AI
+naraz**, a jedyną drogą naprawy jest ręczna wysyłka zipa mailem, bo nie mamy
+serwera aktualizacji.
+
+Zastrzeżenie (uwaga recenzenta do PR #81): **alias bez daty to konwencja dostawcy,
+nie gwarancja** — nie każdy model musi go mieć, a wtyczka nie ma jak sprawdzić
+listy identyfikatorów w locie. Dlatego pole „własny model" przyjmuje dowolną
+nazwę, a panel i FAQ mówią: użyj nazwy bez daty **jeśli dostawca taką podaje**.
+Siatką bezpieczeństwa jest §14: nieznana nazwa modelu daje HTTP 404, który od
+1.4.2 stawia znacznik i zapala w panelu czerwony pasek z komunikatem wprost
+(„API nie zna tego modelu"). Zły identyfikator jest więc **widoczny od pierwszego
+pytania gościa**, a nie cichy — to różnica między usterką do poprawienia w minutę
+a awarią, której właściciel nie zauważa miesiącami.
+
+Model ustala `chatl_ai_model()` w trzech poziomach, bo mają trzech różnych adresatów:
+
+| Poziom | Dla kogo | Uwaga |
+|---|---|---|
+| ustawienie `ai_model` | **kupujący** | nie pisze filtrów; wybiera z listy albo wpisuje własny identyfikator |
+| stała `CHATL_AI_MODEL` | produkt | wartość domyślna |
+| filtr `chatl_ai_model` | integrator | ostatnie słowo (np. proxy z własnym nazewnictwem) |
+
+Pusta wartość ustawienia znaczy „użyj domyślnej produktu" — dlatego wybranie
+z listy modelu równego `CHATL_AI_MODEL` **nie zapisuje niczego na sztywno**.
+Puste wyjście z filtru też wraca do stałej: żądanie do API nigdy nie idzie
+z pustym polem `model`.
+
+Lista w ustawieniach jest krótka i **bez cen**: cennik dostawcy się zmienia,
+a wtyczka nie ma jak go odświeżyć — wpisana kwota zestarzałaby się w paczce
+u klienta. Zamiast tego panel podaje kolejność „taniej ↔ mocniej" i odsyła do
+dokumentacji dostawcy. Pole „własny model" jest po to, żeby lista nigdy nie
+była więzieniem; wpisana wartość jest przycinana do liter, cyfr, myślników
+i kropek.
+
+## 17. Tokeny i koszt trybu AI
 
 Rachunek u dostawcy modelu idzie z **tokenów**, nie z liczby wywołań. Instrukcja
 systemowa (`chatl_ai_instrukcja()`) wkłada do żądania **całą aktywną bazę Q&A**
@@ -719,7 +758,7 @@ Strona **Statystyki i luki** pokazuje zużycie tokenów w wybranym okresie
 (`chatl_statystyki_tokenow()`), a **Ustawienia** — zużycie dzisiejsze obok pola
 limitu. Wtyczka **nie podaje kwot**: cennik dostawcy się zmienia, a ona nie ma jak
 go odświeżyć — wpisana kwota zestarzałaby się w paczce u klienta.
-## 17. Zabezpieczenie formularza a cache strony
+## 18. Zabezpieczenie formularza a cache strony
 
 Nonce wchodzi do HTML-a strony przez `wp_localize_script()`, a wtyczka albo usługa
 cache (LiteSpeed, WP Rocket, W3TC, Cloudflare) potrafi serwować ten HTML **dłużej,
@@ -757,7 +796,7 @@ sukcesem.
 
 ---
 
-## 18. Eksport CSV
+## 19. Eksport CSV
 
 Ręczny, przyciskiem w panelu — `includes/csv.php`. Dwa strumienie: wszystkie zgłoszenia
 (`id, data, email, wiadomosc, status, sesja`) i historia rozmów (`sesja, data, kto, silnik, tresc`),
@@ -773,7 +812,7 @@ kłóciłoby się z obietnicą retencji.
 
 ---
 
-## 19. Znane granice
+## 20. Znane granice
 
 Rzeczy, których wtyczka **nie** robi — żeby nikt nie szukał ich w kodzie:
 
@@ -803,6 +842,8 @@ Rzeczy, których wtyczka **nie** robi — żeby nikt nie szukał ich w kodzie:
 - **Zaufanie nagłówkom proxy jest decyzją właściciela, nie automatem.** Wtyczka
   nie zgaduje, czy strona stoi za Cloudflare — przy wyłączonym przełączniku limity
   są co najwyżej surowsze, przy włączonym na stronie bez proxy dałyby się obejść.
+- **Wtyczka nie sprawdza, czy wpisany model istnieje.** Lista w ustawieniach to
+  podpowiedź, nie walidacja — nieznaną nazwę wykryje dopiero API (HTTP 404).
 - **Wtyczka nie przelicza tokenów na pieniądze.** Pokazuje zużycie; stawki
   sprawdzasz u dostawcy. Cennik się zmienia, a paczka u klienta nie.
 - **Liczniki tokenów zaczynają się od aktualizacji do 1.4.6** — wcześniejsze

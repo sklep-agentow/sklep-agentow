@@ -139,6 +139,9 @@ function chatl_ustawienia() {
 		 * 0 = wyłączony (świadoma decyzja właściciela).
 		 */
 		'ai_limit_tokenow' => 200000,
+		// Pusty = użyj CHATL_AI_MODEL. Właściciel może wpisać własny
+		// identyfikator, gdy dostawca wycofa albo doda model.
+		'ai_model'         => '',
 		// Zaufanie nagłówkom proxy: domyślnie WYŁĄCZONE, bo X-Forwarded-For
 		// da się podrobić. Włącza je świadomie właściciel strony za Cloudflare.
 		'za_proxy'         => 0,

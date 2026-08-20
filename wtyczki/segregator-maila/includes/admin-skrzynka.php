@@ -301,7 +301,16 @@ function segm_strona_skrzynka() {
  */
 function segm_skrzynka_tabela_przebiegow() {
 	global $wpdb;
-	$przebiegi = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}segm_skrz_przebiegi ORDER BY id DESC LIMIT 50" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	$wszystkich = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}segm_skrz_przebiegi" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	$strona_nr  = segm_biezaca_strona( (int) ceil( $wszystkich / SEGM_NA_STRONE ) );
+	$przebiegi  = $wpdb->get_results(
+		$wpdb->prepare(
+			"SELECT * FROM {$wpdb->prefix}segm_skrz_przebiegi ORDER BY id DESC LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			SEGM_NA_STRONE,
+			( $strona_nr - 1 ) * SEGM_NA_STRONE
+		)
+	);
+	segm_pasek_stron( 'segm-skrzynka', $wszystkich, $strona_nr );
 	?>
 	<table class="widefat striped">
 		<thead><tr><th>#</th><th>Kiedy</th><th>Tryb</th><th>Skąd</th><th>Sprawdzonych</th><th>Dopasowanych</th><th>Przeniesionych</th><th>Błędów</th><th></th></tr></thead>
@@ -323,7 +332,7 @@ function segm_skrzynka_tabela_przebiegow() {
 				<td><?php echo (int) $p->dopasowanych; ?></td>
 				<td><?php echo (int) $p->przeniesionych; ?></td>
 				<td><?php echo (int) $p->bledow; ?></td>
-				<td><a href="<?php echo esc_url( admin_url( 'admin.php?page=segm-skrzynka&przebieg=' . (int) $p->id ) ); ?>">Szczegóły</a></td>
+				<td><a href="<?php echo esc_url( admin_url( 'admin.php?page=segm-skrzynka&przebieg=' . (int) $p->id . ( $strona_nr > 1 ? '&segm_strona=' . (int) $strona_nr : '' ) ) ); ?>">Szczegóły</a></td>
 			</tr>
 		<?php endforeach; ?>
 		</tbody>
@@ -356,7 +365,7 @@ function segm_skrzynka_widok_przebiegu( $id ) {
 	?>
 	<div class="wrap">
 		<h1>Przebieg skrzynki #<?php echo (int) $p->id; ?> — <?php echo 'na_zywo' === $p->tryb ? 'realny' : 'na sucho'; ?> (<?php echo esc_html( $p->uruchomiono ); ?>)</h1>
-		<p><a href="<?php echo esc_url( admin_url( 'admin.php?page=segm-skrzynka' ) ); ?>">← wróć do skrzynki</a></p>
+		<p><a href="<?php echo esc_url( admin_url( 'admin.php?page=segm-skrzynka' . segm_param_strony() ) ); ?>">← wróć do skrzynki</a></p>
 		<?php if ( 'na_sucho' === $p->tryb ) : ?>
 			<div class="notice notice-info inline"><p>Ten przebieg poszedł <strong>na sucho</strong>: poniżej jest lista tego, co wtyczka <em>zrobiłaby</em>. Na serwerze poczty nic się nie zmieniło.</p></div>
 		<?php endif; ?>
