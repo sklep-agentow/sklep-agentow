@@ -24,6 +24,23 @@ const CHATL_RETENCJA_DNI  = 90;
  */
 const CHATL_AI_LIMIT_IP_NA_DOBE = 20;
 
+/*
+ * Limit odswiezania zabezpieczenia formularza z jednego adresu IP na minute.
+ * Wyzszy niz wspolny kubel czatu, bo na jedno nieudane pytanie przypada jedno
+ * odswiezenie i gosc nie moze wpasc w blokade w trakcie ratowania wlasnej
+ * rozmowy. Endpoint jest tani, bo niczego nie zapisuje, ale ma byc pod
+ * limitem, zeby nie stal sie darmowa maszynka do generowania tokenow.
+ */
+const CHATL_LIMIT_NONCE = 20;
+
+/*
+ * Ile dni panel pokazuje ostrzezenie o odrzuconych nonce'ach.
+ * Znacznika NIE kasujemy przy udanym zadaniu, bo to byloby zapisanie do bazy
+ * na sciezce KAZDEGO pytania goscia. Zamiast tego ostrzezenie samo cichnie,
+ * gdy ostatnie odrzucenie jest starsze niz to okno.
+ */
+const CHATL_NONCE_OKNO_DNI = 7;
+
 /**
  * Rate limit per IP na tabeli — wspólny dla obu endpointów nopriv,
  * żeby gość z noncem nie zalewał
@@ -77,6 +94,76 @@ function chatl_rate_limit( $akcja, $prog = CHATL_LIMIT_NA_MIN, $okno_sekund = MI
 	}
 	return $ile <= $prog;
 }
+
+/**
+ * Odnotowanie odrzuconego nonce'a — sygnał dla właściciela.
+ *
+ * Bez tego awaria jest CAŁKOWICIE cicha: strona z cache podaje gościom HTML
+ * starszy niż życie nonce'a, każde pytanie kończy się odmową, a właściciel
+ * widzi w panelu normalnie działający panel i pustą historię rozmów.
+ * Wzorzec 1:1 z chatl_odnotuj_wysylke_powiadomienia().
+ *
+ * @return void
+ */
+function chatl_odnotuj_odrzucony_nonce() {
+	$blad = get_option( 'chatl_blad_nonce' );
+	$ile  = is_array( $blad ) && isset( $blad['ile'] ) ? (int) $blad['ile'] + 1 : 1;
+	update_option(
+		'chatl_blad_nonce',
+		array(
+			'ostatni' => current_time( 'mysql' ),
+			'ile'     => $ile,
+		),
+		false
+	);
+}
+
+/**
+ * Sprawdzenie nonce'a, które NIE ubija żądania.
+ *
+ * check_ajax_referer() w domyślnej postaci kończy proces odpowiedzią „-1",
+ * więc (a) nie ma gdzie odnotować awarii, (b) gość dostaje coś, co nie jest
+ * JSON-em wtyczki. Tutaj sprawdzamy sami i odpowiadamy WŁASNYM błędem
+ * z kodem `nonce` — po tym kodzie widget wie, że ma dociągnąć świeży nonce
+ * i powtórzyć żądanie, zamiast straszyć gościa komunikatem o awarii.
+ *
+ * @return void Kończy żądanie, gdy nonce jest zły.
+ */
+function chatl_wymagaj_nonce() {
+	if ( check_ajax_referer( 'chatl_front', 'nonce', false ) ) {
+		return;
+	}
+	chatl_odnotuj_odrzucony_nonce();
+	wp_send_json_error(
+		array(
+			'komunikat' => 'Sesja formularza wygasła — odświeżam i próbuję ponownie.',
+			'kod'       => 'nonce',
+		),
+		403
+	);
+}
+
+/**
+ * AJAX: wydanie świeżego nonce'a gościowi, któremu strona przyszła z cache.
+ *
+ * Endpoint CELOWO nie wymaga nonce'a — jego jedynym zadaniem jest wydanie
+ * nonce'a komuś, kto ma nieważny. Nie osłabia to niczego: ten sam token każdy
+ * może odczytać, wchodząc na stronę, a `wp_create_nonce( 'chatl_front' )` jest
+ * ważny WYŁĄCZNIE dla dwóch publicznych akcji czatu — nie otwiera niczego,
+ * czego gość nie mógłby zrobić i tak. Ochroną jest osobny limit na IP.
+ */
+function chatl_ajax_nonce() {
+	if ( ! chatl_rate_limit( 'nonce', CHATL_LIMIT_NONCE ) ) {
+		wp_send_json_error( array( 'komunikat' => 'Za dużo żądań — odczekaj chwilę.' ), 429 );
+	}
+	$ust = chatl_ustawienia();
+	if ( ! $ust['wlaczony'] ) {
+		wp_send_json_error( array( 'komunikat' => 'Czat jest wyłączony.' ), 403 );
+	}
+	wp_send_json_success( array( 'nonce' => wp_create_nonce( 'chatl_front' ) ) );
+}
+add_action( 'wp_ajax_chatl_nonce', 'chatl_ajax_nonce' );
+add_action( 'wp_ajax_nopriv_chatl_nonce', 'chatl_ajax_nonce' );
 
 /**
  * Wspólny kubeł limitu dla pytań i zgłoszeń widgetu.
@@ -170,7 +257,7 @@ function chatl_waliduj_sesje( $sesja ) {
  * AJAX: gość zadaje pytanie → odpowiedź z bazy Q&A albo tekst awaryjny.
  */
 function chatl_ajax_pytanie() {
-	check_ajax_referer( 'chatl_front', 'nonce' );
+	chatl_wymagaj_nonce();
 
 	if ( ! chatl_limit_ip_ok() ) {
 		wp_send_json_error( array( 'komunikat' => 'Za dużo wiadomości w krótkim czasie — odczekaj chwilę i spróbuj ponownie.' ), 429 );
@@ -251,7 +338,7 @@ add_action( 'wp_ajax_nopriv_chatl_pytanie', 'chatl_ajax_pytanie' );
  * AJAX: gość zostawia kontakt → zgłoszenie + (opcja) mail do właściciela.
  */
 function chatl_ajax_zgloszenie() {
-	check_ajax_referer( 'chatl_front', 'nonce' );
+	chatl_wymagaj_nonce();
 
 	if ( ! chatl_limit_ip_ok() ) {
 		wp_send_json_error( array( 'komunikat' => 'Za dużo wiadomości w krótkim czasie — odczekaj chwilę i spróbuj ponownie.' ), 429 );

@@ -112,12 +112,15 @@ function segm_komunikaty() {
 	// phpcs:disable WordPress.Security.NonceVerification.Recommended -- tylko odczyt komunikatu.
 	if ( isset( $_GET['segm_ok'] ) ) {
 		$teksty = array(
-			'zapisano'     => 'Zapisano.',
-			'usunieto'     => 'Usunięto.',
-			'demo'         => 'Przywrócono próbkę demo (30 maili).',
-			'wyczyszczono' => 'Wyczyszczono: próbka i raporty przebiegów usunięte z bazy.',
-			'zgoda'        => 'Zgoda zapisana — tryby AI są od teraz dostępne.',
-			'zgoda_cofnij' => 'Zgoda cofnięta — tryby AI są zablokowane. Próbka i raporty zostają bez zmian.',
+			'zapisano'      => 'Zapisano.',
+			'usunieto'      => 'Usunięto.',
+			'demo'          => 'Przywrócono próbkę demo (30 maili).',
+			'wyczyszczono'  => 'Wyczyszczono: próbka i raporty przebiegów usunięte z bazy.',
+			'zgoda'         => 'Zgoda zapisana — tryby AI są od teraz dostępne.',
+			'zgoda_cofnij'  => 'Zgoda cofnięta — tryby AI są zablokowane. Próbka i raporty zostają bez zmian.',
+			'mail_dodany'   => 'Mail dodany do próbki — reszta próbki bez zmian.',
+			'mail_zapisany' => 'Mail zapisany.',
+			'mail_usuniety' => 'Mail usunięty z próbki.',
 		);
 		$klucz  = sanitize_key( wp_unslash( $_GET['segm_ok'] ) );
 		if ( isset( $teksty[ $klucz ] ) ) {
@@ -435,7 +438,16 @@ function segm_strona_reguly() {
 	if ( isset( $_GET['edytuj'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$edytowana = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}segm_reguly WHERE id = %d", (int) $_GET['edytuj'] ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.Security.NonceVerification.Recommended
 	}
-	$pola = array(
+
+	// Wynik „Policz na próbce": wypełnia formularz tym, co właściciel wpisał,
+	// żeby po policzeniu nie musiał wklepywać wzorca od nowa.
+	$liczenie = segm_odbierz_liczenie();
+	$wpisane  = array(
+		'pole'         => $liczenie ? $liczenie['pole'] : ( $edytowana ? $edytowana->pole : '' ),
+		'wzorzec'      => $liczenie ? $liczenie['wzorzec'] : ( $edytowana ? $edytowana->wzorzec : '' ),
+		'kategoria_id' => $liczenie && $liczenie['kategoria_id'] > 0 ? (int) $liczenie['kategoria_id'] : ( $edytowana ? (int) $edytowana->kategoria_id : 0 ),
+	);
+	$pola     = array(
 		'od'    => 'nadawca zawiera',
 		'temat' => 'temat zawiera',
 		'tresc' => 'treść zawiera',
@@ -444,6 +456,7 @@ function segm_strona_reguly() {
 	<div class="wrap">
 		<h1>Reguły segregacji</h1>
 		<?php segm_komunikaty(); ?>
+		<p>Kolumny <strong>Pasuje</strong> i <strong>Zgarnia</strong> liczą na BIEŻĄCEJ próbce: pierwsza mówi, do ilu maili pasuje sam wzorzec, druga — ile z nich reguła realnie bierze, bo wcześniejsza reguła mogła je zabrać. Różnica między tymi liczbami to najczęstsza przyczyna „reguła wygląda dobrze, a nic nie łapie".</p>
 		<p><strong>Kolejność na liście rozstrzyga: pierwsza pasująca reguła wygrywa</strong> (jak filtry Gmail) — osobnego pola „priorytet" nie ma. Wzorzec to warianty po przecinku (np. <code>faktur, rachunek</code>) — wystarczy, że JEDEN pasuje jako fragment tekstu.</p>
 
 		<h2><?php echo $edytowana ? 'Edytuj regułę #' . (int) $edytowana->id : 'Dodaj regułę'; ?></h2>
@@ -457,11 +470,11 @@ function segm_strona_reguly() {
 					<td>
 						<select id="segm-pole" name="pole">
 							<?php foreach ( $pola as $klucz => $opis ) : ?>
-								<option value="<?php echo esc_attr( $klucz ); ?>" <?php selected( $edytowana && $edytowana->pole === $klucz ); ?>><?php echo esc_html( $opis ); ?></option>
+								<option value="<?php echo esc_attr( $klucz ); ?>" <?php selected( $wpisane['pole'], $klucz ); ?>><?php echo esc_html( $opis ); ?></option>
 							<?php endforeach; ?>
 						</select>
 						<input type="text" name="wzorzec" class="regular-text" required placeholder="warianty po przecinku"
-							value="<?php echo $edytowana ? esc_attr( $edytowana->wzorzec ) : ''; ?>" aria-label="Wzorzec (warianty po przecinku)">
+							value="<?php echo esc_attr( $wpisane['wzorzec'] ); ?>" aria-label="Wzorzec (warianty po przecinku)">
 					</td>
 				</tr>
 				<tr>
@@ -469,24 +482,32 @@ function segm_strona_reguly() {
 					<td>
 						<select id="segm-kategoria" name="kategoria_id" required>
 							<?php foreach ( $kategorie as $k ) : ?>
-								<option value="<?php echo (int) $k->id; ?>" <?php selected( $edytowana && (int) $edytowana->kategoria_id === (int) $k->id ); ?>><?php echo esc_html( $k->nazwa ); ?></option>
+								<option value="<?php echo (int) $k->id; ?>" <?php selected( $wpisane['kategoria_id'], (int) $k->id ); ?>><?php echo esc_html( $k->nazwa ); ?></option>
 							<?php endforeach; ?>
 						</select>
 					</td>
 				</tr>
 			</table>
-			<?php submit_button( $edytowana ? 'Zapisz zmiany' : 'Dodaj regułę (na koniec listy)' ); ?>
-			<?php if ( $edytowana ) : ?>
-				<a href="<?php echo esc_url( admin_url( 'admin.php?page=segm-reguly' ) ); ?>">Anuluj edycję</a>
-			<?php endif; ?>
+			<p class="submit" style="margin:0;padding:0">
+				<?php submit_button( $edytowana ? 'Zapisz zmiany' : 'Dodaj regułę (na koniec listy)', 'primary', 'submit', false ); ?>
+				<button type="submit" class="button" formaction="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"
+					name="action" value="segm_regula_policz" formnovalidate>Policz na próbce (bez zapisywania)</button>
+				<?php wp_nonce_field( 'segm_regula_policz', '_wpnonce_policz' ); ?>
+				<?php if ( $edytowana ) : ?>
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=segm-reguly' ) ); ?>" style="margin-left:8px">Anuluj edycję</a>
+				<?php endif; ?>
+			</p>
 		</form>
+		<?php if ( $liczenie ) : ?>
+			<div class="notice notice-info inline" style="margin:12px 0"><p><strong>Licznik:</strong> <?php echo esc_html( $liczenie['opis'] ); ?></p></div>
+		<?php endif; ?>
 
 		<h2>Lista reguł (kolejność rozstrzygania)</h2>
 		<table class="widefat striped">
-			<thead><tr><th>#</th><th>Warunek</th><th>→ kategoria</th><th>Kolejność</th><th>Akcje</th></tr></thead>
+			<thead><tr><th>#</th><th>Warunek</th><th>→ kategoria</th><th title="Do ilu maili z próbki pasuje sam wzorzec">Pasuje</th><th title="Ile maili ta reguła realnie zgarnia — pierwsza pasująca wygrywa">Zgarnia</th><th>Kolejność</th><th>Akcje</th></tr></thead>
 			<tbody>
 			<?php if ( ! $reguly ) : ?>
-				<tr><td colspan="5">Brak reguł — wszystko poleci do „<?php echo esc_html( SEGM_KUBEL_DOMYSLNY ); ?>".</td></tr>
+				<tr><td colspan="7">Brak reguł — wszystko poleci do „<?php echo esc_html( SEGM_KUBEL_DOMYSLNY ); ?>".</td></tr>
 			<?php endif; ?>
 			<?php
 			$ostatnia = count( $reguly );
@@ -498,6 +519,12 @@ function segm_strona_reguly() {
 					<td><?php echo (int) $r->kolejnosc; ?></td>
 					<td><?php echo esc_html( $pola[ $r->pole ] . ' „' . $r->wzorzec . '"' ); ?></td>
 					<td><?php echo esc_html( $r->kategoria ); ?></td>
+					<?php $trafienia = segm_policz_trafienia( $r->pole, $r->wzorzec, (int) $r->id ); ?>
+					<td><?php echo (int) $trafienia['pasuje']; ?></td>
+					<td<?php echo $trafienia['pasuje'] > 0 && 0 === $trafienia['wygrywa'] ? ' style="color:#996800"' : ''; ?>>
+						<?php echo (int) $trafienia['wygrywa']; ?>
+						<?php echo $trafienia['pasuje'] > 0 && 0 === $trafienia['wygrywa'] ? ' <span title="Wcześniejsza reguła zabiera te maile pierwsza">!</span>' : ''; ?>
+					</td>
 					<td>
 						<?php if ( $i > 1 ) : ?>
 							<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=segm_regula_ruch&id=' . (int) $r->id . '&kierunek=gora' ), 'segm_regula_ruch_' . (int) $r->id ) ); ?>" aria-label="Przesuń wyżej">▲</a>
@@ -755,6 +782,11 @@ function segm_strona_probka() {
 	global $wpdb;
 	$ile   = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}segm_maile" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 	$maile = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}segm_maile ORDER BY id ASC LIMIT 200" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+	$edytowany_mail = null;
+	if ( isset( $_GET['edytuj_mail'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$edytowany_mail = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}segm_maile WHERE id = %d", (int) $_GET['edytuj_mail'] ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.Security.NonceVerification.Recommended
+	}
 	?>
 	<div class="wrap">
 		<h1>Próbka maili (<?php echo (int) $ile; ?>)</h1>
@@ -773,6 +805,8 @@ function segm_strona_probka() {
 			<?php submit_button( 'Przywróć próbkę demo (30 maili)', 'secondary', 'submit', false, array( 'onclick' => "return confirm('Zastąpić bieżącą próbkę wbudowanym demo?');" ) ); ?>
 		</form>
 
+		<?php segm_formularz_maila( $edytowany_mail ); ?>
+
 		<h2>Retencja danych (RODO)</h2>
 		<p>Próbka to zwykle korespondencja Twoich klientów, czyli dane osobowe. Wtyczka kasuje ją sama:
 			<strong>codzienne zadanie usuwa maile i raporty starsze niż <?php echo (int) SEGM_RETENCJA_DNI; ?> dni</strong>
@@ -786,7 +820,7 @@ function segm_strona_probka() {
 
 		<h2>Maile w próbce<?php echo $ile > 200 ? ' (pierwsze 200)' : ''; ?></h2>
 		<table class="widefat striped">
-			<thead><tr><th>#</th><th>Źródło</th><th>Od</th><th>Temat</th><th>Treść (początek)</th><th>Etykieta</th></tr></thead>
+			<thead><tr><th>#</th><th>Źródło</th><th>Od</th><th>Temat</th><th>Treść (początek)</th><th>Etykieta</th><th>Akcje</th></tr></thead>
 			<tbody>
 			<?php foreach ( $maile as $m ) : ?>
 				<tr>
@@ -796,6 +830,11 @@ function segm_strona_probka() {
 					<td><?php echo esc_html( $m->temat ); ?></td>
 					<td><?php echo esc_html( wp_html_excerpt( $m->tresc, 90, '…' ) ); ?></td>
 					<td><?php echo '' === $m->kategoria_oczekiwana ? '—' : esc_html( $m->kategoria_oczekiwana ); ?></td>
+					<td>
+						<a href="<?php echo esc_url( admin_url( 'admin.php?page=segm-probka&edytuj_mail=' . (int) $m->id ) ); ?>">Edytuj</a> |
+						<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=segm_mail_usun&id=' . (int) $m->id ), 'segm_mail_usun_' . (int) $m->id ) ); ?>"
+							onclick="return confirm('Usunąć ten mail z próbki? Reszta próbki zostaje.');">Usuń</a>
+					</td>
 				</tr>
 			<?php endforeach; ?>
 			</tbody>
