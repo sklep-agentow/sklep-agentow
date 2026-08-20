@@ -22,6 +22,21 @@
 # `vendor/` przed startem (żeby URUCHAMIAŁ bramki, nie czytał ich) oraz jawną
 # listę --allowedTools na te bramki i na pobieranie stron (zasada „tylko źródła
 # oficjalne" jest w briefingu).
+#
+# ⛔ PUŁAPKA, KTÓRĄ TRZEBA ZNAĆ: PR zmieniający TEN plik NIE JEST recenzowany.
+# Akcja odmawia startu, gdy plik workflow różni się od wersji z gałęzi domyślnej
+# („Workflow validation failed. The workflow file must exist and have identical
+# content to the version on the repository's default branch"; źródło akcji:
+# src/github/token.ts — „expected [...] on PRs with workflow changes [...] your
+# workflow will begin working once you merge your PR"). Krok kończy się
+# ZIELONY, ale recenzji NIE MA — czyli PR na ten plik wygląda na sprawdzony,
+# a nie jest. Zmiany tutaj weryfikuje się PO scaleniu, na następnym PR.
+#
+# Uwaga do --allowedTools: akcja dokleja nasze argumenty PO swoich, a ta flaga
+# jest AKUMULUJĄCA (base-action/src/parse-sdk-options.ts, ACCUMULATING_FLAGS),
+# więc nasza lista DOKŁADA uprawnienia, a nie kasuje narzędzi akcji (m.in.
+# tego, którym recenzent pisze komentarz). `WebFetch` musi być wpisany DOKŁADNIE
+# tak, bez nawiasu z domeną — akcja porównuje tę nazwę dosłownie.
 name: Recenzent
 
 on:
