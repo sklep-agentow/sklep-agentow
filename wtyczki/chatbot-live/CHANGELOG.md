@@ -10,7 +10,7 @@ migracja odpala się sama przy pierwszym wejściu do panelu po aktualizacji
 
 ---
 
-## [1.4.10] — 2026-08-20
+## [1.5.2] — 2026-08-21
 
 ### Dodane
 - **Wpięcie w narzędzia RODO WordPressa.** Wniosek o kopię albo o usunięcie danych
@@ -34,6 +34,29 @@ migracja odpala się sama przy pierwszym wejściu do panelu po aktualizacji
 - Komunikat kasownika podaje **rzeczywiste liczby** usuniętych zgłoszeń i wiadomości.
   Wniosek dotyczący adresu, którego nie ma w bazie, kończy się zdaniem „nie znaleziono
   żadnych danych" — a nie potwierdzeniem kasowania, którego nie było.
+---
+
+## [1.5.0] — 2026-08-20 · schemat bazy 5 → 6
+
+### Dodane
+- **Przejęcie rozmowy przez człowieka.** Operator może wejść do trwającej rozmowy;
+  od tej chwili **bot milczy**, a gość widzi **wyraźny komunikat**, że rozmawia
+  z człowiekiem. Zakończenie oddaje rozmowę botowi — też z komunikatem.
+- **Panel „Rozmowy na żywo"**: lista rozmów z ostatnich 30 minut (kto pisze, ostatnie
+  pytanie gościa, ile czeka, liczba wiadomości), okno rozmowy dla operatora
+  z odświeżaniem co 5 s oraz przyciski **Przejmij** i **Zakończ**. Wszystko za
+  uprawnieniem `manage_options` i noncem.
+- Powrót do bota **po ciszy operatora** (5 minut), bez zależności od WP-Cron.
+- Publiczny punkt odpytywania `POST /wp-json/chatl/v1/rozmowa` z rytmem
+  ustalanym przez serwer: 15 s w trybie bota, 5 s po przejęciu, 30 s przy
+  schowanej karcie, 0 zapytań przy zamkniętym oknie czatu.
+
+### Bezpieczeństwo
+- **Identyfikator sesji wydaje teraz SERWER**, a nie przeglądarka. Poprzednia
+  ścieżka zapasowa opierała się o `Math.random()`, który nie jest generatorem
+  kryptograficznym — a od tej wersji identyfikator sesji otwiera treść rozmowy.
+- **Drugi składnik dostępu**: sekret w ciastku `HttpOnly`. Sam identyfikator
+  sesji — nawet poprawny — **nie wystarczy**, żeby przeczytać rozmowę.
 
 ---
 
