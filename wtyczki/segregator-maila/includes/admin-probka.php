@@ -58,7 +58,8 @@ function segm_kontekst_trafien( $reguly = null ) {
  * @return array{pasuje: int, wygrywa: int, maili: int, pusty_wzorzec: bool, zabrane_przez: array<string, int>}
  */
 function segm_policz_trafienia( $pole, $wzorzec, $id_reguly = 0, $kontekst = null ) {
-	if ( ! is_array( $kontekst ) || ! isset( $kontekst['maile'], $kontekst['reguly'] ) ) {
+	// Brak kontekstu = wywołanie spoza listy (formularz reguły): pobieramy sami.
+	if ( ! is_array( $kontekst ) ) {
 		$kontekst = segm_kontekst_trafien();
 	}
 
