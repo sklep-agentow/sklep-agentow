@@ -67,10 +67,13 @@ function chatl_dopasuj( $pytanie ) {
  * @param string $rola   'gosc' albo 'bot'.
  * @param string $tresc  Treść (już zsanityzowana).
  * @param string $silnik 'reguly' albo 'ai' (który silnik odpowiedział).
+ * @return bool True = zapisano, false = zapis padł (odpowiedź bota i tak leci
+ *              do gościa; brak wpisu w historii nie jest powodem, żeby urwać
+ *              działającą rozmowę — ale ma zostawić ślad w logu).
  */
 function chatl_zapisz_wymiane( $sesja, $rola, $tresc, $silnik = 'reguly' ) {
 	global $wpdb;
-	$wpdb->insert(
+	$zapisano = $wpdb->insert(
 		$wpdb->prefix . 'chatl_rozmowy',
 		array(
 			'sesja'     => $sesja,
@@ -81,4 +84,9 @@ function chatl_zapisz_wymiane( $sesja, $rola, $tresc, $silnik = 'reguly' ) {
 		),
 		array( '%s', '%s', '%s', '%s', '%s' )
 	);
+	if ( false === $zapisano ) {
+		chatl_log_bledu_bazy( 'chatl_zapisz_wymiane', 'wpis do historii rozmów (rola: ' . $rola . ')' );
+		return false;
+	}
+	return true;
 }

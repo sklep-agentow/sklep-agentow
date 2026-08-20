@@ -168,7 +168,7 @@ function chatl_seed_demo() {
 
 	$teraz = current_time( 'mysql' );
 	foreach ( $seed as $para ) {
-		$wpdb->insert(
+		$zapisano = $wpdb->insert(
 			$tabela,
 			array(
 				'pytanie'        => $para[0],
@@ -179,5 +179,8 @@ function chatl_seed_demo() {
 			),
 			array( '%s', '%s', '%s', '%d', '%s' )
 		);
+		if ( false === $zapisano ) {
+			chatl_log_bledu_bazy( 'chatl_seed_demo', 'wpis demo do bazy Q&A: ' . $para[0] );
+		}
 	}
 }

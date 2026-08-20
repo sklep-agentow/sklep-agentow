@@ -17,6 +17,34 @@ define( 'CHATL_WERSJA_SCHEMATU', '3' );
 define( 'CHATL_KATALOG', plugin_dir_path( __FILE__ ) );
 define( 'CHATL_URL', plugin_dir_url( __FILE__ ) );
 
+/**
+ * Wpis do logu WP po nieudanym zapisie do bazy.
+ *
+ * $wpdb->insert/update/delete/query zwracają FALSE przy porażce (0 to poprawny
+ * wynik „nic nie pasowało"), więc każde wywołanie porównujemy z false ===.
+ * Log idzie przez wp_trigger_error() — natywne API WP (6.4+), respektuje
+ * WP_DEBUG i nie łamie zakazu error_log() z phpcs.xml.dist. Na starszym WP
+ * (deklarowane minimum 6.0) log po prostu nie powstaje; komunikat błędu dla
+ * użytkownika działa niezależnie od wersji i to on jest właściwą obroną
+ * przed cichym ubytkiem danych.
+ *
+ * @param string $funkcja  Nazwa funkcji, w której zapis padł.
+ * @param string $operacja Krótki opis operacji (co miało trafić do bazy).
+ * @return void
+ */
+function chatl_log_bledu_bazy( $funkcja, $operacja ) {
+	global $wpdb;
+	if ( ! function_exists( 'wp_trigger_error' ) ) {
+		return;
+	}
+	$szczegol = '' !== (string) $wpdb->last_error ? (string) $wpdb->last_error : 'sterownik nie podał komunikatu';
+	wp_trigger_error(
+		(string) $funkcja,
+		'zapis do bazy nie powiódł się (' . $operacja . '): ' . $szczegol,
+		E_USER_WARNING
+	);
+}
+
 require_once CHATL_KATALOG . 'includes/instalator.php';
 require_once CHATL_KATALOG . 'includes/silnik.php';
 require_once CHATL_KATALOG . 'includes/ai.php';
@@ -48,19 +76,25 @@ add_action( 'plugins_loaded', 'chatl_sprawdz_schemat' );
 function chatl_czyszczenie_historii() {
 	global $wpdb;
 	$tabela = $wpdb->prefix . 'chatl_rozmowy';
-	$wpdb->query(
+	$wynik  = $wpdb->query(
 		$wpdb->prepare(
 			"DELETE FROM {$tabela} WHERE utworzono < %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			gmdate( 'Y-m-d H:i:s', time() - 90 * DAY_IN_SECONDS )
 		)
 	);
+	if ( false === $wynik ) {
+		chatl_log_bledu_bazy( 'chatl_czyszczenie_historii', 'kasowanie historii rozmów starszej niż 90 dni' );
+	}
 	$limity = $wpdb->prefix . 'chatl_rate_limit';
-	$wpdb->query(
+	$wynik  = $wpdb->query(
 		$wpdb->prepare(
 			"DELETE FROM {$limity} WHERE okno_do < %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			gmdate( 'Y-m-d H:i:s' )
 		)
 	);
+	if ( false === $wynik ) {
+		chatl_log_bledu_bazy( 'chatl_czyszczenie_historii', 'kasowanie wygasłych okien rate-limitu' );
+	}
 }
 add_action( 'chatl_czyszczenie_historii', 'chatl_czyszczenie_historii' );
 

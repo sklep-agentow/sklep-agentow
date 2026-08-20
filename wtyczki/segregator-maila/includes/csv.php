@@ -113,9 +113,29 @@ function segm_importuj_csv( $sciezka ) {
 		return new WP_Error( 'segm_csv', 'Plik nie zawiera żadnego poprawnego wiersza (kolumny: od, temat, tresc, opcjonalnie kategoria_oczekiwana).' );
 	}
 
-	$wpdb->query( "TRUNCATE TABLE {$wpdb->prefix}segm_maile" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	// Wyczyszczenie próbki MUSI się udać przed wstawianiem — inaczej nowe wiersze
+	// doklejałyby się do starej próbki, a komunikat mówiłby „zastąpiono".
+	if ( false === $wpdb->query( "TRUNCATE TABLE {$wpdb->prefix}segm_maile" ) ) { // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		segm_log_bledu_bazy( 'segm_importuj_csv', 'czyszczenie bieżącej próbki przed importem' );
+		return new WP_Error( 'segm_csv', 'Nie udało się wyczyścić bieżącej próbki — import przerwany. Próbka NIE została zmieniona.' );
+	}
+	$nieudane = 0;
 	foreach ( $wiersze as $wiersz ) {
-		$wpdb->insert( $wpdb->prefix . 'segm_maile', $wiersz, array( '%s', '%s', '%s', '%s', '%s', '%s' ) );
+		if ( false === $wpdb->insert( $wpdb->prefix . 'segm_maile', $wiersz, array( '%s', '%s', '%s', '%s', '%s', '%s' ) ) ) {
+			++$nieudane;
+			segm_log_bledu_bazy( 'segm_importuj_csv', 'wiersz próbki od „' . $wiersz['nadawca'] . '"' );
+		}
+	}
+	if ( $nieudane > 0 ) {
+		return new WP_Error(
+			'segm_csv',
+			sprintf(
+				'Import NIEKOMPLETNY: z %d wierszy baza odrzuciła %d. W próbce jest %d maili — raport z takiej próbki policzy się na niepełnych danych. Sprawdź stan bazy i zaimportuj plik ponownie.',
+				count( $wiersze ),
+				$nieudane,
+				count( $wiersze ) - $nieudane
+			)
+		);
 	}
 
 	return array(

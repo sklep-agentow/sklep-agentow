@@ -46,6 +46,19 @@ function segm_komunikaty() {
 	// phpcs:enable
 }
 
+/**
+ * Powrót z admin-post z komunikatem błędu (zapis do bazy padł).
+ * Operacja, której zapis nie przeszedł, NIE MOŻE kończyć się „Zapisano.".
+ *
+ * @param string $strona    Slug strony wtyczki (page=...).
+ * @param string $komunikat Treść dla admina.
+ * @return void
+ */
+function segm_przekieruj_blad( $strona, $komunikat ) {
+	wp_safe_redirect( admin_url( 'admin.php?page=' . $strona . '&segm_blad=' . rawurlencode( $komunikat ) ) );
+	exit;
+}
+
 /* ===================== PRZEBIEGI + RAPORT ===================== */
 
 function segm_strona_przebiegi() {
@@ -417,7 +430,7 @@ function segm_post_regula_zapisz() {
 	}
 
 	if ( $id > 0 ) {
-		$wpdb->update(
+		$wynik = $wpdb->update(
 			$wpdb->prefix . 'segm_reguly',
 			array(
 				'pole'         => $pole,
@@ -429,8 +442,8 @@ function segm_post_regula_zapisz() {
 			array( '%d' )
 		);
 	} else {
-		$max = (int) $wpdb->get_var( "SELECT MAX(kolejnosc) FROM {$wpdb->prefix}segm_reguly" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$wpdb->insert(
+		$max   = (int) $wpdb->get_var( "SELECT MAX(kolejnosc) FROM {$wpdb->prefix}segm_reguly" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wynik = $wpdb->insert(
 			$wpdb->prefix . 'segm_reguly',
 			array(
 				'kolejnosc'    => $max + 1,
@@ -441,6 +454,10 @@ function segm_post_regula_zapisz() {
 			),
 			array( '%d', '%s', '%s', '%d', '%s' )
 		);
+	}
+	if ( false === $wynik ) {
+		segm_log_bledu_bazy( 'segm_post_regula_zapisz', 'reguła segregacji (id: ' . $id . ')' );
+		segm_przekieruj_blad( 'segm-reguly', 'Nie udało się zapisać reguły — baza odrzuciła zapis. Reguła NIE została zachowana; przebieg policzy się bez niej.' );
 	}
 
 	wp_safe_redirect( admin_url( 'admin.php?page=segm-reguly&segm_ok=zapisano' ) );
@@ -456,7 +473,10 @@ function segm_post_regula_usun() {
 	check_admin_referer( 'segm_regula_usun_' . $id );
 
 	global $wpdb;
-	$wpdb->delete( $wpdb->prefix . 'segm_reguly', array( 'id' => $id ), array( '%d' ) );
+	if ( false === $wpdb->delete( $wpdb->prefix . 'segm_reguly', array( 'id' => $id ), array( '%d' ) ) ) {
+		segm_log_bledu_bazy( 'segm_post_regula_usun', 'usunięcie reguły (id: ' . $id . ')' );
+		segm_przekieruj_blad( 'segm-reguly', 'Nie udało się usunąć reguły — baza odrzuciła operację. Reguła NADAL działa w przebiegach.' );
+	}
 
 	wp_safe_redirect( admin_url( 'admin.php?page=segm-reguly&segm_ok=usunieto' ) );
 	exit;
@@ -480,8 +500,15 @@ function segm_post_regula_ruch() {
 			$sasiad = $wpdb->get_row( $wpdb->prepare( "SELECT id, kolejnosc FROM {$wpdb->prefix}segm_reguly WHERE kolejnosc > %d ORDER BY kolejnosc ASC LIMIT 1", $biezaca->kolejnosc ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		}
 		if ( $sasiad ) {
-			$wpdb->update( $wpdb->prefix . 'segm_reguly', array( 'kolejnosc' => (int) $sasiad->kolejnosc ), array( 'id' => (int) $biezaca->id ), array( '%d' ), array( '%d' ) );
-			$wpdb->update( $wpdb->prefix . 'segm_reguly', array( 'kolejnosc' => (int) $biezaca->kolejnosc ), array( 'id' => (int) $sasiad->id ), array( '%d' ), array( '%d' ) );
+			// Zamiana kolejności to DWA zapisy: jeśli przejdzie tylko pierwszy,
+			// dwie reguły mają tę samą kolejność i rozstrzyga id — kolejność
+			// na ekranie przestaje odpowiadać kolejności rozstrzygania.
+			$a = $wpdb->update( $wpdb->prefix . 'segm_reguly', array( 'kolejnosc' => (int) $sasiad->kolejnosc ), array( 'id' => (int) $biezaca->id ), array( '%d' ), array( '%d' ) );
+			$b = $wpdb->update( $wpdb->prefix . 'segm_reguly', array( 'kolejnosc' => (int) $biezaca->kolejnosc ), array( 'id' => (int) $sasiad->id ), array( '%d' ), array( '%d' ) );
+			if ( false === $a || false === $b ) {
+				segm_log_bledu_bazy( 'segm_post_regula_ruch', 'zamiana kolejności reguł (' . (int) $biezaca->id . ' ↔ ' . (int) $sasiad->id . ')' );
+				segm_przekieruj_blad( 'segm-reguly', 'Nie udało się zmienić kolejności reguł — baza odrzuciła zapis. Sprawdź kolejność na liście przed uruchomieniem przebiegu.' );
+			}
 		}
 	}
 
@@ -568,9 +595,9 @@ function segm_post_kategoria_zapisz() {
 	}
 
 	if ( $id > 0 ) {
-		$wpdb->update( $wpdb->prefix . 'segm_kategorie', array( 'nazwa' => $nazwa ), array( 'id' => $id ), array( '%s' ), array( '%d' ) );
+		$wynik = $wpdb->update( $wpdb->prefix . 'segm_kategorie', array( 'nazwa' => $nazwa ), array( 'id' => $id ), array( '%s' ), array( '%d' ) );
 	} else {
-		$wpdb->insert(
+		$wynik = $wpdb->insert(
 			$wpdb->prefix . 'segm_kategorie',
 			array(
 				'nazwa'     => $nazwa,
@@ -578,6 +605,10 @@ function segm_post_kategoria_zapisz() {
 			),
 			array( '%s', '%s' )
 		);
+	}
+	if ( false === $wynik ) {
+		segm_log_bledu_bazy( 'segm_post_kategoria_zapisz', 'kategoria „' . $nazwa . '" (id: ' . $id . ')' );
+		segm_przekieruj_blad( 'segm-kategorie', 'Nie udało się zapisać kategorii — baza odrzuciła zapis. Kategoria NIE została zachowana.' );
 	}
 
 	wp_safe_redirect( admin_url( 'admin.php?page=segm-kategorie&segm_ok=zapisano' ) );
@@ -598,7 +629,10 @@ function segm_post_kategoria_usun() {
 		wp_safe_redirect( admin_url( 'admin.php?page=segm-kategorie&segm_blad=' . rawurlencode( 'Kategoria ma przypisane reguły — najpierw je usuń albo przepnij.' ) ) );
 		exit;
 	}
-	$wpdb->delete( $wpdb->prefix . 'segm_kategorie', array( 'id' => $id ), array( '%d' ) );
+	if ( false === $wpdb->delete( $wpdb->prefix . 'segm_kategorie', array( 'id' => $id ), array( '%d' ) ) ) {
+		segm_log_bledu_bazy( 'segm_post_kategoria_usun', 'usunięcie kategorii (id: ' . $id . ')' );
+		segm_przekieruj_blad( 'segm-kategorie', 'Nie udało się usunąć kategorii — baza odrzuciła operację. Kategoria NADAL jest na liście.' );
+	}
 
 	wp_safe_redirect( admin_url( 'admin.php?page=segm-kategorie&segm_ok=usunieto' ) );
 	exit;
@@ -680,8 +714,17 @@ function segm_post_probka_demo() {
 	check_admin_referer( 'segm_probka_demo' );
 
 	global $wpdb;
-	$wpdb->query( "TRUNCATE TABLE {$wpdb->prefix}segm_maile" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-	segm_wstaw_probke_demo();
+	if ( false === $wpdb->query( "TRUNCATE TABLE {$wpdb->prefix}segm_maile" ) ) { // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		segm_log_bledu_bazy( 'segm_post_probka_demo', 'czyszczenie próbki przed przywróceniem demo' );
+		segm_przekieruj_blad( 'segm-probka', 'Nie udało się wyczyścić próbki — baza odrzuciła operację. Próbka NIE została zmieniona.' );
+	}
+	$nieudane = segm_wstaw_probke_demo();
+	if ( $nieudane > 0 ) {
+		segm_przekieruj_blad(
+			'segm-probka',
+			sprintf( 'Próbka demo jest NIEKOMPLETNA: baza odrzuciła %d z 30 maili. Raport z takiej próbki policzy się na niepełnych danych.', $nieudane )
+		);
+	}
 
 	wp_safe_redirect( admin_url( 'admin.php?page=segm-probka&segm_ok=demo' ) );
 	exit;

@@ -18,21 +18,54 @@ function chatl_admin_menu() {
 add_action( 'admin_menu', 'chatl_admin_menu' );
 
 /**
- * Komunikat sukcesu po powrocie z admin-post (?chatl_ok=...).
+ * Komunikaty po powrocie z admin-post (?chatl_ok=... / ?chatl_blad=...).
+ * Kanał błędu istnieje, bo operacja, której zapis padł, NIE MOŻE kończyć się
+ * zieloną plakietką „Zapisano." — admin musi zobaczyć, że danych nie ma.
  */
 function chatl_komunikat_ok() {
-	if ( ! isset( $_GET['chatl_ok'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	// phpcs:disable WordPress.Security.NonceVerification.Recommended -- tylko odczyt komunikatu.
+	if ( isset( $_GET['chatl_ok'] ) ) {
+		$teksty = array(
+			'zapisano'  => 'Zapisano.',
+			'usunieto'  => 'Usunięto.',
+			'zmieniono' => 'Zmieniono status.',
+		);
+		$klucz  = sanitize_key( wp_unslash( $_GET['chatl_ok'] ) );
+		if ( isset( $teksty[ $klucz ] ) ) {
+			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( $teksty[ $klucz ] ) . '</p></div>';
+		}
+	}
+	if ( isset( $_GET['chatl_blad'] ) ) {
+		echo '<div class="notice notice-error is-dismissible"><p>' . esc_html( sanitize_text_field( wp_unslash( $_GET['chatl_blad'] ) ) ) . '</p></div>';
+	}
+	// phpcs:enable
+	chatl_notice_bledu_maila();
+}
+
+/**
+ * Powrót z admin-post z komunikatem błędu (zapis do bazy padł).
+ *
+ * @param string $strona    Slug strony wtyczki (page=...).
+ * @param string $komunikat Treść dla admina.
+ * @return void
+ */
+function chatl_przekieruj_blad( $strona, $komunikat ) {
+	wp_safe_redirect( admin_url( 'admin.php?page=' . $strona . '&chatl_blad=' . rawurlencode( $komunikat ) ) );
+	exit;
+}
+
+/**
+ * Ostrzeżenie, gdy ostatnie powiadomienie mailowe o zgłoszeniu nie wyszło
+ * (znacznik ustawia chatl_odnotuj_wysylke_powiadomienia() z front.php).
+ */
+function chatl_notice_bledu_maila() {
+	$blad = get_option( 'chatl_blad_maila' );
+	if ( ! is_array( $blad ) || empty( $blad['kiedy'] ) ) {
 		return;
 	}
-	$teksty = array(
-		'zapisano'  => 'Zapisano.',
-		'usunieto'  => 'Usunięto.',
-		'zmieniono' => 'Zmieniono status.',
-	);
-	$klucz  = sanitize_key( wp_unslash( $_GET['chatl_ok'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-	if ( isset( $teksty[ $klucz ] ) ) {
-		echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( $teksty[ $klucz ] ) . '</p></div>';
-	}
+	echo '<div class="notice notice-warning"><p><strong>Powiadomienia mailowe nie dochodzą.</strong> Ostatnia próba wysyłki na <code>'
+		. esc_html( (string) ( $blad['adres'] ?? '' ) ) . '</code> nie powiodła się ('
+		. esc_html( (string) $blad['kiedy'] ) . '). Zgłoszenia gości <strong>są zapisane</strong> i widoczne na liście — sprawdź konfigurację poczty na hostingu (np. wtyczkę SMTP).</p></div>';
 }
 
 /* ===================== BAZA Q&A ===================== */
@@ -131,10 +164,14 @@ function chatl_post_qa_zapisz() {
 	}
 
 	if ( $id > 0 ) {
-		$wpdb->update( $tabela, $dane, array( 'id' => $id ), array( '%s', '%s', '%s', '%d' ), array( '%d' ) );
+		$wynik = $wpdb->update( $tabela, $dane, array( 'id' => $id ), array( '%s', '%s', '%s', '%d' ), array( '%d' ) );
 	} else {
 		$dane['utworzono'] = current_time( 'mysql' );
-		$wpdb->insert( $tabela, $dane, array( '%s', '%s', '%s', '%d', '%s' ) );
+		$wynik             = $wpdb->insert( $tabela, $dane, array( '%s', '%s', '%s', '%d', '%s' ) );
+	}
+	if ( false === $wynik ) {
+		chatl_log_bledu_bazy( 'chatl_post_qa_zapisz', 'wpis bazy Q&A (id: ' . $id . ')' );
+		chatl_przekieruj_blad( 'chatl-qa', 'Nie udało się zapisać wpisu — baza odrzuciła zapis. Wpis NIE został zachowany; spróbuj ponownie.' );
 	}
 
 	wp_safe_redirect( admin_url( 'admin.php?page=chatl-qa&chatl_ok=zapisano' ) );
@@ -150,7 +187,10 @@ function chatl_post_qa_usun() {
 	check_admin_referer( 'chatl_qa_usun_' . $id );
 
 	global $wpdb;
-	$wpdb->delete( $wpdb->prefix . 'chatl_qa', array( 'id' => $id ), array( '%d' ) );
+	if ( false === $wpdb->delete( $wpdb->prefix . 'chatl_qa', array( 'id' => $id ), array( '%d' ) ) ) {
+		chatl_log_bledu_bazy( 'chatl_post_qa_usun', 'usunięcie wpisu Q&A (id: ' . $id . ')' );
+		chatl_przekieruj_blad( 'chatl-qa', 'Nie udało się usunąć wpisu — baza odrzuciła operację. Wpis NADAL jest w bazie.' );
+	}
 
 	wp_safe_redirect( admin_url( 'admin.php?page=chatl-qa&chatl_ok=usunieto' ) );
 	exit;
@@ -209,7 +249,10 @@ function chatl_post_zgloszenie_status() {
 	}
 
 	global $wpdb;
-	$wpdb->update( $wpdb->prefix . 'chatl_zgloszenia', array( 'status' => $status ), array( 'id' => $id ), array( '%s' ), array( '%d' ) );
+	if ( false === $wpdb->update( $wpdb->prefix . 'chatl_zgloszenia', array( 'status' => $status ), array( 'id' => $id ), array( '%s' ), array( '%d' ) ) ) {
+		chatl_log_bledu_bazy( 'chatl_post_zgloszenie_status', 'zmiana statusu zgłoszenia (id: ' . $id . ')' );
+		chatl_przekieruj_blad( 'chatl-zgloszenia', 'Nie udało się zmienić statusu — baza odrzuciła zapis. Status pozostał bez zmian.' );
+	}
 
 	wp_safe_redirect( admin_url( 'admin.php?page=chatl-zgloszenia&chatl_ok=zmieniono' ) );
 	exit;
@@ -224,7 +267,10 @@ function chatl_post_zgloszenie_usun() {
 	check_admin_referer( 'chatl_zgloszenie_usun_' . $id );
 
 	global $wpdb;
-	$wpdb->delete( $wpdb->prefix . 'chatl_zgloszenia', array( 'id' => $id ), array( '%d' ) );
+	if ( false === $wpdb->delete( $wpdb->prefix . 'chatl_zgloszenia', array( 'id' => $id ), array( '%d' ) ) ) {
+		chatl_log_bledu_bazy( 'chatl_post_zgloszenie_usun', 'usunięcie zgłoszenia (id: ' . $id . ')' );
+		chatl_przekieruj_blad( 'chatl-zgloszenia', 'Nie udało się usunąć zgłoszenia — baza odrzuciła operację. Zgłoszenie NADAL jest w bazie.' );
+	}
 
 	wp_safe_redirect( admin_url( 'admin.php?page=chatl-zgloszenia&chatl_ok=usunieto' ) );
 	exit;

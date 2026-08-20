@@ -96,14 +96,19 @@ function segm_seed_demo() {
 		$kategorie = array( 'Oferty', 'Faktury', 'Reklamacje', 'Spam-podejrzane', 'Reszta' );
 		$id_kat    = array();
 		foreach ( $kategorie as $nazwa ) {
-			$wpdb->insert(
+			if ( false === $wpdb->insert(
 				$wpdb->prefix . 'segm_kategorie',
 				array(
 					'nazwa'     => $nazwa,
 					'utworzono' => $teraz,
 				),
 				array( '%s', '%s' )
-			);
+			) ) {
+				segm_log_bledu_bazy( 'segm_seed_demo', 'kategoria demo: ' . $nazwa );
+				// Bez ID kategorii reguły nie mają dokąd kierować — przerywamy seed
+				// zamiast wstawiać reguły z kategoria_id = 0 (osierocone wiersze).
+				return;
+			}
 			$id_kat[ $nazwa ] = (int) $wpdb->insert_id;
 		}
 
@@ -121,7 +126,7 @@ function segm_seed_demo() {
 			);
 			$kolejnosc = 1;
 			foreach ( $reguly as $r ) {
-				$wpdb->insert(
+				if ( false === $wpdb->insert(
 					$wpdb->prefix . 'segm_reguly',
 					array(
 						'kolejnosc'    => $kolejnosc++,
@@ -131,7 +136,9 @@ function segm_seed_demo() {
 						'utworzono'    => $teraz,
 					),
 					array( '%d', '%s', '%s', '%d', '%s' )
-				);
+				) ) {
+					segm_log_bledu_bazy( 'segm_seed_demo', 'reguła demo: ' . $r[0] . ' → ' . $r[2] );
+				}
 			}
 		}
 	}
@@ -144,6 +151,8 @@ function segm_seed_demo() {
 /**
  * Wstawia próbkę 30 maili demo PL (z etykietami — raport pokazuje accuracy od razu).
  * Wołane też przez przycisk „przywróć próbkę demo".
+ *
+ * @return int Ile wierszy baza odrzuciła (0 = próbka kompletna).
  */
 function segm_wstaw_probke_demo() {
 	global $wpdb;
@@ -182,8 +191,9 @@ function segm_wstaw_probke_demo() {
 		array( 'ksiegowosc@transpol.pl', 'Duplikat faktury 209/08/2026', 'Zgodnie z prośbą przesyłamy duplikat faktury. Oryginał wysłano 5 sierpnia.', 'Faktury' ),
 	);
 
+	$nieudane = 0;
 	foreach ( $maile as $m ) {
-		$wpdb->insert(
+		if ( false === $wpdb->insert(
 			$wpdb->prefix . 'segm_maile',
 			array(
 				'zrodlo'               => 'demo',
@@ -194,6 +204,10 @@ function segm_wstaw_probke_demo() {
 				'utworzono'            => $teraz,
 			),
 			array( '%s', '%s', '%s', '%s', '%s', '%s' )
-		);
+		) ) {
+			++$nieudane;
+			segm_log_bledu_bazy( 'segm_wstaw_probke_demo', 'mail demo od „' . $m[0] . '"' );
+		}
 	}
+	return $nieudane;
 }

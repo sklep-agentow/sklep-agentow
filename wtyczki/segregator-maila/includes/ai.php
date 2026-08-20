@@ -68,12 +68,17 @@ function segm_ai_uzycie_dzis() {
  */
 function segm_ai_zuzyj() {
 	global $wpdb;
-	$wpdb->query(
+	// Padnięty inkrement = stop-loss przestaje liczyć, a rachunek za API rośnie
+	// dalej. Ślad w logu jest tu jedynym sygnałem (dzieje się w środku przebiegu).
+	$wynik = $wpdb->query(
 		$wpdb->prepare(
 			"INSERT INTO {$wpdb->prefix}segm_ai_uzycie (dzien, wywolania) VALUES (%s, 1) ON DUPLICATE KEY UPDATE wywolania = wywolania + 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			current_time( 'Y-m-d' )
 		)
 	);
+	if ( false === $wynik ) {
+		segm_log_bledu_bazy( 'segm_ai_zuzyj', 'inkrement dziennego licznika wywołań AI (stop-loss nie liczy)' );
+	}
 }
 
 /**

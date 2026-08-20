@@ -58,12 +58,17 @@ function chatl_ai_uzycie_dzis() {
 function chatl_ai_zuzyj() {
 	global $wpdb;
 	$tabela = $wpdb->prefix . 'chatl_ai_uzycie';
-	$wpdb->query(
+	// Padnięty inkrement = stop-loss przestaje liczyć, a rachunek za API rośnie
+	// dalej. Ślad w logu jest tu jedynym sygnałem (gość nie może tego zobaczyć).
+	$wynik = $wpdb->query(
 		$wpdb->prepare(
 			"INSERT INTO {$tabela} (dzien, wywolania) VALUES (%s, 1) ON DUPLICATE KEY UPDATE wywolania = wywolania + 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			current_time( 'Y-m-d' )
 		)
 	);
+	if ( false === $wynik ) {
+		chatl_log_bledu_bazy( 'chatl_ai_zuzyj', 'inkrement dziennego licznika wywołań AI (stop-loss nie liczy)' );
+	}
 }
 
 /**

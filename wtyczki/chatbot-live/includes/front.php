@@ -207,7 +207,9 @@ function chatl_ajax_zgloszenie() {
 	}
 
 	global $wpdb;
-	$wpdb->insert(
+	// Zapis MUSI być sprawdzony: bez tego padnięty INSERT kończył się „Dziękujemy",
+	// a wiadomość gościa przepadała bez śladu (cichy ubytek danych klienta).
+	$zapisano = $wpdb->insert(
 		$wpdb->prefix . 'chatl_zgloszenia',
 		array(
 			'email'     => $email,
@@ -218,9 +220,16 @@ function chatl_ajax_zgloszenie() {
 		),
 		array( '%s', '%s', '%s', '%s', '%s' )
 	);
+	if ( false === $zapisano ) {
+		chatl_log_bledu_bazy( 'chatl_ajax_zgloszenie', 'zgłoszenie gościa z czatu' );
+		wp_send_json_error(
+			array( 'komunikat' => 'Nie udało się zapisać wiadomości — przepraszamy. Spróbuj ponownie za chwilę albo napisz do nas mailem.' ),
+			500
+		);
+	}
 
 	if ( $ust['powiadomienia'] && is_email( $ust['mail_powiadomien'] ) ) {
-		wp_mail(
+		$wyslano = wp_mail(
 			$ust['mail_powiadomien'],
 			'ChatBot LIVE: nowe zgłoszenie z czatu',
 			"Gość zostawił wiadomość w czacie na stronie.\n\n"
@@ -228,9 +237,40 @@ function chatl_ajax_zgloszenie() {
 			. "Wiadomość:\n{$wiadomosc}\n\n"
 			. 'Lista zgłoszeń: ' . admin_url( 'admin.php?page=chatl-zgloszenia' )
 		);
+		// Gościowi nic nie mówimy — jego wiadomość JEST zapisana i widoczna w panelu.
+		// Ale właściciel musi wiedzieć, że powiadomienia nie dochodzą, inaczej
+		// czekałby na maile, których poczta hostingu nie wysyła (znacznik zdejmuje
+		// pierwszy udany wysył).
+		chatl_odnotuj_wysylke_powiadomienia( (bool) $wyslano, $ust['mail_powiadomien'] );
 	}
 
 	wp_send_json_success( array( 'komunikat' => 'Dziękujemy! Mamy Twoją wiadomość — odezwiemy się na podany adres.' ) );
 }
 add_action( 'wp_ajax_chatl_zgloszenie', 'chatl_ajax_zgloszenie' );
 add_action( 'wp_ajax_nopriv_chatl_zgloszenie', 'chatl_ajax_zgloszenie' );
+
+/**
+ * Znacznik „ostatnie powiadomienie mailowe nie wyszło" dla panelu.
+ *
+ * wp_mail() zwraca false, gdy poczta hostingu odrzuci wysyłkę. Zgłoszenie jest
+ * wtedy zapisane, ale właściciel nie dostaje sygnału — bez tego znacznika
+ * dowiedziałby się dopiero, wchodząc na listę zgłoszeń z ciekawości.
+ *
+ * @param bool   $wyslano Wynik wp_mail().
+ * @param string $adres   Adres, na który szło powiadomienie.
+ * @return void
+ */
+function chatl_odnotuj_wysylke_powiadomienia( $wyslano, $adres ) {
+	if ( $wyslano ) {
+		delete_option( 'chatl_blad_maila' );
+		return;
+	}
+	update_option(
+		'chatl_blad_maila',
+		array(
+			'kiedy' => current_time( 'mysql' ),
+			'adres' => (string) $adres,
+		),
+		false
+	);
+}

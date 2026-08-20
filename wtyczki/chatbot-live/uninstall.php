@@ -29,6 +29,7 @@ $wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}chatl_rate_limit" ); // phpcs
 
 delete_option( 'chatl_ustawienia' );
 delete_option( 'chatl_wersja_schematu' );
+delete_option( 'chatl_blad_maila' );
 
 // Transienty rate-limitu (chatl_rl_*) ze STARSZYCH wersji wtyczki (≤1.1.x —
 // od 1.2.0 licznik żyje w tabeli): esc_like() eskejpuje podkreślnik (SQL
