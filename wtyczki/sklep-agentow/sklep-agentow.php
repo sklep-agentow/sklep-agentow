@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Sklep Agentów
  * Description: Sklep z testowymi botami AI — Stripe Checkout (tryb testowy), mail po zakupie, wydanie plików, panel w wp-admin. Zaplecze całe w WordPressie, własne tabele.
- * Version: 0.9.0
+ * Version: 0.9.1
  * Requires at least: 6.7
  * Requires PHP: 8.1
  * Author: Warsztat
@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SKLEPAG_WERSJA', '0.9.0' );
+define( 'SKLEPAG_WERSJA', '0.9.1' );
 define( 'SKLEPAG_WERSJA_SCHEMATU', 4 ); // v4: kolumna zamowienia.usunieto_dnia (anonimizacja RODO — K3d); v3: indeks para_logowania.
 define( 'SKLEPAG_LIMIT_POBRAN', 10 ); // Jedno źródło: INSERT zamówienia + treść maila (recenzja PR #33).
 define( 'SKLEPAG_LINK_GODZIN', 72 );  // Ważność linku pobrania — jw.
@@ -72,6 +72,23 @@ function sklepag_assety_frontu() {
 
 	if ( is_page( $strona_sklep ) || is_page( $strona_dziekujemy ) ) {
 		wp_enqueue_style( 'sklepag-front', plugins_url( 'assets/front.css', SKLEPAG_PLIK ), array(), SKLEPAG_WERSJA );
+
+		/* Pojawianie się sekcji przy przewijaniu (spójność z motywem gospodarza).
+			Skrypt w <head> z `defer` + inline PRZED nim: klasa `sklepag-js` musi
+			trafić na <html> ZANIM przeglądarka namaluje treść, inaczej sekcje
+			mignęłyby widoczne i dopiero potem zniknęły. Bez JS klasa nie powstaje
+			i CSS w ogóle nie ukrywa treści — to jest zabezpieczenie, nie ozdoba. */
+		wp_enqueue_script(
+			'sklepag-ruch',
+			plugins_url( 'assets/front-ruch.js', SKLEPAG_PLIK ),
+			array(),
+			SKLEPAG_WERSJA,
+			array(
+				'in_footer' => false,
+				'strategy'  => 'defer',
+			)
+		);
+		wp_add_inline_script( 'sklepag-ruch', "document.documentElement.classList.add('sklepag-js');", 'before' );
 	}
 	if ( is_page( $strona_dziekujemy ) ) {
 		wp_enqueue_script( 'sklepag-dziekujemy', plugins_url( 'assets/dziekujemy.js', SKLEPAG_PLIK ), array(), SKLEPAG_WERSJA, true );
