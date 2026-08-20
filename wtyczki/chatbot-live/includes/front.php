@@ -13,6 +13,17 @@ const CHATL_MAX_WIADOMOSC = 2000;
 const CHATL_LIMIT_NA_MIN  = 10;
 const CHATL_RETENCJA_DNI  = 90;
 
+/*
+ * Osobny, DUZO nizszy limit wywolan AI z jednego IP na dobe.
+ * Limit 10/min i dzienny limit AI mierza zle wymiary: pierwszy jest wspolny
+ * dla pytan i zgloszen i liczy sie w minutach, drugi jest GLOBALNY dla calej
+ * strony. Jeden gosc pytajacy 10x/min przez 10 minut miescil sie w obu,
+ * a wypalal caly dzienny budzet AI wszystkich gosci. Po przekroczeniu tego
+ * limitu bot dalej odpowiada — z regul, jak bez klucza (tryb regulowy
+ * dziala bez zmian).
+ */
+const CHATL_AI_LIMIT_IP_NA_DOBE = 20;
+
 /**
  * Rate limit per IP na tabeli (wzorzec sklepu: sklepag_rate_limit, recenzja
  * PR #33) — wspólny dla obu endpointów nopriv, żeby gość z noncem nie zalewał
@@ -24,19 +35,22 @@ const CHATL_RETENCJA_DNI  = 90;
  * a odczyt zwraca WŁASNĄ wartość żądania (LAST_INSERT_ID, per połączenie) —
  * przy N równoległych żądaniach przechodzi DOKŁADNIE próg, nic więcej.
  *
- * @param string $akcja Etykieta limitu ('chat' = wspólny kubeł widgetu).
- * @param int    $prog  Maks. żądań na minutę z jednego IP.
+ * @param string $akcja        Etykieta limitu ('chat' = wspólny kubeł widgetu,
+ *                             'ai' = wywołania modelu).
+ * @param int    $prog         Maks. żądań na okno z jednego IP.
+ * @param int    $okno_sekund  Długość okna w sekundach (minuta albo doba).
  * @return bool True = wolno obsłużyć, false = limit wyczerpany.
  */
-function chatl_rate_limit( $akcja, $prog ) {
+function chatl_rate_limit( $akcja, $prog, $okno_sekund = MINUTE_IN_SECONDS ) {
 	global $wpdb;
 	$ip = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
 	if ( '' === $ip ) {
 		return false;
 	}
-	$t     = $wpdb->prefix . 'chatl_rate_limit';
-	$okno  = (int) floor( time() / MINUTE_IN_SECONDS );
-	$klucz = $akcja . '|' . $okno . '|' . md5( $ip );
+	$okno_sekund = max( 1, (int) $okno_sekund );
+	$t           = $wpdb->prefix . 'chatl_rate_limit';
+	$okno        = (int) floor( time() / $okno_sekund );
+	$klucz       = $akcja . '|' . $okno . '|' . md5( $ip );
 
 	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
 	$wynik = $wpdb->query(
@@ -44,7 +58,7 @@ function chatl_rate_limit( $akcja, $prog ) {
 			"INSERT INTO {$t} (klucz, licznik, okno_do) VALUES (%s, 1, %s)
 		 ON DUPLICATE KEY UPDATE licznik = LAST_INSERT_ID(licznik + 1)",
 			$klucz,
-			gmdate( 'Y-m-d H:i:s', ( $okno + 2 ) * MINUTE_IN_SECONDS )
+			gmdate( 'Y-m-d H:i:s', ( $okno + 2 ) * $okno_sekund )
 		)
 	);
 	if ( 1 === $wynik ) {
@@ -67,6 +81,19 @@ function chatl_rate_limit( $akcja, $prog ) {
  */
 function chatl_limit_ip_ok() {
 	return chatl_rate_limit( 'chat', CHATL_LIMIT_NA_MIN );
+}
+
+/**
+ * Kubeł wywołań AI: jeden adres IP na dobę.
+ *
+ * Wołany DOPIERO gdy tryb AI jest dostępny — inaczej licznik rósłby też
+ * w trybie regułowym. Wyczerpanie limitu NIE jest błędem dla gościa:
+ * pytanie leci do silnika regułowego, dokładnie jak przy braku klucza.
+ *
+ * @return bool True = wolno wywołać model.
+ */
+function chatl_limit_ai_ip_ok() {
+	return chatl_rate_limit( 'ai', CHATL_AI_LIMIT_IP_NA_DOBE, DAY_IN_SECONDS );
 }
 
 /**
@@ -138,9 +165,9 @@ function chatl_ajax_pytanie() {
 
 	chatl_zapisz_wymiane( $sesja, 'gosc', $pytanie );
 
-	// HYBRYDA: najpierw AI (jest klucz + limit dzienny niewyczerpany);
-	// błąd/timeout/brak klucza => zjazd do trybu regułowego.
-	if ( chatl_ai_dostepny() ) {
+	// HYBRYDA: najpierw AI (jest klucz + limit dzienny globalny i per IP
+	// niewyczerpany); błąd/timeout/brak klucza => zjazd do trybu regułowego.
+	if ( chatl_ai_dostepny() && chatl_limit_ai_ip_ok() ) {
 		$ai = chatl_ai_odpowiedz( $pytanie );
 		if ( null !== $ai ) {
 			if ( CHATL_AI_BRAK === trim( $ai ) ) {

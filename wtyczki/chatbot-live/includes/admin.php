@@ -412,7 +412,8 @@ function chatl_strona_ustawienia() {
 					<th scope="row"><label for="chatl-ai-limit">Dzienny limit wywołań AI (stop-loss)</label></th>
 					<td>
 						<input type="number" id="chatl-ai-limit" name="ai_limit_dzienny" min="1" max="100000" value="<?php echo (int) $ust['ai_limit_dzienny']; ?>">
-						<p class="description">Dzisiaj zużyto: <strong><?php echo (int) chatl_ai_uzycie_dzis(); ?> / <?php echo (int) $ust['ai_limit_dzienny']; ?></strong> wywołań. Po wyczerpaniu limitu bot do północy odpowiada z reguł. Limit jest miękki: równoległe zapytania gości mogą go minimalnie przekroczyć.</p>
+						<p class="description">Dzisiaj zużyto: <strong><?php echo (int) chatl_ai_uzycie_dzis(); ?> / <?php echo (int) $ust['ai_limit_dzienny']; ?></strong> wywołań. Po wyczerpaniu limitu bot do północy odpowiada z reguł. Limit jest miękki: równoległe zapytania gości mogą go minimalnie przekroczyć.<br>
+							Ten limit jest <strong>globalny dla całej strony</strong>. Osobno działa twardszy limit <strong><?php echo (int) CHATL_AI_LIMIT_IP_NA_DOBE; ?> wywołań AI na dobę z jednego adresu IP</strong> — żeby jeden gość nie wypalił budżetu wszystkich. Po jego przekroczeniu ten gość dostaje odpowiedzi z reguł, reszta strony działa normalnie.</p>
 					</td>
 				</tr>
 				<tr>
