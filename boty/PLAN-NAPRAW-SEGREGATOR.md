@@ -1,66 +1,58 @@
-# PLAN NAPRAW — Segregator maila (przed audytem, wersja docelowa 1.2.2)
+# PLAN NAPRAW — Segregator maila · wersja 2 (po krytykach) · cel: 1.2.2
 
-**Data: 2026-08-20.** Podstawa: 4 niezależne krytyki modeli (runda 1) zweryfikowane w kodzie.
-⛔ To jest osobny produkt — ChatBot ma własny plan. Krytycy dali temu botowi najniższe oceny
-(15, 20, 25, 49 / 100) i **wszyscy czterej wskazali TĘ SAMĄ przyczynę** — patrz niżej.
+**20.08.2026, noc.** Wersja 1 powstała PRZED krytykami. Ta jest po: **3 zewnętrzne modele**
+(oceny planu: 62, 75, 78/100 — wszystkie rozbroiły przynętę) + **nasz krytyk z dostępem do kodu**
++ **żywy test klucza AI**, który wykrył awarię wspólną z ChatBotem.
 
-## KONTEKST (czego krytycy nie wiedzieli)
-- To **testowy bot na egzamin**. **Nazwę „Segregator maila" podał ZAMAWIAJĄCY** w notatce
-  zlecenia — nie zmieniamy jej, bo to litera zamówienia.
-- **Brak podpięcia prawdziwej skrzynki (IMAP/OAuth) to ŚWIADOMA decyzja zamawiającego**
-  z 18.08, zapisana w rejestrze (D19): na egzamin działa na próbkach, prawdziwa skrzynka
-  = droga rozbudowy po egzaminie.
-- Termin: paczka i pierwsza próba oddania **27.08**.
+## KONTEKST (czego krytycy zewnętrzni nie wiedzieli)
+Praca egzaminacyjna, termin **27.08**. **Nazwę podał zamawiający — nie zmieniamy.** Brak podpięcia
+prawdziwej skrzynki (IMAP/OAuth) to **jego świadoma decyzja**: na egzamin produkt działa na próbkach.
+W pierwszej rundzie 4 modele dały temu produktowi 15–49/100 i **wszystkie z tego samego powodu**:
+„nazywa się segregator, a nie segreguje — brak efektu końcowego".
 
-## ⛔ ZBIEŻNY ZARZUT 4/4 KRYTYKÓW — i co z nim robimy
-> „Nazywa się segregator, a nie segreguje. Klient kupi myśląc, że posprząta mu skrzynkę,
-> a dostanie analizator plików CSV. Brak EFEKTU KOŃCOWEGO."
+---
 
-**Nazwy nie zmieniamy** (zamówienie). **Naprawiamy dwie rzeczy, które są naprawdę winne:**
-1. **Obietnicę** — pierwsze zdanie ma mówić prawdę OD RAZU, nie trzy ekrany niżej.
-2. **Brak efektu** — dokładamy eksport gotowych filtrów do Gmaila i Outlooka (poniżej C1).
-   To daje realny skutek na prawdziwej skrzynce BEZ łamania zakresu.
+## 🔴 P0 — MUSI
 
-## STAN OBECNY (zweryfikowany w kodzie)
-✅ Reguły z rozstrzyganiem kolejnością · kategorie CRUD · próbka 30 maili PL · import CSV
-(nonce + capability + `is_uploaded_file`, plik NIE trafia na dysk — czytany z bufora) ·
-raport: pokrycie, trafność, lista pomyłek · eksport wyników CSV · historia przebiegów ·
-tryb AI: reguły / AI / porównanie z raportem różnic · escapowanie w raportach (43×) ·
-czysty uninstall · phpcs/phpstan czyste.
-❌ Braki potwierdzone niżej.
-
-## NAPRAWY — kolejność wg ryzyka
-
-### A. PRAWNE (blokujące oddanie)
-| # | Co | Dlaczego | Skąd |
-|---|---|---|---|
-| A1 | **RETENCJA wgranych maili** — cron czyszczący próbki i przebiegi starsze niż 90 dni (jak w ChatBocie) + przycisk „wyczyść próbkę teraz" + wpis w instrukcji | do bazy trafia PRAWDZIWA korespondencja z adresami — dziś zostaje tam na zawsze, zero crona. **Chatbot ma retencję, ten bot nie ma nic** | 2/4 krytyków, potwierdzone w kodzie (zero trafień) |
-| A2 | **Rozdzielenie komunikatu o prywatności**: reguły = nic nie opuszcza serwera; AI = treść maila idzie do dostawcy. W panelu, instrukcji i na stronie produktu | dziś obiecujemy „dane zostają u Ciebie" bez zastrzeżenia | 2/4 krytyków |
-
-### B. UCZCIWOŚĆ PRZEKAZU (największe ryzyko wizerunkowe)
-| # | Co | Dlaczego |
+| # | Co | Dowód |
 |---|---|---|
-| B1 | **Nowe pierwsze zdanie** na karcie i stronie produktu — prawda od razu, np. „Sprawdza Twoje reguły segregacji na próbce maili i pokazuje raport z liczbami — zanim wpuścisz je na żywą skrzynkę." Dziś: „rozdziela pocztę do kategorii" (sugeruje żywą skrzynkę) | 4/4 krytyków. To jest ta jedna rzecz, którą wszyscy nazwali ryzykiem zwrotów |
-| B2 | **Baner w panelu przy pierwszym uruchomieniu**: „To narzędzie NIE łączy się z Twoją skrzynką. Pracuje na próbce, którą wgrasz." | żeby klient dowiedział się PRZED, nie PO zakupie |
+| **P0.1** | **TRYB AI NIE DZIAŁA — napraw.** `includes/ai.php:118` wysyła `output_config → effort`, model `claude-haiku-4-5` tego nie obsługuje → API 400 → cichy zjazd do reguł. **Identyczna linia w ChatBocie — to KLASA, naprawiamy jednym przejściem.** | żywe wywołanie: `HTTP 400, "This model does not support the effort parameter"`; próba kontrolna bez tego pola = 200 |
+| **P0.2** | **Fałszywy sukces przy zapisie — 6 miejsc:** `silnik.php:151-163`, `csv.php:118`, `instalator.php:99,124,186`, `admin.php:433,573`. `$wpdb->insert()` bez sprawdzenia wyniku, użytkownik i tak widzi sukces. | nasz krytyk, plik:linia |
+| **P0.3** | **RETENCJA — zero czyszczenia.** Grep `cron\|wp_schedule` = 0 trafień. Do bazy trafia PRAWDZIWA cudza korespondencja i zostaje na zawsze. Cron 90 dni (wzór 1:1 z ChatBota) + przycisk „wyczyść próbkę teraz" + wyrejestrowanie przy deaktywacji + wpis w uninstall. | 2/4 krytyków + potwierdzone w kodzie |
+| **P0.4** | **Zgoda przed wysłaniem CUDZEJ korespondencji do AI.** W trybie AI treść maili osób trzecich wychodzi do zewnętrznego dostawcy. Sam komunikat to za mało — potrzebne wyraźne, jednorazowe potwierdzenie właściciela przed włączeniem trybu AI. | 2/3 krytyków — **nowe, nie było w wersji 1** |
 
-### C. EFEKT KOŃCOWY (odpowiedź na zarzut 4/4 — tanie, duży zysk)
-| # | Co | Dlaczego |
+## 🟠 P1 — EFEKT KOŃCOWY (odpowiedź na zarzut 4/4 z rundy 1)
+
+| # | Co | Uwaga |
 |---|---|---|
-| C1 | ⭐ **EKSPORT GOTOWYCH FILTRÓW**: po przebiegu przycisk „pobierz filtry do Gmaila" (plik XML do importu w Gmailu) i „pokaż reguły dla Outlooka" (lista krok po kroku) | zamienia „analizator, który nic nie robi" w narzędzie z REALNYM skutkiem na prawdziwej skrzynce — bez IMAP, bez łamania zakresu. Pomysł z krytyki nr 4 |
-| C2 | **Szablon CSV do pobrania** + instrukcja „jak wyeksportować maile z Gmaila/Outlooka" krok po kroku w panelu | 3/4 krytyków: eksport CSV to bariera dla nietechnicznego właściciela |
-| C3 | **Limit rozmiaru wgrywanego pliku** + czytelny komunikat błędu (dziś brak limitu; ryzyko małe, bo tylko administrator, ale porządek) | 1/4 krytyków, potwierdzone |
-| C4 | **Drugi dostawca AI: Gemini** + instrukcja darmowego klucza | jw. co w ChatBocie — bariera „własny klucz" znika |
+| **P1.1** | **Uczciwe pierwsze zdanie** na karcie i stronie produktu. Dziś: „rozdziela pocztę do kategorii" (sugeruje żywą skrzynkę), prawda dopiero kilka ekranów niżej. Nowe: „Sprawdza Twoje reguły segregacji na próbce maili i pokazuje raport z liczbami — zanim wpuścisz je na żywą skrzynkę." | 4/4 z rundy 1 + 3/3 z rundy 2. **Najtańsza poprawka o największym wpływie.** |
+| **P1.2** | **Baner w panelu przy pierwszym uruchomieniu**: „To narzędzie NIE łączy się z Twoją skrzynką." | jw. |
+| **P1.3** | ⭐ **EKSPORT FILTRÓW** — potwierdzony przez 3/3 krytyków jako „jedyny słuszny zwrot", nie plaster. ⚠️ **ALE Z TWARDYM WARUNKIEM:** nasz silnik działa „pierwsza pasująca reguła wygrywa i STOP", a **Gmail stosuje wszystkie pasujące filtry naraz** — eksport 1:1 dałby na żywej skrzynce INNY wynik niż nasz raport. Outlook ma „przestań przetwarzać kolejne reguły", więc tam odwzorowanie jest pełne. **Decyzja: eksportujemy z JAWNYM ostrzeżeniem o tej różnicy + mapowanie tylko reguł przekładalnych; kubeł domyślny „Reszta" NIE jest eksportowalny i trzeba to napisać wprost.** | 3/3 zewnętrznych + nasz krytyk (semantyka) |
+| **P1.4** | **Test akceptacyjny eksportu** (bez tego P1.3 jest obietnicą): 30 maili → reguły → raport → eksport → import do prawdziwego Gmaila → wiadomości testowe → wynik w Gmailu MUSI zgadzać się z raportem albo różnica MUSI być opisana. | wymóg 2/3 krytyków |
 
-### D. DOKUMENTACJA (po zamrożeniu kodu)
-| # | Co |
-|---|---|
-| D1 | Dokumentacja **techniczna**: schemat 5 tabel, format CSV (kolumny, kodowanie), zaczepy do rozbudowy, wymagania |
-| D2 | **Diagram przepływu**: próbka → reguły (kolejność) → kategorie → raport → filtry do skrzynki |
+## 🟡 P2 — bezpieczeństwo importu i drobne
 
-## ⛔ ŚWIADOMIE NIE ROBIMY (idzie do „droga rozbudowy" w instrukcji)
-Podpięcie IMAP/OAuth · automatyczne przenoszenie maili w skrzynce · uczenie się z korekt ·
-wykrywanie subskrypcji i masowe wypisywanie · obsługa załączników · wiele skrzynek.
-**Powód:** zakres klepnięty przez zamawiającego + termin 27.08.
+| # | Co | Uwaga |
+|---|---|---|
+| **P2.1** | **Kodowanie CSV** — dziś zdejmowany tylko znacznik UTF-8 (`csv.php:52,66`); plik z Excela (Windows-1250) wchodzi jako krzaki na polskich znakach. Wykryj i przekonwertuj. | nasz krytyk — **nie było w wersji 1** |
+| **P2.2** | **Pętla czyta plik DO KOŃCA** mimo limitu 500 wierszy (`csv.php:60,93-96` — tylko liczy pominięte). Plik z milionem linii i tak zostanie przemielony → ryzyko wyczerpania pamięci. **Przerwij czytanie po limicie** + limit rozmiaru w bajtach + walidacja typu pliku. | nasz krytyk + 2/3 zewnętrznych (streaming/pamięć) |
+| **P2.3** | **Wyścig: `TRUNCATE` w trakcie przebiegu.** `csv.php:116`, `admin.php:683` czyszczą tabelę bez blokady, a `silnik.php:76` w tym czasie ją czyta. Dwie karty = przebieg policzony na pustej próbce, bez ostrzeżenia. | nasz krytyk |
+| **P2.4** | **Wstrzyknięcie formuły w eksporcie CSV** — treść maila zaczynająca się od `=`, `+`, `-`, `@` wykona się w arkuszu. | 2/3 krytyków |
 
-## SZACUNEK CZASU
-A: ~1,5 h · B: ~0,5 h · C: ~3,5 h (sam eksport filtrów ~2 h) · D: ~1 h → **razem ~6,5 h**.
+## ⛔ WYPADA / OBALONE
+- **Drugi dostawca AI (Gemini)** — 7 głosów przeciw na 7. Po egzaminie.
+- **„Rozdzielenie komunikatu o prywatności (tryb AI)"** — **JUŻ JEST W KODZIE** (`admin.php:735-736`
+  + INSTRUKCJA §7). Wersja 1 wpisała to jako brak, bo przepisałam zarzut krytyków zamiast sprawdzić
+  u siebie. **Moja wpadka — dokładnie ta, przed którą ostrzega nasza zasada „weryfikuj negatywne
+  twierdzenia samodzielnie".** Zostaje P0.4 (zgoda), bo to co innego niż informacja.
+- **„Brak walidacji liczby kolumn przy imporcie"** — **JEST** (`csv.php:80-92`, twarde odrzucenie).
+- **„Brak escapowania w raportach"** — **JEST**, 43 wystąpienia w `admin.php`.
+- **Zmiana nazwy produktu** — nazwa pochodzi z zamówienia.
+
+## 📄 PO ZAMROŻENIU KODU
+Dokumentacja techniczna (schemat 5 tabel, format CSV i kodowanie, zaczepy) + diagram przepływu:
+próbka → reguły → kategorie → raport → filtry do skrzynki.
+
+## ⛔ CZEGO NIE ROBIMY (droga rozbudowy w instrukcji)
+IMAP/OAuth · automatyczne przenoszenie maili w skrzynce · uczenie się z korekt · wykrywanie
+subskrypcji · obsługa załączników · wiele skrzynek.

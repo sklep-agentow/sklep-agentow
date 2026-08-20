@@ -76,9 +76,33 @@ wypala CAŁY dzienny budżet AI dla wszystkich gości.
 Brak możliwości sprawdzenia własnej bazy bez wychodzenia na stronę (przeczytane całe `admin.php`, 409 linii).
 **Zrób:** na stronie bazy Q&A pole „wpisz pytanie" → pokazuje odpowiedź bota ORAZ która para zadziałała (id + pytanie wzorcowe).
 
-## 🟡 Z9. ChatBot: eksport rozmów i zgłoszeń do CSV
+## 🟡 Z9. ChatBot: eksport rozmów i zgłoszeń do CSV — ⚠️ TYLKO RĘCZNY
 Grep `csv|eksport` w całym bocie = 0 trafień. Historia znika po 90 dniach bez możliwości zachowania.
-**Zrób:** przyciski „Pobierz CSV" na liście zgłoszeń i na historii rozmów (nonce + capability, nagłówki jak w segregatorze `csv.php:147`).
+**Zrób:** przyciski „Pobierz CSV" na liście zgłoszeń i na historii rozmów (nonce + capability,
+nagłówki jak w segregatorze `csv.php:147`).
+⛔ **NIE rób automatycznego eksportu przed kasowaniem** — 3 niezależne krytyki wskazały, że
+automatyczny zrzut do pliku przed usunięciem oznacza, że dane NIE są kasowane, tylko archiwizowane
+(sprzeczne z obietnicą „kasujemy po 90 dniach" i z minimalizacją danych).
+⛔ **Zabezpiecz przed wstrzyknięciem formuły do arkusza**: pole zaczynające się od `=`, `+`, `-`, `@`
+poprzedź apostrofem — inaczej Excel potraktuje treść od gościa jako formułę.
+
+## 🟡 Z11. ChatBot: klucz API również ze stałej w konfiguracji
+Dziś klucz czytany WYŁĄCZNIE z bazy (`ai.php:25-26`). Trzy krytyki wytknęły „klucz w bazie jawnym
+tekstem". ⛔ Szyfrowanie kluczem leżącym obok w tym samym WordPressie to teatr — nie robimy tego.
+**Zrób:** jeśli zdefiniowana jest stała `CHATL_KLUCZ_API` w `wp-config.php`, MA PIERWSZEŃSTWO nad opcją
+(w panelu wtedy komunikat „klucz podany w konfiguracji serwera", pole zablokowane). To realna dobra
+praktyka: klucz poza bazą, poza kopiami zapasowymi bazy. Opisz w INSTRUKCJA.md.
+
+## 🔴 Z12. WERYFIKACJA DEKLARACJI (nie kod — DOWÓD, że obietnice są prawdziwe)
+Trzy krytyki niezależnie wskazały: produkt deklaruje rzeczy, których nikt nie sprawdził. **Wykonaj
+i zapisz surowe wyjście** w `audyt/boty/DOWODY-DEKLARACJI.md`:
+1. **Czysta deinstalacja OBU botów**: policz tabele/opcje/crony PRZED instalacją, po instalacji
+   i po odinstalowaniu z włączoną opcją czyszczenia. Diff musi być pusty. (`wp option list`, `SHOW TABLES`, `wp cron event list`)
+2. **Cron retencji 90 dni**: sprawdź, że zdarzenie jest zarejestrowane po aktywacji, wyrejestrowane
+   po deaktywacji, i że faktycznie kasuje — podłóż wpis z datą sprzed 91 dni, odpal zdarzenie ręcznie
+   (`wp cron event run`), pokaż liczbę wierszy przed i po.
+3. **Zjazd AI do reguł**: ustaw zły klucz API i pokaż, że bot odpowiada z bazy zamiast się wysypać.
+4. **Limit dzienny AI**: pokaż, że po przekroczeniu licznik blokuje wywołania.
 
 ## 🟢 Z10. Drobiazgi
 - `chatbot-live`: domyślny próg `$prog = 10` w `chatl_rate_limit` (dziś bez wartości domyślnej).
