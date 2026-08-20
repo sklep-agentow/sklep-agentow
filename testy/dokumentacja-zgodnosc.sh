@@ -36,6 +36,12 @@ spr "zero odsylaczy po NUMERZE rozdzialu" "0" \
 spr "kazdy odsylacz po tytule wskazuje istniejacy rozdzial" "OK" \
   "grep -oP 'rozdzia[lł][u]? \\*\\*\\K[^*]+' $DOK | sort -u | while read -r t; do grep -qF \"## \" $DOK && grep -qP '^## [0-9]+\\. \\Q'\"\$t\"'\\E' $DOK || { echo \"MARTWY: \$t\"; exit; }; done; echo OK"
 
+# CHANGELOG rosnie przez SKLEJANIE wpisow przy kazdym scaleniu — separatory
+# gubily sie po cichu i recenzent zglaszal to kilka rund z rzedu. Kazdy wpis
+# wersji (poza pierwszym) ma byc poprzedzony pozioma kreska.
+spr "kazdy wpis CHANGELOG oddzielony kreska" "0" \
+  "awk '/^## \\[1\\./ {if (NR>1 && poprz != \"---\") b++} {if (\$0 != \"\") poprz=\$0} END {print b+0}' $W/CHANGELOG.md"
+
 echo "=== A. Wersja i schemat ==="
 spr "naglowek Version"            "1.4.9" "grep -oP '(?<=^ \* Version: ).*' $W/chatbot-live.php"
 spr "stala CHATL_WERSJA"          "1.4.9" "grep -oP \"(?<=CHATL_WERSJA', ')[^']*\" $W/chatbot-live.php"
