@@ -54,6 +54,14 @@ function segm_baner_powitalny() {
 	if ( get_user_meta( get_current_user_id(), 'segm_baner_ukryty', true ) ) {
 		return;
 	}
+	// Kto zobaczył pełnoekranowy ekran powitalny po aktywacji, ten przeczytał już
+	// dokładnie to samo przesłanie — baner z tą samą treścią zaraz po kliknięciu
+	// „Zaczynam" byłby powtórzeniem, nie przypomnieniem. Baner zostaje dla
+	// instalacji zaktualizowanych PODMIANĄ PLIKÓW: tam nie ma aktywacji, więc
+	// ekran powitalny się nie odzywa i to baner jest jedynym powitaniem.
+	if ( get_user_meta( get_current_user_id(), SEGM_POWITANIE_META, true ) ) {
+		return;
+	}
 	$schowaj = wp_nonce_url(
 		admin_url( 'admin-post.php?action=segm_baner_ukryj&strona=' . $strona ),
 		'segm_baner_ukryj'

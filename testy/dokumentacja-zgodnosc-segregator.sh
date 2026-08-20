@@ -226,6 +226,8 @@ spr "nie wraca: sprawdzenie znacznika" "1" "sed -n '/function segm_powitanie_prz
 spr "pomija wlaczanie hurtem"        "1" "grep -c \"activate-multi\" $W/includes/admin-powitanie.php"
 spr "strona zdjeta z menu"           "1" "grep -c 'remove_submenu_page' $W/includes/admin-powitanie.php"
 spr "sprawdza uprawnienia"           "2" "grep -c \"current_user_can( 'manage_options' )\" $W/includes/admin-powitanie.php"
+spr "baner ustepuje ekranowi powitalnemu" "1" "sed -n '/function segm_baner_powitalny/,/^}/p' $W/includes/admin.php | grep -c 'SEGM_POWITANIE_META'"
+spr "dokumentacja tlumaczy dwa powitania" "1" "grep -c 'Dwa powitania i dlaczego oba zostają' $DOK"
 spr "uninstall kasuje znacznik globalny" "1" "grep -c \"delete_option( 'segm_powitanie_gotowe' )\" $W/uninstall.php"
 spr "uninstall kasuje metadane wszystkich" "1" "grep -c \"delete_metadata( 'user', 0, 'segm_powitanie_widziane'\" $W/uninstall.php"
 spr "kasowane ZAWSZE (przed warunkiem usun_dane)" "1" "sed -n '1,/usun_dane/p' $W/uninstall.php | grep -c \"delete_option( 'segm_powitanie_gotowe' )\""

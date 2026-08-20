@@ -63,7 +63,7 @@ leży w pliku `LICENSE` w katalogu wtyczki i wchodzi do paczki produktowej.
 | `includes/silnik.php` | 226 | `segm_klasyfikuj_mail()` — jedyna reguła dopasowania w całej wtyczce; przebieg na próbce |
 | `includes/csv.php` | 352 | import próbki z CSV (wykrywanie kodowania, limity) i eksport raportu do CSV |
 | `includes/ai.php` | 294 | opcjonalna klasyfikacja modelem, licznik stop-loss |
-| `includes/admin.php` | 1083 | panel: przebiegi i raporty, reguły, kategorie, próbka, ustawienia, baner powitalny |
+| `includes/admin.php` | 1091 | panel: przebiegi i raporty, reguły, kategorie, próbka, ustawienia, baner powitalny |
 | `includes/filtry.php` | 588 | eksport reguł do filtrów Gmaila (XML) i reguł Outlooka |
 | `includes/class-segm-imap.php` | 947 | **klient IMAP4rev1 w czystym PHP** — gniazdo, TLS, protokół |
 | `includes/skrzynka.php` | 504 | konfiguracja skrzynki, hasło, diagnostyka, „Sprawdź połączenie", rozbiór nagłówków i treści |
@@ -139,6 +139,22 @@ pasuje albo folder docelowy = źródłowy) · `blad` · `cofniety`.
 ### Metadane użytkownika
 
 `segm_baner_ukryty` — decyzja „nie pokazuj banera powitalnego", per osoba.
+
+### Dwa powitania i dlaczego oba zostają
+
+Wtyczka ma **dwa** mechanizmy powitania i to jest decyzja, nie przeoczenie:
+
+1. **Ekran powitalny** (`admin-powitanie.php`) — pełna strona, jednorazowe
+   przekierowanie **po aktywacji**.
+2. **Baner** (`segm_baner_powitalny()` w `admin.php`) — pasek na każdej stronie
+   wtyczki, chowany odnośnikiem, znacznik `segm_baner_ukryty`.
+
+Ekran powitalny odzywa się **tylko przy aktywacji**. Instalacja zaktualizowana
+podmianą plików (typowa przy aktualizacji z paczki na serwerze) nie przechodzi
+przez uchwyt aktywacji, więc tam ekranu nie będzie — i wtedy baner jest jedynym
+powitaniem. Żeby jednak nikt nie czytał tego samego przesłania dwa razy pod rząd,
+**baner ustępuje ekranowi**: nie pokazuje się użytkownikowi, który ma już
+ustawioną metadaną `segm_powitanie_widziane`.
 
 `segm_powitanie_widziane` — numer wersji, przy której ten użytkownik widział już
 ekran powitalny. Trzymane **per osoba**, nie globalnie: na stronie z kilkoma
