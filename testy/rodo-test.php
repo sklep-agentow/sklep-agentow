@@ -89,12 +89,67 @@ echo "\n=== D. Kasowanie usuwa dane wnioskodawcy — i tylko jego ===\n";
 $wynik_k = call_user_func( $kasowniki['chatbot-live']['callback'], $mail_a, 1 );
 rowne( 'kasownik melduje usuniecie', true, $wynik_k['items_removed'] );
 rowne( 'i nie zostawia niczego po cichu', false, $wynik_k['items_retained'] );
-sprawdz( 'wyjasnia wprost, czego nie da sie powiazac z adresem', ! empty( $wynik_k['messages'] ) && false !== strpos( $wynik_k['messages'][0], 'retencja' ) );
+sprawdz( 'wyjasnia wprost, czego nie da sie powiazac z adresem', false !== strpos( implode( ' ', (array) $wynik_k['messages'] ), 'retencja' ) );
 
 rowne( 'zgloszenia osoby A skasowane', '0', (string) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$tz} WHERE email = %s", $mail_a ) ) ); // phpcs:ignore
 rowne( 'rozmowa osoby A skasowana', '0', (string) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$tr} WHERE sesja = %s", $sesja_a ) ) ); // phpcs:ignore
 rowne( 'zgloszenie osoby B NIETKNIETE', '1', (string) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$tz} WHERE email = %s", $mail_b ) ) ); // phpcs:ignore
 rowne( 'rozmowa osoby B NIETKNIETA', '1', (string) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$tr} WHERE sesja = %s", $sesja_b ) ) ); // phpcs:ignore
+
+
+echo "\n=== D2. Komunikat MOWI TO, CO SIE STALO (a nie zawsze to samo) ===\n";
+/*
+ * Uwaga z odbioru: komunikat kasownika brzmial „Usunieto zgloszenia oraz rozmowy"
+ * BEZWARUNKOWO — takze wtedy, gdy nie znikl ani jeden wiersz. Wlasciciel odpowiada
+ * tym tekstem osobie skladajacej wniosek RODO, wiec potwierdzal kasowanie, ktorego
+ * nie bylo. To ta sama klasa bledu co falszywe „Mail zapisany".
+ */
+$komunikat_a = implode( ' ', (array) $wynik_k['messages'] );
+sprawdz( 'przy realnym kasowaniu komunikat podaje LICZBY', 1 === preg_match( '/usunięto \\d+ zgłoszenie/u', $komunikat_a ), $komunikat_a );
+sprawdz( 'i liczbe wiadomosci z rozmow', 1 === preg_match( '/\\d+ wiadomość/u', $komunikat_a ), $komunikat_a );
+
+$wynik_pusty    = call_user_func( $kasowniki['chatbot-live']['callback'], 'rodo-test-nikt@example.test', 1 );
+$komunikat_pusty = implode( ' ', (array) $wynik_pusty['messages'] );
+rowne( 'wniosek o adres bez danych: items_removed = false', false, $wynik_pusty['items_removed'] );
+sprawdz( 'komunikat NIE potwierdza kasowania, ktorego nie bylo', false === stripos( $komunikat_pusty, 'usunięto' ), $komunikat_pusty );
+sprawdz( 'i mowi wprost, ze nic nie znaleziono', false !== strpos( $komunikat_pusty, 'Nie znaleziono' ), $komunikat_pusty );
+
+echo "\n=== D3. SESJA NIE JEST WLASNOSCIA JEDNEGO ADRESU ===\n";
+/*
+ * Uwaga z odbioru, powazniejsza: rozmowa byla wiazana z SESJA, a nie z osoba.
+ * Gdy w jednej sesji przegladarki zostana zostawione DWA rozne adresy (wspolny
+ * komputer w recepcji, albo gosc, ktory rozmyslil sie i podal drugi adres),
+ * jedna rozmowa zawiera wiadomosci DWOCH osob. Wniosek jednej z nich zabieral
+ * wtedy dane drugiej — a eksport WYDAWAL jej tresc rozmowy osoby trzeciej.
+ */
+$mail_d1   = 'rodo-test-wspolna1@example.test';
+$mail_d2   = 'rodo-test-wspolna2@example.test';
+$sesja_wsp = 'rodoTestSesjaWSPOLNAAAAAAAAAAAAA';
+$wpdb->query( $wpdb->prepare( "DELETE FROM {$tz} WHERE email IN (%s, %s)", $mail_d1, $mail_d2 ) ); // phpcs:ignore
+$wpdb->query( $wpdb->prepare( "DELETE FROM {$tr} WHERE sesja = %s", $sesja_wsp ) ); // phpcs:ignore
+
+$wpdb->insert( $tz, array( 'email' => $mail_d1, 'wiadomosc' => 'ZGL-WSP-1', 'sesja' => $sesja_wsp, 'status' => 'nowe', 'utworzono' => current_time( 'mysql' ) ) ); // phpcs:ignore
+$wpdb->insert( $tz, array( 'email' => $mail_d2, 'wiadomosc' => 'ZGL-WSP-2', 'sesja' => $sesja_wsp, 'status' => 'nowe', 'utworzono' => current_time( 'mysql' ) ) ); // phpcs:ignore
+$wpdb->insert( $tr, array( 'sesja' => $sesja_wsp, 'rola' => 'gosc', 'silnik' => 'reguly', 'tresc' => 'ROZMOWA-WSPOLNA: sprawa dwoch osob', 'utworzono' => current_time( 'mysql' ) ) ); // phpcs:ignore
+
+$podzial = chatl_rodo_sesje_maila( $mail_d1 );
+rowne( 'sesja z dwoma adresami NIE jest sesja wylaczna', 0, count( $podzial['wlasne'] ) );
+rowne( 'jest rozpoznana jako wspoldzielona', 1, count( $podzial['wspoldzielone'] ) );
+
+$eksp_wsp  = call_user_func( $eksportery['chatbot-live']['callback'], $mail_d1, 1 );
+$tresc_wsp = chatl_test_tresc_eksportu( $eksp_wsp );
+sprawdz( 'EKSPORT nie wydaje tresci rozmowy dwoch osob', false === strpos( $tresc_wsp, 'ROZMOWA-WSPOLNA' ), $tresc_wsp );
+sprawdz( 'ale wlasne zgloszenie wnioskodawcy wydaje', false !== strpos( $tresc_wsp, 'ZGL-WSP-1' ) );
+sprawdz( 'nie wydaje zgloszenia tej drugiej osoby', false === strpos( $tresc_wsp, 'ZGL-WSP-2' ) );
+sprawdz( 'i MOWI, ze rozmowa zostala pominieta (paczka nie udaje kompletu)', false !== strpos( $tresc_wsp, 'pominięte' ) || false !== strpos( $tresc_wsp, 'nie był jedynym' ), $tresc_wsp );
+
+$kas_wsp   = call_user_func( $kasowniki['chatbot-live']['callback'], $mail_d1, 1 );
+$komun_wsp = implode( ' ', (array) $kas_wsp['messages'] );
+rowne( 'KASOWANIE zostawia rozmowe dwoch osob', '1', (string) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$tr} WHERE sesja = %s", $sesja_wsp ) ) ); // phpcs:ignore
+rowne( 'zgloszenie DRUGIEJ osoby NIETKNIETE', '1', (string) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$tz} WHERE email = %s", $mail_d2 ) ) ); // phpcs:ignore
+rowne( 'wlasne zgloszenie wnioskodawcy skasowane', '0', (string) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$tz} WHERE email = %s", $mail_d1 ) ) ); // phpcs:ignore
+rowne( 'items_retained = true, bo cos ZOSTALO', true, $kas_wsp['items_retained'] );
+sprawdz( 'i komunikat mowi, ze zachowano i dlaczego', false !== strpos( $komun_wsp, 'Zachowano' ) && false !== strpos( $komun_wsp, 'inna osoba' ), $komun_wsp );
 
 echo "\n=== E. Stronicowanie oddaje KOMPLET (eksport z dziura jest niewidoczny) ===\n";
 /*
@@ -142,8 +197,8 @@ echo "\n=== F. Podpowiedz do polityki prywatnosci ===\n";
 sprawdz( 'wtyczka dokłada tresc do polityki prywatnosci', has_action( 'admin_init', 'chatl_polityka_prywatnosci' ) !== false );
 
 echo "\n=== G. Sprzatanie ===\n";
-$wpdb->query( $wpdb->prepare( "DELETE FROM {$tz} WHERE email IN (%s, %s, %s)", $mail_a, $mail_b, $mail_c ) ); // phpcs:ignore
-$wpdb->query( $wpdb->prepare( "DELETE FROM {$tr} WHERE sesja IN (%s, %s, %s)", $sesja_a, $sesja_b, $sesja_c ) ); // phpcs:ignore
+$wpdb->query( $wpdb->prepare( "DELETE FROM {$tz} WHERE email IN (%s, %s, %s, %s, %s)", $mail_a, $mail_b, $mail_c, $mail_d1, $mail_d2 ) ); // phpcs:ignore
+$wpdb->query( $wpdb->prepare( "DELETE FROM {$tr} WHERE sesja IN (%s, %s, %s, %s)", $sesja_a, $sesja_b, $sesja_c, $sesja_wsp ) ); // phpcs:ignore
 rowne( 'dane testowe usuniete', '0', (string) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$tz} WHERE email IN (%s, %s, %s)", $mail_a, $mail_b, $mail_c ) ) ); // phpcs:ignore
 
 echo "\n" . ( $GLOBALS['chatl_test_bledy'] ? 'NIEPOWODZENIE: ' . $GLOBALS['chatl_test_bledy'] . ' krokow nie przeszlo' : 'WSZYSTKIE KROKI PRZESZLY' ) . "\n";

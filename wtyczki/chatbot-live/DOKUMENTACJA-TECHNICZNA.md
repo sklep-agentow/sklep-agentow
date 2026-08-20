@@ -934,8 +934,8 @@ zostawia właściciela z obowiązkiem i bez narzędzia.
 
 | Zaczep WordPressa | Nasza funkcja | Co robi |
 |---|---|---|
-| `wp_privacy_personal_data_exporters` | `chatl_rodo_eksporter()` | wydaje zgłoszenia i powiązane rozmowy |
-| `wp_privacy_personal_data_erasers` | `chatl_rodo_kasownik()` | kasuje jedno i drugie |
+| `wp_privacy_personal_data_exporters` | `chatl_rodo_eksporter()` | wydaje zgłoszenia i rozmowy powiązane **wyłącznie** z tym adresem |
+| `wp_privacy_personal_data_erasers` | `chatl_rodo_kasownik()` | kasuje jedno i drugie, z liczbami w komunikacie |
 | `wp_add_privacy_policy_content()` | `chatl_polityka_prywatnosci()` | gotowy akapit do polityki prywatności |
 
 ### 23.1. Granica wiązania: adres e-mail
@@ -946,13 +946,43 @@ zgłoszenie. **Rozmowa gościa, który nigdy nie podał maila, jest anonimowa** 
 jak przypisać jej do wniosku; kasuje ją retencja po `CHATL_RETENCJA_DNI` dniach.
 Kasownik mówi o tym wprost w komunikacie kreatora, zamiast udawać komplet.
 
-### 23.2. Kolejność kasowania nie jest dowolna
+### 23.2. Sesja NIE jest własnością jednego adresu
+
+`chatl_rodo_sesje_maila()` zwraca sesje **z podziałem** na `wlasne` i `wspoldzielone`.
+Sesja jest współdzielona, gdy w jej zgłoszeniach występuje także **inny** adres —
+wspólny komputer (recepcja, biblioteka) albo gość, który rozmyślił się i podał drugi
+adres. Wtedy **jedna rozmowa zawiera wiadomości dwóch osób**, a wiersze `chatl_rozmowy`
+nie mają znacznika autora, więc nie da się ich rozdzielić.
+
+Takiej rozmowy **nie wydajemy i nie kasujemy**, bo obie operacje uderzają w osobę
+trzecią, i to po cichu:
+
+| Operacja | Co by się stało bez tego podziału |
+|---|---|
+| eksport | wnioskodawca dostałby **treść rozmowy drugiej osoby** — art. 15 ust. 4 RODO mówi wprost, że prawo do kopii nie może naruszać praw innych osób |
+| kasowanie | dane drugiej osoby zniknęłyby **na wniosek osoby trzeciej** |
+
+Zgadywanie po czasie („wiadomości sprzed zgłoszenia należą do tej osoby") wygląda
+mądrze i jest fałszem — w bazie nie ma nic, co by to rozstrzygało. Zamiast zgadywać,
+kreator **wypisuje**, ile rozmów zachowano i dlaczego, a `items_retained` jest wtedy
+`true`. Paczka eksportu dostaje na pierwszej stronie notatkę o pominiętej rozmowie —
+milczenie byłoby gorsze niż pominięcie, bo paczka wyglądałaby na komplet.
+
+### 23.3. Komunikat kasownika mówi to, co się stało
+
+Komunikat jest budowany **z rzeczywistych liczb** (`%d zgłoszenie`, `%d wiadomość`),
+a wniosek dotyczący adresu, którego nie ma w bazie, kończy się zdaniem „nie znaleziono
+żadnych danych — nic nie zostało usunięte". Właściciel odpowiada tym tekstem osobie
+składającej wniosek, więc zdanie o kasowaniu, którego nie było, byłoby potwierdzeniem
+nieprawdy wysłanym w cudzym imieniu.
+
+### 23.4. Kolejność kasowania nie jest dowolna
 
 Najpierw **rozmowy**, potem **zgłoszenia**. Zgłoszenie jest jedynym łącznikiem
 między adresem a sesją — skasowane pierwsze, zabrałoby ze sobą wiedzę o tym, które
 rozmowy usunąć, i zostawiłoby je w bazie na zawsze.
 
-### 23.3. Stronicowanie: dwa źródła, jedna numeracja
+### 23.5. Stronicowanie: dwa źródła, jedna numeracja
 
 Kreator woła eksporter stronami, aż zwróci `done`. Przesunięcie rozmów liczymy
 względem **całkowitej liczby zgłoszeń**, a nie numeru strony: przy dokładnie pełnej

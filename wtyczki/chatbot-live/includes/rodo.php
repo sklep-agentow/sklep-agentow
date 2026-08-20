@@ -25,22 +25,63 @@ if ( ! defined( 'ABSPATH' ) ) {
 const CHATL_RODO_PORCJA = 100;
 
 /**
- * Sesje powiązane z adresem e-mail.
+ * Sesje powiązane z adresem — Z PODZIAŁEM na wyłączne i współdzielone.
  *
- * Wiązanie idzie przez zgłoszenia: to jedyne miejsce, w którym gość podał adres.
+ * ⚠️ TU JEST SEDNO CAŁEGO MODUŁU. Rozmowę wiążemy z osobą przez sesję, w której
+ * zostawiła zgłoszenie — ale **sesja nie jest własnością jednego adresu**. Gość
+ * może w jednej sesji przeglądarki zostawić dwa różne adresy (rozmyślił się,
+ * podał służbowy zamiast prywatnego), a z komputera w recepcji czy w bibliotece
+ * pisze kolejno kilka osób. Wtedy JEDNA rozmowa zawiera wiadomości DWÓCH osób,
+ * nierozróżnialne co do wiersza.
+ *
+ * Traktowanie takiej sesji jako „danych wnioskodawcy" daje dwie awarie, obie
+ * poważne przy RODO i obie po cichu:
+ * - **eksport** wydałby wnioskodawcy treść rozmowy drugiej osoby (art. 15 ust. 4
+ *   wprost mówi, że prawo do kopii nie może naruszać praw innych osób),
+ * - **kasowanie** usunęłoby dane drugiej osoby na wniosek osoby trzeciej.
+ *
+ * Dlatego sesji WSPÓŁDZIELONEJ nie ruszamy w żadną stronę i mówimy o tym wprost,
+ * zamiast zgadywać, który wiersz rozmowy należy do kogo. Zgadywanie po czasie
+ * („wiadomości przed zgłoszeniem są tej osoby") wygląda mądrze i jest fałszem:
+ * w rozmowie z dwoma zgłoszeniami nie ma żadnego znacznika autora.
  *
  * @param string $email Adres.
- * @return array Lista identyfikatorów sesji.
+ * @return array array( wlasne, wspoldzielone ) — listy identyfikatorów sesji.
  */
 function chatl_rodo_sesje_maila( $email ) {
 	global $wpdb;
-	$t = $wpdb->prefix . 'chatl_zgloszenia';
-	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+	$t    = $wpdb->prefix . 'chatl_zgloszenia';
+	$obce = array();
+
+	/*
+	 * Wyciszenie obejmuje OBA zapytania i kończy się przed returnem — listy
+	 * miejsc budujemy z array_fill(), więc phpcs nie ma jak policzyć podstawień
+	 * i ostrzega na wyrost; wszystkie wartości przechodzą przez prepare() co do
+	 * jednej. Poprawność pilnuje strażnik (sekcje C i D testu RODO).
+	 */
+	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQLPlaceholders
 	$sesje = $wpdb->get_col(
 		$wpdb->prepare( "SELECT DISTINCT sesja FROM {$t} WHERE email = %s AND sesja <> ''", $email )
 	);
+	$sesje = array_values( array_filter( (array) $sesje ) );
+
+	if ( $sesje ) {
+		// Które z TYCH sesji mają w zgłoszeniach także INNY adres.
+		$miejsca = implode( ', ', array_fill( 0, count( $sesje ), '%s' ) );
+		$obce    = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT DISTINCT sesja FROM {$t} WHERE sesja IN ({$miejsca}) AND email <> %s",
+				array_merge( $sesje, array( $email ) )
+			)
+		);
+		$obce    = array_values( array_filter( (array) $obce ) );
+	}
 	// phpcs:enable
-	return array_values( array_filter( (array) $sesje ) );
+
+	return array(
+		'wlasne'        => array_values( array_diff( $sesje, $obce ) ),
+		'wspoldzielone' => $obce,
+	);
 }
 
 /**
@@ -100,8 +141,9 @@ function chatl_rodo_eksporter( $email, $strona = 1 ) {
 	 * nas stronami i oczekuje, że każda strona jest skończona — mieszanie dwóch
 	 * źródeł na jednej stronie kończy się gubieniem wierszy przy przewijaniu.
 	 */
-	$sesje  = chatl_rodo_sesje_maila( $email );
-	$miejsc = CHATL_RODO_PORCJA - count( (array) $zgloszenia );
+	$podzial = chatl_rodo_sesje_maila( $email );
+	$sesje   = $podzial['wlasne'];
+	$miejsc  = CHATL_RODO_PORCJA - count( (array) $zgloszenia );
 	if ( $miejsc > 0 && $sesje ) {
 		/*
 		 * Dwa źródła na wspólnej numeracji stron. Przesunięcie rozmów liczymy
@@ -148,9 +190,40 @@ function chatl_rodo_eksporter( $email, $strona = 1 ) {
 		}
 	}
 
+	/*
+	 * `done` liczymy z WIERSZY DANYCH, zanim dołożymy notatkę o pominiętych
+	 * rozmowach — inaczej notatka mogłaby dobić stronę do CHATL_RODO_PORCJA
+	 * i kreator wołałby nas o jedną pustą stronę więcej.
+	 */
+	$gotowe = count( $dane ) < CHATL_RODO_PORCJA;
+
+	/*
+	 * Milczenie o pominiętej rozmowie byłoby gorsze niż jej pominięcie: paczka
+	 * wyglądałaby na komplet. Notatkę dokładamy raz, na pierwszej stronie.
+	 */
+	if ( 1 === $strona && $podzial['wspoldzielone'] ) {
+		$dane[] = array(
+			'group_id'    => 'chatl_rozmowy',
+			'group_label' => 'Historia rozmowy z botem',
+			'item_id'     => 'chatl-rozmowa-pominieta',
+			'data'        => array(
+				array(
+					'name'  => 'Rozmowy pominięte świadomie',
+					'value' => sprintf(
+						'W %d rozmowie/rozmowach ten adres nie był jedynym — w tej samej sesji przeglądarki '
+							. 'zgłoszenie zostawiła także inna osoba (wspólny komputer albo drugi adres tego samego gościa). '
+							. 'Treści takiej rozmowy nie wydajemy, bo zawiera wiadomości drugiej osoby, '
+							. 'a nie da się rozstrzygnąć, który wiersz należy do kogo.',
+						count( $podzial['wspoldzielone'] )
+					),
+				),
+			),
+		);
+	}
+
 	return array(
 		'data' => $dane,
-		'done' => count( $dane ) < CHATL_RODO_PORCJA,
+		'done' => $gotowe,
 	);
 }
 
@@ -171,13 +244,13 @@ function chatl_rodo_eksporter( $email, $strona = 1 ) {
  */
 function chatl_rodo_kasownik( $email, $strona = 1 ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
 	global $wpdb;
-	$usuniete   = 0;
 	$komunikaty = array();
 
-	$sesje = chatl_rodo_sesje_maila( $email );
-	if ( $sesje ) {
+	$podzial = chatl_rodo_sesje_maila( $email );
+	$ile_r   = 0;
+	if ( $podzial['wlasne'] ) {
 		$tr      = $wpdb->prefix . 'chatl_rozmowy';
-		$miejsca = implode( ', ', array_fill( 0, count( $sesje ), '%s' ) );
+		$miejsca = implode( ', ', array_fill( 0, count( $podzial['wlasne'] ), '%s' ) );
 		/*
 		 * Lista miejsc na sesje budowana jest z array_fill(), wiec phpcs nie ma
 		 * jak policzyc podstawien i ostrzega na wyrost — wartosci ida przez
@@ -185,30 +258,61 @@ function chatl_rodo_kasownik( $email, $strona = 1 ) { // phpcs:ignore Generic.Co
 		 * ze kasowanie tyka TYLKO wnioskodawce.
 		 */
 		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQLPlaceholders
-		$ile = $wpdb->query( $wpdb->prepare( "DELETE FROM {$tr} WHERE sesja IN ({$miejsca})", $sesje ) );
+		$ile = $wpdb->query( $wpdb->prepare( "DELETE FROM {$tr} WHERE sesja IN ({$miejsca})", $podzial['wlasne'] ) );
 		// phpcs:enable
-		$usuniete += max( 0, (int) $ile );
+		$ile_r = max( 0, (int) $ile );
 	}
 
 	$tz = $wpdb->prefix . 'chatl_zgloszenia';
 	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
 	$ile_z = $wpdb->query( $wpdb->prepare( "DELETE FROM {$tz} WHERE email = %s", $email ) );
 	// phpcs:enable
-	$usuniete += max( 0, (int) $ile_z );
+	$ile_z = max( 0, (int) $ile_z );
+
+	$usuniete = $ile_r + $ile_z;
 
 	/*
-	 * Uczciwość wobec właściciela, który tym odpowiada osobie składającej wniosek:
-	 * mówimy WPROST, czego nie dało się przypisać. Rozmowa gościa, który nigdy nie
-	 * zostawił maila, nie ma z tym adresem żadnego związku w bazie — nie „została
-	 * zachowana", tylko nie jest daną tej osoby, o ile nie da się jej powiązać.
+	 * ⛔ KOMUNIKAT MUSI MÓWIĆ TO, CO SIĘ NAPRAWDĘ STAŁO — z LICZBAMI, nie w trybie
+	 * bezwarunkowym. Wcześniejsza wersja pisała „Usunięto zgłoszenia oraz rozmowy"
+	 * ZAWSZE, także wtedy, gdy nie zniknął ani jeden wiersz. Właściciel odpowiada
+	 * tym tekstem osobie, która złożyła wniosek RODO, więc zdanie o kasowaniu,
+	 * którego nie było, to potwierdzenie nieprawdy wysłane w cudzym imieniu.
 	 */
-	$komunikaty[] = 'Usunięto zgłoszenia z tym adresem oraz rozmowy z sesji, w których to zgłoszenie powstało. '
-		. 'Rozmowy gości, którzy nigdy nie podali adresu e-mail, nie są powiązane z żadnym adresem w bazie — '
+	if ( 0 === $usuniete ) {
+		$komunikaty[] = 'Nie znaleziono w ChatBocie żadnych danych powiązanych z tym adresem — nic nie zostało usunięte.';
+	} else {
+		$komunikaty[] = sprintf(
+			'ChatBot LIVE: usunięto %d zgłoszenie/zgłoszenia z tym adresem oraz %d wiadomość/wiadomości z powiązanych rozmów.',
+			(int) $ile_z,
+			(int) $ile_r
+		);
+	}
+
+	/*
+	 * Rozmowa, w której SWÓJ adres zostawiła także inna osoba, nie jest kasowana —
+	 * usunięcie zabrałoby dane tej drugiej osoby na wniosek osoby trzeciej.
+	 * Właściciel musi o tym wiedzieć, bo to jedyny przypadek, w którym coś zostaje
+	 * i w którym może być potrzebna jego decyzja.
+	 */
+	if ( $podzial['wspoldzielone'] ) {
+		$komunikaty[] = sprintf(
+			'Zachowano %d rozmowę/rozmowy: w tej samej sesji przeglądarki zgłoszenie zostawiła także inna osoba '
+				. '(wspólny komputer albo drugi adres tego samego gościa). Skasowanie zabrałoby dane tej drugiej osoby, '
+				. 'a wiersze rozmowy nie mają znacznika autora, więc nie da się ich rozdzielić automatycznie.',
+			count( $podzial['wspoldzielone'] )
+		);
+	}
+
+	/*
+	 * Uczciwość wobec właściciela: rozmowa gościa, który nigdy nie zostawił maila,
+	 * nie jest „zachowana" — nie ma jej jak powiązać z żadnym adresem w bazie.
+	 */
+	$komunikaty[] = 'Rozmowy gości, którzy nigdy nie podali adresu e-mail, nie są powiązane z żadnym adresem w bazie — '
 		. 'kasuje je automatycznie retencja po ' . (int) CHATL_RETENCJA_DNI . ' dniach.';
 
 	return array(
 		'items_removed'  => $usuniete > 0,
-		'items_retained' => false,
+		'items_retained' => (bool) $podzial['wspoldzielone'],
 		'messages'       => $komunikaty,
 		'done'           => true,
 	);

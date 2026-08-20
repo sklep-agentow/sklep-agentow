@@ -78,8 +78,23 @@ probuj "eksport pomija historie rozmow" \
 # 6. Kasownik kasuje zgloszenia, ale zostawia rozmowy — po ich skasowaniu
 #    nie ma juz czym powiazac rozmow z adresem, wiec zostana na zawsze.
 probuj "kasownik zostawia rozmowy (sierota nie do powiazania)" \
-  "docker exec $KONTENER sed -i 's|if ( \$sesje ) {|if ( false ) {|' $PLIK" \
+  "docker exec $KONTENER sed -i 's|DELETE FROM {\$tr} WHERE sesja IN|DELETE FROM {\$tr} WHERE 1=0 AND sesja IN|' $PLIK" \
   "rozmowa osoby A skasowana"
+
+# 7. Komunikat kasownika wraca do trybu BEZWARUNKOWEGO: pisze o usunieciu takze
+#    wtedy, gdy nie znikl ani jeden wiersz. Wlasciciel odpowiada tym tekstem
+#    osobie skladajacej wniosek RODO, wiec potwierdza kasowanie, ktorego nie bylo.
+#    To ta sama klasa bledu co falszywe "Mail zapisany".
+probuj "komunikat potwierdza kasowanie, ktorego nie bylo" \
+  "docker exec $KONTENER sed -i 's|if ( 0 === \$usuniete ) {|if ( false ) {|' $PLIK" \
+  "komunikat NIE potwierdza kasowania, ktorego nie bylo"
+
+# 8. Sesja znowu traktowana jako wlasnosc JEDNEGO adresu. To najgrozniejszy blad
+#    w tym module i dziala w obie strony: eksport WYDAJE wnioskodawcy tresc
+#    rozmowy drugiej osoby, a kasowanie usuwa jej dane na wniosek osoby trzeciej.
+probuj "sesja wspoldzielona liczona jako wlasna (dane osoby trzeciej)" \
+  "docker exec $KONTENER sed -i 's|array_values( array_diff( \$sesje, \$obce ) )|\$sesje|' $PLIK" \
+  "EKSPORT nie wydaje tresci rozmowy dwoch osob"
 
 echo
 echo "=== KONTROLA ODWROTNA: czysty kod ma przechodzic ==="

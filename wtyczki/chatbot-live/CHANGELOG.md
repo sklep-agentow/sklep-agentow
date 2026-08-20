@@ -23,6 +23,15 @@ migracja odpala się sama przy pierwszym wejściu do panelu po aktualizacji
 - Wiązanie idzie przez **adres e-mail**, więc rozmowa gościa, który nigdy nie
   zostawił zgłoszenia, nie jest powiązana z żadnym adresem — kasuje ją retencja.
   Kreator mówi o tym wprost, zamiast udawać komplet.
+- **Rozmowa, w której zgłoszenie zostawiła więcej niż jedna osoba** (wspólny
+  komputer w recepcji albo gość, który podał drugi adres), nie jest ani wydawana,
+  ani kasowana: zawiera wiadomości dwóch osób, a wiersze nie mają znacznika autora,
+  więc nie da się ich rozdzielić. Wydanie jej byłoby ujawnieniem cudzych danych
+  wnioskodawcy, a skasowanie — usunięciem cudzych danych na wniosek osoby trzeciej.
+  Kreator wypisuje, ile takich rozmów zachowano i dlaczego.
+- Komunikat kasownika podaje **rzeczywiste liczby** usuniętych zgłoszeń i wiadomości.
+  Wniosek dotyczący adresu, którego nie ma w bazie, kończy się zdaniem „nie znaleziono
+  żadnych danych" — a nie potwierdzeniem kasowania, którego nie było.
 
 ---
 
