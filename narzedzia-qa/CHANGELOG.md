@@ -51,6 +51,40 @@ pory lądują tutaj.
   białej listy ma rzucać się w oczy w diffie). Jedna kontrola „brak narzędzia
   to kod 2". I dziesięć odczytów z **żywego stosu**, każdy sprawdzany po treści
   odpowiedzi, nie po samym kodzie wyjścia.
+- **`paczka-zgodnosc.sh` 1.0.0 — bramka ZAMROŻENIA produktu.** Sprawdza dwie
+  rzeczy, które przy zamrażaniu sprawdza się „na oko" i obie sprawdza się źle.
+
+  **Wersja w pięciu miejscach**, nie w czterech: nagłówek wtyczki, stała
+  w kodzie, `Stable tag` w `readme.txt`, najnowsze wydanie w `CHANGELOG.md`
+  oraz sekcja `== Changelog ==` w `readme.txt` — o tym piątym łatwo zapomnieć,
+  bo to osobny format WordPressa w tym samym pliku co `Stable tag`.
+  Osobno pilnowane jest to, czego zgodność pięciu miejsc NIE wyklucza:
+  **niepusta sekcja `[Niewydane]` w CHANGELOG-u** oznacza, że w kodzie siedzą
+  zmiany ponad ostatnie wydanie, więc paczka z tym numerem nie jest tym, co ten
+  numer opisuje.
+
+  **Paczka porównana co do bajtu, w trzy strony:** każdy plik zipa musi mieć
+  sumę SHA-256 równą plikowi z repozytorium (sama lista nazw nie mówi nic —
+  plik o tej samej nazwie bywa wersją sprzed trzech PR-ów), żaden plik wtyczki
+  nie może zostać pominięty przy pakowaniu, a zawartość zipa musi zgadzać się
+  z allowlistą w `boty/buduj-paczki.sh`.
+
+  Osobno sprawdzana jest surowa postać wersji z nagłówka: numer, który nie
+  wygląda jak numer (np. `1.3.`), przeszedłby przez porównanie „wszystkie mówią
+  to samo", bo wszystkie mówiłyby to samo źle (uwaga z recenzji PR #101).
+
+  Brak wtyczki, brak paczki dla wersji z nagłówka albo brak `unzip`/`sha256sum`
+  to **kod wyjścia 2**, nie domyślne zielone.
+
+- **`paczka-zgodnosc-proba-kontrolna.sh` — 12 podłożonych rozjazdów.** Cztery
+  warianty wersji, która została w tyle (każdy z osobna), kod ponad wersją,
+  plik w zipie o tej samej nazwie i innej treści, plik zgubiony przy pakowaniu,
+  pasażer na gapę (`.env`), allowlista rozjechana ze zbudowanym zipem, brak
+  paczki, wersja, która nie jest numerem — plus kontrola odwrotna, że czysty stan przechodzi. Każdy przypadek
+  sprawdza nie tylko kod wyjścia, ale też czy bramka **nazwała** przyczynę.
+  Pracuje na kopii drzewa, więc prawdziwe pliki i prawdziwa paczka nie są
+  dotykane ani razu.
+
 
 - **`bramka-recenzji.sh` 1.0.0 — bramka na „niemy zgon" recenzenta.** Akcja
   recenzenta potrafi zakończyć się **zielono, nie napisawszy ani słowa**:
