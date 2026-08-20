@@ -27,6 +27,23 @@
 		<properties>
 			<property name="customSanitizingFunctions" type="array">
 				<element value="chatl_waliduj_sesje"/>
+				<!-- 1.4.0: własny sanitizer kolorów (wyglad.php) — regex ^#[0-9a-f]{6}$
+				     po rozwinięciu skrótu, pusty string przy odrzucie, a wywołujący
+				     podstawia wtedy wartość domyślną. -->
+				<element value="chatl_sanitize_kolor"/>
+			</property>
+		</properties>
+	</rule>
+
+	<!-- Brama nonce'a chatbota: check_ajax_referer() w domyślnej postaci UBIJA żądanie,
+	     więc nie da się przy odrzuceniu odnotować awarii dla właściciela (luka L1 —
+	     nonce w cache'owanej stronie). Sprawdzenie mieszka w chatl_wymagaj_nonce()
+	     (front.php), które woła check_ajax_referer( ..., false ) i samo kończy żądanie
+	     przy porażce — sniff ma je uznawać za weryfikację nonce'a. -->
+	<rule ref="WordPress.Security.NonceVerification">
+		<properties>
+			<property name="customNonceVerificationFunctions" type="array">
+				<element value="chatl_wymagaj_nonce"/>
 			</property>
 		</properties>
 	</rule>

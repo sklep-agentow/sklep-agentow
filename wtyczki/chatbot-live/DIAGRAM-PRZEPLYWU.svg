@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 910" width="1400" height="910" role="img" aria-labelledby="tytul opis">
   <title id="tytul">ChatBot LIVE — przepływ zapytania gościa</title>
-  <desc id="opis">Gość zadaje pytanie w widgecie. Bramka wejścia sprawdza nonce i limit zapytań z jednego IP. Pytanie trafia do historii rozmów. Silnik szuka odpowiedzi w bazie Q&amp;A, opcjonalnie poprzedzony trybem AI. Przy trafieniu bot odpowiada i zapisuje odpowiedź. Przy braku trafienia gość dostaje tekst awaryjny i formularz kontaktu; po walidacji, w tym wymaganej zgody, zgłoszenie trafia do bazy i na maila właściciela.</desc>
+  <desc id="opis">Gość zadaje pytanie w widgecie. Bramka wejścia sprawdza nonce i limit zapytań z jednego IP. Pytanie trafia do historii rozmów. Silnik szuka odpowiedzi w bazie Q&amp;A, opcjonalnie poprzedzony trybem AI. Przy trafieniu bot odpowiada i zapisuje odpowiedź wraz ze znacznikiem, czy znał odpowiedź. Przy braku trafienia gość dostaje tekst awaryjny i formularz kontaktu, a pytanie trafia do raportu luk w panelu; po walidacji, w tym wymaganej zgody, zgłoszenie trafia do bazy i na maila właściciela.</desc>
 
   <!-- Paleta sklepu: tło #08090b, panele #101116, akcent limonka #BFFF38,
        tekst #F5F5F5, tekst wygaszony #8F929C.
@@ -91,9 +91,9 @@
   <rect class="panel" x="1128" y="310" width="240" height="120" rx="10"/>
   <text class="t krok"    x="1148" y="336">5A · ODPOWIEDŹ</text>
   <text class="t tytul-b" x="1148" y="360">Bot odpowiada</text>
-  <text class="t opis-b"  x="1148" y="382">Odpowiedź wraca do gościa</text>
-  <text class="t opis-b"  x="1148" y="400">i ląduje w historii rozmów</text>
-  <text class="t opis-b"  x="1148" y="418">ze znacznikiem silnika.</text>
+  <text class="t opis-b"  x="1148" y="382">Odpowiedź wraca do gościa,</text>
+  <text class="t opis-b"  x="1148" y="400">a historia zapisuje silnik</text>
+  <text class="t opis-b"  x="1148" y="418">i to, czy bot znał odpowiedź.</text>
 
   <!-- gałąź NIE: w dół i w lewo -->
   <text class="t etykieta" x="990" y="452">NIE</text>
@@ -105,6 +105,7 @@
   <text class="t tytul-b" x="60" y="610">Tekst awaryjny</text>
   <text class="t opis-b"  x="60" y="632">Bot mówi wprost, że nie wie,</text>
   <text class="t opis-b"  x="60" y="650">i otwiera formularz kontaktu.</text>
+  <text class="t opis-b"  x="60" y="668">Pytanie idzie do raportu luk.</text>
 
   <rect class="panel" x="312" y="560" width="240" height="120" rx="10"/>
   <text class="t krok"    x="332" y="586">6 · FORMULARZ</text>

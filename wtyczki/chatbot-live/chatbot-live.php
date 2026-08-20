@@ -2,7 +2,7 @@
 /**
  * Plugin Name: ChatBot LIVE
  * Description: Bot na stronę firmową: 24/7 odpowiada na powtarzalne pytania z bazy Q&A, a gdy nie zna odpowiedzi — zbiera kontakt, żeby właściciel odezwał się na żywo.
- * Version: 1.2.5
+ * Version: 1.4.1
  * Requires at least: 6.0
  * Requires PHP: 8.1
  * Author: Automatic AI
@@ -15,8 +15,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'CHATL_WERSJA', '1.2.5' );
-define( 'CHATL_WERSJA_SCHEMATU', '3' );
+define( 'CHATL_WERSJA', '1.4.1' );
+define( 'CHATL_WERSJA_SCHEMATU', '4' );
 define( 'CHATL_KATALOG', plugin_dir_path( __FILE__ ) );
 define( 'CHATL_URL', plugin_dir_url( __FILE__ ) );
 
@@ -50,6 +50,7 @@ function chatl_log_bledu_bazy( $funkcja, $operacja ) {
 
 require_once CHATL_KATALOG . 'includes/instalator.php';
 require_once CHATL_KATALOG . 'includes/silnik.php';
+require_once CHATL_KATALOG . 'includes/wyglad.php';
 require_once CHATL_KATALOG . 'includes/ai.php';
 require_once CHATL_KATALOG . 'includes/front.php';
 
@@ -59,6 +60,8 @@ register_deactivation_hook( __FILE__, 'chatl_deaktywacja' );
 if ( is_admin() ) {
 	require_once CHATL_KATALOG . 'includes/admin.php';
 	require_once CHATL_KATALOG . 'includes/csv.php';
+	require_once CHATL_KATALOG . 'includes/statystyki.php';
+	require_once CHATL_KATALOG . 'includes/powitanie.php';
 }
 
 /**
@@ -121,6 +124,12 @@ function chatl_ustawienia() {
 		'ai_informacje'    => '',
 		'ai_limit_dzienny' => 100,
 		'adres_polityki'   => '',
+		// Wygląd widgetu (1.4.0). Wartości domyślne = paleta wpisana
+		// w assets/widget.css, więc aktualizacja nie zmienia nikomu wyglądu.
+		'kolor_glowny'     => '#bfff38',
+		'kolor_naglowka'   => '#08090b',
+		'kolor_tekstu'     => 'auto',
+		'pozycja'          => 'prawo',
 	);
 	$zapisane = get_option( 'chatl_ustawienia', array() );
 	if ( ! is_array( $zapisane ) ) {

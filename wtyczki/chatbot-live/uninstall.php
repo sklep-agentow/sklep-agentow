@@ -30,6 +30,12 @@ $wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}chatl_rate_limit" ); // phpcs
 delete_option( 'chatl_ustawienia' );
 delete_option( 'chatl_wersja_schematu' );
 delete_option( 'chatl_blad_maila' );
+delete_option( 'chatl_blad_nonce' );
+
+// Znacznik „widziałem ekran powitalny" leży przy KAŻDYM administratorze osobno,
+// więc kasujemy go dla wszystkich naraz ($delete_all = true). Bez tego po pełnym
+// czyszczeniu zostawałyby sieroty w wp_usermeta.
+delete_metadata( 'user', 0, 'chatl_powitanie_zamkniete', '', true );
 
 // Transienty rate-limitu (chatl_rl_*) ze STARSZYCH wersji wtyczki (≤1.1.x —
 // od 1.2.0 licznik żyje w tabeli): esc_like() eskejpuje podkreślnik (SQL

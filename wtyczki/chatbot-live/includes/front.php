@@ -24,6 +24,23 @@ const CHATL_RETENCJA_DNI  = 90;
  */
 const CHATL_AI_LIMIT_IP_NA_DOBE = 20;
 
+/*
+ * Limit odswiezania zabezpieczenia formularza z jednego adresu IP na minute.
+ * Wyzszy niz wspolny kubel czatu, bo na jedno nieudane pytanie przypada jedno
+ * odswiezenie i gosc nie moze wpasc w blokade w trakcie ratowania wlasnej
+ * rozmowy. Endpoint jest tani, bo niczego nie zapisuje, ale ma byc pod
+ * limitem, zeby nie stal sie darmowa maszynka do generowania tokenow.
+ */
+const CHATL_LIMIT_NONCE = 20;
+
+/*
+ * Ile dni panel pokazuje ostrzezenie o odrzuconych nonce'ach.
+ * Znacznika NIE kasujemy przy udanym zadaniu, bo to byloby zapisanie do bazy
+ * na sciezce KAZDEGO pytania goscia. Zamiast tego ostrzezenie samo cichnie,
+ * gdy ostatnie odrzucenie jest starsze niz to okno.
+ */
+const CHATL_NONCE_OKNO_DNI = 7;
+
 /**
  * Rate limit per IP na tabeli — wspólny dla obu endpointów nopriv,
  * żeby gość z noncem nie zalewał
@@ -79,6 +96,76 @@ function chatl_rate_limit( $akcja, $prog = CHATL_LIMIT_NA_MIN, $okno_sekund = MI
 }
 
 /**
+ * Odnotowanie odrzuconego nonce'a — sygnał dla właściciela.
+ *
+ * Bez tego awaria jest CAŁKOWICIE cicha: strona z cache podaje gościom HTML
+ * starszy niż życie nonce'a, każde pytanie kończy się odmową, a właściciel
+ * widzi w panelu normalnie działający panel i pustą historię rozmów.
+ * Wzorzec 1:1 z chatl_odnotuj_wysylke_powiadomienia().
+ *
+ * @return void
+ */
+function chatl_odnotuj_odrzucony_nonce() {
+	$blad = get_option( 'chatl_blad_nonce' );
+	$ile  = is_array( $blad ) && isset( $blad['ile'] ) ? (int) $blad['ile'] + 1 : 1;
+	update_option(
+		'chatl_blad_nonce',
+		array(
+			'ostatni' => current_time( 'mysql' ),
+			'ile'     => $ile,
+		),
+		false
+	);
+}
+
+/**
+ * Sprawdzenie nonce'a, które NIE ubija żądania.
+ *
+ * check_ajax_referer() w domyślnej postaci kończy proces odpowiedzią „-1",
+ * więc (a) nie ma gdzie odnotować awarii, (b) gość dostaje coś, co nie jest
+ * JSON-em wtyczki. Tutaj sprawdzamy sami i odpowiadamy WŁASNYM błędem
+ * z kodem `nonce` — po tym kodzie widget wie, że ma dociągnąć świeży nonce
+ * i powtórzyć żądanie, zamiast straszyć gościa komunikatem o awarii.
+ *
+ * @return void Kończy żądanie, gdy nonce jest zły.
+ */
+function chatl_wymagaj_nonce() {
+	if ( check_ajax_referer( 'chatl_front', 'nonce', false ) ) {
+		return;
+	}
+	chatl_odnotuj_odrzucony_nonce();
+	wp_send_json_error(
+		array(
+			'komunikat' => 'Sesja formularza wygasła — odświeżam i próbuję ponownie.',
+			'kod'       => 'nonce',
+		),
+		403
+	);
+}
+
+/**
+ * AJAX: wydanie świeżego nonce'a gościowi, któremu strona przyszła z cache.
+ *
+ * Endpoint CELOWO nie wymaga nonce'a — jego jedynym zadaniem jest wydanie
+ * nonce'a komuś, kto ma nieważny. Nie osłabia to niczego: ten sam token każdy
+ * może odczytać, wchodząc na stronę, a `wp_create_nonce( 'chatl_front' )` jest
+ * ważny WYŁĄCZNIE dla dwóch publicznych akcji czatu — nie otwiera niczego,
+ * czego gość nie mógłby zrobić i tak. Ochroną jest osobny limit na IP.
+ */
+function chatl_ajax_nonce() {
+	if ( ! chatl_rate_limit( 'nonce', CHATL_LIMIT_NONCE ) ) {
+		wp_send_json_error( array( 'komunikat' => 'Za dużo żądań — odczekaj chwilę.' ), 429 );
+	}
+	$ust = chatl_ustawienia();
+	if ( ! $ust['wlaczony'] ) {
+		wp_send_json_error( array( 'komunikat' => 'Czat jest wyłączony.' ), 403 );
+	}
+	wp_send_json_success( array( 'nonce' => wp_create_nonce( 'chatl_front' ) ) );
+}
+add_action( 'wp_ajax_chatl_nonce', 'chatl_ajax_nonce' );
+add_action( 'wp_ajax_nopriv_chatl_nonce', 'chatl_ajax_nonce' );
+
+/**
  * Wspólny kubeł limitu dla pytań i zgłoszeń widgetu.
  */
 function chatl_limit_ip_ok() {
@@ -108,6 +195,19 @@ function chatl_assety() {
 	}
 
 	wp_enqueue_style( 'chatl-widget', CHATL_URL . 'assets/widget.css', array(), CHATL_WERSJA );
+
+	/*
+	 * Kolory właściciela dokładamy jako KILKA ZMIENNYCH CSS, a nie jako
+	 * wygenerowany arkusz: statyczny widget.css dalej siedzi w cache
+	 * przeglądarki, a doklejka ma kilkadziesiąt bajtów. Gdy wygląd jest
+	 * domyślny, chatl_style_wygladu() zwraca pusty string i strona nie
+	 * dostaje ani jednego dodatkowego bajtu.
+	 */
+	$style = chatl_style_wygladu( $ust );
+	if ( '' !== $style ) {
+		wp_add_inline_style( 'chatl-widget', $style );
+	}
+
 	wp_enqueue_script( 'chatl-widget', CHATL_URL . 'assets/widget.js', array(), CHATL_WERSJA, true );
 	wp_localize_script(
 		'chatl-widget',
@@ -124,6 +224,7 @@ function chatl_assety() {
 			),
 			'polityka'   => esc_url( $ust['adres_polityki'] ),
 			'zgodaTekst' => 'Zapoznałem się z informacją o przetwarzaniu danych',
+			'pozycja'    => chatl_wyglad_ustawienia( $ust )['pozycja'],
 		)
 	);
 }
@@ -144,7 +245,7 @@ function chatl_waliduj_sesje( $sesja ) {
  * AJAX: gość zadaje pytanie → odpowiedź z bazy Q&A albo tekst awaryjny.
  */
 function chatl_ajax_pytanie() {
-	check_ajax_referer( 'chatl_front', 'nonce' );
+	chatl_wymagaj_nonce();
 
 	if ( ! chatl_limit_ip_ok() ) {
 		wp_send_json_error( array( 'komunikat' => 'Za dużo wiadomości w krótkim czasie — odczekaj chwilę i spróbuj ponownie.' ), 429 );
@@ -165,7 +266,9 @@ function chatl_ajax_pytanie() {
 		$pytanie = mb_substr( $pytanie, 0, CHATL_MAX_PYTANIE );
 	}
 
-	chatl_zapisz_wymiane( $sesja, 'gosc', $pytanie );
+	// Id pytania trzymamy, bo wynik dopasowania znamy dopiero niżej —
+	// a to WIERSZ PYTANIA niesie treść, z której powstaje raport luk.
+	$id_pytania = chatl_zapisz_wymiane( $sesja, 'gosc', $pytanie );
 
 	// HYBRYDA: najpierw AI (jest klucz + limit dzienny globalny i per IP
 	// niewyczerpany); błąd/timeout/brak klucza => zjazd do trybu regułowego.
@@ -174,7 +277,8 @@ function chatl_ajax_pytanie() {
 		if ( null !== $ai ) {
 			if ( CHATL_AI_BRAK === trim( $ai ) ) {
 				// Próg pewności: model nie zgaduje => uczciwe "nie wiem" + zbiórka kontaktu.
-				chatl_zapisz_wymiane( $sesja, 'bot', $ust['tekst_awaryjny'], 'ai' );
+				chatl_oznacz_trafienie( $id_pytania, false );
+				chatl_zapisz_wymiane( $sesja, 'bot', $ust['tekst_awaryjny'], 'ai', false );
 				wp_send_json_success(
 					array(
 						'trafiono'  => false,
@@ -183,7 +287,8 @@ function chatl_ajax_pytanie() {
 				);
 			}
 			$ai = sanitize_textarea_field( $ai );
-			chatl_zapisz_wymiane( $sesja, 'bot', $ai, 'ai' );
+			chatl_oznacz_trafienie( $id_pytania, true );
+			chatl_zapisz_wymiane( $sesja, 'bot', $ai, 'ai', true );
 			wp_send_json_success(
 				array(
 					'trafiono'  => true,
@@ -195,7 +300,8 @@ function chatl_ajax_pytanie() {
 
 	$wynik = chatl_dopasuj( $pytanie );
 	if ( null === $wynik ) {
-		chatl_zapisz_wymiane( $sesja, 'bot', $ust['tekst_awaryjny'] );
+		chatl_oznacz_trafienie( $id_pytania, false );
+		chatl_zapisz_wymiane( $sesja, 'bot', $ust['tekst_awaryjny'], 'reguly', false );
 		wp_send_json_success(
 			array(
 				'trafiono'  => false,
@@ -204,7 +310,8 @@ function chatl_ajax_pytanie() {
 		);
 	}
 
-	chatl_zapisz_wymiane( $sesja, 'bot', $wynik['odpowiedz'] );
+	chatl_oznacz_trafienie( $id_pytania, true );
+	chatl_zapisz_wymiane( $sesja, 'bot', $wynik['odpowiedz'], 'reguly', true );
 	wp_send_json_success(
 		array(
 			'trafiono'  => true,
@@ -219,7 +326,7 @@ add_action( 'wp_ajax_nopriv_chatl_pytanie', 'chatl_ajax_pytanie' );
  * AJAX: gość zostawia kontakt → zgłoszenie + (opcja) mail do właściciela.
  */
 function chatl_ajax_zgloszenie() {
-	check_ajax_referer( 'chatl_front', 'nonce' );
+	chatl_wymagaj_nonce();
 
 	if ( ! chatl_limit_ip_ok() ) {
 		wp_send_json_error( array( 'komunikat' => 'Za dużo wiadomości w krótkim czasie — odczekaj chwilę i spróbuj ponownie.' ), 429 );

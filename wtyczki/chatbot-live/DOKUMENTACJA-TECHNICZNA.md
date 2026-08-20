@@ -1,6 +1,6 @@
 # ChatBot LIVE — dokumentacja techniczna
 
-Wersja wtyczki: **1.2.5** · schemat bazy: **3** · licencja: **GPL-2.0-or-later**
+Wersja wtyczki: **1.4.1** · schemat bazy: **4** · licencja: **GPL-2.0-or-later**
 
 Dokument opisuje **kod, który jest**, nie plan. Każda liczba i nazwa poniżej ma pokrycie
 w źródle — przy każdej podano plik i symbol, żeby dało się to sprawdzić `grep`-em, a nie
@@ -55,13 +55,20 @@ dystrybucji), a nie to, czy wolno pobrać zapłatę. Na tym stoi cały rynek pł
 | `includes/front.php` | assety widgetu, limity na IP, walidacja sesji, dwa endpointy AJAX | zawsze |
 | `includes/admin.php` | menu, CRUD Q&A, zgłoszenia, historia, ustawienia, test bota w panelu | tylko `is_admin()` |
 | `includes/csv.php` | ręczny eksport zgłoszeń i rozmów do CSV | tylko `is_admin()` |
+| `includes/statystyki.php` | liczby okresu, grupowanie pytań bez odpowiedzi, strona „Statystyki i luki" | tylko `is_admin()` |
+| `includes/wyglad.php` | kolory z ustawień → zmienne CSS, kontrast WCAG, pozycja widgetu | zawsze (front też ich potrzebuje) |
+| `includes/powitanie.php` | ekran powitalny po aktywacji + zapamiętanie zamknięcia | tylko `is_admin()` |
+| `assets/panel-wyglad.js` | podgląd wyglądu na żywo i odczyt kontrastu w panelu | tylko na stronie ustawień |
+| `CHANGELOG.md` | historia wersji (Keep a Changelog) | — |
+| `readme.txt` | opis w standardzie WordPressa (nagłówek, Description, Installation, FAQ, Changelog) | — |
 | `uninstall.php` | obie ścieżki deinstalacji | tylko przy odinstalowaniu (`WP_UNINSTALL_PLUGIN`) |
 | `LICENSE` | pełny tekst GNU GPL v2 (339 linii) | — |
 | `INSTRUKCJA.md`, `DOKUMENTACJA-TECHNICZNA.md`, `DIAGRAM-PRZEPLYWU.svg` | dokumentacja w paczce | — |
 | `assets/widget.js`, `assets/widget.css` | widget czatu na froncie | front, gdy bot włączony |
 
-`admin.php` i `csv.php` są w bloku `if ( is_admin() )` w `chatbot-live.php` — front nie ładuje
-ani panelu, ani eksportu.
+`admin.php`, `csv.php`, `statystyki.php` i `powitanie.php` są w bloku `if ( is_admin() )`
+w `chatbot-live.php` — front nie ładuje ani panelu, ani eksportu, ani liczenia statystyk.
+`wyglad.php` jest **poza** tym blokiem, bo kolory z ustawień muszą trafić także na front.
 
 ---
 
@@ -105,7 +112,12 @@ Serce trybu regułowego. Właściciel wypełnia ją w panelu; przy pierwszej akt
 | `rola` | `varchar(10)` | `gosc` albo `bot` — kto się odezwał. |
 | `silnik` | `varchar(10)`, domyślnie `'reguly'` | `reguly` albo `ai` — **czym** odpowiedział bot. Dzięki temu widać po fakcie, czy tryb AI naprawdę działał, czy po cichu zjeżdżał do reguł. |
 | `tresc` | `text` | Treść wymiany, już zsanityzowana. |
+| `trafiono` | `tinyint(1)`, dopuszcza `NULL` | Czy bot **znał** odpowiedź na to pytanie: `1` tak, `0` nie, `NULL` „nie wiadomo". Ustawiane na OBU wierszach wymiany — na pytaniu gościa i na odpowiedzi bota — bo raport luk pokazuje treść **pytania**, nie odpowiedzi. `NULL` mają wyłącznie wiersze sprzed wersji 1.3.0; nie są zgadywane wstecz i nie wchodzą do mianownika skuteczności. |
 | `utworzono` | `datetime` | Znacznik czasu. Ma indeks `KEY utworzono`, bo cron retencji kasuje właśnie po tej kolumnie. |
+
+Trzeci indeks, `KEY luki (rola, trafiono, utworzono)`, obsługuje jedyne zapytanie raportu luk
+(`rola = 'gosc' AND trafiono = 0` w zakresie dat) — bez niego strona statystyk skanowałaby
+całą historię przy każdym wejściu.
 
 ### 3.4. `{prefix}chatl_ai_uzycie` — licznik stop-loss trybu AI
 
@@ -129,13 +141,25 @@ Serce trybu regułowego. Właściciel wypełnia ją w panelu; przy pierwszej akt
 | Opcja | Zawartość | Autoload | Kiedy powstaje |
 |---|---|---|---|
 | `chatl_ustawienia` | tablica ustawień (patrz niżej) | tak (domyślnie) | przy pierwszym zapisie ustawień — **nie** przy aktywacji |
-| `chatl_wersja_schematu` | numer schematu, obecnie `3` | tak (domyślnie) | przy aktywacji i przy migracji schematu |
+| `chatl_wersja_schematu` | numer schematu, obecnie `4` | tak (domyślnie) | przy aktywacji i przy migracji schematu |
 | `chatl_klucz_api` | klucz API właściciela | **nie** (`add_option(..., '', false)`) | przy zapisaniu klucza w panelu |
 | `chatl_blad_maila` | `['kiedy' => data, 'adres' => e-mail]` | **nie** | gdy `wp_mail()` zwróci `false`; kasowana przy pierwszej udanej wysyłce |
+| `chatl_blad_nonce` | `['ostatni' => data, 'ile' => liczba]` | **nie** | gdy gościowi odbije się zabezpieczenie formularza; kasowana przyciskiem w panelu |
 
 Klucz API jest bez autoloadu celowo: nie wchodzi do zapytania ładowanego na każdej odsłonie
 strony. Weryfikacja na żywym stacku po pełnym cyklu instalacja→deinstalacja→instalacja:
 `autoload` = `off`.
+
+### Metadane użytkownika
+
+| Klucz | Zawartość | Kiedy powstaje |
+|---|---|---|
+| `chatl_powitanie_zamkniete` | `1` — ten administrator zamknął ekran powitalny | po kliknięciu „Rozumiem, zamknij ten ekran" |
+
+Świadomie **metadane użytkownika, nie opcja**: na jednej stronie bywa kilku
+administratorów i to, że jeden przeczytał powitanie, nie znaczy, że pozostali je
+widzieli. Pełne czyszczenie przy deinstalacji kasuje ten klucz u wszystkich
+naraz (`delete_metadata( 'user', 0, …, true )`).
 
 ### Klucze tablicy `chatl_ustawienia` i wartości domyślne
 
@@ -152,6 +176,10 @@ więc **brakujący klucz nigdy nie jest błędem** — nowe pole dostaje wartoś
 | `usun_dane` | `0` | Przełącznik ścieżki deinstalacji (rozdział 6). |
 | `ai_informacje` | `''` | Opis firmy wstrzykiwany do instrukcji systemowej modelu. |
 | `ai_limit_dzienny` | `100` | Globalny dobowy limit wywołań AI. Zapis ograniczany do zakresu 1–100000. |
+| `kolor_glowny` | `#bfff38` | Bąbelek, dymki bota, przyciski, obwódka fokusu. Wartość spoza `#rrggbb` jest odrzucana i wraca domyślna. |
+| `kolor_naglowka` | `#08090b` | Pasek z tytułem okna czatu i paski formularza kontaktu. |
+| `kolor_tekstu` | `auto` | `auto` = wtyczka dobiera kolor tekstu osobno dla bąbelka i dla nagłówka, biorąc ten o lepszym kontraście. Wartość `#rrggbb` = ten sam kolor na obu. |
+| `pozycja` | `prawo` | `prawo` albo `lewo` — róg strony, w którym stoi widget. |
 | `adres_polityki` | `''` | Adres polityki prywatności linkowany przy formularzu. Pusty = sama informacja, bez linku. |
 
 ---
@@ -162,19 +190,32 @@ Wszystkie liczby, którymi wtyczka się rządzi, są stałymi — nie ma ich roz
 
 | Stała | Wartość | Plik | Do czego |
 |---|---|---|---|
-| `CHATL_WERSJA` | `1.2.5` | `chatbot-live.php` | wersja wtyczki; służy też jako `?ver=` assetów (przeglądarka nie poda starego pliku po aktualizacji) |
-| `CHATL_WERSJA_SCHEMATU` | `3` | `chatbot-live.php` | wyzwalacz migracji schematu |
+| `CHATL_WERSJA` | `1.4.1` | `chatbot-live.php` | wersja wtyczki; służy też jako `?ver=` assetów (przeglądarka nie poda starego pliku po aktualizacji) |
+| `CHATL_WERSJA_SCHEMATU` | `4` | `chatbot-live.php` | wyzwalacz migracji schematu |
 | `CHATL_KATALOG`, `CHATL_URL` | ścieżka i adres wtyczki | `chatbot-live.php` | `require` i adresy assetów |
 | `CHATL_MAX_PYTANIE` | `500` | `includes/front.php` | maksymalna długość pytania gościa (nadmiar jest **przycinany**, nie odrzucany) |
 | `CHATL_MAX_WIADOMOSC` | `2000` | `includes/front.php` | maksymalna długość treści zgłoszenia (jw.) |
 | `CHATL_LIMIT_NA_MIN` | `10` | `includes/front.php` | wspólny kubeł: żądań na minutę z jednego IP, łącznie dla pytań i zgłoszeń |
 | `CHATL_RETENCJA_DNI` | `90` | `includes/front.php` | okres retencji historii rozmów — **jedno źródło** dla crona, tekstu w widgecie, panelu i eksportu |
 | `CHATL_AI_LIMIT_IP_NA_DOBE` | `20` | `includes/front.php` | osobny, twardszy limit wywołań AI z jednego IP na dobę |
+| `CHATL_LIMIT_NONCE` | `20` | `includes/front.php` | odświeżeń zabezpieczenia formularza na minutę z jednego IP |
+| `CHATL_NONCE_OKNO_DNI` | `7` | `includes/front.php` | ile dni panel pokazuje ostrzeżenie o odrzuconych zabezpieczeniach |
 | `CHATL_AI_MODEL` | `claude-haiku-4-5-20251001` | `includes/ai.php` | domyślny model (podmienialny filtrem) |
 | `CHATL_AI_MAX_TOKENS` | `1024` | `includes/ai.php` | limit długości odpowiedzi modelu |
 | `CHATL_AI_TIMEOUT` | `9` | `includes/ai.php` | timeout jednego wywołania w sekundach; z jednym ponowieniem daje maks. 18 s, z zapasem pod typowy limit 30 s na hostingu |
 | `CHATL_AI_BRAK` | `BRAK_ODPOWIEDZI` | `includes/ai.php` | sentinel „model nie wie" — sygnał do zbiórki kontaktu zamiast zgadywania |
 | `CHATL_CSV_PORCJA` | `500` | `includes/csv.php` | ile wierszy naraz czyta eksport, żeby nie wciągać całej tabeli do pamięci |
+| `CHATL_LUKI_LIMIT` | `2000` | `includes/statystyki.php` | sufit pytań bez odpowiedzi wciąganych do grupowania; przekroczenie jest **wypisane na stronie**, nie przemilczane |
+| `CHATL_LUKI_POKAZ` | `25` | `includes/statystyki.php` | ile tematów luk pokazuje tabela (reszta jest policzona, tylko niewypisana) |
+| `CHATL_LUKI_PROG` | `50` | `includes/statystyki.php` | próg scalania dwóch pytań w jeden temat, w procentach wspólnych rdzeni |
+| `CHATL_LUKI_RDZEN` | `4` | `includes/statystyki.php` | do ilu znaków skracamy słowo przy **grupowaniu** (polski odmienia końcówki; przy pięciu „firmę"/„firmy" to jeszcze dwa różne rdzenie) |
+| `CHATL_WCAG_PROG` | `4.5` | `includes/wyglad.php` | próg kontrastu z WCAG 2.1, kryterium 1.4.3 (AA) dla zwykłego tekstu |
+| `CHATL_KOLOR_CIEMNY` | `#08090b` | `includes/wyglad.php` | ciemny kolor tekstu, spośród których wybiera automat |
+| `CHATL_KOLOR_JASNY` | `#f5f5f5` | `includes/wyglad.php` | jasny kolor tekstu, jw. — para z paletą wtyczki, nie czyste `#000`/`#fff`, żeby automat przy domyślnych kolorach dawał **dokładnie** dotychczasowy wygląd |
+| `CHATL_PIERSCIEN_ALFA` | `0.18` | `includes/wyglad.php` | krycie pierścienia hover/fokusu liczonego z koloru głównego |
+| `CHATL_META_POWITANIE` | `chatl_powitanie_zamkniete` | `includes/powitanie.php` | klucz metadanych „ten administrator zamknął powitanie" |
+| `CHATL_TRANSIENT_AKTYWACJA` | `chatl_po_aktywacji` | `includes/powitanie.php` | znacznik „właśnie aktywowano", życie 1 minuta |
+| `CHATL_SUGESTIA_RDZEN` | `5` | `includes/statystyki.php` | rdzeń **podpowiadanych słów kluczowych** — dłuższy, bo trafia do silnika dopasowania: `koszt` łapie „koszty"/„kosztuje", a `kosz` łapałby też „koszulę" |
 | `CHATL_KLUCZ_API` | — | **`wp-config.php`, definiuje właściciel** | klucz API poza bazą; ma pierwszeństwo nad opcją |
 
 ---
@@ -276,6 +317,7 @@ różnica stanu tabel, opcji i zdarzeń cron przed instalacją i po odinstalowan
 |---|---|---|---|
 | `chatl_pytanie` | `chatl_ajax_pytanie` | `chatl_front` | pytanie gościa → odpowiedź z AI albo z reguł |
 | `chatl_zgloszenie` | `chatl_ajax_zgloszenie` | `chatl_front` | zapis kontaktu + powiadomienie mailem |
+| `chatl_nonce` | `chatl_ajax_nonce` | **brak (celowo)** | wydaje świeże zabezpieczenie gościowi, któremu strona przyszła z cache |
 
 Obie zarejestrowane w wariancie `wp_ajax_` i `wp_ajax_nopriv_`, bo gość czatu nie jest zalogowany.
 
@@ -290,6 +332,8 @@ Obie zarejestrowane w wariancie `wp_ajax_` i `wp_ajax_nopriv_`, bo gość czatu 
 | `chatl_ustawienia_zapisz` | `chatl_post_ustawienia_zapisz` | `chatl_ustawienia_zapisz` |
 | `chatl_eksport_zgloszen` | `chatl_post_eksport_zgloszen` | `chatl_eksport_zgloszen` |
 | `chatl_eksport_rozmow` | `chatl_post_eksport_rozmow` | `chatl_eksport_rozmow` |
+| `chatl_powitanie_zamknij` | `chatl_post_powitanie_zamknij` | `chatl_powitanie_zamknij` |
+| `chatl_nonce_zamknij` | `chatl_post_nonce_zamknij` | `chatl_nonce_zamknij` |
 
 Nonce operacji na pojedynczym wierszu zawiera jego `id` — nonce od cudzego wiersza nie przejdzie.
 Oba eksporty przechodzą przez jedną bramkę `chatl_csv_brama()` (capability + nonce).
@@ -399,7 +443,169 @@ jest wyniesienie klucza poza bazę stałą `CHATL_KLUCZ_API`, nie pozorne szyfro
 
 ---
 
-## 12. Eksport CSV
+## 12. Statystyki i raport luk
+
+Strona panelu **„Statystyki i luki"** (`chatl_strona_statystyki()` w `includes/statystyki.php`,
+slug `chatl-statystyki`). Okres wybiera się listą (7 / 30 / 90 dni) albo dwiema datami; wartości
+z formularza przechodzą przez `chatl_data_ok()` (regex + `checkdate`), a granice doby liczy
+`chatl_granice_okresu()` w czasie **lokalnym strony** — bo wiersze zapisuje `current_time( 'mysql' )`.
+
+### 12.1. Co pokazuje
+
+| Liczba | Skąd |
+|---|---|
+| pytania gości, liczba rozmów | `chatl_rozmowy`: wiersze `rola = 'gosc'`, rozmowy = `COUNT(DISTINCT sesja)` |
+| odpowiedzi bota i **skuteczność** | `trafiono = 1` / (`trafiono = 1` + `trafiono = 0`) |
+| bez odpowiedzi | `trafiono = 0` |
+| rozdział reguły / AI | kolumna `silnik` przy trafionych odpowiedziach |
+| zebrane kontakty i konwersja | `chatl_zgloszenia` w okresie; konwersja = rozmowy z kontaktem / wszystkie rozmowy |
+| ruch dzień po dniu | `GROUP BY DATE( utworzono )`, słupki rysowane czystym CSS (bez JS i bibliotek) |
+
+Wiersze sprzed 1.3.0 (`trafiono IS NULL`) są liczone **osobno** i wypisane w komunikacie na
+stronie. Gdy w okresie nie ma ani jednej zmierzonej odpowiedzi, kafelek skuteczności pokazuje
+kreskę, a nie `0 (0,0%)` — „zero" i „nie mierzono" to dwie różne rzeczy.
+
+### 12.2. Grupowanie pytań bez odpowiedzi
+
+`chatl_grupuj_pytania()` składa surowe pytania w tematy w dwóch krokach:
+
+1. **normalizacja** (`chatl_normalizuj_pytanie()`): małe litery, ogonki → ASCII, precz
+   z interpunkcją, pojedyncze spacje. Pytania identyczne po normalizacji lądują w jednym kubełku.
+2. **scalanie podobnych**: dla każdego kubełka liczone są **rdzenie** (`chatl_rdzenie_pytania()`) —
+   słowa dłuższe niż 3 znaki, bez listy słów pustych, skrócone do `CHATL_LUKI_RDZEN` znaków.
+   Podpowiedź słów kluczowych używa tej samej funkcji, ale z `CHATL_SUGESTIA_RDZEN` —
+   grupowanie tylko układa listę, a podpowiedź zaczyna dopasowywać odpowiedzi gościom,
+   więc pomyłka kosztuje tam więcej.
+   Dwa kubełki idą do jednego tematu, gdy `chatl_podobienstwo_pytan()` (Jaccard na rdzeniach)
+   daje co najmniej `CHATL_LUKI_PROG` procent.
+
+Skracanie do rdzenia jest tu konieczne, nie kosmetyczne: polski odmienia **końcówki**, więc
+„ile kosztuje dostawa" i „koszt dostawy" na całych słowach mają zero wspólnego, a na rdzeniach
+67%. Cztery znaki, nie pięć — odmiana potrafi siedzieć dokładnie na piątym („firmę"/„firmy"). Rdzenie klastra to rdzenie jego **pierwszego, najliczniejszego** kubełka i już nie rosną —
+gdyby rosły przy każdym scaleniu, klaster stopniowo pasowałby do wszystkiego.
+
+Kolejność jest **deterministyczna** (najpierw liczniejsze, przy remisie alfabetycznie), więc
+ten sam zestaw pytań zawsze daje ten sam raport, niezależnie od kolejności wierszy z bazy.
+Pisownia gościa nie jest nigdzie nadpisywana — normalizacja służy tylko do sklejania, a lista
+„inne sformułowania" pokazuje, co dokładnie wpadło do tematu.
+
+### 12.3. Skrót „Dopisz odpowiedź"
+
+Przycisk przy każdym temacie prowadzi na `admin.php?page=chatl-qa` z parametrami
+`nowe_pytanie` i `nowe_slowa`. `chatl_strona_qa()` **tylko wypełnia** nimi formularz — zapis
+idzie jak zawsze osobnym żądaniem `admin-post` z noncem i `manage_options`, więc adres URL
+niczego nie zapisuje. Podpowiedź słów kluczowych to rdzenie z `chatl_sugerowane_slowa()`,
+bo silnik dopasowuje **podłańcuchy**: `koszt` łapie i „koszty", i „kosztuje", a całe „kosztuje"
+nie złapie „koszt".
+
+Pytanie wstawiane do formularza to **reprezentant tematu** (najczęstsze sformułowanie), a nie
+każdy z wariantów — właściciel odpowiada na temat, nie na jedno zdanie.
+
+---
+
+## 13. Wygląd widgetu i ekran powitalny
+
+### 13.1. Kolory jako zmienne CSS
+
+`assets/widget.css` deklaruje pięć zmiennych na selektorze `.chatl-korzen`
+(**nie** w `:root` — wtyczka nie zaśmieca globalnej przestrzeni nazw motywu):
+`--chatl-glowny`, `--chatl-glowny-tekst`, `--chatl-naglowek`,
+`--chatl-naglowek-tekst`, `--chatl-pierscien`. Wartości wpisane w arkuszu to
+paleta sprzed wersji 1.4.0, więc **sam arkusz wygląda dokładnie tak jak wcześniej**.
+
+`chatl_style_wygladu()` (`includes/wyglad.php`) porównuje wyliczone zmienne
+z domyślnymi i zwraca regułę **tylko z tymi, które właściciel naprawdę zmienił**;
+przy domyślnym wyglądzie zwraca pusty string i `chatl_assety()` nie dokłada do
+strony ani jednego bajtu. Gdy coś zmieniono, kilkadziesiąt bajtów idzie przez
+`wp_add_inline_style()` — statyczny `widget.css` zostaje w pamięci podręcznej
+przeglądarki, a arkusz **nie jest generowany od nowa**.
+
+Pozycja widgetu to klasa `.chatl-lewo`, nie zmienna: nazwy własności (`right`
+kontra `left`) nie da się podać zmienną CSS, a podmiana obu naraz musi być
+atomowa, żeby widget nie mignął po złej stronie. Klasę dokłada `widget.js`
+z wartości przekazanej w `chatlDane.pozycja`, **przed** wstawieniem elementu
+do dokumentu.
+
+### 13.2. Kontrast (WCAG 2.1)
+
+`chatl_luminancja()` liczy luminancję względną wzorem z normy (nie
+przybliżeniem), `chatl_kontrast()` zwraca współczynnik od 1.0 do 21.0.
+Próg `CHATL_WCAG_PROG` = 4.5:1 to kryterium 1.4.3 na poziomie AA dla zwykłego
+tekstu.
+
+Domyślne `kolor_tekstu` = `auto`: `chatl_kolor_tekstu_na()` wybiera spośród
+`CHATL_KOLOR_CIEMNY` i `CHATL_KOLOR_JASNY` ten o wyższym kontraście do tła —
+osobno dla bąbelka i osobno dla paska nagłówka, bo to dwa różne tła. Gdy
+właściciel wpisze własny kolor, panel liczy kontrast i **mówi wprost**, czy
+zestaw spełnia próg (`chatl_ocena_kontrastu()`), ale nie blokuje zapisu.
+
+Wzór kontrastu istnieje też w `assets/panel-wyglad.js`, bo przeglądarka nie ma
+jak pytać PHP przy każdym ruchu suwaka. Żeby te dwie kopie nie rozjechały się po
+cichu, `testy/wyglad-panel.js` ustawia kolory, czyta liczbę policzoną w panelu,
+zapisuje ustawienia i porównuje ją z liczbą policzoną przez PHP.
+
+Konfigurowalne jest to, co widać z zewnątrz i co gryzie się z paletą strony
+klienta: bąbelek, akcenty i pasek nagłówka. **Wnętrze okna czatu** (ciemne tło
+`#101116`, linie, dymek gościa) zostaje na sztywno — to spójny, celowy wygląd
+panelu rozmowy, a nie przeoczenie.
+
+### 13.3. Ekran powitalny
+
+Aktywacja ustawia transient `CHATL_TRANSIENT_AKTYWACJA` na minutę. Na
+`admin_init` `chatl_moze_powitanie()` przekierowuje na stronę `chatl-powitanie`,
+ale tylko gdy: znacznik istnieje, **nie** trwa zbiorcze włączanie wtyczek
+(`activate-multi` — inaczej przekierowanie ukradłoby ekran pozostałym
+wtyczkom), użytkownik ma `manage_options` i **nie zamknął** powitania wcześniej.
+Znacznik jest kasowany przy pierwszym sprawdzeniu, więc ekran nie wraca przy
+kolejnych wejściach do panelu.
+
+Strona jest rejestrowana jako podstrona i od razu zdejmowana z menu
+(`remove_submenu_page`) — ma być osiągalna linkiem, ale nie zajmować pozycji
+w menu. Przycisk „Rozumiem, zamknij ten ekran" idzie przez `admin-post`
+z nonce i `manage_options`, zapisuje `CHATL_META_POWITANIE` przy tym koncie
+i wraca do bazy Q&A.
+
+---
+
+## 14. Zabezpieczenie formularza a cache strony
+
+Nonce wchodzi do HTML-a strony przez `wp_localize_script()`, a wtyczka albo usługa
+cache (LiteSpeed, WP Rocket, W3TC, Cloudflare) potrafi serwować ten HTML **dłużej,
+niż nonce żyje** (12–24 h). Efekt przed 1.4.1: `check_ajax_referer()` kończył
+żądanie odpowiedzią `-1`, `odp.json()` dawało **liczbę**, więc `odp.success` było
+`undefined` i gość dostawał „Coś poszło nie tak" przy **każdym** pytaniu. Czat nie
+działał u nikogo, a właściciel nie miał o tym pojęcia.
+
+Naprawa ma trzy części, bo awaria miała trzy poziomy:
+
+1. **Serwer odmawia rozpoznawalnie.** `chatl_wymagaj_nonce()` woła
+   `check_ajax_referer( …, false )` — bez ubijania żądania — i przy porażce
+   odpowiada własnym JSON-em z `data.kod = 'nonce'`. Dopiero wtedy jest gdzie
+   odnotować awarię.
+2. **Widget ratuje rozmowę sam.** `wyslij()` w `assets/widget.js` po odpowiedzi
+   z kodem `nonce` (albo po surowym `-1`, które po sparsowaniu nie ma pola
+   `success`) dociąga świeże zabezpieczenie publicznym endpointem `chatl_nonce`
+   i powtarza żądanie **dokładnie raz**. Druga porażka to już prawdziwa awaria
+   i wtedy gość ma prawo zobaczyć komunikat.
+3. **Właściciel to widzi.** Każde odrzucenie zwiększa licznik w opcji
+   `chatl_blad_nonce`; panel pokazuje czerwone ostrzeżenie z liczbą, przyczyną
+   i tym, co zrobić. Ostrzeżenie cichnie po `CHATL_NONCE_OKNO_DNI` dniach bez
+   nowych odrzuceń albo po kliknięciu „ukryj".
+
+**Dlaczego endpoint `chatl_nonce` nie wymaga nonce'a:** jego jedynym zadaniem
+jest wydanie zabezpieczenia komuś, kto ma nieważne. Nie osłabia to niczego —
+ten sam token każdy odczyta, wchodząc na stronę — a `wp_create_nonce( 'chatl_front' )`
+jest ważny wyłącznie dla dwóch publicznych akcji czatu i nie otwiera niczego,
+czego gość nie mógłby zrobić i tak. Ochroną jest osobny kubeł limitu na IP
+(`CHATL_LIMIT_NONCE`).
+
+Znacznika **nie kasujemy przy udanym żądaniu** — to byłby zapis do bazy na
+ścieżce każdego pytania gościa. Dlatego ostrzeżenie wygasa czasem, a nie
+sukcesem.
+
+---
+
+## 15. Eksport CSV
 
 Ręczny, przyciskiem w panelu — `includes/csv.php`. Dwa strumienie: wszystkie zgłoszenia
 (`id, data, email, wiadomosc, status, sesja`) i historia rozmów (`sesja, data, kto, silnik, tresc`),
@@ -415,7 +621,7 @@ kłóciłoby się z obietnicą retencji.
 
 ---
 
-## 13. Znane granice
+## 16. Znane granice
 
 Rzeczy, których wtyczka **nie** robi — żeby nikt nie szukał ich w kodzie:
 
@@ -427,6 +633,19 @@ Rzeczy, których wtyczka **nie** robi — żeby nikt nie szukał ich w kodzie:
   najnowszych sesji. Pełne dane wychodzą eksportem CSV.
 - **Limit dobowy AI jest miękki** — sprawdzenie i inkrement to dwa kroki, więc równoległe
   zapytania mogą przekroczyć próg o kilka wywołań.
+- **Statystyki sięgają tylko tak daleko, jak historia** — po `CHATL_RETENCJA_DNI` dniach wiersze
+  są kasowane, więc raport luk sprzed pół roku nie istnieje.
+- **Wiersze sprzed 1.3.0 nie mają znacznika `trafiono`** i nie są zgadywane wstecz. Widać je
+  na stronie statystyk jako osobną liczbę; skuteczność liczy się bez nich.
+- **Grupowanie luk jest heurystyką**, nie rozumieniem języka: sklejanie idzie po wspólnych
+  rdzeniach słów, więc dwa pytania o tym samym, napisane zupełnie innymi słowami, zostaną
+  dwoma tematami. Lista „inne sformułowania" pokazuje, co naprawdę wpadło do tematu.
+- **Konfigurowalny jest wygląd zewnętrzny, nie całe okno.** Kolor główny, pasek
+  nagłówka, tekst na nich i róg strony — tak. Wnętrze okna rozmowy zostaje
+  ciemne; jasny motyw czatu to droga rozbudowy, nie brak w tej wersji.
+- **Kontrast jest liczony i pokazywany, ale nie blokuje zapisu.** Właściciel może
+  świadomie zapisać zestaw poniżej progu WCAG — dostaje wtedy czerwony komunikat,
+  a nie odmowę. Domyślne „dobierz automatycznie" pilnuje progu za niego.
 - **Retencja obejmuje tylko historię rozmów.** Zgłoszenia (a więc adresy e-mail gości) zostają,
   aż właściciel je skasuje. Jeśli polityka prywatności obiecuje termin także dla nich,
   trzeba je kasować ręcznie albo eksportem i usunięciem.

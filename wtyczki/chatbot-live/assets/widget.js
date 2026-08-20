@@ -47,14 +47,67 @@
 		listaWiadomosci.scrollTop = listaWiadomosci.scrollHeight;
 	}
 
-	function wyslij(akcja, pola) {
+	/* Nonce trzymamy w ZMIENNEJ, nie czytamy za kazdym razem z chatlDane:
+	   po odswiezeniu ma obowiazywac nowy, a chatlDane przyszlo z HTML-a. */
+	var nonce = dane.nonce;
+
+	function zadanie(akcja, pola) {
 		var body = new FormData();
 		body.append('action', akcja);
-		body.append('nonce', dane.nonce);
+		body.append('nonce', nonce);
 		body.append('sesja', sesja);
 		Object.keys(pola).forEach(function (k) { body.append(k, pola[k]); });
 		return fetch(dane.ajaxUrl, { method: 'POST', body: body })
 			.then(function (odp) { return odp.json(); });
+	}
+
+	function odswiezNonce() {
+		var body = new FormData();
+		body.append('action', 'chatl_nonce');
+		return fetch(dane.ajaxUrl, { method: 'POST', body: body })
+			.then(function (odp) { return odp.json(); })
+			.then(function (odp) {
+				if (odp && odp.success && odp.data && odp.data.nonce) {
+					nonce = odp.data.nonce;
+					return true;
+				}
+				return false;
+			})
+			.catch(function () { return false; });
+	}
+
+	/* Czy ta odpowiedz to "nonce sie nie zgadza"?
+	   Dwa ksztalty, bo sa dwa zrodla: nasz wlasny blad z kodem 'nonce' oraz
+	   surowe "-1" z warstwy WordPressa albo z wtyczki bezpieczenstwa, ktore
+	   po odp.json() jest LICZBA — wtedy odp.success jest undefined. */
+	function toZlyNonce(odp) {
+		if (odp === null || typeof odp !== 'object') { return true; }
+		if (typeof odp.success === 'undefined') { return true; }
+		return odp.success === false && odp.data && odp.data.kod === 'nonce';
+	}
+
+	/*
+	 * Nonce wchodzi do HTML-a strony, a strona bywa serwowana z cache (LiteSpeed,
+	 * WP Rocket, W3TC, Cloudflare) dluzej, niz nonce zyje. Bez tego ponowienia
+	 * czat przestawal dzialac u WSZYSTKICH gosci naraz, a wlasciciel nie mial
+	 * o tym pojecia — gosc widzial tylko "Cos poszlo nie tak".
+	 *
+	 * Ponawiamy DOKLADNIE RAZ: druga porazka to juz prawdziwa awaria i wtedy
+	 * gosc ma prawo zobaczyc komunikat, zamiast czekac w petli.
+	 */
+	function wyslij(akcja, pola) {
+		return zadanie(akcja, pola)
+			.catch(function () { return null; })
+			.then(function (odp) {
+				if (!toZlyNonce(odp)) { return odp; }
+				return odswiezNonce().then(function (swiezy) {
+					if (!swiezy) {
+						if (odp === null) { return Promise.reject(new Error('brak odpowiedzi')); }
+						return odp;
+					}
+					return zadanie(akcja, pola);
+				});
+			});
 	}
 
 	function pokazFormularz(powod) {
@@ -239,6 +292,9 @@
 
 	function start() {
 		var korzen = el('div', 'chatl-korzen');
+		/* Pozycja z ustawien wlasciciela. Klasa idzie na korzen ZANIM element
+		   trafi do dokumentu, wiec widget nigdy nie mignie po zlej stronie. */
+		if (chatlDane.pozycja === 'lewo') { korzen.className += ' chatl-lewo'; }
 		korzen.appendChild(zbudujOkno());
 
 		var babelek = el('button', 'chatl-babelek', '💬');
