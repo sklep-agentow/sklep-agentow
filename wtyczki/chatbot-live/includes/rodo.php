@@ -42,6 +42,17 @@ const CHATL_RODO_PORCJA = 100;
  * Czyli ten sam błąd, tyle że rozłożony w czasie. Ślad zostaje zapisany, ZANIM
  * kasownik cokolwiek usunie, i przeżywa skasowanie jednego z dwóch zgłoszeń.
  * Nie jest daną osobową: to sam identyfikator sesji, bez adresu i bez treści.
+ *
+ * ⚠️ Granica nazwana wprost (obserwacja z recenzji): zapis idzie przez
+ * `get_option` → `update_option`, a to NIE jest operacja atomowa. Gdyby dwa
+ * wnioski o usunięcie były przetwarzane dokładnie równocześnie, jeden zapis
+ * mógłby nadpisać ślad zapisany przez drugi i ochrona wróciłaby do stanu
+ * „tylko dla wniosków równoczesnych". Zostawiamy tak świadomie: kreator RODO
+ * jest ekranem administracyjnym obsługiwanym po kolei, a zamiana tego na
+ * blokadę albo osobną tabelę kosztuje migrację schematu przy ryzyku, którego
+ * nie da się wywołać normalną pracą z panelem. Gdyby ryzyko przestało być
+ * teoretyczne (kilku administratorów obsługujących wnioski hurtowo), właściwym
+ * krokiem jest tabela z kluczem UNIQUE na sesji, a nie kolejna warstwa nad opcją.
  */
 const CHATL_RODO_OPCJA_WSPOLNE = 'chatl_rodo_sesje_wspolne';
 
@@ -214,10 +225,10 @@ function chatl_rodo_eksporter( $email, $strona = 1 ) {
 	 * nas stronami i oczekuje, że każda strona jest skończona — mieszanie dwóch
 	 * źródeł na jednej stronie kończy się gubieniem wierszy przy przewijaniu.
 	 */
-	$podzial = chatl_rodo_sesje_maila( $email );
-	$sesje   = $podzial['wlasne'];
-	$miejsc  = CHATL_RODO_PORCJA - count( (array) $zgloszenia );
-	if ( $miejsc > 0 && $sesje ) {
+	$podzial     = chatl_rodo_sesje_maila( $email );
+	$sesje       = $podzial['wlasne'];
+	$wolne_sloty = CHATL_RODO_PORCJA - count( (array) $zgloszenia );
+	if ( $wolne_sloty > 0 && $sesje ) {
 		/*
 		 * Dwa źródła na wspólnej numeracji stron. Przesunięcie rozmów liczymy
 		 * względem CAŁEJ liczby zgłoszeń, a nie względem bieżącej strony:
@@ -235,7 +246,7 @@ function chatl_rodo_eksporter( $email, $strona = 1 ) {
 		$rozmowy       = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT id, sesja, rola, tresc, utworzono FROM {$tr} WHERE sesja IN ({$miejsca}) ORDER BY id ASC LIMIT %d OFFSET %d",
-				array_merge( $sesje, array( $miejsc, $offset_rozmow ) )
+				array_merge( $sesje, array( $wolne_sloty, $offset_rozmow ) )
 			),
 			ARRAY_A
 		);

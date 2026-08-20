@@ -44,6 +44,12 @@ była w klepniętych szkicach (`boty/SZKICE-BOTOW.md`) albo wynika z ich zasad
    wydarzy i że w paczce znajdzie historię zmian oraz opis w formacie, który zna
    z katalogu WordPressa. Brak tych rzeczy nie psuje działania, ale od razu
    widać, że to nie jest produkt handlowy.
+11. **Wpięcie w kreator RODO WordPressa (eksporter i kasownik danych osobowych)**
+   (`includes/rodo.php`) — rozszerzenie ponad szkice. **Powód:** wtyczka trzyma
+   adresy e-mail gości i treść ich rozmów, a produkt jest sprzedawany z sekcją
+   o RODO — wtyczka niewpięta w kreator zostawia właściciela z obowiązkiem
+   prawnym i bez narzędzia. To nie jest bonus dla ładnego opisu: bez tego
+   deklaracja produktu rozjeżdża się z tym, co kod naprawdę potrafi.
 
 ## Segregator maila
 1. **Tryb AI + „porównaj reguły vs AI"** — decyzja Dzidka 18.08 (szkice §BOT 2).
