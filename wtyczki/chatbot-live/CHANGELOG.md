@@ -10,6 +10,22 @@ migracja odpala się sama przy pierwszym wejściu do panelu po aktualizacji
 
 ---
 
+## [1.4.10] — 2026-08-20
+
+### Dodane
+- **Wpięcie w narzędzia RODO WordPressa.** Wniosek o kopię albo o usunięcie danych
+  obsługujesz wbudowanym kreatorem (**Narzędzia → Eksport / Usuwanie danych
+  osobowych**): wtyczka wydaje zgłoszenia z czatu i powiązaną z nimi historię
+  rozmowy, a kasownik usuwa jedno i drugie.
+- Gotowy akapit do **polityki prywatności** (Ustawienia → Prywatność).
+
+### Uwaga
+- Wiązanie idzie przez **adres e-mail**, więc rozmowa gościa, który nigdy nie
+  zostawił zgłoszenia, nie jest powiązana z żadnym adresem — kasuje ją retencja.
+  Kreator mówi o tym wprost, zamiast udawać komplet.
+
+---
+
 ## [1.4.9] — 2026-08-20
 
 ### Naprawione

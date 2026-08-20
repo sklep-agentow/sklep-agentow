@@ -1,6 +1,6 @@
 # ChatBot LIVE — dokumentacja techniczna
 
-Wersja wtyczki: **1.4.9** · schemat bazy: **5** · licencja: **GPL-2.0-or-later**
+Wersja wtyczki: **1.4.10** · schemat bazy: **5** · licencja: **GPL-2.0-or-later**
 
 Dokument opisuje **kod, który jest**, nie plan. Każda liczba i nazwa poniżej ma pokrycie
 w źródle — przy każdej podano plik i symbol, żeby dało się to sprawdzić `grep`-em, a nie
@@ -194,7 +194,7 @@ Wszystkie liczby, którymi wtyczka się rządzi, są stałymi — nie ma ich roz
 
 | Stała | Wartość | Plik | Do czego |
 |---|---|---|---|
-| `CHATL_WERSJA` | `1.4.9` | `chatbot-live.php` | wersja wtyczki; służy też jako `?ver=` assetów (przeglądarka nie poda starego pliku po aktualizacji) |
+| `CHATL_WERSJA` | `1.4.10` | `chatbot-live.php` | wersja wtyczki; służy też jako `?ver=` assetów (przeglądarka nie poda starego pliku po aktualizacji) |
 | `CHATL_WERSJA_SCHEMATU` | `5` | `chatbot-live.php` | wyzwalacz migracji schematu |
 | `CHATL_KATALOG`, `CHATL_URL` | ścieżka i adres wtyczki | `chatbot-live.php` | `require` i adresy assetów |
 | `CHATL_MAX_PYTANIE` | `500` | `includes/front.php` | maksymalna długość pytania gościa (nadmiar jest **przycinany**, nie odrzucany) |
@@ -925,7 +925,43 @@ kłóciłoby się z obietnicą retencji.
 
 ---
 
-## 23. Znane granice
+## 23. Narzędzia RODO WordPressa
+
+WordPress ma wbudowany kreator (**Narzędzia → Eksport / Usuwanie danych osobowych**):
+przyjmuje wniosek, weryfikuje adres mailem, buduje paczkę ZIP i prowadzi dziennik
+żądań. Wtyczka trzymająca maile gości i treść rozmów, a niewpięta w ten kreator,
+zostawia właściciela z obowiązkiem i bez narzędzia.
+
+| Zaczep WordPressa | Nasza funkcja | Co robi |
+|---|---|---|
+| `wp_privacy_personal_data_exporters` | `chatl_rodo_eksporter()` | wydaje zgłoszenia i powiązane rozmowy |
+| `wp_privacy_personal_data_erasers` | `chatl_rodo_kasownik()` | kasuje jedno i drugie |
+| `wp_add_privacy_policy_content()` | `chatl_polityka_prywatnosci()` | gotowy akapit do polityki prywatności |
+
+### 23.1. Granica wiązania: adres e-mail
+
+Kluczem jest adres, a to wyznacza granicę. Zgłoszenia mają e-mail wprost; historia
+rozmów **nie** — wiąże się z osobą wyłącznie przez sesję, w której ta osoba zostawiła
+zgłoszenie. **Rozmowa gościa, który nigdy nie podał maila, jest anonimowa** i nie ma
+jak przypisać jej do wniosku; kasuje ją retencja po `CHATL_RETENCJA_DNI` dniach.
+Kasownik mówi o tym wprost w komunikacie kreatora, zamiast udawać komplet.
+
+### 23.2. Kolejność kasowania nie jest dowolna
+
+Najpierw **rozmowy**, potem **zgłoszenia**. Zgłoszenie jest jedynym łącznikiem
+między adresem a sesją — skasowane pierwsze, zabrałoby ze sobą wiedzę o tym, które
+rozmowy usunąć, i zostawiłoby je w bazie na zawsze.
+
+### 23.3. Stronicowanie: dwa źródła, jedna numeracja
+
+Kreator woła eksporter stronami, aż zwróci `done`. Przesunięcie rozmów liczymy
+względem **całkowitej liczby zgłoszeń**, a nie numeru strony: przy dokładnie pełnej
+stronie zgłoszeń naiwne `OFFSET` przeskoczyłoby pierwszą porcję rozmów i wydało
+wniosek **z dziurą**, której nie zauważy ani właściciel, ani osoba składająca wniosek.
+Strażnik podkłada dokładnie ten przypadek.
+
+
+## 24. Znane granice
 
 Rzeczy, których wtyczka **nie** robi — żeby nikt nie szukał ich w kodzie:
 
