@@ -174,7 +174,7 @@ spr "wywolan esc_like (bez komentarzy)" "2" "grep -o 'wpdb->esc_like(' $W/uninst
 
 echo
 echo "=== G. Ustawienia: klucze i wartosci domyslne ==="
-spr "kluczy w chatl_ustawienia"   "14"  "sed -n '/\\\$domyslne = array(/,/);/p' $W/chatbot-live.php | grep -cP \"^\t\t'\""
+spr "kluczy w chatl_ustawienia"   "15"  "sed -n '/\\\$domyslne = array(/,/);/p' $W/chatbot-live.php | grep -cP \"^\t\t'\""
 spr "ai_limit_dzienny domyslnie"  "100" "grep -oP \"(?<='ai_limit_dzienny' => )[0-9]+\" $W/chatbot-live.php"
 spr "zakres zapisu limitu (max)"  "100000" "grep -oP '(?<=min\\( )[0-9]+(?=, \\(int\\) \\\$_POST\\[.ai_limit_dzienny)' $W/includes/admin.php"
 spr "wlaczony domyslnie"          "1"  "grep -oP \"(?<='wlaczony'         => )[0-9]+\" $W/chatbot-live.php"
