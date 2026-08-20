@@ -850,7 +850,10 @@ function segm_post_ustawienia_zapisz() {
 			'ai_limit_dzienny' => isset( $_POST['ai_limit_dzienny'] ) ? max( 1, min( 100000, (int) $_POST['ai_limit_dzienny'] ) ) : $stare['ai_limit_dzienny'],
 		)
 	);
-	update_option( 'segm_ustawienia', $nowe );
+	if ( ! segm_zapisz_opcje( 'segm_ustawienia', $nowe ) ) {
+		segm_log_bledu_bazy( 'segm_post_ustawienia_zapisz', 'ustawienia wtyczki (limit AI, usuwanie danych)' );
+		segm_przekieruj_blad( 'segm-ustawienia', 'Nie udało się zapisać ustawień — baza odrzuciła zapis. Obowiązują POPRZEDNIE ustawienia (m.in. dzienny limit wywołań AI).' );
+	}
 
 	// Klucz API: osobna opcja (autoload=no), nigdy nie wraca do formularza.
 	if ( ! empty( $_POST['usun_klucz'] ) ) {

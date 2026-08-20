@@ -50,6 +50,27 @@ function segm_log_bledu_bazy( $funkcja, $operacja ) {
 	);
 }
 
+/**
+ * Zapis opcji z UCZCIWYM wynikiem.
+ *
+ * update_option() zwraca false także wtedy, gdy nowa wartość jest IDENTYCZNA
+ * ze starą — samo `false` nie odróżnia „nic się nie zmieniło" od „zapis padł",
+ * więc naiwne sprawdzenie sypałoby fałszywymi błędami. Porażkę potwierdzamy
+ * odczytem: false + wartość w bazie inna niż zapisywana = realny błąd.
+ * Przy padniętym zapisie update_option() wychodzi PRZED zasileniem cache'u,
+ * więc get_option() zwraca wtedy starą wartość i różnica jest widoczna.
+ *
+ * @param string $nazwa   Nazwa opcji.
+ * @param mixed  $wartosc Wartość do zapisania.
+ * @return bool True, gdy po operacji w bazie leży to, co miało tam trafić.
+ */
+function segm_zapisz_opcje( $nazwa, $wartosc ) {
+	if ( update_option( $nazwa, $wartosc ) ) {
+		return true;
+	}
+	return get_option( $nazwa ) === $wartosc;
+}
+
 require_once SEGM_KATALOG . 'includes/instalator.php';
 
 register_activation_hook( __FILE__, 'segm_aktywacja' );
