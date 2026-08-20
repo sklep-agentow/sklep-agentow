@@ -38,6 +38,10 @@ do prawdziwej skrzynki. Zbiera zmiany scalone do gałęzi głównej po 1.2.1.
   próbki — do ilu maili pasuje sam wzorzec i ile reguła realnie zgarnia (bo
   pierwsza pasująca wygrywa). Przycisk „Policz na próbce" robi to samo dla
   wzorca jeszcze niezapisanego. Obie liczby liczy ta sama funkcja co przebieg.
+- **Eksport i import własnej konfiguracji** (kategorie + reguły) w JSON-ie.
+  Przeprowadzka na inny hosting albo klon strony nie oznacza już wpisywania
+  dwudziestu reguł od nowa. W pliku NIE MA haseł, klucza API, próbki maili
+  ani zapisanych zgód.
 - **Ekran powitalny po aktywacji** — trzy pierwsze kroki i odnośniki; pokazywany raz,
   z możliwością zamknięcia na stałe (zapamiętywane per użytkownik).
 - Dokumentacja techniczna (`DOKUMENTACJA-TECHNICZNA.md`) z mapą dla audytora,

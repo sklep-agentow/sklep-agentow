@@ -126,6 +126,11 @@ function segm_komunikaty() {
 		if ( isset( $teksty[ $klucz ] ) ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( $teksty[ $klucz ] ) . '</p></div>';
 		}
+		if ( 'konfig' === $klucz ) {
+			$kat = isset( $_GET['kategorii'] ) ? (int) $_GET['kategorii'] : 0;
+			$reg = isset( $_GET['regul'] ) ? (int) $_GET['regul'] : 0;
+			echo '<div class="notice notice-success is-dismissible"><p>Wczytano konfigurację: reguł ' . (int) $reg . ', nowych kategorii ' . (int) $kat . '. Sprawdź kolejność reguł — rozstrzyga o tym, która wygrywa.</p></div>';
+		}
 		if ( 'import' === $klucz ) {
 			$ile = isset( $_GET['ile'] ) ? (int) $_GET['ile'] : 0;
 			$pom = isset( $_GET['pominieto'] ) ? (int) $_GET['pominieto'] : 0;
@@ -542,6 +547,8 @@ function segm_strona_reguly() {
 			<?php endforeach; ?>
 			</tbody>
 		</table>
+
+		<?php segm_konfig_sekcja(); ?>
 	</div>
 	<?php
 }

@@ -99,6 +99,7 @@ if ( is_admin() ) {
 	require_once SEGM_KATALOG . 'includes/admin-skrzynka.php';
 	require_once SEGM_KATALOG . 'includes/admin-powitanie.php';
 	require_once SEGM_KATALOG . 'includes/filtry.php';
+	require_once SEGM_KATALOG . 'includes/konfiguracja.php';
 }
 
 /**

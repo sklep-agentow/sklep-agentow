@@ -72,8 +72,8 @@ done
 
 echo
 echo "=== D. Punkty wejscia ==="
-spr "liczba uchwytow admin_post"     "26" "grep -rhoP 'add_action\( .admin_post_segm_[a-z_]+' $W --include='*.php' | sort -u | wc -l"
-spr "dokumentacja podaje te liczbe"  "1"  "grep -c 'admin-post\` — 26 sztuk' $DOK"
+spr "liczba uchwytow admin_post"     "28" "grep -rhoP 'add_action\( .admin_post_segm_[a-z_]+' $W --include='*.php' | sort -u | wc -l"
+spr "dokumentacja podaje te liczbe"  "1"  "grep -c 'admin-post\` — 28 sztuk' $DOK"
 spr "ZERO punktow dla niezalogowanych" "0" "grep -rc 'wp_ajax_nopriv' $W --include='*.php' | grep -v ':0' | wc -l"
 spr "ZERO tras REST"                 "0"  "grep -rc 'register_rest_route' $W --include='*.php' | grep -v ':0' | wc -l"
 spr "ZERO zaczepow frontu"           "0"  "grep -rc 'template_redirect\|wp_enqueue_scripts\|add_shortcode' $W --include='*.php' | grep -v ':0' | wc -l"
@@ -169,7 +169,7 @@ echo "=== L. Liczby linii z tabeli architektury (par. 3) ==="
 # Odwrotne cudzyslowy w markdownie kolidowaly z podstawieniem polecen w eval —
 # dlatego wzorzec budujemy tu i podajemy do spr() gotowa liczbe.
 BACKTICK=$(printf '\140')
-for f in segregator-maila.php uninstall.php includes/admin-powitanie.php includes/admin-probka.php includes/instalator.php includes/silnik.php includes/csv.php includes/ai.php includes/admin.php includes/filtry.php includes/class-segm-imap.php includes/skrzynka.php includes/skrzynka-przebieg.php includes/admin-skrzynka.php; do
+for f in segregator-maila.php uninstall.php includes/admin-powitanie.php includes/admin-probka.php includes/konfiguracja.php includes/instalator.php includes/silnik.php includes/csv.php includes/ai.php includes/admin.php includes/filtry.php includes/class-segm-imap.php includes/skrzynka.php includes/skrzynka-przebieg.php includes/admin-skrzynka.php; do
   ILE=$(wc -l < $W/$f)
   WZOR="${BACKTICK}${f}${BACKTICK} | ${ILE} |"
   TRAF=$(grep -cF "$WZOR" $DOK)
@@ -183,6 +183,7 @@ spr "CHANGELOG na liscie paczki"    "1" "grep -c 'segregator-maila/CHANGELOG.md'
 spr "readme.txt na liscie paczki"   "1" "grep -c 'segregator-maila/readme.txt' boty/buduj-paczki.sh"
 spr "ekran powitalny na liscie paczki" "1" "grep -c 'segregator-maila/includes/admin-powitanie.php' boty/buduj-paczki.sh"
 spr "praca na pojedynczym mailu w paczce" "1" "grep -c 'segregator-maila/includes/admin-probka.php' boty/buduj-paczki.sh"
+spr "konfiguracja w paczce" "1" "grep -c 'segregator-maila/includes/konfiguracja.php' boty/buduj-paczki.sh"
 spr "diagram istnieje"              "1" "test -f $SVG && echo 1 || echo 0"
 # xmlns="http://www.w3.org/2000/svg" to WYMAGANA deklaracja przestrzeni nazw XML,
 # a nie odwolanie sieciowe — przeglądarka niczego stamtad nie pobiera.
@@ -204,6 +205,22 @@ spr "maile reczne oznaczone zrodlem" "1" "grep -c \"'zrodlo'    = 'reczny'\|= 'r
 spr "nonce liczenia ma wlasna nazwe" "1" "grep -c \"check_admin_referer( 'segm_regula_policz', '_wpnonce_policz' )\" $W/includes/admin-probka.php"
 spr "uninstall kasuje transienty liczenia" "1" "grep -c 'segm_liczenie_' $W/uninstall.php | awk '{print (\$1>0)?1:0}'"
 spr "dokumentacja opisuje iteracje" "1" "grep -c '8.1. Iteracja na pojedynczym przypadku' $DOK"
+
+echo "=== S. Eksport i import konfiguracji ==="
+spr "SEGM_KONFIG_FORMAT"             "1"      "grep -oP '(?<=SEGM_KONFIG_FORMAT = )\d+' $W/includes/konfiguracja.php"
+spr "SEGM_KONFIG_MAX_BAJTOW"         "524288" "grep -oP '(?<=SEGM_KONFIG_MAX_BAJTOW = )\d+' $W/includes/konfiguracja.php"
+spr "SEGM_KONFIG_MAX_WPISOW"         "500"    "grep -oP '(?<=SEGM_KONFIG_MAX_WPISOW = )\d+' $W/includes/konfiguracja.php"
+spr "SEGM_KONFIG_MAX_WZORZEC"        "2000"   "grep -oP '(?<=SEGM_KONFIG_MAX_WZORZEC = )\d+' $W/includes/konfiguracja.php"
+spr "eksport konfiguracji"           "1" "grep -c \"add_action( 'admin_post_segm_konfig_eksport'\" $W/includes/konfiguracja.php"
+spr "import konfiguracji"            "1" "grep -c \"add_action( 'admin_post_segm_konfig_import'\" $W/includes/konfiguracja.php"
+spr "regula wiazana po NAZWIE kategorii" "1" "sed -n '/function segm_konfig_zbierz/,/^}/p' $W/includes/konfiguracja.php | grep -c \"'kategoria' => (string) \\\$r->kategoria\""
+spr "plik BEZ hasla do skrzynki"     "0" "sed -n '/function segm_konfig_zbierz/,/^}/p' $W/includes/konfiguracja.php | grep -c 'segm_skrzynka_haslo\|segm_klucz_api'"
+spr "plik BEZ probki i historii"     "0" "sed -n '/function segm_konfig_zbierz/,/^}/p' $W/includes/konfiguracja.php | grep -c 'segm_maile\|segm_skrz_ruchy\|segm_przebiegi'"
+spr "plik BEZ zapisanych zgod"       "0" "sed -n '/function segm_konfig_zbierz/,/^}/p' $W/includes/konfiguracja.php | grep -c 'segm_zgoda'"
+spr "import sprawdza znacznik wtyczki" "1" "grep -c \"'segregator-maila' !== \\\$dane\\['wtyczka'\\]\" $W/includes/konfiguracja.php"
+spr "import sprawdza wersje formatu" "1" "grep -c 'SEGM_KONFIG_FORMAT' $W/includes/konfiguracja.php | awk '{print (\$1>1)?1:0}'"
+spr "import bierze blokade operacji" "1" "sed -n '/function segm_post_konfig_import/,/^}/p' $W/includes/konfiguracja.php | grep -c 'segm_zajmij_blokade'"
+spr "dokumentacja opisuje przeprowadzke" "1" "grep -c '8.2. Przeprowadzka' $DOK"
 
 echo "=== N. readme.txt w standardzie WordPressa ==="
 spr "readme.txt istnieje"            "1" "test -f $W/readme.txt && echo 1 || echo 0"

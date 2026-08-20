@@ -50,6 +50,7 @@ ALLOWLIST_SEGREGATOR=(
 	"segregator-maila/includes/admin-powitanie.php"
 	"segregator-maila/includes/admin-probka.php"
 	"segregator-maila/includes/filtry.php"
+	"segregator-maila/includes/konfiguracja.php"
 	"segregator-maila/includes/class-segm-imap.php"
 	"segregator-maila/includes/skrzynka.php"
 	"segregator-maila/includes/skrzynka-przebieg.php"
