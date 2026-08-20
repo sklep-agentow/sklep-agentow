@@ -44,6 +44,7 @@ function chatl_komunikat_ok() {
 	}
 	// phpcs:enable
 	chatl_notice_bledu_maila();
+	chatl_notice_pulapki();
 	chatl_notice_bledu_ai();
 	chatl_notice_odrzuconych_nonce();
 }
@@ -64,6 +65,25 @@ function chatl_przekieruj_blad( $strona, $komunikat ) {
  * Ostrzeżenie, gdy ostatnie powiadomienie mailowe o zgłoszeniu nie wyszło
  * (znacznik ustawia chatl_odnotuj_wysylke_powiadomienia() z front.php).
  */
+/**
+ * Licznik zadziałań pułapki na boty.
+ *
+ * Bez tej informacji pułapka jest niesprawdzalna z panelu: cisza znaczyłaby
+ * albo „nic nie przyszło", albo „przepuszczam wszystko". Liczba czyni też
+ * widocznym FAŁSZYWY ALARM — gdy klient mówi, że pisał i nie dostał odpowiedzi,
+ * właściciel wie, gdzie zajrzeć.
+ */
+function chatl_notice_pulapki() {
+	$stan = get_option( 'chatl_pulapka' );
+	if ( ! is_array( $stan ) || empty( $stan['ile'] ) ) {
+		return;
+	}
+	echo '<div class="notice notice-info"><p><strong>Pułapka na boty zadziałała ' . (int) $stan['ile'] . ' raz(y).</strong> '
+		. 'Ostatnio: ' . esc_html( (string) ( $stan['ostatnia'] ?? '' ) ) . ' (' . esc_html( (string) ( $stan['powod'] ?? '' ) ) . '). '
+		. 'Złapane zgłoszenia <strong>są zapisane</strong> — zobaczysz je na liście zgłoszeń pod filtrem <em>podejrzane</em>. '
+		. 'Nie wysyłamy o nich powiadomień mailem.</p></div>';
+}
+
 function chatl_notice_bledu_maila() {
 	$blad = get_option( 'chatl_blad_maila' );
 	if ( ! is_array( $blad ) || empty( $blad['kiedy'] ) ) {
@@ -429,11 +449,36 @@ add_action( 'admin_post_chatl_qa_usun', 'chatl_post_qa_usun' );
 function chatl_strona_zgloszenia() {
 	global $wpdb;
 	$tabela = $wpdb->prefix . 'chatl_zgloszenia';
-	$wpisy  = $wpdb->get_results( "SELECT * FROM {$tabela} ORDER BY id DESC LIMIT 200" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+	/*
+	 * Lista pokazuje DOMYŚLNIE tylko czyste zgłoszenia, a złapane przez pułapkę
+	 * siedzą za filtrem — ale z LICZBĄ widoczną obok. Ukrycie ich bez liczby
+	 * byłoby tym samym, co cicha kasacja: właściciel nie miałby jak zauważyć,
+	 * że pułapka zabrała prawdziwego klienta.
+	 */
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- samo przełączenie widoku listy.
+	$widok = isset( $_GET['widok'] ) && 'podejrzane' === sanitize_key( wp_unslash( $_GET['widok'] ) ) ? 'podejrzane' : 'czyste';
+	$flaga = 'podejrzane' === $widok ? 1 : 0;
+	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+	$wpisy            = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$tabela} WHERE podejrzane = %d ORDER BY id DESC LIMIT 200", $flaga ) );
+	$ile_podejrzanych = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$tabela} WHERE podejrzane = 1" );
+	// phpcs:enable
 	?>
 	<div class="wrap">
 		<h1>Zgłoszenia z czatu</h1>
 		<?php chatl_komunikat_ok(); ?>
+		<ul class="subsubsub">
+			<li><a href="<?php echo esc_url( admin_url( 'admin.php?page=chatl-zgloszenia' ) ); ?>"
+				<?php echo 'czyste' === $widok ? 'class="current"' : ''; ?>>Zgłoszenia</a> |</li>
+			<li><a href="<?php echo esc_url( admin_url( 'admin.php?page=chatl-zgloszenia&widok=podejrzane' ) ); ?>"
+				<?php echo 'podejrzane' === $widok ? 'class="current"' : ''; ?>>Podejrzane <span class="count">(<?php echo (int) $ile_podejrzanych; ?>)</span></a></li>
+		</ul>
+		<?php if ( 'podejrzane' === $widok ) : ?>
+			<div class="notice notice-warning inline" style="margin:12px 0"><p>
+				To zgłoszenia złapane przez <strong>pułapkę na boty</strong>. Są zapisane, ale <strong>nie wysłaliśmy o nich powiadomień mailem</strong>.
+				Jeśli klient mówi, że pisał i nie dostał odpowiedzi — szukaj go tutaj.
+			</p></div>
+		<?php endif; ?>
 		<p>Goście, którym bot nie odpowiedział (albo którzy od razu chcieli kontaktu) — <strong>do odpisania na żywo</strong>.</p>
 		<p><a class="button" href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=chatl_eksport_zgloszen' ), 'chatl_eksport_zgloszen' ) ); ?>">Pobierz CSV (wszystkie zgłoszenia)</a>
 			<span class="description">Kopia dla Ciebie — bot jej nigdzie nie wysyła i nie robi jej sam z siebie.</span></p>
