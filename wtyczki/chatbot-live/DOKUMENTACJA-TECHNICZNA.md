@@ -583,6 +583,20 @@ Wzorzec jest ten sam co przy nieudanym powiadomieniu mailowym
 (`chatl_odnotuj_wysylke_powiadomienia()`): znacznik stawiany przy porażce,
 zdejmowany przy pierwszym sukcesie.
 
+**HTTP 200 to jeszcze nie sukces.** Ciało odpowiedzi bywa nie do odczytania:
+proxy albo brama zgodności podmieniła treść, hosting dokleił swój HTML, model
+zwrócił bloki bez tekstu. Dla właściciela skutek jest **identyczny jak przy złym
+kluczu** — płaci za tryb AI, a bot odpowiada z reguł — więc te ścieżki zostawiają
+ślad tak samo. Panel rozpoznaje ten przypadek po kodzie `200` w znaczniku i daje
+inną radę niż przy odrzuconym kluczu: połączenie i uwierzytelnienie zadziałały,
+popsuła się treść.
+
+Żeby ta klasa błędu nie wróciła, **wszystkie** ścieżki zjazdu do reguł przechodzą
+przez jedną funkcję `chatl_ai_niepowodzenie()`, a bramka pilnuje, że w
+`chatl_ai_odpowiedz()` nie ma ani jednego gołego `return null`. Odmowa modelu
+(`stop_reason: refusal`) **nie** jest awarią — to poprawne „nie wiem" plus zbiórka
+kontaktu, więc znacznika nie stawia.
+
 **Test klucza celowo nie używa `chatl_ai_instrukcja()`.** Tamta wkłada do żądania
 całą aktywną bazę Q&A i opis firmy, więc „sprawdzenie klucza" kosztowałoby tyle,
 co prawdziwe pytanie gościa. Test wysyła jedno słowo z `max_tokens = 1`

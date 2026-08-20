@@ -312,6 +312,25 @@ function chatl_log_bledu_ai( $odp, $kod ) {
 }
 
 /**
+ * Zjazd do trybu regułowego z zostawieniem ŚLADU dla właściciela.
+ *
+ * Istnieje po to, żeby nie dało się dopisać kolejnego `return null` i zapomnieć
+ * o znaczniku — dokładnie to zdarzyło się przy pierwszej wersji tej naprawy
+ * (uwaga recenzenta do PR #79): ścieżki „HTTP 200, ale ciało nie do odczytania"
+ * zwracały null bez wpisu, czyli awaria znowu była cicha, choć PR miał ją
+ * właśnie uwidocznić.
+ *
+ * @param array|WP_Error $odp Odpowiedź wp_remote_post().
+ * @param int            $kod Kod HTTP (0 = błąd połączenia).
+ * @return null Zawsze null — wywołujący ma zrobić `return chatl_ai_niepowodzenie( … );`.
+ */
+function chatl_ai_niepowodzenie( $odp, $kod ) {
+	chatl_log_bledu_ai( $odp, $kod );
+	chatl_odnotuj_blad_ai( $odp, $kod );
+	return null;
+}
+
+/**
  * Odpowiedź AI na pytanie gościa.
  *
  * @return string|null Tekst odpowiedzi (może być sentinel BRAK_ODPOWIEDZI)
@@ -331,14 +350,19 @@ function chatl_ai_odpowiedz( $pytanie ) {
 		// bez tego wpisu wtyczka miesiącami „działa" w trybie AI, odpowiadając
 		// wyłącznie z reguł, bo API odrzuca każde żądanie (tak zniknął błąd
 		// output_config: 400 nie jest nawet retry'owany).
-		chatl_log_bledu_ai( $odp, $kod );
-		chatl_odnotuj_blad_ai( $odp, $kod );
-		return null;
+		return chatl_ai_niepowodzenie( $odp, $kod );
 	}
 
+	/*
+	 * HTTP 200 to jeszcze nie sukces. Ciało bywa nie do odczytania (proxy albo
+	 * brama zgodności podmieniła odpowiedź, hosting dokleił swój HTML, model
+	 * zwrócił samą treść niebędącą tekstem). Dla właściciela skutek jest
+	 * IDENTYCZNY jak przy złym kluczu: płaci za tryb AI, a bot odpowiada
+	 * z reguł — więc ślad musi zostać tak samo.
+	 */
 	$dane = json_decode( wp_remote_retrieve_body( $odp ), true );
 	if ( ! is_array( $dane ) || empty( $dane['content'] ) || ! is_array( $dane['content'] ) ) {
-		return null;
+		return chatl_ai_niepowodzenie( $odp, $kod );
 	}
 	if ( isset( $dane['stop_reason'] ) && 'refusal' === $dane['stop_reason'] ) {
 		return CHATL_AI_BRAK;
@@ -352,7 +376,9 @@ function chatl_ai_odpowiedz( $pytanie ) {
 	}
 	$tekst = trim( $tekst );
 	if ( '' === $tekst ) {
-		return null;
+		// Bloki są, ale żaden nie niesie tekstu — gość dostaje odpowiedź z reguł,
+		// więc właściciel ma prawo wiedzieć, że model nic nie powiedział.
+		return chatl_ai_niepowodzenie( $odp, $kod );
 	}
 
 	// Licznik stop-loss dopiero PO udanym wywołaniu.

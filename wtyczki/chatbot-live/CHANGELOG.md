@@ -20,6 +20,10 @@ migracja odpala się sama przy pierwszym wejściu do panelu po aktualizacji
   a panel pokazuje **czerwony pasek** z datą, kodem HTTP i tym, co zrobić.
   Znacznik znika sam po pierwszym udanym wywołaniu.
 
+- **Także wtedy, gdy API odpowie kodem 200, ale treść jest nieczytelna**
+  (proxy albo brama zgodności podmieniła odpowiedź) — bot zjeżdża do reguł, więc
+  właściciel dostaje ślad i osobną wskazówkę, że kluczem to prawdopodobnie nie jest.
+
 ### Dodane
 - Przycisk **„Przetestuj klucz"** w ustawieniach: jedno tanie wywołanie API
   (jedno słowo, `max_tokens = 1`, bez bazy Q&A w żądaniu), wynik od razu na

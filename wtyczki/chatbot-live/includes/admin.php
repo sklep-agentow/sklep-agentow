@@ -85,12 +85,18 @@ function chatl_notice_bledu_ai() {
 	if ( ! is_array( $blad ) || empty( $blad['kiedy'] ) ) {
 		return;
 	}
-	$kod  = (int) ( $blad['kod'] ?? 0 );
-	$rada = 401 === $kod || 403 === $kod
-		? 'API odrzuciło klucz — najprawdopodobniej jest zły, wygasł albo stracił uprawnienia. Wklej nowy w ustawieniach.'
-		: ( 404 === $kod
-			? 'API nie zna podanego modelu — sprawdź jego nazwę w ustawieniach.'
-			: 'Sprawdź klucz i połączenie z API; jeśli błąd się powtarza, skontaktuj się z dostawcą modelu.' );
+	$kod = (int) ( $blad['kod'] ?? 0 );
+	if ( 401 === $kod || 403 === $kod ) {
+		$rada = 'API odrzuciło klucz — najprawdopodobniej jest zły, wygasł albo stracił uprawnienia. Wklej nowy w ustawieniach.';
+	} elseif ( 404 === $kod ) {
+		$rada = 'API nie zna podanego modelu — sprawdź jego nazwę w ustawieniach.';
+	} elseif ( 200 === $kod ) {
+		// Osobna rada, bo to zupełnie inny trop niż zły klucz: połączenie
+		// i uwierzytelnienie zadziałały, popsuła się TREŚĆ odpowiedzi.
+		$rada = 'API odpowiedziało poprawnym kodem, ale treść odpowiedzi była nieczytelna. Najczęstsza przyczyna to proxy, brama zgodności albo wtyczka bezpieczeństwa po drodze, która podmienia odpowiedź. Klucz jest tu prawdopodobnie w porządku.';
+	} else {
+		$rada = 'Sprawdź klucz i połączenie z API; jeśli błąd się powtarza, skontaktuj się z dostawcą modelu.';
+	}
 
 	echo '<div class="notice notice-error"><p><strong>Tryb AI nie działa — bot odpowiada wyłącznie z reguł.</strong><br>'
 		. 'Ostatnie nieudane wywołanie API: <code>' . esc_html( (string) $blad['kiedy'] ) . '</code>'

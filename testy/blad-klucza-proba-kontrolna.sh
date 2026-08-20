@@ -2,7 +2,7 @@
 # Proba kontrolna straznikow L4 (zasada D14: kontrola, ktora nie znajdzie
 # PODLOZONEGO bledu, jest slepa).
 #
-# Naprawa L4 ma cztery ruchome czesci: zapis znacznika przy porazce, zdjecie go
+# Naprawa L4 ma piec ruchomych czesci: zapis znacznika przy porazce, zdjecie go
 # przy sukcesie, WARUNEK przy zdejmowaniu (zeby nie pisac do bazy przy kazdym
 # udanym pytaniu) i widoczny pasek w panelu. Kazda da sie zepsuc osobno.
 #
@@ -55,6 +55,13 @@ probuj "porazka nieodnotowana (stan sprzed naprawy)" \
   "docker exec $KONTENER sed -i 's|chatl_odnotuj_blad_ai( \$odp, \$kod );|// zdjete przez probe|g' $CEL/includes/ai.php" \
   "znacznik awarii zapisany" "$CEL/includes/ai.php" php
 
+# 1b. Uwaga recenzenta do PR #79: HTTP 200 ze zniekształconym cialem wracalo
+#     bez sladu. Mutant przywraca "return null" w tej galezi — czyli awarie
+#     znowu cicha, dokladnie ta, ktora ten PR mial uwidocznic.
+probuj "HTTP 200 ze smieciem w ciele bez sladu (uwaga do PR 79)" \
+  "docker exec $KONTENER perl -0pi -e 's/(\\!\\s*is_array\\(\\s*\\\$dane\\s*\\)[^\\n]*\\n\\t\\t)return chatl_ai_niepowodzenie\\( \\\$odp, \\\$kod \\);/\\1return null;/s' $CEL/includes/ai.php" \
+  "ZOSTAJE ślad dla właściciela" "$CEL/includes/ai.php" php
+
 # 2. Znacznik zostaje na zawsze: wlasciciel widzi czerwony pasek mimo dzialajacego API.
 probuj "sukces nie zdejmuje znacznika" \
   "docker exec $KONTENER sed -i 's|chatl_odnotuj_sukces_ai();|// zdjete przez probe|g' $CEL/includes/ai.php" \
@@ -87,7 +94,7 @@ fi
 
 echo
 if [ "$BLEDY" -eq 0 ]; then
-  echo "STRAZNIKI WIDZA WSZYSTKIE PIEC PODLOZONYCH BLEDOW"
+  echo "STRAZNIKI WIDZA WSZYSTKIE SZESC PODLOZONYCH BLEDOW"
 else
   echo "STRAZNIKI SLEPE NA $BLEDY PODLOZONYCH BLEDOW"
 fi

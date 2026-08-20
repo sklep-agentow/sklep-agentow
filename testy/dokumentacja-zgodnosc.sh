@@ -211,6 +211,14 @@ spr "zgoda sprawdzana na serwerze" "1" "grep -c \"empty( \\\$_POST\\['zgoda'\\] 
 spr "wp_trigger_error pod straza" "2"  "grep -rc \"function_exists( 'wp_trigger_error' )\" $W/chatbot-live.php $W/includes/ai.php | awk -F: '{s+=\$2} END {print s}'"
 
 echo
+# Uwaga recenzenta do PR #79: kazdy zjazd do regul MUSI zostawic slad, inaczej
+# awaria jest cicha — a to jest dokladnie ta klasa, ktora ten PR naprawia.
+# Zero "return null" w chatl_ai_odpowiedz() znaczy, ze kazda sciezka porazki
+# przechodzi przez chatl_ai_niepowodzenie(), ktore stawia znacznik.
+spr "kazde niepowodzenie AI zostawia slad" "0" "sed -n '/function chatl_ai_odpowiedz/,/^}/p' $W/includes/ai.php | grep -c 'return null;'"
+spr "sciezek zjazdu przez wspolna funkcje" "3" "sed -n '/function chatl_ai_odpowiedz/,/^}/p' $W/includes/ai.php | grep -c 'return chatl_ai_niepowodzenie'"
+
+echo
 echo "=== L. Reguła dopasowania: jedno zrodlo ==="
 spr "definicji chatl_trafione_warianty" "1" "grep -rc 'function chatl_trafione_warianty' $W --include=*.php | awk -F: '{s+=\$2} END {print s}'"
 spr "mieszka w silnik.php"        "1"  "grep -c 'function chatl_trafione_warianty' $W/includes/silnik.php"
