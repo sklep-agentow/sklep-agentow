@@ -10,6 +10,26 @@ migracja odpala się sama przy pierwszym wejściu do panelu po aktualizacji
 
 ---
 
+## [1.5.0] — 2026-08-20 · schemat bazy 5 → 6
+
+### Dodane
+- **Przejęcie rozmowy przez człowieka.** Operator może wejść do trwającej rozmowy;
+  od tej chwili **bot milczy**, a gość widzi **wyraźny komunikat**, że rozmawia
+  z człowiekiem. Zakończenie oddaje rozmowę botowi — też z komunikatem.
+- Powrót do bota **po ciszy operatora** (5 minut), bez zależności od WP-Cron.
+- Publiczny punkt odpytywania `POST /wp-json/chatl/v1/rozmowa` z rytmem
+  ustalanym przez serwer: 15 s w trybie bota, 5 s po przejęciu, 30 s przy
+  schowanej karcie, 0 zapytań przy zamkniętym oknie czatu.
+
+### Bezpieczeństwo
+- **Identyfikator sesji wydaje teraz SERWER**, a nie przeglądarka. Poprzednia
+  ścieżka zapasowa opierała się o `Math.random()`, który nie jest generatorem
+  kryptograficznym — a od tej wersji identyfikator sesji otwiera treść rozmowy.
+- **Drugi składnik dostępu**: sekret w ciastku `HttpOnly`. Sam identyfikator
+  sesji — nawet poprawny — **nie wystarczy**, żeby przeczytać rozmowę.
+
+---
+
 ## [1.4.9] — 2026-08-20
 
 ### Naprawione

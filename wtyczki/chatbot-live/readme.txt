@@ -4,7 +4,7 @@ Tags: chat, chatbot, faq, kontakt, wsparcie
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.4.9
+Stable tag: 1.5.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -135,6 +135,13 @@ w ustawieniach. Klucz API jest kasowany zawsze, niezależnie od tego przełączn
 
 Pełna historia zmian, z opisem każdej pozycji, jest w pliku `CHANGELOG.md`
 w paczce. Poniżej skrót.
+
+= 1.5.0 =
+* Nowość: **przejęcie rozmowy przez człowieka**. Operator wchodzi do rozmowy,
+  bot milczy, a gość widzi wyraźny komunikat, że pisze do człowieka. Po
+  zakończeniu (lub po 5 minutach ciszy operatora) rozmowę przejmuje z powrotem bot.
+* Bezpieczeństwo: identyfikator sesji wydaje serwer, a dostęp do rozmowy wymaga
+  dodatkowo sekretu z ciastka HttpOnly — sam identyfikator nie wystarczy.
 
 = 1.4.9 =
 * **Tryb AI pamięta bieżącą rozmowę.** Gość może dopytywać („jak dojechać" →

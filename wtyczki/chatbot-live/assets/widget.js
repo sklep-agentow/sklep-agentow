@@ -12,20 +12,24 @@
 
 	var dane = window.chatlDane;
 
-	function sesjaId() {
-		var id = null;
+	/*
+	 * Identyfikator sesji wydaje SERWER. Wczesniej wymyslala go przegladarka, ze
+	 * sciezka zapasowa 'chatl-' + Date.now() + Math.random() — a Math.random() nie
+	 * jest generatorem kryptograficznym i nigdy nie mial nim byc. crypto.randomUUID()
+	 * wymaga HTTPS, wiec na witrynie po HTTP ta slaba sciezka byla REGULA, nie
+	 * wyjatkiem. Od chwili, gdy publiczny punkt odpytywania na podstawie sesji WYDAJE
+	 * tresc rozmowy z operatorem, zgadniety identyfikator to podsluch cudzej rozmowy.
+	 */
+	function wczytajSesje() {
 		try {
-			id = window.sessionStorage.getItem('chatl_sesja');
-		} catch (e) { /* sessionStorage niedostępny — sesja jednorazowa */ }
-		if (!id) {
-			id = (window.crypto && window.crypto.randomUUID)
-				? window.crypto.randomUUID()
-				: 'chatl-' + Date.now() + '-' + Math.random().toString(36).slice(2, 10);
-			try {
-				window.sessionStorage.setItem('chatl_sesja', id);
-			} catch (e) { /* jw. */ }
-		}
-		return id;
+			return window.sessionStorage.getItem('chatl_sesja');
+		} catch (e) { return null; }
+	}
+
+	function zapamietajSesje(id) {
+		try {
+			window.sessionStorage.setItem('chatl_sesja', id);
+		} catch (e) { /* sessionStorage niedostepny — sesja jednorazowa */ }
 	}
 
 	function el(tag, klasa, tekst) {
@@ -35,8 +39,27 @@
 		return e;
 	}
 
-	var sesja = sesjaId();
+	var sesja = wczytajSesje();
 	var okno, listaWiadomosci, formularzKontaktu, zamknijFormularz;
+	/* Ustawiane przy budowie okna — zamkniecie czatu (takze klawiszem Escape)
+	   ma UCISZYC odpytywanie, inaczej zamkniete okno dalej obciaza serwer. */
+	var stopOdpytywania = function () {};
+
+	/* Zwraca obietnice sesji: z pamieci karty albo swiezo wydana przez serwer. */
+	function dajSesje() {
+		if (sesja) { return Promise.resolve(sesja); }
+		var body = new FormData();
+		body.append('action', 'chatl_sesja');
+		return fetch(dane.ajaxUrl, { method: 'POST', body: body })
+			.then(function (o) { return o.json(); })
+			.then(function (o) {
+				if (o && o.success && o.data && o.data.sesja) {
+					sesja = o.data.sesja;
+					zapamietajSesje(sesja);
+				}
+				return sesja;
+			});
+	}
 
 	var TYTUL_FORMULARZA = 'Zostaw wiadomość — odezwiemy się osobiście.';
 
@@ -52,13 +75,15 @@
 	var nonce = dane.nonce;
 
 	function zadanie(akcja, pola) {
-		var body = new FormData();
-		body.append('action', akcja);
-		body.append('nonce', nonce);
-		body.append('sesja', sesja);
-		Object.keys(pola).forEach(function (k) { body.append(k, pola[k]); });
-		return fetch(dane.ajaxUrl, { method: 'POST', body: body })
-			.then(function (odp) { return odp.json(); });
+		return dajSesje().then(function (id) {
+			var body = new FormData();
+			body.append('action', akcja);
+			body.append('nonce', nonce);
+			body.append('sesja', id || '');
+			Object.keys(pola).forEach(function (k) { body.append(k, pola[k]); });
+			return fetch(dane.ajaxUrl, { method: 'POST', body: body })
+				.then(function (odp) { return odp.json(); });
+		});
 	}
 
 	/*
@@ -253,6 +278,7 @@
 	function zamknijOkno() {
 		okno.classList.remove('chatl-otwarty');
 		if (zamknijFormularz) { zamknijFormularz(); }
+		stopOdpytywania();
 	}
 
 	function zbudujOkno() {
@@ -267,7 +293,13 @@
 		naglowek.appendChild(zamknij);
 		okno.appendChild(naglowek);
 
+		/* Pasek rozmowcy stoi NAD lista wiadomosci i jest widoczny caly czas —
+		   gosc ma wiedziec, komu pisze, ZANIM napisze, a nie po fakcie. */
+		var pasekRozmowcy = el('div', 'chatl-pasek-rozmowcy', dane.botPasek);
+		pasekRozmowcy.setAttribute('role', 'status');
+
 		listaWiadomosci = el('div', 'chatl-wiadomosci');
+		okno.appendChild(pasekRozmowcy);
 		okno.appendChild(listaWiadomosci);
 
 		/* STAŁY przycisk „zostaw wiadomość" — ścieżka do człowieka od pierwszej chwili. */
@@ -296,6 +328,78 @@
 		wyslijBtn.setAttribute('aria-label', 'Wyślij pytanie');
 		formPytania.appendChild(wyslijBtn);
 
+		/*
+		 * PRZEJECIE ROZMOWY PRZEZ CZLOWIEKA
+		 *
+		 * Rytm odpytywania podaje SERWER w kazdej odpowiedzi (pole `interwal`),
+		 * a nie ten plik: dzieki temu zmiana rytmu nie wymaga wysylania klientom
+		 * nowego JS. Przy zamknietym oknie NIE pytamy w ogole — nie ma rozmowy,
+		 * nie ma po co obciazac serwera kupujacego.
+		 */
+		var odpytywanieId = null;
+		var ostatnieId = 0;
+		var stanRozmowy = 'bot';
+
+		function ustawPasek(stan) {
+			if (stan === stanRozmowy) { return; }
+			stanRozmowy = stan;
+			pasekRozmowcy.textContent = ('czlowiek' === stan) ? dane.ludzkiPasek : dane.botPasek;
+			pasekRozmowcy.className = 'chatl-pasek-rozmowcy' + ('czlowiek' === stan ? ' chatl-pasek-czlowiek' : '');
+			/* Czytnik ekranu ma to OGLOSIC: zmiana rozmowcy jest wazniejsza niz
+			   jakikolwiek inny komunikat w oknie, a osoba niewidzaca nie zobaczy
+			   zmiany koloru paska. */
+			pasekRozmowcy.setAttribute('role', 'status');
+		}
+
+		function odpytaj() {
+			if (!sesja) { return Promise.resolve(); }
+			return fetch(dane.restUrl, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					sesja: sesja,
+					od_id: ostatnieId,
+					ukryta: (document.visibilityState === 'hidden')
+				})
+			})
+				.then(function (o) { return o.json(); })
+				.then(function (o) {
+					if (!o || !o.stan) { return; }
+					ustawPasek(o.stan);
+					(o.nowe || []).forEach(function (w) {
+						ostatnieId = Math.max(ostatnieId, w.id);
+						dodajWiadomosc('system' === w.rola ? 'system' : 'operator', w.tresc);
+					});
+					zaplanujOdpytanie(o.interwal);
+				})
+				.catch(function () {
+					/* Blad sieci nie moze zatrzymac odpytywania na zawsze — probujemy
+					   dalej, ale rzadziej, zeby nie dobijac serwera, ktory ma klopot. */
+					zaplanujOdpytanie(30);
+				});
+		}
+
+		function zaplanujOdpytanie(sekundy) {
+			if (odpytywanieId) { window.clearTimeout(odpytywanieId); }
+			if (!okno.classList.contains('chatl-otwarty')) { return; }
+			var s = Math.max(3, parseInt(sekundy, 10) || 15);
+			odpytywanieId = window.setTimeout(odpytaj, s * 1000);
+		}
+
+		function zatrzymajOdpytywanie() {
+			if (odpytywanieId) { window.clearTimeout(odpytywanieId); }
+			odpytywanieId = null;
+		}
+		stopOdpytywania = zatrzymajOdpytywanie;
+
+		/* Karta wraca na wierzch = pytamy OD RAZU: gosc wlasnie wrocil do rozmowy
+		   i najgorsze, co moze zobaczyc, to cisza przez pelny interwal. */
+		document.addEventListener('visibilitychange', function () {
+			if ('visible' === document.visibilityState && okno.classList.contains('chatl-otwarty')) {
+				odpytaj();
+			}
+		});
+
 		formPytania.addEventListener('submit', function (zd) {
 			zd.preventDefault();
 			var pytanie = polePytania.value.trim();
@@ -309,7 +413,11 @@
 			pokazPisanie();
 			wyslij('chatl_pytanie', { pytanie: pytanie })
 				.then(function (odp) {
-					if (odp.success) {
+					if (odp.success && odp.data && odp.data.przejeta) {
+						/* Rozmowe prowadzi czlowiek: bot MILCZY, a odpowiedz
+						   operatora przyjdzie odpytywaniem. Zadnego pustego dymka. */
+						odpytaj();
+					} else if (odp.success) {
 						dodajWiadomosc('bot', odp.data.odpowiedz);
 						if (!odp.data.trafiono) {
 							pokazFormularz('Zostaw maila i pytanie — wrócimy z odpowiedzią.');
@@ -368,6 +476,11 @@
 			okno.classList.toggle('chatl-otwarty');
 			if (okno.classList.contains('chatl-otwarty')) {
 				okno.querySelector('.chatl-pole-pytania').focus();
+				/* Pierwsze pytanie OD RAZU po otwarciu: operator mogl przejac
+				   rozmowe, gdy okno bylo zamkniete i nikt nie pytal. */
+				dajSesje().then(odpytaj);
+			} else {
+				zatrzymajOdpytywanie();
 			}
 		});
 		korzen.appendChild(babelek);
