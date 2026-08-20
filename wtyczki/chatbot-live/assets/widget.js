@@ -36,7 +36,9 @@
 	}
 
 	var sesja = sesjaId();
-	var okno, listaWiadomosci, formularzKontaktu;
+	var okno, listaWiadomosci, formularzKontaktu, zamknijFormularz;
+
+	var TYTUL_FORMULARZA = 'Zostaw wiadomość — odezwiemy się osobiście.';
 
 	function dodajWiadomosc(rola, tekst) {
 		var w = el('div', 'chatl-wiadomosc chatl-' + rola);
@@ -69,7 +71,20 @@
 
 	function zbudujFormularzKontaktu() {
 		var f = el('form', 'chatl-formularz');
-		f.appendChild(el('div', 'chatl-form-tytul', 'Zostaw wiadomość — odezwiemy się osobiście.'));
+
+		var pasekTytulu = el('div', 'chatl-form-pasek');
+		pasekTytulu.appendChild(el('div', 'chatl-form-tytul', TYTUL_FORMULARZA));
+		/*
+		 * Wyjscie z formularza. Dotad jedynym wyjsciem byla UDANA wysylka:
+		 * gosc, ktory zmienil zdanie, mial formularz na stale — takze po
+		 * zamknieciu i ponownym otwarciu czatu.
+		 */
+		var zamknijForm = el('button', 'chatl-form-zamknij', '×');
+		zamknijForm.type = 'button';
+		zamknijForm.setAttribute('aria-label', 'Zamknij formularz wiadomości');
+		zamknijForm.addEventListener('click', function () { zamknijFormularz(); });
+		pasekTytulu.appendChild(zamknijForm);
+		f.appendChild(pasekTytulu);
 
 		var email = el('input', 'chatl-pole');
 		email.type = 'email';
@@ -115,16 +130,25 @@
 		przycisk.type = 'submit';
 		f.appendChild(przycisk);
 
+		/*
+		 * Zamkniecie = pelny reset: gosc zrezygnowal, wiec nie zostawiamy jego
+		 * adresu i tresci w ukrytym formularzu ani zgody zaznaczonej „na potem".
+		 */
+		zamknijFormularz = function () {
+			f.classList.remove('chatl-otwarty');
+			email.value = '';
+			tresc.value = '';
+			zgoda.checked = false;
+			f.querySelector('.chatl-form-tytul').textContent = TYTUL_FORMULARZA;
+		};
+
 		f.addEventListener('submit', function (zd) {
 			zd.preventDefault();
 			przycisk.disabled = true;
 			wyslij('chatl_zgloszenie', { email: email.value, wiadomosc: tresc.value, zgoda: zgoda.checked ? '1' : '' })
 				.then(function (odp) {
 					if (odp.success) {
-						f.classList.remove('chatl-otwarty');
-						email.value = '';
-						tresc.value = '';
-						zgoda.checked = false;
+						zamknijFormularz();
 						dodajWiadomosc('bot', odp.data.komunikat);
 					} else {
 						dodajWiadomosc('bot', (odp.data && odp.data.komunikat) || 'Nie udało się wysłać. Spróbuj ponownie.');
@@ -139,6 +163,12 @@
 		return f;
 	}
 
+	/* Zamkniecie okna czatu zwija TAKZE formularz — inaczej wracal otwarty. */
+	function zamknijOkno() {
+		okno.classList.remove('chatl-otwarty');
+		if (zamknijFormularz) { zamknijFormularz(); }
+	}
+
 	function zbudujOkno() {
 		okno = el('div', 'chatl-okno');
 
@@ -147,7 +177,7 @@
 		var zamknij = el('button', 'chatl-zamknij', '×');
 		zamknij.type = 'button';
 		zamknij.setAttribute('aria-label', 'Zamknij czat');
-		zamknij.addEventListener('click', function () { okno.classList.remove('chatl-otwarty'); });
+		zamknij.addEventListener('click', function () { zamknijOkno(); });
 		naglowek.appendChild(zamknij);
 		okno.appendChild(naglowek);
 
@@ -221,6 +251,21 @@
 			}
 		});
 		korzen.appendChild(babelek);
+
+		/*
+		 * Escape: najpierw wychodzi z formularza (wezsze okno), przy drugim
+		 * nacisnieciu zamyka caly czat — kolejnosc jak w oknach modalnych.
+		 */
+		document.addEventListener('keydown', function (zd) {
+			if ('Escape' !== zd.key && 'Esc' !== zd.key) { return; }
+			if (formularzKontaktu.classList.contains('chatl-otwarty')) {
+				zamknijFormularz();
+				okno.querySelector('.chatl-pole-pytania').focus();
+			} else if (okno.classList.contains('chatl-otwarty')) {
+				zamknijOkno();
+				babelek.focus();
+			}
+		});
 
 		document.body.appendChild(korzen);
 	}
