@@ -666,7 +666,14 @@ modelu, a te bywają wycofywane — wtedy **każda sprzedana kopia traci tryb AI
 naraz**, a jedyną drogą naprawy jest ręczna wysyłka zipa mailem, bo nie mamy
 serwera aktualizacji.
 
-Zastrzeżenie (uwaga recenzenta do PR #81): **alias bez daty to konwencja dostawcy,
+**Sprawdzone u dostawcy 2026-08-20** (uwaga krytyczna recenzenta do PR #81,
+zamknięta dowodem, nie dyskusją): jedno wywołanie API na każdy identyfikator —
+`claude-haiku-4-5` odpowiedział **HTTP 200**, a w polu `model` odpowiedzi zwrócił
+`claude-haiku-4-5-20251001`; identyfikator z datą zachował się tak samo. Nazwa bez
+daty jest więc **prawdziwym aliasem, który serwer sam rozwija** do bieżącej migawki
+— dokładnie to, na czym opiera się ta sekcja. Wartość domyślna zostaje bez zmian.
+
+Zastrzeżenie: **alias bez daty to konwencja dostawcy,
 nie gwarancja** — nie każdy model musi go mieć, a wtyczka nie ma jak sprawdzić
 listy identyfikatorów w locie. Dlatego pole „własny model" przyjmuje dowolną
 nazwę, a panel i FAQ mówią: użyj nazwy bez daty **jeśli dostawca taką podaje**.
@@ -726,7 +733,7 @@ i opis firmy przy **każdym** pytaniu, więc klient z 200 parami płaci wielokro
 klienta z 10 parami przy tym samym „limicie 100 wywołań na dobę". Do 1.4.6
 w panelu nie było ani jednej liczby o koszcie.
 
-### 14.1. Co zapisujemy
+### 18.1. Co zapisujemy
 
 Tabela `chatl_ai_uzycie` ma cztery liczniki tokenów obok licznika wywołań.
 Nazwy pól odpowiadają polu `usage` odpowiedzi Messages API:
@@ -739,13 +746,30 @@ Nazwy pól odpowiadają polu `usage` odpowiedzi Messages API:
 | `tokeny_cache_odczyt` | `cache_read_input_tokens` |
 
 Inkrement idzie jednym atomowym `INSERT … ON DUPLICATE KEY UPDATE`, razem
-z licznikiem wywołań, **po** udanym wywołaniu.
+z licznikiem wywołań.
+
+**Liczymy po kodzie 200, a nie po udanej odpowiedzi** (uwaga recenzenta do PR #83).
+Kod 200 znaczy, że dostawca wywołanie **wykonał i policzył** — rachunek przychodzi
+niezależnie od tego, czy treść da się użyć. Naliczanie dopiero przy gotowym tekście
+zostawiało trzy ścieżki, które kosztowały właściciela, a były niewidoczne dla
+**obu** stop-lossów naraz:
+
+| Ścieżka | Co się dzieje | Zużycie | Znacznik awarii |
+|---|---|---|---|
+| odmowa modelu (`stop_reason: refusal`) | gość dostaje odpowiedź z reguł | **liczone** (tokeny z `usage`) | **nie** — to poprawne działanie produktu (§14) |
+| bloki bez tekstu (pusto po `trim()`) | zjazd do reguł | **liczone** | tak |
+| ciało nie do odczytania przy 200 | zjazd do reguł | **samo wywołanie**, tokenów nie ma skąd wziąć | tak |
+
+Naliczanie stoi **w jednym miejscu, przed rozgałęzieniem** na te przypadki — ten
+sam zabieg co `chatl_ai_niepowodzenie()` z §14: dopisanie kolejnego wyjścia
+z funkcji nie może już zgubić kosztu przez przeoczenie. Bramka zgodności pilnuje
+obu warunków (jedno wywołanie `chatl_ai_zuzyj()`, i to przed rozgałęzieniem).
 
 **Tokeny płatne** (`chatl_ai_tokeny_dzis()`) to suma wejścia, wyjścia i zapisu do
 cache. Odczyt z cache trzymamy **osobno**, bo jest wielokrotnie tańszy — wrzucenie
 go do jednej sumy zawyżałoby obraz kosztu i przedwcześnie wyłączałoby tryb AI.
 
-### 14.2. Drugi stop-loss
+### 18.2. Drugi stop-loss
 
 `chatl_ai_dostepny()` sprawdza teraz trzy rzeczy: klucz, dobowy limit **wywołań**
 i dobowy limit **tokenów** (`ai_limit_tokenow`, domyślnie 200 000; `0` = wyłączony).
@@ -757,7 +781,7 @@ wywołań) przy typowej bazie Q&A małej firmy. Zaczyna więc gryźć dopiero wt
 gdy **pojedyncze** wywołanie jest nienormalnie drogie — czyli dokładnie
 w przypadku, którego limit wywołań w ogóle nie widzi.
 
-### 14.3. Cache instrukcji — warunkowo, nie na ślepo
+### 18.3. Cache instrukcji — warunkowo, nie na ślepo
 
 `system` jest wysyłane jako **tablica bloków** (wymóg API dla cache), a
 `cache_control: {"type":"ephemeral"}` dokładamy **tylko** gdy instrukcja ma co
@@ -774,7 +798,7 @@ API przy każdym pytaniu. Przelicznik 4 znaki na token jest **zaniżony celowo**
 niż 4096 tokenów. Wolimy nie włączyć cache tam, gdzie by zadziałał, niż włączyć
 go tam, gdzie po cichu nie działa.
 
-### 14.4. Gdzie to widać
+### 18.4. Gdzie to widać
 
 Strona **Statystyki i luki** pokazuje zużycie tokenów w wybranym okresie
 (`chatl_statystyki_tokenow()`), a **Ustawienia** — zużycie dzisiejsze obok pola

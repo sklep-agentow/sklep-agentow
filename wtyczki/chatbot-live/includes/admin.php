@@ -761,7 +761,9 @@ function chatl_strona_ustawienia() {
 							<strong>Rachunek u dostawcy idzie z tokenów, nie z liczby wywołań.</strong> Przy dużej bazie Q&amp;A
 							jedno pytanie potrafi kosztować wielokrotność innego, a limit wywołań tego w ogóle nie widzi —
 							dlatego ten drugi limit istnieje. Po jego wyczerpaniu bot do północy odpowiada z reguł, tak samo
-							jak po wyczerpaniu limitu wywołań. <strong>0 = wyłączony.</strong><br>
+							jak po wyczerpaniu limitu wywołań. <strong>0 = wyłączony.</strong>
+							Limit jest miękki — tak samo jak limit wywołań: równoległe zapytania gości mogą go minimalnie przekroczyć,
+							bo zużycie zapisujemy po odpowiedzi API, a nie przed nią.<br>
 							Aktualne stawki za tokeny sprawdzisz u dostawcy — wtyczka celowo nie podaje kwot, bo cennik się zmienia,
 							a ona nie ma jak go odświeżyć.
 						</p>

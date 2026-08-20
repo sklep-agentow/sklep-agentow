@@ -546,10 +546,28 @@ function chatl_ai_odpowiedz( $pytanie ) {
 	 * z reguł — więc ślad musi zostać tak samo.
 	 */
 	$dane = json_decode( wp_remote_retrieve_body( $odp ), true );
+
+	/*
+	 * Zuzycie zapisujemy TU, w jednym miejscu, zanim rozgalezimy sie na
+	 * przypadki (uwaga recenzenta do PR #83). Kod 200 znaczy, ze dostawca
+	 * wywolanie WYKONAL i je POLICZYL — rachunek przyszedl niezaleznie od tego,
+	 * czy tresc da sie uzyc, czy model odmowil, czy bloki wyszly puste.
+	 * Naliczanie dopiero przy udanej odpowiedzi zostawialo trzy sciezki, ktore
+	 * kosztowaly wlasciciela, a byly niewidoczne dla OBU stop-lossow naraz —
+	 * i to w PR, ktory jest wlasnie o liczeniu kosztu.
+	 *
+	 * Przy ciele nie do odczytania tokenow nie ma skad wziac (pole `usage`
+	 * poszlo razem z reszta odpowiedzi), wiec liczymy samo wywolanie: lepiej
+	 * niedoszacowac tokeny, niz zgubic caly wpis.
+	 */
+	chatl_ai_zuzyj( chatl_ai_usage( is_array( $dane ) ? $dane : array() ) );
+
 	if ( ! is_array( $dane ) || empty( $dane['content'] ) || ! is_array( $dane['content'] ) ) {
 		return chatl_ai_niepowodzenie( $odp, $kod );
 	}
 	if ( isset( $dane['stop_reason'] ) && 'refusal' === $dane['stop_reason'] ) {
+		// Odmowa modelu to poprawne dzialanie produktu, wiec znacznika awarii
+		// NIE stawiamy (granica z PR #79) — ale zuzycie jest juz zaliczone wyzej.
 		return CHATL_AI_BRAK;
 	}
 
@@ -566,9 +584,8 @@ function chatl_ai_odpowiedz( $pytanie ) {
 		return chatl_ai_niepowodzenie( $odp, $kod );
 	}
 
-	// Licznik stop-loss dopiero PO udanym wywołaniu — razem z tokenami z pola
-	// `usage`, bo to one, a nie liczba wywołań, tworzą rachunek u dostawcy.
-	chatl_ai_zuzyj( chatl_ai_usage( $dane ) );
+	// Zuzycie zaliczone wyzej, dla KAZDEJ sciezki po kodzie 200 — tutaj zostaje
+	// juz tylko zdjecie znacznika awarii.
 	chatl_odnotuj_sukces_ai();
 
 	return $tekst;

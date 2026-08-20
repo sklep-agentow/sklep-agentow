@@ -255,6 +255,12 @@ spr "nota jest PRZED powitaniem w kodzie" "wczesniej" "awk '/chatl-nota/{n=NR} /
 spr "czytane wszystkie 4 pola usage" "4" "grep -cP \"'(input_tokens|output_tokens|cache_creation_input_tokens|cache_read_input_tokens)'\" $W/includes/ai.php"
 spr "tokeny platne bez odczytu z cache" "0" "sed -n '/function chatl_ai_tokeny_dzis/,/^}/p' $W/includes/ai.php | grep -c tokeny_cache_odczyt"
 spr "cache instrukcji pod warunkiem progu" "1" "grep -c 'CHATL_AI_CACHE_PROG_ZNAKOW ) {' $W/includes/ai.php"
+# Uwaga WAZNA recenzenta do PR #83: kod 200 znaczy, ze dostawca policzyl wywolanie,
+# wiec KAZDA sciezka po nim musi je zaliczyc. Naliczanie w jednym miejscu, PRZED
+# rozgalezieniem, jest tu odpowiednikiem chatl_ai_niepowodzenie() z PR #79:
+# dopisanie kolejnego wyjscia nie moze juz zgubic kosztu przez przeoczenie.
+spr "zuzycie liczone w JEDNYM miejscu" "1" "sed -n '/function chatl_ai_odpowiedz/,/^}/p' $W/includes/ai.php | grep -c 'chatl_ai_zuzyj('"
+spr "zuzycie liczone PRZED rozgalezieniem" "wczesniej" "sed -n '/function chatl_ai_odpowiedz/,/^}/p' $W/includes/ai.php | awk '/chatl_ai_zuzyj\(/{z=NR} /stop_reason/{r=NR} END{print (z && r && z < r) ? \"wczesniej\" : \"pozniej\"}'"
 spr "limit tokenow blokuje tryb AI"  "1"  "sed -n '/function chatl_ai_dostepny/,/^}/p' $W/includes/ai.php | grep -c chatl_ai_tokeny_dzis"
 
 echo

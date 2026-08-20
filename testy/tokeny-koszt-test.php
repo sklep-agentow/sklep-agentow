@@ -68,6 +68,31 @@ function chatl_test_odpowiedz_api( $we, $wy, $cache_zapis = 0, $cache_odczyt = 0
 	);
 }
 
+/**
+ * Odpowiedź API o DOWOLNYM ciele — do ścieżek, które nie kończą się tekstem.
+ *
+ * @param string $cialo Surowe ciało odpowiedzi (może być nie-JSON).
+ * @return void
+ */
+function chatl_test_odpowiedz_cialo( $cialo ) {
+	remove_all_filters( 'pre_http_request' );
+	add_filter(
+		'pre_http_request',
+		function () use ( $cialo ) {
+			return array(
+				'headers'  => array(),
+				'response' => array(
+					'code'    => 200,
+					'message' => 'OK',
+				),
+				'body'     => $cialo,
+			);
+		},
+		10,
+		2
+	);
+}
+
 global $wpdb;
 $tabela    = $wpdb->prefix . 'chatl_ai_uzycie';
 $dzis      = current_time( 'Y-m-d' );
@@ -147,6 +172,51 @@ chatl_ai_odpowiedz( 'trzecie pytanie' );
 $cialo = json_decode( $GLOBALS['chatl_test_body'], true );
 sprawdz( 'pole system w żądaniu jest tablicą', is_array( $cialo ) && isset( $cialo['system'] ) && is_array( $cialo['system'] ) );
 sprawdz( 'pierwszy blok ma typ text', is_array( $cialo ) && isset( $cialo['system'][0]['type'] ) && 'text' === $cialo['system'][0]['type'] );
+
+echo "\n=== H. Sciezki, ktore KOSZTUJA, a nie konczyly sie tekstem (uwaga do PR #83) ===\n";
+/*
+ * Kod 200 znaczy, ze dostawca policzyl wywolanie — nawet jesli model odmowil
+ * albo bloki wyszly puste. Przed poprawka te dwa wyjscia nie zwiekszaly ANI
+ * licznika wywolan, ANI tokenow: wlasciciel placil, a oba stop-lossy tego
+ * nie widzialy. W PR o liczeniu kosztu to byla dziura wprost w temacie.
+ */
+$wpdb->query( $wpdb->prepare( "DELETE FROM {$tabela} WHERE dzien = %s", $dzis ) );
+delete_option( 'chatl_blad_ai' );
+
+chatl_test_odpowiedz_cialo( wp_json_encode( array(
+	'stop_reason' => 'refusal',
+	'content'     => array( array( 'type' => 'text', 'text' => 'nie moge' ) ),
+	'usage'       => array( 'input_tokens' => 700, 'output_tokens' => 30 ),
+) ) );
+$wynik = chatl_ai_odpowiedz( 'pytanie, ktore model odrzuci' );
+$d     = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$tabela} WHERE dzien = %s", $dzis ), ARRAY_A );
+rowne( 'odmowa modelu daje sentinel BRAK_ODPOWIEDZI', CHATL_AI_BRAK, $wynik );
+rowne( 'odmowa LICZY sie jako wywolanie', 1, (int) $d['wywolania'] );
+rowne( 'odmowa LICZY tokeny (rachunek przyszedl)', 730, chatl_ai_tokeny_dzis() );
+sprawdz( 'odmowa nadal NIE stawia znacznika awarii (granica z PR #79)', false === get_option( 'chatl_blad_ai' ) );
+
+$wpdb->query( $wpdb->prepare( "DELETE FROM {$tabela} WHERE dzien = %s", $dzis ) );
+chatl_test_odpowiedz_cialo( wp_json_encode( array(
+	'content' => array( array( 'type' => 'text', 'text' => '   ' ) ),
+	'usage'   => array( 'input_tokens' => 500, 'output_tokens' => 10 ),
+) ) );
+$wynik = chatl_ai_odpowiedz( 'pytanie, na ktore model nic nie powie' );
+$d     = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$tabela} WHERE dzien = %s", $dzis ), ARRAY_A );
+rowne( 'pusty tekst zjezdza do regul (null)', null, $wynik );
+rowne( 'pusty tekst LICZY sie jako wywolanie', 1, (int) $d['wywolania'] );
+rowne( 'pusty tekst LICZY tokeny', 510, chatl_ai_tokeny_dzis() );
+sprawdz( 'pusty tekst ZOSTAWIA slad dla wlasciciela', is_array( get_option( 'chatl_blad_ai' ) ) );
+
+$wpdb->query( $wpdb->prepare( "DELETE FROM {$tabela} WHERE dzien = %s", $dzis ) );
+delete_option( 'chatl_blad_ai' );
+chatl_test_odpowiedz_cialo( '<html>brama zgodnosci zjadla odpowiedz</html>' );
+$wynik = chatl_ai_odpowiedz( 'pytanie, ktoremu proxy podmienilo odpowiedz' );
+$d     = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$tabela} WHERE dzien = %s", $dzis ), ARRAY_A );
+rowne( 'cialo nie do odczytania zjezdza do regul', null, $wynik );
+rowne( 'i mimo to LICZY sie jako wywolanie', 1, (int) $d['wywolania'] );
+rowne( 'tokenow nie ma skad wziac — zostaja zerem, nie zgadujemy', 0, chatl_ai_tokeny_dzis() );
+sprawdz( 'i zostaje slad dla wlasciciela', is_array( get_option( 'chatl_blad_ai' ) ) );
+delete_option( 'chatl_blad_ai' );
 
 remove_all_filters( 'pre_http_request' );
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$tabela} WHERE dzien = %s", $dzis ) );
