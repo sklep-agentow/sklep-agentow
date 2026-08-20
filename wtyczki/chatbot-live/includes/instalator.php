@@ -101,6 +101,16 @@ function chatl_aktywacja() {
 	if ( ! wp_next_scheduled( 'chatl_czyszczenie_historii' ) ) {
 		wp_schedule_event( time() + DAY_IN_SECONDS, 'daily', 'chatl_czyszczenie_historii' );
 	}
+
+	/*
+	 * Znacznik dla ekranu powitalnego. Krótkie życie (minuta), bo dotyczy
+	 * JEDNEGO przekierowania zaraz po kliknięciu „Włącz" — gdyby żył długo,
+	 * powitanie wyskakiwałoby administratorowi, który wszedł do panelu
+	 * godzinę później i nie wiedziałby, skąd się wzięło.
+	 * Stałą definiuje includes/powitanie.php, ładowany tylko w panelu, więc
+	 * przy aktywacji przez WP-CLI nazwy trzymamy się wprost.
+	 */
+	set_transient( 'chatl_po_aktywacji', 1, MINUTE_IN_SECONDS );
 }
 
 /**

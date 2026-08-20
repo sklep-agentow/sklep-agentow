@@ -108,6 +108,19 @@ function chatl_assety() {
 	}
 
 	wp_enqueue_style( 'chatl-widget', CHATL_URL . 'assets/widget.css', array(), CHATL_WERSJA );
+
+	/*
+	 * Kolory właściciela dokładamy jako KILKA ZMIENNYCH CSS, a nie jako
+	 * wygenerowany arkusz: statyczny widget.css dalej siedzi w cache
+	 * przeglądarki, a doklejka ma kilkadziesiąt bajtów. Gdy wygląd jest
+	 * domyślny, chatl_style_wygladu() zwraca pusty string i strona nie
+	 * dostaje ani jednego dodatkowego bajtu.
+	 */
+	$style = chatl_style_wygladu( $ust );
+	if ( '' !== $style ) {
+		wp_add_inline_style( 'chatl-widget', $style );
+	}
+
 	wp_enqueue_script( 'chatl-widget', CHATL_URL . 'assets/widget.js', array(), CHATL_WERSJA, true );
 	wp_localize_script(
 		'chatl-widget',
@@ -124,6 +137,7 @@ function chatl_assety() {
 			),
 			'polityka'   => esc_url( $ust['adres_polityki'] ),
 			'zgodaTekst' => 'Zapoznałem się z informacją o przetwarzaniu danych',
+			'pozycja'    => chatl_wyglad_ustawienia( $ust )['pozycja'],
 		)
 	);
 }

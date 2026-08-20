@@ -28,17 +28,27 @@ function sprawdz(opis, warunek, szczegol) {
  * Pytanie musi byc UNIKALNE w kazdym przebiegu, inaczej drugi przebieg
  * patrzylby na luke z pierwszego i przechodzilby nawet ze zepsutym zapisem.
  *
- * Unikalne musza byc RDZENIE (pierwsze 5 znakow slow), a nie sam napis:
+ * Unikalne musza byc RDZENIE (pierwsze CHATL_LUKI_RDZEN znakow slow), a nie sam napis:
  * grupowanie sklada pytania o wspolnych rdzeniach w jeden temat, wiec
  * "zraszacze kontrolneAAA" i "zraszacze kontrolneBBB" wpadlyby do jednego
  * tematu (rdzen "kontr" ten sam) i skrot prowadzilby do pytania z POPRZEDNIEGO
  * przebiegu. Dlatego oba znaczniki maja rozne pierwsze piec znakow, a poza
  * nimi pytanie nie zawiera slow znaczacych, ktore moglyby je z czyms skleic.
  */
-const LOS = () => Math.random().toString(36).slice(2, 7);
-const ZNACZNIK = 'zqk' + LOS();
-const ZNACZNIK2 = 'wrn' + LOS();
-const PYTANIE = 'Czy montujecie ' + ZNACZNIK + ' oraz ' + ZNACZNIK2 + '?';
+/*
+ * ZMIERZONE, gdy znaczniki mialy staly przedrostek ('zqk' + losowe): rdzen ma
+ * CZTERY znaki, wiec z losowego ogona wchodzil do niego tylko JEDEN znak —
+ * dwa przebiegi zderzaly sie na rdzeniu z prawdopodobienstwem ~1/36, a wtedy
+ * podobienstwo siegalo progu 50% i pytania z dwoch przebiegow ladowaly w JEDNYM
+ * temacie. Skrot prowadzil wtedy do reprezentanta z poprzedniego przebiegu
+ * i test padal co kilka uruchomien. Dlatego: caly znacznik jest losowy (rdzen
+ * tez), a reszta pytania to wylacznie slowa puste i krotsze niz cztery znaki,
+ * wiec dwa przebiegi nie maja ze soba ZADNEGO wspolnego rdzenia.
+ */
+const LOS = () => Math.random().toString(36).slice(2, 10);
+const ZNACZNIK = LOS();
+const ZNACZNIK2 = LOS();
+const PYTANIE = 'Czy to jest ' + ZNACZNIK + ' oraz ' + ZNACZNIK2 + '?';
 
 (async () => {
   const user = process.env.WP_ADMIN_USER, pass = process.env.WP_ADMIN_PASS;
@@ -144,7 +154,15 @@ const PYTANIE = 'Czy montujecie ' + ZNACZNIK + ' oraz ' + ZNACZNIK2 + '?';
   console.log('       pytanie w formularzu: "' + wpisane + '"');
   console.log('       podpowiedziane slowa: "' + slowa + '"');
   sprawdz('pole "Pytanie wzorcowe" jest juz wypelnione pytaniem goscia', wpisane.indexOf(ZNACZNIK) !== -1);
-  sprawdz('pole slow kluczowych ma podpowiedz (rdzenie po przecinku)', /[a-ząćęłńóśźż]{4,}(, )?/.test(slowa) && slowa.length > 0);
+  /* Podpowiedz ma byc RDZENIAMI slow z pytania, i to rdzeniem DLUZSZYM niz
+     ten uzywany do grupowania (CHATL_SUGESTIA_RDZEN = 5 kontra
+     CHATL_LUKI_RDZEN = 4) — sprawdzamy to wprost na naszych znacznikach,
+     zamiast zgadywac wzorcem "cokolwiek z literami". */
+  sprawdz('podpowiedz zawiera rdzenie obu znacznikow z pytania',
+    slowa.indexOf(ZNACZNIK.slice(0, 5)) !== -1 && slowa.indexOf(ZNACZNIK2.slice(0, 5)) !== -1,
+    'szukane: ' + ZNACZNIK.slice(0, 5) + ' i ' + ZNACZNIK2.slice(0, 5));
+  sprawdz('podpowiedz uzywa rdzenia 5-znakowego, nie 4-znakowego jak grupowanie',
+    slowa.split(', ').filter(function (w) { return w.length === 5; }).length >= 2, slowa);
   sprawdz('pole odpowiedzi zostaje PUSTE (to wlasnie ma dopisac wlasciciel)', odpowiedz === '');
   sprawdz('formularz mowi, skad wzielo sie pytanie',
     (await p.$eval('.wrap', (e) => e.textContent)).indexOf('Statystyki i luki') !== -1);

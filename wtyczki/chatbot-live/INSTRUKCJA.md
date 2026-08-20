@@ -38,7 +38,29 @@ W menu bocznym pojawia się pozycja **ChatBot LIVE**.
    odpowiedzieć, i jedno, na które nie ma — powinien uczciwie zaproponować
    zostawienie maila.
 
-## 3. Jak to działa na co dzień
+## 3. Wygląd widgetu — dopasuj go do swojej strony
+
+Wejdź w **ChatBot LIVE → Ustawienia → Wygląd widgetu**. Ustawisz tam:
+
+- **Kolor główny** — bąbelek czatu, dymki bota, przyciski.
+- **Kolor paska nagłówka** — belka z tytułem okna.
+- **Kolor tekstu na nich** — zostaw „dobierz automatycznie" (zalecane), a wtyczka
+  sama wybierze ciemny albo jasny, ten czytelniejszy na Twoim tle.
+- **Pozycja** — prawy albo lewy dolny róg strony.
+
+Obok jest **podgląd na żywo**: kolory zmieniają się od razu przy wyborze, jeszcze
+przed zapisem, więc widzisz dokładnie to, co zobaczy gość.
+
+Pod podglądem stoi **kontrast**. To nie ozdoba — jeśli tekst na bąbelku ma za
+mały kontrast do tła, część osób go nie przeczyta, a przy audycie dostępności
+jest to pierwszy zarzut. Wtyczka liczy współczynnik według normy WCAG 2.1
+i mówi wprost: „spełnia WCAG AA" albo „PONIŻEJ progu". Próg to 4,5:1.
+Zapisać możesz i tak — decyzja jest Twoja, ale wiesz, co wybierasz.
+
+> Po aktualizacji ze starszej wersji **nic Ci się nie zmieni**: domyślne kolory
+> to dokładnie te, które widget miał wcześniej.
+
+## 4. Jak to działa na co dzień
 
 - Gość pyta → bot odpowiada z bazy Q&A (wygrywa wpis z największą liczbą
   trafionych słów kluczowych).
@@ -50,7 +72,7 @@ W menu bocznym pojawia się pozycja **ChatBot LIVE**.
 - **Historia rozmów** pokazuje wymiany bot↔gość; wpisy starsze niż **90 dni**
   są czyszczone automatycznie.
 
-## 4. Statystyki i luki — czyli jak ulepszać bota bez zgadywania
+## 5. Statystyki i luki — czyli jak ulepszać bota bez zgadywania
 
 Wejdź w **ChatBot LIVE → Statystyki i luki**. Wybierasz okres (7 / 30 / 90 dni
 albo własne daty) i widzisz cztery liczby:
@@ -80,7 +102,7 @@ zajrzyj tutaj, dopisz 2–3 odpowiedzi, a skuteczność rośnie sama.
 > liczbę „bez znacznika"; nie psują procentu skuteczności. Od aktualizacji
 > wszystko liczy się normalnie, więc po kilku dniach ruchu statystyki są pełne.
 
-## 5. Tryb AI (opcjonalny — hybryda)
+## 6. Tryb AI (opcjonalny — hybryda)
 
 Bez klucza bot działa w pełnoprawnym trybie regułowym. Z kluczem API
 (Anthropic — klucz zdobywasz na własnym koncie na console.anthropic.com)
@@ -118,7 +140,12 @@ albo wyłączyć klucz, poprawiasz `wp-config.php`.
 > To wyglądałoby na zabezpieczenie, nie będąc nim. Trzymanie klucza poza bazą
 > jest realną poprawą, a nie pozorem.
 
-## 6. FAQ
+## 7. FAQ
+
+**Zmieniłem kolory i tekst zrobił się nieczytelny.**
+Zaznacz „dobierz automatycznie" przy kolorze tekstu — wtyczka wybierze wersję
+z lepszym kontrastem. Jeśli wolisz własny kolor, patrz na odczyt kontrastu pod
+podglądem: ma być co najmniej 4,5:1.
 
 **Bot nie łapie pytania, choć wpis jest w bazie.**
 Dodaj do wpisu więcej wariantów słów kluczowych (odmiany, formy bez polskich
@@ -168,7 +195,7 @@ domyślnie zostaje (możesz wrócić bez strat). Jeśli w ustawieniach zaznaczys
 „usuń wszystkie dane", odinstalowanie skasuje też bazę Q&A, zgłoszenia,
 historię i ustawienia.
 
-## 7. Droga rozbudowy (po zakupie, na życzenie)
+## 8. Droga rozbudowy (po zakupie, na życzenie)
 
 - automatyczne łapanie polskich odmian (stemming) zamiast ręcznych wariantów,
 - czat operatora na żywo / powiadomienia push,
@@ -176,7 +203,7 @@ historię i ustawienia.
 - inne modele AI lub własny serwer proxy (wtyczka ma filtry `chatl_ai_url`
   i `chatl_ai_model` dla integratorów).
 
-## 8. Deklaracja prywatności (ważne — RODO)
+## 9. Deklaracja prywatności (ważne — RODO)
 
 - **Tryb regułowy:** treść rozmów NIE opuszcza Twojego WordPressa — dopasowanie
   działa lokalnie, dane (rozmowy, zgłoszenia z mailami gości) leżą w Twojej bazie.

@@ -443,6 +443,7 @@ function chatl_strona_historia() {
 
 function chatl_strona_ustawienia() {
 	$ust = chatl_ustawienia();
+	$wyg = chatl_wyglad_ustawienia( $ust );
 	?>
 	<div class="wrap">
 		<h1>Ustawienia ChatBota</h1>
@@ -484,6 +485,49 @@ function chatl_strona_ustawienia() {
 						</p>
 					</td>
 				</tr>
+				<tr><th colspan="2"><h2>Wygląd widgetu</h2>
+					<p style="font-weight:normal">Kolory bąbelka i paska nagłówka oraz róg, w którym stoi widget. Domyślne wartości to paleta, z którą wtyczka jest sprzedawana — puste pole wraca do niej.</p></th></tr>
+				<tr>
+					<th scope="row"><label for="chatl-kolor-glowny">Kolor główny</label></th>
+					<td>
+						<input type="color" id="chatl-kolor-glowny" name="kolor_glowny" value="<?php echo esc_attr( $wyg['kolor_glowny'] ); ?>">
+						<code id="chatl-kolor-glowny-kod"><?php echo esc_html( $wyg['kolor_glowny'] ); ?></code>
+						<p class="description">Bąbelek czatu, dymki bota, przyciski i obwódka fokusu.</p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><label for="chatl-kolor-naglowka">Kolor paska nagłówka</label></th>
+					<td>
+						<input type="color" id="chatl-kolor-naglowka" name="kolor_naglowka" value="<?php echo esc_attr( $wyg['kolor_naglowka'] ); ?>">
+						<code id="chatl-kolor-naglowka-kod"><?php echo esc_html( $wyg['kolor_naglowka'] ); ?></code>
+						<p class="description">Pasek z tytułem okna czatu i paski formularza kontaktu.</p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row">Kolor tekstu na tych kolorach</th>
+					<td>
+						<label><input type="checkbox" id="chatl-tekst-auto" name="kolor_tekstu_auto" value="1" <?php checked( 'auto' === $wyg['kolor_tekstu'] ); ?>>
+							<strong>dobierz automatycznie</strong> (zalecane — wtyczka wybiera ciemny albo jasny, ten z lepszym kontrastem)</label>
+						<p style="margin:8px 0 0">
+							<input type="color" id="chatl-kolor-tekstu" name="kolor_tekstu" value="<?php echo esc_attr( 'auto' === $wyg['kolor_tekstu'] ? CHATL_KOLOR_CIEMNY : $wyg['kolor_tekstu'] ); ?>">
+							<span class="description">używany, gdy powyższe jest odznaczone</span>
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row">Pozycja widgetu</th>
+					<td>
+						<label><input type="radio" name="pozycja" value="prawo" <?php checked( 'prawo', $wyg['pozycja'] ); ?>> prawy dolny róg</label><br>
+						<label><input type="radio" name="pozycja" value="lewo" <?php checked( 'lewo', $wyg['pozycja'] ); ?>> lewy dolny róg</label>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row">Podgląd</th>
+					<td>
+						<?php chatl_podglad_wygladu(); ?>
+					</td>
+				</tr>
+
 				<tr><th colspan="2"><h2>Tryb AI (hybryda)</h2>
 					<p style="font-weight:normal">Z kluczem API odpowiedzi generuje prawdziwy model (Claude) na podstawie informacji o firmie i bazy Q&amp;A — z zakazem zgadywania (niepewny zbiera kontakt). Bez klucza, po wyczerpaniu limitu albo przy błędzie API bot działa w trybie regułowym.</p></th></tr>
 				<tr>
@@ -539,6 +583,79 @@ function chatl_strona_ustawienia() {
 	<?php
 }
 
+/**
+ * Podgląd widgetu w panelu + odczyt kontrastu WCAG.
+ *
+ * Podgląd to ten sam mechanizm co na froncie — zmienne CSS na `.chatl-korzen` —
+ * więc nie jest osobną makietą, która mogłaby pokazywać co innego niż widget.
+ * Wartości startowe rysuje PHP; po każdej zmianie pola przelicza je
+ * assets/panel-wyglad.js, żeby właściciel widział wybór PRZED zapisem.
+ *
+ * @return void
+ */
+function chatl_podglad_wygladu() {
+	$z     = chatl_zmienne_wygladu();
+	$ocena = chatl_ocena_kontrastu();
+	$style = '';
+	foreach ( $z as $nazwa => $wartosc ) {
+		$style .= $nazwa . ':' . $wartosc . ';';
+	}
+	?>
+	<div id="chatl-podglad" style="<?php echo esc_attr( $style ); ?>display:inline-block;padding:14px;border:1px solid #c3c4c7;background:#101116;border-radius:8px">
+		<div style="width:240px;border-radius:8px;overflow:hidden;border:1px solid rgba(245,245,245,.12)">
+			<div id="chatl-podglad-naglowek" style="background:var(--chatl-naglowek);color:var(--chatl-naglowek-tekst);padding:8px 10px;font-size:13px">Napisz do nas</div>
+			<div style="background:#101116;padding:10px">
+				<div id="chatl-podglad-dymek" style="background:var(--chatl-glowny);color:var(--chatl-glowny-tekst);border-radius:12px;padding:8px 12px;font-size:13px;display:inline-block">Dzień dobry! W czym pomóc?</div>
+			</div>
+		</div>
+		<div id="chatl-podglad-babelek" style="width:44px;height:44px;border-radius:50%;background:var(--chatl-glowny);color:var(--chatl-glowny-tekst);border:2px solid var(--chatl-glowny-tekst);margin-top:10px;display:flex;align-items:center;justify-content:center;font-size:20px">💬</div>
+	</div>
+	<div id="chatl-kontrast" style="margin-top:10px">
+		<?php foreach ( $ocena as $poz ) : ?>
+			<p style="margin:4px 0" data-chatl-para="<?php echo esc_attr( 'Bąbelek i przyciski' === $poz['etykieta'] ? 'glowny' : 'naglowek' ); ?>">
+				<strong><?php echo esc_html( $poz['etykieta'] ); ?>:</strong>
+				kontrast <span class="chatl-kontrast-wartosc"><?php echo esc_html( number_format_i18n( $poz['kontrast'], 2 ) ); ?></span>:1 —
+				<span class="chatl-kontrast-ocena" style="font-weight:600;color:<?php echo $poz['ok'] ? '#00a32a' : '#d63638'; ?>">
+					<?php echo $poz['ok'] ? 'spełnia WCAG AA' : 'PONIŻEJ progu WCAG AA'; ?>
+				</span>
+			</p>
+		<?php endforeach; ?>
+		<p class="description">Próg to <?php echo esc_html( number_format_i18n( CHATL_WCAG_PROG, 1 ) ); ?>:1 dla zwykłego tekstu (WCAG 2.1, kryterium 1.4.3, poziom AA).
+			Poniżej progu tekst na bąbelku bywa nieczytelny — zostaw „dobierz automatycznie", a wtyczka pilnuje tego za Ciebie.</p>
+	</div>
+	<?php
+}
+
+/**
+ * Skrypt podglądu — TYLKO na stronie ustawień wtyczki.
+ *
+ * @param string $hak Identyfikator ekranu panelu.
+ * @return void
+ */
+function chatl_assety_panelu( $hak ) {
+	if ( false === strpos( (string) $hak, 'chatl-ustawienia' ) ) {
+		return;
+	}
+	wp_enqueue_script( 'chatl-panel-wyglad', CHATL_URL . 'assets/panel-wyglad.js', array(), CHATL_WERSJA, true );
+	wp_localize_script(
+		'chatl-panel-wyglad',
+		'chatlWyglad',
+		array(
+			'prog'    => CHATL_WCAG_PROG,
+			'ciemny'  => CHATL_KOLOR_CIEMNY,
+			'jasny'   => CHATL_KOLOR_JASNY,
+			// Separator dziesiętny bierzemy z WordPressa, żeby liczba policzona
+			// w przeglądarce wyglądała TAK SAMO jak ta narysowana przez PHP —
+			// inaczej po zapisie „3,45" zmieniałoby się w „3.45" i właściciel
+			// miałby prawo sądzić, że coś się przeliczyło inaczej.
+			'sep'     => false !== strpos( number_format_i18n( 1.5, 1 ), ',' ) ? ',' : '.',
+			'zgodny'  => 'spełnia WCAG AA',
+			'niezgod' => 'PONIŻEJ progu WCAG AA',
+		)
+	);
+}
+add_action( 'admin_enqueue_scripts', 'chatl_assety_panelu' );
+
 function chatl_post_ustawienia_zapisz() {
 	if ( ! current_user_can( 'manage_options' ) ) {
 		wp_die( 'Brak uprawnień.' );
@@ -556,6 +673,14 @@ function chatl_post_ustawienia_zapisz() {
 		'ai_informacje'    => isset( $_POST['ai_informacje'] ) ? sanitize_textarea_field( wp_unslash( $_POST['ai_informacje'] ) ) : $stare['ai_informacje'],
 		'ai_limit_dzienny' => isset( $_POST['ai_limit_dzienny'] ) ? max( 1, min( 100000, (int) $_POST['ai_limit_dzienny'] ) ) : $stare['ai_limit_dzienny'],
 		'adres_polityki'   => isset( $_POST['adres_polityki'] ) ? esc_url_raw( wp_unslash( $_POST['adres_polityki'] ) ) : $stare['adres_polityki'],
+		// Wygląd: kolor z niepoprawną wartością NIE psuje widgetu — sanitizer
+		// zwraca pusty string, a chatl_wyglad_ustawienia() podstawia domyślny.
+		'kolor_glowny'     => isset( $_POST['kolor_glowny'] ) ? chatl_sanitize_kolor( wp_unslash( $_POST['kolor_glowny'] ) ) : $stare['kolor_glowny'],
+		'kolor_naglowka'   => isset( $_POST['kolor_naglowka'] ) ? chatl_sanitize_kolor( wp_unslash( $_POST['kolor_naglowka'] ) ) : $stare['kolor_naglowka'],
+		'kolor_tekstu'     => empty( $_POST['kolor_tekstu_auto'] ) && isset( $_POST['kolor_tekstu'] )
+			? chatl_sanitize_kolor( wp_unslash( $_POST['kolor_tekstu'] ) )
+			: 'auto',
+		'pozycja'          => isset( $_POST['pozycja'] ) && 'lewo' === sanitize_key( wp_unslash( $_POST['pozycja'] ) ) ? 'lewo' : 'prawo',
 	);
 
 	// Klucz API: osobna opcja (autoload=no), nigdy nie wraca do formularza.

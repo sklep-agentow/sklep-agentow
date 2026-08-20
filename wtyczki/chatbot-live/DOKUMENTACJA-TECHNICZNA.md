@@ -1,6 +1,6 @@
 # ChatBot LIVE — dokumentacja techniczna
 
-Wersja wtyczki: **1.3.0** · schemat bazy: **4** · licencja: **GPL-2.0-or-later**
+Wersja wtyczki: **1.4.0** · schemat bazy: **4** · licencja: **GPL-2.0-or-later**
 
 Dokument opisuje **kod, który jest**, nie plan. Każda liczba i nazwa poniżej ma pokrycie
 w źródle — przy każdej podano plik i symbol, żeby dało się to sprawdzić `grep`-em, a nie
@@ -56,13 +56,19 @@ dystrybucji), a nie to, czy wolno pobrać zapłatę. Na tym stoi cały rynek pł
 | `includes/admin.php` | menu, CRUD Q&A, zgłoszenia, historia, ustawienia, test bota w panelu | tylko `is_admin()` |
 | `includes/csv.php` | ręczny eksport zgłoszeń i rozmów do CSV | tylko `is_admin()` |
 | `includes/statystyki.php` | liczby okresu, grupowanie pytań bez odpowiedzi, strona „Statystyki i luki" | tylko `is_admin()` |
+| `includes/wyglad.php` | kolory z ustawień → zmienne CSS, kontrast WCAG, pozycja widgetu | zawsze (front też ich potrzebuje) |
+| `includes/powitanie.php` | ekran powitalny po aktywacji + zapamiętanie zamknięcia | tylko `is_admin()` |
+| `assets/panel-wyglad.js` | podgląd wyglądu na żywo i odczyt kontrastu w panelu | tylko na stronie ustawień |
+| `CHANGELOG.md` | historia wersji (Keep a Changelog) | — |
+| `readme.txt` | opis w standardzie WordPressa (nagłówek, Description, Installation, FAQ, Changelog) | — |
 | `uninstall.php` | obie ścieżki deinstalacji | tylko przy odinstalowaniu (`WP_UNINSTALL_PLUGIN`) |
 | `LICENSE` | pełny tekst GNU GPL v2 (339 linii) | — |
 | `INSTRUKCJA.md`, `DOKUMENTACJA-TECHNICZNA.md`, `DIAGRAM-PRZEPLYWU.svg` | dokumentacja w paczce | — |
 | `assets/widget.js`, `assets/widget.css` | widget czatu na froncie | front, gdy bot włączony |
 
-`admin.php`, `csv.php` i `statystyki.php` są w bloku `if ( is_admin() )` w `chatbot-live.php` —
-front nie ładuje ani panelu, ani eksportu, ani liczenia statystyk.
+`admin.php`, `csv.php`, `statystyki.php` i `powitanie.php` są w bloku `if ( is_admin() )`
+w `chatbot-live.php` — front nie ładuje ani panelu, ani eksportu, ani liczenia statystyk.
+`wyglad.php` jest **poza** tym blokiem, bo kolory z ustawień muszą trafić także na front.
 
 ---
 
@@ -135,13 +141,24 @@ całą historię przy każdym wejściu.
 | Opcja | Zawartość | Autoload | Kiedy powstaje |
 |---|---|---|---|
 | `chatl_ustawienia` | tablica ustawień (patrz niżej) | tak (domyślnie) | przy pierwszym zapisie ustawień — **nie** przy aktywacji |
-| `chatl_wersja_schematu` | numer schematu, obecnie `3` | tak (domyślnie) | przy aktywacji i przy migracji schematu |
+| `chatl_wersja_schematu` | numer schematu, obecnie `4` | tak (domyślnie) | przy aktywacji i przy migracji schematu |
 | `chatl_klucz_api` | klucz API właściciela | **nie** (`add_option(..., '', false)`) | przy zapisaniu klucza w panelu |
 | `chatl_blad_maila` | `['kiedy' => data, 'adres' => e-mail]` | **nie** | gdy `wp_mail()` zwróci `false`; kasowana przy pierwszej udanej wysyłce |
 
 Klucz API jest bez autoloadu celowo: nie wchodzi do zapytania ładowanego na każdej odsłonie
 strony. Weryfikacja na żywym stacku po pełnym cyklu instalacja→deinstalacja→instalacja:
 `autoload` = `off`.
+
+### Metadane użytkownika
+
+| Klucz | Zawartość | Kiedy powstaje |
+|---|---|---|
+| `chatl_powitanie_zamkniete` | `1` — ten administrator zamknął ekran powitalny | po kliknięciu „Rozumiem, zamknij ten ekran" |
+
+Świadomie **metadane użytkownika, nie opcja**: na jednej stronie bywa kilku
+administratorów i to, że jeden przeczytał powitanie, nie znaczy, że pozostali je
+widzieli. Pełne czyszczenie przy deinstalacji kasuje ten klucz u wszystkich
+naraz (`delete_metadata( 'user', 0, …, true )`).
 
 ### Klucze tablicy `chatl_ustawienia` i wartości domyślne
 
@@ -158,6 +175,10 @@ więc **brakujący klucz nigdy nie jest błędem** — nowe pole dostaje wartoś
 | `usun_dane` | `0` | Przełącznik ścieżki deinstalacji (rozdział 6). |
 | `ai_informacje` | `''` | Opis firmy wstrzykiwany do instrukcji systemowej modelu. |
 | `ai_limit_dzienny` | `100` | Globalny dobowy limit wywołań AI. Zapis ograniczany do zakresu 1–100000. |
+| `kolor_glowny` | `#bfff38` | Bąbelek, dymki bota, przyciski, obwódka fokusu. Wartość spoza `#rrggbb` jest odrzucana i wraca domyślna. |
+| `kolor_naglowka` | `#08090b` | Pasek z tytułem okna czatu i paski formularza kontaktu. |
+| `kolor_tekstu` | `auto` | `auto` = wtyczka dobiera kolor tekstu osobno dla bąbelka i dla nagłówka, biorąc ten o lepszym kontraście. Wartość `#rrggbb` = ten sam kolor na obu. |
+| `pozycja` | `prawo` | `prawo` albo `lewo` — róg strony, w którym stoi widget. |
 | `adres_polityki` | `''` | Adres polityki prywatności linkowany przy formularzu. Pusty = sama informacja, bez linku. |
 
 ---
@@ -168,7 +189,7 @@ Wszystkie liczby, którymi wtyczka się rządzi, są stałymi — nie ma ich roz
 
 | Stała | Wartość | Plik | Do czego |
 |---|---|---|---|
-| `CHATL_WERSJA` | `1.3.0` | `chatbot-live.php` | wersja wtyczki; służy też jako `?ver=` assetów (przeglądarka nie poda starego pliku po aktualizacji) |
+| `CHATL_WERSJA` | `1.4.0` | `chatbot-live.php` | wersja wtyczki; służy też jako `?ver=` assetów (przeglądarka nie poda starego pliku po aktualizacji) |
 | `CHATL_WERSJA_SCHEMATU` | `4` | `chatbot-live.php` | wyzwalacz migracji schematu |
 | `CHATL_KATALOG`, `CHATL_URL` | ścieżka i adres wtyczki | `chatbot-live.php` | `require` i adresy assetów |
 | `CHATL_MAX_PYTANIE` | `500` | `includes/front.php` | maksymalna długość pytania gościa (nadmiar jest **przycinany**, nie odrzucany) |
@@ -185,6 +206,12 @@ Wszystkie liczby, którymi wtyczka się rządzi, są stałymi — nie ma ich roz
 | `CHATL_LUKI_POKAZ` | `25` | `includes/statystyki.php` | ile tematów luk pokazuje tabela (reszta jest policzona, tylko niewypisana) |
 | `CHATL_LUKI_PROG` | `50` | `includes/statystyki.php` | próg scalania dwóch pytań w jeden temat, w procentach wspólnych rdzeni |
 | `CHATL_LUKI_RDZEN` | `4` | `includes/statystyki.php` | do ilu znaków skracamy słowo przy **grupowaniu** (polski odmienia końcówki; przy pięciu „firmę"/„firmy" to jeszcze dwa różne rdzenie) |
+| `CHATL_WCAG_PROG` | `4.5` | `includes/wyglad.php` | próg kontrastu z WCAG 2.1, kryterium 1.4.3 (AA) dla zwykłego tekstu |
+| `CHATL_KOLOR_CIEMNY` | `#08090b` | `includes/wyglad.php` | ciemny kolor tekstu, spośród których wybiera automat |
+| `CHATL_KOLOR_JASNY` | `#f5f5f5` | `includes/wyglad.php` | jasny kolor tekstu, jw. — para z paletą wtyczki, nie czyste `#000`/`#fff`, żeby automat przy domyślnych kolorach dawał **dokładnie** dotychczasowy wygląd |
+| `CHATL_PIERSCIEN_ALFA` | `0.18` | `includes/wyglad.php` | krycie pierścienia hover/fokusu liczonego z koloru głównego |
+| `CHATL_META_POWITANIE` | `chatl_powitanie_zamkniete` | `includes/powitanie.php` | klucz metadanych „ten administrator zamknął powitanie" |
+| `CHATL_TRANSIENT_AKTYWACJA` | `chatl_po_aktywacji` | `includes/powitanie.php` | znacznik „właśnie aktywowano", życie 1 minuta |
 | `CHATL_SUGESTIA_RDZEN` | `5` | `includes/statystyki.php` | rdzeń **podpowiadanych słów kluczowych** — dłuższy, bo trafia do silnika dopasowania: `koszt` łapie „koszty"/„kosztuje", a `kosz` łapałby też „koszulę" |
 | `CHATL_KLUCZ_API` | — | **`wp-config.php`, definiuje właściciel** | klucz API poza bazą; ma pierwszeństwo nad opcją |
 
@@ -301,6 +328,7 @@ Obie zarejestrowane w wariancie `wp_ajax_` i `wp_ajax_nopriv_`, bo gość czatu 
 | `chatl_ustawienia_zapisz` | `chatl_post_ustawienia_zapisz` | `chatl_ustawienia_zapisz` |
 | `chatl_eksport_zgloszen` | `chatl_post_eksport_zgloszen` | `chatl_eksport_zgloszen` |
 | `chatl_eksport_rozmow` | `chatl_post_eksport_rozmow` | `chatl_eksport_rozmow` |
+| `chatl_powitanie_zamknij` | `chatl_post_powitanie_zamknij` | `chatl_powitanie_zamknij` |
 
 Nonce operacji na pojedynczym wierszu zawiera jego `id` — nonce od cudzego wiersza nie przejdzie.
 Oba eksporty przechodzą przez jedną bramkę `chatl_csv_brama()` (capability + nonce).
@@ -470,7 +498,71 @@ każdy z wariantów — właściciel odpowiada na temat, nie na jedno zdanie.
 
 ---
 
-## 13. Eksport CSV
+## 13. Wygląd widgetu i ekran powitalny
+
+### 13.1. Kolory jako zmienne CSS
+
+`assets/widget.css` deklaruje pięć zmiennych na selektorze `.chatl-korzen`
+(**nie** w `:root` — wtyczka nie zaśmieca globalnej przestrzeni nazw motywu):
+`--chatl-glowny`, `--chatl-glowny-tekst`, `--chatl-naglowek`,
+`--chatl-naglowek-tekst`, `--chatl-pierscien`. Wartości wpisane w arkuszu to
+paleta sprzed wersji 1.4.0, więc **sam arkusz wygląda dokładnie tak jak wcześniej**.
+
+`chatl_style_wygladu()` (`includes/wyglad.php`) porównuje wyliczone zmienne
+z domyślnymi i zwraca regułę **tylko z tymi, które właściciel naprawdę zmienił**;
+przy domyślnym wyglądzie zwraca pusty string i `chatl_assety()` nie dokłada do
+strony ani jednego bajtu. Gdy coś zmieniono, kilkadziesiąt bajtów idzie przez
+`wp_add_inline_style()` — statyczny `widget.css` zostaje w pamięci podręcznej
+przeglądarki, a arkusz **nie jest generowany od nowa**.
+
+Pozycja widgetu to klasa `.chatl-lewo`, nie zmienna: nazwy własności (`right`
+kontra `left`) nie da się podać zmienną CSS, a podmiana obu naraz musi być
+atomowa, żeby widget nie mignął po złej stronie. Klasę dokłada `widget.js`
+z wartości przekazanej w `chatlDane.pozycja`, **przed** wstawieniem elementu
+do dokumentu.
+
+### 13.2. Kontrast (WCAG 2.1)
+
+`chatl_luminancja()` liczy luminancję względną wzorem z normy (nie
+przybliżeniem), `chatl_kontrast()` zwraca współczynnik od 1.0 do 21.0.
+Próg `CHATL_WCAG_PROG` = 4.5:1 to kryterium 1.4.3 na poziomie AA dla zwykłego
+tekstu.
+
+Domyślne `kolor_tekstu` = `auto`: `chatl_kolor_tekstu_na()` wybiera spośród
+`CHATL_KOLOR_CIEMNY` i `CHATL_KOLOR_JASNY` ten o wyższym kontraście do tła —
+osobno dla bąbelka i osobno dla paska nagłówka, bo to dwa różne tła. Gdy
+właściciel wpisze własny kolor, panel liczy kontrast i **mówi wprost**, czy
+zestaw spełnia próg (`chatl_ocena_kontrastu()`), ale nie blokuje zapisu.
+
+Wzór kontrastu istnieje też w `assets/panel-wyglad.js`, bo przeglądarka nie ma
+jak pytać PHP przy każdym ruchu suwaka. Żeby te dwie kopie nie rozjechały się po
+cichu, `testy/wyglad-panel.js` ustawia kolory, czyta liczbę policzoną w panelu,
+zapisuje ustawienia i porównuje ją z liczbą policzoną przez PHP.
+
+Konfigurowalne jest to, co widać z zewnątrz i co gryzie się z paletą strony
+klienta: bąbelek, akcenty i pasek nagłówka. **Wnętrze okna czatu** (ciemne tło
+`#101116`, linie, dymek gościa) zostaje na sztywno — to spójny, celowy wygląd
+panelu rozmowy, a nie przeoczenie.
+
+### 13.3. Ekran powitalny
+
+Aktywacja ustawia transient `CHATL_TRANSIENT_AKTYWACJA` na minutę. Na
+`admin_init` `chatl_moze_powitanie()` przekierowuje na stronę `chatl-powitanie`,
+ale tylko gdy: znacznik istnieje, **nie** trwa zbiorcze włączanie wtyczek
+(`activate-multi` — inaczej przekierowanie ukradłoby ekran pozostałym
+wtyczkom), użytkownik ma `manage_options` i **nie zamknął** powitania wcześniej.
+Znacznik jest kasowany przy pierwszym sprawdzeniu, więc ekran nie wraca przy
+kolejnych wejściach do panelu.
+
+Strona jest rejestrowana jako podstrona i od razu zdejmowana z menu
+(`remove_submenu_page`) — ma być osiągalna linkiem, ale nie zajmować pozycji
+w menu. Przycisk „Rozumiem, zamknij ten ekran" idzie przez `admin-post`
+z nonce i `manage_options`, zapisuje `CHATL_META_POWITANIE` przy tym koncie
+i wraca do bazy Q&A.
+
+---
+
+## 14. Eksport CSV
 
 Ręczny, przyciskiem w panelu — `includes/csv.php`. Dwa strumienie: wszystkie zgłoszenia
 (`id, data, email, wiadomosc, status, sesja`) i historia rozmów (`sesja, data, kto, silnik, tresc`),
@@ -486,7 +578,7 @@ kłóciłoby się z obietnicą retencji.
 
 ---
 
-## 14. Znane granice
+## 15. Znane granice
 
 Rzeczy, których wtyczka **nie** robi — żeby nikt nie szukał ich w kodzie:
 
@@ -505,6 +597,12 @@ Rzeczy, których wtyczka **nie** robi — żeby nikt nie szukał ich w kodzie:
 - **Grupowanie luk jest heurystyką**, nie rozumieniem języka: sklejanie idzie po wspólnych
   rdzeniach słów, więc dwa pytania o tym samym, napisane zupełnie innymi słowami, zostaną
   dwoma tematami. Lista „inne sformułowania" pokazuje, co naprawdę wpadło do tematu.
+- **Konfigurowalny jest wygląd zewnętrzny, nie całe okno.** Kolor główny, pasek
+  nagłówka, tekst na nich i róg strony — tak. Wnętrze okna rozmowy zostaje
+  ciemne; jasny motyw czatu to droga rozbudowy, nie brak w tej wersji.
+- **Kontrast jest liczony i pokazywany, ale nie blokuje zapisu.** Właściciel może
+  świadomie zapisać zestaw poniżej progu WCAG — dostaje wtedy czerwony komunikat,
+  a nie odmowę. Domyślne „dobierz automatycznie" pilnuje progu za niego.
 - **Retencja obejmuje tylko historię rozmów.** Zgłoszenia (a więc adresy e-mail gości) zostają,
   aż właściciel je skasuje. Jeśli polityka prywatności obiecuje termin także dla nich,
   trzeba je kasować ręcznie albo eksportem i usunięciem.
