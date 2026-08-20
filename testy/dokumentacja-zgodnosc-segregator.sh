@@ -72,8 +72,8 @@ done
 
 echo
 echo "=== D. Punkty wejscia ==="
-spr "liczba uchwytow admin_post"     "28" "grep -rhoP 'add_action\( .admin_post_segm_[a-z_]+' $W --include='*.php' | sort -u | wc -l"
-spr "dokumentacja podaje te liczbe"  "1"  "grep -c 'admin-post\` — 28 sztuk' $DOK"
+spr "liczba uchwytow admin_post"     "29" "grep -rhoP 'add_action\( .admin_post_segm_[a-z_]+' $W --include='*.php' | sort -u | wc -l"
+spr "dokumentacja podaje te liczbe"  "1"  "grep -c 'admin-post\` — 29 sztuk' $DOK"
 spr "ZERO punktow dla niezalogowanych" "0" "grep -rc 'wp_ajax_nopriv' $W --include='*.php' | grep -v ':0' | wc -l"
 spr "ZERO tras REST"                 "0"  "grep -rc 'register_rest_route' $W --include='*.php' | grep -v ':0' | wc -l"
 spr "ZERO zaczepow frontu"           "0"  "grep -rc 'template_redirect\|wp_enqueue_scripts\|add_shortcode' $W --include='*.php' | grep -v ':0' | wc -l"
@@ -246,6 +246,29 @@ spr "zla nazwa NIE kasuje ustawienia" "1" "sed -n '/function segm_wybrany_model/
 spr "pole w formularzu ustawien"     "1" "grep -c \"name=.ai_model.\" $W/includes/admin.php | awk '{print (\$1>0)?1:0}'"
 spr "dokumentacja opisuje wybor modelu" "1" "grep -c '10.1. Wybór modelu AI' $DOK"
 
+echo "=== U. L6: klucz API ze stalej + L4b: sygnal o zlym kluczu ==="
+AI=$W/includes/ai.php
+spr "L6 nazwa stalej"                "SEGM_KLUCZ_API" "grep -oP \"(?<=SEGM_STALA_KLUCZA = ')[^']*\" $AI"
+spr "L6 stala ma pierwszenstwo w odczycie" "1" "awk '/function segm_klucz_api/,/^}/' $AI | grep -c 'segm_klucz_ze_stalej()'"
+spr "L6 stala blokuje zapis z panelu" "1" "awk '/function segm_zapisz_klucz/,/^}/' $AI | grep -c 'segm_klucz_ze_stalej()'"
+spr "L6 panel pokazuje stan ze stalej" "1" "grep -c 'Klucz podany w konfiguracji serwera' $W/includes/admin.php"
+spr "L6 pole zablokowane przy stalej" "1" "grep -c 'placeholder=.klucz z wp-config.php.' $W/includes/admin.php"
+spr "L4b opcja z bledem AI"          "segm_blad_ai" "grep -oP \"(?<=SEGM_OPCJA_BLAD_AI = ')[^']*\" $AI"
+spr "L4b nieudane wywolanie zapisuje blad" "1" "awk '/function segm_log_bledu_ai/,/^}/' $AI | grep -c 'segm_zapisz_blad_ai('"
+spr "L4b udane wywolanie gasi pasek" "1" "awk '/function segm_ai_zapytaj/,/^}/' $AI | grep -c 'segm_wyczysc_blad_ai()'"
+spr "L4b pasek w panelu"             "1" "grep -c \"add_action( 'admin_notices', 'segm_pasek_bledu_ai' )\" $W/includes/admin.php"
+spr "L4b uchwyt testu klucza"        "1" "grep -c \"add_action( 'admin_post_segm_test_klucza'\" $W/includes/admin.php"
+PING=$(awk '/function segm_ai_przetestuj_klucz/,/^}/' $AI | grep -c "segm_ai_zapytaj(.*'ping'")
+spr "L4b test wysyla TYLKO ping"     "1" "echo $PING"
+BEZ_LIMITU=$(awk '/function segm_ai_przetestuj_klucz/,/^}/' $AI | grep -c "'ping', false")
+spr "L4b test NIE zabiera jednostki z limitu" "1" "echo $BEZ_LIMITU"
+TYLKO_KLAS=$(awk '/function segm_ai_zapytaj/,/^}/' $AI | grep -c 'licz_do_limitu ) {')
+spr "licznik stop-loss tylko dla klasyfikacji" "1" "echo $TYLKO_KLAS"
+spr "L4b test NIE siega do probki"   "0" "awk '/function segm_ai_przetestuj_klucz/,/^}/' $AI | grep -c 'segm_maile\|segm_klasyfikuj\|probke'"
+spr "L4b kody HTTP tlumaczone na polski" "1" "awk '/function segm_opis_bledu_ai/,/^}/' $AI | grep -c 'KLUCZ API ZOSTAŁ ODRZUCONY'"
+spr "uninstall kasuje wpis o bledzie AI" "1" "sed -n '1,/usun_dane/p' $W/uninstall.php | grep -c \"delete_option( 'segm_blad_ai' )\""
+spr "dokumentacja opisuje klucz i sygnal" "1" "grep -c '10.2. Klucz API i sygnał o jego odrzuceniu' $DOK"
+
 echo "=== W. Stronicowanie list ==="
 spr "SEGM_NA_STRONE"                 "50" "grep -oP '(?<=SEGM_NA_STRONE = )\d+' $W/includes/admin.php"
 spr "wspolny pasek stron"            "1" "grep -c 'function segm_pasek_stron' $W/includes/admin.php"
@@ -281,6 +304,7 @@ echo "=== O. CHANGELOG.md ==="
 spr "CHANGELOG istnieje"             "1" "test -f $W/CHANGELOG.md && echo 1 || echo 0"
 spr "format Keep a Changelog"        "1" "grep -c 'keepachangelog.com' $W/CHANGELOG.md"
 spr "biezaca wersja ma wpis"         "1" "grep -c '^## \\[1.3.0\\]' $W/CHANGELOG.md"
+spr "Niewydane jest PIERWSZA sekcja (Keep a Changelog)" "Niewydane" "grep -oP '^## \\[\\K[^\\]]+' $W/CHANGELOG.md | head -1"
 spr "liczba wydan opisanych"         "6" "grep -c '^## \\[' $W/CHANGELOG.md"
 for v in 1.0.0 1.1.0 1.2.0 1.2.1; do
   spr "wersja $v z historii gita opisana" "1" "grep -c '^## \\[$v\\]' $W/CHANGELOG.md"
