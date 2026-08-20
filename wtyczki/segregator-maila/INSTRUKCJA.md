@@ -350,6 +350,21 @@ ImportExportTools). Wystarczą trzy kolumny — bez załączników.
 Zobacz w raporcie, KTÓRA reguła go złapała. Najczęściej pomaga: przesunięcie
 bardziej szczegółowej reguły wyżej albo doprecyzowanie wariantów.
 
+**Skąd mam wiedzieć, że tryb AI przestał działać?**
+Powie Ci to sama wtyczka. Gdy dostawca odrzuci wywołanie (zły klucz, wyczerpane
+środki, zła nazwa modelu, awaria po ich stronie), przebieg kończy się wynikiem
+policzonym regułami — ale na stronach wtyczki zapala się pasek **„tryb AI nie
+działa"** z datą i tym, co dokładnie odpowiedział dostawca, po polsku. Pasek
+gaśnie sam po pierwszym udanym wywołaniu. Nie musisz go pilnować: bez niego
+wtyczka mogłaby miesiącami „działać w trybie AI", licząc wyłącznie regułami.
+Przycisk **„Przetestuj klucz API"** w Ustawieniach sprawdza to od ręki.
+
+**Przenoszę stronę / mam drugi oddział — muszę wpisywać reguły od nowa?**
+Nie. Na dole strony *Reguły* pobierasz plik z konfiguracją (kategorie i reguły),
+a na drugiej instalacji wczytujesz go jednym przyciskiem. Hasła, klucza API,
+próbki ani historii w tym pliku nie ma — te podajesz na nowo. Po wczytaniu
+sprawdź kolejność reguł.
+
 **Czy accuracy 100% na demo to ściema?**
 Nie — reguły demo są po prostu dopasowane do próbki demo (tak wygląda dobrze
 skonfigurowany segregator). Na TWOICH mailach zaczniesz niżej i podniesiesz
