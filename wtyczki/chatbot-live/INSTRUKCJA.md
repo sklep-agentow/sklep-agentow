@@ -163,6 +163,17 @@ podglądem: ma być co najmniej 4,5:1.
 Dodaj do wpisu więcej wariantów słów kluczowych (odmiany, formy bez polskich
 znaków). Dopasowanie szuka fragmentów tekstu — `płatnoś` nie złapie „platnosc".
 
+**Którym modelem odpowiada bot i czy mogę go zmienić?**
+Tak — w **Ustawieniach → Tryb AI** jest pole **Model**. Domyślny (najtańszy)
+w zupełności wystarcza do odpowiadania z bazy Q&A; mocniejsze kosztują więcej.
+Aktualną listę modeli i cennik sprawdzisz u dostawcy, w dokumentacji Anthropic —
+odnośnik jest przy tym polu. **Jeśli dostawca podaje nazwę bez daty — wpisz
+właśnie taką** (`claude-haiku-4-5` zamiast `claude-haiku-4-5-20251001`): nazwy
+z datą wskazują konkretną wersję modelu, a te bywają wycofywane i wtedy tryb AI
+przestaje działać. Nie każdy model ma skróconą nazwę — jeżeli dostawca podaje
+wyłącznie wersję z datą, wpisz ją. Gdyby model przestał istnieć, panel powie
+o tym wprost („API nie zna tego modelu"), zamiast po cichu zjeżdżać do reguł.
+
 **Skąd mam wiedzieć, czego dopisać do bazy?**
 Nie zgaduj — wejdź w **Statystyki i luki**. Tabela „Czego botowi brakuje"
 pokazuje prawdziwe pytania Twoich klientów, na które bot nie umiał odpowiedzieć,
@@ -177,6 +188,19 @@ bo „nie mierzono" to co innego niż „bot nie odpowiedział ani razu".
 Tak, jeśli mają wspólne rdzenie słów — grupowanie jest po to, żeby lista miała
 kilkanaście pozycji, a nie kilkaset. Zawsze możesz rozwinąć „inne sformułowania"
 i sprawdzić, co dokładnie do tematu wpadło.
+
+**Moja strona stoi za Cloudflare — czy muszę coś ustawić?**
+Tak, jedną rzecz. Wejdź w **Ustawienia** i zaznacz **„Strona za Cloudflare albo
+proxy"**. Bez tego wtyczka widzi adres Cloudflare zamiast adresu gościa, więc limit
+10 wiadomości na minutę obowiązuje **wszystkich gości razem**, a dobowy limit
+wywołań AI na adres staje się limitem na całą stronę. Jeśli nie jesteś pewien,
+czy stoisz za proxy — zostaw wyłączone; limity będą wtedy co najwyżej surowsze,
+a włączenie tego na stronie bez proxy pozwoliłoby je obchodzić.
+Uwaga: samo używanie Cloudflare nie wystarczy. Jeżeli do Twojego serwera da się
+połączyć **z pominięciem** proxy (po jego własnym adresie IP), ktoś może podać
+zmyślony nagłówek i limit dalej da się obejść — bo takie żądanie nie przechodzi
+przez Cloudflare, który normalnie ten nagłówek poprawia. Poproś hosting, żeby
+ograniczył ruch do adresów Cloudflare, albo zostaw przełącznik wyłączony.
 
 **Czy gość może zalać mnie wiadomościami?**
 Nie — limit to 10 wiadomości na minutę z jednego adresu IP (dotyczy pytań

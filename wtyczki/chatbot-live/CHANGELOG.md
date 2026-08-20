@@ -25,6 +25,41 @@ migracja odpala się sama przy pierwszym wejściu do panelu po aktualizacji
   nie zamyka czatu.
 - Kropki przestają skakać, gdy w systemie włączone jest „ogranicz animacje".
 
+## [1.4.4] — 2026-08-20
+
+### Zmienione
+- **Domyślny model to teraz alias bez daty** (`claude-haiku-4-5` zamiast
+  `claude-haiku-4-5-20251001`). Identyfikator z datą wskazuje konkretną migawkę
+  modelu, a te bywają wycofywane — wtedy **każda sprzedana kopia wtyczki traci
+  tryb AI naraz**. Alias przeżywa wymianę migawki.
+
+### Dodane
+- **Wybór modelu w ustawieniach**: lista podpowiedzi (od najtańszego do
+  najmocniejszego) plus pole na własny identyfikator. Do tej pory zmiana modelu
+  wymagała napisania filtru w kodzie — czego kupujący wtyczkę nie robi.
+- Panel mówi wprost, **żeby wpisywać identyfikator bez daty**, i odsyła do
+  dokumentacji dostawcy po aktualną listę modeli i cennik.
+
+## [1.4.3] — 2026-08-20
+
+### Naprawione
+- **Za Cloudflare albo proxy hostingu cała witryna miała JEDEN limit.** Limit
+  liczony z samego `REMOTE_ADDR` mierzył adres proxy, więc 10 wiadomości na minutę
+  obowiązywało wszystkich gości razem, a dobowy limit 20 wywołań AI na adres
+  stawał się limitem na całą stronę — jeden ruchliwy dzień i reszta gości dostawała
+  odmowy albo odpowiedzi wyłącznie z reguł.
+
+### Dodane
+- Ustawienie **„Strona za Cloudflare albo proxy"** (domyślnie **wyłączone**).
+  Po włączeniu adres gościa ustalany jest z `CF-Connecting-IP`, potem z pierwszego
+  adresu `X-Forwarded-For`, a na końcu z `REMOTE_ADDR`.
+- Filtr `chatl_ip_goscia` — furtka dla hostingu z nietypowym nagłówkiem.
+
+### Uwaga
+- Przełącznik jest domyślnie wyłączony **celowo**: `X-Forwarded-For` da się
+  podrobić, więc na stronie bez proxy zaufanie mu pozwoliłoby obchodzić limity.
+  Włącz go tylko wtedy, gdy strona naprawdę stoi za proxy.
+
 ## [1.4.2] — 2026-08-20
 
 ### Naprawione

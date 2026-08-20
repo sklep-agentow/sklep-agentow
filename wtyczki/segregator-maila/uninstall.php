@@ -42,6 +42,10 @@ foreach ( array( 'segm_komunikat_', 'segm_liczenie_' ) as $segm_rodzina ) {
 // zawsze, żeby po ponownej instalacji tej samej wersji wstęp pokazał się od nowa
 // i żeby w wp_usermeta nie zostały sieroty po wtyczce, której już nie ma.
 delete_option( 'segm_powitanie_gotowe' );
+
+// Wpis o ostatnim błędzie AI zawiera fragment odpowiedzi dostawcy — to stan
+// chwilowy, nie dane właściciela. Znika zawsze.
+delete_option( 'segm_blad_ai' );
 delete_metadata( 'user', 0, 'segm_powitanie_widziane', '', true );
 
 // Sekret właściciela (klucz API) kasowany ZAWSZE, niezależnie od opcji „usuń dane"

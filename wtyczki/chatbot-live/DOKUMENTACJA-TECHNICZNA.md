@@ -181,6 +181,8 @@ więc **brakujący klucz nigdy nie jest błędem** — nowe pole dostaje wartoś
 | `kolor_naglowka` | `#08090b` | Pasek z tytułem okna czatu i paski formularza kontaktu. |
 | `kolor_tekstu` | `auto` | `auto` = wtyczka dobiera kolor tekstu osobno dla bąbelka i dla nagłówka, biorąc ten o lepszym kontraście. Wartość `#rrggbb` = ten sam kolor na obu. |
 | `pozycja` | `prawo` | `prawo` albo `lewo` — róg strony, w którym stoi widget. |
+| `za_proxy` | `0` | Czy ufać nagłówkom proxy przy ustalaniu adresu gościa. **Domyślnie wyłączone** — `X-Forwarded-For` da się podrobić. |
+| `ai_model` | `''` | Model wybrany przez właściciela. **Pusty = użyj `CHATL_AI_MODEL`** — dzięki temu podniesienie domyślnego modelu w kolejnej wersji dociera do wszystkich, którzy go świadomie nie zmienili. |
 | `adres_polityki` | `''` | Adres polityki prywatności linkowany przy formularzu. Pusty = sama informacja, bez linku. |
 
 ---
@@ -199,9 +201,9 @@ Wszystkie liczby, którymi wtyczka się rządzi, są stałymi — nie ma ich roz
 | `CHATL_LIMIT_NA_MIN` | `10` | `includes/front.php` | wspólny kubeł: żądań na minutę z jednego IP, łącznie dla pytań i zgłoszeń |
 | `CHATL_RETENCJA_DNI` | `90` | `includes/front.php` | okres retencji historii rozmów — **jedno źródło** dla crona, tekstu w widgecie, panelu i eksportu |
 | `CHATL_AI_LIMIT_IP_NA_DOBE` | `20` | `includes/front.php` | osobny, twardszy limit wywołań AI z jednego IP na dobę |
+| `CHATL_AI_MODEL` | `claude-haiku-4-5` | `includes/ai.php` | **domyślny** model — alias BEZ daty, żeby wycofanie migawki nie zabiło trybu AI u wszystkich kupujących. Właściciel wybiera model w ustawieniach, integrator filtrem. |
 | `CHATL_LIMIT_NONCE` | `20` | `includes/front.php` | odświeżeń zabezpieczenia formularza na minutę z jednego IP |
 | `CHATL_NONCE_OKNO_DNI` | `7` | `includes/front.php` | ile dni panel pokazuje ostrzeżenie o odrzuconych zabezpieczeniach |
-| `CHATL_AI_MODEL` | `claude-haiku-4-5-20251001` | `includes/ai.php` | domyślny model (podmienialny filtrem) |
 | `CHATL_AI_MAX_TOKENS` | `1024` | `includes/ai.php` | limit długości odpowiedzi modelu |
 | `CHATL_AI_TIMEOUT` | `9` | `includes/ai.php` | timeout jednego wywołania w sekundach; z jednym ponowieniem daje maks. 18 s, z zapasem pod typowy limit 30 s na hostingu |
 | `CHATL_AI_BRAK` | `BRAK_ODPOWIEDZI` | `includes/ai.php` | sentinel „model nie wie" — sygnał do zbiórki kontaktu zamiast zgadywania |
@@ -342,8 +344,14 @@ Oba eksporty przechodzą przez jedną bramkę `chatl_csv_brama()` (capability + 
 
 ### 7.4. Filtry do rozbudowy
 
-Wtyczka wystawia **dwa** filtry — oba w `includes/ai.php`, oba pomyślane jako punkt wejścia dla
-integratora, i oba używane w testach do podstawienia atrapy API:
+Filtry pomyślane jako punkt wejścia dla integratora. Dwa w `includes/ai.php` (oba używane
+w testach do podstawienia atrapy API) i jeden w `includes/front.php`:
+
+| Filtr | Plik | Do czego |
+|---|---|---|
+| `chatl_ip_goscia` | `includes/front.php` | ostatnie słowo przy ustalaniu adresu gościa — dla hostingu z nietypowym nagłówkiem (`True-Client-IP`, `X-Real-IP`). Zwrócenie pustego stringa znaczy „nie wiem". |
+
+Dwa filtry trybu AI:
 
 | Filtr | Domyślnie | Do czego |
 |---|---|---|
@@ -612,7 +620,80 @@ nie jakość odpowiedzi.
 Komunikaty rozróżniają przyczyny, bo prowadzą do różnych działań: `401`/`403`
 to zły lub wygasły klucz, `404` to nieznana nazwa modelu, `429` to limit
 u dostawcy (klucz działa), błąd połączenia to problem z siecią hostingu.
-## 15. Sygnał „bot pisze"
+
+## 15. Adres IP gościa a proxy
+
+Limit „na IP" liczony z samego `REMOTE_ADDR` mierzy adres **proxy**. Strona za
+Cloudflare albo za proxy hostingu widzi jeden adres dla wszystkich gości — wtedy
+`CHATL_LIMIT_NA_MIN` wiadomości na minutę obowiązuje **całą witrynę naraz**,
+a `CHATL_AI_LIMIT_IP_NA_DOBE` wywołań AI na adres staje się limitem na całą stronę.
+
+`chatl_ip_goscia()` (`includes/front.php`) ustala adres w kolejności:
+**`CF-Connecting-IP` → pierwszy adres z `X-Forwarded-For` → `REMOTE_ADDR`**,
+ale nagłówki czyta **wyłącznie** po włączeniu ustawienia `za_proxy`.
+
+To nie jest ostrożność na wyrost. `X-Forwarded-For` da się podrobić zwykłym
+żądaniem, więc na stronie **bez** proxy zaufanie mu oznaczałoby, że każdy obchodzi
+limity, podając za każdym razem inny adres — czyli lekarstwo gorsze od choroby.
+Dlatego przełącznik jest domyślnie **wyłączony**, a panel mówi wprost, kiedy go
+włączyć i czym to grozi.
+
+`X-Forwarded-For` to lista `gość, proxy1, proxy2` — bierzemy **pierwszy** wpis.
+Każdy odczyt przechodzi przez `filter_var( …, FILTER_VALIDATE_IP )`: nagłówek ze
+śmieciem nie może wyłączyć limitu ani stworzyć własnego kubła, więc przy złej
+wartości schodzimy do `REMOTE_ADDR`.
+
+**Warunek, bez którego przełącznik nie daje tego, co obiecuje** (uwaga recenzenta
+do PR #80). `CF-Connecting-IP` jest wiarygodny wyłącznie dlatego, że Cloudflare
+**nadpisuje** ten nagłówek na wejściu. Jeżeli origin jest osiągalny bezpośrednio —
+typowe na hostingu współdzielonym bez reguł zapory — żądanie z podrobionym
+`CF-Connecting-IP` omija Cloudflare w całości i nikt go po drodze nie poprawia.
+Napastnik nie musi wtedy znać niczyjego adresu: wystarczy inna zmyślona wartość
+przy każdym żądaniu, żeby kubeł limitu był za każdym razem nowy. Wtyczka **nie
+weryfikuje** pochodzenia żądania (allowlista zakresów Cloudflare wymagałaby
+aktualizowanej listy adresów i jest poza zakresem tej wersji), więc warunek jest
+po stronie wdrożenia: **włączaj przełącznik tylko wtedy, gdy origin nie przyjmuje
+połączeń z pominięciem proxy** (zapora hostingu ogranicza ruch do adresów
+Cloudflare). Panel mówi to właścicielowi wprost, a nie tylko ta dokumentacja.
+
+## 16. Wybór modelu
+
+`CHATL_AI_MODEL` to **alias bez daty** (`claude-haiku-4-5`), nie migawka
+(`claude-haiku-4-5-20251001`). Identyfikator z datą wskazuje konkretną migawkę
+modelu, a te bywają wycofywane — wtedy **każda sprzedana kopia traci tryb AI
+naraz**, a jedyną drogą naprawy jest ręczna wysyłka zipa mailem, bo nie mamy
+serwera aktualizacji.
+
+Zastrzeżenie (uwaga recenzenta do PR #81): **alias bez daty to konwencja dostawcy,
+nie gwarancja** — nie każdy model musi go mieć, a wtyczka nie ma jak sprawdzić
+listy identyfikatorów w locie. Dlatego pole „własny model" przyjmuje dowolną
+nazwę, a panel i FAQ mówią: użyj nazwy bez daty **jeśli dostawca taką podaje**.
+Siatką bezpieczeństwa jest §14: nieznana nazwa modelu daje HTTP 404, który od
+1.4.2 stawia znacznik i zapala w panelu czerwony pasek z komunikatem wprost
+(„API nie zna tego modelu"). Zły identyfikator jest więc **widoczny od pierwszego
+pytania gościa**, a nie cichy — to różnica między usterką do poprawienia w minutę
+a awarią, której właściciel nie zauważa miesiącami.
+
+Model ustala `chatl_ai_model()` w trzech poziomach, bo mają trzech różnych adresatów:
+
+| Poziom | Dla kogo | Uwaga |
+|---|---|---|
+| ustawienie `ai_model` | **kupujący** | nie pisze filtrów; wybiera z listy albo wpisuje własny identyfikator |
+| stała `CHATL_AI_MODEL` | produkt | wartość domyślna |
+| filtr `chatl_ai_model` | integrator | ostatnie słowo (np. proxy z własnym nazewnictwem) |
+
+Pusta wartość ustawienia znaczy „użyj domyślnej produktu" — dlatego wybranie
+z listy modelu równego `CHATL_AI_MODEL` **nie zapisuje niczego na sztywno**.
+Puste wyjście z filtru też wraca do stałej: żądanie do API nigdy nie idzie
+z pustym polem `model`.
+
+Lista w ustawieniach jest krótka i **bez cen**: cennik dostawcy się zmienia,
+a wtyczka nie ma jak go odświeżyć — wpisana kwota zestarzałaby się w paczce
+u klienta. Zamiast tego panel podaje kolejność „taniej ↔ mocniej" i odsyła do
+dokumentacji dostawcy. Pole „własny model" jest po to, żeby lista nigdy nie
+była więzieniem; wpisana wartość jest przycinana do liter, cyfr, myślników
+i kropek.
+## 17. Sygnał „bot pisze"
 
 Tryb AI ma timeout `CHATL_AI_TIMEOUT` sekund **plus jedno ponowienie**, czyli do
 18 sekund ciszy. Do 1.4.8 pole i przycisk nie były blokowane i nie było żadnego
@@ -637,7 +718,10 @@ Trzy rzeczy warte uwagi:
 Animacja to czysty CSS (bez bibliotek i bez obrazków, widget nie pobiera niczego
 z sieci), a przy systemowym ustawieniu „ogranicz animacje" (`prefers-reduced-motion`,
 WCAG 2.3.3) kropki zostają widoczne i przestają tylko skakać.
-## 16. Zabezpieczenie formularza a cache strony
+
+---
+
+## 18. Zabezpieczenie formularza a cache strony
 
 Nonce wchodzi do HTML-a strony przez `wp_localize_script()`, a wtyczka albo usługa
 cache (LiteSpeed, WP Rocket, W3TC, Cloudflare) potrafi serwować ten HTML **dłużej,
@@ -675,7 +759,7 @@ sukcesem.
 
 ---
 
-## 17. Eksport CSV
+## 19. Eksport CSV
 
 Ręczny, przyciskiem w panelu — `includes/csv.php`. Dwa strumienie: wszystkie zgłoszenia
 (`id, data, email, wiadomosc, status, sesja`) i historia rozmów (`sesja, data, kto, silnik, tresc`),
@@ -691,7 +775,7 @@ kłóciłoby się z obietnicą retencji.
 
 ---
 
-## 18. Znane granice
+## 20. Znane granice
 
 Rzeczy, których wtyczka **nie** robi — żeby nikt nie szukał ich w kodzie:
 
@@ -718,6 +802,11 @@ Rzeczy, których wtyczka **nie** robi — żeby nikt nie szukał ich w kodzie:
   a nie odmowę. Domyślne „dobierz automatycznie" pilnuje progu za niego.
 - **Znacznik awarii AI pamięta tylko OSTATNIE nieudane wywołanie**, nie prowadzi
   historii błędów. To sygnał „coś jest nie tak teraz", a nie dziennik diagnostyczny.
+- **Zaufanie nagłówkom proxy jest decyzją właściciela, nie automatem.** Wtyczka
+  nie zgaduje, czy strona stoi za Cloudflare — przy wyłączonym przełączniku limity
+  są co najwyżej surowsze, przy włączonym na stronie bez proxy dałyby się obejść.
+- **Wtyczka nie sprawdza, czy wpisany model istnieje.** Lista w ustawieniach to
+  podpowiedź, nie walidacja — nieznaną nazwę wykryje dopiero API (HTTP 404).
 - **Retencja obejmuje tylko historię rozmów.** Zgłoszenia (a więc adresy e-mail gości) zostają,
   aż właściciel je skasuje. Jeśli polityka prywatności obiecuje termin także dla nich,
   trzeba je kasować ręcznie albo eksportem i usunięciem.

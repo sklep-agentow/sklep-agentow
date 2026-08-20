@@ -141,6 +141,17 @@ w paczce. Poniżej skrót.
   a w rozmowie pojawia się dymek z kropkami — gość nie klika drugi raz sądząc,
   że czat się zawiesił (każde takie kliknięcie to kolejne płatne wywołanie AI).
 
+= 1.4.4 =
+* **Wybór modelu w ustawieniach** (lista + własny identyfikator) — do tej pory
+  wymagało to pisania filtru w kodzie.
+* Domyślny model to alias bez daty, więc wycofanie konkretnej migawki nie wyłącza
+  trybu AI.
+
+= 1.4.3 =
+* Naprawione: za Cloudflare albo proxy hostingu limity działały na **całą witrynę
+  naraz** zamiast na gościa. Nowe ustawienie „Strona za Cloudflare albo proxy"
+  (domyślnie wyłączone — włącz tylko, gdy naprawdę tak jest).
+
 = 1.4.2 =
 * Naprawione: zły albo wygasły klucz API oznaczał, że bot **po cichu** odpowiada
   wyłącznie z reguł, a właściciel nie miał jak tego zauważyć. Panel pokazuje teraz
