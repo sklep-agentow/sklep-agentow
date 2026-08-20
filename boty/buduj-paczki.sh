@@ -31,6 +31,7 @@ ALLOWLIST_CHATBOT=(
 	"chatbot-live/includes/front.php"
 	"chatbot-live/includes/admin.php"
 	"chatbot-live/includes/csv.php"
+	"chatbot-live/includes/import.php"
 	"chatbot-live/includes/statystyki.php"
 	"chatbot-live/includes/wyglad.php"
 	"chatbot-live/includes/powitanie.php"

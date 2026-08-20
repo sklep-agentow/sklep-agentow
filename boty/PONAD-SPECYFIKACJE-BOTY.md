@@ -44,6 +44,15 @@ była w klepniętych szkicach (`boty/SZKICE-BOTOW.md`) albo wynika z ich zasad
    wydarzy i że w paczce znajdzie historię zmian oraz opis w formacie, który zna
    z katalogu WordPressa. Brak tych rzeczy nie psuje działania, ale od razu
    widać, że to nie jest produkt handlowy.
+11. **Import bazy Q&A z pliku CSV z podglądem przed zapisem + eksport bazy Q&A**
+   (`includes/import.php`, `chatl_post_eksport_qa`) — rozszerzenie ponad szkice.
+   **Powód:** firma, która kupuje bota, ma gotową listę pytań w arkuszu, a wtyczka
+   pozwalała dodawać wyłącznie po jednym wpisie ręcznie — przy czterdziestu parach
+   to godziny przepisywania i pierwszy powód, żeby produkt odłożyć. Podgląd jest
+   częścią tej pozycji, a nie ozdobą: silnik dopasowuje **tylko** po słowach
+   kluczowych, więc wiersz bez nich jest martwy, a właściciel dowiedziałby się
+   o tym dopiero z raportu luk. Podgląd pokazuje podpowiedziane słowa **do edycji**
+   i ostrzega przy wierszach, w które bot nie trafi.
 
 ## Segregator maila
 1. **Tryb AI + „porównaj reguły vs AI"** — decyzja Dzidka 18.08 (szkice §BOT 2).

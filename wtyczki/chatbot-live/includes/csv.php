@@ -152,3 +152,47 @@ function chatl_post_eksport_rozmow() {
 	exit;
 }
 add_action( 'admin_post_chatl_eksport_rozmow', 'chatl_post_eksport_rozmow' );
+
+/**
+ * Eksport bazy pytań i odpowiedzi.
+ *
+ * Kolumny są DOKŁADNIE tymi, które przyjmuje import (includes/import.php),
+ * więc obieg „pobierz → popraw w arkuszu → wgraj z powrotem" domyka się bez
+ * żadnej dokumentacji formatu: wzorem pliku jest własna baza właściciela.
+ * Kolumny `id` świadomie NIE eksportujemy — import tylko dopisuje, więc numer
+ * z pliku i tak nie miałby jak trafić do bazy, a jego obecność sugerowałaby
+ * właścicielowi, że edycja pliku nadpisze istniejący wpis.
+ */
+function chatl_post_eksport_qa() {
+	chatl_csv_brama( 'chatl_eksport_qa' );
+
+	global $wpdb;
+	$tabela = $wpdb->prefix . 'chatl_qa';
+	$out    = chatl_csv_start( 'chatbot-baza-qa-' . gmdate( 'Y-m-d' ) . '.csv' );
+	fputcsv( $out, array( 'pytanie', 'slowa_kluczowe', 'odpowiedz', 'aktywne' ), ',', '"', '\\' );
+
+	$od = 0;
+	do {
+		$wiersze = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$tabela} WHERE id > %d ORDER BY id ASC LIMIT %d", $od, CHATL_CSV_PORCJA ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$ile     = count( $wiersze );
+		foreach ( $wiersze as $w ) {
+			$od = (int) $w->id;
+			fputcsv(
+				$out,
+				array(
+					chatl_csv_komorka( $w->pytanie ),
+					chatl_csv_komorka( $w->slowa_kluczowe ),
+					chatl_csv_komorka( $w->odpowiedz ),
+					(int) $w->aktywne,
+				),
+				',',
+				'"',
+				'\\'
+			);
+		}
+	} while ( CHATL_CSV_PORCJA === $ile );
+
+	fclose( $out ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
+	exit;
+}
+add_action( 'admin_post_chatl_eksport_qa', 'chatl_post_eksport_qa' );

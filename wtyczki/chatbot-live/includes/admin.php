@@ -33,7 +33,13 @@ function chatl_komunikat_ok() {
 			'zmieniono' => 'Zmieniono status.',
 		);
 		$klucz  = sanitize_key( wp_unslash( $_GET['chatl_ok'] ) );
-		if ( isset( $teksty[ $klucz ] ) ) {
+		if ( 'zaimportowano' === $klucz ) {
+			// Liczba jest częścią komunikatu, a nie ozdobą: po imporcie właściciel
+			// musi zobaczyć, ILE wpisów naprawdę weszło — „Zapisano." przy pliku
+			// z 40 wierszami nie mówi, czy weszło 40, czy 3.
+			$ile = isset( $_GET['chatl_ile'] ) ? (int) $_GET['chatl_ile'] : 0;
+			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( sprintf( 'Zaimportowano %d wpisów z pliku CSV.', $ile ) ) . '</p></div>';
+		} elseif ( isset( $teksty[ $klucz ] ) ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( $teksty[ $klucz ] ) . '</p></div>';
 		}
 	}
@@ -235,6 +241,18 @@ function chatl_strona_qa() {
 	<div class="wrap">
 		<h1>Baza pytań i odpowiedzi</h1>
 		<?php chatl_komunikat_ok(); ?>
+		<?php
+		/*
+		 * Czekający podgląd importu zajmuje CAŁY ekran i nic poza nim się nie
+		 * renderuje. To jest moment decyzji („zapisać te 40 wierszy czy nie"),
+		 * a formularz dodawania i lista wpisów obok niego rozpraszałyby uwagę
+		 * dokładnie tam, gdzie właściciel ma coś sprawdzić przed zapisem.
+		 */
+		if ( chatl_import_ekran_podgladu() ) {
+			echo '</div>';
+			return;
+		}
+		?>
 		<p>Bot dopasowuje pytanie gościa po <strong>słowach kluczowych z wariantami</strong> (rozdzielaj przecinkami, np. <code>cena, ceny, cennik</code>). Odmiany słów łapiesz, wpisując warianty.</p>
 
 		<?php chatl_panel_testu_bota(); ?>
@@ -275,6 +293,8 @@ function chatl_strona_qa() {
 				<a href="<?php echo esc_url( admin_url( 'admin.php?page=chatl-qa' ) ); ?>">Anuluj edycję</a>
 			<?php endif; ?>
 		</form>
+
+		<?php chatl_import_ekran_formularza(); ?>
 
 		<h2>Wpisy (<?php echo count( $wpisy ); ?>)</h2>
 		<table class="widefat striped">

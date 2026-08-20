@@ -10,6 +10,41 @@ migracja odpala się sama przy pierwszym wejściu do panelu po aktualizacji
 
 ---
 
+## [1.5.1] — 2026-08-20
+
+### Dodane
+- **Import bazy pytań z pliku CSV — z podglądem przed zapisem.** Firma z gotową
+  listą pytań w Excelu nie musi już przepisywać ich po jednym. Wgrany plik trafia
+  najpierw na **ekran podglądu**: każdy wiersz z werdyktem (do zapisania /
+  duplikat pomijany / błąd), licznikami i możliwością **poprawienia słów
+  kluczowych**. Do bazy nie trafia nic, dopóki właściciel nie kliknie „Zapisz".
+- **Eksport całej bazy Q&A do CSV.** Domyka obieg „pobierz → popraw w arkuszu →
+  wgraj z powrotem"; kolumny eksportu są dokładnie tymi, które przyjmuje import,
+  więc własna baza jest zarazem wzorem pliku.
+
+### Dlaczego podgląd, a nie import „na raz"
+- Bot dopasowuje pytanie gościa **wyłącznie po słowach kluczowych** — kolumna
+  z pytaniem jest tylko etykietą dla właściciela. Wiersz bez słów kluczowych jest
+  więc **martwy**: gość może wkleić pytanie słowo w słowo i nie dostanie
+  odpowiedzi. Typowy plik z arkusza ma właśnie pytanie i odpowiedź, bez słów
+  kluczowych — dlatego wtyczka je **podpowiada** (tą samą funkcją, którą panel
+  podpowiada je przy ręcznym dodawaniu wpisu), pokazuje w podglądzie **do edycji**
+  i ostrzega przy wierszach, w które bot nie trafi albo trafi zbyt szeroko.
+
+### Pliki z prawdziwego świata
+- Rozpoznawany jest **średnik** jako separator (tak zapisuje polski Excel),
+  kodowanie **windows-1250** (konwersja przez `iconv`, bo mbstring nie zna CP1250),
+  znacznik BOM, końce linii CRLF i puste wiersze zostawiane przez arkusze.
+- Kolumny mapowane **po nazwie**, nie po pozycji — kolejność w arkuszu nie ma
+  znaczenia; wymagane są `pytanie` i `odpowiedz`, reszta jest nieobowiązkowa.
+- Krzywy plik kończy się **komunikatem**, nie białym ekranem: pusty plik, brak
+  wymaganych kolumn, plik ponad 2 MB lub ponad 2000 wierszy, plik za duży dla
+  limitu hostingu.
+- Import **tylko dopisuje**: pytanie, które już jest w bazie, zostaje nietknięte,
+  a wiersz z pliku jest pomijany i widać to w podglądzie.
+
+---
+
 ## [1.4.9] — 2026-08-20
 
 ### Naprawione

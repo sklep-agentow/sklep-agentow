@@ -43,8 +43,8 @@ spr "kazdy wpis CHANGELOG oddzielony kreska" "0" \
   "awk '/^## \\[1\\./ {if (NR>1 && poprz != \"---\") b++} {if (\$0 != \"\") poprz=\$0} END {print b+0}' $W/CHANGELOG.md"
 
 echo "=== A. Wersja i schemat ==="
-spr "naglowek Version"            "1.4.9" "grep -oP '(?<=^ \* Version: ).*' $W/chatbot-live.php"
-spr "stala CHATL_WERSJA"          "1.4.9" "grep -oP \"(?<=CHATL_WERSJA', ')[^']*\" $W/chatbot-live.php"
+spr "naglowek Version"            "1.5.1" "grep -oP '(?<=^ \* Version: ).*' $W/chatbot-live.php"
+spr "stala CHATL_WERSJA"          "1.5.1" "grep -oP \"(?<=CHATL_WERSJA', ')[^']*\" $W/chatbot-live.php"
 spr "CHATL_WERSJA_SCHEMATU"       "5"     "grep -oP \"(?<=CHATL_WERSJA_SCHEMATU', ')[^']*\" $W/chatbot-live.php"
 spr "Requires at least"           "6.0"   "grep -oP '(?<=^ \* Requires at least: ).*' $W/chatbot-live.php"
 spr "Requires PHP"                "8.1"   "grep -oP '(?<=^ \* Requires PHP: ).*' $W/chatbot-live.php"
@@ -89,7 +89,7 @@ while IFS='|' read -r _ NAZWA WART PLIK _; do
 done < <(grep -P "^\| ${BT}CHATL_[A-Z_]+${BT} \| ${BT}[^${BT}]+${BT} \| ${BT}[^${BT}]+${BT} \|" $DOK)
 # Sama petla nie wystarczy: gdyby wzorzec wiersza przestal pasowac (zmiana ukladu
 # tabeli), petla nie zrobilaby ANI JEDNEGO sprawdzenia i sekcja bylaby cicho pusta.
-spr "stalych sprawdzonych z tabeli dokumentacji" "28" "echo $STALYCH"
+spr "stalych sprawdzonych z tabeli dokumentacji" "31" "echo $STALYCH"
 
 echo
 echo "=== A1b. Rejestr rozszerzen ponad specyfikacje (klasa #6 sciagi) ==="
@@ -105,12 +105,12 @@ echo "=== A1b. Rejestr rozszerzen ponad specyfikacje (klasa #6 sciagi) ==="
 # paczki zatrzymuje budowe przy nowym pliku.
 REJ=boty/PONAD-SPECYFIKACJE-BOTY.md
 spr "rejestr istnieje"                    "1" "test -f $REJ && echo 1 || echo 0"
-spr "pozycji ChatBota w rejestrze"        "10" "sed -n '/^## ChatBot LIVE/,/^## Segregator/p' $REJ | grep -cP '^[0-9]+\. '"
+spr "pozycji ChatBota w rejestrze"        "11" "sed -n '/^## ChatBot LIVE/,/^## Segregator/p' $REJ | grep -cP '^[0-9]+\. '"
 spr "rejestr wymienia tryb AI"            "1" "sed -n '/^## ChatBot LIVE/,/^## Segregator/p' $REJ | grep -c 'Tryb AI'"
 spr "rejestr wymienia statystyki i luki"  "1" "sed -n '/^## ChatBot LIVE/,/^## Segregator/p' $REJ | grep -c 'Statystyki i raport luk'"
 spr "rejestr wymienia konfigurowalny wyglad" "1" "sed -n '/^## ChatBot LIVE/,/^## Segregator/p' $REJ | grep -c 'Konfigurowalny wygląd widgetu'"
 spr "rejestr wymienia ekran powitalny"    "1" "sed -n '/^## ChatBot LIVE/,/^## Segregator/p' $REJ | grep -c 'Ekran powitalny'"
-spr "kazda pozycja ma powod (mysllnik)"   "10" "sed -n '/^## ChatBot LIVE/,/^## Segregator/p' $REJ | grep -cP '^[0-9]+\..*—|^[0-9]+\.[^—]*$'"
+spr "kazda pozycja ma powod (mysllnik)"   "11" "sed -n '/^## ChatBot LIVE/,/^## Segregator/p' $REJ | grep -cP '^[0-9]+\..*—|^[0-9]+\.[^—]*$'"
 
 echo
 echo "=== A2. Plik LICENSE (pelny GPL-2.0, wziety z rdzenia WordPressa) ==="
@@ -128,9 +128,10 @@ echo "=== A3. Paczka produktowa ==="
 spr "LICENSE na liscie plikow paczki" "1" "grep -c 'chatbot-live/LICENSE' boty/buduj-paczki.sh"
 spr "csv.php na liscie plikow paczki" "1" "grep -c 'chatbot-live/includes/csv.php' boty/buduj-paczki.sh"
 spr "statystyki.php na liscie paczki" "1" "grep -c 'chatbot-live/includes/statystyki.php' boty/buduj-paczki.sh"
+spr "import.php na liscie plikow paczki" "1" "grep -c 'chatbot-live/includes/import.php' boty/buduj-paczki.sh"
 spr "CHANGELOG.md na liscie paczki"  "1" "grep -c 'chatbot-live/CHANGELOG.md' boty/buduj-paczki.sh"
 spr "readme.txt na liscie paczki"    "1" "grep -c 'chatbot-live/readme.txt' boty/buduj-paczki.sh"
-spr "plikow chatbota w allowliscie"   "20" "sed -n '/^ALLOWLIST_CHATBOT=(/,/^)/p' boty/buduj-paczki.sh | grep -c '\"chatbot-live/'"
+spr "plikow chatbota w allowliscie"   "21" "sed -n '/^ALLOWLIST_CHATBOT=(/,/^)/p' boty/buduj-paczki.sh | grep -c '\"chatbot-live/'"
 spr "allowlista = zawartosc katalogu" "0"  "cd wtyczki && find chatbot-live -type f | sort | comm -23 - <(sed -n '/^ALLOWLIST_CHATBOT=(/,/^)/p' ../boty/buduj-paczki.sh | grep -oP '(?<=\")chatbot-live/[^\"]*' | sort) | wc -l"
 # Klasa, ktora tu wyszla: includes/csv.php byl wymagany przez require_once, ale
 # NIE bylo go na liscie plikow paczki. Zip bez tego pliku = fatal w wp-admin
@@ -152,6 +153,9 @@ spr "CHATL_LUKI_POKAZ"            "25"    "grep -oP '(?<=CHATL_LUKI_POKAZ = )[0-
 spr "CHATL_LUKI_PROG"             "50"    "grep -oP '(?<=CHATL_LUKI_PROG = )[0-9]+' $W/includes/statystyki.php"
 spr "CHATL_LUKI_RDZEN"            "4"     "grep -oP '(?<=CHATL_LUKI_RDZEN = )[0-9]+' $W/includes/statystyki.php"
 spr "CHATL_SUGESTIA_RDZEN"        "5"     "grep -oP '(?<=CHATL_SUGESTIA_RDZEN = )[0-9]+' $W/includes/statystyki.php"
+spr "CHATL_IMPORT_MAX_WIERSZY"    "2000"    "grep -oP '(?<=CHATL_IMPORT_MAX_WIERSZY = )[0-9]+' $W/includes/import.php"
+spr "CHATL_IMPORT_MAX_BAJTOW"     "2097152" "grep -oP '(?<=CHATL_IMPORT_MAX_BAJTOW = )[0-9]+' $W/includes/import.php"
+spr "CHATL_IMPORT_MINUT"          "15"      "grep -oP '(?<=CHATL_IMPORT_MINUT = )[0-9]+' $W/includes/import.php"
 spr "CHATL_AI_MODEL"              "claude-haiku-4-5" "grep -oP \"(?<=CHATL_AI_MODEL      = ')[^']*\" $W/includes/ai.php"
 spr "CHATL_AI_BRAK"               "BRAK_ODPOWIEDZI" "grep -oP \"(?<=CHATL_AI_BRAK       = ')[^']*\" $W/includes/ai.php"
 
@@ -212,7 +216,7 @@ echo "=== I. Zaczepy i filtry ==="
 # Liczby po scaleniu z main (#78) SUMUJA sie: nonce dolozyl dwa endpointy AJAX
 # i akcje chatl_nonce_zamknij, ta galaz dokłada chatl_test_klucza.
 spr "endpointy AJAX (z nopriv)"   "6"  "grep -c \"add_action( 'wp_ajax\" $W/includes/front.php"
-spr "akcje admin_post"            "9"  "grep -rc \"add_action( 'admin_post_\" $W/includes/admin.php $W/includes/csv.php | awk -F: '{s+=\$2} END {print s}'"
+spr "akcje admin_post"            "13" "grep -rc \"add_action( 'admin_post_\" $W/includes/admin.php $W/includes/csv.php $W/includes/import.php | awk -F: '{s+=\$2} END {print s}'"
 # Liczymy ROZNE nazwy filtrow, nie wywolania: ten sam punkt rozszerzenia bywa
 # uzyty w kilku miejscach (od 1.4.2 chatl_ai_url i chatl_ai_model wolane sa
 # takze przez test klucza), a dokumentacja obiecuje LICZBE PUNKTOW, nie wywolan.

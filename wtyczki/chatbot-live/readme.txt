@@ -4,7 +4,7 @@ Tags: chat, chatbot, faq, kontakt, wsparcie
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.4.9
+Stable tag: 1.5.1
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -132,6 +132,14 @@ Domyślnie **zostają** — możesz odinstalować i wrócić bez strat. Pełne c
 w ustawieniach. Klucz API jest kasowany zawsze, niezależnie od tego przełącznika.
 
 == Changelog ==
+
+= 1.5.1 =
+* Import bazy pytań z pliku CSV z podglądem przed zapisem — wgrany plik trafia
+  najpierw na ekran podglądu (werdykt przy każdym wierszu, liczniki, edycja
+  podpowiedzianych słów kluczowych), a do bazy nic nie idzie bez potwierdzenia.
+* Eksport całej bazy Q&A do CSV — obieg „pobierz, popraw w arkuszu, wgraj".
+* Rozpoznawany polski Excel: średnik jako separator i kodowanie windows-1250.
+* Import tylko dopisuje: istniejące wpisy nie są nadpisywane.
 
 Pełna historia zmian, z opisem każdej pozycji, jest w pliku `CHANGELOG.md`
 w paczce. Poniżej skrót.
