@@ -15,6 +15,28 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
+ * Próbka i reguły pobrane RAZ, do wielokrotnego liczenia trafień.
+ *
+ * Powód istnienia: lista reguł liczy trafienia dla KAŻDEGO wiersza, a każde
+ * liczenie czytało wcześniej całą próbkę i całą listę reguł osobnym
+ * zapytaniem. Przy dwudziestu regułach dawało to czterdzieści zapytań na jedno
+ * wyświetlenie strony — a wystarczą dwa, bo dane są dla wszystkich wierszy
+ * IDENTYCZNE. Kto liczy raz (formularz reguły), może kontekst pominąć:
+ * funkcja pobierze go sama.
+ *
+ * @param array<int, object>|null $reguly Reguły, jeśli wywołujący ma je już pobrane.
+ * @return array{maile: array<int, object>, reguly: array<int, object>}
+ */
+function segm_kontekst_trafien( $reguly = null ) {
+	global $wpdb;
+
+	return array(
+		'maile'  => (array) $wpdb->get_results( "SELECT id, nadawca, temat, tresc FROM {$wpdb->prefix}segm_maile ORDER BY id ASC" ), // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		'reguly' => null === $reguly ? (array) segm_pobierz_reguly() : (array) $reguly,
+	);
+}
+
+/**
  * Ile maili z BIEŻĄCEJ próbki łapie dana reguła.
  *
  * Zwracamy DWIE różne liczby, bo to dwie różne prawdy i mylenie ich byłoby
@@ -29,13 +51,17 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Liczymy tą samą funkcją co przebieg (`segm_klasyfikuj_mail`), więc liczba
  * z panelu nie może rozjechać się z raportem.
  *
- * @param string $pole       'od' | 'temat' | 'tresc'.
- * @param string $wzorzec    Wzorzec (warianty po przecinku).
- * @param int    $id_reguly  ID edytowanej reguły; 0 = nowa reguła (na koniec listy).
+ * @param string                                                       $pole      'od' | 'temat' | 'tresc'.
+ * @param string                                                       $wzorzec   Wzorzec (warianty po przecinku).
+ * @param int                                                          $id_reguly ID edytowanej reguły; 0 = nowa reguła (na koniec listy).
+ * @param array{maile: array<int, object>, reguly: array<int, object>}|null $kontekst Próbka i reguły z segm_kontekst_trafien(); null = pobierz sam.
  * @return array{pasuje: int, wygrywa: int, maili: int, pusty_wzorzec: bool, zabrane_przez: array<string, int>}
  */
-function segm_policz_trafienia( $pole, $wzorzec, $id_reguly = 0 ) {
-	global $wpdb;
+function segm_policz_trafienia( $pole, $wzorzec, $id_reguly = 0, $kontekst = null ) {
+	// Brak kontekstu = wywołanie spoza listy (formularz reguły): pobieramy sami.
+	if ( ! is_array( $kontekst ) ) {
+		$kontekst = segm_kontekst_trafien();
+	}
 
 	$wynik = array(
 		'pasuje'        => 0,
@@ -48,8 +74,8 @@ function segm_policz_trafienia( $pole, $wzorzec, $id_reguly = 0 ) {
 	// Liczbę maili ustalamy ZAWSZE, także przy pustym wzorcu. Wcześniej wyjście
 	// „na skróty" zostawiało maili=0 i opis mówił „próbka jest pusta" nad próbką
 	// trzydziestu maili — komunikat wskazywał wtedy na zupełnie nie ten problem.
-	$maile          = $wpdb->get_results( "SELECT id, nadawca, temat, tresc FROM {$wpdb->prefix}segm_maile ORDER BY id ASC" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-	$wynik['maili'] = count( (array) $maile );
+	$maile          = $kontekst['maile'];
+	$wynik['maili'] = count( $maile );
 
 	$wzorzec = trim( (string) $wzorzec );
 	if ( '' === $wzorzec ) {
@@ -63,15 +89,20 @@ function segm_policz_trafienia( $pole, $wzorzec, $id_reguly = 0 ) {
 	// Lista reguł taka, jaka BYŁABY po zapisaniu tego formularza: przy edycji
 	// podmieniamy regułę w jej miejscu (kolejność zostaje), przy nowej dokładamy
 	// na koniec — bo tam trafia nowa reguła (`Dodaj regułę (na koniec listy)`).
+	// ⛔ Pracujemy na KOPIACH reguł, nie na obiektach z kontekstu: podmiana
+	// pola i wzorca poniżej zostawałaby w kontekście i psuła liczenie każdemu
+	// następnemu wierszowi listy (kontekst jest wspólny dla wszystkich).
 	$id_probny = $id_reguly > 0 ? (int) $id_reguly : -1;
-	$reguly    = segm_pobierz_reguly();
 	$podmienic = false;
-	foreach ( $reguly as $regula ) {
-		if ( (int) $regula->id === (int) $id_reguly && $id_reguly > 0 ) {
-			$regula->pole    = $pole;
-			$regula->wzorzec = $wzorzec;
-			$podmienic       = true;
+	$reguly    = array();
+	foreach ( $kontekst['reguly'] as $regula ) {
+		$kopia = clone $regula;
+		if ( $id_reguly > 0 && (int) $kopia->id === (int) $id_reguly ) {
+			$kopia->pole    = $pole;
+			$kopia->wzorzec = $wzorzec;
+			$podmienic      = true;
 		}
+		$reguly[] = $kopia;
 	}
 	if ( ! $podmienic ) {
 		$reguly[] = (object) array(

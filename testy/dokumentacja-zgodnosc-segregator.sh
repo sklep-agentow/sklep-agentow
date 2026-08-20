@@ -52,7 +52,9 @@ spr "SEGM_STALA_HASLA"               "SEGM_IMAP_HASLO" "grep -oP \"(?<=SEGM_STAL
 spr "SEGM_SKRZ_TRESC_BAJTOW"         "4096"    "grep -oP '(?<=SEGM_SKRZ_TRESC_BAJTOW = )\d+' $W/includes/skrzynka.php"
 spr "SEGM_SKRZ_LIMIT_CZASU"          "20"      "grep -oP '(?<=SEGM_SKRZ_LIMIT_CZASU = )\d+' $W/includes/skrzynka.php"
 spr "SEGM_SKRZ_LIMIT_GNIAZDA"        "15"      "grep -oP '(?<=SEGM_SKRZ_LIMIT_GNIAZDA = )\d+' $W/includes/skrzynka.php"
-spr "SEGM_AI_MODEL"                  "claude-haiku-4-5-20251001" "grep -oP \"(?<=SEGM_AI_MODEL      = ')[^']*\" $W/includes/ai.php"
+spr "SEGM_AI_MODEL"                  "claude-haiku-4-5" "grep -oP \"(?<=SEGM_AI_MODEL      = ')[^']*\" $W/includes/ai.php"
+spr "domyslny model BEZ daty w identyfikatorze" "0" "grep -oP \"(?<=SEGM_AI_MODEL      = ')[^']*\" $W/includes/ai.php | grep -cP -- '-\\d{8}$'"
+spr "zadna podpowiedz w liscie nie ma daty" "0" "sed -n '/function segm_ai_modele/,/^}/p' $W/includes/ai.php | grep -cP \"'[a-z0-9.-]*-\\d{8}'\""
 spr "SEGM_AI_TIMEOUT"                "9"       "grep -oP '(?<=SEGM_AI_TIMEOUT    = )\d+' $W/includes/ai.php"
 spr "SEGM_AI_PARTIA"                 "30"      "grep -oP '(?<=SEGM_AI_PARTIA     = )\d+' $W/includes/ai.php"
 spr "SEGM_AI_MAX_WYWOLAN_PRZEBIEG"   "1"       "grep -oP '(?<=SEGM_AI_MAX_WYWOLAN_PRZEBIEG = )\d+' $W/includes/ai.php"
@@ -282,6 +284,22 @@ spr "pasek podaje zakres i sume"     "1" "awk '/function segm_pasek_stron/,/^}/'
 spr "odnosniki w listach niosa numer strony" "3" "grep -c \"segm_strona=' . (int) \\\$strona_nr\" $W/includes/admin.php $W/includes/admin-skrzynka.php | grep -oP '(?<=:)\\d+' | paste -sd+ | bc"
 spr "powrot wraca na te sama strone" "3" "grep -c 'segm_param_strony() )' $W/includes/admin.php $W/includes/admin-skrzynka.php $W/includes/admin-probka.php | grep -oP '(?<=:)\\d+' | paste -sd+ | bc"
 spr "dokumentacja opisuje stronicowanie" "1" "grep -c '8.3. Stronicowanie list' $DOK"
+
+echo "=== Y. Licznik trafien: dane pobierane RAZ na cala liste ==="
+ADMIN=$W/includes/admin.php
+PROBKA=$W/includes/admin-probka.php
+Y_KONT=$(awk '/function segm_strona_reguly/,/^}/' $ADMIN | grep -n 'segm_kontekst_trafien( \$reguly )' | head -1 | cut -d: -f1)
+Y_PETLA=$(awk '/function segm_strona_reguly/,/^}/' $ADMIN | grep -n 'foreach ( \$reguly as \$r )' | head -1 | cut -d: -f1)
+Y_WIERSZ=$(awk '/function segm_strona_reguly/,/^}/' $ADMIN | grep -c 'segm_policz_trafienia(.*\$kontekst )')
+Y_ZAPYT=$(awk '/function segm_policz_trafienia/,/^}/' $PROBKA | grep -c 'wpdb->get_')
+Y_KLON=$(awk '/function segm_policz_trafienia/,/^}/' $PROBKA | grep -c 'clone \$regula')
+spr "jest pomocnik pobierajacy dane raz"  "1" "grep -c 'function segm_kontekst_trafien' $PROBKA"
+spr "lista regul bierze kontekst"         "1" "test -n \"$Y_KONT\" && echo 1 || echo 0"
+spr "kontekst POZA petla wierszy"         "1" "test -n \"$Y_KONT\" && test -n \"$Y_PETLA\" && test \"$Y_KONT\" -lt \"$Y_PETLA\" && echo 1 || echo 0"
+spr "wiersz listy liczy Z kontekstem"     "1" "echo $Y_WIERSZ"
+spr "ZERO zapytan w samym liczeniu"       "0" "echo $Y_ZAPYT"
+spr "regula probna KLONOWANA (kontekst wspolny)" "1" "echo $Y_KLON"
+spr "dokumentacja opisuje koszt licznika" "1" "grep -c 'Licznik liczy z jednego kontekstu' $DOK"
 
 echo "=== N. readme.txt w standardzie WordPressa ==="
 spr "readme.txt istnieje"            "1" "test -f $W/readme.txt && echo 1 || echo 0"

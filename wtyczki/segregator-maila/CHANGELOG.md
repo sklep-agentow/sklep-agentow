@@ -19,6 +19,17 @@ wersjonowanie według [SemVer](https://semver.org/lang/pl/).
 
 ### Naprawione
 
+- **Domyślny model AI był migawką z datą** (`claude-haiku-4-5-20251001`).
+  Migawki bywają wycofywane, a bez serwera aktualizacji każda sprzedana kopia
+  straciłaby wtedy tryb AI tego samego dnia. Domyślny jest teraz alias
+  `claude-haiku-4-5`, tak jak w ChatBocie; lista podpowiedzi w Ustawieniach
+  również bez dat.
+- **Strona *Reguły* odpytywała bazę raz na wiersz zamiast raz na całą tabelę.**
+  Licznik „Pasuje"/„Zgarnia" przy każdej regule czytał całą próbkę i całą listę
+  reguł osobnym zapytaniem — przy dwudziestu regułach czterdzieści zapytań na
+  jedno wyświetlenie strony zamiast dwóch, i rosło to liniowo. Dane są dla
+  wszystkich wierszy identyczne, więc pobierane są raz przed pętlą. Liczby
+  w kolumnach się nie zmieniają — pilnuje tego osobny test.
 - **Listy w panelu urywały się bez słowa i bez odnośnika „dalej”.** Przebiegi
   kończyły się na pięćdziesiątym, próbka pokazywała pierwsze 200 z 500, historia
   skrzynki na pięćdziesiątym — do reszty własnych danych nie było jak dojść.

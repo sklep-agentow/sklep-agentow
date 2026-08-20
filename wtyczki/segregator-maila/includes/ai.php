@@ -14,7 +14,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-const SEGM_AI_MODEL      = 'claude-haiku-4-5-20251001';
+/*
+ * Domyślny model: ALIAS BEZ DATY.
+ *
+ * Stał tu wcześniej `claude-haiku-4-5-20251001`. Identyfikator z datą wskazuje
+ * konkretną migawkę modelu, a migawki są z czasem wycofywane — nie mamy serwera
+ * aktualizacji, więc w dniu wycofania KAŻDA sprzedana kopia traci tryb AI naraz
+ * i jedyną drogą naprawy jest ręczna wysyłka zipa mailem. Alias przeżywa
+ * wymianę migawki (serwer sam rozwija go do bieżącej). Ten sam wybór co
+ * `CHATL_AI_MODEL` w ChatBocie — kupujący oba boty ma mieć jedno zachowanie.
+ *
+ * Właściciel może i tak wybrać inny model w Ustawieniach; to tylko wartość
+ * domyślna.
+ */
+const SEGM_AI_MODEL      = 'claude-haiku-4-5';
 const SEGM_AI_MAX_TOKENS = 4096;
 const SEGM_AI_TIMEOUT    = 9;
 const SEGM_AI_PARTIA     = 30;
@@ -51,9 +64,9 @@ const SEGM_AI_MODEL_WZORZEC = '/^[a-z0-9][a-z0-9._-]{2,63}$/';
  */
 function segm_ai_modele() {
 	return array(
-		'claude-haiku-4-5-20251001' => 'Haiku 4.5 — najtańszy, domyślny',
-		'claude-sonnet-5'           => 'Sonnet 5 — droższy, mocniejszy',
-		'claude-opus-5'             => 'Opus 5 — najdroższy, najmocniejszy',
+		'claude-haiku-4-5' => 'Haiku 4.5 — najtańszy, domyślny',
+		'claude-sonnet-5'  => 'Sonnet 5 — droższy, mocniejszy',
+		'claude-opus-5'    => 'Opus 5 — najdroższy, najmocniejszy',
 	);
 }
 
