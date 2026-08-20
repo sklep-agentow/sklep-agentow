@@ -4,7 +4,7 @@ Tags: chat, chatbot, faq, kontakt, wsparcie
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.4.3
+Stable tag: 1.4.4
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -135,6 +135,12 @@ w ustawieniach. Klucz API jest kasowany zawsze, niezależnie od tego przełączn
 
 Pełna historia zmian, z opisem każdej pozycji, jest w pliku `CHANGELOG.md`
 w paczce. Poniżej skrót.
+
+= 1.4.4 =
+* **Wybór modelu w ustawieniach** (lista + własny identyfikator) — do tej pory
+  wymagało to pisania filtru w kodzie.
+* Domyślny model to alias bez daty, więc wycofanie konkretnej migawki nie wyłącza
+  trybu AI.
 
 = 1.4.3 =
 * Naprawione: za Cloudflare albo proxy hostingu limity działały na **całą witrynę
