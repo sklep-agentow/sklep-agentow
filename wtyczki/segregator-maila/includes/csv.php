@@ -289,11 +289,25 @@ function segm_importuj_csv( $sciezka ) {
 }
 
 /**
- * Neutralizacja komórki na eksport (arkusze wykonują komórki od =,+,-,@).
+ * Neutralizacja komórki na eksport (OWASP: CSV injection / formula injection).
+ *
+ * Excel, LibreOffice i Arkusze Google traktują zawartość komórki jak FORMUŁĘ,
+ * gdy zaczyna się od `=`, `+`, `-` albo `@` — a treść bierze się tu z maila,
+ * czyli od kogoś obcego. Poprzedzenie apostrofem wymusza tekst; apostrof nie
+ * jest widoczny w arkuszu jako część wartości.
+ *
+ * Tabulator i powrót karetki są na tej liście, bo arkusze zjadają je na
+ * początku komórki i formuła za nimi i tak się wykonuje. W praktyce do bazy
+ * raczej nie trafią (sanitize_text_field zamienia białe znaki na spacje przy
+ * imporcie), ale eksport bierze też dane starszych próbek i takich wpisanych
+ * do bazy z boku — a koszt tej obrony to dwa znaki na liście.
+ *
+ * @param string $wartosc Surowa wartość komórki.
+ * @return string Wartość bezpieczna do wpisania w arkusz.
  */
 function segm_csv_komorka( $wartosc ) {
 	$wartosc = (string) $wartosc;
-	if ( '' !== $wartosc && in_array( $wartosc[0], array( '=', '+', '-', '@' ), true ) ) {
+	if ( '' !== $wartosc && in_array( $wartosc[0], array( '=', '+', '-', '@', "\t", "\r" ), true ) ) {
 		$wartosc = "'" . $wartosc;
 	}
 	return $wartosc;
