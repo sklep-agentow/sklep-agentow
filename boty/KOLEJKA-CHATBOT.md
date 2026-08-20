@@ -19,7 +19,8 @@ i **proba kontrolna** dowodzaca, ze straznik pada na kodzie sprzed naprawy:
 | #81 | L5 — model zaszyty na sztywno (migawka z data) | 1.4.4 |
 | #82 | L7 — nota o zapisie rozmowy dopiero przy formularzu | 1.4.5 |
 | #83 | L3 — stop-loss liczyl wywolania, rachunek idzie z tokenow | 1.4.6, schemat 5 |
-| #84 | B — tryb AI nie pamietal biezacej rozmowy | 1.4.7 |
+| #85 | B — tryb AI nie pamietal biezacej rozmowy | 1.4.7 |
+| #86 | C — brak sygnalu, ze bot pisze (do 18 s martwego ekranu) | 1.4.8 |
 
 ⚠️ Konflikty przy scalaniu sa **mechaniczne**: linia `Version`/`CHATL_WERSJA`
 (zostaje najwyzszy numer), nazwa pliku paczki oraz liczby w
@@ -59,7 +60,7 @@ zgadnięcia** i sprawdzany przy każdym żądaniu; operator tylko z `manage_opti
 Test ma pokazać, że bot **milczy** po przejęciu i **odzywa się** po zakończeniu,
 i musi być skalibrowany (pada na kodzie sprzed zmiany).
 
-### B. ⭐ Tryb AI nie pamięta bieżącej rozmowy — ✅ ZROBIONE (PR #84)
+### B. ⭐ Tryb AI nie pamięta bieżącej rozmowy — ✅ ZROBIONE (PR #85)
 Zmierzone przez koordynatora: `includes/ai.php` wysyła `messages` z **dokładnie
 jednym** elementem (samo pytanie), zero historii. Gość pyta „jak dojechać",
 potem „gdzie zaparkować" — model nie wie, o czym mowa.
@@ -68,7 +69,7 @@ a tu chodzi o pamięć W TRAKCIE jednej rozmowy.
 Dołożyć historię bieżącej sesji do wywołania, **uciąć do sensownej liczby
 ostatnich wymian** i uzasadnić tę liczbę w PR — każda wymiana to tokeny właściciela.
 
-### C. Brak informacji, że bot pisze
+### C. Brak informacji, że bot pisze — ✅ ZROBIONE (PR #86)
 Pole i przycisk nie są blokowane, brak wskaźnika, a tryb AI ma timeout 9 s
 + jedno ponowienie = do 18 s martwego ekranu. Gość pomyśli, że się zawiesiło,
 i kliknie drugi raz. Zrobić to samo co przy formularzu zgłoszenia: blokada pola
