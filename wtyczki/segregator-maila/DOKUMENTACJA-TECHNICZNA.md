@@ -63,7 +63,7 @@ leży w pliku `LICENSE` w katalogu wtyczki i wchodzi do paczki produktowej.
 | `includes/silnik.php` | 248 | `segm_klasyfikuj_mail()` — jedyna reguła dopasowania w całej wtyczce; przebieg na próbce |
 | `includes/csv.php` | 352 | import próbki z CSV (wykrywanie kodowania, limity) i eksport raportu do CSV |
 | `includes/ai.php` | 556 | opcjonalna klasyfikacja modelem, licznik stop-loss |
-| `includes/admin.php` | 1343 | panel: przebiegi i raporty, reguły, kategorie, próbka, ustawienia, baner powitalny |
+| `includes/admin.php` | 1348 | panel: przebiegi i raporty, reguły, kategorie, próbka, ustawienia, baner powitalny |
 | `includes/konfiguracja.php` | 360 | eksport i import własnej konfiguracji (kategorie + reguły) w JSON-ie |
 | `includes/filtry.php` | 588 | eksport reguł do filtrów Gmaila (XML) i reguł Outlooka |
 | `includes/class-segm-imap.php` | 947 | **klient IMAP4rev1 w czystym PHP** — gniazdo, TLS, protokół |
@@ -71,7 +71,7 @@ leży w pliku `LICENSE` w katalogu wtyczki i wchodzi do paczki produktowej.
 | `includes/skrzynka-przebieg.php` | 556 | przebieg na żywej skrzynce, historia, cofanie, harmonogramy WP-Cron |
 | `includes/admin-skrzynka.php` | 701 | panel zakładki *Skrzynka (IMAP)* i obsługa jej formularzy |
 | `includes/admin-powitanie.php` | 143 | ekran powitalny pokazywany raz po aktywacji |
-| `includes/admin-probka.php` | 382 | praca na POJEDYNCZYM mailu i licznik trafień reguły |
+| `includes/admin-probka.php` | 412 | praca na POJEDYNCZYM mailu i licznik trafień reguły |
 
 Poza kodem w paczce jadą: `LICENSE` (pełny tekst GPL-2.0), `readme.txt`
 (nagłówek w standardzie WordPressa, opis, instalacja, FAQ, changelog),
@@ -338,6 +338,25 @@ Obie liczby powstają z tej samej funkcji, którą liczy przebieg
 **Zgarnia** ze wszystkich reguł równa się liczbie `dopasowanych` w raporcie.
 Gdyby panel liczył po swojemu, prędzej czy później pokazałby liczbę, której
 raport nie potwierdza — a wtedy klient przestaje wierzyć obu.
+
+**Licznik liczy z jednego kontekstu.** Materiał do liczenia — cała próbka i cała
+lista reguł — jest dla wszystkich wierszy tabeli IDENTYCZNY, więc pobiera go
+`segm_kontekst_trafien()` **raz przed pętlą**, a `segm_policz_trafienia()`
+dostaje go gotowego. Wcześniej każdy wiersz czytał jedno i drugie własnym
+zapytaniem: przy dwudziestu regułach czterdzieści zapytań na jedno wyświetlenie
+strony zamiast dwóch, i rosło to liniowo — najmocniej obrywał właściciel z dużą
+liczbą reguł, czyli ten, komu licznik jest najbardziej potrzebny. Kto liczy raz
+(przycisk „Policz na próbce"), kontekst pomija i funkcja pobiera go sama.
+
+⛔ Reguła próbna jest podmieniana **na klonie**, nie na obiekcie z kontekstu:
+kontekst jest wspólny dla wszystkich wierszy, więc podmiana w miejscu zostałaby
+w nim na stałe i każdy następny wiersz liczyłby według cudzego wzorca. Tę samą
+tablicę reguł wyświetla zresztą tabela, więc mutacja zmieniłaby też to, co widać
+w kolumnie „Warunek".
+
+Sam koszt liczenia (`segm_klasyfikuj_mail()` na każdy pasujący mail, dla każdej
+reguły) zostaje bez zmian — to praca w PHP, nie w bazie, i mieści się w pułapie
+próbki (500 maili).
 
 **Tryb AI** (opcjonalny) nie zmienia tej reguły: klasyfikuje równolegle i pokazuje
 różnice. Nie ruszy bez zapisanej zgody `segm_zgoda_ai`, a przy próbce większej niż

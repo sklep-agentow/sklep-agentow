@@ -644,6 +644,11 @@ function segm_strona_reguly() {
 				<tr><td colspan="7">Brak reguł — wszystko poleci do „<?php echo esc_html( SEGM_KUBEL_DOMYSLNY ); ?>".</td></tr>
 			<?php endif; ?>
 			<?php
+			// Próbka i reguły RAZ na całą listę, nie raz na wiersz — inaczej
+			// każdy wiersz odpytywał bazę o to samo (przy 20 regułach: 40 zapytań
+			// zamiast 2). Reguły są już pobrane wyżej, więc kontekst ich nie czyta
+			// drugi raz.
+			$kontekst = segm_kontekst_trafien( $reguly );
 			$ostatnia = count( $reguly );
 			$i        = 0;
 			foreach ( $reguly as $r ) :
@@ -653,7 +658,7 @@ function segm_strona_reguly() {
 					<td><?php echo (int) $r->kolejnosc; ?></td>
 					<td><?php echo esc_html( $pola[ $r->pole ] . ' „' . $r->wzorzec . '"' ); ?></td>
 					<td><?php echo esc_html( $r->kategoria ); ?></td>
-					<?php $trafienia = segm_policz_trafienia( $r->pole, $r->wzorzec, (int) $r->id ); ?>
+					<?php $trafienia = segm_policz_trafienia( $r->pole, $r->wzorzec, (int) $r->id, $kontekst ); ?>
 					<td><?php echo (int) $trafienia['pasuje']; ?></td>
 					<td<?php echo $trafienia['pasuje'] > 0 && 0 === $trafienia['wygrywa'] ? ' style="color:#996800"' : ''; ?>>
 						<?php echo (int) $trafienia['wygrywa']; ?>
