@@ -10,7 +10,7 @@ migracja odpala się sama przy pierwszym wejściu do panelu po aktualizacji
 
 ---
 
-## [1.5.1] — 2026-08-20
+## [1.5.3] — 2026-08-21
 
 ### Dodane
 - **Import bazy pytań z pliku CSV — z podglądem przed zapisem.** Firma z gotową
