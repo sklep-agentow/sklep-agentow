@@ -96,6 +96,14 @@ probuj "sesja wspoldzielona liczona jako wlasna (dane osoby trzeciej)" \
   "docker exec $KONTENER sed -i 's|array_values( array_diff( \$sesje, \$obce ) )|\$sesje|' $PLIK" \
   "EKSPORT nie wydaje tresci rozmowy dwoch osob"
 
+# 9. Trwaly slad "ta sesja byla wspoldzielona" przestaje byc czytany. Wykrywanie
+#    wraca do BIEZACEGO stanu tabeli zgloszen — czyli dziala tylko dla wnioskow
+#    rozpatrywanych ROWNOCZESNIE. Kreator obsluguje je po kolei, wiec wniosek
+#    osoby B zlozony PO skasowaniu danych osoby A dostalby cala rozmowe.
+probuj "slad wspoldzielenia nie przezywa kasowania (wnioski po kolei)" \
+  "docker exec $KONTENER sed -i 's|array_intersect( \$sesje, chatl_rodo_slad_wspolnych() )|array()|' $PLIK" \
+  "po skasowaniu danych A sesja NADAL jest wspoldzielona dla B"
+
 echo
 echo "=== KONTROLA ODWROTNA: czysty kod ma przechodzic ==="
 wdroz_czysty

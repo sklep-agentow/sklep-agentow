@@ -151,6 +151,36 @@ rowne( 'wlasne zgloszenie wnioskodawcy skasowane', '0', (string) $wpdb->get_var(
 rowne( 'items_retained = true, bo cos ZOSTALO', true, $kas_wsp['items_retained'] );
 sprawdz( 'i komunikat mowi, ze zachowano i dlaczego', false !== strpos( $komun_wsp, 'Zachowano' ) && false !== strpos( $komun_wsp, 'inna osoba' ), $komun_wsp );
 
+
+echo "\n=== D4. Wnioski przychodza PO KOLEI, a nie naraz ===\n";
+/*
+ * Znalezisko recenzenta, ostrzejsze niz wyglada: wykrywanie sesji wspoldzielonej
+ * czytalo BIEZACY stan tabeli zgloszen, a kasownik w tej samej operacji kasuje
+ * zgloszenie wnioskodawcy — czyli niszczy dowod, ze sesja byla wspoldzielona.
+ * Kreator WordPressa obsluguje wnioski jeden po drugim, czesto w odstepie dni,
+ * wiec ochrona dzialalaby wylacznie dla wnioskow rozpatrywanych ROWNOCZESNIE.
+ *
+ * Sekwencja: A juz skasowal swoje dane (sekcja D3 wyzej). Teraz wniosek sklada B.
+ */
+$podzial_po = chatl_rodo_sesje_maila( $mail_d2 );
+rowne( 'po skasowaniu danych A sesja NADAL jest wspoldzielona dla B', 1, count( $podzial_po['wspoldzielone'] ) );
+rowne( 'i nie stala sie wylaczna wlasnoscia B', 0, count( $podzial_po['wlasne'] ) );
+
+$eksp_b  = call_user_func( $eksportery['chatbot-live']['callback'], $mail_d2, 1 );
+$tresc_b = chatl_test_tresc_eksportu( $eksp_b );
+sprawdz( 'eksport dla B NIE wydaje rozmowy z wiadomosciami osoby A', false === strpos( $tresc_b, 'ROZMOWA-WSPOLNA' ), $tresc_b );
+
+$kas_b = call_user_func( $kasowniki['chatbot-live']['callback'], $mail_d2, 1 );
+rowne( 'i kasowanie dla B tez jej nie zabiera', '1', (string) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$tr} WHERE sesja = %s", $sesja_wsp ) ) ); // phpcs:ignore
+rowne( 'items_retained dla B tez true', true, $kas_b['items_retained'] );
+
+// Slad nie moze rosnac w nieskonczonosc: sesja bez ani jednej wiadomosci wypada.
+$wpdb->query( $wpdb->prepare( "DELETE FROM {$tr} WHERE sesja = %s", $sesja_wsp ) ); // phpcs:ignore
+chatl_rodo_zapamietaj_wspolne( array( 'rodoTestSesjaDOPRZYCIECIA00000' ) );
+$slad = chatl_rodo_slad_wspolnych();
+sprawdz( 'sesja bez rozmowy wypada ze sladu (opcja nie rosnie bez konca)', ! in_array( $sesja_wsp, $slad, true ), implode( ',', $slad ) );
+sprawdz( 'i nowa sesja bez rozmowy tez tam nie zostaje', ! in_array( 'rodoTestSesjaDOPRZYCIECIA00000', $slad, true ), implode( ',', $slad ) );
+
 echo "\n=== E. Stronicowanie oddaje KOMPLET (eksport z dziura jest niewidoczny) ===\n";
 /*
  * Najgrozniejszy przypadek to DOKLADNIE pelna strona zgloszen: naiwne liczenie
@@ -197,6 +227,7 @@ echo "\n=== F. Podpowiedz do polityki prywatnosci ===\n";
 sprawdz( 'wtyczka dokłada tresc do polityki prywatnosci', has_action( 'admin_init', 'chatl_polityka_prywatnosci' ) !== false );
 
 echo "\n=== G. Sprzatanie ===\n";
+delete_option( CHATL_RODO_OPCJA_WSPOLNE );
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$tz} WHERE email IN (%s, %s, %s, %s, %s)", $mail_a, $mail_b, $mail_c, $mail_d1, $mail_d2 ) ); // phpcs:ignore
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$tr} WHERE sesja IN (%s, %s, %s, %s)", $sesja_a, $sesja_b, $sesja_c, $sesja_wsp ) ); // phpcs:ignore
 rowne( 'dane testowe usuniete', '0', (string) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$tz} WHERE email IN (%s, %s, %s)", $mail_a, $mail_b, $mail_c ) ) ); // phpcs:ignore

@@ -28,7 +28,9 @@ migracja odpala się sama przy pierwszym wejściu do panelu po aktualizacji
   ani kasowana: zawiera wiadomości dwóch osób, a wiersze nie mają znacznika autora,
   więc nie da się ich rozdzielić. Wydanie jej byłoby ujawnieniem cudzych danych
   wnioskodawcy, a skasowanie — usunięciem cudzych danych na wniosek osoby trzeciej.
-  Kreator wypisuje, ile takich rozmów zachowano i dlaczego.
+  Kreator wypisuje, ile takich rozmów zachowano i dlaczego. Ochrona działa także wtedy,
+  gdy wnioski przychodzą **po kolei**: informacja o współdzieleniu sesji jest zapisywana
+  zanim cokolwiek zostanie usunięte, więc nie znika razem ze skasowanym zgłoszeniem.
 - Komunikat kasownika podaje **rzeczywiste liczby** usuniętych zgłoszeń i wiadomości.
   Wniosek dotyczący adresu, którego nie ma w bazie, kończy się zdaniem „nie znaleziono
   żadnych danych" — a nie potwierdzeniem kasowania, którego nie było.

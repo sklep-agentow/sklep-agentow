@@ -25,6 +25,70 @@ if ( ! defined( 'ABSPATH' ) ) {
 const CHATL_RODO_PORCJA = 100;
 
 /**
+ * Nazwa opcji z listą sesji, o których WIEMY, że były współdzielone.
+ *
+ * ⚠️ Po co osobny ślad, skoro współdzielenie widać w tabeli zgłoszeń: bo kasownik
+ * **niszczy ten dowód w tej samej operacji**. Sekwencja, która to pokazuje —
+ * i która jest normalnym trybem pracy kreatora, bo wnioski przychodzą jeden po
+ * drugim, często w odstępie dni:
+ *
+ * 1. w sesji S zgłoszenia zostawiają osoby A i B (dwa różne adresy),
+ * 2. A składa wniosek o usunięcie: zgłoszenie A znika, rozmowa S zostaje
+ *    zachowana — poprawnie, bo w chwili sprawdzania zgłoszenie B jeszcze było,
+ * 3. B składa **swój** wniosek później. W tabeli nie ma już żadnego obcego
+ *    adresu dla sesji S, więc bez tego śladu S wyglądałaby na wyłączną własność B,
+ * 4. eksport wydałby B **całą rozmowę, razem z wiadomościami osoby A**.
+ *
+ * Czyli ten sam błąd, tyle że rozłożony w czasie. Ślad zostaje zapisany, ZANIM
+ * kasownik cokolwiek usunie, i przeżywa skasowanie jednego z dwóch zgłoszeń.
+ * Nie jest daną osobową: to sam identyfikator sesji, bez adresu i bez treści.
+ */
+const CHATL_RODO_OPCJA_WSPOLNE = 'chatl_rodo_sesje_wspolne';
+
+/**
+ * Sesje zapamiętane jako współdzielone.
+ *
+ * @return array
+ */
+function chatl_rodo_slad_wspolnych() {
+	$lista = get_option( CHATL_RODO_OPCJA_WSPOLNE, array() );
+	return is_array( $lista ) ? array_values( array_filter( array_map( 'strval', $lista ) ) ) : array();
+}
+
+/**
+ * Dopisanie sesji do śladu współdzielonych. Wołane PRZED kasowaniem zgłoszeń.
+ *
+ * @param array $sesje Identyfikatory sesji.
+ * @return void
+ */
+function chatl_rodo_zapamietaj_wspolne( $sesje ) {
+	global $wpdb;
+	$sesje = array_values( array_filter( array_map( 'strval', (array) $sesje ) ) );
+	if ( ! $sesje ) {
+		return;
+	}
+	$lista = array_values( array_unique( array_merge( chatl_rodo_slad_wspolnych(), $sesje ) ) );
+
+	/*
+	 * Przycinanie przy zapisie, a nie w cronie: rodo.php ładuje się wyłącznie
+	 * w panelu (`is_admin()`), więc zadanie crona i tak by tej funkcji nie
+	 * zobaczyło. Zapis zdarza się rzadko — tylko przy wniosku o usunięcie
+	 * dotyczącym sesji współdzielonej — więc jeden dodatkowy SELECT jest tani.
+	 *
+	 * Sesja, po której nie została ANI JEDNA wiadomość (retencja skasowała
+	 * rozmowę po CHATL_RETENCJA_DNI dniach), nie ma już czego chronić i wypada
+	 * z listy. Dzięki temu opcja nie rośnie w nieskończoność.
+	 */
+	$tr      = $wpdb->prefix . 'chatl_rozmowy';
+	$miejsca = implode( ', ', array_fill( 0, count( $lista ), '%s' ) );
+	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQLPlaceholders
+	$zywe = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT sesja FROM {$tr} WHERE sesja IN ({$miejsca})", $lista ) );
+	$zywe = array_values( array_filter( (array) $zywe ) );
+
+	update_option( CHATL_RODO_OPCJA_WSPOLNE, $zywe, false );
+}
+
+/**
  * Sesje powiązane z adresem — Z PODZIAŁEM na wyłączne i współdzielone.
  *
  * ⚠️ TU JEST SEDNO CAŁEGO MODUŁU. Rozmowę wiążemy z osobą przez sesję, w której
@@ -77,6 +141,15 @@ function chatl_rodo_sesje_maila( $email ) {
 		$obce    = array_values( array_filter( (array) $obce ) );
 	}
 	// phpcs:enable
+
+	/*
+	 * Sesja raz uznana za współdzieloną zostaje nią NA ZAWSZE — także wtedy, gdy
+	 * drugie zgłoszenie zniknęło już z tabeli, bo jego właściciel złożył własny
+	 * wniosek o usunięcie. Bez tego kroku ochrona działałaby wyłącznie dla wniosków
+	 * rozpatrywanych RÓWNOCZEŚNIE, a kreator WordPressa obsługuje je po kolei,
+	 * często w odstępie dni (patrz komentarz przy CHATL_RODO_OPCJA_WSPOLNE).
+	 */
+	$obce = array_values( array_unique( array_merge( $obce, array_intersect( $sesje, chatl_rodo_slad_wspolnych() ) ) ) );
 
 	return array(
 		'wlasne'        => array_values( array_diff( $sesje, $obce ) ),
@@ -247,7 +320,15 @@ function chatl_rodo_kasownik( $email, $strona = 1 ) { // phpcs:ignore Generic.Co
 	$komunikaty = array();
 
 	$podzial = chatl_rodo_sesje_maila( $email );
-	$ile_r   = 0;
+
+	/*
+	 * NAJPIERW ślad, POTEM kasowanie. Odwrotna kolejność kasowałaby dowód
+	 * współdzielenia, zanim zdążylibyśmy go zapisać — patrz komentarz przy
+	 * CHATL_RODO_OPCJA_WSPOLNE.
+	 */
+	chatl_rodo_zapamietaj_wspolne( $podzial['wspoldzielone'] );
+
+	$ile_r = 0;
 	if ( $podzial['wlasne'] ) {
 		$tr      = $wpdb->prefix . 'chatl_rozmowy';
 		$miejsca = implode( ', ', array_fill( 0, count( $podzial['wlasne'] ), '%s' ) );

@@ -146,6 +146,7 @@ całą historię przy każdym wejściu.
 | `chatl_blad_maila` | `['kiedy' => data, 'adres' => e-mail]` | **nie** | gdy `wp_mail()` zwróci `false`; kasowana przy pierwszej udanej wysyłce |
 | `chatl_blad_ai` | `['kiedy' => data, 'kod' => HTTP, 'tresc' => fragment]` | **nie** | gdy wywołanie API nie zwróci 200; kasowana przy pierwszym udanym wywołaniu |
 | `chatl_blad_nonce` | `['ostatni' => data, 'ile' => liczba]` | **nie** | gdy gościowi odbije się zabezpieczenie formularza; kasowana przyciskiem w panelu |
+| `chatl_rodo_sesje_wspolne` | lista identyfikatorów sesji, o których wiemy, że **były współdzielone** przez dwie osoby | **nie** | przy wniosku RODO o usunięcie dotyczącym takiej sesji; przycinana przy każdym zapisie (patrz 23.2) |
 
 Klucz API jest bez autoloadu celowo: nie wchodzi do zapytania ładowanego na każdej odsłonie
 strony. Weryfikacja na żywym stacku po pełnym cyklu instalacja→deinstalacja→instalacja:
@@ -967,6 +968,25 @@ mądrze i jest fałszem — w bazie nie ma nic, co by to rozstrzygało. Zamiast 
 kreator **wypisuje**, ile rozmów zachowano i dlaczego, a `items_retained` jest wtedy
 `true`. Paczka eksportu dostaje na pierwszej stronie notatkę o pominiętej rozmowie —
 milczenie byłoby gorsze niż pominięcie, bo paczka wyglądałaby na komplet.
+
+**Ślad musi przeżyć kasowanie — inaczej ochrona działa tylko dla wniosków składanych
+równocześnie.** Współdzielenie widać w tabeli zgłoszeń, ale kasownik **niszczy ten dowód
+w tej samej operacji**: usuwa zgłoszenie wnioskodawcy. Sekwencja, która to pokazuje, jest
+normalnym trybem pracy kreatora (wnioski przychodzą jeden po drugim, często w odstępie dni):
+
+1. w sesji S zgłoszenia zostawiają A i B,
+2. **A prosi o usunięcie** — zgłoszenie A znika, rozmowa S zostaje zachowana (poprawnie),
+3. **B prosi później o kopię** — w tabeli nie ma już obcego adresu dla S,
+4. bez śladu eksport wydałby B **całą rozmowę, razem z wiadomościami osoby A**.
+
+Dlatego `chatl_rodo_kasownik()` zapisuje identyfikatory sesji współdzielonych do opcji
+`chatl_rodo_sesje_wspolne` **zanim** cokolwiek usunie, a `chatl_rodo_sesje_maila()` bierze
+pod uwagę zarówno bieżący stan tabeli, jak i ten ślad. W opcji leżą **same identyfikatory
+sesji** — bez adresu i bez treści, więc to nie są dane osobowe. Lista jest przycinana przy
+każdym zapisie: sesja, po której nie została ani jedna wiadomość (retencja skasowała rozmowę
+po `CHATL_RETENCJA_DNI` dniach), nie ma już czego chronić i wypada. Przycinanie dzieje się
+przy zapisie, a nie w cronie, bo `rodo.php` ładuje się wyłącznie w panelu (`is_admin()`),
+więc zadanie crona tej funkcji by nie zobaczyło.
 
 ### 23.3. Komunikat kasownika mówi to, co się stało
 
