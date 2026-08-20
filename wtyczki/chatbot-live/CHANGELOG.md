@@ -10,6 +10,38 @@ migracja odpala się sama przy pierwszym wejściu do panelu po aktualizacji
 
 ---
 
+## [1.5.3] — 2026-08-21 · schemat bazy 6 → 7
+
+### Dodane
+- **Pułapka na boty.** Ukryte pole, którego człowiek nie widzi i nie dosięgnie
+  klawiszem Tab, plus **próg czasu liczony po stronie serwera** (pytanie szybsze
+  niż 2 sekundy od otwarcia czatu nie jest pisane przez człowieka).
+- Próg czasu **nie obowiązuje przy formularzu kontaktu** — test w przeglądarce
+  pokazał, że prawdziwy gość klikający „Zostaw wiadomość" zaraz po otwarciu czatu
+  wpadał we własną pułapkę, a cena tej pomyłki to utracony kontakt. Formularza
+  pilnuje samo ukryte pole.
+
+### Co się dzieje ze złapaną wiadomością — i dlaczego
+- **Zostaje zapisana, z oznaczeniem „podejrzane".** Nie kasujemy jej po cichu:
+  gdyby sito pomyliło się przy prawdziwym kliencie, nikt by się o tym nie
+  dowiedział — klient myślałby, że wysłał, właściciel nie wiedziałby, że coś
+  przepadło. Ten produkt istnieje po to, żeby zbierać kontakty.
+- **Nie wysyła powiadomienia mailem** — ochrona przed mail-bombą była głównym
+  powodem postawienia pułapki.
+- **Nie zużywa budżetu trybu AI** ani limitu chroniącego prawdziwych gości.
+- Lista **Zgłoszenia** pokazuje domyślnie tylko czyste; złapane są **za filtrem
+  z licznikiem**, żeby fałszywy alarm był widoczny.
+- Dla wysyłającego odpowiedź jest **co do znaku identyczna** z odpowiedzią na
+  czyste zgłoszenie — autor skryptu nie dowiaduje się, że wpadł.
+
+### Uwaga — czego to nie zatrzyma
+- Pułapka łapie automaty wypełniające wszystko, co znajdą na stronie, i strzelające
+  natychmiast po jej wczytaniu. **Nie zatrzyma** kogoś, kto podejrzy kształt żądania
+  i będzie je wysyłał bezpośrednio, z odstępami — przed tym broni dobowy limit
+  zapytań AI na adres. Napisane wprost także w instrukcji.
+
+---
+
 ## [1.5.0] — 2026-08-20 · schemat bazy 5 → 6
 
 ### Dodane

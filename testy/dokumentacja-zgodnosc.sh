@@ -43,9 +43,9 @@ spr "kazdy wpis CHANGELOG oddzielony kreska" "0" \
   "awk '/^## \\[1\\./ {if (NR>1 && poprz != \"---\") b++} {if (\$0 != \"\") poprz=\$0} END {print b+0}' $W/CHANGELOG.md"
 
 echo "=== A. Wersja i schemat ==="
-spr "naglowek Version"            "1.5.0" "grep -oP '(?<=^ \* Version: ).*' $W/chatbot-live.php"
-spr "stala CHATL_WERSJA"          "1.5.0" "grep -oP \"(?<=CHATL_WERSJA', ')[^']*\" $W/chatbot-live.php"
-spr "CHATL_WERSJA_SCHEMATU"       "6"     "grep -oP \"(?<=CHATL_WERSJA_SCHEMATU', ')[^']*\" $W/chatbot-live.php"
+spr "naglowek Version"            "1.5.3" "grep -oP '(?<=^ \* Version: ).*' $W/chatbot-live.php"
+spr "stala CHATL_WERSJA"          "1.5.3" "grep -oP \"(?<=CHATL_WERSJA', ')[^']*\" $W/chatbot-live.php"
+spr "CHATL_WERSJA_SCHEMATU"       "7"     "grep -oP \"(?<=CHATL_WERSJA_SCHEMATU', ')[^']*\" $W/chatbot-live.php"
 spr "Requires at least"           "6.0"   "grep -oP '(?<=^ \* Requires at least: ).*' $W/chatbot-live.php"
 spr "Requires PHP"                "8.1"   "grep -oP '(?<=^ \* Requires PHP: ).*' $W/chatbot-live.php"
 spr "naglowek Author"             "Automatic AI" "grep -oP '(?<=^ \* Author: ).*' $W/chatbot-live.php"
@@ -89,7 +89,7 @@ while IFS='|' read -r _ NAZWA WART PLIK _; do
 done < <(grep -P "^\| ${BT}CHATL_[A-Z_]+${BT} \| ${BT}[^${BT}]+${BT} \| ${BT}[^${BT}]+${BT} \|" $DOK)
 # Sama petla nie wystarczy: gdyby wzorzec wiersza przestal pasowac (zmiana ukladu
 # tabeli), petla nie zrobilaby ANI JEDNEGO sprawdzenia i sekcja bylaby cicho pusta.
-spr "stalych sprawdzonych z tabeli dokumentacji" "28" "echo $STALYCH"
+spr "stalych sprawdzonych z tabeli dokumentacji" "31" "echo $STALYCH"
 
 echo
 echo "=== A1b. Rejestr rozszerzen ponad specyfikacje (klasa #6 sciagi) ==="
@@ -105,12 +105,12 @@ echo "=== A1b. Rejestr rozszerzen ponad specyfikacje (klasa #6 sciagi) ==="
 # paczki zatrzymuje budowe przy nowym pliku.
 REJ=boty/PONAD-SPECYFIKACJE-BOTY.md
 spr "rejestr istnieje"                    "1" "test -f $REJ && echo 1 || echo 0"
-spr "pozycji ChatBota w rejestrze"        "10" "sed -n '/^## ChatBot LIVE/,/^## Segregator/p' $REJ | grep -cP '^[0-9]+\. '"
+spr "pozycji ChatBota w rejestrze"        "11" "sed -n '/^## ChatBot LIVE/,/^## Segregator/p' $REJ | grep -cP '^[0-9]+\. '"
 spr "rejestr wymienia tryb AI"            "1" "sed -n '/^## ChatBot LIVE/,/^## Segregator/p' $REJ | grep -c 'Tryb AI'"
 spr "rejestr wymienia statystyki i luki"  "1" "sed -n '/^## ChatBot LIVE/,/^## Segregator/p' $REJ | grep -c 'Statystyki i raport luk'"
 spr "rejestr wymienia konfigurowalny wyglad" "1" "sed -n '/^## ChatBot LIVE/,/^## Segregator/p' $REJ | grep -c 'Konfigurowalny wygląd widgetu'"
 spr "rejestr wymienia ekran powitalny"    "1" "sed -n '/^## ChatBot LIVE/,/^## Segregator/p' $REJ | grep -c 'Ekran powitalny'"
-spr "kazda pozycja ma powod (mysllnik)"   "10" "sed -n '/^## ChatBot LIVE/,/^## Segregator/p' $REJ | grep -cP '^[0-9]+\..*—|^[0-9]+\.[^—]*$'"
+spr "kazda pozycja ma powod (mysllnik)"   "11" "sed -n '/^## ChatBot LIVE/,/^## Segregator/p' $REJ | grep -cP '^[0-9]+\..*—|^[0-9]+\.[^—]*$'"
 
 echo
 echo "=== A2. Plik LICENSE (pelny GPL-2.0, wziety z rdzenia WordPressa) ==="
@@ -175,7 +175,7 @@ spr "rola varchar(10)"            "1"  "grep -c 'rola varchar(10) NOT NULL' $W/i
 spr "trafiono dopuszcza NULL"     "1"  "grep -c 'trafiono tinyint(1) DEFAULT NULL' $W/includes/instalator.php"
 spr "indeks luki pod raport"      "1"  "grep -c 'KEY luki (rola,trafiono,utworzono)' $W/includes/instalator.php"
 spr "silnik domyslnie reguly"     "1"  "grep -c \"silnik varchar(10) NOT NULL DEFAULT 'reguly'\" $W/includes/instalator.php"
-spr "indeksow KEY (poza PRIMARY)" "7"  "grep -cP '^\\t\\tKEY ' $W/includes/instalator.php"
+spr "indeksow KEY (poza PRIMARY)" "8"  "grep -cP '^\\t\\tKEY ' $W/includes/instalator.php"
 
 echo
 echo "=== E. Aktywacja, seed, cron ==="
@@ -204,7 +204,7 @@ echo "=== H. Opcje i autoload ==="
 spr "klucz API add_option bez autoload" "1" "grep -c \"add_option( 'chatl_klucz_api', \\\$klucz, '', false )\" $W/includes/ai.php"
 # Oba znaczniki awarii (mail i odrzucony nonce) maja byc BEZ autoloadu: to opcje
 # czytane tylko w panelu, wiec nie ma powodu wozic ich w kazdym zapytaniu strony.
-spr "znacznikow awarii bez autoload"    "2" "grep -A8 \"update_option($\" $W/includes/front.php | grep -cP '^\\t\\tfalse$'"
+spr "znacznikow awarii bez autoload"    "3" "grep -A8 \"update_option($\" $W/includes/front.php | grep -cP '^\\t\\tfalse$'"
 spr "znacznik nonce zapisywany bez autoload" "1" "grep -A9 \"'chatl_blad_nonce',\" $W/includes/front.php | grep -cP '^\\t\\tfalse$'"
 
 echo

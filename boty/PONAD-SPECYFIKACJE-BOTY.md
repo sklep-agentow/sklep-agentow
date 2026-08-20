@@ -44,6 +44,12 @@ była w klepniętych szkicach (`boty/SZKICE-BOTOW.md`) albo wynika z ich zasad
    wydarzy i że w paczce znajdzie historię zmian oraz opis w formacie, który zna
    z katalogu WordPressa. Brak tych rzeczy nie psuje działania, ale od razu
    widać, że to nie jest produkt handlowy.
+11. **Pułapka na boty (honeypot + próg czasu)** (`includes/front.php`,
+   `assets/widget.js`) — rozszerzenie ponad szkice. **Powód:** czat jest publiczny,
+   a pięć adresów wystarczało, żeby wyczerpać dzienny budżet AI właściciela —
+   potem prawdziwi goście dostawali już tylko tryb regułowy, a właściciel płacił
+   za funkcję, która cicho przestała działać. Do tego formularz kontaktu bez sita
+   jest zaproszeniem do mail-bomby na skrzynkę właściciela.
 
 ## Segregator maila
 1. **Tryb AI + „porównaj reguły vs AI"** — decyzja Dzidka 18.08 (szkice §BOT 2).

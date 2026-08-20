@@ -510,7 +510,10 @@ function chatl_ajax_zgloszenie() {
 
 	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce sprawdzony linijkę wyżej.
 	$sesja_wstepna = isset( $_POST['sesja'] ) ? chatl_waliduj_sesje( wp_unslash( $_POST['sesja'] ) ) : '';
-	$pulapka       = chatl_pulapka_zlapala( $sesja_wstepna );
+	// Bez progu czasu — przy formularzu kontaktu fałszywy alarm kosztuje
+	// utracony kontakt, a próg i tak nie łapie bota strzelającego wprost
+	// w admin-ajax.php (patrz komentarz przy chatl_pulapka_zlapala).
+	$pulapka = chatl_pulapka_zlapala( $sesja_wstepna, false );
 	if ( '' !== $pulapka ) {
 		chatl_odnotuj_pulapke( $pulapka );
 	}
@@ -640,15 +643,31 @@ add_action( 'wp_ajax_nopriv_chatl_zgloszenie', 'chatl_ajax_zgloszenie' );
  * broni dobowy limit na adres (CHATL_AI_LIMIT_IP_NA_DOBE), a nie to.
  * To jest tanie sito na masową głupotę, nie zamek na determinację.
  *
- * @param string $sesja Identyfikator sesji (już zwalidowany).
+ * ⚠️ PRÓG CZASU JEST WŁĄCZANY OSOBNO I NIE DZIAŁA PRZY FORMULARZU KONTAKTU.
+ * Powód zmierzony testem przeglądarkowym, nie wydedukowany: prawdziwy gość,
+ * który otworzy czat i od razu kliknie „Zostaw wiadomość", potrafi wysłać
+ * formularz szybciej niż w dwie sekundy od wydania sesji — i wpada we własną
+ * pułapkę. Cena tego fałszywego alarmu to **utracony kontakt**, czyli jedyna
+ * rzecz, dla której ten produkt istnieje.
+ *
+ * Rachunek wychodzi tu jednoznacznie na niekorzyść progu czasu przy zgłoszeniu:
+ * bot uderzający wprost w `admin-ajax.php` podaje ZMYŚLONĄ sesję, dla której nie
+ * ma wiersza w tabeli — a wtedy próg czasu i tak nie zadziała (brak wiersza to
+ * nie dowód bota). Łapie więc wyłącznie skrypt, który grzecznie poprosi o sesję
+ * i natychmiast strzeli. Przy pytaniu do bota koszt pomyłki jest bliski zeru
+ * (gość dostaje odpowiedź z reguł i nawet tego nie zauważy), więc tam próg
+ * zostaje. Przy formularzu — nie.
+ *
+ * @param string $sesja        Identyfikator sesji (już zwalidowany).
+ * @param bool   $sprawdzaj_czas Czy stosować próg czasu (patrz wyżej).
  * @return string '' gdy czysto, inaczej powód: 'pole' albo 'czas'.
  */
-function chatl_pulapka_zlapala( $sesja ) {
+function chatl_pulapka_zlapala( $sesja, $sprawdzaj_czas = true ) {
 	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce sprawdza chatl_wymagaj_nonce() na wejściu do endpointu.
 	if ( ! empty( $_POST[ CHATL_PULAPKA_POLE ] ) ) {
 		return 'pole';
 	}
-	if ( '' === (string) $sesja ) {
+	if ( ! $sprawdzaj_czas || '' === (string) $sesja ) {
 		return '';
 	}
 	global $wpdb;

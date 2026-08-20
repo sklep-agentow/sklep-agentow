@@ -46,6 +46,13 @@ function chatl_test_sprzataj() {
 	$wpdb->query( "DELETE FROM {$wpdb->prefix}chatl_zgloszenia WHERE email LIKE 'pulapka-test%'" ); // phpcs:ignore
 	$wpdb->query( "DELETE FROM {$wpdb->prefix}chatl_sesje WHERE sesja LIKE 'pulapkaTest%'" ); // phpcs:ignore
 	delete_option( 'chatl_pulapka' );
+	/*
+	 * Czyscimy WLASNE kuble limitu. Powod jest merytoryczny, nie kosmetyczny:
+	 * kazdy przebieg wysyla dwa zgloszenia, a proba kontrolna odpala test
+	 * dziewiec razy pod rzad — bez tego dziewiaty przebieg dostaje 429 i "czysty
+	 * kod nie przechodzi", czyli proba mowilaby o wadzie, ktorej nie ma.
+	 */
+	$wpdb->query( "DELETE FROM {$wpdb->prefix}chatl_rate_limit WHERE klucz LIKE 'chat|%' OR klucz LIKE 'pulapka|%' OR klucz LIKE 'ai|%'" ); // phpcs:ignore
 }
 chatl_test_sprzataj();
 
@@ -68,7 +75,7 @@ echo "\n=== B. Wykrywanie: prog czasu liczony PO STRONIE SERWERA ===\n";
 $_POST = array();
 rowne( 'zadanie tuz po wydaniu sesji = zlapane', 'czas', chatl_pulapka_zlapala( $sesja_swieza ) );
 rowne( 'nieznana sesja NIE jest lapana (mogla wygasnac)', '', chatl_pulapka_zlapala( 'pulapkaTestNieMaTakiej000000000' ) );
-rowne( 'pusta sesja tez nie', '', chatl_pulapka_zlapala( '' ) );
+rowne( 'prog czasu da sie WYLACZYC dla wybranej sciezki', '', chatl_pulapka_zlapala( $sesja_swieza, false ) );
 
 echo "\n=== C. Licznik czyni pulapke widoczna w panelu ===\n";
 delete_option( 'chatl_pulapka' );
@@ -81,34 +88,123 @@ sprawdz( 'oraz kiedy', ! empty( $stan['ostatnia'] ) );
 
 echo "\n=== D. SEDNO: zlapane zgloszenie TRAFIA DO BAZY, z flaga ===\n";
 /*
- * Nie wolamy endpointu przez HTTP (nonce, naglowki), tylko odtwarzamy DOKLADNIE
- * to, co robi jego galaz zapisu — z flaga wyliczana tak samo.
+ * ⛔ Ta sekcja wola PRAWDZIWY endpoint, a nie kopie jego logiki. Pierwsza wersja
+ * miala wlasny helper powtarzajacy INSERT — proba kontrolna to obnazyla: mutant
+ * "flaga nie jest stawiana" nie zostal zlapany, bo test sprawdzal SWOJ kod,
+ * nie kod wtyczki. Test, ktory powtarza implementacje, dowodzi tylko tego,
+ * ze umiem ja przepisac.
+ *
+ * wp_send_json_* konczy sie wp_die(), wiec podmieniamy uchwyt na wyjatek
+ * i lapiemy wyjscie buforem — to jest podrecznikowy sposob wolania handlera
+ * AJAX bez HTTP.
  */
-function chatl_test_zapisz( $email, $pulapka ) {
-	global $wpdb;
-	return $wpdb->insert(
-		$wpdb->prefix . 'chatl_zgloszenia',
-		array(
-			'email'      => $email,
-			'wiadomosc'  => 'tresc testowa',
-			'sesja'      => 'pulapkaTestStaraAAAAAAAAAAAAAAAA',
-			'status'     => 'nowe',
-			'podejrzane' => '' === $pulapka ? 0 : 1,
-			'utworzono'  => current_time( 'mysql' ),
-		),
-		array( '%s', '%s', '%s', '%s', '%d', '%s' )
-	);
+class Chatl_Test_Wyjscie extends Exception {}
+
+function chatl_test_uchwyt_die() {
+	return function () {
+		throw new Chatl_Test_Wyjscie();
+	};
 }
-sprawdz( 'kolumna podejrzane istnieje w schemacie', false !== $wpdb->get_var( "SHOW COLUMNS FROM {$tz} LIKE 'podejrzane'" ) ); // phpcs:ignore
-chatl_test_zapisz( 'pulapka-test-czysty@example.test', '' );
-chatl_test_zapisz( 'pulapka-test-zlapany@example.test', 'pole' );
+
+/**
+ * Wola endpoint zgloszenia tak, jak zrobilby to widget.
+ *
+ * @param string $email        Adres.
+ * @param bool   $wypelnij_pulapke Czy wypelnic ukryte pole (czyli udawac bota).
+ * @param string $sesja        Sesja.
+ * @return array Odkodowana odpowiedz JSON.
+ */
+function chatl_test_zgloszenie( $email, $wypelnij_pulapke, $sesja ) {
+	$_POST = array(
+		'nonce'     => wp_create_nonce( 'chatl_front' ),
+		'sesja'     => $sesja,
+		'email'     => $email,
+		'wiadomosc' => 'tresc testowa',
+		'zgoda'     => '1',
+	);
+	$_POST[ CHATL_PULAPKA_POLE ] = $wypelnij_pulapke ? 'https://spam.example' : '';
+	$_REQUEST                    = $_POST;
+
+	/*
+	 * Bez tego wp_send_json() poza kontekstem AJAX wola ZWYKLE die(), ktorego
+	 * zaden filtr nie przechwyci — proces konczylby sie na pierwszym wywolaniu.
+	 * wp_doing_ajax() przepuszcza swoj wynik przez filtr, wiec tedy.
+	 */
+	add_filter( 'wp_doing_ajax', '__return_true' );
+	add_filter( 'wp_die_ajax_handler', 'chatl_test_uchwyt_die' );
+	add_filter( 'wp_die_handler', 'chatl_test_uchwyt_die' );
+	ob_start();
+	try {
+		chatl_ajax_zgloszenie();
+	} catch ( Chatl_Test_Wyjscie $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement
+		// Spodziewane: wp_send_json_* zawsze konczy zadanie.
+	}
+	$wyjscie = ob_get_clean();
+	remove_filter( 'wp_doing_ajax', '__return_true' );
+	remove_filter( 'wp_die_ajax_handler', 'chatl_test_uchwyt_die' );
+	remove_filter( 'wp_die_handler', 'chatl_test_uchwyt_die' );
+	return json_decode( $wyjscie, true );
+}
+
+// Poczta idzie do lapacza, nie w swiat — i sprawdzamy, CZY w ogole wyszla.
+$GLOBALS['chatl_test_maile'] = 0;
+add_filter(
+	'pre_wp_mail',
+	function () {
+		++$GLOBALS['chatl_test_maile'];
+		return true;
+	}
+);
+
+sprawdz( 'kolumna podejrzane istnieje w schemacie', (bool) $wpdb->get_var( "SHOW COLUMNS FROM {$tz} LIKE 'podejrzane'" ) ); // phpcs:ignore
+
+$odp_czysta = chatl_test_zgloszenie( 'pulapka-test-czysty@example.test', false, $sesja_stara );
+$maile_po_czystym = $GLOBALS['chatl_test_maile'];
+$odp_zlapana = chatl_test_zgloszenie( 'pulapka-test-zlapany@example.test', true, $sesja_stara );
+$maile_po_zlapanym = $GLOBALS['chatl_test_maile'];
 
 $czysty  = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$tz} WHERE email = %s", 'pulapka-test-czysty@example.test' ), ARRAY_A ); // phpcs:ignore
 $zlapany = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$tz} WHERE email = %s", 'pulapka-test-zlapany@example.test' ), ARRAY_A ); // phpcs:ignore
+
 sprawdz( 'zlapane zgloszenie JEST w bazie (nie wyrzucone po cichu)', is_array( $zlapany ) );
-rowne( 'i ma flage podejrzane = 1', 1, (int) $zlapany['podejrzane'] );
-rowne( 'czyste ma flage 0', 0, (int) $czysty['podejrzane'] );
-rowne( 'tresc zlapanego zachowana w calosci', 'tresc testowa', $zlapany['wiadomosc'] );
+rowne( 'i ma flage podejrzane = 1', 1, (int) ( $zlapany['podejrzane'] ?? -1 ) );
+rowne( 'czyste ma flage 0', 0, (int) ( $czysty['podejrzane'] ?? -1 ) );
+rowne( 'tresc zlapanego zachowana w calosci', 'tresc testowa', (string) ( $zlapany['wiadomosc'] ?? '' ) );
+
+echo "\n=== D2. Dla goscia odpowiedz jest NIEODROZNIALNA od udanej ===\n";
+sprawdz( 'czyste zgloszenie konczy sie sukcesem', ! empty( $odp_czysta['success'] ) );
+sprawdz( 'zlapane TAKZE sukcesem (spamer nie wie, ze wpadl)', ! empty( $odp_zlapana['success'] ) );
+rowne(
+	'i komunikat jest CO DO ZNAKU ten sam',
+	(string) ( $odp_czysta['data']['komunikat'] ?? 'A' ),
+	(string) ( $odp_zlapana['data']['komunikat'] ?? 'B' )
+);
+
+echo "\n=== D3. WARUNEK 1 zmierzony, nie wyczytany z kodu ===\n";
+rowne( 'czyste zgloszenie WYSLALO powiadomienie', 1, $maile_po_czystym );
+rowne( 'zlapane NIE wyslalo zadnego (ochrona przed mail-bomba)', 1, $maile_po_zlapanym );
+
+echo "\n=== B2. FORMULARZ KONTAKTU nie stosuje progu czasu ===\n";
+/*
+ * Znalezione testem przegladarkowym, nie wydedukowane: prawdziwy gosc, ktory
+ * otworzy czat i OD RAZU klika "Zostaw wiadomosc", wysyla formularz szybciej niz
+ * w dwie sekundy od wydania sesji — i wpadal we wlasna pulapke. Cena tego
+ * falszywego alarmu to UTRACONY KONTAKT, czyli jedyna rzecz, dla ktorej ten
+ * produkt istnieje. Prog czasu i tak nie lapie bota strzelajacego wprost
+ * w admin-ajax.php, bo taki podaje ZMYSLONA sesje (brak wiersza = nie lapiemy).
+ */
+$odp_szybka = chatl_test_zgloszenie( 'pulapka-test-szybki@example.test', false, $sesja_swieza );
+$szybki     = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$tz} WHERE email = %s", 'pulapka-test-szybki@example.test' ), ARRAY_A ); // phpcs:ignore
+sprawdz( 'zgloszenie ze SWIEZEJ sesji doszlo do bazy', is_array( $szybki ) );
+rowne( 'i jest CZYSTE — prog czasu go nie zlapal', 0, (int) ( $szybki['podejrzane'] ?? -1 ) );
+
+$odp_szybka_bot = chatl_test_zgloszenie( 'pulapka-test-szybki-bot@example.test', true, $sesja_swieza );
+$szybki_bot     = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$tz} WHERE email = %s", 'pulapka-test-szybki-bot@example.test' ), ARRAY_A ); // phpcs:ignore
+rowne( 'ale UKRYTE POLE lapie tak samo, niezaleznie od wieku sesji', 1, (int) ( $szybki_bot['podejrzane'] ?? -1 ) );
+// Czyscimy $_POST: wywolania endpointu wyzej zostawily w nim wypelnione
+// pole-pulapke, wiec bez tego sprawdzalibysmy co innego, niz opisuje krok.
+$_POST = array();
+rowne( 'pusta sesja tez nie', '', chatl_pulapka_zlapala( '' ) );
 
 echo "\n=== E. Lista panelu: domyslnie czyste, podejrzane za filtrem z licznikiem ===\n";
 $domyslne   = $wpdb->get_col( $wpdb->prepare( "SELECT email FROM {$tz} WHERE podejrzane = %d AND email LIKE 'pulapka-test%%'", 0 ) ); // phpcs:ignore
@@ -131,10 +227,34 @@ sprawdz(
 	strpos( $kod, 'chatl_pulapka_zlapala( $sesja_wstepna )' ) < strpos( $kod, 'if ( ! chatl_limit_ip_ok() ) {' ),
 	'kolejnosc odwrocona'
 );
+/*
+ * Pierwsza wersja tego kroku porownywala pozycje w CALYM pliku i szukala funkcji
+ * chatl_limit_ai_ok, ktora NIE ISTNIEJE (naprawde nazywa sie chatl_limit_ai_ip_ok).
+ * strpos zwracal false, porownanie liczylo bzdure — czyli krok "przechodzil"
+ * albo "padal" bez zwiazku z kodem. Teraz: wycinamy CIALO endpointu i sprawdzamy
+ * kolejnosc w nim, a nazwy funkcji sa najpierw potwierdzane jako istniejace.
+ */
+$ciało = '';
+if ( preg_match( '/function chatl_ajax_pytanie\(.*?\n}/s', $kod, $m ) ) {
+	$ciało = $m[0];
+}
+sprawdz( 'cialo endpointu chatl_ajax_pytanie dalo sie wyciac', '' !== $ciało );
+sprawdz( 'obie nazwy funkcji AI naprawde istnieja w kodzie', function_exists( 'chatl_limit_ai_ip_ok' ) && function_exists( 'chatl_ai_odpowiedz' ) );
+
+$poz_pulapki = strpos( $ciało, 'chatl_pulapka_zlapala(' );
+$poz_wyjscia = strpos( $ciało, 'wp_send_json_success' );
+$poz_ai      = strpos( $ciało, 'chatl_ai_odpowiedz(' );
 sprawdz(
-	'WARUNEK 2b: zlapane pytanie NIE dochodzi do trybu AI',
-	strpos( $kod, "'silnik'    => 'reguly'" ) < strpos( $kod, 'chatl_limit_ai_ok' ),
-	'zlapane pytanie moze siegnac AI'
+	'WARUNEK 2b: zlapane pytanie WYCHODZI z endpointu, zanim kod dojdzie do AI',
+	false !== $poz_pulapki && false !== $poz_wyjscia && false !== $poz_ai
+		&& $poz_pulapki < $poz_wyjscia && $poz_wyjscia < $poz_ai,
+	'pulapka=' . var_export( $poz_pulapki, true ) . ' wyjscie=' . var_export( $poz_wyjscia, true ) . ' ai=' . var_export( $poz_ai, true )
+);
+sprawdz(
+	'i nie zuzywa dobowego budzetu AI (limit wolany dopiero po pulapce)',
+	false !== strpos( $ciało, 'chatl_limit_ai_ip_ok' )
+		&& $poz_wyjscia < strpos( $ciało, 'chatl_limit_ai_ip_ok' ),
+	'limit AI wolany przed wyjsciem pulapki'
 );
 sprawdz(
 	'WARUNEK 3: odpowiedz dla zlapanego jest SUKCESEM, nie bledem',

@@ -4,7 +4,7 @@ Tags: chat, chatbot, faq, kontakt, wsparcie
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.5.0
+Stable tag: 1.5.3
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -132,6 +132,13 @@ Domyślnie **zostają** — możesz odinstalować i wrócić bez strat. Pełne c
 w ustawieniach. Klucz API jest kasowany zawsze, niezależnie od tego przełącznika.
 
 == Changelog ==
+
+= 1.5.3 =
+* Pułapka na boty: ukryte pole + próg czasu liczony po stronie serwera.
+* Złapane zgłoszenie jest ZAPISANE z oznaczeniem „podejrzane", ale nie wysyła
+  powiadomienia mailem i nie zużywa budżetu trybu AI.
+* Lista zgłoszeń pokazuje domyślnie tylko czyste; podejrzane za filtrem z licznikiem.
+* Dla wysyłającego odpowiedź jest identyczna jak przy udanym zgłoszeniu.
 
 Pełna historia zmian, z opisem każdej pozycji, jest w pliku `CHANGELOG.md`
 w paczce. Poniżej skrót.
