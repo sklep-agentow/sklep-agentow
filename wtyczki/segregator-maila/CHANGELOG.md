@@ -17,6 +17,16 @@ wersjonowanie według [SemVer](https://semver.org/lang/pl/).
   że od jakiegoś czasu liczą u niego same reguły. Pasek gaśnie sam po pierwszym
   udanym wywołaniu.
 
+### Naprawione
+
+- **Listy w panelu urywały się bez słowa i bez odnośnika „dalej”.** Przebiegi
+  kończyły się na pięćdziesiątym, próbka pokazywała pierwsze 200 z 500, historia
+  skrzynki na pięćdziesiątym — do reszty własnych danych nie było jak dojść.
+  Wszystkie trzy listy są teraz stronicowane, po 50 wierszy, z informacją
+  „pozycje X–Y z Z”. Odnośniki „Zobacz raport", „Szczegóły" i „Edytuj" niosą
+  numer strony, a powrotne „wróć" i „Anuluj edycję" go czytają — powrót nie
+  zrzuca już na pierwszą stronę.
+
 ### Bezpieczeństwo
 
 - **Klucz API można trzymać poza bazą**: stała `SEGM_KLUCZ_API` w `wp-config.php`

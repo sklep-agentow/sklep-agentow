@@ -141,6 +141,12 @@ w paczce. Poniżej skrót.
   „gdzie zaparkować") i bot wie, o czym mowa. Pamięć obejmuje ostatnie 6 wymian
   — celowo ucięta, bo każda wymiana to tokeny na Twoim rachunku.
 
+= 1.4.4 =
+* **Wybór modelu w ustawieniach** (lista + własny identyfikator) — do tej pory
+  wymagało to pisania filtru w kodzie.
+* Domyślny model to alias bez daty, więc wycofanie konkretnej migawki nie wyłącza
+  trybu AI.
+
 = 1.4.3 =
 * Naprawione: za Cloudflare albo proxy hostingu limity działały na **całą witrynę
   naraz** zamiast na gościa. Nowe ustawienie „Strona za Cloudflare albo proxy"
