@@ -73,6 +73,37 @@ function chatl_notice_bledu_maila() {
 }
 
 /**
+ * Model wybrany w formularzu: lista albo pole „własny".
+ *
+ * Pusty wynik znaczy „użyj wartości domyślnej produktu" — dlatego wybranie
+ * z listy modelu równego CHATL_AI_MODEL nie zapisuje niczego na sztywno.
+ * Dzięki temu podniesienie domyślnego modelu w kolejnej wersji wtyczki dociera
+ * do wszystkich, którzy go świadomie nie zmienili.
+ *
+ * @param string $stary Poprzednia wartość (gdy formularz nic nie przysłał).
+ * @return string Identyfikator modelu albo pusty string.
+ */
+function chatl_model_z_formularza( $stary ) {
+	// phpcs:disable WordPress.Security.NonceVerification.Missing -- wołane z chatl_post_ustawienia_zapisz(), które sprawdza nonce i uprawnienia.
+	if ( ! isset( $_POST['ai_model_lista'] ) ) {
+		return (string) $stary;
+	}
+	$wybor = sanitize_text_field( wp_unslash( $_POST['ai_model_lista'] ) );
+	if ( 'wlasny' === $wybor ) {
+		$wlasny = isset( $_POST['ai_model_wlasny'] ) ? sanitize_text_field( wp_unslash( $_POST['ai_model_wlasny'] ) ) : '';
+		// Identyfikatory modeli to litery, cyfry, myślniki i kropki — nic więcej
+		// nie ma prawa trafić do żądania do API.
+		$wlasny = trim( (string) preg_replace( '/[^a-zA-Z0-9.\-]/', '', $wlasny ) );
+		return $wlasny;
+	}
+	// phpcs:enable WordPress.Security.NonceVerification.Missing
+	if ( ! isset( chatl_ai_modele()[ $wybor ] ) ) {
+		return (string) $stary;
+	}
+	return CHATL_AI_MODEL === $wybor ? '' : $wybor;
+}
+
+/**
  * Czerwony pasek: ostatnie wywołanie API nie powiodło się.
  *
  * To jest jedyny kanał, którym właściciel dowie się, że płaci za tryb AI,
@@ -653,6 +684,36 @@ function chatl_strona_ustawienia() {
 					</td>
 				</tr>
 				<tr>
+					<th scope="row"><label for="chatl-ai-model">Model</label></th>
+					<td>
+						<?php
+						$modele  = chatl_ai_modele();
+						$biezacy = chatl_ai_model();
+						$znany   = isset( $modele[ $biezacy ] );
+						?>
+						<select id="chatl-ai-model" name="ai_model_lista">
+							<?php foreach ( $modele as $id => $opis ) : ?>
+								<option value="<?php echo esc_attr( $id ); ?>" <?php selected( $znany && $biezacy === $id ); ?>><?php echo esc_html( $opis ); ?></option>
+							<?php endforeach; ?>
+							<option value="wlasny" <?php selected( ! $znany ); ?>>własny — wpisz identyfikator poniżej</option>
+						</select>
+						<p style="margin:8px 0 0">
+							<input type="text" id="chatl-ai-model-wlasny" name="ai_model_wlasny" class="regular-text" placeholder="np. claude-haiku-4-5"
+								value="<?php echo esc_attr( $znany ? '' : $biezacy ); ?>">
+							<span class="description">używane, gdy wybierzesz „własny"</span>
+						</p>
+						<p class="description">
+							Teraz w użyciu: <code><?php echo esc_html( $biezacy ); ?></code>.
+							<strong>Jeśli dostawca udostępnia identyfikator bez daty — użyj właśnie takiego</strong>
+							(np. <code>claude-haiku-4-5</code> zamiast <code>claude-haiku-4-5-20251001</code>): nazwy z datą wskazują konkretną
+							migawkę modelu, a te bywają wycofywane i wtedy tryb AI przestaje działać. Nie każdy model ma taki skrócony
+							identyfikator — jeżeli dostawca podaje wyłącznie nazwę z datą, wpisz ją i pilnuj komunikatów o wycofaniu.<br>
+							Aktualną listę modeli i cennik sprawdzisz u dostawcy: <a href="https://docs.anthropic.com/en/docs/about-claude/models" target="_blank" rel="noopener">dokumentacja modeli Anthropic</a>.
+							Kolejność na liście to „taniej ↔ mocniej"; do odpowiadania z bazy Q&amp;A najtańszy model zwykle w zupełności wystarcza.
+						</p>
+					</td>
+				</tr>
+				<tr>
 					<th scope="row">Sprawdzenie klucza</th>
 					<td>
 						<?php // Odnośnik, a nie przycisk w formularzu: przycisk wysłałby CAŁE ustawienia, a to ma być samo sprawdzenie. ?>
@@ -814,6 +875,7 @@ function chatl_post_ustawienia_zapisz() {
 			? chatl_sanitize_kolor( wp_unslash( $_POST['kolor_tekstu'] ) )
 			: 'auto',
 		'pozycja'          => isset( $_POST['pozycja'] ) && 'lewo' === sanitize_key( wp_unslash( $_POST['pozycja'] ) ) ? 'lewo' : 'prawo',
+		'ai_model'         => chatl_model_z_formularza( $stare['ai_model'] ),
 		'za_proxy'         => empty( $_POST['za_proxy'] ) ? 0 : 1,
 	);
 

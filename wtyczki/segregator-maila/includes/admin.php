@@ -139,6 +139,89 @@ function segm_post_baner_ukryj() {
 add_action( 'admin_post_segm_baner_ukryj', 'segm_post_baner_ukryj' );
 
 /**
+ * Ile wierszy na stronę listy. Jedna liczba dla wszystkich list wtyczki, żeby
+ * właściciel nie musiał się domyślać, dlaczego jedna urywa się inaczej niż druga.
+ */
+const SEGM_NA_STRONE = 50;
+
+/**
+ * Numer bieżącej strony listy z adresu (?segm_strona=N).
+ *
+ * Własny parametr, nie `paged`: WordPress używa `paged` do własnych list
+ * i podpięcie się pod niego na stronie wtyczki bywa źródłem przekręconych
+ * przekierowań.
+ *
+ * @param int $stron Ile stron ma lista (żeby nie wyjść poza zakres).
+ * @return int
+ */
+function segm_biezaca_strona( $stron ) {
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- tylko numer strony listy, nic nie zapisujemy.
+	$nr = isset( $_GET['segm_strona'] ) ? (int) $_GET['segm_strona'] : 1;
+	return max( 1, min( max( 1, $stron ), $nr ) );
+}
+
+/**
+ * Kawałek adresu z numerem strony listy — do przeniesienia w ODNOŚNIKU.
+ *
+ * Widok szczegółów (raport przebiegu, szczegóły przebiegu skrzynki) nie zna
+ * długości listy, z której właściciel przyszedł, więc nie może użyć
+ * segm_biezaca_strona() — a bez przeniesienia numeru „wróć" zawsze lądowało
+ * na stronie 1, choćby wyjście było ze strony 4 z 6. Dla pierwszej strony
+ * zwraca pusty łańcuch, żeby nie zaśmiecać adresu.
+ *
+ * @return string
+ */
+function segm_param_strony() {
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- tylko numer strony listy, nic nie zapisujemy.
+	$nr = isset( $_GET['segm_strona'] ) ? max( 1, (int) $_GET['segm_strona'] ) : 1;
+	return $nr > 1 ? '&segm_strona=' . $nr : '';
+}
+
+/**
+ * Pasek stron pod listą.
+ *
+ * Powód istnienia: listy urywały się na sztywnym LIMIT i NIE MÓWIŁY o tym.
+ * Przebiegi kończyły się na pięćdziesiątym, próbka pokazywała pierwsze 200
+ * z 500 — bez jednego odnośnika „dalej". Właściciel nie miał jak dojść do
+ * reszty własnych danych i nie wiedział nawet, że jakaś reszta istnieje.
+ *
+ * @param string               $strona    Slug strony wtyczki (page=...).
+ * @param int                  $wszystkich Ile wierszy ma cała lista.
+ * @param int                  $biezaca    Numer bieżącej strony.
+ * @param array<string, mixed> $dodatkowe  Dodatkowe parametry adresu do zachowania.
+ * @return void
+ */
+function segm_pasek_stron( $strona, $wszystkich, $biezaca, $dodatkowe = array() ) {
+	$stron = (int) ceil( $wszystkich / SEGM_NA_STRONE );
+	if ( $stron < 2 ) {
+		return;
+	}
+	$baza      = add_query_arg(
+		array_merge( array( 'page' => $strona ), $dodatkowe ) + array( 'segm_strona' => '%#%' ),
+		admin_url( 'admin.php' )
+	);
+	$odnosniki = paginate_links(
+		array(
+			'base'      => $baza,
+			'format'    => '',
+			'current'   => $biezaca,
+			'total'     => $stron,
+			'prev_text' => '‹ poprzednia',
+			'next_text' => 'następna ›',
+			'type'      => 'plain',
+		)
+	);
+	$od        = ( $biezaca - 1 ) * SEGM_NA_STRONE + 1;
+	$do        = min( $wszystkich, $biezaca * SEGM_NA_STRONE );
+	?>
+	<p class="tablenav-pages" style="margin:8px 0">
+		<span class="displaying-num">pozycje <?php echo (int) $od; ?>–<?php echo (int) $do; ?> z <?php echo (int) $wszystkich; ?> (strona <?php echo (int) $biezaca; ?> z <?php echo (int) $stron; ?>)</span>
+		<?php echo wp_kses_post( (string) $odnosniki ); ?>
+	</p>
+	<?php
+}
+
+/**
  * Komunikat po powrocie z admin-post (?segm_ok=... / ?segm_blad=...).
  */
 function segm_komunikaty() {
@@ -217,8 +300,16 @@ function segm_strona_przebiegi() {
 		return;
 	}
 
-	$przebiegi = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}segm_przebiegi ORDER BY id DESC LIMIT 50" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-	$maili     = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}segm_maile" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	$przebiegow = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}segm_przebiegi" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	$strona_nr  = segm_biezaca_strona( (int) ceil( $przebiegow / SEGM_NA_STRONE ) );
+	$przebiegi  = $wpdb->get_results(
+		$wpdb->prepare(
+			"SELECT * FROM {$wpdb->prefix}segm_przebiegi ORDER BY id DESC LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			SEGM_NA_STRONE,
+			( $strona_nr - 1 ) * SEGM_NA_STRONE
+		)
+	);
+	$maili      = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}segm_maile" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 	?>
 	<div class="wrap">
 		<h1>Przebiegi segregacji</h1>
@@ -248,7 +339,8 @@ function segm_strona_przebiegi() {
 			<?php submit_button( 'Przepuść próbkę', 'primary', 'submit', false ); ?>
 		</form>
 
-		<h2>Historia przebiegów</h2>
+		<h2>Historia przebiegów<?php echo $przebiegow > 0 ? ' (' . (int) $przebiegow . ')' : ''; ?></h2>
+		<?php segm_pasek_stron( 'segm-przebiegi', $przebiegow, $strona_nr ); ?>
 		<table class="widefat striped">
 			<thead><tr><th>#</th><th>Kiedy</th><th>Tryb</th><th>Maili</th><th>Przypisane (reguły/AI, poza „Reszta")</th><th>Pokrycie</th><th>Accuracy</th><th></th></tr></thead>
 			<tbody>
@@ -264,7 +356,7 @@ function segm_strona_przebiegi() {
 					<td><?php echo (int) $p->dopasowanych; ?></td>
 					<td><?php echo esc_html( segm_procent( $p->dopasowanych, $p->maili ) ); ?></td>
 					<td><?php echo $p->etykietowanych > 0 ? esc_html( segm_procent( $p->trafionych, $p->etykietowanych ) . ' (' . (int) $p->trafionych . '/' . (int) $p->etykietowanych . ')' ) : '—'; ?></td>
-					<td><a href="<?php echo esc_url( admin_url( 'admin.php?page=segm-przebiegi&przebieg=' . (int) $p->id ) ); ?>">Zobacz raport</a></td>
+					<td><a href="<?php echo esc_url( admin_url( 'admin.php?page=segm-przebiegi&przebieg=' . (int) $p->id . ( $strona_nr > 1 ? '&segm_strona=' . (int) $strona_nr : '' ) ) ); ?>">Zobacz raport</a></td>
 				</tr>
 			<?php endforeach; ?>
 			</tbody>
@@ -329,7 +421,7 @@ function segm_widok_raportu( $id ) {
 	<div class="wrap">
 		<h1>Raport przebiegu #<?php echo (int) $p->id; ?> — <?php echo esc_html( $nazwy_trybow[ $p->tryb ] ?? $p->tryb ); ?> (<?php echo esc_html( $p->uruchomiono ); ?>)</h1>
 		<?php segm_komunikaty(); ?>
-		<p><a href="<?php echo esc_url( admin_url( 'admin.php?page=segm-przebiegi' ) ); ?>">← wróć do przebiegów</a> |
+		<p><a href="<?php echo esc_url( admin_url( 'admin.php?page=segm-przebiegi' . segm_param_strony() ) ); ?>">← wróć do przebiegów</a> |
 			<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=segm_eksport_csv&przebieg=' . (int) $p->id ), 'segm_eksport_' . (int) $p->id ) ); ?>">Eksport CSV</a></p>
 
 		<h2>Liczby</h2>
@@ -824,8 +916,15 @@ add_action( 'admin_post_segm_kategoria_usun', 'segm_post_kategoria_usun' );
 
 function segm_strona_probka() {
 	global $wpdb;
-	$ile   = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}segm_maile" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-	$maile = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}segm_maile ORDER BY id ASC LIMIT 200" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	$ile       = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}segm_maile" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	$strona_nr = segm_biezaca_strona( (int) ceil( $ile / SEGM_NA_STRONE ) );
+	$maile     = $wpdb->get_results(
+		$wpdb->prepare(
+			"SELECT * FROM {$wpdb->prefix}segm_maile ORDER BY id ASC LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			SEGM_NA_STRONE,
+			( $strona_nr - 1 ) * SEGM_NA_STRONE
+		)
+	);
 
 	$edytowany_mail = null;
 	if ( isset( $_GET['edytuj_mail'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -862,7 +961,8 @@ function segm_strona_probka() {
 		</form>
 		<p class="description">Raporty kasujemy razem z próbką, bo trzymają nadawcę i temat każdego maila — czyszczenie samej tabeli maili zostawiałoby tę samą korespondencję w historii przebiegów. Kategorie, reguły i klucz API zostają nietknięte.</p>
 
-		<h2>Maile w próbce<?php echo $ile > 200 ? ' (pierwsze 200)' : ''; ?></h2>
+		<h2>Maile w próbce</h2>
+		<?php segm_pasek_stron( 'segm-probka', $ile, $strona_nr ); ?>
 		<table class="widefat striped">
 			<thead><tr><th>#</th><th>Źródło</th><th>Od</th><th>Temat</th><th>Treść (początek)</th><th>Etykieta</th><th>Akcje</th></tr></thead>
 			<tbody>
@@ -875,7 +975,7 @@ function segm_strona_probka() {
 					<td><?php echo esc_html( wp_html_excerpt( $m->tresc, 90, '…' ) ); ?></td>
 					<td><?php echo '' === $m->kategoria_oczekiwana ? '—' : esc_html( $m->kategoria_oczekiwana ); ?></td>
 					<td>
-						<a href="<?php echo esc_url( admin_url( 'admin.php?page=segm-probka&edytuj_mail=' . (int) $m->id ) ); ?>">Edytuj</a> |
+						<a href="<?php echo esc_url( admin_url( 'admin.php?page=segm-probka&edytuj_mail=' . (int) $m->id . ( $strona_nr > 1 ? '&segm_strona=' . (int) $strona_nr : '' ) ) ); ?>">Edytuj</a> |
 						<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=segm_mail_usun&id=' . (int) $m->id ), 'segm_mail_usun_' . (int) $m->id ) ); ?>"
 							onclick="return confirm('Usunąć ten mail z próbki? Reszta próbki zostaje.');">Usuń</a>
 					</td>
