@@ -30,6 +30,7 @@ $wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}chatl_rate_limit" ); // phpcs
 delete_option( 'chatl_ustawienia' );
 delete_option( 'chatl_wersja_schematu' );
 delete_option( 'chatl_blad_maila' );
+delete_option( 'chatl_blad_ai' );
 delete_option( 'chatl_blad_nonce' );
 
 // Znacznik „widziałem ekran powitalny" leży przy KAŻDYM administratorze osobno,

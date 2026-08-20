@@ -169,7 +169,7 @@ echo
 echo "=== F. Deinstalacja: obie sciezki ==="
 spr "DROP TABLE (5 tabel)"        "5"  "grep -c 'DROP TABLE IF EXISTS' $W/uninstall.php"
 spr "klucz API kasowany zawsze"   "1"  "sed -n '1,/usun_dane/p' $W/uninstall.php | grep -c \"delete_option( 'chatl_klucz_api' )\""
-spr "delete_option w sciezce B"   "4"  "sed -n '/usun_dane/,\$p' $W/uninstall.php | grep -c 'delete_option('"
+spr "delete_option w sciezce B"   "5"  "sed -n '/usun_dane/,\$p' $W/uninstall.php | grep -c 'delete_option('"
 spr "wywolan esc_like (bez komentarzy)" "2" "grep -o 'wpdb->esc_like(' $W/uninstall.php | wc -l"
 
 echo
@@ -190,10 +190,15 @@ spr "znacznik nonce zapisywany bez autoload" "1" "grep -A9 \"'chatl_blad_nonce',
 
 echo
 echo "=== I. Zaczepy i filtry ==="
+# Liczby po scaleniu z main (#78) SUMUJA sie: nonce dolozyl dwa endpointy AJAX
+# i akcje chatl_nonce_zamknij, ta galaz dokłada chatl_test_klucza.
 spr "endpointy AJAX (z nopriv)"   "6"  "grep -c \"add_action( 'wp_ajax\" $W/includes/front.php"
-spr "akcje admin_post"            "8"  "grep -rc \"add_action( 'admin_post_\" $W/includes/admin.php $W/includes/csv.php | awk -F: '{s+=\$2} END {print s}'"
-spr "wystawione filtry"           "2"  "grep -rc 'apply_filters(' $W/includes/ai.php"
-spr "bramek current_user_can"      "7"  "grep -rc \"current_user_can( 'manage_options' )\" $W/includes/admin.php $W/includes/csv.php | awk -F: '{s+=\$2} END {print s}'"
+spr "akcje admin_post"            "9"  "grep -rc \"add_action( 'admin_post_\" $W/includes/admin.php $W/includes/csv.php | awk -F: '{s+=\$2} END {print s}'"
+# Liczymy ROZNE nazwy filtrow, nie wywolania: ten sam punkt rozszerzenia bywa
+# uzyty w kilku miejscach (od 1.4.2 chatl_ai_url i chatl_ai_model wolane sa
+# takze przez test klucza), a dokumentacja obiecuje LICZBE PUNKTOW, nie wywolan.
+spr "wystawione filtry (rozne nazwy)" "2"  "grep -oP \"(?<=apply_filters\\( ')[^']*\" $W/includes/ai.php | sort -u | wc -l"
+spr "bramek current_user_can"      "8"  "grep -rc \"current_user_can( 'manage_options' )\" $W/includes/admin.php $W/includes/csv.php | awk -F: '{s+=\$2} END {print s}'"
 spr "stron panelu (menu+submenu)"  "6"  "grep -c 'add_menu_page(\|add_submenu_page(' $W/includes/admin.php"
 
 echo
@@ -211,6 +216,12 @@ spr "zgoda sprawdzana na serwerze" "1" "grep -c \"empty( \\\$_POST\\['zgoda'\\] 
 spr "wp_trigger_error pod straza" "2"  "grep -rc \"function_exists( 'wp_trigger_error' )\" $W/chatbot-live.php $W/includes/ai.php | awk -F: '{s+=\$2} END {print s}'"
 
 echo
+# Uwaga recenzenta do PR #79: kazdy zjazd do regul MUSI zostawic slad, inaczej
+# awaria jest cicha — a to jest dokladnie ta klasa, ktora ten PR naprawia.
+# Zero "return null" w chatl_ai_odpowiedz() znaczy, ze kazda sciezka porazki
+# przechodzi przez chatl_ai_niepowodzenie(), ktore stawia znacznik.
+spr "kazde niepowodzenie AI zostawia slad" "0" "sed -n '/function chatl_ai_odpowiedz/,/^}/p' $W/includes/ai.php | grep -c 'return null;'"
+spr "sciezek zjazdu przez wspolna funkcje" "3" "sed -n '/function chatl_ai_odpowiedz/,/^}/p' $W/includes/ai.php | grep -c 'return chatl_ai_niepowodzenie'"
 # Pamiec biezacej rozmowy: historia MUSI byc filtrowana po sesji (granica
 # prywatnosci, nie optymalizacja) i MUSI miec sufit — kazda wymiana to tokeny.
 spr "historia filtrowana po sesji" "2" "sed -n '/function chatl_ai_historia/,/^}/p' $W/includes/ai.php | grep -c 'sesja = %s'"
