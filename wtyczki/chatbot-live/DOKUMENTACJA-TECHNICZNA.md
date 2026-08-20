@@ -1,6 +1,6 @@
 # ChatBot LIVE — dokumentacja techniczna
 
-Wersja wtyczki: **1.4.0** · schemat bazy: **4** · licencja: **GPL-2.0-or-later**
+Wersja wtyczki: **1.4.4** · schemat bazy: **4** · licencja: **GPL-2.0-or-later**
 
 Dokument opisuje **kod, który jest**, nie plan. Każda liczba i nazwa poniżej ma pokrycie
 w źródle — przy każdej podano plik i symbol, żeby dało się to sprawdzić `grep`-em, a nie
@@ -179,6 +179,7 @@ więc **brakujący klucz nigdy nie jest błędem** — nowe pole dostaje wartoś
 | `kolor_naglowka` | `#08090b` | Pasek z tytułem okna czatu i paski formularza kontaktu. |
 | `kolor_tekstu` | `auto` | `auto` = wtyczka dobiera kolor tekstu osobno dla bąbelka i dla nagłówka, biorąc ten o lepszym kontraście. Wartość `#rrggbb` = ten sam kolor na obu. |
 | `pozycja` | `prawo` | `prawo` albo `lewo` — róg strony, w którym stoi widget. |
+| `ai_model` | `''` | Model wybrany przez właściciela. **Pusty = użyj `CHATL_AI_MODEL`** — dzięki temu podniesienie domyślnego modelu w kolejnej wersji dociera do wszystkich, którzy go świadomie nie zmienili. |
 | `adres_polityki` | `''` | Adres polityki prywatności linkowany przy formularzu. Pusty = sama informacja, bez linku. |
 
 ---
@@ -189,7 +190,7 @@ Wszystkie liczby, którymi wtyczka się rządzi, są stałymi — nie ma ich roz
 
 | Stała | Wartość | Plik | Do czego |
 |---|---|---|---|
-| `CHATL_WERSJA` | `1.4.0` | `chatbot-live.php` | wersja wtyczki; służy też jako `?ver=` assetów (przeglądarka nie poda starego pliku po aktualizacji) |
+| `CHATL_WERSJA` | `1.4.4` | `chatbot-live.php` | wersja wtyczki; służy też jako `?ver=` assetów (przeglądarka nie poda starego pliku po aktualizacji) |
 | `CHATL_WERSJA_SCHEMATU` | `4` | `chatbot-live.php` | wyzwalacz migracji schematu |
 | `CHATL_KATALOG`, `CHATL_URL` | ścieżka i adres wtyczki | `chatbot-live.php` | `require` i adresy assetów |
 | `CHATL_MAX_PYTANIE` | `500` | `includes/front.php` | maksymalna długość pytania gościa (nadmiar jest **przycinany**, nie odrzucany) |
@@ -197,7 +198,7 @@ Wszystkie liczby, którymi wtyczka się rządzi, są stałymi — nie ma ich roz
 | `CHATL_LIMIT_NA_MIN` | `10` | `includes/front.php` | wspólny kubeł: żądań na minutę z jednego IP, łącznie dla pytań i zgłoszeń |
 | `CHATL_RETENCJA_DNI` | `90` | `includes/front.php` | okres retencji historii rozmów — **jedno źródło** dla crona, tekstu w widgecie, panelu i eksportu |
 | `CHATL_AI_LIMIT_IP_NA_DOBE` | `20` | `includes/front.php` | osobny, twardszy limit wywołań AI z jednego IP na dobę |
-| `CHATL_AI_MODEL` | `claude-haiku-4-5-20251001` | `includes/ai.php` | domyślny model (podmienialny filtrem) |
+| `CHATL_AI_MODEL` | `claude-haiku-4-5` | `includes/ai.php` | **domyślny** model — alias BEZ daty, żeby wycofanie migawki nie zabiło trybu AI u wszystkich kupujących. Właściciel wybiera model w ustawieniach, integrator filtrem. |
 | `CHATL_AI_MAX_TOKENS` | `1024` | `includes/ai.php` | limit długości odpowiedzi modelu |
 | `CHATL_AI_TIMEOUT` | `9` | `includes/ai.php` | timeout jednego wywołania w sekundach; z jednym ponowieniem daje maks. 18 s, z zapasem pod typowy limit 30 s na hostingu |
 | `CHATL_AI_BRAK` | `BRAK_ODPOWIEDZI` | `includes/ai.php` | sentinel „model nie wie" — sygnał do zbiórki kontaktu zamiast zgadywania |
@@ -562,7 +563,37 @@ i wraca do bazy Q&A.
 
 ---
 
-## 14. Eksport CSV
+## 14. Wybór modelu
+
+`CHATL_AI_MODEL` to **alias bez daty** (`claude-haiku-4-5`), nie migawka
+(`claude-haiku-4-5-20251001`). Identyfikator z datą wskazuje konkretną migawkę
+modelu, a te bywają wycofywane — wtedy **każda sprzedana kopia traci tryb AI
+naraz**, a jedyną drogą naprawy jest ręczna wysyłka zipa mailem, bo nie mamy
+serwera aktualizacji.
+
+Model ustala `chatl_ai_model()` w trzech poziomach, bo mają trzech różnych adresatów:
+
+| Poziom | Dla kogo | Uwaga |
+|---|---|---|
+| ustawienie `ai_model` | **kupujący** | nie pisze filtrów; wybiera z listy albo wpisuje własny identyfikator |
+| stała `CHATL_AI_MODEL` | produkt | wartość domyślna |
+| filtr `chatl_ai_model` | integrator | ostatnie słowo (np. proxy z własnym nazewnictwem) |
+
+Pusta wartość ustawienia znaczy „użyj domyślnej produktu" — dlatego wybranie
+z listy modelu równego `CHATL_AI_MODEL` **nie zapisuje niczego na sztywno**.
+Puste wyjście z filtru też wraca do stałej: żądanie do API nigdy nie idzie
+z pustym polem `model`.
+
+Lista w ustawieniach jest krótka i **bez cen**: cennik dostawcy się zmienia,
+a wtyczka nie ma jak go odświeżyć — wpisana kwota zestarzałaby się w paczce
+u klienta. Zamiast tego panel podaje kolejność „taniej ↔ mocniej" i odsyła do
+dokumentacji dostawcy. Pole „własny model" jest po to, żeby lista nigdy nie
+była więzieniem; wpisana wartość jest przycinana do liter, cyfr, myślników
+i kropek.
+
+---
+
+## 15. Eksport CSV
 
 Ręczny, przyciskiem w panelu — `includes/csv.php`. Dwa strumienie: wszystkie zgłoszenia
 (`id, data, email, wiadomosc, status, sesja`) i historia rozmów (`sesja, data, kto, silnik, tresc`),
@@ -578,7 +609,7 @@ kłóciłoby się z obietnicą retencji.
 
 ---
 
-## 15. Znane granice
+## 16. Znane granice
 
 Rzeczy, których wtyczka **nie** robi — żeby nikt nie szukał ich w kodzie:
 
@@ -603,6 +634,8 @@ Rzeczy, których wtyczka **nie** robi — żeby nikt nie szukał ich w kodzie:
 - **Kontrast jest liczony i pokazywany, ale nie blokuje zapisu.** Właściciel może
   świadomie zapisać zestaw poniżej progu WCAG — dostaje wtedy czerwony komunikat,
   a nie odmowę. Domyślne „dobierz automatycznie" pilnuje progu za niego.
+- **Wtyczka nie sprawdza, czy wpisany model istnieje.** Lista w ustawieniach to
+  podpowiedź, nie walidacja — nieznaną nazwę wykryje dopiero API (HTTP 404).
 - **Retencja obejmuje tylko historię rozmów.** Zgłoszenia (a więc adresy e-mail gości) zostają,
   aż właściciel je skasuje. Jeśli polityka prywatności obiecuje termin także dla nich,
   trzeba je kasować ręcznie albo eksportem i usunięciem.

@@ -151,6 +151,14 @@ podglądem: ma być co najmniej 4,5:1.
 Dodaj do wpisu więcej wariantów słów kluczowych (odmiany, formy bez polskich
 znaków). Dopasowanie szuka fragmentów tekstu — `płatnoś` nie złapie „platnosc".
 
+**Którym modelem odpowiada bot i czy mogę go zmienić?**
+Tak — w **Ustawieniach → Tryb AI** jest pole **Model**. Domyślny (najtańszy)
+w zupełności wystarcza do odpowiadania z bazy Q&A; mocniejsze kosztują więcej.
+Aktualną listę modeli i cennik sprawdzisz u dostawcy, w dokumentacji Anthropic —
+odnośnik jest przy tym polu. **Wpisuj nazwę bez daty** (`claude-haiku-4-5`,
+a nie `claude-haiku-4-5-20251001`): nazwy z datą wskazują konkretną wersję
+modelu, a te bywają wycofywane i wtedy tryb AI przestaje działać.
+
 **Skąd mam wiedzieć, czego dopisać do bazy?**
 Nie zgaduj — wejdź w **Statystyki i luki**. Tabela „Czego botowi brakuje"
 pokazuje prawdziwe pytania Twoich klientów, na które bot nie umiał odpowiedzieć,

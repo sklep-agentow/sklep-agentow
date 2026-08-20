@@ -14,7 +14,19 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-const CHATL_AI_MODEL      = 'claude-haiku-4-5-20251001';
+/*
+ * Domyslny model: ALIAS BEZ DATY.
+ *
+ * Wczesniej stalo tu 'claude-haiku-4-5-20251001'. Identyfikatory z data
+ * wskazuja konkretna migawke modelu, a te sa z czasem wycofywane — kazda
+ * sprzedana kopia wtyczki traci wtedy tryb AI naraz i jedyna droga naprawy
+ * jest reczna wysylka zipa mailem, bo nie mamy serwera aktualizacji.
+ * Alias bez daty przezywa wymiane migawki.
+ *
+ * Wlasciciel moze i tak wybrac inny model w ustawieniach — ta stala jest
+ * tylko wartoscia domyslna.
+ */
+const CHATL_AI_MODEL      = 'claude-haiku-4-5';
 const CHATL_AI_MAX_TOKENS = 1024;
 const CHATL_AI_TIMEOUT    = 9;
 const CHATL_AI_BRAK       = 'BRAK_ODPOWIEDZI';
@@ -138,7 +150,7 @@ function chatl_ai_instrukcja() {
 function chatl_ai_zapytaj( $pytanie ) {
 	// Filtry = punkt rozszerzenia (np. proxy albo atrapa API w testach).
 	$url   = apply_filters( 'chatl_ai_url', 'https://api.anthropic.com/v1/messages' );
-	$model = apply_filters( 'chatl_ai_model', CHATL_AI_MODEL );
+	$model = chatl_ai_model();
 
 	return wp_remote_post(
 		$url,
@@ -186,6 +198,44 @@ function chatl_log_bledu_ai( $odp, $kod ) {
 		'chatl_ai_odpowiedz',
 		'wywołanie API nie powiodło się, bot odpowiada z reguł (' . $szczegol . ')',
 		E_USER_WARNING
+	);
+}
+
+/**
+ * Model, którym naprawdę pytamy: ustawienie właściciela, potem stała, potem filtr.
+ *
+ * Trzy poziomy, bo mają trzech różnych adresatów: pole w ustawieniach jest dla
+ * kupującego (który nie pisze filtrów), stała to wartość domyślna produktu,
+ * a filtr zostaje dla integratora.
+ *
+ * @return string Identyfikator modelu.
+ */
+function chatl_ai_model() {
+	$ust   = chatl_ustawienia();
+	$model = isset( $ust['ai_model'] ) ? trim( (string) $ust['ai_model'] ) : '';
+	if ( '' === $model ) {
+		$model = CHATL_AI_MODEL;
+	}
+	/** Ostatnie słowo dla integratora (np. proxy z własnym nazewnictwem). */
+	$model = (string) apply_filters( 'chatl_ai_model', $model );
+	return '' !== trim( $model ) ? trim( $model ) : CHATL_AI_MODEL;
+}
+
+/**
+ * Lista modeli podpowiadanych w ustawieniach.
+ *
+ * Świadomie KRÓTKA i bez cen: cennik dostawcy się zmienia, a wtyczka nie ma jak
+ * go odświeżyć — wpisana kwota zestarzałaby się w paczce u klienta. Zamiast tego
+ * podajemy kolejność „taniej ↔ mocniej" i odsyłamy do dostawcy po aktualne stawki.
+ * Pole „własny model" jest po to, żeby lista nigdy nie była więzieniem.
+ *
+ * @return array Identyfikator => opis dla właściciela.
+ */
+function chatl_ai_modele() {
+	return array(
+		'claude-haiku-4-5' => 'Haiku 4.5 — najtańszy i najszybszy (domyślny, w zupełności wystarcza do bazy Q&A)',
+		'claude-sonnet-5'  => 'Sonnet 5 — mocniejszy, droższy',
+		'claude-opus-5'    => 'Opus 5 — najmocniejszy, najdroższy',
 	);
 }
 
