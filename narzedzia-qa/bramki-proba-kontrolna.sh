@@ -78,7 +78,7 @@ probuj "quality.yml nie wola juz bramki.sh" \
 
 # 6. Furtka continue-on-error.
 probuj "continue-on-error w quality.yml" \
-	"sed -i 's|    runs-on: ubuntu-latest|    runs-on: ubuntu-latest\\n    continue-on-error: true|' $WORKFLOW" \
+	"sed -i 's|^  bramki:|  bramki:\\n    continue-on-error: true|' $WORKFLOW" \
 	"bash narzedzia-qa/sprawdz-manifest.sh" \
 	"continue-on-error"
 

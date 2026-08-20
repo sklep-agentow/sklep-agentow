@@ -66,7 +66,9 @@ concurrency:
 
 jobs:
   recenzja:
-    runs-on: ubuntu-latest
+    # Własny wykonawca na naszym serwerze (20.08). Recenzent zostaje na KAŻDYM
+    # pchnięciu — to najlepsza kontrola, jaką mamy, a teraz jest za darmo.
+    runs-on: [self-hosted, linux, x64]
     permissions:
       contents: read
       pull-requests: write
@@ -118,8 +120,12 @@ jobs:
           name: claude-execution-output
           # Dwie ścieżki: log naszego runa mówi RUNNER_TEMP, docs base-action /tmp —
           # bierzemy obie, upload-artifact wgra tę, która istnieje.
+          # ⚠️ `runner.temp` zamiast wpisanego na sztywno /home/runner/work/_temp:
+          # na własnym wykonawcy katalog roboczy leży gdzie indziej (zależnie od
+          # miejsca instalacji runnera), więc sztywna ścieżka po cichu przestałaby
+          # łapać artefakt — a to jedyna sonda przy „niemym zgonie".
           path: |
-            /home/runner/work/_temp/claude-execution-output.json
+            ${{ runner.temp }}/claude-execution-output.json
             /tmp/claude-execution-output.json
           if-no-files-found: warn
           retention-days: 7
