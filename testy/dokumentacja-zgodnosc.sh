@@ -24,8 +24,8 @@ spr() { # spr "opis" "oczekiwane" "polecenie"
 }
 
 echo "=== A. Wersja i schemat ==="
-spr "naglowek Version"            "1.4.0" "grep -oP '(?<=^ \* Version: ).*' $W/chatbot-live.php"
-spr "stala CHATL_WERSJA"          "1.4.0" "grep -oP \"(?<=CHATL_WERSJA', ')[^']*\" $W/chatbot-live.php"
+spr "naglowek Version"            "1.4.3" "grep -oP '(?<=^ \* Version: ).*' $W/chatbot-live.php"
+spr "stala CHATL_WERSJA"          "1.4.3" "grep -oP \"(?<=CHATL_WERSJA', ')[^']*\" $W/chatbot-live.php"
 spr "CHATL_WERSJA_SCHEMATU"       "4"     "grep -oP \"(?<=CHATL_WERSJA_SCHEMATU', ')[^']*\" $W/chatbot-live.php"
 spr "Requires at least"           "6.0"   "grep -oP '(?<=^ \* Requires at least: ).*' $W/chatbot-live.php"
 spr "Requires PHP"                "8.1"   "grep -oP '(?<=^ \* Requires PHP: ).*' $W/chatbot-live.php"
@@ -174,7 +174,7 @@ spr "wywolan esc_like (bez komentarzy)" "2" "grep -o 'wpdb->esc_like(' $W/uninst
 
 echo
 echo "=== G. Ustawienia: klucze i wartosci domyslne ==="
-spr "kluczy w chatl_ustawienia"   "13"  "sed -n '/\\\$domyslne = array(/,/);/p' $W/chatbot-live.php | grep -cP \"^\t\t'\""
+spr "kluczy w chatl_ustawienia"   "14"  "sed -n '/\\\$domyslne = array(/,/);/p' $W/chatbot-live.php | grep -cP \"^\t\t'\""
 spr "ai_limit_dzienny domyslnie"  "100" "grep -oP \"(?<='ai_limit_dzienny' => )[0-9]+\" $W/chatbot-live.php"
 spr "zakres zapisu limitu (max)"  "100000" "grep -oP '(?<=min\\( )[0-9]+(?=, \\(int\\) \\\$_POST\\[.ai_limit_dzienny)' $W/includes/admin.php"
 spr "wlaczony domyslnie"          "1"  "grep -oP \"(?<='wlaczony'         => )[0-9]+\" $W/chatbot-live.php"
@@ -189,7 +189,12 @@ echo
 echo "=== I. Zaczepy i filtry ==="
 spr "endpointy AJAX (z nopriv)"   "4"  "grep -c \"add_action( 'wp_ajax\" $W/includes/front.php"
 spr "akcje admin_post"            "7"  "grep -rc \"add_action( 'admin_post_\" $W/includes/admin.php $W/includes/csv.php | awk -F: '{s+=\$2} END {print s}'"
-spr "wystawione filtry"           "2"  "grep -rc 'apply_filters(' $W/includes/ai.php"
+spr "wystawione filtry AI"        "2"  "grep -oP \"(?<=apply_filters\\( ')[^']*\" $W/includes/ai.php | sort -u | wc -l"
+spr "filtr adresu goscia"         "1"  "grep -oP \"(?<=apply_filters\\( ')[^']*\" $W/includes/front.php | sort -u | wc -l"
+# Naglowki proxy czytamy WYLACZNIE pod przelacznikiem — gdyby ten warunek znikl,
+# na stronie bez proxy kazdy obchodzilby limity, podajac inny adres.
+spr "naglowki proxy pod przelacznikiem" "1" "grep -c \"if ( ! empty( \\\$ust\\['za_proxy'\\] ) ) {\" $W/includes/front.php"
+spr "kazdy adres walidowany"      "3"  "grep -c 'FILTER_VALIDATE_IP' $W/includes/front.php"
 spr "bramek current_user_can"      "6"  "grep -rc \"current_user_can( 'manage_options' )\" $W/includes/admin.php $W/includes/csv.php | awk -F: '{s+=\$2} END {print s}'"
 spr "stron panelu (menu+submenu)"  "6"  "grep -c 'add_menu_page(\|add_submenu_page(' $W/includes/admin.php"
 

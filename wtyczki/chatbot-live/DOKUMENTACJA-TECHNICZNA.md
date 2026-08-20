@@ -1,6 +1,6 @@
 # ChatBot LIVE — dokumentacja techniczna
 
-Wersja wtyczki: **1.4.0** · schemat bazy: **4** · licencja: **GPL-2.0-or-later**
+Wersja wtyczki: **1.4.3** · schemat bazy: **4** · licencja: **GPL-2.0-or-later**
 
 Dokument opisuje **kod, który jest**, nie plan. Każda liczba i nazwa poniżej ma pokrycie
 w źródle — przy każdej podano plik i symbol, żeby dało się to sprawdzić `grep`-em, a nie
@@ -179,6 +179,7 @@ więc **brakujący klucz nigdy nie jest błędem** — nowe pole dostaje wartoś
 | `kolor_naglowka` | `#08090b` | Pasek z tytułem okna czatu i paski formularza kontaktu. |
 | `kolor_tekstu` | `auto` | `auto` = wtyczka dobiera kolor tekstu osobno dla bąbelka i dla nagłówka, biorąc ten o lepszym kontraście. Wartość `#rrggbb` = ten sam kolor na obu. |
 | `pozycja` | `prawo` | `prawo` albo `lewo` — róg strony, w którym stoi widget. |
+| `za_proxy` | `0` | Czy ufać nagłówkom proxy przy ustalaniu adresu gościa. **Domyślnie wyłączone** — `X-Forwarded-For` da się podrobić. |
 | `adres_polityki` | `''` | Adres polityki prywatności linkowany przy formularzu. Pusty = sama informacja, bez linku. |
 
 ---
@@ -189,7 +190,7 @@ Wszystkie liczby, którymi wtyczka się rządzi, są stałymi — nie ma ich roz
 
 | Stała | Wartość | Plik | Do czego |
 |---|---|---|---|
-| `CHATL_WERSJA` | `1.4.0` | `chatbot-live.php` | wersja wtyczki; służy też jako `?ver=` assetów (przeglądarka nie poda starego pliku po aktualizacji) |
+| `CHATL_WERSJA` | `1.4.3` | `chatbot-live.php` | wersja wtyczki; służy też jako `?ver=` assetów (przeglądarka nie poda starego pliku po aktualizacji) |
 | `CHATL_WERSJA_SCHEMATU` | `4` | `chatbot-live.php` | wyzwalacz migracji schematu |
 | `CHATL_KATALOG`, `CHATL_URL` | ścieżka i adres wtyczki | `chatbot-live.php` | `require` i adresy assetów |
 | `CHATL_MAX_PYTANIE` | `500` | `includes/front.php` | maksymalna długość pytania gościa (nadmiar jest **przycinany**, nie odrzucany) |
@@ -335,8 +336,14 @@ Oba eksporty przechodzą przez jedną bramkę `chatl_csv_brama()` (capability + 
 
 ### 7.4. Filtry do rozbudowy
 
-Wtyczka wystawia **dwa** filtry — oba w `includes/ai.php`, oba pomyślane jako punkt wejścia dla
-integratora, i oba używane w testach do podstawienia atrapy API:
+Filtry pomyślane jako punkt wejścia dla integratora. Dwa w `includes/ai.php` (oba używane
+w testach do podstawienia atrapy API) i jeden w `includes/front.php`:
+
+| Filtr | Plik | Do czego |
+|---|---|---|
+| `chatl_ip_goscia` | `includes/front.php` | ostatnie słowo przy ustalaniu adresu gościa — dla hostingu z nietypowym nagłówkiem (`True-Client-IP`, `X-Real-IP`). Zwrócenie pustego stringa znaczy „nie wiem". |
+
+Dwa filtry trybu AI:
 
 | Filtr | Domyślnie | Do czego |
 |---|---|---|
@@ -562,7 +569,31 @@ i wraca do bazy Q&A.
 
 ---
 
-## 14. Eksport CSV
+## 14. Adres IP gościa a proxy
+
+Limit „na IP" liczony z samego `REMOTE_ADDR` mierzy adres **proxy**. Strona za
+Cloudflare albo za proxy hostingu widzi jeden adres dla wszystkich gości — wtedy
+`CHATL_LIMIT_NA_MIN` wiadomości na minutę obowiązuje **całą witrynę naraz**,
+a `CHATL_AI_LIMIT_IP_NA_DOBE` wywołań AI na adres staje się limitem na całą stronę.
+
+`chatl_ip_goscia()` (`includes/front.php`) ustala adres w kolejności:
+**`CF-Connecting-IP` → pierwszy adres z `X-Forwarded-For` → `REMOTE_ADDR`**,
+ale nagłówki czyta **wyłącznie** po włączeniu ustawienia `za_proxy`.
+
+To nie jest ostrożność na wyrost. `X-Forwarded-For` da się podrobić zwykłym
+żądaniem, więc na stronie **bez** proxy zaufanie mu oznaczałoby, że każdy obchodzi
+limity, podając za każdym razem inny adres — czyli lekarstwo gorsze od choroby.
+Dlatego przełącznik jest domyślnie **wyłączony**, a panel mówi wprost, kiedy go
+włączyć i czym to grozi.
+
+`X-Forwarded-For` to lista `gość, proxy1, proxy2` — bierzemy **pierwszy** wpis.
+Każdy odczyt przechodzi przez `filter_var( …, FILTER_VALIDATE_IP )`: nagłówek ze
+śmieciem nie może wyłączyć limitu ani stworzyć własnego kubła, więc przy złej
+wartości schodzimy do `REMOTE_ADDR`.
+
+---
+
+## 15. Eksport CSV
 
 Ręczny, przyciskiem w panelu — `includes/csv.php`. Dwa strumienie: wszystkie zgłoszenia
 (`id, data, email, wiadomosc, status, sesja`) i historia rozmów (`sesja, data, kto, silnik, tresc`),
@@ -578,7 +609,7 @@ kłóciłoby się z obietnicą retencji.
 
 ---
 
-## 15. Znane granice
+## 16. Znane granice
 
 Rzeczy, których wtyczka **nie** robi — żeby nikt nie szukał ich w kodzie:
 
@@ -603,6 +634,9 @@ Rzeczy, których wtyczka **nie** robi — żeby nikt nie szukał ich w kodzie:
 - **Kontrast jest liczony i pokazywany, ale nie blokuje zapisu.** Właściciel może
   świadomie zapisać zestaw poniżej progu WCAG — dostaje wtedy czerwony komunikat,
   a nie odmowę. Domyślne „dobierz automatycznie" pilnuje progu za niego.
+- **Zaufanie nagłówkom proxy jest decyzją właściciela, nie automatem.** Wtyczka
+  nie zgaduje, czy strona stoi za Cloudflare — przy wyłączonym przełączniku limity
+  są co najwyżej surowsze, przy włączonym na stronie bez proxy dałyby się obejść.
 - **Retencja obejmuje tylko historię rozmów.** Zgłoszenia (a więc adresy e-mail gości) zostają,
   aż właściciel je skasuje. Jeśli polityka prywatności obiecuje termin także dla nich,
   trzeba je kasować ręcznie albo eksportem i usunięciem.

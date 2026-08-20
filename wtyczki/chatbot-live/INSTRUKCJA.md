@@ -166,6 +166,14 @@ Tak, jeśli mają wspólne rdzenie słów — grupowanie jest po to, żeby lista
 kilkanaście pozycji, a nie kilkaset. Zawsze możesz rozwinąć „inne sformułowania"
 i sprawdzić, co dokładnie do tematu wpadło.
 
+**Moja strona stoi za Cloudflare — czy muszę coś ustawić?**
+Tak, jedną rzecz. Wejdź w **Ustawienia** i zaznacz **„Strona za Cloudflare albo
+proxy"**. Bez tego wtyczka widzi adres Cloudflare zamiast adresu gościa, więc limit
+10 wiadomości na minutę obowiązuje **wszystkich gości razem**, a dobowy limit
+wywołań AI na adres staje się limitem na całą stronę. Jeśli nie jesteś pewien,
+czy stoisz za proxy — zostaw wyłączone; limity będą wtedy co najwyżej surowsze,
+a włączenie tego na stronie bez proxy pozwoliłoby je obchodzić.
+
 **Czy gość może zalać mnie wiadomościami?**
 Nie — limit to 10 wiadomości na minutę z jednego adresu IP (dotyczy pytań
 i zgłoszeń łącznie). Pytanie ma maks. 500 znaków, wiadomość zgłoszenia 2000.

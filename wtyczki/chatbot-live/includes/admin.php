@@ -567,6 +567,20 @@ function chatl_strona_ustawienia() {
 					</td>
 				</tr>
 				<tr>
+					<th scope="row">Strona za Cloudflare albo proxy</th>
+					<td>
+						<label><input type="checkbox" name="za_proxy" value="1" <?php checked( $ust['za_proxy'] ); ?>>
+							ustalaj adres gościa z nagłówków proxy (<code>CF-Connecting-IP</code>, <code>X-Forwarded-For</code>)</label>
+						<p class="description">
+							<strong>Włącz tylko wtedy, gdy Twoja strona naprawdę stoi za Cloudflare albo za proxy hostingu.</strong>
+							Bez tego wtyczka widzi adres proxy zamiast adresu gościa, więc limit <?php echo (int) CHATL_LIMIT_NA_MIN; ?> wiadomości na minutę
+							obowiązuje <strong>całą witrynę naraz</strong>, a dobowy limit <?php echo (int) CHATL_AI_LIMIT_IP_NA_DOBE; ?> wywołań AI na adres staje się limitem na całą stronę.<br>
+							Domyślnie wyłączone, bo te nagłówki da się <strong>podrobić</strong>: na stronie bez proxy zaufanie im oznaczałoby,
+							że każdy obchodzi limity, podając za każdym razem inny adres. Nie wiesz? Zostaw wyłączone — limity będą co najwyżej surowsze.
+						</p>
+					</td>
+				</tr>
+				<tr>
 					<th scope="row">Usuwanie wtyczki</th>
 					<td>
 						<label><input type="checkbox" name="usun_dane" value="1" <?php checked( $ust['usun_dane'] ); ?>> przy odinstalowaniu usuń WSZYSTKIE dane (baza Q&A, zgłoszenia, historia, ustawienia)</label>
@@ -681,6 +695,7 @@ function chatl_post_ustawienia_zapisz() {
 			? chatl_sanitize_kolor( wp_unslash( $_POST['kolor_tekstu'] ) )
 			: 'auto',
 		'pozycja'          => isset( $_POST['pozycja'] ) && 'lewo' === sanitize_key( wp_unslash( $_POST['pozycja'] ) ) ? 'lewo' : 'prawo',
+		'za_proxy'         => empty( $_POST['za_proxy'] ) ? 0 : 1,
 	);
 
 	// Klucz API: osobna opcja (autoload=no), nigdy nie wraca do formularza.
