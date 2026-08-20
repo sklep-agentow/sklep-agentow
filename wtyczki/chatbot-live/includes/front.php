@@ -108,6 +108,19 @@ function chatl_assety() {
 	}
 
 	wp_enqueue_style( 'chatl-widget', CHATL_URL . 'assets/widget.css', array(), CHATL_WERSJA );
+
+	/*
+	 * Kolory właściciela dokładamy jako KILKA ZMIENNYCH CSS, a nie jako
+	 * wygenerowany arkusz: statyczny widget.css dalej siedzi w cache
+	 * przeglądarki, a doklejka ma kilkadziesiąt bajtów. Gdy wygląd jest
+	 * domyślny, chatl_style_wygladu() zwraca pusty string i strona nie
+	 * dostaje ani jednego dodatkowego bajtu.
+	 */
+	$style = chatl_style_wygladu( $ust );
+	if ( '' !== $style ) {
+		wp_add_inline_style( 'chatl-widget', $style );
+	}
+
 	wp_enqueue_script( 'chatl-widget', CHATL_URL . 'assets/widget.js', array(), CHATL_WERSJA, true );
 	wp_localize_script(
 		'chatl-widget',
@@ -124,6 +137,7 @@ function chatl_assety() {
 			),
 			'polityka'   => esc_url( $ust['adres_polityki'] ),
 			'zgodaTekst' => 'Zapoznałem się z informacją o przetwarzaniu danych',
+			'pozycja'    => chatl_wyglad_ustawienia( $ust )['pozycja'],
 		)
 	);
 }
@@ -165,7 +179,9 @@ function chatl_ajax_pytanie() {
 		$pytanie = mb_substr( $pytanie, 0, CHATL_MAX_PYTANIE );
 	}
 
-	chatl_zapisz_wymiane( $sesja, 'gosc', $pytanie );
+	// Id pytania trzymamy, bo wynik dopasowania znamy dopiero niżej —
+	// a to WIERSZ PYTANIA niesie treść, z której powstaje raport luk.
+	$id_pytania = chatl_zapisz_wymiane( $sesja, 'gosc', $pytanie );
 
 	// HYBRYDA: najpierw AI (jest klucz + limit dzienny globalny i per IP
 	// niewyczerpany); błąd/timeout/brak klucza => zjazd do trybu regułowego.
@@ -174,7 +190,8 @@ function chatl_ajax_pytanie() {
 		if ( null !== $ai ) {
 			if ( CHATL_AI_BRAK === trim( $ai ) ) {
 				// Próg pewności: model nie zgaduje => uczciwe "nie wiem" + zbiórka kontaktu.
-				chatl_zapisz_wymiane( $sesja, 'bot', $ust['tekst_awaryjny'], 'ai' );
+				chatl_oznacz_trafienie( $id_pytania, false );
+				chatl_zapisz_wymiane( $sesja, 'bot', $ust['tekst_awaryjny'], 'ai', false );
 				wp_send_json_success(
 					array(
 						'trafiono'  => false,
@@ -183,7 +200,8 @@ function chatl_ajax_pytanie() {
 				);
 			}
 			$ai = sanitize_textarea_field( $ai );
-			chatl_zapisz_wymiane( $sesja, 'bot', $ai, 'ai' );
+			chatl_oznacz_trafienie( $id_pytania, true );
+			chatl_zapisz_wymiane( $sesja, 'bot', $ai, 'ai', true );
 			wp_send_json_success(
 				array(
 					'trafiono'  => true,
@@ -195,7 +213,8 @@ function chatl_ajax_pytanie() {
 
 	$wynik = chatl_dopasuj( $pytanie );
 	if ( null === $wynik ) {
-		chatl_zapisz_wymiane( $sesja, 'bot', $ust['tekst_awaryjny'] );
+		chatl_oznacz_trafienie( $id_pytania, false );
+		chatl_zapisz_wymiane( $sesja, 'bot', $ust['tekst_awaryjny'], 'reguly', false );
 		wp_send_json_success(
 			array(
 				'trafiono'  => false,
@@ -204,7 +223,8 @@ function chatl_ajax_pytanie() {
 		);
 	}
 
-	chatl_zapisz_wymiane( $sesja, 'bot', $wynik['odpowiedz'] );
+	chatl_oznacz_trafienie( $id_pytania, true );
+	chatl_zapisz_wymiane( $sesja, 'bot', $wynik['odpowiedz'], 'reguly', true );
 	wp_send_json_success(
 		array(
 			'trafiono'  => true,

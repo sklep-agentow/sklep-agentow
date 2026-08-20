@@ -1,5 +1,6 @@
 /* E2E kości v2: akordeon "card" + pola karty w iframe'ach Elements. */
 const { chromium } = require('playwright-core');
+const { wymagajChromium } = require('../lib/chromium');
 const BAZA = 'http://localhost:8890';
 
 async function wypelnijWRamkach(p, dopasowania) {
@@ -32,7 +33,7 @@ async function wypelnijWRamkach(p, dopasowania) {
   const cs = (url.match(/cs_test_[A-Za-z0-9]+/) || [])[0];
   console.log('SESJA:', cs);
 
-  const b = await chromium.launch({ executablePath: '/root/.cache/ms-playwright/chromium-1234/chrome-linux64/chrome' });
+  const b = await chromium.launch({ executablePath: wymagajChromium() });
   const p = await b.newPage();
   await p.goto(url, { waitUntil: 'load', timeout: 45000 });
   await p.waitForTimeout(5000);

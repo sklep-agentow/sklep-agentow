@@ -4,6 +4,7 @@
    Wymaga playwright-core + WP_ADMIN_USER/WP_ADMIN_PASS w env.
    Użycie: node testy/eksport-csv.js [adres] */
 const { chromium } = require('playwright-core');
+const { wymagajChromium } = require('./lib/chromium');
 const BAZA = process.argv[2] || 'http://localhost:8890';
 
 let bledy = 0;
@@ -16,9 +17,7 @@ function sprawdz(opis, warunek) {
   const user = process.env.WP_ADMIN_USER, pass = process.env.WP_ADMIN_PASS;
   if (!user || !pass) { console.error('Brak WP_ADMIN_USER/WP_ADMIN_PASS w env.'); process.exit(1); }
 
-  const b = await chromium.launch({
-    executablePath: '/root/.cache/ms-playwright/chromium-1234/chrome-linux64/chrome',
-  });
+  const b = await chromium.launch({ executablePath: wymagajChromium() });
   const p = await b.newPage();
 
   /* Test robi sobie własny materiał: gość zostawia wiadomość, która JEST

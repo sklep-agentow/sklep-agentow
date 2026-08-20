@@ -4,6 +4,7 @@
    WP_ADMIN_USER + WP_ADMIN_PASS (nigdy w kodzie).
    Użycie: WP_ADMIN_USER=... WP_ADMIN_PASS=... node testy/zrzuty-panelu.js [katalog-wyjscia] */
 const { chromium } = require('playwright-core');
+const { wymagajChromium } = require('./lib/chromium');
 const BAZA = 'http://localhost:8890';
 const GDZIE = process.argv[2] || 'zrzuty';
 const fs = require('fs');
@@ -23,7 +24,7 @@ const EKRANY = [
   if (!user || !pass) { console.error('Brak WP_ADMIN_USER/WP_ADMIN_PASS w env.'); process.exit(1); }
   fs.mkdirSync(GDZIE, { recursive: true });
 
-  const b = await chromium.launch({ executablePath: '/root/.cache/ms-playwright/chromium-1234/chrome-linux64/chrome' });
+  const b = await chromium.launch({ executablePath: wymagajChromium() });
   const p = await b.newPage({ viewport: { width: 1440, height: 1000 } });
 
   await p.goto(BAZA + '/wp-login.php', { waitUntil: 'load' });

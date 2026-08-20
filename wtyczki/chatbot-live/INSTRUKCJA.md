@@ -38,7 +38,29 @@ W menu bocznym pojawia się pozycja **ChatBot LIVE**.
    odpowiedzieć, i jedno, na które nie ma — powinien uczciwie zaproponować
    zostawienie maila.
 
-## 3. Jak to działa na co dzień
+## 3. Wygląd widgetu — dopasuj go do swojej strony
+
+Wejdź w **ChatBot LIVE → Ustawienia → Wygląd widgetu**. Ustawisz tam:
+
+- **Kolor główny** — bąbelek czatu, dymki bota, przyciski.
+- **Kolor paska nagłówka** — belka z tytułem okna.
+- **Kolor tekstu na nich** — zostaw „dobierz automatycznie" (zalecane), a wtyczka
+  sama wybierze ciemny albo jasny, ten czytelniejszy na Twoim tle.
+- **Pozycja** — prawy albo lewy dolny róg strony.
+
+Obok jest **podgląd na żywo**: kolory zmieniają się od razu przy wyborze, jeszcze
+przed zapisem, więc widzisz dokładnie to, co zobaczy gość.
+
+Pod podglądem stoi **kontrast**. To nie ozdoba — jeśli tekst na bąbelku ma za
+mały kontrast do tła, część osób go nie przeczyta, a przy audycie dostępności
+jest to pierwszy zarzut. Wtyczka liczy współczynnik według normy WCAG 2.1
+i mówi wprost: „spełnia WCAG AA" albo „PONIŻEJ progu". Próg to 4,5:1.
+Zapisać możesz i tak — decyzja jest Twoja, ale wiesz, co wybierasz.
+
+> Po aktualizacji ze starszej wersji **nic Ci się nie zmieni**: domyślne kolory
+> to dokładnie te, które widget miał wcześniej.
+
+## 4. Jak to działa na co dzień
 
 - Gość pyta → bot odpowiada z bazy Q&A (wygrywa wpis z największą liczbą
   trafionych słów kluczowych).
@@ -50,7 +72,37 @@ W menu bocznym pojawia się pozycja **ChatBot LIVE**.
 - **Historia rozmów** pokazuje wymiany bot↔gość; wpisy starsze niż **90 dni**
   są czyszczone automatycznie.
 
-## 4. Tryb AI (opcjonalny — hybryda)
+## 5. Statystyki i luki — czyli jak ulepszać bota bez zgadywania
+
+Wejdź w **ChatBot LIVE → Statystyki i luki**. Wybierasz okres (7 / 30 / 90 dni
+albo własne daty) i widzisz cztery liczby:
+
+| Kafelek | Co znaczy |
+|---|---|
+| **Pytania gości** | ile pytań przyszło i w ilu rozmowach |
+| **Bot odpowiedział** | ile razy bot znał odpowiedź i jaki to procent — to **skuteczność bota** |
+| **Bez odpowiedzi** | ile razy musiał się przyznać, że nie wie |
+| **Zebrane kontakty** | ile osób zostawiło maila i jaka to część wszystkich rozmów |
+
+Pod spodem jest ruch dzień po dniu, a **najważniejsza jest ostatnia tabela:
+„Czego botowi brakuje"**. To lista pytań, na które bot NIE umiał odpowiedzieć,
+zebrana w tematy — bo goście pytają o to samo na dziesięć sposobów
+(„ile kosztuje dostawa", „koszt dostawy", „jaki jest koszt dostawy" to jeden
+temat). Przy każdym temacie widzisz, ile razy padł i kiedy ostatnio; klikając
+**„…i N innych sformułowań"** zobaczysz, co dokładnie pisali goście.
+
+Obok każdego tematu jest przycisk **„Dopisz odpowiedź →"**. Klikasz i lądujesz
+w bazie Q&A z **już wpisanym pytaniem** i podpowiedzianymi słowami kluczowymi —
+zostaje wpisać odpowiedź i zapisać. To cała pętla ulepszania bota: raz w tygodniu
+zajrzyj tutaj, dopisz 2–3 odpowiedzi, a skuteczność rośnie sama.
+
+> **Uwaga po aktualizacji ze starszej wersji:** rozmowy zapisane **przed**
+> wersją 1.3.0 nie mają informacji, czy bot trafił — wtyczka jej wtedy nie
+> zbierała i **nie zgaduje jej wstecz**. Zobaczysz je na stronie jako osobną
+> liczbę „bez znacznika"; nie psują procentu skuteczności. Od aktualizacji
+> wszystko liczy się normalnie, więc po kilku dniach ruchu statystyki są pełne.
+
+## 6. Tryb AI (opcjonalny — hybryda)
 
 Bez klucza bot działa w pełnoprawnym trybie regułowym. Z kluczem API
 (Anthropic — klucz zdobywasz na własnym koncie na console.anthropic.com)
@@ -88,11 +140,31 @@ albo wyłączyć klucz, poprawiasz `wp-config.php`.
 > To wyglądałoby na zabezpieczenie, nie będąc nim. Trzymanie klucza poza bazą
 > jest realną poprawą, a nie pozorem.
 
-## 5. FAQ
+## 7. FAQ
+
+**Zmieniłem kolory i tekst zrobił się nieczytelny.**
+Zaznacz „dobierz automatycznie" przy kolorze tekstu — wtyczka wybierze wersję
+z lepszym kontrastem. Jeśli wolisz własny kolor, patrz na odczyt kontrastu pod
+podglądem: ma być co najmniej 4,5:1.
 
 **Bot nie łapie pytania, choć wpis jest w bazie.**
 Dodaj do wpisu więcej wariantów słów kluczowych (odmiany, formy bez polskich
 znaków). Dopasowanie szuka fragmentów tekstu — `płatnoś` nie złapie „platnosc".
+
+**Skąd mam wiedzieć, czego dopisać do bazy?**
+Nie zgaduj — wejdź w **Statystyki i luki**. Tabela „Czego botowi brakuje"
+pokazuje prawdziwe pytania Twoich klientów, na które bot nie umiał odpowiedzieć,
+uszeregowane od najczęstszych. Zacznij od góry listy.
+
+**Statystyki pokazują „—" zamiast procentu skuteczności.**
+To znaczy, że w wybranym okresie nie ma jeszcze ani jednej zmierzonej odpowiedzi
+(świeża instalacja albo same rozmowy sprzed aktualizacji). Kreska, a nie „0%",
+bo „nie mierzono" to co innego niż „bot nie odpowiedział ani razu".
+
+**Czy dwa różne pytania mogą wpaść do jednego tematu?**
+Tak, jeśli mają wspólne rdzenie słów — grupowanie jest po to, żeby lista miała
+kilkanaście pozycji, a nie kilkaset. Zawsze możesz rozwinąć „inne sformułowania"
+i sprawdzić, co dokładnie do tematu wpadło.
 
 **Czy gość może zalać mnie wiadomościami?**
 Nie — limit to 10 wiadomości na minutę z jednego adresu IP (dotyczy pytań
@@ -123,7 +195,7 @@ domyślnie zostaje (możesz wrócić bez strat). Jeśli w ustawieniach zaznaczys
 „usuń wszystkie dane", odinstalowanie skasuje też bazę Q&A, zgłoszenia,
 historię i ustawienia.
 
-## 6. Droga rozbudowy (po zakupie, na życzenie)
+## 8. Droga rozbudowy (po zakupie, na życzenie)
 
 - automatyczne łapanie polskich odmian (stemming) zamiast ręcznych wariantów,
 - czat operatora na żywo / powiadomienia push,
@@ -131,7 +203,7 @@ historię i ustawienia.
 - inne modele AI lub własny serwer proxy (wtyczka ma filtry `chatl_ai_url`
   i `chatl_ai_model` dla integratorów).
 
-## 7. Deklaracja prywatności (ważne — RODO)
+## 9. Deklaracja prywatności (ważne — RODO)
 
 - **Tryb regułowy:** treść rozmów NIE opuszcza Twojego WordPressa — dopasowanie
   działa lokalnie, dane (rozmowy, zgłoszenia z mailami gości) leżą w Twojej bazie.
