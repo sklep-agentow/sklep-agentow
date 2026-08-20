@@ -142,6 +142,11 @@ w paczce. Poniżej skrót.
   kosztować wielokrotność innego.
 * Zużycie tokenów widoczne w Statystykach i w Ustawieniach.
 
+= 1.4.3 =
+* Naprawione: za Cloudflare albo proxy hostingu limity działały na **całą witrynę
+  naraz** zamiast na gościa. Nowe ustawienie „Strona za Cloudflare albo proxy"
+  (domyślnie wyłączone — włącz tylko, gdy naprawdę tak jest).
+
 = 1.4.2 =
 * Naprawione: zły albo wygasły klucz API oznaczał, że bot **po cichu** odpowiada
   wyłącznie z reguł, a właściciel nie miał jak tego zauważyć. Panel pokazuje teraz
