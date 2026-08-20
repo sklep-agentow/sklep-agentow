@@ -938,7 +938,7 @@ function segm_strona_probka() {
 					<td><?php echo esc_html( wp_html_excerpt( $m->tresc, 90, '…' ) ); ?></td>
 					<td><?php echo '' === $m->kategoria_oczekiwana ? '—' : esc_html( $m->kategoria_oczekiwana ); ?></td>
 					<td>
-						<a href="<?php echo esc_url( admin_url( 'admin.php?page=segm-probka&edytuj_mail=' . (int) $m->id ) ); ?>">Edytuj</a> |
+						<a href="<?php echo esc_url( admin_url( 'admin.php?page=segm-probka&edytuj_mail=' . (int) $m->id . ( $strona_nr > 1 ? '&segm_strona=' . (int) $strona_nr : '' ) ) ); ?>">Edytuj</a> |
 						<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=segm_mail_usun&id=' . (int) $m->id ), 'segm_mail_usun_' . (int) $m->id ) ); ?>"
 							onclick="return confirm('Usunąć ten mail z próbki? Reszta próbki zostaje.');">Usuń</a>
 					</td>

@@ -256,8 +256,8 @@ spr "lista probki stronicowana"      "1" "awk '/function segm_strona_probka/,/^}
 spr "historia skrzynki stronicowana" "1" "awk '/function segm_skrzynka_tabela_przebiegow/,/^}/' $W/includes/admin-skrzynka.php | grep -c 'segm_pasek_stron('"
 spr "wszystkie trzy listy z OFFSET"  "3" "grep -c 'LIMIT %d OFFSET %d' $W/includes/admin.php $W/includes/admin-skrzynka.php | grep -oP '(?<=:)\d+' | paste -sd+ | bc"
 spr "pasek podaje zakres i sume"     "1" "awk '/function segm_pasek_stron/,/^}/' $W/includes/admin.php | grep -c 'displaying-num'"
-spr "wejscie w szczegoly niesie numer strony" "2" "grep -c \"segm_strona=' . (int) \\\$strona_nr\" $W/includes/admin.php $W/includes/admin-skrzynka.php | grep -oP '(?<=:)\\d+' | paste -sd+ | bc"
-spr "powrot wraca na te sama strone" "2" "grep -c 'segm_param_strony() )' $W/includes/admin.php $W/includes/admin-skrzynka.php | grep -oP '(?<=:)\\d+' | paste -sd+ | bc"
+spr "odnosniki w listach niosa numer strony" "3" "grep -c \"segm_strona=' . (int) \\\$strona_nr\" $W/includes/admin.php $W/includes/admin-skrzynka.php | grep -oP '(?<=:)\\d+' | paste -sd+ | bc"
+spr "powrot wraca na te sama strone" "3" "grep -c 'segm_param_strony() )' $W/includes/admin.php $W/includes/admin-skrzynka.php $W/includes/admin-probka.php | grep -oP '(?<=:)\\d+' | paste -sd+ | bc"
 spr "dokumentacja opisuje stronicowanie" "1" "grep -c '8.3. Stronicowanie list' $DOK"
 
 echo "=== N. readme.txt w standardzie WordPressa ==="

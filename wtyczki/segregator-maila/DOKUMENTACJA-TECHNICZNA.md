@@ -383,9 +383,9 @@ więc `?segm_strona=999` pokazuje ostatnią stronę, a nie pustą tabelę.
 Pasek podaje zakres i sumę („pozycje 51–100 z 260 (strona 2 z 6)”), bo sama
 nawigacja bez liczb nie mówi właścicielowi, ile danych w ogóle ma.
 
-Numer strony **jedzie dalej w odnośnikach**: „Zobacz raport" i „Szczegóły"
-doklejają `segm_strona`, a powrotne „← wróć" odczytuje go z adresu przez
-`segm_param_strony()`. Bez tego wejście w szczegóły wpisu ze strony 4 i powrót
+Numer strony **jedzie dalej w odnośnikach**: „Zobacz raport", „Szczegóły"
+i „Edytuj" doklejają `segm_strona`, a powrotne „← wróć" i „Anuluj edycję"
+odczytują go z adresu przez `segm_param_strony()`. Bez tego wejście w szczegóły wpisu ze strony 4 i powrót
 zrzucały właściciela na stronę 1 — czyli dokładnie ten problem, który
 stronicowanie miało usunąć, wracał tylnymi drzwiami. Pierwsza strona nie dokleja
 niczego, żeby adres został czysty.
