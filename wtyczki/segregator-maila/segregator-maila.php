@@ -16,6 +16,34 @@ define( 'SEGM_WERSJA', '1.2.1' );
 define( 'SEGM_WERSJA_SCHEMATU', '2' );
 define( 'SEGM_KATALOG', plugin_dir_path( __FILE__ ) );
 
+/**
+ * Wpis do logu WP po nieudanym zapisie do bazy.
+ *
+ * $wpdb->insert/update/delete/query zwracają FALSE przy porażce (0 to poprawny
+ * wynik „nic nie pasowało"), więc każde wywołanie porównujemy z false ===.
+ * Log idzie przez wp_trigger_error() — natywne API WP (6.4+), respektuje
+ * WP_DEBUG i nie łamie zakazu error_log() z phpcs.xml.dist. Na starszym WP
+ * (deklarowane minimum 6.0) log po prostu nie powstaje; komunikat błędu dla
+ * użytkownika działa niezależnie od wersji i to on jest właściwą obroną
+ * przed cichym ubytkiem danych.
+ *
+ * @param string $funkcja  Nazwa funkcji, w której zapis padł.
+ * @param string $operacja Krótki opis operacji (co miało trafić do bazy).
+ * @return void
+ */
+function segm_log_bledu_bazy( $funkcja, $operacja ) {
+	global $wpdb;
+	if ( ! function_exists( 'wp_trigger_error' ) ) {
+		return;
+	}
+	$szczegol = '' !== (string) $wpdb->last_error ? (string) $wpdb->last_error : 'sterownik nie podał komunikatu';
+	wp_trigger_error(
+		(string) $funkcja,
+		'zapis do bazy nie powiódł się (' . $operacja . '): ' . $szczegol,
+		E_USER_WARNING
+	);
+}
+
 require_once SEGM_KATALOG . 'includes/instalator.php';
 
 register_activation_hook( __FILE__, 'segm_aktywacja' );

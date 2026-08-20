@@ -67,7 +67,8 @@ function segm_pobierz_reguly() {
  * przebieg ZJEŻDŻA do trybu regułowego — jak w ChatBocie.
  *
  * @param string $tryb Tryb przebiegu.
- * @return array ['id' => int, 'zjazd' => bool] Zjazd = chciano AI, wyszły reguły.
+ * @return array ['id' => int, 'zjazd' => bool] + opcjonalnie ['blad' => string].
+ *               Zjazd = chciano AI, wyszły reguły.
  */
 function segm_wykonaj_przebieg( $tryb = 'reguly' ) {
 	global $wpdb;
@@ -148,7 +149,9 @@ function segm_wykonaj_przebieg( $tryb = 'reguly' ) {
 		$wyniki[] = $wpis;
 	}
 
-	$wpdb->insert(
+	// Bez tego sprawdzenia padnięty zapis kończył się przekierowaniem na raport
+	// „#0", czyli „Nie ma takiego przebiegu" — admin widział pustkę zamiast błędu.
+	$zapisano = $wpdb->insert(
 		$wpdb->prefix . 'segm_przebiegi',
 		array(
 			'tryb'           => $tryb,
@@ -161,6 +164,14 @@ function segm_wykonaj_przebieg( $tryb = 'reguly' ) {
 		),
 		array( '%s', '%d', '%d', '%d', '%d', '%s', '%s' )
 	);
+	if ( false === $zapisano ) {
+		segm_log_bledu_bazy( 'segm_wykonaj_przebieg', 'zapis wyniku przebiegu (tryb: ' . $tryb . ')' );
+		return array(
+			'id'    => 0,
+			'zjazd' => $zjazd,
+			'blad'  => 'Przebieg policzył się, ale zapis wyniku do bazy nie powiódł się — raportu NIE ma. Sprawdź stan bazy i uruchom przebieg ponownie.',
+		);
+	}
 
 	return array(
 		'id'    => (int) $wpdb->insert_id,

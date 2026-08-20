@@ -1,5 +1,74 @@
 # CO-WISI — rzeczy oddane komuś / bez strażnika (zasada: oddajesz ⇒ wiersz, wraca ⇒ kasujesz)
 
+## 🔄 W TOKU 20.08 (noc) — RUNDA BOTÓW, DWA BUILDERY
+⏰ **TERMIN: do 1.09** (Dzidek 20.08 — zmiana z 30.08).
+- **builder1** (tmux praca:builder1, drzewo główne, gałąź `boty/runda-finalna`): TYLKO chatbot
+  + klasa AI w obu botach. Zrobione: Z1 (fałszywy sukces zapisu, oba boty), **Z0 (tryb AI —
+  był MARTWY)**, Z2 (zgoda RODO w formularzu). Dalej: PLAN-NAPRAW-CHATBOT v2, P1 i P2.
+- **builder2** (tmux praca:builder2, drzewo `sklep-agentow-boty`, gałąź `boty/segregator-naprawy`):
+  TYLKO segregator, punkty 1-8 z BRIEF-BUILDER2. ⛔ nie dotyka `segregator-maila/includes/ai.php`.
+- ⛔ **Scalenie gałęzi + bump 1.2.2 + przebudowa paczek = koordynator**, nie buildery.
+- ⏸️ **WSTRZYMANE do decyzji**: eksport filtrów Gmail/Outlook (P1.3) — nasz silnik zatrzymuje się
+  na pierwszej pasującej regule, Gmail stosuje wszystkie naraz → eksport 1:1 dałby inny wynik
+  niż nasz raport. Rekomendacja: eksport z jawnym ostrzeżeniem + lista reguł nieprzekładalnych.
+- 🔑 Klucze API (Anthropic, Gemini) w `/root/.claude/sekrety-*.env` — **DO SKASOWANIA po testach**.
+- ⚠️ Tunel publiczny AKTYWNY, siteurl stacka przestawiony na adres tunelu (przepis przywrócenia
+  w CONTEXT-SERWER.md).
+
+
+## ⚠️ WISZĄCE OD 19.08 (sesja Gosia-3) — TUNEL PUBLICZNY na czas oglądania Dzidka
+- **Tunel cloudflared AKTYWNY**: `https://linda-refrigerator-potato-objective.trycloudflare.com`
+  → :8890 (proces w tle sesji; log `/tmp/cf-sklep-8890.log`). **siteurl+home stacka
+  PRZESTAWIONE na adres tunelu** — po seansie Dzidka PRZYWRÓCIĆ:
+  `docker exec strona_wp_wordpress wp --allow-root --path=/var/www/html option update siteurl "http://localhost:8890" && docker exec strona_wp_wordpress wp --allow-root --path=/var/www/html option update home "http://localhost:8890"`
+  + ubić tunel (`pkill -f "cloudflared tunnel --url http://127.0.0.1:8890"`).
+  ⛔ Do tego czasu testy automatyczne po localhost NIE są miarodajne (canonical
+  redirect na tunel); E2E przez tunel: kopia `przelot2-tunel.js` w scratchpadzie.
+- **header.php motywu KOPII zmieniony poza repo** (link „Sklep" w obu nav —
+  D28): backup w kontenerze `header.php.przed-sklepem`; dosłowne fragmenty
+  w INSTRUKCJA-INSTALACJI (sekcja Ustawienia produkcyjne).
+
+## ✅ ZAMKNIĘTE 19.08 (późny wieczór) — ⭐ K5b3 FINAŁ SZLIFU (PR #61 MERGED) = SZLIF WIZUALNY ZAMKNIĘTY
+- Sędzia finalny **84/100** (przynęta „sekcja wideo" rozbrojona): finalny CTA
+  listy („Wybierz bota…" + 2 przyciski) · hierarchia linków (DLA KOGO:
+  „Więcej o tym bocie") · kadr raportu 1200×470 (czytelność +60%) ·
+  BONUS: Sklep dopisany do nav STOPKI (footer.php kopii, backup; instrukcja).
+- Zarzut „pusta stopka" 2× ODRZUCONY z twardym dowodem: viewport po WOLNYM
+  scrollu = pełna stopka, wszystkie elementy op=1. ⭐ WADA NARZĘDZIA:
+  fullPage-screenshot playwrighta NIE odpala reveal-animacji motywu — oceny
+  wyglądu odtąd zrzutami VIEWPORTU po wolnym scrollu, nigdy samym fullPage.
+- Recenzja #61 czysta (zero uwag krytycznych/ważnych). E2E: mail_wyslany
+  (5. pełny przelot dnia). Sklep w nav: nagłówek desktop + mobile + stopka.
+
+## ✅ ZAMKNIĘTE 19.08 (wieczór) — ⭐ K5b2 ILUSTRACJE SVG KART (PR #60 MERGED, D28b)
+- Karty listy: WŁASNE ilustracje SVG w brandzie (roboty-bliźniaki, 880×560,
+  ~4 KB) — feedback Dzidka „fajne obrazy jak profesjonaliści"; zrzuty żywych
+  botów zostały na stronach produktów (podział: lista=marketing, produkt=dowód).
+  Generyczny stock/AI-obrazy ODRZUCONE (D28b). Opinie/gwiazdki NIE (D6/Omnibus
+  — powiedziane Dzidkowi wprost).
+- Recenzent złapał REALNEGO BUGA (modyfikator klasy CSS doklejany do złego
+  członu przy dwuczłonowym $klasa) → naprawiony, dowód surowym renderem klas;
+  D28b dopisane do rejestru (kod cytował decyzję bez wpisu — klasa #3).
+  ⭐ NOWA ZASADA z uwagi krytycznej: opis PR-a MA surowe wyjście komend, nie
+  deklaracje. E2E po każdej porcji: mail_wyslany (łącznie 4× dziś).
+
+## ✅ ZAMKNIĘTE 19.08 (popołudnie) — ⭐ K5b WIZUALIA (PR #59 MERGED, sklep 0.9.0, D28)
+- **Feedback Dzidka obsłużony**: link „Sklep" w nav (desktop+mobile) · zrzuty
+  ŻYWYCH botów na kartach i w sekcji „JAK TO WYGLĄDA" (rama „okna aplikacji") ·
+  lista: pasek konkretów + OD ZAKUPU DO DZIAŁANIA + DLA KOGO (jedno źródło
+  treści) + PYTANIA (liczby ze stałych = dok=kod). Wideo ODRZUCONE (D28).
+- **Sędzia 79/100 (przynęta rozbrojona)**: 2 zgrzyty naprawione (okno 20rem,
+  rama okna), zarzut „pustka przed stopką" ODRZUCONY Z DOWODEM (artefakt
+  fullPage bez scrolla — reveal stopki gospodarza, opacity [0,0]→[1,1] po
+  scrollu; ⚠️ zrzuty full-page odtąd PO przescrollowaniu!), postulat opinii
+  ODRZUCONY (D6/Omnibus).
+- **E2E ×2 przez tunel: mail_wyslany** · recenzent: 4 drobne uwagi zaadresowane
+  (2 kodem, 2 pomiarem: wymiary JPG zmierzone 1:1, kadr segregatora obejrzany) ·
+  stack==main diff czysty · paczki botów 1.2.1 NIETKNIĘTE.
+- Zwiad wzorców: agenciai.pl = landing 1 szkolenia → osobna domena sprzedażowa
+  claudedlafirm.pl (30k px, countdown, opinie) — model NIE nasz; podebrane:
+  kroki uruchomienia, konkrety techniczne, FAQ listy.
+
 ## ✅ ZAMKNIĘTE 19.08 (noc) — ⭐ K6 INSTALACJA OD ZERA (przyciągnięte z 24.08), sklep 0.8.2
 - **NIE-autor = niezależna sesja-tester** (Sonnet, tmux, deny na kod/warsztat —
   decyzja Dzidka: „tester niezależny przez tmux jak buildery"). Pełna ścieżka
