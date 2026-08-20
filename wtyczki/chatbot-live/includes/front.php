@@ -14,6 +14,8 @@ const CHATL_LIMIT_NA_MIN  = 10;
 const CHATL_RETENCJA_DNI  = 90;
 
 /*
+
+/**
  * Osobny, DUZO nizszy limit wywolan AI z jednego IP na dobe.
  * Limit 10/min i dzienny limit AI mierza zle wymiary: pierwszy jest wspolny
  * dla pytan i zgloszen i liczy sie w minutach, drugi jest GLOBALNY dla calej
@@ -62,7 +64,7 @@ const CHATL_NONCE_OKNO_DNI = 7;
  */
 function chatl_rate_limit( $akcja, $prog = CHATL_LIMIT_NA_MIN, $okno_sekund = MINUTE_IN_SECONDS ) {
 	global $wpdb;
-	$ip = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
+	$ip = chatl_ip_goscia();
 	if ( '' === $ip ) {
 		return false;
 	}
@@ -93,6 +95,60 @@ function chatl_rate_limit( $akcja, $prog = CHATL_LIMIT_NA_MIN, $okno_sekund = MI
 		return true; // Awaria licznika — limiter chroni przed spamem, nie może zablokować czatu (nonce/walidacje są gdzie indziej).
 	}
 	return $ile <= $prog;
+}
+
+/**
+ * Adres IP gościa — z uwzględnieniem proxy, ale TYLKO na wyraźną decyzję właściciela.
+ *
+ * Problem, który to naprawia: limit „na IP" liczony z samego REMOTE_ADDR mierzy
+ * adres PROXY. Strona za Cloudflare albo za proxy hostingu widzi jeden adres dla
+ * wszystkich gości — wtedy 10 wiadomości na minutę obowiązuje CAŁĄ WITRYNĘ,
+ * a dobowy limit AI (20 na IP) staje się limitem 20 na całą stronę.
+ *
+ * Nagłówkom ufamy WYŁĄCZNIE po włączeniu przełącznika w ustawieniach i to jest
+ * decyzja świadoma, nie oszczędność: `X-Forwarded-For` da się podrobić zwykłym
+ * żądaniem, więc na stronie BEZ proxy zaufanie mu oznaczałoby, że każdy obchodzi
+ * limit, podając za każdym razem inny adres. Domyślnie przełącznik jest WYŁĄCZONY.
+ *
+ * Kolejność (jak w opisie luki L2): CF-Connecting-IP, potem pierwszy adres
+ * z X-Forwarded-For, potem REMOTE_ADDR.
+ *
+ * @return string Adres IP albo pusty string, gdy nie da się go ustalić.
+ */
+function chatl_ip_goscia() {
+	$ust = chatl_ustawienia();
+	$ip  = '';
+
+	if ( ! empty( $ust['za_proxy'] ) ) {
+		// phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotValidated -- każdy odczyt niżej przechodzi przez filter_var( ..., FILTER_VALIDATE_IP ).
+		if ( ! empty( $_SERVER['HTTP_CF_CONNECTING_IP'] ) ) {
+			$ip = sanitize_text_field( wp_unslash( $_SERVER['HTTP_CF_CONNECTING_IP'] ) );
+		} elseif ( ! empty( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) {
+			// X-Forwarded-For to LISTA: „gość, proxy1, proxy2". Interesuje nas pierwszy.
+			$lista = explode( ',', sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) );
+			$ip    = trim( (string) $lista[0] );
+		}
+		// phpcs:enable WordPress.Security.ValidatedSanitizedInput.InputNotValidated
+
+		// Nagłówek z bzdurą (albo z adresem prywatnym podstawionym przez kogoś
+		// „na próbę") NIE może wyłączyć limitu — wtedy schodzimy do REMOTE_ADDR.
+		if ( ! filter_var( $ip, FILTER_VALIDATE_IP ) ) {
+			$ip = '';
+		}
+	}
+
+	if ( '' === $ip && isset( $_SERVER['REMOTE_ADDR'] ) ) {
+		$ip = sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) );
+	}
+
+	/**
+	 * Ostatnie słowo dla integratora: hosting bywa za nietypowym nagłówkiem
+	 * (True-Client-IP, X-Real-IP). Zwrócenie pustego stringa = „nie wiem".
+	 *
+	 * @param string $ip Ustalony adres.
+	 */
+	$ip = (string) apply_filters( 'chatl_ip_goscia', $ip );
+	return filter_var( $ip, FILTER_VALIDATE_IP ) ? $ip : '';
 }
 
 /**

@@ -20,6 +20,26 @@ migracja odpala się sama przy pierwszym wejściu do panelu po aktualizacji
   do niej. Do tej pory informacja pojawiała się dopiero przy zostawianiu maila,
   choć samo pisanie na czacie już trafiało do historii rozmów.
 
+## [1.4.3] — 2026-08-20
+
+### Naprawione
+- **Za Cloudflare albo proxy hostingu cała witryna miała JEDEN limit.** Limit
+  liczony z samego `REMOTE_ADDR` mierzył adres proxy, więc 10 wiadomości na minutę
+  obowiązywało wszystkich gości razem, a dobowy limit 20 wywołań AI na adres
+  stawał się limitem na całą stronę — jeden ruchliwy dzień i reszta gości dostawała
+  odmowy albo odpowiedzi wyłącznie z reguł.
+
+### Dodane
+- Ustawienie **„Strona za Cloudflare albo proxy"** (domyślnie **wyłączone**).
+  Po włączeniu adres gościa ustalany jest z `CF-Connecting-IP`, potem z pierwszego
+  adresu `X-Forwarded-For`, a na końcu z `REMOTE_ADDR`.
+- Filtr `chatl_ip_goscia` — furtka dla hostingu z nietypowym nagłówkiem.
+
+### Uwaga
+- Przełącznik jest domyślnie wyłączony **celowo**: `X-Forwarded-For` da się
+  podrobić, więc na stronie bez proxy zaufanie mu pozwoliłoby obchodzić limity.
+  Włącz go tylko wtedy, gdy strona naprawdę stoi za proxy.
+
 ## [1.4.2] — 2026-08-20
 
 ### Naprawione

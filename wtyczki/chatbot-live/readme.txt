@@ -140,6 +140,11 @@ w paczce. Poniżej skrót.
 * Gość widzi informację o zapisie rozmowy **na starcie czatu**, a nie dopiero przy
   formularzu kontaktu — wraz z odnośnikiem do Twojej polityki prywatności.
 
+= 1.4.3 =
+* Naprawione: za Cloudflare albo proxy hostingu limity działały na **całą witrynę
+  naraz** zamiast na gościa. Nowe ustawienie „Strona za Cloudflare albo proxy"
+  (domyślnie wyłączone — włącz tylko, gdy naprawdę tak jest).
+
 = 1.4.2 =
 * Naprawione: zły albo wygasły klucz API oznaczał, że bot **po cichu** odpowiada
   wyłącznie z reguł, a właściciel nie miał jak tego zauważyć. Panel pokazuje teraz

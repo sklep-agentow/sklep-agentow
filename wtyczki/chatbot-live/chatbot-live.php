@@ -130,6 +130,9 @@ function chatl_ustawienia() {
 		'kolor_naglowka'   => '#08090b',
 		'kolor_tekstu'     => 'auto',
 		'pozycja'          => 'prawo',
+		// Zaufanie nagłówkom proxy: domyślnie WYŁĄCZONE, bo X-Forwarded-For
+		// da się podrobić. Włącza je świadomie właściciel strony za Cloudflare.
+		'za_proxy'         => 0,
 	);
 	$zapisane = get_option( 'chatl_ustawienia', array() );
 	if ( ! is_array( $zapisane ) ) {
