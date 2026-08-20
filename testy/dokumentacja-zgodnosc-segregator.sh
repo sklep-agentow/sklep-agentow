@@ -237,6 +237,15 @@ spr "import sprawdza wersje formatu" "1" "grep -c 'SEGM_KONFIG_FORMAT' $W/includ
 spr "import bierze blokade operacji" "1" "sed -n '/function segm_post_konfig_import/,/^}/p' $W/includes/konfiguracja.php | grep -c 'segm_zajmij_blokade'"
 spr "dokumentacja opisuje przeprowadzke" "1" "grep -c '8.2. Przeprowadzka' $DOK"
 
+echo "=== T. Wybor modelu AI ==="
+spr "ustawienie ai_model ma wartosc domyslna" "1" "sed -n '/function segm_ustawienia/,/^}/p' $W/segregator-maila.php | grep -c \"'ai_model'         => ''\""
+spr "model czytany z ustawien"       "1" "grep -c \"apply_filters( 'segm_ai_model', segm_ai_model() )\" $W/includes/ai.php"
+spr "filtr nadal na wierzchu"        "1" "grep -c \"apply_filters( 'segm_ai_model'\" $W/includes/ai.php"
+spr "wzorzec nazwy modelu"           "1" "grep -c 'SEGM_AI_MODEL_WZORZEC' $W/includes/ai.php | awk '{print (\$1>2)?1:0}'"
+spr "zla nazwa NIE kasuje ustawienia" "1" "sed -n '/function segm_wybrany_model/,/^}/p' $W/includes/ai.php | grep -c 'return (string) \\\$poprzedni;'"
+spr "pole w formularzu ustawien"     "1" "grep -c \"name=.ai_model.\" $W/includes/admin.php | awk '{print (\$1>0)?1:0}'"
+spr "dokumentacja opisuje wybor modelu" "1" "grep -c '10.1. Wybór modelu AI' $DOK"
+
 echo "=== N. readme.txt w standardzie WordPressa ==="
 spr "readme.txt istnieje"            "1" "test -f $W/readme.txt && echo 1 || echo 0"
 spr "naglowek === Nazwa ==="         "1" "head -1 $W/readme.txt | grep -c '^=== Segregator maila ===$'"

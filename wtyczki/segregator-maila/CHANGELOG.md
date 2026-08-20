@@ -42,6 +42,9 @@ do prawdziwej skrzynki. Zbiera zmiany scalone do gałęzi głównej po 1.2.1.
   Przeprowadzka na inny hosting albo klon strony nie oznacza już wpisywania
   dwudziestu reguł od nowa. W pliku NIE MA haseł, klucza API, próbki maili
   ani zapisanych zgód.
+- **Wybór modelu AI w ustawieniach** — dotąd zmiana modelu wymagała edycji PHP
+  przez filtr. Lista podpowiedzi plus pole na własną nazwę; filtr `segm_ai_model`
+  nadal ma ostatnie słowo.
 - **Ekran powitalny po aktywacji** — trzy pierwsze kroki i odnośniki; pokazywany raz,
   z możliwością zamknięcia na stałe (zapamiętywane per użytkownik).
 - Dokumentacja techniczna (`DOKUMENTACJA-TECHNICZNA.md`) z mapą dla audytora,

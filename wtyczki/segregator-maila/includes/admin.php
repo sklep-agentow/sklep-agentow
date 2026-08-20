@@ -1008,6 +1008,29 @@ function segm_strona_ustawienia() {
 					</td>
 				</tr>
 				<tr>
+					<th scope="row"><label for="segm-ai-model">Model AI</label></th>
+					<td>
+						<?php $model_teraz = segm_ai_model(); ?>
+						<select id="segm-ai-model" name="ai_model">
+							<option value=""<?php selected( '' === trim( (string) $ust['ai_model'] ) ); ?>>domyślny wtyczki (<?php echo esc_html( SEGM_AI_MODEL ); ?>)</option>
+							<?php foreach ( segm_ai_modele() as $nazwa => $opis ) : ?>
+								<option value="<?php echo esc_attr( $nazwa ); ?>" <?php selected( $ust['ai_model'], $nazwa ); ?>><?php echo esc_html( $opis ); ?></option>
+							<?php endforeach; ?>
+							<option value="__wlasny"<?php selected( '' !== trim( (string) $ust['ai_model'] ) && ! isset( segm_ai_modele()[ $ust['ai_model'] ] ) ); ?>>własny — wpisz w polu obok</option>
+						</select>
+						<input type="text" name="ai_model_wlasny" class="regular-text" value="<?php echo '' !== trim( (string) $ust['ai_model'] ) && ! isset( segm_ai_modele()[ $ust['ai_model'] ] ) ? esc_attr( $ust['ai_model'] ) : ''; ?>"
+							placeholder="np. claude-sonnet-5" aria-label="Własna nazwa modelu">
+						<p class="description">
+							Teraz w użyciu: <code><?php echo esc_html( $model_teraz ); ?></code>.
+							Lista to <strong>podpowiedzi</strong>, nie gwarancja — dostępność modeli zależy od Twojego konta u dostawcy. Nazwa modelu spoza listy: wybierz „własny" i wpisz ją obok.<br>
+							Wtyczka <strong>nie sprawdza, czy model istnieje</strong> (nie da się tego wiedzieć bez zapytania dostawcy). Zła nazwa = błąd API, a wtedy przebieg zjeżdża do trybu regułowego i mówi o tym w raporcie.
+							<?php if ( has_filter( 'segm_ai_model' ) ) : ?>
+								<br><strong>Uwaga:</strong> na tej instalacji działa filtr <code>segm_ai_model</code> — on nakłada się na to ustawienie i ma ostatnie słowo.
+							<?php endif; ?>
+						</p>
+					</td>
+				</tr>
+				<tr>
 					<th scope="row"><label for="segm-ai-limit">Dzienny limit wywołań AI (stop-loss)</label></th>
 					<td>
 						<input type="number" id="segm-ai-limit" name="ai_limit_dzienny" min="1" max="100000" value="<?php echo (int) $ust['ai_limit_dzienny']; ?>">
@@ -1063,6 +1086,7 @@ function segm_post_ustawienia_zapisz() {
 		array(
 			'usun_dane'        => empty( $_POST['usun_dane'] ) ? 0 : 1,
 			'ai_limit_dzienny' => isset( $_POST['ai_limit_dzienny'] ) ? max( 1, min( 100000, (int) $_POST['ai_limit_dzienny'] ) ) : $stare['ai_limit_dzienny'],
+			'ai_model'         => segm_wybrany_model( $stare['ai_model'] ),
 		)
 	);
 	if ( ! segm_zapisz_opcje( 'segm_ustawienia', $nowe ) ) {
