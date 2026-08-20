@@ -37,11 +37,13 @@ const CHATL_AI_LIMIT_IP_NA_DOBE = 20;
  *
  * @param string $akcja        Etykieta limitu ('chat' = wspólny kubeł widgetu,
  *                             'ai' = wywołania modelu).
- * @param int    $prog         Maks. żądań na okno z jednego IP.
+ * @param int    $prog         Maks. żądań na okno z jednego IP (domyślnie
+ *                             CHATL_LIMIT_NA_MIN — wywołanie bez progu nie
+ *                             zostaje bez limitu).
  * @param int    $okno_sekund  Długość okna w sekundach (minuta albo doba).
  * @return bool True = wolno obsłużyć, false = limit wyczerpany.
  */
-function chatl_rate_limit( $akcja, $prog, $okno_sekund = MINUTE_IN_SECONDS ) {
+function chatl_rate_limit( $akcja, $prog = CHATL_LIMIT_NA_MIN, $okno_sekund = MINUTE_IN_SECONDS ) {
 	global $wpdb;
 	$ip = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
 	if ( '' === $ip ) {
