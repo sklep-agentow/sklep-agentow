@@ -91,9 +91,18 @@ model („przypisz mail do JEDNEJ z kategorii [lista]; niepewny → Reszta") —
 przebiegu do wyboru: reguły / AI / **porównaj oba** (raport pokazuje różnice —
 mocny argument sprzedażowy: widać, co AI łapie ponad reguły). Ten sam stop-loss
 i zjazd do reguł co w ChatBocie.
-**GRANICE na egzamin (jawne):** bez podpięcia prawdziwej skrzynki (IMAP/OAuth —
-po egzaminie, droga opisana w instrukcji krok po kroku); działa na próbkach CSV —
-dlatego uczciwie nazywa się „testowy bot", a nie udaje produkcji.
+**GRANICE — ZAKTUALIZOWANE 2026-08-20** (poprzednia wersja tego akapitu mówiła
+„bez podpięcia prawdziwej skrzynki… testowy bot" i jest już NIEPRAWDZIWA: podpięcie
+skrzynki powstało i działa — pobieranie, przenoszenie do folderów na serwerze
+poczty, tryb na sucho jako domyślny, cofnięcie ostatniego przebiegu, harmonogram).
+Prawdziwe granice, jakie zostały:
+- **logowanie wyłącznie loginem i hasłem aplikacji** (`LOGIN` wg RFC 3501); brak
+  `AUTHENTICATE`/OAuth2 ⇒ **Microsoft 365 i Outlook.com nie zadziałają** — musi to
+  stać na stronie produktu PRZED zakupem, nie w komunikacie błędu po zakupie;
+- **na skrzynce klasyfikują REGUŁY**, tryb AI działa na próbce (koszt wywołań przy
+  całej poczcie byłby niekontrolowany);
+- **bez czytania załączników i struktury MIME** — decyzja z nadawcy, tematu
+  i początku treści.
 
 ---
 
