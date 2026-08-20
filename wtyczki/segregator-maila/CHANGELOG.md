@@ -5,6 +5,17 @@ Wszystkie istotne zmiany w tej wtyczce są zapisywane w tym pliku.
 Format według [Keep a Changelog](https://keepachangelog.com/pl/1.1.0/),
 wersjonowanie według [SemVer](https://semver.org/lang/pl/).
 
+## [Niewydane]
+
+### Naprawione
+
+- **Listy w panelu urywały się bez słowa i bez odnośnika „dalej”.** Przebiegi
+  kończyły się na pięćdziesiątym, próbka pokazywała pierwsze 200 z 500, historia
+  skrzynki na pięćdziesiątym — do reszty własnych danych nie było jak dojść.
+  Wszystkie trzy listy są teraz stronicowane, po 50 wierszy, z informacją
+  „pozycje X–Y z Z”. Wejście w szczegóły wpisu i powrót „wróć" trzymają numer
+  strony, więc powrót nie zrzuca na pierwszą stronę.
+
 ## [1.3.0] — 2026-08-20
 
 Wydanie, w którym Segregator przestaje pracować wyłącznie na próbce i podłącza się
@@ -38,6 +49,13 @@ do prawdziwej skrzynki. Zbiera zmiany scalone do gałęzi głównej po 1.2.1.
   próbki — do ilu maili pasuje sam wzorzec i ile reguła realnie zgarnia (bo
   pierwsza pasująca wygrywa). Przycisk „Policz na próbce" robi to samo dla
   wzorca jeszcze niezapisanego. Obie liczby liczy ta sama funkcja co przebieg.
+- **Eksport i import własnej konfiguracji** (kategorie + reguły) w JSON-ie.
+  Przeprowadzka na inny hosting albo klon strony nie oznacza już wpisywania
+  dwudziestu reguł od nowa. W pliku NIE MA haseł, klucza API, próbki maili
+  ani zapisanych zgód.
+- **Wybór modelu AI w ustawieniach** — dotąd zmiana modelu wymagała edycji PHP
+  przez filtr. Lista podpowiedzi plus pole na własną nazwę; filtr `segm_ai_model`
+  nadal ma ostatnie słowo.
 - **Ekran powitalny po aktywacji** — trzy pierwsze kroki i odnośniki; pokazywany raz,
   z możliwością zamknięcia na stałe (zapamiętywane per użytkownik).
 - Dokumentacja techniczna (`DOKUMENTACJA-TECHNICZNA.md`) z mapą dla audytora,
@@ -96,16 +114,6 @@ do prawdziwej skrzynki. Zbiera zmiany scalone do gałęzi głównej po 1.2.1.
   loginem i hasłem, ich serwer wymaga OAuth2 (sprawdzone: `outlook.office365.com`
   ogłasza `LOGINDISABLED`). Wtyczka wykrywa to i mówi wprost.
 - Cofnąć da się wyłącznie ostatni przebieg, nie dowolny wcześniejszy.
-
-## [Niewydane]
-
-### Naprawione
-
-- **Listy w panelu urywały się bez słowa i bez odnośnika „dalej”.** Przebiegi
-  kończyły się na pięćdziesiątym, próbka pokazywała pierwsze 200 z 500, historia
-  skrzynki na pięćdziesiątym — do reszty własnych danych nie było jak dojść.
-  Wszystkie trzy listy są teraz stronicowane, po 50 wierszy, z informacją
-  „pozycje X–Y z Z”.
 
 ## [1.2.1] — 2026-08-19
 

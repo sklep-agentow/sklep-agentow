@@ -128,6 +128,23 @@ function segm_biezaca_strona( $stron ) {
 }
 
 /**
+ * Kawałek adresu z numerem strony listy — do przeniesienia w ODNOŚNIKU.
+ *
+ * Widok szczegółów (raport przebiegu, szczegóły przebiegu skrzynki) nie zna
+ * długości listy, z której właściciel przyszedł, więc nie może użyć
+ * segm_biezaca_strona() — a bez przeniesienia numeru „wróć" zawsze lądowało
+ * na stronie 1, choćby wyjście było ze strony 4 z 6. Dla pierwszej strony
+ * zwraca pusty łańcuch, żeby nie zaśmiecać adresu.
+ *
+ * @return string
+ */
+function segm_param_strony() {
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- tylko numer strony listy, nic nie zapisujemy.
+	$nr = isset( $_GET['segm_strona'] ) ? max( 1, (int) $_GET['segm_strona'] ) : 1;
+	return $nr > 1 ? '&segm_strona=' . $nr : '';
+}
+
+/**
  * Pasek stron pod listą.
  *
  * Powód istnienia: listy urywały się na sztywnym LIMIT i NIE MÓWIŁY o tym.
@@ -191,6 +208,11 @@ function segm_komunikaty() {
 		$klucz  = sanitize_key( wp_unslash( $_GET['segm_ok'] ) );
 		if ( isset( $teksty[ $klucz ] ) ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( $teksty[ $klucz ] ) . '</p></div>';
+		}
+		if ( 'konfig' === $klucz ) {
+			$kat = isset( $_GET['kategorii'] ) ? (int) $_GET['kategorii'] : 0;
+			$reg = isset( $_GET['regul'] ) ? (int) $_GET['regul'] : 0;
+			echo '<div class="notice notice-success is-dismissible"><p>Wczytano konfigurację: reguł ' . (int) $reg . ', nowych kategorii ' . (int) $kat . '. Sprawdź kolejność reguł — rozstrzyga o tym, która wygrywa.</p></div>';
 		}
 		if ( 'import' === $klucz ) {
 			$ile = isset( $_GET['ile'] ) ? (int) $_GET['ile'] : 0;
@@ -297,7 +319,7 @@ function segm_strona_przebiegi() {
 					<td><?php echo (int) $p->dopasowanych; ?></td>
 					<td><?php echo esc_html( segm_procent( $p->dopasowanych, $p->maili ) ); ?></td>
 					<td><?php echo $p->etykietowanych > 0 ? esc_html( segm_procent( $p->trafionych, $p->etykietowanych ) . ' (' . (int) $p->trafionych . '/' . (int) $p->etykietowanych . ')' ) : '—'; ?></td>
-					<td><a href="<?php echo esc_url( admin_url( 'admin.php?page=segm-przebiegi&przebieg=' . (int) $p->id ) ); ?>">Zobacz raport</a></td>
+					<td><a href="<?php echo esc_url( admin_url( 'admin.php?page=segm-przebiegi&przebieg=' . (int) $p->id . ( $strona_nr > 1 ? '&segm_strona=' . (int) $strona_nr : '' ) ) ); ?>">Zobacz raport</a></td>
 				</tr>
 			<?php endforeach; ?>
 			</tbody>
@@ -362,7 +384,7 @@ function segm_widok_raportu( $id ) {
 	<div class="wrap">
 		<h1>Raport przebiegu #<?php echo (int) $p->id; ?> — <?php echo esc_html( $nazwy_trybow[ $p->tryb ] ?? $p->tryb ); ?> (<?php echo esc_html( $p->uruchomiono ); ?>)</h1>
 		<?php segm_komunikaty(); ?>
-		<p><a href="<?php echo esc_url( admin_url( 'admin.php?page=segm-przebiegi' ) ); ?>">← wróć do przebiegów</a> |
+		<p><a href="<?php echo esc_url( admin_url( 'admin.php?page=segm-przebiegi' . segm_param_strony() ) ); ?>">← wróć do przebiegów</a> |
 			<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=segm_eksport_csv&przebieg=' . (int) $p->id ), 'segm_eksport_' . (int) $p->id ) ); ?>">Eksport CSV</a></p>
 
 		<h2>Liczby</h2>
@@ -617,6 +639,8 @@ function segm_strona_reguly() {
 			<?php endforeach; ?>
 			</tbody>
 		</table>
+
+		<?php segm_konfig_sekcja(); ?>
 	</div>
 	<?php
 }
@@ -1084,6 +1108,29 @@ function segm_strona_ustawienia() {
 					</td>
 				</tr>
 				<tr>
+					<th scope="row"><label for="segm-ai-model">Model AI</label></th>
+					<td>
+						<?php $model_teraz = segm_ai_model(); ?>
+						<select id="segm-ai-model" name="ai_model">
+							<option value=""<?php selected( '' === trim( (string) $ust['ai_model'] ) ); ?>>domyślny wtyczki (<?php echo esc_html( SEGM_AI_MODEL ); ?>)</option>
+							<?php foreach ( segm_ai_modele() as $nazwa => $opis ) : ?>
+								<option value="<?php echo esc_attr( $nazwa ); ?>" <?php selected( $ust['ai_model'], $nazwa ); ?>><?php echo esc_html( $opis ); ?></option>
+							<?php endforeach; ?>
+							<option value="__wlasny"<?php selected( '' !== trim( (string) $ust['ai_model'] ) && ! isset( segm_ai_modele()[ $ust['ai_model'] ] ) ); ?>>własny — wpisz w polu obok</option>
+						</select>
+						<input type="text" name="ai_model_wlasny" class="regular-text" value="<?php echo '' !== trim( (string) $ust['ai_model'] ) && ! isset( segm_ai_modele()[ $ust['ai_model'] ] ) ? esc_attr( $ust['ai_model'] ) : ''; ?>"
+							placeholder="np. claude-sonnet-5" aria-label="Własna nazwa modelu">
+						<p class="description">
+							Teraz w użyciu: <code><?php echo esc_html( $model_teraz ); ?></code>.
+							Lista to <strong>podpowiedzi</strong>, nie gwarancja — dostępność modeli zależy od Twojego konta u dostawcy. Nazwa modelu spoza listy: wybierz „własny" i wpisz ją obok.<br>
+							Wtyczka <strong>nie sprawdza, czy model istnieje</strong> (nie da się tego wiedzieć bez zapytania dostawcy). Zła nazwa = błąd API, a wtedy przebieg zjeżdża do trybu regułowego i mówi o tym w raporcie.
+							<?php if ( has_filter( 'segm_ai_model' ) ) : ?>
+								<br><strong>Uwaga:</strong> na tej instalacji działa filtr <code>segm_ai_model</code> — on nakłada się na to ustawienie i ma ostatnie słowo.
+							<?php endif; ?>
+						</p>
+					</td>
+				</tr>
+				<tr>
 					<th scope="row"><label for="segm-ai-limit">Dzienny limit wywołań AI (stop-loss)</label></th>
 					<td>
 						<input type="number" id="segm-ai-limit" name="ai_limit_dzienny" min="1" max="100000" value="<?php echo (int) $ust['ai_limit_dzienny']; ?>">
@@ -1139,6 +1186,7 @@ function segm_post_ustawienia_zapisz() {
 		array(
 			'usun_dane'        => empty( $_POST['usun_dane'] ) ? 0 : 1,
 			'ai_limit_dzienny' => isset( $_POST['ai_limit_dzienny'] ) ? max( 1, min( 100000, (int) $_POST['ai_limit_dzienny'] ) ) : $stare['ai_limit_dzienny'],
+			'ai_model'         => segm_wybrany_model( $stare['ai_model'] ),
 		)
 	);
 	if ( ! segm_zapisz_opcje( 'segm_ustawienia', $nowe ) ) {

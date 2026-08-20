@@ -332,7 +332,7 @@ function segm_skrzynka_tabela_przebiegow() {
 				<td><?php echo (int) $p->dopasowanych; ?></td>
 				<td><?php echo (int) $p->przeniesionych; ?></td>
 				<td><?php echo (int) $p->bledow; ?></td>
-				<td><a href="<?php echo esc_url( admin_url( 'admin.php?page=segm-skrzynka&przebieg=' . (int) $p->id ) ); ?>">Szczegóły</a></td>
+				<td><a href="<?php echo esc_url( admin_url( 'admin.php?page=segm-skrzynka&przebieg=' . (int) $p->id . ( $strona_nr > 1 ? '&segm_strona=' . (int) $strona_nr : '' ) ) ); ?>">Szczegóły</a></td>
 			</tr>
 		<?php endforeach; ?>
 		</tbody>
@@ -365,7 +365,7 @@ function segm_skrzynka_widok_przebiegu( $id ) {
 	?>
 	<div class="wrap">
 		<h1>Przebieg skrzynki #<?php echo (int) $p->id; ?> — <?php echo 'na_zywo' === $p->tryb ? 'realny' : 'na sucho'; ?> (<?php echo esc_html( $p->uruchomiono ); ?>)</h1>
-		<p><a href="<?php echo esc_url( admin_url( 'admin.php?page=segm-skrzynka' ) ); ?>">← wróć do skrzynki</a></p>
+		<p><a href="<?php echo esc_url( admin_url( 'admin.php?page=segm-skrzynka' . segm_param_strony() ) ); ?>">← wróć do skrzynki</a></p>
 		<?php if ( 'na_sucho' === $p->tryb ) : ?>
 			<div class="notice notice-info inline"><p>Ten przebieg poszedł <strong>na sucho</strong>: poniżej jest lista tego, co wtyczka <em>zrobiłaby</em>. Na serwerze poczty nic się nie zmieniło.</p></div>
 		<?php endif; ?>
