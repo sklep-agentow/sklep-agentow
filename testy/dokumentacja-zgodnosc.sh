@@ -24,8 +24,8 @@ spr() { # spr "opis" "oczekiwane" "polecenie"
 }
 
 echo "=== A. Wersja i schemat ==="
-spr "naglowek Version"            "1.4.0" "grep -oP '(?<=^ \* Version: ).*' $W/chatbot-live.php"
-spr "stala CHATL_WERSJA"          "1.4.0" "grep -oP \"(?<=CHATL_WERSJA', ')[^']*\" $W/chatbot-live.php"
+spr "naglowek Version"            "1.4.2" "grep -oP '(?<=^ \* Version: ).*' $W/chatbot-live.php"
+spr "stala CHATL_WERSJA"          "1.4.2" "grep -oP \"(?<=CHATL_WERSJA', ')[^']*\" $W/chatbot-live.php"
 spr "CHATL_WERSJA_SCHEMATU"       "4"     "grep -oP \"(?<=CHATL_WERSJA_SCHEMATU', ')[^']*\" $W/chatbot-live.php"
 spr "Requires at least"           "6.0"   "grep -oP '(?<=^ \* Requires at least: ).*' $W/chatbot-live.php"
 spr "Requires PHP"                "8.1"   "grep -oP '(?<=^ \* Requires PHP: ).*' $W/chatbot-live.php"
@@ -169,7 +169,7 @@ echo
 echo "=== F. Deinstalacja: obie sciezki ==="
 spr "DROP TABLE (5 tabel)"        "5"  "grep -c 'DROP TABLE IF EXISTS' $W/uninstall.php"
 spr "klucz API kasowany zawsze"   "1"  "sed -n '1,/usun_dane/p' $W/uninstall.php | grep -c \"delete_option( 'chatl_klucz_api' )\""
-spr "delete_option w sciezce B"   "3"  "sed -n '/usun_dane/,\$p' $W/uninstall.php | grep -c 'delete_option('"
+spr "delete_option w sciezce B"   "4"  "sed -n '/usun_dane/,\$p' $W/uninstall.php | grep -c 'delete_option('"
 spr "wywolan esc_like (bez komentarzy)" "2" "grep -o 'wpdb->esc_like(' $W/uninstall.php | wc -l"
 
 echo
@@ -188,9 +188,12 @@ spr "chatl_blad_maila bez autoload"     "1" "grep -A8 \"update_option($\" $W/inc
 echo
 echo "=== I. Zaczepy i filtry ==="
 spr "endpointy AJAX (z nopriv)"   "4"  "grep -c \"add_action( 'wp_ajax\" $W/includes/front.php"
-spr "akcje admin_post"            "7"  "grep -rc \"add_action( 'admin_post_\" $W/includes/admin.php $W/includes/csv.php | awk -F: '{s+=\$2} END {print s}'"
-spr "wystawione filtry"           "2"  "grep -rc 'apply_filters(' $W/includes/ai.php"
-spr "bramek current_user_can"      "6"  "grep -rc \"current_user_can( 'manage_options' )\" $W/includes/admin.php $W/includes/csv.php | awk -F: '{s+=\$2} END {print s}'"
+spr "akcje admin_post"            "8"  "grep -rc \"add_action( 'admin_post_\" $W/includes/admin.php $W/includes/csv.php | awk -F: '{s+=\$2} END {print s}'"
+# Liczymy RӦZNE nazwy filtrow, nie wywolania: ten sam punkt rozszerzenia bywa
+# uzyty w kilku miejscach (od 1.4.2 chatl_ai_url i chatl_ai_model wolane sa
+# takze przez test klucza), a dokumentacja obiecuje LICZBE PUNKTOW, nie wywolan.
+spr "wystawione filtry (rozne nazwy)" "2"  "grep -oP \"(?<=apply_filters\\( ')[^']*\" $W/includes/ai.php | sort -u | wc -l"
+spr "bramek current_user_can"      "7"  "grep -rc \"current_user_can( 'manage_options' )\" $W/includes/admin.php $W/includes/csv.php | awk -F: '{s+=\$2} END {print s}'"
 spr "stron panelu (menu+submenu)"  "6"  "grep -c 'add_menu_page(\|add_submenu_page(' $W/includes/admin.php"
 
 echo

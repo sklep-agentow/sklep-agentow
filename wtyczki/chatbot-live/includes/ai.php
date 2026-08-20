@@ -167,6 +167,128 @@ function chatl_ai_zapytaj( $pytanie ) {
 }
 
 /**
+ * Znacznik „ostatnie wywołanie API nie powiodło się" — dla WŁAŚCICIELA.
+ *
+ * Sam wpis do logu (chatl_log_bledu_ai) nie wystarcza: na produkcji WP_DEBUG_LOG
+ * jest wyłączony, więc zły albo wygasły klucz oznaczał, że bot **po cichu**
+ * odpowiada wyłącznie z reguł — w nieskończoność. Właściciel płacił za tryb AI,
+ * którego nie ma, i nie miał jak tego zauważyć.
+ *
+ * Wzorzec 1:1 z chatl_odnotuj_wysylke_powiadomienia(): znacznik stawiany przy
+ * porażce, zdejmowany przy pierwszym sukcesie.
+ *
+ * @param array|WP_Error $odp Odpowiedź wp_remote_post().
+ * @param int            $kod Kod HTTP (0 = błąd połączenia).
+ * @return void
+ */
+function chatl_odnotuj_blad_ai( $odp, $kod ) {
+	if ( is_wp_error( $odp ) ) {
+		$tresc = 'błąd połączenia: ' . $odp->get_error_message();
+	} else {
+		$tresc = (string) wp_remote_retrieve_body( $odp );
+	}
+	update_option(
+		'chatl_blad_ai',
+		array(
+			'kiedy' => current_time( 'mysql' ),
+			'kod'   => (int) $kod,
+			'tresc' => mb_substr( wp_strip_all_tags( $tresc ), 0, 300 ),
+		),
+		false
+	);
+}
+
+/**
+ * Zdjęcie znacznika po udanym wywołaniu.
+ *
+ * Kasujemy TYLKO wtedy, gdy znacznik istnieje. Bez tego warunku każde udane
+ * pytanie gościa kończyłoby się zapisem do bazy — a udane wywołania to
+ * przypadek normalny, nie wyjątkowy.
+ *
+ * @return void
+ */
+function chatl_odnotuj_sukces_ai() {
+	if ( get_option( 'chatl_blad_ai' ) ) {
+		delete_option( 'chatl_blad_ai' );
+	}
+}
+
+/**
+ * Jedno TANIE wywołanie API, żeby sprawdzić klucz na żądanie właściciela.
+ *
+ * Celowo NIE używa chatl_ai_instrukcja(): tamta wkłada do żądania całą aktywną
+ * bazę Q&A i opis firmy, więc „sprawdzenie klucza" kosztowałoby właściciela
+ * tyle, co prawdziwe pytanie gościa. Tutaj idzie jedno słowo i `max_tokens = 1`
+ * — sprawdzamy klucz, dostępność API i nazwę modelu, nie jakość odpowiedzi.
+ *
+ * @return array ok (bool), kod (int), komunikat (string).
+ */
+function chatl_ai_test_klucza() {
+	$klucz = chatl_klucz_api();
+	if ( '' === $klucz ) {
+		return array(
+			'ok'        => false,
+			'kod'       => 0,
+			'komunikat' => 'Nie ma zapisanego klucza API — wpisz go i zapisz ustawienia, potem sprawdź ponownie.',
+		);
+	}
+
+	$url   = apply_filters( 'chatl_ai_url', 'https://api.anthropic.com/v1/messages' );
+	$model = apply_filters( 'chatl_ai_model', CHATL_AI_MODEL );
+	$odp   = wp_remote_post(
+		$url,
+		array(
+			'timeout' => CHATL_AI_TIMEOUT,
+			'headers' => array(
+				'Content-Type'      => 'application/json',
+				'x-api-key'         => $klucz,
+				'anthropic-version' => '2023-06-01',
+			),
+			'body'    => wp_json_encode(
+				array(
+					'model'      => $model,
+					'max_tokens' => 1,
+					'messages'   => array(
+						array(
+							'role'    => 'user',
+							'content' => 'test',
+						),
+					),
+				)
+			),
+		)
+	);
+
+	$kod = is_wp_error( $odp ) ? 0 : (int) wp_remote_retrieve_response_code( $odp );
+	if ( ! is_wp_error( $odp ) && 200 === $kod ) {
+		chatl_odnotuj_sukces_ai();
+		return array(
+			'ok'        => true,
+			'kod'       => 200,
+			'komunikat' => 'Klucz działa — API odpowiedziało poprawnie (model: ' . $model . ').',
+		);
+	}
+
+	chatl_odnotuj_blad_ai( $odp, $kod );
+	if ( is_wp_error( $odp ) ) {
+		$powod = 'nie udało się połączyć z API: ' . $odp->get_error_message();
+	} elseif ( 401 === $kod || 403 === $kod ) {
+		$powod = 'API odrzuciło klucz (HTTP ' . $kod . ') — klucz jest zły, wygasł albo nie ma uprawnień.';
+	} elseif ( 404 === $kod ) {
+		$powod = 'API nie zna tego modelu (HTTP 404) — sprawdź nazwę modelu: ' . $model . '.';
+	} elseif ( 429 === $kod ) {
+		$powod = 'API odrzuciło żądanie z powodu limitu (HTTP 429) — klucz działa, ale przekroczono limit u dostawcy.';
+	} else {
+		$powod = 'API odpowiedziało błędem HTTP ' . $kod . '.';
+	}
+	return array(
+		'ok'        => false,
+		'kod'       => $kod,
+		'komunikat' => $powod,
+	);
+}
+
+/**
  * Wpis do logu WP, gdy wywołanie API nie zwróciło 200.
  *
  * @param array|WP_Error $odp Odpowiedź wp_remote_post().
@@ -210,6 +332,7 @@ function chatl_ai_odpowiedz( $pytanie ) {
 		// wyłącznie z reguł, bo API odrzuca każde żądanie (tak zniknął błąd
 		// output_config: 400 nie jest nawet retry'owany).
 		chatl_log_bledu_ai( $odp, $kod );
+		chatl_odnotuj_blad_ai( $odp, $kod );
 		return null;
 	}
 
@@ -234,6 +357,7 @@ function chatl_ai_odpowiedz( $pytanie ) {
 
 	// Licznik stop-loss dopiero PO udanym wywołaniu.
 	chatl_ai_zuzyj();
+	chatl_odnotuj_sukces_ai();
 
 	return $tekst;
 }

@@ -10,6 +10,25 @@ migracja odpala się sama przy pierwszym wejściu do panelu po aktualizacji
 
 ---
 
+## [1.4.2] — 2026-08-20
+
+### Naprawione
+- **Zły albo wygasły klucz API oznaczał, że bot po cichu odpowiada wyłącznie
+  z reguł — w nieskończoność.** Błąd trafiał tylko do logu WordPressa, który na
+  produkcji jest wyłączony, więc właściciel płacił za tryb AI, którego nie ma,
+  i nie miał jak tego zauważyć. Teraz każde nieudane wywołanie zostawia znacznik,
+  a panel pokazuje **czerwony pasek** z datą, kodem HTTP i tym, co zrobić.
+  Znacznik znika sam po pierwszym udanym wywołaniu.
+
+### Dodane
+- Przycisk **„Przetestuj klucz"** w ustawieniach: jedno tanie wywołanie API
+  (jedno słowo, `max_tokens = 1`, bez bazy Q&A w żądaniu), wynik od razu na
+  ekranie. Nie zużywa dziennego limitu. Komunikaty rozróżniają zły klucz (401/403),
+  nieznany model (404), limit u dostawcy (429) i błąd połączenia.
+- Opcja `chatl_blad_ai` (czas, kod HTTP, przycięty fragment odpowiedzi).
+
+---
+
 ## [1.4.0] — 2026-08-20
 
 ### Dodane

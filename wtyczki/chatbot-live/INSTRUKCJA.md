@@ -142,6 +142,12 @@ albo wyłączyć klucz, poprawiasz `wp-config.php`.
 
 ## 7. FAQ
 
+**Skąd mam wiedzieć, czy tryb AI naprawdę działa?**
+W **Ustawieniach → Tryb AI** jest przycisk **„Przetestuj klucz"** — jedno tanie
+wywołanie, wynik od razu na ekranie. Gdyby API zaczęło odrzucać żądania (zły albo
+wygasły klucz), w panelu pojawi się czerwony pasek z datą i kodem błędu. Bot działa
+wtedy dalej, ale wyłącznie z reguł — dlatego ten sygnał jest ważny.
+
 **Zmieniłem kolory i tekst zrobił się nieczytelny.**
 Zaznacz „dobierz automatycznie" przy kolorze tekstu — wtyczka wybierze wersję
 z lepszym kontrastem. Jeśli wolisz własny kolor, patrz na odczyt kontrastu pod

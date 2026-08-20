@@ -1,6 +1,6 @@
 # ChatBot LIVE — dokumentacja techniczna
 
-Wersja wtyczki: **1.4.0** · schemat bazy: **4** · licencja: **GPL-2.0-or-later**
+Wersja wtyczki: **1.4.2** · schemat bazy: **4** · licencja: **GPL-2.0-or-later**
 
 Dokument opisuje **kod, który jest**, nie plan. Każda liczba i nazwa poniżej ma pokrycie
 w źródle — przy każdej podano plik i symbol, żeby dało się to sprawdzić `grep`-em, a nie
@@ -144,6 +144,7 @@ całą historię przy każdym wejściu.
 | `chatl_wersja_schematu` | numer schematu, obecnie `4` | tak (domyślnie) | przy aktywacji i przy migracji schematu |
 | `chatl_klucz_api` | klucz API właściciela | **nie** (`add_option(..., '', false)`) | przy zapisaniu klucza w panelu |
 | `chatl_blad_maila` | `['kiedy' => data, 'adres' => e-mail]` | **nie** | gdy `wp_mail()` zwróci `false`; kasowana przy pierwszej udanej wysyłce |
+| `chatl_blad_ai` | `['kiedy' => data, 'kod' => HTTP, 'tresc' => fragment]` | **nie** | gdy wywołanie API nie zwróci 200; kasowana przy pierwszym udanym wywołaniu |
 
 Klucz API jest bez autoloadu celowo: nie wchodzi do zapytania ładowanego na każdej odsłonie
 strony. Weryfikacja na żywym stacku po pełnym cyklu instalacja→deinstalacja→instalacja:
@@ -189,7 +190,7 @@ Wszystkie liczby, którymi wtyczka się rządzi, są stałymi — nie ma ich roz
 
 | Stała | Wartość | Plik | Do czego |
 |---|---|---|---|
-| `CHATL_WERSJA` | `1.4.0` | `chatbot-live.php` | wersja wtyczki; służy też jako `?ver=` assetów (przeglądarka nie poda starego pliku po aktualizacji) |
+| `CHATL_WERSJA` | `1.4.2` | `chatbot-live.php` | wersja wtyczki; służy też jako `?ver=` assetów (przeglądarka nie poda starego pliku po aktualizacji) |
 | `CHATL_WERSJA_SCHEMATU` | `4` | `chatbot-live.php` | wyzwalacz migracji schematu |
 | `CHATL_KATALOG`, `CHATL_URL` | ścieżka i adres wtyczki | `chatbot-live.php` | `require` i adresy assetów |
 | `CHATL_MAX_PYTANIE` | `500` | `includes/front.php` | maksymalna długość pytania gościa (nadmiar jest **przycinany**, nie odrzucany) |
@@ -329,6 +330,7 @@ Obie zarejestrowane w wariancie `wp_ajax_` i `wp_ajax_nopriv_`, bo gość czatu 
 | `chatl_eksport_zgloszen` | `chatl_post_eksport_zgloszen` | `chatl_eksport_zgloszen` |
 | `chatl_eksport_rozmow` | `chatl_post_eksport_rozmow` | `chatl_eksport_rozmow` |
 | `chatl_powitanie_zamknij` | `chatl_post_powitanie_zamknij` | `chatl_powitanie_zamknij` |
+| `chatl_test_klucza` | `chatl_post_test_klucza` | `chatl_test_klucza` |
 
 Nonce operacji na pojedynczym wierszu zawiera jego `id` — nonce od cudzego wiersza nie przejdzie.
 Oba eksporty przechodzą przez jedną bramkę `chatl_csv_brama()` (capability + nonce).
@@ -562,7 +564,39 @@ i wraca do bazy Q&A.
 
 ---
 
-## 14. Eksport CSV
+## 14. Sygnał, gdy tryb AI przestaje działać
+
+Przed 1.4.2 nieudane wywołanie API szło **wyłącznie** do logu przez
+`wp_trigger_error()`. Na produkcji `WP_DEBUG_LOG` jest wyłączony, więc zły albo
+wygasły klucz oznaczał, że bot po cichu odpowiada tylko z reguł — w nieskończoność.
+Właściciel płacił za tryb AI, którego nie ma, i **nie miał jak tego zauważyć**.
+
+| Element | Gdzie | Co robi |
+|---|---|---|
+| `chatl_odnotuj_blad_ai()` | `includes/ai.php` | stawia znacznik `chatl_blad_ai` (czas, kod HTTP, przycięty do 300 znaków fragment odpowiedzi) przy każdym nieudanym wywołaniu |
+| `chatl_odnotuj_sukces_ai()` | `includes/ai.php` | zdejmuje znacznik po pierwszym udanym wywołaniu — **tylko gdy znacznik istnieje**, żeby udane pytanie gościa nie kończyło się zapisem do bazy |
+| `chatl_notice_bledu_ai()` | `includes/admin.php` | czerwony pasek w panelu: kiedy, kod HTTP, co to znaczy i co zrobić |
+| `chatl_ai_test_klucza()` | `includes/ai.php` | jedno **tanie** wywołanie na żądanie właściciela |
+| `chatl_post_test_klucza()` | `includes/admin.php` | akcja `admin-post` za przyciskiem „Przetestuj klucz" |
+
+Wzorzec jest ten sam co przy nieudanym powiadomieniu mailowym
+(`chatl_odnotuj_wysylke_powiadomienia()`): znacznik stawiany przy porażce,
+zdejmowany przy pierwszym sukcesie.
+
+**Test klucza celowo nie używa `chatl_ai_instrukcja()`.** Tamta wkłada do żądania
+całą aktywną bazę Q&A i opis firmy, więc „sprawdzenie klucza" kosztowałoby tyle,
+co prawdziwe pytanie gościa. Test wysyła jedno słowo z `max_tokens = 1`
+i nie rusza dziennego licznika (`chatl_ai_zuzyj()` woła wyłącznie
+`chatl_ai_odpowiedz()`). Sprawdza klucz, dostępność API i nazwę modelu —
+nie jakość odpowiedzi.
+
+Komunikaty rozróżniają przyczyny, bo prowadzą do różnych działań: `401`/`403`
+to zły lub wygasły klucz, `404` to nieznana nazwa modelu, `429` to limit
+u dostawcy (klucz działa), błąd połączenia to problem z siecią hostingu.
+
+---
+
+## 15. Eksport CSV
 
 Ręczny, przyciskiem w panelu — `includes/csv.php`. Dwa strumienie: wszystkie zgłoszenia
 (`id, data, email, wiadomosc, status, sesja`) i historia rozmów (`sesja, data, kto, silnik, tresc`),
@@ -578,7 +612,7 @@ kłóciłoby się z obietnicą retencji.
 
 ---
 
-## 15. Znane granice
+## 16. Znane granice
 
 Rzeczy, których wtyczka **nie** robi — żeby nikt nie szukał ich w kodzie:
 
@@ -603,6 +637,8 @@ Rzeczy, których wtyczka **nie** robi — żeby nikt nie szukał ich w kodzie:
 - **Kontrast jest liczony i pokazywany, ale nie blokuje zapisu.** Właściciel może
   świadomie zapisać zestaw poniżej progu WCAG — dostaje wtedy czerwony komunikat,
   a nie odmowę. Domyślne „dobierz automatycznie" pilnuje progu za niego.
+- **Znacznik awarii AI pamięta tylko OSTATNIE nieudane wywołanie**, nie prowadzi
+  historii błędów. To sygnał „coś jest nie tak teraz", a nie dziennik diagnostyczny.
 - **Retencja obejmuje tylko historię rozmów.** Zgłoszenia (a więc adresy e-mail gości) zostają,
   aż właściciel je skasuje. Jeśli polityka prywatności obiecuje termin także dla nich,
   trzeba je kasować ręcznie albo eksportem i usunięciem.
