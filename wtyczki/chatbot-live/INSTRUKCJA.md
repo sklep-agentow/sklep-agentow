@@ -119,10 +119,18 @@ i aktywnych wpisów bazy Q&A:
    6 wymian i **kończy się wraz z zamknięciem karty** przeglądarki; przy
    następnej wizycie rozmowa zaczyna się od nowa. Ucięcie jest celowe:
    każda dołożona wymiana to tokeny na Twoim rachunku.
-3. **Stop-loss:** dzienny limit wywołań (domyślnie 100, licznik w ustawieniach;
-   limit jest miękki — równoległe zapytania gości mogą go minimalnie
-   przekroczyć). Osobno działa twardszy limit **20 wywołań AI na dobę
+3. **Stop-loss — DWA limity, bo rachunek idzie z tokenów, nie z wywołań:**
+   dzienny limit **wywołań** (domyślnie 100) i dzienny limit **tokenów**
+   (domyślnie 200 000; `0` = wyłączony). Ten drugi jest ważniejszy, niż wygląda:
+   przy każdym pytaniu do modelu wysyłana jest **cała Twoja aktywna baza Q&A**,
+   więc im większa baza, tym droższe pojedyncze pytanie — a limit wywołań tego
+   w ogóle nie widzi. Oba liczniki (wywołania i tokeny) widzisz w Ustawieniach,
+   a zużycie za wybrany okres na stronie **Statystyki i luki**.
+   Obie liczby są miękkie — równoległe zapytania gości mogą je minimalnie
+   przekroczyć. Osobno działa twardszy limit **20 wywołań AI na dobę
    z jednego adresu IP**, żeby jeden gość nie wypalił budżetu wszystkich.
+   Wtyczka pokazuje **tokeny, nie złotówki** — aktualne stawki sprawdzisz
+   u dostawcy modelu, bo cennik się zmienia, a wtyczka nie ma jak go odświeżyć.
    Po wyczerpaniu któregokolwiek limitu, przy błędzie API albo braku klucza bot
    automatycznie wraca do trybu regułowego — czat nigdy nie przestaje działać.
 

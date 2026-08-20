@@ -444,6 +444,50 @@ function chatl_statystyki_dzienne( $od, $do_dnia ) {
 }
 
 /**
+ * Zużycie tokenów AI w okresie (z tabeli licznika, nie z historii rozmów).
+ *
+ * Rachunek u dostawcy modelu idzie z TOKENÓW, a nie z liczby wywołań — dlatego
+ * właściciel musi widzieć tę liczbę obok skuteczności. Odczyt z cache trzymamy
+ * osobno, bo jest wielokrotnie tańszy i wrzucenie go do jednej sumy zawyżałoby
+ * obraz kosztu.
+ *
+ * @param string $od      Data początkowa (lokalna).
+ * @param string $do_dnia Data końcowa (lokalna).
+ * @return array wywolania, tokeny_wejscia, tokeny_wyjscia, tokeny_cache_zapis,
+ *               tokeny_cache_odczyt, platne (suma trzech pierwszych rodzajów).
+ */
+function chatl_statystyki_tokenow( $od, $do_dnia ) {
+	global $wpdb;
+	$t = $wpdb->prefix . 'chatl_ai_uzycie';
+	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- nazwa tabeli z $wpdb->prefix, wartości przez prepare().
+	$r = $wpdb->get_row(
+		$wpdb->prepare(
+			"SELECT
+				COALESCE( SUM( wywolania ), 0 ) AS wywolania,
+				COALESCE( SUM( tokeny_wejscia ), 0 ) AS tokeny_wejscia,
+				COALESCE( SUM( tokeny_wyjscia ), 0 ) AS tokeny_wyjscia,
+				COALESCE( SUM( tokeny_cache_zapis ), 0 ) AS tokeny_cache_zapis,
+				COALESCE( SUM( tokeny_cache_odczyt ), 0 ) AS tokeny_cache_odczyt
+			FROM {$t} WHERE dzien BETWEEN %s AND %s",
+			$od,
+			$do_dnia
+		),
+		ARRAY_A
+	);
+	// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+	$w           = array(
+		'wywolania'           => (int) ( $r['wywolania'] ?? 0 ),
+		'tokeny_wejscia'      => (int) ( $r['tokeny_wejscia'] ?? 0 ),
+		'tokeny_wyjscia'      => (int) ( $r['tokeny_wyjscia'] ?? 0 ),
+		'tokeny_cache_zapis'  => (int) ( $r['tokeny_cache_zapis'] ?? 0 ),
+		'tokeny_cache_odczyt' => (int) ( $r['tokeny_cache_odczyt'] ?? 0 ),
+	);
+	$w['platne'] = $w['tokeny_wejscia'] + $w['tokeny_wyjscia'] + $w['tokeny_cache_zapis'];
+	return $w;
+}
+
+/**
  * Pytania gości, na które bot NIE odpowiedział — już pogrupowane.
  *
  * @param string $od Data początkowa.
@@ -618,6 +662,27 @@ function chatl_strona_statystyki() {
 		<?php if ( $s['z_ai'] > 0 || $s['z_regul'] > 0 ) : ?>
 			<p class="description">Odpowiedzi z reguł: <strong><?php echo esc_html( number_format_i18n( $s['z_regul'] ) ); ?></strong>,
 				z trybu AI: <strong><?php echo esc_html( number_format_i18n( $s['z_ai'] ) ); ?></strong>.</p>
+		<?php endif; ?>
+
+		<?php $tok = chatl_statystyki_tokenow( $okres['od'], $okres['do'] ); ?>
+		<?php if ( $tok['wywolania'] > 0 ) : ?>
+			<div style="background:#fff;border:1px solid #c3c4c7;border-left:4px solid #dba617;padding:12px 16px;margin:8px 0;max-width:900px">
+				<strong>Zużycie trybu AI w tym okresie:</strong>
+				<?php echo esc_html( number_format_i18n( $tok['wywolania'] ) ); ?> wywołań,
+				<strong><?php echo esc_html( number_format_i18n( $tok['platne'] ) ); ?></strong> tokenów płatnych
+				(wejście <?php echo esc_html( number_format_i18n( $tok['tokeny_wejscia'] ) ); ?>,
+				wyjście <?php echo esc_html( number_format_i18n( $tok['tokeny_wyjscia'] ) ); ?>,
+				zapis do cache <?php echo esc_html( number_format_i18n( $tok['tokeny_cache_zapis'] ) ); ?>).
+				<?php if ( $tok['tokeny_cache_odczyt'] > 0 ) : ?>
+					Odczyt z cache: <?php echo esc_html( number_format_i18n( $tok['tokeny_cache_odczyt'] ) ); ?> tokenów — liczony osobno, bo jest wielokrotnie tańszy.
+				<?php endif; ?>
+				<p class="description" style="margin:6px 0 0">
+					<strong>To tokeny, a nie wywołania, tworzą rachunek u dostawcy modelu.</strong>
+					Im większa baza Q&amp;A, tym droższe pojedyncze pytanie — cała aktywna baza idzie w instrukcji przy każdym wywołaniu.
+					Dobowy limit tokenów ustawisz w <a href="<?php echo esc_url( admin_url( 'admin.php?page=chatl-ustawienia' ) ); ?>">Ustawieniach</a>.
+					Aktualne stawki sprawdzisz u dostawcy — wtyczka nie podaje kwot, bo cennik się zmienia, a ona nie ma jak go odświeżyć.
+				</p>
+			</div>
 		<?php endif; ?>
 
 		<?php if ( $s['nieoznaczone'] > 0 ) : ?>

@@ -23,10 +23,23 @@ spr() { # spr "opis" "oczekiwane" "polecenie"
   fi
 }
 
+echo "=== A0. Struktura dokumentacji: numeracja i odsylacze ==="
+# Numery rozdzialow przesuwaja sie przy KAZDYM scaleniu, w ktorym obie galezie
+# dolozyly sekcje — recenzent zglaszal ten sam martwy odsylacz TRZY razy.
+# Dlatego: (1) numery musza byc ciagle, (2) odsylamy PO TYTULE, nie po numerze,
+# (3) kazdy tytul w odsylaczu musi istniec jako naglowek. Numer sie przesuwa,
+# tytul nie — a jesli ktos go zmieni, kontrola (3) to zlapie.
+spr "numery sekcji sa ciagle i bez powtorzen" "OK" \
+  "grep -oP '^## \\K[0-9]+' $DOK | awk 'NR!=\$1 {print \"ROZJAZD przy \" \$1; exit} END {print \"OK\"}'"
+spr "zero odsylaczy po NUMERZE rozdzialu" "0" \
+  "grep -cE 'rozdzial[u]? [0-9]|rozdział[u]? [0-9]|§ ?[0-9]|sekcj[ai] [0-9]' $DOK"
+spr "kazdy odsylacz po tytule wskazuje istniejacy rozdzial" "OK" \
+  "grep -oP 'rozdzia[lł][u]? \\*\\*\\K[^*]+' $DOK | sort -u | while read -r t; do grep -qF \"## \" $DOK && grep -qP '^## [0-9]+\\. \\Q'\"\$t\"'\\E' $DOK || { echo \"MARTWY: \$t\"; exit; }; done; echo OK"
+
 echo "=== A. Wersja i schemat ==="
 spr "naglowek Version"            "1.4.7" "grep -oP '(?<=^ \* Version: ).*' $W/chatbot-live.php"
 spr "stala CHATL_WERSJA"          "1.4.7" "grep -oP \"(?<=CHATL_WERSJA', ')[^']*\" $W/chatbot-live.php"
-spr "CHATL_WERSJA_SCHEMATU"       "4"     "grep -oP \"(?<=CHATL_WERSJA_SCHEMATU', ')[^']*\" $W/chatbot-live.php"
+spr "CHATL_WERSJA_SCHEMATU"       "5"     "grep -oP \"(?<=CHATL_WERSJA_SCHEMATU', ')[^']*\" $W/chatbot-live.php"
 spr "Requires at least"           "6.0"   "grep -oP '(?<=^ \* Requires at least: ).*' $W/chatbot-live.php"
 spr "Requires PHP"                "8.1"   "grep -oP '(?<=^ \* Requires PHP: ).*' $W/chatbot-live.php"
 spr "naglowek Author"             "Automatic AI" "grep -oP '(?<=^ \* Author: ).*' $W/chatbot-live.php"
@@ -70,7 +83,7 @@ while IFS='|' read -r _ NAZWA WART PLIK _; do
 done < <(grep -P "^\| ${BT}CHATL_[A-Z_]+${BT} \| ${BT}[^${BT}]+${BT} \| ${BT}[^${BT}]+${BT} \|" $DOK)
 # Sama petla nie wystarczy: gdyby wzorzec wiersza przestal pasowac (zmiana ukladu
 # tabeli), petla nie zrobilaby ANI JEDNEGO sprawdzenia i sekcja bylaby cicho pusta.
-spr "stalych sprawdzonych z tabeli dokumentacji" "27" "echo $STALYCH"
+spr "stalych sprawdzonych z tabeli dokumentacji" "28" "echo $STALYCH"
 
 echo
 echo "=== A1b. Rejestr rozszerzen ponad specyfikacje (klasa #6 sciagi) ==="
@@ -147,7 +160,7 @@ spr "liczba dbDelta"              "5"  "grep -c 'dbDelta(' $W/includes/instalato
 spr "kolumn w chatl_qa"           "6"  "sed -n '/CREATE TABLE {\$p}chatl_qa/,/) {\$charset}/p' $W/includes/instalator.php | grep -cP '^\t\t(id|pytanie|slowa_kluczowe|odpowiedz|aktywne|utworzono) '"
 spr "kolumn w chatl_zgloszenia"   "6"  "sed -n '/CREATE TABLE {\$p}chatl_zgloszenia/,/) {\$charset}/p' $W/includes/instalator.php | grep -cP '^\t\t(id|email|wiadomosc|sesja|status|utworzono) '"
 spr "kolumn w chatl_rozmowy"      "7"  "sed -n '/CREATE TABLE {\$p}chatl_rozmowy/,/) {\$charset}/p' $W/includes/instalator.php | grep -cP '^\t\t(id|sesja|rola|silnik|tresc|trafiono|utworzono) '"
-spr "kolumn w chatl_ai_uzycie"    "2"  "sed -n '/CREATE TABLE {\$p}chatl_ai_uzycie/,/) {\$charset}/p' $W/includes/instalator.php | grep -cP '^\t\t(dzien|wywolania) '"
+spr "kolumn w chatl_ai_uzycie"    "6"  "sed -n '/CREATE TABLE {\$p}chatl_ai_uzycie/,/) {\$charset}/p' $W/includes/instalator.php | grep -cP '^\t\t(dzien|wywolania|tokeny_wejscia|tokeny_wyjscia|tokeny_cache_zapis|tokeny_cache_odczyt) '"
 spr "kolumn w chatl_rate_limit"   "3"  "sed -n '/CREATE TABLE {\$p}chatl_rate_limit/,/) {\$charset}/p' $W/includes/instalator.php | grep -cP '^\t\t(klucz|licznik|okno_do) '"
 spr "email varchar(190)"          "1"  "grep -c 'email varchar(190) NOT NULL' $W/includes/instalator.php"
 spr "sesja varchar(64) x2"        "2"  "grep -c 'sesja varchar(64)' $W/includes/instalator.php"
@@ -174,7 +187,7 @@ spr "wywolan esc_like (bez komentarzy)" "2" "grep -o 'wpdb->esc_like(' $W/uninst
 
 echo
 echo "=== G. Ustawienia: klucze i wartosci domyslne ==="
-spr "kluczy w chatl_ustawienia"   "15"  "sed -n '/\\\$domyslne = array(/,/);/p' $W/chatbot-live.php | grep -cP \"^\t\t'\""
+spr "kluczy w chatl_ustawienia"   "16"  "sed -n '/\\\$domyslne = array(/,/);/p' $W/chatbot-live.php | grep -cP \"^\t\t'\""
 spr "ai_limit_dzienny domyslnie"  "100" "grep -oP \"(?<='ai_limit_dzienny' => )[0-9]+\" $W/chatbot-live.php"
 spr "zakres zapisu limitu (max)"  "100000" "grep -oP '(?<=min\\( )[0-9]+(?=, \\(int\\) \\\$_POST\\[.ai_limit_dzienny)' $W/includes/admin.php"
 spr "wlaczony domyslnie"          "1"  "grep -oP \"(?<='wlaczony'         => )[0-9]+\" $W/chatbot-live.php"
@@ -249,6 +262,19 @@ spr "nota liczy dni ze stalej"        "1" "grep -A4 notaZapisu $W/includes/front
 # wiadomosci decyduje o tym, czy gosc przeczyta ja przed napisaniem czegokolwiek.
 spr "widget rysuje note"           "1"  "grep -c 'chatl-nota' $W/assets/widget.js"
 spr "nota jest PRZED powitaniem w kodzie" "wczesniej" "awk '/chatl-nota/{n=NR} /dodajWiadomosc..bot., dane.powitanie/{p=NR} END{print (n && p && n < p) ? \"wczesniej\" : \"pozniej\"}' $W/assets/widget.js"
+# Rachunek u dostawcy idzie z TOKENOW (luka L3): nazwy pol usage musza zgadzac
+# sie z kontraktem API, odczyt z cache NIE moze wchodzic do tokenow platnych,
+# a cache instrukcji ma byc dokladany WARUNKOWO (ponizej progu dziala po cichu wcale).
+spr "czytane wszystkie 4 pola usage" "4" "grep -cP \"'(input_tokens|output_tokens|cache_creation_input_tokens|cache_read_input_tokens)'\" $W/includes/ai.php"
+spr "tokeny platne bez odczytu z cache" "0" "sed -n '/function chatl_ai_tokeny_dzis/,/^}/p' $W/includes/ai.php | grep -c tokeny_cache_odczyt"
+spr "cache instrukcji pod warunkiem progu" "1" "grep -c 'CHATL_AI_CACHE_PROG_ZNAKOW ) {' $W/includes/ai.php"
+# Uwaga WAZNA recenzenta do PR #83: kod 200 znaczy, ze dostawca policzyl wywolanie,
+# wiec KAZDA sciezka po nim musi je zaliczyc. Naliczanie w jednym miejscu, PRZED
+# rozgalezieniem, jest tu odpowiednikiem chatl_ai_niepowodzenie() z PR #79:
+# dopisanie kolejnego wyjscia nie moze juz zgubic kosztu przez przeoczenie.
+spr "zuzycie liczone w JEDNYM miejscu" "1" "sed -n '/function chatl_ai_odpowiedz/,/^}/p' $W/includes/ai.php | grep -c 'chatl_ai_zuzyj('"
+spr "zuzycie liczone PRZED rozgalezieniem" "wczesniej" "sed -n '/function chatl_ai_odpowiedz/,/^}/p' $W/includes/ai.php | awk '/chatl_ai_zuzyj\(/{z=NR} /stop_reason/{r=NR} END{print (z && r && z < r) ? \"wczesniej\" : \"pozniej\"}'"
+spr "limit tokenow blokuje tryb AI"  "1"  "sed -n '/function chatl_ai_dostepny/,/^}/p' $W/includes/ai.php | grep -c chatl_ai_tokeny_dzis"
 # Pamiec biezacej rozmowy: historia MUSI byc filtrowana po sesji (granica
 # prywatnosci, nie optymalizacja) i MUSI miec sufit — kazda wymiana to tokeny.
 spr "historia filtrowana po sesji" "2" "sed -n '/function chatl_ai_historia/,/^}/p' $W/includes/ai.php | grep -c 'sesja = %s'"

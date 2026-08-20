@@ -141,6 +141,12 @@ w paczce. Poniżej skrót.
   „gdzie zaparkować") i bot wie, o czym mowa. Pamięć obejmuje ostatnie 6 wymian
   — celowo ucięta, bo każda wymiana to tokeny na Twoim rachunku.
 
+= 1.4.6 =
+* **Dobowy limit tokenów** — drugi stop-loss obok limitu wywołań. Rachunek
+  u dostawcy idzie z tokenów, a przy dużej bazie Q&A jedno pytanie potrafi
+  kosztować wielokrotność innego.
+* Zużycie tokenów widoczne w Statystykach i w Ustawieniach.
+
 = 1.4.5 =
 * Gość widzi informację o zapisie rozmowy **na starcie czatu**, a nie dopiero przy
   formularzu kontaktu — wraz z odnośnikiem do Twojej polityki prywatności.

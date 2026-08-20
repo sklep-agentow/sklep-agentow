@@ -71,10 +71,20 @@ function chatl_utworz_tabele() {
 	) {$charset};"
 	);
 
+	/*
+	 * Rachunek u dostawcy modelu idzie z TOKENOW, nie z liczby wywolan — klient
+	 * z 200 parami Q&A placi wielokrotnosc klienta z 10 parami przy tym samym
+	 * "limicie 100 wywolan". Dlatego liczymy cztery pola, dokladnie te, ktore
+	 * zwraca API w polu `usage`.
+	 */
 	dbDelta(
 		"CREATE TABLE {$p}chatl_ai_uzycie (
 		dzien date NOT NULL,
 		wywolania int(10) unsigned NOT NULL DEFAULT 0,
+		tokeny_wejscia bigint(20) unsigned NOT NULL DEFAULT 0,
+		tokeny_wyjscia bigint(20) unsigned NOT NULL DEFAULT 0,
+		tokeny_cache_zapis bigint(20) unsigned NOT NULL DEFAULT 0,
+		tokeny_cache_odczyt bigint(20) unsigned NOT NULL DEFAULT 0,
 		PRIMARY KEY  (dzien)
 	) {$charset};"
 	);
