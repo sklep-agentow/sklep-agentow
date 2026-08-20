@@ -387,7 +387,11 @@ function segm_post_przebieg_start() {
 		exit;
 	}
 	$adres = 'admin.php?page=segm-przebiegi&przebieg=' . (int) $wynik['id'];
-	if ( $wynik['zjazd'] ) {
+	if ( ! empty( $wynik['ostrzezenie'] ) ) {
+		// Ostrzeżenie o zmianie próbki w trakcie ma trafić NA RAPORT — raport
+		// istnieje i jest do obejrzenia, tylko opisuje stan sprzed zmiany.
+		$adres .= '&segm_blad=' . rawurlencode( (string) $wynik['ostrzezenie'] );
+	} elseif ( $wynik['zjazd'] ) {
 		$adres .= '&segm_blad=' . rawurlencode( 'AI nie odpowiedziało (błąd, limit albo brak klucza) — wykonano przebieg regułowy.' );
 	}
 	wp_safe_redirect( admin_url( $adres ) );
@@ -846,12 +850,19 @@ function segm_post_probka_demo() {
 	}
 	check_admin_referer( 'segm_probka_demo' );
 
+	$zajeta = segm_zajmij_blokade( 'przywracanie próbki demo' );
+	if ( true !== $zajeta ) {
+		segm_przekieruj_blad( 'segm-probka', sprintf( 'Trwa inna operacja na próbce (%s) — nie ruszamy jej w połowie. Odczekaj chwilę i spróbuj ponownie.', $zajeta ) );
+	}
+
 	global $wpdb;
 	if ( false === $wpdb->query( "TRUNCATE TABLE {$wpdb->prefix}segm_maile" ) ) { // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		segm_log_bledu_bazy( 'segm_post_probka_demo', 'czyszczenie próbki przed przywróceniem demo' );
+		segm_zwolnij_blokade();
 		segm_przekieruj_blad( 'segm-probka', 'Nie udało się wyczyścić próbki — baza odrzuciła operację. Próbka NIE została zmieniona.' );
 	}
 	$nieudane = segm_wstaw_probke_demo();
+	segm_zwolnij_blokade();
 	if ( $nieudane > 0 ) {
 		segm_przekieruj_blad(
 			'segm-probka',
@@ -892,15 +903,23 @@ function segm_post_probka_wyczysc() {
 	}
 	check_admin_referer( 'segm_probka_wyczysc' );
 
+	$zajeta = segm_zajmij_blokade( 'czyszczenie próbki na żądanie' );
+	if ( true !== $zajeta ) {
+		segm_przekieruj_blad( 'segm-probka', sprintf( 'Trwa inna operacja na próbce (%s) — nie ruszamy jej w połowie. Odczekaj chwilę i spróbuj ponownie.', $zajeta ) );
+	}
+
 	global $wpdb;
 	if ( false === $wpdb->query( "TRUNCATE TABLE {$wpdb->prefix}segm_maile" ) ) { // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		segm_log_bledu_bazy( 'segm_post_probka_wyczysc', 'czyszczenie próbki na żądanie' );
+		segm_zwolnij_blokade();
 		segm_przekieruj_blad( 'segm-probka', 'Nie udało się wyczyścić próbki — baza odrzuciła operację. Maile NADAL są w bazie.' );
 	}
 	if ( false === $wpdb->query( "TRUNCATE TABLE {$wpdb->prefix}segm_przebiegi" ) ) { // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		segm_log_bledu_bazy( 'segm_post_probka_wyczysc', 'czyszczenie raportów przebiegów na żądanie' );
+		segm_zwolnij_blokade();
 		segm_przekieruj_blad( 'segm-probka', 'Próbka została wyczyszczona, ale raportów przebiegów NIE udało się usunąć — nadawcy i tematy maili nadal są w bazie. Sprawdź stan bazy i powtórz operację.' );
 	}
+	segm_zwolnij_blokade();
 
 	wp_safe_redirect( admin_url( 'admin.php?page=segm-probka&segm_ok=wyczyszczono' ) );
 	exit;

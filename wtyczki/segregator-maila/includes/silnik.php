@@ -73,6 +73,21 @@ function segm_pobierz_reguly() {
 function segm_wykonaj_przebieg( $tryb = 'reguly' ) {
 	global $wpdb;
 
+	// P2.3: przebieg czyta próbkę, a import/demo/„wyczyść teraz"/retencja ją
+	// kasują — bez znacznika dwie karty naraz dawały raport policzony na
+	// pustej próbce, i to bez słowa ostrzeżenia.
+	$zajeta = segm_zajmij_blokade( 'przebieg segregacji' );
+	if ( true !== $zajeta ) {
+		return array(
+			'id'    => 0,
+			'zjazd' => false,
+			'blad'  => sprintf(
+				'Trwa inna operacja na próbce (%s) — przebieg NIE wystartował, bo policzyłby się na danych zmienianych w trakcie. Odczekaj chwilę i uruchom go ponownie.',
+				$zajeta
+			),
+		);
+	}
+
 	$reguly = segm_pobierz_reguly();
 	$maile  = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}segm_maile ORDER BY id ASC" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
@@ -84,6 +99,7 @@ function segm_wykonaj_przebieg( $tryb = 'reguly' ) {
 		// wyglądałby jak „AI nie odpowiedziało", a tu chodzi o świadomą decyzję,
 		// której nikt jeszcze nie podjął. Przebieg NIE startuje.
 		if ( ! segm_zgoda_ai_udzielona() ) {
+			segm_zwolnij_blokade();
 			return array(
 				'id'    => 0,
 				'zjazd' => false,
@@ -94,6 +110,7 @@ function segm_wykonaj_przebieg( $tryb = 'reguly' ) {
 		// TWARDY limit próbki dla AI (limit PHP 30 s): JAWNY błąd zamiast
 		// fatala w środku pętli albo cichego zjazdu — przebieg NIE startuje.
 		if ( count( $maile ) > SEGM_AI_MAX_PROBKA ) {
+			segm_zwolnij_blokade();
 			return array(
 				'id'    => 0,
 				'zjazd' => false,
@@ -178,6 +195,7 @@ function segm_wykonaj_przebieg( $tryb = 'reguly' ) {
 	);
 	if ( false === $zapisano ) {
 		segm_log_bledu_bazy( 'segm_wykonaj_przebieg', 'zapis wyniku przebiegu (tryb: ' . $tryb . ')' );
+		segm_zwolnij_blokade();
 		return array(
 			'id'    => 0,
 			'zjazd' => $zjazd,
@@ -185,8 +203,24 @@ function segm_wykonaj_przebieg( $tryb = 'reguly' ) {
 		);
 	}
 
-	return array(
-		'id'    => (int) $wpdb->insert_id,
+	$id = (int) $wpdb->insert_id;
+	segm_zwolnij_blokade();
+
+	// Pas i szelki do znacznika: gdyby próbka mimo wszystko zmieniła się w
+	// trakcie liczenia (znacznik nie jest atomowy co do milisekundy), raport
+	// ma to POWIEDZIEĆ, a nie udawać, że policzył się na tym, co jest w bazie.
+	$ile_teraz = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}segm_maile" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	$wynik     = array(
+		'id'    => $id,
 		'zjazd' => $zjazd,
 	);
+	if ( count( $maile ) !== $ile_teraz ) {
+		$wynik['ostrzezenie'] = sprintf(
+			'UWAGA: w trakcie przebiegu próbka zmieniła się (na starcie miała %d maili, teraz ma %d) — raport #%d opisuje stan sprzed zmiany. Uruchom przebieg ponownie, żeby liczby zgadzały się z bieżącą próbką.',
+			count( $maile ),
+			$ile_teraz,
+			$id
+		);
+	}
+	return $wynik;
 }

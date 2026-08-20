@@ -113,6 +113,13 @@ add_action( 'plugins_loaded', 'segm_sprawdz_schemat' );
 function segm_czyszczenie_probki() {
 	global $wpdb;
 
+	// Retencja też kasuje wiersze, więc nie może wejść w środek przebiegu ani
+	// importu. Gdy coś trwa — odpuszczamy tę dobę: cron jest codzienny, a dane
+	// starsze niż 90 dni nie zrobią się od tego młodsze o więcej niż dzień.
+	if ( true !== segm_zajmij_blokade( 'czyszczenie starych danych (retencja)' ) ) {
+		return;
+	}
+
 	// Wiersze zapisujemy przez current_time( 'mysql' ), czyli w czasie LOKALNYM
 	// strony — granicę liczymy w tej samej skali, żeby przy strefie +02:00 nie
 	// kasować dwie godziny za wcześnie.
@@ -142,6 +149,8 @@ function segm_czyszczenie_probki() {
 	if ( false === $wynik ) {
 		segm_log_bledu_bazy( 'segm_czyszczenie_probki', 'kasowanie raportów starszych niż ' . SEGM_RETENCJA_DNI . ' dni' );
 	}
+
+	segm_zwolnij_blokade();
 }
 add_action( 'segm_czyszczenie_probki', 'segm_czyszczenie_probki' );
 
@@ -159,6 +168,73 @@ function segm_zapewnij_cron() {
 	}
 }
 add_action( 'plugins_loaded', 'segm_zapewnij_cron' );
+
+/*
+ * Znacznik „operacja na próbce w toku" (P2.3). Nazwa opcji + ile sekund wpis
+ * jest ważny: po tym czasie znacznik po padniętym procesie przestaje blokować
+ * wtyczkę (najdłuższa chroniona operacja to przebieg AI, ~18 s).
+ */
+const SEGM_BLOKADA       = 'segm_operacja_w_toku';
+const SEGM_BLOKADA_WAZNA = 120;
+
+/**
+ * Zajęcie znacznika na czas operacji ruszającej próbkę.
+ *
+ * Chroniony scenariusz: `TRUNCATE TABLE segm_maile` (import CSV, przywrócenie
+ * demo, „wyczyść teraz", retencja) leci w tym samym czasie, w którym przebieg
+ * czyta tę tabelę — druga karta w przeglądarce wystarczy. Efektem był raport
+ * policzony na pustej albo połowicznej próbce, BEZ jednego słowa ostrzeżenia.
+ *
+ * UCZCIWIE, czym to JEST, a czym NIE JEST: to znacznik sprawdzany przed
+ * startem, nie blokada atomowa. add_option()/get_option() idą przez cache
+ * opcji, więc dwa żądania trafione co do milisekundy mogą oba przejść.
+ * Zamyka realny scenariusz (dwie karty, kliknięcia w odstępie sekund), a nie
+ * teoretyczny wyścig o milisekundę; ten drugi łapie osobne sprawdzenie na
+ * końcu przebiegu (czy próbka nie zmieniła się w trakcie). Prawdziwa
+ * atomowość wymagałaby własnej tabeli z unikalnym kluczem, czyli zmiany
+ * schematu — to nie jest zakres naprawy błędu.
+ *
+ * Transakcja nie wchodzi w grę: TRUNCATE w MySQL robi niejawny COMMIT, więc
+ * opakowanie go w transakcję niczego by nie odizolowało.
+ *
+ * @param string $opis Co trzyma znacznik (pokazywane drugiej karcie).
+ * @return true|string True = zajęte; string = opis operacji, która trwa.
+ */
+function segm_zajmij_blokade( $opis ) {
+	$stary = get_option( SEGM_BLOKADA );
+	if ( is_array( $stary ) && isset( $stary['do'] ) ) {
+		if ( (int) $stary['do'] > time() ) {
+			return isset( $stary['opis'] ) ? (string) $stary['opis'] : 'inna operacja na próbce';
+		}
+		// Znacznik po procesie, który padł w połowie (fatal, timeout) —
+		// sprzątamy go, zamiast blokować wtyczkę na zawsze.
+		delete_option( SEGM_BLOKADA );
+	}
+
+	return add_option( SEGM_BLOKADA, segm_stempel_blokady( $opis ), '', false ) ? true : 'inna operacja na próbce';
+}
+
+/**
+ * Zawartość znacznika: co go trzyma i do kiedy jest ważny.
+ *
+ * @param string $opis Co trzyma znacznik.
+ * @return array{opis: string, do: int}
+ */
+function segm_stempel_blokady( $opis ) {
+	return array(
+		'opis' => (string) $opis,
+		'do'   => time() + SEGM_BLOKADA_WAZNA,
+	);
+}
+
+/**
+ * Zwolnienie znacznika (wołane na KAŻDEJ drodze wyjścia z operacji).
+ *
+ * @return void
+ */
+function segm_zwolnij_blokade() {
+	delete_option( SEGM_BLOKADA );
+}
 
 /**
  * Zgoda właściciela na wysyłanie próbki do zewnętrznego dostawcy modelu.

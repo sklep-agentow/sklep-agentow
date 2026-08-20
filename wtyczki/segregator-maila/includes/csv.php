@@ -241,10 +241,21 @@ function segm_importuj_csv( $sciezka ) {
 		return new WP_Error( 'segm_csv', 'Plik nie zawiera żadnego poprawnego wiersza (kolumny: od, temat, tresc, opcjonalnie kategoria_oczekiwana).' );
 	}
 
+	// P2.3: od tego miejsca ruszamy tabelę, więc bierzemy znacznik — przebieg
+	// uruchomiony w drugiej karcie policzyłby się na próbce w połowie wymiany.
+	$zajeta = segm_zajmij_blokade( 'import próbki z pliku CSV' );
+	if ( true !== $zajeta ) {
+		return new WP_Error(
+			'segm_csv',
+			sprintf( 'Trwa inna operacja na próbce (%s) — import przerwany, żeby nie mieszać danych w połowie. Odczekaj chwilę i wgraj plik ponownie. Próbka NIE została zmieniona.', $zajeta )
+		);
+	}
+
 	// Wyczyszczenie próbki MUSI się udać przed wstawianiem — inaczej nowe wiersze
 	// doklejałyby się do starej próbki, a komunikat mówiłby „zastąpiono".
 	if ( false === $wpdb->query( "TRUNCATE TABLE {$wpdb->prefix}segm_maile" ) ) { // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		segm_log_bledu_bazy( 'segm_importuj_csv', 'czyszczenie bieżącej próbki przed importem' );
+		segm_zwolnij_blokade();
 		return new WP_Error( 'segm_csv', 'Nie udało się wyczyścić bieżącej próbki — import przerwany. Próbka NIE została zmieniona.' );
 	}
 	$nieudane = 0;
@@ -254,6 +265,8 @@ function segm_importuj_csv( $sciezka ) {
 			segm_log_bledu_bazy( 'segm_importuj_csv', 'wiersz próbki od „' . $wiersz['nadawca'] . '"' );
 		}
 	}
+	segm_zwolnij_blokade();
+
 	if ( $nieudane > 0 ) {
 		return new WP_Error(
 			'segm_csv',

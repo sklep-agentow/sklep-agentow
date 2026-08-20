@@ -16,6 +16,11 @@ $segm_ust = get_option( 'segm_ustawienia', array() );
 // sypie błędami „nie ma takiej funkcji".
 wp_clear_scheduled_hook( 'segm_czyszczenie_probki' );
 
+// Znacznik „operacja na próbce w toku" to stan chwilowy, nie dane użytkownika —
+// kasujemy ZAWSZE, żeby po odinstalowaniu nie został w bazie wpis bez wtyczki,
+// która umiałaby go zwolnić.
+delete_option( 'segm_operacja_w_toku' );
+
 // Sekret właściciela (klucz API) kasowany ZAWSZE, niezależnie od opcji „usuń dane"
 // (zasada D22: poświadczenia ≠ dane użytkowe; martwa wtyczka nie zostawia klucza
 // w bazie — znalezisko wrogiej sesji botów 19.08, zmierzone na czystym WP).
