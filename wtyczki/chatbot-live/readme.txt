@@ -93,6 +93,13 @@ i zgłoszeń. Pytanie ma maksymalnie 500 znaków, wiadomość zgłoszenia 2000.
 Nie. Bez klucza bot działa w pełnoprawnym trybie regułowym na Twojej bazie Q&A.
 Klucz włącza tryb AI, który jest dodatkiem, nie warunkiem działania.
 
+= Skąd mam wiedzieć, czy tryb AI naprawdę działa? =
+
+Wejdź w **Ustawienia → Tryb AI** i kliknij **„Przetestuj klucz"** — wtyczka wykona
+jedno tanie wywołanie i powie wprost, czy klucz działa. Gdyby API zaczęło odrzucać
+żądania (zły albo wygasły klucz), w panelu pojawi się czerwony pasek; bot działa
+wtedy dalej, ale wyłącznie w trybie regułowym.
+
 = Ile kosztuje mnie tryb AI? =
 
 Tyle, ile wykorzystasz u dostawcy modelu. Wtyczka ma stop-loss: ustawiasz dobowy
@@ -134,6 +141,11 @@ w paczce. Poniżej skrót.
   wymagało to pisania filtru w kodzie.
 * Domyślny model to alias bez daty, więc wycofanie konkretnej migawki nie wyłącza
   trybu AI.
+
+= 1.4.2 =
+* Naprawione: zły albo wygasły klucz API oznaczał, że bot **po cichu** odpowiada
+  wyłącznie z reguł, a właściciel nie miał jak tego zauważyć. Panel pokazuje teraz
+  czerwony pasek, a w ustawieniach jest przycisk **„Przetestuj klucz"**.
 = 1.4.1 =
 * Naprawione: na stronie z cache (LiteSpeed, WP Rocket, W3TC, Cloudflare) czat mógł
   przestać działać **wszystkim gościom naraz**, a właściciel nie miał jak tego

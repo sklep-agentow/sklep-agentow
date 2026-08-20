@@ -28,6 +28,7 @@ function chatl_komunikat_ok() {
 	if ( isset( $_GET['chatl_ok'] ) ) {
 		$teksty = array(
 			'zapisano'  => 'Zapisano.',
+			'klucz_ok'  => 'Klucz API działa — API odpowiedziało poprawnie.',
 			'usunieto'  => 'Usunięto.',
 			'zmieniono' => 'Zmieniono status.',
 		);
@@ -41,6 +42,7 @@ function chatl_komunikat_ok() {
 	}
 	// phpcs:enable
 	chatl_notice_bledu_maila();
+	chatl_notice_bledu_ai();
 	chatl_notice_odrzuconych_nonce();
 }
 
@@ -100,6 +102,60 @@ function chatl_model_z_formularza( $stary ) {
 	}
 	return CHATL_AI_MODEL === $wybor ? '' : $wybor;
 }
+
+/**
+ * Czerwony pasek: ostatnie wywołanie API nie powiodło się.
+ *
+ * To jest jedyny kanał, którym właściciel dowie się, że płaci za tryb AI,
+ * którego nie ma. Log WordPressa nie wystarcza — na produkcji WP_DEBUG_LOG
+ * jest wyłączony i błąd nie ma dokąd trafić.
+ *
+ * @return void
+ */
+function chatl_notice_bledu_ai() {
+	$blad = get_option( 'chatl_blad_ai' );
+	if ( ! is_array( $blad ) || empty( $blad['kiedy'] ) ) {
+		return;
+	}
+	$kod = (int) ( $blad['kod'] ?? 0 );
+	if ( 401 === $kod || 403 === $kod ) {
+		$rada = 'API odrzuciło klucz — najprawdopodobniej jest zły, wygasł albo stracił uprawnienia. Wklej nowy w ustawieniach.';
+	} elseif ( 404 === $kod ) {
+		$rada = 'API nie zna podanego modelu — sprawdź jego nazwę w ustawieniach.';
+	} elseif ( 200 === $kod ) {
+		// Osobna rada, bo to zupełnie inny trop niż zły klucz: połączenie
+		// i uwierzytelnienie zadziałały, popsuła się TREŚĆ odpowiedzi.
+		$rada = 'API odpowiedziało poprawnym kodem, ale treść odpowiedzi była nieczytelna. Najczęstsza przyczyna to proxy, brama zgodności albo wtyczka bezpieczeństwa po drodze, która podmienia odpowiedź. Klucz jest tu prawdopodobnie w porządku.';
+	} else {
+		$rada = 'Sprawdź klucz i połączenie z API; jeśli błąd się powtarza, skontaktuj się z dostawcą modelu.';
+	}
+
+	echo '<div class="notice notice-error"><p><strong>Tryb AI nie działa — bot odpowiada wyłącznie z reguł.</strong><br>'
+		. 'Ostatnie nieudane wywołanie API: <code>' . esc_html( (string) $blad['kiedy'] ) . '</code>'
+		. ( $kod > 0 ? ', kod HTTP <code>' . esc_html( (string) $kod ) . '</code>' : ' (błąd połączenia)' ) . '.<br>'
+		. esc_html( $rada ) . '<br>'
+		. ( ! empty( $blad['tresc'] ) ? '<code>' . esc_html( (string) $blad['tresc'] ) . '</code><br>' : '' )
+		. '<a href="' . esc_url( admin_url( 'admin.php?page=chatl-ustawienia' ) ) . '">Przejdź do ustawień i przetestuj klucz</a>'
+		. ' — znacznik znika sam po pierwszym udanym wywołaniu.</p></div>';
+}
+
+/**
+ * „Przetestuj klucz" — jedno tanie wywołanie API, wynik od razu na ekranie.
+ */
+function chatl_post_test_klucza() {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_die( 'Brak uprawnień.' );
+	}
+	check_admin_referer( 'chatl_test_klucza' );
+
+	$wynik = chatl_ai_test_klucza();
+	if ( $wynik['ok'] ) {
+		wp_safe_redirect( admin_url( 'admin.php?page=chatl-ustawienia&chatl_ok=klucz_ok' ) );
+		exit;
+	}
+	chatl_przekieruj_blad( 'chatl-ustawienia', $wynik['komunikat'] );
+}
+add_action( 'admin_post_chatl_test_klucza', 'chatl_post_test_klucza' );
 
 /**
  * Ostrzeżenie: gościom odbija się nonce (najczęściej: strona z cache).
@@ -652,6 +708,20 @@ function chatl_strona_ustawienia() {
 							nazwy z datą wskazują konkretną migawkę modelu, a te bywają wycofywane i wtedy tryb AI przestaje działać.<br>
 							Aktualną listę modeli i cennik sprawdzisz u dostawcy: <a href="https://docs.anthropic.com/en/docs/about-claude/models" target="_blank" rel="noopener">dokumentacja modeli Anthropic</a>.
 							Kolejność na liście to „taniej ↔ mocniej"; do odpowiadania z bazy Q&amp;A najtańszy model zwykle w zupełności wystarcza.
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row">Sprawdzenie klucza</th>
+					<td>
+						<?php // Odnośnik, a nie przycisk w formularzu: przycisk wysłałby CAŁE ustawienia, a to ma być samo sprawdzenie. ?>
+						<a class="button" href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=chatl_test_klucza' ), 'chatl_test_klucza' ) ); ?>">Przetestuj klucz</a>
+						<p class="description">Jedno tanie wywołanie API (jedno słowo, <code>max_tokens = 1</code>) — sprawdza klucz, połączenie i nazwę modelu, nie zużywa dziennego limitu.
+							Wynik pojawi się na górze tej strony.
+							<?php $blad_ai = get_option( 'chatl_blad_ai' ); ?>
+							<?php if ( is_array( $blad_ai ) && ! empty( $blad_ai['kiedy'] ) ) : ?>
+								<br><strong style="color:#d63638">Ostatnie wywołanie API nie powiodło się</strong> (<?php echo esc_html( (string) $blad_ai['kiedy'] ); ?>) — bot odpowiada teraz wyłącznie z reguł.
+							<?php endif; ?>
 						</p>
 					</td>
 				</tr>

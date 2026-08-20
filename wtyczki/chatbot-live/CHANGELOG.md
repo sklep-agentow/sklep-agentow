@@ -24,6 +24,27 @@ migracja odpala się sama przy pierwszym wejściu do panelu po aktualizacji
   wymagała napisania filtru w kodzie — czego kupujący wtyczkę nie robi.
 - Panel mówi wprost, **żeby wpisywać identyfikator bez daty**, i odsyła do
   dokumentacji dostawcy po aktualną listę modeli i cennik.
+
+## [1.4.2] — 2026-08-20
+
+### Naprawione
+- **Zły albo wygasły klucz API oznaczał, że bot po cichu odpowiada wyłącznie
+  z reguł — w nieskończoność.** Błąd trafiał tylko do logu WordPressa, który na
+  produkcji jest wyłączony, więc właściciel płacił za tryb AI, którego nie ma,
+  i nie miał jak tego zauważyć. Teraz każde nieudane wywołanie zostawia znacznik,
+  a panel pokazuje **czerwony pasek** z datą, kodem HTTP i tym, co zrobić.
+  Znacznik znika sam po pierwszym udanym wywołaniu.
+
+- **Także wtedy, gdy API odpowie kodem 200, ale treść jest nieczytelna**
+  (proxy albo brama zgodności podmieniła odpowiedź) — bot zjeżdża do reguł, więc
+  właściciel dostaje ślad i osobną wskazówkę, że kluczem to prawdopodobnie nie jest.
+
+### Dodane
+- Przycisk **„Przetestuj klucz"** w ustawieniach: jedno tanie wywołanie API
+  (jedno słowo, `max_tokens = 1`, bez bazy Q&A w żądaniu), wynik od razu na
+  ekranie. Nie zużywa dziennego limitu. Komunikaty rozróżniają zły klucz (401/403),
+  nieznany model (404), limit u dostawcy (429) i błąd połączenia.
+- Opcja `chatl_blad_ai` (czas, kod HTTP, przycięty fragment odpowiedzi).
 ## [1.4.1] — 2026-08-20
 
 ### Naprawione
