@@ -196,7 +196,7 @@ function segm_formularz_maila( $edytowany ) {
 		</table>
 		<?php submit_button( $edytowany ? 'Zapisz zmiany' : 'Dodaj mail do próbki', 'primary', 'submit', false ); ?>
 		<?php if ( $edytowany ) : ?>
-			<a href="<?php echo esc_url( admin_url( 'admin.php?page=segm-probka' ) ); ?>" style="margin-left:8px">Anuluj edycję</a>
+			<a href="<?php echo esc_url( admin_url( 'admin.php?page=segm-probka' . segm_param_strony() ) ); ?>" style="margin-left:8px">Anuluj edycję</a>
 		<?php endif; ?>
 	</form>
 	<?php
