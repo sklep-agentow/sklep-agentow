@@ -1,0 +1,129 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 990" width="1400" height="990" role="img" aria-labelledby="tytul opis">
+  <title id="tytul">Segregator maila — przepływ segregacji</title>
+  <desc id="opis">Dwie ścieżki zbiegają się w jednym silniku reguł. Ścieżka A pracuje na próbce maili wgranej z pliku CSV albo na wbudowanym demo. Ścieżka B łączy się z prawdziwą skrzynką po IMAP i przechodzi przez bramkę trybu: domyślnie na sucho, gdzie folder otwierany jest poleceniem EXAMINE w trybie tylko do odczytu, a realne przenoszenie wymaga jednocześnie ustawionego trybu i zapisanej zgody. Silnik reguł jest wspólny dla obu ścieżek: pierwsza pasująca reguła wygrywa, brak dopasowania kieruje mail do kubła Reszta. Ścieżka A kończy się raportem z liczbami, ścieżka B decyzją o przeniesieniu, historią i możliwością cofnięcia ostatniego przebiegu. Trzecia droga to eksport reguł do filtrów Gmaila i Outlooka.</desc>
+
+  <!-- Paleta sklepu: tło #08090b, panele #101116, akcent limonka #BFFF38,
+       tekst #F5F5F5, tekst wygaszony #8F929C.
+       Plik SAMODZIELNY: zero odwołań zewnętrznych, fonty wyłącznie systemowe. -->
+  <defs>
+    <marker id="strzalka" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#BFFF38"/>
+    </marker>
+    <marker id="strzalka-szara" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#8F929C"/>
+    </marker>
+    <style>
+      .tlo       { fill: #08090b; }
+      .panel     { fill: #101116; stroke: #BFFF38; stroke-opacity: .28; stroke-width: 1.5; }
+      .panel-sz  { fill: #101116; stroke: #8F929C; stroke-opacity: .5; stroke-width: 1.5; stroke-dasharray: 6 4; }
+      .panel-mo  { fill: #101116; stroke: #BFFF38; stroke-width: 2; }
+      .t         { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+      .naglowek  { font-size: 26px; font-weight: 700; fill: #F5F5F5; }
+      .podtytul  { font-size: 14px; fill: #8F929C; }
+      .sciezka   { font-size: 13px; font-weight: 700; fill: #BFFF38; letter-spacing: .10em; }
+      .krok      { font-size: 11.5px; font-weight: 700; fill: #BFFF38; letter-spacing: .08em; }
+      .krok-sz   { font-size: 11.5px; font-weight: 700; fill: #8F929C; letter-spacing: .08em; }
+      .tytul-b   { font-size: 15px; font-weight: 700; fill: #F5F5F5; }
+      .opis-b    { font-size: 12.5px; fill: #8F929C; }
+      .kod       { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; font-size: 11.5px; fill: #BFFF38; }
+      .kod-sz    { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; font-size: 11.5px; fill: #8F929C; }
+      .stopka    { font-size: 12px; fill: #8F929C; }
+      .linia     { stroke: #BFFF38; stroke-width: 2; fill: none; }
+      .linia-sz  { stroke: #8F929C; stroke-width: 1.6; fill: none; stroke-dasharray: 5 4; }
+    </style>
+  </defs>
+
+  <rect class="tlo" x="0" y="0" width="1400" height="990"/>
+
+  <text class="t naglowek" x="40" y="52">Segregator maila — przepływ segregacji</text>
+  <text class="t podtytul" x="40" y="80">Dwie ścieżki, jeden silnik reguł. Na żywej skrzynce domyślny jest tryb NA SUCHO — folder otwierany poleceniem EXAMINE, czyli tylko do odczytu po stronie serwera.</text>
+
+  <text class="t sciezka" x="40" y="120">ŚCIEŻKA A — PRÓBKA (test reguł, nic nie opuszcza WordPressa)</text>
+  <text class="t sciezka" x="740" y="120">ŚCIEŻKA B — ŻYWA SKRZYNKA (IMAP)</text>
+
+  <!-- ================= RZĄD 1 ================= -->
+  <rect class="panel" x="40" y="136" width="620" height="124" rx="10"/>
+  <text class="t krok"    x="60" y="162">ŹRÓDŁO</text>
+  <text class="t tytul-b" x="60" y="186">Próbka maili: plik CSV albo wbudowane demo</text>
+  <text class="t opis-b"  x="60" y="208">Import pilnuje limitów: 5 MB pliku, 500 wierszy, 2000 znaków na pole.</text>
+  <text class="t opis-b"  x="60" y="227">Kodowanie wykrywane — plik z polskiego Excela też wchodzi poprawnie.</text>
+  <text class="t kod"     x="60" y="248">tabela segm_maile</text>
+
+  <rect class="panel" x="740" y="136" width="620" height="124" rx="10"/>
+  <text class="t krok"    x="760" y="162">POŁĄCZENIE</text>
+  <text class="t tytul-b" x="760" y="186">Logowanie do serwera poczty</text>
+  <text class="t opis-b"  x="760" y="208">Gniazdo TCP, szyfrowanie TLS 1.2 lub 1.3, logowanie HASŁEM APLIKACJI.</text>
+  <text class="t opis-b"  x="760" y="227">Własny klient IMAP — rozszerzenie PHP „imap” nie jest potrzebne.</text>
+  <text class="t kod"     x="760" y="248">stała SEGM_IMAP_HASLO z wp-config.php ma pierwszeństwo nad bazą</text>
+
+  <path class="linia" d="M 350 260 L 350 292" marker-end="url(#strzalka)"/>
+  <path class="linia" d="M 1050 260 L 1050 292" marker-end="url(#strzalka)"/>
+
+  <!-- ================= RZĄD 2 ================= -->
+  <rect class="panel" x="40" y="292" width="620" height="124" rx="10"/>
+  <text class="t krok"    x="60" y="318">START PRZEBIEGU</text>
+  <text class="t tytul-b" x="60" y="342">Wejście przez panel — dwie kontrole, osobno</text>
+  <text class="t opis-b"  x="60" y="364">Nonce potwierdza, że żądanie wyszło z naszego formularza; uprawnienie</text>
+  <text class="t opis-b"  x="60" y="383">manage_options — że ta osoba ma prawo je wykonać. Sprawdzane oddzielnie.</text>
+  <text class="t kod"     x="60" y="404">znacznik segm_operacja_w_toku blokuje drugi przebieg (ważny 120 s)</text>
+
+  <rect class="panel-mo" x="740" y="292" width="620" height="124" rx="10"/>
+  <text class="t krok"    x="760" y="318">⭐ BRAMKA TRYBU — DOMYŚLNIE NA SUCHO</text>
+  <text class="t tytul-b" x="760" y="342">Realnie tylko przy DWÓCH warunkach naraz</text>
+  <text class="t opis-b"  x="760" y="364">Ustawiony tryb „na żywo” ORAZ zapisana zgoda właściciela z datą i loginem.</text>
+  <text class="t kod-sz"  x="760" y="385">na sucho: EXAMINE — serwer odpowiada [READ-ONLY]</text>
+  <text class="t kod"     x="760" y="405">realnie:  SELECT — dopiero tu wolno cokolwiek ruszyć</text>
+
+  <path class="linia" d="M 350 416 L 350 434 L 500 434 L 500 452" marker-end="url(#strzalka)"/>
+  <path class="linia" d="M 1050 416 L 1050 434 L 900 434 L 900 452" marker-end="url(#strzalka)"/>
+
+  <!-- ================= SILNIK (wspólny) ================= -->
+  <rect class="panel-mo" x="340" y="452" width="720" height="126" rx="10"/>
+  <text class="t krok"    x="360" y="478">SILNIK REGUŁ — JEDEN DLA OBU ŚCIEŻEK</text>
+  <text class="t tytul-b" x="360" y="502">„pole zawiera wzorzec → kategoria”</text>
+  <text class="t opis-b"  x="360" y="524">Pola: nadawca, temat, treść. Dopasowanie to zawieranie tekstu, nie wyrażenie</text>
+  <text class="t opis-b"  x="360" y="543">regularne. PIERWSZA PASUJĄCA REGUŁA WYGRYWA; brak trafienia → kubeł „Reszta”.</text>
+  <text class="t kod"     x="360" y="566">segm_klasyfikuj_mail() — includes/silnik.php</text>
+
+  <path class="linia" d="M 500 578 L 500 596 L 350 596 L 350 614" marker-end="url(#strzalka)"/>
+  <path class="linia" d="M 900 578 L 900 596 L 1050 596 L 1050 614" marker-end="url(#strzalka)"/>
+
+  <!-- ================= RZĄD 3 ================= -->
+  <rect class="panel" x="40" y="614" width="620" height="124" rx="10"/>
+  <text class="t krok"    x="60" y="640">WYNIK ŚCIEŻKI A</text>
+  <text class="t tytul-b" x="60" y="664">Raport z liczbami, zanim cokolwiek ruszy pocztę</text>
+  <text class="t opis-b"  x="60" y="686">Pokrycie (ile poczty automat rozdziela sam), accuracy przy próbce</text>
+  <text class="t opis-b"  x="60" y="705">z etykietami i imienna lista pomyłek — widać, którą regułę poprawić.</text>
+  <text class="t kod"     x="60" y="726">tabela segm_przebiegi — pozycje w kolumnie wyniki (JSON)</text>
+
+  <rect class="panel" x="740" y="614" width="620" height="124" rx="10"/>
+  <text class="t krok"    x="760" y="640">WYNIK ŚCIEŻKI B</text>
+  <text class="t tytul-b" x="760" y="664">Co dzieje się z pojedynczą wiadomością</text>
+  <text class="t kod-sz"  x="760" y="687">na sucho: stan „plan” — na serwerze NIC się nie zmienia</text>
+  <text class="t kod"     x="760" y="707">realnie:  CREATE brakującego folderu → UID MOVE → zapis nowego UID</text>
+  <text class="t opis-b"  x="760" y="728">Odczyt idzie przez BODY.PEEK, więc nie oznacza cudzej poczty jako przeczytanej.</text>
+
+  <path class="linia" d="M 1050 738 L 1050 774" marker-end="url(#strzalka)"/>
+  <!-- Przerywana, bo eksport filtrów to droga OBOK segregacji w WordPressie,
+       a nie jej kolejny krok: bierze te same reguły, gdy są już sprawdzone. -->
+  <path class="linia-sz" d="M 350 738 L 350 774" marker-end="url(#strzalka-szara)"/>
+
+  <!-- ================= RZĄD 4 ================= -->
+  <rect class="panel-sz" x="40" y="774" width="620" height="124" rx="10"/>
+  <text class="t krok-sz" x="60" y="800">TRZECIA DROGA (opcjonalna)</text>
+  <text class="t tytul-b" x="60" y="824">Eksport reguł do filtrów skrzynki</text>
+  <text class="t opis-b"  x="60" y="846">Te same reguły jako plik filtrów Gmaila (XML) albo reguł Outlooka —</text>
+  <text class="t opis-b"  x="60" y="865">dla właściciela, który woli, żeby segregowała jego własna poczta.</text>
+  <text class="t kod-sz"  x="60" y="886">strona segm-filtry — includes/filtry.php</text>
+
+  <rect class="panel" x="740" y="774" width="620" height="124" rx="10"/>
+  <text class="t krok"    x="760" y="800">HISTORIA I COFANIE</text>
+  <text class="t tytul-b" x="760" y="824">Co, kiedy i dokąd — z drogą odwrotu</text>
+  <text class="t opis-b"  x="760" y="846">Każda pozycja: UID, Message-ID, nadawca, temat, folder źródłowy → docelowy.</text>
+  <text class="t opis-b"  x="760" y="865">Cofnąć wolno WYŁĄCZNIE ostatni przebieg; decyduje stan bazy, nie formularz.</text>
+  <text class="t kod"     x="760" y="886">tabele segm_skrz_przebiegi + segm_skrz_ruchy</text>
+
+  <!-- ================= STOPKA ================= -->
+  <text class="t stopka" x="40" y="936">Retencja 90 dni obejmuje próbkę, raporty przebiegów ORAZ historię skrzynki — to wszystko są dane osób trzecich.</text>
+  <text class="t stopka" x="40" y="958">Odinstalowanie kasuje hasło do skrzynki, klucz API i obie zgody ZAWSZE, niezależnie od opcji „usuń wszystkie dane”.</text>
+</svg>

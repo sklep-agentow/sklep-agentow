@@ -9,6 +9,19 @@
 # Uzycie: testy/svg-proba-kontrolna.sh [plik.svg]
 set -u
 ZRODLO="${1:-wtyczki/chatbot-live/DIAGRAM-PRZEPLYWU.svg}"
+
+# Wymiary kadru CZYTAMY Z PLIKU, nie wpisujemy na sztywno. Pierwsza wersja tej
+# proby miala wklepane 910 i x=1300 z diagramu ChatBota — na diagramie o innym
+# kadrze mutacje albo nie wchodzily, albo wchodzily w miejsce, ktore i tak jest
+# poza kadrem, i proba meldowala nie to, co bada.
+SZER=$(grep -oP 'viewBox="0 0 \K[0-9]+' "$ZRODLO" | head -1)
+WYS=$(grep -oP 'viewBox="0 0 [0-9]+ \K[0-9]+' "$ZRODLO" | head -1)
+[ -n "$SZER" ] && [ -n "$WYS" ] || { echo "BLAD: nie da sie odczytac viewBox z $ZRODLO" >&2; exit 1; }
+PONIZEJ=$((WYS - 2))      # tekst tuz pod dolna krawedzia kadru
+DALEKO=$((SZER - 100))    # dlugi tekst startujacy przy prawej krawedzi
+SRODEK=$((WYS / 2))
+INNA_WYS=$((WYS - 30))    # celowy rozjazd height vs viewBox
+
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
 BLEDY=0
@@ -45,11 +58,11 @@ io.open(p, 'w', encoding='utf-8').write(s.replace('</svg>', '  ' + el + '\n</svg
 PY
 }
 
-probuj "tekst wychodzacy w DOL"   'wstaw "<text class=\"t stopka\" x=\"600\" y=\"908\">podlozony blad w dol</text>"'   "dolna"
-probuj "tekst wychodzacy w GORE"  'wstaw "<text class=\"t stopka\" x=\"600\" y=\"6\">podlozony blad w gore</text>"'     "gorna"
-probuj "tekst wychodzacy w LEWO"  'wstaw "<text class=\"t stopka\" x=\"1\" y=\"500\">podlozony blad w lewo</text>"'     "lewa"
-probuj "tekst wychodzacy w PRAWO" 'wstaw "<text class=\"t stopka\" x=\"1300\" y=\"500\">podlozony blad wychodzacy daleko w prawo poza kadr</text>"' "prawa"
-probuj "kadr niespojny (height != viewBox)" "sed -i 's/height=\"910\" role/height=\"880\" role/' \"\$TMP/p.svg\"" "kadr niespojny"
+probuj "tekst wychodzacy w DOL"   "wstaw '<text class=\"t stopka\" x=\"600\" y=\"$PONIZEJ\">podlozony blad w dol</text>'"   "dolna"
+probuj "tekst wychodzacy w GORE"  "wstaw '<text class=\"t stopka\" x=\"600\" y=\"6\">podlozony blad w gore</text>'"     "gorna"
+probuj "tekst wychodzacy w LEWO"  "wstaw '<text class=\"t stopka\" x=\"1\" y=\"$SRODEK\">podlozony blad w lewo</text>'"     "lewa"
+probuj "tekst wychodzacy w PRAWO" "wstaw '<text class=\"t stopka\" x=\"$DALEKO\" y=\"$SRODEK\">podlozony blad wychodzacy daleko w prawo poza kadr</text>'" "prawa"
+probuj "kadr niespojny (height != viewBox)" "sed -i 's/height=\"$WYS\" role/height=\"$INNA_WYS\" role/' \"\$TMP/p.svg\"" "kadr niespojny"
 probuj "plik bez tekstow (kontrola pusta)" "sed -i 's|<text |<nietekst |g' \"\$TMP/p.svg\"" "ZERO elementow"
 
 echo

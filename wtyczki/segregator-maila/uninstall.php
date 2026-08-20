@@ -8,6 +8,8 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	exit;
 }
 
+global $wpdb;
+
 $segm_ust = get_option( 'segm_ustawienia', array() );
 
 // Harmonogram retencji zdejmuje już deaktywacja, ale odinstalowanie ma zostawić
@@ -21,6 +23,23 @@ wp_clear_scheduled_hook( 'segm_skrzynka_cron' );
 // kasujemy ZAWSZE, żeby po odinstalowaniu nie został w bazie wpis bez wtyczki,
 // która umiałaby go zwolnić.
 delete_option( 'segm_operacja_w_toku' );
+
+// Komunikaty panelu skrzynki trzymane są w transientach nazwanych per użytkownik
+// (`segm_komunikat_<ID>`), więc nie da się ich skasować jednym delete_transient() —
+// nazwy nie znamy z góry. Potrafią zawierać nazwy folderów cudzej skrzynki i zapis
+// rozmowy z serwerem poczty (bez hasła), więc znikają ZAWSZE, nie tylko przy
+// „usuń wszystkie dane". Kasujemy też wiersze `_transient_timeout_*`, bo to
+// osobne wpisy w wp_options i bez nich zostałyby sieroty.
+$segm_wzor = $wpdb->esc_like( '_transient_segm_komunikat_' ) . '%';
+$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $segm_wzor ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+$segm_wzor = $wpdb->esc_like( '_transient_timeout_segm_komunikat_' ) . '%';
+$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $segm_wzor ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+// Stan ekranu powitalnego to stan INTERFEJSU, nie dane właściciela: znika
+// zawsze, żeby po ponownej instalacji tej samej wersji wstęp pokazał się od nowa
+// i żeby w wp_usermeta nie zostały sieroty po wtyczce, której już nie ma.
+delete_option( 'segm_powitanie_gotowe' );
+delete_metadata( 'user', 0, 'segm_powitanie_widziane', '', true );
 
 // Sekret właściciela (klucz API) kasowany ZAWSZE, niezależnie od opcji „usuń dane"
 // (zasada D22: poświadczenia ≠ dane użytkowe; martwa wtyczka nie zostawia klucza
@@ -46,8 +65,6 @@ delete_option( 'segm_zgoda_ai' );
 if ( empty( $segm_ust['usun_dane'] ) ) {
 	return;
 }
-
-global $wpdb;
 $wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}segm_kategorie" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 $wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}segm_reguly" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 $wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}segm_maile" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared

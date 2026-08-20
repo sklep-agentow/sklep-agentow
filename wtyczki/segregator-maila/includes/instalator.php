@@ -123,6 +123,11 @@ function segm_aktywacja() {
 	if ( ! wp_next_scheduled( 'segm_czyszczenie_probki' ) ) {
 		wp_schedule_event( time() + DAY_IN_SECONDS, 'daily', 'segm_czyszczenie_probki' );
 	}
+
+	// Zapala ekran powitalny. Samo przekierowanie robi admin_init, bo z uchwytu
+	// aktywacji nie wolno przekierowywać — WordPress jest w środku własnej
+	// procedury i po drodze potrafi jeszcze coś wypisać.
+	update_option( 'segm_powitanie_gotowe', 1 );
 }
 
 /**
