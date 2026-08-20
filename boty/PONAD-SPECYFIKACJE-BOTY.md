@@ -18,6 +18,32 @@ była w klepniętych szkicach (`boty/SZKICE-BOTOW.md`) albo wynika z ich zasad
 7. **Indeks `KEY okno_do` na tabeli `chatl_rate_limit`** — świadome rozszerzenie
    ponad wzorzec sklepu (tam go nie ma): przyspiesza cronowe sprzątanie
    `DELETE … WHERE okno_do < teraz`. Nazwane tu na wniosek recenzji PR #40.
+8. **Statystyki i raport luk** (osobna strona panelu: ile pytań przyszło, na ile
+   bot odpowiedział i jaki to procent, ile skończyło się zbiórką kontaktu, oraz
+   lista pytań bez odpowiedzi pogrupowana w tematy ze skrótem „dopisz
+   odpowiedź") — rozszerzenie ponad szkice, dodane 20.08 przy podniesieniu progu
+   z „demo egzaminacyjne" na „produkt na sprzedaż". **Powód:** właściciel nie ma
+   skąd wiedzieć, czego dopisać do bazy Q&A, a to jedyna czynność, która realnie
+   podnosi skuteczność bota — bez tego produkt jest statyczny. Kosztowało nową
+   kolumnę `chatl_rozmowy.trafiono` i indeks `KEY luki` (schemat bazy 4).
+   Nazwane tu na wniosek recenzji PR #73.
+9. **Konfigurowalny wygląd widgetu** (kolor główny, kolor paska nagłówka, kolor
+   tekstu na nich, róg strony) wraz z **podglądem na żywo i kontrolą kontrastu
+   WCAG 2.1 AA** w panelu — rozszerzenie ponad szkice, dodane 20.08.
+   **Powód:** kolory były zaszyte na sztywno, więc klient z niebieską albo
+   pomarańczową witryną dostawał limonkowy bąbelek z naszej palety. Przy
+   sprzedaży wielu klientom to pierwsze pytanie, a u konkurencji (Tidio,
+   Chatwoot) konfigurowalny wygląd jest standardem, nie dodatkiem. Kontrast
+   dołożony, bo dowolny kolor to prosta droga do nieczytelnego tekstu —
+   a to zarzut, który audytor dostępności stawia natychmiast. Domyślne wartości
+   są identyczne z dotychczasowymi, więc nikomu nic się nie zmienia.
+10. **Ekran powitalny po aktywacji + komplet dokumentów produktowych**
+   (`CHANGELOG.md`, `readme.txt` w standardzie WordPressa) — rozszerzenie ponad
+   szkice, dodane 20.08. **Powód:** boty idą na sprzedaż jako normalne produkty
+   rynkowe, a kupujący płatną wtyczkę oczekuje, że po kliknięciu „Włącz" coś się
+   wydarzy i że w paczce znajdzie historię zmian oraz opis w formacie, który zna
+   z katalogu WordPressa. Brak tych rzeczy nie psuje działania, ale od razu
+   widać, że to nie jest produkt handlowy.
 
 ## Segregator maila
 1. **Tryb AI + „porównaj reguły vs AI"** — decyzja Dzidka 18.08 (szkice §BOT 2).

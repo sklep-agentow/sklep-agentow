@@ -27,6 +27,10 @@
 		<properties>
 			<property name="customSanitizingFunctions" type="array">
 				<element value="chatl_waliduj_sesje"/>
+				<!-- 1.4.0: własny sanitizer kolorów (wyglad.php) — regex ^#[0-9a-f]{6}$
+				     po rozwinięciu skrótu, pusty string przy odrzucie, a wywołujący
+				     podstawia wtedy wartość domyślną. -->
+				<element value="chatl_sanitize_kolor"/>
 			</property>
 		</properties>
 	</rule>

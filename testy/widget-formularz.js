@@ -7,6 +7,7 @@
    Użycie: node testy/widget-formularz.js [adres]   (domyślnie localhost:8890)
    Kod wyjścia 0 = wszystkie kroki przeszły, 1 = któryś nie. */
 const { chromium } = require('playwright-core');
+const { wymagajChromium } = require('./lib/chromium');
 const BAZA = process.argv[2] || 'http://localhost:8890';
 
 let bledy = 0;
@@ -16,9 +17,7 @@ function sprawdz(opis, warunek) {
 }
 
 (async () => {
-  const b = await chromium.launch({
-    executablePath: '/root/.cache/ms-playwright/chromium-1234/chrome-linux64/chrome',
-  });
+  const b = await chromium.launch({ executablePath: wymagajChromium() });
   const p = await b.newPage();
   await p.goto(BAZA + '/', { waitUntil: 'load' });
 

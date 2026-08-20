@@ -14,6 +14,7 @@
  * Kod wyjścia 0 = wszystko się mieści, 1 = coś wystaje.
  */
 const { chromium } = require('playwright-core');
+const { wymagajChromium } = require('./lib/chromium');
 const path = require('path');
 
 const PLIK = process.argv[2] || 'wtyczki/chatbot-live/DIAGRAM-PRZEPLYWU.svg';
@@ -31,9 +32,7 @@ const MARG_PION   = Number(process.argv[4] || 4);
 const MARG_KADR   = Number(process.argv[5] || 16);
 
 (async () => {
-  const b = await chromium.launch({
-    executablePath: '/root/.cache/ms-playwright/chromium-1234/chrome-linux64/chrome',
-  });
+  const b = await chromium.launch({ executablePath: wymagajChromium() });
   const p = await b.newPage();
   await p.goto('file://' + path.resolve(PLIK), { waitUntil: 'load' });
 
