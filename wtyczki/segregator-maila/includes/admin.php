@@ -20,15 +20,96 @@ function segm_admin_menu() {
 add_action( 'admin_menu', 'segm_admin_menu' );
 
 /**
+ * Slugi stron wtyczki — jedno źródło prawdy dla menu, banera i powrotów.
+ *
+ * @return array<int, string>
+ */
+function segm_strony() {
+	return array( 'segm-przebiegi', 'segm-reguly', 'segm-kategorie', 'segm-probka', 'segm-ustawienia' );
+}
+
+/**
+ * Baner przy pierwszym wejściu do panelu: uczciwie, czym ten bot JEST.
+ *
+ * Zarzut z pierwszej rundy krytyk brzmiał „nazywa się segregator, a nie
+ * segreguje" — bo nazwa i karta produktu sugerują wpięcie do skrzynki.
+ * Prawda musi stać na wierzchu, a nie kilka ekranów niżej, więc baner wisi na
+ * KAŻDEJ stronie wtyczki, dopóki właściciel go nie schowa.
+ *
+ * Chowanie idzie przez zwykły odnośnik z nonce (meta użytkownika), a nie przez
+ * „is-dismissible" — tamto zamyka baner tylko na jedno wyświetlenie i wraca
+ * przy następnym wejściu, dopóki nie dołoży się do tego JS-a i AJAX-a.
+ *
+ * @return void
+ */
+function segm_baner_powitalny() {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		return;
+	}
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- tylko rozpoznanie, na której stronie jesteśmy.
+	$strona = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
+	if ( ! in_array( $strona, segm_strony(), true ) ) {
+		return;
+	}
+	if ( get_user_meta( get_current_user_id(), 'segm_baner_ukryty', true ) ) {
+		return;
+	}
+	$schowaj = wp_nonce_url(
+		admin_url( 'admin-post.php?action=segm_baner_ukryj&strona=' . $strona ),
+		'segm_baner_ukryj'
+	);
+	?>
+	<div class="notice notice-info">
+		<p><strong>To narzędzie NIE łączy się z Twoją skrzynką pocztową.</strong> Pracuje na PRÓBCE maili, którą wgrasz (albo na wbudowanym demo 30 maili): sprawdza Twoje reguły segregacji i pokazuje raport z liczbami — ile poczty automat rozdzieliłby sam i gdzie by się pomylił — <em>zanim</em> wpuścisz te reguły na żywą skrzynkę.</p>
+		<p>Nic tu nie czyta ani nie przenosi Twoich prawdziwych maili. Podpięcie skrzynki (IMAP/OAuth) to droga rozbudowy opisana w instrukcji.
+			<a href="<?php echo esc_url( $schowaj ); ?>">Rozumiem — nie pokazuj więcej</a></p>
+	</div>
+	<?php
+}
+add_action( 'admin_notices', 'segm_baner_powitalny' );
+
+/**
+ * Schowanie banera dla bieżącego użytkownika (decyzja per osoba, nie globalna).
+ *
+ * @return void
+ */
+function segm_post_baner_ukryj() {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_die( 'Brak uprawnień.' );
+	}
+	check_admin_referer( 'segm_baner_ukryj' );
+
+	$strona = isset( $_GET['strona'] ) ? sanitize_key( wp_unslash( $_GET['strona'] ) ) : 'segm-przebiegi';
+	if ( ! in_array( $strona, segm_strony(), true ) ) {
+		$strona = 'segm-przebiegi';
+	}
+
+	$uzytkownik = get_current_user_id();
+	update_user_meta( $uzytkownik, 'segm_baner_ukryty', 1 );
+	// Gdyby zapis nie przeszedł, baner po prostu wróci — ale niech właściciel
+	// wie DLACZEGO wraca, zamiast klikać ten sam odnośnik w kółko.
+	if ( ! get_user_meta( $uzytkownik, 'segm_baner_ukryty', true ) ) {
+		segm_przekieruj_blad( $strona, 'Nie udało się zapamiętać, że baner ma zniknąć — baza odrzuciła zapis. Baner będzie się pokazywał dalej.' );
+	}
+
+	wp_safe_redirect( admin_url( 'admin.php?page=' . $strona ) );
+	exit;
+}
+add_action( 'admin_post_segm_baner_ukryj', 'segm_post_baner_ukryj' );
+
+/**
  * Komunikat po powrocie z admin-post (?segm_ok=... / ?segm_blad=...).
  */
 function segm_komunikaty() {
 	// phpcs:disable WordPress.Security.NonceVerification.Recommended -- tylko odczyt komunikatu.
 	if ( isset( $_GET['segm_ok'] ) ) {
 		$teksty = array(
-			'zapisano' => 'Zapisano.',
-			'usunieto' => 'Usunięto.',
-			'demo'     => 'Przywrócono próbkę demo (30 maili).',
+			'zapisano'     => 'Zapisano.',
+			'usunieto'     => 'Usunięto.',
+			'demo'         => 'Przywrócono próbkę demo (30 maili).',
+			'wyczyszczono' => 'Wyczyszczono: próbka i raporty przebiegów usunięte z bazy.',
+			'zgoda'        => 'Zgoda zapisana — tryby AI są od teraz dostępne.',
+			'zgoda_cofnij' => 'Zgoda cofnięta — tryby AI są zablokowane. Próbka i raporty zostają bez zmian.',
 		);
 		$klucz  = sanitize_key( wp_unslash( $_GET['segm_ok'] ) );
 		if ( isset( $teksty[ $klucz ] ) ) {
@@ -37,7 +118,21 @@ function segm_komunikaty() {
 		if ( 'import' === $klucz ) {
 			$ile = isset( $_GET['ile'] ) ? (int) $_GET['ile'] : 0;
 			$pom = isset( $_GET['pominieto'] ) ? (int) $_GET['pominieto'] : 0;
-			echo '<div class="notice notice-success is-dismissible"><p>Zaimportowano ' . (int) $ile . ' maili (próbka zastąpiona).' . ( $pom > 0 ? ' Pominięto wierszy: ' . (int) $pom . '.' : '' ) . '</p></div>';
+			$kod = isset( $_GET['kodowanie'] ) ? sanitize_text_field( wp_unslash( $_GET['kodowanie'] ) ) : '';
+			$prz = ! empty( $_GET['przerwano'] );
+			// Wykryte kodowanie mówimy wprost: gdy plik NIE był w UTF-8, to jest
+			// jedyny moment, w którym właściciel może wychwycić, że detekcja
+			// trafiła obok i polskie znaki poszły do bazy krzywo.
+			$opis_kod = '';
+			if ( 'UTF-8' === $kod ) {
+				$opis_kod = ' Kodowanie pliku: UTF-8.';
+			} elseif ( '' !== $kod ) {
+				$opis_kod = ' Kodowanie pliku: ' . $kod . ' — polskie znaki przekonwertowano na UTF-8. Jeśli w tabeli poniżej widzisz krzaki, zapisz plik jako „CSV UTF-8" i zaimportuj ponownie.';
+			}
+			echo '<div class="notice notice-success is-dismissible"><p>Zaimportowano ' . (int) $ile . ' maili (próbka zastąpiona).' . ( $pom > 0 ? ' Pominięto pustych wierszy: ' . (int) $pom . '.' : '' ) . esc_html( $opis_kod ) . '</p></div>';
+			if ( $prz ) {
+				echo '<div class="notice notice-warning is-dismissible"><p>Plik ma więcej niż ' . (int) SEGM_IMPORT_MAX_WIERSZY . ' wierszy — wzięliśmy pierwsze ' . (int) SEGM_IMPORT_MAX_WIERSZY . ' i <strong>dalszej części pliku w ogóle nie czytaliśmy</strong> (dlatego import był szybki). Do testu reguł taka próbka wystarcza; jeśli chcesz sprawdzić inny fragment skrzynki, wytnij go w arkuszu i wgraj osobno.</p></div>';
+			}
 		}
 	}
 	if ( isset( $_GET['segm_blad'] ) ) {
@@ -81,15 +176,18 @@ function segm_strona_przebiegi() {
 			<?php wp_nonce_field( 'segm_przebieg_start' ); ?>
 			<?php
 			$ai_jest    = segm_ai_dostepny();
+			$ai_zgoda   = segm_zgoda_ai_udzielona();
 			$ai_za_duza = $maili > SEGM_AI_MAX_PROBKA;
-			$ai_mozliwe = $ai_jest && ! $ai_za_duza;
+			$ai_mozliwe = $ai_jest && $ai_zgoda && ! $ai_za_duza;
 			?>
 			<p>
 				<label><input type="radio" name="tryb" value="reguly" checked> reguły (lokalnie, bez klucza, bez limitu próbki)</label><br>
 				<label><input type="radio" name="tryb" value="ai" <?php disabled( ! $ai_mozliwe ); ?>> AI (klasyfikuje model; próbka do <?php echo (int) SEGM_AI_MAX_PROBKA; ?> maili)</label><br>
 				<label><input type="radio" name="tryb" value="porownaj" <?php disabled( ! $ai_mozliwe ); ?>> porównaj oba (raport różnic — co AI łapie ponad reguły; próbka do <?php echo (int) SEGM_AI_MAX_PROBKA; ?> maili)</label>
 			</p>
-			<?php if ( ! $ai_jest ) : ?>
+			<?php if ( ! $ai_zgoda ) : ?>
+				<p class="description"><strong>Tryby AI zablokowane: brak zgody na wysyłkę próbki.</strong> W trybie AI treść maili z próbki — także korespondencja osób trzecich — wychodzi do zewnętrznego dostawcy modelu. Potwierdź to raz w <a href="<?php echo esc_url( admin_url( 'admin.php?page=segm-ustawienia' ) ); ?>">Ustawieniach Segregatora</a>. Bez potwierdzenia przebieg AI się NIE uruchomi (to nie jest zjazd do reguł — to Twoja decyzja, której jeszcze nie ma).</p>
+			<?php elseif ( ! $ai_jest ) : ?>
 				<p class="description">Tryby AI nieaktywne: <?php echo '' === segm_klucz_api() ? 'brak klucza API (Ustawienia)' : 'dzienny limit wywołań wyczerpany'; ?>. Przy błędzie AI przebieg i tak zjeżdża do reguł.</p>
 			<?php elseif ( $ai_za_duza ) : ?>
 				<p class="description">Tryby AI nieaktywne: próbka ma <?php echo (int) $maili; ?> maili, a tryb AI obsługuje maks. <?php echo (int) SEGM_AI_MAX_PROBKA; ?> (jedno wywołanie API to do 18 s — timeout 9 s + retry — a typowy limit czasu żądania na hostingu to 30 s). Zmniejsz próbkę albo użyj trybu „reguły".</p>
@@ -289,7 +387,11 @@ function segm_post_przebieg_start() {
 		exit;
 	}
 	$adres = 'admin.php?page=segm-przebiegi&przebieg=' . (int) $wynik['id'];
-	if ( $wynik['zjazd'] ) {
+	if ( ! empty( $wynik['ostrzezenie'] ) ) {
+		// Ostrzeżenie o zmianie próbki w trakcie ma trafić NA RAPORT — raport
+		// istnieje i jest do obejrzenia, tylko opisuje stan sprzed zmiany.
+		$adres .= '&segm_blad=' . rawurlencode( (string) $wynik['ostrzezenie'] );
+	} elseif ( $wynik['zjazd'] ) {
 		$adres .= '&segm_blad=' . rawurlencode( 'AI nie odpowiedziało (błąd, limit albo brak klucza) — wykonano przebieg regułowy.' );
 	}
 	wp_safe_redirect( admin_url( $adres ) );
@@ -649,7 +751,7 @@ function segm_strona_probka() {
 	<div class="wrap">
 		<h1>Próbka maili (<?php echo (int) $ile; ?>)</h1>
 		<?php segm_komunikaty(); ?>
-		<p>Segregator testujesz na próbce — bez podpinania żywej skrzynki. Możesz wgrać własny eksport CSV (kolumny: <code>od, temat, tresc</code>, opcjonalnie <code>kategoria_oczekiwana</code> — wtedy raport policzy accuracy). Separator: przecinek albo średnik (jak w polskim Excelu) — wykrywany automatycznie. Import <strong>zastępuje</strong> bieżącą próbkę; maks. <?php echo (int) SEGM_IMPORT_MAX_WIERSZY; ?> wierszy.</p>
+		<p>Segregator testujesz na próbce — bez podpinania żywej skrzynki. Możesz wgrać własny eksport CSV (kolumny: <code>od, temat, tresc</code>, opcjonalnie <code>kategoria_oczekiwana</code> — wtedy raport policzy accuracy). Separator: przecinek albo średnik (jak w polskim Excelu) — wykrywany automatycznie. Import <strong>zastępuje</strong> bieżącą próbkę; maks. <?php echo (int) SEGM_IMPORT_MAX_WIERSZY; ?> wierszy i <?php echo esc_html( size_format( SEGM_IMPORT_MAX_BAJTOW ) ); ?> na plik (po limicie wierszy czytanie jest przerywane — reszty pliku nie ruszamy).</p>
 
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" enctype="multipart/form-data" style="margin-bottom:12px">
 			<input type="hidden" name="action" value="segm_import_csv">
@@ -662,6 +764,17 @@ function segm_strona_probka() {
 			<?php wp_nonce_field( 'segm_probka_demo' ); ?>
 			<?php submit_button( 'Przywróć próbkę demo (30 maili)', 'secondary', 'submit', false, array( 'onclick' => "return confirm('Zastąpić bieżącą próbkę wbudowanym demo?');" ) ); ?>
 		</form>
+
+		<h2>Retencja danych (RODO)</h2>
+		<p>Próbka to zwykle korespondencja Twoich klientów, czyli dane osobowe. Wtyczka kasuje ją sama:
+			<strong>codzienne zadanie usuwa maile i raporty starsze niż <?php echo (int) SEGM_RETENCJA_DNI; ?> dni</strong>
+			(<?php echo esc_html( segm_opis_najblizszego_czyszczenia() ); ?>). Nie chcesz czekać — wyczyść od ręki:</p>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+			<input type="hidden" name="action" value="segm_probka_wyczysc">
+			<?php wp_nonce_field( 'segm_probka_wyczysc' ); ?>
+			<?php submit_button( 'Wyczyść próbkę teraz (maile + raporty przebiegów)', 'delete', 'submit', false, array( 'onclick' => "return confirm('Usunąć CAŁĄ próbkę i WSZYSTKIE raporty przebiegów? Tego nie da się cofnąć. Kategorie i reguły zostają.');" ) ); ?>
+		</form>
+		<p class="description">Raporty kasujemy razem z próbką, bo trzymają nadawcę i temat każdego maila — czyszczenie samej tabeli maili zostawiałoby tę samą korespondencję w historii przebiegów. Kategorie, reguły i klucz API zostają nietknięte.</p>
 
 		<h2>Maile w próbce<?php echo $ile > 200 ? ' (pierwsze 200)' : ''; ?></h2>
 		<table class="widefat striped">
@@ -696,13 +809,37 @@ function segm_post_import_csv() {
 		exit;
 	}
 
+	// Atrybut accept=".csv" w formularzu to podpowiedź dla okna wyboru pliku,
+	// nie zabezpieczenie — żądanie może przyjść bez formularza. Rozszerzenie
+	// sprawdzamy tu, a to, czy plik NAPRAWDĘ jest tekstem, weryfikuje import
+	// (odrzut danych binarnych i UTF-16).
+	$nazwa = isset( $_FILES['plik_csv']['name'] ) ? sanitize_file_name( wp_unslash( $_FILES['plik_csv']['name'] ) ) : '';
+	$typ   = wp_check_filetype(
+		$nazwa,
+		array(
+			'csv' => 'text/csv',
+			'txt' => 'text/plain',
+		)
+	);
+	if ( ! in_array( $typ['ext'], array( 'csv', 'txt' ), true ) ) {
+		wp_safe_redirect( admin_url( 'admin.php?page=segm-probka&segm_blad=' . rawurlencode( 'Przyjmujemy tylko pliki .csv (albo .txt z zawartością CSV). Wgrany plik ma inne rozszerzenie — próbka NIE została zmieniona.' ) ) );
+		exit;
+	}
+
 	$wynik = segm_importuj_csv( $tmp );
 	if ( is_wp_error( $wynik ) ) {
 		wp_safe_redirect( admin_url( 'admin.php?page=segm-probka&segm_blad=' . rawurlencode( $wynik->get_error_message() ) ) );
 		exit;
 	}
 
-	wp_safe_redirect( admin_url( 'admin.php?page=segm-probka&segm_ok=import&ile=' . (int) $wynik['zaimportowano'] . '&pominieto=' . (int) $wynik['pominieto'] ) );
+	wp_safe_redirect(
+		admin_url(
+			'admin.php?page=segm-probka&segm_ok=import&ile=' . (int) $wynik['zaimportowano']
+			. '&pominieto=' . (int) $wynik['pominieto']
+			. '&przerwano=' . ( empty( $wynik['przerwano'] ) ? '0' : '1' )
+			. '&kodowanie=' . rawurlencode( (string) $wynik['kodowanie'] )
+		)
+	);
 	exit;
 }
 add_action( 'admin_post_segm_import_csv', 'segm_post_import_csv' );
@@ -713,12 +850,19 @@ function segm_post_probka_demo() {
 	}
 	check_admin_referer( 'segm_probka_demo' );
 
+	$zajeta = segm_zajmij_blokade( 'przywracanie próbki demo' );
+	if ( true !== $zajeta ) {
+		segm_przekieruj_blad( 'segm-probka', sprintf( 'Trwa inna operacja na próbce (%s) — nie ruszamy jej w połowie. Odczekaj chwilę i spróbuj ponownie.', $zajeta ) );
+	}
+
 	global $wpdb;
 	if ( false === $wpdb->query( "TRUNCATE TABLE {$wpdb->prefix}segm_maile" ) ) { // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		segm_log_bledu_bazy( 'segm_post_probka_demo', 'czyszczenie próbki przed przywróceniem demo' );
+		segm_zwolnij_blokade();
 		segm_przekieruj_blad( 'segm-probka', 'Nie udało się wyczyścić próbki — baza odrzuciła operację. Próbka NIE została zmieniona.' );
 	}
 	$nieudane = segm_wstaw_probke_demo();
+	segm_zwolnij_blokade();
 	if ( $nieudane > 0 ) {
 		segm_przekieruj_blad(
 			'segm-probka',
@@ -730,6 +874,57 @@ function segm_post_probka_demo() {
 	exit;
 }
 add_action( 'admin_post_segm_probka_demo', 'segm_post_probka_demo' );
+
+/**
+ * Kiedy retencja posprząta następnym razem — zdanie do panelu.
+ * Gdy harmonogramu nie ma (np. WP-Cron wyłączony przez DISABLE_WP_CRON i nikt
+ * go nie woła), NIE udajemy, że jest: właściciel ma to zobaczyć.
+ *
+ * @return string
+ */
+function segm_opis_najblizszego_czyszczenia() {
+	$kiedy = wp_next_scheduled( 'segm_czyszczenie_probki' );
+	if ( ! $kiedy ) {
+		return 'uwaga: zadanie NIE jest zaplanowane — sprawdź, czy WP-Cron działa na tym hostingu';
+	}
+	return 'najbliższe czyszczenie: ' . wp_date( 'j.m.Y H:i', $kiedy );
+}
+
+/**
+ * „Wyczyść próbkę teraz": usuwa maile i raporty przebiegów, czyli WSZYSTKO,
+ * co trzyma cudzą korespondencję. Kategorie i reguły (konfiguracja właściciela)
+ * zostają — po wyczyszczeniu można od razu wgrać nową próbkę.
+ *
+ * @return void
+ */
+function segm_post_probka_wyczysc() {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_die( 'Brak uprawnień.' );
+	}
+	check_admin_referer( 'segm_probka_wyczysc' );
+
+	$zajeta = segm_zajmij_blokade( 'czyszczenie próbki na żądanie' );
+	if ( true !== $zajeta ) {
+		segm_przekieruj_blad( 'segm-probka', sprintf( 'Trwa inna operacja na próbce (%s) — nie ruszamy jej w połowie. Odczekaj chwilę i spróbuj ponownie.', $zajeta ) );
+	}
+
+	global $wpdb;
+	if ( false === $wpdb->query( "TRUNCATE TABLE {$wpdb->prefix}segm_maile" ) ) { // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		segm_log_bledu_bazy( 'segm_post_probka_wyczysc', 'czyszczenie próbki na żądanie' );
+		segm_zwolnij_blokade();
+		segm_przekieruj_blad( 'segm-probka', 'Nie udało się wyczyścić próbki — baza odrzuciła operację. Maile NADAL są w bazie.' );
+	}
+	if ( false === $wpdb->query( "TRUNCATE TABLE {$wpdb->prefix}segm_przebiegi" ) ) { // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		segm_log_bledu_bazy( 'segm_post_probka_wyczysc', 'czyszczenie raportów przebiegów na żądanie' );
+		segm_zwolnij_blokade();
+		segm_przekieruj_blad( 'segm-probka', 'Próbka została wyczyszczona, ale raportów przebiegów NIE udało się usunąć — nadawcy i tematy maili nadal są w bazie. Sprawdź stan bazy i powtórz operację.' );
+	}
+	segm_zwolnij_blokade();
+
+	wp_safe_redirect( admin_url( 'admin.php?page=segm-probka&segm_ok=wyczyszczono' ) );
+	exit;
+}
+add_action( 'admin_post_segm_probka_wyczysc', 'segm_post_probka_wyczysc' );
 
 /* ===================== USTAWIENIA ===================== */
 
@@ -775,6 +970,27 @@ function segm_strona_ustawienia() {
 			</table>
 			<?php submit_button( 'Zapisz ustawienia' ); ?>
 		</form>
+		<h2>Zgoda na wysyłkę próbki do AI</h2>
+		<?php $zgoda = segm_zgoda_ai(); ?>
+		<?php if ( null === $zgoda ) : ?>
+			<p><strong>Tryby AI są zablokowane</strong>, dopóki tego nie potwierdzisz. Powód: próbka to zwykle korespondencja Twoich klientów — <em>cudze</em> dane osobowe. W trybie AI nadawca, temat i treść każdego maila z próbki wychodzą z Twojego serwera do zewnętrznego dostawcy modelu (Anthropic, <code>api.anthropic.com</code>). Tryb „reguły" działa lokalnie i takiej zgody nie wymaga.</p>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<input type="hidden" name="action" value="segm_zgoda_zapisz">
+				<?php wp_nonce_field( 'segm_zgoda_zapisz' ); ?>
+				<p><label><input type="checkbox" name="zgoda" value="1" required>
+					Potwierdzam, że treść maili z próbki (także korespondencja osób trzecich) będzie wysyłana do zewnętrznego dostawcy modelu w celu klasyfikacji, i że mam do tego podstawę — a przetwarzanie jest opisane w mojej polityce prywatności.</label></p>
+				<?php submit_button( 'Zapisz zgodę i odblokuj tryby AI', 'primary', 'submit', false ); ?>
+			</form>
+		<?php else : ?>
+			<p><strong>Zgoda udzielona</strong>: <?php echo esc_html( $zgoda['kiedy'] ); ?>, użytkownik <code><?php echo esc_html( $zgoda['kto'] ); ?></code>. Tryby AI są odblokowane.</p>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<input type="hidden" name="action" value="segm_zgoda_cofnij">
+				<?php wp_nonce_field( 'segm_zgoda_cofnij' ); ?>
+				<?php submit_button( 'Cofnij zgodę (blokuje tryby AI)', 'secondary', 'submit', false, array( 'onclick' => "return confirm('Cofnąć zgodę? Tryby AI przestaną działać do czasu ponownego potwierdzenia.');" ) ); ?>
+			</form>
+			<p class="description">Cofnięcie zgody blokuje wyłącznie tryby AI — próbka, reguły, raporty i klucz API zostają nietknięte. Zapis daty i loginu jest po to, żeby dało się odpowiedzieć na pytanie „kto i kiedy na to pozwolił".</p>
+		<?php endif; ?>
+
 		<h2>Prywatność</h2>
 		<p>Tryb regułowy: treść maili <strong>nie opuszcza</strong> Twojego WordPressa — segregacja działa lokalnie na próbce. Tryby AI: treść maili z próbki (nadawca, temat, treść) jest wysyłana do API dostawcy modelu (Anthropic) — poinformuj o tym w swojej polityce prywatności. Wtyczka nie łączy się z żadną skrzynką pocztową (działa na próbkach CSV — dlatego to uczciwie „testowy bot").</p>
 	</div>
@@ -795,7 +1011,10 @@ function segm_post_ustawienia_zapisz() {
 			'ai_limit_dzienny' => isset( $_POST['ai_limit_dzienny'] ) ? max( 1, min( 100000, (int) $_POST['ai_limit_dzienny'] ) ) : $stare['ai_limit_dzienny'],
 		)
 	);
-	update_option( 'segm_ustawienia', $nowe );
+	if ( ! segm_zapisz_opcje( 'segm_ustawienia', $nowe ) ) {
+		segm_log_bledu_bazy( 'segm_post_ustawienia_zapisz', 'ustawienia wtyczki (limit AI, usuwanie danych)' );
+		segm_przekieruj_blad( 'segm-ustawienia', 'Nie udało się zapisać ustawień — baza odrzuciła zapis. Obowiązują POPRZEDNIE ustawienia (m.in. dzienny limit wywołań AI).' );
+	}
 
 	// Klucz API: osobna opcja (autoload=no), nigdy nie wraca do formularza.
 	if ( ! empty( $_POST['usun_klucz'] ) ) {
@@ -808,3 +1027,57 @@ function segm_post_ustawienia_zapisz() {
 	exit;
 }
 add_action( 'admin_post_segm_ustawienia_zapisz', 'segm_post_ustawienia_zapisz' );
+
+/**
+ * Zapis zgody na wysyłkę próbki do AI (data + login — do okazania przy audycie).
+ *
+ * @return void
+ */
+function segm_post_zgoda_zapisz() {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_die( 'Brak uprawnień.' );
+	}
+	check_admin_referer( 'segm_zgoda_zapisz' );
+
+	if ( empty( $_POST['zgoda'] ) ) {
+		segm_przekieruj_blad( 'segm-ustawienia', 'Zgoda NIE została zapisana — pole potwierdzenia nie było zaznaczone. Tryby AI pozostają zablokowane.' );
+	}
+
+	$uzytkownik = wp_get_current_user();
+	$wpis       = array(
+		'kiedy' => current_time( 'mysql' ),
+		'kto'   => $uzytkownik->user_login,
+	);
+	if ( ! segm_zapisz_opcje( 'segm_zgoda_ai', $wpis ) ) {
+		segm_log_bledu_bazy( 'segm_post_zgoda_zapisz', 'zgoda na wysyłkę próbki do AI' );
+		segm_przekieruj_blad( 'segm-ustawienia', 'Nie udało się zapisać zgody — baza odrzuciła zapis. Tryby AI pozostają ZABLOKOWANE (żaden mail nie wyszedł na zewnątrz).' );
+	}
+
+	wp_safe_redirect( admin_url( 'admin.php?page=segm-ustawienia&segm_ok=zgoda' ) );
+	exit;
+}
+add_action( 'admin_post_segm_zgoda_zapisz', 'segm_post_zgoda_zapisz' );
+
+/**
+ * Cofnięcie zgody — tryby AI wracają do stanu zablokowanego.
+ *
+ * @return void
+ */
+function segm_post_zgoda_cofnij() {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_die( 'Brak uprawnień.' );
+	}
+	check_admin_referer( 'segm_zgoda_cofnij' );
+
+	delete_option( 'segm_zgoda_ai' );
+	// delete_option() zwraca false także dla opcji, której nie było — o tym, czy
+	// zgoda naprawdę zniknęła, rozstrzyga odczyt, nie zwracana wartość.
+	if ( segm_zgoda_ai_udzielona() ) {
+		segm_log_bledu_bazy( 'segm_post_zgoda_cofnij', 'cofnięcie zgody na wysyłkę próbki do AI' );
+		segm_przekieruj_blad( 'segm-ustawienia', 'Nie udało się cofnąć zgody — baza odrzuciła operację. Zgoda NADAL obowiązuje, tryby AI są dostępne. Sprawdź stan bazy i powtórz operację.' );
+	}
+
+	wp_safe_redirect( admin_url( 'admin.php?page=segm-ustawienia&segm_ok=zgoda_cofnij' ) );
+	exit;
+}
+add_action( 'admin_post_segm_zgoda_cofnij', 'segm_post_zgoda_cofnij' );

@@ -77,12 +77,23 @@ function segm_utworz_tabele() {
 }
 
 /**
- * Aktywacja: tabele + wersja schematu + seed.
+ * Aktywacja: tabele + wersja schematu + seed + harmonogram retencji.
  */
 function segm_aktywacja() {
 	segm_utworz_tabele();
 	update_option( 'segm_wersja_schematu', SEGM_WERSJA_SCHEMATU );
 	segm_seed_demo();
+
+	if ( ! wp_next_scheduled( 'segm_czyszczenie_probki' ) ) {
+		wp_schedule_event( time() + DAY_IN_SECONDS, 'daily', 'segm_czyszczenie_probki' );
+	}
+}
+
+/**
+ * Deaktywacja: zdejmij cron (dane zostają — właściciel może wrócić bez strat).
+ */
+function segm_deaktywacja() {
+	wp_clear_scheduled_hook( 'segm_czyszczenie_probki' );
 }
 
 /**

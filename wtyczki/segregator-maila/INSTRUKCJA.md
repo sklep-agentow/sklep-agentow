@@ -47,6 +47,15 @@ Wymagania: WordPress 6.0+ i PHP 8.1+.
 
 ## 4. Tryb AI (opcjonalny — hybryda)
 
+**Najpierw zgoda — bez niej tryby AI się nie uruchomią.** W trybie AI nadawca,
+temat i treść każdego maila z próbki wychodzą z Twojego serwera do zewnętrznego
+dostawcy modelu, a próbka to zwykle korespondencja Twoich klientów, czyli CUDZE
+dane osobowe. Dlatego w **Ustawieniach Segregatora** jest sekcja *„Zgoda na
+wysyłkę próbki do AI"*: jedno wyraźne potwierdzenie, zapisane z datą i loginem
+(do okazania, gdyby ktoś zapytał, kto na to pozwolił). Zgodę można cofnąć
+jednym przyciskiem — wtedy tryby AI znów są zablokowane, a próbka, reguły i
+raporty zostają nietknięte. Tryb „reguły" działa lokalnie i zgody nie wymaga.
+
 Z własnym kluczem API (Anthropic, console.anthropic.com) klasyfikację może
 robić prawdziwy model — a najciekawszy jest tryb **„porównaj oba"**:
 
@@ -73,8 +82,20 @@ Plik musi mieć kolumny w kolejności `od, temat, tresc[, kategoria_oczekiwana]`
 rozdzielane przecinkami albo średnikami (separator wykrywany automatycznie —
 polski Excel przy „Zapisz jako CSV" daje średniki i to działa); pierwszy wiersz
 może być nagłówkiem. Gdy wiersz danych ma mniej niż 3 kolumny, cały import jest
-odrzucany z komunikatem (próbka zostaje nietknięta). Limit: 500 wierszy
-(nadmiar jest pomijany i raportowany).
+odrzucany z komunikatem (próbka zostaje nietknięta). Limity: **500 wierszy**
+(po nich czytanie pliku jest PRZERYWANE — dostajesz o tym komunikat, a import
+kończy się od razu) i **5 MB** na plik. Przyjmujemy `.csv` oraz `.txt`
+z zawartością CSV; plik z danymi binarnymi jest odrzucany.
+
+**A co z polskimi znakami (ą, ć, ę, ł)?**
+Kodowanie jest wykrywane automatycznie. Plik w **UTF-8** wchodzi jak leci;
+plik w **Windows-1250** (tak zapisuje polski Excel przez „Zapisz jako CSV")
+jest przekodowywany — po imporcie komunikat mówi, jakie kodowanie wykryto,
+żeby dało się to sprawdzić. Nie czytamy **UTF-16** („Tekst Unicode" w Excelu)
+— taki plik jest odrzucany z komunikatem, próbka zostaje nietknięta; zapisz go
+wtedy jako „CSV UTF-8". Przekodowanie wymaga rozszerzenia PHP `iconv`
+(standard na hostingach); gdyby go nie było, dostaniesz komunikat zamiast
+cichych krzaków.
 
 **Skąd wziąć CSV z mojej skrzynki?**
 Większość klientów poczty ma eksport (np. Thunderbird z dodatkiem
@@ -88,6 +109,15 @@ bardziej szczegółowej reguły wyżej albo doprecyzowanie wariantów.
 Nie — reguły demo są po prostu dopasowane do próbki demo (tak wygląda dobrze
 skonfigurowany segregator). Na TWOICH mailach zaczniesz niżej i podniesiesz
 wynik pętlą z punktu 3.
+
+**Jak długo próbka leży w bazie?**
+Maksymalnie **90 dni**. Codzienne zadanie (WP-Cron) kasuje maile i raporty
+przebiegów starsze niż 90 dni — nie musisz o tym pamiętać. Na stronie **Próbka
+maili** widzisz termin najbliższego czyszczenia i masz przycisk **„Wyczyść
+próbkę teraz"**, który usuwa próbkę i wszystkie raporty od ręki (kategorie,
+reguły i klucz API zostają). Wyłączenie wtyczki zdejmuje zadanie z
+harmonogramu; dane zostają do czasu odinstalowania z opcją „usuń wszystkie
+dane".
 
 **Co z danymi po odinstalowaniu?**
 Klucz API jest kasowany przy KAŻDYM odinstalowaniu (wtyczka nie zostawia
@@ -108,7 +138,15 @@ reguły, próbka, przebiegi i ustawienia.
 - **Tryb regułowy:** treść maili NIE opuszcza Twojego WordPressa — segregacja
   działa lokalnie, próbka leży w Twojej bazie danych.
 - **Tryby AI:** treść maili z próbki (nadawca, temat, treść) jest wysyłana do
-  API dostawcy modelu (Anthropic) w celu klasyfikacji.
+  API dostawcy modelu (Anthropic) w celu klasyfikacji — i **nie stanie się to
+  bez Twojej wyraźnej zgody**: dopóki nie potwierdzisz jej w Ustawieniach,
+  przebieg AI w ogóle nie startuje (zamiast tego dostajesz komunikat).
+  Zgoda jest zapisywana z datą i loginem osoby, która ją wyraziła, i można ją
+  cofnąć w każdej chwili. Odinstalowanie wtyczki kasuje ją zawsze.
+- **Retencja:** próbka i raporty przebiegów są kasowane automatycznie po
+  **90 dniach** (codzienny WP-Cron), a przycisk „Wyczyść próbkę teraz" na
+  stronie *Próbka maili* usuwa je natychmiast. Raporty kasujemy razem z
+  próbką, bo trzymają nadawcę i temat każdego maila.
 - Jeśli wgrywasz próbkę z PRAWDZIWYMI mailami klientów, to są dane osobowe —
   **dopisz przetwarzanie (i ewentualnego dostawcę AI) do swojej polityki
   prywatności**; do testów reguł często wystarczy próbka zanonimizowana.

@@ -10,10 +10,26 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 
 $segm_ust = get_option( 'segm_ustawienia', array() );
 
+// Harmonogram retencji zdejmuje już deaktywacja, ale odinstalowanie ma zostawić
+// czysto także wtedy, gdy wtyczkę usunięto z pominięciem tamtej ścieżki
+// (np. skasowanie katalogu i „usuń" z listy) — martwy wpis w cronie tylko
+// sypie błędami „nie ma takiej funkcji".
+wp_clear_scheduled_hook( 'segm_czyszczenie_probki' );
+
+// Znacznik „operacja na próbce w toku" to stan chwilowy, nie dane użytkownika —
+// kasujemy ZAWSZE, żeby po odinstalowaniu nie został w bazie wpis bez wtyczki,
+// która umiałaby go zwolnić.
+delete_option( 'segm_operacja_w_toku' );
+
 // Sekret właściciela (klucz API) kasowany ZAWSZE, niezależnie od opcji „usuń dane"
 // (zasada D22: poświadczenia ≠ dane użytkowe; martwa wtyczka nie zostawia klucza
 // w bazie — znalezisko wrogiej sesji botów 19.08, zmierzone na czystym WP).
 delete_option( 'segm_klucz_api' );
+
+// Zgoda na wysyłkę próbki do AI też znika ZAWSZE: po ponownej instalacji
+// właściciel ma podjąć tę decyzję świadomie od nowa, a nie odziedziczyć
+// potwierdzenie sprzed odinstalowania.
+delete_option( 'segm_zgoda_ai' );
 
 if ( empty( $segm_ust['usun_dane'] ) ) {
 	return;
@@ -28,3 +44,7 @@ $wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}segm_ai_uzycie" ); // phpcs:i
 
 delete_option( 'segm_ustawienia' );
 delete_option( 'segm_wersja_schematu' );
+
+// Ślad „baner powitalny schowany" trzymany per użytkownik — bez tego zostałyby
+// osierocone wiersze w wp_usermeta po wtyczce, której już nie ma.
+delete_metadata( 'user', 0, 'segm_baner_ukryty', '', true );
