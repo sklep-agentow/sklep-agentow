@@ -20,16 +20,39 @@ const CHATL_AI_TIMEOUT    = 9;
 const CHATL_AI_BRAK       = 'BRAK_ODPOWIEDZI';
 
 /**
- * Klucz API właściciela (opcja z autoload=no; nigdy w kodzie/paczce/repo).
+ * Czy klucz jest podany stałą CHATL_KLUCZ_API w wp-config.php.
+ *
+ * Stała MA PIERWSZEŃSTWO nad opcją: klucz siedzi wtedy poza bazą, więc nie
+ * wychodzi z kopią zapasową bazy ani z eksportem do innego środowiska.
+ * ⛔ Świadomie NIE szyfrujemy klucza w bazie — klucz szyfrujący leżałby
+ * w tym samym WordPressie, obok danych; to teatr, nie zabezpieczenie.
+ *
+ * @return bool
+ */
+function chatl_klucz_ze_stalej() {
+	return defined( 'CHATL_KLUCZ_API' ) && '' !== trim( (string) constant( 'CHATL_KLUCZ_API' ) );
+}
+
+/**
+ * Klucz API właściciela: stała z wp-config.php, a jeśli jej nie ma — opcja
+ * (z autoload=no; nigdy w kodzie/paczce/repo).
  */
 function chatl_klucz_api() {
+	if ( chatl_klucz_ze_stalej() ) {
+		return trim( (string) constant( 'CHATL_KLUCZ_API' ) );
+	}
 	return (string) get_option( 'chatl_klucz_api', '' );
 }
 
 /**
  * Zapis/kasowanie klucza z wymuszonym autoload=no.
+ * Gdy klucz jest w konfiguracji serwera, panel go nie nadpisuje — inaczej
+ * wpis w polu formularza po cichu wygrywałby ze stałą wbrew deklaracji.
  */
 function chatl_zapisz_klucz( $klucz ) {
+	if ( chatl_klucz_ze_stalej() ) {
+		return;
+	}
 	if ( '' === $klucz ) {
 		delete_option( 'chatl_klucz_api' );
 		return;

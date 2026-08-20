@@ -62,10 +62,31 @@ i aktywnych wpisów bazy Q&A:
    zmyślać ceny czy terminy.
 3. **Stop-loss:** dzienny limit wywołań (domyślnie 100, licznik w ustawieniach;
    limit jest miękki — równoległe zapytania gości mogą go minimalnie
-   przekroczyć). Po wyczerpaniu limitu, przy błędzie API albo braku klucza bot
+   przekroczyć). Osobno działa twardszy limit **20 wywołań AI na dobę
+   z jednego adresu IP**, żeby jeden gość nie wypalił budżetu wszystkich.
+   Po wyczerpaniu któregokolwiek limitu, przy błędzie API albo braku klucza bot
    automatycznie wraca do trybu regułowego — czat nigdy nie przestaje działać.
 
 Koszty API ponosi właściciel klucza według cennika dostawcy.
+
+### Klucz w konfiguracji serwera (zalecane)
+
+Klucz wpisany w panelu leży w bazie danych — a więc wychodzi z każdą jej kopią
+zapasową i przy przenoszeniu strony na inny serwer. Bezpieczniej podać go
+**poza bazą**, stałą w pliku `wp-config.php`:
+
+```php
+define( 'CHATL_KLUCZ_API', 'sk-ant-…' );
+```
+
+Stała **ma pierwszeństwo** nad polem w panelu. Wtyczka pokazuje wtedy
+„Klucz podany w konfiguracji serwera", a pole jest zablokowane — żeby zmienić
+albo wyłączyć klucz, poprawiasz `wp-config.php`.
+
+> Dlaczego wtyczka nie szyfruje klucza w bazie? Bo klucz szyfrujący musiałby
+> leżeć w tym samym WordPressie, obok danych — kto ma bazę, ma jedno i drugie.
+> To wyglądałoby na zabezpieczenie, nie będąc nim. Trzymanie klucza poza bazą
+> jest realną poprawą, a nie pozorem.
 
 ## 5. FAQ
 
@@ -86,8 +107,10 @@ Nie — sesja czatu żyje w karcie przeglądarki gościa. Historia rozmów jest
 zapisywana po stronie serwera (90 dni) do wglądu właściciela.
 
 **Co się stanie z danymi po odinstalowaniu?**
-Klucz API jest kasowany przy KAŻDYM odinstalowaniu (wtyczka nie zostawia
-Twojego sekretu w bazie; po ponownej instalacji wpisz go na nowo). Reszta
+Klucz API zapisany w panelu jest kasowany przy KAŻDYM odinstalowaniu (wtyczka
+nie zostawia Twojego sekretu w bazie; po ponownej instalacji wpisz go na nowo).
+Klucz podany stałą w `wp-config.php` zostaje tam, gdzie go wpisałeś — wtyczka
+nie rusza plików konfiguracyjnych; usuwasz go sam, jeśli chcesz. Reszta
 domyślnie zostaje (możesz wrócić bez strat). Jeśli w ustawieniach zaznaczysz
 „usuń wszystkie dane", odinstalowanie skasuje też bazę Q&A, zgłoszenia,
 historię i ustawienia.

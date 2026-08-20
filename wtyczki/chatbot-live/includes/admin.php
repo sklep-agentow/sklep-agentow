@@ -477,13 +477,21 @@ function chatl_strona_ustawienia() {
 					<th scope="row"><label for="chatl-klucz">Klucz API (Anthropic)</label></th>
 					<td>
 						<?php $klucz = chatl_klucz_api(); ?>
-						<?php if ( '' !== $klucz ) : ?>
-							<p><strong>Klucz zapisany</strong> (…<?php echo esc_html( substr( $klucz, -4 ) ); ?>).
-								<label><input type="checkbox" name="usun_klucz" value="1"> usuń klucz (wyłącza tryb AI)</label></p>
+						<?php if ( chatl_klucz_ze_stalej() ) : ?>
+							<p><strong>Klucz podany w konfiguracji serwera</strong> (…<?php echo esc_html( substr( $klucz, -4 ) ); ?>) — stałą <code>CHATL_KLUCZ_API</code> w <code>wp-config.php</code>.</p>
+							<input type="password" id="chatl-klucz" class="regular-text" value="" autocomplete="off" disabled
+								placeholder="klucz z wp-config.php">
+							<p class="description">To pole jest zablokowane, bo stała ma pierwszeństwo nad bazą. Żeby zmienić albo wyłączyć klucz, popraw <code>wp-config.php</code>. Klucz trzymany poza bazą nie wychodzi z kopią zapasową bazy — to zalecany sposób.</p>
+						<?php else : ?>
+							<?php if ( '' !== $klucz ) : ?>
+								<p><strong>Klucz zapisany</strong> (…<?php echo esc_html( substr( $klucz, -4 ) ); ?>).
+									<label><input type="checkbox" name="usun_klucz" value="1"> usuń klucz (wyłącza tryb AI)</label></p>
+							<?php endif; ?>
+							<input type="password" id="chatl-klucz" name="klucz_api" class="regular-text" value="" autocomplete="off"
+								placeholder="<?php echo '' !== $klucz ? 'wklej, aby podmienić' : 'sk-ant-…'; ?>">
+							<p class="description">Klucz WŁAŚCICIELA strony — przechowywany tylko w Twojej bazie (bez autoload), nigdzie nie wysyłany poza api.anthropic.com.<br>
+								Bezpieczniej: wpisz go stałą <code>define( 'CHATL_KLUCZ_API', 'sk-ant-…' );</code> w <code>wp-config.php</code> — wtedy klucz nie leży w bazie i nie wychodzi z jej kopią zapasową. Stała ma pierwszeństwo nad tym polem.</p>
 						<?php endif; ?>
-						<input type="password" id="chatl-klucz" name="klucz_api" class="regular-text" value="" autocomplete="off"
-							placeholder="<?php echo '' !== $klucz ? 'wklej, aby podmienić' : 'sk-ant-…'; ?>">
-						<p class="description">Klucz WŁAŚCICIELA strony — przechowywany tylko w Twojej bazie (bez autoload), nigdzie nie wysyłany poza api.anthropic.com.</p>
 					</td>
 				</tr>
 				<tr>
