@@ -7,6 +7,16 @@ wersjonowanie według [SemVer](https://semver.org/lang/pl/).
 
 ## [Niewydane]
 
+### Zmienione
+
+- **Instrukcja opisuje wtyczkę, którą kupujący naprawdę dostaje.** Doszło:
+  podłączenie skrzynki krok po kroku (od hasła aplikacji po włączenie
+  harmonogramu), liczniki „Pasuje"/„Zgarnia" przy regule i liczenie wzorca bez
+  zapisywania, praca na pojedynczym mailu, przeprowadzka reguł plikiem JSON,
+  klucz API trzymany stałą w `wp-config.php`, „Przetestuj klucz API", pasek
+  „tryb AI nie działa" oraz wybór modelu w Ustawieniach. Z „drogi rozbudowy"
+  zniknął wybór modelu — jest w produkcie, więc nie może wisieć jako plan.
+
 ### Dodane
 
 - **„Przetestuj klucz API”** w Ustawieniach — jedno wywołanie ze słowem „ping”,
