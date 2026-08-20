@@ -10,6 +10,28 @@ migracja odpala się sama przy pierwszym wejściu do panelu po aktualizacji
 
 ---
 
+## [1.4.6] — 2026-08-20 · schemat bazy 4 → 5
+
+### Naprawione
+- **Dobowy limit chronił przed liczbą wywołań, a rachunek idzie z tokenów.**
+  Cała aktywna baza Q&A wchodzi do każdego zapytania, więc klient z 200 parami
+  płacił wielokrotność klienta z 10 parami przy identycznym „limicie 100 wywołań".
+  Doszedł **drugi stop-loss: dobowy limit tokenów** (domyślnie 200 000, `0` = wyłączony).
+
+### Dodane
+- Zapis zużycia tokenów z każdej odpowiedzi API (wejście, wyjście, zapis
+  i odczyt cache — osobno).
+- **Zużycie tokenów w Statystykach** (za wybrany okres) i w Ustawieniach (dzisiejsze).
+- Cache instrukcji systemowej po stronie API — **dokładany warunkowo**, tylko gdy
+  instrukcja jest dość długa, żeby cache w ogóle zadziałał.
+
+### Uwaga przy aktualizacji
+- Liczniki tokenów startują od tej wersji; wcześniejsze wywołania nie zostawiły
+  tej informacji i nie są zgadywane wstecz.
+- Wtyczka pokazuje tokeny, **nie kwoty** — stawki sprawdzasz u dostawcy modelu.
+
+---
+
 ## [1.4.0] — 2026-08-20
 
 ### Dodane

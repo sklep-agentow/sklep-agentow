@@ -2,7 +2,7 @@
 /**
  * Plugin Name: ChatBot LIVE
  * Description: Bot na stronę firmową: 24/7 odpowiada na powtarzalne pytania z bazy Q&A, a gdy nie zna odpowiedzi — zbiera kontakt, żeby właściciel odezwał się na żywo.
- * Version: 1.4.0
+ * Version: 1.4.6
  * Requires at least: 6.0
  * Requires PHP: 8.1
  * Author: Automatic AI
@@ -15,8 +15,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'CHATL_WERSJA', '1.4.0' );
-define( 'CHATL_WERSJA_SCHEMATU', '4' );
+define( 'CHATL_WERSJA', '1.4.6' );
+define( 'CHATL_WERSJA_SCHEMATU', '5' );
 define( 'CHATL_KATALOG', plugin_dir_path( __FILE__ ) );
 define( 'CHATL_URL', plugin_dir_url( __FILE__ ) );
 
@@ -130,6 +130,15 @@ function chatl_ustawienia() {
 		'kolor_naglowka'   => '#08090b',
 		'kolor_tekstu'     => 'auto',
 		'pozycja'          => 'prawo',
+		/*
+		 * Dobowy limit TOKENOW — drugi stop-loss, obok limitu wywołań.
+		 * 200 000 to mniej więcej tyle, ile zużyje 100 wywołań (domyślny limit
+		 * wywołań) przy typowej bazie Q&A małej firmy. Zaczyna więc gryźć
+		 * dopiero, gdy POJEDYNCZE wywołanie jest nienormalnie drogie — czyli
+		 * dokładnie w przypadku, którego limit wywołań w ogóle nie widzi.
+		 * 0 = wyłączony (świadoma decyzja właściciela).
+		 */
+		'ai_limit_tokenow' => 200000,
 	);
 	$zapisane = get_option( 'chatl_ustawienia', array() );
 	if ( ! is_array( $zapisane ) ) {

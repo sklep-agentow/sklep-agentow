@@ -567,6 +567,31 @@ function chatl_strona_ustawienia() {
 					</td>
 				</tr>
 				<tr>
+					<th scope="row"><label for="chatl-ai-limit-tokenow">Dobowy limit tokenów (drugi stop-loss)</label></th>
+					<td>
+						<?php $zuzycie = chatl_ai_zuzycie_dnia(); ?>
+						<input type="number" id="chatl-ai-limit-tokenow" name="ai_limit_tokenow" min="0" max="100000000" step="1000"
+							value="<?php echo (int) $ust['ai_limit_tokenow']; ?>">
+						<p class="description">
+							Dzisiaj zużyto: <strong><?php echo esc_html( number_format_i18n( chatl_ai_tokeny_dzis() ) ); ?></strong>
+							<?php if ( (int) $ust['ai_limit_tokenow'] > 0 ) : ?>
+								/ <?php echo esc_html( number_format_i18n( (int) $ust['ai_limit_tokenow'] ) ); ?>
+							<?php endif; ?>
+							tokenów płatnych
+							(wejście <?php echo esc_html( number_format_i18n( $zuzycie['tokeny_wejscia'] ) ); ?>,
+							wyjście <?php echo esc_html( number_format_i18n( $zuzycie['tokeny_wyjscia'] ) ); ?>,
+							zapis do cache <?php echo esc_html( number_format_i18n( $zuzycie['tokeny_cache_zapis'] ) ); ?>;
+							odczyt z cache <?php echo esc_html( number_format_i18n( $zuzycie['tokeny_cache_odczyt'] ) ); ?> — tańszy, liczony osobno).<br>
+							<strong>Rachunek u dostawcy idzie z tokenów, nie z liczby wywołań.</strong> Przy dużej bazie Q&amp;A
+							jedno pytanie potrafi kosztować wielokrotność innego, a limit wywołań tego w ogóle nie widzi —
+							dlatego ten drugi limit istnieje. Po jego wyczerpaniu bot do północy odpowiada z reguł, tak samo
+							jak po wyczerpaniu limitu wywołań. <strong>0 = wyłączony.</strong><br>
+							Aktualne stawki za tokeny sprawdzisz u dostawcy — wtyczka celowo nie podaje kwot, bo cennik się zmienia,
+							a ona nie ma jak go odświeżyć.
+						</p>
+					</td>
+				</tr>
+				<tr>
 					<th scope="row">Usuwanie wtyczki</th>
 					<td>
 						<label><input type="checkbox" name="usun_dane" value="1" <?php checked( $ust['usun_dane'] ); ?>> przy odinstalowaniu usuń WSZYSTKIE dane (baza Q&A, zgłoszenia, historia, ustawienia)</label>
@@ -681,6 +706,7 @@ function chatl_post_ustawienia_zapisz() {
 			? chatl_sanitize_kolor( wp_unslash( $_POST['kolor_tekstu'] ) )
 			: 'auto',
 		'pozycja'          => isset( $_POST['pozycja'] ) && 'lewo' === sanitize_key( wp_unslash( $_POST['pozycja'] ) ) ? 'lewo' : 'prawo',
+		'ai_limit_tokenow' => isset( $_POST['ai_limit_tokenow'] ) ? max( 0, min( 100000000, (int) $_POST['ai_limit_tokenow'] ) ) : $stare['ai_limit_tokenow'],
 	);
 
 	// Klucz API: osobna opcja (autoload=no), nigdy nie wraca do formularza.
