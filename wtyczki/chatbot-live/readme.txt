@@ -140,6 +140,8 @@ w paczce. Poniżej skrót.
 * Nowość: **przejęcie rozmowy przez człowieka**. Operator wchodzi do rozmowy,
   bot milczy, a gość widzi wyraźny komunikat, że pisze do człowieka. Po
   zakończeniu (lub po 5 minutach ciszy operatora) rozmowę przejmuje z powrotem bot.
+* Nowa podstrona **Rozmowy na żywo**: widzisz, kto teraz pisze i ile czeka,
+  wchodzisz do rozmowy jednym kliknięciem i odpowiadasz gościowi.
 * Bezpieczeństwo: identyfikator sesji wydaje serwer, a dostęp do rozmowy wymaga
   dodatkowo sekretu z ciastka HttpOnly — sam identyfikator nie wystarczy.
 

@@ -16,6 +16,10 @@ migracja odpala się sama przy pierwszym wejściu do panelu po aktualizacji
 - **Przejęcie rozmowy przez człowieka.** Operator może wejść do trwającej rozmowy;
   od tej chwili **bot milczy**, a gość widzi **wyraźny komunikat**, że rozmawia
   z człowiekiem. Zakończenie oddaje rozmowę botowi — też z komunikatem.
+- **Panel „Rozmowy na żywo"**: lista rozmów z ostatnich 30 minut (kto pisze, ostatnie
+  pytanie gościa, ile czeka, liczba wiadomości), okno rozmowy dla operatora
+  z odświeżaniem co 5 s oraz przyciski **Przejmij** i **Zakończ**. Wszystko za
+  uprawnieniem `manage_options` i noncem.
 - Powrót do bota **po ciszy operatora** (5 minut), bez zależności od WP-Cron.
 - Publiczny punkt odpytywania `POST /wp-json/chatl/v1/rozmowa` z rytmem
   ustalanym przez serwer: 15 s w trybie bota, 5 s po przejęciu, 30 s przy

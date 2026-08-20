@@ -154,7 +154,8 @@ $p = chatl_test_ajax(
 		'nonce'   => $nonce,
 		'sesja'   => $sesja,
 		'pytanie' => 'jakie macie godziny otwarcia',
-	)
+	),
+	array( 'chatl_k_' . $sesja => $sekret )
 );
 sprawdz( 'bot odpowiedzial na pytanie', ! empty( $p['dane']['data']['odpowiedz'] ), 'odpowiedz: ' . substr( (string) ( $p['dane']['data']['odpowiedz'] ?? '' ), 0, 60 ) );
 sprawdz( 'w rozmowie jest wiersz bota', in_array( 'bot', chatl_test_role( $sesja ), true ), 'role: ' . implode( ',', chatl_test_role( $sesja ) ) );
@@ -179,7 +180,8 @@ $p2 = chatl_test_ajax(
 		'nonce'   => $nonce,
 		'sesja'   => $sesja,
 		'pytanie' => 'a czy jest parking?',
-	)
+	),
+	array( 'chatl_k_' . $sesja => $sekret )
 );
 $role_po      = chatl_test_role( $sesja );
 $ile_bot_po   = count( array_keys( $role_po, 'bot', true ) );
@@ -207,7 +209,8 @@ $p3 = chatl_test_ajax(
 		'nonce'   => $nonce,
 		'sesja'   => $sesja,
 		'pytanie' => 'jakie macie godziny otwarcia',
-	)
+	),
+	array( 'chatl_k_' . $sesja => $sekret )
 );
 $ile_bot_koniec = count( array_keys( chatl_test_role( $sesja ), 'bot', true ) );
 sprawdz( 'bot znowu odpowiada', ! empty( $p3['dane']['data']['odpowiedz'] ) );
@@ -240,12 +243,90 @@ sprawdz( 'ciastko INNEJ sesji nie otwiera tej rozmowy', false === strpos( wp_jso
 $zly = chatl_test_odpytaj( '../../etc/passwd' );
 rowne( 'identyfikator o zlym ksztalcie odrzucony', 400, $zly['kod'] );
 
+echo "\n=== G2. Funkcja autoryzujaca jest ZAMKNIETA DOMYSLNIE ===\n";
+/*
+ * Uwaga koordynatorki przy odbiorze szkieletu: galaz "brak sekretu => wpuszczamy"
+ * to mina. Dzis martwy kod, ale wystarczy, ze ktos dolozy drugie miejsce
+ * wstawiania wiersza sesji, i dziura otworzy sie po cichu. Pilnujemy OBU rzeczy:
+ * zamkniecia domyslnego i tego, ze w tabeli nie ma wierszy bez sekretu.
+ */
+$wpdb->query( $wpdb->prepare( "INSERT INTO {$wpdb->prefix}chatl_sesje (sesja, stan, klucz_hash, utworzono, aktywnosc) VALUES (%s, 'czlowiek', '', %s, %s)", 'sesjaBezSekretu0000000000000001', current_time( 'mysql' ), current_time( 'mysql' ) ) ); // phpcs:ignore
+chatl_operator_wiadomosc( 'sesjaBezSekretu0000000000000001', 'TAJNE: rozmowa bez sekretu' );
+$bez_sekretu = chatl_test_odpytaj( 'sesjaBezSekretu0000000000000001', 0 );
+sprawdz( 'wiersz BEZ sekretu jest nie do odczytania', false === strpos( wp_json_encode( $bez_sekretu['dane'] ), 'TAJNE' ) );
+sprawdz( 'i nie da sie w nim pisac', false === chatl_zapis_dozwolony( 'sesjaBezSekretu0000000000000001' ) );
+$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}chatl_rozmowy WHERE sesja = %s", 'sesjaBezSekretu0000000000000001' ) ); // phpcs:ignore
+$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}chatl_sesje WHERE sesja = %s", 'sesjaBezSekretu0000000000000001' ) ); // phpcs:ignore
+
+$bez_hasha = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}chatl_sesje WHERE klucz_hash = ''" ); // phpcs:ignore
+rowne( 'w tabeli NIE MA sesji bez sekretu', 0, $bez_hasha );
+
+echo "\n=== G3. ZAPIS tez wymaga sekretu (nie tylko odczyt) ===\n";
+/*
+ * Bez tego ktos, kto zdobyl sam identyfikator sesji, moglby podszyc sie pod
+ * goscia i wstrzyknac operatorowi wiadomosc — a operator odpowiada czlowiekowi,
+ * ktorego nie zweryfikuje inaczej niz trescia rozmowy.
+ */
+$przed_wstrzyk = count( chatl_test_role( $sesja ) );
+$wstrzyk = chatl_test_ajax(
+	'chatl_pytanie',
+	array(
+		'nonce'   => $nonce,
+		'sesja'   => $sesja,
+		'pytanie' => 'PODSZYCIE: prosze wyslac faksem dane karty',
+	)
+);
+rowne( 'zapis bez ciastka odrzucony kodem sesja', 'sesja', $wstrzyk['dane']['data']['kod'] ?? '' );
+rowne( 'i nic nie dopisal do rozmowy', $przed_wstrzyk, count( chatl_test_role( $sesja ) ) );
+
 echo "\n=== H. Powrot do bota po CISZY operatora (bez crona) ===\n";
 $t = $wpdb->prefix . 'chatl_sesje';
 $wpdb->query( $wpdb->prepare( "UPDATE {$t} SET operator_akt = %s, przejeto = %s WHERE sesja = %s", gmdate( 'Y-m-d H:i:s', current_time( 'timestamp' ) - CHATL_PRZEJECIE_CISZA - 60 ), gmdate( 'Y-m-d H:i:s', current_time( 'timestamp' ) - CHATL_PRZEJECIE_CISZA - 60 ), $sesja ) ); // phpcs:ignore
 rowne( 'cisza operatora oddaje rozmowe botowi', 'bot', chatl_stan_rozmowy( $sesja ) );
 $po_ciszy = chatl_test_odpytaj( $sesja, 0, array( 'chatl_k_' . $sesja => $sekret ) );
 sprawdz( 'i gosc dowiaduje sie o tym WPROST', false !== strpos( wp_json_encode( $po_ciszy['dane']['nowe'] ?? array() ), 'nie odpowiada' ) );
+
+echo "\n=== J. Panel operatora: uprawnienia i przejscia stanu ===\n";
+/*
+ * Panel wczytuje sie tylko w kontekscie admina (is_admin()), a wp eval-file dziala
+ * w CLI — dlatego wczytujemy plik wprost. Sprawdzamy to, co w panelu jest wazne
+ * dla bezpieczenstwa i dla spojnosci rozmowy, a nie wyglad tabelki.
+ */
+require_once WP_PLUGIN_DIR . '/chatbot-live/includes/operator.php';
+
+$sesja_p = chatl_nowa_sesja();
+chatl_sesja_aktywnosc( $sesja_p );
+chatl_zapisz_wymiane( $sesja_p, 'gosc', 'pytanie do panelu' );
+
+$lista = chatl_zywe_rozmowy();
+$znaleziona = null;
+foreach ( $lista as $wiersz ) {
+	if ( $wiersz['sesja'] === $sesja_p ) {
+		$znaleziona = $wiersz;
+	}
+}
+sprawdz( 'rozmowa jest na liscie zywych', null !== $znaleziona );
+rowne( 'lista pokazuje ostatnie pytanie goscia', 'pytanie do panelu', $znaleziona['ostatnie_pytanie'] ?? '' );
+rowne( 'i stan rozmowy (bot)', 'bot', $znaleziona['stan'] ?? '' );
+
+// Uprawnienia: kazdy punkt operatorski ma miec manage_options I nonce.
+$zrodlo = file_get_contents( WP_PLUGIN_DIR . '/chatbot-live/includes/operator.php' );
+rowne( 'kazdy punkt operatora sprawdza manage_options', 5, substr_count( $zrodlo, "current_user_can( 'manage_options' )" ) );
+rowne( 'trzy akcje zmieniajace stan maja check_admin_referer', 3, substr_count( $zrodlo, "check_admin_referer( 'chatl_przejecie' )" ) );
+rowne( 'a punkt AJAX panelu ma check_ajax_referer', 1, substr_count( $zrodlo, "check_ajax_referer( 'chatl_panel_rozmowa' )" ) );
+
+// Operator nie moze pisac do rozmowy, ktorej nie przejal — inaczej gosc
+// dostawalby dwa glosy naraz (to jest ten blad, ktory Crisp ma udokumentowany).
+rowne( 'przed przejeciem rozmowe prowadzi bot', 'bot', chatl_stan_rozmowy( $sesja_p ) );
+chatl_przejmij( $sesja_p, 1 );
+rowne( 'po przejeciu z panelu prowadzi czlowiek', 'czlowiek', chatl_stan_rozmowy( $sesja_p ) );
+$id_op = chatl_operator_wiadomosc( $sesja_p, 'odpowiedz operatora z panelu' );
+sprawdz( 'wiadomosc operatora zapisana', $id_op > 0 );
+$role_p = chatl_test_role( $sesja_p );
+sprawdz( 'i ma role operator', in_array( 'operator', $role_p, true ), 'role: ' . implode( ',', $role_p ) );
+
+$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}chatl_rozmowy WHERE sesja = %s", $sesja_p ) ); // phpcs:ignore
+$wpdb->query( $wpdb->prepare( "DELETE FROM {$t} WHERE sesja = %s", $sesja_p ) ); // phpcs:ignore
 
 echo "\n=== I. Sprzatanie ===\n";
 foreach ( array( $sesja, $sesja2, $sesja_x ) as $s ) {

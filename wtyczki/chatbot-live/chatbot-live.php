@@ -60,6 +60,7 @@ register_deactivation_hook( __FILE__, 'chatl_deaktywacja' );
 
 if ( is_admin() ) {
 	require_once CHATL_KATALOG . 'includes/admin.php';
+	require_once CHATL_KATALOG . 'includes/operator.php';
 	require_once CHATL_KATALOG . 'includes/csv.php';
 	require_once CHATL_KATALOG . 'includes/statystyki.php';
 	require_once CHATL_KATALOG . 'includes/powitanie.php';

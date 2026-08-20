@@ -128,10 +128,19 @@ function chatl_sesja_uprawniona( $sesja, $w ) {
 	if ( ! is_array( $w ) ) {
 		return false;
 	}
-	// Sesje sprzed 1.5.0 nie mają sekretu — nie odcinamy ich od rozmowy, którą
-	// już prowadzą. Nowe zawsze go mają, bo wydaje je chatl_nowa_sesja().
+	/*
+	 * ZAMKNIĘTE DOMYŚLNIE. Wiersz bez sekretu nie jest „sesją zaufaną" — jest
+	 * sesją, której serwer nigdy nie wydał, więc nie ma czego otwierać.
+	 *
+	 * Poprzednia wersja tej gałęzi zwracała tu `true` („stare sesje przepuszczamy").
+	 * Dziś nie dało się tego wykorzystać, bo jedyna ścieżka zakładania wiersza
+	 * ustawia sekret — ale to jest mina, nie ustępstwo: wystarczyłoby, żeby ktoś
+	 * kiedyś dołożył drugie miejsce wstawiania wiersza (choćby uzupełnianie starych
+	 * sesji), a dziura otworzyłaby się po cichu, w funkcji, która ma AUTORYZOWAĆ.
+	 * Strażnik pilnuje osobno, że w tabeli nie ma wierszy bez sekretu.
+	 */
 	if ( empty( $w['klucz_hash'] ) ) {
-		return true;
+		return false;
 	}
 	$nazwa = 'chatl_k_' . $sesja;
 	if ( empty( $_COOKIE[ $nazwa ] ) ) {
@@ -274,6 +283,33 @@ function chatl_operator_wiadomosc( $sesja, $tresc ) {
 }
 
 /**
+ * Czy TO żądanie ma prawo pisać w tej rozmowie.
+ *
+ * Decyzja świadoma, nie przypadek (pytanie koordynatorki przy odbiorze szkieletu):
+ * sekretu wymagamy także przy ZAPISIE, nie tylko przy odczycie. Bez tego ktoś, kto
+ * zdobył sam identyfikator sesji, mógłby **podszyć się pod gościa** i wstrzyknąć
+ * operatorowi wiadomość — a operator odpowiada człowiekowi, którego nie zweryfikuje
+ * inaczej niż treścią rozmowy. Ryzyko jest małe (identyfikator jest nie do
+ * zgadnięcia), ale skutek — wprowadzenie w błąd człowieka po drugiej stronie —
+ * jest gorszy niż koszt zamknięcia tej ścieżki.
+ *
+ * Cena, którą płacimy świadomie: przeglądarka z zablokowanymi ciastkami
+ * pierwszej strony nie utrzyma sesji. Widget wykrywa to po odpowiedzi `kod: sesja`,
+ * prosi o nową sesję i ponawia raz — jeśli i to nie przejdzie, gość dostaje
+ * jasny komunikat zamiast czatu, który „po prostu nie działa".
+ *
+ * @param string $sesja Sesja.
+ * @return bool
+ */
+function chatl_zapis_dozwolony( $sesja ) {
+	$w = chatl_sesja_wiersz( $sesja );
+	if ( null === $w ) {
+		return false;
+	}
+	return chatl_sesja_uprawniona( $sesja, $w );
+}
+
+/**
  * Stan rozmowy Z UWZGLĘDNIENIEM wygaśnięcia przejęcia.
  *
  * Każde wejście do rozmowy (pytanie gościa, odpytywanie) przechodzi tędy, więc
@@ -319,13 +355,17 @@ function chatl_sesja_aktywnosc( $sesja ) {
 	global $wpdb;
 	$t = $wpdb->prefix . 'chatl_sesje';
 	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+	/*
+	 * Wyłącznie UPDATE. Wcześniej stało tu INSERT ... ON DUPLICATE KEY, czyli
+	 * DRUGIE miejsce zakładania sesji — a zakładało wiersz BEZ sekretu, więc
+	 * dokładnie ten przypadek, który wyżej musi być zamknięty. Sesje zakłada
+	 * tylko chatl_nowa_sesja(), razem z sekretem. Jedno miejsce, jedna reguła.
+	 */
 	$wpdb->query(
 		$wpdb->prepare(
-			"INSERT INTO {$t} (sesja, stan, utworzono, aktywnosc) VALUES (%s, 'bot', %s, %s)
-			ON DUPLICATE KEY UPDATE aktywnosc = VALUES(aktywnosc)",
-			$sesja,
+			"UPDATE {$t} SET aktywnosc = %s WHERE sesja = %s",
 			current_time( 'mysql' ),
-			current_time( 'mysql' )
+			$sesja
 		)
 	);
 	// phpcs:enable

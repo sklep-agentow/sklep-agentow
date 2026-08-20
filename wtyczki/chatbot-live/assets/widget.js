@@ -22,7 +22,14 @@
 	 */
 	function wczytajSesje() {
 		try {
-			return window.sessionStorage.getItem('chatl_sesja');
+			var id = window.sessionStorage.getItem('chatl_sesja');
+			/* Sesje wydane przez SERWER maja dokladnie 32 znaki alfanumeryczne.
+			   Cokolwiek innego to pozostalosc po wersji, w ktorej identyfikator
+			   wymyslala przegladarka (UUID z myslnikami albo 'chatl-<czas>-<random>')
+			   — takiej nie da sie juz uzyc, bo nie ma do niej sekretu. Wymieniamy
+			   ja po cichu na nowa, zamiast zostawiac goscia z czatem, ktory
+			   milczy bez wyjasnienia. */
+			return (id && /^[a-zA-Z0-9]{32}$/.test(id)) ? id : null;
 		} catch (e) { return null; }
 	}
 
@@ -83,6 +90,24 @@
 			Object.keys(pola).forEach(function (k) { body.append(k, pola[k]); });
 			return fetch(dane.ajaxUrl, { method: 'POST', body: body })
 				.then(function (odp) { return odp.json(); });
+		});
+	}
+
+	/*
+	 * Sesja bez waznego sekretu (np. po aktualizacji wtyczki albo gdy ciastko
+	 * przepadlo) konczy sie kodem `sesja`. Wtedy: nowa sesja i JEDNO ponowienie.
+	 * Jedno, nie w petli — jesli przegladarka blokuje ciastka pierwszej strony,
+	 * druga proba padnie tak samo, a gosc ma dostac uczciwy komunikat zamiast
+	 * czatu, ktory w kolko probuje i milczy.
+	 */
+	function zadanieZOdnowieniem(akcja, pola) {
+		return zadanie(akcja, pola).then(function (odp) {
+			if (odp && !odp.success && odp.data && 'sesja' === odp.data.kod) {
+				sesja = null;
+				try { window.sessionStorage.removeItem('chatl_sesja'); } catch (e) { /* jw. */ }
+				return zadanie(akcja, pola);
+			}
+			return odp;
 		});
 	}
 
@@ -154,7 +179,7 @@
 	 * gosc ma prawo zobaczyc komunikat, zamiast czekac w petli.
 	 */
 	function wyslij(akcja, pola) {
-		return zadanie(akcja, pola)
+		return zadanieZOdnowieniem(akcja, pola)
 			.catch(function () { return null; })
 			.then(function (odp) {
 				if (!toZlyNonce(odp)) { return odp; }
@@ -163,7 +188,7 @@
 						if (odp === null) { return Promise.reject(new Error('brak odpowiedzi')); }
 						return odp;
 					}
-					return zadanie(akcja, pola);
+					return zadanieZOdnowieniem(akcja, pola);
 				});
 			});
 	}

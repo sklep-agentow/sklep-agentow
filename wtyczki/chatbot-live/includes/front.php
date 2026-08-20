@@ -344,6 +344,22 @@ function chatl_ajax_pytanie() {
 	if ( '' === $pytanie || '' === $sesja ) {
 		wp_send_json_error( array( 'komunikat' => 'Puste pytanie.' ), 400 );
 	}
+
+	/*
+	 * Sekret sesji obowiązuje TAKŻE przy zapisie — inaczej ktoś, kto zdobył sam
+	 * identyfikator, mógłby podszyć się pod gościa i wstrzyknąć operatorowi
+	 * wiadomość. Kod `sesja` jest sygnałem dla widgetu: poproś o nową sesję
+	 * i spróbuj jeszcze raz (dokładnie tak, jak przy wygasłym nonce).
+	 */
+	if ( ! chatl_zapis_dozwolony( $sesja ) ) {
+		wp_send_json_error(
+			array(
+				'komunikat' => 'Sesja rozmowy wygasła — zaczynam nową i wysyłam ponownie.',
+				'kod'       => 'sesja',
+			),
+			403
+		);
+	}
 	if ( mb_strlen( $pytanie ) > CHATL_MAX_PYTANIE ) {
 		$pytanie = mb_substr( $pytanie, 0, CHATL_MAX_PYTANIE );
 	}
