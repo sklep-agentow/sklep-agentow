@@ -56,10 +56,28 @@ była w klepniętych szkicach (`boty/SZKICE-BOTOW.md`) albo wynika z ich zasad
 5. **Historia przebiegów** (raporty zapisane, nie jednorazowe) — sekcja ADMIN
    szkiców („przebiegi (historia raportów)").
 6. **Limit importu 500 wierszy** — ochrona RAM/czasu na współdzielonym hostingu.
+7. ⭐ **Przebieg na PRAWDZIWEJ skrzynce (IMAP)** — własny klient IMAP4rev1 w czystym
+   PHP (bez rozszerzenia `imap`, wyjętego z PHP 8.4 do PECL), pobranie wiadomości,
+   decyzja regułami, przeniesienie do folderów na serwerze poczty, historia
+   przebiegów, cofnięcie ostatniego przebiegu, zadanie cykliczne. **Powód:** szkice
+   odkładały to „po egzaminie", ale po podniesieniu progu na produkt do sprzedaży
+   (Dzidek 20.08) bot bez dostępu do skrzynki jest analizatorem plików, a nie
+   automatem, który komuś oszczędza czas. **Bezpiecznik:** tryb NA SUCHO jest
+   domyślny i otwiera folder przez `EXAMINE` (RFC 3501 6.3.2), czyli read-only na
+   poziomie protokołu; realne przenoszenie wymaga przełączenia trybu ORAZ osobnego
+   potwierdzenia; przy braku rozszerzeń `MOVE`/`UIDPLUS` oryginał NIE jest kasowany
+   (zwykłe `EXPUNGE` skasowałoby cudze wiadomości oznaczone \Deleted — RFC 4315 2.1).
+   **Granica jawna:** logowanie tylko `LOGIN` z hasłem aplikacji, bez OAuth2 ⇒
+   Microsoft 365 i Outlook.com nieobsługiwane; na skrzynce klasyfikują reguły, nie AI.
+8. **Eksport reguł do filtrów Gmaila i Outlooka** — reguły zostają w skrzynce
+   klienta niezależnie od wtyczki; przekład uwzględnia różnicę rozstrzygania
+   (nasz silnik bierze PIERWSZĄ pasującą regułę, Gmail stosuje wszystkie).
 
 ## Czego CELOWO nie ma (granice jawne, też ze szkiców)
 - ChatBot: bez czatu operatora na żywo, bez pamięci rozmów między wizytami.
-- Segregator: bez podpięcia żywej skrzynki (IMAP po egzaminie — opisane
-  w instrukcji jako droga rozbudowy).
+- Segregator: ⛔ **nieaktualne od 2026-08-20** — podpięcie żywej skrzynki (IMAP)
+  POWSTAŁO i jest w produkcie. Zostały węższe granice: logowanie tylko hasłem
+  aplikacji (bez OAuth ⇒ brak Microsoft 365 i Outlook.com), na skrzynce
+  klasyfikują reguły a nie AI, bez czytania załączników.
 - Oba: automatyczny stemming polskich odmian = droga rozbudowy (recenzja
   PR #27: bez cichego poszerzania wyceny).

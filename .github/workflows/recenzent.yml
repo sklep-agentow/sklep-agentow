@@ -11,24 +11,86 @@
 #    (nie zabija runa, ale wyłącza serwer MCP github_ci dla track_progress),
 #  - krok upload-artifact (if: always()) zachowuje pełny wynik CLI — treść
 #    błędu, której okrojony log nie pokazuje.
+#
+# 2026-08-20: briefing recenzenta WYPROWADZONY do .github/RECENZENT-BRIEFING.md.
+# Powód: ten plik jest wspólny dla wszystkich builderów — dopóki 60 linii
+# instrukcji siedziało w środku, każda poprawka recenzenta ruszała plik wspólny
+# i robiła konflikt u każdego, kto miał otwartą gałąź. Tu zostaje SAMA mechanika
+# (co uruchomić i z jakimi uprawnieniami), treść recenzji mieszka w briefingu.
+# Przy okazji recenzent dostał to, czego mu brakowało: pełną historię
+# (fetch-depth: 0 — dwa razy sam się skarżył, że nie może zweryfikować historii),
+# `vendor/` przed startem (żeby URUCHAMIAŁ bramki, nie czytał ich) oraz jawną
+# listę --allowedTools na te bramki i na pobieranie stron (zasada „tylko źródła
+# oficjalne" jest w briefingu).
+#
+# ⛔ WALIDACJA WORKFLOW: bez `github_token` PR zmieniający TEN plik NIE JEST
+# recenzowany. Akcja odmawia startu, gdy plik workflow różni się od wersji
+# z gałęzi domyślnej („Workflow validation failed. The workflow file must exist
+# and have identical content to the version on the repository's default branch";
+# źródło akcji: src/github/token.ts — „expected [...] on PRs with workflow
+# changes [...] your workflow will begin working once you merge your PR").
+# Krok kończy się ZIELONY, ale recenzji NIE MA — PR na ten plik wygląda wtedy
+# na sprawdzony, a nie jest. Zmierzone na PR #90: krok trwał 4 s, artefakt
+# z wyjściem CLI PUSTY (CLI w ogóle nie wystartowało).
+# Istnieje jedno wyjście: wypełnienie wejścia `github_token` wbudowanym tokenem
+# przebiegu pomija wymianę OIDC → app token, a wraz z nią tę walidację
+# (OVERRIDE_GITHUB_TOKEN wychodzi z setupGitHubToken() PRZED wymianą) — wtedy PR
+# na ten plik JEST recenzowany. Cena: znika zabezpieczenie przed PR-em, który
+# przerabia workflow pod siebie. ⚠️ NIE ROBIMY tego bez decyzji koordynatorki;
+# dopóki jej nie ma, zmiany tutaj weryfikuje się PO scaleniu, na następnym PR.
+#
+# Uwaga do --allowedTools: akcja dokleja nasze argumenty PO swoich, a ta flaga
+# jest AKUMULUJĄCA (base-action/src/parse-sdk-options.ts, ACCUMULATING_FLAGS;
+# test „should accumulate multiple --allowedTools flags from claudeArgs"
+# symuluje dokładnie nasz przypadek), więc nasza lista DOKŁADA uprawnienia,
+# a nie kasuje narzędzi akcji. Mimo to wymieniamy JAWNIE narzędzia domyślne
+# (Read/Glob/Grep/LS + mcp__github_comment__update_claude_comment +
+# mcp__github_ci__*): kosztuje nic, a uniezależnia nas od tego, czy akumulacja
+# kiedyś się zmieni — bez `Read` recenzent nie przeczyta briefingu, bez
+# mcp__github_comment nie napisze recenzji. `WebFetch` musi być wpisany
+# DOKŁADNIE tak, bez nawiasu z domeną — akcja porównuje tę nazwę dosłownie.
 name: Recenzent
 
 on:
   pull_request:
     types: [opened, synchronize, ready_for_review, reopened]
 
+# Nowy commit w tej samej gałęzi anuluje poprzednią recenzję. Tu oszczędność
+# jest największa w całym repo: jedna recenzja to ~2,5 minuty, a poprawki lecą
+# seriami — trzy pchnięcia pod rząd kosztowały trzy pełne recenzje, z których
+# dwie i tak opisywały stan już nieaktualny. `quality.yml` miał ten mechanizm
+# od początku, ten plik nie miał go wcale.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   recenzja:
-    runs-on: ubuntu-latest
+    # Własny wykonawca na naszym serwerze (20.08). Recenzent zostaje na KAŻDYM
+    # pchnięciu — to najlepsza kontrola, jaką mamy, a teraz jest za darmo.
+    runs-on: [self-hosted, linux, x64]
     permissions:
       contents: read
       pull-requests: write
       actions: read
       id-token: write
     steps:
+      # Pelna historia, nie plytki klon: recenzent dwa razy sam zglaszal, ze nie
+      # moze zweryfikowac historii (fetch-depth: 1 daje jeden commit, wiec
+      # `git log`/`git diff` wzgledem bazy PR-a nie maja z czym pracowac).
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
+
+      # PHP + vendor/ PRZED recenzja: recenzent ma URUCHAMIAC bramki (phpcs,
+      # phpstan, skrypty zgodnosci), a nie czytac je i zgadywac wynik.
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+
+      - name: Zaleznosci QA (composer)
+        run: composer install --no-interaction --no-progress
 
       - name: Recenzja PR
         id: recenzja
@@ -41,60 +103,13 @@ jobs:
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ github.event.pull_request.number }}
 
-            Jesteś recenzentem PR w projekcie „sklep-agentow": TRZY WTYCZKI
-            WordPressa (SKLEP + 2 boty: ChatBot LIVE, Segregator maila) na WP 7.0 /
-            PHP 8.4. Zaplecze CAŁE w WordPressie — własne tabele (`{$wpdb->prefix}
-            sklepag_`/`chatl_`/`segm_`), panel w wp-admin, Stripe Checkout (tryb
-            testowy) przez `wp_remote_post` BEZ SDK, maile przez `wp_mail`. To NIE
-            jest Cloudflare/Worker/Next.js (świat sprzed piwotu D16 — unieważniony,
-            gdyby PR go wspominał = błąd). Pisz PO POLSKU.
-
-            ZASADA DOWODU (najważniejsza): opis PR musi zawierać DOWÓD działania —
-            wynik uruchomienia na żywym stacku WP (wyjście komendy, `wp eval`, zapis
-            z bazy, treść maila z łapacza), nie deklarację „działa". Brak dowodu =
-            uwaga KRYTYCZNA, niezależnie od jakości kodu.
-
-            Czytaj zmiany na tle dokumentów repo: PLAN-PROJEKTU.md (sekcja 7 —
-            bezpieczeństwo; sekcja 12 — kryteria GOTOWE), ZROZUMIENIE.md i DECYZJE.md
-            (MUST NOT + decyzje D1-D24 — rzeczy ŚWIADOMIE nierobione; nie żądaj ich),
-            ORAZ **audyt/SCIAGA-EGZAMINATORA.md** — 7 klas błędów, które oceniający
-            (kolega) wytykał w poprzednich projektach. PILNUJ tych klas w każdym PR:
-              1. Uninstall NIEKOMPLETNY — zostają opcje/tabele/pliki/cron, a zwłaszcza
-                 KLUCZ API właściciela. Symetria zapis↔sprzątanie w TYM SAMYM PR.
-              2. SQL `LIKE` z `_`/`%` bez escape → dotyka CUDZYCH danych. Każdy LIKE:
-                 wartości przez `$wpdb->esc_like()`, w stałych literalny `\_`.
-              3. Dokumentacja/komentarz KŁAMIE względem kodu — każdą LICZBĘ i obietnicę
-                 z README/instrukcji/komentarza sprawdź w kodzie (kolega wytykał ×4).
-              4. Wersje/badge/„Latest" nieaktualne — wpis w CHANGELOG zgodny z kodem.
-              5. Ślady wewnętrzne w paczce klienta — notatki QA, TODO/FIXME, adresy dev.
-              6. Kod robi WIĘCEJ niż spec bez deklaracji — wskaż i każ nazwać jawnie.
-              7. Licznik/stan w `wp_options` zamiast własnej tabeli.
-
-            ZGODNOŚĆ Z OFICJALNĄ DOKUMENTACJĄ WORDPRESS (Plugin Handbook — pilnuj
-            podręcznikowych błędów):
-            - nonce (CSRF) + capability check (autoryzacja) PARĄ na KAŻDEJ mutacji admina,
-            - `$wpdb->prepare()` do każdego SQL z wejściem, zero sklejania,
-            - sanitize early (konkretne klucze + `wp_unslash`, nie całe $_POST),
-              escape late (`esc_html/attr/url`),
-            - `dbDelta` dla tabel (nowa tabela = 3 miejsca: dbDelta + uninstall +
-              ścieżka upgrade schematu),
-            - `permission_callback` jawny przy `register_rest_route`,
-            - assety ładowane TYLKO tam, gdzie są potrzebne (nie globalnie),
-            - wywołania zewnętrzne: suma prób < limit PHP (timeout + retry), liczniki
-              limitów zużywane PO sukcesie.
-
-            Na co patrzysz poza tym (sam decydujesz o reszcie):
-            - poprawność: przypadki brzegowe, wyścigi (webhook 2×, wyścig silników),
-              padnięcie w połowie (RESUME/CAS), atomowość liczników,
-            - bezpieczeństwo: wszystko, co dotyka pieniędzy, plików i logowania admina;
-              cena WYŁĄCZNIE z bazy; podpis webhooka stałoczasowo na surowym body,
-            - prostota: czy nie budujemy więcej, niż wymaga zakres (MUST NOT!),
-            - spójność z planem: implementacja może spełniać dokument, a łamać skutek —
-              wskazuj takie miejsca.
-
-            Uwagi konkretne, każda z wagą (KRYTYCZNA/WAŻNA/DROBNA), inline tam, gdzie
-            dotyczą konkretnych linii. Nie chwal bez powodu. Po przeglądzie: krótkie
-            podsumowanie z listą „czego NIE sprawdziłem".
+            Przeczytaj plik `.github/RECENZENT-BRIEFING.md` z tego repozytorium
+            (jest w checkoucie) i wykonaj recenzję TEGO PR-a dokładnie według
+            niego. Briefing jest jedynym źródłem zasad recenzji — nie zgaduj
+            i nie zastępuj go własnymi przyzwyczajeniami. Jeśli pliku nie ma,
+            powiedz to wprost i nie recenzuj na wyczucie.
+          claude_args: |
+            --allowedTools "Read,Glob,Grep,LS,mcp__github_comment__update_claude_comment,mcp__github_ci__get_ci_status,mcp__github_ci__get_workflow_run_details,mcp__github_ci__download_job_log,Bash(composer install),Bash(composer install --no-interaction --no-progress),Bash(vendor/bin/phpcs),Bash(vendor/bin/phpcs:*),Bash(vendor/bin/phpstan:*),Bash(php -l:*),Bash(find:*),Bash(bash testy/dokumentacja-zgodnosc.sh),Bash(bash testy/dokumentacja-zgodnosc-segregator.sh),Bash(bash narzedzia-qa/sprawdz-manifest.sh),Bash(git log:*),Bash(git diff:*),Bash(git show:*),Bash(git rev-list:*),WebFetch"
 
       # Sonda błędu: pełny zapis wykonania CLI (stream NDJSON) — jedyne miejsce,
       # gdzie ląduje treść błędu przy „niemym zgonie" (log pokazuje tylko is_error).
@@ -105,8 +120,12 @@ jobs:
           name: claude-execution-output
           # Dwie ścieżki: log naszego runa mówi RUNNER_TEMP, docs base-action /tmp —
           # bierzemy obie, upload-artifact wgra tę, która istnieje.
+          # ⚠️ `runner.temp` zamiast wpisanego na sztywno /home/runner/work/_temp:
+          # na własnym wykonawcy katalog roboczy leży gdzie indziej (zależnie od
+          # miejsca instalacji runnera), więc sztywna ścieżka po cichu przestałaby
+          # łapać artefakt — a to jedyna sonda przy „niemym zgonie".
           path: |
-            /home/runner/work/_temp/claude-execution-output.json
+            ${{ runner.temp }}/claude-execution-output.json
             /tmp/claude-execution-output.json
           if-no-files-found: warn
           retention-days: 7
