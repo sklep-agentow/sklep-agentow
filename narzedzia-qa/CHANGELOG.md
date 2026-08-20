@@ -17,6 +17,50 @@ pory lądują tutaj.
 
 ### Dodane
 
+- **`dowod-z-paczki.sh` 1.0.0 — powtarzalny dowód Z PACZKI, nie z repozytorium.**
+  Kupujący nie dostaje repozytorium, dostaje ZIP — więc wszystko, co sprawdzamy na
+  drzewie roboczym, sprawdza **inny artefakt niż sprzedawany**. Skrypt bierze paczkę,
+  stawia **czystą instalację WordPressa z włączonym `WP_DEBUG`** i przechodzi pełne
+  życie wtyczki, odpowiadając kodem wyjścia na cztery pytania:
+
+  1. czy wgranie **z zipa** i aktywacja przechodzą bez notice, warning, deprecated
+     i fatal (log `WP_DEBUG_LOG`, nie „wygląda czysto"),
+  2. czy **silnik regułowy odpowiada, gdy klucza API nie ma wcale**,
+  3. czy po deinstalacji z pełnym czyszczeniem **różnica odcisków bazy jest PUSTA** —
+     i różnica jest **pokazywana**, nie streszczana,
+  4. czy **sekrety właściciela znikają ZAWSZE**, także gdy właściciel nie zaznaczył
+     „usuń wszystkie dane".
+
+  Działa dla **obu botów** (tablica z sekretami, opcją czyszczenia i wywołaniem
+  silnika wpisana w skrypcie, nie zgadywana), bierze paczkę jako argument i kończy
+  się **kodem 1**, gdy cokolwiek z tego nie wyjdzie.
+
+  ⛔ **Nie dotyka stosu warsztatowego.** Stawia własną instalację (kontener
+  `probny_wp`, baza `wp_probny`) i tylko ją kasuje — wgrywanie i kasowanie wtyczek
+  na wspólnym stosie zniszczyłoby cudzą robotę w toku. Odczyty idą przez
+  `stos.sh --stos probny`; drugiego dostępu do stosu tu nie ma.
+
+  Odcisk pomija wpisy, które WordPress dopisuje w tle niezależnie od wtyczki —
+  **lista pominięć jest wypisywana przy każdym przebiegu**, żeby „pusta różnica"
+  nie stała się pustym słowem.
+
+- **`dowod-z-paczki-proba-kontrolna.sh` — cztery mutanty i kontrola odwrotna.**
+  Psuje w kopii paczki po jednej rzeczy naraz, dokładnie tej, której dany dowód
+  pilnuje: uninstall przestaje kasować klucz API, wtyczka rzuca notice przy starcie,
+  pełne czyszczenie zostawia opcję w bazie, silnik regułowy milczy bez klucza.
+  Każdy przypadek sprawdza **kod wyjścia ORAZ czy dowód nazwał przyczynę** — dowód
+  padający na wszystko z tym samym komunikatem jest bezużyteczny przy szukaniu wady.
+  Paczka w repo nie jest dotykana ani razu.
+
+### Zmienione
+
+- **`stos.sh`** — wybór stosu z **zamkniętej listy dwóch pozycji**
+  (`--stos warsztat|probny`). To nadal nie jest wybór kontenera przez dzwoniącego:
+  kontenery i adresy są wpisane w skrypcie, a nazwa spoza listy to odmowa z kodem 2.
+  Potrzebne, żeby dowód z paczki czytał swoją czystą instalację **tym samym oknem**,
+  zamiast dorabiać drugi dostęp do WordPressa.
+
+
 - **`stos.sh` 1.0.0 — czysto odczytowe okno recenzenta na żywy stos.**
   Pomiar wyjściowy: w recenzjach z 20.08 padło **91** zdań „czego nie
   sprawdziłem", z czego **51** brzmiało „nie mam uruchomionego WordPressa",
