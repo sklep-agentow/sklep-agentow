@@ -2,7 +2,19 @@
    Paleta 1:1 ze sklepu/strony-gospodarza (front.css .sklepag-wyspa, 19.08):
    tusz #08090b · węgiel #101116 · papier #f5f5f5 · pył #8f929c · limonka #bfff38
    · linia rgba(245,245,245,0.08) · hover = pierścień rgba(191,255,56,0.18).
-   Dymki jak mockup strony produktu: bot = limonka na tuszu, gość = jasny na ciemnym. */
+   Dymki jak mockup strony produktu: bot = limonka na tuszu, gość = jasny na ciemnym.
+
+   KOLORY KONFIGUROWALNE żyją jako zmienne CSS na .chatl-korzen — NIE w :root,
+   żeby wtyczka nie wstrzykiwała nazw do globalnej przestrzeni motywu klienta.
+   Wartości poniżej to DOMYŚLNE (dokładnie ta sama paleta co przed 1.4.0), więc
+   arkusz sam z siebie wygląda identycznie jak wcześniej. Ustawienia właściciela
+   nadpisują tylko te zmienne, które naprawdę zmienił (chatl_style_wygladu()
+   w includes/wyglad.php) — cały arkusz NIE jest generowany od nowa.
+
+   Wnętrze okna (węgiel #101116, linie, tekst dymka gościa) zostaje na sztywno:
+   konfigurowalny jest kolor główny (bąbelek, akcenty) i kolor paska nagłówka
+   wraz z tekstem na nich — czyli to, co widać z zewnątrz i co gryzie się
+   z paletą strony klienta. */
 
 .chatl-korzen {
 	position: fixed;
@@ -12,6 +24,21 @@
 	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
 	font-size: 14px;
 	line-height: 1.4;
+
+	--chatl-glowny: #bfff38;
+	--chatl-glowny-tekst: #08090b;
+	--chatl-naglowek: #08090b;
+	--chatl-naglowek-tekst: #f5f5f5;
+	--chatl-pierscien: rgba(191, 255, 56, 0.18);
+}
+
+/* Widget przy lewej krawędzi — klasę dokłada widget.js z ustawienia „pozycja".
+   Osobna klasa, a nie zmienna: nazwy własności (right/left) nie da się podać
+   zmienną CSS, a podmiana obu naraz musi być atomowa, żeby widget nie wylądował
+   przez chwilę po obu stronach. */
+.chatl-korzen.chatl-lewo {
+	right: auto;
+	left: 20px;
 }
 
 .chatl-babelek {
@@ -19,10 +46,10 @@
 	height: 56px;
 	/* Ciemna obwódka: na ciemnym motywie gospodarza znika (tło = tusz), na jasnej
 	   stronie daje separację od tła (WCAG 1.4.11 — limonka na białym to ~1.2:1). */
-	border: 2px solid #08090b;
+	border: 2px solid var(--chatl-glowny-tekst);
 	border-radius: 50%;
-	background: #bfff38;
-	color: #08090b;
+	background: var(--chatl-glowny);
+	color: var(--chatl-glowny-tekst);
 	font-size: 24px;
 	cursor: pointer;
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
@@ -31,7 +58,7 @@
 }
 
 .chatl-babelek:hover {
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45), 0 0 0 4px rgba(191, 255, 56, 0.18);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45), 0 0 0 4px var(--chatl-pierscien);
 }
 
 .chatl-okno {
@@ -58,8 +85,8 @@
 	align-items: center;
 	justify-content: space-between;
 	padding: 10px 14px;
-	background: #08090b;
-	color: #f5f5f5;
+	background: var(--chatl-naglowek);
+	color: var(--chatl-naglowek-tekst);
 	border-bottom: 1px solid rgba(245, 245, 245, 0.08);
 }
 
@@ -70,7 +97,7 @@
 .chatl-zamknij {
 	border: 0;
 	background: none;
-	color: #f5f5f5;
+	color: var(--chatl-naglowek-tekst);
 	font-size: 20px;
 	cursor: pointer;
 	padding: 0 4px;
@@ -96,8 +123,8 @@
 	max-width: 85%;
 	padding: 8px 12px;
 	border-radius: 12px;
-	background: #bfff38;
-	color: #08090b;
+	background: var(--chatl-glowny);
+	color: var(--chatl-glowny-tekst);
 	white-space: pre-wrap;
 	word-break: break-word;
 }
@@ -115,9 +142,9 @@
 }
 
 .chatl-przycisk-kontakt {
-	border: 1px solid #bfff38;
+	border: 1px solid var(--chatl-glowny);
 	background: none;
-	color: #bfff38;
+	color: var(--chatl-glowny);
 	border-radius: 16px;
 	padding: 4px 14px;
 	cursor: pointer;
@@ -125,13 +152,13 @@
 }
 
 .chatl-przycisk-kontakt:hover {
-	box-shadow: 0 0 0 4px rgba(191, 255, 56, 0.18);
+	box-shadow: 0 0 0 4px var(--chatl-pierscien);
 }
 
 .chatl-formularz {
 	display: none;
 	padding: 10px 12px;
-	background: #08090b;
+	background: var(--chatl-naglowek);
 	border-top: 1px solid rgba(245, 245, 245, 0.08);
 }
 
@@ -147,7 +174,7 @@
 }
 .chatl-form-tytul {
 	font-size: 13px;
-	color: #f5f5f5;
+	color: var(--chatl-naglowek-tekst);
 	flex: 1 1 auto;
 }
 .chatl-form-zamknij {
@@ -157,12 +184,13 @@
 	padding: 0 2px;
 	font-size: 18px;
 	line-height: 1;
-	color: rgba(245, 245, 245, 0.62);
+	color: var(--chatl-naglowek-tekst);
+	opacity: 0.62;
 	cursor: pointer;
 }
 .chatl-form-zamknij:hover,
 .chatl-form-zamknij:focus-visible {
-	color: #f5f5f5;
+	color: var(--chatl-naglowek-tekst);
 }
 
 .chatl-formularz .chatl-pole {
@@ -206,8 +234,8 @@
 .chatl-wyslij-zgloszenie {
 	width: 100%;
 	border: 0;
-	background: #bfff38;
-	color: #08090b;
+	background: var(--chatl-glowny);
+	color: var(--chatl-glowny-tekst);
 	border-radius: 6px;
 	padding: 7px;
 	cursor: pointer;
@@ -215,7 +243,7 @@
 }
 
 .chatl-wyslij-zgloszenie:hover {
-	box-shadow: 0 0 0 4px rgba(191, 255, 56, 0.18);
+	box-shadow: 0 0 0 4px var(--chatl-pierscien);
 }
 
 .chatl-wyslij-zgloszenie:disabled {
@@ -225,14 +253,14 @@
 .chatl-form-pytania {
 	display: flex;
 	border-top: 1px solid rgba(245, 245, 245, 0.08);
-	background: #08090b;
+	background: var(--chatl-naglowek);
 }
 
 .chatl-pole-pytania {
 	flex: 1;
 	border: 0;
 	background: none;
-	color: #f5f5f5;
+	color: var(--chatl-naglowek-tekst);
 	padding: 10px 12px;
 	font: inherit;
 	min-width: 0;
@@ -248,14 +276,14 @@
 .chatl-korzen button:focus-visible,
 .chatl-korzen input:focus-visible,
 .chatl-korzen textarea:focus-visible {
-	outline: 2px solid #bfff38;
+	outline: 2px solid var(--chatl-glowny);
 	outline-offset: -2px;
 }
 
 .chatl-wyslij-pytanie {
 	border: 0;
 	background: none;
-	color: #bfff38;
+	color: var(--chatl-glowny);
 	font-size: 18px;
 	padding: 0 14px;
 	cursor: pointer;

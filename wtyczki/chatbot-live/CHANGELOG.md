@@ -1,0 +1,203 @@
+# Changelog — ChatBot LIVE
+
+Wszystkie istotne zmiany w tej wtyczce. Format według
+[Keep a Changelog](https://keepachangelog.com/pl/1.1.0/), numeracja według
+[Semantic Versioning](https://semver.org/lang/pl/).
+
+Kolumna „schemat bazy" jest podana przy każdej wersji, która go zmieniała —
+migracja odpala się sama przy pierwszym wejściu do panelu po aktualizacji
+(`chatl_sprawdz_schemat()`), bez deaktywacji wtyczki.
+
+---
+
+## [1.4.0] — 2026-08-20
+
+### Dodane
+- **Konfigurowalny wygląd widgetu** (Ustawienia → Wygląd widgetu): kolor główny
+  (bąbelek, dymki bota, przyciski), kolor paska nagłówka, kolor tekstu na nich
+  oraz róg strony, w którym stoi widget — prawy albo lewy dolny.
+- **Podgląd na żywo** w panelu: kolory zmieniają się od razu przy wyborze, przed
+  zapisem. Podgląd używa tych samych zmiennych CSS co widget na stronie, więc
+  nie może pokazać czegoś innego, niż zobaczy gość.
+- **Kontrola kontrastu WCAG 2.1 (AA, próg 4.5:1)** przy wybranych kolorach:
+  panel podaje policzony współczynnik i mówi wprost, czy zestaw spełnia próg.
+  Domyślnie włączone „dobierz automatycznie" — wtyczka sama wybiera ciemny albo
+  jasny tekst, ten z lepszym kontrastem do wybranego tła.
+- **Ekran powitalny po aktywacji** — podziękowanie, trzy pierwsze kroki
+  i odnośniki do ustawień, bazy Q&A oraz statystyk. Pokazywany raz, po
+  zamknięciu nie wraca; decyzja zapamiętywana **osobno dla każdego konta
+  administratora**, bo na jednej stronie bywa ich kilku.
+- **`CHANGELOG.md` i `readme.txt`** w paczce — historia zmian oraz opis
+  w standardzie WordPressa (nagłówek, Description, Installation, FAQ, Changelog).
+
+### Zmienione
+- Kolory widgetu przeniesione ze sztywnych wartości w `assets/widget.css` na
+  **zmienne CSS** deklarowane na `.chatl-korzen`. Wartości domyślne są takie
+  same jak przed tą wersją, więc **aktualizacja nie zmienia nikomu wyglądu**.
+  Ustawienia właściciela dokładają tylko te zmienne, które naprawdę zmienił —
+  gdy wygląd jest domyślny, strona nie dostaje ani jednego dodatkowego bajtu,
+  a statyczny arkusz dalej siedzi w pamięci podręcznej przeglądarki.
+
+### Usunięte
+- Nic.
+
+---
+
+## [1.3.0] — 2026-08-20 · schemat bazy 3 → 4
+
+### Dodane
+- **Statystyki i luki** — nowa strona panelu: ile pytań przyszło w wybranym
+  okresie (7 / 30 / 90 dni albo własne daty), na ile bot odpowiedział i jaki to
+  procent, ile rozmów skończyło się zebraniem kontaktu, rozdział odpowiedzi
+  z reguł i z trybu AI, ruch dzień po dniu.
+- **Raport luk** — lista najczęstszych pytań, na które bot NIE znał odpowiedzi,
+  pogrupowana w tematy (goście pytają o to samo na wiele sposobów). Przy każdym
+  temacie przycisk **„Dopisz odpowiedź"**, który otwiera dodawanie nowej pary
+  Q&A z już wpisanym pytaniem i podpowiedzianymi słowami kluczowymi.
+- Kolumna `trafiono` w tabeli `wp_chatl_rozmowy` i indeks `KEY luki` — to z nich
+  liczą się statystyki i raport luk.
+
+### Zmienione
+- `chatl_zapisz_wymiane()` zwraca teraz identyfikator zapisanego wiersza
+  (wcześniej wartość logiczną), bo znacznik trafienia dopisuje się do wiersza
+  pytania po ustaleniu wyniku dopasowania.
+
+### Uwaga przy aktualizacji
+- Rozmowy zapisane **przed** tą wersją nie mają informacji, czy bot trafił —
+  wtyczka jej wtedy nie zbierała i **nie zgaduje jej wstecz**. Takie wiersze są
+  na stronie statystyk policzone osobno i nie wchodzą do procentu skuteczności.
+  Rozmowy od aktualizacji liczą się normalnie.
+
+---
+
+## [1.2.5] — 2026-08-20
+
+### Dodane
+- `DOKUMENTACJA-TECHNICZNA.md` — schemat wszystkich tabel kolumna po kolumnie,
+  opcje w `wp_options` z autoloadem, wszystkie stałe, cykl życia (aktywacja,
+  migracja schematu, cron retencji, obie ścieżki deinstalacji), punkty wejścia,
+  filtry do rozbudowy, bezpieczeństwo i jawna sekcja „Znane granice".
+- `DIAGRAM-PRZEPLYWU.svg` — przepływ zapytania gościa, bez odwołań zewnętrznych.
+- `LICENSE` — pełny tekst GNU GPL v2.
+
+### Zmienione
+- Nagłówek wtyczki i opisy przepisane pod sprzedaż zamiast pod prezentację.
+
+> Wersja 1.2.4 nosiła numer tylko w gałęzi roboczej i **nigdy nie została
+> wydana** — zmiany z niej weszły do 1.2.5.
+
+---
+
+## [1.2.3] — 2026-08-20
+
+### Zmienione
+- Reguła dopasowania ma **jedno źródło**: `chatl_trafione_warianty()`
+  i `chatl_punktacja()` mieszkają w `includes/silnik.php`, a panel testowy
+  pokazuje dokładnie to, co policzył silnik, zamiast liczyć drugi raz.
+  Wcześniej panel miał własną kopię algorytmu i mógł rozjechać się z botem.
+
+### Dodane
+- Test bota w panelu pokazuje, **która para** zadziałała (numer, pytanie
+  wzorcowe, dopasowane warianty) i link do jej edycji.
+
+---
+
+## [1.2.2] — 2026-08-20
+
+### Naprawione
+- **Cichy ubytek danych klienta**: zapisy do bazy szły bez sprawdzenia wyniku,
+  więc gość mógł zobaczyć „Dziękujemy" przy nieudanym zapisie. Każdy zapis jest
+  teraz sprawdzany; przy porażce gość dostaje komunikat błędu, a nie
+  podziękowanie, i powstaje wpis w logu WordPressa.
+- Formularz kontaktu dało się zamknąć wyłącznie przez udane wysłanie — doszedł
+  przycisk zamknięcia, obsługa klawisza Escape i reset stanu przy zamykaniu okna.
+- Właściciel nie wiedział, gdy `wp_mail()` odrzuciło powiadomienie — panel
+  pokazuje teraz ostrzeżenie, a zgłoszenie i tak jest zapisane.
+
+### Dodane
+- **Zgoda na przetwarzanie danych** w formularzu kontaktu: wymagany checkbox,
+  informacja co zbieramy, po co i na jak długo, opcjonalny link do polityki
+  prywatności (nowe pole w ustawieniach). Zgoda sprawdzana **po stronie
+  serwera** — bez niej zgłoszenie nie trafia do bazy.
+- Osobny, twardszy limit wywołań AI: 20 na dobę z jednego adresu IP, żeby jeden
+  gość nie wypalił dobowego budżetu wszystkich.
+- Ręczny eksport zgłoszeń i historii rozmów do CSV (z BOM UTF-8, czytany
+  poprawnie przez Excel).
+
+---
+
+## [1.2.1] — 2026-08-19
+
+### Zmienione
+- Podniesiona wersja w nagłówku i w stałej wersjonującej pliki `.css`/`.js` —
+  bez tego przeglądarki podawały gościom stary widget z pamięci podręcznej.
+- Widget przejął paletę kolorów strony, na której stoi.
+
+### Naprawione
+- Klucz API właściciela jest kasowany przy odinstalowaniu **zawsze**, także gdy
+  przełącznik „usuń wszystkie dane" jest wyłączony — poświadczenie to nie są
+  dane użytkowe.
+
+---
+
+## [1.2.0] — 2026-08-18 · schemat bazy 2 → 3
+
+### Naprawione
+- **Limit zapytań przestał przeciekać.** Licznik na transiencie nie był atomowy:
+  równoległe żądania gubiły inkrementacje i przy progu 10 przechodziło 15 z 25
+  żądań; w trybie AI gość mógł tak przepalać klucz właściciela. Licznik żyje
+  teraz w tabeli `wp_chatl_rate_limit` z atomowym `INSERT … ON DUPLICATE KEY
+  UPDATE` — przy równoległych żądaniach przechodzi dokładnie próg.
+  Adres IP nie leży w bazie jawnie, tylko jako skrót.
+
+### Zmienione
+- Domyślny model AI: szybszy i tańszy `claude-haiku-4-5`.
+- Deinstalacja przepisana według Plugin Handbook (`esc_like()` + `prepare()`).
+
+### Dodane
+- Instrukcja użytkownika po polsku (`INSTRUKCJA.md`) w paczce.
+
+---
+
+## [1.1.0] — 2026-08-18 · schemat bazy 1 → 2
+
+### Dodane
+- **Tryb AI (hybryda).** Z kluczem API właściciela odpowiedzi generuje model
+  na podstawie opisu firmy i aktywnej bazy Q&A, z **zakazem zgadywania**: gdy
+  model nie jest pewny, bot uczciwie mówi „nie wiem" i zbiera kontakt.
+- **Stop-loss**: dobowy limit wywołań z licznikiem w osobnej tabeli, zużywany
+  dopiero po udanym wywołaniu. Brak klucza, wyczerpany limit, błąd API albo
+  przekroczony czas → bot płynnie wraca do trybu regułowego.
+- Kolumna `silnik` w historii rozmów — po fakcie widać, czy odpowiedział model,
+  czy reguły.
+
+---
+
+## [1.0.1] — 2026-08-18
+
+### Dodane
+- Limit 10 wiadomości na minutę z jednego adresu IP, wspólny dla pytań
+  i zgłoszeń — ochrona przed zalewaniem bazy i mail-bombingiem właściciela.
+- Dostępność (WCAG): etykiety `aria-label` przy polach, widoczny znacznik
+  fokusu dla obsługi z klawiatury, komunikat błędu serwera w widgecie.
+
+### Naprawione
+- Retencja działa także wtedy, gdy WP-cron nie odpali z braku ruchu — wejście
+  na stronę „Historia rozmów" również czyści wpisy starsze niż 90 dni.
+
+---
+
+## [1.0.0] — 2026-08-18 · schemat bazy 1
+
+### Dodane
+- Pierwsze wydanie. Widget czatu (bąbelek + okno) ze **stałym** przyciskiem
+  „zostaw wiadomość", silnik regułowy dopasowujący pytanie po wariantach słów
+  kluczowych, tekst awaryjny i formularz kontaktu przy braku dopasowania.
+- Panel: baza Q&A (dodawanie, edycja, usuwanie, włącznik pojedynczej pary),
+  zgłoszenia z czatu, historia rozmów, ustawienia. Każda zmiana zabezpieczona
+  nonce i uprawnieniem administratora.
+- Seed 10 gotowych par pytanie-odpowiedź typowej polskiej firmy usługowej —
+  bot odpowiada od pierwszej minuty.
+- Powiadomienie mailem o nowym zgłoszeniu, retencja historii rozmów 90 dni
+  (codzienny cron), deinstalacja w dwóch wariantach: dane zostają albo pełne
+  czyszczenie.

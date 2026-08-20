@@ -239,6 +239,9 @@
 
 	function start() {
 		var korzen = el('div', 'chatl-korzen');
+		/* Pozycja z ustawien wlasciciela. Klasa idzie na korzen ZANIM element
+		   trafi do dokumentu, wiec widget nigdy nie mignie po zlej stronie. */
+		if (chatlDane.pozycja === 'lewo') { korzen.className += ' chatl-lewo'; }
 		korzen.appendChild(zbudujOkno());
 
 		var babelek = el('button', 'chatl-babelek', '💬');
