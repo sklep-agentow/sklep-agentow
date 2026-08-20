@@ -83,6 +83,19 @@ W recenzji **podaj kod wyjścia** każdej bramki, którą uruchomiłeś (np.
 uruchomienia jest warte tyle, co „działa" w opisie PR-a — czyli nic. Jeśli
 bramki NIE udało się uruchomić, napisz wprost, której i dlaczego.
 
+MASZ ŻYWY STOS — KORZYSTAJ Z NIEGO ZAMIAST PISAĆ, ŻE NIE MASZ DOSTĘPU.
+Warsztatowy WordPress, jego baza i łapacz maili stoją na tej samej maszynie
+co Ty. Sięgasz do nich JEDNYM narzędziem: `bash narzedzia-qa/stos.sh` — lista
+operacji pod `stos.sh pomoc` (m.in. `stan`, `strona /sciezka`, `opcja <nazwa>`,
+`wtyczki`, `tabele`, `wiersze <tabela>`, `ostatni-mail`). Zgodność paczki
+z repozytorium sprawdza `bash narzedzia-qa/paczka-zgodnosc.sh <wtyczka>`.
+Zanim napiszesz w „czego NIE sprawdziłem" zdanie o braku WordPressa, paczki,
+renderowania strony czy zawartości bazy — **najpierw zapytaj o to stos i podaj
+odpowiedź**. To zdanie wolno napisać tylko wtedy, gdy `stos.sh` sam powiedział,
+że nie odpowiada (kończy się wtedy kodem 2) — wtedy zacytuj jego komunikat.
+`stos.sh` jest wyłącznie do odczytu i ma zamkniętą listę operacji: nie próbuj
+przez niego niczego zmieniać ani przemycać własnych poleceń, bo odmówi.
+
 ŹRÓDŁA — ZASADA TWARDA. Wolno Ci pobierać strony z sieci, ale cytować możesz
 **wyłącznie źródła oficjalne**:
 
