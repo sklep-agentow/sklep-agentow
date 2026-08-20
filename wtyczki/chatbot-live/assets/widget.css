@@ -340,3 +340,52 @@
 	padding: 0 14px;
 	cursor: pointer;
 }
+
+/*
+ * PRZEJECIE ROZMOWY PRZEZ CZLOWIEKA
+ *
+ * Pasek rozmowcy jest widoczny CALY CZAS, nie tylko w chwili zmiany: gosc, ktory
+ * przewinal rozmowe albo wrocil po kilku minutach, ma jednym spojrzeniem wiedziec,
+ * komu pisze. Kolor akcentu bierzemy z ustawien wlasciciela (--chatl-glowny),
+ * wiec pasek nie wypada z jego palety.
+ */
+.chatl-pasek-rozmowcy {
+	padding: 6px 12px;
+	background: #101116;
+	border-bottom: 1px solid rgba(245, 245, 245, 0.08);
+	color: rgba(245, 245, 245, 0.65);
+	font-size: 12px;
+	text-align: center;
+}
+
+.chatl-pasek-rozmowcy.chatl-pasek-czlowiek {
+	background: var(--chatl-glowny);
+	color: var(--chatl-tekst-na-glownym, #08090b);
+	font-weight: 600;
+	/* Nie polegamy na SAMYM kolorze: informacja jest w tresci paska, a kontrast
+	   tylko ja wzmacnia — inaczej osoba nierozrozniajaca barw traci komunikat. */
+	color: var(--chatl-tekst-na-glownym, #08090b);
+}
+
+/* Wiadomosc systemowa: to nie jest glos bota ani czlowieka, tylko informacja
+   o tym, co sie stalo z rozmowa. Ma wygladac inaczej niz oba dymki. */
+.chatl-wiadomosc.chatl-system {
+	justify-content: center;
+}
+
+.chatl-system .chatl-dymek {
+	max-width: 92%;
+	background: none;
+	border: 1px dashed rgba(245, 245, 245, 0.25);
+	color: rgba(245, 245, 245, 0.75);
+	font-size: 12px;
+	text-align: center;
+}
+
+/* Wiadomosc operatora — wizualnie po stronie bota, ale z wlasnym akcentem,
+   zeby nie dalo sie jej pomylic z odpowiedzia automatu. */
+.chatl-operator .chatl-dymek {
+	background: rgba(245, 245, 245, 0.08);
+	color: #f5f5f5;
+	border-left: 3px solid var(--chatl-glowny);
+}
