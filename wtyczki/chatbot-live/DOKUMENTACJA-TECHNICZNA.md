@@ -622,6 +622,16 @@ modelu, a te bywają wycofywane — wtedy **każda sprzedana kopia traci tryb AI
 naraz**, a jedyną drogą naprawy jest ręczna wysyłka zipa mailem, bo nie mamy
 serwera aktualizacji.
 
+Zastrzeżenie (uwaga recenzenta do PR #81): **alias bez daty to konwencja dostawcy,
+nie gwarancja** — nie każdy model musi go mieć, a wtyczka nie ma jak sprawdzić
+listy identyfikatorów w locie. Dlatego pole „własny model" przyjmuje dowolną
+nazwę, a panel i FAQ mówią: użyj nazwy bez daty **jeśli dostawca taką podaje**.
+Siatką bezpieczeństwa jest §14: nieznana nazwa modelu daje HTTP 404, który od
+1.4.2 stawia znacznik i zapala w panelu czerwony pasek z komunikatem wprost
+(„API nie zna tego modelu"). Zły identyfikator jest więc **widoczny od pierwszego
+pytania gościa**, a nie cichy — to różnica między usterką do poprawienia w minutę
+a awarią, której właściciel nie zauważa miesiącami.
+
 Model ustala `chatl_ai_model()` w trzech poziomach, bo mają trzech różnych adresatów:
 
 | Poziom | Dla kogo | Uwaga |

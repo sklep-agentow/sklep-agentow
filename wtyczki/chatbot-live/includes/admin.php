@@ -704,8 +704,10 @@ function chatl_strona_ustawienia() {
 						</p>
 						<p class="description">
 							Teraz w użyciu: <code><?php echo esc_html( $biezacy ); ?></code>.
-							<strong>Wpisuj identyfikator BEZ daty</strong> (np. <code>claude-haiku-4-5</code>, nie <code>claude-haiku-4-5-20251001</code>) —
-							nazwy z datą wskazują konkretną migawkę modelu, a te bywają wycofywane i wtedy tryb AI przestaje działać.<br>
+							<strong>Jeśli dostawca udostępnia identyfikator bez daty — użyj właśnie takiego</strong>
+							(np. <code>claude-haiku-4-5</code> zamiast <code>claude-haiku-4-5-20251001</code>): nazwy z datą wskazują konkretną
+							migawkę modelu, a te bywają wycofywane i wtedy tryb AI przestaje działać. Nie każdy model ma taki skrócony
+							identyfikator — jeżeli dostawca podaje wyłącznie nazwę z datą, wpisz ją i pilnuj komunikatów o wycofaniu.<br>
 							Aktualną listę modeli i cennik sprawdzisz u dostawcy: <a href="https://docs.anthropic.com/en/docs/about-claude/models" target="_blank" rel="noopener">dokumentacja modeli Anthropic</a>.
 							Kolejność na liście to „taniej ↔ mocniej"; do odpowiadania z bazy Q&amp;A najtańszy model zwykle w zupełności wystarcza.
 						</p>

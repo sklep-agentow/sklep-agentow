@@ -167,9 +167,12 @@ znaków). Dopasowanie szuka fragmentów tekstu — `płatnoś` nie złapie „pl
 Tak — w **Ustawieniach → Tryb AI** jest pole **Model**. Domyślny (najtańszy)
 w zupełności wystarcza do odpowiadania z bazy Q&A; mocniejsze kosztują więcej.
 Aktualną listę modeli i cennik sprawdzisz u dostawcy, w dokumentacji Anthropic —
-odnośnik jest przy tym polu. **Wpisuj nazwę bez daty** (`claude-haiku-4-5`,
-a nie `claude-haiku-4-5-20251001`): nazwy z datą wskazują konkretną wersję
-modelu, a te bywają wycofywane i wtedy tryb AI przestaje działać.
+odnośnik jest przy tym polu. **Jeśli dostawca podaje nazwę bez daty — wpisz
+właśnie taką** (`claude-haiku-4-5` zamiast `claude-haiku-4-5-20251001`): nazwy
+z datą wskazują konkretną wersję modelu, a te bywają wycofywane i wtedy tryb AI
+przestaje działać. Nie każdy model ma skróconą nazwę — jeżeli dostawca podaje
+wyłącznie wersję z datą, wpisz ją. Gdyby model przestał istnieć, panel powie
+o tym wprost („API nie zna tego modelu"), zamiast po cichu zjeżdżać do reguł.
 
 **Skąd mam wiedzieć, czego dopisać do bazy?**
 Nie zgaduj — wejdź w **Statystyki i luki**. Tabela „Czego botowi brakuje"
