@@ -85,6 +85,16 @@ może być nagłówkiem. Gdy wiersz danych ma mniej niż 3 kolumny, cały import
 odrzucany z komunikatem (próbka zostaje nietknięta). Limit: 500 wierszy
 (nadmiar jest pomijany i raportowany).
 
+**A co z polskimi znakami (ą, ć, ę, ł)?**
+Kodowanie jest wykrywane automatycznie. Plik w **UTF-8** wchodzi jak leci;
+plik w **Windows-1250** (tak zapisuje polski Excel przez „Zapisz jako CSV")
+jest przekodowywany — po imporcie komunikat mówi, jakie kodowanie wykryto,
+żeby dało się to sprawdzić. Nie czytamy **UTF-16** („Tekst Unicode" w Excelu)
+— taki plik jest odrzucany z komunikatem, próbka zostaje nietknięta; zapisz go
+wtedy jako „CSV UTF-8". Przekodowanie wymaga rozszerzenia PHP `iconv`
+(standard na hostingach); gdyby go nie było, dostaniesz komunikat zamiast
+cichych krzaków.
+
 **Skąd wziąć CSV z mojej skrzynki?**
 Większość klientów poczty ma eksport (np. Thunderbird z dodatkiem
 ImportExportTools). Wystarczą trzy kolumny — bez załączników.

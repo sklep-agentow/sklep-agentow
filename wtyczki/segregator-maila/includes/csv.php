@@ -12,6 +12,72 @@ if ( ! defined( 'ABSPATH' ) ) {
 const SEGM_IMPORT_MAX_WIERSZY = 500;
 const SEGM_MAX_POLE           = 2000;
 
+/* Ile bajtów początku pliku wystarczy, żeby rozpoznać kodowanie. */
+const SEGM_PROBKA_KODOWANIA = 65536;
+
+/**
+ * Rozpoznanie kodowania pliku CSV.
+ *
+ * Dotąd zdejmowany był tylko znacznik BOM, a reszta kodu zakładała UTF-8 —
+ * plik z polskiego Excela („Zapisz jako CSV") jest w Windows-1250 i wchodził
+ * jako krzaki na każdym ą, ć, ę, ł.
+ *
+ * UCZCIWIE o granicy tej detekcji: Windows-1250 i ISO-8859-2 są jednobajtowe
+ * i obejmują prawie ten sam zakres bajtów, więc ŻADNA heurystyka nie odróżni
+ * ich pewnie na krótkim tekście. Rozstrzygamy więc twardo i przewidywalnie:
+ * poprawny UTF-8 zostaje UTF-8, wszystko inne traktujemy jako Windows-1250
+ * (kodowanie polskiego Excela, czyli źródło ~każdego takiego pliku) i mówimy
+ * o tym użytkownikowi w komunikacie po imporcie.
+ *
+ * @param string $probka Początek pliku (surowe bajty).
+ * @return string 'UTF-8' | 'Windows-1250' | '' gdy kodowanie nieobsługiwane.
+ */
+function segm_wykryj_kodowanie( $probka ) {
+	// UTF-16/UTF-32 (Excel: „Tekst Unicode") — fgetcsv tego nie rozetnie,
+	// bo separatory są tam zapisane na dwóch bajtach. Lepszy jawny odrzut niż
+	// import wiersza-krzaka.
+	if ( 0 === strncmp( $probka, "\xFF\xFE", 2 ) || 0 === strncmp( $probka, "\xFE\xFF", 2 ) ) {
+		return '';
+	}
+	if ( 0 === strncmp( $probka, "\xEF\xBB\xBF", 3 ) ) {
+		return 'UTF-8';
+	}
+	// Próbka mogła uciąć znak wielobajtowy w połowie — bez tego poprawny plik
+	// UTF-8 zostałby uznany za jednobajtowy tylko dlatego, że akurat tam się
+	// skończyła.
+	$obciete = 0;
+	while ( $obciete < 3 && '' !== $probka && ! mb_check_encoding( $probka, 'UTF-8' ) ) {
+		$probka = substr( $probka, 0, -1 );
+		++$obciete;
+	}
+	return mb_check_encoding( $probka, 'UTF-8' ) ? 'UTF-8' : 'Windows-1250';
+}
+
+/**
+ * Przekodowanie pojedynczej komórki na UTF-8 (baza i cała wtyczka są w UTF-8).
+ *
+ * Robi to ICONV, nie mbstring — i to nie jest kwestia gustu: mbstring w PHP
+ * NIE ZNA Windows-1250. Sprawdzone na stacku (PHP 8.4):
+ *   mb_list_encodings() => Windows-1252, Windows-1254, ISO-8859-2, Windows-1251
+ * a mb_convert_encoding( ..., 'Windows-1250' ) rzuca ValueError „contains
+ * invalid encoding". Podstawienie ISO-8859-2 „bo podobne" byłoby zgadywaniem:
+ * te strony różnią się m.in. na ą, ś, ź, ż, czyli dokładnie tam, gdzie boli.
+ *
+ * //IGNORE zamiast //TRANSLIT: Windows-1250 ma kilka bajtów nieprzypisanych
+ * (0x81, 0x83, 0x88, 0x90, 0x98) — mają zniknąć, a nie zamienić się w „?".
+ *
+ * @param string $tekst     Komórka w kodowaniu źródłowym.
+ * @param string $kodowanie Kodowanie wykryte dla pliku.
+ * @return string
+ */
+function segm_na_utf8( $tekst, $kodowanie ) {
+	if ( 'UTF-8' === $kodowanie ) {
+		return $tekst;
+	}
+	$wynik = iconv( $kodowanie, 'UTF-8//IGNORE', $tekst );
+	return false === $wynik ? $tekst : $wynik;
+}
+
 /**
  * Autodetekcja separatora po PIERWSZEJ linii pliku: polski Excel („Zapisz
  * jako CSV" przy locale PL) daje średniki, ręczne pliki — przecinki.
@@ -29,12 +95,13 @@ function segm_wykryj_separator( $linia ) {
 /**
  * Import CSV: kolumny od,temat,tresc[,kategoria_oczekiwana]; import ZASTĘPUJE
  * bieżącą próbkę (klient wrzuca eksport swojej skrzynki zamiast demo).
- * Separator (przecinek/średnik) wykrywany automatycznie; BOM UTF-8 zdejmowany;
- * wiersz danych z mniej niż 3 kolumnami = ODRZUCENIE całego importu (żadnego
- * cichego importowania śmieci przy złym separatorze).
+ * Separator (przecinek/średnik) i kodowanie (UTF-8 / Windows-1250) wykrywane
+ * automatycznie; BOM UTF-8 zdejmowany; wiersz danych z mniej niż 3 kolumnami =
+ * ODRZUCENIE całego importu (żadnego cichego importowania śmieci przy złym
+ * separatorze).
  *
  * @param string $sciezka Ścieżka tmp wgranego pliku.
- * @return array|WP_Error ['zaimportowano' => int, 'pominieto' => int, 'separator' => string]
+ * @return array|WP_Error ['zaimportowano' => int, 'pominieto' => int, 'separator' => string, 'kodowanie' => string]
  */
 function segm_importuj_csv( $sciezka ) {
 	global $wpdb;
@@ -44,11 +111,24 @@ function segm_importuj_csv( $sciezka ) {
 		return new WP_Error( 'segm_csv', 'Nie udało się odczytać pliku.' );
 	}
 
+	$kodowanie = segm_wykryj_kodowanie( (string) fread( $uchwyt, SEGM_PROBKA_KODOWANIA ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fread
+	if ( '' === $kodowanie ) {
+		fclose( $uchwyt ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
+		return new WP_Error( 'segm_csv', 'Plik jest zapisany w UTF-16 (tak zapisuje pozycja „Tekst Unicode" w Excelu) — tego formatu nie czytamy. Zapisz go jako „CSV UTF-8" albo zwykły „CSV" i wgraj ponownie. Próbka NIE została zmieniona.' );
+	}
+	if ( 'UTF-8' !== $kodowanie && ! function_exists( 'iconv' ) ) {
+		fclose( $uchwyt ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
+		return new WP_Error( 'segm_csv', 'Plik nie jest zapisany w UTF-8, a ten serwer nie ma rozszerzenia PHP „iconv", którym umiemy go przekodować (mbstring nie obsługuje Windows-1250). Zapisz plik jako „CSV UTF-8" i wgraj ponownie — albo poproś hosting o włączenie iconv. Próbka NIE została zmieniona.' );
+	}
+	rewind( $uchwyt );
+
 	$pierwsza_linia = fgets( $uchwyt );
 	if ( false === $pierwsza_linia ) {
 		fclose( $uchwyt ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
 		return new WP_Error( 'segm_csv', 'Plik jest pusty.' );
 	}
+	// Separator liczymy na surowych bajtach: przecinek i średnik mają ten sam
+	// kod w UTF-8 i w Windows-1250, więc przekodowanie nic by tu nie zmieniło.
 	$separator = segm_wykryj_separator( preg_replace( '/^\xEF\xBB\xBF/', '', $pierwsza_linia ) );
 	rewind( $uchwyt );
 
@@ -94,10 +174,13 @@ function segm_importuj_csv( $sciezka ) {
 			++$pominieto;
 			continue;
 		}
-		$od        = sanitize_text_field( (string) $w[0] );
-		$temat     = sanitize_text_field( (string) $w[1] );
-		$tresc     = sanitize_textarea_field( (string) $w[2] );
-		$oczek     = isset( $w[3] ) ? sanitize_text_field( (string) $w[3] ) : '';
+		// Przekodowanie PRZED sanityzacją: sanitize_text_field() wycina bajty
+		// niebędące poprawnym UTF-8, więc na krzakach z Windows-1250 zjadałoby
+		// polskie znaki zamiast je uratować.
+		$od        = sanitize_text_field( segm_na_utf8( (string) $w[0], $kodowanie ) );
+		$temat     = sanitize_text_field( segm_na_utf8( (string) $w[1], $kodowanie ) );
+		$tresc     = sanitize_textarea_field( segm_na_utf8( (string) $w[2], $kodowanie ) );
+		$oczek     = isset( $w[3] ) ? sanitize_text_field( segm_na_utf8( (string) $w[3], $kodowanie ) ) : '';
 		$wiersze[] = array(
 			'zrodlo'               => 'import',
 			'nadawca'              => mb_substr( $od, 0, 190 ),
@@ -142,6 +225,7 @@ function segm_importuj_csv( $sciezka ) {
 		'zaimportowano' => count( $wiersze ),
 		'pominieto'     => $pominieto,
 		'separator'     => $separator,
+		'kodowanie'     => $kodowanie,
 	);
 }
 

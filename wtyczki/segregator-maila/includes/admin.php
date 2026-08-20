@@ -118,7 +118,17 @@ function segm_komunikaty() {
 		if ( 'import' === $klucz ) {
 			$ile = isset( $_GET['ile'] ) ? (int) $_GET['ile'] : 0;
 			$pom = isset( $_GET['pominieto'] ) ? (int) $_GET['pominieto'] : 0;
-			echo '<div class="notice notice-success is-dismissible"><p>Zaimportowano ' . (int) $ile . ' maili (próbka zastąpiona).' . ( $pom > 0 ? ' Pominięto wierszy: ' . (int) $pom . '.' : '' ) . '</p></div>';
+			$kod = isset( $_GET['kodowanie'] ) ? sanitize_text_field( wp_unslash( $_GET['kodowanie'] ) ) : '';
+			// Wykryte kodowanie mówimy wprost: gdy plik NIE był w UTF-8, to jest
+			// jedyny moment, w którym właściciel może wychwycić, że detekcja
+			// trafiła obok i polskie znaki poszły do bazy krzywo.
+			$opis_kod = '';
+			if ( 'UTF-8' === $kod ) {
+				$opis_kod = ' Kodowanie pliku: UTF-8.';
+			} elseif ( '' !== $kod ) {
+				$opis_kod = ' Kodowanie pliku: ' . $kod . ' — polskie znaki przekonwertowano na UTF-8. Jeśli w tabeli poniżej widzisz krzaki, zapisz plik jako „CSV UTF-8" i zaimportuj ponownie.';
+			}
+			echo '<div class="notice notice-success is-dismissible"><p>Zaimportowano ' . (int) $ile . ' maili (próbka zastąpiona).' . ( $pom > 0 ? ' Pominięto wierszy: ' . (int) $pom . '.' : '' ) . esc_html( $opis_kod ) . '</p></div>';
 		}
 	}
 	if ( isset( $_GET['segm_blad'] ) ) {
@@ -797,7 +807,13 @@ function segm_post_import_csv() {
 		exit;
 	}
 
-	wp_safe_redirect( admin_url( 'admin.php?page=segm-probka&segm_ok=import&ile=' . (int) $wynik['zaimportowano'] . '&pominieto=' . (int) $wynik['pominieto'] ) );
+	wp_safe_redirect(
+		admin_url(
+			'admin.php?page=segm-probka&segm_ok=import&ile=' . (int) $wynik['zaimportowano']
+			. '&pominieto=' . (int) $wynik['pominieto']
+			. '&kodowanie=' . rawurlencode( (string) $wynik['kodowanie'] )
+		)
+	);
 	exit;
 }
 add_action( 'admin_post_segm_import_csv', 'segm_post_import_csv' );
