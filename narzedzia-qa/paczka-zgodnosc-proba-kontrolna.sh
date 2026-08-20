@@ -159,8 +159,16 @@ psuj_pasazer_w_zipie() {
 
 psuj_allowliste() {
 	przygotuj_czysty "$1"
-	sed -i "s|\t\"$WTYCZKA/includes/csv.php\"\n||" "$1/boty/buduj-paczki.sh"
+	# Jedna linia, nie dwie: sed w trybie jednowierszowym nie dopasuje "\n",
+	# więc próba usunięcia wpisu sed-em była martwa (recenzja PR #101).
 	grep -v "\"$WTYCZKA/includes/csv.php\"" "$1/boty/buduj-paczki.sh" > "$1/boty/tmp" && mv "$1/boty/tmp" "$1/boty/buduj-paczki.sh"
+}
+
+psuj_wersja_nie_jest_numerem() {
+	przygotuj_czysty "$1"
+	# Kropka na końcu: wszystkie pięć miejsc „zgadza się", a numer jest zepsuty.
+	sed -i 's/^ \* Version: 1.3.0/ * Version: 1.3./' "$1/wtyczki/$WTYCZKA/$WTYCZKA.php"
+	przepakuj_z_zrodla "$1"
 }
 
 psuj_brak_paczki() {
@@ -189,6 +197,7 @@ sprawdz "plik wtyczki zgubiony przy pakowaniu"         1 psuj_brak_pliku_w_zipie
 sprawdz "pasazer na gape w zipie (.env)"               1 psuj_pasazer_w_zipie     "NIE MA GO w repozytorium"
 sprawdz "allowlista rozjechana ze zbudowanym zipem"    1 psuj_allowliste          "różni się od allowlisty"
 sprawdz "nie ma paczki dla wersji z naglowka"          1 psuj_brak_paczki         "nie ma paczki"
+sprawdz "wersja w naglowku nie jest numerem (1.3.)"    1 psuj_wersja_nie_jest_numerem "nie wygląda jak numer wydania"
 
 echo
 echo "=== KONTROLA ODWROTNA: czysty stan ma PRZECHODZIC ==="

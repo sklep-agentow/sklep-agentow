@@ -35,14 +35,18 @@ pory lądują tutaj.
   nie może zostać pominięty przy pakowaniu, a zawartość zipa musi zgadzać się
   z allowlistą w `boty/buduj-paczki.sh`.
 
+  Osobno sprawdzana jest surowa postać wersji z nagłówka: numer, który nie
+  wygląda jak numer (np. `1.3.`), przeszedłby przez porównanie „wszystkie mówią
+  to samo", bo wszystkie mówiłyby to samo źle (uwaga z recenzji PR #101).
+
   Brak wtyczki, brak paczki dla wersji z nagłówka albo brak `unzip`/`sha256sum`
   to **kod wyjścia 2**, nie domyślne zielone.
 
-- **`paczka-zgodnosc-proba-kontrolna.sh` — 11 podłożonych rozjazdów.** Cztery
+- **`paczka-zgodnosc-proba-kontrolna.sh` — 12 podłożonych rozjazdów.** Cztery
   warianty wersji, która została w tyle (każdy z osobna), kod ponad wersją,
   plik w zipie o tej samej nazwie i innej treści, plik zgubiony przy pakowaniu,
   pasażer na gapę (`.env`), allowlista rozjechana ze zbudowanym zipem, brak
-  paczki — plus kontrola odwrotna, że czysty stan przechodzi. Każdy przypadek
+  paczki, wersja, która nie jest numerem — plus kontrola odwrotna, że czysty stan przechodzi. Każdy przypadek
   sprawdza nie tylko kod wyjścia, ale też czy bramka **nazwała** przyczynę.
   Pracuje na kopii drzewa, więc prawdziwe pliki i prawdziwa paczka nie są
   dotykane ani razu.

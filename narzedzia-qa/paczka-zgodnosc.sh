@@ -53,15 +53,15 @@ printf '=== PACZKA-ZGODNOSC %s — wtyczka: %s ===\n\n' "$WERSJA_BRAMKI" "$WTYCZ
 echo "--- A. Wersja mówi wszędzie to samo ---"
 
 # 1) nagłówek wtyczki
-W_NAGLOWEK="$(sed -n 's/^ \* Version:[[:space:]]*\([0-9][0-9.]*\).*/\1/p' "$GLOWNY" | head -1)"
+W_NAGLOWEK="$(sed -n 's/^ \* Version:[[:space:]]*\([0-9]\+\(\.[0-9]\+\)*\).*/\1/p' "$GLOWNY" | head -1)"
 # 2) stała w kodzie (SEGM_WERSJA / CHATL_WERSJA — pierwsza stała *_WERSJA)
-W_STALA="$(sed -n "s/^define([[:space:]]*'[A-Z]*_WERSJA'[[:space:]]*,[[:space:]]*'\([0-9][0-9.]*\)'.*/\1/p" "$GLOWNY" | head -1)"
+W_STALA="$(sed -n "s/^define([[:space:]]*'[A-Z]*_WERSJA'[[:space:]]*,[[:space:]]*'\([0-9]\+\(\.[0-9]\+\)*\)'.*/\1/p" "$GLOWNY" | head -1)"
 # 3) Stable tag w readme.txt
-W_README="$(sed -n 's/^Stable tag:[[:space:]]*\([0-9][0-9.]*\).*/\1/p' "$ZRODLO/readme.txt" 2> /dev/null | head -1)"
+W_README="$(sed -n 's/^Stable tag:[[:space:]]*\([0-9]\+\(\.[0-9]\+\)*\).*/\1/p' "$ZRODLO/readme.txt" 2> /dev/null | head -1)"
 # 4) najnowszy WYDANY wpis w CHANGELOG.md (pomijamy [Niewydane])
-W_CHANGELOG="$(grep -m1 '^## \[[0-9]' "$ZRODLO/CHANGELOG.md" 2> /dev/null | sed 's/^## \[\([0-9][0-9.]*\)\].*/\1/')"
+W_CHANGELOG="$(grep -m1 '^## \[[0-9]' "$ZRODLO/CHANGELOG.md" 2> /dev/null | sed 's/^## \[\([0-9]\+\(\.[0-9]\+\)*\)\].*/\1/')"
 # 5) najnowszy wpis w sekcji Changelog readme.txt (format WP: „= 1.3.0 =")
-W_README_CH="$(grep -m1 '^= [0-9]' "$ZRODLO/readme.txt" 2> /dev/null | sed 's/^= \([0-9][0-9.]*\) =.*/\1/')"
+W_README_CH="$(grep -m1 '^= [0-9]' "$ZRODLO/readme.txt" 2> /dev/null | sed 's/^= \([0-9]\+\(\.[0-9]\+\)*\) =.*/\1/')"
 
 printf '  nagłówek wtyczki:      %s\n' "${W_NAGLOWEK:-BRAK}"
 printf '  stała w kodzie:        %s\n' "${W_STALA:-BRAK}"
@@ -81,6 +81,16 @@ for para in "nagłówek wtyczki:$W_NAGLOWEK" "stała w kodzie:$W_STALA" \
 	fi
 done
 [ "$BLEDY" -eq 0 ] && potwierdz "pięć miejsc zgodnych: $W_NAGLOWEK"
+
+# Numer, który nie wygląda jak numer, przeszedłby przez porównanie „wszystkie
+# mówią to samo", bo wszystkie mówiłyby to samo źle. Nagłówek jest wzorcem dla
+# pozostałych czterech miejsc i dla nazwy paczki, więc jego surowa postać
+# sprawdzana jest osobno (uwaga z recenzji PR #101).
+SUROWA_WERSJA="$(sed -n 's/^ \* Version:[[:space:]]*\([^[:space:]]\+\).*/\1/p' "$GLOWNY" | head -1)"
+case "$SUROWA_WERSJA" in
+	*[!0-9.]*|.*|*.|"") zglos "nagłówek wtyczki ma wersję [$SUROWA_WERSJA] — to nie wygląda jak numer wydania" ;;
+esac
+
 
 # ⛔ Wersja spójna w pięciu miejscach to JESZCZE NIE ZNACZY, że jest prawdziwa.
 # Niepusty [Niewydane] mówi wprost: w kodzie siedzą zmiany PONAD ostatnie
