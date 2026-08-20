@@ -128,11 +128,10 @@ function chatl_ai_zapytaj( $pytanie ) {
 			),
 			'body'    => wp_json_encode(
 				array(
-					'model'         => $model,
-					'max_tokens'    => CHATL_AI_MAX_TOKENS,
-					'output_config' => array( 'effort' => 'low' ),
-					'system'        => chatl_ai_instrukcja(),
-					'messages'      => array(
+					'model'      => $model,
+					'max_tokens' => CHATL_AI_MAX_TOKENS,
+					'system'     => chatl_ai_instrukcja(),
+					'messages'   => array(
 						array(
 							'role'    => 'user',
 							'content' => $pytanie,
@@ -141,6 +140,29 @@ function chatl_ai_zapytaj( $pytanie ) {
 				)
 			),
 		)
+	);
+}
+
+/**
+ * Wpis do logu WP, gdy wywołanie API nie zwróciło 200.
+ *
+ * @param array|WP_Error $odp Odpowiedź wp_remote_post().
+ * @param int            $kod Kod HTTP (0 = błąd połączenia).
+ * @return void
+ */
+function chatl_log_bledu_ai( $odp, $kod ) {
+	if ( ! function_exists( 'wp_trigger_error' ) ) {
+		return;
+	}
+	if ( is_wp_error( $odp ) ) {
+		$szczegol = 'błąd połączenia: ' . $odp->get_error_message();
+	} else {
+		$szczegol = 'HTTP ' . (int) $kod . ': ' . wp_html_excerpt( (string) wp_remote_retrieve_body( $odp ), 300, '…' );
+	}
+	wp_trigger_error(
+		'chatl_ai_odpowiedz',
+		'wywołanie API nie powiodło się, bot odpowiada z reguł (' . $szczegol . ')',
+		E_USER_WARNING
 	);
 }
 
@@ -160,6 +182,11 @@ function chatl_ai_odpowiedz( $pytanie ) {
 		$kod = is_wp_error( $odp ) ? 0 : (int) wp_remote_retrieve_response_code( $odp );
 	}
 	if ( is_wp_error( $odp ) || 200 !== $kod ) {
+		// Zjazd do reguł MA być cichy dla gościa, ale nie dla właściciela:
+		// bez tego wpisu wtyczka miesiącami „działa" w trybie AI, odpowiadając
+		// wyłącznie z reguł, bo API odrzuca każde żądanie (tak zniknął błąd
+		// output_config: 400 nie jest nawet retry'owany).
+		chatl_log_bledu_ai( $odp, $kod );
 		return null;
 	}
 
