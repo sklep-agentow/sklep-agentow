@@ -26,9 +26,10 @@ function segm_komunikaty() {
 	// phpcs:disable WordPress.Security.NonceVerification.Recommended -- tylko odczyt komunikatu.
 	if ( isset( $_GET['segm_ok'] ) ) {
 		$teksty = array(
-			'zapisano' => 'Zapisano.',
-			'usunieto' => 'Usunięto.',
-			'demo'     => 'Przywrócono próbkę demo (30 maili).',
+			'zapisano'     => 'Zapisano.',
+			'usunieto'     => 'Usunięto.',
+			'demo'         => 'Przywrócono próbkę demo (30 maili).',
+			'wyczyszczono' => 'Wyczyszczono: próbka i raporty przebiegów usunięte z bazy.',
 		);
 		$klucz  = sanitize_key( wp_unslash( $_GET['segm_ok'] ) );
 		if ( isset( $teksty[ $klucz ] ) ) {
@@ -663,6 +664,17 @@ function segm_strona_probka() {
 			<?php submit_button( 'Przywróć próbkę demo (30 maili)', 'secondary', 'submit', false, array( 'onclick' => "return confirm('Zastąpić bieżącą próbkę wbudowanym demo?');" ) ); ?>
 		</form>
 
+		<h2>Retencja danych (RODO)</h2>
+		<p>Próbka to zwykle korespondencja Twoich klientów, czyli dane osobowe. Wtyczka kasuje ją sama:
+			<strong>codzienne zadanie usuwa maile i raporty starsze niż <?php echo (int) SEGM_RETENCJA_DNI; ?> dni</strong>
+			(<?php echo esc_html( segm_opis_najblizszego_czyszczenia() ); ?>). Nie chcesz czekać — wyczyść od ręki:</p>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+			<input type="hidden" name="action" value="segm_probka_wyczysc">
+			<?php wp_nonce_field( 'segm_probka_wyczysc' ); ?>
+			<?php submit_button( 'Wyczyść próbkę teraz (maile + raporty przebiegów)', 'delete', 'submit', false, array( 'onclick' => "return confirm('Usunąć CAŁĄ próbkę i WSZYSTKIE raporty przebiegów? Tego nie da się cofnąć. Kategorie i reguły zostają.');" ) ); ?>
+		</form>
+		<p class="description">Raporty kasujemy razem z próbką, bo trzymają nadawcę i temat każdego maila — czyszczenie samej tabeli maili zostawiałoby tę samą korespondencję w historii przebiegów. Kategorie, reguły i klucz API zostają nietknięte.</p>
+
 		<h2>Maile w próbce<?php echo $ile > 200 ? ' (pierwsze 200)' : ''; ?></h2>
 		<table class="widefat striped">
 			<thead><tr><th>#</th><th>Źródło</th><th>Od</th><th>Temat</th><th>Treść (początek)</th><th>Etykieta</th></tr></thead>
@@ -730,6 +742,49 @@ function segm_post_probka_demo() {
 	exit;
 }
 add_action( 'admin_post_segm_probka_demo', 'segm_post_probka_demo' );
+
+/**
+ * Kiedy retencja posprząta następnym razem — zdanie do panelu.
+ * Gdy harmonogramu nie ma (np. WP-Cron wyłączony przez DISABLE_WP_CRON i nikt
+ * go nie woła), NIE udajemy, że jest: właściciel ma to zobaczyć.
+ *
+ * @return string
+ */
+function segm_opis_najblizszego_czyszczenia() {
+	$kiedy = wp_next_scheduled( 'segm_czyszczenie_probki' );
+	if ( ! $kiedy ) {
+		return 'uwaga: zadanie NIE jest zaplanowane — sprawdź, czy WP-Cron działa na tym hostingu';
+	}
+	return 'najbliższe czyszczenie: ' . wp_date( 'j.m.Y H:i', $kiedy );
+}
+
+/**
+ * „Wyczyść próbkę teraz": usuwa maile i raporty przebiegów, czyli WSZYSTKO,
+ * co trzyma cudzą korespondencję. Kategorie i reguły (konfiguracja właściciela)
+ * zostają — po wyczyszczeniu można od razu wgrać nową próbkę.
+ *
+ * @return void
+ */
+function segm_post_probka_wyczysc() {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_die( 'Brak uprawnień.' );
+	}
+	check_admin_referer( 'segm_probka_wyczysc' );
+
+	global $wpdb;
+	if ( false === $wpdb->query( "TRUNCATE TABLE {$wpdb->prefix}segm_maile" ) ) { // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		segm_log_bledu_bazy( 'segm_post_probka_wyczysc', 'czyszczenie próbki na żądanie' );
+		segm_przekieruj_blad( 'segm-probka', 'Nie udało się wyczyścić próbki — baza odrzuciła operację. Maile NADAL są w bazie.' );
+	}
+	if ( false === $wpdb->query( "TRUNCATE TABLE {$wpdb->prefix}segm_przebiegi" ) ) { // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		segm_log_bledu_bazy( 'segm_post_probka_wyczysc', 'czyszczenie raportów przebiegów na żądanie' );
+		segm_przekieruj_blad( 'segm-probka', 'Próbka została wyczyszczona, ale raportów przebiegów NIE udało się usunąć — nadawcy i tematy maili nadal są w bazie. Sprawdź stan bazy i powtórz operację.' );
+	}
+
+	wp_safe_redirect( admin_url( 'admin.php?page=segm-probka&segm_ok=wyczyszczono' ) );
+	exit;
+}
+add_action( 'admin_post_segm_probka_wyczysc', 'segm_post_probka_wyczysc' );
 
 /* ===================== USTAWIENIA ===================== */
 

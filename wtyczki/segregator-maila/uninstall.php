@@ -10,6 +10,12 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 
 $segm_ust = get_option( 'segm_ustawienia', array() );
 
+// Harmonogram retencji zdejmuje już deaktywacja, ale odinstalowanie ma zostawić
+// czysto także wtedy, gdy wtyczkę usunięto z pominięciem tamtej ścieżki
+// (np. skasowanie katalogu i „usuń" z listy) — martwy wpis w cronie tylko
+// sypie błędami „nie ma takiej funkcji".
+wp_clear_scheduled_hook( 'segm_czyszczenie_probki' );
+
 // Sekret właściciela (klucz API) kasowany ZAWSZE, niezależnie od opcji „usuń dane"
 // (zasada D22: poświadczenia ≠ dane użytkowe; martwa wtyczka nie zostawia klucza
 // w bazie — znalezisko wrogiej sesji botów 19.08, zmierzone na czystym WP).

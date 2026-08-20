@@ -89,6 +89,15 @@ Nie — reguły demo są po prostu dopasowane do próbki demo (tak wygląda dobr
 skonfigurowany segregator). Na TWOICH mailach zaczniesz niżej i podniesiesz
 wynik pętlą z punktu 3.
 
+**Jak długo próbka leży w bazie?**
+Maksymalnie **90 dni**. Codzienne zadanie (WP-Cron) kasuje maile i raporty
+przebiegów starsze niż 90 dni — nie musisz o tym pamiętać. Na stronie **Próbka
+maili** widzisz termin najbliższego czyszczenia i masz przycisk **„Wyczyść
+próbkę teraz"**, który usuwa próbkę i wszystkie raporty od ręki (kategorie,
+reguły i klucz API zostają). Wyłączenie wtyczki zdejmuje zadanie z
+harmonogramu; dane zostają do czasu odinstalowania z opcją „usuń wszystkie
+dane".
+
 **Co z danymi po odinstalowaniu?**
 Klucz API jest kasowany przy KAŻDYM odinstalowaniu (wtyczka nie zostawia
 Twojego sekretu w bazie; po ponownej instalacji wpisz go na nowo). Reszta
@@ -109,6 +118,10 @@ reguły, próbka, przebiegi i ustawienia.
   działa lokalnie, próbka leży w Twojej bazie danych.
 - **Tryby AI:** treść maili z próbki (nadawca, temat, treść) jest wysyłana do
   API dostawcy modelu (Anthropic) w celu klasyfikacji.
+- **Retencja:** próbka i raporty przebiegów są kasowane automatycznie po
+  **90 dniach** (codzienny WP-Cron), a przycisk „Wyczyść próbkę teraz" na
+  stronie *Próbka maili* usuwa je natychmiast. Raporty kasujemy razem z
+  próbką, bo trzymają nadawcę i temat każdego maila.
 - Jeśli wgrywasz próbkę z PRAWDZIWYMI mailami klientów, to są dane osobowe —
   **dopisz przetwarzanie (i ewentualnego dostawcę AI) do swojej polityki
   prywatności**; do testów reguł często wystarczy próbka zanonimizowana.
