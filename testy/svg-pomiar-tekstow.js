@@ -42,6 +42,18 @@ const MARG_KADR   = Number(process.argv[5] || 16);
     const vb = svg.viewBox.baseVal;
     const W = vb.width, H = vb.height;
 
+    /*
+     * Kadr musi byc JEDNOZNACZNY. Gdy atrybuty width/height nie zgadzaja sie
+     * z viewBox, "wysokosc obrazu" zalezy od tego, ktory z nich czyta dany
+     * program — i ten sam plik jednemu narzedziu wychodzi na 910, a drugiemu
+     * na 880. Wtedy kontrola moze swiecic zielono, a klient widziec ucieta
+     * linie. Rozjazd = twardy blad, zanim ktokolwiek zacznie szukac roznicy
+     * w tekstach.
+     */
+    const atrW = parseFloat(svg.getAttribute('width'));
+    const atrH = parseFloat(svg.getAttribute('height'));
+    const kadrNiespojny = (Number.isFinite(atrW) && atrW !== W) || (Number.isFinite(atrH) && atrH !== H);
+
     const prostokaty = [...svg.querySelectorAll('rect')]
       .map((r) => ({
         x: r.x.baseVal.value, y: r.y.baseVal.value,
@@ -91,7 +103,7 @@ const MARG_KADR   = Number(process.argv[5] || 16);
         }
       }
     }
-    return { W, H, ile: wszystkie.length, zle, wszystkie, najszersze: [...wszystkie].sort((a, c) => c.prawa - a.prawa).slice(0, 5), najnizsze: [...wszystkie].sort((a, c) => c.dol - a.dol).slice(0, 5) };
+    return { W, H, atrW, atrH, kadrNiespojny, ile: wszystkie.length, zle, wszystkie, najszersze: [...wszystkie].sort((a, c) => c.prawa - a.prawa).slice(0, 5), najnizsze: [...wszystkie].sort((a, c) => c.dol - a.dol).slice(0, 5) };
   }, { MARG_POZIOM, MARG_PION, MARG_KADR });
 
   await b.close();
@@ -101,8 +113,18 @@ const MARG_KADR   = Number(process.argv[5] || 16);
     process.exit(0);
   }
   console.log('plik: ' + PLIK);
-  console.log('viewBox: ' + wynik.W + ' x ' + wynik.H);
+  console.log('viewBox: ' + wynik.W + ' x ' + wynik.H + '   atrybuty width/height: ' + wynik.atrW + ' x ' + wynik.atrH);
   console.log('zmierzonych tekstow (text + tspan): ' + wynik.ile);
+  if (wynik.ile === 0) {
+    console.log('\nNIEPOWODZENIE: zmierzono ZERO elementow — kontrola nie znalazla tekstow (zly plik albo zly selektor)');
+    process.exit(1);
+  }
+  if (wynik.kadrNiespojny) {
+    console.log('\nNIEPOWODZENIE: kadr niespojny — viewBox mowi ' + wynik.W + 'x' + wynik.H
+      + ', a atrybuty width/height mowia ' + wynik.atrW + 'x' + wynik.atrH
+      + '. Ten sam plik da rozne wyniki w roznych narzedziach.');
+    process.exit(1);
+  }
   console.log('\nnajdalej siegajace w PRAWO:');
   for (const w of wynik.najszersze) {
     console.log('  prawa=' + String(w.prawa).padStart(5) + '  szer=' + String(w.szer).padStart(4) + '  "' + w.tekst + '"');

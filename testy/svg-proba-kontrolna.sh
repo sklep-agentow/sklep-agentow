@@ -35,6 +35,12 @@ probuj "tekst wychodzacy w GORE"  "sed -i 's/x=\"40\" y=\"52\"/x=\"40\" y=\"8\"/
 probuj "tekst wychodzacy w LEWO"  "sed -i 's/class=\"t stopka\" x=\"40\" y=\"776\"/class=\"t stopka\" x=\"2\" y=\"776\"/' \"\$TMP/p.svg\"" "lewa"
 probuj "tekst wychodzacy w PRAWO" "sed -i 's/rozpisane w DOKUMENTACJA-TECHNICZNA.md./rozpisane w DOKUMENTACJA-TECHNICZNA.md, rozdzial 5, tabela stalych konfiguracyjnych wtyczki./' \"\$TMP/p.svg\"" "prawa"
 
+# Klasa, przez ktora ten sam plik dawal 910 mnie i 880 recenzentce: atrybut
+# height rozjechany z viewBox. Wtedy "wysokosc obrazu" zalezy od narzedzia,
+# a kontrola potrafi swiecic zielono przy scietej linii u klienta.
+probuj "kadr niespojny (height != viewBox)" "sed -i 's/viewBox=\"0 0 1400 910\" width=\"1400\" height=\"910\"/viewBox=\"0 0 1400 910\" width=\"1400\" height=\"880\"/' \"\$TMP/p.svg\"" "kadr niespojny"
+probuj "plik bez tekstow (kontrola pusta)" "sed -i 's|<text |<nietekst |g' \"\$TMP/p.svg\"" "ZERO elementow"
+
 echo
 echo "=== KONTROLA ODWROTNA: czysty plik ma przechodzic ==="
 if node testy/svg-pomiar-tekstow.js "$ZRODLO" > /dev/null 2>&1; then
@@ -46,7 +52,7 @@ fi
 
 echo
 if [ "$BLEDY" -eq 0 ]; then
-  echo "KONTROLA WIDZI WSZYSTKIE CZTERY KRAWEDZIE"
+  echo "KONTROLA WIDZI CZTERY KRAWEDZIE, NIESPOJNY KADR I PUSTY POMIAR"
 else
   echo "KONTROLA SLEPA NA $BLEDY KRAWEDZI"
 fi
