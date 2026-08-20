@@ -6,6 +6,7 @@
    ZIP (ścieżka), ZRZUT (ścieżka PNG; domyślnie tmpdir systemu).
    Wyjście: linie WYNIK:..., exit 0 gdy wszystkie OK. */
 const { chromium } = require('playwright-core');
+const { wymagajChromium } = require('./lib/chromium');
 const { execFileSync } = require('child_process');
 const BAZA = 'http://localhost:8890';
 const ZIP = process.env.ZIP || 'boty/paczki/chatbot-live-1.2.1.zip';
@@ -22,7 +23,7 @@ let bledy = 0;
 const wynik = (nazwa, ok, extra = '') => { console.log(`WYNIK:${ok ? 'OK ' : 'PAD'} ${nazwa}${extra ? ' — ' + extra : ''}`); if (!ok) bledy++; };
 
 (async () => {
-  const b = await chromium.launch({ executablePath: '/root/.cache/ms-playwright/chromium-1234/chrome-linux64/chrome' });
+  const b = await chromium.launch({ executablePath: wymagajChromium() });
   const p = await b.newPage({ viewport: { width: 1440, height: 1000 } });
   await p.goto(BAZA + '/wp-login.php', { waitUntil: 'load' });
   await p.fill('#user_login', process.env.WP_ADMIN_USER);

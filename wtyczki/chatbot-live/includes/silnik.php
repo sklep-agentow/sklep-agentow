@@ -112,29 +112,66 @@ function chatl_dopasuj( $pytanie ) {
 /**
  * Zapisuje wymianę do historii rozmów.
  *
- * @param string $sesja  Identyfikator sesji przeglądarki (już zwalidowany).
- * @param string $rola   'gosc' albo 'bot'.
- * @param string $tresc  Treść (już zsanityzowana).
- * @param string $silnik 'reguly' albo 'ai' (który silnik odpowiedział).
- * @return bool True = zapisano, false = zapis padł (odpowiedź bota i tak leci
- *              do gościa; brak wpisu w historii nie jest powodem, żeby urwać
- *              działającą rozmowę — ale ma zostawić ślad w logu).
+ * @param string    $sesja    Identyfikator sesji przeglądarki (już zwalidowany).
+ * @param string    $rola     'gosc' albo 'bot'.
+ * @param string    $tresc    Treść (już zsanityzowana).
+ * @param string    $silnik   'reguly' albo 'ai' (który silnik odpowiedział).
+ * @param bool|null $trafiono Czy bot znał odpowiedź. NULL = jeszcze nie wiadomo
+ *                            (tak zapisujemy pytanie gościa — wynik znamy
+ *                            dopiero po dopasowaniu; domyka je
+ *                            chatl_oznacz_trafienie()).
+ * @return int Id zapisanego wiersza, 0 = zapis padł. Odpowiedź bota i tak
+ *             leci do gościa; brak wpisu w historii nie jest powodem, żeby
+ *             urwać działającą rozmowę — ale ma zostawić ślad w logu.
  */
-function chatl_zapisz_wymiane( $sesja, $rola, $tresc, $silnik = 'reguly' ) {
+function chatl_zapisz_wymiane( $sesja, $rola, $tresc, $silnik = 'reguly', $trafiono = null ) {
 	global $wpdb;
-	$zapisano = $wpdb->insert(
-		$wpdb->prefix . 'chatl_rozmowy',
-		array(
-			'sesja'     => $sesja,
-			'rola'      => $rola,
-			'silnik'    => $silnik,
-			'tresc'     => $tresc,
-			'utworzono' => current_time( 'mysql' ),
-		),
-		array( '%s', '%s', '%s', '%s', '%s' )
+	$dane   = array(
+		'sesja'     => $sesja,
+		'rola'      => $rola,
+		'silnik'    => $silnik,
+		'tresc'     => $tresc,
+		'utworzono' => current_time( 'mysql' ),
 	);
+	$format = array( '%s', '%s', '%s', '%s', '%s' );
+	if ( null !== $trafiono ) {
+		$dane['trafiono'] = $trafiono ? 1 : 0;
+		$format[]         = '%d';
+	}
+	$zapisano = $wpdb->insert( $wpdb->prefix . 'chatl_rozmowy', $dane, $format );
 	if ( false === $zapisano ) {
 		chatl_log_bledu_bazy( 'chatl_zapisz_wymiane', 'wpis do historii rozmów (rola: ' . $rola . ')' );
+		return 0;
+	}
+	return (int) $wpdb->insert_id;
+}
+
+/**
+ * Dopisuje wynik dopasowania do wiersza PYTANIA gościa.
+ *
+ * Osobny krok, bo w chwili zapisu pytania jeszcze nie wiemy, czy bot je
+ * zrozumie. Znacznik musi wylądować na wierszu gościa (nie tylko bota), bo
+ * raport luk pokazuje TREŚĆ PYTANIA — czyli to, czego brakuje w bazie Q&A.
+ *
+ * @param int  $id_pytania Id z chatl_zapisz_wymiane() (0 = zapis pytania padł).
+ * @param bool $trafiono   Czy bot znał odpowiedź.
+ * @return bool True = oznaczono.
+ */
+function chatl_oznacz_trafienie( $id_pytania, $trafiono ) {
+	$id_pytania = (int) $id_pytania;
+	if ( $id_pytania <= 0 ) {
+		return false;
+	}
+	global $wpdb;
+	$wynik = $wpdb->update(
+		$wpdb->prefix . 'chatl_rozmowy',
+		array( 'trafiono' => $trafiono ? 1 : 0 ),
+		array( 'id' => $id_pytania ),
+		array( '%d' ),
+		array( '%d' )
+	);
+	if ( false === $wynik ) {
+		chatl_log_bledu_bazy( 'chatl_oznacz_trafienie', 'oznaczenie trafienia przy pytaniu (id: ' . $id_pytania . ')' );
 		return false;
 	}
 	return true;

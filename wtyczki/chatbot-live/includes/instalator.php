@@ -43,6 +43,18 @@ function chatl_utworz_tabele() {
 	) {$charset};"
 	);
 
+	/*
+	 * trafiono: czy bot ZNAŁ odpowiedź na to pytanie (1/0). Ustawiane na OBU
+	 * wierszach wymiany — na pytaniu gościa i na odpowiedzi bota — bo raport
+	 * luk potrzebuje TREŚCI PYTANIA, a nie treści odpowiedzi.
+	 *
+	 * NULL znaczy „nie wiadomo" i występuje tylko w wierszach sprzed 1.3.0.
+	 * Świadomie NIE zgadujemy ich wstecz (np. porównaniem treści z aktualnym
+	 * tekstem awaryjnym): właściciel mógł ten tekst po drodze zmienić, więc
+	 * takie „uzupełnienie" wpisałoby do statystyk sprzedawanego produktu
+	 * liczby, których nikt nigdy nie zmierzył. Statystyki liczą NULL-e osobno
+	 * i mówią o nich wprost na stronie.
+	 */
 	dbDelta(
 		"CREATE TABLE {$p}chatl_rozmowy (
 		id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
@@ -50,10 +62,12 @@ function chatl_utworz_tabele() {
 		rola varchar(10) NOT NULL,
 		silnik varchar(10) NOT NULL DEFAULT 'reguly',
 		tresc text NOT NULL,
+		trafiono tinyint(1) DEFAULT NULL,
 		utworzono datetime NOT NULL,
 		PRIMARY KEY  (id),
 		KEY sesja (sesja),
-		KEY utworzono (utworzono)
+		KEY utworzono (utworzono),
+		KEY luki (rola,trafiono,utworzono)
 	) {$charset};"
 	);
 

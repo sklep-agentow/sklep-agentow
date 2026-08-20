@@ -1,6 +1,6 @@
 # ChatBot LIVE — dokumentacja techniczna
 
-Wersja wtyczki: **1.2.5** · schemat bazy: **3** · licencja: **GPL-2.0-or-later**
+Wersja wtyczki: **1.3.0** · schemat bazy: **4** · licencja: **GPL-2.0-or-later**
 
 Dokument opisuje **kod, który jest**, nie plan. Każda liczba i nazwa poniżej ma pokrycie
 w źródle — przy każdej podano plik i symbol, żeby dało się to sprawdzić `grep`-em, a nie
@@ -55,13 +55,14 @@ dystrybucji), a nie to, czy wolno pobrać zapłatę. Na tym stoi cały rynek pł
 | `includes/front.php` | assety widgetu, limity na IP, walidacja sesji, dwa endpointy AJAX | zawsze |
 | `includes/admin.php` | menu, CRUD Q&A, zgłoszenia, historia, ustawienia, test bota w panelu | tylko `is_admin()` |
 | `includes/csv.php` | ręczny eksport zgłoszeń i rozmów do CSV | tylko `is_admin()` |
+| `includes/statystyki.php` | liczby okresu, grupowanie pytań bez odpowiedzi, strona „Statystyki i luki" | tylko `is_admin()` |
 | `uninstall.php` | obie ścieżki deinstalacji | tylko przy odinstalowaniu (`WP_UNINSTALL_PLUGIN`) |
 | `LICENSE` | pełny tekst GNU GPL v2 (339 linii) | — |
 | `INSTRUKCJA.md`, `DOKUMENTACJA-TECHNICZNA.md`, `DIAGRAM-PRZEPLYWU.svg` | dokumentacja w paczce | — |
 | `assets/widget.js`, `assets/widget.css` | widget czatu na froncie | front, gdy bot włączony |
 
-`admin.php` i `csv.php` są w bloku `if ( is_admin() )` w `chatbot-live.php` — front nie ładuje
-ani panelu, ani eksportu.
+`admin.php`, `csv.php` i `statystyki.php` są w bloku `if ( is_admin() )` w `chatbot-live.php` —
+front nie ładuje ani panelu, ani eksportu, ani liczenia statystyk.
 
 ---
 
@@ -105,7 +106,12 @@ Serce trybu regułowego. Właściciel wypełnia ją w panelu; przy pierwszej akt
 | `rola` | `varchar(10)` | `gosc` albo `bot` — kto się odezwał. |
 | `silnik` | `varchar(10)`, domyślnie `'reguly'` | `reguly` albo `ai` — **czym** odpowiedział bot. Dzięki temu widać po fakcie, czy tryb AI naprawdę działał, czy po cichu zjeżdżał do reguł. |
 | `tresc` | `text` | Treść wymiany, już zsanityzowana. |
+| `trafiono` | `tinyint(1)`, dopuszcza `NULL` | Czy bot **znał** odpowiedź na to pytanie: `1` tak, `0` nie, `NULL` „nie wiadomo". Ustawiane na OBU wierszach wymiany — na pytaniu gościa i na odpowiedzi bota — bo raport luk pokazuje treść **pytania**, nie odpowiedzi. `NULL` mają wyłącznie wiersze sprzed wersji 1.3.0; nie są zgadywane wstecz i nie wchodzą do mianownika skuteczności. |
 | `utworzono` | `datetime` | Znacznik czasu. Ma indeks `KEY utworzono`, bo cron retencji kasuje właśnie po tej kolumnie. |
+
+Trzeci indeks, `KEY luki (rola, trafiono, utworzono)`, obsługuje jedyne zapytanie raportu luk
+(`rola = 'gosc' AND trafiono = 0` w zakresie dat) — bez niego strona statystyk skanowałaby
+całą historię przy każdym wejściu.
 
 ### 3.4. `{prefix}chatl_ai_uzycie` — licznik stop-loss trybu AI
 
@@ -162,8 +168,8 @@ Wszystkie liczby, którymi wtyczka się rządzi, są stałymi — nie ma ich roz
 
 | Stała | Wartość | Plik | Do czego |
 |---|---|---|---|
-| `CHATL_WERSJA` | `1.2.5` | `chatbot-live.php` | wersja wtyczki; służy też jako `?ver=` assetów (przeglądarka nie poda starego pliku po aktualizacji) |
-| `CHATL_WERSJA_SCHEMATU` | `3` | `chatbot-live.php` | wyzwalacz migracji schematu |
+| `CHATL_WERSJA` | `1.3.0` | `chatbot-live.php` | wersja wtyczki; służy też jako `?ver=` assetów (przeglądarka nie poda starego pliku po aktualizacji) |
+| `CHATL_WERSJA_SCHEMATU` | `4` | `chatbot-live.php` | wyzwalacz migracji schematu |
 | `CHATL_KATALOG`, `CHATL_URL` | ścieżka i adres wtyczki | `chatbot-live.php` | `require` i adresy assetów |
 | `CHATL_MAX_PYTANIE` | `500` | `includes/front.php` | maksymalna długość pytania gościa (nadmiar jest **przycinany**, nie odrzucany) |
 | `CHATL_MAX_WIADOMOSC` | `2000` | `includes/front.php` | maksymalna długość treści zgłoszenia (jw.) |
@@ -175,6 +181,11 @@ Wszystkie liczby, którymi wtyczka się rządzi, są stałymi — nie ma ich roz
 | `CHATL_AI_TIMEOUT` | `9` | `includes/ai.php` | timeout jednego wywołania w sekundach; z jednym ponowieniem daje maks. 18 s, z zapasem pod typowy limit 30 s na hostingu |
 | `CHATL_AI_BRAK` | `BRAK_ODPOWIEDZI` | `includes/ai.php` | sentinel „model nie wie" — sygnał do zbiórki kontaktu zamiast zgadywania |
 | `CHATL_CSV_PORCJA` | `500` | `includes/csv.php` | ile wierszy naraz czyta eksport, żeby nie wciągać całej tabeli do pamięci |
+| `CHATL_LUKI_LIMIT` | `2000` | `includes/statystyki.php` | sufit pytań bez odpowiedzi wciąganych do grupowania; przekroczenie jest **wypisane na stronie**, nie przemilczane |
+| `CHATL_LUKI_POKAZ` | `25` | `includes/statystyki.php` | ile tematów luk pokazuje tabela (reszta jest policzona, tylko niewypisana) |
+| `CHATL_LUKI_PROG` | `50` | `includes/statystyki.php` | próg scalania dwóch pytań w jeden temat, w procentach wspólnych rdzeni |
+| `CHATL_LUKI_RDZEN` | `4` | `includes/statystyki.php` | do ilu znaków skracamy słowo przy **grupowaniu** (polski odmienia końcówki; przy pięciu „firmę"/„firmy" to jeszcze dwa różne rdzenie) |
+| `CHATL_SUGESTIA_RDZEN` | `5` | `includes/statystyki.php` | rdzeń **podpowiadanych słów kluczowych** — dłuższy, bo trafia do silnika dopasowania: `koszt` łapie „koszty"/„kosztuje", a `kosz` łapałby też „koszulę" |
 | `CHATL_KLUCZ_API` | — | **`wp-config.php`, definiuje właściciel** | klucz API poza bazą; ma pierwszeństwo nad opcją |
 
 ---
@@ -399,7 +410,67 @@ jest wyniesienie klucza poza bazę stałą `CHATL_KLUCZ_API`, nie pozorne szyfro
 
 ---
 
-## 12. Eksport CSV
+## 12. Statystyki i raport luk
+
+Strona panelu **„Statystyki i luki"** (`chatl_strona_statystyki()` w `includes/statystyki.php`,
+slug `chatl-statystyki`). Okres wybiera się listą (7 / 30 / 90 dni) albo dwiema datami; wartości
+z formularza przechodzą przez `chatl_data_ok()` (regex + `checkdate`), a granice doby liczy
+`chatl_granice_okresu()` w czasie **lokalnym strony** — bo wiersze zapisuje `current_time( 'mysql' )`.
+
+### 12.1. Co pokazuje
+
+| Liczba | Skąd |
+|---|---|
+| pytania gości, liczba rozmów | `chatl_rozmowy`: wiersze `rola = 'gosc'`, rozmowy = `COUNT(DISTINCT sesja)` |
+| odpowiedzi bota i **skuteczność** | `trafiono = 1` / (`trafiono = 1` + `trafiono = 0`) |
+| bez odpowiedzi | `trafiono = 0` |
+| rozdział reguły / AI | kolumna `silnik` przy trafionych odpowiedziach |
+| zebrane kontakty i konwersja | `chatl_zgloszenia` w okresie; konwersja = rozmowy z kontaktem / wszystkie rozmowy |
+| ruch dzień po dniu | `GROUP BY DATE( utworzono )`, słupki rysowane czystym CSS (bez JS i bibliotek) |
+
+Wiersze sprzed 1.3.0 (`trafiono IS NULL`) są liczone **osobno** i wypisane w komunikacie na
+stronie. Gdy w okresie nie ma ani jednej zmierzonej odpowiedzi, kafelek skuteczności pokazuje
+kreskę, a nie `0 (0,0%)` — „zero" i „nie mierzono" to dwie różne rzeczy.
+
+### 12.2. Grupowanie pytań bez odpowiedzi
+
+`chatl_grupuj_pytania()` składa surowe pytania w tematy w dwóch krokach:
+
+1. **normalizacja** (`chatl_normalizuj_pytanie()`): małe litery, ogonki → ASCII, precz
+   z interpunkcją, pojedyncze spacje. Pytania identyczne po normalizacji lądują w jednym kubełku.
+2. **scalanie podobnych**: dla każdego kubełka liczone są **rdzenie** (`chatl_rdzenie_pytania()`) —
+   słowa dłuższe niż 3 znaki, bez listy słów pustych, skrócone do `CHATL_LUKI_RDZEN` znaków.
+   Podpowiedź słów kluczowych używa tej samej funkcji, ale z `CHATL_SUGESTIA_RDZEN` —
+   grupowanie tylko układa listę, a podpowiedź zaczyna dopasowywać odpowiedzi gościom,
+   więc pomyłka kosztuje tam więcej.
+   Dwa kubełki idą do jednego tematu, gdy `chatl_podobienstwo_pytan()` (Jaccard na rdzeniach)
+   daje co najmniej `CHATL_LUKI_PROG` procent.
+
+Skracanie do rdzenia jest tu konieczne, nie kosmetyczne: polski odmienia **końcówki**, więc
+„ile kosztuje dostawa" i „koszt dostawy" na całych słowach mają zero wspólnego, a na rdzeniach
+67%. Cztery znaki, nie pięć — odmiana potrafi siedzieć dokładnie na piątym („firmę"/„firmy"). Rdzenie klastra to rdzenie jego **pierwszego, najliczniejszego** kubełka i już nie rosną —
+gdyby rosły przy każdym scaleniu, klaster stopniowo pasowałby do wszystkiego.
+
+Kolejność jest **deterministyczna** (najpierw liczniejsze, przy remisie alfabetycznie), więc
+ten sam zestaw pytań zawsze daje ten sam raport, niezależnie od kolejności wierszy z bazy.
+Pisownia gościa nie jest nigdzie nadpisywana — normalizacja służy tylko do sklejania, a lista
+„inne sformułowania" pokazuje, co dokładnie wpadło do tematu.
+
+### 12.3. Skrót „Dopisz odpowiedź"
+
+Przycisk przy każdym temacie prowadzi na `admin.php?page=chatl-qa` z parametrami
+`nowe_pytanie` i `nowe_slowa`. `chatl_strona_qa()` **tylko wypełnia** nimi formularz — zapis
+idzie jak zawsze osobnym żądaniem `admin-post` z noncem i `manage_options`, więc adres URL
+niczego nie zapisuje. Podpowiedź słów kluczowych to rdzenie z `chatl_sugerowane_slowa()`,
+bo silnik dopasowuje **podłańcuchy**: `koszt` łapie i „koszty", i „kosztuje", a całe „kosztuje"
+nie złapie „koszt".
+
+Pytanie wstawiane do formularza to **reprezentant tematu** (najczęstsze sformułowanie), a nie
+każdy z wariantów — właściciel odpowiada na temat, nie na jedno zdanie.
+
+---
+
+## 13. Eksport CSV
 
 Ręczny, przyciskiem w panelu — `includes/csv.php`. Dwa strumienie: wszystkie zgłoszenia
 (`id, data, email, wiadomosc, status, sesja`) i historia rozmów (`sesja, data, kto, silnik, tresc`),
@@ -415,7 +486,7 @@ kłóciłoby się z obietnicą retencji.
 
 ---
 
-## 13. Znane granice
+## 14. Znane granice
 
 Rzeczy, których wtyczka **nie** robi — żeby nikt nie szukał ich w kodzie:
 
@@ -427,6 +498,13 @@ Rzeczy, których wtyczka **nie** robi — żeby nikt nie szukał ich w kodzie:
   najnowszych sesji. Pełne dane wychodzą eksportem CSV.
 - **Limit dobowy AI jest miękki** — sprawdzenie i inkrement to dwa kroki, więc równoległe
   zapytania mogą przekroczyć próg o kilka wywołań.
+- **Statystyki sięgają tylko tak daleko, jak historia** — po `CHATL_RETENCJA_DNI` dniach wiersze
+  są kasowane, więc raport luk sprzed pół roku nie istnieje.
+- **Wiersze sprzed 1.3.0 nie mają znacznika `trafiono`** i nie są zgadywane wstecz. Widać je
+  na stronie statystyk jako osobną liczbę; skuteczność liczy się bez nich.
+- **Grupowanie luk jest heurystyką**, nie rozumieniem języka: sklejanie idzie po wspólnych
+  rdzeniach słów, więc dwa pytania o tym samym, napisane zupełnie innymi słowami, zostaną
+  dwoma tematami. Lista „inne sformułowania" pokazuje, co naprawdę wpadło do tematu.
 - **Retencja obejmuje tylko historię rozmów.** Zgłoszenia (a więc adresy e-mail gości) zostają,
   aż właściciel je skasuje. Jeśli polityka prywatności obiecuje termin także dla nich,
   trzeba je kasować ręcznie albo eksportem i usunięciem.

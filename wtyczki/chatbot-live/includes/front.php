@@ -165,7 +165,9 @@ function chatl_ajax_pytanie() {
 		$pytanie = mb_substr( $pytanie, 0, CHATL_MAX_PYTANIE );
 	}
 
-	chatl_zapisz_wymiane( $sesja, 'gosc', $pytanie );
+	// Id pytania trzymamy, bo wynik dopasowania znamy dopiero niżej —
+	// a to WIERSZ PYTANIA niesie treść, z której powstaje raport luk.
+	$id_pytania = chatl_zapisz_wymiane( $sesja, 'gosc', $pytanie );
 
 	// HYBRYDA: najpierw AI (jest klucz + limit dzienny globalny i per IP
 	// niewyczerpany); błąd/timeout/brak klucza => zjazd do trybu regułowego.
@@ -174,7 +176,8 @@ function chatl_ajax_pytanie() {
 		if ( null !== $ai ) {
 			if ( CHATL_AI_BRAK === trim( $ai ) ) {
 				// Próg pewności: model nie zgaduje => uczciwe "nie wiem" + zbiórka kontaktu.
-				chatl_zapisz_wymiane( $sesja, 'bot', $ust['tekst_awaryjny'], 'ai' );
+				chatl_oznacz_trafienie( $id_pytania, false );
+				chatl_zapisz_wymiane( $sesja, 'bot', $ust['tekst_awaryjny'], 'ai', false );
 				wp_send_json_success(
 					array(
 						'trafiono'  => false,
@@ -183,7 +186,8 @@ function chatl_ajax_pytanie() {
 				);
 			}
 			$ai = sanitize_textarea_field( $ai );
-			chatl_zapisz_wymiane( $sesja, 'bot', $ai, 'ai' );
+			chatl_oznacz_trafienie( $id_pytania, true );
+			chatl_zapisz_wymiane( $sesja, 'bot', $ai, 'ai', true );
 			wp_send_json_success(
 				array(
 					'trafiono'  => true,
@@ -195,7 +199,8 @@ function chatl_ajax_pytanie() {
 
 	$wynik = chatl_dopasuj( $pytanie );
 	if ( null === $wynik ) {
-		chatl_zapisz_wymiane( $sesja, 'bot', $ust['tekst_awaryjny'] );
+		chatl_oznacz_trafienie( $id_pytania, false );
+		chatl_zapisz_wymiane( $sesja, 'bot', $ust['tekst_awaryjny'], 'reguly', false );
 		wp_send_json_success(
 			array(
 				'trafiono'  => false,
@@ -204,7 +209,8 @@ function chatl_ajax_pytanie() {
 		);
 	}
 
-	chatl_zapisz_wymiane( $sesja, 'bot', $wynik['odpowiedz'] );
+	chatl_oznacz_trafienie( $id_pytania, true );
+	chatl_zapisz_wymiane( $sesja, 'bot', $wynik['odpowiedz'], 'reguly', true );
 	wp_send_json_success(
 		array(
 			'trafiono'  => true,

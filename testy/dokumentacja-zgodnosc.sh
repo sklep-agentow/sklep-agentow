@@ -24,9 +24,9 @@ spr() { # spr "opis" "oczekiwane" "polecenie"
 }
 
 echo "=== A. Wersja i schemat ==="
-spr "naglowek Version"            "1.2.5" "grep -oP '(?<=^ \* Version: ).*' $W/chatbot-live.php"
-spr "stala CHATL_WERSJA"          "1.2.5" "grep -oP \"(?<=CHATL_WERSJA', ')[^']*\" $W/chatbot-live.php"
-spr "CHATL_WERSJA_SCHEMATU"       "3"     "grep -oP \"(?<=CHATL_WERSJA_SCHEMATU', ')[^']*\" $W/chatbot-live.php"
+spr "naglowek Version"            "1.3.0" "grep -oP '(?<=^ \* Version: ).*' $W/chatbot-live.php"
+spr "stala CHATL_WERSJA"          "1.3.0" "grep -oP \"(?<=CHATL_WERSJA', ')[^']*\" $W/chatbot-live.php"
+spr "CHATL_WERSJA_SCHEMATU"       "4"     "grep -oP \"(?<=CHATL_WERSJA_SCHEMATU', ')[^']*\" $W/chatbot-live.php"
 spr "Requires at least"           "6.0"   "grep -oP '(?<=^ \* Requires at least: ).*' $W/chatbot-live.php"
 spr "Requires PHP"                "8.1"   "grep -oP '(?<=^ \* Requires PHP: ).*' $W/chatbot-live.php"
 spr "naglowek Author"             "Automatic AI" "grep -oP '(?<=^ \* Author: ).*' $W/chatbot-live.php"
@@ -49,7 +49,8 @@ echo
 echo "=== A3. Paczka produktowa ==="
 spr "LICENSE na liscie plikow paczki" "1" "grep -c 'chatbot-live/LICENSE' boty/buduj-paczki.sh"
 spr "csv.php na liscie plikow paczki" "1" "grep -c 'chatbot-live/includes/csv.php' boty/buduj-paczki.sh"
-spr "plikow chatbota w allowliscie"   "14" "sed -n '/^ALLOWLIST_CHATBOT=(/,/^)/p' boty/buduj-paczki.sh | grep -c '\"chatbot-live/'"
+spr "statystyki.php na liscie paczki" "1" "grep -c 'chatbot-live/includes/statystyki.php' boty/buduj-paczki.sh"
+spr "plikow chatbota w allowliscie"   "15" "sed -n '/^ALLOWLIST_CHATBOT=(/,/^)/p' boty/buduj-paczki.sh | grep -c '\"chatbot-live/'"
 spr "allowlista = zawartosc katalogu" "0"  "cd wtyczki && find chatbot-live -type f | sort | comm -23 - <(sed -n '/^ALLOWLIST_CHATBOT=(/,/^)/p' ../boty/buduj-paczki.sh | grep -oP '(?<=\")chatbot-live/[^\"]*' | sort) | wc -l"
 # Klasa, ktora tu wyszla: includes/csv.php byl wymagany przez require_once, ale
 # NIE bylo go na liscie plikow paczki. Zip bez tego pliku = fatal w wp-admin
@@ -66,6 +67,11 @@ spr "CHATL_AI_LIMIT_IP_NA_DOBE"   "20"    "grep -oP '(?<=CHATL_AI_LIMIT_IP_NA_DO
 spr "CHATL_AI_MAX_TOKENS"         "1024"  "grep -oP '(?<=CHATL_AI_MAX_TOKENS = )[0-9]+' $W/includes/ai.php"
 spr "CHATL_AI_TIMEOUT"            "9"     "grep -oP '(?<=CHATL_AI_TIMEOUT    = )[0-9]+' $W/includes/ai.php"
 spr "CHATL_CSV_PORCJA"            "500"   "grep -oP '(?<=CHATL_CSV_PORCJA = )[0-9]+' $W/includes/csv.php"
+spr "CHATL_LUKI_LIMIT"            "2000"  "grep -oP '(?<=CHATL_LUKI_LIMIT = )[0-9]+' $W/includes/statystyki.php"
+spr "CHATL_LUKI_POKAZ"            "25"    "grep -oP '(?<=CHATL_LUKI_POKAZ = )[0-9]+' $W/includes/statystyki.php"
+spr "CHATL_LUKI_PROG"             "50"    "grep -oP '(?<=CHATL_LUKI_PROG = )[0-9]+' $W/includes/statystyki.php"
+spr "CHATL_LUKI_RDZEN"            "4"     "grep -oP '(?<=CHATL_LUKI_RDZEN = )[0-9]+' $W/includes/statystyki.php"
+spr "CHATL_SUGESTIA_RDZEN"        "5"     "grep -oP '(?<=CHATL_SUGESTIA_RDZEN = )[0-9]+' $W/includes/statystyki.php"
 spr "CHATL_AI_MODEL"              "claude-haiku-4-5-20251001" "grep -oP \"(?<=CHATL_AI_MODEL      = ')[^']*\" $W/includes/ai.php"
 spr "CHATL_AI_BRAK"               "BRAK_ODPOWIEDZI" "grep -oP \"(?<=CHATL_AI_BRAK       = ')[^']*\" $W/includes/ai.php"
 
@@ -79,15 +85,17 @@ echo "=== D. Baza: 5 tabel i liczba kolumn ==="
 spr "liczba dbDelta"              "5"  "grep -c 'dbDelta(' $W/includes/instalator.php"
 spr "kolumn w chatl_qa"           "6"  "sed -n '/CREATE TABLE {\$p}chatl_qa/,/) {\$charset}/p' $W/includes/instalator.php | grep -cP '^\t\t(id|pytanie|slowa_kluczowe|odpowiedz|aktywne|utworzono) '"
 spr "kolumn w chatl_zgloszenia"   "6"  "sed -n '/CREATE TABLE {\$p}chatl_zgloszenia/,/) {\$charset}/p' $W/includes/instalator.php | grep -cP '^\t\t(id|email|wiadomosc|sesja|status|utworzono) '"
-spr "kolumn w chatl_rozmowy"      "6"  "sed -n '/CREATE TABLE {\$p}chatl_rozmowy/,/) {\$charset}/p' $W/includes/instalator.php | grep -cP '^\t\t(id|sesja|rola|silnik|tresc|utworzono) '"
+spr "kolumn w chatl_rozmowy"      "7"  "sed -n '/CREATE TABLE {\$p}chatl_rozmowy/,/) {\$charset}/p' $W/includes/instalator.php | grep -cP '^\t\t(id|sesja|rola|silnik|tresc|trafiono|utworzono) '"
 spr "kolumn w chatl_ai_uzycie"    "2"  "sed -n '/CREATE TABLE {\$p}chatl_ai_uzycie/,/) {\$charset}/p' $W/includes/instalator.php | grep -cP '^\t\t(dzien|wywolania) '"
 spr "kolumn w chatl_rate_limit"   "3"  "sed -n '/CREATE TABLE {\$p}chatl_rate_limit/,/) {\$charset}/p' $W/includes/instalator.php | grep -cP '^\t\t(klucz|licznik|okno_do) '"
 spr "email varchar(190)"          "1"  "grep -c 'email varchar(190) NOT NULL' $W/includes/instalator.php"
 spr "sesja varchar(64) x2"        "2"  "grep -c 'sesja varchar(64)' $W/includes/instalator.php"
 spr "status varchar(20)"          "1"  "grep -c \"status varchar(20) NOT NULL DEFAULT 'nowe'\" $W/includes/instalator.php"
 spr "rola varchar(10)"            "1"  "grep -c 'rola varchar(10) NOT NULL' $W/includes/instalator.php"
+spr "trafiono dopuszcza NULL"     "1"  "grep -c 'trafiono tinyint(1) DEFAULT NULL' $W/includes/instalator.php"
+spr "indeks luki pod raport"      "1"  "grep -c 'KEY luki (rola,trafiono,utworzono)' $W/includes/instalator.php"
 spr "silnik domyslnie reguly"     "1"  "grep -c \"silnik varchar(10) NOT NULL DEFAULT 'reguly'\" $W/includes/instalator.php"
-spr "indeksow KEY (poza PRIMARY)" "4"  "grep -cP '^\\t\\tKEY ' $W/includes/instalator.php"
+spr "indeksow KEY (poza PRIMARY)" "5"  "grep -cP '^\\t\\tKEY ' $W/includes/instalator.php"
 
 echo
 echo "=== E. Aktywacja, seed, cron ==="
@@ -122,7 +130,7 @@ spr "endpointy AJAX (z nopriv)"   "4"  "grep -c \"add_action( 'wp_ajax\" $W/incl
 spr "akcje admin_post"            "7"  "grep -rc \"add_action( 'admin_post_\" $W/includes/admin.php $W/includes/csv.php | awk -F: '{s+=\$2} END {print s}'"
 spr "wystawione filtry"           "2"  "grep -rc 'apply_filters(' $W/includes/ai.php"
 spr "bramek current_user_can"      "6"  "grep -rc \"current_user_can( 'manage_options' )\" $W/includes/admin.php $W/includes/csv.php | awk -F: '{s+=\$2} END {print s}'"
-spr "stron panelu (menu+submenu)"  "5"  "grep -c 'add_menu_page(\|add_submenu_page(' $W/includes/admin.php"
+spr "stron panelu (menu+submenu)"  "6"  "grep -c 'add_menu_page(\|add_submenu_page(' $W/includes/admin.php"
 
 echo
 echo "=== J. Panel: limity list cytowane w dokumentacji ==="
@@ -142,6 +150,19 @@ echo
 echo "=== L. Reguła dopasowania: jedno zrodlo ==="
 spr "definicji chatl_trafione_warianty" "1" "grep -rc 'function chatl_trafione_warianty' $W --include=*.php | awk -F: '{s+=\$2} END {print s}'"
 spr "mieszka w silnik.php"        "1"  "grep -c 'function chatl_trafione_warianty' $W/includes/silnik.php"
+
+echo
+echo "=== L2. Statystyki: znacznik trafienia i grupowanie ==="
+# Znacznik MUSI ladowac na obu wierszach wymiany (pytanie goscia + odpowiedz
+# bota): raport luk pokazuje TRESC PYTANIA, wiec sam wiersz bota by nie
+# wystarczyl. Cztery sciezki odpowiedzi = cztery wywolania chatl_oznacz_trafienie.
+spr "sciezek odpowiedzi oznaczajacych trafienie" "4" "grep -c 'chatl_oznacz_trafienie( \$id_pytania' $W/includes/front.php"
+spr "definicji chatl_oznacz_trafienie" "1" "grep -rc 'function chatl_oznacz_trafienie' $W --include=*.php | awk -F: '{s+=\$2} END {print s}'"
+spr "definicji chatl_grupuj_pytania"   "1" "grep -rc 'function chatl_grupuj_pytania' $W --include=*.php | awk -F: '{s+=\$2} END {print s}'"
+spr "grupowanie mieszka w statystyki.php" "1" "grep -c 'function chatl_grupuj_pytania' $W/includes/statystyki.php"
+# Wiersze sprzed 1.3.0 (trafiono IS NULL) NIE moga wchodzic do mianownika
+# skutecznosci — inaczej panel karze wlasciciela za dane, ktorych nikt nie zmierzyl.
+spr "skutecznosc liczona bez wierszy NULL" "1" "grep -c \"chatl_procent( \\\$s\\['odpowiedziano'\\], \\\$s\\['odpowiedziano'\\] + \\\$s\\['bez_odpowiedzi'\\] )\" $W/includes/statystyki.php"
 
 echo
 echo "=== M. Diagram: paleta i samodzielnosc ==="
@@ -170,11 +191,20 @@ echo "=== O. Ramki tekstow w SVG (dokladny pomiar getBBox, CZTERY krawedzie) ===
 # przegladarka. Estymator szerokosci bez przegladarki byl sprawdzony i ODRZUCONY:
 # skalibrowany na 65 prawdziwych pomiarach przeszacowywal do 36%, wiec jako
 # bramka falszywie alarmowalby na tekstach, ktore sie mieszcza.
-if [ ! -x /root/.cache/ms-playwright/chromium-1234/chrome-linux64/chrome ] || [ ! -d node_modules/playwright-core ]; then
+# Sciezki do chromium NIE wpisujemy tutaj wprost: numer rewizji przegladarki
+# zmienia sie po kazdej aktualizacji playwrighta, a katalog domowy zalezy od
+# tego, kto uruchamia kontrole (uwaga recenzenta z PR #66). Jedno miejsce,
+# ktore o tym decyduje, to testy/lib/chromium.js — ten sam wykrywacz, ktorego
+# uzywaja same testy, wiec skrypt nie moze "pominac" kontroli, ktora testowi
+# by sie odpalila.
+CHROMIUM=$(node testy/lib/chromium.js 2>/dev/null)
+if [ -z "$CHROMIUM" ] || [ ! -d node_modules/playwright-core ]; then
   echo "  POMINIETE  brak chromium albo playwright-core — kontrola ramek tekstow NIE zostala wykonana"
-  echo "             (npm install --no-save playwright-core; potem: node testy/svg-pomiar-tekstow.js)"
+  echo "             (npm install --no-save playwright-core && npx playwright install chromium;"
+  echo "              albo wskaz swoja przegladarke: CHATL_CHROMIUM=/sciezka/do/chrome)"
   BLEDY=$((BLEDY+1))
 else
+  echo "  chromium: $CHROMIUM"
   if node testy/svg-pomiar-tekstow.js "$SVG" | sed 's/^/  /'; then
     printf '  OK   %-58s\n' "wszystkie teksty mieszcza sie w kadrze i w swoich ramkach"
   else

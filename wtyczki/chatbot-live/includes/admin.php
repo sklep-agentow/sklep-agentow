@@ -11,6 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 function chatl_admin_menu() {
 	add_menu_page( 'ChatBot LIVE', 'ChatBot LIVE', 'manage_options', 'chatl-qa', 'chatl_strona_qa', 'dashicons-format-chat', 58 );
 	add_submenu_page( 'chatl-qa', 'Baza pytań i odpowiedzi', 'Baza Q&A', 'manage_options', 'chatl-qa', 'chatl_strona_qa' );
+	add_submenu_page( 'chatl-qa', 'Statystyki i luki', 'Statystyki i luki', 'manage_options', 'chatl-statystyki', 'chatl_strona_statystyki' );
 	add_submenu_page( 'chatl-qa', 'Zgłoszenia z czatu', 'Zgłoszenia', 'manage_options', 'chatl-zgloszenia', 'chatl_strona_zgloszenia' );
 	add_submenu_page( 'chatl-qa', 'Historia rozmów', 'Historia rozmów', 'manage_options', 'chatl-historia', 'chatl_strona_historia' );
 	add_submenu_page( 'chatl-qa', 'Ustawienia ChatBota', 'Ustawienia', 'manage_options', 'chatl-ustawienia', 'chatl_strona_ustawienia' );
@@ -79,6 +80,25 @@ function chatl_strona_qa() {
 		$edytowany = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$tabela} WHERE id = %d", (int) $_GET['edytuj'] ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.Security.NonceVerification.Recommended
 	}
 	$wpisy = $wpdb->get_results( "SELECT * FROM {$tabela} ORDER BY id ASC" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+	/*
+	 * Skrót ze strony „Statystyki i luki": pytanie gościa, na które bot nie
+	 * umiał odpowiedzieć, wchodzi tu WPISANE — razem z podpowiedzią słów
+	 * kluczowych. To zamyka pętlę: raport pokazuje lukę, jedno kliknięcie
+	 * otwiera jej załatanie. Wartości z adresu tylko WYPEŁNIAJĄ formularz,
+	 * niczego nie zapisują — zapis idzie jak zawsze przez admin-post z noncem.
+	 */
+	// phpcs:disable WordPress.Security.NonceVerification.Recommended -- samo wypełnienie pól formularza; mutacja jest osobnym żądaniem z noncem.
+	$z_luki       = isset( $_GET['nowe_pytanie'] ) ? sanitize_text_field( wp_unslash( $_GET['nowe_pytanie'] ) ) : '';
+	$slowa_z_luki = isset( $_GET['nowe_slowa'] ) ? sanitize_text_field( wp_unslash( $_GET['nowe_slowa'] ) ) : '';
+	// phpcs:enable WordPress.Security.NonceVerification.Recommended
+	if ( $edytowany ) {
+		$wart_pytanie = $edytowany->pytanie;
+		$wart_slowa   = $edytowany->slowa_kluczowe;
+	} else {
+		$wart_pytanie = $z_luki;
+		$wart_slowa   = $slowa_z_luki;
+	}
 	?>
 	<div class="wrap">
 		<h1>Baza pytań i odpowiedzi</h1>
@@ -87,6 +107,12 @@ function chatl_strona_qa() {
 
 		<?php chatl_panel_testu_bota(); ?>
 
+		<?php if ( ! $edytowany && '' !== $z_luki ) : ?>
+			<div class="notice notice-info inline" style="margin:12px 0"><p>
+				Pytanie przyszło ze strony <a href="<?php echo esc_url( admin_url( 'admin.php?page=chatl-statystyki' ) ); ?>">Statystyki i luki</a> —
+				bot nie umiał na nie odpowiedzieć. <strong>Wpisz odpowiedź</strong> i zapisz; słowa kluczowe to tylko podpowiedź, popraw je śmiało.
+			</p></div>
+		<?php endif; ?>
 		<h2><?php echo $edytowany ? 'Edytuj wpis #' . (int) $edytowany->id : 'Dodaj nowy wpis'; ?></h2>
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 			<input type="hidden" name="action" value="chatl_qa_zapisz">
@@ -96,12 +122,12 @@ function chatl_strona_qa() {
 				<tr>
 					<th scope="row"><label for="chatl-pytanie">Pytanie wzorcowe</label></th>
 					<td><input type="text" id="chatl-pytanie" name="pytanie" class="large-text" required
-						value="<?php echo $edytowany ? esc_attr( $edytowany->pytanie ) : ''; ?>"></td>
+						value="<?php echo esc_attr( $wart_pytanie ); ?>"></td>
 				</tr>
 				<tr>
 					<th scope="row"><label for="chatl-slowa">Słowa kluczowe (warianty po przecinku)</label></th>
 					<td><input type="text" id="chatl-slowa" name="slowa_kluczowe" class="large-text" required
-						value="<?php echo $edytowany ? esc_attr( $edytowany->slowa_kluczowe ) : ''; ?>"></td>
+						value="<?php echo esc_attr( $wart_slowa ); ?>"></td>
 				</tr>
 				<tr>
 					<th scope="row"><label for="chatl-odpowiedz">Odpowiedź bota</label></th>
