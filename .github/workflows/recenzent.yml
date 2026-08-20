@@ -92,6 +92,12 @@ jobs:
       - name: Zaleznosci QA (composer)
         run: composer install --no-interaction --no-progress
 
+      # Znacznik czasu SPRZED recenzji. Bramka niżej liczy z niego, jak długo
+      # recenzent naprawdę pracował — dwadzieścia sekund to nie recenzja.
+      - name: Znacznik startu recenzji
+        id: znacznik
+        run: echo "start=$(date +%s)" >> "$GITHUB_OUTPUT"
+
       - name: Recenzja PR
         id: recenzja
         uses: anthropics/claude-code-action@v1
@@ -129,3 +135,23 @@ jobs:
             /tmp/claude-execution-output.json
           if-no-files-found: warn
           retention-days: 7
+
+      # ⛔ BRAMKA NA NIEMY ZGON. Akcja recenzenta potrafi skończyć się ZIELONO,
+      # nie napisawszy ani słowa — zmierzone dwa razy 20.08, raz doprowadziło do
+      # scalenia PR-a z otwartą uwagą KRYTYCZNĄ. Kryterium jest podwójne (czas
+      # ORAZ komentarz), a PR ruszający pliki workflow dostaje JAWNY wyjątek,
+      # bo tam akcja odmawia pracy z zasady. Szczegóły i próba kontrolna:
+      # narzedzia-qa/bramka-recenzji.sh, narzedzia-qa/bramka-recenzji-proba-kontrolna.sh.
+      #
+      # `!cancelled()` zamiast `always()`: przebieg ubity przez concurrency
+      # (nowe pchnięcie w tę samą gałąź) nie jest niemym zgonem, tylko naszą
+      # własną oszczędnością — czerwień za to byłaby kłamstwem.
+      - name: "Bramka: recenzja naprawde sie odbyla"
+        if: ${{ !cancelled() }}
+        env:
+          RECENZJA_START: ${{ steps.znacznik.outputs.start }}
+          PR_NUMER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+          TOKEN_GH: ${{ secrets.GITHUB_TOKEN }}
+          PLIK_WYNIKU_CLI: ${{ runner.temp }}/claude-execution-output.json
+        run: bash narzedzia-qa/bramka-recenzji.sh
