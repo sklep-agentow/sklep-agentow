@@ -205,6 +205,10 @@ spr "L4b pasek w panelu"             "1" "grep -c \"add_action( 'admin_notices',
 spr "L4b uchwyt testu klucza"        "1" "grep -c \"add_action( 'admin_post_segm_test_klucza'\" $W/includes/admin.php"
 PING=$(awk '/function segm_ai_przetestuj_klucz/,/^}/' $AI | grep -c "segm_ai_zapytaj(.*'ping'")
 spr "L4b test wysyla TYLKO ping"     "1" "echo $PING"
+BEZ_LIMITU=$(awk '/function segm_ai_przetestuj_klucz/,/^}/' $AI | grep -c "'ping', false")
+spr "L4b test NIE zabiera jednostki z limitu" "1" "echo $BEZ_LIMITU"
+TYLKO_KLAS=$(awk '/function segm_ai_zapytaj/,/^}/' $AI | grep -c 'licz_do_limitu ) {')
+spr "licznik stop-loss tylko dla klasyfikacji" "1" "echo $TYLKO_KLAS"
 spr "L4b test NIE siega do probki"   "0" "awk '/function segm_ai_przetestuj_klucz/,/^}/' $AI | grep -c 'segm_maile\|segm_klasyfikuj\|probke'"
 spr "L4b kody HTTP tlumaczone na polski" "1" "awk '/function segm_opis_bledu_ai/,/^}/' $AI | grep -c 'KLUCZ API ZOSTAŁ ODRZUCONY'"
 spr "uninstall kasuje wpis o bledzie AI" "1" "sed -n '1,/usun_dane/p' $W/uninstall.php | grep -c \"delete_option( 'segm_blad_ai' )\""
@@ -233,6 +237,7 @@ spr "format Keep a Changelog"        "1" "grep -c 'keepachangelog.com' $W/CHANGE
 spr "biezaca wersja ma wpis"         "1" "grep -c '^## \\[1.3.0\\]' $W/CHANGELOG.md"
 spr "liczba wydan opisanych"         "6" "grep -c '^## \\[' $W/CHANGELOG.md"
 spr "biezaca praca w sekcji Niewydane" "1" "grep -c '^## \\[Niewydane\\]$' $W/CHANGELOG.md"
+spr "Niewydane jest PIERWSZA sekcja (Keep a Changelog)" "Niewydane" "grep -oP '^## \\[\\K[^\\]]+' $W/CHANGELOG.md | head -1"
 for v in 1.0.0 1.1.0 1.2.0 1.2.1; do
   spr "wersja $v z historii gita opisana" "1" "grep -c '^## \\[$v\\]' $W/CHANGELOG.md"
 done

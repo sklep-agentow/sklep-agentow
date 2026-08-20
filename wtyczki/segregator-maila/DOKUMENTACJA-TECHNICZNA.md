@@ -62,7 +62,7 @@ leży w pliku `LICENSE` w katalogu wtyczki i wchodzi do paczki produktowej.
 | `includes/instalator.php` | 268 | `dbDelta` dla 7 tabel, aktywacja, deaktywacja, seed demo (5 kategorii, 8 reguł, 30 maili) |
 | `includes/silnik.php` | 226 | `segm_klasyfikuj_mail()` — jedyna reguła dopasowania w całej wtyczce; przebieg na próbce |
 | `includes/csv.php` | 352 | import próbki z CSV (wykrywanie kodowania, limity) i eksport raportu do CSV |
-| `includes/ai.php` | 465 | opcjonalna klasyfikacja modelem, licznik stop-loss |
+| `includes/ai.php` | 481 | opcjonalna klasyfikacja modelem, licznik stop-loss |
 | `includes/admin.php` | 1173 | panel: przebiegi i raporty, reguły, kategorie, próbka, ustawienia, baner powitalny |
 | `includes/filtry.php` | 588 | eksport reguł do filtrów Gmaila (XML) i reguł Outlooka |
 | `includes/class-segm-imap.php` | 947 | **klient IMAP4rev1 w czystym PHP** — gniazdo, TLS, protokół |
@@ -467,6 +467,14 @@ u dostawcy — żeby nie szukał błędu u siebie, gdy go tam nie ma.
 „ping”. ⛔ Żadnego maila, żadnej treści z próbki — to test poświadczeń, nie
 klasyfikacja, więc nie wymaga zgody na wysyłkę próbki do AI i celowo jej nie
 sprawdza.
+
+Z tego samego powodu test **nie zabiera jednostki z dziennego stop-lossu**
+(`ai_limit_dzienny`) i **nie jest nim blokowany**: ten limit chroni budżet na
+klasyfikację, a sprawdzenie własnych poświadczeń nie jest klasyfikacją.
+Właściciel z wyczerpanym limitem musi móc sprawdzić, czy klucz w ogóle działa —
+inaczej diagnostyka wyłączałaby się dokładnie wtedy, gdy jest potrzebna.
+Technicznie: `segm_ai_zapytaj()` ma trzeci parametr `$licz_do_limitu`, a licznik
+rośnie tylko dla wywołań, które naprawdę klasyfikują.
 
 ## 11. Cykl życia
 

@@ -189,6 +189,13 @@ function segm_opis_bledu_ai( $kod ) {
  * wychodziły z serwera cudze dane. Test NIE wymaga więc zgody na wysyłkę
  * próbki do AI i celowo jej nie sprawdza.
  *
+ * Z tego samego powodu test NIE ZABIERA jednostki z dziennego stop-lossu
+ * (`ai_limit_dzienny`) i NIE JEST nim blokowany: ten limit chroni budżet na
+ * klasyfikację, a sprawdzenie własnych poświadczeń nie jest klasyfikacją.
+ * Właściciel z wyczerpanym limitem musi móc sprawdzić, czy klucz w ogóle
+ * działa — inaczej diagnostyka wyłączałaby się dokładnie wtedy, gdy jest
+ * potrzebna.
+ *
  * @return array{ok: bool, komunikat: string}
  */
 function segm_ai_przetestuj_klucz() {
@@ -199,7 +206,7 @@ function segm_ai_przetestuj_klucz() {
 		);
 	}
 
-	$odpowiedz = segm_ai_zapytaj( 'Odpowiadasz jednym słowem.', 'ping' );
+	$odpowiedz = segm_ai_zapytaj( 'Odpowiadasz jednym słowem.', 'ping', false );
 	if ( null === $odpowiedz ) {
 		$blad = segm_blad_ai();
 		return array(
@@ -285,11 +292,14 @@ function segm_log_bledu_ai( $odp, $kod ) {
 /**
  * Jedno wywołanie Messages API (wp_remote_post) z JEDNYM retry (połączenie/5xx/429).
  *
- * @param string $system Instrukcja systemowa.
- * @param string $tresc  Treść wiadomości użytkownika.
+ * @param string $system         Instrukcja systemowa.
+ * @param string $tresc          Treść wiadomości użytkownika.
+ * @param bool   $licz_do_limitu Czy udane wywołanie ma zabrać jednostkę
+ *                               z dziennego stop-lossu. Fałsz WYŁĄCZNIE dla
+ *                               sprawdzenia klucza, które nic nie klasyfikuje.
  * @return string|null Tekst odpowiedzi modelu albo null przy błędzie.
  */
-function segm_ai_zapytaj( $system, $tresc ) {
+function segm_ai_zapytaj( $system, $tresc, $licz_do_limitu = true ) {
 	// Filtry = punkt rozszerzenia (proxy / atrapa API w testach).
 	$url   = apply_filters( 'segm_ai_url', 'https://api.anthropic.com/v1/messages' );
 	$model = apply_filters( 'segm_ai_model', SEGM_AI_MODEL );
@@ -350,8 +360,14 @@ function segm_ai_zapytaj( $system, $tresc ) {
 		return null;
 	}
 
-	// Licznik stop-loss dopiero PO udanym wywołaniu.
-	segm_ai_zuzyj();
+	// Licznik stop-loss dopiero PO udanym wywołaniu — i TYLKO dla wywołań,
+	// które naprawdę klasyfikują. Sprawdzenie klucza („ping") nie zabiera
+	// właścicielowi jednostki z budżetu prawdziwych klasyfikacji: przycisk
+	// w panelu obiecuje, że NICZEGO nie klasyfikuje, a licznik, który mimo to
+	// idzie w górę, robiłby z tej obietnicy nieprawdę.
+	if ( $licz_do_limitu ) {
+		segm_ai_zuzyj();
+	}
 
 	return $tekst;
 }

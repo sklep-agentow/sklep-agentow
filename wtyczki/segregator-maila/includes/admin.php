@@ -1036,7 +1036,7 @@ function segm_strona_ustawienia() {
 			<input type="hidden" name="action" value="segm_test_klucza">
 			<?php wp_nonce_field( 'segm_test_klucza' ); ?>
 			<?php submit_button( 'Przetestuj klucz API', 'secondary', 'submit', false, '' === segm_klucz_api() ? array( 'disabled' => 'disabled' ) : array() ); ?>
-			<span class="description"><?php echo '' === segm_klucz_api() ? 'Najpierw zapisz klucz.' : 'Sprawdza poświadczenia i nazwę modelu — niczego nie klasyfikuje.'; ?></span>
+			<span class="description"><?php echo '' === segm_klucz_api() ? 'Najpierw zapisz klucz.' : 'Sprawdza poświadczenia i nazwę modelu — niczego nie klasyfikuje i nie zabiera jednostki z dziennego limitu AI.'; ?></span>
 		</form>
 
 		<h2>Zgoda na wysyłkę próbki do AI</h2>
