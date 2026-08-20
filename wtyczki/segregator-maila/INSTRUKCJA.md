@@ -6,8 +6,10 @@ z Ciebie i gdzie się myli.
 
 **Jak to działa:** najpierw ustawiasz reguły i sprawdzasz je na PRÓBCE maili
 (wbudowane demo albo Twój eksport CSV) — czyli ZANIM cokolwiek dotknie
-prawdziwej poczty. Gotowe reguły wyeksportujesz do filtrów Gmaila i Outlooka
-i wpuścisz na żywą skrzynkę.
+prawdziwej poczty. Potem podłączasz skrzynkę po IMAP (rozdział 6) i wtyczka
+rozkłada pocztę do folderów sama. **Domyślnie na sucho**: pokazuje, co by
+przeniosła, i nie rusza ani jednej wiadomości, dopóki sam tego nie włączysz.
+Gotowe reguły możesz też wyeksportować do filtrów Gmaila i Outlooka.
 
 ## 1. Instalacja (2 minuty)
 
@@ -111,7 +113,109 @@ Do wyboru trzy pliki:
 Te same ostrzeżenia są wpisane w KAŻDY wygenerowany plik, żeby nie zgubiły się
 po drodze do osoby, która będzie klikać w skrzynce.
 
-## 6. FAQ
+## 6. Prawdziwa skrzynka (IMAP) — segregacja na żywo
+
+Zakładka **Segregator maila → Skrzynka (IMAP)**. Wtyczka loguje się do Twojej
+skrzynki, czyta wiadomości i przenosi je do folderów na serwerze poczty —
+według tych samych reguł, które przetestowałeś na próbce.
+
+### ⭐ Domyślnie działa NA SUCHO i to jest celowe
+
+Po podłączeniu skrzynki wtyczka **niczego nie rusza**. Przebieg pokazuje
+listę: która wiadomość, od kogo, do którego folderu **by trafiła** — i tyle.
+To nie jest deklaracja w regulaminie, tylko sposób działania: w trybie na
+sucho folder otwierany jest poleceniem IMAP `EXAMINE`, czyli **tylko do
+odczytu na poziomie protokołu**. Serwer poczty sam odrzuciłby próbę zmiany,
+nawet gdyby wtyczka ją wysłała.
+
+Realne przenoszenie włącza się **dwoma świadomymi krokami**:
+
+1. potwierdzasz jednorazowo, że wtyczka może ruszać wiadomości (zapisujemy
+   datę i login — do okazania, gdyby ktoś pytał, kto na to pozwolił),
+2. dopiero potem przełączasz *Tryb pracy* na „realne przenoszenie".
+
+Sam pierwszy krok jeszcze niczego nie włącza. Cofnięcie potwierdzenia wraca
+do trybu na sucho natychmiast.
+
+### Co wpisać w polach
+
+| Pole | Co wpisać |
+|---|---|
+| Serwer IMAP | adres od dostawcy poczty; dla Gmaila `imap.gmail.com` |
+| Port i szyfrowanie | prawie zawsze **993 + SSL/TLS** |
+| Login | zwykle pełny adres e-mail |
+| Hasło | **hasło aplikacji** — patrz niżej |
+| Folder źródłowy | `INBOX`, czyli skrzynka odbiorcza |
+| Folder nadrzędny | np. `Segregator` — kategoria „Faktury" trafi do `Segregator/Faktury` |
+
+Przycisk **Sprawdź połączenie** łączy się naprawdę: loguje się, mówi, ile
+wiadomości widzi w folderze źródłowym, wypisuje foldery na serwerze i pokazuje
+całą rozmowę z serwerem do wglądu. Hasła w tej rozmowie nie ma — w miejscu
+hasła jest `****`.
+
+### ⛔ Hasło aplikacji, nigdy hasło do konta
+
+**Podawaj wyłącznie hasło aplikacji.** To osobne hasło wydawane jednemu
+programowi: unieważnisz je jednym kliknięciem, nie zmieniając hasła do poczty,
+i nie daje dostępu do reszty konta. U dostawców z logowaniem dwuskładnikowym
+zwykłe hasło i tak nie zadziała.
+
+Bezpieczniej niż w bazie — **stałą w `wp-config.php`**:
+
+```php
+define( 'SEGM_IMAP_HASLO', 'twoje-haslo-aplikacji' );
+```
+
+Stała ma **pierwszeństwo** nad polem w panelu (pole jest wtedy zablokowane).
+Hasło nie leży w bazie, więc nie wychodzi z jej kopią zapasową ani z eksportem
+na środowisko testowe. Tak samo rozwiązany jest klucz API w ChatBocie.
+
+Niezależnie od tego, gdzie trzymasz hasło: **hasło nigdy nie wraca do
+formularza** (można je tylko podmienić albo usunąć), a **odinstalowanie wtyczki
+kasuje je z bazy ZAWSZE** — także wtedy, gdy nie zaznaczysz „usuń wszystkie
+dane". To samo dotyczy potwierdzenia realnego przenoszenia.
+
+### ⛔ Czego wtyczka nie obsłuży
+
+**Microsoft 365 i Outlook.com.** Microsoft wyłączył tam logowanie loginem
+i hasłem — ich serwer przyjmuje wyłącznie OAuth2. Sprawdzone na żywym
+serwerze: `outlook.office365.com` ogłasza `LOGINDISABLED`. Wtyczka wykryje to
+i powie wprost, zamiast w kółko zgłaszać „błędne hasło".
+
+### Czego wtyczka NIE wymaga: rozszerzenia PHP „imap"
+
+Rozszerzenie `imap` zostało wyjęte z PHP i przeniesione do repozytorium PECL —
+podręcznik PHP pisze wprost: *„This extension has been moved to the PECL
+repository and is no longer bundled with PHP as of PHP 8.4.0"*. Wtyczka oparta
+na funkcjach `imap_*` przestałaby działać po aktualizacji PHP na Twoim
+hostingu. Ta ma **własnego klienta IMAP** i potrzebuje tylko tego, co PHP ma
+zawsze: gniazd sieciowych i OpenSSL. Sekcja *„Czy ten serwer to udźwignie"* na
+górze zakładki sprawdza to wszystko i mówi po polsku, czego brakuje.
+
+### Segregacja cykliczna i „Uruchom teraz"
+
+Częstotliwość: co 15 minut, co 30 minut, co godzinę, co 6 godzin, raz na dobę
+albo wyłączona. Zadanie chodzi na WP-Cron WordPressa. Jeśli WP-Cron jest
+wyłączony (stała `DISABLE_WP_CRON`), wtyczka to pokaże, zamiast udawać, że
+harmonogram działa. Przycisk **Uruchom teraz** działa zawsze i w tym samym
+trybie, który masz ustawiony.
+
+Jeden przebieg bierze do 50 najnowszych wiadomości (do zmiany w ustawieniach)
+i kończy się po 20 sekundach — reszta idzie następnym razem. To celowe:
+hosting nie urwie żądania w połowie przenoszenia.
+
+### Historia i cofanie ostatniego przebiegu
+
+Każdy przebieg zapisuje: co, kiedy i dokąd. **Cofnij ostatni przebieg**
+przenosi wiadomości z powrotem do folderu, z którego wyszły. Wtyczka zapamiętuje
+nowy identyfikator każdej wiadomości (kod odpowiedzi `COPYUID`), a gdy serwer
+go nie poda, szuka wiadomości po nagłówku `Message-ID`. Jeśli którejś nie
+odnajdzie, powie tego wprost — zamiast zgadywać i przenieść cudzy mail.
+
+Cofnąć da się **ostatni** przebieg, nie dowolny wcześniejszy. Dlatego zanim
+włączysz realne przenoszenie, puść skrzynkę raz na sucho i przeczytaj listę.
+
+## 7. FAQ
 
 **Import CSV nie wchodzi.**
 Plik musi mieć kolumny w kolejności `od, temat, tresc[, kategoria_oczekiwana]`,
@@ -161,15 +265,14 @@ Twojego sekretu w bazie; po ponownej instalacji wpisz go na nowo). Reszta
 domyślnie zostaje. Z opcją „usuń wszystkie dane" kasowane są też kategorie,
 reguły, próbka, przebiegi i ustawienia.
 
-## 7. Droga rozbudowy (po zakupie, na życzenie)
+## 8. Droga rozbudowy (po zakupie, na życzenie)
 
-- podpięcie prawdziwej skrzynki (IMAP/OAuth) i segregacja na żywo — krok po
-  kroku: konto techniczne → pobieranie nagłówków → te same reguły → etykiety,
+- logowanie OAuth2 (potrzebne do Microsoft 365 i Outlook.com),
 - reguły z wykluczeniami („zawiera X, ale nie Y"),
-- harmonogram automatycznych przebiegów,
+- nadawanie etykiet zamiast przenoszenia (Gmail),
 - inne modele AI / własny proxy (filtry `segm_ai_url` i `segm_ai_model`).
 
-## 8. Deklaracja prywatności (ważne — RODO)
+## 9. Deklaracja prywatności (ważne — RODO)
 
 - **Tryb regułowy:** treść maili NIE opuszcza Twojego WordPressa — segregacja
   działa lokalnie, próbka leży w Twojej bazie danych.
@@ -179,10 +282,17 @@ reguły, próbka, przebiegi i ustawienia.
   przebieg AI w ogóle nie startuje (zamiast tego dostajesz komunikat).
   Zgoda jest zapisywana z datą i loginem osoby, która ją wyraziła, i można ją
   cofnąć w każdej chwili. Odinstalowanie wtyczki kasuje ją zawsze.
-- **Retencja:** próbka i raporty przebiegów są kasowane automatycznie po
-  **90 dniach** (codzienny WP-Cron), a przycisk „Wyczyść próbkę teraz" na
-  stronie *Próbka maili* usuwa je natychmiast. Raporty kasujemy razem z
-  próbką, bo trzymają nadawcę i temat każdego maila.
+- **Skrzynka IMAP:** treść maili nie opuszcza Twojego serwera — wtyczka łączy
+  się bezpośrednio z Twoim serwerem poczty i klasyfikuje lokalnie, regułami.
+  Hasło aplikacji trzymane jest w osobnej opcji bez autoload (albo, zalecane,
+  w `wp-config.php`) i **kasowane przy odinstalowaniu ZAWSZE**. Wiadomości
+  pobieramy poleceniem `BODY.PEEK`, które **nie oznacza ich jako
+  przeczytanych**.
+- **Retencja:** próbka, raporty przebiegów oraz historia segregacji skrzynki
+  (nadawca, temat, folder) są kasowane automatycznie po **90 dniach**
+  (codzienny WP-Cron), a przycisk „Wyczyść próbkę teraz" na stronie *Próbka
+  maili* usuwa próbkę i raporty natychmiast. Raporty kasujemy razem z próbką,
+  bo trzymają nadawcę i temat każdego maila.
 - Jeśli wgrywasz próbkę z PRAWDZIWYMI mailami klientów, to są dane osobowe —
   **dopisz przetwarzanie (i ewentualnego dostawcę AI) do swojej polityki
   prywatności**; do testów reguł często wystarczy próbka zanonimizowana.

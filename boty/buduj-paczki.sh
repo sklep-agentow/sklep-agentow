@@ -38,7 +38,11 @@ ALLOWLIST_SEGREGATOR=(
 	"segregator-maila/includes/ai.php"
 	"segregator-maila/includes/csv.php"
 	"segregator-maila/includes/admin.php"
+	"segregator-maila/includes/admin-skrzynka.php"
 	"segregator-maila/includes/filtry.php"
+	"segregator-maila/includes/class-segm-imap.php"
+	"segregator-maila/includes/skrzynka.php"
+	"segregator-maila/includes/skrzynka-przebieg.php"
 )
 
 zbuduj() {

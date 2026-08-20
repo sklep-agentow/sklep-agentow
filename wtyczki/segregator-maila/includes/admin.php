@@ -25,7 +25,7 @@ add_action( 'admin_menu', 'segm_admin_menu' );
  * @return array<int, string>
  */
 function segm_strony() {
-	return array( 'segm-przebiegi', 'segm-reguly', 'segm-kategorie', 'segm-probka', 'segm-ustawienia' );
+	return array( 'segm-przebiegi', 'segm-reguly', 'segm-kategorie', 'segm-probka', 'segm-skrzynka', 'segm-ustawienia' );
 }
 
 /**
@@ -60,8 +60,8 @@ function segm_baner_powitalny() {
 	);
 	?>
 	<div class="notice notice-info">
-		<p><strong>To narzędzie NIE łączy się z Twoją skrzynką pocztową.</strong> Pracuje na PRÓBCE maili, którą wgrasz (albo na wbudowanym demo 30 maili): sprawdza Twoje reguły segregacji i pokazuje raport z liczbami — ile poczty automat rozdzieliłby sam i gdzie by się pomylił — <em>zanim</em> wpuścisz te reguły na żywą skrzynkę.</p>
-		<p>Nic tu nie czyta ani nie przenosi Twoich prawdziwych maili. Podpięcie skrzynki (IMAP/OAuth) to droga rozbudowy opisana w instrukcji.
+		<p><strong>Zacznij od próbki, dopiero potem podłącz skrzynkę.</strong> Reguły sprawdzasz najpierw na PRÓBCE maili, którą wgrasz (albo na wbudowanym demo 30 maili): raport pokazuje z liczbami, ile poczty automat rozdzieli sam i gdzie się pomyli — <em>zanim</em> cokolwiek dotknie prawdziwej korespondencji.</p>
+		<p>Gotowe reguły puszczasz na żywą skrzynkę w zakładce <strong>Skrzynka (IMAP)</strong>. <strong>Domyślnie działa tam tryb NA SUCHO</strong>: wtyczka pokazuje, co by przeniosła, i nie rusza ani jednej wiadomości, dopóki sam tego nie włączysz.
 			<a href="<?php echo esc_url( $schowaj ); ?>">Rozumiem — nie pokazuj więcej</a></p>
 	</div>
 	<?php

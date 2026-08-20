@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: Segregator maila
- * Description: Porządkuje firmową skrzynkę: rozdziela pocztę do kategorii według Twoich reguł (kolejność = pierwsza pasująca wygrywa), pokazuje raport z liczbami — ile poczty automat rozdziela sam i gdzie się myli — i eksportuje gotowe reguły do filtrów Gmaila oraz Outlooka.
+ * Description: Porządkuje firmową skrzynkę: łączy się z nią po IMAP i rozkłada pocztę do folderów według Twoich reguł. Domyślnie pracuje NA SUCHO — pokazuje, co by przeniósł, i nie rusza ani jednej wiadomości, dopóki sam tego nie włączysz. Do tego zadanie cykliczne, historia i cofnięcie ostatniego przebiegu.
  * Version: 1.2.1
  * Requires at least: 6.0
  * Requires PHP: 8.1
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 define( 'SEGM_WERSJA', '1.2.1' );
-define( 'SEGM_WERSJA_SCHEMATU', '2' );
+define( 'SEGM_WERSJA_SCHEMATU', '3' );
 define( 'SEGM_KATALOG', plugin_dir_path( __FILE__ ) );
 
 /*
@@ -79,12 +79,23 @@ require_once SEGM_KATALOG . 'includes/instalator.php';
 register_activation_hook( __FILE__, 'segm_aktywacja' );
 register_deactivation_hook( __FILE__, 'segm_deaktywacja' );
 
-// Bot działa wyłącznie w adminie — front nie ładuje nic poza ścieżką upgrade.
+/*
+ * Segregacja skrzynki chodzi TAKŻE poza panelem: zadanie cykliczne WP-Cron
+ * odpala się z wp-cron.php, gdzie is_admin() jest fałszem. Silnik reguł i cała
+ * obsługa IMAP muszą więc być widoczne zawsze — inaczej cron wywalałby się na
+ * „nie ma takiej funkcji". Reszta (panel, import CSV, eksport filtrów) zostaje
+ * przy adminie, bo front nie ma z nich żadnego pożytku.
+ */
+require_once SEGM_KATALOG . 'includes/silnik.php';
+require_once SEGM_KATALOG . 'includes/ai.php';
+require_once SEGM_KATALOG . 'includes/class-segm-imap.php';
+require_once SEGM_KATALOG . 'includes/skrzynka.php';
+require_once SEGM_KATALOG . 'includes/skrzynka-przebieg.php';
+
 if ( is_admin() ) {
-	require_once SEGM_KATALOG . 'includes/silnik.php';
-	require_once SEGM_KATALOG . 'includes/ai.php';
 	require_once SEGM_KATALOG . 'includes/csv.php';
 	require_once SEGM_KATALOG . 'includes/admin.php';
+	require_once SEGM_KATALOG . 'includes/admin-skrzynka.php';
 	require_once SEGM_KATALOG . 'includes/filtry.php';
 }
 
@@ -104,10 +115,11 @@ add_action( 'plugins_loaded', 'segm_sprawdz_schemat' );
  * (wzór 1:1 z ChatBota — rejestracja przy aktywacji, zdjęcie przy deaktywacji,
  * wpis w uninstall.php).
  *
- * Kasujemy OBIE tabele z treścią osób trzecich: segm_maile (nadawca, temat,
- * treść) ORAZ segm_przebiegi (kolumna wyniki trzyma nadawcę i temat każdego
- * maila) — czyszczenie samej próbki zostawiałoby tę samą korespondencję
- * w raportach, czyli retencję tylko na papierze.
+ * Kasujemy WSZYSTKIE tabele z treścią osób trzecich: segm_maile (nadawca,
+ * temat, treść), segm_przebiegi (kolumna wyniki trzyma nadawcę i temat każdego
+ * maila) oraz historię segregacji żywej skrzynki (segm_skrz_ruchy +
+ * segm_skrz_przebiegi) — czyszczenie samej próbki zostawiałoby tę samą
+ * korespondencję w raportach, czyli retencję tylko na papierze.
  *
  * Funkcja żyje w pliku głównym (ładowanym zawsze), bo WP-Cron chodzi poza
  * adminem — includes/ ładują się tylko dla is_admin().
@@ -152,6 +164,31 @@ function segm_czyszczenie_probki() {
 	);
 	if ( false === $wynik ) {
 		segm_log_bledu_bazy( 'segm_czyszczenie_probki', 'kasowanie raportów starszych niż ' . SEGM_RETENCJA_DNI . ' dni' );
+	}
+
+	// Historia segregacji ŻYWEJ skrzynki trzyma nadawcę i temat każdej ruszonej
+	// wiadomości, czyli tę samą kategorię danych co próbka — obejmuje ją więc
+	// ta sama retencja. Bez tego wpisu retencja byłaby tylko na papierze.
+	$ruchy = $wpdb->prefix . 'segm_skrz_ruchy';
+	$wynik = $wpdb->query(
+		$wpdb->prepare(
+			"DELETE FROM {$ruchy} WHERE utworzono < %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$granica
+		)
+	);
+	if ( false === $wynik ) {
+		segm_log_bledu_bazy( 'segm_czyszczenie_probki', 'kasowanie historii skrzynki starszej niż ' . SEGM_RETENCJA_DNI . ' dni' );
+	}
+
+	$skrz_przebiegi = $wpdb->prefix . 'segm_skrz_przebiegi';
+	$wynik          = $wpdb->query(
+		$wpdb->prepare(
+			"DELETE FROM {$skrz_przebiegi} WHERE uruchomiono < %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$granica
+		)
+	);
+	if ( false === $wynik ) {
+		segm_log_bledu_bazy( 'segm_czyszczenie_probki', 'kasowanie przebiegów skrzynki starszych niż ' . SEGM_RETENCJA_DNI . ' dni' );
 	}
 
 	segm_zwolnij_blokade();

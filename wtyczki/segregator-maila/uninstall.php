@@ -15,6 +15,7 @@ $segm_ust = get_option( 'segm_ustawienia', array() );
 // (np. skasowanie katalogu i „usuń" z listy) — martwy wpis w cronie tylko
 // sypie błędami „nie ma takiej funkcji".
 wp_clear_scheduled_hook( 'segm_czyszczenie_probki' );
+wp_clear_scheduled_hook( 'segm_skrzynka_cron' );
 
 // Znacznik „operacja na próbce w toku" to stan chwilowy, nie dane użytkownika —
 // kasujemy ZAWSZE, żeby po odinstalowaniu nie został w bazie wpis bez wtyczki,
@@ -25,6 +26,17 @@ delete_option( 'segm_operacja_w_toku' );
 // (zasada D22: poświadczenia ≠ dane użytkowe; martwa wtyczka nie zostawia klucza
 // w bazie — znalezisko wrogiej sesji botów 19.08, zmierzone na czystym WP).
 delete_option( 'segm_klucz_api' );
+
+// HASŁO DO CUDZEJ SKRZYNKI — kasowane ZAWSZE i bezwarunkowo, niezależnie od
+// opcji „usuń dane". Poświadczenia do konta pocztowego osoby trzeciej to
+// najcięższy sekret, jaki ta wtyczka trzyma; odinstalowana wtyczka nie ma
+// prawa zostawić go w bazie ani w jej kopii zapasowej.
+delete_option( 'segm_imap_haslo' );
+
+// Zgoda na REALNE przenoszenie wiadomości też znika zawsze: po ponownej
+// instalacji wtyczka ma wrócić do trybu NA SUCHO i poprosić o tę decyzję
+// od nowa, a nie odziedziczyć potwierdzenie sprzed odinstalowania.
+delete_option( 'segm_zgoda_przenoszenie' );
 
 // Zgoda na wysyłkę próbki do AI też znika ZAWSZE: po ponownej instalacji
 // właściciel ma podjąć tę decyzję świadomie od nowa, a nie odziedziczyć
@@ -41,8 +53,11 @@ $wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}segm_reguly" ); // phpcs:igno
 $wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}segm_maile" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 $wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}segm_przebiegi" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 $wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}segm_ai_uzycie" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}segm_skrz_przebiegi" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}segm_skrz_ruchy" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 delete_option( 'segm_ustawienia' );
+delete_option( 'segm_skrzynka' );
 delete_option( 'segm_wersja_schematu' );
 
 // Ślad „baner powitalny schowany" trzymany per użytkownik — bez tego zostałyby
