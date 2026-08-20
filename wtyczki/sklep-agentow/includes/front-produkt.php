@@ -162,9 +162,11 @@ function sklepag_tresc_produktu( $slug ) {
 				array( '0 maili na zewnątrz', 'tryb regułowy działa w całości w Twoim WordPressie' ),
 			),
 			'dla_kogo'     => array( 'Biura i sekretariaty', 'Firmy usługowe z jedną wspólną skrzynką', 'Każdy, kto zaczyna dzień od przekopywania poczty' ),
-			'uczciwosc'    => 'Nie znajdziesz tu opinii z gwiazdkami — sprzedajemy od niedawna i nie zmyślamy recenzji; zamiast tego masz raport z liczbami z TWOJEJ próbki. Działa na próbkach CSV (eksport ze skrzynki w 2 minuty) — dlatego uczciwie nazywa się „testowy", a nie udaje produkcji. Podpięcie prawdziwej skrzynki (IMAP/OAuth) to opisana krok po kroku droga rozbudowy w instrukcji. Prywatność: w trybie regułowym nic nie wychodzi z Twojego serwera; w trybie AI treść maila idzie do API dostawcy (wzmianka do Twojej polityki prywatności).',
+			'uczciwosc'    => 'Nie znajdziesz tu opinii z gwiazdkami — sprzedajemy od niedawna i nie zmyślamy recenzji; zamiast tego masz raport z liczbami z TWOJEJ próbki. Reguły układasz i sprawdzasz na próbce, a potem puszczasz je na PRAWDZIWEJ skrzynce: wtyczka rozkłada pocztę do folderów na serwerze poczty, domyślnie chodzi NA SUCHO i nie rusza ani jednej wiadomości, dopóki sam nie potwierdzisz, a ostatni przebieg cofniesz jednym kliknięciem. Czego nie ma, mówimy przed zakupem: logowanie tylko loginem i hasłem aplikacji, więc Microsoft 365 i Outlook.com NIE zadziałają (tam wymagane jest OAuth); na skrzynce klasyfikują reguły, nie AI; bez czytania załączników.',
 			'faq'          => array(
-				array( 'Czy muszę podpinać skrzynkę?', 'Nie — pracujesz na próbkach CSV. Prawdziwa skrzynka to droga rozbudowy opisana w instrukcji.' ),
+				array( 'Czy muszę podpinać skrzynkę?', 'Nie musisz — możesz pracować wyłącznie na próbkach CSV. Ale możesz: wtyczka obsługuje prawdziwą skrzynkę i przenosi w niej pocztę do folderów.' ),
+				array( 'Zadziała z Microsoft 365 albo Outlook.com?', 'Nie. Tam wymagane jest logowanie OAuth, którego ta wtyczka nie obsługuje. Gmail i skrzynki hostingowe z hasłem aplikacji: tak.' ),
+				array( 'Czy coś mi się pomiesza w poczcie?', 'Domyślny tryb na sucho niczego nie rusza — pokazuje tylko, co by zrobił. Realne przenoszenie wymaga przełączenia i osobnego potwierdzenia, a ostatni przebieg da się cofnąć.' ),
 				array( 'Skąd wezmę CSV?', 'Eksport z klienta poczty (Gmail, Thunderbird, Outlook) — instrukcja pokazuje jak, krok po kroku.' ),
 				array( 'Co znaczy trafność (accuracy)?', 'Dodajesz do próbki kolumnę z oczekiwaną kategorią — raport liczy % trafień i pokazuje pomyłki.' ),
 				array( 'Czy AI jest wymagane?', 'Nie — pełny tryb regułowy działa bez klucza. AI to opcja do porównania wyników.' ),
@@ -427,7 +429,7 @@ function sklepag_render_produkt( $slug ) {
 		$html .= '</ul></section>';
 
 		// UCZCIWOŚĆ (zamiast fejk-opinii — D6/Omnibus).
-		$html .= '<section class="sklepag-sekcja sklepag-uczciwosc"><p class="sklepag-mono-etykieta">[ „TESTOWY BOT" — CO TO ZNACZY ]</p>';
+		$html .= '<section class="sklepag-sekcja sklepag-uczciwosc"><p class="sklepag-mono-etykieta">[ CO DOKŁADNIE DOSTAJESZ — I CZEGO NIE MA ]</p>';
 		$html .= '<p class="sklepag-sekcja-tekst">' . esc_html( $t['uczciwosc'] ) . '</p></section>';
 	} elseif ( '' !== trim( (string) $p->opis_pelny ) ) {
 		// Produkt spoza dwójki: opis pełny z bazy, render jako tekst (XSS — plan §7).
