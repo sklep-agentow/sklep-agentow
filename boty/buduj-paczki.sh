@@ -28,6 +28,7 @@ ALLOWLIST_CHATBOT=(
 	"chatbot-live/includes/instalator.php"
 	"chatbot-live/includes/silnik.php"
 	"chatbot-live/includes/ai.php"
+	"chatbot-live/includes/rodo.php"
 	"chatbot-live/includes/operator.php"
 	"chatbot-live/assets/operator.css"
 	"chatbot-live/assets/operator.js"

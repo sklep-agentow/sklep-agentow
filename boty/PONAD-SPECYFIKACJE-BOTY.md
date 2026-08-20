@@ -44,7 +44,13 @@ była w klepniętych szkicach (`boty/SZKICE-BOTOW.md`) albo wynika z ich zasad
    wydarzy i że w paczce znajdzie historię zmian oraz opis w formacie, który zna
    z katalogu WordPressa. Brak tych rzeczy nie psuje działania, ale od razu
    widać, że to nie jest produkt handlowy.
-11. **Pułapka na boty (honeypot + próg czasu)** (`includes/front.php`,
+11. **Wpięcie w kreator RODO WordPressa (eksporter i kasownik danych osobowych)**
+   (`includes/rodo.php`) — rozszerzenie ponad szkice. **Powód:** wtyczka trzyma
+   adresy e-mail gości i treść ich rozmów, a produkt jest sprzedawany z sekcją
+   o RODO — wtyczka niewpięta w kreator zostawia właściciela z obowiązkiem
+   prawnym i bez narzędzia. To nie jest bonus dla ładnego opisu: bez tego
+   deklaracja produktu rozjeżdża się z tym, co kod naprawdę potrafi.
+12. **Pułapka na boty (honeypot + próg czasu)** (`includes/front.php`,
    `assets/widget.js`) — rozszerzenie ponad szkice. **Powód:** czat jest publiczny,
    a pięć adresów wystarczało, żeby wyczerpać dzienny budżet AI właściciela —
    potem prawdziwi goście dostawali już tylko tryb regułowy, a właściciel płacił
