@@ -1,0 +1,118 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 920" width="1400" height="920" role="img" aria-labelledby="tyt opis">
+	<title id="tyt">Sklep Agentów — ścieżka zakupu od kliknięcia do pobrania pliku</title>
+	<desc id="opis">Diagram przepływu: gość klika Kup, przechodzi walidację zgody i limitu, płaci przez Stripe Checkout. Zamówienie domykają dwa niezależne silniki: webhook Stripe i zadanie cykliczne co 10 minut, z atomowym przejęciem, żeby mail wyszedł dokładnie raz. Następnie mail z linkiem i brama pobrań sprawdzająca token, termin 72 godzin i limit 10 pobrań.</desc>
+	<style>
+		.t { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+		.m { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+		.tytul { font-size: 30px; font-weight: 650; fill: #f5f5f5; }
+		.podtyt { font-size: 15px; fill: #8f929c; }
+		.etyk { font-size: 12px; fill: #bfff38; letter-spacing: 2px; }
+		.naglowek { font-size: 17px; font-weight: 600; fill: #f5f5f5; }
+		.opis { font-size: 13px; fill: #8f929c; }
+		.kod { font-size: 11.5px; fill: #8f929c; letter-spacing: 0.5px; }
+		.akcent { font-size: 13px; fill: #bfff38; }
+		.karta { fill: #101116; stroke: rgba(245,245,245,0.10); stroke-width: 1.5; rx: 14; }
+		.karta-akc { fill: #101116; stroke: #bfff38; stroke-width: 2; rx: 14; }
+		.strzalka { stroke: #bfff38; stroke-width: 2.5; fill: none; }
+		.linia { stroke: rgba(245,245,245,0.10); stroke-width: 1; }
+	</style>
+	<rect width="1400" height="920" fill="#08090b"/>
+	<text class="t tytul" x="60" y="62">Sklep Agentów — od kliknięcia do pobrania</text>
+	<text class="t podtyt" x="60" y="92">Zakup domykają DWA niezależne silniki. Atomowe przejęcie gwarantuje, że mail wychodzi dokładnie raz.</text>
+	<line class="linia" x1="60" y1="120" x2="1340" y2="120"/>
+
+	<!-- RZAD 1 -->
+	<g>
+		<rect class="karta" x="60" y="160" width="290" height="150"/>
+		<text class="m etyk" x="84" y="192">1 · GOŚĆ</text>
+		<text class="t naglowek" x="84" y="222">Klika „Kup teraz"</text>
+		<text class="t opis" x="84" y="250">Strona produktu, zaznaczona</text>
+		<text class="t opis" x="84" y="270">zgoda na przetwarzanie danych.</text>
+		<text class="m kod" x="84" y="294">bez zakładania konta</text>
+	</g>
+	<path class="strzalka" d="M362 235 h44" marker-end="url(#g)"/>
+	<g>
+		<rect class="karta" x="418" y="160" width="290" height="150"/>
+		<text class="m etyk" x="442" y="192">2 · BRAMKA WEJŚCIA</text>
+		<text class="t naglowek" x="442" y="222">Nonce, zgoda, limit</text>
+		<text class="t opis" x="442" y="250">Brak zgody albo przekroczony</text>
+		<text class="t opis" x="442" y="270">limit — zakup nie rusza.</text>
+		<text class="m kod" x="442" y="294">limit per adres IP</text>
+	</g>
+	<path class="strzalka" d="M720 235 h44" marker-end="url(#g)"/>
+	<g>
+		<rect class="karta" x="776" y="160" width="290" height="150"/>
+		<text class="m etyk" x="800" y="192">3 · SESJA</text>
+		<text class="t naglowek" x="800" y="222">Stripe Checkout</text>
+		<text class="t opis" x="800" y="250">Zamówienie zapisane jako</text>
+		<text class="t opis" x="800" y="270">oczekujące, gość idzie płacić.</text>
+		<text class="m kod" x="800" y="294">wp_sklepag_zamowienia</text>
+	</g>
+	<path class="strzalka" d="M1078 235 h44" marker-end="url(#g)"/>
+	<g>
+		<rect class="karta-akc" x="1134" y="160" width="206" height="150"/>
+		<text class="m etyk" x="1158" y="192">4 · PŁATNOŚĆ</text>
+		<text class="t naglowek" x="1158" y="222">Karta u Stripe</text>
+		<text class="t opis" x="1158" y="250">Jedyna usługa</text>
+		<text class="t opis" x="1158" y="270">zewnętrzna w całej</text>
+		<text class="t opis" x="1158" y="290">wtyczce.</text>
+	</g>
+
+	<!-- RZAD 2: dwa silniki -->
+	<path class="strzalka" d="M1237 322 v58 h-537 v34" marker-end="url(#g)"/>
+	<text class="m akcent" x="1250" y="356">wynik</text>
+	<g>
+		<rect class="karta" x="418" y="414" width="290" height="130"/>
+		<text class="m etyk" x="442" y="446">5A · SILNIK PIERWSZY</text>
+		<text class="t naglowek" x="442" y="476">Webhook Stripe</text>
+		<text class="t opis" x="442" y="504">Stripe sam powiadamia.</text>
+		<text class="m kod" x="442" y="528">podpis sprawdzany</text>
+	</g>
+	<g>
+		<rect class="karta" x="776" y="414" width="290" height="130"/>
+		<text class="m etyk" x="800" y="446">5B · SILNIK DRUGI</text>
+		<text class="t naglowek" x="800" y="476">Zadanie co 10 minut</text>
+		<text class="t opis" x="800" y="504">Domyka, gdy webhook</text>
+		<text class="t opis" x="800" y="524">nie dotarł.</text>
+	</g>
+	<path class="strzalka" d="M563 556 v40 h137 v20" marker-end="url(#g)"/>
+	<path class="strzalka" d="M921 556 v40 h-137 v20" marker-end="url(#g)"/>
+
+	<!-- RZAD 3 -->
+	<g>
+		<rect class="karta-akc" x="418" y="626" width="648" height="120"/>
+		<text class="m etyk" x="442" y="658">6 · ATOMOWE PRZEJĘCIE — sedno całego mechanizmu</text>
+		<text class="t naglowek" x="442" y="690">Jeden UPDATE z warunkiem na poprzedni stan</text>
+		<text class="t opis" x="442" y="718">Silnik, który przegra wyścig, wycofuje się BEZ wysyłania drugiego maila.</text>
+		<text class="m kod" x="442" y="738">źródłem prawdy jest wyłącznie zamowienia.status</text>
+	</g>
+	<path class="strzalka" d="M742 758 v40" marker-end="url(#g)"/>
+
+	<!-- RZAD 4 -->
+	<g>
+		<rect class="karta" x="60" y="798" width="330" height="92"/>
+		<text class="m etyk" x="84" y="828">7 · MAIL</text>
+		<text class="t naglowek" x="84" y="856">Link do pobrania</text>
+		<text class="m kod" x="84" y="878">token 64 znaki</text>
+	</g>
+	<g>
+		<rect class="karta" x="418" y="798" width="648" height="92"/>
+		<text class="m etyk" x="442" y="828">8 · BRAMA POBRAŃ — trzy warunki sprawdzane naraz</text>
+		<text class="t naglowek" x="442" y="856">Token poprawny · termin 72 h · limit 10 pobrań</text>
+		<text class="m kod" x="442" y="878">plik wydawany strumieniem przez PHP, nigdy publicznym adresem</text>
+	</g>
+	<g>
+		<rect class="karta" x="1094" y="798" width="246" height="92"/>
+		<text class="m etyk" x="1118" y="828">9 · KLIENT</text>
+		<text class="t naglowek" x="1118" y="856">Pobiera paczkę</text>
+		<text class="m kod" x="1118" y="878">zip wtyczki</text>
+	</g>
+	<path class="strzalka" d="M392 844 h18" marker-end="url(#g)"/>
+	<path class="strzalka" d="M1068 844 h18" marker-end="url(#g)"/>
+
+	<defs>
+		<marker id="g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+			<path d="M 0 0 L 10 5 L 0 10 z" fill="#bfff38"/>
+		</marker>
+	</defs>
+</svg>
