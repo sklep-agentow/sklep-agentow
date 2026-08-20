@@ -64,9 +64,9 @@ const SEGM_AI_MODEL_WZORZEC = '/^[a-z0-9][a-z0-9._-]{2,63}$/';
  */
 function segm_ai_modele() {
 	return array(
-		'claude-haiku-4-5'          => 'Haiku 4.5 — najtańszy, domyślny',
-		'claude-sonnet-5'           => 'Sonnet 5 — droższy, mocniejszy',
-		'claude-opus-5'             => 'Opus 5 — najdroższy, najmocniejszy',
+		'claude-haiku-4-5'  => 'Haiku 4.5 — najtańszy, domyślny',
+		'claude-sonnet-5'   => 'Sonnet 5 — droższy, mocniejszy',
+		'claude-opus-5'     => 'Opus 5 — najdroższy, najmocniejszy',
 	);
 }
 
