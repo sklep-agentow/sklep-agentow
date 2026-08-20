@@ -60,11 +60,16 @@ const CHATL_NONCE_OKNO_DNI = 7;
  *                             CHATL_LIMIT_NA_MIN — wywołanie bez progu nie
  *                             zostaje bez limitu).
  * @param int    $okno_sekund  Długość okna w sekundach (minuta albo doba).
+ * @param string $tozsamosc    Czyj kubeł: pusty = adres gościa, inaczej np. 'sesja:abc'.
  * @return bool True = wolno obsłużyć, false = limit wyczerpany.
  */
-function chatl_rate_limit( $akcja, $prog = CHATL_LIMIT_NA_MIN, $okno_sekund = MINUTE_IN_SECONDS ) {
+function chatl_rate_limit( $akcja, $prog = CHATL_LIMIT_NA_MIN, $okno_sekund = MINUTE_IN_SECONDS, $tozsamosc = '' ) {
 	global $wpdb;
-	$ip = chatl_ip_goscia();
+	// Pusta tozsamosc = kubel na adres goscia (tak dziala reszta limitow). Odpytywanie
+	// podaje wlasna: w biurze i za proxy wszyscy goscie maja JEDEN adres, wiec limit
+	// per IP karalby ich nawzajem — a przy przejeciu rozmowy odciety gosc przestaje
+	// dostawac wiadomosci od czlowieka, z ktorym rozmawia.
+	$ip = '' !== (string) $tozsamosc ? (string) $tozsamosc : chatl_ip_goscia();
 	if ( '' === $ip ) {
 		return false;
 	}
@@ -269,16 +274,16 @@ function chatl_assety() {
 		'chatl-widget',
 		'chatlDane',
 		array(
-			'ajaxUrl'    => admin_url( 'admin-ajax.php' ),
-			'nonce'      => wp_create_nonce( 'chatl_front' ),
-			'powitanie'  => $ust['powitanie'],
+			'ajaxUrl'     => admin_url( 'admin-ajax.php' ),
+			'nonce'       => wp_create_nonce( 'chatl_front' ),
+			'powitanie'   => $ust['powitanie'],
 			// Informacja o przetwarzaniu danych przy formularzu kontaktu:
 			// co zbieramy, po co, jak długo. Adres polityki pusty => bez linku.
-			'prywatnosc' => sprintf(
+			'prywatnosc'  => sprintf(
 				'Zbieramy Twój adres e-mail i treść wiadomości wyłącznie po to, żeby odpowiedzieć na Twoje pytanie. Przechowujemy je przez %d dni, potem są kasowane.',
 				CHATL_RETENCJA_DNI
 			),
-			'polityka'   => esc_url( $ust['adres_polityki'] ),
+			'polityka'    => esc_url( $ust['adres_polityki'] ),
 			/*
 			 * Nota na STARCIE rozmowy, nie dopiero przy formularzu kontaktu.
 			 * Samo pisanie na czacie już ląduje w chatl_rozmowy — gość dowiadywał
@@ -286,13 +291,22 @@ function chatl_assety() {
 			 * zapisana od kilku minut. Sprzedajemy wielu firmom i każda staje się
 			 * administratorem danych, więc informacja ma być PRZED pierwszym słowem.
 			 */
-			'notaZapisu' => sprintf(
+			'notaZapisu'  => sprintf(
 				'Rozmowa jest zapisywana przez %d dni, żebyśmy mogli wrócić z odpowiedzią.',
 				CHATL_RETENCJA_DNI
 			),
-			'notaLink'   => 'Polityka prywatności',
-			'zgodaTekst' => 'Zapoznałem się z informacją o przetwarzaniu danych',
-			'pozycja'    => chatl_wyglad_ustawienia( $ust )['pozycja'],
+			'notaLink'    => 'Polityka prywatności',
+			'zgodaTekst'  => 'Zapoznałem się z informacją o przetwarzaniu danych',
+			'pozycja'     => chatl_wyglad_ustawienia( $ust )['pozycja'],
+			// Punkt odpytywania: co nowego w MOJEJ rozmowie (przejęcie przez człowieka).
+			'restUrl'     => esc_url_raw( rest_url( 'chatl/v1/rozmowa' ) ),
+			/*
+			 * Komunikaty o zmianie rozmówcy. Gość ma wiedzieć, KOMU pisze, ZANIM
+			 * napisze coś, czego nie powiedziałby maszynie — dlatego to jest pasek
+			 * w oknie rozmowy, a nie zmiana awatara, którą łatwo przeoczyć.
+			 */
+			'ludzkiPasek' => 'Rozmawiasz z człowiekiem — do rozmowy dołączył konsultant.',
+			'botPasek'    => 'Rozmawiasz z botem.',
 		)
 	);
 }
@@ -330,6 +344,22 @@ function chatl_ajax_pytanie() {
 	if ( '' === $pytanie || '' === $sesja ) {
 		wp_send_json_error( array( 'komunikat' => 'Puste pytanie.' ), 400 );
 	}
+
+	/*
+	 * Sekret sesji obowiązuje TAKŻE przy zapisie — inaczej ktoś, kto zdobył sam
+	 * identyfikator, mógłby podszyć się pod gościa i wstrzyknąć operatorowi
+	 * wiadomość. Kod `sesja` jest sygnałem dla widgetu: poproś o nową sesję
+	 * i spróbuj jeszcze raz (dokładnie tak, jak przy wygasłym nonce).
+	 */
+	if ( ! chatl_zapis_dozwolony( $sesja ) ) {
+		wp_send_json_error(
+			array(
+				'komunikat' => 'Sesja rozmowy wygasła — zaczynam nową i wysyłam ponownie.',
+				'kod'       => 'sesja',
+			),
+			403
+		);
+	}
 	if ( mb_strlen( $pytanie ) > CHATL_MAX_PYTANIE ) {
 		$pytanie = mb_substr( $pytanie, 0, CHATL_MAX_PYTANIE );
 	}
@@ -337,6 +367,30 @@ function chatl_ajax_pytanie() {
 	// Id pytania trzymamy, bo wynik dopasowania znamy dopiero niżej —
 	// a to WIERSZ PYTANIA niesie treść, z której powstaje raport luk.
 	$id_pytania = chatl_zapisz_wymiane( $sesja, 'gosc', $pytanie );
+	chatl_sesja_aktywnosc( $sesja );
+
+	/*
+	 * PRZEJĘCIE: gdy rozmowę prowadzi człowiek, bot MILCZY — i to jest cała
+	 * różnica między „mamy live chat" a „mamy dwa boty naraz".
+	 *
+	 * Wiadomość gościa jest już zapisana (operator musi ją przeczytać w panelu),
+	 * ale nie idzie ani do modelu, ani do reguł: żadnego wywołania API (czyli
+	 * żadnego kosztu), żadnej odpowiedzi automatu wpadającej człowiekowi w słowo.
+	 * Odpowiedź operatora dojdzie do gościa odpytywaniem, nie tą odpowiedzią.
+	 *
+	 * Crisp dokumentuje u siebie zachowanie odwrotne (wiadomość operatora nie
+	 * przerywa scenariusza bota) — dlatego strażnik sprawdza OBA kierunki:
+	 * milczenie po przejęciu i powrót głosu po zakończeniu.
+	 */
+	if ( chatl_bot_milczy( $sesja ) ) {
+		wp_send_json_success(
+			array(
+				'przejeta'  => true,
+				'trafiono'  => null,
+				'odpowiedz' => '',
+			)
+		);
+	}
 
 	// HYBRYDA: najpierw AI (jest klucz + limit dzienny globalny i per IP
 	// niewyczerpany); błąd/timeout/brak klucza => zjazd do trybu regułowego.
