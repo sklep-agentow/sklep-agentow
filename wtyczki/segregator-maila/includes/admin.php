@@ -20,6 +20,84 @@ function segm_admin_menu() {
 add_action( 'admin_menu', 'segm_admin_menu' );
 
 /**
+ * Slugi stron wtyczki — jedno źródło prawdy dla menu, banera i powrotów.
+ *
+ * @return array<int, string>
+ */
+function segm_strony() {
+	return array( 'segm-przebiegi', 'segm-reguly', 'segm-kategorie', 'segm-probka', 'segm-ustawienia' );
+}
+
+/**
+ * Baner przy pierwszym wejściu do panelu: uczciwie, czym ten bot JEST.
+ *
+ * Zarzut z pierwszej rundy krytyk brzmiał „nazywa się segregator, a nie
+ * segreguje" — bo nazwa i karta produktu sugerują wpięcie do skrzynki.
+ * Prawda musi stać na wierzchu, a nie kilka ekranów niżej, więc baner wisi na
+ * KAŻDEJ stronie wtyczki, dopóki właściciel go nie schowa.
+ *
+ * Chowanie idzie przez zwykły odnośnik z nonce (meta użytkownika), a nie przez
+ * „is-dismissible" — tamto zamyka baner tylko na jedno wyświetlenie i wraca
+ * przy następnym wejściu, dopóki nie dołoży się do tego JS-a i AJAX-a.
+ *
+ * @return void
+ */
+function segm_baner_powitalny() {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		return;
+	}
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- tylko rozpoznanie, na której stronie jesteśmy.
+	$strona = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
+	if ( ! in_array( $strona, segm_strony(), true ) ) {
+		return;
+	}
+	if ( get_user_meta( get_current_user_id(), 'segm_baner_ukryty', true ) ) {
+		return;
+	}
+	$schowaj = wp_nonce_url(
+		admin_url( 'admin-post.php?action=segm_baner_ukryj&strona=' . $strona ),
+		'segm_baner_ukryj'
+	);
+	?>
+	<div class="notice notice-info">
+		<p><strong>To narzędzie NIE łączy się z Twoją skrzynką pocztową.</strong> Pracuje na PRÓBCE maili, którą wgrasz (albo na wbudowanym demo 30 maili): sprawdza Twoje reguły segregacji i pokazuje raport z liczbami — ile poczty automat rozdzieliłby sam i gdzie by się pomylił — <em>zanim</em> wpuścisz te reguły na żywą skrzynkę.</p>
+		<p>Nic tu nie czyta ani nie przenosi Twoich prawdziwych maili. Podpięcie skrzynki (IMAP/OAuth) to droga rozbudowy opisana w instrukcji.
+			<a href="<?php echo esc_url( $schowaj ); ?>">Rozumiem — nie pokazuj więcej</a></p>
+	</div>
+	<?php
+}
+add_action( 'admin_notices', 'segm_baner_powitalny' );
+
+/**
+ * Schowanie banera dla bieżącego użytkownika (decyzja per osoba, nie globalna).
+ *
+ * @return void
+ */
+function segm_post_baner_ukryj() {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_die( 'Brak uprawnień.' );
+	}
+	check_admin_referer( 'segm_baner_ukryj' );
+
+	$strona = isset( $_GET['strona'] ) ? sanitize_key( wp_unslash( $_GET['strona'] ) ) : 'segm-przebiegi';
+	if ( ! in_array( $strona, segm_strony(), true ) ) {
+		$strona = 'segm-przebiegi';
+	}
+
+	$uzytkownik = get_current_user_id();
+	update_user_meta( $uzytkownik, 'segm_baner_ukryty', 1 );
+	// Gdyby zapis nie przeszedł, baner po prostu wróci — ale niech właściciel
+	// wie DLACZEGO wraca, zamiast klikać ten sam odnośnik w kółko.
+	if ( ! get_user_meta( $uzytkownik, 'segm_baner_ukryty', true ) ) {
+		segm_przekieruj_blad( $strona, 'Nie udało się zapamiętać, że baner ma zniknąć — baza odrzuciła zapis. Baner będzie się pokazywał dalej.' );
+	}
+
+	wp_safe_redirect( admin_url( 'admin.php?page=' . $strona ) );
+	exit;
+}
+add_action( 'admin_post_segm_baner_ukryj', 'segm_post_baner_ukryj' );
+
+/**
  * Komunikat po powrocie z admin-post (?segm_ok=... / ?segm_blad=...).
  */
 function segm_komunikaty() {

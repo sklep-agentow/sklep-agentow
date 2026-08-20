@@ -39,3 +39,7 @@ $wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}segm_ai_uzycie" ); // phpcs:i
 
 delete_option( 'segm_ustawienia' );
 delete_option( 'segm_wersja_schematu' );
+
+// Ślad „baner powitalny schowany" trzymany per użytkownik — bez tego zostałyby
+// osierocone wiersze w wp_usermeta po wtyczce, której już nie ma.
+delete_metadata( 'user', 0, 'segm_baner_ukryty', '', true );
