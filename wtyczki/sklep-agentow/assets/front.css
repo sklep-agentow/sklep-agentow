@@ -34,6 +34,11 @@
 	grid-template-columns: 1fr min(72rem, 100%) 1fr;
 }
 
+/* ⚠️ ŚWIADOMA DECYZJA (uwaga recenzenta #62): to jest WYRÓWNANIE DO SIATKI,
+   nie centrowanie treści. Sekcje trzymają własny `max-width` (czytelna długość
+   linii) i stoją przy LEWEJ krawędzi toru — dokładnie tak jak treść gospodarza
+   (jego `max-w-[42rem]` też siedzi przy lewej krawędzi `container-site`).
+   Luz po prawej stronie sekcji jest zamierzony, nie jest niedokończoną robotą. */
 .sklepag-wyspa > * {
 	grid-column: 2;
 }
