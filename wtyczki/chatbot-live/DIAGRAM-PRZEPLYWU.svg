@@ -1,0 +1,149 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 910" width="1400" height="910" role="img" aria-labelledby="tytul opis">
+  <title id="tytul">ChatBot LIVE — przepływ zapytania gościa</title>
+  <desc id="opis">Gość zadaje pytanie w widgecie. Bramka wejścia sprawdza nonce i limit zapytań z jednego IP. Pytanie trafia do historii rozmów. Silnik szuka odpowiedzi w bazie Q&amp;A, opcjonalnie poprzedzony trybem AI. Przy trafieniu bot odpowiada i zapisuje odpowiedź. Przy braku trafienia gość dostaje tekst awaryjny i formularz kontaktu; po walidacji, w tym wymaganej zgody, zgłoszenie trafia do bazy i na maila właściciela.</desc>
+
+  <!-- Paleta sklepu: tło #08090b, panele #101116, akcent limonka #BFFF38,
+       tekst #F5F5F5, tekst wygaszony #8F929C.
+       Plik SAMODZIELNY: zero odwołań zewnętrznych, fonty wyłącznie systemowe. -->
+  <defs>
+    <marker id="strzalka" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#BFFF38"/>
+    </marker>
+    <marker id="strzalka-szara" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#8F929C"/>
+    </marker>
+    <style>
+      .tlo      { fill: #08090b; }
+      .panel    { fill: #101116; stroke: #BFFF38; stroke-opacity: .28; stroke-width: 1.5; }
+      .panel-ai { fill: #101116; stroke: #8F929C; stroke-opacity: .5; stroke-width: 1.5; stroke-dasharray: 6 4; }
+      .romb     { fill: #101116; stroke: #BFFF38; stroke-width: 2; }
+      .t        { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+      .naglowek { font-size: 26px; font-weight: 700; fill: #F5F5F5; }
+      .podtytul { font-size: 14px; fill: #8F929C; }
+      .krok     { font-size: 11.5px; font-weight: 700; fill: #BFFF38; letter-spacing: .08em; }
+      .krok-sz  { font-size: 11.5px; font-weight: 700; fill: #8F929C; letter-spacing: .08em; }
+      .tytul-b  { font-size: 15px; font-weight: 700; fill: #F5F5F5; }
+      .opis-b   { font-size: 12.5px; fill: #8F929C; }
+      .kod      { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; font-size: 11.5px; fill: #BFFF38; }
+      .kod-sz   { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; font-size: 11.5px; fill: #8F929C; }
+      .etykieta { font-size: 12.5px; font-weight: 700; fill: #BFFF38; }
+      .stopka   { font-size: 12px; fill: #8F929C; }
+      .linia    { stroke: #BFFF38; stroke-width: 2; fill: none; }
+      .linia-sz { stroke: #8F929C; stroke-width: 1.6; fill: none; stroke-dasharray: 5 4; }
+    </style>
+  </defs>
+
+  <rect class="tlo" x="0" y="0" width="1400" height="910"/>
+
+  <text class="t naglowek" x="40" y="52">ChatBot LIVE — przepływ zapytania gościa</text>
+  <text class="t podtytul" x="40" y="78">Ścieżka regułowa jest ścieżką podstawową. Tryb AI (ramka przerywana) jest opcjonalny i przy każdym błędzie zjeżdża do reguł.</text>
+
+  <!-- ===== WIERSZ 1: droga pytania ===== -->
+  <rect class="panel" x="40" y="150" width="240" height="120" rx="10"/>
+  <text class="t krok"    x="60" y="176">1 · GOŚĆ</text>
+  <text class="t tytul-b" x="60" y="200">Pytanie w widgecie</text>
+  <text class="t opis-b"  x="60" y="222">Sesja żyje w karcie przeglądarki,</text>
+  <text class="t opis-b"  x="60" y="240">bez pamięci między wizytami.</text>
+  <text class="t kod"     x="60" y="260">maks. 500 znaków</text>
+
+  <rect class="panel" x="312" y="150" width="240" height="120" rx="10"/>
+  <text class="t krok"    x="332" y="176">2 · BRAMKA WEJŚCIA</text>
+  <text class="t tytul-b" x="332" y="200">Nonce i limit</text>
+  <text class="t opis-b"  x="332" y="222">Nonce, limit z jednego IP</text>
+  <text class="t opis-b"  x="332" y="240">i sprawdzenie, czy bot włączony.</text>
+  <text class="t kod"     x="332" y="260">10 zapytań / min / IP</text>
+
+  <rect class="panel" x="584" y="150" width="240" height="120" rx="10"/>
+  <text class="t krok"    x="604" y="176">3 · HISTORIA</text>
+  <text class="t tytul-b" x="604" y="200">Zapis pytania</text>
+  <text class="t opis-b"  x="604" y="222">Wymiana trafia do historii,</text>
+  <text class="t opis-b"  x="604" y="240">czyszczonej cronem co dobę.</text>
+  <text class="t kod"     x="604" y="260">wp_chatl_rozmowy · 90 dni</text>
+
+  <rect class="panel" x="856" y="150" width="240" height="120" rx="10"/>
+  <text class="t krok"    x="876" y="176">4 · SILNIK</text>
+  <text class="t tytul-b" x="876" y="200">Szukanie w bazie Q&amp;A</text>
+  <text class="t opis-b"  x="876" y="222">Warianty po przecinku,</text>
+  <text class="t opis-b"  x="876" y="240">dopasowanie podłańcuchem.</text>
+  <text class="t kod"     x="876" y="260">wp_chatl_qa</text>
+
+  <rect class="panel-ai" x="1128" y="150" width="240" height="120" rx="10"/>
+  <text class="t krok-sz" x="1148" y="176">OPCJONALNIE · TRYB AI</text>
+  <text class="t opis-b"  x="1148" y="200">Z kluczem API pytanie idzie</text>
+  <text class="t opis-b"  x="1148" y="218">najpierw do modelu. Błąd, limit</text>
+  <text class="t opis-b"  x="1148" y="236">brak klucza — zjazd do reguł.</text>
+  <text class="t kod-sz"  x="1148" y="258">timeout 9 s + 1 ponowienie</text>
+
+  <line class="linia" x1="280" y1="210" x2="304" y2="210" marker-end="url(#strzalka)"/>
+  <line class="linia" x1="552" y1="210" x2="576" y2="210" marker-end="url(#strzalka)"/>
+  <line class="linia" x1="824" y1="210" x2="848" y2="210" marker-end="url(#strzalka)"/>
+  <line class="linia-sz" x1="1128" y1="210" x2="1104" y2="210" marker-end="url(#strzalka-szara)"/>
+
+  <!-- ===== DECYZJA ===== -->
+  <line class="linia" x1="976" y1="270" x2="976" y2="304" marker-end="url(#strzalka)"/>
+  <path class="romb" d="M 976 310 L 1096 370 L 976 430 L 856 370 Z"/>
+  <text class="t tytul-b" x="976" y="366" text-anchor="middle">Trafienie?</text>
+  <text class="t opis-b"  x="976" y="386" text-anchor="middle">wygrywa więcej wariantów</text>
+
+  <!-- gałąź TAK: w prawo -->
+  <text class="t etykieta" x="1104" y="360">TAK</text>
+  <line class="linia" x1="1096" y1="370" x2="1120" y2="370" marker-end="url(#strzalka)"/>
+  <rect class="panel" x="1128" y="310" width="240" height="120" rx="10"/>
+  <text class="t krok"    x="1148" y="336">5A · ODPOWIEDŹ</text>
+  <text class="t tytul-b" x="1148" y="360">Bot odpowiada</text>
+  <text class="t opis-b"  x="1148" y="382">Odpowiedź wraca do gościa</text>
+  <text class="t opis-b"  x="1148" y="400">i ląduje w historii rozmów</text>
+  <text class="t opis-b"  x="1148" y="418">ze znacznikiem silnika.</text>
+
+  <!-- gałąź NIE: w dół i w lewo -->
+  <text class="t etykieta" x="990" y="452">NIE</text>
+  <path class="linia" d="M 976 430 L 976 500 L 160 500 L 160 554" marker-end="url(#strzalka)"/>
+
+  <!-- ===== WIERSZ 2: droga kontaktu ===== -->
+  <rect class="panel" x="40" y="560" width="240" height="120" rx="10"/>
+  <text class="t krok"    x="60" y="586">5B · BRAK ODPOWIEDZI</text>
+  <text class="t tytul-b" x="60" y="610">Tekst awaryjny</text>
+  <text class="t opis-b"  x="60" y="632">Bot mówi wprost, że nie wie,</text>
+  <text class="t opis-b"  x="60" y="650">i otwiera formularz kontaktu.</text>
+
+  <rect class="panel" x="312" y="560" width="240" height="120" rx="10"/>
+  <text class="t krok"    x="332" y="586">6 · FORMULARZ</text>
+  <text class="t tytul-b" x="332" y="610">E-mail, treść, zgoda</text>
+  <text class="t opis-b"  x="332" y="632">Checkbox zgody WYMAGANY,</text>
+  <text class="t opis-b"  x="332" y="650">obok informacji: co, po co</text>
+  <text class="t opis-b"  x="332" y="668">i na jak długo zbieramy.</text>
+
+  <rect class="panel" x="584" y="560" width="240" height="120" rx="10"/>
+  <text class="t krok"    x="604" y="586">7 · WALIDACJA</text>
+  <text class="t tytul-b" x="604" y="610">Kontrola na serwerze</text>
+  <text class="t opis-b"  x="604" y="632">Nonce, limit, poprawny e-mail,</text>
+  <text class="t opis-b"  x="604" y="650">niepusta treść ORAZ zgoda —</text>
+  <text class="t opis-b"  x="604" y="668">sam checkbox niczego nie broni.</text>
+
+  <rect class="panel" x="856" y="560" width="240" height="120" rx="10"/>
+  <text class="t krok"    x="876" y="586">8 · ZAPIS I MAIL</text>
+  <text class="t tytul-b" x="876" y="610">Zgłoszenie i mail</text>
+  <text class="t opis-b"  x="876" y="632">Wynik zapisu do bazy i wysyłki</text>
+  <text class="t opis-b"  x="876" y="650">maila jest SPRAWDZANY.</text>
+  <text class="t kod"     x="876" y="670">wp_chatl_zgloszenia</text>
+
+  <line class="linia" x1="280" y1="620" x2="304" y2="620" marker-end="url(#strzalka)"/>
+  <line class="linia" x1="552" y1="620" x2="576" y2="620" marker-end="url(#strzalka)"/>
+  <line class="linia" x1="824" y1="620" x2="848" y2="620" marker-end="url(#strzalka)"/>
+
+  <!-- ===== WIERSZ 3: co widzi gość ===== -->
+  <line class="linia" x1="976" y1="680" x2="976" y2="724" marker-end="url(#strzalka)"/>
+  <rect class="panel" x="584" y="730" width="640" height="106" rx="10"/>
+  <text class="t krok"    x="604" y="756">9 · CO WIDZI GOŚĆ</text>
+  <text class="t tytul-b" x="604" y="780">Zapis się udał: „Dziękujemy — odezwiemy się na podany adres”.</text>
+  <text class="t opis-b"  x="604" y="802">Zapis padł: komunikat błędu i prośba o ponowienie — nigdy fałszywe podziękowanie.</text>
+  <text class="t opis-b"  x="604" y="822">Mail nie wyszedł: zgłoszenie i tak jest w panelu, a właściciel widzi tam ostrzeżenie.</text>
+
+  <text class="t stopka" x="40" y="756">Tabele wtyczki:</text>
+  <text class="t stopka" x="40" y="776">wp_chatl_qa · wp_chatl_zgloszenia</text>
+  <text class="t stopka" x="40" y="796">wp_chatl_rozmowy · wp_chatl_ai_uzycie</text>
+  <text class="t stopka" x="40" y="816">wp_chatl_rate_limit</text>
+
+  <text class="t stopka" x="584" y="852">Każda liczba na diagramie pochodzi ze stałej w kodzie: CHATL_MAX_PYTANIE, CHATL_LIMIT_NA_MIN,</text>
+  <text class="t stopka" x="584" y="872">CHATL_RETENCJA_DNI, CHATL_AI_TIMEOUT — rozpisane w DOKUMENTACJA-TECHNICZNA.md.</text>
+</svg>

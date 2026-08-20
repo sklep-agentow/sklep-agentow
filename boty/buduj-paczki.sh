@@ -19,12 +19,16 @@ mkdir -p "$WYJSCIE"
 ALLOWLIST_CHATBOT=(
 	"chatbot-live/chatbot-live.php"
 	"chatbot-live/uninstall.php"
+	"chatbot-live/LICENSE"
 	"chatbot-live/INSTRUKCJA.md"
+	"chatbot-live/DOKUMENTACJA-TECHNICZNA.md"
+	"chatbot-live/DIAGRAM-PRZEPLYWU.svg"
 	"chatbot-live/includes/instalator.php"
 	"chatbot-live/includes/silnik.php"
 	"chatbot-live/includes/ai.php"
 	"chatbot-live/includes/front.php"
 	"chatbot-live/includes/admin.php"
+	"chatbot-live/includes/csv.php"
 	"chatbot-live/assets/widget.js"
 	"chatbot-live/assets/widget.css"
 )
@@ -67,9 +71,9 @@ zbuduj() {
 	fi
 
 	# 3) Sweep treści plików z listy (ślady wewnętrzne: TODO/notatki QA/adresy dev).
-	# `HACK` z granicami slowa (\b): bez nich wzorzec lapal nazwisko „James Hacker"
-	# z zalacznika tekstu GPL w pliku LICENSE — falszywy alarm zatrzymywal budowe.
-	if ( cd "$KORZEN/wtyczki" && grep -niE 'TODO|FIXME|XXX:|\bHACK\b|nie dla klienta|notatka (QA|recenzenck)|localhost:8890|strona_wp|sklep_mailpit' "${ALLOWLIST[@]}" ); then
+	# Znaczniki w GRANICACH SŁOWA (\b...\b): bez tego "HACK" trafiało w "James
+	# Hacker" z załącznika GPL w pliku LICENSE i budowa padała na tekście licencji.
+	if ( cd "$KORZEN/wtyczki" && grep -niE '\bTODO\b|\bFIXME\b|\bXXX\b:|\bHACK\b|nie dla klienta|notatka (QA|recenzenck)|localhost:8890|strona_wp|sklep_mailpit' "${ALLOWLIST[@]}" ); then
 		echo "BLAD: slady wewnetrzne w plikach $WTYCZKA (wyzej)" >&2
 		exit 1
 	fi

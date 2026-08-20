@@ -11,9 +11,9 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 
 $chatl_ust = get_option( 'chatl_ustawienia', array() );
 
-// Sekret właściciela (klucz API) kasowany ZAWSZE, niezależnie od opcji „usuń dane"
-// (zasada D22: poświadczenia ≠ dane użytkowe; martwa wtyczka nie zostawia klucza
-// w bazie — znalezisko wrogiej sesji botów 19.08, zmierzone na czystym WP).
+// Sekret właściciela (klucz API) kasowany ZAWSZE, niezależnie od opcji „usuń dane":
+// poświadczenie to nie są dane użytkowe, a martwa wtyczka nie ma prawa zostawiać
+// klucza w bazie.
 delete_option( 'chatl_klucz_api' );
 
 if ( empty( $chatl_ust['usun_dane'] ) ) {

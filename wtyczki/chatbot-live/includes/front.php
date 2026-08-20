@@ -25,8 +25,8 @@ const CHATL_RETENCJA_DNI  = 90;
 const CHATL_AI_LIMIT_IP_NA_DOBE = 20;
 
 /**
- * Rate limit per IP na tabeli (wzorzec sklepu: sklepag_rate_limit, recenzja
- * PR #33) — wspólny dla obu endpointów nopriv, żeby gość z noncem nie zalewał
+ * Rate limit per IP na tabeli — wspólny dla obu endpointów nopriv,
+ * żeby gość z noncem nie zalewał
  * bazy, nie mail-bombił właściciela ani nie przepalał klucza API w trybie AI.
  *
  * Poprzednia wersja na transiencie (get/set) NIE była atomowa: równoległe
