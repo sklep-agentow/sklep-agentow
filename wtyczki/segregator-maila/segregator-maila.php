@@ -82,6 +82,7 @@ if ( is_admin() ) {
 	require_once SEGM_KATALOG . 'includes/ai.php';
 	require_once SEGM_KATALOG . 'includes/csv.php';
 	require_once SEGM_KATALOG . 'includes/admin.php';
+	require_once SEGM_KATALOG . 'includes/filtry.php';
 }
 
 /**

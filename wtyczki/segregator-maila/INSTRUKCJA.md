@@ -75,7 +75,44 @@ robić prawdziwy model — a najciekawszy jest tryb **„porównaj oba"**:
 
 Koszty API ponosi właściciel klucza według cennika dostawcy.
 
-## 5. FAQ
+## 5. Eksport filtrów do prawdziwej skrzynki
+
+Kiedy reguły dają na próbce wynik, który Cię zadowala, przenieś je tam, gdzie
+naprawdę stoi poczta: **Segregator maila → Eksport filtrów**.
+
+Do wyboru trzy pliki:
+
+- **Gmail — plik XML do zaimportowania.** W Gmailu: *Ustawienia → Zobacz
+  wszystkie ustawienia → Filtry i zablokowane adresy → Importuj filtry*.
+- **Gmail — zapytania do wklejenia (CSV).** Ta sama treść, ale do ręcznego
+  sprawdzenia: wklejasz zapytanie w wyszukiwarkę Gmaila i widzisz, co złapie,
+  ZANIM cokolwiek zaimportujesz. Zalecane pierwsze podejście.
+- **Outlook — instrukcja krok po kroku (TXT).** Outlook nie przyjmuje reguł
+  z zewnętrznego pliku (jego własny format `.rwz` otwiera wyłącznie klasyczny
+  Outlook, a w wersji przeglądarkowej import w ogóle nie działa), więc
+  dostajesz listę do odklikania — w naszej kolejności.
+
+### Czego eksport NIE przeniesie — przeczytaj, zanim zaimportujesz
+
+1. **Kubeł „Reszta" nie jest eksportowalny.** To nie reguła, tylko „żadna
+   reguła nie pasowała", a takiego warunku nie ma ani Gmail, ani Outlook.
+   Skutek w skrzynce wychodzi jednak ten sam: mail, którego nie złapie żaden
+   filtr, zostaje w Skrzynce odbiorczej.
+2. **Kolejność.** Nasz silnik zatrzymuje się na PIERWSZEJ pasującej regule;
+   Gmail czegoś takiego nie ma. Dlatego w eksporcie **każdy filtr dostaje
+   dodatkowy warunek wykluczający wszystkie wcześniejsze reguły** — dzięki temu
+   mail wpada najwyżej do jednej kategorii, niezależnie od kolejności
+   stosowania filtrów. W **Outlooku** odwzorowanie jest pełne: zaznacz
+   w każdej regule **„Zatrzymaj przetwarzanie kolejnych reguł"**.
+3. **Fragment kontra całe słowo.** My szukamy fragmentu (`faktur` łapie
+   „faktury"), wyszukiwarka skrzynki operuje na słowach. To największe źródło
+   różnic — wzorce urwane w połowie słowa dopisz do pełnych form.
+4. **Accuracy zostaje u nas.** Skrzynka nie zna kolumny `kategoria_oczekiwana`.
+
+Te same ostrzeżenia są wpisane w KAŻDY wygenerowany plik, żeby nie zgubiły się
+po drodze do osoby, która będzie klikać w skrzynce.
+
+## 6. FAQ
 
 **Import CSV nie wchodzi.**
 Plik musi mieć kolumny w kolejności `od, temat, tresc[, kategoria_oczekiwana]`,
@@ -125,7 +162,7 @@ Twojego sekretu w bazie; po ponownej instalacji wpisz go na nowo). Reszta
 domyślnie zostaje. Z opcją „usuń wszystkie dane" kasowane są też kategorie,
 reguły, próbka, przebiegi i ustawienia.
 
-## 6. Droga rozbudowy (po zakupie, na życzenie)
+## 7. Droga rozbudowy (po zakupie, na życzenie)
 
 - podpięcie prawdziwej skrzynki (IMAP/OAuth) i segregacja na żywo — krok po
   kroku: konto techniczne → pobieranie nagłówków → te same reguły → etykiety,
@@ -133,7 +170,7 @@ reguły, próbka, przebiegi i ustawienia.
 - harmonogram automatycznych przebiegów,
 - inne modele AI / własny proxy (filtry `segm_ai_url` i `segm_ai_model`).
 
-## 7. Deklaracja prywatności (ważne — RODO)
+## 8. Deklaracja prywatności (ważne — RODO)
 
 - **Tryb regułowy:** treść maili NIE opuszcza Twojego WordPressa — segregacja
   działa lokalnie, próbka leży w Twojej bazie danych.
