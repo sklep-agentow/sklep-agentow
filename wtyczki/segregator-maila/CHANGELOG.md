@@ -48,6 +48,14 @@ do prawdziwej skrzynki. Zbiera zmiany scalone do gałęzi głównej po 1.2.1.
   brakuje — zamiast białego ekranu przy brakującym rozszerzeniu PHP.
 - **Eksport reguł do filtrów Gmaila (XML) i reguł Outlooka** wraz z opisem, czego
   eksport NIE przeniesie.
+- **Praca na pojedynczym mailu w próbce**: dodanie, poprawienie i usunięcie
+  JEDNEGO maila. Dotąd każda operacja na próbce była operacją na całości (import
+  CSV, demo, „wyczyść"), więc sprawdzenie jednego przypadku wymagało przebudowania
+  pliku CSV.
+- **Licznik trafień przy regule**: przy każdej regule dwie liczby z bieżącej
+  próbki — do ilu maili pasuje sam wzorzec i ile reguła realnie zgarnia (bo
+  pierwsza pasująca wygrywa). Przycisk „Policz na próbce" robi to samo dla
+  wzorca jeszcze niezapisanego. Obie liczby liczy ta sama funkcja co przebieg.
 - **Ekran powitalny po aktywacji** — trzy pierwsze kroki i odnośniki; pokazywany raz,
   z możliwością zamknięcia na stałe (zapamiętywane per użytkownik).
 - Dokumentacja techniczna (`DOKUMENTACJA-TECHNICZNA.md`) z mapą dla audytora,

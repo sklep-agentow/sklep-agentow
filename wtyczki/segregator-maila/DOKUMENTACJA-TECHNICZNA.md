@@ -57,19 +57,20 @@ leży w pliku `LICENSE` w katalogu wtyczki i wchodzi do paczki produktowej.
 
 | Plik | Linii | Za co odpowiada |
 |---|---|---|
-| `segregator-maila.php` | 324 | nagłówek wtyczki, stałe, ładowanie plików, cron retencji, znacznik „operacja w toku", zgoda na AI, ustawienia ogólne |
-| `uninstall.php` | 86 | deinstalacja — dwie ścieżki (§11.5) |
+| `segregator-maila.php` | 325 | nagłówek wtyczki, stałe, ładowanie plików, cron retencji, znacznik „operacja w toku", zgoda na AI, ustawienia ogólne |
+| `uninstall.php` | 89 | deinstalacja — dwie ścieżki (§11.5) |
 | `includes/instalator.php` | 268 | `dbDelta` dla 7 tabel, aktywacja, deaktywacja, seed demo (5 kategorii, 8 reguł, 30 maili) |
-| `includes/silnik.php` | 226 | `segm_klasyfikuj_mail()` — jedyna reguła dopasowania w całej wtyczce; przebieg na próbce |
+| `includes/silnik.php` | 248 | `segm_klasyfikuj_mail()` — jedyna reguła dopasowania w całej wtyczce; przebieg na próbce |
 | `includes/csv.php` | 352 | import próbki z CSV (wykrywanie kodowania, limity) i eksport raportu do CSV |
 | `includes/ai.php` | 481 | opcjonalna klasyfikacja modelem, licznik stop-loss |
-| `includes/admin.php` | 1173 | panel: przebiegi i raporty, reguły, kategorie, próbka, ustawienia, baner powitalny |
+| `includes/admin.php` | 1212 | panel: przebiegi i raporty, reguły, kategorie, próbka, ustawienia, baner powitalny |
 | `includes/filtry.php` | 588 | eksport reguł do filtrów Gmaila (XML) i reguł Outlooka |
 | `includes/class-segm-imap.php` | 947 | **klient IMAP4rev1 w czystym PHP** — gniazdo, TLS, protokół |
 | `includes/skrzynka.php` | 504 | konfiguracja skrzynki, hasło, diagnostyka, „Sprawdź połączenie", rozbiór nagłówków i treści |
 | `includes/skrzynka-przebieg.php` | 556 | przebieg na żywej skrzynce, historia, cofanie, harmonogramy WP-Cron |
 | `includes/admin-skrzynka.php` | 692 | panel zakładki *Skrzynka (IMAP)* i obsługa jej formularzy |
 | `includes/admin-powitanie.php` | 143 | ekran powitalny pokazywany raz po aktywacji |
+| `includes/admin-probka.php` | 382 | praca na POJEDYNCZYM mailu i licznik trafień reguły |
 
 Poza kodem w paczce jadą: `LICENSE` (pełny tekst GPL-2.0), `readme.txt`
 (nagłówek w standardzie WordPressa, opis, instalacja, FAQ, changelog),
@@ -82,8 +83,8 @@ Poza kodem w paczce jadą: `LICENSE` (pełny tekst GPL-2.0), `readme.txt`
   `class-segm-imap.php`, `skrzynka.php`, `skrzynka-przebieg.php`.
   Powód jest konkretny: zadanie cykliczne WP-Cron odpala się z `wp-cron.php`, gdzie
   `is_admin()` jest fałszem. Bez tego cron wywracałby się na „nie ma takiej funkcji".
-- **tylko w panelu** (`is_admin()`): `csv.php`, `admin.php`, `admin-skrzynka.php`,
-  `admin-powitanie.php`, `filtry.php`.
+- **tylko w panelu** (`is_admin()`): `csv.php`, `admin.php`, `admin-probka.php`,
+  `admin-skrzynka.php`, `admin-powitanie.php`, `filtry.php`.
 
 Front strony nie dostaje **żadnego** kodu wtyczki poza definicjami funkcji — Segregator
 nie ma widoku publicznego, skrótów ani zasobów wpinanych w stronę.
@@ -166,7 +167,11 @@ zamknięcie karty zamiast kliknięcia „Zaczynam” też liczy się jako „wid
 ### Transienty
 
 `segm_komunikat_{ID_użytkownika}` — komunikat i zapis rozmowy z serwerem poczty
-przenoszony przez przekierowanie, ważny **5 minut**. Nazwa zależy od użytkownika,
+przenoszony przez przekierowanie, ważny **5 minut**.
+
+`segm_liczenie_{ID_użytkownika}` — wynik „Policz na próbce" wraz z wpisanymi
+wartościami formularza, ważny **5 minut**. Wzorzec bywa długi i pełen przecinków,
+więc nie przenosimy go adresem URL. Nazwa zależy od użytkownika,
 więc deinstalacja kasuje go zapytaniem `LIKE` po `wp_options` (razem z wierszami
 `_transient_timeout_*`) — §11.5.
 
@@ -223,7 +228,7 @@ Sprawdzalne jednym grepem — patrz kontrola D w skrypcie zgodności.
 | `segm-filtry` | Eksport filtrów | `filtry.php` |
 | `segm-powitanie` | ekran powitalny — **zdjęty z menu**, wchodzi się z przekierowania | `admin-powitanie.php` |
 
-### 7.2. Uchwyty `admin-post` — 24 sztuki
+### 7.2. Uchwyty `admin-post` — 27 sztuk
 
 Każdy z nich, **bez wyjątku**, sprawdza dwie rzeczy osobno:
 `current_user_can( 'manage_options' )` **oraz** `check_admin_referer( ... )`.
@@ -237,6 +242,9 @@ formularza", uprawnienie mówi „ta osoba ma prawo to zrobić".
 | `segm_import_csv` | import próbki z pliku |
 | `segm_probka_demo` | przywraca próbkę demo |
 | `segm_probka_wyczysc` | kasuje próbkę i raporty |
+| `segm_mail_zapisz` | dodaje albo poprawia JEDEN mail w próbce |
+| `segm_mail_usun` | usuwa JEDEN mail z próbki |
+| `segm_regula_policz` | liczy trafienia reguły na próbce **bez zapisywania** |
 | `segm_regula_zapisz`, `segm_regula_usun`, `segm_regula_ruch` | edycja reguł i ich kolejności |
 | `segm_kategoria_zapisz`, `segm_kategoria_usun` | edycja kategorii |
 | `segm_ustawienia_zapisz` | ustawienia ogólne i klucz API |
@@ -296,6 +304,31 @@ miejsce dla obu trybów pracy i dla panelu:
 4. **pierwsza pasująca reguła wygrywa** — kolejność jest jedynym mechanizmem
    rozstrzygania, nie ma osobnego pola „priorytet",
 5. brak dopasowania → kubeł `Reszta`.
+
+### 8.1. Iteracja na pojedynczym przypadku
+
+Cała próbka nie jest jedyną jednostką pracy. Panel *Próbka maili* pozwala
+**dodać, poprawić i usunąć JEDEN mail** (`segm_mail_zapisz`, `segm_mail_usun`) —
+import CSV, demo i „wyczyść" nadal działają na całości, ale nie trzeba już
+przebudowywać pliku, żeby sprawdzić jeden przypadek. Maile dodane ręcznie mają
+`zrodlo = 'reczny'`, więc widać je na liście obok wierszy z importu.
+
+Panel *Reguły* pokazuje przy każdej regule **dwie liczby z bieżącej próbki**
+(`segm_policz_trafienia()`):
+
+- **Pasuje** — do ilu maili pasuje sam wzorzec, gdyby ta reguła była jedyna,
+- **Zgarnia** — ile maili reguła realnie bierze w przebiegu, po uwzględnieniu,
+  że pierwsza pasująca wygrywa.
+
+Różnica między tymi liczbami to najczęstsza przyczyna wrażenia „reguła wygląda
+dobrze, a nic nie łapie": zabrała je reguła stojąca wyżej. Przycisk **„Policz na
+próbce (bez zapisywania)"** robi to samo dla wzorca jeszcze niezapisanego.
+
+Obie liczby powstają z tej samej funkcji, którą liczy przebieg
+(`segm_klasyfikuj_mail()` + `segm_wzorzec_pasuje()`), więc suma kolumny
+**Zgarnia** ze wszystkich reguł równa się liczbie `dopasowanych` w raporcie.
+Gdyby panel liczył po swojemu, prędzej czy później pokazałby liczbę, której
+raport nie potwierdza — a wtedy klient przestaje wierzyć obu.
 
 **Tryb AI** (opcjonalny) nie zmienia tej reguły: klasyfikuje równolegle i pokazuje
 różnice. Nie ruszy bez zapisanej zgody `segm_zgoda_ai`, a przy próbce większej niż
