@@ -1,18 +1,21 @@
 <?php
 /**
  * Plugin Name: Sklep Agentów
- * Description: Sklep z testowymi botami AI — Stripe Checkout (tryb testowy), mail po zakupie, wydanie plików, panel w wp-admin. Zaplecze całe w WordPressie, własne tabele.
- * Version: 0.9.1
+ * Description: Sprzedawaj wtyczki-boty AI bezpośrednio ze swojej strony: płatność kartą, automatyczny mail z linkiem do pobrania, panel zamówień ze statystykami i dziennikiem logowań. Wszystkie dane zostają w Twojej bazie — bez abonamentu i bez zewnętrznych usług.
+ * Version: 0.9.2
  * Requires at least: 6.7
  * Requires PHP: 8.1
- * Author: Warsztat
+ * Author: Automatic AI
+ * License: GPL-2.0-or-later
+ * License URI: https://www.gnu.org/licenses/gpl-2.0.html
+ * Text Domain: sklep-agentow
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SKLEPAG_WERSJA', '0.9.1' );
+define( 'SKLEPAG_WERSJA', '0.9.2' );
 define( 'SKLEPAG_WERSJA_SCHEMATU', 4 ); // v4: kolumna zamowienia.usunieto_dnia (anonimizacja RODO — K3d); v3: indeks para_logowania.
 define( 'SKLEPAG_LIMIT_POBRAN', 10 ); // Jedno źródło: INSERT zamówienia + treść maila (recenzja PR #33).
 define( 'SKLEPAG_LINK_GODZIN', 72 );  // Ważność linku pobrania — jw.
@@ -151,7 +154,7 @@ function sklepag_shortcode_sklep() {
 		if ( $obraz ) {
 			$html .= sklepag_figure_zrzutu( $obraz, 'sklepag-karta-obraz sklepag-karta-ilustracja', false, false );
 		}
-		$html .= '<div class="sklepag-karta-glowa">' . sklepag_ikona_produktu( $p->slug ) . '<p class="sklepag-mono-etykieta">[ <span class="sklepag-akcent">BOT</span> · TESTOWY ]</p></div>';
+		$html .= '<div class="sklepag-karta-glowa">' . sklepag_ikona_produktu( $p->slug ) . '<p class="sklepag-mono-etykieta">[ <span class="sklepag-akcent">BOT</span> · WTYCZKA WordPress ]</p></div>';
 		$html .= '<h2 class="sklepag-karta-tytul">' . esc_html( $p->nazwa ) . '</h2>';
 		$html .= '<p class="sklepag-karta-opis">' . esc_html( $p->opis_krotki ) . '</p>';
 		$html .= '<p class="sklepag-cena">' . esc_html( number_format( $p->cena_grosze / 100, 2, ',', ' ' ) ) . '<span class="sklepag-cena-waluta">' . esc_html( $p->waluta ) . '</span></p>';
