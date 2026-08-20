@@ -18,6 +18,8 @@ Gotowe reguły możesz też wyeksportować do filtrów Gmaila i Outlooka.
 2. Gotowe — od razu masz: 5 kategorii (Oferty, Faktury, Reklamacje,
    Spam-podejrzane, Reszta), 8 przykładowych reguł i próbkę 30 polskich maili
    demo z etykietami.
+3. Po włączeniu wtyczka pokaże **ekran powitalny** z trzema pierwszymi krokami.
+   Możesz go zamknąć na stałe — nie wraca.
 
 Wymagania: WordPress 6.0+ i PHP 8.1+.
 
@@ -46,6 +48,46 @@ Wymagania: WordPress 6.0+ i PHP 8.1+.
    żadnej reguły trafia do kubła **„Reszta"** (jak mail zostający w skrzynce
    głównej Gmaila).
 
+**Nie musisz puszczać całej próbki, żeby sprawdzić jedną regułę.** Przy każdej
+regule na liście są dwie liczby z bieżącej próbki:
+
+- **Pasuje** — do ilu maili pasuje sam wzorzec, gdyby ta reguła była jedyna,
+- **Zgarnia** — ile z nich reguła realnie bierze, bo wcześniejsza mogła je
+  zabrać pierwsza.
+
+Reguła, która pasuje do dwudziestu maili i zgarnia zero, to najczęstsza
+przyczyna wrażenia „reguła wygląda dobrze, a nic nie łapie" — stoi za nisko.
+Przycisk **„Policz na próbce (bez zapisywania)"** liczy to samo dla wzorca,
+którego jeszcze nie zapisałeś, więc możesz próbować bez zaśmiecania listy.
+
+Na stronie *Próbka maili* możesz też **dodać, poprawić albo usunąć POJEDYNCZY
+mail** — bez przebudowywania całego pliku CSV, gdy chcesz sprawdzić jeden
+uparty przypadek. Długie listy (przebiegi, próbka, historia skrzynki) są
+dzielone po **50 wierszy** na stronę, z informacją „pozycje X–Y z Z".
+
+### Przeprowadzka: zabierz reguły ze sobą
+
+Na dole strony **Reguły** jest sekcja *„Przeprowadzka"*: **pobierasz plik JSON**
+z kategoriami i regułami, a na drugiej instalacji wczytujesz go jednym
+przyciskiem. Przydaje się przy przenoszeniu strony, drugim oddziale albo
+zwyczajnej kopii bezpieczeństwa własnej konfiguracji.
+
+Co trzeba wiedzieć, zanim wczytasz:
+
+- wczytanie **ZASTĘPUJE wszystkie reguły**, a kategorie tylko **uzupełnia** —
+  żadna istniejąca kategoria nie znika (mogą do niej kierować raporty i foldery
+  na skrzynce),
+- reguły wiążą się z kategorią **po nazwie**, nie po numerze, więc działają na
+  instalacji, gdzie kategorie mają inne identyfikatory,
+- ⛔ **w pliku NIE MA sekretów ani cudzej poczty**: hasła do skrzynki, klucza
+  API, próbki maili, historii przebiegów ani zapisanych zgód. Plik ląduje
+  w katalogu pobranych, więc świadomie nie wkładamy tam niczego wrażliwego —
+  po przeprowadzce hasło, klucz i zgody podajesz na nowo,
+- limity wczytywanego pliku: **512 kB**, **500 kategorii i 500 reguł**, wzorzec
+  do **2000 znaków** — plik z zewnątrz jest traktowany jak dane od nieznajomego
+  i sprawdzany, zanim cokolwiek trafi do bazy,
+- po wczytaniu **sprawdź kolejność reguł** — to ona rozstrzyga, która wygrywa.
+
 ## 4. Tryb AI (opcjonalny — hybryda)
 
 **Najpierw zgoda — bez niej tryby AI się nie uruchomią.** W trybie AI nadawca,
@@ -73,6 +115,47 @@ robić prawdziwy model — a najciekawszy jest tryb **„porównaj oba"**:
   przekroczyć) z licznikiem w ustawieniach; przy błędzie API, braku klucza
   albo wyczerpanym limicie przebieg automatycznie wykonuje się regułami
   (z komunikatem).
+
+### Klucz API: gdzie go trzymać i jak sprawdzić, czy działa
+
+Klucz wpisujesz w **Ustawieniach Segregatora**. Bezpieczniej niż w bazie —
+**stałą w `wp-config.php`**:
+
+```php
+define( 'SEGM_KLUCZ_API', 'sk-ant-...' );
+```
+
+Stała ma **pierwszeństwo** nad polem w panelu (pole jest wtedy zablokowane,
+a panel pokazuje cztery ostatnie znaki, żebyś wiedział, który klucz działa).
+Klucz nie leży wtedy w bazie, więc nie wychodzi z jej kopią zapasową ani
+z eksportem na środowisko testowe. Dokładnie tak samo rozwiązane jest hasło do
+skrzynki (`SEGM_IMAP_HASLO`) i klucz w ChatBocie — jeden sposób dla obu botów.
+
+Przycisk **„Przetestuj klucz API"** wysyła JEDNO wywołanie ze słowem „ping" —
+żadnego maila z próbki, żadnej Twojej treści. Odpowiedź mówi wprost, czy klucz
+działa i którym modelem odpowiedział. Test **nie zabiera jednostki z dziennego
+limitu** i nie jest nim blokowany: sprawdzenie własnych poświadczeń musi działać
+także wtedy, gdy limit jest wyczerpany.
+
+Gdy dostawca odrzuci wywołanie, przebieg zjeżdża do reguł i kończy się wynikiem
+— ale na stronach wtyczki zapala się **pasek „tryb AI nie działa"** z datą,
+kodem i tym, co dokładnie odpowiedział dostawca, po polsku. Bez tego paska
+wtyczka mogłaby miesiącami „działać w trybie AI", licząc wyłącznie regułami.
+Pasek gaśnie **sam** po pierwszym udanym wywołaniu.
+
+### Wybór modelu
+
+W Ustawieniach wybierasz model z listy podpowiedzi (Haiku — najtańszy
+i domyślny, Sonnet, Opus) albo wpisujesz **własną nazwę**, jeśli masz dostęp do
+innego modelu. Domyślny jest `claude-haiku-4-5` — **alias bez daty**, celowo:
+identyfikatory z datą wskazują konkretną migawkę modelu, a te bywają wycofywane.
+
+Lista to **podpowiedzi, nie gwarancja** — dostępność zależy od Twojego konta
+u dostawcy. Wtyczka nie sprawdza, czy model istnieje (tego nie da się wiedzieć
+bez zapytania dostawcy); zła nazwa skończy się błędem API, a wtedy zobaczysz to
+na pasku i przebieg policzy regułami. Nazwa z literówką jest odrzucana przy
+zapisie i zostaje poprzednia — żeby pomyłka w formularzu nie wyłączyła po cichu
+trybu AI przy następnym przebiegu.
 
 Koszty API ponosi właściciel klucza według cennika dostawcy.
 
@@ -136,6 +219,28 @@ Realne przenoszenie włącza się **dwoma świadomymi krokami**:
 
 Sam pierwszy krok jeszcze niczego nie włącza. Cofnięcie potwierdzenia wraca
 do trybu na sucho natychmiast.
+
+### Podłączenie krok po kroku
+
+1. **Wygeneruj hasło aplikacji** u swojego dostawcy poczty (w Gmailu:
+   *Zarządzaj kontem Google → Bezpieczeństwo → Hasła do aplikacji*). Zwykłe
+   hasło do konta nie zadziała — patrz niżej.
+2. **Wpisz dane połączenia** w zakładce *Skrzynka (IMAP)*: serwer, port
+   i szyfrowanie, login, hasło aplikacji, folder źródłowy i folder nadrzędny
+   (tabela niżej). Zapisz.
+3. **Kliknij „Sprawdź połączenie".** Wtyczka naprawdę się loguje i mówi, ile
+   wiadomości widzi oraz jakie foldery zastała. Dopiero gdy to działa, ma sens
+   iść dalej.
+4. **Puść przebieg NA SUCHO** przyciskiem *Uruchom teraz*. Nic się nie ruszy —
+   dostajesz listę: która wiadomość, od kogo, do którego folderu **by trafiła**.
+5. **Przeczytaj tę listę uważnie.** To jest moment na poprawianie reguł, nie
+   po przeniesieniu poczty. Wróć do rozdziału 3, popraw, puść na sucho jeszcze
+   raz.
+6. Gdy lista wygląda tak, jak chcesz: **potwierdź jednorazowo**, że wtyczka może
+   ruszać wiadomości, a **potem** przełącz *Tryb pracy* na „realne przenoszenie".
+   Dwa osobne kroki — pierwszy sam z siebie niczego nie włącza.
+7. Na koniec ustaw **harmonogram** (np. co 30 minut), jeśli chcesz, żeby
+   segregacja chodziła sama.
 
 ### Co wpisać w polach
 
@@ -245,6 +350,21 @@ ImportExportTools). Wystarczą trzy kolumny — bez załączników.
 Zobacz w raporcie, KTÓRA reguła go złapała. Najczęściej pomaga: przesunięcie
 bardziej szczegółowej reguły wyżej albo doprecyzowanie wariantów.
 
+**Skąd mam wiedzieć, że tryb AI przestał działać?**
+Powie Ci to sama wtyczka. Gdy dostawca odrzuci wywołanie (zły klucz, wyczerpane
+środki, zła nazwa modelu, awaria po ich stronie), przebieg kończy się wynikiem
+policzonym regułami — ale na stronach wtyczki zapala się pasek **„tryb AI nie
+działa"** z datą i tym, co dokładnie odpowiedział dostawca, po polsku. Pasek
+gaśnie sam po pierwszym udanym wywołaniu. Nie musisz go pilnować: bez niego
+wtyczka mogłaby miesiącami „działać w trybie AI", licząc wyłącznie regułami.
+Przycisk **„Przetestuj klucz API"** w Ustawieniach sprawdza to od ręki.
+
+**Przenoszę stronę / mam drugi oddział — muszę wpisywać reguły od nowa?**
+Nie. Na dole strony *Reguły* pobierasz plik z konfiguracją (kategorie i reguły),
+a na drugiej instalacji wczytujesz go jednym przyciskiem. Hasła, klucza API,
+próbki ani historii w tym pliku nie ma — te podajesz na nowo. Po wczytaniu
+sprawdź kolejność reguł.
+
 **Czy accuracy 100% na demo to ściema?**
 Nie — reguły demo są po prostu dopasowane do próbki demo (tak wygląda dobrze
 skonfigurowany segregator). Na TWOICH mailach zaczniesz niżej i podniesiesz
@@ -270,7 +390,9 @@ reguły, próbka, przebiegi i ustawienia.
 - logowanie OAuth2 (potrzebne do Microsoft 365 i Outlook.com),
 - reguły z wykluczeniami („zawiera X, ale nie Y"),
 - nadawanie etykiet zamiast przenoszenia (Gmail),
-- inne modele AI / własny proxy (filtry `segm_ai_url` i `segm_ai_model`).
+- własne proxy albo model spoza listy podpowiedzi wpięty programistycznie
+  (filtry `segm_ai_url` i `segm_ai_model`) — sam **wybór modelu jest już
+  w Ustawieniach** i nie wymaga programisty (rozdział 4).
 
 ## 9. Deklaracja prywatności (ważne — RODO)
 
@@ -282,6 +404,10 @@ reguły, próbka, przebiegi i ustawienia.
   przebieg AI w ogóle nie startuje (zamiast tego dostajesz komunikat).
   Zgoda jest zapisywana z datą i loginem osoby, która ją wyraziła, i można ją
   cofnąć w każdej chwili. Odinstalowanie wtyczki kasuje ją zawsze.
+- **Klucz API i hasło do skrzynki:** oba możesz trzymać **poza bazą**, stałymi
+  w `wp-config.php` (`SEGM_KLUCZ_API`, `SEGM_IMAP_HASLO`) — wtedy nie wychodzą
+  z kopią zapasową bazy. Gdziekolwiek je trzymasz, odinstalowanie wtyczki
+  kasuje je z bazy ZAWSZE.
 - **Skrzynka IMAP:** treść maili nie opuszcza Twojego serwera — wtyczka łączy
   się bezpośrednio z Twoim serwerem poczty i klasyfikuje lokalnie, regułami.
   Hasło aplikacji trzymane jest w osobnej opcji bez autoload (albo, zalecane,
