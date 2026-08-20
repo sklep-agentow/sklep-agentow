@@ -1,6 +1,6 @@
 # ChatBot LIVE — dokumentacja techniczna
 
-Wersja wtyczki: **1.4.4** · schemat bazy: **4** · licencja: **GPL-2.0-or-later**
+Wersja wtyczki: **1.4.5** · schemat bazy: **4** · licencja: **GPL-2.0-or-later**
 
 Dokument opisuje **kod, który jest**, nie plan. Każda liczba i nazwa poniżej ma pokrycie
 w źródle — przy każdej podano plik i symbol, żeby dało się to sprawdzić `grep`-em, a nie
@@ -193,7 +193,7 @@ Wszystkie liczby, którymi wtyczka się rządzi, są stałymi — nie ma ich roz
 
 | Stała | Wartość | Plik | Do czego |
 |---|---|---|---|
-| `CHATL_WERSJA` | `1.4.4` | `chatbot-live.php` | wersja wtyczki; służy też jako `?ver=` assetów (przeglądarka nie poda starego pliku po aktualizacji) |
+| `CHATL_WERSJA` | `1.4.5` | `chatbot-live.php` | wersja wtyczki; służy też jako `?ver=` assetów (przeglądarka nie poda starego pliku po aktualizacji) |
 | `CHATL_WERSJA_SCHEMATU` | `4` | `chatbot-live.php` | wyzwalacz migracji schematu |
 | `CHATL_KATALOG`, `CHATL_URL` | ścieżka i adres wtyczki | `chatbot-live.php` | `require` i adresy assetów |
 | `CHATL_MAX_PYTANIE` | `500` | `includes/front.php` | maksymalna długość pytania gościa (nadmiar jest **przycinany**, nie odrzucany) |
@@ -693,7 +693,29 @@ u klienta. Zamiast tego panel podaje kolejność „taniej ↔ mocniej" i odsył
 dokumentacji dostawcy. Pole „własny model" jest po to, żeby lista nigdy nie
 była więzieniem; wpisana wartość jest przycinana do liter, cyfr, myślników
 i kropek.
-## 17. Zabezpieczenie formularza a cache strony
+
+## 17. Kiedy gość dowiaduje się o zapisie rozmowy
+
+Do 1.4.5 informacja o przetwarzaniu danych szła **wyłącznie** do formularza
+kontaktu, a samo pisanie na czacie już lądowało w `chatl_rozmowy`. Gość
+dowiadywał się o zapisie dopiero, gdy zostawiał maila — a wtedy część rozmowy
+była zapisana od kilku minut. Wtyczkę kupuje wiele firm i **każda staje się
+administratorem danych**, więc informacja musi być przed pierwszym słowem.
+
+Widget rysuje notę (`.chatl-nota`) jako **pierwszy element listy wiadomości**,
+przed powitaniem bota. Treść i okres retencji pochodzą z `CHATL_RETENCJA_DNI`,
+więc nie da się ich rozjechać z tym, co naprawdę kasuje cron. Gdy właściciel
+podał adres polityki prywatności, nota kończy się odnośnikiem
+(`target="_blank"` + `rel="noopener"`); bez adresu nie ma pustego linku.
+
+Nota **nie jest dymkiem bota** — to informacja właściciela strony, nie wypowiedź
+w rozmowie. Powstaje z węzłów tekstowych i elementu `a`, bez `innerHTML` —
+tak jak reszta widgetu.
+
+Formularz kontaktu **zachowuje** swoją własną, pełniejszą informację (co, po co,
+jak długo) razem z wymaganym checkboxem zgody — tam zbierany jest adres e-mail,
+więc wymóg jest mocniejszy niż przy samej rozmowie.
+## 18. Zabezpieczenie formularza a cache strony
 
 Nonce wchodzi do HTML-a strony przez `wp_localize_script()`, a wtyczka albo usługa
 cache (LiteSpeed, WP Rocket, W3TC, Cloudflare) potrafi serwować ten HTML **dłużej,
@@ -731,7 +753,7 @@ sukcesem.
 
 ---
 
-## 18. Eksport CSV
+## 19. Eksport CSV
 
 Ręczny, przyciskiem w panelu — `includes/csv.php`. Dwa strumienie: wszystkie zgłoszenia
 (`id, data, email, wiadomosc, status, sesja`) i historia rozmów (`sesja, data, kto, silnik, tresc`),
@@ -747,7 +769,7 @@ kłóciłoby się z obietnicą retencji.
 
 ---
 
-## 19. Znane granice
+## 20. Znane granice
 
 Rzeczy, których wtyczka **nie** robi — żeby nikt nie szukał ich w kodzie:
 

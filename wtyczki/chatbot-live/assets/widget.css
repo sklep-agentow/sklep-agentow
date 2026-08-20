@@ -110,6 +110,17 @@
 	background: #101116;
 }
 
+.chatl-nota {
+	font-size: 12px;
+	line-height: 1.35;
+	color: rgba(245, 245, 245, 0.62);
+	padding: 0 2px 4px;
+}
+
+.chatl-nota a {
+	color: var(--chatl-glowny);
+}
+
 .chatl-wiadomosc {
 	display: flex;
 	margin-bottom: 8px;
