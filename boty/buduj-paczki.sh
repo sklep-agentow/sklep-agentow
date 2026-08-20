@@ -31,12 +31,14 @@ ALLOWLIST_CHATBOT=(
 ALLOWLIST_SEGREGATOR=(
 	"segregator-maila/segregator-maila.php"
 	"segregator-maila/uninstall.php"
+	"segregator-maila/LICENSE"
 	"segregator-maila/INSTRUKCJA.md"
 	"segregator-maila/includes/instalator.php"
 	"segregator-maila/includes/silnik.php"
 	"segregator-maila/includes/ai.php"
 	"segregator-maila/includes/csv.php"
 	"segregator-maila/includes/admin.php"
+	"segregator-maila/includes/filtry.php"
 )
 
 zbuduj() {
@@ -61,7 +63,9 @@ zbuduj() {
 	fi
 
 	# 3) Sweep treści plików z listy (ślady wewnętrzne: TODO/notatki QA/adresy dev).
-	if ( cd "$KORZEN/wtyczki" && grep -niE 'TODO|FIXME|XXX:|HACK|nie dla klienta|notatka (QA|recenzenck)|localhost:8890|strona_wp|sklep_mailpit' "${ALLOWLIST[@]}" ); then
+	# `HACK` z granicami slowa (\b): bez nich wzorzec lapal nazwisko „James Hacker"
+	# z zalacznika tekstu GPL w pliku LICENSE — falszywy alarm zatrzymywal budowe.
+	if ( cd "$KORZEN/wtyczki" && grep -niE 'TODO|FIXME|XXX:|\bHACK\b|nie dla klienta|notatka (QA|recenzenck)|localhost:8890|strona_wp|sklep_mailpit' "${ALLOWLIST[@]}" ); then
 		echo "BLAD: slady wewnetrzne w plikach $WTYCZKA (wyzej)" >&2
 		exit 1
 	fi

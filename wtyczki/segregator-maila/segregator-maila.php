@@ -1,11 +1,14 @@
 <?php
 /**
  * Plugin Name: Segregator maila
- * Description: Testowy bot porządkujący skrzynkę firmową: rozdziela maile do kategorii według reguł (kolejność = pierwsza wygrywa) i pokazuje raport z liczbami — trafienia, % pokrycia, accuracy przy próbce z etykietami.
+ * Description: Porządkuje firmową skrzynkę: rozdziela pocztę do kategorii według Twoich reguł (kolejność = pierwsza pasująca wygrywa), pokazuje raport z liczbami — ile poczty automat rozdziela sam i gdzie się myli — i eksportuje gotowe reguły do filtrów Gmaila oraz Outlooka.
  * Version: 1.2.1
  * Requires at least: 6.0
  * Requires PHP: 8.1
- * Author: Sklep Agentów
+ * Author: Automatic AI
+ * License: GPL-2.0-or-later
+ * License URI: https://www.gnu.org/licenses/gpl-2.0.html
+ * Text Domain: segregator-maila
  */
 
 if ( ! defined( 'ABSPATH' ) ) {

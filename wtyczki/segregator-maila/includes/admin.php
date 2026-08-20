@@ -992,7 +992,7 @@ function segm_strona_ustawienia() {
 		<?php endif; ?>
 
 		<h2>Prywatność</h2>
-		<p>Tryb regułowy: treść maili <strong>nie opuszcza</strong> Twojego WordPressa — segregacja działa lokalnie na próbce. Tryby AI: treść maili z próbki (nadawca, temat, treść) jest wysyłana do API dostawcy modelu (Anthropic) — poinformuj o tym w swojej polityce prywatności. Wtyczka nie łączy się z żadną skrzynką pocztową (działa na próbkach CSV — dlatego to uczciwie „testowy bot").</p>
+		<p>Tryb regułowy: treść maili <strong>nie opuszcza</strong> Twojego WordPressa — segregacja działa lokalnie na próbce. Tryby AI: treść maili z próbki (nadawca, temat, treść) jest wysyłana do API dostawcy modelu (Anthropic) — poinformuj o tym w swojej polityce prywatności. Wtyczka nie łączy się z żadną skrzynką pocztową — pracuje na próbce, którą sam wgrywasz.</p>
 	</div>
 	<?php
 }

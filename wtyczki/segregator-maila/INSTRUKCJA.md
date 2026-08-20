@@ -1,14 +1,13 @@
 # Segregator maila — instrukcja użytkownika
 
-Testowy bot porządkujący skrzynkę firmową: rozdziela maile do kategorii według
-reguł (jak filtry Gmaila) i pokazuje raport z liczbami — ile roboty zrobiłby
-za Ciebie.
+Porządkuje firmową skrzynkę: rozdziela pocztę do kategorii według Twoich reguł
+(jak filtry Gmaila) i pokazuje raport z liczbami — ile roboty automat zdejmuje
+z Ciebie i gdzie się myli.
 
-**Uczciwie:** wtyczka działa na PRÓBKACH maili (wbudowane demo albo Twój
-eksport CSV), nie podpina się do żywej skrzynki — dlatego nazywa się „testowy
-bot". Testujesz reguły na próbce ZANIM cokolwiek dotknie prawdziwej poczty
-(wzorzec trybu testowego z reguł Exchange). Podpięcie skrzynki (IMAP) to droga
-rozbudowy po zakupie.
+**Jak to działa:** najpierw ustawiasz reguły i sprawdzasz je na PRÓBCE maili
+(wbudowane demo albo Twój eksport CSV) — czyli ZANIM cokolwiek dotknie
+prawdziwej poczty. Gotowe reguły wyeksportujesz do filtrów Gmaila i Outlooka
+i wpuścisz na żywą skrzynkę.
 
 ## 1. Instalacja (2 minuty)
 
