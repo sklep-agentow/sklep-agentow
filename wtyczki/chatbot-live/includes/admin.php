@@ -85,6 +85,8 @@ function chatl_strona_qa() {
 		<?php chatl_komunikat_ok(); ?>
 		<p>Bot dopasowuje pytanie gościa po <strong>słowach kluczowych z wariantami</strong> (rozdzielaj przecinkami, np. <code>cena, ceny, cennik</code>). Odmiany słów łapiesz, wpisując warianty.</p>
 
+		<?php chatl_panel_testu_bota(); ?>
+
 		<h2><?php echo $edytowany ? 'Edytuj wpis #' . (int) $edytowany->id : 'Dodaj nowy wpis'; ?></h2>
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 			<input type="hidden" name="action" value="chatl_qa_zapisz">
@@ -141,6 +143,89 @@ function chatl_strona_qa() {
 		</table>
 	</div>
 	<?php
+}
+
+/**
+ * Test bota na własnej bazie, bez wychodzenia na stronę.
+ *
+ * Pokazuje NIE TYLKO odpowiedź, ale i KTÓRA para ją dała (id + pytanie
+ * wzorcowe + dopasowane warianty) — dopasowanie przestaje być czarną skrzynką
+ * i widać, dlaczego bot odpowiedział tak, a nie inaczej.
+ *
+ * Formularz jest GET-em na tę samą stronę: to odczyt, nic nie zmienia w bazie,
+ * więc nie ma tu mutacji do zabezpieczania noncem (capability pilnuje
+ * add_menu_page: manage_options).
+ */
+function chatl_panel_testu_bota() {
+	// phpcs:disable WordPress.Security.NonceVerification.Recommended -- formularz tylko odczytuje; brak mutacji.
+	$pytanie = isset( $_GET['test'] ) ? sanitize_text_field( wp_unslash( $_GET['test'] ) ) : '';
+	// phpcs:enable
+	$ust = chatl_ustawienia();
+	?>
+	<div class="card" style="max-width:100%;padding:12px 16px">
+		<h2 style="margin-top:0">Test bota</h2>
+		<p class="description">Wpisz pytanie tak, jak zrobiłby to gość — zobaczysz odpowiedź i <strong>która para zadziałała</strong>.</p>
+		<form method="get" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>">
+			<input type="hidden" name="page" value="chatl-qa">
+			<input type="text" name="test" class="regular-text" placeholder="np. ile kosztuje wasza usługa"
+				value="<?php echo esc_attr( $pytanie ); ?>" aria-label="Pytanie do testu bota">
+			<?php submit_button( 'Sprawdź odpowiedź', 'secondary', 'submit', false ); ?>
+			<?php if ( '' !== $pytanie ) : ?>
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=chatl-qa' ) ); ?>">wyczyść</a>
+			<?php endif; ?>
+		</form>
+		<?php if ( '' !== $pytanie ) : ?>
+			<?php $wynik = chatl_dopasuj( $pytanie ); ?>
+			<?php if ( null === $wynik ) : ?>
+				<p><strong>Żadna para nie pasuje.</strong> Gość dostałby tekst awaryjny i propozycję zostawienia kontaktu:</p>
+				<blockquote style="margin:0 0 8px;padding:8px 12px;border-left:4px solid #d63638;background:#fff"><?php echo esc_html( $ust['tekst_awaryjny'] ); ?></blockquote>
+				<p class="description">Chcesz, żeby bot to łapał? Dopisz wariant do słów kluczowych którejś pary powyżej.</p>
+			<?php else : ?>
+				<?php $para = chatl_wpis_qa( (int) $wynik['id'] ); ?>
+				<p>Odpowiedź, którą dostałby gość:</p>
+				<blockquote style="margin:0 0 8px;padding:8px 12px;border-left:4px solid #00a32a;background:#fff"><?php echo esc_html( $wynik['odpowiedz'] ); ?></blockquote>
+				<?php if ( $para ) : ?>
+					<p>Zadziałała para <strong>#<?php echo (int) $para->id; ?></strong> — „<?php echo esc_html( $para->pytanie ); ?>"
+						(<a href="<?php echo esc_url( admin_url( 'admin.php?page=chatl-qa&edytuj=' . (int) $para->id ) ); ?>">edytuj</a>).<br>
+						Dopasowane warianty: <code><?php echo esc_html( implode( ', ', chatl_trafione_warianty( $pytanie, $para->slowa_kluczowe ) ) ); ?></code></p>
+				<?php endif; ?>
+			<?php endif; ?>
+			<?php if ( chatl_ai_dostepny() ) : ?>
+				<p class="description"><strong>Uwaga:</strong> tryb AI jest włączony, więc gość najpierw dostaje odpowiedź modelu — ten test pokazuje silnik regułowy, czyli to, co odpowie bot bez klucza, po limicie albo przy błędzie API. Test celowo NIE wywołuje API (nie przepala budżetu).</p>
+			<?php endif; ?>
+		<?php endif; ?>
+	</div>
+	<?php
+}
+
+/**
+ * Pojedynczy wpis bazy Q&A (do pokazania, która para zadziałała).
+ *
+ * @param int $id Identyfikator wpisu.
+ * @return object|null
+ */
+function chatl_wpis_qa( $id ) {
+	global $wpdb;
+	return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}chatl_qa WHERE id = %d", $id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+}
+
+/**
+ * Które warianty pary trafiły w pytanie (ta sama logika co w silniku).
+ *
+ * @param string $pytanie        Pytanie z testu.
+ * @param string $slowa_kluczowe Warianty pary, po przecinku.
+ * @return array Lista trafionych wariantów.
+ */
+function chatl_trafione_warianty( $pytanie, $slowa_kluczowe ) {
+	$szukane  = mb_strtolower( trim( (string) $pytanie ) );
+	$trafione = array();
+	$warianty = array_filter( array_map( 'trim', explode( ',', mb_strtolower( (string) $slowa_kluczowe ) ) ) );
+	foreach ( $warianty as $wariant ) {
+		if ( false !== mb_strpos( $szukane, $wariant ) ) {
+			$trafione[] = $wariant;
+		}
+	}
+	return $trafione;
 }
 
 function chatl_post_qa_zapisz() {
@@ -208,6 +293,8 @@ function chatl_strona_zgloszenia() {
 		<h1>Zgłoszenia z czatu</h1>
 		<?php chatl_komunikat_ok(); ?>
 		<p>Goście, którym bot nie odpowiedział (albo którzy od razu chcieli kontaktu) — <strong>do odpisania na żywo</strong>.</p>
+		<p><a class="button" href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=chatl_eksport_zgloszen' ), 'chatl_eksport_zgloszen' ) ); ?>">Pobierz CSV (wszystkie zgłoszenia)</a>
+			<span class="description">Kopia dla Ciebie — bot jej nigdzie nie wysyła i nie robi jej sam z siebie.</span></p>
 		<table class="widefat striped">
 			<thead><tr><th>#</th><th>Data</th><th>E-mail gościa</th><th>Wiadomość</th><th>Status</th><th>Akcje</th></tr></thead>
 			<tbody>
@@ -297,7 +384,8 @@ function chatl_strona_historia() {
 		?>
 		<div class="wrap">
 			<h1>Rozmowa <code><?php echo esc_html( $sesja ); ?></code></h1>
-			<p><a href="<?php echo esc_url( admin_url( 'admin.php?page=chatl-historia' ) ); ?>">← wróć do listy rozmów</a></p>
+			<p><a href="<?php echo esc_url( admin_url( 'admin.php?page=chatl-historia' ) ); ?>">← wróć do listy rozmów</a> |
+				<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=chatl_eksport_rozmow&sesja=' . rawurlencode( $sesja ) ), 'chatl_eksport_rozmow' ) ); ?>">Pobierz CSV tej rozmowy</a></p>
 			<table class="widefat striped">
 				<thead><tr><th>Czas</th><th>Kto</th><th>Treść</th></tr></thead>
 				<tbody>
@@ -319,7 +407,9 @@ function chatl_strona_historia() {
 	?>
 	<div class="wrap">
 		<h1>Historia rozmów</h1>
-		<p>Zapis wymian bot↔gość (ostatnie 100 rozmów). Historia starsza niż <strong>90 dni</strong> jest czyszczona automatycznie.</p>
+		<p>Zapis wymian bot↔gość (ostatnie 100 rozmów). Historia starsza niż <strong><?php echo (int) CHATL_RETENCJA_DNI; ?> dni</strong> jest czyszczona automatycznie.</p>
+		<p><a class="button" href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=chatl_eksport_rozmow' ), 'chatl_eksport_rozmow' ) ); ?>">Pobierz CSV (cała historia)</a>
+			<span class="description">Chcesz zachować rozmowy dłużej niż <?php echo (int) CHATL_RETENCJA_DNI; ?> dni? Pobierz je sam, zanim zostaną skasowane — wtyczka <strong>nie</strong> robi kopii automatycznie, bo wtedy „kasujemy po <?php echo (int) CHATL_RETENCJA_DNI; ?> dniach" przestałoby być prawdą.</span></p>
 		<table class="widefat striped">
 			<thead><tr><th>Sesja</th><th>Wymian</th><th>Początek</th><th>Ostatnia aktywność</th><th></th></tr></thead>
 			<tbody>
@@ -372,19 +462,41 @@ function chatl_strona_ustawienia() {
 						<p class="description"><label><input type="checkbox" name="powiadomienia" value="1" <?php checked( $ust['powiadomienia'] ); ?>> wysyłaj mail przy każdym nowym zgłoszeniu</label></p>
 					</td>
 				</tr>
+				<tr>
+					<th scope="row"><label for="chatl-polityka">Adres polityki prywatności</label></th>
+					<td>
+						<input type="url" id="chatl-polityka" name="adres_polityki" class="regular-text" placeholder="https://twojafirma.pl/polityka-prywatnosci"
+							value="<?php echo esc_attr( $ust['adres_polityki'] ); ?>">
+						<p class="description">
+							Link pokazywany gościowi przy formularzu kontaktu, obok informacji, co zbieramy (e-mail i treść pytania), po co (odpowiedź na pytanie) i jak długo (<?php echo (int) CHATL_RETENCJA_DNI; ?> dni). Puste pole = sama informacja, bez linku.
+							<?php $polityka_wp = get_privacy_policy_url(); ?>
+							<?php if ( '' !== $polityka_wp && $polityka_wp !== $ust['adres_polityki'] ) : ?>
+								<br>Ten WordPress ma ustawioną stronę polityki prywatności: <code><?php echo esc_html( $polityka_wp ); ?></code> — możesz wkleić ten adres.
+							<?php endif; ?>
+						</p>
+					</td>
+				</tr>
 				<tr><th colspan="2"><h2>Tryb AI (hybryda)</h2>
 					<p style="font-weight:normal">Z kluczem API odpowiedzi generuje prawdziwy model (Claude) na podstawie informacji o firmie i bazy Q&amp;A — z zakazem zgadywania (niepewny zbiera kontakt). Bez klucza, po wyczerpaniu limitu albo przy błędzie API bot działa w trybie regułowym.</p></th></tr>
 				<tr>
 					<th scope="row"><label for="chatl-klucz">Klucz API (Anthropic)</label></th>
 					<td>
 						<?php $klucz = chatl_klucz_api(); ?>
-						<?php if ( '' !== $klucz ) : ?>
-							<p><strong>Klucz zapisany</strong> (…<?php echo esc_html( substr( $klucz, -4 ) ); ?>).
-								<label><input type="checkbox" name="usun_klucz" value="1"> usuń klucz (wyłącza tryb AI)</label></p>
+						<?php if ( chatl_klucz_ze_stalej() ) : ?>
+							<p><strong>Klucz podany w konfiguracji serwera</strong> (…<?php echo esc_html( substr( $klucz, -4 ) ); ?>) — stałą <code>CHATL_KLUCZ_API</code> w <code>wp-config.php</code>.</p>
+							<input type="password" id="chatl-klucz" class="regular-text" value="" autocomplete="off" disabled
+								placeholder="klucz z wp-config.php">
+							<p class="description">To pole jest zablokowane, bo stała ma pierwszeństwo nad bazą. Żeby zmienić albo wyłączyć klucz, popraw <code>wp-config.php</code>. Klucz trzymany poza bazą nie wychodzi z kopią zapasową bazy — to zalecany sposób.</p>
+						<?php else : ?>
+							<?php if ( '' !== $klucz ) : ?>
+								<p><strong>Klucz zapisany</strong> (…<?php echo esc_html( substr( $klucz, -4 ) ); ?>).
+									<label><input type="checkbox" name="usun_klucz" value="1"> usuń klucz (wyłącza tryb AI)</label></p>
+							<?php endif; ?>
+							<input type="password" id="chatl-klucz" name="klucz_api" class="regular-text" value="" autocomplete="off"
+								placeholder="<?php echo '' !== $klucz ? 'wklej, aby podmienić' : 'sk-ant-…'; ?>">
+							<p class="description">Klucz WŁAŚCICIELA strony — przechowywany tylko w Twojej bazie (bez autoload), nigdzie nie wysyłany poza api.anthropic.com.<br>
+								Bezpieczniej: wpisz go stałą <code>define( 'CHATL_KLUCZ_API', 'sk-ant-…' );</code> w <code>wp-config.php</code> — wtedy klucz nie leży w bazie i nie wychodzi z jej kopią zapasową. Stała ma pierwszeństwo nad tym polem.</p>
 						<?php endif; ?>
-						<input type="password" id="chatl-klucz" name="klucz_api" class="regular-text" value="" autocomplete="off"
-							placeholder="<?php echo '' !== $klucz ? 'wklej, aby podmienić' : 'sk-ant-…'; ?>">
-						<p class="description">Klucz WŁAŚCICIELA strony — przechowywany tylko w Twojej bazie (bez autoload), nigdzie nie wysyłany poza api.anthropic.com.</p>
 					</td>
 				</tr>
 				<tr>
@@ -398,7 +510,8 @@ function chatl_strona_ustawienia() {
 					<th scope="row"><label for="chatl-ai-limit">Dzienny limit wywołań AI (stop-loss)</label></th>
 					<td>
 						<input type="number" id="chatl-ai-limit" name="ai_limit_dzienny" min="1" max="100000" value="<?php echo (int) $ust['ai_limit_dzienny']; ?>">
-						<p class="description">Dzisiaj zużyto: <strong><?php echo (int) chatl_ai_uzycie_dzis(); ?> / <?php echo (int) $ust['ai_limit_dzienny']; ?></strong> wywołań. Po wyczerpaniu limitu bot do północy odpowiada z reguł. Limit jest miękki: równoległe zapytania gości mogą go minimalnie przekroczyć.</p>
+						<p class="description">Dzisiaj zużyto: <strong><?php echo (int) chatl_ai_uzycie_dzis(); ?> / <?php echo (int) $ust['ai_limit_dzienny']; ?></strong> wywołań. Po wyczerpaniu limitu bot do północy odpowiada z reguł. Limit jest miękki: równoległe zapytania gości mogą go minimalnie przekroczyć.<br>
+							Ten limit jest <strong>globalny dla całej strony</strong>. Osobno działa twardszy limit <strong><?php echo (int) CHATL_AI_LIMIT_IP_NA_DOBE; ?> wywołań AI na dobę z jednego adresu IP</strong> — żeby jeden gość nie wypalił budżetu wszystkich. Po jego przekroczeniu ten gość dostaje odpowiedzi z reguł, reszta strony działa normalnie.</p>
 					</td>
 				</tr>
 				<tr>
@@ -412,7 +525,8 @@ function chatl_strona_ustawienia() {
 			<?php submit_button( 'Zapisz ustawienia' ); ?>
 		</form>
 		<h2>Prywatność</h2>
-		<p>Tryb regułowy: treść rozmów <strong>nie opuszcza</strong> Twojego WordPressa — dopasowanie działa lokalnie. Tryb AI: treść pytania gościa (wraz z informacjami o firmie i bazą Q&amp;A) jest wysyłana do API dostawcy modelu (Anthropic) — poinformuj o tym w swojej polityce prywatności. Historia rozmów jest przechowywana 90 dni.</p>
+		<p>Tryb regułowy: treść rozmów <strong>nie opuszcza</strong> Twojego WordPressa — dopasowanie działa lokalnie. Tryb AI: treść pytania gościa (wraz z informacjami o firmie i bazą Q&amp;A) jest wysyłana do API dostawcy modelu (Anthropic) — poinformuj o tym w swojej polityce prywatności. Historia rozmów jest przechowywana <?php echo (int) CHATL_RETENCJA_DNI; ?> dni.</p>
+		<p>Formularz kontaktu ma <strong>wymagany</strong> checkbox zgody na przetwarzanie danych — sprawdzany także po stronie serwera, więc zgłoszenie bez zgody nie trafia do bazy. Sam zapisany wiersz jest więc dowodem, że zgoda była.</p>
 	</div>
 	<?php
 }
@@ -433,6 +547,7 @@ function chatl_post_ustawienia_zapisz() {
 		'usun_dane'        => empty( $_POST['usun_dane'] ) ? 0 : 1,
 		'ai_informacje'    => isset( $_POST['ai_informacje'] ) ? sanitize_textarea_field( wp_unslash( $_POST['ai_informacje'] ) ) : $stare['ai_informacje'],
 		'ai_limit_dzienny' => isset( $_POST['ai_limit_dzienny'] ) ? max( 1, min( 100000, (int) $_POST['ai_limit_dzienny'] ) ) : $stare['ai_limit_dzienny'],
+		'adres_polityki'   => isset( $_POST['adres_polityki'] ) ? esc_url_raw( wp_unslash( $_POST['adres_polityki'] ) ) : $stare['adres_polityki'],
 	);
 
 	// Klucz API: osobna opcja (autoload=no), nigdy nie wraca do formularza.

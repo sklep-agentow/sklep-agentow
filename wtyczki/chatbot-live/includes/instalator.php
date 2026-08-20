@@ -112,56 +112,62 @@ function chatl_seed_demo() {
 	/*
 	 * Warianty to podłańcuchy: krótkie rdzenie („otwart", „konsultac") łapią
 	 * odmiany, a formy bez polskich znaków — pisownię bez diakrytyków.
+	 *
+	 * Silnik dopasowuje PODŁAŃCUCHY, więc na literówki i brak ogonków nie ma
+	 * innej obrony niż wpisane wprost warianty („cenik", „otwarci"). Dodając
+	 * je pilnujemy, żeby NIE dublowały rdzenia, który już tu jest: liczba
+	 * trafionych wariantów jest punktacją, więc wariant zawierający istniejący
+	 * rdzeń („rachunek" obok „rachun") zawyżałby wynik tej pary kosztem innych.
 	 */
 	$seed = array(
 		array(
 			'Ile kosztują usługi? Gdzie znajdę cennik?',
-			'cena, ceny, cenie, cennik, koszt, ile płac, ile plac, stawk, wycen',
+			'cena, ceny, cenie, cennik, cenik, koszt, ile płac, ile plac, stawk, wycen, opłat, oplat',
 			'Aktualny cennik znajdziesz na stronie „Cennik". Ceny zależą od zakresu — napisz, czego potrzebujesz, a przygotujemy wycenę bez zobowiązań.',
 		),
 		array(
 			'W jakich godzinach jesteście otwarci?',
-			'godzin, otwart, otwarc, czynn, pracujecie, sobot, weekend, niedziel',
+			'godzin, otwart, otwarc, czynn, pracujecie, sobot, weekend, niedziel, do której, do ktorej, od której, od ktorej',
 			'Pracujemy od poniedziałku do piątku w godzinach 8:00–16:00. W weekendy odpisujemy na wiadomości w miarę możliwości.',
 		),
 		array(
 			'Jak się z wami skontaktować?',
-			'kontakt, telefon, zadzwoni, dzwoni, mail, napisać, napisac, numer',
+			'kontakt, telefon, zadzwoni, dzwoni, mail, mejl, napisać, napisac, numer',
 			'Najszybciej: telefon 600 000 000 (pn–pt 8:00–16:00) albo mail biuro@twojafirma.pl. Możesz też zostawić wiadomość tutaj w czacie — oddzwonimy.',
 		),
 		array(
 			'Czym się zajmujecie? Jaka jest oferta?',
-			'ofert, usług, uslug, zakres, zajmujecie, co robicie',
+			'ofert, oferuj, usług, uslug, zakres, zajmujecie, robicie',
 			'Świadczymy usługi dla firm i klientów indywidualnych — pełny zakres znajdziesz na stronie „Oferta". Jeśli nie masz pewności, czy pomożemy w Twojej sprawie, zostaw pytanie, a doradzimy.',
 		),
 		array(
 			'Gdzie was znajdę? Jak dojechać?',
-			'adres, dojazd, dojecha, lokalizac, gdzie jest, siedzib, parking',
+			'adres, dojazd, dojecha, lokalizac, gdzie jest, gdzie was, jak trafi, mapa, siedzib, parking',
 			'Nasza siedziba: ul. Przykładowa 1, 00-001 Warszawa. Parking dla klientów jest od strony podwórza. Dokładna mapa dojazdu jest na stronie „Kontakt".',
 		),
 		array(
 			'Jakie formy płatności przyjmujecie?',
-			'płatno, platno, przelew, gotówk, gotowk, kartą, karta, blik, zapłac, zaplac',
+			'płatno, platno, przelew, gotówk, gotowk, kartą, karta, kartę, karte, blik, zapłac, zaplac',
 			'Przyjmujemy przelew, BLIK i gotówkę. Za usługi stałe wystawiamy faktury z 7-dniowym terminem płatności.',
 		),
 		array(
 			'Jaki jest termin realizacji?',
-			'termin, realizacj, jak długo, jak dlugo, ile trwa, kiedy będzie, kiedy bedzie, czas oczekiwania',
+			'termin, realizacj, jak długo, jak dlugo, ile trwa, ile czasu, kiedy będzie, kiedy bedzie, na kiedy, czas oczekiwania',
 			'Standardowy termin realizacji to 3–5 dni roboczych od potwierdzenia zamówienia. Przy większych zleceniach termin ustalamy indywidualnie.',
 		),
 		array(
 			'Czy dajecie gwarancję? Jak zgłosić reklamację?',
-			'gwaranc, reklamac, zwrot, zepsu, usterk, napraw',
+			'gwaranc, reklamac, reklamow, zwrot, zepsu, usterk, napraw',
 			'Tak, na nasze usługi dajemy 12 miesięcy gwarancji. Reklamację zgłosisz mailem na biuro@twojafirma.pl — odpowiadamy do 3 dni roboczych.',
 		),
 		array(
 			'Czy wystawiacie faktury VAT?',
-			'faktur, vat, rachunek, nip',
+			'faktur, vat, rachun, nip',
 			'Tak, wystawiamy faktury VAT. Podaj NIP przy zamówieniu, a fakturę wyślemy mailem po realizacji.',
 		),
 		array(
 			'Jak umówić wizytę lub konsultację?',
-			'umówi, umowi, wizyt, spotka, konsultac, rezerwac, zapisać się, zapisac sie',
+			'umówi, umowi, wizyt, spotka, konsultac, rezerwac, zapisa',
 			'Wizytę umówisz telefonicznie (600 000 000) albo zostaw tutaj maila z dopiskiem „konsultacja" — wrócimy z propozycją terminu w 1 dzień roboczy.',
 		),
 	);

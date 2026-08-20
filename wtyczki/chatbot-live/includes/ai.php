@@ -20,16 +20,39 @@ const CHATL_AI_TIMEOUT    = 9;
 const CHATL_AI_BRAK       = 'BRAK_ODPOWIEDZI';
 
 /**
- * Klucz API właściciela (opcja z autoload=no; nigdy w kodzie/paczce/repo).
+ * Czy klucz jest podany stałą CHATL_KLUCZ_API w wp-config.php.
+ *
+ * Stała MA PIERWSZEŃSTWO nad opcją: klucz siedzi wtedy poza bazą, więc nie
+ * wychodzi z kopią zapasową bazy ani z eksportem do innego środowiska.
+ * ⛔ Świadomie NIE szyfrujemy klucza w bazie — klucz szyfrujący leżałby
+ * w tym samym WordPressie, obok danych; to teatr, nie zabezpieczenie.
+ *
+ * @return bool
+ */
+function chatl_klucz_ze_stalej() {
+	return defined( 'CHATL_KLUCZ_API' ) && '' !== trim( (string) constant( 'CHATL_KLUCZ_API' ) );
+}
+
+/**
+ * Klucz API właściciela: stała z wp-config.php, a jeśli jej nie ma — opcja
+ * (z autoload=no; nigdy w kodzie/paczce/repo).
  */
 function chatl_klucz_api() {
+	if ( chatl_klucz_ze_stalej() ) {
+		return trim( (string) constant( 'CHATL_KLUCZ_API' ) );
+	}
 	return (string) get_option( 'chatl_klucz_api', '' );
 }
 
 /**
  * Zapis/kasowanie klucza z wymuszonym autoload=no.
+ * Gdy klucz jest w konfiguracji serwera, panel go nie nadpisuje — inaczej
+ * wpis w polu formularza po cichu wygrywałby ze stałą wbrew deklaracji.
  */
 function chatl_zapisz_klucz( $klucz ) {
+	if ( chatl_klucz_ze_stalej() ) {
+		return;
+	}
 	if ( '' === $klucz ) {
 		delete_option( 'chatl_klucz_api' );
 		return;
@@ -128,11 +151,10 @@ function chatl_ai_zapytaj( $pytanie ) {
 			),
 			'body'    => wp_json_encode(
 				array(
-					'model'         => $model,
-					'max_tokens'    => CHATL_AI_MAX_TOKENS,
-					'output_config' => array( 'effort' => 'low' ),
-					'system'        => chatl_ai_instrukcja(),
-					'messages'      => array(
+					'model'      => $model,
+					'max_tokens' => CHATL_AI_MAX_TOKENS,
+					'system'     => chatl_ai_instrukcja(),
+					'messages'   => array(
 						array(
 							'role'    => 'user',
 							'content' => $pytanie,
@@ -141,6 +163,29 @@ function chatl_ai_zapytaj( $pytanie ) {
 				)
 			),
 		)
+	);
+}
+
+/**
+ * Wpis do logu WP, gdy wywołanie API nie zwróciło 200.
+ *
+ * @param array|WP_Error $odp Odpowiedź wp_remote_post().
+ * @param int            $kod Kod HTTP (0 = błąd połączenia).
+ * @return void
+ */
+function chatl_log_bledu_ai( $odp, $kod ) {
+	if ( ! function_exists( 'wp_trigger_error' ) ) {
+		return;
+	}
+	if ( is_wp_error( $odp ) ) {
+		$szczegol = 'błąd połączenia: ' . $odp->get_error_message();
+	} else {
+		$szczegol = 'HTTP ' . (int) $kod . ': ' . wp_html_excerpt( (string) wp_remote_retrieve_body( $odp ), 300, '…' );
+	}
+	wp_trigger_error(
+		'chatl_ai_odpowiedz',
+		'wywołanie API nie powiodło się, bot odpowiada z reguł (' . $szczegol . ')',
+		E_USER_WARNING
 	);
 }
 
@@ -160,6 +205,11 @@ function chatl_ai_odpowiedz( $pytanie ) {
 		$kod = is_wp_error( $odp ) ? 0 : (int) wp_remote_retrieve_response_code( $odp );
 	}
 	if ( is_wp_error( $odp ) || 200 !== $kod ) {
+		// Zjazd do reguł MA być cichy dla gościa, ale nie dla właściciela:
+		// bez tego wpisu wtyczka miesiącami „działa" w trybie AI, odpowiadając
+		// wyłącznie z reguł, bo API odrzuca każde żądanie (tak zniknął błąd
+		// output_config: 400 nie jest nawet retry'owany).
+		chatl_log_bledu_ai( $odp, $kod );
 		return null;
 	}
 

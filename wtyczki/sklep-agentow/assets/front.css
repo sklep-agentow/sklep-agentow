@@ -21,6 +21,26 @@
 	padding: clamp(4rem, 10vw, 5.5rem) clamp(1rem, 4vw, 2.5rem) clamp(2rem, 6vw, 4.5rem);
 	border-radius: 0;
 	line-height: 1.6;
+
+	/* RAMA TREŚCI — 1:1 z siatką motywu gospodarza. ZMIERZONE 20.08 w przeglądarce
+	   przy oknie 1920px: jego `container-site` idzie 352→1568 (1216px), a OBSZAR
+	   TREŚCI w środku 384→1536, czyli 1152px = 72rem — i to jest liczba, którą
+	   bierzemy, żeby nasze sekcje stały w jednej linii z jego logo i tekstem.
+	   Bez tego sekcje z własnym `max-width` lgnęły do LEWEJ krawędzi: treść
+	   kończyła się na 1032px i zostawało 888px pustki (znalezisko Dzidka
+	   + pomiar getBoundingClientRect). Tło zostaje na pełną szerokość,
+	   centrowana jest sama treść — dokładnie jak u gospodarza. */
+	display: grid;
+	grid-template-columns: 1fr min(72rem, 100%) 1fr;
+}
+
+/* ⚠️ ŚWIADOMA DECYZJA (uwaga recenzenta #62): to jest WYRÓWNANIE DO SIATKI,
+   nie centrowanie treści. Sekcje trzymają własny `max-width` (czytelna długość
+   linii) i stoją przy LEWEJ krawędzi toru — dokładnie tak jak treść gospodarza
+   (jego `max-w-[42rem]` też siedzi przy lewej krawędzi `container-site`).
+   Luz po prawej stronie sekcji jest zamierzony, nie jest niedokończoną robotą. */
+.sklepag-wyspa > * {
+	grid-column: 2;
 }
 
 .sklepag-wyspa *,
@@ -756,11 +776,37 @@ a.sklepag-kup {
 	margin: 1.2rem 0 0;
 }
 
+/* ---------- Pojawianie się sekcji przy przewijaniu (spójność z motywem) ----------
+   Feedback Dzidka 20.08: „podstrona sklepu nie ma animacji jak reszta strony".
+   Parametry ZMIERZONE z motywu gospodarza (26px, 0.3s ease-out, 0.5s cubic-bezier).
+   ⛔ Ukrywamy WYŁĄCZNIE gdy oba warunki spełnione: `sklepag-js` na <html> (inline
+   w head, przed renderem — zero mignięcia) I `sklepag-ruch` na wyspie (dodaje
+   front-ruch.js po sprawdzeniu obsługi). Bez JS / przy błędzie skryptu / przy
+   „ogranicz ruch" — treść po prostu jest widoczna. Nic nie może zniknąć. */
+.sklepag-js .sklepag-ruch > * {
+	opacity: 0;
+	transform: translateY(26px);
+}
+
+.sklepag-js .sklepag-ruch > .sklepag-widoczne {
+	opacity: 1;
+	transform: none;
+	transition: opacity 0.3s ease-out, transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
 @media (prefers-reduced-motion: reduce) {
 	.sklepag-wyspa *,
 	.sklepag-wyspa *::before,
 	.sklepag-wyspa *::after {
 		animation: none !important;
 		transition: none !important;
+	}
+
+	/* Pasek i szelki: skrypt i tak nie doda `sklepag-ruch` przy tym ustawieniu,
+	   ale gdyby ktoś zmienił ustawienie systemu przy otwartej stronie — treść
+	   ma zostać widoczna, nie zamrozić się w stanie ukrytym. */
+	.sklepag-js .sklepag-ruch > * {
+		opacity: 1 !important;
+		transform: none !important;
 	}
 }
