@@ -88,8 +88,12 @@ Faktury, Reklamacje, Reszta); strzałka między kolumnami.
   NA SUCHO — pokazuje, co by zrobiła, i **nie rusza ani jednej wiadomości**,
   dopóki sam nie przełączysz trybu i nie potwierdzisz. Ostatni przebieg da się
   **cofnąć jednym kliknięciem**, a całość może chodzić sama według harmonogramu.
-- **Eksport reguł do filtrów Gmaila i Outlooka**: te same reguły możesz przenieść
-  do swojej skrzynki i zostawić je tam na stałe, niezależnie od wtyczki.
+- **Eksport reguł do filtrów Gmaila i Outlooka**: te same reguły przenosisz do
+  swojej skrzynki i zostają tam na stałe, niezależnie od wtyczki. Przekład nie jest
+  dosłowny i mówimy o tym wprost: nasz silnik bierze PIERWSZĄ pasującą regułę,
+  a Gmail stosuje WSZYSTKIE naraz — dlatego eksport dokłada wykluczenia, żeby wynik
+  zgadzał się z raportem. Czego przełożyć się nie da, dostajesz wypisane na liście
+  przy eksporcie, zamiast po cichu.
 
 **JAK DZIAŁA — 3 KROKI**: 1. Zainstaluj. 2. Ułóż reguły pod swoją skrzynkę
 (PLACEHOLDER-POMIAR: „~20 minut" — po pomiarze 23.08). 3. Puść przebieg
