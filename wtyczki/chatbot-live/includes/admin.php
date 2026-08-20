@@ -372,6 +372,20 @@ function chatl_strona_ustawienia() {
 						<p class="description"><label><input type="checkbox" name="powiadomienia" value="1" <?php checked( $ust['powiadomienia'] ); ?>> wysyłaj mail przy każdym nowym zgłoszeniu</label></p>
 					</td>
 				</tr>
+				<tr>
+					<th scope="row"><label for="chatl-polityka">Adres polityki prywatności</label></th>
+					<td>
+						<input type="url" id="chatl-polityka" name="adres_polityki" class="regular-text" placeholder="https://twojafirma.pl/polityka-prywatnosci"
+							value="<?php echo esc_attr( $ust['adres_polityki'] ); ?>">
+						<p class="description">
+							Link pokazywany gościowi przy formularzu kontaktu, obok informacji, co zbieramy (e-mail i treść pytania), po co (odpowiedź na pytanie) i jak długo (<?php echo (int) CHATL_RETENCJA_DNI; ?> dni). Puste pole = sama informacja, bez linku.
+							<?php $polityka_wp = get_privacy_policy_url(); ?>
+							<?php if ( '' !== $polityka_wp && $polityka_wp !== $ust['adres_polityki'] ) : ?>
+								<br>Ten WordPress ma ustawioną stronę polityki prywatności: <code><?php echo esc_html( $polityka_wp ); ?></code> — możesz wkleić ten adres.
+							<?php endif; ?>
+						</p>
+					</td>
+				</tr>
 				<tr><th colspan="2"><h2>Tryb AI (hybryda)</h2>
 					<p style="font-weight:normal">Z kluczem API odpowiedzi generuje prawdziwy model (Claude) na podstawie informacji o firmie i bazy Q&amp;A — z zakazem zgadywania (niepewny zbiera kontakt). Bez klucza, po wyczerpaniu limitu albo przy błędzie API bot działa w trybie regułowym.</p></th></tr>
 				<tr>
@@ -412,7 +426,8 @@ function chatl_strona_ustawienia() {
 			<?php submit_button( 'Zapisz ustawienia' ); ?>
 		</form>
 		<h2>Prywatność</h2>
-		<p>Tryb regułowy: treść rozmów <strong>nie opuszcza</strong> Twojego WordPressa — dopasowanie działa lokalnie. Tryb AI: treść pytania gościa (wraz z informacjami o firmie i bazą Q&amp;A) jest wysyłana do API dostawcy modelu (Anthropic) — poinformuj o tym w swojej polityce prywatności. Historia rozmów jest przechowywana 90 dni.</p>
+		<p>Tryb regułowy: treść rozmów <strong>nie opuszcza</strong> Twojego WordPressa — dopasowanie działa lokalnie. Tryb AI: treść pytania gościa (wraz z informacjami o firmie i bazą Q&amp;A) jest wysyłana do API dostawcy modelu (Anthropic) — poinformuj o tym w swojej polityce prywatności. Historia rozmów jest przechowywana <?php echo (int) CHATL_RETENCJA_DNI; ?> dni.</p>
+		<p>Formularz kontaktu ma <strong>wymagany</strong> checkbox zgody na przetwarzanie danych — sprawdzany także po stronie serwera, więc zgłoszenie bez zgody nie trafia do bazy. Sam zapisany wiersz jest więc dowodem, że zgoda była.</p>
 	</div>
 	<?php
 }
@@ -433,6 +448,7 @@ function chatl_post_ustawienia_zapisz() {
 		'usun_dane'        => empty( $_POST['usun_dane'] ) ? 0 : 1,
 		'ai_informacje'    => isset( $_POST['ai_informacje'] ) ? sanitize_textarea_field( wp_unslash( $_POST['ai_informacje'] ) ) : $stare['ai_informacje'],
 		'ai_limit_dzienny' => isset( $_POST['ai_limit_dzienny'] ) ? max( 1, min( 100000, (int) $_POST['ai_limit_dzienny'] ) ) : $stare['ai_limit_dzienny'],
+		'adres_polityki'   => isset( $_POST['adres_polityki'] ) ? esc_url_raw( wp_unslash( $_POST['adres_polityki'] ) ) : $stare['adres_polityki'],
 	);
 
 	// Klucz API: osobna opcja (autoload=no), nigdy nie wraca do formularza.

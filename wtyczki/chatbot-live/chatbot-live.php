@@ -111,6 +111,7 @@ function chatl_ustawienia() {
 		'usun_dane'        => 0,
 		'ai_informacje'    => '',
 		'ai_limit_dzienny' => 100,
+		'adres_polityki'   => '',
 	);
 	$zapisane = get_option( 'chatl_ustawienia', array() );
 	if ( ! is_array( $zapisane ) ) {

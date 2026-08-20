@@ -11,6 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 const CHATL_MAX_PYTANIE   = 500;
 const CHATL_MAX_WIADOMOSC = 2000;
 const CHATL_LIMIT_NA_MIN  = 10;
+const CHATL_RETENCJA_DNI  = 90;
 
 /**
  * Rate limit per IP na tabeli (wzorzec sklepu: sklepag_rate_limit, recenzja
@@ -83,9 +84,17 @@ function chatl_assety() {
 		'chatl-widget',
 		'chatlDane',
 		array(
-			'ajaxUrl'   => admin_url( 'admin-ajax.php' ),
-			'nonce'     => wp_create_nonce( 'chatl_front' ),
-			'powitanie' => $ust['powitanie'],
+			'ajaxUrl'    => admin_url( 'admin-ajax.php' ),
+			'nonce'      => wp_create_nonce( 'chatl_front' ),
+			'powitanie'  => $ust['powitanie'],
+			// Informacja o przetwarzaniu danych przy formularzu kontaktu:
+			// co zbieramy, po co, jak długo. Adres polityki pusty => bez linku.
+			'prywatnosc' => sprintf(
+				'Zbieramy Twój adres e-mail i treść wiadomości wyłącznie po to, żeby odpowiedzieć na Twoje pytanie. Przechowujemy je przez %d dni, potem są kasowane.',
+				CHATL_RETENCJA_DNI
+			),
+			'polityka'   => esc_url( $ust['adres_polityki'] ),
+			'zgodaTekst' => 'Zapoznałem się z informacją o przetwarzaniu danych',
 		)
 	);
 }
@@ -201,6 +210,16 @@ function chatl_ajax_zgloszenie() {
 	}
 	if ( '' === $wiadomosc ) {
 		wp_send_json_error( array( 'komunikat' => 'Napisz, w czym pomóc.' ), 400 );
+	}
+	// Zgoda sprawdzana PO STRONIE SERWERA: checkbox w przeglądarce da się
+	// ominąć (DevTools, żądanie wprost do admin-ajax), a bez zgody nie wolno
+	// zapisać maila gościa. Zapis zgłoszenia JEST dowodem zgody — bez niej
+	// żądanie nie dochodzi do INSERT-a.
+	if ( empty( $_POST['zgoda'] ) ) {
+		wp_send_json_error(
+			array( 'komunikat' => 'Zaznacz proszę zgodę na przetwarzanie danych — bez niej nie możemy zapisać Twojej wiadomości.' ),
+			400
+		);
 	}
 	if ( mb_strlen( $wiadomosc ) > CHATL_MAX_WIADOMOSC ) {
 		$wiadomosc = mb_substr( $wiadomosc, 0, CHATL_MAX_WIADOMOSC );

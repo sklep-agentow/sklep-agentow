@@ -157,6 +157,32 @@
 	font: inherit;
 }
 
+/* Informacja o przetwarzaniu danych + wymagana zgoda (formularz kontaktu). */
+.chatl-info-prywatnosc {
+	margin: 0 0 6px;
+	font-size: 11px;
+	line-height: 1.45;
+	color: rgba(245, 245, 245, 0.62);
+}
+.chatl-info-prywatnosc a {
+	color: #f5f5f5;
+	text-decoration: underline;
+}
+.chatl-zgoda {
+	display: flex;
+	gap: 6px;
+	align-items: flex-start;
+	margin-bottom: 8px;
+	font-size: 11px;
+	line-height: 1.45;
+	color: rgba(245, 245, 245, 0.82);
+	cursor: pointer;
+}
+.chatl-zgoda input {
+	margin: 2px 0 0;
+	flex: 0 0 auto;
+}
+
 .chatl-wyslij-zgloszenie {
 	width: 100%;
 	border: 0;

@@ -87,6 +87,30 @@
 		tresc.setAttribute('aria-label', 'Treść wiadomości');
 		f.appendChild(tresc);
 
+		/*
+		 * Informacja o przetwarzaniu danych PRZED polem zgody: co zbieramy,
+		 * po co, jak długo. Link do polityki tylko, gdy wlasciciel podal adres
+		 * w ustawieniach — pusty adres = sama informacja, bez martwego linku.
+		 */
+		var info = el('p', 'chatl-info-prywatnosc', dane.prywatnosc);
+		if (dane.polityka) {
+			info.appendChild(document.createTextNode(' '));
+			var link = el('a', null, 'Polityka prywatności');
+			link.href = dane.polityka;
+			link.target = '_blank';
+			link.rel = 'noopener noreferrer';
+			info.appendChild(link);
+		}
+		f.appendChild(info);
+
+		var zgodaEtykieta = el('label', 'chatl-zgoda');
+		var zgoda = el('input');
+		zgoda.type = 'checkbox';
+		zgoda.required = true;
+		zgodaEtykieta.appendChild(zgoda);
+		zgodaEtykieta.appendChild(document.createTextNode(' ' + dane.zgodaTekst));
+		f.appendChild(zgodaEtykieta);
+
 		var przycisk = el('button', 'chatl-wyslij-zgloszenie', 'Wyślij wiadomość');
 		przycisk.type = 'submit';
 		f.appendChild(przycisk);
@@ -94,12 +118,13 @@
 		f.addEventListener('submit', function (zd) {
 			zd.preventDefault();
 			przycisk.disabled = true;
-			wyslij('chatl_zgloszenie', { email: email.value, wiadomosc: tresc.value })
+			wyslij('chatl_zgloszenie', { email: email.value, wiadomosc: tresc.value, zgoda: zgoda.checked ? '1' : '' })
 				.then(function (odp) {
 					if (odp.success) {
 						f.classList.remove('chatl-otwarty');
 						email.value = '';
 						tresc.value = '';
+						zgoda.checked = false;
 						dodajWiadomosc('bot', odp.data.komunikat);
 					} else {
 						dodajWiadomosc('bot', (odp.data && odp.data.komunikat) || 'Nie udało się wysłać. Spróbuj ponownie.');
