@@ -31,10 +31,12 @@ komendy, `wp eval`, zapis z bazy, treść maila z łapacza, kod wyjścia bramki.
   miejscach, PR zamyka wszystkie albo jawnie mówi, czego nie zamyka.
 
 ## Bramki
-`vendor/bin/phpcs` · `vendor/bin/phpstan analyse --memory-limit=1G --no-progress` ·
-`php -l` · `testy/dokumentacja-zgodnosc.sh` (ChatBot) ·
-`testy/dokumentacja-zgodnosc-segregator.sh` · `narzedzia-qa/sprawdz-manifest.sh`
-Uruchamiasz je **lokalnie** i wklejasz **kody wyjścia** do opisu PR-a.
+⭐ **Jedno źródło prawdy: `narzedzia-qa/bramki.sh`** — tam jest pełna lista i KOLEJNOŚĆ
+(actionlint, manifest, php-lint, phpcs, phpstan, gitleaks) oraz licznik, który PADA,
+gdy zestaw się skurczy. Nie przepisuj tej listy w innych plikach — rozjedzie się.
+Lokalnie: `bash narzedzia-qa/bramki.sh` (tryb pełny) — plus, gdy dotykasz wtyczek:
+`testy/dokumentacja-zgodnosc.sh` (ChatBot) i `testy/dokumentacja-zgodnosc-segregator.sh`.
+Wynik z **kodem wyjścia** wklejasz do opisu PR-a.
 ⛔ Zielony ogon wyjścia to nie dowód — liczy się **EXIT**, nie ostatnia linia.
 
 ## Rzeczy, które wywalały nas wcześniej
