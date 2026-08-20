@@ -58,14 +58,15 @@ jobs:
 
       # Było w trzech starych zadaniach (php-lint, phpcs, phpstan) — tu raz.
       #
-      # ⚠️ ZMIERZONE 20.08 NA WŁASNYM WYKONAWCY: ten krok NIE jest darmowy jak
-      #    w chmurze (tam leci z cache). U nas trwa ~44 s i DOINSTALOWAŁ 167
-      #    PAKIETÓW SYSTEMOWYCH (autoconf, firebird-dev, freetds-dev,
-      #    krb5-multidev, imagemagick... — zależności do budowania rozszerzeń),
-      #    a także przestawił systemowe `php` z 8.3 na 8.4
-      #    (/etc/alternatives/php). To zmiana na SERWERZE, nie w piaskownicy.
-      #    Serwer ma już PHP 8.4, więc ten krok da się kiedyś wyłączyć albo
-      #    obwarować warunkiem — osobna pozycja, czeka na decyzję właściciela.
+      # ⚠️ ZMIERZONE 20.08 NA WŁASNYM WYKONAWCY — koszt jednorazowy, nie stały.
+      #    PIERWSZY przebieg: 44 s, DOINSTALOWAŁ 167 PAKIETÓW SYSTEMOWYCH
+      #    (autoconf, firebird-dev, freetds-dev, krb5-multidev, imagemagick —
+      #    zależności do budowania rozszerzeń PHP) i przestawił systemowe `php`
+      #    z 8.3 na 8.4 (/etc/alternatives/php). To zmiana na SERWERZE, nie
+      #    w piaskownicy — własny wykonawca nie sprząta po sobie.
+      #    DRUGI i kolejne: 1 s, całe zadanie 29 s. Krok zostaje: kosztuje
+      #    sekundę, a gwarantuje, że bramki liczą na 8.4 nawet gdyby ktoś
+      #    przestawił systemowe PHP z powrotem.
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
