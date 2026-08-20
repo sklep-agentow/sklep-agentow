@@ -72,8 +72,8 @@ done
 
 echo
 echo "=== D. Punkty wejscia ==="
-spr "liczba uchwytow admin_post"     "23" "grep -rhoP 'add_action\( .admin_post_segm_[a-z_]+' $W --include='*.php' | sort -u | wc -l"
-spr "dokumentacja podaje te liczbe"  "1"  "grep -c 'admin-post\` — 23 sztuki' $DOK"
+spr "liczba uchwytow admin_post"     "26" "grep -rhoP 'add_action\( .admin_post_segm_[a-z_]+' $W --include='*.php' | sort -u | wc -l"
+spr "dokumentacja podaje te liczbe"  "1"  "grep -c 'admin-post\` — 26 sztuk' $DOK"
 spr "ZERO punktow dla niezalogowanych" "0" "grep -rc 'wp_ajax_nopriv' $W --include='*.php' | grep -v ':0' | wc -l"
 spr "ZERO tras REST"                 "0"  "grep -rc 'register_rest_route' $W --include='*.php' | grep -v ':0' | wc -l"
 spr "ZERO zaczepow frontu"           "0"  "grep -rc 'template_redirect\|wp_enqueue_scripts\|add_shortcode' $W --include='*.php' | grep -v ':0' | wc -l"
@@ -117,7 +117,8 @@ spr "haslo nie wraca do formularza"  "0" "grep -c 'name=\"haslo\" [^>]*value=\"<
 spr "uninstall kasuje haslo ZAWSZE"  "1" "sed -n '1,/usun_dane/p' $W/uninstall.php | grep -c \"delete_option( 'segm_imap_haslo' )\""
 spr "uninstall kasuje klucz API ZAWSZE" "1" "sed -n '1,/usun_dane/p' $W/uninstall.php | grep -c \"delete_option( 'segm_klucz_api' )\""
 spr "uninstall kasuje obie zgody ZAWSZE" "2" "sed -n '1,/usun_dane/p' $W/uninstall.php | grep -c \"delete_option( 'segm_zgoda_\""
-spr "uninstall kasuje transienty panelu" "2" "grep -c '_transient.*segm_komunikat_' $W/uninstall.php"
+spr "uninstall kasuje transienty panelu" "1" "grep -c \"'segm_komunikat_', 'segm_liczenie_'\" $W/uninstall.php"
+spr "uninstall bierze OBA przedrostki transientow" "1" "grep -c \"'_transient_', '_transient_timeout_'\" $W/uninstall.php"
 
 echo
 echo "=== H. Tryb na sucho — twierdzenia z par. 9.2 ==="
@@ -168,7 +169,7 @@ echo "=== L. Liczby linii z tabeli architektury (par. 3) ==="
 # Odwrotne cudzyslowy w markdownie kolidowaly z podstawieniem polecen w eval —
 # dlatego wzorzec budujemy tu i podajemy do spr() gotowa liczbe.
 BACKTICK=$(printf '\140')
-for f in segregator-maila.php uninstall.php includes/admin-powitanie.php includes/instalator.php includes/silnik.php includes/csv.php includes/ai.php includes/admin.php includes/filtry.php includes/class-segm-imap.php includes/skrzynka.php includes/skrzynka-przebieg.php includes/admin-skrzynka.php; do
+for f in segregator-maila.php uninstall.php includes/admin-powitanie.php includes/admin-probka.php includes/instalator.php includes/silnik.php includes/csv.php includes/ai.php includes/admin.php includes/filtry.php includes/class-segm-imap.php includes/skrzynka.php includes/skrzynka-przebieg.php includes/admin-skrzynka.php; do
   ILE=$(wc -l < $W/$f)
   WZOR="${BACKTICK}${f}${BACKTICK} | ${ILE} |"
   TRAF=$(grep -cF "$WZOR" $DOK)
@@ -181,6 +182,7 @@ spr "DIAGRAM na liscie paczki"      "1" "grep -c 'segregator-maila/DIAGRAM-PRZEP
 spr "CHANGELOG na liscie paczki"    "1" "grep -c 'segregator-maila/CHANGELOG.md' boty/buduj-paczki.sh"
 spr "readme.txt na liscie paczki"   "1" "grep -c 'segregator-maila/readme.txt' boty/buduj-paczki.sh"
 spr "ekran powitalny na liscie paczki" "1" "grep -c 'segregator-maila/includes/admin-powitanie.php' boty/buduj-paczki.sh"
+spr "praca na pojedynczym mailu w paczce" "1" "grep -c 'segregator-maila/includes/admin-probka.php' boty/buduj-paczki.sh"
 spr "diagram istnieje"              "1" "test -f $SVG && echo 1 || echo 0"
 # xmlns="http://www.w3.org/2000/svg" to WYMAGANA deklaracja przestrzeni nazw XML,
 # a nie odwolanie sieciowe — przeglądarka niczego stamtad nie pobiera.
@@ -190,6 +192,33 @@ spr "diagram: tlo palety sklepu"    "1" "grep -c '#08090b' $SVG | awk '{print (\
 spr "diagram: limonka"              "1" "grep -ci '#BFFF38' $SVG | awk '{print (\$1>0)?1:0}'"
 spr "diagram: tekst jasny"          "1" "grep -ci '#F5F5F5' $SVG | awk '{print (\$1>0)?1:0}'"
 spr "diagram: szary"                "1" "grep -ci '#8F929C' $SVG | awk '{print (\$1>0)?1:0}'"
+
+echo "=== R. Iteracja na pojedynczym mailu i licznik regul ==="
+spr "dodanie/edycja jednego maila"   "1" "grep -c \"add_action( 'admin_post_segm_mail_zapisz'\" $W/includes/admin-probka.php"
+spr "usuniecie jednego maila"        "1" "grep -c \"add_action( 'admin_post_segm_mail_usun'\" $W/includes/admin-probka.php"
+spr "liczenie bez zapisywania"       "1" "grep -c \"add_action( 'admin_post_segm_regula_policz'\" $W/includes/admin-probka.php"
+spr "licznik uzywa silnika, nie wlasnej logiki" "1" "sed -n '/function segm_policz_trafienia/,/^}/p' $W/includes/admin-probka.php | grep -c 'segm_klasyfikuj_mail('"
+spr "jedna regula dopasowania (silnik + panel)" "1" "grep -c 'function segm_wzorzec_pasuje' $W/includes/silnik.php"
+spr "silnik wola te sama funkcje"    "1" "sed -n '/function segm_klasyfikuj_mail/,/^}/p' $W/includes/silnik.php | grep -c 'segm_wzorzec_pasuje('"
+spr "maile reczne oznaczone zrodlem" "1" "grep -c \"'zrodlo'    = 'reczny'\|= 'reczny'\" $W/includes/admin-probka.php"
+spr "nonce liczenia ma wlasna nazwe" "1" "grep -c \"check_admin_referer( 'segm_regula_policz', '_wpnonce_policz' )\" $W/includes/admin-probka.php"
+spr "uninstall kasuje transienty liczenia" "1" "grep -c 'segm_liczenie_' $W/uninstall.php | awk '{print (\$1>0)?1:0}'"
+spr "dokumentacja opisuje iteracje" "1" "grep -c '8.1. Iteracja na pojedynczym przypadku' $DOK"
+# --- straznicy uwag z recenzji PR #75 (liczone poza spr(), bo wzorce z $ i
+# cudzyslowami nie przezywaja podwojnego eval) ---
+PROBKA=$W/includes/admin-probka.php
+G1=$(awk '/function segm_post_mail_zapisz/,/^}/' $PROBKA | grep -c 'if ( 0 === \$zapis )')
+G2=$(awk '/function segm_post_mail_zapisz/,/^}/' $PROBKA | grep -c 'NIE MA już w próbce')
+G3=$(awk '/function segm_policz_trafienia/,/^}/' $PROBKA | grep -c "pusty_wzorzec'\] = true")
+LIN_MAILI=$(awk '/function segm_policz_trafienia/,/^}/' $PROBKA | grep -n "wynik\['maili'\] = count" | head -1 | cut -d: -f1)
+LIN_WZORZEC=$(awk '/function segm_policz_trafienia/,/^}/' $PROBKA | grep -n "wzorzec = trim" | head -1 | cut -d: -f1)
+G5=$(awk '/function segm_opis_trafien/,/^}/' $PROBKA | grep -c 'pole wzorca jest puste')
+spr "0 z update() sprawdzane w bazie"          "1" "echo $G1"
+spr "brak wiersza = komunikat, nie sukces"     "1" "echo $G2"
+spr "pusty wzorzec ma wlasny znacznik"         "1" "echo $G3"
+spr "liczba maili ustalana PRZED wzorcem"      "1" "test -n \"$LIN_MAILI\" && test -n \"$LIN_WZORZEC\" && test \"$LIN_MAILI\" -lt \"$LIN_WZORZEC\" && echo 1 || echo 0"
+spr "pusta probka zglaszana PRZED pustym wzorcem" "1" "awk '/function segm_opis_trafien/,/^}/' $PROBKA | grep -n \"maili.\] )\|pusty_wzorzec\" | head -2 | head -1 | grep -c maili"
+spr "opis rozroznia pusty wzorzec od pustej probki" "1" "echo $G5"
 
 echo "=== N. readme.txt w standardzie WordPressa ==="
 spr "readme.txt istnieje"            "1" "test -f $W/readme.txt && echo 1 || echo 0"

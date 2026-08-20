@@ -31,6 +31,7 @@ delete_option( 'chatl_ustawienia' );
 delete_option( 'chatl_wersja_schematu' );
 delete_option( 'chatl_blad_maila' );
 delete_option( 'chatl_blad_ai' );
+delete_option( 'chatl_blad_nonce' );
 
 // Znacznik „widziałem ekran powitalny" leży przy KAŻDYM administratorze osobno,
 // więc kasujemy go dla wszystkich naraz ($delete_all = true). Bez tego po pełnym

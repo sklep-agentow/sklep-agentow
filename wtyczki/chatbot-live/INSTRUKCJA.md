@@ -147,6 +147,12 @@ W **Ustawieniach → Tryb AI** jest przycisk **„Przetestuj klucz"** — jedno 
 wywołanie, wynik od razu na ekranie. Gdyby API zaczęło odrzucać żądania (zły albo
 wygasły klucz), w panelu pojawi się czerwony pasek z datą i kodem błędu. Bot działa
 wtedy dalej, ale wyłącznie z reguł — dlatego ten sygnał jest ważny.
+**Goście piszą, że czat nie działa, a w panelu mam czerwone ostrzeżenie.**
+Twoja strona jest podawana z pamięci podręcznej (cache) starszej niż ważność
+zabezpieczenia formularza — to najczęstsza przyczyna. Wtyczka próbuje ratować
+rozmowę sama: odświeża zabezpieczenie i powtarza pytanie. Jeśli mimo to liczba
+w ostrzeżeniu rośnie, **wyłącz cache dla strony z czatem** (w LiteSpeed, WP Rocket,
+W3TC albo Cloudflare) albo skróć czas życia cache.
 
 **Zmieniłem kolory i tekst zrobił się nieczytelny.**
 Zaznacz „dobierz automatycznie" przy kolorze tekstu — wtyczka wybierze wersję

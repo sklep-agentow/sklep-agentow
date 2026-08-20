@@ -95,6 +95,7 @@ require_once SEGM_KATALOG . 'includes/skrzynka-przebieg.php';
 if ( is_admin() ) {
 	require_once SEGM_KATALOG . 'includes/csv.php';
 	require_once SEGM_KATALOG . 'includes/admin.php';
+	require_once SEGM_KATALOG . 'includes/admin-probka.php';
 	require_once SEGM_KATALOG . 'includes/admin-skrzynka.php';
 	require_once SEGM_KATALOG . 'includes/admin-powitanie.php';
 	require_once SEGM_KATALOG . 'includes/filtry.php';

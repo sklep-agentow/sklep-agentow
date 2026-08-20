@@ -145,6 +145,7 @@ całą historię przy każdym wejściu.
 | `chatl_klucz_api` | klucz API właściciela | **nie** (`add_option(..., '', false)`) | przy zapisaniu klucza w panelu |
 | `chatl_blad_maila` | `['kiedy' => data, 'adres' => e-mail]` | **nie** | gdy `wp_mail()` zwróci `false`; kasowana przy pierwszej udanej wysyłce |
 | `chatl_blad_ai` | `['kiedy' => data, 'kod' => HTTP, 'tresc' => fragment]` | **nie** | gdy wywołanie API nie zwróci 200; kasowana przy pierwszym udanym wywołaniu |
+| `chatl_blad_nonce` | `['ostatni' => data, 'ile' => liczba]` | **nie** | gdy gościowi odbije się zabezpieczenie formularza; kasowana przyciskiem w panelu |
 
 Klucz API jest bez autoloadu celowo: nie wchodzi do zapytania ładowanego na każdej odsłonie
 strony. Weryfikacja na żywym stacku po pełnym cyklu instalacja→deinstalacja→instalacja:
@@ -198,6 +199,8 @@ Wszystkie liczby, którymi wtyczka się rządzi, są stałymi — nie ma ich roz
 | `CHATL_LIMIT_NA_MIN` | `10` | `includes/front.php` | wspólny kubeł: żądań na minutę z jednego IP, łącznie dla pytań i zgłoszeń |
 | `CHATL_RETENCJA_DNI` | `90` | `includes/front.php` | okres retencji historii rozmów — **jedno źródło** dla crona, tekstu w widgecie, panelu i eksportu |
 | `CHATL_AI_LIMIT_IP_NA_DOBE` | `20` | `includes/front.php` | osobny, twardszy limit wywołań AI z jednego IP na dobę |
+| `CHATL_LIMIT_NONCE` | `20` | `includes/front.php` | odświeżeń zabezpieczenia formularza na minutę z jednego IP |
+| `CHATL_NONCE_OKNO_DNI` | `7` | `includes/front.php` | ile dni panel pokazuje ostrzeżenie o odrzuconych zabezpieczeniach |
 | `CHATL_AI_MODEL` | `claude-haiku-4-5-20251001` | `includes/ai.php` | domyślny model (podmienialny filtrem) |
 | `CHATL_AI_MAX_TOKENS` | `1024` | `includes/ai.php` | limit długości odpowiedzi modelu |
 | `CHATL_AI_TIMEOUT` | `9` | `includes/ai.php` | timeout jednego wywołania w sekundach; z jednym ponowieniem daje maks. 18 s, z zapasem pod typowy limit 30 s na hostingu |
@@ -315,6 +318,7 @@ różnica stanu tabel, opcji i zdarzeń cron przed instalacją i po odinstalowan
 |---|---|---|---|
 | `chatl_pytanie` | `chatl_ajax_pytanie` | `chatl_front` | pytanie gościa → odpowiedź z AI albo z reguł |
 | `chatl_zgloszenie` | `chatl_ajax_zgloszenie` | `chatl_front` | zapis kontaktu + powiadomienie mailem |
+| `chatl_nonce` | `chatl_ajax_nonce` | **brak (celowo)** | wydaje świeże zabezpieczenie gościowi, któremu strona przyszła z cache |
 
 Obie zarejestrowane w wariancie `wp_ajax_` i `wp_ajax_nopriv_`, bo gość czatu nie jest zalogowany.
 
@@ -331,6 +335,7 @@ Obie zarejestrowane w wariancie `wp_ajax_` i `wp_ajax_nopriv_`, bo gość czatu 
 | `chatl_eksport_rozmow` | `chatl_post_eksport_rozmow` | `chatl_eksport_rozmow` |
 | `chatl_powitanie_zamknij` | `chatl_post_powitanie_zamknij` | `chatl_powitanie_zamknij` |
 | `chatl_test_klucza` | `chatl_post_test_klucza` | `chatl_test_klucza` |
+| `chatl_nonce_zamknij` | `chatl_post_nonce_zamknij` | `chatl_nonce_zamknij` |
 
 Nonce operacji na pojedynczym wierszu zawiera jego `id` — nonce od cudzego wiersza nie przejdzie.
 Oba eksporty przechodzą przez jedną bramkę `chatl_csv_brama()` (capability + nonce).
@@ -607,10 +612,45 @@ nie jakość odpowiedzi.
 Komunikaty rozróżniają przyczyny, bo prowadzą do różnych działań: `401`/`403`
 to zły lub wygasły klucz, `404` to nieznana nazwa modelu, `429` to limit
 u dostawcy (klucz działa), błąd połączenia to problem z siecią hostingu.
+## 15. Zabezpieczenie formularza a cache strony
+
+Nonce wchodzi do HTML-a strony przez `wp_localize_script()`, a wtyczka albo usługa
+cache (LiteSpeed, WP Rocket, W3TC, Cloudflare) potrafi serwować ten HTML **dłużej,
+niż nonce żyje** (12–24 h). Efekt przed 1.4.1: `check_ajax_referer()` kończył
+żądanie odpowiedzią `-1`, `odp.json()` dawało **liczbę**, więc `odp.success` było
+`undefined` i gość dostawał „Coś poszło nie tak" przy **każdym** pytaniu. Czat nie
+działał u nikogo, a właściciel nie miał o tym pojęcia.
+
+Naprawa ma trzy części, bo awaria miała trzy poziomy:
+
+1. **Serwer odmawia rozpoznawalnie.** `chatl_wymagaj_nonce()` woła
+   `check_ajax_referer( …, false )` — bez ubijania żądania — i przy porażce
+   odpowiada własnym JSON-em z `data.kod = 'nonce'`. Dopiero wtedy jest gdzie
+   odnotować awarię.
+2. **Widget ratuje rozmowę sam.** `wyslij()` w `assets/widget.js` po odpowiedzi
+   z kodem `nonce` (albo po surowym `-1`, które po sparsowaniu nie ma pola
+   `success`) dociąga świeże zabezpieczenie publicznym endpointem `chatl_nonce`
+   i powtarza żądanie **dokładnie raz**. Druga porażka to już prawdziwa awaria
+   i wtedy gość ma prawo zobaczyć komunikat.
+3. **Właściciel to widzi.** Każde odrzucenie zwiększa licznik w opcji
+   `chatl_blad_nonce`; panel pokazuje czerwone ostrzeżenie z liczbą, przyczyną
+   i tym, co zrobić. Ostrzeżenie cichnie po `CHATL_NONCE_OKNO_DNI` dniach bez
+   nowych odrzuceń albo po kliknięciu „ukryj".
+
+**Dlaczego endpoint `chatl_nonce` nie wymaga nonce'a:** jego jedynym zadaniem
+jest wydanie zabezpieczenia komuś, kto ma nieważne. Nie osłabia to niczego —
+ten sam token każdy odczyta, wchodząc na stronę — a `wp_create_nonce( 'chatl_front' )`
+jest ważny wyłącznie dla dwóch publicznych akcji czatu i nie otwiera niczego,
+czego gość nie mógłby zrobić i tak. Ochroną jest osobny kubeł limitu na IP
+(`CHATL_LIMIT_NONCE`).
+
+Znacznika **nie kasujemy przy udanym żądaniu** — to byłby zapis do bazy na
+ścieżce każdego pytania gościa. Dlatego ostrzeżenie wygasa czasem, a nie
+sukcesem.
 
 ---
 
-## 15. Eksport CSV
+## 16. Eksport CSV
 
 Ręczny, przyciskiem w panelu — `includes/csv.php`. Dwa strumienie: wszystkie zgłoszenia
 (`id, data, email, wiadomosc, status, sesja`) i historia rozmów (`sesja, data, kto, silnik, tresc`),
@@ -626,7 +666,7 @@ kłóciłoby się z obietnicą retencji.
 
 ---
 
-## 16. Znane granice
+## 17. Znane granice
 
 Rzeczy, których wtyczka **nie** robi — żeby nikt nie szukał ich w kodzie:
 
