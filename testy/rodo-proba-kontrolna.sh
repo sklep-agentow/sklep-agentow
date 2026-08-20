@@ -71,8 +71,11 @@ probuj "eksport gubi wiersze przy pelnej stronie zgloszen" \
   "zaden wiersz nie wypadl ze stronicowania"
 
 # 5. Eksport pomija rozmowy — wniosek dostaje same zgloszenia.
+#    UWAGA: kotwica tego mutanta juz raz zgnila po zmianie nazwy zmiennej
+#    ($miejsc -> $wolne_sloty). Proba kontrolna zlapala to sama, meldujac
+#    "mutacja NIE weszla do pliku" — po to jest ten warunek w probuj().
 probuj "eksport pomija historie rozmow" \
-  "docker exec $KONTENER sed -i 's|if ( \$miejsc > 0 \&\& \$sesje ) {|if ( false ) {|' $PLIK" \
+  "docker exec $KONTENER sed -i 's|if ( \$wolne_sloty > 0 \&\& \$sesje ) {|if ( false ) {|' $PLIK" \
   "eksport zawiera pytanie goscia z rozmowy"
 
 # 6. Kasownik kasuje zgloszenia, ale zostawia rozmowy — po ich skasowaniu
