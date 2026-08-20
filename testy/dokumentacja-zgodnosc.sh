@@ -45,7 +45,7 @@ spr "kazdy wpis CHANGELOG oddzielony kreska" "0" \
 echo "=== A. Wersja i schemat ==="
 spr "naglowek Version"            "1.5.1" "grep -oP '(?<=^ \* Version: ).*' $W/chatbot-live.php"
 spr "stala CHATL_WERSJA"          "1.5.1" "grep -oP \"(?<=CHATL_WERSJA', ')[^']*\" $W/chatbot-live.php"
-spr "CHATL_WERSJA_SCHEMATU"       "5"     "grep -oP \"(?<=CHATL_WERSJA_SCHEMATU', ')[^']*\" $W/chatbot-live.php"
+spr "CHATL_WERSJA_SCHEMATU"       "6"     "grep -oP \"(?<=CHATL_WERSJA_SCHEMATU', ')[^']*\" $W/chatbot-live.php"
 spr "Requires at least"           "6.0"   "grep -oP '(?<=^ \* Requires at least: ).*' $W/chatbot-live.php"
 spr "Requires PHP"                "8.1"   "grep -oP '(?<=^ \* Requires PHP: ).*' $W/chatbot-live.php"
 spr "naglowek Author"             "Automatic AI" "grep -oP '(?<=^ \* Author: ).*' $W/chatbot-live.php"
@@ -131,7 +131,7 @@ spr "statystyki.php na liscie paczki" "1" "grep -c 'chatbot-live/includes/statys
 spr "import.php na liscie plikow paczki" "1" "grep -c 'chatbot-live/includes/import.php' boty/buduj-paczki.sh"
 spr "CHANGELOG.md na liscie paczki"  "1" "grep -c 'chatbot-live/CHANGELOG.md' boty/buduj-paczki.sh"
 spr "readme.txt na liscie paczki"    "1" "grep -c 'chatbot-live/readme.txt' boty/buduj-paczki.sh"
-spr "plikow chatbota w allowliscie"   "21" "sed -n '/^ALLOWLIST_CHATBOT=(/,/^)/p' boty/buduj-paczki.sh | grep -c '\"chatbot-live/'"
+spr "plikow chatbota w allowliscie"   "25" "sed -n '/^ALLOWLIST_CHATBOT=(/,/^)/p' boty/buduj-paczki.sh | grep -c '\"chatbot-live/'"
 spr "allowlista = zawartosc katalogu" "0"  "cd wtyczki && find chatbot-live -type f | sort | comm -23 - <(sed -n '/^ALLOWLIST_CHATBOT=(/,/^)/p' ../boty/buduj-paczki.sh | grep -oP '(?<=\")chatbot-live/[^\"]*' | sort) | wc -l"
 # Klasa, ktora tu wyszla: includes/csv.php byl wymagany przez require_once, ale
 # NIE bylo go na liscie plikow paczki. Zip bez tego pliku = fatal w wp-admin
@@ -166,20 +166,20 @@ spr "liczba 90 wpisana wprost w kodzie PHP" "0" "grep -rhoP '\\d+ \\* DAY_IN_SEC
 
 echo
 echo "=== D. Baza: 5 tabel i liczba kolumn ==="
-spr "liczba dbDelta"              "5"  "grep -c 'dbDelta(' $W/includes/instalator.php"
+spr "liczba dbDelta"              "6"  "grep -c 'dbDelta(' $W/includes/instalator.php"
 spr "kolumn w chatl_qa"           "6"  "sed -n '/CREATE TABLE {\$p}chatl_qa/,/) {\$charset}/p' $W/includes/instalator.php | grep -cP '^\t\t(id|pytanie|slowa_kluczowe|odpowiedz|aktywne|utworzono) '"
 spr "kolumn w chatl_zgloszenia"   "6"  "sed -n '/CREATE TABLE {\$p}chatl_zgloszenia/,/) {\$charset}/p' $W/includes/instalator.php | grep -cP '^\t\t(id|email|wiadomosc|sesja|status|utworzono) '"
 spr "kolumn w chatl_rozmowy"      "7"  "sed -n '/CREATE TABLE {\$p}chatl_rozmowy/,/) {\$charset}/p' $W/includes/instalator.php | grep -cP '^\t\t(id|sesja|rola|silnik|tresc|trafiono|utworzono) '"
 spr "kolumn w chatl_ai_uzycie"    "6"  "sed -n '/CREATE TABLE {\$p}chatl_ai_uzycie/,/) {\$charset}/p' $W/includes/instalator.php | grep -cP '^\t\t(dzien|wywolania|tokeny_wejscia|tokeny_wyjscia|tokeny_cache_zapis|tokeny_cache_odczyt) '"
 spr "kolumn w chatl_rate_limit"   "3"  "sed -n '/CREATE TABLE {\$p}chatl_rate_limit/,/) {\$charset}/p' $W/includes/instalator.php | grep -cP '^\t\t(klucz|licznik|okno_do) '"
 spr "email varchar(190)"          "1"  "grep -c 'email varchar(190) NOT NULL' $W/includes/instalator.php"
-spr "sesja varchar(64) x2"        "2"  "grep -c 'sesja varchar(64)' $W/includes/instalator.php"
+spr "sesja varchar(64) x3"        "3"  "grep -c 'sesja varchar(64)' $W/includes/instalator.php"
 spr "status varchar(20)"          "1"  "grep -c \"status varchar(20) NOT NULL DEFAULT 'nowe'\" $W/includes/instalator.php"
 spr "rola varchar(10)"            "1"  "grep -c 'rola varchar(10) NOT NULL' $W/includes/instalator.php"
 spr "trafiono dopuszcza NULL"     "1"  "grep -c 'trafiono tinyint(1) DEFAULT NULL' $W/includes/instalator.php"
 spr "indeks luki pod raport"      "1"  "grep -c 'KEY luki (rola,trafiono,utworzono)' $W/includes/instalator.php"
 spr "silnik domyslnie reguly"     "1"  "grep -c \"silnik varchar(10) NOT NULL DEFAULT 'reguly'\" $W/includes/instalator.php"
-spr "indeksow KEY (poza PRIMARY)" "5"  "grep -cP '^\\t\\tKEY ' $W/includes/instalator.php"
+spr "indeksow KEY (poza PRIMARY)" "7"  "grep -cP '^\\t\\tKEY ' $W/includes/instalator.php"
 
 echo
 echo "=== E. Aktywacja, seed, cron ==="
@@ -190,7 +190,7 @@ spr "seed tylko do pustej bazy"   "1"  "grep -c 'if ( \$ile > 0 ) {' $W/includes
 
 echo
 echo "=== F. Deinstalacja: obie sciezki ==="
-spr "DROP TABLE (5 tabel)"        "5"  "grep -c 'DROP TABLE IF EXISTS' $W/uninstall.php"
+spr "DROP TABLE (6 tabel)"        "6"  "grep -c 'DROP TABLE IF EXISTS' $W/uninstall.php"
 spr "klucz API kasowany zawsze"   "1"  "sed -n '1,/usun_dane/p' $W/uninstall.php | grep -c \"delete_option( 'chatl_klucz_api' )\""
 spr "delete_option w sciezce B"   "5"  "sed -n '/usun_dane/,\$p' $W/uninstall.php | grep -c 'delete_option('"
 spr "wywolan esc_like (bez komentarzy)" "2" "grep -o 'wpdb->esc_like(' $W/uninstall.php | wc -l"

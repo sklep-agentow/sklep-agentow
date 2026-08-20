@@ -1,6 +1,6 @@
 # ChatBot LIVE — dokumentacja techniczna
 
-Wersja wtyczki: **1.5.1** · schemat bazy: **5** · licencja: **GPL-2.0-or-later**
+Wersja wtyczki: **1.5.1** · schemat bazy: **6** · licencja: **GPL-2.0-or-later**
 
 Dokument opisuje **kod, który jest**, nie plan. Każda liczba i nazwa poniżej ma pokrycie
 w źródle — przy każdej podano plik i symbol, żeby dało się to sprawdzić `grep`-em, a nie
@@ -142,7 +142,7 @@ całą historię przy każdym wejściu.
 | Opcja | Zawartość | Autoload | Kiedy powstaje |
 |---|---|---|---|
 | `chatl_ustawienia` | tablica ustawień (patrz niżej) | tak (domyślnie) | przy pierwszym zapisie ustawień — **nie** przy aktywacji |
-| `chatl_wersja_schematu` | numer schematu, obecnie `5` | tak (domyślnie) | przy aktywacji i przy migracji schematu |
+| `chatl_wersja_schematu` | numer schematu, obecnie `6` | tak (domyślnie) | przy aktywacji i przy migracji schematu |
 | `chatl_klucz_api` | klucz API właściciela | **nie** (`add_option(..., '', false)`) | przy zapisaniu klucza w panelu |
 | `chatl_blad_maila` | `['kiedy' => data, 'adres' => e-mail]` | **nie** | gdy `wp_mail()` zwróci `false`; kasowana przy pierwszej udanej wysyłce |
 | `chatl_blad_ai` | `['kiedy' => data, 'kod' => HTTP, 'tresc' => fragment]` | **nie** | gdy wywołanie API nie zwróci 200; kasowana przy pierwszym udanym wywołaniu |
@@ -196,7 +196,7 @@ Wszystkie liczby, którymi wtyczka się rządzi, są stałymi — nie ma ich roz
 | Stała | Wartość | Plik | Do czego |
 |---|---|---|---|
 | `CHATL_WERSJA` | `1.5.1` | `chatbot-live.php` | wersja wtyczki; służy też jako `?ver=` assetów (przeglądarka nie poda starego pliku po aktualizacji) |
-| `CHATL_WERSJA_SCHEMATU` | `5` | `chatbot-live.php` | wyzwalacz migracji schematu |
+| `CHATL_WERSJA_SCHEMATU` | `6` | `chatbot-live.php` | wyzwalacz migracji schematu |
 | `CHATL_KATALOG`, `CHATL_URL` | ścieżka i adres wtyczki | `chatbot-live.php` | `require` i adresy assetów |
 | `CHATL_MAX_PYTANIE` | `500` | `includes/front.php` | maksymalna długość pytania gościa (nadmiar jest **przycinany**, nie odrzucany) |
 | `CHATL_MAX_WIADOMOSC` | `2000` | `includes/front.php` | maksymalna długość treści zgłoszenia (jw.) |
@@ -942,7 +942,84 @@ kłóciłoby się z obietnicą retencji.
 
 ---
 
-## 23. Znane granice
+## 23. Przejęcie rozmowy przez człowieka
+
+Bot nazywa się LIVE, więc rozmowę musi dać się przejąć. Rozpoznanie wzorców
+(Chatwoot, Crisp, Tidio) i pomiary kosztu odpytywania: `boty/ROZPOZNANIE-PRZEJECIE-ROZMOWY.md`.
+
+### 23.1. Stan rozmowy — jedno pole
+
+Za Chatwootem: **jedno** pole `stan` w `chatl_sesje` (`bot` albo `czlowiek`), a nie
+dwa niezależne przełączniki, które prędzej czy później się rozjadą i zostawią
+rozmowę bez żadnej ze stron. Stan czyta zarówno ścieżka pytania gościa, jak
+i punkt odpytywania.
+
+| Przejście | Kto wywołuje | Co widzi gość |
+|---|---|---|
+| `bot` → `czlowiek` | przycisk **Przejmij** w panelu | „Do rozmowy dołączył konsultant…" |
+| `czlowiek` → `bot` | przycisk **Zakończ** | „Konsultant zakończył rozmowę…" |
+| `czlowiek` → `bot` | cisza operatora > `CHATL_PRZEJECIE_CISZA` | „Konsultant nie odpowiada…" |
+
+Powrót po ciszy liczy się **przy każdym wejściu do rozmowy**, a nie cronem —
+działa więc także tam, gdzie WP-Cron jest wyłączony.
+
+### 23.2. Bot milczy — i to jest sedno
+
+Po przejęciu pytanie gościa **jest zapisywane** (operator musi je przeczytać),
+ale nie idzie ani do modelu, ani do reguł: zero kosztu API i żadnej odpowiedzi
+automatu wpadającej człowiekowi w słowo. Crisp ma u siebie udokumentowane
+zachowanie odwrotne — wiadomość operatora nie przerywa scenariusza bota —
+dlatego strażnik sprawdza **oba** kierunki: milczenie po przejęciu i powrót
+głosu po zakończeniu.
+
+### 23.3. Dostęp do rozmowy: dwa składniki
+
+Punkt `POST /wp-json/chatl/v1/rozmowa` jest publiczny, więc dostęp stoi na dwóch
+rzeczach naraz:
+
+1. **identyfikator sesji** — wydaje go **serwer** (`wp_generate_password( 32, false )`).
+   Wcześniej wymyślała go przeglądarka, ze ścieżką zapasową opartą o `Math.random()`,
+   który nie jest generatorem kryptograficznym;
+2. **sekret z ciastka `HttpOnly`** (`chatl_k_<sesja>`, `SameSite=Lax`, `Secure` przy SSL),
+   porównywany `hash_equals()` z `wp_hash()` w bazie.
+
+Sam identyfikator — **nawet poprawny** — nie otwiera rozmowy. Odpowiedź na brak
+sekretu jest **nieodróżnialna** od odpowiedzi na nieznaną sesję, więc zgadujący
+nie ma wyroczni. Funkcja autoryzująca jest **zamknięta domyślnie**: wiersz bez
+sekretu to sesja, której serwer nigdy nie wydał, więc nie ma czego otwierać —
+a strażnik pilnuje, że takich wierszy w tabeli nie ma.
+
+Sekretu wymaga **także zapis** (pytanie gościa), nie tylko odczyt: bez tego ktoś,
+kto zdobył sam identyfikator, mógłby podszyć się pod gościa i wprowadzić operatora
+w błąd. Cena płacona świadomie: przeglądarka z zablokowanymi ciastkami pierwszej
+strony nie utrzyma sesji — widget prosi wtedy o nową i ponawia **raz**.
+
+### 23.4. Rytm odpytywania
+
+Interwał podaje **serwer** w każdej odpowiedzi, więc zmiana rytmu nie wymaga
+wysyłania klientom nowego JS.
+
+| Sytuacja | Interwał |
+|---|---|
+| okno czatu zamknięte | **0 zapytań** |
+| rozmawia bot | `CHATL_ODPYT_BOT` (15 s) |
+| przejęta, karta widoczna | `CHATL_ODPYT_CZLOWIEK` (5 s) |
+| przejęta, karta schowana | `CHATL_ODPYT_UKRYTA` (30 s) |
+| przejęta, cisza > 2 min | `CHATL_ODPYT_CISZA` (120 s) |
+
+Liczby, dlaczego akurat takie i co robi odpytywanie co sekundę przy 100 gościach —
+w pliku rozpoznania i w opisie PR.
+
+### 23.5. Panel operatora
+
+`includes/operator.php`, podstrona **Rozmowy na żywo**. Lista pokazuje, kto pisze
+(bot czy człowiek), ostatnie pytanie gościa, ile czeka i liczbę wiadomości —
+jednym zapytaniem z podzapytaniami, nie pętlą po sesjach. Każdy punkt operatora
+ma `manage_options` **i** nonce. Pisanie do rozmowy, której się nie przejęło,
+jest odrzucane: gość dostawałby wtedy dwa głosy naraz.
+
+
+## 24. Znane granice
 
 Rzeczy, których wtyczka **nie** robi — żeby nikt nie szukał ich w kodzie:
 

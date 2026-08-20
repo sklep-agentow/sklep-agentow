@@ -31,6 +31,8 @@ function chatl_komunikat_ok() {
 			'klucz_ok'  => 'Klucz API działa — API odpowiedziało poprawnie.',
 			'usunieto'  => 'Usunięto.',
 			'zmieniono' => 'Zmieniono status.',
+			'przejeta'  => 'Rozmowa przejęta — od tej chwili bot w niej milczy, a gość widzi, że pisze do człowieka.',
+			'oddana'    => 'Rozmowa oddana botowi — gość dostał o tym komunikat.',
 		);
 		$klucz  = sanitize_key( wp_unslash( $_GET['chatl_ok'] ) );
 		if ( 'zaimportowano' === $klucz ) {
