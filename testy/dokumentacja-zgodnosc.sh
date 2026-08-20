@@ -132,10 +132,14 @@ spr "SVG: 90 dni"                 "1"  "grep -c '90 dni' $SVG"
 spr "SVG: timeout 9 s"            "1"  "grep -c 'timeout 9 s' $SVG"
 
 echo
-echo "=== O. Ramki tekstow w SVG (dokladny pomiar getBBox) ==="
+echo "=== O. Ramki tekstow w SVG (dokladny pomiar getBBox, CZTERY krawedzie) ==="
 # SVG NIE zawija tekstu: element <text> z poprawnym x rozciaga sie tyle, ile
 # zajma glify, i cicho wychodzi poza kadr. Sprawdzenie samego punktu startowego
 # tego NIE lapie — tak przeszla urwana stopka w pierwszej wersji diagramu.
+# Kontrola patrzy na WSZYSTKIE CZTERY krawedzie (lewa, prawa, gorna, dolna),
+# bo pierwsza wersja tej kontroli pilnowala w boksach tylko prawej — a kontrola
+# z luka jest grozniejsza niz brak kontroli. Ze naprawde widzi kazda krawedz,
+# dowodzi testy/svg-proba-kontrolna.sh (podklada celowy blad przy kazdej).
 # Jedyny sposob, zeby zmierzyc to naprawde, to silnik skladu tekstu, czyli
 # przegladarka. Estymator szerokosci bez przegladarki byl sprawdzony i ODRZUCONY:
 # skalibrowany na 65 prawdziwych pomiarach przeszacowywal do 36%, wiec jako

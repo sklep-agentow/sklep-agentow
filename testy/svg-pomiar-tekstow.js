@@ -6,18 +6,29 @@
  * łapie (tak przeszła urwana stopka w pierwszej wersji diagramu).
  *
  * Sprawdza dwie rzeczy dla każdego <text> i <tspan>:
- *   1) czy ramka mieści się w viewBox,
- *   2) czy tekst mieści się w prostokącie, w którym się zaczyna (jeśli w jakimś).
+ *   1) czy ramka mieści się w kadrze — WSZYSTKIE CZTERY krawędzie,
+ *   2) czy tekst mieści się w prostokącie, w którym się zaczyna — też z czterech stron.
  *
  * Wymaga playwright-core. Uruchamiać Z KATALOGU REPO:
- *   node testy/svg-pomiar-tekstow.js [plik.svg] [margines-w-boksie]
+ *   node testy/svg-pomiar-tekstow.js [plik.svg] [marg-poziom] [marg-pion] [marg-kadr]
  * Kod wyjścia 0 = wszystko się mieści, 1 = coś wystaje.
  */
 const { chromium } = require('playwright-core');
 const path = require('path');
 
 const PLIK = process.argv[2] || 'wtyczki/chatbot-live/DIAGRAM-PRZEPLYWU.svg';
-const MARGINES = Number(process.argv[3] || 12); // zapas wewnątrz prostokąta
+/*
+ * Trzy różne progi, bo trzy różne rzeczy:
+ *  - MARG_POZIOM: teksty w boksach są wcięte o 20 px, więc 12 px zapasu po
+ *    bokach jest realnym wymogiem układu, nie kaprysem.
+ *  - MARG_PION: pionowo wymagamy tylko, żeby tekst NIE DOTYKAŁ krawędzi boksu
+ *    (ostatnia linia siedzi blisko dołu z założenia) — 4 px.
+ *  - MARG_KADR: od krawędzi obrazu trzymamy 16 px, bo tam ucięcie jest
+ *    nieodwracalne: w PDF i w przeglądarce po prostu nie ma tego piksela.
+ */
+const MARG_POZIOM = Number(process.argv[3] || 12);
+const MARG_PION   = Number(process.argv[4] || 4);
+const MARG_KADR   = Number(process.argv[5] || 16);
 
 (async () => {
   const b = await chromium.launch({
@@ -26,7 +37,7 @@ const MARGINES = Number(process.argv[3] || 12); // zapas wewnątrz prostokąta
   const p = await b.newPage();
   await p.goto('file://' + path.resolve(PLIK), { waitUntil: 'load' });
 
-  const wynik = await p.evaluate((margines) => {
+  const wynik = await p.evaluate(({ MARG_POZIOM, MARG_PION, MARG_KADR }) => {
     const svg = document.querySelector('svg');
     const vb = svg.viewBox.baseVal;
     const W = vb.width, H = vb.height;
@@ -52,18 +63,36 @@ const MARGINES = Number(process.argv[3] || 12); // zapas wewnątrz prostokąta
       wpis.bold = (parseInt(st.fontWeight, 10) || 400) >= 600 ? 1 : 0;
       wszystkie.push(wpis);
 
-      if (bb.x < 0 || bb.y < 0 || prawa > W || dol > H) {
-        zle.push({ ...wpis, powod: 'poza viewBox ' + W + 'x' + H });
+      // CZTERY KRAWEDZIE kadru, nie tylko prawa. Tekst potrafi wyjsc w dol
+      // (ostatnia linia pod kadrem = scieta u dolu), w gore i w lewo tak samo
+      // latwo jak w prawo — sprawdzanie samej szerokosci to kontrola z luka,
+      // a kontrola z luka jest grozniejsza niz brak kontroli.
+      const pozaKadrem = [];
+      if (bb.x < MARG_KADR) { pozaKadrem.push('lewa (x=' + Math.round(bb.x) + ')'); }
+      if (bb.y < MARG_KADR) { pozaKadrem.push('gorna (y=' + Math.round(bb.y) + ')'); }
+      if (prawa > W - MARG_KADR) { pozaKadrem.push('prawa (' + Math.round(prawa) + ' > ' + (W - MARG_KADR) + ')'); }
+      if (dol > H - MARG_KADR) { pozaKadrem.push('dolna (' + Math.round(dol) + ' > ' + (H - MARG_KADR) + ')'); }
+      if (pozaKadrem.length) {
+        zle.push({ ...wpis, powod: 'poza kadrem ' + W + 'x' + H + ' — krawedzie: ' + pozaKadrem.join(', ') });
         continue;
       }
-      // W którym prostokącie zaczyna się ten tekst?
+
+      // W którym prostokącie zaczyna się ten tekst? Jesli w jakims — musi sie
+      // w nim miescic ze WSZYSTKICH czterech stron.
       const boks = prostokaty.find((r) => bb.x >= r.x && bb.x <= r.x + r.w && bb.y >= r.y && bb.y <= r.y + r.h);
-      if (boks && prawa > boks.x + boks.w - margines) {
-        zle.push({ ...wpis, powod: 'wychodzi z ramki (prawa krawedz boksu ' + Math.round(boks.x + boks.w) + ')' });
+      if (boks) {
+        const pozaBoksem = [];
+        if (bb.x < boks.x + MARG_POZIOM) { pozaBoksem.push('lewa'); }
+        if (bb.y < boks.y + MARG_PION) { pozaBoksem.push('gorna'); }
+        if (prawa > boks.x + boks.w - MARG_POZIOM) { pozaBoksem.push('prawa'); }
+        if (dol > boks.y + boks.h - MARG_PION) { pozaBoksem.push('dolna'); }
+        if (pozaBoksem.length) {
+          zle.push({ ...wpis, powod: 'wychodzi z ramki [' + Math.round(boks.x) + ',' + Math.round(boks.y) + ' ' + Math.round(boks.w) + 'x' + Math.round(boks.h) + '] — krawedzie: ' + pozaBoksem.join(', ') });
+        }
       }
     }
-    return { W, H, ile: wszystkie.length, zle, wszystkie, najszersze: [...wszystkie].sort((a, c) => c.prawa - a.prawa).slice(0, 5) };
-  }, MARGINES);
+    return { W, H, ile: wszystkie.length, zle, wszystkie, najszersze: [...wszystkie].sort((a, c) => c.prawa - a.prawa).slice(0, 5), najnizsze: [...wszystkie].sort((a, c) => c.dol - a.dol).slice(0, 5) };
+  }, { MARG_POZIOM, MARG_PION, MARG_KADR });
 
   await b.close();
 
@@ -74,9 +103,13 @@ const MARGINES = Number(process.argv[3] || 12); // zapas wewnątrz prostokąta
   console.log('plik: ' + PLIK);
   console.log('viewBox: ' + wynik.W + ' x ' + wynik.H);
   console.log('zmierzonych tekstow (text + tspan): ' + wynik.ile);
-  console.log('\nnajdalej siegajace ramki:');
+  console.log('\nnajdalej siegajace w PRAWO:');
   for (const w of wynik.najszersze) {
     console.log('  prawa=' + String(w.prawa).padStart(5) + '  szer=' + String(w.szer).padStart(4) + '  "' + w.tekst + '"');
+  }
+  console.log('\nnajnizej siegajace (dolna krawedz):');
+  for (const w of wynik.najnizsze) {
+    console.log('  dol=' + String(w.dol).padStart(5) + '  zapas do kadru=' + String(wynik.H - w.dol).padStart(4) + '  "' + w.tekst + '"');
   }
   if (wynik.zle.length) {
     console.log('\nPRZEPELNIENIA (' + wynik.zle.length + '):');
