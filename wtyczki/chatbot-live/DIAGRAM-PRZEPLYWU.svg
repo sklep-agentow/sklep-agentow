@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 880" width="1400" height="880" role="img" aria-labelledby="tytul opis">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 910" width="1400" height="910" role="img" aria-labelledby="tytul opis">
   <title id="tytul">ChatBot LIVE — przepływ zapytania gościa</title>
   <desc id="opis">Gość zadaje pytanie w widgecie. Bramka wejścia sprawdza nonce i limit zapytań z jednego IP. Pytanie trafia do historii rozmów. Silnik szuka odpowiedzi w bazie Q&amp;A, opcjonalnie poprzedzony trybem AI. Przy trafieniu bot odpowiada i zapisuje odpowiedź. Przy braku trafienia gość dostaje tekst awaryjny i formularz kontaktu; po walidacji, w tym wymaganej zgody, zgłoszenie trafia do bazy i na maila właściciela.</desc>
 
@@ -33,7 +33,7 @@
     </style>
   </defs>
 
-  <rect class="tlo" x="0" y="0" width="1400" height="880"/>
+  <rect class="tlo" x="0" y="0" width="1400" height="910"/>
 
   <text class="t naglowek" x="40" y="52">ChatBot LIVE — przepływ zapytania gościa</text>
   <text class="t podtytul" x="40" y="78">Ścieżka regułowa jest ścieżką podstawową. Tryb AI (ramka przerywana) jest opcjonalny i przy każdym błędzie zjeżdża do reguł.</text>
@@ -57,13 +57,13 @@
   <text class="t krok"    x="604" y="176">3 · HISTORIA</text>
   <text class="t tytul-b" x="604" y="200">Zapis pytania</text>
   <text class="t opis-b"  x="604" y="222">Wymiana trafia do historii,</text>
-  <text class="t opis-b"  x="604" y="240">czyszczonej codziennym cronem.</text>
+  <text class="t opis-b"  x="604" y="240">czyszczonej cronem co dobę.</text>
   <text class="t kod"     x="604" y="260">wp_chatl_rozmowy · 90 dni</text>
 
   <rect class="panel" x="856" y="150" width="240" height="120" rx="10"/>
   <text class="t krok"    x="876" y="176">4 · SILNIK</text>
   <text class="t tytul-b" x="876" y="200">Szukanie w bazie Q&amp;A</text>
-  <text class="t opis-b"  x="876" y="222">Warianty rozdzielone przecinkiem,</text>
+  <text class="t opis-b"  x="876" y="222">Warianty po przecinku,</text>
   <text class="t opis-b"  x="876" y="240">dopasowanie podłańcuchem.</text>
   <text class="t kod"     x="876" y="260">wp_chatl_qa</text>
 
@@ -71,7 +71,7 @@
   <text class="t krok-sz" x="1148" y="176">OPCJONALNIE · TRYB AI</text>
   <text class="t opis-b"  x="1148" y="200">Z kluczem API pytanie idzie</text>
   <text class="t opis-b"  x="1148" y="218">najpierw do modelu. Błąd, limit</text>
-  <text class="t opis-b"  x="1148" y="236">albo brak klucza = zjazd do reguł.</text>
+  <text class="t opis-b"  x="1148" y="236">brak klucza — zjazd do reguł.</text>
   <text class="t kod-sz"  x="1148" y="258">timeout 9 s + 1 ponowienie</text>
 
   <line class="linia" x1="280" y1="210" x2="304" y2="210" marker-end="url(#strzalka)"/>
@@ -109,20 +109,20 @@
   <rect class="panel" x="312" y="560" width="240" height="120" rx="10"/>
   <text class="t krok"    x="332" y="586">6 · FORMULARZ</text>
   <text class="t tytul-b" x="332" y="610">E-mail, treść, zgoda</text>
-  <text class="t opis-b"  x="332" y="632">Checkbox zgody WYMAGANY, obok</text>
-  <text class="t opis-b"  x="332" y="650">informacji co, po co i na jak</text>
-  <text class="t opis-b"  x="332" y="668">długo zbieramy dane.</text>
+  <text class="t opis-b"  x="332" y="632">Checkbox zgody WYMAGANY,</text>
+  <text class="t opis-b"  x="332" y="650">obok informacji: co, po co</text>
+  <text class="t opis-b"  x="332" y="668">i na jak długo zbieramy.</text>
 
   <rect class="panel" x="584" y="560" width="240" height="120" rx="10"/>
   <text class="t krok"    x="604" y="586">7 · WALIDACJA</text>
-  <text class="t tytul-b" x="604" y="610">Sprawdzenie na serwerze</text>
+  <text class="t tytul-b" x="604" y="610">Kontrola na serwerze</text>
   <text class="t opis-b"  x="604" y="632">Nonce, limit, poprawny e-mail,</text>
   <text class="t opis-b"  x="604" y="650">niepusta treść ORAZ zgoda —</text>
   <text class="t opis-b"  x="604" y="668">sam checkbox niczego nie broni.</text>
 
   <rect class="panel" x="856" y="560" width="240" height="120" rx="10"/>
   <text class="t krok"    x="876" y="586">8 · ZAPIS I MAIL</text>
-  <text class="t tytul-b" x="876" y="610">Zgłoszenie + powiadomienie</text>
+  <text class="t tytul-b" x="876" y="610">Zgłoszenie i mail</text>
   <text class="t opis-b"  x="876" y="632">Wynik zapisu do bazy i wysyłki</text>
   <text class="t opis-b"  x="876" y="650">maila jest SPRAWDZANY.</text>
   <text class="t kod"     x="876" y="670">wp_chatl_zgloszenia</text>
@@ -133,7 +133,7 @@
 
   <!-- ===== WIERSZ 3: co widzi gość ===== -->
   <line class="linia" x1="976" y1="680" x2="976" y2="724" marker-end="url(#strzalka)"/>
-  <rect class="panel" x="584" y="730" width="512" height="106" rx="10"/>
+  <rect class="panel" x="584" y="730" width="640" height="106" rx="10"/>
   <text class="t krok"    x="604" y="756">9 · CO WIDZI GOŚĆ</text>
   <text class="t tytul-b" x="604" y="780">Zapis się udał: „Dziękujemy — odezwiemy się na podany adres”.</text>
   <text class="t opis-b"  x="604" y="802">Zapis padł: komunikat błędu i prośba o ponowienie — nigdy fałszywe podziękowanie.</text>
@@ -144,5 +144,6 @@
   <text class="t stopka" x="40" y="796">wp_chatl_rozmowy · wp_chatl_ai_uzycie</text>
   <text class="t stopka" x="40" y="816">wp_chatl_rate_limit</text>
 
-  <text class="t stopka" x="584" y="864">Każda liczba na diagramie pochodzi ze stałej w kodzie (CHATL_MAX_PYTANIE, CHATL_LIMIT_NA_MIN, CHATL_RETENCJA_DNI, CHATL_AI_TIMEOUT) — rozpisane w DOKUMENTACJA-TECHNICZNA.md.</text>
+  <text class="t stopka" x="584" y="864">Każda liczba na diagramie pochodzi ze stałej w kodzie: CHATL_MAX_PYTANIE, CHATL_LIMIT_NA_MIN,</text>
+  <text class="t stopka" x="584" y="884">CHATL_RETENCJA_DNI, CHATL_AI_TIMEOUT — rozpisane w DOKUMENTACJA-TECHNICZNA.md.</text>
 </svg>

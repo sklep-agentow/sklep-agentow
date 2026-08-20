@@ -119,7 +119,7 @@ spr "mieszka w silnik.php"        "1"  "grep -c 'function chatl_trafione_wariant
 
 echo
 echo "=== M. Diagram: paleta i samodzielnosc ==="
-spr "limonka BFFF38 w SVG"        "0"  "test \$(grep -c 'BFFF38' $SVG) -gt 0 && echo 0 || echo 1"
+spr "uzyc limonki BFFF38 w SVG"   "8"  "grep -o 'BFFF38' $SVG | wc -l"
 spr "ciemne tlo 08090b"           "1"  "grep -c 'fill: #08090b' $SVG"
 spr "brak odwolan zewnetrznych"    "0"  "grep 'https\\?://' $SVG | grep -vc 'www\\.w3\\.org/2000/svg'"
 spr "brak font-face/import/script" "0" "grep -cE '@font-face|@import|<script|xlink:href|<image' $SVG"
@@ -130,6 +130,28 @@ spr "SVG: 500 znakow"             "1"  "grep -c 'maks. 500 znaków' $SVG"
 spr "SVG: 10 zapytan/min"         "1"  "grep -c '10 zapytań / min / IP' $SVG"
 spr "SVG: 90 dni"                 "1"  "grep -c '90 dni' $SVG"
 spr "SVG: timeout 9 s"            "1"  "grep -c 'timeout 9 s' $SVG"
+
+echo
+echo "=== O. Ramki tekstow w SVG (dokladny pomiar getBBox) ==="
+# SVG NIE zawija tekstu: element <text> z poprawnym x rozciaga sie tyle, ile
+# zajma glify, i cicho wychodzi poza kadr. Sprawdzenie samego punktu startowego
+# tego NIE lapie — tak przeszla urwana stopka w pierwszej wersji diagramu.
+# Jedyny sposob, zeby zmierzyc to naprawde, to silnik skladu tekstu, czyli
+# przegladarka. Estymator szerokosci bez przegladarki byl sprawdzony i ODRZUCONY:
+# skalibrowany na 65 prawdziwych pomiarach przeszacowywal do 36%, wiec jako
+# bramka falszywie alarmowalby na tekstach, ktore sie mieszcza.
+if [ ! -x /root/.cache/ms-playwright/chromium-1234/chrome-linux64/chrome ] || [ ! -d node_modules/playwright-core ]; then
+  echo "  POMINIETE  brak chromium albo playwright-core — kontrola ramek tekstow NIE zostala wykonana"
+  echo "             (npm install --no-save playwright-core; potem: node testy/svg-pomiar-tekstow.js)"
+  BLEDY=$((BLEDY+1))
+else
+  if node testy/svg-pomiar-tekstow.js "$SVG" | sed 's/^/  /'; then
+    printf '  OK   %-58s\n' "wszystkie teksty mieszcza sie w kadrze i w swoich ramkach"
+  else
+    printf '  BLAD %-58s\n' "teksty wychodza poza kadr albo poza swoje ramki"
+    BLEDY=$((BLEDY+1))
+  fi
+fi
 
 echo
 if [ "$BLEDY" -eq 0 ]; then
