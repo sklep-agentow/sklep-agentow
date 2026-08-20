@@ -1,6 +1,6 @@
 # ChatBot LIVE — dokumentacja techniczna
 
-Wersja wtyczki: **1.5.0** · schemat bazy: **6** · licencja: **GPL-2.0-or-later**
+Wersja wtyczki: **1.5.2** · schemat bazy: **6** · licencja: **GPL-2.0-or-later**
 
 Dokument opisuje **kod, który jest**, nie plan. Każda liczba i nazwa poniżej ma pokrycie
 w źródle — przy każdej podano plik i symbol, żeby dało się to sprawdzić `grep`-em, a nie
@@ -146,6 +146,7 @@ całą historię przy każdym wejściu.
 | `chatl_blad_maila` | `['kiedy' => data, 'adres' => e-mail]` | **nie** | gdy `wp_mail()` zwróci `false`; kasowana przy pierwszej udanej wysyłce |
 | `chatl_blad_ai` | `['kiedy' => data, 'kod' => HTTP, 'tresc' => fragment]` | **nie** | gdy wywołanie API nie zwróci 200; kasowana przy pierwszym udanym wywołaniu |
 | `chatl_blad_nonce` | `['ostatni' => data, 'ile' => liczba]` | **nie** | gdy gościowi odbije się zabezpieczenie formularza; kasowana przyciskiem w panelu |
+| `chatl_rodo_sesje_wspolne` | lista identyfikatorów sesji, o których wiemy, że **były współdzielone** przez dwie osoby | **nie** | przy wniosku RODO o usunięcie dotyczącym takiej sesji; przycinana przy każdym zapisie (patrz 23.2) |
 
 Klucz API jest bez autoloadu celowo: nie wchodzi do zapytania ładowanego na każdej odsłonie
 strony. Weryfikacja na żywym stacku po pełnym cyklu instalacja→deinstalacja→instalacja:
@@ -194,7 +195,7 @@ Wszystkie liczby, którymi wtyczka się rządzi, są stałymi — nie ma ich roz
 
 | Stała | Wartość | Plik | Do czego |
 |---|---|---|---|
-| `CHATL_WERSJA` | `1.5.0` | `chatbot-live.php` | wersja wtyczki; służy też jako `?ver=` assetów (przeglądarka nie poda starego pliku po aktualizacji) |
+| `CHATL_WERSJA` | `1.5.2` | `chatbot-live.php` | wersja wtyczki; służy też jako `?ver=` assetów (przeglądarka nie poda starego pliku po aktualizacji) |
 | `CHATL_WERSJA_SCHEMATU` | `6` | `chatbot-live.php` | wyzwalacz migracji schematu |
 | `CHATL_KATALOG`, `CHATL_URL` | ścieżka i adres wtyczki | `chatbot-live.php` | `require` i adresy assetów |
 | `CHATL_MAX_PYTANIE` | `500` | `includes/front.php` | maksymalna długość pytania gościa (nadmiar jest **przycinany**, nie odrzucany) |
@@ -1002,7 +1003,90 @@ ma `manage_options` **i** nonce. Pisanie do rozmowy, której się nie przejęło
 jest odrzucane: gość dostawałby wtedy dwa głosy naraz.
 
 
-## 24. Znane granice
+## 24. Narzędzia RODO WordPressa
+
+WordPress ma wbudowany kreator (**Narzędzia → Eksport / Usuwanie danych osobowych**):
+przyjmuje wniosek, weryfikuje adres mailem, buduje paczkę ZIP i prowadzi dziennik
+żądań. Wtyczka trzymająca maile gości i treść rozmów, a niewpięta w ten kreator,
+zostawia właściciela z obowiązkiem i bez narzędzia.
+
+| Zaczep WordPressa | Nasza funkcja | Co robi |
+|---|---|---|
+| `wp_privacy_personal_data_exporters` | `chatl_rodo_eksporter()` | wydaje zgłoszenia i rozmowy powiązane **wyłącznie** z tym adresem |
+| `wp_privacy_personal_data_erasers` | `chatl_rodo_kasownik()` | kasuje jedno i drugie, z liczbami w komunikacie |
+| `wp_add_privacy_policy_content()` | `chatl_polityka_prywatnosci()` | gotowy akapit do polityki prywatności |
+
+### 23.1. Granica wiązania: adres e-mail
+
+Kluczem jest adres, a to wyznacza granicę. Zgłoszenia mają e-mail wprost; historia
+rozmów **nie** — wiąże się z osobą wyłącznie przez sesję, w której ta osoba zostawiła
+zgłoszenie. **Rozmowa gościa, który nigdy nie podał maila, jest anonimowa** i nie ma
+jak przypisać jej do wniosku; kasuje ją retencja po `CHATL_RETENCJA_DNI` dniach.
+Kasownik mówi o tym wprost w komunikacie kreatora, zamiast udawać komplet.
+
+### 23.2. Sesja NIE jest własnością jednego adresu
+
+`chatl_rodo_sesje_maila()` zwraca sesje **z podziałem** na `wlasne` i `wspoldzielone`.
+Sesja jest współdzielona, gdy w jej zgłoszeniach występuje także **inny** adres —
+wspólny komputer (recepcja, biblioteka) albo gość, który rozmyślił się i podał drugi
+adres. Wtedy **jedna rozmowa zawiera wiadomości dwóch osób**, a wiersze `chatl_rozmowy`
+nie mają znacznika autora, więc nie da się ich rozdzielić.
+
+Takiej rozmowy **nie wydajemy i nie kasujemy**, bo obie operacje uderzają w osobę
+trzecią, i to po cichu:
+
+| Operacja | Co by się stało bez tego podziału |
+|---|---|
+| eksport | wnioskodawca dostałby **treść rozmowy drugiej osoby** — art. 15 ust. 4 RODO mówi wprost, że prawo do kopii nie może naruszać praw innych osób |
+| kasowanie | dane drugiej osoby zniknęłyby **na wniosek osoby trzeciej** |
+
+Zgadywanie po czasie („wiadomości sprzed zgłoszenia należą do tej osoby") wygląda
+mądrze i jest fałszem — w bazie nie ma nic, co by to rozstrzygało. Zamiast zgadywać,
+kreator **wypisuje**, ile rozmów zachowano i dlaczego, a `items_retained` jest wtedy
+`true`. Paczka eksportu dostaje na pierwszej stronie notatkę o pominiętej rozmowie —
+milczenie byłoby gorsze niż pominięcie, bo paczka wyglądałaby na komplet.
+
+**Ślad musi przeżyć kasowanie — inaczej ochrona działa tylko dla wniosków składanych
+równocześnie.** Współdzielenie widać w tabeli zgłoszeń, ale kasownik **niszczy ten dowód
+w tej samej operacji**: usuwa zgłoszenie wnioskodawcy. Sekwencja, która to pokazuje, jest
+normalnym trybem pracy kreatora (wnioski przychodzą jeden po drugim, często w odstępie dni):
+
+1. w sesji S zgłoszenia zostawiają A i B,
+2. **A prosi o usunięcie** — zgłoszenie A znika, rozmowa S zostaje zachowana (poprawnie),
+3. **B prosi później o kopię** — w tabeli nie ma już obcego adresu dla S,
+4. bez śladu eksport wydałby B **całą rozmowę, razem z wiadomościami osoby A**.
+
+Dlatego `chatl_rodo_kasownik()` zapisuje identyfikatory sesji współdzielonych do opcji
+`chatl_rodo_sesje_wspolne` **zanim** cokolwiek usunie, a `chatl_rodo_sesje_maila()` bierze
+pod uwagę zarówno bieżący stan tabeli, jak i ten ślad. W opcji leżą **same identyfikatory
+sesji** — bez adresu i bez treści, więc to nie są dane osobowe. Lista jest przycinana przy
+każdym zapisie: sesja, po której nie została ani jedna wiadomość (retencja skasowała rozmowę
+po `CHATL_RETENCJA_DNI` dniach), nie ma już czego chronić i wypada. Przycinanie dzieje się
+przy zapisie, a nie w cronie, bo `rodo.php` ładuje się wyłącznie w panelu (`is_admin()`),
+więc zadanie crona tej funkcji by nie zobaczyło.
+
+### 23.3. Komunikat kasownika mówi to, co się stało
+
+Komunikat jest budowany **z rzeczywistych liczb** (`%d zgłoszenie`, `%d wiadomość`),
+a wniosek dotyczący adresu, którego nie ma w bazie, kończy się zdaniem „nie znaleziono
+żadnych danych — nic nie zostało usunięte". Właściciel odpowiada tym tekstem osobie
+składającej wniosek, więc zdanie o kasowaniu, którego nie było, byłoby potwierdzeniem
+nieprawdy wysłanym w cudzym imieniu.
+
+### 23.4. Kolejność kasowania nie jest dowolna
+
+Najpierw **rozmowy**, potem **zgłoszenia**. Zgłoszenie jest jedynym łącznikiem
+między adresem a sesją — skasowane pierwsze, zabrałoby ze sobą wiedzę o tym, które
+rozmowy usunąć, i zostawiłoby je w bazie na zawsze.
+
+### 23.5. Stronicowanie: dwa źródła, jedna numeracja
+
+Kreator woła eksporter stronami, aż zwróci `done`. Przesunięcie rozmów liczymy
+względem **całkowitej liczby zgłoszeń**, a nie numeru strony: przy dokładnie pełnej
+stronie zgłoszeń naiwne `OFFSET` przeskoczyłoby pierwszą porcję rozmów i wydało
+wniosek **z dziurą**, której nie zauważy ani właściciel, ani osoba składająca wniosek.
+Strażnik podkłada dokładnie ten przypadek.
+## 25. Znane granice
 
 Rzeczy, których wtyczka **nie** robi — żeby nikt nie szukał ich w kodzie:
 
@@ -1012,6 +1096,12 @@ Rzeczy, których wtyczka **nie** robi — żeby nikt nie szukał ich w kodzie:
   (rozdział **Pamięć bieżącej rozmowy w trybie AI**); tryb regułowy pozostaje bezstanowy z natury — dopasowuje pojedyncze pytanie.
 - **Bez czytania treści strony** — wiedza bota to wyłącznie baza Q&A i opis firmy z ustawień.
 - **Bez wielojęzyczności i bez i18n** — teksty są polskie wprost, bez `textdomain`.
+- **Wniosek RODO dotyczy adresu e-mail, nie adresu IP.** Limity ruchu trzymają `md5(IP)`
+  w tabeli `chatl_rate_limit` z krótkim oknem — nie da się tego powiązać z osobą i nie ma
+  po co tego eksportować ani kasować na wniosek. Rozmowy gości, którzy nigdy nie zostawili
+  zgłoszenia, są anonimowe i kasuje je retencja, a rozmowy współdzielone przez dwie osoby
+  nie są ani wydawane, ani kasowane — jedno i drugie rozpisane w rozdziale
+  **Narzędzia RODO WordPressa**.
 - **Bez stronicowania** w panelu: lista zgłoszeń pokazuje 200 najnowszych, lista rozmów 100
   najnowszych sesji. Pełne dane wychodzą eksportem CSV.
 - **Limit dobowy AI jest miękki** — sprawdzenie i inkrement to dwa kroki, więc równoległe

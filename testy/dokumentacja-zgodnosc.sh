@@ -43,8 +43,8 @@ spr "kazdy wpis CHANGELOG oddzielony kreska" "0" \
   "awk '/^## \\[1\\./ {if (NR>1 && poprz != \"---\") b++} {if (\$0 != \"\") poprz=\$0} END {print b+0}' $W/CHANGELOG.md"
 
 echo "=== A. Wersja i schemat ==="
-spr "naglowek Version"            "1.5.0" "grep -oP '(?<=^ \* Version: ).*' $W/chatbot-live.php"
-spr "stala CHATL_WERSJA"          "1.5.0" "grep -oP \"(?<=CHATL_WERSJA', ')[^']*\" $W/chatbot-live.php"
+spr "naglowek Version"            "1.5.2" "grep -oP '(?<=^ \* Version: ).*' $W/chatbot-live.php"
+spr "stala CHATL_WERSJA"          "1.5.2" "grep -oP \"(?<=CHATL_WERSJA', ')[^']*\" $W/chatbot-live.php"
 spr "CHATL_WERSJA_SCHEMATU"       "6"     "grep -oP \"(?<=CHATL_WERSJA_SCHEMATU', ')[^']*\" $W/chatbot-live.php"
 spr "Requires at least"           "6.0"   "grep -oP '(?<=^ \* Requires at least: ).*' $W/chatbot-live.php"
 spr "Requires PHP"                "8.1"   "grep -oP '(?<=^ \* Requires PHP: ).*' $W/chatbot-live.php"
@@ -105,12 +105,12 @@ echo "=== A1b. Rejestr rozszerzen ponad specyfikacje (klasa #6 sciagi) ==="
 # paczki zatrzymuje budowe przy nowym pliku.
 REJ=boty/PONAD-SPECYFIKACJE-BOTY.md
 spr "rejestr istnieje"                    "1" "test -f $REJ && echo 1 || echo 0"
-spr "pozycji ChatBota w rejestrze"        "10" "sed -n '/^## ChatBot LIVE/,/^## Segregator/p' $REJ | grep -cP '^[0-9]+\. '"
+spr "pozycji ChatBota w rejestrze"        "11" "sed -n '/^## ChatBot LIVE/,/^## Segregator/p' $REJ | grep -cP '^[0-9]+\. '"
 spr "rejestr wymienia tryb AI"            "1" "sed -n '/^## ChatBot LIVE/,/^## Segregator/p' $REJ | grep -c 'Tryb AI'"
 spr "rejestr wymienia statystyki i luki"  "1" "sed -n '/^## ChatBot LIVE/,/^## Segregator/p' $REJ | grep -c 'Statystyki i raport luk'"
 spr "rejestr wymienia konfigurowalny wyglad" "1" "sed -n '/^## ChatBot LIVE/,/^## Segregator/p' $REJ | grep -c 'Konfigurowalny wygląd widgetu'"
 spr "rejestr wymienia ekran powitalny"    "1" "sed -n '/^## ChatBot LIVE/,/^## Segregator/p' $REJ | grep -c 'Ekran powitalny'"
-spr "kazda pozycja ma powod (mysllnik)"   "10" "sed -n '/^## ChatBot LIVE/,/^## Segregator/p' $REJ | grep -cP '^[0-9]+\..*—|^[0-9]+\.[^—]*$'"
+spr "kazda pozycja ma powod (mysllnik)"   "11" "sed -n '/^## ChatBot LIVE/,/^## Segregator/p' $REJ | grep -cP '^[0-9]+\..*—|^[0-9]+\.[^—]*$'"
 
 echo
 echo "=== A2. Plik LICENSE (pelny GPL-2.0, wziety z rdzenia WordPressa) ==="
@@ -130,7 +130,14 @@ spr "csv.php na liscie plikow paczki" "1" "grep -c 'chatbot-live/includes/csv.ph
 spr "statystyki.php na liscie paczki" "1" "grep -c 'chatbot-live/includes/statystyki.php' boty/buduj-paczki.sh"
 spr "CHANGELOG.md na liscie paczki"  "1" "grep -c 'chatbot-live/CHANGELOG.md' boty/buduj-paczki.sh"
 spr "readme.txt na liscie paczki"    "1" "grep -c 'chatbot-live/readme.txt' boty/buduj-paczki.sh"
-spr "plikow chatbota w allowliscie"   "24" "sed -n '/^ALLOWLIST_CHATBOT=(/,/^)/p' boty/buduj-paczki.sh | grep -c '\"chatbot-live/'"
+spr "plikow chatbota w allowliscie"   "25" "sed -n '/^ALLOWLIST_CHATBOT=(/,/^)/p' boty/buduj-paczki.sh | grep -c '\"chatbot-live/'"
+# Klasa, ktora wyszla przy scalaniu 1.4.10 z 1.5.0: konflikt w chatbot-live.php
+# zjadl `require_once includes/przejecie.php`. Plik zostal w katalogu i w paczce,
+# wiec allowlista swiecila na zielono — a wtyczka po prostu nie ladowala polowy
+# funkcji. Kontrola idzie WIEC W OBIE STRONY: kazdy plik z includes/ musi byc
+# przez cos wymagany.
+spr "kazdy plik includes/ jest wymagany przez require_once" "0" \
+  "cd $W && ls includes/*.php | sed 's|^|CHATL_KATALOG . .|' >/dev/null; ls includes/*.php | while read -r f; do grep -q \"require_once CHATL_KATALOG . '\$f'\" chatbot-live.php || echo \"\$f\"; done | wc -l"
 spr "allowlista = zawartosc katalogu" "0"  "cd wtyczki && find chatbot-live -type f | sort | comm -23 - <(sed -n '/^ALLOWLIST_CHATBOT=(/,/^)/p' ../boty/buduj-paczki.sh | grep -oP '(?<=\")chatbot-live/[^\"]*' | sort) | wc -l"
 # Klasa, ktora tu wyszla: includes/csv.php byl wymagany przez require_once, ale
 # NIE bylo go na liscie plikow paczki. Zip bez tego pliku = fatal w wp-admin
@@ -188,7 +195,7 @@ echo
 echo "=== F. Deinstalacja: obie sciezki ==="
 spr "DROP TABLE (6 tabel)"        "6"  "grep -c 'DROP TABLE IF EXISTS' $W/uninstall.php"
 spr "klucz API kasowany zawsze"   "1"  "sed -n '1,/usun_dane/p' $W/uninstall.php | grep -c \"delete_option( 'chatl_klucz_api' )\""
-spr "delete_option w sciezce B"   "5"  "sed -n '/usun_dane/,\$p' $W/uninstall.php | grep -c 'delete_option('"
+spr "delete_option w sciezce B"   "6"  "sed -n '/usun_dane/,\$p' $W/uninstall.php | grep -c 'delete_option('"
 spr "wywolan esc_like (bez komentarzy)" "2" "grep -o 'wpdb->esc_like(' $W/uninstall.php | wc -l"
 
 echo
