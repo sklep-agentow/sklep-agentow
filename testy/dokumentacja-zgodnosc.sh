@@ -197,7 +197,21 @@ spr "akcje admin_post"            "9"  "grep -rc \"add_action( 'admin_post_\" $W
 # Liczymy ROZNE nazwy filtrow, nie wywolania: ten sam punkt rozszerzenia bywa
 # uzyty w kilku miejscach (od 1.4.2 chatl_ai_url i chatl_ai_model wolane sa
 # takze przez test klucza), a dokumentacja obiecuje LICZBE PUNKTOW, nie wywolan.
-spr "wystawione filtry (rozne nazwy)" "2"  "grep -oP \"(?<=apply_filters\( ')[^']*\" $W/includes/ai.php | sort -u | wc -l"
+spr "wystawione filtry AI"        "2"  "grep -oP \"(?<=apply_filters\( ')[^']*\" $W/includes/ai.php | sort -u | wc -l"
+spr "filtr adresu goscia"         "1"  "grep -oP \"(?<=apply_filters\( ')[^']*\" $W/includes/front.php | sort -u | wc -l"
+# Naglowki proxy czytamy WYLACZNIE pod przelacznikiem — gdyby ten warunek znikl,
+# na stronie bez proxy kazdy obchodzilby limity, podajac inny adres.
+spr "naglowki proxy pod przelacznikiem" "1" "grep -c \"if ( ! empty( \\\$ust\['za_proxy'\] ) ) {\" $W/includes/front.php"
+# Uwaga WAZNA recenzenta do PR #80: CF-Connecting-IP jest wiarygodny tylko wtedy,
+# gdy origin nie przyjmuje polaczen z pominieciem proxy. To warunek WDROZENIA,
+# ktorego kod nie umie wymusic — wiec musi stac w panelu, a nie tylko w dokumentacji.
+spr "panel ostrzega o ominieciu proxy" "1" "grep -c 'Sam Cloudflare to za mało' $W/includes/admin.php"
+spr "dokumentacja stawia ten warunek"  "1" "grep -c 'origin nie przyjmuje' $DOK"
+
+# Uwaga DROBNA recenzenta do PR #80: liczenie samego stringu FILTER_VALIDATE_IP
+# lapalo tez wzmianke w komentarzu phpcs:disable — kontrola wywracala sie przy
+# zmianie TRESCI komentarza, nie logiki. Liczymy realne wywolania.
+spr "kazdy adres walidowany"      "2"  "grep -cF \"filter_var( \\\$ip, FILTER_VALIDATE_IP )\" $W/includes/front.php"
 # Model z data w stalej to bomba zegarowa u kazdego kupujacego (luka L5):
 # migawki bywaja wycofywane, a my nie mamy serwera aktualizacji.
 spr "domyslny model BEZ daty"     "0"  "grep -cP \"CHATL_AI_MODEL\s*=\s*'[^']*-[0-9]{8}'\" $W/includes/ai.php"

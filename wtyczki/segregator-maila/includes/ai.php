@@ -104,16 +104,49 @@ function segm_ai_model() {
 }
 
 /**
- * Klucz API właściciela (opcja z autoload=no; nigdy w kodzie/paczce/repo).
+ * Nazwa stałej z wp-config.php, która ma pierwszeństwo nad kluczem w bazie.
+ */
+const SEGM_STALA_KLUCZA = 'SEGM_KLUCZ_API';
+
+/**
+ * Czy klucz jest podany stałą SEGM_KLUCZ_API w wp-config.php.
+ *
+ * Stała MA PIERWSZEŃSTWO nad opcją: klucz siedzi wtedy poza bazą, więc nie
+ * wychodzi z jej kopią zapasową ani z eksportem na środowisko testowe.
+ * Ten sam wzorzec co CHATL_KLUCZ_API w ChatBocie i SEGM_IMAP_HASLO przy
+ * skrzynce — kupujący oba boty ma dostać JEDNĄ klasę ochrony sekretu,
+ * a nie dwie różne zależnie od tego, którego bota otworzy.
+ *
+ * ⛔ Świadomie NIE szyfrujemy klucza w bazie: klucz szyfrujący leżałby w tym
+ * samym WordPressie, obok danych. To teatr, nie zabezpieczenie.
+ *
+ * @return bool
+ */
+function segm_klucz_ze_stalej() {
+	return defined( SEGM_STALA_KLUCZA ) && '' !== trim( (string) constant( SEGM_STALA_KLUCZA ) );
+}
+
+/**
+ * Klucz API właściciela: stała z wp-config.php, a gdy jej nie ma — opcja
+ * (z autoload=no; nigdy w kodzie/paczce/repo).
  */
 function segm_klucz_api() {
+	if ( segm_klucz_ze_stalej() ) {
+		return trim( (string) constant( SEGM_STALA_KLUCZA ) );
+	}
 	return (string) get_option( 'segm_klucz_api', '' );
 }
 
 /**
  * Zapis/kasowanie klucza z wymuszonym autoload=no.
+ *
+ * Gdy klucz jest w konfiguracji serwera, panel go NIE nadpisuje — inaczej wpis
+ * w polu formularza po cichu wygrywałby ze stałą wbrew deklaracji w panelu.
  */
 function segm_zapisz_klucz( $klucz ) {
+	if ( segm_klucz_ze_stalej() ) {
+		return;
+	}
 	if ( '' === $klucz ) {
 		delete_option( 'segm_klucz_api' );
 		return;
@@ -123,6 +156,145 @@ function segm_zapisz_klucz( $klucz ) {
 	} else {
 		update_option( 'segm_klucz_api', $klucz );
 	}
+}
+
+/**
+ * Nazwa opcji z ostatnim błędem trybu AI.
+ */
+const SEGM_OPCJA_BLAD_AI = 'segm_blad_ai';
+
+/**
+ * Model, którym faktycznie poleci żądanie (ustawienie właściciela + filtr).
+ *
+ * Jedno źródło prawdy dla żądania, testu klucza i wpisu o błędzie — inaczej
+ * pasek błędu pokazywałby inny model, niż poszedł w żądaniu.
+ *
+ * @return string
+ */
+function segm_ai_model_w_uzyciu() {
+	return (string) apply_filters( 'segm_ai_model', segm_ai_model() );
+}
+
+/**
+ * Zapamiętanie, że wywołanie AI padło.
+ *
+ * Zjazd do reguł jest CICHY z założenia (przebieg ma się skończyć wynikiem,
+ * nie ekranem błędu) — ale cisza nie może trwać w nieskończoność. Bez tego
+ * wpisu wtyczka miesiącami „działa w trybie AI", licząc wyłącznie regułami,
+ * bo dostawca odrzuca każde żądanie. Wpis zapala pasek w panelu i gaśnie sam
+ * przy pierwszym udanym wywołaniu.
+ *
+ * @param string $komunikat Co dokładnie odpowiedział dostawca.
+ * @param int    $kod       Kod HTTP (0 = w ogóle nie doszło do odpowiedzi).
+ * @return void
+ */
+function segm_zapisz_blad_ai( $komunikat, $kod ) {
+	update_option(
+		SEGM_OPCJA_BLAD_AI,
+		array(
+			'kiedy'     => current_time( 'mysql' ),
+			'kod'       => (int) $kod,
+			'komunikat' => mb_substr( (string) $komunikat, 0, 300 ),
+			'model'     => segm_ai_model_w_uzyciu(),
+		),
+		false
+	);
+}
+
+/**
+ * Ostatni błąd trybu AI albo null.
+ *
+ * @return array{kiedy: string, kod: int, komunikat: string, model: string}|null
+ */
+function segm_blad_ai() {
+	$wpis = get_option( SEGM_OPCJA_BLAD_AI, array() );
+	if ( ! is_array( $wpis ) || empty( $wpis['kiedy'] ) ) {
+		return null;
+	}
+	return array(
+		'kiedy'     => (string) $wpis['kiedy'],
+		'kod'       => isset( $wpis['kod'] ) ? (int) $wpis['kod'] : 0,
+		'komunikat' => isset( $wpis['komunikat'] ) ? (string) $wpis['komunikat'] : '',
+		'model'     => isset( $wpis['model'] ) ? (string) $wpis['model'] : '',
+	);
+}
+
+/**
+ * Skasowanie wpisu o błędzie (udane wywołanie albo udany test klucza).
+ *
+ * @return void
+ */
+function segm_wyczysc_blad_ai() {
+	delete_option( SEGM_OPCJA_BLAD_AI );
+}
+
+/**
+ * Co ten kod HTTP znaczy dla WŁAŚCICIELA.
+ *
+ * Sam kod nic mu nie mówi. „401" to nie jest informacja — „klucz odrzucony,
+ * sprawdź, czy nie wygasł" jest. Rozdzielamy też przyczyny po jego stronie
+ * od awarii u dostawcy, żeby nie szukał błędu u siebie, gdy go tam nie ma.
+ *
+ * @param int $kod Kod HTTP.
+ * @return string
+ */
+function segm_opis_bledu_ai( $kod ) {
+	$opisy = array(
+		0   => 'Nie udało się w ogóle połączyć z dostawcą modelu — sieć, zapora albo blokada połączeń wychodzących na hostingu.',
+		400 => 'Dostawca odrzucił treść żądania. Najczęstsza przyczyna: nieprawidłowa NAZWA MODELU.',
+		401 => 'KLUCZ API ZOSTAŁ ODRZUCONY. Sprawdź, czy jest wpisany w całości, czy nie wygasł i czy należy do właściwego konta.',
+		403 => 'Klucz jest rozpoznany, ale nie ma uprawnień do tego modelu na tym koncie.',
+		404 => 'Dostawca nie zna takiego adresu ani modelu — sprawdź nazwę modelu i filtr `segm_ai_url`.',
+		429 => 'Przekroczony limit zapytań po stronie dostawcy. Spróbuj później albo zmniejsz próbkę.',
+	);
+	if ( isset( $opisy[ $kod ] ) ) {
+		return $opisy[ $kod ];
+	}
+	if ( $kod >= 500 ) {
+		return 'Awaria po stronie dostawcy modelu (kod ' . (int) $kod . '). To NIE jest problem z Twoją konfiguracją.';
+	}
+	return 'Dostawca odrzucił żądanie kodem ' . (int) $kod . '.';
+}
+
+/**
+ * „Przetestuj klucz": jedno najtańsze wywołanie, żeby sprawdzić poświadczenia.
+ *
+ * ⛔ Wysyłamy WYŁĄCZNIE słowo „ping" — żadnego maila, żadnej treści z próbki.
+ * To jest test poświadczeń, nie klasyfikacja, i nie ma powodu, żeby przy nim
+ * wychodziły z serwera cudze dane. Test NIE wymaga więc zgody na wysyłkę
+ * próbki do AI i celowo jej nie sprawdza.
+ *
+ * Z tego samego powodu test NIE ZABIERA jednostki z dziennego stop-lossu
+ * (`ai_limit_dzienny`) i NIE JEST nim blokowany: ten limit chroni budżet na
+ * klasyfikację, a sprawdzenie własnych poświadczeń nie jest klasyfikacją.
+ * Właściciel z wyczerpanym limitem musi móc sprawdzić, czy klucz w ogóle
+ * działa — inaczej diagnostyka wyłączałaby się dokładnie wtedy, gdy jest
+ * potrzebna.
+ *
+ * @return array{ok: bool, komunikat: string}
+ */
+function segm_ai_przetestuj_klucz() {
+	if ( '' === segm_klucz_api() ) {
+		return array(
+			'ok'        => false,
+			'komunikat' => 'Nie ma czego testować — klucz API nie jest ustawiony ani w panelu, ani stałą ' . SEGM_STALA_KLUCZA . ' w wp-config.php.',
+		);
+	}
+
+	$odpowiedz = segm_ai_zapytaj( 'Odpowiadasz jednym słowem.', 'ping', false );
+	if ( null === $odpowiedz ) {
+		$blad = segm_blad_ai();
+		return array(
+			'ok'        => false,
+			'komunikat' => 'Klucz NIE zadziałał. ' . ( null === $blad ? 'Dostawca nie odpowiedział.' : segm_opis_bledu_ai( $blad['kod'] ) . ' Odpowiedź dostawcy: ' . $blad['komunikat'] ),
+		);
+	}
+
+	segm_wyczysc_blad_ai();
+	return array(
+		'ok'        => true,
+		'komunikat' => sprintf( 'Klucz działa. Model %s odpowiedział: „%s".', segm_ai_model_w_uzyciu(), mb_substr( trim( $odpowiedz ), 0, 60 ) ),
+	);
 }
 
 /**
@@ -172,13 +344,18 @@ function segm_ai_dostepny() {
  * @return void
  */
 function segm_log_bledu_ai( $odp, $kod ) {
-	if ( ! function_exists( 'wp_trigger_error' ) ) {
-		return;
-	}
 	if ( is_wp_error( $odp ) ) {
 		$szczegol = 'błąd połączenia: ' . $odp->get_error_message();
 	} else {
 		$szczegol = 'HTTP ' . (int) $kod . ': ' . wp_html_excerpt( (string) wp_remote_retrieve_body( $odp ), 300, '…' );
+	}
+	// Log widzi PROGRAMISTA przy włączonym WP_DEBUG. Opcję widzi WŁAŚCICIEL
+	// w panelu — i ona jest tu ważniejsza, bo to on płaci za tryb AI, który
+	// po cichu nie działa.
+	segm_zapisz_blad_ai( $szczegol, $kod );
+
+	if ( ! function_exists( 'wp_trigger_error' ) ) {
+		return;
 	}
 	wp_trigger_error(
 		'segm_ai_zapytaj',
@@ -190,14 +367,17 @@ function segm_log_bledu_ai( $odp, $kod ) {
 /**
  * Jedno wywołanie Messages API (wp_remote_post) z JEDNYM retry (połączenie/5xx/429).
  *
- * @param string $system Instrukcja systemowa.
- * @param string $tresc  Treść wiadomości użytkownika.
+ * @param string $system         Instrukcja systemowa.
+ * @param string $tresc          Treść wiadomości użytkownika.
+ * @param bool   $licz_do_limitu Czy udane wywołanie ma zabrać jednostkę
+ *                               z dziennego stop-lossu. Fałsz WYŁĄCZNIE dla
+ *                               sprawdzenia klucza, które nic nie klasyfikuje.
  * @return string|null Tekst odpowiedzi modelu albo null przy błędzie.
  */
-function segm_ai_zapytaj( $system, $tresc ) {
+function segm_ai_zapytaj( $system, $tresc, $licz_do_limitu = true ) {
 	// Filtry = punkt rozszerzenia (proxy / atrapa API w testach).
 	$url   = apply_filters( 'segm_ai_url', 'https://api.anthropic.com/v1/messages' );
-	$model = apply_filters( 'segm_ai_model', segm_ai_model() );
+	$model = segm_ai_model_w_uzyciu();
 
 	$argumenty = array(
 		'timeout' => SEGM_AI_TIMEOUT,
@@ -236,6 +416,10 @@ function segm_ai_zapytaj( $system, $tresc ) {
 		return null;
 	}
 
+	// Udane wywołanie gasi pasek w panelu — inaczej ostrzeżenie o kluczu
+	// wisiałoby po jego naprawieniu aż do ręcznego skasowania opcji.
+	segm_wyczysc_blad_ai();
+
 	$dane = json_decode( wp_remote_retrieve_body( $odp ), true );
 	if ( ! is_array( $dane ) || empty( $dane['content'] ) || ! is_array( $dane['content'] ) ) {
 		return null;
@@ -251,8 +435,14 @@ function segm_ai_zapytaj( $system, $tresc ) {
 		return null;
 	}
 
-	// Licznik stop-loss dopiero PO udanym wywołaniu.
-	segm_ai_zuzyj();
+	// Licznik stop-loss dopiero PO udanym wywołaniu — i TYLKO dla wywołań,
+	// które naprawdę klasyfikują. Sprawdzenie klucza („ping") nie zabiera
+	// właścicielowi jednostki z budżetu prawdziwych klasyfikacji: przycisk
+	// w panelu obiecuje, że NICZEGO nie klasyfikuje, a licznik, który mimo to
+	// idzie w górę, robiłby z tej obietnicy nieprawdę.
+	if ( $licz_do_limitu ) {
+		segm_ai_zuzyj();
+	}
 
 	return $tekst;
 }

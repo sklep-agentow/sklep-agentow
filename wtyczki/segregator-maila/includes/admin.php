@@ -77,6 +77,39 @@ function segm_baner_powitalny() {
 add_action( 'admin_notices', 'segm_baner_powitalny' );
 
 /**
+ * Pasek „tryb AI nie działa" na stronach wtyczki.
+ *
+ * Zjazd do reguł jest cichy w raporcie z rozmysłem, ale właściciel PŁACI za
+ * tryb AI i ma prawo wiedzieć, że od tygodnia liczą u niego same reguły.
+ * Pasek gaśnie sam przy pierwszym udanym wywołaniu — nie trzeba go zamykać.
+ *
+ * @return void
+ */
+function segm_pasek_bledu_ai() {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		return;
+	}
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- tylko rozpoznanie, na której stronie jesteśmy.
+	$strona = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
+	if ( ! in_array( $strona, segm_strony(), true ) ) {
+		return;
+	}
+	$blad = segm_blad_ai();
+	if ( null === $blad ) {
+		return;
+	}
+	?>
+	<div class="notice notice-error">
+		<p><strong>Tryb AI nie działa — przebiegi liczą się samymi regułami.</strong>
+			<?php echo esc_html( segm_opis_bledu_ai( $blad['kod'] ) ); ?>
+			Ostatnia nieudana próba: <?php echo esc_html( $blad['kiedy'] ); ?>.</p>
+		<p><a href="<?php echo esc_url( admin_url( 'admin.php?page=segm-ustawienia' ) ); ?>">Sprawdź klucz w Ustawieniach Segregatora</a></p>
+	</div>
+	<?php
+}
+add_action( 'admin_notices', 'segm_pasek_bledu_ai' );
+
+/**
  * Schowanie banera dla bieżącego użytkownika (decyzja per osoba, nie globalna).
  *
  * @return void
@@ -125,6 +158,10 @@ function segm_komunikaty() {
 		$klucz  = sanitize_key( wp_unslash( $_GET['segm_ok'] ) );
 		if ( isset( $teksty[ $klucz ] ) ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( $teksty[ $klucz ] ) . '</p></div>';
+		}
+		if ( 'klucz_dziala' === $klucz ) {
+			$opis = isset( $_GET['opis'] ) ? sanitize_text_field( wp_unslash( $_GET['opis'] ) ) : 'Klucz działa.';
+			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( $opis ) . '</p></div>';
 		}
 		if ( 'konfig' === $klucz ) {
 			$kat = isset( $_GET['kategorii'] ) ? (int) $_GET['kategorii'] : 0;
@@ -998,13 +1035,20 @@ function segm_strona_ustawienia() {
 					<th scope="row"><label for="segm-klucz">Klucz API (Anthropic)</label></th>
 					<td>
 						<?php $klucz = segm_klucz_api(); ?>
-						<?php if ( '' !== $klucz ) : ?>
-							<p><strong>Klucz zapisany</strong> (…<?php echo esc_html( substr( $klucz, -4 ) ); ?>).
-								<label><input type="checkbox" name="usun_klucz" value="1"> usuń klucz (wyłącza tryby AI)</label></p>
+						<?php if ( segm_klucz_ze_stalej() ) : ?>
+							<p><strong>Klucz podany w konfiguracji serwera</strong> (…<?php echo esc_html( substr( $klucz, -4 ) ); ?>) — stałą <code><?php echo esc_html( SEGM_STALA_KLUCZA ); ?></code> w <code>wp-config.php</code>.</p>
+							<input type="password" id="segm-klucz" class="regular-text" value="" autocomplete="off" disabled placeholder="klucz z wp-config.php">
+							<p class="description">To pole jest zablokowane, bo stała ma pierwszeństwo nad bazą. Żeby zmienić albo wyłączyć klucz, popraw <code>wp-config.php</code>. Klucz trzymany poza bazą nie wychodzi z jej kopią zapasową — to sposób zalecany.</p>
+						<?php else : ?>
+							<?php if ( '' !== $klucz ) : ?>
+								<p><strong>Klucz zapisany</strong> (…<?php echo esc_html( substr( $klucz, -4 ) ); ?>).
+									<label><input type="checkbox" name="usun_klucz" value="1"> usuń klucz (wyłącza tryby AI)</label></p>
+							<?php endif; ?>
+							<input type="password" id="segm-klucz" name="klucz_api" class="regular-text" value="" autocomplete="off"
+								placeholder="<?php echo '' !== $klucz ? 'wklej, aby podmienić' : 'sk-ant-…'; ?>">
+							<p class="description">Klucz WŁAŚCICIELA — przechowywany tylko w Twojej bazie (bez autoload), wysyłany wyłącznie do api.anthropic.com.<br>
+								Bezpieczniej: wpisz go stałą <code>define( '<?php echo esc_html( SEGM_STALA_KLUCZA ); ?>', 'sk-ant-…' );</code> w <code>wp-config.php</code> — wtedy klucz nie leży w bazie i nie wychodzi z jej kopią zapasową. Stała ma pierwszeństwo nad tym polem.</p>
 						<?php endif; ?>
-						<input type="password" id="segm-klucz" name="klucz_api" class="regular-text" value="" autocomplete="off"
-							placeholder="<?php echo '' !== $klucz ? 'wklej, aby podmienić' : 'sk-ant-…'; ?>">
-						<p class="description">Klucz WŁAŚCICIELA — przechowywany tylko w Twojej bazie (bez autoload), wysyłany wyłącznie do api.anthropic.com.</p>
 					</td>
 				</tr>
 				<tr>
@@ -1047,6 +1091,23 @@ function segm_strona_ustawienia() {
 			</table>
 			<?php submit_button( 'Zapisz ustawienia' ); ?>
 		</form>
+		<h2>Sprawdzenie klucza API</h2>
+		<?php $ost_blad = segm_blad_ai(); ?>
+		<?php if ( null !== $ost_blad ) : ?>
+			<div class="notice notice-error inline" style="margin:12px 0">
+				<p><strong>Ostatnie wywołanie AI nie powiodło się</strong> (<?php echo esc_html( $ost_blad['kiedy'] ); ?>, model <code><?php echo esc_html( $ost_blad['model'] ); ?></code>).<br>
+					<?php echo esc_html( segm_opis_bledu_ai( $ost_blad['kod'] ) ); ?></p>
+				<p><em>Odpowiedź dostawcy:</em> <code><?php echo esc_html( $ost_blad['komunikat'] ); ?></code></p>
+			</div>
+		<?php endif; ?>
+		<p>Przebieg AI przy błędzie <strong>zjeżdża do reguł i kończy się wynikiem</strong>, a nie ekranem błędu — to celowe. Żeby jednak cisza nie trwała miesiącami, sprawdź klucz tutaj: wychodzi JEDNO wywołanie ze słowem „ping”, <strong>bez ani jednego maila z próbki</strong>.</p>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+			<input type="hidden" name="action" value="segm_test_klucza">
+			<?php wp_nonce_field( 'segm_test_klucza' ); ?>
+			<?php submit_button( 'Przetestuj klucz API', 'secondary', 'submit', false, '' === segm_klucz_api() ? array( 'disabled' => 'disabled' ) : array() ); ?>
+			<span class="description"><?php echo '' === segm_klucz_api() ? 'Najpierw zapisz klucz.' : 'Sprawdza poświadczenia i nazwę modelu — niczego nie klasyfikuje i nie zabiera jednostki z dziennego limitu AI.'; ?></span>
+		</form>
+
 		<h2>Zgoda na wysyłkę próbki do AI</h2>
 		<?php $zgoda = segm_zgoda_ai(); ?>
 		<?php if ( null === $zgoda ) : ?>
@@ -1135,6 +1196,27 @@ function segm_post_zgoda_zapisz() {
 	exit;
 }
 add_action( 'admin_post_segm_zgoda_zapisz', 'segm_post_zgoda_zapisz' );
+
+/**
+ * „Przetestuj klucz API".
+ *
+ * @return void
+ */
+function segm_post_test_klucza() {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_die( 'Brak uprawnień.' );
+	}
+	check_admin_referer( 'segm_test_klucza' );
+
+	$wynik = segm_ai_przetestuj_klucz();
+	if ( ! $wynik['ok'] ) {
+		segm_przekieruj_blad( 'segm-ustawienia', $wynik['komunikat'] );
+	}
+
+	wp_safe_redirect( admin_url( 'admin.php?page=segm-ustawienia&segm_ok=klucz_dziala&opis=' . rawurlencode( $wynik['komunikat'] ) ) );
+	exit;
+}
+add_action( 'admin_post_segm_test_klucza', 'segm_post_test_klucza' );
 
 /**
  * Cofnięcie zgody — tryby AI wracają do stanu zablokowanego.
