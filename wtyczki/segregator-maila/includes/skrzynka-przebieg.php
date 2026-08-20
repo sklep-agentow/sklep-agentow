@@ -269,7 +269,14 @@ function segm_skrzynka_przebieg( $zrodlo = 'reczny' ) {
 			$utworzone[ $cel ] = true;
 			// CREATE mogło zmienić bieżący folder na niektórych serwerach —
 			// otwieramy źródłowy z powrotem, żeby UID-y dotyczyły tego, co trzeba.
-			$klient->otworz( $zrodlowy, false );
+			// Wynik SPRAWDZAMY: bez wybranego folderu źródłowego kolejne UID MOVE
+			// nie ma czego przenosić i lepiej powiedzieć to przy tej wiadomości,
+			// niż zbierać serię niezrozumiałych odmów serwera.
+			if ( null === $klient->otworz( $zrodlowy, false ) ) {
+				++$bledow;
+				$ruchy[] = segm_skrzynka_ruch( $uid, $wiadomosc->message_id, $wiadomosc->nadawca, $wiadomosc->temat, (string) $ust['folder_zrodlowy'], Segm_Imap::z_utf7( $cel ), 'blad', 'Folder docelowy powstał, ale nie udało się wrócić do folderu źródłowego — ' . $klient->blad() );
+				continue;
+			}
 		}
 
 		$wynik = $klient->przenies( $uid, $cel );
@@ -413,6 +420,23 @@ function segm_skrzynka_cofnij( $id_przebiegu ) {
 	}
 	if ( (int) $przebieg->cofniety > 0 ) {
 		$wynik['blad'] = 'Ten przebieg został już cofnięty.';
+		return $wynik;
+	}
+
+	// Cofać wolno WYŁĄCZNIE ostatni nie-cofnięty przebieg — tak mówi instrukcja
+	// i tak mówi panel. Samo ukryte pole w formularzu tego nie pilnuje: między
+	// wyświetleniem strony a kliknięciem cron mógł dorzucić nowszy przebieg,
+	// a wtedy cofanie starszego przestawiałoby wiadomości, które w międzyczasie
+	// pojechały gdzie indziej. Sprawdzamy stan bazy, nie to, co przyszło z żądania.
+	$najnowszy = segm_skrzynka_ostatni_do_cofniecia();
+	if ( $najnowszy && (int) $najnowszy->id !== (int) $przebieg->id ) {
+		$wynik['blad'] = sprintf(
+			'Cofnąć można tylko OSTATNI przebieg, a od czasu przebiegu #%d był jeszcze przebieg #%d (%s), którego nikt nie cofnął. Cofnij najpierw #%d.',
+			(int) $przebieg->id,
+			(int) $najnowszy->id,
+			(string) $najnowszy->uruchomiono,
+			(int) $najnowszy->id
+		);
 		return $wynik;
 	}
 
