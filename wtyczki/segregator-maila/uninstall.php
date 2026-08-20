@@ -21,6 +21,11 @@ wp_clear_scheduled_hook( 'segm_czyszczenie_probki' );
 // w bazie — znalezisko wrogiej sesji botów 19.08, zmierzone na czystym WP).
 delete_option( 'segm_klucz_api' );
 
+// Zgoda na wysyłkę próbki do AI też znika ZAWSZE: po ponownej instalacji
+// właściciel ma podjąć tę decyzję świadomie od nowa, a nie odziedziczyć
+// potwierdzenie sprzed odinstalowania.
+delete_option( 'segm_zgoda_ai' );
+
 if ( empty( $segm_ust['usun_dane'] ) ) {
 	return;
 }

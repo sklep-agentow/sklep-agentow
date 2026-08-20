@@ -47,6 +47,15 @@ Wymagania: WordPress 6.0+ i PHP 8.1+.
 
 ## 4. Tryb AI (opcjonalny — hybryda)
 
+**Najpierw zgoda — bez niej tryby AI się nie uruchomią.** W trybie AI nadawca,
+temat i treść każdego maila z próbki wychodzą z Twojego serwera do zewnętrznego
+dostawcy modelu, a próbka to zwykle korespondencja Twoich klientów, czyli CUDZE
+dane osobowe. Dlatego w **Ustawieniach Segregatora** jest sekcja *„Zgoda na
+wysyłkę próbki do AI"*: jedno wyraźne potwierdzenie, zapisane z datą i loginem
+(do okazania, gdyby ktoś zapytał, kto na to pozwolił). Zgodę można cofnąć
+jednym przyciskiem — wtedy tryby AI znów są zablokowane, a próbka, reguły i
+raporty zostają nietknięte. Tryb „reguły" działa lokalnie i zgody nie wymaga.
+
 Z własnym kluczem API (Anthropic, console.anthropic.com) klasyfikację może
 robić prawdziwy model — a najciekawszy jest tryb **„porównaj oba"**:
 
@@ -117,7 +126,11 @@ reguły, próbka, przebiegi i ustawienia.
 - **Tryb regułowy:** treść maili NIE opuszcza Twojego WordPressa — segregacja
   działa lokalnie, próbka leży w Twojej bazie danych.
 - **Tryby AI:** treść maili z próbki (nadawca, temat, treść) jest wysyłana do
-  API dostawcy modelu (Anthropic) w celu klasyfikacji.
+  API dostawcy modelu (Anthropic) w celu klasyfikacji — i **nie stanie się to
+  bez Twojej wyraźnej zgody**: dopóki nie potwierdzisz jej w Ustawieniach,
+  przebieg AI w ogóle nie startuje (zamiast tego dostajesz komunikat).
+  Zgoda jest zapisywana z datą i loginem osoby, która ją wyraziła, i można ją
+  cofnąć w każdej chwili. Odinstalowanie wtyczki kasuje ją zawsze.
 - **Retencja:** próbka i raporty przebiegów są kasowane automatycznie po
   **90 dniach** (codzienny WP-Cron), a przycisk „Wyczyść próbkę teraz" na
   stronie *Próbka maili* usuwa je natychmiast. Raporty kasujemy razem z

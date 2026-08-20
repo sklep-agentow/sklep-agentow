@@ -79,6 +79,18 @@ function segm_wykonaj_przebieg( $tryb = 'reguly' ) {
 	$zjazd   = false;
 	$mapa_ai = null;
 	if ( in_array( $tryb, array( 'ai', 'porownaj' ), true ) ) {
+		// P0.4: bez wyraźnej zgody właściciela treść cudzych maili NIE wychodzi
+		// do zewnętrznego dostawcy. To NIE jest zjazd do reguł — cichy zjazd
+		// wyglądałby jak „AI nie odpowiedziało", a tu chodzi o świadomą decyzję,
+		// której nikt jeszcze nie podjął. Przebieg NIE startuje.
+		if ( ! segm_zgoda_ai_udzielona() ) {
+			return array(
+				'id'    => 0,
+				'zjazd' => false,
+				'blad'  => 'Tryb AI wymaga jednorazowego potwierdzenia: w trybie AI treść maili z próbki (także korespondencja osób trzecich) wychodzi do zewnętrznego dostawcy modelu. Potwierdź to w Ustawieniach Segregatora — sekcja „Zgoda na wysyłkę próbki do AI". Do tego czasu działa tryb „reguły" (lokalnie, nic nie opuszcza Twojego WordPressa).',
+			);
+		}
+
 		// TWARDY limit próbki dla AI (limit PHP 30 s): JAWNY błąd zamiast
 		// fatala w środku pętli albo cichego zjazdu — przebieg NIE startuje.
 		if ( count( $maile ) > SEGM_AI_MAX_PROBKA ) {

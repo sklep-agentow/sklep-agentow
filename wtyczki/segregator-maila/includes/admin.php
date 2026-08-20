@@ -30,6 +30,8 @@ function segm_komunikaty() {
 			'usunieto'     => 'Usunięto.',
 			'demo'         => 'Przywrócono próbkę demo (30 maili).',
 			'wyczyszczono' => 'Wyczyszczono: próbka i raporty przebiegów usunięte z bazy.',
+			'zgoda'        => 'Zgoda zapisana — tryby AI są od teraz dostępne.',
+			'zgoda_cofnij' => 'Zgoda cofnięta — tryby AI są zablokowane. Próbka i raporty zostają bez zmian.',
 		);
 		$klucz  = sanitize_key( wp_unslash( $_GET['segm_ok'] ) );
 		if ( isset( $teksty[ $klucz ] ) ) {
@@ -82,15 +84,18 @@ function segm_strona_przebiegi() {
 			<?php wp_nonce_field( 'segm_przebieg_start' ); ?>
 			<?php
 			$ai_jest    = segm_ai_dostepny();
+			$ai_zgoda   = segm_zgoda_ai_udzielona();
 			$ai_za_duza = $maili > SEGM_AI_MAX_PROBKA;
-			$ai_mozliwe = $ai_jest && ! $ai_za_duza;
+			$ai_mozliwe = $ai_jest && $ai_zgoda && ! $ai_za_duza;
 			?>
 			<p>
 				<label><input type="radio" name="tryb" value="reguly" checked> reguły (lokalnie, bez klucza, bez limitu próbki)</label><br>
 				<label><input type="radio" name="tryb" value="ai" <?php disabled( ! $ai_mozliwe ); ?>> AI (klasyfikuje model; próbka do <?php echo (int) SEGM_AI_MAX_PROBKA; ?> maili)</label><br>
 				<label><input type="radio" name="tryb" value="porownaj" <?php disabled( ! $ai_mozliwe ); ?>> porównaj oba (raport różnic — co AI łapie ponad reguły; próbka do <?php echo (int) SEGM_AI_MAX_PROBKA; ?> maili)</label>
 			</p>
-			<?php if ( ! $ai_jest ) : ?>
+			<?php if ( ! $ai_zgoda ) : ?>
+				<p class="description"><strong>Tryby AI zablokowane: brak zgody na wysyłkę próbki.</strong> W trybie AI treść maili z próbki — także korespondencja osób trzecich — wychodzi do zewnętrznego dostawcy modelu. Potwierdź to raz w <a href="<?php echo esc_url( admin_url( 'admin.php?page=segm-ustawienia' ) ); ?>">Ustawieniach Segregatora</a>. Bez potwierdzenia przebieg AI się NIE uruchomi (to nie jest zjazd do reguł — to Twoja decyzja, której jeszcze nie ma).</p>
+			<?php elseif ( ! $ai_jest ) : ?>
 				<p class="description">Tryby AI nieaktywne: <?php echo '' === segm_klucz_api() ? 'brak klucza API (Ustawienia)' : 'dzienny limit wywołań wyczerpany'; ?>. Przy błędzie AI przebieg i tak zjeżdża do reguł.</p>
 			<?php elseif ( $ai_za_duza ) : ?>
 				<p class="description">Tryby AI nieaktywne: próbka ma <?php echo (int) $maili; ?> maili, a tryb AI obsługuje maks. <?php echo (int) SEGM_AI_MAX_PROBKA; ?> (jedno wywołanie API to do 18 s — timeout 9 s + retry — a typowy limit czasu żądania na hostingu to 30 s). Zmniejsz próbkę albo użyj trybu „reguły".</p>
@@ -830,6 +835,27 @@ function segm_strona_ustawienia() {
 			</table>
 			<?php submit_button( 'Zapisz ustawienia' ); ?>
 		</form>
+		<h2>Zgoda na wysyłkę próbki do AI</h2>
+		<?php $zgoda = segm_zgoda_ai(); ?>
+		<?php if ( null === $zgoda ) : ?>
+			<p><strong>Tryby AI są zablokowane</strong>, dopóki tego nie potwierdzisz. Powód: próbka to zwykle korespondencja Twoich klientów — <em>cudze</em> dane osobowe. W trybie AI nadawca, temat i treść każdego maila z próbki wychodzą z Twojego serwera do zewnętrznego dostawcy modelu (Anthropic, <code>api.anthropic.com</code>). Tryb „reguły" działa lokalnie i takiej zgody nie wymaga.</p>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<input type="hidden" name="action" value="segm_zgoda_zapisz">
+				<?php wp_nonce_field( 'segm_zgoda_zapisz' ); ?>
+				<p><label><input type="checkbox" name="zgoda" value="1" required>
+					Potwierdzam, że treść maili z próbki (także korespondencja osób trzecich) będzie wysyłana do zewnętrznego dostawcy modelu w celu klasyfikacji, i że mam do tego podstawę — a przetwarzanie jest opisane w mojej polityce prywatności.</label></p>
+				<?php submit_button( 'Zapisz zgodę i odblokuj tryby AI', 'primary', 'submit', false ); ?>
+			</form>
+		<?php else : ?>
+			<p><strong>Zgoda udzielona</strong>: <?php echo esc_html( $zgoda['kiedy'] ); ?>, użytkownik <code><?php echo esc_html( $zgoda['kto'] ); ?></code>. Tryby AI są odblokowane.</p>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<input type="hidden" name="action" value="segm_zgoda_cofnij">
+				<?php wp_nonce_field( 'segm_zgoda_cofnij' ); ?>
+				<?php submit_button( 'Cofnij zgodę (blokuje tryby AI)', 'secondary', 'submit', false, array( 'onclick' => "return confirm('Cofnąć zgodę? Tryby AI przestaną działać do czasu ponownego potwierdzenia.');" ) ); ?>
+			</form>
+			<p class="description">Cofnięcie zgody blokuje wyłącznie tryby AI — próbka, reguły, raporty i klucz API zostają nietknięte. Zapis daty i loginu jest po to, żeby dało się odpowiedzieć na pytanie „kto i kiedy na to pozwolił".</p>
+		<?php endif; ?>
+
 		<h2>Prywatność</h2>
 		<p>Tryb regułowy: treść maili <strong>nie opuszcza</strong> Twojego WordPressa — segregacja działa lokalnie na próbce. Tryby AI: treść maili z próbki (nadawca, temat, treść) jest wysyłana do API dostawcy modelu (Anthropic) — poinformuj o tym w swojej polityce prywatności. Wtyczka nie łączy się z żadną skrzynką pocztową (działa na próbkach CSV — dlatego to uczciwie „testowy bot").</p>
 	</div>
@@ -866,3 +892,57 @@ function segm_post_ustawienia_zapisz() {
 	exit;
 }
 add_action( 'admin_post_segm_ustawienia_zapisz', 'segm_post_ustawienia_zapisz' );
+
+/**
+ * Zapis zgody na wysyłkę próbki do AI (data + login — do okazania przy audycie).
+ *
+ * @return void
+ */
+function segm_post_zgoda_zapisz() {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_die( 'Brak uprawnień.' );
+	}
+	check_admin_referer( 'segm_zgoda_zapisz' );
+
+	if ( empty( $_POST['zgoda'] ) ) {
+		segm_przekieruj_blad( 'segm-ustawienia', 'Zgoda NIE została zapisana — pole potwierdzenia nie było zaznaczone. Tryby AI pozostają zablokowane.' );
+	}
+
+	$uzytkownik = wp_get_current_user();
+	$wpis       = array(
+		'kiedy' => current_time( 'mysql' ),
+		'kto'   => $uzytkownik->user_login,
+	);
+	if ( ! segm_zapisz_opcje( 'segm_zgoda_ai', $wpis ) ) {
+		segm_log_bledu_bazy( 'segm_post_zgoda_zapisz', 'zgoda na wysyłkę próbki do AI' );
+		segm_przekieruj_blad( 'segm-ustawienia', 'Nie udało się zapisać zgody — baza odrzuciła zapis. Tryby AI pozostają ZABLOKOWANE (żaden mail nie wyszedł na zewnątrz).' );
+	}
+
+	wp_safe_redirect( admin_url( 'admin.php?page=segm-ustawienia&segm_ok=zgoda' ) );
+	exit;
+}
+add_action( 'admin_post_segm_zgoda_zapisz', 'segm_post_zgoda_zapisz' );
+
+/**
+ * Cofnięcie zgody — tryby AI wracają do stanu zablokowanego.
+ *
+ * @return void
+ */
+function segm_post_zgoda_cofnij() {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_die( 'Brak uprawnień.' );
+	}
+	check_admin_referer( 'segm_zgoda_cofnij' );
+
+	delete_option( 'segm_zgoda_ai' );
+	// delete_option() zwraca false także dla opcji, której nie było — o tym, czy
+	// zgoda naprawdę zniknęła, rozstrzyga odczyt, nie zwracana wartość.
+	if ( segm_zgoda_ai_udzielona() ) {
+		segm_log_bledu_bazy( 'segm_post_zgoda_cofnij', 'cofnięcie zgody na wysyłkę próbki do AI' );
+		segm_przekieruj_blad( 'segm-ustawienia', 'Nie udało się cofnąć zgody — baza odrzuciła operację. Zgoda NADAL obowiązuje, tryby AI są dostępne. Sprawdź stan bazy i powtórz operację.' );
+	}
+
+	wp_safe_redirect( admin_url( 'admin.php?page=segm-ustawienia&segm_ok=zgoda_cofnij' ) );
+	exit;
+}
+add_action( 'admin_post_segm_zgoda_cofnij', 'segm_post_zgoda_cofnij' );

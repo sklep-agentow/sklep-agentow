@@ -161,6 +161,36 @@ function segm_zapewnij_cron() {
 add_action( 'plugins_loaded', 'segm_zapewnij_cron' );
 
 /**
+ * Zgoda właściciela na wysyłanie próbki do zewnętrznego dostawcy modelu.
+ *
+ * W trybie AI do api.anthropic.com wychodzi treść maili — a to zwykle
+ * korespondencja OSÓB TRZECICH, nie właściciela. Sama informacja w panelu to
+ * za mało: potrzebne jest jednorazowe, wyraźne potwierdzenie, zapisane z datą
+ * i loginem, żeby dało się je okazać przy pytaniu „kto i kiedy na to pozwolił".
+ *
+ * @return array{kiedy: string, kto: string}|null Null = zgody NIE MA.
+ */
+function segm_zgoda_ai() {
+	$zapisana = get_option( 'segm_zgoda_ai', array() );
+	if ( ! is_array( $zapisana ) || empty( $zapisana['kiedy'] ) ) {
+		return null;
+	}
+	return array(
+		'kiedy' => (string) $zapisana['kiedy'],
+		'kto'   => isset( $zapisana['kto'] ) ? (string) $zapisana['kto'] : 'nieznany',
+	);
+}
+
+/**
+ * Czy tryby AI wolno w ogóle uruchomić.
+ *
+ * @return bool
+ */
+function segm_zgoda_ai_udzielona() {
+	return null !== segm_zgoda_ai();
+}
+
+/**
  * Ustawienia wtyczki z wartościami domyślnymi.
  */
 function segm_ustawienia() {
