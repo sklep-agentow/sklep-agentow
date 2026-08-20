@@ -82,8 +82,10 @@ Plik musi mieć kolumny w kolejności `od, temat, tresc[, kategoria_oczekiwana]`
 rozdzielane przecinkami albo średnikami (separator wykrywany automatycznie —
 polski Excel przy „Zapisz jako CSV" daje średniki i to działa); pierwszy wiersz
 może być nagłówkiem. Gdy wiersz danych ma mniej niż 3 kolumny, cały import jest
-odrzucany z komunikatem (próbka zostaje nietknięta). Limit: 500 wierszy
-(nadmiar jest pomijany i raportowany).
+odrzucany z komunikatem (próbka zostaje nietknięta). Limity: **500 wierszy**
+(po nich czytanie pliku jest PRZERYWANE — dostajesz o tym komunikat, a import
+kończy się od razu) i **5 MB** na plik. Przyjmujemy `.csv` oraz `.txt`
+z zawartością CSV; plik z danymi binarnymi jest odrzucany.
 
 **A co z polskimi znakami (ą, ć, ę, ł)?**
 Kodowanie jest wykrywane automatycznie. Plik w **UTF-8** wchodzi jak leci;

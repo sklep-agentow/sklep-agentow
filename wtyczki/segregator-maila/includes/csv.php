@@ -15,6 +15,14 @@ const SEGM_MAX_POLE           = 2000;
 /* Ile bajtów początku pliku wystarczy, żeby rozpoznać kodowanie. */
 const SEGM_PROBKA_KODOWANIA = 65536;
 
+/*
+ * Twardy limit rozmiaru wgrywanego pliku. 500 wierszy × maksymalne pola
+ * (190 + 2000 + 2000 + 100 znaków) to ok. 2,2 MB w UTF-8 — 5 MB daje zapas na
+ * cudzysłowy, długie linie i wiersze ponad limit, a jednocześnie odcina plik
+ * z milionem linii ZANIM zacznie zajmować pamięć i czas PHP.
+ */
+const SEGM_IMPORT_MAX_BAJTOW = 5242880;
+
 /**
  * Rozpoznanie kodowania pliku CSV.
  *
@@ -101,17 +109,43 @@ function segm_wykryj_separator( $linia ) {
  * separatorze).
  *
  * @param string $sciezka Ścieżka tmp wgranego pliku.
- * @return array|WP_Error ['zaimportowano' => int, 'pominieto' => int, 'separator' => string, 'kodowanie' => string]
+ * @return array|WP_Error ['zaimportowano' => int, 'pominieto' => int, 'przerwano' => bool, 'separator' => string, 'kodowanie' => string]
  */
 function segm_importuj_csv( $sciezka ) {
 	global $wpdb;
+
+	// Limit rozmiaru PRZED otwarciem pliku: import 500 wierszy nie ma powodu
+	// dotykać pliku wielkości płyty, a odrzut na wejściu jest jedyną obroną,
+	// której nie da się obejść nietypową zawartością.
+	$rozmiar = (int) filesize( $sciezka ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_filesize
+	if ( $rozmiar > SEGM_IMPORT_MAX_BAJTOW ) {
+		return new WP_Error(
+			'segm_csv',
+			sprintf(
+				'Plik ma %s, a limit to %s. Import próbki bierze najwyżej %d wierszy — wytnij z pliku fragment do przetestowania reguł i wgraj go ponownie. Próbka NIE została zmieniona.',
+				size_format( $rozmiar ),
+				size_format( SEGM_IMPORT_MAX_BAJTOW ),
+				SEGM_IMPORT_MAX_WIERSZY
+			)
+		);
+	}
 
 	$uchwyt = fopen( $sciezka, 'r' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen
 	if ( ! $uchwyt ) {
 		return new WP_Error( 'segm_csv', 'Nie udało się odczytać pliku.' );
 	}
 
-	$kodowanie = segm_wykryj_kodowanie( (string) fread( $uchwyt, SEGM_PROBKA_KODOWANIA ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fread
+	$poczatek = (string) fread( $uchwyt, SEGM_PROBKA_KODOWANIA ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fread
+
+	// Bajt zerowy nie występuje w pliku tekstowym — to znak, że ktoś wgrał
+	// obrazek/archiwum/plik binarny z rozszerzeniem .csv. Odrzucamy, zanim
+	// fgetcsv zacznie z tego produkować „wiersze".
+	if ( false !== strpos( $poczatek, "\0" ) && 0 !== strncmp( $poczatek, "\xFF\xFE", 2 ) && 0 !== strncmp( $poczatek, "\xFE\xFF", 2 ) ) {
+		fclose( $uchwyt ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
+		return new WP_Error( 'segm_csv', 'To nie jest plik tekstowy CSV (zawiera dane binarne). Wgraj plik zapisany jako CSV — najlepiej „CSV UTF-8". Próbka NIE została zmieniona.' );
+	}
+
+	$kodowanie = segm_wykryj_kodowanie( $poczatek );
 	if ( '' === $kodowanie ) {
 		fclose( $uchwyt ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
 		return new WP_Error( 'segm_csv', 'Plik jest zapisany w UTF-16 (tak zapisuje pozycja „Tekst Unicode" w Excelu) — tego formatu nie czytamy. Zapisz go jako „CSV UTF-8" albo zwykły „CSV" i wgraj ponownie. Próbka NIE została zmieniona.' );
@@ -134,6 +168,7 @@ function segm_importuj_csv( $sciezka ) {
 
 	$wiersze   = array();
 	$pominieto = 0;
+	$przerwano = false;
 	$pierwszy  = true;
 	$nr        = 0;
 
@@ -170,10 +205,6 @@ function segm_importuj_csv( $sciezka ) {
 				)
 			);
 		}
-		if ( count( $wiersze ) >= SEGM_IMPORT_MAX_WIERSZY ) {
-			++$pominieto;
-			continue;
-		}
 		// Przekodowanie PRZED sanityzacją: sanitize_text_field() wycina bajty
 		// niebędące poprawnym UTF-8, więc na krzakach z Windows-1250 zjadałoby
 		// polskie znaki zamiast je uratować.
@@ -189,6 +220,20 @@ function segm_importuj_csv( $sciezka ) {
 			'kategoria_oczekiwana' => mb_substr( $oczek, 0, 100 ),
 			'utworzono'            => current_time( 'mysql' ),
 		);
+
+		// PRZERWANIE, nie „licz dalej i pomijaj": wcześniej pętla i tak
+		// przechodziła plik do końca, więc plik z milionem linii był mielony
+		// w całości mimo limitu 500. Sprawdzamy jeszcze, czy za limitem coś
+		// realnie jest — żeby nie straszyć komunikatem pliku, który ma
+		// równiutko 500 wierszy i pustą linię na końcu.
+		if ( count( $wiersze ) >= SEGM_IMPORT_MAX_WIERSZY ) {
+			$dalej = fgets( $uchwyt );
+			while ( false !== $dalej && '' === trim( $dalej ) ) {
+				$dalej = fgets( $uchwyt );
+			}
+			$przerwano = false !== $dalej;
+			break;
+		}
 	}
 	fclose( $uchwyt ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
 
@@ -224,6 +269,7 @@ function segm_importuj_csv( $sciezka ) {
 	return array(
 		'zaimportowano' => count( $wiersze ),
 		'pominieto'     => $pominieto,
+		'przerwano'     => $przerwano,
 		'separator'     => $separator,
 		'kodowanie'     => $kodowanie,
 	);

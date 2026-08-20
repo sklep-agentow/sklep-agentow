@@ -119,6 +119,7 @@ function segm_komunikaty() {
 			$ile = isset( $_GET['ile'] ) ? (int) $_GET['ile'] : 0;
 			$pom = isset( $_GET['pominieto'] ) ? (int) $_GET['pominieto'] : 0;
 			$kod = isset( $_GET['kodowanie'] ) ? sanitize_text_field( wp_unslash( $_GET['kodowanie'] ) ) : '';
+			$prz = ! empty( $_GET['przerwano'] );
 			// Wykryte kodowanie mówimy wprost: gdy plik NIE był w UTF-8, to jest
 			// jedyny moment, w którym właściciel może wychwycić, że detekcja
 			// trafiła obok i polskie znaki poszły do bazy krzywo.
@@ -128,7 +129,10 @@ function segm_komunikaty() {
 			} elseif ( '' !== $kod ) {
 				$opis_kod = ' Kodowanie pliku: ' . $kod . ' — polskie znaki przekonwertowano na UTF-8. Jeśli w tabeli poniżej widzisz krzaki, zapisz plik jako „CSV UTF-8" i zaimportuj ponownie.';
 			}
-			echo '<div class="notice notice-success is-dismissible"><p>Zaimportowano ' . (int) $ile . ' maili (próbka zastąpiona).' . ( $pom > 0 ? ' Pominięto wierszy: ' . (int) $pom . '.' : '' ) . esc_html( $opis_kod ) . '</p></div>';
+			echo '<div class="notice notice-success is-dismissible"><p>Zaimportowano ' . (int) $ile . ' maili (próbka zastąpiona).' . ( $pom > 0 ? ' Pominięto pustych wierszy: ' . (int) $pom . '.' : '' ) . esc_html( $opis_kod ) . '</p></div>';
+			if ( $prz ) {
+				echo '<div class="notice notice-warning is-dismissible"><p>Plik ma więcej niż ' . (int) SEGM_IMPORT_MAX_WIERSZY . ' wierszy — wzięliśmy pierwsze ' . (int) SEGM_IMPORT_MAX_WIERSZY . ' i <strong>dalszej części pliku w ogóle nie czytaliśmy</strong> (dlatego import był szybki). Do testu reguł taka próbka wystarcza; jeśli chcesz sprawdzić inny fragment skrzynki, wytnij go w arkuszu i wgraj osobno.</p></div>';
+			}
 		}
 	}
 	if ( isset( $_GET['segm_blad'] ) ) {
@@ -743,7 +747,7 @@ function segm_strona_probka() {
 	<div class="wrap">
 		<h1>Próbka maili (<?php echo (int) $ile; ?>)</h1>
 		<?php segm_komunikaty(); ?>
-		<p>Segregator testujesz na próbce — bez podpinania żywej skrzynki. Możesz wgrać własny eksport CSV (kolumny: <code>od, temat, tresc</code>, opcjonalnie <code>kategoria_oczekiwana</code> — wtedy raport policzy accuracy). Separator: przecinek albo średnik (jak w polskim Excelu) — wykrywany automatycznie. Import <strong>zastępuje</strong> bieżącą próbkę; maks. <?php echo (int) SEGM_IMPORT_MAX_WIERSZY; ?> wierszy.</p>
+		<p>Segregator testujesz na próbce — bez podpinania żywej skrzynki. Możesz wgrać własny eksport CSV (kolumny: <code>od, temat, tresc</code>, opcjonalnie <code>kategoria_oczekiwana</code> — wtedy raport policzy accuracy). Separator: przecinek albo średnik (jak w polskim Excelu) — wykrywany automatycznie. Import <strong>zastępuje</strong> bieżącą próbkę; maks. <?php echo (int) SEGM_IMPORT_MAX_WIERSZY; ?> wierszy i <?php echo esc_html( size_format( SEGM_IMPORT_MAX_BAJTOW ) ); ?> na plik (po limicie wierszy czytanie jest przerywane — reszty pliku nie ruszamy).</p>
 
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" enctype="multipart/form-data" style="margin-bottom:12px">
 			<input type="hidden" name="action" value="segm_import_csv">
@@ -801,6 +805,23 @@ function segm_post_import_csv() {
 		exit;
 	}
 
+	// Atrybut accept=".csv" w formularzu to podpowiedź dla okna wyboru pliku,
+	// nie zabezpieczenie — żądanie może przyjść bez formularza. Rozszerzenie
+	// sprawdzamy tu, a to, czy plik NAPRAWDĘ jest tekstem, weryfikuje import
+	// (odrzut danych binarnych i UTF-16).
+	$nazwa = isset( $_FILES['plik_csv']['name'] ) ? sanitize_file_name( wp_unslash( $_FILES['plik_csv']['name'] ) ) : '';
+	$typ   = wp_check_filetype(
+		$nazwa,
+		array(
+			'csv' => 'text/csv',
+			'txt' => 'text/plain',
+		)
+	);
+	if ( ! in_array( $typ['ext'], array( 'csv', 'txt' ), true ) ) {
+		wp_safe_redirect( admin_url( 'admin.php?page=segm-probka&segm_blad=' . rawurlencode( 'Przyjmujemy tylko pliki .csv (albo .txt z zawartością CSV). Wgrany plik ma inne rozszerzenie — próbka NIE została zmieniona.' ) ) );
+		exit;
+	}
+
 	$wynik = segm_importuj_csv( $tmp );
 	if ( is_wp_error( $wynik ) ) {
 		wp_safe_redirect( admin_url( 'admin.php?page=segm-probka&segm_blad=' . rawurlencode( $wynik->get_error_message() ) ) );
@@ -811,6 +832,7 @@ function segm_post_import_csv() {
 		admin_url(
 			'admin.php?page=segm-probka&segm_ok=import&ile=' . (int) $wynik['zaimportowano']
 			. '&pominieto=' . (int) $wynik['pominieto']
+			. '&przerwano=' . ( empty( $wynik['przerwano'] ) ? '0' : '1' )
 			. '&kodowanie=' . rawurlencode( (string) $wynik['kodowanie'] )
 		)
 	);
