@@ -35,6 +35,19 @@
 		</properties>
 	</rule>
 
+	<!-- Brama nonce'a chatbota: check_ajax_referer() w domyślnej postaci UBIJA żądanie,
+	     więc nie da się przy odrzuceniu odnotować awarii dla właściciela (luka L1 —
+	     nonce w cache'owanej stronie). Sprawdzenie mieszka w chatl_wymagaj_nonce()
+	     (front.php), które woła check_ajax_referer( ..., false ) i samo kończy żądanie
+	     przy porażce — sniff ma je uznawać za weryfikację nonce'a. -->
+	<rule ref="WordPress.Security.NonceVerification">
+		<properties>
+			<property name="customNonceVerificationFunctions" type="array">
+				<element value="chatl_wymagaj_nonce"/>
+			</property>
+		</properties>
+	</rule>
+
 	<!-- D25 (uzupełnienie 19.08): boty trzymają CAŁY stan we własnych tabelach
 	     (architektura §4B — sprawdzone: wszystkie 69 trafień sniffa to własne tabele
 	     chatl_*/segm_*), więc rada „użyj API WP / dołóż cache" nie ma tam adresata —
