@@ -10,13 +10,63 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
+ * Które warianty pary trafiły w pytanie gościa.
+ *
+ * JEDYNE miejsce, gdzie żyje reguła dopasowania (małe litery, podział po
+ * przecinku, szukanie podłańcucha). Wołają ją i silnik (chatl_dopasuj), i test
+ * bota w panelu — inaczej panel mógłby pokazywać co innego, niż bot naprawdę
+ * zrobił, a wtedy panel kłamie na temat własnego produktu.
+ *
+ * @param string $pytanie        Pytanie gościa (surowe).
+ * @param string $slowa_kluczowe Warianty pary, rozdzielone przecinkami.
+ * @return array Lista trafionych wariantów (już po mb_strtolower i trim).
+ */
+function chatl_trafione_warianty( $pytanie, $slowa_kluczowe ) {
+	$szukane  = mb_strtolower( trim( (string) $pytanie ) );
+	$trafione = array();
+	if ( '' === $szukane ) {
+		return $trafione;
+	}
+	$warianty = array_filter( array_map( 'trim', explode( ',', mb_strtolower( (string) $slowa_kluczowe ) ) ) );
+	foreach ( $warianty as $wariant ) {
+		if ( false !== mb_strpos( $szukane, $wariant ) ) {
+			$trafione[] = $wariant;
+		}
+	}
+	return $trafione;
+}
+
+/**
+ * Punktacja jednej pary: ile wariantów trafiło i jak długie łącznie.
+ *
+ * Wydzielone razem z dopasowaniem, żeby „ile trafień" i „jak liczymy remis"
+ * też miały jedno źródło — panel pokazuje dokładnie te liczby, którymi
+ * silnik rozstrzygnął.
+ *
+ * @param array $trafione Wynik chatl_trafione_warianty().
+ * @return array ['trafienia' => int, 'dlugosc' => int]
+ */
+function chatl_punktacja( $trafione ) {
+	$dlugosc = 0;
+	foreach ( $trafione as $wariant ) {
+		$dlugosc += mb_strlen( $wariant );
+	}
+	return array(
+		'trafienia' => count( $trafione ),
+		'dlugosc'   => $dlugosc,
+	);
+}
+
+/**
  * Szuka najlepszej odpowiedzi na pytanie gościa.
  *
  * Wynik: liczba trafionych wariantów decyduje; przy remisie wygrywa dłuższe
  * łączne trafienie (bardziej konkretny wpis). Zero trafień => null.
  *
  * @param string $pytanie Surowe pytanie gościa.
- * @return array|null ['id' => int, 'odpowiedz' => string] albo null.
+ * @return array|null ['id' => int, 'odpowiedz' => string, 'trafione' => array]
+ *                    albo null. 'trafione' = warianty, którymi ta para wygrała
+ *                    (panel pokazuje je bez powtarzania algorytmu).
  */
 function chatl_dopasuj( $pytanie ) {
 	global $wpdb;
@@ -33,20 +83,18 @@ function chatl_dopasuj( $pytanie ) {
 	$max_traf  = 0;
 	$max_dl    = 0;
 
+	$trafione_najlepszego = array();
+
 	foreach ( $wpisy as $wpis ) {
-		$warianty  = array_filter( array_map( 'trim', explode( ',', mb_strtolower( $wpis->slowa_kluczowe ) ) ) );
-		$trafienia = 0;
-		$dlugosc   = 0;
-		foreach ( $warianty as $wariant ) {
-			if ( false !== mb_strpos( $szukane, $wariant ) ) {
-				++$trafienia;
-				$dlugosc += mb_strlen( $wariant );
-			}
-		}
+		$trafione  = chatl_trafione_warianty( $szukane, $wpis->slowa_kluczowe );
+		$punkty    = chatl_punktacja( $trafione );
+		$trafienia = $punkty['trafienia'];
+		$dlugosc   = $punkty['dlugosc'];
 		if ( $trafienia > $max_traf || ( $trafienia === $max_traf && $trafienia > 0 && $dlugosc > $max_dl ) ) {
-			$max_traf  = $trafienia;
-			$max_dl    = $dlugosc;
-			$najlepszy = $wpis;
+			$max_traf             = $trafienia;
+			$max_dl               = $dlugosc;
+			$najlepszy            = $wpis;
+			$trafione_najlepszego = $trafione;
 		}
 	}
 
@@ -57,6 +105,7 @@ function chatl_dopasuj( $pytanie ) {
 	return array(
 		'id'        => (int) $najlepszy->id,
 		'odpowiedz' => $najlepszy->odpowiedz,
+		'trafione'  => $trafione_najlepszego,
 	);
 }
 
