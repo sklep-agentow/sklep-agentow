@@ -142,6 +142,10 @@ w paczce. Poniżej skrót.
   kosztować wielokrotność innego.
 * Zużycie tokenów widoczne w Statystykach i w Ustawieniach.
 
+= 1.4.5 =
+* Gość widzi informację o zapisie rozmowy **na starcie czatu**, a nie dopiero przy
+  formularzu kontaktu — wraz z odnośnikiem do Twojej polityki prywatności.
+
 = 1.4.4 =
 * **Wybór modelu w ustawieniach** (lista + własny identyfikator) — do tej pory
   wymagało to pisania filtru w kodzie.

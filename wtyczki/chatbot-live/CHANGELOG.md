@@ -30,6 +30,16 @@ migracja odpala się sama przy pierwszym wejściu do panelu po aktualizacji
   tej informacji i nie są zgadywane wstecz.
 - Wtyczka pokazuje tokeny, **nie kwoty** — stawki sprawdzasz u dostawcy modelu.
 
+## [1.4.5] — 2026-08-20
+
+### Zmienione
+- **Gość dowiaduje się o zapisie rozmowy na jej starcie, a nie dopiero przy
+  formularzu kontaktu.** Widget pokazuje teraz krótką notę („Rozmowa jest
+  zapisywana przez 90 dni, żebyśmy mogli wrócić z odpowiedzią") **przed**
+  powitaniem bota, a gdy podałeś adres polityki prywatności — z odnośnikiem
+  do niej. Do tej pory informacja pojawiała się dopiero przy zostawianiu maila,
+  choć samo pisanie na czacie już trafiało do historii rozmów.
+
 ## [1.4.4] — 2026-08-20
 
 ### Zmienione

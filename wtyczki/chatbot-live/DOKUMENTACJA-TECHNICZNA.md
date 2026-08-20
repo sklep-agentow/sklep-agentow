@@ -696,7 +696,29 @@ dokumentacji dostawcy. Pole „własny model" jest po to, żeby lista nigdy nie
 była więzieniem; wpisana wartość jest przycinana do liter, cyfr, myślników
 i kropek.
 
-## 17. Tokeny i koszt trybu AI
+## 17. Kiedy gość dowiaduje się o zapisie rozmowy
+
+Do 1.4.5 informacja o przetwarzaniu danych szła **wyłącznie** do formularza
+kontaktu, a samo pisanie na czacie już lądowało w `chatl_rozmowy`. Gość
+dowiadywał się o zapisie dopiero, gdy zostawiał maila — a wtedy część rozmowy
+była zapisana od kilku minut. Wtyczkę kupuje wiele firm i **każda staje się
+administratorem danych**, więc informacja musi być przed pierwszym słowem.
+
+Widget rysuje notę (`.chatl-nota`) jako **pierwszy element listy wiadomości**,
+przed powitaniem bota. Treść i okres retencji pochodzą z `CHATL_RETENCJA_DNI`,
+więc nie da się ich rozjechać z tym, co naprawdę kasuje cron. Gdy właściciel
+podał adres polityki prywatności, nota kończy się odnośnikiem
+(`target="_blank"` + `rel="noopener"`); bez adresu nie ma pustego linku.
+
+Nota **nie jest dymkiem bota** — to informacja właściciela strony, nie wypowiedź
+w rozmowie. Powstaje z węzłów tekstowych i elementu `a`, bez `innerHTML` —
+tak jak reszta widgetu.
+
+Formularz kontaktu **zachowuje** swoją własną, pełniejszą informację (co, po co,
+jak długo) razem z wymaganym checkboxem zgody — tam zbierany jest adres e-mail,
+więc wymóg jest mocniejszy niż przy samej rozmowie.
+
+## 18. Tokeny i koszt trybu AI
 
 Rachunek u dostawcy modelu idzie z **tokenów**, nie z liczby wywołań. Instrukcja
 systemowa (`chatl_ai_instrukcja()`) wkłada do żądania **całą aktywną bazę Q&A**
@@ -758,7 +780,7 @@ Strona **Statystyki i luki** pokazuje zużycie tokenów w wybranym okresie
 (`chatl_statystyki_tokenow()`), a **Ustawienia** — zużycie dzisiejsze obok pola
 limitu. Wtyczka **nie podaje kwot**: cennik dostawcy się zmienia, a ona nie ma jak
 go odświeżyć — wpisana kwota zestarzałaby się w paczce u klienta.
-## 18. Zabezpieczenie formularza a cache strony
+## 19. Zabezpieczenie formularza a cache strony
 
 Nonce wchodzi do HTML-a strony przez `wp_localize_script()`, a wtyczka albo usługa
 cache (LiteSpeed, WP Rocket, W3TC, Cloudflare) potrafi serwować ten HTML **dłużej,
@@ -796,7 +818,7 @@ sukcesem.
 
 ---
 
-## 19. Eksport CSV
+## 20. Eksport CSV
 
 Ręczny, przyciskiem w panelu — `includes/csv.php`. Dwa strumienie: wszystkie zgłoszenia
 (`id, data, email, wiadomosc, status, sesja`) i historia rozmów (`sesja, data, kto, silnik, tresc`),
@@ -812,7 +834,7 @@ kłóciłoby się z obietnicą retencji.
 
 ---
 
-## 20. Znane granice
+## 21. Znane granice
 
 Rzeczy, których wtyczka **nie** robi — żeby nikt nie szukał ich w kodzie:
 
