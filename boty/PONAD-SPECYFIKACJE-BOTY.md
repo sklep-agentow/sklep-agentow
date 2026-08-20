@@ -59,7 +59,9 @@ była w klepniętych szkicach (`boty/SZKICE-BOTOW.md`) albo wynika z ich zasad
 
 ## Czego CELOWO nie ma (granice jawne, też ze szkiców)
 - ChatBot: bez czatu operatora na żywo, bez pamięci rozmów między wizytami.
-- Segregator: bez podpięcia żywej skrzynki (IMAP po egzaminie — opisane
-  w instrukcji jako droga rozbudowy).
+- Segregator: ⛔ **nieaktualne od 2026-08-20** — podpięcie żywej skrzynki (IMAP)
+  POWSTAŁO i jest w produkcie. Zostały węższe granice: logowanie tylko hasłem
+  aplikacji (bez OAuth ⇒ brak Microsoft 365 i Outlook.com), na skrzynce
+  klasyfikują reguły a nie AI, bez czytania załączników.
 - Oba: automatyczny stemming polskich odmian = droga rozbudowy (recenzja
   PR #27: bez cichego poszerzania wyceny).

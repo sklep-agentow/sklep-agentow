@@ -62,9 +62,10 @@ AI treść pytań idzie do dostawcy API — wzmianka do Twojej polityki prywatno
 ## SEGREGATOR MAILA
 
 **HERO** — mono: `[ PRODUKT · 02 ]` · H1: „Segregator maila" ·
-zdanie: „Rozdziela pocztę do kategorii według Twoich reguł — i pokazuje raport,
-ile roboty zrobił za Ciebie." · cena z bazy · CTA · pasek-signature:
-`● [ SEGREGATOR · GOTOWY ] PRÓBKA 30 MAILI W ZESTAWIE`
+zdanie: „Rozdziela pocztę do kategorii według Twoich reguł — na próbce albo
+na Twojej prawdziwej skrzynce — i pokazuje raport, ile roboty zrobił za Ciebie."
+· cena z bazy · CTA · pasek-signature:
+`● [ SEGREGATOR · GOTOWY ] PRÓBKA 30 MAILI + PODPIĘCIE SKRZYNKI`
 
 **PROBLEM** — „Wszystko na jednej kupie." / „Oferty, faktury, reklamacje i spam
 w jednym strumieniu. Zanim odpiszesz ważnym, przekopujesz się przez resztę."
@@ -81,7 +82,14 @@ Faktury, Reklamacje, Reszta); strzałka między kolumnami.
 - Raport z przebiegu: ile do której kategorii, ile bez dopasowania, % pokrycia;
   przy próbce z oczekiwaną kategorią — trafność (accuracy) i lista pomyłek.
 - Tryb AI (opcjonalny, Twój klucz): klasyfikacja modelem + przebieg
-  „porównaj reguły vs AI" z raportem różnic.
+  „porównaj reguły vs AI" z raportem różnic — na próbce.
+- **Przebieg na Twojej prawdziwej skrzynce**: podpinasz ją hasłem aplikacji,
+  a wtyczka rozkłada pocztę do folderów NA SERWERZE POCZTY. Domyślnie chodzi
+  NA SUCHO — pokazuje, co by zrobiła, i **nie rusza ani jednej wiadomości**,
+  dopóki sam nie przełączysz trybu i nie potwierdzisz. Ostatni przebieg da się
+  **cofnąć jednym kliknięciem**, a całość może chodzić sama według harmonogramu.
+- **Eksport reguł do filtrów Gmaila i Outlooka**: te same reguły możesz przenieść
+  do swojej skrzynki i zostawić je tam na stałe, niezależnie od wtyczki.
 
 **JAK DZIAŁA — 3 KROKI**: 1. Zainstaluj. 2. Ułóż reguły pod swoją skrzynkę
 (PLACEHOLDER-POMIAR: „~20 minut" — po pomiarze 23.08). 3. Puść przebieg
@@ -95,13 +103,29 @@ i czytaj raport.
 **DLA KOGO** — biura i sekretariaty · firmy usługowe z jedną wspólną skrzynką ·
 każdy, kto zaczyna dzień od przekopywania poczty.
 
-**„TESTOWY BOT — CO TO ZNACZY"**: działa na próbkach CSV (eksport ze skrzynki
-w 2 minuty) — dlatego uczciwie nazywa się „testowy", a nie udaje produkcji.
-Podpięcie prawdziwej skrzynki (IMAP/OAuth) = droga rozbudowy, opisana krok po
-kroku w instrukcji. Prywatność: reguły = nic nie wychodzi; AI = treść maila
-idzie do API dostawcy (wzmianka do polityki prywatności).
+**„CO ROBI NA TWOJEJ SKRZYNCE — I CZEGO NIE ROBI"** (sekcja uczciwości; idzie
+też do instrukcji):
+Reguły układasz i sprawdzasz na próbce — wbudowanej albo swojej z pliku CSV —
+więc widzisz wynik, ZANIM cokolwiek dotknie poczty. Potem podpinasz skrzynkę
+i puszczasz ten sam zestaw reguł na prawdziwych mailach.
+⛔ **Czego nie ma, powiedziane wprost przed zakupem:**
+- **Logowanie tylko loginem i hasłem aplikacji.** Działa z Gmailem i większością
+  skrzynek hostingowych. **Microsoft 365 i Outlook.com NIE zadziałają** —
+  Microsoft wymaga tam logowania OAuth, którego ta wtyczka nie obsługuje.
+  Sprawdź to, zanim kupisz.
+- **Na skrzynce pracują REGUŁY, nie AI.** Tryb AI działa na próbce (i w trybie
+  „porównaj reguły vs AI"), bo klasyfikowanie modelem całej poczty to koszt,
+  którego nikt nie kontroluje z góry.
+- **Bez czytania załączników** — decyzja zapada z nadawcy, tematu i początku treści.
+Prywatność: reguły = nic nie opuszcza Twojego serwera, także przy przebiegu
+na skrzynce; AI = treść idzie do API dostawcy (wzmianka do polityki prywatności).
 
-**FAQ**: Czy muszę podpinać skrzynkę? (Nie — pracujesz na próbkach CSV.) ·
+**FAQ**: Czy muszę podpinać skrzynkę? (Nie musisz — możesz pracować wyłącznie
+na próbkach CSV. Ale możesz: wtyczka obsługuje prawdziwą skrzynkę.) ·
+Czy zadziała z Microsoft 365 albo Outlook.com? (Nie — tam wymagane jest
+logowanie OAuth. Gmail i skrzynki hostingowe z hasłem aplikacji: tak.) ·
+Czy coś mi się pomiesza w poczcie? (Domyślny tryb na sucho niczego nie rusza,
+a ostatni przebieg da się cofnąć.) ·
 Skąd wezmę CSV? (Eksport z klienta poczty; instrukcja pokazuje jak.) ·
 Co znaczy accuracy? (Dodajesz do próbki kolumnę z oczekiwaną kategorią —
 raport liczy % trafień i pokazuje pomyłki.) · Czy AI jest wymagane? (Nie —
