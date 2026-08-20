@@ -4,7 +4,7 @@ Tags: chat, chatbot, faq, kontakt, wsparcie
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.4.6
+Stable tag: 1.4.8
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -135,6 +135,11 @@ w ustawieniach. Klucz API jest kasowany zawsze, niezależnie od tego przełączn
 
 Pełna historia zmian, z opisem każdej pozycji, jest w pliku `CHANGELOG.md`
 w paczce. Poniżej skrót.
+
+= 1.4.8 =
+* **Widać, że bot pisze.** Na czas oczekiwania pole i przycisk są zablokowane,
+  a w rozmowie pojawia się dymek z kropkami — gość nie klika drugi raz sądząc,
+  że czat się zawiesił (każde takie kliknięcie to kolejne płatne wywołanie AI).
 
 = 1.4.6 =
 * **Dobowy limit tokenów** — drugi stop-loss obok limitu wywołań. Rachunek

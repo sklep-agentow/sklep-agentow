@@ -1,6 +1,6 @@
 # ChatBot LIVE — dokumentacja techniczna
 
-Wersja wtyczki: **1.4.6** · schemat bazy: **5** · licencja: **GPL-2.0-or-later**
+Wersja wtyczki: **1.4.8** · schemat bazy: **5** · licencja: **GPL-2.0-or-later**
 
 Dokument opisuje **kod, który jest**, nie plan. Każda liczba i nazwa poniżej ma pokrycie
 w źródle — przy każdej podano plik i symbol, żeby dało się to sprawdzić `grep`-em, a nie
@@ -194,7 +194,7 @@ Wszystkie liczby, którymi wtyczka się rządzi, są stałymi — nie ma ich roz
 
 | Stała | Wartość | Plik | Do czego |
 |---|---|---|---|
-| `CHATL_WERSJA` | `1.4.6` | `chatbot-live.php` | wersja wtyczki; służy też jako `?ver=` assetów (przeglądarka nie poda starego pliku po aktualizacji) |
+| `CHATL_WERSJA` | `1.4.8` | `chatbot-live.php` | wersja wtyczki; służy też jako `?ver=` assetów (przeglądarka nie poda starego pliku po aktualizacji) |
 | `CHATL_WERSJA_SCHEMATU` | `5` | `chatbot-live.php` | wyzwalacz migracji schematu |
 | `CHATL_KATALOG`, `CHATL_URL` | ścieżka i adres wtyczki | `chatbot-live.php` | `require` i adresy assetów |
 | `CHATL_MAX_PYTANIE` | `500` | `includes/front.php` | maksymalna długość pytania gościa (nadmiar jest **przycinany**, nie odrzucany) |
@@ -804,7 +804,35 @@ Strona **Statystyki i luki** pokazuje zużycie tokenów w wybranym okresie
 (`chatl_statystyki_tokenow()`), a **Ustawienia** — zużycie dzisiejsze obok pola
 limitu. Wtyczka **nie podaje kwot**: cennik dostawcy się zmienia, a ona nie ma jak
 go odświeżyć — wpisana kwota zestarzałaby się w paczce u klienta.
-## 19. Zabezpieczenie formularza a cache strony
+## 19. Sygnał „bot pisze"
+
+Tryb AI ma timeout `CHATL_AI_TIMEOUT` sekund **plus jedno ponowienie**, czyli do
+18 sekund ciszy. Do 1.4.8 pole i przycisk nie były blokowane i nie było żadnego
+wskaźnika — gość uznawał, że się zawiesiło, i klikał drugi raz. Każde kliknięcie
+to kolejne wywołanie modelu **na rachunku właściciela**.
+
+Po wysłaniu pytania widget: blokuje pole i przycisk, dokłada dymek `.chatl-pisze`
+z trzema kropkami, a po odpowiedzi (albo po błędzie) sprząta jedno i drugie.
+
+Trzy rzeczy warte uwagi:
+
+- **Blokada jest jednocześnie strażą przed podwójnym wysłaniem.** Obsługa
+  `submit` sprawdza `wyslijBtn.disabled` i wychodzi — dzięki temu nawet zdarzenie
+  wywołane z pominięciem interfejsu (skrypt, klawiatura, powtórzony `submit`)
+  nie wyśle drugiego żądania.
+- **Sprzątanie idzie w `finally`, nie w `then`.** Po nieudanym żądaniu gość
+  **też** musi odzyskać pole — inaczej jedna wpadka sieci zamyka mu czat na stałe.
+- **Dymek jest elementem listy wiadomości**, nie nakładką: przewija się razem
+  z rozmową i znika przez usunięcie węzła. Ma `aria-live="polite"` i etykietę,
+  więc osoba korzystająca z czytnika ekranu dostaje ten sam sygnał co widząca.
+
+Animacja to czysty CSS (bez bibliotek i bez obrazków, widget nie pobiera niczego
+z sieci), a przy systemowym ustawieniu „ogranicz animacje" (`prefers-reduced-motion`,
+WCAG 2.3.3) kropki zostają widoczne i przestają tylko skakać.
+
+---
+
+## 20. Zabezpieczenie formularza a cache strony
 
 Nonce wchodzi do HTML-a strony przez `wp_localize_script()`, a wtyczka albo usługa
 cache (LiteSpeed, WP Rocket, W3TC, Cloudflare) potrafi serwować ten HTML **dłużej,
@@ -842,7 +870,7 @@ sukcesem.
 
 ---
 
-## 20. Eksport CSV
+## 21. Eksport CSV
 
 Ręczny, przyciskiem w panelu — `includes/csv.php`. Dwa strumienie: wszystkie zgłoszenia
 (`id, data, email, wiadomosc, status, sesja`) i historia rozmów (`sesja, data, kto, silnik, tresc`),
@@ -858,7 +886,7 @@ kłóciłoby się z obietnicą retencji.
 
 ---
 
-## 21. Znane granice
+## 22. Znane granice
 
 Rzeczy, których wtyczka **nie** robi — żeby nikt nie szukał ich w kodzie:
 

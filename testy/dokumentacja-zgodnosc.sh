@@ -23,9 +23,16 @@ spr() { # spr "opis" "oczekiwane" "polecenie"
   fi
 }
 
+echo "=== A0. Numeracja sekcji dokumentacji ==="
+# Numery rozdzialow przesuwaja sie przy KAZDYM scaleniu, w ktorym obie galezie
+# dolozyly sekcje. Recznie to juz raz ucieklo (dwie sekcje o tym samym numerze),
+# a bramka tego nie widziala, bo sprawdza tresc, nie ciaglosc. Teraz widzi.
+spr "numery sekcji sa ciagle i bez powtorzen" "OK" \
+  "grep -oP '^## \\K[0-9]+' $DOK | awk 'NR!=\$1 {print \"ROZJAZD przy \" \$1; exit} END {print \"OK\"}'"
+
 echo "=== A. Wersja i schemat ==="
-spr "naglowek Version"            "1.4.6" "grep -oP '(?<=^ \* Version: ).*' $W/chatbot-live.php"
-spr "stala CHATL_WERSJA"          "1.4.6" "grep -oP \"(?<=CHATL_WERSJA', ')[^']*\" $W/chatbot-live.php"
+spr "naglowek Version"            "1.4.8" "grep -oP '(?<=^ \* Version: ).*' $W/chatbot-live.php"
+spr "stala CHATL_WERSJA"          "1.4.8" "grep -oP \"(?<=CHATL_WERSJA', ')[^']*\" $W/chatbot-live.php"
 spr "CHATL_WERSJA_SCHEMATU"       "5"     "grep -oP \"(?<=CHATL_WERSJA_SCHEMATU', ')[^']*\" $W/chatbot-live.php"
 spr "Requires at least"           "6.0"   "grep -oP '(?<=^ \* Requires at least: ).*' $W/chatbot-live.php"
 spr "Requires PHP"                "8.1"   "grep -oP '(?<=^ \* Requires PHP: ).*' $W/chatbot-live.php"
@@ -262,6 +269,12 @@ spr "cache instrukcji pod warunkiem progu" "1" "grep -c 'CHATL_AI_CACHE_PROG_ZNA
 spr "zuzycie liczone w JEDNYM miejscu" "1" "sed -n '/function chatl_ai_odpowiedz/,/^}/p' $W/includes/ai.php | grep -c 'chatl_ai_zuzyj('"
 spr "zuzycie liczone PRZED rozgalezieniem" "wczesniej" "sed -n '/function chatl_ai_odpowiedz/,/^}/p' $W/includes/ai.php | awk '/chatl_ai_zuzyj\(/{z=NR} /stop_reason/{r=NR} END{print (z && r && z < r) ? \"wczesniej\" : \"pozniej\"}'"
 spr "limit tokenow blokuje tryb AI"  "1"  "sed -n '/function chatl_ai_dostepny/,/^}/p' $W/includes/ai.php | grep -c chatl_ai_tokeny_dzis"
+# Sygnal "bot pisze": blokada MUSI byc zdejmowana w finally (po bledzie tez),
+# a straz przed podwojnym wyslaniem czyta stan przycisku.
+spr "dymek pisania rysowany"       "1"  "grep -c 'chatl-pisze' $W/assets/widget.js"
+spr "blokada zdejmowana w finally" "1"  "grep -c 'ukryjPisanie();' $W/assets/widget.js"
+spr "straz przed podwojnym wyslaniem" "1" "grep -c 'wyslijBtn.disabled) { return; }' $W/assets/widget.js"
+spr "kropki szanuja ograniczenie animacji" "1" "grep -c 'prefers-reduced-motion' $W/assets/widget.css"
 
 echo
 echo "=== L. Reguła dopasowania: jedno zrodlo ==="
