@@ -104,7 +104,7 @@ jest zawsze lepsze niż wymyślony cytat.
 Powyższe siedem klas to rzeczy, które wytknął **oceniający**. Poniższe trzy to rzeczy,
 które znalazł **nasz własny audyt** — czyli błędy, które popełniamy przy budowie.
 Do briefingu weszły TYLKO te, które wystąpiły co najmniej dwa razy. Źródło z dowodami:
-`/root/praca/zlecenia/DESTYLAT-BLEDOW-Z-AUDYTOW.md`.
+`audyt/boty/SLEPE-PLAMY-NASZEGO-AUDYTU.md` (ten sam destylat, w repo).
 
 8. **Naprawa trafia w JEDEN egzemplarz wzorca, bliźniak zostaje zepsuty.**
    Cztery wystąpienia w jednym projekcie: poprawka języka objęła część miejsc, reszta
