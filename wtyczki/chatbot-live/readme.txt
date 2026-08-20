@@ -141,6 +141,10 @@ w paczce. Poniżej skrót.
   „gdzie zaparkować") i bot wie, o czym mowa. Pamięć obejmuje ostatnie 6 wymian
   — celowo ucięta, bo każda wymiana to tokeny na Twoim rachunku.
 
+= 1.4.5 =
+* Gość widzi informację o zapisie rozmowy **na starcie czatu**, a nie dopiero przy
+  formularzu kontaktu — wraz z odnośnikiem do Twojej polityki prywatności.
+
 = 1.4.4 =
 * **Wybór modelu w ustawieniach** (lista + własny identyfikator) — do tej pory
   wymagało to pisania filtru w kodzie.

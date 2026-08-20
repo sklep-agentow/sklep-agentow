@@ -240,6 +240,15 @@ echo
 # przechodzi przez chatl_ai_niepowodzenie(), ktore stawia znacznik.
 spr "kazde niepowodzenie AI zostawia slad" "0" "sed -n '/function chatl_ai_odpowiedz/,/^}/p' $W/includes/ai.php | grep -c 'return null;'"
 spr "sciezek zjazdu przez wspolna funkcje" "3" "sed -n '/function chatl_ai_odpowiedz/,/^}/p' $W/includes/ai.php | grep -c 'return chatl_ai_niepowodzenie'"
+# Gosc ma wiedziec o zapisie rozmowy ZANIM cokolwiek napisze (luka L7),
+# a okres retencji w nocie musi pochodzic ze stalej — inaczej tekst rozjedzie
+# sie z tym, co naprawde kasuje cron.
+spr "nota o zapisie rozmowy istnieje" "1" "grep -c notaZapisu $W/includes/front.php"
+spr "nota liczy dni ze stalej"        "1" "grep -A4 notaZapisu $W/includes/front.php | grep -c CHATL_RETENCJA_DNI"
+# Nota MUSI powstawac wczesniej w kodzie niz powitanie — kolejnosc w liscie
+# wiadomosci decyduje o tym, czy gosc przeczyta ja przed napisaniem czegokolwiek.
+spr "widget rysuje note"           "1"  "grep -c 'chatl-nota' $W/assets/widget.js"
+spr "nota jest PRZED powitaniem w kodzie" "wczesniej" "awk '/chatl-nota/{n=NR} /dodajWiadomosc..bot., dane.powitanie/{p=NR} END{print (n && p && n < p) ? \"wczesniej\" : \"pozniej\"}' $W/assets/widget.js"
 # Pamiec biezacej rozmowy: historia MUSI byc filtrowana po sesji (granica
 # prywatnosci, nie optymalizacja) i MUSI miec sufit — kazda wymiana to tokeny.
 spr "historia filtrowana po sesji" "2" "sed -n '/function chatl_ai_historia/,/^}/p' $W/includes/ai.php | grep -c 'sesja = %s'"
