@@ -1,7 +1,6 @@
 # CI projektu sklep-agentow — stack po piwocie D16: 3 wtyczki WordPressa (PHP 8.1+, stack WP 7.0.4/PHP 8.4).
-# Bramki PHP (plan §7): php-lint + phpcs (WPCS, zakres w phpcs.xml.dist) + phpstan (level 5,
-# wszystkie 3 wtyczki) + gitleaks. Testy przelotu E2E biegają na żywym stacku warsztatu
-# (testy/e2e/), nie tutaj — CI nie ma WP+Stripe.
+# Bramki (plan §7): actionlint + manifest + php-lint + phpcs (WPCS) + phpstan (level 5) + gitleaks.
+# Testy przelotu E2E biegają na żywym stacku warsztatu (testy/e2e/), nie tutaj — CI nie ma WP+Stripe.
 #
 # ⛔ PRAWDA O BRAMCE (zmierzone 17.08): repo PRYWATNE na darmowym koncie = GitHub
 #    NIE UDOSTĘPNIA branch protection ani rulesetów (API: 403 „Upgrade to Pro").
@@ -12,6 +11,19 @@
 #        git config core.hooksPath .githooks
 #    (świeży klon bez tej komendy NIE ma ochrony; świadome obejście: --no-verify).
 #    Twarda bramka wróci, gdy repo będzie publiczne albo konto Pro (decyzja Dzidka).
+#
+# 2026-08-20: SZEŚĆ ZADAŃ ZBITE W JEDNO. Powód policzalny: GitHub nalicza każde
+# zadanie osobno i zaokrągla w górę do pełnej minuty, więc sześć zadań po ~7 s
+# kosztowało SZEŚĆ MINUT za czterdzieści sekund liczenia. Tego samego dnia konto
+# wyczerpało minuty i wszystkie bramki padły z zerem kroków — stąd ta zmiana.
+# Bramki biegną teraz po kolei w narzedzia-qa/bramki.sh (ta sama kolejność co
+# w sześciu zadaniach), a ten plik tylko stawia środowisko i woła skrypt.
+#
+# ⛔ CZEGO PILNOWAĆ PO TEJ ZMIANIE: sześć zielonych zadań było widać na liście —
+# jedno zadanie, które po cichu przestało wołać phpstana, wygląda równie zielono.
+# Dlatego skrypt LICZY wykonane bramki, wypisuje ich liczbę i PADA poniżej progu,
+# a narzedzia-qa/sprawdz-manifest.sh pilnuje, że rejestr bramek w skrypcie zgadza
+# się z .github/manifest-bramek.txt. Sam manifest pozostaje nietknięty.
 name: Quality
 
 on:
@@ -19,6 +31,8 @@ on:
   push:
     branches: [main]
 
+# Nowy commit w tej samej gałęzi anuluje poprzedni przebieg — trzy pchnięcia
+# pod rząd kosztują jedną kontrolę, nie trzy.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -27,76 +41,32 @@ permissions:
   contents: read
 
 jobs:
-  # Lint samych plików CI — łapie literówki YAML zanim cokolwiek ruszy
-  # (własna blizna: „CI YAML dwukropek w nazwie kroku").
-  actionlint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: reviewdog/action-actionlint@v1
-
-  # Strażnik strażników: quality.yml musi zgadzać się z manifestem bramek
-  # (job zniknął / continue-on-error / furtka if: = czerwone).
-  manifest:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Manifest bramek zgodny z workflow
-        run: bash narzedzia-qa/sprawdz-manifest.sh
-
-  # Składnia PHP na wersji stacka docelowego (WP 7.0.4 / PHP 8.4).
-  php-lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.4'
-          coverage: none
-      - name: php -l na wszystkich plikach wtyczek
-        run: |
-          set -euo pipefail
-          find wtyczki -name '*.php' -print0 | xargs -0 -n1 php -l > /dev/null
-          echo "Skladnia czysta."
-
-  # Styl kodu WPCS (zakres startowy: wtyczka sklepu — patrz phpcs.xml.dist i DECYZJE D25).
-  phpcs:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.4'
-          coverage: none
-      - name: Zaleznosci QA
-        run: composer install --no-interaction --no-progress
-      - name: phpcs (WordPress Coding Standards)
-        run: vendor/bin/phpcs
-
-  # Statyka phpstan level 5 — wszystkie 3 wtyczki (stuby WP przez szepeviktor/phpstan-wordpress).
-  phpstan:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.4'
-          coverage: none
-      - name: Zaleznosci QA
-        run: composer install --no-interaction --no-progress
-      - name: phpstan analyse
-        run: vendor/bin/phpstan analyse --memory-limit=1G --no-progress
-
-  # Skan sekretów w historii i zmianach (repo prywatne: potrzebne pull-requests: read).
-  gitleaks:
+  # JEDNO zadanie na wszystkie bramki. Nie dziel go z powrotem bez policzenia
+  # minut: każdy podział to kolejna rozpoczęta minuta za kilka sekund pracy.
+  bramki:
     runs-on: ubuntu-latest
     permissions:
       contents: read
       pull-requests: read
     steps:
+      # Pełna historia: gitleaks skanuje commity, nie tylko drzewo robocze.
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Było w trzech starych zadaniach (php-lint, phpcs, phpstan) — tu raz.
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+
+      # Było w dwóch starych zadaniach (phpcs, phpstan) — tu raz.
+      - name: Zaleznosci QA
+        run: composer install --no-interaction --no-progress
+
+      # ⛔ BEZ `if:` na tym kroku i bez `continue-on-error` — bramka, która może
+      # nie wystartować albo nie zablokować, nie jest bramką. Pomijanie bramek
+      # PHP przy zmianach czysto tekstowych dzieje się WEWNĄTRZ skryptu, jest
+      # wypisywane i policzone.
+      - name: Bramki jakosci
+        run: bash narzedzia-qa/bramki.sh

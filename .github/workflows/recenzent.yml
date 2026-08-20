@@ -55,6 +55,15 @@ on:
   pull_request:
     types: [opened, synchronize, ready_for_review, reopened]
 
+# Nowy commit w tej samej gałęzi anuluje poprzednią recenzję. Tu oszczędność
+# jest największa w całym repo: jedna recenzja to ~2,5 minuty, a poprawki lecą
+# seriami — trzy pchnięcia pod rząd kosztowały trzy pełne recenzje, z których
+# dwie i tak opisywały stan już nieaktualny. `quality.yml` miał ten mechanizm
+# od początku, ten plik nie miał go wcale.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   recenzja:
     runs-on: ubuntu-latest
