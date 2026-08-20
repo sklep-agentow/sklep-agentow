@@ -70,7 +70,9 @@ Zapisać możesz i tak — decyzja jest Twoja, ale wiesz, co wybierasz.
 - Zgłoszenia lądują w **ChatBot LIVE → Zgłoszenia** (+ mail do Ciebie, jeśli
   włączony). Odpisujesz osobiście — to jest człon „LIVE".
 - **Historia rozmów** pokazuje wymiany bot↔gość; wpisy starsze niż **90 dni**
-  są czyszczone automatycznie.
+  są czyszczone automatycznie. Gość widzi o tym krótką notę **na starcie czatu**,
+  a jeśli podałeś adres polityki prywatności w Ustawieniach — nota prowadzi
+  także do niej. Warto ten adres uzupełnić: to Ty jesteś administratorem tych danych.
 
 ## 5. Statystyki i luki — czyli jak ulepszać bota bez zgadywania
 

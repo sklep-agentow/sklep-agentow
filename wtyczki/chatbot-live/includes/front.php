@@ -136,6 +136,18 @@ function chatl_assety() {
 				CHATL_RETENCJA_DNI
 			),
 			'polityka'   => esc_url( $ust['adres_polityki'] ),
+			/*
+			 * Nota na STARCIE rozmowy, nie dopiero przy formularzu kontaktu.
+			 * Samo pisanie na czacie już ląduje w chatl_rozmowy — gość dowiadywał
+			 * się o tym dopiero, gdy zostawiał maila, a wtedy część rozmowy była
+			 * zapisana od kilku minut. Sprzedajemy wielu firmom i każda staje się
+			 * administratorem danych, więc informacja ma być PRZED pierwszym słowem.
+			 */
+			'notaZapisu' => sprintf(
+				'Rozmowa jest zapisywana przez %d dni, żebyśmy mogli wrócić z odpowiedzią.',
+				CHATL_RETENCJA_DNI
+			),
+			'notaLink'   => 'Polityka prywatności',
 			'zgodaTekst' => 'Zapoznałem się z informacją o przetwarzaniu danych',
 			'pozycja'    => chatl_wyglad_ustawienia( $ust )['pozycja'],
 		)

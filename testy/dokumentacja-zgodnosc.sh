@@ -24,8 +24,8 @@ spr() { # spr "opis" "oczekiwane" "polecenie"
 }
 
 echo "=== A. Wersja i schemat ==="
-spr "naglowek Version"            "1.4.0" "grep -oP '(?<=^ \* Version: ).*' $W/chatbot-live.php"
-spr "stala CHATL_WERSJA"          "1.4.0" "grep -oP \"(?<=CHATL_WERSJA', ')[^']*\" $W/chatbot-live.php"
+spr "naglowek Version"            "1.4.5" "grep -oP '(?<=^ \* Version: ).*' $W/chatbot-live.php"
+spr "stala CHATL_WERSJA"          "1.4.5" "grep -oP \"(?<=CHATL_WERSJA', ')[^']*\" $W/chatbot-live.php"
 spr "CHATL_WERSJA_SCHEMATU"       "4"     "grep -oP \"(?<=CHATL_WERSJA_SCHEMATU', ')[^']*\" $W/chatbot-live.php"
 spr "Requires at least"           "6.0"   "grep -oP '(?<=^ \* Requires at least: ).*' $W/chatbot-live.php"
 spr "Requires PHP"                "8.1"   "grep -oP '(?<=^ \* Requires PHP: ).*' $W/chatbot-live.php"
@@ -206,6 +206,17 @@ spr "BOM UTF-8 w eksporcie"       "1"  "grep -c 'xEF.xBB.xBF' $W/includes/csv.ph
 spr "widget bez uzycia innerHTML"  "0"  "grep -c '\\.innerHTML' $W/assets/widget.js"
 spr "zgoda sprawdzana na serwerze" "1" "grep -c \"empty( \\\$_POST\\['zgoda'\\] )\" $W/includes/front.php"
 spr "wp_trigger_error pod straza" "2"  "grep -rc \"function_exists( 'wp_trigger_error' )\" $W/chatbot-live.php $W/includes/ai.php | awk -F: '{s+=\$2} END {print s}'"
+
+echo
+# Gosc ma wiedziec o zapisie rozmowy ZANIM cokolwiek napisze (luka L7),
+# a okres retencji w nocie musi pochodzic ze stalej — inaczej tekst rozjedzie
+# sie z tym, co naprawde kasuje cron.
+spr "nota o zapisie rozmowy istnieje" "1" "grep -c notaZapisu $W/includes/front.php"
+spr "nota liczy dni ze stalej"        "1" "grep -A4 notaZapisu $W/includes/front.php | grep -c CHATL_RETENCJA_DNI"
+# Nota MUSI powstawac wczesniej w kodzie niz powitanie — kolejnosc w liscie
+# wiadomosci decyduje o tym, czy gosc przeczyta ja przed napisaniem czegokolwiek.
+spr "widget rysuje note"           "1"  "grep -c 'chatl-nota' $W/assets/widget.js"
+spr "nota jest PRZED powitaniem w kodzie" "wczesniej" "awk '/chatl-nota/{n=NR} /dodajWiadomosc..bot., dane.powitanie/{p=NR} END{print (n && p && n < p) ? \"wczesniej\" : \"pozniej\"}' $W/assets/widget.js"
 
 echo
 echo "=== L. Reguła dopasowania: jedno zrodlo ==="

@@ -233,6 +233,24 @@
 		});
 		okno.appendChild(formPytania);
 
+		/* Nota o zapisie rozmowy — PRZED powitaniem, zeby gosc przeczytal ja
+		   zanim cokolwiek napisze. Nie jest dymkiem bota: to informacja
+		   wlasciciela strony, a nie wypowiedz w rozmowie. Sklada sie z wezlow
+		   tekstowych i (opcjonalnie) odnosnika — bez innerHTML. */
+		if (dane.notaZapisu) {
+			var nota = el('div', 'chatl-nota', dane.notaZapisu);
+			if (dane.polityka) {
+				nota.appendChild(document.createTextNode(' '));
+				var link = document.createElement('a');
+				link.href = dane.polityka;
+				link.target = '_blank';
+				link.rel = 'noopener';
+				link.textContent = dane.notaLink || 'Polityka prywatności';
+				nota.appendChild(link);
+			}
+			listaWiadomosci.appendChild(nota);
+		}
+
 		dodajWiadomosc('bot', dane.powitanie);
 		return okno;
 	}
