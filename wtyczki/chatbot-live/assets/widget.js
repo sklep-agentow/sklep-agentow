@@ -57,6 +57,39 @@
 			.then(function (odp) { return odp.json(); });
 	}
 
+	/*
+	 * Sygnal "bot pisze". Bez niego gosc patrzyl na nieruchomy ekran: w trybie AI
+	 * timeout to 9 sekund plus jedno ponowienie, czyli do 18 sekund ciszy. Czlowiek
+	 * uznaje wtedy, ze sie zawiesilo, i klika drugi raz — a kazde kliniecie to
+	 * kolejne wywolanie modelu na rachunku wlasciciela.
+	 *
+	 * Dymek jest ELEMENTEM LISTY WIADOMOSCI, nie nakladka: dzieki temu sam
+	 * przewija sie na dol razem z rozmowa i znika przez usuniecie wezla.
+	 */
+	var dymekPisania = null;
+
+	function pokazPisanie() {
+		if (dymekPisania) { return; }
+		var w = el('div', 'chatl-wiadomosc chatl-bot chatl-pisze');
+		var d = el('div', 'chatl-dymek');
+		/* aria-live: czytnik ekranu ma OGLOSIC, ze bot pracuje — inaczej osoba
+		   niewidzaca dostaje te sama cisze co wczesniej, tylko bez wskaznika. */
+		d.setAttribute('aria-live', 'polite');
+		d.setAttribute('aria-label', 'Bot pisze odpowiedź');
+		for (var i = 0; i < 3; i++) { d.appendChild(el('span', 'chatl-kropka')); }
+		w.appendChild(d);
+		listaWiadomosci.appendChild(w);
+		listaWiadomosci.scrollTop = listaWiadomosci.scrollHeight;
+		dymekPisania = w;
+	}
+
+	function ukryjPisanie() {
+		if (dymekPisania && dymekPisania.parentNode) {
+			dymekPisania.parentNode.removeChild(dymekPisania);
+		}
+		dymekPisania = null;
+	}
+
 	function pokazFormularz(powod) {
 		if (formularzKontaktu.classList.contains('chatl-otwarty')) {
 			formularzKontaktu.querySelector('input').focus();
@@ -213,9 +246,14 @@
 		formPytania.addEventListener('submit', function (zd) {
 			zd.preventDefault();
 			var pytanie = polePytania.value.trim();
-			if (!pytanie) { return; }
+			/* Blokada dziala tez jako straz przed podwojnym wyslaniem: dopoki
+			   trwa poprzednie pytanie, drugie nie ma jak wyjsc. */
+			if (!pytanie || wyslijBtn.disabled) { return; }
 			polePytania.value = '';
 			dodajWiadomosc('gosc', pytanie);
+			polePytania.disabled = true;
+			wyslijBtn.disabled = true;
+			pokazPisanie();
 			wyslij('chatl_pytanie', { pytanie: pytanie })
 				.then(function (odp) {
 					if (odp.success) {
@@ -229,6 +267,14 @@
 				})
 				.catch(function () {
 					dodajWiadomosc('bot', 'Coś poszło nie tak. Spróbuj ponownie.');
+				})
+				.finally(function () {
+					/* finally, nie then: po bledzie gosc TEZ musi odzyskac pole,
+					   inaczej jedna nieudana proba zamyka mu czat na stale. */
+					ukryjPisanie();
+					polePytania.disabled = false;
+					wyslijBtn.disabled = false;
+					polePytania.focus();
 				});
 		});
 		okno.appendChild(formPytania);
