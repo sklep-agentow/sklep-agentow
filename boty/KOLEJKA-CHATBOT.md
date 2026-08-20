@@ -5,7 +5,30 @@ skończonym kawałku. Zasady od koordynatora: osobne PR-y, **nigdy nie scalam**
 (scala koordynator), nie dotykam `wtyczki/segregator-maila` ani
 `wtyczki/sklep-agentow`, bez `push --force`, bez kasowania gałęzi.
 
-## Stan na 2026-08-20
+## Stan na 2026-08-20 (aktualizacja po scaleniu PR #73)
+
+### Zrobione i czekajace na scalenie — luki ze swiezej glowy
+Wszystkie odbite od `main` = 2ed694c, kazda z **testem-straznikiem (exit 1)**
+i **proba kontrolna** dowodzaca, ze straznik pada na kodzie sprzed naprawy:
+
+| PR | Luka | Wersja |
+|---|---|---|
+| #78 | L1 — nonce w cache'owanej stronie: czat padal u wszystkich po cichu | 1.4.1 |
+| #79 | L4 — zly klucz API: bot po cichu odpowiadal z regul | 1.4.2 |
+| #80 | L2 — limit „na IP" mierzyl adres proxy | 1.4.3 |
+| #81 | L5 — model zaszyty na sztywno (migawka z data) | 1.4.4 |
+| #82 | L7 — nota o zapisie rozmowy dopiero przy formularzu | 1.4.5 |
+| #83 | L3 — stop-loss liczyl wywolania, rachunek idzie z tokenow | 1.4.6, schemat 5 |
+| #84 | B — tryb AI nie pamietal biezacej rozmowy | 1.4.7 |
+
+⚠️ Konflikty przy scalaniu sa **mechaniczne**: linia `Version`/`CHATL_WERSJA`
+(zostaje najwyzszy numer), nazwa pliku paczki oraz liczby w
+`testy/dokumentacja-zgodnosc.sh`, ktore **sumuja sie** miedzy PR-ami. Schemat
+bazy rusza tylko #83 (4 -> 5).
+
+### Stan wczesniejszy
+
+
 
 - **PR #73** — gałąź `b1/chatbot-statystyki`, wersja **1.4.0**, schemat bazy **4**.
   Zawiera: statystyki i raport luk, wykrywanie chromium (`testy/lib/chromium.js`),
@@ -36,7 +59,7 @@ zgadnięcia** i sprawdzany przy każdym żądaniu; operator tylko z `manage_opti
 Test ma pokazać, że bot **milczy** po przejęciu i **odzywa się** po zakończeniu,
 i musi być skalibrowany (pada na kodzie sprzed zmiany).
 
-### B. ⭐ Tryb AI nie pamięta bieżącej rozmowy
+### B. ⭐ Tryb AI nie pamięta bieżącej rozmowy — ✅ ZROBIONE (PR #84)
 Zmierzone przez koordynatora: `includes/ai.php` wysyła `messages` z **dokładnie
 jednym** elementem (samo pytanie), zero historii. Gość pyta „jak dojechać",
 potem „gdzie zaparkować" — model nie wie, o czym mowa.

@@ -1,6 +1,6 @@
 # ChatBot LIVE — dokumentacja techniczna
 
-Wersja wtyczki: **1.4.0** · schemat bazy: **4** · licencja: **GPL-2.0-or-later**
+Wersja wtyczki: **1.4.7** · schemat bazy: **4** · licencja: **GPL-2.0-or-later**
 
 Dokument opisuje **kod, który jest**, nie plan. Każda liczba i nazwa poniżej ma pokrycie
 w źródle — przy każdej podano plik i symbol, żeby dało się to sprawdzić `grep`-em, a nie
@@ -189,7 +189,7 @@ Wszystkie liczby, którymi wtyczka się rządzi, są stałymi — nie ma ich roz
 
 | Stała | Wartość | Plik | Do czego |
 |---|---|---|---|
-| `CHATL_WERSJA` | `1.4.0` | `chatbot-live.php` | wersja wtyczki; służy też jako `?ver=` assetów (przeglądarka nie poda starego pliku po aktualizacji) |
+| `CHATL_WERSJA` | `1.4.7` | `chatbot-live.php` | wersja wtyczki; służy też jako `?ver=` assetów (przeglądarka nie poda starego pliku po aktualizacji) |
 | `CHATL_WERSJA_SCHEMATU` | `4` | `chatbot-live.php` | wyzwalacz migracji schematu |
 | `CHATL_KATALOG`, `CHATL_URL` | ścieżka i adres wtyczki | `chatbot-live.php` | `require` i adresy assetów |
 | `CHATL_MAX_PYTANIE` | `500` | `includes/front.php` | maksymalna długość pytania gościa (nadmiar jest **przycinany**, nie odrzucany) |
@@ -201,6 +201,8 @@ Wszystkie liczby, którymi wtyczka się rządzi, są stałymi — nie ma ich roz
 | `CHATL_AI_MAX_TOKENS` | `1024` | `includes/ai.php` | limit długości odpowiedzi modelu |
 | `CHATL_AI_TIMEOUT` | `9` | `includes/ai.php` | timeout jednego wywołania w sekundach; z jednym ponowieniem daje maks. 18 s, z zapasem pod typowy limit 30 s na hostingu |
 | `CHATL_AI_BRAK` | `BRAK_ODPOWIEDZI` | `includes/ai.php` | sentinel „model nie wie" — sygnał do zbiórki kontaktu zamiast zgadywania |
+| `CHATL_AI_PAMIEC_WYMIAN` | `6` | `includes/ai.php` | ile ostatnich wymian bieżącej rozmowy trafia do wywołania modelu |
+| `CHATL_AI_PAMIEC_ZNAKOW` | `600` | `includes/ai.php` | górny limit długości jednej wiadomości z historii |
 | `CHATL_CSV_PORCJA` | `500` | `includes/csv.php` | ile wierszy naraz czyta eksport, żeby nie wciągać całej tabeli do pamięci |
 | `CHATL_LUKI_LIMIT` | `2000` | `includes/statystyki.php` | sufit pytań bez odpowiedzi wciąganych do grupowania; przekroczenie jest **wypisane na stronie**, nie przemilczane |
 | `CHATL_LUKI_POKAZ` | `25` | `includes/statystyki.php` | ile tematów luk pokazuje tabela (reszta jest policzona, tylko niewypisana) |
@@ -562,7 +564,46 @@ i wraca do bazy Q&A.
 
 ---
 
-## 14. Eksport CSV
+## 14. Pamięć bieżącej rozmowy w trybie AI
+
+Do 1.4.7 `messages` w żądaniu miało **dokładnie jeden element** — samo ostatnie
+pytanie. Gość pytał „jak dojechać", dostawał odpowiedź, dopytywał „gdzie
+zaparkować" — a model nie wiedział, o czym mowa, choć wizualnie to jedna rozmowa.
+
+⚠️ **To nie była nasza świadoma granica.** Poza zakresem została pamięć **między
+wizytami** (sesja żyje w karcie przeglądarki i tak zostaje); tu chodziło o pamięć
+**w trakcie jednej rozmowy**, czyli o coś, czego gość ma prawo oczekiwać.
+
+`chatl_ai_historia( $sesja, $przed_id )` zwraca ostatnie `CHATL_AI_PAMIEC_WYMIAN`
+wymian tej rozmowy w kolejności chronologicznej, jako wiadomości `user`/`assistant`.
+
+Cztery rzeczy, które ta funkcja musi robić dobrze:
+
+1. **Nie dublować bieżącego pytania.** Jest ono zapisywane do historii **przed**
+   wywołaniem modelu, więc bierzemy wyłącznie wiersze o `id` mniejszym niż
+   właśnie zapisany — inaczej model dostałby to samo pytanie dwa razy.
+2. **Nie przeciekać między rozmowami.** Filtr po `sesja` jest tu granicą
+   prywatności, nie optymalizacją: wymiany innego gościa nie mają prawa trafić
+   do cudzego żądania.
+3. **Nie rosnąć bez końca.** Sufit to `CHATL_AI_PAMIEC_WYMIAN` wymian, a każda
+   wiadomość jest przycinana do `CHATL_AI_PAMIEC_ZNAKOW` znaków — pytanie gościa
+   jest już ograniczone, ale odpowiedź bota bywa długa i jedna rozwlekła
+   wypowiedź z przeszłości potrafiłaby zdominować żądanie.
+4. **Zachować kształt rozmowy.** Wiadomości tej samej strony pod rząd (np. gdy
+   zapis odpowiedzi bota padł) są scalane, a wiodąca wypowiedź bota usuwana —
+   rozmowa wysyłana do modelu zaczyna się od gościa.
+
+**Skąd sześć wymian.** Tyle wystarcza na realny ciąg dopytań („jak dojechać" →
+„gdzie zaparkować" → „a w sobotę?"), a każda wymiana to tokeny właściciela.
+Przy krótkich wiadomościach czatu sześć wymian to rząd 300–600 tokenów dołożonych
+do żądania, które i tak niesie całą bazę Q&A w instrukcji systemowej — na stacku
+warsztatowym sama instrukcja ma 3651 znaków, czyli ok. 1200 tokenów. Wyżej rośnie
+rachunek, a nie jakość: gość firmowego czatu rzadko wraca do czegoś sprzed
+dziesięciu wiadomości.
+
+---
+
+## 15. Eksport CSV
 
 Ręczny, przyciskiem w panelu — `includes/csv.php`. Dwa strumienie: wszystkie zgłoszenia
 (`id, data, email, wiadomosc, status, sesja`) i historia rozmów (`sesja, data, kto, silnik, tresc`),
@@ -578,12 +619,14 @@ kłóciłoby się z obietnicą retencji.
 
 ---
 
-## 15. Znane granice
+## 16. Znane granice
 
 Rzeczy, których wtyczka **nie** robi — żeby nikt nie szukał ich w kodzie:
 
 - **Bez czatu z operatorem na żywo** i bez integracji z Messengerem/WhatsAppem.
 - **Bez pamięci między wizytami** — sesja żyje w `sessionStorage` karty przeglądarki.
+  W trakcie **jednej** rozmowy tryb AI pamięta ostatnie `CHATL_AI_PAMIEC_WYMIAN` wymian
+  (rozdział 14); tryb regułowy pozostaje bezstanowy z natury — dopasowuje pojedyncze pytanie.
 - **Bez czytania treści strony** — wiedza bota to wyłącznie baza Q&A i opis firmy z ustawień.
 - **Bez wielojęzyczności i bez i18n** — teksty są polskie wprost, bez `textdomain`.
 - **Bez stronicowania** w panelu: lista zgłoszeń pokazuje 200 najnowszych, lista rozmów 100

@@ -10,6 +10,23 @@ migracja odpala się sama przy pierwszym wejściu do panelu po aktualizacji
 
 ---
 
+## [1.4.7] — 2026-08-20
+
+### Naprawione
+- **Tryb AI nie pamiętał bieżącej rozmowy.** Do modelu szło samo ostatnie
+  pytanie, więc gość, który pytał „jak dojechać", a potem „gdzie zaparkować",
+  dostawał odpowiedź od bota nierozumiejącego, o czym mowa — choć wizualnie
+  to była jedna rozmowa. Teraz model dostaje ostatnie **6 wymian** tej rozmowy.
+
+### Uwaga
+- To nadal **nie jest** pamięć między wizytami — zamknięcie karty przeglądarki
+  kończy rozmowę, tak jak wcześniej.
+- Pamięć jest **ucięta celowo**: każda dołożona wymiana to tokeny na rachunku
+  właściciela. Sześć wymian pokrywa realny ciąg dopytań, a długie odpowiedzi
+  z przeszłości są przycinane, żeby jedna z nich nie zdominowała zapytania.
+
+---
+
 ## [1.4.0] — 2026-08-20
 
 ### Dodane

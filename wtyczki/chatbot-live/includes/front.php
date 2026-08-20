@@ -186,7 +186,10 @@ function chatl_ajax_pytanie() {
 	// HYBRYDA: najpierw AI (jest klucz + limit dzienny globalny i per IP
 	// niewyczerpany); błąd/timeout/brak klucza => zjazd do trybu regułowego.
 	if ( chatl_ai_dostepny() && chatl_limit_ai_ip_ok() ) {
-		$ai = chatl_ai_odpowiedz( $pytanie );
+		// Historia BIEŻĄCEJ rozmowy: bez niej model nie wiedział, o czym mowa
+		// przy dopytaniu. Bierzemy wiersze STARSZE niż właśnie zapisane pytanie,
+		// żeby nie wysłać go dwa razy.
+		$ai = chatl_ai_odpowiedz( $pytanie, chatl_ai_historia( $sesja, $id_pytania ) );
 		if ( null !== $ai ) {
 			if ( CHATL_AI_BRAK === trim( $ai ) ) {
 				// Próg pewności: model nie zgaduje => uczciwe "nie wiem" + zbiórka kontaktu.

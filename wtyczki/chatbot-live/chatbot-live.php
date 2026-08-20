@@ -2,7 +2,7 @@
 /**
  * Plugin Name: ChatBot LIVE
  * Description: Bot na stronę firmową: 24/7 odpowiada na powtarzalne pytania z bazy Q&A, a gdy nie zna odpowiedzi — zbiera kontakt, żeby właściciel odezwał się na żywo.
- * Version: 1.4.0
+ * Version: 1.4.7
  * Requires at least: 6.0
  * Requires PHP: 8.1
  * Author: Automatic AI
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'CHATL_WERSJA', '1.4.0' );
+define( 'CHATL_WERSJA', '1.4.7' );
 define( 'CHATL_WERSJA_SCHEMATU', '4' );
 define( 'CHATL_KATALOG', plugin_dir_path( __FILE__ ) );
 define( 'CHATL_URL', plugin_dir_url( __FILE__ ) );

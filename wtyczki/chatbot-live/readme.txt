@@ -4,7 +4,7 @@ Tags: chat, chatbot, faq, kontakt, wsparcie
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.4.0
+Stable tag: 1.4.7
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -121,6 +121,11 @@ w ustawieniach. Klucz API jest kasowany zawsze, niezależnie od tego przełączn
 
 Pełna historia zmian, z opisem każdej pozycji, jest w pliku `CHANGELOG.md`
 w paczce. Poniżej skrót.
+
+= 1.4.7 =
+* **Tryb AI pamięta bieżącą rozmowę.** Gość może dopytywać („jak dojechać" →
+  „gdzie zaparkować") i bot wie, o czym mowa. Pamięć obejmuje ostatnie 6 wymian
+  — celowo ucięta, bo każda wymiana to tokeny na Twoim rachunku.
 
 = 1.4.0 =
 * **Konfigurowalny wygląd widgetu**: kolor główny, kolor paska nagłówka, kolor
