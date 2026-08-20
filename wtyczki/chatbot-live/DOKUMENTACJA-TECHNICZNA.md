@@ -1029,6 +1029,13 @@ Rzeczy, których wtyczka **nie** robi — żeby nikt nie szukał ich w kodzie:
   (rozdział **Pamięć bieżącej rozmowy w trybie AI**); tryb regułowy pozostaje bezstanowy z natury — dopasowuje pojedyncze pytanie.
 - **Bez czytania treści strony** — wiedza bota to wyłącznie baza Q&A i opis firmy z ustawień.
 - **Bez wielojęzyczności i bez i18n** — teksty są polskie wprost, bez `textdomain`.
+- **Podgląd importu CSV widzi bazę z chwili wczytania pliku.** Lista istniejących pytań
+  jest pobierana raz, przy budowaniu podglądu, a zapis bierze wiersze podglądu i **nie**
+  odpytuje bazy ponownie — to jest cena obietnicy „zapisze się dokładnie to, co widzisz".
+  Jeśli w oknie do `CHATL_IMPORT_MINUT` minut to samo pytanie trafi do bazy inną drogą
+  (ręcznie albo drugim importem), zapis je zduplikuje. Tabela `chatl_qa` nie ma `UNIQUE`
+  na `pytanie` i ręczne dodawanie nigdy tej ochrony nie miało, więc to nie jest regresja —
+  ale jest granicą, nie niedopatrzeniem.
 - **Bez stronicowania** w panelu: lista zgłoszeń pokazuje 200 najnowszych, lista rozmów 100
   najnowszych sesji. Pełne dane wychodzą eksportem CSV.
 - **Limit dobowy AI jest miękki** — sprawdzenie i inkrement to dwa kroki, więc równoległe

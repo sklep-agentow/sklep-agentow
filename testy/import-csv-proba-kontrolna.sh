@@ -100,6 +100,18 @@ probuj "apostrof z neutralizacji formul nie jest zdejmowany" \
   "s/\t\treturn substr( \$wartosc, 1 );/\t\treturn \$wartosc;/" \
   "apostrof neutralizacji formul zdjety\|tresc wraca IDENTYCZNA"
 
+# 9. Deinstalacja przestaje kasowac podglady importu — po pelnym czyszczeniu
+#    w wp_options zostaja pytania i odpowiedzi klienta.
+wdroz_czysty
+docker exec "$KONTENER" sed -i 's|_transient_chatl_import_|_transient_nie_ma_takiego_|g' "$CEL/uninstall.php"
+wyjscie=$(odpal); kod=$?
+if [ "$kod" -ne 0 ] && echo "$wyjscie" | grep -q "BLAD uninstall kasuje podglady importu"; then
+  printf '  OK   straznik PADL na: %-52s (EXIT=%d)\n' "deinstalacja zostawia podglady importu" "$kod"
+else
+  printf '  BLAD straznik NIE zlapal: %-48s (EXIT=%d)\n' "deinstalacja zostawia podglady importu" "$kod"
+  BLEDY=$((BLEDY+1))
+fi
+
 echo
 echo "=== KONTROLA ODWROTNA: czysty kod ma przechodzic ==="
 wdroz_czysty
@@ -112,7 +124,7 @@ fi
 
 echo
 if [ "$BLEDY" -eq 0 ]; then
-  echo "STRAZNIK WIDZI WSZYSTKIE 8 PODLOZONYCH BLEDOW"
+  echo "STRAZNIK WIDZI WSZYSTKIE 9 PODLOZONYCH BLEDOW"
 else
   echo "STRAZNIK SLEPY NA $BLEDY PODLOZONYCH BLEDOW"
 fi

@@ -44,3 +44,9 @@ delete_metadata( 'user', 0, 'chatl_powitanie_zamkniete', '', true );
 // wildcard) + prepare — wzorzec Handbook, żeby nie złapać cudzych wpisów
 // o podobnej nazwie.
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s", $wpdb->esc_like( '_transient_chatl_rl_' ) . '%', $wpdb->esc_like( '_transient_timeout_chatl_rl_' ) . '%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+
+// Podglądy importu CSV (chatl_import_<id użytkownika>, TTL 15 minut). Zwykle
+// wygasają same, ale deinstalacja w trakcie niedokończonego importu zostawiłaby
+// w wp_options pytania i odpowiedzi klienta — czyli DANE, po pełnym czyszczeniu.
+// Ten sam wzorzec esc_like() + prepare co wyżej.
+$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s", $wpdb->esc_like( '_transient_chatl_import_' ) . '%', $wpdb->esc_like( '_transient_timeout_chatl_import_' ) . '%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery

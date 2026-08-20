@@ -279,6 +279,23 @@ rowne( 'i ani jeden wiersz z takiego pliku nie wchodzi', 0, count( $w_duzy['wier
 
 /* ============ G. SPRZATANIE ============ */
 
+echo "\n=== F2. Deinstalacja zabiera tez PODGLADY importu ===\n";
+/*
+ * Uwaga recenzenta: transient chatl_import_<id> zyje 15 minut i trzyma PYTANIA
+ * I ODPOWIEDZI klienta. Deinstalacja w trakcie niedokonczonego importu zostawilaby
+ * te dane w wp_options — po pelnym czyszczeniu, ktore obiecuje usuniecie wszystkiego.
+ */
+$uninstall = file_get_contents( WP_PLUGIN_DIR . '/chatbot-live/uninstall.php' ); // phpcs:ignore
+sprawdz(
+	'uninstall kasuje podglady importu',
+	false !== strpos( $uninstall, "esc_like( '_transient_chatl_import_' )" ),
+	'brak sprzatania transientu importu'
+);
+sprawdz(
+	'razem ze znacznikiem wygasniecia',
+	false !== strpos( $uninstall, "esc_like( '_transient_timeout_chatl_import_' )" )
+);
+
 echo "\n=== G. Sprzatanie ===\n";
 chatl_test_sprzataj();
 rowne( 'wiersze testowe usuniete', 0, chatl_test_ile_testowych() );
