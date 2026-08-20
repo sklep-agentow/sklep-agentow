@@ -114,6 +114,11 @@ i aktywnych wpisów bazy Q&A:
 1. **Ustawienia → Tryb AI** → wklej klucz, wypełnij pole „Informacje o firmie".
 2. Model ma zakaz zgadywania: gdy nie zna odpowiedzi, zbiera kontakt zamiast
    zmyślać ceny czy terminy.
+2a. **Bot pamięta bieżącą rozmowę** — gość może dopytywać („jak dojechać",
+   potem „gdzie zaparkować") i bot wie, o czym mowa. Pamięć obejmuje ostatnie
+   6 wymian i **kończy się wraz z zamknięciem karty** przeglądarki; przy
+   następnej wizycie rozmowa zaczyna się od nowa. Ucięcie jest celowe:
+   każda dołożona wymiana to tokeny na Twoim rachunku.
 3. **Stop-loss — DWA limity, bo rachunek idzie z tokenów, nie z wywołań:**
    dzienny limit **wywołań** (domyślnie 100) i dzienny limit **tokenów**
    (domyślnie 200 000; `0` = wyłączony). Ten drugi jest ważniejszy, niż wygląda:

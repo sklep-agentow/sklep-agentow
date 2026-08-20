@@ -23,16 +23,28 @@ spr() { # spr "opis" "oczekiwane" "polecenie"
   fi
 }
 
-echo "=== A0. Numeracja sekcji dokumentacji ==="
+echo "=== A0. Struktura dokumentacji: numeracja i odsylacze ==="
 # Numery rozdzialow przesuwaja sie przy KAZDYM scaleniu, w ktorym obie galezie
-# dolozyly sekcje. Recznie to juz raz ucieklo (dwie sekcje o tym samym numerze),
-# a bramka tego nie widziala, bo sprawdza tresc, nie ciaglosc. Teraz widzi.
+# dolozyly sekcje — recenzent zglaszal ten sam martwy odsylacz TRZY razy.
+# Dlatego: (1) numery musza byc ciagle, (2) odsylamy PO TYTULE, nie po numerze,
+# (3) kazdy tytul w odsylaczu musi istniec jako naglowek. Numer sie przesuwa,
+# tytul nie — a jesli ktos go zmieni, kontrola (3) to zlapie.
 spr "numery sekcji sa ciagle i bez powtorzen" "OK" \
   "grep -oP '^## \\K[0-9]+' $DOK | awk 'NR!=\$1 {print \"ROZJAZD przy \" \$1; exit} END {print \"OK\"}'"
+spr "zero odsylaczy po NUMERZE rozdzialu" "0" \
+  "grep -cE 'rozdzial[u]? [0-9]|rozdział[u]? [0-9]|§ ?[0-9]|sekcj[ai] [0-9]' $DOK"
+spr "kazdy odsylacz po tytule wskazuje istniejacy rozdzial" "OK" \
+  "grep -oP 'rozdzia[lł][u]? \\*\\*\\K[^*]+' $DOK | sort -u | while read -r t; do grep -qF \"## \" $DOK && grep -qP '^## [0-9]+\\. \\Q'\"\$t\"'\\E' $DOK || { echo \"MARTWY: \$t\"; exit; }; done; echo OK"
+
+# CHANGELOG rosnie przez SKLEJANIE wpisow przy kazdym scaleniu — separatory
+# gubily sie po cichu i recenzent zglaszal to kilka rund z rzedu. Kazdy wpis
+# wersji (poza pierwszym) ma byc poprzedzony pozioma kreska.
+spr "kazdy wpis CHANGELOG oddzielony kreska" "0" \
+  "awk '/^## \\[1\\./ {if (NR>1 && poprz != \"---\") b++} {if (\$0 != \"\") poprz=\$0} END {print b+0}' $W/CHANGELOG.md"
 
 echo "=== A. Wersja i schemat ==="
-spr "naglowek Version"            "1.4.8" "grep -oP '(?<=^ \* Version: ).*' $W/chatbot-live.php"
-spr "stala CHATL_WERSJA"          "1.4.8" "grep -oP \"(?<=CHATL_WERSJA', ')[^']*\" $W/chatbot-live.php"
+spr "naglowek Version"            "1.4.9" "grep -oP '(?<=^ \* Version: ).*' $W/chatbot-live.php"
+spr "stala CHATL_WERSJA"          "1.4.9" "grep -oP \"(?<=CHATL_WERSJA', ')[^']*\" $W/chatbot-live.php"
 spr "CHATL_WERSJA_SCHEMATU"       "5"     "grep -oP \"(?<=CHATL_WERSJA_SCHEMATU', ')[^']*\" $W/chatbot-live.php"
 spr "Requires at least"           "6.0"   "grep -oP '(?<=^ \* Requires at least: ).*' $W/chatbot-live.php"
 spr "Requires PHP"                "8.1"   "grep -oP '(?<=^ \* Requires PHP: ).*' $W/chatbot-live.php"
@@ -77,7 +89,7 @@ while IFS='|' read -r _ NAZWA WART PLIK _; do
 done < <(grep -P "^\| ${BT}CHATL_[A-Z_]+${BT} \| ${BT}[^${BT}]+${BT} \| ${BT}[^${BT}]+${BT} \|" $DOK)
 # Sama petla nie wystarczy: gdyby wzorzec wiersza przestal pasowac (zmiana ukladu
 # tabeli), petla nie zrobilaby ANI JEDNEGO sprawdzenia i sekcja bylaby cicho pusta.
-spr "stalych sprawdzonych z tabeli dokumentacji" "26" "echo $STALYCH"
+spr "stalych sprawdzonych z tabeli dokumentacji" "28" "echo $STALYCH"
 
 echo
 echo "=== A1b. Rejestr rozszerzen ponad specyfikacje (klasa #6 sciagi) ==="
@@ -275,6 +287,12 @@ spr "dymek pisania rysowany"       "1"  "grep -c 'chatl-pisze' $W/assets/widget.
 spr "blokada zdejmowana w finally" "1"  "grep -c 'ukryjPisanie();' $W/assets/widget.js"
 spr "straz przed podwojnym wyslaniem" "1" "grep -c 'wyslijBtn.disabled) { return; }' $W/assets/widget.js"
 spr "kropki szanuja ograniczenie animacji" "1" "grep -c 'prefers-reduced-motion' $W/assets/widget.css"
+# Pamiec biezacej rozmowy: historia MUSI byc filtrowana po sesji (granica
+# prywatnosci, nie optymalizacja) i MUSI miec sufit — kazda wymiana to tokeny.
+spr "historia filtrowana po sesji" "2" "sed -n '/function chatl_ai_historia/,/^}/p' $W/includes/ai.php | grep -c 'sesja = %s'"
+spr "historia ma sufit dlugosci"   "1" "sed -n '/function chatl_ai_historia/,/^}/p' $W/includes/ai.php | grep -c 'CHATL_AI_PAMIEC_WYMIAN \* 2'"
+spr "biezace pytanie odciete po id" "1" "sed -n '/function chatl_ai_historia/,/^}/p' $W/includes/ai.php | grep -c 'id < %d'"
+spr "historia trafia do zadania"   "1" "grep -c '(array) \$historia,' $W/includes/ai.php"
 
 echo
 echo "=== L. Reguła dopasowania: jedno zrodlo ==="

@@ -10,6 +10,23 @@ migracja odpala się sama przy pierwszym wejściu do panelu po aktualizacji
 
 ---
 
+## [1.4.9] — 2026-08-20
+
+### Naprawione
+- **Tryb AI nie pamiętał bieżącej rozmowy.** Do modelu szło samo ostatnie
+  pytanie, więc gość, który pytał „jak dojechać", a potem „gdzie zaparkować",
+  dostawał odpowiedź od bota nierozumiejącego, o czym mowa — choć wizualnie
+  to była jedna rozmowa. Teraz model dostaje ostatnie **6 wymian** tej rozmowy.
+
+### Uwaga
+- To nadal **nie jest** pamięć między wizytami — zamknięcie karty przeglądarki
+  kończy rozmowę, tak jak wcześniej.
+- Pamięć jest **ucięta celowo**: każda dołożona wymiana to tokeny na rachunku
+  właściciela. Sześć wymian pokrywa realny ciąg dopytań, a długie odpowiedzi
+  z przeszłości są przycinane, żeby jedna z nich nie zdominowała zapytania.
+
+---
+
 ## [1.4.8] — 2026-08-20
 
 ### Naprawione
@@ -24,6 +41,8 @@ migracja odpala się sama przy pierwszym wejściu do panelu po aktualizacji
 - Po nieudanym żądaniu pole wraca tak samo jak po udanym — jedna wpadka sieci
   nie zamyka czatu.
 - Kropki przestają skakać, gdy w systemie włączone jest „ogranicz animacje".
+
+---
 
 ## [1.4.6] — 2026-08-20 · schemat bazy 4 → 5
 
@@ -45,6 +64,8 @@ migracja odpala się sama przy pierwszym wejściu do panelu po aktualizacji
   tej informacji i nie są zgadywane wstecz.
 - Wtyczka pokazuje tokeny, **nie kwoty** — stawki sprawdzasz u dostawcy modelu.
 
+---
+
 ## [1.4.5] — 2026-08-20
 
 ### Zmienione
@@ -54,6 +75,8 @@ migracja odpala się sama przy pierwszym wejściu do panelu po aktualizacji
   powitaniem bota, a gdy podałeś adres polityki prywatności — z odnośnikiem
   do niej. Do tej pory informacja pojawiała się dopiero przy zostawianiu maila,
   choć samo pisanie na czacie już trafiało do historii rozmów.
+
+---
 
 ## [1.4.4] — 2026-08-20
 
@@ -69,6 +92,8 @@ migracja odpala się sama przy pierwszym wejściu do panelu po aktualizacji
   wymagała napisania filtru w kodzie — czego kupujący wtyczkę nie robi.
 - Panel mówi wprost, **żeby wpisywać identyfikator bez daty**, i odsyła do
   dokumentacji dostawcy po aktualną listę modeli i cennik.
+
+---
 
 ## [1.4.3] — 2026-08-20
 
@@ -90,6 +115,8 @@ migracja odpala się sama przy pierwszym wejściu do panelu po aktualizacji
   podrobić, więc na stronie bez proxy zaufanie mu pozwoliłoby obchodzić limity.
   Włącz go tylko wtedy, gdy strona naprawdę stoi za proxy.
 
+---
+
 ## [1.4.2] — 2026-08-20
 
 ### Naprawione
@@ -110,6 +137,9 @@ migracja odpala się sama przy pierwszym wejściu do panelu po aktualizacji
   ekranie. Nie zużywa dziennego limitu. Komunikaty rozróżniają zły klucz (401/403),
   nieznany model (404), limit u dostawcy (429) i błąd połączenia.
 - Opcja `chatl_blad_ai` (czas, kod HTTP, przycięty fragment odpowiedzi).
+
+---
+
 ## [1.4.1] — 2026-08-20
 
 ### Naprawione

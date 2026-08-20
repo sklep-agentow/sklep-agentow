@@ -5,6 +5,7 @@ skończonym kawałku. Zasady od koordynatora: osobne PR-y, **nigdy nie scalam**
 (scala koordynator), nie dotykam `wtyczki/segregator-maila` ani
 `wtyczki/sklep-agentow`, bez `push --force`, bez kasowania gałęzi.
 
+
 ## Zrodlo znalezisk
 
 `boty/LUKI-SWIEZA-GLOWA-20-08.md` — przelot koordynatorki po kodzie obu botow
@@ -19,9 +20,15 @@ i instalatory nie byly czytane.
 |---|---|---|---|
 | #78 | **L1** | nonce w cache'owanej stronie — czat padal u WSZYSTKICH gosci naraz, po cichu | 1.4.1 |
 | #79 | **L4** | zly albo wygasly klucz API — bot po cichu odpowiadal z regul, w nieskonczonosc | 1.4.2 |
+| #80 | **L2** | limit „na IP" mierzyl adres proxy — za Cloudflare cala witryna miala jeden kubel | 1.4.3 |
+| #81 | **L5** | model zaszyty jako migawka z data — bomba zegarowa u kazdego kupujacego | 1.4.4 |
+| #82 | **L7** | gosc dowiadywal sie o zapisie rozmowy dopiero przy formularzu kontaktu | 1.4.5 |
+| #83 | **L3** | stop-loss liczyl wywolania, a rachunek u dostawcy idzie z tokenow | 1.4.6, schemat 5 |
+| #85 | **B** | tryb AI nie pamietal biezacej rozmowy (dopytanie trafialo w prozne) | 1.4.7 |
+| #86 | **C** | brak sygnalu, ze bot pisze — do 18 s martwego ekranu, gosc klikal drugi raz | 1.4.8 |
 
-Pozostale pozycje (L2, L3, L5, L7 oraz B i C z kolejki nizej) ida osobnymi
-PR-ami; ich numery dopisywane sa w gałęziach, ktore je wnosza.
+Kazda z tych galezi ma **test-straznik (exit 1)** i **probe kontrolna** dowodzaca,
+ze straznik pada na kodzie sprzed naprawy. Schemat bazy rusza tylko #83 (4 -> 5).
 
 ⚠️ Wszystkie galezie odbite od tego samego `main` (2ed694c), wiec przy scalaniu
 konflikty sa **mechaniczne**: linia `Version`/`CHATL_WERSJA` (zostaje najwyzszy
@@ -60,7 +67,7 @@ zgadnięcia** i sprawdzany przy każdym żądaniu; operator tylko z `manage_opti
 Test ma pokazać, że bot **milczy** po przejęciu i **odzywa się** po zakończeniu,
 i musi być skalibrowany (pada na kodzie sprzed zmiany).
 
-### B. ⭐ Tryb AI nie pamięta bieżącej rozmowy
+### B. ⭐ Tryb AI nie pamięta bieżącej rozmowy — ✅ ZROBIONE (PR #85)
 Zmierzone przez koordynatora: `includes/ai.php` wysyła `messages` z **dokładnie
 jednym** elementem (samo pytanie), zero historii. Gość pyta „jak dojechać",
 potem „gdzie zaparkować" — model nie wie, o czym mowa.
@@ -69,7 +76,7 @@ a tu chodzi o pamięć W TRAKCIE jednej rozmowy.
 Dołożyć historię bieżącej sesji do wywołania, **uciąć do sensownej liczby
 ostatnich wymian** i uzasadnić tę liczbę w PR — każda wymiana to tokeny właściciela.
 
-### C. Brak informacji, że bot pisze
+### C. Brak informacji, że bot pisze — ✅ ZROBIONE (PR #86)
 Pole i przycisk nie są blokowane, brak wskaźnika, a tryb AI ma timeout 9 s
 + jedno ponowienie = do 18 s martwego ekranu. Gość pomyśli, że się zawiesiło,
 i kliknie drugi raz. Zrobić to samo co przy formularzu zgłoszenia: blokada pola

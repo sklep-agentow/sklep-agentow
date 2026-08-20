@@ -1,6 +1,6 @@
 # ChatBot LIVE — dokumentacja techniczna
 
-Wersja wtyczki: **1.4.8** · schemat bazy: **5** · licencja: **GPL-2.0-or-later**
+Wersja wtyczki: **1.4.9** · schemat bazy: **5** · licencja: **GPL-2.0-or-later**
 
 Dokument opisuje **kod, który jest**, nie plan. Każda liczba i nazwa poniżej ma pokrycie
 w źródle — przy każdej podano plik i symbol, żeby dało się to sprawdzić `grep`-em, a nie
@@ -174,7 +174,7 @@ więc **brakujący klucz nigdy nie jest błędem** — nowe pole dostaje wartoś
 | `tekst_awaryjny` | tekst „nie znam odpowiedzi…" | Co bot mówi, gdy żadna para nie pasuje. |
 | `mail_powiadomien` | `admin_email` z WordPressa | Adres, na który idzie powiadomienie o nowym zgłoszeniu. |
 | `powiadomienia` | `1` | Czy w ogóle wysyłać ten mail. |
-| `usun_dane` | `0` | Przełącznik ścieżki deinstalacji (rozdział 6). |
+| `usun_dane` | `0` | Przełącznik ścieżki deinstalacji (rozdział **Cykl życia**). |
 | `ai_informacje` | `''` | Opis firmy wstrzykiwany do instrukcji systemowej modelu. |
 | `ai_limit_dzienny` | `100` | Globalny dobowy limit **wywołań** AI. Zapis ograniczany do zakresu 1–100000. |
 | `ai_limit_tokenow` | `200000` | Globalny dobowy limit **tokenów płatnych** — drugi stop-loss. `0` = wyłączony. |
@@ -194,7 +194,7 @@ Wszystkie liczby, którymi wtyczka się rządzi, są stałymi — nie ma ich roz
 
 | Stała | Wartość | Plik | Do czego |
 |---|---|---|---|
-| `CHATL_WERSJA` | `1.4.8` | `chatbot-live.php` | wersja wtyczki; służy też jako `?ver=` assetów (przeglądarka nie poda starego pliku po aktualizacji) |
+| `CHATL_WERSJA` | `1.4.9` | `chatbot-live.php` | wersja wtyczki; służy też jako `?ver=` assetów (przeglądarka nie poda starego pliku po aktualizacji) |
 | `CHATL_WERSJA_SCHEMATU` | `5` | `chatbot-live.php` | wyzwalacz migracji schematu |
 | `CHATL_KATALOG`, `CHATL_URL` | ścieżka i adres wtyczki | `chatbot-live.php` | `require` i adresy assetów |
 | `CHATL_MAX_PYTANIE` | `500` | `includes/front.php` | maksymalna długość pytania gościa (nadmiar jest **przycinany**, nie odrzucany) |
@@ -209,6 +209,8 @@ Wszystkie liczby, którymi wtyczka się rządzi, są stałymi — nie ma ich roz
 | `CHATL_AI_TIMEOUT` | `9` | `includes/ai.php` | timeout jednego wywołania w sekundach; z jednym ponowieniem daje maks. 18 s, z zapasem pod typowy limit 30 s na hostingu |
 | `CHATL_AI_BRAK` | `BRAK_ODPOWIEDZI` | `includes/ai.php` | sentinel „model nie wie" — sygnał do zbiórki kontaktu zamiast zgadywania |
 | `CHATL_AI_CACHE_PROG_ZNAKOW` | `16384` | `includes/ai.php` | od tylu znaków instrukcji dokładamy `cache_control`; poniżej progu dostawcy cache **po cichu nie działa** |
+| `CHATL_AI_PAMIEC_WYMIAN` | `6` | `includes/ai.php` | ile ostatnich wymian bieżącej rozmowy trafia do wywołania modelu |
+| `CHATL_AI_PAMIEC_ZNAKOW` | `600` | `includes/ai.php` | górny limit długości jednej wiadomości z historii |
 | `CHATL_CSV_PORCJA` | `500` | `includes/csv.php` | ile wierszy naraz czyta eksport, żeby nie wciągać całej tabeli do pamięci |
 | `CHATL_LUKI_LIMIT` | `2000` | `includes/statystyki.php` | sufit pytań bez odpowiedzi wciąganych do grupowania; przekroczenie jest **wypisane na stronie**, nie przemilczane |
 | `CHATL_LUKI_POKAZ` | `25` | `includes/statystyki.php` | ile tematów luk pokazuje tabela (reszta jest policzona, tylko niewypisana) |
@@ -677,7 +679,7 @@ Zastrzeżenie: **alias bez daty to konwencja dostawcy,
 nie gwarancja** — nie każdy model musi go mieć, a wtyczka nie ma jak sprawdzić
 listy identyfikatorów w locie. Dlatego pole „własny model" przyjmuje dowolną
 nazwę, a panel i FAQ mówią: użyj nazwy bez daty **jeśli dostawca taką podaje**.
-Siatką bezpieczeństwa jest §14: nieznana nazwa modelu daje HTTP 404, który od
+Siatką bezpieczeństwa jest rozdział **Sygnał, gdy tryb AI przestaje działać**: nieznana nazwa modelu daje HTTP 404, który od
 1.4.2 stawia znacznik i zapala w panelu czerwony pasek z komunikatem wprost
 („API nie zna tego modelu"). Zły identyfikator jest więc **widoczny od pierwszego
 pytania gościa**, a nie cichy — to różnica między usterką do poprawienia w minutę
@@ -756,12 +758,12 @@ zostawiało trzy ścieżki, które kosztowały właściciela, a były niewidoczn
 
 | Ścieżka | Co się dzieje | Zużycie | Znacznik awarii |
 |---|---|---|---|
-| odmowa modelu (`stop_reason: refusal`) | gość dostaje odpowiedź z reguł | **liczone** (tokeny z `usage`) | **nie** — to poprawne działanie produktu (§14) |
+| odmowa modelu (`stop_reason: refusal`) | gość dostaje odpowiedź z reguł | **liczone** (tokeny z `usage`) | **nie** — to poprawne działanie produktu (rozdział **Sygnał, gdy tryb AI przestaje działać**) |
 | bloki bez tekstu (pusto po `trim()`) | zjazd do reguł | **liczone** | tak |
 | ciało nie do odczytania przy 200 | zjazd do reguł | **samo wywołanie**, tokenów nie ma skąd wziąć | tak |
 
 Naliczanie stoi **w jednym miejscu, przed rozgałęzieniem** na te przypadki — ten
-sam zabieg co `chatl_ai_niepowodzenie()` z §14: dopisanie kolejnego wyjścia
+sam zabieg co `chatl_ai_niepowodzenie()` z rozdziału **Sygnał, gdy tryb AI przestaje działać**: dopisanie kolejnego wyjścia
 z funkcji nie może już zgubić kosztu przez przeoczenie. Bramka zgodności pilnuje
 obu warunków (jedno wywołanie `chatl_ai_zuzyj()`, i to przed rozgałęzieniem).
 
@@ -832,7 +834,44 @@ WCAG 2.3.3) kropki zostają widoczne i przestają tylko skakać.
 
 ---
 
-## 20. Zabezpieczenie formularza a cache strony
+
+## 20. Pamięć bieżącej rozmowy w trybie AI
+
+Do 1.4.7 `messages` w żądaniu miało **dokładnie jeden element** — samo ostatnie
+pytanie. Gość pytał „jak dojechać", dostawał odpowiedź, dopytywał „gdzie
+zaparkować" — a model nie wiedział, o czym mowa, choć wizualnie to jedna rozmowa.
+
+⚠️ **To nie była nasza świadoma granica.** Poza zakresem została pamięć **między
+wizytami** (sesja żyje w karcie przeglądarki i tak zostaje); tu chodziło o pamięć
+**w trakcie jednej rozmowy**, czyli o coś, czego gość ma prawo oczekiwać.
+
+`chatl_ai_historia( $sesja, $przed_id )` zwraca ostatnie `CHATL_AI_PAMIEC_WYMIAN`
+wymian tej rozmowy w kolejności chronologicznej, jako wiadomości `user`/`assistant`.
+
+Cztery rzeczy, które ta funkcja musi robić dobrze:
+
+1. **Nie dublować bieżącego pytania.** Jest ono zapisywane do historii **przed**
+   wywołaniem modelu, więc bierzemy wyłącznie wiersze o `id` mniejszym niż
+   właśnie zapisany — inaczej model dostałby to samo pytanie dwa razy.
+2. **Nie przeciekać między rozmowami.** Filtr po `sesja` jest tu granicą
+   prywatności, nie optymalizacją: wymiany innego gościa nie mają prawa trafić
+   do cudzego żądania.
+3. **Nie rosnąć bez końca.** Sufit to `CHATL_AI_PAMIEC_WYMIAN` wymian, a każda
+   wiadomość jest przycinana do `CHATL_AI_PAMIEC_ZNAKOW` znaków — pytanie gościa
+   jest już ograniczone, ale odpowiedź bota bywa długa i jedna rozwlekła
+   wypowiedź z przeszłości potrafiłaby zdominować żądanie.
+4. **Zachować kształt rozmowy.** Wiadomości tej samej strony pod rząd (np. gdy
+   zapis odpowiedzi bota padł) są scalane, a wiodąca wypowiedź bota usuwana —
+   rozmowa wysyłana do modelu zaczyna się od gościa.
+
+**Skąd sześć wymian.** Tyle wystarcza na realny ciąg dopytań („jak dojechać" →
+„gdzie zaparkować" → „a w sobotę?"), a każda wymiana to tokeny właściciela.
+Przy krótkich wiadomościach czatu sześć wymian to rząd 300–600 tokenów dołożonych
+do żądania, które i tak niesie całą bazę Q&A w instrukcji systemowej — na stacku
+warsztatowym sama instrukcja ma 3651 znaków, czyli ok. 1200 tokenów. Wyżej rośnie
+rachunek, a nie jakość: gość firmowego czatu rzadko wraca do czegoś sprzed
+dziesięciu wiadomości.
+## 21. Zabezpieczenie formularza a cache strony
 
 Nonce wchodzi do HTML-a strony przez `wp_localize_script()`, a wtyczka albo usługa
 cache (LiteSpeed, WP Rocket, W3TC, Cloudflare) potrafi serwować ten HTML **dłużej,
@@ -870,7 +909,7 @@ sukcesem.
 
 ---
 
-## 21. Eksport CSV
+## 22. Eksport CSV
 
 Ręczny, przyciskiem w panelu — `includes/csv.php`. Dwa strumienie: wszystkie zgłoszenia
 (`id, data, email, wiadomosc, status, sesja`) i historia rozmów (`sesja, data, kto, silnik, tresc`),
@@ -886,12 +925,14 @@ kłóciłoby się z obietnicą retencji.
 
 ---
 
-## 22. Znane granice
+## 23. Znane granice
 
 Rzeczy, których wtyczka **nie** robi — żeby nikt nie szukał ich w kodzie:
 
 - **Bez czatu z operatorem na żywo** i bez integracji z Messengerem/WhatsAppem.
 - **Bez pamięci między wizytami** — sesja żyje w `sessionStorage` karty przeglądarki.
+  W trakcie **jednej** rozmowy tryb AI pamięta ostatnie `CHATL_AI_PAMIEC_WYMIAN` wymian
+  (rozdział **Pamięć bieżącej rozmowy w trybie AI**); tryb regułowy pozostaje bezstanowy z natury — dopasowuje pojedyncze pytanie.
 - **Bez czytania treści strony** — wiedza bota to wyłącznie baza Q&A i opis firmy z ustawień.
 - **Bez wielojęzyczności i bez i18n** — teksty są polskie wprost, bez `textdomain`.
 - **Bez stronicowania** w panelu: lista zgłoszeń pokazuje 200 najnowszych, lista rozmów 100

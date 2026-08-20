@@ -32,6 +32,28 @@ const CHATL_AI_TIMEOUT    = 9;
 const CHATL_AI_BRAK       = 'BRAK_ODPOWIEDZI';
 
 /*
+ * Ile OSTATNICH wymian biezacej rozmowy trafia do wywolania modelu.
+ *
+ * Szesc, bo tyle wystarcza na realny ciag dopytan ("jak dojechac" -> "gdzie
+ * zaparkowac" -> "a w sobote?"), a kazda wymiana to tokeny wlasciciela: przy
+ * krotkich wiadomosciach czatu szesc wymian to rzad 300-600 tokenow dolozonych
+ * do zadania, ktore i tak niesie cala baze Q&A w instrukcji systemowej.
+ * Wyzej rosnie rachunek, a nie jakosc — gosc firmowego czatu rzadko wraca
+ * do czegos sprzed dziesieciu wiadomosci.
+ *
+ * ⚠️ To NIE jest pamiec MIEDZY wizytami (ta zostaje swiadomie poza zakresem —
+ * sesja zyje w karcie przegladarki). To pamiec W TRAKCIE jednej rozmowy.
+ */
+const CHATL_AI_PAMIEC_WYMIAN = 6;
+
+/*
+ * Górny limit dlugosci JEDNEJ wiadomosci z historii. Pytanie goscia jest juz
+ * przyciete do CHATL_MAX_PYTANIE, ale odpowiedz bota moze byc dluga — bez tego
+ * jedna rozwlekla odpowiedz z przeszlosci potrafilaby zdominowac zadanie.
+ */
+const CHATL_AI_PAMIEC_ZNAKOW = 600;
+
+/*
  * Prog dlugosci instrukcji systemowej, od ktorego wlaczamy jej cache po stronie
  * API. Dostawca wlacza cache dopiero od 4096 tokenow instrukcji dla modelu
  * domyslnego; ponizej progu cache po cichu NIE dziala — bez bledu, bez sygnalu.
@@ -255,6 +277,81 @@ function chatl_ai_instrukcja() {
 }
 
 /**
+ * Historia BIEŻĄCEJ rozmowy w formacie wiadomości Messages API.
+ *
+ * Bez tego model dostawał samo ostatnie pytanie: gość pytał „jak dojechać",
+ * dostawał odpowiedź, dopytywał „gdzie zaparkować" — a model nie wiedział,
+ * o czym mowa, choć wizualnie to jedna rozmowa.
+ *
+ * Bierzemy ostatnie CHATL_AI_PAMIEC_WYMIAN wymian, w kolejności chronologicznej,
+ * i wymuszamy NAPRZEMIENNOŚĆ ról: dwie wiadomości tej samej strony pod rząd
+ * (np. gdy zapis odpowiedzi bota padł) scalamy w jedną, żeby nie wysyłać do API
+ * rozmowy o kształcie, którego ono nie oczekuje.
+ *
+ * @param string $sesja    Identyfikator sesji (już zwalidowany).
+ * @param int    $przed_id Bierz tylko wiersze STARSZE niż ten id — bieżące
+ *                         pytanie jest już zapisane i nie może się zdublować.
+ * @return array Lista ['role' => 'user'|'assistant', 'content' => string].
+ */
+function chatl_ai_historia( $sesja, $przed_id = 0 ) {
+	global $wpdb;
+	if ( '' === (string) $sesja ) {
+		return array();
+	}
+	$tabela = $wpdb->prefix . 'chatl_rozmowy';
+	$limit  = CHATL_AI_PAMIEC_WYMIAN * 2;
+
+	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- nazwa tabeli z $wpdb->prefix, wartości przez prepare().
+	if ( $przed_id > 0 ) {
+		$wiersze = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT rola, tresc FROM {$tabela} WHERE sesja = %s AND id < %d ORDER BY id DESC LIMIT %d",
+				$sesja,
+				$przed_id,
+				$limit
+			)
+		);
+	} else {
+		$wiersze = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT rola, tresc FROM {$tabela} WHERE sesja = %s ORDER BY id DESC LIMIT %d",
+				$sesja,
+				$limit
+			)
+		);
+	}
+	// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+	$historia = array();
+	foreach ( array_reverse( (array) $wiersze ) as $w ) {
+		$rola  = 'gosc' === $w->rola ? 'user' : 'assistant';
+		$tresc = trim( (string) $w->tresc );
+		if ( '' === $tresc ) {
+			continue;
+		}
+		if ( mb_strlen( $tresc ) > CHATL_AI_PAMIEC_ZNAKOW ) {
+			$tresc = mb_substr( $tresc, 0, CHATL_AI_PAMIEC_ZNAKOW ) . '…';
+		}
+		$ostatni = count( $historia ) - 1;
+		if ( $ostatni >= 0 && $historia[ $ostatni ]['role'] === $rola ) {
+			$historia[ $ostatni ]['content'] .= "\n" . $tresc;
+			continue;
+		}
+		$historia[] = array(
+			'role'    => $rola,
+			'content' => $tresc,
+		);
+	}
+
+	// Rozmowa wysyłana do modelu musi zaczynać się od gościa: wiodąca wypowiedź
+	// bota (np. powitanie zapisane bez pytania) nie niesie kontekstu, a psuje kształt.
+	while ( $historia && 'assistant' === $historia[0]['role'] ) {
+		array_shift( $historia );
+	}
+	return $historia;
+}
+
+/**
  * Instrukcja systemowa jako blok żądania — z cache TYLKO wtedy, gdy zadziała.
  *
  * Dostawca włącza cache instrukcji dopiero od pewnej jej długości; poniżej progu
@@ -280,9 +377,11 @@ function chatl_ai_blok_systemowy( $instrukcja ) {
 /**
  * Jedno wywołanie Claude API (Messages API przez wp_remote_post).
  *
+ * @param string $pytanie  Pytanie gościa.
+ * @param array  $historia Poprzednie wymiany tej rozmowy (chatl_ai_historia()).
  * @return array|WP_Error Odpowiedź wp_remote_post.
  */
-function chatl_ai_zapytaj( $pytanie ) {
+function chatl_ai_zapytaj( $pytanie, $historia = array() ) {
 	// Filtry = punkt rozszerzenia (np. proxy albo atrapa API w testach).
 	$url   = apply_filters( 'chatl_ai_url', 'https://api.anthropic.com/v1/messages' );
 	$model = chatl_ai_model();
@@ -301,11 +400,14 @@ function chatl_ai_zapytaj( $pytanie ) {
 					'model'      => $model,
 					'max_tokens' => CHATL_AI_MAX_TOKENS,
 					'system'     => chatl_ai_blok_systemowy( chatl_ai_instrukcja() ),
-					'messages'   => array(
+					'messages'   => array_merge(
+						(array) $historia,
 						array(
-							'role'    => 'user',
-							'content' => $pytanie,
-						),
+							array(
+								'role'    => 'user',
+								'content' => $pytanie,
+							),
+						)
 					),
 				)
 			),
@@ -518,16 +620,19 @@ function chatl_ai_modele() {
 /**
  * Odpowiedź AI na pytanie gościa.
  *
+ * @param string $pytanie  Pytanie gościa.
+ * @param array  $historia Poprzednie wymiany tej rozmowy; pusta = model widzi
+ *                         samo pytanie (tak działało do 1.4.7).
  * @return string|null Tekst odpowiedzi (może być sentinel BRAK_ODPOWIEDZI)
  *                     albo null przy błędzie => zjazd do trybu regułowego.
  */
-function chatl_ai_odpowiedz( $pytanie ) {
-	$odp = chatl_ai_zapytaj( $pytanie );
+function chatl_ai_odpowiedz( $pytanie, $historia = array() ) {
+	$odp = chatl_ai_zapytaj( $pytanie, $historia );
 
 	// JEDEN retry: tylko błąd połączenia/timeout albo 5xx/przeciążenie (nie 4xx).
 	$kod = is_wp_error( $odp ) ? 0 : (int) wp_remote_retrieve_response_code( $odp );
 	if ( is_wp_error( $odp ) || $kod >= 500 || 429 === $kod ) {
-		$odp = chatl_ai_zapytaj( $pytanie );
+		$odp = chatl_ai_zapytaj( $pytanie, $historia );
 		$kod = is_wp_error( $odp ) ? 0 : (int) wp_remote_retrieve_response_code( $odp );
 	}
 	if ( is_wp_error( $odp ) || 200 !== $kod ) {
