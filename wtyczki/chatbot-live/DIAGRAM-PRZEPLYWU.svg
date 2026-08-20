@@ -144,6 +144,6 @@
   <text class="t stopka" x="40" y="796">wp_chatl_rozmowy · wp_chatl_ai_uzycie</text>
   <text class="t stopka" x="40" y="816">wp_chatl_rate_limit</text>
 
-  <text class="t stopka" x="584" y="864">Każda liczba na diagramie pochodzi ze stałej w kodzie: CHATL_MAX_PYTANIE, CHATL_LIMIT_NA_MIN,</text>
-  <text class="t stopka" x="584" y="884">CHATL_RETENCJA_DNI, CHATL_AI_TIMEOUT — rozpisane w DOKUMENTACJA-TECHNICZNA.md.</text>
+  <text class="t stopka" x="584" y="852">Każda liczba na diagramie pochodzi ze stałej w kodzie: CHATL_MAX_PYTANIE, CHATL_LIMIT_NA_MIN,</text>
+  <text class="t stopka" x="584" y="872">CHATL_RETENCJA_DNI, CHATL_AI_TIMEOUT — rozpisane w DOKUMENTACJA-TECHNICZNA.md.</text>
 </svg>

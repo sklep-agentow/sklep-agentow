@@ -30,15 +30,26 @@ probuj() {
 }
 
 echo "=== PROBA KONTROLNA: czy kontrola ramek widzi kazda krawedz ==="
-probuj "tekst wychodzacy w DOL"   "sed -i 's/y=\"884\">CHATL_RETENCJA_DNI/y=\"906\">CHATL_RETENCJA_DNI/' \"\$TMP/p.svg\"" "dolna"
-probuj "tekst wychodzacy w GORE"  "sed -i 's/x=\"40\" y=\"52\"/x=\"40\" y=\"8\"/' \"\$TMP/p.svg\""                        "gorna"
-probuj "tekst wychodzacy w LEWO"  "sed -i 's/class=\"t stopka\" x=\"40\" y=\"776\"/class=\"t stopka\" x=\"2\" y=\"776\"/' \"\$TMP/p.svg\"" "lewa"
-probuj "tekst wychodzacy w PRAWO" "sed -i 's/rozpisane w DOKUMENTACJA-TECHNICZNA.md./rozpisane w DOKUMENTACJA-TECHNICZNA.md, rozdzial 5, tabela stalych konfiguracyjnych wtyczki./' \"\$TMP/p.svg\"" "prawa"
+# Bledy PODKLADAMY JAKO NOWY ELEMENT tuz przed </svg>, a nie przez celowanie
+# w istniejace wspolrzedne. Pierwsza wersja tej proby podmieniala y="884"
+# w stopce — po przesunieciu stopki mutacja przestala wchodzic i proba
+# zameldowala "kontrola slepa", choc slepa byla SAMA PROBA. Podkladanie nowego
+# elementu nie zalezy od tego, jak dzis wyglada diagram.
+wstaw() { # wstaw "<text ...>...</text>"
+  local el="$1"
+  python3 - "$TMP/p.svg" "$el" <<'PY'
+import io, sys
+p, el = sys.argv[1], sys.argv[2]
+s = io.open(p, encoding='utf-8').read()
+io.open(p, 'w', encoding='utf-8').write(s.replace('</svg>', '  ' + el + '\n</svg>'))
+PY
+}
 
-# Klasa, przez ktora ten sam plik dawal 910 mnie i 880 recenzentce: atrybut
-# height rozjechany z viewBox. Wtedy "wysokosc obrazu" zalezy od narzedzia,
-# a kontrola potrafi swiecic zielono przy scietej linii u klienta.
-probuj "kadr niespojny (height != viewBox)" "sed -i 's/viewBox=\"0 0 1400 910\" width=\"1400\" height=\"910\"/viewBox=\"0 0 1400 910\" width=\"1400\" height=\"880\"/' \"\$TMP/p.svg\"" "kadr niespojny"
+probuj "tekst wychodzacy w DOL"   'wstaw "<text class=\"t stopka\" x=\"600\" y=\"908\">podlozony blad w dol</text>"'   "dolna"
+probuj "tekst wychodzacy w GORE"  'wstaw "<text class=\"t stopka\" x=\"600\" y=\"6\">podlozony blad w gore</text>"'     "gorna"
+probuj "tekst wychodzacy w LEWO"  'wstaw "<text class=\"t stopka\" x=\"1\" y=\"500\">podlozony blad w lewo</text>"'     "lewa"
+probuj "tekst wychodzacy w PRAWO" 'wstaw "<text class=\"t stopka\" x=\"1300\" y=\"500\">podlozony blad wychodzacy daleko w prawo poza kadr</text>"' "prawa"
+probuj "kadr niespojny (height != viewBox)" "sed -i 's/height=\"910\" role/height=\"880\" role/' \"\$TMP/p.svg\"" "kadr niespojny"
 probuj "plik bez tekstow (kontrola pusta)" "sed -i 's|<text |<nietekst |g' \"\$TMP/p.svg\"" "ZERO elementow"
 
 echo
