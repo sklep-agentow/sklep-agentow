@@ -62,8 +62,8 @@ leży w pliku `LICENSE` w katalogu wtyczki i wchodzi do paczki produktowej.
 | `includes/instalator.php` | 268 | `dbDelta` dla 7 tabel, aktywacja, deaktywacja, seed demo (5 kategorii, 8 reguł, 30 maili) |
 | `includes/silnik.php` | 248 | `segm_klasyfikuj_mail()` — jedyna reguła dopasowania w całej wtyczce; przebieg na próbce |
 | `includes/csv.php` | 352 | import próbki z CSV (wykrywanie kodowania, limity) i eksport raportu do CSV |
-| `includes/ai.php` | 556 | opcjonalna klasyfikacja modelem, licznik stop-loss |
-| `includes/admin.php` | 1343 | panel: przebiegi i raporty, reguły, kategorie, próbka, ustawienia, baner powitalny |
+| `includes/ai.php` | 569 | opcjonalna klasyfikacja modelem, licznik stop-loss |
+| `includes/admin.php` | 1348 | panel: przebiegi i raporty, reguły, kategorie, próbka, ustawienia, baner powitalny |
 | `includes/konfiguracja.php` | 360 | eksport i import własnej konfiguracji (kategorie + reguły) w JSON-ie |
 | `includes/filtry.php` | 588 | eksport reguł do filtrów Gmaila (XML) i reguł Outlooka |
 | `includes/class-segm-imap.php` | 947 | **klient IMAP4rev1 w czystym PHP** — gniazdo, TLS, protokół |
@@ -71,7 +71,7 @@ leży w pliku `LICENSE` w katalogu wtyczki i wchodzi do paczki produktowej.
 | `includes/skrzynka-przebieg.php` | 556 | przebieg na żywej skrzynce, historia, cofanie, harmonogramy WP-Cron |
 | `includes/admin-skrzynka.php` | 701 | panel zakładki *Skrzynka (IMAP)* i obsługa jej formularzy |
 | `includes/admin-powitanie.php` | 143 | ekran powitalny pokazywany raz po aktywacji |
-| `includes/admin-probka.php` | 382 | praca na POJEDYNCZYM mailu i licznik trafień reguły |
+| `includes/admin-probka.php` | 413 | praca na POJEDYNCZYM mailu i licznik trafień reguły |
 
 Poza kodem w paczce jadą: `LICENSE` (pełny tekst GPL-2.0), `readme.txt`
 (nagłówek w standardzie WordPressa, opis, instalacja, FAQ, changelog),
@@ -198,7 +198,7 @@ więc deinstalacja kasuje go zapytaniem `LIKE` po `wp_options` (razem z wierszam
 | `SEGM_SKRZ_TRESC_BAJTOW` | `4096` | `skrzynka.php` | ile bajtów treści maila pobieramy do dopasowania reguł |
 | `SEGM_SKRZ_LIMIT_CZASU` | `20` | `skrzynka.php` | twardy limit czasu jednego przebiegu na skrzynce (s) |
 | `SEGM_SKRZ_LIMIT_GNIAZDA` | `15` | `skrzynka.php` | limit czasu pojedynczej operacji sieciowej (s) |
-| `SEGM_AI_MODEL` | `claude-haiku-4-5-20251001` | `ai.php` | model **domyślny**; nadpisuje go ustawienie `ai_model`, a na końcu filtr `segm_ai_model` |
+| `SEGM_AI_MODEL` | `claude-haiku-4-5` | `ai.php` | model **domyślny**; nadpisuje go ustawienie `ai_model`, a na końcu filtr `segm_ai_model` |
 | `SEGM_AI_MODEL_WZORZEC` | `/^[a-z0-9][a-z0-9._-]{2,63}$/` | `ai.php` | dopuszczalny kształt nazwy modelu |
 | `SEGM_AI_TIMEOUT` | `9` | `ai.php` | limit czasu wywołania API (s), jeden retry |
 | `SEGM_AI_PARTIA` | `30` | `ai.php` | ile maili w jednym wywołaniu |
@@ -338,6 +338,25 @@ Obie liczby powstają z tej samej funkcji, którą liczy przebieg
 **Zgarnia** ze wszystkich reguł równa się liczbie `dopasowanych` w raporcie.
 Gdyby panel liczył po swojemu, prędzej czy później pokazałby liczbę, której
 raport nie potwierdza — a wtedy klient przestaje wierzyć obu.
+
+**Licznik liczy z jednego kontekstu.** Materiał do liczenia — cała próbka i cała
+lista reguł — jest dla wszystkich wierszy tabeli IDENTYCZNY, więc pobiera go
+`segm_kontekst_trafien()` **raz przed pętlą**, a `segm_policz_trafienia()`
+dostaje go gotowego. Wcześniej każdy wiersz czytał jedno i drugie własnym
+zapytaniem: przy dwudziestu regułach czterdzieści zapytań na jedno wyświetlenie
+strony zamiast dwóch, i rosło to liniowo — najmocniej obrywał właściciel z dużą
+liczbą reguł, czyli ten, komu licznik jest najbardziej potrzebny. Kto liczy raz
+(przycisk „Policz na próbce"), kontekst pomija i funkcja pobiera go sama.
+
+⛔ Reguła próbna jest podmieniana **na klonie**, nie na obiekcie z kontekstu:
+kontekst jest wspólny dla wszystkich wierszy, więc podmiana w miejscu zostałaby
+w nim na stałe i każdy następny wiersz liczyłby według cudzego wzorca. Tę samą
+tablicę reguł wyświetla zresztą tabela, więc mutacja zmieniłaby też to, co widać
+w kolumnie „Warunek".
+
+Sam koszt liczenia (`segm_klasyfikuj_mail()` na każdy pasujący mail, dla każdej
+reguły) zostaje bez zmian — to praca w PHP, nie w bazie, i mieści się w pułapie
+próbki (500 maili).
 
 **Tryb AI** (opcjonalny) nie zmienia tej reguły: klasyfikuje równolegle i pokazuje
 różnice. Nie ruszy bez zapisanej zgody `segm_zgoda_ai`, a przy próbce większej niż
@@ -538,6 +557,11 @@ Model bierze się z trzech miejsc, w tej kolejności ważności:
 2. **ustawienie `ai_model`** z panelu (Ustawienia → Model AI): lista podpowiedzi
    albo własna nazwa wpisana ręcznie,
 3. **stała `SEGM_AI_MODEL`**, gdy ustawienie jest puste.
+
+Domyślną wartością jest **alias bez daty** (`claude-haiku-4-5`), a nie migawka
+z datą: migawki bywają wycofywane, a bez serwera aktualizacji każda sprzedana
+kopia straciłaby tryb AI tego samego dnia i jedyną naprawą byłaby ręczna wysyłka
+zipa mailem. Ten sam wybór co `CHATL_AI_MODEL` w ChatBocie.
 
 Nazwa musi pasować do `SEGM_AI_MODEL_WZORZEC`; nazwa z literówką (spacja,
 znaczniki, za krótka) jest **odrzucana z zachowaniem poprzedniej**, żeby pomyłka

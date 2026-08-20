@@ -10,7 +10,7 @@ migracja odpala się sama przy pierwszym wejściu do panelu po aktualizacji
 
 ---
 
-## [1.4.7] — 2026-08-20
+## [1.4.9] — 2026-08-20
 
 ### Naprawione
 - **Tryb AI nie pamiętał bieżącej rozmowy.** Do modelu szło samo ostatnie
@@ -24,6 +24,21 @@ migracja odpala się sama przy pierwszym wejściu do panelu po aktualizacji
 - Pamięć jest **ucięta celowo**: każda dołożona wymiana to tokeny na rachunku
   właściciela. Sześć wymian pokrywa realny ciąg dopytań, a długie odpowiedzi
   z przeszłości są przycinane, żeby jedna z nich nie zdominowała zapytania.
+
+## [1.4.8] — 2026-08-20
+
+### Naprawione
+- **Gość nie wiedział, że bot pracuje.** W trybie AI odpowiedź potrafi zająć
+  kilkanaście sekund, a pole i przycisk nie były blokowane i nic się nie działo —
+  więc gość uznawał, że czat się zawiesił, i klikał drugi raz, co uruchamiało
+  **kolejne płatne wywołanie modelu**. Teraz na czas oczekiwania pole i przycisk
+  są zablokowane, a w rozmowie pojawia się dymek z trzema kropkami.
+
+### Uwaga
+- Blokada działa też jako zabezpieczenie przed podwójnym wysłaniem.
+- Po nieudanym żądaniu pole wraca tak samo jak po udanym — jedna wpadka sieci
+  nie zamyka czatu.
+- Kropki przestają skakać, gdy w systemie włączone jest „ogranicz animacje".
 
 ## [1.4.6] — 2026-08-20 · schemat bazy 4 → 5
 
