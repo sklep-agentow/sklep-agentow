@@ -24,6 +24,23 @@ migracja odpala się sama przy pierwszym wejściu do panelu po aktualizacji
   wymagała napisania filtru w kodzie — czego kupujący wtyczkę nie robi.
 - Panel mówi wprost, **żeby wpisywać identyfikator bez daty**, i odsyła do
   dokumentacji dostawcy po aktualną listę modeli i cennik.
+## [1.4.1] — 2026-08-20
+
+### Naprawione
+- **Czat przestawał działać wszystkim gościom naraz na stronie z cache — po cichu.**
+  Zabezpieczenie formularza (nonce) wchodzi do HTML-a strony, a wtyczka albo usługa
+  cache (LiteSpeed, WP Rocket, W3TC, Cloudflare) potrafi podawać ten HTML dłużej,
+  niż zabezpieczenie żyje. Każde pytanie kończyło się wtedy komunikatem
+  „Coś poszło nie tak", a właściciel nie miał jak się o tym dowiedzieć.
+  Teraz widget **sam dociąga świeże zabezpieczenie i powtarza pytanie raz**,
+  więc rozmowa dochodzi do skutku, a panel pokazuje właścicielowi czerwone
+  ostrzeżenie z liczbą odrzuceń i wskazówką, żeby wyłączyć cache dla strony z czatem.
+
+### Dodane
+- Publiczny punkt wejścia `chatl_nonce` wydający świeże zabezpieczenie
+  (bez nonce'a — z osobnym limitem `CHATL_LIMIT_NONCE` na adres IP).
+- Opcja `chatl_blad_nonce` i ostrzeżenie w panelu (wzorzec jak przy nieudanym
+  powiadomieniu mailowym), z przyciskiem ukrycia.
 
 ---
 

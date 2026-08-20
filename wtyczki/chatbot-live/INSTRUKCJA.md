@@ -142,6 +142,13 @@ albo wyłączyć klucz, poprawiasz `wp-config.php`.
 
 ## 7. FAQ
 
+**Goście piszą, że czat nie działa, a w panelu mam czerwone ostrzeżenie.**
+Twoja strona jest podawana z pamięci podręcznej (cache) starszej niż ważność
+zabezpieczenia formularza — to najczęstsza przyczyna. Wtyczka próbuje ratować
+rozmowę sama: odświeża zabezpieczenie i powtarza pytanie. Jeśli mimo to liczba
+w ostrzeżeniu rośnie, **wyłącz cache dla strony z czatem** (w LiteSpeed, WP Rocket,
+W3TC albo Cloudflare) albo skróć czas życia cache.
+
 **Zmieniłem kolory i tekst zrobił się nieczytelny.**
 Zaznacz „dobierz automatycznie" przy kolorze tekstu — wtyczka wybierze wersję
 z lepszym kontrastem. Jeśli wolisz własny kolor, patrz na odczyt kontrastu pod

@@ -24,16 +24,19 @@ wp_clear_scheduled_hook( 'segm_skrzynka_cron' );
 // która umiałaby go zwolnić.
 delete_option( 'segm_operacja_w_toku' );
 
-// Komunikaty panelu skrzynki trzymane są w transientach nazwanych per użytkownik
-// (`segm_komunikat_<ID>`), więc nie da się ich skasować jednym delete_transient() —
-// nazwy nie znamy z góry. Potrafią zawierać nazwy folderów cudzej skrzynki i zapis
-// rozmowy z serwerem poczty (bez hasła), więc znikają ZAWSZE, nie tylko przy
-// „usuń wszystkie dane". Kasujemy też wiersze `_transient_timeout_*`, bo to
-// osobne wpisy w wp_options i bez nich zostałyby sieroty.
-$segm_wzor = $wpdb->esc_like( '_transient_segm_komunikat_' ) . '%';
-$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $segm_wzor ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-$segm_wzor = $wpdb->esc_like( '_transient_timeout_segm_komunikat_' ) . '%';
-$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $segm_wzor ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+// Transienty panelu nazwane są per użytkownik (`segm_komunikat_<ID>` —
+// komunikaty skrzynki, `segm_liczenie_<ID>` — wynik liczenia trafień reguły),
+// więc nie da się ich skasować jednym delete_transient(): nazwy nie znamy
+// z góry. Potrafią zawierać nazwy folderów cudzej skrzynki i zapis rozmowy
+// z serwerem poczty (bez hasła), więc znikają ZAWSZE, nie tylko przy „usuń
+// wszystkie dane". Kasujemy też wiersze `_transient_timeout_*`, bo to osobne
+// wpisy w wp_options i bez nich zostałyby sieroty.
+foreach ( array( 'segm_komunikat_', 'segm_liczenie_' ) as $segm_rodzina ) {
+	foreach ( array( '_transient_', '_transient_timeout_' ) as $segm_przedrostek ) {
+		$segm_wzor = $wpdb->esc_like( $segm_przedrostek . $segm_rodzina ) . '%';
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $segm_wzor ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	}
+}
 
 // Stan ekranu powitalnego to stan INTERFEJSU, nie dane właściciela: znika
 // zawsze, żeby po ponownej instalacji tej samej wersji wstęp pokazał się od nowa

@@ -41,6 +41,7 @@ function chatl_komunikat_ok() {
 	}
 	// phpcs:enable
 	chatl_notice_bledu_maila();
+	chatl_notice_odrzuconych_nonce();
 }
 
 /**
@@ -99,6 +100,50 @@ function chatl_model_z_formularza( $stary ) {
 	}
 	return CHATL_AI_MODEL === $wybor ? '' : $wybor;
 }
+
+/**
+ * Ostrzeżenie: gościom odbija się nonce (najczęściej: strona z cache).
+ *
+ * To jest awaria, której właściciel NIE MA JAK zobaczyć inaczej — czat po
+ * prostu przestaje działać wszystkim naraz, a panel wygląda normalnie.
+ * Ostrzeżenie samo cichnie po CHATL_NONCE_OKNO_DNI dniach bez nowych odrzuceń,
+ * bo znacznika nie kasujemy na ścieżce zwykłego pytania (to byłby zapis do bazy
+ * przy każdej wiadomości gościa).
+ *
+ * @return void
+ */
+function chatl_notice_odrzuconych_nonce() {
+	$blad = get_option( 'chatl_blad_nonce' );
+	if ( ! is_array( $blad ) || empty( $blad['ostatni'] ) ) {
+		return;
+	}
+	$kiedy = strtotime( (string) $blad['ostatni'] );
+	if ( ! $kiedy || $kiedy < time() - CHATL_NONCE_OKNO_DNI * DAY_IN_SECONDS ) {
+		return;
+	}
+	$zamknij = wp_nonce_url( admin_url( 'admin-post.php?action=chatl_nonce_zamknij' ), 'chatl_nonce_zamknij' );
+	echo '<div class="notice notice-error"><p><strong>Gościom nie działa czat — odrzucone zabezpieczenie formularza.</strong> '
+		. 'Odrzuconych żądań: <code>' . esc_html( number_format_i18n( (int) $blad['ile'] ) ) . '</code>, ostatnie: <code>'
+		. esc_html( (string) $blad['ostatni'] ) . '</code>.<br>'
+		. 'Najczęstsza przyczyna: <strong>wtyczka albo usługa cache</strong> (LiteSpeed, WP Rocket, W3TC, Cloudflare) podaje gościom '
+		. 'stronę starszą niż ważność zabezpieczenia. Widget próbuje wtedy odświeżyć je sam i powtórzyć pytanie, więc rozmowa zwykle '
+		. 'dochodzi do skutku — ale jeśli ta liczba rośnie, <strong>wyłącz cache dla strony z czatem</strong> albo skróć czas życia cache.<br>'
+		. '<a href="' . esc_url( $zamknij ) . '">Rozumiem, ukryj to ostrzeżenie</a> (wróci, gdy pojawią się nowe odrzucenia).</p></div>';
+}
+
+/**
+ * Ukrycie ostrzeżenia o nonce'ach — kasuje znacznik.
+ */
+function chatl_post_nonce_zamknij() {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_die( 'Brak uprawnień.' );
+	}
+	check_admin_referer( 'chatl_nonce_zamknij' );
+	delete_option( 'chatl_blad_nonce' );
+	wp_safe_redirect( admin_url( 'admin.php?page=chatl-qa&chatl_ok=zapisano' ) );
+	exit;
+}
+add_action( 'admin_post_chatl_nonce_zamknij', 'chatl_post_nonce_zamknij' );
 
 /* ===================== BAZA Q&A ===================== */
 
