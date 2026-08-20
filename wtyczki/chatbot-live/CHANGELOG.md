@@ -10,6 +10,32 @@ migracja odpala się sama przy pierwszym wejściu do panelu po aktualizacji
 
 ---
 
+## [1.5.2] — 2026-08-21
+
+### Dodane
+- **Wpięcie w narzędzia RODO WordPressa.** Wniosek o kopię albo o usunięcie danych
+  obsługujesz wbudowanym kreatorem (**Narzędzia → Eksport / Usuwanie danych
+  osobowych**): wtyczka wydaje zgłoszenia z czatu i powiązaną z nimi historię
+  rozmowy, a kasownik usuwa jedno i drugie.
+- Gotowy akapit do **polityki prywatności** (Ustawienia → Prywatność).
+
+### Uwaga
+- Wiązanie idzie przez **adres e-mail**, więc rozmowa gościa, który nigdy nie
+  zostawił zgłoszenia, nie jest powiązana z żadnym adresem — kasuje ją retencja.
+  Kreator mówi o tym wprost, zamiast udawać komplet.
+- **Rozmowa, w której zgłoszenie zostawiła więcej niż jedna osoba** (wspólny
+  komputer w recepcji albo gość, który podał drugi adres), nie jest ani wydawana,
+  ani kasowana: zawiera wiadomości dwóch osób, a wiersze nie mają znacznika autora,
+  więc nie da się ich rozdzielić. Wydanie jej byłoby ujawnieniem cudzych danych
+  wnioskodawcy, a skasowanie — usunięciem cudzych danych na wniosek osoby trzeciej.
+  Kreator wypisuje, ile takich rozmów zachowano i dlaczego. Ochrona działa także wtedy,
+  gdy wnioski przychodzą **po kolei**: informacja o współdzieleniu sesji jest zapisywana
+  zanim cokolwiek zostanie usunięte, więc nie znika razem ze skasowanym zgłoszeniem.
+- Komunikat kasownika podaje **rzeczywiste liczby** usuniętych zgłoszeń i wiadomości.
+  Wniosek dotyczący adresu, którego nie ma w bazie, kończy się zdaniem „nie znaleziono
+  żadnych danych" — a nie potwierdzeniem kasowania, którego nie było.
+---
+
 ## [1.5.0] — 2026-08-20 · schemat bazy 5 → 6
 
 ### Dodane
