@@ -99,6 +99,7 @@ if ( is_admin() ) {
 	require_once SEGM_KATALOG . 'includes/admin-skrzynka.php';
 	require_once SEGM_KATALOG . 'includes/admin-powitanie.php';
 	require_once SEGM_KATALOG . 'includes/filtry.php';
+	require_once SEGM_KATALOG . 'includes/konfiguracja.php';
 }
 
 /**
@@ -316,6 +317,7 @@ function segm_ustawienia() {
 	$domyslne = array(
 		'usun_dane'        => 0,
 		'ai_limit_dzienny' => 100,
+		'ai_model'         => '',
 	);
 	$zapisane = get_option( 'segm_ustawienia', array() );
 	if ( ! is_array( $zapisane ) ) {

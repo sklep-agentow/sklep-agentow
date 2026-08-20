@@ -144,6 +144,7 @@ całą historię przy każdym wejściu.
 | `chatl_wersja_schematu` | numer schematu, obecnie `4` | tak (domyślnie) | przy aktywacji i przy migracji schematu |
 | `chatl_klucz_api` | klucz API właściciela | **nie** (`add_option(..., '', false)`) | przy zapisaniu klucza w panelu |
 | `chatl_blad_maila` | `['kiedy' => data, 'adres' => e-mail]` | **nie** | gdy `wp_mail()` zwróci `false`; kasowana przy pierwszej udanej wysyłce |
+| `chatl_blad_ai` | `['kiedy' => data, 'kod' => HTTP, 'tresc' => fragment]` | **nie** | gdy wywołanie API nie zwróci 200; kasowana przy pierwszym udanym wywołaniu |
 | `chatl_blad_nonce` | `['ostatni' => data, 'ile' => liczba]` | **nie** | gdy gościowi odbije się zabezpieczenie formularza; kasowana przyciskiem w panelu |
 
 Klucz API jest bez autoloadu celowo: nie wchodzi do zapytania ładowanego na każdej odsłonie
@@ -334,6 +335,7 @@ Obie zarejestrowane w wariancie `wp_ajax_` i `wp_ajax_nopriv_`, bo gość czatu 
 | `chatl_eksport_zgloszen` | `chatl_post_eksport_zgloszen` | `chatl_eksport_zgloszen` |
 | `chatl_eksport_rozmow` | `chatl_post_eksport_rozmow` | `chatl_eksport_rozmow` |
 | `chatl_powitanie_zamknij` | `chatl_post_powitanie_zamknij` | `chatl_powitanie_zamknij` |
+| `chatl_test_klucza` | `chatl_post_test_klucza` | `chatl_test_klucza` |
 | `chatl_nonce_zamknij` | `chatl_post_nonce_zamknij` | `chatl_nonce_zamknij` |
 
 Nonce operacji na pojedynczym wierszu zawiera jego `id` — nonce od cudzego wiersza nie przejdzie.
@@ -574,7 +576,51 @@ i wraca do bazy Q&A.
 
 ---
 
-## 14. Adres IP gościa a proxy
+## 14. Sygnał, gdy tryb AI przestaje działać
+
+Przed 1.4.2 nieudane wywołanie API szło **wyłącznie** do logu przez
+`wp_trigger_error()`. Na produkcji `WP_DEBUG_LOG` jest wyłączony, więc zły albo
+wygasły klucz oznaczał, że bot po cichu odpowiada tylko z reguł — w nieskończoność.
+Właściciel płacił za tryb AI, którego nie ma, i **nie miał jak tego zauważyć**.
+
+| Element | Gdzie | Co robi |
+|---|---|---|
+| `chatl_odnotuj_blad_ai()` | `includes/ai.php` | stawia znacznik `chatl_blad_ai` (czas, kod HTTP, przycięty do 300 znaków fragment odpowiedzi) przy każdym nieudanym wywołaniu |
+| `chatl_odnotuj_sukces_ai()` | `includes/ai.php` | zdejmuje znacznik po pierwszym udanym wywołaniu — **tylko gdy znacznik istnieje**, żeby udane pytanie gościa nie kończyło się zapisem do bazy |
+| `chatl_notice_bledu_ai()` | `includes/admin.php` | czerwony pasek w panelu: kiedy, kod HTTP, co to znaczy i co zrobić |
+| `chatl_ai_test_klucza()` | `includes/ai.php` | jedno **tanie** wywołanie na żądanie właściciela |
+| `chatl_post_test_klucza()` | `includes/admin.php` | akcja `admin-post` za przyciskiem „Przetestuj klucz" |
+
+Wzorzec jest ten sam co przy nieudanym powiadomieniu mailowym
+(`chatl_odnotuj_wysylke_powiadomienia()`): znacznik stawiany przy porażce,
+zdejmowany przy pierwszym sukcesie.
+
+**HTTP 200 to jeszcze nie sukces.** Ciało odpowiedzi bywa nie do odczytania:
+proxy albo brama zgodności podmieniła treść, hosting dokleił swój HTML, model
+zwrócił bloki bez tekstu. Dla właściciela skutek jest **identyczny jak przy złym
+kluczu** — płaci za tryb AI, a bot odpowiada z reguł — więc te ścieżki zostawiają
+ślad tak samo. Panel rozpoznaje ten przypadek po kodzie `200` w znaczniku i daje
+inną radę niż przy odrzuconym kluczu: połączenie i uwierzytelnienie zadziałały,
+popsuła się treść.
+
+Żeby ta klasa błędu nie wróciła, **wszystkie** ścieżki zjazdu do reguł przechodzą
+przez jedną funkcję `chatl_ai_niepowodzenie()`, a bramka pilnuje, że w
+`chatl_ai_odpowiedz()` nie ma ani jednego gołego `return null`. Odmowa modelu
+(`stop_reason: refusal`) **nie** jest awarią — to poprawne „nie wiem" plus zbiórka
+kontaktu, więc znacznika nie stawia.
+
+**Test klucza celowo nie używa `chatl_ai_instrukcja()`.** Tamta wkłada do żądania
+całą aktywną bazę Q&A i opis firmy, więc „sprawdzenie klucza" kosztowałoby tyle,
+co prawdziwe pytanie gościa. Test wysyła jedno słowo z `max_tokens = 1`
+i nie rusza dziennego licznika (`chatl_ai_zuzyj()` woła wyłącznie
+`chatl_ai_odpowiedz()`). Sprawdza klucz, dostępność API i nazwę modelu —
+nie jakość odpowiedzi.
+
+Komunikaty rozróżniają przyczyny, bo prowadzą do różnych działań: `401`/`403`
+to zły lub wygasły klucz, `404` to nieznana nazwa modelu, `429` to limit
+u dostawcy (klucz działa), błąd połączenia to problem z siecią hostingu.
+
+## 15. Adres IP gościa a proxy
 
 Limit „na IP" liczony z samego `REMOTE_ADDR` mierzy adres **proxy**. Strona za
 Cloudflare albo za proxy hostingu widzi jeden adres dla wszystkich gości — wtedy
@@ -595,7 +641,7 @@ włączyć i czym to grozi.
 Każdy odczyt przechodzi przez `filter_var( …, FILTER_VALIDATE_IP )`: nagłówek ze
 śmieciem nie może wyłączyć limitu ani stworzyć własnego kubła, więc przy złej
 wartości schodzimy do `REMOTE_ADDR`.
-## 15. Zabezpieczenie formularza a cache strony
+## 16. Zabezpieczenie formularza a cache strony
 
 Nonce wchodzi do HTML-a strony przez `wp_localize_script()`, a wtyczka albo usługa
 cache (LiteSpeed, WP Rocket, W3TC, Cloudflare) potrafi serwować ten HTML **dłużej,
@@ -633,7 +679,7 @@ sukcesem.
 
 ---
 
-## 16. Eksport CSV
+## 17. Eksport CSV
 
 Ręczny, przyciskiem w panelu — `includes/csv.php`. Dwa strumienie: wszystkie zgłoszenia
 (`id, data, email, wiadomosc, status, sesja`) i historia rozmów (`sesja, data, kto, silnik, tresc`),
@@ -649,7 +695,7 @@ kłóciłoby się z obietnicą retencji.
 
 ---
 
-## 17. Znane granice
+## 18. Znane granice
 
 Rzeczy, których wtyczka **nie** robi — żeby nikt nie szukał ich w kodzie:
 
@@ -674,6 +720,8 @@ Rzeczy, których wtyczka **nie** robi — żeby nikt nie szukał ich w kodzie:
 - **Kontrast jest liczony i pokazywany, ale nie blokuje zapisu.** Właściciel może
   świadomie zapisać zestaw poniżej progu WCAG — dostaje wtedy czerwony komunikat,
   a nie odmowę. Domyślne „dobierz automatycznie" pilnuje progu za niego.
+- **Znacznik awarii AI pamięta tylko OSTATNIE nieudane wywołanie**, nie prowadzi
+  historii błędów. To sygnał „coś jest nie tak teraz", a nie dziennik diagnostyczny.
 - **Zaufanie nagłówkom proxy jest decyzją właściciela, nie automatem.** Wtyczka
   nie zgaduje, czy strona stoi za Cloudflare — przy wyłączonym przełączniku limity
   są co najwyżej surowsze, przy włączonym na stronie bez proxy dałyby się obejść.
