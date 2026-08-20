@@ -116,7 +116,12 @@ jest zawsze lepsze niż wymyślony cytat.
 ## KLASY Z NASZYCH WŁASNYCH AUDYTÓW (destylat 2026-08-21, dwa poprzednie zlecenia)
 Powyższe siedem klas to rzeczy, które wytknął **oceniający**. Poniższe trzy to rzeczy,
 które znalazł **nasz własny audyt** — czyli błędy, które popełniamy przy budowie.
-Do briefingu weszły TYLKO te, które wystąpiły co najmniej dwa razy. Źródło z dowodami:
+Do briefingu weszły klasy z DWÓCH różnych koszyków, z różnym progiem — i to jest
+świadome: **klasy 8-10 to błędy w produkcie** i wchodzą tylko z co najmniej dwoma
+wystąpieniami, bo jednorazowa wpadka w kodzie to przypadek. **Klasa 11 to co innego:
+wada NASZEGO SPRAWDZANIA** (bramka o nazwie szerszej niż zakres), i tu próg wynosi
+JEDNO wystąpienie, bo taka wada przepuszcza dowolną liczbę błędów naraz — u nas
+przepuściła cztery nieprawdziwe zdania przy zielonym CI. Źródło z dowodami:
 `audyt/boty/SLEPE-PLAMY-NASZEGO-AUDYTU.md` (ten sam destylat, w repo).
 
 8. **Naprawa trafia w JEDEN egzemplarz wzorca, bliźniak zostaje zepsuty.**
