@@ -2,7 +2,7 @@
 /**
  * Silnik regułowy: proste dopasowanie podłańcuchów po wariantach słów kluczowych.
  * Odmiany łapane przez warianty wpisane ręcznie („cena, ceny, cennik") —
- * automatyczny stemming = droga rozbudowy PO egzaminie (recenzja PR #27).
+ * automatyczny stemming to droga rozbudowy, nie brak w tej wersji.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {

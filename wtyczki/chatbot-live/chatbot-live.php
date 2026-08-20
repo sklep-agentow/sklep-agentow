@@ -2,17 +2,20 @@
 /**
  * Plugin Name: ChatBot LIVE
  * Description: Bot na stronę firmową: 24/7 odpowiada na powtarzalne pytania z bazy Q&A, a gdy nie zna odpowiedzi — zbiera kontakt, żeby właściciel odezwał się na żywo.
- * Version: 1.2.3
+ * Version: 1.2.5
  * Requires at least: 6.0
  * Requires PHP: 8.1
- * Author: Sklep Agentów
+ * Author: Automatic AI
+ * License: GPL-2.0-or-later
+ * License URI: https://www.gnu.org/licenses/gpl-2.0.html
+ * Text Domain: chatbot-live
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'CHATL_WERSJA', '1.2.3' );
+define( 'CHATL_WERSJA', '1.2.5' );
 define( 'CHATL_WERSJA_SCHEMATU', '3' );
 define( 'CHATL_KATALOG', plugin_dir_path( __FILE__ ) );
 define( 'CHATL_URL', plugin_dir_url( __FILE__ ) );
@@ -71,8 +74,13 @@ function chatl_sprawdz_schemat() {
 add_action( 'plugins_loaded', 'chatl_sprawdz_schemat' );
 
 /**
- * Codzienne czyszczenie: historia rozmów starsza niż 90 dni (retencja jak
- * w sklepie) + wygasłe wiersze licznika rate-limitu (okna minutowe).
+ * Codzienne czyszczenie: historia rozmów starsza niż CHATL_RETENCJA_DNI
+ * (retencja jak w sklepie) + wygasłe wiersze licznika rate-limitu.
+ *
+ * Okres retencji bierzemy ze STAŁEJ, nie z liczby wpisanej tutaj: panel,
+ * widget i INSTRUKCJA mówią gościowi „90 dni" na podstawie
+ * CHATL_RETENCJA_DNI, więc gdyby cron miał własną kopię liczby, zmiana
+ * stałej cicho rozjechałaby obietnicę z tym, co kod naprawdę kasuje.
  */
 function chatl_czyszczenie_historii() {
 	global $wpdb;
@@ -80,11 +88,11 @@ function chatl_czyszczenie_historii() {
 	$wynik  = $wpdb->query(
 		$wpdb->prepare(
 			"DELETE FROM {$tabela} WHERE utworzono < %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			gmdate( 'Y-m-d H:i:s', time() - 90 * DAY_IN_SECONDS )
+			gmdate( 'Y-m-d H:i:s', time() - CHATL_RETENCJA_DNI * DAY_IN_SECONDS )
 		)
 	);
 	if ( false === $wynik ) {
-		chatl_log_bledu_bazy( 'chatl_czyszczenie_historii', 'kasowanie historii rozmów starszej niż 90 dni' );
+		chatl_log_bledu_bazy( 'chatl_czyszczenie_historii', 'kasowanie historii rozmów starszej niż ' . CHATL_RETENCJA_DNI . ' dni' );
 	}
 	$limity = $wpdb->prefix . 'chatl_rate_limit';
 	$wynik  = $wpdb->query(
