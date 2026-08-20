@@ -106,6 +106,14 @@ w WordPressie — jeśli nie działa, skonfiguruj wtyczkę SMTP u swojego hostin
 Nie — sesja czatu żyje w karcie przeglądarki gościa. Historia rozmów jest
 zapisywana po stronie serwera (90 dni) do wglądu właściciela.
 
+**Chcę zachować rozmowy dłużej niż 90 dni.**
+Na liście zgłoszeń i w historii rozmów jest przycisk **„Pobierz CSV"** — plik
+zapisuje się na Twoim komputerze i od tej chwili to Ty za niego odpowiadasz.
+Wtyczka **nie** robi takiej kopii sama przed kasowaniem: gdyby robiła, zdanie
+„kasujemy po 90 dniach" przestałoby być prawdą — dane byłyby tylko przenoszone
+gdzie indziej. Plik ma BOM UTF-8, więc polskie znaki otwierają się poprawnie
+także w Excelu.
+
 **Co się stanie z danymi po odinstalowaniu?**
 Klucz API zapisany w panelu jest kasowany przy KAŻDYM odinstalowaniu (wtyczka
 nie zostawia Twojego sekretu w bazie; po ponownej instalacji wpisz go na nowo).

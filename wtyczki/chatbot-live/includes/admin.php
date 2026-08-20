@@ -293,6 +293,8 @@ function chatl_strona_zgloszenia() {
 		<h1>Zgłoszenia z czatu</h1>
 		<?php chatl_komunikat_ok(); ?>
 		<p>Goście, którym bot nie odpowiedział (albo którzy od razu chcieli kontaktu) — <strong>do odpisania na żywo</strong>.</p>
+		<p><a class="button" href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=chatl_eksport_zgloszen' ), 'chatl_eksport_zgloszen' ) ); ?>">Pobierz CSV (wszystkie zgłoszenia)</a>
+			<span class="description">Kopia dla Ciebie — bot jej nigdzie nie wysyła i nie robi jej sam z siebie.</span></p>
 		<table class="widefat striped">
 			<thead><tr><th>#</th><th>Data</th><th>E-mail gościa</th><th>Wiadomość</th><th>Status</th><th>Akcje</th></tr></thead>
 			<tbody>
@@ -382,7 +384,8 @@ function chatl_strona_historia() {
 		?>
 		<div class="wrap">
 			<h1>Rozmowa <code><?php echo esc_html( $sesja ); ?></code></h1>
-			<p><a href="<?php echo esc_url( admin_url( 'admin.php?page=chatl-historia' ) ); ?>">← wróć do listy rozmów</a></p>
+			<p><a href="<?php echo esc_url( admin_url( 'admin.php?page=chatl-historia' ) ); ?>">← wróć do listy rozmów</a> |
+				<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=chatl_eksport_rozmow&sesja=' . rawurlencode( $sesja ) ), 'chatl_eksport_rozmow' ) ); ?>">Pobierz CSV tej rozmowy</a></p>
 			<table class="widefat striped">
 				<thead><tr><th>Czas</th><th>Kto</th><th>Treść</th></tr></thead>
 				<tbody>
@@ -404,7 +407,9 @@ function chatl_strona_historia() {
 	?>
 	<div class="wrap">
 		<h1>Historia rozmów</h1>
-		<p>Zapis wymian bot↔gość (ostatnie 100 rozmów). Historia starsza niż <strong>90 dni</strong> jest czyszczona automatycznie.</p>
+		<p>Zapis wymian bot↔gość (ostatnie 100 rozmów). Historia starsza niż <strong><?php echo (int) CHATL_RETENCJA_DNI; ?> dni</strong> jest czyszczona automatycznie.</p>
+		<p><a class="button" href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=chatl_eksport_rozmow' ), 'chatl_eksport_rozmow' ) ); ?>">Pobierz CSV (cała historia)</a>
+			<span class="description">Chcesz zachować rozmowy dłużej niż <?php echo (int) CHATL_RETENCJA_DNI; ?> dni? Pobierz je sam, zanim zostaną skasowane — wtyczka <strong>nie</strong> robi kopii automatycznie, bo wtedy „kasujemy po <?php echo (int) CHATL_RETENCJA_DNI; ?> dniach" przestałoby być prawdą.</span></p>
 		<table class="widefat striped">
 			<thead><tr><th>Sesja</th><th>Wymian</th><th>Początek</th><th>Ostatnia aktywność</th><th></th></tr></thead>
 			<tbody>
