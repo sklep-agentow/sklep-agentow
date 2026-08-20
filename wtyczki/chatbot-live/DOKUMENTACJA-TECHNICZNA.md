@@ -1,6 +1,6 @@
 # ChatBot LIVE — dokumentacja techniczna
 
-Wersja wtyczki: **1.4.8** · schemat bazy: **4** · licencja: **GPL-2.0-or-later**
+Wersja wtyczki: **1.4.8** · schemat bazy: **5** · licencja: **GPL-2.0-or-later**
 
 Dokument opisuje **kod, który jest**, nie plan. Każda liczba i nazwa poniżej ma pokrycie
 w źródle — przy każdej podano plik i symbol, żeby dało się to sprawdzić `grep`-em, a nie
@@ -141,7 +141,7 @@ całą historię przy każdym wejściu.
 | Opcja | Zawartość | Autoload | Kiedy powstaje |
 |---|---|---|---|
 | `chatl_ustawienia` | tablica ustawień (patrz niżej) | tak (domyślnie) | przy pierwszym zapisie ustawień — **nie** przy aktywacji |
-| `chatl_wersja_schematu` | numer schematu, obecnie `4` | tak (domyślnie) | przy aktywacji i przy migracji schematu |
+| `chatl_wersja_schematu` | numer schematu, obecnie `5` | tak (domyślnie) | przy aktywacji i przy migracji schematu |
 | `chatl_klucz_api` | klucz API właściciela | **nie** (`add_option(..., '', false)`) | przy zapisaniu klucza w panelu |
 | `chatl_blad_maila` | `['kiedy' => data, 'adres' => e-mail]` | **nie** | gdy `wp_mail()` zwróci `false`; kasowana przy pierwszej udanej wysyłce |
 | `chatl_blad_ai` | `['kiedy' => data, 'kod' => HTTP, 'tresc' => fragment]` | **nie** | gdy wywołanie API nie zwróci 200; kasowana przy pierwszym udanym wywołaniu |
@@ -176,7 +176,8 @@ więc **brakujący klucz nigdy nie jest błędem** — nowe pole dostaje wartoś
 | `powiadomienia` | `1` | Czy w ogóle wysyłać ten mail. |
 | `usun_dane` | `0` | Przełącznik ścieżki deinstalacji (rozdział 6). |
 | `ai_informacje` | `''` | Opis firmy wstrzykiwany do instrukcji systemowej modelu. |
-| `ai_limit_dzienny` | `100` | Globalny dobowy limit wywołań AI. Zapis ograniczany do zakresu 1–100000. |
+| `ai_limit_dzienny` | `100` | Globalny dobowy limit **wywołań** AI. Zapis ograniczany do zakresu 1–100000. |
+| `ai_limit_tokenow` | `200000` | Globalny dobowy limit **tokenów płatnych** — drugi stop-loss. `0` = wyłączony. |
 | `kolor_glowny` | `#bfff38` | Bąbelek, dymki bota, przyciski, obwódka fokusu. Wartość spoza `#rrggbb` jest odrzucana i wraca domyślna. |
 | `kolor_naglowka` | `#08090b` | Pasek z tytułem okna czatu i paski formularza kontaktu. |
 | `kolor_tekstu` | `auto` | `auto` = wtyczka dobiera kolor tekstu osobno dla bąbelka i dla nagłówka, biorąc ten o lepszym kontraście. Wartość `#rrggbb` = ten sam kolor na obu. |
@@ -194,7 +195,7 @@ Wszystkie liczby, którymi wtyczka się rządzi, są stałymi — nie ma ich roz
 | Stała | Wartość | Plik | Do czego |
 |---|---|---|---|
 | `CHATL_WERSJA` | `1.4.8` | `chatbot-live.php` | wersja wtyczki; służy też jako `?ver=` assetów (przeglądarka nie poda starego pliku po aktualizacji) |
-| `CHATL_WERSJA_SCHEMATU` | `4` | `chatbot-live.php` | wyzwalacz migracji schematu |
+| `CHATL_WERSJA_SCHEMATU` | `5` | `chatbot-live.php` | wyzwalacz migracji schematu |
 | `CHATL_KATALOG`, `CHATL_URL` | ścieżka i adres wtyczki | `chatbot-live.php` | `require` i adresy assetów |
 | `CHATL_MAX_PYTANIE` | `500` | `includes/front.php` | maksymalna długość pytania gościa (nadmiar jest **przycinany**, nie odrzucany) |
 | `CHATL_MAX_WIADOMOSC` | `2000` | `includes/front.php` | maksymalna długość treści zgłoszenia (jw.) |
@@ -207,6 +208,7 @@ Wszystkie liczby, którymi wtyczka się rządzi, są stałymi — nie ma ich roz
 | `CHATL_AI_MAX_TOKENS` | `1024` | `includes/ai.php` | limit długości odpowiedzi modelu |
 | `CHATL_AI_TIMEOUT` | `9` | `includes/ai.php` | timeout jednego wywołania w sekundach; z jednym ponowieniem daje maks. 18 s, z zapasem pod typowy limit 30 s na hostingu |
 | `CHATL_AI_BRAK` | `BRAK_ODPOWIEDZI` | `includes/ai.php` | sentinel „model nie wie" — sygnał do zbiórki kontaktu zamiast zgadywania |
+| `CHATL_AI_CACHE_PROG_ZNAKOW` | `16384` | `includes/ai.php` | od tylu znaków instrukcji dokładamy `cache_control`; poniżej progu dostawcy cache **po cichu nie działa** |
 | `CHATL_CSV_PORCJA` | `500` | `includes/csv.php` | ile wierszy naraz czyta eksport, żeby nie wciągać całej tabeli do pamięci |
 | `CHATL_LUKI_LIMIT` | `2000` | `includes/statystyki.php` | sufit pytań bez odpowiedzi wciąganych do grupowania; przekroczenie jest **wypisane na stronie**, nie przemilczane |
 | `CHATL_LUKI_POKAZ` | `25` | `includes/statystyki.php` | ile tematów luk pokazuje tabela (reszta jest policzona, tylko niewypisana) |
@@ -664,7 +666,14 @@ modelu, a te bywają wycofywane — wtedy **każda sprzedana kopia traci tryb AI
 naraz**, a jedyną drogą naprawy jest ręczna wysyłka zipa mailem, bo nie mamy
 serwera aktualizacji.
 
-Zastrzeżenie (uwaga recenzenta do PR #81): **alias bez daty to konwencja dostawcy,
+**Sprawdzone u dostawcy 2026-08-20** (uwaga krytyczna recenzenta do PR #81,
+zamknięta dowodem, nie dyskusją): jedno wywołanie API na każdy identyfikator —
+`claude-haiku-4-5` odpowiedział **HTTP 200**, a w polu `model` odpowiedzi zwrócił
+`claude-haiku-4-5-20251001`; identyfikator z datą zachował się tak samo. Nazwa bez
+daty jest więc **prawdziwym aliasem, który serwer sam rozwija** do bieżącej migawki
+— dokładnie to, na czym opiera się ta sekcja. Wartość domyślna zostaje bez zmian.
+
+Zastrzeżenie: **alias bez daty to konwencja dostawcy,
 nie gwarancja** — nie każdy model musi go mieć, a wtyczka nie ma jak sprawdzić
 listy identyfikatorów w locie. Dlatego pole „własny model" przyjmuje dowolną
 nazwę, a panel i FAQ mówią: użyj nazwy bez daty **jeśli dostawca taką podaje**.
@@ -715,7 +724,87 @@ tak jak reszta widgetu.
 Formularz kontaktu **zachowuje** swoją własną, pełniejszą informację (co, po co,
 jak długo) razem z wymaganym checkboxem zgody — tam zbierany jest adres e-mail,
 więc wymóg jest mocniejszy niż przy samej rozmowie.
-## 18. Sygnał „bot pisze"
+
+## 18. Tokeny i koszt trybu AI
+
+Rachunek u dostawcy modelu idzie z **tokenów**, nie z liczby wywołań. Instrukcja
+systemowa (`chatl_ai_instrukcja()`) wkłada do żądania **całą aktywną bazę Q&A**
+i opis firmy przy **każdym** pytaniu, więc klient z 200 parami płaci wielokrotność
+klienta z 10 parami przy tym samym „limicie 100 wywołań na dobę". Do 1.4.6
+w panelu nie było ani jednej liczby o koszcie.
+
+### 18.1. Co zapisujemy
+
+Tabela `chatl_ai_uzycie` ma cztery liczniki tokenów obok licznika wywołań.
+Nazwy pól odpowiadają polu `usage` odpowiedzi Messages API:
+
+| Kolumna | Pole `usage` |
+|---|---|
+| `tokeny_wejscia` | `input_tokens` |
+| `tokeny_wyjscia` | `output_tokens` |
+| `tokeny_cache_zapis` | `cache_creation_input_tokens` |
+| `tokeny_cache_odczyt` | `cache_read_input_tokens` |
+
+Inkrement idzie jednym atomowym `INSERT … ON DUPLICATE KEY UPDATE`, razem
+z licznikiem wywołań.
+
+**Liczymy po kodzie 200, a nie po udanej odpowiedzi** (uwaga recenzenta do PR #83).
+Kod 200 znaczy, że dostawca wywołanie **wykonał i policzył** — rachunek przychodzi
+niezależnie od tego, czy treść da się użyć. Naliczanie dopiero przy gotowym tekście
+zostawiało trzy ścieżki, które kosztowały właściciela, a były niewidoczne dla
+**obu** stop-lossów naraz:
+
+| Ścieżka | Co się dzieje | Zużycie | Znacznik awarii |
+|---|---|---|---|
+| odmowa modelu (`stop_reason: refusal`) | gość dostaje odpowiedź z reguł | **liczone** (tokeny z `usage`) | **nie** — to poprawne działanie produktu (§14) |
+| bloki bez tekstu (pusto po `trim()`) | zjazd do reguł | **liczone** | tak |
+| ciało nie do odczytania przy 200 | zjazd do reguł | **samo wywołanie**, tokenów nie ma skąd wziąć | tak |
+
+Naliczanie stoi **w jednym miejscu, przed rozgałęzieniem** na te przypadki — ten
+sam zabieg co `chatl_ai_niepowodzenie()` z §14: dopisanie kolejnego wyjścia
+z funkcji nie może już zgubić kosztu przez przeoczenie. Bramka zgodności pilnuje
+obu warunków (jedno wywołanie `chatl_ai_zuzyj()`, i to przed rozgałęzieniem).
+
+**Tokeny płatne** (`chatl_ai_tokeny_dzis()`) to suma wejścia, wyjścia i zapisu do
+cache. Odczyt z cache trzymamy **osobno**, bo jest wielokrotnie tańszy — wrzucenie
+go do jednej sumy zawyżałoby obraz kosztu i przedwcześnie wyłączałoby tryb AI.
+
+### 18.2. Drugi stop-loss
+
+`chatl_ai_dostepny()` sprawdza teraz trzy rzeczy: klucz, dobowy limit **wywołań**
+i dobowy limit **tokenów** (`ai_limit_tokenow`, domyślnie 200 000; `0` = wyłączony).
+Po wyczerpaniu któregokolwiek bot do północy odpowiada z reguł — tak samo jak
+wcześniej po wyczerpaniu limitu wywołań, więc dla gościa nic się nie zmienia.
+
+Wartość domyślna to mniej więcej tyle, ile zużyje 100 wywołań (domyślny limit
+wywołań) przy typowej bazie Q&A małej firmy. Zaczyna więc gryźć dopiero wtedy,
+gdy **pojedyncze** wywołanie jest nienormalnie drogie — czyli dokładnie
+w przypadku, którego limit wywołań w ogóle nie widzi.
+
+### 18.3. Cache instrukcji — warunkowo, nie na ślepo
+
+`system` jest wysyłane jako **tablica bloków** (wymóg API dla cache), a
+`cache_control: {"type":"ephemeral"}` dokładamy **tylko** gdy instrukcja ma co
+najmniej `CHATL_AI_CACHE_PROG_ZNAKOW` znaków.
+
+Powód jest twardy: dostawca włącza cache instrukcji dopiero od **4096 tokenów**
+dla modelu domyślnego, a poniżej progu `cache_control` jest **po cichu ignorowane**
+— bez błędu i bez sygnału. Typowa baza Q&A małej firmy jest krótsza, więc **cache
+nie jest tu ratunkiem na koszt**; ratunkiem jest limit tokenów i pokazanie zużycia.
+
+Liczymy **znaki**, nie tokeny, bo policzenie tokenów wymagałoby osobnego wywołania
+API przy każdym pytaniu. Przelicznik 4 znaki na token jest **zaniżony celowo**
+(polski tekst to bliżej 3 znaków na token), więc 16 384 znaki to na pewno więcej
+niż 4096 tokenów. Wolimy nie włączyć cache tam, gdzie by zadziałał, niż włączyć
+go tam, gdzie po cichu nie działa.
+
+### 18.4. Gdzie to widać
+
+Strona **Statystyki i luki** pokazuje zużycie tokenów w wybranym okresie
+(`chatl_statystyki_tokenow()`), a **Ustawienia** — zużycie dzisiejsze obok pola
+limitu. Wtyczka **nie podaje kwot**: cennik dostawcy się zmienia, a ona nie ma jak
+go odświeżyć — wpisana kwota zestarzałaby się w paczce u klienta.
+## 19. Sygnał „bot pisze"
 
 Tryb AI ma timeout `CHATL_AI_TIMEOUT` sekund **plus jedno ponowienie**, czyli do
 18 sekund ciszy. Do 1.4.8 pole i przycisk nie były blokowane i nie było żadnego
@@ -743,7 +832,7 @@ WCAG 2.3.3) kropki zostają widoczne i przestają tylko skakać.
 
 ---
 
-## 19. Zabezpieczenie formularza a cache strony
+## 20. Zabezpieczenie formularza a cache strony
 
 Nonce wchodzi do HTML-a strony przez `wp_localize_script()`, a wtyczka albo usługa
 cache (LiteSpeed, WP Rocket, W3TC, Cloudflare) potrafi serwować ten HTML **dłużej,
@@ -781,7 +870,7 @@ sukcesem.
 
 ---
 
-## 20. Eksport CSV
+## 21. Eksport CSV
 
 Ręczny, przyciskiem w panelu — `includes/csv.php`. Dwa strumienie: wszystkie zgłoszenia
 (`id, data, email, wiadomosc, status, sesja`) i historia rozmów (`sesja, data, kto, silnik, tresc`),
@@ -797,7 +886,7 @@ kłóciłoby się z obietnicą retencji.
 
 ---
 
-## 21. Znane granice
+## 22. Znane granice
 
 Rzeczy, których wtyczka **nie** robi — żeby nikt nie szukał ich w kodzie:
 
@@ -829,6 +918,10 @@ Rzeczy, których wtyczka **nie** robi — żeby nikt nie szukał ich w kodzie:
   są co najwyżej surowsze, przy włączonym na stronie bez proxy dałyby się obejść.
 - **Wtyczka nie sprawdza, czy wpisany model istnieje.** Lista w ustawieniach to
   podpowiedź, nie walidacja — nieznaną nazwę wykryje dopiero API (HTTP 404).
+- **Wtyczka nie przelicza tokenów na pieniądze.** Pokazuje zużycie; stawki
+  sprawdzasz u dostawcy. Cennik się zmienia, a paczka u klienta nie.
+- **Liczniki tokenów zaczynają się od aktualizacji do 1.4.6** — wcześniejsze
+  wywołania nie zostawiły tej informacji i nie są zgadywane wstecz.
 - **Retencja obejmuje tylko historię rozmów.** Zgłoszenia (a więc adresy e-mail gości) zostają,
   aż właściciel je skasuje. Jeśli polityka prywatności obiecuje termin także dla nich,
   trzeba je kasować ręcznie albo eksportem i usunięciem.

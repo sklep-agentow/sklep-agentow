@@ -31,6 +31,19 @@ const CHATL_AI_MAX_TOKENS = 1024;
 const CHATL_AI_TIMEOUT    = 9;
 const CHATL_AI_BRAK       = 'BRAK_ODPOWIEDZI';
 
+/*
+ * Prog dlugosci instrukcji systemowej, od ktorego wlaczamy jej cache po stronie
+ * API. Dostawca wlacza cache dopiero od 4096 tokenow instrukcji dla modelu
+ * domyslnego; ponizej progu cache po cichu NIE dziala — bez bledu, bez sygnalu.
+ *
+ * Liczymy ZNAKI, nie tokeny, bo policzenie tokenow wymagaloby osobnego wywolania
+ * API przy kazdym pytaniu. Przelicznik 4 znaki na token jest tu ZANIZONY celowo
+ * (polski tekst to blizej 3 znakow na token), wiec 16384 znaki to na pewno
+ * wiecej niz 4096 tokenow. Wolimy nie wlaczyc cache tam, gdzie by zadzialal,
+ * niz wlaczyc go tam, gdzie po cichu nie dziala.
+ */
+const CHATL_AI_CACHE_PROG_ZNAKOW = 16384;
+
 /**
  * Czy klucz jest podany stałą CHATL_KLUCZ_API w wp-config.php.
  *
@@ -80,41 +93,140 @@ function chatl_zapisz_klucz( $klucz ) {
  * Ile wywołań AI poszło dzisiaj (licznik stop-loss z tabeli wtyczki).
  */
 function chatl_ai_uzycie_dzis() {
+	$dzis = chatl_ai_zuzycie_dnia();
+	return (int) $dzis['wywolania'];
+}
+
+/**
+ * Całe dzisiejsze zużycie: wywołania i wszystkie cztery liczniki tokenów.
+ *
+ * @param string $dzien Data `Y-m-d`; pusty = dzisiaj (czas strony).
+ * @return array wywolania, tokeny_wejscia, tokeny_wyjscia, tokeny_cache_zapis,
+ *               tokeny_cache_odczyt — zawsze komplet kluczy, zawsze int.
+ */
+function chatl_ai_zuzycie_dnia( $dzien = '' ) {
 	global $wpdb;
+	$dzien  = '' !== $dzien ? $dzien : current_time( 'Y-m-d' );
 	$tabela = $wpdb->prefix . 'chatl_ai_uzycie';
-	return (int) $wpdb->get_var(
-		$wpdb->prepare( "SELECT wywolania FROM {$tabela} WHERE dzien = %s", current_time( 'Y-m-d' ) ) // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	$w      = $wpdb->get_row(
+		$wpdb->prepare( "SELECT * FROM {$tabela} WHERE dzien = %s", $dzien ), // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		ARRAY_A
+	);
+	$puste  = array(
+		'wywolania'           => 0,
+		'tokeny_wejscia'      => 0,
+		'tokeny_wyjscia'      => 0,
+		'tokeny_cache_zapis'  => 0,
+		'tokeny_cache_odczyt' => 0,
+	);
+	if ( ! is_array( $w ) ) {
+		return $puste;
+	}
+	foreach ( $puste as $klucz => $_ ) {
+		$puste[ $klucz ] = isset( $w[ $klucz ] ) ? (int) $w[ $klucz ] : 0;
+	}
+	return $puste;
+}
+
+/**
+ * Ile tokenów PŁATNYCH poszło dzisiaj.
+ *
+ * Sumujemy wejście, wyjście i zapis do cache; odczyt z cache liczymy osobno,
+ * bo jest wielokrotnie tańszy i wrzucenie go do jednego worka zawyżałoby
+ * obraz kosztu. To ta liczba jest porównywana z dobowym limitem tokenów.
+ *
+ * @return int
+ */
+function chatl_ai_tokeny_dzis() {
+	$d = chatl_ai_zuzycie_dnia();
+	return $d['tokeny_wejscia'] + $d['tokeny_wyjscia'] + $d['tokeny_cache_zapis'];
+}
+
+/**
+ * Wyciąga liczniki z pola `usage` odpowiedzi API.
+ *
+ * Nazwy pól są z dokumentacji Messages API: input_tokens, output_tokens,
+ * cache_creation_input_tokens, cache_read_input_tokens.
+ *
+ * @param array $dane Zdekodowana odpowiedź API.
+ * @return array Cztery liczniki (int).
+ */
+function chatl_ai_usage( $dane ) {
+	$u = isset( $dane['usage'] ) && is_array( $dane['usage'] ) ? $dane['usage'] : array();
+	return array(
+		'tokeny_wejscia'      => isset( $u['input_tokens'] ) ? (int) $u['input_tokens'] : 0,
+		'tokeny_wyjscia'      => isset( $u['output_tokens'] ) ? (int) $u['output_tokens'] : 0,
+		'tokeny_cache_zapis'  => isset( $u['cache_creation_input_tokens'] ) ? (int) $u['cache_creation_input_tokens'] : 0,
+		'tokeny_cache_odczyt' => isset( $u['cache_read_input_tokens'] ) ? (int) $u['cache_read_input_tokens'] : 0,
 	);
 }
 
 /**
- * Zalicz jedno udane wywołanie (atomowo; wołane PO sukcesie API).
+ * Zalicz jedno udane wywołanie wraz z tokenami (atomowo; wołane PO sukcesie).
+ *
+ * @param array $usage Wynik chatl_ai_usage(); brak = same wywołania.
+ * @return void
  */
-function chatl_ai_zuzyj() {
+function chatl_ai_zuzyj( $usage = array() ) {
 	global $wpdb;
 	$tabela = $wpdb->prefix . 'chatl_ai_uzycie';
+	$we     = isset( $usage['tokeny_wejscia'] ) ? (int) $usage['tokeny_wejscia'] : 0;
+	$wy     = isset( $usage['tokeny_wyjscia'] ) ? (int) $usage['tokeny_wyjscia'] : 0;
+	$cz     = isset( $usage['tokeny_cache_zapis'] ) ? (int) $usage['tokeny_cache_zapis'] : 0;
+	$co     = isset( $usage['tokeny_cache_odczyt'] ) ? (int) $usage['tokeny_cache_odczyt'] : 0;
+
 	// Padnięty inkrement = stop-loss przestaje liczyć, a rachunek za API rośnie
 	// dalej. Ślad w logu jest tu jedynym sygnałem (gość nie może tego zobaczyć).
+	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- nazwa tabeli z $wpdb->prefix, wszystkie wartości przez prepare().
 	$wynik = $wpdb->query(
 		$wpdb->prepare(
-			"INSERT INTO {$tabela} (dzien, wywolania) VALUES (%s, 1) ON DUPLICATE KEY UPDATE wywolania = wywolania + 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			current_time( 'Y-m-d' )
+			"INSERT INTO {$tabela} (dzien, wywolania, tokeny_wejscia, tokeny_wyjscia, tokeny_cache_zapis, tokeny_cache_odczyt)
+			VALUES (%s, 1, %d, %d, %d, %d)
+			ON DUPLICATE KEY UPDATE
+				wywolania = wywolania + 1,
+				tokeny_wejscia = tokeny_wejscia + %d,
+				tokeny_wyjscia = tokeny_wyjscia + %d,
+				tokeny_cache_zapis = tokeny_cache_zapis + %d,
+				tokeny_cache_odczyt = tokeny_cache_odczyt + %d",
+			current_time( 'Y-m-d' ),
+			$we,
+			$wy,
+			$cz,
+			$co,
+			$we,
+			$wy,
+			$cz,
+			$co
 		)
 	);
+	// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 	if ( false === $wynik ) {
-		chatl_log_bledu_bazy( 'chatl_ai_zuzyj', 'inkrement dziennego licznika wywołań AI (stop-loss nie liczy)' );
+		chatl_log_bledu_bazy( 'chatl_ai_zuzyj', 'inkrement dziennego licznika wywołań i tokenów AI (stop-loss nie liczy)' );
 	}
 }
 
 /**
- * Czy tryb AI jest teraz dostępny (jest klucz + dzienny limit niewyczerpany).
+ * Czy tryb AI jest teraz dostępny.
+ *
+ * Trzy warunki: jest klucz, nie wyczerpano dobowego limitu WYWOŁAŃ i nie
+ * wyczerpano dobowego limitu TOKENÓW. Drugi limit istnieje, bo rachunek
+ * u dostawcy idzie z tokenów: przy dużej bazie Q&A jedno wywołanie potrafi
+ * kosztować wielokrotność innego, a licznik wywołań tego w ogóle nie widzi.
+ * Limit tokenów równy 0 znaczy „wyłączony".
  */
 function chatl_ai_dostepny() {
 	if ( '' === chatl_klucz_api() ) {
 		return false;
 	}
 	$ust = chatl_ustawienia();
-	return chatl_ai_uzycie_dzis() < (int) $ust['ai_limit_dzienny'];
+	if ( chatl_ai_uzycie_dzis() >= (int) $ust['ai_limit_dzienny'] ) {
+		return false;
+	}
+	$limit_tokenow = isset( $ust['ai_limit_tokenow'] ) ? (int) $ust['ai_limit_tokenow'] : 0;
+	if ( $limit_tokenow > 0 && chatl_ai_tokeny_dzis() >= $limit_tokenow ) {
+		return false;
+	}
+	return true;
 }
 
 /**
@@ -143,6 +255,29 @@ function chatl_ai_instrukcja() {
 }
 
 /**
+ * Instrukcja systemowa jako blok żądania — z cache TYLKO wtedy, gdy zadziała.
+ *
+ * Dostawca włącza cache instrukcji dopiero od pewnej jej długości; poniżej progu
+ * `cache_control` jest **po cichu ignorowane** — bez błędu i bez sygnału. Dlatego
+ * dokładamy je warunkowo: przy typowej bazie Q&A małej firmy instrukcja jest
+ * krótsza niż próg, więc cache nie jest tu ratunkiem na koszt (ratunkiem jest
+ * limit tokenów i pokazanie zużycia). Przy dużej bazie — zaczyna się opłacać.
+ *
+ * @param string $instrukcja Treść instrukcji systemowej.
+ * @return array Tablica bloków `system` dla Messages API.
+ */
+function chatl_ai_blok_systemowy( $instrukcja ) {
+	$blok = array(
+		'type' => 'text',
+		'text' => $instrukcja,
+	);
+	if ( mb_strlen( $instrukcja ) >= CHATL_AI_CACHE_PROG_ZNAKOW ) {
+		$blok['cache_control'] = array( 'type' => 'ephemeral' );
+	}
+	return array( $blok );
+}
+
+/**
  * Jedno wywołanie Claude API (Messages API przez wp_remote_post).
  *
  * @return array|WP_Error Odpowiedź wp_remote_post.
@@ -165,7 +300,7 @@ function chatl_ai_zapytaj( $pytanie ) {
 				array(
 					'model'      => $model,
 					'max_tokens' => CHATL_AI_MAX_TOKENS,
-					'system'     => chatl_ai_instrukcja(),
+					'system'     => chatl_ai_blok_systemowy( chatl_ai_instrukcja() ),
 					'messages'   => array(
 						array(
 							'role'    => 'user',
@@ -411,10 +546,28 @@ function chatl_ai_odpowiedz( $pytanie ) {
 	 * z reguł — więc ślad musi zostać tak samo.
 	 */
 	$dane = json_decode( wp_remote_retrieve_body( $odp ), true );
+
+	/*
+	 * Zuzycie zapisujemy TU, w jednym miejscu, zanim rozgalezimy sie na
+	 * przypadki (uwaga recenzenta do PR #83). Kod 200 znaczy, ze dostawca
+	 * wywolanie WYKONAL i je POLICZYL — rachunek przyszedl niezaleznie od tego,
+	 * czy tresc da sie uzyc, czy model odmowil, czy bloki wyszly puste.
+	 * Naliczanie dopiero przy udanej odpowiedzi zostawialo trzy sciezki, ktore
+	 * kosztowaly wlasciciela, a byly niewidoczne dla OBU stop-lossow naraz —
+	 * i to w PR, ktory jest wlasnie o liczeniu kosztu.
+	 *
+	 * Przy ciele nie do odczytania tokenow nie ma skad wziac (pole `usage`
+	 * poszlo razem z reszta odpowiedzi), wiec liczymy samo wywolanie: lepiej
+	 * niedoszacowac tokeny, niz zgubic caly wpis.
+	 */
+	chatl_ai_zuzyj( chatl_ai_usage( is_array( $dane ) ? $dane : array() ) );
+
 	if ( ! is_array( $dane ) || empty( $dane['content'] ) || ! is_array( $dane['content'] ) ) {
 		return chatl_ai_niepowodzenie( $odp, $kod );
 	}
 	if ( isset( $dane['stop_reason'] ) && 'refusal' === $dane['stop_reason'] ) {
+		// Odmowa modelu to poprawne dzialanie produktu, wiec znacznika awarii
+		// NIE stawiamy (granica z PR #79) — ale zuzycie jest juz zaliczone wyzej.
 		return CHATL_AI_BRAK;
 	}
 
@@ -431,8 +584,8 @@ function chatl_ai_odpowiedz( $pytanie ) {
 		return chatl_ai_niepowodzenie( $odp, $kod );
 	}
 
-	// Licznik stop-loss dopiero PO udanym wywołaniu.
-	chatl_ai_zuzyj();
+	// Zuzycie zaliczone wyzej, dla KAZDEJ sciezki po kodzie 200 — tutaj zostaje
+	// juz tylko zdjecie znacznika awarii.
 	chatl_odnotuj_sukces_ai();
 
 	return $tekst;
