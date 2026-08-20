@@ -57,13 +57,14 @@ leży w pliku `LICENSE` w katalogu wtyczki i wchodzi do paczki produktowej.
 
 | Plik | Linii | Za co odpowiada |
 |---|---|---|
-| `segregator-maila.php` | 325 | nagłówek wtyczki, stałe, ładowanie plików, cron retencji, znacznik „operacja w toku", zgoda na AI, ustawienia ogólne |
+| `segregator-maila.php` | 327 | nagłówek wtyczki, stałe, ładowanie plików, cron retencji, znacznik „operacja w toku", zgoda na AI, ustawienia ogólne |
 | `uninstall.php` | 85 | deinstalacja — dwie ścieżki (§11.5) |
 | `includes/instalator.php` | 268 | `dbDelta` dla 7 tabel, aktywacja, deaktywacja, seed demo (5 kategorii, 8 reguł, 30 maili) |
 | `includes/silnik.php` | 248 | `segm_klasyfikuj_mail()` — jedyna reguła dopasowania w całej wtyczce; przebieg na próbce |
 | `includes/csv.php` | 352 | import próbki z CSV (wykrywanie kodowania, limity) i eksport raportu do CSV |
-| `includes/ai.php` | 294 | opcjonalna klasyfikacja modelem, licznik stop-loss |
-| `includes/admin.php` | 1130 | panel: przebiegi i raporty, reguły, kategorie, próbka, ustawienia, baner powitalny |
+| `includes/ai.php` | 366 | opcjonalna klasyfikacja modelem, licznik stop-loss |
+| `includes/admin.php` | 1161 | panel: przebiegi i raporty, reguły, kategorie, próbka, ustawienia, baner powitalny |
+| `includes/konfiguracja.php` | 360 | eksport i import własnej konfiguracji (kategorie + reguły) w JSON-ie |
 | `includes/filtry.php` | 588 | eksport reguł do filtrów Gmaila (XML) i reguł Outlooka |
 | `includes/class-segm-imap.php` | 947 | **klient IMAP4rev1 w czystym PHP** — gniazdo, TLS, protokół |
 | `includes/skrzynka.php` | 504 | konfiguracja skrzynki, hasło, diagnostyka, „Sprawdź połączenie", rozbiór nagłówków i treści |
@@ -84,7 +85,7 @@ Poza kodem w paczce jadą: `LICENSE` (pełny tekst GPL-2.0), `readme.txt`
   Powód jest konkretny: zadanie cykliczne WP-Cron odpala się z `wp-cron.php`, gdzie
   `is_admin()` jest fałszem. Bez tego cron wywracałby się na „nie ma takiej funkcji".
 - **tylko w panelu** (`is_admin()`): `csv.php`, `admin.php`, `admin-probka.php`,
-  `admin-skrzynka.php`, `admin-powitanie.php`, `filtry.php`.
+  `admin-skrzynka.php`, `admin-powitanie.php`, `filtry.php`, `konfiguracja.php`.
 
 Front strony nie dostaje **żadnego** kodu wtyczki poza definicjami funkcji — Segregator
 nie ma widoku publicznego, skrótów ani zasobów wpinanych w stronę.
@@ -127,7 +128,7 @@ pasuje albo folder docelowy = źródłowy) · `blad` · `cofniety`.
 
 | Nazwa | Zawartość | Autoload |
 |---|---|---|
-| `segm_ustawienia` | `usun_dane` (domyślnie `0`), `ai_limit_dzienny` (domyślnie `100`) | tak |
+| `segm_ustawienia` | `usun_dane` (domyślnie `0`), `ai_limit_dzienny` (domyślnie `100`), `ai_model` (domyślnie puste = stała wtyczki) | tak |
 | `segm_skrzynka` | konfiguracja IMAP **bez hasła** (§9.1) | tak |
 | `segm_imap_haslo` | **hasło aplikacji do skrzynki** | **nie** (`add_option( ..., '', false )`) |
 | `segm_klucz_api` | klucz API dostawcy modelu | **nie** |
@@ -194,12 +195,17 @@ więc deinstalacja kasuje go zapytaniem `LIKE` po `wp_options` (razem z wierszam
 | `SEGM_SKRZ_TRESC_BAJTOW` | `4096` | `skrzynka.php` | ile bajtów treści maila pobieramy do dopasowania reguł |
 | `SEGM_SKRZ_LIMIT_CZASU` | `20` | `skrzynka.php` | twardy limit czasu jednego przebiegu na skrzynce (s) |
 | `SEGM_SKRZ_LIMIT_GNIAZDA` | `15` | `skrzynka.php` | limit czasu pojedynczej operacji sieciowej (s) |
-| `SEGM_AI_MODEL` | `claude-haiku-4-5-20251001` | `ai.php` | model domyślny (filtr `segm_ai_model`) |
+| `SEGM_AI_MODEL` | `claude-haiku-4-5-20251001` | `ai.php` | model **domyślny**; nadpisuje go ustawienie `ai_model`, a na końcu filtr `segm_ai_model` |
+| `SEGM_AI_MODEL_WZORZEC` | `/^[a-z0-9][a-z0-9._-]{2,63}$/` | `ai.php` | dopuszczalny kształt nazwy modelu |
 | `SEGM_AI_TIMEOUT` | `9` | `ai.php` | limit czasu wywołania API (s), jeden retry |
 | `SEGM_AI_PARTIA` | `30` | `ai.php` | ile maili w jednym wywołaniu |
 | `SEGM_AI_MAX_WYWOLAN_PRZEBIEG` | `1` | `ai.php` | ile wywołań na przebieg |
 | `SEGM_AI_MAX_PROBKA` | `30` (`PARTIA × WYWOLAN`) | `ai.php` | twardy limit próbki dla trybu AI |
 | `SEGM_FILTRY_STRONA` | `segm-filtry` | `filtry.php` | slug strony eksportu filtrów |
+| `SEGM_KONFIG_FORMAT` | `1` | `konfiguracja.php` | wersja formatu pliku konfiguracji |
+| `SEGM_KONFIG_MAX_BAJTOW` | `524288` (512 kB) | `konfiguracja.php` | limit wielkości wczytywanego pliku |
+| `SEGM_KONFIG_MAX_WPISOW` | `500` | `konfiguracja.php` | limit liczby kategorii i reguł z pliku |
+| `SEGM_KONFIG_MAX_WZORZEC` | `2000` | `konfiguracja.php` | limit długości wzorca z pliku |
 
 Stałe klasy `Segm_Imap`: `KONIEC` (`\r\n`), `DZIENNIK_LINII` (`120`),
 `DZIENNIK_ZNAKOW` (`300`).
@@ -225,7 +231,7 @@ Sprawdzalne jednym grepem — patrz kontrola D w skrypcie zgodności.
 | `segm-filtry` | Eksport filtrów | `filtry.php` |
 | `segm-powitanie` | ekran powitalny — **zdjęty z menu**, wchodzi się z przekierowania | `admin-powitanie.php` |
 
-### 7.2. Uchwyty `admin-post` — 26 sztuk
+### 7.2. Uchwyty `admin-post` — 28 sztuk
 
 Każdy z nich, **bez wyjątku**, sprawdza dwie rzeczy osobno:
 `current_user_can( 'manage_options' )` **oraz** `check_admin_referer( ... )`.
@@ -248,6 +254,8 @@ formularza", uprawnienie mówi „ta osoba ma prawo to zrobić".
 | `segm_zgoda_zapisz`, `segm_zgoda_cofnij` | zgoda na wysyłkę próbki do AI |
 | `segm_baner_ukryj` | chowa baner powitalny |
 | `segm_eksport_filtrow` | pobranie pliku filtrów Gmaila / reguł Outlooka |
+| `segm_konfig_eksport` | pobranie WŁASNEJ konfiguracji (kategorie + reguły) w JSON-ie |
+| `segm_konfig_import` | wczytanie konfiguracji z pliku — **zastępuje reguły** |
 | `segm_skrzynka_zapisz` | zapis konfiguracji IMAP i hasła |
 | `segm_skrzynka_test` | „Sprawdź połączenie" |
 | `segm_skrzynka_tryb` | przełączenie na sucho / realnie |
@@ -332,6 +340,32 @@ różnice. Nie ruszy bez zapisanej zgody `segm_zgoda_ai`, a przy próbce większ
 zamiast urwać się w połowie na limicie czasu żądania.
 
 ---
+
+### 8.2. Przeprowadzka: eksport i import własnej konfiguracji
+
+`konfiguracja.php` wywozi **kategorie i reguły** do pliku JSON i wczytuje je
+z powrotem. To co innego niż eksport filtrów Gmaila: tamten jest jednokierunkowy
+i świadomie stratny, ten wraca do Segregatora w całości.
+
+Reguły wiążemy z kategorią **po nazwie, nie po identyfikatorze** — na drugiej
+instalacji te same kategorie mają inne `id`, więc wywiezienie `id` dałoby po
+imporcie reguły kierujące w nicość. Kategoria wymieniona przez regułę, a
+nieobecna na liście, jest **dokładana**, zamiast po cichu wyrzucać regułę.
+
+Wczytanie **zastępuje wszystkie reguły**, a kategorie tylko **uzupełnia** —
+istniejąca kategoria nie znika, bo mogą do niej kierować raporty i foldery
+na skrzynce.
+
+⛔ **Czego plik NIE zawiera i dlaczego**: hasła do skrzynki i klucza API
+(poświadczenia nie jeżdżą w pliku, który ląduje w katalogu pobranych),
+próbki maili ani historii (to cudza korespondencja objęta retencją — wywożenie
+jej plikiem obchodziłoby tę retencję), zapisanych zgód (decyzja na jednej
+instalacji nie jest decyzją na drugiej; po imporcie trzeba je podjąć od nowa).
+
+Plik przychodzi z zewnątrz, więc jest traktowany jak dane od nieznajomego:
+sprawdzany znacznik wtyczki i wersja formatu, limit wielkości pliku, limit
+liczby wpisów, sanityzacja i przycięcie każdej wartości, odrzucenie reguł
+z nieznanym polem.
 
 ## 9. Przepływ B — segregacja na PRAWDZIWEJ SKRZYNCE
 
@@ -467,6 +501,26 @@ Wtyczka wykrywa `LOGINDISABLED` przed próbą logowania i tłumaczy po polsku ob
 przyczyny. Gmail (`imap.gmail.com:993`) działa z hasłem aplikacji.
 
 ---
+
+### 10.1. Wybór modelu AI
+
+Model bierze się z trzech miejsc, w tej kolejności ważności:
+
+1. **filtr `segm_ai_model`** — nakłada się na wszystko, ostatnie słowo należy do
+   programisty (np. własne proxy),
+2. **ustawienie `ai_model`** z panelu (Ustawienia → Model AI): lista podpowiedzi
+   albo własna nazwa wpisana ręcznie,
+3. **stała `SEGM_AI_MODEL`**, gdy ustawienie jest puste.
+
+Nazwa musi pasować do `SEGM_AI_MODEL_WZORZEC`; nazwa z literówką (spacja,
+znaczniki, za krótka) jest **odrzucana z zachowaniem poprzedniej**, żeby pomyłka
+w formularzu nie wyłączyła po cichu trybu AI przy następnym przebiegu.
+
+⚠️ Wtyczka **nie sprawdza, czy model istnieje** — tego nie da się wiedzieć bez
+zapytania dostawcy, a lista modeli zmienia się szybciej niż wtyczka. Zła nazwa
+kończy się błędem API, a wtedy przebieg zjeżdża do trybu regułowego i mówi
+o tym w raporcie. Lista w panelu to **podpowiedzi**, nie gwarancja dostępności
+na koncie właściciela.
 
 ## 11. Cykl życia
 
