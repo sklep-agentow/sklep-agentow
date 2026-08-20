@@ -1,6 +1,6 @@
 # ChatBot LIVE — dokumentacja techniczna
 
-Wersja wtyczki: **1.2.4** · schemat bazy: **3**
+Wersja wtyczki: **1.2.5** · schemat bazy: **3** · licencja: **GPL-2.0-or-later**
 
 Dokument opisuje **kod, który jest**, nie plan. Każda liczba i nazwa poniżej ma pokrycie
 w źródle — przy każdej podano plik i symbol, żeby dało się to sprawdzić `grep`-em, a nie
@@ -19,6 +19,7 @@ diagram przepływu — w `DIAGRAM-PRZEPLYWU.svg`.
 | Rozszerzenia PHP | `mbstring` (`mb_strtolower`, `mb_strpos`, `mb_substr`, `mb_strlen`) | `silnik.php`, `front.php` |
 | Połączenie wychodzące | **tylko w trybie AI**: HTTPS do `api.anthropic.com` | `chatl_ai_zapytaj()` |
 | Uprawnienia w panelu | `manage_options` | `chatl_admin_menu()` i każdy handler `admin_post_*` |
+| Licencja | GPL-2.0-or-later | nagłówek `License` + plik `LICENSE` |
 
 Wtyczka **nie wymaga** Composera, npm, cron systemowego ani żadnej biblioteki zewnętrznej.
 Front ładuje wyłącznie własne `assets/widget.css` i `assets/widget.js`.
@@ -33,6 +34,16 @@ Front ładuje wyłącznie własne `assets/widget.css` i `assets/widget.js`.
 
 ---
 
+### Licencja
+
+Wtyczka jest wydana na **GPL-2.0-or-later**. Pełny tekst licencji leży w pliku `LICENSE`
+w katalogu wtyczki; nagłówek deklaruje `License` i `License URI`.
+
+To nie jest wybór stylistyczny: kod wtyczki korzysta z API WordPressa, więc jest dziełem
+pochodnym i dziedziczy licencję rdzenia. **Nie stoi to na przeszkodzie sprzedaży** — GPL
+reguluje warunki, na jakich kupujący dostaje kod (m.in. prawo do modyfikacji i dalszej
+dystrybucji), a nie to, czy wolno pobrać zapłatę. Na tym stoi cały rynek płatnych wtyczek WP.
+
 ## 2. Pliki
 
 | Plik | Rola | Kiedy ładowany |
@@ -45,6 +56,8 @@ Front ładuje wyłącznie własne `assets/widget.css` i `assets/widget.js`.
 | `includes/admin.php` | menu, CRUD Q&A, zgłoszenia, historia, ustawienia, test bota w panelu | tylko `is_admin()` |
 | `includes/csv.php` | ręczny eksport zgłoszeń i rozmów do CSV | tylko `is_admin()` |
 | `uninstall.php` | obie ścieżki deinstalacji | tylko przy odinstalowaniu (`WP_UNINSTALL_PLUGIN`) |
+| `LICENSE` | pełny tekst GNU GPL v2 (339 linii) | — |
+| `INSTRUKCJA.md`, `DOKUMENTACJA-TECHNICZNA.md`, `DIAGRAM-PRZEPLYWU.svg` | dokumentacja w paczce | — |
 | `assets/widget.js`, `assets/widget.css` | widget czatu na froncie | front, gdy bot włączony |
 
 `admin.php` i `csv.php` są w bloku `if ( is_admin() )` w `chatbot-live.php` — front nie ładuje
@@ -149,7 +162,7 @@ Wszystkie liczby, którymi wtyczka się rządzi, są stałymi — nie ma ich roz
 
 | Stała | Wartość | Plik | Do czego |
 |---|---|---|---|
-| `CHATL_WERSJA` | `1.2.4` | `chatbot-live.php` | wersja wtyczki; służy też jako `?ver=` assetów (przeglądarka nie poda starego pliku po aktualizacji) |
+| `CHATL_WERSJA` | `1.2.5` | `chatbot-live.php` | wersja wtyczki; służy też jako `?ver=` assetów (przeglądarka nie poda starego pliku po aktualizacji) |
 | `CHATL_WERSJA_SCHEMATU` | `3` | `chatbot-live.php` | wyzwalacz migracji schematu |
 | `CHATL_KATALOG`, `CHATL_URL` | ścieżka i adres wtyczki | `chatbot-live.php` | `require` i adresy assetów |
 | `CHATL_MAX_PYTANIE` | `500` | `includes/front.php` | maksymalna długość pytania gościa (nadmiar jest **przycinany**, nie odrzucany) |
@@ -238,8 +251,9 @@ Czego **żadna** ścieżka nie rusza: stałej `CHATL_KLUCZ_API` w `wp-config.php
 modyfikuje plików konfiguracyjnych) i zdarzenia cron — to zdejmuje deaktywacja, która
 w normalnym przebiegu WordPressa poprzedza odinstalowanie.
 
-Weryfikacja na żywym stacku (pełny cykl, `audyt/boty/DOWODY-DEKLARACJI.md`): różnica stanu
-tabel, opcji i cronów przed instalacją i po odinstalowaniu ze ścieżką B — **pusta**.
+Zweryfikowane na działającej instalacji (pełny cykl instalacja → deinstalacja → instalacja):
+różnica stanu tabel, opcji i zdarzeń cron przed instalacją i po odinstalowaniu ze ścieżką B —
+**pusta**.
 
 ---
 

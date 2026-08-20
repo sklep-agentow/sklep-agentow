@@ -24,11 +24,37 @@ spr() { # spr "opis" "oczekiwane" "polecenie"
 }
 
 echo "=== A. Wersja i schemat ==="
-spr "naglowek Version"            "1.2.4" "grep -oP '(?<=^ \* Version: ).*' $W/chatbot-live.php"
-spr "stala CHATL_WERSJA"          "1.2.4" "grep -oP \"(?<=CHATL_WERSJA', ')[^']*\" $W/chatbot-live.php"
+spr "naglowek Version"            "1.2.5" "grep -oP '(?<=^ \* Version: ).*' $W/chatbot-live.php"
+spr "stala CHATL_WERSJA"          "1.2.5" "grep -oP \"(?<=CHATL_WERSJA', ')[^']*\" $W/chatbot-live.php"
 spr "CHATL_WERSJA_SCHEMATU"       "3"     "grep -oP \"(?<=CHATL_WERSJA_SCHEMATU', ')[^']*\" $W/chatbot-live.php"
 spr "Requires at least"           "6.0"   "grep -oP '(?<=^ \* Requires at least: ).*' $W/chatbot-live.php"
 spr "Requires PHP"                "8.1"   "grep -oP '(?<=^ \* Requires PHP: ).*' $W/chatbot-live.php"
+spr "naglowek Author"             "Automatic AI" "grep -oP '(?<=^ \* Author: ).*' $W/chatbot-live.php"
+spr "naglowek License"            "GPL-2.0-or-later" "grep -oP '(?<=^ \* License: ).*' $W/chatbot-live.php"
+spr "naglowek License URI"        "https://www.gnu.org/licenses/gpl-2.0.html" "grep -oP '(?<=^ \* License URI: ).*' $W/chatbot-live.php"
+spr "naglowek Text Domain"        "chatbot-live" "grep -oP '(?<=^ \* Text Domain: ).*' $W/chatbot-live.php"
+
+echo
+echo "=== A2. Plik LICENSE (pelny GPL-2.0, wziety z rdzenia WordPressa) ==="
+spr "LICENSE istnieje"            "1"  "test -f $W/LICENSE && echo 1 || echo 0"
+spr "zaczyna sie naglowkiem GPL"  "1"  "head -1 $W/LICENSE | grep -c 'GNU GENERAL PUBLIC LICENSE'"
+spr "wersja 2, June 1991"         "1"  "head -2 $W/LICENSE | grep -c 'Version 2, June 1991'"
+spr "ma sekcje warunkow"          "1"  "grep -c 'TERMS AND CONDITIONS FOR COPYING' $W/LICENSE"
+spr "ma sekcje NO WARRANTY"       "1"  "grep -c '^ *NO WARRANTY' $W/LICENSE"
+spr "konczy sie na tresci GPL"    "1"  "tail -1 $W/LICENSE | grep -c 'Public License instead of this License.'"
+spr "bez naglowka WRITTEN OFFER"  "0"  "grep -c '^WRITTEN OFFER$' $W/LICENSE"
+spr "bez wzmianek o WordPressie"  "0"  "grep -ci 'wordpress' $W/LICENSE"
+
+echo
+echo "=== A3. Paczka produktowa ==="
+spr "LICENSE na liscie plikow paczki" "1" "grep -c 'chatbot-live/LICENSE' boty/buduj-paczki.sh"
+spr "csv.php na liscie plikow paczki" "1" "grep -c 'chatbot-live/includes/csv.php' boty/buduj-paczki.sh"
+spr "plikow chatbota w allowliscie"   "14" "sed -n '/^ALLOWLIST_CHATBOT=(/,/^)/p' boty/buduj-paczki.sh | grep -c '\"chatbot-live/'"
+spr "allowlista = zawartosc katalogu" "0"  "cd wtyczki && find chatbot-live -type f | sort | comm -23 - <(sed -n '/^ALLOWLIST_CHATBOT=(/,/^)/p' ../boty/buduj-paczki.sh | grep -oP '(?<=\")chatbot-live/[^\"]*' | sort) | wc -l"
+# Klasa, ktora tu wyszla: includes/csv.php byl wymagany przez require_once, ale
+# NIE bylo go na liscie plikow paczki. Zip bez tego pliku = fatal w wp-admin
+# u klienta. Kazdy plik z require_once MUSI byc w allowliscie.
+spr "kazdy require_once jest w paczce" "0" "grep -oP \"(?<=require_once CHATL_KATALOG \\. ')[^']*\" $W/chatbot-live.php | sed 's|^|chatbot-live/|' | sort -u | comm -23 - <(sed -n '/^ALLOWLIST_CHATBOT=(/,/^)/p' boty/buduj-paczki.sh | grep -oP '(?<=\")chatbot-live/[^\"]*' | sort) | wc -l"
 
 echo
 echo "=== B. Stale liczbowe (dokumentacja cytuje te wartosci) ==="
