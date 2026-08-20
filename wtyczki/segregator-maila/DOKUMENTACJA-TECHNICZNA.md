@@ -58,12 +58,12 @@ leży w pliku `LICENSE` w katalogu wtyczki i wchodzi do paczki produktowej.
 | Plik | Linii | Za co odpowiada |
 |---|---|---|
 | `segregator-maila.php` | 324 | nagłówek wtyczki, stałe, ładowanie plików, cron retencji, znacznik „operacja w toku", zgoda na AI, ustawienia ogólne |
-| `uninstall.php` | 82 | deinstalacja — dwie ścieżki (§11.5) |
+| `uninstall.php` | 86 | deinstalacja — dwie ścieżki (§11.5) |
 | `includes/instalator.php` | 268 | `dbDelta` dla 7 tabel, aktywacja, deaktywacja, seed demo (5 kategorii, 8 reguł, 30 maili) |
 | `includes/silnik.php` | 226 | `segm_klasyfikuj_mail()` — jedyna reguła dopasowania w całej wtyczce; przebieg na próbce |
 | `includes/csv.php` | 352 | import próbki z CSV (wykrywanie kodowania, limity) i eksport raportu do CSV |
-| `includes/ai.php` | 294 | opcjonalna klasyfikacja modelem, licznik stop-loss |
-| `includes/admin.php` | 1091 | panel: przebiegi i raporty, reguły, kategorie, próbka, ustawienia, baner powitalny |
+| `includes/ai.php` | 465 | opcjonalna klasyfikacja modelem, licznik stop-loss |
+| `includes/admin.php` | 1173 | panel: przebiegi i raporty, reguły, kategorie, próbka, ustawienia, baner powitalny |
 | `includes/filtry.php` | 588 | eksport reguł do filtrów Gmaila (XML) i reguł Outlooka |
 | `includes/class-segm-imap.php` | 947 | **klient IMAP4rev1 w czystym PHP** — gniazdo, TLS, protokół |
 | `includes/skrzynka.php` | 504 | konfiguracja skrzynki, hasło, diagnostyka, „Sprawdź połączenie", rozbiór nagłówków i treści |
@@ -129,7 +129,8 @@ pasuje albo folder docelowy = źródłowy) · `blad` · `cofniety`.
 | `segm_ustawienia` | `usun_dane` (domyślnie `0`), `ai_limit_dzienny` (domyślnie `100`) | tak |
 | `segm_skrzynka` | konfiguracja IMAP **bez hasła** (§9.1) | tak |
 | `segm_imap_haslo` | **hasło aplikacji do skrzynki** | **nie** (`add_option( ..., '', false )`) |
-| `segm_klucz_api` | klucz API dostawcy modelu | **nie** |
+| `segm_klucz_api` | klucz API dostawcy modelu (stała `SEGM_KLUCZ_API` ma pierwszeństwo) | **nie** |
+| `segm_blad_ai` | ostatni błąd trybu AI: kiedy, kod HTTP, odpowiedź dostawcy, model | **nie** |
 | `segm_zgoda_ai` | `kiedy` + `kto` — zgoda na wysyłkę próbki do AI | tak |
 | `segm_zgoda_przenoszenie` | `kiedy` + `kto` — zgoda na realne przenoszenie wiadomości | tak |
 | `segm_operacja_w_toku` | znacznik „coś trwa" z terminem ważności | **nie** |
@@ -185,7 +186,9 @@ więc deinstalacja kasuje go zapytaniem `LIKE` po `wp_options` (razem z wierszam
 | `SEGM_IMPORT_MAX_BAJTOW` | `5242880` (5 MB) | `csv.php` | limit rozmiaru pliku |
 | `SEGM_MAX_POLE` | `2000` | `csv.php` | limit długości pojedynczego pola |
 | `SEGM_PROBKA_KODOWANIA` | `65536` | `csv.php` | ile bajtów bada wykrywanie kodowania |
-| `SEGM_STALA_HASLA` | `SEGM_IMAP_HASLO` | `skrzynka.php` | nazwa stałej z `wp-config.php` mającej pierwszeństwo nad bazą |
+| `SEGM_STALA_HASLA` | `SEGM_IMAP_HASLO` | `skrzynka.php` | nazwa stałej z `wp-config.php` mającej pierwszeństwo nad bazą (hasło do skrzynki) |
+| `SEGM_STALA_KLUCZA` | `SEGM_KLUCZ_API` | `ai.php` | to samo dla klucza API dostawcy modelu |
+| `SEGM_OPCJA_BLAD_AI` | `segm_blad_ai` | `ai.php` | opcja z ostatnim błędem trybu AI |
 | `SEGM_SKRZ_TRESC_BAJTOW` | `4096` | `skrzynka.php` | ile bajtów treści maila pobieramy do dopasowania reguł |
 | `SEGM_SKRZ_LIMIT_CZASU` | `20` | `skrzynka.php` | twardy limit czasu jednego przebiegu na skrzynce (s) |
 | `SEGM_SKRZ_LIMIT_GNIAZDA` | `15` | `skrzynka.php` | limit czasu pojedynczej operacji sieciowej (s) |
@@ -220,7 +223,7 @@ Sprawdzalne jednym grepem — patrz kontrola D w skrypcie zgodności.
 | `segm-filtry` | Eksport filtrów | `filtry.php` |
 | `segm-powitanie` | ekran powitalny — **zdjęty z menu**, wchodzi się z przekierowania | `admin-powitanie.php` |
 
-### 7.2. Uchwyty `admin-post` — 23 sztuki
+### 7.2. Uchwyty `admin-post` — 24 sztuki
 
 Każdy z nich, **bez wyjątku**, sprawdza dwie rzeczy osobno:
 `current_user_can( 'manage_options' )` **oraz** `check_admin_referer( ... )`.
@@ -238,6 +241,7 @@ formularza", uprawnienie mówi „ta osoba ma prawo to zrobić".
 | `segm_kategoria_zapisz`, `segm_kategoria_usun` | edycja kategorii |
 | `segm_ustawienia_zapisz` | ustawienia ogólne i klucz API |
 | `segm_zgoda_zapisz`, `segm_zgoda_cofnij` | zgoda na wysyłkę próbki do AI |
+| `segm_test_klucza` | „Przetestuj klucz API” — jedno wywołanie ze słowem „ping” |
 | `segm_baner_ukryj` | chowa baner powitalny |
 | `segm_eksport_filtrow` | pobranie pliku filtrów Gmaila / reguł Outlooka |
 | `segm_skrzynka_zapisz` | zapis konfiguracji IMAP i hasła |
@@ -434,6 +438,35 @@ Wtyczka wykrywa `LOGINDISABLED` przed próbą logowania i tłumaczy po polsku ob
 przyczyny. Gmail (`imap.gmail.com:993`) działa z hasłem aplikacji.
 
 ---
+
+### 10.1. Klucz API i sygnał o jego odrzuceniu
+
+**Gdzie mieszka klucz.** Stała `SEGM_KLUCZ_API` w `wp-config.php` ma
+**pierwszeństwo** nad opcją w bazie — dokładnie jak `CHATL_KLUCZ_API`
+w ChatBocie i `SEGM_IMAP_HASLO` przy skrzynce. Gdy stała jest ustawiona, pole
+w panelu jest zablokowane, a `segm_zapisz_klucz()` wychodzi bez zapisu: wpis
+w formularzu nie może po cichu wygrać ze stałą wbrew deklaracji w panelu.
+Kupujący oba boty ma dostać JEDNĄ klasę ochrony sekretu, a nie dwie różne
+zależnie od tego, którego bota otworzy.
+
+**Dlaczego cichy zjazd do reguł to za mało.** Przy błędzie API przebieg
+zjeżdża do trybu regułowego i kończy się wynikiem, nie ekranem błędu — i tak
+ma zostać. Ale cisza nie może trwać w nieskończoność: bez sygnału wtyczka
+miesiącami „działa w trybie AI”, licząc wyłącznie regułami, bo dostawca odrzuca
+każde żądanie. Dlatego każde nieudane wywołanie zapisuje opcję `segm_blad_ai`
+(kiedy, kod HTTP, odpowiedź dostawcy, model), a ta zapala **pasek na każdej
+stronie wtyczki**. Pasek gaśnie **sam** przy pierwszym udanym wywołaniu —
+nie trzeba go zamykać.
+
+Kod HTTP jest tłumaczony na zdanie po polsku (`segm_opis_bledu_ai()`), bo samo
+„401” nie jest informacją dla właściciela. Opisy rozdzielają przyczyny po jego
+stronie (odrzucony klucz, zła nazwa modelu, brak uprawnień) od awarii
+u dostawcy — żeby nie szukał błędu u siebie, gdy go tam nie ma.
+
+**„Przetestuj klucz API”** (Ustawienia) wysyła JEDNO wywołanie ze słowem
+„ping”. ⛔ Żadnego maila, żadnej treści z próbki — to test poświadczeń, nie
+klasyfikacja, więc nie wymaga zgody na wysyłkę próbki do AI i celowo jej nie
+sprawdza.
 
 ## 11. Cykl życia
 

@@ -89,6 +89,24 @@ do prawdziwej skrzynki. Zbiera zmiany scalone do gałęzi głównej po 1.2.1.
   ogłasza `LOGINDISABLED`). Wtyczka wykrywa to i mówi wprost.
 - Cofnąć da się wyłącznie ostatni przebieg, nie dowolny wcześniejszy.
 
+## [Niewydane]
+
+### Dodane
+
+- **„Przetestuj klucz API”** w Ustawieniach — jedno wywołanie ze słowem „ping”,
+  bez ani jednego maila z próbki, z komunikatem po polsku, co dokładnie odrzucił
+  dostawca.
+- **Pasek „tryb AI nie działa”** na stronach wtyczki. Przebieg przy błędzie API
+  nadal zjeżdża do reguł i kończy się wynikiem, ale właściciel dowiaduje się,
+  że od jakiegoś czasu liczą u niego same reguły. Pasek gaśnie sam po pierwszym
+  udanym wywołaniu.
+
+### Bezpieczeństwo
+
+- **Klucz API można trzymać poza bazą**: stała `SEGM_KLUCZ_API` w `wp-config.php`
+  ma pierwszeństwo nad opcją, a panel jej nie nadpisuje. Dotąd klucz Segregatora
+  wychodził z każdą kopią zapasową bazy, choć ChatBot miał tę ochronę od dawna.
+
 ## [1.2.1] — 2026-08-19
 
 ### Naprawione

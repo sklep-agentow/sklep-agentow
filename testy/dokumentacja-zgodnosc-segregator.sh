@@ -72,8 +72,8 @@ done
 
 echo
 echo "=== D. Punkty wejscia ==="
-spr "liczba uchwytow admin_post"     "23" "grep -rhoP 'add_action\( .admin_post_segm_[a-z_]+' $W --include='*.php' | sort -u | wc -l"
-spr "dokumentacja podaje te liczbe"  "1"  "grep -c 'admin-post\` — 23 sztuki' $DOK"
+spr "liczba uchwytow admin_post"     "24" "grep -rhoP 'add_action\( .admin_post_segm_[a-z_]+' $W --include='*.php' | sort -u | wc -l"
+spr "dokumentacja podaje te liczbe"  "1"  "grep -c 'admin-post\` — 24 sztuki' $DOK"
 spr "ZERO punktow dla niezalogowanych" "0" "grep -rc 'wp_ajax_nopriv' $W --include='*.php' | grep -v ':0' | wc -l"
 spr "ZERO tras REST"                 "0"  "grep -rc 'register_rest_route' $W --include='*.php' | grep -v ':0' | wc -l"
 spr "ZERO zaczepow frontu"           "0"  "grep -rc 'template_redirect\|wp_enqueue_scripts\|add_shortcode' $W --include='*.php' | grep -v ':0' | wc -l"
@@ -191,6 +191,25 @@ spr "diagram: limonka"              "1" "grep -ci '#BFFF38' $SVG | awk '{print (
 spr "diagram: tekst jasny"          "1" "grep -ci '#F5F5F5' $SVG | awk '{print (\$1>0)?1:0}'"
 spr "diagram: szary"                "1" "grep -ci '#8F929C' $SVG | awk '{print (\$1>0)?1:0}'"
 
+echo "=== U. L6: klucz API ze stalej + L4b: sygnal o zlym kluczu ==="
+AI=$W/includes/ai.php
+spr "L6 nazwa stalej"                "SEGM_KLUCZ_API" "grep -oP \"(?<=SEGM_STALA_KLUCZA = ')[^']*\" $AI"
+spr "L6 stala ma pierwszenstwo w odczycie" "1" "awk '/function segm_klucz_api/,/^}/' $AI | grep -c 'segm_klucz_ze_stalej()'"
+spr "L6 stala blokuje zapis z panelu" "1" "awk '/function segm_zapisz_klucz/,/^}/' $AI | grep -c 'segm_klucz_ze_stalej()'"
+spr "L6 panel pokazuje stan ze stalej" "1" "grep -c 'Klucz podany w konfiguracji serwera' $W/includes/admin.php"
+spr "L6 pole zablokowane przy stalej" "1" "grep -c 'placeholder=.klucz z wp-config.php.' $W/includes/admin.php"
+spr "L4b opcja z bledem AI"          "segm_blad_ai" "grep -oP \"(?<=SEGM_OPCJA_BLAD_AI = ')[^']*\" $AI"
+spr "L4b nieudane wywolanie zapisuje blad" "1" "awk '/function segm_log_bledu_ai/,/^}/' $AI | grep -c 'segm_zapisz_blad_ai('"
+spr "L4b udane wywolanie gasi pasek" "1" "awk '/function segm_ai_zapytaj/,/^}/' $AI | grep -c 'segm_wyczysc_blad_ai()'"
+spr "L4b pasek w panelu"             "1" "grep -c \"add_action( 'admin_notices', 'segm_pasek_bledu_ai' )\" $W/includes/admin.php"
+spr "L4b uchwyt testu klucza"        "1" "grep -c \"add_action( 'admin_post_segm_test_klucza'\" $W/includes/admin.php"
+PING=$(awk '/function segm_ai_przetestuj_klucz/,/^}/' $AI | grep -c "segm_ai_zapytaj(.*'ping'")
+spr "L4b test wysyla TYLKO ping"     "1" "echo $PING"
+spr "L4b test NIE siega do probki"   "0" "awk '/function segm_ai_przetestuj_klucz/,/^}/' $AI | grep -c 'segm_maile\|segm_klasyfikuj\|probke'"
+spr "L4b kody HTTP tlumaczone na polski" "1" "awk '/function segm_opis_bledu_ai/,/^}/' $AI | grep -c 'KLUCZ API ZOSTAŁ ODRZUCONY'"
+spr "uninstall kasuje wpis o bledzie AI" "1" "sed -n '1,/usun_dane/p' $W/uninstall.php | grep -c \"delete_option( 'segm_blad_ai' )\""
+spr "dokumentacja opisuje klucz i sygnal" "1" "grep -c '10.1. Klucz API i sygnał o jego odrzuceniu' $DOK"
+
 echo "=== N. readme.txt w standardzie WordPressa ==="
 spr "readme.txt istnieje"            "1" "test -f $W/readme.txt && echo 1 || echo 0"
 spr "naglowek === Nazwa ==="         "1" "head -1 $W/readme.txt | grep -c '^=== Segregator maila ===$'"
@@ -212,7 +231,8 @@ echo "=== O. CHANGELOG.md ==="
 spr "CHANGELOG istnieje"             "1" "test -f $W/CHANGELOG.md && echo 1 || echo 0"
 spr "format Keep a Changelog"        "1" "grep -c 'keepachangelog.com' $W/CHANGELOG.md"
 spr "biezaca wersja ma wpis"         "1" "grep -c '^## \\[1.3.0\\]' $W/CHANGELOG.md"
-spr "liczba wydan opisanych"         "5" "grep -c '^## \\[' $W/CHANGELOG.md"
+spr "liczba wydan opisanych"         "6" "grep -c '^## \\[' $W/CHANGELOG.md"
+spr "biezaca praca w sekcji Niewydane" "1" "grep -c '^## \\[Niewydane\\]$' $W/CHANGELOG.md"
 for v in 1.0.0 1.1.0 1.2.0 1.2.1; do
   spr "wersja $v z historii gita opisana" "1" "grep -c '^## \\[$v\\]' $W/CHANGELOG.md"
 done
