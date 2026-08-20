@@ -353,7 +353,7 @@ function chatl_strona_historia() {
 	$tabela = $wpdb->prefix . 'chatl_rozmowy';
 
 	// Self-heal retencji: WP-cron to pseudo-cron (bez ruchu nie odpala), więc
-	// wejście admina na Historię też czyści wpisy starsze niż 90 dni (idempotentne).
+	// wejście admina na Historię też czyści wpisy starsze niż okres retencji (idempotentne).
 	chatl_czyszczenie_historii();
 
 	$sesja = '';
