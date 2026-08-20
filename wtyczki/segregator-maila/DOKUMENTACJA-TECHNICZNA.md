@@ -62,7 +62,7 @@ leży w pliku `LICENSE` w katalogu wtyczki i wchodzi do paczki produktowej.
 | `includes/instalator.php` | 268 | `dbDelta` dla 7 tabel, aktywacja, deaktywacja, seed demo (5 kategorii, 8 reguł, 30 maili) |
 | `includes/silnik.php` | 248 | `segm_klasyfikuj_mail()` — jedyna reguła dopasowania w całej wtyczce; przebieg na próbce |
 | `includes/csv.php` | 352 | import próbki z CSV (wykrywanie kodowania, limity) i eksport raportu do CSV |
-| `includes/ai.php` | 556 | opcjonalna klasyfikacja modelem, licznik stop-loss |
+| `includes/ai.php` | 569 | opcjonalna klasyfikacja modelem, licznik stop-loss |
 | `includes/admin.php` | 1348 | panel: przebiegi i raporty, reguły, kategorie, próbka, ustawienia, baner powitalny |
 | `includes/konfiguracja.php` | 360 | eksport i import własnej konfiguracji (kategorie + reguły) w JSON-ie |
 | `includes/filtry.php` | 588 | eksport reguł do filtrów Gmaila (XML) i reguł Outlooka |
@@ -198,7 +198,7 @@ więc deinstalacja kasuje go zapytaniem `LIKE` po `wp_options` (razem z wierszam
 | `SEGM_SKRZ_TRESC_BAJTOW` | `4096` | `skrzynka.php` | ile bajtów treści maila pobieramy do dopasowania reguł |
 | `SEGM_SKRZ_LIMIT_CZASU` | `20` | `skrzynka.php` | twardy limit czasu jednego przebiegu na skrzynce (s) |
 | `SEGM_SKRZ_LIMIT_GNIAZDA` | `15` | `skrzynka.php` | limit czasu pojedynczej operacji sieciowej (s) |
-| `SEGM_AI_MODEL` | `claude-haiku-4-5-20251001` | `ai.php` | model **domyślny**; nadpisuje go ustawienie `ai_model`, a na końcu filtr `segm_ai_model` |
+| `SEGM_AI_MODEL` | `claude-haiku-4-5` | `ai.php` | model **domyślny**; nadpisuje go ustawienie `ai_model`, a na końcu filtr `segm_ai_model` |
 | `SEGM_AI_MODEL_WZORZEC` | `/^[a-z0-9][a-z0-9._-]{2,63}$/` | `ai.php` | dopuszczalny kształt nazwy modelu |
 | `SEGM_AI_TIMEOUT` | `9` | `ai.php` | limit czasu wywołania API (s), jeden retry |
 | `SEGM_AI_PARTIA` | `30` | `ai.php` | ile maili w jednym wywołaniu |
@@ -557,6 +557,11 @@ Model bierze się z trzech miejsc, w tej kolejności ważności:
 2. **ustawienie `ai_model`** z panelu (Ustawienia → Model AI): lista podpowiedzi
    albo własna nazwa wpisana ręcznie,
 3. **stała `SEGM_AI_MODEL`**, gdy ustawienie jest puste.
+
+Domyślną wartością jest **alias bez daty** (`claude-haiku-4-5`), a nie migawka
+z datą: migawki bywają wycofywane, a bez serwera aktualizacji każda sprzedana
+kopia straciłaby tryb AI tego samego dnia i jedyną naprawą byłaby ręczna wysyłka
+zipa mailem. Ten sam wybór co `CHATL_AI_MODEL` w ChatBocie.
 
 Nazwa musi pasować do `SEGM_AI_MODEL_WZORZEC`; nazwa z literówką (spacja,
 znaczniki, za krótka) jest **odrzucana z zachowaniem poprzedniej**, żeby pomyłka
