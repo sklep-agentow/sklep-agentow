@@ -72,8 +72,8 @@ done
 
 echo
 echo "=== D. Punkty wejscia ==="
-spr "liczba uchwytow admin_post"     "27" "grep -rhoP 'add_action\( .admin_post_segm_[a-z_]+' $W --include='*.php' | sort -u | wc -l"
-spr "dokumentacja podaje te liczbe"  "1"  "grep -c 'admin-post\` — 27 sztuk' $DOK"
+spr "liczba uchwytow admin_post"     "29" "grep -rhoP 'add_action\( .admin_post_segm_[a-z_]+' $W --include='*.php' | sort -u | wc -l"
+spr "dokumentacja podaje te liczbe"  "1"  "grep -c 'admin-post\` — 29 sztuk' $DOK"
 spr "ZERO punktow dla niezalogowanych" "0" "grep -rc 'wp_ajax_nopriv' $W --include='*.php' | grep -v ':0' | wc -l"
 spr "ZERO tras REST"                 "0"  "grep -rc 'register_rest_route' $W --include='*.php' | grep -v ':0' | wc -l"
 spr "ZERO zaczepow frontu"           "0"  "grep -rc 'template_redirect\|wp_enqueue_scripts\|add_shortcode' $W --include='*.php' | grep -v ':0' | wc -l"
@@ -169,7 +169,7 @@ echo "=== L. Liczby linii z tabeli architektury (par. 3) ==="
 # Odwrotne cudzyslowy w markdownie kolidowaly z podstawieniem polecen w eval —
 # dlatego wzorzec budujemy tu i podajemy do spr() gotowa liczbe.
 BACKTICK=$(printf '\140')
-for f in segregator-maila.php uninstall.php includes/admin-powitanie.php includes/admin-probka.php includes/instalator.php includes/silnik.php includes/csv.php includes/ai.php includes/admin.php includes/filtry.php includes/class-segm-imap.php includes/skrzynka.php includes/skrzynka-przebieg.php includes/admin-skrzynka.php; do
+for f in segregator-maila.php uninstall.php includes/admin-powitanie.php includes/admin-probka.php includes/konfiguracja.php includes/instalator.php includes/silnik.php includes/csv.php includes/ai.php includes/admin.php includes/filtry.php includes/class-segm-imap.php includes/skrzynka.php includes/skrzynka-przebieg.php includes/admin-skrzynka.php; do
   ILE=$(wc -l < $W/$f)
   WZOR="${BACKTICK}${f}${BACKTICK} | ${ILE} |"
   TRAF=$(grep -cF "$WZOR" $DOK)
@@ -183,6 +183,7 @@ spr "CHANGELOG na liscie paczki"    "1" "grep -c 'segregator-maila/CHANGELOG.md'
 spr "readme.txt na liscie paczki"   "1" "grep -c 'segregator-maila/readme.txt' boty/buduj-paczki.sh"
 spr "ekran powitalny na liscie paczki" "1" "grep -c 'segregator-maila/includes/admin-powitanie.php' boty/buduj-paczki.sh"
 spr "praca na pojedynczym mailu w paczce" "1" "grep -c 'segregator-maila/includes/admin-probka.php' boty/buduj-paczki.sh"
+spr "konfiguracja w paczce" "1" "grep -c 'segregator-maila/includes/konfiguracja.php' boty/buduj-paczki.sh"
 spr "diagram istnieje"              "1" "test -f $SVG && echo 1 || echo 0"
 # xmlns="http://www.w3.org/2000/svg" to WYMAGANA deklaracja przestrzeni nazw XML,
 # a nie odwolanie sieciowe — przeglądarka niczego stamtad nie pobiera.
@@ -220,6 +221,31 @@ spr "liczba maili ustalana PRZED wzorcem"      "1" "test -n \"$LIN_MAILI\" && te
 spr "pusta probka zglaszana PRZED pustym wzorcem" "1" "awk '/function segm_opis_trafien/,/^}/' $PROBKA | grep -n \"maili.\] )\|pusty_wzorzec\" | head -2 | head -1 | grep -c maili"
 spr "opis rozroznia pusty wzorzec od pustej probki" "1" "echo $G5"
 
+echo "=== S. Eksport i import konfiguracji ==="
+spr "SEGM_KONFIG_FORMAT"             "1"      "grep -oP '(?<=SEGM_KONFIG_FORMAT = )\d+' $W/includes/konfiguracja.php"
+spr "SEGM_KONFIG_MAX_BAJTOW"         "524288" "grep -oP '(?<=SEGM_KONFIG_MAX_BAJTOW = )\d+' $W/includes/konfiguracja.php"
+spr "SEGM_KONFIG_MAX_WPISOW"         "500"    "grep -oP '(?<=SEGM_KONFIG_MAX_WPISOW = )\d+' $W/includes/konfiguracja.php"
+spr "SEGM_KONFIG_MAX_WZORZEC"        "2000"   "grep -oP '(?<=SEGM_KONFIG_MAX_WZORZEC = )\d+' $W/includes/konfiguracja.php"
+spr "eksport konfiguracji"           "1" "grep -c \"add_action( 'admin_post_segm_konfig_eksport'\" $W/includes/konfiguracja.php"
+spr "import konfiguracji"            "1" "grep -c \"add_action( 'admin_post_segm_konfig_import'\" $W/includes/konfiguracja.php"
+spr "regula wiazana po NAZWIE kategorii" "1" "sed -n '/function segm_konfig_zbierz/,/^}/p' $W/includes/konfiguracja.php | grep -c \"'kategoria' => (string) \\\$r->kategoria\""
+spr "plik BEZ hasla do skrzynki"     "0" "sed -n '/function segm_konfig_zbierz/,/^}/p' $W/includes/konfiguracja.php | grep -c 'segm_skrzynka_haslo\|segm_klucz_api'"
+spr "plik BEZ probki i historii"     "0" "sed -n '/function segm_konfig_zbierz/,/^}/p' $W/includes/konfiguracja.php | grep -c 'segm_maile\|segm_skrz_ruchy\|segm_przebiegi'"
+spr "plik BEZ zapisanych zgod"       "0" "sed -n '/function segm_konfig_zbierz/,/^}/p' $W/includes/konfiguracja.php | grep -c 'segm_zgoda'"
+spr "import sprawdza znacznik wtyczki" "1" "grep -c \"'segregator-maila' !== \\\$dane\\['wtyczka'\\]\" $W/includes/konfiguracja.php"
+spr "import sprawdza wersje formatu" "1" "grep -c 'SEGM_KONFIG_FORMAT' $W/includes/konfiguracja.php | awk '{print (\$1>1)?1:0}'"
+spr "import bierze blokade operacji" "1" "sed -n '/function segm_post_konfig_import/,/^}/p' $W/includes/konfiguracja.php | grep -c 'segm_zajmij_blokade'"
+spr "dokumentacja opisuje przeprowadzke" "1" "grep -c '8.2. Przeprowadzka' $DOK"
+
+echo "=== T. Wybor modelu AI ==="
+spr "ustawienie ai_model ma wartosc domyslna" "1" "sed -n '/function segm_ustawienia/,/^}/p' $W/segregator-maila.php | grep -c \"'ai_model'         => ''\""
+spr "model czytany z ustawien"       "1" "grep -c \"apply_filters( 'segm_ai_model', segm_ai_model() )\" $W/includes/ai.php"
+spr "filtr nadal na wierzchu"        "1" "grep -c \"apply_filters( 'segm_ai_model'\" $W/includes/ai.php"
+spr "wzorzec nazwy modelu"           "1" "grep -c 'SEGM_AI_MODEL_WZORZEC' $W/includes/ai.php | awk '{print (\$1>2)?1:0}'"
+spr "zla nazwa NIE kasuje ustawienia" "1" "sed -n '/function segm_wybrany_model/,/^}/p' $W/includes/ai.php | grep -c 'return (string) \\\$poprzedni;'"
+spr "pole w formularzu ustawien"     "1" "grep -c \"name=.ai_model.\" $W/includes/admin.php | awk '{print (\$1>0)?1:0}'"
+spr "dokumentacja opisuje wybor modelu" "1" "grep -c '10.1. Wybór modelu AI' $DOK"
+
 echo "=== U. L6: klucz API ze stalej + L4b: sygnal o zlym kluczu ==="
 AI=$W/includes/ai.php
 spr "L6 nazwa stalej"                "SEGM_KLUCZ_API" "grep -oP \"(?<=SEGM_STALA_KLUCZA = ')[^']*\" $AI"
@@ -241,7 +267,7 @@ spr "licznik stop-loss tylko dla klasyfikacji" "1" "echo $TYLKO_KLAS"
 spr "L4b test NIE siega do probki"   "0" "awk '/function segm_ai_przetestuj_klucz/,/^}/' $AI | grep -c 'segm_maile\|segm_klasyfikuj\|probke'"
 spr "L4b kody HTTP tlumaczone na polski" "1" "awk '/function segm_opis_bledu_ai/,/^}/' $AI | grep -c 'KLUCZ API ZOSTAŁ ODRZUCONY'"
 spr "uninstall kasuje wpis o bledzie AI" "1" "sed -n '1,/usun_dane/p' $W/uninstall.php | grep -c \"delete_option( 'segm_blad_ai' )\""
-spr "dokumentacja opisuje klucz i sygnal" "1" "grep -c '10.1. Klucz API i sygnał o jego odrzuceniu' $DOK"
+spr "dokumentacja opisuje klucz i sygnal" "1" "grep -c '10.2. Klucz API i sygnał o jego odrzuceniu' $DOK"
 
 echo "=== N. readme.txt w standardzie WordPressa ==="
 spr "readme.txt istnieje"            "1" "test -f $W/readme.txt && echo 1 || echo 0"

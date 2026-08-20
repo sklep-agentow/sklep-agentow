@@ -32,6 +32,78 @@ const SEGM_AI_MAX_WYWOLAN_PRZEBIEG = 1;
 const SEGM_AI_MAX_PROBKA           = SEGM_AI_PARTIA * SEGM_AI_MAX_WYWOLAN_PRZEBIEG;
 
 /**
+ * Kształt, jaki musi mieć nazwa modelu.
+ *
+ * Nie sprawdzamy, czy model ISTNIEJE — tego nie da się wiedzieć bez zapytania
+ * dostawcy, a lista modeli zmienia się szybciej niż wtyczka. Pilnujemy tylko,
+ * żeby w nagłówku żądania nie wylądowało nic poza nazwą modelu.
+ */
+const SEGM_AI_MODEL_WZORZEC = '/^[a-z0-9][a-z0-9._-]{2,63}$/';
+
+/**
+ * Modele podpowiadane w ustawieniach.
+ *
+ * To PODPOWIEDZI, nie gwarancja: dostępność zależy od konta u dostawcy.
+ * Właściciel może wpisać dowolną inną nazwę — dlatego obok listy jest pole
+ * tekstowe, a nie sama lista zamknięta.
+ *
+ * @return array<string, string> nazwa modelu => opis dla człowieka
+ */
+function segm_ai_modele() {
+	return array(
+		'claude-haiku-4-5-20251001' => 'Haiku 4.5 — najtańszy, domyślny',
+		'claude-sonnet-5'           => 'Sonnet 5 — droższy, mocniejszy',
+		'claude-opus-5'             => 'Opus 5 — najdroższy, najmocniejszy',
+	);
+}
+
+/**
+ * Nazwa modelu wybrana w formularzu ustawień.
+ *
+ * Lista i pole tekstowe to jedno ustawienie w dwóch kontrolkach, więc
+ * rozstrzygnięcie musi być w jednym miejscu: „własny" bierze pole tekstowe,
+ * cokolwiek innego bierze listę. Nazwa niepasująca do wzorca jest ODRZUCANA
+ * z zachowaniem poprzedniej — nie chcemy, żeby literówka po cichu wyłączyła
+ * tryb AI przy następnym przebiegu.
+ *
+ * @param string $poprzedni Wartość obowiązująca przed zapisem.
+ * @return string
+ */
+function segm_wybrany_model( $poprzedni ) {
+	// phpcs:disable WordPress.Security.NonceVerification.Missing -- nonce sprawdza segm_post_ustawienia_zapisz(), które jest jedynym wywołującym.
+	$z_listy = isset( $_POST['ai_model'] ) ? sanitize_text_field( wp_unslash( $_POST['ai_model'] ) ) : '';
+	$wlasny  = isset( $_POST['ai_model_wlasny'] ) ? sanitize_text_field( wp_unslash( $_POST['ai_model_wlasny'] ) ) : '';
+	// phpcs:enable
+	$wybrany = '__wlasny' === $z_listy ? trim( $wlasny ) : trim( $z_listy );
+
+	if ( '' === $wybrany ) {
+		return '';
+	}
+	if ( 1 !== preg_match( SEGM_AI_MODEL_WZORZEC, $wybrany ) ) {
+		return (string) $poprzedni;
+	}
+	return $wybrany;
+}
+
+/**
+ * Model, którym ma liczyć tryb AI.
+ *
+ * Kolejność ważności: ustawienie właściciela z panelu, a gdy puste — stała
+ * SEGM_AI_MODEL. Filtr `segm_ai_model` nakłada się na wynik tej funkcji, więc
+ * programista nadal ma ostatnie słowo (np. własne proxy).
+ *
+ * @return string
+ */
+function segm_ai_model() {
+	$ust     = segm_ustawienia();
+	$wybrany = isset( $ust['ai_model'] ) ? trim( (string) $ust['ai_model'] ) : '';
+	if ( '' !== $wybrany && 1 === preg_match( SEGM_AI_MODEL_WZORZEC, $wybrany ) ) {
+		return $wybrany;
+	}
+	return SEGM_AI_MODEL;
+}
+
+/**
  * Nazwa stałej z wp-config.php, która ma pierwszeństwo nad kluczem w bazie.
  */
 const SEGM_STALA_KLUCZA = 'SEGM_KLUCZ_API';
@@ -92,12 +164,15 @@ function segm_zapisz_klucz( $klucz ) {
 const SEGM_OPCJA_BLAD_AI = 'segm_blad_ai';
 
 /**
- * Model, którym faktycznie poleci żądanie (z uwzględnieniem filtru).
+ * Model, którym faktycznie poleci żądanie (ustawienie właściciela + filtr).
+ *
+ * Jedno źródło prawdy dla żądania, testu klucza i wpisu o błędzie — inaczej
+ * pasek błędu pokazywałby inny model, niż poszedł w żądaniu.
  *
  * @return string
  */
 function segm_ai_model_w_uzyciu() {
-	return (string) apply_filters( 'segm_ai_model', SEGM_AI_MODEL );
+	return (string) apply_filters( 'segm_ai_model', segm_ai_model() );
 }
 
 /**
@@ -302,7 +377,7 @@ function segm_log_bledu_ai( $odp, $kod ) {
 function segm_ai_zapytaj( $system, $tresc, $licz_do_limitu = true ) {
 	// Filtry = punkt rozszerzenia (proxy / atrapa API w testach).
 	$url   = apply_filters( 'segm_ai_url', 'https://api.anthropic.com/v1/messages' );
-	$model = apply_filters( 'segm_ai_model', SEGM_AI_MODEL );
+	$model = segm_ai_model_w_uzyciu();
 
 	$argumenty = array(
 		'timeout' => SEGM_AI_TIMEOUT,
