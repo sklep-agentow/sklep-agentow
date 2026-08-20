@@ -85,6 +85,8 @@ function chatl_strona_qa() {
 		<?php chatl_komunikat_ok(); ?>
 		<p>Bot dopasowuje pytanie gościa po <strong>słowach kluczowych z wariantami</strong> (rozdzielaj przecinkami, np. <code>cena, ceny, cennik</code>). Odmiany słów łapiesz, wpisując warianty.</p>
 
+		<?php chatl_panel_testu_bota(); ?>
+
 		<h2><?php echo $edytowany ? 'Edytuj wpis #' . (int) $edytowany->id : 'Dodaj nowy wpis'; ?></h2>
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 			<input type="hidden" name="action" value="chatl_qa_zapisz">
@@ -141,6 +143,89 @@ function chatl_strona_qa() {
 		</table>
 	</div>
 	<?php
+}
+
+/**
+ * Test bota na własnej bazie, bez wychodzenia na stronę.
+ *
+ * Pokazuje NIE TYLKO odpowiedź, ale i KTÓRA para ją dała (id + pytanie
+ * wzorcowe + dopasowane warianty) — dopasowanie przestaje być czarną skrzynką
+ * i widać, dlaczego bot odpowiedział tak, a nie inaczej.
+ *
+ * Formularz jest GET-em na tę samą stronę: to odczyt, nic nie zmienia w bazie,
+ * więc nie ma tu mutacji do zabezpieczania noncem (capability pilnuje
+ * add_menu_page: manage_options).
+ */
+function chatl_panel_testu_bota() {
+	// phpcs:disable WordPress.Security.NonceVerification.Recommended -- formularz tylko odczytuje; brak mutacji.
+	$pytanie = isset( $_GET['test'] ) ? sanitize_text_field( wp_unslash( $_GET['test'] ) ) : '';
+	// phpcs:enable
+	$ust = chatl_ustawienia();
+	?>
+	<div class="card" style="max-width:100%;padding:12px 16px">
+		<h2 style="margin-top:0">Test bota</h2>
+		<p class="description">Wpisz pytanie tak, jak zrobiłby to gość — zobaczysz odpowiedź i <strong>która para zadziałała</strong>.</p>
+		<form method="get" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>">
+			<input type="hidden" name="page" value="chatl-qa">
+			<input type="text" name="test" class="regular-text" placeholder="np. ile kosztuje wasza usługa"
+				value="<?php echo esc_attr( $pytanie ); ?>" aria-label="Pytanie do testu bota">
+			<?php submit_button( 'Sprawdź odpowiedź', 'secondary', 'submit', false ); ?>
+			<?php if ( '' !== $pytanie ) : ?>
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=chatl-qa' ) ); ?>">wyczyść</a>
+			<?php endif; ?>
+		</form>
+		<?php if ( '' !== $pytanie ) : ?>
+			<?php $wynik = chatl_dopasuj( $pytanie ); ?>
+			<?php if ( null === $wynik ) : ?>
+				<p><strong>Żadna para nie pasuje.</strong> Gość dostałby tekst awaryjny i propozycję zostawienia kontaktu:</p>
+				<blockquote style="margin:0 0 8px;padding:8px 12px;border-left:4px solid #d63638;background:#fff"><?php echo esc_html( $ust['tekst_awaryjny'] ); ?></blockquote>
+				<p class="description">Chcesz, żeby bot to łapał? Dopisz wariant do słów kluczowych którejś pary powyżej.</p>
+			<?php else : ?>
+				<?php $para = chatl_wpis_qa( (int) $wynik['id'] ); ?>
+				<p>Odpowiedź, którą dostałby gość:</p>
+				<blockquote style="margin:0 0 8px;padding:8px 12px;border-left:4px solid #00a32a;background:#fff"><?php echo esc_html( $wynik['odpowiedz'] ); ?></blockquote>
+				<?php if ( $para ) : ?>
+					<p>Zadziałała para <strong>#<?php echo (int) $para->id; ?></strong> — „<?php echo esc_html( $para->pytanie ); ?>"
+						(<a href="<?php echo esc_url( admin_url( 'admin.php?page=chatl-qa&edytuj=' . (int) $para->id ) ); ?>">edytuj</a>).<br>
+						Dopasowane warianty: <code><?php echo esc_html( implode( ', ', chatl_trafione_warianty( $pytanie, $para->slowa_kluczowe ) ) ); ?></code></p>
+				<?php endif; ?>
+			<?php endif; ?>
+			<?php if ( chatl_ai_dostepny() ) : ?>
+				<p class="description"><strong>Uwaga:</strong> tryb AI jest włączony, więc gość najpierw dostaje odpowiedź modelu — ten test pokazuje silnik regułowy, czyli to, co odpowie bot bez klucza, po limicie albo przy błędzie API. Test celowo NIE wywołuje API (nie przepala budżetu).</p>
+			<?php endif; ?>
+		<?php endif; ?>
+	</div>
+	<?php
+}
+
+/**
+ * Pojedynczy wpis bazy Q&A (do pokazania, która para zadziałała).
+ *
+ * @param int $id Identyfikator wpisu.
+ * @return object|null
+ */
+function chatl_wpis_qa( $id ) {
+	global $wpdb;
+	return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}chatl_qa WHERE id = %d", $id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+}
+
+/**
+ * Które warianty pary trafiły w pytanie (ta sama logika co w silniku).
+ *
+ * @param string $pytanie        Pytanie z testu.
+ * @param string $slowa_kluczowe Warianty pary, po przecinku.
+ * @return array Lista trafionych wariantów.
+ */
+function chatl_trafione_warianty( $pytanie, $slowa_kluczowe ) {
+	$szukane  = mb_strtolower( trim( (string) $pytanie ) );
+	$trafione = array();
+	$warianty = array_filter( array_map( 'trim', explode( ',', mb_strtolower( (string) $slowa_kluczowe ) ) ) );
+	foreach ( $warianty as $wariant ) {
+		if ( false !== mb_strpos( $szukane, $wariant ) ) {
+			$trafione[] = $wariant;
+		}
+	}
+	return $trafione;
 }
 
 function chatl_post_qa_zapisz() {
