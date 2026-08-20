@@ -204,6 +204,21 @@ spr "maile reczne oznaczone zrodlem" "1" "grep -c \"'zrodlo'    = 'reczny'\|= 'r
 spr "nonce liczenia ma wlasna nazwe" "1" "grep -c \"check_admin_referer( 'segm_regula_policz', '_wpnonce_policz' )\" $W/includes/admin-probka.php"
 spr "uninstall kasuje transienty liczenia" "1" "grep -c 'segm_liczenie_' $W/uninstall.php | awk '{print (\$1>0)?1:0}'"
 spr "dokumentacja opisuje iteracje" "1" "grep -c '8.1. Iteracja na pojedynczym przypadku' $DOK"
+# --- straznicy uwag z recenzji PR #75 (liczone poza spr(), bo wzorce z $ i
+# cudzyslowami nie przezywaja podwojnego eval) ---
+PROBKA=$W/includes/admin-probka.php
+G1=$(awk '/function segm_post_mail_zapisz/,/^}/' $PROBKA | grep -c 'if ( 0 === \$zapis )')
+G2=$(awk '/function segm_post_mail_zapisz/,/^}/' $PROBKA | grep -c 'NIE MA już w próbce')
+G3=$(awk '/function segm_policz_trafienia/,/^}/' $PROBKA | grep -c "pusty_wzorzec'\] = true")
+LIN_MAILI=$(awk '/function segm_policz_trafienia/,/^}/' $PROBKA | grep -n "wynik\['maili'\] = count" | head -1 | cut -d: -f1)
+LIN_WZORZEC=$(awk '/function segm_policz_trafienia/,/^}/' $PROBKA | grep -n "wzorzec = trim" | head -1 | cut -d: -f1)
+G5=$(awk '/function segm_opis_trafien/,/^}/' $PROBKA | grep -c 'pole wzorca jest puste')
+spr "0 z update() sprawdzane w bazie"          "1" "echo $G1"
+spr "brak wiersza = komunikat, nie sukces"     "1" "echo $G2"
+spr "pusty wzorzec ma wlasny znacznik"         "1" "echo $G3"
+spr "liczba maili ustalana PRZED wzorcem"      "1" "test -n \"$LIN_MAILI\" && test -n \"$LIN_WZORZEC\" && test \"$LIN_MAILI\" -lt \"$LIN_WZORZEC\" && echo 1 || echo 0"
+spr "pusta probka zglaszana PRZED pustym wzorcem" "1" "awk '/function segm_opis_trafien/,/^}/' $PROBKA | grep -n \"maili.\] )\|pusty_wzorzec\" | head -2 | head -1 | grep -c maili"
+spr "opis rozroznia pusty wzorzec od pustej probki" "1" "echo $G5"
 
 echo "=== N. readme.txt w standardzie WordPressa ==="
 spr "readme.txt istnieje"            "1" "test -f $W/readme.txt && echo 1 || echo 0"

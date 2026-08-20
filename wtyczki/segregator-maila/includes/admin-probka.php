@@ -32,27 +32,33 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @param string $pole       'od' | 'temat' | 'tresc'.
  * @param string $wzorzec    Wzorzec (warianty po przecinku).
  * @param int    $id_reguly  ID edytowanej reguły; 0 = nowa reguła (na koniec listy).
- * @return array{pasuje: int, wygrywa: int, maili: int, zabrane_przez: array<string, int>}
+ * @return array{pasuje: int, wygrywa: int, maili: int, pusty_wzorzec: bool, zabrane_przez: array<string, int>}
  */
 function segm_policz_trafienia( $pole, $wzorzec, $id_reguly = 0 ) {
 	global $wpdb;
 
-	$wynik   = array(
+	$wynik = array(
 		'pasuje'        => 0,
 		'wygrywa'       => 0,
 		'maili'         => 0,
+		'pusty_wzorzec' => false,
 		'zabrane_przez' => array(),
 	);
+
+	// Liczbę maili ustalamy ZAWSZE, także przy pustym wzorcu. Wcześniej wyjście
+	// „na skróty" zostawiało maili=0 i opis mówił „próbka jest pusta" nad próbką
+	// trzydziestu maili — komunikat wskazywał wtedy na zupełnie nie ten problem.
+	$maile          = $wpdb->get_results( "SELECT id, nadawca, temat, tresc FROM {$wpdb->prefix}segm_maile ORDER BY id ASC" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	$wynik['maili'] = count( (array) $maile );
+
 	$wzorzec = trim( (string) $wzorzec );
 	if ( '' === $wzorzec ) {
+		$wynik['pusty_wzorzec'] = true;
 		return $wynik;
 	}
-
-	$maile = $wpdb->get_results( "SELECT id, nadawca, temat, tresc FROM {$wpdb->prefix}segm_maile ORDER BY id ASC" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 	if ( ! $maile ) {
 		return $wynik;
 	}
-	$wynik['maili'] = count( $maile );
 
 	// Lista reguł taka, jaka BYŁABY po zapisaniu tego formularza: przy edycji
 	// podmieniamy regułę w jej miejscu (kolejność zostaje), przy nowej dokładamy
@@ -107,12 +113,22 @@ function segm_policz_trafienia( $pole, $wzorzec, $id_reguly = 0 ) {
 /**
  * Zdanie po polsku opisujące wynik liczenia.
  *
- * @param array{pasuje: int, wygrywa: int, maili: int, zabrane_przez: array<string, int>} $l Wynik segm_policz_trafienia().
+ * @param array{pasuje: int, wygrywa: int, maili: int, pusty_wzorzec: bool, zabrane_przez: array<string, int>} $l Wynik segm_policz_trafienia().
  * @return string
  */
 function segm_opis_trafien( $l ) {
+	// „Nie wpisałeś wzorca" i „nie masz próbki" to dwie różne przyczyny zera
+	// i dwie różne rady. Pusta próbka jest przeszkodą większą (bez niej nawet
+	// dobry wzorzec nic nie pokaże), więc mówimy o niej pierwszej — a wzorzec
+	// zgłaszamy dopiero wtedy, gdy jest na czym liczyć.
 	if ( 0 === $l['maili'] ) {
 		return 'Próbka jest pusta — nie ma na czym policzyć. Wgraj CSV, przywróć demo albo dodaj mail ręcznie.';
+	}
+	if ( ! empty( $l['pusty_wzorzec'] ) ) {
+		return sprintf(
+			'Nie ma czego liczyć — pole wzorca jest puste. Wpisz warianty po przecinku (np. „faktur, rachunek”) i kliknij ponownie. Próbka ma %d maili i czeka.',
+			$l['maili']
+		);
 	}
 	if ( 0 === $l['pasuje'] ) {
 		return sprintf( 'Ten wzorzec nie pasuje do ŻADNEGO z %d maili w próbce.', $l['maili'] );
@@ -228,13 +244,26 @@ function segm_post_mail_zapisz() {
 	);
 
 	if ( $id > 0 ) {
-		$zapis     = $wpdb->update(
+		$zapis = $wpdb->update(
 			$wpdb->prefix . 'segm_maile',
 			$dane,
 			array( 'id' => $id ),
 			array( '%s', '%s', '%s', '%s' ),
 			array( '%d' )
 		);
+		// UWAGA na 0: update() zwraca 0 W DWÓCH RÓŻNYCH sytuacjach — gdy nic
+		// się nie zmieniło (właściciel kliknął „Zapisz" bez zmian) ORAZ gdy
+		// wiersza już nie ma (ktoś skasował mail między otwarciem formularza
+		// a zapisem, albo zrobiła to retencja). Pierwsze jest sukcesem, drugie
+		// NIE — a bez tego sprawdzenia oba kończyły się komunikatem
+		// „Mail zapisany", czyli fałszywym sukcesem nad nieistniejącym mailem.
+		if ( 0 === $zapis ) {
+			$istnieje = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}segm_maile WHERE id = %d", $id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			if ( 0 === $istnieje ) {
+				segm_zwolnij_blokade();
+				segm_przekieruj_blad( 'segm-probka', sprintf( 'Maila #%d NIE MA już w próbce — ktoś go usunął (albo zrobiła to retencja), zanim zapisałeś zmiany. Nic nie zostało zapisane; jeśli ten przypadek jest Ci potrzebny, dodaj go jako nowy mail.', $id ) );
+			}
+		}
 		$komunikat = 'mail_zapisany';
 	} else {
 		$dane['zrodlo']    = 'reczny';

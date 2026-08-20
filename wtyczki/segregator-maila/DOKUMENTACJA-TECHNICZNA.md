@@ -70,7 +70,7 @@ leży w pliku `LICENSE` w katalogu wtyczki i wchodzi do paczki produktowej.
 | `includes/skrzynka-przebieg.php` | 556 | przebieg na żywej skrzynce, historia, cofanie, harmonogramy WP-Cron |
 | `includes/admin-skrzynka.php` | 692 | panel zakładki *Skrzynka (IMAP)* i obsługa jej formularzy |
 | `includes/admin-powitanie.php` | 143 | ekran powitalny pokazywany raz po aktywacji |
-| `includes/admin-probka.php` | 353 | praca na POJEDYNCZYM mailu i licznik trafień reguły |
+| `includes/admin-probka.php` | 382 | praca na POJEDYNCZYM mailu i licznik trafień reguły |
 
 Poza kodem w paczce jadą: `LICENSE` (pełny tekst GPL-2.0), `readme.txt`
 (nagłówek w standardzie WordPressa, opis, instalacja, FAQ, changelog),
