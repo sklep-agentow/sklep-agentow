@@ -187,7 +187,8 @@ function chatl_panel_testu_bota() {
 				<?php if ( $para ) : ?>
 					<p>Zadziałała para <strong>#<?php echo (int) $para->id; ?></strong> — „<?php echo esc_html( $para->pytanie ); ?>"
 						(<a href="<?php echo esc_url( admin_url( 'admin.php?page=chatl-qa&edytuj=' . (int) $para->id ) ); ?>">edytuj</a>).<br>
-						Dopasowane warianty: <code><?php echo esc_html( implode( ', ', chatl_trafione_warianty( $pytanie, $para->slowa_kluczowe ) ) ); ?></code></p>
+						<?php // Warianty bierzemy z wyniku SILNIKA, a nie liczymy drugi raz — panel nie ma własnej wersji dopasowania. ?>
+						Dopasowane warianty: <code><?php echo esc_html( implode( ', ', $wynik['trafione'] ) ); ?></code></p>
 				<?php endif; ?>
 			<?php endif; ?>
 			<?php if ( chatl_ai_dostepny() ) : ?>
@@ -207,25 +208,6 @@ function chatl_panel_testu_bota() {
 function chatl_wpis_qa( $id ) {
 	global $wpdb;
 	return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}chatl_qa WHERE id = %d", $id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-}
-
-/**
- * Które warianty pary trafiły w pytanie (ta sama logika co w silniku).
- *
- * @param string $pytanie        Pytanie z testu.
- * @param string $slowa_kluczowe Warianty pary, po przecinku.
- * @return array Lista trafionych wariantów.
- */
-function chatl_trafione_warianty( $pytanie, $slowa_kluczowe ) {
-	$szukane  = mb_strtolower( trim( (string) $pytanie ) );
-	$trafione = array();
-	$warianty = array_filter( array_map( 'trim', explode( ',', mb_strtolower( (string) $slowa_kluczowe ) ) ) );
-	foreach ( $warianty as $wariant ) {
-		if ( false !== mb_strpos( $szukane, $wariant ) ) {
-			$trafione[] = $wariant;
-		}
-	}
-	return $trafione;
 }
 
 function chatl_post_qa_zapisz() {
