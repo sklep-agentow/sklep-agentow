@@ -114,8 +114,19 @@ jobs:
             niego. Briefing jest jedynym źródłem zasad recenzji — nie zgaduj
             i nie zastępuj go własnymi przyzwyczajeniami. Jeśli pliku nie ma,
             powiedz to wprost i nie recenzuj na wyczucie.
+          # 20.08: recenzent dostał ŻYWY STOS. W dzisiejszych recenzjach padło
+          # 91 zdań „czego nie sprawdziłem", z czego 51 brzmiało „nie mam
+          # uruchomionego WordPressa / nie zweryfikowałem paczki" — a WordPress
+          # warsztatowy stoi na TEJ SAMEJ maszynie co ten wykonawca.
+          # ⛔ Recenzent NIE dostaje dockera ani powłoki. Dostaje trzy nazwane
+          # skrypty, każdy wyłącznie do odczytu: narzedzia-qa/stos.sh (zamknięta
+          # lista operacji, twarde sprawdzanie argumentów, zero zapisu),
+          # narzedzia-qa/paczka-zgodnosc.sh i testy/instrukcja-liczby-segregator.sh.
+          # Wzorzec `:*` przy dwóch pierwszych przepuszcza dowolne argumenty —
+          # dlatego to SKRYPT, nie akcja, odrzuca wszystko spoza białej listy;
+          # pilnuje tego narzedzia-qa/stos-proba-kontrolna.sh (26 kontroli).
           claude_args: |
-            --allowedTools "Read,Glob,Grep,LS,mcp__github_comment__update_claude_comment,mcp__github_ci__get_ci_status,mcp__github_ci__get_workflow_run_details,mcp__github_ci__download_job_log,Bash(composer install),Bash(composer install --no-interaction --no-progress),Bash(vendor/bin/phpcs),Bash(vendor/bin/phpcs:*),Bash(vendor/bin/phpstan:*),Bash(php -l:*),Bash(find:*),Bash(bash testy/dokumentacja-zgodnosc.sh),Bash(bash testy/dokumentacja-zgodnosc-segregator.sh),Bash(bash narzedzia-qa/sprawdz-manifest.sh),Bash(git log:*),Bash(git diff:*),Bash(git show:*),Bash(git rev-list:*),WebFetch"
+            --allowedTools "Read,Glob,Grep,LS,mcp__github_comment__update_claude_comment,mcp__github_ci__get_ci_status,mcp__github_ci__get_workflow_run_details,mcp__github_ci__download_job_log,Bash(composer install),Bash(composer install --no-interaction --no-progress),Bash(vendor/bin/phpcs),Bash(vendor/bin/phpcs:*),Bash(vendor/bin/phpstan:*),Bash(php -l:*),Bash(find:*),Bash(bash testy/dokumentacja-zgodnosc.sh),Bash(bash testy/dokumentacja-zgodnosc-segregator.sh),Bash(bash narzedzia-qa/sprawdz-manifest.sh),Bash(bash narzedzia-qa/stos.sh:*),Bash(bash narzedzia-qa/paczka-zgodnosc.sh:*),Bash(bash testy/instrukcja-liczby-segregator.sh),Bash(git log:*),Bash(git diff:*),Bash(git show:*),Bash(git rev-list:*),WebFetch"
 
       # Sonda błędu: pełny zapis wykonania CLI (stream NDJSON) — jedyne miejsce,
       # gdzie ląduje treść błędu przy „niemym zgonie" (log pokazuje tylko is_error).
