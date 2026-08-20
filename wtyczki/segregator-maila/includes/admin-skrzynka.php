@@ -301,7 +301,16 @@ function segm_strona_skrzynka() {
  */
 function segm_skrzynka_tabela_przebiegow() {
 	global $wpdb;
-	$przebiegi = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}segm_skrz_przebiegi ORDER BY id DESC LIMIT 50" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	$wszystkich = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}segm_skrz_przebiegi" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	$strona_nr  = segm_biezaca_strona( (int) ceil( $wszystkich / SEGM_NA_STRONE ) );
+	$przebiegi  = $wpdb->get_results(
+		$wpdb->prepare(
+			"SELECT * FROM {$wpdb->prefix}segm_skrz_przebiegi ORDER BY id DESC LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			SEGM_NA_STRONE,
+			( $strona_nr - 1 ) * SEGM_NA_STRONE
+		)
+	);
+	segm_pasek_stron( 'segm-skrzynka', $wszystkich, $strona_nr );
 	?>
 	<table class="widefat striped">
 		<thead><tr><th>#</th><th>Kiedy</th><th>Tryb</th><th>Skąd</th><th>Sprawdzonych</th><th>Dopasowanych</th><th>Przeniesionych</th><th>Błędów</th><th></th></tr></thead>

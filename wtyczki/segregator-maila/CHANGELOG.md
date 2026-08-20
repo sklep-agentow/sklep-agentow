@@ -89,6 +89,16 @@ do prawdziwej skrzynki. Zbiera zmiany scalone do gałęzi głównej po 1.2.1.
   ogłasza `LOGINDISABLED`). Wtyczka wykrywa to i mówi wprost.
 - Cofnąć da się wyłącznie ostatni przebieg, nie dowolny wcześniejszy.
 
+## [Niewydane]
+
+### Naprawione
+
+- **Listy w panelu urywały się bez słowa i bez odnośnika „dalej”.** Przebiegi
+  kończyły się na pięćdziesiątym, próbka pokazywała pierwsze 200 z 500, historia
+  skrzynki na pięćdziesiątym — do reszty własnych danych nie było jak dojść.
+  Wszystkie trzy listy są teraz stronicowane, po 50 wierszy, z informacją
+  „pozycje X–Y z Z”.
+
 ## [1.2.1] — 2026-08-19
 
 ### Naprawione

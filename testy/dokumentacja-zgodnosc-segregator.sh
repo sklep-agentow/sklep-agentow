@@ -191,6 +191,18 @@ spr "diagram: limonka"              "1" "grep -ci '#BFFF38' $SVG | awk '{print (
 spr "diagram: tekst jasny"          "1" "grep -ci '#F5F5F5' $SVG | awk '{print (\$1>0)?1:0}'"
 spr "diagram: szary"                "1" "grep -ci '#8F929C' $SVG | awk '{print (\$1>0)?1:0}'"
 
+echo "=== W. Stronicowanie list ==="
+spr "SEGM_NA_STRONE"                 "50" "grep -oP '(?<=SEGM_NA_STRONE = )\d+' $W/includes/admin.php"
+spr "wspolny pasek stron"            "1" "grep -c 'function segm_pasek_stron' $W/includes/admin.php"
+spr "numer strony przycinany do zakresu" "1" "awk '/function segm_biezaca_strona/,/^}/' $W/includes/admin.php | grep -c 'max( 1, min('"
+spr "ZERO sztywnych LIMIT-ow w listach" "0" "grep -c 'ORDER BY id DESC LIMIT 50\|ORDER BY id ASC LIMIT 200' $W/includes/admin.php $W/includes/admin-skrzynka.php | grep -v ':0' | wc -l"
+spr "lista przebiegow stronicowana"  "1" "awk '/function segm_strona_przebiegi/,/^}/' $W/includes/admin.php | grep -c 'segm_pasek_stron('"
+spr "lista probki stronicowana"      "1" "awk '/function segm_strona_probka/,/^}/' $W/includes/admin.php | grep -c 'segm_pasek_stron('"
+spr "historia skrzynki stronicowana" "1" "awk '/function segm_skrzynka_tabela_przebiegow/,/^}/' $W/includes/admin-skrzynka.php | grep -c 'segm_pasek_stron('"
+spr "wszystkie trzy listy z OFFSET"  "3" "grep -c 'LIMIT %d OFFSET %d' $W/includes/admin.php $W/includes/admin-skrzynka.php | grep -oP '(?<=:)\d+' | paste -sd+ | bc"
+spr "pasek podaje zakres i sume"     "1" "awk '/function segm_pasek_stron/,/^}/' $W/includes/admin.php | grep -c 'displaying-num'"
+spr "dokumentacja opisuje stronicowanie" "1" "grep -c '8.1. Stronicowanie list' $DOK"
+
 echo "=== N. readme.txt w standardzie WordPressa ==="
 spr "readme.txt istnieje"            "1" "test -f $W/readme.txt && echo 1 || echo 0"
 spr "naglowek === Nazwa ==="         "1" "head -1 $W/readme.txt | grep -c '^=== Segregator maila ===$'"
@@ -212,7 +224,8 @@ echo "=== O. CHANGELOG.md ==="
 spr "CHANGELOG istnieje"             "1" "test -f $W/CHANGELOG.md && echo 1 || echo 0"
 spr "format Keep a Changelog"        "1" "grep -c 'keepachangelog.com' $W/CHANGELOG.md"
 spr "biezaca wersja ma wpis"         "1" "grep -c '^## \\[1.3.0\\]' $W/CHANGELOG.md"
-spr "liczba wydan opisanych"         "5" "grep -c '^## \\[' $W/CHANGELOG.md"
+spr "liczba wydan opisanych"         "6" "grep -c '^## \\[' $W/CHANGELOG.md"
+spr "biezaca praca w sekcji Niewydane" "1" "grep -c '^## \\[Niewydane\\]$' $W/CHANGELOG.md"
 for v in 1.0.0 1.1.0 1.2.0 1.2.1; do
   spr "wersja $v z historii gita opisana" "1" "grep -c '^## \\[$v\\]' $W/CHANGELOG.md"
 done

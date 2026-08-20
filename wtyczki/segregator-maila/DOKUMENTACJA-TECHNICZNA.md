@@ -63,12 +63,12 @@ leży w pliku `LICENSE` w katalogu wtyczki i wchodzi do paczki produktowej.
 | `includes/silnik.php` | 226 | `segm_klasyfikuj_mail()` — jedyna reguła dopasowania w całej wtyczce; przebieg na próbce |
 | `includes/csv.php` | 352 | import próbki z CSV (wykrywanie kodowania, limity) i eksport raportu do CSV |
 | `includes/ai.php` | 294 | opcjonalna klasyfikacja modelem, licznik stop-loss |
-| `includes/admin.php` | 1091 | panel: przebiegi i raporty, reguły, kategorie, próbka, ustawienia, baner powitalny |
+| `includes/admin.php` | 1174 | panel: przebiegi i raporty, reguły, kategorie, próbka, ustawienia, baner powitalny |
 | `includes/filtry.php` | 588 | eksport reguł do filtrów Gmaila (XML) i reguł Outlooka |
 | `includes/class-segm-imap.php` | 947 | **klient IMAP4rev1 w czystym PHP** — gniazdo, TLS, protokół |
 | `includes/skrzynka.php` | 504 | konfiguracja skrzynki, hasło, diagnostyka, „Sprawdź połączenie", rozbiór nagłówków i treści |
 | `includes/skrzynka-przebieg.php` | 556 | przebieg na żywej skrzynce, historia, cofanie, harmonogramy WP-Cron |
-| `includes/admin-skrzynka.php` | 692 | panel zakładki *Skrzynka (IMAP)* i obsługa jej formularzy |
+| `includes/admin-skrzynka.php` | 701 | panel zakładki *Skrzynka (IMAP)* i obsługa jej formularzy |
 | `includes/admin-powitanie.php` | 143 | ekran powitalny pokazywany raz po aktywacji |
 
 Poza kodem w paczce jadą: `LICENSE` (pełny tekst GPL-2.0), `readme.txt`
@@ -195,6 +195,7 @@ więc deinstalacja kasuje go zapytaniem `LIKE` po `wp_options` (razem z wierszam
 | `SEGM_AI_MAX_WYWOLAN_PRZEBIEG` | `1` | `ai.php` | ile wywołań na przebieg |
 | `SEGM_AI_MAX_PROBKA` | `30` (`PARTIA × WYWOLAN`) | `ai.php` | twardy limit próbki dla trybu AI |
 | `SEGM_FILTRY_STRONA` | `segm-filtry` | `filtry.php` | slug strony eksportu filtrów |
+| `SEGM_NA_STRONE` | `50` | `admin.php` | ile wierszy na stronę KAŻDEJ listy w panelu |
 
 Stałe klasy `Segm_Imap`: `KONIEC` (`\r\n`), `DZIENNIK_LINII` (`120`),
 `DZIENNIK_ZNAKOW` (`300`).
@@ -299,6 +300,21 @@ różnice. Nie ruszy bez zapisanej zgody `segm_zgoda_ai`, a przy próbce większ
 zamiast urwać się w połowie na limicie czasu żądania.
 
 ---
+
+### 8.1. Stronicowanie list
+
+Trzy listy w panelu potrafią urosnąć: przebiegi na próbce, sama próbka
+(do 500 wierszy z importu) i historia segregacji skrzynki. Wszystkie trzy
+stronicuje jeden mechanizm — `segm_pasek_stron()` w `admin.php`, po
+`SEGM_NA_STRONE` = 50 wierszy, numer strony w parametrze `segm_strona`.
+
+Świadomie **własny parametr, nie `paged`**: WordPress używa `paged` do własnych
+list i podpinanie się pod niego na stronie wtyczki bywa źródłem przekręconych
+przekierowań. Numer spoza zakresu jest **przycinany do istniejącej strony**,
+więc `?segm_strona=999` pokazuje ostatnią stronę, a nie pustą tabelę.
+
+Pasek podaje zakres i sumę („pozycje 51–100 z 260 (strona 2 z 6)”), bo sama
+nawigacja bez liczb nie mówi właścicielowi, ile danych w ogóle ma.
 
 ## 9. Przepływ B — segregacja na PRAWDZIWEJ SKRZYNCE
 
