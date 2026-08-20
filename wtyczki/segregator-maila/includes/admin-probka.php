@@ -92,12 +92,17 @@ function segm_policz_trafienia( $pole, $wzorzec, $id_reguly = 0, $kontekst = nul
 	// ⛔ Pracujemy na KOPIACH reguł, nie na obiektach z kontekstu: podmiana
 	// pola i wzorca poniżej zostawałaby w kontekście i psuła liczenie każdemu
 	// następnemu wierszowi listy (kontekst jest wspólny dla wszystkich).
+	// $id_probny to identyfikator reguły, którą liczymy: własny przy edycji,
+	// -1 przy nowej (żadna reguła w bazie nie ma -1, więc nowa niczego nie
+	// podmienia). Porównujemy właśnie z nim, a nie powtarzamy warunku
+	// „$id_reguly > 0 && ..." — dwa zapisy tej samej myśli czytają się tak,
+	// jakby mówiły o czymś innym.
 	$id_probny = $id_reguly > 0 ? (int) $id_reguly : -1;
 	$podmienic = false;
 	$reguly    = array();
 	foreach ( $kontekst['reguly'] as $regula ) {
 		$kopia = clone $regula;
-		if ( $id_reguly > 0 && (int) $kopia->id === (int) $id_reguly ) {
+		if ( (int) $kopia->id === $id_probny ) {
 			$kopia->pole    = $pole;
 			$kopia->wzorzec = $wzorzec;
 			$podmienic      = true;
