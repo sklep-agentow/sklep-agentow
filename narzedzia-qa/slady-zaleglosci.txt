@@ -12,29 +12,19 @@
 #
 # Format: etykieta|ścieżka względem katalogu wtyczki|treść linii (bez wcięcia).
 #
-# STAN 2026-08-21, po posprzątaniu Segregatora i po rozszerzeniu wzorca do 1.1.0
-# — 44 pozycje:
+# STAN 2026-08-21, po zamknięciu czterech ostatnich śladów Segregatora
+# — 40 pozycji:
 #   chatbot-live      0  (wyczyszczony przy zamrażaniu 1.5.7)
-#   segregator-maila  4  (BYŁO 12 przy wzorcu 1.1.0; osiem zamkniętych w tym PR-ze,
-#                         zostały cztery w DOKUMENTACJA-TECHNICZNA.md — plik pod ręką
-#                         buildera 2, nie wolno mi go tknąć)
-#   sklep-agentow    40  (BYŁO 31, potem 42; jedenaście doszło z rozszerzenia wzorca o nasze
-#                         słownictwo — „krytyk #N", „ściąga egzaminatora". Moduł
-#                         koordynatora, wzięty przez niego na siebie.
-#                         ⚠️ JEDEN z nich jest w tekście WIDZIANYM PRZEZ UŻYTKOWNIKA:
-#                         includes/admin-zamowienie.php — „(podgląd — egzaminator
-#                         widzi mail bez skrzynki)" leci do HTML-a panelu, to nie
-#                         jest komentarz.)
+#   segregator-maila  0  (cztery ścieżki naszego drzewa roboczego w pliku, KTÓRY
+#                         IDZIE W PACZCE DO KUPUJĄCEGO — zamknięte w tym PR-ze)
+#   sklep-agentow    40  (komentarze z odsyłaczami do naszego procesu; moduł
+#                         koordynatorki, zamykane w osobnym PR-ze)
 #
 # ⚠️ UWAGA PRZY SCALANIU: ten plik powstaje TAKŻE w PR-ze zamrożenia ChatBota,
 # tam z jedenastoma pozycjami segregatora. Konflikt „oba dodały ten plik" jest
 # ZAMIERZONY — bierze się wersję z TEGO PR-a (35 pozycji). Wzięcie tamtej zostawi
 # siedem wpisów, które do niczego nie pasują, a martwy wpis zapala bramkę `slady`
 # na czerwono. Kolejność scalania nie ma znaczenia, ważne, która wersja zostaje.
-segregator-maila|DOKUMENTACJA-TECHNICZNA.md|node testy/svg-pomiar-tekstow.js wtyczki/segregator-maila/DIAGRAM-PRZEPLYWU.svg
-segregator-maila|DOKUMENTACJA-TECHNICZNA.md|testy/dokumentacja-zgodnosc-segregator.sh   # każda liczba i nazwa stąd — grepem po kodzie
-segregator-maila|DOKUMENTACJA-TECHNICZNA.md|vendor/bin/phpcs -q wtyczki/segregator-maila/
-segregator-maila|DOKUMENTACJA-TECHNICZNA.md|> w `testy/dokumentacja-zgodnosc-segregator.sh` i wykonuje się jednym poleceniem.
 sklep-agentow|assets/front.css|font-size: 0.8rem; /* Spójnie z mono-etykietami (obserwacja recenzji #53). */
 sklep-agentow|assets/front.css|/* PRZED/PO segregacji (§5b.3; etykieta DEMO — krytyk #12). */
 sklep-agentow|assets/front.css|/* ⚠️ ŚWIADOMA DECYZJA (uwaga recenzenta #62): to jest WYRÓWNANIE DO SIATKI,
