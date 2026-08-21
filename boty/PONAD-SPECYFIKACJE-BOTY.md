@@ -53,6 +53,18 @@ była w klepniętych szkicach (`boty/SZKICE-BOTOW.md`) albo wynika z ich zasad
    kluczowych, więc wiersz bez nich jest martwy, a właściciel dowiedziałby się
    o tym dopiero z raportu luk. Podgląd pokazuje podpowiedziane słowa **do edycji**
    i ostrzega przy wierszach, w które bot nie trafi.
+12. **Wpięcie w kreator RODO WordPressa (eksporter i kasownik danych osobowych)**
+   (`includes/rodo.php`) — rozszerzenie ponad szkice. **Powód:** wtyczka trzyma
+   adresy e-mail gości i treść ich rozmów, a produkt jest sprzedawany z sekcją
+   o RODO — wtyczka niewpięta w kreator zostawia właściciela z obowiązkiem
+   prawnym i bez narzędzia. To nie jest bonus dla ładnego opisu: bez tego
+   deklaracja produktu rozjeżdża się z tym, co kod naprawdę potrafi.
+13. **Pułapka na boty (honeypot + próg czasu)** (`includes/front.php`,
+   `assets/widget.js`) — rozszerzenie ponad szkice. **Powód:** czat jest publiczny,
+   a pięć adresów wystarczało, żeby wyczerpać dzienny budżet AI właściciela —
+   potem prawdziwi goście dostawali już tylko tryb regułowy, a właściciel płacił
+   za funkcję, która cicho przestała działać. Do tego formularz kontaktu bez sita
+   jest zaproszeniem do mail-bomby na skrzynkę właściciela.
 
 ## Segregator maila
 1. **Tryb AI + „porównaj reguły vs AI"** — decyzja Dzidka 18.08 (szkice §BOT 2).

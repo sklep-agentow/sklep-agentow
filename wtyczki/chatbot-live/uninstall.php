@@ -33,6 +33,10 @@ delete_option( 'chatl_wersja_schematu' );
 delete_option( 'chatl_blad_maila' );
 delete_option( 'chatl_blad_ai' );
 delete_option( 'chatl_blad_nonce' );
+// Nazwa wpisana wprost, a nie przez CHATL_RODO_OPCJA_WSPOLNE: uninstall.php biegnie
+// bez ladowania wtyczki, wiec stalej z includes/rodo.php tu nie ma. Slad sesji
+// wspoldzielonych (same identyfikatory, bez adresow i tresci) znika razem z danymi.
+delete_option( 'chatl_rodo_sesje_wspolne' );
 
 // Znacznik „widziałem ekran powitalny" leży przy KAŻDYM administratorze osobno,
 // więc kasujemy go dla wszystkich naraz ($delete_all = true). Bez tego po pełnym

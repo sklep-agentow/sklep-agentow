@@ -74,6 +74,42 @@ Zapisać możesz i tak — decyzja jest Twoja, ale wiesz, co wybierasz.
   a jeśli podałeś adres polityki prywatności w Ustawieniach — nota prowadzi
   także do niej. Warto ten adres uzupełnić: to Ty jesteś administratorem tych danych.
 
+### Pułapka na boty — i czego ona NIE zatrzyma
+
+Czat jest publiczny, więc trafiają na niego automaty. Wtyczka ma na nie proste
+sito: **ukryte pole**, którego człowiek nie widzi i nie dosięgnie klawiszem Tab
+(wypełnia je tylko skrypt), oraz **próg czasu** — pytanie wysłane w niecałe
+2 sekundy od otwarcia czatu nie jest pisane przez człowieka.
+
+Próg czasu celowo **nie obowiązuje przy formularzu kontaktu**: gość, który otwiera
+czat i od razu klika „Zostaw wiadomość", potrafi wysłać go bardzo szybko, a pomyłka
+kosztowałaby Cię prawdziwy kontakt. Formularza pilnuje samo ukryte pole.
+
+Co się dzieje ze złapaną wiadomością — i dlaczego właśnie tak:
+
+- **Zostaje zapisana**, z oznaczeniem „podejrzane". Nie kasujemy jej po cichu,
+  bo gdyby sito pomyliło się przy prawdziwym kliencie, **nikt by się o tym nie
+  dowiedział**: klient myślałby, że wysłał, a Ty nie wiedziałbyś, że coś przepadło.
+- **Nie dostajesz o niej maila.** To główny powód, dla którego ta pułapka
+  istnieje — żeby automat nie zasypał Twojej skrzynki.
+- **Nie zużywa budżetu trybu AI** ani limitu, który chroni prawdziwych gości.
+- Lista **Zgłoszenia** pokazuje domyślnie tylko czyste. Podejrzane są **za
+  filtrem obok, z licznikiem** — jeśli klient mówi, że pisał i nie dostał
+  odpowiedzi, zajrzyj tam w pierwszej kolejności.
+- Wysyłający **nie dowiaduje się, że wpadł** — widzi to samo podziękowanie co
+  wszyscy. Inaczej autor skryptu poprawiłby go w pięć minut.
+
+Liczbę zadziałań pułapki widzisz jako komunikat w panelu.
+
+⚠️ **Uczciwie o granicy tego sita.** Pułapka zatrzymuje automaty, które
+przeglądają stronę i wypełniają wszystko, co znajdą, albo strzelają natychmiast
+po jej wczytaniu. **Nie zatrzyma** kogoś, kto celowo podejrzy, jak czat wysyła
+dane, i będzie wysyłał je bezpośrednio, z odstępami — przed tym broni dobowy
+limit zapytań AI z jednego adresu (Ustawienia → tryb AI), a nie ukryte pole.
+To jest tanie sito na masową głupotę, nie zamek na determinację. Jeśli
+zobaczysz, że mimo pułapki budżet AI znika, napisz do nas — wtedy potrzebne
+jest inne narzędzie (np. captcha albo ograniczenie czatu do zalogowanych).
+
 ## 5. Statystyki i luki — czyli jak ulepszać bota bez zgadywania
 
 Wejdź w **ChatBot LIVE → Statystyki i luki**. Wybierasz okres (7 / 30 / 90 dni

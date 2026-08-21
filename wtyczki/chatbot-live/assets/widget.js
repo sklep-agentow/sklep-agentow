@@ -47,7 +47,7 @@
 	}
 
 	var sesja = wczytajSesje();
-	var okno, listaWiadomosci, formularzKontaktu, zamknijFormularz;
+	var okno, listaWiadomosci, formularzKontaktu, zamknijFormularz, polePulapki;
 	/* Ustawiane przy budowie okna — zamkniecie czatu (takze klawiszem Escape)
 	   ma UCISZYC odpytywanie, inaczej zamkniete okno dalej obciaza serwer. */
 	var stopOdpytywania = function () {};
@@ -87,6 +87,9 @@
 			body.append('action', akcja);
 			body.append('nonce', nonce);
 			body.append('sesja', id || '');
+			// Pulapka na boty: pole JEST w DOM (skrobiacy skrypt je znajdzie
+			// i wypelni), a widget wysyla je zawsze PUSTE. Wypelnione = nie czlowiek.
+			body.append('chatl_pole_dodatkowe', polePulapki ? polePulapki.value : '');
 			Object.keys(pola).forEach(function (k) { body.append(k, pola[k]); });
 			return fetch(dane.ajaxUrl, { method: 'POST', body: body })
 				.then(function (odp) { return odp.json(); });
@@ -221,6 +224,24 @@
 		zamknijForm.addEventListener('click', function () { zamknijFormularz(); });
 		pasekTytulu.appendChild(zamknijForm);
 		f.appendChild(pasekTytulu);
+
+		/*
+		 * PULAPKA NA BOTY. Pole jest w DOM, wiec skrypt, ktory zeskrobal strone
+		 * i odsyla wszystko, co znalazl, wypelni je i wpadnie. Czlowiek go nie
+		 * zobaczy i nie dojdzie do niego tabulatorem, a czytnik ekranu je pomija.
+		 *
+		 * NIE uzywamy display:none — czesc prostych botow pomija pola ukryte tak
+		 * wprost. Nazwa celowo nie brzmi jak "email"/"imie"/"telefon": menedzery
+		 * hasel wypelniaja pola po nazwie, a falszywy alarm u prawdziwego goscia
+		 * jest tu drozszy niz przepuszczony spam.
+		 */
+		polePulapki = el('input', 'chatl-pole-dodatkowe');
+		polePulapki.type = 'text';
+		polePulapki.name = 'chatl_pole_dodatkowe';
+		polePulapki.tabIndex = -1;
+		polePulapki.autocomplete = 'off';
+		polePulapki.setAttribute('aria-hidden', 'true');
+		f.appendChild(polePulapki);
 
 		var email = el('input', 'chatl-pole');
 		email.type = 'email';

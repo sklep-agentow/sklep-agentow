@@ -26,6 +26,36 @@ const CHATL_RETENCJA_DNI  = 90;
  */
 const CHATL_AI_LIMIT_IP_NA_DOBE = 20;
 
+/**
+ * Nazwa ukrytego pola-pułapki.
+ *
+ * Celowo NIE brzmi jak „email", „imie" ani „telefon": menedżery haseł
+ * i autouzupełnianie przeglądarki wypełniają pola po nazwie, a fałszywy alarm
+ * u prawdziwego gościa jest tu droższy niż przepuszczony spam.
+ */
+const CHATL_PULAPKA_POLE = 'chatl_pole_dodatkowe';
+
+/**
+ * Ile sekund od WYDANIA SESJI żądanie uznajemy za zbyt szybkie na człowieka.
+ *
+ * Liczone po stronie serwera, z `utworzono` w tabeli sesji — nie ze znacznika
+ * przysłanego przez przeglądarkę, bo taki znacznik skrypt po prostu podrabia.
+ * Dwie sekundy to próg dobrany pod NAJSZYBSZEGO człowieka, nie pod średniego:
+ * gość, który kliknie gotowe pytanie od razu po otwarciu okna, i tak potrzebuje
+ * więcej — okno musi się rozwinąć, a sesja jest wydawana przed rysowaniem.
+ */
+const CHATL_PULAPKA_SEKUND = 2;
+
+/**
+ * Sufit ZŁAPANYCH zgłoszeń zapisywanych z jednego adresu w minucie.
+ *
+ * Złapane zgłoszenie ląduje w bazie (decyzja produktowa: nie oddajemy leada za
+ * elegancję mechanizmu), więc sama pułapka nie może stać się drogą do zalania
+ * tabeli. Powyżej tego sufitu zgłoszenie NIE jest zapisywane — ale odpowiedź
+ * dla wysyłającego jest nadal identyczna, żeby skrypt się nie dowiedział.
+ */
+const CHATL_LIMIT_PULAPKA = 5;
+
 /*
  * Limit odswiezania zabezpieczenia formularza z jednego adresu IP na minute.
  * Wyzszy niz wspolny kubel czatu, bo na jedno nieudane pytanie przypada jedno
@@ -329,6 +359,31 @@ function chatl_waliduj_sesje( $sesja ) {
 function chatl_ajax_pytanie() {
 	chatl_wymagaj_nonce();
 
+	/*
+	 * Pułapka sprawdzana PRZED limitem i PRZED czymkolwiek płatnym. Kolejność
+	 * jest tu decyzją, nie przypadkiem: złapane żądanie nie może zużywać kubła,
+	 * który blokuje PRAWDZIWYCH gości — inaczej bot dalej wypychałby ludzi
+	 * z czatu, tyle że innym mechanizmem.
+	 */
+	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce sprawdzony linijkę wyżej.
+	$sesja_wstepna = isset( $_POST['sesja'] ) ? chatl_waliduj_sesje( wp_unslash( $_POST['sesja'] ) ) : '';
+	$pulapka       = chatl_pulapka_zlapala( $sesja_wstepna );
+	if ( '' !== $pulapka ) {
+		chatl_odnotuj_pulapke( $pulapka );
+		/*
+		 * Odpowiedź jest nieodróżnialna od zwykłego „nie znam odpowiedzi": bot
+		 * nie dowiaduje się, że wpadł, a człowiek fałszywie złapany dostaje
+		 * normalnie działający czat, tylko bez trybu AI.
+		 */
+		wp_send_json_success(
+			array(
+				'odpowiedz' => chatl_ustawienia()['tekst_awaryjny'],
+				'silnik'    => 'reguly',
+				'trafiono'  => false,
+			)
+		);
+	}
+
 	if ( ! chatl_limit_ip_ok() ) {
 		wp_send_json_error( array( 'komunikat' => 'Za dużo wiadomości w krótkim czasie — odczekaj chwilę i spróbuj ponownie.' ), 429 );
 	}
@@ -453,7 +508,17 @@ add_action( 'wp_ajax_nopriv_chatl_pytanie', 'chatl_ajax_pytanie' );
 function chatl_ajax_zgloszenie() {
 	chatl_wymagaj_nonce();
 
-	if ( ! chatl_limit_ip_ok() ) {
+	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce sprawdzony linijkę wyżej.
+	$sesja_wstepna = isset( $_POST['sesja'] ) ? chatl_waliduj_sesje( wp_unslash( $_POST['sesja'] ) ) : '';
+	// Bez progu czasu — przy formularzu kontaktu fałszywy alarm kosztuje
+	// utracony kontakt, a próg i tak nie łapie bota strzelającego wprost
+	// w admin-ajax.php (patrz komentarz przy chatl_pulapka_zlapala).
+	$pulapka = chatl_pulapka_zlapala( $sesja_wstepna, false );
+	if ( '' !== $pulapka ) {
+		chatl_odnotuj_pulapke( $pulapka );
+	}
+
+	if ( '' === $pulapka && ! chatl_limit_ip_ok() ) {
 		wp_send_json_error( array( 'komunikat' => 'Za dużo wiadomości w krótkim czasie — odczekaj chwilę i spróbuj ponownie.' ), 429 );
 	}
 
@@ -487,18 +552,41 @@ function chatl_ajax_zgloszenie() {
 	}
 
 	global $wpdb;
+
+	/*
+	 * ZŁAPANE ZGŁOSZENIE TRAFIA DO BAZY — z flagą, nie do kosza. Decyzja
+	 * produktowa, nie techniczna: ten bot istnieje po to, żeby małej firmie
+	 * ZBIERAĆ KONTAKTY. Koszt przejrzenia trzech spamów jest niższy niż koszt
+	 * jednego utraconego klienta, a fałszywy alarm w wersji „cicho wyrzuć" jest
+	 * NIEWIDZIALNY dla obu stron: gość myśli, że wysłał, właściciel nie wie,
+	 * że coś przepadło.
+	 *
+	 * Cisza dotyczy BOTA, nie bazy — odpowiedź niżej jest identyczna jak przy
+	 * czystym zgłoszeniu, więc skrypt się nie dowiaduje, że wpadł.
+	 *
+	 * Sufit na złapane zapisy: skoro złapane lądują w bazie, sama pułapka nie
+	 * może stać się drogą do zalania tabeli. Powyżej sufitu nie zapisujemy —
+	 * i to jest jedyne miejsce, w którym coś przepada. Nie dotyczy czystych
+	 * zgłoszeń, więc prawdziwy klient nigdy tędy nie wypada.
+	 */
+	$zapis_pominiety = false;
+	if ( '' !== $pulapka && ! chatl_rate_limit( 'pulapka', CHATL_LIMIT_PULAPKA ) ) {
+		$zapis_pominiety = true;
+	}
+
 	// Zapis MUSI być sprawdzony: bez tego padnięty INSERT kończył się „Dziękujemy",
 	// a wiadomość gościa przepadała bez śladu (cichy ubytek danych klienta).
-	$zapisano = $wpdb->insert(
+	$zapisano = $zapis_pominiety ? true : $wpdb->insert(
 		$wpdb->prefix . 'chatl_zgloszenia',
 		array(
-			'email'     => $email,
-			'wiadomosc' => $wiadomosc,
-			'sesja'     => $sesja,
-			'status'    => 'nowe',
-			'utworzono' => current_time( 'mysql' ),
+			'email'      => $email,
+			'wiadomosc'  => $wiadomosc,
+			'sesja'      => $sesja,
+			'status'     => 'nowe',
+			'podejrzane' => '' === $pulapka ? 0 : 1,
+			'utworzono'  => current_time( 'mysql' ),
 		),
-		array( '%s', '%s', '%s', '%s', '%s' )
+		array( '%s', '%s', '%s', '%s', '%d', '%s' )
 	);
 	if ( false === $zapisano ) {
 		chatl_log_bledu_bazy( 'chatl_ajax_zgloszenie', 'zgłoszenie gościa z czatu' );
@@ -508,7 +596,12 @@ function chatl_ajax_zgloszenie() {
 		);
 	}
 
-	if ( $ust['powiadomienia'] && is_email( $ust['mail_powiadomien'] ) ) {
+	/*
+	 * ⛔ ZŁAPANE ZGŁOSZENIE NIE WYSYŁA MAILA. To był główny powód postawienia tej
+	 * pułapki: ochrona właściciela przed mail-bombą. Zgłoszenie jest w panelu,
+	 * za filtrem „podejrzane", więc nic nie ginie — ale skrzynka zostaje czysta.
+	 */
+	if ( '' === $pulapka && $ust['powiadomienia'] && is_email( $ust['mail_powiadomien'] ) ) {
 		$wyslano = wp_mail(
 			$ust['mail_powiadomien'],
 			'ChatBot LIVE: nowe zgłoszenie z czatu',
@@ -540,6 +633,80 @@ add_action( 'wp_ajax_nopriv_chatl_zgloszenie', 'chatl_ajax_zgloszenie' );
  * @param string $adres   Adres, na który szło powiadomienie.
  * @return void
  */
+/**
+ * Czy TO żądanie wpadło w pułapkę na boty.
+ *
+ * ⚠️ Uczciwie o zasięgu, żeby nikt nie wziął tego za ochronę budżetu AI:
+ * pułapka łapie skrypty, które **zeskrobały stronę i odsyłają wszystko, co
+ * znalazły**, albo strzelają natychmiast po pobraniu strony. NIE łapie kogoś,
+ * kto zna kształt żądania i wysyła je wprost do `admin-ajax.php` — przed tym
+ * broni dobowy limit na adres (CHATL_AI_LIMIT_IP_NA_DOBE), a nie to.
+ * To jest tanie sito na masową głupotę, nie zamek na determinację.
+ *
+ * ⚠️ PRÓG CZASU JEST WŁĄCZANY OSOBNO I NIE DZIAŁA PRZY FORMULARZU KONTAKTU.
+ * Powód zmierzony testem przeglądarkowym, nie wydedukowany: prawdziwy gość,
+ * który otworzy czat i od razu kliknie „Zostaw wiadomość", potrafi wysłać
+ * formularz szybciej niż w dwie sekundy od wydania sesji — i wpada we własną
+ * pułapkę. Cena tego fałszywego alarmu to **utracony kontakt**, czyli jedyna
+ * rzecz, dla której ten produkt istnieje.
+ *
+ * Rachunek wychodzi tu jednoznacznie na niekorzyść progu czasu przy zgłoszeniu:
+ * bot uderzający wprost w `admin-ajax.php` podaje ZMYŚLONĄ sesję, dla której nie
+ * ma wiersza w tabeli — a wtedy próg czasu i tak nie zadziała (brak wiersza to
+ * nie dowód bota). Łapie więc wyłącznie skrypt, który grzecznie poprosi o sesję
+ * i natychmiast strzeli. Przy pytaniu do bota koszt pomyłki jest bliski zeru
+ * (gość dostaje odpowiedź z reguł i nawet tego nie zauważy), więc tam próg
+ * zostaje. Przy formularzu — nie.
+ *
+ * @param string $sesja        Identyfikator sesji (już zwalidowany).
+ * @param bool   $sprawdzaj_czas Czy stosować próg czasu (patrz wyżej).
+ * @return string '' gdy czysto, inaczej powód: 'pole' albo 'czas'.
+ */
+function chatl_pulapka_zlapala( $sesja, $sprawdzaj_czas = true ) {
+	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce sprawdza chatl_wymagaj_nonce() na wejściu do endpointu.
+	if ( ! empty( $_POST[ CHATL_PULAPKA_POLE ] ) ) {
+		return 'pole';
+	}
+	if ( ! $sprawdzaj_czas || '' === (string) $sesja ) {
+		return '';
+	}
+	global $wpdb;
+	$t = $wpdb->prefix . 'chatl_sesje';
+	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+	$utworzono = $wpdb->get_var( $wpdb->prepare( "SELECT utworzono FROM {$t} WHERE sesja = %s", $sesja ) );
+	if ( ! $utworzono ) {
+		return ''; // Brak wiersza sesji to nie dowód bota — sesja mogła wygasnąć.
+	}
+	// Oba znaczniki w czasie WITRYNY: sesja zapisywana przez current_time( 'mysql' ).
+	$wiek = (int) current_time( 'timestamp' ) - (int) strtotime( (string) $utworzono ); // phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp.Requested
+	return $wiek < CHATL_PULAPKA_SEKUND ? 'czas' : '';
+}
+
+/**
+ * Licznik zadziałań pułapki — żeby właściciel WIDZIAŁ, że działa.
+ *
+ * Bez licznika pułapka jest niesprawdzalna z panelu: cisza znaczy albo „nic nie
+ * przyszło", albo „przepuszczam wszystko", i nie da się tego rozróżnić. Licznik
+ * czyni też widocznym FAŁSZYWY ALARM — jeśli rośnie, a klienci skarżą się, że
+ * pisali i nie dostali odpowiedzi, właściciel wie, gdzie zajrzeć.
+ *
+ * @param string $powod 'pole' albo 'czas'.
+ * @return void
+ */
+function chatl_odnotuj_pulapke( $powod ) {
+	$stan = get_option( 'chatl_pulapka', array() );
+	$stan = is_array( $stan ) ? $stan : array();
+	update_option(
+		'chatl_pulapka',
+		array(
+			'ile'      => 1 + (int) ( $stan['ile'] ?? 0 ),
+			'ostatnia' => current_time( 'mysql' ),
+			'powod'    => 'pole' === $powod ? 'ukryte pole' : 'zbyt szybkie żądanie',
+		),
+		false
+	);
+}
+
 function chatl_odnotuj_wysylke_powiadomienia( $wyslano, $adres ) {
 	if ( $wyslano ) {
 		delete_option( 'chatl_blad_maila' );

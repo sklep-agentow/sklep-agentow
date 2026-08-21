@@ -1,6 +1,6 @@
 # ChatBot LIVE — dokumentacja techniczna
 
-Wersja wtyczki: **1.5.3** · schemat bazy: **6** · licencja: **GPL-2.0-or-later**
+Wersja wtyczki: **1.5.5** · schemat bazy: **7** · licencja: **GPL-2.0-or-later**
 
 Dokument opisuje **kod, który jest**, nie plan. Każda liczba i nazwa poniżej ma pokrycie
 w źródle — przy każdej podano plik i symbol, żeby dało się to sprawdzić `grep`-em, a nie
@@ -101,6 +101,7 @@ Serce trybu regułowego. Właściciel wypełnia ją w panelu; przy pierwszej akt
 | `email` | `varchar(190)` | Adres gościa. 190 znaków, bo to bezpieczna długość dla indeksu przy `utf8mb4`. Walidowany `is_email()` przed zapisem. |
 | `wiadomosc` | `text` | Treść od gościa. Przycinana do 2000 znaków (`CHATL_MAX_WIADOMOSC`). |
 | `sesja` | `varchar(64)`, domyślnie `''` | Identyfikator sesji czatu — pozwala zestawić zgłoszenie z rozmową, która je poprzedziła. |
+| `podejrzane` | `tinyint(1)` | `0` = zgłoszenie normalne, `1` = złapane przez pułapkę na boty; lista w panelu domyślnie pokazuje tylko `0` |
 | `status` | `varchar(20)`, domyślnie `'nowe'` | `nowe` albo `obsluzone` — jedyne dwie wartości przyjmowane przez handler zmiany statusu. Ma własny indeks `KEY status`. |
 | `utworzono` | `datetime` | Kiedy przyszło zgłoszenie. **Zgłoszenia NIE podlegają retencji 90 dni** — kasuje je właściciel ręcznie albo pełna deinstalacja. |
 
@@ -142,11 +143,12 @@ całą historię przy każdym wejściu.
 | Opcja | Zawartość | Autoload | Kiedy powstaje |
 |---|---|---|---|
 | `chatl_ustawienia` | tablica ustawień (patrz niżej) | tak (domyślnie) | przy pierwszym zapisie ustawień — **nie** przy aktywacji |
-| `chatl_wersja_schematu` | numer schematu, obecnie `6` | tak (domyślnie) | przy aktywacji i przy migracji schematu |
+| `chatl_wersja_schematu` | numer schematu, obecnie `7` | tak (domyślnie) | przy aktywacji i przy migracji schematu |
 | `chatl_klucz_api` | klucz API właściciela | **nie** (`add_option(..., '', false)`) | przy zapisaniu klucza w panelu |
 | `chatl_blad_maila` | `['kiedy' => data, 'adres' => e-mail]` | **nie** | gdy `wp_mail()` zwróci `false`; kasowana przy pierwszej udanej wysyłce |
 | `chatl_blad_ai` | `['kiedy' => data, 'kod' => HTTP, 'tresc' => fragment]` | **nie** | gdy wywołanie API nie zwróci 200; kasowana przy pierwszym udanym wywołaniu |
 | `chatl_blad_nonce` | `['ostatni' => data, 'ile' => liczba]` | **nie** | gdy gościowi odbije się zabezpieczenie formularza; kasowana przyciskiem w panelu |
+| `chatl_rodo_sesje_wspolne` | lista identyfikatorów sesji, o których wiemy, że **były współdzielone** przez dwie osoby | **nie** | przy wniosku RODO o usunięcie dotyczącym takiej sesji; przycinana przy każdym zapisie (patrz 23.2) |
 
 Klucz API jest bez autoloadu celowo: nie wchodzi do zapytania ładowanego na każdej odsłonie
 strony. Weryfikacja na żywym stacku po pełnym cyklu instalacja→deinstalacja→instalacja:
@@ -195,8 +197,8 @@ Wszystkie liczby, którymi wtyczka się rządzi, są stałymi — nie ma ich roz
 
 | Stała | Wartość | Plik | Do czego |
 |---|---|---|---|
-| `CHATL_WERSJA` | `1.5.3` | `chatbot-live.php` | wersja wtyczki; służy też jako `?ver=` assetów (przeglądarka nie poda starego pliku po aktualizacji) |
-| `CHATL_WERSJA_SCHEMATU` | `6` | `chatbot-live.php` | wyzwalacz migracji schematu |
+| `CHATL_WERSJA` | `1.5.5` | `chatbot-live.php` | wersja wtyczki; służy też jako `?ver=` assetów (przeglądarka nie poda starego pliku po aktualizacji) |
+| `CHATL_WERSJA_SCHEMATU` | `7` | `chatbot-live.php` | wyzwalacz migracji schematu |
 | `CHATL_KATALOG`, `CHATL_URL` | ścieżka i adres wtyczki | `chatbot-live.php` | `require` i adresy assetów |
 | `CHATL_MAX_PYTANIE` | `500` | `includes/front.php` | maksymalna długość pytania gościa (nadmiar jest **przycinany**, nie odrzucany) |
 | `CHATL_MAX_WIADOMOSC` | `2000` | `includes/front.php` | maksymalna długość treści zgłoszenia (jw.) |
@@ -227,6 +229,9 @@ Wszystkie liczby, którymi wtyczka się rządzi, są stałymi — nie ma ich roz
 | `CHATL_IMPORT_MAX_WIERSZY` | `2000` | `includes/import.php` | sufit wierszy jednego pliku CSV — powyżej odmowa z komunikatem zamiast padu na limicie pamięci |
 | `CHATL_IMPORT_MAX_BAJTOW` | `2097152` | `includes/import.php` | sufit rozmiaru wgrywanego pliku (2 MB) |
 | `CHATL_IMPORT_MINUT` | `15` | `includes/import.php` | ile żyje podgląd importu czekający na potwierdzenie |
+| `CHATL_PULAPKA_POLE` | `chatl_pole_dodatkowe` | `includes/front.php` | nazwa ukrytego pola-pułapki; celowo nie brzmi jak `email`/`imie`, bo menedżery haseł wypełniają pola po nazwie |
+| `CHATL_PULAPKA_SEKUND` | `2` | `includes/front.php` | poniżej tylu sekund od wydania sesji żądanie nie jest uznawane za pisane przez człowieka |
+| `CHATL_LIMIT_PULAPKA` | `5` | `includes/front.php` | sufit ZŁAPANYCH zgłoszeń zapisywanych z jednego adresu w minucie |
 | `CHATL_KLUCZ_API` | — | **`wp-config.php`, definiuje właściciel** | klucz API poza bazą; ma pierwszeństwo nad opcją |
 
 ---
@@ -1019,7 +1024,169 @@ ma `manage_options` **i** nonce. Pisanie do rozmowy, której się nie przejęło
 jest odrzucane: gość dostawałby wtedy dwa głosy naraz.
 
 
-## 24. Znane granice
+## 24. Narzędzia RODO WordPressa
+
+WordPress ma wbudowany kreator (**Narzędzia → Eksport / Usuwanie danych osobowych**):
+przyjmuje wniosek, weryfikuje adres mailem, buduje paczkę ZIP i prowadzi dziennik
+żądań. Wtyczka trzymająca maile gości i treść rozmów, a niewpięta w ten kreator,
+zostawia właściciela z obowiązkiem i bez narzędzia.
+
+| Zaczep WordPressa | Nasza funkcja | Co robi |
+|---|---|---|
+| `wp_privacy_personal_data_exporters` | `chatl_rodo_eksporter()` | wydaje zgłoszenia i rozmowy powiązane **wyłącznie** z tym adresem |
+| `wp_privacy_personal_data_erasers` | `chatl_rodo_kasownik()` | kasuje jedno i drugie, z liczbami w komunikacie |
+| `wp_add_privacy_policy_content()` | `chatl_polityka_prywatnosci()` | gotowy akapit do polityki prywatności |
+
+### 23.1. Granica wiązania: adres e-mail
+
+Kluczem jest adres, a to wyznacza granicę. Zgłoszenia mają e-mail wprost; historia
+rozmów **nie** — wiąże się z osobą wyłącznie przez sesję, w której ta osoba zostawiła
+zgłoszenie. **Rozmowa gościa, który nigdy nie podał maila, jest anonimowa** i nie ma
+jak przypisać jej do wniosku; kasuje ją retencja po `CHATL_RETENCJA_DNI` dniach.
+Kasownik mówi o tym wprost w komunikacie kreatora, zamiast udawać komplet.
+
+### 23.2. Sesja NIE jest własnością jednego adresu
+
+`chatl_rodo_sesje_maila()` zwraca sesje **z podziałem** na `wlasne` i `wspoldzielone`.
+Sesja jest współdzielona, gdy w jej zgłoszeniach występuje także **inny** adres —
+wspólny komputer (recepcja, biblioteka) albo gość, który rozmyślił się i podał drugi
+adres. Wtedy **jedna rozmowa zawiera wiadomości dwóch osób**, a wiersze `chatl_rozmowy`
+nie mają znacznika autora, więc nie da się ich rozdzielić.
+
+Takiej rozmowy **nie wydajemy i nie kasujemy**, bo obie operacje uderzają w osobę
+trzecią, i to po cichu:
+
+| Operacja | Co by się stało bez tego podziału |
+|---|---|
+| eksport | wnioskodawca dostałby **treść rozmowy drugiej osoby** — art. 15 ust. 4 RODO mówi wprost, że prawo do kopii nie może naruszać praw innych osób |
+| kasowanie | dane drugiej osoby zniknęłyby **na wniosek osoby trzeciej** |
+
+Zgadywanie po czasie („wiadomości sprzed zgłoszenia należą do tej osoby") wygląda
+mądrze i jest fałszem — w bazie nie ma nic, co by to rozstrzygało. Zamiast zgadywać,
+kreator **wypisuje**, ile rozmów zachowano i dlaczego, a `items_retained` jest wtedy
+`true`. Paczka eksportu dostaje na pierwszej stronie notatkę o pominiętej rozmowie —
+milczenie byłoby gorsze niż pominięcie, bo paczka wyglądałaby na komplet.
+
+**Ślad musi przeżyć kasowanie — inaczej ochrona działa tylko dla wniosków składanych
+równocześnie.** Współdzielenie widać w tabeli zgłoszeń, ale kasownik **niszczy ten dowód
+w tej samej operacji**: usuwa zgłoszenie wnioskodawcy. Sekwencja, która to pokazuje, jest
+normalnym trybem pracy kreatora (wnioski przychodzą jeden po drugim, często w odstępie dni):
+
+1. w sesji S zgłoszenia zostawiają A i B,
+2. **A prosi o usunięcie** — zgłoszenie A znika, rozmowa S zostaje zachowana (poprawnie),
+3. **B prosi później o kopię** — w tabeli nie ma już obcego adresu dla S,
+4. bez śladu eksport wydałby B **całą rozmowę, razem z wiadomościami osoby A**.
+
+Dlatego `chatl_rodo_kasownik()` zapisuje identyfikatory sesji współdzielonych do opcji
+`chatl_rodo_sesje_wspolne` **zanim** cokolwiek usunie, a `chatl_rodo_sesje_maila()` bierze
+pod uwagę zarówno bieżący stan tabeli, jak i ten ślad. W opcji leżą **same identyfikatory
+sesji** — bez adresu i bez treści, więc to nie są dane osobowe. Lista jest przycinana przy
+każdym zapisie: sesja, po której nie została ani jedna wiadomość (retencja skasowała rozmowę
+po `CHATL_RETENCJA_DNI` dniach), nie ma już czego chronić i wypada. Przycinanie dzieje się
+przy zapisie, a nie w cronie, bo `rodo.php` ładuje się wyłącznie w panelu (`is_admin()`),
+więc zadanie crona tej funkcji by nie zobaczyło.
+
+### 23.3. Komunikat kasownika mówi to, co się stało
+
+Komunikat jest budowany **z rzeczywistych liczb** (`%d zgłoszenie`, `%d wiadomość`),
+a wniosek dotyczący adresu, którego nie ma w bazie, kończy się zdaniem „nie znaleziono
+żadnych danych — nic nie zostało usunięte". Właściciel odpowiada tym tekstem osobie
+składającej wniosek, więc zdanie o kasowaniu, którego nie było, byłoby potwierdzeniem
+nieprawdy wysłanym w cudzym imieniu.
+
+### 23.4. Kolejność kasowania nie jest dowolna
+
+Najpierw **rozmowy**, potem **zgłoszenia**. Zgłoszenie jest jedynym łącznikiem
+między adresem a sesją — skasowane pierwsze, zabrałoby ze sobą wiedzę o tym, które
+rozmowy usunąć, i zostawiłoby je w bazie na zawsze.
+
+### 23.5. Stronicowanie: dwa źródła, jedna numeracja
+
+Kreator woła eksporter stronami, aż zwróci `done`. Przesunięcie rozmów liczymy
+względem **całkowitej liczby zgłoszeń**, a nie numeru strony: przy dokładnie pełnej
+stronie zgłoszeń naiwne `OFFSET` przeskoczyłoby pierwszą porcję rozmów i wydało
+wniosek **z dziurą**, której nie zauważy ani właściciel, ani osoba składająca wniosek.
+Strażnik podkłada dokładnie ten przypadek.
+## 25. Pułapka na boty
+
+Publiczny czat dostaje ruch automatów. Sito jest tanie i dwuczęściowe:
+
+| Pułapka | Co łapie | Gdzie |
+|---|---|---|
+| **ukryte pole** `CHATL_PULAPKA_POLE` | skrypt, który zeskrobał stronę i odsyła wszystkie znalezione pola | `assets/widget.js` (tworzy), `chatl_pulapka_zlapala()` (sprawdza) |
+| **próg czasu** `CHATL_PULAPKA_SEKUND` | skrypt, który poprosił o sesję i natychmiast strzelił | liczony z `chatl_sesje.utworzono`, **po stronie serwera**; działa **tylko przy pytaniu do bota** |
+
+Próg czasu **nie** opiera się na znaczniku od przeglądarki — taki znacznik skrypt
+podrabia jedną linijką. Wiek sesji bierzemy z własnej tabeli.
+
+### Próg czasu NIE działa przy formularzu kontaktu
+
+To nie jest przeoczenie, tylko wynik pomiaru. Test przeglądarkowy
+(`testy/pulapka-widget.js`) pokazał, że **prawdziwy gość**, który otworzy czat
+i od razu kliknie „Zostaw wiadomość", wysyła formularz szybciej niż w dwie sekundy
+od wydania sesji — i wpadał we własną pułapkę. Cena tego fałszywego alarmu to
+**utracony kontakt**, czyli jedyna rzecz, dla której ten produkt istnieje.
+
+Rachunek wychodzi tu jednoznacznie:
+
+| | pytanie do bota | formularz kontaktu |
+|---|---|---|
+| koszt fałszywego alarmu | gość dostaje odpowiedź z reguł zamiast z AI i tego nie zauważa | **utracony kontakt** |
+| co próg czasu naprawdę łapie | skrypt, który poprosił o sesję i natychmiast strzelił | to samo |
+| decyzja | próg **zostaje** | próg **wyłączony**, zostaje ukryte pole |
+
+Dodatkowy argument, który przesądza: bot uderzający wprost w `admin-ajax.php`
+podaje **zmyśloną sesję**, dla której nie ma wiersza w tabeli — a wtedy próg czasu
+i tak nie zadziała, bo brak wiersza nie jest dowodem bota. Próg łapie więc wyłącznie
+skrypt, który grzecznie poprosi o sesję i zaraz strzeli, czyli wąską klasę. Oddawanie
+za nią kontaktów byłoby złym interesem.
+
+Technicznie: `chatl_pulapka_zlapala( $sesja, $sprawdzaj_czas = true )`, a endpoint
+zgłoszenia woła ją z `false`.
+
+Pole jest wynoszone poza kadr (`left: -9999px`), a **nie** chowane przez
+`display: none`: część prostych botów pomija pola ukryte tak wprost, czyli
+akurat te, dla których to sito powstało. Ma `tabindex="-1"` (człowiek nie
+dojdzie do niego klawiszem Tab), `aria-hidden="true"` (czytnik ekranu pomija)
+i `autocomplete="off"`.
+
+### 25.1. Co się dzieje ze złapanym żądaniem
+
+**Decyzja produktowa, nie techniczna:** złapane zgłoszenie **trafia do bazy
+z flagą `podejrzane = 1`**, a nie do kosza. Ten produkt istnieje po to, żeby
+małej firmie zbierać kontakty — koszt przejrzenia trzech spamów jest niższy niż
+koszt jednego utraconego klienta, a fałszywy alarm w wersji „cicho wyrzuć" jest
+**niewidzialny dla obu stron**: gość myśli, że wysłał, właściciel nie wie, że coś
+przepadło.
+
+Cisza dotyczy **bota, nie bazy** — odpowiedź dla wysyłającego jest **co do znaku**
+identyczna z odpowiedzią na czyste zgłoszenie, więc autor skryptu nie dowiaduje
+się, że wpadł.
+
+Trzy warunki, które czynią to bezpiecznym (każdy ma osobny krok w strażniku):
+
+1. **Brak maila.** Złapane zgłoszenie nie uruchamia powiadomienia — ochrona przed
+   mail-bombą była głównym powodem postawienia pułapki.
+2. **Brak zużycia limitów.** Pułapka jest sprawdzana **przed** `chatl_limit_ip_ok()`
+   i przed trybem AI, więc złapane żądania nie zjadają kubła, który chroni
+   prawdziwych gości, ani dobowego budżetu AI.
+3. **Osobny widok.** Lista zgłoszeń pokazuje domyślnie `podejrzane = 0`, a złapane
+   siedzą za filtrem **z licznikiem**. Licznik jest tu częścią mechanizmu, a nie
+   ozdobą: to on czyni fałszywy alarm widocznym.
+
+Osobny sufit `CHATL_LIMIT_PULAPKA` ogranicza **zapisy** złapanych z jednego adresu —
+skoro złapane lądują w bazie, sama pułapka nie może stać się drogą do zalania
+tabeli. Powyżej sufitu zgłoszenie nie jest zapisywane, ale odpowiedź nadal jest
+identyczna.
+
+### 25.2. Czego to sito NIE zatrzyma
+
+Pułapka nie zatrzyma kogoś, kto podejrzy kształt żądania i wyśle je wprost do
+`admin-ajax.php` z odstępami. Przed tym broni dobowy limit `CHATL_AI_LIMIT_IP_NA_DOBE`
+na adres, a nie ukryte pole. Nazywamy to wprost także w `INSTRUKCJA.md`, żeby
+właściciel nie wziął tego za zabezpieczenie budżetu AI.
+
+## 26. Znane granice
 
 Rzeczy, których wtyczka **nie** robi — żeby nikt nie szukał ich w kodzie:
 
@@ -1036,6 +1203,12 @@ Rzeczy, których wtyczka **nie** robi — żeby nikt nie szukał ich w kodzie:
   (ręcznie albo drugim importem), zapis je zduplikuje. Tabela `chatl_qa` nie ma `UNIQUE`
   na `pytanie` i ręczne dodawanie nigdy tej ochrony nie miało, więc to nie jest regresja —
   ale jest granicą, nie niedopatrzeniem.
+- **Wniosek RODO dotyczy adresu e-mail, nie adresu IP.** Limity ruchu trzymają `md5(IP)`
+  w tabeli `chatl_rate_limit` z krótkim oknem — nie da się tego powiązać z osobą i nie ma
+  po co tego eksportować ani kasować na wniosek. Rozmowy gości, którzy nigdy nie zostawili
+  zgłoszenia, są anonimowe i kasuje je retencja, a rozmowy współdzielone przez dwie osoby
+  nie są ani wydawane, ani kasowane — jedno i drugie rozpisane w rozdziale
+  **Narzędzia RODO WordPressa**.
 - **Bez stronicowania** w panelu: lista zgłoszeń pokazuje 200 najnowszych, lista rozmów 100
   najnowszych sesji. Pełne dane wychodzą eksportem CSV.
 - **Limit dobowy AI jest miękki** — sprawdzenie i inkrement to dwa kroki, więc równoległe
