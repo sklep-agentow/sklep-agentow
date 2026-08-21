@@ -39,6 +39,16 @@
 # przerabia workflow pod siebie. ⚠️ NIE ROBIMY tego bez decyzji koordynatorki;
 # dopóki jej nie ma, zmiany tutaj weryfikuje się PO scaleniu, na następnym PR.
 #
+# Testy w `testy/*.php` NIE sa zwyklymi skryptami PHP: kazdy zaczyna sie od
+# `WP_PLUGIN_DIR` i `require` plikow wtyczki, wiec `php testy/X.php` konczy sie
+# `Undefined constant "WP_PLUGIN_DIR"` (EXIT=255). Uruchamia je wylacznie wp-cli
+# WEWNATRZ kontenera (`docker cp` + `wp eval-file`). Dlatego NIE ma tu wzorca
+# `Bash(php testy/:*)` — otwieralby prawo do polecenia, ktore i tak zawsze pada —
+# ani `Bash(docker exec:*)`, ktory oddalby cala maszyne. Jest `test-php.sh`:
+# jedna nazwana operacja, nazwa testu przez twardy wzorzec [a-z0-9-], katalog
+# `testy/` wpisany w skrypcie, `wp eval-file` (plik z repozytorium) zamiast
+# `wp eval` (kod z wiersza polecen). Wzorzec pilnuje `test-php-proba-kontrolna.sh`.
+#
 # Uwaga do --allowedTools: akcja dokleja nasze argumenty PO swoich, a ta flaga
 # jest AKUMULUJĄCA (base-action/src/parse-sdk-options.ts, ACCUMULATING_FLAGS;
 # test „should accumulate multiple --allowedTools flags from claudeArgs"
@@ -125,8 +135,24 @@ jobs:
           # Wzorzec `:*` przy dwóch pierwszych przepuszcza dowolne argumenty —
           # dlatego to SKRYPT, nie akcja, odrzuca wszystko spoza białej listy;
           # pilnuje tego narzedzia-qa/stos-proba-kontrolna.sh (26 kontroli).
+          # 21.08: recenzent ma URUCHAMIAC nasze testy, nie tylko je czytac.
+          # Dotad pisal „nie uruchomilem" przy skryptach, ktore stoja w repo obok
+          # recenzowanego kodu — to byla luka w tej liscie, nie ostroznosc.
+          # Wpisane JAWNIE, po jednym, zamiast wzorca z gwiazdka: lista ma byc
+          # do przeczytania w calosci i ma boles przy dopisywaniu, bo kazda
+          # pozycja to zgoda na wykonanie kodu w checkoucie recenzenta.
+          # ⛔ CELOWO POZA LISTA: testy/seed-demo.sh — jako jedyny pisze do
+          #    WSPOLNEGO stosu warsztatowego (zamowienia demo w bazie), a nie do
+          #    wlasnego checkoutu recenzenta. Reszta prob kontrolnych podmienia
+          #    pliki wylacznie u siebie i przywraca je po sobie; checkout runnera
+          #    jest jednorazowy i bez prawa zapisu do repo, wiec najgorsze, co
+          #    moze zrobic przerwana proba, to zabrudzic wlasna kopie.
+          # ⛔ TEZ POZA LISTA: dowod-z-paczki i dowod-aktualizacji wraz z ich
+          #    probami — stawiaja kontenery i biegna kilkanascie minut, czyli
+          #    dluzej niz cala recenzja. To kalibracja przed oddaniem, nie
+          #    narzedzie recenzenta.
           claude_args: |
-            --allowedTools "Read,Glob,Grep,LS,mcp__github_comment__update_claude_comment,mcp__github_ci__get_ci_status,mcp__github_ci__get_workflow_run_details,mcp__github_ci__download_job_log,Bash(composer install),Bash(composer install --no-interaction --no-progress),Bash(vendor/bin/phpcs),Bash(vendor/bin/phpcs:*),Bash(vendor/bin/phpstan:*),Bash(php -l:*),Bash(find:*),Bash(bash testy/dokumentacja-zgodnosc.sh),Bash(bash testy/dokumentacja-zgodnosc-segregator.sh),Bash(bash narzedzia-qa/sprawdz-manifest.sh),Bash(bash narzedzia-qa/stos.sh:*),Bash(bash narzedzia-qa/paczka-zgodnosc.sh:*),Bash(bash testy/instrukcja-liczby-segregator.sh),Bash(git log:*),Bash(git diff:*),Bash(git show:*),Bash(git rev-list:*),WebFetch"
+            --allowedTools "Read,Glob,Grep,LS,mcp__github_comment__update_claude_comment,mcp__github_ci__get_ci_status,mcp__github_ci__get_workflow_run_details,mcp__github_ci__download_job_log,Bash(composer install),Bash(composer install --no-interaction --no-progress),Bash(vendor/bin/phpcs),Bash(vendor/bin/phpcs:*),Bash(vendor/bin/phpstan:*),Bash(php -l:*),Bash(find:*),Bash(bash testy/dokumentacja-zgodnosc.sh),Bash(bash testy/dokumentacja-zgodnosc-segregator.sh),Bash(bash narzedzia-qa/sprawdz-manifest.sh),Bash(bash testy/blad-klucza-proba-kontrolna.sh),Bash(bash testy/ip-za-proxy-proba-kontrolna.sh),Bash(bash testy/kalibracja-mutantem.sh),Bash(bash testy/licznik-trafien-proba-kontrolna.sh),Bash(bash testy/nonce-proba-kontrolna.sh),Bash(bash testy/nota-zapisu-proba-kontrolna.sh),Bash(bash testy/pamiec-rozmowy-proba-kontrolna.sh),Bash(bash testy/przejecie-proba-kontrolna.sh),Bash(bash testy/pulapka-proba-kontrolna.sh),Bash(bash testy/rodo-proba-kontrolna.sh),Bash(bash testy/statystyki-proba-kontrolna.sh),Bash(bash testy/stronicowanie-proba-kontrolna.sh),Bash(bash testy/svg-proba-kontrolna.sh),Bash(bash testy/tokeny-koszt-proba-kontrolna.sh),Bash(bash testy/wskaznik-pisania-proba-kontrolna.sh),Bash(bash testy/wybor-modelu-proba-kontrolna.sh),Bash(bash testy/zgodnosc-proba-kontrolna.sh),Bash(bash narzedzia-qa/bramka-recenzji-proba-kontrolna.sh),Bash(bash narzedzia-qa/bramki-proba-kontrolna.sh),Bash(bash narzedzia-qa/paczka-zgodnosc-proba-kontrolna.sh),Bash(bash narzedzia-qa/stos-proba-kontrolna.sh),Bash(bash narzedzia-qa/test-php-proba-kontrolna.sh),Bash(bash narzedzia-qa/test-php.sh:*),Bash(bash narzedzia-qa/bramki.sh),Bash(bash narzedzia-qa/bramki.sh:*),Bash(bash narzedzia-qa/stos.sh:*),Bash(bash narzedzia-qa/paczka-zgodnosc.sh:*),Bash(bash testy/instrukcja-liczby-segregator.sh),Bash(git log:*),Bash(git diff:*),Bash(git show:*),Bash(git rev-list:*),WebFetch"
 
       # Sonda błędu: pełny zapis wykonania CLI (stream NDJSON) — jedyne miejsce,
       # gdzie ląduje treść błędu przy „niemym zgonie" (log pokazuje tylko is_error).

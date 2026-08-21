@@ -26,14 +26,21 @@
 #               1 = któraś bramka czerwona ALBO wykonano ich za mało
 set -u
 
+# Bramka `slady` (dołożona 21.08 przy zamrażaniu ChatBota 1.5.7): pilnuje, żeby do
+# plików WTYCZEK nie wjeżdżały nasze ślady wewnętrzne — TODO, adres maszyny dev,
+# odsyłacz do `testy/…`, numer naszego zgłoszenia. Powód jest z życia: paczka 1.5.7
+# wiozła kupującemu 20 takich śladów i ŻADNA bramka tego nie widziała, bo zip był
+# równy repozytorium co do bajtu, a ślad leżał po obu stronach tak samo.
+# Chodzi też przy zmianach tekstowych — komentarz w dokumentacji to ten sam problem.
+#
 # ⛔ Rejestr bramek. Nazwy MUSZĄ zgadzać się z .github/manifest-bramek.txt —
 # pilnuje tego narzedzia-qa/sprawdz-manifest.sh. Kolejność jak w quality.yml
 # sprzed zbicia zadań: najpierw tanie i statyczne, na końcu skan historii.
-BRAMKI=(actionlint manifest php-lint phpcs phpstan gitleaks)
+BRAMKI=(actionlint manifest slady php-lint phpcs phpstan gitleaks)
 # Bramki dotykające WYŁĄCZNIE kodu PHP — pomijane, gdy zmiana jest tekstowa.
 BRAMKI_PHP=(php-lint phpcs phpstan)
-PROG_PELNY=6
-PROG_TEKSTOWY=3
+PROG_PELNY=7
+PROG_TEKSTOWY=4
 
 # Wersje narzędzi pobieranych, gdy nie ma ich w PATH. Pinowane świadomie:
 # „najnowsza" w bramce oznacza, że CI potrafi zmienić zdanie bez naszej zmiany.
@@ -187,6 +194,20 @@ uruchom_phpstan() {
 	vendor/bin/phpstan analyse --memory-limit=1G --no-progress
 }
 
+# Ślady wewnętrzne w plikach wtyczek — czyli w tym, co trafia do paczki klienta.
+# Wzorce i lista długu siedzą w narzedzia-qa/slady-wewnetrzne.sh; ta sama funkcja
+# obsługuje bramkę zamrożenia, więc nie ma dwóch list, które mogą się rozjechać.
+uruchom_slady() {
+	local skaner="narzedzia-qa/slady-wewnetrzne.sh" kod=0 katalog wtyczka
+	[ -f "$skaner" ] || { echo "BRAK $skaner — nie ma czym sprawdzic sladow" >&2; return 1; }
+	for katalog in wtyczki/*/; do
+		[ -d "$katalog" ] || continue
+		wtyczka="$(basename "$katalog")"
+		bash "$skaner" "$wtyczka" "${katalog%/}" || kod=1
+	done
+	return $kod
+}
+
 uruchom_gitleaks() {
 	local bin
 	bin="$(zapewnij_narzedzie gitleaks \
@@ -201,6 +222,7 @@ echo "=== BRAMKI JAKOSCI — tryb: $TRYB, prog: $PROG z ${#BRAMKI[@]} ==="
 
 bramka actionlint uruchom_actionlint
 bramka manifest   uruchom_manifest
+bramka slady      uruchom_slady
 bramka php-lint   uruchom_php_lint
 bramka phpcs      uruchom_phpcs
 bramka phpstan    uruchom_phpstan

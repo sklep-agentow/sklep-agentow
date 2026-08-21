@@ -2,7 +2,7 @@
 /**
  * Przejęcie rozmowy przez człowieka: stan rozmowy, uciszenie bota, odpytywanie.
  *
- * Model stanu wzięty z Chatwoota (rozpoznanie w boty/ROZPOZNANIE-PRZEJECIE-ROZMOWY.md):
+ * Model stanu wzięty z Chatwoota:
  * JEDNO pole na rozmowie decyduje, kto odpowiada — `bot` albo `czlowiek` — zamiast
  * dwóch niezależnych przełączników („bot wyłączony" + „operator przypisany"), które
  * prędzej czy później się rozjadą i zostawią rozmowę bez żadnej ze stron.
@@ -285,7 +285,7 @@ function chatl_operator_wiadomosc( $sesja, $tresc ) {
 /**
  * Czy TO żądanie ma prawo pisać w tej rozmowie.
  *
- * Decyzja świadoma, nie przypadek (pytanie koordynatorki przy odbiorze szkieletu):
+ * Decyzja świadoma, nie przypadek:
  * sekretu wymagamy także przy ZAPISIE, nie tylko przy odczycie. Bez tego ktoś, kto
  * zdobył sam identyfikator sesji, mógłby **podszyć się pod gościa** i wstrzyknąć
  * operatorowi wiadomość — a operator odpowiada człowiekowi, którego nie zweryfikuje

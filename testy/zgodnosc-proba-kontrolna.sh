@@ -68,6 +68,30 @@ probuj "tabela stalych rozbita (petla bez ani jednego sprawdzenia)" \
   "sed -i 's/^| \`CHATL_/| CHATL_/' $DOK" \
   "stalych sprawdzonych z tabeli dokumentacji"
 
+# Mutant na kontrole "kazdy plik includes/ jest wymagany". Mutuje INNY plik niz
+# reszta prob (chatbot-live.php, nie dokumentacje), wiec ma wlasna kopie i wlasne
+# przywrocenie. Blad, ktory to odtwarza, zdarzyl sie naprawde: konflikt scalania
+# 1.4.10 z 1.5.0 zjadl require dla includes/przejecie.php, plik zostal w paczce,
+# allowlista swiecila na zielono, a polowa wtyczki po prostu sie nie ladowala.
+BOOT=wtyczki/chatbot-live/chatbot-live.php
+KOPIA_BOOT=$(mktemp)
+cp "$BOOT" "$KOPIA_BOOT"
+sed -i "/require_once CHATL_KATALOG . 'includes\/przejecie.php';/d" "$BOOT"
+if ! diff -q "$KOPIA_BOOT" "$BOOT" >/dev/null; then
+  wyjscie=$(bash testy/dokumentacja-zgodnosc.sh 2>&1); kod=$?
+  if [ "$kod" -ne 0 ] && echo "$wyjscie" | grep -q "BLAD.*jest wymagany przez require_once"; then
+    printf '  OK   bramka PADLA na: %-44s (EXIT=%d)\n' "zgubiony require dla pliku z includes/" "$kod"
+  else
+    printf '  BLAD bramka NIE zlapala: %-41s (EXIT=%d)\n' "zgubiony require dla pliku z includes/" "$kod"
+    BLEDY=$((BLEDY+1))
+  fi
+else
+  printf '  BLAD mutacja nie weszla do pliku: %-32s\n' "zgubiony require"
+  BLEDY=$((BLEDY+1))
+fi
+cp "$KOPIA_BOOT" "$BOOT"
+rm -f "$KOPIA_BOOT"
+
 echo
 echo "=== KONTROLA ODWROTNA: czysta dokumentacja ma przechodzic ==="
 cp "$KOPIA" "$DOK"

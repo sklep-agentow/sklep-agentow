@@ -96,6 +96,18 @@ odpowiedź**. To zdanie wolno napisać tylko wtedy, gdy `stos.sh` sam powiedzia�
 `stos.sh` jest wyłącznie do odczytu i ma zamkniętą listę operacji: nie próbuj
 przez niego niczego zmieniać ani przemycać własnych poleceń, bo odmówi.
 
+NASZE TESTY MASZ URUCHAMIAĆ, NIE CZYTAĆ. Wszystkie skrypty z `testy/` oraz
+próby kontrolne z `narzedzia-qa/` są na Twojej liście narzędzi — wolno Ci je
+wykonać i podać kod wyjścia. Komplet bramek jednym poleceniem (skrypt sam podaje,
+ile ich wykonał i ile wymaga tryb):
+`bash narzedzia-qa/bramki.sh`. Zdanie „nie uruchomiłem próby kontrolnej" jest
+dopuszczalne tylko wtedy, gdy próba **padła albo odmówiła** — wtedy zacytuj jej
+wyjście. Jedyny skrypt świadomie poza listą to `testy/seed-demo.sh`: pisze do
+wspólnego stosu warsztatowego, a nie do Twojego checkoutu.
+Testy `testy/*.php` uruchamiasz przez `bash narzedzia-qa/test-php.sh <nazwa>`
+(`… lista` wypisze nazwy) — samo `php testy/X.php` zawsze pada, bo te testy
+potrzebują WordPressa i chodzą przez `wp eval-file` w kontenerze.
+
 ŹRÓDŁA — ZASADA TWARDA. Wolno Ci pobierać strony z sieci, ale cytować możesz
 **wyłącznie źródła oficjalne**:
 
@@ -112,3 +124,34 @@ niezgodne ze standardem — podaj odnośnik do konkretnego miejsca w źródle
 oficjalnym. **Gdy nie możesz czegoś zweryfikować, napisz wprost, że NIE
 SPRAWDZIŁEŚ** — zamiast zgadywać i podawać domysł jako fakt. „Nie sprawdziłem"
 jest zawsze lepsze niż wymyślony cytat.
+
+## KLASY Z NASZYCH WŁASNYCH AUDYTÓW (destylat 2026-08-21, dwa poprzednie zlecenia)
+Powyższe siedem klas to rzeczy, które wytknął **oceniający**. Poniższe trzy to rzeczy,
+które znalazł **nasz własny audyt** — czyli błędy, które popełniamy przy budowie.
+Do briefingu weszły klasy z DWÓCH różnych koszyków, z różnym progiem — i to jest
+świadome: **klasy 8-10 to błędy w produkcie** i wchodzą tylko z co najmniej dwoma
+wystąpieniami, bo jednorazowa wpadka w kodzie to przypadek. **Klasa 11 to co innego:
+wada NASZEGO SPRAWDZANIA** (bramka o nazwie szerszej niż zakres), i tu próg wynosi
+JEDNO wystąpienie, bo taka wada przepuszcza dowolną liczbę błędów naraz — u nas
+przepuściła cztery nieprawdziwe zdania przy zielonym CI. Źródło z dowodami:
+`audyt/boty/SLEPE-PLAMY-NASZEGO-AUDYTU.md` (ten sam destylat, w repo).
+
+8. **Naprawa trafia w JEDEN egzemplarz wzorca, bliźniak zostaje zepsuty.**
+   Cztery wystąpienia w jednym projekcie: poprawka języka objęła część miejsc, reszta
+   została. **Sprawdź:** po każdej naprawie zażądaj w PR-ze wyniku
+   `grep -rn "<naprawiany ciąg>" --include=*.php --include=*.md .` — jeśli autor
+   pokazuje jedno miejsce, a grep daje więcej, to jest naprawa egzemplarza.
+9. **Prywatny e-mail w historii commitów.** Dwa projekty, 92 i 172 commity
+   z prawdziwym adresem zamiast adresu-zasłony. **Sprawdź** przy PR-ach dotykających
+   konfiguracji gita albo przy przygotowaniu wydania:
+   `git log --format='%ae' | sort | uniq -c | sort -rn` — każdy adres spoza
+   `users.noreply.github.com` to znalezisko.
+10. **Paczka zbudowana PRZED ostatnią poprawką**, więc treść w środku jest zamrożona
+   na starszej wersji. Zdarzyło się dwa razy przy wydaniach tego samego projektu.
+   **Sprawdź:** czy zip powstał PO ostatnim commicie zmieniającym treść i czy jego
+   zawartość zgadza się z repozytorium co do pliku (lista + suma kontrolna).
+11. **Nazwa bramki obiecuje więcej, niż bramka sprawdza.** W poprzednim zleceniu
+   bramka nazwana „liczby zgodne z kodem" liczyła wyłącznie liczby, więc cztery
+   nieprawdziwe ZDANIA przeszły przy zielonym CI. **Sprawdź:** gdy PR dodaje albo
+   zmienia bramkę, porównaj jej NAZWĘ z tym, co faktycznie wykonuje — nazwa szersza
+   niż zakres to znalezisko, bo buduje fałszywe poczucie pokrycia.

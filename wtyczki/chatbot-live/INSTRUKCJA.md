@@ -4,10 +4,11 @@ Bot na stronę firmową: 24/7 odpowiada na powtarzalne pytania klientów z bazy
 pytań-odpowiedzi, a gdy nie zna odpowiedzi — zbiera kontakt, żeby właściciel
 odezwał się osobiście.
 
-**Uczciwie:** to bot regułowy z bazy Q&A + most do maila właściciela — „LIVE"
-znaczy, że żywy człowiek ODPISZE na zebrany kontakt (to nie czat z operatorem
-w czasie rzeczywistym). Opcjonalnie, z własnym kluczem API, odpowiedzi może
-generować prawdziwy model AI — patrz sekcja „Tryb AI".
+**Uczciwie:** bez klucza API to bot regułowy z bazy Q&A + most do maila właściciela
+i wtedy „LIVE" znaczy, że żywy człowiek ODPISZE na zebrany kontakt. Opcjonalnie,
+z własnym kluczem API, odpowiedzi generuje prawdziwy model AI — patrz sekcja
+„Tryb AI". Rozmowę **możesz też przejąć osobiście** i pisać do gościa na żywo —
+patrz sekcja „Przejmij rozmowę osobiście"; bot wtedy milczy.
 
 ## 1. Instalacja (2 minuty)
 
@@ -67,12 +68,51 @@ Zapisać możesz i tak — decyzja jest Twoja, ale wiesz, co wybierasz.
 - Brak dopasowania → bot pokazuje tekst awaryjny i formularz „zostaw maila".
   Przycisk **„Zostaw wiadomość"** jest zresztą widoczny cały czas — gość
   zawsze ma ścieżkę do człowieka.
+- Listy w panelu (zgłoszenia, historia rozmów, raport luk) są **podzielone na
+  strony** — jeśli masz więcej wpisów, niż mieści jedna strona, pod tabelą pojawią
+  się numery. Nic nie znika po przekroczeniu limitu.
 - Zgłoszenia lądują w **ChatBot LIVE → Zgłoszenia** (+ mail do Ciebie, jeśli
   włączony). Odpisujesz osobiście — to jest człon „LIVE".
 - **Historia rozmów** pokazuje wymiany bot↔gość; wpisy starsze niż **90 dni**
   są czyszczone automatycznie. Gość widzi o tym krótką notę **na starcie czatu**,
   a jeśli podałeś adres polityki prywatności w Ustawieniach — nota prowadzi
   także do niej. Warto ten adres uzupełnić: to Ty jesteś administratorem tych danych.
+
+### Pułapka na boty — i czego ona NIE zatrzyma
+
+Czat jest publiczny, więc trafiają na niego automaty. Wtyczka ma na nie proste
+sito: **ukryte pole**, którego człowiek nie widzi i nie dosięgnie klawiszem Tab
+(wypełnia je tylko skrypt), oraz **próg czasu** — pytanie wysłane w niecałe
+2 sekundy od otwarcia czatu nie jest pisane przez człowieka.
+
+Próg czasu celowo **nie obowiązuje przy formularzu kontaktu**: gość, który otwiera
+czat i od razu klika „Zostaw wiadomość", potrafi wysłać go bardzo szybko, a pomyłka
+kosztowałaby Cię prawdziwy kontakt. Formularza pilnuje samo ukryte pole.
+
+Co się dzieje ze złapaną wiadomością — i dlaczego właśnie tak:
+
+- **Zostaje zapisana**, z oznaczeniem „podejrzane". Nie kasujemy jej po cichu,
+  bo gdyby sito pomyliło się przy prawdziwym kliencie, **nikt by się o tym nie
+  dowiedział**: klient myślałby, że wysłał, a Ty nie wiedziałbyś, że coś przepadło.
+- **Nie dostajesz o niej maila.** To główny powód, dla którego ta pułapka
+  istnieje — żeby automat nie zasypał Twojej skrzynki.
+- **Nie zużywa budżetu trybu AI** ani limitu, który chroni prawdziwych gości.
+- Lista **Zgłoszenia** pokazuje domyślnie tylko czyste. Podejrzane są **za
+  filtrem obok, z licznikiem** — jeśli klient mówi, że pisał i nie dostał
+  odpowiedzi, zajrzyj tam w pierwszej kolejności.
+- Wysyłający **nie dowiaduje się, że wpadł** — widzi to samo podziękowanie co
+  wszyscy. Inaczej autor skryptu poprawiłby go w pięć minut.
+
+Liczbę zadziałań pułapki widzisz jako komunikat w panelu.
+
+⚠️ **Uczciwie o granicy tego sita.** Pułapka zatrzymuje automaty, które
+przeglądają stronę i wypełniają wszystko, co znajdą, albo strzelają natychmiast
+po jej wczytaniu. **Nie zatrzyma** kogoś, kto celowo podejrzy, jak czat wysyła
+dane, i będzie wysyłał je bezpośrednio, z odstępami — przed tym broni dobowy
+limit zapytań AI z jednego adresu (Ustawienia → tryb AI), a nie ukryte pole.
+To jest tanie sito na masową głupotę, nie zamek na determinację. Jeśli
+zobaczysz, że mimo pułapki budżet AI znika, napisz do nas — wtedy potrzebne
+jest inne narzędzie (np. captcha albo ograniczenie czatu do zalogowanych).
 
 ## 5. Statystyki i luki — czyli jak ulepszać bota bez zgadywania
 
@@ -225,6 +265,17 @@ i zgłoszeń łącznie). Pytanie ma maks. 500 znaków, wiadomość zgłoszenia 2
 Zgłoszenia i tak zapisują się w panelu. Mail wymaga działającej wysyłki
 w WordPressie — jeśli nie działa, skonfiguruj wtyczkę SMTP u swojego hostingu.
 
+**Przejmij rozmowę osobiście**
+
+W panelu jest podstrona **ChatBot LIVE → Rozmowy na żywo**: lista rozmów, które
+toczą się w tej chwili, wraz z tym, co gość napisał. Przycisk **Przejmij** oddaje
+rozmowę Tobie — gość widzi „Do rozmowy dołączył konsultant…", a **bot od tej chwili
+milczy**: pytania gościa są zapisywane, żebyś je przeczytał, ale automat nie wpada
+Ci w słowo (i nie zużywa limitu AI). Przycisk **Zakończ** oddaje rozmowę botowi.
+Jeśli nie odpiszesz przez **5 minut**, rozmowa wraca do bota sama, a gość dostaje
+komunikat „Konsultant nie odpowiada…" — po to, żeby nikt nie został przy milczącym
+oknie.
+
 **Czy bot pamięta rozmowę między wizytami?**
 Nie — sesja czatu żyje w karcie przeglądarki gościa. Historia rozmów jest
 zapisywana po stronie serwera (90 dni) do wglądu właściciela.
@@ -249,7 +300,8 @@ historię i ustawienia.
 ## 8. Droga rozbudowy (po zakupie, na życzenie)
 
 - automatyczne łapanie polskich odmian (stemming) zamiast ręcznych wariantów,
-- czat operatora na żywo / powiadomienia push,
+- powiadomienia push o nowej rozmowie (samo przejęcie rozmowy przez człowieka
+  **już jest w produkcie** — sekcja „Przejmij rozmowę osobiście"),
 - pamięć rozmowy między wizytami,
 - inne modele AI lub własny serwer proxy (wtyczka ma filtry `chatl_ai_url`
   i `chatl_ai_model` dla integratorów).

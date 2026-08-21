@@ -3,10 +3,9 @@
 
    Wzor kontrastu jest tu drugi raz (pierwszy w includes/wyglad.php), bo
    przegladarka nie ma jak zapytac PHP przy kazdym ruchu suwaka. Zeby te dwie
-   kopie nie rozjechaly sie po cichu — dokladnie ta klasa bledu, ktora
-   recenzent zglosil przy panelu testowym bota (PR #65) — pilnuje ich test
-   testy/wyglad-panel.js: ustawia kolory, czyta liczbe policzona TUTAJ,
-   zapisuje i porownuje z liczba policzona przez PHP. Rozjazd = test pada. */
+   kopie nie rozjechaly sie po cichu, pilnuje ich test w przegladarce:
+   ustawia kolory, czyta liczbe policzona TUTAJ, zapisuje ustawienia
+   i porownuje z liczba policzona przez PHP. Rozjazd = test pada. */
 (function () {
 	'use strict';
 

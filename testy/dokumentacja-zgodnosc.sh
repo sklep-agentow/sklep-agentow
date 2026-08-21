@@ -43,9 +43,9 @@ spr "kazdy wpis CHANGELOG oddzielony kreska" "0" \
   "awk '/^## \\[1\\./ {if (NR>1 && poprz != \"---\") b++} {if (\$0 != \"\") poprz=\$0} END {print b+0}' $W/CHANGELOG.md"
 
 echo "=== A. Wersja i schemat ==="
-spr "naglowek Version"            "1.5.0" "grep -oP '(?<=^ \* Version: ).*' $W/chatbot-live.php"
-spr "stala CHATL_WERSJA"          "1.5.0" "grep -oP \"(?<=CHATL_WERSJA', ')[^']*\" $W/chatbot-live.php"
-spr "CHATL_WERSJA_SCHEMATU"       "6"     "grep -oP \"(?<=CHATL_WERSJA_SCHEMATU', ')[^']*\" $W/chatbot-live.php"
+spr "naglowek Version"            "1.5.7" "grep -oP '(?<=^ \* Version: ).*' $W/chatbot-live.php"
+spr "stala CHATL_WERSJA"          "1.5.7" "grep -oP \"(?<=CHATL_WERSJA', ')[^']*\" $W/chatbot-live.php"
+spr "CHATL_WERSJA_SCHEMATU"       "7"     "grep -oP \"(?<=CHATL_WERSJA_SCHEMATU', ')[^']*\" $W/chatbot-live.php"
 spr "Requires at least"           "6.0"   "grep -oP '(?<=^ \* Requires at least: ).*' $W/chatbot-live.php"
 spr "Requires PHP"                "8.1"   "grep -oP '(?<=^ \* Requires PHP: ).*' $W/chatbot-live.php"
 spr "naglowek Author"             "Automatic AI" "grep -oP '(?<=^ \* Author: ).*' $W/chatbot-live.php"
@@ -89,7 +89,7 @@ while IFS='|' read -r _ NAZWA WART PLIK _; do
 done < <(grep -P "^\| ${BT}CHATL_[A-Z_]+${BT} \| ${BT}[^${BT}]+${BT} \| ${BT}[^${BT}]+${BT} \|" $DOK)
 # Sama petla nie wystarczy: gdyby wzorzec wiersza przestal pasowac (zmiana ukladu
 # tabeli), petla nie zrobilaby ANI JEDNEGO sprawdzenia i sekcja bylaby cicho pusta.
-spr "stalych sprawdzonych z tabeli dokumentacji" "28" "echo $STALYCH"
+spr "stalych sprawdzonych z tabeli dokumentacji" "36" "echo $STALYCH"
 
 echo
 echo "=== A1b. Rejestr rozszerzen ponad specyfikacje (klasa #6 sciagi) ==="
@@ -105,12 +105,12 @@ echo "=== A1b. Rejestr rozszerzen ponad specyfikacje (klasa #6 sciagi) ==="
 # paczki zatrzymuje budowe przy nowym pliku.
 REJ=boty/PONAD-SPECYFIKACJE-BOTY.md
 spr "rejestr istnieje"                    "1" "test -f $REJ && echo 1 || echo 0"
-spr "pozycji ChatBota w rejestrze"        "10" "sed -n '/^## ChatBot LIVE/,/^## Segregator/p' $REJ | grep -cP '^[0-9]+\. '"
+spr "pozycji ChatBota w rejestrze"        "13" "sed -n '/^## ChatBot LIVE/,/^## Segregator/p' $REJ | grep -cP '^[0-9]+\. '"
 spr "rejestr wymienia tryb AI"            "1" "sed -n '/^## ChatBot LIVE/,/^## Segregator/p' $REJ | grep -c 'Tryb AI'"
 spr "rejestr wymienia statystyki i luki"  "1" "sed -n '/^## ChatBot LIVE/,/^## Segregator/p' $REJ | grep -c 'Statystyki i raport luk'"
 spr "rejestr wymienia konfigurowalny wyglad" "1" "sed -n '/^## ChatBot LIVE/,/^## Segregator/p' $REJ | grep -c 'Konfigurowalny wygląd widgetu'"
 spr "rejestr wymienia ekran powitalny"    "1" "sed -n '/^## ChatBot LIVE/,/^## Segregator/p' $REJ | grep -c 'Ekran powitalny'"
-spr "kazda pozycja ma powod (mysllnik)"   "10" "sed -n '/^## ChatBot LIVE/,/^## Segregator/p' $REJ | grep -cP '^[0-9]+\..*—|^[0-9]+\.[^—]*$'"
+spr "kazda pozycja ma powod (mysllnik)"   "13" "sed -n '/^## ChatBot LIVE/,/^## Segregator/p' $REJ | grep -cP '^[0-9]+\..*—|^[0-9]+\.[^—]*$'"
 
 echo
 echo "=== A2. Plik LICENSE (pelny GPL-2.0, wziety z rdzenia WordPressa) ==="
@@ -128,9 +128,17 @@ echo "=== A3. Paczka produktowa ==="
 spr "LICENSE na liscie plikow paczki" "1" "grep -c 'chatbot-live/LICENSE' boty/buduj-paczki.sh"
 spr "csv.php na liscie plikow paczki" "1" "grep -c 'chatbot-live/includes/csv.php' boty/buduj-paczki.sh"
 spr "statystyki.php na liscie paczki" "1" "grep -c 'chatbot-live/includes/statystyki.php' boty/buduj-paczki.sh"
+spr "import.php na liscie plikow paczki" "1" "grep -c 'chatbot-live/includes/import.php' boty/buduj-paczki.sh"
 spr "CHANGELOG.md na liscie paczki"  "1" "grep -c 'chatbot-live/CHANGELOG.md' boty/buduj-paczki.sh"
 spr "readme.txt na liscie paczki"    "1" "grep -c 'chatbot-live/readme.txt' boty/buduj-paczki.sh"
-spr "plikow chatbota w allowliscie"   "24" "sed -n '/^ALLOWLIST_CHATBOT=(/,/^)/p' boty/buduj-paczki.sh | grep -c '\"chatbot-live/'"
+spr "plikow chatbota w allowliscie"   "26" "sed -n '/^ALLOWLIST_CHATBOT=(/,/^)/p' boty/buduj-paczki.sh | grep -c '\"chatbot-live/'"
+# Klasa, ktora wyszla przy scalaniu 1.4.10 z 1.5.0: konflikt w chatbot-live.php
+# zjadl `require_once includes/przejecie.php`. Plik zostal w katalogu i w paczce,
+# wiec allowlista swiecila na zielono — a wtyczka po prostu nie ladowala polowy
+# funkcji. Kontrola idzie WIEC W OBIE STRONY: kazdy plik z includes/ musi byc
+# przez cos wymagany.
+spr "kazdy plik includes/ jest wymagany przez require_once" "0" \
+  "cd $W && ls includes/*.php | sed 's|^|CHATL_KATALOG . .|' >/dev/null; ls includes/*.php | while read -r f; do grep -q \"require_once CHATL_KATALOG . '\$f'\" chatbot-live.php || echo \"\$f\"; done | wc -l"
 spr "allowlista = zawartosc katalogu" "0"  "cd wtyczki && find chatbot-live -type f | sort | comm -23 - <(sed -n '/^ALLOWLIST_CHATBOT=(/,/^)/p' ../boty/buduj-paczki.sh | grep -oP '(?<=\")chatbot-live/[^\"]*' | sort) | wc -l"
 # Klasa, ktora tu wyszla: includes/csv.php byl wymagany przez require_once, ale
 # NIE bylo go na liscie plikow paczki. Zip bez tego pliku = fatal w wp-admin
@@ -152,6 +160,9 @@ spr "CHATL_LUKI_POKAZ"            "25"    "grep -oP '(?<=CHATL_LUKI_POKAZ = )[0-
 spr "CHATL_LUKI_PROG"             "50"    "grep -oP '(?<=CHATL_LUKI_PROG = )[0-9]+' $W/includes/statystyki.php"
 spr "CHATL_LUKI_RDZEN"            "4"     "grep -oP '(?<=CHATL_LUKI_RDZEN = )[0-9]+' $W/includes/statystyki.php"
 spr "CHATL_SUGESTIA_RDZEN"        "5"     "grep -oP '(?<=CHATL_SUGESTIA_RDZEN = )[0-9]+' $W/includes/statystyki.php"
+spr "CHATL_IMPORT_MAX_WIERSZY"    "2000"    "grep -oP '(?<=CHATL_IMPORT_MAX_WIERSZY = )[0-9]+' $W/includes/import.php"
+spr "CHATL_IMPORT_MAX_BAJTOW"     "2097152" "grep -oP '(?<=CHATL_IMPORT_MAX_BAJTOW = )[0-9]+' $W/includes/import.php"
+spr "CHATL_IMPORT_MINUT"          "15"      "grep -oP '(?<=CHATL_IMPORT_MINUT = )[0-9]+' $W/includes/import.php"
 spr "CHATL_AI_MODEL"              "claude-haiku-4-5" "grep -oP \"(?<=CHATL_AI_MODEL      = ')[^']*\" $W/includes/ai.php"
 spr "CHATL_AI_BRAK"               "BRAK_ODPOWIEDZI" "grep -oP \"(?<=CHATL_AI_BRAK       = ')[^']*\" $W/includes/ai.php"
 
@@ -175,7 +186,7 @@ spr "rola varchar(10)"            "1"  "grep -c 'rola varchar(10) NOT NULL' $W/i
 spr "trafiono dopuszcza NULL"     "1"  "grep -c 'trafiono tinyint(1) DEFAULT NULL' $W/includes/instalator.php"
 spr "indeks luki pod raport"      "1"  "grep -c 'KEY luki (rola,trafiono,utworzono)' $W/includes/instalator.php"
 spr "silnik domyslnie reguly"     "1"  "grep -c \"silnik varchar(10) NOT NULL DEFAULT 'reguly'\" $W/includes/instalator.php"
-spr "indeksow KEY (poza PRIMARY)" "7"  "grep -cP '^\\t\\tKEY ' $W/includes/instalator.php"
+spr "indeksow KEY (poza PRIMARY)" "8"  "grep -cP '^\\t\\tKEY ' $W/includes/instalator.php"
 
 echo
 echo "=== E. Aktywacja, seed, cron ==="
@@ -188,8 +199,8 @@ echo
 echo "=== F. Deinstalacja: obie sciezki ==="
 spr "DROP TABLE (6 tabel)"        "6"  "grep -c 'DROP TABLE IF EXISTS' $W/uninstall.php"
 spr "klucz API kasowany zawsze"   "1"  "sed -n '1,/usun_dane/p' $W/uninstall.php | grep -c \"delete_option( 'chatl_klucz_api' )\""
-spr "delete_option w sciezce B"   "5"  "sed -n '/usun_dane/,\$p' $W/uninstall.php | grep -c 'delete_option('"
-spr "wywolan esc_like (bez komentarzy)" "2" "grep -o 'wpdb->esc_like(' $W/uninstall.php | wc -l"
+spr "delete_option w sciezce B"   "6"  "sed -n '/usun_dane/,\$p' $W/uninstall.php | grep -c 'delete_option('"
+spr "wywolan esc_like (bez komentarzy)"  "4" "grep -o 'wpdb->esc_like(' $W/uninstall.php | wc -l"
 
 echo
 echo "=== G. Ustawienia: klucze i wartosci domyslne ==="
@@ -204,7 +215,7 @@ echo "=== H. Opcje i autoload ==="
 spr "klucz API add_option bez autoload" "1" "grep -c \"add_option( 'chatl_klucz_api', \\\$klucz, '', false )\" $W/includes/ai.php"
 # Oba znaczniki awarii (mail i odrzucony nonce) maja byc BEZ autoloadu: to opcje
 # czytane tylko w panelu, wiec nie ma powodu wozic ich w kazdym zapytaniu strony.
-spr "znacznikow awarii bez autoload"    "2" "grep -A8 \"update_option($\" $W/includes/front.php | grep -cP '^\\t\\tfalse$'"
+spr "znacznikow awarii bez autoload"    "3" "grep -A8 \"update_option($\" $W/includes/front.php | grep -cP '^\\t\\tfalse$'"
 spr "znacznik nonce zapisywany bez autoload" "1" "grep -A9 \"'chatl_blad_nonce',\" $W/includes/front.php | grep -cP '^\\t\\tfalse$'"
 
 echo
@@ -212,7 +223,7 @@ echo "=== I. Zaczepy i filtry ==="
 # Liczby po scaleniu z main (#78) SUMUJA sie: nonce dolozyl dwa endpointy AJAX
 # i akcje chatl_nonce_zamknij, ta galaz dokłada chatl_test_klucza.
 spr "endpointy AJAX (z nopriv)"   "6"  "grep -c \"add_action( 'wp_ajax\" $W/includes/front.php"
-spr "akcje admin_post"            "9"  "grep -rc \"add_action( 'admin_post_\" $W/includes/admin.php $W/includes/csv.php | awk -F: '{s+=\$2} END {print s}'"
+spr "akcje admin_post"            "13" "grep -rc \"add_action( 'admin_post_\" $W/includes/admin.php $W/includes/csv.php $W/includes/import.php | awk -F: '{s+=\$2} END {print s}'"
 # Liczymy ROZNE nazwy filtrow, nie wywolania: ten sam punkt rozszerzenia bywa
 # uzyty w kilku miejscach (od 1.4.2 chatl_ai_url i chatl_ai_model wolane sa
 # takze przez test klucza), a dokumentacja obiecuje LICZBE PUNKTOW, nie wywolan.
@@ -240,8 +251,18 @@ spr "stron panelu (menu+submenu)"  "6"  "grep -c 'add_menu_page(\|add_submenu_pa
 
 echo
 echo "=== J. Panel: limity list cytowane w dokumentacji ==="
-spr "lista zgloszen LIMIT 200"    "1"  "grep -c 'chatl_zgloszenia} ORDER BY id DESC LIMIT 200\\|ORDER BY id DESC LIMIT 200' $W/includes/admin.php"
-spr "lista rozmow LIMIT 100"      "1"  "grep -c 'ORDER BY koniec DESC LIMIT 100' $W/includes/admin.php"
+# Do 1.5.5 te dwie kontrole pilnowaly TWARDYCH limitow (LIMIT 200 / LIMIT 100).
+# Od 1.5.6 listy sa stronicowane, wiec pilnuja czego innego: ze rozmiar strony
+# siedzi w STALEJ (a nie znowu w liczbie wpisanej w zapytaniu) i ze zapytanie
+# naprawde ma przesuniecie. Sam brak LIMIT 200 nie wystarczy — bez OFFSET-u
+# strona druga pokazywalaby to samo co pierwsza.
+spr "rozmiar strony zgloszen w stalej" "200" "grep -oP '(?<=CHATL_NA_STRONE_ZGLOSZEN = )[0-9]+' $W/includes/admin.php"
+spr "rozmiar strony rozmow w stalej"   "100" "grep -oP '(?<=CHATL_NA_STRONE_ROZMOW = )[0-9]+' $W/includes/admin.php"
+spr "lista zgloszen ma OFFSET"    "1"  "grep -c 'LIMIT %d OFFSET %d\", \$flaga' $W/includes/admin.php"
+spr "lista rozmow ma OFFSET"      "1"  "grep -c 'ORDER BY koniec DESC LIMIT %d OFFSET %d' $W/includes/admin.php"
+spr "rozmowy liczone po sesjach"  "1"  "grep -c 'COUNT(DISTINCT sesja)' $W/includes/admin.php"
+spr "raport luk przesuwa sie"     "2"  "grep -c 'luki_offset' $W/includes/statystyki.php"
+spr "zero twardych limitow list"  "0"  "grep -c 'ORDER BY id DESC LIMIT 200\\|ORDER BY koniec DESC LIMIT 100' $W/includes/admin.php"
 
 echo
 echo "=== K. Bezpieczenstwo: to, co dokumentacja obiecuje ==="

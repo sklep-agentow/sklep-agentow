@@ -33,6 +33,10 @@ delete_option( 'chatl_wersja_schematu' );
 delete_option( 'chatl_blad_maila' );
 delete_option( 'chatl_blad_ai' );
 delete_option( 'chatl_blad_nonce' );
+// Nazwa wpisana wprost, a nie przez CHATL_RODO_OPCJA_WSPOLNE: uninstall.php biegnie
+// bez ladowania wtyczki, wiec stalej z includes/rodo.php tu nie ma. Slad sesji
+// wspoldzielonych (same identyfikatory, bez adresow i tresci) znika razem z danymi.
+delete_option( 'chatl_rodo_sesje_wspolne' );
 
 // Znacznik „widziałem ekran powitalny" leży przy KAŻDYM administratorze osobno,
 // więc kasujemy go dla wszystkich naraz ($delete_all = true). Bez tego po pełnym
@@ -44,3 +48,9 @@ delete_metadata( 'user', 0, 'chatl_powitanie_zamkniete', '', true );
 // wildcard) + prepare — wzorzec Handbook, żeby nie złapać cudzych wpisów
 // o podobnej nazwie.
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s", $wpdb->esc_like( '_transient_chatl_rl_' ) . '%', $wpdb->esc_like( '_transient_timeout_chatl_rl_' ) . '%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+
+// Podglądy importu CSV (chatl_import_<id użytkownika>, TTL 15 minut). Zwykle
+// wygasają same, ale deinstalacja w trakcie niedokończonego importu zostawiłaby
+// w wp_options pytania i odpowiedzi klienta — czyli DANE, po pełnym czyszczeniu.
+// Ten sam wzorzec esc_like() + prepare co wyżej.
+$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s", $wpdb->esc_like( '_transient_chatl_import_' ) . '%', $wpdb->esc_like( '_transient_timeout_chatl_import_' ) . '%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery

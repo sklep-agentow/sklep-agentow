@@ -35,7 +35,13 @@ function chatl_komunikat_ok() {
 			'oddana'    => 'Rozmowa oddana botowi — gość dostał o tym komunikat.',
 		);
 		$klucz  = sanitize_key( wp_unslash( $_GET['chatl_ok'] ) );
-		if ( isset( $teksty[ $klucz ] ) ) {
+		if ( 'zaimportowano' === $klucz ) {
+			// Liczba jest częścią komunikatu, a nie ozdobą: po imporcie właściciel
+			// musi zobaczyć, ILE wpisów naprawdę weszło — „Zapisano." przy pliku
+			// z 40 wierszami nie mówi, czy weszło 40, czy 3.
+			$ile = isset( $_GET['chatl_ile'] ) ? (int) $_GET['chatl_ile'] : 0;
+			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( sprintf( 'Zaimportowano %d wpisów z pliku CSV.', $ile ) ) . '</p></div>';
+		} elseif ( isset( $teksty[ $klucz ] ) ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( $teksty[ $klucz ] ) . '</p></div>';
 		}
 	}
@@ -44,8 +50,72 @@ function chatl_komunikat_ok() {
 	}
 	// phpcs:enable
 	chatl_notice_bledu_maila();
+	chatl_notice_pulapki();
 	chatl_notice_bledu_ai();
 	chatl_notice_odrzuconych_nonce();
+}
+
+/**
+ * Rozmiar strony list w panelu.
+ *
+ * Liczby są DOKŁADNIE te, które listy pokazywały wcześniej jako twardy limit.
+ * To nie jest brak pomysłu, tylko decyzja: wada zgłoszona w kolejce brzmiała
+ * „lista urywa się i nie ma strony drugiej", więc naprawiamy DOSTĘP do reszty
+ * danych, a nie przyzwyczajenia właściciela. Kto ma dziś mniej wpisów niż limit,
+ * nie zobaczy żadnej zmiany.
+ */
+const CHATL_NA_STRONE_ZGLOSZEN = 200;
+
+/** Rozmiar strony listy rozmów (jak wyżej). */
+const CHATL_NA_STRONE_ROZMOW = 100;
+
+/**
+ * Numer strony z adresu — zawsze co najmniej 1.
+ *
+ * @return int
+ */
+function chatl_numer_strony() {
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- samo przełączenie widoku listy, bez mutacji.
+	return isset( $_GET['strona_listy'] ) ? max( 1, (int) $_GET['strona_listy'] ) : 1;
+}
+
+/**
+ * Odsyłacze stron pod listą (i nad nią, gdy stron jest więcej niż jedna).
+ *
+ * Numer strony trzymamy w `strona_listy`, a NIE w `paged` ani `strona`:
+ * `page` jest zajęte przez WordPressa (slug podstrony), a własna nazwa nie
+ * wejdzie w kolizję z niczym, co WP dokłada do adresów panelu.
+ *
+ * @param int   $wszystkich Ile wierszy w całości.
+ * @param int   $na_strone  Rozmiar strony.
+ * @param int   $strona     Bieżąca strona.
+ * @param array $dodatkowe  Parametry adresu do zachowania (np. filtr widoku).
+ * @return void
+ */
+function chatl_stronicowanie( $wszystkich, $na_strone, $strona, $dodatkowe = array() ) {
+	$stron = (int) ceil( max( 0, (int) $wszystkich ) / max( 1, (int) $na_strone ) );
+	if ( $stron < 2 ) {
+		return; // Jedna strona = brak nawigacji. Pusty pasek tylko myli.
+	}
+	$baza = add_query_arg( $dodatkowe, admin_url( 'admin.php' ) );
+	$html = paginate_links(
+		array(
+			'base'      => add_query_arg( 'strona_listy', '%#%', $baza ),
+			'format'    => '',
+			'current'   => max( 1, (int) $strona ),
+			'total'     => $stron,
+			'prev_text' => '‹',
+			'next_text' => '›',
+			'type'      => 'plain',
+		)
+	);
+	if ( ! $html ) {
+		return;
+	}
+	echo '<div class="tablenav"><div class="tablenav-pages">'
+		. '<span class="displaying-num">' . esc_html( sprintf( '%s pozycji', number_format_i18n( (int) $wszystkich ) ) ) . '</span> '
+		. wp_kses_post( $html )
+		. '</div></div>';
 }
 
 /**
@@ -64,6 +134,25 @@ function chatl_przekieruj_blad( $strona, $komunikat ) {
  * Ostrzeżenie, gdy ostatnie powiadomienie mailowe o zgłoszeniu nie wyszło
  * (znacznik ustawia chatl_odnotuj_wysylke_powiadomienia() z front.php).
  */
+/**
+ * Licznik zadziałań pułapki na boty.
+ *
+ * Bez tej informacji pułapka jest niesprawdzalna z panelu: cisza znaczyłaby
+ * albo „nic nie przyszło", albo „przepuszczam wszystko". Liczba czyni też
+ * widocznym FAŁSZYWY ALARM — gdy klient mówi, że pisał i nie dostał odpowiedzi,
+ * właściciel wie, gdzie zajrzeć.
+ */
+function chatl_notice_pulapki() {
+	$stan = get_option( 'chatl_pulapka' );
+	if ( ! is_array( $stan ) || empty( $stan['ile'] ) ) {
+		return;
+	}
+	echo '<div class="notice notice-info"><p><strong>Pułapka na boty zadziałała ' . (int) $stan['ile'] . ' raz(y).</strong> '
+		. 'Ostatnio: ' . esc_html( (string) ( $stan['ostatnia'] ?? '' ) ) . ' (' . esc_html( (string) ( $stan['powod'] ?? '' ) ) . '). '
+		. 'Złapane zgłoszenia <strong>są zapisane</strong> — zobaczysz je na liście zgłoszeń pod filtrem <em>podejrzane</em>. '
+		. 'Nie wysyłamy o nich powiadomień mailem.</p></div>';
+}
+
 function chatl_notice_bledu_maila() {
 	$blad = get_option( 'chatl_blad_maila' );
 	if ( ! is_array( $blad ) || empty( $blad['kiedy'] ) ) {
@@ -237,6 +326,18 @@ function chatl_strona_qa() {
 	<div class="wrap">
 		<h1>Baza pytań i odpowiedzi</h1>
 		<?php chatl_komunikat_ok(); ?>
+		<?php
+		/*
+		 * Czekający podgląd importu zajmuje CAŁY ekran i nic poza nim się nie
+		 * renderuje. To jest moment decyzji („zapisać te 40 wierszy czy nie"),
+		 * a formularz dodawania i lista wpisów obok niego rozpraszałyby uwagę
+		 * dokładnie tam, gdzie właściciel ma coś sprawdzić przed zapisem.
+		 */
+		if ( chatl_import_ekran_podgladu() ) {
+			echo '</div>';
+			return;
+		}
+		?>
 		<p>Bot dopasowuje pytanie gościa po <strong>słowach kluczowych z wariantami</strong> (rozdzielaj przecinkami, np. <code>cena, ceny, cennik</code>). Odmiany słów łapiesz, wpisując warianty.</p>
 
 		<?php chatl_panel_testu_bota(); ?>
@@ -277,6 +378,8 @@ function chatl_strona_qa() {
 				<a href="<?php echo esc_url( admin_url( 'admin.php?page=chatl-qa' ) ); ?>">Anuluj edycję</a>
 			<?php endif; ?>
 		</form>
+
+		<?php chatl_import_ekran_formularza(); ?>
 
 		<h2>Wpisy (<?php echo count( $wpisy ); ?>)</h2>
 		<table class="widefat striped">
@@ -429,11 +532,44 @@ add_action( 'admin_post_chatl_qa_usun', 'chatl_post_qa_usun' );
 function chatl_strona_zgloszenia() {
 	global $wpdb;
 	$tabela = $wpdb->prefix . 'chatl_zgloszenia';
-	$wpisy  = $wpdb->get_results( "SELECT * FROM {$tabela} ORDER BY id DESC LIMIT 200" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+	/*
+	 * Lista pokazuje DOMYŚLNIE tylko czyste zgłoszenia, a złapane przez pułapkę
+	 * siedzą za filtrem — ale z LICZBĄ widoczną obok. Ukrycie ich bez liczby
+	 * byłoby tym samym, co cicha kasacja: właściciel nie miałby jak zauważyć,
+	 * że pułapka zabrała prawdziwego klienta.
+	 */
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- samo przełączenie widoku listy.
+	$widok = isset( $_GET['widok'] ) && 'podejrzane' === sanitize_key( wp_unslash( $_GET['widok'] ) ) ? 'podejrzane' : 'czyste';
+	$flaga = 'podejrzane' === $widok ? 1 : 0;
+	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+	$strona     = chatl_numer_strony();
+	$wszystkich = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$tabela} WHERE podejrzane = %d", $flaga ) );
+	/*
+	 * Strona spoza zakresu (adres z zakładki po skasowaniu wpisów) nie może dać
+	 * pustej listy bez wyjaśnienia — przycinamy do ostatniej istniejącej.
+	 */
+	$stron            = max( 1, (int) ceil( $wszystkich / CHATL_NA_STRONE_ZGLOSZEN ) );
+	$strona           = min( $strona, $stron );
+	$wpisy            = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$tabela} WHERE podejrzane = %d ORDER BY id DESC LIMIT %d OFFSET %d", $flaga, CHATL_NA_STRONE_ZGLOSZEN, ( $strona - 1 ) * CHATL_NA_STRONE_ZGLOSZEN ) );
+	$ile_podejrzanych = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$tabela} WHERE podejrzane = 1" );
+	// phpcs:enable
 	?>
 	<div class="wrap">
 		<h1>Zgłoszenia z czatu</h1>
 		<?php chatl_komunikat_ok(); ?>
+		<ul class="subsubsub">
+			<li><a href="<?php echo esc_url( admin_url( 'admin.php?page=chatl-zgloszenia' ) ); ?>"
+				<?php echo 'czyste' === $widok ? 'class="current"' : ''; ?>>Zgłoszenia</a> |</li>
+			<li><a href="<?php echo esc_url( admin_url( 'admin.php?page=chatl-zgloszenia&widok=podejrzane' ) ); ?>"
+				<?php echo 'podejrzane' === $widok ? 'class="current"' : ''; ?>>Podejrzane <span class="count">(<?php echo (int) $ile_podejrzanych; ?>)</span></a></li>
+		</ul>
+		<?php if ( 'podejrzane' === $widok ) : ?>
+			<div class="notice notice-warning inline" style="margin:12px 0"><p>
+				To zgłoszenia złapane przez <strong>pułapkę na boty</strong>. Są zapisane, ale <strong>nie wysłaliśmy o nich powiadomień mailem</strong>.
+				Jeśli klient mówi, że pisał i nie dostał odpowiedzi — szukaj go tutaj.
+			</p></div>
+		<?php endif; ?>
 		<p>Goście, którym bot nie odpowiedział (albo którzy od razu chcieli kontaktu) — <strong>do odpisania na żywo</strong>.</p>
 		<p><a class="button" href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=chatl_eksport_zgloszen' ), 'chatl_eksport_zgloszen' ) ); ?>">Pobierz CSV (wszystkie zgłoszenia)</a>
 			<span class="description">Kopia dla Ciebie — bot jej nigdzie nie wysyła i nie robi jej sam z siebie.</span></p>
@@ -461,6 +597,7 @@ function chatl_strona_zgloszenia() {
 			<?php endforeach; ?>
 			</tbody>
 		</table>
+		<?php chatl_stronicowanie( $wszystkich, CHATL_NA_STRONE_ZGLOSZEN, $strona, array( 'page' => 'chatl-zgloszenia' ) + ( 'podejrzane' === $widok ? array( 'widok' => 'podejrzane' ) : array() ) ); ?>
 	</div>
 	<?php
 }
@@ -545,11 +682,17 @@ function chatl_strona_historia() {
 		return;
 	}
 
-	$rozmowy = $wpdb->get_results( "SELECT sesja, COUNT(*) AS wymian, MIN(utworzono) AS poczatek, MAX(utworzono) AS koniec FROM {$tabela} GROUP BY sesja ORDER BY koniec DESC LIMIT 100" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	$strona_r = chatl_numer_strony();
+	// Liczymy SESJE, nie wiersze: lista pokazuje rozmowy, a jedna rozmowa to wiele wymian.
+	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	$wszystkich_r = (int) $wpdb->get_var( "SELECT COUNT(DISTINCT sesja) FROM {$tabela}" );
+	$stron_r      = max( 1, (int) ceil( $wszystkich_r / CHATL_NA_STRONE_ROZMOW ) );
+	$strona_r     = min( $strona_r, $stron_r );
+	$rozmowy      = $wpdb->get_results( $wpdb->prepare( "SELECT sesja, COUNT(*) AS wymian, MIN(utworzono) AS poczatek, MAX(utworzono) AS koniec FROM {$tabela} GROUP BY sesja ORDER BY koniec DESC LIMIT %d OFFSET %d", CHATL_NA_STRONE_ROZMOW, ( $strona_r - 1 ) * CHATL_NA_STRONE_ROZMOW ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 	?>
 	<div class="wrap">
 		<h1>Historia rozmów</h1>
-		<p>Zapis wymian bot↔gość (ostatnie 100 rozmów). Historia starsza niż <strong><?php echo (int) CHATL_RETENCJA_DNI; ?> dni</strong> jest czyszczona automatycznie.</p>
+		<p>Zapis wymian bot↔gość (<?php echo esc_html( number_format_i18n( $wszystkich_r ) ); ?> rozmów, po <?php echo (int) CHATL_NA_STRONE_ROZMOW; ?> na stronę). Historia starsza niż <strong><?php echo (int) CHATL_RETENCJA_DNI; ?> dni</strong> jest czyszczona automatycznie.</p>
 		<p><a class="button" href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=chatl_eksport_rozmow' ), 'chatl_eksport_rozmow' ) ); ?>">Pobierz CSV (cała historia)</a>
 			<span class="description">Chcesz zachować rozmowy dłużej niż <?php echo (int) CHATL_RETENCJA_DNI; ?> dni? Pobierz je sam, zanim zostaną skasowane — wtyczka <strong>nie</strong> robi kopii automatycznie, bo wtedy „kasujemy po <?php echo (int) CHATL_RETENCJA_DNI; ?> dniach" przestałoby być prawdą.</span></p>
 		<table class="widefat striped">
@@ -569,6 +712,7 @@ function chatl_strona_historia() {
 			<?php endforeach; ?>
 			</tbody>
 		</table>
+		<?php chatl_stronicowanie( $wszystkich_r, CHATL_NA_STRONE_ROZMOW, $strona_r, array( 'page' => 'chatl-historia' ) ); ?>
 	</div>
 	<?php
 }

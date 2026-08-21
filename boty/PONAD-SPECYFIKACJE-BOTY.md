@@ -44,6 +44,27 @@ była w klepniętych szkicach (`boty/SZKICE-BOTOW.md`) albo wynika z ich zasad
    wydarzy i że w paczce znajdzie historię zmian oraz opis w formacie, który zna
    z katalogu WordPressa. Brak tych rzeczy nie psuje działania, ale od razu
    widać, że to nie jest produkt handlowy.
+11. **Import bazy Q&A z pliku CSV z podglądem przed zapisem + eksport bazy Q&A**
+   (`includes/import.php`, `chatl_post_eksport_qa`) — rozszerzenie ponad szkice.
+   **Powód:** firma, która kupuje bota, ma gotową listę pytań w arkuszu, a wtyczka
+   pozwalała dodawać wyłącznie po jednym wpisie ręcznie — przy czterdziestu parach
+   to godziny przepisywania i pierwszy powód, żeby produkt odłożyć. Podgląd jest
+   częścią tej pozycji, a nie ozdobą: silnik dopasowuje **tylko** po słowach
+   kluczowych, więc wiersz bez nich jest martwy, a właściciel dowiedziałby się
+   o tym dopiero z raportu luk. Podgląd pokazuje podpowiedziane słowa **do edycji**
+   i ostrzega przy wierszach, w które bot nie trafi.
+12. **Wpięcie w kreator RODO WordPressa (eksporter i kasownik danych osobowych)**
+   (`includes/rodo.php`) — rozszerzenie ponad szkice. **Powód:** wtyczka trzyma
+   adresy e-mail gości i treść ich rozmów, a produkt jest sprzedawany z sekcją
+   o RODO — wtyczka niewpięta w kreator zostawia właściciela z obowiązkiem
+   prawnym i bez narzędzia. To nie jest bonus dla ładnego opisu: bez tego
+   deklaracja produktu rozjeżdża się z tym, co kod naprawdę potrafi.
+13. **Pułapka na boty (honeypot + próg czasu)** (`includes/front.php`,
+   `assets/widget.js`) — rozszerzenie ponad szkice. **Powód:** czat jest publiczny,
+   a pięć adresów wystarczało, żeby wyczerpać dzienny budżet AI właściciela —
+   potem prawdziwi goście dostawali już tylko tryb regułowy, a właściciel płacił
+   za funkcję, która cicho przestała działać. Do tego formularz kontaktu bez sita
+   jest zaproszeniem do mail-bomby na skrzynkę właściciela.
 
 ## Segregator maila
 1. **Tryb AI + „porównaj reguły vs AI"** — decyzja Dzidka 18.08 (szkice §BOT 2).
@@ -74,7 +95,11 @@ była w klepniętych szkicach (`boty/SZKICE-BOTOW.md`) albo wynika z ich zasad
    (nasz silnik bierze PIERWSZĄ pasującą regułę, Gmail stosuje wszystkie).
 
 ## Czego CELOWO nie ma (granice jawne, też ze szkiców)
-- ChatBot: bez czatu operatora na żywo, bez pamięci rozmów między wizytami.
+- ChatBot: ⛔ **nieaktualne od 2026-08-21** w części o operatorze — **przejęcie
+  rozmowy przez człowieka POWSTAŁO i jest w produkcie** (podstrona „Rozmowy na
+  żywo", przycisk **Przejmij**, bot po przejęciu milczy). Zostaje prawdą: **bez
+  pamięci rozmów między wizytami** — sesja żyje w karcie przeglądarki; pamięć
+  w trakcie JEDNEJ rozmowy (tryb AI, ostatnie wymiany) to co innego i ona istnieje.
 - Segregator: ⛔ **nieaktualne od 2026-08-20** — podpięcie żywej skrzynki (IMAP)
   POWSTAŁO i jest w produkcie. Zostały węższe granice: logowanie tylko hasłem
   aplikacji (bez OAuth ⇒ brak Microsoft 365 i Outlook.com), na skrzynce

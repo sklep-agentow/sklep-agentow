@@ -10,6 +10,131 @@ migracja odpala się sama przy pierwszym wejściu do panelu po aktualizacji
 
 ---
 
+## [1.5.7] — 2026-08-21
+
+### Dodane
+- **Import bazy pytań z pliku CSV — z podglądem przed zapisem.** Firma z gotową
+  listą pytań w Excelu nie musi już przepisywać ich po jednym. Wgrany plik trafia
+  najpierw na **ekran podglądu**: każdy wiersz z werdyktem (do zapisania /
+  duplikat pomijany / błąd), licznikami i możliwością **poprawienia słów
+  kluczowych**. Do bazy nie trafia nic, dopóki właściciel nie kliknie „Zapisz".
+- **Eksport całej bazy Q&A do CSV.** Domyka obieg „pobierz → popraw w arkuszu →
+  wgraj z powrotem"; kolumny eksportu są dokładnie tymi, które przyjmuje import,
+  więc własna baza jest zarazem wzorem pliku.
+
+### Dlaczego podgląd, a nie import „na raz"
+- Bot dopasowuje pytanie gościa **wyłącznie po słowach kluczowych** — kolumna
+  z pytaniem jest tylko etykietą dla właściciela. Wiersz bez słów kluczowych jest
+  więc **martwy**: gość może wkleić pytanie słowo w słowo i nie dostanie
+  odpowiedzi. Typowy plik z arkusza ma właśnie pytanie i odpowiedź, bez słów
+  kluczowych — dlatego wtyczka je **podpowiada** (tą samą funkcją, którą panel
+  podpowiada je przy ręcznym dodawaniu wpisu), pokazuje w podglądzie **do edycji**
+  i ostrzega przy wierszach, w które bot nie trafi albo trafi zbyt szeroko.
+
+### Pliki z prawdziwego świata
+- Rozpoznawany jest **średnik** jako separator (tak zapisuje polski Excel),
+  kodowanie **windows-1250** (konwersja przez `iconv`, bo mbstring nie zna CP1250),
+  znacznik BOM, końce linii CRLF i puste wiersze zostawiane przez arkusze.
+- Kolumny mapowane **po nazwie**, nie po pozycji — kolejność w arkuszu nie ma
+  znaczenia; wymagane są `pytanie` i `odpowiedz`, reszta jest nieobowiązkowa.
+- Krzywy plik kończy się **komunikatem**, nie białym ekranem: pusty plik, brak
+  wymaganych kolumn, plik ponad 2 MB lub ponad 2000 wierszy, plik za duży dla
+  limitu hostingu.
+- Import **tylko dopisuje**: pytanie, które już jest w bazie, zostaje nietknięte,
+  a wiersz z pliku jest pomijany i widać to w podglądzie.
+
+### Porządek przed zamrożeniem wersji
+- **Z paczki znikają nasze ślady wewnętrzne.** Komentarze w kodzie i akapity
+  dokumentacji technicznej odsyłały do plików, których kupujący nie dostaje
+  (nasze testy i wewnętrzne rozpoznania), i powoływały się na numery naszych
+  zgłoszeń oraz na osoby z zespołu. Treść merytoryczna została bez zmian — zniknęły same
+  odsyłacze do naszego warsztatu. **Działanie wtyczki jest nietknięte.**
+- W `readme.txt` zdanie o pełnej historii zmian stoi teraz **nad** listą wydań,
+  a nie w środku wpisu 1.5.7, gdzie czytało się jak jego część.
+
+---
+
+## [1.5.6] — 2026-08-21
+
+### Naprawione
+- **Trzy listy w panelu urywały się i nie dawało się dojść do reszty danych.**
+  Zgłoszenia kończyły się na 200 pozycjach, rozmowy na 100, raport luk na 25
+  tematach — dane były w bazie, ale z panelu **nieosiągalne**. Wszystkie trzy
+  mają teraz strony.
+
+### Uwaga
+- **Rozmiar strony to dokładnie te same liczby**, które listy pokazywały
+  wcześniej jako twardy limit (200 / 100 / 25). Kto ma mniej wpisów niż limit,
+  nie zobaczy żadnej zmiany — naprawiliśmy dostęp do danych, nie przyzwyczajenia.
+- Liczba rozmów liczona jest **po sesjach, nie po wymianach** — jedna rozmowa to
+  wiele wiadomości.
+- Odsyłacze stron **zachowują filtr** (np. widok „podejrzane" na liście zgłoszeń)
+  i wybrany okres na stronie statystyk.
+- Wejście na stronę spoza zakresu (np. ze starej zakładki) pokazuje ostatnią
+  istniejącą stronę, a nie pustą listę.
+- **Limit 2000 wierszy wejściowych raportu luk zostaje bez zmian** — to osobna
+  granica wydajności, opisana w panelu; stronicowanie dotyczy wyniku grupowania.
+
+---
+
+## [1.5.4] — 2026-08-21 · schemat bazy 6 → 7
+
+### Dodane
+- **Pułapka na boty.** Ukryte pole, którego człowiek nie widzi i nie dosięgnie
+  klawiszem Tab, plus **próg czasu liczony po stronie serwera** (pytanie szybsze
+  niż 2 sekundy od otwarcia czatu nie jest pisane przez człowieka).
+- Próg czasu **nie obowiązuje przy formularzu kontaktu** — test w przeglądarce
+  pokazał, że prawdziwy gość klikający „Zostaw wiadomość" zaraz po otwarciu czatu
+  wpadał we własną pułapkę, a cena tej pomyłki to utracony kontakt. Formularza
+  pilnuje samo ukryte pole.
+
+### Co się dzieje ze złapaną wiadomością — i dlaczego
+- **Zostaje zapisana, z oznaczeniem „podejrzane".** Nie kasujemy jej po cichu:
+  gdyby sito pomyliło się przy prawdziwym kliencie, nikt by się o tym nie
+  dowiedział — klient myślałby, że wysłał, właściciel nie wiedziałby, że coś
+  przepadło. Ten produkt istnieje po to, żeby zbierać kontakty.
+- **Nie wysyła powiadomienia mailem** — ochrona przed mail-bombą była głównym
+  powodem postawienia pułapki.
+- **Nie zużywa budżetu trybu AI** ani limitu chroniącego prawdziwych gości.
+- Lista **Zgłoszenia** pokazuje domyślnie tylko czyste; złapane są **za filtrem
+  z licznikiem**, żeby fałszywy alarm był widoczny.
+- Dla wysyłającego odpowiedź jest **co do znaku identyczna** z odpowiedzią na
+  czyste zgłoszenie — autor skryptu nie dowiaduje się, że wpadł.
+
+### Uwaga — czego to nie zatrzyma
+- Pułapka łapie automaty wypełniające wszystko, co znajdą na stronie, i strzelające
+  natychmiast po jej wczytaniu. **Nie zatrzyma** kogoś, kto podejrzy kształt żądania
+  i będzie je wysyłał bezpośrednio, z odstępami — przed tym broni dobowy limit
+  zapytań AI na adres. Napisane wprost także w instrukcji.
+
+---
+
+## [1.5.2] — 2026-08-21
+
+### Dodane
+- **Wpięcie w narzędzia RODO WordPressa.** Wniosek o kopię albo o usunięcie danych
+  obsługujesz wbudowanym kreatorem (**Narzędzia → Eksport / Usuwanie danych
+  osobowych**): wtyczka wydaje zgłoszenia z czatu i powiązaną z nimi historię
+  rozmowy, a kasownik usuwa jedno i drugie.
+- Gotowy akapit do **polityki prywatności** (Ustawienia → Prywatność).
+
+### Uwaga
+- Wiązanie idzie przez **adres e-mail**, więc rozmowa gościa, który nigdy nie
+  zostawił zgłoszenia, nie jest powiązana z żadnym adresem — kasuje ją retencja.
+  Kreator mówi o tym wprost, zamiast udawać komplet.
+- **Rozmowa, w której zgłoszenie zostawiła więcej niż jedna osoba** (wspólny
+  komputer w recepcji albo gość, który podał drugi adres), nie jest ani wydawana,
+  ani kasowana: zawiera wiadomości dwóch osób, a wiersze nie mają znacznika autora,
+  więc nie da się ich rozdzielić. Wydanie jej byłoby ujawnieniem cudzych danych
+  wnioskodawcy, a skasowanie — usunięciem cudzych danych na wniosek osoby trzeciej.
+  Kreator wypisuje, ile takich rozmów zachowano i dlaczego. Ochrona działa także wtedy,
+  gdy wnioski przychodzą **po kolei**: informacja o współdzieleniu sesji jest zapisywana
+  zanim cokolwiek zostanie usunięte, więc nie znika razem ze skasowanym zgłoszeniem.
+- Komunikat kasownika podaje **rzeczywiste liczby** usuniętych zgłoszeń i wiadomości.
+  Wniosek dotyczący adresu, którego nie ma w bazie, kończy się zdaniem „nie znaleziono
+  żadnych danych" — a nie potwierdzeniem kasowania, którego nie było.
+---
+
 ## [1.5.0] — 2026-08-20 · schemat bazy 5 → 6
 
 ### Dodane

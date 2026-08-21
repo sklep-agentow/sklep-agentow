@@ -37,9 +37,11 @@ function chatl_utworz_tabele() {
 		wiadomosc text NOT NULL,
 		sesja varchar(64) NOT NULL DEFAULT '',
 		status varchar(20) NOT NULL DEFAULT 'nowe',
+		podejrzane tinyint(1) NOT NULL DEFAULT 0,
 		utworzono datetime NOT NULL,
 		PRIMARY KEY  (id),
-		KEY status (status)
+		KEY status (status),
+		KEY podejrzane (podejrzane)
 	) {$charset};"
 	);
 
@@ -73,7 +75,7 @@ function chatl_utworz_tabele() {
 
 	/*
 	 * Stan rozmowy: kto odpowiada gosciowi — bot czy czlowiek. JEDNO pole, nie
-	 * zestaw flag (model z Chatwoota, rozpoznanie w boty/ROZPOZNANIE-PRZEJECIE-ROZMOWY.md).
+	 * zestaw flag (model z Chatwoota).
 	 * Tabela jest osobna od chatl_rozmowy, bo tamta rosnie z kazda wiadomoscia,
 	 * a tu potrzebny jest JEDEN wiersz na sesje, ktory da sie tanio przeczytac
 	 * przy kazdym odpytaniu i tanio zaktualizowac przy kazdej wiadomosci.

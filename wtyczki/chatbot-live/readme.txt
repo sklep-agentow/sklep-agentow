@@ -4,7 +4,7 @@ Tags: chat, chatbot, faq, kontakt, wsparcie
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.5.0
+Stable tag: 1.5.7
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -26,7 +26,11 @@ zmyślonej odpowiedzi zamiast przyznania się do niewiedzy.
   „zostaw wiadomość" — gość zawsze ma ścieżkę do człowieka.
 * Bazę 10 gotowych par pytanie-odpowiedź typowej polskiej firmy usługowej —
   bot odpowiada od pierwszej minuty, a Ty podmieniasz treści na swoje.
-* Panel: baza Q&A, zgłoszenia z czatu, historia rozmów, ustawienia.
+* Panel: baza Q&A, zgłoszenia z czatu, historia rozmów, **rozmowy na żywo**,
+  ustawienia.
+* **Możesz przejąć rozmowę osobiście** — na podstronie „Rozmowy na żywo" widzisz,
+  kto właśnie pisze, i jednym przyciskiem przejmujesz rozmowę. Bot wtedy milczy,
+  żeby nie wpadać Ci w słowo; po 5 minutach Twojego milczenia rozmowa wraca do bota.
 * **Statystyki i luki** — ile pytań przyszło, na ile bot odpowiedział, jaki to
   procent, ile rozmów skończyło się zebraniem kontaktu. Najważniejsze: lista
   pytań, na które bot **nie znał odpowiedzi**, pogrupowana w tematy, z przyciskiem
@@ -136,14 +140,18 @@ w ustawieniach. Klucz API jest kasowany zawsze, niezależnie od tego przełączn
 Pełna historia zmian, z opisem każdej pozycji, jest w pliku `CHANGELOG.md`
 w paczce. Poniżej skrót.
 
-= 1.5.0 =
-* Nowość: **przejęcie rozmowy przez człowieka**. Operator wchodzi do rozmowy,
-  bot milczy, a gość widzi wyraźny komunikat, że pisze do człowieka. Po
-  zakończeniu (lub po 5 minutach ciszy operatora) rozmowę przejmuje z powrotem bot.
-* Nowa podstrona **Rozmowy na żywo**: widzisz, kto teraz pisze i ile czeka,
-  wchodzisz do rozmowy jednym kliknięciem i odpowiadasz gościowi.
-* Bezpieczeństwo: identyfikator sesji wydaje serwer, a dostęp do rozmowy wymaga
-  dodatkowo sekretu z ciastka HttpOnly — sam identyfikator nie wystarczy.
+= 1.5.7 =
+* Import bazy pytań z pliku CSV z podglądem przed zapisem — wgrany plik trafia
+  najpierw na ekran podglądu (werdykt przy każdym wierszu, liczniki, edycja
+  podpowiedzianych słów kluczowych), a do bazy nic nie idzie bez potwierdzenia.
+* Eksport całej bazy Q&A do CSV — obieg „pobierz, popraw w arkuszu, wgraj".
+* Rozpoznawany polski Excel: średnik jako separator i kodowanie windows-1250.
+* Import tylko dopisuje: istniejące wpisy nie są nadpisywane.
+
+= 1.5.2 =
+* Nowość: wnioski RODO obsłużysz **wbudowanym kreatorem WordPressa** — wtyczka
+  wydaje zgłoszenia z czatu i powiązaną historię rozmowy, a na żądanie je kasuje.
+* Gotowy akapit do polityki prywatności.
 
 = 1.4.9 =
 * **Tryb AI pamięta bieżącą rozmowę.** Gość może dopytywać („jak dojechać" →

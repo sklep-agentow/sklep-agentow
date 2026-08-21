@@ -2,7 +2,7 @@
 /**
  * Plugin Name: ChatBot LIVE
  * Description: Bot na stronę firmową: 24/7 odpowiada na powtarzalne pytania z bazy Q&A, a gdy nie zna odpowiedzi — zbiera kontakt, żeby właściciel odezwał się na żywo.
- * Version: 1.5.0
+ * Version: 1.5.7
  * Requires at least: 6.0
  * Requires PHP: 8.1
  * Author: Automatic AI
@@ -15,8 +15,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'CHATL_WERSJA', '1.5.0' );
-define( 'CHATL_WERSJA_SCHEMATU', '6' );
+define( 'CHATL_WERSJA', '1.5.7' );
+define( 'CHATL_WERSJA_SCHEMATU', '7' );
 define( 'CHATL_KATALOG', plugin_dir_path( __FILE__ ) );
 define( 'CHATL_URL', plugin_dir_url( __FILE__ ) );
 
@@ -53,6 +53,7 @@ require_once CHATL_KATALOG . 'includes/silnik.php';
 require_once CHATL_KATALOG . 'includes/wyglad.php';
 require_once CHATL_KATALOG . 'includes/ai.php';
 require_once CHATL_KATALOG . 'includes/przejecie.php';
+require_once CHATL_KATALOG . 'includes/rodo.php';
 require_once CHATL_KATALOG . 'includes/front.php';
 
 register_activation_hook( __FILE__, 'chatl_aktywacja' );
@@ -62,6 +63,7 @@ if ( is_admin() ) {
 	require_once CHATL_KATALOG . 'includes/admin.php';
 	require_once CHATL_KATALOG . 'includes/operator.php';
 	require_once CHATL_KATALOG . 'includes/csv.php';
+	require_once CHATL_KATALOG . 'includes/import.php';
 	require_once CHATL_KATALOG . 'includes/statystyki.php';
 	require_once CHATL_KATALOG . 'includes/powitanie.php';
 }

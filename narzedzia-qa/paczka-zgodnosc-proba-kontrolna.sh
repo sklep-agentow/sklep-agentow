@@ -10,6 +10,18 @@
 # Pracuje na KOPII drzewa (KORZEN_PROBY), więc prawdziwe pliki repozytorium
 # i prawdziwa paczka nie są dotykane ani razu.
 #
+# DWIE KLASY DOŁOŻONE PRZY ZAMRAŻANIU ChatBota 1.5.7: wydanie z zgodnym numerem,
+# ale BEZ ani jednej linii opisu, oraz paczka z naszym śladem wewnętrznym w środku
+# (TODO, adres maszyny dev, ścieżka drzewa roboczego, numer PR-a). Obie przechodziły
+# przez porównanie numerów i sum kontrolnych, bo numer był zgodny, a ślad leżał
+# w repozytorium DOKŁADNIE tak samo jak w paczce.
+#
+# ⚠️ Te przypadki biegną na chatbot-live, nie na segregatorze, i na nim też bada
+# się stan czysty. Powód jest twardy, nie estetyczny: paczka segregatora 1.3.0 ma
+# dziś ślady wewnętrzne (ścieżki `audyt/boty/…`, „recenzja PR #27/#37"), więc jako
+# wzorzec czystości nie nadaje się do niczego. To pozycja dla właściciela tamtego
+# modułu — tu jest odnotowana, nie obchodzona.
+#
 # Kody wyjścia: 0 = bramka rozpoznała wszystkie podłożone przypadki
 #               1 = pomyliła się choć raz
 set -u
@@ -32,6 +44,10 @@ przygotuj_kopie() {
 	cp "$KORZEN/boty/paczki/$WTYCZKA"-*.zip "$cel/boty/paczki/"
 	cp "$KORZEN/boty/buduj-paczki.sh" "$cel/boty/"
 	cp "$BRAMKA" "$cel/narzedzia-qa/"
+	# Skaner śladów jest osobnym plikiem (to samo źródło wzorców co bramka `slady`),
+	# więc kopia drzewa musi go dostać — inaczej bramka słusznie melduje, że nie ma
+	# czym sprawdzić, i próba bada brak narzędzia zamiast tego, co miała badać.
+	cp "$KORZEN/narzedzia-qa/slady-wewnetrzne.sh" "$cel/narzedzia-qa/"
 }
 
 # Wersja z nagłówka kopii — do składania nazwy zipa.
@@ -176,6 +192,64 @@ psuj_brak_paczki() {
 	rm -f "$1/boty/paczki/$WTYCZKA"-*.zip
 }
 
+# --- klasa: wydanie bez opisu i ślady wewnętrzne (chatbot-live) ---------------
+
+# Mutacja, która NIE weszła do pliku, daje fałszywe „bramka złapała" — bo nie było
+# czego łapać. Kotwice gniją po każdym refaktorze, więc każda próba niżej sprawdza
+# najpierw, że podłożyła to, co miała podłożyć.
+kotwica() {
+	local opis="$1" warunek_ok="$2"
+	if [ "$warunek_ok" != "tak" ]; then
+		echo "PROBA: mutacja [$opis] NIE weszla do pliku — kotwica zgnila, przypadek nic nie dowodzi" >&2
+		exit 2
+	fi
+}
+
+# Ile linii listy ma sekcja danej wersji w CHANGELOG.md kopii.
+ile_pozycji_changelog() {
+	awk -v w="$2" 'index($0, "## [" w "]") == 1 { s = 1; next } /^## \[/ { s = 0 } s && /^[-*] / { i++ } END { print i + 0 }' "$1"
+}
+
+psuj_pusty_wpis_changelog() {
+	local cel="$1" plik wersja
+	przygotuj_czysty "$cel"
+	wersja="$(wersja_kopii "$cel")"
+	plik="$cel/wtyczki/$WTYCZKA/CHANGELOG.md"
+	# Nagłówek wydania ZOSTAJE (numer nadal zgodny w pięciu miejscach), znika treść.
+	awk -v w="$wersja" 'index($0, "## [" w "]") == 1 { print; s = 1; next } /^## \[/ { s = 0 } !s' "$plik" > "$plik.nowy"
+	mv "$plik.nowy" "$plik"
+	kotwica "pusty wpis CHANGELOG" "$( [ "$(ile_pozycji_changelog "$plik" "$wersja")" -eq 0 ] && grep -q "## \[$wersja\]" "$plik" && echo tak )"
+	przepakuj_z_zrodla "$cel"
+}
+
+psuj_pusta_sekcja_readme() {
+	local cel="$1" plik wersja ile
+	przygotuj_czysty "$cel"
+	wersja="$(wersja_kopii "$cel")"
+	plik="$cel/wtyczki/$WTYCZKA/readme.txt"
+	awk -v w="$wersja" 'index($0, "= " w " =") == 1 { print; s = 1; next } /^= [0-9]/ { s = 0 } /^== / { s = 0 } !s' "$plik" > "$plik.nowy"
+	mv "$plik.nowy" "$plik"
+	ile="$(awk -v w="$wersja" 'index($0, "= " w " =") == 1 { s = 1; next } /^= [0-9]/ { s = 0 } /^== / { s = 0 } s && NF { i++ } END { print i + 0 }' "$plik")"
+	kotwica "pusta sekcja readme" "$( [ "$ile" -eq 0 ] && grep -q "^= $wersja =" "$plik" && echo tak )"
+	przepakuj_z_zrodla "$cel"
+}
+
+# Ślad wewnętrzny dopisany do PLIKU ŹRÓDŁOWEGO i spakowany razem z resztą — czyli
+# zip zgadza się z repo co do bajtu, a mimo to kupujący dostaje naszą notatkę.
+dopisz_slad() {
+	local cel="$1" tresc="$2" plik
+	przygotuj_czysty "$cel"
+	plik="$cel/wtyczki/$WTYCZKA/includes/silnik.php"
+	printf '%s\n' "$tresc" >> "$plik"
+	kotwica "$tresc" "$( grep -qF "$tresc" "$plik" && echo tak )"
+	przepakuj_z_zrodla "$cel"
+}
+
+psuj_todo_w_paczce()      { dopisz_slad "$1" "// TODO: dopisac obsluge zalacznikow przed oddaniem"; }
+psuj_adres_dev()          { dopisz_slad "$1" "// sprawdzone na http://localhost:8890/wp-admin/"; }
+psuj_sciezke_robocza()    { dopisz_slad "$1" "// liczbe pilnuje testy/statystyki-test.php"; }
+psuj_obieg_pracy()        { dopisz_slad "$1" "// uwaga recenzenta do PR #99 — zostawiamy swiadomie"; }
+
 # --- przebieg -----------------------------------------------------------------
 
 command -v zip > /dev/null || { echo "PROBA: brak narzedzia zip — nie zbuduje uszkodzonych paczek" >&2; exit 2; }
@@ -200,8 +274,19 @@ sprawdz "nie ma paczki dla wersji z naglowka"          1 psuj_brak_paczki       
 sprawdz "wersja w naglowku nie jest numerem (1.3.)"    1 psuj_wersja_nie_jest_numerem "nie wygląda jak numer wydania"
 
 echo
+echo "=== WYDANIE BEZ OPISU I SLADY WEWNETRZNE (chatbot-live) — bramka MA PASC ==="
+WTYCZKA=chatbot-live
+sprawdz "CHANGELOG: naglowek wydania bez ani jednej pozycji" 1 psuj_pusty_wpis_changelog "ZERO TREŚCI"
+sprawdz "readme.txt: sekcja wydania pusta"                   1 psuj_pusta_sekcja_readme   "ZERO TREŚCI"
+sprawdz "TODO zapakowane do paczki klienta"                  1 psuj_todo_w_paczce         "znacznik roboczy"
+sprawdz "adres maszyny dev w paczce (localhost:8890)"        1 psuj_adres_dev             "adres maszyny dev"
+sprawdz "sciezka naszego drzewa roboczego w paczce"          1 psuj_sciezke_robocza       "ścieżka naszego drzewa roboczego"
+sprawdz "numer PR-a i recenzent w paczce"                    1 psuj_obieg_pracy           "nasz obieg pracy"
+
+echo
 echo "=== KONTROLA ODWROTNA: czysty stan ma PRZECHODZIC ==="
-sprawdz "wersja spojna, zip rowny repo co do bajtu"    0 nic_nie_psuj
+# Bez tego „naprawa" mogłaby odrzucać WSZYSTKO i świecić na zielono.
+sprawdz "czysta paczka: wersja, sumy, opis wydania, zero sladow" 0 nic_nie_psuj
 
 echo
 if [ "$BLEDY" -eq 0 ]; then

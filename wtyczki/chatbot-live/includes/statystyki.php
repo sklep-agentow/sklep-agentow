@@ -5,7 +5,7 @@
  *
  * Ten plik ma DWIE warstwy i celowo je rozdziela:
  *   1. liczenie i grupowanie (funkcje bez echo) — da się je odpalić z wp-cli
- *      i sprawdzić testem (testy/statystyki-test.php),
+ *      i sprawdzić testem po stronie PHP,
  *   2. rysowanie strony panelu (chatl_strona_statystyki).
  * Bez tego rozdziału jedynym sposobem sprawdzenia liczb byłoby czytanie HTML-a
  * przeglądarką — a wtedy test mierzy układ strony, nie arytmetykę.
@@ -740,13 +740,26 @@ function chatl_strona_statystyki() {
 			</p></div>
 		<?php endif; ?>
 
+		<?php
+		/*
+		 * Stronicowanie luk dzieje się NAD JUŻ POGRUPOWANĄ tablicą, a nie w SQL —
+		 * grupowanie tematów jest robotą PHP (rdzenie słów, próg podobieństwa),
+		 * więc numer strony nie ma jak wejść do zapytania. Twardy sufit
+		 * CHATL_LUKI_LIMIT na wiersze WEJŚCIOWE zostaje bez zmian: to osobna,
+		 * świadoma granica wydajności, opisana w komunikacie wyżej, a nie ta
+		 * sama sprawa co brak strony drugiej.
+		 */
+		$luki_stron  = max( 1, (int) ceil( count( $luki['grupy'] ) / CHATL_LUKI_POKAZ ) );
+		$luki_strona = min( chatl_numer_strony(), $luki_stron );
+		$luki_offset = ( $luki_strona - 1 ) * CHATL_LUKI_POKAZ;
+		?>
 		<table class="widefat striped">
 			<thead><tr><th style="width:70px">Pytań</th><th>Temat (pytanie gościa)</th><th style="width:150px">Ostatnio</th><th style="width:210px">Akcja</th></tr></thead>
 			<tbody>
 			<?php if ( ! $luki['grupy'] ) : ?>
 				<tr><td colspan="4">Brak pytań bez odpowiedzi w tym okresie — albo baza Q&amp;A jest kompletna, albo w tym okresie nikt nie pytał.</td></tr>
 			<?php endif; ?>
-			<?php foreach ( array_slice( $luki['grupy'], 0, CHATL_LUKI_POKAZ ) as $g ) : ?>
+			<?php foreach ( array_slice( $luki['grupy'], $luki_offset, CHATL_LUKI_POKAZ ) as $g ) : ?>
 				<?php
 				$link = add_query_arg(
 					array(
@@ -778,9 +791,27 @@ function chatl_strona_statystyki() {
 			<?php endforeach; ?>
 			</tbody>
 		</table>
+		<?php
+		chatl_stronicowanie(
+			count( $luki['grupy'] ),
+			CHATL_LUKI_POKAZ,
+			$luki_strona,
+			array_filter(
+				array(
+					'page'   => 'chatl-statystyki',
+					// Okres bierzemy z $okres, a nie wprost z adresu: to jest ta sama
+					// wartość PO walidacji (chatl_okres_z_zadania), więc odsyłacze stron
+					// nie przeniosą dalej daty, którą strona i tak odrzuciła.
+					'zakres' => $okres['zakres'],
+					'od'     => 'wlasny' === $okres['zakres'] ? $okres['od'] : '',
+					'do'     => 'wlasny' === $okres['zakres'] ? $okres['do'] : '',
+				)
+			)
+		);
+		?>
 		<?php if ( count( $luki['grupy'] ) > CHATL_LUKI_POKAZ ) : ?>
-			<p class="description">Pokazano <?php echo (int) CHATL_LUKI_POKAZ; ?> najczęstszych tematów z <?php echo esc_html( number_format_i18n( count( $luki['grupy'] ) ) ); ?>.
-				Odpowiedz na te — reszta zwykle jest ogonem pojedynczych pytań.</p>
+			<p class="description">Tematy są posortowane od najczęstszych — pierwsza strona to te, na których odpowiedź daje najwięcej.
+				Dalsze strony to zwykle ogon pojedynczych pytań.</p>
 		<?php endif; ?>
 		<p class="description">Tematy sklejamy po wspólnych rdzeniach słów (próg <?php echo (int) CHATL_LUKI_PROG; ?>%), bo polski odmienia końcówki:
 			„ile kosztuje dostawa" i „koszt dostawy" to dla właściciela jedno pytanie. Rozwiń „inne sformułowania", żeby zobaczyć, co dokładnie wpadło do tematu.</p>

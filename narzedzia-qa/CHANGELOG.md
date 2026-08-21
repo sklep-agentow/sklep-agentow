@@ -15,6 +15,35 @@ pory lądują tutaj.
 
 ## [Niewydane]
 
+### Zmienione
+
+- **Bramka `slady` wpisana do `.github/manifest-bramek.txt` — z siódmej „ponad
+  podłogą" staje się TWARDYM MINIMUM.** Do tej pory działała, ale nikogo nie
+  zatrzymywała twardo: dało się ją wyjąć z `bramki.sh` i strażnik manifestu nawet
+  by nie mrugnął, bo nie było jej na liście obowiązkowych. Mieliśmy już w tym
+  projekcie przypadek, że ta sama informacja dotarła trzy razy i nic nie zatrzymała,
+  bo wszystko było doradcze — ten wpis to zamyka. Skutek uboczny wpisu: `PROG_PELNY`
+  nie może już zejść poniżej **siedmiu**, bo manifest wymienia siedem bramek.
+
+  Trzy nowe przypadki w `bramki-proba-kontrolna.sh`, w tym jeden **end-to-end**:
+  ślad podłożony do prawdziwego pliku wtyczki, uruchomione dokładnie to polecenie,
+  które woła `quality.yml` — `BRAMKA slady: EXIT=1`, `NIEZALICZONE BRAMKI: 1`,
+  cały przebieg **EXIT=1**. Plik wtyczki wraca z kopii zapasowej niezależnie od wyniku.
+
+### Naprawione
+
+- **`slady-wewnetrzne.sh` 1.0.0 → 1.1.0 — wzorzec „nasz obieg pracy" łapie NASZE
+  SŁOWNICTWO, nie tylko nasze numery.** W Segregatorze został **bliźniak**
+  wyczyszczonych śladów: „Zarzut z pierwszej **rundy krytyk**" mówi o naszym obiegu
+  dokładnie to samo, co „recenzja PR #27", tylko innymi słowami — i wzorzec go nie
+  widział. Poprawienie samego zdania byłoby naprawą egzemplarza, więc wzorzec dostał
+  `\bkrytyk`, `egzaminator` i `Dzidek` (granica słowa przy `krytyk` jest konieczna:
+  bez niej wzorzec łapie „diakrytyków"). Dwa nowe przypadki w próbie kontrolnej.
+  Skutek na repozytorium: segregator 11 → 12 znalezionych (wszystkie zamknięte poza
+  czterema w dokumentacji), sklep 31 → 42 — w tym **jeden ślad w tekście widzianym
+  przez użytkownika**, nie w komentarzu: `sklep-agentow/includes/admin-zamowienie.php`
+  wypisuje w panelu „(podgląd — egzaminator widzi mail bez skrzynki)".
+
 ### Dodane
 
 - **`dowod-aktualizacji.sh` 1.0.0 — dowód AKTUALIZACJI W MIEJSCU.** U klienta
@@ -94,6 +123,138 @@ pory lądują tutaj.
   Każdy przypadek sprawdza **kod wyjścia ORAZ czy dowód nazwał przyczynę** — dowód
   padający na wszystko z tym samym komunikatem jest bezużyteczny przy szukaniu wady.
   Paczka w repo nie jest dotykana ani razu.
+- **`dowod-zachowania-chatbot.sh` 1.0.0 — dowód ZACHOWANIA z paczki (punkt D).**
+  `dowod-z-paczki.sh` odpowiada na pytania o cykl życia wtyczki; ten skrypt na trzy
+  pytania o zachowanie: **D3** klucz API odcięty w trakcie (zjazd do reguł + znacznik
+  w panelu), **D4** strona z cache i nonce starszy niż życie (**luka L1**), **D6**
+  retencja naprawdę kasuje. Każdy dowód ma przypadek **BEZ wady**: świeży nonce ma
+  działać za pierwszym razem, wpis sprzed jednego dnia ma przeżyć sprzątanie, a przy
+  sprawnym API znacznika awarii ma nie być.
+  ⛔ **Zero internetu w dowodzie**: „odcięcie klucza" udaje własny punkt końcowy
+  w kontenerze przez filtr `chatl_ai_url`, który wtyczka sama daje integratorom.
+  Dowód zależny od cudzego serwera nie jest dowodem, tylko prognozą pogody.
+  ⚠️ Skrypt **wymaga `lib-stos-probny.sh` z PR #105** — do czasu jego scalenia nie
+  da się go uruchomić z samego maina.
+
+- **`slady-wewnetrzne.sh` 1.0.0 — nowe narzędzie i SIÓDMA bramka `slady`
+  w `bramki.sh` (próg pełny 6 → 7, tekstowy 3 → 4).** Wyczyszczenie 20 śladów
+  z ChatBota było naprawą EGZEMPLARZA: jutro wjeżdża nowy komentarz
+  z odsyłaczem do `testy/…` albo numerem naszego zgłoszenia i wszystko wraca.
+  Bramka zamrożenia sprawdza to raz, przy zamrażaniu; bramka `slady` sprawdza to
+  przy **każdym PR-ze**, także tekstowym — komentarz w dokumentacji to ten sam problem.
+  Jedno źródło wzorców dla obu miejsc, żeby dwie listy nie rozjechały się po dopisku.
+
+- **`slady-zaleglosci.txt` — lista DŁUGU, nie lista wyjątków.** 42 ślady, które
+  już leżą w repozytorium (segregator-maila 11, sklep-agentow 31, chatbot-live 0),
+  są wypisywane przy każdym przebiegu, ale nie blokują — inaczej bramka wywracałaby
+  cudze PR-y od pierwszego dnia. Wpis, który przestał do czegokolwiek pasować,
+  jest **czerwony**: lista ma się kurczyć, a nie gnić. Przy zamrażaniu lista
+  **nie obowiązuje** — `paczka-zgodnosc.sh` woła skaner z pustą listą, bo paczka
+  oddawana klientowi ma mieć zero śladów.
+
+### Naprawione
+
+- **`bramki-proba-kontrolna.sh` — trzy zgniłe kotwice.** Dołożenie siódmej bramki
+  unieważniło trzy przypadki na raz: fraza „wykonano 5 bramek", `PROG_PELNY=6`
+  i pełne brzmienie tablicy `BRAMKI=(…)` w sed-zie. Dwa przypadki cicho przestały
+  cokolwiek podkładać, jeden przechodził niezauważony. Kotwice są teraz bez
+  zaszytych liczb i bez przepisywania całej tablicy. Do tego **sześć nowych
+  przypadków** dla bramki `slady` (TODO, adres dev, ścieżka drzewa, numer PR-a,
+  martwy wpis na liście, kontrola odwrotna na czystej wtyczce).
+
+### Zmienione
+
+- **`paczka-zgodnosc.sh` 1.0.0 → 1.1.0 — bramka zamrożenia dostała dwie kontrole,
+  których zgodny numer i suma kontrolna NIE łapią.**
+
+  **(C) Wydanie z opisem, nie z samym numerem.** Nagłówek `## [1.5.7]` bez ani
+  jednej linii pod spodem przechodził przez porównanie wersji, bo numer był
+  poprawny — brakowało tego, co ten numer znaczy. Sprawdzane w `CHANGELOG.md`
+  **i** w sekcji `= wersja =` w `readme.txt`, bo to drugie widzi kupujący w sklepie.
+
+  **(D) Paczka bez naszych śladów wewnętrznych.** Zip równy repozytorium co do
+  bajtu jest wciąż zipem, w którym siedzi `TODO`, ścieżka `testy/…`, adres
+  `localhost:8890` albo „uwaga recenzenta do PR #83". Kontrola zgodności z repo
+  takiego śladu **nie widzi z definicji** — ślad jest w repo tak samo jak w paczce.
+  Skanowana jest **rozpakowana paczka**, w czterech klasach wzorców: znacznik
+  roboczy, adres maszyny dev, ścieżka naszego drzewa, nasz obieg pracy.
+
+  Kalibracja: na stanie sprzed naprawy stara bramka 1.0.0 dawała **EXIT=0**,
+  nowa na tym samym stanie **EXIT=1** i 20 wypisanych śladów.
+
+- **`paczka-zgodnosc-proba-kontrolna.sh` — sześć nowych podłożonych przypadków**
+  (pusty wpis w CHANGELOG-u, pusta sekcja w readme, TODO w paczce, adres dev,
+  ścieżka `testy/…`, numer PR-a) plus kontrola „mutacja naprawdę weszła do pliku".
+  Stan czysty badany jest teraz na `chatbot-live`: paczka segregatora 1.3.0 ma
+  dziś własne ślady wewnętrzne, więc jako wzorzec czystości się nie nadaje.
+
+- **`.github/workflows/recenzent.yml`** — `--allowedTools` dostał `test-php.sh`
+  i jego próbę kontrolną, żeby recenzent mógł uruchomić testy PHP z `testy/`.
+  Świadomie **nie** dostał `Bash(php testy/:*)` ani `Bash(docker exec:*)` —
+  powód wpisany w komentarzu nad listą, żeby następny czytający nie „poprawił"
+  tego z powrotem.
+- **`.github/RECENZENT-BRIEFING.md`** — zdanie o tym, że testy `testy/*.php`
+  uruchamia się przez `test-php.sh`, bo samo `php testy/X.php` zawsze pada.
+
+- **`.github/workflows/recenzent.yml` — recenzent URUCHAMIA nasze testy, nie tylko
+  je czyta.** Do `--allowedTools` doszły **23 pozycje**: wszystkie skrypty z `testy/`
+  (poza jednym, niżej), cztery próby kontrolne z `narzedzia-qa/` oraz
+  `bramki.sh` — komplet sześciu bramek jednym poleceniem, którego recenzent dotąd
+  nie mógł wywołać, przez co pisał „nie uruchomiłem phpcs/phpstan".
+
+  Wpisane **jawnie, po jednym**, zamiast wzorca z gwiazdką: lista ma dać się
+  przeczytać w całości i ma boleć przy dopisywaniu, bo każda pozycja to zgoda na
+  wykonanie kodu w checkoucie recenzenta.
+
+  ⛔ **Celowo poza listą: `testy/seed-demo.sh`** — jako jedyny pisze do **wspólnego
+  stosu warsztatowego** (zamówienia demo w bazie), a nie do własnego checkoutu.
+  Reszta prób podmienia pliki wyłącznie u siebie i przywraca je po sobie,
+  a checkout runnera jest jednorazowy i bez prawa zapisu do repo.
+
+  ⛔ **Też poza listą: `dowod-z-paczki` i `dowod-aktualizacji` wraz z próbami** —
+  stawiają kontenery i biegną kilkanaście minut, czyli dłużej niż cała recenzja.
+  To kalibracja przed oddaniem, nie narzędzie recenzenta.
+
+- **`.github/RECENZENT-BRIEFING.md`** — akapit „NASZE TESTY MASZ URUCHAMIAĆ, NIE
+  CZYTAĆ". Zdanie „nie uruchomiłem próby kontrolnej" wolno napisać tylko wtedy,
+  gdy próba **padła albo odmówiła** — wtedy z cytatem jej wyjścia. Sama allowlista
+  nie wystarcza: przy #103 recenzent miał już narzędzie i nadal nie wiedział,
+  że ma po nie sięgnąć.
+
+
+### Dodane
+
+- **`test-php.sh` 1.0.0 — okno recenzenta na URUCHOMIENIE testu PHP.** PR #109
+  otworzył recenzentowi całe `testy/`, ale wyłącznie skrypty powłoki. Testy
+  `testy/*.php` zostały poza zasięgiem, bo **nie są zwykłymi skryptami PHP**:
+  każdy zaczyna się od `WP_PLUGIN_DIR` i `require` plików wtyczki, więc
+  `php testy/import-csv-test.php` kończy się `Undefined constant "WP_PLUGIN_DIR"`
+  i kodem 255. Uruchamia je wyłącznie wp-cli **wewnątrz kontenera**
+  (`docker cp` + `wp eval-file`). Wzorzec `Bash(php testy/:*)` w `--allowedTools`
+  otworzyłby więc prawo do polecenia, które i tak zawsze pada, a
+  `Bash(docker exec:*)` oddałby całą maszynę.
+  Skrypt jest **jedną nazwaną operacją**, dokładnie jak `stos.sh`: dzwoniący
+  podaje wyłącznie NAZWĘ testu (wzorzec `[a-z0-9-]`, więc `../`, ścieżka
+  bezwzględna, `;` i `$(…)` odpadają zanim cokolwiek dotknie dockera), katalog
+  `testy/` jest wpisany w skrypcie, a wołane jest `wp eval-file` na pliku
+  Z REPOZYTORIUM, nigdy `wp eval` (kod z wiersza poleceń). `test-php.sh lista`
+  wypisuje, co wolno uruchomić. Plik testowy jest kasowany z kontenera także
+  wtedy, gdy test padł.
+  ⚠️ To **nie** jest okno czysto odczytowe, w odróżnieniu od `stos.sh` — testy
+  piszą do bazy warsztatowej (własnym przedrostkiem, sprzątając po sobie).
+
+- **`test-php-proba-kontrolna.sh` — 20 kontroli.** Dwanaście prób wyjścia poza
+  `testy/` i przemycenia polecenia w nazwie — każda musi paść **na wzorcu nazwy**,
+  nie „gdzieś dalej". To rozróżnienie jest tu sednem: przy poluzowanym wzorcu
+  większość ścieżek i tak kończy się kodem 2 (`/etc/passwd.php` nie istnieje),
+  więc próba sprawdzająca sam kod wyjścia **przechodziła na dziurawym skrypcie**.
+  Dlatego przypadkiem rozstrzygającym jest ścieżka, która po doklejeniu `.php`
+  trafia w **istniejący** plik poza `testy/` (`../wtyczki/chatbot-live/chatbot-live`),
+  a próba wymaga w wyjściu konkretnego powodu odmowy. Do tego trzy kontrole
+  czytające treść samego skryptu (zero `wp eval`, katalog jako stała, liczba
+  wywołań dockera bez wzrostu), odmowa z listą przy nieznanym teście, dwie
+  kontrole nadmiarowych argumentów i kontrola odwrotna: `import-csv-test.php`
+  ma się naprawdę uruchomić i przejść.
 
 - **`stos.sh` 1.0.0 — czysto odczytowe okno recenzenta na żywy stos.**
   Pomiar wyjściowy: w recenzjach z 20.08 padło **91** zdań „czego nie
