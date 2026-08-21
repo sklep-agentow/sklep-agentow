@@ -67,6 +67,9 @@ Zapisać możesz i tak — decyzja jest Twoja, ale wiesz, co wybierasz.
 - Brak dopasowania → bot pokazuje tekst awaryjny i formularz „zostaw maila".
   Przycisk **„Zostaw wiadomość"** jest zresztą widoczny cały czas — gość
   zawsze ma ścieżkę do człowieka.
+- Listy w panelu (zgłoszenia, historia rozmów, raport luk) są **podzielone na
+  strony** — jeśli masz więcej wpisów, niż mieści jedna strona, pod tabelą pojawią
+  się numery. Nic nie znika po przekroczeniu limitu.
 - Zgłoszenia lądują w **ChatBot LIVE → Zgłoszenia** (+ mail do Ciebie, jeśli
   włączony). Odpisujesz osobiście — to jest człon „LIVE".
 - **Historia rozmów** pokazuje wymiany bot↔gość; wpisy starsze niż **90 dni**
