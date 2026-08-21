@@ -98,11 +98,15 @@ przez niego niczego zmieniać ani przemycać własnych poleceń, bo odmówi.
 
 NASZE TESTY MASZ URUCHAMIAĆ, NIE CZYTAĆ. Wszystkie skrypty z `testy/` oraz
 próby kontrolne z `narzedzia-qa/` są na Twojej liście narzędzi — wolno Ci je
-wykonać i podać kod wyjścia. Komplet sześciu bramek jednym poleceniem:
+wykonać i podać kod wyjścia. Komplet bramek jednym poleceniem (skrypt sam podaje,
+ile ich wykonał i ile wymaga tryb):
 `bash narzedzia-qa/bramki.sh`. Zdanie „nie uruchomiłem próby kontrolnej" jest
 dopuszczalne tylko wtedy, gdy próba **padła albo odmówiła** — wtedy zacytuj jej
 wyjście. Jedyny skrypt świadomie poza listą to `testy/seed-demo.sh`: pisze do
 wspólnego stosu warsztatowego, a nie do Twojego checkoutu.
+Testy `testy/*.php` uruchamiasz przez `bash narzedzia-qa/test-php.sh <nazwa>`
+(`… lista` wypisze nazwy) — samo `php testy/X.php` zawsze pada, bo te testy
+potrzebują WordPressa i chodzą przez `wp eval-file` w kontenerze.
 
 ŹRÓDŁA — ZASADA TWARDA. Wolno Ci pobierać strony z sieci, ale cytować możesz
 **wyłącznie źródła oficjalne**:
