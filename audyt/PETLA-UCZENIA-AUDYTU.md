@@ -51,7 +51,7 @@ Wszystkie wyszły przy domykaniu botów, u trzech różnych osób (builder1, bui
   w dokumencie o dowodach; runda 2 — odnośniki dopisane Z PAMIĘCI, jeden — `PR #122`,
   `dowod-z-paczki.sh:316` — **nie istniał**) oraz P1 raz (runda 3 — licznik poprawiony w tabeli,
   stara liczba **została w narracji pod nią**).
-- **RUND POPRAWEK tego pliku: 7.** Bo rundy 4–7 nie dołożyły nowych klas — poprawiały **liczniki
+- **RUND POPRAWEK tego pliku: 6.** Bo rundy 4–6 nie dołożyły nowych klas — poprawiały **liczniki
   i sformułowania** po poprzednich: podniesienie P7 i P1, rozdzielenie „w tym pliku" od „łącznie",
   i wreszcie ta: zdanie mówiło „cztery rundy", a własny rozbiór sumował się do trzech.
 
@@ -62,4 +62,27 @@ zgadzała; łapał to za każdym razem recenzent czytający ze zrozumieniem.
 ⭐ **Wniosek operacyjny: narzędzie sprawdza ZGODNOŚĆ, człowiek sprawdza SENS.** Kalibracja
 mutantami i czytający recenzent **nie zastępują się nawzajem** — łapią różne rodzaje błędów.
 
+### Co z tego wynika dla NASZEGO audytu
 
+- **P1 jest najczęstsza** — cztery wystąpienia, w tym jedno **w tym pliku**, w tym raz **zaraz po tym**, jak
+  recenzent wytknął ją tej samej osobie. To nie jest kwestia uwagi: człowiek widzi miejsce,
+  które ma właśnie otwarte. ⭐ Jedyne, co działa, to **mechaniczny odruch**: po każdej naprawie
+  `grep` po wzorcu, nie „wydaje mi się, że to jedyne miejsce".
+  → **Do stopki promptu audytora:** „znalazłeś błąd? zanim zgłosisz, sprawdź wyszukiwaniem,
+  czy nie ma bliźniaka; zgłoś WSZYSTKIE wystąpienia albo napisz wprost, ilu nie sprawdziłeś".
+- **P3 jest najgroźniejsza** — zielone z niewłaściwego powodu wygląda **identycznie** jak
+  zielone z właściwego. Jedyny rozróżnik to kalibracja: podłóż błąd i sprawdź, czy narzędzie
+  pada **na właściwym kroku**, nie gdziekolwiek.
+- **P7 dotyczy audytora tak samo jak budowniczego.** Czerwień zbyta wyjaśnieniem jest gorsza
+  niż czerwień nieprzeczytana, bo zamyka temat.
+
+## ⛔ ZASADA NA KONIEC AUDYTU (bez tego pętla nie istnieje)
+
+Audyt **nie jest skończony**, gdy zamknięto listę celów. Jest skończony, gdy:
+1. każde potwierdzone znalezisko ma **test z kodem wyjścia 1** wpięty do CI,
+2. każda **nowa klasa** ma mutanta w banku,
+3. każda klasa, która przeszła przez wszystkie soczewki, ma **nowe pytanie** w mapie polowania,
+4. ten plik ma dopisany wiersz z liczbą wystąpień.
+
+⛔ Zero powtórek, nie zero błędów. Ogon zawsze zostaje — ale ma być coraz cieńszy
+i nigdy z tej samej beczki.
