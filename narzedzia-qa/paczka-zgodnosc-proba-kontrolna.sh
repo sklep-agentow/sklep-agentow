@@ -44,6 +44,10 @@ przygotuj_kopie() {
 	cp "$KORZEN/boty/paczki/$WTYCZKA"-*.zip "$cel/boty/paczki/"
 	cp "$KORZEN/boty/buduj-paczki.sh" "$cel/boty/"
 	cp "$BRAMKA" "$cel/narzedzia-qa/"
+	# Skaner śladów jest osobnym plikiem (to samo źródło wzorców co bramka `slady`),
+	# więc kopia drzewa musi go dostać — inaczej bramka słusznie melduje, że nie ma
+	# czym sprawdzić, i próba bada brak narzędzia zamiast tego, co miała badać.
+	cp "$KORZEN/narzedzia-qa/slady-wewnetrzne.sh" "$cel/narzedzia-qa/"
 }
 
 # Wersja z nagłówka kopii — do składania nazwy zipa.

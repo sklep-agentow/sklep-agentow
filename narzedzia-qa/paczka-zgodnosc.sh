@@ -224,26 +224,29 @@ echo
 echo "--- D. Paczka bez śladów wewnętrznych ---"
 
 # Skanujemy ROZPAKOWANĄ PACZKĘ, nie repo: pytanie brzmi „co dostaje kupujący".
-# Każda pozycja to: nazwa klasy śladu | wzorzec ERE.
-SLADY=(
-	"znacznik roboczy|TODO|FIXME|@todo|\bHACK\b|\bXXX\b|NOTATK[AI] QA|DO USUNIECIA PRZED"
-	"adres maszyny dev|localhost|127\.0\.0\.1|0\.0\.0\.0|:8890|:8025|mailpit|ngrok|wp-env|vagrant|\.ddev\b"
-	"ścieżka naszego drzewa roboczego|/root/praca|(^|[^a-zA-Z0-9/._-])(testy|boty|audyt|narzedzia-qa|wtyczki)/"
-	"nasz obieg pracy|PR #[0-9]|recenzent|recenzj|koordynator|builder[0-9]|prób[ay] kontroln|proba-kontrolna|mutant"
-)
-
-ILE_SLADOW=0
-for pozycja in "${SLADY[@]}"; do
-	nazwa="${pozycja%%|*}"
-	wzorzec="${pozycja#*|}"
-	# -I pomija pliki binarne, -r schodzi w podkatalogi paczki.
-	while IFS= read -r trafienie; do
-		[ -n "$trafienie" ] || continue
-		zglos "ślad wewnętrzny ($nazwa): $(printf '%.150s' "$trafienie")"
-		ILE_SLADOW=$(( ILE_SLADOW + 1 ))
-	done < <( cd "$W_ZIPIE" 2> /dev/null && grep -rInE "$wzorzec" . 2> /dev/null | sed 's|^\./||' )
-done
-[ "$ILE_SLADOW" -eq 0 ] && potwierdz "w $ILE_ZIP plikach paczki nie ma śladów wewnętrznych (${#SLADY[@]} klasy wzorców)"
+# Wzorce siedzą w JEDNYM miejscu — narzedzia-qa/slady-wewnetrzne.sh — bo to samo
+# pytanie zadaje bramka `slady` przy każdym PR-ze, a dwie kopie listy wzorców
+# rozjechałyby się po pierwszym dopisku.
+#
+# ⛔ SLADY_ZALEGLOSCI=/dev/null: przy zamrażaniu lista długu NIE OBOWIĄZUJE.
+# Paczka oddawana kupującemu ma mieć zero śladów — także tych, z którymi bramka
+# codzienna żyje, bo czekają na właściciela modułu.
+SKANER="$KORZEN/narzedzia-qa/slady-wewnetrzne.sh"
+if [ ! -f "$SKANER" ]; then
+	zglos "nie ma $SKANER — nie mam czym sprawdzić śladów wewnętrznych"
+else
+	WYNIK_SLADY="$( SLADY_ZALEGLOSCI=/dev/null bash "$SKANER" "$WTYCZKA" "$W_ZIPIE" )" || true
+	ILE_SLADOW=0
+	while IFS= read -r linia; do
+		case "$linia" in
+			"  SLAD "*)
+				zglos "ślad wewnętrzny: $(printf '%s' "$linia" | sed 's/^  SLAD  *//')"
+				ILE_SLADOW=$(( ILE_SLADOW + 1 ))
+				;;
+		esac
+	done <<< "$WYNIK_SLADY"
+	[ "$ILE_SLADOW" -eq 0 ] && potwierdz "w $ILE_ZIP plikach paczki nie ma śladów wewnętrznych (skaner $(sed -n 's/^WERSJA_NARZEDZIA=//p' "$SKANER"))"
+fi
 
 # --- werdykt ------------------------------------------------------------------
 

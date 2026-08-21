@@ -15,6 +15,34 @@ pory lądują tutaj.
 
 ## [Niewydane]
 
+### Dodane
+
+- **`slady-wewnetrzne.sh` 1.0.0 — nowe narzędzie i SIÓDMA bramka `slady`
+  w `bramki.sh` (próg pełny 6 → 7, tekstowy 3 → 4).** Wyczyszczenie 20 śladów
+  z ChatBota było naprawą EGZEMPLARZA: jutro wjeżdża nowy komentarz
+  z odsyłaczem do `testy/…` albo numerem naszego zgłoszenia i wszystko wraca.
+  Bramka zamrożenia sprawdza to raz, przy zamrażaniu; bramka `slady` sprawdza to
+  przy **każdym PR-ze**, także tekstowym — komentarz w dokumentacji to ten sam problem.
+  Jedno źródło wzorców dla obu miejsc, żeby dwie listy nie rozjechały się po dopisku.
+
+- **`slady-zaleglosci.txt` — lista DŁUGU, nie lista wyjątków.** 42 ślady, które
+  już leżą w repozytorium (segregator-maila 11, sklep-agentow 31, chatbot-live 0),
+  są wypisywane przy każdym przebiegu, ale nie blokują — inaczej bramka wywracałaby
+  cudze PR-y od pierwszego dnia. Wpis, który przestał do czegokolwiek pasować,
+  jest **czerwony**: lista ma się kurczyć, a nie gnić. Przy zamrażaniu lista
+  **nie obowiązuje** — `paczka-zgodnosc.sh` woła skaner z pustą listą, bo paczka
+  oddawana klientowi ma mieć zero śladów.
+
+### Naprawione
+
+- **`bramki-proba-kontrolna.sh` — trzy zgniłe kotwice.** Dołożenie siódmej bramki
+  unieważniło trzy przypadki na raz: fraza „wykonano 5 bramek", `PROG_PELNY=6`
+  i pełne brzmienie tablicy `BRAMKI=(…)` w sed-zie. Dwa przypadki cicho przestały
+  cokolwiek podkładać, jeden przechodził niezauważony. Kotwice są teraz bez
+  zaszytych liczb i bez przepisywania całej tablicy. Do tego **sześć nowych
+  przypadków** dla bramki `slady` (TODO, adres dev, ścieżka drzewa, numer PR-a,
+  martwy wpis na liście, kontrola odwrotna na czystej wtyczce).
+
 ### Zmienione
 
 - **`paczka-zgodnosc.sh` 1.0.0 → 1.1.0 — bramka zamrożenia dostała dwie kontrole,
