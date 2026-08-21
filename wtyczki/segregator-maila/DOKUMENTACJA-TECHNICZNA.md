@@ -5,9 +5,11 @@
 > **Po co ten dokument.** To jest **mapa systemu dla audytora i programisty**, nie ulotka.
 > Każda liczba i każda nazwa tutaj jest wzięta z kodu, nie z pamięci — jeśli coś się
 > rozjedzie, to jest błąd do zgłoszenia. Instrukcja dla użytkownika jest osobno
-> (`INSTRUKCJA.md`). Zgodność tego dokumentu z kodem jest sprawdzana
-> automatycznie przed każdym wydaniem — dlatego liczby niżej są z kodu, nie
-> z pamięci; jeśli któraś się nie zgadza, to jest błąd do zgłoszenia.
+> (`INSTRUKCJA.md`). Do tego dokumentu istnieje **kontrola porównująca każdą jego
+> liczbę i nazwę z kodem**; autor uruchamia ją przed wydaniem, ale **nie jest to
+> bramka, która sama zatrzymuje wydanie** — więc traktuj to jako deklarację
+> dyscypliny, nie jako gwarancję maszyny. Jeśli któraś liczba się nie zgadza,
+> to jest błąd do zgłoszenia.
 
 ---
 
@@ -756,17 +758,23 @@ się nie zmieniła). Pełna atomowość wymagałaby osobnej tabeli z unikalnym k
 
 ### Jak szybko sprawdzić deklaracje z tego dokumentu
 
-Poniższe polecenia uruchamia się **w katalogu wtyczki** (u Ciebie:
-`wp-content/plugins/segregator-maila/`):
+W katalogu wtyczki (u Ciebie: `wp-content/plugins/segregator-maila/`) możesz
+sprawdzić **każdą liczbę i nazwę z tego dokumentu** wprost w kodzie:
 
 ```
-phpcs -q .                          # standard kodu WordPressa
-phpstan analyse --memory-limit=1G . # analiza statyczna
-grep -rn "nazwa_stalej" .           # każdą liczbę z tego dokumentu znajdziesz w kodzie
+grep -rn "SEGM_" .                  # stałe: limity, progi, wersja schematu
+grep -rn "nazwa_funkcji" .          # funkcja, o której mówi dany rozdział
+php -l plik.php                     # czy plik jest poprawny składniowo
 ```
 
-Dwie kontrole biegną po stronie autora przed każdym wydaniem i ich wyniku nie
-da się odtworzyć z samej paczki: porównanie **każdej liczby i nazwy z tego
-dokumentu** z kodem oraz pomiar ramek tekstu w `DIAGRAM-PRZEPLYWU.svg`
-(czy podpisy mieszczą się w kształtach). Obie muszą przejść, zanim paczka
-powstanie.
+⚠️ **Czego z samej paczki NIE zrobisz.** `phpcs` i `phpstan` wymagają plików
+konfiguracyjnych (ruleset standardu WordPressa i konfiguracja analizy) oraz
+znajomości funkcji rdzenia WordPressa — a tych **nie ma w paczce**. Uruchomione
+na samym katalogu wtyczki wypiszą albo brak ruleseta, albo lawinę „undefined
+function add_action" — czyli hałas, nie ocenę kodu. Ta wtyczka jest sprawdzana
+oboma narzędziami po stronie autora, na pełnej konfiguracji.
+
+Po stronie autora biegną też dwie kontrole, których wyniku z paczki odtworzyć
+się nie da: porównanie **każdej liczby i nazwy z tego dokumentu** z kodem oraz
+pomiar ramek tekstu w `DIAGRAM-PRZEPLYWU.svg` (czy podpisy mieszczą się
+w kształtach).
