@@ -1,5 +1,5 @@
 #!/bin/bash
-# stos.sh — WĄSKIE, CZYSTO ODCZYTOWE okno recenzenta na żywy stos.     WERSJA 1.0.0
+# stos.sh — WĄSKIE, CZYSTO ODCZYTOWE okno recenzenta na żywy stos.     WERSJA 1.1.0
 #
 # PO CO TO POWSTAŁO (policzone 20.08): w dzisiejszych recenzjach padło
 # 91 zdań „czego nie sprawdziłem". PIĘĆDZIESIĄT JEDEN z nich brzmiało
@@ -32,12 +32,35 @@
 #                   albo argument odrzucony przez sprawdzenie wzorca
 set -u
 
-WERSJA=1.0.0
+WERSJA=1.1.0
 
-# ⛔ Stałe, nie parametry. Dzwoniący nie wybiera ani kontenera, ani adresu.
-KONTENER_WP=strona_wp_wordpress
-KONTENER_DB=strona_wp_db
-ADRES_WP=http://localhost:8890
+# ⛔ Stałe, nie parametry. Dzwoniący NIE wybiera kontenera ani adresu — wybiera
+#    co najwyżej STOS, i to wyłącznie z tej zamkniętej listy dwóch pozycji:
+#      warsztat — wspólny stos warsztatowy (domyślny, na nim pracują builderzy),
+#      probny   — czysta instalacja stawiana przez narzedzia-qa/dowod-z-paczki.sh
+#                 na osobnej bazie; wolno ją kasować i stawiać od zera.
+#    Nazwa spoza listy to odmowa. Kontenery i adresy dalej są wpisane tutaj.
+STOS=warsztat
+if [ "${1:-}" = "--stos" ]; then
+	STOS="${2:-}"
+	shift 2 || true
+fi
+case "$STOS" in
+	warsztat)
+		KONTENER_WP=strona_wp_wordpress
+		KONTENER_DB=strona_wp_db
+		ADRES_WP=http://localhost:8890
+		;;
+	probny)
+		KONTENER_WP=probny_wp
+		KONTENER_DB=strona_wp_db
+		ADRES_WP=http://localhost:8891
+		;;
+	*)
+		printf 'STOS: ODMOWA — nie znam stosu [%s]. Dozwolone: warsztat, probny.\n' "$STOS" >&2
+		exit 2
+		;;
+esac
 ADRES_LAPACZ=http://127.0.0.1:8025
 
 # Prefiksy tabel, o które wolno pytać. Tabele rdzenia WordPressa poza tą
@@ -165,7 +188,9 @@ policz_wiersze() {
 
 pomoc() {
 	cat <<POMOC
-stos.sh $WERSJA — czysto odczytowe okno na warsztatowy stos WordPressa.
+stos.sh $WERSJA — czysto odczytowe okno na stos WordPressa (teraz: $STOS).
+
+  --stos warsztat|probny   ktory stos pytamy (domyslnie warsztat); musi stac PRZED operacja
 
   stan                     czy WordPress, baza i łapacz maili odpowiadają
   strona <sciezka>         GET $ADRES_WP<sciezka> — kod HTTP, typ, rozmiar, treść

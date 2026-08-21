@@ -46,6 +46,83 @@ pory lądują tutaj.
 
 ### Dodane
 
+- **`dowod-aktualizacji.sh` 1.0.0 — dowód AKTUALIZACJI W MIEJSCU.** U klienta
+  aktualizacja zdarza się częściej niż czysta instalacja, a to zupełnie inna
+  ścieżka kodu: **podmiana plików nie przechodzi przez hook aktywacji**. Wszystko,
+  co wtyczka robi „przy instalacji" (tabele, kolumny, opcje startowe), musi przy
+  aktualizacji zrobić kod porównujący wersję schematu przy `plugins_loaded`.
+  Gdy go nie ma albo jest błędny, klient dostaje wtyczkę pytającą bazę o kolumnę,
+  której u niego nie ma — a **czysta instalacja nigdy tego nie pokaże**, bo tam
+  hook aktywacji zrobił wszystko. To dziura **D4** z materiału audytowego.
+
+  Skrypt instaluje **starą** paczkę, zdejmuje odcisk schematu i zostawia własny
+  wiersz-znacznik, podmienia pliki na **nową** paczkę BEZ deaktywacji, puka na
+  stronę (dopiero żądanie odpala kod aktualizacji) i sprawdza pięć rzeczy:
+  wersja wtyczki jest nowa · **wersja schematu poszła w górę** i zgadza się
+  z nowym kodem · schemat **przybył** i nic z niego **nie znikło** ·
+  **stare dane przetrwały** co do wiersza i treści · zero notice, warning,
+  deprecated i fatal.
+
+  Starą paczkę bierze z `boty/paczki/`, a gdy jej tam już nie ma (nowe wydanie
+  kasuje poprzednią) — **wyciąga ją z historii gita**. To celowe: ścieżka
+  aktualizacji dotyczy właśnie wersji, których w drzewie roboczym już nie ma.
+
+  Znacznik jest **własny**, nie z seeda instalatora: przetrwanie danych, które
+  instalator i tak wpisuje od nowa, niczego nie dowodzi.
+
+- **`dowod-aktualizacji-proba-kontrolna.sh` — trzy mutanty i kontrola odwrotna.**
+  Nowa wersja bez kodu migracji (schemat stoi) · migracja kasująca starą kolumnę
+  (znika miejsce na dane klienta) · migracja czyszcząca tabelę (dane klienta giną).
+  Każdy przypadek sprawdza kod wyjścia **oraz czy dowód nazwał przyczynę**.
+  Mutant wchodzi pod nazwą prawdziwej paczki, więc próba **zawsze przywraca**
+  oryginał z kopii — także gdy przebieg zostanie przerwany.
+
+- **`lib-stos-probny.sh` 1.0.0 — wspólny warsztat obu dowodów.** Stawianie
+  czystej instalacji z `WP_DEBUG`, odciski bazy i schematu, log błędów PHP,
+  sprzątanie. Wyciągnięte z `dowod-z-paczki.sh`, żeby poprawka w jednym miejscu
+  (jak naprawa kolejności odcisku) trafiała do obu dowodów — ta sama zasada,
+  co „napraw klasę, nie egzemplarz". Doszedł **odcisk schematu** (tabela + kolumna
+  + typ): sama lista tabel nie wystarcza, bo aktualizacja dokładająca KOLUMNĘ
+  wygląda po niej identycznie jak aktualizacja, która nie zrobiła nic.
+  Odcisk schematu pyta bazę z **ucieczką podkreślnika** (`ESCAPE '!'`): w SQL
+  `LIKE` `_` jest metaznakiem „dowolny jeden znak", więc `wp_chatl%` łapałoby
+  też `wpXchatl…`. To klasa #2 ze ściągi, a tu jest biblioteka WSPÓLNA —
+  nawyk stąd rozniósłby się na każdy kolejny dowód, który z niej skorzysta.
+
+- **`dowod-z-paczki.sh` 1.0.0 — powtarzalny dowód Z PACZKI, nie z repozytorium.**
+  Kupujący nie dostaje repozytorium, dostaje ZIP — więc wszystko, co sprawdzamy na
+  drzewie roboczym, sprawdza **inny artefakt niż sprzedawany**. Skrypt bierze paczkę,
+  stawia **czystą instalację WordPressa z włączonym `WP_DEBUG`** i przechodzi pełne
+  życie wtyczki, odpowiadając kodem wyjścia na cztery pytania:
+
+  1. czy wgranie **z zipa** i aktywacja przechodzą bez notice, warning, deprecated
+     i fatal (log `WP_DEBUG_LOG`, nie „wygląda czysto"),
+  2. czy **silnik regułowy odpowiada, gdy klucza API nie ma wcale**,
+  3. czy po deinstalacji z pełnym czyszczeniem **różnica odcisków bazy jest PUSTA** —
+     i różnica jest **pokazywana**, nie streszczana,
+  4. czy **sekrety właściciela znikają ZAWSZE**, także gdy właściciel nie zaznaczył
+     „usuń wszystkie dane".
+
+  Działa dla **obu botów** (tablica z sekretami, opcją czyszczenia i wywołaniem
+  silnika wpisana w skrypcie, nie zgadywana), bierze paczkę jako argument i kończy
+  się **kodem 1**, gdy cokolwiek z tego nie wyjdzie.
+
+  ⛔ **Nie dotyka stosu warsztatowego.** Stawia własną instalację (kontener
+  `probny_wp`, baza `wp_probny`) i tylko ją kasuje — wgrywanie i kasowanie wtyczek
+  na wspólnym stosie zniszczyłoby cudzą robotę w toku. Odczyty idą przez
+  `stos.sh --stos probny`; drugiego dostępu do stosu tu nie ma.
+
+  Odcisk pomija wpisy, które WordPress dopisuje w tle niezależnie od wtyczki —
+  **lista pominięć jest wypisywana przy każdym przebiegu**, żeby „pusta różnica"
+  nie stała się pustym słowem.
+
+- **`dowod-z-paczki-proba-kontrolna.sh` — cztery mutanty i kontrola odwrotna.**
+  Psuje w kopii paczki po jednej rzeczy naraz, dokładnie tej, której dany dowód
+  pilnuje: uninstall przestaje kasować klucz API, wtyczka rzuca notice przy starcie,
+  pełne czyszczenie zostawia opcję w bazie, silnik regułowy milczy bez klucza.
+  Każdy przypadek sprawdza **kod wyjścia ORAZ czy dowód nazwał przyczynę** — dowód
+  padający na wszystko z tym samym komunikatem jest bezużyteczny przy szukaniu wady.
+  Paczka w repo nie jest dotykana ani razu.
 - **`dowod-zachowania-chatbot.sh` 1.0.0 — dowód ZACHOWANIA z paczki (punkt D).**
   `dowod-z-paczki.sh` odpowiada na pytania o cykl życia wtyczki; ten skrypt na trzy
   pytania o zachowanie: **D3** klucz API odcięty w trakcie (zjazd do reguł + znacznik
@@ -204,14 +281,14 @@ pory lądują tutaj.
   wprost, nigdy ciche zielone. Paczek ten skrypt nie dotyka: od nich jest
   `paczka-zgodnosc.sh`.
 
-- **`stos-proba-kontrolna.sh` — 26 kontroli.** Trzynaście prób przemycenia
+- **`stos-proba-kontrolna.sh` — 27 kontroli.** Trzynaście prób przemycenia
   własnego polecenia i wyjścia poza białą listę (średnik i podstawienie
   polecenia w ścieżce, `..`, flaga jako trzeci argument, wstrzyknięcie SQL
   w nazwie tabeli, tabela spoza listy) — każda musi skończyć się kodem 2.
-  Dwie kontrole czytające **treść samego skryptu**: żadne wywołanie `wp` nie
-  może być operacją zapisu, a liczba wywołań dockera nie może urosnąć (obejście
-  białej listy ma rzucać się w oczy w diffie). Jedna kontrola „brak narzędzia
-  to kod 2". I dziesięć odczytów z **żywego stosu**, każdy sprawdzany po treści
+  Trzy kontrole czytające **treść samego skryptu**: żadne wywołanie `wp` nie
+  może być operacją zapisu, liczba wywołań dockera nie może urosnąć (obejście
+  białej listy ma rzucać się w oczy w diffie), a tekst pomocy nie może zawierać
+  literalnych sekwencji ucieczki. Jedna kontrola „brak narzędzia to kod 2". I dziesięć odczytów z **żywego stosu**, każdy sprawdzany po treści
   odpowiedzi, nie po samym kodzie wyjścia.
 - **`paczka-zgodnosc.sh` 1.0.0 — bramka ZAMROŻENIA produktu.** Sprawdza dwie
   rzeczy, które przy zamrażaniu sprawdza się „na oko" i obie sprawdza się źle.
@@ -282,6 +359,34 @@ pory lądują tutaj.
   plikami, więc próba działa bez pukania do GitHuba, tak samo na biurku i w CI.
 
 ### Zmienione
+
+- **`dowod-z-paczki.sh` → 1.0.1** — korzysta ze wspólnej biblioteki zamiast
+  własnej kopii stawiania stosu. Zachowanie bez zmian: przebieg na paczce
+  ChatBota i pełna kalibracja (4 mutanty + kontrola odwrotna) po refaktorze
+  dają ten sam wynik co przed nim.
+  Domknięte dwie uwagi z recenzji: komentarz nagłówka mówił `WERSJA 1.0.0`,
+  a stała w kodzie `1.0.1` (**klasa #4 — wersja rozjechana**, tym razem
+  wewnątrz JEDNEGO pliku), oraz `LIKE '${PREFIKS}%'` liczył opcje bez ucieczki
+  podkreślnika (**klasa #2 — `esc_like`**: `chatl_%` łapało też `chatlX…`).
+  Ucieczka idzie przez jawne `ESCAPE '!'`, nie przez odwrotny ukośnik —
+  ukośnik przeżyłby dzisiejszą drogę do bazy, ale nie musi przeżyć następnej.
+
+- **`sprawdz-manifest.sh`** — czwarta kontrola: **rozjazd wersji wewnątrz
+  jednego skryptu** `narzedzia-qa/*.sh` (komentarz nagłówka kontra stała
+  `WERSJA`). Egzemplarz z recenzji #105 naprawiony ręcznie, ale klasa zostaje
+  zamknięta tutaj, żeby następny refaktor nie przywiózł jej z powrotem.
+  Skalibrowane: na kodzie sprzed naprawy strażnik pada z **EXIT=1** i nazywa
+  plik, po naprawie **EXIT=0**.
+
+- **`stos.sh` → 1.1.0** — wybór stosu z **zamkniętej listy dwóch pozycji**
+  (`--stos warsztat|probny`). To nadal nie jest wybór kontenera przez dzwoniącego:
+  kontenery i adresy są wpisane w skrypcie, a nazwa spoza listy to odmowa z kodem 2.
+  Potrzebne, żeby dowód z paczki czytał swoją czystą instalację **tym samym oknem**,
+  zamiast dorabiać drugi dostęp do WordPressa.
+  Przy okazji naprawiony tekst pomocy: heredok `POMOC` nie interpretuje ucieczek,
+  więc wpisane w nim `\n\n` wypisywało się jako cztery znaki zamiast dwóch pustych
+  linii. `stos-proba-kontrolna.sh` dostał kontrolę na nawrót — **pada na kodzie
+  sprzed naprawy**, przechodzi po niej.
 
 - **`.github/workflows/recenzent.yml`** — `--allowedTools` dostał trzy skrypty:
   `stos.sh`, `paczka-zgodnosc.sh` i `instrukcja-liczby-segregator.sh`. Dwóch
