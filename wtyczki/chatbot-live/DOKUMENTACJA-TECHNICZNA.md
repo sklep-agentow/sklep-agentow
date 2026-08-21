@@ -1,6 +1,6 @@
 # ChatBot LIVE — dokumentacja techniczna
 
-Wersja wtyczki: **1.5.4** · schemat bazy: **7** · licencja: **GPL-2.0-or-later**
+Wersja wtyczki: **1.5.6** · schemat bazy: **7** · licencja: **GPL-2.0-or-later**
 
 Dokument opisuje **kod, który jest**, nie plan. Każda liczba i nazwa poniżej ma pokrycie
 w źródle — przy każdej podano plik i symbol, żeby dało się to sprawdzić `grep`-em, a nie
@@ -223,8 +223,10 @@ Wszystkie liczby, którymi wtyczka się rządzi, są stałymi — nie ma ich roz
 | `CHATL_META_POWITANIE` | `chatl_powitanie_zamkniete` | `includes/powitanie.php` | klucz metadanych „ten administrator zamknął powitanie" |
 | `CHATL_TRANSIENT_AKTYWACJA` | `chatl_po_aktywacji` | `includes/powitanie.php` | znacznik „właśnie aktywowano", życie 1 minuta |
 | `CHATL_SUGESTIA_RDZEN` | `5` | `includes/statystyki.php` | rdzeń **podpowiadanych słów kluczowych** — dłuższy, bo trafia do silnika dopasowania: `koszt` łapie „koszty"/„kosztuje", a `kosz` łapałby też „koszulę" |
-| `CHATL_WERSJA` | `1.5.4` | `chatbot-live.php` | wersja wtyczki; służy też jako `?ver=` assetów (przeglądarka nie poda starego pliku po aktualizacji) |
+| `CHATL_WERSJA` | `1.5.6` | `chatbot-live.php` | wersja wtyczki; służy też jako `?ver=` assetów (przeglądarka nie poda starego pliku po aktualizacji) |
 | `CHATL_WERSJA_SCHEMATU` | `7` | `chatbot-live.php` | wyzwalacz migracji schematu |
+| `CHATL_NA_STRONE_ZGLOSZEN` | `200` | `includes/admin.php` | rozmiar strony listy zgłoszeń |
+| `CHATL_NA_STRONE_ROZMOW` | `100` | `includes/admin.php` | rozmiar strony listy rozmów |
 | `CHATL_PULAPKA_POLE` | `chatl_pole_dodatkowe` | `includes/front.php` | nazwa ukrytego pola-pułapki; celowo nie brzmi jak `email`/`imie`, bo menedżery haseł wypełniają pola po nazwie |
 | `CHATL_PULAPKA_SEKUND` | `2` | `includes/front.php` | poniżej tylu sekund od wydania sesji żądanie nie jest uznawane za pisane przez człowieka |
 | `CHATL_LIMIT_PULAPKA` | `5` | `includes/front.php` | sufit ZŁAPANYCH zgłoszeń zapisywanych z jednego adresu w minucie |
@@ -1169,7 +1171,48 @@ Pułapka nie zatrzyma kogoś, kto podejrzy kształt żądania i wyśle je wprost
 na adres, a nie ukryte pole. Nazywamy to wprost także w `INSTRUKCJA.md`, żeby
 właściciel nie wziął tego za zabezpieczenie budżetu AI.
 
-## 26. Znane granice
+## 26. Stronicowanie list w panelu
+
+Trzy listy panelu miały twarde sufity i **nie dawało się dojść do reszty danych**:
+zgłoszenia urywały się na 200, rozmowy na 100, raport luk na 25 tematów. Dane
+istniały w bazie, ale z panelu były nieosiągalne.
+
+| Lista | Rozmiar strony | Jak liczona całość |
+|---|---|---|
+| Zgłoszenia (`chatl_strona_zgloszenia`) | `CHATL_NA_STRONE_ZGLOSZEN` = 200 | `COUNT(*)` z tym samym `WHERE` co lista (czyli **z filtrem widoku**) |
+| Rozmowy (`chatl_strona_historia`) | `CHATL_NA_STRONE_ROZMOW` = 100 | `COUNT(DISTINCT sesja)` — lista pokazuje rozmowy, nie wymiany |
+| Raport luk (`chatl_strona_statystyki`) | `CHATL_LUKI_POKAZ` = 25 | `count()` pogrupowanych tematów, **w PHP** |
+
+**Rozmiary stron są DOKŁADNIE te, które listy pokazywały wcześniej jako twardy
+limit.** To decyzja, nie brak pomysłu: wada brzmiała „lista urywa się i nie ma
+strony drugiej", więc naprawiamy **dostęp do reszty danych**, a nie
+przyzwyczajenia właściciela. Kto ma dziś mniej wpisów niż limit, nie zobaczy
+żadnej zmiany.
+
+### 26.1. Trzy pułapki, które ta zmiana musiała ominąć
+
+1. **Rozmowy liczone po sesjach, nie po wierszach.** Jedna rozmowa to wiele
+   wymian; liczenie wierszy dałoby liczbę stron oderwaną od listy i puste strony
+   na końcu.
+2. **Filtr musi jechać w odsyłaczach.** Lista zgłoszeń ma widok „podejrzane"
+   (pułapka na boty) — bez przeniesienia `widok` strona druga pokazywałaby inny
+   zbiór niż pierwsza. Liczba wszystkich pozycji też jest liczona **z filtrem**.
+3. **Numer strony spoza zakresu jest przycinany** do ostatniej istniejącej.
+   Wejście z zakładki po skasowaniu wpisów dawałoby inaczej pustą listę bez
+   żadnego wyjaśnienia.
+
+Numer strony siedzi w parametrze `strona_listy`, a nie `paged` ani `page`:
+`page` jest zajęte przez WordPressa (slug podstrony).
+
+### 26.2. Czego stronicowanie NIE zmieniło
+
+`CHATL_LUKI_LIMIT` = 2000 ogranicza wiersze **wejściowe** do grupowania i zostaje
+bez zmian. To osobna, świadoma granica wydajności, opisana wprost w komunikacie
+na stronie statystyk — stronicowanie dotyczy **wyniku** grupowania. Zdjęcie tego
+sufitu przy okazji byłoby cichą zmianą zachowania, bo panel obiecuje jedno,
+a kod robiłby drugie. Strażnik pilnuje tego osobnym krokiem.
+
+## 27. Znane granice
 
 Rzeczy, których wtyczka **nie** robi — żeby nikt nie szukał ich w kodzie:
 
@@ -1185,8 +1228,6 @@ Rzeczy, których wtyczka **nie** robi — żeby nikt nie szukał ich w kodzie:
   zgłoszenia, są anonimowe i kasuje je retencja, a rozmowy współdzielone przez dwie osoby
   nie są ani wydawane, ani kasowane — jedno i drugie rozpisane w rozdziale
   **Narzędzia RODO WordPressa**.
-- **Bez stronicowania** w panelu: lista zgłoszeń pokazuje 200 najnowszych, lista rozmów 100
-  najnowszych sesji. Pełne dane wychodzą eksportem CSV.
 - **Limit dobowy AI jest miękki** — sprawdzenie i inkrement to dwa kroki, więc równoległe
   zapytania mogą przekroczyć próg o kilka wywołań.
 - **Statystyki sięgają tylko tak daleko, jak historia** — po `CHATL_RETENCJA_DNI` dniach wiersze

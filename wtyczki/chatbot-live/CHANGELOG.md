@@ -10,6 +10,29 @@ migracja odpala się sama przy pierwszym wejściu do panelu po aktualizacji
 
 ---
 
+## [1.5.6] — 2026-08-21
+
+### Naprawione
+- **Trzy listy w panelu urywały się i nie dawało się dojść do reszty danych.**
+  Zgłoszenia kończyły się na 200 pozycjach, rozmowy na 100, raport luk na 25
+  tematach — dane były w bazie, ale z panelu **nieosiągalne**. Wszystkie trzy
+  mają teraz strony.
+
+### Uwaga
+- **Rozmiar strony to dokładnie te same liczby**, które listy pokazywały
+  wcześniej jako twardy limit (200 / 100 / 25). Kto ma mniej wpisów niż limit,
+  nie zobaczy żadnej zmiany — naprawiliśmy dostęp do danych, nie przyzwyczajenia.
+- Liczba rozmów liczona jest **po sesjach, nie po wymianach** — jedna rozmowa to
+  wiele wiadomości.
+- Odsyłacze stron **zachowują filtr** (np. widok „podejrzane" na liście zgłoszeń)
+  i wybrany okres na stronie statystyk.
+- Wejście na stronę spoza zakresu (np. ze starej zakładki) pokazuje ostatnią
+  istniejącą stronę, a nie pustą listę.
+- **Limit 2000 wierszy wejściowych raportu luk zostaje bez zmian** — to osobna
+  granica wydajności, opisana w panelu; stronicowanie dotyczy wyniku grupowania.
+
+---
+
 ## [1.5.4] — 2026-08-21 · schemat bazy 6 → 7
 
 ### Dodane

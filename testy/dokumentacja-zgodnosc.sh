@@ -43,11 +43,11 @@ spr "kazdy wpis CHANGELOG oddzielony kreska" "0" \
   "awk '/^## \\[1\\./ {if (NR>1 && poprz != \"---\") b++} {if (\$0 != \"\") poprz=\$0} END {print b+0}' $W/CHANGELOG.md"
 
 echo "=== A. Wersja i schemat ==="
-spr "naglowek Version"            "1.5.4" "grep -oP '(?<=^ \* Version: ).*' $W/chatbot-live.php"
-spr "stala CHATL_WERSJA"          "1.5.4" "grep -oP \"(?<=CHATL_WERSJA', ')[^']*\" $W/chatbot-live.php"
+spr "naglowek Version"            "1.5.6" "grep -oP '(?<=^ \* Version: ).*' $W/chatbot-live.php"
+spr "stala CHATL_WERSJA"          "1.5.6" "grep -oP \"(?<=CHATL_WERSJA', ')[^']*\" $W/chatbot-live.php"
 spr "CHATL_WERSJA_SCHEMATU"       "7"     "grep -oP \"(?<=CHATL_WERSJA_SCHEMATU', ')[^']*\" $W/chatbot-live.php"
-spr "naglowek Version"            "1.5.4" "grep -oP '(?<=^ \* Version: ).*' $W/chatbot-live.php"
-spr "stala CHATL_WERSJA"          "1.5.4" "grep -oP \"(?<=CHATL_WERSJA', ')[^']*\" $W/chatbot-live.php"
+spr "naglowek Version"            "1.5.6" "grep -oP '(?<=^ \* Version: ).*' $W/chatbot-live.php"
+spr "stala CHATL_WERSJA"          "1.5.6" "grep -oP \"(?<=CHATL_WERSJA', ')[^']*\" $W/chatbot-live.php"
 spr "CHATL_WERSJA_SCHEMATU"       "7"     "grep -oP \"(?<=CHATL_WERSJA_SCHEMATU', ')[^']*\" $W/chatbot-live.php"
 spr "Requires at least"           "6.0"   "grep -oP '(?<=^ \* Requires at least: ).*' $W/chatbot-live.php"
 spr "Requires PHP"                "8.1"   "grep -oP '(?<=^ \* Requires PHP: ).*' $W/chatbot-live.php"
@@ -92,7 +92,7 @@ while IFS='|' read -r _ NAZWA WART PLIK _; do
 done < <(grep -P "^\| ${BT}CHATL_[A-Z_]+${BT} \| ${BT}[^${BT}]+${BT} \| ${BT}[^${BT}]+${BT} \|" $DOK)
 # Sama petla nie wystarczy: gdyby wzorzec wiersza przestal pasowac (zmiana ukladu
 # tabeli), petla nie zrobilaby ANI JEDNEGO sprawdzenia i sekcja bylaby cicho pusta.
-spr "stalych sprawdzonych z tabeli dokumentacji" "31" "echo $STALYCH"
+spr "stalych sprawdzonych z tabeli dokumentacji" "33" "echo $STALYCH"
 
 echo
 echo "=== A1b. Rejestr rozszerzen ponad specyfikacje (klasa #6 sciagi) ==="
@@ -250,8 +250,18 @@ spr "stron panelu (menu+submenu)"  "6"  "grep -c 'add_menu_page(\|add_submenu_pa
 
 echo
 echo "=== J. Panel: limity list cytowane w dokumentacji ==="
-spr "lista zgloszen LIMIT 200"    "1"  "grep -c 'chatl_zgloszenia} ORDER BY id DESC LIMIT 200\\|ORDER BY id DESC LIMIT 200' $W/includes/admin.php"
-spr "lista rozmow LIMIT 100"      "1"  "grep -c 'ORDER BY koniec DESC LIMIT 100' $W/includes/admin.php"
+# Do 1.5.5 te dwie kontrole pilnowaly TWARDYCH limitow (LIMIT 200 / LIMIT 100).
+# Od 1.5.6 listy sa stronicowane, wiec pilnuja czego innego: ze rozmiar strony
+# siedzi w STALEJ (a nie znowu w liczbie wpisanej w zapytaniu) i ze zapytanie
+# naprawde ma przesuniecie. Sam brak LIMIT 200 nie wystarczy — bez OFFSET-u
+# strona druga pokazywalaby to samo co pierwsza.
+spr "rozmiar strony zgloszen w stalej" "200" "grep -oP '(?<=CHATL_NA_STRONE_ZGLOSZEN = )[0-9]+' $W/includes/admin.php"
+spr "rozmiar strony rozmow w stalej"   "100" "grep -oP '(?<=CHATL_NA_STRONE_ROZMOW = )[0-9]+' $W/includes/admin.php"
+spr "lista zgloszen ma OFFSET"    "1"  "grep -c 'LIMIT %d OFFSET %d\", \$flaga' $W/includes/admin.php"
+spr "lista rozmow ma OFFSET"      "1"  "grep -c 'ORDER BY koniec DESC LIMIT %d OFFSET %d' $W/includes/admin.php"
+spr "rozmowy liczone po sesjach"  "1"  "grep -c 'COUNT(DISTINCT sesja)' $W/includes/admin.php"
+spr "raport luk przesuwa sie"     "2"  "grep -c 'luki_offset' $W/includes/statystyki.php"
+spr "zero twardych limitow list"  "0"  "grep -c 'ORDER BY id DESC LIMIT 200\\|ORDER BY koniec DESC LIMIT 100' $W/includes/admin.php"
 
 echo
 echo "=== K. Bezpieczenstwo: to, co dokumentacja obiecuje ==="
