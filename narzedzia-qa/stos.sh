@@ -1,5 +1,5 @@
 #!/bin/bash
-# stos.sh — WĄSKIE, CZYSTO ODCZYTOWE okno recenzenta na żywy stos.     WERSJA 1.0.0
+# stos.sh — WĄSKIE, CZYSTO ODCZYTOWE okno recenzenta na żywy stos.     WERSJA 1.1.0
 #
 # PO CO TO POWSTAŁO (policzone 20.08): w dzisiejszych recenzjach padło
 # 91 zdań „czego nie sprawdziłem". PIĘĆDZIESIĄT JEDEN z nich brzmiało
@@ -32,7 +32,7 @@
 #                   albo argument odrzucony przez sprawdzenie wzorca
 set -u
 
-WERSJA=1.0.0
+WERSJA=1.1.0
 
 # ⛔ Stałe, nie parametry. Dzwoniący NIE wybiera kontenera ani adresu — wybiera
 #    co najwyżej STOS, i to wyłącznie z tej zamkniętej listy dwóch pozycji:
@@ -188,7 +188,9 @@ policz_wiersze() {
 
 pomoc() {
 	cat <<POMOC
-stos.sh $WERSJA — czysto odczytowe okno na stos WordPressa (teraz: $STOS).\n\n  --stos warsztat|probny   ktory stos pytamy (domyslnie warsztat); musi stac PRZED operacja
+stos.sh $WERSJA — czysto odczytowe okno na stos WordPressa (teraz: $STOS).
+
+  --stos warsztat|probny   ktory stos pytamy (domyslnie warsztat); musi stac PRZED operacja
 
   stan                     czy WordPress, baza i łapacz maili odpowiadają
   strona <sciezka>         GET $ADRES_WP<sciezka> — kod HTTP, typ, rozmiar, treść

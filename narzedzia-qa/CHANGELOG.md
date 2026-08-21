@@ -56,14 +56,6 @@ pory lądują tutaj.
   + typ): sama lista tabel nie wystarcza, bo aktualizacja dokładająca KOLUMNĘ
   wygląda po niej identycznie jak aktualizacja, która nie zrobiła nic.
 
-### Zmienione
-
-- **`dowod-z-paczki.sh` → 1.0.1** — korzysta ze wspólnej biblioteki zamiast
-  własnej kopii stawiania stosu. Zachowanie bez zmian: przebieg na paczce
-  ChatBota i pełna kalibracja (4 mutanty + kontrola odwrotna) po refaktorze
-  dają ten sam wynik co przed nim.
-
-
 - **`dowod-z-paczki.sh` 1.0.0 — powtarzalny dowód Z PACZKI, nie z repozytorium.**
   Kupujący nie dostaje repozytorium, dostaje ZIP — więc wszystko, co sprawdzamy na
   drzewie roboczym, sprawdza **inny artefakt niż sprzedawany**. Skrypt bierze paczkę,
@@ -99,15 +91,6 @@ pory lądują tutaj.
   padający na wszystko z tym samym komunikatem jest bezużyteczny przy szukaniu wady.
   Paczka w repo nie jest dotykana ani razu.
 
-### Zmienione
-
-- **`stos.sh`** — wybór stosu z **zamkniętej listy dwóch pozycji**
-  (`--stos warsztat|probny`). To nadal nie jest wybór kontenera przez dzwoniącego:
-  kontenery i adresy są wpisane w skrypcie, a nazwa spoza listy to odmowa z kodem 2.
-  Potrzebne, żeby dowód z paczki czytał swoją czystą instalację **tym samym oknem**,
-  zamiast dorabiać drugi dostęp do WordPressa.
-
-
 - **`stos.sh` 1.0.0 — czysto odczytowe okno recenzenta na żywy stos.**
   Pomiar wyjściowy: w recenzjach z 20.08 padło **91** zdań „czego nie
   sprawdziłem", z czego **51** brzmiało „nie mam uruchomionego WordPressa",
@@ -133,14 +116,14 @@ pory lądują tutaj.
   wprost, nigdy ciche zielone. Paczek ten skrypt nie dotyka: od nich jest
   `paczka-zgodnosc.sh`.
 
-- **`stos-proba-kontrolna.sh` — 26 kontroli.** Trzynaście prób przemycenia
+- **`stos-proba-kontrolna.sh` — 27 kontroli.** Trzynaście prób przemycenia
   własnego polecenia i wyjścia poza białą listę (średnik i podstawienie
   polecenia w ścieżce, `..`, flaga jako trzeci argument, wstrzyknięcie SQL
   w nazwie tabeli, tabela spoza listy) — każda musi skończyć się kodem 2.
-  Dwie kontrole czytające **treść samego skryptu**: żadne wywołanie `wp` nie
-  może być operacją zapisu, a liczba wywołań dockera nie może urosnąć (obejście
-  białej listy ma rzucać się w oczy w diffie). Jedna kontrola „brak narzędzia
-  to kod 2". I dziesięć odczytów z **żywego stosu**, każdy sprawdzany po treści
+  Trzy kontrole czytające **treść samego skryptu**: żadne wywołanie `wp` nie
+  może być operacją zapisu, liczba wywołań dockera nie może urosnąć (obejście
+  białej listy ma rzucać się w oczy w diffie), a tekst pomocy nie może zawierać
+  literalnych sekwencji ucieczki. Jedna kontrola „brak narzędzia to kod 2". I dziesięć odczytów z **żywego stosu**, każdy sprawdzany po treści
   odpowiedzi, nie po samym kodzie wyjścia.
 - **`paczka-zgodnosc.sh` 1.0.0 — bramka ZAMROŻENIA produktu.** Sprawdza dwie
   rzeczy, które przy zamrażaniu sprawdza się „na oko" i obie sprawdza się źle.
@@ -211,6 +194,21 @@ pory lądują tutaj.
   plikami, więc próba działa bez pukania do GitHuba, tak samo na biurku i w CI.
 
 ### Zmienione
+
+- **`dowod-z-paczki.sh` → 1.0.1** — korzysta ze wspólnej biblioteki zamiast
+  własnej kopii stawiania stosu. Zachowanie bez zmian: przebieg na paczce
+  ChatBota i pełna kalibracja (4 mutanty + kontrola odwrotna) po refaktorze
+  dają ten sam wynik co przed nim.
+
+- **`stos.sh` → 1.1.0** — wybór stosu z **zamkniętej listy dwóch pozycji**
+  (`--stos warsztat|probny`). To nadal nie jest wybór kontenera przez dzwoniącego:
+  kontenery i adresy są wpisane w skrypcie, a nazwa spoza listy to odmowa z kodem 2.
+  Potrzebne, żeby dowód z paczki czytał swoją czystą instalację **tym samym oknem**,
+  zamiast dorabiać drugi dostęp do WordPressa.
+  Przy okazji naprawiony tekst pomocy: heredok `POMOC` nie interpretuje ucieczek,
+  więc wpisane w nim `\n\n` wypisywało się jako cztery znaki zamiast dwóch pustych
+  linii. `stos-proba-kontrolna.sh` dostał kontrolę na nawrót — **pada na kodzie
+  sprzed naprawy**, przechodzi po niej.
 
 - **`.github/workflows/recenzent.yml`** — `--allowedTools` dostał trzy skrypty:
   `stos.sh`, `paczka-zgodnosc.sh` i `instrukcja-liczby-segregator.sh`. Dwóch
