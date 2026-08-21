@@ -15,6 +15,29 @@ pory lądują tutaj.
 
 ## [Niewydane]
 
+### Naprawione
+
+- **`dowod-zachowania-segregator-proba-kontrolna.sh` — mutant M1 zakotwiczony WZORCEM,
+  nie numerem linii.** Było `sed -i '145s/.*/…MUTANT/'`, czyli podmiana CAŁEJ linii 145
+  bez względu na jej treść — takie podstawienie udaje się **zawsze**, więc kontrola
+  „czy mutacja weszła" zawsze mówiła TAK. Po refaktorze, gdy prawdziwe przypisanie
+  `$na_zywo` przesunie się gdzie indziej, podłożylibyśmy mutanta w **przypadkowym
+  miejscu**, dowód padłby z innego powodu, a kalibracja zostałaby odhaczona jako zdana.
+  Teraz kotwicą jest `$na_zywo = segm_przenoszenie_dozwolone();` — brak dopasowania
+  = brak podstawienia = zgniła kotwica widoczna. (M2 i M3 były zakotwiczone wzorcem
+  od początku.)
+
+- **…a przy sprawdzaniu tej poprawki wyszło, że sama kontrola zgniłej kotwicy MILCZAŁA.**
+  `zmutuj()` biegnie w **podpowłoce** (`$(zmutuj …)`), więc zwiększony w niej licznik
+  błędów ginął razem z nią, a komunikat wypisany na stdout wpadał do zmiennej z nazwą
+  zipa zamiast na ekran — do tego `&&` pomijało wtedy sprawdzenie. Efekt: zgniła kotwica
+  kończyła się **ciszą i EXIT=0**, czyli próba kontrolna kłamała dokładnie tak, jak miał
+  kłamać mutant, którego miała złapać. Diagnostyka idzie teraz na **stderr**, a liczenie
+  błędów przeniesione do powłoki głównej (`mutuj_i_sprawdz`).
+
+  Sprawdzone symulacją refaktoru (kotwica celowo zepsuta): **BLAD … (mutacja NIE weszla
+  — kotwica zgnila)**, `EXIT=1`. Na poprawnych kotwicach cały przebieg dalej `EXIT=0`.
+
 ### Dodane
 
 - **`dowod-zachowania-segregator.sh` 1.0.0 — dowód zachowania Segregatora NA SKRZYNCE,
