@@ -1,5 +1,5 @@
 #!/bin/bash
-# paczka-zgodnosc.sh — bramka ZAMROŻENIA: czy paczka to naprawdę to,        WERSJA 1.0.0
+# paczka-zgodnosc.sh — bramka ZAMROŻENIA: czy paczka to naprawdę to,        WERSJA 1.1.0
 # co leży w repozytorium, i czy wersja mówi wszędzie to samo.
 #
 # PO CO TO POWSTAŁO: przy zamrażaniu produktu „na oko" sprawdza się dwie rzeczy
@@ -12,6 +12,16 @@
 # Dlatego: KAŻDY plik porównywany sumą kontrolną SHA-256, w obie strony,
 # a wersja czytana ze wszystkich pięciu miejsc naraz.
 #
+# DWIE RZECZY, KTÓRYCH ZGODNY NUMER NIE ŁAPIE (dopisane przy zamrażaniu 1.5.7):
+# (C) Numer w CHANGELOG-u zgadza się także wtedy, gdy pod nagłówkiem wydania
+#     nie ma ANI JEDNEJ linii treści. Kupujący dostaje wtedy wydanie, o którym
+#     nie napisano nic — a bramka wersji świeci na zielono, bo numery pasują.
+#     Sprawdzamy więc, że sekcja wydania ma TREŚĆ, w CHANGELOG.md i w readme.txt.
+# (D) Zip równy repozytorium co do bajtu jest wciąż zipem, w którym mogą siedzieć
+#     nasze ŚLADY WEWNĘTRZNE: TODO, notatki QA, ścieżki drzewa roboczego, numery
+#     PR-ów, adresy maszyny dev. Zgodność z repo takiego śladu nie widzi — bo
+#     ślad jest w repo TAK SAMO jak w paczce. Skanujemy więc rozpakowaną paczkę.
+#
 # Użycie:
 #   bash narzedzia-qa/paczka-zgodnosc.sh segregator-maila
 #   bash narzedzia-qa/paczka-zgodnosc.sh chatbot-live
@@ -21,7 +31,7 @@
 #               2 = nie ma czego sprawdzać (brak wtyczki, brak zipa, brak narzędzia)
 set -u
 
-WERSJA_BRAMKI=1.0.0
+WERSJA_BRAMKI=1.1.0
 
 # KORZEN_PROBY: próba kontrolna podstawia kopię drzewa, żeby móc podkładać
 # uszkodzone paczki i rozjechane wersje BEZ dotykania prawdziwych plików repo.
@@ -174,6 +184,66 @@ elif ! diff -q "$ALLOW" "$LISTA_ZIP" > /dev/null; then
 else
 	potwierdz "zip zgadza się z allowlistą buduj-paczki.sh ($(wc -l < "$ALLOW") pozycji)"
 fi
+
+# --- 3. CHANGELOG ma WPIS, nie sam zgodny numer ------------------------------
+
+echo
+echo "--- C. Wydanie ma opis, nie sam numer ---"
+
+# Sekcja wydawanej wersji w CHANGELOG.md: liczy się TREŚĆ (linie listy), a nie
+# sam nagłówek z datą. Wydanie bez ani jednej linii opisu przechodziło przez
+# porównanie numerów, bo numer był poprawny — brakowało tego, co ten numer znaczy.
+TRESC_MD="$(awk -v w="$W_NAGLOWEK" '
+	index($0, "## [" w "]") == 1 { wsekcji = 1; next }
+	/^## \[/ { wsekcji = 0 }
+	wsekcji && /^[-*] / { ile++ }
+	END { print ile + 0 }' "$ZRODLO/CHANGELOG.md" 2> /dev/null)"
+if [ "${TRESC_MD:-0}" -gt 0 ]; then
+	potwierdz "CHANGELOG.md: wpis [$W_NAGLOWEK] ma treść ($TRESC_MD pozycji)"
+else
+	zglos "CHANGELOG.md ma nagłówek [$W_NAGLOWEK], ale POD NIM ZERO TREŚCI — wydanie bez opisu"
+fi
+
+# To samo w readme.txt (format WP: „= 1.5.7 ="). Sklep pokazuje kupującemu tę
+# sekcję, nie CHANGELOG.md, więc pusto TUTAJ boli tak samo.
+TRESC_README="$(awk -v w="$W_NAGLOWEK" '
+	index($0, "= " w " =") == 1 { wsekcji = 1; next }
+	/^= [0-9]/ { wsekcji = 0 }
+	/^== / { wsekcji = 0 }
+	wsekcji && NF { ile++ }
+	END { print ile + 0 }' "$ZRODLO/readme.txt" 2> /dev/null)"
+if [ "${TRESC_README:-0}" -gt 0 ]; then
+	potwierdz "readme.txt: sekcja = $W_NAGLOWEK = ma treść ($TRESC_README linii)"
+else
+	zglos "readme.txt ma sekcję = $W_NAGLOWEK =, ale POD NIĄ ZERO TREŚCI — wydanie bez opisu"
+fi
+
+# --- 4. ślady wewnętrzne w paczce --------------------------------------------
+
+echo
+echo "--- D. Paczka bez śladów wewnętrznych ---"
+
+# Skanujemy ROZPAKOWANĄ PACZKĘ, nie repo: pytanie brzmi „co dostaje kupujący".
+# Każda pozycja to: nazwa klasy śladu | wzorzec ERE.
+SLADY=(
+	"znacznik roboczy|TODO|FIXME|@todo|\bHACK\b|\bXXX\b|NOTATK[AI] QA|DO USUNIECIA PRZED"
+	"adres maszyny dev|localhost|127\.0\.0\.1|0\.0\.0\.0|:8890|:8025|mailpit|ngrok|wp-env|vagrant|\.ddev\b"
+	"ścieżka naszego drzewa roboczego|/root/praca|(^|[^a-zA-Z0-9/._-])(testy|boty|audyt|narzedzia-qa|wtyczki)/"
+	"nasz obieg pracy|PR #[0-9]|recenzent|recenzj|koordynator|builder[0-9]|prób[ay] kontroln|proba-kontrolna|mutant"
+)
+
+ILE_SLADOW=0
+for pozycja in "${SLADY[@]}"; do
+	nazwa="${pozycja%%|*}"
+	wzorzec="${pozycja#*|}"
+	# -I pomija pliki binarne, -r schodzi w podkatalogi paczki.
+	while IFS= read -r trafienie; do
+		[ -n "$trafienie" ] || continue
+		zglos "ślad wewnętrzny ($nazwa): $(printf '%.150s' "$trafienie")"
+		ILE_SLADOW=$(( ILE_SLADOW + 1 ))
+	done < <( cd "$W_ZIPIE" 2> /dev/null && grep -rInE "$wzorzec" . 2> /dev/null | sed 's|^\./||' )
+done
+[ "$ILE_SLADOW" -eq 0 ] && potwierdz "w $ILE_ZIP plikach paczki nie ma śladów wewnętrznych (${#SLADY[@]} klasy wzorców)"
 
 # --- werdykt ------------------------------------------------------------------
 

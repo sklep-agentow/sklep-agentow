@@ -17,6 +17,30 @@ pory lądują tutaj.
 
 ### Zmienione
 
+- **`paczka-zgodnosc.sh` 1.0.0 → 1.1.0 — bramka zamrożenia dostała dwie kontrole,
+  których zgodny numer i suma kontrolna NIE łapią.**
+
+  **(C) Wydanie z opisem, nie z samym numerem.** Nagłówek `## [1.5.7]` bez ani
+  jednej linii pod spodem przechodził przez porównanie wersji, bo numer był
+  poprawny — brakowało tego, co ten numer znaczy. Sprawdzane w `CHANGELOG.md`
+  **i** w sekcji `= wersja =` w `readme.txt`, bo to drugie widzi kupujący w sklepie.
+
+  **(D) Paczka bez naszych śladów wewnętrznych.** Zip równy repozytorium co do
+  bajtu jest wciąż zipem, w którym siedzi `TODO`, ścieżka `testy/…`, adres
+  `localhost:8890` albo „uwaga recenzenta do PR #83". Kontrola zgodności z repo
+  takiego śladu **nie widzi z definicji** — ślad jest w repo tak samo jak w paczce.
+  Skanowana jest **rozpakowana paczka**, w czterech klasach wzorców: znacznik
+  roboczy, adres maszyny dev, ścieżka naszego drzewa, nasz obieg pracy.
+
+  Kalibracja: na stanie sprzed naprawy stara bramka 1.0.0 dawała **EXIT=0**,
+  nowa na tym samym stanie **EXIT=1** i 20 wypisanych śladów.
+
+- **`paczka-zgodnosc-proba-kontrolna.sh` — sześć nowych podłożonych przypadków**
+  (pusty wpis w CHANGELOG-u, pusta sekcja w readme, TODO w paczce, adres dev,
+  ścieżka `testy/…`, numer PR-a) plus kontrola „mutacja naprawdę weszła do pliku".
+  Stan czysty badany jest teraz na `chatbot-live`: paczka segregatora 1.3.0 ma
+  dziś własne ślady wewnętrzne, więc jako wzorzec czystości się nie nadaje.
+
 - **`.github/workflows/recenzent.yml` — recenzent URUCHAMIA nasze testy, nie tylko
   je czyta.** Do `--allowedTools` doszły **23 pozycje**: wszystkie skrypty z `testy/`
   (poza jednym, niżej), cztery próby kontrolne z `narzedzia-qa/` oraz
