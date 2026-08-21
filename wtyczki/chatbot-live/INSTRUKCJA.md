@@ -4,10 +4,11 @@ Bot na stronę firmową: 24/7 odpowiada na powtarzalne pytania klientów z bazy
 pytań-odpowiedzi, a gdy nie zna odpowiedzi — zbiera kontakt, żeby właściciel
 odezwał się osobiście.
 
-**Uczciwie:** to bot regułowy z bazy Q&A + most do maila właściciela — „LIVE"
-znaczy, że żywy człowiek ODPISZE na zebrany kontakt (to nie czat z operatorem
-w czasie rzeczywistym). Opcjonalnie, z własnym kluczem API, odpowiedzi może
-generować prawdziwy model AI — patrz sekcja „Tryb AI".
+**Uczciwie:** bez klucza API to bot regułowy z bazy Q&A + most do maila właściciela
+i wtedy „LIVE" znaczy, że żywy człowiek ODPISZE na zebrany kontakt. Opcjonalnie,
+z własnym kluczem API, odpowiedzi generuje prawdziwy model AI — patrz sekcja
+„Tryb AI". Rozmowę **możesz też przejąć osobiście** i pisać do gościa na żywo —
+patrz sekcja „Przejmij rozmowę osobiście"; bot wtedy milczy.
 
 ## 1. Instalacja (2 minuty)
 
@@ -264,6 +265,17 @@ i zgłoszeń łącznie). Pytanie ma maks. 500 znaków, wiadomość zgłoszenia 2
 Zgłoszenia i tak zapisują się w panelu. Mail wymaga działającej wysyłki
 w WordPressie — jeśli nie działa, skonfiguruj wtyczkę SMTP u swojego hostingu.
 
+**Przejmij rozmowę osobiście**
+
+W panelu jest podstrona **ChatBot LIVE → Rozmowy na żywo**: lista rozmów, które
+toczą się w tej chwili, wraz z tym, co gość napisał. Przycisk **Przejmij** oddaje
+rozmowę Tobie — gość widzi „Do rozmowy dołączył konsultant…", a **bot od tej chwili
+milczy**: pytania gościa są zapisywane, żebyś je przeczytał, ale automat nie wpada
+Ci w słowo (i nie zużywa limitu AI). Przycisk **Zakończ** oddaje rozmowę botowi.
+Jeśli nie odpiszesz przez **5 minut**, rozmowa wraca do bota sama, a gość dostaje
+komunikat „Konsultant nie odpowiada…" — po to, żeby nikt nie został przy milczącym
+oknie.
+
 **Czy bot pamięta rozmowę między wizytami?**
 Nie — sesja czatu żyje w karcie przeglądarki gościa. Historia rozmów jest
 zapisywana po stronie serwera (90 dni) do wglądu właściciela.
@@ -288,7 +300,8 @@ historię i ustawienia.
 ## 8. Droga rozbudowy (po zakupie, na życzenie)
 
 - automatyczne łapanie polskich odmian (stemming) zamiast ręcznych wariantów,
-- czat operatora na żywo / powiadomienia push,
+- powiadomienia push o nowej rozmowie (samo przejęcie rozmowy przez człowieka
+  **już jest w produkcie** — sekcja „Przejmij rozmowę osobiście"),
 - pamięć rozmowy między wizytami,
 - inne modele AI lub własny serwer proxy (wtyczka ma filtry `chatl_ai_url`
   i `chatl_ai_model` dla integratorów).

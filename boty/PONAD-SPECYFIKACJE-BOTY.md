@@ -95,7 +95,11 @@ była w klepniętych szkicach (`boty/SZKICE-BOTOW.md`) albo wynika z ich zasad
    (nasz silnik bierze PIERWSZĄ pasującą regułę, Gmail stosuje wszystkie).
 
 ## Czego CELOWO nie ma (granice jawne, też ze szkiców)
-- ChatBot: bez czatu operatora na żywo, bez pamięci rozmów między wizytami.
+- ChatBot: ⛔ **nieaktualne od 2026-08-21** w części o operatorze — **przejęcie
+  rozmowy przez człowieka POWSTAŁO i jest w produkcie** (podstrona „Rozmowy na
+  żywo", przycisk **Przejmij**, bot po przejęciu milczy). Zostaje prawdą: **bez
+  pamięci rozmów między wizytami** — sesja żyje w karcie przeglądarki; pamięć
+  w trakcie JEDNEJ rozmowy (tryb AI, ostatnie wymiany) to co innego i ona istnieje.
 - Segregator: ⛔ **nieaktualne od 2026-08-20** — podpięcie żywej skrzynki (IMAP)
   POWSTAŁO i jest w produkcie. Zostały węższe granice: logowanie tylko hasłem
   aplikacji (bez OAuth ⇒ brak Microsoft 365 i Outlook.com), na skrzynce

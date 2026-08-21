@@ -52,13 +52,25 @@ o firmie. Bez klucza — pełnoprawny tryb regułowy (nie atrapa).
 automatyczny zjazd do trybu regułowego. Builder przed integracją czyta skill
 `claude-api` (model/parametry z docs, nie z pamięci).
 **GRANICE na egzamin (jawne):** bez pamięci rozmów między wizytami (sesja
-przeglądarki), bez czatu operatora na żywo w czasie rzeczywistym (kontakt =
-zgłoszenie + mail — w OBU trybach); bramka `bezpieczenstwo-agenta` przed oddaniem
+przeglądarki — **to zostaje prawdą**; pamięć W TRAKCIE jednej rozmowy w trybie AI
+powstała, patrz rozdział „Pamięć bieżącej rozmowy w trybie AI"),
+⛔ **nieaktualne od 2026-08-21:** „bez czatu operatora na żywo w czasie rzeczywistym
+(kontakt = zgłoszenie + mail — w OBU trybach)" — **przejęcie rozmowy przez człowieka
+POWSTAŁO i jest w produkcie** (podstrona „Rozmowy na żywo", przycisk **Przejmij**,
+rozdział „Przejęcie rozmowy przez człowieka" w dokumentacji technicznej ChatBota);
+bramka `bezpieczenstwo-agenta` przed oddaniem
 (bot czyta niezaufany tekst gości; nie ma narzędzi ani danych poza bazą Q&A —
 ryzyko niskie, ale sprawdzone, nie założone).
-**Uczciwie (to zdanie idzie TEŻ na stronę produktu w K5):** to bot regułowy z bazy
-Q&A + most do maila właściciela — NIE żywa rozmowa z operatorem ani prawdziwe AI;
-„LIVE" znaczy: żywy człowiek ODPISZE na zebrany kontakt.
+**Uczciwie (to zdanie idzie TEŻ na stronę produktu w K5):**
+⛔ **nieaktualne od 2026-08-21.** Brzmiało: „to bot regułowy z bazy Q&A + most do maila
+właściciela — NIE żywa rozmowa z operatorem ani prawdziwe AI; »LIVE« znaczy: żywy
+człowiek ODPISZE na zebrany kontakt". Dziś **oba** zaprzeczenia są nieprawdziwe:
+tryb AI z prawdziwym modelem działa (z kluczem właściciela), a rozmowę można przejąć
+z panelu. Prawdziwe dziś: **bez klucza API** bot jest regułowy i wtedy „LIVE" znaczy
+tyle, że człowiek odpisze na zebrany kontakt; **z kluczem** odpowiada model;
+**po przejęciu** pisze człowiek, a bot milczy.
+⚠️ Zdanie na stronie produktu (`TRESC-STRON-PRODUKTOW.md`) pochodzi stąd i wymaga
+osobnej poprawki po stronie koordynatorki — ten plik jej nie zastępuje.
 
 ---
 
