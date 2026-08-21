@@ -45,37 +45,21 @@ Wszystkie wyszły przy domykaniu botów, u trzech różnych osób (builder1, bui
 | **P6** | **nieśledzony plik wjeżdża do cudzego PR-a przez `git add -A`** | 1× | PR #122: `boty/BRIEF-BUILDER2-SEGREGATOR.md`, 71 linii, nieopisany w PR-ze; usunięty commitem `1f96238` |
 | **P7** | **wyjaśnienie zamiast pomiaru** | 3× | PR #126: koordynatorka zbyła czerwoną `dokumentacja-zgodnosc.sh` uzasadnieniem „pada przez brak chromium" — uruchomiona dała **6 pozycji, 5 realnych** · **ten plik, runda 1**: tabela klas bez ani jednego odnośnika (dokument o dowodach — bez dowodów) · **ten plik, runda 2**: odnośniki dopisane Z PAMIĘCI, nie z historii; jeden (PR #122, linia :316) NIE ISTNIAŁ |
 
-⚠️ **Rozliczenie tego pliku, żeby liczby nie mieszały dwóch rzeczy:** P7 ma w tabeli **3×** ŁĄCZNIE, z czego **2× w tym pliku** (runda 1 i 2) plus 1× poza nim (PR #126). P1 ma **4×** łącznie, z czego **1× w tym pliku** (runda 3). Razem ten dokument wymagał **czterech rund poprawek tego samego pliku**, w których wracała klasa, o której ten plik jest. Dwa pierwsze razy złapał recenzent:
-runda 1 — tabela bez ani jednego odnośnika; runda 2 — **odnośniki dopisane Z PAMIĘCI, nie z historii**.
-Jeden z nich (`PR #122`, `dowod-z-paczki.sh:316`) **nie istniał**: PR #122 to sprzątanie śladów,
-plik ma 263 linie, a prawdziwa naprawa ucieczki w `LIKE` naprawiła **oba** miejsca naraz — czyli
-nie była przypadkiem P1 w ogóle. Dlatego licznik P1 spadł z 4× na **3×**.
-⭐ Wniosek, który kosztował dwie rundy: **odnośnik też jest twierdzeniem i wymaga próby kontrolnej.**
-Sprawdziłam wtedy trzy cytowane commity i uznałam próbę za wykonaną — a nie sprawdziłam
-numerów PR-ów ani numerów linii. Częściowa próba kontrolna daje fałszywe poczucie, że się sprawdziło. Dopisane jako wystąpienie,
-nie zamiecione — bo pętla, która nie liczy własnych potknięć, nie jest pętlą.
+⚠️ **ROZLICZENIE TEGO PLIKU — dwie RÓŻNE liczby, których nie wolno mylić:**
 
-### Co z tego wynika dla NASZEGO audytu
+- **WYSTĄPIENIA KLAS w tym pliku: 3.** P7 dwa razy (runda 1 — tabela bez ani jednego odnośnika,
+  w dokumencie o dowodach; runda 2 — odnośniki dopisane Z PAMIĘCI, jeden — `PR #122`,
+  `dowod-z-paczki.sh:316` — **nie istniał**) oraz P1 raz (runda 3 — licznik poprawiony w tabeli,
+  stara liczba **została w narracji pod nią**).
+- **RUND POPRAWEK tego pliku: 7.** Bo rundy 4–7 nie dołożyły nowych klas — poprawiały **liczniki
+  i sformułowania** po poprzednich: podniesienie P7 i P1, rozdzielenie „w tym pliku" od „łącznie",
+  i wreszcie ta: zdanie mówiło „cztery rundy", a własny rozbiór sumował się do trzech.
 
-- **P1 jest najczęstsza** — cztery wystąpienia, w tym jedno **w tym pliku**, w tym raz **zaraz po tym**, jak
-  recenzent wytknął ją tej samej osobie. To nie jest kwestia uwagi: człowiek widzi miejsce,
-  które ma właśnie otwarte. ⭐ Jedyne, co działa, to **mechaniczny odruch**: po każdej naprawie
-  `grep` po wzorcu, nie „wydaje mi się, że to jedyne miejsce".
-  → **Do stopki promptu audytora:** „znalazłeś błąd? zanim zgłosisz, sprawdź wyszukiwaniem,
-  czy nie ma bliźniaka; zgłoś WSZYSTKIE wystąpienia albo napisz wprost, ilu nie sprawdziłeś".
-- **P3 jest najgroźniejsza** — zielone z niewłaściwego powodu wygląda **identycznie** jak
-  zielone z właściwego. Jedyny rozróżnik to kalibracja: podłóż błąd i sprawdź, czy narzędzie
-  pada **na właściwym kroku**, nie gdziekolwiek.
-- **P7 dotyczy audytora tak samo jak budowniczego.** Czerwień zbyta wyjaśnieniem jest gorsza
-  niż czerwień nieprzeczytana, bo zamyka temat.
+⛔ **To jest sedno, nie księgowość.** Cztery ostatnie rundy poszły na to, że **jedno zdanie
+mieszało dwa różne liczniki** — ile razy klasa wystąpiła, a ile razy plik był poprawiany.
+Obie liczby były wewnętrznie poprawne i **żaden skrypt tego nie złapał**, bo zgodność się
+zgadzała; łapał to za każdym razem recenzent czytający ze zrozumieniem.
+⭐ **Wniosek operacyjny: narzędzie sprawdza ZGODNOŚĆ, człowiek sprawdza SENS.** Kalibracja
+mutantami i czytający recenzent **nie zastępują się nawzajem** — łapią różne rodzaje błędów.
 
-## ⛔ ZASADA NA KONIEC AUDYTU (bez tego pętla nie istnieje)
 
-Audyt **nie jest skończony**, gdy zamknięto listę celów. Jest skończony, gdy:
-1. każde potwierdzone znalezisko ma **test z kodem wyjścia 1** wpięty do CI,
-2. każda **nowa klasa** ma mutanta w banku,
-3. każda klasa, która przeszła przez wszystkie soczewki, ma **nowe pytanie** w mapie polowania,
-4. ten plik ma dopisany wiersz z liczbą wystąpień.
-
-⛔ Zero powtórek, nie zero błędów. Ogon zawsze zostaje — ale ma być coraz cieńszy
-i nigdy z tej samej beczki.
