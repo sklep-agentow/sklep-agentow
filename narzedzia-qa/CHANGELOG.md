@@ -17,6 +17,35 @@ pory lądują tutaj.
 
 ### Naprawione
 
+- **KLASA, nie egzemplarz: `wp option get` w teście pustości — pięć miejsc, nie jedno.**
+  Naprawa znacznika awarii AI zamknęła tylko jedno wystąpienie. `grep` po wszystkich
+  skryptach QA pokazał następne cztery, w tym **strażnika luki L1** (`chatl_blad_nonce`,
+  `dowod-zachowania-chatbot.sh:229`), który meldował „odrzucony nonce ZOSTAŁ ODNOTOWANY"
+  **zawsze** — także gdyby wtyczka nie odnotowała niczego. Fałszywy pozytyw akurat tam,
+  gdzie pilnujemy luki.
+
+  Wspólny odczyt `opcja()` mieszka teraz w `lib-stos-probny.sh`, czyli w **jednym**
+  miejscu dla wszystkich trzech dowodów. Pomiar różnicy:
+
+  ```
+  $ wp option get nie_ma_takiej_opcji            → Error: Could not get … (NIEPUSTE)
+  $ wp eval '… get_option( "nie_ma_takiej_opcji" ) …'  → (PUSTE)
+  ```
+
+  Sprawdzone też, gdzie ten wzorzec **NIE** jest błędem: `dowod-z-paczki.sh:123` pyta
+  o **kod wyjścia**, nie o tekst — i to jest poprawne, zostaje bez zmian.
+
+- **`dowod-aktualizacji.sh` — dowód wymagał, żeby KAŻDA aktualizacja podnosiła schemat.**
+  Wydanie dokumentacyjne (1.5.7 → 1.5.8, tak samo 1.3.0 → 1.3.1) schematu nie rusza,
+  więc na zamrożonej parze paczek dowód meldował **dwie wady produktu, których nie ma**.
+  Prawdziwym warunkiem nie jest „numer urósł", tylko **„baza zgadza się z kodem"**:
+  awarią jest brak wpisu, rozjazd z kodem albo numer, który poszedł **w dół**.
+  Po poprawce `chatbot-live 1.5.7 → 1.5.8` przechodzi wszystkie pięć dowodów (EXIT=0),
+  a próba kontrolna dalej łapie wszystkie trzy podłożone awarie (EXIT=0) — mutantowi
+  „nowa wersja nie ma kodu migracji" zmieniła się tylko fraza, którą dowód go nazywa.
+
+### Naprawione
+
 - **`dowod-zachowania-chatbot.sh` — dziura D3 była wadą PRZYRZĄDU, nie bota. Trzy błędy,
   wszystkie w narzędziu.** Po naprawie dowód na paczce **1.5.8** daje `EXIT=0`:
   odpowiedź idzie z modelu (`silnik = ai` zapisany przez bota), po odcięciu klucza

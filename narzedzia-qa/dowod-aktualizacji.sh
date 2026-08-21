@@ -128,7 +128,7 @@ KOD="$(zapukaj_na_strone "$STOS_SH")"
 printf '  stara wersja aktywna, strona odpowiada HTTP %s\n' "${KOD:-brak}"
 
 WERSJA_PLIKU_PRZED="$(wp plugin get "$WTYCZKA" --field=version | tr -d '\r')"
-SCHEMAT_PRZED="$(wp option get "$OPCJA_SCHEMAT" 2> /dev/null | tr -d '\r')"
+SCHEMAT_PRZED="$(opcja "$OPCJA_SCHEMAT" | tr -d '\r')"
 SCHEMAT_ODCISK_PRZED="$ROBOCZY/schemat-przed.txt"
 odcisk_schematu "$PREFIKS" > "$SCHEMAT_ODCISK_PRZED"
 printf '  wersja wtyczki: %s · wersja schematu w bazie: %s\n' "$WERSJA_PLIKU_PRZED" "${SCHEMAT_PRZED:-BRAK}"
@@ -163,19 +163,27 @@ printf '    %s → %s\n' "$WERSJA_PLIKU_PRZED" "$WERSJA_PLIKU_PO"
 
 # ---- DOWOD 2: wersja schematu poszla w gore ----
 naglowek "DOWOD 2 — wersja schematu w bazie poszla w gore"
-SCHEMAT_PO="$(wp option get "$OPCJA_SCHEMAT" 2> /dev/null | tr -d '\r')"
+SCHEMAT_PO="$(opcja "$OPCJA_SCHEMAT" | tr -d '\r')"
 SCHEMAT_KODU="$(grep -m1 -o "define( '[A-Z]*_WERSJA_SCHEMATU', '[0-9]*' )" "wtyczki/$WTYCZKA/$WTYCZKA.php" | grep -o "'[0-9]*' )" | tr -cd '0-9')"
 printf '    w bazie: %s → %s ; w nowym kodzie: %s\n' "${SCHEMAT_PRZED:-BRAK}" "${SCHEMAT_PO:-BRAK}" "${SCHEMAT_KODU:-BRAK}"
+# ⛔ PRAWDZIWYM warunkiem NIE JEST „numer urosl", tylko „baza zgadza sie z kodem".
+# Wydanie dokumentacyjne (u nas 1.5.7 → 1.5.8 i 1.3.0 → 1.3.1) NIE ZMIENIA schematu
+# i wtedy „nie drgnela" jest poprawnym wynikiem, nie awaria. Pierwsza wersja tego
+# dowodu zakladala, ze kazda aktualizacja podnosi schemat — na zamrozonej parze paczek
+# meldowala dwie wady produktu, ktorych nie ma. Awaria to: brak wpisu, rozjazd z kodem
+# albo numer, ktory poszedl W DOL.
+SCHEMAT_ROSNIE=nie
+[ -n "$SCHEMAT_PO" ] && [ -n "$SCHEMAT_PRZED" ] && [ "$(( SCHEMAT_PO ))" -gt "$(( SCHEMAT_PRZED ))" ] && SCHEMAT_ROSNIE=tak
 if [ -z "$SCHEMAT_PO" ]; then
 	zglos "po aktualizacji w bazie NIE MA wpisu $OPCJA_SCHEMAT"
-elif [ "$SCHEMAT_PO" = "$SCHEMAT_PRZED" ]; then
-	zglos "wersja schematu NIE DRGNELA ($SCHEMAT_PRZED) — kod aktualizacji sie nie odpalil"
 elif [ -n "$SCHEMAT_KODU" ] && [ "$SCHEMAT_PO" != "$SCHEMAT_KODU" ]; then
 	zglos "baza mowi schemat $SCHEMAT_PO, a nowy kod oczekuje $SCHEMAT_KODU"
-elif [ "$(( SCHEMAT_PO ))" -le "$(( ${SCHEMAT_PRZED:-0} ))" ]; then
-	zglos "wersja schematu poszla W DOL albo stoi ($SCHEMAT_PRZED → $SCHEMAT_PO)"
-else
+elif [ "$(( SCHEMAT_PO ))" -lt "$(( ${SCHEMAT_PRZED:-0} ))" ]; then
+	zglos "wersja schematu poszla W DOL ($SCHEMAT_PRZED → $SCHEMAT_PO)"
+elif [ "$SCHEMAT_ROSNIE" = tak ]; then
 	potwierdz "wersja schematu $SCHEMAT_PRZED → $SCHEMAT_PO, zgodna z nowym kodem"
+else
+	potwierdz "schemat bez zmian ($SCHEMAT_PO) i zgodny z kodem — to wydanie go nie rusza"
 fi
 
 # ---- DOWOD 3: schemat przybyl i nic nie znikelo ----
@@ -188,8 +196,10 @@ printf '    kolumn przed: %s · po: %s\n' "$(wc -l < "$SCHEMAT_ODCISK_PRZED")" "
 if [ -n "$PRZYBYLO" ]; then
 	printf '    PRZYBYLO:\n'; printf '%s\n' "$PRZYBYLO" | sed 's/^/      + /'
 	potwierdz "aktualizacja dolozyla schemat ($(printf '%s\n' "$PRZYBYLO" | wc -l) pozycji)"
+elif [ "$SCHEMAT_ROSNIE" = tak ]; then
+	zglos "schemat NIE DRGNAL, choc wersja schematu urosla ($SCHEMAT_PRZED → $SCHEMAT_PO)"
 else
-	zglos "schemat NIE DRGNAL — skoro wersja schematu rosnie, cos powinno przybyc"
+	potwierdz "schemat bez zmian — zgodnie z wersja schematu, ktora tez stoi"
 fi
 if [ -n "$UBYLO" ]; then
 	zglos "ze schematu UBYLO — to utrata miejsca na dane klienta:"

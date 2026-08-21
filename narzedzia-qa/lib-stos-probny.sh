@@ -44,6 +44,17 @@ wymagaj_narzedzi() {
 
 wp() { docker exec "$KONTENER" wp --allow-root --path=/var/www/html "$@" 2>&1; }
 
+# ⛔ ODCZYT OPCJI, KTORY NIE KLAMIE PRZY JEJ BRAKU.
+# `wp option get` nieistniejacej opcji wypisuje „Error: Could not get 'x' option",
+# a wrapper wp() wyzej scala stderr do stdout — wiec `[ -z "$(wp option get x)" ]`
+# widzi NIEPUSTY napis i czyta BRAK opcji jako JEJ OBECNOSC. Kazdy straznik oparty
+# na tym wzorcu melduje sukces ZAWSZE, takze gdy nic sie nie zapisalo.
+# Zlapane 21.08 w trzech miejscach naraz (znacznik awarii AI, znacznik odrzuconego
+# nonce'a, wersja schematu przy aktualizacji). PHP na brak opcji zwraca pustke.
+opcja() {
+	wp eval "\$w = get_option( '$1' ); echo is_array( \$w ) || is_object( \$w ) ? wp_json_encode( \$w ) : (string) \$w;" 2>&1 | tail -1
+}
+
 sql_bazy() {
 	local haslo
 	haslo="$(docker exec "$KONTENER_DB" printenv MARIADB_ROOT_PASSWORD 2> /dev/null \

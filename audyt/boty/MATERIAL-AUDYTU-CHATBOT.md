@@ -279,6 +279,21 @@ Poza tym **jawnie niesprawdzone przeze mnie**, i to są miejsca, w które sam by
 Trzy pozycje dowodu D3 przez cały dzień meldowały wadę produktu, a **wadą było moje
 narzędzie**: pytało bota szybciej, niż pozwala próg pułapki, czytało brak opcji jako
 komunikat błędu wp-cli i szukało w panelu zdania, którego panel nie pisze. Naprawiłem
-to dzisiaj i D3 wyszło na zielono. **Wniosek dla Ciebie jest taki: jeśli mój przyrząd
-pokaże Ci czerwone, sprawdź najpierw przyrząd** — a jeśli pokaże zielone, sprawdź, czy
-w ogóle cokolwiek zmierzył.
+to i D3 wyszło na zielono.
+
+Potem okazało się, że **naprawiłem tylko jedno wystąpienie z pięciu**: ten sam wzorzec
+(`wp option get` w teście pustości, gdzie brak opcji wygląda jak jej obecność) siedział
+jeszcze w czterech miejscach, w tym w **strażniku luki L1** — meldował „odrzucony nonce
+ZOSTAŁ ODNOTOWANY" zawsze, także gdyby nic się nie odnotowało. Wyszło to dopiero
+z `grep`-a po całym katalogu, nie z pamięci. Osobno: `dowod-aktualizacji.sh` wymagał,
+żeby **każda** aktualizacja podnosiła wersję schematu, więc na wydaniu dokumentacyjnym
+(1.5.7 → 1.5.8) meldował dwie wady, których nie ma.
+
+**Trzy wnioski dla Ciebie, w kolejności ważności:**
+
+1. Jeśli mój przyrząd pokaże Ci **czerwone — sprawdź najpierw przyrząd**.
+2. Jeśli pokaże **zielone — sprawdź, czy cokolwiek zmierzył** (strażnik, który melduje
+   sukces przy pustej bazie, jest gorszy niż jego brak).
+3. Po każdej naprawie zapytaj **„gdzie jeszcze to samo"** i sprawdź to **wyszukiwaniem,
+   nie pamięcią** — ta klasa wróciła u nas dziś **pięć razy**, u trzech różnych osób,
+   raz kilkanaście minut po tym, jak ktoś ją komuś wytknął.

@@ -124,15 +124,6 @@ pytanie_goscia() {
 		-d "action=chatl_pytanie" -d "nonce=$n" -d "sesja=$sesja" \
 		--data-urlencode "pytanie=$PYTANIE"
 }
-# ⛔ `wp option get` NIE ISTNIEJACEJ opcji wypisuje „Error: Could not get …",
-# a wrapper wp() z lib-stos-probny.sh scala stderr do stdout — wiec `[ -z "$(wp option
-# get …)" ]` widzi NIEPUSTY napis i czyta brak znacznika jako „znacznik jest".
-# Na tym poleglo D3: dwie pozycje meldowaly wade produktu tam, gdzie produkt
-# zachowal sie poprawnie. Pytamy wiec PHP-em, ktory na brak opcji zwraca pustke.
-znacznik_ai() {
-	wp eval 'echo get_option( "chatl_blad_ai" ) ? wp_json_encode( get_option( "chatl_blad_ai" ) ) : "";' 2>&1 | tail -1
-}
-
 silnik_ostatniej() {
 	sql_bazy "SELECT silnik FROM \`$BAZA\`.wp_chatl_rozmowy WHERE sesja='$1' AND rola='bot' ORDER BY id DESC LIMIT 1;" | tr -d '\r'
 }
@@ -140,9 +131,9 @@ silnik_ostatniej() {
 # odroznia wady bota od zle ustawionego stanowiska.
 printf '    baza Q&A: %s par · klucz ustawiony: %s · AI dostepne: %s · adres modelu: %s\n' \
 	"$(sql_bazy "SELECT COUNT(*) FROM \`$BAZA\`.wp_chatl_qa;" | tr -d '\r')" \
-	"$( [ -n "$(wp option get chatl_klucz_api 2> /dev/null)" ] && echo TAK || echo NIE )" \
+	"$( [ -n "$(opcja chatl_klucz_api)" ] && echo TAK || echo NIE )" \
 	"$(wp eval 'echo chatl_ai_dostepny() ? "TAK" : "NIE";' 2>&1 | tail -1)" \
-	"$(wp option get probny_ai_url 2> /dev/null)"
+	"$(opcja probny_ai_url)"
 printf '    surowa odpowiedz modelu przez wtyczke: [%s]\n' \
 	"$(wp eval 'echo (string) chatl_ai_odpowiedz( "ile trwa realizacja", array() );' 2>&1 | tail -1)"
 SES_A="$(nowa_sesja)"
@@ -153,7 +144,7 @@ if printf '%s' "$ODP_AI" | grep -q 'ODPOWIEDZ-Z-UDAWANEGO-AI' && [ "$SILNIK_AI" 
 else
 	zglos "przy dzialajacym API bot nie odpowiedzial z modelu (silnik=$SILNIK_AI): $(printf '%s' "$ODP_AI" | head -c 160)"
 fi
-if [ -z "$(znacznik_ai)" ]; then
+if [ -z "$(opcja chatl_blad_ai)" ]; then
 	potwierdz "przy dzialajacym API znacznika awarii NIE MA (przypadek bez wady)"
 else
 	zglos "znacznik awarii jest, choc API odpowiedzialo poprawnie"
@@ -172,7 +163,7 @@ else
 	zglos "po odcieciu klucza gosc nie dostal odpowiedzi (silnik=$SILNIK_PO): $(printf '%s' "$ODP_PO" | head -c 160)"
 fi
 
-ZNACZNIK="$(znacznik_ai)"
+ZNACZNIK="$(opcja chatl_blad_ai)"
 if printf '%s' "$ZNACZNIK" | grep -q '"kod":401'; then
 	potwierdz "znacznik awarii zapisany z kodem 401: $ZNACZNIK"
 else
@@ -191,7 +182,7 @@ wp option update probny_ai_url "http://localhost/udaj-ai-ok.php" > /dev/null
 SES_C="$(nowa_sesja)"
 ODP_C="$(pytanie_goscia "$SES_C")"
 printf '    powrot API — odpowiedz: [%s] silnik: [%s]\n' "$(printf '%s' "$ODP_C" | head -c 90)" "$(silnik_ostatniej "$SES_C")"
-if [ -z "$(znacznik_ai)" ]; then
+if [ -z "$(opcja chatl_blad_ai)" ]; then
 	potwierdz "po powrocie API znacznik zostaje ZDJETY (nie zostaje na zawsze)"
 else
 	zglos "znacznik awarii zostal, choc API znowu odpowiada"
@@ -226,7 +217,7 @@ if printf '%s' "$ODP_ZLY" | grep -qx -- '-1'; then
 else
 	potwierdz "odpowiedz jest JSON-em wtyczki, nie golym -1"
 fi
-if [ -n "$(wp option get chatl_blad_nonce 2> /dev/null)" ]; then
+if [ -n "$(opcja chatl_blad_nonce)" ]; then
 	potwierdz "odrzucony nonce ZOSTAL ODNOTOWANY dla wlasciciela"
 else
 	zglos "odrzucony nonce nie zostal nigdzie odnotowany — wlasciciel sie nie dowie"
