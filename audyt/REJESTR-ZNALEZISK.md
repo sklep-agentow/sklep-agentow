@@ -18,6 +18,21 @@
      Łamacz ChatBot, Łamacz Segregator). Nic nie zniknęło — trzy dawne wiersze `F1`/`F2`/`F3`
      przeszły na ZAMKNIETE (scalone #136, e28b825), więc wypadły z licznika OTWARTYCH. -->
 
+## Znalezisk BEZ strażnika: 7
+<!-- BRAMKA: liczba wierszy, ktore w kolumnie testu maja „BRAK — do dopisania".
+     To NIE jest usterka rejestru — to DLUG. Znalezisko dowiedzione wykonaniem, ale bez
+     straznika, ktory by pilnowal, zeby nie wrocilo. Prowadzimy go tak samo jak dlug sladow
+     w sklepie: schodzil 41 -> 40, nigdy w druga strone.
+     ⭐ Ta liczba ma prawo TYLKO MALEC. Bramka pada przy rozjezdzie w OBIE strony:
+     wzrost = ktos dopisal znalezisko bez straznika po cichu; spadek = albo straznik
+     powstal (obniz liczbe swiadomie), albo ktos skasowal wiersz znaleziska.
+     ⛔ Wiersz wskazujacy nieistniejacy plik o KONKRETNEJ nazwie to co innego — to twardy
+     blad bramki, bo martwy odsylacz UDAJE, ze straznik stoi.
+
+     Stan 21.08: siedem znalezisk bez straznika to A4-F1..F4, A6-F2, LC-F1, LC-F2.
+     Raporty A4 i Lamacz ChatBot dowiodly swoich znalezisk komendami wpisanymi w terminal
+     i przegladarka (curl do admin-ajax.php, konsola JS) — nie zostawily po sobie pliku. -->
+
 ## Kody — jak czytać
 Każdy raport numerował swoje znaleziska od nowa i cztery raporty użyły tych samych
 kodów `F1`–`F4` na różne błędy. Kody w tabeli mają więc **prefiks soczewki**, a numer
