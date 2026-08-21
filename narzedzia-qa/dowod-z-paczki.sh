@@ -36,28 +36,16 @@
 #               2 = nie ma czego sprawdzać (brak paczki, brak dockera, stos nie wstaje)
 set -u
 
-WERSJA=1.0.0
+WERSJA=1.0.1
 
 KORZEN="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$KORZEN" || exit 2
 STOS_SH="$KORZEN/narzedzia-qa/stos.sh"
 
-# --- stos próbny: stałe, nie parametry ----------------------------------------
-KONTENER=probny_wp
-KONTENER_DB=strona_wp_db
-BAZA=wp_probny
-SIEC=strona_wp_default
-OBRAZ=wordpress:6.9.4-php8.4-apache
-PORT=8891
-ADRES="http://localhost:$PORT"
-
-ZOSTAW=nie
-BLEDY=0
-
-zglos()     { printf '  ⛔ NIE WYSZLO  %s\n' "$1"; BLEDY=$(( BLEDY + 1 )); }
-potwierdz() { printf '  ✅ WYSZLO      %s\n' "$1"; }
-padnij()    { printf 'DOWOD-Z-PACZKI: %s\n' "$1" >&2; exit 2; }
-naglowek()  { printf '\n=== %s ===\n' "$1"; }
+# Wspólny warsztat (stawianie i sprzątanie czystej instalacji, odciski, log
+# błędów) siedzi w bibliotece — ten sam kod obsługuje dowód aktualizacji.
+# shellcheck source=narzedzia-qa/lib-stos-probny.sh
+. "$KORZEN/narzedzia-qa/lib-stos-probny.sh"
 
 # --- argumenty ----------------------------------------------------------------
 
@@ -99,107 +87,10 @@ case "$WTYCZKA" in
 		;;
 esac
 
-# --- narzędzia ----------------------------------------------------------------
-
-command -v docker > /dev/null || padnij "brak dockera"
-command -v unzip  > /dev/null || padnij "brak unzip"
-docker ps --filter "name=^${KONTENER_DB}$" --filter status=running -q | grep -q . \
-	|| padnij "kontener bazy $KONTENER_DB nie chodzi — nie mam gdzie postawić stosu próbnego"
-
-wp() { docker exec "$KONTENER" wp --allow-root --path=/var/www/html "$@" 2>&1; }
-
-sql_bazy() {
-	local haslo uzyt
-	uzyt="$(docker exec "$KONTENER" printenv WORDPRESS_DB_USER 2> /dev/null || echo root)"
-	haslo="$(docker exec "$KONTENER_DB" printenv MARIADB_ROOT_PASSWORD 2> /dev/null \
-		|| docker exec "$KONTENER_DB" printenv MYSQL_ROOT_PASSWORD 2> /dev/null)"
-	docker exec -e MYSQL_PWD="$haslo" "$KONTENER_DB" mariadb -uroot -N -B -e "$1" 2>&1
-}
-
-# --- stos próbny: postaw od zera ----------------------------------------------
-
-postaw_stos() {
-	naglowek "STOS PROBNY — czysta instalacja od zera"
-	local haslo_root uzyt_db haslo_db
-	haslo_root="$(docker exec "$KONTENER_DB" printenv MARIADB_ROOT_PASSWORD 2> /dev/null \
-		|| docker exec "$KONTENER_DB" printenv MYSQL_ROOT_PASSWORD 2> /dev/null)"
-	[ -n "$haslo_root" ] || padnij "nie umiem odczytać hasła root bazy z kontenera $KONTENER_DB"
-	uzyt_db=root
-	haslo_db="$haslo_root"
-
-	docker rm -f "$KONTENER" > /dev/null 2>&1 || true
-	docker exec -e MYSQL_PWD="$haslo_root" "$KONTENER_DB" \
-		mariadb -uroot -e "DROP DATABASE IF EXISTS \`$BAZA\`; CREATE DATABASE \`$BAZA\`;" \
-		|| padnij "nie umiem założyć bazy $BAZA"
-	printf '  baza %s — utworzona od zera\n' "$BAZA"
-
-	# WP_DEBUG WŁĄCZONY i piszący do pliku, a NIE na stronę: notice wyrzucony
-	# na stronę psuje HTML i bywa niewidoczny, w logu jest zawsze i da się go policzyć.
-	docker run -d --name "$KONTENER" --network "$SIEC" -p "$PORT:80" \
-		-e WORDPRESS_DB_HOST="$KONTENER_DB" \
-		-e WORDPRESS_DB_USER="$uzyt_db" \
-		-e WORDPRESS_DB_PASSWORD="$haslo_db" \
-		-e WORDPRESS_DB_NAME="$BAZA" \
-		-e WORDPRESS_DEBUG=1 \
-		-e WORDPRESS_CONFIG_EXTRA="define('WP_DEBUG_LOG', '/var/www/html/debug.log'); define('WP_DEBUG_DISPLAY', false); define('SCRIPT_DEBUG', true);" \
-		"$OBRAZ" > /dev/null || padnij "nie umiem uruchomić kontenera $KONTENER"
-
-	local i=0
-	until docker exec "$KONTENER" test -f /var/www/html/wp-settings.php 2> /dev/null; do
-		i=$(( i + 1 )); [ "$i" -gt 60 ] && padnij "WordPress nie rozpakował się w kontenerze"
-		sleep 1
-	done
-	docker exec "$KONTENER" sh -c 'command -v wp >/dev/null || (curl -sSL -o /usr/local/bin/wp https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && chmod +x /usr/local/bin/wp)' > /dev/null 2>&1
-	docker exec "$KONTENER" sh -c 'command -v wp' > /dev/null 2>&1 || padnij "w kontenerze próbnym nie ma wp-cli"
-
-	i=0
-	until wp core is-installed > /dev/null 2>&1; do
-		wp core install --url="$ADRES" --title="Stos probny" \
-			--admin_user=probny --admin_password=probne-haslo-QA \
-			--admin_email=probny@example.com --skip-email > /dev/null 2>&1
-		i=$(( i + 1 )); [ "$i" -gt 12 ] && padnij "nie udało się zainstalować rdzenia WordPressa"
-		sleep 2
-	done
-	printf '  WordPress %s — zainstalowany, WP_DEBUG włączony\n' "$(wp core version | tr -d '\r')"
-	# Log z instalacji rdzenia nie jest przedmiotem tego dowodu — kasujemy go,
-	# żeby to, co znajdziemy dalej, pochodziło WYŁĄCZNIE od wtyczki.
-	docker exec "$KONTENER" sh -c ': > /var/www/html/debug.log' 2> /dev/null || true
-}
-
-zwin_stos() {
-	if [ "$ZOSTAW" = tak ]; then
-		printf '\nStos próbny ZOSTAJE (--zostaw): %s — panel: %s/wp-admin (probny / probne-haslo-QA)\n' "$KONTENER" "$ADRES"
-		return
-	fi
-	docker rm -f "$KONTENER" > /dev/null 2>&1 || true
-	sql_bazy "DROP DATABASE IF EXISTS \`$BAZA\`;" > /dev/null 2>&1 || true
-}
+wymagaj_narzedzi
 trap zwin_stos EXIT
 
-# --- odcisk bazy ---------------------------------------------------------------
-#
-# Odcisk = nazwy opcji + nazwy tabel. Świadomie POMIJANE są wpisy, które sam
-# WordPress dopisuje w tle niezależnie od naszej wtyczki — inaczej różnica nigdy
-# nie byłaby pusta i „pusta różnica" przestałaby cokolwiek znaczyć. Lista pominięć
-# jest WYPISYWANA przy każdym przebiegu; nie ma tu cichych wyjątków.
-POMIJANE_WZORCE='^_transient_|^_site_transient_|^cron$|^recently_activated$|^wp_force_deactivated_plugins$|^active_plugins$|^uninstall_plugins$|^db_upgraded$|^auto_updater\.lock$|^finished_|^_wp_session'
-
-odcisk() {
-	{
-		sql_bazy "SELECT option_name FROM \`$BAZA\`.wp_options ORDER BY option_name;" \
-			| grep -Ev "$POMIJANE_WZORCE" | sed 's/^/OPCJA /'
-		sql_bazy "SELECT table_name FROM information_schema.tables WHERE table_schema='$BAZA' ORDER BY table_name;" \
-			| sed 's/^/TABELA /'
-	} 2> /dev/null | sort
-}
-
 # --- dowody --------------------------------------------------------------------
-
-log_bledow() {
-	docker exec "$KONTENER" sh -c 'cat /var/www/html/debug.log 2>/dev/null' 2> /dev/null \
-		| grep -E 'PHP (Notice|Warning|Fatal error|Parse error|Deprecated|Recoverable)' || true
-}
-wyczysc_log() { docker exec "$KONTENER" sh -c ': > /var/www/html/debug.log' 2> /dev/null || true; }
 
 wgraj_z_zipa() {
 	docker cp "$PACZKA" "$KONTENER:/tmp/paczka.zip" > /dev/null || padnij "nie umiem wgrać zipa do kontenera"
