@@ -7,7 +7,7 @@
 > do CI" i **nie była spełniona ani razu**. W `testy/` leżało 57 plików, CI nie uruchamiało
 > żadnego. PR #135 wniósł dwa celowo padające testy — i przeszedł na zielono.
 
-## Liczba znalezisk OTWARTYCH: 17
+## Liczba znalezisk OTWARTYCH: 20
 <!-- BRAMKA: powyższa liczba musi zgadzać się z liczbą wierszy o statusie OTWARTE.
      Dopisanie znaleziska ZATRZYMUJE bramkę, dopóki ktoś świadomie nie podniesie liczby.
      ⭐ Ta liczba ma prawo TYLKO MALEĆ. Jeśli rośnie — to znaczy, że audyt znalazł coś nowego,
@@ -76,6 +76,9 @@ i bramka policzyła siedem nieistniejących znalezisk z nieznanym statusem.
 | `P2-Z4` | paczka RODO opisuje wiadomości **operatora** jako „Bot" — dokument wydawany na wniosek art. 15 mówi co innego niż okno czatu | BRAK — do dopisania | OTWARTE |
 | `LS-F1` | cofnięcie przebiegu melduje sukces dla maili, których nie ruszyło, i zamyka drogę odwrotu | `audyt/boty/repro/lamacz-cofanie.php` | OTWARTE |
 | `LS-F2` | baza pada w połowie przebiegu na żywo: poczta przeniesiona, historia pusta, cofanie martwe, panel pokazuje sukces | `audyt/boty/repro/lamacz-baza-i-srodowisko.php` | W NAPRAWIE |
+| `DK-1` | licznik pułapki i lista podejrzanych zgłoszeń to **dwa źródła prawdy** o tym samym zdarzeniu — rozjeżdżają się 14 do 5 | `audyt/boty/testy-audytu/DK-dwa-zrodla-pulapka.sh` | OTWARTE |
+| `DK-5` | licznik trzymany w `wp_options` **gubi 13 z 20 równoległych zapisów** (ten sam licznik w tabeli gubi 0) | `audyt/boty/testy-audytu/DK-rownolegle-liczniki.sh` | OTWARTE |
+| `DK-6` | zamek Segregatora wpuszcza **dwie operacje naraz**, a znacznik drugiej nadpisuje pierwszą | `audyt/boty/testy-audytu/DK-blokada-segregatora.php` | OTWARTE |
 
 ## Statusy — co znaczą
 - **OTWARTE** — błąd potwierdzony dowodem, kod nienaprawiony. Test **pada** i tak ma być.
@@ -92,7 +95,7 @@ wymaga osobnej decyzji.
 ## Raporty objęte rejestrem
 `RAPORT-A2-AWARIA.md` · `RAPORT-A3-DANE.md` · `RAPORT-A5-KRAWEDZIE.md` ·
 `RAPORT-A4-FRONT.md` · `RAPORT-A6-ODWROTNY.md` ·
-`RAPORT-LAMACZ-CHATBOT.md` · `RAPORT-LAMACZ-SEGREGATOR.md` · `RAPORT-A1-BEZPIECZENSTWO.md` · `RAPORT-PRZEBIEG2-CHATBOT.md`
+`RAPORT-LAMACZ-CHATBOT.md` · `RAPORT-LAMACZ-SEGREGATOR.md` · `RAPORT-A1-BEZPIECZENSTWO.md` · `RAPORT-PRZEBIEG2-CHATBOT.md` · `RAPORT-DOKONCZENIE-A3-A5.md`
 <!-- BRAMKA: każdy plik audyt/boty/RAPORT-*.md musi być wymieniony w linii wyżej.
      Cztery ostatnie leżą jeszcze na niescalonych gałęziach audytorskich
      (audyt/a4-front, audyt/a6-odwrotny, audyt/lamacz-chatbot, audyt/lamacz-segregator)
