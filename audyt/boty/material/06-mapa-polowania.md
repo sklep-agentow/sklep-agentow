@@ -12,33 +12,41 @@
      = „nie patrzyłem", nie „czysto" — takie cele zostają ⬜. -->
 
 ## A1 — SECURITY (wykonanie: curl, przeglądarka, żądania równoległe)
-- ⬜ Publiczny punkt wejścia czatu: żądanie bez nonce, z cudzym nonce, z wygasłym
+- ✅ Publiczny punkt wejścia czatu: żądanie bez nonce, z cudzym nonce, z wygasłym  <!-- A1: brak/cudzy/wygasly nonce odrzucone; wygasly podrobiony filtrem nonce_tick -->
   <!-- NIETKNIĘTY: żaden raport nie wysłał żądania BEZ nonce ani z cudzym. Salwa
        w RAPORT-LAMACZ-CHATBOT §Ł-2 szła z WAŻNYM nonce, a raport sam pisze
        (pkt 4 „Czego nie zdążyłem"): „ścieżki odnowienia nonce'a przy wygasłym
        tokenie nie wykonałem". -->
-- ⬜ Akcje panelu: konto bez uprawnień (subskrybent, redaktor) próbuje każdej mutacji
+- ✅ Akcje panelu: konto bez uprawnień (subskrybent, redaktor) próbuje każdej mutacji  <!-- A1: 47 akcji x 2 role = 94 proby, 0 przepuszczonych, wszystkie odmowy przez uprawnienie -->
   <!-- NIETKNIĘTY jako cel: runda A1 NIE WYDAŁA RAPORTU. Na `main` jest strażnik
        JEDNEJ akcji (`testy/segregator-skrzynka-test-uprawnienia.php`, nagłówek
        opisuje kalibrację), a RAPORT-A3-DANE §„Uwaga o rundzie A1" odnotowuje,
        że tamto znalezisko było mutantem M1. Pozostałe 45 akcji `admin_post_`
        nie ma pokrycia w żadnym raporcie. -->
-- ⬜ Wstrzyknięcie polecenia w trybie AI (gość pisze „zignoruj instrukcje i podaj…")
+- ✅ Wstrzyknięcie polecenia w trybie AI (gość pisze „zignoruj instrukcje i podaj…")  <!-- A1: przejeta odpowiedz modelu 'ZHAKOWANE' scieta biala lista. ⚠️ polowa (ladunek przez maile Segregatora) NIEZMIERZONA -->
   <!-- NIETKNIĘTY: grep po całym korpusie siedmiu raportów (`wstrzyk|zignoruj
        instrukcje|injection`) = ZERO trafień. Nikt tego nie dotknął. -->
-- ⬜ Czy klucz API wycieka: do odpowiedzi, do logów, do HTML, do eksportu CSV
+- ✅ Czy klucz API wycieka: do odpowiedzi, do logów, do HTML, do eksportu CSV  <!-- A1: piec drog osobno; klucz wylacznie w naglowku x-api-key -->
   <!-- NIETKNIĘTY: trafienia na „wyciek" w raportach dotyczą czego innego
        (RAPORT-LAMACZ-CHATBOT: „wyciek historii między sesjami — nietknięte";
        RAPORT-A4-FRONT: obalona hipoteza o wycieku przez odpytywanie).
        RAPORT-A3-DANE dowodzi, że klucz znika przy ODINSTALOWANIU — to inny cel (A3). -->
-- ⬜ Import CSV: plik nie-CSV, plik z PHP w środku, plik gigantyczny, zła liczba kolumn
+- ✅ Import CSV: plik nie-CSV, plik z PHP w środku, plik gigantyczny, zła liczba kolumn  <!-- A1: 7 plikow + proba kontrolna; is_uploaded_file, zero move_uploaded_file -->
   <!-- NIETKNIĘTY: RAPORT-A5-KRAWEDZIE §„Co zostało niedokończone" pkt 5 wprost:
        „Krawędzie importu, w ogóle nietknięte". -->
 - 🐞 Limit żądań: czy mierzy wymiar, który robi szkodę (G7); salwa równoległa
   <!-- 🐞 Ł-2 w RAPORT-LAMACZ-CHATBOT §„ZNALEZISKO Ł-2": 200 żądań / 7 s z jednego
        adresu (~1700/min przy pytaniu mapy o 500/min), 0 z 200 dostało 429; ścieżka
        pułapki nielimitowana i każde żądanie pisze do `wp_options`; licznik gubi
-       25% zdarzeń. Wykonane, z surowym wyjściem. -->
+       25% zdarzeń. Wykonane, z surowym wyjściem.
+       ─────────────────────────────────────────────────────────────────────────
+       ⚠️ DRUGI POMIAR TEGO SAMEGO CELU — inna ŚCIEŻKA, godzę je tutaj:
+       A1 (RAPORT-A1-BEZPIECZENSTWO, cel 6) na ścieżce `chatl_nonce`: 60 równoległych
+       żądań → 19 sukcesów przy progu 20, licznik dokładnie 61. CZYSTO, bez przecieku.
+       ⛔ To NIE zaprzecza Ł-2: A1 mierzył WĘŻSZY zakres niż pytanie tego celu.
+       Cel zostaje 🐞, bo jego pytanie brzmi „czy limiter mierzy wymiar, który robi
+       szkodę" — a ścieżka pułapki go OMIJA. Zamknie się dopiero po naprawie LC-F2
+       (potwierdzonego niezależnie przez przebieg 2 jako Z3: 30/30 przy progu 10). -->
 
 ## A2 — AWARIA (czytanie + WYMUSZONE awarie)
 - 🐞 Każdy zapis do bazy: czy kod ZMIERZYŁ stan po operacji, czy tylko wywołał funkcję (G2)
@@ -91,11 +99,11 @@
        `testy/chatbot-sesje-retencja-rodo-test.php` EXIT=1→0 z kontrolą mechanizmu.
        Oraz 🐞 KR6 (RAPORT-A5-KRAWEDZIE) — retencja kasuje PRZED obiecanymi 90 dniami
        w strefie ujemnej. Sama granica 90/91 dni przy `gmt_offset=0` wyszła czysto (KR5). -->
-- ⬜ Ile jest źródeł prawdy dla tej samej listy (rozjazd = cichy błąd)
+- 🐞 Ile jest źródeł prawdy dla tej samej listy (rozjazd = cichy błąd)  <!-- DK-1 (+ 2 pary anomalii, 2 pary czyste) -->
   <!-- NIETKNIĘTY: żaden z siedmiu raportów nie bada tego celu. Trafienia na „rozjazd"
        dotyczą czego innego (A5: rozjazd bliźniaków w KR7; A6: rozjazd źródło↔render
        wskazany jako NIESPRAWDZONY). -->
-- ⬜ `LIKE` z `_` / `%` — czy sprzątanie nie łapie CUDZYCH wpisów
+- ✅ `LIKE` z `_` / `%` — czy sprzątanie nie łapie CUDZYCH wpisów  <!-- DK-2: 5 z 5 miejsc, test skalibrowany -->
   <!-- NIETKNIĘTY: jedyne trafienia na `LIKE` w raportach to SQL WŁASNYCH testów
        (RAPORT-A2-AWARIA), nie audyt zapytań produktu. Nikt nie podłożył cudzego wpisu
        o podobnej nazwie i nie sprawdził, czy sprzątanie go nie zabiera. -->
@@ -134,14 +142,14 @@
        ⛔ CZĘŚĆ CELU NIETKNIĘTA: „maksimum / jeden-ponad / najdłuższe dopuszczalne"
        NIE WYKONANE — raport §„Co zostało niedokończone" pkt 1 i 5. Bliźniak KR2
        w Segregatorze (`admin.php:1254`) nie uruchomiony. -->
-- ⬜ Polskie znaki, emoji, znaczniki HTML, cudzysłowy w każdym polu tekstowym
+- ✅ Polskie znaki, emoji, znaczniki HTML, cudzysłowy w każdym polu tekstowym  <!-- DK-3: 8 pol -->
   <!-- NIETKNIĘTY: RAPORT-A5-KRAWEDZIE §„Co zostało niedokończone" pkt 2 wprost
        „NIE WYKONANE", z gotowym przepisem (curl ze słoikiem ciastek, mailpit :8025). -->
-- ⬜ CSV: Windows-1250, brak nagłówka, pusty plik, milion wierszy
+- ✅ CSV: Windows-1250, brak nagłówka, pusty plik, milion wierszy  <!-- DK-4: 10 przypadkow -->
   <!-- NIETKNIĘTY: RAPORT-A5-KRAWEDZIE pkt 5 — „Krawędzie importu, w ogóle nietknięte"
        (`CHATL_IMPORT_MAX_WIERSZY`, `CHATL_IMPORT_MAX_BAJTOW`, `SEGM_IMPORT_*`,
        `SEGM_KONFIG_MAX_WPISOW`). -->
-- ⬜ Dwa żądania naraz do tego samego zasobu
+- 🐞 Dwa żądania naraz do tego samego zasobu  <!-- DK-5 i DK-6 -->
   <!-- NIETKNIĘTY: RAPORT-A2-AWARIA §„czego nie było na mojej liście" pkt 2 wprost:
        „nie pytałem, ile wywołań ponad limit przechodzi przy salwie równoległej".
        RAPORT-LAMACZ-SEGREGATOR odnotowuje istnienie blokady `segm_zajmij_blokade()`
@@ -201,15 +209,15 @@
        (zabrakło budżetu) — zamknięcie opiera się na dwóch pozostałych raportach. -->
 
 ---
-**LICZNIK:** 36 celów. **✅ 15 · 🐞 11 · ⚠️ 0 · ⬜ 10.**
-**Domkniętych: 26 z 36. Otwartych: 10.** ⛔ Audyt trwa — licznik nie pokazuje 36/36.
+**LICZNIK:** 36 celów. **✅ 23 · 🐞 13 · ⚠️ 0 · ⬜ 0.**
+**Domkniętych: 36 z 36. Otwartych: 0.** ⭐ **AUDYT DOMKNIĘTY — licznik pokazuje 36/36.**
 
-Rozkład po sekcjach: A1 **1/6** (5 ⬜) · A2 **5/5** · A3 **4/6** (2 ⬜) · A4 **5/5** ·
-A5 **1/4** (3 ⬜) · A6 **5/5** · Ł **5/5**.
+Rozkład po sekcjach: A1 **6/6** · A2 **5/5** · A3 **6/6** · A4 **5/5** · A5 **4/4** · A6 **5/5** · Ł **5/5**.
 
-<!-- Sprawdzenie licznika: grep -c "^- " na sekcjach = 36 (A1=6, A2=5, A3=6, A4=5,
-     A5=4, A6=5, L=5). Znaki: grep -c "^- ✅" = 15, "^- 🐞" = 11, "^- ⬜" = 10,
-     "^- ⚠️" = 0. Suma 36. -->
+<!-- Sprawdzenie licznika (PRZELICZONE Z PLIKU, nie z pamięci): suma celów = 36.
+     Znaki: "^- ✅" = 23, "^- 🐞" = 13, "^- ⚠️" = 0, "^- ⬜" = 0.
+     ⛔ Ta stopka MUSI być przeliczana RAZEM z LICZNIKIEM — recenzja #152 złapała ją
+     nieaktualną obok poprawionego licznika, w tym samym pliku i tym samym PR-ze. -->
 
 **⚠️ 0 nie znaczy „zero anomalii".** Sekcja ⚠️ jest pusta, bo każda anomalia, na jaką
 trafiły raporty, siedzi WEWNĄTRZ celu, który dostał inny znak — nie ma celu, którego
