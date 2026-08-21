@@ -36,7 +36,18 @@ KATALOG="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=lib-stos-probny.sh
 . "$KATALOG/lib-stos-probny.sh"
 
-PACZKA="${1:-boty/paczki/segregator-maila-1.3.0.zip}"
+KORZEN_REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# ⛔ Domyslna paczka BIERZE SIE Z NAGLOWKA WTYCZKI, nie z wpisanego numeru.
+# Wpisany numer starzeje sie przy pierwszym podbiciu wersji i wtedy dowod cicho
+# bada PORZEDNIA paczke, ktora dalej lezy obok nowej (zlapane przy zamrozeniu
+# 1.5.8: domyslna wartosc wskazywala 1.5.7).
+domyslna_paczka() {
+	local w wersja
+	w="$1"
+	wersja="$(sed -n 's/^ \* Version:[[:space:]]*\([0-9][0-9.]*\).*/\1/p' "$KORZEN_REPO/wtyczki/$w/$w.php" | head -1)"
+	printf 'boty/paczki/%s-%s.zip' "$w" "$wersja"
+}
+PACZKA="${1:-$(domyslna_paczka segregator-maila)}"
 [ -f "$PACZKA" ] || padnij "nie ma paczki [$PACZKA]"
 WTYCZKA=segregator-maila
 

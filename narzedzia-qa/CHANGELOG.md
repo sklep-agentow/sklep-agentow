@@ -17,6 +17,32 @@ pory lądują tutaj.
 
 ### Naprawione
 
+- **`dowod-zachowania-chatbot.sh` — dziura D3 była wadą PRZYRZĄDU, nie bota. Trzy błędy,
+  wszystkie w narzędziu.** Po naprawie dowód na paczce **1.5.8** daje `EXIT=0`:
+  odpowiedź idzie z modelu (`silnik = ai` zapisany przez bota), po odcięciu klucza
+  bot zjeżdża do reguł, znacznik zapisuje się z kodem 401, panel pokazuje ostrzeżenie,
+  a po powrocie API znacznik znika sam.
+
+  1. **Pytał bota szybciej niż próg pułapki na boty.** Sesja i pytanie szły jedno po
+     drugim, a wtyczka traktuje pytanie zadane wcześniej niż `CHATL_PULAPKA_SEKUND`
+     od wydania sesji jako bota: odpowiada tekstem awaryjnym, **nie woła modelu i nie
+     zapisuje ani jednego wiersza rozmowy**. Cały dowód D3 mierzył pułapkę zamiast
+     trybu AI. Przerwa czytana jest teraz **z kodu**, nie wpisana liczbą.
+  2. **Czytał brak opcji jako jej obecność.** `wp option get` nieistniejącej opcji
+     wypisuje „Error: Could not get …", a wrapper `wp()` scala stderr do stdout — więc
+     `[ -z "$(wp option get …)" ]` widział niepusty napis. Dwie pozycje meldowały wadę
+     produktu tam, gdzie produkt zachował się poprawnie. Pytamy teraz PHP-em.
+  3. **Szukał w panelu zdania, którego panel nie pisze** („Ostatnie wywołanie API nie
+     powiodło się" zamiast „Tryb AI nie działa"). Kotwica zgniła po zmianie tekstu.
+
+- **`dowod-zachowania-chatbot.sh` i `dowod-zachowania-segregator.sh` — domyślna paczka
+  brana z NAGŁÓWKA WTYCZKI, nie wpisana numerem.** Wpisany numer starzeje się przy
+  pierwszym podbiciu wersji i wtedy dowód cicho bada **poprzednią** paczkę, która dalej
+  leży obok nowej. Złapane przy zamrożeniu: domyślna wartość wskazywała `1.5.7`, choć
+  zamrożona jest `1.5.8`.
+
+### Naprawione
+
 - **`dowod-zachowania-segregator-proba-kontrolna.sh` — mutant M1 zakotwiczony WZORCEM,
   nie numerem linii.** Było `sed -i '145s/.*/…MUTANT/'`, czyli podmiana CAŁEJ linii 145
   bez względu na jej treść — takie podstawienie udaje się **zawsze**, więc kontrola
