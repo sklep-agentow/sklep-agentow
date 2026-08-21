@@ -17,8 +17,11 @@
 #   chatbot-live      0  (wyczyszczony przy zamrażaniu 1.5.7)
 #   segregator-maila  4  (cztery ścieżki naszego drzewa w DOKUMENTACJA-TECHNICZNA.md;
 #                         zamykane w osobnym PR-ze — po jego scaleniu zostaje 0)
-#   sklep-agentow     0  (komentarze przepisane: sens techniczny został,
-#                         zniknęły odsyłacze do naszego procesu)
+#   sklep-agentow     0  (BYŁO 40 na dzisiejszym mainie — a 42 w chwili odbicia tej
+#                         gałęzi; dwa zamknął po drodze PR #117, przepisując tekst
+#                         sprzedażowy na „nie fabrykujemy ocen". Reszta: komentarze
+#                         przepisane — sens techniczny został, zniknęły odsyłacze
+#                         do naszego procesu.)
 #
 # ⚠️ UWAGA PRZY SCALANIU: ten plik powstaje TAKŻE w PR-ze zamrożenia ChatBota,
 # tam z jedenastoma pozycjami segregatora. Konflikt „oba dodały ten plik" jest
