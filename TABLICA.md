@@ -34,11 +34,37 @@ zielono i PR został scalony. Te testy leżą teraz na `main` i nic o tym nie m�
 **nie jest spełniona ani razu**. Wszystko jest doradcze.
 
 **Kształt naprawy** (do zrobienia, nie zrobione):
-1. Nowa bramka `testy` w `bramki.sh`, uruchamiana przez CI.
-2. Testy dzielą się na dwie listy: **strażnicy** (mają przechodzić — porażka wali CI)
-   i **znaleziska** (padają celowo, bo błąd jeszcze nieнaprawiony).
-3. Lista znalezisk ma prawo **tylko się kurczyć**. Test, który zaczyna przechodzić,
-   przenosi się do strażników. Nowy padający test poza listą = CI na czerwono.
+### ✅ ZROBIONE 21.08 19:12 — ósma bramka `znaleziska`
+
+`narzedzia-qa/bramka-znaleziska.sh` + `audyt/REJESTR-ZNALEZISK.md`, wpięte do `bramki.sh`
+(próg pełny 7 → **8**, tekstowy 4 → **5**). Bramka sprawdza **księgowość znalezisk**:
+
+- liczba OTWARTYCH wpisana wprost w rejestrze musi zgadzać się z liczbą wierszy —
+  dopisanie znaleziska **zatrzymuje bramkę**, dopóki ktoś świadomie nie podniesie liczby;
+- każdy test wskazany w rejestrze **musi istnieć** (martwy odsyłacz udaje, że strażnik stoi);
+- każdy `audyt/boty/RAPORT-*.md` musi być objęty rejestrem — nowy raport nie wniesie
+  znalezisk poza księgowość, czyli dokładnie to, co się nam stało;
+- status musi być ze znanego zbioru (OTWARTE / W NAPRAWIE / ZAMKNIĘTE);
+- bramka **liczy własne kontrole** i pada, gdy wzorzec tabeli przestał pasować — inaczej
+  cicho nie wystartowałaby i świeciła zielono (nasza własna blizna).
+
+**Kalibracja zdana: 4 podstawki na 4 złapane** (rozjazd liczby w nagłówku, test wskazany
+na nieistniejący plik, raport spoza rejestru, wymyślony status), kontrola odwrotna na czystym
+rejestrze EXIT=0. Bramka nie jest napisem.
+
+W rejestrze siedzi **9 znalezisk**: F1/F2/F3 (w naprawie przez #136), A3-1, A3-2, KR1, KR2,
+KR4, KR6 (otwarte).
+
+### ⛔ CZEGO ŚWIADOMIE NIE ZROBIŁAM — czeka na decyzję Dzidka
+
+1. **Wpis do `.github/manifest-bramek.txt`.** Manifest ma własną zasadę, zapisaną w nim
+   samym: *„każda zmiana = osobny PR, który Dzidek czyta w całości; agent NIE dotyka tego
+   pliku w PR-ach z kodem"*. Dopóki bramki tam nie ma, działa i zatrzymuje pull requesty,
+   ale **nie jest minimum** — da się ją usunąć bez alarmu. Ta sama droga, którą przeszła
+   bramka `slady`: najpierw działała, potem wpis uczynił ją nieusuwalną.
+2. **Uruchamiania testów przez CI.** Wszystkie 23 skrypty i 18 testów PHP wymagają żywego
+   stosu Dockera — psują kod w kontenerze i sprawdzają, czy strażnik pada. Równoległe
+   przeloty CI deptałyby sobie po stosie. Wykonanie zostaje przy człowieku i recenzencie.
 
 ## 🔧 PULL REQUESTY
 

@@ -36,11 +36,11 @@ set -u
 # ⛔ Rejestr bramek. Nazwy MUSZĄ zgadzać się z .github/manifest-bramek.txt —
 # pilnuje tego narzedzia-qa/sprawdz-manifest.sh. Kolejność jak w quality.yml
 # sprzed zbicia zadań: najpierw tanie i statyczne, na końcu skan historii.
-BRAMKI=(actionlint manifest slady php-lint phpcs phpstan gitleaks)
+BRAMKI=(actionlint manifest slady znaleziska php-lint phpcs phpstan gitleaks)
 # Bramki dotykające WYŁĄCZNIE kodu PHP — pomijane, gdy zmiana jest tekstowa.
 BRAMKI_PHP=(php-lint phpcs phpstan)
-PROG_PELNY=7
-PROG_TEKSTOWY=4
+PROG_PELNY=8
+PROG_TEKSTOWY=5
 
 # Wersje narzędzi pobieranych, gdy nie ma ich w PATH. Pinowane świadomie:
 # „najnowsza" w bramce oznacza, że CI potrafi zmienić zdanie bez naszej zmiany.
@@ -179,6 +179,14 @@ uruchom_manifest() {
 	bash narzedzia-qa/sprawdz-manifest.sh
 }
 
+# Ksiegowosc znalezisk audytu: czy kazde ma test, status i czy zaden raport nie
+# wnosi znalezisk poza rejestr. ⛔ NIE uruchamia testow — wszystkie wymagaja zywego
+# stosu Dockera, wiec w rownoleglym CI deptalyby sobie po stosie. Pelne uzasadnienie
+# i granica tej kontroli: naglowek narzedzia-qa/bramka-znaleziska.sh.
+uruchom_znaleziska() {
+	bash narzedzia-qa/bramka-znaleziska.sh
+}
+
 uruchom_php_lint() {
 	find wtyczki -name '*.php' -print0 | xargs -0 -n1 php -l > /dev/null || return 1
 	echo "Skladnia czysta."
@@ -223,6 +231,7 @@ echo "=== BRAMKI JAKOSCI — tryb: $TRYB, prog: $PROG z ${#BRAMKI[@]} ==="
 bramka actionlint uruchom_actionlint
 bramka manifest   uruchom_manifest
 bramka slady      uruchom_slady
+bramka znaleziska uruchom_znaleziska
 bramka php-lint   uruchom_php_lint
 bramka phpcs      uruchom_phpcs
 bramka phpstan    uruchom_phpstan
