@@ -15,6 +15,34 @@ pory lądują tutaj.
 
 ## [Niewydane]
 
+### Zmienione
+
+- **`.github/workflows/recenzent.yml` — recenzent URUCHAMIA nasze testy, nie tylko
+  je czyta.** Do `--allowedTools` doszły **23 pozycje**: wszystkie skrypty z `testy/`
+  (poza jednym, niżej), cztery próby kontrolne z `narzedzia-qa/` oraz
+  `bramki.sh` — komplet sześciu bramek jednym poleceniem, którego recenzent dotąd
+  nie mógł wywołać, przez co pisał „nie uruchomiłem phpcs/phpstan".
+
+  Wpisane **jawnie, po jednym**, zamiast wzorca z gwiazdką: lista ma dać się
+  przeczytać w całości i ma boleć przy dopisywaniu, bo każda pozycja to zgoda na
+  wykonanie kodu w checkoucie recenzenta.
+
+  ⛔ **Celowo poza listą: `testy/seed-demo.sh`** — jako jedyny pisze do **wspólnego
+  stosu warsztatowego** (zamówienia demo w bazie), a nie do własnego checkoutu.
+  Reszta prób podmienia pliki wyłącznie u siebie i przywraca je po sobie,
+  a checkout runnera jest jednorazowy i bez prawa zapisu do repo.
+
+  ⛔ **Też poza listą: `dowod-z-paczki` i `dowod-aktualizacji` wraz z próbami** —
+  stawiają kontenery i biegną kilkanaście minut, czyli dłużej niż cała recenzja.
+  To kalibracja przed oddaniem, nie narzędzie recenzenta.
+
+- **`.github/RECENZENT-BRIEFING.md`** — akapit „NASZE TESTY MASZ URUCHAMIAĆ, NIE
+  CZYTAĆ". Zdanie „nie uruchomiłem próby kontrolnej" wolno napisać tylko wtedy,
+  gdy próba **padła albo odmówiła** — wtedy z cytatem jej wyjścia. Sama allowlista
+  nie wystarcza: przy #103 recenzent miał już narzędzie i nadal nie wiedział,
+  że ma po nie sięgnąć.
+
+
 ### Dodane
 
 - **`stos.sh` 1.0.0 — czysto odczytowe okno recenzenta na żywy stos.**

@@ -96,6 +96,14 @@ odpowiedź**. To zdanie wolno napisać tylko wtedy, gdy `stos.sh` sam powiedzia�
 `stos.sh` jest wyłącznie do odczytu i ma zamkniętą listę operacji: nie próbuj
 przez niego niczego zmieniać ani przemycać własnych poleceń, bo odmówi.
 
+NASZE TESTY MASZ URUCHAMIAĆ, NIE CZYTAĆ. Wszystkie skrypty z `testy/` oraz
+próby kontrolne z `narzedzia-qa/` są na Twojej liście narzędzi — wolno Ci je
+wykonać i podać kod wyjścia. Komplet sześciu bramek jednym poleceniem:
+`bash narzedzia-qa/bramki.sh`. Zdanie „nie uruchomiłem próby kontrolnej" jest
+dopuszczalne tylko wtedy, gdy próba **padła albo odmówiła** — wtedy zacytuj jej
+wyjście. Jedyny skrypt świadomie poza listą to `testy/seed-demo.sh`: pisze do
+wspólnego stosu warsztatowego, a nie do Twojego checkoutu.
+
 ŹRÓDŁA — ZASADA TWARDA. Wolno Ci pobierać strony z sieci, ale cytować możesz
 **wyłącznie źródła oficjalne**:
 
