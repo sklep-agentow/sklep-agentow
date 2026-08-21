@@ -15,6 +15,41 @@ pory lądują tutaj.
 
 ## [Niewydane]
 
+### Dodane
+
+- **`dowod-zachowania-segregator.sh` 1.0.0 — dowód zachowania Segregatora NA SKRZYNCE,
+  z paczki.** Odpowiednik `dowod-zachowania-chatbot.sh`, którego dla Segregatora nie było
+  wcale, a punkt D listy domknięcia wymaga go dla OBU botów. Trzy dowody: przebieg
+  **na sucho nie rusza ani jednej wiadomości**, przebieg **na żywo przenosi i daje się
+  cofnąć**, **retencja kasuje wpis sprzed 91 dni i NIE rusza świeższego**.
+
+  ⛔ Stan skrzynki mierzony **niezależnie, Pythonem (`imaplib`) z zewnątrz**, nie klasą
+  `Segm_Imap` z wtyczki — test mierzący tym samym kodem, który sprawdza, potwierdza sam
+  siebie. Skrzynka warsztatowa (`segm_imap`) nietknięta: skrypt stawia **własny**
+  serwer poczty (`probny_imap`, greenmail) i kasuje go po sobie.
+
+  Dwie pułapki złapane po drodze i zamknięte w kodzie: heredok `<<-` zjadał wcięcia
+  skryptu Pythona (pomiar wracał pusty, a puste porównanie „przed == po" świeciło na
+  **zielono** — dowód, który przechodzi, bo nic nie zmierzył), oraz `docker-proxy`
+  przyjmujący połączenie, zanim greenmail podepnie się pod port (czekamy teraz na
+  **powitanie protokołu**, nie na samo TCP). Doszła twarda bramka: jeśli pomiar nie
+  zwróci liczby wiadomości w INBOX, skrypt **pada**, zamiast porównywać puste napisy.
+
+- **`dowod-zachowania-segregator-proba-kontrolna.sh`** — trzy mutanty celujące
+  w obietnice sprzedażowe (na sucho przestaje chronić pocztę, cofnięcie nic nie cofa,
+  retencja kasuje wszystko) plus kontrola odwrotna na czystej paczce. Każdy mutant
+  sprawdzany dwa razy: czy **wszedł do pliku** i czy dowód padł **z właściwego powodu**.
+
+### Naprawione
+
+- **`dowod-z-paczki.sh` — próba trybu regułowego dla Segregatora mierzyła własny błąd.**
+  Podawała maila jako **tablicę** i reguły przez `ARRAY_A`, a silnik czyta `$mail->nadawca`
+  i `$regula->pole` — tak wołają go wszystkie trzy miejsca w produkcji
+  (`skrzynka-przebieg.php:213`, `admin-probka.php:130`, `silnik.php:175`), zawsze wierszami
+  z bazy, czyli obiektami. Efekt: siedem Warningów, „ODPOWIEDZ:Array" i **dowód nie
+  wychodził na poprawnej wtyczce**. Próba buduje teraz obiekty i sprawdza KONKRETNY
+  wynik (`kategoria=Faktury regula=7`), a nie „cokolwiek niepustego".
+
 ### Zmienione
 
 - **Bramka `slady` wpisana do `.github/manifest-bramek.txt` — z siódmej „ponad
