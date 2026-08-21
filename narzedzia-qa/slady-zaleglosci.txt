@@ -12,51 +12,68 @@
 #
 # Format: etykieta|ścieżka względem katalogu wtyczki|treść linii (bez wcięcia).
 #
-# STAN 2026-08-21, przy zamrażaniu ChatBota 1.5.7 — 42 pozycje, ZERO moich:
-#   chatbot-live      0  (wyczyszczony w tym samym PR-ze, 20 śladów usuniętych)
-#   segregator-maila 11  (moduł buildera 2 — zamrożony 1.3.0, paczka wiezie ślady)
-#   sklep-agentow    31  (moduł koordynatora)
-# W żadnym z tych dwóch modułów nie wolno mi ruszyć pliku, więc wpisy czekają na
-# ich właścicieli. Zamrożenie segregatora trzeba z tego powodu powtórzyć.
-segregator-maila|CHANGELOG.md|- Poprawki importu CSV z recenzji: separator, długości pól, puste wiersze.
+# STAN 2026-08-21, po posprzątaniu Segregatora i po rozszerzeniu wzorca do 1.1.0
+# — 46 pozycji:
+#   chatbot-live      0  (wyczyszczony przy zamrażaniu 1.5.7)
+#   segregator-maila  4  (BYŁO 12 przy wzorcu 1.1.0; osiem zamkniętych w tym PR-ze,
+#                         zostały cztery w DOKUMENTACJA-TECHNICZNA.md — plik pod ręką
+#                         buildera 2, nie wolno mi go tknąć)
+#   sklep-agentow    42  (BYŁO 31; jedenaście doszło z rozszerzenia wzorca o nasze
+#                         słownictwo — „krytyk #N", „ściąga egzaminatora". Moduł
+#                         koordynatora, wzięty przez niego na siebie.
+#                         ⚠️ JEDEN z nich jest w tekście WIDZIANYM PRZEZ UŻYTKOWNIKA:
+#                         includes/admin-zamowienie.php — „(podgląd — egzaminator
+#                         widzi mail bez skrzynki)" leci do HTML-a panelu, to nie
+#                         jest komentarz.)
+#
+# ⚠️ UWAGA PRZY SCALANIU: ten plik powstaje TAKŻE w PR-ze zamrożenia ChatBota,
+# tam z jedenastoma pozycjami segregatora. Konflikt „oba dodały ten plik" jest
+# ZAMIERZONY — bierze się wersję z TEGO PR-a (35 pozycji). Wzięcie tamtej zostawi
+# siedem wpisów, które do niczego nie pasują, a martwy wpis zapala bramkę `slady`
+# na czerwono. Kolejność scalania nie ma znaczenia, ważne, która wersja zostaje.
 segregator-maila|DOKUMENTACJA-TECHNICZNA.md|node testy/svg-pomiar-tekstow.js wtyczki/segregator-maila/DIAGRAM-PRZEPLYWU.svg
 segregator-maila|DOKUMENTACJA-TECHNICZNA.md|testy/dokumentacja-zgodnosc-segregator.sh   # każda liczba i nazwa stąd — grepem po kodzie
 segregator-maila|DOKUMENTACJA-TECHNICZNA.md|vendor/bin/phpcs -q wtyczki/segregator-maila/
 segregator-maila|DOKUMENTACJA-TECHNICZNA.md|> w `testy/dokumentacja-zgodnosc-segregator.sh` i wykonuje się jednym poleceniem.
-segregator-maila|includes/ai.php|// nie rozbije formatu promptu (recenzja PR #37).
-segregator-maila|includes/ai.php|* TWARDY limit próbki dla trybów AI/porównaj (recenzja PR #37): jedna partia
-segregator-maila|includes/filtry.php|* (audyt/boty/WZORZEC-gmail-filters.xml): deklaracja XML w apostrofach, kanał
-segregator-maila|includes/filtry.php|* w audyt/boty/WZORZEC-gmail-filters.xml). esc_xml() zamienia apostrof na
-segregator-maila|includes/konfiguracja.php|* nie jest wczytany (np. w WP-CLI). Złapane testem, nie recenzją.
-segregator-maila|includes/silnik.php|* (JEDEN mechanizm rozstrzygania, bez pola priorytet — recenzja PR #27).
 sklep-agentow|assets/front.css|font-size: 0.8rem; /* Spójnie z mono-etykietami (obserwacja recenzji #53). */
+sklep-agentow|assets/front.css|/* PRZED/PO segregacji (§5b.3; etykieta DEMO — krytyk #12). */
 sklep-agentow|assets/front.css|/* ⚠️ ŚWIADOMA DECYZJA (uwaga recenzenta #62): to jest WYRÓWNANIE DO SIATKI,
 sklep-agentow|includes/admin-dashboard.php|* Dashboard „jak dobre sklepy" (K3c; wzorce audyt/WZORCE-DASHBOARD-K3.md):
 sklep-agentow|includes/admin-dashboard.php|// przeczyłby karcie KPI (off-by-one — recenzja PR #44). Słupków jest dni+1.
 sklep-agentow|includes/admin-dashboard.php|sklepag_dociagnij_zalegle( 8 ); // Budżet czasu: render admina nie może wisieć (PR #44); resztę dociągnie cron.
 sklep-agentow|includes/admin.php|* plikach admin-*.php; dashboard „jak dobre sklepy" wg audyt/WZORCE-DASHBOARD-K3.md.
 sklep-agentow|includes/admin-ustawienia.php|* bez reaktywacji — recenzja PR #43), a admin_init biegnie przy każdym wejściu
+sklep-agentow|includes/admin-zamowienie.php|echo '<h2 class="sklepag-box-tytul">Treść wysłanego maila <span class="sklepag-szary">(podgląd — egzaminator widzi mail bez skrzynki)</span></h2>';
 sklep-agentow|includes/admin-zamowienie.php|// Tylko stany PO domknięciu wysyłki (recenzja #45): `mail_w_toku` = webhook
 sklep-agentow|includes/aktywacja.php|// Sprzątamy świeży katalog — bez tego zostaje sierota, której uninstall nie zna (recenzja PR #28).
 sklep-agentow|includes/aktywacja.php|// Ta sama próba kontrolna co dla index.php (recenzja PR #28, uwaga 2. rundy).
 sklep-agentow|includes/aktywacja.php|// Ta sama widzialność błędu co niżej — porażka mkdir to też cicha ślepota (recenzja PR #28).
 sklep-agentow|includes/class-sklepag-lista-zamowien.php|// Data wg ustawień WP (spójność z resztą wp-admin — recenzja PR #44).
+sklep-agentow|includes/class-sklepag-sitemap-produkty.php|* oficjalna droga to własny WP_Sitemaps_Provider (krytyk #5).
 sklep-agentow|includes/front-produkt.php|* (boty/TRESC-STRON-PRODUKTOW.md — problem/kroki/dowody/FAQ/mockupy).
 sklep-agentow|includes/front-produkt.php|// całości dublowało tokeny i celowało w zły człon (recenzja #60).
+sklep-agentow|includes/front-produkt.php|// ILE CZASU ODZYSKUJESZ (S-03; krytyk #9 — dedykowane miejsce).
 sklep-agentow|includes/front-produkt.php|// I włącznik w jej ustawieniach ON (recenzja #52 — sama aktywność nie
+sklep-agentow|includes/front-produkt.php|* Slug strony sklepu z opcji (krytyk #4: hardkod „sklep" pęka przy „-2").
 sklep-agentow|includes/front-produkt.php|'uczciwosc'    => 'Nie znajdziesz tu opinii z gwiazdkami — sprzedajemy od niedawna i nie zmyślamy recenzji; zamiast tego masz raport z liczbami z TWOJEJ próbki. Reguły układasz i sprawdzasz na próbce, a potem puszczasz je na PRAWDZIWEJ skrzynce: wtyczka rozkłada pocztę do folderów na serwerze poczty, domyślnie chodzi NA SUCHO i nie rusza ani jednej wiadomości, dopóki sam nie potwierdzisz, a ostatni przebieg cofniesz jednym kliknięciem. Czego nie ma, mówimy przed zakupem: logowanie tylko loginem i hasłem aplikacji, więc Microsoft 365 i Outlook.com NIE zadziałają (tam wymagane jest OAuth); na skrzynce klasyfikują reguły, nie AI; bez czytania załączników.',
 sklep-agentow|includes/front-produkt.php|'uczciwosc'    => 'Nie znajdziesz tu opinii z gwiazdkami — sprzedajemy od niedawna i nie zmyślamy recenzji; zamiast tego masz tryb testowy i seed demo, żeby sprawdzić samemu. Pełnoprawny silnik regułowy działa od razu — bez kluczy i opłat. „LIVE" znaczy: żywy człowiek (Ty) odpisuje na zebrane kontakty — bot nie udaje wszechwiedzy. Tryb AI włączasz WŁASNYM kluczem; przy limicie dziennym lub błędzie bot sam wraca do reguł. Prywatność: w trybie regułowym treść rozmów nie opuszcza Twojego serwera; w trybie AI pytanie gościa idzie do API dostawcy (informacja też do Twojej polityki prywatności).',
+sklep-agentow|includes/front-seo.php|// JSON-LD: Product (image WYMAGANE przez Google — krytyk #6) + okruszki.
+sklep-agentow|includes/front-seo.php|* Provider sitemap dla produktów (własna tabela ≠ CPT — krytyk #5;
 sklep-agentow|includes/front-seo.php|* sanityzacja co w renderze (recenzja #52, drobna).
 sklep-agentow|includes/front-seo.php|* TYLKO na stronie sklepu (recenzja #52, WAŻNA): bez tego warunku KAŻDY adres
 sklep-agentow|includes/logowania.php|* ⛔ Amplifikacja przez równoległość (recenzja PR #42): salwa równoczesnych
+sklep-agentow|includes/logowania.php|const SKLEPAG_OPOZNIENIE_SUFIT_S = 60;      // Plan §7: sufit opóźnienia; OPÓŹNIENIE, nie blokada (wspólne konta — nie wolno zablokować egzaminatora).
+sklep-agentow|includes/logowania.php|* rosnących opóźnieniach — egzaminatora to nie dotyka (i nie jest to
 sklep-agentow|includes/zakup.php|// 2) ZAMÓWIENIA niedomknięte (KRYTYCZNA z recenzji PR #33): sesja dostaje stan
 sklep-agentow|includes/zakup.php|break; // Resztę dociągnie cron — render admina nie może wisieć (PR #44).
 sklep-agentow|includes/zakup.php|// (fail-open). Dziś licznik+1 to gwarantuje (uwaga recenzji #57).
 sklep-agentow|includes/zakup.php|// Filtry schodzą też przy rzucie z wp_mail — nie mogą wisieć na resztę żądania (recenzja PR #43).
+sklep-agentow|includes/zakup.php|*                      hostingu i wywalił render; ściąga egzaminatora: „100 s > 30 s").
 sklep-agentow|includes/zakup.php|// Inkrementacja MUSI być atomowa (recenzja PR #33): para get/set transient
 sklep-agentow|includes/zakup.php|// recenzja PR #40, wzorzec przeniesiony z chatl_rate_limit).
 sklep-agentow|includes/zakup.php|return isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '0.0.0.0';
 sklep-agentow|includes/zakup.php|*                      (self-heal/przycisk na dashboardzie — recenzja PR #44: worst-case
 sklep-agentow|sklep-agentow.php|define( 'SKLEPAG_LIMIT_POBRAN', 10 ); // Jedno źródło: INSERT zamówienia + treść maila (recenzja PR #33).
 sklep-agentow|uninstall.php|* kasował klucza API"; recenzja PR #43). Symetria zapis<->sprzątanie: każda
+sklep-agentow|uninstall.php|* sprzedaży — kasowane ZAWSZE (klasa #1 ściągi egzaminatora: „uninstall nie
 sklep-agentow|uninstall.php|// w wp_usermeta, nie w wp_options (recenzja PR #44 — symetria zapis↔sprzątanie).

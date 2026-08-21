@@ -33,7 +33,7 @@ const SEGM_AI_TIMEOUT    = 9;
 const SEGM_AI_PARTIA     = 30;
 
 /*
- * TWARDY limit próbki dla trybów AI/porównaj (recenzja PR #37): jedna partia
+ * TWARDY limit próbki dla trybów AI/porównaj: jedna partia
  * to maks. 18 s (timeout 9 s + jeden retry 9 s), a limit PHP hostingu bywa
  * 30 s wall-clock — z zapasem mieści się dokładnie JEDNO wywołanie na
  * przebieg (18 s < 30 s, zapas 12 s). Dwa wywołania (36 s) już nie.
@@ -469,7 +469,7 @@ function segm_ai_zapytaj( $system, $tresc, $licz_do_limitu = true ) {
  */
 function segm_ai_klasyfikuj_partie( $maile, $kategorie ) {
 	// Nazwy kategorii przez wp_json_encode — cudzysłów/backslash w nazwie
-	// nie rozbije formatu promptu (recenzja PR #37).
+	// nie rozbije formatu promptu.
 	$lista = implode( ', ', array_map( fn( $k ) => wp_json_encode( $k, JSON_UNESCAPED_UNICODE ), $kategorie ) );
 
 	$system = 'Klasyfikujesz maile firmowe do kategorii. Dozwolone kategorie: ' . $lista . '.' . "\n"

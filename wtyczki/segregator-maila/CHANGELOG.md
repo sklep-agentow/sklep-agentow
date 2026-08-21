@@ -177,7 +177,7 @@ do prawdziwej skrzynki. Zbiera zmiany scalone do gałęzi głównej po 1.2.1.
 
 ### Naprawione
 
-- Poprawki importu CSV z recenzji: separator, długości pól, puste wiersze.
+- Poprawki importu CSV: separator, długości pól, puste wiersze.
 
 ## [1.1.0] — 2026-08-18
 

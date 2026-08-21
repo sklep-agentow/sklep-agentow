@@ -41,7 +41,7 @@ const SEGM_KONFIG_MAX_WPISOW = 500;
  * Świadomie WŁASNA stała, a nie SEGM_MAX_POLE z csv.php: tamta pilnuje pola
  * w importowanym CSV i mieszkają w innym pliku. Sięganie po nią stąd wiązałoby
  * ten plik z kolejnością ładowania — i wywracało się wszędzie, gdzie csv.php
- * nie jest wczytany (np. w WP-CLI). Złapane testem, nie recenzją.
+ * nie jest wczytany (np. w WP-CLI). Złapane testem, nie czytaniem kodu.
  */
 const SEGM_KONFIG_MAX_WZORZEC = 2000;
 

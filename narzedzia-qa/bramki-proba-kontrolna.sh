@@ -134,6 +134,10 @@ slad_probuj "TODO w pliku wtyczki"           "// TODO: dokonczyc przed oddaniem"
 slad_probuj "adres maszyny dev"              "// sprawdzone na http://localhost:8890/wp-admin/" "adres maszyny dev"
 slad_probuj "odsylacz do naszego drzewa"     "// liczbe pilnuje testy/silnik-test.php" "ścieżka naszego drzewa roboczego"
 slad_probuj "numer PR-a i recenzent"         "// uwaga recenzenta do PR #133" "nasz obieg pracy"
+# BLIZNIAK: to samo o naszym obiegu, ale BEZ slowa "recenzja" i bez numeru PR-a.
+# Wzorzec 1.0.0 tego nie widzial i zostawil taki komentarz w Segregatorze.
+slad_probuj "nasze slownictwo bez numeru zgloszenia" "// zarzut z pierwszej rundy krytyk" "nasz obieg pracy"
+slad_probuj "sciaga egzaminatora w komentarzu"       "// klasa #1 sciagi egzaminatora" "nasz obieg pracy"
 
 # Lista zaleglosci ma sie KURCZYC, a nie gnic: wpis, ktory do niczego nie pasuje,
 # jest czerwony. Inaczej po refaktorze zostaje spis rzeczy, ktorych juz nie ma.

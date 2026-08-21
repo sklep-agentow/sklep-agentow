@@ -15,6 +15,20 @@ pory lądują tutaj.
 
 ## [Niewydane]
 
+### Naprawione
+
+- **`slady-wewnetrzne.sh` 1.0.0 → 1.1.0 — wzorzec „nasz obieg pracy" łapie NASZE
+  SŁOWNICTWO, nie tylko nasze numery.** W Segregatorze został **bliźniak**
+  wyczyszczonych śladów: „Zarzut z pierwszej **rundy krytyk**" mówi o naszym obiegu
+  dokładnie to samo, co „recenzja PR #27", tylko innymi słowami — i wzorzec go nie
+  widział. Poprawienie samego zdania byłoby naprawą egzemplarza, więc wzorzec dostał
+  `\bkrytyk`, `egzaminator` i `Dzidek` (granica słowa przy `krytyk` jest konieczna:
+  bez niej wzorzec łapie „diakrytyków"). Dwa nowe przypadki w próbie kontrolnej.
+  Skutek na repozytorium: segregator 11 → 12 znalezionych (wszystkie zamknięte poza
+  czterema w dokumentacji), sklep 31 → 42 — w tym **jeden ślad w tekście widzianym
+  przez użytkownika**, nie w komentarzu: `sklep-agentow/includes/admin-zamowienie.php`
+  wypisuje w panelu „(podgląd — egzaminator widzi mail bez skrzynki)".
+
 ### Dodane
 
 - **`slady-wewnetrzne.sh` 1.0.0 — nowe narzędzie i SIÓDMA bramka `slady`

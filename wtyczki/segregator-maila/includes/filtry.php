@@ -215,8 +215,8 @@ function segm_filtry_bezpieczny_komentarz( $tekst ) {
  * Jedna właściwość filtra.
  *
  * Atrybuty w APOSTROFACH, wcięcie tabulatorami, znacznik samozamykający —
- * dokładnie tak, jak w pliku wyeksportowanym z żywej skrzynki (wzorzec
- * w audyt/boty/WZORZEC-gmail-filters.xml). esc_xml() zamienia apostrof na
+ * dokładnie tak, jak w pliku wyeksportowanym z żywej skrzynki.
+ * esc_xml() zamienia apostrof na
  * &apos;, więc wartość z apostrofem nie rozbije atrybutu.
  *
  * @param string $nazwa   Nazwa właściwości (from, subject, hasTheWord, ...).
@@ -246,8 +246,8 @@ function segm_filtry_id( $rodzaj, $przyrostek ) {
 /**
  * Plik XML do „Importuj filtry” w Gmailu.
  *
- * Struktura odwzorowana z PLIKU WYEKSPORTOWANEGO Z ŻYWEJ SKRZYNKI
- * (audyt/boty/WZORZEC-gmail-filters.xml): deklaracja XML w apostrofach, kanał
+ * Struktura odwzorowana z PLIKU WYEKSPORTOWANEGO Z ŻYWEJ SKRZYNKI:
+ * deklaracja XML w apostrofach, kanał
  * Atom z title/id/updated/author, każdy filtr jako <entry> z category
  * term='filter', title „Mail Filter”, id, updated i PUSTYM <content>, a dopiero
  * potem właściwości. Nazwy właściwości pochodzą z dokumentacji Google

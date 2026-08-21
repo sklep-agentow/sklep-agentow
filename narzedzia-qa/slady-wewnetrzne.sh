@@ -1,5 +1,5 @@
 #!/bin/bash
-# slady-wewnetrzne.sh — czy to, co dostaje kupujący, wiezie NASZE ślady.   WERSJA 1.0.0
+# slady-wewnetrzne.sh — czy to, co dostaje kupujący, wiezie NASZE ślady.   WERSJA 1.1.0
 #
 # PO CO TO POWSTAŁO: przy zamrażaniu ChatBota 1.5.7 okazało się, że paczka wiozła
 # klientowi 20 śladów w 8 plikach — odsyłacze do plików, których kupujący nie
@@ -29,7 +29,7 @@
 #               2 = zła liczba argumentów / nie ma katalogu
 set -u
 
-WERSJA_NARZEDZIA=1.0.0
+WERSJA_NARZEDZIA=1.1.0
 
 ETYKIETA="${1:-}"
 KATALOG="${2:-}"
@@ -44,11 +44,18 @@ ZALEGLOSCI="${SLADY_ZALEGLOSCI:-$KORZEN_NARZEDZIA/slady-zaleglosci.txt}"
 
 # Klasa śladu | wzorzec ERE. Wzorce celowo wąskie: bramka, która krzyczy na
 # zwykłe polskie słowa, zostanie wyłączona po tygodniu i nie wróci.
+#
+# 1.1.0 — „nasz obieg pracy" dostał NASZE SŁOWNICTWO, nie tylko nasze numery.
+# Powód z życia: w Segregatorze został BLIŹNIAK wyczyszczonych śladów —
+# „Zarzut z pierwszej rundy krytyk" mówi o naszym obiegu dokładnie to samo, co
+# „recenzja PR #27", tylko innymi słowami, więc wzorzec go NIE WIDZIAŁ. Naprawa
+# samego zdania byłaby naprawą egzemplarza. `\bkrytyk` z granicą słowa, bo bez
+# niej wzorzec łapie „diakrytyków".
 SLADY=(
 	"znacznik roboczy|TODO|FIXME|@todo|\bHACK\b|\bXXX\b|NOTATK[AI] QA|DO USUNIECIA PRZED"
 	"adres maszyny dev|localhost|127\.0\.0\.1|0\.0\.0\.0|:8890|:8025|mailpit|ngrok|wp-env|vagrant|\.ddev\b"
 	"ścieżka naszego drzewa roboczego|/root/praca|(^|[^a-zA-Z0-9/._-])(testy|boty|audyt|narzedzia-qa|wtyczki)/"
-	"nasz obieg pracy|PR #[0-9]|recenzent|recenzj|koordynator|builder[0-9]|prób[ay] kontroln|proba-kontrolna|mutant"
+	"nasz obieg pracy|PR #[0-9]|recenzent|recenzj|koordynator|builder[0-9]|prób[ay] kontroln|proba-kontrolna|mutant|\\bkrytyk|egzaminator|Dzidek"
 )
 
 # --- wczytanie listy zaległości ----------------------------------------------
