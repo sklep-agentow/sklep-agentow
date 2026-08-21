@@ -7,7 +7,7 @@
 > do CI" i **nie była spełniona ani razu**. W `testy/` leżało 57 plików, CI nie uruchamiało
 > żadnego. PR #135 wniósł dwa celowo padające testy — i przeszedł na zielono.
 
-## Liczba znalezisk OTWARTYCH: 15
+## Liczba znalezisk OTWARTYCH: 17
 <!-- BRAMKA: powyższa liczba musi zgadzać się z liczbą wierszy o statusie OTWARTE.
      Dopisanie znaleziska ZATRZYMUJE bramkę, dopóki ktoś świadomie nie podniesie liczby.
      ⭐ Ta liczba ma prawo TYLKO MALEĆ. Jeśli rośnie — to znaczy, że audyt znalazł coś nowego,
@@ -18,7 +18,7 @@
      Łamacz ChatBot, Łamacz Segregator). Nic nie zniknęło — trzy dawne wiersze `F1`/`F2`/`F3`
      przeszły na ZAMKNIETE (scalone #136, e28b825), więc wypadły z licznika OTWARTYCH. -->
 
-## Znalezisk BEZ strażnika: 7
+## Znalezisk BEZ strażnika: 9
 <!-- BRAMKA: liczba wierszy, ktore w kolumnie testu maja „BRAK — do dopisania".
      To NIE jest usterka rejestru — to DLUG. Znalezisko dowiedzione wykonaniem, ale bez
      straznika, ktory by pilnowal, zeby nie wrocilo. Prowadzimy go tak samo jak dlug sladow
@@ -29,7 +29,8 @@
      ⛔ Wiersz wskazujacy nieistniejacy plik o KONKRETNEJ nazwie to co innego — to twardy
      blad bramki, bo martwy odsylacz UDAJE, ze straznik stoi.
 
-     Stan 21.08: siedem znalezisk bez straznika to A4-F1..F4, A6-F2, LC-F1, LC-F2.
+     Stan 21.08 wieczor: dziewiec bez straznika — A4-F1..F4, A6-F2, LC-F2, P2-Z1, P2-Z2, P2-Z4.
+     LC-F1 wypadlo (OBALONE, sekcja nizej). Przebieg 2 nie zostawil ANI JEDNEGO pliku testu.
      Raporty A4 i Lamacz ChatBot dowiodly swoich znalezisk komendami wpisanymi w terminal
      i przegladarka (curl do admin-ajax.php, konsola JS) — nie zostawily po sobie pliku. -->
 
@@ -38,7 +39,7 @@ Każdy raport numerował swoje znaleziska od nowa i cztery raporty użyły tych 
 kodów `F1`–`F4` na różne błędy. Kody w tabeli mają więc **prefiks soczewki**, a numer
 został oryginalny, żeby dało się wrócić do raportu:
 
-- **`A2-`** — awaria · `RAPORT-A2-AWARIA.md`, w raporcie `F1`–`F4`
+- **`A2-`** — awaria · `RAPORT-A1-BEZPIECZENSTWO.md` · `RAPORT-PRZEBIEG2-CHATBOT.md` · `RAPORT-A2-AWARIA.md`, w raporcie `F1`–`F4`
 - **`A3-`** — dane · `RAPORT-A3-DANE.md`, w raporcie `A3-1`, `A3-2` (już jednoznaczne, zostawione bez zmian)
 - **`KR`** — krawędzie · `RAPORT-A5-KRAWEDZIE.md`, w raporcie `KR1`–`KR6` (już jednoznaczne, zostawione bez zmian)
 - **`A4-`** — front i używalność · `RAPORT-A4-FRONT.md`, w raporcie `F1`–`F4`
@@ -69,8 +70,10 @@ i bramka policzyła siedem nieistniejących znalezisk z nieznanym statusem.
 | `A4-F4` | przełącznik czatu nie mówi czytnikowi ekranu, czy jest otwarty (WCAG poziom A) | BRAK — do dopisania | OTWARTE |
 | `A6-F1` | deklaracja prywatności ChatBota nie wymienia wszystkiego, co naprawdę wychodzi do API | `testy/a6-deklaracja-vs-ladunek-ai.php` | OTWARTE |
 | `A6-F2` | materiał audytowy twierdzi, że dwie największe funkcje botów nie istnieją — każdy następny audyt startuje z fałszywym obrazem produktu | BRAK — do dopisania | OTWARTE |
-| `LC-F1` | PIERWSZA wiadomość każdego gościa jest po cichu wyrzucana przez pułapkę na boty | BRAK — do dopisania | OTWARTE |
-| `LC-F2` | ścieżka pułapki jest całkowicie nielimitowana i każde żądanie pisze do `wp_options` | BRAK — do dopisania | OTWARTE |
+| `LC-F2` | ścieżka pułapki jest całkowicie nielimitowana i każde żądanie pisze do `wp_options` — ⭐ **POTWIERDZONE NIEZALEŻNIE** przez przebieg 2 (jego `Z3`): 30/30 żądań przeszło przy progu 10 | BRAK — do dopisania | OTWARTE |
+| `P2-Z1` | „Przetestuj klucz" pyta o inną stałą niż bot — właściciel z własnym modelem widzi zielone „Klucz działa" przy martwym trybie AI, a przycisk przy okazji kasuje jedyny pasek o awarii | BRAK — do dopisania | OTWARTE |
+| `P2-Z2` | opcja `chatl_pulapka` przeżywa pełne odinstalowanie, choć dokumentacja obiecuje pustą różnicę bazy | BRAK — do dopisania | OTWARTE |
+| `P2-Z4` | paczka RODO opisuje wiadomości **operatora** jako „Bot" — dokument wydawany na wniosek art. 15 mówi co innego niż okno czatu | BRAK — do dopisania | OTWARTE |
 | `LS-F1` | cofnięcie przebiegu melduje sukces dla maili, których nie ruszyło, i zamyka drogę odwrotu | `audyt/boty/repro/lamacz-cofanie.php` | OTWARTE |
 | `LS-F2` | baza pada w połowie przebiegu na żywo: poczta przeniesiona, historia pusta, cofanie martwe, panel pokazuje sukces | `audyt/boty/repro/lamacz-baza-i-srodowisko.php` | W NAPRAWIE |
 
@@ -96,6 +99,19 @@ wymaga osobnej decyzji.
      — są wymienione z góry, żeby ich scalenie nie zatrzymało bramki. -->
 
 ---
+
+## ⛔ OBALONE — poza tabelą i poza licznikiem, ale ZOSTAJE jako ślad
+
+**`LC-F1` — „pierwsza wiadomość każdego gościa ginie w pułapce na boty" — OBALONE.**
+Weryfikator zmierzył w prawdziwej przeglądarce: sesja powstaje **przy kliknięciu bąbelka**
+(`widget.js:527` w `start()`), nie przy wysyłce, więc zegar pułapki liczy cały czas pisania.
+Odstęp otwarcie→wysłanie wyszedł **2,73 s**, wiadomość doszła, rozmowa się zapisała.
+Autor przejechał się na stanowisku: `curl` strzelający dwa żądania po sobie **z konstrukcji**
+odtwarzał tezę „sesja rodzi się w chwili wysłania".
+⚠️ **Co z obawy zostaje:** wysłanie poniżej ~1,9 s od otwarcia rzeczywiście gubi wiadomość po cichu —
+ale uzyskano to programowym kliknięciem przy **0,155 s**; człowiek nie napisze pytania w tym czasie.
+⭐ Wpis zostaje, bo obalone znalezisko jest tak samo cenne jak potwierdzone: uratowało nas przed
+naprawianiem czegoś, czego nie ma. ⛔ Nie liczy się do OTWARTYCH ani do długu strażników.
 
 ## ⚠️ ANOMALIE — poza tabelą i poza licznikiem
 
