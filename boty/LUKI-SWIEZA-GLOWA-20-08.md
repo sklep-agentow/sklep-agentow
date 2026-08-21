@@ -135,7 +135,7 @@ w bazie sklepu. (Pamięć: `zmiana-napisu-uniewaznia-materialy`.)
 ---
 
 ## DESTYLAT Z DOKUMENTACJI API — odblokowuje L3 i doprecyzowuje L5
-Pełny: `/root/praca/zlecenia/destylat-api-anthropic-20-08.md` (20.08, ze ścieżkami dowodów).
+Pełny: `boty/destylat-api-anthropic.md` (20.08, ze ścieżkami dowodów).
 
 **Do L3 (tokeny i koszt):**
 - `usage` w odpowiedzi ma cztery pola: `input_tokens`, `output_tokens`,
