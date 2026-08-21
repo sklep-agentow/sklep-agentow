@@ -36,6 +36,21 @@ dziś jest **w całości w WordPressie**). Zostawione dla historii decyzji:
 ⚠️ `CLAUDE.md` mówi o tym wprost: „jeśli gdzieś tak napisano, to świat sprzed zwrotu D16
 i jest nieaktualny".
 
+## 📅 RAPORTY Z DATĄ — aktualne tylko wtedy, gdy stan się nie zmienił
+
+⚠️ **Trzecia kategoria, której łatwo nie zauważyć.** To nie są ani dokumenty żywe, ani archiwum:
+to zdjęcia stanu z konkretnego dnia. Odwołują się do starej architektury **jako do przeszłości**
+— więc trafienia na „Cloudflare/Worker/Next.js" NIE znaczą, że plik jest nieaktualny.
+
+- `SPRZATANIE-RAPORT.md` (18.08) — 14 trafień na słowa starej architektury, ale opisuje
+  **dzisiejsze śmieci**: `node_modules/` jako relikt po zwrocie D16. ⭐ Sprawdzone 21.08:
+  `node_modules/` **nadal istnieje** (~195 MB), więc raport jest **aktualny**.
+- `audyt/POMIAR-CZASU.md`, `audyt/K6-RAPORT-TESTERA.md`, `audyt/DZIEN-1.md` — ta sama zasada.
+
+⛔ **Zanim powołasz się na taki raport — sprawdź, czy jego treść jest jeszcze prawdziwa.**
+Sama liczba trafień na słowa kluczowe to **poszlaka, nie dowód**: `CLAUDE.md` ma jedno trafienie
+i jest to zdanie OSTRZEGAJĄCE, a `DECYZJE.md` ma pięć, bo **zapisuje sam zwrot D16**.
+
 ## 🕳️ CZEGO NIE MA — nie szukaj, zgłoś jako brak
 
 - **Bank mutantów NIE leży w repo** i to jest celowe — patrz `material/README-BANK-MUTANTOW.md`.
