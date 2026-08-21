@@ -9,7 +9,9 @@ wersjonowanie według [SemVer](https://semver.org/lang/pl/).
 
 _Nic jeszcze nie czeka na wydanie._
 
-## [1.3.1] - 2026-08-21
+---
+
+## [1.3.1] — 2026-08-21
 
 ### Zmienione
 
