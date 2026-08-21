@@ -3,8 +3,8 @@
  * Odinstalowanie. Wzorzec dojrzałych sklepów: dane sprzedaży domyślnie ZOSTAJĄ;
  * pełne czyszczenie tylko przy włączonej opcji sklepag_usun_dane_przy_odinstalowaniu.
  * WYJĄTEK: sekrety (klucz Stripe, sekret webhooka) to POŚWIADCZENIA, nie dane
- * sprzedaży — kasowane ZAWSZE (klasa #1 ściągi egzaminatora: „uninstall nie
- * kasował klucza API"; recenzja PR #43). Symetria zapis<->sprzątanie: każda
+ * sprzedaży — kasowane ZAWSZE (najczęstszy błąd wtyczek: „uninstall nie
+ * kasował klucza API"). Symetria zapis<->sprzątanie: każda
  * rzecz zapisywana przez wtyczkę ma tu swój wiersz.
  */
 
@@ -68,5 +68,5 @@ wp_clear_scheduled_hook( 'sklepag_dociagnij_zalegle' );
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $wpdb->esc_like( 'sklepag_' ) . '%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- uninstall.
 
 // 6. User meta wtyczki: Screen Options „na stronę" zapisuje się per użytkownik
-// w wp_usermeta, nie w wp_options (recenzja PR #44 — symetria zapis↔sprzątanie).
+// w wp_usermeta, nie w wp_options (symetria zapis↔sprzątanie).
 delete_metadata( 'user', 0, 'sklepag_zamowien_na_strone', '', true );

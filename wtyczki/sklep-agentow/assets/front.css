@@ -34,7 +34,7 @@
 	grid-template-columns: 1fr min(72rem, 100%) 1fr;
 }
 
-/* ⚠️ ŚWIADOMA DECYZJA (uwaga recenzenta #62): to jest WYRÓWNANIE DO SIATKI,
+/* ⚠️ ŚWIADOMA DECYZJA: to jest WYRÓWNANIE DO SIATKI,
    nie centrowanie treści. Sekcje trzymają własny `max-width` (czytelna długość
    linii) i stoją przy LEWEJ krawędzi toru — dokładnie tak jak treść gospodarza
    (jego `max-w-[42rem]` też siedzi przy lewej krawędzi `container-site`).
@@ -92,7 +92,7 @@
 /* Baner trybu testowego — mono-pasek, spokojny (plan §4: nie krzyczący alert). */
 .sklepag-baner-testowy {
 	font-family: var(--sklepag-mono);
-	font-size: 0.8rem; /* Spójnie z mono-etykietami (obserwacja recenzji #53). */
+	font-size: 0.8rem; /* Spójnie z mono-etykietami. */
 	letter-spacing: 0.14em;
 	text-transform: uppercase;
 	color: var(--sklepag-limonka);
@@ -502,7 +502,7 @@ a.sklepag-kup {
 	margin: 0;
 }
 
-/* PRZED/PO segregacji (§5b.3; etykieta DEMO — krytyk #12). */
+/* PRZED/PO segregacji (§5b.3; etykieta DEMO). */
 .sklepag-przedpo {
 	margin-top: 2rem;
 }

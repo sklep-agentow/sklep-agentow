@@ -25,7 +25,7 @@ add_action( 'admin_init', 'sklepag_ustawienia_rejestracja' );
  * istniejącej opcji — bez tego pierwszy zapis dałby autoload=yes i sekrety
  * ładowałyby się na froncie przy każdym żądaniu (plan §7). Właśnie TU, nie
  * w aktywacji: hak aktywacji nie odpala przy update-in-place (podmiana plików
- * bez reaktywacji — recenzja PR #43), a admin_init biegnie przy każdym wejściu
+ * bez reaktywacji), a admin_init biegnie przy każdym wejściu
  * do admina i add_option jest no-opem, gdy opcja już istnieje; na froncie zero
  * kosztu (admin_init tam nie ma).
  */

@@ -135,7 +135,7 @@ class Sklepag_Lista_Zamowien extends WP_List_Table {
 				return '<a href="' . esc_url( $url ) . '"><strong>#' . (int) $item->id . '</strong></a>'
 					. $this->row_actions( array( 'view' => '<a href="' . esc_url( $url ) . '">Szczegóły</a>' ) );
 			case 'utworzono':
-				// Data wg ustawień WP (spójność z resztą wp-admin — recenzja PR #44).
+				// Data wg ustawień WP (spójność z resztą wp-admin).
 				return esc_html( mysql2date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $item->utworzono ) );
 			case 'email_kupujacego':
 			case 'produkt_nazwa_kupiona':

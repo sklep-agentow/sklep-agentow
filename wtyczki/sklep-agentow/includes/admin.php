@@ -2,7 +2,7 @@
 /**
  * Panel wp-admin (K3): menu wtyczki, wspólne assety admina i strona-pulpit
  * z licznikami z bazy (prawdziwe zapytania, zero atrap). Widoki żyją w osobnych
- * plikach admin-*.php; dashboard „jak dobre sklepy" wg audyt/WZORCE-DASHBOARD-K3.md.
+ * plikach admin-*.php; dashboard „jak dobre sklepy".
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
