@@ -14,9 +14,21 @@
 # (boty dołączą przy swojej wrogiej sesji ~23.08 razem z przebudową paczek — DECYZJE D25);
 # phpstan i php-lint obejmują od razu WSZYSTKIE wtyczki. Testy przelotu E2E żyją na
 # stacku warsztatowym (testy/e2e/) — w CI nie ma WP+Stripe, więc ich tu nie deklarujemy.
+#
+# ROZSZERZENIE 2026-08-21 (PR „ci/manifest-slady", po zamrożeniu ChatBota 1.5.7):
+# bramka `slady` — czy do plików wtyczek nie wjeżdżają NASZE ślady wewnętrzne
+# (TODO, adres maszyny dev, odsyłacz do `testy/…`, numer naszego zgłoszenia, nasze
+# słownictwo warsztatowe). Powód jest z życia, nie z teorii: paczka ChatBota 1.5.7
+# wiozła kupującemu 20 takich śladów, a paczka Segregatora 1.3.0 — dwanaście, i ŻADNA
+# bramka tego nie widziała, bo zip był równy repozytorium co do bajtu, a ślad leżał
+# po obu stronach tak samo. Bramka istniała już od 20.08, ale POZA manifestem, czyli
+# jako siódma ponad podłogą — działała, a nie zatrzymywała nikogo twardo. Ten wpis
+# robi z niej minimum: zniknięcie jej z rejestru albo z wywołań pada na strażniku
+# manifestu, a próg pełnego przebiegu nie może już zejść poniżej siedmiu.
 actionlint
 manifest
 php-lint
 phpcs
 phpstan
 gitleaks
+slady

@@ -72,6 +72,18 @@ probuj "prog pelnego przebiegu obnizony do 4" \
 	"bash narzedzia-qa/sprawdz-manifest.sh" \
 	"poprzeczka obniżona"
 
+# 4b. Bramka `slady` jest od 21.08 w manifescie, czyli jest TWARDYM MINIMUM.
+#     Dwa te same zamachy co na phpcs: zniknięcie z rejestru i obniżenie progu.
+probuj "slady wyrzucone z rejestru BRAMKI=()" \
+	"sed -i '/^BRAMKI=(/ s/ slady//' $BRAMKI" \
+	"bash narzedzia-qa/sprawdz-manifest.sh" \
+	"'slady' jest w manifescie"
+
+probuj "prog obnizony ponizej liczby bramek z manifestu" \
+	"sed -i 's/^PROG_PELNY=[0-9]*/PROG_PELNY=6/' $BRAMKI" \
+	"bash narzedzia-qa/sprawdz-manifest.sh" \
+	"poprzeczka obniżona"
+
 # 5. Workflow przestaje wolac skrypt z bramkami.
 probuj "quality.yml nie wola juz bramki.sh" \
 	"sed -i 's|bash narzedzia-qa/bramki.sh|echo pomijam|' $WORKFLOW" \
@@ -138,6 +150,28 @@ slad_probuj "numer PR-a i recenzent"         "// uwaga recenzenta do PR #133" "n
 # Wzorzec 1.0.0 tego nie widzial i zostawil taki komentarz w Segregatorze.
 slad_probuj "nasze slownictwo bez numeru zgloszenia" "// zarzut z pierwszej rundy krytyk" "nasz obieg pracy"
 slad_probuj "sciaga egzaminatora w komentarzu"       "// klasa #1 sciagi egzaminatora" "nasz obieg pracy"
+
+# ⭐ TO JEST TEN PRZYPADEK, O KTORY CHODZI W MANIFESCIE: nie „skaner widzi slad",
+# tylko „CI STOI NA CZERWONO". Mutacja idzie do PRAWDZIWEGO pliku wtyczki, uruchamiane
+# jest DOKLADNIE to polecenie, ktore wola quality.yml, a plik wraca na miejsce z kopii
+# zapasowej niezaleznie od wyniku.
+PLIK_WTYCZKI=wtyczki/chatbot-live/includes/silnik.php
+KOPIA_PLIKU="$PIASKOWNICA/silnik.php.oryginal"
+cp "$PLIK_WTYCZKI" "$KOPIA_PLIKU"
+printf '\n// TODO: zdjac przed oddaniem — patrz testy/silnik-test.php (PR #999)\n' >> "$PLIK_WTYCZKI"
+if grep -qF "zdjac przed oddaniem" "$PLIK_WTYCZKI"; then
+	WYJ_CI=$(bash "$BRAMKI" --tryb pelny 2>&1); KOD_CI=$?
+	cp "$KOPIA_PLIKU" "$PLIK_WTYCZKI"
+	if [ "$KOD_CI" -ne 0 ] && printf '%s' "$WYJ_CI" | grep -qF "BRAMKA slady: EXIT=1"; then
+		printf '  OK   zlapane: %-56s (EXIT=%d)\n' "podlozony slad ZAPALA CALE bramki.sh (to co wola CI)" "$KOD_CI"
+		printf '%s\n' "$WYJ_CI" | grep -E "^  slady|^NIEZALICZONE" | sed 's/^/         /'
+	else
+		printf '  BLAD PRZESZLO NIEZAUWAZONE: %-42s (EXIT=%d)\n' "podlozony slad w bramki.sh" "$KOD_CI"; BLEDY=$((BLEDY+1))
+	fi
+else
+	printf '  BLAD mutacja NIE weszla: %-52s\n' "slad w prawdziwym pliku wtyczki"; BLEDY=$((BLEDY+1))
+fi
+cp "$KOPIA_PLIKU" "$PLIK_WTYCZKI"
 
 # Lista zaleglosci ma sie KURCZYC, a nie gnic: wpis, ktory do niczego nie pasuje,
 # jest czerwony. Inaczej po refaktorze zostaje spis rzeczy, ktorych juz nie ma.

@@ -15,6 +15,21 @@ pory lądują tutaj.
 
 ## [Niewydane]
 
+### Zmienione
+
+- **Bramka `slady` wpisana do `.github/manifest-bramek.txt` — z siódmej „ponad
+  podłogą" staje się TWARDYM MINIMUM.** Do tej pory działała, ale nikogo nie
+  zatrzymywała twardo: dało się ją wyjąć z `bramki.sh` i strażnik manifestu nawet
+  by nie mrugnął, bo nie było jej na liście obowiązkowych. Mieliśmy już w tym
+  projekcie przypadek, że ta sama informacja dotarła trzy razy i nic nie zatrzymała,
+  bo wszystko było doradcze — ten wpis to zamyka. Skutek uboczny wpisu: `PROG_PELNY`
+  nie może już zejść poniżej **siedmiu**, bo manifest wymienia siedem bramek.
+
+  Trzy nowe przypadki w `bramki-proba-kontrolna.sh`, w tym jeden **end-to-end**:
+  ślad podłożony do prawdziwego pliku wtyczki, uruchomione dokładnie to polecenie,
+  które woła `quality.yml` — `BRAMKA slady: EXIT=1`, `NIEZALICZONE BRAMKI: 1`,
+  cały przebieg **EXIT=1**. Plik wtyczki wraca z kopii zapasowej niezależnie od wyniku.
+
 ### Naprawione
 
 - **`slady-wewnetrzne.sh` 1.0.0 → 1.1.0 — wzorzec „nasz obieg pracy" łapie NASZE
