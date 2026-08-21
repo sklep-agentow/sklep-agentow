@@ -4,7 +4,7 @@ Tags: chat, chatbot, faq, kontakt, wsparcie
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.5.7
+Stable tag: 1.5.8
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -139,6 +139,10 @@ w ustawieniach. Klucz API jest kasowany zawsze, niezależnie od tego przełączn
 
 Pełna historia zmian, z opisem każdej pozycji, jest w pliku `CHANGELOG.md`
 w paczce. Poniżej skrót.
+
+= 1.5.8 =
+Instrukcja i opis mowia to, co bot naprawde robi: przejecie rozmowy przez czlowieka
+i pamiec rozmowy. Zero zmian w kodzie.
 
 = 1.5.7 =
 * Import bazy pytań z pliku CSV z podglądem przed zapisem — wgrany plik trafia

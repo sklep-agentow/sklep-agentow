@@ -4,7 +4,7 @@ Tags: email, imap, inbox, automation, rules
 Requires at least: 6.0
 Tested up to: 7.0.4
 Requires PHP: 8.1
-Stable tag: 1.3.0
+Stable tag: 1.3.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -128,6 +128,11 @@ z serwerem. Hasło jest w nim zamaskowane.
 == Changelog ==
 
 Pełna historia zmian jest w pliku `CHANGELOG.md` w katalogu wtyczki.
+
+= 1.3.1 =
+Instrukcja opisuje wtyczke, ktora kupujacy naprawde dostaje: podlaczenie skrzynki
+krok po kroku, liczniki przy regule, przeprowadzka regul plikiem, wybor modelu.
+Zero zmian w kodzie.
 
 = 1.3.0 =
 * Podłączenie prawdziwej skrzynki po IMAP: połączenie, sprawdzenie połączenia,

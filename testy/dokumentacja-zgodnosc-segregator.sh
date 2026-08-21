@@ -25,8 +25,8 @@ spr() { # spr "opis" "oczekiwane" "polecenie"
 }
 
 echo "=== A. Wersja, naglowek, licencja ==="
-spr "naglowek Version"               "1.3.0" "grep -oP '(?<=^ \* Version: ).*' $W/segregator-maila.php"
-spr "stala SEGM_WERSJA"              "1.3.0" "grep -oP \"(?<=SEGM_WERSJA', ')[^']*\" $W/segregator-maila.php"
+spr "naglowek Version"               "1.3.1" "grep -oP '(?<=^ \* Version: ).*' $W/segregator-maila.php"
+spr "stala SEGM_WERSJA"              "1.3.1" "grep -oP \"(?<=SEGM_WERSJA', ')[^']*\" $W/segregator-maila.php"
 spr "SEGM_WERSJA_SCHEMATU"           "3"     "grep -oP \"(?<=SEGM_WERSJA_SCHEMATU', ')[^']*\" $W/segregator-maila.php"
 spr "Requires at least"              "6.0"   "grep -oP '(?<=^ \* Requires at least: ).*' $W/segregator-maila.php"
 spr "Requires PHP"                   "8.1"   "grep -oP '(?<=^ \* Requires PHP: ).*' $W/segregator-maila.php"
@@ -34,7 +34,7 @@ spr "naglowek Author"                "Automatic AI" "grep -oP '(?<=^ \* Author: 
 spr "naglowek License"               "GPL-2.0-or-later" "grep -oP '(?<=^ \* License: ).*' $W/segregator-maila.php"
 spr "naglowek License URI"           "https://www.gnu.org/licenses/gpl-2.0.html" "grep -oP '(?<=^ \* License URI: ).*' $W/segregator-maila.php"
 spr "naglowek Text Domain"           "segregator-maila" "grep -oP '(?<=^ \* Text Domain: ).*' $W/segregator-maila.php"
-spr "dokumentacja podaje te wersje"  "1" "grep -c '\*\*Wersja wtyczki: 1.3.0 · wersja schematu bazy: 3 · WordPress 6.0+ · PHP 8.1+\*\*' $DOK"
+spr "dokumentacja podaje te wersje"  "1" "grep -c '\*\*Wersja wtyczki: 1.3.1 · wersja schematu bazy: 3 · WordPress 6.0+ · PHP 8.1+\*\*' $DOK"
 spr "LICENSE istnieje"               "1" "test -f $W/LICENSE && echo 1 || echo 0"
 spr "LICENSE zaczyna sie GPL"        "1" "head -1 $W/LICENSE | grep -c 'GNU GENERAL PUBLIC LICENSE'"
 
@@ -321,13 +321,13 @@ spr "krotki opis <= 150 znakow"      "1" "test $KROTKI -le 150 && echo 1 || echo
 echo "=== O. CHANGELOG.md ==="
 spr "CHANGELOG istnieje"             "1" "test -f $W/CHANGELOG.md && echo 1 || echo 0"
 spr "format Keep a Changelog"        "1" "grep -c 'keepachangelog.com' $W/CHANGELOG.md"
-spr "biezaca wersja ma wpis"         "1" "grep -c '^## \\[1.3.0\\]' $W/CHANGELOG.md"
+spr "biezaca wersja ma wpis"         "1" "grep -c '^## \\[1.3.1\\]' $W/CHANGELOG.md"
 spr "Niewydane jest PIERWSZA sekcja (Keep a Changelog)" "Niewydane" "grep -oP '^## \\[\\K[^\\]]+' $W/CHANGELOG.md | head -1"
-spr "liczba wydan opisanych"         "6" "grep -c '^## \\[' $W/CHANGELOG.md"
+spr "liczba wydan opisanych"         "7" "grep -c '^## \\[' $W/CHANGELOG.md"
 for v in 1.0.0 1.1.0 1.2.0 1.2.1; do
   spr "wersja $v z historii gita opisana" "1" "grep -c '^## \\[$v\\]' $W/CHANGELOG.md"
 done
-spr "readme.txt tez ma changelog wersji" "1" "grep -c '^= 1.3.0 =$' $W/readme.txt"
+spr "readme.txt tez ma changelog wersji" "1" "grep -c '^= 1.3.1 =$' $W/readme.txt"
 
 echo "=== P. Ekran powitalny ==="
 spr "aktywacja zapala znacznik"      "1" "sed -n '/function segm_aktywacja/,/^}/p' $W/includes/instalator.php | grep -c \"update_option( 'segm_powitanie_gotowe', 1 )\""
