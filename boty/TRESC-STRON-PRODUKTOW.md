@@ -40,9 +40,12 @@ się odpowiedzi."
 **DLA KOGO** — usługi lokalne (fryzjer, warsztat, gabinet) · sklepy i firmy
 z powtarzalnymi pytaniami · każdy, kto traci klientów piszących po godzinach.
 
-**„TESTOWY BOT — CO TO ZNACZY"** (sekcja uczciwości; idzie też do instrukcji):
-Pełnoprawny silnik regułowy działa od razu — bez kluczy i opłat. „LIVE" znaczy:
-żywy człowiek (Ty) odpisuje na zebrane kontakty — bot nie udaje wszechwiedzy.
+**„UCZCIWIE: CO BOT ROBI, A CZEGO NIE"** (sekcja uczciwości; idzie też do instrukcji):
+Pełnoprawny silnik regułowy działa od razu — bez kluczy i opłat. „LIVE" znaczy dwie
+rzeczy: bot odpowiada natychmiast, a Ty możesz w każdej chwili PRZEJĄĆ rozmowę i pisać
+do gościa osobiście — wtedy bot w niej milczy, a gość widzi wprost, że rozmawia
+z człowiekiem; po pięciu minutach Twojej ciszy rozmowa sama wraca do bota. Gdy nie
+przejmiesz, bot zbiera kontakt i odpisujesz później. Bot nie udaje wszechwiedzy.
 Tryb AI włączasz WŁASNYM kluczem; przy limicie dziennym lub błędzie bot sam
 wraca do reguł. Prywatność: reguły = zero wysyłki na zewnątrz; AI = pytanie
 gościa idzie do API dostawcy (informacja także w polityce prywatności).
