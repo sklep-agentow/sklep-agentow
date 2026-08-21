@@ -197,7 +197,7 @@ function sklepag_utworz_katalog_chroniony() {
 	$sciezka = trailingslashit( $upload['basedir'] ) . 'sklepag-chronione-' . wp_generate_password( 16, false, false );
 
 	if ( ! wp_mkdir_p( $sciezka ) ) {
-		// Ta sama widzialność błędu co niżej — porażka mkdir to też cicha ślepota (recenzja PR #28).
+		// Ta sama widzialność błędu co niżej — porażka mkdir to też cicha ślepota.
 		update_option( 'sklepag_katalog_chroniony_blad', 'mkdir nieudany — sprawdź uprawnienia uploads', false );
 		return;
 	}
@@ -207,7 +207,7 @@ function sklepag_utworz_katalog_chroniony() {
 	$ok   = file_put_contents( $test, "<?php // cisza\n" ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- katalog w uploads; WP_Filesystem (abstrakcja FTP) przy aktywacji potrafi pytać o poświadczenia.
 
 	if ( false === $ok ) {
-		// Sprzątamy świeży katalog — bez tego zostaje sierota, której uninstall nie zna (recenzja PR #28).
+		// Sprzątamy świeży katalog — bez tego zostaje sierota, której uninstall nie zna.
 		rmdir( $sciezka ); // phpcs:ignore WordPress.WP.AlternativeFunctions
 		update_option( 'sklepag_katalog_chroniony_blad', 'zapis nieudany — sprawdź uprawnienia uploads', false );
 		return;
@@ -219,7 +219,7 @@ function sklepag_utworz_katalog_chroniony() {
 		"<IfModule mod_authz_core.c>\nRequire all denied\n</IfModule>\n<IfModule !mod_authz_core.c>\nDeny from all\n</IfModule>\n"
 	);
 	if ( false === $ht ) {
-		// Ta sama próba kontrolna co dla index.php (recenzja PR #28, uwaga 2. rundy).
+		// Ta sama kontrola co dla index.php.
 		unlink( trailingslashit( $sciezka ) . 'index.php' ); // phpcs:ignore WordPress.WP.AlternativeFunctions
 		rmdir( $sciezka ); // phpcs:ignore WordPress.WP.AlternativeFunctions
 		update_option( 'sklepag_katalog_chroniony_blad', 'zapis .htaccess nieudany — sprawdź uprawnienia uploads', false );

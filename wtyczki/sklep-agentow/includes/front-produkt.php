@@ -7,7 +7,7 @@
  * fallback ?sklepag_produkt=slug działa zawsze (permalinki wyłączone też).
  * KAŻDY produkt dostaje pełną stronę z pól bazy (kryterium #7: nowy produkt
  * bez zmian kodu); dwa znane slugi dostają DODATKOWO bogate sekcje
- * (boty/TRESC-STRON-PRODUKTOW.md — problem/kroki/dowody/FAQ/mockupy).
+ * (układ sekcji: problem/kroki/dowody/FAQ/mockupy).
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -26,7 +26,7 @@ function sklepag_query_vars( $vars ) {
 add_filter( 'query_vars', 'sklepag_query_vars' );
 
 /**
- * Slug strony sklepu z opcji (krytyk #4: hardkod „sklep" pęka przy „-2").
+ * Slug strony sklepu z opcji (hardkod „sklep" pęka przy „-2").
  */
 function sklepag_slug_strony_sklepu() {
 	$id = (int) get_option( 'sklepag_strona_sklep' );
@@ -99,7 +99,7 @@ function sklepag_tresc_produktu( $slug ) {
 			'pasek_glowa'  => 'BOT · ONLINE',
 			'pasek'        => 'ODPOWIADA 24/7',
 			// Człon „przetestuj" tylko gdy bąbelek REALNIE widoczny: wtyczka aktywna
-			// I włącznik w jej ustawieniach ON (recenzja #52 — sama aktywność nie
+			// I włącznik w jej ustawieniach ON (sama aktywność nie
 			// gwarantuje widgetu; właściciel może go wyłączyć bez deaktywacji).
 			'pasek_zywy'   => ( function_exists( 'chatl_ustawienia' ) && ! empty( chatl_ustawienia()['wlaczony'] ) ) ? ' — PRZETESTUJ: BĄBELEK W ROGU' : '',
 			'problem_t'    => 'Te same pytania. Codziennie.',
@@ -124,7 +124,7 @@ function sklepag_tresc_produktu( $slug ) {
 				array( '100% rozmów u Ciebie', 'tryb regułowy: treść nie opuszcza Twojego WordPressa' ),
 			),
 			'dla_kogo'     => array( 'Usługi lokalne — fryzjer, warsztat, gabinet', 'Sklepy i firmy z powtarzalnymi pytaniami', 'Każdy, kto traci klientów piszących po godzinach' ),
-			'uczciwosc'    => 'Nie znajdziesz tu opinii z gwiazdkami — sprzedajemy od niedawna i nie zmyślamy recenzji; zamiast tego masz tryb testowy i seed demo, żeby sprawdzić samemu. Pełnoprawny silnik regułowy działa od razu — bez kluczy i opłat. „LIVE" znaczy: żywy człowiek (Ty) odpisuje na zebrane kontakty — bot nie udaje wszechwiedzy. Tryb AI włączasz WŁASNYM kluczem; przy limicie dziennym lub błędzie bot sam wraca do reguł. Prywatność: w trybie regułowym treść rozmów nie opuszcza Twojego serwera; w trybie AI pytanie gościa idzie do API dostawcy (informacja też do Twojej polityki prywatności).',
+			'uczciwosc'    => 'Nie znajdziesz tu opinii z gwiazdkami — sprzedajemy od niedawna i nie zmyślamy opinii; zamiast tego masz tryb testowy i seed demo, żeby sprawdzić samemu. Pełnoprawny silnik regułowy działa od razu — bez kluczy i opłat. „LIVE" znaczy: żywy człowiek (Ty) odpisuje na zebrane kontakty — bot nie udaje wszechwiedzy. Tryb AI włączasz WŁASNYM kluczem; przy limicie dziennym lub błędzie bot sam wraca do reguł. Prywatność: w trybie regułowym treść rozmów nie opuszcza Twojego serwera; w trybie AI pytanie gościa idzie do API dostawcy (informacja też do Twojej polityki prywatności).',
 			'faq'          => array(
 				array( 'Czy potrzebuję klucza AI?', 'Nie — bot w pełni działa bez niego, na Twojej bazie pytań i odpowiedzi.' ),
 				array( 'Co się dzieje, gdy bot nie zna odpowiedzi?', 'Prosi o maila, zapisuje zgłoszenie i może powiadomić Cię mailem — kontakt nie przepada.' ),
@@ -162,7 +162,7 @@ function sklepag_tresc_produktu( $slug ) {
 				array( '0 maili na zewnątrz', 'tryb regułowy działa w całości w Twoim WordPressie' ),
 			),
 			'dla_kogo'     => array( 'Biura i sekretariaty', 'Firmy usługowe z jedną wspólną skrzynką', 'Każdy, kto zaczyna dzień od przekopywania poczty' ),
-			'uczciwosc'    => 'Nie znajdziesz tu opinii z gwiazdkami — sprzedajemy od niedawna i nie zmyślamy recenzji; zamiast tego masz raport z liczbami z TWOJEJ próbki. Reguły układasz i sprawdzasz na próbce, a potem puszczasz je na PRAWDZIWEJ skrzynce: wtyczka rozkłada pocztę do folderów na serwerze poczty, domyślnie chodzi NA SUCHO i nie rusza ani jednej wiadomości, dopóki sam nie potwierdzisz, a ostatni przebieg cofniesz jednym kliknięciem. Czego nie ma, mówimy przed zakupem: logowanie tylko loginem i hasłem aplikacji, więc Microsoft 365 i Outlook.com NIE zadziałają (tam wymagane jest OAuth); na skrzynce klasyfikują reguły, nie AI; bez czytania załączników.',
+			'uczciwosc'    => 'Nie znajdziesz tu opinii z gwiazdkami — sprzedajemy od niedawna i nie zmyślamy opinii; zamiast tego masz raport z liczbami z TWOJEJ próbki. Reguły układasz i sprawdzasz na próbce, a potem puszczasz je na PRAWDZIWEJ skrzynce: wtyczka rozkłada pocztę do folderów na serwerze poczty, domyślnie chodzi NA SUCHO i nie rusza ani jednej wiadomości, dopóki sam nie potwierdzisz, a ostatni przebieg cofniesz jednym kliknięciem. Czego nie ma, mówimy przed zakupem: logowanie tylko loginem i hasłem aplikacji, więc Microsoft 365 i Outlook.com NIE zadziałają (tam wymagane jest OAuth); na skrzynce klasyfikują reguły, nie AI; bez czytania załączników.',
 			'faq'          => array(
 				array( 'Czy muszę podpinać skrzynkę?', 'Nie musisz — możesz pracować wyłącznie na próbkach CSV. Ale możesz: wtyczka obsługuje prawdziwą skrzynkę i przenosi w niej pocztę do folderów.' ),
 				array( 'Zadziała z Microsoft 365 albo Outlook.com?', 'Nie. Tam wymagane jest logowanie OAuth, którego ta wtyczka nie obsługuje. Gmail i skrzynki hostingowe z hasłem aplikacji: tak.' ),
@@ -246,7 +246,7 @@ function sklepag_figure_zrzutu( $zrzut, $klasa, $z_podpisem, $z_paskiem = true )
 	// Modyfikator per produkt (kadr okna karty ustawiany w CSS, np. dolna
 	// część okna czatu zamiast uciętego nagłówka). Sufiks ZAWSZE na bazowym
 	// (pierwszym) członie klasy — przy wieloczłonowym $klasa doklejanie do
-	// całości dublowało tokeny i celowało w zły człon (recenzja #60).
+	// całości dublowało tokeny i celowało w zły człon.
 	$czlony = explode( ' ', $klasa );
 	$klasa .= ' ' . $czlony[0] . '--' . sanitize_html_class( pathinfo( $zrzut['plik'], PATHINFO_FILENAME ) );
 	$html   = '<figure class="' . esc_attr( $klasa ) . '">';
@@ -409,7 +409,7 @@ function sklepag_render_produkt( $slug ) {
 			$html .= '</section>';
 		}
 
-		// ILE CZASU ODZYSKUJESZ (S-03; krytyk #9 — dedykowane miejsce).
+		// ILE CZASU ODZYSKUJESZ (S-03 — dedykowane miejsce).
 		$html .= '<section class="sklepag-sekcja"><p class="sklepag-mono-etykieta">[ ILE CZASU ODZYSKUJESZ ]</p>';
 		$html .= '<div class="sklepag-dowody">';
 		foreach ( $t['dowody'] as $d ) {

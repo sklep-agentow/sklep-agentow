@@ -53,7 +53,13 @@ ZALEGLOSCI="${SLADY_ZALEGLOSCI:-$KORZEN_NARZEDZIA/slady-zaleglosci.txt}"
 # niej wzorzec łapie „diakrytyków".
 SLADY=(
 	"znacznik roboczy|TODO|FIXME|@todo|\bHACK\b|\bXXX\b|NOTATK[AI] QA|DO USUNIECIA PRZED"
-	"adres maszyny dev|localhost|127\.0\.0\.1|0\.0\.0\.0|:8890|:8025|mailpit|ngrok|wp-env|vagrant|\.ddev\b"
+	# `0.0.0.0` WYPADA z tego wzorca (2026-08-21): to adres NIEOKREŚLONY, a nie
+	# adres naszej maszyny. W sklepie jest wartością zastępczą dla braku
+	# REMOTE_ADDR (`sklepag_ip()`), więc trafiał tu jako fałszywy alarm i nie dało
+	# się go „zamknąć" inaczej niż psując kod pod skaner. Wszystko, co naprawdę
+	# wskazuje NASZ stos — localhost, 127.0.0.1, nasze porty, mailpit, ngrok,
+	# wp-env, vagrant, ddev — zostaje.
+	"adres maszyny dev|localhost|127\.0\.0\.1|:8890|:8025|mailpit|ngrok|wp-env|vagrant|\.ddev\b"
 	"ścieżka naszego drzewa roboczego|/root/praca|(^|[^a-zA-Z0-9/._-])(testy|boty|audyt|narzedzia-qa|wtyczki)/"
 	"nasz obieg pracy|PR #[0-9]|recenzent|recenzj|koordynator|builder[0-9]|prób[ay] kontroln|proba-kontrolna|mutant|\\bkrytyk|egzaminator|Dzidek"
 )

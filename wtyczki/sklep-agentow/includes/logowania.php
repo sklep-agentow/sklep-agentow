@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-const SKLEPAG_OPOZNIENIE_SUFIT_S = 60;      // Plan §7: sufit opóźnienia; OPÓŹNIENIE, nie blokada (wspólne konta — nie wolno zablokować egzaminatora).
+const SKLEPAG_OPOZNIENIE_SUFIT_S = 60;      // Plan §7: sufit opóźnienia; OPÓŹNIENIE, nie blokada (wspólne konta — nie wolno zablokować prawdziwego użytkownika).
 const SKLEPAG_OPOZNIENIE_OKNO_S  = 15 * 60; // Błędy starsze niż okno nie podbijają opóźnienia.
 
 add_action( 'wp_login', 'sklepag_loguj_udane', 10, 2 );
@@ -75,11 +75,11 @@ function sklepag_loguj_nieudane( $username, $error ) {
  * min(2^n, 60) s. Sleep nie wlicza się do max_execution_time (zegar liczy
  * czas CPU skryptu), a sufit 60 s trzyma workera krótko.
  *
- * ⛔ Amplifikacja przez równoległość (recenzja PR #42): salwa równoczesnych
+ * ⛔ Amplifikacja przez równoległość: salwa równoczesnych
  * POST-ów na wp-login.php zajęłaby po workerze na sleep każda — dlatego
  * ZANIM cokolwiek zaśnie, ciasny limit prób per IP odbija nadmiar
  * NATYCHMIAST (worker wolny od razu). Człowiek nie zrobi >6 prób/min przy
- * rosnących opóźnieniach — egzaminatora to nie dotyka (i nie jest to
+ * rosnących opóźnieniach — prawdziwego użytkownika to nie dotyka (i nie jest to
  * blokada konta, tylko chwilowy limit adresu). Rezydualne ryzyko
  * (wiele IP = DDoS) — poza zakresem wtyczki, D26.
  *
