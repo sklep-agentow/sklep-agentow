@@ -199,7 +199,7 @@ echo
 echo "=== F. Deinstalacja: obie sciezki ==="
 spr "DROP TABLE (6 tabel)"        "6"  "grep -c 'DROP TABLE IF EXISTS' $W/uninstall.php"
 spr "klucz API kasowany zawsze"   "1"  "sed -n '1,/usun_dane/p' $W/uninstall.php | grep -c \"delete_option( 'chatl_klucz_api' )\""
-spr "delete_option w sciezce B"   "6"  "sed -n '/usun_dane/,\$p' $W/uninstall.php | grep -c 'delete_option('"
+spr "delete_option w sciezce B"   "7"  "sed -n '/usun_dane/,\$p' $W/uninstall.php | grep -c 'delete_option('"
 spr "wywolan esc_like (bez komentarzy)"  "4" "grep -o 'wpdb->esc_like(' $W/uninstall.php | wc -l"
 
 echo
@@ -246,7 +246,7 @@ spr "kazdy adres walidowany"      "2"  "grep -cF \"filter_var( \\\$ip, FILTER_VA
 # migawki bywaja wycofywane, a my nie mamy serwera aktualizacji.
 spr "domyslny model BEZ daty"     "0"  "grep -cP \"CHATL_AI_MODEL\s*=\s*'[^']*-[0-9]{8}'\" $W/includes/ai.php"
 spr "zadne modele z listy nie maja daty" "0" "sed -n '/function chatl_ai_modele/,/^}/p' $W/includes/ai.php | grep -cP \"'[a-z0-9-]+-[0-9]{8}'\""
-spr "bramek current_user_can"      "8"  "grep -rc \"current_user_can( 'manage_options' )\" $W/includes/admin.php $W/includes/csv.php | awk -F: '{s+=\$2} END {print s}'"
+spr "bramek current_user_can"      "9"  "grep -rc \"current_user_can( 'manage_options' )\" $W/includes/admin.php $W/includes/csv.php | awk -F: '{s+=\$2} END {print s}'"
 spr "stron panelu (menu+submenu)"  "6"  "grep -c 'add_menu_page(\|add_submenu_page(' $W/includes/admin.php"
 
 echo
