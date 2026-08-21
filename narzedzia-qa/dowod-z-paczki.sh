@@ -1,5 +1,5 @@
 #!/bin/bash
-# dowod-z-paczki.sh — POWTARZALNY DOWÓD Z PACZKI, nie z repozytorium.  WERSJA 1.0.0
+# dowod-z-paczki.sh — POWTARZALNY DOWÓD Z PACZKI, nie z repozytorium.  WERSJA 1.0.1
 #
 # PO CO TO POWSTAŁO: kupujący nie dostaje repozytorium — dostaje ZIP. Wszystko,
 # co sprawdzamy na drzewie roboczym, sprawdza INNY artefakt niż ten sprzedawany.
@@ -204,7 +204,12 @@ fi
 # wtyczki: slug to `chatbot-live`, a opcje mają `chatl_` — liczenie po slugu dawało
 # zawsze zero i wyglądało jak dowód, nie będąc nim.
 PREFIKS="${SEKRETY[0]%%_*}_"
-ILE_ZOSTALO="$(sql_bazy "SELECT COUNT(*) FROM \`$BAZA\`.wp_options WHERE option_name LIKE '${PREFIKS}%';" | tr -d '\r')"
+# `_` w SQL LIKE to METAZNAK „dowolny jeden znak", nie literał: wzorzec `chatl_%`
+# policzyłby też `chatlX...`. To odpowiednik esc_like() z WordPressa — klasa #2 ze
+# ściągi egzaminatora. Uciekamy przez jawne ESCAPE, nie przez odwrotny ukośnik:
+# ukośnik przeżyłby dzisiejszą drogę do bazy, ale nie musi przeżyć następnej.
+PREFIKS_LIKE="${PREFIKS//_/!_}"
+ILE_ZOSTALO="$(sql_bazy "SELECT COUNT(*) FROM \`$BAZA\`.wp_options WHERE option_name LIKE '${PREFIKS_LIKE}%' ESCAPE '!';" | tr -d '\r')"
 printf '    dane uzytkowe z prefiksem %s, ktore MIALY zostac: %s opcji\n' "$PREFIKS" "$ILE_ZOSTALO"
 
 # ---- DOWOD 4: pelne czyszczenie zwraca baze do stanu sprzed instalacji ----

@@ -55,6 +55,10 @@ pory lądują tutaj.
   co „napraw klasę, nie egzemplarz". Doszedł **odcisk schematu** (tabela + kolumna
   + typ): sama lista tabel nie wystarcza, bo aktualizacja dokładająca KOLUMNĘ
   wygląda po niej identycznie jak aktualizacja, która nie zrobiła nic.
+  Odcisk schematu pyta bazę z **ucieczką podkreślnika** (`ESCAPE '!'`): w SQL
+  `LIKE` `_` jest metaznakiem „dowolny jeden znak", więc `wp_chatl%` łapałoby
+  też `wpXchatl…`. To klasa #2 ze ściągi, a tu jest biblioteka WSPÓLNA —
+  nawyk stąd rozniósłby się na każdy kolejny dowód, który z niej skorzysta.
 
 - **`dowod-z-paczki.sh` 1.0.0 — powtarzalny dowód Z PACZKI, nie z repozytorium.**
   Kupujący nie dostaje repozytorium, dostaje ZIP — więc wszystko, co sprawdzamy na
@@ -199,6 +203,19 @@ pory lądują tutaj.
   własnej kopii stawiania stosu. Zachowanie bez zmian: przebieg na paczce
   ChatBota i pełna kalibracja (4 mutanty + kontrola odwrotna) po refaktorze
   dają ten sam wynik co przed nim.
+  Domknięte dwie uwagi z recenzji: komentarz nagłówka mówił `WERSJA 1.0.0`,
+  a stała w kodzie `1.0.1` (**klasa #4 — wersja rozjechana**, tym razem
+  wewnątrz JEDNEGO pliku), oraz `LIKE '${PREFIKS}%'` liczył opcje bez ucieczki
+  podkreślnika (**klasa #2 — `esc_like`**: `chatl_%` łapało też `chatlX…`).
+  Ucieczka idzie przez jawne `ESCAPE '!'`, nie przez odwrotny ukośnik —
+  ukośnik przeżyłby dzisiejszą drogę do bazy, ale nie musi przeżyć następnej.
+
+- **`sprawdz-manifest.sh`** — czwarta kontrola: **rozjazd wersji wewnątrz
+  jednego skryptu** `narzedzia-qa/*.sh` (komentarz nagłówka kontra stała
+  `WERSJA`). Egzemplarz z recenzji #105 naprawiony ręcznie, ale klasa zostaje
+  zamknięta tutaj, żeby następny refaktor nie przywiózł jej z powrotem.
+  Skalibrowane: na kodzie sprzed naprawy strażnik pada z **EXIT=1** i nazywa
+  plik, po naprawie **EXIT=0**.
 
 - **`stos.sh` → 1.1.0** — wybór stosu z **zamkniętej listy dwóch pozycji**
   (`--stos warsztat|probny`). To nadal nie jest wybór kontenera przez dzwoniącego:

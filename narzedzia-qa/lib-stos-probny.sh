@@ -135,9 +135,15 @@ odcisk() {
 # wygląda dokładnie tak samo jak aktualizacja, która nie zrobiła nic.
 odcisk_schematu() {
 	local prefiks="$1"
+	# `_` w SQL LIKE to METAZNAK „dowolny jeden znak", nie literał — bez ucieczki
+	# `wp_chatl%` dopasowałoby też `wpXchatl...`. Klasa #2 ze ściągi egzaminatora
+	# (esc_like), a to jest WSPÓLNA biblioteka: nawyk stąd rozniósłby się na każdy
+	# kolejny dowód, który z niej skorzysta. Ucieczka przez jawne ESCAPE.
+	local prefiks_like="wp_${prefiks}"
+	prefiks_like="${prefiks_like//_/!_}"
 	sql_bazy "SELECT CONCAT(table_name, ' . ', column_name, ' : ', column_type)
 	          FROM information_schema.columns
-	          WHERE table_schema='$BAZA' AND table_name LIKE 'wp_${prefiks}%'
+	          WHERE table_schema='$BAZA' AND table_name LIKE '${prefiks_like}%' ESCAPE '!'
 	          ORDER BY table_name, column_name;" 2> /dev/null | sort
 }
 
