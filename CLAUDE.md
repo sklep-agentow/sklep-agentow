@@ -32,8 +32,10 @@ komendy, `wp eval`, zapis z bazy, treść maila z łapacza, kod wyjścia bramki.
 
 ## Bramki
 ⭐ **Jedno źródło prawdy: `narzedzia-qa/bramki.sh`** — tam jest pełna lista i KOLEJNOŚĆ
-(actionlint, manifest, php-lint, phpcs, phpstan, gitleaks) oraz licznik, który PADA,
-gdy zestaw się skurczy. Nie przepisuj tej listy w innych plikach — rozjedzie się.
+bramek oraz licznik, który PADA, gdy zestaw się skurczy. ⛔ **Nie przepisuj tej listy
+tutaj ani nigdzie indziej.** Ten plik sam kiedyś ją przepisał wbrew własnemu zakazowi
+i rozjechała się: wymieniał sześć bramek, gdy w skrypcie było ich siedem (doszła `slady`).
+Chcesz wiedzieć, co się uruchamia — pytaj źródła: `grep '^BRAMKI=' narzedzia-qa/bramki.sh`.
 Lokalnie: `bash narzedzia-qa/bramki.sh` (tryb pełny) — plus, gdy dotykasz wtyczek:
 `testy/dokumentacja-zgodnosc.sh` (ChatBot) i `testy/dokumentacja-zgodnosc-segregator.sh`.
 Wynik z **kodem wyjścia** wklejasz do opisu PR-a.
