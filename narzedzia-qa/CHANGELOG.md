@@ -15,6 +15,20 @@ pory lądują tutaj.
 
 ## [Niewydane]
 
+### Dodane
+
+- **`stos.sh` 1.1.0 → 1.2.0 — `wiersze-gdzie <tabela.kolumna=wartosc>`.** Wąskie okno
+  recenzenta umiało policzyć tylko CAŁĄ tabelę, więc dowodu opartego na liczbie wierszy
+  z `silnik = ai` **nie dało się powtórzyć cudzą ręką** — recenzent musiał wierzyć na
+  słowo. Teraz: `bash narzedzia-qa/stos.sh wiersze-gdzie wp_chatl_rozmowy.silnik=ai`.
+  Wszystkie trzy części wejścia przechodzą przez tę samą białą listę znaków co reszta
+  skryptu (`[a-zA-Z0-9_-]`), tabela dodatkowo przez białą listę tabel; SQL składa skrypt,
+  nie dzwoniący (`silnik=ai';DROP` → ODMOWA, sprawdzone).
+
+  Przy okazji **jedna** funkcja rozmawia z bazą zamiast dwóch: wywołań dockera w skrypcie
+  jest teraz **5, a nie 6** — strażnik z próby kontrolnej (pada, gdy ich przybywa, bo to
+  wygląda jak obejście białej listy) zostaje nietknięty i przechodzi.
+
 ### Zmienione
 
 - **Bramka `slady` wpisana do `.github/manifest-bramek.txt` — z siódmej „ponad

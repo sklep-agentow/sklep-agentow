@@ -276,22 +276,43 @@ tej samej treści nie mogą z niej pochodzić.
 
 Wiersz `rola='bot', silnik='ai'` powstaje **wyłącznie** w gałęzi AI endpointu
 `chatl_ajax_pytanie` — `wtyczki/chatbot-live/includes/front.php:461` (sentinel „nie wiem")
-i `:471` (odpowiedź modelu). Innego miejsca zapisu nie ma. A testy dzielą się rozłącznie:
+i `:471` (odpowiedź modelu). Innego miejsca zapisu w kodzie nie ma.
+
+⭐ **Najkrótszy dowód wykluczenia to PUSTE PRZECIĘCIE dwóch zbiorów** — jedno polecenie,
+odtwarzalne wprost:
 
 ```
-$ grep -rl "pre_http_request" testy/            # testy z ATRAPĄ API — 4 pliki
-testy/blad-klucza-test.php testy/pamiec-rozmowy-test.php
-testy/wybor-modelu-test.php testy/tokeny-koszt-test.php
-    → wszystkie wołają chatl_ai_odpowiedz() WPROST, żaden nie dotyka endpointu
-
-$ grep -rl "chatl_pytanie" testy/               # testy przez ENDPOINT — 4 pliki
-testy/przejecie-test.php testy/pulapka-test.php
-testy/nonce-cache-test.js testy/wskaznik-pisania-test.js
-    → w żadnym z nich nie ma pre_http_request (grep -c = 0)
+$ grep -rl "pre_http_request" testy/ | xargs grep -lE "chatl_pytanie|chatl_ajax_pytanie"
+                                    # (brak trafień — ani jeden plik nie jest w obu zbiorach)
 ```
 
-Zbiory są rozłączne, więc **wiersz `silnik='ai'` nie ma innego źródła niż prawdziwe
-HTTP 200 od dostawcy**.
+Zbiory osobno, dokładnie tak, jak zwracają je te polecenia:
+
+```
+$ grep -rl "pre_http_request" testy/        # testy z ATRAPĄ API — 4 pliki
+testy/blad-klucza-test.php
+testy/pamiec-rozmowy-test.php
+testy/tokeny-koszt-test.php
+testy/wybor-modelu-test.php
+    → wszystkie cztery wołają chatl_ai_odpowiedz() WPROST, żaden nie dotyka endpointu
+
+$ grep -rl "chatl_pytanie" testy/           # testy dotykające ENDPOINTU pytania — 3 pliki
+testy/nonce-cache-test.js
+testy/przejecie-test.php
+testy/wskaznik-pisania-test.js
+    → w żadnym z nich nie ma pre_http_request
+```
+
+⚠️ **Uwaga o czwartym pliku, żeby ten zapis się nie rozjechał z rzeczywistością.**
+`testy/pulapka-test.php` też zawiera napis `chatl_ajax_pytanie`, ale **nie łapie go
+powyższy grep** (szuka `chatl_pytanie`, a tam stoi `chatl_ajax_pytanie`) — i słusznie,
+bo ten test **nie wywołuje** tego endpointu: czyta jego ŹRÓDŁO wyrażeniem regularnym
+(`pulapka-test.php:238`), żeby sprawdzić KOLEJNOŚĆ warunków, a wywołuje endpoint
+**zgłoszenia kontaktu** (`chatl_ajax_zgloszenie()`, linia 138). Atrapy również nie ma.
+Wniosek się nie zmienia — zmienia się to, że polecenie wyżej daje dokładnie tę listę,
+którą tu widzisz.
+
+**Czyli: wiersz `silnik='ai'` nie ma innego źródła niż prawdziwe HTTP 200 od dostawcy.**
 
 ### 3. Zużycie liczone DOPIERO po HTTP 200 — i ono też jest niezerowe
 
@@ -316,6 +337,25 @@ $ git log --oneline -S "randomUUID" -- wtyczki/chatbot-live/assets/widget.js
 dcb2437 Pozycja A: przejecie rozmowy przez czlowieka (1.5.0, schemat 6) (#95)
 7111fff feat: chatbot-live P1 — szkielet + tryb regułowy
 ```
+
+### Jak to sprawdzić CUDZĄ ręką (wąskie okno recenzenta)
+
+Powyższe liczby wyjęte są `wp eval`-em, do którego recenzent dostępu nie ma. Żeby dowód
+dało się powtórzyć bez wiary na słowo, `narzedzia-qa/stos.sh` (tylko-do-odczytu, biała
+lista tabel) umie od 1.2.0 liczyć **z warunkiem**:
+
+```
+$ bash narzedzia-qa/stos.sh wiersze-gdzie wp_chatl_rozmowy.silnik=ai
+=== SELECT COUNT(*) FROM wp_chatl_rozmowy WHERE silnik = ai ===
+  wierszy: 20
+
+$ bash narzedzia-qa/stos.sh wiersze wp_chatl_ai_uzycie
+  wierszy: 2                       # dwa dni: 2026-08-20 i 2026-08-21
+```
+
+⚠️ To są liczby **ze stanu bazy warsztatowej w dniu pomiaru**. Jeśli czytasz to później,
+policz jeszcze raz — liczba wierszy `silnik=ai` może tylko rosnąć albo zniknąć razem
+z bazą (`wp db reset`), ale **nie może zmaleć** przy uczciwej pracy stanowiska.
 
 ### ⛔ CZEGO TEN DOWÓD NIE OBEJMUJE — i to jest ważniejsze niż on sam
 
