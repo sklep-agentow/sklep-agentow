@@ -37,7 +37,7 @@ Wszystkie wyszły przy domykaniu botów, u trzech różnych osób (builder1, bui
 
 | # | Klasa (mechanizm) | Ile | ODNOŚNIKI — każde wystąpienie osobno |
 |---|---|---|---|
-| **P1** | **naprawa trafia w egzemplarz, bliźniak zostaje** | **4×** | PR #122 (`LIKE` bez ucieczki: naprawione w `dowod-z-paczki.sh:316`, bliźniak został w `lib-stos-probny.sh:140`) · PR #126 runda 1 (wersja poprawiona w dokumentacji Segregatora, ChatBota **nie**) · PR #126 runda 2 (polskie znaki w obu `CHANGELOG.md`, w obu `readme.txt` **nie**) · PR #127 (`wp option get` naprawione dla `chatl_blad_ai`, bliźniak `chatl_blad_nonce` trzy linie niżej) |
+| **P1** | **naprawa trafia w egzemplarz, bliźniak zostaje** | **3×** | PR #126 runda 1 (wersja poprawiona w dokumentacji Segregatora, ChatBota **nie** — złapał recenzent) · PR #126 runda 2 (polskie znaki w obu `CHANGELOG.md`, w obu `readme.txt` **nie** — złapał recenzent, rundę po tym, jak zgłosił tę samą klasę) · PR #127 / commit `89c4ec4` „piec miejsc, nie jedno" (`wp option get` naprawione dla jednej opcji; bliźniaki w **5 miejscach w 3 plikach**: `dowod-zachowania-chatbot.sh`, `dowod-aktualizacji.sh`, `lib-stos-probny.sh`) |
 | **P2** | **zamrożenie unieważnione przez późniejszą zmianę pliku z paczki** | 2× | ChatBot: paczka 1.5.7 zbudowana rano, PR #113 zmienił potem 3 pliki z paczki → `paczka-zgodnosc.sh chatbot-live` EXIT=1, 3 ROZJAZDY · Segregator: commit `3ddb39e` „zamrozenie bylo pozorne" (11 śladów), naprawione dopiero w `807d72d` „Zamrozenie NAPRAWDE" |
 | **P3** | **test/bramka przechodzi z NIEWŁAŚCIWEGO powodu** | 3× | PR #124 (krok B dowodził działania **reguły demo**, nie własnej — recenzent odtworzył na żywo: wiadomość w `Segregator.Faktury` zamiast `Segregator.SEGMTEST-Faktury`) · PR #124 (builder2 sam zgłosił: pierwsza wersja testu przechodziła zawsze, bo źle liczyła błędy) · PR #125 (próba kontrolna **milczała** przy zgniłej kotwicy mutanta M1) |
 | **P4** | **zaszyta wartość w teście unieważniona przez zmianę produktu** | 2× | PR #126: `testy/dokumentacja-zgodnosc-segregator.sh` — 5 miejsc z `1.3.0` + licznik wydań `"6"` · `testy/dokumentacja-zgodnosc.sh` — 2 miejsca z `1.5.7` |
@@ -45,12 +45,19 @@ Wszystkie wyszły przy domykaniu botów, u trzech różnych osób (builder1, bui
 | **P6** | **nieśledzony plik wjeżdża do cudzego PR-a przez `git add -A`** | 1× | PR #122: `boty/BRIEF-BUILDER2-SEGREGATOR.md`, 71 linii, nieopisany w PR-ze; usunięty commitem `1f96238` |
 | **P7** | **wyjaśnienie zamiast pomiaru** | 2× | PR #126: koordynatorka zbyła czerwoną `dokumentacja-zgodnosc.sh` uzasadnieniem „pada przez brak chromium" — uruchomiona dała **6 pozycji, 5 realnych** · **ten plik, runda 1**: tabela klas bez ani jednego odnośnika (dokument o dowodach — bez dowodów) |
 
-⚠️ **P7 wystąpiła drugi raz W TYM PLIKU** i złapał to recenzent. Dopisane jako wystąpienie,
+⚠️ **P7 wystąpiła w tym pliku DWA RAZY** i oba razy złapał to recenzent, nie ja:
+runda 1 — tabela bez ani jednego odnośnika; runda 2 — **odnośniki dopisane Z PAMIĘCI, nie z historii**.
+Jeden z nich (`PR #122`, `dowod-z-paczki.sh:316`) **nie istniał**: PR #122 to sprzątanie śladów,
+plik ma 263 linie, a prawdziwa naprawa ucieczki w `LIKE` naprawiła **oba** miejsca naraz — czyli
+nie była przypadkiem P1 w ogóle. Dlatego licznik P1 spadł z 4× na **3×**.
+⭐ Wniosek, który kosztował dwie rundy: **odnośnik też jest twierdzeniem i wymaga próby kontrolnej.**
+Sprawdziłam wtedy trzy cytowane commity i uznałam próbę za wykonaną — a nie sprawdziłam
+numerów PR-ów ani numerów linii. Częściowa próba kontrolna daje fałszywe poczucie, że się sprawdziło. Dopisane jako wystąpienie,
 nie zamiecione — bo pętla, która nie liczy własnych potknięć, nie jest pętlą.
 
 ### Co z tego wynika dla NASZEGO audytu
 
-- **P1 jest królem** — cztery wystąpienia w jeden poranek, w tym raz **zaraz po tym**, jak
+- **P1 jest najczęstsza** — cztery wystąpienia w jeden poranek, w tym raz **zaraz po tym**, jak
   recenzent wytknął ją tej samej osobie. To nie jest kwestia uwagi: człowiek widzi miejsce,
   które ma właśnie otwarte. ⭐ Jedyne, co działa, to **mechaniczny odruch**: po każdej naprawie
   `grep` po wzorcu, nie „wydaje mi się, że to jedyne miejsce".
