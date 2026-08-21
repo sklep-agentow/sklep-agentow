@@ -80,7 +80,15 @@ case "$WTYCZKA" in
 	segregator-maila)
 		SEKRETY=(segm_klucz_api segm_imap_haslo)
 		OPCJA_UST=segm_ustawienia
-		PROBA_REGULOWA='global $wpdb; $r = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}segm_reguly", ARRAY_A ); $m = array( "nadawca" => "faktury@example.com", "temat" => "Faktura 1/2026", "tresc" => "W zalaczniku faktura." ); echo "ODPOWIEDZ:" . (string) segm_klasyfikuj_mail( $m, $r );'
+		# ⛔ OBIEKTY, nie tablice, i wlasna regula zamiast odczytu z bazy.
+		# Pierwsza wersja tej proby brala reguly przez ARRAY_A i podawala maila
+		# jako tablice — a silnik czyta `$mail->nadawca` i `$regula->pole`
+		# (tak wola go CALA produkcja: skrzynka-przebieg.php:213, admin-probka.php:130,
+		# silnik.php:175, wszystkie trzy przez wiersze z bazy, czyli obiekty).
+		# Efekt: siedem Warningow i „ODPOWIEDZ:Array" — proba mierzyla wlasny blad,
+		# nie zachowanie wtyczki. Regula budowana TUTAJ, bo swieza instalacja nie ma
+		# jeszcze zadnej: proba ma sprawdzac SILNIK, nie zawartosc bazy demo.
+		PROBA_REGULOWA='$mail = (object) array( "nadawca" => "faktury@example.com", "temat" => "Faktura 1/2026", "tresc" => "W zalaczniku faktura." ); $reguly = array( (object) array( "id" => 7, "kolejnosc" => 1, "pole" => "od", "wzorzec" => "faktury@", "kategoria" => "Faktury" ) ); $d = segm_klasyfikuj_mail( $mail, $reguly ); echo "ODPOWIEDZ:" . ( "Faktury" === $d["kategoria"] && 7 === (int) $d["regula_id"] ? "kategoria=Faktury regula=7" : "ROZJAZD " . wp_json_encode( $d ) );'
 		;;
 	*)
 		padnij "nie znam wtyczki [$WTYCZKA] — dopisz ją do tablicy w tym skrypcie, nie obchodź jej"

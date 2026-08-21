@@ -43,7 +43,7 @@ function sklepag_obsluz_resend() {
 	if ( '' === (string) $zam->email_kupujacego ) {
 		wp_die( 'Zamówienie bez adresu e-mail (kupujący zanonimizowany?) — nie ma dokąd wysłać.', 'Sklep Agentów', 400 );
 	}
-	// Tylko stany PO domknięciu wysyłki (recenzja #45): `mail_w_toku` = webhook
+	// Tylko stany PO domknięciu wysyłki: `mail_w_toku` = webhook
 	// właśnie domyka (resend nadpisałby token bez CAS), `oczekuje`/`oplacone` =
 	// silnik zaraz wyśle sam. Utknięte `mail_w_toku` odzyskuje reconciliation
 	// (stale-claim po 5 min) i przestawia status — wtedy resend się odblokuje.
@@ -209,7 +209,7 @@ function sklepag_admin_zamowienie() {
 
 	// Treść maila + akcje TUŻ OBOK (wzorzec Stripe „Resend receipt").
 	echo '<div class="postbox sklepag-box"><div class="inside">';
-	echo '<h2 class="sklepag-box-tytul">Treść wysłanego maila <span class="sklepag-szary">(podgląd — egzaminator widzi mail bez skrzynki)</span></h2>';
+	echo '<h2 class="sklepag-box-tytul">Treść wysłanego maila <span class="sklepag-szary">(podgląd treści — nie kopia z Twojej skrzynki)</span></h2>';
 	echo $zam->mail_tresc
 		? '<pre class="sklepag-mail-tresc">' . esc_html( $zam->mail_tresc ) . '</pre>'
 		: '<p class="description">Treść maila jeszcze nie powstała (zamówienie niedomknięte).</p>';
