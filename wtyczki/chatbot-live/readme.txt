@@ -141,8 +141,8 @@ Pełna historia zmian, z opisem każdej pozycji, jest w pliku `CHANGELOG.md`
 w paczce. Poniżej skrót.
 
 = 1.5.8 =
-Instrukcja i opis mowia to, co bot naprawde robi: przejecie rozmowy przez czlowieka
-i pamiec rozmowy. Zero zmian w kodzie.
+Instrukcja i opis mówią to, co bot naprawdę robi: przejęcie rozmowy przez człowieka
+i pamięć rozmowy. Zero zmian w kodzie.
 
 = 1.5.7 =
 * Import bazy pytań z pliku CSV z podglądem przed zapisem — wgrany plik trafia

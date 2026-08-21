@@ -130,8 +130,8 @@ z serwerem. Hasło jest w nim zamaskowane.
 Pełna historia zmian jest w pliku `CHANGELOG.md` w katalogu wtyczki.
 
 = 1.3.1 =
-Instrukcja opisuje wtyczke, ktora kupujacy naprawde dostaje: podlaczenie skrzynki
-krok po kroku, liczniki przy regule, przeprowadzka regul plikiem, wybor modelu.
+Instrukcja opisuje wtyczkę, którą kupujący naprawdę dostaje: podłączenie skrzynki
+krok po kroku, liczniki przy regule, przeprowadzka reguł plikiem, wybór modelu.
 Zero zmian w kodzie.
 
 = 1.3.0 =
