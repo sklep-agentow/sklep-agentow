@@ -37,15 +37,15 @@ Wszystkie wyszły przy domykaniu botów, u trzech różnych osób (builder1, bui
 
 | # | Klasa (mechanizm) | Ile | ODNOŚNIKI — każde wystąpienie osobno |
 |---|---|---|---|
-| **P1** | **naprawa trafia w egzemplarz, bliźniak zostaje** | **3×** | PR #126 runda 1 (wersja poprawiona w dokumentacji Segregatora, ChatBota **nie** — złapał recenzent) · PR #126 runda 2 (polskie znaki w obu `CHANGELOG.md`, w obu `readme.txt` **nie** — złapał recenzent, rundę po tym, jak zgłosił tę samą klasę) · PR #127 / commit `89c4ec4` „piec miejsc, nie jedno" (`wp option get` naprawione dla jednej opcji; bliźniaki w **5 miejscach w 2 plikach**: `dowod-zachowania-chatbot.sh:143,145,229` i `dowod-aktualizacji.sh:131,166`. ⚠️ `lib-stos-probny.sh` NIE jest trzecim plikiem z wadą — tam powstała wspólna funkcja `opcja()`, czyli **miejsce naprawy**, nie kolejny bliźniak) |
+| **P1** | **naprawa trafia w egzemplarz, bliźniak zostaje** | **4×** | PR #126 runda 1 (wersja poprawiona w dokumentacji Segregatora, ChatBota **nie** — złapał recenzent) · PR #126 runda 2 (polskie znaki w obu `CHANGELOG.md`, w obu `readme.txt` **nie** — złapał recenzent, rundę po tym, jak zgłosił tę samą klasę) · PR #127 / commit `89c4ec4` „piec miejsc, nie jedno" (`wp option get` naprawione dla jednej opcji; bliźniaki w **5 miejscach w 2 plikach**: `dowod-zachowania-chatbot.sh:143,145,229` i `dowod-aktualizacji.sh:131,166`. ⚠️ `lib-stos-probny.sh` NIE jest trzecim plikiem z wadą — tam powstała wspólna funkcja `opcja()`, czyli **miejsce naprawy**, nie kolejny bliźniak) · ⭐ **ten plik, runda 3**: licznik P1 poprawiony w tabeli, stara liczba ZOSTAŁA w narracji pod nią — recenzent nazwał to żywym przykładem własnej klasy w trakcie naprawiania jej opisu |
 | **P2** | **zamrożenie unieważnione przez późniejszą zmianę pliku z paczki** | 2× | ChatBot: paczka 1.5.7 zbudowana rano, PR #113 zmienił potem 3 pliki z paczki → `paczka-zgodnosc.sh chatbot-live` EXIT=1, 3 ROZJAZDY · Segregator: commit `3ddb39e` „zamrozenie bylo pozorne" (11 śladów), naprawione dopiero w `807d72d` „Zamrozenie NAPRAWDE" |
 | **P3** | **test/bramka przechodzi z NIEWŁAŚCIWEGO powodu** | 3× | PR #124 (krok B dowodził działania **reguły demo**, nie własnej — recenzent odtworzył na żywo: wiadomość w `Segregator.Faktury` zamiast `Segregator.SEGMTEST-Faktury`) · PR #124 (builder2 sam zgłosił: pierwsza wersja testu przechodziła zawsze, bo źle liczyła błędy) · PR #125 (próba kontrolna **milczała** przy zgniłej kotwicy mutanta M1) |
 | **P4** | **zaszyta wartość w teście unieważniona przez zmianę produktu** | 2× | PR #126: `testy/dokumentacja-zgodnosc-segregator.sh` — 5 miejsc z `1.3.0` + licznik wydań `"6"` · `testy/dokumentacja-zgodnosc.sh` — 2 miejsca z `1.5.7` |
 | **P5** | **PR scalony do GAŁĘZI udaje scalonego do `main`** | 1× | PR #107: `gh pr view 107 --json baseRefName` → `boty/dowod-z-paczki` (nie `main`), a `git ls-tree -r origin/main` nie pokazywał `narzedzia-qa/dowod-aktualizacji.sh`. Weszło dopiero z PR #105 |
 | **P6** | **nieśledzony plik wjeżdża do cudzego PR-a przez `git add -A`** | 1× | PR #122: `boty/BRIEF-BUILDER2-SEGREGATOR.md`, 71 linii, nieopisany w PR-ze; usunięty commitem `1f96238` |
-| **P7** | **wyjaśnienie zamiast pomiaru** | 2× | PR #126: koordynatorka zbyła czerwoną `dokumentacja-zgodnosc.sh` uzasadnieniem „pada przez brak chromium" — uruchomiona dała **6 pozycji, 5 realnych** · **ten plik, runda 1**: tabela klas bez ani jednego odnośnika (dokument o dowodach — bez dowodów) |
+| **P7** | **wyjaśnienie zamiast pomiaru** | 3× | PR #126: koordynatorka zbyła czerwoną `dokumentacja-zgodnosc.sh` uzasadnieniem „pada przez brak chromium" — uruchomiona dała **6 pozycji, 5 realnych** · **ten plik, runda 1**: tabela klas bez ani jednego odnośnika (dokument o dowodach — bez dowodów) · **ten plik, runda 2**: odnośniki dopisane Z PAMIĘCI, nie z historii; jeden (PR #122, linia :316) NIE ISTNIAŁ |
 
-⚠️ **P7 wystąpiła w tym pliku DWA RAZY** i oba razy złapał to recenzent, nie ja:
+⚠️ **P7 wystąpiła w tym pliku TRZY RAZY**, a P1 raz — łącznie **cztery rundy poprawek tego samego pliku**, w których wracała klasa, o której ten plik jest. Dwa pierwsze razy złapał recenzent:
 runda 1 — tabela bez ani jednego odnośnika; runda 2 — **odnośniki dopisane Z PAMIĘCI, nie z historii**.
 Jeden z nich (`PR #122`, `dowod-z-paczki.sh:316`) **nie istniał**: PR #122 to sprzątanie śladów,
 plik ma 263 linie, a prawdziwa naprawa ucieczki w `LIKE` naprawiła **oba** miejsca naraz — czyli
@@ -57,7 +57,7 @@ nie zamiecione — bo pętla, która nie liczy własnych potknięć, nie jest p�
 
 ### Co z tego wynika dla NASZEGO audytu
 
-- **P1 jest najczęstsza** — trzy wystąpienia w jeden poranek, w tym raz **zaraz po tym**, jak
+- **P1 jest najczęstsza** — cztery wystąpienia, w tym jedno **w tym pliku**, w tym raz **zaraz po tym**, jak
   recenzent wytknął ją tej samej osobie. To nie jest kwestia uwagi: człowiek widzi miejsce,
   które ma właśnie otwarte. ⭐ Jedyne, co działa, to **mechaniczny odruch**: po każdej naprawie
   `grep` po wzorcu, nie „wydaje mi się, że to jedyne miejsce".
