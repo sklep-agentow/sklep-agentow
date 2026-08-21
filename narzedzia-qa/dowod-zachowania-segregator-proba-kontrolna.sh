@@ -82,6 +82,24 @@ mutuj_i_sprawdz() {
 	sprawdz "$opis" "$zip" 1 "$fraza"
 }
 
+# ⛔ NAJPIERW SPRAWDZAM SAMA PROBE. Proba kontrolna, ktora przy zgnilej kotwicy
+# konczy sie CISZA i zerem, jest gorsza niz jej brak: mowi „skalibrowane", nie
+# sprawdziwszy niczego. Ten przypadek podklada kotwice, ktorej w pliku NIE MA,
+# i wymaga, zeby `zmutuj` odmowil KODEM WYJSCIA — nie komunikatem, nie cisza.
+# Jest tani (sam sed na rozpakowanej kopii, zero dockera), wiec biegnie zawsze.
+echo "=== KONTROLA SAMEJ PROBY — zgnila kotwica MA byc bledem, nie cisza ==="
+KOD_ZGNILEJ=0
+zmutuj kontrola-zgnilej-kotwicy includes/skrzynka-przebieg.php \
+	's|$na_zywo = TEJ_LINII_JUZ_NIE_MA();|$na_zywo = true; // MUTANT|' 'MUTANT' \
+	> /dev/null 2>&1 || KOD_ZGNILEJ=$?
+if [ "$KOD_ZGNILEJ" -ne 0 ]; then
+	printf '  OK   %-58s (EXIT=%s)\n' "kotwica, ktorej nie ma w pliku, jest odrzucana" "$KOD_ZGNILEJ"
+else
+	printf '  BLAD %-58s (EXIT=0 — proba MILCZY)\n' "kotwica, ktorej nie ma w pliku, przeszla"
+	BLEDY=$(( BLEDY + 1 ))
+fi
+
+echo
 echo "=== MUTANTY — dowod MA PASC ==="
 
 # ⛔ ZAKOTWICZONE WZORCEM, nie numerem linii. Pierwsza wersja podmieniala CALA
