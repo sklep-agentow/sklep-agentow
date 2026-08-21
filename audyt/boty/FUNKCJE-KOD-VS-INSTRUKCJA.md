@@ -1,4 +1,6 @@
 # ODWROTNY PRZEGLĄD: co produkt ROBI vs co instrukcja OPISUJE — oba boty
+<!-- adresy: potwierdzalne -->
+
 
 **Pomiar: 2026-08-21, stan `807d72d` (ChatBot 1.5.8, Segregator 1.3.1).**
 
@@ -17,26 +19,26 @@ akcje AJAX (`wp_ajax_*`), trasy REST (`register_rest_route`), zadania cykliczne
 
 | funkcja widoczna dla użytkownika | gdzie w kodzie | w instrukcji |
 |---|---|---|
-| Menu **Baza Q&A** | `includes/admin.php:12` (`add_menu_page`) | ✅ TAK (§2) |
-| Menu **Statystyki i luki** | `includes/admin.php` (`chatl-statystyki`) | ✅ TAK (§5) |
-| Menu **Zgłoszenia z czatu** | `includes/admin.php` (`chatl-zgloszenia`) | ✅ TAK (§4) |
-| Menu **Historia rozmów** | `includes/admin.php` (`chatl-historia`) | ✅ TAK (§4) |
-| Menu **Ustawienia** | `includes/admin.php` (`chatl-ustawienia`) | ✅ TAK (§2, §3, §6) |
-| Menu **Rozmowy na żywo** (przejęcie) | `includes/operator.php` (`chatl-rozmowy`) | ✅ TAK (§7, „Przejmij rozmowę osobiście") |
-| Widget czatu, zbiórka kontaktu | `includes/front.php` (AJAX `chatl_pytanie`, `chatl_zgloszenie`) | ✅ TAK (§1, §4) |
-| Tryb AI + dwa stop-lossy | `includes/ai.php` | ✅ TAK (§6) |
-| Pamięć bieżącej rozmowy | `includes/ai.php:47` | ✅ TAK (§6, pkt 2a) |
-| Pułapka na boty | `includes/front.php:47` | ✅ TAK (§4, „Pułapka na boty") |
-| Wygląd widgetu + kontrast WCAG | `includes/wyglad.php` | ✅ TAK (§3) |
-| Wnioski RODO (eksporter/kasownik WP) | `includes/rodo.php` | ✅ TAK (§9) |
-| Retencja 90 dni (cron) | `chatl_czyszczenie_historii` | ✅ TAK (§4, §9) |
-| Trasa REST `chatl/v1/rozmowa` | `includes/przejecie.php:502` | ✅ TAK — pośrednio, przez opis przejęcia |
-| **Import bazy Q&A z CSV** (1.5.7) | `includes/import.php` | ⛔ **BYŁO: NIE** → ✅ dopisane (§2a) |
-| **Eksport bazy Q&A do CSV** (1.5.7) | `includes/import.php:730+` | ⛔ **BYŁO: NIE** → ✅ dopisane (§2a) |
-| **Wskaźnik „bot pisze"** (1.4.8) | `assets/widget.js` | 🐞 **NIE** — nie ma ani w instrukcji, ani w readme |
-| **Stronicowanie trzech list panelu** (1.5.6) | `includes/admin.php:67,70` (200/100/25) | 🐞 **NIE** — żaden dokument nie mówi, że listy mają strony |
-| **Podstrona „Start" (ekran powitalny)** | `includes/powitanie.php:32` | 🐞 **NIE** w instrukcji (readme wspomina) |
-| **Test bota w panelu** | `includes/admin.php` (AJAX `chatl_panel_rozmowa`) | 🐞 **NIE** w instrukcji (readme wspomina) |
+| Menu **Baza Q&A** | `wtyczki/chatbot-live/includes/admin.php:12` (`add_menu_page`) | ✅ TAK (§2) |
+| Menu **Statystyki i luki** | `wtyczki/chatbot-live/includes/admin.php` (`chatl-statystyki`) | ✅ TAK (§5) |
+| Menu **Zgłoszenia z czatu** | `wtyczki/chatbot-live/includes/admin.php` (`chatl-zgloszenia`) | ✅ TAK (§4) |
+| Menu **Historia rozmów** | `wtyczki/chatbot-live/includes/admin.php` (`chatl-historia`) | ✅ TAK (§4) |
+| Menu **Ustawienia** | `wtyczki/chatbot-live/includes/admin.php` (`chatl-ustawienia`) | ✅ TAK (§2, §3, §6) |
+| Menu **Rozmowy na żywo** (przejęcie) | `wtyczki/chatbot-live/includes/operator.php` (`chatl-rozmowy`) | ✅ TAK (§7, „Przejmij rozmowę osobiście") |
+| Widget czatu, zbiórka kontaktu | `wtyczki/chatbot-live/includes/front.php` (AJAX `chatl_pytanie`, `chatl_zgloszenie`) | ✅ TAK (§1, §4) |
+| Tryb AI + dwa stop-lossy | `wtyczki/chatbot-live/includes/ai.php` | ✅ TAK (§6) |
+| Pamięć bieżącej rozmowy | `wtyczki/chatbot-live/includes/ai.php:47` (`CHATL_AI_PAMIEC_WYMIAN`) | ✅ TAK (§6, pkt 2a) |
+| Pułapka na boty | `wtyczki/chatbot-live/includes/front.php:47` (`CHATL_PULAPKA_SEKUND`) | ✅ TAK (§4, „Pułapka na boty") |
+| Wygląd widgetu + kontrast WCAG | `wtyczki/chatbot-live/includes/wyglad.php` | ✅ TAK (§3) |
+| Wnioski RODO (eksporter/kasownik WP) | `wtyczki/chatbot-live/includes/rodo.php` | ✅ TAK (§9) |
+| Retencja 90 dni (cron) | `wtyczki/chatbot-live/includes/instalator.php:137` (`chatl_czyszczenie_historii`) | ✅ TAK (§4, §9) |
+| Trasa REST `chatl/v1/rozmowa` | `wtyczki/chatbot-live/includes/przejecie.php:502` (`register_rest_route`) | ✅ TAK — pośrednio, przez opis przejęcia |
+| **Import bazy Q&A z CSV** (1.5.7) | `wtyczki/chatbot-live/includes/import.php` | ⛔ **BYŁO: NIE** → ✅ dopisane (§2a) |
+| **Eksport bazy Q&A do CSV** (1.5.7) | `wtyczki/chatbot-live/includes/import.php:730` (nagłówek `Import` i eksport bazy) | ⛔ **BYŁO: NIE** → ✅ dopisane (§2a) |
+| **Wskaźnik „bot pisze"** (1.4.8) | `wtyczki/chatbot-live/assets/widget.js` | 🐞 **NIE** — nie ma ani w instrukcji, ani w readme |
+| **Stronicowanie trzech list panelu** (1.5.6) | `wtyczki/chatbot-live/includes/admin.php:67,70` (`CHATL_NA_STRONE_ZGLOSZEN`, `CHATL_NA_STRONE_ROZMOW`) | 🐞 **NIE** — żaden dokument nie mówi, że listy mają strony |
+| **Podstrona „Start" (ekran powitalny)** | `wtyczki/chatbot-live/includes/powitanie.php:32` (`add_submenu_page`) | 🐞 **NIE** w instrukcji (readme wspomina) |
+| **Test bota w panelu** | `wtyczki/chatbot-live/includes/admin.php` (AJAX `chatl_panel_rozmowa`) | 🐞 **NIE** w instrukcji (readme wspomina) |
 
 **Cztery pozycje bez opisu w instrukcji, wszystkie z ostatnich dni przed zamrożeniem** —
 dokładnie tam, gdzie kazała szukać kolejność `git log`:
@@ -55,19 +57,19 @@ c31b54b C: brak sygnalu, ze bot pisze (1.4.8)                               ← 
 
 | funkcja widoczna dla użytkownika | gdzie w kodzie | w instrukcji |
 |---|---|---|
-| Menu **Przebiegi** | `includes/admin.php` (`segm-przebiegi`) | ✅ TAK |
+| Menu **Przebiegi** | `wtyczki/segregator-maila/includes/admin.php` (`segm-przebiegi`) | ✅ TAK |
 | Menu **Reguły** | `segm-reguly` | ✅ TAK (§3, 26 wzmianek) |
 | Menu **Kategorie** | `segm-kategorie` | ✅ TAK |
 | Menu **Próbka maili** | `segm-probka` | ✅ TAK |
-| Menu **Skrzynka (IMAP)** | `includes/admin-skrzynka.php` (`segm-skrzynka`) | ✅ TAK |
+| Menu **Skrzynka (IMAP)** | `wtyczki/segregator-maila/includes/admin-skrzynka.php` (`segm-skrzynka`) | ✅ TAK |
 | Menu **Ustawienia** | `segm-ustawienia` | ✅ TAK |
-| Ekran powitalny po aktywacji | `includes/admin-powitanie.php` | ✅ TAK |
-| Eksport filtrów Gmail / reguł Outlook | `includes/filtry.php` | ✅ TAK (11 i 8 wzmianek) |
-| Import/eksport konfiguracji JSON | `includes/konfiguracja.php` | ✅ TAK |
-| „Uruchom teraz" i harmonogram | `includes/skrzynka-przebieg.php` | ✅ TAK |
-| **Cofnięcie przebiegu** | `includes/skrzynka-przebieg.php:402` | ✅ TAK |
-| „Przetestuj klucz API" | `includes/ai.php` | ✅ TAK |
-| Retencja 90 dni (cron) | `segm_czyszczenie_probki` | ✅ TAK |
+| Ekran powitalny po aktywacji | `wtyczki/segregator-maila/includes/admin-powitanie.php` | ✅ TAK |
+| Eksport filtrów Gmail / reguł Outlook | `wtyczki/segregator-maila/includes/filtry.php` | ✅ TAK (11 i 8 wzmianek) |
+| Import/eksport konfiguracji JSON | `wtyczki/segregator-maila/includes/konfiguracja.php` | ✅ TAK |
+| „Uruchom teraz" i harmonogram | `wtyczki/segregator-maila/includes/skrzynka-przebieg.php` | ✅ TAK |
+| **Cofnięcie przebiegu** | `wtyczki/segregator-maila/includes/skrzynka-przebieg.php:402` (`segm_skrzynka_cofnij`) | ✅ TAK |
+| „Przetestuj klucz API" | `wtyczki/segregator-maila/includes/ai.php` | ✅ TAK |
+| Retencja 90 dni (cron) | `wtyczki/segregator-maila/segregator-maila.php:211` (rejestracja) + `wtyczki/segregator-maila/segregator-maila.php:132` (`segm_czyszczenie_probki`) | ✅ TAK |
 | Trasy REST | **brak w kodzie** | — (nie ma czego opisywać) |
 | Akcje AJAX | **brak w kodzie** | — |
 

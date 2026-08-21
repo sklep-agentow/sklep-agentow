@@ -15,6 +15,31 @@ pory lądują tutaj.
 
 ## [Niewydane]
 
+### Dodane
+
+- **`adresy-w-dokumencie.sh` 1.0.0 — mechaniczna kontrola, czy dokument nie kłamie
+  o WŁASNYCH odsyłaczach.** Powstało, bo 21.08 **trzeci raz** dokument opisujący jakąś
+  klasę błędu sam ją popełnił: przegląd „co robi kod, czego nie ma w instrukcji" miał
+  nieścisłe adresy `plik:linia`. Pisanie O KLASIE nie chroni przed KLASĄ — uwaga siedzi
+  na treści, nie na formie. Chroni tylko kontrola **po** napisaniu.
+
+  Dla każdego `sciezka/plik:linia[,linia]` skrypt sprawdza: czy plik istnieje, czy linia
+  istnieje, i **czy treść się zgadza** — w cytowanej linii (albo w nazwie funkcji, wewnątrz
+  której stoi) musi wystąpić nazwa albo liczba, którą obiecuje wiersz dokumentu. Adres
+  do innego repozytorium jest pomijany jawnie, nie po cichu.
+
+  ⭐ Tryb **SUROWY** włącza sam dokument znacznikiem `<!-- adresy: potwierdzalne -->`:
+  wtedy adres, którego wiersz nie nazywa po imieniu, jest **błędem**. Bez tego rozdziału
+  narzędzie krzyczałoby na każdy stary dokument w repo i zostałoby wyłączone w tydzień.
+
+  Kalibracja: przestawienie `ai.php:47` → `:470` (linia istnieje, treść inna) i
+  `powitanie.php:32` → `:99999` (poza plikiem) — **oba złapane, EXIT=1**.
+
+  Pierwszy przebieg znalazł **7 z 7 adresów nie do użycia** w świeżo napisanym dokumencie
+  (brak przedrostka `wtyczki/<wtyczka>/`) oraz — po dopisaniu sekcji do instrukcji ChatBota —
+  **12 adresów w przeglądzie liczb, które przestały pasować**, bo mój własny dopisek
+  przesunął numery linii w cytowanym pliku. Bez tej kontroli oddałbym oba dokumenty.
+
 ### Naprawione
 
 - **KLASA, nie egzemplarz: `wp option get` w teście pustości — pięć miejsc, nie jedno.**

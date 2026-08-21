@@ -307,7 +307,7 @@ testy/wskaznik-pisania-test.js
 `testy/pulapka-test.php` też zawiera napis `chatl_ajax_pytanie`, ale **nie łapie go
 powyższy grep** (szuka `chatl_pytanie`, a tam stoi `chatl_ajax_pytanie`) — i słusznie,
 bo ten test **nie wywołuje** tego endpointu: czyta jego ŹRÓDŁO wyrażeniem regularnym
-(`pulapka-test.php:238`), żeby sprawdzić KOLEJNOŚĆ warunków, a wywołuje endpoint
+(`testy/pulapka-test.php:238`), żeby sprawdzić KOLEJNOŚĆ warunków, a wywołuje endpoint
 **zgłoszenia kontaktu** (`chatl_ajax_zgloszenie()`, linia 138). Atrapy również nie ma.
 Wniosek się nie zmienia — zmienia się to, że polecenie wyżej daje dokładnie tę listę,
 którą tu widzisz.
