@@ -300,8 +300,11 @@ Plik odpala się tylko przy prawdziwym odinstalowaniu (`WP_UNINSTALL_PLUGIN`), n
 **Ścieżka B — pełne czyszczenie (`usun_dane` = 1, zaznaczone w ustawieniach):**
 
 1. To samo skasowanie klucza API.
-2. `DROP TABLE IF EXISTS` dla wszystkich pięciu tabel.
-3. `delete_option` dla `chatl_ustawienia`, `chatl_wersja_schematu`, `chatl_blad_maila`.
+2. `DROP TABLE IF EXISTS` dla wszystkich sześciu tabel (`chatl_qa`, `chatl_rozmowy`,
+   `chatl_sesje`, `chatl_zgloszenia`, `chatl_rate_limit`, `chatl_ai_uzycie`).
+3. `delete_option` dla siedmiu opcji: `chatl_ustawienia`, `chatl_wersja_schematu`,
+   `chatl_blad_maila`, `chatl_blad_ai`, `chatl_blad_nonce`, `chatl_blad_bazy`
+   i `chatl_rodo_sesje_wspolne`.
 4. Sprzątanie transientów `chatl_rl_*` ze **starszych wersji wtyczki** (≤ 1.1.x, gdy licznik
    limitów żył w opcjach zamiast w tabeli). Zapytanie używa `esc_like()` — podkreślnik jest
    symbolem wieloznacznym w `LIKE`, więc bez eskejpowania mogłoby złapać cudze wpisy.

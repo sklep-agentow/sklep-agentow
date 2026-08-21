@@ -110,6 +110,38 @@ function segm_pasek_bledu_ai() {
 add_action( 'admin_notices', 'segm_pasek_bledu_ai' );
 
 /**
+ * Pasek: zapis do bazy nie doszedł do skutku.
+ *
+ * Ten sam wzorzec co pasek błędu AI wyżej — bo to JEDYNY kanał, którym
+ * właściciel się o tym dowie. `wp_trigger_error()` nic nie zapisuje przy
+ * WP_DEBUG=false, a wyłączony jest na każdej normalnej instalacji klienta.
+ * Pasek sam cichnie po SEGM_BLAD_BAZY_OKNO_DNI dniach bez nowego błędu.
+ *
+ * @return void
+ */
+function segm_pasek_bledu_bazy() {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		return;
+	}
+	$blad = get_option( 'segm_blad_bazy' );
+	if ( ! is_array( $blad ) || empty( $blad['ostatni'] ) ) {
+		return;
+	}
+	$kiedy = strtotime( (string) $blad['ostatni'] );
+	if ( ! $kiedy || $kiedy < time() - SEGM_BLAD_BAZY_OKNO_DNI * DAY_IN_SECONDS ) {
+		return;
+	}
+	printf(
+		'<div class="notice notice-error"><p><strong>Segregator maila: zapis do bazy nie powiódł się.</strong> Ostatnio %s (wystąpień: %d). Operacja: %s. Baza odpowiedziała: %s.<br>Część danych mogła się NIE zapisać. Jeśli to się powtarza, pokaż ten komunikat swojemu hostingowi.</p></div>',
+		esc_html( (string) $blad['ostatni'] ),
+		(int) ( $blad['ile'] ?? 1 ),
+		esc_html( (string) ( $blad['operacja'] ?? '' ) ),
+		esc_html( (string) ( $blad['szczegol'] ?? '' ) )
+	);
+}
+add_action( 'admin_notices', 'segm_pasek_bledu_bazy' );
+
+/**
  * Schowanie banera dla bieżącego użytkownika (decyzja per osoba, nie globalna).
  *
  * @return void

@@ -60,13 +60,13 @@ leży w pliku `LICENSE` w katalogu wtyczki i wchodzi do paczki produktowej.
 
 | Plik | Linii | Za co odpowiada |
 |---|---|---|
-| `segregator-maila.php` | 327 | nagłówek wtyczki, stałe, ładowanie plików, cron retencji, znacznik „operacja w toku", zgoda na AI, ustawienia ogólne |
-| `uninstall.php` | 89 | deinstalacja — dwie ścieżki (§11.5) |
+| `segregator-maila.php` | 364 | nagłówek wtyczki, stałe, ładowanie plików, cron retencji, znacznik „operacja w toku", zgoda na AI, ustawienia ogólne |
+| `uninstall.php` | 90 | deinstalacja — dwie ścieżki (§11.5) |
 | `includes/instalator.php` | 268 | `dbDelta` dla 7 tabel, aktywacja, deaktywacja, seed demo (5 kategorii, 8 reguł, 30 maili) |
 | `includes/silnik.php` | 248 | `segm_klasyfikuj_mail()` — jedyna reguła dopasowania w całej wtyczce; przebieg na próbce |
 | `includes/csv.php` | 352 | import próbki z CSV (wykrywanie kodowania, limity) i eksport raportu do CSV |
 | `includes/ai.php` | 569 | opcjonalna klasyfikacja modelem, licznik stop-loss |
-| `includes/admin.php` | 1348 | panel: przebiegi i raporty, reguły, kategorie, próbka, ustawienia, baner powitalny |
+| `includes/admin.php` | 1380 | panel: przebiegi i raporty, reguły, kategorie, próbka, ustawienia, baner powitalny |
 | `includes/konfiguracja.php` | 360 | eksport i import własnej konfiguracji (kategorie + reguły) w JSON-ie |
 | `includes/filtry.php` | 588 | eksport reguł do filtrów Gmaila (XML) i reguł Outlooka |
 | `includes/class-segm-imap.php` | 947 | **klient IMAP4rev1 w czystym PHP** — gniazdo, TLS, protokół |
