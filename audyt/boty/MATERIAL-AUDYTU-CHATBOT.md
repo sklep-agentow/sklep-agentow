@@ -1,6 +1,6 @@
 # MATERIAŁ DLA AUDYTORA — ChatBot LIVE
 
-**Pomiar: 2026-08-21, po zamrożeniu 1.5.8.** Wszystkie liczby niżej są **zmierzone
+**Pomiar: 2026-08-21, po zamrożeniu 1.5.8. ⭐ SHA odświeżone po scaleniu #127.** Wszystkie liczby niżej są **zmierzone
 tego dnia na tej maszynie**, nie przepisane z wcześniejszych dokumentów. Przy każdej
 stoi polecenie, którym ją zdjęto — masz je powtórzyć, jeśli czytasz to później niż
 w dniu pomiaru, bo stos żyje.
@@ -44,13 +44,17 @@ po SHA i tylko commit.
 
 | co | wartość | czym zmierzone |
 |---|---|---|
-| Gałąź główna, stan na pomiar | `807d72d61c07108a11a934e4d2b74f691ea7c495` | `git rev-parse HEAD` |
-| Ostatni commit dotykający wtyczki | `807d72d` (2026-08-21 09:22, PR #126) | `git log -1 -- wtyczki/chatbot-live/` |
-| Commit, z którego powstała paczka | `807d72d` | `git log -1 -- boty/paczki/` |
+| Gałąź główna, stan na pomiar | `7bfdb1f4301e47bea0d6d41144393faaee6ba0c7` | `git rev-parse HEAD` (2026-08-21 10:09, PR #127) |
+| **Ostatni commit dotykający wtyczki** | **`807d72d61c07108a11a934e4d2b74f691ea7c495`** | `git log -1 -- wtyczki/chatbot-live/` (2026-08-21 09:22, PR #126) |
+| **Commit, z którego powstała paczka** | **`807d72d61c07108a11a934e4d2b74f691ea7c495`** | `git log -1 -- boty/paczki/chatbot-live-1.5.8.zip` |
 | Wersja w nagłówku wtyczki | **1.5.8** | `bash narzedzia-qa/paczka-zgodnosc.sh chatbot-live` |
 | Wersja schematu bazy | **7** (`CHATL_WERSJA_SCHEMATU`) | `chatbot-live.php:19` |
 | Paczka | `boty/paczki/chatbot-live-1.5.8.zip`, **26 plików** | j.w. |
 | Suma kontrolna paczki | `cab1a31c5133ad8f7ea88968554447e0b92d91f644a062b8f89832125c9a4e97` | `sha256sum` |
+
+⚠️ Czubek gałęzi (`7bfdb1f`) jest **nowszy** niż commit wtyczki (`807d72d`) — po zamrożeniu
+weszły jeszcze materiały audytowe, które kodu nie dotykają. **Audytujesz `807d72d`**, i to
+w obu botach: ten sam commit zamroził ChatBota 1.5.8 i Segregatora 1.3.1.
 
 Odtworzenie stanu audytowanego, jednym poleceniem:
 

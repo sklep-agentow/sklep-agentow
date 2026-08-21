@@ -1,6 +1,9 @@
 # MATERIAŁ DLA AUDYTORA — Segregator maila
 
-**Pomiar: 2026-08-21, 01:30 czasu serwera.** Wszystkie liczby niżej są **zmierzone
+**Pomiar pierwotny: 2026-08-21, 01:30. ⭐ ODŚWIEŻONE 2026-08-21 po zamrożeniu 1.3.1**
+(SHA, wersja, suma kontrolna paczki i skala — paczka Segregatora zmieniała się tego dnia
+**trzy razy**: sprzątanie śladów wewnętrznych (#114), dokumentacja (#120), wydanie 1.3.1 (#126).
+Materiał, który cytuje SHA sprzed tych zmian, wysyła audytora na inny kod niż oddajemy.) Wszystkie liczby niżej są **zmierzone
 tego dnia na tej maszynie**, nie przepisane z wcześniejszych dokumentów. Przy każdej
 stoi polecenie, którym ją zdjęto — masz je powtórzyć, jeśli czytasz to później niż
 w dniu pomiaru, bo stos żyje.
@@ -45,51 +48,72 @@ godziny. Bierzesz commit po SHA i tylko commit.
 
 | co | wartość | czym zmierzone |
 |---|---|---|
-| Gałąź główna, stan na pomiar | `811aba731a485744f7be06d570755fc16c135b6d` | `git rev-parse HEAD` (2026-08-21 01:08) |
-| Ostatni commit dotykający wtyczki | `83c921ec53a0456320684d603a6ec1488c18dbeb` | `git log -1 -- wtyczki/segregator-maila/` (2026-08-20 23:23, PR #94) |
-| Commit, z którego powstała paczka | `83c921ec53a0456320684d603a6ec1488c18dbeb` | `git log -1 -- boty/paczki/segregator-maila-1.3.0.zip` |
-| Wersja w nagłówku wtyczki | **1.3.0** | `bash narzedzia-qa/paczka-zgodnosc.sh segregator-maila` |
-| Paczka | `boty/paczki/segregator-maila-1.3.0.zip`, 21 plików | j.w. |
-| Suma kontrolna paczki | `f507d8f6ebd689d8ced43eae4ec60788d7fe4baf40107986872505fddadf0e27` | `sha256sum` |
+| Gałąź główna, stan na pomiar | `7bfdb1f4301e47bea0d6d41144393faaee6ba0c7` | `git rev-parse HEAD` (2026-08-21 10:09, PR #127) |
+| **Ostatni commit dotykający wtyczki** | **`807d72d61c07108a11a934e4d2b74f691ea7c495`** | `git log -1 -- wtyczki/segregator-maila/` (2026-08-21 09:22, PR #126) |
+| **Commit, z którego powstała paczka** | **`807d72d61c07108a11a934e4d2b74f691ea7c495`** | `git log -1 -- boty/paczki/segregator-maila-1.3.1.zip` |
+| Wersja w nagłówku wtyczki | **1.3.1** | `bash narzedzia-qa/paczka-zgodnosc.sh segregator-maila` |
+| Wersja schematu bazy | **3** (`SEGM_WERSJA_SCHEMATU`) | `segregator-maila.php` |
+| Paczka | `boty/paczki/segregator-maila-1.3.1.zip`, **21 plików** | j.w. |
+| Suma kontrolna paczki | `befbfb8f6e7395b7a7d908b520c3c66085eb32645383423671f6d75712de3c0a` | `sha256sum` |
+
+⚠️ Czubek gałęzi (`7bfdb1f`) jest **nowszy** niż commit wtyczki (`807d72d`) — po zamrożeniu
+weszły jeszcze materiały audytowe, które kodu nie dotykają. **Audytujesz `807d72d`.**
+⚠️ W `boty/paczki/` leżą też **stare paczki** (`segregator-maila-1.3.0.zip`,
+`chatbot-live-1.5.7.zip`). Jeśli cokolwiek na paczce uruchamiasz — wypisz w raporcie
+jej **sumę kontrolną**, nie samą nazwę.
 
 Odtworzenie stanu audytowanego, jednym poleceniem:
 
 ```
-git checkout 83c921ec53a0456320684d603a6ec1488c18dbeb -- wtyczki/segregator-maila/
+git checkout 807d72d61c07108a11a934e4d2b74f691ea7c495 -- wtyczki/segregator-maila/
 ```
 
 **Paczka zgadza się z repozytorium co do bajtu** — wszystkie 21 plików ma sumę
 SHA-256 równą plikowi z repo, nic nie zostało pominięte przy pakowaniu, zawartość
 zgadza się z allowlistą `boty/buduj-paczki.sh`. Sprawdzone bramką, nie na oko.
 
-### ⛔ Ale wersja 1.3.0 NIE JEST ZAMROŻONA — i to jest pierwsze, co masz wiedzieć
-
-`bash narzedzia-qa/paczka-zgodnosc.sh segregator-maila` → **EXIT=1**:
+### ⭐ Wersja 1.3.1 JEST zamrożona — a jeszcze rano NIE BYŁA
 
 ```
-  OK       pięć miejsc zgodnych: 1.3.0
-  ROZJAZD  CHANGELOG ma niepustą sekcję [Niewydane] (7 pozycji) — kod jest PONAD wersją 1.3.0
+$ bash narzedzia-qa/paczka-zgodnosc.sh segregator-maila
+  OK       pięć miejsc zgodnych: 1.3.1
+  OK       sekcja [Niewydane] jest pusta — kod odpowiada wydanej wersji
+  OK       wszystkie 21 plików zipa ma sumę SHA-256 równą plikowi z repo
+  OK       żaden plik wtyczki nie został pominięty przy pakowaniu
+  OK       zip zgadza się z allowlistą buduj-paczki.sh (21 pozycji)
+  OK       CHANGELOG.md: wpis [1.3.1] ma treść (7 pozycji) · readme.txt: sekcja = 1.3.1 = ma treść
+  OK       w 21 plikach paczki nie ma śladów wewnętrznych (skaner 1.1.0)
+PACZKA ZGODNA Z REPOZYTORIUM I WERSJA SPOJNA — mozna zamrazac                  EXIT=0
 ```
 
-Wersja mówi **1.3.0** w pięciu miejscach naraz (nagłówek wtyczki, stała `SEGM_WERSJA`,
-`Stable tag`, `CHANGELOG.md`, sekcja `== Changelog ==` w `readme.txt`) i wszystkie pięć
-jest ze sobą zgodne. Mimo to numer jest nieprawdziwy: w kodzie siedzi **siedem pozycji
-ponad wydanie 1.3.0** — m.in. stała `SEGM_KLUCZ_API`, „Przetestuj klucz API", pasek
-błędu trybu AI, stronicowanie list, koniec zapytań N+1. Decyzja o numerze (najpewniej
-1.4.0) należy do koordynatorki i na dzień pomiaru nie zapadła.
+**Historia tego jednego dnia jest dla Ciebie ważniejsza niż sam wynik**, bo pokazuje,
+czego szukać: przy pierwszym pomiarze (01:30) wersja mówiła **1.3.0 w pięciu miejscach
+naraz i wszystkie pięć było ze sobą zgodne** — a mimo to numer był nieprawdziwy, bo
+w kodzie siedziało **siedem pozycji ponad wydanie** (`[Niewydane]` w `CHANGELOG.md`):
+stała `SEGM_KLUCZ_API`, „Przetestuj klucz API", pasek błędu trybu AI, stronicowanie list,
+koniec zapytań N+1. **Zgodność pięciu miejsc nie jest dowodem, że numer mówi prawdę.**
+Dziś te siedem pozycji jest wydane jako 1.3.1, a `[Niewydane]` jest puste.
 
-**Co to znaczy dla Ciebie:** znalezisko „instrukcja/CHANGELOG nie opisuje funkcji X"
-może być prawdziwe **i jednocześnie już znane** — sprawdź najpierw sekcję `[Niewydane]`
-w `wtyczki/segregator-maila/CHANGELOG.md`, zanim zgłosisz to jako lukę dokumentacji.
-Zgłaszaj natomiast bez wahania wszystko, czego **nie ma ani w wydaniu, ani w `[Niewydane]`**.
+Do tego paczka 1.3.0 wiozła kupującemu **dwanaście naszych śladów wewnętrznych**
+(ścieżki `audyt/boty/…`, „recenzja PR #27/#37") — zamrożenie było wtedy **pozorne**.
+Zamknięte w #114, wzorzec wykrywający rozszerzony do 1.1.0.
+
+**Co to znaczy dla Ciebie:** jeśli znajdziesz funkcję, której nie opisuje ani wydanie,
+ani `[Niewydane]` — zgłaszaj bez wahania, bo dziś ta sekcja jest pusta i nie ma się już
+za czym schować. I sprawdź **sam**, czy paczka, którą badasz, odpowiada commitowi z tabeli
+wyżej: ta klasa błędu wróciła u nas tego dnia trzy razy.
 
 ### Skala — przelicz, nie ufaj planowi
 
 | co | zmierzone 2026-08-21 | w `PLAN-AUDYTU-BOTOW.md` |
 |---|---|---|
 | Segregator (PHP+JS+CSS) | **7 418 linii / 15 plików** | 1 626 linii |
-| ChatBot (PHP+JS+CSS) | **6 284 linie / 18 plików** | 1 643 linie |
-| razem | **13 702 linie** | 3 269 linii |
+| ChatBot (PHP+JS+CSS) | **7 925 linii / 20 plików** | 1 643 linie |
+| razem | **15 343 linie** | 3 269 linii |
+
+Przeliczone ponownie **po zamrożeniu**: `find wtyczki/<wtyczka> \( -name '*.php' -o -name
+'*.js' -o -name '*.css' \)`. ChatBot urósł od pierwszego pomiaru (przejęcie rozmowy, import
+CSV, stronicowanie), Segregator stoi — jego 1.3.1 nie zmieniło ani jednej linii kodu.
 
 `find wtyczki/<bot> -type f \( -name '*.php' -o -name '*.js' -o -name '*.css' \) -print0 | xargs -0 cat | wc -l`
 
@@ -159,7 +183,7 @@ pilnuje.
 `SEGM_WERSJA_SCHEMATU = 3`; `segregator-maila.php:109` porównuje ją z opcją
 `segm_wersja_schematu` i **uruchamia migrację tabel**. Na mapie A3 pyta „co przeżywa
 deinstalację" — czyli o koniec życia. **Nikt nie pyta o aktualizację**: co się dzieje
-z bazą pełną danych przy przejściu 1.2.1 → 1.3.0, czy migracja jest odporna na
+z bazą pełną danych przy przejściu 1.2.1 → 1.3.1, czy migracja jest odporna na
 powtórzenie, co przy przerwaniu w połowie. `mapa-ryzyka.txt` sama nazywa migracje
 obszarem wagi DUŻEJ — i wskazuje na nieistniejący katalog (D2).
 
