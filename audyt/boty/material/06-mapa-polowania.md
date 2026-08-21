@@ -38,7 +38,15 @@
   <!-- 🐞 Ł-2 w RAPORT-LAMACZ-CHATBOT §„ZNALEZISKO Ł-2": 200 żądań / 7 s z jednego
        adresu (~1700/min przy pytaniu mapy o 500/min), 0 z 200 dostało 429; ścieżka
        pułapki nielimitowana i każde żądanie pisze do `wp_options`; licznik gubi
-       25% zdarzeń. Wykonane, z surowym wyjściem. -->
+       25% zdarzeń. Wykonane, z surowym wyjściem.
+       ─────────────────────────────────────────────────────────────────────────
+       ⚠️ DRUGI POMIAR TEGO SAMEGO CELU — inna ŚCIEŻKA, godzę je tutaj:
+       A1 (RAPORT-A1-BEZPIECZENSTWO, cel 6) na ścieżce `chatl_nonce`: 60 równoległych
+       żądań → 19 sukcesów przy progu 20, licznik dokładnie 61. CZYSTO, bez przecieku.
+       ⛔ To NIE zaprzecza Ł-2: A1 mierzył WĘŻSZY zakres niż pytanie tego celu.
+       Cel zostaje 🐞, bo jego pytanie brzmi „czy limiter mierzy wymiar, który robi
+       szkodę" — a ścieżka pułapki go OMIJA. Zamknie się dopiero po naprawie LC-F2
+       (potwierdzonego niezależnie przez przebieg 2 jako Z3: 30/30 przy progu 10). -->
 
 ## A2 — AWARIA (czytanie + WYMUSZONE awarie)
 - 🐞 Każdy zapis do bazy: czy kod ZMIERZYŁ stan po operacji, czy tylko wywołał funkcję (G2)
@@ -204,12 +212,12 @@
 **LICZNIK:** 36 celów. **✅ 23 · 🐞 13 · ⚠️ 0 · ⬜ 0.**
 **Domkniętych: 36 z 36. Otwartych: 0.** ⭐ **AUDYT DOMKNIĘTY — licznik pokazuje 36/36.**
 
-Rozkład po sekcjach: A1 **1/6** (5 ⬜) · A2 **5/5** · A3 **4/6** (2 ⬜) · A4 **5/5** ·
-A5 **1/4** (3 ⬜) · A6 **5/5** · Ł **5/5**.
+Rozkład po sekcjach: A1 **6/6** · A2 **5/5** · A3 **6/6** · A4 **5/5** · A5 **4/4** · A6 **5/5** · Ł **5/5**.
 
-<!-- Sprawdzenie licznika: grep -c "^- " na sekcjach = 36 (A1=6, A2=5, A3=6, A4=5,
-     A5=4, A6=5, L=5). Znaki: grep -c "^- ✅" = 15, "^- 🐞" = 11, "^- ⬜" = 10,
-     "^- ⚠️" = 0. Suma 36. -->
+<!-- Sprawdzenie licznika (PRZELICZONE Z PLIKU, nie z pamięci): suma celów = 36.
+     Znaki: "^- ✅" = 23, "^- 🐞" = 13, "^- ⚠️" = 0, "^- ⬜" = 0.
+     ⛔ Ta stopka MUSI być przeliczana RAZEM z LICZNIKIEM — recenzja #152 złapała ją
+     nieaktualną obok poprawionego licznika, w tym samym pliku i tym samym PR-ze. -->
 
 **⚠️ 0 nie znaczy „zero anomalii".** Sekcja ⚠️ jest pusta, bo każda anomalia, na jaką
 trafiły raporty, siedzi WEWNĄTRZ celu, który dostał inny znak — nie ma celu, którego
