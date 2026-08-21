@@ -10,6 +10,25 @@ migracja odpala się sama przy pierwszym wejściu do panelu po aktualizacji
 
 ---
 
+## [Niewydane]
+
+_Nic jeszcze nie czeka na wydanie._
+
+---
+
+## [1.5.8] — 2026-08-21
+
+### Zmienione
+
+- **Instrukcja, dokumentacja i opis wtyczki mówią to, co bot naprawdę robi.**
+  Do 1.5.7 pisaliśmy w nich, że bot nie ma czatu operatora i nie pamięta rozmowy
+  — obie te rzeczy weszły do produktu w tej samej wersji, więc zdania o ich braku
+  przestały być prawdziwe. Opis „LIVE" mówi teraz o przejęciu rozmowy przez
+  człowieka: bot milczy po przejęciu, gość widzi, że pisze z człowiekiem, a po
+  pięciu minutach ciszy operatora rozmowa wraca do bota. Zero zmian w kodzie.
+
+---
+
 ## [1.5.7] — 2026-08-21
 
 ### Dodane

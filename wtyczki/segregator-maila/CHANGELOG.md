@@ -7,6 +7,12 @@ wersjonowanie według [SemVer](https://semver.org/lang/pl/).
 
 ## [Niewydane]
 
+_Nic jeszcze nie czeka na wydanie._
+
+---
+
+## [1.3.1] — 2026-08-21
+
 ### Zmienione
 
 - **Instrukcja opisuje wtyczkę, którą kupujący naprawdę dostaje.** Doszło:
