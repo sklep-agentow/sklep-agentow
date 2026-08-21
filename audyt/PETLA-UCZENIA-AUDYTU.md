@@ -51,9 +51,15 @@ Wszystkie wyszły przy domykaniu botów, u trzech różnych osób (builder1, bui
   w dokumencie o dowodach; runda 2 — odnośniki dopisane Z PAMIĘCI, jeden — `PR #122`,
   `dowod-z-paczki.sh:316` — **nie istniał**) oraz P1 raz (runda 3 — licznik poprawiony w tabeli,
   stara liczba **została w narracji pod nią**).
-- **RUND POPRAWEK tego pliku: 6.** Bo rundy 4–6 nie dołożyły nowych klas — poprawiały **liczniki
-  i sformułowania** po poprzednich: podniesienie P7 i P1, rozdzielenie „w tym pliku" od „łącznie",
-  i wreszcie ta: zdanie mówiło „cztery rundy", a własny rozbiór sumował się do trzech.
+- **RUND POPRAWEK: licznika NIE PODAJĘ i to jest decyzja, nie przeoczenie.**
+  Próbowałam trzy razy i za każdym razem liczba dezaktualizowała się **w chwili zapisu** —
+  bo commit, który ją poprawia, jest kolejną rundą. To licznik **samoodnoszący się**: nie da
+  się go utrzymać aktualnym, można tylko gonić własny ogon. ⭐ Wniosek ogólniejszy niż ten plik:
+  **liczba, która sama siebie unieważnia, nie ma prawa być w dokumencie** — zastąp ją opisem
+  jakościowym albo poleceniem, którym czytelnik policzy ją sobie sam:
+  `git log --oneline -- audyt/PETLA-UCZENIA-AUDYTU.md | wc -l`.
+  Rundy 4 i dalsze nie dołożyły nowych klas — poprawiały **liczniki i sformułowania**
+  po poprzednich.
 
 ⛔ **To jest sedno, nie księgowość.** Cztery ostatnie rundy poszły na to, że **jedno zdanie
 mieszało dwa różne liczniki** — ile razy klasa wystąpiła, a ile razy plik był poprawiany.
