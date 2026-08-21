@@ -1,7 +1,7 @@
 <?php
 /**
  * Silnik regułowy segregacji: warunek→kategoria, kolejność = pierwsza wygrywa
- * (JEDEN mechanizm rozstrzygania, bez pola priorytet — recenzja PR #27).
+ * (JEDEN mechanizm rozstrzygania, bez pola priorytet — decyzja świadoma).
  * Mail bez dopasowania trafia do kubła domyślnego „Reszta" (wzorzec Gmail:
  * brak reguły = mail zostaje w skrzynce głównej).
  */
