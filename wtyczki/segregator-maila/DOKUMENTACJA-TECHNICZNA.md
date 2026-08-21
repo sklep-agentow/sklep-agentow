@@ -61,12 +61,12 @@ leży w pliku `LICENSE` w katalogu wtyczki i wchodzi do paczki produktowej.
 | Plik | Linii | Za co odpowiada |
 |---|---|---|
 | `segregator-maila.php` | 364 | nagłówek wtyczki, stałe, ładowanie plików, cron retencji, znacznik „operacja w toku", zgoda na AI, ustawienia ogólne |
-| `uninstall.php` | 90 | deinstalacja — dwie ścieżki (§11.5) |
+| `uninstall.php` | 91 | deinstalacja — dwie ścieżki (§11.5) |
 | `includes/instalator.php` | 268 | `dbDelta` dla 7 tabel, aktywacja, deaktywacja, seed demo (5 kategorii, 8 reguł, 30 maili) |
 | `includes/silnik.php` | 248 | `segm_klasyfikuj_mail()` — jedyna reguła dopasowania w całej wtyczce; przebieg na próbce |
 | `includes/csv.php` | 352 | import próbki z CSV (wykrywanie kodowania, limity) i eksport raportu do CSV |
 | `includes/ai.php` | 569 | opcjonalna klasyfikacja modelem, licznik stop-loss |
-| `includes/admin.php` | 1380 | panel: przebiegi i raporty, reguły, kategorie, próbka, ustawienia, baner powitalny |
+| `includes/admin.php` | 1463 | panel: przebiegi i raporty, reguły, kategorie, próbka, ustawienia, baner powitalny, paski błędu AI i błędu bazy |
 | `includes/konfiguracja.php` | 360 | eksport i import własnej konfiguracji (kategorie + reguły) w JSON-ie |
 | `includes/filtry.php` | 588 | eksport reguł do filtrów Gmaila (XML) i reguł Outlooka |
 | `includes/class-segm-imap.php` | 947 | **klient IMAP4rev1 w czystym PHP** — gniazdo, TLS, protokół |
@@ -238,7 +238,7 @@ Sprawdzalne jednym grepem — patrz kontrola D w skrypcie zgodności.
 | `segm-filtry` | Eksport filtrów | `filtry.php` |
 | `segm-powitanie` | ekran powitalny — **zdjęty z menu**, wchodzi się z przekierowania | `admin-powitanie.php` |
 
-### 7.2. Uchwyty `admin-post` — 29 sztuk
+### 7.2. Uchwyty `admin-post` — 30 sztuk
 
 Każdy z nich, **bez wyjątku**, sprawdza dwie rzeczy osobno:
 `current_user_can( 'manage_options' )` **oraz** `check_admin_referer( ... )`.
@@ -261,6 +261,7 @@ formularza", uprawnienie mówi „ta osoba ma prawo to zrobić".
 | `segm_zgoda_zapisz`, `segm_zgoda_cofnij` | zgoda na wysyłkę próbki do AI |
 | `segm_test_klucza` | „Przetestuj klucz API” — jedno wywołanie ze słowem „ping” |
 | `segm_baner_ukryj` | chowa baner powitalny |
+| `segm_blad_bazy_ukryj` | chowa pasek błędu bazy — per użytkownik i tylko TO zgłoszenie (nowy błąd zapala pasek z powrotem) |
 | `segm_eksport_filtrow` | pobranie pliku filtrów Gmaila / reguł Outlooka |
 | `segm_konfig_eksport` | pobranie WŁASNEJ konfiguracji (kategorie + reguły) w JSON-ie |
 | `segm_konfig_import` | wczytanie konfiguracji z pliku — **zastępuje reguły** |

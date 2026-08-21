@@ -110,12 +110,52 @@ function segm_pasek_bledu_ai() {
 add_action( 'admin_notices', 'segm_pasek_bledu_ai' );
 
 /**
+ * Meta użytkownika z ODCISKIEM schowanego zgłoszenia błędu bazy.
+ *
+ * Nie zwykłe „1", jak przy banerze powitalnym, i to jest cała różnica: baner
+ * powitalny mówi rzecz, która się nie zmienia, więc wolno go schować na zawsze.
+ * Tutaj chowamy KONKRETNE zgłoszenie awarii — gdyby schowanie było trwałe,
+ * jedno kliknięcie uciszyłoby także KAŻDY NASTĘPNY błąd zapisu, czyli odebrałoby
+ * właścicielowi dokładnie ten sygnał, dla którego ten pasek w ogóle powstał.
+ */
+const SEGM_BLAD_BAZY_UKRYTY_META = 'segm_blad_bazy_ukryty';
+
+/**
+ * Odcisk bieżącego zgłoszenia błędu bazy.
+ *
+ * Bierze OBA pola, które zmienia nowy błąd (`segm_log_bledu_bazy()` podbija
+ * `ile` i nadpisuje `ostatni`). Sam licznik nie wystarczy: gdyby opcja kiedyś
+ * wystartowała od nowa, `ile` wróciłoby do 1 i schowanie sprzed awarii
+ * zasłoniłoby świeży błąd.
+ *
+ * @param array $blad Wpis z opcji `segm_blad_bazy`.
+ * @return string
+ */
+function segm_odcisk_bledu_bazy( $blad ) {
+	return (int) ( $blad['ile'] ?? 1 ) . '|' . (string) ( $blad['ostatni'] ?? '' );
+}
+
+/**
  * Pasek: zapis do bazy nie doszedł do skutku.
  *
  * Ten sam wzorzec co pasek błędu AI wyżej — bo to JEDYNY kanał, którym
  * właściciel się o tym dowie. `wp_trigger_error()` nic nie zapisuje przy
  * WP_DEBUG=false, a wyłączony jest na każdej normalnej instalacji klienta.
  * Pasek sam cichnie po SEGM_BLAD_BAZY_OKNO_DNI dniach bez nowego błędu.
+ *
+ * ⭐ ZASIĘG GLOBALNY JEST TU CELOWY — jako jedyny pasek tej wtyczki nie filtruje
+ * stron przez segm_strony(). Segregator pracuje CRONEM W TLE: właściciel
+ * konfiguruje go raz i tygodniami nie zagląda do panelu wtyczki, a to jest
+ * dokładnie powód, dla którego błędy zapisu ginęły. Ten pasek ma go złapać
+ * na Kokpicie, nie czekać, aż sam przyjdzie po wiadomość o utracie danych.
+ *
+ * ⭐ Ceną za globalny zasięg jest MOŻLIWOŚĆ SCHOWANIA — i to trwałego, tego
+ * samego, którego wtyczka używa przy banerze powitalnym (odnośnik z nonce +
+ * meta użytkownika). ⛔ NIE `is-dismissible`: tamto zamyka pasek na jedno
+ * wyświetlenie i wraca przy następnym wejściu (powód opisany przy banerze
+ * powitalnym wyżej). Schowanie jest PER UŻYTKOWNIK, więc jeden administrator
+ * nie zasłania paska drugiemu, i dotyczy TEGO zgłoszenia — nowy błąd zapisu
+ * zapala pasek z powrotem.
  *
  * @return void
  */
@@ -131,15 +171,58 @@ function segm_pasek_bledu_bazy() {
 	if ( ! $kiedy || $kiedy < time() - SEGM_BLAD_BAZY_OKNO_DNI * DAY_IN_SECONDS ) {
 		return;
 	}
+	if ( segm_odcisk_bledu_bazy( $blad ) === (string) get_user_meta( get_current_user_id(), SEGM_BLAD_BAZY_UKRYTY_META, true ) ) {
+		return;
+	}
+	$schowaj = wp_nonce_url(
+		admin_url( 'admin-post.php?action=segm_blad_bazy_ukryj' ),
+		'segm_blad_bazy_ukryj'
+	);
 	printf(
-		'<div class="notice notice-error"><p><strong>Segregator maila: zapis do bazy nie powiódł się.</strong> Ostatnio %s (wystąpień: %d). Operacja: %s. Baza odpowiedziała: %s.<br>Część danych mogła się NIE zapisać. Jeśli to się powtarza, pokaż ten komunikat swojemu hostingowi.</p></div>',
+		'<div class="notice notice-error"><p><strong>Segregator maila: zapis do bazy nie powiódł się.</strong> Ostatnio %s (wystąpień: %d). Operacja: %s. Baza odpowiedziała: %s.<br>Część danych mogła się NIE zapisać. Jeśli to się powtarza, pokaż ten komunikat swojemu hostingowi. <a href="%s">Rozumiem — nie pokazuj więcej</a></p></div>',
 		esc_html( (string) $blad['ostatni'] ),
 		(int) ( $blad['ile'] ?? 1 ),
 		esc_html( (string) ( $blad['operacja'] ?? '' ) ),
-		esc_html( (string) ( $blad['szczegol'] ?? '' ) )
+		esc_html( (string) ( $blad['szczegol'] ?? '' ) ),
+		esc_url( $schowaj )
 	);
 }
 add_action( 'admin_notices', 'segm_pasek_bledu_bazy' );
+
+/**
+ * Schowanie paska błędu bazy dla bieżącego użytkownika.
+ *
+ * Bliźniak segm_post_baner_ukryj() niżej, z jedną różnicą wymuszoną zasięgiem:
+ * pasek wisi na KAŻDEJ stronie panelu, więc nie ma jednej „strony wtyczki",
+ * na którą można wrócić — wracamy tam, skąd przyszło kliknięcie
+ * (`wp_get_referer()`, przepuszczone przez `wp_safe_redirect`, czyli tylko
+ * adresy tej witryny).
+ *
+ * @return void
+ */
+function segm_post_blad_bazy_ukryj() {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_die( 'Brak uprawnień.' );
+	}
+	check_admin_referer( 'segm_blad_bazy_ukryj' );
+
+	$blad = get_option( 'segm_blad_bazy' );
+	if ( is_array( $blad ) && ! empty( $blad['ostatni'] ) ) {
+		$uzytkownik = get_current_user_id();
+		$odcisk     = segm_odcisk_bledu_bazy( $blad );
+		update_user_meta( $uzytkownik, SEGM_BLAD_BAZY_UKRYTY_META, $odcisk );
+		// Gdyby zapis nie przeszedł, pasek po prostu wróci — ale niech właściciel
+		// wie DLACZEGO wraca, zamiast klikać ten sam odnośnik w kółko.
+		if ( (string) get_user_meta( $uzytkownik, SEGM_BLAD_BAZY_UKRYTY_META, true ) !== $odcisk ) {
+			segm_przekieruj_blad( 'segm-przebiegi', 'Nie udało się zapamiętać, że pasek ma zniknąć — baza odrzuciła zapis. Pasek będzie się pokazywał dalej.' );
+		}
+	}
+
+	$powrot = wp_get_referer();
+	wp_safe_redirect( $powrot ? $powrot : admin_url() );
+	exit;
+}
+add_action( 'admin_post_segm_blad_bazy_ukryj', 'segm_post_blad_bazy_ukryj' );
 
 /**
  * Schowanie banera dla bieżącego użytkownika (decyzja per osoba, nie globalna).

@@ -88,3 +88,4 @@ delete_option( 'segm_wersja_schematu' );
 // Ślad „baner powitalny schowany" trzymany per użytkownik — bez tego zostałyby
 // osierocone wiersze w wp_usermeta po wtyczce, której już nie ma.
 delete_metadata( 'user', 0, 'segm_baner_ukryty', '', true );
+delete_metadata( 'user', 0, 'segm_blad_bazy_ukryty', '', true );
