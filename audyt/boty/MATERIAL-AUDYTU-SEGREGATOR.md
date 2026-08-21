@@ -1,5 +1,6 @@
 # MATERIAŁ DLA AUDYTORA — Segregator maila
 
+
 **Pomiar pierwotny: 2026-08-21, 01:30. ⭐ ODŚWIEŻONE 2026-08-21 po zamrożeniu 1.3.1**
 (SHA, wersja, suma kontrolna paczki i skala — paczka Segregatora zmieniała się tego dnia
 **trzy razy**: sprzątanie śladów wewnętrznych (#114), dokumentacja (#120), wydanie 1.3.1 (#126).
@@ -180,7 +181,7 @@ pilnuje.
 
 ### D4 ⛔ Aktualizacja i migracja schematu — kod istnieje, pytania nie ma
 
-`SEGM_WERSJA_SCHEMATU = 3`; `segregator-maila.php:109` porównuje ją z opcją
+`SEGM_WERSJA_SCHEMATU = 3`; `wtyczki/segregator-maila/segregator-maila.php:109` porównuje ją z opcją
 `segm_wersja_schematu` i **uruchamia migrację tabel**. Na mapie A3 pyta „co przeżywa
 deinstalację" — czyli o koniec życia. **Nikt nie pyta o aktualizację**: co się dzieje
 z bazą pełną danych przy przejściu 1.2.1 → 1.3.1, czy migracja jest odporna na

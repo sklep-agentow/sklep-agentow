@@ -21,6 +21,11 @@ patrz sekcja „Przejmij rozmowę osobiście"; bot wtedy milczy.
 
 Wymagania: WordPress 6.0+ i PHP 8.1+.
 
+**Podstrona „Start".** Zaraz po włączeniu wtyczki w menu **ChatBot LIVE** pojawia się
+pozycja **Start** — trzy pierwsze kroki (ustaw teksty i mail, dobierz kolory i róg,
+podmień bazę Q&A na swoją) z odnośnikami prosto do właściwych ekranów. Możesz ją
+zamknąć na stałe, gdy przestanie być potrzebna; wraca dopiero przy nowej instalacji.
+
 ## 2. Konfiguracja w kwadrans
 
 W menu bocznym pojawia się pozycja **ChatBot LIVE**.
@@ -38,6 +43,58 @@ W menu bocznym pojawia się pozycja **ChatBot LIVE**.
 3. Wejdź na swoją stronę i przetestuj: zadaj pytania, na które bot ma
    odpowiedzieć, i jedno, na które nie ma — powinien uczciwie zaproponować
    zostawienie maila.
+
+### Test bota bez wychodzenia na stronę
+
+Na stronie **Baza Q&A**, pod listą wpisów, jest sekcja **„Test bota"**. Wpisujesz
+pytanie tak, jak zadałby je gość (np. „ile kosztuje wasza usługa") i od razu widzisz
+odpowiedź **oraz to, KTÓRA para z bazy ją dała**. Jeśli żadna nie pasuje, dostajesz
+wprost **„Żadna para nie pasuje."** — i wiesz, że trzeba dopisać słowa kluczowe.
+To najszybszy sposób sprawdzenia zmiany: nie musisz odświeżać strony firmowej
+ani czyścić cache.
+
+## 2a. Baza pytań z pliku — import i eksport CSV
+
+Jeśli masz już listę pytań w Excelu albo Arkuszach Google, nie musisz przepisywać
+jej po jednym wpisie. **ChatBot LIVE → Baza Q&A**, sekcja **„Import i eksport bazy (CSV)”**.
+
+**Kolumny.** Wymagane są dwie: `pytanie` i `odpowiedz`. Nieobowiązkowe:
+`slowa_kluczowe` (rozdzielone przecinkami) i `aktywne` (`1` albo `0`; brak kolumny
+albo pusta komórka znaczy „wpis ma działać”). Nagłówki mają też przyjmowane odmiany:
+`pytanie_wzorcowe`, `slowa`, `warianty`, `odpowiedz_bota`, `aktywny`.
+Kolumny rozpoznawane są **po nazwie w pierwszym wierszu, nie po kolejności** —
+możesz je poprzestawiać. Najprościej: **najpierw wyeksportuj to, co już masz**
+(przycisk **„Pobierz CSV (cała baza Q&A)”** w tej samej sekcji), popraw w arkuszu
+i wgraj z powrotem
+— plik eksportu ma dokładnie te kolumny, które przyjmuje import.
+
+**Pliki z polskiego Excela działają**: rozpoznawany jest średnik jako separator,
+kodowanie windows-1250, znacznik BOM i końce linii z Windows. Pusty wiersz między
+danymi nie psuje importu.
+
+**Nic nie trafia do bazy od razu.** Wybierasz plik i klikasz **„Wczytaj i pokaż
+podgląd”**. Zobaczysz wtedy **ekran podglądu**: każdy
+wiersz z werdyktem (do zapisania / duplikat pomijany / błąd), licznikami i polami
+**słów kluczowych do poprawienia**. To ważne, bo bot dopasowuje pytanie gościa
+**wyłącznie po słowach kluczowych** — wiersz bez nich byłby martwy, więc wtyczka
+podpowiada je sama i pokazuje do edycji. Do bazy nic nie idzie, dopóki nie klikniesz
+**„Zapisz N wpisów”**.
+
+**Import tylko dopisuje.** Pytanie, które już jest w bazie, zostaje nietknięte,
+a wiersz z pliku jest pomijany — i widać to w podglądzie. Nie da się nim przypadkiem
+nadpisać własnej, poprawionej treści.
+
+**Limity, żeby nie zaskoczyły przy większym pliku:**
+
+| co | ile |
+|---|---|
+| wierszy w jednym pliku | **2000** |
+| rozmiar pliku | **2 MB** |
+| ważność podglądu | **15 minut** — po tym czasie wgraj plik jeszcze raz |
+
+Krzywy plik kończy się **komunikatem**, nie białym ekranem: pusty plik, brak
+wymaganych kolumn, przekroczony limit albo plik za duży dla Twojego hostingu
+zostaną nazwane po imieniu.
 
 ## 3. Wygląd widgetu — dopasuj go do swojej strony
 
@@ -77,6 +134,28 @@ Zapisać możesz i tak — decyzja jest Twoja, ale wiesz, co wybierasz.
   są czyszczone automatycznie. Gość widzi o tym krótką notę **na starcie czatu**,
   a jeśli podałeś adres polityki prywatności w Ustawieniach — nota prowadzi
   także do niej. Warto ten adres uzupełnić: to Ty jesteś administratorem tych danych.
+
+### Gość widzi, że bot pisze
+
+Zanim odpowiedź się pojawi, w oknie czatu miga **sygnał „bot pisze"**. Ma znaczenie
+przede wszystkim w trybie AI, gdzie odpowiedź potrafi iść kilka sekund: bez tego sygnału
+gość patrzy na nieruchomy ekran i klika drugi raz, a potem trzeci. Wskaźnik jest też
+czytany przez czytniki ekranu (etykieta „Bot pisze odpowiedź"), więc osoba niewidząca
+dostaje tę samą informację co reszta.
+
+### Długie listy mają strony
+
+Trzy listy w panelu dzielą się na strony, więc nie urywają się w połowie danych:
+
+| lista | wierszy na stronę |
+|---|---|
+| **Zgłoszenia z czatu** | 200 |
+| **Historia rozmów** | 100 |
+| **Raport luk** (Statystyki i luki) | 25 tematów |
+
+Pod każdą listą widać, którą stronę oglądasz i ile jest wszystkich pozycji. Jeśli
+kiedyś widziałeś dokładnie 200 zgłoszeń i myślałeś, że to wszystko — teraz reszta
+jest o jedno kliknięcie dalej, a nie niedostępna.
 
 ### Pułapka na boty — i czego ona NIE zatrzyma
 
