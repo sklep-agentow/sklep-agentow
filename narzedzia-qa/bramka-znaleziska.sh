@@ -125,7 +125,10 @@ for RAPORT in audyt/boty/RAPORT-*.md; do
 	[ -e "$RAPORT" ] || continue
 	NAZWA=$(basename "$RAPORT")
 	licz
-	if grep -qF "$NAZWA" "$REJ"; then
+	# ⛔ Szukamy TYLKO w sekcji "Raporty objete rejestrem", nie po calym pliku.
+	# Recenzja #143: grep po calym pliku przechodzil, bo nazwa raportu pada tez
+	# w slowniku kodow — sekcja obiecywala wiecej pokrycia, niz bramka sprawdzala.
+	if sed -n '/^## Raporty objęte rejestrem/,/^## /p' "$REJ" | grep -qF "$NAZWA"; then
 		ok "raport objety rejestrem: $NAZWA"
 	else
 		zglos "raport POZA rejestrem: $NAZWA — jego znaleziska nie sa policzone"

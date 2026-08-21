@@ -92,7 +92,7 @@ wymaga osobnej decyzji.
 ## Raporty objęte rejestrem
 `RAPORT-A2-AWARIA.md` · `RAPORT-A3-DANE.md` · `RAPORT-A5-KRAWEDZIE.md` ·
 `RAPORT-A4-FRONT.md` · `RAPORT-A6-ODWROTNY.md` ·
-`RAPORT-LAMACZ-CHATBOT.md` · `RAPORT-LAMACZ-SEGREGATOR.md`
+`RAPORT-LAMACZ-CHATBOT.md` · `RAPORT-LAMACZ-SEGREGATOR.md` · `RAPORT-A1-BEZPIECZENSTWO.md` · `RAPORT-PRZEBIEG2-CHATBOT.md`
 <!-- BRAMKA: każdy plik audyt/boty/RAPORT-*.md musi być wymieniony w linii wyżej.
      Cztery ostatnie leżą jeszcze na niescalonych gałęziach audytorskich
      (audyt/a4-front, audyt/a6-odwrotny, audyt/lamacz-chatbot, audyt/lamacz-segregator)
