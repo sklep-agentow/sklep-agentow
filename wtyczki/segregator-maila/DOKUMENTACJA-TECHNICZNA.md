@@ -5,8 +5,9 @@
 > **Po co ten dokument.** To jest **mapa systemu dla audytora i programisty**, nie ulotka.
 > Każda liczba i każda nazwa tutaj jest wzięta z kodu, nie z pamięci — jeśli coś się
 > rozjedzie, to jest błąd do zgłoszenia. Instrukcja dla użytkownika jest osobno
-> (`INSTRUKCJA.md`), a kontrola zgodności tego dokumentu z kodem siedzi
-> w `testy/dokumentacja-zgodnosc-segregator.sh` i wykonuje się jednym poleceniem.
+> (`INSTRUKCJA.md`). Zgodność tego dokumentu z kodem jest sprawdzana
+> automatycznie przed każdym wydaniem — dlatego liczby niżej są z kodu, nie
+> z pamięci; jeśli któraś się nie zgadza, to jest błąd do zgłoszenia.
 
 ---
 
@@ -755,9 +756,17 @@ się nie zmieniła). Pełna atomowość wymagałaby osobnej tabeli z unikalnym k
 
 ### Jak szybko sprawdzić deklaracje z tego dokumentu
 
+Poniższe polecenia uruchamia się **w katalogu wtyczki** (u Ciebie:
+`wp-content/plugins/segregator-maila/`):
+
 ```
-testy/dokumentacja-zgodnosc-segregator.sh   # każda liczba i nazwa stąd — grepem po kodzie
-node testy/svg-pomiar-tekstow.js wtyczki/segregator-maila/DIAGRAM-PRZEPLYWU.svg
-vendor/bin/phpcs -q wtyczki/segregator-maila/
-vendor/bin/phpstan analyse --memory-limit=1G
+phpcs -q .                          # standard kodu WordPressa
+phpstan analyse --memory-limit=1G . # analiza statyczna
+grep -rn "nazwa_stalej" .           # każdą liczbę z tego dokumentu znajdziesz w kodzie
 ```
+
+Dwie kontrole biegną po stronie autora przed każdym wydaniem i ich wyniku nie
+da się odtworzyć z samej paczki: porównanie **każdej liczby i nazwy z tego
+dokumentu** z kodem oraz pomiar ramek tekstu w `DIAGRAM-PRZEPLYWU.svg`
+(czy podpisy mieszczą się w kształtach). Obie muszą przejść, zanim paczka
+powstanie.
