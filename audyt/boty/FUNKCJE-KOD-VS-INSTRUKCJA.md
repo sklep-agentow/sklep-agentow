@@ -34,11 +34,11 @@ akcje AJAX (`wp_ajax_*`), trasy REST (`register_rest_route`), zadania cykliczne
 | Retencja 90 dni (cron) | `wtyczki/chatbot-live/includes/instalator.php:137` (`chatl_czyszczenie_historii`) | ✅ TAK (§4, §9) |
 | Trasa REST `chatl/v1/rozmowa` | `wtyczki/chatbot-live/includes/przejecie.php:502` (`register_rest_route`) | ✅ TAK — pośrednio, przez opis przejęcia |
 | **Import bazy Q&A z CSV** (1.5.7) | `wtyczki/chatbot-live/includes/import.php` | ⛔ **BYŁO: NIE** → ✅ dopisane (§2a) |
-| **Eksport bazy Q&A do CSV** (1.5.7) | `wtyczki/chatbot-live/includes/import.php:730` (nagłówek `Import` i eksport bazy) | ⛔ **BYŁO: NIE** → ✅ dopisane (§2a) |
+| **Eksport bazy Q&A do CSV** (1.5.7) | `wtyczki/chatbot-live/includes/csv.php:166` (`chatl_post_eksport_qa()`) | ⛔ **BYŁO: NIE** → ✅ dopisane (§2a) |
 | **Wskaźnik „bot pisze"** (1.4.8) | `wtyczki/chatbot-live/assets/widget.js` | ✅ **dopisane** (§4, „Gość widzi, że bot pisze") + readme |
 | **Stronicowanie trzech list panelu** (1.5.6) | `wtyczki/chatbot-live/includes/admin.php:67,70` (`CHATL_NA_STRONE_ZGLOSZEN`, `CHATL_NA_STRONE_ROZMOW`) | ✅ **dopisane** (§4, „Długie listy mają strony") + readme |
 | **Podstrona „Start" (ekran powitalny)** | `wtyczki/chatbot-live/includes/powitanie.php:32` (`add_submenu_page`) | ✅ **dopisane** (§1 „Podstrona Start") + readme |
-| **Test bota w panelu** | `wtyczki/chatbot-live/includes/admin.php` (AJAX `chatl_panel_rozmowa`) | 🐞 **NIE** w instrukcji (readme wspomina) |
+| **Test bota w panelu** | `wtyczki/chatbot-live/includes/admin.php:422` (`chatl_panel_testu_bota()`, GET — **nie** AJAX) | ⛔ **BYŁO: NIE** → ✅ dopisane (§2, „Test bota bez wychodzenia na stronę") + readme |
 
 **Cztery pozycje bez opisu w instrukcji, wszystkie z ostatnich dni przed zamrożeniem** —
 dokładnie tam, gdzie kazała szukać kolejność `git log`:

@@ -63,9 +63,14 @@ Wszystkie liczby stamtąd sprawdzone niżej ręcznie.
 | **8 przykładowych reguł** | `wtyczki/segregator-maila/INSTRUKCJA.md`, `wtyczki/segregator-maila/readme.txt` | `wtyczki/segregator-maila/includes/instalator.php:172-183` — osiem wpisów | ✅ ZGODNE |
 | **30 maili** w próbce demo | `wtyczki/segregator-maila/INSTRUKCJA.md`, `wtyczki/segregator-maila/readme.txt` | `wtyczki/segregator-maila/includes/instalator.php:216+` — trzydzieści wpisów | ✅ ZGODNE |
 
-## 🐞 ZNALEZISKO — dokumentacja MILCZY o funkcji, za którą klient płaci
+## ✅ ZNALEZISKO ZAMKNIĘTE — dokumentacja MILCZAŁA o funkcji, za którą klient płaci
 
-**Instrukcja ChatBota nie opisuje importu bazy Q&A z pliku CSV** — funkcji wydanej
+> **STAN: ZAMKNIĘTE w tym samym pull requeście (#133).** `INSTRUKCJA.md:91-93` opisuje już
+> import CSV wraz z limitami (2000 wierszy / 2 MB / 15 minut), a `dokumentacja-zgodnosc.sh`
+> potwierdza te liczby jako `OK`. Opis poniżej zostaje jako **zapis stanu sprzed naprawy** —
+> to on nazwał klasę „dokumentacja milczy o funkcji". ⛔ Nie czytaj go jako otwartej luki.
+
+**Instrukcja ChatBota nie opisywała importu bazy Q&A z pliku CSV** — funkcji wydanej
 w 1.5.7 i ogłoszonej w `wtyczki/chatbot-live/readme.txt` jako nowość:
 
 ```
