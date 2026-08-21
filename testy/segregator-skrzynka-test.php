@@ -43,8 +43,11 @@ $GLOBALS['segm_test_bledy'] = 0;
 $ZNACZNIK = 'segmznak' . strtolower( wp_generate_password( 8, false ) );
 $TEMAT    = 'SEGMTEST ' . $ZNACZNIK;
 $NADAWCA  = $ZNACZNIK . '@segmtest.invalid';
-$ZRODLO   = 'SEGMTEST-IN';
-$ZUZYTE   = 'SEGMTEST-zuzyte';
+const SEGMTEST_KATEGORIA = 'SEGMTEST-Kategoria';
+const SEGMTEST_ZRODLO    = 'SEGMTEST-IN';
+const SEGMTEST_ZUZYTE    = 'SEGMTEST-zuzyte';
+$ZRODLO = SEGMTEST_ZRODLO;
+$ZUZYTE = SEGMTEST_ZUZYTE;
 
 function krok( $ok, $opis, $szczegol = '' ) {
 	if ( $ok ) {
@@ -126,7 +129,7 @@ function segmtest_odstaw_do_zrodla( $temat, $zrodlo ) {
 	return $ok;
 }
 
-function segmtest_sprzataj( $temat, $zrodlo = '' ) {
+function segmtest_sprzataj( $znacznik, $zrodlo = '' ) {
 	global $wpdb;
 
 	// Konfiguracja wspolnego stosu wraca do stanu sprzed proby.
@@ -141,9 +144,16 @@ function segmtest_sprzataj( $temat, $zrodlo = '' ) {
 	} else {
 		update_option( 'segm_zgoda_przenoszenie', $GLOBALS['segm_test_stara_zgoda'] );
 	}
-	$wpdb->query( "DELETE FROM {$wpdb->prefix}segm_reguly WHERE wzorzec LIKE 'segmznak%'" );
-	$wpdb->query( "DELETE FROM {$wpdb->prefix}segm_kategorie WHERE nazwa LIKE 'SEGMTEST-%'" );
-	$wpdb->query( "DELETE FROM {$wpdb->prefix}segm_skrz_ruchy WHERE temat LIKE 'SEGMTEST-%'" );
+	// ⛔ Wszystkie trzy zapytania szukaja po ZNACZNIKU przez esc_like — nie po
+	// brzmieniu tematu ani nazwy. Wersja z 'SEGMTEST-%' przestala cokolwiek
+	// lapac w chwili, gdy temat zmienil sie na "SEGMTEST <znacznik>" (spacja
+	// zamiast mysnika) i zostawila 28 wierszy we wspolnej bazie.
+	$jak = '%' . $wpdb->esc_like( $znacznik ) . '%';
+	$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}segm_reguly WHERE wzorzec LIKE %s", $jak ) );
+	$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}segm_skrz_ruchy WHERE temat LIKE %s", $jak ) );
+	// Kategoria ma nazwe STALA, wiec porownujemy ja wprost — bez wzorca, ktory
+	// moglby sie rozjechac z nazwa przy nastepnej zmianie.
+	$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}segm_kategorie WHERE nazwa = %s", SEGMTEST_KATEGORIA ) );
 	// Klient IMAP tej wtyczki CELOWO nie ma kasowania (rozdział „Granice":
 	// „Nie kasuje wiadomości"), więc próba też nie kasuje — odstawia swoje
 	// wiadomości do SEGMTEST-zuzyte. Foldery testowe są DWA i stałe
@@ -158,8 +168,8 @@ function segmtest_sprzataj( $temat, $zrodlo = '' ) {
 			if ( null !== $k->otworz( $f, false ) ) {
 				foreach ( (array) $k->uidy( 'ALL' ) as $uid ) {
 					$w = segm_skrzynka_wiadomosc( $k, $uid, false );
-					if ( $w && false !== mb_strpos( (string) $w->temat, 'SEGMTEST-' ) ) {
-						$k->przenies( $uid, 'SEGMTEST-zuzyte' );
+					if ( $w && false !== mb_strpos( (string) $w->temat, $znacznik ) ) {
+						$k->przenies( $uid, SEGMTEST_ZUZYTE );
 					}
 				}
 			}
@@ -199,7 +209,7 @@ function segmtest_oproznij( $folder, $zuzyte ) {
 // Sprzatanie ZANIM zaczniemy: resztki po poprzednich przebiegach leza w folderze
 // zrodlowym i przebieg policzylby je razem z nasza (widziane: "przeniesionych: 2").
 segmtest_oproznij( $ZRODLO, $ZUZYTE );
-register_shutdown_function( 'segmtest_sprzataj', $TEMAT, $ZRODLO );
+register_shutdown_function( 'segmtest_sprzataj', $ZNACZNIK, $ZRODLO );
 
 // ---------------------------------------------------------------- przygotowanie
 // ⛔ To jest WSPOLNY stos warsztatowy — pracuje na nim tez builder 1. Podmieniamy
@@ -227,7 +237,7 @@ $ust = array_merge(
 update_option( 'segm_skrzynka', $ust );
 segm_skrzynka_zapisz_haslo( 'tajne1234' );
 
-$wpdb->insert( $wpdb->prefix . 'segm_kategorie', array( 'nazwa' => 'SEGMTEST-Kategoria', 'utworzono' => current_time( 'mysql' ) ) );
+$wpdb->insert( $wpdb->prefix . 'segm_kategorie', array( 'nazwa' => SEGMTEST_KATEGORIA, 'utworzono' => current_time( 'mysql' ) ) );
 $kategoria = (int) $wpdb->insert_id;
 $wpdb->insert(
 	$wpdb->prefix . 'segm_reguly',
@@ -265,7 +275,12 @@ krok( (int) $p['dopasowanych'] >= 1, 'regula DOPASOWALA nasza wiadomosc', 'dopas
 echo "\n=== C. TRYB NA SUCHO — NIC NIE RUSZA ===\n";
 krok( 0 === (int) $p['przeniesionych'], 'na sucho przeniesionych = 0', 'przeniesionych: ' . $p['przeniesionych'] );
 krok( 1 === segmtest_ile_w_folderze( $ZRODLO, $TEMAT ), 'wiadomosc DALEJ lezy w folderze zrodlowym po przebiegu na sucho' );
-krok( 0 === segmtest_ile_w_folderze( 'Segregator.SEGMTEST-Faktury', $TEMAT ) + segmtest_ile_w_folderze( 'Segregator/SEGMTEST-Faktury', $TEMAT ), 'folder docelowy pusty — nic sie nie przeniosło' );
+$k_c = new Segm_Imap( 20 );
+$k_c->polacz( 'segm_imap', 3143, 'brak' );
+$k_c->zaloguj( 'szef', 'tajne1234' );
+$FOLDER_MOJ = Segm_Imap::z_utf7( segm_skrzynka_folder_dla( $k_c, $ust['prefiks'], SEGMTEST_KATEGORIA ) );
+$k_c->rozlacz();
+krok( 0 === segmtest_ile_w_folderze( $FOLDER_MOJ, $TEMAT ), 'folder docelowy pusty — nic sie nie przeniosło', $FOLDER_MOJ );
 
 // --------------------------------------------------------------- D. przenoszenie
 echo "\n=== D. PRZENOSZENIE MAILI (NA ZYWO) ===\n";
@@ -284,7 +299,7 @@ $FOLDER_DO = (string) $wpdb->get_var(
 $k_pom = new Segm_Imap( 20 );
 $k_pom->polacz( 'segm_imap', 3143, 'brak' );
 $k_pom->zaloguj( 'szef', 'tajne1234' );
-$OCZEKIWANY = Segm_Imap::z_utf7( segm_skrzynka_folder_dla( $k_pom, $ust['prefiks'], 'SEGMTEST-Kategoria' ) );
+$OCZEKIWANY = Segm_Imap::z_utf7( segm_skrzynka_folder_dla( $k_pom, $ust['prefiks'], SEGMTEST_KATEGORIA ) );
 $k_pom->rozlacz();
 krok( $FOLDER_DO === $OCZEKIWANY, 'wiadomosc trafila do folderu MOJEJ kategorii, nie cudzej reguly', "jest: $FOLDER_DO · oczekiwany: $OCZEKIWANY" );
 krok( 1 === segmtest_ile_w_folderze( $FOLDER_DO, $TEMAT ), 'wiadomosc JEST w folderze docelowym', $FOLDER_DO );
