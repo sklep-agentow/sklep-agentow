@@ -47,6 +47,18 @@ pory lądują tutaj.
 
 ### Dodane
 
+- **`stos.sh` 1.1.0 → 1.2.0 — `wiersze-gdzie <tabela.kolumna=wartosc>`.** Wąskie okno
+  recenzenta umiało policzyć tylko CAŁĄ tabelę, więc dowodu opartego na liczbie wierszy
+  z `silnik = ai` **nie dało się powtórzyć cudzą ręką** — recenzent musiał wierzyć na
+  słowo. Teraz: `bash narzedzia-qa/stos.sh wiersze-gdzie wp_chatl_rozmowy.silnik=ai`.
+  Wszystkie trzy części wejścia przechodzą przez tę samą białą listę znaków co reszta
+  skryptu (`[a-zA-Z0-9_-]`), tabela dodatkowo przez białą listę tabel; SQL składa skrypt,
+  nie dzwoniący (`silnik=ai';DROP` → ODMOWA, sprawdzone).
+
+  Przy okazji **jedna** funkcja rozmawia z bazą zamiast dwóch: wywołań dockera w skrypcie
+  jest teraz **5, a nie 6** — strażnik z próby kontrolnej (pada, gdy ich przybywa, bo to
+  wygląda jak obejście białej listy) zostaje nietknięty i przechodzi.
+
 - **`dowod-zachowania-segregator.sh` 1.0.0 — dowód zachowania Segregatora NA SKRZYNCE,
   z paczki.** Odpowiednik `dowod-zachowania-chatbot.sh`, którego dla Segregatora nie było
   wcale, a punkt D listy domknięcia wymaga go dla OBU botów. Trzy dowody: przebieg

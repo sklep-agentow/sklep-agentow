@@ -251,6 +251,155 @@ baza Q&A właściciela (14 par) i jego historia rozmów zostały nietknięte.
 
 ---
 
+## ✅ DOWÓD: tryb AI ODPOWIEDZIAŁ GOŚCIOWI na ścieżce widgetu (21.08, pomiar wsteczny)
+
+**Pytanie, na które to odpowiada** (padnie przy oddaniu): *czy ktokolwiek widział odpowiedź
+z PRAWDZIWEGO modelu na ścieżce gościa, czy cały czas mierzyliśmy atrapy i zjazd do reguł?*
+
+**Odpowiedź: TAK — i to nie jest założenie, tylko rozumowanie przez wykluczenie
+oparte na trzech niezależnych pomiarach.**
+
+### 1. Ślad w bazie: 20 odpowiedzi bota z silnikiem `ai`
+
+```
+$ wp eval 'global $wpdb; echo $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}chatl_rozmowy WHERE silnik=\"ai\"");'
+20                                  # w 11 sesjach, 2026-08-20 14:14–15:08
+```
+
+Treści to **trzy różne parafrazy tej samej informacji** („Sprzedajemy dwie wtyczki
+WordPress: — **ChatBot LIVE** – 149 zł…", „Mamy dwie wtyczki…", „ChatBot LIVE kosztuje
+**149,00 zł**, a Segregator maila **199,00 zł**…") plus sentinel „nie wiem" na pytanie
+spoza wiedzy firmy. **Atrapa zwraca zawsze ten sam napis** — trzy różne sformułowania
+tej samej treści nie mogą z niej pochodzić.
+
+### 2. Wykluczenie atrapy: żaden test nie łączy endpointu z atrapą
+
+Wiersz `rola='bot', silnik='ai'` powstaje **wyłącznie** w gałęzi AI endpointu
+`chatl_ajax_pytanie` — `wtyczki/chatbot-live/includes/front.php:461` (sentinel „nie wiem")
+i `:471` (odpowiedź modelu). Innego miejsca zapisu w kodzie nie ma.
+
+⭐ **Najkrótszy dowód wykluczenia to PUSTE PRZECIĘCIE dwóch zbiorów** — jedno polecenie,
+odtwarzalne wprost:
+
+```
+$ grep -rl "pre_http_request" testy/ | xargs grep -lE "chatl_pytanie|chatl_ajax_pytanie"
+                                    # (brak trafień — ani jeden plik nie jest w obu zbiorach)
+```
+
+Zbiory osobno, dokładnie tak, jak zwracają je te polecenia:
+
+```
+$ grep -rl "pre_http_request" testy/        # testy z ATRAPĄ API — 4 pliki
+testy/blad-klucza-test.php
+testy/pamiec-rozmowy-test.php
+testy/tokeny-koszt-test.php
+testy/wybor-modelu-test.php
+    → wszystkie cztery wołają chatl_ai_odpowiedz() WPROST, żaden nie dotyka endpointu
+
+$ grep -rl "chatl_pytanie" testy/           # testy dotykające ENDPOINTU pytania — 3 pliki
+testy/nonce-cache-test.js
+testy/przejecie-test.php
+testy/wskaznik-pisania-test.js
+    → w żadnym z nich nie ma pre_http_request
+```
+
+⚠️ **Uwaga o czwartym pliku, żeby ten zapis się nie rozjechał z rzeczywistością.**
+`testy/pulapka-test.php` też zawiera napis `chatl_ajax_pytanie`, ale **nie łapie go
+powyższy grep** (szuka `chatl_pytanie`, a tam stoi `chatl_ajax_pytanie`) — i słusznie,
+bo ten test **nie wywołuje** tego endpointu: czyta jego ŹRÓDŁO wyrażeniem regularnym
+(`pulapka-test.php:238`), żeby sprawdzić KOLEJNOŚĆ warunków, a wywołuje endpoint
+**zgłoszenia kontaktu** (`chatl_ajax_zgloszenie()`, linia 138). Atrapy również nie ma.
+Wniosek się nie zmienia — zmienia się to, że polecenie wyżej daje dokładnie tę listę,
+którą tu widzisz.
+
+**Czyli: wiersz `silnik='ai'` nie ma innego źródła niż prawdziwe HTTP 200 od dostawcy.**
+
+### 3. Zużycie liczone DOPIERO po HTTP 200 — i ono też jest niezerowe
+
+`chatl_ai_zuzyj()` woła się po sprawdzeniu kodu 200 (`includes/ai.php`, komentarz
+„Kod 200 znaczy, ze dostawca wywolanie WYKONAL i je POLICZYL"), więc tabela zużycia
+nie zapisuje ani jednego nieudanego wywołania:
+
+```
+$ wp eval '... SELECT * FROM wp_chatl_ai_uzycie'
+2026-08-20 | 74 wywołania | 6264 tokenów wejścia  | 217 wyjścia
+2026-08-21 | 56 wywołań   | 40696 tokenów wejścia | 1471 wyjścia
+```
+
+### 4. To była PRZEGLĄDARKA, nie skrypt
+
+Wszystkie 11 sesji z odpowiedziami AI ma format **UUID**. Identyfikator sesji w tym
+formacie generował `crypto.randomUUID()` **w przeglądarce gościa** — w `assets/widget.js`
+do PR #95, po którym sesję wydaje serwer (dziś 32 znaki, inny format):
+
+```
+$ git log --oneline -S "randomUUID" -- wtyczki/chatbot-live/assets/widget.js
+dcb2437 Pozycja A: przejecie rozmowy przez czlowieka (1.5.0, schemat 6) (#95)
+7111fff feat: chatbot-live P1 — szkielet + tryb regułowy
+```
+
+### Jak to sprawdzić CUDZĄ ręką (wąskie okno recenzenta)
+
+Powyższe liczby wyjęte są `wp eval`-em, do którego recenzent dostępu nie ma. Żeby dowód
+dało się powtórzyć bez wiary na słowo, `narzedzia-qa/stos.sh` (tylko-do-odczytu, biała
+lista tabel) umie od 1.2.0 liczyć **z warunkiem**:
+
+```
+$ bash narzedzia-qa/stos.sh wiersze-gdzie wp_chatl_rozmowy.silnik=ai
+=== SELECT COUNT(*) FROM wp_chatl_rozmowy WHERE silnik = ai ===
+  wierszy: 20
+
+$ bash narzedzia-qa/stos.sh wiersze wp_chatl_ai_uzycie
+  wierszy: 2                       # dwa dni: 2026-08-20 i 2026-08-21
+```
+
+⚠️ To są liczby **ze stanu bazy warsztatowej w dniu pomiaru**. Jeśli czytasz to później,
+policz jeszcze raz — liczba wierszy `silnik=ai` może tylko rosnąć albo zniknąć razem
+z bazą (`wp db reset`), ale **nie może zmaleć** przy uczciwej pracy stanowiska.
+
+### ⛔ CZEGO TEN DOWÓD NIE OBEJMUJE — i to jest ważniejsze niż on sam
+
+**Dowód dotyczy wersji SPRZED zamrożenia.** Od commita zamrożenia 1.5.7
+(`3e4858e`, 21.08 05:07) w bazie **nie ma ani jednego wiersza `silnik='ai'`** —
+wszystkie dzisiejsze są `reguly`. Dla **audytowanej** wersji 1.5.7 dowodu „AI odpowiada
+gościowi" **NIE MA** i nie da się go zrobić bez ważnego klucza (patrz niżej).
+
+### Dlaczego dziś się tego nie powtórzy: klucz stanowiska jest nieważny
+
+Rozpoznanie dziury **D3** z dowodu z paczki (#119) — „ścieżka AI żyje w PHP, ale na
+ścieżce gościa nie wchodzi". Zmierzone po kolei, bez zgadywania:
+
+| hipoteza | pomiar | werdykt |
+|---|---|---|
+| nonce odrzuca żądanie | pełna ścieżka `chatl_nonce` → `chatl_sesja` → `chatl_pytanie` przez `admin-ajax.php`: `success:true`, oba wiersze rozmowy zapisane | ODPADA |
+| kubeł limitu na IP zjedzony | `ai\|<doba>\|<md5 IP>` → licznik **1** przy progu `CHATL_AI_LIMIT_IP_NA_DOBE = 20` | ODPADA |
+| warunek przed wywołaniem | `chatl_ai_uzycie_dzis()` = **56** ≥ `ai_limit_dzienny` = **50** → `chatl_ai_dostepny()` = false, AI nie jest nawet próbowane | **TRAFIONA** |
+| …a po podniesieniu limitu? | nadal reguły → znacznik `chatl_blad_ai` = `{"kod":401,"tresc":"authentication_error … API key is invalid."}` | **DRUGA PRZYCZYNA** |
+
+`chatl_ai_odpowiedz()` wołane **wprost w PHP też zwraca NULL** z tym samym 401 — czyli
+teza „wprost działa, przez AJAX nie" dziś się nie potwierdza; klucz stanowiska jest
+nieważny dla obu dróg.
+
+**Werdykt D3: wada stanowiska, nie bota.** Produkt zachował się dokładnie tak, jak ma:
+spróbował AI, dostał odmowę dostawcy, zjechał do reguł bez wywracania czatu i **zostawił
+ślad widoczny dla właściciela** (`chatl_blad_ai` — to naprawa L4 działająca na żywo).
+Wyczerpanie limitu dziennego znacznika nie zapala, bo to nie awaria; właściciel widzi to
+w Ustawieniach: „Dzisiaj zużyto: 56 / 50 wywołań. Po wyczerpaniu limitu bot do północy
+odpowiada z reguł" (`includes/admin.php:887`).
+
+⚠️ **Dopóki na stanowisku siedzi nieważny klucz, KAŻDY test trybu AI mierzy ścieżkę
+awaryjną, nie AI.** Ważny klucz to decyzja właściciela zlecenia (płatne API).
+
+### Pułapka pomiarowa, przez którą to zgłoszenie wyglądało na wadę produktu
+
+Zgłoszenie brzmiało „kolumna `silnik` zostaje PUSTA, żaden wiersz bota się nie zapisuje".
+Tabela `wp_chatl_rozmowy` ma kolumnę **`rola`**, nie `kto` — a `$wpdb->get_results()`
+z nieistniejącą kolumną zwraca **pustą tablicę, nie błąd**. Pusty wynik przy 252 wierszach
+w tabeli czyta się wtedy jako „nic się nie zapisuje". Przed ogłoszeniem takiej wady:
+`SHOW COLUMNS FROM <tabela>` albo `SELECT *` na jednym wierszu i `$wpdb->last_error`.
+
+---
+
 ## Czego ta sekcja NIE obejmuje
 
 - **Segregator maila** — przeszedł do buildera 2 (gałąź `boty/segregator-naprawy`);

@@ -1,5 +1,5 @@
 #!/bin/bash
-# stos.sh — WĄSKIE, CZYSTO ODCZYTOWE okno recenzenta na żywy stos.     WERSJA 1.1.0
+# stos.sh — WĄSKIE, CZYSTO ODCZYTOWE okno recenzenta na żywy stos.     WERSJA 1.2.0
 #
 # PO CO TO POWSTAŁO (policzone 20.08): w dzisiejszych recenzjach padło
 # 91 zdań „czego nie sprawdziłem". PIĘĆDZIESIĄT JEDEN z nich brzmiało
@@ -32,7 +32,7 @@
 #                   albo argument odrzucony przez sprawdzenie wzorca
 set -u
 
-WERSJA=1.1.0
+WERSJA=1.2.0
 
 # ⛔ Stałe, nie parametry. Dzwoniący NIE wybiera kontenera ani adresu — wybiera
 #    co najwyżej STOS, i to wyłącznie z tej zamkniętej listy dwóch pozycji:
@@ -165,8 +165,11 @@ wp_odczyt_lub_padnij() {
 # klienta mysql (zmierzone: `wp db query` konczy sie „env: 'mysql': No such
 # file or directory"). Poswiadczenia czytane sa z wp-config przez wp-cli
 # i nigdy nie sa wypisywane; haslo leci przez MYSQL_PWD, nie w linii polecen.
-policz_wiersze() {
-	local tabela="$1" baza uzyt haslo wynik status
+# JEDNO miejsce, w ktorym ten skrypt rozmawia z baza. Obie operacje liczace ida
+# przez nie, zeby nie mnozyc wywolan dockera — proba kontrolna liczy je i pada,
+# gdy przybywa nowych (to jej sposob na wykrycie obejscia bialej listy).
+licz_sql() {
+	local sql="$1" baza uzyt haslo wynik status
 	kontener_zyje
 	docker ps --filter "name=^${KONTENER_DB}$" --filter status=running --format '{{.Names}}' 2> /dev/null \
 		| grep -qx "$KONTENER_DB" || brak_stosu "kontener bazy $KONTENER_DB nie jest uruchomiony"
@@ -174,12 +177,19 @@ policz_wiersze() {
 	uzyt="$(wp_odczyt_lub_padnij config get DB_USER | tr -d '\r')"
 	haslo="$(wp_odczyt_lub_padnij config get DB_PASSWORD | tr -d '\r')"
 	wynik="$(docker exec -e MYSQL_PWD="$haslo" "$KONTENER_DB" \
-		mariadb -u"$uzyt" -N -B -e "SELECT COUNT(*) FROM \`$tabela\`;" "$baza" 2>&1)"; status=$?
+		mariadb -u"$uzyt" -N -B -e "$sql" "$baza" 2>&1)"; status=$?
 	if [ "$status" -ne 0 ]; then
-		printf '%s\n' "$wynik" >&2
-		brak_stosu "zapytanie o liczbe wierszy w $tabela skonczylo sie kodem $status"
+		brak_stosu "baza nie odpowiedziala na liczenie: $wynik"
 	fi
-	printf '%s\n' "$wynik"
+	printf '%s' "$wynik"
+}
+
+policz_wiersze() {
+	licz_sql "SELECT COUNT(*) FROM \`$1\`;"
+}
+
+policz_wiersze_gdzie() {
+	licz_sql "SELECT COUNT(*) FROM \`$1\` WHERE \`$2\` = '$3';"
 }
 
 # ------------------------------------------------------------------------
@@ -200,6 +210,9 @@ stos.sh $WERSJA — czysto odczytowe okno na stos WordPressa (teraz: $STOS).
   wtyczki                  lista wtyczek ze stanem (wp plugin list)
   tabele                   tabele wtyczek widoczne w bazie
   wiersze <tabela>         SELECT COUNT(*) — tabela z białej listy
+  wiersze-gdzie <t.k=w>    SELECT COUNT(*) ... WHERE kolumna = wartość
+                           (np. chatl_rozmowy.silnik=ai — wszystkie trzy części
+                           przez białą listę znaków, SQL składa ten skrypt)
   maile                    ile maili złapał mailpit
   ostatni-mail             nadawca, odbiorca, temat i początek treści
   wersja-wp                wersja rdzenia WordPressa
@@ -283,6 +296,32 @@ op_wiersze() {
 	printf '  wierszy: %s\n' "$(policz_wiersze "$1")"
 }
 
+# Liczenie z JEDNYM warunkiem równości. Powstało, bo dowód „tryb AI odpowiadał
+# gościowi" opiera się na liczbie wierszy z `silnik = ai`, a przez to wąskie okno
+# dało się policzyć tylko CAŁĄ tabelę — recenzent nie mógł odtworzyć liczby i musiał
+# wierzyć na słowo. Dowód, którego nie da się powtórzyć cudzą ręką, nie jest dowodem.
+#
+# Wejście: `tabela.kolumna=wartosc`, wszystkie trzy części przez tę samą białą listę
+# znaków co reszta skryptu ([a-zA-Z0-9_-]), tabela dodatkowo przez białą listę tabel.
+# SQL składa TEN skrypt, nie dzwoniący; wartość nie może wnieść ani cudzysłowu,
+# ani spacji, ani średnika.
+op_wiersze_gdzie() {
+	local wejscie="$1" tabela reszta kolumna wartosc
+	case "$wejscie" in
+		*.*=*) ;;
+		*) odmow "oczekuję postaci tabela.kolumna=wartosc (dostałam: [$wejscie])" ;;
+	esac
+	tabela="${wejscie%%.*}"
+	reszta="${wejscie#*.}"
+	kolumna="${reszta%%=*}"
+	wartosc="${reszta#*=}"
+	sprawdz_tabele "$tabela"
+	sprawdz_nazwe "$kolumna" "nazwa kolumny"
+	sprawdz_nazwe "$wartosc" "wartość warunku"
+	printf '=== SELECT COUNT(*) FROM %s WHERE %s = %s ===\n' "$tabela" "$kolumna" "$wartosc"
+	printf '  wierszy: %s\n' "$(policz_wiersze_gdzie "$tabela" "$kolumna" "$wartosc")"
+}
+
 op_maile() {
 	wymagaj_narzedzia curl
 	local ile
@@ -332,6 +371,7 @@ case "$OPERACJA" in
 	wtyczki)      op_wtyczki ;;
 	tabele)       op_tabele ;;
 	wiersze)      wymagaj_argumentu; op_wiersze "$ARGUMENT" ;;
+	wiersze-gdzie) wymagaj_argumentu; op_wiersze_gdzie "$ARGUMENT" ;;
 	maile)        op_maile ;;
 	ostatni-mail) op_ostatni_mail ;;
 	wersja-wp)    op_wersja_wp ;;
