@@ -37,6 +37,13 @@ zmyślonej odpowiedzi zamiast przyznania się do niewiedzy.
   „Dopisz odpowiedź" przy każdym. Bot sam pokazuje, jak go ulepszyć.
 * Test bota w panelu — sprawdzasz odpowiedź bez wychodzenia na stronę i widzisz,
   **która para** zadziałała.
+* **Bazę pytań wgrasz plikiem CSV** — z podglądem przed zapisem: każdy wiersz
+  z werdyktem (do zapisania / duplikat / błąd) i podpowiedzianymi słowami kluczowymi
+  do poprawienia. Do bazy nic nie trafia, dopóki nie potwierdzisz. Import tylko
+  dopisuje, więc nie nadpisze Twoich poprawionych treści. Rozpoznaje polski Excel
+  (średnik, windows-1250, BOM). Limity: 2000 wierszy i 2 MB na plik.
+* **Eksport całej bazy Q&A do CSV** — kolumny eksportu są dokładnie te, które
+  przyjmuje import, więc obieg „pobierz, popraw w arkuszu, wgraj" domyka się sam.
 * Eksport zgłoszeń i rozmów do CSV (z BOM UTF-8, otwiera się poprawnie w Excelu).
 
 **Tryb AI (opcjonalny)**

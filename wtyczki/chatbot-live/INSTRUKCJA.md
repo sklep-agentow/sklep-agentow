@@ -39,6 +39,49 @@ W menu bocznym pojawia się pozycja **ChatBot LIVE**.
    odpowiedzieć, i jedno, na które nie ma — powinien uczciwie zaproponować
    zostawienie maila.
 
+## 2a. Baza pytań z pliku — import i eksport CSV
+
+Jeśli masz już listę pytań w Excelu albo Arkuszach Google, nie musisz przepisywać
+jej po jednym wpisie. **ChatBot LIVE → Baza Q&A**, sekcja **„Import i eksport bazy (CSV)”**.
+
+**Kolumny.** Wymagane są dwie: `pytanie` i `odpowiedz`. Nieobowiązkowe:
+`slowa_kluczowe` (rozdzielone przecinkami) i `aktywne` (`1` albo `0`; brak kolumny
+albo pusta komórka znaczy „wpis ma działać”). Nagłówki mają też przyjmowane odmiany:
+`pytanie_wzorcowe`, `slowa`, `warianty`, `odpowiedz_bota`, `aktywny`.
+Kolumny rozpoznawane są **po nazwie w pierwszym wierszu, nie po kolejności** —
+możesz je poprzestawiać. Najprościej: **najpierw wyeksportuj to, co już masz**
+(przycisk **„Pobierz CSV (cała baza Q&A)”** w tej samej sekcji), popraw w arkuszu
+i wgraj z powrotem
+— plik eksportu ma dokładnie te kolumny, które przyjmuje import.
+
+**Pliki z polskiego Excela działają**: rozpoznawany jest średnik jako separator,
+kodowanie windows-1250, znacznik BOM i końce linii z Windows. Pusty wiersz między
+danymi nie psuje importu.
+
+**Nic nie trafia do bazy od razu.** Wybierasz plik i klikasz **„Wczytaj i pokaż
+podgląd”**. Zobaczysz wtedy **ekran podglądu**: każdy
+wiersz z werdyktem (do zapisania / duplikat pomijany / błąd), licznikami i polami
+**słów kluczowych do poprawienia**. To ważne, bo bot dopasowuje pytanie gościa
+**wyłącznie po słowach kluczowych** — wiersz bez nich byłby martwy, więc wtyczka
+podpowiada je sama i pokazuje do edycji. Do bazy nic nie idzie, dopóki nie klikniesz
+**„Zapisz N wpisów”**.
+
+**Import tylko dopisuje.** Pytanie, które już jest w bazie, zostaje nietknięte,
+a wiersz z pliku jest pomijany — i widać to w podglądzie. Nie da się nim przypadkiem
+nadpisać własnej, poprawionej treści.
+
+**Limity, żeby nie zaskoczyły przy większym pliku:**
+
+| co | ile |
+|---|---|
+| wierszy w jednym pliku | **2000** |
+| rozmiar pliku | **2 MB** |
+| ważność podglądu | **15 minut** — po tym czasie wgraj plik jeszcze raz |
+
+Krzywy plik kończy się **komunikatem**, nie białym ekranem: pusty plik, brak
+wymaganych kolumn, przekroczony limit albo plik za duży dla Twojego hostingu
+zostaną nazwane po imieniu.
+
 ## 3. Wygląd widgetu — dopasuj go do swojej strony
 
 Wejdź w **ChatBot LIVE → Ustawienia → Wygląd widgetu**. Ustawisz tam:
