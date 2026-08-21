@@ -45,7 +45,7 @@ Wszystkie wyszły przy domykaniu botów, u trzech różnych osób (builder1, bui
 | **P6** | **nieśledzony plik wjeżdża do cudzego PR-a przez `git add -A`** | 1× | PR #122: `boty/BRIEF-BUILDER2-SEGREGATOR.md`, 71 linii, nieopisany w PR-ze; usunięty commitem `1f96238` |
 | **P7** | **wyjaśnienie zamiast pomiaru** | 3× | PR #126: koordynatorka zbyła czerwoną `dokumentacja-zgodnosc.sh` uzasadnieniem „pada przez brak chromium" — uruchomiona dała **6 pozycji, 5 realnych** · **ten plik, runda 1**: tabela klas bez ani jednego odnośnika (dokument o dowodach — bez dowodów) · **ten plik, runda 2**: odnośniki dopisane Z PAMIĘCI, nie z historii; jeden (PR #122, linia :316) NIE ISTNIAŁ |
 
-⚠️ **P7 wystąpiła w tym pliku TRZY RAZY**, a P1 raz — łącznie **cztery rundy poprawek tego samego pliku**, w których wracała klasa, o której ten plik jest. Dwa pierwsze razy złapał recenzent:
+⚠️ **Rozliczenie tego pliku, żeby liczby nie mieszały dwóch rzeczy:** P7 ma w tabeli **3×** ŁĄCZNIE, z czego **2× w tym pliku** (runda 1 i 2) plus 1× poza nim (PR #126). P1 ma **4×** łącznie, z czego **1× w tym pliku** (runda 3). Razem ten dokument wymagał **czterech rund poprawek tego samego pliku**, w których wracała klasa, o której ten plik jest. Dwa pierwsze razy złapał recenzent:
 runda 1 — tabela bez ani jednego odnośnika; runda 2 — **odnośniki dopisane Z PAMIĘCI, nie z historii**.
 Jeden z nich (`PR #122`, `dowod-z-paczki.sh:316`) **nie istniał**: PR #122 to sprzątanie śladów,
 plik ma 263 linie, a prawdziwa naprawa ucieczki w `LIKE` naprawiła **oba** miejsca naraz — czyli
