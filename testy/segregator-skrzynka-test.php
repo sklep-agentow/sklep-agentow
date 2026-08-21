@@ -14,7 +14,9 @@
  *
  * Test gada z serwerem IMAP `segm_imap` (GreenMail) w tej samej sieci dockera,
  * wysyła własną wiadomość przez SMTP i sprząta po sobie — także gdy któryś krok
- * nie przejdzie. Wiersze testowe mają przedrostek 'SEGMTEST-'.
+ * nie przejdzie: konfiguracja skrzynki wraca do stanu sprzed próby (to WSPÓLNY
+ * stos, pracuje na nim też builder 1), wiersze testowe znikają, a wiadomości
+ * lądują w SEGMTEST-zuzyte. Foldery testowe są dwa i stałe.
  *
  * Uruchomienie:
  *   docker cp testy/segregator-skrzynka-test.php strona_wp_wordpress:/tmp/x.php
@@ -31,8 +33,18 @@ require_once $katalog . 'skrzynka-przebieg.php';
 
 global $wpdb;
 $GLOBALS['segm_test_bledy'] = 0;
-$TEMAT  = 'SEGMTEST-FAKTURA-' . wp_generate_password( 8, false );
-$ZRODLO = 'SEGMTEST-IN-' . wp_generate_password( 6, false );
+// ⛔ Ani temat, ani nadawca NIE MOGA pasowac do REGUL DEMO z instalatora.
+// Pierwsza wersja wysylala z `ksiegowosc@dostawca.test` z tematem
+// "SEGMTEST-FAKTURA-..." — a demo lapie `od: ksiegowosc` (regula 1) ORAZ
+// `temat: faktur` (regula 2). Rozstrzyga kolejnosc, wiec wygrywala regula
+// DEMO: wiadomosc szla do "Segregator.Faktury", test byl zielony i dowodzil,
+// ze dziala JAKAS regula — nie ta dodana. Ponizszy znacznik nie wystepuje
+// w zadnym wzorcu demo (pola od, temat, tresc).
+$ZNACZNIK = 'segmznak' . strtolower( wp_generate_password( 8, false ) );
+$TEMAT    = 'SEGMTEST ' . $ZNACZNIK;
+$NADAWCA  = $ZNACZNIK . '@segmtest.invalid';
+$ZRODLO   = 'SEGMTEST-IN';
+$ZUZYTE   = 'SEGMTEST-zuzyte';
 
 function krok( $ok, $opis, $szczegol = '' ) {
 	if ( $ok ) {
@@ -45,7 +57,7 @@ function krok( $ok, $opis, $szczegol = '' ) {
 }
 
 /** Wysyłka wiadomości wprost po SMTP — bez wp_mail, bo ta poszłaby do mailpita. */
-function segmtest_wyslij( $temat ) {
+function segmtest_wyslij( $temat, $nadawca ) {
 	$s = @fsockopen( 'segm_imap', 3025, $e, $es, 10 );
 	if ( ! $s ) {
 		return false;
@@ -59,10 +71,10 @@ function segmtest_wyslij( $temat ) {
 	};
 	$czytaj();
 	$pisz( 'HELO test' );
-	$pisz( 'MAIL FROM:<ksiegowosc@dostawca.test>' );
+	$pisz( "MAIL FROM:<$nadawca>" );
 	$pisz( 'RCPT TO:<szef@firma.test>' );
 	$pisz( 'DATA' );
-	fwrite( $s, "Subject: $temat\r\nFrom: ksiegowosc@dostawca.test\r\nTo: szef@firma.test\r\n\r\nTresc testowa segregatora.\r\n.\r\n" );
+	fwrite( $s, "Subject: $temat\r\nFrom: $nadawca\r\nTo: szef@firma.test\r\n\r\nWiadomosc probna, bez slow z regul demo.\r\n.\r\n" );
 	$czytaj();
 	$pisz( 'QUIT' );
 	fclose( $s );
@@ -114,17 +126,33 @@ function segmtest_odstaw_do_zrodla( $temat, $zrodlo ) {
 	return $ok;
 }
 
-function segmtest_sprzataj( $temat ) {
+function segmtest_sprzataj( $temat, $zrodlo = '' ) {
 	global $wpdb;
-	$wpdb->query( "DELETE FROM {$wpdb->prefix}segm_reguly WHERE wzorzec LIKE 'SEGMTEST-%'" );
+
+	// Konfiguracja wspolnego stosu wraca do stanu sprzed proby.
+	if ( null === $GLOBALS['segm_test_stare_ust'] ) {
+		delete_option( 'segm_skrzynka' );
+	} else {
+		update_option( 'segm_skrzynka', $GLOBALS['segm_test_stare_ust'] );
+	}
+	segm_skrzynka_zapisz_haslo( (string) $GLOBALS['segm_test_stare_haslo'] );
+	if ( null === $GLOBALS['segm_test_stara_zgoda'] ) {
+		delete_option( 'segm_zgoda_przenoszenie' );
+	} else {
+		update_option( 'segm_zgoda_przenoszenie', $GLOBALS['segm_test_stara_zgoda'] );
+	}
+	$wpdb->query( "DELETE FROM {$wpdb->prefix}segm_reguly WHERE wzorzec LIKE 'segmznak%'" );
 	$wpdb->query( "DELETE FROM {$wpdb->prefix}segm_kategorie WHERE nazwa LIKE 'SEGMTEST-%'" );
 	$wpdb->query( "DELETE FROM {$wpdb->prefix}segm_skrz_ruchy WHERE temat LIKE 'SEGMTEST-%'" );
-	delete_option( 'segm_zgoda_przenoszenie' );
 	// Klient IMAP tej wtyczki CELOWO nie ma kasowania (rozdział „Granice":
-	// „Nie kasuje wiadomości"), więc próba też nie kasuje — odsuwa swoje
-	// wiadomości na bok, do własnego folderu. Każdy przebieg ma inny temat,
-	// więc odstawione śmieci nie mieszają się do następnego pomiaru.
-	foreach ( array( 'INBOX', 'Segregator/SEGMTEST-Faktury', 'Segregator.SEGMTEST-Faktury' ) as $f ) {
+	// „Nie kasuje wiadomości"), więc próba też nie kasuje — odstawia swoje
+	// wiadomości do SEGMTEST-zuzyte. Foldery testowe są DWA i stałe
+	// (SEGMTEST-IN, SEGMTEST-zuzyte), więc ich liczba nie rośnie z przebiegami.
+	$foldery = array( 'INBOX' );
+	if ( '' !== $zrodlo ) {
+		$foldery[] = $zrodlo;
+	}
+	foreach ( $foldery as $f ) {
 		$k = new Segm_Imap( 20 );
 		if ( $k->polacz( 'segm_imap', 3143, 'brak' ) && $k->zaloguj( 'szef', 'tajne1234' ) ) {
 			if ( null !== $k->otworz( $f, false ) ) {
@@ -140,11 +168,47 @@ function segmtest_sprzataj( $temat ) {
 	}
 }
 
+/**
+ * Odstawia WSZYSTKO z podanego folderu do SEGMTEST-zuzyte.
+ *
+ * Wołane PRZED próbą: folder źródłowy ma być pusty, bo inaczej przebieg
+ * policzyłby resztki po poprzednich uruchomieniach (widziane: „przeniesionych:
+ * 2", potem „3"). Kasować nie możemy — klient tej wtyczki nie ma kasowania
+ * i mieć nie będzie („Nie kasuje wiadomości" z rozdziału Granice).
+ */
+function segmtest_oproznij( $folder, $zuzyte ) {
+	$k = new Segm_Imap( 20 );
+	if ( ! $k->polacz( 'segm_imap', 3143, 'brak' ) || ! $k->zaloguj( 'szef', 'tajne1234' ) ) {
+		return false;
+	}
+	if ( ! $k->folder_istnieje( $zuzyte ) ) {
+		$k->utworz_folder( $zuzyte );
+	}
+	if ( ! $k->folder_istnieje( $folder ) ) {
+		$k->utworz_folder( $folder );
+	}
+	if ( null !== $k->otworz( $folder, false ) ) {
+		foreach ( (array) $k->uidy( 'ALL' ) as $uid ) {
+			$k->przenies( $uid, $zuzyte );
+		}
+	}
+	$k->rozlacz();
+	return true;
+}
+
 // Sprzatanie ZANIM zaczniemy: resztki po poprzednich przebiegach leza w folderze
 // zrodlowym i przebieg policzylby je razem z nasza (widziane: "przeniesionych: 2").
-register_shutdown_function( 'segmtest_sprzataj', $TEMAT );
+segmtest_oproznij( $ZRODLO, $ZUZYTE );
+register_shutdown_function( 'segmtest_sprzataj', $TEMAT, $ZRODLO );
 
 // ---------------------------------------------------------------- przygotowanie
+// ⛔ To jest WSPOLNY stos warsztatowy — pracuje na nim tez builder 1. Podmieniamy
+// konfiguracje skrzynki na czas proby, wiec MUSIMY oddac ja taka, jaka byla:
+// inaczej zostawiamy cudzemu stosowi obcy host, obce haslo i tryb `na_zywo`.
+$GLOBALS['segm_test_stare_ust']   = get_option( 'segm_skrzynka', null );
+$GLOBALS['segm_test_stare_haslo'] = segm_skrzynka_haslo();
+$GLOBALS['segm_test_stara_zgoda'] = get_option( 'segm_zgoda_przenoszenie', null );
+
 $ust = segm_skrzynka_ustawienia();
 $ust = array_merge(
 	$ust,
@@ -163,15 +227,15 @@ $ust = array_merge(
 update_option( 'segm_skrzynka', $ust );
 segm_skrzynka_zapisz_haslo( 'tajne1234' );
 
-$wpdb->insert( $wpdb->prefix . 'segm_kategorie', array( 'nazwa' => 'SEGMTEST-Faktury', 'utworzono' => current_time( 'mysql' ) ) );
+$wpdb->insert( $wpdb->prefix . 'segm_kategorie', array( 'nazwa' => 'SEGMTEST-Kategoria', 'utworzono' => current_time( 'mysql' ) ) );
 $kategoria = (int) $wpdb->insert_id;
 $wpdb->insert(
 	$wpdb->prefix . 'segm_reguly',
-	array( 'kolejnosc' => 1, 'pole' => 'temat', 'wzorzec' => $TEMAT, 'kategoria_id' => $kategoria, 'utworzono' => current_time( 'mysql' ) )
+	array( 'kolejnosc' => 1, 'pole' => 'temat', 'wzorzec' => $ZNACZNIK, 'kategoria_id' => $kategoria, 'utworzono' => current_time( 'mysql' ) )
 );
 
 echo "=== PRZYGOTOWANIE ===\n";
-krok( segmtest_wyslij( $TEMAT ), 'wiadomosc testowa wyslana na skrzynke', $TEMAT );
+krok( segmtest_wyslij( $TEMAT, $NADAWCA ), 'wiadomosc testowa wyslana na skrzynke', $TEMAT );
 sleep( 1 );
 krok( segmtest_odstaw_do_zrodla( $TEMAT, $ZRODLO ), 'wiadomosc przeniesiona do wlasnego folderu zrodlowego SEGMTEST-IN' );
 krok( 1 === segmtest_ile_w_folderze( $ZRODLO, $TEMAT ), 'lezy w SEGMTEST-IN przed przebiegiem' );
@@ -214,7 +278,15 @@ krok( 0 === segmtest_ile_w_folderze( $ZRODLO, $TEMAT ), 'wiadomosci NIE MA juz w
 $FOLDER_DO = (string) $wpdb->get_var(
 	$wpdb->prepare( "SELECT folder_do FROM {$wpdb->prefix}segm_skrz_ruchy WHERE temat LIKE %s AND folder_do <> '' ORDER BY id DESC LIMIT 1", '%' . $wpdb->esc_like( $TEMAT ) . '%' )
 );
-krok( '' !== $FOLDER_DO, 'ruch zapisal nazwe folderu docelowego', $FOLDER_DO );
+// ⛔ ASERCJA ROZSTRZYGAJACA: folder ma byc folderem MOJEJ kategorii, a nie
+// jakimkolwiek. "Cokolwiek niepustego" przechodzilo takze wtedy, gdy zadzialala
+// regula DEMO — i wlasnie tak bylo w pierwszej wersji tej proby.
+$k_pom = new Segm_Imap( 20 );
+$k_pom->polacz( 'segm_imap', 3143, 'brak' );
+$k_pom->zaloguj( 'szef', 'tajne1234' );
+$OCZEKIWANY = Segm_Imap::z_utf7( segm_skrzynka_folder_dla( $k_pom, $ust['prefiks'], 'SEGMTEST-Kategoria' ) );
+$k_pom->rozlacz();
+krok( $FOLDER_DO === $OCZEKIWANY, 'wiadomosc trafila do folderu MOJEJ kategorii, nie cudzej reguly', "jest: $FOLDER_DO · oczekiwany: $OCZEKIWANY" );
 krok( 1 === segmtest_ile_w_folderze( $FOLDER_DO, $TEMAT ), 'wiadomosc JEST w folderze docelowym', $FOLDER_DO );
 
 // ----------------------------------------------------------------- E. cofniecie

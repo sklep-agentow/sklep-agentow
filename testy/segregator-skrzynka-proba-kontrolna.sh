@@ -84,6 +84,18 @@ probuj "E. cofniecie liczy, ale nie przenosi z powrotem" \
 	"s/if ( null === \$klient->przenies( \$uid, \$folder_z ) ) {/if ( false ) {/" \
 	"WROCILA do folderu zrodlowego"
 
+# F. CUDZA REGULA WYGRYWA — mutant, ktory pokazuje, PO CO jest asercja na
+#    KONKRETNY folder. Dopasowanie przestaje patrzec na wzorzec, wiec wygrywa
+#    pierwsza regula z brzegu, czyli DEMO z instalatora, i wiadomosc laduje
+#    w "Segregator.Faktury" zamiast w folderze naszej kategorii.
+#    ⭐ Pierwsza wersja tego testu (asercja "folder docelowy niepusty" oraz
+#    "dopasowanych > 0") na tym mutancie PRZECHODZILA — dowodzila, ze dziala
+#    JAKAS regula, nie ze dziala TA DODANA. Recenzent zlapal to na zywo.
+probuj "F. wygrywa CUDZA (demo) regula zamiast naszej" \
+	"includes/silnik.php" \
+	"s/^function segm_wzorzec_pasuje( \$tekst, \$wzorzec ) {/function segm_wzorzec_pasuje( \$tekst, \$wzorzec ) {\n\treturn true;/" \
+	"folderu MOJEJ kategorii"
+
 echo
 echo "=== KONTROLA ODWROTNA — czysty kod MA przejsc ==="
 wdroz_czysty
@@ -101,7 +113,7 @@ fi
 wdroz_czysty
 echo
 if [ "$BLEDY" -eq 0 ]; then
-	echo "STRAZNIK SKRZYNKI JEST SKALIBROWANY — kazdy z pieciu podlozonych bledow zlapany, czysty kod przechodzi"
+	echo "STRAZNIK SKRZYNKI JEST SKALIBROWANY — kazdy z szesciu podlozonych bledow zlapany, czysty kod przechodzi"
 	exit 0
 fi
 echo "STRAZNIK NIE ZLAPAL $BLEDY PRZYPADK(OW) — nie oddawaj go jako dowodu w tym stanie"
