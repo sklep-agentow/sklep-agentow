@@ -97,6 +97,21 @@ if printf '%s\n' "$KROK" | grep -qE '^\s*if:'; then
   BLAD=1
 fi
 
+# 4) Rozjazd wersji WEWNĄTRZ jednego skryptu: komentarz nagłówka mówi co innego niż
+#    stała WERSJA w kodzie. Klasa #4 ze ściągi egzaminatora („wersja rozjechana"),
+#    złapana w recenzji #105 na dowod-z-paczki.sh (nagłówek 1.0.0, stała 1.0.1 po
+#    refaktorze). Egzemplarz naprawiony ręcznie; TU zamykamy klasę, żeby następny
+#    refaktor nie przywiózł jej z powrotem. Skrypty bez stałej WERSJA (biblioteki,
+#    próby kontrolne) pomijamy — nie mają czego rozjechać.
+for SKRYPT in "$(dirname "$0")"/*.sh; do
+  NAGLOWEK="$(grep -m1 -oE 'WERSJA [0-9]+\.[0-9]+\.[0-9]+' "$SKRYPT" | awk '{print $2}')"
+  STALA="$(grep -m1 -oE '^WERSJA=[0-9]+\.[0-9]+\.[0-9]+' "$SKRYPT" | cut -d= -f2)"
+  if [ -n "$NAGLOWEK" ] && [ -n "$STALA" ] && [ "$NAGLOWEK" != "$STALA" ]; then
+    echo "MANIFEST-GUARD: $(basename "$SKRYPT") — naglowek mowi WERSJA $NAGLOWEK, stala mowi $STALA. Wersja rozjechana w jednym pliku." >&2
+    BLAD=1
+  fi
+done
+
 if [ "$BLAD" -eq 0 ]; then
   echo "MANIFEST-GUARD: zgodne — wszystkie bramki z manifestu aktywne, bez furtek."
 fi

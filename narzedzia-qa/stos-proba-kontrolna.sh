@@ -87,6 +87,17 @@ else
 	printf '  OK   wywolania dockera policzone: %s (limit 6)\n' "$ILE_DOCKER"
 fi
 
+# Tekst pomocy to JEDYNE wyjscie funkcji pomoc(). Heredok POMOC nie interpretuje
+# ucieczek, wiec wpisane w nim `\n` wypisuje sie jako dwa znaki zamiast podzialu
+# linii — recenzja PR #105 zlapala to golym okiem. Ta kontrola lapie nawrot.
+if bash "$STOS" pomoc | grep -q '\\n'; then
+	echo "  BLAD tekst pomocy ma literalne \\n zamiast podzialu linii:"
+	bash "$STOS" pomoc | grep -n '\\n' | sed 's/^/         /'
+	BLEDY=$(( BLEDY + 1 ))
+else
+	echo "  OK   tekst pomocy bez literalnych sekwencji ucieczki"
+fi
+
 echo
 echo "=== BRAK NARZEDZIA TO KOD 2, NIE CICHE ZIELONE ==="
 kod=0
