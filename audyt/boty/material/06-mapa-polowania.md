@@ -14,11 +14,16 @@
 - ⬜ Limit żądań: czy mierzy wymiar, który robi szkodę (G7); salwa równoległa
 
 ## A2 — AWARIA (czytanie + WYMUSZONE awarie)
-- ⬜ Każdy zapis do bazy: czy kod ZMIERZYŁ stan po operacji, czy tylko wywołał funkcję (G2)
-- ⬜ Co się dzieje, gdy API nie odpowiada / odpowiada błędem / odpowiada śmieciem
-- ⬜ Czy da się odróżnić „AI odpowiedziało" od „zjechaliśmy do reguł" (G1)
-- ⬜ Zapis pada w połowie wieloetapowej operacji — co zostaje w bazie
-- ⬜ Wysyłka maila zawodzi — czy użytkownik widzi prawdę
+- ✅ Każdy zapis do bazy: czy kod ZMIERZYŁ stan po operacji, czy tylko wywołał funkcję (G2)
+- ✅ Co się dzieje, gdy API nie odpowiada / odpowiada błędem / odpowiada śmieciem
+- ✅ Czy da się odróżnić „AI odpowiedziało" od „zjechaliśmy do reguł" (G1)
+- ✅ Zapis pada w połowie wieloetapowej operacji — co zostaje w bazie
+- ✅ Wysyłka maila zawodzi — czy użytkownik widzi prawdę
+
+> ✅ **ZAMKNIĘTE 21.08 przez `audyt/boty/RAPORT-A2-AWARIA.md`** (soczewka A2, przebieg
+> na zamrożonym `807d72d`): 3 znaleziska F1-F3, każde dowiedzione **kalibrowanym testem**
+> z próbami kontrolnymi. ⛔ Audytor sam wskazał 6 kategorii POZA swoją soczewką — patrz sekcja
+> „CZEGO NIE BYŁO NA MOJEJ LIŚCIE" w raporcie; **nie są objęte tym odhaczeniem**.
 
 ## A3 — DANE / CO ZOSTAJE (SQL na bazie + wp-cli)
 - ⬜ Diff bazy: przed instalacją → po instalacji → po odinstalowaniu, OBIEMA ścieżkami (G3)
@@ -56,7 +61,7 @@
 - ⬜ „Co, jeśli właściciel wyłączy zadania cykliczne (`DISABLE_WP_CRON`)"
 
 ---
-**LICZNIK:** 36 celów. Zamknięte: 0. ⛔ Audyt trwa, dopóki licznik nie pokaże 36/36.
+**LICZNIK:** 36 celów. Zamknięte: 5. Otwarte: 31. ⛔ Audyt trwa, dopóki licznik nie pokaże 36/36.
 <!-- Poprawione 21.08 przez koordynatorke: bylo „34", a policzenie pozycji celow daje 36
      (A1=6, A2=5, A3=6, A4=5, A5=4, A6=5, L=5). Zanizony licznik pozwolilby zamknac audyt
      przy dwoch celach nietknietych. Sprawdzenie: grep -c "^- " na sekcjach tego pliku. -->
