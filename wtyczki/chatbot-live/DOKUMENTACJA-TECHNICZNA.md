@@ -1,6 +1,6 @@
 # ChatBot LIVE — dokumentacja techniczna
 
-Wersja wtyczki: **1.5.6** · schemat bazy: **7** · licencja: **GPL-2.0-or-later**
+Wersja wtyczki: **1.5.7** · schemat bazy: **7** · licencja: **GPL-2.0-or-later**
 
 Dokument opisuje **kod, który jest**, nie plan. Każda liczba i nazwa poniżej ma pokrycie
 w źródle — przy każdej podano plik i symbol, żeby dało się to sprawdzić `grep`-em, a nie
@@ -54,7 +54,8 @@ dystrybucji), a nie to, czy wolno pobrać zapłatę. Na tym stoi cały rynek pł
 | `includes/ai.php` | tryb AI: klucz, licznik stop-loss, instrukcja systemowa, wywołanie API, log błędu API | zawsze |
 | `includes/front.php` | assety widgetu, limity na IP, walidacja sesji, dwa endpointy AJAX | zawsze |
 | `includes/admin.php` | menu, CRUD Q&A, zgłoszenia, historia, ustawienia, test bota w panelu | tylko `is_admin()` |
-| `includes/csv.php` | ręczny eksport zgłoszeń i rozmów do CSV | tylko `is_admin()` |
+| `includes/csv.php` | ręczny eksport zgłoszeń, rozmów **i bazy Q&A** do CSV | tylko `is_admin()` |
+| `includes/import.php` | import bazy Q&A z CSV: parsowanie, podgląd przed zapisem, zapis zatwierdzonych wierszy | tylko `is_admin()` |
 | `includes/statystyki.php` | liczby okresu, grupowanie pytań bez odpowiedzi, strona „Statystyki i luki" | tylko `is_admin()` |
 | `includes/wyglad.php` | kolory z ustawień → zmienne CSS, kontrast WCAG, pozycja widgetu | zawsze (front też ich potrzebuje) |
 | `includes/powitanie.php` | ekran powitalny po aktywacji + zapamiętanie zamknięcia | tylko `is_admin()` |
@@ -66,7 +67,7 @@ dystrybucji), a nie to, czy wolno pobrać zapłatę. Na tym stoi cały rynek pł
 | `INSTRUKCJA.md`, `DOKUMENTACJA-TECHNICZNA.md`, `DIAGRAM-PRZEPLYWU.svg` | dokumentacja w paczce | — |
 | `assets/widget.js`, `assets/widget.css` | widget czatu na froncie | front, gdy bot włączony |
 
-`admin.php`, `csv.php`, `statystyki.php` i `powitanie.php` są w bloku `if ( is_admin() )`
+`admin.php`, `csv.php`, `import.php`, `statystyki.php` i `powitanie.php` są w bloku `if ( is_admin() )`
 w `chatbot-live.php` — front nie ładuje ani panelu, ani eksportu, ani liczenia statystyk.
 `wyglad.php` jest **poza** tym blokiem, bo kolory z ustawień muszą trafić także na front.
 
@@ -196,6 +197,8 @@ Wszystkie liczby, którymi wtyczka się rządzi, są stałymi — nie ma ich roz
 
 | Stała | Wartość | Plik | Do czego |
 |---|---|---|---|
+| `CHATL_WERSJA` | `1.5.7` | `chatbot-live.php` | wersja wtyczki; służy też jako `?ver=` assetów (przeglądarka nie poda starego pliku po aktualizacji) |
+| `CHATL_WERSJA_SCHEMATU` | `7` | `chatbot-live.php` | wyzwalacz migracji schematu |
 | `CHATL_KATALOG`, `CHATL_URL` | ścieżka i adres wtyczki | `chatbot-live.php` | `require` i adresy assetów |
 | `CHATL_MAX_PYTANIE` | `500` | `includes/front.php` | maksymalna długość pytania gościa (nadmiar jest **przycinany**, nie odrzucany) |
 | `CHATL_MAX_WIADOMOSC` | `2000` | `includes/front.php` | maksymalna długość treści zgłoszenia (jw.) |
@@ -223,8 +226,9 @@ Wszystkie liczby, którymi wtyczka się rządzi, są stałymi — nie ma ich roz
 | `CHATL_META_POWITANIE` | `chatl_powitanie_zamkniete` | `includes/powitanie.php` | klucz metadanych „ten administrator zamknął powitanie" |
 | `CHATL_TRANSIENT_AKTYWACJA` | `chatl_po_aktywacji` | `includes/powitanie.php` | znacznik „właśnie aktywowano", życie 1 minuta |
 | `CHATL_SUGESTIA_RDZEN` | `5` | `includes/statystyki.php` | rdzeń **podpowiadanych słów kluczowych** — dłuższy, bo trafia do silnika dopasowania: `koszt` łapie „koszty"/„kosztuje", a `kosz` łapałby też „koszulę" |
-| `CHATL_WERSJA` | `1.5.6` | `chatbot-live.php` | wersja wtyczki; służy też jako `?ver=` assetów (przeglądarka nie poda starego pliku po aktualizacji) |
-| `CHATL_WERSJA_SCHEMATU` | `7` | `chatbot-live.php` | wyzwalacz migracji schematu |
+| `CHATL_IMPORT_MAX_WIERSZY` | `2000` | `includes/import.php` | sufit wierszy jednego pliku CSV — powyżej odmowa z komunikatem zamiast padu na limicie pamięci |
+| `CHATL_IMPORT_MAX_BAJTOW` | `2097152` | `includes/import.php` | sufit rozmiaru wgrywanego pliku (2 MB) |
+| `CHATL_IMPORT_MINUT` | `15` | `includes/import.php` | ile żyje podgląd importu czekający na potwierdzenie |
 | `CHATL_NA_STRONE_ZGLOSZEN` | `200` | `includes/admin.php` | rozmiar strony listy zgłoszeń |
 | `CHATL_NA_STRONE_ROZMOW` | `100` | `includes/admin.php` | rozmiar strony listy rozmów |
 | `CHATL_PULAPKA_POLE` | `chatl_pole_dodatkowe` | `includes/front.php` | nazwa ukrytego pola-pułapki; celowo nie brzmi jak `email`/`imie`, bo menedżery haseł wypełniają pola po nazwie |
@@ -346,12 +350,25 @@ Obie zarejestrowane w wariancie `wp_ajax_` i `wp_ajax_nopriv_`, bo gość czatu 
 | `chatl_ustawienia_zapisz` | `chatl_post_ustawienia_zapisz` | `chatl_ustawienia_zapisz` |
 | `chatl_eksport_zgloszen` | `chatl_post_eksport_zgloszen` | `chatl_eksport_zgloszen` |
 | `chatl_eksport_rozmow` | `chatl_post_eksport_rozmow` | `chatl_eksport_rozmow` |
+| `chatl_eksport_qa` | `chatl_post_eksport_qa` | `chatl_eksport_qa` |
+| `chatl_qa_import_podglad` | `chatl_post_qa_import_podglad` | `chatl_qa_import_podglad` |
+| `chatl_qa_import_zapisz` | `chatl_post_qa_import_zapisz` | `chatl_qa_import_zapisz` |
+| `chatl_qa_import_anuluj` | `chatl_post_qa_import_anuluj` | `chatl_qa_import_anuluj` |
 | `chatl_powitanie_zamknij` | `chatl_post_powitanie_zamknij` | `chatl_powitanie_zamknij` |
 | `chatl_test_klucza` | `chatl_post_test_klucza` | `chatl_test_klucza` |
 | `chatl_nonce_zamknij` | `chatl_post_nonce_zamknij` | `chatl_nonce_zamknij` |
 
 Nonce operacji na pojedynczym wierszu zawiera jego `id` — nonce od cudzego wiersza nie przejdzie.
-Oba eksporty przechodzą przez jedną bramkę `chatl_csv_brama()` (capability + nonce).
+Wszystkie trzy eksporty przechodzą przez jedną bramkę `chatl_csv_brama()` (capability + nonce).
+
+Import jest **dwukrokowy i nic nie zapisuje w kroku pierwszym**: `chatl_qa_import_podglad`
+parsuje plik i odkłada wynik w transiencie `chatl_import_<id użytkownika>` (życie
+`CHATL_IMPORT_MINUT`), a `chatl_qa_import_zapisz` zapisuje **wiersze z tego transientu** —
+nie parsuje pliku po raz drugi, więc do bazy trafia dokładnie to, co pokazał podgląd.
+Z formularza podglądu bierzemy wyłącznie poprawione słowa kluczowe; pytania i odpowiedzi
+pochodzą z podglądu, więc podmiana pola w przeglądarce nie wprowadzi treści, której
+właściciel nie widział. Plik jest czytany wprost z uploadu PHP i **nigdzie nie jest
+zapisywany** (bez `wp_handle_upload`, żeby dane klienta nie zostawały w `uploads/`).
 
 ### 7.4. Filtry do rozbudowy
 
@@ -1222,6 +1239,13 @@ Rzeczy, których wtyczka **nie** robi — żeby nikt nie szukał ich w kodzie:
   (rozdział **Pamięć bieżącej rozmowy w trybie AI**); tryb regułowy pozostaje bezstanowy z natury — dopasowuje pojedyncze pytanie.
 - **Bez czytania treści strony** — wiedza bota to wyłącznie baza Q&A i opis firmy z ustawień.
 - **Bez wielojęzyczności i bez i18n** — teksty są polskie wprost, bez `textdomain`.
+- **Podgląd importu CSV widzi bazę z chwili wczytania pliku.** Lista istniejących pytań
+  jest pobierana raz, przy budowaniu podglądu, a zapis bierze wiersze podglądu i **nie**
+  odpytuje bazy ponownie — to jest cena obietnicy „zapisze się dokładnie to, co widzisz".
+  Jeśli w oknie do `CHATL_IMPORT_MINUT` minut to samo pytanie trafi do bazy inną drogą
+  (ręcznie albo drugim importem), zapis je zduplikuje. Tabela `chatl_qa` nie ma `UNIQUE`
+  na `pytanie` i ręczne dodawanie nigdy tej ochrony nie miało, więc to nie jest regresja —
+  ale jest granicą, nie niedopatrzeniem.
 - **Wniosek RODO dotyczy adresu e-mail, nie adresu IP.** Limity ruchu trzymają `md5(IP)`
   w tabeli `chatl_rate_limit` z krótkim oknem — nie da się tego powiązać z osobą i nie ma
   po co tego eksportować ani kasować na wniosek. Rozmowy gości, którzy nigdy nie zostawili
