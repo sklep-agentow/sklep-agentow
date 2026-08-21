@@ -13,12 +13,12 @@
 # Format: etykieta|ścieżka względem katalogu wtyczki|treść linii (bez wcięcia).
 #
 # STAN 2026-08-21, po posprzątaniu Segregatora i po rozszerzeniu wzorca do 1.1.0
-# — 46 pozycji:
+# — 44 pozycje:
 #   chatbot-live      0  (wyczyszczony przy zamrażaniu 1.5.7)
 #   segregator-maila  4  (BYŁO 12 przy wzorcu 1.1.0; osiem zamkniętych w tym PR-ze,
 #                         zostały cztery w DOKUMENTACJA-TECHNICZNA.md — plik pod ręką
 #                         buildera 2, nie wolno mi go tknąć)
-#   sklep-agentow    42  (BYŁO 31; jedenaście doszło z rozszerzenia wzorca o nasze
+#   sklep-agentow    40  (BYŁO 31, potem 42; jedenaście doszło z rozszerzenia wzorca o nasze
 #                         słownictwo — „krytyk #N", „ściąga egzaminatora". Moduł
 #                         koordynatora, wzięty przez niego na siebie.
 #                         ⚠️ JEDEN z nich jest w tekście WIDZIANYM PRZEZ UŻYTKOWNIKA:
