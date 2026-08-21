@@ -53,6 +53,7 @@ function chatl_komunikat_ok() {
 	chatl_notice_pulapki();
 	chatl_notice_bledu_ai();
 	chatl_notice_odrzuconych_nonce();
+	chatl_notice_bledu_bazy();
 }
 
 /**
@@ -259,6 +260,39 @@ add_action( 'admin_post_chatl_test_klucza', 'chatl_post_test_klucza' );
  *
  * @return void
  */
+/**
+ * Pasek: zapis do bazy nie doszedł do skutku.
+ *
+ * To JEDYNY kanał, którym właściciel się o tym dowie. Log PHP nie wystarcza:
+ * `wp_trigger_error()` nic nie zapisuje przy WP_DEBUG=false, a wyłączony jest
+ * na każdej normalnej instalacji — bez tego paska 29 miejsc w obu wtyczkach
+ * gubiło błąd bez śladu (raport audytora awarii, punkt najgroźniejszy).
+ *
+ * Pasek sam cichnie po CHATL_BLAD_BAZY_OKNO_DNI dniach bez nowego błędu.
+ *
+ * @return void
+ */
+function chatl_notice_bledu_bazy() {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		return;
+	}
+	$blad = get_option( 'chatl_blad_bazy' );
+	if ( ! is_array( $blad ) || empty( $blad['ostatni'] ) ) {
+		return;
+	}
+	$kiedy = strtotime( (string) $blad['ostatni'] );
+	if ( ! $kiedy || $kiedy < time() - CHATL_BLAD_BAZY_OKNO_DNI * DAY_IN_SECONDS ) {
+		return;
+	}
+	printf(
+		'<div class="notice notice-error"><p><strong>ChatBot LIVE: zapis do bazy nie powiódł się.</strong> Ostatnio %s (wystąpień: %d). Operacja: %s. Baza odpowiedziała: %s.<br>Część danych mogła się NIE zapisać. Jeśli to się powtarza, pokaż ten komunikat swojemu hostingowi.</p></div>',
+		esc_html( (string) $blad['ostatni'] ),
+		(int) ( $blad['ile'] ?? 1 ),
+		esc_html( (string) ( $blad['operacja'] ?? '' ) ),
+		esc_html( (string) ( $blad['szczegol'] ?? '' ) )
+	);
+}
+
 function chatl_notice_odrzuconych_nonce() {
 	$blad = get_option( 'chatl_blad_nonce' );
 	if ( ! is_array( $blad ) || empty( $blad['ostatni'] ) ) {

@@ -40,12 +40,49 @@ const SEGM_RETENCJA_DNI = 90;
  * @param string $operacja Krótki opis operacji (co miało trafić do bazy).
  * @return void
  */
+/**
+ * Ile dni panel pokazuje ostrzeżenie o nieudanym zapisie do bazy.
+ * Znacznika NIE kasujemy przy udanym zapisie — nie ma jednego „sukcesu", po
+ * którym można by go zgasić. Ostrzeżenie samo cichnie, gdy ostatni błąd jest
+ * starszy niż to okno. Ta sama liczba co w ChatBocie: jeden wzorzec, nie dwa.
+ */
+const SEGM_BLAD_BAZY_OKNO_DNI = 14;
+
 function segm_log_bledu_bazy( $funkcja, $operacja ) {
 	global $wpdb;
+	$szczegol = '' !== (string) $wpdb->last_error ? (string) $wpdb->last_error : 'sterownik nie podał komunikatu';
+
+	/*
+	 * ⛔ TRWAŁY ŚLAD, NIEZALEŻNY OD WP_DEBUG — rozciągnięty wzorzec znacznika
+	 * błędu trybu AI (`segm_blad_ai`): opcja + pasek w panelu. wp_trigger_error()
+	 * niżej zostaje dla instalacji deweloperskiej, ale rdzeń WordPressa kończy je
+	 * natychmiast przy WP_DEBUG=false (wp-includes/functions.php: „Bail out if
+	 * WP_DEBUG is not turned on"), czyli na KAŻDEJ normalnej instalacji klienta.
+	 *
+	 * Liczymy powtórzenia zamiast dopisywać wpis za wpisem — błąd w pętli
+	 * (import CSV, seed, cron czyszczący próbkę) zalałby inaczej tabelę opcji.
+	 *
+	 * ⚠️ Kanał NAJLEPSZEGO WYSIŁKU: gdy padnie cała baza, ten zapis też się nie
+	 * uda. Chroni przed awarią POJEDYNCZEGO zapytania, nie serwera bazy.
+	 */
+	$wpis = get_option( 'segm_blad_bazy' );
+	$wpis = is_array( $wpis ) ? $wpis : array();
+	$ile  = isset( $wpis['ile'] ) ? (int) $wpis['ile'] + 1 : 1;
+	update_option(
+		'segm_blad_bazy',
+		array(
+			'ostatni'  => current_time( 'mysql' ),
+			'funkcja'  => (string) $funkcja,
+			'operacja' => mb_substr( (string) $operacja, 0, 200 ),
+			'szczegol' => mb_substr( $szczegol, 0, 300 ),
+			'ile'      => $ile,
+		),
+		false
+	);
+
 	if ( ! function_exists( 'wp_trigger_error' ) ) {
 		return;
 	}
-	$szczegol = '' !== (string) $wpdb->last_error ? (string) $wpdb->last_error : 'sterownik nie podał komunikatu';
 	wp_trigger_error(
 		(string) $funkcja,
 		'zapis do bazy nie powiódł się (' . $operacja . '): ' . $szczegol,

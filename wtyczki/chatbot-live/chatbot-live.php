@@ -35,12 +35,53 @@ define( 'CHATL_URL', plugin_dir_url( __FILE__ ) );
  * @param string $operacja Krótki opis operacji (co miało trafić do bazy).
  * @return void
  */
+/**
+ * Ile dni panel pokazuje ostrzeżenie o nieudanym zapisie do bazy.
+ * Znacznika NIE kasujemy przy udanym zapisie — nie ma jednego „sukcesu", po
+ * którym można by go zgasić, a kasowanie na ścieżce każdego zapisu byłoby
+ * dokładaniem zapytania tam, gdzie właśnie coś nie działa. Zamiast tego
+ * ostrzeżenie samo cichnie, gdy ostatni błąd jest starszy niż to okno.
+ */
+const CHATL_BLAD_BAZY_OKNO_DNI = 14;
+
 function chatl_log_bledu_bazy( $funkcja, $operacja ) {
 	global $wpdb;
+	$szczegol = '' !== (string) $wpdb->last_error ? (string) $wpdb->last_error : 'sterownik nie podał komunikatu';
+
+	/*
+	 * ⛔ TRWAŁY ŚLAD, NIEZALEŻNY OD WP_DEBUG. wp_trigger_error() niżej jest dla
+	 * instalacji deweloperskiej: rdzeń WordPressa kończy je natychmiast, gdy
+	 * WP_DEBUG jest wyłączony (wp-includes/functions.php: „Bail out if WP_DEBUG
+	 * is not turned on"), a wyłączony jest na KAŻDEJ normalnej instalacji
+	 * klienta. Bez tego zapisu 29 miejsc w obu wtyczkach traciło błąd bez śladu
+	 * i właściciel nie miał jak się dowiedzieć, że zapis nie doszedł.
+	 *
+	 * Ten sam wzorzec, co znacznik błędu trybu AI: opcja + pasek w panelu.
+	 * Liczymy powtórzenia zamiast dopisywać wpis za wpisem — błąd w pętli
+	 * (import CSV, seed, cron) inaczej zalałby tabelę opcji.
+	 *
+	 * ⚠️ To jest kanał NAJLEPSZEGO WYSIŁKU: gdy padnie cała baza, ten zapis
+	 * też się nie uda. Chroni przed awarią POJEDYNCZEGO zapytania, nie przed
+	 * awarią serwera bazy — i tak jest opisany w dokumentacji.
+	 */
+	$wpis = get_option( 'chatl_blad_bazy' );
+	$wpis = is_array( $wpis ) ? $wpis : array();
+	$ile  = isset( $wpis['ile'] ) ? (int) $wpis['ile'] + 1 : 1;
+	update_option(
+		'chatl_blad_bazy',
+		array(
+			'ostatni'  => current_time( 'mysql' ),
+			'funkcja'  => (string) $funkcja,
+			'operacja' => mb_substr( (string) $operacja, 0, 200 ),
+			'szczegol' => mb_substr( $szczegol, 0, 300 ),
+			'ile'      => $ile,
+		),
+		false
+	);
+
 	if ( ! function_exists( 'wp_trigger_error' ) ) {
 		return;
 	}
-	$szczegol = '' !== (string) $wpdb->last_error ? (string) $wpdb->last_error : 'sterownik nie podał komunikatu';
 	wp_trigger_error(
 		(string) $funkcja,
 		'zapis do bazy nie powiódł się (' . $operacja . '): ' . $szczegol,
