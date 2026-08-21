@@ -17,6 +17,14 @@ pory lądują tutaj.
 
 ### Zmienione
 
+- **`.github/workflows/recenzent.yml`** — `--allowedTools` dostał `test-php.sh`
+  i jego próbę kontrolną, żeby recenzent mógł uruchomić testy PHP z `testy/`.
+  Świadomie **nie** dostał `Bash(php testy/:*)` ani `Bash(docker exec:*)` —
+  powód wpisany w komentarzu nad listą, żeby następny czytający nie „poprawił"
+  tego z powrotem.
+- **`.github/RECENZENT-BRIEFING.md`** — zdanie o tym, że testy `testy/*.php`
+  uruchamia się przez `test-php.sh`, bo samo `php testy/X.php` zawsze pada.
+
 - **`.github/workflows/recenzent.yml` — recenzent URUCHAMIA nasze testy, nie tylko
   je czyta.** Do `--allowedTools` doszły **23 pozycje**: wszystkie skrypty z `testy/`
   (poza jednym, niżej), cztery próby kontrolne z `narzedzia-qa/` oraz
@@ -44,6 +52,38 @@ pory lądują tutaj.
 
 
 ### Dodane
+
+- **`test-php.sh` 1.0.0 — okno recenzenta na URUCHOMIENIE testu PHP.** PR #109
+  otworzył recenzentowi całe `testy/`, ale wyłącznie skrypty powłoki. Testy
+  `testy/*.php` zostały poza zasięgiem, bo **nie są zwykłymi skryptami PHP**:
+  każdy zaczyna się od `WP_PLUGIN_DIR` i `require` plików wtyczki, więc
+  `php testy/import-csv-test.php` kończy się `Undefined constant "WP_PLUGIN_DIR"`
+  i kodem 255. Uruchamia je wyłącznie wp-cli **wewnątrz kontenera**
+  (`docker cp` + `wp eval-file`). Wzorzec `Bash(php testy/:*)` w `--allowedTools`
+  otworzyłby więc prawo do polecenia, które i tak zawsze pada, a
+  `Bash(docker exec:*)` oddałby całą maszynę.
+  Skrypt jest **jedną nazwaną operacją**, dokładnie jak `stos.sh`: dzwoniący
+  podaje wyłącznie NAZWĘ testu (wzorzec `[a-z0-9-]`, więc `../`, ścieżka
+  bezwzględna, `;` i `$(…)` odpadają zanim cokolwiek dotknie dockera), katalog
+  `testy/` jest wpisany w skrypcie, a wołane jest `wp eval-file` na pliku
+  Z REPOZYTORIUM, nigdy `wp eval` (kod z wiersza poleceń). `test-php.sh lista`
+  wypisuje, co wolno uruchomić. Plik testowy jest kasowany z kontenera także
+  wtedy, gdy test padł.
+  ⚠️ To **nie** jest okno czysto odczytowe, w odróżnieniu od `stos.sh` — testy
+  piszą do bazy warsztatowej (własnym przedrostkiem, sprzątając po sobie).
+
+- **`test-php-proba-kontrolna.sh` — 20 kontroli.** Dwanaście prób wyjścia poza
+  `testy/` i przemycenia polecenia w nazwie — każda musi paść **na wzorcu nazwy**,
+  nie „gdzieś dalej". To rozróżnienie jest tu sednem: przy poluzowanym wzorcu
+  większość ścieżek i tak kończy się kodem 2 (`/etc/passwd.php` nie istnieje),
+  więc próba sprawdzająca sam kod wyjścia **przechodziła na dziurawym skrypcie**.
+  Dlatego przypadkiem rozstrzygającym jest ścieżka, która po doklejeniu `.php`
+  trafia w **istniejący** plik poza `testy/` (`../wtyczki/chatbot-live/chatbot-live`),
+  a próba wymaga w wyjściu konkretnego powodu odmowy. Do tego trzy kontrole
+  czytające treść samego skryptu (zero `wp eval`, katalog jako stała, liczba
+  wywołań dockera bez wzrostu), odmowa z listą przy nieznanym teście, dwie
+  kontrole nadmiarowych argumentów i kontrola odwrotna: `import-csv-test.php`
+  ma się naprawdę uruchomić i przejść.
 
 - **`stos.sh` 1.0.0 — czysto odczytowe okno recenzenta na żywy stos.**
   Pomiar wyjściowy: w recenzjach z 20.08 padło **91** zdań „czego nie
