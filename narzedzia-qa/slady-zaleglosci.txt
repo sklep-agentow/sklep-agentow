@@ -13,19 +13,12 @@
 # Format: etykieta|ścieżka względem katalogu wtyczki|treść linii (bez wcięcia).
 #
 # STAN 2026-08-21, po zamknięciu czterech ostatnich śladów Segregatora
-# — 42 pozycje:
+# — 40 pozycji:
 #   chatbot-live      0  (wyczyszczony przy zamrażaniu 1.5.7)
-#   segregator-maila  0  (BYŁO 12 przy wzorcu 1.1.0; osiem zamknął koordynator,
-#                         cztery ostatnie — ścieżki naszego drzewa roboczego
-#                         w DOKUMENTACJA-TECHNICZNA.md, czyli w pliku, KTÓRY IDZIE
-#                         W PACZCE DO KUPUJĄCEGO — zamknął builder 2)
-#   sklep-agentow    42  (BYŁO 31; jedenaście doszło z rozszerzenia wzorca o nasze
-#                         słownictwo — „krytyk #N", „ściąga egzaminatora". Moduł
-#                         koordynatora, wzięty przez niego na siebie.
-#                         ⚠️ JEDEN z nich jest w tekście WIDZIANYM PRZEZ UŻYTKOWNIKA:
-#                         includes/admin-zamowienie.php — „(podgląd — egzaminator
-#                         widzi mail bez skrzynki)" leci do HTML-a panelu, to nie
-#                         jest komentarz.)
+#   segregator-maila  0  (cztery ścieżki naszego drzewa roboczego w pliku, KTÓRY
+#                         IDZIE W PACZCE DO KUPUJĄCEGO — zamknięte w tym PR-ze)
+#   sklep-agentow    40  (komentarze z odsyłaczami do naszego procesu; moduł
+#                         koordynatorki, zamykane w osobnym PR-ze)
 #
 # ⚠️ UWAGA PRZY SCALANIU: ten plik powstaje TAKŻE w PR-ze zamrożenia ChatBota,
 # tam z jedenastoma pozycjami segregatora. Konflikt „oba dodały ten plik" jest
@@ -52,8 +45,6 @@ sklep-agentow|includes/front-produkt.php|// całości dublowało tokeny i celowa
 sklep-agentow|includes/front-produkt.php|// ILE CZASU ODZYSKUJESZ (S-03; krytyk #9 — dedykowane miejsce).
 sklep-agentow|includes/front-produkt.php|// I włącznik w jej ustawieniach ON (recenzja #52 — sama aktywność nie
 sklep-agentow|includes/front-produkt.php|* Slug strony sklepu z opcji (krytyk #4: hardkod „sklep" pęka przy „-2").
-sklep-agentow|includes/front-produkt.php|'uczciwosc'    => 'Nie znajdziesz tu opinii z gwiazdkami — sprzedajemy od niedawna i nie zmyślamy recenzji; zamiast tego masz raport z liczbami z TWOJEJ próbki. Reguły układasz i sprawdzasz na próbce, a potem puszczasz je na PRAWDZIWEJ skrzynce: wtyczka rozkłada pocztę do folderów na serwerze poczty, domyślnie chodzi NA SUCHO i nie rusza ani jednej wiadomości, dopóki sam nie potwierdzisz, a ostatni przebieg cofniesz jednym kliknięciem. Czego nie ma, mówimy przed zakupem: logowanie tylko loginem i hasłem aplikacji, więc Microsoft 365 i Outlook.com NIE zadziałają (tam wymagane jest OAuth); na skrzynce klasyfikują reguły, nie AI; bez czytania załączników.',
-sklep-agentow|includes/front-produkt.php|'uczciwosc'    => 'Nie znajdziesz tu opinii z gwiazdkami — sprzedajemy od niedawna i nie zmyślamy recenzji; zamiast tego masz tryb testowy i seed demo, żeby sprawdzić samemu. Pełnoprawny silnik regułowy działa od razu — bez kluczy i opłat. „LIVE" znaczy: żywy człowiek (Ty) odpisuje na zebrane kontakty — bot nie udaje wszechwiedzy. Tryb AI włączasz WŁASNYM kluczem; przy limicie dziennym lub błędzie bot sam wraca do reguł. Prywatność: w trybie regułowym treść rozmów nie opuszcza Twojego serwera; w trybie AI pytanie gościa idzie do API dostawcy (informacja też do Twojej polityki prywatności).',
 sklep-agentow|includes/front-seo.php|// JSON-LD: Product (image WYMAGANE przez Google — krytyk #6) + okruszki.
 sklep-agentow|includes/front-seo.php|* Provider sitemap dla produktów (własna tabela ≠ CPT — krytyk #5;
 sklep-agentow|includes/front-seo.php|* sanityzacja co w renderze (recenzja #52, drobna).
