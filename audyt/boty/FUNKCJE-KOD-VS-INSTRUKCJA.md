@@ -35,9 +35,9 @@ akcje AJAX (`wp_ajax_*`), trasy REST (`register_rest_route`), zadania cykliczne
 | Trasa REST `chatl/v1/rozmowa` | `wtyczki/chatbot-live/includes/przejecie.php:502` (`register_rest_route`) | ✅ TAK — pośrednio, przez opis przejęcia |
 | **Import bazy Q&A z CSV** (1.5.7) | `wtyczki/chatbot-live/includes/import.php` | ⛔ **BYŁO: NIE** → ✅ dopisane (§2a) |
 | **Eksport bazy Q&A do CSV** (1.5.7) | `wtyczki/chatbot-live/includes/import.php:730` (nagłówek `Import` i eksport bazy) | ⛔ **BYŁO: NIE** → ✅ dopisane (§2a) |
-| **Wskaźnik „bot pisze"** (1.4.8) | `wtyczki/chatbot-live/assets/widget.js` | 🐞 **NIE** — nie ma ani w instrukcji, ani w readme |
-| **Stronicowanie trzech list panelu** (1.5.6) | `wtyczki/chatbot-live/includes/admin.php:67,70` (`CHATL_NA_STRONE_ZGLOSZEN`, `CHATL_NA_STRONE_ROZMOW`) | 🐞 **NIE** — żaden dokument nie mówi, że listy mają strony |
-| **Podstrona „Start" (ekran powitalny)** | `wtyczki/chatbot-live/includes/powitanie.php:32` (`add_submenu_page`) | 🐞 **NIE** w instrukcji (readme wspomina) |
+| **Wskaźnik „bot pisze"** (1.4.8) | `wtyczki/chatbot-live/assets/widget.js` | ✅ **dopisane** (§4, „Gość widzi, że bot pisze") + readme |
+| **Stronicowanie trzech list panelu** (1.5.6) | `wtyczki/chatbot-live/includes/admin.php:67,70` (`CHATL_NA_STRONE_ZGLOSZEN`, `CHATL_NA_STRONE_ROZMOW`) | ✅ **dopisane** (§4, „Długie listy mają strony") + readme |
+| **Podstrona „Start" (ekran powitalny)** | `wtyczki/chatbot-live/includes/powitanie.php:32` (`add_submenu_page`) | ✅ **dopisane** (§1 „Podstrona Start") + readme |
 | **Test bota w panelu** | `wtyczki/chatbot-live/includes/admin.php` (AJAX `chatl_panel_rozmowa`) | 🐞 **NIE** w instrukcji (readme wspomina) |
 
 **Cztery pozycje bez opisu w instrukcji, wszystkie z ostatnich dni przed zamrożeniem** —
@@ -88,5 +88,6 @@ PACZKA-ZGODNOSC: 2 rozjazd(ow) — NIE ZAMRAZAJ w tym stanie                 EXI
 To **nie jest usterka tej zmiany** — to dowód, że bramka zamrożenia działa. Scalenie
 wymaga wydania **1.5.9** i przebudowy paczki. Decyzja koordynatorki.
 
-Trzy pozostałe braki (wskaźnik pisania, stronicowanie, „Start"/test bota w instrukcji)
-zgłaszam, **nie dopisuję** — żeby jedno wydanie zamknęło je razem, a nie w trzech turach.
+**Wszystkie cztery braki są dopisane** — import i eksport CSV, wskaźnik „bot pisze",
+stronicowanie trzech list oraz podstrona „Start" wraz z testem bota w panelu. Instrukcja
+opisuje dziś każdą funkcję, którą produkt pokazuje użytkownikowi.

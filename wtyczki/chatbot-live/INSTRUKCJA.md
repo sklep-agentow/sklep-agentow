@@ -21,6 +21,11 @@ patrz sekcja „Przejmij rozmowę osobiście"; bot wtedy milczy.
 
 Wymagania: WordPress 6.0+ i PHP 8.1+.
 
+**Podstrona „Start".** Zaraz po włączeniu wtyczki w menu **ChatBot LIVE** pojawia się
+pozycja **Start** — trzy pierwsze kroki (ustaw teksty i mail, dobierz kolory i róg,
+podmień bazę Q&A na swoją) z odnośnikami prosto do właściwych ekranów. Możesz ją
+zamknąć na stałe, gdy przestanie być potrzebna; wraca dopiero przy nowej instalacji.
+
 ## 2. Konfiguracja w kwadrans
 
 W menu bocznym pojawia się pozycja **ChatBot LIVE**.
@@ -38,6 +43,15 @@ W menu bocznym pojawia się pozycja **ChatBot LIVE**.
 3. Wejdź na swoją stronę i przetestuj: zadaj pytania, na które bot ma
    odpowiedzieć, i jedno, na które nie ma — powinien uczciwie zaproponować
    zostawienie maila.
+
+### Test bota bez wychodzenia na stronę
+
+Na stronie **Baza Q&A**, pod listą wpisów, jest sekcja **„Test bota"**. Wpisujesz
+pytanie tak, jak zadałby je gość (np. „ile kosztuje wasza usługa") i od razu widzisz
+odpowiedź **oraz to, KTÓRA para z bazy ją dała**. Jeśli żadna nie pasuje, dostajesz
+wprost **„Żadna para nie pasuje."** — i wiesz, że trzeba dopisać słowa kluczowe.
+To najszybszy sposób sprawdzenia zmiany: nie musisz odświeżać strony firmowej
+ani czyścić cache.
 
 ## 2a. Baza pytań z pliku — import i eksport CSV
 
@@ -120,6 +134,28 @@ Zapisać możesz i tak — decyzja jest Twoja, ale wiesz, co wybierasz.
   są czyszczone automatycznie. Gość widzi o tym krótką notę **na starcie czatu**,
   a jeśli podałeś adres polityki prywatności w Ustawieniach — nota prowadzi
   także do niej. Warto ten adres uzupełnić: to Ty jesteś administratorem tych danych.
+
+### Gość widzi, że bot pisze
+
+Zanim odpowiedź się pojawi, w oknie czatu miga **sygnał „bot pisze"**. Ma znaczenie
+przede wszystkim w trybie AI, gdzie odpowiedź potrafi iść kilka sekund: bez tego sygnału
+gość patrzy na nieruchomy ekran i klika drugi raz, a potem trzeci. Wskaźnik jest też
+czytany przez czytniki ekranu (etykieta „Bot pisze odpowiedź"), więc osoba niewidząca
+dostaje tę samą informację co reszta.
+
+### Długie listy mają strony
+
+Trzy listy w panelu dzielą się na strony, więc nie urywają się w połowie danych:
+
+| lista | wierszy na stronę |
+|---|---|
+| **Zgłoszenia z czatu** | 200 |
+| **Historia rozmów** | 100 |
+| **Raport luk** (Statystyki i luki) | 25 tematów |
+
+Pod każdą listą widać, którą stronę oglądasz i ile jest wszystkich pozycji. Jeśli
+kiedyś widziałeś dokładnie 200 zgłoszeń i myślałeś, że to wszystko — teraz reszta
+jest o jedno kliknięcie dalej, a nie niedostępna.
 
 ### Pułapka na boty — i czego ona NIE zatrzyma
 
