@@ -5,8 +5,11 @@
 > **Po co ten dokument.** To jest **mapa systemu dla audytora i programisty**, nie ulotka.
 > Każda liczba i każda nazwa tutaj jest wzięta z kodu, nie z pamięci — jeśli coś się
 > rozjedzie, to jest błąd do zgłoszenia. Instrukcja dla użytkownika jest osobno
-> (`INSTRUKCJA.md`), a kontrola zgodności tego dokumentu z kodem siedzi
-> w `testy/dokumentacja-zgodnosc-segregator.sh` i wykonuje się jednym poleceniem.
+> (`INSTRUKCJA.md`). Do tego dokumentu istnieje **kontrola porównująca każdą jego
+> liczbę i nazwę z kodem**; autor uruchamia ją przed wydaniem, ale **nie jest to
+> bramka, która sama zatrzymuje wydanie** — więc traktuj to jako deklarację
+> dyscypliny, nie jako gwarancję maszyny. Jeśli któraś liczba się nie zgadza,
+> to jest błąd do zgłoszenia.
 
 ---
 
@@ -755,9 +758,23 @@ się nie zmieniła). Pełna atomowość wymagałaby osobnej tabeli z unikalnym k
 
 ### Jak szybko sprawdzić deklaracje z tego dokumentu
 
+W katalogu wtyczki (u Ciebie: `wp-content/plugins/segregator-maila/`) możesz
+sprawdzić **każdą liczbę i nazwę z tego dokumentu** wprost w kodzie:
+
 ```
-testy/dokumentacja-zgodnosc-segregator.sh   # każda liczba i nazwa stąd — grepem po kodzie
-node testy/svg-pomiar-tekstow.js wtyczki/segregator-maila/DIAGRAM-PRZEPLYWU.svg
-vendor/bin/phpcs -q wtyczki/segregator-maila/
-vendor/bin/phpstan analyse --memory-limit=1G
+grep -rn "SEGM_" .                  # stałe: limity, progi, wersja schematu
+grep -rn "nazwa_funkcji" .          # funkcja, o której mówi dany rozdział
+php -l plik.php                     # czy plik jest poprawny składniowo
 ```
+
+⚠️ **Czego z samej paczki NIE zrobisz.** `phpcs` i `phpstan` wymagają plików
+konfiguracyjnych (ruleset standardu WordPressa i konfiguracja analizy) oraz
+znajomości funkcji rdzenia WordPressa — a tych **nie ma w paczce**. Uruchomione
+na samym katalogu wtyczki wypiszą albo brak ruleseta, albo lawinę „undefined
+function add_action" — czyli hałas, nie ocenę kodu. Ta wtyczka jest sprawdzana
+oboma narzędziami po stronie autora, na pełnej konfiguracji.
+
+Po stronie autora biegną też dwie kontrole, których wyniku z paczki odtworzyć
+się nie da: porównanie **każdej liczby i nazwy z tego dokumentu** z kodem oraz
+pomiar ramek tekstu w `DIAGRAM-PRZEPLYWU.svg` (czy podpisy mieszczą się
+w kształtach).

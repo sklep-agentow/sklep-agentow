@@ -12,23 +12,20 @@
 #
 # Format: etykieta|ścieżka względem katalogu wtyczki|treść linii (bez wcięcia).
 #
-# STAN 2026-08-21, po posprzątaniu komentarzy sklepu
-# — 4 pozycje:
+# STAN 2026-08-21 — LISTA PUSTA. Zero śladów wewnętrznych we wszystkich trzech
+# wtyczkach:
 #   chatbot-live      0  (wyczyszczony przy zamrażaniu 1.5.7)
-#   segregator-maila  4  (cztery ścieżki naszego drzewa w DOKUMENTACJA-TECHNICZNA.md;
-#                         zamykane w osobnym PR-ze — po jego scaleniu zostaje 0)
-#   sklep-agentow     0  (BYŁO 40 na dzisiejszym mainie — a 42 w chwili odbicia tej
-#                         gałęzi; dwa zamknął po drodze PR #117, przepisując tekst
-#                         sprzedażowy na „nie fabrykujemy ocen". Reszta: komentarze
-#                         przepisane — sens techniczny został, zniknęły odsyłacze
-#                         do naszego procesu.)
+#   segregator-maila  0  (cztery ścieżki naszego drzewa roboczego w pliku, który
+#                         idzie w paczce do kupującego — zamknięte w #120)
+#   sklep-agentow     0  (komentarze przepisane: sens techniczny został,
+#                         zniknęły odsyłacze do naszego procesu)
+#
+# ⛔ Pusta lista NIE znaczy, że plik jest zbędny: bramka `slady` wypisuje przy
+# każdym przebiegu „dlug z listy=0", a każdy NOWY ślad zapali się jako `nowe`.
+# Dopisanie tu czegokolwiek, żeby przepchnąć PR, jest obejściem bramki.
 #
 # ⚠️ UWAGA PRZY SCALANIU: ten plik powstaje TAKŻE w PR-ze zamrożenia ChatBota,
 # tam z jedenastoma pozycjami segregatora. Konflikt „oba dodały ten plik" jest
 # ZAMIERZONY — bierze się wersję z TEGO PR-a (35 pozycji). Wzięcie tamtej zostawi
 # siedem wpisów, które do niczego nie pasują, a martwy wpis zapala bramkę `slady`
 # na czerwono. Kolejność scalania nie ma znaczenia, ważne, która wersja zostaje.
-segregator-maila|DOKUMENTACJA-TECHNICZNA.md|node testy/svg-pomiar-tekstow.js wtyczki/segregator-maila/DIAGRAM-PRZEPLYWU.svg
-segregator-maila|DOKUMENTACJA-TECHNICZNA.md|testy/dokumentacja-zgodnosc-segregator.sh   # każda liczba i nazwa stąd — grepem po kodzie
-segregator-maila|DOKUMENTACJA-TECHNICZNA.md|vendor/bin/phpcs -q wtyczki/segregator-maila/
-segregator-maila|DOKUMENTACJA-TECHNICZNA.md|> w `testy/dokumentacja-zgodnosc-segregator.sh` i wykonuje się jednym poleceniem.
