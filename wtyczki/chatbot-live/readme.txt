@@ -4,7 +4,7 @@ Tags: chat, chatbot, faq, kontakt, wsparcie
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.5.5
+Stable tag: 1.5.7
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -133,7 +133,7 @@ w ustawieniach. Klucz API jest kasowany zawsze, niezależnie od tego przełączn
 
 == Changelog ==
 
-= 1.5.5 =
+= 1.5.7 =
 * Import bazy pytań z pliku CSV z podglądem przed zapisem — wgrany plik trafia
   najpierw na ekran podglądu (werdykt przy każdym wierszu, liczniki, edycja
   podpowiedzianych słów kluczowych), a do bazy nic nie idzie bez potwierdzenia.

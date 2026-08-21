@@ -56,6 +56,69 @@ function chatl_komunikat_ok() {
 }
 
 /**
+ * Rozmiar strony list w panelu.
+ *
+ * Liczby są DOKŁADNIE te, które listy pokazywały wcześniej jako twardy limit.
+ * To nie jest brak pomysłu, tylko decyzja: wada zgłoszona w kolejce brzmiała
+ * „lista urywa się i nie ma strony drugiej", więc naprawiamy DOSTĘP do reszty
+ * danych, a nie przyzwyczajenia właściciela. Kto ma dziś mniej wpisów niż limit,
+ * nie zobaczy żadnej zmiany.
+ */
+const CHATL_NA_STRONE_ZGLOSZEN = 200;
+
+/** Rozmiar strony listy rozmów (jak wyżej). */
+const CHATL_NA_STRONE_ROZMOW = 100;
+
+/**
+ * Numer strony z adresu — zawsze co najmniej 1.
+ *
+ * @return int
+ */
+function chatl_numer_strony() {
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- samo przełączenie widoku listy, bez mutacji.
+	return isset( $_GET['strona_listy'] ) ? max( 1, (int) $_GET['strona_listy'] ) : 1;
+}
+
+/**
+ * Odsyłacze stron pod listą (i nad nią, gdy stron jest więcej niż jedna).
+ *
+ * Numer strony trzymamy w `strona_listy`, a NIE w `paged` ani `strona`:
+ * `page` jest zajęte przez WordPressa (slug podstrony), a własna nazwa nie
+ * wejdzie w kolizję z niczym, co WP dokłada do adresów panelu.
+ *
+ * @param int   $wszystkich Ile wierszy w całości.
+ * @param int   $na_strone  Rozmiar strony.
+ * @param int   $strona     Bieżąca strona.
+ * @param array $dodatkowe  Parametry adresu do zachowania (np. filtr widoku).
+ * @return void
+ */
+function chatl_stronicowanie( $wszystkich, $na_strone, $strona, $dodatkowe = array() ) {
+	$stron = (int) ceil( max( 0, (int) $wszystkich ) / max( 1, (int) $na_strone ) );
+	if ( $stron < 2 ) {
+		return; // Jedna strona = brak nawigacji. Pusty pasek tylko myli.
+	}
+	$baza = add_query_arg( $dodatkowe, admin_url( 'admin.php' ) );
+	$html = paginate_links(
+		array(
+			'base'      => add_query_arg( 'strona_listy', '%#%', $baza ),
+			'format'    => '',
+			'current'   => max( 1, (int) $strona ),
+			'total'     => $stron,
+			'prev_text' => '‹',
+			'next_text' => '›',
+			'type'      => 'plain',
+		)
+	);
+	if ( ! $html ) {
+		return;
+	}
+	echo '<div class="tablenav"><div class="tablenav-pages">'
+		. '<span class="displaying-num">' . esc_html( sprintf( '%s pozycji', number_format_i18n( (int) $wszystkich ) ) ) . '</span> '
+		. wp_kses_post( $html )
+		. '</div></div>';
+}
+
+/**
  * Powrót z admin-post z komunikatem błędu (zapis do bazy padł).
  *
  * @param string $strona    Slug strony wtyczki (page=...).
@@ -480,7 +543,15 @@ function chatl_strona_zgloszenia() {
 	$widok = isset( $_GET['widok'] ) && 'podejrzane' === sanitize_key( wp_unslash( $_GET['widok'] ) ) ? 'podejrzane' : 'czyste';
 	$flaga = 'podejrzane' === $widok ? 1 : 0;
 	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
-	$wpisy            = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$tabela} WHERE podejrzane = %d ORDER BY id DESC LIMIT 200", $flaga ) );
+	$strona     = chatl_numer_strony();
+	$wszystkich = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$tabela} WHERE podejrzane = %d", $flaga ) );
+	/*
+	 * Strona spoza zakresu (adres z zakładki po skasowaniu wpisów) nie może dać
+	 * pustej listy bez wyjaśnienia — przycinamy do ostatniej istniejącej.
+	 */
+	$stron            = max( 1, (int) ceil( $wszystkich / CHATL_NA_STRONE_ZGLOSZEN ) );
+	$strona           = min( $strona, $stron );
+	$wpisy            = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$tabela} WHERE podejrzane = %d ORDER BY id DESC LIMIT %d OFFSET %d", $flaga, CHATL_NA_STRONE_ZGLOSZEN, ( $strona - 1 ) * CHATL_NA_STRONE_ZGLOSZEN ) );
 	$ile_podejrzanych = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$tabela} WHERE podejrzane = 1" );
 	// phpcs:enable
 	?>
@@ -526,6 +597,7 @@ function chatl_strona_zgloszenia() {
 			<?php endforeach; ?>
 			</tbody>
 		</table>
+		<?php chatl_stronicowanie( $wszystkich, CHATL_NA_STRONE_ZGLOSZEN, $strona, array( 'page' => 'chatl-zgloszenia' ) + ( 'podejrzane' === $widok ? array( 'widok' => 'podejrzane' ) : array() ) ); ?>
 	</div>
 	<?php
 }
@@ -610,11 +682,17 @@ function chatl_strona_historia() {
 		return;
 	}
 
-	$rozmowy = $wpdb->get_results( "SELECT sesja, COUNT(*) AS wymian, MIN(utworzono) AS poczatek, MAX(utworzono) AS koniec FROM {$tabela} GROUP BY sesja ORDER BY koniec DESC LIMIT 100" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	$strona_r = chatl_numer_strony();
+	// Liczymy SESJE, nie wiersze: lista pokazuje rozmowy, a jedna rozmowa to wiele wymian.
+	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	$wszystkich_r = (int) $wpdb->get_var( "SELECT COUNT(DISTINCT sesja) FROM {$tabela}" );
+	$stron_r      = max( 1, (int) ceil( $wszystkich_r / CHATL_NA_STRONE_ROZMOW ) );
+	$strona_r     = min( $strona_r, $stron_r );
+	$rozmowy      = $wpdb->get_results( $wpdb->prepare( "SELECT sesja, COUNT(*) AS wymian, MIN(utworzono) AS poczatek, MAX(utworzono) AS koniec FROM {$tabela} GROUP BY sesja ORDER BY koniec DESC LIMIT %d OFFSET %d", CHATL_NA_STRONE_ROZMOW, ( $strona_r - 1 ) * CHATL_NA_STRONE_ROZMOW ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 	?>
 	<div class="wrap">
 		<h1>Historia rozmów</h1>
-		<p>Zapis wymian bot↔gość (ostatnie 100 rozmów). Historia starsza niż <strong><?php echo (int) CHATL_RETENCJA_DNI; ?> dni</strong> jest czyszczona automatycznie.</p>
+		<p>Zapis wymian bot↔gość (<?php echo esc_html( number_format_i18n( $wszystkich_r ) ); ?> rozmów, po <?php echo (int) CHATL_NA_STRONE_ROZMOW; ?> na stronę). Historia starsza niż <strong><?php echo (int) CHATL_RETENCJA_DNI; ?> dni</strong> jest czyszczona automatycznie.</p>
 		<p><a class="button" href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=chatl_eksport_rozmow' ), 'chatl_eksport_rozmow' ) ); ?>">Pobierz CSV (cała historia)</a>
 			<span class="description">Chcesz zachować rozmowy dłużej niż <?php echo (int) CHATL_RETENCJA_DNI; ?> dni? Pobierz je sam, zanim zostaną skasowane — wtyczka <strong>nie</strong> robi kopii automatycznie, bo wtedy „kasujemy po <?php echo (int) CHATL_RETENCJA_DNI; ?> dniach" przestałoby być prawdą.</span></p>
 		<table class="widefat striped">
@@ -634,6 +712,7 @@ function chatl_strona_historia() {
 			<?php endforeach; ?>
 			</tbody>
 		</table>
+		<?php chatl_stronicowanie( $wszystkich_r, CHATL_NA_STRONE_ROZMOW, $strona_r, array( 'page' => 'chatl-historia' ) ); ?>
 	</div>
 	<?php
 }
