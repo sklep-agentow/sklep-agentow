@@ -17,6 +17,19 @@ pory lądują tutaj.
 
 ### Dodane
 
+- **`dowod-zachowania-chatbot.sh` 1.0.0 — dowód ZACHOWANIA z paczki (punkt D).**
+  `dowod-z-paczki.sh` odpowiada na pytania o cykl życia wtyczki; ten skrypt na trzy
+  pytania o zachowanie: **D3** klucz API odcięty w trakcie (zjazd do reguł + znacznik
+  w panelu), **D4** strona z cache i nonce starszy niż życie (**luka L1**), **D6**
+  retencja naprawdę kasuje. Każdy dowód ma przypadek **BEZ wady**: świeży nonce ma
+  działać za pierwszym razem, wpis sprzed jednego dnia ma przeżyć sprzątanie, a przy
+  sprawnym API znacznika awarii ma nie być.
+  ⛔ **Zero internetu w dowodzie**: „odcięcie klucza" udaje własny punkt końcowy
+  w kontenerze przez filtr `chatl_ai_url`, który wtyczka sama daje integratorom.
+  Dowód zależny od cudzego serwera nie jest dowodem, tylko prognozą pogody.
+  ⚠️ Skrypt **wymaga `lib-stos-probny.sh` z PR #105** — do czasu jego scalenia nie
+  da się go uruchomić z samego maina.
+
 - **`slady-wewnetrzne.sh` 1.0.0 — nowe narzędzie i SIÓDMA bramka `slady`
   w `bramki.sh` (próg pełny 6 → 7, tekstowy 3 → 4).** Wyczyszczenie 20 śladów
   z ChatBota było naprawą EGZEMPLARZA: jutro wjeżdża nowy komentarz
