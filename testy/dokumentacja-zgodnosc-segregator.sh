@@ -74,8 +74,8 @@ done
 
 echo
 echo "=== D. Punkty wejscia ==="
-spr "liczba uchwytow admin_post"     "29" "grep -rhoP 'add_action\( .admin_post_segm_[a-z_]+' $W --include='*.php' | sort -u | wc -l"
-spr "dokumentacja podaje te liczbe"  "1"  "grep -c 'admin-post\` — 29 sztuk' $DOK"
+spr "liczba uchwytow admin_post"     "30" "grep -rhoP 'add_action\( .admin_post_segm_[a-z_]+' $W --include='*.php' | sort -u | wc -l"
+spr "dokumentacja podaje te liczbe"  "1"  "grep -c 'admin-post\` — 30 sztuk' $DOK"
 spr "ZERO punktow dla niezalogowanych" "0" "grep -rc 'wp_ajax_nopriv' $W --include='*.php' | grep -v ':0' | wc -l"
 spr "ZERO tras REST"                 "0"  "grep -rc 'register_rest_route' $W --include='*.php' | grep -v ':0' | wc -l"
 spr "ZERO zaczepow frontu"           "0"  "grep -rc 'template_redirect\|wp_enqueue_scripts\|add_shortcode' $W --include='*.php' | grep -v ':0' | wc -l"
