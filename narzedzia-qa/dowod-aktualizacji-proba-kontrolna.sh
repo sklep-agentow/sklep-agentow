@@ -94,7 +94,11 @@ sprawdz() {
 
 echo "=== KALIBRACJA DOWODU AKTUALIZACJI ($WTYCZKA $STARA → $NOWA) ==="
 
-sprawdz "nowa wersja nie ma kodu migracji"    1 psuj_brak_migracji  "wersja schematu NIE DRGNELA"
+# Fraza zmieniona razem z warunkiem w dowodzie: nie pytamy juz „czy numer urosl"
+# (wydanie dokumentacyjne go nie rusza i to jest poprawne), tylko „czy baza zgadza sie
+# z KODEM". Brak migracji zostawia baze na starym numerze, wiec dowod nazywa dokladnie
+# to: baza mowi X, a nowy kod oczekuje Y.
+sprawdz "nowa wersja nie ma kodu migracji"    1 psuj_brak_migracji  "a nowy kod oczekuje"
 sprawdz "migracja kasuje stara kolumne"       1 psuj_kasuje_kolumne "ze schematu UBYLO"
 sprawdz "migracja czysci dane klienta"        1 psuj_czysci_dane    "NIE PRZETRWAL"
 

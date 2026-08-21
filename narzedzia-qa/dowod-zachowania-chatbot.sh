@@ -29,7 +29,18 @@ KATALOG="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=lib-stos-probny.sh
 . "$KATALOG/lib-stos-probny.sh"
 
-PACZKA="${1:-boty/paczki/chatbot-live-1.5.7.zip}"
+KORZEN_REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# ⛔ Domyslna paczka BIERZE SIE Z NAGLOWKA WTYCZKI, nie z wpisanego numeru.
+# Wpisany numer starzeje sie przy pierwszym podbiciu wersji i wtedy dowod cicho
+# bada PORZEDNIA paczke, ktora dalej lezy obok nowej (zlapane przy zamrozeniu
+# 1.5.8: domyslna wartosc wskazywala 1.5.7).
+domyslna_paczka() {
+	local w wersja
+	w="$1"
+	wersja="$(sed -n 's/^ \* Version:[[:space:]]*\([0-9][0-9.]*\).*/\1/p' "$KORZEN_REPO/wtyczki/$w/$w.php" | head -1)"
+	printf 'boty/paczki/%s-%s.zip' "$w" "$wersja"
+}
+PACZKA="${1:-$(domyslna_paczka chatbot-live)}"
 [ -f "$PACZKA" ] || padnij "nie ma paczki [$PACZKA]"
 WTYCZKA=chatbot-live
 # Pytanie z bazy demo. Spacje MUSZA isc przez --data-urlencode: surowe -d rozbija
@@ -89,9 +100,22 @@ AJAX="$ADRES/wp-admin/admin-ajax.php"
 # wlasny identyfikator i dostawala kod `sesja`, czyli mierzyla wlasny blad
 # zamiast zachowania bota. Trzymamy ciastka w pliku, dokladnie jak przegladarka.
 CIASTKA="$(mktemp)"
+# ⛔ PROG PULAPKI NA BOTY. Wtyczka traktuje pytanie zadane szybciej niz
+# CHATL_PULAPKA_SEKUND od wydania sesji jako bota: odpowiada tekstem awaryjnym,
+# NIE wola modelu i NIE zapisuje ani jednego wiersza rozmowy. Skrypt pytal
+# natychmiast po wydaniu sesji, wiec caly dowod D3 mierzyl PULAPKE, a nie tryb AI —
+# stad szesc pozycji „nie wyszlo" i dziura D3 zostawiona jako otwarta.
+# Prog czytamy Z KODU, nie wpisujemy liczby: zmiana stalej ma przestawic te przerwe
+# sama, a nie zostawic kolejna kotwice, ktora zgnije po cichu.
+PROG_PULAPKI="$(wp eval 'echo (int) CHATL_PULAPKA_SEKUND;' 2>&1 | tail -1)"
+case "$PROG_PULAPKI" in ''|*[!0-9]*) PROG_PULAPKI=2 ;; esac
+
 nowa_sesja() {
-	curl -s -c "$CIASTKA" -b "$CIASTKA" -X POST "$AJAX" -d "action=chatl_sesja" \
-		| sed -n 's/.*"sesja":"\([^"]*\)".*/\1/p'
+	local s
+	s="$(curl -s -c "$CIASTKA" -b "$CIASTKA" -X POST "$AJAX" -d "action=chatl_sesja" \
+		| sed -n 's/.*"sesja":"\([^"]*\)".*/\1/p')"
+	sleep $(( PROG_PULAPKI + 1 ))
+	printf '%s' "$s"
 }
 pytanie_goscia() {
 	local sesja="$1"
@@ -107,9 +131,9 @@ silnik_ostatniej() {
 # odroznia wady bota od zle ustawionego stanowiska.
 printf '    baza Q&A: %s par · klucz ustawiony: %s · AI dostepne: %s · adres modelu: %s\n' \
 	"$(sql_bazy "SELECT COUNT(*) FROM \`$BAZA\`.wp_chatl_qa;" | tr -d '\r')" \
-	"$( [ -n "$(wp option get chatl_klucz_api 2> /dev/null)" ] && echo TAK || echo NIE )" \
+	"$( [ -n "$(opcja chatl_klucz_api)" ] && echo TAK || echo NIE )" \
 	"$(wp eval 'echo chatl_ai_dostepny() ? "TAK" : "NIE";' 2>&1 | tail -1)" \
-	"$(wp option get probny_ai_url 2> /dev/null)"
+	"$(opcja probny_ai_url)"
 printf '    surowa odpowiedz modelu przez wtyczke: [%s]\n' \
 	"$(wp eval 'echo (string) chatl_ai_odpowiedz( "ile trwa realizacja", array() );' 2>&1 | tail -1)"
 SES_A="$(nowa_sesja)"
@@ -120,7 +144,7 @@ if printf '%s' "$ODP_AI" | grep -q 'ODPOWIEDZ-Z-UDAWANEGO-AI' && [ "$SILNIK_AI" 
 else
 	zglos "przy dzialajacym API bot nie odpowiedzial z modelu (silnik=$SILNIK_AI): $(printf '%s' "$ODP_AI" | head -c 160)"
 fi
-if [ -z "$(wp option get chatl_blad_ai 2> /dev/null)" ]; then
+if [ -z "$(opcja chatl_blad_ai)" ]; then
 	potwierdz "przy dzialajacym API znacznika awarii NIE MA (przypadek bez wady)"
 else
 	zglos "znacznik awarii jest, choc API odpowiedzialo poprawnie"
@@ -139,7 +163,7 @@ else
 	zglos "po odcieciu klucza gosc nie dostal odpowiedzi (silnik=$SILNIK_PO): $(printf '%s' "$ODP_PO" | head -c 160)"
 fi
 
-ZNACZNIK="$(wp option get chatl_blad_ai --format=json 2> /dev/null)"
+ZNACZNIK="$(opcja chatl_blad_ai)"
 if printf '%s' "$ZNACZNIK" | grep -q '"kod":401'; then
 	potwierdz "znacznik awarii zapisany z kodem 401: $ZNACZNIK"
 else
@@ -147,7 +171,7 @@ else
 fi
 # Znacznik ma być WIDOCZNY w panelu, nie tylko w bazie — inaczej właściciel
 # nadal nie wie, że gościom odpowiada sam silnik regułowy.
-if wp eval 'require_once WP_PLUGIN_DIR . "/chatbot-live/includes/admin.php"; chatl_notice_bledu_ai();' 2>&1 | grep -q 'Ostatnie wywołanie API nie powiodło się'; then
+if wp eval 'require_once WP_PLUGIN_DIR . "/chatbot-live/includes/admin.php"; chatl_notice_bledu_ai();' 2>&1 | grep -q 'Tryb AI nie działa'; then
 	potwierdz "panel POKAZUJE wlascicielowi ostrzezenie o nieudanym wywolaniu API"
 else
 	W_PANELU="$(wp eval 'require_once WP_PLUGIN_DIR . "/chatbot-live/includes/admin.php"; chatl_notice_bledu_ai();' 2>&1 | head -3)"
@@ -155,8 +179,10 @@ else
 fi
 # Powrót API do sprawności ma znacznik ZDJĄĆ — inaczej ostrzeżenie zostaje na zawsze.
 wp option update probny_ai_url "http://localhost/udaj-ai-ok.php" > /dev/null
-pytanie_goscia "$(nowa_sesja)" > /dev/null 2>&1
-if [ -z "$(wp option get chatl_blad_ai 2> /dev/null)" ]; then
+SES_C="$(nowa_sesja)"
+ODP_C="$(pytanie_goscia "$SES_C")"
+printf '    powrot API — odpowiedz: [%s] silnik: [%s]\n' "$(printf '%s' "$ODP_C" | head -c 90)" "$(silnik_ostatniej "$SES_C")"
+if [ -z "$(opcja chatl_blad_ai)" ]; then
 	potwierdz "po powrocie API znacznik zostaje ZDJETY (nie zostaje na zawsze)"
 else
 	zglos "znacznik awarii zostal, choc API znowu odpowiada"
@@ -191,7 +217,7 @@ if printf '%s' "$ODP_ZLY" | grep -qx -- '-1'; then
 else
 	potwierdz "odpowiedz jest JSON-em wtyczki, nie golym -1"
 fi
-if [ -n "$(wp option get chatl_blad_nonce 2> /dev/null)" ]; then
+if [ -n "$(opcja chatl_blad_nonce)" ]; then
 	potwierdz "odrzucony nonce ZOSTAL ODNOTOWANY dla wlasciciela"
 else
 	zglos "odrzucony nonce nie zostal nigdzie odnotowany — wlasciciel sie nie dowie"
