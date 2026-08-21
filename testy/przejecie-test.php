@@ -124,6 +124,17 @@ $wpdb->query( "DELETE FROM {$wpdb->prefix}chatl_rate_limit WHERE klucz LIKE 'ses
 echo "=== A. Sesje wydaje SERWER, nie przegladarka ===\n";
 $odp = chatl_test_ajax( 'chatl_sesja' );
 $sesja = isset( $odp['dane']['data']['sesja'] ) ? $odp['dane']['data']['sesja'] : '';
+
+/*
+ * Cofamy znacznik wydania sesji o minute. Powod jest merytoryczny, nie kosmetyczny:
+ * od 1.5.3 dziala pulapka na boty z progiem czasu (CHATL_PULAPKA_SEKUND), a ten
+ * test zaklada sesje i W TEJ SAMEJ SEKUNDZIE strzela pytaniem — czyli zachowuje sie
+ * dokladnie jak skrypt, ktorego pulapka ma nie przepuscic. Prawdziwy gosc dostaje
+ * sesje przy OTWARCIU okna czatu (widget.js: dajSesje() na klikniecie babelka),
+ * a pytanie pisze pozniej, wiec ta minuta odtwarza jego sytuacje, a nie omija
+ * mechanizmu. Bez tego test mierzylby pulapke zamiast przejecia rozmowy.
+ */
+$wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->prefix}chatl_sesje SET utworzono = %s WHERE sesja = %s", gmdate( 'Y-m-d H:i:s', current_time( 'timestamp' ) - MINUTE_IN_SECONDS ), $sesja ) ); // phpcs:ignore
 sprawdz( 'punkt wydaje sesje', '' !== $sesja, 'sesja: ' . $sesja );
 rowne( 'sesja ma 32 znaki', 32, strlen( $sesja ) );
 sprawdz( 'sesja jest alfanumeryczna', (bool) preg_match( '/^[a-zA-Z0-9]{32}$/', $sesja ) );

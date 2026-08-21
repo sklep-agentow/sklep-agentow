@@ -389,3 +389,16 @@
 	color: #f5f5f5;
 	border-left: 3px solid var(--chatl-glowny);
 }
+
+/* Pulapka na boty: pole musi ISTNIEC w drzewie i w ukladzie (czesc prostych
+   botow pomija display:none), ale byc nieosiagalne dla czlowieka. Stad wyniesienie
+   poza kadr zamiast ukrycia, zerowa wysokosc i brak zdarzen wskaznika. */
+.chatl-pole-dodatkowe {
+	position: absolute !important;
+	left: -9999px !important;
+	top: auto;
+	width: 1px;
+	height: 1px;
+	opacity: 0;
+	pointer-events: none;
+}

@@ -1,6 +1,6 @@
 # ChatBot LIVE — dokumentacja techniczna
 
-Wersja wtyczki: **1.5.2** · schemat bazy: **6** · licencja: **GPL-2.0-or-later**
+Wersja wtyczki: **1.5.4** · schemat bazy: **7** · licencja: **GPL-2.0-or-later**
 
 Dokument opisuje **kod, który jest**, nie plan. Każda liczba i nazwa poniżej ma pokrycie
 w źródle — przy każdej podano plik i symbol, żeby dało się to sprawdzić `grep`-em, a nie
@@ -100,6 +100,7 @@ Serce trybu regułowego. Właściciel wypełnia ją w panelu; przy pierwszej akt
 | `email` | `varchar(190)` | Adres gościa. 190 znaków, bo to bezpieczna długość dla indeksu przy `utf8mb4`. Walidowany `is_email()` przed zapisem. |
 | `wiadomosc` | `text` | Treść od gościa. Przycinana do 2000 znaków (`CHATL_MAX_WIADOMOSC`). |
 | `sesja` | `varchar(64)`, domyślnie `''` | Identyfikator sesji czatu — pozwala zestawić zgłoszenie z rozmową, która je poprzedziła. |
+| `podejrzane` | `tinyint(1)` | `0` = zgłoszenie normalne, `1` = złapane przez pułapkę na boty; lista w panelu domyślnie pokazuje tylko `0` |
 | `status` | `varchar(20)`, domyślnie `'nowe'` | `nowe` albo `obsluzone` — jedyne dwie wartości przyjmowane przez handler zmiany statusu. Ma własny indeks `KEY status`. |
 | `utworzono` | `datetime` | Kiedy przyszło zgłoszenie. **Zgłoszenia NIE podlegają retencji 90 dni** — kasuje je właściciel ręcznie albo pełna deinstalacja. |
 
@@ -141,7 +142,7 @@ całą historię przy każdym wejściu.
 | Opcja | Zawartość | Autoload | Kiedy powstaje |
 |---|---|---|---|
 | `chatl_ustawienia` | tablica ustawień (patrz niżej) | tak (domyślnie) | przy pierwszym zapisie ustawień — **nie** przy aktywacji |
-| `chatl_wersja_schematu` | numer schematu, obecnie `6` | tak (domyślnie) | przy aktywacji i przy migracji schematu |
+| `chatl_wersja_schematu` | numer schematu, obecnie `7` | tak (domyślnie) | przy aktywacji i przy migracji schematu |
 | `chatl_klucz_api` | klucz API właściciela | **nie** (`add_option(..., '', false)`) | przy zapisaniu klucza w panelu |
 | `chatl_blad_maila` | `['kiedy' => data, 'adres' => e-mail]` | **nie** | gdy `wp_mail()` zwróci `false`; kasowana przy pierwszej udanej wysyłce |
 | `chatl_blad_ai` | `['kiedy' => data, 'kod' => HTTP, 'tresc' => fragment]` | **nie** | gdy wywołanie API nie zwróci 200; kasowana przy pierwszym udanym wywołaniu |
@@ -195,8 +196,6 @@ Wszystkie liczby, którymi wtyczka się rządzi, są stałymi — nie ma ich roz
 
 | Stała | Wartość | Plik | Do czego |
 |---|---|---|---|
-| `CHATL_WERSJA` | `1.5.2` | `chatbot-live.php` | wersja wtyczki; służy też jako `?ver=` assetów (przeglądarka nie poda starego pliku po aktualizacji) |
-| `CHATL_WERSJA_SCHEMATU` | `6` | `chatbot-live.php` | wyzwalacz migracji schematu |
 | `CHATL_KATALOG`, `CHATL_URL` | ścieżka i adres wtyczki | `chatbot-live.php` | `require` i adresy assetów |
 | `CHATL_MAX_PYTANIE` | `500` | `includes/front.php` | maksymalna długość pytania gościa (nadmiar jest **przycinany**, nie odrzucany) |
 | `CHATL_MAX_WIADOMOSC` | `2000` | `includes/front.php` | maksymalna długość treści zgłoszenia (jw.) |
@@ -224,6 +223,11 @@ Wszystkie liczby, którymi wtyczka się rządzi, są stałymi — nie ma ich roz
 | `CHATL_META_POWITANIE` | `chatl_powitanie_zamkniete` | `includes/powitanie.php` | klucz metadanych „ten administrator zamknął powitanie" |
 | `CHATL_TRANSIENT_AKTYWACJA` | `chatl_po_aktywacji` | `includes/powitanie.php` | znacznik „właśnie aktywowano", życie 1 minuta |
 | `CHATL_SUGESTIA_RDZEN` | `5` | `includes/statystyki.php` | rdzeń **podpowiadanych słów kluczowych** — dłuższy, bo trafia do silnika dopasowania: `koszt` łapie „koszty"/„kosztuje", a `kosz` łapałby też „koszulę" |
+| `CHATL_WERSJA` | `1.5.4` | `chatbot-live.php` | wersja wtyczki; służy też jako `?ver=` assetów (przeglądarka nie poda starego pliku po aktualizacji) |
+| `CHATL_WERSJA_SCHEMATU` | `7` | `chatbot-live.php` | wyzwalacz migracji schematu |
+| `CHATL_PULAPKA_POLE` | `chatl_pole_dodatkowe` | `includes/front.php` | nazwa ukrytego pola-pułapki; celowo nie brzmi jak `email`/`imie`, bo menedżery haseł wypełniają pola po nazwie |
+| `CHATL_PULAPKA_SEKUND` | `2` | `includes/front.php` | poniżej tylu sekund od wydania sesji żądanie nie jest uznawane za pisane przez człowieka |
+| `CHATL_LIMIT_PULAPKA` | `5` | `includes/front.php` | sufit ZŁAPANYCH zgłoszeń zapisywanych z jednego adresu w minucie |
 | `CHATL_KLUCZ_API` | — | **`wp-config.php`, definiuje właściciel** | klucz API poza bazą; ma pierwszeństwo nad opcją |
 
 ---
@@ -1086,7 +1090,86 @@ względem **całkowitej liczby zgłoszeń**, a nie numeru strony: przy dokładni
 stronie zgłoszeń naiwne `OFFSET` przeskoczyłoby pierwszą porcję rozmów i wydało
 wniosek **z dziurą**, której nie zauważy ani właściciel, ani osoba składająca wniosek.
 Strażnik podkłada dokładnie ten przypadek.
-## 25. Znane granice
+## 25. Pułapka na boty
+
+Publiczny czat dostaje ruch automatów. Sito jest tanie i dwuczęściowe:
+
+| Pułapka | Co łapie | Gdzie |
+|---|---|---|
+| **ukryte pole** `CHATL_PULAPKA_POLE` | skrypt, który zeskrobał stronę i odsyła wszystkie znalezione pola | `assets/widget.js` (tworzy), `chatl_pulapka_zlapala()` (sprawdza) |
+| **próg czasu** `CHATL_PULAPKA_SEKUND` | skrypt, który poprosił o sesję i natychmiast strzelił | liczony z `chatl_sesje.utworzono`, **po stronie serwera**; działa **tylko przy pytaniu do bota** |
+
+Próg czasu **nie** opiera się na znaczniku od przeglądarki — taki znacznik skrypt
+podrabia jedną linijką. Wiek sesji bierzemy z własnej tabeli.
+
+### Próg czasu NIE działa przy formularzu kontaktu
+
+To nie jest przeoczenie, tylko wynik pomiaru. Test przeglądarkowy
+(`testy/pulapka-widget.js`) pokazał, że **prawdziwy gość**, który otworzy czat
+i od razu kliknie „Zostaw wiadomość", wysyła formularz szybciej niż w dwie sekundy
+od wydania sesji — i wpadał we własną pułapkę. Cena tego fałszywego alarmu to
+**utracony kontakt**, czyli jedyna rzecz, dla której ten produkt istnieje.
+
+Rachunek wychodzi tu jednoznacznie:
+
+| | pytanie do bota | formularz kontaktu |
+|---|---|---|
+| koszt fałszywego alarmu | gość dostaje odpowiedź z reguł zamiast z AI i tego nie zauważa | **utracony kontakt** |
+| co próg czasu naprawdę łapie | skrypt, który poprosił o sesję i natychmiast strzelił | to samo |
+| decyzja | próg **zostaje** | próg **wyłączony**, zostaje ukryte pole |
+
+Dodatkowy argument, który przesądza: bot uderzający wprost w `admin-ajax.php`
+podaje **zmyśloną sesję**, dla której nie ma wiersza w tabeli — a wtedy próg czasu
+i tak nie zadziała, bo brak wiersza nie jest dowodem bota. Próg łapie więc wyłącznie
+skrypt, który grzecznie poprosi o sesję i zaraz strzeli, czyli wąską klasę. Oddawanie
+za nią kontaktów byłoby złym interesem.
+
+Technicznie: `chatl_pulapka_zlapala( $sesja, $sprawdzaj_czas = true )`, a endpoint
+zgłoszenia woła ją z `false`.
+
+Pole jest wynoszone poza kadr (`left: -9999px`), a **nie** chowane przez
+`display: none`: część prostych botów pomija pola ukryte tak wprost, czyli
+akurat te, dla których to sito powstało. Ma `tabindex="-1"` (człowiek nie
+dojdzie do niego klawiszem Tab), `aria-hidden="true"` (czytnik ekranu pomija)
+i `autocomplete="off"`.
+
+### 25.1. Co się dzieje ze złapanym żądaniem
+
+**Decyzja produktowa, nie techniczna:** złapane zgłoszenie **trafia do bazy
+z flagą `podejrzane = 1`**, a nie do kosza. Ten produkt istnieje po to, żeby
+małej firmie zbierać kontakty — koszt przejrzenia trzech spamów jest niższy niż
+koszt jednego utraconego klienta, a fałszywy alarm w wersji „cicho wyrzuć" jest
+**niewidzialny dla obu stron**: gość myśli, że wysłał, właściciel nie wie, że coś
+przepadło.
+
+Cisza dotyczy **bota, nie bazy** — odpowiedź dla wysyłającego jest **co do znaku**
+identyczna z odpowiedzią na czyste zgłoszenie, więc autor skryptu nie dowiaduje
+się, że wpadł.
+
+Trzy warunki, które czynią to bezpiecznym (każdy ma osobny krok w strażniku):
+
+1. **Brak maila.** Złapane zgłoszenie nie uruchamia powiadomienia — ochrona przed
+   mail-bombą była głównym powodem postawienia pułapki.
+2. **Brak zużycia limitów.** Pułapka jest sprawdzana **przed** `chatl_limit_ip_ok()`
+   i przed trybem AI, więc złapane żądania nie zjadają kubła, który chroni
+   prawdziwych gości, ani dobowego budżetu AI.
+3. **Osobny widok.** Lista zgłoszeń pokazuje domyślnie `podejrzane = 0`, a złapane
+   siedzą za filtrem **z licznikiem**. Licznik jest tu częścią mechanizmu, a nie
+   ozdobą: to on czyni fałszywy alarm widocznym.
+
+Osobny sufit `CHATL_LIMIT_PULAPKA` ogranicza **zapisy** złapanych z jednego adresu —
+skoro złapane lądują w bazie, sama pułapka nie może stać się drogą do zalania
+tabeli. Powyżej sufitu zgłoszenie nie jest zapisywane, ale odpowiedź nadal jest
+identyczna.
+
+### 25.2. Czego to sito NIE zatrzyma
+
+Pułapka nie zatrzyma kogoś, kto podejrzy kształt żądania i wyśle je wprost do
+`admin-ajax.php` z odstępami. Przed tym broni dobowy limit `CHATL_AI_LIMIT_IP_NA_DOBE`
+na adres, a nie ukryte pole. Nazywamy to wprost także w `INSTRUKCJA.md`, żeby
+właściciel nie wziął tego za zabezpieczenie budżetu AI.
+
+## 26. Znane granice
 
 Rzeczy, których wtyczka **nie** robi — żeby nikt nie szukał ich w kodzie:
 

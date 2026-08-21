@@ -37,9 +37,11 @@ function chatl_utworz_tabele() {
 		wiadomosc text NOT NULL,
 		sesja varchar(64) NOT NULL DEFAULT '',
 		status varchar(20) NOT NULL DEFAULT 'nowe',
+		podejrzane tinyint(1) NOT NULL DEFAULT 0,
 		utworzono datetime NOT NULL,
 		PRIMARY KEY  (id),
-		KEY status (status)
+		KEY status (status),
+		KEY podejrzane (podejrzane)
 	) {$charset};"
 	);
 
