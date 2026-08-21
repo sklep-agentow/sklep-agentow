@@ -116,7 +116,8 @@ Rubryka mówi "Dokumenty klienta zgodne z kodem (liczby, statusy, **obietnice**)
 (`liczby-zgodne-z-kodem.sh`) sprawdza WYŁĄCZNIE liczby. Efekt: 4 fałszywe zdania w dokumentach
 klienta przeszły przy zielonej bramce, bo dotyczyły obietnic ("zrobi to programista"), nie liczb.
 **Dowód:** `mp-s1-klon/audyt/UWAGI-DO-RAPORTU.md:72-93`, cytowane pliki: `INSTRUKCJA-KLIENTA.md:226`,
-`instrukcje/KOORDYNATOR.md:52`, `instrukcje/ADMIN.md:75-77`, `README.md:20`.
+`mp-s1-klon/instrukcje/KOORDYNATOR.md:52`, `mp-s1-klon/instrukcje/ADMIN.md:75-77`,
+`mp-s1-klon/README.md:20`.
 
 ---
 
