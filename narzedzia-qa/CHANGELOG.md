@@ -17,6 +17,53 @@ pory lądują tutaj.
 
 ### Dodane
 
+- **`dowod-aktualizacji.sh` 1.0.0 — dowód AKTUALIZACJI W MIEJSCU.** U klienta
+  aktualizacja zdarza się częściej niż czysta instalacja, a to zupełnie inna
+  ścieżka kodu: **podmiana plików nie przechodzi przez hook aktywacji**. Wszystko,
+  co wtyczka robi „przy instalacji" (tabele, kolumny, opcje startowe), musi przy
+  aktualizacji zrobić kod porównujący wersję schematu przy `plugins_loaded`.
+  Gdy go nie ma albo jest błędny, klient dostaje wtyczkę pytającą bazę o kolumnę,
+  której u niego nie ma — a **czysta instalacja nigdy tego nie pokaże**, bo tam
+  hook aktywacji zrobił wszystko. To dziura **D4** z materiału audytowego.
+
+  Skrypt instaluje **starą** paczkę, zdejmuje odcisk schematu i zostawia własny
+  wiersz-znacznik, podmienia pliki na **nową** paczkę BEZ deaktywacji, puka na
+  stronę (dopiero żądanie odpala kod aktualizacji) i sprawdza pięć rzeczy:
+  wersja wtyczki jest nowa · **wersja schematu poszła w górę** i zgadza się
+  z nowym kodem · schemat **przybył** i nic z niego **nie znikło** ·
+  **stare dane przetrwały** co do wiersza i treści · zero notice, warning,
+  deprecated i fatal.
+
+  Starą paczkę bierze z `boty/paczki/`, a gdy jej tam już nie ma (nowe wydanie
+  kasuje poprzednią) — **wyciąga ją z historii gita**. To celowe: ścieżka
+  aktualizacji dotyczy właśnie wersji, których w drzewie roboczym już nie ma.
+
+  Znacznik jest **własny**, nie z seeda instalatora: przetrwanie danych, które
+  instalator i tak wpisuje od nowa, niczego nie dowodzi.
+
+- **`dowod-aktualizacji-proba-kontrolna.sh` — trzy mutanty i kontrola odwrotna.**
+  Nowa wersja bez kodu migracji (schemat stoi) · migracja kasująca starą kolumnę
+  (znika miejsce na dane klienta) · migracja czyszcząca tabelę (dane klienta giną).
+  Każdy przypadek sprawdza kod wyjścia **oraz czy dowód nazwał przyczynę**.
+  Mutant wchodzi pod nazwą prawdziwej paczki, więc próba **zawsze przywraca**
+  oryginał z kopii — także gdy przebieg zostanie przerwany.
+
+- **`lib-stos-probny.sh` 1.0.0 — wspólny warsztat obu dowodów.** Stawianie
+  czystej instalacji z `WP_DEBUG`, odciski bazy i schematu, log błędów PHP,
+  sprzątanie. Wyciągnięte z `dowod-z-paczki.sh`, żeby poprawka w jednym miejscu
+  (jak naprawa kolejności odcisku) trafiała do obu dowodów — ta sama zasada,
+  co „napraw klasę, nie egzemplarz". Doszedł **odcisk schematu** (tabela + kolumna
+  + typ): sama lista tabel nie wystarcza, bo aktualizacja dokładająca KOLUMNĘ
+  wygląda po niej identycznie jak aktualizacja, która nie zrobiła nic.
+
+### Zmienione
+
+- **`dowod-z-paczki.sh` → 1.0.1** — korzysta ze wspólnej biblioteki zamiast
+  własnej kopii stawiania stosu. Zachowanie bez zmian: przebieg na paczce
+  ChatBota i pełna kalibracja (4 mutanty + kontrola odwrotna) po refaktorze
+  dają ten sam wynik co przed nim.
+
+
 - **`dowod-z-paczki.sh` 1.0.0 — powtarzalny dowód Z PACZKI, nie z repozytorium.**
   Kupujący nie dostaje repozytorium, dostaje ZIP — więc wszystko, co sprawdzamy na
   drzewie roboczym, sprawdza **inny artefakt niż sprzedawany**. Skrypt bierze paczkę,
