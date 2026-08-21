@@ -9,9 +9,11 @@ wywołania na żywo. Dokładnie ta dziura, którą wskazały krytyki (4 modele +
 **Objaw:** bot odpowiada z bazy reguł także wtedy, gdy klucz jest wpisany i limit niewyczerpany.
 Wygląda, jakby działał — bo zjazd do reguł maskuje awarię.
 
-**Przyczyna (plik:linia):**
-- `wtyczki/chatbot-live/includes/ai.php:133` — `'output_config' => array( 'effort' => 'low' )`
-- `wtyczki/segregator-maila/includes/ai.php:118` — to samo (KLASA, nie egzemplarz)
+**Przyczyna (plik, stan z 20.08):** ⚠️ ADRESY HISTORYCZNE — pole `output_config`
+zostało usunięte przy naprawie, więc numery linii z tamtego dnia nie wskazują już
+niczego. Zostawiamy nazwę pliku i pola, bo to jest to, co da się dziś odnaleźć.
+- `wtyczki/chatbot-live/includes/ai.php`, funkcja budująca żądanie (stan z 20.08) — `'output_config' => array( 'effort' => 'low' )`
+- `wtyczki/segregator-maila/includes/ai.php`, to samo miejsce (KLASA, nie egzemplarz)
 
 Model `claude-haiku-4-5-20251001` nie obsługuje tego pola. API odrzuca całe żądanie.
 
@@ -307,7 +309,7 @@ testy/wskaznik-pisania-test.js
 `testy/pulapka-test.php` też zawiera napis `chatl_ajax_pytanie`, ale **nie łapie go
 powyższy grep** (szuka `chatl_pytanie`, a tam stoi `chatl_ajax_pytanie`) — i słusznie,
 bo ten test **nie wywołuje** tego endpointu: czyta jego ŹRÓDŁO wyrażeniem regularnym
-(`pulapka-test.php:238`), żeby sprawdzić KOLEJNOŚĆ warunków, a wywołuje endpoint
+(`testy/pulapka-test.php:238`), żeby sprawdzić KOLEJNOŚĆ warunków, a wywołuje endpoint
 **zgłoszenia kontaktu** (`chatl_ajax_zgloszenie()`, linia 138). Atrapy również nie ma.
 Wniosek się nie zmienia — zmienia się to, że polecenie wyżej daje dokładnie tę listę,
 którą tu widzisz.

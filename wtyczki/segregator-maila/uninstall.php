@@ -46,6 +46,7 @@ delete_option( 'segm_powitanie_gotowe' );
 // Wpis o ostatnim błędzie AI zawiera fragment odpowiedzi dostawcy — to stan
 // chwilowy, nie dane właściciela. Znika zawsze.
 delete_option( 'segm_blad_ai' );
+delete_option( 'segm_blad_bazy' );
 delete_metadata( 'user', 0, 'segm_powitanie_widziane', '', true );
 
 // Sekret właściciela (klucz API) kasowany ZAWSZE, niezależnie od opcji „usuń dane"
@@ -87,3 +88,4 @@ delete_option( 'segm_wersja_schematu' );
 // Ślad „baner powitalny schowany" trzymany per użytkownik — bez tego zostałyby
 // osierocone wiersze w wp_usermeta po wtyczce, której już nie ma.
 delete_metadata( 'user', 0, 'segm_baner_ukryty', '', true );
+delete_metadata( 'user', 0, 'segm_blad_bazy_ukryty', '', true );
