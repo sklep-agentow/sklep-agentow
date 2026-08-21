@@ -43,6 +43,15 @@ migracja odpala się sama przy pierwszym wejściu do panelu po aktualizacji
 - Import **tylko dopisuje**: pytanie, które już jest w bazie, zostaje nietknięte,
   a wiersz z pliku jest pomijany i widać to w podglądzie.
 
+### Porządek przed zamrożeniem wersji
+- **Z paczki znikają nasze ślady wewnętrzne.** Komentarze w kodzie i akapity
+  dokumentacji technicznej odsyłały do plików, których kupujący nie dostaje
+  (nasze testy i wewnętrzne rozpoznania), i powoływały się na numery naszych
+  zgłoszeń oraz na osoby z zespołu. Treść merytoryczna została bez zmian — zniknęły same
+  odsyłacze do naszego warsztatu. **Działanie wtyczki jest nietknięte.**
+- W `readme.txt` zdanie o pełnej historii zmian stoi teraz **nad** listą wydań,
+  a nie w środku wpisu 1.5.7, gdzie czytało się jak jego część.
+
 ---
 
 ## [1.5.6] — 2026-08-21

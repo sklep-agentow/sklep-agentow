@@ -4,7 +4,7 @@
  *
  * Dlaczego to osobny plik, a nie kilka linii w froncie: liczenie kontrastu to
  * arytmetyka z normy, którą trzeba dać się sprawdzić testem bez uruchamiania
- * przeglądarki (testy/wyglad-test.php). Wszystko poniżej to funkcje czyste —
+ * przeglądarki. Wszystko poniżej to funkcje czyste —
  * biorą kolory, zwracają liczby i napisy, niczego nie drukują.
  */
 
@@ -213,7 +213,7 @@ function chatl_zmienne_domyslne() {
 /**
  * Reguła CSS z nadpisanymi zmiennymi — albo pusty string.
  *
- * Trzy rzeczy, o które prosiła recenzja wyglądu:
+ * Trzy rzeczy, których ta funkcja pilnuje:
  *   1. NIE generujemy arkusza od nowa — wychodzi kilka deklaracji zmiennych,
  *      reszta stylów zostaje w statycznym pliku (cache przeglądarki działa),
  *   2. wypisujemy TYLKO zmienne różne od domyślnych — właściciel, który

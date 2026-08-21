@@ -579,7 +579,7 @@ zestaw spełnia próg (`chatl_ocena_kontrastu()`), ale nie blokuje zapisu.
 
 Wzór kontrastu istnieje też w `assets/panel-wyglad.js`, bo przeglądarka nie ma
 jak pytać PHP przy każdym ruchu suwaka. Żeby te dwie kopie nie rozjechały się po
-cichu, `testy/wyglad-panel.js` ustawia kolory, czyta liczbę policzoną w panelu,
+cichu, test w przeglądarce ustawia kolory, czyta liczbę policzoną w panelu,
 zapisuje ustawienia i porównuje ją z liczbą policzoną przez PHP.
 
 Konfigurowalne jest to, co widać z zewnątrz i co gryzie się z paletą strony
@@ -671,8 +671,8 @@ Każdy odczyt przechodzi przez `filter_var( …, FILTER_VALIDATE_IP )`: nagłów
 śmieciem nie może wyłączyć limitu ani stworzyć własnego kubła, więc przy złej
 wartości schodzimy do `REMOTE_ADDR`.
 
-**Warunek, bez którego przełącznik nie daje tego, co obiecuje** (uwaga recenzenta
-do PR #80). `CF-Connecting-IP` jest wiarygodny wyłącznie dlatego, że Cloudflare
+**Warunek, bez którego przełącznik nie daje tego, co obiecuje.**
+`CF-Connecting-IP` jest wiarygodny wyłącznie dlatego, że Cloudflare
 **nadpisuje** ten nagłówek na wejściu. Jeżeli origin jest osiągalny bezpośrednio —
 typowe na hostingu współdzielonym bez reguł zapory — żądanie z podrobionym
 `CF-Connecting-IP` omija Cloudflare w całości i nikt go po drodze nie poprawia.
@@ -692,8 +692,8 @@ modelu, a te bywają wycofywane — wtedy **każda sprzedana kopia traci tryb AI
 naraz**, a jedyną drogą naprawy jest ręczna wysyłka zipa mailem, bo nie mamy
 serwera aktualizacji.
 
-**Sprawdzone u dostawcy 2026-08-20** (uwaga krytyczna recenzenta do PR #81,
-zamknięta dowodem, nie dyskusją): jedno wywołanie API na każdy identyfikator —
+**Sprawdzone u dostawcy 2026-08-20** (zamknięte dowodem, nie dyskusją):
+jedno wywołanie API na każdy identyfikator —
 `claude-haiku-4-5` odpowiedział **HTTP 200**, a w polu `model` odpowiedzi zwrócił
 `claude-haiku-4-5-20251001`; identyfikator z datą zachował się tak samo. Nazwa bez
 daty jest więc **prawdziwym aliasem, który serwer sam rozwija** do bieżącej migawki
@@ -774,7 +774,7 @@ Nazwy pól odpowiadają polu `usage` odpowiedzi Messages API:
 Inkrement idzie jednym atomowym `INSERT … ON DUPLICATE KEY UPDATE`, razem
 z licznikiem wywołań.
 
-**Liczymy po kodzie 200, a nie po udanej odpowiedzi** (uwaga recenzenta do PR #83).
+**Liczymy po kodzie 200, a nie po udanej odpowiedzi.**
 Kod 200 znaczy, że dostawca wywołanie **wykonał i policzył** — rachunek przychodzi
 niezależnie od tego, czy treść da się użyć. Naliczanie dopiero przy gotowym tekście
 zostawiało trzy ścieżki, które kosztowały właściciela, a były niewidoczne dla
@@ -951,8 +951,8 @@ kłóciłoby się z obietnicą retencji.
 
 ## 23. Przejęcie rozmowy przez człowieka
 
-Bot nazywa się LIVE, więc rozmowę musi dać się przejąć. Rozpoznanie wzorców
-(Chatwoot, Crisp, Tidio) i pomiary kosztu odpytywania: `boty/ROZPOZNANIE-PRZEJECIE-ROZMOWY.md`.
+Bot nazywa się LIVE, więc rozmowę musi dać się przejąć. Model stanu i tempo
+odpytywania wzięte z rozpoznania wzorców rynkowych (Chatwoot, Crisp, Tidio).
 
 ### 23.1. Stan rozmowy — jedno pole
 
@@ -1123,8 +1123,8 @@ podrabia jedną linijką. Wiek sesji bierzemy z własnej tabeli.
 
 ### Próg czasu NIE działa przy formularzu kontaktu
 
-To nie jest przeoczenie, tylko wynik pomiaru. Test przeglądarkowy
-(`testy/pulapka-widget.js`) pokazał, że **prawdziwy gość**, który otworzy czat
+To nie jest przeoczenie, tylko wynik pomiaru. Test przeglądarkowy pokazał,
+że **prawdziwy gość**, który otworzy czat
 i od razu kliknie „Zostaw wiadomość", wysyła formularz szybciej niż w dwie sekundy
 od wydania sesji — i wpadał we własną pułapkę. Cena tego fałszywego alarmu to
 **utracony kontakt**, czyli jedyna rzecz, dla której ten produkt istnieje.

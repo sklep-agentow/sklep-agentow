@@ -75,7 +75,7 @@ function chatl_utworz_tabele() {
 
 	/*
 	 * Stan rozmowy: kto odpowiada gosciowi — bot czy czlowiek. JEDNO pole, nie
-	 * zestaw flag (model z Chatwoota, rozpoznanie w boty/ROZPOZNANIE-PRZEJECIE-ROZMOWY.md).
+	 * zestaw flag (model z Chatwoota).
 	 * Tabela jest osobna od chatl_rozmowy, bo tamta rosnie z kazda wiadomoscia,
 	 * a tu potrzebny jest JEDEN wiersz na sesje, ktory da sie tanio przeczytac
 	 * przy kazdym odpytaniu i tanio zaktualizowac przy kazdej wiadomosci.

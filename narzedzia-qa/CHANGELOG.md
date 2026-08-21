@@ -15,7 +15,59 @@ pory lądują tutaj.
 
 ## [Niewydane]
 
+### Dodane
+
+- **`slady-wewnetrzne.sh` 1.0.0 — nowe narzędzie i SIÓDMA bramka `slady`
+  w `bramki.sh` (próg pełny 6 → 7, tekstowy 3 → 4).** Wyczyszczenie 20 śladów
+  z ChatBota było naprawą EGZEMPLARZA: jutro wjeżdża nowy komentarz
+  z odsyłaczem do `testy/…` albo numerem naszego zgłoszenia i wszystko wraca.
+  Bramka zamrożenia sprawdza to raz, przy zamrażaniu; bramka `slady` sprawdza to
+  przy **każdym PR-ze**, także tekstowym — komentarz w dokumentacji to ten sam problem.
+  Jedno źródło wzorców dla obu miejsc, żeby dwie listy nie rozjechały się po dopisku.
+
+- **`slady-zaleglosci.txt` — lista DŁUGU, nie lista wyjątków.** 42 ślady, które
+  już leżą w repozytorium (segregator-maila 11, sklep-agentow 31, chatbot-live 0),
+  są wypisywane przy każdym przebiegu, ale nie blokują — inaczej bramka wywracałaby
+  cudze PR-y od pierwszego dnia. Wpis, który przestał do czegokolwiek pasować,
+  jest **czerwony**: lista ma się kurczyć, a nie gnić. Przy zamrażaniu lista
+  **nie obowiązuje** — `paczka-zgodnosc.sh` woła skaner z pustą listą, bo paczka
+  oddawana klientowi ma mieć zero śladów.
+
+### Naprawione
+
+- **`bramki-proba-kontrolna.sh` — trzy zgniłe kotwice.** Dołożenie siódmej bramki
+  unieważniło trzy przypadki na raz: fraza „wykonano 5 bramek", `PROG_PELNY=6`
+  i pełne brzmienie tablicy `BRAMKI=(…)` w sed-zie. Dwa przypadki cicho przestały
+  cokolwiek podkładać, jeden przechodził niezauważony. Kotwice są teraz bez
+  zaszytych liczb i bez przepisywania całej tablicy. Do tego **sześć nowych
+  przypadków** dla bramki `slady` (TODO, adres dev, ścieżka drzewa, numer PR-a,
+  martwy wpis na liście, kontrola odwrotna na czystej wtyczce).
+
 ### Zmienione
+
+- **`paczka-zgodnosc.sh` 1.0.0 → 1.1.0 — bramka zamrożenia dostała dwie kontrole,
+  których zgodny numer i suma kontrolna NIE łapią.**
+
+  **(C) Wydanie z opisem, nie z samym numerem.** Nagłówek `## [1.5.7]` bez ani
+  jednej linii pod spodem przechodził przez porównanie wersji, bo numer był
+  poprawny — brakowało tego, co ten numer znaczy. Sprawdzane w `CHANGELOG.md`
+  **i** w sekcji `= wersja =` w `readme.txt`, bo to drugie widzi kupujący w sklepie.
+
+  **(D) Paczka bez naszych śladów wewnętrznych.** Zip równy repozytorium co do
+  bajtu jest wciąż zipem, w którym siedzi `TODO`, ścieżka `testy/…`, adres
+  `localhost:8890` albo „uwaga recenzenta do PR #83". Kontrola zgodności z repo
+  takiego śladu **nie widzi z definicji** — ślad jest w repo tak samo jak w paczce.
+  Skanowana jest **rozpakowana paczka**, w czterech klasach wzorców: znacznik
+  roboczy, adres maszyny dev, ścieżka naszego drzewa, nasz obieg pracy.
+
+  Kalibracja: na stanie sprzed naprawy stara bramka 1.0.0 dawała **EXIT=0**,
+  nowa na tym samym stanie **EXIT=1** i 20 wypisanych śladów.
+
+- **`paczka-zgodnosc-proba-kontrolna.sh` — sześć nowych podłożonych przypadków**
+  (pusty wpis w CHANGELOG-u, pusta sekcja w readme, TODO w paczce, adres dev,
+  ścieżka `testy/…`, numer PR-a) plus kontrola „mutacja naprawdę weszła do pliku".
+  Stan czysty badany jest teraz na `chatbot-live`: paczka segregatora 1.3.0 ma
+  dziś własne ślady wewnętrzne, więc jako wzorzec czystości się nie nadaje.
 
 - **`.github/workflows/recenzent.yml`** — `--allowedTools` dostał `test-php.sh`
   i jego próbę kontrolną, żeby recenzent mógł uruchomić testy PHP z `testy/`.

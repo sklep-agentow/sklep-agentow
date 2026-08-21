@@ -133,6 +133,9 @@ w ustawieniach. Klucz API jest kasowany zawsze, niezależnie od tego przełączn
 
 == Changelog ==
 
+Pełna historia zmian, z opisem każdej pozycji, jest w pliku `CHANGELOG.md`
+w paczce. Poniżej skrót.
+
 = 1.5.7 =
 * Import bazy pytań z pliku CSV z podglądem przed zapisem — wgrany plik trafia
   najpierw na ekran podglądu (werdykt przy każdym wierszu, liczniki, edycja
@@ -140,9 +143,6 @@ w ustawieniach. Klucz API jest kasowany zawsze, niezależnie od tego przełączn
 * Eksport całej bazy Q&A do CSV — obieg „pobierz, popraw w arkuszu, wgraj".
 * Rozpoznawany polski Excel: średnik jako separator i kodowanie windows-1250.
 * Import tylko dopisuje: istniejące wpisy nie są nadpisywane.
-
-Pełna historia zmian, z opisem każdej pozycji, jest w pliku `CHANGELOG.md`
-w paczce. Poniżej skrót.
 
 = 1.5.2 =
 * Nowość: wnioski RODO obsłużysz **wbudowanym kreatorem WordPressa** — wtyczka

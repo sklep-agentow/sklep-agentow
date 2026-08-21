@@ -43,7 +43,7 @@ const CHATL_RODO_PORCJA = 100;
  * kasownik cokolwiek usunie, i przeżywa skasowanie jednego z dwóch zgłoszeń.
  * Nie jest daną osobową: to sam identyfikator sesji, bez adresu i bez treści.
  *
- * ⚠️ Granica nazwana wprost (obserwacja z recenzji): zapis idzie przez
+ * ⚠️ Granica nazwana wprost: zapis idzie przez
  * `get_option` → `update_option`, a to NIE jest operacja atomowa. Gdyby dwa
  * wnioski o usunięcie były przetwarzane dokładnie równocześnie, jeden zapis
  * mógłby nadpisać ślad zapisany przez drugi i ochrona wróciłaby do stanu

@@ -5,7 +5,7 @@
  *
  * Ten plik ma DWIE warstwy i celowo je rozdziela:
  *   1. liczenie i grupowanie (funkcje bez echo) — da się je odpalić z wp-cli
- *      i sprawdzić testem (testy/statystyki-test.php),
+ *      i sprawdzić testem po stronie PHP,
  *   2. rysowanie strony panelu (chatl_strona_statystyki).
  * Bez tego rozdziału jedynym sposobem sprawdzenia liczb byłoby czytanie HTML-a
  * przeglądarką — a wtedy test mierzy układ strony, nie arytmetykę.
