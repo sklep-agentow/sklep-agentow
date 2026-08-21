@@ -45,28 +45,30 @@ probuj() {
 
 echo "=== PROBA KONTROLNA: czy kurczacy sie zestaw bramek zostanie zauwazony ==="
 
-# 1. Ktos kasuje wywolanie phpstana — licznik ma zobaczyc, ze wykonano 5 z 6.
+# 1. Ktos kasuje wywolanie phpstana — licznik ma zobaczyc, ze wykonano o jedna mniej.
+#    Fraza BEZ liczby: dolozenie siodmej bramki (21.08) uniewaznilo kotwice
+#    "wykonano 5 bramek" i przypadek zaczal przechodzic niezauwazony.
 probuj "wywolanie phpstana skasowane (licznik)" \
 	"sed -i '/^bramka phpstan /d' $BRAMKI" \
 	"bash $BRAMKI --tryb pelny" \
-	"STOP: wykonano 5 bramek"
+	"wymaga co najmniej"
 
 # 2. To samo, ale ktos „sprytnie" obniza prog, zeby licznik nie krzyczal —
 #    wtedy krzyczy straznik manifestu.
 probuj "phpstan skasowany I prog obnizony do 5 (manifest)" \
-	"sed -i '/^bramka phpstan /d' $BRAMKI && sed -i 's/^PROG_PELNY=6/PROG_PELNY=5/' $BRAMKI" \
+	"sed -i '/^bramka phpstan /d' $BRAMKI && sed -i 's/^PROG_PELNY=[0-9]*/PROG_PELNY=5/' $BRAMKI" \
 	"bash narzedzia-qa/sprawdz-manifest.sh" \
 	"NIKT JEJ NIE WOŁA"
 
 # 3. Bramka znika z rejestru — manifest sie nie zgadza.
 probuj "phpcs wyrzucony z rejestru BRAMKI=()" \
-	"sed -i 's/^BRAMKI=(actionlint manifest php-lint phpcs phpstan gitleaks)/BRAMKI=(actionlint manifest php-lint phpstan gitleaks)/' $BRAMKI" \
+	"sed -i '/^BRAMKI=(/ s/ phpcs//' $BRAMKI" \
 	"bash narzedzia-qa/sprawdz-manifest.sh" \
 	"bramka zniknęła"
 
 # 4. Ciche obnizenie poprzeczki bez ruszania bramek.
 probuj "prog pelnego przebiegu obnizony do 4" \
-	"sed -i 's/^PROG_PELNY=6/PROG_PELNY=4/' $BRAMKI" \
+	"sed -i 's/^PROG_PELNY=[0-9]*/PROG_PELNY=4/' $BRAMKI" \
 	"bash narzedzia-qa/sprawdz-manifest.sh" \
 	"poprzeczka obniżona"
 
@@ -104,6 +106,60 @@ if [ "$WYNIK" -gt 0 ]; then
 else
 	echo "  BLAD zmiana .sh potraktowana jako tekstowa"; BLEDY=$((BLEDY+1))
 fi
+
+echo
+echo "=== BRAMKA slady: nowy slad w pliku wtyczki MA byc zlapany ==="
+# Pracujemy na KOPII katalogu wtyczki — zaden plik repozytorium nie jest dotykany.
+SKANER=narzedzia-qa/slady-wewnetrzne.sh
+PIASKOWNICA=$(mktemp -d)
+cp -r wtyczki/chatbot-live "$PIASKOWNICA/"
+KOPIA_WTYCZKI="$PIASKOWNICA/chatbot-live"
+
+slad_probuj() {
+	local opis="$1" tresc="$2" fraza="$3" wyjscie kod=0
+	cp -r wtyczki/chatbot-live/. "$KOPIA_WTYCZKI/"
+	printf '%s\n' "$tresc" >> "$KOPIA_WTYCZKI/includes/silnik.php"
+	if ! grep -qF "$tresc" "$KOPIA_WTYCZKI/includes/silnik.php"; then
+		printf '  BLAD mutacja NIE weszla: %-52s\n' "$opis"; BLEDY=$((BLEDY+1)); return
+	fi
+	wyjscie=$(SLADY_ZALEGLOSCI=/dev/null bash "$SKANER" chatbot-live "$KOPIA_WTYCZKI" 2>&1) || kod=$?
+	if [ "$kod" -ne 0 ] && printf '%s' "$wyjscie" | grep -qF "$fraza"; then
+		printf '  OK   zlapane: %-56s (EXIT=%d)\n' "$opis" "$kod"
+	else
+		printf '  BLAD PRZESZLO NIEZAUWAZONE: %-42s (EXIT=%d)\n' "$opis" "$kod"; BLEDY=$((BLEDY+1))
+	fi
+}
+
+slad_probuj "TODO w pliku wtyczki"           "// TODO: dokonczyc przed oddaniem" "znacznik roboczy"
+slad_probuj "adres maszyny dev"              "// sprawdzone na http://localhost:8890/wp-admin/" "adres maszyny dev"
+slad_probuj "odsylacz do naszego drzewa"     "// liczbe pilnuje testy/silnik-test.php" "ścieżka naszego drzewa roboczego"
+slad_probuj "numer PR-a i recenzent"         "// uwaga recenzenta do PR #133" "nasz obieg pracy"
+# BLIZNIAK: to samo o naszym obiegu, ale BEZ slowa "recenzja" i bez numeru PR-a.
+# Wzorzec 1.0.0 tego nie widzial i zostawil taki komentarz w Segregatorze.
+slad_probuj "nasze slownictwo bez numeru zgloszenia" "// zarzut z pierwszej rundy krytyk" "nasz obieg pracy"
+slad_probuj "sciaga egzaminatora w komentarzu"       "// klasa #1 sciagi egzaminatora" "nasz obieg pracy"
+
+# Lista zaleglosci ma sie KURCZYC, a nie gnic: wpis, ktory do niczego nie pasuje,
+# jest czerwony. Inaczej po refaktorze zostaje spis rzeczy, ktorych juz nie ma.
+cp -r wtyczki/chatbot-live/. "$KOPIA_WTYCZKI/"
+MARTWA_LISTA="$PIASKOWNICA/zaleglosci.txt"
+echo "chatbot-live|includes/silnik.php|// slad, ktorego juz dawno nie ma" > "$MARTWA_LISTA"
+WYJ=$(SLADY_ZALEGLOSCI="$MARTWA_LISTA" bash "$SKANER" chatbot-live "$KOPIA_WTYCZKI" 2>&1); KOD=$?
+if [ "$KOD" -ne 0 ] && printf '%s' "$WYJ" | grep -qF "MARTWY"; then
+	printf '  OK   zlapane: %-56s (EXIT=%d)\n' "martwy wpis na liscie zaleglosci" "$KOD"
+else
+	printf '  BLAD PRZESZLO NIEZAUWAZONE: %-42s (EXIT=%d)\n' "martwy wpis na liscie zaleglosci" "$KOD"; BLEDY=$((BLEDY+1))
+fi
+
+# Kontrola odwrotna DLA TEJ bramki: czysta wtyczka ma przechodzic, inaczej
+# „naprawa" polegalaby na krzyczeniu na wszystko.
+cp -r wtyczki/chatbot-live/. "$KOPIA_WTYCZKI/"
+if SLADY_ZALEGLOSCI=/dev/null bash "$SKANER" chatbot-live "$KOPIA_WTYCZKI" > /dev/null 2>&1; then
+	echo "  OK   czysta wtyczka przechodzi skan sladow (EXIT=0)"
+else
+	echo "  BLAD czysta wtyczka NIE przechodzi skanu sladow"; BLEDY=$((BLEDY+1))
+fi
+rm -rf "$PIASKOWNICA"
 
 echo
 echo "=== KONTROLA ODWROTNA: czysty stan ma przechodzic ==="

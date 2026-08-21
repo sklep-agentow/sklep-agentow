@@ -31,8 +31,8 @@ function segm_strony() {
 /**
  * Baner przy pierwszym wejściu do panelu: uczciwie, czym ten bot JEST.
  *
- * Zarzut z pierwszej rundy krytyk brzmiał „nazywa się segregator, a nie
- * segreguje" — bo nazwa i karta produktu sugerują wpięcie do skrzynki.
+ * Najczęstszy zarzut brzmi „nazywa się segregator, a nie segreguje" — bo nazwa
+ * i karta produktu sugerują wpięcie do skrzynki.
  * Prawda musi stać na wierzchu, a nie kilka ekranów niżej, więc baner wisi na
  * KAŻDEJ stronie wtyczki, dopóki właściciel go nie schowa.
  *
