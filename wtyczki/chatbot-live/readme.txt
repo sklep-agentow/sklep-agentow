@@ -26,7 +26,11 @@ zmyślonej odpowiedzi zamiast przyznania się do niewiedzy.
   „zostaw wiadomość" — gość zawsze ma ścieżkę do człowieka.
 * Bazę 10 gotowych par pytanie-odpowiedź typowej polskiej firmy usługowej —
   bot odpowiada od pierwszej minuty, a Ty podmieniasz treści na swoje.
-* Panel: baza Q&A, zgłoszenia z czatu, historia rozmów, ustawienia.
+* Panel: baza Q&A, zgłoszenia z czatu, historia rozmów, **rozmowy na żywo**,
+  ustawienia.
+* **Możesz przejąć rozmowę osobiście** — na podstronie „Rozmowy na żywo" widzisz,
+  kto właśnie pisze, i jednym przyciskiem przejmujesz rozmowę. Bot wtedy milczy,
+  żeby nie wpadać Ci w słowo; po 5 minutach Twojego milczenia rozmowa wraca do bota.
 * **Statystyki i luki** — ile pytań przyszło, na ile bot odpowiedział, jaki to
   procent, ile rozmów skończyło się zebraniem kontaktu. Najważniejsze: lista
   pytań, na które bot **nie znał odpowiedzi**, pogrupowana w tematy, z przyciskiem

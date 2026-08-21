@@ -1233,7 +1233,10 @@ a kod robiłby drugie. Strażnik pilnuje tego osobnym krokiem.
 
 Rzeczy, których wtyczka **nie** robi — żeby nikt nie szukał ich w kodzie:
 
-- **Bez czatu z operatorem na żywo** i bez integracji z Messengerem/WhatsAppem.
+- **Bez integracji z Messengerem/WhatsAppem.** Czat operatora na żywo **jest** —
+  przejęcie rozmowy z panelu opisuje rozdział **Przejęcie rozmowy przez człowieka**;
+  ta lista mówiła co innego do wersji 1.5.7 włącznie i była wtedy sprzeczna z tamtym
+  rozdziałem w tym samym pliku.
 - **Bez pamięci między wizytami** — sesja żyje w `sessionStorage` karty przeglądarki.
   W trakcie **jednej** rozmowy tryb AI pamięta ostatnie `CHATL_AI_PAMIEC_WYMIAN` wymian
   (rozdział **Pamięć bieżącej rozmowy w trybie AI**); tryb regułowy pozostaje bezstanowy z natury — dopasowuje pojedyncze pytanie.
