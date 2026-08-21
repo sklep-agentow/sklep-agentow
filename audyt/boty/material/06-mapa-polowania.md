@@ -56,4 +56,7 @@
 - ⬜ „Co, jeśli właściciel wyłączy zadania cykliczne (`DISABLE_WP_CRON`)"
 
 ---
-**LICZNIK:** 34 cele. Zamknięte: 0. ⛔ Audyt trwa, dopóki licznik nie pokaże 34/34.
+**LICZNIK:** 36 celów. Zamknięte: 0. ⛔ Audyt trwa, dopóki licznik nie pokaże 36/36.
+<!-- Poprawione 21.08 przez koordynatorke: bylo „34", a policzenie pozycji celow daje 36
+     (A1=6, A2=5, A3=6, A4=5, A5=4, A6=5, L=5). Zanizony licznik pozwolilby zamknac audyt
+     przy dwoch celach nietknietych. Sprawdzenie: grep -c "^- " na sekcjach tego pliku. -->
