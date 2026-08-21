@@ -7,7 +7,7 @@
  * fallback ?sklepag_produkt=slug działa zawsze (permalinki wyłączone też).
  * KAŻDY produkt dostaje pełną stronę z pól bazy (kryterium #7: nowy produkt
  * bez zmian kodu); dwa znane slugi dostają DODATKOWO bogate sekcje
- * (boty/TRESC-STRON-PRODUKTOW.md — problem/kroki/dowody/FAQ/mockupy).
+ * (układ sekcji: problem/kroki/dowody/FAQ/mockupy).
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -26,7 +26,7 @@ function sklepag_query_vars( $vars ) {
 add_filter( 'query_vars', 'sklepag_query_vars' );
 
 /**
- * Slug strony sklepu z opcji (krytyk #4: hardkod „sklep" pęka przy „-2").
+ * Slug strony sklepu z opcji (hardkod „sklep" pęka przy „-2").
  */
 function sklepag_slug_strony_sklepu() {
 	$id = (int) get_option( 'sklepag_strona_sklep' );
@@ -99,7 +99,7 @@ function sklepag_tresc_produktu( $slug ) {
 			'pasek_glowa'  => 'BOT · ONLINE',
 			'pasek'        => 'ODPOWIADA 24/7',
 			// Człon „przetestuj" tylko gdy bąbelek REALNIE widoczny: wtyczka aktywna
-			// I włącznik w jej ustawieniach ON (recenzja #52 — sama aktywność nie
+			// I włącznik w jej ustawieniach ON (sama aktywność nie
 			// gwarantuje widgetu; właściciel może go wyłączyć bez deaktywacji).
 			'pasek_zywy'   => ( function_exists( 'chatl_ustawienia' ) && ! empty( chatl_ustawienia()['wlaczony'] ) ) ? ' — PRZETESTUJ: BĄBELEK W ROGU' : '',
 			'problem_t'    => 'Te same pytania. Codziennie.',
@@ -246,7 +246,7 @@ function sklepag_figure_zrzutu( $zrzut, $klasa, $z_podpisem, $z_paskiem = true )
 	// Modyfikator per produkt (kadr okna karty ustawiany w CSS, np. dolna
 	// część okna czatu zamiast uciętego nagłówka). Sufiks ZAWSZE na bazowym
 	// (pierwszym) członie klasy — przy wieloczłonowym $klasa doklejanie do
-	// całości dublowało tokeny i celowało w zły człon (recenzja #60).
+	// całości dublowało tokeny i celowało w zły człon.
 	$czlony = explode( ' ', $klasa );
 	$klasa .= ' ' . $czlony[0] . '--' . sanitize_html_class( pathinfo( $zrzut['plik'], PATHINFO_FILENAME ) );
 	$html   = '<figure class="' . esc_attr( $klasa ) . '">';
@@ -409,7 +409,7 @@ function sklepag_render_produkt( $slug ) {
 			$html .= '</section>';
 		}
 
-		// ILE CZASU ODZYSKUJESZ (S-03; krytyk #9 — dedykowane miejsce).
+		// ILE CZASU ODZYSKUJESZ (S-03 — dedykowane miejsce).
 		$html .= '<section class="sklepag-sekcja"><p class="sklepag-mono-etykieta">[ ILE CZASU ODZYSKUJESZ ]</p>';
 		$html .= '<div class="sklepag-dowody">';
 		foreach ( $t['dowody'] as $d ) {

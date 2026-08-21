@@ -23,11 +23,11 @@ function sklepag_rate_limit( $akcja, $prog = 10 ) {
 	$okno  = (int) floor( time() / MINUTE_IN_SECONDS );
 	$klucz = $akcja . '|' . $okno . '|' . md5( sklepag_ip() );
 
-	// Inkrementacja MUSI być atomowa (recenzja PR #33): para get/set transient
+	// Inkrementacja MUSI być atomowa: para get/set transient
 	// gubi żądania równoległe — zmierzone 40/40 przepuszczonych przy progu 30.
 	// Odczyt WŁASNEJ wartości przez LAST_INSERT_ID(expr) — osobny SELECT licznik
 	// miał mikro-okno wyścigu (A czytał wartość zawyżoną przez równoległe B;
-	// recenzja PR #40, wzorzec przeniesiony z chatl_rate_limit).
+	// wzorzec przeniesiony z chatl_rate_limit).
 	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
 	$wynik = $wpdb->query(
 		$wpdb->prepare(
@@ -41,7 +41,7 @@ function sklepag_rate_limit( $akcja, $prog = 10 ) {
 	// wtedy MySQL zwraca 2 (nigdy 0 „bez zmian"). Gdyby ktoś kiedyś zmienił
 	// wyrażenie ON DUPLICATE KEY UPDATE na takie, które może zostawić licznik bez
 	// zmiany, gałąź `else` fałszywie zgłosiłaby awarię i przepuściła nadmiar
-	// (fail-open). Dziś licznik+1 to gwarantuje (uwaga recenzji #57).
+	// (fail-open). Dziś licznik+1 to gwarantuje.
 	if ( 1 === $wynik ) {
 		$ile = 1; // Świeży wiersz w tym oknie (INSERT zwraca 1).
 	} elseif ( 2 === $wynik ) {
@@ -381,7 +381,7 @@ function sklepag_wyslij_mail_sklepu( $adresat, $temat, $tresc ) {
 	try {
 		return wp_mail( $adresat, $temat, $tresc );
 	} finally {
-		// Filtry schodzą też przy rzucie z wp_mail — nie mogą wisieć na resztę żądania (recenzja PR #43).
+		// Filtry schodzą też przy rzucie z wp_mail — nie mogą wisieć na resztę żądania.
 		remove_filter( 'wp_mail_from', 'sklepag_filtr_nadawca_email' );
 		remove_filter( 'wp_mail_from_name', 'sklepag_filtr_nadawca_nazwa' );
 	}
@@ -418,9 +418,9 @@ function sklepag_status_zamowienia( WP_REST_Request $zadanie ) {
 
 /**
  * @param int $budzet_s Budżet CZASU ściany w sekundach dla wywołań SYNCHRONICZNYCH
- *                      (self-heal/przycisk na dashboardzie — recenzja PR #44: worst-case
+ *                      (self-heal/przycisk na dashboardzie: worst-case
  *                      40 requestów × 15 s timeout przekroczyłby max_execution_time
- *                      hostingu i wywalił render; ściąga egzaminatora: „100 s > 30 s").
+ *                      hostingu i wywalił render: „100 s > 30 s").
  *                      0 = bez limitu (WP-cron — kontekst tolerancyjny na czas).
  *                      Niedociągnięte w budżecie zostają na następny bieg (idempotentne).
  */
@@ -445,7 +445,7 @@ function sklepag_dociagnij_zalegle( $budzet_s = 0 ) {
 
 	foreach ( $sesje as $sid ) {
 		if ( $po_budzecie() ) {
-			break; // Resztę dociągnie cron — render admina nie może wisieć (PR #44).
+			break; // Resztę dociągnie cron — render admina nie może wisieć.
 		}
 		$sesja = sklepag_stripe_pobierz_sesje( $sid );
 		if ( is_wp_error( $sesja ) ) {
@@ -459,7 +459,7 @@ function sklepag_dociagnij_zalegle( $budzet_s = 0 ) {
 		}
 	}
 
-	// 2) ZAMÓWIENIA niedomknięte (KRYTYCZNA z recenzji PR #33): sesja dostaje stan
+	// 2) ZAMÓWIENIA niedomknięte: sesja dostaje stan
 	// 'oplacona' zaraz po CAS-ie płatności — ZANIM mail wyjdzie — więc pętla wyżej
 	// nigdy nie widzi zamówień uwięzionych w mail_blad (pad wysyłki) ani mail_w_toku
 	// (pad procesu). Podnosimy je tu TYM SAMYM silnikiem: CAS + stale-claim same

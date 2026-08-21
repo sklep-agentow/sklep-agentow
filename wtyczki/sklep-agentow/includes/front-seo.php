@@ -13,10 +13,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Produkt bieżącego widoku (null poza stroną produktu).
- * TYLKO na stronie sklepu (recenzja #52, WAŻNA): bez tego warunku KAŻDY adres
+ * TYLKO na stronie sklepu: bez tego warunku KAŻDY adres
  * z doklejonym ?sklepag_produkt= przejmował title/canonical/OG/JSON-LD produktu
  * (zmierzone na /kontakt/ przed naprawą). Slug przez sanitize_title — ta sama
- * sanityzacja co w renderze (recenzja #52, drobna).
+ * sanityzacja co w renderze.
  */
 function sklepag_seo_biezacy_produkt() {
 	if ( ! is_page( (int) get_option( 'sklepag_strona_sklep' ) ) ) {
@@ -97,7 +97,7 @@ function sklepag_seo_head() {
 	echo '<meta name="twitter:description" content="' . esc_attr( $opis ) . '">' . "\n";
 	echo '<meta name="twitter:image" content="' . esc_url( $okladka ) . '">' . "\n";
 
-	// JSON-LD: Product (image WYMAGANE przez Google — krytyk #6) + okruszki.
+	// JSON-LD: Product (image WYMAGANE przez Google) + okruszki.
 	$sklep_url = get_permalink( (int) get_option( 'sklepag_strona_sklep' ) );
 	$ld        = array(
 		array(
@@ -176,7 +176,7 @@ function sklepag_seo_noindex_dziekujemy( $roboty ) {
 add_filter( 'wp_robots', 'sklepag_seo_noindex_dziekujemy' );
 
 /**
- * Provider sitemap dla produktów (własna tabela ≠ CPT — krytyk #5;
+ * Provider sitemap dla produktów (własna tabela ≠ CPT;
  * oficjalne API rdzenia: WP_Sitemaps_Provider).
  */
 function sklepag_seo_rejestruj_sitemap() {

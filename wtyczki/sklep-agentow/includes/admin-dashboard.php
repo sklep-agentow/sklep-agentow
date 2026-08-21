@@ -1,6 +1,6 @@
 <?php
 /**
- * Dashboard „jak dobre sklepy" (K3c; wzorce audyt/WZORCE-DASHBOARD-K3.md):
+ * Dashboard „jak dobre sklepy" — wzorowany na sklepach, które to robią dobrze:
  * karty KPI z porównaniem % do poprzedniego okresu → rozkład zakupów
  * w czasie (S-04) → tabela zamówień → eksport CSV z aktualnych filtrów.
  * Do tego: notice o zamówieniach z nieudaną wysyłką (panel-czerwone, plan §6),
@@ -194,7 +194,7 @@ function sklepag_dashboard_self_heal() {
 		return;
 	}
 	update_option( 'sklepag_reconciliation_ostatnia', time(), false );
-	sklepag_dociagnij_zalegle( 8 ); // Budżet czasu: render admina nie może wisieć (PR #44); resztę dociągnie cron.
+	sklepag_dociagnij_zalegle( 8 ); // Budżet czasu: render admina nie może wisieć; resztę dociągnie cron.
 }
 
 add_action( 'admin_post_sklepag_dociagnij', 'sklepag_obsluz_dociagnij' );
@@ -478,7 +478,7 @@ function sklepag_rozklad_w_czasie( $okres, $g ) {
 		);
 		// Od $i=0: dzień $start (kalendarzowa data $g['od'], częściowy) TEŻ dostaje
 		// słupek — zapytanie go łapie (utworzono >= od), a wykres bez niego
-		// przeczyłby karcie KPI (off-by-one — recenzja PR #44). Słupków jest dni+1.
+		// przeczyłby karcie KPI (off-by-one). Słupków jest dni+1.
 		$etykiety = array();
 		$start    = strtotime( substr( $g['od'], 0, 10 ) );
 		for ( $i = 0; $i <= $g['dni']; $i++ ) {
