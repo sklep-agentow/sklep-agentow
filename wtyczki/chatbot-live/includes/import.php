@@ -56,7 +56,7 @@ function chatl_import_klucz() {
  * czyta plik jako windows-1250), więc plik, który najczęściej tu wróci, zaczyna
  * się od tych trzech bajtów.
  *
- * Uczciwie o sile tej funkcji, bo próba kontrolna to zmierzyła: jej usunięcie
+ * Uczciwie o sile tej funkcji, bo zostało to zmierzone: jej usunięcie
  * NIE psuje dziś importu. Nagłówek przeżyłby i bez niej, bo
  * chatl_import_klucz_kolumny() zamienia bajty BOM-u na „_" i obcina je razem
  * z podkreśleniami. To jest jednak zbieg okoliczności w normalizacji nazw,

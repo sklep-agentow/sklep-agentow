@@ -564,10 +564,9 @@ function chatl_log_bledu_ai( $odp, $kod ) {
  * Zjazd do trybu regułowego z zostawieniem ŚLADU dla właściciela.
  *
  * Istnieje po to, żeby nie dało się dopisać kolejnego `return null` i zapomnieć
- * o znaczniku — dokładnie to zdarzyło się przy pierwszej wersji tej naprawy
- * (uwaga recenzenta do PR #79): ścieżki „HTTP 200, ale ciało nie do odczytania"
- * zwracały null bez wpisu, czyli awaria znowu była cicha, choć PR miał ją
- * właśnie uwidocznić.
+ * o znaczniku — dokładnie to zdarzyło się przy pierwszej wersji tej naprawy:
+ * ścieżki „HTTP 200, ale ciało nie do odczytania" zwracały null bez wpisu,
+ * czyli awaria znowu była cicha, choć naprawa miała ją właśnie uwidocznić.
  *
  * @param array|WP_Error $odp Odpowiedź wp_remote_post().
  * @param int            $kod Kod HTTP (0 = błąd połączenia).
@@ -654,12 +653,12 @@ function chatl_ai_odpowiedz( $pytanie, $historia = array() ) {
 
 	/*
 	 * Zuzycie zapisujemy TU, w jednym miejscu, zanim rozgalezimy sie na
-	 * przypadki (uwaga recenzenta do PR #83). Kod 200 znaczy, ze dostawca
+	 * przypadki. Kod 200 znaczy, ze dostawca
 	 * wywolanie WYKONAL i je POLICZYL — rachunek przyszedl niezaleznie od tego,
 	 * czy tresc da sie uzyc, czy model odmowil, czy bloki wyszly puste.
 	 * Naliczanie dopiero przy udanej odpowiedzi zostawialo trzy sciezki, ktore
 	 * kosztowaly wlasciciela, a byly niewidoczne dla OBU stop-lossow naraz —
-	 * i to w PR, ktory jest wlasnie o liczeniu kosztu.
+	 * i to w zmianie, ktora jest wlasnie o liczeniu kosztu.
 	 *
 	 * Przy ciele nie do odczytania tokenow nie ma skad wziac (pole `usage`
 	 * poszlo razem z reszta odpowiedzi), wiec liczymy samo wywolanie: lepiej
@@ -672,7 +671,7 @@ function chatl_ai_odpowiedz( $pytanie, $historia = array() ) {
 	}
 	if ( isset( $dane['stop_reason'] ) && 'refusal' === $dane['stop_reason'] ) {
 		// Odmowa modelu to poprawne dzialanie produktu, wiec znacznika awarii
-		// NIE stawiamy (granica z PR #79) — ale zuzycie jest juz zaliczone wyzej.
+		// NIE stawiamy (granica swiadoma) — ale zuzycie jest juz zaliczone wyzej.
 		return CHATL_AI_BRAK;
 	}
 
