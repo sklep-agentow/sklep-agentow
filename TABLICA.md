@@ -19,7 +19,7 @@ pod `flock /root/praca/zlecenia/wymiana/stos.lock`. Max **3 sesje Claude naraz**
 
 ### Stan rejestru na start etapu (23.08, po pomiarze)
 **23 OTWARTE · 1 W NAPRAWIE (LS-F2) · 0 ZAMKNIĘTE naprawdę** — A2-F1/F2/F3 wróciły na OTWARTE po uruchomieniu
-`test-awaria-zapisu.php` na `main` (PADA 3/6, EXIT=1; #136 naprawił sąsiedni problem). Dług strażników 7.
+`test-awaria-zapisu.php` na `main` (PADA 3/6, EXIT=1; #136 naprawił sąsiedni problem). Dług strażników 11 (cztery wpisy z rejestru okazały się sondami bez exit 1).
 Linia bazowa testów PRZED: `audyt/LINIA-BAZOWA-TESTOW.md` [baza-766b4c9].
 
 ## 🔴 POZYCJA NUMER JEDEN — CI NIE URUCHAMIA ŻADNEGO TESTU

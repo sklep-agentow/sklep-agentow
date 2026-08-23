@@ -11,7 +11,7 @@ Zamknąć znaleziska rejestru tak, żeby: test, który padał, przechodzi (stra�
 nie pada · dokumentacja mówi prawdę · cudze oko raz na końcu.
 **Koniec = skrypt, nie deklaracja:** `narzedzia-qa/linia-bazowa.sh koniec` na `main`@SHA uruchomiony przez koordynatorkę:
 wszystkie testy wskazane w rejestrze EXIT=0 i zero regresji vs linia bazowa; rejestr bez wierszy OTWARTE **i** W NAPRAWIE
-(bramka `znaleziska` liczy oba — jedna linia do dopisania w K0); `bramki.sh` EXIT=0; na końcu `dowod-z-paczki.sh` +
+(sprawdzane komendą koordynatorki: `grep -c '| W NAPRAWIE |' audyt/REJESTR-ZNALEZISK.md` = 0 — bramki NIE zmieniamy, lekko); `bramki.sh` EXIT=0; na końcu `dowod-z-paczki.sh` +
 `dowod-zachowania-*.sh` EXIT=0 NA NOWEJ PACZCE (1.5.9 / 1.3.2, bump raz, na końcu).
 
 ## 1. JAK NIE ZEPSUĆ CZEGOŚ INNEGO — lekko, ale maszynowo
@@ -107,7 +107,7 @@ Legenda dowodu: **[T]** = test zamrożony ma przejść · **[P]** = test zamroż
 
 ### koordynatorka
 **K0 (przed startem builderów, JEDEN PR `chore: etap 3 — prawda w rejestrze, przyrząd, briefing`):**
-1. Rejestr: A2-F1/F2/F3 → OTWARTE (licznik 20→23 świadomie, dowód EXIT=1 w opisie); A4-F1/F2 kolumna test → istniejące `a4-*.js` (dług 9→7); nowa sekcja **„DO ODTWORZENIA (poza licznikiem)"**: WK-1,3,4,5,8,13,15,17 (ze zdaniem dziennika) + T-1,T-3,T-4 + A3-3; bramka `znaleziska` liczy też W NAPRAWIE (1 linia + próba kontrolna); sekcja „PROPOZYCJE DO DZIDKA" → `PONAD-SPECYFIKACJE-BOTY.md` (noscript, WK-9, WK-11/18, minimalizacja danych, L8).
+1. Rejestr: A2-F1/F2/F3 → OTWARTE (licznik 20→23 świadomie, dowód EXIT=1 w opisie); A4-F1/F2/LS-F1/LS-F2 kolumna test → „BRAK — do dopisania (sonda…)”, bo `a4-*.js` i `repro/*.php` to SONDY z EXIT zawsze 0 (dług 9→11 świadomie); nowa sekcja **„DO ODTWORZENIA (poza licznikiem)"**: WK-1,3,4,5,8,13,15,17 (ze zdaniem dziennika) + T-1,T-3,T-4 + A3-3; bramka `znaleziska` liczy też W NAPRAWIE (1 linia + próba kontrolna); sekcja „PROPOZYCJE DO DZIDKA" → `PONAD-SPECYFIKACJE-BOTY.md` (noscript, WK-9, WK-11/18, minimalizacja danych, L8).
 2. `audyt/PLAN-NAPRAW.md` (ten plik), `audyt/BRIEFING-NAPRAWY.md`, `narzedzia-qa/kto-wola.sh`, `narzedzia-qa/linia-bazowa.sh` (z mariadb-dump przez `strona_wp_db`), scalenie gałęzi `koord/przelot-czlowieka` (`PRZELOT-CZLOWIEKA.md` nie jest na main — F4).
 3. Hasło `admin_roboczy` odświeżone (testy panelu). **Linia bazowa PRZED** (`linia-bazowa.sh baza-<sha>`), dowody zachowania PRZED na paczkach 1.5.8/1.3.1 (EXIT do `LINIA-BAZOWA-TESTOW.md`).
 4. Worktree b1/b2 ze świeżego `main` po scaleniu K0, okna tmux `builder1`/`builder2` (krytyk → `/clear` → builder1), strażnik w tle, TABLICA.

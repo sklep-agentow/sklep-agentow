@@ -28,6 +28,9 @@
 #    PODMIENIAJĄ kod wtyczki w kontenerze, mierzą przyrząd, nie produkt), `seed-demo.sh`,
 #    `zrzuty-panelu.js`, `svg-pomiar-tekstow.js` (narzędzia), `testy/e2e/` (sklep, poza etapem).
 #    Pominięte są WYPISANE w wyniku — pominięcie ciche wyglądałoby jak „sprawdzone".
+# ⚠️ Przywrócenie bazy z zrzutu mariadb-dump robi DROP tylko tabel, które istniały w chwili zrzutu —
+#    tabela dopisana przez test w trakcie przebiegu PRZEŻYJE przywrócenie (sierota, nieszkodliwa, ale bądź świadom).
+# ⚠️ Etykieta to nazwa NADANA przez wołającego; SHA w wyniku to HEAD drzewa w chwili przebiegu — wierz SHA.
 set -u
 
 KONTENER=strona_wp_wordpress
@@ -48,7 +51,7 @@ if [ "${1:-}" = "--porownaj" ]; then
 		if [ "$exit_a" != "0" ] && [ "$exit_b" = "0" ]; then echo "✅ NAPRAWA   $nazwa  $exit_a → $exit_b"; NAPRAWY=$((NAPRAWY+1)); fi
 	done < "$B"
 	while IFS=$'\t' read -r nazwa _; do
-		grep -q "^$nazwa	" "$B" || echo "ZNIKNĄŁ   $nazwa (był w $A, nie ma w $B)"
+		awk -F'\t' -v n="$nazwa" '$1==n{f=1} END{exit !f}' "$B" || echo "ZNIKNĄŁ   $nazwa (był w $A, nie ma w $B)"
 	done < "$A"
 	echo "porównanie: regresje=$REGRESJE naprawy=$NAPRAWY"
 	[ "$REGRESJE" -eq 0 ]; exit $?
@@ -127,7 +130,7 @@ echo "--- audyt/boty/testy-audytu + repro (przywracanie bazy po każdym) ---"
 for t in audyt/boty/testy-audytu/*.php audyt/boty/repro/*.php; do [ -f "$t" ] && uruchom "$t" php tak; done
 for t in audyt/boty/testy-audytu/*.js; do [ -f "$t" ] && uruchom "$t" js tak; done
 for t in audyt/boty/testy-audytu/*.sh; do [ -f "$t" ] && uruchom "$t" sh tak; done
-echo "POMINIĘTE (sklep, poza etapem): testy/e2e/*"; printf 'testy/e2e/*\tPOMINIETE\t0\n' >> "$TSV"
+echo "POMINIĘTE (sklep, poza etapem): testy/e2e/ (katalog)"; printf 'testy/e2e/\tPOMINIETE\t0\n' >> "$TSV"
 
 echo "--- przywracam bazę i kod wtyczek z HEAD ---"
 przywroc_baze; przywroc_kod

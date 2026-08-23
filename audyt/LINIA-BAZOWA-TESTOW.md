@@ -78,9 +78,9 @@
 | `audyt/boty/testy-audytu/DK-dwa-zrodla-pulapka.sh` | 1 | 4 |
 | `audyt/boty/testy-audytu/DK-rownolegle-liczniki.sh` | 1 | 8 |
 | `audyt/boty/testy-audytu/DK-znaki-pola.sh` | 0 | 4 |
-| `testy/e2e/*` | POMINIETE | 0 |
+| `testy/e2e/` | POMINIETE | 0 |
 
-Logi: `/root/praca/zlecenia/wymiana/linia-bazowa-logi/baza-766b4c9/`. Plik porównań: `audyt/linia-bazowa/baza-766b4c9.tsv`.
+Logi: `/root/praca/zlecenia/wymiana/linia-bazowa-logi/baza-766b4c9/`. Plik porównań: `audyt/linia-bazowa/baza-766b4c9.tsv`. ⚠️ Etykieta `baza-766b4c9` = kod wtyczek z main 766b4c9; HEAD drzewa w chwili przebiegu to bbb4b03 (766b4c9 + cherry-pick `audyt/PRZELOT-CZLOWIEKA.md`, kod wtyczek identyczny).
 
 ### Uwagi do [baza-766b4c9] — co pada i DLACZEGO (23.08, koordynatorka)
 Oczekiwane (strażnicy OTWARTYCH znalezisk, mają przejść po naprawach): `a6-deklaracja-vs-ladunek-ai.php` (A6-F1) ·
