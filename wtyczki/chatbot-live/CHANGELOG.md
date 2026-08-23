@@ -27,7 +27,10 @@ migracja odpala się sama przy pierwszym wejściu do panelu po aktualizacji
   bez limitu: skrypt z wypełnioną pułapką albo zepsutym nonce'em przechodził 30 z 30 przy
   progu 10, a każde żądanie pisało do bazy — bot miał drogę tańszą niż uczciwy gość.
   Kubły są osobne, więc złapane nie zjadają limitu prawdziwego klienta, a odmowa wygląda
-  identycznie jak zwykłe przekroczenie limitu (pułapka pozostaje niewykrywalna).
+  identycznie jak zwykłe przekroczenie limitu (pułapka pozostaje niewykrywalna). Na ścieżce
+  odrzuconego zabezpieczenia limit dotyczy **wyłącznie zapisu**: odpowiedź powyżej progu jest
+  ta sama, więc czat na stronie z cache dalej naprawia się sam — także wtedy, gdy witryna stoi
+  za proxy i wszyscy goście dzielą jeden adres.
 - **Odinstalowanie nie zostawia już opcji `chatl_pulapka`** (dokumentacja obiecywała pustą
   różnicę bazy, a opcja przeżywała pełne czyszczenie).
 - **„Zapisano" dopiero po zmierzonym zapisie** (audyt A2, F1–F3). Przy odrzuconym

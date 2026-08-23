@@ -284,16 +284,23 @@ function chatl_wymagaj_nonce() {
 		return;
 	}
 	/*
-	 * Zły nonce też ma swój kubeł (P2-Z3 / LC-F2): ta ścieżka była jedyną
-	 * bez limitu — skrypt z zepsutym noncem przechodził 30/30 przy progu 10,
-	 * a każde żądanie kończyło się zapisem. Osobny kubeł, nie wspólny „chat":
-	 * gość ze stroną z cache odświeża nonce i powtarza pytanie, więc odrzucenie
-	 * nie może zjadać jego właściwego limitu. Powyżej progu 429 bez zapisu.
+	 * Zły nonce też ma swój kubeł (P2-Z3 / LC-F2): ta ścieżka była jedyną bez
+	 * limitu — skrypt z zepsutym noncem przechodził 30/30 przy progu 10, a każde
+	 * żądanie kończyło się ZAPISEM do bazy. Osobny kubeł, nie wspólny „chat",
+	 * żeby odrzucenie nie zjadało właściwego limitu gościa.
+	 *
+	 * ⛔ Limit dotyczy WYŁĄCZNIE zapisu zdarzenia, nigdy KSZTAŁTU odpowiedzi.
+	 * Widget rozpoznaje „zły nonce" tylko po `kod === 'nonce'` (widget.js,
+	 * `toZlyNonce()`) i tylko wtedy dociąga świeży nonce i ponawia pytanie.
+	 * Odpowiedź bez tego klucza wyłączyłaby samonaprawę — a to jest dokładnie
+	 * luka L1: witryna za proxy z wyłączonym zaufaniem nagłówkom ma JEDEN kubeł
+	 * dla wszystkich gości, więc przy stronie z cache 11. gość na minutę
+	 * dostałby twardą odmowę zamiast cichego odświeżenia. Powyżej progu
+	 * odpowiadamy więc TAK SAMO, tylko bez dopisywania zdarzenia do bazy.
 	 */
-	if ( ! chatl_rate_limit( 'nonce-odrzucony', CHATL_LIMIT_NA_MIN ) ) {
-		wp_send_json_error( array( 'komunikat' => 'Za dużo żądań w krótkim czasie — odczekaj chwilę i spróbuj ponownie.' ), 429 );
+	if ( chatl_rate_limit( 'nonce-odrzucony', CHATL_LIMIT_NA_MIN ) ) {
+		chatl_odnotuj_odrzucony_nonce();
 	}
-	chatl_odnotuj_odrzucony_nonce();
 	wp_send_json_error(
 		array(
 			'komunikat' => 'Sesja formularza wygasła — odświeżam i próbuję ponownie.',
@@ -603,7 +610,6 @@ function chatl_ajax_zgloszenie() {
 		if ( ! chatl_rate_limit( 'pulapka', CHATL_LIMIT_PULAPKA ) ) {
 			wp_send_json_error( array( 'komunikat' => 'Za dużo wiadomości w krótkim czasie — odczekaj chwilę i spróbuj ponownie.' ), 429 );
 		}
-		chatl_odnotuj_pulapke( $pulapka, 'zgloszenie' );
 	}
 
 	if ( '' === $pulapka && ! chatl_limit_ip_ok() ) {
@@ -680,6 +686,20 @@ function chatl_ajax_zgloszenie() {
 			array( 'komunikat' => 'Nie udało się zapisać wiadomości — przepraszamy. Spróbuj ponownie za chwilę albo napisz do nas mailem.' ),
 			500
 		);
+	}
+
+	/*
+	 * Zdarzenie pułapki dopisujemy DOPIERO TERAZ, po udanym zapisie zgłoszenia —
+	 * bo pasek w panelu obiecuje na jego podstawie WIERSZE do obejrzenia pod
+	 * filtrem „podejrzane". Zapis wcześniej (przed walidacją) liczyłby też
+	 * żądania, które kończą się bez wiersza: wyłączony czat, zły adres e-mail,
+	 * pusta treść, brak zgody, padnięty INSERT — a bot wypełniający pole na
+	 * ślepo zwykle nie poda ani adresu, ani zgody. Licznik znów obiecywałby
+	 * wiersze, których nie ma (DK-1). Sufit zapisu stoi WYŻEJ i działa
+	 * niezależnie: powyżej progu żądanie kończy się, zanim tu dojdzie.
+	 */
+	if ( '' !== $pulapka ) {
+		chatl_odnotuj_pulapke( $pulapka, 'zgloszenie' );
 	}
 
 	/*

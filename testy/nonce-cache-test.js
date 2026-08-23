@@ -31,15 +31,22 @@ function wp(args) {
     return execFileSync('docker', ['exec', '-u', 'www-data', KONTENER, 'wp'].concat(args), { encoding: 'utf8' }).trim();
   } catch (e) { return ''; }
 }
+/* Od schematu 8 odrzucone nonce'y sa WIERSZAMI w {prefix}chatl_zdarzenia
+   (rodzaj 'nonce'), a nie licznikiem w opcji chatl_blad_nonce: licznik w
+   wp_options gubil rownolegle zapisy. Czytamy wiec COUNT(*) z tabeli. */
 function licznikOdrzucen() {
-  const s = wp(['option', 'get', 'chatl_blad_nonce', '--format=json']);
-  try { return JSON.parse(s).ile; } catch (e) { return 0; }
+  const s = wp(['eval', 'global $wpdb; echo (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}chatl_zdarzenia WHERE rodzaj = \'nonce\'" );']);
+  const n = parseInt(s, 10);
+  return Number.isFinite(n) ? n : 0;
+}
+function skasujOdrzucenia() {
+  wp(['eval', 'global $wpdb; $wpdb->query( "DELETE FROM {$wpdb->prefix}chatl_zdarzenia WHERE rodzaj = \'nonce\'" );']);
 }
 
 (async () => {
   const user = process.env.WP_ADMIN_USER, pass = process.env.WP_ADMIN_PASS;
   if (!user || !pass) { console.error('Brak WP_ADMIN_USER/WP_ADMIN_PASS w env.'); process.exit(1); }
-  wp(['option', 'delete', 'chatl_blad_nonce']);
+  skasujOdrzucenia();
 
   console.log('[A] serwer: zle zabezpieczenie -> rozpoznawalna odmowa + slad dla wlasciciela');
   const przed = licznikOdrzucen();

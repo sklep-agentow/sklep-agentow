@@ -103,7 +103,7 @@ cpl_sprzataj();
 echo "\n=== C. DK-1: licznik i lista podejrzanych zgłoszeń mówią to samo ===\n";
 $ts = $wpdb->prefix . 'chatl_sesje';
 $tz = $wpdb->prefix . 'chatl_zgloszenia';
-$wpdb->insert( $ts, array( 'sesja' => $cpl_sesja_stara, 'stan' => 'bot', 'klucz_hash' => '', 'utworzono' => gmdate( 'Y-m-d H:i:s', (int) current_time( 'timestamp' ) - 600 ), 'aktywnosc' => current_time( 'mysql' ) ) ); // phpcs:ignore
+$wpdb->insert( $ts, array( 'sesja' => $cpl_sesja_stara, 'stan' => 'bot', 'klucz_hash' => wp_hash( 'cpl' ), 'utworzono' => gmdate( 'Y-m-d H:i:s', (int) current_time( 'timestamp' ) - 600 ), 'aktywnosc' => current_time( 'mysql' ) ) ); // phpcs:ignore
 
 class Cpl_Wyjscie extends Exception {}
 function cpl_uchwyt() {
@@ -175,7 +175,7 @@ cpl( false !== strpos( $pasek, '<strong>3</strong> przy formularzu kontaktu' ) &
 
 echo "\n=== D. LC-F2 / P2-Z3: ścieżka pułapki i złego nonce'a mają limit ===\n";
 cpl_sprzataj();
-$wpdb->insert( $ts, array( 'sesja' => $cpl_sesja_stara, 'stan' => 'bot', 'klucz_hash' => '', 'utworzono' => gmdate( 'Y-m-d H:i:s', (int) current_time( 'timestamp' ) - 600 ), 'aktywnosc' => current_time( 'mysql' ) ) ); // phpcs:ignore
+$wpdb->insert( $ts, array( 'sesja' => $cpl_sesja_stara, 'stan' => 'bot', 'klucz_hash' => wp_hash( 'cpl' ), 'utworzono' => gmdate( 'Y-m-d H:i:s', (int) current_time( 'timestamp' ) - 600 ), 'aktywnosc' => current_time( 'mysql' ) ) ); // phpcs:ignore
 $odmowy = 0;
 for ( $i = 0; $i < 12; $i++ ) {
 	$odp     = cpl_zadanie( 'chatl_ajax_pytanie', array( 'nonce' => wp_create_nonce( 'chatl_front' ), 'sesja' => $cpl_sesja_stara, 'pytanie' => 'test', CHATL_PULAPKA_POLE => 'bot' ) );
@@ -186,18 +186,77 @@ cpl( $odmowy > 0, 'LC-F2: powyżej progu złapany dostaje ODMOWĘ (wcześniej 20
 cpl( $zdarzen <= CHATL_LIMIT_PULAPKA, 'i przestaje zapisywać do bazy powyżej sufitu', 'zdarzeń: ' . $zdarzen . ' przy sufitcie ' . CHATL_LIMIT_PULAPKA );
 
 cpl_sprzataj();
-$odmowy = 0;
+for ( $i = 0; $i < 14; $i++ ) {
+	cpl_zadanie( 'chatl_ajax_pytanie', array( 'nonce' => 'zepsuty', 'sesja' => $cpl_sesja_stara, 'pytanie' => 'test' ) );
+}
+$zdarzen = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$t} WHERE rodzaj = 'nonce'" ); // phpcs:ignore
+/*
+ * P2-Z3 dotyczy ZAPISU do bazy z żądania niezalogowanego (30 żądań = 30 zapisów),
+ * a nie kształtu odpowiedzi: 14 prób ma zostawić najwyżej `CHATL_LIMIT_NA_MIN`
+ * wierszy. Że odpowiedź MIMO TO dalej niesie kod „nonce" (czyli widget się
+ * samonaprawia) mierzy sekcja D2 — to są dwa różne warunki i oba muszą być
+ * spełnione naraz.
+ */
+cpl( $zdarzen <= CHATL_LIMIT_NA_MIN, 'P2-Z3: powyżej progu zły nonce przestaje ZAPISYWAĆ (wcześniej 30/30 = 30 zapisów)', 'zdarzeń: ' . $zdarzen . ' z 14 prób' );
+cpl( $zdarzen > 0, 'ale poniżej progu zapisuje — właściciel dowiaduje się o problemie z cache', 'zdarzeń: ' . $zdarzen );
+
+echo "\n=== D2. Powyżej progu widget MUSI dalej móc się samonaprawić (luka L1) ===\n";
+/*
+ * Uwaga recenzenta do #162: limit na ścieżce odrzuconego nonce'a dotyczy
+ * ZAPISU zdarzenia, nigdy KSZTAŁTU odpowiedzi. Widget rozpoznaje zły nonce
+ * wyłącznie po `kod === 'nonce'` — bez tego klucza nie dociąga świeżego nonce'a
+ * i rozmowa się kończy. Za proxy z wyłączonym zaufaniem nagłówkom wszyscy goście
+ * dzielą JEDEN kubeł, więc przy stronie z cache próg wyczerpuje się w sekundy
+ * i dotyczyłoby to każdego kolejnego gościa.
+ */
+cpl_sprzataj();
+$ma_kod   = 0;
+$odmowy   = 0;
 for ( $i = 0; $i < 14; $i++ ) {
 	$odp     = cpl_zadanie( 'chatl_ajax_pytanie', array( 'nonce' => 'zepsuty', 'sesja' => $cpl_sesja_stara, 'pytanie' => 'test' ) );
+	$ma_kod += ( is_array( $odp ) && 'nonce' === ( $odp['data']['kod'] ?? '' ) ) ? 1 : 0;
 	$odmowy += cpl_odmowa( $odp ) ? 1 : 0;
 }
 $zdarzen = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$t} WHERE rodzaj = 'nonce'" ); // phpcs:ignore
-cpl( $odmowy > 0, 'P2-Z3: powyżej progu zły nonce dostaje ODMOWĘ (wcześniej 30/30 przechodziło bez limitu)', 'odmów: ' . $odmowy . ' z 14' );
-cpl( $zdarzen <= CHATL_LIMIT_NA_MIN, 'i zapisów jest najwyżej tyle, ile próg', 'zdarzeń: ' . $zdarzen );
+cpl( 14 === $ma_kod, 'KAŻDA odpowiedź (także powyżej progu) niesie kod „nonce" — widget dalej się samonaprawia', 'z kodem: ' . $ma_kod . ' z 14' );
+cpl( 0 === $odmowy, 'i żadna nie jest twardą odmową „za dużo żądań"', 'odmów: ' . $odmowy );
+cpl( $zdarzen <= CHATL_LIMIT_NA_MIN, 'a mimo to zapisów jest najwyżej tyle, ile próg (limit dotyczy ZAPISU)', 'zdarzeń: ' . $zdarzen );
+
+echo "\n=== D3. DK-1 na ścieżce zgłoszenia: licznik nie obiecuje wierszy, których nie ma ===\n";
+cpl_sprzataj();
+$wpdb->insert( $ts, array( 'sesja' => $cpl_sesja_stara, 'stan' => 'bot', 'klucz_hash' => wp_hash( 'cpl' ), 'utworzono' => gmdate( 'Y-m-d H:i:s', (int) current_time( 'timestamp' ) - 600 ), 'aktywnosc' => current_time( 'mysql' ) ) ); // phpcs:ignore
+/*
+ * Bot wypełniający ukryte pole na ślepo zwykle nie poda ani poprawnego adresu,
+ * ani zgody — a takie żądanie kończy się BEZ wiersza w chatl_zgloszenia.
+ * Zdarzenie zapisane przed walidacją kazałoby właścicielowi szukać wierszy,
+ * których nie ma (dokładnie objaw DK-1).
+ */
+$odrzucone = array(
+	'zły adres e-mail'  => array( 'email' => 'to-nie-jest-mail', 'wiadomosc' => 'tresc', 'zgoda' => '1' ),
+	'pusta wiadomość'   => array( 'email' => 'pul-licznik-test-x@example.test', 'wiadomosc' => '', 'zgoda' => '1' ),
+	'brak zgody'        => array( 'email' => 'pul-licznik-test-y@example.test', 'wiadomosc' => 'tresc', 'zgoda' => '' ),
+);
+foreach ( $odrzucone as $co => $pola ) {
+	cpl_zadanie(
+		'chatl_ajax_zgloszenie',
+		array_merge(
+			array( 'nonce' => wp_create_nonce( 'chatl_front' ), 'sesja' => $cpl_sesja_stara, CHATL_PULAPKA_POLE => 'https://spam.example' ),
+			$pola
+		)
+	);
+}
+$stan    = chatl_zdarzenia_stan( 'pulapka' );
+$wierszy = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$tz} WHERE email LIKE 'pul-licznik-test%' AND podejrzane = 1" ); // phpcs:ignore
+cpl( 0 === (int) ( $stan['sciezki']['zgloszenie'] ?? 0 ) && 0 === $wierszy, 'złapane, które odpadło na walidacji, NIE zwiększa liczby obiecanej w pasku', 'zdarzeń: ' . (int) ( $stan['sciezki']['zgloszenie'] ?? 0 ) . ', wierszy: ' . $wierszy );
+// PRZYPADEK BEZ WADY: złapane, które PRZESZŁO walidację, dalej jest liczone i zapisane.
+cpl_zadanie( 'chatl_ajax_zgloszenie', cpl_post_zgloszenie( 'pul-licznik-test-ok@example.test', true, $cpl_sesja_stara ) );
+$stan    = chatl_zdarzenia_stan( 'pulapka' );
+$wierszy = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$tz} WHERE email = 'pul-licznik-test-ok@example.test' AND podejrzane = 1" ); // phpcs:ignore
+cpl( 1 === (int) ( $stan['sciezki']['zgloszenie'] ?? 0 ) && 1 === $wierszy, 'BEZ WADY: złapane zapisane = złapane policzone (1 = 1)', 'zdarzeń: ' . (int) ( $stan['sciezki']['zgloszenie'] ?? 0 ) . ', wierszy: ' . $wierszy );
 
 echo "\n=== E. PRZYPADKI BEZ WADY: prawdziwy gość nie obrywa ===\n";
 cpl_sprzataj();
-$wpdb->insert( $ts, array( 'sesja' => $cpl_sesja_stara, 'stan' => 'bot', 'klucz_hash' => '', 'utworzono' => gmdate( 'Y-m-d H:i:s', (int) current_time( 'timestamp' ) - 600 ), 'aktywnosc' => current_time( 'mysql' ) ) ); // phpcs:ignore
+$wpdb->insert( $ts, array( 'sesja' => $cpl_sesja_stara, 'stan' => 'bot', 'klucz_hash' => wp_hash( 'cpl' ), 'utworzono' => gmdate( 'Y-m-d H:i:s', (int) current_time( 'timestamp' ) - 600 ), 'aktywnosc' => current_time( 'mysql' ) ) ); // phpcs:ignore
 // Najpierw 6 złapanych (kubeł złapanych wyczerpany), potem CZYSTE zgłoszenie gościa.
 for ( $i = 0; $i < 6; $i++ ) {
 	cpl_zadanie( 'chatl_ajax_pytanie', array( 'nonce' => wp_create_nonce( 'chatl_front' ), 'sesja' => $cpl_sesja_stara, 'pytanie' => 'test', CHATL_PULAPKA_POLE => 'bot' ) );
@@ -211,7 +270,7 @@ cpl( ! isset( $sciezki['zgloszenie'] ), 'i nie dopisało zdarzenia pułapki', wp
 
 // Zły nonce nie zjada kubła gościa — kubły są osobne.
 cpl_sprzataj();
-$wpdb->insert( $ts, array( 'sesja' => $cpl_sesja_stara, 'stan' => 'bot', 'klucz_hash' => '', 'utworzono' => gmdate( 'Y-m-d H:i:s', (int) current_time( 'timestamp' ) - 600 ), 'aktywnosc' => current_time( 'mysql' ) ) ); // phpcs:ignore
+$wpdb->insert( $ts, array( 'sesja' => $cpl_sesja_stara, 'stan' => 'bot', 'klucz_hash' => wp_hash( 'cpl' ), 'utworzono' => gmdate( 'Y-m-d H:i:s', (int) current_time( 'timestamp' ) - 600 ), 'aktywnosc' => current_time( 'mysql' ) ) ); // phpcs:ignore
 for ( $i = 0; $i < 12; $i++ ) {
 	cpl_zadanie( 'chatl_ajax_pytanie', array( 'nonce' => 'zepsuty', 'sesja' => $cpl_sesja_stara, 'pytanie' => 'test' ) );
 }

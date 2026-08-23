@@ -135,7 +135,7 @@ całą historię przy każdym wejściu.
 | `id` | `bigint` AUTO_INCREMENT, PK | Jeden wiersz = jedno zdarzenie. To jest sedno: `INSERT` jest atomowy sam z siebie, więc N żądań naraz zapisuje N zdarzeń. Poprzednik (licznik w `wp_options`: `get_option` → `+1` → `update_option`) gubił 13 z 20 równoległych inkrementacji — i tym więcej, im większy ruch, czyli dokładnie wtedy, gdy liczba jest właścicielowi potrzebna. |
 | `rodzaj` | `varchar(20)` | `pulapka` albo `nonce`. |
 | `szczegol` | `varchar(40)` | Powód złapania (`ukryte pole` / `zbyt szybkie żądanie`). |
-| `sciezka` | `varchar(20)` | Którędy przyszło: `pytanie` albo `zgloszenie`. Dzięki temu pasek w panelu mówi, **ilu** złapanych właściciel znajdzie na liście zgłoszeń — pułapka na ścieżce pytania nie tworzy zgłoszenia, bo gość nie zostawił kontaktu, a wcześniej pasek obiecywał wiersze, których nie ma. |
+| `sciezka` | `varchar(20)` | Którędy przyszło: `pytanie` albo `zgloszenie`. Dzięki temu pasek w panelu mówi, **ilu** złapanych właściciel znajdzie na liście zgłoszeń — pułapka na ścieżce pytania nie tworzy zgłoszenia, bo gość nie zostawił kontaktu, a wcześniej pasek obiecywał wiersze, których nie ma. Z tego samego powodu zdarzenie ze ścieżki `zgloszenie` zapisujemy **dopiero po udanym `INSERT`** zgłoszenia: żądanie odrzucone na walidacji (zły adres, brak zgody, wyłączony czat, padnięty zapis) nie zostawia wiersza, więc nie może podbijać liczby w pasku. |
 | `utworzono` | `datetime` (czas witryny) | Do paska („ostatnio") i do retencji — zdarzenia starsze niż `CHATL_RETENCJA_DNI` kasuje ten sam cron, co historię rozmów, więc tabela nie rośnie bez końca. Indeks `KEY rodzaj_utworzono`. |
 
 Licznik w panelu to `COUNT(*)` z tej tabeli — **jedno** źródło prawdy, nie druga kopia liczby.
@@ -490,12 +490,24 @@ udanym wywołaniu.
 
 ## 10. Limity na IP
 
-Jeden mechanizm, dwa kubły — `chatl_rate_limit( $akcja, $prog, $okno_sekund )` w `includes/front.php`:
+Jeden mechanizm, cztery kubły — `chatl_rate_limit( $akcja, $prog, $okno_sekund )` w `includes/front.php`:
 
 | Kubeł | Próg | Okno | Czego pilnuje |
 |---|---|---|---|
 | `chat` | `CHATL_LIMIT_NA_MIN` = 10 | minuta | zalew bazy i mail-bombing właściciela; wspólny dla pytań i zgłoszeń |
 | `ai` | `CHATL_AI_LIMIT_IP_NA_DOBE` = 20 | doba | żeby jeden gość nie wypalił całego dobowego budżetu AI wszystkich |
+| `pulapka` | `CHATL_LIMIT_PULAPKA` = 5 | minuta | żeby złapany bot nie zalał tabel zdarzeniami i zgłoszeniami „podejrzanymi" |
+| `nonce-odrzucony` | `CHATL_LIMIT_NA_MIN` = 10 | minuta | żeby odrzucone zabezpieczenie nie było darmową drogą do zapisu w bazie |
+
+Kubły `pulapka` i `nonce-odrzucony` są **osobne** od `chat` z tego samego powodu: złapany bot
+ani gość ze stroną z cache nie mogą zjadać limitu prawdziwego klienta.
+
+> ⛔ **Kubeł `nonce-odrzucony` ogranicza ZAPIS, nie odpowiedź.** Powyżej progu wtyczka
+> odpowiada **tak samo** — z `kod => 'nonce'` — tylko nie dopisuje zdarzenia. Widget rozpoznaje
+> zły nonce wyłącznie po tym kluczu i tylko po nim dociąga świeży nonce i ponawia pytanie
+> (samonaprawa z sekcji o L1). Twarda odmowa powyżej progu wyłączyłaby ją dokładnie tam, gdzie
+> jest najpotrzebniejsza: za proxy z wyłączonym zaufaniem nagłówkom **wszyscy goście dzielą
+> jeden kubeł**, więc przy stronie z cache próg wyczerpuje się w sekundy.
 
 Inkrement jest atomowy (`ON DUPLICATE KEY UPDATE` + `LAST_INSERT_ID`), więc równoległe żądania
 nie gubią zliczeń. Kubeł AI sprawdzany jest **dopiero** gdy tryb AI jest w ogóle dostępny —
