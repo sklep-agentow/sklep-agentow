@@ -144,14 +144,24 @@ function chatl_przekieruj_blad( $strona, $komunikat ) {
  * właściciel wie, gdzie zajrzeć.
  */
 function chatl_notice_pulapki() {
-	$stan = get_option( 'chatl_pulapka' );
-	if ( ! is_array( $stan ) || empty( $stan['ile'] ) ) {
+	$stan = chatl_zdarzenia_stan( 'pulapka' );
+	if ( empty( $stan['ile'] ) ) {
 		return;
 	}
-	echo '<div class="notice notice-info"><p><strong>Pułapka na boty zadziałała ' . (int) $stan['ile'] . ' raz(y).</strong> '
-		. 'Ostatnio: ' . esc_html( (string) ( $stan['ostatnia'] ?? '' ) ) . ' (' . esc_html( (string) ( $stan['powod'] ?? '' ) ) . '). '
-		. 'Złapane zgłoszenia <strong>są zapisane</strong> — zobaczysz je na liście zgłoszeń pod filtrem <em>podejrzane</em>. '
-		. 'Nie wysyłamy o nich powiadomień mailem.</p></div>';
+	/*
+	 * Liczby są rozbite po ŚCIEŻCE, bo to jedyny uczciwy sposób powiedzenia,
+	 * ilu złapanych właściciel znajdzie na liście zgłoszeń. Pułapka na ścieżce
+	 * PYTANIA nie tworzy zgłoszenia (gość nie zostawił kontaktu) — wcześniej
+	 * pasek obiecywał, że wszystkie N są „pod filtrem podejrzane", a było ich
+	 * tam mniej i właściciel szukał wierszy, których nie ma (DK-1).
+	 */
+	$ze_zgloszen = (int) ( $stan['sciezki']['zgloszenie'] ?? 0 );
+	$z_pytan     = (int) ( $stan['sciezki']['pytanie'] ?? 0 );
+	echo '<div class="notice notice-info"><p><strong>Pułapka na boty zadziałała ' . esc_html( number_format_i18n( (int) $stan['ile'] ) ) . ' raz(y).</strong> '
+		. 'Ostatnio: ' . esc_html( $stan['ostatnia'] ) . ' (' . esc_html( $stan['szczegol'] ) . '). '
+		. 'Z tego <strong>' . esc_html( number_format_i18n( $ze_zgloszen ) ) . '</strong> przy formularzu kontaktu — te zgłoszenia <strong>są zapisane</strong> '
+		. 'i zobaczysz je na liście zgłoszeń pod filtrem <em>podejrzane</em> (nie wysyłamy o nich powiadomień mailem). '
+		. 'Pozostałe <strong>' . esc_html( number_format_i18n( $z_pytan ) ) . '</strong> to pytania do bota — tam nie ma czego zapisać, bo gość nie zostawił kontaktu.</p></div>';
 }
 
 function chatl_notice_bledu_maila() {
@@ -294,18 +304,18 @@ function chatl_notice_bledu_bazy() {
 }
 
 function chatl_notice_odrzuconych_nonce() {
-	$blad = get_option( 'chatl_blad_nonce' );
-	if ( ! is_array( $blad ) || empty( $blad['ostatni'] ) ) {
+	$blad = chatl_zdarzenia_stan( 'nonce' );
+	if ( empty( $blad['ile'] ) || '' === $blad['ostatnia'] ) {
 		return;
 	}
-	$kiedy = strtotime( (string) $blad['ostatni'] );
+	$kiedy = strtotime( $blad['ostatnia'] );
 	if ( ! $kiedy || $kiedy < time() - CHATL_NONCE_OKNO_DNI * DAY_IN_SECONDS ) {
 		return;
 	}
 	$zamknij = wp_nonce_url( admin_url( 'admin-post.php?action=chatl_nonce_zamknij' ), 'chatl_nonce_zamknij' );
 	echo '<div class="notice notice-error"><p><strong>Gościom nie działa czat — odrzucone zabezpieczenie formularza.</strong> '
 		. 'Odrzuconych żądań: <code>' . esc_html( number_format_i18n( (int) $blad['ile'] ) ) . '</code>, ostatnie: <code>'
-		. esc_html( (string) $blad['ostatni'] ) . '</code>.<br>'
+		. esc_html( $blad['ostatnia'] ) . '</code>.<br>'
 		. 'Najczęstsza przyczyna: <strong>wtyczka albo usługa cache</strong> (LiteSpeed, WP Rocket, W3TC, Cloudflare) podaje gościom '
 		. 'stronę starszą niż ważność zabezpieczenia. Widget próbuje wtedy odświeżyć je sam i powtórzyć pytanie, więc rozmowa zwykle '
 		. 'dochodzi do skutku — ale jeśli ta liczba rośnie, <strong>wyłącz cache dla strony z czatem</strong> albo skróć czas życia cache.<br>'
@@ -320,7 +330,10 @@ function chatl_post_nonce_zamknij() {
 		wp_die( 'Brak uprawnień.' );
 	}
 	check_admin_referer( 'chatl_nonce_zamknij' );
-	delete_option( 'chatl_blad_nonce' );
+	// Ukrycie ostrzeżenia = skasowanie zdarzeń, które je wywołały. Wróci przy
+	// pierwszym nowym odrzuceniu (tak działało przy opcji, zostaje bez zmian).
+	global $wpdb;
+	$wpdb->delete( $wpdb->prefix . 'chatl_zdarzenia', array( 'rodzaj' => 'nonce' ), array( '%s' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 	wp_safe_redirect( admin_url( 'admin.php?page=chatl-qa&chatl_ok=zapisano' ) );
 	exit;
 }

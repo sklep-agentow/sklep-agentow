@@ -12,7 +12,24 @@ migracja odpala się sama przy pierwszym wejściu do panelu po aktualizacji
 
 ## [Niewydane]
 
+### Zmienione
+- **Zadziałania pułapki na boty i odrzucone zabezpieczenia formularza leżą w tabeli**
+  (`chatl_zdarzenia`, schemat bazy 8), a nie w liczniku w `wp_options`. Licznik gubił
+  równoległe zapisy (13 z 20 przy 20 żądaniach naraz) i tym więcej, im większy ruch.
+  ⚠️ Przy aktualizacji stare liczniki są kasowane i **liczba w panelu zaczyna od zera** —
+  zapisane zgłoszenia i ich oznaczenie „podejrzane" zostają nietknięte.
+- **Pasek w panelu mówi, ilu złapanych naprawdę znajdziesz na liście zgłoszeń.** Wcześniej
+  obiecywał wszystkie zadziałania, a pułapka na ścieżce pytania do bota nie tworzy
+  zgłoszenia (gość nie zostawił kontaktu) — właściciel szukał wierszy, których nie ma.
+
 ### Naprawione
+- **Ścieżka pułapki i ścieżka odrzuconego zabezpieczenia mają limit żądań.** Były jedynymi
+  bez limitu: skrypt z wypełnioną pułapką albo zepsutym nonce'em przechodził 30 z 30 przy
+  progu 10, a każde żądanie pisało do bazy — bot miał drogę tańszą niż uczciwy gość.
+  Kubły są osobne, więc złapane nie zjadają limitu prawdziwego klienta, a odmowa wygląda
+  identycznie jak zwykłe przekroczenie limitu (pułapka pozostaje niewykrywalna).
+- **Odinstalowanie nie zostawia już opcji `chatl_pulapka`** (dokumentacja obiecywała pustą
+  różnicę bazy, a opcja przeżywała pełne czyszczenie).
 - **„Zapisano" dopiero po zmierzonym zapisie** (audyt A2, F1–F3). Przy odrzuconym
   przez bazę zapisie panel ustawień pokazuje komunikat błędu i obowiązują poprzednie
   ustawienia (m.in. dzienny limit wywołań AI) — wcześniej świecił „Ustawienia zapisane".

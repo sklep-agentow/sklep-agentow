@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 define( 'CHATL_WERSJA', '1.5.8' );
-define( 'CHATL_WERSJA_SCHEMATU', '7' );
+define( 'CHATL_WERSJA_SCHEMATU', '8' );
 define( 'CHATL_KATALOG', plugin_dir_path( __FILE__ ) );
 define( 'CHATL_URL', plugin_dir_url( __FILE__ ) );
 
@@ -148,6 +148,15 @@ if ( is_admin() ) {
 function chatl_sprawdz_schemat() {
 	if ( get_option( 'chatl_wersja_schematu' ) !== CHATL_WERSJA_SCHEMATU ) {
 		chatl_utworz_tabele();
+		/*
+		 * Schemat 8: liczniki pułapki i odrzuconych nonce'ów przeniesione
+		 * z wp_options do tabeli chatl_zdarzenia. Stare opcje kasujemy —
+		 * ich liczby były zaniżone (wyścig, DK-5) i nie da się ich zamienić
+		 * na wiersze zdarzeń; licznik w panelu zaczyna od zera po aktualizacji
+		 * (zapisane w CHANGELOG).
+		 */
+		delete_option( 'chatl_pulapka' );
+		delete_option( 'chatl_blad_nonce' );
 		update_option( 'chatl_wersja_schematu', CHATL_WERSJA_SCHEMATU );
 	}
 }
@@ -193,6 +202,18 @@ function chatl_czyszczenie_historii() {
 	);
 	if ( false === $wynik ) {
 		chatl_log_bledu_bazy( 'chatl_czyszczenie_historii', 'kasowanie wygasłych okien rate-limitu' );
+	}
+	// Zdarzenia strażnika (pułapka, nonce) — ta sama retencja co historia rozmów,
+	// ten sam układ czasu (utworzono z current_time), żeby tabela nie rosła bez końca.
+	$zdarzenia = $wpdb->prefix . 'chatl_zdarzenia';
+	$wynik     = $wpdb->query(
+		$wpdb->prepare(
+			"DELETE FROM {$zdarzenia} WHERE utworzono < %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			wp_date( 'Y-m-d H:i:s', time() - CHATL_RETENCJA_DNI * DAY_IN_SECONDS )
+		)
+	);
+	if ( false === $wynik ) {
+		chatl_log_bledu_bazy( 'chatl_czyszczenie_historii', 'kasowanie zdarzeń strażnika starszych niż ' . CHATL_RETENCJA_DNI . ' dni' );
 	}
 }
 add_action( 'chatl_czyszczenie_historii', 'chatl_czyszczenie_historii' );

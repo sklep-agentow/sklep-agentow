@@ -45,7 +45,7 @@ spr "kazdy wpis CHANGELOG oddzielony kreska" "0" \
 echo "=== A. Wersja i schemat ==="
 spr "naglowek Version"            "1.5.8" "grep -oP '(?<=^ \* Version: ).*' $W/chatbot-live.php"
 spr "stala CHATL_WERSJA"          "1.5.8" "grep -oP \"(?<=CHATL_WERSJA', ')[^']*\" $W/chatbot-live.php"
-spr "CHATL_WERSJA_SCHEMATU"       "7"     "grep -oP \"(?<=CHATL_WERSJA_SCHEMATU', ')[^']*\" $W/chatbot-live.php"
+spr "CHATL_WERSJA_SCHEMATU"       "8"     "grep -oP \"(?<=CHATL_WERSJA_SCHEMATU', ')[^']*\" $W/chatbot-live.php"
 spr "Requires at least"           "6.0"   "grep -oP '(?<=^ \* Requires at least: ).*' $W/chatbot-live.php"
 spr "Requires PHP"                "8.1"   "grep -oP '(?<=^ \* Requires PHP: ).*' $W/chatbot-live.php"
 spr "naglowek Author"             "Automatic AI" "grep -oP '(?<=^ \* Author: ).*' $W/chatbot-live.php"
@@ -168,12 +168,12 @@ spr "CHATL_AI_BRAK"               "BRAK_ODPOWIEDZI" "grep -oP \"(?<=CHATL_AI_BRA
 
 echo
 echo "=== C. Retencja ma JEDNO zrodlo (nie liczba wpisana w cronie) ==="
-spr "cron liczy retencje ze stalej"   "1" "grep -c 'CHATL_RETENCJA_DNI \* DAY_IN_SECONDS' $W/chatbot-live.php"
+spr "cron liczy retencje ze stalej"   "2" "grep -c 'CHATL_RETENCJA_DNI \* DAY_IN_SECONDS' $W/chatbot-live.php"
 spr "liczba 90 wpisana wprost w kodzie PHP" "0" "grep -rhoP '\\d+ \\* DAY_IN_SECONDS' $W --include=*.php | grep -c '^90 '"
 
 echo
 echo "=== D. Baza: 5 tabel i liczba kolumn ==="
-spr "liczba dbDelta"              "6"  "grep -c 'dbDelta(' $W/includes/instalator.php"
+spr "liczba dbDelta"              "7"  "grep -c 'dbDelta(' $W/includes/instalator.php"
 spr "kolumn w chatl_qa"           "6"  "sed -n '/CREATE TABLE {\$p}chatl_qa/,/) {\$charset}/p' $W/includes/instalator.php | grep -cP '^\t\t(id|pytanie|slowa_kluczowe|odpowiedz|aktywne|utworzono) '"
 spr "kolumn w chatl_zgloszenia"   "6"  "sed -n '/CREATE TABLE {\$p}chatl_zgloszenia/,/) {\$charset}/p' $W/includes/instalator.php | grep -cP '^\t\t(id|email|wiadomosc|sesja|status|utworzono) '"
 spr "kolumn w chatl_rozmowy"      "7"  "sed -n '/CREATE TABLE {\$p}chatl_rozmowy/,/) {\$charset}/p' $W/includes/instalator.php | grep -cP '^\t\t(id|sesja|rola|silnik|tresc|trafiono|utworzono) '"
@@ -186,7 +186,7 @@ spr "rola varchar(10)"            "1"  "grep -c 'rola varchar(10) NOT NULL' $W/i
 spr "trafiono dopuszcza NULL"     "1"  "grep -c 'trafiono tinyint(1) DEFAULT NULL' $W/includes/instalator.php"
 spr "indeks luki pod raport"      "1"  "grep -c 'KEY luki (rola,trafiono,utworzono)' $W/includes/instalator.php"
 spr "silnik domyslnie reguly"     "1"  "grep -c \"silnik varchar(10) NOT NULL DEFAULT 'reguly'\" $W/includes/instalator.php"
-spr "indeksow KEY (poza PRIMARY)" "8"  "grep -cP '^\\t\\tKEY ' $W/includes/instalator.php"
+spr "indeksow KEY (poza PRIMARY)" "9"  "grep -cP '^\\t\\tKEY ' $W/includes/instalator.php"
 
 echo
 echo "=== E. Aktywacja, seed, cron ==="
@@ -197,9 +197,9 @@ spr "seed tylko do pustej bazy"   "1"  "grep -c 'if ( \$ile > 0 ) {' $W/includes
 
 echo
 echo "=== F. Deinstalacja: obie sciezki ==="
-spr "DROP TABLE (6 tabel)"        "6"  "grep -c 'DROP TABLE IF EXISTS' $W/uninstall.php"
+spr "DROP TABLE (7 tabel)"        "7"  "grep -c 'DROP TABLE IF EXISTS' $W/uninstall.php"
 spr "klucz API kasowany zawsze"   "1"  "sed -n '1,/usun_dane/p' $W/uninstall.php | grep -c \"delete_option( 'chatl_klucz_api' )\""
-spr "delete_option w sciezce B"   "7"  "sed -n '/usun_dane/,\$p' $W/uninstall.php | grep -c 'delete_option('"
+spr "delete_option w sciezce B"   "8"  "sed -n '/usun_dane/,\$p' $W/uninstall.php | grep -c 'delete_option('"
 spr "wywolan esc_like (bez komentarzy)"  "4" "grep -o 'wpdb->esc_like(' $W/uninstall.php | wc -l"
 
 echo
@@ -217,8 +217,11 @@ spr "klucz API add_option bez autoload" "1" "grep -c \"add_option( 'chatl_klucz_
 # czytane tylko w panelu, wiec nie ma powodu wozic ich w kazdym zapytaniu strony.
 # Zapis idzie przez update_option() albo chatl_zapisz_opcje() (C1: wynik mierzony) —
 # obie formy przyjmuja autoload jako trzeci argument, liczymy obie.
-spr "znacznikow awarii bez autoload"    "3" "grep -A8 -E \"(update_option|chatl_zapisz_opcje)\\($\" $W/includes/front.php | grep -cP '^\\t\\tfalse$'"
-spr "znacznik nonce zapisywany bez autoload" "1" "grep -A9 \"'chatl_blad_nonce',\" $W/includes/front.php | grep -cP '^\\t\\tfalse$'"
+# Od schematu 8 zdarzenia straznika (pulapka, odrzucony nonce) NIE sa opcjami —
+# leza w tabeli chatl_zdarzenia (wiersz na zdarzenie), wiec autoload ich nie dotyczy.
+# Zostaje jeden znacznik w front.php: „powiadomienia mailowe nie wychodza".
+spr "znacznikow awarii bez autoload"    "1" "grep -A8 -E \"(update_option|chatl_zapisz_opcje)\\($\" $W/includes/front.php | grep -cP '^\\t\\tfalse$'"
+spr "zdarzenia straznika w tabeli, nie w opcji" "0" "grep -cE \"(update_option|get_option)\\( 'chatl_(pulapka|blad_nonce)'\" $W/includes/front.php"
 
 echo
 echo "=== I. Zaczepy i filtry ==="
