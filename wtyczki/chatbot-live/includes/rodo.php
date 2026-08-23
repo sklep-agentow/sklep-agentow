@@ -377,6 +377,21 @@ function chatl_rodo_kasownik( $email, $strona = 1 ) { // phpcs:ignore Generic.Co
 		$ile = $wpdb->query( $wpdb->prepare( "DELETE FROM {$tr} WHERE sesja IN ({$miejsca})", $podzial['wlasne'] ) );
 		// phpcs:enable
 		$ile_r = max( 0, (int) $ile );
+
+		/*
+		 * Wiersz sesji też jest śladem osoby (kiedy pisała, czy przejął ją
+		 * człowiek), więc „usunięcie danych" musi go objąć — inaczej po wniosku
+		 * RODO w bazie zostaje dowód, że ta rozmowa była (A3-1, część B).
+		 * Kasujemy WYŁĄCZNIE sesje wyłączne wnioskodawcy: współdzielona została
+		 * wyżej razem z rozmową, bo należy też do drugiej osoby.
+		 */
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQLPlaceholders
+		$ts    = $wpdb->prefix . 'chatl_sesje';
+		$ile_s = $wpdb->query( $wpdb->prepare( "DELETE FROM {$ts} WHERE sesja IN ({$miejsca})", $podzial['wlasne'] ) );
+		// phpcs:enable
+		if ( false === $ile_s ) {
+			chatl_log_bledu_bazy( 'chatl_rodo_kasownik', 'kasowanie wierszy sesji wnioskodawcy' );
+		}
 	}
 
 	$tz = $wpdb->prefix . 'chatl_zgloszenia';

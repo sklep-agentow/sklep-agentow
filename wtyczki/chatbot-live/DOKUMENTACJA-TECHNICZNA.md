@@ -292,18 +292,25 @@ tabele, ustawienia, klucz API. Deaktywacja jest odwracalna bez strat.
 
 ### 6.4. Cron retencji — `chatl_czyszczenie_historii()`
 
-Codziennie, dwa `DELETE`:
+Codziennie, cztery `DELETE`:
 
 - z `chatl_rozmowy` wszystko starsze niż `CHATL_RETENCJA_DNI` dni,
-- z `chatl_rate_limit` wiersze z `okno_do` w przeszłości.
+- z `chatl_rate_limit` wiersze z `okno_do` w przeszłości,
+- z `chatl_zdarzenia` zdarzenia strażnika (pułapka, odrzucony nonce) starsze niż
+  `CHATL_RETENCJA_DNI` dni,
+- z `chatl_sesje` wiersze, w których `aktywnosc` jest starsza niż `CHATL_RETENCJA_DNI`
+  dni. Po `aktywnosc`, nie po `utworzono`: sesja, do której gość wraca po tygodniach,
+  jest żywa i nie może zniknąć spod otwartego okna. Do audytu danych (A3-1) ta tabela
+  nie miała **żadnej** ścieżki kasowania i rosła o wiersz na każde otwarcie widgetu.
 
-Granica retencji jest liczona **w strefie witryny** (`wp_date()`), bo `utworzono` też
-jest zapisywane w strefie witryny (`current_time( 'mysql' )`). Do audytu A5 (KR6) granica
-szła w UTC i próg przesuwał się o offset strefy — w strefie ujemnej rozmowy ginęły
-godziny PRZED obiecanymi 90 dniami. Okna rate-limitu zostają w UTC, bo `okno_do` jest
-zapisywane przez `gmdate()` — tam oba końce są w tym samym układzie.
+Granice retencji **rozmów, zdarzeń i sesji** liczymy w strefie witryny (`wp_date()`),
+bo wszystkie trzy kolumny (`utworzono`, `utworzono`, `aktywnosc`) są zapisywane przez
+`current_time( 'mysql' )`, czyli też w strefie witryny. Do audytu A5 (KR6) granica szła w UTC i próg przesuwał się
+o offset strefy — w strefie ujemnej rozmowy ginęły godziny PRZED obiecanymi 90 dniami.
+Okna rate-limitu zostają w UTC, bo `okno_do` jest zapisywane przez `gmdate()` — tam oba
+końce są w tym samym układzie.
 
-Wynik obu zapytań jest sprawdzany; porażka trafia do logu WordPressa.
+Wynik każdego zapytania jest sprawdzany; porażka trafia do trwałego śladu błędu bazy.
 **Zgłoszeń ten cron nie dotyka** — kontakty od gości nie mają automatycznego terminu ważności.
 
 WP-cron to pseudo-cron: bez ruchu na stronie nic się nie odpala. Dlatego wejście administratora
@@ -335,9 +342,14 @@ Plik odpala się tylko przy prawdziwym odinstalowaniu (`WP_UNINSTALL_PLUGIN`), n
    limitów żył w opcjach zamiast w tabeli). Zapytanie używa `esc_like()` — podkreślnik jest
    symbolem wieloznacznym w `LIKE`, więc bez eskejpowania mogłoby złapać cudze wpisy.
 
-Czego **żadna** ścieżka nie rusza: stałej `CHATL_KLUCZ_API` w `wp-config.php` (wtyczka nie
-modyfikuje plików konfiguracyjnych) i zdarzenia cron — to zdejmuje deaktywacja, która
-w normalnym przebiegu WordPressa poprzedza odinstalowanie.
+Zdarzenie cron `chatl_czyszczenie_historii` zdejmuje **każda** ścieżka odinstalowania,
+zanim jeszcze sprawdzimy opcję „usuń dane": zwykle robi to deaktywacja, ale wtyczkę da
+się usunąć z jej pominięciem (skasowany katalog, „usuń" z listy) i wtedy `uninstall.php`
+jest jedynym sprzątaczem. Zaplanowany zaczep bez kodu to nie są dane właściciela, tylko
+wpis w `wp_options → cron`, w który WordPress uderza codziennie (A3-2).
+
+Czego **żadna** ścieżka nie rusza: stałej `CHATL_KLUCZ_API` w `wp-config.php` — wtyczka nie
+modyfikuje plików konfiguracyjnych.
 
 Zweryfikowane na działającej instalacji (pełny cykl instalacja → deinstalacja → instalacja):
 różnica stanu tabel, opcji i zdarzeń cron przed instalacją i po odinstalowaniu ze ścieżką B —

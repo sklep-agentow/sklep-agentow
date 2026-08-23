@@ -215,6 +215,30 @@ function chatl_czyszczenie_historii() {
 	if ( false === $wynik ) {
 		chatl_log_bledu_bazy( 'chatl_czyszczenie_historii', 'kasowanie zdarzeń strażnika starszych niż ' . CHATL_RETENCJA_DNI . ' dni' );
 	}
+
+	/*
+	 * Sesje rozmów. Do audytu danych (A3-1) tabela `chatl_sesje` nie miała
+	 * ŻADNEJ ścieżki kasowania: jeden wiersz na każde otwarcie widgetu, także
+	 * długo po tym, jak retencja skasowała samą rozmowę. Kasujemy po
+	 * `aktywnosc` (ostatni ruch w rozmowie), nie po `utworzono`: sesja, do
+	 * której gość wraca po tygodniach, jest ŻYWA i nie może zniknąć spod
+	 * otwartego okna — a wiersz bez rozmowy i tak nie ma czego opisywać.
+	 * Ta sama granica co historia rozmów, ten sam próg dla obietnicy „90 dni"
+	 * i ta sama PODSTAWA CZASU: `wp_date()`, czyli strefa witryny. `aktywnosc`
+	 * jest zapisywana przez `current_time( 'mysql' )`, więc porównanie w UTC
+	 * przesuwałoby próg o offset strefy — dokładnie wada KR6, naprawiona wyżej
+	 * dla historii rozmów.
+	 */
+	$sesje = $wpdb->prefix . 'chatl_sesje';
+	$wynik = $wpdb->query(
+		$wpdb->prepare(
+			"DELETE FROM {$sesje} WHERE aktywnosc < %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			wp_date( 'Y-m-d H:i:s', time() - CHATL_RETENCJA_DNI * DAY_IN_SECONDS )
+		)
+	);
+	if ( false === $wynik ) {
+		chatl_log_bledu_bazy( 'chatl_czyszczenie_historii', 'kasowanie sesji rozmów starszych niż ' . CHATL_RETENCJA_DNI . ' dni' );
+	}
 }
 add_action( 'chatl_czyszczenie_historii', 'chatl_czyszczenie_historii' );
 

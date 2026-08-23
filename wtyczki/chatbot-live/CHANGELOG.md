@@ -57,6 +57,13 @@ migracja odpala się sama przy pierwszym wejściu do panelu po aktualizacji
   do 6 wcześniejszych wymian tej samej rozmowy (razem z tym, co gość podał wcześniej).
 - **Pola panelu mają etykiety** (`<label for>`): plik CSV przy imporcie, własny kolor
   tekstu, własny identyfikator modelu — czytnik ekranu nazywa je teraz poprawnie.
+- **Sesje rozmów podlegają retencji i wnioskom RODO.** Tabela sesji nie miała żadnej
+  ścieżki kasowania: rosła o wiersz przy każdym otwarciu czatu, także długo po tym, jak
+  retencja skasowała samą rozmowę, a po „usunięciu danych" na wniosek RODO zostawał
+  ślad, że rozmowa danej osoby istniała. Sesje żywe (z ruchem w ostatnich 90 dniach)
+  i sesje innych osób zostają nietknięte.
+- **Odinstalowanie zdejmuje zadanie cyklicze wtyczki.** Po usunięciu wtyczki z pominięciem
+  dezaktywacji w bazie zostawał zaplanowany zaczep, w który WordPress uderzał codziennie.
 - **„Zapisano" dopiero po zmierzonym zapisie** (audyt A2, F1–F3). Przy odrzuconym
   przez bazę zapisie panel ustawień pokazuje komunikat błędu i obowiązują poprzednie
   ustawienia (m.in. dzienny limit wywołań AI) — wcześniej świecił „Ustawienia zapisane".

@@ -168,7 +168,10 @@ spr "CHATL_AI_BRAK"               "BRAK_ODPOWIEDZI" "grep -oP \"(?<=CHATL_AI_BRA
 
 echo
 echo "=== C. Retencja ma JEDNO zrodlo (nie liczba wpisana w cronie) ==="
-spr "cron liczy retencje ze stalej"   "2" "grep -c 'CHATL_RETENCJA_DNI \* DAY_IN_SECONDS' $W/chatbot-live.php"
+# Trzy wystapienia: historia rozmow, zdarzenia straznika i sesje rozmow — wszystkie
+# granice licza sie z tej samej stalej, zeby obietnica „90 dni" nie rozjechala sie
+# miedzy tabelami (A3-1, C3, C6).
+spr "cron liczy retencje ze stalej"   "3" "grep -c 'CHATL_RETENCJA_DNI \* DAY_IN_SECONDS' $W/chatbot-live.php"
 spr "liczba 90 wpisana wprost w kodzie PHP" "0" "grep -rhoP '\\d+ \\* DAY_IN_SECONDS' $W --include=*.php | grep -c '^90 '"
 
 echo
