@@ -302,6 +302,14 @@ Codziennie, cztery `DELETE`:
   dni. Po `aktywnosc`, nie po `utworzono`: sesja, do której gość wraca po tygodniach,
   jest żywa i nie może zniknąć spod otwartego okna. Do audytu danych (A3-1) ta tabela
   nie miała **żadnej** ścieżki kasowania i rosła o wiersz na każde otwarcie widgetu.
+  ⚠️ `aktywnosc` liczy ruch **gościa** (pytanie, odpytywanie); wiadomość operatora
+  odświeża osobną kolumnę `operator_akt`. Rozmowa, w której przez cały okres retencji
+  pisze wyłącznie operator, straci więc wiersz sesji, a jej wiadomości zostaną
+  w historii bez wiersza w panelu rozmów żywych — przypadek egzotyczny (gość musiałby
+  milczeć 90 dni przy piszącym konsultancie), nazwany tu wprost zamiast przemilczany.
+  Próg liczymy `gmdate()` (UTC), tak samo jak sąsiednie kasowanie historii rozmów —
+  różnica względem czasu witryny to offset strefy (w Polsce sesja żyje o 2 h dłużej);
+  akceptujemy ją świadomie, żeby oba `DELETE` w tym cronie miały jedną podstawę czasu.
 
 Granice retencji **rozmów, zdarzeń i sesji** liczymy w strefie witryny (`wp_date()`),
 bo wszystkie trzy kolumny (`utworzono`, `utworzono`, `aktywnosc`) są zapisywane przez
@@ -1162,7 +1170,7 @@ zostawia właściciela z obowiązkiem i bez narzędzia.
 | Zaczep WordPressa | Nasza funkcja | Co robi |
 |---|---|---|
 | `wp_privacy_personal_data_exporters` | `chatl_rodo_eksporter()` | wydaje zgłoszenia i rozmowy powiązane **wyłącznie** z tym adresem |
-| `wp_privacy_personal_data_erasers` | `chatl_rodo_kasownik()` | kasuje jedno i drugie, z liczbami w komunikacie |
+| `wp_privacy_personal_data_erasers` | `chatl_rodo_kasownik()` | kasuje zgłoszenia, rozmowy **i wiersze sesji** wnioskodawcy; komunikat podaje liczby skasowanych zgłoszeń i wiadomości (wiersz sesji jest nośnikiem technicznym bez treści, więc nie jest osobno liczony) |
 | `wp_add_privacy_policy_content()` | `chatl_polityka_prywatnosci()` | gotowy akapit do polityki prywatności |
 
 ### 23.1. Granica wiązania: adres e-mail
@@ -1227,9 +1235,12 @@ nieprawdy wysłanym w cudzym imieniu.
 
 ### 23.4. Kolejność kasowania nie jest dowolna
 
-Najpierw **rozmowy**, potem **zgłoszenia**. Zgłoszenie jest jedynym łącznikiem
+Najpierw **rozmowy** i **wiersze sesji** (jedno i drugie po tej samej liście sesji
+wyłącznych wnioskodawcy), potem **zgłoszenia**. Zgłoszenie jest jedynym łącznikiem
 między adresem a sesją — skasowane pierwsze, zabrałoby ze sobą wiedzę o tym, które
-rozmowy usunąć, i zostawiłoby je w bazie na zawsze.
+rozmowy i które sesje usunąć, i zostawiłoby je w bazie na zawsze. Sesje
+**współdzielone** nie są kasowane wcale, dokładnie tak jak ich rozmowy: należą też
+do drugiej osoby.
 
 ### 23.5. Stronicowanie: dwa źródła, jedna numeracja
 

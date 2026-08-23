@@ -163,8 +163,9 @@ function chatl_sprawdz_schemat() {
 add_action( 'plugins_loaded', 'chatl_sprawdz_schemat' );
 
 /**
- * Codzienne czyszczenie: historia rozmów starsza niż CHATL_RETENCJA_DNI
- * (retencja jak w sklepie) + wygasłe wiersze licznika rate-limitu.
+ * Codzienne czyszczenie, TRZY kasowania: historia rozmów starsza niż
+ * CHATL_RETENCJA_DNI (retencja jak w sklepie), wygasłe wiersze licznika
+ * rate-limitu oraz wiersze sesji bez ruchu gościa przez ten sam okres.
  *
  * Okres retencji bierzemy ze STAŁEJ, nie z liczby wpisanej tutaj: panel,
  * widget i INSTRUKCJA mówią gościowi „90 dni" na podstawie
