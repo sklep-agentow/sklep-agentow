@@ -276,8 +276,12 @@ op_opcja() {
 	#    ogona — wystarczy, żeby stwierdzić obecność i zmianę, za mało, żeby użyć.
 	case "$1" in
 		*klucz*|*haslo*|*hasło*|*token*|*sekret*|*secret*|*password*|*api_key*)
-			local W; W="$(wp_odczyt option get "$1" 2>&1)"
-			if printf '%s' "$W" | grep -q "Could not get"; then printf '(opcja nie istnieje)\n'; else printf '[SEKRET ZAMASKOWANY] długość=%s ogon=…%s\n' "${#W}" "${W: -2}"; fi ;;
+			# ⛔ podstawienie $(…) to PODPOWŁOKA: exit 2 z brak_stosu kończy ją, nie skrypt, a komunikat
+			#    awarii wpadłby do W jako „wartość" (recenzja #157: 214 znaków = długość błędu, kod 0).
+			#    Dlatego kod wyjścia podpowłoki jest sprawdzany i przekazywany dalej, a komunikat wypisany.
+			local W KOD; W="$(wp_odczyt option get "$1" 2>&1)"; KOD=$?
+			if [ "$KOD" -ne 0 ]; then printf '%s\n' "$W" >&2; exit "$KOD"; fi
+			printf '[SEKRET ZAMASKOWANY] długość=%s ogon=…%s\n' "${#W}" "${W: -2}" ;;
 		*) wp_odczyt option get "$1" ;;
 	esac
 }
