@@ -95,20 +95,30 @@ function chatl_klucz_api() {
  * Zapis/kasowanie klucza z wymuszonym autoload=no.
  * Gdy klucz jest w konfiguracji serwera, panel go nie nadpisuje — inaczej
  * wpis w polu formularza po cichu wygrywałby ze stałą wbrew deklaracji.
+ *
+ * Wynik jest MIERZONY odczytem opcji po zapisie (wzorzec
+ * segm_skrzynka_zapisz_haslo() z Segregatora), nie zakładany. Do audytu A2
+ * funkcja zwracała void: przy odrzuconym zapisie w bazie zostawał stary klucz,
+ * panel mówił „zapisano", a „Przetestuj klucz" testował STARY klucz i dawał
+ * zielone potwierdzenie klucza, którego właściciel właśnie nie zapisał (A2-F3).
+ *
+ * @param string $klucz Klucz ('' = skasuj).
+ * @return bool True, gdy po operacji w bazie leży to, co miało tam trafić.
  */
 function chatl_zapisz_klucz( $klucz ) {
 	if ( chatl_klucz_ze_stalej() ) {
-		return;
+		return true;
 	}
 	if ( '' === $klucz ) {
 		delete_option( 'chatl_klucz_api' );
-		return;
+		return '' === (string) get_option( 'chatl_klucz_api', '' );
 	}
 	if ( false === get_option( 'chatl_klucz_api' ) ) {
 		add_option( 'chatl_klucz_api', $klucz, '', false );
 	} else {
 		update_option( 'chatl_klucz_api', $klucz );
 	}
+	return (string) get_option( 'chatl_klucz_api', '' ) === $klucz;
 }
 
 /**
@@ -436,7 +446,7 @@ function chatl_odnotuj_blad_ai( $odp, $kod ) {
 	} else {
 		$tresc = (string) wp_remote_retrieve_body( $odp );
 	}
-	update_option(
+	$zapisano = chatl_zapisz_opcje(
 		'chatl_blad_ai',
 		array(
 			'kiedy' => current_time( 'mysql' ),
@@ -445,6 +455,14 @@ function chatl_odnotuj_blad_ai( $odp, $kod ) {
 		),
 		false
 	);
+	/*
+	 * Ten znacznik jest JEDYNYM sygnałem, że tryb AI po cichu zjechał do reguł.
+	 * Gdy sam padnie po cichu, wraca dokładnie ta cisza, przed którą broni —
+	 * dlatego jego porażka idzie do trwałego śladu błędu bazy (pasek w panelu).
+	 */
+	if ( ! $zapisano ) {
+		chatl_log_bledu_bazy( 'chatl_odnotuj_blad_ai', 'znacznik awarii trybu AI (kod ' . (int) $kod . ')' );
+	}
 }
 
 /**

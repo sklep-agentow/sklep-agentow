@@ -625,7 +625,12 @@ Właściciel płacił za tryb AI, którego nie ma, i **nie miał jak tego zauwa�
 
 Wzorzec jest ten sam co przy nieudanym powiadomieniu mailowym
 (`chatl_odnotuj_wysylke_powiadomienia()`): znacznik stawiany przy porażce,
-zdejmowany przy pierwszym sukcesie.
+zdejmowany przy pierwszym sukcesie. Oba znaczniki idą przez `chatl_zapisz_opcje()`
+(wynik **mierzony** odczytem opcji po zapisie, bliźniak `segm_zapisz_opcje()`
+z Segregatora) — gdy sam znacznik padnie po cichu, jego porażka trafia do trwałego
+śladu błędu bazy (`chatl_blad_bazy`, pasek w panelu). Bez tego znacznik awarii,
+który jest jedynym sygnałem cichego zjazdu do reguł, sam milczałby przy awarii bazy
+(audyt A2, znalezisko F4).
 
 **HTTP 200 to jeszcze nie sukces.** Ciało odpowiedzi bywa nie do odczytania:
 proxy albo brama zgodności podmieniła treść, hosting dokleił swój HTML, model
@@ -973,6 +978,19 @@ i punkt odpytywania.
 Powrót po ciszy liczy się **przy każdym wejściu do rozmowy**, a nie cronem —
 działa więc także tam, gdzie WP-Cron jest wyłączony.
 
+Każde przejście jest **mierzone odczytem `stan` po zapisie**, nie zakładane:
+`$wpdb->update()` zwraca `0`, nie `false`, gdy żaden wiersz nie pasował, więc sam
+wynik zapisu nie mówi, co leży w bazie. Gdy baza odrzuci zapis, `chatl_przejmij()` /
+`chatl_oddaj_botowi()` zwracają `false`, gość **nie** dostaje komunikatu o zmianie
+rozmówcy (nie czyta „dołączył konsultant" do rozmowy, w której dalej odpowiada bot),
+operator widzi w panelu komunikat błędu zamiast „przejęta"/„oddana", a porażka
+zostawia ślad w `chatl_blad_bazy`. Powrót po ciszy przy odrzuconym zapisie zwraca
+stan **z bazy** (`czlowiek`) i próbuje ponownie przy następnym wejściu. Ten sam
+wzorzec obowiązuje w `chatl_nowa_sesja()` (odrzucony INSERT = brak sesji i brak
+ciastka, widget dostaje błąd zamiast identyfikatora widma) i w zapisie ustawień
+oraz klucza API (`chatl_zapisz_klucz()` zwraca `bool`; „zapisano" dopiero po
+zmierzonym zapisie — audyt A2, znaleziska F1–F3).
+
 ### 23.2. Bot milczy — i to jest sedno
 
 Po przejęciu pytanie gościa **jest zapisywane** (operator musi je przeczytać),
@@ -1084,8 +1102,11 @@ normalnym trybem pracy kreatora (wnioski przychodzą jeden po drugim, często w 
 
 Dlatego `chatl_rodo_kasownik()` zapisuje identyfikatory sesji współdzielonych do opcji
 `chatl_rodo_sesje_wspolne` **zanim** cokolwiek usunie, a `chatl_rodo_sesje_maila()` bierze
-pod uwagę zarówno bieżący stan tabeli, jak i ten ślad. W opcji leżą **same identyfikatory
-sesji** — bez adresu i bez treści, więc to nie są dane osobowe. Lista jest przycinana przy
+pod uwagę zarówno bieżący stan tabeli, jak i ten ślad. Gdy zapis śladu się **nie
+powiedzie** (baza odrzuciła zapis), kasownik **nic nie usuwa** i mówi to wprost w
+komunikacie — skasowanie zgłoszenia bez śladu zabrałoby jedyny dowód współdzielenia,
+a wniosek można powtórzyć po naprawie bazy, wycieku cofnąć się nie da. W opcji leżą
+**same identyfikatory sesji** — bez adresu i bez treści, więc to nie są dane osobowe. Lista jest przycinana przy
 każdym zapisie: sesja, po której nie została ani jedna wiadomość (retencja skasowała rozmowę
 po `CHATL_RETENCJA_DNI` dniach), nie ma już czego chronić i wypada. Przycinanie dzieje się
 przy zapisie, a nie w cronie, bo `rodo.php` ładuje się wyłącznie w panelu (`is_admin()`),

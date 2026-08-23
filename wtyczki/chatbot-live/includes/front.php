@@ -712,7 +712,7 @@ function chatl_odnotuj_wysylke_powiadomienia( $wyslano, $adres ) {
 		delete_option( 'chatl_blad_maila' );
 		return;
 	}
-	update_option(
+	$zapisano = chatl_zapisz_opcje(
 		'chatl_blad_maila',
 		array(
 			'kiedy' => current_time( 'mysql' ),
@@ -720,4 +720,9 @@ function chatl_odnotuj_wysylke_powiadomienia( $wyslano, $adres ) {
 		),
 		false
 	);
+	// Znacznik awarii poczty, który sam pada po cichu, to podwójna cisza —
+	// porażka jego zapisu idzie do trwałego śladu błędu bazy (A2-F4).
+	if ( ! $zapisano ) {
+		chatl_log_bledu_bazy( 'chatl_odnotuj_wysylke_powiadomienia', 'znacznik „powiadomienia mailowe nie wychodzą”' );
+	}
 }

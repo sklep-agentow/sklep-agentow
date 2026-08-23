@@ -70,13 +70,16 @@ function chatl_rodo_slad_wspolnych() {
  * Dopisanie sesji do śladu współdzielonych. Wołane PRZED kasowaniem zgłoszeń.
  *
  * @param array $sesje Identyfikatory sesji.
- * @return void
+ * @return bool True, gdy po operacji ślad w bazie zawiera to, co miał (także gdy
+ *              nie było czego dopisywać). False = baza odrzuciła zapis — kasownik
+ *              ma się wtedy ZATRZYMAĆ, bo bez śladu dowód współdzielenia przepada
+ *              razem ze skasowanym zgłoszeniem i nie da się go już odtworzyć.
  */
 function chatl_rodo_zapamietaj_wspolne( $sesje ) {
 	global $wpdb;
 	$sesje = array_values( array_filter( array_map( 'strval', (array) $sesje ) ) );
 	if ( ! $sesje ) {
-		return;
+		return true;
 	}
 	$lista = array_values( array_unique( array_merge( chatl_rodo_slad_wspolnych(), $sesje ) ) );
 
@@ -96,7 +99,11 @@ function chatl_rodo_zapamietaj_wspolne( $sesje ) {
 	$zywe = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT sesja FROM {$tr} WHERE sesja IN ({$miejsca})", $lista ) );
 	$zywe = array_values( array_filter( (array) $zywe ) );
 
-	update_option( CHATL_RODO_OPCJA_WSPOLNE, $zywe, false );
+	if ( ! chatl_zapisz_opcje( CHATL_RODO_OPCJA_WSPOLNE, $zywe, false ) ) {
+		chatl_log_bledu_bazy( 'chatl_rodo_zapamietaj_wspolne', 'ślad sesji współdzielonych (wniosek RODO)' );
+		return false;
+	}
+	return true;
 }
 
 /**
@@ -336,8 +343,25 @@ function chatl_rodo_kasownik( $email, $strona = 1 ) { // phpcs:ignore Generic.Co
 	 * NAJPIERW ślad, POTEM kasowanie. Odwrotna kolejność kasowałaby dowód
 	 * współdzielenia, zanim zdążylibyśmy go zapisać — patrz komentarz przy
 	 * CHATL_RODO_OPCJA_WSPOLNE.
+	 *
+	 * Gdy zapis śladu padł, NIE kasujemy nic: skasowanie zgłoszenia bez śladu
+	 * zabrałoby jedyny dowód, że sesja była współdzielona, i następny wniosek
+	 * (drugiej osoby) dostałby eksport z cudzymi wiadomościami. Wniosek można
+	 * powtórzyć po naprawie bazy; wycieku cofnąć się nie da. Komunikat mówi
+	 * wprost, że nic nie usunięto (A2-F4, rodo.php).
 	 */
-	chatl_rodo_zapamietaj_wspolne( $podzial['wspoldzielone'] );
+	if ( ! chatl_rodo_zapamietaj_wspolne( $podzial['wspoldzielone'] ) ) {
+		return array(
+			'items_removed'  => false,
+			'items_retained' => true,
+			'messages'       => array(
+				'ChatBot LIVE: NIC nie zostało usunięte — baza odrzuciła zapis śladu rozmów współdzielonych, '
+					. 'a bez niego kasowanie mogłoby później wydać innej osobie cudze wiadomości. '
+					. 'Sprawdź stan bazy (pasek ostrzeżenia w panelu ChatBota) i uruchom usuwanie ponownie.',
+			),
+			'done'           => true,
+		);
+	}
 
 	$ile_r = 0;
 	if ( $podzial['wlasne'] ) {

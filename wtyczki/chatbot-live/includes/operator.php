@@ -305,7 +305,11 @@ function chatl_post_przejmij() {
 	if ( '' === $sesja ) {
 		chatl_przekieruj_blad( 'chatl-rozmowy', 'Nieprawidłowa rozmowa.' );
 	}
-	chatl_przejmij( $sesja, get_current_user_id() );
+	// „Przejęta" tylko wtedy, gdy przejęcie ZMIERZONO w bazie — inaczej operator
+	// pisałby do rozmowy, w której dalej odpowiada bot (A2-F2).
+	if ( ! chatl_przejmij( $sesja, get_current_user_id() ) ) {
+		chatl_przekieruj_blad( 'chatl-rozmowy&sesja=' . rawurlencode( $sesja ), 'Nie udało się przejąć rozmowy — baza odrzuciła zapis. Rozmowa NADAL jest przy bocie; gość nie dostał komunikatu o konsultancie. Sprawdź stan bazy i spróbuj ponownie.' );
+	}
 	wp_safe_redirect( admin_url( 'admin.php?page=chatl-rozmowy&sesja=' . rawurlencode( $sesja ) . '&chatl_ok=przejeta' ) );
 	exit;
 }
@@ -326,7 +330,9 @@ function chatl_post_zakoncz() {
 	if ( '' === $sesja ) {
 		chatl_przekieruj_blad( 'chatl-rozmowy', 'Nieprawidłowa rozmowa.' );
 	}
-	chatl_oddaj_botowi( $sesja, 'Konsultant zakończył rozmowę — dalej pomaga bot.' );
+	if ( ! chatl_oddaj_botowi( $sesja, 'Konsultant zakończył rozmowę — dalej pomaga bot.' ) ) {
+		chatl_przekieruj_blad( 'chatl-rozmowy&sesja=' . rawurlencode( $sesja ), 'Nie udało się oddać rozmowy botowi — baza odrzuciła zapis. Rozmowa NADAL jest przy Tobie; gość nie dostał komunikatu o zakończeniu. Sprawdź stan bazy i spróbuj ponownie.' );
+	}
 	wp_safe_redirect( admin_url( 'admin.php?page=chatl-rozmowy&sesja=' . rawurlencode( $sesja ) . '&chatl_ok=oddana' ) );
 	exit;
 }
@@ -357,7 +363,11 @@ function chatl_post_operator_wyslij() {
 	if ( 'czlowiek' !== chatl_stan_rozmowy( $sesja ) ) {
 		chatl_przekieruj_blad( 'chatl-rozmowy', 'Najpierw przejmij rozmowę — bez tego odpowiadałby też bot.' );
 	}
-	chatl_operator_wiadomosc( $sesja, $tresc );
+	// 0 = wiadomość NIE trafiła do bazy, więc gość jej nie zobaczy — operator ma
+	// to wiedzieć teraz, nie po ciszy po drugiej stronie.
+	if ( 0 === chatl_operator_wiadomosc( $sesja, $tresc ) ) {
+		chatl_przekieruj_blad( 'chatl-rozmowy&sesja=' . rawurlencode( $sesja ), 'Wiadomość NIE została wysłana — baza odrzuciła zapis. Gość jej nie zobaczy. Sprawdź stan bazy i wyślij ponownie.' );
+	}
 	wp_safe_redirect( admin_url( 'admin.php?page=chatl-rozmowy&sesja=' . rawurlencode( $sesja ) ) );
 	exit;
 }
