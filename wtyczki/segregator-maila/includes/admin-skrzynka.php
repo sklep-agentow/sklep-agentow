@@ -48,6 +48,18 @@ function segm_skrzynka_zapamietaj( $typ, $tekst, $dziennik = array() ) {
  * @return void
  */
 function segm_skrzynka_pokaz_komunikat() {
+	/*
+	 * WK-17: komunikat ISTNIAŁ, ale renderował się w środku strony, jako szósty
+	 * pasek — pod dwoma paskami WordPressa i paskami wtyczki (błąd AI, błąd
+	 * bazy, wskazówka startowa). Kupujący go nie zobaczył i nie wiedział, czy
+	 * zapis zadziałał. Teraz idzie przez `admin_notices` z priorytetem 1, czyli
+	 * PRZED paskami wtyczki (te mają domyślny 10) — jest pierwszym, co widać
+	 * po powrocie z formularza.
+	 */
+	$ekran = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+	if ( $ekran && false === strpos( (string) $ekran->id, 'segm-skrzynka' ) ) {
+		return;
+	}
 	$klucz = 'segm_komunikat_' . get_current_user_id();
 	$wpis  = get_transient( $klucz );
 	if ( ! is_array( $wpis ) || empty( $wpis['tekst'] ) ) {
@@ -74,6 +86,28 @@ function segm_skrzynka_pokaz_komunikat() {
 	<?php
 }
 
+add_action( 'admin_notices', 'segm_skrzynka_pokaz_komunikat', 1 );
+
+/**
+ * Czego brakuje do „Sprawdź połączenie" — po nazwach pól z formularza (WK-5).
+ *
+ * @return array<int, string> Puste = wszystko zapisane.
+ */
+function segm_skrzynka_czego_brakuje() {
+	$ust   = segm_skrzynka_ustawienia();
+	$braki = array();
+	if ( '' === trim( (string) $ust['host'] ) ) {
+		$braki[] = 'serwer IMAP';
+	}
+	if ( '' === trim( (string) $ust['login'] ) ) {
+		$braki[] = 'login';
+	}
+	if ( '' === segm_skrzynka_haslo() ) {
+		$braki[] = 'hasło aplikacji';
+	}
+	return $braki;
+}
+
 /* ===================== STRONA ===================== */
 
 /**
@@ -94,7 +128,6 @@ function segm_strona_skrzynka() {
 	?>
 	<div class="wrap">
 		<h1>Skrzynka (IMAP)</h1>
-		<?php segm_skrzynka_pokaz_komunikat(); ?>
 
 		<div class="notice notice-info inline" style="margin:12px 0">
 			<p><strong>Domyślnie wtyczka pracuje NA SUCHO.</strong> Loguje się do skrzynki, czyta nagłówki i pokazuje, co <em>zrobiłaby</em> z każdą wiadomością — ale niczego nie rusza. W tym trybie folder otwierany jest poleceniem <code>EXAMINE</code>, czyli tylko do odczytu na poziomie protokołu: serwer poczty sam odrzuci każdą próbę zmiany. Realne przenoszenie włącza się świadomie, niżej.</p>
@@ -168,6 +201,8 @@ function segm_strona_skrzynka() {
 								placeholder="<?php echo '' !== segm_skrzynka_haslo() ? 'wpisz, aby podmienić' : 'hasło aplikacji'; ?>">
 							<p class="description">
 								⛔ <strong>Podaj HASŁO APLIKACJI, nigdy głównego hasła do konta.</strong> Hasło aplikacji obowiązuje wyłącznie dla jednego programu, ma ograniczone prawa i unieważnisz je jednym kliknięciem, nie zmieniając hasła do poczty. Gmail i Microsoft 365 przy włączonym logowaniu dwuskładnikowym zwykłego hasła i tak nie przyjmą.<br>
+								<strong>Skąd je wziąć:</strong> u dostawcy poczty, w ustawieniach bezpieczeństwa konta — w Gmailu <em>Zarządzaj kontem Google → Bezpieczeństwo → Hasła do aplikacji</em>, u dostawców hostingowych (home.pl, OVH, nazwa.pl) zwykle <em>Poczta → konto → hasła aplikacji / hasła zewnętrzne</em>. Wygenerowane hasło wklej tutaj w całości, razem ze spacjami, jeśli dostawca je wstawia.<br>
+								Więcej: <code>INSTRUKCJA.md</code>, rozdział <em>„Prawdziwa skrzynka (IMAP) — segregacja na żywo"</em>, sekcje <em>„Podłączenie krok po kroku"</em> i <em>„⛔ Hasło aplikacji, nigdy hasło do konta"</em>.<br>
 								Hasło NIGDY nie wraca do tego pola — po zapisaniu można je tylko podmienić albo usunąć.<br>
 								Bezpieczniej: wpisz je stałą <code>define( '<?php echo esc_html( SEGM_STALA_HASLA ); ?>', 'twoje-haslo-aplikacji' );</code> w <code>wp-config.php</code>. Wtedy hasło nie leży w bazie i nie wychodzi z jej kopią zapasową. Stała ma pierwszeństwo nad tym polem.
 							</p>
@@ -219,7 +254,29 @@ function segm_strona_skrzynka() {
 			<input type="hidden" name="action" value="segm_skrzynka_test">
 			<?php wp_nonce_field( 'segm_skrzynka_test' ); ?>
 			<?php submit_button( 'Sprawdź połączenie', 'secondary', 'submit', false, $gotowa ? array() : array( 'disabled' => 'disabled' ) ); ?>
-			<span class="description"><?php echo $gotowa ? 'Łączy się naprawdę, loguje i pokazuje, ile wiadomości widzi w folderze źródłowym. Niczego nie zmienia.' : 'Uzupełnij najpierw serwer, login i hasło.'; ?></span>
+			<span class="description">
+				<?php if ( $gotowa ) : ?>
+					Łączy się naprawdę, loguje i pokazuje, ile wiadomości widzi w folderze źródłowym. Niczego nie zmienia.
+				<?php else : ?>
+					<?php
+					/*
+					 * WK-5: kupujący wypełnił pola, przycisk został szary i nic
+					 * nie mówiło dlaczego. Sprawdzenie łączy się z danymi
+					 * ZAPISANYMI w bazie, nie z zawartością pól — więc mówimy
+					 * to wprost i wymieniamy, czego brakuje po zapisie.
+					 */
+					$braki = segm_skrzynka_czego_brakuje();
+					?>
+					<strong>Przycisk jest nieaktywny, dopóki dane połączenia nie są ZAPISANE.</strong>
+					Sprawdzenie loguje się danymi z bazy, nie tymi wpisanymi przed chwilą w polach —
+					<?php if ( $braki ) : ?>
+						brakuje: <strong><?php echo esc_html( implode( ', ', $braki ) ); ?></strong>.
+						Uzupełnij i kliknij <strong>„Zapisz połączenie"</strong> (przycisk wyżej); przycisk odblokuje się od razu po zapisie.
+					<?php else : ?>
+						kliknij <strong>„Zapisz połączenie"</strong> (przycisk wyżej), a ten odblokuje się od razu.
+					<?php endif; ?>
+				<?php endif; ?>
+			</span>
 		</form>
 
 		<h2>Tryb pracy</h2>

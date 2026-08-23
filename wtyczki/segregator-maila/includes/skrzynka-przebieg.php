@@ -122,6 +122,16 @@ function segm_skrzynka_opis_harmonogramu() {
 /* ===================== PRZEBIEG ===================== */
 
 /**
+ * Komunikat wpisywany do wiersza przebiegu PRZED pierwszym ruchem.
+ *
+ * Zostaje w bazie tylko wtedy, gdy przebieg nie doszedł do końcowego
+ * podsumowania: proces padł (fatal, timeout hostingu, zabity cron) albo baza
+ * odrzuciła również ten ostatni zapis. Dlatego brzmi jak stan awaryjny, a nie
+ * jak „trwa" — właściciel czyta go w historii i w widoku przebiegu.
+ */
+const SEGM_SKRZ_KOMUNIKAT_W_TOKU = 'Przebieg w toku. Jeśli ten tekst został tu na stałe, przebieg NIE doszedł do końca (proces przerwany albo baza odrzuciła zapis podsumowania) — liczby w tym wierszu mogą być niepełne, prawdę o poszczególnych wiadomościach mówi lista pozycji.';
+
+/**
  * Jeden przebieg segregacji na skrzynce.
  *
  * ⭐ KOLEJNOŚĆ: ZAPIS ZAMIARU PRZED RUCHEM (LS-F2). Historia jest jedynym
@@ -219,7 +229,7 @@ function segm_skrzynka_przebieg( $zrodlo = 'reczny' ) {
 			'przeniesionych'  => 0,
 			'bledow'          => 0,
 			'cofniety'        => 0,
-			'komunikat'       => 'Przebieg w toku.',
+			'komunikat'       => SEGM_SKRZ_KOMUNIKAT_W_TOKU,
 			'uruchomiono'     => current_time( 'mysql' ),
 		),
 		array( '%s', '%s', '%s', '%d', '%d', '%d', '%d', '%d', '%s', '%s' )

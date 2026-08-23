@@ -60,7 +60,7 @@ leży w pliku `LICENSE` w katalogu wtyczki i wchodzi do paczki produktowej.
 
 | Plik | Linii | Za co odpowiada |
 |---|---|---|
-| `segregator-maila.php` | 434 | nagłówek wtyczki, stałe, ładowanie plików, cron retencji, znacznik „operacja w toku", zgoda na AI, ustawienia ogólne |
+| `segregator-maila.php` | 452 | nagłówek wtyczki, stałe, ładowanie plików, cron retencji, znacznik „operacja w toku", zgoda na AI, ustawienia ogólne |
 | `uninstall.php` | 91 | deinstalacja — dwie ścieżki (§11.5) |
 | `includes/instalator.php` | 276 | `dbDelta` dla 7 tabel, aktywacja, deaktywacja, seed demo (5 kategorii, 8 reguł, 30 maili) |
 | `includes/silnik.php` | 248 | `segm_klasyfikuj_mail()` — jedyna reguła dopasowania w całej wtyczce; przebieg na próbce |
@@ -71,8 +71,8 @@ leży w pliku `LICENSE` w katalogu wtyczki i wchodzi do paczki produktowej.
 | `includes/filtry.php` | 588 | eksport reguł do filtrów Gmaila (XML) i reguł Outlooka |
 | `includes/class-segm-imap.php` | 1073 | **klient IMAP4rev1 w czystym PHP** — gniazdo, TLS, protokół |
 | `includes/skrzynka.php` | 504 | konfiguracja skrzynki, hasło, diagnostyka, „Sprawdź połączenie", rozbiór nagłówków i treści |
-| `includes/skrzynka-przebieg.php` | 731 | przebieg na żywej skrzynce, historia, cofanie, harmonogramy WP-Cron |
-| `includes/admin-skrzynka.php` | 713 | panel zakładki *Skrzynka (IMAP)* i obsługa jej formularzy |
+| `includes/skrzynka-przebieg.php` | 741 | przebieg na żywej skrzynce, historia, cofanie, harmonogramy WP-Cron |
+| `includes/admin-skrzynka.php` | 770 | panel zakładki *Skrzynka (IMAP)* i obsługa jej formularzy |
 | `includes/admin-powitanie.php` | 143 | ekran powitalny pokazywany raz po aktywacji |
 | `includes/admin-probka.php` | 418 | praca na POJEDYNCZYM mailu i licznik trafień reguły |
 
@@ -174,6 +174,8 @@ zamknięcie karty zamiast kliknięcia „Zaczynam” też liczy się jako „wid
 ### Transienty
 
 `segm_komunikat_{ID_użytkownika}` — komunikat i zapis rozmowy z serwerem poczty
+(wyświetlany przez `admin_notices` z priorytetem **1**, czyli przed paskami wtyczki:
+inaczej potwierdzenie zapisu tonęło pod paskami błędu AI i błędu bazy — WK-17)
 przenoszony przez przekierowanie, ważny **5 minut**.
 
 `segm_liczenie_{ID_użytkownika}` — wynik „Policz na próbce" wraz z wpisanymi
@@ -455,6 +457,11 @@ niczego, żeby adres został czysty.
                   ▼
               segm_zwolnij_blokade()
 ```
+
+Wiersz przebiegu dostaje na starcie komunikat `SEGM_SKRZ_KOMUNIKAT_W_TOKU`, który mówi
+wprost, że **przebieg nie doszedł do końca**, gdyby ten tekst został w bazie na stałe
+(proces przerwany albo końcowe podsumowanie też odrzucone przez bazę). Właściciel czyta
+go w historii i w widoku przebiegu, zamiast oglądać wiecznie „w toku".
 
 Kolejność „najpierw baza, potem serwer" jest celowa: historia jest jedynym źródłem, z którego
 da się cofnąć przebieg, więc powstaje ZANIM cokolwiek ruszy. Porażka zapisu = błąd przebiegu
@@ -740,7 +747,10 @@ do tego się nie nadaje — sprawdza istnienie w pamięci procesu i robi
 `INSERT … ON DUPLICATE KEY UPDATE`, który nadpisuje cudzy wiersz i melduje sukces.
 Znacznik po procesie, który padł (`do` w przeszłości) albo w obcym kształcie (bez pola
 `do`) jest przejmowany — kasowany **po wartości**, nie po nazwie, żeby nie zdjąć zamka,
-który w międzyczasie zajął kto inny. Dodatkowo przebieg na próbce sprawdza na końcu,
+który w międzyczasie zajął kto inny. Tak samo **zwolnienie**: `segm_zwolnij_blokade()`
+kasuje wyłącznie stempel, który sam wstawił (zapamiętany na czas żądania) — proces,
+który przekroczył `SEGM_BLOKADA_WAZNA` i którego zamek ktoś przejął, nie zdejmie na
+wyjściu cudzego, świeżego znacznika. Dodatkowo przebieg na próbce sprawdza na końcu,
 czy liczba wierszy się nie zmieniła.
 
 ---
