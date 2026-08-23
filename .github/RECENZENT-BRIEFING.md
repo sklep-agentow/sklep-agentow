@@ -72,6 +72,8 @@ URUCHAMIAJ BRAMKI, NIE CZYTAJ ICH. Runner ma zainstalowane PHP 8.4 i katalog
 
 - `vendor/bin/phpcs` — styl WPCS,
 - `vendor/bin/phpstan analyse --memory-limit=1G --no-progress` — statyka,
+- ⚠️ PRZED `dokumentacja-zgodnosc.sh`: `ln -s /root/praca/zlecenia/sklep-agentow/node_modules node_modules` (katalog
+  roboczy akcji nie ma `node_modules`; bez nich sekcja O tego testu celowo dolicza błąd — EXIT=1 ze środowiska, nie z treści).
 - `bash testy/dokumentacja-zgodnosc.sh` oraz
   `bash testy/dokumentacja-zgodnosc-segregator.sh` — czy dokumentacja nie kłamie
   względem kodu,
