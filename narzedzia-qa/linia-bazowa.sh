@@ -47,7 +47,7 @@ if [ "${1:-}" = "--porownaj" ]; then
 	while IFS=$'\t' read -r nazwa exit_b _; do
 		exit_a=$(awk -F'\t' -v n="$nazwa" '$1==n{print $2}' "$A")
 		[ -z "$exit_a" ] && { echo "NOWY      $nazwa → EXIT=$exit_b (nie było w $A)"; continue; }
-		if [ "$exit_a" = "0" ] && [ "$exit_b" != "0" ]; then echo "⛔ REGRESJA  $nazwa  $exit_a → $exit_b"; REGRESJE=$((REGRESJE+1)); fi
+		if [ "$exit_a" = "0" ] && [ "$exit_b" != "0" ] && [ "$exit_b" != "POMINIETE" ]; then echo "⛔ REGRESJA  $nazwa  $exit_a → $exit_b"; REGRESJE=$((REGRESJE+1)); fi
 		if [ "$exit_a" != "0" ] && [ "$exit_b" = "0" ]; then echo "✅ NAPRAWA   $nazwa  $exit_a → $exit_b"; NAPRAWY=$((NAPRAWY+1)); fi
 	done < "$B"
 	while IFS=$'\t' read -r nazwa _; do
