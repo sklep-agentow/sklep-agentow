@@ -278,14 +278,22 @@ op_opcja() {
 	# ⚠️ ŚWIADOMA GRANICA: filtr jest PO NAZWIE (lista wzorców niżej), nie po treści — opcja-tablica
 	#    (np. ustawienia) może nieść sekret w środku i przejdzie jawnie. Dokładając opcję z sekretem
 	#    nazwij ją tak, żeby wzorzec łapał (klucz/haslo/token/secret/api/key/pass).
-	case "$1" in
+	# wielkość liter nie może decydować o wycieku: nazwa jest normalizowana do małych (runda 4)
+	local NAZWA_MALA; NAZWA_MALA="$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]')"
+	case "$NAZWA_MALA" in
 		*klucz*|*haslo*|*token*|*sekret*|*secret*|*password*|*pass*|*api*|*key*)
 			# podstawienie $(…) to PODPOWŁOKA: exit 2 z brak_stosu kończy ją, nie skrypt — dlatego
 			# kod wyjścia jest sprawdzany i przekazywany dalej (recenzja #157). wp_odczyt scala
 			# stderr do stdout, więc komunikat awarii siedzi w WART — przy błędzie wypisujemy go
 			# na stderr (nigdy jako „wartość") i wychodzimy z tym samym kodem.
 			local WART KOD; WART="$(wp_odczyt option get "$1")"; KOD=$?
-			[ "$KOD" -ne 0 ] && { printf '%s\n' "$WART" >&2; exit "$KOD"; }
+			if [ "$KOD" -ne 0 ]; then
+				# ⛔ przy błędzie NIE wypisujemy surowego wyjścia: wp potrafi zwrócić wartość razem
+				#    z ostrzeżeniem i niezerowym kodem — wypisujemy wyłącznie ZNANE komunikaty
+				#    (Error:/Warning:/STOS NIE ODPOWIADA), resztę zastępuje sam kod (runda 4)
+				printf '%s\n' "$WART" | grep -E '^(Error:|Warning:|STOS NIE ODPOWIADA)' >&2 || printf 'odczyt nie powiódł się (EXIT=%s), szczegóły wycięte — mogłyby nieść sekret\n' "$KOD" >&2
+				exit "$KOD"
+			fi
 			if [ "${#WART}" -ge 12 ]; then printf '[SEKRET ZAMASKOWANY] długość=%s ogon=…%s\n' "${#WART}" "${WART: -2}"
 			else printf '[SEKRET ZAMASKOWANY] długość=%s\n' "${#WART}"; fi ;;
 		*) wp_odczyt option get "$1" ;;

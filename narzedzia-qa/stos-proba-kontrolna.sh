@@ -127,7 +127,28 @@ WYJ_SEKRET="$(bash "$STOS" opcja chatl_klucz_api 2>/dev/null)"
 if printf '%s' "$WYJ_SEKRET" | grep -qE 'sk-ant-[A-Za-z0-9_-]{10,}'; then
 	printf '  BLAD %-56s (pelna wartosc klucza na stdout)\n' "opcja-sekret nie wycieka"; BLEDY=$(( BLEDY + 1 ))
 else
-	printf '  OK   %-56s\n' "opcja-sekret nie wycieka (brak wzorca klucza w wyjsciu)"
+	printf '  OK   %-56s\n' "opcja-sekret: w wyjsciu brak wzorca sk-ant- (weziej niz nie-wycieka)"
+fi
+# 1.3.0 runda 4: wielkosc liter nie moze decydowac o wycieku (KLUCZ wielkimi tez maskowany);
+# opcji nie ma na stosie, wiec przy dzialajacym filtrze dostaniemy blad odczytu (EXIT!=0) — wazne,
+# ze wyjscie NIE zawiera surowej wartosci; przy zepsutym filtrze nazwa przeszlaby jawna galezia.
+WYJ_DUZE="$(bash "$STOS" opcja CHATL_KLUCZ_API_PROBA 2>&1)"; KOD_DUZE=$?
+if [ "$KOD_DUZE" -ne 0 ] && ! printf '%s' "$WYJ_DUZE" | grep -q 'wp option get CHATL_KLUCZ_API_PROBA ===.*[a-z0-9]'; then
+	printf '  OK   %-56s\n' "nazwa WIELKIMI literami tez idzie galezia sekretu (EXIT=$KOD_DUZE)"
+else
+	printf '  BLAD %-56s\n' "nazwa WIELKIMI literami ominela maskowanie"; BLEDY=$(( BLEDY + 1 ))
+fi
+# 1.3.0 runda 4: regresja podpowloki — martwy stos ma dawac EXIT=2 i ZERO [SEKRET ZAMASKOWANY]
+# (bez tej kontroli exit 2 z brak_stosu ginal w $(...) i skrypt wypisywal dlugosc KOMUNIKATU jako klucza).
+if docker ps --filter name='^probny_wp$' --filter status=running -q | grep -q .; then
+	printf '  POMINIETE %-51s\n' "kontrola martwego stosu (probny_wp AKURAT chodzi)"
+else
+	WYJ_MARTWY="$(bash "$STOS" --stos probny opcja chatl_klucz_api 2>&1)"; KOD_MARTWY=$?
+	if [ "$KOD_MARTWY" = "2" ] && ! printf '%s' "$WYJ_MARTWY" | grep -q 'SEKRET ZAMASKOWANY'; then
+		printf '  OK   %-56s\n' "martwy stos: EXIT=2 i zadnego udawanego maskowania"
+	else
+		printf '  BLAD %-56s (EXIT=%s)\n' "martwy stos: exit z podpowloki zginal albo udaje maske" "$KOD_MARTWY"; BLEDY=$(( BLEDY + 1 ))
+	fi
 fi
 odczyt "licznik maili z lapacza"   "wiadomości:"       maile
 odczyt "ostatni mail"              "Subject"           ostatni-mail
