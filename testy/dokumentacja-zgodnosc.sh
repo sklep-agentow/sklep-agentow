@@ -190,7 +190,7 @@ spr "indeksow KEY (poza PRIMARY)" "9"  "grep -cP '^\\t\\tKEY ' $W/includes/insta
 
 echo
 echo "=== E. Aktywacja, seed, cron ==="
-spr "par Q&A w seedzie"           "10" "awk '/\\\$seed = array\\(/{f=1} f&&/^\t\tarray\\(\$/{n++} f&&/^\t\\);\$/{print n; exit}' $W/includes/instalator.php"
+spr "par Q&A w seedzie"           "11" "awk '/\\\$seed = array\\(/{f=1} f&&/^\t\tarray\\(\$/{n++} f&&/^\t\\);\$/{print n; exit}' $W/includes/instalator.php"
 spr "harmonogram: daily"          "1"  "grep -c \"wp_schedule_event( time() + DAY_IN_SECONDS, 'daily', 'chatl_czyszczenie_historii' )\" $W/includes/instalator.php"
 spr "deaktywacja zdejmuje cron"   "1"  "grep -c \"wp_clear_scheduled_hook( 'chatl_czyszczenie_historii' )\" $W/includes/instalator.php"
 spr "seed tylko do pustej bazy"   "1"  "grep -c 'if ( \$ile > 0 ) {' $W/includes/instalator.php"

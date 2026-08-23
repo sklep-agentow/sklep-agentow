@@ -82,7 +82,7 @@ Kolacja z `$wpdb->get_charset_collate()`, czyli taka jak reszta tabel WordPressa
 ### 3.1. `{prefix}chatl_qa` — baza pytań i odpowiedzi
 
 Serce trybu regułowego. Właściciel wypełnia ją w panelu; przy pierwszej aktywacji dostaje
-10 gotowych par demo.
+11 gotowych par demo (10 tematów firmy + powitanie).
 
 | Kolumna | Typ | Po co jest |
 |---|---|---|
@@ -259,7 +259,7 @@ Po kolei, dokładnie to i nic więcej:
 1. `chatl_utworz_tabele()` — pięć `dbDelta()`. Operacja jest **idempotentna**: przy reaktywacji
    nie kasuje danych, tylko dociąga brakujące kolumny i indeksy.
 2. `update_option( 'chatl_wersja_schematu', CHATL_WERSJA_SCHEMATU )`.
-3. `chatl_seed_demo()` — 10 par Q&A typowej polskiej firmy usługowej. **Wchodzi wyłącznie do
+3. `chatl_seed_demo()` — 11 par Q&A typowej polskiej firmy usługowej (10 tematów + powitanie: „dzień dobry" to pierwsze, co pisze człowiek, a silnik z założenia nie zgaduje). **Wchodzi wyłącznie do
    PUSTEJ tabeli** (`SELECT COUNT(*)` i wyjście, gdy > 0), więc reaktywacja nie nadpisuje
    pracy właściciela.
 4. Harmonogram: jeśli zdarzenie `chatl_czyszczenie_historii` nie jest jeszcze zaplanowane —
@@ -1103,6 +1103,18 @@ wysyłania klientom nowego JS.
 
 Liczby, dlaczego akurat takie i co robi odpytywanie co sekundę przy 100 gościach —
 w pliku rozpoznania i w opisie PR.
+
+**Sterowanie odpytywaniem z zewnątrz — dwa mosty.** `odpytaj()` i
+`zatrzymajOdpytywanie()` żyją w domknięciu `zbudujOkno()` (widzą sesję, listę
+wiadomości i pasek rozmówcy), a startować i zatrzymywać trzeba je także spoza
+niego: z bąbelka i z obsługi klawisza Escape. Służą do tego dwie zmienne
+ustawiane w jednym miejscu — `startOdpytywania` i `stopOdpytywania`. Do audytu A4
+bąbelek wołał `odpytaj` po nazwie, spoza zasięgu: przeglądarka zgłaszała
+`ReferenceError`, obsługa kliknięcia przerywała się w połowie i **odpytywanie
+nie startowało wcale** — gość nie widział ani komunikatu o przejęciu rozmowy,
+ani wiadomości operatora, dopóki sam czegoś nie napisał. Bąbelek niesie też
+`aria-expanded` (stan czatu dla czytnika ekranu); etykieta `aria-label`
+pozostaje stała, bo po niej trafiają w bąbelek testy i użytkownicy czytników.
 
 ### 23.5. Panel operatora
 

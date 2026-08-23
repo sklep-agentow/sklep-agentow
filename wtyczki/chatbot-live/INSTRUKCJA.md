@@ -32,7 +32,7 @@ W menu bocznym pojawia się pozycja **ChatBot LIVE**.
 
 1. **Ustawienia** → podmień tekst powitania i tekst awaryjny na własne,
    wpisz mail do powiadomień o zgłoszeniach (domyślnie mail administratora).
-2. **Baza Q&A** → przejrzyj 10 przykładowych wpisów i podmień treści na
+2. **Baza Q&A** → przejrzyj 11 przykładowych wpisów i podmień treści na
    dane swojej firmy (telefony, adres, ceny). Każdy wpis to:
    - *pytanie wzorcowe* — dla Ciebie, żeby wiedzieć, czego dotyczy wpis,
    - *słowa kluczowe z wariantami* — po nich bot dopasowuje pytanie gościa;
@@ -43,6 +43,14 @@ W menu bocznym pojawia się pozycja **ChatBot LIVE**.
 3. Wejdź na swoją stronę i przetestuj: zadaj pytania, na które bot ma
    odpowiedzieć, i jedno, na które nie ma — powinien uczciwie zaproponować
    zostawienie maila.
+
+> **Zostaw wpis powitalny.** Pierwsze, co pisze człowiek do czatu, to zwykle
+> „dzień dobry" — a bot z założenia **nie zgaduje** i na nieznane pytanie
+> odpowiada „nie znam odpowiedzi". W bazie jest gotowy wpis *„Dzień dobry /
+> cześć — jak zacząć?"* z wariantami powitań; podmień w nim treść odpowiedzi na
+> własną (najlepiej wymień tematy, o które warto zapytać), ale **nie kasuj go** —
+> bez niego rozmowa zaczyna się od odmowy. Ta sama zasada dotyczy podziękowań
+> („dziękuję", „ok") — jeśli chcesz na nie odpowiadać, dodaj im własny wpis.
 
 ### Test bota bez wychodzenia na stronę
 
