@@ -54,8 +54,10 @@ Jedyny wyjątek to opcjonalny tryb AI, który działa wyłącznie na PRÓBCE wgr
 przez Ciebie: do dostawcy modelu wychodzą wtedy nadawca (190 znaków), temat
 (300 znaków) i treść maila z próbki (pierwsze 800 znaków), identyfikator wiersza
 próbki, nazwy Twoich kategorii i nazwa modelu; przy błędzie żądanie jest
-ponawiane raz. Nie wychodzą załączniki, nagłówki techniczne maila ani nic ze
-skrzynki IMAP. Nie stanie się to bez Twojego wyraźnego potwierdzenia,
+ponawiane raz. WordPress dokleja do każdego żądania nagłówek `user-agent`
+z adresem Twojej strony i wersją WordPressa. Nie wychodzą załączniki, nagłówki
+techniczne maila ani nic ze skrzynki IMAP; adresu IP nie umieszczamy w treści
+żądania (samo połączenie ujawnia go dostawcy tak jak każde inne). Nie stanie się to bez Twojego wyraźnego potwierdzenia,
 zapisywanego z datą i loginem. Przycisk „Przetestuj klucz API" wysyła wyłącznie
 słowo „ping".
 

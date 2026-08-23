@@ -648,13 +648,23 @@ wprost, bo właściciel pisze z niej własną politykę prywatności): nadawca (
 znaków), temat (300), treść maila z próbki (pierwsze 800) i identyfikator wiersza
 próbki — dla każdego maila w partii do `SEGM_AI_PARTIA`; do tego **nazwy
 wszystkich kategorii** właściciela w poleceniu systemowym, nazwa modelu i limit
-`max_tokens`. Nie wychodzą: załączniki, nagłówki techniczne maila, `Message-ID`,
-kolumna `kategoria_oczekiwana`, adresy IP. Przy błędzie żądanie jest **ponawiane
+`max_tokens`. Do tego **nagłówki**: `x-api-key`, `anthropic-version`, `Content-Type` oraz
+`user-agent`, którego wtyczka NIE nadpisuje — WordPress wstawia tam własny
+(`WordPress/<wersja>; <adres strony>`, filtr `http_headers_useragent`), więc
+adres strony właściciela i wersja WP wychodzą przy KAŻDYM żądaniu, także przy
+teście klucza. Nie wychodzą: załączniki, nagłówki techniczne maila,
+`Message-ID`, kolumna `kategoria_oczekiwana`; adresu IP nie umieszczamy
+w treści żądania (z samego połączenia dostawca widzi go tak jak przy każdym
+połączeniu — deklaracja mówi to wprost, zamiast obiecywać anonimowość). Przy błędzie żądanie jest **ponawiane
 raz** — te same dane lecą drugi raz. **Przebieg na prawdziwej skrzynce (IMAP)
 nie woła AI w ogóle**: `skrzynka-przebieg.php` i `skrzynka.php` nie mają ani
 jednego wywołania `segm_ai_*`, tryb AI dotyczy wyłącznie próbki. Pilnuje tego strażnik
-w repozytorium, który rozkłada PRAWDZIWY przechwycony ładunek i dla każdego
-składnika pyta, czy deklaracja go wymienia.
+w repozytorium, który rozkłada PRAWDZIWY przechwycony ładunek (ciało **i**
+nagłówki) i dla każdego składnika pyta, czy deklaracja go wymienia — czytając
+dokument i pliki źródłowe **z repozytorium**, nie z kopii wtyczki na stosie.
+Fakt „na skrzynce nie ma AI" asertuje deterministycznie: zero wywołań
+`segm_ai_*` w `skrzynka-przebieg.php` i `skrzynka.php`; sam przebieg na
+nieskonfigurowanej skrzynce niczego by nie dowiódł, bo odbija się na wejściu.
 
 **„Przetestuj klucz API”** (Ustawienia) wysyła JEDNO wywołanie ze słowem
 „ping”. ⛔ Żadnego maila, żadnej treści z próbki — to test poświadczeń, nie

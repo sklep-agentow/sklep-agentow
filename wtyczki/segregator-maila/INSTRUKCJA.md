@@ -415,11 +415,16 @@ reguły, próbka, przebiegi i ustawienia.
     przypisujemy odpowiedź modelu do maila;
   - **nazwy Twoich kategorii** — cała lista, w poleceniu systemowym;
   - **nazwa modelu** i limit długości odpowiedzi;
-  - **klucz API** (w nagłówku żądania, jak przy każdym logowaniu do API).
+  - **klucz API** (w nagłówku żądania, jak przy każdym logowaniu do API);
+  - **adres Twojej strony i wersja WordPressa** — WordPress dokleja je do każdego
+    żądania wychodzącego w nagłówku `user-agent` (np. `WordPress/6.8; https://twojafirma.pl`).
+    Dotyczy to **także** przycisku „Przetestuj klucz API".
 
   **Nie wychodzi:** załączniki, nagłówki techniczne maila, `Message-ID`,
-  kolumna „kategoria oczekiwana" z próbki, adres IP Twój ani gościa, ani nic
-  z prawdziwej skrzynki IMAP (patrz punkt niżej).
+  kolumna „kategoria oczekiwana" z próbki, ani nic z prawdziwej skrzynki IMAP
+  (patrz punkt niżej). Adresu IP **nie umieszczamy w treści żądania** — ale
+  uczciwie: adres IP Twojego serwera dostawca i tak widzi z samego połączenia,
+  bo tak działa każde połączenie w internecie.
 
   ⚠️ Gdy żądanie nie dojdzie (błąd sieci, 429, awaria dostawcy), wtyczka
   **ponawia je JEDEN raz** — te same dane wychodzą wtedy drugi raz.
@@ -430,7 +435,8 @@ reguły, próbka, przebiegi i ustawienia.
   która ją wyraziła, i można ją cofnąć w każdej chwili. Odinstalowanie wtyczki
   kasuje ją zawsze.
 - **„Przetestuj klucz API"** wysyła do dostawcy **wyłącznie słowo „ping"** —
-  ani jednego maila, ani jednego znaku z próbki. To sprawdzenie poświadczeń,
+  ani jednego maila, ani jednego znaku z próbki (nagłówki, w tym adres strony
+  w `user-agent`, lecą jak przy każdym żądaniu). To sprawdzenie poświadczeń,
   nie klasyfikacja.
 - **Klucz API i hasło do skrzynki:** oba możesz trzymać **poza bazą**, stałymi
   w `wp-config.php` (`SEGM_KLUCZ_API`, `SEGM_IMAP_HASLO`) — wtedy nie wychodzą
