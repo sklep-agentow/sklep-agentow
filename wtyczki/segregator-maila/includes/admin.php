@@ -98,12 +98,33 @@ function segm_pasek_bledu_ai() {
 	if ( null === $blad ) {
 		return;
 	}
+	/*
+	 * WK-3: świeżo kupiona wtyczka witała właściciela czerwonym „KLUCZ API
+	 * ZOSTAŁ ODRZUCONY. Sprawdź, czy jest wpisany w całości…" — o kluczu,
+	 * którego ten człowiek nigdy nie wpisywał (ślad błędu został po kimś
+	 * innym albo po kluczu skasowanym później). Brak klucza to NIE jest
+	 * odrzucony klucz: gdy klucza nie ma, mówimy skąd go wziąć i gdzie wpisać,
+	 * żółto (to stan do uzupełnienia), a nie czerwono (to nie awaria).
+	 */
+	$bez_klucza = '' === segm_klucz_api();
 	?>
-	<div class="notice notice-error">
-		<p><strong>Tryb AI nie działa — przebiegi liczą się samymi regułami.</strong>
-			<?php echo esc_html( segm_opis_bledu_ai( $blad['kod'] ) ); ?>
-			Ostatnia nieudana próba: <?php echo esc_html( $blad['kiedy'] ); ?>.</p>
-		<p><a href="<?php echo esc_url( admin_url( 'admin.php?page=segm-ustawienia' ) ); ?>">Sprawdź klucz w Ustawieniach Segregatora</a></p>
+	<div class="notice <?php echo $bez_klucza ? 'notice-warning' : 'notice-error'; ?>">
+		<?php if ( $bez_klucza ) : ?>
+			<p><strong>Tryb AI jest wyłączony, bo nie ma klucza API — przebiegi liczą się samymi regułami.</strong>
+				Tryb regułowy jest pełnoprawny: nie musisz nic robić, żeby wtyczka działała.
+				Klucz jest potrzebny tylko wtedy, gdy chcesz dodatkowo puścić próbkę przez model.</p>
+			<p>Klucz bierzesz z konta u dostawcy modelu (Anthropic, <code>console.anthropic.com</code>) i wpisujesz
+				w <em>Ustawieniach Segregatora</em> albo — bezpieczniej — stałą <code><?php echo esc_html( SEGM_STALA_KLUCZA ); ?></code>
+				w <code>wp-config.php</code>.</p>
+			<p class="description">Ostatnia nieudana próba wywołania AI: <?php echo esc_html( $blad['kiedy'] ); ?><?php echo $blad['kod'] > 0 ? esc_html( ', odpowiedź dostawcy: kod ' . (int) $blad['kod'] ) : ''; ?>.
+				Ten ślad pochodzi sprzed usunięcia klucza — <strong>nie jest zarzutem wobec Ciebie</strong> i zgaśnie sam po pierwszym udanym wywołaniu.</p>
+			<p><a href="<?php echo esc_url( admin_url( 'admin.php?page=segm-ustawienia' ) ); ?>">Wpisz klucz w Ustawieniach Segregatora</a></p>
+		<?php else : ?>
+			<p><strong>Tryb AI nie działa — przebiegi liczą się samymi regułami.</strong>
+				<?php echo esc_html( segm_opis_bledu_ai( $blad['kod'] ) ); ?>
+				Ostatnia nieudana próba: <?php echo esc_html( $blad['kiedy'] ); ?>.</p>
+			<p><a href="<?php echo esc_url( admin_url( 'admin.php?page=segm-ustawienia' ) ); ?>">Sprawdź klucz w Ustawieniach Segregatora</a></p>
+		<?php endif; ?>
 	</div>
 	<?php
 }

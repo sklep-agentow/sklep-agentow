@@ -192,8 +192,9 @@ function segm_przenoszenie_dozwolone() {
  *
  * Wtyczka ma POWIEDZIEĆ, czego brakuje, a nie paść z białym ekranem.
  *
- * @return array<int, array{nazwa: string, stan: string, opis: string}>
- *         stan: 'ok' | 'uwaga' | 'blad'.
+ * @return array<int, array{nazwa: string, stan: string, opis: string, znacznik?: string}>
+ *         stan: 'ok' | 'uwaga' | 'blad'; 'znacznik' (opcjonalny) zastępuje
+ *         domyślny napis w kolumnie stanu, gdy „✔ jest" byłoby mylące.
  */
 function segm_skrzynka_diagnostyka() {
 	$wynik = array();
@@ -232,6 +233,11 @@ function segm_skrzynka_diagnostyka() {
 	$wynik[]  = array(
 		'nazwa' => 'Rozszerzenie PHP „imap" (NIEwymagane)',
 		'stan'  => 'ok',
+		// WK-4: kolumna stanu mówiła „✔ jest", a opis obok zaczynał się od
+		// „Nieobecne" — kupujący czytał to jako błąd w tabelce. Kolumna ma
+		// mówić o STANIE RZECZY, a nie tylko „u nas wszystko gra": własny
+		// znacznik rozstrzyga, co widać, i zgadza się z pierwszym słowem opisu.
+		'znacznik' => $ext_imap ? '✔ jest (nieużywane)' : '— nie dotyczy',
 		'opis'  => $ext_imap
 			? 'Obecne, ale wtyczka z niego nie korzysta — rozmawia z serwerem protokołem po gnieździe, więc działa tak samo bez niego.'
 			: 'Nieobecne — i dobrze, bo wtyczka go NIE potrzebuje. Podręcznik PHP (php.net/manual/en/imap.installation.php): „This extension has been moved to the PECL repository and is no longer bundled with PHP as of PHP 8.4.0". Wtyczka oparta na funkcjach imap_* przestałaby u Ciebie działać po aktualizacji PHP — ta jest oparta na własnym kliencie IMAP.',
