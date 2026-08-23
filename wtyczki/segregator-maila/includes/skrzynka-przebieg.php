@@ -124,6 +124,22 @@ function segm_skrzynka_opis_harmonogramu() {
 /**
  * Jeden przebieg segregacji na skrzynce.
  *
+ * ⭐ KOLEJNOŚĆ: ZAPIS ZAMIARU PRZED RUCHEM (LS-F2). Historia jest jedynym
+ * źródłem, z którego da się cofnąć przebieg — więc powstaje ZANIM cokolwiek
+ * ruszy na serwerze: najpierw wiersz przebiegu, potem dla każdej wiadomości
+ * wiersz „w toku", dopiero po udanym zapisie `UID MOVE`, a po potwierdzeniu
+ * od serwera wiersz dostaje stan „przeniesiony" i nowy UID. Gdy baza odmówi:
+ *  - wiadomość, której zamiaru nie dało się zapisać, NIE jest ruszana,
+ *  - przebieg PRZERYWA się na pierwszej odmowie (baza, która padła, nie
+ *    przyjmie też następnych wierszy) i zwraca `blad` — panel pokazuje błąd,
+ *    a nie „sukces" z pustą historią,
+ *  - `przeniesionych` liczy tylko ruchy potwierdzone przez serwer.
+ * Wiersz, który został „w toku" (proces padł między MOVE a potwierdzeniem),
+ * jest dla cofania sygnałem „szukaj po Message-ID", a nie „pomiń".
+ * Wcześniej wiersze historii powstawały PO pętli przenoszenia — przy padzie
+ * bazy poczta była rozłożona po folderach, historia pusta, cofanie martwe,
+ * a panel pokazywał „przeniesionych=1, błędów=0".
+ *
  * @param string $zrodlo 'reczny' albo 'cron'.
  * @return array{id: int, tryb: string, sprawdzonych: int, dopasowanych: int, przeniesionych: int, bledow: int, komunikat: string, blad: string}
  */
@@ -147,6 +163,8 @@ function segm_skrzynka_przebieg( $zrodlo = 'reczny' ) {
 	if ( 'na_zywo' === $ust['tryb'] && ! $na_zywo ) {
 		$uwagi[] = 'Tryb ustawiono na realne przenoszenie, ale BRAK jednorazowego potwierdzenia — przebieg poszedł NA SUCHO i nic nie ruszył.';
 	}
+	$tryb          = $na_zywo ? 'na_zywo' : 'na_sucho';
+	$pusty['tryb'] = $tryb;
 
 	// Ten sam znacznik co przy próbce CSV: dwa przebiegi naraz (cron + klik
 	// w panelu) liczyłyby i przenosiły te same wiadomości dwa razy.
@@ -188,13 +206,41 @@ function segm_skrzynka_przebieg( $zrodlo = 'reczny' ) {
 		$uidy = array_slice( $uidy, -$limit );
 	}
 
+	// Wiersz przebiegu powstaje PRZED pierwszym ruchem — bez niego nie ma do
+	// czego przypiąć historii, więc bez niego nic nie ruszamy.
+	$zapis = $wpdb->insert(
+		$wpdb->prefix . 'segm_skrz_przebiegi',
+		array(
+			'tryb'            => $tryb,
+			'zrodlo'          => 'cron' === $zrodlo ? 'cron' : 'reczny',
+			'folder_zrodlowy' => (string) $ust['folder_zrodlowy'],
+			'sprawdzonych'    => 0,
+			'dopasowanych'    => 0,
+			'przeniesionych'  => 0,
+			'bledow'          => 0,
+			'cofniety'        => 0,
+			'komunikat'       => 'Przebieg w toku.',
+			'uruchomiono'     => current_time( 'mysql' ),
+		),
+		array( '%s', '%s', '%s', '%d', '%d', '%d', '%d', '%d', '%s', '%s' )
+	);
+	if ( false === $zapis ) {
+		segm_log_bledu_bazy( 'segm_skrzynka_przebieg', 'zapis przebiegu skrzynki (tryb: ' . $tryb . ')' );
+		$klient->rozlacz();
+		segm_zwolnij_blokade();
+		$pusty['blad'] = 'Nie udało się zapisać przebiegu w bazie — przebieg NIE wystartował i żadna wiadomość nie została ruszona. Sprawdź stan bazy i uruchom ponownie.';
+		return $pusty;
+	}
+	$id_przebiegu = (int) $wpdb->insert_id;
+
 	$reguly       = segm_pobierz_reguly();
-	$ruchy        = array();
+	$sprawdzonych = 0;
 	$dopasowanych = 0;
 	$przenies     = 0;
 	$bledow       = 0;
 	$start        = time();
 	$przerwano    = false;
+	$baza_padla   = '';
 	$utworzone    = array();
 
 	foreach ( $uidy as $uid ) {
@@ -202,11 +248,15 @@ function segm_skrzynka_przebieg( $zrodlo = 'reczny' ) {
 			$przerwano = true;
 			break;
 		}
+		++$sprawdzonych;
 
 		$wiadomosc = segm_skrzynka_wiadomosc( $klient, $uid, ! empty( $ust['dopasuj_tresc'] ) );
 		if ( null === $wiadomosc ) {
 			++$bledow;
-			$ruchy[] = segm_skrzynka_ruch( $uid, '', '', '', (string) $ust['folder_zrodlowy'], '', 'blad', $klient->blad() );
+			if ( ! segm_skrzynka_zapisz_ruch( $id_przebiegu, segm_skrzynka_ruch( $uid, '', '', '', (string) $ust['folder_zrodlowy'], '', 'blad', $klient->blad() ) ) ) {
+				$baza_padla = 'zapis pozycji historii (UID ' . (int) $uid . ')';
+				break;
+			}
 			continue;
 		}
 
@@ -218,7 +268,7 @@ function segm_skrzynka_przebieg( $zrodlo = 'reczny' ) {
 		}
 
 		if ( ! $dopasowal && empty( $ust['ruszaj_reszte'] ) ) {
-			$ruchy[] = segm_skrzynka_ruch(
+			$ruch = segm_skrzynka_ruch(
 				$uid,
 				$wiadomosc->message_id,
 				$wiadomosc->nadawca,
@@ -228,12 +278,16 @@ function segm_skrzynka_przebieg( $zrodlo = 'reczny' ) {
 				'pominiety',
 				'Żadna reguła nie pasuje — wiadomość zostaje na miejscu (kubeł „' . SEGM_KUBEL_DOMYSLNY . '" wyłączony w ustawieniach).'
 			);
+			if ( ! segm_skrzynka_zapisz_ruch( $id_przebiegu, $ruch ) ) {
+				$baza_padla = 'zapis pozycji historii (UID ' . (int) $uid . ')';
+				break;
+			}
 			continue;
 		}
 
 		$cel = segm_skrzynka_folder_dla( $klient, (string) $ust['prefiks'], $kategoria );
 		if ( $cel === $zrodlowy ) {
-			$ruchy[] = segm_skrzynka_ruch(
+			$ruch = segm_skrzynka_ruch(
 				$uid,
 				$wiadomosc->message_id,
 				$wiadomosc->nadawca,
@@ -243,11 +297,15 @@ function segm_skrzynka_przebieg( $zrodlo = 'reczny' ) {
 				'pominiety',
 				'Folder docelowy jest tym samym folderem co źródłowy — nie ma czego przenosić.'
 			);
+			if ( ! segm_skrzynka_zapisz_ruch( $id_przebiegu, $ruch ) ) {
+				$baza_padla = 'zapis pozycji historii (UID ' . (int) $uid . ')';
+				break;
+			}
 			continue;
 		}
 
 		if ( ! $na_zywo ) {
-			$ruchy[] = segm_skrzynka_ruch(
+			$ruch = segm_skrzynka_ruch(
 				$uid,
 				$wiadomosc->message_id,
 				$wiadomosc->nadawca,
@@ -257,13 +315,20 @@ function segm_skrzynka_przebieg( $zrodlo = 'reczny' ) {
 				'plan',
 				''
 			);
+			if ( ! segm_skrzynka_zapisz_ruch( $id_przebiegu, $ruch ) ) {
+				$baza_padla = 'zapis pozycji historii (UID ' . (int) $uid . ')';
+				break;
+			}
 			continue;
 		}
 
 		if ( ! isset( $utworzone[ $cel ] ) ) {
 			if ( ! $klient->utworz_folder( $cel ) ) {
 				++$bledow;
-				$ruchy[] = segm_skrzynka_ruch( $uid, $wiadomosc->message_id, $wiadomosc->nadawca, $wiadomosc->temat, (string) $ust['folder_zrodlowy'], Segm_Imap::z_utf7( $cel ), 'blad', $klient->blad() );
+				if ( ! segm_skrzynka_zapisz_ruch( $id_przebiegu, segm_skrzynka_ruch( $uid, $wiadomosc->message_id, $wiadomosc->nadawca, $wiadomosc->temat, (string) $ust['folder_zrodlowy'], Segm_Imap::z_utf7( $cel ), 'blad', $klient->blad() ) ) ) {
+					$baza_padla = 'zapis pozycji historii (UID ' . (int) $uid . ')';
+					break;
+				}
 				continue;
 			}
 			$utworzone[ $cel ] = true;
@@ -274,21 +339,45 @@ function segm_skrzynka_przebieg( $zrodlo = 'reczny' ) {
 			// niż zbierać serię niezrozumiałych odmów serwera.
 			if ( null === $klient->otworz( $zrodlowy, false ) ) {
 				++$bledow;
-				$ruchy[] = segm_skrzynka_ruch( $uid, $wiadomosc->message_id, $wiadomosc->nadawca, $wiadomosc->temat, (string) $ust['folder_zrodlowy'], Segm_Imap::z_utf7( $cel ), 'blad', 'Folder docelowy powstał, ale nie udało się wrócić do folderu źródłowego — ' . $klient->blad() );
+				if ( ! segm_skrzynka_zapisz_ruch( $id_przebiegu, segm_skrzynka_ruch( $uid, $wiadomosc->message_id, $wiadomosc->nadawca, $wiadomosc->temat, (string) $ust['folder_zrodlowy'], Segm_Imap::z_utf7( $cel ), 'blad', 'Folder docelowy powstał, ale nie udało się wrócić do folderu źródłowego — ' . $klient->blad() ) ) ) {
+					$baza_padla = 'zapis pozycji historii (UID ' . (int) $uid . ')';
+					break;
+				}
 				continue;
 			}
+		}
+
+		// ZAMIAR do bazy — dopiero potem ruch na serwerze.
+		$ruch     = segm_skrzynka_ruch(
+			$uid,
+			$wiadomosc->message_id,
+			$wiadomosc->nadawca,
+			$wiadomosc->temat,
+			(string) $ust['folder_zrodlowy'],
+			Segm_Imap::z_utf7( $cel ),
+			'w_toku',
+			'Przenoszenie w toku. Jeśli ten wpis się nie zmienił, przebieg urwał się między przeniesieniem a potwierdzeniem — cofanie odszuka wiadomość po Message-ID.'
+		);
+		$id_ruchu = segm_skrzynka_zapisz_ruch( $id_przebiegu, $ruch );
+		if ( ! $id_ruchu ) {
+			$baza_padla = 'zapis zamiaru przeniesienia (UID ' . (int) $uid . ') — wiadomość NIE została ruszona';
+			break;
 		}
 
 		$wynik = $klient->przenies( $uid, $cel );
 		if ( null === $wynik ) {
 			++$bledow;
-			$ruchy[] = segm_skrzynka_ruch( $uid, $wiadomosc->message_id, $wiadomosc->nadawca, $wiadomosc->temat, (string) $ust['folder_zrodlowy'], Segm_Imap::z_utf7( $cel ), 'blad', $klient->blad() );
+			segm_skrzynka_oznacz_ruch( $id_ruchu, 'blad', $klient->blad() );
 			continue;
 		}
 		++$przenies;
-		$ruch                 = segm_skrzynka_ruch( $uid, $wiadomosc->message_id, $wiadomosc->nadawca, $wiadomosc->temat, (string) $ust['folder_zrodlowy'], Segm_Imap::z_utf7( $cel ), 'przeniesiony', $wynik['uwaga'] );
-		$ruch['uid_docelowy'] = (int) $wynik['uid_docelowy'];
-		$ruchy[]              = $ruch;
+		if ( ! segm_skrzynka_potwierdz_ruch( $id_ruchu, (int) $wynik['uid_docelowy'], (int) $wynik['uidvalidity_do'], (string) $wynik['uwaga'] ) ) {
+			// Wiadomość JEST przeniesiona (liczymy ją), ale potwierdzenie nie
+			// weszło do bazy — wiersz zostaje „w toku" i mówi o tym wprost.
+			// Dalej nie idziemy: baza, która odmówiła, nie przyjmie kolejnych zamiarów.
+			$baza_padla = 'potwierdzenie przeniesienia (UID ' . (int) $uid . ') — wiadomość JEST przeniesiona, w historii widnieje jako „w toku"';
+			break;
+		}
 	}
 
 	$klient->rozlacz();
@@ -297,48 +386,43 @@ function segm_skrzynka_przebieg( $zrodlo = 'reczny' ) {
 		$uwagi[] = sprintf(
 			'Przebieg zatrzymał się po %d s na %d wiadomościach z %d — reszta pójdzie następnym razem. To celowy limit, żeby hosting nie urwał żądania w połowie przenoszenia.',
 			SEGM_SKRZ_LIMIT_CZASU,
-			count( $ruchy ),
+			$sprawdzonych,
 			count( $uidy )
 		);
 	}
+	$blad = '';
+	if ( '' !== $baza_padla ) {
+		$blad    = sprintf(
+			'Zapis historii do bazy nie powiódł się (%s). Przebieg #%d PRZERWANY po %d wiadomościach z %d: potwierdzonych przeniesień %d, reszta została na miejscu. Sprawdź stan bazy, zanim uruchomisz go ponownie.',
+			$baza_padla,
+			$id_przebiegu,
+			$sprawdzonych,
+			count( $uidy ),
+			$przenies
+		);
+		$uwagi[] = $blad;
+	}
 
-	$tryb  = $na_zywo ? 'na_zywo' : 'na_sucho';
-	$zapis = $wpdb->insert(
+	if ( false === $wpdb->update(
 		$wpdb->prefix . 'segm_skrz_przebiegi',
 		array(
-			'tryb'            => $tryb,
-			'zrodlo'          => 'cron' === $zrodlo ? 'cron' : 'reczny',
-			'folder_zrodlowy' => (string) $ust['folder_zrodlowy'],
-			'sprawdzonych'    => count( $ruchy ),
-			'dopasowanych'    => $dopasowanych,
-			'przeniesionych'  => $przenies,
-			'bledow'          => $bledow,
-			'cofniety'        => 0,
-			'komunikat'       => implode( ' ', $uwagi ),
-			'uruchomiono'     => current_time( 'mysql' ),
+			'sprawdzonych'   => $sprawdzonych,
+			'dopasowanych'   => $dopasowanych,
+			'przeniesionych' => $przenies,
+			'bledow'         => $bledow,
+			'komunikat'      => implode( ' ', $uwagi ),
 		),
-		array( '%s', '%s', '%s', '%d', '%d', '%d', '%d', '%d', '%s', '%s' )
-	);
-	if ( false === $zapis ) {
-		segm_log_bledu_bazy( 'segm_skrzynka_przebieg', 'zapis przebiegu skrzynki (tryb: ' . $tryb . ')' );
-		segm_zwolnij_blokade();
-		$pusty['tryb'] = $tryb;
-		$pusty['blad'] = 'na_zywo' === $tryb
-			? 'Wiadomości ZOSTAŁY przeniesione na serwerze, ale zapis historii do bazy nie powiódł się — nie ma z czego cofnąć tego przebiegu. Sprawdź stan bazy i folder docelowy w programie pocztowym.'
-			: 'Przebieg policzył się, ale zapis wyniku do bazy nie powiódł się — raportu NIE ma. Sprawdź stan bazy i uruchom przebieg ponownie.';
-		return $pusty;
-	}
-	$id_przebiegu = (int) $wpdb->insert_id;
-
-	foreach ( $ruchy as $ruch ) {
-		$ruch['przebieg_id'] = $id_przebiegu;
-		$ruch['utworzono']   = current_time( 'mysql' );
-		if ( false === $wpdb->insert(
-			$wpdb->prefix . 'segm_skrz_ruchy',
-			$ruch,
-			array( '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s' )
-		) ) {
-			segm_log_bledu_bazy( 'segm_skrzynka_przebieg', 'zapis pozycji historii (UID ' . $ruch['uid'] . ')' );
+		array( 'id' => $id_przebiegu ),
+		array( '%d', '%d', '%d', '%d', '%s' ),
+		array( '%d' )
+	) ) {
+		segm_log_bledu_bazy( 'segm_skrzynka_przebieg', 'podsumowanie przebiegu #' . $id_przebiegu );
+		if ( '' === $blad ) {
+			$blad = sprintf(
+				'Przebieg #%d policzył się (przeniesionych %d), ale podsumowania nie udało się zapisać w bazie — historia pozycji jest kompletna, liczby w tabeli przebiegów mogą pokazywać zera. Sprawdź stan bazy.',
+				$id_przebiegu,
+				$przenies
+			);
 		}
 	}
 
@@ -347,12 +431,12 @@ function segm_skrzynka_przebieg( $zrodlo = 'reczny' ) {
 	return array(
 		'id'             => $id_przebiegu,
 		'tryb'           => $tryb,
-		'sprawdzonych'   => count( $ruchy ),
+		'sprawdzonych'   => $sprawdzonych,
 		'dopasowanych'   => $dopasowanych,
 		'przeniesionych' => $przenies,
 		'bledow'         => $bledow,
 		'komunikat'      => implode( ' ', $uwagi ),
-		'blad'           => '',
+		'blad'           => $blad,
 	);
 }
 
@@ -365,24 +449,82 @@ function segm_skrzynka_przebieg( $zrodlo = 'reczny' ) {
  * @param string $temat      Temat.
  * @param string $skad       Folder źródłowy (czytelnie).
  * @param string $dokad      Folder docelowy (czytelnie).
- * @param string $stan       'plan' | 'przeniesiony' | 'pominiety' | 'blad' | 'cofniety'.
+ * @param string $stan       'plan' | 'w_toku' | 'przeniesiony' | 'pominiety' | 'blad' | 'cofniety'.
  * @param string $komunikat  Wyjaśnienie dla właściciela.
  * @return array<string, mixed>
  */
 function segm_skrzynka_ruch( $uid, $message_id, $nadawca, $temat, $skad, $dokad, $stan, $komunikat ) {
 	return array(
-		'przebieg_id'  => 0,
-		'uid'          => (int) $uid,
-		'message_id'   => mb_substr( (string) $message_id, 0, 190 ),
-		'nadawca'      => mb_substr( (string) $nadawca, 0, 190 ),
-		'temat'        => (string) $temat,
-		'folder_z'     => (string) $skad,
-		'folder_do'    => (string) $dokad,
-		'stan'         => (string) $stan,
-		'komunikat'    => (string) $komunikat,
-		'uid_docelowy' => 0,
-		'utworzono'    => '',
+		'przebieg_id'    => 0,
+		'uid'            => (int) $uid,
+		'message_id'     => mb_substr( (string) $message_id, 0, 190 ),
+		'nadawca'        => mb_substr( (string) $nadawca, 0, 190 ),
+		'temat'          => (string) $temat,
+		'folder_z'       => (string) $skad,
+		'folder_do'      => (string) $dokad,
+		'stan'           => (string) $stan,
+		'komunikat'      => (string) $komunikat,
+		'uid_docelowy'   => 0,
+		'uidvalidity_do' => 0,
+		'utworzono'      => '',
 	);
+}
+
+/**
+ * Zapis jednej pozycji historii. „Skąd wiem, że się udało": insert() zwraca
+ * false przy porażce, a insert_id > 0 przy sukcesie — zwracamy ten drugi.
+ *
+ * @param int                  $id_przebiegu Identyfikator przebiegu.
+ * @param array<string, mixed> $ruch         Wiersz z segm_skrzynka_ruch().
+ * @return int Identyfikator wiersza albo 0 przy porażce (błąd już zalogowany).
+ */
+function segm_skrzynka_zapisz_ruch( $id_przebiegu, $ruch ) {
+	global $wpdb;
+	$ruch['przebieg_id'] = (int) $id_przebiegu;
+	$ruch['utworzono']   = current_time( 'mysql' );
+	$wynik               = $wpdb->insert(
+		$wpdb->prefix . 'segm_skrz_ruchy',
+		$ruch,
+		array( '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%s' )
+	);
+	if ( false === $wynik || (int) $wpdb->insert_id <= 0 ) {
+		segm_log_bledu_bazy( 'segm_skrzynka_przebieg', 'zapis pozycji historii (UID ' . (int) $ruch['uid'] . ')' );
+		return 0;
+	}
+	return (int) $wpdb->insert_id;
+}
+
+/**
+ * Potwierdzenie ruchu w historii: „w toku" → „przeniesiony" + nowy UID
+ * i UIDVALIDITY folderu docelowego (cofanie sprawdza ją, zanim zaufa UID-owi).
+ *
+ * @param int    $id_ruchu       Identyfikator wiersza historii.
+ * @param int    $uid_docelowy   UID w folderze docelowym (0 = serwer nie podał).
+ * @param int    $uidvalidity_do UIDVALIDITY folderu docelowego (0 = nieznane).
+ * @param string $uwaga          Uwaga z klienta IMAP (np. serwer bez MOVE).
+ * @return bool True, gdy wiersz po zapisie ma stan „przeniesiony".
+ */
+function segm_skrzynka_potwierdz_ruch( $id_ruchu, $uid_docelowy, $uidvalidity_do, $uwaga ) {
+	global $wpdb;
+	$wynik = $wpdb->update(
+		$wpdb->prefix . 'segm_skrz_ruchy',
+		array(
+			'stan'           => 'przeniesiony',
+			'komunikat'      => (string) $uwaga,
+			'uid_docelowy'   => (int) $uid_docelowy,
+			'uidvalidity_do' => (int) $uidvalidity_do,
+		),
+		array( 'id' => (int) $id_ruchu ),
+		array( '%s', '%s', '%d', '%d' ),
+		array( '%d' )
+	);
+	if ( false === $wynik ) {
+		segm_log_bledu_bazy( 'segm_skrzynka_przebieg', 'potwierdzenie przeniesienia (pozycja ' . (int) $id_ruchu . ')' );
+		return false;
+	}
+	// update() zwraca 0 także wtedy, gdy nic nie pasowało — prawdę mówi odczyt PO zapisie.
+	$stan = $wpdb->get_var( $wpdb->prepare( "SELECT stan FROM {$wpdb->prefix}segm_skrz_ruchy WHERE id = %d", (int) $id_ruchu ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	return 'przeniesiony' === $stan;
 }
 
 /* ===================== COFANIE ===================== */
@@ -395,6 +537,19 @@ function segm_skrzynka_ruch( $uid, $message_id, $nadawca, $temat, $skad, $dokad,
  * zwrócić — wtedy szukamy wiadomości w folderze docelowym po nagłówku
  * Message-ID. Gdy i to zawiedzie, mówimy wprost, której wiadomości nie
  * odnaleziono, zamiast zgadywać.
+ *
+ * ⭐ Liczymy TYLKO to, co naprawdę wróciło (LS-F1): `Segm_Imap::przenies()`
+ * sprawdza skutek ruchu, więc wiadomość, którą właściciel w międzyczasie
+ * przeciągnął gdzie indziej, dostaje BŁĄD przy swojej pozycji, a nie
+ * „wróciła". Przebieg jest „cofnięty w całości" tylko przy zerze błędów —
+ * inaczej przycisk zostaje i drugą próbę da się zrobić.
+ *
+ * ⭐ UIDVALIDITY (T-3, RFC 3501 §2.3.1.1): zapamiętany UID znaczy coś tylko
+ * w folderze o TEJ SAMEJ UIDVALIDITY. Folder skasowany i założony na nowo
+ * zaczyna UID-y od 1 — stary UID wskazywałby OBCĄ wiadomość i to ją byśmy
+ * „cofnęli". Gdy UIDVALIDITY się różni, UID-owi nie ufamy i szukamy po
+ * Message-ID. Pozycje „w toku" (proces padł między MOVE a potwierdzeniem)
+ * traktujemy tak samo: UID-u nie znamy, szukamy po Message-ID.
  *
  * @param int $id_przebiegu Identyfikator przebiegu do cofnięcia.
  * @return array{ok: bool, cofnietych: int, bledow: int, blad: string}
@@ -441,7 +596,7 @@ function segm_skrzynka_cofnij( $id_przebiegu ) {
 	}
 
 	$ruchy = $wpdb->get_results(
-		$wpdb->prepare( "SELECT * FROM {$wpdb->prefix}segm_skrz_ruchy WHERE przebieg_id = %d AND stan = 'przeniesiony' ORDER BY folder_do ASC, id ASC", (int) $id_przebiegu ) // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->prepare( "SELECT * FROM {$wpdb->prefix}segm_skrz_ruchy WHERE przebieg_id = %d AND stan IN ('przeniesiony', 'w_toku') ORDER BY folder_do ASC, id ASC", (int) $id_przebiegu ) // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 	);
 	if ( ! $ruchy ) {
 		$wynik['blad'] = 'W tym przebiegu nie ma ani jednej przeniesionej wiadomości.';
@@ -460,22 +615,31 @@ function segm_skrzynka_cofnij( $id_przebiegu ) {
 		$wynik['blad'] = $polaczenie['blad'];
 		return $wynik;
 	}
-	$klient  = $polaczenie['klient'];
-	$otwarty = '';
+	$klient              = $polaczenie['klient'];
+	$otwarty             = '';
+	$otwarty_uidvalidity = 0;
 
 	foreach ( $ruchy as $ruch ) {
 		$folder_do = Segm_Imap::do_utf7( (string) $ruch->folder_do );
 		$folder_z  = Segm_Imap::do_utf7( (string) $ruch->folder_z );
 		if ( $otwarty !== $folder_do ) {
-			if ( null === $klient->otworz( $folder_do, false ) ) {
+			$stan_folderu = $klient->otworz( $folder_do, false );
+			if ( null === $stan_folderu ) {
 				++$wynik['bledow'];
-				segm_skrzynka_oznacz_ruch( (int) $ruch->id, 'przeniesiony', 'Cofanie: nie udało się otworzyć folderu „' . $ruch->folder_do . '" — ' . $klient->blad() );
+				segm_skrzynka_oznacz_ruch( (int) $ruch->id, (string) $ruch->stan, 'Cofanie: nie udało się otworzyć folderu „' . $ruch->folder_do . '" — ' . $klient->blad() );
 				continue;
 			}
-			$otwarty = $folder_do;
+			$otwarty             = $folder_do;
+			$otwarty_uidvalidity = (int) $stan_folderu['uidvalidity'];
 		}
 
-		$uid = (int) $ruch->uid_docelowy;
+		$uid              = 'przeniesiony' === $ruch->stan ? (int) $ruch->uid_docelowy : 0;
+		$zapisana_uv      = (int) $ruch->uidvalidity_do;
+		$folder_odnowiony = $uid > 0 && $zapisana_uv > 0 && $otwarty_uidvalidity > 0 && $zapisana_uv !== $otwarty_uidvalidity;
+		if ( $folder_odnowiony ) {
+			// Ten sam numer, inny folder: UID-owi nie wolno ufać.
+			$uid = 0;
+		}
 		if ( $uid <= 0 && '' !== (string) $ruch->message_id ) {
 			$znalezione = $klient->znajdz_po_message_id( (string) $ruch->message_id );
 			if ( is_array( $znalezione ) && ! empty( $znalezione ) ) {
@@ -484,13 +648,20 @@ function segm_skrzynka_cofnij( $id_przebiegu ) {
 		}
 		if ( $uid <= 0 ) {
 			++$wynik['bledow'];
-			segm_skrzynka_oznacz_ruch( (int) $ruch->id, 'przeniesiony', 'Cofanie: nie odnaleziono tej wiadomości w folderze „' . $ruch->folder_do . '" (serwer nie zwrócił nowego identyfikatora, a nagłówka Message-ID też nie ma). Przenieś ją z powrotem ręcznie w programie pocztowym.' );
+			if ( $folder_odnowiony ) {
+				$powod = 'folder „' . $ruch->folder_do . '" został od czasu przebiegu skasowany i założony na nowo (zmieniła się jego UIDVALIDITY), a wiadomości o tym Message-ID już w nim nie ma';
+			} elseif ( 'w_toku' === $ruch->stan ) {
+				$powod = 'przebieg urwał się między przeniesieniem a potwierdzeniem i nie wiadomo, czy wiadomość w ogóle została przeniesiona; po Message-ID nie odnaleziono jej w folderze „' . $ruch->folder_do . '"';
+			} else {
+				$powod = 'nie odnaleziono tej wiadomości w folderze „' . $ruch->folder_do . '" (serwer nie zwrócił nowego identyfikatora, a nagłówka Message-ID też nie ma)';
+			}
+			segm_skrzynka_oznacz_ruch( (int) $ruch->id, (string) $ruch->stan, 'Cofanie: ' . $powod . '. Sprawdź ją ręcznie w programie pocztowym.' );
 			continue;
 		}
 
 		if ( null === $klient->przenies( $uid, $folder_z ) ) {
 			++$wynik['bledow'];
-			segm_skrzynka_oznacz_ruch( (int) $ruch->id, 'przeniesiony', 'Cofanie: serwer odmówił przeniesienia z powrotem — ' . $klient->blad() );
+			segm_skrzynka_oznacz_ruch( (int) $ruch->id, (string) $ruch->stan, 'Cofanie: nie udało się przenieść z powrotem — ' . $klient->blad() . ' Sprawdź ją ręcznie w programie pocztowym.' );
 			continue;
 		}
 		++$wynik['cofnietych'];
@@ -548,9 +719,13 @@ function segm_skrzynka_oznacz_ruch( $id, $stan, $komunikat ) {
  */
 function segm_skrzynka_ostatni_do_cofniecia() {
 	global $wpdb;
+	// Prawdę o tym, czy jest co cofać, mówi historia pozycji (także „w toku"
+	// po urwanym przebiegu), nie licznik w wierszu przebiegu — ten mógł nie
+	// dojechać do bazy, gdy przebieg padł w połowie.
 	return $wpdb->get_row(
-		"SELECT * FROM {$wpdb->prefix}segm_skrz_przebiegi
-		 WHERE tryb = 'na_zywo' AND cofniety = 0 AND przeniesionych > 0
-		 ORDER BY id DESC LIMIT 1" // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		"SELECT p.* FROM {$wpdb->prefix}segm_skrz_przebiegi p
+		 WHERE p.tryb = 'na_zywo' AND p.cofniety = 0
+		   AND EXISTS (SELECT 1 FROM {$wpdb->prefix}segm_skrz_ruchy r WHERE r.przebieg_id = p.id AND r.stan IN ('przeniesiony', 'w_toku'))
+		 ORDER BY p.id DESC LIMIT 1" // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 	);
 }

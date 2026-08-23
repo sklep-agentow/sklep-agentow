@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 define( 'SEGM_WERSJA', '1.3.1' );
-define( 'SEGM_WERSJA_SCHEMATU', '3' );
+define( 'SEGM_WERSJA_SCHEMATU', '4' );
 define( 'SEGM_KATALOG', plugin_dir_path( __FILE__ ) );
 
 /*
@@ -266,14 +266,26 @@ const SEGM_BLOKADA_WAZNA = 120;
  * czyta tę tabelę — druga karta w przeglądarce wystarczy. Efektem był raport
  * policzony na pustej albo połowicznej próbce, BEZ jednego słowa ostrzeżenia.
  *
- * UCZCIWIE, czym to JEST, a czym NIE JEST: to znacznik sprawdzany przed
- * startem, nie blokada atomowa. add_option()/get_option() idą przez cache
- * opcji, więc dwa żądania trafione co do milisekundy mogą oba przejść.
- * Zamyka realny scenariusz (dwie karty, kliknięcia w odstępie sekund), a nie
- * teoretyczny wyścig o milisekundę; ten drugi łapie osobne sprawdzenie na
- * końcu przebiegu (czy próbka nie zmieniła się w trakcie). Prawdziwa
- * atomowość wymagałaby własnej tabeli z unikalnym kluczem, czyli zmiany
- * schematu — to nie jest zakres naprawy błędu.
+ * Zamek jest ATOMOWY na poziomie bazy, nie cache opcji (DK-6, T-4):
+ *  - stan czytamy PROSTO z `wp_options` — cache opcji tego procesu
+ *    (`notoptions`, alloptions, trwały object cache) nie widzi wpisu, który
+ *    sekundę temu zrobił inny proces PHP, a zamek ma chronić właśnie przed nim;
+ *  - zajęcie to jeden `INSERT IGNORE` po kluczu unikalnym `option_name`
+ *    i liczy się WYNIK: dokładnie 1 wiersz = nasz, 0 = ktoś był szybszy.
+ *    `add_option()` się do tego NIE nadaje: sprawdza istnienie w pamięci
+ *    procesu i robi `INSERT … ON DUPLICATE KEY UPDATE`, który nadpisuje cudzy
+ *    wiersz i melduje sukces — dwa przebiegi szły naraz, a znacznik kłamał,
+ *    kto go trzyma (zmierzone testem wyścigu dwóch procesów);
+ *  - znacznik po procesie, który padł (fatal, timeout, zabity), przestaje
+ *    blokować po SEGM_BLOKADA_WAZNA s — przejmujemy go, ale kasując DOKŁADNIE
+ *    ten przeterminowany wiersz (po wartości), nie to, co w międzyczasie mógł
+ *    zająć kto inny; to samo dla wiersza w obcym kształcie (bez pola `do`),
+ *    który wcześniej blokował wtyczkę NA ZAWSZE, bo sprawdzenie terminu go
+ *    pomijało, a add_option() odbijał się od istniejącego (T-4);
+ *  - błąd bazy przy zajmowaniu = ODMOWA, nie zgoda (brak danych ≠ wolne).
+ * Własna tabela byłaby zmianą schematu bez zysku: klucz unikalny na
+ * `option_name` daje tę samą atomowość, a zamrożony test audytu mierzy
+ * dokładnie ten kształt (proces B = INSERT do `wp_options`).
  *
  * Transakcja nie wchodzi w grę: TRUNCATE w MySQL robi niejawny COMMIT, więc
  * opakowanie go w transakcję niczego by nie odizolowało.
@@ -282,17 +294,37 @@ const SEGM_BLOKADA_WAZNA = 120;
  * @return true|string True = zajęte; string = opis operacji, która trwa.
  */
 function segm_zajmij_blokade( $opis ) {
-	$stary = get_option( SEGM_BLOKADA );
-	if ( is_array( $stary ) && isset( $stary['do'] ) ) {
-		if ( (int) $stary['do'] > time() ) {
-			return isset( $stary['opis'] ) ? (string) $stary['opis'] : 'inna operacja na próbce';
+	global $wpdb;
+
+	$surowy = $wpdb->get_var( $wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", SEGM_BLOKADA ) );
+	if ( null !== $surowy ) {
+		$stary = maybe_unserialize( $surowy );
+		if ( is_array( $stary ) && isset( $stary['do'] ) && (int) $stary['do'] > time() ) {
+			return isset( $stary['opis'] ) && '' !== (string) $stary['opis'] ? (string) $stary['opis'] : 'inna operacja na próbce';
 		}
-		// Znacznik po procesie, który padł w połowie (fatal, timeout) —
-		// sprzątamy go, zamiast blokować wtyczkę na zawsze.
-		delete_option( SEGM_BLOKADA );
+		// Przeterminowany albo w obcym kształcie: proces, który go zostawił, już
+		// nie pracuje. Kasujemy ten konkretny wiersz (po wartości) — gdy ktoś
+		// właśnie przejął zamek świeżym wpisem, DELETE go nie ruszy, a nasz
+		// INSERT niżej odbije się od niego uczciwie.
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name = %s AND option_value = %s", SEGM_BLOKADA, $surowy ) );
 	}
 
-	return add_option( SEGM_BLOKADA, segm_stempel_blokady( $opis ), '', false ) ? true : 'inna operacja na próbce';
+	$wstawiono = $wpdb->query(
+		$wpdb->prepare(
+			"INSERT IGNORE INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'no')",
+			SEGM_BLOKADA,
+			maybe_serialize( segm_stempel_blokady( $opis ) )
+		)
+	);
+	if ( 1 !== (int) $wstawiono ) {
+		// 0 = ktoś był szybszy (wiersz już jest); false = błąd bazy → odmowa.
+		return 'inna operacja na próbce';
+	}
+	// Pisaliśmy obok API opcji — cache tego procesu musi to zobaczyć, żeby
+	// get_option()/delete_option() po drodze nie pracowały na starym „nie ma".
+	wp_cache_delete( SEGM_BLOKADA, 'options' );
+	wp_cache_delete( 'notoptions', 'options' );
+	return true;
 }
 
 /**
