@@ -118,7 +118,9 @@ function segm_utworz_tabele() {
  */
 function segm_aktywacja() {
 	segm_utworz_tabele();
-	update_option( 'segm_wersja_schematu', SEGM_WERSJA_SCHEMATU );
+	if ( ! segm_zapisz_opcje( 'segm_wersja_schematu', SEGM_WERSJA_SCHEMATU ) ) {
+		segm_log_bledu_bazy( 'segm_aktywacja', 'zapis wersji schematu ' . SEGM_WERSJA_SCHEMATU );
+	}
 	segm_seed_demo();
 
 	if ( ! wp_next_scheduled( 'segm_czyszczenie_probki' ) ) {

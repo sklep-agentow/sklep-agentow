@@ -427,16 +427,23 @@ function segm_post_skrzynka_zapisz() {
 		$szyfrowanie = 'ssl';
 	}
 
+	// Puste albo błędne pole liczbowe NIE nadpisuje poprzedniej wartości (KR4):
+	// `max( 1, (int) '' )` robiło z pustego portu port 1 i pustego limitu
+	// limit 1 — a panel mówił „Zapisano". Właściciel dostaje o tym zdanie.
+	$uwagi = array();
+	$port  = segm_liczba_z_pola( 'port', (int) $stare['port'], 1, 65535, 'port', $uwagi );
+	$limit = segm_liczba_z_pola( 'limit', (int) $stare['limit'], 1, 500, 'limit wiadomości na przebieg', $uwagi );
+
 	$nowe = array_merge(
 		$stare,
 		array(
 			'host'                 => isset( $_POST['host'] ) ? sanitize_text_field( wp_unslash( $_POST['host'] ) ) : '',
-			'port'                 => isset( $_POST['port'] ) ? max( 1, min( 65535, (int) $_POST['port'] ) ) : 993,
+			'port'                 => $port,
 			'szyfrowanie'          => $szyfrowanie,
 			'login'                => isset( $_POST['login'] ) ? sanitize_text_field( wp_unslash( $_POST['login'] ) ) : '',
 			'folder_zrodlowy'      => isset( $_POST['folder_zrodlowy'] ) ? sanitize_text_field( wp_unslash( $_POST['folder_zrodlowy'] ) ) : 'INBOX',
 			'prefiks'              => isset( $_POST['prefiks'] ) ? sanitize_text_field( wp_unslash( $_POST['prefiks'] ) ) : '',
-			'limit'                => isset( $_POST['limit'] ) ? max( 1, min( 500, (int) $_POST['limit'] ) ) : 50,
+			'limit'                => $limit,
 			'dopasuj_tresc'        => empty( $_POST['dopasuj_tresc'] ) ? 0 : 1,
 			'tylko_nieprzeczytane' => empty( $_POST['tylko_nieprzeczytane'] ) ? 0 : 1,
 			'ruszaj_reszte'        => empty( $_POST['ruszaj_reszte'] ) ? 0 : 1,
@@ -470,6 +477,10 @@ function segm_post_skrzynka_zapisz() {
 		$komunikat = 'Zapisano ustawienia i nowe hasło aplikacji.';
 	}
 
+	if ( $uwagi ) {
+		segm_skrzynka_zapamietaj( 'uwaga', $komunikat . ' ALE: ' . implode( ' ', $uwagi ) . ' Popraw pole i zapisz ponownie, zanim klikniesz „Sprawdź połączenie".' );
+		segm_skrzynka_wroc();
+	}
 	segm_skrzynka_zapamietaj( 'ok', $komunikat . ' Kliknij „Sprawdź połączenie", żeby potwierdzić, że serwer je przyjmuje.' );
 	segm_skrzynka_wroc();
 }

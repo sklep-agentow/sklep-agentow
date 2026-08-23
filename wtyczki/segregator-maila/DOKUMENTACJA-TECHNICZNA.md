@@ -60,19 +60,19 @@ leży w pliku `LICENSE` w katalogu wtyczki i wchodzi do paczki produktowej.
 
 | Plik | Linii | Za co odpowiada |
 |---|---|---|
-| `segregator-maila.php` | 396 | nagłówek wtyczki, stałe, ładowanie plików, cron retencji, znacznik „operacja w toku", zgoda na AI, ustawienia ogólne |
+| `segregator-maila.php` | 402 | nagłówek wtyczki, stałe, ładowanie plików, cron retencji, znacznik „operacja w toku", zgoda na AI, ustawienia ogólne |
 | `uninstall.php` | 91 | deinstalacja — dwie ścieżki (§11.5) |
-| `includes/instalator.php` | 269 | `dbDelta` dla 7 tabel, aktywacja, deaktywacja, seed demo (5 kategorii, 8 reguł, 30 maili) |
+| `includes/instalator.php` | 270 | `dbDelta` dla 7 tabel, aktywacja, deaktywacja, seed demo (5 kategorii, 8 reguł, 30 maili) |
 | `includes/silnik.php` | 248 | `segm_klasyfikuj_mail()` — jedyna reguła dopasowania w całej wtyczce; przebieg na próbce |
 | `includes/csv.php` | 352 | import próbki z CSV (wykrywanie kodowania, limity) i eksport raportu do CSV |
-| `includes/ai.php` | 569 | opcjonalna klasyfikacja modelem, licznik stop-loss |
-| `includes/admin.php` | 1463 | panel: przebiegi i raporty, reguły, kategorie, próbka, ustawienia, baner powitalny, paski błędu AI i błędu bazy |
+| `includes/ai.php` | 588 | opcjonalna klasyfikacja modelem, licznik stop-loss |
+| `includes/admin.php` | 1482 | panel: przebiegi i raporty, reguły, kategorie, próbka, ustawienia, baner powitalny, paski błędu AI i błędu bazy |
 | `includes/konfiguracja.php` | 360 | eksport i import własnej konfiguracji (kategorie + reguły) w JSON-ie |
 | `includes/filtry.php` | 588 | eksport reguł do filtrów Gmaila (XML) i reguł Outlooka |
 | `includes/class-segm-imap.php` | 1073 | **klient IMAP4rev1 w czystym PHP** — gniazdo, TLS, protokół |
 | `includes/skrzynka.php` | 504 | konfiguracja skrzynki, hasło, diagnostyka, „Sprawdź połączenie", rozbiór nagłówków i treści |
-| `includes/skrzynka-przebieg.php` | 731 | przebieg na żywej skrzynce, historia, cofanie, harmonogramy WP-Cron |
-| `includes/admin-skrzynka.php` | 702 | panel zakładki *Skrzynka (IMAP)* i obsługa jej formularzy |
+| `includes/skrzynka-przebieg.php` | 556 | przebieg na żywej skrzynce, historia, cofanie, harmonogramy WP-Cron |
+| `includes/admin-skrzynka.php` | 712 | panel zakładki *Skrzynka (IMAP)* i obsługa jej formularzy |
 | `includes/admin-powitanie.php` | 143 | ekran powitalny pokazywany raz po aktywacji |
 | `includes/admin-probka.php` | 418 | praca na POJEDYNCZYM mailu i licznik trafień reguły |
 
@@ -614,6 +614,12 @@ w formularzu nie może po cichu wygrać ze stałą wbrew deklaracji w panelu.
 Kupujący oba boty ma dostać JEDNĄ klasę ochrony sekretu, a nie dwie różne
 zależnie od tego, którego bota otworzy.
 
+**Skąd kod wie, że klucz się zapisał.** `segm_zapisz_klucz()` zwraca `bool`
+zmierzony **odczytem po zapisie** (ten sam wzorzec co `segm_skrzynka_zapisz_haslo()`),
+a handler ustawień przy `false` kończy się komunikatem o NIEZAPISANYM kluczu,
+nie „Zapisano" — inaczej „Przetestuj klucz" testowałby stary klucz i dawał
+zielone potwierdzenie klucza, którego nie ma w bazie.
+
 **Dlaczego cichy zjazd do reguł to za mało.** Przy błędzie API przebieg
 zjeżdża do trybu regułowego i kończy się wynikiem, nie ekranem błędu — i tak
 ma zostać. Ale cisza nie może trwać w nieskończoność: bez sygnału wtyczka
@@ -621,7 +627,9 @@ miesiącami „działa w trybie AI”, licząc wyłącznie regułami, bo dostawc
 każde żądanie. Dlatego każde nieudane wywołanie zapisuje opcję `segm_blad_ai`
 (kiedy, kod HTTP, odpowiedź dostawcy, model), a ta zapala **pasek na każdej
 stronie wtyczki**. Pasek gaśnie **sam** przy pierwszym udanym wywołaniu —
-nie trzeba go zamykać.
+nie trzeba go zamykać. Zapis tego znacznika jest mierzony (`segm_zapisz_opcje()`);
+gdy sam padnie, zostawia ślad w `segm_blad_bazy` (pasek błędu bazy) — znacznik
+awarii, który pada po cichu, przywracałby dokładnie tę ciszę, przed którą broni.
 
 Kod HTTP jest tłumaczony na zdanie po polsku (`segm_opis_bledu_ai()`), bo samo
 „401” nie jest informacją dla właściciela. Opisy rozdzielają przyczyny po jego
@@ -712,7 +720,8 @@ domyślnie wyłączonej): 7 tabel, `segm_ustawienia`, `segm_skrzynka`,
 | Uprawnienia | `current_user_can( 'manage_options' )` w **każdym** z 23 uchwytów | `admin.php`, `admin-skrzynka.php`, `filtry.php` |
 | Nonce | `check_admin_referer()` w **każdym** z 23 uchwytów, osobno od uprawnień | jw. |
 | SQL | wyłącznie `$wpdb->prepare()` / `$wpdb->insert()` z listą formatów; `esc_like()` przy `LIKE` | całość |
-| Wynik zapisu | każde `insert`/`update`/`query` porównane z `false`; porażka = komunikat błędu, nigdy „Zapisano" | całość |
+| Wynik zapisu | każde `insert`/`update`/`query` porównane z `false`; opcje przez `segm_zapisz_opcje()` (odczyt po zapisie); porażka = komunikat błędu, nigdy „Zapisano" | całość |
+| Puste pole liczbowe | `segm_liczba_z_pola()`: pole puste, nie-liczba albo poza zakresem NIE nadpisuje poprzedniej wartości (port, limit wiadomości, dzienny limit AI) — właściciel dostaje komunikat ostrzegawczy zamiast „Zapisano" | plik główny, `admin.php`, `admin-skrzynka.php` |
 | Wyjście | `esc_html` / `esc_attr` / `esc_url`; dziennik protokołu przez `esc_html` w `<pre>` | panel |
 | Wstrzyknięcie formuły do arkusza | pola zaczynające się od `=`, `+`, `-`, `@` poprzedzane apostrofem przy eksporcie CSV | `csv.php` |
 | Import pliku | limit rozmiaru (5 MB), limit wierszy (500, **z przerwaniem czytania**), limit długości pola (2000), wykrywanie kodowania | `csv.php` |
