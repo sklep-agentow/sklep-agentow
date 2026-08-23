@@ -150,11 +150,29 @@ function chatl_ai_zuzycie_dnia( $dzien = '' ) {
 		'tokeny_wyjscia'      => 0,
 		'tokeny_cache_zapis'  => 0,
 		'tokeny_cache_odczyt' => 0,
+		'blad'                => false,
 	);
+	/*
+	 * „Brak wiersza" (dziś nikt jeszcze nie pytał) i „zapytanie padło" (tabela
+	 * uszkodzona/usunięta) NIE są tym samym. get_row() zwraca null w obu, ale
+	 * tylko w drugim $wpdb->last_error jest niepusty. Do naprawy T-1 oba dawały
+	 * zera, zera były poniżej limitu i stop-loss przepuszczał wywołania płatnego
+	 * API przy liczniku, który nie liczy — fail-open na rachunku właściciela.
+	 * Błąd odczytu wraca z flagą, a chatl_ai_dostepny() traktuje go jak
+	 * wyczerpany limit. Ślad idzie tym samym kanałem co padnięte zapisy.
+	 */
+	if ( '' !== (string) $wpdb->last_error ) {
+		chatl_log_bledu_bazy( 'chatl_ai_zuzycie_dnia', 'odczyt dziennego licznika wywołań AI — tryb AI wstrzymany, odpowiadają reguły' );
+		$puste['blad'] = true;
+		return $puste;
+	}
 	if ( ! is_array( $w ) ) {
 		return $puste;
 	}
 	foreach ( $puste as $klucz => $_ ) {
+		if ( 'blad' === $klucz ) {
+			continue;
+		}
 		$puste[ $klucz ] = isset( $w[ $klucz ] ) ? (int) $w[ $klucz ] : 0;
 	}
 	return $puste;
@@ -251,11 +269,21 @@ function chatl_ai_dostepny() {
 		return false;
 	}
 	$ust = chatl_ustawienia();
-	if ( chatl_ai_uzycie_dzis() >= (int) $ust['ai_limit_dzienny'] ) {
+	$d   = chatl_ai_zuzycie_dnia();
+	/*
+	 * Licznik nie do odczytania = NIE WIEMY, ile dziś poszło, więc zakładamy
+	 * najgorsze: limit wyczerpany. Bot odpowiada z reguł, rachunek nie rośnie,
+	 * właściciel widzi pasek błędu bazy w panelu (T-1, audyt etap 3).
+	 */
+	if ( ! empty( $d['blad'] ) ) {
+		return false;
+	}
+	if ( (int) $d['wywolania'] >= (int) $ust['ai_limit_dzienny'] ) {
 		return false;
 	}
 	$limit_tokenow = isset( $ust['ai_limit_tokenow'] ) ? (int) $ust['ai_limit_tokenow'] : 0;
-	if ( $limit_tokenow > 0 && chatl_ai_tokeny_dzis() >= $limit_tokenow ) {
+	$tokeny        = (int) $d['tokeny_wejscia'] + (int) $d['tokeny_wyjscia'] + (int) $d['tokeny_cache_zapis'];
+	if ( $limit_tokenow > 0 && $tokeny >= $limit_tokenow ) {
 		return false;
 	}
 	return true;

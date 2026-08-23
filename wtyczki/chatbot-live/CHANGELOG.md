@@ -25,6 +25,16 @@ migracja odpala się sama przy pierwszym wejściu do panelu po aktualizacji
   RODO sesji współdzielonych przy padniętym zapisie zostawiają trwały ślad błędu bazy;
   kasownik RODO bez zapisanego śladu nic nie usuwa i mówi to wprost.
   Nowa funkcja pomocnicza `chatl_zapisz_opcje()` (bliźniak Segregatora).
+- **Stop-loss nie jest fail-open** (T-1): gdy licznika dobowego AI nie da się odczytać
+  (uszkodzona/usunięta tabela), tryb AI jest wstrzymany i bot odpowiada z reguł — wcześniej
+  błąd odczytu wyglądał jak „0 wywołań" i płatne API było wołane bez limitu. Panel mówi,
+  że licznik jest nieczytelny; ślad w pasku błędu bazy.
+- **Puste pole liczbowe nie nadpisuje limitu** (audyt A5, KR1/KR2): „50 000" ze spacją albo
+  puste pole w limicie tokenów wyłączało stop-loss (0), w limicie wywołań zjeżdżało do 1 —
+  przy zielonym „zapisano". Teraz poprzednia wartość zostaje, a panel mówi, którego pola
+  nie zmienił i dlaczego.
+- **Retencja liczona w strefie witryny** (KR6): granica 90 dni szła w UTC, a czas wpisów
+  w strefie witryny — w strefie ujemnej rozmowy ginęły godziny przed terminem.
 
 ---
 

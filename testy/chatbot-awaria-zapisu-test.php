@@ -45,7 +45,12 @@ function caz( $ok, $opis, $szczegol = '' ) {
 $caz_opcje = array( 'chatl_ustawienia', 'chatl_klucz_api', 'chatl_blad_bazy', 'chatl_blad_ai', 'chatl_blad_maila', 'chatl_rodo_sesje_wspolne' );
 $GLOBALS['caz_migawka'] = array();
 foreach ( $caz_opcje as $o ) {
-	$GLOBALS['caz_migawka'][ $o ] = get_option( $o, null );
+	// Wartość I autoload: samo update_option() odtworzyłoby opcję z innym autoloadem
+	// niż miała (klucz API ma autoload=off) — migawka ma wracać co do kolumny.
+	$GLOBALS['caz_migawka'][ $o ] = array(
+		'wartosc'  => get_option( $o, null ),
+		'autoload' => $wpdb->get_var( $wpdb->prepare( "SELECT autoload FROM {$wpdb->options} WHERE option_name = %s", $o ) ), // phpcs:ignore
+	);
 }
 $GLOBALS['caz_sesje']  = array();
 $GLOBALS['caz_emaile'] = array( 'c1awaria-a@example.test', 'c1awaria-b@example.test' );
@@ -56,11 +61,14 @@ register_shutdown_function(
 		foreach ( $GLOBALS['caz_filtry'] as $f ) {
 			remove_filter( 'query', $f, 999 );
 		}
-		foreach ( $GLOBALS['caz_migawka'] as $o => $w ) {
-			if ( null === $w ) {
+		foreach ( $GLOBALS['caz_migawka'] as $o => $m ) {
+			if ( null === $m['wartosc'] ) {
 				delete_option( $o );
-			} else {
-				update_option( $o, $w );
+				continue;
+			}
+			update_option( $o, $m['wartosc'] );
+			if ( null !== $m['autoload'] ) {
+				$wpdb->update( $wpdb->options, array( 'autoload' => $m['autoload'] ), array( 'option_name' => $o ), array( '%s' ), array( '%s' ) ); // phpcs:ignore
 			}
 		}
 		$ts = $wpdb->prefix . 'chatl_sesje';
@@ -198,6 +206,12 @@ caz( 'chatl_przejmij' === ostatni_blad_funkcja(), 'AWARIA: ślad błędu wskazuj
 
 $r = chatl_przejmij( $s, 1 );
 caz( true === $r && 'czlowiek' === stan_sesji( $s ), 'BEZ WADY: przejęcie → true i stan czlowiek' );
+
+// Brak wiersza przy ZDROWEJ bazie (sesja skasowana między listą a kliknięciem) ≠ błąd bazy.
+delete_option( 'chatl_blad_bazy' );
+$r  = chatl_przejmij( 'c1AwariaSesjaKtorejNieMa00000000', 1 );
+$r2 = chatl_oddaj_botowi( 'c1AwariaSesjaKtorejNieMa00000000', '' );
+caz( false === $r && false === $r2 && '' === ostatni_blad_funkcja(), 'BEZ WADY: przejęcie/oddanie NIEISTNIEJĄCEJ sesji → false BEZ fałszywego alarmu błędu bazy', ostatni_blad_funkcja() );
 caz( 1 === ile_system( $s, 'konsultant' ), 'BEZ WADY: gość dostał komunikat o konsultancie raz' );
 
 $f = psuj( 'chatl_sesje' );
