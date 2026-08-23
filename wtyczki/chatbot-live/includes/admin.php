@@ -1087,19 +1087,40 @@ function chatl_post_ustawienia_zapisz() {
 		'za_proxy'         => empty( $_POST['za_proxy'] ) ? 0 : 1,
 	);
 
-	// Klucz API: osobna opcja (autoload=no), nigdy nie wraca do formularza.
-	if ( ! empty( $_POST['usun_klucz'] ) ) {
-		chatl_zapisz_klucz( '' );
-	} elseif ( isset( $_POST['klucz_api'] ) && '' !== trim( (string) wp_unslash( $_POST['klucz_api'] ) ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- warunek tylko bada niepustość; zapisywana wartość przechodzi sanitize_text_field() linijkę niżej.
-		chatl_zapisz_klucz( sanitize_text_field( wp_unslash( $_POST['klucz_api'] ) ) );
-	}
 	if ( '' === $nowe['powitanie'] ) {
 		$nowe['powitanie'] = $stare['powitanie'];
 	}
 	if ( '' === $nowe['tekst_awaryjny'] ) {
 		$nowe['tekst_awaryjny'] = $stare['tekst_awaryjny'];
 	}
-	update_option( 'chatl_ustawienia', $nowe );
+	/*
+	 * „Zapisano" dopiero po ZMIERZENIU, że zapis doszedł do skutku (A2-F1).
+	 * Do audytu wynik update_option() był wyrzucany i przekierowanie z
+	 * chatl_ok=zapisano leciało bezwarunkowo — właściciel podnosił dzienny limit
+	 * wywołań AI, widział zielone potwierdzenie, a obowiązywała stara liczba.
+	 * Wzorzec 1:1 z segm_post_ustawienia_zapisz() w Segregatorze.
+	 */
+	if ( ! chatl_zapisz_opcje( 'chatl_ustawienia', $nowe ) ) {
+		chatl_log_bledu_bazy( 'chatl_post_ustawienia_zapisz', 'ustawienia wtyczki (limit AI, wygląd, powiadomienia)' );
+		chatl_przekieruj_blad( 'chatl-ustawienia', 'Nie udało się zapisać ustawień — baza odrzuciła zapis. Obowiązują POPRZEDNIE ustawienia (m.in. dzienny limit wywołań AI); klucz API nie był w tym kroku zapisywany.' );
+	}
+
+	// Klucz API: osobna opcja (autoload=no), nigdy nie wraca do formularza.
+	$klucz_ok = true;
+	if ( ! empty( $_POST['usun_klucz'] ) ) {
+		$klucz_ok = chatl_zapisz_klucz( '' );
+	} elseif ( isset( $_POST['klucz_api'] ) && '' !== trim( (string) wp_unslash( $_POST['klucz_api'] ) ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- warunek tylko bada niepustość; zapisywana wartość przechodzi sanitize_text_field() linijkę niżej.
+		$klucz_ok = chatl_zapisz_klucz( sanitize_text_field( wp_unslash( $_POST['klucz_api'] ) ) );
+	}
+	if ( ! $klucz_ok ) {
+		/*
+		 * Bez tej gałęzi właściciel po wymianie klucza kliknąłby „Przetestuj
+		 * klucz" i przetestował STARY klucz — wtyczka sama produkowałaby
+		 * fałszywy dowód, że nowy klucz działa (A2-F3).
+		 */
+		chatl_log_bledu_bazy( 'chatl_post_ustawienia_zapisz', 'klucz API dostawcy (zapis/kasowanie)' );
+		chatl_przekieruj_blad( 'chatl-ustawienia', 'Ustawienia zapisane, ale klucz API NIE — baza odrzuciła zapis. Obowiązuje POPRZEDNI klucz (także przy „Przetestuj klucz"). Sprawdź stan bazy i wpisz klucz jeszcze raz.' );
+	}
 
 	wp_safe_redirect( admin_url( 'admin.php?page=chatl-ustawienia&chatl_ok=zapisano' ) );
 	exit;

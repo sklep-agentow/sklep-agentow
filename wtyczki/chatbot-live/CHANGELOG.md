@@ -12,7 +12,19 @@ migracja odpala się sama przy pierwszym wejściu do panelu po aktualizacji
 
 ## [Niewydane]
 
-_Nic jeszcze nie czeka na wydanie._
+### Naprawione
+- **„Zapisano" dopiero po zmierzonym zapisie** (audyt A2, F1–F3). Przy odrzuconym
+  przez bazę zapisie panel ustawień pokazuje komunikat błędu i obowiązują poprzednie
+  ustawienia (m.in. dzienny limit wywołań AI) — wcześniej świecił „Ustawienia zapisane".
+  Zapis klucza API zwraca wynik i panel mówi wprost, gdy klucz NIE został zapisany
+  (wcześniej „Przetestuj klucz" testował stary klucz i dawał zielone potwierdzenie).
+  Przejęcie rozmowy / oddanie botowi / powrót po ciszy mierzą stan w bazie po zapisie:
+  przy awarii operator widzi błąd zamiast „przejęta", a gość nie czyta „dołączył
+  konsultant" do rozmowy, w której dalej odpowiada bot. Nowa sesja przy odrzuconym
+  zapisie nie wydaje identyfikatora widma. Znaczniki awarii (tryb AI, poczta) i ślad
+  RODO sesji współdzielonych przy padniętym zapisie zostawiają trwały ślad błędu bazy;
+  kasownik RODO bez zapisanego śladu nic nie usuwa i mówi to wprost.
+  Nowa funkcja pomocnicza `chatl_zapisz_opcje()` (bliźniak Segregatora).
 
 ---
 

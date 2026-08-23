@@ -31,8 +31,12 @@ define( 'CHATL_URL', plugin_dir_url( __FILE__ ) );
  * użytkownika działa niezależnie od wersji i to on jest właściwą obroną
  * przed cichym ubytkiem danych.
  *
- * @param string $funkcja  Nazwa funkcji, w której zapis padł.
- * @param string $operacja Krótki opis operacji (co miało trafić do bazy).
+ * @param string      $funkcja  Nazwa funkcji, w której zapis padł.
+ * @param string      $operacja Krótki opis operacji (co miało trafić do bazy).
+ * @param string|null $szczegol Komunikat sterownika; null = weź $wpdb->last_error
+ *                              TERAZ. Podaje go wołający, który między zapisem
+ *                              a wpisem do logu zdążył odczytać stan z bazy
+ *                              (każde kolejne zapytanie czyści last_error).
  * @return void
  */
 /**
@@ -44,9 +48,12 @@ define( 'CHATL_URL', plugin_dir_url( __FILE__ ) );
  */
 const CHATL_BLAD_BAZY_OKNO_DNI = 14;
 
-function chatl_log_bledu_bazy( $funkcja, $operacja ) {
+function chatl_log_bledu_bazy( $funkcja, $operacja, $szczegol = null ) {
 	global $wpdb;
-	$szczegol = '' !== (string) $wpdb->last_error ? (string) $wpdb->last_error : 'sterownik nie podał komunikatu';
+	if ( null === $szczegol ) {
+		$szczegol = (string) $wpdb->last_error;
+	}
+	$szczegol = '' !== (string) $szczegol ? (string) $szczegol : 'sterownik nie podał komunikatu';
 
 	/*
 	 * ⛔ TRWAŁY ŚLAD, NIEZALEŻNY OD WP_DEBUG. wp_trigger_error() niżej jest dla
@@ -87,6 +94,31 @@ function chatl_log_bledu_bazy( $funkcja, $operacja ) {
 		'zapis do bazy nie powiódł się (' . $operacja . '): ' . $szczegol,
 		E_USER_WARNING
 	);
+}
+
+/**
+ * Zapis opcji z UCZCIWYM wynikiem — bliźniak segm_zapisz_opcje() z Segregatora.
+ *
+ * update_option() zwraca false także wtedy, gdy nowa wartość jest IDENTYCZNA
+ * ze starą — samo `false` nie odróżnia „nic się nie zmieniło" od „zapis padł",
+ * więc naiwne sprawdzenie sypałoby fałszywymi błędami. Porażkę potwierdzamy
+ * odczytem: false + wartość w bazie inna niż zapisywana = realny błąd.
+ * Przy padniętym zapisie update_option() wychodzi PRZED zasileniem cache'u,
+ * więc get_option() zwraca wtedy starą wartość i różnica jest widoczna.
+ *
+ * Do audytu A2 ChatBot nie miał tej funkcji wcale i wszystkie zapisy opcji
+ * zakładały sukces („Ustawienia zapisane" po odrzuconym zapisie — A2-F1).
+ *
+ * @param string    $nazwa    Nazwa opcji.
+ * @param mixed     $wartosc  Wartość do zapisania.
+ * @param bool|null $autoload Jak w update_option() (null = bez zmiany).
+ * @return bool True, gdy po operacji w bazie leży to, co miało tam trafić.
+ */
+function chatl_zapisz_opcje( $nazwa, $wartosc, $autoload = null ) {
+	if ( update_option( $nazwa, $wartosc, $autoload ) ) {
+		return true;
+	}
+	return get_option( $nazwa ) === $wartosc;
 }
 
 require_once CHATL_KATALOG . 'includes/instalator.php';

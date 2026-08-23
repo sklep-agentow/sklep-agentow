@@ -55,14 +55,16 @@ const CHATL_LIMIT_ODPYT = 40;
  * `wp_generate_password( 32, false )` to 32 znaki z alfanumerycznego zakresu
  * (>180 bitów), rysowane z tego samego źródła co hasła WordPressa.
  *
- * @return string Identyfikator sesji.
+ * @return string Identyfikator sesji; '' gdy baza odrzuciła założenie wiersza
+ *                (wtedy NIE ma ani ciastka, ani sesji — rozmowa bez wiersza nie
+ *                pojawiłaby się w panelu operatora, gość pisałby w próżnię).
  */
 function chatl_nowa_sesja() {
 	global $wpdb;
 	$sesja  = wp_generate_password( 32, false );
 	$sekret = wp_generate_password( 32, false );
 
-	$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+	$wstawiono = $wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		$wpdb->prefix . 'chatl_sesje',
 		array(
 			'sesja'      => $sesja,
@@ -73,6 +75,10 @@ function chatl_nowa_sesja() {
 		),
 		array( '%s', '%s', '%s', '%s', '%s' )
 	);
+	if ( false === $wstawiono ) {
+		chatl_log_bledu_bazy( 'chatl_nowa_sesja', 'założenie wiersza sesji rozmowy' );
+		return '';
+	}
 
 	chatl_ustaw_ciastko_sesji( $sesja, $sekret );
 	return $sesja;
@@ -201,11 +207,34 @@ function chatl_przejecie_wygaslo( $w ) {
 }
 
 /**
+ * Stan sesji ODCZYTANY z bazy — tym mierzymy, czy zapis przejścia doszedł do skutku.
+ *
+ * `$wpdb->update()` zwraca 0 (nie false), gdy żaden wiersz nie pasował, więc
+ * sam wynik update'u nie mówi, co leży w bazie. Wzorzec
+ * segm_skrzynka_zapisz_haslo(): zapis, potem odczyt z powrotem.
+ *
+ * @param string $sesja Sesja.
+ * @return string 'bot' / 'czlowiek' / '' (brak wiersza albo błąd odczytu).
+ */
+function chatl_sesja_stan_z_bazy( $sesja ) {
+	global $wpdb;
+	$t = $wpdb->prefix . 'chatl_sesje';
+	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+	$stan = $wpdb->get_var( $wpdb->prepare( "SELECT stan FROM {$t} WHERE sesja = %s", $sesja ) );
+	// phpcs:enable
+	return is_string( $stan ) ? $stan : '';
+}
+
+/**
  * Oddanie rozmowy botowi (ręcznie przyciskiem albo po ciszy operatora).
+ *
+ * Komunikat dla gościa idzie DOPIERO po zmierzeniu, że rozmowa naprawdę wróciła
+ * do bota — inaczej gość czytałby „konsultant zakończył", a rozmowa zostawałaby
+ * przy człowieku (A2-F2, rodzeństwo chatl_przejmij()).
  *
  * @param string $sesja      Sesja.
  * @param string $komunikat  Co ma zobaczyć gość.
- * @return void
+ * @return bool Czy po operacji rozmowa jest przy bocie.
  */
 function chatl_oddaj_botowi( $sesja, $komunikat ) {
 	global $wpdb;
@@ -221,9 +250,16 @@ function chatl_oddaj_botowi( $sesja, $komunikat ) {
 		array( '%s', '%d', '%s', '%s' ),
 		array( '%s' )
 	);
+	$blad = (string) $wpdb->last_error;
+	$stan = chatl_sesja_stan_z_bazy( $sesja );
+	if ( 'bot' !== $stan ) {
+		chatl_log_bledu_bazy( 'chatl_oddaj_botowi', 'oddanie rozmowy botowi (stan sesji)', '' !== $blad ? $blad : 'po zapisie stan sesji: ' . ( '' === $stan ? 'brak wiersza' : $stan ) );
+		return false;
+	}
 	if ( '' !== $komunikat ) {
 		chatl_komunikat_systemowy( $sesja, $komunikat );
 	}
+	return true;
 }
 
 /**
@@ -254,6 +290,18 @@ function chatl_przejmij( $sesja, $kto ) {
 		array( '%s', '%d', '%s', '%s' ),
 		array( '%s' )
 	);
+	/*
+	 * „Czy przejęcie doszło do skutku" = ODCZYT stanu po zapisie, nie założenie.
+	 * Do audytu A2 stało tu bezwarunkowe `return true`: przy odrzuconym zapisie
+	 * rozmowa zostawała przy bocie, operator dostawał „przejęta", a gość czytał
+	 * „Do rozmowy dołączył konsultant" i czekał na człowieka, którego nie było.
+	 */
+	$blad = (string) $wpdb->last_error;
+	$stan = chatl_sesja_stan_z_bazy( $sesja );
+	if ( 'czlowiek' !== $stan ) {
+		chatl_log_bledu_bazy( 'chatl_przejmij', 'przejęcie rozmowy przez operatora (stan sesji)', '' !== $blad ? $blad : 'po zapisie stan sesji: ' . ( '' === $stan ? 'brak wiersza' : $stan ) );
+		return false;
+	}
 	// Gość dowiaduje się o zmianie rozmówcy WPROST, a nie po zmianie awatara.
 	chatl_komunikat_systemowy( $sesja, 'Do rozmowy dołączył konsultant — od tej chwili odpowiada człowiek, nie bot.' );
 	return true;
@@ -267,18 +315,23 @@ function chatl_przejmij( $sesja, $kto ) {
  *
  * @param string $sesja Sesja.
  * @param string $tresc Treść.
- * @return int Id wiersza.
+ * @return int Id wiersza; 0 = wiadomość NIE trafiła do bazy (gość jej nie zobaczy).
  */
 function chatl_operator_wiadomosc( $sesja, $tresc ) {
 	global $wpdb;
-	$id = chatl_zapisz_wymiane( $sesja, 'operator', $tresc, 'czlowiek' );
-	$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+	$id         = chatl_zapisz_wymiane( $sesja, 'operator', $tresc, 'czlowiek' );
+	$odswiezono = $wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		$wpdb->prefix . 'chatl_sesje',
 		array( 'operator_akt' => current_time( 'mysql' ) ),
 		array( 'sesja' => $sesja ),
 		array( '%s' ),
 		array( '%s' )
 	);
+	// Nieodświeżony znacznik = cisza operatora liczona mimo pisania → rozmowa
+	// mogłaby wrócić do bota w trakcie rozmowy z człowiekiem. Ślad, nie cisza.
+	if ( false === $odswiezono ) {
+		chatl_log_bledu_bazy( 'chatl_operator_wiadomosc', 'znacznik aktywności operatora' );
+	}
 	return $id;
 }
 
@@ -326,11 +379,13 @@ function chatl_stan_rozmowy( $sesja ) {
 		return 'bot';
 	}
 	if ( chatl_przejecie_wygaslo( $w ) ) {
-		chatl_oddaj_botowi(
+		$oddano = chatl_oddaj_botowi(
 			$sesja,
 			'Konsultant nie odpowiada — z rozmową znów pomaga bot. Napisz pytanie jeszcze raz.'
 		);
-		return 'bot';
+		// Gdy zapis powrotu padł, rozmowa W BAZIE nadal jest przy człowieku —
+		// zwracamy stan zmierzony, a nie zamierzony; następne wejście spróbuje znów.
+		return $oddano ? 'bot' : 'czlowiek';
 	}
 	return 'czlowiek' === $w['stan'] ? 'czlowiek' : 'bot';
 }
@@ -361,7 +416,7 @@ function chatl_sesja_aktywnosc( $sesja ) {
 	 * dokładnie ten przypadek, który wyżej musi być zamknięty. Sesje zakłada
 	 * tylko chatl_nowa_sesja(), razem z sekretem. Jedno miejsce, jedna reguła.
 	 */
-	$wpdb->query(
+	$wynik = $wpdb->query(
 		$wpdb->prepare(
 			"UPDATE {$t} SET aktywnosc = %s WHERE sesja = %s",
 			current_time( 'mysql' ),
@@ -369,6 +424,10 @@ function chatl_sesja_aktywnosc( $sesja ) {
 		)
 	);
 	// phpcs:enable
+	// 0 wierszy = sesja bez wiersza (dozwolone, patrz wyżej); false = baza odrzuciła.
+	if ( false === $wynik ) {
+		chatl_log_bledu_bazy( 'chatl_sesja_aktywnosc', 'znacznik aktywności gościa' );
+	}
 }
 
 /**
@@ -544,7 +603,12 @@ function chatl_ajax_sesja() {
 	if ( ! $ust['wlaczony'] ) {
 		wp_send_json_error( array( 'komunikat' => 'Czat jest wyłączony.' ), 403 );
 	}
-	wp_send_json_success( array( 'sesja' => chatl_nowa_sesja() ) );
+	$sesja = chatl_nowa_sesja();
+	if ( '' === $sesja ) {
+		// Widget dostaje błąd (sesja zostaje pusta), a nie identyfikator bez wiersza.
+		wp_send_json_error( array( 'komunikat' => 'Nie udało się rozpocząć rozmowy — spróbuj za chwilę.' ), 500 );
+	}
+	wp_send_json_success( array( 'sesja' => $sesja ) );
 }
 add_action( 'wp_ajax_chatl_sesja', 'chatl_ajax_sesja' );
 add_action( 'wp_ajax_nopriv_chatl_sesja', 'chatl_ajax_sesja' );

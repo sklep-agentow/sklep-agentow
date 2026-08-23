@@ -213,9 +213,11 @@ spr "usun_dane domyslnie"         "0"  "grep -oP \"(?<='usun_dane'        => )[0
 echo
 echo "=== H. Opcje i autoload ==="
 spr "klucz API add_option bez autoload" "1" "grep -c \"add_option( 'chatl_klucz_api', \\\$klucz, '', false )\" $W/includes/ai.php"
-# Oba znaczniki awarii (mail i odrzucony nonce) maja byc BEZ autoloadu: to opcje
+# Znaczniki awarii (mail, odrzucony nonce, pulapka) maja byc BEZ autoloadu: to opcje
 # czytane tylko w panelu, wiec nie ma powodu wozic ich w kazdym zapytaniu strony.
-spr "znacznikow awarii bez autoload"    "3" "grep -A8 \"update_option($\" $W/includes/front.php | grep -cP '^\\t\\tfalse$'"
+# Zapis idzie przez update_option() albo chatl_zapisz_opcje() (C1: wynik mierzony) —
+# obie formy przyjmuja autoload jako trzeci argument, liczymy obie.
+spr "znacznikow awarii bez autoload"    "3" "grep -A8 -E \"(update_option|chatl_zapisz_opcje)\\($\" $W/includes/front.php | grep -cP '^\\t\\tfalse$'"
 spr "znacznik nonce zapisywany bez autoload" "1" "grep -A9 \"'chatl_blad_nonce',\" $W/includes/front.php | grep -cP '^\\t\\tfalse$'"
 
 echo
