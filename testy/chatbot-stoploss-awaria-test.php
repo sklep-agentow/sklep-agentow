@@ -45,11 +45,18 @@ function csa( $ok, $opis, $szczegol = '' ) {
 /* ───────── MIGAWKA + SPRZĄTANIE ───────── */
 $tabela = $wpdb->prefix . 'chatl_ai_uzycie';
 $dzis   = current_time( 'Y-m-d' );
-$GLOBALS['csa_mig'] = array(
-	'chatl_ustawienia' => get_option( 'chatl_ustawienia', null ),
-	'chatl_klucz_api'  => get_option( 'chatl_klucz_api', null ),
-	'chatl_blad_bazy'  => get_option( 'chatl_blad_bazy', null ),
-);
+/*
+ * Migawka zapamietuje wartosc I autoload — samo update_option() odtworzyloby
+ * opcje z domyslnym autoloadem, a `chatl_klucz_api` i `chatl_blad_bazy` sa
+ * zapisywane z autoload=false. Ten sam wzorzec co w chatbot-awaria-zapisu-test.
+ */
+$GLOBALS['csa_mig'] = array();
+foreach ( array( 'chatl_ustawienia', 'chatl_klucz_api', 'chatl_blad_bazy' ) as $csa_o ) {
+	$GLOBALS['csa_mig'][ $csa_o ] = array(
+		'wartosc'  => get_option( $csa_o, null ),
+		'autoload' => $wpdb->get_var( $wpdb->prepare( "SELECT autoload FROM {$wpdb->options} WHERE option_name = %s", $csa_o ) ), // phpcs:ignore
+	);
+}
 $GLOBALS['csa_wiersz'] = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$tabela} WHERE dzien = %s", $dzis ), ARRAY_A ); // phpcs:ignore
 $GLOBALS['csa_filtr']  = null;
 register_shutdown_function(
@@ -58,11 +65,14 @@ register_shutdown_function(
 		if ( $GLOBALS['csa_filtr'] ) {
 			remove_filter( 'query', $GLOBALS['csa_filtr'], 999 );
 		}
-		foreach ( $GLOBALS['csa_mig'] as $o => $w ) {
-			if ( null === $w ) {
+		foreach ( $GLOBALS['csa_mig'] as $o => $m ) {
+			if ( null === $m['wartosc'] ) {
 				delete_option( $o );
-			} else {
-				update_option( $o, $w );
+				continue;
+			}
+			update_option( $o, $m['wartosc'] );
+			if ( null !== $m['autoload'] ) {
+				$wpdb->update( $wpdb->options, array( 'autoload' => $m['autoload'] ), array( 'option_name' => $o ), array( '%s' ), array( '%s' ) ); // phpcs:ignore
 			}
 		}
 		$wpdb->delete( $tabela, array( 'dzien' => $dzis ), array( '%s' ) ); // phpcs:ignore

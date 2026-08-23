@@ -1086,6 +1086,13 @@ function chatl_pole_liczbowe( $nazwa, $min, $max, $poprzednia, $etykieta, &$pomi
 	if ( ! isset( $_POST[ $nazwa ] ) ) {
 		return (int) $poprzednia;
 	}
+	// Spreparowane żądanie może przysłać TABLICĘ (`pole[]=1`). Rzutowanie jej na
+	// string kończy się ostrzeżeniem „Array to string conversion" w logu — wynik
+	// i tak byłby bezpieczny (pole pominięte), ale log ma zostać czysty.
+	if ( ! is_scalar( $_POST[ $nazwa ] ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sprawdzamy sam TYP, wartości tu nie używamy.
+		$pominiete[] = sprintf( '„%s” (nieczytelna wartość — zostaje %d)', $etykieta, (int) $poprzednia );
+		return (int) $poprzednia;
+	}
 	$surowe = trim( (string) wp_unslash( $_POST[ $nazwa ] ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- niżej is_numeric() + (int); nie-liczba nie jest zapisywana.
 	// phpcs:enable
 	if ( '' === $surowe || ! is_numeric( $surowe ) ) {

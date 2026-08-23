@@ -446,10 +446,14 @@ Wchodzi **przed** silnikiem regułowym i tylko wtedy, gdy `chatl_ai_dostepny()` 
 > tryb AI. Dobowy limit na IP (`chatl_limit_ai_ip_ok()` → `chatl_rate_limit( 'ai', … )`)
 > jest **też** limitem kosztowym, ale dzieli ścieżkę awaryjną z limiterem spamu:
 > gdy jego licznik padnie, **przepuszcza** (`chatl_rate_limit()` zwraca `true`).
-> Nie zostaje przez to bez ochrony — nad nim stoi globalny stop-loss, który przy tej
-> samej awarii jest zamknięty, więc do modelu i tak nic nie idzie. Zmiana tego
-> zachowania oznaczałaby, że awaria licznika limitów **odcina czat** (nonce i walidacje
-> wejścia bronią niezależnie), dlatego zostaje tak, jak jest.
+> **Te dwie awarie są niezależne, bo liczniki leżą w INNYCH tabelach:** globalny
+> stop-loss czyta `chatl_ai_uzycie`, limit per IP — `chatl_rate_limit`. Gdy padnie
+> sama `chatl_rate_limit`, globalny stop-loss **działa dalej i jest otwarty**: do modelu
+> idzie normalnie, znika tylko sufit na gościa, więc jeden adres może wtedy zjeść cały
+> dobowy budżet witryny (nie więcej — globalny limit wywołań i limit tokenów obowiązują).
+> Dopiero awaria obejmująca `chatl_ai_uzycie` (albo całej bazy) zamyka tryb AI.
+> Zmiana zachowania limitera oznaczałaby, że awaria jego licznika **odcina czat**
+> (nonce i walidacje wejścia bronią niezależnie), dlatego zostaje tak, jak jest.
 
 Wywołanie: `wp_remote_post` na adres z filtru, timeout `CHATL_AI_TIMEOUT`, **jedno** ponowienie
 i tylko przy błędzie połączenia, 5xx albo 429 (4xx nie jest ponawiane — to błąd żądania, nie awaria).
