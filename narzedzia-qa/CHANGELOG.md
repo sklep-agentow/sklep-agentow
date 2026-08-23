@@ -14,6 +14,11 @@ wstecz nie dopisuję, bo nie umiałbym jej odtworzyć uczciwie. Ich zmiany od te
 pory lądują tutaj.
 
 ## [Niewydane]
+- **`stos.sh` 1.2.0 → 1.3.0 — `opcja` maskuje sekrety.** Opcje, których nazwa wskazuje sekret
+  (klucz/haslo/token/secret/api/key/pass), wypisują tylko długość i 2-znakowy ogon (ogon przy
+  ≥ 12 zn.). Powód: 23.08 recenzent zobaczył w logach akcji pełny klucz API dostawcy. Błąd
+  stosu z podpowłoki jest przekazywany dalej (EXIT 2). Próba kontrolna sprawdza maskowanie
+  i brak wzorca klucza w wyjściu. Granica świadoma: filtr po NAZWIE, nie po treści.
 
 ### Dodane
 

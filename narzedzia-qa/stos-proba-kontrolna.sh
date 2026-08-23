@@ -121,6 +121,14 @@ odczyt "lista wtyczek"             "segregator-maila"  wtyczki
 odczyt "tabele wtyczek w bazie"    "wp_segm_reguly"    tabele
 odczyt "liczba wierszy w tabeli"   "wierszy:"          wiersze wp_segm_reguly
 odczyt "opcja ustawien segregatora" "ai_limit_dzienny" opcja segm_ustawienia
+# 1.3.0: opcja z sekretem w nazwie ma wyjść ZAMASKOWANA — i NIGDY z wartością (poniżej druga kontrola)
+odczyt "opcja-sekret zamaskowana"   "[SEKRET ZAMASKOWANY]" opcja chatl_klucz_api
+WYJ_SEKRET="$(bash "$STOS" opcja chatl_klucz_api 2>/dev/null)"
+if printf '%s' "$WYJ_SEKRET" | grep -qE 'sk-ant-[A-Za-z0-9_-]{10,}'; then
+	printf '  BLAD %-56s (pelna wartosc klucza na stdout)\n' "opcja-sekret nie wycieka"; BLEDY=$(( BLEDY + 1 ))
+else
+	printf '  OK   %-56s\n' "opcja-sekret nie wycieka (brak wzorca klucza w wyjsciu)"
+fi
 odczyt "licznik maili z lapacza"   "wiadomości:"       maile
 odczyt "ostatni mail"              "Subject"           ostatni-mail
 odczyt "wersja rdzenia"            "7."                wersja-wp
