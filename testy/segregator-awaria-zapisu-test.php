@@ -249,5 +249,41 @@ $sk = segm_skrzynka_ustawienia();
 $km = segmaz_komunikat_skrzynki();
 segmaz( 143 === (int) $sk['port'] && 20 === (int) $sk['limit'] && 'ok' === $km['typ'], 'BEZ WADY: poprawne liczby zapisane, komunikat „ok"', "port={$sk['port']} limit={$sk['limit']} [{$km['typ']}]" );
 
+// -------------------------- F. A2-F4: pozostale zapisy z aktywacji (recenzja #159)
+echo "\n=== F. A2-F4: znacznik ekranu powitalnego i wersja schematu tez sa mierzone ===\n";
+$stan_pow = get_option( 'segm_powitanie_gotowe', null );
+$stan_sch = get_option( 'segm_wersja_schematu', null );
+delete_option( 'segm_blad_bazy' );
+delete_option( 'segm_powitanie_gotowe' );
+$f  = segmaz_psuj( 'segm_powitanie_gotowe', 'UPDATE' );
+$f2 = segmaz_psuj( 'segm_powitanie_gotowe', 'INSERT' );
+segm_aktywacja();
+segmaz_odpsuj( $f );
+segmaz_odpsuj( $f2 );
+wp_cache_flush();
+segmaz( 'segm_aktywacja' === segmaz_slad_funkcja(), 'AWARIA: padniety znacznik powitania zostawia slad bledu bazy', segmaz_slad_funkcja() );
+delete_option( 'segm_blad_bazy' );
+delete_option( 'segm_wersja_schematu' );
+$f  = segmaz_psuj( 'segm_wersja_schematu', 'UPDATE' );
+$f2 = segmaz_psuj( 'segm_wersja_schematu', 'INSERT' );
+segm_sprawdz_schemat();
+segmaz_odpsuj( $f );
+segmaz_odpsuj( $f2 );
+wp_cache_flush();
+segmaz( 'segm_sprawdz_schemat' === segmaz_slad_funkcja(), 'AWARIA: padniety zapis wersji schematu zostawia slad bledu bazy', segmaz_slad_funkcja() );
+delete_option( 'segm_blad_bazy' );
+segm_sprawdz_schemat();
+wp_cache_flush();
+segmaz( SEGM_WERSJA_SCHEMATU === get_option( 'segm_wersja_schematu' ) && '' === segmaz_slad_funkcja(), 'BEZ WADY: dzialajaca baza — wersja schematu zapisana, bez sladu bledu', (string) get_option( 'segm_wersja_schematu' ) );
+// stan sprzed proby
+if ( null === $stan_pow ) {
+	delete_option( 'segm_powitanie_gotowe' );
+} else {
+	update_option( 'segm_powitanie_gotowe', $stan_pow );
+}
+if ( null !== $stan_sch ) {
+	update_option( 'segm_wersja_schematu', $stan_sch );
+}
+
 printf( "\nBLEDOW: %d\n", $GLOBALS['segmaz_bledy'] );
 exit( $GLOBALS['segmaz_bledy'] > 0 ? 1 : 0 );

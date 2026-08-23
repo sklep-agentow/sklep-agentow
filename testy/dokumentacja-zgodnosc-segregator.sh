@@ -330,7 +330,10 @@ done
 spr "readme.txt tez ma changelog wersji" "1" "grep -c '^= 1.3.1 =$' $W/readme.txt"
 
 echo "=== P. Ekran powitalny ==="
-spr "aktywacja zapala znacznik"      "1" "sed -n '/function segm_aktywacja/,/^}/p' $W/includes/instalator.php | grep -c \"update_option( 'segm_powitanie_gotowe', 1 )\""
+# Zapis znacznika idzie przez segm_zapisz_opcje() (wynik MIERZONY, A2-F4) —
+# asercja pyta o zapalenie znacznika, nie o konkretną funkcję zapisu.
+spr "aktywacja zapala znacznik"      "1" "sed -n '/function segm_aktywacja/,/^}/p' $W/includes/instalator.php | grep -c \"segm_zapisz_opcje( 'segm_powitanie_gotowe', 1 )\""
+spr "znacznik powitania: wynik zapisu mierzony" "1" "sed -n '/function segm_aktywacja/,/^}/p' $W/includes/instalator.php | grep -c 'znacznik ekranu powitalnego'"
 spr "przekierowanie na admin_init"   "1" "grep -c \"add_action( 'admin_init', 'segm_powitanie_przekieruj' )\" $W/includes/admin-powitanie.php"
 spr "pamietane PER UZYTKOWNIKA"      "1" "sed -n '/function segm_powitanie_przekieruj/,/^}/p' $W/includes/admin-powitanie.php | grep -c 'update_user_meta( get_current_user_id(), SEGM_POWITANIE_META'"
 spr "nie wraca: sprawdzenie znacznika" "1" "sed -n '/function segm_powitanie_przekieruj/,/^}/p' $W/includes/admin-powitanie.php | grep -c 'get_user_meta( get_current_user_id(), SEGM_POWITANIE_META'"
