@@ -126,8 +126,13 @@ spr "cofniecie ostatniego przebiegu"   "1" "grep -c 'Cofnij ostatni przebieg' $I
 spr "cofnac da sie TYLKO ostatni"      "1" "grep -c 'ostatni.. przebieg, nie dowolny' $I | awk '{print (\$1>0)?1:0}'"
 spr "podlaczenie krok po kroku"        "1" "grep -c 'Podłączenie krok po kroku' $I"
 spr "prywatnosc: tryb regulowy osobno" "1" "grep -c '\*\*Tryb regułowy:\*\*' $I"
-spr "prywatnosc: tryby AI osobno"      "1" "grep -c '\*\*Tryby AI:\*\*' $I"
-spr "prywatnosc: skrzynka klasyfikuje REGULAMI" "1" "grep -c 'klasyfikuje lokalnie, regułami' $I"
+# A3-3: deklaracja wylicza SKLADNIKI ladunku AI, nie samo haslo „tryby AI".
+spr "prywatnosc: tryby AI osobno"      "1" "grep -c 'Tryby AI — co dokładnie wychodzi' $I"
+spr "prywatnosc: sklad ladunku AI"     "1" "grep -c 'identyfikator wiersza próbki' $I"
+spr "prywatnosc: co NIE wychodzi"      "1" "grep -c 'Nie wychodzi:' $I"
+spr "prywatnosc: jedno ponowienie"     "1" "grep -c 'ponawia je JEDEN raz' $I"
+spr "prywatnosc: test klucza to ping"  "1" "grep -c 'wyłącznie słowo' $I"
+spr "prywatnosc: skrzynka klasyfikuje REGULAMI" "1" "grep -c 'na skrzynce pracują SAME REGUŁY\|SAME REGUŁY' $I"
 spr "prywatnosc: BODY.PEEK nie oznacza przeczytanych" "1" "grep -c 'BODY.PEEK' $I"
 
 echo

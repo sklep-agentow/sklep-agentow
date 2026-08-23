@@ -53,6 +53,13 @@ wersjonowanie według [SemVer](https://semver.org/lang/pl/).
   zdaniem po polsku („Serwer odrzucił połączenie na tym porcie — nikt tam nie odbiera"),
   a kod systemowy zostaje w części „Szczegóły techniczne"; pole wyboru szyfrowania ma
   etykietę dla czytnika ekranu.
+- **Deklaracja prywatności mówi wprost, co wychodzi do dostawcy AI** (A3-3): pełna lista
+  składników żądania (nadawca, temat, treść do 800 znaków, identyfikator wiersza próbki,
+  nazwy kategorii, nazwa modelu), lista tego, co NIE wychodzi, informacja o jednym
+  ponowieniu żądania oraz o tym, że „Przetestuj klucz" wysyła wyłącznie słowo „ping".
+  Powiedziane też wprost — w instrukcji, readme i w panelu — że **na prawdziwej skrzynce
+  pracują same reguły** i nie wychodzi z niej do dostawcy nic. Panel nie twierdzi już,
+  że „wtyczka nie łączy się z żadną skrzynką pocztową" (nieprawda od 1.3.0).
 
 ---
 

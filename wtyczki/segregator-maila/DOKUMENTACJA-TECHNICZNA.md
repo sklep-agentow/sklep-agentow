@@ -66,7 +66,7 @@ leży w pliku `LICENSE` w katalogu wtyczki i wchodzi do paczki produktowej.
 | `includes/silnik.php` | 248 | `segm_klasyfikuj_mail()` — jedyna reguła dopasowania w całej wtyczce; przebieg na próbce |
 | `includes/csv.php` | 352 | import próbki z CSV (wykrywanie kodowania, limity) i eksport raportu do CSV |
 | `includes/ai.php` | 588 | opcjonalna klasyfikacja modelem, licznik stop-loss |
-| `includes/admin.php` | 1503 | panel: przebiegi i raporty, reguły, kategorie, próbka, ustawienia, baner powitalny, paski błędu AI i błędu bazy |
+| `includes/admin.php` | 1504 | panel: przebiegi i raporty, reguły, kategorie, próbka, ustawienia, baner powitalny, paski błędu AI i błędu bazy |
 | `includes/konfiguracja.php` | 360 | eksport i import własnej konfiguracji (kategorie + reguły) w JSON-ie |
 | `includes/filtry.php` | 588 | eksport reguł do filtrów Gmaila (XML) i reguł Outlooka |
 | `includes/class-segm-imap.php` | 1123 | **klient IMAP4rev1 w czystym PHP** — gniazdo, TLS, protokół |
@@ -643,41 +643,18 @@ Kod HTTP jest tłumaczony na zdanie po polsku (`segm_opis_bledu_ai()`), bo samo
 stronie (odrzucony klucz, zła nazwa modelu, brak uprawnień) od awarii
 u dostawcy — żeby nie szukał błędu u siebie, gdy go tam nie ma.
 
-**Brak klucza to nie odrzucony klucz** (WK-3). Gdy śladu błędu towarzyszy PUSTY
-klucz — a tak wygląda świeża instalacja na serwerze, na którym ktoś wcześniej
-próbował trybu AI — pasek jest **ostrzeżeniem (żółtym)**, nie błędem: mówi, że
-tryb AI jest wyłączony, bo klucza nie ma, że tryb regułowy jest pełnoprawny,
-skąd wziąć klucz i gdzie go wpisać. Nie cytuje wtedy zdania „sprawdź, czy jest
-wpisany w całości", bo zakładałoby, że właściciel ten klucz wpisywał. Sam kod
-odpowiedzi i data zostają w drobnym druku, z adnotacją, że ślad pochodzi sprzed
-usunięcia klucza.
-
-**Tabelka „Czy ten serwer to udźwignie"** (`segm_skrzynka_diagnostyka()`) opisuje
-środowisko, a kolumna stanu mówi o **stanie rzeczy**, nie o ocenie. Wiersz może
-podać własny `znacznik` — używa go rozszerzenie PHP `imap`, którego wtyczka nie
-potrzebuje: „✔ jest (nieużywane)" albo „— nie dotyczy". Wcześniej kolumna
-pokazywała „✔ jest" obok opisu zaczynającego się od „Nieobecne" i kupujący
-czytał to jako błąd w tabelce (WK-4).
-
-**Błędy połączenia mówią po polsku, kod zostaje** (WK-13). `Segm_Imap::po_ludzku()`
-składa pierwsze zdanie z podpowiedzią, co sprawdzić; komunikat systemowy i kod
-idą na koniec, w części „Szczegóły techniczne (do wklejenia hostingodawcy)".
-Nieznany kod dostaje zdanie ogólne, nie pustkę.
-
-⛔ **Kolejność rozpoznawania: najpierw TREŚĆ komunikatu systemowego, potem kod.**
-Przy nierozwiązanej nazwie serwera — literówka w adresie, najczęstszy błąd
-właściciela — PHP ustawia `errno = 0`, a nie `-3` (zmierzone na PHP 8.4:
-`php_network_getaddresses: getaddrinfo … Name or service not known`). Gdyby
-czytać najpierw kod, ta gałąź byłaby martwa. Rozpoznajemy więc po treści:
-`getaddrinfo`/`php_network_getaddresses` → „nie udało się odnaleźć serwera o tym
-adresie, sprawdź literówkę"; komunikaty warstwy szyfrowania (`SSL routines`,
-`certificate verify`, `enable crypto`, `wrong version number`, `handshake`) →
-zdanie o niedobranej parze port + szyfrowanie. Dopasowanie TLS jest celowo
-WĄSKIE: samo „ssl" występuje też w naszym własnym adresie (`ssl://host:993`),
-więc szeroki wzorzec przypisywałby winę szyfrowaniu przy każdej porażce i mówił
-„serwer odpowiedział" tam, gdzie nikt nie odebrał. Dopiero po tych dwóch
-próbach czytamy `errno` (111 odrzucone połączenie, 110 brak odpowiedzi,
-113 brak drogi, 101 brak sieci).
+**Co dokładnie opuszcza WordPressa w trybie AI** (A3-3 — deklaracja ma to mówić
+wprost, bo właściciel pisze z niej własną politykę prywatności): nadawca (190
+znaków), temat (300), treść maila z próbki (pierwsze 800) i identyfikator wiersza
+próbki — dla każdego maila w partii do `SEGM_AI_PARTIA`; do tego **nazwy
+wszystkich kategorii** właściciela w poleceniu systemowym, nazwa modelu i limit
+`max_tokens`. Nie wychodzą: załączniki, nagłówki techniczne maila, `Message-ID`,
+kolumna `kategoria_oczekiwana`, adresy IP. Przy błędzie żądanie jest **ponawiane
+raz** — te same dane lecą drugi raz. **Przebieg na prawdziwej skrzynce (IMAP)
+nie woła AI w ogóle**: `skrzynka-przebieg.php` i `skrzynka.php` nie mają ani
+jednego wywołania `segm_ai_*`, tryb AI dotyczy wyłącznie próbki. Pilnuje tego strażnik
+w repozytorium, który rozkłada PRAWDZIWY przechwycony ładunek i dla każdego
+składnika pyta, czy deklaracja go wymienia.
 
 **„Przetestuj klucz API”** (Ustawienia) wysyła JEDNO wywołanie ze słowem
 „ping”. ⛔ Żadnego maila, żadnej treści z próbki — to test poświadczeń, nie

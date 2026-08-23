@@ -48,9 +48,16 @@ serwerem poczty i klasyfikuje lokalnie, regułami. Wiadomości pobiera polecenie
 `BODY.PEEK`, które **nie oznacza ich jako przeczytanych**. Próbka, raporty
 i historia skrzynki są kasowane automatycznie po 90 dniach.
 
-Jedyny wyjątek to opcjonalny tryb AI: tam treść maili z próbki wychodzi do
-zewnętrznego dostawcy modelu — i nie stanie się to bez Twojego wyraźnego
-potwierdzenia, zapisywanego z datą i loginem.
+Na skrzynce IMAP pracują SAME REGUŁY — do dostawcy modelu nie wychodzi stamtąd nic.
+
+Jedyny wyjątek to opcjonalny tryb AI, który działa wyłącznie na PRÓBCE wgranej
+przez Ciebie: do dostawcy modelu wychodzą wtedy nadawca (190 znaków), temat
+(300 znaków) i treść maila z próbki (pierwsze 800 znaków), identyfikator wiersza
+próbki, nazwy Twoich kategorii i nazwa modelu; przy błędzie żądanie jest
+ponawiane raz. Nie wychodzą załączniki, nagłówki techniczne maila ani nic ze
+skrzynki IMAP. Nie stanie się to bez Twojego wyraźnego potwierdzenia,
+zapisywanego z datą i loginem. Przycisk „Przetestuj klucz API" wysyła wyłącznie
+słowo „ping".
 
 = Czego wtyczka nie zrobi =
 
