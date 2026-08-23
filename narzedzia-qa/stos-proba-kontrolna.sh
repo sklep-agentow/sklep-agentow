@@ -129,14 +129,15 @@ if printf '%s' "$WYJ_SEKRET" | grep -qE 'sk-ant-[A-Za-z0-9_-]{10,}'; then
 else
 	printf '  OK   %-56s\n' "opcja-sekret: w wyjsciu brak wzorca sk-ant- (weziej niz nie-wycieka)"
 fi
-# 1.3.0 runda 4: wielkosc liter nie moze decydowac o wycieku (KLUCZ wielkimi tez maskowany);
-# opcji nie ma na stosie, wiec przy dzialajacym filtrze dostaniemy blad odczytu (EXIT!=0) — wazne,
-# ze wyjscie NIE zawiera surowej wartosci; przy zepsutym filtrze nazwa przeszlaby jawna galezia.
-WYJ_DUZE="$(bash "$STOS" opcja CHATL_KLUCZ_API_PROBA 2>&1)"; KOD_DUZE=$?
-if [ "$KOD_DUZE" -ne 0 ] && ! printf '%s' "$WYJ_DUZE" | grep -q 'wp option get CHATL_KLUCZ_API_PROBA ===.*[a-z0-9]'; then
-	printf '  OK   %-56s\n' "nazwa WIELKIMI literami tez idzie galezia sekretu (EXIT=$KOD_DUZE)"
+# 1.3.0 runda 5: kalibracja kontroli wielkich liter. Opcja MUSI ISTNIEC (baza porownuje nazwy
+# bez wielkosci liter, wiec CHATL_KLUCZ_API zwraca zywa wartosc) — na ZEPSUTYM filtrze nazwa
+# wielkimi poszlaby jawna galezia i wypisala pelny klucz; na dobrym dostajemy maske. Poprzednia
+# wersja pytala o opcje nieistniejaca i przechodzila na zielono takze na zepsutym filtrze.
+WYJ_DUZE="$(bash "$STOS" opcja CHATL_KLUCZ_API 2>&1)"; KOD_DUZE=$?
+if [ "$KOD_DUZE" -eq 0 ] && printf '%s' "$WYJ_DUZE" | grep -q 'SEKRET ZAMASKOWANY' && ! printf '%s' "$WYJ_DUZE" | grep -qE 'sk-ant-[A-Za-z0-9_-]{10,}'; then
+	printf '  OK   %-56s\n' "nazwa WIELKIMI literami: zywa opcja zamaskowana, zero sk-ant-"
 else
-	printf '  BLAD %-56s\n' "nazwa WIELKIMI literami ominela maskowanie"; BLEDY=$(( BLEDY + 1 ))
+	printf '  BLAD %-56s (EXIT=%s)\n' "nazwa WIELKIMI literami ominela maskowanie zywej opcji" "$KOD_DUZE"; BLEDY=$(( BLEDY + 1 ))
 fi
 # 1.3.0 runda 4: regresja podpowloki — martwy stos ma dawac EXIT=2 i ZERO [SEKRET ZAMASKOWANY]
 # (bez tej kontroli exit 2 z brak_stosu ginal w $(...) i skrypt wypisywal dlugosc KOMUNIKATU jako klucza).
