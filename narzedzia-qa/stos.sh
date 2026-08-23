@@ -1,5 +1,5 @@
 #!/bin/bash
-# stos.sh — WĄSKIE, CZYSTO ODCZYTOWE okno recenzenta na żywy stos.     WERSJA 1.2.0
+# stos.sh — WĄSKIE, CZYSTO ODCZYTOWE okno recenzenta na żywy stos.     WERSJA 1.3.0
 #
 # PO CO TO POWSTAŁO (policzone 20.08): w dzisiejszych recenzjach padło
 # 91 zdań „czego nie sprawdziłem". PIĘĆDZIESIĄT JEDEN z nich brzmiało
@@ -32,7 +32,7 @@
 #                   albo argument odrzucony przez sprawdzenie wzorca
 set -u
 
-WERSJA=1.2.0
+WERSJA=1.3.0
 
 # ⛔ Stałe, nie parametry. Dzwoniący NIE wybiera kontenera ani adresu — wybiera
 #    co najwyżej STOS, i to wyłącznie z tej zamkniętej listy dwóch pozycji:
@@ -205,7 +205,8 @@ stos.sh $WERSJA — czysto odczytowe okno na stos WordPressa (teraz: $STOS).
   stan                     czy WordPress, baza i łapacz maili odpowiadają
   strona <sciezka>         GET $ADRES_WP<sciezka> — kod HTTP, typ, rozmiar, treść
   naglowki <sciezka>       same nagłówki odpowiedzi
-  opcja <nazwa>            wartość jednej opcji WordPressa (wp option get)
+  opcja <nazwa>            wartość jednej opcji WordPressa (wp option get);
+                           nazwy z klucz/haslo/token/secret/api/key/pass → tylko długość i ogon (1.3.0)
   opcje <prefiks>          nazwy opcji zaczynające się od prefiksu
   wtyczki                  lista wtyczek ze stanem (wp plugin list)
   tabele                   tabele wtyczek widoczne w bazie
@@ -270,7 +271,33 @@ op_naglowki() {
 op_opcja() {
 	sprawdz_nazwe "$1" "nazwa opcji"
 	printf '=== wp option get %s ===\n' "$1"
-	wp_odczyt option get "$1"
+	# ⛔ SEKRETY NIE WYCHODZĄ NA STDOUT (1.3.0). Wyjście tego okna ląduje w logach akcji GitHuba
+	#    (recenzent) — 23.08 recenzent zobaczył w nich pełny klucz API dostawcy. Opcje, których
+	#    NAZWA wskazuje sekret, dostają tylko DŁUGOŚĆ i 2-znakowy ogon (ogon tylko przy ≥ 12 zn.;
+	#    krótsze — sama długość). Wystarczy, żeby stwierdzić obecność i zmianę, za mało, żeby użyć.
+	# ⚠️ ŚWIADOMA GRANICA: filtr jest PO NAZWIE (lista wzorców niżej), nie po treści — opcja-tablica
+	#    (np. ustawienia) może nieść sekret w środku i przejdzie jawnie. Dokładając opcję z sekretem
+	#    nazwij ją tak, żeby wzorzec łapał (klucz/haslo/token/secret/api/key/pass).
+	# wielkość liter nie może decydować o wycieku: nazwa jest normalizowana do małych (runda 4)
+	local NAZWA_MALA; NAZWA_MALA="$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]')"
+	case "$NAZWA_MALA" in
+		*klucz*|*haslo*|*token*|*sekret*|*secret*|*password*|*pass*|*api*|*key*)
+			# podstawienie $(…) to PODPOWŁOKA: exit 2 z brak_stosu kończy ją, nie skrypt — dlatego
+			# kod wyjścia jest sprawdzany i przekazywany dalej (recenzja #157). wp_odczyt scala
+			# stderr do stdout, więc komunikat awarii siedzi w WART — przy błędzie wypisujemy go
+			# na stderr (nigdy jako „wartość") i wychodzimy z tym samym kodem.
+			local WART KOD; WART="$(wp_odczyt option get "$1")"; KOD=$?
+			if [ "$KOD" -ne 0 ]; then
+				# ⛔ przy błędzie NIE wypisujemy surowego wyjścia: wp potrafi zwrócić wartość razem
+				#    z ostrzeżeniem i niezerowym kodem — wypisujemy wyłącznie ZNANE komunikaty
+				#    (Error:/Warning:/STOS NIE ODPOWIADA), resztę zastępuje sam kod (runda 4)
+				printf '%s\n' "$WART" | grep -E '^(Error:|Warning:|STOS NIE ODPOWIADA)' >&2 || printf 'odczyt nie powiódł się (EXIT=%s), szczegóły wycięte — mogłyby nieść sekret\n' "$KOD" >&2
+				exit "$KOD"
+			fi
+			if [ "${#WART}" -ge 12 ]; then printf '[SEKRET ZAMASKOWANY] długość=%s ogon=…%s\n' "${#WART}" "${WART: -2}"
+			else printf '[SEKRET ZAMASKOWANY] długość=%s\n' "${#WART}"; fi ;;
+		*) wp_odczyt option get "$1" ;;
+	esac
 }
 
 op_opcje() {

@@ -121,6 +121,36 @@ odczyt "lista wtyczek"             "segregator-maila"  wtyczki
 odczyt "tabele wtyczek w bazie"    "wp_segm_reguly"    tabele
 odczyt "liczba wierszy w tabeli"   "wierszy:"          wiersze wp_segm_reguly
 odczyt "opcja ustawien segregatora" "ai_limit_dzienny" opcja segm_ustawienia
+# 1.3.0: opcja z sekretem w nazwie ma wyjść ZAMASKOWANA — i NIGDY z wartością (poniżej druga kontrola)
+odczyt "opcja-sekret zamaskowana"   "[SEKRET ZAMASKOWANY]" opcja chatl_klucz_api
+WYJ_SEKRET="$(bash "$STOS" opcja chatl_klucz_api 2>/dev/null)"
+if printf '%s' "$WYJ_SEKRET" | grep -qE 'sk-ant-[A-Za-z0-9_-]{10,}'; then
+	printf '  BLAD %-56s (pelna wartosc klucza na stdout)\n' "opcja-sekret nie wycieka"; BLEDY=$(( BLEDY + 1 ))
+else
+	printf '  OK   %-56s\n' "opcja-sekret: w wyjsciu brak wzorca sk-ant- (weziej niz nie-wycieka)"
+fi
+# 1.3.0 runda 5: kalibracja kontroli wielkich liter. Opcja MUSI ISTNIEC (baza porownuje nazwy
+# bez wielkosci liter, wiec CHATL_KLUCZ_API zwraca zywa wartosc) — na ZEPSUTYM filtrze nazwa
+# wielkimi poszlaby jawna galezia i wypisala pelny klucz; na dobrym dostajemy maske. Poprzednia
+# wersja pytala o opcje nieistniejaca i przechodzila na zielono takze na zepsutym filtrze.
+WYJ_DUZE="$(bash "$STOS" opcja CHATL_KLUCZ_API 2>&1)"; KOD_DUZE=$?
+if [ "$KOD_DUZE" -eq 0 ] && printf '%s' "$WYJ_DUZE" | grep -q 'SEKRET ZAMASKOWANY' && ! printf '%s' "$WYJ_DUZE" | grep -qE 'sk-ant-[A-Za-z0-9_-]{10,}'; then
+	printf '  OK   %-56s\n' "nazwa WIELKIMI literami: zywa opcja zamaskowana, zero sk-ant-"
+else
+	printf '  BLAD %-56s (EXIT=%s)\n' "nazwa WIELKIMI literami ominela maskowanie zywej opcji" "$KOD_DUZE"; BLEDY=$(( BLEDY + 1 ))
+fi
+# 1.3.0 runda 4: regresja podpowloki — martwy stos ma dawac EXIT=2 i ZERO [SEKRET ZAMASKOWANY]
+# (bez tej kontroli exit 2 z brak_stosu ginal w $(...) i skrypt wypisywal dlugosc KOMUNIKATU jako klucza).
+if docker ps --filter name='^probny_wp$' --filter status=running -q | grep -q .; then
+	printf '  POMINIETE %-51s\n' "kontrola martwego stosu (probny_wp AKURAT chodzi)"
+else
+	WYJ_MARTWY="$(bash "$STOS" --stos probny opcja chatl_klucz_api 2>&1)"; KOD_MARTWY=$?
+	if [ "$KOD_MARTWY" = "2" ] && ! printf '%s' "$WYJ_MARTWY" | grep -q 'SEKRET ZAMASKOWANY'; then
+		printf '  OK   %-56s\n' "martwy stos: EXIT=2 i zadnego udawanego maskowania"
+	else
+		printf '  BLAD %-56s (EXIT=%s)\n' "martwy stos: exit z podpowloki zginal albo udaje maske" "$KOD_MARTWY"; BLEDY=$(( BLEDY + 1 ))
+	fi
+fi
 odczyt "licznik maili z lapacza"   "wiadomości:"       maile
 odczyt "ostatni mail"              "Subject"           ostatni-mail
 odczyt "wersja rdzenia"            "7."                wersja-wp
