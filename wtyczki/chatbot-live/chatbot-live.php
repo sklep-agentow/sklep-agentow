@@ -91,7 +91,7 @@ function chatl_log_bledu_bazy( $funkcja, $operacja, $szczegol = null ) {
 	}
 	wp_trigger_error(
 		(string) $funkcja,
-		'zapis do bazy nie powiódł się (' . $operacja . '): ' . $szczegol,
+		'operacja na bazie nie powiodła się (' . $operacja . '): ' . $szczegol,
 		E_USER_WARNING
 	);
 }
@@ -165,10 +165,20 @@ add_action( 'plugins_loaded', 'chatl_sprawdz_schemat' );
 function chatl_czyszczenie_historii() {
 	global $wpdb;
 	$tabela = $wpdb->prefix . 'chatl_rozmowy';
-	$wynik  = $wpdb->query(
+	/*
+	 * Granica liczona w STREFIE WITRYNY, bo `utworzono` jest zapisywane przez
+	 * `current_time( 'mysql' )` — też w strefie witryny. Do audytu A5 (KR6)
+	 * granica szła z `gmdate( …, time() - … )`, czyli w UTC: porównywane były dwa
+	 * różne układy odniesienia i próg przesuwał się o offset strefy — u kupującego
+	 * w strefie ujemnej (UTC-5) rozmowy ginęły 5 h PRZED obiecanymi 90 dniami.
+	 * `wp_date()` formatuje znacznik czasu w strefie WordPressa (ta sama, której
+	 * używa `current_time()`); okna rate-limitu niżej zostają w UTC, bo `okno_do`
+	 * jest zapisywane przez `gmdate()` — tam oba końce są w UTC.
+	 */
+	$wynik = $wpdb->query(
 		$wpdb->prepare(
 			"DELETE FROM {$tabela} WHERE utworzono < %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			gmdate( 'Y-m-d H:i:s', time() - CHATL_RETENCJA_DNI * DAY_IN_SECONDS )
+			wp_date( 'Y-m-d H:i:s', time() - CHATL_RETENCJA_DNI * DAY_IN_SECONDS )
 		)
 	);
 	if ( false === $wynik ) {

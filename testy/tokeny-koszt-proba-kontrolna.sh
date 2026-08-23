@@ -51,8 +51,13 @@ probuj "zuzycie liczone dopiero przy udanej odpowiedzi (uwaga do PR 83)" \
   "docker exec $KONTENER sed -i '/chatl_ai_zuzyj( chatl_ai_usage( is_array/d; /function chatl_ai_odpowiedz/,/^}/s|chatl_odnotuj_sukces_ai();|chatl_ai_zuzyj( chatl_ai_usage( \$dane ) );\n\tchatl_odnotuj_sukces_ai();|' $PLIK_A" \
   "odmowa LICZY tokeny (rachunek przyszedl)" "$PLIK_A" php
 
+# Mutant nr 3 celuje w warunek DRUGIEGO stop-lossu. Po naprawie T-1 (C2)
+# chatl_ai_dostepny() czyta licznik RAZ i sumuje tokeny z odczytanej tablicy,
+# wiec warunek brzmi `$tokeny >= $limit_tokenow`, a nie `chatl_ai_tokeny_dzis()`.
+# Stary wzorzec przestal pasowac i proba melduje „mutacja NIE weszla do pliku"
+# (glosno, bo pilnuje md5) — przepisany na aktualna postac warunku.
 probuj "limit tokenow nie blokuje AI" \
-  "docker exec $KONTENER sed -i 's|if ( \$limit_tokenow > 0 \&\& chatl_ai_tokeny_dzis() >= \$limit_tokenow ) {|if ( false ) {|' $PLIK_A" \
+  "docker exec $KONTENER sed -i 's|if ( \$limit_tokenow > 0 \&\& \$tokeny >= \$limit_tokenow ) {|if ( false ) {|' $PLIK_A" \
   "tryb AI jest zablokowany"
 
 probuj "odczyt z cache wliczany do tokenow platnych" \

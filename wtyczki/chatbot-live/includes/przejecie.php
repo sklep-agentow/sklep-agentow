@@ -253,7 +253,12 @@ function chatl_oddaj_botowi( $sesja, $komunikat ) {
 	$blad = (string) $wpdb->last_error;
 	$stan = chatl_sesja_stan_z_bazy( $sesja );
 	if ( 'bot' !== $stan ) {
-		chatl_log_bledu_bazy( 'chatl_oddaj_botowi', 'oddanie rozmowy botowi (stan sesji)', '' !== $blad ? $blad : 'po zapisie stan sesji: ' . ( '' === $stan ? 'brak wiersza' : $stan ) );
+		// Ślad błędu bazy TYLKO przy błędzie sterownika. UPDATE trafiający 0 wierszy
+		// przy zdrowej bazie (sesja skasowana między listą a kliknięciem) to nie awaria
+		// — to „nie ma czego oddawać": false bez fałszywego alarmu w panelu.
+		if ( '' !== $blad ) {
+			chatl_log_bledu_bazy( 'chatl_oddaj_botowi', 'oddanie rozmowy botowi (stan sesji)', $blad );
+		}
 		return false;
 	}
 	if ( '' !== $komunikat ) {
@@ -299,7 +304,11 @@ function chatl_przejmij( $sesja, $kto ) {
 	$blad = (string) $wpdb->last_error;
 	$stan = chatl_sesja_stan_z_bazy( $sesja );
 	if ( 'czlowiek' !== $stan ) {
-		chatl_log_bledu_bazy( 'chatl_przejmij', 'przejęcie rozmowy przez operatora (stan sesji)', '' !== $blad ? $blad : 'po zapisie stan sesji: ' . ( '' === $stan ? 'brak wiersza' : $stan ) );
+		// Jak w chatl_oddaj_botowi(): brak wiersza (0 trafionych, brak błędu) to nie
+		// awaria bazy — false bez śladu; ślad tylko, gdy sterownik zgłosił błąd.
+		if ( '' !== $blad ) {
+			chatl_log_bledu_bazy( 'chatl_przejmij', 'przejęcie rozmowy przez operatora (stan sesji)', $blad );
+		}
 		return false;
 	}
 	// Gość dowiaduje się o zmianie rozmówcy WPROST, a nie po zmianie awatara.

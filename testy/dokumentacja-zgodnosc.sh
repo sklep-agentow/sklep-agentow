@@ -206,7 +206,7 @@ echo
 echo "=== G. Ustawienia: klucze i wartosci domyslne ==="
 spr "kluczy w chatl_ustawienia"   "16"  "sed -n '/\\\$domyslne = array(/,/);/p' $W/chatbot-live.php | grep -cP \"^\t\t'\""
 spr "ai_limit_dzienny domyslnie"  "100" "grep -oP \"(?<='ai_limit_dzienny' => )[0-9]+\" $W/chatbot-live.php"
-spr "zakres zapisu limitu (max)"  "100000" "grep -oP '(?<=min\\( )[0-9]+(?=, \\(int\\) \\\$_POST\\[.ai_limit_dzienny)' $W/includes/admin.php"
+spr "zakres zapisu limitu (max)"  "100000" "grep -oP \"(?<=chatl_pole_liczbowe\\( 'ai_limit_dzienny', 1, )[0-9]+\" $W/includes/admin.php"
 spr "wlaczony domyslnie"          "1"  "grep -oP \"(?<='wlaczony'         => )[0-9]+\" $W/chatbot-live.php"
 spr "usun_dane domyslnie"         "0"  "grep -oP \"(?<='usun_dane'        => )[0-9]+\" $W/chatbot-live.php"
 
@@ -303,7 +303,7 @@ spr "cache instrukcji pod warunkiem progu" "1" "grep -c 'CHATL_AI_CACHE_PROG_ZNA
 # dopisanie kolejnego wyjscia nie moze juz zgubic kosztu przez przeoczenie.
 spr "zuzycie liczone w JEDNYM miejscu" "1" "sed -n '/function chatl_ai_odpowiedz/,/^}/p' $W/includes/ai.php | grep -c 'chatl_ai_zuzyj('"
 spr "zuzycie liczone PRZED rozgalezieniem" "wczesniej" "sed -n '/function chatl_ai_odpowiedz/,/^}/p' $W/includes/ai.php | awk '/chatl_ai_zuzyj\(/{z=NR} /stop_reason/{r=NR} END{print (z && r && z < r) ? \"wczesniej\" : \"pozniej\"}'"
-spr "limit tokenow blokuje tryb AI"  "1"  "sed -n '/function chatl_ai_dostepny/,/^}/p' $W/includes/ai.php | grep -c chatl_ai_tokeny_dzis"
+spr "limit tokenow blokuje tryb AI"  "1"  "sed -n '/function chatl_ai_dostepny/,/^}/p' $W/includes/ai.php | grep -c 'limit_tokenow > 0 &&'"
 # Sygnal "bot pisze": blokada MUSI byc zdejmowana w finally (po bledzie tez),
 # a straz przed podwojnym wyslaniem czyta stan przycisku.
 spr "dymek pisania rysowany"       "1"  "grep -c 'chatl-pisze' $W/assets/widget.js"

@@ -179,8 +179,8 @@ więc **brakujący klucz nigdy nie jest błędem** — nowe pole dostaje wartoś
 | `powiadomienia` | `1` | Czy w ogóle wysyłać ten mail. |
 | `usun_dane` | `0` | Przełącznik ścieżki deinstalacji (rozdział **Cykl życia**). |
 | `ai_informacje` | `''` | Opis firmy wstrzykiwany do instrukcji systemowej modelu. |
-| `ai_limit_dzienny` | `100` | Globalny dobowy limit **wywołań** AI. Zapis ograniczany do zakresu 1–100000. |
-| `ai_limit_tokenow` | `200000` | Globalny dobowy limit **tokenów płatnych** — drugi stop-loss. `0` = wyłączony. |
+| `ai_limit_dzienny` | `100` | Globalny dobowy limit **wywołań** AI. Zapis ograniczany do zakresu 1–100000; jak przy limicie tokenów, **puste albo nieczytelne pole liczbowe NIE nadpisuje poprzedniej wartości** (`chatl_pole_liczbowe()`, audyt A5 KR1/KR2). |
+| `ai_limit_tokenow` | `200000` | Globalny dobowy limit **tokenów płatnych** — drugi stop-loss. `0` = wyłączony (jawne zero z formularza; **puste albo nieczytelne pole liczbowe NIE nadpisuje poprzedniej wartości** i panel mówi to zamiast „zapisano" — `chatl_pole_liczbowe()`, audyt A5 KR1/KR2). |
 | `kolor_glowny` | `#bfff38` | Bąbelek, dymki bota, przyciski, obwódka fokusu. Wartość spoza `#rrggbb` jest odrzucana i wraca domyślna. |
 | `kolor_naglowka` | `#08090b` | Pasek z tytułem okna czatu i paski formularza kontaktu. |
 | `kolor_tekstu` | `auto` | `auto` = wtyczka dobiera kolor tekstu osobno dla bąbelka i dla nagłówka, biorąc ten o lepszym kontraście. Wartość `#rrggbb` = ten sam kolor na obu. |
@@ -278,6 +278,12 @@ Codziennie, dwa `DELETE`:
 
 - z `chatl_rozmowy` wszystko starsze niż `CHATL_RETENCJA_DNI` dni,
 - z `chatl_rate_limit` wiersze z `okno_do` w przeszłości.
+
+Granica retencji jest liczona **w strefie witryny** (`wp_date()`), bo `utworzono` też
+jest zapisywane w strefie witryny (`current_time( 'mysql' )`). Do audytu A5 (KR6) granica
+szła w UTC i próg przesuwał się o offset strefy — w strefie ujemnej rozmowy ginęły
+godziny PRZED obiecanymi 90 dniami. Okna rate-limitu zostają w UTC, bo `okno_do` jest
+zapisywane przez `gmdate()` — tam oba końce są w tym samym układzie.
 
 Wynik obu zapytań jest sprawdzany; porażka trafia do logu WordPressa.
 **Zgłoszeń ten cron nie dotyka** — kontakty od gości nie mają automatycznego terminu ważności.
@@ -425,8 +431,29 @@ Wchodzi **przed** silnikiem regułowym i tylko wtedy, gdy `chatl_ai_dostepny()` 
 `chatl_limit_ai_ip_ok()` zwrócą prawdę:
 
 - jest klucz (ze stałej `CHATL_KLUCZ_API` albo z opcji — stała ma pierwszeństwo),
+- licznik dobowy **da się odczytać** — nieudany odczyt `chatl_ai_uzycie` (odrzucone
+  zapytanie: uszkodzona albo usunięta tabela; **albo brak połączenia z bazą**, gdy
+  `wpdb::query()` wychodzi jeszcze przed ustawieniem `last_error`) to NIE to samo, co
+  „brak wiersza na dziś": `chatl_ai_zuzycie_dnia()` wraca wtedy z flagą `blad`,
+  a `chatl_ai_dostepny()` traktuje to jak wyczerpany limit (**fail-closed**: reguły,
+  bez AI) i zostawia ślad w `chatl_blad_bazy`,
 - globalny licznik dobowy jest poniżej `ai_limit_dzienny`,
+- dobowy licznik tokenów płatnych jest poniżej `ai_limit_tokenow` (gdy ten > 0),
 - kubeł tego IP nie przekroczył `CHATL_AI_LIMIT_IP_NA_DOBE`.
+
+> **Dwa bezpieczniki kosztowe zachowują się przy awarii RÓŻNIE — i to jest świadome.**
+> Globalny stop-loss (`chatl_ai_dostepny()`) przy nieczytelnym liczniku **wstrzymuje**
+> tryb AI. Dobowy limit na IP (`chatl_limit_ai_ip_ok()` → `chatl_rate_limit( 'ai', … )`)
+> jest **też** limitem kosztowym, ale dzieli ścieżkę awaryjną z limiterem spamu:
+> gdy jego licznik padnie, **przepuszcza** (`chatl_rate_limit()` zwraca `true`).
+> **Te dwie awarie są niezależne, bo liczniki leżą w INNYCH tabelach:** globalny
+> stop-loss czyta `chatl_ai_uzycie`, limit per IP — `chatl_rate_limit`. Gdy padnie
+> sama `chatl_rate_limit`, globalny stop-loss **działa dalej i jest otwarty**: do modelu
+> idzie normalnie, znika tylko sufit na gościa, więc jeden adres może wtedy zjeść cały
+> dobowy budżet witryny (nie więcej — globalny limit wywołań i limit tokenów obowiązują).
+> Dopiero awaria obejmująca `chatl_ai_uzycie` (albo całej bazy) zamyka tryb AI.
+> Zmiana zachowania limitera oznaczałaby, że awaria jego licznika **odcina czat**
+> (nonce i walidacje wejścia bronią niezależnie), dlatego zostaje tak, jak jest.
 
 Wywołanie: `wp_remote_post` na adres z filtru, timeout `CHATL_AI_TIMEOUT`, **jedno** ponowienie
 i tylko przy błędzie połączenia, 5xx albo 429 (4xx nie jest ponawiane — to błąd żądania, nie awaria).

@@ -150,11 +150,45 @@ function chatl_ai_zuzycie_dnia( $dzien = '' ) {
 		'tokeny_wyjscia'      => 0,
 		'tokeny_cache_zapis'  => 0,
 		'tokeny_cache_odczyt' => 0,
+		'blad'                => false,
 	);
+	/*
+	 * „Brak wiersza" (dziś nikt jeszcze nie pytał) i „odczyt się nie udał" NIE są
+	 * tym samym — a `get_row()` zwraca `null` w obu. Do naprawy T-1 oba dawały
+	 * zera, zera były poniżej limitu i stop-loss przepuszczał wywołania płatnego
+	 * API przy liczniku, który nie liczy: fail-open na rachunku właściciela.
+	 *
+	 * Nieudany odczyt rozpoznajemy DWOMA sygnałami, bo jeden nie wystarcza:
+	 *  1. `$wpdb->last_error` — zapytanie doszło do serwera i zostało odrzucone
+	 *     (uszkodzona albo usunięta tabela, odebrane uprawnienia);
+	 *  2. `$wpdb->ready === false` — POŁĄCZENIA NIE MA. `wpdb::query()` wychodzi
+	 *     wtedy `return false` jeszcze przed `flush()`, więc `last_error` w ogóle
+	 *     nie jest ustawiany i zostaje w nim (pusty albo cudzy) komunikat
+	 *     z poprzedniego zapytania. Sam warunek na `last_error` przepuszczałby
+	 *     więc dokładnie ten przypadek, w którym baza jest martwa.
+	 *
+	 * Wynik wraca z flagą `blad`, a `chatl_ai_dostepny()` traktuje ją jak limit
+	 * wyczerpany (reguły, bez płatnego API). Ślad idzie tym samym kanałem co
+	 * padnięte zapisy — kanałem najlepszego wysiłku: przy martwej bazie i on
+	 * nie dojdzie, ale decyzja „nie wołamy API" zapada niezależnie od niego.
+	 */
+	$brak_polaczenia = ! $wpdb->ready;
+	if ( $brak_polaczenia || '' !== (string) $wpdb->last_error ) {
+		chatl_log_bledu_bazy(
+			'chatl_ai_zuzycie_dnia',
+			'odczyt dziennego licznika wywołań AI — tryb AI wstrzymany, odpowiadają reguły',
+			$brak_polaczenia ? 'brak połączenia z bazą (wpdb->ready = false)' : null
+		);
+		$puste['blad'] = true;
+		return $puste;
+	}
 	if ( ! is_array( $w ) ) {
 		return $puste;
 	}
 	foreach ( $puste as $klucz => $_ ) {
+		if ( 'blad' === $klucz ) {
+			continue;
+		}
 		$puste[ $klucz ] = isset( $w[ $klucz ] ) ? (int) $w[ $klucz ] : 0;
 	}
 	return $puste;
@@ -251,11 +285,21 @@ function chatl_ai_dostepny() {
 		return false;
 	}
 	$ust = chatl_ustawienia();
-	if ( chatl_ai_uzycie_dzis() >= (int) $ust['ai_limit_dzienny'] ) {
+	$d   = chatl_ai_zuzycie_dnia();
+	/*
+	 * Licznik nie do odczytania = NIE WIEMY, ile dziś poszło, więc zakładamy
+	 * najgorsze: limit wyczerpany. Bot odpowiada z reguł, rachunek nie rośnie,
+	 * właściciel widzi pasek błędu bazy w panelu (T-1, audyt etap 3).
+	 */
+	if ( ! empty( $d['blad'] ) ) {
+		return false;
+	}
+	if ( (int) $d['wywolania'] >= (int) $ust['ai_limit_dzienny'] ) {
 		return false;
 	}
 	$limit_tokenow = isset( $ust['ai_limit_tokenow'] ) ? (int) $ust['ai_limit_tokenow'] : 0;
-	if ( $limit_tokenow > 0 && chatl_ai_tokeny_dzis() >= $limit_tokenow ) {
+	$tokeny        = (int) $d['tokeny_wejscia'] + (int) $d['tokeny_wyjscia'] + (int) $d['tokeny_cache_zapis'];
+	if ( $limit_tokenow > 0 && $tokeny >= $limit_tokenow ) {
 		return false;
 	}
 	return true;

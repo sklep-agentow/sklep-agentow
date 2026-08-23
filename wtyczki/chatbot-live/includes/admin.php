@@ -285,7 +285,7 @@ function chatl_notice_bledu_bazy() {
 		return;
 	}
 	printf(
-		'<div class="notice notice-error"><p><strong>ChatBot LIVE: zapis do bazy nie powiódł się.</strong> Ostatnio %s (wystąpień: %d). Operacja: %s. Baza odpowiedziała: %s.<br>Część danych mogła się NIE zapisać. Jeśli to się powtarza, pokaż ten komunikat swojemu hostingowi.</p></div>',
+		'<div class="notice notice-error"><p><strong>ChatBot LIVE: operacja na bazie danych nie powiodła się.</strong> Ostatnio %s (wystąpień: %d). Operacja: %s. Baza odpowiedziała: %s.<br>Część danych mogła się NIE zapisać albo NIE odczytać (przy nieczytelnym liczniku AI bot odpowiada z reguł). Jeśli to się powtarza, pokaż ten komunikat swojemu hostingowi.</p></div>',
 		esc_html( (string) $blad['ostatni'] ),
 		(int) ( $blad['ile'] ?? 1 ),
 		esc_html( (string) ( $blad['operacja'] ?? '' ) ),
@@ -918,18 +918,22 @@ function chatl_strona_ustawienia() {
 					<th scope="row"><label for="chatl-ai-limit">Dzienny limit wywołań AI (stop-loss)</label></th>
 					<td>
 						<input type="number" id="chatl-ai-limit" name="ai_limit_dzienny" min="1" max="100000" value="<?php echo (int) $ust['ai_limit_dzienny']; ?>">
-						<p class="description">Dzisiaj zużyto: <strong><?php echo (int) chatl_ai_uzycie_dzis(); ?> / <?php echo (int) $ust['ai_limit_dzienny']; ?></strong> wywołań. Po wyczerpaniu limitu bot do północy odpowiada z reguł. Limit jest miękki: równoległe zapytania gości mogą go minimalnie przekroczyć.<br>
+						<?php $zuzycie = chatl_ai_zuzycie_dnia(); ?>
+						<?php if ( ! empty( $zuzycie['blad'] ) ) : ?>
+							<p class="description" style="color:#b32d2e"><strong>Licznik wywołań AI jest nieczytelny</strong> (błąd bazy danych — szczegóły w czerwonym pasku u góry). Do czasu naprawy tryb AI jest wstrzymany i bot odpowiada z reguł, żeby rachunek nie rósł bez kontroli.</p>
+						<?php endif; ?>
+						<p class="description">Dzisiaj zużyto: <strong><?php echo (int) $zuzycie['wywolania']; ?> / <?php echo (int) $ust['ai_limit_dzienny']; ?></strong> wywołań. Po wyczerpaniu limitu bot do północy odpowiada z reguł. Limit jest miękki: równoległe zapytania gości mogą go minimalnie przekroczyć.<br>
 							Ten limit jest <strong>globalny dla całej strony</strong>. Osobno działa twardszy limit <strong><?php echo (int) CHATL_AI_LIMIT_IP_NA_DOBE; ?> wywołań AI na dobę z jednego adresu IP</strong> — żeby jeden gość nie wypalił budżetu wszystkich. Po jego przekroczeniu ten gość dostaje odpowiedzi z reguł, reszta strony działa normalnie.</p>
 					</td>
 				</tr>
 				<tr>
 					<th scope="row"><label for="chatl-ai-limit-tokenow">Dobowy limit tokenów (drugi stop-loss)</label></th>
 					<td>
-						<?php $zuzycie = chatl_ai_zuzycie_dnia(); ?>
 						<input type="number" id="chatl-ai-limit-tokenow" name="ai_limit_tokenow" min="0" max="100000000" step="1000"
 							value="<?php echo (int) $ust['ai_limit_tokenow']; ?>">
 						<p class="description">
-							Dzisiaj zużyto: <strong><?php echo esc_html( number_format_i18n( chatl_ai_tokeny_dzis() ) ); ?></strong>
+							<?php // Liczymy z $zuzycie odczytanego wyżej — jedno zapytanie na render panelu, nie dwa. ?>
+							Dzisiaj zużyto: <strong><?php echo esc_html( number_format_i18n( (int) $zuzycie['tokeny_wejscia'] + (int) $zuzycie['tokeny_wyjscia'] + (int) $zuzycie['tokeny_cache_zapis'] ) ); ?></strong>
 							<?php if ( (int) $ust['ai_limit_tokenow'] > 0 ) : ?>
 								/ <?php echo esc_html( number_format_i18n( (int) $ust['ai_limit_tokenow'] ) ); ?>
 							<?php endif; ?>
@@ -1057,14 +1061,56 @@ function chatl_assety_panelu( $hak ) {
 }
 add_action( 'admin_enqueue_scripts', 'chatl_assety_panelu' );
 
+/**
+ * Pole liczbowe z formularza: PUSTE albo nieczytelne NIE nadpisuje poprzedniej wartości.
+ *
+ * Pole `type="number"` wysyła PUSTĄ wartość, gdy przeglądarka nie umie sparsować
+ * treści — wystarczy „50 000" (spacja), „50.000" albo „50,000", czyli polski
+ * zapis liczby. `(int) ''` daje 0, a 0 w „dobowym limicie tokenów" znaczy
+ * „stop-loss WYŁĄCZONY", w „dziennym limicie wywołań" po `max( 1, … )` — 1.
+ * Właściciel widział „zapisano" i nie wiedział, że literówką zdjął bezpiecznik
+ * kosztowy (audyt A5, KR1/KR2). Teraz puste/nieczytelne pole zostawia POPRZEDNIĄ
+ * wartość i trafia na listę pominiętych, o której handler mówi wprost zamiast
+ * „zapisano". Jawne „0" jest liczbą i zapisuje się normalnie (świadome wyłączenie).
+ *
+ * @param string $nazwa      Nazwa pola w $_POST.
+ * @param int    $min        Dolna granica.
+ * @param int    $max        Górna granica.
+ * @param int    $poprzednia Wartość obowiązująca przed zapisem.
+ * @param string $etykieta   Nazwa pola dla właściciela (do komunikatu).
+ * @param array  $pominiete  Lista pominiętych pól (dopisywana).
+ * @return int
+ */
+function chatl_pole_liczbowe( $nazwa, $min, $max, $poprzednia, $etykieta, &$pominiete ) {
+	// phpcs:disable WordPress.Security.NonceVerification.Missing -- wołane z chatl_post_ustawienia_zapisz(), które sprawdza nonce i uprawnienia.
+	if ( ! isset( $_POST[ $nazwa ] ) ) {
+		return (int) $poprzednia;
+	}
+	// Spreparowane żądanie może przysłać TABLICĘ (`pole[]=1`). Rzutowanie jej na
+	// string kończy się ostrzeżeniem „Array to string conversion" w logu — wynik
+	// i tak byłby bezpieczny (pole pominięte), ale log ma zostać czysty.
+	if ( ! is_scalar( $_POST[ $nazwa ] ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sprawdzamy sam TYP, wartości tu nie używamy.
+		$pominiete[] = sprintf( '„%s” (nieczytelna wartość — zostaje %d)', $etykieta, (int) $poprzednia );
+		return (int) $poprzednia;
+	}
+	$surowe = trim( (string) wp_unslash( $_POST[ $nazwa ] ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- niżej is_numeric() + (int); nie-liczba nie jest zapisywana.
+	// phpcs:enable
+	if ( '' === $surowe || ! is_numeric( $surowe ) ) {
+		$pominiete[] = sprintf( '„%s” (było puste albo nieczytelne — zostaje %d)', $etykieta, (int) $poprzednia );
+		return (int) $poprzednia;
+	}
+	return max( $min, min( $max, (int) $surowe ) );
+}
+
 function chatl_post_ustawienia_zapisz() {
 	if ( ! current_user_can( 'manage_options' ) ) {
 		wp_die( 'Brak uprawnień.' );
 	}
 	check_admin_referer( 'chatl_ustawienia_zapisz' );
 
-	$stare = chatl_ustawienia();
-	$nowe  = array(
+	$stare     = chatl_ustawienia();
+	$pominiete = array();
+	$nowe      = array(
 		'wlaczony'         => empty( $_POST['wlaczony'] ) ? 0 : 1,
 		'powitanie'        => isset( $_POST['powitanie'] ) ? sanitize_textarea_field( wp_unslash( $_POST['powitanie'] ) ) : $stare['powitanie'],
 		'tekst_awaryjny'   => isset( $_POST['tekst_awaryjny'] ) ? sanitize_textarea_field( wp_unslash( $_POST['tekst_awaryjny'] ) ) : $stare['tekst_awaryjny'],
@@ -1072,7 +1118,7 @@ function chatl_post_ustawienia_zapisz() {
 		'powiadomienia'    => empty( $_POST['powiadomienia'] ) ? 0 : 1,
 		'usun_dane'        => empty( $_POST['usun_dane'] ) ? 0 : 1,
 		'ai_informacje'    => isset( $_POST['ai_informacje'] ) ? sanitize_textarea_field( wp_unslash( $_POST['ai_informacje'] ) ) : $stare['ai_informacje'],
-		'ai_limit_dzienny' => isset( $_POST['ai_limit_dzienny'] ) ? max( 1, min( 100000, (int) $_POST['ai_limit_dzienny'] ) ) : $stare['ai_limit_dzienny'],
+		'ai_limit_dzienny' => chatl_pole_liczbowe( 'ai_limit_dzienny', 1, 100000, $stare['ai_limit_dzienny'], 'Dzienny limit wywołań AI', $pominiete ),
 		'adres_polityki'   => isset( $_POST['adres_polityki'] ) ? esc_url_raw( wp_unslash( $_POST['adres_polityki'] ) ) : $stare['adres_polityki'],
 		// Wygląd: kolor z niepoprawną wartością NIE psuje widgetu — sanitizer
 		// zwraca pusty string, a chatl_wyglad_ustawienia() podstawia domyślny.
@@ -1082,7 +1128,7 @@ function chatl_post_ustawienia_zapisz() {
 			? chatl_sanitize_kolor( wp_unslash( $_POST['kolor_tekstu'] ) )
 			: 'auto',
 		'pozycja'          => isset( $_POST['pozycja'] ) && 'lewo' === sanitize_key( wp_unslash( $_POST['pozycja'] ) ) ? 'lewo' : 'prawo',
-		'ai_limit_tokenow' => isset( $_POST['ai_limit_tokenow'] ) ? max( 0, min( 100000000, (int) $_POST['ai_limit_tokenow'] ) ) : $stare['ai_limit_tokenow'],
+		'ai_limit_tokenow' => chatl_pole_liczbowe( 'ai_limit_tokenow', 0, 100000000, $stare['ai_limit_tokenow'], 'Dobowy limit tokenów', $pominiete ),
 		'ai_model'         => chatl_model_z_formularza( $stare['ai_model'] ),
 		'za_proxy'         => empty( $_POST['za_proxy'] ) ? 0 : 1,
 	);
@@ -1120,6 +1166,12 @@ function chatl_post_ustawienia_zapisz() {
 		 */
 		chatl_log_bledu_bazy( 'chatl_post_ustawienia_zapisz', 'klucz API dostawcy (zapis/kasowanie)' );
 		chatl_przekieruj_blad( 'chatl-ustawienia', 'Ustawienia zapisane, ale klucz API NIE — baza odrzuciła zapis. Obowiązuje POPRZEDNI klucz (także przy „Przetestuj klucz"). Sprawdź stan bazy i wpisz klucz jeszcze raz.' );
+	}
+
+	// Pominięte pole liczbowe = komunikat INNY niż „zapisano" (KR1/KR2): właściciel
+	// ma wiedzieć, że limit, który wpisał, NIE wszedł i obowiązuje poprzedni.
+	if ( $pominiete ) {
+		chatl_przekieruj_blad( 'chatl-ustawienia', 'Zapisano pozostałe ustawienia, ale NIE zmieniono pola: ' . implode( '; ', $pominiete ) . '. Wpisz samą liczbę, bez spacji i kropek (np. 50000), i zapisz ponownie.' );
 	}
 
 	wp_safe_redirect( admin_url( 'admin.php?page=chatl-ustawienia&chatl_ok=zapisano' ) );

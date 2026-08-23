@@ -250,6 +250,11 @@ i aktywnych wpisów bazy Q&A:
    z jednego adresu IP**, żeby jeden gość nie wypalił budżetu wszystkich.
    Wtyczka pokazuje **tokeny, nie złotówki** — aktualne stawki sprawdzisz
    u dostawcy modelu, bo cennik się zmienia, a wtyczka nie ma jak go odświeżyć.
+   W pola limitów wpisuj **samą liczbę** (np. `50000`, nie „50 000" ani „50.000") —
+   nieczytelną albo pustą wartość wtyczka pomija, zostawia poprzedni limit i mówi
+   o tym czerwonym komunikatem zamiast „zapisano". Gdy licznik wywołań jest
+   nieczytelny (błąd bazy danych), tryb AI jest wstrzymany i bot odpowiada
+   z reguł — zobaczysz to w Ustawieniach i w czerwonym pasku u góry panelu.
    Po wyczerpaniu któregokolwiek limitu, przy błędzie API albo braku klucza bot
    automatycznie wraca do trybu regułowego — czat nigdy nie przestaje działać.
 
