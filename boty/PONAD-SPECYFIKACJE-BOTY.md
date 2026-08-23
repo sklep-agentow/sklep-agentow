@@ -106,3 +106,17 @@ była w klepniętych szkicach (`boty/SZKICE-BOTOW.md`) albo wynika z ich zasad
   klasyfikują reguły a nie AI, bez czytania załączników.
 - Oba: automatyczny stemming polskich odmian = droga rozbudowy (recenzja
   PR #27: bez cichego poszerzania wyceny).
+
+## Propozycje po etapie napraw (23.08) — ŚWIADOMIE nierobione teraz, decyzja Dzidka po oddaniu
+Pochodzą z dziennika kupującego (`audyt/WCIELENIE-KUPUJACY.md`) i z krytyki planu napraw. Każda to
+ROZSZERZENIE zakresu albo sprawa środowiska, nie wada produktu — dlatego nie są w rejestrze znalezisk.
+- ChatBot: obsługa zdań nie-pytań w silniku (powitanie, podziękowanie) — zamówienie §FRONT każe
+  „nie znam odpowiedzi" bez poszerzania dopasowania; teraz tylko wpis powitalny w danych startowych.
+- ChatBot: `<noscript>` z drogą kontaktu dla gościa bez JavaScriptu — wystawia adres e-mail w HTML
+  (żniwiarki spamu); wymaga decyzji, jaki kontakt pokazać.
+- ChatBot: własne, polskie komunikaty walidacji formularza zamiast dymków HTML5 — dymki są w języku
+  PRZEGLĄDARKI gościa (stanowisko testowe było en-US, stąd „Please fill out this field").
+- Segregator: polityka „jeden komunikat naraz" w panelu (powitanie nie obok błędu) — UX, nie wada.
+- Segregator: minimalizacja danych wysyłanych do dostawcy AI (domena nadawcy zamiast pełnego adresu).
+- Segregator: AI na przebiegu skrzynki (dziś: same reguły) — decyzja L8 Dzidka: funkcja czy napis wprost.
+- ChatBot: ostrzeżenie o `DISABLE_WP_CRON` w panelu (Segregator je ma).
