@@ -179,7 +179,7 @@ więc **brakujący klucz nigdy nie jest błędem** — nowe pole dostaje wartoś
 | `powiadomienia` | `1` | Czy w ogóle wysyłać ten mail. |
 | `usun_dane` | `0` | Przełącznik ścieżki deinstalacji (rozdział **Cykl życia**). |
 | `ai_informacje` | `''` | Opis firmy wstrzykiwany do instrukcji systemowej modelu. |
-| `ai_limit_dzienny` | `100` | Globalny dobowy limit **wywołań** AI. Zapis ograniczany do zakresu 1–100000. |
+| `ai_limit_dzienny` | `100` | Globalny dobowy limit **wywołań** AI. Zapis ograniczany do zakresu 1–100000; jak przy limicie tokenów, **puste albo nieczytelne pole liczbowe NIE nadpisuje poprzedniej wartości** (`chatl_pole_liczbowe()`, audyt A5 KR1/KR2). |
 | `ai_limit_tokenow` | `200000` | Globalny dobowy limit **tokenów płatnych** — drugi stop-loss. `0` = wyłączony (jawne zero z formularza; **puste albo nieczytelne pole liczbowe NIE nadpisuje poprzedniej wartości** i panel mówi to zamiast „zapisano" — `chatl_pole_liczbowe()`, audyt A5 KR1/KR2). |
 | `kolor_glowny` | `#bfff38` | Bąbelek, dymki bota, przyciski, obwódka fokusu. Wartość spoza `#rrggbb` jest odrzucana i wraca domyślna. |
 | `kolor_naglowka` | `#08090b` | Pasek z tytułem okna czatu i paski formularza kontaktu. |
@@ -431,14 +431,25 @@ Wchodzi **przed** silnikiem regułowym i tylko wtedy, gdy `chatl_ai_dostepny()` 
 `chatl_limit_ai_ip_ok()` zwrócą prawdę:
 
 - jest klucz (ze stałej `CHATL_KLUCZ_API` albo z opcji — stała ma pierwszeństwo),
-- licznik dobowy **da się odczytać** — błąd zapytania do `chatl_ai_uzycie` (uszkodzona albo
-  usunięta tabela) to NIE to samo, co „brak wiersza na dziś": `chatl_ai_zuzycie_dnia()`
-  wraca wtedy z flagą `blad`, a `chatl_ai_dostepny()` traktuje to jak wyczerpany limit
-  (fail-closed: reguły, bez AI) i zostawia ślad w `chatl_blad_bazy`. Inaczej niż limiter
-  spamu na IP (niżej, „przepuść"), bo tu porażka kosztuje pieniądze, nie wygodę,
+- licznik dobowy **da się odczytać** — nieudany odczyt `chatl_ai_uzycie` (odrzucone
+  zapytanie: uszkodzona albo usunięta tabela; **albo brak połączenia z bazą**, gdy
+  `wpdb::query()` wychodzi jeszcze przed ustawieniem `last_error`) to NIE to samo, co
+  „brak wiersza na dziś": `chatl_ai_zuzycie_dnia()` wraca wtedy z flagą `blad`,
+  a `chatl_ai_dostepny()` traktuje to jak wyczerpany limit (**fail-closed**: reguły,
+  bez AI) i zostawia ślad w `chatl_blad_bazy`,
 - globalny licznik dobowy jest poniżej `ai_limit_dzienny`,
 - dobowy licznik tokenów płatnych jest poniżej `ai_limit_tokenow` (gdy ten > 0),
 - kubeł tego IP nie przekroczył `CHATL_AI_LIMIT_IP_NA_DOBE`.
+
+> **Dwa bezpieczniki kosztowe zachowują się przy awarii RÓŻNIE — i to jest świadome.**
+> Globalny stop-loss (`chatl_ai_dostepny()`) przy nieczytelnym liczniku **wstrzymuje**
+> tryb AI. Dobowy limit na IP (`chatl_limit_ai_ip_ok()` → `chatl_rate_limit( 'ai', … )`)
+> jest **też** limitem kosztowym, ale dzieli ścieżkę awaryjną z limiterem spamu:
+> gdy jego licznik padnie, **przepuszcza** (`chatl_rate_limit()` zwraca `true`).
+> Nie zostaje przez to bez ochrony — nad nim stoi globalny stop-loss, który przy tej
+> samej awarii jest zamknięty, więc do modelu i tak nic nie idzie. Zmiana tego
+> zachowania oznaczałaby, że awaria licznika limitów **odcina czat** (nonce i walidacje
+> wejścia bronią niezależnie), dlatego zostaje tak, jak jest.
 
 Wywołanie: `wp_remote_post` na adres z filtru, timeout `CHATL_AI_TIMEOUT`, **jedno** ponowienie
 i tylko przy błędzie połączenia, 5xx albo 429 (4xx nie jest ponawiane — to błąd żądania, nie awaria).

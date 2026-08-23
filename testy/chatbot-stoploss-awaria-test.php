@@ -127,6 +127,23 @@ csa( false === $dostepny, 'T-1: błąd odczytu licznika → tryb AI WSTRZYMANY (
 csa( 'chatl_ai_zuzycie_dnia' === csa_slad(), 'T-1: trwały ślad błędu bazy wskazuje odczyt licznika', csa_slad() );
 csa( ! empty( $z['blad'] ), 'T-1: wynik odczytu niesie znacznik błędu (nie udaje zmierzonego zera)', wp_json_encode( $z ) );
 
+echo "\n=== B2. AWARIA: brak POŁĄCZENIA z bazą (last_error milczy) ===\n";
+/*
+ * Uwaga recenzenta do #158: `wpdb::query()` przy `ready === false` wychodzi
+ * `return false` PRZED `flush()`, więc `last_error` nie jest ustawiany i zostaje
+ * w nim (pusty albo cudzy) komunikat z poprzedniego zapytania. Sam warunek na
+ * last_error przepuszczałby dokładnie ten przypadek — czyli martwą bazę.
+ * Odtwarzamy go tak, jak wygląda naprawdę: zgaszona flaga gotowości połączenia.
+ */
+$wpdb->flush();          // czysty last_error, żeby nie zdał egzaminu „na zapas"
+$ready_przed    = $wpdb->ready;
+$wpdb->ready    = false;
+$z              = chatl_ai_zuzycie_dnia();
+$dostepny       = chatl_ai_dostepny();
+$wpdb->ready    = $ready_przed;
+csa( ! empty( $z['blad'] ), 'brak połączenia rozpoznany jako błąd odczytu (nie „0 wywołań")', wp_json_encode( $z ) );
+csa( false === $dostepny, 'i tryb AI jest WSTRZYMANY także wtedy, gdy last_error milczy', var_export( $dostepny, true ) );
+
 echo "\n=== C. BEZ WADY po awarii: licznik wraca → decyzja wraca ===\n";
 $wpdb->delete( $tabela, array( 'dzien' => $dzis ), array( '%s' ) ); // phpcs:ignore
 csa( true === chatl_ai_dostepny(), 'po ustąpieniu awarii i zerowym liczniku AI znów dostępne' );

@@ -932,7 +932,8 @@ function chatl_strona_ustawienia() {
 						<input type="number" id="chatl-ai-limit-tokenow" name="ai_limit_tokenow" min="0" max="100000000" step="1000"
 							value="<?php echo (int) $ust['ai_limit_tokenow']; ?>">
 						<p class="description">
-							Dzisiaj zużyto: <strong><?php echo esc_html( number_format_i18n( chatl_ai_tokeny_dzis() ) ); ?></strong>
+							<?php // Liczymy z $zuzycie odczytanego wyżej — jedno zapytanie na render panelu, nie dwa. ?>
+							Dzisiaj zużyto: <strong><?php echo esc_html( number_format_i18n( (int) $zuzycie['tokeny_wejscia'] + (int) $zuzycie['tokeny_wyjscia'] + (int) $zuzycie['tokeny_cache_zapis'] ) ); ?></strong>
 							<?php if ( (int) $ust['ai_limit_tokenow'] > 0 ) : ?>
 								/ <?php echo esc_html( number_format_i18n( (int) $ust['ai_limit_tokenow'] ) ); ?>
 							<?php endif; ?>
