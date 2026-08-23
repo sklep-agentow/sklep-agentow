@@ -982,10 +982,17 @@ Naprawa ma trzy części, bo awaria miała trzy poziomy:
    `success`) dociąga świeże zabezpieczenie publicznym endpointem `chatl_nonce`
    i powtarza żądanie **dokładnie raz**. Druga porażka to już prawdziwa awaria
    i wtedy gość ma prawo zobaczyć komunikat.
-3. **Właściciel to widzi.** Każde odrzucenie zwiększa licznik w opcji
-   `chatl_zdarzenia` (rodzaj `nonce`); panel pokazuje czerwone ostrzeżenie z liczbą, przyczyną
-   i tym, co zrobić. Ostrzeżenie cichnie po `CHATL_NONCE_OKNO_DNI` dniach bez
-   nowych odrzuceń albo po kliknięciu „ukryj".
+3. **Właściciel to widzi.** Odrzucenie dopisuje wiersz do **tabeli**
+   `chatl_zdarzenia` (rodzaj `nonce`); panel pokazuje czerwone ostrzeżenie z liczbą,
+   przyczyną i tym, co zrobić. Ostrzeżenie cichnie po `CHATL_NONCE_OKNO_DNI` dniach
+   bez nowych odrzuceń albo po kliknięciu „ukryj".
+   ⚠️ **Ta liczba jest DOLNYM ograniczeniem**, nie liczbą odrzuceń: zapis jest ucięty
+   kubłem `nonce-odrzucony` do `CHATL_LIMIT_NA_MIN` na minutę z adresu, żeby ścieżka
+   odrzucenia nie była darmową drogą do bazy. Ma to znaczenie **za proxy**, gdzie
+   wszyscy goście dzielą jeden adres: przy masowej awarii cache liczba rośnie
+   najwyżej o 10 na minutę, choć odrzuceń jest wielokrotnie więcej. Sama
+   samonaprawa widgetu limitowi **nie podlega** — odpowiedź z `kod = 'nonce'`
+   idzie zawsze (patrz ramka o kubłach w rozdziale o limitach).
 
 **Dlaczego endpoint `chatl_nonce` nie wymaga nonce'a:** jego jedynym zadaniem
 jest wydanie zabezpieczenia komuś, kto ma nieważne. Nie osłabia to niczego —

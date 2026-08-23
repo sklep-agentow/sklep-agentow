@@ -195,7 +195,10 @@ naglowek "DOWOD D4 — strona z CACHE: nonce starszy niz zycie (luka L1)"
 wyczysc_log
 # Od schematu 8 odrzucone nonce'y sa wierszami w chatl_zdarzenia (rodzaj 'nonce'),
 # nie licznikiem w opcji chatl_blad_nonce — czyscimy wiec tabele, nie opcje.
-wp eval 'global $wpdb; $wpdb->query( "DELETE FROM {$wpdb->prefix}chatl_zdarzenia WHERE rodzaj = \"nonce\"" );' > /dev/null 2>&1
+# Razem z nia KUBEL limitu 'nonce-odrzucony': zapis jest uciety do CHATL_LIMIT_NA_MIN
+# na minute z adresu, wiec bez tego powtorzony dowod moglby nie zapisac ani jednego
+# zdarzenia i zameldowac wade, ktorej nie ma.
+wp eval 'global $wpdb; $wpdb->query( "DELETE FROM {$wpdb->prefix}chatl_zdarzenia WHERE rodzaj = \"nonce\"" ); $wpdb->query( "DELETE FROM {$wpdb->prefix}chatl_rate_limit WHERE klucz LIKE \"nonce-odrzucony|%\"" );' > /dev/null 2>&1
 
 # a) przypadek BEZ wady: swiezy nonce ma dzialac za pierwszym razem
 NONCE_OK="$(wp eval 'echo wp_create_nonce( "chatl_front" );' 2>&1 | tail -1)"

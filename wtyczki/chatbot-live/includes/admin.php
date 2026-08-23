@@ -148,20 +148,28 @@ function chatl_notice_pulapki() {
 	if ( empty( $stan['ile'] ) ) {
 		return;
 	}
+	global $wpdb;
 	/*
-	 * Liczby są rozbite po ŚCIEŻCE, bo to jedyny uczciwy sposób powiedzenia,
-	 * ilu złapanych właściciel znajdzie na liście zgłoszeń. Pułapka na ścieżce
-	 * PYTANIA nie tworzy zgłoszenia (gość nie zostawił kontaktu) — wcześniej
-	 * pasek obiecywał, że wszystkie N są „pod filtrem podejrzane", a było ich
-	 * tam mniej i właściciel szukał wierszy, których nie ma (DK-1).
+	 * ⛔ DWIE RÓŻNE LICZBY, z dwóch różnych źródeł — i to jest sedno DK-1.
+	 *
+	 * „Ile razy zadziałała pułapka" liczymy ze ZDARZEŃ (chatl_zdarzenia), bo to
+	 * zapis zdarzenia, nie stanu. Ale zdanie „zobaczysz je pod filtrem
+	 * podejrzane" obiecuje WIERSZE — więc liczbę do tego zdania bierzemy
+	 * z tabeli zgłoszeń, jednym `COUNT(*)`. Inaczej licznik rozjeżdża się
+	 * z listą przy pierwszej rzeczy, którą właściciel zrobi po przeczytaniu
+	 * paska: skasuje spam z listy (`chatl_post_zgloszenie_usun()`), albo zrobi
+	 * to za niego kasownik RODO — żadne z nich nie tyka zdarzeń. Rozjazd idzie
+	 * też w drugą stronę: zdarzenia kasuje retencja po CHATL_RETENCJA_DNI,
+	 * a zgłoszenia nie mają terminu ważności.
 	 */
-	$ze_zgloszen = (int) ( $stan['sciezki']['zgloszenie'] ?? 0 );
-	$z_pytan     = (int) ( $stan['sciezki']['pytanie'] ?? 0 );
-	echo '<div class="notice notice-info"><p><strong>Pułapka na boty zadziałała ' . esc_html( number_format_i18n( (int) $stan['ile'] ) ) . ' raz(y).</strong> '
+	$podejrzanych = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}chatl_zgloszenia WHERE podejrzane = 1" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	$z_pytan      = (int) ( $stan['sciezki']['pytanie'] ?? 0 );
+	echo '<div class="notice notice-info"><p><strong>Pułapka na boty zadziałała ' . esc_html( number_format_i18n( (int) $stan['ile'] ) ) . ' raz(y)</strong> '
+		. '(licznik z ostatnich ' . (int) CHATL_RETENCJA_DNI . ' dni). '
 		. 'Ostatnio: ' . esc_html( $stan['ostatnia'] ) . ' (' . esc_html( $stan['szczegol'] ) . '). '
-		. 'Z tego <strong>' . esc_html( number_format_i18n( $ze_zgloszen ) ) . '</strong> przy formularzu kontaktu — te zgłoszenia <strong>są zapisane</strong> '
-		. 'i zobaczysz je na liście zgłoszeń pod filtrem <em>podejrzane</em> (nie wysyłamy o nich powiadomień mailem). '
-		. 'Pozostałe <strong>' . esc_html( number_format_i18n( $z_pytan ) ) . '</strong> to pytania do bota — tam nie ma czego zapisać, bo gość nie zostawił kontaktu.</p></div>';
+		. 'Na liście zgłoszeń pod filtrem <em>podejrzane</em> czeka teraz <strong>' . esc_html( number_format_i18n( $podejrzanych ) ) . '</strong> '
+		. 'zgłoszeń (nie wysyłamy o nich powiadomień mailem); skasowane już się tu nie liczą. '
+		. 'Z zadziałań pułapki <strong>' . esc_html( number_format_i18n( $z_pytan ) ) . '</strong> przypada na pytania do bota — tam nie ma czego zapisać, bo gość nie zostawił kontaktu.</p></div>';
 }
 
 function chatl_notice_bledu_maila() {
@@ -314,11 +322,14 @@ function chatl_notice_odrzuconych_nonce() {
 	}
 	$zamknij = wp_nonce_url( admin_url( 'admin-post.php?action=chatl_nonce_zamknij' ), 'chatl_nonce_zamknij' );
 	echo '<div class="notice notice-error"><p><strong>Gościom nie działa czat — odrzucone zabezpieczenie formularza.</strong> '
-		. 'Odrzuconych żądań: <code>' . esc_html( number_format_i18n( (int) $blad['ile'] ) ) . '</code>, ostatnie: <code>'
+		. 'Odrzuconych żądań (co najmniej): <code>' . esc_html( number_format_i18n( (int) $blad['ile'] ) ) . '</code>, ostatnie: <code>'
 		. esc_html( $blad['ostatnia'] ) . '</code>.<br>'
 		. 'Najczęstsza przyczyna: <strong>wtyczka albo usługa cache</strong> (LiteSpeed, WP Rocket, W3TC, Cloudflare) podaje gościom '
 		. 'stronę starszą niż ważność zabezpieczenia. Widget próbuje wtedy odświeżyć je sam i powtórzyć pytanie, więc rozmowa zwykle '
 		. 'dochodzi do skutku — ale jeśli ta liczba rośnie, <strong>wyłącz cache dla strony z czatem</strong> albo skróć czas życia cache.<br>'
+		. 'Liczba jest <strong>dolnym ograniczeniem</strong>: zapisujemy najwyżej ' . (int) CHATL_LIMIT_NA_MIN . ' odrzuceń na minutę z jednego adresu, '
+		. 'żeby ta ścieżka nie stała się darmową drogą do bazy. Jeśli witryna stoi za proxy (jeden adres dla wszystkich gości), '
+		. 'prawdziwych odrzuceń może być wielokrotnie więcej.<br>'
 		. '<a href="' . esc_url( $zamknij ) . '">Rozumiem, ukryj to ostrzeżenie</a> (wróci, gdy pojawią się nowe odrzucenia).</p></div>';
 }
 

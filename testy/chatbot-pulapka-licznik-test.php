@@ -171,7 +171,13 @@ cpl( 2 === (int) ( $stan['sciezki']['pytanie'] ?? 0 ) && 5 === (int) $stan['ile'
 ob_start();
 chatl_notice_pulapki();
 $pasek = (string) ob_get_clean();
-cpl( false !== strpos( $pasek, '<strong>3</strong> przy formularzu kontaktu' ) && false !== strpos( $pasek, '<strong>2</strong> to pytania do bota' ), 'DK-1: pasek w panelu mówi, ILU złapanych właściciel ZNAJDZIE na liście', wp_strip_all_tags( $pasek ) );
+$wierszy_teraz = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$tz} WHERE podejrzane = 1" ); // phpcs:ignore
+cpl(
+	false !== strpos( $pasek, '<strong>' . number_format_i18n( $wierszy_teraz ) . '</strong> ' )
+		&& false !== strpos( $pasek, '<strong>2</strong> przypada na pytania do bota' ),
+	'DK-1: pasek mówi, ile WIERSZY czeka pod filtrem (liczone z tabeli zgłoszeń) i ile zadziałań przypadło na pytania',
+	wp_strip_all_tags( $pasek )
+);
 
 echo "\n=== D. LC-F2 / P2-Z3: ścieżka pułapki i złego nonce'a mają limit ===\n";
 cpl_sprzataj();
@@ -199,6 +205,32 @@ $zdarzen = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$t} WHERE rodzaj = 'nonc
  */
 cpl( $zdarzen <= CHATL_LIMIT_NA_MIN, 'P2-Z3: powyżej progu zły nonce przestaje ZAPISYWAĆ (wcześniej 30/30 = 30 zapisów)', 'zdarzeń: ' . $zdarzen . ' z 14 prób' );
 cpl( $zdarzen > 0, 'ale poniżej progu zapisuje — właściciel dowiaduje się o problemie z cache', 'zdarzeń: ' . $zdarzen );
+
+echo "\n=== C2. DK-1: pasek liczy WIERSZE, a nie zdarzenia (właściciel kasuje spam) ===\n";
+/*
+ * Uwaga recenzenta do #162: zdanie „zobaczysz je pod filtrem podejrzane" obiecuje
+ * WIERSZE, a liczone były ZDARZENIA. Wiersze znikają dwiema drogami, których
+ * zdarzenia nie widzą: właściciel kasuje spam z listy (dokładnie to, co pasek mu
+ * podpowiada) i kasownik RODO. Zdarzenia znikają trzecią (retencja 90 dni).
+ */
+cpl_sprzataj();
+$wpdb->insert( $ts, array( 'sesja' => $cpl_sesja_stara, 'stan' => 'bot', 'klucz_hash' => wp_hash( 'cpl' ), 'utworzono' => gmdate( 'Y-m-d H:i:s', (int) current_time( 'timestamp' ) - 600 ), 'aktywnosc' => current_time( 'mysql' ) ) ); // phpcs:ignore
+for ( $i = 0; $i < 2; $i++ ) {
+	cpl_zadanie( 'chatl_ajax_zgloszenie', cpl_post_zgloszenie( 'pul-licznik-test-c2-' . $i . '@example.test', true, $cpl_sesja_stara ) );
+}
+$przed = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$tz} WHERE podejrzane = 1" ); // phpcs:ignore
+ob_start();
+chatl_notice_pulapki();
+$pasek = (string) ob_get_clean();
+cpl( false !== strpos( $pasek, '<strong>' . number_format_i18n( $przed ) . '</strong> ' ), 'pasek podaje liczbę wierszy „podejrzanych" z bazy', 'wierszy: ' . $przed );
+// Właściciel kasuje złapane zgłoszenie z listy — zdarzenie zostaje, wiersz znika.
+$id = (int) $wpdb->get_var( "SELECT id FROM {$tz} WHERE podejrzane = 1 ORDER BY id DESC LIMIT 1" ); // phpcs:ignore
+$wpdb->delete( $tz, array( 'id' => $id ), array( '%d' ) ); // phpcs:ignore
+ob_start();
+chatl_notice_pulapki();
+$pasek_po = (string) ob_get_clean();
+cpl( false !== strpos( $pasek_po, '<strong>' . number_format_i18n( $przed - 1 ) . '</strong> ' ), 'po skasowaniu zgłoszenia pasek obiecuje o JEDEN wiersz mniej', 'oczekiwano ' . ( $przed - 1 ) );
+cpl( false !== strpos( $pasek_po, 'zadziałała' ), 'a liczba ZADZIAŁAŃ pułapki zostaje (to inne zdarzenie niż istnienie wiersza)' );
 
 echo "\n=== D2. Powyżej progu widget MUSI dalej móc się samonaprawić (luka L1) ===\n";
 /*

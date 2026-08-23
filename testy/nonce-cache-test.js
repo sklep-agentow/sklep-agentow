@@ -39,8 +39,13 @@ function licznikOdrzucen() {
   const n = parseInt(s, 10);
   return Number.isFinite(n) ? n : 0;
 }
+/* Kasujemy zdarzenia I KUBEŁ limitu `nonce-odrzucony`. Od C3 zapis odrzucenia
+   jest ucięty do CHATL_LIMIT_NA_MIN na minutę z adresu, a `nonce-proba-kontrolna.sh`
+   odpala ten test SZEŚĆ razy pod rząd z tego samego adresu — bez czyszczenia kubła
+   szósty przebieg nie dopisałby wiersza i strażnik zameldowałby wadę, której nie ma.
+   Ten sam powód, dla którego czyści swoje kubły testy/pulapka-test.php. */
 function skasujOdrzucenia() {
-  wp(['eval', 'global $wpdb; $wpdb->query( "DELETE FROM {$wpdb->prefix}chatl_zdarzenia WHERE rodzaj = \'nonce\'" );']);
+  wp(['eval', 'global $wpdb; $wpdb->query( "DELETE FROM {$wpdb->prefix}chatl_zdarzenia WHERE rodzaj = \'nonce\'" ); $wpdb->query( "DELETE FROM {$wpdb->prefix}chatl_rate_limit WHERE klucz LIKE \'nonce-odrzucony|%\'" );']);
 }
 
 (async () => {
