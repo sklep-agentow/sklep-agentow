@@ -266,7 +266,7 @@ function chatl_rodo_eksporter( $email, $strona = 1 ) {
 				'data'        => array(
 					array(
 						'name'  => 'Kto',
-						'value' => 'gosc' === $r['rola'] ? 'Gość' : 'Bot',
+						'value' => chatl_nazwa_roli( $r['rola'] ),
 					),
 					array(
 						'name'  => 'Treść',

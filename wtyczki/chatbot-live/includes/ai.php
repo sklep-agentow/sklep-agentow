@@ -544,8 +544,16 @@ function chatl_ai_test_klucza() {
 		);
 	}
 
-	$url   = apply_filters( 'chatl_ai_url', 'https://api.anthropic.com/v1/messages' );
-	$model = apply_filters( 'chatl_ai_model', CHATL_AI_MODEL );
+	$url = apply_filters( 'chatl_ai_url', 'https://api.anthropic.com/v1/messages' );
+	/*
+	 * TEN SAM model, którym pyta bot — przez chatl_ai_model(), nie przez samą
+	 * stałą. Do audytu (P2-Z1) diagnostyka brała CHATL_AI_MODEL, więc pomijała
+	 * pole „własny model" z ustawień: właściciel wpisywał nazwę z literówką,
+	 * bot po cichu zjeżdżał do reguł, a „Przetestuj klucz" mówił „działa",
+	 * bo pytał modelu domyślnego. Przycisk ma mierzyć TĘ konfigurację, która
+	 * obsługuje gości — inaczej jest maszynką do fałszywych dowodów.
+	 */
+	$model = chatl_ai_model();
 	$odp   = wp_remote_post(
 		$url,
 		array(
@@ -572,6 +580,17 @@ function chatl_ai_test_klucza() {
 
 	$kod = is_wp_error( $odp ) ? 0 : (int) wp_remote_retrieve_response_code( $odp );
 	if ( ! is_wp_error( $odp ) && 200 === $kod ) {
+		/*
+		 * Udany test GASI alarm — ale dopiero teraz jest to uczciwe. Do naprawy
+		 * P2-Z1 przycisk pytał modelem ze stałej, więc zgaszenie paska znaczyło
+		 * „zadziałało coś, czego bot nie używa": właściciel z literówką w polu
+		 * „własny model" tracił jedyny sygnał o martwym trybie AI. Teraz test
+		 * idzie DOKŁADNIE tą samą konfiguracją co odpowiedź dla gościa (klucz +
+		 * chatl_ai_model()), więc HTTP 200 znaczy, że ta konfiguracja żyje, a
+		 * stary wpis dotyczy stanu sprzed poprawki. Kryterium wprost z linii
+		 * bazowej testów: pasek znika po teście TYM SAMYM modelem co bot,
+		 * nie po teście innym modelem.
+		 */
 		chatl_odnotuj_sukces_ai();
 		return array(
 			'ok'        => true,

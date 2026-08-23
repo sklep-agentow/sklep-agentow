@@ -137,7 +137,7 @@ function chatl_post_eksport_rozmow() {
 				array(
 					chatl_csv_komorka( $w->sesja ),
 					chatl_csv_komorka( $w->utworzono ),
-					'gosc' === $w->rola ? 'gość' : 'bot',
+					chatl_nazwa_roli( $w->rola ),
 					chatl_csv_komorka( $w->silnik ),
 					chatl_csv_komorka( $w->tresc ),
 				),

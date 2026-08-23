@@ -418,8 +418,13 @@ historię i ustawienia.
 
 - **Tryb regułowy:** treść rozmów NIE opuszcza Twojego WordPressa — dopasowanie
   działa lokalnie, dane (rozmowy, zgłoszenia z mailami gości) leżą w Twojej bazie.
-- **Tryb AI:** treść pytania gościa wraz z Twoim opisem firmy i bazą Q&A jest
-  wysyłana do API dostawcy modelu (Anthropic) w celu wygenerowania odpowiedzi.
+- **Tryb AI:** do API dostawcy modelu (Anthropic) wychodzą **cztery** rzeczy:
+  treść pytania gościa, Twój opis firmy, Twoja baza Q&A oraz **do 6 wcześniejszych
+  wymian tej samej rozmowy** (pytania gościa i odpowiedzi bota). Ta czwarta pozycja
+  jest po to, żeby bot rozumiał dopytanie („a gdzie zaparkować?"), ale znaczy też,
+  że **wszystko, co gość napisał wcześniej w tej rozmowie** — imię, nazwisko, numer
+  telefonu — wychodzi razem z kolejnym pytaniem. Napisz o tym w swojej polityce
+  prywatności; poza tą listą nic z rozmowy nie opuszcza Twojego WordPressa.
 - W obu trybach zbierasz maile gości (zgłoszenia) i przechowujesz historię
   rozmów 90 dni — **dopisz to do polityki prywatności swojej strony** wraz
   z informacją o dostawcy AI, jeśli włączasz tryb AI.

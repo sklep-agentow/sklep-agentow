@@ -736,7 +736,8 @@ function chatl_import_ekran_formularza() {
 	<form method="post" enctype="multipart/form-data" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 		<input type="hidden" name="action" value="chatl_qa_import_podglad">
 		<?php wp_nonce_field( 'chatl_qa_import_podglad' ); ?>
-		<input type="file" name="plik" accept=".csv,text/csv" required>
+		<label for="chatl-plik-csv">Plik CSV z pytaniami i odpowiedziami</label>
+		<input type="file" id="chatl-plik-csv" name="plik" accept=".csv,text/csv" required>
 		<?php submit_button( 'Wczytaj i pokaż podgląd', 'secondary', 'submit', false ); ?>
 		<a class="button" href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=chatl_eksport_qa' ), 'chatl_eksport_qa' ) ); ?>">Pobierz CSV (cała baza Q&amp;A)</a>
 	</form>
