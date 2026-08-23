@@ -179,7 +179,7 @@ function chatl_deaktywacja() {
 }
 
 /**
- * Seed: 11 par Q&A typowej polskiej firmy usługowej (10 tematów + powitanie).
+ * Seed: 10 par Q&A typowej polskiej firmy usługowej.
  * Wchodzi tylko do PUSTEJ bazy — nie nadpisuje pracy właściciela przy reaktywacji.
  */
 function chatl_seed_demo() {
@@ -252,20 +252,19 @@ function chatl_seed_demo() {
 			'umówi, umowi, wizyt, spotka, konsultac, rezerwac, zapisa',
 			'Wizytę umówisz telefonicznie (600 000 000) albo zostaw tutaj maila z dopiskiem „konsultacja" — wrócimy z propozycją terminu w 1 dzień roboczy.',
 		),
-		/*
-		 * POWITANIE. Wcielenie kupującego (WK-8): pierwsze, co pisze człowiek do
-		 * czatu, to „dzień dobry" — i dostawał „nie znam odpowiedzi", zanim zdążył
-		 * o cokolwiek zapytać. Silnika NIE poszerzamy (zamówienie §FRONT zakazuje
-		 * luźniejszego dopasowania i każe uczciwe „nie znam odpowiedzi"); to jest
-		 * brakujący WPIS w danych, nie brakująca funkcja. Warianty bez ogonków,
-		 * bo tak ludzie piszą w czacie.
-		 */
-		array(
-			'Dzień dobry / cześć — jak zacząć?',
-			'dzień dobry, dzien dobry, dobry wieczor, dobry wieczór, witam, witaj, czesc, cześć, hej, halo, siema, hello',
-			'Dzień dobry! Zapytaj o cennik, godziny otwarcia, ofertę, dojazd albo termin realizacji — odpowiem od ręki. Jeśli czegoś nie będę wiedzieć, zostawisz wiadomość i odezwiemy się osobiście.',
-		),
 	);
+
+	/*
+	 * ⛔ CELOWO BEZ WPISU POWITALNEGO. Wcielenie kupującego (WK-8) pokazało, że
+	 * „dzień dobry" kończy się tekstem awaryjnym — ale wpis z wariantami
+	 * „dzień dobry"/„dobry wieczór" w danych startowych PRZEJMUJE pytania
+	 * złożone: przy remisie trafień wygrywa dłuższy wariant, więc „Dzień dobry,
+	 * ile kosztuje wizyta?" dostawało powitanie zamiast cennika (zmierzone).
+	 * Silnika nie zmieniamy — zamówienie §FRONT zakazuje
+	 * luźniejszego dopasowania — więc wpis powitalny zostaje DECYZJĄ właściciela:
+	 * gotowiec do wklejenia i ostrzeżenie o tym skutku ubocznym są w instrukcji,
+	 * w rozdziale o konfiguracji.
+	 */
 
 	$teraz = current_time( 'mysql' );
 	foreach ( $seed as $para ) {

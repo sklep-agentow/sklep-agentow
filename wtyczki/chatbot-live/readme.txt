@@ -24,7 +24,7 @@ zmyślonej odpowiedzi zamiast przyznania się do niewiedzy.
 
 * Widget czatu na stronie (bąbelek + okno) ze stałym przyciskiem
   „zostaw wiadomość" — gość zawsze ma ścieżkę do człowieka.
-* Bazę 11 gotowych par pytanie-odpowiedź typowej polskiej firmy usługowej (w tym powitanie) —
+* Bazę 10 gotowych par pytanie-odpowiedź typowej polskiej firmy usługowej —
   bot odpowiada od pierwszej minuty, a Ty podmieniasz treści na swoje.
 * Panel: baza Q&A, zgłoszenia z czatu, historia rozmów, **rozmowy na żywo**,
   ustawienia.

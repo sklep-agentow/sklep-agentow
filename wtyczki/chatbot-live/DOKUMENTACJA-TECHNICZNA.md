@@ -82,7 +82,7 @@ Kolacja z `$wpdb->get_charset_collate()`, czyli taka jak reszta tabel WordPressa
 ### 3.1. `{prefix}chatl_qa` — baza pytań i odpowiedzi
 
 Serce trybu regułowego. Właściciel wypełnia ją w panelu; przy pierwszej aktywacji dostaje
-11 gotowych par demo (10 tematów firmy + powitanie).
+10 gotowych par demo.
 
 | Kolumna | Typ | Po co jest |
 |---|---|---|
@@ -259,7 +259,7 @@ Po kolei, dokładnie to i nic więcej:
 1. `chatl_utworz_tabele()` — pięć `dbDelta()`. Operacja jest **idempotentna**: przy reaktywacji
    nie kasuje danych, tylko dociąga brakujące kolumny i indeksy.
 2. `update_option( 'chatl_wersja_schematu', CHATL_WERSJA_SCHEMATU )`.
-3. `chatl_seed_demo()` — 11 par Q&A typowej polskiej firmy usługowej (10 tematów + powitanie: „dzień dobry" to pierwsze, co pisze człowiek, a silnik z założenia nie zgaduje). **Wchodzi wyłącznie do
+3. `chatl_seed_demo()` — 10 par Q&A typowej polskiej firmy usługowej. **Bez wpisu powitalnego**: wpis z wariantami „dzień dobry"/„dobry wieczór" przejmuje pytania złożone („Dzień dobry, ile kosztuje wizyta?" → powitanie zamiast cennika), bo przy remisie trafień wygrywa dłuższy wariant. Gotowiec do wklejenia i ostrzeżenie o tym skutku są w instrukcji właściciela (rozdział o konfiguracji) — to jego decyzja, nie nasza domyślna. **Wchodzi wyłącznie do
    PUSTEJ tabeli** (`SELECT COUNT(*)` i wyjście, gdy > 0), więc reaktywacja nie nadpisuje
    pracy właściciela.
 4. Harmonogram: jeśli zdarzenie `chatl_czyszczenie_historii` nie jest jeszcze zaplanowane —

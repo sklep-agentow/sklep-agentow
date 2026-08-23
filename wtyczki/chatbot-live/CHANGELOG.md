@@ -40,9 +40,12 @@ migracja odpala się sama przy pierwszym wejściu do panelu po aktualizacji
   20 sekund). Ten sam błąd zamykał się na bąbelku (`zatrzymajOdpytywanie is not defined`).
 - **Bąbelek czatu mówi czytnikom ekranu, czy czat jest otwarty** (`aria-expanded`);
   etykieta „Otwórz czat" zostaje bez zmian.
-- **Baza startowa ma wpis powitalny.** „Dzień dobry" to pierwsze, co pisze człowiek —
-  a bot z założenia nie zgaduje i odpowiadał „nie znam odpowiedzi", zanim gość zdążył
-  o cokolwiek zapytać. Silnik dopasowania bez zmian; to był brakujący wpis w danych.
+- **Instrukcja ma gotowy wpis powitalny do wklejenia.** „Dzień dobry" to pierwsze, co
+  pisze człowiek — a bot z założenia nie zgaduje i odpowiada „nie znam odpowiedzi".
+  Wpisu **nie dokładamy do bazy startowej**: z wariantami „dzień dobry"/„dobry wieczór"
+  przejmowałby pytania złożone („Dzień dobry, ile kosztuje wizyta?" → powitanie zamiast
+  cennika). Instrukcja podaje gotową treść, ostrzega o tym skutku i mówi, jak go uniknąć —
+  decyzja należy do właściciela. Silnik dopasowania bez zmian.
 - **„Zapisano" dopiero po zmierzonym zapisie** (audyt A2, F1–F3). Przy odrzuconym
   przez bazę zapisie panel ustawień pokazuje komunikat błędu i obowiązują poprzednie
   ustawienia (m.in. dzienny limit wywołań AI) — wcześniej świecił „Ustawienia zapisane".

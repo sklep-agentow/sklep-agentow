@@ -32,7 +32,7 @@ W menu bocznym pojawia się pozycja **ChatBot LIVE**.
 
 1. **Ustawienia** → podmień tekst powitania i tekst awaryjny na własne,
    wpisz mail do powiadomień o zgłoszeniach (domyślnie mail administratora).
-2. **Baza Q&A** → przejrzyj 11 przykładowych wpisów i podmień treści na
+2. **Baza Q&A** → przejrzyj 10 przykładowych wpisów i podmień treści na
    dane swojej firmy (telefony, adres, ceny). Każdy wpis to:
    - *pytanie wzorcowe* — dla Ciebie, żeby wiedzieć, czego dotyczy wpis,
    - *słowa kluczowe z wariantami* — po nich bot dopasowuje pytanie gościa;
@@ -44,13 +44,25 @@ W menu bocznym pojawia się pozycja **ChatBot LIVE**.
    odpowiedzieć, i jedno, na które nie ma — powinien uczciwie zaproponować
    zostawienie maila.
 
-> **Zostaw wpis powitalny.** Pierwsze, co pisze człowiek do czatu, to zwykle
-> „dzień dobry" — a bot z założenia **nie zgaduje** i na nieznane pytanie
-> odpowiada „nie znam odpowiedzi". W bazie jest gotowy wpis *„Dzień dobry /
-> cześć — jak zacząć?"* z wariantami powitań; podmień w nim treść odpowiedzi na
-> własną (najlepiej wymień tematy, o które warto zapytać), ale **nie kasuj go** —
-> bez niego rozmowa zaczyna się od odmowy. Ta sama zasada dotyczy podziękowań
-> („dziękuję", „ok") — jeśli chcesz na nie odpowiadać, dodaj im własny wpis.
+> **Warto dodać wpis powitalny — ale to Twoja decyzja, i warto znać jej cenę.**
+> Pierwsze, co pisze człowiek do czatu, to zwykle „dzień dobry" — a bot z założenia
+> **nie zgaduje** i na nieznane pytanie odpowiada „nie znam odpowiedzi". Możesz to
+> zmienić, dodając w **Bazie Q&A** własny wpis (przycisk *Dodaj wpis*):
+>
+> - **pytanie wzorcowe:** `Dzień dobry / cześć — jak zacząć?`
+> - **słowa kluczowe:** `dzień dobry, dzien dobry, dobry wieczor, dobry wieczór, witam, witaj, czesc, cześć, hej, halo, siema, hello`
+> - **odpowiedź:** `Dzień dobry! Zapytaj o cennik, godziny otwarcia, ofertę, dojazd albo termin realizacji — odpowiem od ręki. Jeśli czegoś nie będę wiedzieć, zostawisz wiadomość i odezwiemy się osobiście.`
+>
+> ⚠️ **Cena tego wpisu:** przy pytaniu, które łączy powitanie z treścią
+> („**Dzień dobry, ile kosztuje wizyta?**"), bot może odpowiedzieć **powitaniem
+> zamiast cennika** — dopasowanie liczy trafione warianty, a przy remisie wygrywa
+> dłuższy, czyli „dzień dobry". Dlatego tego wpisu **nie ma** w bazie startowej.
+> Jeśli chcesz go mieć, a zależy Ci na pytaniach złożonych, zostaw w słowach
+> kluczowych **tylko krótkie** powitania (`witam, witaj, czesc, cześć, hej, halo,
+> siema, hello`) — wtedy „dzień dobry" samo w sobie dalej trafi w tekst awaryjny,
+> ale zagajenia z treścią pójdą do właściwej odpowiedzi. Ta sama zasada dotyczy
+> podziękowań („dziękuję", „ok") — jeśli chcesz na nie odpowiadać, dodaj im
+> własny wpis i sprawdź w **Teście bota**, czy nie przejmuje pytań.
 
 ### Test bota bez wychodzenia na stronę
 
