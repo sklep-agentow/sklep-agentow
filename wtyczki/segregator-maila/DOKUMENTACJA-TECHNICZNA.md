@@ -70,9 +70,9 @@ leży w pliku `LICENSE` w katalogu wtyczki i wchodzi do paczki produktowej.
 | `includes/konfiguracja.php` | 360 | eksport i import własnej konfiguracji (kategorie + reguły) w JSON-ie |
 | `includes/filtry.php` | 588 | eksport reguł do filtrów Gmaila (XML) i reguł Outlooka |
 | `includes/class-segm-imap.php` | 1073 | **klient IMAP4rev1 w czystym PHP** — gniazdo, TLS, protokół |
-| `includes/skrzynka.php` | 504 | konfiguracja skrzynki, hasło, diagnostyka, „Sprawdź połączenie", rozbiór nagłówków i treści |
+| `includes/skrzynka.php` | 528 | konfiguracja skrzynki (co jest, czego brakuje), hasło, diagnostyka, „Sprawdź połączenie", rozbiór nagłówków i treści |
 | `includes/skrzynka-przebieg.php` | 741 | przebieg na żywej skrzynce, historia, cofanie, harmonogramy WP-Cron |
-| `includes/admin-skrzynka.php` | 770 | panel zakładki *Skrzynka (IMAP)* i obsługa jej formularzy |
+| `includes/admin-skrzynka.php` | 756 | panel zakładki *Skrzynka (IMAP)* i obsługa jej formularzy |
 | `includes/admin-powitanie.php` | 143 | ekran powitalny pokazywany raz po aktywacji |
 | `includes/admin-probka.php` | 418 | praca na POJEDYNCZYM mailu i licznik trafień reguły |
 

@@ -50,7 +50,7 @@ function wp(args) {
   if (!user || !pass) { console.error('Brak WP_ADMIN_USER/WP_ADMIN_PASS w env.'); process.exit(1); }
 
   /* Stan sprzed próby wraca ZAWSZE — to wspólny stos warsztatowy. */
-  const stan = wp(['eval', 'echo json_encode( array( "u" => get_option( "segm_skrzynka", null ), "h" => get_option( "segm_imap_haslo", null ) ) );']);
+  const stan = wp(['eval', 'echo json_encode( array( "u" => get_option( "segm_skrzynka", null ), "h" => get_option( "segm_imap_haslo", null ), "b" => get_option( "segm_blad_ai", null ) ) );']);
   const b = await chromium.launch({ executablePath: wymagajChromium() });
   const p = await b.newPage({ viewport: { width: 1280, height: 1000 } });
   try {
@@ -79,6 +79,14 @@ function wp(args) {
       /INSTRUKCJA\.md/.test(opisHasla) && /Hasło aplikacji, nigdy hasło do konta/.test(opisHasla) && !/rozdział\s*\d/.test(opisHasla));
 
     console.log('\n[3] po zapisie komunikat jest widoczny i stoi PRZED paskami wtyczki');
+    /* ⛔ Ten krok NIE MOŻE przejść „pusto": gdyby na stosie nie było ani jednego
+       paska wtyczki, porównanie kolejności nie miałoby z czym porównywać i test
+       byłby zielony na kodzie sprzed naprawy. Dlatego SAMI stawiamy pasek —
+       ślad błędu trybu AI — i wymagamy, żeby oba paski istniały. Ślad wraca do
+       stanu sprzed próby w bloku finally. */
+    wp(['option', 'update', 'segm_blad_ai', JSON.stringify({
+      kiedy: '2026-01-01 00:00:00', kod: 401, komunikat: 'straznik ekranu skrzynki', model: 'x',
+    }), '--format=json']);
     await p.fill('#segm-host', 'segm_imap');
     await p.fill('#segm-port', '3143');
     await p.selectOption('#segm-szyfrowanie', 'brak').catch(() => {});
@@ -92,11 +100,17 @@ function wp(args) {
     })));
     paski.forEach((n, i) => console.log('       [' + i + '] ' + n.klasa + ' :: ' + n.tekst));
     const idxOk = paski.findIndex((n) => /notice-success/.test(n.klasa) && /Zapisano/.test(n.tekst));
-    const idxWtyczki = paski.findIndex((n) => /Segregator maila: zapis do bazy|Tryb AI nie działa|Zacznij od próbki/.test(n.tekst));
-    sprawdz('zielony komunikat „Zapisano…" jest na stronie', idxOk >= 0);
-    sprawdz('komunikat jest WIDOCZNY', idxOk >= 0 && (await p.$eval('.notice-success', (e) => e.offsetParent !== null)));
+    const idxWtyczki = paski.findIndex((n) => /Segregator maila: zapis do bazy|Tryb AI|Zacznij od próbki/.test(n.tekst));
+    sprawdz('zielony komunikat „Zapisano…" jest na stronie', idxOk >= 0, 'indeks=' + idxOk);
+    sprawdz('komunikat jest WIDOCZNY',
+      idxOk >= 0 && (await p.$eval('.notice-success', (e) => e.offsetParent !== null).catch(() => false)));
+    /* kontrola przyrządu: pasek wtyczki MUSI być, inaczej nie ma czego porównywać */
+    sprawdz('kontrola: na stronie JEST przynajmniej jeden pasek wtyczki', idxWtyczki >= 0, 'indeks=' + idxWtyczki);
     sprawdz('komunikat stoi PRZED paskami wtyczki (bledy AI/bazy, wskazowka)',
-      idxOk >= 0 && (idxWtyczki === -1 || idxOk < idxWtyczki), 'komunikat=' + idxOk + ', pierwszy pasek wtyczki=' + idxWtyczki);
+      idxOk >= 0 && idxWtyczki >= 0 && idxOk < idxWtyczki, 'komunikat=' + idxOk + ', pierwszy pasek wtyczki=' + idxWtyczki);
+    sprawdz('komunikat jest PIERWSZYM paskiem wtyczki na stronie',
+      idxOk >= 0 && paski.slice(0, idxOk).every((n) => /update-nag/.test(n.klasa)),
+      'przed nim: ' + paski.slice(0, idxOk).map((n) => n.klasa).join(' | '));
 
     console.log('\n[4] BEZ WADY: po zapisie kompletnych danych przycisk dziala i opis wraca do normalnego');
     const wylaczony2 = await p.$eval(formTest + ' input[type="submit"]', (e) => e.disabled);
@@ -116,6 +130,7 @@ function wp(args) {
       'if ( null === $s["u"] ) { delete_option( "segm_skrzynka" ); } else { update_option( "segm_skrzynka", $s["u"] ); }' +
       'delete_option( "segm_imap_haslo" );' +
       'if ( null !== $s["h"] ) { add_option( "segm_imap_haslo", $s["h"], "", false ); }' +
+      'if ( null === $s["b"] ) { delete_option( "segm_blad_ai" ); } else { update_option( "segm_blad_ai", $s["b"], false ); }' +
       'echo "stan skrzynki sprzed proby przywrocony";',
     ]));
   }

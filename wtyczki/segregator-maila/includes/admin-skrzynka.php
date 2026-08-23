@@ -56,8 +56,14 @@ function segm_skrzynka_pokaz_komunikat() {
 	 * PRZED paskami wtyczki (te mają domyślny 10) — jest pierwszym, co widać
 	 * po powrocie z formularza.
 	 */
+	if ( ! current_user_can( 'manage_options' ) ) {
+		return;
+	}
+	// Zawężenie DOMYŚLNIE ZAMKNIĘTE: bez pewności, że jesteśmy na ekranie
+	// skrzynki, nie wypisujemy nic. Funkcja autoryzująca (i każda decydująca
+	// „pokazać czy nie") nie ma prawa mieć domyślnego otwarcia.
 	$ekran = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
-	if ( $ekran && false === strpos( (string) $ekran->id, 'segm-skrzynka' ) ) {
+	if ( ! $ekran || false === strpos( (string) $ekran->id, 'segm-skrzynka' ) ) {
 		return;
 	}
 	$klucz = 'segm_komunikat_' . get_current_user_id();
@@ -87,26 +93,6 @@ function segm_skrzynka_pokaz_komunikat() {
 }
 
 add_action( 'admin_notices', 'segm_skrzynka_pokaz_komunikat', 1 );
-
-/**
- * Czego brakuje do „Sprawdź połączenie" — po nazwach pól z formularza (WK-5).
- *
- * @return array<int, string> Puste = wszystko zapisane.
- */
-function segm_skrzynka_czego_brakuje() {
-	$ust   = segm_skrzynka_ustawienia();
-	$braki = array();
-	if ( '' === trim( (string) $ust['host'] ) ) {
-		$braki[] = 'serwer IMAP';
-	}
-	if ( '' === trim( (string) $ust['login'] ) ) {
-		$braki[] = 'login';
-	}
-	if ( '' === segm_skrzynka_haslo() ) {
-		$braki[] = 'hasło aplikacji';
-	}
-	return $braki;
-}
 
 /* ===================== STRONA ===================== */
 
