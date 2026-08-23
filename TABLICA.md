@@ -1,20 +1,26 @@
 # 🎯 TABLICA — kto co bierze, co czeka, co blokuje
 
 > Jedno miejsce zamiast dopytywania. **Aktualizuje koordynatorka po każdej zmianie stanu.**
-> Stan na: **21.08, 19:05**
+> Stan na: **23.08, 16:30 — ETAP 3: NAPRAWY (plan: `audyt/PLAN-NAPRAW.md`, briefing: `audyt/BRIEFING-NAPRAWY.md`)**
 
-## 👥 KTO CO BIERZE TERAZ
+## 👥 KTO CO BIERZE TERAZ (etap 3 — naprawy po audycie)
 
-| okno tmux | rola | teren | gałąź | stan |
-|---|---|---|---|---|
-| `praca:1` | **Łamacz Segregatora** (autor ChatBota — cudzy kod) | `segregator-maila` | `audyt/lamacz-segregator` | pracuje |
-| `praca:2` | **Łamacz ChatBota** (autor Segregatora — cudzy kod) | `chatbot-live` | `audyt/lamacz-chatbot` | pracuje |
-| `praca:3` | **Audytor A6 odwrotny** (kod → dokumentacja) | oba boty | `audyt/a6-odwrotny` | pracuje |
-| `praca:4` | **Audytor A4 front** (przeglądarka, dostępność) | oba boty | `audyt/a4-front` | pracuje |
-| koordynatorka | scalanie, naprawy z recenzji, bump, tablica | całość | — | — |
+| okno tmux | rola | teren | drzewo | paczki (kolejność) | stan |
+|---|---|---|---|---|---|
+| `builder1` | naprawy ChatBota | `wtyczki/chatbot-live/` + `testy/chatbot-*` | `/root/praca/zlecenia/sklep-agentow-b1` | C1 → C2 → C3 → C4 → C5 → C6 | start po scaleniu K0 |
+| `builder2` | naprawy Segregatora | `wtyczki/segregator-maila/` + `testy/segregator-*` | `/root/praca/zlecenia/sklep-agentow-b2` | S1 → S2 → S3 → S4 → S5 | start po scaleniu K0 |
+| koordynatorka | K0 (rejestr, przyrząd, briefing, linia bazowa), scalanie, pliki wspólne, wieczorna linia bazowa, bump na końcu | reszta | worktree `koord/*` | K0 → K1 → K2 → K3 | K0 w toku |
 
-⛔ **Zasada obsady:** nikt nie audytuje kodu, który sam pisał. Przy każdej zamianie ról
-builder idzie przez `/clear` — świeży kontekst jest tym, czego audytor potrzebuje najbardziej.
+⛔ **Pliki wspólne edytuje TYLKO koordynatorka:** `audyt/REJESTR-ZNALEZISK.md`, `TABLICA.md`,
+`boty/PONAD-SPECYFIKACJE-BOTY.md`, `boty/buduj-paczki.sh`, `boty/paczki/`, `.github/`, `narzedzia-qa/bramki.sh`.
+Builder pisze proponowaną zmianę w opisie PR. Nikt nie scala własnego PR-a.
+⛔ **Jeden builder na wtyczkę** (kod idzie na stos przez `docker cp`, bind-mountu nie ma). Testy przeglądarkowe/HTTP
+pod `flock /root/praca/zlecenia/wymiana/stos.lock`. Max **3 sesje Claude naraz** (RAM 3,8 GB, próg `available` ≥ 1 GB).
+
+### Stan rejestru na start etapu (23.08, po pomiarze)
+**23 OTWARTE · 1 W NAPRAWIE (LS-F2) · 0 ZAMKNIĘTE naprawdę** — A2-F1/F2/F3 wróciły na OTWARTE po uruchomieniu
+`test-awaria-zapisu.php` na `main` (PADA 3/6, EXIT=1; #136 naprawił sąsiedni problem). Dług strażników 11 (cztery wpisy z rejestru okazały się sondami bez exit 1).
+Linia bazowa testów PRZED: `audyt/LINIA-BAZOWA-TESTOW.md` [baza-766b4c9].
 
 ## 🔴 POZYCJA NUMER JEDEN — CI NIE URUCHAMIA ŻADNEGO TESTU
 
