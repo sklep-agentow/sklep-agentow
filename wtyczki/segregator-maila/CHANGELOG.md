@@ -7,7 +7,26 @@ wersjonowanie według [SemVer](https://semver.org/lang/pl/).
 
 ## [Niewydane]
 
-_Nic jeszcze nie czeka na wydanie._
+### Naprawione
+- **Przebieg na żywo zapisuje zamiar PRZED ruchem poczty** (LS-F2): wiersz przebiegu
+  i pozycja „w toku" trafiają do bazy, zanim poleci `UID MOVE`; potwierdzenie od serwera
+  zmienia ją na „przeniesiono". Gdy baza odmówi zapisu, wiadomość NIE jest ruszana,
+  przebieg przerywa się z widocznym błędem, a `przeniesionych` liczy tylko potwierdzone
+  ruchy. Wcześniej przy padzie bazy poczta była rozłożona po folderach, historia pusta,
+  cofanie martwe, a panel pokazywał sukces.
+- **Cofnięcie liczy tylko to, co naprawdę wróciło** (LS-F1): klient IMAP uznaje ruch za
+  udany po niepustym `COPYUID` (na serwerze bez UIDPLUS — po porównaniu stanu folderu),
+  bo `UID MOVE` nieistniejącego UID-a kończy się „OK" (RFC 3501 §6.4.8). Wiadomość
+  przeciągnięta w międzyczasie ręcznie dostaje błąd przy pozycji, przebieg nie jest
+  oznaczany jako cofnięty w całości i drugą próbę da się zrobić.
+- **UIDVALIDITY folderu docelowego zapisywana przy przenoszeniu i sprawdzana przy
+  cofaniu** (T-3): folder skasowany i założony na nowo nie podsunie obcej wiadomości
+  o tym samym numerze — wtyczka szuka wtedy po `Message-ID`. Schemat bazy 3 → 4
+  (kolumna `segm_skrz_ruchy.uidvalidity_do`, podniesienie automatyczne).
+- **Zamek operacji atomowy** (DK-6, T-4): `segm_zajmij_blokade()` zajmuje znacznik jednym
+  `INSERT IGNORE` i liczy wiersze, zamiast `get_option()`+`add_option()` (które nadpisywało
+  cudzy wpis i wpuszczało dwie operacje naraz); stan czyta prosto z bazy. Znacznik
+  w obcym kształcie (bez terminu) nie blokuje już wtyczki na zawsze.
 
 ---
 

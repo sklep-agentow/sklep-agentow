@@ -357,6 +357,7 @@ function segm_skrzynka_widok_przebiegu( $id ) {
 
 	$opisy = array(
 		'plan'         => 'przeniósłby',
+		'w_toku'       => 'w toku (niepotwierdzone)',
 		'przeniesiony' => 'przeniesiono',
 		'pominiety'    => 'zostawiono',
 		'blad'         => 'BŁĄD',

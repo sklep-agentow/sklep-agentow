@@ -581,6 +581,39 @@ class Segm_Imap {
 	}
 
 	/**
+	 * Czy wiadomość o danym UID istnieje w otwartym folderze (RFC 3501 6.4.8).
+	 *
+	 * @param int $uid UID wiadomości.
+	 * @return bool|null Null = serwer nie odpowiedział poprawnie (blad() mówi czemu).
+	 */
+	public function istnieje( $uid ) {
+		$uidy = $this->uidy( 'UID ' . (int) $uid );
+		if ( null === $uidy ) {
+			return null;
+		}
+		return in_array( (int) $uid, $uidy, true );
+	}
+
+	/**
+	 * UIDVALIDITY folderu bez zmiany folderu bieżącego (RFC 3501 6.3.10 STATUS).
+	 *
+	 * @param string $nazwa Nazwa folderu w kodowaniu serwera.
+	 * @return int 0 = serwer nie podał.
+	 */
+	public function uidvalidity( $nazwa ) {
+		$odp = $this->wykonaj( 'STATUS ' . $this->tekst( $nazwa ) . ' (UIDVALIDITY)' );
+		if ( null === $odp || 'OK' !== $odp['status'] ) {
+			return 0;
+		}
+		foreach ( $odp['linie'] as $linia ) {
+			if ( preg_match( '/UIDVALIDITY (\d+)/', $linia['tekst'], $m ) ) {
+				return (int) $m[1];
+			}
+		}
+		return 0;
+	}
+
+	/**
 	 * Przeniesienie wiadomości do innego folderu.
 	 *
 	 * Droga główna: UID MOVE (RFC 6851) — jedna operacja, bez stanów pośrednich.
@@ -589,57 +622,136 @@ class Segm_Imap {
 	 * to WPROST — zwykłe EXPUNGE skasowałoby też cudze wiadomości oznaczone
 	 * \Deleted przez inny program (RFC 4315 2.1 ostrzega o tym wprost).
 	 *
+	 * ⭐ Liczy się SKUTEK, nie status (LS-F1): RFC 3501 §6.4.8 — polecenie UID
+	 * z numerem, który nie pasuje do żadnej wiadomości, kończy się „OK", bo
+	 * serwer nie ma nic do zgłoszenia. Wtyczka liczyła kiedyś „przeniesiono"
+	 * za sam status, więc cofnięcie meldowało sukces dla wiadomości, którą
+	 * właściciel w międzyczasie przeciągnął gdzie indziej. Dlatego:
+	 *  - serwer z UIDPLUS zwraca COPYUID (RFC 4315 §3) — PUSTY zbiór UID-ów
+	 *    w COPYUID znaczy „nic nie ruszyłem" i tak to meldujemy (null + blad);
+	 *  - serwer bez UIDPLUS: sprawdzamy istnienie PRZED ruchem (UID SEARCH)
+	 *    i po nim — wiadomość, której nie było, albo która dalej leży w źródle,
+	 *    to porażka, nie sukces.
+	 * Zwracamy też UIDVALIDITY folderu docelowego (z COPYUID albo STATUS) —
+	 * cofanie porównuje ją z bieżącą, zanim zaufa zapamiętanemu UID-owi (T-3).
+	 *
 	 * @param int    $uid   UID wiadomości w otwartym folderze.
 	 * @param string $cel   Nazwa folderu docelowego w kodowaniu serwera.
-	 * @return array{uid_docelowy: int, sposob: string, uwaga: string}|null
+	 * @return array{uid_docelowy: int, uidvalidity_do: int, sposob: string, uwaga: string}|null
 	 */
 	public function przenies( $uid, $cel ) {
+		$uid = (int) $uid;
+		// Bez UIDPLUS nie dostaniemy COPYUID, więc skutek mierzymy stanem folderu.
+		$recznie = ! $this->ma_moznosc( 'UIDPLUS' );
+		if ( $recznie ) {
+			$jest = $this->istnieje( $uid );
+			if ( null === $jest ) {
+				return null;
+			}
+			if ( ! $jest ) {
+				$this->blad = 'W otwartym folderze nie ma wiadomości o UID ' . $uid . ' — nic nie zostało przeniesione (ktoś przeniósł ją albo skasował poza wtyczką).';
+				return null;
+			}
+		}
+
 		if ( $this->ma_moznosc( 'MOVE' ) ) {
-			$odp = $this->wykonaj( 'UID MOVE ' . (int) $uid . ' ' . $this->tekst( $cel ) );
+			$odp = $this->wykonaj( 'UID MOVE ' . $uid . ' ' . $this->tekst( $cel ) );
 			if ( null === $odp || 'OK' !== $odp['status'] ) {
-				$this->blad = 'Serwer odmówił przeniesienia wiadomości ' . (int) $uid . ': ' . ( null === $odp ? $this->blad : $odp['ogon'] );
+				$this->blad = 'Serwer odmówił przeniesienia wiadomości ' . $uid . ': ' . ( null === $odp ? $this->blad : $odp['ogon'] );
+				return null;
+			}
+			$skutek = $this->skutek_ruchu( $odp, $uid, $cel, $recznie );
+			if ( null === $skutek ) {
 				return null;
 			}
 			return array(
-				'uid_docelowy' => $this->copyuid( $odp ),
-				'sposob'       => 'UID MOVE',
-				'uwaga'        => '',
+				'uid_docelowy'   => $skutek['uid'],
+				'uidvalidity_do' => $skutek['uidvalidity'],
+				'sposob'         => 'UID MOVE',
+				'uwaga'          => '',
 			);
 		}
 
-		$odp = $this->wykonaj( 'UID COPY ' . (int) $uid . ' ' . $this->tekst( $cel ) );
+		$odp = $this->wykonaj( 'UID COPY ' . $uid . ' ' . $this->tekst( $cel ) );
 		if ( null === $odp || 'OK' !== $odp['status'] ) {
-			$this->blad = 'Serwer odmówił skopiowania wiadomości ' . (int) $uid . ' do folderu docelowego: ' . ( null === $odp ? $this->blad : $odp['ogon'] );
+			$this->blad = 'Serwer odmówił skopiowania wiadomości ' . $uid . ' do folderu docelowego: ' . ( null === $odp ? $this->blad : $odp['ogon'] );
 			return null;
 		}
-		$uid_docelowy = $this->copyuid( $odp );
+		$skutek = $this->skutek_ruchu( $odp, $uid, $cel, false );
+		if ( null === $skutek ) {
+			return null;
+		}
+		$uid_docelowy   = $skutek['uid'];
+		$uidvalidity_do = $skutek['uidvalidity'];
 
-		$odp = $this->wykonaj( 'UID STORE ' . (int) $uid . ' +FLAGS.SILENT (\\Deleted)' );
+		$odp = $this->wykonaj( 'UID STORE ' . $uid . ' +FLAGS.SILENT (\\Deleted)' );
 		if ( null === $odp || 'OK' !== $odp['status'] ) {
-			$this->blad = 'Kopia wiadomości ' . (int) $uid . ' trafiła do folderu docelowego, ale oryginału NIE udało się oznaczyć do usunięcia — w skrzynce zostaje duplikat: ' . ( null === $odp ? $this->blad : $odp['ogon'] );
+			$this->blad = 'Kopia wiadomości ' . $uid . ' trafiła do folderu docelowego, ale oryginału NIE udało się oznaczyć do usunięcia — w skrzynce zostaje duplikat: ' . ( null === $odp ? $this->blad : $odp['ogon'] );
 			return null;
 		}
 
 		if ( ! $this->ma_moznosc( 'UIDPLUS' ) ) {
 			return array(
-				'uid_docelowy' => $uid_docelowy,
-				'sposob'       => 'UID COPY + \\Deleted',
-				'uwaga'        => 'Serwer nie ma rozszerzeń MOVE ani UIDPLUS: kopia jest w folderze docelowym, a oryginał oznaczyliśmy do usunięcia, ale NIE kasujemy go sami — zwykłe EXPUNGE usunęłoby też wiadomości oznaczone do kasowania przez Twój program pocztowy. Oryginał zniknie, gdy opróżnisz kosz w kliencie poczty.',
+				'uid_docelowy'   => $uid_docelowy,
+				'uidvalidity_do' => $uidvalidity_do,
+				'sposob'         => 'UID COPY + \\Deleted',
+				'uwaga'          => 'Serwer nie ma rozszerzeń MOVE ani UIDPLUS: kopia jest w folderze docelowym, a oryginał oznaczyliśmy do usunięcia, ale NIE kasujemy go sami — zwykłe EXPUNGE usunęłoby też wiadomości oznaczone do kasowania przez Twój program pocztowy. Oryginał zniknie, gdy opróżnisz kosz w kliencie poczty.',
 			);
 		}
 
-		$odp = $this->wykonaj( 'UID EXPUNGE ' . (int) $uid );
+		$odp = $this->wykonaj( 'UID EXPUNGE ' . $uid );
 		if ( null === $odp || 'OK' !== $odp['status'] ) {
 			return array(
-				'uid_docelowy' => $uid_docelowy,
-				'sposob'       => 'UID COPY + \\Deleted',
-				'uwaga'        => 'Kopia jest w folderze docelowym i oryginał jest oznaczony do usunięcia, ale UID EXPUNGE nie przeszło (' . $odp['ogon'] . ') — oryginał chwilowo zostaje w skrzynce.',
+				'uid_docelowy'   => $uid_docelowy,
+				'uidvalidity_do' => $uidvalidity_do,
+				'sposob'         => 'UID COPY + \\Deleted',
+				'uwaga'          => 'Kopia jest w folderze docelowym i oryginał jest oznaczony do usunięcia, ale UID EXPUNGE nie przeszło (' . ( null === $odp ? $this->blad : $odp['ogon'] ) . ') — oryginał chwilowo zostaje w skrzynce.',
 			);
 		}
 		return array(
-			'uid_docelowy' => $uid_docelowy,
-			'sposob'       => 'UID COPY + UID EXPUNGE',
-			'uwaga'        => '',
+			'uid_docelowy'   => $uid_docelowy,
+			'uidvalidity_do' => $uidvalidity_do,
+			'sposob'         => 'UID COPY + UID EXPUNGE',
+			'uwaga'          => '',
+		);
+	}
+
+	/**
+	 * Co NAPRAWDĘ zrobił MOVE/COPY: nowy UID i UIDVALIDITY celu z COPYUID,
+	 * a gdy serwer nie dał COPYUID — stan folderu źródłowego po ruchu
+	 * (tylko gdy $recznie, czyli bez UIDPLUS) i STATUS celu.
+	 *
+	 * @param array{status: string, ogon: string, linie: array<int, array{tekst: string, literaly: array<int, string>}>} $odp     Odpowiedź serwera.
+	 * @param int    $uid     UID w folderze źródłowym.
+	 * @param string $cel     Folder docelowy (kodowanie serwera).
+	 * @param bool   $recznie Czy brak COPYUID sprawdzać stanem źródła.
+	 * @return array{uid: int, uidvalidity: int}|null Null = nic nie ruszono (blad() mówi czemu).
+	 */
+	private function skutek_ruchu( $odp, $uid, $cel, $recznie ) {
+		$c = $this->copyuid( $odp );
+		if ( $c['jest'] ) {
+			if ( $c['pusty'] ) {
+				$this->blad = 'Serwer odpowiedział OK, ale COPYUID jest pusty: w otwartym folderze nie ma wiadomości o UID ' . (int) $uid . ' — nic nie zostało przeniesione (ktoś przeniósł ją albo skasował poza wtyczką).';
+				return null;
+			}
+			return array(
+				'uid'         => $c['uid'],
+				'uidvalidity' => $c['uidvalidity'],
+			);
+		}
+		if ( $recznie ) {
+			$jest = $this->istnieje( $uid );
+			if ( null === $jest ) {
+				return null;
+			}
+			if ( $jest ) {
+				$this->blad = 'Serwer odpowiedział OK, ale wiadomość ' . (int) $uid . ' nadal leży w folderze źródłowym — nie została przeniesiona.';
+				return null;
+			}
+		}
+		return array(
+			'uid'         => 0,
+			'uidvalidity' => $this->uidvalidity( $cel ),
 		);
 	}
 
@@ -837,27 +949,41 @@ class Segm_Imap {
 	}
 
 	/**
-	 * UID nadany kopii w folderze docelowym z kodu odpowiedzi COPYUID
-	 * (RFC 4315 3: „COPYUID SP uidvalidity SP uid-set SP uid-set").
+	 * Kod odpowiedzi COPYUID (RFC 4315 3: „COPYUID SP uidvalidity SP uid-set
+	 * SP uid-set"): UIDVALIDITY folderu DOCELOWEGO, UID-y źródłowe, UID-y nadane
+	 * kopiom. Kopiujemy po JEDNEJ wiadomości, więc zbiory mają jeden element.
 	 *
-	 * Kopiujemy po JEDNEJ wiadomości, więc zbiory UID-ów mają jeden element
-	 * i drugi z nich jest nowym UID-em. Serwer NIE MUSI zwrócić COPYUID —
-	 * wtedy 0, a cofanie przebiegu szuka wiadomości po Message-ID.
+	 * Serwer NIE MUSI zwrócić COPYUID (`jest` = false). Gdy zwraca, a zbiory są
+	 * PUSTE (`pusty` = true), to wprost mówi: „żadna wiadomość nie pasowała" —
+	 * czyli nic nie przeniósł, choć status był OK (tak robi np. GreenMail:
+	 * `* OK [COPYUID 1787494337  ]`).
 	 *
 	 * @param array{status: string, ogon: string, linie: array<int, array{tekst: string, literaly: array<int, string>}>} $odp Odpowiedź serwera.
-	 * @return int
+	 * @return array{jest: bool, pusty: bool, uidvalidity: int, uid: int}
 	 */
 	private function copyuid( $odp ) {
+		$brak      = array(
+			'jest'        => false,
+			'pusty'       => false,
+			'uidvalidity' => 0,
+			'uid'         => 0,
+		);
 		$kandydaci = array( $odp['ogon'] );
 		foreach ( $odp['linie'] as $linia ) {
 			$kandydaci[] = $linia['tekst'];
 		}
 		foreach ( $kandydaci as $tekst ) {
-			if ( preg_match( '/\[COPYUID (\d+) ([0-9,:]+) ([0-9,:]+)\]/i', $tekst, $m ) ) {
-				return (int) strtok( $m[3], ',:' );
+			if ( preg_match( '/\[COPYUID (\d+) ([0-9,:]*) ?([0-9,:]*)\s*\]/i', $tekst, $m ) ) {
+				$nowe = trim( $m[3] );
+				return array(
+					'jest'        => true,
+					'pusty'       => '' === $nowe,
+					'uidvalidity' => (int) $m[1],
+					'uid'         => '' === $nowe ? 0 : (int) strtok( $nowe, ',:' ),
+				);
 			}
 		}
-		return 0;
+		return $brak;
 	}
 
 	/**

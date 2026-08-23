@@ -97,6 +97,7 @@ function segm_utworz_tabele() {
 		stan varchar(20) NOT NULL DEFAULT 'plan',
 		komunikat text NOT NULL,
 		uid_docelowy bigint(20) unsigned NOT NULL DEFAULT 0,
+		uidvalidity_do bigint(20) unsigned NOT NULL DEFAULT 0,
 		utworzono datetime NOT NULL,
 		PRIMARY KEY  (id),
 		KEY przebieg_id (przebieg_id)

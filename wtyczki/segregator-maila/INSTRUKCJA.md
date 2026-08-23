@@ -311,11 +311,20 @@ hosting nie urwie żądania w połowie przenoszenia.
 
 ### Historia i cofanie ostatniego przebiegu
 
-Każdy przebieg zapisuje: co, kiedy i dokąd. **Cofnij ostatni przebieg**
-przenosi wiadomości z powrotem do folderu, z którego wyszły. Wtyczka zapamiętuje
-nowy identyfikator każdej wiadomości (kod odpowiedzi `COPYUID`), a gdy serwer
-go nie poda, szuka wiadomości po nagłówku `Message-ID`. Jeśli którejś nie
-odnajdzie, powie tego wprost — zamiast zgadywać i przenieść cudzy mail.
+Każdy przebieg zapisuje: co, kiedy i dokąd — i robi to **zanim** ruszy
+wiadomość: najpierw wpis w historii, potem przeniesienie, na końcu potwierdzenie.
+Gdyby baza danych odmówiła zapisu w trakcie, wtyczka nie rusza tej wiadomości,
+przerywa przebieg i mówi o tym czerwonym komunikatem — nie zostaniesz z pocztą
+rozłożoną po folderach bez zapisu, co gdzie poszło.
+
+**Cofnij ostatni przebieg** przenosi wiadomości z powrotem do folderu, z którego
+wyszły. Wtyczka zapamiętuje nowy identyfikator każdej wiadomości (kod odpowiedzi
+`COPYUID`) razem z identyfikatorem folderu (`UIDVALIDITY`), a gdy serwer go nie
+poda, szuka wiadomości po nagłówku `Message-ID`. Liczy tylko wiadomości, które
+**naprawdę** wróciły: jeśli którąś w międzyczasie przeciągnąłeś ręcznie gdzie
+indziej albo skasowałeś folder kategorii, powie tego wprost przy tej pozycji —
+zamiast zgadywać i przenieść cudzy mail — a przebieg zostanie do cofnięcia
+ponownie, gdy ją odnajdziesz.
 
 Cofnąć da się **ostatni** przebieg, nie dowolny wcześniejszy. Dlatego zanim
 włączysz realne przenoszenie, puść skrzynkę raz na sucho i przeczytaj listę.

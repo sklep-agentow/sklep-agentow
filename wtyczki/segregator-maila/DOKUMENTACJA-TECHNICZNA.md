@@ -1,6 +1,6 @@
 # Segregator maila — dokumentacja techniczna
 
-**Wersja wtyczki: 1.3.1 · wersja schematu bazy: 3 · WordPress 6.0+ · PHP 8.1+**
+**Wersja wtyczki: 1.3.1 · wersja schematu bazy: 4 · WordPress 6.0+ · PHP 8.1+**
 
 > **Po co ten dokument.** To jest **mapa systemu dla audytora i programisty**, nie ulotka.
 > Każda liczba i każda nazwa tutaj jest wzięta z kodu, nie z pamięci — jeśli coś się
@@ -60,19 +60,19 @@ leży w pliku `LICENSE` w katalogu wtyczki i wchodzi do paczki produktowej.
 
 | Plik | Linii | Za co odpowiada |
 |---|---|---|
-| `segregator-maila.php` | 364 | nagłówek wtyczki, stałe, ładowanie plików, cron retencji, znacznik „operacja w toku", zgoda na AI, ustawienia ogólne |
+| `segregator-maila.php` | 396 | nagłówek wtyczki, stałe, ładowanie plików, cron retencji, znacznik „operacja w toku", zgoda na AI, ustawienia ogólne |
 | `uninstall.php` | 91 | deinstalacja — dwie ścieżki (§11.5) |
-| `includes/instalator.php` | 268 | `dbDelta` dla 7 tabel, aktywacja, deaktywacja, seed demo (5 kategorii, 8 reguł, 30 maili) |
+| `includes/instalator.php` | 269 | `dbDelta` dla 7 tabel, aktywacja, deaktywacja, seed demo (5 kategorii, 8 reguł, 30 maili) |
 | `includes/silnik.php` | 248 | `segm_klasyfikuj_mail()` — jedyna reguła dopasowania w całej wtyczce; przebieg na próbce |
 | `includes/csv.php` | 352 | import próbki z CSV (wykrywanie kodowania, limity) i eksport raportu do CSV |
 | `includes/ai.php` | 569 | opcjonalna klasyfikacja modelem, licznik stop-loss |
 | `includes/admin.php` | 1463 | panel: przebiegi i raporty, reguły, kategorie, próbka, ustawienia, baner powitalny, paski błędu AI i błędu bazy |
 | `includes/konfiguracja.php` | 360 | eksport i import własnej konfiguracji (kategorie + reguły) w JSON-ie |
 | `includes/filtry.php` | 588 | eksport reguł do filtrów Gmaila (XML) i reguł Outlooka |
-| `includes/class-segm-imap.php` | 947 | **klient IMAP4rev1 w czystym PHP** — gniazdo, TLS, protokół |
+| `includes/class-segm-imap.php` | 1073 | **klient IMAP4rev1 w czystym PHP** — gniazdo, TLS, protokół |
 | `includes/skrzynka.php` | 504 | konfiguracja skrzynki, hasło, diagnostyka, „Sprawdź połączenie", rozbiór nagłówków i treści |
-| `includes/skrzynka-przebieg.php` | 556 | przebieg na żywej skrzynce, historia, cofanie, harmonogramy WP-Cron |
-| `includes/admin-skrzynka.php` | 701 | panel zakładki *Skrzynka (IMAP)* i obsługa jej formularzy |
+| `includes/skrzynka-przebieg.php` | 731 | przebieg na żywej skrzynce, historia, cofanie, harmonogramy WP-Cron |
+| `includes/admin-skrzynka.php` | 702 | panel zakładki *Skrzynka (IMAP)* i obsługa jej formularzy |
 | `includes/admin-powitanie.php` | 143 | ekran powitalny pokazywany raz po aktywacji |
 | `includes/admin-probka.php` | 418 | praca na POJEDYNCZYM mailu i licznik trafień reguły |
 
@@ -107,7 +107,7 @@ Wszystkie tworzy `segm_utworz_tabele()` (`includes/instalator.php`) przez `dbDel
 | `segm_przebiegi` | raporty przebiegów na próbce; kolumna `wyniki` to JSON z pozycją każdego maila | `segm_wykonaj_przebieg()` |
 | `segm_ai_uzycie` | licznik wywołań AI na dzień (stop-loss) | `includes/ai.php` |
 | `segm_skrz_przebiegi` | nagłówek przebiegu na **żywej skrzynce**: tryb, źródło, liczniki, znacznik „cofnięty" | `segm_skrzynka_przebieg()` |
-| `segm_skrz_ruchy` | pozycje historii: UID, `Message-ID`, nadawca, temat, folder z→do, stan, UID po przeniesieniu | `segm_skrzynka_przebieg()`, `segm_skrzynka_oznacz_ruch()` |
+| `segm_skrz_ruchy` | pozycje historii: UID, `Message-ID`, nadawca, temat, folder z→do, stan, UID po przeniesieniu, `UIDVALIDITY` folderu docelowego (od schematu 4) | `segm_skrzynka_przebieg()`, `segm_skrzynka_oznacz_ruch()` |
 
 ### Które tabele trzymają CUDZE dane osobowe
 
@@ -120,8 +120,11 @@ pobierana do pamięci na czas dopasowania reguł i nigdzie nie jest zapisywana.
 
 ### Stany w `segm_skrz_ruchy.stan`
 
-`plan` (tryb na sucho: tak by zrobił) · `przeniesiony` · `pominiety` (żadna reguła nie
-pasuje albo folder docelowy = źródłowy) · `blad` · `cofniety`.
+`plan` (tryb na sucho: tak by zrobił) · `w_toku` (zamiar zapisany, `UID MOVE` jeszcze
+niepotwierdzony — wiersz w tym stanie po zakończonym przebiegu znaczy, że proces urwał się
+między przeniesieniem a potwierdzeniem; cofanie szuka takiej wiadomości po `Message-ID`) ·
+`przeniesiony` · `pominiety` (żadna reguła nie pasuje albo folder docelowy = źródłowy) ·
+`blad` · `cofniety`.
 
 ---
 
@@ -138,8 +141,8 @@ pasuje albo folder docelowy = źródłowy) · `blad` · `cofniety`.
 | `segm_blad_ai` | ostatni błąd trybu AI: kiedy, kod HTTP, odpowiedź dostawcy, model | **nie** |
 | `segm_zgoda_ai` | `kiedy` + `kto` — zgoda na wysyłkę próbki do AI | tak |
 | `segm_zgoda_przenoszenie` | `kiedy` + `kto` — zgoda na realne przenoszenie wiadomości | tak |
-| `segm_operacja_w_toku` | znacznik „coś trwa" z terminem ważności | **nie** |
-| `segm_wersja_schematu` | wersja schematu bazy (dziś `3`) | tak |
+| `segm_operacja_w_toku` | zamek „coś trwa" z terminem ważności — zajmowany atomowo (`INSERT IGNORE`, nie `add_option()`) | **nie** |
+| `segm_wersja_schematu` | wersja schematu bazy (dziś `4`) | tak |
 | `segm_powitanie_gotowe` | znacznik „instalacja świeża — pokaż ekran powitalny” | tak |
 
 ### Metadane użytkownika
@@ -435,16 +438,28 @@ niczego, żeby adres został czysty.
                   ▼                    ▼
             UID SEARCH ALL | UNSEEN  → najnowsze N wiadomości
                   ▼
+      INSERT segm_skrz_przebiegi (wiersz przebiegu PRZED pierwszym ruchem;
+                  ▼               porażka = przebieg nie startuje, nic nie ruszone)
    dla każdej: UID FETCH BODY.PEEK[HEADER] (+ BODY.PEEK[TEXT]<0.4096>)
                → segm_klasyfikuj_mail() → folder docelowy
                   ▼                    ▼
-          stan 'plan'          CREATE (gdy brak) → UID MOVE
-          (nic się nie dzieje)  → zapis UID z COPYUID
-                  ▼                    ▼
-      zapis segm_skrz_przebiegi + segm_skrz_ruchy
+      INSERT ruch 'plan'        INSERT ruch 'w_toku'  (ZAMIAR przed ruchem;
+      (nic się nie dzieje)             ▼              porażka = wiadomość NIE ruszona,
+                                CREATE (gdy brak) → UID MOVE   przebieg przerwany z błędem)
+                                       ▼
+                                COPYUID pusty? → ruch 'blad' (nic nie przeniesiono)
+                                COPYUID pełny → UPDATE ruch 'przeniesiony'
+                                                + uid_docelowy + uidvalidity_do
+                  ▼
+      UPDATE segm_skrz_przebiegi (liczniki, komunikat)
                   ▼
               segm_zwolnij_blokade()
 ```
+
+Kolejność „najpierw baza, potem serwer" jest celowa: historia jest jedynym źródłem, z którego
+da się cofnąć przebieg, więc powstaje ZANIM cokolwiek ruszy. Porażka zapisu = błąd przebiegu
+(pole `blad`, panel pokazuje czerwony komunikat), nie sukces z pustą historią; `przeniesionych`
+liczy wyłącznie ruchy potwierdzone przez serwer.
 
 ### 9.1. Konfiguracja skrzynki (`segm_skrzynka_ustawienia()`)
 
@@ -504,8 +519,20 @@ opcji `segm_zgoda_przenoszenie`. Samo potwierdzenie niczego nie włącza. Ustawi
   między wyświetleniem strony a kliknięciem cron mógł dorzucić nowszy przebieg.
 - Nowy UID wiadomości bierzemy z kodu odpowiedzi `COPYUID` (RFC 4315). Gdy serwer go
   nie zwróci, szukamy wiadomości po nagłówku `Message-ID`.
-- Gdy i to zawiedzie, pozycja historii dostaje wyjaśnienie „przenieś ją ręcznie",
-  a przebieg **nie** jest oznaczany jako cofnięty w całości.
+- **UIDVALIDITY** (RFC 3501 §2.3.1.1): przy przenoszeniu zapisujemy `UIDVALIDITY` folderu
+  docelowego (z `COPYUID`, a bez niego ze `STATUS`). Przy cofaniu porównujemy ją z bieżącą
+  — gdy się różni (folder skasowany i założony na nowo), zapamiętanemu UID-owi nie ufamy
+  i szukamy po `Message-ID`; inaczej „cofnęlibyśmy" obcą wiadomość o tym samym numerze.
+- Pozycje `w_toku` (przebieg urwał się między `UID MOVE` a potwierdzeniem) cofamy po
+  `Message-ID`; gdy wiadomości nie ma w folderze docelowym, pozycja dostaje wyjaśnienie.
+- **Liczymy skutek, nie status** (RFC 3501 §6.4.8: `UID MOVE` nieistniejącego UID-a kończy
+  się `OK`): `Segm_Imap::przenies()` uznaje ruch za udany tylko przy niepustym `COPYUID`,
+  a na serwerze bez UIDPLUS — po porównaniu stanu folderu przed i po. Wiadomość, którą
+  właściciel w międzyczasie przeciągnął gdzie indziej, dostaje BŁĄD przy swojej pozycji,
+  `cofnietych` jej nie liczy.
+- Gdy którakolwiek pozycja zawiedzie, pozycja historii dostaje wyjaśnienie „sprawdź ją
+  ręcznie", a przebieg **nie** jest oznaczany jako cofnięty w całości — przycisk zostaje
+  i drugą próbę da się zrobić.
 
 ---
 
@@ -689,17 +716,21 @@ domyślnie wyłączonej): 7 tabel, `segm_ustawienia`, `segm_skrzynka`,
 | Wyjście | `esc_html` / `esc_attr` / `esc_url`; dziennik protokołu przez `esc_html` w `<pre>` | panel |
 | Wstrzyknięcie formuły do arkusza | pola zaczynające się od `=`, `+`, `-`, `@` poprzedzane apostrofem przy eksporcie CSV | `csv.php` |
 | Import pliku | limit rozmiaru (5 MB), limit wierszy (500, **z przerwaniem czytania**), limit długości pola (2000), wykrywanie kodowania | `csv.php` |
-| Wyścig operacji | znacznik `segm_operacja_w_toku` z terminem ważności 120 s przed każdą operacją ruszającą dane | plik główny |
+| Wyścig operacji | zamek `segm_operacja_w_toku` zajmowany atomowo (`INSERT IGNORE` po kluczu unikalnym `option_name`, wynik = liczba wierszy), odczyt stanu prosto z bazy z pominięciem cache opcji, termin ważności 120 s | plik główny |
 | Certyfikat TLS | `verify_peer` i `verify_peer_name` **włączone domyślnie**; wyłączenie to świadomy przełącznik z ostrzeżeniem | `class-segm-imap.php` |
 | Poświadczenia w logach | `LOGIN` w dzienniku ma argument zamaskowany `****`; hasło nie trafia do HTML panelu | `class-segm-imap.php` |
 | Zakaz `error_log()` | logowanie przez `wp_trigger_error()` (respektuje `WP_DEBUG`) | `segm_log_bledu_bazy()` |
 
-Uczciwie o **granicy znacznika `segm_operacja_w_toku`**: to znacznik sprawdzany przed
-startem, **nie blokada atomowa**. `add_option()`/`get_option()` idą przez cache opcji,
-więc dwa żądania trafione co do milisekundy mogą oba przejść. Zamyka realny scenariusz
-(dwie karty, kliknięcia w odstępie sekund), a nie teoretyczny wyścig o milisekundę —
-ten drugi łapie osobne sprawdzenie na końcu przebiegu na próbce (czy liczba wierszy
-się nie zmieniła). Pełna atomowość wymagałaby osobnej tabeli z unikalnym kluczem.
+Zamek `segm_operacja_w_toku` jest **atomowy na poziomie bazy**: zajęcie to jeden
+`INSERT IGNORE` do `wp_options` (klucz unikalny `option_name`) i liczy się liczba wierszy
+(1 = nasz, 0 = ktoś był szybszy, błąd bazy = odmowa); stan czytamy prosto z bazy, bo cache
+opcji procesu nie widzi wpisu zrobionego sekundę temu przez inny proces. `add_option()`
+do tego się nie nadaje — sprawdza istnienie w pamięci procesu i robi
+`INSERT … ON DUPLICATE KEY UPDATE`, który nadpisuje cudzy wiersz i melduje sukces.
+Znacznik po procesie, który padł (`do` w przeszłości) albo w obcym kształcie (bez pola
+`do`) jest przejmowany — kasowany **po wartości**, nie po nazwie, żeby nie zdjąć zamka,
+który w międzyczasie zajął kto inny. Dodatkowo przebieg na próbce sprawdza na końcu,
+czy liczba wierszy się nie zmieniła.
 
 ---
 
@@ -739,11 +770,11 @@ się nie zmieniła). Pełna atomowość wymagałaby osobnej tabeli z unikalnym k
 | # | Miejsce | Plik | Pytanie, które warto zadać |
 |---|---|---|---|
 | 1 | przerwanie połączenia w połowie przenoszenia | `skrzynka-przebieg.php`, `class-segm-imap.php::przenies()` | co zostaje w bazie i na serwerze, gdy sieć padnie **między** `UID COPY` a `UID EXPUNGE`? Czy wiadomość może zniknąć z obu folderów naraz, czy tylko zdublować się? |
-| 2 | odzyskanie poczty po błędnym przebiegu | `segm_skrzynka_cofnij()` | czy da się odzyskać maile, gdy serwer nie zwrócił `COPYUID` **i** wiadomość nie ma `Message-ID`? Co, gdy właściciel w międzyczasie ruszył ją ręcznie? |
+| 2 | odzyskanie poczty po błędnym przebiegu | `segm_skrzynka_cofnij()` | czy da się odzyskać maile, gdy serwer nie zwrócił `COPYUID` **i** wiadomość nie ma `Message-ID`? Wiadomość ruszona ręcznie przez właściciela dostaje błąd przy pozycji (pilnuje tego strażnik w repozytorium) — a co z serwerem bez UIDPLUS, gdzie skutek mierzymy stanem folderu? |
 | 3 | hasło do cudzej skrzynki | `skrzynka.php`, `class-segm-imap.php::zapisz_dziennik()` | czy hasło wycieka gdziekolwiek: do dziennika protokołu, do HTML panelu, do logu PHP przy błędzie, do kopii zapasowej bazy, do transientu z komunikatem? |
 | 4 | „na sucho" jako obietnica | `segm_skrzynka_przebieg()` | czy istnieje **jakakolwiek** ścieżka, którą przebieg na sucho wysyła polecenie zmieniające stan skrzynki? Czy `EXAMINE` na pewno jest użyte przy każdym wejściu? |
 | 5 | dwa warunki realnego przenoszenia | `segm_przenoszenie_dozwolone()` | czy da się przenosić realnie, mając tylko jeden z dwóch warunków? Co po ręcznej edycji opcji w bazie? |
-| 6 | wyścig dwóch przebiegów | `segm_zajmij_blokade()` | co robi cron odpalony w środku przebiegu ręcznego? Znacznik **nie jest** atomowy — jakie są skutki podwójnego wejścia? |
+| 6 | wyścig dwóch przebiegów | `segm_zajmij_blokade()` | co robi cron odpalony w środku przebiegu ręcznego? Zamek jest atomowy (`INSERT IGNORE`, pilnuje tego strażnik w repozytorium) — ale co, gdy przebieg trwa dłużej niż 120 s i zamek zostaje przejęty w trakcie? |
 | 7 | limit czasu przebiegu | `SEGM_SKRZ_LIMIT_CZASU` | co się dzieje z wiadomościami, których przebieg nie zdążył ruszyć? Czy następny przebieg weźmie je poprawnie, czy pominie? |
 | 8 | weryfikacja certyfikatu | `class-segm-imap.php::polacz()` | czy `ufaj_bez_cert` da się włączyć niechcący? Czy przy wyłączonej weryfikacji ostrzeżenie jest widoczne w miejscu decyzji, czy tylko w instrukcji? |
 | 9 | nazwy folderów z polskimi znakami | `Segm_Imap::do_utf7()` | co się stanie, gdy `mbstring` nie zna `UTF7-IMAP`? Czy powstanie folder o przekręconej nazwie, czy operacja padnie z komunikatem? |
