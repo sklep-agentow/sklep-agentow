@@ -729,7 +729,20 @@ function chatl_strona_historia() {
 				<?php foreach ( $wymiany as $w ) : ?>
 					<tr>
 						<td><?php echo esc_html( $w->utworzono ); ?></td>
-						<td><?php echo 'gosc' === $w->rola ? 'Gość' : ( 'ai' === $w->silnik ? 'Bot (AI)' : 'Bot (reguły)' ); ?></td>
+						<?php
+						/*
+						 * Nazwa roli z chatl_nazwa_roli() — tego samego źródła co eksport
+						 * RODO i CSV (P2-Z4). Wcześniej panel miał TRZECIĄ własną mapę
+						 * „wszystko poza gościem to Bot", więc wiadomość konsultanta była
+						 * tu podpisana „Bot (reguły)". Silnik dopisujemy tylko przy bocie:
+						 * to informacja o TYM, czym odpowiedział, a nie o tym, KTO pisał.
+						 */
+						$kto_pisal = chatl_nazwa_roli( $w->rola );
+						if ( 'bot' === $w->rola ) {
+							$kto_pisal .= 'ai' === $w->silnik ? ' (AI)' : ' (reguły)';
+						}
+						?>
+						<td><?php echo esc_html( $kto_pisal ); ?></td>
 						<td><?php echo esc_html( $w->tresc ); ?></td>
 					</tr>
 				<?php endforeach; ?>
