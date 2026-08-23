@@ -17,7 +17,8 @@
  *   B. (WK-4) wiersz „Rozszerzenie PHP imap" — napis w kolumnie stanu zgadza
  *      się z pierwszym zdaniem opisu (żadnego „✔ jest" obok „Nieobecne");
  *      pozostałe wiersze mają domyślne znaczniki;
- *   C. (WK-13) komunikat połączenia zaczyna się zdaniem po polsku, kod
+ *   C. (WK-13) komunikat połączenia zaczyna się zdaniem po polsku — także przy
+ *      LITERÓWCE w adresie serwera, gdzie PHP daje `errno = 0` — kod
  *      systemowy zostaje w części „szczegóły techniczne"; para port+szyfrowanie
  *      dostaje własne zdanie; poprawne połączenie nadal działa;
  *   D. (A4-F3) pole wyboru szyfrowania ma `id` i etykietę `<label for>`.
@@ -97,7 +98,9 @@ if ( segm_klucz_ze_stalej() ) {
 	$p = segmk_pasek();
 	printf( "  pasek: %s\n", mb_substr( $p['tekst'], 0, 200 ) );
 	segmk( '' !== $p['tekst'], 'pasek w ogole sie pokazuje (wlasciciel wie, ze AI nie dziala)' );
-	segmk( false === mb_stripos( $p['tekst'], 'ZOSTAŁ ODRZUCONY' ) || false === mb_stripos( $p['tekst'], 'czy jest wpisany w całości' ), 'BEZ klucza pasek NIE zarzuca, ze klucz wlasciciela zostal odrzucony', $p['tekst'] );
+	// AND, nie OR: zniknięcie JEDNEGO z dwóch zdań nie wystarczy — regresja,
+	// która przywróci samo „KLUCZ API ZOSTAŁ ODRZUCONY", ma ten test ZAPALIĆ.
+	segmk( false === mb_stripos( $p['tekst'], 'ZOSTAŁ ODRZUCONY' ) && false === mb_stripos( $p['tekst'], 'czy jest wpisany w całości' ), 'BEZ klucza pasek NIE zarzuca, ze klucz wlasciciela zostal odrzucony', $p['tekst'] );
 	segmk( false !== mb_stripos( $p['tekst'], 'nie ma klucza' ), 'pasek mowi WPROST, ze klucza nie ma' );
 	segmk( false !== mb_stripos( $p['tekst'], 'console.anthropic.com' ) || false !== mb_stripos( $p['tekst'], SEGM_STALA_KLUCZA ), 'pasek mowi, SKAD wziac klucz i gdzie go wpisac' );
 	segmk( false !== mb_stripos( $p['tekst'], 'regułowy jest pełnoprawny' ), 'pasek uspokaja: bez klucza wtyczka dziala regulami' );
@@ -154,7 +157,23 @@ $k2 = new Segm_Imap( 5 );
 $k2->polacz( 'segm_imap', 3143, 'ssl' );
 $blad2 = $k2->blad();
 printf( "  %s\n", mb_substr( $blad2, 0, 200 ) );
-segmk( false !== mb_stripos( $blad2, 'szyfrowani' ), 'niedobrana para port+szyfrowanie dostaje wlasne zdanie', mb_substr( $blad2, 0, 120 ) );
+// Stary komunikat tez zawieral slowo „szyfrowanie" („Sprawdź adres serwera, port
+// i szyfrowanie") — asercja musi trafiac w zdanie charakterystyczne dla NOWEGO.
+segmk( false !== mb_stripos( $blad2, 'nie udało się zestawić szyfrowania' ), 'niedobrana para port+szyfrowanie dostaje wlasne zdanie', mb_substr( $blad2, 0, 140 ) );
+segmk( false === mb_stripos( $blad2, 'Serwer odrzucił połączenie na tym porcie' ), 'blad TLS nie jest mylony z odmowa polaczenia', mb_substr( $blad2, 0, 100 ) );
+
+// (recenzja #163) Literowka w adresie to NAJCZESTSZY blad wlasciciela, a PHP
+// ustawia przy niej errno = 0 — rozpoznanie musi isc po TRESCI komunikatu,
+// nie po kodzie; wczesniej ta galaz byla martwa.
+$k_dns = new Segm_Imap( 5 );
+$k_dns->polacz( 'imap.segmk-nie-istnieje.example', 993, 'ssl' );
+$blad3 = $k_dns->blad();
+printf( "  %s\n", mb_substr( $blad3, 0, 230 ) );
+segmk( false !== mb_stripos( $blad3, 'Nie udało się odnaleźć serwera o tym adresie' ), 'literowka w adresie: komunikat NAZYWA przyczyne po polsku', mb_substr( $blad3, 0, 120 ) );
+segmk( false !== mb_stripos( $blad3, 'literówki' ), 'komunikat mowi, co sprawdzic (literowka w polu „Serwer IMAP")' );
+segmk( false === mb_stripos( mb_substr( $blad3, 0, 150 ), 'getaddrinfo' ), 'pierwsze zdanie NIE jest angielskim komunikatem sterownika', mb_substr( $blad3, 0, 120 ) );
+segmk( false !== mb_stripos( $blad3, 'Szczegóły techniczne' ) && false !== mb_stripos( $blad3, 'getaddrinfo' ), 'komunikat sterownika ZOSTAJE w czesci technicznej' );
+segmk( false === mb_stripos( $blad3, 'zestawić szyfrowania' ), 'blad nazwy NIE jest przypisywany szyfrowaniu (mimo „ssl://" w tresci)', mb_substr( $blad3, 0, 120 ) );
 
 $k3 = new Segm_Imap( 10 );
 $ok3 = $k3->polacz( 'segm_imap', 3143, 'brak' ) && $k3->zaloguj( 'szef', 'tajne1234' );

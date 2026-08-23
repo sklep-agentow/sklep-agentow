@@ -69,7 +69,7 @@ leży w pliku `LICENSE` w katalogu wtyczki i wchodzi do paczki produktowej.
 | `includes/admin.php` | 1503 | panel: przebiegi i raporty, reguły, kategorie, próbka, ustawienia, baner powitalny, paski błędu AI i błędu bazy |
 | `includes/konfiguracja.php` | 360 | eksport i import własnej konfiguracji (kategorie + reguły) w JSON-ie |
 | `includes/filtry.php` | 588 | eksport reguł do filtrów Gmaila (XML) i reguł Outlooka |
-| `includes/class-segm-imap.php` | 1110 | **klient IMAP4rev1 w czystym PHP** — gniazdo, TLS, protokół |
+| `includes/class-segm-imap.php` | 1123 | **klient IMAP4rev1 w czystym PHP** — gniazdo, TLS, protokół |
 | `includes/skrzynka.php` | 534 | konfiguracja skrzynki, hasło, diagnostyka, „Sprawdź połączenie", rozbiór nagłówków i treści |
 | `includes/skrzynka-przebieg.php` | 741 | przebieg na żywej skrzynce, historia, cofanie, harmonogramy WP-Cron |
 | `includes/admin-skrzynka.php` | 766 | panel zakładki *Skrzynka (IMAP)* i obsługa jej formularzy |
@@ -660,11 +660,24 @@ pokazywała „✔ jest" obok opisu zaczynającego się od „Nieobecne" i kupuj
 czytał to jako błąd w tabelce (WK-4).
 
 **Błędy połączenia mówią po polsku, kod zostaje** (WK-13). `Segm_Imap::po_ludzku()`
-tłumaczy kod `errno` gniazda (111 odrzucone połączenie, 110 brak odpowiedzi,
-113 brak drogi, -3 nierozwiązana nazwa) oraz rozpoznaje błąd TLS na pierwsze
-zdanie z podpowiedzią, co sprawdzić; komunikat systemowy i kod idą na koniec,
-w części „Szczegóły techniczne (do wklejenia hostingodawcy)". Nieznany kod
-dostaje zdanie ogólne, nie pustkę.
+składa pierwsze zdanie z podpowiedzią, co sprawdzić; komunikat systemowy i kod
+idą na koniec, w części „Szczegóły techniczne (do wklejenia hostingodawcy)".
+Nieznany kod dostaje zdanie ogólne, nie pustkę.
+
+⛔ **Kolejność rozpoznawania: najpierw TREŚĆ komunikatu systemowego, potem kod.**
+Przy nierozwiązanej nazwie serwera — literówka w adresie, najczęstszy błąd
+właściciela — PHP ustawia `errno = 0`, a nie `-3` (zmierzone na PHP 8.4:
+`php_network_getaddresses: getaddrinfo … Name or service not known`). Gdyby
+czytać najpierw kod, ta gałąź byłaby martwa. Rozpoznajemy więc po treści:
+`getaddrinfo`/`php_network_getaddresses` → „nie udało się odnaleźć serwera o tym
+adresie, sprawdź literówkę"; komunikaty warstwy szyfrowania (`SSL routines`,
+`certificate verify`, `enable crypto`, `wrong version number`, `handshake`) →
+zdanie o niedobranej parze port + szyfrowanie. Dopasowanie TLS jest celowo
+WĄSKIE: samo „ssl" występuje też w naszym własnym adresie (`ssl://host:993`),
+więc szeroki wzorzec przypisywałby winę szyfrowaniu przy każdej porażce i mówił
+„serwer odpowiedział" tam, gdzie nikt nie odebrał. Dopiero po tych dwóch
+próbach czytamy `errno` (111 odrzucone połączenie, 110 brak odpowiedzi,
+113 brak drogi, 101 brak sieci).
 
 **„Przetestuj klucz API”** (Ustawienia) wysyła JEDNO wywołanie ze słowem
 „ping”. ⛔ Żadnego maila, żadnej treści z próbki — to test poświadczeń, nie

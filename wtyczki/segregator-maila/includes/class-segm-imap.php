@@ -220,10 +220,9 @@ class Segm_Imap {
 			// wyciągamy go stamtąd, zamiast zbyć właściciela ogólnikiem.
 			$szczegol   = '' === $errstr ? $this->opis_ostrzezen() : $errstr;
 			$this->blad = sprintf(
-				'Połączenie z serwerem poczty %s nie doszło do skutku. %s%sSzczegóły techniczne (do wklejenia hostingodawcy): %s%s.',
+				'Połączenie z serwerem poczty %s nie doszło do skutku. %s Szczegóły techniczne (do wklejenia hostingodawcy): %s%s.',
 				$host . ':' . (int) $port,
 				self::po_ludzku( $errno, $szczegol ),
-				' ',
 				$szczegol,
 				$errno > 0 ? ' (kod systemowy ' . (int) $errno . ')' : ''
 			);
@@ -1003,7 +1002,26 @@ class Segm_Imap {
 	 * @return string Zdanie po polsku, zakończone kropką.
 	 */
 	private static function po_ludzku( $errno, $szczegol ) {
-		if ( false !== stripos( $szczegol, 'ssl' ) || false !== stripos( $szczegol, 'certificate' ) || false !== stripos( $szczegol, 'crypto' ) ) {
+		/*
+		 * ⛔ KOLEJNOŚĆ MA ZNACZENIE: najpierw treść komunikatu systemowego,
+		 * dopiero potem kod. Przy nierozwiązanej nazwie serwera (literówka
+		 * w adresie — najczęstszy błąd właściciela) PHP ustawia `errno = 0`,
+		 * a nie -3: zmierzone na PHP 8.4, `php_network_getaddresses:
+		 * getaddrinfo for … failed: Name or service not known`. Gdyby kod
+		 * czytać pierwszy, ta gałąź byłaby martwa i właściciel dostawałby
+		 * ogólnik plus angielski komunikat sterownika.
+		 */
+		if ( false !== stripos( $szczegol, 'getaddrinfo' ) || false !== stripos( $szczegol, 'php_network_getaddresses' ) || false !== stripos( $szczegol, 'name or service not known' ) || false !== stripos( $szczegol, 'no address associated' ) ) {
+			return 'Nie udało się odnaleźć serwera o tym adresie — nazwa nie zamienia się na adres w sieci. Sprawdź, czy w polu „Serwer IMAP" nie ma literówki (dla Gmaila jest to imap.gmail.com).';
+		}
+		/*
+		 * Heurystyka TLS musi być WĄSKA: samo „ssl" pada też w naszym własnym
+		 * adresie (`Unable to connect to ssl://host:993`), więc szeroki wzorzec
+		 * przypisywał winę szyfrowaniu przy każdej porażce połączenia — i mówił
+		 * „serwer odpowiedział", gdy nikt nie odebrał. Dopasowujemy komunikaty,
+		 * które NAPRAWDĘ pochodzą z warstwy szyfrowania.
+		 */
+		if ( preg_match( '/SSL routines|certificate verify|enable crypto|wrong version number|sslv3|tlsv1|handshake/i', $szczegol ) ) {
 			return 'Serwer odpowiedział, ale nie udało się zestawić szyfrowania. Najczęstsza przyczyna to niedobrana para port + szyfrowanie (993 idzie z „SSL/TLS od razu", 143 ze „STARTTLS"); przy serwerze z certyfikatem podpisanym przez siebie pomaga opcja pomijania weryfikacji certyfikatu.';
 		}
 		$opisy = array(
@@ -1011,16 +1029,11 @@ class Segm_Imap {
 			110 => 'Serwer nie odpowiedział w wyznaczonym czasie. Zwykle blokuje to zapora hostingu albo adres jest niewłaściwy.',
 			113 => 'Do tego serwera nie ma drogi z Twojego hostingu — połączenia wychodzące są zablokowane albo adres jest zły.',
 			101 => 'Twój hosting nie ma połączenia z siecią, którą trzeba przejść do tego serwera.',
-			-3  => 'Nie udało się odnaleźć adresu serwera (nazwa nie zamienia się na adres). Sprawdź, czy adres nie ma literówki.',
-			0   => 'Połączenia w ogóle nie udało się otworzyć.',
 		);
 		if ( isset( $opisy[ (int) $errno ] ) ) {
 			return $opisy[ (int) $errno ];
 		}
-		if ( false !== stripos( $szczegol, 'resolve' ) || false !== stripos( $szczegol, 'getaddrinfo' ) ) {
-			return $opisy[-3];
-		}
-		return 'Sprawdź adres serwera, numer portu i wybrane szyfrowanie — najczęściej to one się nie zgadzają.';
+		return 'Sprawdź adres serwera, numer portu i wybrane szyfrowanie — najczęściej to one się nie zgadzają. Gdy wszystko wygląda dobrze, przeszkodą bywa zapora hostingu blokująca połączenia wychodzące.';
 	}
 
 	/**
