@@ -270,7 +270,16 @@ op_naglowki() {
 op_opcja() {
 	sprawdz_nazwe "$1" "nazwa opcji"
 	printf '=== wp option get %s ===\n' "$1"
-	wp_odczyt option get "$1"
+	# ⛔ SEKRETY NIE WYCHODZĄ NA STDOUT. Wyjście tego okna ląduje w logach akcji GitHuba
+	#    (recenzent) — 23.08 recenzent zobaczył w nich pełny klucz API dostawcy. Opcje,
+	#    których nazwa mówi „klucz / hasło / token / sekret", dostają tylko DŁUGOŚĆ i 4 znaki
+	#    ogona — wystarczy, żeby stwierdzić obecność i zmianę, za mało, żeby użyć.
+	case "$1" in
+		*klucz*|*haslo*|*hasło*|*token*|*sekret*|*secret*|*password*|*api_key*)
+			local W; W="$(wp_odczyt option get "$1" 2>&1)"
+			if printf '%s' "$W" | grep -q "Could not get"; then printf '(opcja nie istnieje)\n'; else printf '[SEKRET ZAMASKOWANY] długość=%s ogon=…%s\n' "${#W}" "${W: -2}"; fi ;;
+		*) wp_odczyt option get "$1" ;;
+	esac
 }
 
 op_opcje() {
