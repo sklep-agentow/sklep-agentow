@@ -118,7 +118,9 @@ function segm_utworz_tabele() {
  */
 function segm_aktywacja() {
 	segm_utworz_tabele();
-	update_option( 'segm_wersja_schematu', SEGM_WERSJA_SCHEMATU );
+	if ( ! segm_zapisz_opcje( 'segm_wersja_schematu', SEGM_WERSJA_SCHEMATU ) ) {
+		segm_log_bledu_bazy( 'segm_aktywacja', 'zapis wersji schematu ' . SEGM_WERSJA_SCHEMATU );
+	}
 	segm_seed_demo();
 
 	if ( ! wp_next_scheduled( 'segm_czyszczenie_probki' ) ) {
@@ -128,7 +130,12 @@ function segm_aktywacja() {
 	// Zapala ekran powitalny. Samo przekierowanie robi admin_init, bo z uchwytu
 	// aktywacji nie wolno przekierowywać — WordPress jest w środku własnej
 	// procedury i po drodze potrafi jeszcze coś wypisać.
-	update_option( 'segm_powitanie_gotowe', 1 );
+	// Zapis MIERZONY jak reszta (A2-F4): gdy padnie, właściciel nie zobaczy
+	// ekranu powitalnego i nie będzie wiedział dlaczego — ślad w pasku błędu
+	// bazy jest wtedy jedynym sygnałem, że to nie „wtyczka się nie włączyła".
+	if ( ! segm_zapisz_opcje( 'segm_powitanie_gotowe', 1 ) ) {
+		segm_log_bledu_bazy( 'segm_aktywacja', 'znacznik ekranu powitalnego' );
+	}
 }
 
 /**

@@ -337,7 +337,7 @@ function segm_pasek_stron( $strona, $wszystkich, $biezaca, $dodatkowe = array() 
 }
 
 /**
- * Komunikat po powrocie z admin-post (?segm_ok=... / ?segm_blad=...).
+ * Komunikat po powrocie z admin-post (?segm_ok=... / ?segm_uwaga=... / ?segm_blad=...).
  */
 function segm_komunikaty() {
 	// phpcs:disable WordPress.Security.NonceVerification.Recommended -- tylko odczyt komunikatu.
@@ -385,6 +385,9 @@ function segm_komunikaty() {
 				echo '<div class="notice notice-warning is-dismissible"><p>Plik ma więcej niż ' . (int) SEGM_IMPORT_MAX_WIERSZY . ' wierszy — wzięliśmy pierwsze ' . (int) SEGM_IMPORT_MAX_WIERSZY . ' i <strong>dalszej części pliku w ogóle nie czytaliśmy</strong> (dlatego import był szybki). Do testu reguł taka próbka wystarcza; jeśli chcesz sprawdzić inny fragment skrzynki, wytnij go w arkuszu i wgraj osobno.</p></div>';
 			}
 		}
+	}
+	if ( isset( $_GET['segm_uwaga'] ) ) {
+		echo '<div class="notice notice-warning is-dismissible"><p>' . esc_html( sanitize_text_field( wp_unslash( $_GET['segm_uwaga'] ) ) ) . '</p></div>';
 	}
 	if ( isset( $_GET['segm_blad'] ) ) {
 		echo '<div class="notice notice-error is-dismissible"><p>' . esc_html( sanitize_text_field( wp_unslash( $_GET['segm_blad'] ) ) ) . '</p></div>';
@@ -1362,26 +1365,42 @@ function segm_post_ustawienia_zapisz() {
 	check_admin_referer( 'segm_ustawienia_zapisz' );
 
 	$stare = segm_ustawienia();
-	$nowe  = array_merge(
+	$uwagi = array();
+	// Pole liczbowe puste albo nie-liczba NIE nadpisuje poprzedniej wartości
+	// (KR4 — ta sama klasa co port/limit skrzynki): `max( 1, (int) '' )` robiło
+	// z pustego pola limit 1 i mówiło „Zapisano".
+	$limit_ai = segm_liczba_z_pola( 'ai_limit_dzienny', (int) $stare['ai_limit_dzienny'], 1, 100000, 'dzienny limit wywołań AI', $uwagi );
+	$nowe     = array_merge(
 		$stare,
 		array(
 			'usun_dane'        => empty( $_POST['usun_dane'] ) ? 0 : 1,
-			'ai_limit_dzienny' => isset( $_POST['ai_limit_dzienny'] ) ? max( 1, min( 100000, (int) $_POST['ai_limit_dzienny'] ) ) : $stare['ai_limit_dzienny'],
+			'ai_limit_dzienny' => $limit_ai,
 			'ai_model'         => segm_wybrany_model( $stare['ai_model'] ),
 		)
 	);
 	if ( ! segm_zapisz_opcje( 'segm_ustawienia', $nowe ) ) {
 		segm_log_bledu_bazy( 'segm_post_ustawienia_zapisz', 'ustawienia wtyczki (limit AI, usuwanie danych)' );
-		segm_przekieruj_blad( 'segm-ustawienia', 'Nie udało się zapisać ustawień — baza odrzuciła zapis. Obowiązują POPRZEDNIE ustawienia (m.in. dzienny limit wywołań AI).' );
+		segm_przekieruj_blad( 'segm-ustawienia', 'Nie udało się zapisać ustawień — baza odrzuciła zapis. Obowiązują POPRZEDNIE ustawienia (m.in. dzienny limit wywołań AI); klucz API nie był w tym kroku zapisywany.' );
 	}
 
 	// Klucz API: osobna opcja (autoload=no), nigdy nie wraca do formularza.
+	// Wynik zapisu MIERZONY (A2-F3): bez tego „Przetestuj klucz" testował stary
+	// klucz i dawał zielone potwierdzenie klucza, którego nie było w bazie.
+	$klucz_ok = true;
 	if ( ! empty( $_POST['usun_klucz'] ) ) {
-		segm_zapisz_klucz( '' );
+		$klucz_ok = segm_zapisz_klucz( '' );
 	} elseif ( isset( $_POST['klucz_api'] ) && '' !== trim( (string) wp_unslash( $_POST['klucz_api'] ) ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- warunek tylko bada niepustość; zapisywana wartość przechodzi sanitize_text_field() linijkę niżej.
-		segm_zapisz_klucz( sanitize_text_field( wp_unslash( $_POST['klucz_api'] ) ) );
+		$klucz_ok = segm_zapisz_klucz( sanitize_text_field( wp_unslash( $_POST['klucz_api'] ) ) );
+	}
+	if ( ! $klucz_ok ) {
+		segm_log_bledu_bazy( 'segm_post_ustawienia_zapisz', 'klucz API' );
+		segm_przekieruj_blad( 'segm-ustawienia', 'Pozostałe ustawienia zapisane, ale KLUCZ API NIE został zapisany — baza odrzuciła zapis. W bazie zostaje poprzedni klucz (albo żaden); „Przetestuj klucz" sprawdziłby teraz stary klucz. Sprawdź stan bazy i wpisz klucz ponownie.' );
 	}
 
+	if ( $uwagi ) {
+		wp_safe_redirect( admin_url( 'admin.php?page=segm-ustawienia&segm_uwaga=' . rawurlencode( 'Zapisano, ALE: ' . implode( ' ', $uwagi ) . ' Popraw pole i zapisz ponownie.' ) ) );
+		exit;
+	}
 	wp_safe_redirect( admin_url( 'admin.php?page=segm-ustawienia&segm_ok=zapisano' ) );
 	exit;
 }

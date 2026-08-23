@@ -100,15 +100,48 @@ function segm_log_bledu_bazy( $funkcja, $operacja ) {
  * Przy padniętym zapisie update_option() wychodzi PRZED zasileniem cache'u,
  * więc get_option() zwraca wtedy starą wartość i różnica jest widoczna.
  *
- * @param string $nazwa   Nazwa opcji.
- * @param mixed  $wartosc Wartość do zapisania.
+ * @param string    $nazwa    Nazwa opcji.
+ * @param mixed     $wartosc  Wartość do zapisania.
+ * @param bool|null $autoload Jak w update_option() (null = bez zmiany / domyślnie).
  * @return bool True, gdy po operacji w bazie leży to, co miało tam trafić.
  */
-function segm_zapisz_opcje( $nazwa, $wartosc ) {
-	if ( update_option( $nazwa, $wartosc ) ) {
+function segm_zapisz_opcje( $nazwa, $wartosc, $autoload = null ) {
+	if ( update_option( $nazwa, $wartosc, $autoload ) ) {
 		return true;
 	}
 	return get_option( $nazwa ) === $wartosc;
+}
+
+/**
+ * Liczba z pola formularza z uczciwą obsługą pustego pola i śmieci.
+ *
+ * Pole puste, nie-liczba albo poza zakresem NIE nadpisuje poprzedniej wartości
+ * — zostaje ona w mocy, a właściciel dostaje o tym zdanie (zamiast cichego
+ * „1"). Pola nieobecnego w żądaniu nie ruszamy wcale.
+ *
+ * @param string        $pole       Nazwa pola w $_POST.
+ * @param int           $poprzednia Wartość obowiązująca przed zapisem.
+ * @param int           $min        Dolna granica (włącznie).
+ * @param int           $max        Górna granica (włącznie).
+ * @param string        $nazwa      Nazwa pola po ludzku (do komunikatu).
+ * @param array<string> $uwagi      Lista zdań dla właściciela (dopisywana).
+ * @return int Wartość do zapisania.
+ */
+function segm_liczba_z_pola( $pole, $poprzednia, $min, $max, $nazwa, &$uwagi ) {
+	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- wołane z handlerów, które nonce sprawdziły wcześniej.
+	if ( ! isset( $_POST[ $pole ] ) ) {
+		return (int) $poprzednia;
+	}
+	$surowe = trim( sanitize_text_field( wp_unslash( $_POST[ $pole ] ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
+	if ( '' === $surowe ) {
+		$uwagi[] = sprintf( 'Pole „%s" było puste — zostawiono poprzednią wartość %d.', $nazwa, (int) $poprzednia );
+		return (int) $poprzednia;
+	}
+	if ( ! ctype_digit( $surowe ) || (int) $surowe < $min || (int) $surowe > $max ) {
+		$uwagi[] = sprintf( 'Pole „%s" ma wartość „%s", a przyjmujemy liczbę całkowitą od %d do %d — zostawiono poprzednią wartość %d.', $nazwa, mb_substr( $surowe, 0, 20 ), $min, $max, (int) $poprzednia );
+		return (int) $poprzednia;
+	}
+	return (int) $surowe;
 }
 
 require_once SEGM_KATALOG . 'includes/instalator.php';
@@ -145,7 +178,12 @@ if ( is_admin() ) {
 function segm_sprawdz_schemat() {
 	if ( get_option( 'segm_wersja_schematu' ) !== SEGM_WERSJA_SCHEMATU ) {
 		segm_utworz_tabele();
-		update_option( 'segm_wersja_schematu', SEGM_WERSJA_SCHEMATU );
+		// Porażka jest idempotentna (migracja pobiegnie przy następnym żądaniu),
+		// ale ma zostawić ślad — inaczej dbDelta leciałoby przy każdym żądaniu
+		// bez jednego słowa dlaczego (A2-F4, niższa waga).
+		if ( ! segm_zapisz_opcje( 'segm_wersja_schematu', SEGM_WERSJA_SCHEMATU ) ) {
+			segm_log_bledu_bazy( 'segm_sprawdz_schemat', 'zapis wersji schematu ' . SEGM_WERSJA_SCHEMATU );
+		}
 	}
 }
 add_action( 'plugins_loaded', 'segm_sprawdz_schemat' );

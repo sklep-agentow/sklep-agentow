@@ -27,6 +27,14 @@ wersjonowanie według [SemVer](https://semver.org/lang/pl/).
   `INSERT IGNORE` i liczy wiersze, zamiast `get_option()`+`add_option()` (które nadpisywało
   cudzy wpis i wpuszczało dwie operacje naraz); stan czyta prosto z bazy. Znacznik
   w obcym kształcie (bez terminu) nie blokuje już wtyczki na zawsze.
+- **Zapis klucza API ma wynik** (A2-F3): `segm_zapisz_klucz()` zwraca `bool` zmierzony
+  odczytem po zapisie; gdy baza odrzuci zapis, panel mówi o niezapisanym kluczu zamiast
+  „Zapisano" (wcześniej „Przetestuj klucz" testował stary klucz i dawał zielone
+  potwierdzenie). Znacznik awarii trybu AI, wersja schematu — zapis mierzony, porażka
+  zostawia ślad błędu bazy (A2-F4).
+- **Puste pole liczbowe nie zjeżdża po cichu do 1** (KR4): port i limit skrzynki oraz
+  dzienny limit wywołań AI — pole puste, nie-liczba albo poza zakresem zostawia
+  poprzednią wartość, a właściciel dostaje ostrzeżenie zamiast „Zapisano".
 
 ---
 
