@@ -231,6 +231,7 @@ function sklepag_tresc_produktu( $slug ) {
 			'galeria'      => array(
 				array(
 					'plik'   => 'segregator-maila--zywy.jpg',
+					'kadr'   => 'cover',
 					'alt'    => 'Raport przebiegu Segregatora maila w panelu WordPressa: 30 maili w próbce, pokrycie regułami 80 procent, trafność 100 procent, podział na kategorie',
 					'podpis' => 'PRAWDZIWY RAPORT Z PANELU — LICZBY BEZ RETUSZU',
 					'szer'   => 1200,
@@ -540,7 +541,7 @@ function sklepag_render_produkt( $slug ) {
 			$html .= '<section class="sklepag-sekcja"><p class="sklepag-mono-etykieta">[ CO JEST W ŚRODKU ]</p>';
 			$html .= '<div class="sklepag-galeria">';
 			foreach ( $t['galeria'] as $g ) {
-				$kadr_kl = 'sklepag-galeria-kadr' . ( isset( $g['kadr'] ) && 'contain' === $g['kadr'] ? ' sklepag-galeria-kadr--contain' : '' );
+				$kadr_kl = 'sklepag-galeria-kadr' . ( isset( $g['kadr'] ) ? ' sklepag-galeria-kadr--' . sanitize_html_class( $g['kadr'] ) : '' );
 				$html   .= '<figure class="sklepag-galeria-kafel"><div class="' . esc_attr( $kadr_kl ) . '"><img src="' . esc_url( plugins_url( 'assets/w-srodku/' . $g['plik'], SKLEPAG_PLIK ) ) . '" alt="' . esc_attr( $g['alt'] ) . '" width="' . (int) $g['szer'] . '" height="' . (int) $g['wys'] . '" loading="lazy"></div>';
 				$html   .= '<figcaption class="sklepag-mono-etykieta">' . esc_html( $g['podpis'] ) . '</figcaption></figure>';
 			}

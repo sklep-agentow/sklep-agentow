@@ -973,15 +973,22 @@ a.sklepag-kup {
 	overflow: hidden;
 	background: var(--sklepag-tusz);
 }
+/* Domyslnie: PELNA szerokosc zrzutu, kadr tnie tylko DOL — zadne napisy nie sa
+   ucinane w poziomie (feedback 24.08 v3: krawedz ucinala teksty w pol slowa). */
 .sklepag-galeria-kadr img {
 	width: 100%;
+	height: auto;
+	display: block;
+}
+/* Tryb cover (np. raport z pusta prawa polowa): wypelnia kafel, tnie od prawej. */
+.sklepag-galeria-kadr--cover img {
 	height: 100%;
 	object-fit: cover;
 	object-position: top left;
-	display: block;
 }
 /* Mały pionowy zrzut (formularz widgetu): contain na ciemnym tle zamiast rozmytego upscale. */
 .sklepag-galeria-kadr--contain img {
+	height: 100%;
 	object-fit: contain;
 	object-position: center;
 }
