@@ -17,6 +17,15 @@
 > `a4-widget-konsola-kontrast.js` EXIT=2 (przyrząd pomiarowy, nie strażnik).
 > `widget-formularz.js` zszedł z tej listy 24.08 (własna migawka `adres_polityki` — uwaga 7 recenzji #168).
 > Kandydat po oddaniu: samowystarczalność dwóch pozostałych (wzorzec migawki z `pulapka-test.php`).
+>
+> **Adnotacja do [etap3-final] (uwaga 12 recenzji #168):** TSV pochodzi z drzewa `14f2cff`; późniejsze
+> commity poprawek recenzyjnych ruszyły DWA mierzone przez linię testy — `testy/nota-zapisu-test.js`
+> i `testy/widget-formularz.js` (utwardzenie migawki/restore, zero zmian w asercjach produktu) —
+> oba po zmianach uruchomione SOLO na stosie: **EXIT=0 i EXIT=0**. Kod wtyczek między `14f2cff`
+> a HEAD zmienił wyłącznie pozycję docblocka (`instalator.php`) i tekst jednej linii SVG.
+> **Jawna zaległość (uwaga 13):** diagram Segregatora NIE MA strażnika geometrii (sekcja O bramki
+> dokumentacyjnej mierzy tylko diagram ChatBota); pomiar `svg-pomiar-tekstow.js` dla Segregatora
+> wykonany ręcznie 24.08: „WSZYSTKIE TEKSTY SIE MIESZCZA". Kandydat po oddaniu: sekcja O także dla Segregatora.
 
 
 

@@ -39,7 +39,13 @@ function ustawPolityke(adres) {
 let notaMigawka = null;
 function przywrocPolityke() {
   if (notaMigawka === null) { return; }
-  wpEval('$u = chatl_ustawienia(); $u["adres_polityki"] = ' + JSON.stringify(notaMigawka) + '; update_option("chatl_ustawienia", $u);');
+  const w = wpEval('$u = chatl_ustawienia(); $u["adres_polityki"] = ' + JSON.stringify(notaMigawka) + '; update_option("chatl_ustawienia", $u); echo "OK";');
+  if (w !== 'OK') {
+    /* Pad restore NIE zeruje migawki (kolejne wywolanie, np. z .catch, sprobuje
+     * raz jeszcze) i melduje glosno — jak bliźniak w widget-formularz.js. */
+    console.error('przywrocPolityke(): restore adres_polityki PADL — stos mogl zostac ze stanem testowym');
+    return;
+  }
   notaMigawka = null;
 }
 
