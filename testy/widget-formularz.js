@@ -34,12 +34,19 @@ function ustawPolityke() {
     throw new Error('ustawPolityke(): nie odczytam migawki adres_polityki (docker/wp-cli padl) — nie ruszam stosu');
   }
   const zapis = wpEval('$u = (array) get_option("chatl_ustawienia"); $u["adres_polityki"] = ' + JSON.stringify(POLITYKA_TEST) + '; update_option("chatl_ustawienia", $u); wp_cache_flush(); echo "OK";');
-  if (zapis === null) { throw new Error('ustawPolityke(): zapis warunku wstepnego padl — nie ruszam stosu dalej'); }
+  if (zapis !== 'OK') { throw new Error('ustawPolityke(): zapis warunku wstepnego padl (' + zapis + ') — nie ruszam stosu dalej'); }
   politykaPrzed = migawka; /* dopiero po udanym zapisie jest co przywracac */
 }
 function przywrocPolityke() {
   if (politykaPrzed === null) { return; }
-  wpEval('$u = (array) get_option("chatl_ustawienia"); $u["adres_polityki"] = ' + JSON.stringify(politykaPrzed) + '; update_option("chatl_ustawienia", $u); wp_cache_flush();');
+  const w = wpEval('$u = (array) get_option("chatl_ustawienia"); $u["adres_polityki"] = ' + JSON.stringify(politykaPrzed) + '; update_option("chatl_ustawienia", $u); wp_cache_flush(); echo "OK";');
+  if (w !== 'OK') {
+    /* Restore padl: NIE zerujemy migawki (kolejne wywolanie sprobuje raz
+     * jeszcze, np. z .catch) i mowimy glosno, ze stos mogl zostac z adresem
+     * testowym — cichy pad restore to ta sama klasa co DROBNA C. */
+    console.error('przywrocPolityke(): restore adres_polityki PADL — na stosie mogl zostac ' + POLITYKA_TEST);
+    return;
+  }
   politykaPrzed = null;
 }
 
