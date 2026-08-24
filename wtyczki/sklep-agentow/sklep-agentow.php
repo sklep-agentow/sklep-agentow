@@ -148,8 +148,8 @@ function sklepag_shortcode_sklep() {
 
 	$html .= '<div class="sklepag-karty">';
 	foreach ( $produkty as $p ) {
-		// Karta: ILUSTRACJA w brandzie (D28b); zrzut żywego bota został na
-		// stronie produktu w sekcji „JAK TO WYGLĄDA" jako dowód.
+		// Karta: ILUSTRACJA w brandzie (D28b + UZUPEŁNIENIE 24.08); zrzut żywego
+		// bota jest na stronie produktu pierwszym kaflem galerii [ CO JEST W ŚRODKU ].
 		$obraz = sklepag_ilustracja_produktu( $p->slug );
 		$html .= '<article class="sklepag-karta">';
 		if ( $obraz ) {

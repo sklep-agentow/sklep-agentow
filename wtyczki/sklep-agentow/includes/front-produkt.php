@@ -309,10 +309,10 @@ function sklepag_tresc_produktu( $slug ) {
 }
 
 /**
- * Ilustracja produktu do KARTY listy (feedback Dzidka 19.08: „fajne obrazy —
+ * Ilustracja produktu do KARTY listy i HERO strony produktu (feedback Dzidka 19.08: „fajne obrazy —
  * robot segregujący maile, ktoś odpisujący na czacie"). Własne SVG w palecie
  * strony (limonkowy line-art, roboty-bliźniaki) zamiast generycznego stocka;
- * zrzut żywego bota zostaje na stronie produktu jako dowód.
+ * zrzut żywego bota jest na stronie produktu pierwszym kaflem galerii.
  *
  * @param string $slug Slug produktu.
  * @return array|null Dane obrazu (plik/alt/szer/wys) albo null.
