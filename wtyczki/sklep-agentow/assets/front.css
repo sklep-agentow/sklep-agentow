@@ -873,8 +873,20 @@ a.sklepag-kup {
 	.sklepag-vs-naglowek {
 		display: none;
 	}
-	.sklepag-vs-lewa {
-		border-bottom: 0;
+	/* Podpis kolumny wraca jako etykieta wiersza — tekst z data-kol (PHP), nie z CSS. */
+	.sklepag-vs-lewa::before,
+	.sklepag-vs-prawa::before {
+		content: attr(data-kol);
+		display: block;
+		font-family: var(--sklepag-mono);
+		font-size: 0.72rem;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--sklepag-pyl);
+		margin-bottom: 4px;
+	}
+	.sklepag-vs-prawa::before {
+		color: var(--sklepag-limonka);
 	}
 	.sklepag-vs-prawa {
 		margin-bottom: 8px;
@@ -899,4 +911,10 @@ a.sklepag-kup {
 	border: 1px solid var(--sklepag-limonka);
 	border-radius: 8px;
 	padding: 20px;
+}
+
+.sklepag-opinie-nota {
+	margin-top: 12px;
+	color: var(--sklepag-pyl);
+	font-size: 0.9rem;
 }

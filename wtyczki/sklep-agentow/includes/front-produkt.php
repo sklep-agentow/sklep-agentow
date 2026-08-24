@@ -147,8 +147,9 @@ function sklepag_tresc_produktu( $slug ) {
 			 * ⛔ OPINIE: wyłącznie PRAWDZIWE, od zweryfikowanych kupujących (D6 + UZUPEŁNIENIE
 			 * 24.08, Omnibus). Puste = sekcja się nie renderuje. Format wpisu:
 			 * array( 'treść opinii', 'Imię, firma' ). Gdy dodajesz PIERWSZĄ opinię,
-			 * USUŃ z 'uczciwosc' zdanie „Nie znajdziesz tu opinii z gwiazdkami…" — inaczej
-			 * strona zaprzeczy sama sobie.
+			 * USUŃ z 'uczciwosc' zdanie „Nie znajdziesz tu opinii z gwiazdkami…" —
+			 * o pochodzeniu opinii mówi wtedy stała NOTA renderowana razem z sekcją
+			 * (patrz sklepag_render_produkt), więc strona nie zostaje bez tego zdania.
 			 */
 			'opinie'       => array(),
 			/*
@@ -218,7 +219,7 @@ function sklepag_tresc_produktu( $slug ) {
 			'gwarancja'    => '',
 			'faq'          => array(
 				array( 'Czy muszę podpinać skrzynkę?', 'Nie musisz — możesz pracować wyłącznie na próbkach CSV. Ale możesz: wtyczka obsługuje prawdziwą skrzynkę i przenosi w niej pocztę do folderów.' ),
-				array( 'Jakie są wymagania techniczne?', 'WordPress 6.0 lub nowszy i PHP 8.1 lub nowszy — standard na dzisiejszych hostingach. Bez dodatkowych usług; tryb AI wymaga tylko Twojego klucza API.' ),
+				array( 'Jakie są wymagania techniczne?', 'WordPress 6.0 lub nowszy i PHP 8.1 lub nowszy. Praca na próbkach CSV nie potrzebuje nic więcej. Do połączenia z PRAWDZIWĄ skrzynką hosting musi mieć włączoną funkcję stream_socket_client (najtańsze hostingi bywają z nią na bakier) i rozszerzenie OpenSSL do szyfrowania — wbudowana diagnostyka wtyczki sprawdzi oba za Ciebie i powie, o co poprosić hostingodawcę. Tryb AI wymaga tylko Twojego klucza API.' ),
 				array( 'Zadziała z Microsoft 365 albo Outlook.com?', 'Nie. Tam wymagane jest logowanie OAuth, którego ta wtyczka nie obsługuje. Gmail i skrzynki hostingowe z hasłem aplikacji: tak.' ),
 				array( 'Czy coś mi się pomiesza w poczcie?', 'Domyślny tryb na sucho niczego nie rusza — pokazuje tylko, co by zrobił. Realne przenoszenie wymaga przełączenia i osobnego potwierdzenia, a ostatni przebieg da się cofnąć.' ),
 				array( 'Skąd wezmę CSV?', 'Eksport z klienta poczty (Gmail, Thunderbird, Outlook) — instrukcja pokazuje jak, krok po kroku.' ),
@@ -491,7 +492,7 @@ function sklepag_render_produkt( $slug ) {
 			$html .= '<h2 class="sklepag-sekcja-tytul">' . esc_html( $por['tytul'] ) . '</h2>';
 			$html .= '<div class="sklepag-vs"><div class="sklepag-vs-naglowek">' . esc_html( $por['kol'][0] ) . '</div><div class="sklepag-vs-naglowek sklepag-vs-bot">' . esc_html( $por['kol'][1] ) . '</div>';
 			foreach ( $por['wiersze'] as $w ) {
-				$html .= '<div class="sklepag-vs-lewa">' . esc_html( $w[0] ) . '</div><div class="sklepag-vs-prawa">' . esc_html( $w[1] ) . '</div>';
+				$html .= '<div class="sklepag-vs-lewa" data-kol="' . esc_attr( $por['kol'][0] ) . '">' . esc_html( $w[0] ) . '</div><div class="sklepag-vs-prawa" data-kol="' . esc_attr( $por['kol'][1] ) . '">' . esc_html( $w[1] ) . '</div>';
 			}
 			$html .= '</div>';
 			$html .= '<p class="sklepag-vs-przypis">' . esc_html( $por['przypis'] ) . '</p></section>';
@@ -511,7 +512,9 @@ function sklepag_render_produkt( $slug ) {
 			foreach ( $t['opinie'] as $op ) {
 				$html .= '<figure class="sklepag-opinia"><blockquote>' . esc_html( $op[0] ) . '</blockquote><figcaption class="sklepag-mono-etykieta">' . esc_html( $op[1] ) . '</figcaption></figure>';
 			}
-			$html .= '</div></section>';
+			$html .= '</div>';
+			$html .= '<p class="sklepag-opinie-nota">Publikujemy wyłącznie opinie osób, które kupiły ten produkt — przed publikacją potwierdzamy zakup w danych zamówień sklepu.</p>';
+			$html .= '</section>';
 		}
 
 		// UCZCIWOŚĆ (zamiast fejk-opinii — D6/Omnibus).
