@@ -194,3 +194,5 @@
 - **Bramka na LICZBY strony sprzedażowej** (`front-produkt.php`: „6 zrzutów", „10 par",
   „30 maili demo") — dziś prawdziwe (zmierzone w r1 #172), ale bez strażnika zgniją po cichu
   jak każda liczba; wzór: `dokumentacja-zgodnosc*.sh`.
+- **Regulamin sklepu (strona DRAFT #120)**: dopisać gwarancję satysfakcji 14 dni (D31)
+  i tryb wygaśnięcia aktualizacji przy zwrocie — przy finalizacji regulaminu w K8.

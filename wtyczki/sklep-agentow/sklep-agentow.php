@@ -3,7 +3,7 @@
  * Plugin Name: Sklep Agentów
  * Plugin URI: https://automaticai.pl/sklep/
  * Description: Sprzedawaj wtyczki-boty AI bezpośrednio ze swojej strony: płatność kartą, automatyczny mail z linkiem do pobrania, panel zamówień ze statystykami i dziennikiem logowań. Zamówienia, produkty i pliki zostają w Twojej bazie i na Twoim serwerze — bez abonamentu. Płatność obsługuje Stripe.
- * Version: 0.9.5
+ * Version: 0.9.6
  * Requires at least: 6.7
  * Requires PHP: 8.1
  * Author: Automatic AI
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SKLEPAG_WERSJA', '0.9.5' );
+define( 'SKLEPAG_WERSJA', '0.9.6' );
 define( 'SKLEPAG_WERSJA_SCHEMATU', 4 ); // v4: kolumna zamowienia.usunieto_dnia (anonimizacja RODO — K3d); v3: indeks para_logowania.
 define( 'SKLEPAG_LIMIT_POBRAN', 10 ); // Jedno źródło: INSERT zamówienia + treść maila.
 define( 'SKLEPAG_LINK_GODZIN', 72 );  // Ważność linku pobrania — jw.
@@ -105,7 +105,7 @@ function sklepag_assety_frontu() {
  * napis bez zmian od K1 — testy i K2 na nim polegają).
  */
 function sklepag_baner_testowy() {
-	return '<p class="sklepag-baner-testowy">TRYB TESTOWY — płatności nie są pobierane</p>';
+	return '<p class="sklepag-baner-testowy">TRYB TESTOWY — płatności nie są pobierane. Przetestujesz cały zakup kartą testową, nic nie płacąc.</p>';
 }
 
 /**
@@ -132,6 +132,7 @@ function sklepag_shortcode_sklep() {
 	$html .= '<h1 class="sklepag-hero-tytul"><span class="sklepag-akcent">Boty</span>, które robią robotę.</h1>';
 	$html .= '<p class="sklepag-lead">Gotowe wtyczki-boty dla Twojej firmy. Instalujesz jak każdą wtyczkę WordPressa — działają od pierwszej minuty.</p>';
 	$html .= sklepag_baner_testowy();
+	$html .= '<p class="sklepag-demo-cta">▶ Zielony bąbelek w rogu strony to ChatBot LIVE — porozmawiaj z nim, zanim kupisz.</p>';
 	// Pasek konkretów: każda pozycja ma pokrycie w kodzie/pomiarze (dok=kod):
 	// 6.0+ = „Requires at least" obu botów · czysta deinstalacja = zmierzona
 	// we wrogiej sesji botów (diff przed-po pusty) · bez abonamentu = zakup
