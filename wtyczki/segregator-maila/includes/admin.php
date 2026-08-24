@@ -1374,7 +1374,8 @@ function segm_strona_ustawienia() {
 		<?php endif; ?>
 
 		<h2>Prywatność</h2>
-		<p>Tryb regułowy: treść maili <strong>nie opuszcza</strong> Twojego WordPressa — segregacja działa lokalnie na próbce. Tryby AI: treść maili z próbki (nadawca, temat, treść) jest wysyłana do API dostawcy modelu (Anthropic) — poinformuj o tym w swojej polityce prywatności. Wtyczka nie łączy się z żadną skrzynką pocztową — pracuje na próbce, którą sam wgrywasz.</p>
+		<p>Tryb regułowy: treść maili <strong>nie opuszcza</strong> Twojego WordPressa — segregacja działa lokalnie. <strong>Na prawdziwej skrzynce (IMAP) pracują SAME REGUŁY</strong>: przebieg łączy się tylko z Twoim serwerem poczty, do dostawcy modelu nie wychodzi stamtąd nic.</p>
+		<p>Tryby AI działają wyłącznie na PRÓBCE, którą sam wgrywasz. Do API dostawcy (Anthropic) wychodzą wtedy: nadawca (190 znaków), temat (300 znaków) i treść maila z próbki (pierwsze 800 znaków), identyfikator wiersza próbki, nazwy Twoich kategorii oraz nazwa modelu; przy błędzie żądanie jest ponawiane raz. WordPress dokleja też nagłówek <code>user-agent</code> z adresem Twojej strony i wersją WordPressa (także przy „Przetestuj klucz API"). Nie wychodzą załączniki ani nagłówki techniczne maila; adresu IP nie umieszczamy w treści żądania. Przycisk „Przetestuj klucz API" wysyła wyłącznie słowo „ping". Pełna lista jest w <code>INSTRUKCJA.md</code>, rozdział <em>Deklaracja prywatności</em> — <strong>poinformuj o tym w swojej polityce prywatności</strong>.</p>
 	</div>
 	<?php
 }

@@ -407,18 +407,45 @@ reguły, próbka, przebiegi i ustawienia.
 
 - **Tryb regułowy:** treść maili NIE opuszcza Twojego WordPressa — segregacja
   działa lokalnie, próbka leży w Twojej bazie danych.
-- **Tryby AI:** treść maili z próbki (nadawca, temat, treść) jest wysyłana do
-  API dostawcy modelu (Anthropic) w celu klasyfikacji — i **nie stanie się to
-  bez Twojej wyraźnej zgody**: dopóki nie potwierdzisz jej w Ustawieniach,
-  przebieg AI w ogóle nie startuje (zamiast tego dostajesz komunikat).
-  Zgoda jest zapisywana z datą i loginem osoby, która ją wyraziła, i można ją
-  cofnąć w każdej chwili. Odinstalowanie wtyczki kasuje ją zawsze.
+- **Tryby AI — co dokładnie wychodzi z Twojego WordPressa.** Do API dostawcy
+  modelu (Anthropic, `api.anthropic.com`) leci przy klasyfikacji próbki:
+  - **nadawca** (do 190 znaków), **temat** (do 300 znaków) i **treść** maila
+    z próbki (pierwsze **800 znaków**) — dla każdego maila w partii (do 30);
+  - **identyfikator wiersza próbki** (liczba z Twojej bazy), po którym
+    przypisujemy odpowiedź modelu do maila;
+  - **nazwy Twoich kategorii** — cała lista, w poleceniu systemowym;
+  - **nazwa modelu** i limit długości odpowiedzi;
+  - **klucz API** (w nagłówku żądania, jak przy każdym logowaniu do API);
+  - **adres Twojej strony i wersja WordPressa** — WordPress dokleja je do każdego
+    żądania wychodzącego w nagłówku `user-agent` (np. `WordPress/6.8; https://twojafirma.pl`).
+    Dotyczy to **także** przycisku „Przetestuj klucz API".
+
+  **Nie wychodzi:** załączniki, nagłówki techniczne maila, `Message-ID`,
+  kolumna „kategoria oczekiwana" z próbki, ani nic z prawdziwej skrzynki IMAP
+  (patrz punkt niżej). Adresu IP **nie umieszczamy w treści żądania** — ale
+  uczciwie: adres IP Twojego serwera dostawca i tak widzi z samego połączenia,
+  bo tak działa każde połączenie w internecie.
+
+  ⚠️ Gdy żądanie nie dojdzie (błąd sieci, 429, awaria dostawcy), wtyczka
+  **ponawia je JEDEN raz** — te same dane wychodzą wtedy drugi raz.
+
+  Wszystko to **nie stanie się bez Twojej wyraźnej zgody**: dopóki nie
+  potwierdzisz jej w Ustawieniach, przebieg AI w ogóle nie startuje (zamiast
+  tego dostajesz komunikat). Zgoda jest zapisywana z datą i loginem osoby,
+  która ją wyraziła, i można ją cofnąć w każdej chwili. Odinstalowanie wtyczki
+  kasuje ją zawsze.
+- **„Przetestuj klucz API"** wysyła do dostawcy **wyłącznie słowo „ping"** —
+  ani jednego maila, ani jednego znaku z próbki (nagłówki, w tym adres strony
+  w `user-agent`, lecą jak przy każdym żądaniu). To sprawdzenie poświadczeń,
+  nie klasyfikacja.
 - **Klucz API i hasło do skrzynki:** oba możesz trzymać **poza bazą**, stałymi
   w `wp-config.php` (`SEGM_KLUCZ_API`, `SEGM_IMAP_HASLO`) — wtedy nie wychodzą
   z kopią zapasową bazy. Gdziekolwiek je trzymasz, odinstalowanie wtyczki
   kasuje je z bazy ZAWSZE.
-- **Skrzynka IMAP:** treść maili nie opuszcza Twojego serwera — wtyczka łączy
-  się bezpośrednio z Twoim serwerem poczty i klasyfikuje lokalnie, regułami.
+- **Skrzynka IMAP: na skrzynce pracują SAME REGUŁY — do dostawcy AI nie wychodzi
+  stamtąd nic.** Przebieg segregacji łączy się wyłącznie z Twoim serwerem poczty
+  i klasyfikuje lokalnie; tryb AI działa tylko na PRÓBCE, którą sam wgrywasz.
+  Treść maili ze skrzynki nie opuszcza Twojego serwera.
   Hasło aplikacji trzymane jest w osobnej opcji bez autoload (albo, zalecane,
   w `wp-config.php`) i **kasowane przy odinstalowaniu ZAWSZE**. Wiadomości
   pobieramy poleceniem `BODY.PEEK`, które **nie oznacza ich jako
