@@ -34,18 +34,65 @@ foreach ( array('chatl_czyszczenie_historii','segm_czyszczenie_probki','segm_skr
 }
 echo "=== AUDYT DANYCH: co zostaje w cronie po odinstalowaniu ===\n";
 
-$probuj = function ( $katalog, $slug, $hook, $optust ) use ( &$obcy ) {
+/*
+ * ⛔ KOPIE `wp_options` i `wp_usermeta`. Test wlacza PRAWDZIWY `uninstall.php`,
+ * ktory kasuje opcje wtyczki (`chatl_klucz_api`, `segm_imap_haslo`,
+ * `segm_skrzynka`, oba `*_ustawienia`…). Do tej poprawki podstawiany byl tylko
+ * prefiks TABEL, a `$wpdb->options` wskazywal prawdziwa tabele — wiec kazde
+ * uruchomienie tego testu KASOWALO klucz API wlasciciela i konfiguracje skrzynki
+ * na wspolnym stosie (zmierzone 23.08: po przebiegu `chatl_klucz_api` znikal,
+ * a `tokeny-koszt-test.php` padal na dwoch krokach z powodu braku klucza).
+ * Teraz `delete_option()` trafia w KOPIE: prawdziwe wiersze zostaja nietkniete,
+ * a jedynym skutkiem ubocznym jest wyczyszczony cache opcji (odbudowuje sie sam).
+ */
+$kopiuj_tabele = function ( $zrodlo, $kopia ) {
+	global $wpdb;
+	$wpdb->query( "DROP TABLE IF EXISTS `" . esc_sql( $kopia ) . "`" ); // phpcs:ignore
+	$wpdb->query( "CREATE TABLE `" . esc_sql( $kopia ) . "` LIKE `" . esc_sql( $zrodlo ) . "`" ); // phpcs:ignore
+	$wpdb->query( "INSERT INTO `" . esc_sql( $kopia ) . "` SELECT * FROM `" . esc_sql( $zrodlo ) . "`" ); // phpcs:ignore
+};
+
+/**
+ * Jedno odinstalowanie na KOPIACH tabel.
+ *
+ * @param string $katalog   Katalog wtyczki.
+ * @param string $slug      Slug do WP_UNINSTALL_PLUGIN.
+ * @param string $hook      Zaczep crona wtyczki.
+ * @param string $optust    Nazwa opcji z ustawieniami.
+ * @param int    $usun_dane 1 = sciezka B (pelne czyszczenie), 0 = sciezka A (dane zostaja).
+ */
+$probuj = function ( $katalog, $slug, $hook, $optust, $usun_dane = 1 ) use ( &$obcy, $kopiuj_tabele ) {
 	// stan wyjsciowy: zaczep wtyczki zaplanowany + zaczep CUDZEJ wtyczki zaplanowany
 	if ( ! wp_next_scheduled( $hook ) )  { wp_schedule_event( time() + DAY_IN_SECONDS, 'daily', $hook ); }
 	if ( ! wp_next_scheduled( $obcy ) )  { wp_schedule_event( time() + DAY_IN_SECONDS, 'daily', $obcy ); }
-	$u = (array) get_option( $optust, array() ); $u['usun_dane'] = 1; update_option( $optust, $u );
+	$u = (array) get_option( $optust, array() ); $u['usun_dane'] = (int) $usun_dane; update_option( $optust, $u );
 	if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) { define( 'WP_UNINSTALL_PLUGIN', $slug ); }
-	// uninstall NIE moze zrzucic prawdziwych tabel stosu: podstawiamy prefiks testowy
+	// uninstall NIE moze ruszyc prawdziwych tabel stosu: podstawiamy prefiks testowy
+	// ORAZ kopie wp_options / wp_usermeta (patrz komentarz wyzej).
 	global $wpdb; $real = $wpdb->prefix; $base = $wpdb->base_prefix;
-	$wpdb->set_prefix( 'wpaudz_' ); $wpdb->options = $base . 'options'; $wpdb->usermeta = $base . 'usermeta';
+	$kopiuj_tabele( $base . 'options', 'wpaudz_options' );
+	$kopiuj_tabele( $base . 'usermeta', 'wpaudz_usermeta' );
+	$wpdb->set_prefix( 'wpaudz_' ); $wpdb->options = 'wpaudz_options'; $wpdb->usermeta = 'wpaudz_usermeta';
 	include WP_PLUGIN_DIR . '/' . $katalog . '/uninstall.php';
+	/*
+	 * Skutek mierzymy TAM, GDZIE uninstall pisal: `wp_clear_scheduled_hook()` to
+	 * te samo `wp_options`, ktore podstawilismy kopia, wiec `wp_next_scheduled()`
+	 * po przywroceniu prawdziwej tabeli pokazywalby stan SPRZED odinstalowania
+	 * (zmierzone: wszystkie cztery przypadki „cron ZOSTAJE", takze kontrolny
+	 * Segregator, ktory robi to poprawnie). Czytamy wiec harmonogram z kopii.
+	 */
+	$surowy = $wpdb->get_var( "SELECT option_value FROM wpaudz_options WHERE option_name = 'cron'" ); // phpcs:ignore
 	$wpdb->set_prefix( $real ); $wpdb->options = $base . 'options'; $wpdb->usermeta = $base . 'usermeta';
-	return array( 'wtyczki' => (bool) wp_next_scheduled( $hook ), 'obcy' => (bool) wp_next_scheduled( $obcy ) );
+	wp_cache_flush(); // cache opcji zostal wyczyszczony przez delete_option() na kopii
+	$harm = maybe_unserialize( (string) $surowy );
+	$ma   = function ( $h ) use ( $harm ) {
+		if ( ! is_array( $harm ) ) { return false; }
+		foreach ( $harm as $kiedy => $zaczepy ) {
+			if ( is_array( $zaczepy ) && isset( $zaczepy[ $h ] ) ) { return true; }
+		}
+		return false;
+	};
+	return array( 'wtyczki' => $ma( $hook ), 'obcy' => $ma( $obcy ) );
 };
 
 $r = $probuj( 'chatbot-live', 'chatbot-live/chatbot-live.php', 'chatl_czyszczenie_historii', 'chatl_ustawienia' );
@@ -58,10 +105,44 @@ $r2 = $probuj( 'segregator-maila', 'segregator-maila/segregator-maila.php', 'seg
 if ( $r2['wtyczki'] ) { zbl( '3. KONTROLA Segregator: cron ZOSTAL — metoda pomiaru podejrzana' ); }
 else                  { zok( '3. KONTROLA Segregator: cron zdjety przez uninstall', 'blizniacza wtyczka robi to poprawnie' ); }
 
+/*
+ * SCIEZKA A — domyslna, czyli ta, ktora wybiera wiekszosc wlascicieli: „dane
+ * ZOSTAJA" (`usun_dane = 0`). Zaczep crona nie jest dana wlasciciela, tylko
+ * wpisem, w ktory WordPress uderza codziennie i trafia w nieistniejaca funkcje,
+ * wiec ma zniknac TAKZE tedy. Bez tego przypadku straznik przechodzil, nawet
+ * gdyby `wp_clear_scheduled_hook()` wrocilo pod wczesny `return` — a to jest
+ * dokladnie ten ksztalt, ktory ma dzis uninstall SKLEPU (uwaga recenzenta #167).
+ */
+$r3 = $probuj( 'chatbot-live', 'chatbot-live/chatbot-live.php', 'chatl_czyszczenie_historii', 'chatl_ustawienia', 0 );
+if ( $r3['wtyczki'] ) { zbl( '4. ChatBot, sciezka A (usun_dane=0): cron ZOSTAJE', 'zdejmowanie crona siedzi PO wczesnym return' ); }
+else                  { zok( '4. ChatBot, sciezka A (dane zostaja): cron i tak zdjety' ); }
+if ( $r3['obcy'] )    { zok( '5. ChatBot, sciezka A: cron CUDZEJ wtyczki nietkniety' ); }
+else                  { zbl( '5. ChatBot, sciezka A: uninstall zdjal cron CUDZEJ wtyczki', 'kasowanie za szerokie' ); }
+
+$r4 = $probuj( 'segregator-maila', 'segregator-maila/segregator-maila.php', 'segm_czyszczenie_probki', 'segm_ustawienia', 0 );
+if ( $r4['wtyczki'] ) { zbl( '6. KONTROLA Segregator, sciezka A: cron ZOSTAL' ); }
+else                  { zok( '6. KONTROLA Segregator, sciezka A: cron zdjety', 'blizniak trzyma ten sam warunek' ); }
+
+/*
+ * PRZYPADEK BEZ WADY dla samej METODY: sciezka A NIE MOZE skasowac danych.
+ * Mierzymy to na kopii, do ktorej pisal uninstall — gdyby ktos przesunal
+ * kasowanie ustawien przed `return`, zobaczymy to tutaj, a nie u klienta.
+ */
+$zostalo = (int) $wpdb->get_var( "SELECT COUNT(*) FROM wpaudz_options WHERE option_name = 'segm_ustawienia'" ); // phpcs:ignore
+if ( 1 === $zostalo ) { zok( '7. sciezka A zostawia ustawienia wtyczki (kasuje tylko to, co ulotne)' ); }
+else                  { zbl( '7. sciezka A skasowala ustawienia wtyczki', 'domyslne odinstalowanie ma ZOSTAWIC dane' ); }
+
+/* Dowod, ze prawdziwe opcje stosu przezyly ten test (patrz komentarz o kopiach). */
+$klucz_zyje = null !== $wpdb->get_var( "SELECT option_id FROM {$wpdb->options} WHERE option_name = 'chatl_klucz_api'" ); // phpcs:ignore
+$skrz_zyje  = null !== $wpdb->get_var( "SELECT option_id FROM {$wpdb->options} WHERE option_name = 'segm_skrzynka'" ); // phpcs:ignore
+if ( $klucz_zyje && $skrz_zyje ) { zok( '8. PRAWDZIWE opcje stosu nietkniete (klucz API, skrzynka)' ); }
+else                             { zbl( '8. test skasowal PRAWDZIWE opcje stosu', 'klucz=' . ( $klucz_zyje ? 'jest' : 'ZNIKL' ) . ' skrzynka=' . ( $skrz_zyje ? 'jest' : 'ZNIKLA' ) ); }
+
 /* sprzatanie: zdejmij zaczep testowy, przywroc stan wyjsciowy cronow */
 wp_clear_scheduled_hook( $obcy );
 foreach ( $stan as $h => $kiedy ) { if ( $kiedy && ! wp_next_scheduled( $h ) ) { wp_schedule_event( $kiedy, 'daily', $h ); } }
 foreach ( (array) $wpdb->get_col( "SHOW TABLES LIKE 'wpaudz\\_%'" ) as $t ) { $wpdb->query( "DROP TABLE IF EXISTS `" . esc_sql( $t ) . "`" ); }
+wp_cache_flush();
 
 echo "\n";
 if ( 0 === $GLOBALS['B'] ) { echo "WSZYSTKIE KROKI PRZESZLY — odinstalowanie nie zostawia zombie w cronie\n"; exit( 0 ); }

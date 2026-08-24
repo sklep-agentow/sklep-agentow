@@ -9,6 +9,16 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	exit;
 }
 
+/*
+ * Cron zdejmujemy ZAWSZE i PRZED gałęzią „dane zostają": zaplanowany zaczep bez
+ * kodu, który go obsłuży, to nie są dane właściciela, tylko śmieć w
+ * `wp_options -> cron`, w który WordPress uderza codziennie. Normalnie zdejmuje
+ * go deaktywacja, ale wtyczkę da się usunąć z jej pominięciem (skasowany
+ * katalog, „usuń" z listy) — wtedy `uninstall.php` jest jedynym sprzątaczem.
+ * Wzorzec bliźniaczej wtyczki (`segregator-maila/uninstall.php`), A3-2.
+ */
+wp_clear_scheduled_hook( 'chatl_czyszczenie_historii' );
+
 $chatl_ust = get_option( 'chatl_ustawienia', array() );
 
 // Sekret właściciela (klucz API) kasowany ZAWSZE, niezależnie od opcji „usuń dane":
