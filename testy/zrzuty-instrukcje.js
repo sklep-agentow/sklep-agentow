@@ -82,16 +82,19 @@ const ADMIN = [
   if (migawka.klucz === null || migawka.skrzynka === null || migawka.haslo === null) {
     console.error('nie odczytam migawek — nie ruszam stosu'); process.exit(1);
   }
-  const zdejmij = wpEv('delete_option("chatl_klucz_api"); delete_option("segm_skrzynka"); delete_option("segm_imap_haslo"); wp_cache_flush(); echo "OK";');
-  if (zdejmij !== 'OK') { console.error('zdjecie opcji na czas zrzutow PADLO'); process.exit(1); }
   const przywrocMigawki = () => {
     const kod = ['chatl_klucz_api', 'segm_skrzynka', 'segm_imap_haslo'].map((opt, i) => {
       const v = [migawka.klucz, migawka.skrzynka, migawka.haslo][i];
       return v === 'false' ? 'delete_option("' + opt + '");'
         : '$v = json_decode(' + JSON.stringify(v) + ', true); update_option("' + opt + '", $v, false);';
-    }).join(' ') + ' wp_cache_flush(); echo get_option("chatl_klucz_api") || ' + (migawka.klucz === 'false' ? '1' : '0') + ' ? "OK" : "PUSTO";';
+    }).join(' ')
+      /* Pomiar SKUTKU dla kazdej z trzech opcji: 1 = stan zgodny z migawka
+         (wartosc wrocila ALBO migawka mowila "nie bylo"). */
+      + ' $ocz = array(' + [migawka.klucz, migawka.skrzynka, migawka.haslo].map((v) => v === 'false' ? '0' : '1').join(',') + ');'
+      + ' $sa = array(get_option("chatl_klucz_api") ? 1 : 0, get_option("segm_skrzynka") ? 1 : 0, get_option("segm_imap_haslo") ? 1 : 0);'
+      + ' echo ($sa === $ocz) ? "OK" : "ROZJAZD:" . implode("", $sa) . "vs" . implode("", $ocz);';
     const w = wpEv(kod);
-    if (w !== 'OK') { console.error('PRZYWROCENIE MIGAWEK PADLO (' + w + ') — sprawdz klucz i skrzynke RECZNIE!'); bledy++; return false; }
+    if (w !== 'OK') { console.error('PRZYWROCENIE MIGAWEK PADLO (' + w + ') — sprawdz klucz, skrzynke i haslo RECZNIE!'); bledy++; return false; }
     return true;
   };
   /* WAZNA B (#169 r2): zdjecia segregatora maja pokazywac KANONICZNE demo
@@ -102,6 +105,10 @@ const ADMIN = [
      przez finally z przywrocMigawki() (process.exit omija finally, wiec bledy
      krytyczne леca throw-em do glownego catch po przywroceniu). */
   try {
+  /* Zdjecie sekretow DOPIERO wewnatrz try — kazdy pad ponizej przechodzi przez
+     finally z przywrocMigawki() (WAZNA 1 recenzji #169 r4: exit przed try omijal finally). */
+  const zdejmij = wpEv('delete_option("chatl_klucz_api"); delete_option("segm_skrzynka"); delete_option("segm_imap_haslo"); wp_cache_flush(); echo "OK";');
+  if (zdejmij !== 'OK') { throw new Error('zdjecie opcji na czas zrzutow PADLO'); }
   const seed = wpEv('global $wpdb; $p=$wpdb->prefix; $wpdb->query("DELETE FROM {$p}segm_reguly"); $wpdb->query("DELETE FROM {$p}segm_kategorie"); $wpdb->query("DELETE FROM {$p}segm_maile"); segm_seed_demo(); echo $wpdb->get_var("SELECT COUNT(*) FROM {$p}segm_kategorie")."/".$wpdb->get_var("SELECT COUNT(*) FROM {$p}segm_reguly")."/".$wpdb->get_var("SELECT COUNT(*) FROM {$p}segm_maile");');
   if (seed !== '5/8/30') { throw new Error('seed demo nie dal 5/8/30, mam: ' + seed + ' — nie strzelam falszywych liczb'); }
   console.log('  seed demo: 5/8/30 potwierdzone');

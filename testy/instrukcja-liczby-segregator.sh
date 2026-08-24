@@ -55,6 +55,9 @@ KAT=$(sed -n '/\$kategorie = array(/p' $W/includes/instalator.php | grep -o "'" 
 KAT=$((KAT / 2))
 # Reguly demo mieszkaja w segm_reguly_demo() — jednym zrodle prawdy dla seeda i QA.
 REG=$(awk '/function segm_reguly_demo/,/^}/' $W/includes/instalator.php | grep -c "array( '")
+# Wersja z NAGLOWKA wtyczki — bramka nie moze mierzyc paczki sprzed trzech wydan
+# (klasa 11; do 24.08 siedzialo tu literalne 1.3.0).
+WERSJA_Z_NAGLOWKA=$(grep -oE 'Version: *[0-9.]+' $W/segregator-maila.php | grep -oE '[0-9.]+')
 MAILE=$(awk '/\$maile[ \t]*=[ \t]*array\(/,/^[ \t]*\);/' $W/includes/instalator.php | grep -c "array( '")
 spr "kategorii demo w kodzie"        "5"  "echo $KAT"
 spr "regul demo w kodzie"            "8"  "echo $REG"
@@ -139,7 +142,7 @@ spr "prywatnosc: BODY.PEEK nie oznacza przeczytanych" "1" "grep -c 'BODY.PEEK' $
 echo
 echo "=== H. Instrukcja WCHODZI do paczki klienta ==="
 spr "INSTRUKCJA.md na allowliscie paczki" "1" "grep -c 'segregator-maila/INSTRUKCJA.md' boty/buduj-paczki.sh"
-spr "INSTRUKCJA.md w zbudowanym zipie"    "1" "unzip -l boty/paczki/segregator-maila-1.3.0.zip | grep -c 'segregator-maila/INSTRUKCJA.md'"
+spr "INSTRUKCJA.md w zbudowanym zipie"    "1" "unzip -l boty/paczki/segregator-maila-$WERSJA_Z_NAGLOWKA.zip | grep -c 'segregator-maila/INSTRUKCJA.md'"
 
 echo
 if [ "$BLEDY" -eq 0 ]; then
