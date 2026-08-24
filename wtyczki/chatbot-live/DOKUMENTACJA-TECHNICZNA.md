@@ -111,7 +111,7 @@ Serce trybu regułowego. Właściciel wypełnia ją w panelu; przy pierwszej akt
 |---|---|---|
 | `id` | `bigint(20) unsigned`, PK, auto | Kolejność wymian w rozmowie; po nim sortuje widok rozmowy i porcjowanie eksportu CSV. |
 | `sesja` | `varchar(64)` | Klucz grupujący wymiany w jedną rozmowę. Ma indeks `KEY sesja`, bo widok pojedynczej rozmowy filtruje właśnie po nim. |
-| `rola` | `varchar(10)` | `gosc` albo `bot` — kto się odezwał. |
+| `rola` | `varchar(10)` | Kto się odezwał — **cztery** wartości: `gosc`, `bot`, `operator` (człowiek z obsługi po przejęciu rozmowy) i `system` (komunikat wtyczki, np. o dołączeniu konsultanta). Nazwę dla człowieka daje `chatl_nazwa_roli()` (`includes/silnik.php`) — **jedno** źródło dla eksportu RODO, eksportu CSV i widoku rozmowy w panelu; wcześniej każde z tych trzech miejsc miało własną mapę „wszystko poza gościem to Bot" i podpisywało wiadomości konsultanta jako bota. W panelu do nazwy roli dochodzi jeszcze `(AI)` / `(reguły)` przy wierszach bota — to informacja o użytym silniku, nie o tym, kto pisał. Statystyki i raport luk liczą wyłącznie `gosc` i `bot`, więc komunikaty systemowe nie zaburzają skuteczności. |
 | `silnik` | `varchar(10)`, domyślnie `'reguly'` | `reguly` albo `ai` — **czym** odpowiedział bot. Dzięki temu widać po fakcie, czy tryb AI naprawdę działał, czy po cichu zjeżdżał do reguł. |
 | `tresc` | `text` | Treść wymiany, już zsanityzowana. |
 | `trafiono` | `tinyint(1)`, dopuszcza `NULL` | Czy bot **znał** odpowiedź na to pytanie: `1` tak, `0` nie, `NULL` „nie wiadomo". Ustawiane na OBU wierszach wymiany — na pytaniu gościa i na odpowiedzi bota — bo raport luk pokazuje treść **pytania**, nie odpowiedzi. `NULL` mają wyłącznie wiersze sprzed wersji 1.3.0; nie są zgadywane wstecz i nie wchodzą do mianownika skuteczności. |
@@ -682,6 +682,14 @@ Właściciel płacił za tryb AI, którego nie ma, i **nie miał jak tego zauwa�
 | `chatl_ai_test_klucza()` | `includes/ai.php` | jedno **tanie** wywołanie na żądanie właściciela |
 | `chatl_post_test_klucza()` | `includes/admin.php` | akcja `admin-post` za przyciskiem „Przetestuj klucz" |
 
+**Przycisk sprawdza TĘ konfigurację, która obsługuje gości.** Model bierze
+`chatl_ai_model()` (ustawienie właściciela → stała produktu → filtr), a nie samą
+stałą `CHATL_AI_MODEL`. Do naprawy P2-Z1 diagnostyka pomijała pole „własny model":
+właściciel z literówką w nazwie widział „Klucz działa", a bot po cichu odpowiadał
+z reguł — wtyczka produkowała fałszywy dowód poprawności. Udany test gasi czerwony
+pasek `chatl_blad_ai` i jest to uczciwe **dlatego**, że pyta tym samym kluczem
+i modelem co odpowiedź dla gościa.
+
 Wzorzec jest ten sam co przy nieudanym powiadomieniu mailowym
 (`chatl_odnotuj_wysylke_powiadomienia()`): znacznik stawiany przy porażce,
 zdejmowany przy pierwszym sukcesie. Oba znaczniki idą przez `chatl_zapisz_opcje()`
@@ -938,6 +946,13 @@ wizytami** (sesja żyje w karcie przeglądarki i tak zostaje); tu chodziło o pa
 
 `chatl_ai_historia( $sesja, $przed_id )` zwraca ostatnie `CHATL_AI_PAMIEC_WYMIAN`
 wymian tej rozmowy w kolejności chronologicznej, jako wiadomości `user`/`assistant`.
+
+⚠️ **Bierze WSZYSTKIE role, nie tylko gościa i bota.** Wiersze `operator` (człowiek
+z obsługi po przejęciu rozmowy) i `system` (komunikat o dołączeniu konsultanta) idą
+do modelu jako `assistant` — bez nich model nie zrozumiałby dopytania po rozmowie
+z człowiekiem. Skutek jest jednak taki, że **wiadomości konsultanta opuszczają
+WordPressa** przy następnym pytaniu gościa, jeśli rozmowa wróciła do bota. Instrukcja
+właściciela mówi to wprost w rozdziale **„Deklaracja prywatności"**.
 
 Cztery rzeczy, które ta funkcja musi robić dobrze:
 

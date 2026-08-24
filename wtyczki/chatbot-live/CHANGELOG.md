@@ -46,6 +46,17 @@ migracja odpala się sama przy pierwszym wejściu do panelu po aktualizacji
   przejmowałby pytania złożone („Dzień dobry, ile kosztuje wizyta?" → powitanie zamiast
   cennika). Instrukcja podaje gotową treść, ostrzega o tym skutku i mówi, jak go uniknąć —
   decyzja należy do właściciela. Silnik dopasowania bez zmian.
+- **„Przetestuj klucz" sprawdza ten model, którym naprawdę odpowiada bot.** Przycisk
+  pytał modelem domyślnym, więc przy własnym modelu z literówką mówił „Klucz działa",
+  choć bot po cichu odpowiadał wyłącznie z reguł.
+- **Eksport danych (RODO) i eksport CSV nazywają wszystkie cztery role rozmowy.**
+  Wiadomość konsultanta była podpisana „Bot", a komunikat systemowy („do rozmowy
+  dołączył konsultant") wyglądał na wypowiedź bota — osoba, która dostała swoje dane
+  na wniosek, czytała nieprawdę o tym, kto z nią rozmawiał.
+- **Deklaracja prywatności wymienia wszystko, co wychodzi do dostawcy AI** — w tym
+  do 6 wcześniejszych wymian tej samej rozmowy (razem z tym, co gość podał wcześniej).
+- **Pola panelu mają etykiety** (`<label for>`): plik CSV przy imporcie, własny kolor
+  tekstu, własny identyfikator modelu — czytnik ekranu nazywa je teraz poprawnie.
 - **„Zapisano" dopiero po zmierzonym zapisie** (audyt A2, F1–F3). Przy odrzuconym
   przez bazę zapisie panel ustawień pokazuje komunikat błędu i obowiązują poprzednie
   ustawienia (m.in. dzienny limit wywołań AI) — wcześniej świecił „Ustawienia zapisane".

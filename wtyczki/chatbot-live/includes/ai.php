@@ -378,6 +378,14 @@ function chatl_ai_historia( $sesja, $przed_id = 0 ) {
 
 	$historia = array();
 	foreach ( array_reverse( (array) $wiersze ) as $w ) {
+		/*
+		 * Do modelu idzie CAŁA rozmowa, nie tylko wymiany z botem: wiersze roli
+		 * `operator` (człowiek z obsługi) i `system` (komunikat o przejęciu) też
+		 * wchodzą, jako `assistant`. Tak ma być — bez nich model nie zrozumiałby
+		 * dopytania po rozmowie z konsultantem — ale to znaczy, że **wiadomości
+		 * konsultanta również opuszczają WordPressa**, i dlatego deklaracja
+		 * prywatności (rozdział „Deklaracja prywatności") wymienia je wprost.
+		 */
 		$rola  = 'gosc' === $w->rola ? 'user' : 'assistant';
 		$tresc = trim( (string) $w->tresc );
 		if ( '' === $tresc ) {
@@ -544,8 +552,19 @@ function chatl_ai_test_klucza() {
 		);
 	}
 
-	$url   = apply_filters( 'chatl_ai_url', 'https://api.anthropic.com/v1/messages' );
-	$model = apply_filters( 'chatl_ai_model', CHATL_AI_MODEL );
+	$url = apply_filters( 'chatl_ai_url', 'https://api.anthropic.com/v1/messages' );
+	/*
+	 * TEN SAM model, którym pyta bot — przez chatl_ai_model(), nie przez samą
+	 * stałą. Do audytu (P2-Z1) diagnostyka brała CHATL_AI_MODEL, więc pomijała
+	 * pole „własny model" z ustawień: właściciel wpisywał nazwę z literówką,
+	 * bot po cichu zjeżdżał do reguł, a „Przetestuj klucz" mówił „działa",
+	 * bo pytał modelu domyślnego. Przycisk ma iść TYM SAMYM KLUCZEM I MODELEM co
+	 * odpowiedź dla gościa — inaczej jest maszynką do fałszywych dowodów. Kształt
+	 * żądania jest CELOWO inny (jedno słowo, `max_tokens = 1`, bez instrukcji
+	 * systemowej): sprawdzamy dostępność klucza i nazwy modelu, nie jakość
+	 * odpowiedzi, a diagnostyka nie może kosztować tyle, co pytanie gościa.
+	 */
+	$model = chatl_ai_model();
 	$odp   = wp_remote_post(
 		$url,
 		array(
@@ -572,6 +591,18 @@ function chatl_ai_test_klucza() {
 
 	$kod = is_wp_error( $odp ) ? 0 : (int) wp_remote_retrieve_response_code( $odp );
 	if ( ! is_wp_error( $odp ) && 200 === $kod ) {
+		/*
+		 * Udany test GASI alarm — ale dopiero teraz jest to uczciwe. Do naprawy
+		 * P2-Z1 przycisk pytał modelem ze stałej, więc zgaszenie paska znaczyło
+		 * „zadziałało coś, czego bot nie używa": właściciel z literówką w polu
+		 * „własny model" tracił jedyny sygnał o martwym trybie AI. Teraz test
+		 * idzie tym samym KLUCZEM i MODELEM co odpowiedź dla gościa (kształt
+		 * żądania jest inny i taki ma zostać), więc HTTP 200 znaczy, że ta para
+		 * klucz+model żyje, a
+		 * stary wpis dotyczy stanu sprzed poprawki. Kryterium wprost z linii
+		 * bazowej testów: pasek znika po teście TYM SAMYM modelem co bot,
+		 * nie po teście innym modelem.
+		 */
 		chatl_odnotuj_sukces_ai();
 		return array(
 			'ok'        => true,

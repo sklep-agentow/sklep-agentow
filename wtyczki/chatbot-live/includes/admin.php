@@ -729,7 +729,20 @@ function chatl_strona_historia() {
 				<?php foreach ( $wymiany as $w ) : ?>
 					<tr>
 						<td><?php echo esc_html( $w->utworzono ); ?></td>
-						<td><?php echo 'gosc' === $w->rola ? 'Gość' : ( 'ai' === $w->silnik ? 'Bot (AI)' : 'Bot (reguły)' ); ?></td>
+						<?php
+						/*
+						 * Nazwa roli z chatl_nazwa_roli() — tego samego źródła co eksport
+						 * RODO i CSV (P2-Z4). Wcześniej panel miał TRZECIĄ własną mapę
+						 * „wszystko poza gościem to Bot", więc wiadomość konsultanta była
+						 * tu podpisana „Bot (reguły)". Silnik dopisujemy tylko przy bocie:
+						 * to informacja o TYM, czym odpowiedział, a nie o tym, KTO pisał.
+						 */
+						$kto_pisal = chatl_nazwa_roli( $w->rola );
+						if ( 'bot' === $w->rola ) {
+							$kto_pisal .= 'ai' === $w->silnik ? ' (AI)' : ' (reguły)';
+						}
+						?>
+						<td><?php echo esc_html( $kto_pisal ); ?></td>
 						<td><?php echo esc_html( $w->tresc ); ?></td>
 					</tr>
 				<?php endforeach; ?>
@@ -845,6 +858,7 @@ function chatl_strona_ustawienia() {
 						<label><input type="checkbox" id="chatl-tekst-auto" name="kolor_tekstu_auto" value="1" <?php checked( 'auto' === $wyg['kolor_tekstu'] ); ?>>
 							<strong>dobierz automatycznie</strong> (zalecane — wtyczka wybiera ciemny albo jasny, ten z lepszym kontrastem)</label>
 						<p style="margin:8px 0 0">
+							<label for="chatl-kolor-tekstu">Własny kolor tekstu</label>
 							<input type="color" id="chatl-kolor-tekstu" name="kolor_tekstu" value="<?php echo esc_attr( 'auto' === $wyg['kolor_tekstu'] ? CHATL_KOLOR_CIEMNY : $wyg['kolor_tekstu'] ); ?>">
 							<span class="description">używany, gdy powyższe jest odznaczone</span>
 						</p>
@@ -902,6 +916,7 @@ function chatl_strona_ustawienia() {
 							<option value="wlasny" <?php selected( ! $znany ); ?>>własny — wpisz identyfikator poniżej</option>
 						</select>
 						<p style="margin:8px 0 0">
+							<label for="chatl-ai-model-wlasny">Własny identyfikator modelu</label>
 							<input type="text" id="chatl-ai-model-wlasny" name="ai_model_wlasny" class="regular-text" placeholder="np. claude-haiku-4-5"
 								value="<?php echo esc_attr( $znany ? '' : $biezacy ); ?>">
 							<span class="description">używane, gdy wybierzesz „własny"</span>

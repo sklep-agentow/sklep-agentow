@@ -41,8 +41,13 @@ $sesja = 'a6' . wp_generate_password( 18, false, false );
 $tr = $wpdb->prefix . 'chatl_rozmowy'; $ts = $wpdb->prefix . 'chatl_sesje';
 $wpdb->insert( $ts, array('sesja'=>$sesja,'stan'=>'bot','klucz_hash'=>wp_hash('x'),'utworzono'=>current_time('mysql'),'aktywnosc'=>current_time('mysql')), array('%s','%s','%s','%s','%s') );
 $znacznik = 'Jan Kowalski, tel 555-111-222';
+$znacznik_op = 'Tu Anna z obslugi, numer zamowienia 12345';
 $wpdb->insert( $tr, array('sesja'=>$sesja,'rola'=>'gosc','tresc'=>"Nazywam sie $znacznik",'utworzono'=>current_time('mysql')) );
 $wpdb->insert( $tr, array('sesja'=>$sesja,'rola'=>'bot','tresc'=>'Prosze zostawic maila.','utworzono'=>current_time('mysql')) );
+// Rozmowa PRZEJETA przez czlowieka i oddana botowi: wiersze roli `operator`
+// i `system` tez ida do modelu (chatl_ai_historia bierze WSZYSTKIE role).
+$wpdb->insert( $tr, array('sesja'=>$sesja,'rola'=>'system','tresc'=>'Do rozmowy dolaczyl konsultant.','utworzono'=>current_time('mysql')) );
+$wpdb->insert( $tr, array('sesja'=>$sesja,'rola'=>'operator','tresc'=>$znacznik_op,'utworzono'=>current_time('mysql')) );
 $wpdb->insert( $tr, array('sesja'=>$sesja,'rola'=>'gosc','tresc'=>'Jakie sa godziny otwarcia?','utworzono'=>current_time('mysql')) );
 $id_biez = (int) $wpdb->insert_id;
 
@@ -79,6 +84,19 @@ if ( $historia_w_ladunku && ! $dekl_mowi_o_historii ) {
 	a6ok( '1. wczesniejsze wiadomosci goscia NIE opuszczaja WordPressa' );
 } else {
 	a6ok( '1. deklaracja wymienia wczesniejsze wiadomosci rozmowy' );
+}
+
+/* --- 2b. WADA: czy deklaracja mowi, ze ida tez wiadomosci KONSULTANTA --- */
+$operator_w_ladunku = false;
+foreach ( (array) $d['messages'] as $m ) { if ( false !== strpos( (string) $m['content'], $znacznik_op ) ) { $operator_w_ladunku = true; } }
+$dekl_mowi_o_operatorze = (bool) preg_match( '/konsultant\w*|operator\w*|obsług\w+|człowiek\w*/iu', $dekl );
+if ( $operator_w_ladunku && ! $dekl_mowi_o_operatorze ) {
+	a6bl( '1b. deklaracja NIE mowi, ze do API ida takze wiadomosci KONSULTANTA, a one wychodza',
+		'w ladunku jest: "' . $znacznik_op . '"' );
+} elseif ( ! $operator_w_ladunku ) {
+	a6ok( '1b. wiadomosci konsultanta NIE opuszczaja WordPressa' );
+} else {
+	a6ok( '1b. deklaracja wymienia wiadomosci konsultanta jako czesc ladunku' );
 }
 
 /* --- 3. BEZ WADY: deklaracja nie moze OBIECYWAC czegos, czego kod nie robi --- */

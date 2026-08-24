@@ -124,6 +124,30 @@ function chatl_dopasuj( $pytanie ) {
  *             leci do gościa; brak wpisu w historii nie jest powodem, żeby
  *             urwać działającą rozmowę — ale ma zostawić ślad w logu.
  */
+/**
+ * Nazwa roli dla CZŁOWIEKA — jedno źródło dla eksportu RODO, CSV i panelu.
+ *
+ * W tabeli rozmów są CZTERY role (`gosc`, `bot`, `operator`, `system`), a mapy
+ * „wszystko, co nie jest gościem, to Bot" były w dwóch miejscach: eksporter RODO
+ * i eksport CSV. Skutek: osoba, która dostała swoje dane na wniosek RODO,
+ * czytała, że odpowiadał jej „Bot", choć pisał do niej człowiek z obsługi
+ * (audyt P2-Z4) — a komunikaty systemowe („do rozmowy dołączył konsultant")
+ * wyglądały na wypowiedzi bota.
+ *
+ * @param string $rola Rola z kolumny `rola`.
+ * @return string Nazwa do pokazania człowiekowi.
+ */
+function chatl_nazwa_roli( $rola ) {
+	$nazwy = array(
+		'gosc'     => 'Gość',
+		'bot'      => 'Bot',
+		'operator' => 'Konsultant (człowiek)',
+		'system'   => 'Komunikat systemowy',
+	);
+	$rola  = (string) $rola;
+	return isset( $nazwy[ $rola ] ) ? $nazwy[ $rola ] : $rola;
+}
+
 function chatl_zapisz_wymiane( $sesja, $rola, $tresc, $silnik = 'reguly', $trafiono = null ) {
 	global $wpdb;
 	$dane   = array(
