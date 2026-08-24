@@ -71,6 +71,47 @@ function segm_zmierz_zapytania( $co ) {
 // właściciel po aktywacji, więc liczby w teście są liczbami z realnego panelu.
 segm_seed_demo();
 
+/*
+ * Wspólny stos testowy DRYFUJE: import konfiguracji (segm_konfig_wgraj) czy
+ * ręczne porządki potrafią zostawić bazę z kategoriami, ale BEZ reguł — a seed
+ * CELOWO nie odtwarza reguł, gdy kategorie istnieją (reaktywacja nie może
+ * wskrzeszać demo w skonfigurowanej instalacji). Ten test potrzebuje materiału
+ * demo, więc brakujące reguły demo dosiewa SAM — dokładnie te, które seed
+ * wstawiłby na czystej bazie, z kategoriami mapowanymi po nazwie.
+ * (Linia bazowa 24.08: „reguł: 0, maili: 30" — stąd ta dosiewka.)
+ */
+if ( count( segm_pobierz_reguly() ) < 5 ) {
+	if ( ! function_exists( 'segm_reguly_demo' ) ) {
+		require_once WP_PLUGIN_DIR . '/segregator-maila/includes/instalator.php';
+	}
+	$lt_kat = array();
+	foreach ( $wpdb->get_results( "SELECT id, nazwa FROM {$wpdb->prefix}segm_kategorie" ) as $lt_k ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$lt_kat[ $lt_k->nazwa ] = (int) $lt_k->id;
+	}
+	// JEDNO źródło prawdy: ta sama tablica, którą sieje instalator (uwaga 5 recenzji #168
+	// — wcześniejsza kopia w teście mogła się rozjechać z seedem bez czerwonego).
+	// Dosiewka ŚWIADOMIE zostaje po teście: to odtworzenie kanonicznego materiału demo
+	// (stan po aktywacji), nie śmieć testowy — panel bez reguł był zepsuty dla ludzi.
+	$lt_demo = segm_reguly_demo();
+	$lt_kol  = 1 + (int) $wpdb->get_var( "SELECT COALESCE(MAX(kolejnosc),0) FROM {$wpdb->prefix}segm_reguly" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	foreach ( $lt_demo as $lt_r ) {
+		if ( ! isset( $lt_kat[ $lt_r[2] ] ) ) {
+			continue; // Brak kategorii o tej nazwie — nie wstawiamy reguły-sieroty.
+		}
+		$wpdb->insert(
+			$wpdb->prefix . 'segm_reguly',
+			array(
+				'kolejnosc'    => $lt_kol++,
+				'pole'         => $lt_r[0],
+				'wzorzec'      => $lt_r[1],
+				'kategoria_id' => $lt_kat[ $lt_r[2] ],
+				'utworzono'    => current_time( 'mysql' ),
+			),
+			array( '%d', '%s', '%s', '%d', '%s' )
+		);
+	}
+}
+
 $reguly = segm_pobierz_reguly();
 
 // Migawka reguł ZANIM cokolwiek policzymy — jako tekst, nie jako obiekty.

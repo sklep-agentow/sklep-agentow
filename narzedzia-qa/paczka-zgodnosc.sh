@@ -6,11 +6,13 @@
 # i obie sprawdza się źle. Pierwsza: czy zip zawiera to, co repo — a spojrzenie
 # na listę plików NIE MÓWI NIC o ich treści, bo plik o tej samej nazwie może być
 # starą wersją sprzed trzech PR-ów. Druga: czy wersja się zgadza — a wersja
-# mieszka w PIĘCIU miejscach i wystarczy, że jedno zostanie w tyle, żeby kupujący
-# dostał paczkę podpisaną cudzym numerem.
+# mieszka w SZEŚCIU miejscach i wystarczy, że jedno zostanie w tyle, żeby kupujący
+# dostał paczkę podpisaną cudzym numerem. (Szóste — nagłówek DOKUMENTACJA-TECHNICZNA.md —
+# dopisane po recenzji PR #168: bramka mówiła „WERSJA SPÓJNA", a dokument JADĄCY W PACZCE
+# niósł stary numer.)
 #
 # Dlatego: KAŻDY plik porównywany sumą kontrolną SHA-256, w obie strony,
-# a wersja czytana ze wszystkich pięciu miejsc naraz.
+# a wersja czytana ze wszystkich sześciu miejsc naraz.
 #
 # DWIE RZECZY, KTÓRYCH ZGODNY NUMER NIE ŁAPIE (dopisane przy zamrażaniu 1.5.7):
 # (C) Numer w CHANGELOG-u zgadza się także wtedy, gdy pod nagłówkiem wydania
@@ -58,7 +60,7 @@ potwierdz() { printf '  OK       %s\n' "$1"; }
 
 printf '=== PACZKA-ZGODNOSC %s — wtyczka: %s ===\n\n' "$WERSJA_BRAMKI" "$WTYCZKA"
 
-# --- 1. wersja w pięciu miejscach ---------------------------------------------
+# --- 1. wersja w sześciu miejscach --------------------------------------------
 
 echo "--- A. Wersja mówi wszędzie to samo ---"
 
@@ -72,17 +74,21 @@ W_README="$(sed -n 's/^Stable tag:[[:space:]]*\([0-9]\+\(\.[0-9]\+\)*\).*/\1/p' 
 W_CHANGELOG="$(grep -m1 '^## \[[0-9]' "$ZRODLO/CHANGELOG.md" 2> /dev/null | sed 's/^## \[\([0-9]\+\(\.[0-9]\+\)*\)\].*/\1/')"
 # 5) najnowszy wpis w sekcji Changelog readme.txt (format WP: „= 1.3.0 =")
 W_README_CH="$(grep -m1 '^= [0-9]' "$ZRODLO/readme.txt" 2> /dev/null | sed 's/^= \([0-9]\+\(\.[0-9]\+\)*\) =.*/\1/')"
+# Szóste miejsce: nagłówek dokumentacji technicznej (jedzie w paczce do klienta).
+W_DOKTECH="$(grep -m1 -oE 'Wersja wtyczki:[* ]*[0-9]+(\.[0-9]+)*' "$ZRODLO/DOKUMENTACJA-TECHNICZNA.md" 2> /dev/null | grep -oE '[0-9]+(\.[0-9]+)*' | head -1)"
 
 printf '  nagłówek wtyczki:      %s\n' "${W_NAGLOWEK:-BRAK}"
 printf '  stała w kodzie:        %s\n' "${W_STALA:-BRAK}"
 printf '  Stable tag (readme):   %s\n' "${W_README:-BRAK}"
 printf '  CHANGELOG.md:          %s\n' "${W_CHANGELOG:-BRAK}"
 printf '  Changelog w readme:    %s\n' "${W_README_CH:-BRAK}"
+printf '  DOKUMENTACJA-TECHN.:   %s\n' "${W_DOKTECH:-BRAK}"
 echo
 
 for para in "nagłówek wtyczki:$W_NAGLOWEK" "stała w kodzie:$W_STALA" \
 	"Stable tag w readme.txt:$W_README" "CHANGELOG.md:$W_CHANGELOG" \
-	"sekcja Changelog w readme.txt:$W_README_CH"; do
+	"sekcja Changelog w readme.txt:$W_README_CH" \
+	"nagłówek DOKUMENTACJA-TECHNICZNA.md:$W_DOKTECH"; do
 	gdzie="${para%%:*}"; ile="${para#*:}"
 	if [ -z "$ile" ]; then
 		zglos "$gdzie — nie umiem odczytać wersji"
@@ -90,7 +96,7 @@ for para in "nagłówek wtyczki:$W_NAGLOWEK" "stała w kodzie:$W_STALA" \
 		zglos "$gdzie mówi $ile, a nagłówek wtyczki $W_NAGLOWEK"
 	fi
 done
-[ "$BLEDY" -eq 0 ] && potwierdz "pięć miejsc zgodnych: $W_NAGLOWEK"
+[ "$BLEDY" -eq 0 ] && potwierdz "sześć miejsc zgodnych: $W_NAGLOWEK"
 
 # Numer, który nie wygląda jak numer, przeszedłby przez porównanie „wszystkie
 # mówią to samo", bo wszystkie mówiłyby to samo źle. Nagłówek jest wzorcem dla

@@ -124,29 +124,47 @@ nic_nie_psuj() { przygotuj_czysty "$1"; }
 
 psuj_stala() {
 	przygotuj_czysty "$1"
-	sed -i "s/define( 'SEGM_WERSJA', '1.3.0' )/define( 'SEGM_WERSJA', '1.2.9' )/" "$1/wtyczki/$WTYCZKA/$WTYCZKA.php"
+	# Wersja BIEŻĄCA, nie zaszyta: podstawki z literalnym numerem zgniły cicho
+	# przy pierwszym bumpie (1.3.0→1.3.1: sed nie trafiał, mutant nie wchodził,
+	# a „bramka złapała" było fałszywe — wykryte przy 1.3.2, recenzja PR #168).
+	local w; w="$(wersja_kopii "$1")"
+	sed -i "s/define( 'SEGM_WERSJA', '$w' )/define( 'SEGM_WERSJA', '1.2.9' )/" "$1/wtyczki/$WTYCZKA/$WTYCZKA.php"
+	kotwica "stala 1.2.9" "$( grep -qF "'1.2.9'" "$1/wtyczki/$WTYCZKA/$WTYCZKA.php" && echo tak )"
 	przepakuj_z_zrodla "$1"
 }
 
 psuj_stable_tag() {
 	przygotuj_czysty "$1"
-	sed -i 's/^Stable tag: 1.3.0/Stable tag: 1.2.0/' "$1/wtyczki/$WTYCZKA/readme.txt"
+	local w; w="$(wersja_kopii "$1")"
+	sed -i "s/^Stable tag: $w/Stable tag: 1.2.0/" "$1/wtyczki/$WTYCZKA/readme.txt"
+	kotwica "Stable tag 1.2.0" "$( grep -q '^Stable tag: 1.2.0' "$1/wtyczki/$WTYCZKA/readme.txt" && echo tak )"
 	przepakuj_z_zrodla "$1"
 }
 
 psuj_changelog_md() {
 	przygotuj_czysty "$1"
-	sed -i 's/^## \[1.3.0\]/## [1.2.5]/' "$1/wtyczki/$WTYCZKA/CHANGELOG.md"
+	local w; w="$(wersja_kopii "$1")"
+	sed -i "s/^## \[$w\]/## [1.2.5]/" "$1/wtyczki/$WTYCZKA/CHANGELOG.md"
+	kotwica "CHANGELOG 1.2.5" "$( grep -q '^## \[1.2.5\]' "$1/wtyczki/$WTYCZKA/CHANGELOG.md" && echo tak )"
 	przepakuj_z_zrodla "$1"
 }
 
 psuj_changelog_readme() {
 	przygotuj_czysty "$1"
-	sed -i 's/^= 1.3.0 =/= 1.2.4 =/' "$1/wtyczki/$WTYCZKA/readme.txt"
+	local w; w="$(wersja_kopii "$1")"
+	sed -i "s/^= $w =/= 1.2.4 =/" "$1/wtyczki/$WTYCZKA/readme.txt"
+	kotwica "readme = 1.2.4 =" "$( grep -q '^= 1.2.4 =' "$1/wtyczki/$WTYCZKA/readme.txt" && echo tak )"
 	przepakuj_z_zrodla "$1"
 }
 
-zostaw_niewydane() { :; }   # niczego nie ruszam — [Niewydane] zostaje niepuste
+zostaw_niewydane() {
+	# Sama sadzi pozycję ponad wydanie — poleganie na tym, że repo AKURAT ma
+	# niepuste [Niewydane], gniło przy każdym zamrożeniu (wtedy jest puste).
+	sed -i '/^## \[Niewydane\]/a\
+- podstawiona pozycja ponad wydanie (proba kontrolna)' "$1/wtyczki/$WTYCZKA/CHANGELOG.md"
+	kotwica "pozycja ponad wydanie" "$( grep -q 'podstawiona pozycja ponad wydanie' "$1/wtyczki/$WTYCZKA/CHANGELOG.md" && echo tak )"
+	przepakuj_z_zrodla "$1"
+}
 
 psuj_tresc_pliku_w_zipie() {
 	local cel="$1" rozpakowane
@@ -182,8 +200,10 @@ psuj_allowliste() {
 
 psuj_wersja_nie_jest_numerem() {
 	przygotuj_czysty "$1"
-	# Kropka na końcu: wszystkie pięć miejsc „zgadza się", a numer jest zepsuty.
-	sed -i 's/^ \* Version: 1.3.0/ * Version: 1.3./' "$1/wtyczki/$WTYCZKA/$WTYCZKA.php"
+	# Kropka na końcu: wszystkie miejsca „zgadzają się", a numer jest zepsuty.
+	local w; w="$(wersja_kopii "$1")"
+	sed -i "s/^ \* Version: $w/ * Version: $w./" "$1/wtyczki/$WTYCZKA/$WTYCZKA.php"
+	kotwica "Version z kropka" "$( grep -qE '^ \* Version: [0-9.]+\.$' "$1/wtyczki/$WTYCZKA/$WTYCZKA.php" && echo tak )"
 	przepakuj_z_zrodla "$1"
 }
 
@@ -250,15 +270,26 @@ psuj_adres_dev()          { dopisz_slad "$1" "// sprawdzone na http://localhost:
 psuj_sciezke_robocza()    { dopisz_slad "$1" "// liczbe pilnuje testy/statystyki-test.php"; }
 psuj_obieg_pracy()        { dopisz_slad "$1" "// uwaga recenzenta do PR #99 — zostawiamy swiadomie"; }
 
+psuj_doktech() {
+	# Szóste miejsce wersji (nagłówek DOKUMENTACJA-TECHNICZNA.md) — dopisane
+	# do bramki po recenzji PR #168; ta podstawka pilnuje, żeby zostało w niej na zawsze.
+	przygotuj_czysty "$1"
+	local w; w="$(wersja_kopii "$1")"
+	sed -i "s/Wersja wtyczki: $w/Wersja wtyczki: 1.2.8/" "$1/wtyczki/$WTYCZKA/DOKUMENTACJA-TECHNICZNA.md"
+	kotwica "doktech 1.2.8" "$( grep -q 'Wersja wtyczki: 1.2.8' "$1/wtyczki/$WTYCZKA/DOKUMENTACJA-TECHNICZNA.md" && echo tak )"
+	przepakuj_z_zrodla "$1"
+}
+
 # --- przebieg -----------------------------------------------------------------
 
 command -v zip > /dev/null || { echo "PROBA: brak narzedzia zip — nie zbuduje uszkodzonych paczek" >&2; exit 2; }
 
-echo "=== WERSJA ROZJECHANA W JEDNYM Z PIECIU MIEJSC — bramka MA PASC ==="
+echo "=== WERSJA ROZJECHANA W JEDNYM Z SZESCIU MIEJSC — bramka MA PASC ==="
 sprawdz "stala w kodzie zostala w tyle (1.2.9)"        1 psuj_stala            "stała w kodzie mówi 1.2.9"
 sprawdz "Stable tag w readme zostal w tyle (1.2.0)"    1 psuj_stable_tag       "Stable tag w readme.txt mówi 1.2.0"
 sprawdz "CHANGELOG.md mowi o innym wydaniu (1.2.5)"    1 psuj_changelog_md     "CHANGELOG.md mówi 1.2.5"
 sprawdz "sekcja Changelog w readme w tyle (1.2.4)"     1 psuj_changelog_readme "sekcja Changelog w readme.txt mówi 1.2.4"
+sprawdz "DOKUMENTACJA-TECHNICZNA w tyle (1.2.8)"       1 psuj_doktech          "nagłówek DOKUMENTACJA-TECHNICZNA.md mówi 1.2.8"
 
 echo
 echo "=== KOD PONAD WERSJA — bramka MA PASC ==="

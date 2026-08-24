@@ -56,10 +56,44 @@ function chatl_test_sprzataj() {
 }
 chatl_test_sprzataj();
 
+/*
+ * Powiadomienia mailowe JAWNIE wlaczone na czas testu. Wspolny stos dryfuje:
+ * zapis formularza ustawien bez zaznaczonego checkboxa (albo reczna zmiana
+ * w panelu) zostawia powiadomienia=0 — a sekcja D3 mierzy REALNA wysylke
+ * wp_mail(), wiec bez wlasnego warunku wstepnego test pada niezaleznie od
+ * kodu wtyczki (linia bazowa 24.08: 0 maili zamiast 1). Migawka wraca na
+ * shutdown — takze po bledzie krytycznym — co do wartosci I autoloadu
+ * (wzorzec 1:1 z chatbot-awaria-zapisu-test.php).
+ */
+$GLOBALS['pt_ust_migawka'] = array(
+	'wartosc'  => get_option( 'chatl_ustawienia', null ),
+	'autoload' => $wpdb->get_var( $wpdb->prepare( "SELECT autoload FROM {$wpdb->options} WHERE option_name = %s", 'chatl_ustawienia' ) ), // phpcs:ignore
+);
+register_shutdown_function(
+	function () {
+		global $wpdb;
+		$m = $GLOBALS['pt_ust_migawka'];
+		if ( null === $m['wartosc'] ) {
+			delete_option( 'chatl_ustawienia' );
+		} else {
+			update_option( 'chatl_ustawienia', $m['wartosc'] );
+			if ( null !== $m['autoload'] ) {
+				$wpdb->update( $wpdb->options, array( 'autoload' => $m['autoload'] ), array( 'option_name' => 'chatl_ustawienia' ), array( '%s' ), array( '%s' ) ); // phpcs:ignore
+			}
+		}
+		wp_cache_flush();
+	}
+);
+$pt_ust                     = chatl_ustawienia();
+$pt_ust['powiadomienia']    = 1;
+$pt_ust['mail_powiadomien'] = 'pulapka-test-wlasciciel@example.test';
+update_option( 'chatl_ustawienia', $pt_ust );
+wp_cache_flush();
+
 // Sesja "stara": wydana 60 s temu — czlowiek zdazyl przeczytac i napisac.
-$wpdb->insert( $ts, array( 'sesja' => $sesja_stara, 'stan' => 'bot', 'klucz_hash' => '', 'utworzono' => gmdate( 'Y-m-d H:i:s', current_time( 'timestamp' ) - 60 ), 'aktywnosc' => current_time( 'mysql' ) ) ); // phpcs:ignore
+$wpdb->insert( $ts, array( 'sesja' => $sesja_stara, 'stan' => 'bot', 'klucz_hash' => wp_hash( 'pt' ), 'utworzono' => gmdate( 'Y-m-d H:i:s', current_time( 'timestamp' ) - 60 ), 'aktywnosc' => current_time( 'mysql' ) ) ); // phpcs:ignore
 // Sesja "swieza": wydana przed chwila — zadanie w tej samej sekundzie to nie czlowiek.
-$wpdb->insert( $ts, array( 'sesja' => $sesja_swieza, 'stan' => 'bot', 'klucz_hash' => '', 'utworzono' => current_time( 'mysql' ), 'aktywnosc' => current_time( 'mysql' ) ) ); // phpcs:ignore
+$wpdb->insert( $ts, array( 'sesja' => $sesja_swieza, 'stan' => 'bot', 'klucz_hash' => wp_hash( 'pt' ), 'utworzono' => current_time( 'mysql' ), 'aktywnosc' => current_time( 'mysql' ) ) ); // phpcs:ignore
 
 echo "=== A. Wykrywanie: ukryte pole ===\n";
 $_POST = array();

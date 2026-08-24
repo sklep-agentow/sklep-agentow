@@ -53,18 +53,38 @@ function wp(args) {
   const stan = wp(['eval', 'echo json_encode( array( "u" => get_option( "segm_skrzynka", null ), "h" => get_option( "segm_imap_haslo", null ), "b" => get_option( "segm_blad_ai", null ) ) );']);
   const b = await chromium.launch({ executablePath: wymagajChromium() });
   const p = await b.newPage({ viewport: { width: 1280, height: 1000 } });
+  /* 60 s zamiast 30 s + jawne czekanie na formularz nizej: pod pelna linia
+   * bazowa (2 vCPU, PHP+MariaDB+Chromium naraz) logowanie i render admina
+   * potrafia sie wlec — $eval bez czekania wywracal test w 3 s mimo zdrowego
+   * kodu (24.08, [etap3-final]; ta sama klasa co eksport-csv). */
+  p.setDefaultTimeout(60000);
   try {
-    await p.goto(BAZA + '/wp-login.php', { waitUntil: 'load' });
-    await p.fill('#user_login', user);
-    await p.fill('#user_pass', pass);
-    await p.click('#wp-submit');
-    await p.waitForLoadState('load');
+    /* Logowanie z JEDNYM ponowieniem: pod pelna linia bazowa pierwszy POST
+     * na wp-login bywa gubiony (ciastko nie siada) i kazde kolejne goto
+     * odbija na ekran logowania — test czekal wtedy 60 s na formularz,
+     * ktorego na TAMTEJ stronie nigdy nie bedzie (24.08, [etap3-final] x2). */
+    for (let prA = 0; prA < 2; prA++) {
+      await p.goto(BAZA + '/wp-login.php', { waitUntil: 'load' });
+      if (!(await p.$('#user_login'))) { break; } /* juz zalogowani — przekierowalo do admina */
+      await p.fill('#user_login', user);
+      await p.fill('#user_pass', pass);
+      await p.click('#wp-submit');
+      await p.waitForLoadState('load');
+      if (!p.url().includes('wp-login.php')) { break; }
+    }
 
     console.log('[1] skrzynka NIEskonfigurowana: przycisk „Sprawdz polaczenie" mowi, dlaczego jest szary');
     wp(['option', 'delete', 'segm_skrzynka']);
     wp(['option', 'delete', 'segm_imap_haslo']);
     await p.goto(BAZA + '/wp-admin/admin.php?page=segm-skrzynka', { waitUntil: 'load' });
     const formTest = 'form:has(input[name="action"][value="segm_skrzynka_test"])';
+    try {
+      await p.waitForSelector(formTest + ' input[type="submit"]');
+    } catch (e) {
+      /* Diagnoza zamiast niemego timeoutu: NA JAKIEJ stronie test wyladowal. */
+      console.log('  DIAGNOZA: url=' + p.url() + ' tytul=' + (await p.title()));
+      throw e;
+    }
     const wylaczony = await p.$eval(formTest + ' input[type="submit"]', (e) => e.disabled);
     const opis = await p.$eval(formTest + ' .description', (e) => e.innerText.replace(/\s+/g, ' ').trim());
     sprawdz('przycisk jest nieaktywny (skrzynka niezapisana)', wylaczony === true);

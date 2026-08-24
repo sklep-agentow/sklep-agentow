@@ -14,6 +14,7 @@
  */
 const { chromium } = require('playwright-core');
 const { wymagajChromium } = require('./lib/chromium');
+const { zaloguj } = require('./lib/logowanie');
 const fs = require('fs');
 const GDZIE = process.argv[2] || 'zrzuty-wygladu';
 const BAZA = process.argv[3] || 'http://localhost:8890';
@@ -39,11 +40,8 @@ function naHex(rgb) {
 
   const b = await chromium.launch({ executablePath: wymagajChromium() });
   const p = await b.newPage({ viewport: { width: 1280, height: 900 } });
-  await p.goto(BAZA + '/wp-login.php', { waitUntil: 'load' });
-  await p.fill('#user_login', user);
-  await p.fill('#user_pass', pass);
-  await p.click('#wp-submit');
-  await p.waitForLoadState('load');
+  p.setDefaultTimeout(60000); // 60 s: pelna linia bazowa na 2 vCPU dlawi 30-sekundowy default (24.08)
+  await zaloguj(p, BAZA, user, pass);
 
   const USTAWIENIA = BAZA + '/wp-admin/admin.php?page=chatl-ustawienia';
 

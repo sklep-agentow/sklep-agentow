@@ -59,10 +59,19 @@ nie wklejaj do plików w repo, nie zapisuj w znaleziskach.
 
 ## ⛔ TEGO NIE ZGŁASZAJ (to nie są błędy — to świadome decyzje albo stan poligonu)
 
-1. **Brak podpięcia prawdziwej skrzynki (IMAP/OAuth) w Segregatorze** — świadoma decyzja
-   zamawiającego (D19). Bot działa na próbkach CSV. To jest w zamówieniu.
-2. **Brak czatu z żywym operatorem / pamięci między wizytami w ChatBocie** — jw., granica
-   klepnięta w szkicach.
+1. **Tryb próbki CSV w Segregatorze** — to NIE jest „brak skrzynki". Segregator **MA
+   pełne podpięcie IMAP** (`includes/class-segm-imap.php`, ekran „Skrzynka", przebiegi
+   na żywo z cofaniem) — doszło 20/21.08. Na poligonie równolegle działa tryb próbki
+   CSV (materiał demo do nauki reguł). Nie zgłaszaj trybu próbki jako braku IMAP
+   — i nie zgłaszaj istnienia IMAP jako „kod robi więcej niż zamówienie" (deklaracje
+   zaktualizowane, S5/#165).
+   <!-- A6-F2: wcześniejsza wersja tej pozycji twierdziła, że IMAP nie istnieje,
+        i wyprowadzała audytorów w pole. Pilnuje testy/material-audytu-zgodnosc.sh -->
+2. **Pamięci między wizytami w ChatBocie NIE MA — świadomie** (granica klepnięta
+   w szkicach). ALE: ChatBot **MA przejęcie rozmowy przez żywego operatora**
+   (`includes/przejecie.php`, `includes/operator.php`, panel „Rozmowy") — doszło
+   20/21.08. Nie zgłaszaj przejęcia jako nieistniejącego; pamięć W TRAKCIE jednej
+   rozmowy też jest (historia sesji).
 3. **Brak automatycznego stemmingu polskich odmian** — v1 ma dopasowanie podłańcuchów
    i pole „warianty". Rozbudowa po egzaminie, jawnie zapisana.
 4. **Brak pola „priorytet" przy regułach Segregatora** — świadomy wybór (jeden mechanizm
@@ -70,9 +79,11 @@ nie wklejaj do plików w repo, nie zapisuj w znaleziskach.
 5. **Tryb testowy Stripe w sklepie** — sklep nie jest przedmiotem tego audytu.
 6. **Adres witryny ustawiony na tunel** — stan poligonu, opisany wyżej.
 7. **`SPRZATANIE-RAPORT.md` w katalogu repo (nieśledzony)** — znany dług, czeka na decyzję.
-8. **Wersja wtyczek `1.2.1` w paczkach** — po naprawach idzie bump do `1.2.2`; jeśli
-   audytujesz kod po naprawach, rozbieżność paczka↔kod jest znana i zaplanowana.
-   ⚠️ ALE: jeśli po bumpie zip nadal ma starą wersję **w chwili oddania** — to jest błąd.
+8. **Rozbieżność wersji paczka↔kod W TRAKCIE etapu napraw** — po każdej paczce napraw
+   idzie bump, więc zbudowany wcześniej zip bywa o wersję za kodem; to znane i zaplanowane
+   (aktualne numery: nagłówki wtyczek + `CHANGELOG.md`, nie ten dokument).
+   ⚠️ ALE: jeśli po bumpie zip nadal ma starą wersję **w chwili oddania** — to jest błąd
+   (pilnują `narzedzia-qa/paczka-zgodnosc.sh` i `dowod-z-paczki.sh`).
 
 ## ⚠️ CZEGO NIE WOLNO ZROBIĆ NA TYM POLIGONIE
 - ⛔ Nie kasuj bazy, tabel ani wtyczek. Testy destrukcyjne → na kopii tabeli.

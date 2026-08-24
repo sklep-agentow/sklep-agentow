@@ -7,6 +7,12 @@ wersjonowanie według [SemVer](https://semver.org/lang/pl/).
 
 ## [Niewydane]
 
+Nic jeszcze.
+
+---
+
+## [1.3.2] — 2026-08-24 · schemat bazy 3 → 4
+
 ### Naprawione
 - **Przebieg na żywo zapisuje zamiar PRZED ruchem poczty** (LS-F2): wiersz przebiegu
   i pozycja „w toku" trafiają do bazy, zanim poleci `UID MOVE`; potwierdzenie od serwera

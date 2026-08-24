@@ -1,3 +1,34 @@
+# LINIA BAZOWA TESTÓW — zapis przebiegów
+
+> **PODSUMOWANIE ETAPU 3 (24.08):** punkt odniesienia = [baza-766b4c9] (zamrożony stan audytu,
+> 13 czerwonych). Po scaleniu 15 PR-ów napraw: [po-naprawach] 04:03 (nocny, diagnostyczny — 4 regresje
+> + 1 nowy czerwony, WSZYSTKIE zdiagnozowane jako wady testów/dryf wspólnego stosu, kod wtyczek zdrowy;
+> szczegóły: TABLICA.md §Zamknięcie etapu 3) → naprawy przyrządów → [po-naprawach-2] 04:34 (kontrolny,
+> regresje=0) → seria przebiegów z bumpem 1.5.9/1.3.2, która wypaliła z testów przeglądarkowych DWIE
+> klasy kruchości pod pełnym obciążeniem 2 vCPU (30-sekundowy default Playwrighta → 60 s we wszystkich;
+> jednostrzałowe logowanie do wp-admin gubiące ciastko → wspólny `testy/lib/logowanie.js` z ponowieniem;
+> po drodze DK-1 przepisany na przyrząd po C3 — wcześniej bywał zielony PRZYPADKIEM przy wyczerpanym
+> kuble) → **[etap3-final] OFICJALNY: 64 uruchomione · 61 przechodzi · 3 pada ·
+> `--porownaj` z bazą: regresje=0, naprawy=10, EXIT=0.**
+>
+> **3 stałe czerwone — środowiskowe, czerwone JUŻ w [baza-766b4c9], nie regresje:**
+> `panel-statystyki.js` (baza Q&A stosu zna odpowiedź, która miała spaść do tekstu awaryjnego) ·
+> `stronicowanie-panel.js` (licznik pozycji zależny od narosłych danych stosu, >10 tys. wierszy) ·
+> `a4-widget-konsola-kontrast.js` EXIT=2 (przyrząd pomiarowy, nie strażnik).
+> `widget-formularz.js` zszedł z tej listy 24.08 (własna migawka `adres_polityki` — uwaga 7 recenzji #168).
+> Kandydat po oddaniu: samowystarczalność dwóch pozostałych (wzorzec migawki z `pulapka-test.php`).
+>
+> **Adnotacja do [etap3-final] (uwaga 12 recenzji #168):** TSV pochodzi z drzewa `14f2cff`; późniejsze
+> commity poprawek recenzyjnych ruszyły DWA mierzone przez linię testy — `testy/nota-zapisu-test.js`
+> i `testy/widget-formularz.js` (utwardzenie migawki/restore, zero zmian w asercjach produktu) —
+> oba po zmianach uruchomione SOLO na stosie: **EXIT=0 i EXIT=0**. Kod wtyczek między `14f2cff`
+> a HEAD zmienił wyłącznie pozycję docblocka (`instalator.php`) i tekst jednej linii SVG.
+> **Jawna zaległość (uwaga 13):** diagram Segregatora NIE MA strażnika geometrii (sekcja O bramki
+> dokumentacyjnej mierzy tylko diagram ChatBota); pomiar `svg-pomiar-tekstow.js` dla Segregatora
+> wykonany ręcznie 24.08: „WSZYSTKIE TEKSTY SIE MIESZCZA". Kandydat po oddaniu: sekcja O także dla Segregatora.
+
+
+
 
 ## [baza-766b4c9] — HEAD `bbb4b03` — 2026-08-23 16:12 — uruchomione 51 · przechodzi 38 · pada 13
 
@@ -95,3 +126,295 @@ Oczekiwane (strażnicy OTWARTYCH znalezisk, mają przejść po naprawach): `a6-d
 - `audyt/boty/testy-audytu/a4-widget-konsola-kontrast.js` EXIT=2 — przyrząd (timeout kliknięcia 30 s), sonda, nie test.
 - Sondy z EXIT zawsze 0 (nie strażnicy): `repro/lamacz-cofanie.php`, `repro/lamacz-baza-i-srodowisko.php`, `a4-przejecie-nie-dochodzi.js`, `a4-zamkniecie-odpytywanie.js` — patrz rejestr.
 Pierwszy przebieg tego dnia „uwalił" 13 testów JS w 0 s: worktree nie miał `node_modules` → skrypt robi teraz dowiązanie.
+
+## [po-naprawach] — HEAD `0ed7639` — 2026-08-24 04:03 — uruchomione 65 · przechodzi 55 · pada 10
+
+| test | EXIT | s |
+|---|---|---|
+| `testy/a6-deklaracja-vs-ladunek-ai.php` | 0 | 1 |
+| `testy/blad-klucza-test.php` | 0 | 1 |
+| `testy/chatbot-awaria-zapisu-test.php` | 0 | 0 |
+| `testy/chatbot-pulapka-licznik-test.php` | 0 | 6 |
+| `testy/chatbot-rodo-role-test.php` | 0 | 0 |
+| `testy/chatbot-sesje-retencja-rodo-test.php` | 0 | 1 |
+| `testy/chatbot-stoploss-awaria-test.php` | 0 | 0 |
+| `testy/chatbot-test-klucza-test.php` | 0 | 1 |
+| `testy/import-csv-test.php` | 0 | 0 |
+| `testy/ip-za-proxy-test.php` | 0 | 1 |
+| `testy/licznik-trafien-test.php` | 1 | 0 |
+| `testy/pamiec-rozmowy-test.php` | 0 | 1 |
+| `testy/panel-vs-bot.php` | 0 | 0 |
+| `testy/przejecie-test.php` | 0 | 3 |
+| `testy/pulapka-test.php` | 1 | 0 |
+| `testy/rodo-test.php` | 0 | 1 |
+| `testy/segregator-awaria-zapisu-test.php` | 0 | 1 |
+| `testy/segregator-cofanie-test.php` | 0 | 13 |
+| `testy/segregator-deklaracja-vs-ladunek-ai.php` | 1 | 1 |
+| `testy/segregator-komunikaty-test.php` | 0 | 0 |
+| `testy/segregator-przebieg-historia-test.php` | 0 | 7 |
+| `testy/segregator-skrzynka-test.php` | 0 | 5 |
+| `testy/segregator-skrzynka-test-uprawnienia.php` | 0 | 1 |
+| `testy/segregator-zamek-ttl-test.php` | 0 | 1 |
+| `testy/statystyki-test.php` | 0 | 0 |
+| `testy/stronicowanie-test.php` | 0 | 1 |
+| `testy/tokeny-koszt-test.php` | 0 | 0 |
+| `testy/uninstall-zombie-cron-test.php` | 0 | 1 |
+| `testy/wybor-modelu-test.php` | 0 | 1 |
+| `testy/wyglad-test.php` | 0 | 0 |
+| `testy/znacznik-bledu-bazy-test.php` | 0 | 1 |
+| `testy/blad-klucza-panel.js` | 0 | 9 |
+| `testy/chatbot-widget-odpytywanie-test.js` | 0 | 39 |
+| `testy/dziennik-test.js` | POMINIETE | 0 |
+| `testy/eksport-csv.js` | 1 | 13 |
+| `testy/import-csv-panel.js` | 0 | 10 |
+| `testy/nonce-cache-test.js` | 0 | 8 |
+| `testy/nota-zapisu-test.js` | 0 | 7 |
+| `testy/panel-statystyki.js` | 1 | 7 |
+| `testy/panel-test-bota.js` | 0 | 5 |
+| `testy/powitanie-test.js` | 0 | 9 |
+| `testy/produkty-test.js` | POMINIETE | 0 |
+| `testy/pulapka-widget.js` | 0 | 6 |
+| `testy/segregator-ekran-skrzynki.js` | 0 | 6 |
+| `testy/stronicowanie-panel.js` | 1 | 8 |
+| `testy/svg-pomiar-tekstow.js` | POMINIETE | 0 |
+| `testy/widget-formularz.js` | 1 | 5 |
+| `testy/wskaznik-pisania-test.js` | 0 | 7 |
+| `testy/wyglad-panel.js` | 0 | 10 |
+| `testy/zrzuty-panelu.js` | POMINIETE | 0 |
+| `testy/blad-klucza-proba-kontrolna.sh` | POMINIETE | 0 |
+| `testy/dokumentacja-zgodnosc-segregator.sh` | 0 | 1 |
+| `testy/dokumentacja-zgodnosc.sh` | 0 | 2 |
+| `testy/import-csv-proba-kontrolna.sh` | POMINIETE | 0 |
+| `testy/instrukcja-liczby-segregator.sh` | 0 | 1 |
+| `testy/ip-za-proxy-proba-kontrolna.sh` | POMINIETE | 0 |
+| `testy/kalibracja-mutantem.sh` | POMINIETE | 0 |
+| `testy/licznik-trafien-proba-kontrolna.sh` | POMINIETE | 0 |
+| `testy/nonce-proba-kontrolna.sh` | POMINIETE | 0 |
+| `testy/nota-zapisu-proba-kontrolna.sh` | POMINIETE | 0 |
+| `testy/pamiec-rozmowy-proba-kontrolna.sh` | POMINIETE | 0 |
+| `testy/przejecie-proba-kontrolna.sh` | POMINIETE | 0 |
+| `testy/pulapka-proba-kontrolna.sh` | POMINIETE | 0 |
+| `testy/rodo-proba-kontrolna.sh` | POMINIETE | 0 |
+| `testy/seed-demo.sh` | POMINIETE | 0 |
+| `testy/segregator-deklaracja-vs-ladunek-ai.sh` | 0 | 1 |
+| `testy/segregator-skrzynka-proba-kontrolna.sh` | POMINIETE | 0 |
+| `testy/statystyki-proba-kontrolna.sh` | POMINIETE | 0 |
+| `testy/stronicowanie-proba-kontrolna.sh` | POMINIETE | 0 |
+| `testy/svg-proba-kontrolna.sh` | POMINIETE | 0 |
+| `testy/tokeny-koszt-proba-kontrolna.sh` | POMINIETE | 0 |
+| `testy/wskaznik-pisania-proba-kontrolna.sh` | POMINIETE | 0 |
+| `testy/wybor-modelu-proba-kontrolna.sh` | POMINIETE | 0 |
+| `testy/zgodnosc-proba-kontrolna.sh` | POMINIETE | 0 |
+| `audyt/boty/testy-audytu/DK-blokada-segregatora.php` | 0 | 0 |
+| `audyt/boty/testy-audytu/DK-csv-krawedzie.php` | 0 | 0 |
+| `audyt/boty/testy-audytu/DK-like-esc-like.php` | 0 | 0 |
+| `audyt/boty/testy-audytu/DK-znaki-pola.php` | 0 | 1 |
+| `audyt/boty/testy-audytu/test-a1-uprawnienia.php` | 0 | 1 |
+| `audyt/boty/testy-audytu/test-awaria-zapisu.php` | 0 | 0 |
+| `audyt/boty/testy-audytu/test-krawedzie.php` | 0 | 1 |
+| `audyt/boty/repro/lamacz-baza-i-srodowisko.php` | 255 | 1 |
+| `audyt/boty/repro/lamacz-cofanie.php` | 0 | 8 |
+| `audyt/boty/testy-audytu/a4-przejecie-nie-dochodzi.js` | 0 | 37 |
+| `audyt/boty/testy-audytu/a4-widget-konsola-kontrast.js` | 2 | 43 |
+| `audyt/boty/testy-audytu/a4-zamkniecie-odpytywanie.js` | 0 | 90 |
+| `audyt/boty/testy-audytu/DK-dwa-zrodla-pulapka.sh` | 0 | 4 |
+| `audyt/boty/testy-audytu/DK-rownolegle-liczniki.sh` | 1 | 9 |
+| `audyt/boty/testy-audytu/DK-znaki-pola.sh` | 0 | 4 |
+| `testy/e2e/` | POMINIETE | 0 |
+
+Logi: `/root/praca/zlecenia/wymiana/linia-bazowa-logi/po-naprawach/`. Plik porównań: `audyt/linia-bazowa/po-naprawach.tsv`.
+
+## [po-naprawach-2] — HEAD `0ed7639` — 2026-08-24 04:34 — uruchomione 63 · przechodzi 59 · pada 4
+
+| test | EXIT | s |
+|---|---|---|
+| `testy/a6-deklaracja-vs-ladunek-ai.php` | 0 | 0 |
+| `testy/blad-klucza-test.php` | 0 | 1 |
+| `testy/chatbot-awaria-zapisu-test.php` | 0 | 1 |
+| `testy/chatbot-pulapka-licznik-test.php` | 0 | 5 |
+| `testy/chatbot-rodo-role-test.php` | 0 | 1 |
+| `testy/chatbot-sesje-retencja-rodo-test.php` | 0 | 0 |
+| `testy/chatbot-stoploss-awaria-test.php` | 0 | 1 |
+| `testy/chatbot-test-klucza-test.php` | 0 | 0 |
+| `testy/import-csv-test.php` | 0 | 1 |
+| `testy/ip-za-proxy-test.php` | 0 | 0 |
+| `testy/licznik-trafien-test.php` | 0 | 1 |
+| `testy/pamiec-rozmowy-test.php` | 0 | 1 |
+| `testy/panel-vs-bot.php` | 0 | 0 |
+| `testy/przejecie-test.php` | 0 | 2 |
+| `testy/pulapka-test.php` | 0 | 0 |
+| `testy/rodo-test.php` | 0 | 1 |
+| `testy/segregator-awaria-zapisu-test.php` | 0 | 1 |
+| `testy/segregator-cofanie-test.php` | 0 | 13 |
+| `testy/segregator-deklaracja-vs-ladunek-ai.php` | POMINIETE | 0 |
+| `testy/segregator-komunikaty-test.php` | 0 | 1 |
+| `testy/segregator-przebieg-historia-test.php` | 0 | 6 |
+| `testy/segregator-skrzynka-test.php` | 0 | 5 |
+| `testy/segregator-skrzynka-test-uprawnienia.php` | 0 | 1 |
+| `testy/segregator-zamek-ttl-test.php` | 0 | 1 |
+| `testy/statystyki-test.php` | 0 | 0 |
+| `testy/stronicowanie-test.php` | 0 | 1 |
+| `testy/tokeny-koszt-test.php` | 0 | 1 |
+| `testy/uninstall-zombie-cron-test.php` | 0 | 1 |
+| `testy/wybor-modelu-test.php` | 0 | 0 |
+| `testy/wyglad-test.php` | 0 | 0 |
+| `testy/znacznik-bledu-bazy-test.php` | 0 | 1 |
+| `testy/blad-klucza-panel.js` | 0 | 6 |
+| `testy/chatbot-widget-odpytywanie-test.js` | 0 | 35 |
+| `testy/dziennik-test.js` | POMINIETE | 0 |
+| `testy/eksport-csv.js` | 0 | 5 |
+| `testy/import-csv-panel.js` | 0 | 6 |
+| `testy/nonce-cache-test.js` | 0 | 6 |
+| `testy/nota-zapisu-test.js` | 0 | 5 |
+| `testy/panel-statystyki.js` | 1 | 5 |
+| `testy/panel-test-bota.js` | 0 | 4 |
+| `testy/powitanie-test.js` | 0 | 10 |
+| `testy/produkty-test.js` | POMINIETE | 0 |
+| `testy/pulapka-widget.js` | 0 | 5 |
+| `testy/segregator-ekran-skrzynki.js` | 0 | 7 |
+| `testy/stronicowanie-panel.js` | 1 | 5 |
+| `testy/svg-pomiar-tekstow.js` | POMINIETE | 0 |
+| `testy/widget-formularz.js` | 1 | 2 |
+| `testy/wskaznik-pisania-test.js` | 0 | 6 |
+| `testy/wyglad-panel.js` | 0 | 8 |
+| `testy/zrzuty-panelu.js` | POMINIETE | 0 |
+| `testy/blad-klucza-proba-kontrolna.sh` | POMINIETE | 0 |
+| `testy/dokumentacja-zgodnosc-segregator.sh` | 0 | 1 |
+| `testy/dokumentacja-zgodnosc.sh` | 0 | 3 |
+| `testy/import-csv-proba-kontrolna.sh` | POMINIETE | 0 |
+| `testy/instrukcja-liczby-segregator.sh` | 0 | 0 |
+| `testy/ip-za-proxy-proba-kontrolna.sh` | POMINIETE | 0 |
+| `testy/kalibracja-mutantem.sh` | POMINIETE | 0 |
+| `testy/licznik-trafien-proba-kontrolna.sh` | POMINIETE | 0 |
+| `testy/nonce-proba-kontrolna.sh` | POMINIETE | 0 |
+| `testy/nota-zapisu-proba-kontrolna.sh` | POMINIETE | 0 |
+| `testy/pamiec-rozmowy-proba-kontrolna.sh` | POMINIETE | 0 |
+| `testy/przejecie-proba-kontrolna.sh` | POMINIETE | 0 |
+| `testy/pulapka-proba-kontrolna.sh` | POMINIETE | 0 |
+| `testy/rodo-proba-kontrolna.sh` | POMINIETE | 0 |
+| `testy/seed-demo.sh` | POMINIETE | 0 |
+| `testy/segregator-deklaracja-vs-ladunek-ai.sh` | 0 | 1 |
+| `testy/segregator-skrzynka-proba-kontrolna.sh` | POMINIETE | 0 |
+| `testy/statystyki-proba-kontrolna.sh` | POMINIETE | 0 |
+| `testy/stronicowanie-proba-kontrolna.sh` | POMINIETE | 0 |
+| `testy/svg-proba-kontrolna.sh` | POMINIETE | 0 |
+| `testy/tokeny-koszt-proba-kontrolna.sh` | POMINIETE | 0 |
+| `testy/wskaznik-pisania-proba-kontrolna.sh` | POMINIETE | 0 |
+| `testy/wybor-modelu-proba-kontrolna.sh` | POMINIETE | 0 |
+| `testy/zgodnosc-proba-kontrolna.sh` | POMINIETE | 0 |
+| `audyt/boty/testy-audytu/DK-blokada-segregatora.php` | 0 | 0 |
+| `audyt/boty/testy-audytu/DK-csv-krawedzie.php` | 0 | 0 |
+| `audyt/boty/testy-audytu/DK-like-esc-like.php` | 0 | 1 |
+| `audyt/boty/testy-audytu/DK-znaki-pola.php` | 0 | 0 |
+| `audyt/boty/testy-audytu/test-a1-uprawnienia.php` | 0 | 2 |
+| `audyt/boty/testy-audytu/test-awaria-zapisu.php` | 0 | 0 |
+| `audyt/boty/testy-audytu/test-krawedzie.php` | 0 | 1 |
+| `audyt/boty/repro/lamacz-baza-i-srodowisko.php` | POMINIETE | 0 |
+| `audyt/boty/repro/lamacz-cofanie.php` | 0 | 7 |
+| `audyt/boty/testy-audytu/a4-przejecie-nie-dochodzi.js` | 0 | 37 |
+| `audyt/boty/testy-audytu/a4-widget-konsola-kontrast.js` | 2 | 43 |
+| `audyt/boty/testy-audytu/a4-zamkniecie-odpytywanie.js` | 0 | 90 |
+| `audyt/boty/testy-audytu/DK-dwa-zrodla-pulapka.sh` | 0 | 4 |
+| `audyt/boty/testy-audytu/DK-rownolegle-liczniki.sh` | 0 | 9 |
+| `audyt/boty/testy-audytu/DK-znaki-pola.sh` | 0 | 4 |
+| `testy/e2e/` | POMINIETE | 0 |
+
+Logi: `/root/praca/zlecenia/wymiana/linia-bazowa-logi/po-naprawach-2/`. Plik porównań: `audyt/linia-bazowa/po-naprawach-2.tsv`.
+
+## [etap3-final] — HEAD `1c9a272` — 2026-08-24 06:13 — uruchomione 64 · przechodzi 61 · pada 3
+
+| test | EXIT | s |
+|---|---|---|
+| `testy/a6-deklaracja-vs-ladunek-ai.php` | 0 | 1 |
+| `testy/blad-klucza-test.php` | 0 | 0 |
+| `testy/chatbot-awaria-zapisu-test.php` | 0 | 1 |
+| `testy/chatbot-pulapka-licznik-test.php` | 0 | 5 |
+| `testy/chatbot-rodo-role-test.php` | 0 | 0 |
+| `testy/chatbot-sesje-retencja-rodo-test.php` | 0 | 1 |
+| `testy/chatbot-stoploss-awaria-test.php` | 0 | 0 |
+| `testy/chatbot-test-klucza-test.php` | 0 | 1 |
+| `testy/import-csv-test.php` | 0 | 0 |
+| `testy/ip-za-proxy-test.php` | 0 | 1 |
+| `testy/licznik-trafien-test.php` | 0 | 0 |
+| `testy/pamiec-rozmowy-test.php` | 0 | 1 |
+| `testy/panel-vs-bot.php` | 0 | 0 |
+| `testy/przejecie-test.php` | 0 | 2 |
+| `testy/pulapka-test.php` | 0 | 0 |
+| `testy/rodo-test.php` | 0 | 1 |
+| `testy/segregator-awaria-zapisu-test.php` | 0 | 1 |
+| `testy/segregator-cofanie-test.php` | 0 | 13 |
+| `testy/segregator-deklaracja-vs-ladunek-ai.php` | POMINIETE | 0 |
+| `testy/segregator-komunikaty-test.php` | 0 | 1 |
+| `testy/segregator-przebieg-historia-test.php` | 0 | 6 |
+| `testy/segregator-skrzynka-test.php` | 0 | 5 |
+| `testy/segregator-skrzynka-test-uprawnienia.php` | 0 | 1 |
+| `testy/segregator-zamek-ttl-test.php` | 0 | 1 |
+| `testy/statystyki-test.php` | 0 | 1 |
+| `testy/stronicowanie-test.php` | 0 | 0 |
+| `testy/tokeny-koszt-test.php` | 0 | 1 |
+| `testy/uninstall-zombie-cron-test.php` | 0 | 0 |
+| `testy/wybor-modelu-test.php` | 0 | 1 |
+| `testy/wyglad-test.php` | 0 | 0 |
+| `testy/znacznik-bledu-bazy-test.php` | 0 | 1 |
+| `testy/blad-klucza-panel.js` | 0 | 7 |
+| `testy/chatbot-widget-odpytywanie-test.js` | 0 | 35 |
+| `testy/dziennik-test.js` | POMINIETE | 0 |
+| `testy/eksport-csv.js` | 0 | 5 |
+| `testy/import-csv-panel.js` | 0 | 6 |
+| `testy/nonce-cache-test.js` | 0 | 6 |
+| `testy/nota-zapisu-test.js` | 0 | 5 |
+| `testy/panel-statystyki.js` | 1 | 6 |
+| `testy/panel-test-bota.js` | 0 | 4 |
+| `testy/powitanie-test.js` | 0 | 10 |
+| `testy/produkty-test.js` | POMINIETE | 0 |
+| `testy/pulapka-widget.js` | 0 | 6 |
+| `testy/segregator-ekran-skrzynki.js` | 0 | 6 |
+| `testy/stronicowanie-panel.js` | 1 | 5 |
+| `testy/svg-pomiar-tekstow.js` | POMINIETE | 0 |
+| `testy/widget-formularz.js` | 0 | 4 |
+| `testy/wskaznik-pisania-test.js` | 0 | 5 |
+| `testy/wyglad-panel.js` | 0 | 9 |
+| `testy/zrzuty-panelu.js` | POMINIETE | 0 |
+| `testy/blad-klucza-proba-kontrolna.sh` | POMINIETE | 0 |
+| `testy/dokumentacja-zgodnosc-segregator.sh` | 0 | 1 |
+| `testy/dokumentacja-zgodnosc.sh` | 0 | 2 |
+| `testy/import-csv-proba-kontrolna.sh` | POMINIETE | 0 |
+| `testy/instrukcja-liczby-segregator.sh` | 0 | 0 |
+| `testy/ip-za-proxy-proba-kontrolna.sh` | POMINIETE | 0 |
+| `testy/kalibracja-mutantem.sh` | POMINIETE | 0 |
+| `testy/licznik-trafien-proba-kontrolna.sh` | POMINIETE | 0 |
+| `testy/material-audytu-zgodnosc.sh` | 0 | 0 |
+| `testy/nonce-proba-kontrolna.sh` | POMINIETE | 0 |
+| `testy/nota-zapisu-proba-kontrolna.sh` | POMINIETE | 0 |
+| `testy/pamiec-rozmowy-proba-kontrolna.sh` | POMINIETE | 0 |
+| `testy/przejecie-proba-kontrolna.sh` | POMINIETE | 0 |
+| `testy/pulapka-proba-kontrolna.sh` | POMINIETE | 0 |
+| `testy/rodo-proba-kontrolna.sh` | POMINIETE | 0 |
+| `testy/seed-demo.sh` | POMINIETE | 0 |
+| `testy/segregator-deklaracja-vs-ladunek-ai.sh` | 0 | 1 |
+| `testy/segregator-skrzynka-proba-kontrolna.sh` | POMINIETE | 0 |
+| `testy/statystyki-proba-kontrolna.sh` | POMINIETE | 0 |
+| `testy/stronicowanie-proba-kontrolna.sh` | POMINIETE | 0 |
+| `testy/svg-proba-kontrolna.sh` | POMINIETE | 0 |
+| `testy/tokeny-koszt-proba-kontrolna.sh` | POMINIETE | 0 |
+| `testy/wskaznik-pisania-proba-kontrolna.sh` | POMINIETE | 0 |
+| `testy/wybor-modelu-proba-kontrolna.sh` | POMINIETE | 0 |
+| `testy/zgodnosc-proba-kontrolna.sh` | POMINIETE | 0 |
+| `audyt/boty/testy-audytu/DK-blokada-segregatora.php` | 0 | 0 |
+| `audyt/boty/testy-audytu/DK-csv-krawedzie.php` | 0 | 0 |
+| `audyt/boty/testy-audytu/DK-like-esc-like.php` | 0 | 1 |
+| `audyt/boty/testy-audytu/DK-znaki-pola.php` | 0 | 1 |
+| `audyt/boty/testy-audytu/test-a1-uprawnienia.php` | 0 | 1 |
+| `audyt/boty/testy-audytu/test-awaria-zapisu.php` | 0 | 0 |
+| `audyt/boty/testy-audytu/test-krawedzie.php` | 0 | 0 |
+| `audyt/boty/repro/lamacz-baza-i-srodowisko.php` | POMINIETE | 0 |
+| `audyt/boty/repro/lamacz-cofanie.php` | 0 | 8 |
+| `audyt/boty/testy-audytu/a4-przejecie-nie-dochodzi.js` | 0 | 36 |
+| `audyt/boty/testy-audytu/a4-widget-konsola-kontrast.js` | 2 | 73 |
+| `audyt/boty/testy-audytu/a4-zamkniecie-odpytywanie.js` | 0 | 89 |
+| `audyt/boty/testy-audytu/DK-dwa-zrodla-pulapka.sh` | 0 | 5 |
+| `audyt/boty/testy-audytu/DK-rownolegle-liczniki.sh` | 0 | 10 |
+| `audyt/boty/testy-audytu/DK-znaki-pola.sh` | 0 | 4 |
+| `testy/e2e/` | POMINIETE | 0 |
+
+Logi: `/root/praca/zlecenia/wymiana/linia-bazowa-logi/etap3-final/`. Plik porównań: `audyt/linia-bazowa/etap3-final.tsv`.

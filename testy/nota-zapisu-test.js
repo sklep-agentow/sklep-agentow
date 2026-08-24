@@ -21,19 +21,44 @@ function sprawdz(opis, warunek, szczegol) {
   if (!warunek) { bledy++; }
 }
 function wpEval(kod) {
+  /* null = WYWROTKA wywolania, '' = poprawna pusta odpowiedz — rozroznienie
+   * chroni migawke: '' z wywrotki udawaloby prawidlowy stan i restore
+   * zapisalby pustke w miejsce cudzej wartosci (WAZNA 8 recenzji #168:
+   * ten plik byl zrodlem dryfu adres_polityki='' na wspolnym stosie,
+   * ktory wywracal widget-formularz.js biegnacy PO nim). */
   try {
     return execFileSync('docker', ['exec', '-u', 'www-data', KONTENER, 'wp', 'eval', kod], { encoding: 'utf8' }).trim();
-  } catch (e) { return ''; }
+  } catch (e) { return null; }
 }
 function ustawPolityke(adres) {
-  wpEval('$u = chatl_ustawienia(); $u["adres_polityki"] = "' + adres + '"; update_option("chatl_ustawienia", $u);');
+  const zapis = wpEval('$u = chatl_ustawienia(); $u["adres_polityki"] = "' + adres + '"; update_option("chatl_ustawienia", $u); echo "OK";');
+  if (zapis !== 'OK') { throw new Error('ustawPolityke(): zapis adres_polityki padl (' + zapis + ')'); }
+}
+/* Restore IDEMPOTENTNE i wolane takze z .catch — wywrotka w polowie testu nie
+ * moze zostawic stosu z pustka ani z adresem testowym (wzorzec z widget-formularz.js). */
+let notaMigawka = null;
+function przywrocPolityke() {
+  if (notaMigawka === null) { return; }
+  const w = wpEval('$u = chatl_ustawienia(); $u["adres_polityki"] = ' + JSON.stringify(notaMigawka) + '; update_option("chatl_ustawienia", $u); echo "OK";');
+  if (w !== 'OK') {
+    /* Pad restore NIE zeruje migawki (kolejne wywolanie, np. z .catch, sprobuje
+     * raz jeszcze) i melduje glosno — jak bliźniak w widget-formularz.js. */
+    console.error('przywrocPolityke(): restore adres_polityki PADL — stos mogl zostac ze stanem testowym');
+    return;
+  }
+  notaMigawka = null;
 }
 
 (async () => {
   const staraPolityka = wpEval('echo chatl_ustawienia()["adres_polityki"];');
+  if (staraPolityka === null) {
+    throw new Error('nie odczytam migawki adres_polityki (docker/wp-cli padl) — nie ruszam stosu');
+  }
+  notaMigawka = staraPolityka;
   const retencja = wpEval('echo CHATL_RETENCJA_DNI;');
   const b = await chromium.launch({ executablePath: wymagajChromium() });
   const p = await b.newPage({ viewport: { width: 1280, height: 900 } });
+  p.setDefaultTimeout(60000); // 60 s: pelna linia bazowa na 2 vCPU dlawi 30-sekundowy default (24.08)
 
   console.log('[1] nota jest widoczna PRZED napisaniem czegokolwiek');
   ustawPolityke('');
@@ -90,8 +115,8 @@ function ustawPolityke(adres) {
   } catch (e) { uzycia = '0'; } // grep -c bez trafien konczy sie kodem 1
   sprawdz('zero UZYC .innerHTML w widgecie', uzycia === '0', 'trafien: ' + uzycia);
 
-  ustawPolityke(staraPolityka);
+  przywrocPolityke();
   await b.close();
   console.log('\n' + (bledy ? 'NIEPOWODZENIE: ' + bledy + ' krokow nie przeszlo' : 'WSZYSTKIE KROKI PRZESZLY'));
   process.exit(bledy ? 1 : 0);
-})().catch((e) => { console.error(e); process.exit(1); });
+})().catch((e) => { przywrocPolityke(); console.error(e); process.exit(1); });

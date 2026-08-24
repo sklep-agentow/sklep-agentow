@@ -7,8 +7,14 @@
 > do CI" i **nie była spełniona ani razu**. W `testy/` leżało 57 plików, CI nie uruchamiało
 > żadnego. PR #135 wniósł dwa celowo padające testy — i przeszedł na zielono.
 
-## Liczba znalezisk OTWARTYCH: 23
+## Liczba znalezisk OTWARTYCH: 0
 <!-- BRAMKA: powyższa liczba musi zgadzać się z liczbą wierszy o statusie OTWARTE.
+
+     ✅ ZAMKNIĘTE 24.08 z 23 na 0: scalone paczki napraw C1–C6 (#155 #158 #162 #164 #166 #167),
+     S1–S5 (#156 #159 #161 #163 #165) + A6-F2 domknięte 24.08 poprawką materiału audytowego
+     i nowym strażnikiem. Statusy nadane PO POMIARZE (lekcja z 23.08 niżej): pełna linia bazowa
+     po naprawach — regresje=0, wszystkie strażniki znalezisk EXIT=0 (zapis: audyt/LINIA-BAZOWA-TESTOW.md,
+     wpis [po-naprawach-2] i finalny [etap3-final]).
      Dopisanie znaleziska ZATRZYMUJE bramkę, dopóki ktoś świadomie nie podniesie liczby.
      ⭐ Ta liczba ma prawo TYLKO MALEĆ. Jeśli rośnie — to znaczy, że audyt znalazł coś nowego,
      i to jest w porządku; ale musi być świadome, nie po cichu.
@@ -26,8 +32,12 @@
      przy zamykaniu rejestru (zamknięto sąsiedni problem z tego samego raportu). Lekcja: status
      ZAMKNIĘTE nadaje się po URUCHOMIENIU testu, nie po scaleniu PR-a o podobnym tytule. -->
 
-## Znalezisk BEZ strażnika: 11
+## Znalezisk BEZ strażnika: 0
 <!-- BRAMKA: liczba wierszy, ktore w kolumnie testu maja „BRAK — do dopisania".
+
+     ✅ SPŁACONE 24.08 z 11 na 0: każda paczka napraw przyniosła strażnika z kalibracją
+     (EXIT=1 na kodzie sprzed naprawy, EXIT=0 po) — ścieżki w kolumnie testu każdego wiersza;
+     ostatni dług (A6-F2) zamknął strażnik testy/material-audytu-zgodnosc.sh (24.08).
      To NIE jest usterka rejestru — to DLUG. Znalezisko dowiedzione wykonaniem, ale bez
      straznika, ktory by pilnowal, zeby nie wrocilo. Prowadzimy go tak samo jak dlug sladow
      w sklepie: schodzil 41 -> 40, nigdy w druga strone.
@@ -70,30 +80,30 @@ i bramka policzyła siedem nieistniejących znalezisk z nieznanym statusem.
 
 | kod | co | test (dowód) | status |
 |---|---|---|---|
-| `A2-F1` | ChatBot melduje „Ustawienia zapisane", gdy baza zapis odrzuciła | `audyt/boty/testy-audytu/test-awaria-zapisu.php` | OTWARTE |
-| `A2-F2` | `chatl_przejmij()` zwraca `true` nie sprawdziwszy zapisu; gość dostaje nieprawdę | `audyt/boty/testy-audytu/test-awaria-zapisu.php` | OTWARTE |
-| `A2-F3` | zapis klucza API bez pomiaru — stary klucz zostaje, nikt się nie dowiaduje | `audyt/boty/testy-audytu/test-awaria-zapisu.php` | OTWARTE |
-| `A3-1` | `chatl_sesje` — tabela bez żadnej ścieżki kasowania, poza kasownikiem RODO | `testy/chatbot-sesje-retencja-rodo-test.php` | OTWARTE |
-| `A3-2` | zombie cron ChatBota zostaje po odinstalowaniu wtyczki | `testy/uninstall-zombie-cron-test.php` | OTWARTE |
-| `KR1` | puste pole „dobowy limit tokenów" wyłącza drugi stop-loss kosztowy, po cichu | `audyt/boty/testy-audytu/test-krawedzie.php` | OTWARTE |
-| `KR2` | puste pole „dobowy limit wywołań" zjeżdża limit do 1, po cichu | `audyt/boty/testy-audytu/test-krawedzie.php` | OTWARTE |
-| `KR4` | puste pole „port"/„limit" skrzynki IMAP daje port 1 i limit 1, po cichu | `audyt/boty/testy-audytu/test-krawedzie.php` | OTWARTE |
-| `KR6` | retencja ChatBota kasuje rozmowy PRZED obiecanymi 90 dniami w strefie ujemnej | `audyt/boty/testy-audytu/test-krawedzie.php` | OTWARTE |
-| `A4-F1` | gość NIE dowiaduje się, że do rozmowy dołączył żywy konsultant — okno czatu zamiera | BRAK — do dopisania (sonda `audyt/boty/testy-audytu/a4-przejecie-nie-dochodzi.js` odtwarza, ale EXIT zawsze 0) | OTWARTE |
-| `A4-F2` | zamknięcie czatu bąbelkiem wywala ten sam błąd, druga gałąź tej samej wady | BRAK — do dopisania (sonda `audyt/boty/testy-audytu/a4-zamkniecie-odpytywanie.js` odtwarza, EXIT zawsze 0) | OTWARTE |
-| `A4-F3` | cztery pola panelu nie mają żadnej nazwy dla czytnika ekranu (WCAG poziom A) | BRAK — do dopisania | OTWARTE |
-| `A4-F4` | przełącznik czatu nie mówi czytnikowi ekranu, czy jest otwarty (WCAG poziom A) | BRAK — do dopisania | OTWARTE |
-| `A6-F1` | deklaracja prywatności ChatBota nie wymienia wszystkiego, co naprawdę wychodzi do API | `testy/a6-deklaracja-vs-ladunek-ai.php` | OTWARTE |
-| `A6-F2` | materiał audytowy twierdzi, że dwie największe funkcje botów nie istnieją — każdy następny audyt startuje z fałszywym obrazem produktu | BRAK — do dopisania | OTWARTE |
-| `LC-F2` | ścieżka pułapki jest całkowicie nielimitowana i każde żądanie pisze do `wp_options` — ⭐ **POTWIERDZONE NIEZALEŻNIE** przez przebieg 2 (jego `Z3`): 30/30 żądań przeszło przy progu 10 | BRAK — do dopisania | OTWARTE |
-| `P2-Z1` | „Przetestuj klucz" pyta o inną stałą niż bot — właściciel z własnym modelem widzi zielone „Klucz działa" przy martwym trybie AI, a przycisk przy okazji kasuje jedyny pasek o awarii | BRAK — do dopisania | OTWARTE |
-| `P2-Z2` | opcja `chatl_pulapka` przeżywa pełne odinstalowanie, choć dokumentacja obiecuje pustą różnicę bazy | BRAK — do dopisania | OTWARTE |
-| `P2-Z4` | paczka RODO opisuje wiadomości **operatora** jako „Bot" — dokument wydawany na wniosek art. 15 mówi co innego niż okno czatu | BRAK — do dopisania | OTWARTE |
-| `LS-F1` | cofnięcie przebiegu melduje sukces dla maili, których nie ruszyło, i zamyka drogę odwrotu | BRAK — do dopisania (sonda `audyt/boty/repro/lamacz-cofanie.php` odtwarza, EXIT zawsze 0) | OTWARTE |
-| `LS-F2` | baza pada w połowie przebiegu na żywo: poczta przeniesiona, historia pusta, cofanie martwe, panel pokazuje sukces | BRAK — do dopisania (sonda `audyt/boty/repro/lamacz-baza-i-srodowisko.php` odtwarza, EXIT zawsze 0) | W NAPRAWIE |
-| `DK-1` | licznik pułapki i lista podejrzanych zgłoszeń to **dwa źródła prawdy** o tym samym zdarzeniu — rozjeżdżają się 14 do 5 | `audyt/boty/testy-audytu/DK-dwa-zrodla-pulapka.sh` | OTWARTE |
-| `DK-5` | licznik trzymany w `wp_options` **gubi 13 z 20 równoległych zapisów** (ten sam licznik w tabeli gubi 0) | `audyt/boty/testy-audytu/DK-rownolegle-liczniki.sh` | OTWARTE |
-| `DK-6` | zamek Segregatora wpuszcza **dwie operacje naraz**, a znacznik drugiej nadpisuje pierwszą | `audyt/boty/testy-audytu/DK-blokada-segregatora.php` | OTWARTE |
+| `A2-F1` | ChatBot melduje „Ustawienia zapisane", gdy baza zapis odrzuciła — **naprawa C1 #155; zamrożony test-awaria-zapisu.php 6/6** | `testy/chatbot-awaria-zapisu-test.php` | ZAMKNIETE |
+| `A2-F2` | `chatl_przejmij()` zwraca `true` nie sprawdziwszy zapisu; gość dostaje nieprawdę — **naprawa C1 #155** | `testy/chatbot-awaria-zapisu-test.php` | ZAMKNIETE |
+| `A2-F3` | zapis klucza API bez pomiaru — stary klucz zostaje, nikt się nie dowiaduje — **naprawa C1 #155; bliźniak Segregatora: S2 #159, segregator-awaria-zapisu-test.php** | `testy/chatbot-awaria-zapisu-test.php` | ZAMKNIETE |
+| `A3-1` | `chatl_sesje` — tabela bez żadnej ścieżki kasowania, poza kasownikiem RODO — **naprawa C6 #167** | `testy/chatbot-sesje-retencja-rodo-test.php` | ZAMKNIETE |
+| `A3-2` | zombie cron ChatBota zostaje po odinstalowaniu wtyczki — **naprawa C6 #167** | `testy/uninstall-zombie-cron-test.php` | ZAMKNIETE |
+| `KR1` | puste pole „dobowy limit tokenów" wyłącza drugi stop-loss kosztowy, po cichu — **naprawa C2 #158; test-krawedzie.php 1→0** | `testy/chatbot-stoploss-awaria-test.php` | ZAMKNIETE |
+| `KR2` | puste pole „dobowy limit wywołań" zjeżdża limit do 1, po cichu — **naprawa C2 #158; test-krawedzie.php 1→0** | `testy/chatbot-stoploss-awaria-test.php` | ZAMKNIETE |
+| `KR4` | puste pole „port"/„limit" skrzynki IMAP daje port 1 i limit 1, po cichu — **naprawa S2 #159; test-krawedzie.php 1→0** | `testy/segregator-awaria-zapisu-test.php` | ZAMKNIETE |
+| `KR6` | retencja ChatBota kasuje rozmowy PRZED obiecanymi 90 dniami w strefie ujemnej — **naprawa C2 #158; test 1→0 w linii bazowej** | `audyt/boty/testy-audytu/test-krawedzie.php` | ZAMKNIETE |
+| `A4-F1` | gość NIE dowiaduje się, że do rozmowy dołączył żywy konsultant — okno czatu zamiera — **naprawa C4 #164; kalibracja origin/main EXIT=1** | `testy/chatbot-widget-odpytywanie-test.js` | ZAMKNIETE |
+| `A4-F2` | zamknięcie czatu bąbelkiem wywala ten sam błąd, druga gałąź tej samej wady — **naprawa C4 #164, sekcja zamknięcia** | `testy/chatbot-widget-odpytywanie-test.js` | ZAMKNIETE |
+| `A4-F3` | cztery pola panelu nie mają żadnej nazwy dla czytnika ekranu (WCAG poziom A) — **pola Segregatora: S4 #163; pola ChatBota: C5 #166, dowód w opisie PR** | `testy/segregator-komunikaty-test.php` | ZAMKNIETE |
+| `A4-F4` | przełącznik czatu nie mówi czytnikowi ekranu, czy jest otwarty (WCAG poziom A) — **naprawa C4 #164, sekcje aria-expanded** | `testy/chatbot-widget-odpytywanie-test.js` | ZAMKNIETE |
+| `A6-F1` | deklaracja prywatności ChatBota nie wymienia wszystkiego, co naprawdę wychodzi do API — **naprawa C5 #166; w linii bazowej 1→0** | `testy/a6-deklaracja-vs-ladunek-ai.php` | ZAMKNIETE |
+| `A6-F2` | materiał audytowy twierdzi, że dwie największe funkcje botów nie istnieją — każdy następny audyt startuje z fałszywym obrazem produktu — **materiał poprawiony 24.08; kalibracja: stara wersja → EXIT=1, 5 BLAD** | `testy/material-audytu-zgodnosc.sh` | ZAMKNIETE |
+| `LC-F2` | ścieżka pułapki jest całkowicie nielimitowana i każde żądanie pisze do `wp_options` — ⭐ **POTWIERDZONE NIEZALEŻNIE** przez przebieg 2 (jego `Z3`): 30/30 żądań przeszło przy progu 10 — **naprawa C3 #162 — kubły pulapka i nonce-odrzucony** | `testy/chatbot-pulapka-licznik-test.php` | ZAMKNIETE |
+| `P2-Z1` | „Przetestuj klucz" pyta o inną stałą niż bot — właściciel z własnym modelem widzi zielone „Klucz działa" przy martwym trybie AI, a przycisk przy okazji kasuje jedyny pasek o awarii — **naprawa C5 #166** | `testy/chatbot-test-klucza-test.php` | ZAMKNIETE |
+| `P2-Z2` | opcja `chatl_pulapka` przeżywa pełne odinstalowanie, choć dokumentacja obiecuje pustą różnicę bazy — **naprawa C3 #162 — trzy miejsca schematu i uninstall** | `testy/chatbot-pulapka-licznik-test.php` | ZAMKNIETE |
+| `P2-Z4` | paczka RODO opisuje wiadomości **operatora** jako „Bot" — dokument wydawany na wniosek art. 15 mówi co innego niż okno czatu — **naprawa C5 #166** | `testy/chatbot-rodo-role-test.php` | ZAMKNIETE |
+| `LS-F1` | cofnięcie przebiegu melduje sukces dla maili, których nie ruszyło, i zamyka drogę odwrotu — **naprawa S1 #156; kalibracja 8c87c06 EXIT=1; sonda lamacz-cofanie.php zostaje dowodem** | `testy/segregator-cofanie-test.php` | ZAMKNIETE |
+| `LS-F2` | baza pada w połowie przebiegu na żywo: poczta przeniesiona, historia pusta, cofanie martwe, panel pokazuje sukces — **naprawa S1 #156; kalibracja 8c87c06 → 7 BLAD; zamrożona sonda lamacz-baza-i-srodowisko.php poza linią bazową** | `testy/segregator-przebieg-historia-test.php` | ZAMKNIETE |
+| `DK-1` | licznik pułapki i lista podejrzanych zgłoszeń to **dwa źródła prawdy** o tym samym zdarzeniu — rozjeżdżają się 14 do 5 — **naprawa C3 #162; 1→0** | `audyt/boty/testy-audytu/DK-dwa-zrodla-pulapka.sh` | ZAMKNIETE |
+| `DK-5` | licznik trzymany w `wp_options` **gubi 13 z 20 równoległych zapisów** (ten sam licznik w tabeli gubi 0) — **naprawa C3 #162; przyrząd zaktualizowany 24.08 na tabelę zdarzeń, EXIT=0** | `audyt/boty/testy-audytu/DK-rownolegle-liczniki.sh` | ZAMKNIETE |
+| `DK-6` | zamek Segregatora wpuszcza **dwie operacje naraz**, a znacznik drugiej nadpisuje pierwszą — **naprawa S1 #156; 1→0 + segregator-zamek-ttl-test.php** | `audyt/boty/testy-audytu/DK-blokada-segregatora.php` | ZAMKNIETE |
 
 ## Statusy — co znaczą
 - **OTWARTE** — błąd potwierdzony dowodem, kod nienaprawiony. Test **pada** i tak ma być.
@@ -101,11 +111,13 @@ i bramka policzyła siedem nieistniejących znalezisk z nieznanym statusem.
 - **ZAMKNIĘTE** — kod naprawiony, test **przechodzi** i staje się strażnikiem regresji.
   ⛔ Test ZAMKNIĘTEGO znaleziska nigdy się nie kasuje — od tej chwili pilnuje, żeby nie wróciło.
 
-⚠️ **Uwaga do `LS-F2`:** naprawa w locie zamyka **jeden z czterech** punktów tego znaleziska
-(właściciel dowie się, że zapis padł). Raport źródłowy stwierdza wprost, że po niej raport
-przebiegu **nadal** pokazuje sukces, wiersz przebiegu **nadal** przeczy zeru wierszy historii,
-a cofanie **nadal** jest martwe. ⛔ Nie zamykać tego wiersza automatycznie przy scaleniu —
-wymaga osobnej decyzji.
+⚠️ **Uwaga do `LS-F2`** (historyczna, sprzed S1): naprawa w locie zamykała **jeden z czterech**
+punktów tego znaleziska. ✅ ROZSTRZYGNIĘTE 24.08 osobną decyzją koordynatorki: S1 (#156)
+domknął pozostałe punkty — zapis zamiaru PRZED ruchem poczty, raport przebiegu i historia
+mówią prawdę przy awarii, cofanie liczy tylko wrócone. Dowód: strażnik
+`testy/segregator-przebieg-historia-test.php` (kalibracja: kod sprzed S1 → 7 BLAD/EXIT=1,
+po S1 → EXIT=0). Zamrożona sonda `lamacz-baza-i-srodowisko.php` została dowodem w git,
+wyłączona z linii bazowej (woła kształt kodu sprzed S1 → FATAL).
 
 ## Raporty objęte rejestrem
 `RAPORT-A2-AWARIA.md` · `RAPORT-A3-DANE.md` · `RAPORT-A5-KRAWEDZIE.md` ·
@@ -163,18 +175,18 @@ koordynatorka awansuje pozycję do tabeli wyżej (PR z EXIT=1 w opisie, licznik 
 Jeśli nie pada — zostaje tu adnotacja „nie odtworzono" i sprawa jest zamknięta. Nic stąd nie liczy się
 do OTWARTYCH ani do długu strażników.
 
-- `WK-1` (ChatBot, paczka C4) — formularz kontaktowy NAKŁADA się na powitanie; krzyżyk formularza zamyka CAŁY czat i gubi wpisaną treść (dziennik 19:48, 19:49, „okno małe i wszystko się nakłada" — jedna przyczyna układu, trzy objawy).
-- `WK-3` (Segregator, S4) — świeżo zainstalowana wtyczka wita błędem „KLUCZ API ZOSTAŁ ODRZUCONY" o kluczu, którego właściciel nie wpisywał (19:54); brak klucza ≠ odrzucony klucz; komunikat zakłada winę użytkownika.
-- `WK-4` (Segregator, S4) — tabelka zgodności serwera: „✔ jest" obok „Nieobecne" w jednej linii (19:55).
-- `WK-5` (Segregator, S3) — po wypełnieniu formularza skrzynki „Sprawdź połączenie" zostaje szare bez słowa, że najpierw trzeba zapisać (19:56).
-- `WK-8` (ChatBot, C4) — „dzień dobry" dostaje „nie znam odpowiedzi" (19:48). ⛔ Zamówienie (§FRONT) każe „nie znam odpowiedzi" i zakazuje poszerzania dopasowania — naprawa = WPIS POWITALNY w danych startowych/instrukcji, NIE zmiana silnika.
-- `WK-13` (Segregator, S4) — „Connection refused (kod 111)": żargon w komunikacie dla laika (19:57).
-- `WK-15` (Segregator, S3) — ekran skrzynki nie wyjaśnia, czym jest „hasło aplikacji" ani skąd je wziąć (19:55).
-- `WK-17` (Segregator, S3) — po „Zapisz połączenie" kupujący nie zobaczył potwierdzenia (19:56). ⚠️ Komunikat „Zapisano ustawienia połączenia…" ISTNIEJE w kodzie (`admin-skrzynka.php`, zapamiętanie ~:472, wyświetlenie ~:97) — do odtworzenia jest DLACZEGO go nie widać, nie „dodanie komunikatu".
-- `T-1` (ChatBot, C2) — fail-open kosztowy: `chatl_ai_zuzycie_dnia()` (`ai.php:129-150`) przy BŁĘDZIE zapytania dostaje `null` tak samo jak przy braku wiersza → zwraca zera → `chatl_ai_uzycie_dzis() >= limit` jest fałszywe → AI wołane przy padniętej tabeli licznika. Odczyt kodu (krytyka planu 23.08, zweryfikowany), nie pomiar — builder pisze test symulujący błąd zapytania filtrem `query` (jak `test-awaria-zapisu.php`).
-- `T-3` (Segregator, S1) — `UIDVALIDITY` odczytywane i WYRZUCANE (raport Łamacza Segregatora, „czego nie było na liście" pkt 2) — przyczyna źródłowa ostrzejszego wariantu LS-F1 (folder skasowany i założony na nowo). Naprawiane razem z LS-F1.
-- `T-4` (Segregator, S1) — zamek przebiegu po zabitym procesie zostaje NA ZAWSZE i cicho wyłącza cron (raport A2, „czego nie było na liście" pkt 2). Naprawiane razem z DK-6 (TTL zamka).
-- `A3-3` (Segregator, S5) — TABLICA „czekające na decyzję" #1: w trybie AI Segregator wysyła nadawców i tematy CUDZYCH maili do dostawcy AI; deklaracja tego nie mówi wprost. Fakt (23.08): AI NIE działa na przebiegu skrzynki (same reguły) — `segm_ai_zapytaj()` woła `silnik.php` (próbka/klasyfikacja). Naprawa = deklaracja mówi prawdę + test „deklaracja vs ładunek" jak `testy/a6-deklaracja-vs-ladunek-ai.php`. Decyzja L8 (czy AI wchodzi na skrzynkę) należy do Dzidka.
+- `WK-1` (ChatBot, paczka C4) — formularz kontaktowy NAKŁADA się na powitanie; krzyżyk formularza zamyka CAŁY czat i gubi wpisaną treść (dziennik 19:48, 19:49, „okno małe i wszystko się nakłada" — jedna przyczyna układu, trzy objawy). **→ ✅ C4 (#164): sprawdzone i NIE ODTWORZONE; asercje układu zostały w strażniku — zamknięte.**
+- `WK-3` (Segregator, S4) — świeżo zainstalowana wtyczka wita błędem „KLUCZ API ZOSTAŁ ODRZUCONY" o kluczu, którego właściciel nie wpisywał (19:54); brak klucza ≠ odrzucony klucz; komunikat zakłada winę użytkownika. **→ ✅ weszło w S4 (#163), strażnik `testy/segregator-komunikaty-test.php`.**
+- `WK-4` (Segregator, S4) — tabelka zgodności serwera: „✔ jest" obok „Nieobecne" w jednej linii (19:55). **→ ✅ weszło w S4 (#163), strażnik `testy/segregator-komunikaty-test.php`.**
+- `WK-5` (Segregator, S3) — po wypełnieniu formularza skrzynki „Sprawdź połączenie" zostaje szare bez słowa, że najpierw trzeba zapisać (19:56). **→ ✅ weszło w S3 (#161), strażnik `testy/segregator-ekran-skrzynki.js`.**
+- `WK-8` (ChatBot, C4) — „dzień dobry" dostaje „nie znam odpowiedzi" (19:48). ⛔ Zamówienie (§FRONT) każe „nie znam odpowiedzi" i zakazuje poszerzania dopasowania — naprawa = WPIS POWITALNY w danych startowych/instrukcji, NIE zmiana silnika. **→ ✅ weszło w C4 (#164): jedenasty wpis danych startowych (silnik nietknięty), dowód w opisie PR.**
+- `WK-13` (Segregator, S4) — „Connection refused (kod 111)": żargon w komunikacie dla laika (19:57). **→ ✅ weszło w S4 (#163), strażnik `testy/segregator-komunikaty-test.php`.**
+- `WK-15` (Segregator, S3) — ekran skrzynki nie wyjaśnia, czym jest „hasło aplikacji" ani skąd je wziąć (19:55). **→ ✅ weszło w S3 (#161), strażnik `testy/segregator-ekran-skrzynki.js`.**
+- `WK-17` (Segregator, S3) — po „Zapisz połączenie" kupujący nie zobaczył potwierdzenia (19:56). ⚠️ Komunikat „Zapisano ustawienia połączenia…" ISTNIEJE w kodzie (`admin-skrzynka.php`, zapamiętanie ~:472, wyświetlenie ~:97) — do odtworzenia jest DLACZEGO go nie widać, nie „dodanie komunikatu". **→ ✅ weszło w S3 (#161): odtworzone (komunikat tonął pod cudzymi paskami), strażnik `testy/segregator-ekran-skrzynki.js` wymaga, żeby był PIERWSZYM paskiem wtyczki.**
+- `T-1` (ChatBot, C2) — fail-open kosztowy: `chatl_ai_zuzycie_dnia()` (`ai.php:129-150`) przy BŁĘDZIE zapytania dostaje `null` tak samo jak przy braku wiersza → zwraca zera → `chatl_ai_uzycie_dzis() >= limit` jest fałszywe → AI wołane przy padniętej tabeli licznika. Odczyt kodu (krytyka planu 23.08, zweryfikowany), nie pomiar — builder pisze test symulujący błąd zapytania filtrem `query` (jak `test-awaria-zapisu.php`). **→ ✅ weszło w C2 (#158): odtworzone i naprawione, strażnik `testy/chatbot-stoploss-awaria-test.php` (sekcja B).**
+- `T-3` (Segregator, S1) — `UIDVALIDITY` odczytywane i WYRZUCANE (raport Łamacza Segregatora, „czego nie było na liście" pkt 2) — przyczyna źródłowa ostrzejszego wariantu LS-F1 (folder skasowany i założony na nowo). Naprawiane razem z LS-F1. **→ ✅ weszło w S1 (#156): kolumna `uidvalidity_do`, strażnik `testy/segregator-cofanie-test.php`.**
+- `T-4` (Segregator, S1) — zamek przebiegu po zabitym procesie zostaje NA ZAWSZE i cicho wyłącza cron (raport A2, „czego nie było na liście" pkt 2). Naprawiane razem z DK-6 (TTL zamka). **→ ✅ weszło w S1 (#156), strażnik `testy/segregator-zamek-ttl-test.php`.**
+- `A3-3` (Segregator, S5) — TABLICA „czekające na decyzję" #1: w trybie AI Segregator wysyła nadawców i tematy CUDZYCH maili do dostawcy AI; deklaracja tego nie mówi wprost. Fakt (23.08): AI NIE działa na przebiegu skrzynki (same reguły) — `segm_ai_zapytaj()` woła `silnik.php` (próbka/klasyfikacja). Naprawa = deklaracja mówi prawdę + test „deklaracja vs ładunek" jak `testy/a6-deklaracja-vs-ladunek-ai.php`. Decyzja L8 (czy AI wchodzi na skrzynkę) należy do Dzidka. **→ ✅ weszło w S5 (#165): deklaracja i panel mówią prawdę („na skrzynce SAME REGUŁY"); strażnik `testy/segregator-deklaracja-vs-ladunek-ai.sh` (wrapper wgrywa dokumenty Z REPO; silnik `.php` wołany wyłącznie przez niego). Decyzja L8 NADAL u Dzidka — rekomendacja: zostaje napis „same reguły".**
 
 ### Świadomie NIE naprawiane w tym etapie (propozycje → `boty/PONAD-SPECYFIKACJE-BOTY.md`)
 `<noscript>` z e-mailem (wyciek adresu do HTML, anomalia nie wada) · WK-9 „jeden komunikat naraz" (polityka UX, rozszerzenie) ·

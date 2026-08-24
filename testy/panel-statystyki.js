@@ -15,6 +15,7 @@
  */
 const { chromium } = require('playwright-core');
 const { wymagajChromium } = require('./lib/chromium');
+const { zaloguj } = require('./lib/logowanie');
 const BAZA = process.argv[2] || 'http://localhost:8890';
 
 let bledy = 0;
@@ -56,6 +57,7 @@ const PYTANIE = 'Czy to jest ' + ZNACZNIK + ' oraz ' + ZNACZNIK2 + '?';
 
   const b = await chromium.launch({ executablePath: wymagajChromium() });
   const p = await b.newPage({ viewport: { width: 1440, height: 1100 } });
+  p.setDefaultTimeout(60000); // 60 s: pelna linia bazowa na 2 vCPU dlawi 30-sekundowy default (24.08)
 
   console.log('[1] gosc zadaje pytanie SPOZA bazy (prawdziwy widget, prawdziwy AJAX)');
   console.log('       pytanie: ' + PYTANIE);
@@ -92,11 +94,7 @@ const PYTANIE = 'Czy to jest ' + ZNACZNIK + ' oraz ' + ZNACZNIK2 + '?';
     rozmowa2.slice(-200));
 
   console.log('\n[2] admin wchodzi na Statystyki i luki');
-  await p.goto(BAZA + '/wp-login.php', { waitUntil: 'load' });
-  await p.fill('#user_login', user);
-  await p.fill('#user_pass', pass);
-  await p.click('#wp-submit');
-  await p.waitForLoadState('load');
+  await zaloguj(p, BAZA, user, pass);
   await p.goto(BAZA + '/wp-admin/admin.php?page=chatl-statystyki&zakres=7', { waitUntil: 'load' });
 
   const naglowki = await p.$$eval('h1, h2', (h) => h.map((e) => e.textContent.trim()));

@@ -1,15 +1,19 @@
 # 🎯 TABLICA — kto co bierze, co czeka, co blokuje
 
 > Jedno miejsce zamiast dopytywania. **Aktualizuje koordynatorka po każdej zmianie stanu.**
-> Stan na: **23.08, 16:30 — ETAP 3: NAPRAWY (plan: `audyt/PLAN-NAPRAW.md`, briefing: `audyt/BRIEFING-NAPRAWY.md`)**
+> Stan na: **24.08 — ✅ ETAP 3 (NAPRAWY) ZAMKNIĘTY.** 15 PR-ów scalonych (K0 #153, K0b #154,
+> C1–C6: #155 #158 #162 #164 #166 #167, S1–S5: #156 #159 #161 #163 #165, recenzent #160, stos #157).
+> Rejestr: **0 OTWARTYCH, dług strażników 0** — wszystkie 24 znaleziska ZAMKNIĘTE po pomiarze.
+> Linia bazowa po naprawach: **regresje=0** (`audyt/LINIA-BAZOWA-TESTOW.md` [etap3-final]).
+> W toku: bump ChatBot **1.5.9** / Segregator **1.3.2** + paczki z dowodami (ten PR). Potem: sklep (lista Dzidka).
 
 ## 👥 KTO CO BIERZE TERAZ (etap 3 — naprawy po audycie)
 
 | okno tmux | rola | teren | drzewo | paczki (kolejność) | stan |
 |---|---|---|---|---|---|
-| `builder1` | naprawy ChatBota | `wtyczki/chatbot-live/` + `testy/chatbot-*` | `/root/praca/zlecenia/sklep-agentow-b1` | C1 → C2 → C3 → C4 → C5 → C6 | start po scaleniu K0 |
-| `builder2` | naprawy Segregatora | `wtyczki/segregator-maila/` + `testy/segregator-*` | `/root/praca/zlecenia/sklep-agentow-b2` | S1 → S2 → S3 → S4 → S5 | start po scaleniu K0 |
-| koordynatorka | K0 (rejestr, przyrząd, briefing, linia bazowa), scalanie, pliki wspólne, wieczorna linia bazowa, bump na końcu | reszta | worktree `koord/*` | K0 → K1 → K2 → K3 | K0 w toku |
+| `builder1` | naprawy ChatBota | `wtyczki/chatbot-live/` + `testy/chatbot-*` | — | C1 → C2 → C3 → C4 → C5 → C6 | ✅ ZAKOŃCZONE, wszystkie scalone |
+| `builder2` | naprawy Segregatora | `wtyczki/segregator-maila/` + `testy/segregator-*` | — | S1 → S2 → S3 → S4 → S5 | ✅ ZAKOŃCZONE, wszystkie scalone |
+| koordynatorka | domknięcie etapu: diagnoza linii bazowej, rejestr → ZAMKNIĘTE, bump + paczki + dowody | reszta | worktree `koord/etap3-final` | finał | 🔄 w tym PR |
 
 ⛔ **Pliki wspólne edytuje TYLKO koordynatorka:** `audyt/REJESTR-ZNALEZISK.md`, `TABLICA.md`,
 `boty/PONAD-SPECYFIKACJE-BOTY.md`, `boty/buduj-paczki.sh`, `boty/paczki/`, `.github/`, `narzedzia-qa/bramki.sh`.
@@ -61,6 +65,23 @@ rejestrze EXIT=0. Bramka nie jest napisem.
 W rejestrze siedzi **9 znalezisk**: F1/F2/F3 (w naprawie przez #136), A3-1, A3-2, KR1, KR2,
 KR4, KR6 (otwarte).
 
+### ✅ ZAMKNIĘCIE ETAPU 3 (24.08) — diagnoza pięciu czerwonych linii bazowej
+Nocna linia [po-naprawach] pokazała 4 regresje + 1 nowy czerwony strażnik. Diagnoza (systematycznie,
+z dowodami): **kod wtyczek zdrowy — wszystkie pięć to wady testów albo dryf wspólnego stosu**:
+`pulapka-test` (stos miał `powiadomienia=0` po cudzym zapisie formularza → test dostał własną migawkę
+ustawień i jawnie włącza powiadomienia) · `licznik-trafien-test` (import konfiguracji zostawił stos
+bez reguł, a seed CELOWO nie odtwarza reguł przy istniejących kategoriach → test dosiewa demo sam) ·
+`eksport-csv` (duble wiersza testowego po przerwanym cudzym przebiegu → sprzątanie pętlą) ·
+`DK-rownolegle-liczniki` (mierzył licznik w opcjach USUNIĘTY przez C3 → przyrząd zaktualizowany na
+tabelę zdarzeń: 10/10 co do progu, kubeł 20/20 atomowo) · `segregator-deklaracja-vs-ladunek-ai.php`
+(to silnik wrappera `.sh`, nie duplikat — linia bazowa pomija go jawnie) · zamrożona sonda
+`lamacz-baza-i-srodowisko.php` wyłączona z linii (woła kształt kodu sprzed S1; dowód w git).
+Dodatkowo: A6-F2 domknięte (materiał audytowy poprawiony + strażnik `testy/material-audytu-zgodnosc.sh`),
+dług `klucz_hash=''` w testach spłacony (`wp_hash`), `test-klucza`/`pulapka`/`przejęcie` — zielone.
+Pozostałe czerwone linii bazowej (3×env: `panel-statystyki`, `stronicowanie-panel`, `widget-formularz` —
+dane/konfiguracja stosu, czerwone już w [baza-766b4c9]; `a4-widget-konsola-kontrast` EXIT=2 = przyrząd) —
+udokumentowane w `audyt/LINIA-BAZOWA-TESTOW.md`, kandydaci do samowystarczalności testów po oddaniu.
+
 ### ⛔ CZEGO ŚWIADOMIE NIE ZROBIŁAM — czeka na decyzję Dzidka
 
 1. **Wpis do `.github/manifest-bramek.txt`.** Manifest ma własną zasadę, zapisaną w nim
@@ -72,14 +93,17 @@ KR4, KR6 (otwarte).
    stosu Dockera — psują kod w kontenerze i sprawdzają, czy strażnik pada. Równoległe
    przeloty CI deptałyby sobie po stosie. Wykonanie zostaje przy człowieku i recenzencie.
 
-## 🔧 PULL REQUESTY
+## 🔧 PULL REQUESTY (etap 3 — wszystkie scalone)
 
-| nr | co | stan |
-|---|---|---|
-| #135 | audyt A3 dane — `chatl_sesje` bez kasowania, zombie cron | ✅ **SCALONY** 18:52 |
-| #136 | błąd zapisu przestaje ginąć przy `WP_DEBUG=false` (29 miejsc) | 🔧 naprawiona uwaga krytyczna (`387ee38`), czeka na CI |
-| #133 | instrukcja ChatBota: import CSV + przegląd odwrotny | 🔧 naprawione 3 uwagi (`d3d6930`), czeka na CI |
-| #137 | audyt A5 krawędzie — 4 znaleziska | ⏳ kontrole zielone, **recenzja do przeczytania** |
+| paczka | PR | paczka | PR |
+|---|---|---|---|
+| K0 / K0b | #153 / #154 | S1 | #156 |
+| C1 | #155 | S2 | #159 |
+| C2 | #158 | S3 | #161 |
+| C3 | #162 | S4 | #163 |
+| C4 | #164 | S5 | #165 |
+| C5 | #166 | recenzent-Opus | #160 |
+| C6 | #167 | maskowanie sekretów stosu | #157 |
 
 ⛔ Kolejka CI jest szeregowa — jeden własny wykonawca, jedno zadanie naraz.
 
@@ -87,29 +111,25 @@ KR4, KR6 (otwarte).
 
 | soczewka | pytanie | stan |
 |---|---|---|
-| A1 bezpieczeństwo | czy da się to zaatakować | ✅ kalibracja zdana celująco, przebieg zrobiony |
-| A2 awaria | co się dzieje, gdy coś padnie | ✅ raport, 3 znaleziska |
-| A3 dane / RODO | co zostaje w bazie | ✅ raport, 2 znaleziska, scalony |
-| A4 front | co widzi człowiek | 🔄 `praca:4` |
-| A5 krawędzie | puste, maksimum, jeden ponad | ✅ raport #137, 4 znaleziska |
-| A6 dok↔kod odwrotny | o czym dokumentacja MILCZY | 🔄 `praca:3` |
-| Ł Łamacz | jakie założenie świat złamie | 🔄 `praca:1` + `praca:2` |
+| wszystkie 7 (A1–A6 + Łamacz) | — | ✅ **AUDYT DOMKNIĘTY 23.08**: MAPA 36/36 celów, 23 czysto, 13 znalezisk (#152) — a 24.08 wszystkie znaleziska ZAMKNIĘTE naprawami |
 
 Mapa polowania: `audyt/boty/material/06-mapa-polowania.md` — **36 celów**, odhacza koordynatorka.
 
-## 🐞 ZNALEZISKA CZEKAJĄCE NA DECYZJĘ
+## 🐞 ZNALEZISKA CZEKAJĄCE NA DECYZJĘ (stan 24.08)
 
-1. **Segregator wysyła nadawców i tematy cudzych maili do dostawcy AI** — klient przekazuje
-   dane osób trzecich, które o tym nie wiedzą. Inna kategoria RODO niż retencja. **Nierozstrzygnięte.**
-2. **Zasięg paska błędu bazy** — Segregator pokazuje globalnie, ChatBot tylko na swoich stronach.
-   Moja rekomendacja: wyrównać **w górę** (oba globalnie, odrzucalne), nie w dół. Ślad w #136.
-3. **`chatl_sesje` rośnie bez końca**, poza kasownikiem RODO (znalezisko A3).
-4. **Zombie cron ChatBota** po odinstalowaniu (znalezisko A3).
-5. **Blokada przebiegu skrzynki po zabitym procesie** cicho wyłącza cron na zawsze.
-6. **`DISABLE_WP_CRON`** u klienta unieważnia obiecaną retencję 90 dni.
+1. **L8 — czy AI wchodzi na skrzynkę Segregatora** — JEDYNA otwarta decyzja, należy do Dzidka.
+   Fakt (S5 #165): dziś na przebiegu skrzynki pracują SAME REGUŁY, deklaracja i panel mówią to wprost.
+   **Rekomendacja: zostaje napis „same reguły"** (zero danych osób trzecich do AI, zero ryzyka RODO).
+2. **Zasięg paska błędu bazy** (Segregator globalnie, ChatBot na swoich stronach) — nie weszło do
+   paczek C1–C6/S1–S5; zaległość niżej priorytetu, ślad w #136. Reszta dawnej listy: pkt 3 (sesje) →
+   C6 #167 · pkt 4 (zombie cron) → C6 #167 · pkt 5 (zamek po zabitym procesie) → S1 #156 ·
+   pkt 6 (`DISABLE_WP_CRON`) → świadomie nie (T-2: ostrzeżenie ma Segregator; rejestr, sekcja
+   „świadomie NIE naprawiane").
 
 ## 📦 PO AUDYCIE — kolejność domknięcia
-1. Rozstrzygnąć znaleziska, każde potwierdzone dostaje strażnika z exit 1.
-2. **Jedno zbiorcze podbicie: ChatBot 1.5.9, Segregator 1.3.2** + przebudowa obu paczek
-   + `paczka-zgodnosc.sh` EXIT=0. ⛔ Robi to koordynatorka, jedną operacją, po ostatnim scaleniu.
-3. Sklep — Dzidek ma własną listę poprawek, wracamy po botach.
+1. ✅ Rozstrzygnięte: każde znalezisko ZAMKNIĘTE ze strażnikiem (rejestr: OTWARTE=0, dług=0).
+2. 🔄 **Jedno zbiorcze podbicie: ChatBot 1.5.9, Segregator 1.3.2** + przebudowa obu paczek
+   + `paczka-zgodnosc.sh` EXIT=0 + dowody NA PACZKACH — w tym PR, jedną operacją.
+3. Sklep — Dzidek ma własną listę poprawek (`wymiana/SKLEP-LISTA-PO-BOTACH.md`), wracamy po botach.
+4. Dokumentacja projektu botów: przegląd istniejących instrukcji/diagramów/architektury przeciw
+   kodowi po naprawach, poprawki tam, gdzie naprawy unieważniły treść.

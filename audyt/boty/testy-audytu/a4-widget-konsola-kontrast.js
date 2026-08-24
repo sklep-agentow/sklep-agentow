@@ -8,6 +8,7 @@ function naTle(f,t){const a=f[3];return [0,1,2].map(i=>Math.round(f[i]*a+t[i]*(1
 (async () => {
   const b = await chromium.launch({ headless:true, args:['--no-sandbox','--disable-dev-shm-usage','--disable-gpu','--js-flags=--max-old-space-size=256'] });
   const p = await b.newPage();
+  p.setDefaultTimeout(60000); // 60 s: pelna linia bazowa na 2 vCPU dlawi 30-sekundowy default (24.08)
   const konsola=[], bledy=[], zadania=[];
   p.on('console', m => { if(m.type()==='error'||m.type()==='warning') konsola.push(m.type()+': '+m.text()); });
   p.on('pageerror', e => bledy.push('pageerror: '+e.message));

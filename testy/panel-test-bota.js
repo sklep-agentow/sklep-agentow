@@ -5,6 +5,7 @@
    nigdy w kodzie). Użycie: node testy/panel-test-bota.js [adres] */
 const { chromium } = require('playwright-core');
 const { wymagajChromium } = require('./lib/chromium');
+const { zaloguj } = require('./lib/logowanie');
 const BAZA = process.argv[2] || 'http://localhost:8890';
 
 let bledy = 0;
@@ -19,11 +20,8 @@ function sprawdz(opis, warunek) {
 
   const b = await chromium.launch({ executablePath: wymagajChromium() });
   const p = await b.newPage({ viewport: { width: 1280, height: 1000 } });
-  await p.goto(BAZA + '/wp-login.php', { waitUntil: 'load' });
-  await p.fill('#user_login', user);
-  await p.fill('#user_pass', pass);
-  await p.click('#wp-submit');
-  await p.waitForLoadState('load');
+  p.setDefaultTimeout(60000); // 60 s: pelna linia bazowa na 2 vCPU dlawi 30-sekundowy default (24.08)
+  await zaloguj(p, BAZA, user, pass);
 
   const karta = '.wrap .card';
   await p.goto(BAZA + '/wp-admin/admin.php?page=chatl-qa', { waitUntil: 'load' });

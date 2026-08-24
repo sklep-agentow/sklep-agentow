@@ -34,6 +34,7 @@ const MARG_KADR   = Number(process.argv[5] || 16);
 (async () => {
   const b = await chromium.launch({ executablePath: wymagajChromium() });
   const p = await b.newPage();
+  p.setDefaultTimeout(60000); // 60 s: pelna linia bazowa na 2 vCPU dlawi 30-sekundowy default (24.08)
   await p.goto('file://' + path.resolve(PLIK), { waitUntil: 'load' });
 
   const wynik = await p.evaluate(({ MARG_POZIOM, MARG_PION, MARG_KADR }) => {

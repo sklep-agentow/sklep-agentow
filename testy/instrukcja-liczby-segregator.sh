@@ -53,7 +53,8 @@ echo
 echo "=== B. Co kupujacy dostaje po wlaczeniu (seed demo) ==="
 KAT=$(sed -n '/\$kategorie = array(/p' $W/includes/instalator.php | grep -o "'" | wc -l)
 KAT=$((KAT / 2))
-REG=$(awk '/\$reguly[ \t]*=[ \t]*array\(/,/^[ \t]*\);/' $W/includes/instalator.php | grep -c "array( '")
+# Reguly demo mieszkaja w segm_reguly_demo() — jednym zrodle prawdy dla seeda i QA.
+REG=$(awk '/function segm_reguly_demo/,/^}/' $W/includes/instalator.php | grep -c "array( '")
 MAILE=$(awk '/\$maile[ \t]*=[ \t]*array\(/,/^[ \t]*\);/' $W/includes/instalator.php | grep -c "array( '")
 spr "kategorii demo w kodzie"        "5"  "echo $KAT"
 spr "regul demo w kodzie"            "8"  "echo $REG"

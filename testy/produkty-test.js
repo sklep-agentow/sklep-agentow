@@ -25,6 +25,7 @@ const wynik = (nazwa, ok, extra = '') => { console.log(`WYNIK:${ok ? 'OK ' : 'PA
 (async () => {
   const b = await chromium.launch({ executablePath: wymagajChromium() });
   const p = await b.newPage({ viewport: { width: 1440, height: 1000 } });
+  p.setDefaultTimeout(60000); // 60 s: pelna linia bazowa na 2 vCPU dlawi 30-sekundowy default (24.08)
   await p.goto(BAZA + '/wp-login.php', { waitUntil: 'load' });
   await p.fill('#user_login', process.env.WP_ADMIN_USER);
   await p.fill('#user_pass', process.env.WP_ADMIN_PASS);

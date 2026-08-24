@@ -6,6 +6,7 @@
    nigdy w kodzie). Użycie: node testy/import-csv-panel.js [adres] */
 const { chromium } = require('playwright-core');
 const { wymagajChromium } = require('./lib/chromium');
+const { zaloguj } = require('./lib/logowanie');
 const fs = require('fs');
 const { execFileSync } = require('child_process');
 const os = require('os');
@@ -54,11 +55,8 @@ function sprzataj() {
   // ciastko logowania, a z kontekstu domyslnego nie da sie otworzyc kolejnej karty.
   const ctx = await b.newContext({ viewport: { width: 1400, height: 1100 } });
   const p = await ctx.newPage();
-  await p.goto(BAZA + '/wp-login.php', { waitUntil: 'load' });
-  await p.fill('#user_login', user);
-  await p.fill('#user_pass', pass);
-  await p.click('#wp-submit');
-  await p.waitForLoadState('load');
+  p.setDefaultTimeout(60000); // 60 s: pelna linia bazowa na 2 vCPU dlawi 30-sekundowy default (24.08)
+  await zaloguj(p, BAZA, user, pass);
 
   const ileWpisow = async () => {
     const t = await p.$eval('.wrap', (e) => e.textContent);
@@ -100,6 +98,7 @@ function sprzataj() {
   const stanPoPodgladzie = await (async () => {
     // Karta w TYM SAMYM kontekscie — inaczej sesja bez ciastka logowania.
     const p2 = await ctx.newPage();
+    p2.setDefaultTimeout(60000); // 60 s: pelna linia bazowa na 2 vCPU dlawi 30-sekundowy default (24.08)
     await p2.goto(BAZA + '/wp-admin/admin.php?page=chatl-qa', { waitUntil: 'load' });
     const t = await p2.$eval('.wrap', (e) => e.textContent);
     await p2.close();
