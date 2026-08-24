@@ -7,7 +7,16 @@
    przeglądarka po polsku (pola dat!); czekanie na DOWÓD ekranu (selektor),
    nie na "network idle"; front: okno czatu fotografowane jako element.
 
-   Użycie: WP_ADMIN_USER=... WP_ADMIN_PASS=... node testy/zrzuty-instrukcje.js
+   ⛔ NARZĘDZIE PRZESTAWIA WSPÓLNY STOS: (1) twardy RESET materiału demo Segregatora
+   (kategorie+reguły+maile → seed od zera; to stan kanoniczny stosu testowego, ale
+   kasuje, co było) — wymaga jawnej zgody ZRZUTY_RESET_DEMO=1; (2) wgrywa OBA katalogi
+   wtyczek z TEGO drzewa na stos (docker cp), żeby zdjęcia pokazywały wersję z paczki,
+   nie to, co akurat wisi na stosie; (3) na czas strzałów zdejmuje klucz API ChatBota
+   i konfigurację skrzynki — MIGAWKI TRZYMA W PAMIĘCI PROCESU (nie w bazie: opcja-
+   sierota z hasłem przeżyłaby pad skryptu i odinstalowanie wtyczki), przywraca
+   w finally — także po błędzie.
+
+   Użycie: ZRZUTY_RESET_DEMO=1 WP_ADMIN_USER=... WP_ADMIN_PASS=... node testy/zrzuty-instrukcje.js
    Wyjście: wtyczki/chatbot-live/zrzuty/*.png + wtyczki/segregator-maila/zrzuty/*.png */
 const { chromium } = require('playwright-core');
 const { wymagajChromium } = require('./lib/chromium');
@@ -53,24 +62,48 @@ const ADMIN = [
   const { execFileSync } = require('child_process');
   const wpEv = (kod) => { try { return execFileSync('docker', ['exec', '-u', 'www-data', 'strona_wp_wordpress', 'wp', 'eval', kod], { encoding: 'utf8' }).trim(); } catch (e) { return null; }
   };
-  const kluczByl = wpEv('echo get_option("chatl_klucz_api") ? "TAK" : "NIE";');
-  if (kluczByl === null) { console.error('nie odczytam stanu klucza — nie ruszam stosu'); process.exit(1); }
-  if (kluczByl === 'TAK') {
-    const m = wpEv('update_option("chatl_klucz_api_migawka_zrzut", get_option("chatl_klucz_api"), false); delete_option("chatl_klucz_api"); wp_cache_flush(); echo "OK";');
-    if (m !== 'OK') { console.error('migawka klucza PADLA — nie ruszam stosu dalej'); process.exit(1); }
+  if (process.env.ZRZUTY_RESET_DEMO !== '1') {
+    console.error('To narzedzie RESETUJE demo Segregatora i przestawia stos — uruchom z ZRZUTY_RESET_DEMO=1 (swiadomie).');
+    process.exit(2);
   }
-  /* WAZNA A (#169 r2): zrzut skrzynki NIE moze pokazywac naszego kontenera
-   * (segm_imap:3143, bez szyfrowania, haslo zapisane) — to anty-wzorzec, przed
-   * ktorym tekst obok ostrzega. Migawka konfiguracji skrzynki -> czysty formularz
-   * (placeholdery imap.przyklad.pl / 993 / SSL) -> przywrocenie po strzale. */
-  const skrzMig = wpEv('update_option("segm_skrzynka_migawka_zrzut", array(get_option("segm_skrzynka"), get_option("segm_imap_haslo")), false); delete_option("segm_skrzynka"); delete_option("segm_imap_haslo"); wp_cache_flush(); echo "OK";');
-  if (skrzMig !== 'OK') { console.error('migawka skrzynki PADLA — nie ruszam stosu dalej'); process.exit(1); }
+  /* Stos = TO drzewo (uwaga 6 recenzji #169 r3): zdjecia maja pokazywac wersje,
+     ktora jedzie w paczce. */
+  for (const w of ['chatbot-live', 'segregator-maila']) {
+    try {
+      execFileSync('docker', ['cp', 'wtyczki/' + w + '/.', 'strona_wp_wordpress:/var/www/html/wp-content/plugins/' + w + '/']);
+    } catch (e) { console.error('docker cp ' + w + ' PADL — stos nie odpowiada wersji z drzewa'); process.exit(1); }
+  }
+  /* MIGAWKI W PAMIECI (json_encode -> zmienna node); zadnych opcji *_migawka_* w bazie. */
+  const migawka = { klucz: null, skrzynka: null, haslo: null };
+  const czytaj = (opt) => wpEv('echo json_encode(get_option("' + opt + '"));');
+  migawka.klucz = czytaj('chatl_klucz_api');
+  migawka.skrzynka = czytaj('segm_skrzynka');
+  migawka.haslo = czytaj('segm_imap_haslo');
+  if (migawka.klucz === null || migawka.skrzynka === null || migawka.haslo === null) {
+    console.error('nie odczytam migawek — nie ruszam stosu'); process.exit(1);
+  }
+  const zdejmij = wpEv('delete_option("chatl_klucz_api"); delete_option("segm_skrzynka"); delete_option("segm_imap_haslo"); wp_cache_flush(); echo "OK";');
+  if (zdejmij !== 'OK') { console.error('zdjecie opcji na czas zrzutow PADLO'); process.exit(1); }
+  const przywrocMigawki = () => {
+    const kod = ['chatl_klucz_api', 'segm_skrzynka', 'segm_imap_haslo'].map((opt, i) => {
+      const v = [migawka.klucz, migawka.skrzynka, migawka.haslo][i];
+      return v === 'false' ? 'delete_option("' + opt + '");'
+        : '$v = json_decode(' + JSON.stringify(v) + ', true); update_option("' + opt + '", $v, false);';
+    }).join(' ') + ' wp_cache_flush(); echo get_option("chatl_klucz_api") || ' + (migawka.klucz === 'false' ? '1' : '0') + ' ? "OK" : "PUSTO";';
+    const w = wpEv(kod);
+    if (w !== 'OK') { console.error('PRZYWROCENIE MIGAWEK PADLO (' + w + ') — sprawdz klucz i skrzynke RECZNIE!'); bledy++; return false; }
+    return true;
+  };
   /* WAZNA B (#169 r2): zdjecia segregatora maja pokazywac KANONICZNE demo
    * (5 kategorii / 8 regul / 30 maili z instrukcji) — a wspolny stos dryfuje.
    * Twardy reset materialu demo przed strzalami; to stos testowy, seed jest
    * jego stanem kanonicznym. */
+  /* Od tego miejsca stos jest PRZESTAWIONY — kazda sciezka wyjscia MUSI przejsc
+     przez finally z przywrocMigawki() (process.exit omija finally, wiec bledy
+     krytyczne леca throw-em do glownego catch po przywroceniu). */
+  try {
   const seed = wpEv('global $wpdb; $p=$wpdb->prefix; $wpdb->query("DELETE FROM {$p}segm_reguly"); $wpdb->query("DELETE FROM {$p}segm_kategorie"); $wpdb->query("DELETE FROM {$p}segm_maile"); segm_seed_demo(); echo $wpdb->get_var("SELECT COUNT(*) FROM {$p}segm_kategorie")."/".$wpdb->get_var("SELECT COUNT(*) FROM {$p}segm_reguly")."/".$wpdb->get_var("SELECT COUNT(*) FROM {$p}segm_maile");');
-  if (seed !== '5/8/30') { console.error('seed demo nie dal 5/8/30, mam: ' + seed + ' — nie strzelam falszywych liczb'); process.exit(1); }
+  if (seed !== '5/8/30') { throw new Error('seed demo nie dal 5/8/30, mam: ' + seed + ' — nie strzelam falszywych liczb'); }
   console.log('  seed demo: 5/8/30 potwierdzone');
 
   for (const [wtyczka, nazwa, slug, dowod, kadr, maxH] of ADMIN) {
@@ -118,13 +151,10 @@ const ADMIN = [
     bledy++;
   }
 
-  if (kluczByl === 'TAK') {
-    const w = wpEv('update_option("chatl_klucz_api", get_option("chatl_klucz_api_migawka_zrzut"), false); delete_option("chatl_klucz_api_migawka_zrzut"); wp_cache_flush(); echo get_option("chatl_klucz_api") ? "OK" : "PUSTO";');
-    if (w !== 'OK') { console.error('PRZYWROCENIE KLUCZA PADLO (' + w + ') — klucz wlasciciela mogl zostac skasowany!'); bledy++; }
+  } finally {
+    przywrocMigawki(); /* wraca ZAWSZE — takze po throw w srodku strzalow */
+    await b.close();
   }
-  const skrzW = wpEv('$m = get_option("segm_skrzynka_migawka_zrzut"); if (is_array($m)) { if (false !== $m[0]) { update_option("segm_skrzynka", $m[0]); } if (false !== $m[1]) { update_option("segm_imap_haslo", $m[1]); } } delete_option("segm_skrzynka_migawka_zrzut"); wp_cache_flush(); echo "OK";');
-  if (skrzW !== 'OK') { console.error('PRZYWROCENIE SKRZYNKI PADLO — konfiguracja mogla zostac wyczyszczona!'); bledy++; }
-  await b.close();
   console.log('\nZROBIONE: ' + zrobione + ', BLEDOW: ' + bledy);
   process.exit(bledy ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });

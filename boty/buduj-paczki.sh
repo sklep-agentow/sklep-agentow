@@ -13,6 +13,31 @@ set -euo pipefail
 KATALOG_SKRYPTU="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 KORZEN="$(dirname "$KATALOG_SKRYPTU")"
 WYJSCIE="$KATALOG_SKRYPTU/paczki"
+
+# ⛔ ZAMEK WYDANYCH PACZEK — klasa 10 (24.08: budowa zrzutów przed bumpem dwa razy
+# nadpisała wydane 1.5.9/1.3.2 nową treścią pod starym numerem).
+# FAIL-CLOSED: gdy nie umiem SPRAWDZIĆ, czy paczka jest wydana — ODMAWIAM, nie buduję.
+#   - poza repo gita:      wymaga BUDUJ_POZA_REPO=1 (ustawia piaskownica próby kontrolnej),
+#   - origin/main nieznane: ODMOWA,
+#   - paczka w origin/main: ODMOWA.
+# Świadome obejście każdej odmowy: BUDUJ_NADPISZ_WYDANE=1 (np. naprawa zepsutego zipa).
+zamek_wydanej_paczki() {
+	local NAZWA; NAZWA=$(basename "$1")
+	[ "${BUDUJ_NADPISZ_WYDANE:-0}" = "1" ] && return 0
+	if ! git rev-parse --git-dir >/dev/null 2>&1; then
+		[ "${BUDUJ_POZA_REPO:-0}" = "1" ] && return 0
+		echo "⛔ Nie jestem w repo gita — nie umiem sprawdzić, czy $NAZWA jest wydana. Odmowa (piaskownica: BUDUJ_POZA_REPO=1)." >&2
+		exit 1
+	fi
+	if ! git rev-parse --verify --quiet origin/main >/dev/null; then
+		echo "⛔ origin/main nieosiągalny — nie umiem sprawdzić, czy $NAZWA jest wydana. Odmowa." >&2
+		exit 1
+	fi
+	if git cat-file -e "origin/main:boty/paczki/$NAZWA" 2>/dev/null; then
+		echo "⛔ $NAZWA jest już WYDANA (origin/main) — podbij wersję wtyczki zamiast nadpisywać." >&2
+		exit 1
+	fi
+}
 mkdir -p "$WYJSCIE"
 
 # Pełna, jawna lista plików każdej paczki (ścieżki względem wtyczki/).
@@ -116,16 +141,7 @@ zbuduj() {
 
 	# 5) Zip TYLKO z plików allowlisty (katalog wtyczki w korzeniu — format WP).
 	local PACZKA="$WYJSCIE/$WTYCZKA-$WERSJA.zip"
-	# ⛔ Paczka WYDANA (istnieje w origin/main) jest ZAMROŻONA — nadpisanie jej nową
-	# treścią pod starym numerem to klasa 10 (stało się 24.08: budowa zrzutów przed
-	# bumpem podmieniła 1.5.9/1.3.2). Nowa treść = nowy numer w nagłówku wtyczki.
-	# Świadome obejście (np. naprawa zepsutego historycznego zipa): BUDUJ_NADPISZ_WYDANE=1.
-	# Poza repo gitem (proba kontrolna buduje w piaskownicy) — kontrola się nie odpala.
-	if [ "${BUDUJ_NADPISZ_WYDANE:-0}" != "1" ] && git rev-parse --git-dir >/dev/null 2>&1 \
-		&& git cat-file -e "origin/main:boty/paczki/$(basename "$PACZKA")" 2>/dev/null; then
-		echo "⛔ $(basename "$PACZKA") jest już WYDANA (origin/main) — podbij wersję wtyczki zamiast nadpisywać." >&2
-		exit 1
-	fi
+	zamek_wydanej_paczki "$PACZKA"
 	rm -f "$PACZKA"
 	( cd "$KORZEN/wtyczki" && zip -q "$PACZKA" "${ALLOWLIST[@]}" )
 
@@ -135,12 +151,8 @@ zbuduj() {
 	if [ -n "$ROZNICA" ]; then
 		echo "BLAD: zawartosc zipa $WTYCZKA rozni sie od allowlisty:" >&2
 		echo "$ROZNICA" >&2
-	# ⛔ Ten sam zamek co wyżej — paczka wydana (origin/main) jest zamrożona.
-	if [ "${BUDUJ_NADPISZ_WYDANE:-0}" != "1" ] && git rev-parse --git-dir >/dev/null 2>&1 \
-		&& git cat-file -e "origin/main:boty/paczki/$(basename "$PACZKA")" 2>/dev/null; then
-		echo "⛔ $(basename "$PACZKA") jest już WYDANA (origin/main) — podbij wersję wtyczki zamiast nadpisywać." >&2
-		exit 1
-	fi
+		# Sprzątanie WŁASNEGO, świeżo zbudowanego artefaktu po padzie kontroli —
+		# zamek wydanych paczek pilnuje wejścia do budowy, nie tego rm.
 		rm -f "$PACZKA"
 		exit 1
 	fi
