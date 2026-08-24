@@ -58,8 +58,9 @@ statyczna + API bez N+1 · spójny styl kodu (eslint/prettier w CI; zakaz `debug
 Kont/logowania kupujących NIE ma · kursów NIE sprzedajemy · faktur NIE wystawiamy · plików
 produktów NIE trzymamy publicznie · reszty strony-gospodarza NIE dotykamy · prawdziwych
 płatności NIE włączamy · **przecen i przekreślonych cen NIE MA** (Omnibus-historia-cen wraca
-tylko na wyraźne życzenie, z tabelą historii) · **sekcji „opinie" NIE MA** (zero zmyślonych
-opinii — prawo; zamiast tego „dla kogo jest ten agent") · samoobsługowego ponownego wysłania
+tylko na wyraźne życzenie, z tabelą historii) · **sekcja „opinie" pokazuje WYŁĄCZNIE
+prawdziwe wpisy zweryfikowanych kupujących** (zero zmyślonych opinii — prawo; pusta
+lista = sekcji nie widać; obok tego „dla kogo jest ten agent") · samoobsługowego ponownego wysłania
 linku NIE ma (kanał kontaktu właściciela) · monitoringu/alertingu NIE ma w v1 (panel + retry
 wystarczą; wraca przy produkcji) · płatności asynchronicznych NIE obsługujemy (egzamin = karty
 testowe; obsłużone: completed + expired) · multi-tenant NIE ma (izolacja per konto właściciela
@@ -162,8 +163,9 @@ Zgoda na natychmiastowe dostarczenie zapisywana per zamówienie (treść + czas)
 i polityka prywatności jako SZABLONY wypełniane danymi sprzedawcy z config (paczka nie
 publikuje cudzego regulaminu; C18) · minimalizacja: tylko email · pseudonimizacja na żądanie ·
 retencja logów 90 dni · polityka wymienia operatora płatności i dostawcę maili jako podmioty
-przetwarzające · **bez przecen → Omnibus-ceny nie dotyczy (jawnie)** · bez opinii → Omnibus-
-opinie nie dotyczy (jawnie) · WCAG-lite (EAA).
+przetwarzające · **bez przecen → Omnibus-ceny nie dotyczy (jawnie)** · opinie wyłącznie
+zweryfikowanych kupujących → **Omnibus-opinie DOTYCZY i jest spełniony** (weryfikacja
+zakupu przed publikacją + nota przy sekcji; bez aggregateRating) · WCAG-lite (EAA).
 
 ## 9. PLAN PRACY v2 (harmonogram do terminu; POMIAR czasu per krok)
 

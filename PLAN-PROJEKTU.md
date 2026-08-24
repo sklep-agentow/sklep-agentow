@@ -45,8 +45,12 @@ docelowego) · spójny styl kodu (phpcs w CI; zakaz gołych var_dump/error_log w
 
 Kont/logowania KUPUJĄCYCH nie ma (konta w WP mają tylko adminowie) · kursów NIE
 sprzedajemy · faktur NIE wystawiamy · plików produktów NIE serwujemy bezpośrednio
-(tylko brama PHP) · prawdziwych płatności NIE włączamy · przecen i opinii NIE MA
-(Omnibus — jawnie nie dotyczy) · **WooCommerce NIE używamy** (D17 — sklep to nasza
+(tylko brama PHP) · prawdziwych płatności NIE włączamy · przecen NIE MA (Omnibus-ceny
+— jawnie nie dotyczy) · opinie WYŁĄCZNIE prawdziwe od zweryfikowanych kupujących,
+dodawane ręcznie po potwierdzeniu zakupu — bez zbierania formularzem od gości i bez
+ocen zbiorczych (D6 + UZUPEŁNIENIE 24.08; Omnibus-opinie DOTYCZY i jest spełniony
+weryfikacją zakupu przed publikacją oraz notą przy sekcji) · **WooCommerce NIE
+używamy** (D17 — sklep to nasza
 wtyczka) · **tłumaczeń/i18n NIE robimy** (teksty polskie wprost — D21; omija też minę
 textdomain WP 6.7+) · multisite WP NIE (jedna zwykła instalacja) · monitoringu
 zewnętrznego NIE w v1 · botów z PRAWDZIWYM AI/IMAP NIE na egzamin (D19 — rdzeń demo;
@@ -244,7 +248,9 @@ jako SZABLONY z polami sprzedawcy do wypełnienia (paczka nie publikuje cudzego
 regulaminu) · minimalizacja: od kupującego tylko email · anonimizacja na żądanie ·
 retencja logów 90 dni · polityka wymienia Stripe i mechanizm maili jako
 przetwarzających; instrukkcja właściciela: akceptacja DPA u operatorów · bez przecen
-i opinii → Omnibus jawnie nie dotyczy · WCAG-lite (EAA) · przed oddaniem: bramka
+→ Omnibus-ceny jawnie nie dotyczy · opinie zweryfikowanych kupujących → Omnibus-opinie
+DOTYCZY i jest spełniony (weryfikacja zakupu przed publikacją + nota przy sekcji;
+bez aggregateRating) · WCAG-lite (EAA) · przed oddaniem: bramka
 `bezpieczenstwo-danych-klienta` (dane osobowe = mail kupujących + dziennik IP).
 
 ## 9. PLAN PRACY v3 (harmonogram; POMIAR czasu per krok w audyt/POMIAR-CZASU.md)

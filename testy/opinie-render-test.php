@@ -66,25 +66,72 @@ echo "\n=== D. Brak imienia: znak zastepczy zamiast pustego krazka (DROBNA 5) ==
 sprawdz( 'zero pustych <strong></strong>', false === strpos( $html, '<strong></strong>' ) );
 sprawdz( 'wpis bez imienia dostaje „Klient"', false !== strpos( $html, '<strong>Klient</strong>' ) );
 sprawdz( 'avatar wpisu bez imienia = K', false !== strpos( $html, '<span class="sklepag-avatar" aria-hidden="true">K</span>' ) );
-$html_spacja = sklepag_render_opinie( array( array( 'tresc' => 'x', 'imie' => '   ' ) ) );
+$html_spacja = sklepag_render_opinie(
+	array(
+		array(
+			'tresc' => 'x',
+			'imie'  => '   ',
+		),
+	)
+);
 sprawdz( 'imie z samych spacji tez daje „Klient"', false !== strpos( $html_spacja, '<strong>Klient</strong>' ) );
 
 echo "\n=== E. Gwiazdki poza zakresem: zacisk 1-5 ===\n";
-$html_9 = sklepag_render_opinie( array( array( 'tresc' => 'x', 'imie' => 'Ala', 'gwiazdki' => 9 ) ) );
+$html_9 = sklepag_render_opinie(
+	array(
+		array(
+			'tresc'    => 'x',
+			'imie'     => 'Ala',
+			'gwiazdki' => 9,
+		),
+	)
+);
 sprawdz( '9 gwiazdek zaciska sie do 5, span pustych PUSTY', false !== strpos( $html_9, 'aria-label="Ocena 5 na 5"' ) && false !== strpos( $html_9, '<span class="sklepag-gwiazdki-puste"></span>' ) );
-$html_0 = sklepag_render_opinie( array( array( 'tresc' => 'x', 'imie' => 'Ala', 'gwiazdki' => 0 ) ) );
+$html_0 = sklepag_render_opinie(
+	array(
+		array(
+			'tresc'    => 'x',
+			'imie'     => 'Ala',
+			'gwiazdki' => 0,
+		),
+	)
+);
 sprawdz( '0 gwiazdek zaciska sie do 1', false !== strpos( $html_0, 'aria-label="Ocena 1 na 5"' ) );
-$html_bez = sklepag_render_opinie( array( array( 'tresc' => 'x', 'imie' => 'Ala' ) ) );
+$html_bez = sklepag_render_opinie(
+	array(
+		array(
+			'tresc' => 'x',
+			'imie'  => 'Ala',
+		),
+	)
+);
 sprawdz( 'brak klucza gwiazdki = 5 (domysl)', false !== strpos( $html_bez, 'aria-label="Ocena 5 na 5"' ) );
 
 echo "\n=== F. Polski inicjal wielobajtowy ===\n";
-$html_pl = sklepag_render_opinie( array( array( 'tresc' => 'x', 'imie' => 'łukasz' ) ) );
+$html_pl = sklepag_render_opinie(
+	array(
+		array(
+			'tresc' => 'x',
+			'imie'  => 'łukasz',
+		),
+	)
+);
 sprawdz( 'inicjal Ł (wielobajtowy, z duzej)', false !== strpos( $html_pl, '>Ł</span>' ) );
 
-echo "\n=== G. Stary format array( tresc, podpis ) nietkniety ===\n";
+echo "\n=== G. Dawny format array( tresc, podpis ) POMIJANY — lista mieszana nie przeczy nocie ===\n";
 $html_stary = sklepag_render_opinie( array( array( 'Stary wpis dziala.', '— Jan, warsztat' ) ) );
-sprawdz( 'blockquote i podpis sa', false !== strpos( $html_stary, '<blockquote>Stary wpis dziala.</blockquote>' ) && false !== strpos( $html_stary, '— Jan, warsztat' ) );
-sprawdz( 'stary format BEZ plakietki (nie klamiemy przy starych wpisach)', 0 === substr_count( $html_stary, 'ZWERYFIKOWANY ZAKUP' ) );
+sprawdz( 'wpis wylacznie dawnego formatu = sekcji NIE MA (zero noty bez opinii)', '' === $html_stary );
+$html_mix = sklepag_render_opinie(
+	array(
+		array( 'Stary wpis.', '— Jan' ),
+		array(
+			'tresc' => 'Nowy wpis.',
+			'imie'  => 'Ewa',
+		),
+	)
+);
+sprawdz( 'lista mieszana: renderuje sie tylko wpis nowego formatu', false !== strpos( $html_mix, '<strong>Ewa</strong>' ) && false === strpos( $html_mix, 'Stary wpis.' ) );
+sprawdz( 'lista mieszana: kazdy WIDOCZNY wpis ma plakietke (1 wpis = 1 plakietka)', 1 === substr_count( $html_mix, 'ZWERYFIKOWANY ZAKUP' ) );
 
 echo "\n";
 if ( $GLOBALS['sklepag_test_bledy'] > 0 ) {
