@@ -1,5 +1,13 @@
 # CO-WISI — rzeczy oddane komuś / bez strażnika (zasada: oddajesz ⇒ wiersz, wraca ⇒ kasujesz)
 
+## 📦 SKLEP — PRZED WYDANIEM (z recenzji #176, DROBNA 6, 25.08)
+- **Wtyczka sklep-agentow nie ma `readme.txt` ani `CHANGELOG.md`, a `boty/paczki/` nie ma
+  paczki sklepu w żadnej wersji** — `paczka-zgodnosc.sh sklep-agentow` świeci 4 rozjazdami
+  („NIE ZAMRAZAJ w tym stanie") i przy każdym bumpie będzie świecić mocniej, aż przestanie
+  cokolwiek znaczyć. Zastane, nie z #176. Domknąć PRZED zamrożeniem paczki wydania sklepu
+  (CLAUDE.md pkt 4 wymienia readme/CHANGELOG jako obowiązkowe punkty zgodności; klasa 10
+  ściągi: „paczka zamrożona przed ostatnią poprawką").
+
 ## 🔄 W TOKU 20.08 (noc) — RUNDA BOTÓW, DWA BUILDERY
 ⏰ **TERMIN: do 1.09** (Dzidek 20.08 — zmiana z 30.08).
 - **builder1** (tmux praca:builder1, drzewo główne, gałąź `boty/runda-finalna`): TYLKO chatbot

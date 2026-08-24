@@ -86,6 +86,62 @@ function sklepag_produkt_po_slugu( $slug ) {
 }
 
 /**
+ * Sekcja OPINIE KLIENTÓW z tablicy wpisów. Pusta lista = pusty string (sekcji nie ma).
+ *
+ * Dwa formaty wpisu: stary array( tresc, podpis ) oraz nowy z kluczami
+ * 'tresc'/'imie'/'gwiazdki'(1-5)/'tytul'/'data' — te same klucze odda tabela
+ * `sklepag_opinie` po zbudowaniu mechanizmu. Plakietka ZWERYFIKOWANY ZAKUP stoi
+ * przy KAŻDYM wpisie nowego formatu: nota pod sekcją gwarantuje weryfikację
+ * wszystkich publikowanych opinii, więc plakietka warunkowa robiłaby z wpisu
+ * bez niej „opinię podejrzaną".
+ *
+ * Wydzielone z sklepag_tresc_produktu, żeby render dało się udowodnić na dowolnej
+ * tablicy, niezależnie od danych produktów — i tu wepnie się render z bazy
+ * po zbudowaniu mechanizmu opinii.
+ *
+ * @param mixed $opinie Lista wpisów opinii (tablica; inny typ = brak sekcji).
+ * @return string HTML sekcji albo '' gdy brak wpisów.
+ */
+function sklepag_render_opinie( $opinie ) {
+	if ( ! is_array( $opinie ) || empty( $opinie ) ) {
+		return '';
+	}
+	$html = '<section class="sklepag-sekcja"><p class="sklepag-mono-etykieta">[ OPINIE KLIENTÓW ]</p><div class="sklepag-opinie">';
+	foreach ( $opinie as $op ) {
+		if ( isset( $op['tresc'] ) ) {
+			$imie = isset( $op['imie'] ) ? trim( (string) $op['imie'] ) : '';
+			if ( '' === $imie ) {
+				$imie = 'Klient'; // Bez imienia: znak zastępczy zamiast pustego krążka i pustego <strong>.
+			}
+			$gw = isset( $op['gwiazdki'] ) ? max( 1, min( 5, (int) $op['gwiazdki'] ) ) : 5;
+			// mb_substr polyfilluje rdzeń WP (compat.php), mb_strtoupper NIE — bez
+			// strażnika host bez mbstring padłby fatalem na stronie produktu.
+			$inicjal = mb_substr( $imie, 0, 1 );
+			$inicjal = function_exists( 'mb_strtoupper' ) ? mb_strtoupper( $inicjal ) : strtoupper( $inicjal );
+			$html   .= '<figure class="sklepag-opinia"><div class="sklepag-opinia-glowa">';
+			$html   .= '<span class="sklepag-avatar" aria-hidden="true">' . esc_html( $inicjal ) . '</span>';
+			$html   .= '<div><p class="sklepag-opinia-imie"><strong>' . esc_html( $imie ) . '</strong>';
+			$html   .= ' <span class="sklepag-opinia-badge">ZWERYFIKOWANY ZAKUP</span>';
+			$html   .= '</p><p class="sklepag-gwiazdki" aria-label="Ocena ' . (int) $gw . ' na 5">' . str_repeat( '★', $gw ) . '<span class="sklepag-gwiazdki-puste">' . str_repeat( '★', 5 - $gw ) . '</span></p></div></div>';
+			if ( ! empty( $op['tytul'] ) ) {
+				$html .= '<p class="sklepag-opinia-tytul">' . esc_html( $op['tytul'] ) . '</p>';
+			}
+			$html .= '<blockquote>' . esc_html( $op['tresc'] ) . '</blockquote>';
+			if ( ! empty( $op['data'] ) ) {
+				$html .= '<figcaption class="sklepag-mono-etykieta">' . esc_html( $op['data'] ) . '</figcaption>';
+			}
+			$html .= '</figure>';
+			continue;
+		}
+		$html .= '<figure class="sklepag-opinia"><blockquote>' . esc_html( $op[0] ) . '</blockquote><figcaption class="sklepag-mono-etykieta">' . esc_html( $op[1] ) . '</figcaption></figure>';
+	}
+	$html .= '</div>';
+	$html .= '<p class="sklepag-opinie-nota">Publikujemy wyłącznie opinie osób, które kupiły ten produkt — przed publikacją potwierdzamy zakup w danych zamówień sklepu.</p>';
+	$html .= '</section>';
+	return $html;
+}
+
+/**
  * Bogata treść znanych produktów (TRESC-STRON-PRODUKTOW.md).
  * Null = produkt spoza dwójki → strona generyczna z pól bazy.
  *
@@ -623,41 +679,7 @@ function sklepag_render_produkt( $slug ) {
 
 		// OPINIE KLIENTÓW — wyłącznie PRAWDZIWE, od zweryfikowanych kupujących
 		// (D6 + UZUPEŁNIENIE 24.08, Omnibus). Pusta lista = sekcji nie ma.
-		if ( ! empty( $t['opinie'] ) ) {
-			$html .= '<section class="sklepag-sekcja"><p class="sklepag-mono-etykieta">[ OPINIE KLIENTÓW ]</p><div class="sklepag-opinie">';
-			foreach ( $t['opinie'] as $op ) {
-				/*
-				 * Dwa formaty wpisu: stary array( tresc, podpis ) oraz nowy z kluczami
-				 * 'tresc'/'imie'/'gwiazdki'(1-5)/'tytul'/'data'/'zweryfikowana' —
-				 * docelowy wyglad (feedback 25.08: gwiazdki, imie, avatar); te same
-				 * klucze odda tabela sklepag_opinie po zbudowaniu mechanizmu.
-				 */
-				if ( isset( $op['tresc'] ) ) {
-					$imie  = isset( $op['imie'] ) ? $op['imie'] : '';
-					$gw    = isset( $op['gwiazdki'] ) ? max( 1, min( 5, (int) $op['gwiazdki'] ) ) : 5;
-					$html .= '<figure class="sklepag-opinia"><div class="sklepag-opinia-glowa">';
-					$html .= '<span class="sklepag-avatar" aria-hidden="true">' . esc_html( mb_strtoupper( mb_substr( trim( $imie ), 0, 1 ) ) ) . '</span>';
-					$html .= '<div><p class="sklepag-opinia-imie"><strong>' . esc_html( $imie ) . '</strong>';
-					if ( ! empty( $op['zweryfikowana'] ) ) {
-						$html .= ' <span class="sklepag-opinia-badge">ZWERYFIKOWANY ZAKUP</span>';
-					}
-					$html .= '</p><p class="sklepag-gwiazdki" aria-label="Ocena ' . (int) $gw . ' na 5">' . str_repeat( '★', $gw ) . '<span class="sklepag-gwiazdki-puste">' . str_repeat( '★', 5 - $gw ) . '</span></p></div></div>';
-					if ( ! empty( $op['tytul'] ) ) {
-						$html .= '<p class="sklepag-opinia-tytul">' . esc_html( $op['tytul'] ) . '</p>';
-					}
-					$html .= '<blockquote>' . esc_html( $op['tresc'] ) . '</blockquote>';
-					if ( ! empty( $op['data'] ) ) {
-						$html .= '<figcaption class="sklepag-mono-etykieta">' . esc_html( $op['data'] ) . '</figcaption>';
-					}
-					$html .= '</figure>';
-					continue;
-				}
-				$html .= '<figure class="sklepag-opinia"><blockquote>' . esc_html( $op[0] ) . '</blockquote><figcaption class="sklepag-mono-etykieta">' . esc_html( $op[1] ) . '</figcaption></figure>';
-			}
-			$html .= '</div>';
-			$html .= '<p class="sklepag-opinie-nota">Publikujemy wyłącznie opinie osób, które kupiły ten produkt — przed publikacją potwierdzamy zakup w danych zamówień sklepu.</p>';
-			$html .= '</section>';
-		}
+		$html .= sklepag_render_opinie( $t['opinie'] );
 
 		// UCZCIWOŚĆ (zamiast fejk-opinii — D6/Omnibus). Punkty, nie ściana
 		// (badania: 53% kupujących samo szuka ograniczeń — forma ma być skanowalna).

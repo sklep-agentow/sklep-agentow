@@ -1152,7 +1152,9 @@ a.sklepag-kup {
 	letter-spacing: 2px;
 }
 .sklepag-gwiazdki-puste {
-	color: var(--sklepag-linia);
+	/* --sklepag-pyl: 6,2:1 na tle karty #101116 — widoczne, wyraźnie słabsze od
+	   limonki (15,8:1). --sklepag-linia dawała 1,21:1 = glif niewidoczny. */
+	color: var(--sklepag-pyl);
 }
 .sklepag-opinia-tytul {
 	margin: 0 0 6px;

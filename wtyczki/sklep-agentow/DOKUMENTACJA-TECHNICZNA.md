@@ -150,8 +150,11 @@ w cronie bez wtyczki tylko sypie błędami — #170).
 ## 9. Granice — czego ta wtyczka NIE robi
 
 Nie zakłada kont kupujących · nie obsługuje płatności cyklicznych ani abonamentów ·
-nie prowadzi opinii ani ocen · nie robi przecen ani kuponów · nie dotyka motywu
-ani cudzych wtyczek · nie wysyła danych nigdzie poza Stripe.
+nie zbiera opinii formularzem od gości i nie liczy ocen zbiorczych (pokazuje wyłącznie
+opinie zweryfikowanych kupujących z oceną 1–5, dodawane ręcznie po potwierdzeniu
+zakupu; bez `aggregateRating` w danych strukturalnych — D6) · nie robi przecen
+ani kuponów · nie dotyka motywu ani cudzych wtyczek · nie wysyła danych nigdzie
+poza Stripe.
 
 ---
 
