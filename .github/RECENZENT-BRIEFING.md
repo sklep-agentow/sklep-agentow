@@ -67,16 +67,26 @@ dotyczą konkretnych linii. Nie chwal bez powodu. Po przeglądzie: krótkie
 podsumowanie z listą „czego NIE sprawdziłem".
 
 UWAGA = FAKT POTWIERDZONY, NIE HIPOTEZA (zasada właściciela, 2026-08-24).
-Każda uwaga z wagą MUSI stać na jednym z dwóch dowodów, podanych W TREŚCI uwagi:
-- WYNIK WYKONANIA: komenda + jej wyjście + EXIT (uruchomiłeś i to się STAŁO), albo
-- CYTATY: plik:linia + przytoczony fragment, którego sprzeczność z drugim
-  przytoczonym miejscem (kod/dokument/spec) widać w samych cytatach.
-„Mogłoby się zepsuć", „gdyby ktoś kiedyś", „wygląda na", „potencjalnie" — bez
-odtworzenia to NIE jest uwaga: nie nadawaj wagi, nie wliczaj do werdyktu, nie
-otwieraj tym rundy. Jeśli przypuszczenie naprawdę warto zapisać, zmieść je
-w JEDNYM zdaniu w sekcji „Nieodtworzone przypuszczenia (bez wag)" na końcu —
-zwykle ta sekcja ma być PUSTA. Uwaga bez dowodu w treści = autor ma prawo
-odrzucić ją adnotacją „bez dowodu" i nie wolno Ci jej eskalować w kolejnej rundzie.
+Każda uwaga z wagą MUSI stać na jednym z TRZECH dowodów, podanych W TREŚCI uwagi:
+- WYNIK WYKONANIA: komenda + jej wyjście + EXIT (uruchomiłeś i to się STAŁO).
+  Komenda pokazująca BRAK — np. grep bez trafień, z kodem wyjścia — też jest
+  wynikiem wykonania; klasy wad z NIEOBECNOŚCI (1., 5. ze ściągi) dowodzi się tak.
+- CYTATY SPRZECZNE: plik:linia + przytoczony fragment, którego sprzeczność
+  z drugim przytoczonym miejscem (kod/dokument/spec) widać w samych cytatach.
+- CYTAT KODU Z WADĄ WIDOCZNĄ WPROST: przytoczone linie, w których wada jest
+  strukturalna i nie wymaga odtworzenia na żywo — np. read-modify-write licznika
+  + druga ścieżka wejścia (wyścig), zapis bez wiersza w uninstall (niesymetria).
+  Wskazujesz WSZYSTKIE linie składające się na wadę, nie jedną z opisem reszty.
+„Mogłoby się zepsuć", „gdyby ktoś kiedyś", „wygląda na", „potencjalnie" bez
+ŻADNEJ z trzech form = to NIE jest uwaga: nie nadawaj wagi, nie wliczaj do
+podsumowania i nie wracaj do tego w recenzji po poprawkach (tak rozumiemy
+„rundę": kolejna recenzja tego samego PR-a po pushu autora). Jeśli
+przypuszczenie naprawdę warto zapisać, zmieść je w JEDNYM zdaniu w sekcji
+„Nieodtworzone przypuszczenia (bez wag)" na końcu — zwykle PUSTEJ. To NIE jest
+to samo co „czego NIE sprawdziłem": tam wpisujesz, czego nie uruchomiłeś lub
+nie zbadałeś; do przypuszczeń trafia to, co podejrzewasz, a czego nie
+potwierdziłeś żadną z trzech form. Uwaga bez dowodu = autor ma prawo odrzucić
+ją adnotacją „bez dowodu" i nie wolno Ci jej powtarzać z wagą w kolejnej rundzie.
 
 URUCHAMIAJ BRAMKI, NIE CZYTAJ ICH. Runner ma zainstalowane PHP 8.4 i katalog
 `vendor/` (workflow robi `composer install` PRZED recenzją), a klon jest PEŁNY
