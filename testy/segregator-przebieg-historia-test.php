@@ -255,6 +255,38 @@ segmh( 1 === count( segmh_uidy_z( $ZRODLO, $ZN ) ), 'A NADAL w zrodle — nic ni
 segmh( 0 === count( segmh_uidy_z( $FOLDER_KAT, $ZN ) ), 'folder kategorii pusty' );
 $wiersz_b = $id_b > $id_przed ? $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}segm_skrz_przebiegi WHERE id = %d", $id_b ) ) : null; // phpcs:ignore
 segmh( ! $wiersz_b || 0 === (int) $wiersz_b->przeniesionych, 'wiersz przebiegu (jesli jest) nie deklaruje przeniesionych', $wiersz_b ? 'przeniesionych=' . $wiersz_b->przeniesionych : 'brak wiersza' );
+// (recenzja #156) Gdy koncowe podsumowanie tez padnie, w wierszu zostaje
+// komunikat startowy — ma OSTRZEGAC, a nie mowic „w toku" w nieskonczonosc.
+segmh( ! $wiersz_b || false !== mb_strpos( (string) $wiersz_b->komunikat, 'NIE doszedl' ) || false !== mb_strpos( (string) $wiersz_b->komunikat, 'NIE doszedł' ) || false !== mb_strpos( (string) $wiersz_b->komunikat, 'PRZERWANY' ), 'komunikat wiersza ostrzega, ze przebieg sie nie dokonczyl', $wiersz_b ? mb_substr( (string) $wiersz_b->komunikat, 0, 120 ) : 'brak wiersza' );
+
+// ------------------------------- B2. pad zapisu historii I podsumowania (recenzja #156)
+echo "\n=== B2. LS-F2: pada zapis historii ORAZ koncowe podsumowanie ===\n";
+$wpdb->suppress_errors( true );
+add_filter(
+	'query',
+	function ( $q ) {
+		$p = ltrim( $q );
+		if ( false !== strpos( $q, 'segm_skrz_ruchy' ) && 0 === stripos( $p, 'INSERT' ) ) {
+			return 'INSERT INTO segmhist_tabela_ktorej_nie_ma (a) VALUES (1)';
+		}
+		if ( false !== strpos( $q, 'segm_skrz_przebiegi' ) && 0 === stripos( $p, 'UPDATE' ) ) {
+			return 'UPDATE segmhist_tabela_ktorej_nie_ma SET a = 1';
+		}
+		return $q;
+	},
+	99
+);
+$w = segm_skrzynka_przebieg( 'reczny' );
+remove_all_filters( 'query' );
+$wpdb->suppress_errors( false );
+$id_b2 = $w['id'] > 0 ? (int) $w['id'] : segmh_ostatni_przebieg_id();
+if ( $id_b2 > $id_przed ) {
+	segmh_zapamietaj_przebieg( $id_b2 );
+}
+$wiersz_b2 = $id_b2 > $id_przed ? $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}segm_skrz_przebiegi WHERE id = %d", $id_b2 ) ) : null; // phpcs:ignore
+printf( "  wiersz przebiegu #%d: komunikat=\"%s\"\n", $id_b2, $wiersz_b2 ? mb_substr( (string) $wiersz_b2->komunikat, 0, 160 ) : '(brak)' );
+segmh( $wiersz_b2 && false !== mb_strpos( (string) $wiersz_b2->komunikat, 'NIE doszedł do końca' ), 'wiersz, ktory zostal bez podsumowania, OSTRZEGA zamiast mowic „w toku"', $wiersz_b2 ? mb_substr( (string) $wiersz_b2->komunikat, 0, 80 ) : 'brak' );
+segmh( 1 === count( segmh_uidy_z( $ZRODLO, $ZN ) ), 'A NADAL w zrodle' );
 
 // ------------------------------------------------ C. pad zapisu wiersza przebiegu
 echo "\n=== C. LS-F2: baza odrzuca zapis wiersza przebiegu ===\n";

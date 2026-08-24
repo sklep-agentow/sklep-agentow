@@ -35,6 +35,16 @@ wersjonowanie według [SemVer](https://semver.org/lang/pl/).
 - **Puste pole liczbowe nie zjeżdża po cichu do 1** (KR4): port i limit skrzynki oraz
   dzienny limit wywołań AI — pole puste, nie-liczba albo poza zakresem zostawia
   poprzednią wartość, a właściciel dostaje ostrzeżenie zamiast „Zapisano".
+- **Ekran „Skrzynka (IMAP)" w pierwszych minutach** (WK-5, WK-15, WK-17): szary przycisk
+  „Sprawdź połączenie" mówi teraz, że dane trzeba najpierw ZAPISAĆ, i wymienia brakujące
+  pola; opis pola hasła mówi, skąd wziąć hasło aplikacji, i odsyła do sekcji instrukcji
+  po tytule; potwierdzenie zapisu pokazuje się jako pierwszy pasek wtyczki (wcześniej
+  tonęło jako szósty, pod paskami błędu AI i błędu bazy).
+- **Zwolnienie zamka kasuje tylko własny stempel** — proces, którego zamek ktoś przejął
+  po przekroczeniu ważności, nie zdejmuje już cudzego, świeżego znacznika.
+- **Wiersz przebiegu bez podsumowania ostrzega** zamiast mówić „w toku" w nieskończoność:
+  gdy proces zginie albo baza odrzuci także końcowy zapis, komunikat mówi wprost, że
+  przebieg nie doszedł do końca, a liczby w wierszu mogą być niepełne.
 
 ---
 

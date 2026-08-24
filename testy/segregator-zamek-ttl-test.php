@@ -12,6 +12,8 @@
  *      `do` — np. zostawiona przez starszą wersję albo ręcznie) — na kodzie
  *      sprzed naprawy blokował wtyczkę NA ZAWSZE, bo sprawdzenie terminu
  *      pomijało taki wiersz, a `add_option()` odbijał się od istniejącego;
+ *   5b. (recenzja #156) zwolnienie kasuje TYLKO własny stempel — proces, który
+ *      stracił zamek przez przejęcie po TTL, nie kasuje na wyjściu cudzego;
  *   5. (DK-6, ten sam układ co zamrożony `audyt/boty/testy-audytu/
  *      DK-blokada-segregatora.php`) proces B wstawia znacznik do bazy ZA
  *      PLECAMI procesu A, który już „wie", że znacznika nie ma — A musi dostać
@@ -114,6 +116,20 @@ segmzt( false === $widzi_a, 'A przed startem nie widzial znacznika', var_export(
 segmzt( true !== $a_wynik, 'A dostaje ODMOWE, choc jego cache mowi „wolne"', var_export( $a_wynik, true ) );
 segmzt( is_array( $w ) && 'zamektest: proces B' === ( $w['opis'] ?? '' ), 'znacznik dalej nalezy do B (A go nie nadpisal)', is_array( $w ) ? ( $w['opis'] ?? '?' ) : var_export( $w, true ) );
 delete_option( SEGM_BLOKADA );
+
+echo "=== 5b. Zwolnienie kasuje TYLKO wlasny stempel ===\n";
+delete_option( SEGM_BLOKADA );
+// Proces A zajmuje zamek na krótko, po czym jego wpis wygasa i przejmuje go B.
+segmzt( true === segm_zajmij_blokade( 'zamektest: proces A (zaraz straci zamek)' ), 'A zajal zamek' );
+segmzt_wstaw_obcy( segm_stempel_blokady( 'zamektest: proces B (przejal po TTL)' ), false );
+segm_zwolnij_blokade(); // A konczy prace i sprzata PO SOBIE
+$w = segmzt_w_bazie();
+segmzt( is_array( $w ) && 'zamektest: proces B (przejal po TTL)' === ( $w['opis'] ?? '' ), 'zwolnienie przez A NIE skasowalo znacznika B', is_array( $w ) ? ( $w['opis'] ?? '?' ) : var_export( $w, true ) );
+delete_option( SEGM_BLOKADA );
+$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name = %s", SEGM_BLOKADA ) );
+segmzt( true === segm_zajmij_blokade( 'zamektest: po sprzataniu' ), 'BEZ WADY: wlasciciel zamka zwalnia go skutecznie' );
+segm_zwolnij_blokade();
+segmzt( null === segmzt_w_bazie(), 'BEZ WADY: po zwolnieniu wlasnego stempla wiersza nie ma' );
 
 echo "=== 6. BEZ WADY: po wyscigu zwykle zajecie dalej dziala ===\n";
 $f = segm_zajmij_blokade( 'zamektest: na koniec' );

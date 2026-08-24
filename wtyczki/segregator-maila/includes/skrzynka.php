@@ -72,8 +72,32 @@ function segm_skrzynka_ustawienia() {
  * @return bool
  */
 function segm_skrzynka_skonfigurowana() {
-	$ust = segm_skrzynka_ustawienia();
-	return '' !== trim( (string) $ust['host'] ) && '' !== trim( (string) $ust['login'] ) && '' !== segm_skrzynka_haslo();
+	return array() === segm_skrzynka_czego_brakuje();
+}
+
+/**
+ * Czego brakuje do połączenia — po nazwach pól z formularza (WK-5).
+ *
+ * JEDNO źródło prawdy: „skrzynka gotowa" to po prostu pusta lista braków.
+ * Dwie funkcje sprawdzające te same trzy warunki osobno rozjechałyby się przy
+ * pierwszym dołożonym polu — panel mówiłby „brakuje X", a przycisk i tak byłby
+ * aktywny (albo odwrotnie).
+ *
+ * @return array<int, string> Puste = wszystko, czego trzeba, jest zapisane.
+ */
+function segm_skrzynka_czego_brakuje() {
+	$ust   = segm_skrzynka_ustawienia();
+	$braki = array();
+	if ( '' === trim( (string) $ust['host'] ) ) {
+		$braki[] = 'serwer IMAP';
+	}
+	if ( '' === trim( (string) $ust['login'] ) ) {
+		$braki[] = 'login';
+	}
+	if ( '' === segm_skrzynka_haslo() ) {
+		$braki[] = 'hasło aplikacji';
+	}
+	return $braki;
 }
 
 /* ===================== HASŁO ===================== */

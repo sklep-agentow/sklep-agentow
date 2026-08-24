@@ -347,17 +347,20 @@ function segm_zajmij_blokade( $opis ) {
 		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name = %s AND option_value = %s", SEGM_BLOKADA, $surowy ) );
 	}
 
+	$moja      = maybe_serialize( segm_stempel_blokady( $opis ) );
 	$wstawiono = $wpdb->query(
 		$wpdb->prepare(
 			"INSERT IGNORE INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'no')",
 			SEGM_BLOKADA,
-			maybe_serialize( segm_stempel_blokady( $opis ) )
+			$moja
 		)
 	);
 	if ( 1 !== (int) $wstawiono ) {
 		// 0 = ktoś był szybszy (wiersz już jest); false = błąd bazy → odmowa.
 		return 'inna operacja na próbce';
 	}
+	// Zapamiętujemy WŁASNY stempel — zwolnienie kasuje tylko jego (patrz niżej).
+	$GLOBALS['segm_blokada_moja'] = $moja;
 	// Pisaliśmy obok API opcji — cache tego procesu musi to zobaczyć, żeby
 	// get_option()/delete_option() po drodze nie pracowały na starym „nie ma".
 	wp_cache_delete( SEGM_BLOKADA, 'options' );
@@ -381,10 +384,25 @@ function segm_stempel_blokady( $opis ) {
 /**
  * Zwolnienie znacznika (wołane na KAŻDEJ drodze wyjścia z operacji).
  *
+ * Kasujemy WYŁĄCZNIE własny stempel (`option_value` = to, co sami wstawiliśmy).
+ * Bezwarunkowe `delete_option()` miało wadę symetryczną do DK-6: proces, który
+ * przekroczył `SEGM_BLOKADA_WAZNA` i którego zamek ktoś w międzyczasie przejął,
+ * na wyjściu kasował CUDZY, świeży znacznik i wpuszczał trzecią operację.
+ * Gdy tego stempla nie mamy (zamek nie był nasz), nie ruszamy niczego.
+ *
  * @return void
  */
 function segm_zwolnij_blokade() {
-	delete_option( SEGM_BLOKADA );
+	global $wpdb;
+
+	$moja = isset( $GLOBALS['segm_blokada_moja'] ) ? (string) $GLOBALS['segm_blokada_moja'] : '';
+	unset( $GLOBALS['segm_blokada_moja'] );
+	if ( '' === $moja ) {
+		return;
+	}
+	$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name = %s AND option_value = %s", SEGM_BLOKADA, $moja ) );
+	wp_cache_delete( SEGM_BLOKADA, 'options' );
+	wp_cache_delete( 'notoptions', 'options' );
 }
 
 /**
