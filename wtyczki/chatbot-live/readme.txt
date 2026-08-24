@@ -154,7 +154,7 @@ Pełna historia zmian, z opisem każdej pozycji, jest w pliku `CHANGELOG.md`
 w paczce. Poniżej skrót.
 
 = 1.5.10 =
-Instrukcja z 7 zrzutami ekranu (panel, widget, statystyki) — maszynowo, odtwarzalnie.
+Instrukcja z 6 zrzutami ekranu (panel, widget, statystyki) — maszynowo, odtwarzalnie.
 Zero zmian w kodzie.
 
 = 1.5.9 =

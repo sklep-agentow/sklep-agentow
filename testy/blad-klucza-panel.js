@@ -34,7 +34,17 @@ function podlozApi(adres) {
   dexec([KONTENER, 'bash', '-c', "printf '%s' " + JSON.stringify(kod) + " > " + MU]);
   dexec([KONTENER, 'chown', 'www-data:www-data', MU]);
 }
-function sprzatnijApi() { dexec([KONTENER, 'rm', '-f', MU]); }
+function sprzatnijApi() {
+  dexec([KONTENER, 'rm', '-f', MU]);
+  /* Weryfikacja SKUTKIEM (dexec polyka wyjatki): mu-plugin przekierowuje CALE AI
+   * na petle zwrotna — cichy pad usuwania zostawia zaslepke na wspolnym stosie
+   * (WAZNA 4 recenzji #169, klasa DROBNEJ 16). */
+  const nadalJest = dexec([KONTENER, 'bash', '-c', 'test -f ' + MU + ' && echo JEST || echo BRAK']);
+  if (nadalJest !== 'BRAK') {
+    console.error('sprzatnijApi(): mu-plugin NIE zostal usuniety (' + nadalJest + ') — stos zostal z zaslepka AI!');
+    bledy++;
+  }
+}
 
 (async () => {
   const user = process.env.WP_ADMIN_USER, pass = process.env.WP_ADMIN_PASS;

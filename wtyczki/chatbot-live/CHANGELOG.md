@@ -19,7 +19,7 @@ Nic jeszcze.
 ## [1.5.10] — 2026-08-24
 
 ### Dodane
-- **Instrukcja z 7 zrzutami ekranu** (panel, widget oczami gościa, statystyki) —
+- **Instrukcja z 6 zrzutami ekranu** (panel, widget oczami gościa, statystyki) —
   robionymi maszynowo, więc odtwarzalnymi po każdej zmianie wyglądu. Zero zmian w kodzie wtyczki.
 
 ---

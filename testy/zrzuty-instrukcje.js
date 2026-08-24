@@ -19,11 +19,10 @@ const ADMIN = [
   /* [wtyczka, nazwa pliku, slug strony, selektor-DOWÓD ekranu] */
   /* [wtyczka, plik, slug, DOWOD ekranu, KADR (opcjonalnie — domyslnie caly #wpbody-content)] */
   ['chatbot-live', 'ustawienia', 'chatl-ustawienia', '#wpbody-content form', '#wpbody-content form'],
-  ['chatbot-live', 'baza-qa', 'chatl-qa', '#wpbody-content table, #wpbody-content form'],
   ['chatbot-live', 'zgloszenia', 'chatl-zgloszenia', '#wpbody-content table'],
   /* Statystyki: kadr GORNY (kafle + ruch dzienny) — dolna lista luk niesie
      tresci pytan z materialu testowego stosu, a stopka WP wizytowke silnika. */
-  ['chatbot-live', 'statystyki', 'chatl-statystyki', '#wpbody-content', '#wpbody-content', 1020],
+  ['chatbot-live', 'statystyki', 'chatl-statystyki', '#wpbody-content', '#wpbody-content', 790],
   ['segregator-maila', 'skrzynka-imap', 'segm-skrzynka', '#wpbody-content form', '#wpbody-content form'],
   ['segregator-maila', 'reguly', 'segm-reguly', '#wpbody-content table, #wpbody-content form'],
   ['segregator-maila', 'kategorie', 'segm-kategorie', '#wpbody-content'],
@@ -43,21 +42,28 @@ const ADMIN = [
     args: ['--lang=pl-PL,pl'],
     env: { ...process.env, LANG: 'pl_PL.UTF-8' },
   });
-  const p = await b.newPage({ viewport: { width: 1280, height: 1000 } });
+  const p = await b.newPage({ viewport: { width: 1280, height: 1500 } }); /* wyzszy niz kazdy clip — page.screenshot(clip) obcina do viewportu */
   p.setDefaultTimeout(60000);
   let zrobione = 0, bledy = 0;
 
   await zaloguj(p, BAZA, user, pass);
 
-  for (const [wtyczka, nazwa, slug, dowod, kadr] of ADMIN) {
+  /* D2 recenzji #169: zrzut ustawien ChatBota strzelamy przy PUSTYM kluczu API
+     (ogon prawdziwego klucza wchodzil w kadr). Migawka wraca po strzale. */
+  const { execFileSync } = require('child_process');
+  const wpEv = (kod) => { try { return execFileSync('docker', ['exec', '-u', 'www-data', 'strona_wp_wordpress', 'wp', 'eval', kod], { encoding: 'utf8' }).trim(); } catch (e) { return null; }
+  };
+  const kluczByl = wpEv('echo get_option("chatl_klucz_api") ? "TAK" : "NIE";');
+  if (kluczByl === 'TAK') { wpEv('update_option("chatl_klucz_api_migawka_zrzut", get_option("chatl_klucz_api"), false); delete_option("chatl_klucz_api"); wp_cache_flush();'); }
+
+  for (const [wtyczka, nazwa, slug, dowod, kadr, maxH] of ADMIN) {
     const cel = 'wtyczki/' + wtyczka + '/zrzuty/' + nazwa + '.png';
     try {
       await p.goto(BAZA + '/wp-admin/admin.php?page=' + slug, { waitUntil: 'load' });
-      await p.waitForSelector(dowod.split(',')[0].trim());
+      await p.waitForSelector(dowod); /* przecinek = "lub" w Playwright — czekamy na KTORYKOLWIEK dowod */
       /* Paski aktualizacji WP to srodowisko testowe, nie produkt — precz z kadru. */
       await p.addStyleTag({ content: '.update-nag{display:none!important} #wpfooter{display:none!important}' });
       const el = p.locator(kadr || '#wpbody-content').first();
-      const maxH = ADMIN.find((r) => r[1] === nazwa && r[0] === wtyczka)[5];
       if (maxH) {
         const box = await el.boundingBox();
         await p.screenshot({ path: cel, clip: { x: box.x, y: box.y, width: box.width, height: Math.min(box.height, maxH) } });
@@ -95,6 +101,7 @@ const ADMIN = [
     bledy++;
   }
 
+  if (kluczByl === 'TAK') { wpEv('update_option("chatl_klucz_api", get_option("chatl_klucz_api_migawka_zrzut"), false); delete_option("chatl_klucz_api_migawka_zrzut"); wp_cache_flush();'); }
   await b.close();
   console.log('\nZROBIONE: ' + zrobione + ', BLEDOW: ' + bledy);
   process.exit(bledy ? 1 : 0);

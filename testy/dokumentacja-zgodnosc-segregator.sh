@@ -348,6 +348,13 @@ spr "kasowane ZAWSZE (przed warunkiem usun_dane)" "1" "sed -n '1,/usun_dane/p' $
 
 
 echo
+
+echo "=== Z. Zrzuty z INSTRUKCJI: plik istnieje i jedzie w paczce (uwaga D8 recenzji #169) ==="
+for obrazek in $(grep -oE '\]\(zrzuty/[a-z0-9-]+\.png\)' wtyczki/segregator-maila/INSTRUKCJA.md | tr -d ']()'); do
+  spr "plik $obrazek istnieje" "1" "test -f wtyczki/segregator-maila/$obrazek && echo 1 || echo 0"
+  spr "$obrazek na allowliscie paczki" "1" "grep -c '\"segregator-maila/$obrazek\"' boty/buduj-paczki.sh"
+done
+
 if [ "$BLEDY" -eq 0 ]; then
   echo "DOKUMENTACJA ZGODNA Z KODEM — 0 rozjazdow"
 else

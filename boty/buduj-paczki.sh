@@ -22,7 +22,6 @@ ALLOWLIST_CHATBOT=(
 	"chatbot-live/LICENSE"
 	"chatbot-live/INSTRUKCJA.md"
 	"chatbot-live/zrzuty/ustawienia.png"
-	"chatbot-live/zrzuty/baza-qa.png"
 	"chatbot-live/zrzuty/zgloszenia.png"
 	"chatbot-live/zrzuty/statystyki.png"
 	"chatbot-live/zrzuty/widget-babelek.png"
