@@ -10,7 +10,7 @@ migracja odpala się sama przy pierwszym wejściu do panelu po aktualizacji
 
 ---
 
-## [Niewydane]
+## [1.5.9] — 2026-08-24 · schemat bazy 7 → 8
 
 ### Zmienione
 - **Zadziałania pułapki na boty i odrzucone zabezpieczenia formularza leżą w tabeli**

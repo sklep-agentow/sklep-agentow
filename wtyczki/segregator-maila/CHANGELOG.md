@@ -5,7 +5,7 @@ Wszystkie istotne zmiany w tej wtyczce są zapisywane w tym pliku.
 Format według [Keep a Changelog](https://keepachangelog.com/pl/1.1.0/),
 wersjonowanie według [SemVer](https://semver.org/lang/pl/).
 
-## [Niewydane]
+## [1.3.2] — 2026-08-24 · schemat bazy 3 → 4
 
 ### Naprawione
 - **Przebieg na żywo zapisuje zamiar PRZED ruchem poczty** (LS-F2): wiersz przebiegu

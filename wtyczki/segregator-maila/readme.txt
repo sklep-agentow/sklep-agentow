@@ -4,7 +4,7 @@ Tags: email, imap, inbox, automation, rules
 Requires at least: 6.0
 Tested up to: 7.0.4
 Requires PHP: 8.1
-Stable tag: 1.3.1
+Stable tag: 1.3.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -137,6 +137,14 @@ z serwerem. Hasło jest w nim zamaskowane.
 == Changelog ==
 
 Pełna historia zmian jest w pliku `CHANGELOG.md` w katalogu wtyczki.
+
+= 1.3.2 =
+Wyniki pełnego audytu wprawione w kod: przebieg na żywo zapisuje zamiar PRZED
+ruchem poczty (awaria w pół kroku nie kłamie już sukcesem, cofanie liczy tylko
+wrócone, UIDVALIDITY pilnuje folderu docelowego, schemat bazy 4), zamek przebiegu
+atomowy i z terminem ważności, ekran skrzynki prowadzi za rękę i potwierdza zapis
+jako pierwszy pasek, komunikaty po ludzku, „zapisano" dopiero po zmierzonym
+zapisie, a deklaracja prywatności mówi wprost: na skrzynce pracują same reguły.
 
 = 1.3.1 =
 Instrukcja opisuje wtyczkę, którą kupujący naprawdę dostaje: podłączenie skrzynki

@@ -26,7 +26,9 @@
 #
 # ⛔ POMIJA ŚWIADOMIE: `*-proba-kontrolna.sh` i `kalibracja-mutantem.sh` (to kalibratory —
 #    PODMIENIAJĄ kod wtyczki w kontenerze, mierzą przyrząd, nie produkt), `seed-demo.sh`,
-#    `zrzuty-panelu.js`, `svg-pomiar-tekstow.js` (narzędzia), `testy/e2e/` (sklep, poza etapem).
+#    `zrzuty-panelu.js`, `svg-pomiar-tekstow.js` (narzędzia), `testy/e2e/` (sklep, poza etapem),
+#    `segregator-deklaracja-vs-ladunek-ai.php` (silnik strażnika A3-3 — biega przez wrapper `.sh`),
+#    `lamacz-baza-i-srodowisko.php` (zamrożona sonda audytu — kształt kodu sprzed S1, dowód w git).
 #    Pominięte są WYPISANE w wyniku — pominięcie ciche wyglądałoby jak „sprawdzone".
 # ⚠️ Przywrócenie bazy z zrzutu mariadb-dump robi DROP tylko tabel, które istniały w chwili zrzutu —
 #    tabela dopisana przez test w trakcie przebiegu PRZEŻYJE przywrócenie (sierota, nieszkodliwa, ale bądź świadom).
@@ -115,7 +117,14 @@ uruchom() { # $1 = ścieżka testu, $2 = typ (php|js|sh), $3 = czy przywracać b
 }
 
 echo "--- testy/ (PHP) ---"
-for t in testy/*.php; do uruchom "$t" php nie; done
+for t in testy/*.php; do
+	# Silnik strażnika A3-3: dokument↔kod. Uruchamia go WYŁĄCZNIE wrapper
+	# testy/segregator-deklaracja-vs-ladunek-ai.sh (wgrywa dokumenty i kod
+	# Z REPO do kontenera); wołany wprost sam odmawia biegu (EXIT=1), bo
+	# kopia wtyczki na stosie nie jest źródłem prawdy — to nie jest wada.
+	case "$t" in *segregator-deklaracja-vs-ladunek-ai.php) echo "POMINIĘTE (silnik strażnika A3-3 — uruchamia go wrapper .sh): $t"; printf '%s\tPOMINIETE\t0\n' "$t" >> "$TSV"; continue;; esac
+	uruchom "$t" php nie
+done
 echo "--- testy/ (JS, przeglądarka) ---"
 for t in testy/*.js; do
 	case "$t" in *zrzuty-panelu.js|*svg-pomiar-tekstow.js) echo "POMINIĘTE (narzędzie, nie test): $t"; printf '%s\tPOMINIETE\t0\n' "$t" >> "$TSV"; continue;; *dziennik-test.js|*produkty-test.js) echo "POMINIĘTE (SKLEP — poza etapem; dziennik-test zatruwa limiter logowań): $t"; printf '%s\tPOMINIETE\t0\n' "$t" >> "$TSV"; continue;; esac
@@ -127,7 +136,14 @@ for t in testy/*.sh; do
 	uruchom "$t" sh nie
 done
 echo "--- audyt/boty/testy-audytu + repro (przywracanie bazy po każdym) ---"
-for t in audyt/boty/testy-audytu/*.php audyt/boty/repro/*.php; do [ -f "$t" ] && uruchom "$t" php tak; done
+for t in audyt/boty/testy-audytu/*.php audyt/boty/repro/*.php; do
+	[ -f "$t" ] || continue
+	# Zamrożona sonda audytu A2 (repro sprzed napraw): woła funkcję diagnostyki
+	# usuniętą przez S1 → FATAL 255. Sonda jest DOWODEM historycznym w git —
+	# kodu się pod nią nie naprawia i nie podnosi się jej do nowego kształtu.
+	case "$t" in *lamacz-baza-i-srodowisko.php) echo "POMINIĘTE (zamrożona sonda audytu — kształt kodu sprzed S1): $t"; printf '%s\tPOMINIETE\t0\n' "$t" >> "$TSV"; continue;; esac
+	uruchom "$t" php tak
+done
 for t in audyt/boty/testy-audytu/*.js; do [ -f "$t" ] && uruchom "$t" js tak; done
 for t in audyt/boty/testy-audytu/*.sh; do [ -f "$t" ] && uruchom "$t" sh tak; done
 echo "POMINIĘTE (sklep, poza etapem): testy/e2e/ (katalog)"; printf 'testy/e2e/\tPOMINIETE\t0\n' >> "$TSV"

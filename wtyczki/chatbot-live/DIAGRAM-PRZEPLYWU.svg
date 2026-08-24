@@ -140,10 +140,11 @@
   <text class="t opis-b"  x="604" y="802">Zapis padł: komunikat błędu i prośba o ponowienie — nigdy fałszywe podziękowanie.</text>
   <text class="t opis-b"  x="604" y="822">Mail nie wyszedł: zgłoszenie i tak jest w panelu, a właściciel widzi tam ostrzeżenie.</text>
 
-  <text class="t stopka" x="40" y="756">Tabele wtyczki:</text>
-  <text class="t stopka" x="40" y="776">wp_chatl_qa · wp_chatl_zgloszenia</text>
-  <text class="t stopka" x="40" y="796">wp_chatl_rozmowy · wp_chatl_ai_uzycie</text>
-  <text class="t stopka" x="40" y="816">wp_chatl_rate_limit</text>
+  <text class="t stopka" x="40" y="756">Tabele wtyczki (schemat bazy 8):</text>
+  <text class="t stopka" x="40" y="776">wp_chatl_qa · wp_chatl_zgloszenia · wp_chatl_sesje</text>
+  <text class="t stopka" x="40" y="796">wp_chatl_rozmowy · wp_chatl_ai_uzycie · wp_chatl_rate_limit</text>
+  <text class="t stopka" x="40" y="816">wp_chatl_zdarzenia — ślady pułapki na boty</text>
+  <text class="t stopka" x="40" y="836">i odrzuconych zabezpieczeń (zamiast licznika w opcjach)</text>
 
   <text class="t stopka" x="584" y="852">Każda liczba na diagramie pochodzi ze stałej w kodzie: CHATL_MAX_PYTANIE, CHATL_LIMIT_NA_MIN,</text>
   <text class="t stopka" x="584" y="872">CHATL_RETENCJA_DNI, CHATL_AI_TIMEOUT — rozpisane w DOKUMENTACJA-TECHNICZNA.md.</text>

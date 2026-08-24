@@ -1,21 +1,36 @@
 #!/usr/bin/env bash
-# STRAŻNIK DK-5: licznik, do którego pisze N żądań NARAZ, ma po nich pokazać N.
-#   - ścieżka badana: chatl_blad_nonce (opcja, get_option -> update_option)
+# STRAŻNIK DK-5 (przyrząd ZAKTUALIZOWANY po naprawie C3, PR #162): równoległe
+# zapisy licznika nie mogą ginąć.
+#   HISTORIA: znalezisko DK-5 pokazało, że licznik w wp_options (chatl_blad_nonce,
+#   get_option -> update_option) gubił 13 z 20 równoległych zapisów. Naprawa C3
+#   USUNĘŁA licznik w opcjach — zdarzenia idą do tabeli chatl_zdarzenia
+#   (INSERT = wiersz, nic nie ginie), a ścieżka złego nonce'a ma kubeł
+#   `nonce-odrzucony` z progiem CHATL_LIMIT_NA_MIN zapisów/min (celowo:
+#   ochrona bazy przed zalaniem; odpowiedź HTTP jest taka sama nad progiem).
+#   - ścieżka badana: N żądań NARAZ ze złym noncem → w tabeli zdarzeń jest
+#     DOKŁADNIE min(N, próg) wierszy `nonce`, a kubeł naliczył CAŁE N atomowo.
+#     Zgubiona inkrementacja = wynik PONIŻEJ tych liczb.
 #   - próba kontrolna: tabela chatl_rate_limit (INSERT ... ON DUPLICATE KEY UPDATE)
-# EXIT 0 = oba liczniki się zgadzają, EXIT 1 = zgubione inkrementacje.
+# EXIT 0 = liczniki co do sztuki, EXIT 1 = zgubione inkrementacje.
 set -u
 WP="docker exec strona_wp_wordpress wp"
 URL="http://localhost:8890/wp-admin/admin-ajax.php"
 N="${1:-20}"
 
-KOPIA=$($WP eval 'echo json_encode( get_option("chatl_blad_nonce") );' --allow-root)
-$WP eval 'delete_option("chatl_blad_nonce");' --allow-root
+PROG=$($WP eval 'echo (int) CHATL_LIMIT_NA_MIN;' --allow-root)
+OCZEKIWANE=$(( N < PROG ? N : PROG ))
 
-echo "== SCIEZKA BADANA: $N zadan NARAZ ze zlym noncem (licznik w wp_options) =="
+# Czyste pole: własne zdarzenia `nonce` i świeże okno kubła (jak sprzątanie pulapka-test).
+$WP eval 'global $wpdb; $wpdb->query("DELETE FROM {$wpdb->prefix}chatl_zdarzenia WHERE rodzaj = \"nonce\"");' --allow-root
+$WP eval 'global $wpdb; $wpdb->query("DELETE FROM {$wpdb->prefix}chatl_rate_limit WHERE klucz LIKE \"nonce-odrzucony|%\"");' --allow-root
+
+echo "== SCIEZKA BADANA: $N zadan NARAZ ze zlym noncem (zdarzenia w TABELI, prog zapisu $PROG/min) =="
 seq 1 "$N" | xargs -P "$N" -I{} curl -s -o /dev/null -X POST "$URL" \
   -d "action=chatl_pytanie&nonce=zepsuty{}&sesja=aaaaaaaa&pytanie=rownolegle{}"
-PO=$($WP eval 'echo (int) ((array) get_option("chatl_blad_nonce"))["ile"];' --allow-root)
-echo "oczekiwane: $N   zapisane w chatl_blad_nonce.ile: $PO"
+PO=$($WP eval 'global $wpdb; echo (int) $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}chatl_zdarzenia WHERE rodzaj = \"nonce\"");' --allow-root)
+KUBEL=$($WP eval 'global $wpdb; echo (int) $wpdb->get_var("SELECT COALESCE(SUM(licznik),0) FROM {$wpdb->prefix}chatl_rate_limit WHERE klucz LIKE \"nonce-odrzucony|%\"");' --allow-root)
+echo "oczekiwane zdarzenia: $OCZEKIWANE (min z N=$N i progu $PROG)   zapisane w chatl_zdarzenia: $PO"
+echo "oczekiwany kubel: $N   naliczone w chatl_rate_limit: $KUBEL"
 
 echo ""
 echo "== PROBA KONTROLNA: $N zadan NARAZ do licznika w TABELI (chatl_rate_limit) =="
@@ -32,17 +47,17 @@ global \$wpdb; \$t = \$wpdb->prefix . 'chatl_rate_limit';
 echo (int) \$wpdb->get_var( \$wpdb->prepare( \"SELECT licznik FROM {\$t} WHERE klucz = %s\", '$KLUCZ' ) );" --allow-root)
 echo "oczekiwane: $N   zapisane w chatl_rate_limit.licznik: $POT"
 
-# sprzatanie
+# sprzatanie: wiersz probny kontrolnej + wlasne zdarzenia i kubel sciezki badanej
 $WP eval "
 global \$wpdb; \$t = \$wpdb->prefix . 'chatl_rate_limit';
 \$wpdb->query( \$wpdb->prepare( \"DELETE FROM {\$t} WHERE klucz = %s\", '$KLUCZ' ) );
-if ( '$KOPIA' === 'false' ) { delete_option('chatl_blad_nonce'); }
-else { update_option('chatl_blad_nonce', json_decode('$KOPIA', true), false); }
-echo 'sprzatanie: chatl_blad_nonce=' . json_encode(get_option('chatl_blad_nonce')) . ' wiersz probny usuniety';" --allow-root
+\$wpdb->query( \"DELETE FROM {\$t} WHERE klucz LIKE 'nonce-odrzucony|%'\" );
+\$wpdb->query( \"DELETE FROM {\$wpdb->prefix}chatl_zdarzenia WHERE rodzaj = 'nonce'\" );
+echo 'sprzatanie: zdarzenia nonce i kubly usuniete, wiersz probny usuniety';" --allow-root
 echo ""
 
-if [ "$PO" = "$N" ] && [ "$POT" = "$N" ]; then
-  echo "WYNIK: OK — oba liczniki zgadzaja sie z liczba zadan."; exit 0
+if [ "$PO" = "$OCZEKIWANE" ] && [ "$KUBEL" = "$N" ] && [ "$POT" = "$N" ]; then
+  echo "WYNIK: OK — zdarzenia co do progu, kubel i tabela co do sztuki."; exit 0
 fi
-echo "WYNIK: PADA — opcja zgubila $((N - PO)) z $N inkrementacji; tabela zgubila $((N - POT))."
+echo "WYNIK: PADA — zdarzenia: $PO/$OCZEKIWANE; kubel: $KUBEL/$N; tabela kontrolna zgubila $((N - POT))."
 exit 1

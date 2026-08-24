@@ -134,7 +134,7 @@ ctk( is_array( $alarm ) && 500 === (int) $alarm['kod'], 'alarm zostaje i pokazuj
 echo "\n=== C. PRZYPADEK BEZ WADY: alarm gasi udana odpowiedź wydana GOŚCIOWI ===\n";
 $GLOBALS['ctk_kod'] = 200; // sekcja B2 zostawiła atrapę w trybie awarii
 $sesja              = 'ctkSesjaProbna0000000000000000A';
-$wpdb->insert( $wpdb->prefix . 'chatl_sesje', array( 'sesja' => $sesja, 'stan' => 'bot', 'klucz_hash' => '', 'utworzono' => current_time( 'mysql' ), 'aktywnosc' => current_time( 'mysql' ) ) ); // phpcs:ignore
+$wpdb->insert( $wpdb->prefix . 'chatl_sesje', array( 'sesja' => $sesja, 'stan' => 'bot', 'klucz_hash' => wp_hash( 'ctk' ), 'utworzono' => current_time( 'mysql' ), 'aktywnosc' => current_time( 'mysql' ) ) ); // phpcs:ignore
 $odp = chatl_ai_odpowiedz( 'pytanie próbne C5', $sesja );
 ctk( is_string( $odp ) && '' !== $odp, 'bot dostał odpowiedź z API (atrapa)', (string) $odp );
 ctk( false === get_option( 'chatl_blad_ai' ), 'i TO zgasiło alarm' );

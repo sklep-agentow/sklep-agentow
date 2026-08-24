@@ -4,7 +4,7 @@ Tags: chat, chatbot, faq, kontakt, wsparcie
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.5.8
+Stable tag: 1.5.9
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -152,6 +152,14 @@ w ustawieniach. Klucz API jest kasowany zawsze, niezależnie od tego przełączn
 
 Pełna historia zmian, z opisem każdej pozycji, jest w pliku `CHANGELOG.md`
 w paczce. Poniżej skrót.
+
+= 1.5.9 =
+Wyniki pełnego audytu wprawione w kod: przejęcie rozmowy przez konsultanta dociera
+do gościa od razu (błąd JavaScriptu naprawiony), ślady pułapki na boty w tabeli
+zamiast licznika w opcjach (równoległe zapisy się nie gubią, schemat bazy 8),
+limity na ścieżkach pułapki i odrzuconego zabezpieczenia, „zapisano" dopiero po
+zmierzonym zapisie, eksporty nazywają wszystkie cztery role rozmowy, pełna
+deklaracja prywatności, retencja sesji i czyste odinstalowanie.
 
 = 1.5.8 =
 Instrukcja i opis mówią to, co bot naprawdę robi: przejęcie rozmowy przez człowieka

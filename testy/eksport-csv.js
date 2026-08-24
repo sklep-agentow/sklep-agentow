@@ -19,6 +19,11 @@ function sprawdz(opis, warunek) {
 
   const b = await chromium.launch({ executablePath: wymagajChromium() });
   const p = await b.newPage();
+  /* 60 s zamiast domyślnych 30 s: serwer testowy ma 2 vCPU i podczas pełnej
+   * linii bazowej (PHP+MariaDB+Chromium naraz) strona admina potrafiła wstawać
+   * dłużej niż 30 s — test padał TIMEOUTEM mimo zdrowego kodu (24.08, [etap3-final]
+   * pierwsze podejście). Solo ta sama strona wstaje w ~2 s. */
+  p.setDefaultTimeout(60000);
 
   /* Test robi sobie własny materiał: gość zostawia wiadomość, która JEST
      formułą arkusza. Bez tego test zależałby od tego, co akurat leży w bazie —
@@ -91,16 +96,20 @@ function sprawdz(opis, warunek) {
   sprawdz('sa wiersze rozmow', csv2.trim().split('\n').length > 1);
   console.log('       przykladowy wiersz: ' + (csv2.split('\n')[1] || '').trim().slice(0, 140));
 
-  /* Sprzątanie po sobie: zgłoszenie testowe nie ma zostawać w bazie klienta. */
+  /* Sprzątanie po sobie: zgłoszenie testowe nie ma zostawać w bazie klienta.
+   * PĘTLĄ, nie pojedynczo: wspólny stos dryfuje — przerwany wcześniejszy
+   * przebieg zostawia własny wiersz formula@przyklad.pl, a kasowanie jednego
+   * wiersza zostawiało drugi i krok „posprzątane" padał mimo zdrowego kodu
+   * (linia bazowa 24.08: dwa wiersze, 20:36 i 20:40). */
   await p.goto(BAZA + '/wp-admin/admin.php?page=chatl-zgloszenia', { waitUntil: 'load' });
-  const wierszDoUsuniecia = await p.$('tr:has-text("formula@przyklad.pl")');
-  if (wierszDoUsuniecia) {
+  for (let i = 0; i < 10; i++) {
+    const wierszDoUsuniecia = await p.$('tr:has-text("formula@przyklad.pl")');
+    if (!wierszDoUsuniecia) break;
     const usun = await wierszDoUsuniecia.$('a[href*="chatl_zgloszenie_usun"]');
-    if (usun) {
-      p.once('dialog', (d) => d.accept());
-      await usun.click();
-      await p.waitForLoadState('load');
-    }
+    if (!usun) break;
+    p.once('dialog', (d) => d.accept());
+    await usun.click();
+    await p.waitForLoadState('load');
   }
   sprawdz('zgloszenie testowe posprzatane', (await p.$('td:has-text("formula@przyklad.pl")')) === null);
 

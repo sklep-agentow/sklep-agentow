@@ -71,6 +71,49 @@ function segm_zmierz_zapytania( $co ) {
 // właściciel po aktywacji, więc liczby w teście są liczbami z realnego panelu.
 segm_seed_demo();
 
+/*
+ * Wspólny stos testowy DRYFUJE: import konfiguracji (segm_konfig_wgraj) czy
+ * ręczne porządki potrafią zostawić bazę z kategoriami, ale BEZ reguł — a seed
+ * CELOWO nie odtwarza reguł, gdy kategorie istnieją (reaktywacja nie może
+ * wskrzeszać demo w skonfigurowanej instalacji). Ten test potrzebuje materiału
+ * demo, więc brakujące reguły demo dosiewa SAM — dokładnie te, które seed
+ * wstawiłby na czystej bazie, z kategoriami mapowanymi po nazwie.
+ * (Linia bazowa 24.08: „reguł: 0, maili: 30" — stąd ta dosiewka.)
+ */
+if ( count( segm_pobierz_reguly() ) < 5 ) {
+	$lt_kat = array();
+	foreach ( $wpdb->get_results( "SELECT id, nazwa FROM {$wpdb->prefix}segm_kategorie" ) as $lt_k ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$lt_kat[ $lt_k->nazwa ] = (int) $lt_k->id;
+	}
+	$lt_demo = array(
+		array( 'od', 'faktury@, ksiegowosc, księgowość, rozliczenia@', 'Faktury' ),
+		array( 'temat', 'faktur, rachunek, płatnoś, platnosc, nota księgowa, nota ksiegowa', 'Faktury' ),
+		array( 'temat', 'reklamac, zwrot, uszkodzon, wadliw', 'Reklamacje' ),
+		array( 'tresc', 'reklamuj, zepsu, nie działa, nie dziala, żądam zwrotu, zadam zwrotu', 'Reklamacje' ),
+		array( 'temat', 'ofert, wycen, zapytanie', 'Oferty' ),
+		array( 'tresc', 'proszę o wycenę, prosze o wycene, zainteresowan, ile kosztuje', 'Oferty' ),
+		array( 'od', 'no-reply, noreply, newsletter, mailing@', 'Spam-podejrzane' ),
+		array( 'temat', 'wygrałeś, wygrales, promocja, rabat, ostatnia szansa, gratis', 'Spam-podejrzane' ),
+	);
+	$lt_kol  = 1 + (int) $wpdb->get_var( "SELECT COALESCE(MAX(kolejnosc),0) FROM {$wpdb->prefix}segm_reguly" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	foreach ( $lt_demo as $lt_r ) {
+		if ( ! isset( $lt_kat[ $lt_r[2] ] ) ) {
+			continue; // Brak kategorii o tej nazwie — nie wstawiamy reguły-sieroty.
+		}
+		$wpdb->insert(
+			$wpdb->prefix . 'segm_reguly',
+			array(
+				'kolejnosc'    => $lt_kol++,
+				'pole'         => $lt_r[0],
+				'wzorzec'      => $lt_r[1],
+				'kategoria_id' => $lt_kat[ $lt_r[2] ],
+				'utworzono'    => current_time( 'mysql' ),
+			),
+			array( '%d', '%s', '%s', '%d', '%s' )
+		);
+	}
+}
+
 $reguly = segm_pobierz_reguly();
 
 // Migawka reguł ZANIM cokolwiek policzymy — jako tekst, nie jako obiekty.

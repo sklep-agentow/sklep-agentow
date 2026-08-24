@@ -100,7 +100,7 @@
   <text class="t krok"    x="760" y="640">WYNIK ŚCIEŻKI B</text>
   <text class="t tytul-b" x="760" y="664">Co dzieje się z pojedynczą wiadomością</text>
   <text class="t kod-sz"  x="760" y="687">na sucho: stan „plan” — na serwerze NIC się nie zmienia</text>
-  <text class="t kod"     x="760" y="707">realnie:  CREATE brakującego folderu → UID MOVE → zapis nowego UID</text>
+  <text class="t kod"     x="760" y="707">realnie:  zamiar w bazie → CREATE folderu → UID MOVE → potwierdzenie (UID + UIDVALIDITY)</text>
   <text class="t opis-b"  x="760" y="728">Odczyt idzie przez BODY.PEEK, więc nie oznacza cudzej poczty jako przeczytanej.</text>
 
   <path class="linia" d="M 1050 738 L 1050 774" marker-end="url(#strzalka)"/>
