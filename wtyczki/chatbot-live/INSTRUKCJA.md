@@ -28,6 +28,8 @@ zamknąć na stałe, gdy przestanie być potrzebna; wraca dopiero przy nowej ins
 
 ## 2. Konfiguracja w kwadrans
 
+
+![Ekran ustawień ChatBota](zrzuty/ustawienia.png)
 W menu bocznym pojawia się pozycja **ChatBot LIVE**.
 
 1. **Ustawienia** → podmień tekst powitania i tekst awaryjny na własne,
@@ -75,6 +77,8 @@ ani czyścić cache.
 
 ## 2a. Baza pytań z pliku — import i eksport CSV
 
+
+![Baza pytań i odpowiedzi](zrzuty/baza-qa.png)
 Jeśli masz już listę pytań w Excelu albo Arkuszach Google, nie musisz przepisywać
 jej po jednym wpisie. **ChatBot LIVE → Baza Q&A**, sekcja **„Import i eksport bazy (CSV)”**.
 
@@ -118,6 +122,13 @@ zostaną nazwane po imieniu.
 
 ## 3. Wygląd widgetu — dopasuj go do swojej strony
 
+
+Tak widget wygląda oczami gościa — zamknięty bąbelek, otwarte okno rozmowy
+i formularz zostawienia wiadomości:
+
+![Bąbelek czatu](zrzuty/widget-babelek.png)
+![Okno rozmowy](zrzuty/widget-okno.png)
+![Formularz kontaktu](zrzuty/widget-formularz.png)
 Wejdź w **ChatBot LIVE → Ustawienia → Wygląd widgetu**. Ustawisz tam:
 
 - **Kolor główny** — bąbelek czatu, dymki bota, przyciski.
@@ -140,6 +151,8 @@ Zapisać możesz i tak — decyzja jest Twoja, ale wiesz, co wybierasz.
 
 ## 4. Jak to działa na co dzień
 
+
+![Zgłoszenia z czatu w panelu](zrzuty/zgloszenia.png)
 - Gość pyta → bot odpowiada z bazy Q&A (wygrywa wpis z największą liczbą
   trafionych słów kluczowych).
 - Brak dopasowania → bot pokazuje tekst awaryjny i formularz „zostaw maila".
@@ -219,6 +232,8 @@ jest inne narzędzie (np. captcha albo ograniczenie czatu do zalogowanych).
 
 ## 5. Statystyki i luki — czyli jak ulepszać bota bez zgadywania
 
+
+![Statystyki i luki](zrzuty/statystyki.png)
 Wejdź w **ChatBot LIVE → Statystyki i luki**. Wybierasz okres (7 / 30 / 90 dni
 albo własne daty) i widzisz cztery liczby:
 

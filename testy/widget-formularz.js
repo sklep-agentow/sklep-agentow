@@ -45,6 +45,7 @@ function przywrocPolityke() {
      * jeszcze, np. z .catch) i mowimy glosno, ze stos mogl zostac z adresem
      * testowym — cichy pad restore to ta sama klasa co DROBNA C. */
     console.error('przywrocPolityke(): restore adres_polityki PADL — na stosie mogl zostac ' + POLITYKA_TEST);
+    bledy++; /* pad restore = czerwony test (DROBNA 16 recenzji #168) */
     return;
   }
   politykaPrzed = null;

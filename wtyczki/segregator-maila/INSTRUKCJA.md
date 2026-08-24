@@ -25,6 +25,8 @@ Wymagania: WordPress 6.0+ i PHP 8.1+.
 
 ## 2. Pierwszy przebieg (1 minuta)
 
+
+![Próbka maili z raportem trafień](zrzuty/probka-demo.png)
 1. W menu bocznym: **Segregator maila → Przebiegi**.
 2. Kliknij **„Przepuść próbkę"** (tryb „reguły").
 3. Dostajesz raport: mail → kategoria → która reguła zadziałała, trafienia
@@ -34,6 +36,9 @@ Wymagania: WordPress 6.0+ i PHP 8.1+.
 
 ## 3. Reguły pod własną firmę w ~20 minut
 
+
+![Lista reguł](zrzuty/reguly.png)
+![Kategorie](zrzuty/kategorie.png)
 1. **Kategorie** → dodaj/zmień kategorie pod swoją skrzynkę.
 2. **Reguły** → każda reguła to: *warunek* (nadawca / temat / treść ZAWIERA
    któryś z wariantów po przecinku, np. `faktur, rachunek`) → *kategoria*.
@@ -161,6 +166,8 @@ Koszty API ponosi właściciel klucza według cennika dostawcy.
 
 ## 5. Eksport filtrów do prawdziwej skrzynki
 
+
+![Ustawienia i eksport](zrzuty/ustawienia.png)
 Kiedy reguły dają na próbce wynik, który Cię zadowala, przenieś je tam, gdzie
 naprawdę stoi poczta: **Segregator maila → Eksport filtrów**.
 
@@ -198,6 +205,14 @@ po drodze do osoby, która będzie klikać w skrzynce.
 
 ## 6. Prawdziwa skrzynka (IMAP) — segregacja na żywo
 
+
+Formularz połączenia ze skrzynką — pola opisane krok po kroku:
+
+![Połączenie ze skrzynką IMAP](zrzuty/skrzynka-imap.png)
+
+Historię przebiegów (co, kiedy i z jakim wynikiem) znajdziesz w zakładce **Przebiegi**:
+
+![Historia przebiegów](zrzuty/przebiegi.png)
 Zakładka **Segregator maila → Skrzynka (IMAP)**. Wtyczka loguje się do Twojej
 skrzynki, czyta wiadomości i przenosi je do folderów na serwerze poczty —
 według tych samych reguł, które przetestowałeś na próbce.
