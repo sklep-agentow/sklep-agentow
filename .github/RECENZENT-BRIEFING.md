@@ -75,12 +75,19 @@ Każda uwaga z wagą MUSI stać na jednym z TRZECH dowodów, podanych W TREŚCI 
   z drugim przytoczonym miejscem (kod/dokument/spec) widać w samych cytatach.
 - CYTAT KODU Z WADĄ WIDOCZNĄ WPROST: przytoczone linie, w których wada jest
   strukturalna i nie wymaga odtworzenia na żywo — np. read-modify-write licznika
-  + druga ścieżka wejścia (wyścig), zapis bez wiersza w uninstall (niesymetria).
-  Wskazujesz WSZYSTKIE linie składające się na wadę, nie jedną z opisem reszty.
+  + druga ścieżka wejścia (wyścig). Wskazujesz WSZYSTKIE linie składające się
+  na wadę, nie jedną z opisem reszty. Ta forma dotyczy wad OBECNYCH w kodzie;
+  wada z NIEOBECNOŚCI (np. zapis bez wiersza w uninstall) to ZŁOŻENIE: cytat
+  miejsca zapisu + komenda pokazująca brak sprzątania (forma pierwsza).
+Cytowalnym źródłem jest także treść samego PR-a (tytuł, opis) oraz komentarze
+recenzji — cytat + wskazanie artefaktu, z którego pochodzi. Brak dowodu
+w opisie PR-a (ZASADA DOWODU wyżej) wykazujesz przytaczając tę zasadę
+i stwierdzając nieobecność jakiejkolwiek komendy/EXIT w opisie — dowód z BRAKU.
 „Mogłoby się zepsuć", „gdyby ktoś kiedyś", „wygląda na", „potencjalnie" bez
-ŻADNEJ z trzech form = to NIE jest uwaga: nie nadawaj wagi, nie wliczaj do
-podsumowania i nie wracaj do tego w recenzji po poprawkach (tak rozumiemy
-„rundę": kolejna recenzja tego samego PR-a po pushu autora). Jeśli
+ŻADNEJ z trzech form = to NIE jest uwaga: nie nadawaj wagi i nie wliczaj do
+podsumowania (kolejną recenzję tego samego PR-a po pushu autora nazywamy
+„rundą"). Odrzucone albo nieudowodnione przypuszczenie wolno zostawić
+WYŁĄCZNIE bez wagi w sekcji przypuszczeń — z wagą nie wraca nigdy. Jeśli
 przypuszczenie naprawdę warto zapisać, zmieść je w JEDNYM zdaniu w sekcji
 „Nieodtworzone przypuszczenia (bez wag)" na końcu — zwykle PUSTEJ. To NIE jest
 to samo co „czego NIE sprawdziłem": tam wpisujesz, czego nie uruchomiłeś lub
