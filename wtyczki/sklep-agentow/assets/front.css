@@ -995,3 +995,109 @@ a.sklepag-kup {
 .sklepag-galeria-kafel figcaption {
 	padding: 10px 14px;
 }
+
+/* ===== Koszyk A (25.08): demo-CTA, zgodność, trigger, przypisy, punkty uczciwości, lightbox, sticky ===== */
+.sklepag-demo-cta {
+	color: var(--sklepag-limonka);
+	font-weight: 600;
+	margin: 10px 0 0;
+}
+.sklepag-zgodnosc {
+	list-style: none;
+	margin: 12px 0 0;
+	padding: 0;
+	font-family: var(--sklepag-mono);
+	font-size: 0.78rem;
+	letter-spacing: 0.04em;
+}
+.sklepag-zgodnosc li {
+	padding: 4px 0;
+}
+.sklepag-zgodnosc li:first-child {
+	color: var(--sklepag-limonka);
+}
+.sklepag-zgodnosc li:last-child {
+	color: var(--sklepag-pyl);
+}
+.sklepag-trigger {
+	font-family: var(--sklepag-mono);
+	font-size: 0.8rem;
+	color: var(--sklepag-limonka);
+	margin: 8px 0 0;
+}
+.sklepag-przypis {
+	color: var(--sklepag-pyl);
+	font-size: 0.92rem;
+	margin-top: 12px;
+}
+.sklepag-uczciwosc-punkty {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	gap: 10px;
+}
+.sklepag-uczciwosc-punkty li {
+	padding: 10px 14px 10px 34px;
+	background: var(--sklepag-wegiel);
+	border: 1px solid var(--sklepag-linia);
+	border-radius: 8px;
+	position: relative;
+}
+.sklepag-uczciwosc-punkty li::before {
+	content: "—";
+	position: absolute;
+	left: 14px;
+	color: var(--sklepag-limonka);
+}
+.sklepag-uczciwosc-punkty strong {
+	color: var(--sklepag-limonka);
+}
+.sklepag-lightbox {
+	display: block;
+	cursor: zoom-in;
+}
+.sklepag-lightbox-tlo {
+	position: fixed;
+	inset: 0;
+	background: rgba(4, 5, 7, 0.92);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 9999;
+	padding: 24px;
+	cursor: zoom-out;
+}
+.sklepag-lightbox-tlo img {
+	max-width: 100%;
+	max-height: 100%;
+	width: auto;
+	height: auto;
+	border-radius: 8px;
+	box-shadow: 0 24px 64px rgba(0, 0, 0, 0.7);
+}
+.sklepag-sticky {
+	position: fixed;
+	left: 50%;
+	transform: translateX(-50%);
+	bottom: 14px;
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	background: var(--sklepag-wegiel);
+	border: 1px solid var(--sklepag-linia);
+	border-radius: 999px;
+	padding: 8px 10px 8px 18px;
+	box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+	z-index: 9000;
+}
+.sklepag-sticky[hidden] {
+	display: none;
+}
+.sklepag-sticky-cena {
+	font-weight: 700;
+	white-space: nowrap;
+}
+.sklepag-sticky .sklepag-kup {
+	margin: 0;
+}

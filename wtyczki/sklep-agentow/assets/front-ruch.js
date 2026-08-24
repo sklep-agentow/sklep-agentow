@@ -46,3 +46,41 @@
 		} );
 	} );
 }() );
+
+/* ===== Koszyk A (25.08): lightbox galerii + sticky CTA ===== */
+(function () {
+	'use strict';
+	// Lightbox: klik w kafel galerii otwiera pełny obraz; klik/Esc zamyka.
+	document.addEventListener('click', function (e) {
+		var link = e.target.closest('.sklepag-lightbox');
+		if (link) {
+			e.preventDefault();
+			var tlo = document.createElement('div');
+			tlo.className = 'sklepag-lightbox-tlo';
+			var img = document.createElement('img');
+			img.src = link.getAttribute('href');
+			img.alt = (link.querySelector('img') || {}).alt || '';
+			tlo.appendChild(img);
+			tlo.addEventListener('click', function () { tlo.remove(); });
+			document.addEventListener('keydown', function esc(ev) {
+				if (ev.key === 'Escape') { tlo.remove(); document.removeEventListener('keydown', esc); }
+			});
+			document.body.appendChild(tlo);
+		}
+	});
+	// Sticky CTA: pokazuje się po minięciu hero, znika przy widocznym formularzu zakupu.
+	var pasek = document.querySelector('.sklepag-sticky');
+	var hero = document.querySelector('.sklepag-hero');
+	var formularz = document.getElementById('sklepag-kup-formularz');
+	if (pasek && hero && 'IntersectionObserver' in window) {
+		var heroWidoczne = true, formularzWidoczny = false;
+		var przelacz = function () {
+			if (!heroWidoczne && !formularzWidoczny) { pasek.removeAttribute('hidden'); }
+			else { pasek.setAttribute('hidden', ''); }
+		};
+		new IntersectionObserver(function (w) { heroWidoczne = w[0].isIntersecting; przelacz(); }).observe(hero);
+		if (formularz) {
+			new IntersectionObserver(function (w) { formularzWidoczny = w[0].isIntersecting; przelacz(); }).observe(formularz);
+		}
+	}
+})();

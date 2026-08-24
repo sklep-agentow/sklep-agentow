@@ -95,7 +95,8 @@ function sklepag_tresc_produktu( $slug ) {
 	$tresci = array(
 		'chatbot-live'     => array(
 			'etykieta'     => '[ <span class="sklepag-akcent">BOT</span> · CZAT NA STRONĘ ]',
-			'zdanie'       => 'Odpowiada klientom 24/7. A gdy nie zna odpowiedzi — bierze kontakt i oddaje rozmowę Tobie.',
+			'zdanie'       => 'Nie trać klientów piszących po godzinach: bot odpowiada 24/7, zbiera kontakty, a trudne rozmowy oddaje Tobie.',
+			'demo_cta'     => 'Porozmawiaj z botem TERAZ — to ten sam bot: kliknij zielony bąbelek w rogu strony i zadaj pytanie.',
 			'pasek_glowa'  => 'BOT · ONLINE',
 			'pasek'        => 'ODPOWIADA 24/7',
 			// Człon „przetestuj" tylko gdy bąbelek REALNIE widoczny: wtyczka aktywna
@@ -124,7 +125,12 @@ function sklepag_tresc_produktu( $slug ) {
 				array( '100% rozmów u Ciebie', 'tryb regułowy: treść nie opuszcza Twojego WordPressa' ),
 			),
 			'dla_kogo'     => array( 'Usługi lokalne — fryzjer, warsztat, gabinet', 'Sklepy i firmy z powtarzalnymi pytaniami', 'Każdy, kto traci klientów piszących po godzinach' ),
-			'uczciwosc'    => 'Nie znajdziesz tu opinii z gwiazdkami — sprzedajemy od niedawna i nie fabrykujemy ocen; zamiast tego masz tryb testowy i seed demo, żeby sprawdzić samemu. Pełnoprawny silnik regułowy działa od razu — bez kluczy i opłat. „LIVE" znaczy dwie rzeczy: bot odpowiada natychmiast, a Ty możesz w każdej chwili PRZEJĄĆ rozmowę i pisać do gościa osobiście — wtedy bot w niej milczy, a gość widzi wprost, że rozmawia z człowiekiem; po pięciu minutach Twojej ciszy rozmowa sama wraca do bota. Gdy nie przejmiesz, bot zbiera kontakt i odpisujesz później. Bot nie udaje wszechwiedzy. Tryb AI włączasz WŁASNYM kluczem; przy limicie dziennym lub błędzie bot sam wraca do reguł. Prywatność: w trybie regułowym treść rozmów nie opuszcza Twojego serwera; w trybie AI pytanie gościa idzie do API dostawcy (informacja też do Twojej polityki prywatności).',
+			'uczciwosc'    => array(
+				'<strong>Bot NIE zmyśla</strong> — odpowiada wyłącznie z Twojej bazy pytań i odpowiedzi. Nie zna odpowiedzi? Zbiera kontakt, Ty odpisujesz później.',
+				'„LIVE" znaczy: w każdej chwili możesz PRZEJĄĆ rozmowę i pisać do gościa osobiście — bot milknie, a gość widzi wprost, że rozmawia z człowiekiem; po pięciu minutach Twojej ciszy rozmowa wraca do bota.',
+				'Pełnoprawny silnik regułowy działa od razu — bez kluczy i opłat. Tryb AI włączasz WŁASNYM kluczem; przy limicie dziennym lub błędzie bot sam wraca do reguł.',
+				'Prywatność: w trybie regułowym treść rozmów nie opuszcza Twojego serwera; w trybie AI pytanie gościa idzie do dostawcy API (gotowa wzmianka do Twojej polityki prywatności jest w instrukcji).',
+			),
 			/*
 			 * Pliki galerii to KOPIE zrzutow z wtyczek botow (assets/w-srodku/ —
 			 * samowystarczalnosc sklepu). Po regeneracji zrzutow instrukcji botow
@@ -193,7 +199,8 @@ function sklepag_tresc_produktu( $slug ) {
 			 * ⛔ GWARANCJA: obietnica zwrotu pieniędzy = zobowiązanie WŁAŚCICIELA.
 			 * Treść i włączenie to decyzja WŁAŚCICIELA SKLEPU; puste = sekcja się nie renderuje.
 			 */
-			'gwarancja'    => '',
+			'gwarancja'    => '14 dni gwarancji satysfakcji: jeśli bot nie spełni Twoich oczekiwań, napisz do nas — zwracamy pieniądze bez pytań. Zwrot oznacza wygaśnięcie prawa do aktualizacji i wsparcia dla kupionej kopii.',
+			'kalkulacja'   => 'Policz po swojemu: 10 pytań dziennie × 3 minuty = około 5 godzin miesięcznie z głowy. Podstaw własne liczby — matematyka jest jawna.',
 			'faq'          => array(
 				array( 'Czy potrzebuję klucza AI?', 'Nie — bot w pełni działa bez niego, na Twojej bazie pytań i odpowiedzi.' ),
 				array( 'Jakie są wymagania techniczne?', 'WordPress 6.0 lub nowszy i PHP 8.1 lub nowszy — standard na dzisiejszych hostingach. Bez dodatkowych usług; tryb AI wymaga tylko Twojego klucza API.' ),
@@ -205,35 +212,42 @@ function sklepag_tresc_produktu( $slug ) {
 			'final'        => 'Zacznij odpowiadać w nocy. Bez nocek.',
 		),
 		'segregator-maila' => array(
-			'etykieta'     => '[ <span class="sklepag-akcent">BOT</span> · PORZĄDEK W POCZCIE ]',
-			'zdanie'       => 'Rozdziela pocztę do kategorii według Twoich reguł — i pokazuje raport, ile roboty zrobił za Ciebie.',
-			'pasek_glowa'  => 'SEGREGATOR · GOTOWY',
-			'pasek'        => 'PRÓBKA 30 MAILI W ZESTAWIE',
-			'pasek_zywy'   => '',
-			'problem_t'    => 'Wszystko na jednej kupie.',
-			'problem'      => 'Oferty, faktury, reklamacje i spam w jednym strumieniu. Zanim odpiszesz ważnym, przekopujesz się przez resztę.',
-			'mockup_czatu' => false,
-			'przedpo'      => true,
-			'funkcje'      => array(
+			'etykieta'       => '[ <span class="sklepag-akcent">BOT</span> · PORZĄDEK W POCZCIE ]',
+			'zdanie'         => 'Przestań zaczynać dzień od przekopywania skrzynki: reguły układają pocztę do kategorii, a raport pokazuje, ile roboty zeszło z Ciebie.',
+			'demo_cta'       => 'Przetestuj bez ryzyka: 30 maili demo w zestawie — raport z liczbami po pierwszym przebiegu, bez podpinania skrzynki.',
+			'zgodnosc'       => array( 'DZIAŁA Z: Gmail i skrzynki hostingowe (hasło aplikacji)', 'NIE DZIAŁA Z: Microsoft 365 / Outlook.com (wymagają OAuth)' ),
+			'pasek_glowa'    => 'SEGREGATOR · GOTOWY',
+			'pasek'          => 'PRÓBKA 30 MAILI W ZESTAWIE',
+			'pasek_zywy'     => '',
+			'problem_t'      => 'Wszystko na jednej kupie.',
+			'problem'        => 'Oferty, faktury, reklamacje i spam w jednym strumieniu. Zanim odpiszesz ważnym, przekopujesz się przez resztę.',
+			'mockup_czatu'   => false,
+			'przedpo'        => true,
+			'funkcje'        => array(
 				array( 'Reguły segregacji', 'Nadawca / temat / słowa w treści → kategoria. Kolejność na liście rozstrzyga: pierwsza pasująca wygrywa — zero niejednoznaczności.' ),
 				array( 'Kategorie pod Twoją firmę', 'Dowolne nazwy: dodajesz i zmieniasz, jak chcesz — Oferty, Faktury, Reklamacje. Kategorii używanej przez regułę nie skasujesz przypadkiem.' ),
 				array( 'Próbki zamiast ryzyka', 'Wbudowane 30 maili demo po polsku + import WŁASNEJ próbki z CSV (od, temat, treść).' ),
 				array( 'Raport z liczbami', 'Ile do której kategorii, ile bez dopasowania, % pokrycia; przy próbce z oczekiwaną kategorią — trafność i lista pomyłek.' ),
 				array( 'Tryb AI (opcjonalny)', 'Twój klucz: klasyfikacja modelem + przebieg „porównaj reguły vs AI" z raportem różnic.' ),
 			),
-			'kroki'        => array(
+			'kroki'          => array(
 				'Zainstaluj wtyczkę.',
 				'Ułóż reguły pod swoją skrzynkę.',
 				'Puść przebieg i czytaj raport.',
 			),
-			'dowody'       => array(
+			'dowody'         => array(
 				array( '30 maili demo', 'przebieg testowy od pierwszej minuty, bez podpinania czegokolwiek' ),
 				array( '% pokrycia', 'liczony z TWOJEJ próbki — raport pokazuje liczby, nie obietnice' ),
 				array( '0 maili na zewnątrz', 'tryb regułowy działa w całości w Twoim WordPressie' ),
 			),
-			'dla_kogo'     => array( 'Biura i sekretariaty', 'Firmy usługowe z jedną wspólną skrzynką', 'Każdy, kto zaczyna dzień od przekopywania poczty' ),
-			'uczciwosc'    => 'Nie znajdziesz tu opinii z gwiazdkami — sprzedajemy od niedawna i nie fabrykujemy ocen; zamiast tego masz raport z liczbami z TWOJEJ próbki. Reguły układasz i sprawdzasz na próbce, a potem puszczasz je na PRAWDZIWEJ skrzynce: wtyczka rozkłada pocztę do folderów na serwerze poczty, domyślnie chodzi NA SUCHO i nie rusza ani jednej wiadomości, dopóki sam nie potwierdzisz, a ostatni przebieg cofniesz jednym kliknięciem. Czego nie ma, mówimy przed zakupem: logowanie tylko loginem i hasłem aplikacji, więc Microsoft 365 i Outlook.com NIE zadziałają (tam wymagane jest OAuth); na skrzynce klasyfikują reguły, nie AI; bez czytania załączników.',
-			'galeria'      => array(
+			'dla_kogo'       => array( 'Biura i sekretariaty', 'Firmy usługowe z jedną wspólną skrzynką', 'Każdy, kto zaczyna dzień od przekopywania poczty' ),
+			'uczciwosc'      => array(
+				'Reguły układasz i sprawdzasz na próbce, a potem puszczasz je na PRAWDZIWEJ skrzynce: wtyczka rozkłada pocztę do folderów na serwerze poczty.',
+				'<strong>Domyślnie tryb NA SUCHO</strong>: nie rusza ani jednej wiadomości, dopóki sam nie potwierdzisz — a ostatni przebieg cofniesz jednym kliknięciem.',
+				'<strong>Czego nie ma, mówimy przed zakupem</strong>: logowanie tylko loginem i hasłem aplikacji, więc Microsoft 365 i Outlook.com NIE zadziałają (tam wymagane jest OAuth).',
+				'Na skrzynce klasyfikują reguły, nie AI; bez czytania załączników.',
+			),
+			'galeria'        => array(
 				array(
 					'plik'   => 'segregator-maila--zywy.jpg',
 					'kadr'   => 'cover',
@@ -271,14 +285,14 @@ function sklepag_tresc_produktu( $slug ) {
 					'wys'    => 719,
 				),
 			),
-			'pakiet'       => array(
+			'pakiet'         => array(
 				'Plik ZIP wtyczki — instalujesz jak każdą wtyczkę WordPressa, w kilka minut.',
 				'Instrukcja krok po kroku z 6 zrzutami ekranu.',
 				'Próbka 30 maili demo po polsku — testujesz od pierwszej minuty, bez podpinania skrzynki.',
 				'Dokumentacja techniczna z diagramem przepływu (dla Twojego informatyka).',
 				'Historia zmian i licencja w paczce.',
 			),
-			'porownanie'   => array(
+			'porownanie'     => array(
 				'tytul'   => 'Ręczne sortowanie kontra reguły',
 				'kol'     => array( 'Robione ręcznie', 'Z botem' ),
 				'wiersze' => array(
@@ -290,9 +304,10 @@ function sklepag_tresc_produktu( $slug ) {
 				'przypis' => 'Reguły układasz raz i poprawiasz, gdy raport pokaże pomyłki — bot nie zgaduje za Ciebie.',
 			),
 			/* ⛔ OPINIE i GWARANCJA: te same zasady co przy chatbot-live (komentarz wyżej). */
-			'opinie'       => array(),
-			'gwarancja'    => '',
-			'faq'          => array(
+			'opinie'         => array(),
+			'gwarancja'      => '14 dni gwarancji satysfakcji: jeśli bot nie spełni Twoich oczekiwań, napisz do nas — zwracamy pieniądze bez pytań. Zwrot oznacza wygaśnięcie prawa do aktualizacji i wsparcia dla kupionej kopii.',
+			'dowody_przypis' => 'Liczby z próbki 30 maili demo — Twoją trafność pokaże raport na TWOICH regułach i TWOJEJ poczcie.',
+			'faq'            => array(
 				array( 'Czy muszę podpinać skrzynkę?', 'Nie musisz — możesz pracować wyłącznie na próbkach CSV. Ale możesz: wtyczka obsługuje prawdziwą skrzynkę i przenosi w niej pocztę do folderów.' ),
 				array( 'Jakie są wymagania techniczne?', 'WordPress 6.0 lub nowszy i PHP 8.1 lub nowszy. Praca na próbkach CSV nie potrzebuje nic więcej. Do połączenia z PRAWDZIWĄ skrzynką hosting musi mieć włączoną funkcję stream_socket_client (najtańsze hostingi bywają z nią na bakier) i rozszerzenie OpenSSL do szyfrowania — wbudowana diagnostyka wtyczki sprawdzi oba za Ciebie i powie, o co poprosić hostingodawcę. Tryb AI wymaga tylko Twojego klucza API.' ),
 				array( 'Zadziała z Microsoft 365 albo Outlook.com?', 'Nie. Tam wymagane jest logowanie OAuth, którego ta wtyczka nie obsługuje. Gmail i skrzynki hostingowe z hasłem aplikacji: tak.' ),
@@ -302,7 +317,7 @@ function sklepag_tresc_produktu( $slug ) {
 				array( 'Czy AI jest wymagane?', 'Nie — pełny tryb regułowy działa bez klucza. AI to opcja do porównania wyników.' ),
 				array( 'Co z RODO?', 'Próbki zostają w Twojej bazie. W trybie AI treść idzie do dostawcy API — gotowa wzmianka do polityki prywatności w instrukcji.' ),
 			),
-			'final'        => 'Niech poczta sama się układa.',
+			'final'          => 'Niech poczta sama się układa.',
 		),
 	);
 	return isset( $tresci[ $slug ] ) ? $tresci[ $slug ] : null;
@@ -478,6 +493,19 @@ function sklepag_render_produkt( $slug ) {
 	}
 	$html .= $cena;
 	$html .= '<p><a class="sklepag-kup sklepag-kup-kotwica" href="#sklepag-kup-formularz">Kup teraz (płatność testowa)</a></p>';
+	if ( $t && ! empty( $t['gwarancja'] ) ) {
+		$html .= '<p class="sklepag-trigger">✔ 14 dni na zwrot — bez pytań</p>';
+	}
+	if ( $t && ! empty( $t['demo_cta'] ) ) {
+		$html .= '<p class="sklepag-demo-cta">▶ ' . esc_html( $t['demo_cta'] ) . '</p>';
+	}
+	if ( $t && ! empty( $t['zgodnosc'] ) ) {
+		$html .= '<ul class="sklepag-zgodnosc">';
+		foreach ( $t['zgodnosc'] as $z ) {
+			$html .= '<li>' . esc_html( $z ) . '</li>';
+		}
+		$html .= '</ul>';
+	}
 	$html .= sklepag_baner_testowy();
 	$html .= '</header>';
 	if ( $zrzut_hero ) {
@@ -519,7 +547,8 @@ function sklepag_render_produkt( $slug ) {
 			$html .= '<div class="sklepag-galeria">';
 			foreach ( $t['galeria'] as $g ) {
 				$kadr_kl = 'sklepag-galeria-kadr' . ( isset( $g['kadr'] ) ? ' sklepag-galeria-kadr--' . sanitize_html_class( $g['kadr'] ) : '' );
-				$html   .= '<figure class="sklepag-galeria-kafel"><div class="' . esc_attr( $kadr_kl ) . '"><img src="' . esc_url( plugins_url( 'assets/w-srodku/' . $g['plik'], SKLEPAG_PLIK ) ) . '" alt="' . esc_attr( $g['alt'] ) . '" width="' . (int) $g['szer'] . '" height="' . (int) $g['wys'] . '" loading="lazy"></div>';
+				$pelny   = esc_url( plugins_url( 'assets/w-srodku/' . $g['plik'], SKLEPAG_PLIK ) );
+				$html   .= '<figure class="sklepag-galeria-kafel"><a class="sklepag-lightbox" href="' . $pelny . '" aria-label="Powiększ zrzut"><div class="' . esc_attr( $kadr_kl ) . '"><img src="' . $pelny . '" alt="' . esc_attr( $g['alt'] ) . '" width="' . (int) $g['szer'] . '" height="' . (int) $g['wys'] . '" loading="lazy"></div></a>';
 				$html   .= '<figcaption class="sklepag-mono-etykieta">' . esc_html( $g['podpis'] ) . '</figcaption></figure>';
 			}
 			$html .= '</div></section>';
@@ -541,6 +570,12 @@ function sklepag_render_produkt( $slug ) {
 			$html .= '<div class="sklepag-dowod"><p class="sklepag-dowod-liczba">' . esc_html( $d[0] ) . '</p><p class="sklepag-dowod-podpis">' . esc_html( $d[1] ) . '</p></div>';
 		}
 		$html .= '</div>';
+		if ( ! empty( $t['kalkulacja'] ) ) {
+			$html .= '<p class="sklepag-przypis">' . esc_html( $t['kalkulacja'] ) . '</p>';
+		}
+		if ( ! empty( $t['dowody_przypis'] ) ) {
+			$html .= '<p class="sklepag-przypis">' . esc_html( $t['dowody_przypis'] ) . '</p>';
+		}
 		if ( $t['przedpo'] ) {
 			$html .= sklepag_przed_po();
 		}
@@ -578,9 +613,19 @@ function sklepag_render_produkt( $slug ) {
 			$html .= '</section>';
 		}
 
-		// UCZCIWOŚĆ (zamiast fejk-opinii — D6/Omnibus).
+		// UCZCIWOŚĆ (zamiast fejk-opinii — D6/Omnibus). Punkty, nie ściana
+		// (badania: 53% kupujących samo szuka ograniczeń — forma ma być skanowalna).
 		$html .= '<section class="sklepag-sekcja sklepag-uczciwosc"><p class="sklepag-mono-etykieta">[ CO DOKŁADNIE DOSTAJESZ — I CZEGO NIE MA ]</p>';
-		$html .= '<p class="sklepag-sekcja-tekst">' . esc_html( $t['uczciwosc'] ) . '</p></section>';
+		if ( is_array( $t['uczciwosc'] ) ) {
+			$html .= '<ul class="sklepag-uczciwosc-punkty">';
+			foreach ( $t['uczciwosc'] as $u ) {
+				$html .= '<li>' . wp_kses( $u, array( 'strong' => array() ) ) . '</li>';
+			}
+			$html .= '</ul>';
+		} else {
+			$html .= '<p class="sklepag-sekcja-tekst">' . esc_html( $t['uczciwosc'] ) . '</p>';
+		}
+		$html .= '</section>';
 	} elseif ( '' !== trim( (string) $p->opis_pelny ) ) {
 		// Produkt spoza dwójki: opis pełny z bazy, render jako tekst (XSS — plan §7).
 		$html .= '<section class="sklepag-sekcja"><p class="sklepag-mono-etykieta">[ O PRODUKCIE ]</p>';
@@ -589,7 +634,14 @@ function sklepag_render_produkt( $slug ) {
 
 	// CENA + ZAKUP.
 	$html .= '<section class="sklepag-sekcja sklepag-sekcja-zakup"><p class="sklepag-mono-etykieta">[ CENA ]</p>';
-	$html .= $cena . sklepag_formularz_zakupu( $p ) . '</section>';
+	$html .= $cena;
+	if ( $t && ! empty( $t['gwarancja'] ) ) {
+		$html .= '<p class="sklepag-trigger">✔ 14 dni gwarancji satysfakcji — zwrot bez pytań</p>';
+	}
+	if ( $t && ! empty( $t['zgodnosc'] ) ) {
+		$html .= '<p class="sklepag-przypis">' . esc_html( implode( ' · ', $t['zgodnosc'] ) ) . '</p>';
+	}
+	$html .= sklepag_formularz_zakupu( $p ) . '</section>';
 
 	// GWARANCJA — obietnica zwrotu = zobowiązanie finansowe; treść ustala właściciel sklepu.
 	if ( $t && ! empty( $t['gwarancja'] ) ) {
@@ -612,6 +664,8 @@ function sklepag_render_produkt( $slug ) {
 	$html .= '<p><a class="sklepag-kup sklepag-kup-kotwica" href="#sklepag-kup-formularz">Kup teraz (płatność testowa)</a></p>';
 	$html .= '</section>';
 
+	// Sticky pasek CTA (badanie Baymard: przycisk z marginesem, NIE pelna szerokosc).
+	$html .= '<div class="sklepag-sticky" hidden><span class="sklepag-sticky-cena">' . esc_html( number_format( $p->cena_grosze / 100, 0, ',', ' ' ) ) . ' ' . esc_html( $p->waluta ) . '</span><a class="sklepag-kup sklepag-kup-kotwica" href="#sklepag-kup-formularz">Kup teraz</a></div>';
 	$html .= '</div>';
 	return $html;
 }
