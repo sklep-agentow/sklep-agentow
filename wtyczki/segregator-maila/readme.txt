@@ -4,7 +4,7 @@ Tags: email, imap, inbox, automation, rules
 Requires at least: 6.0
 Tested up to: 7.0.4
 Requires PHP: 8.1
-Stable tag: 1.3.3
+Stable tag: 1.3.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -81,7 +81,12 @@ słowo „ping".
 5. Skrzynkę podłączysz w zakładce **Skrzynka (IMAP)**. Zacznij od przycisku
    „Sprawdź połączenie", potem puść jeden przebieg na sucho i przeczytaj listę.
 
-Wymagania: WordPress 6.0 lub nowszy, PHP 8.1 lub nowszy. Rozszerzenie PHP `imap`
+Wymagania: WordPress 6.0 lub nowszy, PHP 8.1 lub nowszy. Do połączenia z prawdziwą
+skrzynką: funkcja PHP `stream_socket_client` (bywa blokowana na najtańszych
+hostingach) i rozszerzenie OpenSSL — wbudowana diagnostyka sprawdzi oba i powie,
+o co poprosić hostingodawcę. Microsoft 365 i Outlook.com NIE są obsługiwane
+(wymagają OAuth); Gmail i skrzynki hostingowe z hasłem aplikacji działają.
+Rozszerzenie PHP `imap`
 **nie jest potrzebne** — wtyczka ma własnego klienta IMAP.
 
 == Frequently Asked Questions ==
@@ -137,6 +142,9 @@ z serwerem. Hasło jest w nim zamaskowane.
 == Changelog ==
 
 Pełna historia zmian jest w pliku `CHANGELOG.md` w katalogu wtyczki.
+
+= 1.3.4 =
+* Wymagania w readme mówią pełną prawdę: stream_socket_client + OpenSSL dla prawdziwej skrzynki; Microsoft 365/Outlook.com nieobsługiwane (OAuth). Zero zmian w kodzie.
 
 = 1.3.3 =
 Instrukcja z 6 zrzutami ekranu (próbka, przebiegi, reguły, kategorie, IMAP, ustawienia) — maszynowo.

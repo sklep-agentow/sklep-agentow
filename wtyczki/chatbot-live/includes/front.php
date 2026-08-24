@@ -542,7 +542,25 @@ function chatl_ajax_pytanie() {
 		$ai = chatl_ai_odpowiedz( $pytanie, chatl_ai_historia( $sesja, $id_pytania ) );
 		if ( null !== $ai ) {
 			if ( CHATL_AI_BRAK === trim( $ai ) ) {
-				// Próg pewności: model nie zgaduje => uczciwe "nie wiem" + zbiórka kontaktu.
+				/*
+				 * Próg pewności: model nie zgaduje. Ale zanim padnie „nie znam" —
+				 * SIATKA BEZPIECZEŃSTWA: reguły wpisane ręcznie przez właściciela.
+				 * Bez tego bot mówił „nie znam" przy odpowiedzi LEŻĄCEJ w bazie
+				 * (zmierzone 25.08: para o gwarancji trafiała w chatl_dopasuj,
+				 * a hybryda oddawała tekst awaryjny — model bywa nadostrożny
+				 * przy tematach pieniędzy i to jest OK, od pewników są reguły).
+				 */
+				$z_regul = chatl_dopasuj( $pytanie );
+				if ( null !== $z_regul ) {
+					chatl_oznacz_trafienie( $id_pytania, true );
+					chatl_zapisz_wymiane( $sesja, 'bot', $z_regul['odpowiedz'], 'reguly', true );
+					wp_send_json_success(
+						array(
+							'trafiono'  => true,
+							'odpowiedz' => $z_regul['odpowiedz'],
+						)
+					);
+				}
 				chatl_oznacz_trafienie( $id_pytania, false );
 				chatl_zapisz_wymiane( $sesja, 'bot', $ust['tekst_awaryjny'], 'ai', false );
 				wp_send_json_success(

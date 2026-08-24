@@ -16,6 +16,15 @@ Nic jeszcze.
 
 ---
 
+## [1.5.11] — 2026-08-25
+
+### Naprawione
+- **Tryb hybrydowy: reguły jako siatka bezpieczeństwa pod AI.** Gdy model odpowiada
+  „nie wiem" (próg pewności), bot najpierw sprawdza ręcznie wpisaną bazę pytań
+  i odpowiedzi — dopiero przy braku trafienia mówi „nie znam" i zbiera kontakt.
+  Dotąd nadostrożność modelu (np. przy pytaniach o zwroty) zasłaniała odpowiedź
+  leżącą w bazie. Zero zmian w trybie czysto regułowym.
+
 ## [1.5.10] — 2026-08-24
 
 ### Dodane

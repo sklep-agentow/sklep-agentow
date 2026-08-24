@@ -11,6 +11,13 @@ Nic jeszcze.
 
 ---
 
+## [1.3.4] — 2026-08-25
+
+### Zmienione
+- **readme mówi pełne wymagania prawdziwej skrzynki**: `stream_socket_client`
+  + OpenSSL (diagnostyka wtyczki sprawdza oba), oraz wprost: Microsoft 365
+  i Outlook.com nieobsługiwane (OAuth). Zero zmian w kodzie.
+
 ## [1.3.3] — 2026-08-24
 
 ### Dodane
