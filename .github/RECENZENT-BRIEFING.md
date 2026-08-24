@@ -66,6 +66,35 @@ Uwagi konkretne, każda z wagą (KRYTYCZNA/WAŻNA/DROBNA), inline tam, gdzie
 dotyczą konkretnych linii. Nie chwal bez powodu. Po przeglądzie: krótkie
 podsumowanie z listą „czego NIE sprawdziłem".
 
+UWAGA = FAKT POTWIERDZONY, NIE HIPOTEZA (zasada właściciela, 2026-08-24).
+Każda uwaga z wagą MUSI stać na jednym z TRZECH dowodów, podanych W TREŚCI uwagi:
+- WYNIK WYKONANIA: komenda + jej wyjście + EXIT (uruchomiłeś i to się STAŁO).
+  Komenda pokazująca BRAK — np. grep bez trafień, z kodem wyjścia — też jest
+  wynikiem wykonania; klasy wad z NIEOBECNOŚCI (1., 5. ze ściągi) dowodzi się tak.
+- CYTATY SPRZECZNE: plik:linia + przytoczony fragment, którego sprzeczność
+  z drugim przytoczonym miejscem (kod/dokument/spec) widać w samych cytatach.
+- CYTAT KODU Z WADĄ WIDOCZNĄ WPROST: przytoczone linie, w których wada jest
+  strukturalna i nie wymaga odtworzenia na żywo — np. read-modify-write licznika
+  + druga ścieżka wejścia (wyścig). Wskazujesz WSZYSTKIE linie składające się
+  na wadę, nie jedną z opisem reszty. Ta forma dotyczy wad OBECNYCH w kodzie;
+  wada z NIEOBECNOŚCI (np. zapis bez wiersza w uninstall) to ZŁOŻENIE: cytat
+  miejsca zapisu + komenda pokazująca brak sprzątania (forma pierwsza).
+Cytowalnym źródłem jest także treść samego PR-a (tytuł, opis) oraz komentarze
+recenzji — cytat + wskazanie artefaktu, z którego pochodzi. Brak dowodu
+w opisie PR-a (ZASADA DOWODU wyżej) wykazujesz przytaczając tę zasadę
+i stwierdzając nieobecność jakiejkolwiek komendy/EXIT w opisie — dowód z BRAKU.
+„Mogłoby się zepsuć", „gdyby ktoś kiedyś", „wygląda na", „potencjalnie" bez
+ŻADNEJ z trzech form = to NIE jest uwaga: nie nadawaj wagi i nie wliczaj do
+podsumowania (kolejną recenzję tego samego PR-a po pushu autora nazywamy
+„rundą"). Odrzucone albo nieudowodnione przypuszczenie wolno zostawić
+WYŁĄCZNIE bez wagi w sekcji przypuszczeń — z wagą nie wraca nigdy. Jeśli
+przypuszczenie naprawdę warto zapisać, zmieść je w JEDNYM zdaniu w sekcji
+„Nieodtworzone przypuszczenia (bez wag)" na końcu — zwykle PUSTEJ. To NIE jest
+to samo co „czego NIE sprawdziłem": tam wpisujesz, czego nie uruchomiłeś lub
+nie zbadałeś; do przypuszczeń trafia to, co podejrzewasz, a czego nie
+potwierdziłeś żadną z trzech form. Uwaga bez dowodu = autor ma prawo odrzucić
+ją adnotacją „bez dowodu" i nie wolno Ci jej powtarzać z wagą w kolejnej rundzie.
+
 URUCHAMIAJ BRAMKI, NIE CZYTAJ ICH. Runner ma zainstalowane PHP 8.4 i katalog
 `vendor/` (workflow robi `composer install` PRZED recenzją), a klon jest PEŁNY
 (`fetch-depth: 0`), więc historia gita jest do dyspozycji. Masz z tego korzystać:
