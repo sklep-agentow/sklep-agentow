@@ -125,6 +125,43 @@ function sklepag_tresc_produktu( $slug ) {
 			),
 			'dla_kogo'     => array( 'Usługi lokalne — fryzjer, warsztat, gabinet', 'Sklepy i firmy z powtarzalnymi pytaniami', 'Każdy, kto traci klientów piszących po godzinach' ),
 			'uczciwosc'    => 'Nie znajdziesz tu opinii z gwiazdkami — sprzedajemy od niedawna i nie fabrykujemy ocen; zamiast tego masz tryb testowy i seed demo, żeby sprawdzić samemu. Pełnoprawny silnik regułowy działa od razu — bez kluczy i opłat. „LIVE" znaczy dwie rzeczy: bot odpowiada natychmiast, a Ty możesz w każdej chwili PRZEJĄĆ rozmowę i pisać do gościa osobiście — wtedy bot w niej milczy, a gość widzi wprost, że rozmawia z człowiekiem; po pięciu minutach Twojej ciszy rozmowa sama wraca do bota. Gdy nie przejmiesz, bot zbiera kontakt i odpisujesz później. Bot nie udaje wszechwiedzy. Tryb AI włączasz WŁASNYM kluczem; przy limicie dziennym lub błędzie bot sam wraca do reguł. Prywatność: w trybie regułowym treść rozmów nie opuszcza Twojego serwera; w trybie AI pytanie gościa idzie do API dostawcy (informacja też do Twojej polityki prywatności).',
+			/*
+			 * Pliki galerii to KOPIE zrzutow z wtyczek botow (assets/w-srodku/ —
+			 * samowystarczalnosc sklepu). Po regeneracji zrzutow instrukcji botow
+			 * skopiuj nowe wersje takze tutaj.
+			 */
+			'galeria'      => array(
+				array(
+					'plik'   => 'chatbot-live--zywy.jpg',
+					'alt'    => 'Okno rozmowy ChatBota LIVE na stronie: gość pyta o godziny otwarcia, bot odpowiada wpisem z bazy pytań i odpowiedzi',
+					'podpis' => 'PRAWDZIWY ZRZUT Z TEJ STRONY — TRYB REGUŁOWY, BEZ KLUCZA AI',
+					'szer'   => 682,
+					'wys'    => 908,
+					'kadr'   => 'contain',
+				),
+				array(
+					'plik'   => 'chatbot-live--widget-formularz.png',
+					'alt'    => 'Formularz „Zostaw wiadomość" w oknie czatu: pola e-mail i treść, zgoda RODO',
+					'podpis' => 'GDY BOT NIE ZNA ODPOWIEDZI — ZBIERA KONTAKT',
+					'szer'   => 320,
+					'wys'    => 440,
+					'kadr'   => 'contain',
+				),
+				array(
+					'plik'   => 'chatbot-live--ustawienia.png',
+					'alt'    => 'Panel ustawień ChatBota w wp-admin: włącznik, teksty powitania, tryb AI z limitem dziennym',
+					'podpis' => 'PANEL USTAWIEŃ — WSZYSTKO PO POLSKU',
+					'szer'   => 1078,
+					'wys'    => 2857,
+				),
+				array(
+					'plik'   => 'chatbot-live--statystyki.png',
+					'alt'    => 'Statystyki ChatBota: 177 pytań, wykres ruchu dzień po dniu, lista pytań bez odpowiedzi',
+					'podpis' => 'STATYSTYKI I LUKI W BAZIE — WIDZISZ, O CO PYTAJĄ',
+					'szer'   => 1100,
+					'wys'    => 790,
+				),
+			),
 			'pakiet'       => array(
 				'Plik ZIP wtyczki — instalujesz jak każdą wtyczkę WordPressa, w kilka minut.',
 				'Instrukcja krok po kroku z 6 zrzutami ekranu.',
@@ -179,7 +216,7 @@ function sklepag_tresc_produktu( $slug ) {
 			'przedpo'      => true,
 			'funkcje'      => array(
 				array( 'Reguły segregacji', 'Nadawca / temat / słowa w treści → kategoria. Kolejność na liście rozstrzyga: pierwsza pasująca wygrywa — zero niejednoznaczności.' ),
-				array( 'Kategorie pod Twoją firmę', 'Dowolne nazwy, pełny CRUD: Oferty, Faktury, Reklamacje — jak chcesz.' ),
+				array( 'Kategorie pod Twoją firmę', 'Dowolne nazwy: dodajesz i zmieniasz, jak chcesz — Oferty, Faktury, Reklamacje. Kategorii używanej przez regułę nie skasujesz przypadkiem.' ),
 				array( 'Próbki zamiast ryzyka', 'Wbudowane 30 maili demo po polsku + import WŁASNEJ próbki z CSV (od, temat, treść).' ),
 				array( 'Raport z liczbami', 'Ile do której kategorii, ile bez dopasowania, % pokrycia; przy próbce z oczekiwaną kategorią — trafność i lista pomyłek.' ),
 				array( 'Tryb AI (opcjonalny)', 'Twój klucz: klasyfikacja modelem + przebieg „porównaj reguły vs AI" z raportem różnic.' ),
@@ -196,6 +233,44 @@ function sklepag_tresc_produktu( $slug ) {
 			),
 			'dla_kogo'     => array( 'Biura i sekretariaty', 'Firmy usługowe z jedną wspólną skrzynką', 'Każdy, kto zaczyna dzień od przekopywania poczty' ),
 			'uczciwosc'    => 'Nie znajdziesz tu opinii z gwiazdkami — sprzedajemy od niedawna i nie fabrykujemy ocen; zamiast tego masz raport z liczbami z TWOJEJ próbki. Reguły układasz i sprawdzasz na próbce, a potem puszczasz je na PRAWDZIWEJ skrzynce: wtyczka rozkłada pocztę do folderów na serwerze poczty, domyślnie chodzi NA SUCHO i nie rusza ani jednej wiadomości, dopóki sam nie potwierdzisz, a ostatni przebieg cofniesz jednym kliknięciem. Czego nie ma, mówimy przed zakupem: logowanie tylko loginem i hasłem aplikacji, więc Microsoft 365 i Outlook.com NIE zadziałają (tam wymagane jest OAuth); na skrzynce klasyfikują reguły, nie AI; bez czytania załączników.',
+			'galeria'      => array(
+				array(
+					'plik'   => 'segregator-maila--zywy.jpg',
+					'kadr'   => 'cover',
+					'alt'    => 'Raport przebiegu Segregatora maila w panelu WordPressa: 30 maili w próbce, pokrycie regułami 80 procent, trafność 100 procent, podział na kategorie',
+					'podpis' => 'PRAWDZIWY RAPORT Z PANELU — LICZBY BEZ RETUSZU',
+					'szer'   => 1200,
+					'wys'    => 470,
+				),
+				array(
+					'plik'   => 'segregator-maila--probka-demo.png',
+					'alt'    => 'Ekran Próbka maili: tabela 30 przykładowych wiadomości po polsku z nadawcą, tematem i treścią',
+					'podpis' => '30 MAILI DEMO — TESTUJESZ OD PIERWSZEJ MINUTY',
+					'szer'   => 1100,
+					'wys'    => 2726,
+				),
+				array(
+					'plik'   => 'segregator-maila--reguly.png',
+					'alt'    => 'Lista reguł segregacji: nadawca, temat, słowa w treści, kategoria i kolumny Pasuje/Zgarnia',
+					'podpis' => 'REGUŁY — PIERWSZA PASUJĄCA WYGRYWA',
+					'szer'   => 1100,
+					'wys'    => 1070,
+				),
+				array(
+					'plik'   => 'segregator-maila--kategorie.png',
+					'alt'    => 'Lista kategorii poczty: Oferty, Faktury, Reklamacje i własne',
+					'podpis' => 'KATEGORIE POD TWOJĄ FIRMĘ — UŻYWANEJ NIE SKASUJESZ PRZYPADKIEM',
+					'szer'   => 1100,
+					'wys'    => 511,
+				),
+				array(
+					'plik'   => 'segregator-maila--ustawienia.png',
+					'alt'    => 'Ustawienia Segregatora: tryb AI (hybryda), klucz API, dzienny limit kosztów',
+					'podpis' => 'TRYB AI I STOP-LOSSY — TY TRZYMASZ BUDŻET',
+					'szer'   => 1078,
+					'wys'    => 719,
+				),
+			),
 			'pakiet'       => array(
 				'Plik ZIP wtyczki — instalujesz jak każdą wtyczkę WordPressa, w kilka minut.',
 				'Instrukcja krok po kroku z 6 zrzutami ekranu.',
@@ -234,38 +309,10 @@ function sklepag_tresc_produktu( $slug ) {
 }
 
 /**
- * Zrzut ŻYWEGO bota do karty i strony produktu (feedback Dzidka 19.08: „potrzeba
- * obrazów do produktów"). Zrzuty robione z tej instalacji, bez retuszu — spójne
- * z sekcją uczciwości. Wymiary wpisane na sztywno = brak CLS przy lazy-load.
- *
- * @param string $slug Slug produktu.
- * @return array|null Dane obrazu (plik/alt/podpis/szer/wys) albo null.
- */
-function sklepag_zrzut_produktu( $slug ) {
-	$zrzuty = array(
-		'chatbot-live'     => array(
-			'plik'   => 'chatbot-live.jpg',
-			'alt'    => 'Okno rozmowy ChatBota LIVE na stronie: gość pyta o godziny otwarcia, bot odpowiada wpisem z bazy pytań i odpowiedzi',
-			'podpis' => 'PRAWDZIWY ZRZUT Z TEJ STRONY — TRYB REGUŁOWY, BEZ KLUCZA AI',
-			'szer'   => 682,
-			'wys'    => 908,
-		),
-		'segregator-maila' => array(
-			'plik'   => 'segregator-maila.jpg',
-			'alt'    => 'Raport przebiegu Segregatora maila w panelu WordPressa: 30 maili w próbce, pokrycie regułami 80 procent, trafność 100 procent, podział na kategorie',
-			'podpis' => 'PRAWDZIWY RAPORT Z PANELU — PRÓBKA 30 MAILI DEMO, LICZBY BEZ RETUSZU',
-			'szer'   => 1200,
-			'wys'    => 470,
-		),
-	);
-	return isset( $zrzuty[ $slug ] ) ? $zrzuty[ $slug ] : null;
-}
-
-/**
- * Ilustracja produktu do KARTY listy (feedback Dzidka 19.08: „fajne obrazy —
+ * Ilustracja produktu do KARTY listy i HERO strony produktu (feedback Dzidka 19.08: „fajne obrazy —
  * robot segregujący maile, ktoś odpisujący na czacie"). Własne SVG w palecie
  * strony (limonkowy line-art, roboty-bliźniaki) zamiast generycznego stocka;
- * zrzut żywego bota zostaje na stronie produktu jako dowód.
+ * zrzut żywego bota jest na stronie produktu pierwszym kaflem galerii.
  *
  * @param string $slug Slug produktu.
  * @return array|null Dane obrazu (plik/alt/szer/wys) albo null.
@@ -291,7 +338,7 @@ function sklepag_ilustracja_produktu( $slug ) {
 /**
  * Znacznik <figure> z obrazem produktu (wspólny dla karty listy i strony produktu).
  *
- * @param array  $zrzut Dane z sklepag_zrzut_produktu()/sklepag_ilustracja_produktu().
+ * @param array  $zrzut Dane z sklepag_ilustracja_produktu() albo wpis galerii (plik/alt/podpis/szer/wys).
  * @param string $klasa Klasa CSS figure.
  * @param bool   $z_podpisem Czy dodać figcaption.
  * @param bool   $z_paskiem  Czy dodać pasek „okna aplikacji" (tylko dla zrzutów —
@@ -416,11 +463,15 @@ function sklepag_render_produkt( $slug ) {
 	$html  = '<div class="sklepag-wyspa sklepag-produkt">';
 	$html .= '<nav class="sklepag-okruszki" aria-label="Okruszki"><a href="' . esc_url( get_permalink( (int) get_option( 'sklepag_strona_sklep' ) ) ) . '">Sklep</a> <span aria-hidden="true">/</span> <span>' . esc_html( $p->nazwa ) . '</span></nav>';
 
-	// HERO.
-	$html .= '<header class="sklepag-hero">';
-	$html .= '<p class="sklepag-mono-etykieta">' . ( $t ? wp_kses( $t['etykieta'], array( 'span' => array( 'class' => array() ) ) ) : '[ <span class="sklepag-akcent">BOT</span> · TESTOWY ]' ) . '</p>';
-	$html .= '<h1 class="sklepag-hero-tytul">' . esc_html( $p->nazwa ) . '</h1>';
-	$html .= '<p class="sklepag-lead">' . esc_html( $t ? $t['zdanie'] : $p->opis_krotki ) . '</p>';
+	// HERO — dwie kolumny: tekst + ILUSTRACJA BRANDOWA (feedback 24.08 v2: „tu ma
+	// być branding, wnętrze botów niżej"). Żywe zrzuty wnętrza są w galerii
+	// [ CO JEST W ŚRODKU ] — pierwszy kafel każdego produktu.
+	$zrzut_hero = sklepag_ilustracja_produktu( $slug );
+	$html      .= '<div class="sklepag-hero-uklad">';
+	$html      .= '<header class="sklepag-hero">';
+	$html      .= '<p class="sklepag-mono-etykieta">' . ( $t ? wp_kses( $t['etykieta'], array( 'span' => array( 'class' => array() ) ) ) : '[ <span class="sklepag-akcent">BOT</span> · TESTOWY ]' ) . '</p>';
+	$html      .= '<h1 class="sklepag-hero-tytul">' . esc_html( $p->nazwa ) . '</h1>';
+	$html      .= '<p class="sklepag-lead">' . esc_html( $t ? $t['zdanie'] : $p->opis_krotki ) . '</p>';
 	if ( $t ) {
 		$glowa = explode( ' · ', $t['pasek_glowa'], 2 );
 		$html .= '<p class="sklepag-pasek-statusu"><span class="sklepag-kropka" aria-hidden="true"></span>[ <span class="sklepag-akcent">' . esc_html( $glowa[0] ) . '</span> · ' . esc_html( isset( $glowa[1] ) ? $glowa[1] : '' ) . ' ] ' . esc_html( $t['pasek'] . $t['pasek_zywy'] ) . '</p>';
@@ -429,6 +480,10 @@ function sklepag_render_produkt( $slug ) {
 	$html .= '<p><a class="sklepag-kup sklepag-kup-kotwica" href="#sklepag-kup-formularz">Kup teraz (płatność testowa)</a></p>';
 	$html .= sklepag_baner_testowy();
 	$html .= '</header>';
+	if ( $zrzut_hero ) {
+		$html .= '<div class="sklepag-hero-wizual">' . sklepag_figure_zrzutu( $zrzut_hero, 'sklepag-zrzut sklepag-hero-zrzut', false, false ) . '</div>';
+	}
+	$html .= '</div>';
 
 	if ( $t ) {
 		// PROBLEM.
@@ -456,12 +511,18 @@ function sklepag_render_produkt( $slug ) {
 		}
 		$html .= '</ol></section>';
 
-		// JAK TO WYGLĄDA — zrzut żywego bota (feedback Dzidka 19.08).
-		$zrzut = sklepag_zrzut_produktu( $slug );
-		if ( $zrzut ) {
-			$html .= '<section class="sklepag-sekcja"><p class="sklepag-mono-etykieta">[ JAK TO WYGLĄDA ]</p>';
-			$html .= sklepag_figure_zrzutu( $zrzut, 'sklepag-zrzut', true );
-			$html .= '</section>';
+		// CO JEST W ŚRODKU — galeria zrzutów panelu (feedback 24.08: „pokazać, co
+		// jest w środku"). Zrzuty z żywej instalacji, bez retuszu; tasiemce kadruje
+		// CSS od góry (object-position: top), wymiary prawdziwe — brak CLS.
+		if ( ! empty( $t['galeria'] ) ) {
+			$html .= '<section class="sklepag-sekcja"><p class="sklepag-mono-etykieta">[ CO JEST W ŚRODKU ]</p>';
+			$html .= '<div class="sklepag-galeria">';
+			foreach ( $t['galeria'] as $g ) {
+				$kadr_kl = 'sklepag-galeria-kadr' . ( isset( $g['kadr'] ) ? ' sklepag-galeria-kadr--' . sanitize_html_class( $g['kadr'] ) : '' );
+				$html   .= '<figure class="sklepag-galeria-kafel"><div class="' . esc_attr( $kadr_kl ) . '"><img src="' . esc_url( plugins_url( 'assets/w-srodku/' . $g['plik'], SKLEPAG_PLIK ) ) . '" alt="' . esc_attr( $g['alt'] ) . '" width="' . (int) $g['szer'] . '" height="' . (int) $g['wys'] . '" loading="lazy"></div>';
+				$html   .= '<figcaption class="sklepag-mono-etykieta">' . esc_html( $g['podpis'] ) . '</figcaption></figure>';
+			}
+			$html .= '</div></section>';
 		}
 
 		// W PACZCE — policzalna zawartość zipa (fakty z paczki, nie obietnice).

@@ -918,3 +918,80 @@ a.sklepag-kup {
 	color: var(--sklepag-pyl);
 	font-size: 0.9rem;
 }
+
+/* ===== 24.08 wieczór: hero 2-kol + galeria „CO JEST W ŚRODKU" + oprawa jasnych zrzutów ===== */
+.sklepag-hero-uklad {
+	display: grid;
+	grid-template-columns: 1.05fr 0.95fr;
+	gap: 36px;
+	align-items: center;
+}
+@media (max-width: 900px) {
+	.sklepag-hero-uklad {
+		grid-template-columns: 1fr;
+	}
+}
+/* Jasny zrzut na ciemnym tle ma siedzieć jak OKNO aplikacji, nie jak biała dziura:
+   obrys, mocny cień, zaokrąglenie — bez rozciągania na pełną szerokość. */
+.sklepag-hero-wizual .sklepag-zrzut {
+	margin: 0;
+	border: 1px solid var(--sklepag-linia);
+	border-radius: 12px;
+	overflow: hidden;
+	box-shadow: 0 18px 48px rgba(0, 0, 0, 0.55);
+	background: var(--sklepag-wegiel);
+}
+.sklepag-hero-wizual .sklepag-zrzut img {
+	display: block;
+	width: 100%;
+	height: auto;
+}
+/* Ilustracja brandowa w hero: karta bez paska okna, tło zgodne z grafiką. */
+.sklepag-hero-wizual .sklepag-hero-zrzut {
+	background: transparent;
+}
+.sklepag-galeria {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 16px;
+}
+@media (max-width: 700px) {
+	.sklepag-galeria {
+		grid-template-columns: 1fr;
+	}
+}
+.sklepag-galeria-kafel {
+	margin: 0;
+	background: var(--sklepag-wegiel);
+	border: 1px solid var(--sklepag-linia);
+	border-radius: 10px;
+	overflow: hidden;
+	box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+.sklepag-galeria-kadr {
+	aspect-ratio: 4 / 3;
+	overflow: hidden;
+	background: var(--sklepag-tusz);
+}
+/* Domyslnie: PELNA szerokosc zrzutu, kadr tnie tylko DOL — zadne napisy nie sa
+   ucinane w poziomie (feedback 24.08 v3: krawedz ucinala teksty w pol slowa). */
+.sklepag-galeria-kadr img {
+	width: 100%;
+	height: auto;
+	display: block;
+}
+/* Tryb cover (np. raport z pusta prawa polowa): wypelnia kafel, tnie od prawej. */
+.sklepag-galeria-kadr--cover img {
+	height: 100%;
+	object-fit: cover;
+	object-position: top left;
+}
+/* Mały pionowy zrzut (formularz widgetu): contain na ciemnym tle zamiast rozmytego upscale. */
+.sklepag-galeria-kadr--contain img {
+	height: 100%;
+	object-fit: contain;
+	object-position: center;
+}
+.sklepag-galeria-kafel figcaption {
+	padding: 10px 14px;
+}

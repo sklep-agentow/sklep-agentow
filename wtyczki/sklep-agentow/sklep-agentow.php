@@ -3,7 +3,7 @@
  * Plugin Name: Sklep Agentów
  * Plugin URI: https://automaticai.pl/sklep/
  * Description: Sprzedawaj wtyczki-boty AI bezpośrednio ze swojej strony: płatność kartą, automatyczny mail z linkiem do pobrania, panel zamówień ze statystykami i dziennikiem logowań. Zamówienia, produkty i pliki zostają w Twojej bazie i na Twoim serwerze — bez abonamentu. Płatność obsługuje Stripe.
- * Version: 0.9.4
+ * Version: 0.9.5
  * Requires at least: 6.7
  * Requires PHP: 8.1
  * Author: Automatic AI
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SKLEPAG_WERSJA', '0.9.4' );
+define( 'SKLEPAG_WERSJA', '0.9.5' );
 define( 'SKLEPAG_WERSJA_SCHEMATU', 4 ); // v4: kolumna zamowienia.usunieto_dnia (anonimizacja RODO — K3d); v3: indeks para_logowania.
 define( 'SKLEPAG_LIMIT_POBRAN', 10 ); // Jedno źródło: INSERT zamówienia + treść maila.
 define( 'SKLEPAG_LINK_GODZIN', 72 );  // Ważność linku pobrania — jw.
@@ -148,8 +148,8 @@ function sklepag_shortcode_sklep() {
 
 	$html .= '<div class="sklepag-karty">';
 	foreach ( $produkty as $p ) {
-		// Karta: ILUSTRACJA w brandzie (D28b); zrzut żywego bota został na
-		// stronie produktu w sekcji „JAK TO WYGLĄDA" jako dowód.
+		// Karta: ILUSTRACJA w brandzie (D28b + UZUPEŁNIENIE 24.08); zrzut żywego
+		// bota jest na stronie produktu pierwszym kaflem galerii [ CO JEST W ŚRODKU ].
 		$obraz = sklepag_ilustracja_produktu( $p->slug );
 		$html .= '<article class="sklepag-karta">';
 		if ( $obraz ) {
