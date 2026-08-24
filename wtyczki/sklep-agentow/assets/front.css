@@ -810,3 +810,93 @@ a.sklepag-kup {
 		transform: none !important;
 	}
 }
+
+/* ===== Sekcje z 24.08: W PACZCE / RĘCZNIE KONTRA BOT / OPINIE / GWARANCJA ===== */
+.sklepag-pakiet {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	gap: 10px;
+}
+.sklepag-pakiet li {
+	padding: 12px 16px 12px 38px;
+	background: var(--sklepag-wegiel);
+	border: 1px solid var(--sklepag-linia);
+	border-radius: 8px;
+	position: relative;
+}
+.sklepag-pakiet li::before {
+	content: "▸";
+	position: absolute;
+	left: 16px;
+	color: var(--sklepag-limonka);
+}
+.sklepag-vs {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 1px;
+	background: var(--sklepag-linia);
+	border: 1px solid var(--sklepag-linia);
+	border-radius: 8px;
+	overflow: hidden;
+}
+.sklepag-vs-naglowek {
+	font-family: var(--sklepag-mono);
+	font-size: 0.78rem;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--sklepag-pyl);
+	padding: 12px 16px;
+	background: var(--sklepag-tusz);
+}
+.sklepag-vs-naglowek.sklepag-vs-bot {
+	color: var(--sklepag-limonka);
+}
+.sklepag-vs-lewa,
+.sklepag-vs-prawa {
+	padding: 12px 16px;
+	background: var(--sklepag-wegiel);
+}
+.sklepag-vs-lewa {
+	color: var(--sklepag-pyl);
+}
+.sklepag-vs-przypis {
+	margin-top: 12px;
+	color: var(--sklepag-pyl);
+	font-size: 0.92rem;
+}
+@media (max-width: 640px) {
+	.sklepag-vs {
+		grid-template-columns: 1fr;
+	}
+	.sklepag-vs-naglowek {
+		display: none;
+	}
+	.sklepag-vs-lewa {
+		border-bottom: 0;
+	}
+	.sklepag-vs-prawa {
+		margin-bottom: 8px;
+	}
+}
+.sklepag-opinie {
+	display: grid;
+	gap: 12px;
+}
+.sklepag-opinia {
+	margin: 0;
+	padding: 16px;
+	background: var(--sklepag-wegiel);
+	border: 1px solid var(--sklepag-linia);
+	border-left: 3px solid var(--sklepag-limonka);
+	border-radius: 8px;
+}
+.sklepag-opinia blockquote {
+	margin: 0 0 8px;
+}
+.sklepag-gwarancja {
+	border: 1px solid var(--sklepag-limonka);
+	border-radius: 8px;
+	padding: 20px;
+}
