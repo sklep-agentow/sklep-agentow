@@ -202,8 +202,8 @@ od produkcji" w dokumentacji projektu.
 Wtyczki → Sklep Agentów → Wyłącz → Usuń. Domyślnie dane sprzedaży ZOSTAJĄ
 w bazie (historia zamówień to nie śmieć). Chcesz zniknąć bez śladu?
 Ustawienia sklepu → „Dane przy odinstalowaniu" → włącz „Pełne czyszczenie"
-PRZED usunięciem wtyczki — wtedy znikają tabele, opcje, strony sklepu,
-pliki chronione i zaplanowane zadania. Klucze Stripe są usuwane ZAWSZE,
+PRZED usunięciem wtyczki — wtedy znikają tabele, opcje, strony sklepu
+i pliki chronione. Klucze Stripe i zaplanowane zadania są usuwane ZAWSZE,
 niezależnie od tej opcji.
 
 ⚠️ **Boty czyścisz OSOBNO:** ChatBot LIVE i Segregator maila (jeśli były

@@ -211,7 +211,7 @@ function sklepag_sekcja_maile_opis() {
 }
 
 function sklepag_sekcja_dane_opis() {
-	echo '<p>Domyślnie dane sprzedaży ZOSTAJĄ po odinstalowaniu (historia sprzedaży to nie śmieć). Włączenie = pełne czyszczenie: tabele, opcje, strony wtyczki, pliki chronione, zadania cron.</p>';
+	echo '<p>Domyślnie dane sprzedaży ZOSTAJĄ po odinstalowaniu (historia sprzedaży to nie śmieć). Włączenie = pełne czyszczenie: tabele, opcje, strony wtyczki, pliki chronione. Klucze Stripe i zaplanowane zadanie cron są usuwane ZAWSZE, niezależnie od tej opcji.</p>';
 }
 
 /* ---------- Pola ---------- */

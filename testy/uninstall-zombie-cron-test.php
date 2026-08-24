@@ -23,7 +23,8 @@
  *   8.    PRAWDZIWE opcje stosu przezyly caly test (kontrola izolacji kopii)
  *   9-12. SKLEP (#170): ta sama klasa w trzeciej wtyczce — sciezka B i sciezka A,
  *      z jawnym odcieciem drog kasujacych PRAWDZIWE dane (patrz $probuj/$wyzeruj)
- *   13.   PRAWDZIWE wp_posts nietkniete — odciecie drog poza kopiami ZMIERZONE
+ *   13.   PRAWDZIWE wp_posts nietkniete — droga wp_delete_post ZMIERZONA
+ *      (droga plikowa unlink jest odcieta danymi $wyzeruj — wyrozumowana, nie liczona)
  *   (numeracja wyjscia jest przeplatana: 8 i 13 to kontrole koncowe calosci)
  *
  * Uruchomienie:
@@ -51,6 +52,10 @@ echo "=== AUDYT DANYCH: co zostaje w cronie po odinstalowaniu ===\n";
  * register_shutdown_function (biegnie takze po fatalu). Shutdown najpierw
  * wraca na PRAWDZIWY prefiks — przy padzie w srodku include obowiazywalby
  * testowy `wpaudz_` i przywracanie pisaloby w kopie, ktorej moze juz nie byc.
+ * Shutdown sprzata tez RESZTE sladow poza kopiami (runda 3 #170): zaczep
+ * `$obcy` i dosiane crony w prawdziwym wp_options->cron oraz tabele
+ * `wpaudz_%` — pelna kopie prawdziwych opcji RAZEM Z SEKRETAMI; fatal nie
+ * moze zostawic na wspolnym stosie ani zombie-crona, ani kopii poswiadczen.
  */
 $GLOBALS['pref_prawdziwy'] = $wpdb->prefix;
 $GLOBALS['przelaczniki']   = array();
@@ -69,7 +74,17 @@ $przywroc_przelaczniki = function () {
 		if ( '__BRAK__' === $w ) { delete_option( $o ); } else { update_option( $o, $w ); }
 	}
 };
-register_shutdown_function( $przywroc_przelaczniki );
+$sprzataj_stos = function () use ( $obcy, &$stan ) {
+	global $wpdb;
+	wp_clear_scheduled_hook( $obcy );
+	foreach ( $stan as $h => $kiedy ) { if ( $kiedy && ! wp_next_scheduled( $h ) ) { wp_schedule_event( $kiedy, 'daily', $h ); } }
+	foreach ( (array) $wpdb->get_col( "SHOW TABLES LIKE 'wpaudz\\_%'" ) as $t ) { $wpdb->query( "DROP TABLE IF EXISTS `" . esc_sql( $t ) . "`" ); } // phpcs:ignore
+	wp_cache_flush();
+};
+register_shutdown_function( function () use ( $przywroc_przelaczniki, $sprzataj_stos ) {
+	$przywroc_przelaczniki(); // najpierw prawdziwy prefiks (w srodku), potem reszta sladow
+	$sprzataj_stos();
+} );
 
 /*
  * ⛔ KOPIE `wp_options` i `wp_usermeta`. Test wlacza PRAWDZIWY `uninstall.php`,
@@ -218,12 +233,10 @@ $posty_po = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->posts}" ); // ph
 if ( $posty_po === $GLOBALS['posty_przed'] ) { zok( '13. PRAWDZIWE wp_posts nietkniete (' . $posty_po . ' przed i po)' ); }
 else { zbl( '13. test zmienil PRAWDZIWE wp_posts', 'przed=' . $GLOBALS['posty_przed'] . ' po=' . $posty_po ); }
 
-/* sprzatanie: zdejmij zaczep testowy, przywroc stan wyjsciowy cronow i przelacznikow */
+/* sprzatanie: przelaczniki + zaczep testowy + crony + tabele wpaudz_ (te same
+ * closures co w shutdownie — idempotentne, drugi bieg przy zamykaniu nie szkodzi) */
 $przywroc_przelaczniki();
-wp_clear_scheduled_hook( $obcy );
-foreach ( $stan as $h => $kiedy ) { if ( $kiedy && ! wp_next_scheduled( $h ) ) { wp_schedule_event( $kiedy, 'daily', $h ); } }
-foreach ( (array) $wpdb->get_col( "SHOW TABLES LIKE 'wpaudz\\_%'" ) as $t ) { $wpdb->query( "DROP TABLE IF EXISTS `" . esc_sql( $t ) . "`" ); }
-wp_cache_flush();
+$sprzataj_stos();
 
 echo "\n";
 if ( 0 === $GLOBALS['B'] ) { echo "WSZYSTKIE KROKI PRZESZLY — odinstalowanie nie zostawia zombie w cronie\n"; exit( 0 ); }
