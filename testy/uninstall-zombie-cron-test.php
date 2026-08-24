@@ -17,8 +17,14 @@
  *   2. BEZ WADY: uninstall NIE moze zdjac crona CUDZEJ wtyczki
  *   3. KONTROLA: ta sama proba na Segregatorze (ktory to robi poprawnie) ma PRZEJSC
  *      — bez tego padniecie w 1. nie dowodzi niczego o metodzie pomiaru
+ *   4-6.  sciezka A (usun_dane=0) dla ChatBota i Segregatora: cron ma zniknac TAKZE
+ *      przy „dane zostaja" — to jest przypadek lapiacy wade z #167/#170
+ *   7.    sciezka A NIE MOZE skasowac danych (ustawienia przezywaja w kopii)
+ *   8.    PRAWDZIWE opcje stosu przezyly caly test (kontrola izolacji kopii)
  *   9-12. SKLEP (#170): ta sama klasa w trzeciej wtyczce — sciezka B i sciezka A,
  *      z jawnym odcieciem drog kasujacych PRAWDZIWE dane (patrz $probuj/$wyzeruj)
+ *   13.   PRAWDZIWE wp_posts nietkniete — odciecie drog poza kopiami ZMIERZONE
+ *   (numeracja wyjscia jest przeplatana: 8 i 13 to kontrole koncowe calosci)
  *
  * Uruchomienie:
  *   docker cp testy/uninstall-zombie-cron-test.php strona_wp_wordpress:/tmp/z.php
@@ -35,6 +41,35 @@ foreach ( array('chatl_czyszczenie_historii','segm_czyszczenie_probki','segm_skr
 	$stan[$h] = wp_next_scheduled( $h );
 }
 echo "=== AUDYT DANYCH: co zostaje w cronie po odinstalowaniu ===\n";
+
+/*
+ * MIGAWKA PRZELACZNIKOW z PRAWDZIWEGO stosu (uwaga 3 recenzji #170): $probuj
+ * robi update_option() PRZED podmiana prefiksu, wiec pisze do wspolnego
+ * wp_options. Miedzy przebiegiem sciezki B a A przelacznik sklepu stoi na 1 —
+ * pad/timeout/Ctrl-C w tym oknie zostawilby stos z uzbrojonym pelnym
+ * czyszczeniem. Przywracamy wartosci wyjsciowe w sprzataniu ORAZ w
+ * register_shutdown_function (biegnie takze po fatalu). Shutdown najpierw
+ * wraca na PRAWDZIWY prefiks — przy padzie w srodku include obowiazywalby
+ * testowy `wpaudz_` i przywracanie pisaloby w kopie, ktorej moze juz nie byc.
+ */
+$GLOBALS['pref_prawdziwy'] = $wpdb->prefix;
+$GLOBALS['przelaczniki']   = array();
+foreach ( array( 'chatl_ustawienia', 'segm_ustawienia', 'sklepag_usun_dane_przy_odinstalowaniu' ) as $o ) {
+	$GLOBALS['przelaczniki'][ $o ] = get_option( $o, '__BRAK__' );
+}
+$GLOBALS['posty_przed'] = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->posts}" ); // phpcs:ignore
+$przywroc_przelaczniki = function () {
+	global $wpdb;
+	if ( 'wpaudz_' === $wpdb->prefix ) {
+		$p = $GLOBALS['pref_prawdziwy'];
+		$wpdb->set_prefix( $p ); $wpdb->options = $p . 'options'; $wpdb->usermeta = $p . 'usermeta';
+		wp_cache_flush();
+	}
+	foreach ( $GLOBALS['przelaczniki'] as $o => $w ) {
+		if ( '__BRAK__' === $w ) { delete_option( $o ); } else { update_option( $o, $w ); }
+	}
+};
+register_shutdown_function( $przywroc_przelaczniki );
 
 /*
  * ⛔ KOPIE `wp_options` i `wp_usermeta`. Test wlacza PRAWDZIWY `uninstall.php`,
@@ -174,7 +209,17 @@ $skrz_zyje  = null !== $wpdb->get_var( "SELECT option_id FROM {$wpdb->options} W
 if ( $klucz_zyje && $skrz_zyje ) { zok( '8. PRAWDZIWE opcje stosu nietkniete (klucz API, skrzynka)' ); }
 else                             { zbl( '8. test skasowal PRAWDZIWE opcje stosu', 'klucz=' . ( $klucz_zyje ? 'jest' : 'ZNIKL' ) . ' skrzynka=' . ( $skrz_zyje ? 'jest' : 'ZNIKLA' ) ); }
 
-/* sprzatanie: zdejmij zaczep testowy, przywroc stan wyjsciowy cronow */
+/*
+ * Odciecie drog poza kopiami ma byc ZMIERZONE, nie wyrozumowane (uwaga 4 #170):
+ * gdyby sciezka B sklepu kiedys dostala identyfikator strony spoza $wyzeruj,
+ * wp_delete_post(, true) zdjalby PRAWDZIWY wpis — ten licznik by to pokazal.
+ */
+$posty_po = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->posts}" ); // phpcs:ignore
+if ( $posty_po === $GLOBALS['posty_przed'] ) { zok( '13. PRAWDZIWE wp_posts nietkniete (' . $posty_po . ' przed i po)' ); }
+else { zbl( '13. test zmienil PRAWDZIWE wp_posts', 'przed=' . $GLOBALS['posty_przed'] . ' po=' . $posty_po ); }
+
+/* sprzatanie: zdejmij zaczep testowy, przywroc stan wyjsciowy cronow i przelacznikow */
+$przywroc_przelaczniki();
 wp_clear_scheduled_hook( $obcy );
 foreach ( $stan as $h => $kiedy ) { if ( $kiedy && ! wp_next_scheduled( $h ) ) { wp_schedule_event( $kiedy, 'daily', $h ); } }
 foreach ( (array) $wpdb->get_col( "SHOW TABLES LIKE 'wpaudz\\_%'" ) as $t ) { $wpdb->query( "DROP TABLE IF EXISTS `" . esc_sql( $t ) . "`" ); }
