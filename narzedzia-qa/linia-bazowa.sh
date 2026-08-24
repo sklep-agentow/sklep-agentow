@@ -91,7 +91,7 @@ przywroc_baze() {
 	docker exec -i -e MYSQL_PWD="$HASLO_DB" "$KONTENER_DB" mariadb -uroot "$BAZA_WP" < "$ZRZUT" 2>>"$LOGI/przywracanie.err" || echo "⚠️ przywracanie bazy zgłosiło błąd (patrz $LOGI/przywracanie.err)"
 	wp cache flush >/dev/null 2>&1
 }
-przywroc_kod()  { for w in chatbot-live segregator-maila; do docker cp "wtyczki/$w/." "$KONTENER:/var/www/html/wp-content/plugins/$w/" >/dev/null && docker exec "$KONTENER" chown -R www-data:www-data "/var/www/html/wp-content/plugins/$w"; done; }
+przywroc_kod()  { for w in chatbot-live segregator-maila sklep-agentow; do docker cp "wtyczki/$w/." "$KONTENER:/var/www/html/wp-content/plugins/$w/" >/dev/null && docker exec "$KONTENER" chown -R www-data:www-data "/var/www/html/wp-content/plugins/$w"; done; }
 # worktree nie ma node_modules (nieśledzone, leżą w głównym drzewie) — testy JS padałyby w 0 s
 #    z „Cannot find module 'playwright-core'" (zmierzone 23.08: 13 testów JS „padło" przez to)
 if [ ! -e node_modules ] && [ -d /root/praca/zlecenia/sklep-agentow/node_modules ]; then

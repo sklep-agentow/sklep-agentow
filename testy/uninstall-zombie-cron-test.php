@@ -17,6 +17,15 @@
  *   2. BEZ WADY: uninstall NIE moze zdjac crona CUDZEJ wtyczki
  *   3. KONTROLA: ta sama proba na Segregatorze (ktory to robi poprawnie) ma PRZEJSC
  *      — bez tego padniecie w 1. nie dowodzi niczego o metodzie pomiaru
+ *   4-6.  sciezka A (usun_dane=0) dla ChatBota i Segregatora: cron ma zniknac TAKZE
+ *      przy „dane zostaja" — to jest przypadek lapiacy wade z #167/#170
+ *   7.    sciezka A NIE MOZE skasowac danych (ustawienia przezywaja w kopii)
+ *   8.    PRAWDZIWE opcje stosu przezyly caly test (kontrola izolacji kopii)
+ *   9-12. SKLEP (#170): ta sama klasa w trzeciej wtyczce — sciezka B i sciezka A,
+ *      z jawnym odcieciem drog kasujacych PRAWDZIWE dane (patrz $probuj/$wyzeruj)
+ *   13.   PRAWDZIWE wp_posts nietkniete — droga wp_delete_post ZMIERZONA
+ *      (droga plikowa unlink jest odcieta danymi $wyzeruj — wyrozumowana, nie liczona)
+ *   (numeracja wyjscia jest przeplatana: 8 i 13 to kontrole koncowe calosci)
  *
  * Uruchomienie:
  *   docker cp testy/uninstall-zombie-cron-test.php strona_wp_wordpress:/tmp/z.php
@@ -29,10 +38,53 @@ function zbl($o,$s=''){ $GLOBALS['B']++; printf("  BLAD %s%s\n",$o,''!==$s?"  [$
 
 $obcy = 'obca_wtyczka_zaczep_audyt';
 $stan = array();
-foreach ( array('chatl_czyszczenie_historii','segm_czyszczenie_probki','segm_skrzynka_cron') as $h ) {
+foreach ( array('chatl_czyszczenie_historii','segm_czyszczenie_probki','segm_skrzynka_cron','sklepag_dociagnij_zalegle') as $h ) {
 	$stan[$h] = wp_next_scheduled( $h );
 }
 echo "=== AUDYT DANYCH: co zostaje w cronie po odinstalowaniu ===\n";
+
+/*
+ * MIGAWKA PRZELACZNIKOW z PRAWDZIWEGO stosu (uwaga 3 recenzji #170): $probuj
+ * robi update_option() PRZED podmiana prefiksu, wiec pisze do wspolnego
+ * wp_options. Miedzy przebiegiem sciezki B a A przelacznik sklepu stoi na 1 —
+ * pad/timeout/Ctrl-C w tym oknie zostawilby stos z uzbrojonym pelnym
+ * czyszczeniem. Przywracamy wartosci wyjsciowe w sprzataniu ORAZ w
+ * register_shutdown_function (biegnie takze po fatalu). Shutdown najpierw
+ * wraca na PRAWDZIWY prefiks — przy padzie w srodku include obowiazywalby
+ * testowy `wpaudz_` i przywracanie pisaloby w kopie, ktorej moze juz nie byc.
+ * Shutdown sprzata tez RESZTE sladow poza kopiami (runda 3 #170): zaczep
+ * `$obcy` i dosiane crony w prawdziwym wp_options->cron oraz tabele
+ * `wpaudz_%` — pelna kopie prawdziwych opcji RAZEM Z SEKRETAMI; fatal nie
+ * moze zostawic na wspolnym stosie ani zombie-crona, ani kopii poswiadczen.
+ */
+$GLOBALS['pref_prawdziwy'] = $wpdb->prefix;
+$GLOBALS['przelaczniki']   = array();
+foreach ( array( 'chatl_ustawienia', 'segm_ustawienia', 'sklepag_usun_dane_przy_odinstalowaniu' ) as $o ) {
+	$GLOBALS['przelaczniki'][ $o ] = get_option( $o, '__BRAK__' );
+}
+$GLOBALS['posty_przed'] = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->posts}" ); // phpcs:ignore
+$przywroc_przelaczniki = function () {
+	global $wpdb;
+	if ( 'wpaudz_' === $wpdb->prefix ) {
+		$p = $GLOBALS['pref_prawdziwy'];
+		$wpdb->set_prefix( $p ); $wpdb->options = $p . 'options'; $wpdb->usermeta = $p . 'usermeta';
+		wp_cache_flush();
+	}
+	foreach ( $GLOBALS['przelaczniki'] as $o => $w ) {
+		if ( '__BRAK__' === $w ) { delete_option( $o ); } else { update_option( $o, $w ); }
+	}
+};
+$sprzataj_stos = function () use ( $obcy, &$stan ) {
+	global $wpdb;
+	wp_clear_scheduled_hook( $obcy );
+	foreach ( $stan as $h => $kiedy ) { if ( $kiedy && ! wp_next_scheduled( $h ) ) { wp_schedule_event( $kiedy, 'daily', $h ); } }
+	foreach ( (array) $wpdb->get_col( "SHOW TABLES LIKE 'wpaudz\\_%'" ) as $t ) { $wpdb->query( "DROP TABLE IF EXISTS `" . esc_sql( $t ) . "`" ); } // phpcs:ignore
+	wp_cache_flush();
+};
+register_shutdown_function( function () use ( $przywroc_przelaczniki, $sprzataj_stos ) {
+	$przywroc_przelaczniki(); // najpierw prawdziwy prefiks (w srodku), potem reszta sladow
+	$sprzataj_stos();
+} );
 
 /*
  * ⛔ KOPIE `wp_options` i `wp_usermeta`. Test wlacza PRAWDZIWY `uninstall.php`,
@@ -60,12 +112,18 @@ $kopiuj_tabele = function ( $zrodlo, $kopia ) {
  * @param string $hook      Zaczep crona wtyczki.
  * @param string $optust    Nazwa opcji z ustawieniami.
  * @param int    $usun_dane 1 = sciezka B (pelne czyszczenie), 0 = sciezka A (dane zostaja).
+ * @param int    $plaska    1 = $optust to PLASKA opcja 0/1 (sklep), nie tablica z kluczem `usun_dane`.
+ * @param array  $wyzeruj   Opcje do USUNIECIA z kopii przed uninstallem — jawne odciecie drog,
+ *                          ktore pisza POZA kopiami ($wpdb->posts przez wp_delete_post,
+ *                          prawdziwy dysk przez unlink). Bez tego sciezka B sklepu bylaby
+ *                          bezpieczna tylko PRZYPADKIEM (gdy stos akurat nie ma tych opcji).
  */
-$probuj = function ( $katalog, $slug, $hook, $optust, $usun_dane = 1 ) use ( &$obcy, $kopiuj_tabele ) {
+$probuj = function ( $katalog, $slug, $hook, $optust, $usun_dane = 1, $plaska = 0, $wyzeruj = array() ) use ( &$obcy, $kopiuj_tabele ) {
 	// stan wyjsciowy: zaczep wtyczki zaplanowany + zaczep CUDZEJ wtyczki zaplanowany
 	if ( ! wp_next_scheduled( $hook ) )  { wp_schedule_event( time() + DAY_IN_SECONDS, 'daily', $hook ); }
 	if ( ! wp_next_scheduled( $obcy ) )  { wp_schedule_event( time() + DAY_IN_SECONDS, 'daily', $obcy ); }
-	$u = (array) get_option( $optust, array() ); $u['usun_dane'] = (int) $usun_dane; update_option( $optust, $u );
+	if ( $plaska ) { update_option( $optust, (int) $usun_dane ); }
+	else { $u = (array) get_option( $optust, array() ); $u['usun_dane'] = (int) $usun_dane; update_option( $optust, $u ); }
 	if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) { define( 'WP_UNINSTALL_PLUGIN', $slug ); }
 	// uninstall NIE moze ruszyc prawdziwych tabel stosu: podstawiamy prefiks testowy
 	// ORAZ kopie wp_options / wp_usermeta (patrz komentarz wyzej).
@@ -73,6 +131,11 @@ $probuj = function ( $katalog, $slug, $hook, $optust, $usun_dane = 1 ) use ( &$o
 	$kopiuj_tabele( $base . 'options', 'wpaudz_options' );
 	$kopiuj_tabele( $base . 'usermeta', 'wpaudz_usermeta' );
 	$wpdb->set_prefix( 'wpaudz_' ); $wpdb->options = 'wpaudz_options'; $wpdb->usermeta = 'wpaudz_usermeta';
+	foreach ( $wyzeruj as $opc ) {
+		$wpdb->query( $wpdb->prepare( 'DELETE FROM wpaudz_options WHERE option_name = %s', $opc ) ); // phpcs:ignore
+		wp_cache_delete( $opc, 'options' ); // get_option nie moze siegnac po PRAWDZIWA wartosc z cache
+	}
+	wp_cache_delete( 'alloptions', 'options' );
 	include WP_PLUGIN_DIR . '/' . $katalog . '/uninstall.php';
 	/*
 	 * Skutek mierzymy TAM, GDZIE uninstall pisal: `wp_clear_scheduled_hook()` to
@@ -110,8 +173,9 @@ else                  { zok( '3. KONTROLA Segregator: cron zdjety przez uninstal
  * ZOSTAJA" (`usun_dane = 0`). Zaczep crona nie jest dana wlasciciela, tylko
  * wpisem, w ktory WordPress uderza codziennie i trafia w nieistniejaca funkcje,
  * wiec ma zniknac TAKZE tedy. Bez tego przypadku straznik przechodzil, nawet
- * gdyby `wp_clear_scheduled_hook()` wrocilo pod wczesny `return` — a to jest
- * dokladnie ten ksztalt, ktory ma dzis uninstall SKLEPU (uwaga recenzenta #167).
+ * gdyby `wp_clear_scheduled_hook()` wrocilo pod wczesny `return` — dokladnie
+ * ten ksztalt MIAL uninstall SKLEPU do #170 (uwaga recenzenta #167; przypadki
+ * 9-12 nizej pilnuja, zeby nie wrocil).
  */
 $r3 = $probuj( 'chatbot-live', 'chatbot-live/chatbot-live.php', 'chatl_czyszczenie_historii', 'chatl_ustawienia', 0 );
 if ( $r3['wtyczki'] ) { zbl( '4. ChatBot, sciezka A (usun_dane=0): cron ZOSTAJE', 'zdejmowanie crona siedzi PO wczesnym return' ); }
@@ -132,17 +196,47 @@ $zostalo = (int) $wpdb->get_var( "SELECT COUNT(*) FROM wpaudz_options WHERE opti
 if ( 1 === $zostalo ) { zok( '7. sciezka A zostawia ustawienia wtyczki (kasuje tylko to, co ulotne)' ); }
 else                  { zbl( '7. sciezka A skasowala ustawienia wtyczki', 'domyslne odinstalowanie ma ZOSTAWIC dane' ); }
 
+/*
+ * SKLEP (#170) — trzecia wtyczka z ta sama klasa wady. Sciezka B sklepu robi
+ * `wp_delete_post( , true )` i `unlink()` — obie drogi pisza POZA kopiami
+ * (prawdziwe wp_posts, prawdziwy dysk), wiec sa JAWNIE odciete lista $wyzeruj:
+ * bez opcji stron i katalogu chronionego uninstall nie ma czego kasowac.
+ * Opcja przelacznika jest PLASKA (0/1), nie tablica — stad $plaska = 1.
+ */
+$sklep_wyzeruj = array( 'sklepag_strona_sklep', 'sklepag_strona_dziekujemy', 'sklepag_strona_regulamin', 'sklepag_strona_polityka', 'sklepag_katalog_chroniony' );
+$r5 = $probuj( 'sklep-agentow', 'sklep-agentow/sklep-agentow.php', 'sklepag_dociagnij_zalegle', 'sklepag_usun_dane_przy_odinstalowaniu', 1, 1, $sklep_wyzeruj );
+if ( $r5['wtyczki'] ) { zbl( '9. SKLEP, sciezka B: cron `sklepag_dociagnij_zalegle` ZOSTAJE', 'zombie w wp_options->cron' ); }
+else                  { zok( '9. SKLEP, sciezka B: cron zdjety przez uninstall' ); }
+if ( $r5['obcy'] )    { zok( '10. SKLEP, sciezka B: cron CUDZEJ wtyczki nietkniety' ); }
+else                  { zbl( '10. SKLEP, sciezka B: uninstall zdjal cron CUDZEJ wtyczki', 'kasowanie za szerokie' ); }
+
+/* Sciezka A sklepu — przypadek, ktory na kodzie sprzed #170 PADA (kalibracja naprawy). */
+$r6 = $probuj( 'sklep-agentow', 'sklep-agentow/sklep-agentow.php', 'sklepag_dociagnij_zalegle', 'sklepag_usun_dane_przy_odinstalowaniu', 0, 1, $sklep_wyzeruj );
+if ( $r6['wtyczki'] ) { zbl( '11. SKLEP, sciezka A (usun_dane=0): cron ZOSTAJE', 'zdejmowanie crona siedzi PO wczesnym return' ); }
+else                  { zok( '11. SKLEP, sciezka A (dane zostaja): cron i tak zdjety' ); }
+$sklep_zostalo = (int) $wpdb->get_var( "SELECT COUNT(*) FROM wpaudz_options WHERE option_name = 'sklepag_wersja_schematu'" ); // phpcs:ignore
+if ( 1 === $sklep_zostalo ) { zok( '12. SKLEP, sciezka A zostawia dane (wersja schematu przezyla)' ); }
+else                        { zbl( '12. SKLEP, sciezka A skasowala dane wtyczki', 'domyslne odinstalowanie ma ZOSTAWIC dane' ); }
+
 /* Dowod, ze prawdziwe opcje stosu przezyly ten test (patrz komentarz o kopiach). */
 $klucz_zyje = null !== $wpdb->get_var( "SELECT option_id FROM {$wpdb->options} WHERE option_name = 'chatl_klucz_api'" ); // phpcs:ignore
 $skrz_zyje  = null !== $wpdb->get_var( "SELECT option_id FROM {$wpdb->options} WHERE option_name = 'segm_skrzynka'" ); // phpcs:ignore
 if ( $klucz_zyje && $skrz_zyje ) { zok( '8. PRAWDZIWE opcje stosu nietkniete (klucz API, skrzynka)' ); }
 else                             { zbl( '8. test skasowal PRAWDZIWE opcje stosu', 'klucz=' . ( $klucz_zyje ? 'jest' : 'ZNIKL' ) . ' skrzynka=' . ( $skrz_zyje ? 'jest' : 'ZNIKLA' ) ); }
 
-/* sprzatanie: zdejmij zaczep testowy, przywroc stan wyjsciowy cronow */
-wp_clear_scheduled_hook( $obcy );
-foreach ( $stan as $h => $kiedy ) { if ( $kiedy && ! wp_next_scheduled( $h ) ) { wp_schedule_event( $kiedy, 'daily', $h ); } }
-foreach ( (array) $wpdb->get_col( "SHOW TABLES LIKE 'wpaudz\\_%'" ) as $t ) { $wpdb->query( "DROP TABLE IF EXISTS `" . esc_sql( $t ) . "`" ); }
-wp_cache_flush();
+/*
+ * Odciecie drog poza kopiami ma byc ZMIERZONE, nie wyrozumowane (uwaga 4 #170):
+ * gdyby sciezka B sklepu kiedys dostala identyfikator strony spoza $wyzeruj,
+ * wp_delete_post(, true) zdjalby PRAWDZIWY wpis — ten licznik by to pokazal.
+ */
+$posty_po = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->posts}" ); // phpcs:ignore
+if ( $posty_po === $GLOBALS['posty_przed'] ) { zok( '13. PRAWDZIWE wp_posts nietkniete (' . $posty_po . ' przed i po)' ); }
+else { zbl( '13. test zmienil PRAWDZIWE wp_posts', 'przed=' . $GLOBALS['posty_przed'] . ' po=' . $posty_po ); }
+
+/* sprzatanie: przelaczniki + zaczep testowy + crony + tabele wpaudz_ (te same
+ * closures co w shutdownie — idempotentne, drugi bieg przy zamykaniu nie szkodzi) */
+$przywroc_przelaczniki();
+$sprzataj_stos();
 
 echo "\n";
 if ( 0 === $GLOBALS['B'] ) { echo "WSZYSTKIE KROKI PRZESZLY — odinstalowanie nie zostawia zombie w cronie\n"; exit( 0 ); }
