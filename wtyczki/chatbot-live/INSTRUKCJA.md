@@ -182,7 +182,11 @@ Co się dzieje ze złapaną wiadomością — i dlaczego właśnie tak:
 - Wysyłający **nie dowiaduje się, że wpadł** — widzi to samo podziękowanie co
   wszyscy. Inaczej autor skryptu poprawiłby go w pięć minut.
 
-Liczbę zadziałań pułapki widzisz jako komunikat w panelu.
+Liczbę zadziałań pułapki widzisz jako komunikat w panelu — z rozbiciem na te przy
+**formularzu kontaktu** (te zgłoszenia są zapisane i znajdziesz je pod filtrem
+„podejrzane") i te przy **pytaniach do bota** (tam nie ma czego zapisać, bo gość nie
+zostawił kontaktu). Po aktualizacji wtyczki licznik startuje od zera — wcześniejsze
+zgłoszenia i ich oznaczenie zostają nietknięte.
 
 ⚠️ **Uczciwie o granicy tego sita.** Pułapka zatrzymuje automaty, które
 przeglądają stronę i wypełniają wszystko, co znajdą, albo strzelają natychmiast

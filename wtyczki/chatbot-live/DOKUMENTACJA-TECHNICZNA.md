@@ -1,6 +1,6 @@
 # ChatBot LIVE — dokumentacja techniczna
 
-Wersja wtyczki: **1.5.8** · schemat bazy: **7** · licencja: **GPL-2.0-or-later**
+Wersja wtyczki: **1.5.8** · schemat bazy: **8** · licencja: **GPL-2.0-or-later**
 
 Dokument opisuje **kod, który jest**, nie plan. Każda liczba i nazwa poniżej ma pokrycie
 w źródle — przy każdej podano plik i symbol, żeby dało się to sprawdzić `grep`-em, a nie
@@ -128,7 +128,19 @@ całą historię przy każdym wejściu.
 | `dzien` | `date`, PK | Doba, której dotyczy licznik. Klucz główny, więc jeden wiersz na dobę i inkrement idzie atomowo przez `ON DUPLICATE KEY UPDATE`. |
 | `wywolania` | `int(10) unsigned`, domyślnie `0` | Ile **udanych** wywołań API poszło tego dnia. Licznik rośnie dopiero PO sukcesie (`chatl_ai_zuzyj()` wołane na końcu `chatl_ai_odpowiedz()`), więc nieudane próby nie zjadają limitu właściciela. |
 
-### 3.5. `{prefix}chatl_rate_limit` — licznik limitów na IP
+### 3.5. `{prefix}chatl_zdarzenia` — zdarzenia strażnika wejścia
+
+| Kolumna | Typ | Po co jest |
+|---|---|---|
+| `id` | `bigint` AUTO_INCREMENT, PK | Jeden wiersz = jedno zdarzenie. To jest sedno: `INSERT` jest atomowy sam z siebie, więc N żądań naraz zapisuje N zdarzeń. Poprzednik (licznik w `wp_options`: `get_option` → `+1` → `update_option`) gubił 13 z 20 równoległych inkrementacji — i tym więcej, im większy ruch, czyli dokładnie wtedy, gdy liczba jest właścicielowi potrzebna. |
+| `rodzaj` | `varchar(20)` | `pulapka` albo `nonce`. |
+| `szczegol` | `varchar(40)` | Powód złapania (`ukryte pole` / `zbyt szybkie żądanie`). |
+| `sciezka` | `varchar(20)` | Którędy przyszło: `pytanie` albo `zgloszenie`. Dzięki temu pasek w panelu mówi, **ilu** złapanych właściciel znajdzie na liście zgłoszeń — pułapka na ścieżce pytania nie tworzy zgłoszenia, bo gość nie zostawił kontaktu, a wcześniej pasek obiecywał wiersze, których nie ma. Z tego samego powodu zdarzenie ze ścieżki `zgloszenie` zapisujemy **dopiero po udanym `INSERT`** zgłoszenia: żądanie odrzucone na walidacji (zły adres, brak zgody, wyłączony czat, padnięty zapis) nie zostawia wiersza, więc nie może podbijać liczby w pasku. |
+| `utworzono` | `datetime` (czas witryny) | Do paska („ostatnio") i do retencji — zdarzenia starsze niż `CHATL_RETENCJA_DNI` kasuje ten sam cron, co historię rozmów, więc tabela nie rośnie bez końca. Indeks `KEY rodzaj_utworzono`. |
+
+Licznik w panelu to `COUNT(*)` z tej tabeli — **jedno** źródło prawdy, nie druga kopia liczby.
+
+### 3.6. `{prefix}chatl_rate_limit` — licznik limitów na IP
 
 | Kolumna | Typ | Po co jest |
 |---|---|---|
@@ -143,11 +155,11 @@ całą historię przy każdym wejściu.
 | Opcja | Zawartość | Autoload | Kiedy powstaje |
 |---|---|---|---|
 | `chatl_ustawienia` | tablica ustawień (patrz niżej) | tak (domyślnie) | przy pierwszym zapisie ustawień — **nie** przy aktywacji |
-| `chatl_wersja_schematu` | numer schematu, obecnie `7` | tak (domyślnie) | przy aktywacji i przy migracji schematu |
+| `chatl_wersja_schematu` | numer schematu, obecnie `8` | tak (domyślnie) | przy aktywacji i przy migracji schematu |
 | `chatl_klucz_api` | klucz API właściciela | **nie** (`add_option(..., '', false)`) | przy zapisaniu klucza w panelu |
 | `chatl_blad_maila` | `['kiedy' => data, 'adres' => e-mail]` | **nie** | gdy `wp_mail()` zwróci `false`; kasowana przy pierwszej udanej wysyłce |
 | `chatl_blad_ai` | `['kiedy' => data, 'kod' => HTTP, 'tresc' => fragment]` | **nie** | gdy wywołanie API nie zwróci 200; kasowana przy pierwszym udanym wywołaniu |
-| `chatl_blad_nonce` | `['ostatni' => data, 'ile' => liczba]` | **nie** | gdy gościowi odbije się zabezpieczenie formularza; kasowana przyciskiem w panelu |
+| ~~`chatl_blad_nonce`~~ | **usunięta w schemacie 8** — odrzucone nonce'y i zadziałania pułapki leżą w tabeli `chatl_zdarzenia` (wiersz na zdarzenie). Licznik w opcji gubił równoległe zapisy i rozjeżdżał się z listą złapanych zgłoszeń. Podniesienie schematu kasuje starą opcję (razem z `chatl_pulapka`). | — | — |
 | `chatl_rodo_sesje_wspolne` | lista identyfikatorów sesji, o których wiemy, że **były współdzielone** przez dwie osoby | **nie** | przy wniosku RODO o usunięcie dotyczącym takiej sesji; przycinana przy każdym zapisie (patrz 23.2) |
 
 Klucz API jest bez autoloadu celowo: nie wchodzi do zapytania ładowanego na każdej odsłonie
@@ -198,7 +210,7 @@ Wszystkie liczby, którymi wtyczka się rządzi, są stałymi — nie ma ich roz
 | Stała | Wartość | Plik | Do czego |
 |---|---|---|---|
 | `CHATL_WERSJA` | `1.5.8` | `chatbot-live.php` | wersja wtyczki; służy też jako `?ver=` assetów (przeglądarka nie poda starego pliku po aktualizacji) |
-| `CHATL_WERSJA_SCHEMATU` | `7` | `chatbot-live.php` | wyzwalacz migracji schematu |
+| `CHATL_WERSJA_SCHEMATU` | `8` | `chatbot-live.php` | wyzwalacz migracji schematu |
 | `CHATL_KATALOG`, `CHATL_URL` | ścieżka i adres wtyczki | `chatbot-live.php` | `require` i adresy assetów |
 | `CHATL_MAX_PYTANIE` | `500` | `includes/front.php` | maksymalna długość pytania gościa (nadmiar jest **przycinany**, nie odrzucany) |
 | `CHATL_MAX_WIADOMOSC` | `2000` | `includes/front.php` | maksymalna długość treści zgłoszenia (jw.) |
@@ -267,6 +279,12 @@ deaktywacji (wtedy `register_activation_hook` się nie odpala).
 > `uninstall.php` oraz podniesienia `CHATL_WERSJA_SCHEMATU`. Pominięcie któregokolwiek
 > zostawia tabelę-sierotę.
 
+**Schemat 8** (zdarzenia strażnika): zakłada `chatl_zdarzenia` i **kasuje** stare liczniki
+z `wp_options` (`chatl_pulapka`, `chatl_blad_nonce`). Ich liczb nie da się przenieść na
+wiersze zdarzeń — były zaniżone przez wyścig przy `update_option` — więc licznik w panelu
+zaczyna po aktualizacji od zera. Zapisane zgłoszenia i ich flaga `podejrzane` zostają
+nietknięte.
+
 ### 6.3. Deaktywacja — `chatl_deaktywacja()`
 
 `wp_clear_scheduled_hook( 'chatl_czyszczenie_historii' )` — i tyle. **Dane zostają w komplecie**:
@@ -306,11 +324,13 @@ Plik odpala się tylko przy prawdziwym odinstalowaniu (`WP_UNINSTALL_PLUGIN`), n
 **Ścieżka B — pełne czyszczenie (`usun_dane` = 1, zaznaczone w ustawieniach):**
 
 1. To samo skasowanie klucza API.
-2. `DROP TABLE IF EXISTS` dla wszystkich sześciu tabel (`chatl_qa`, `chatl_rozmowy`,
-   `chatl_sesje`, `chatl_zgloszenia`, `chatl_rate_limit`, `chatl_ai_uzycie`).
-3. `delete_option` dla siedmiu opcji: `chatl_ustawienia`, `chatl_wersja_schematu`,
-   `chatl_blad_maila`, `chatl_blad_ai`, `chatl_blad_nonce`, `chatl_blad_bazy`
-   i `chatl_rodo_sesje_wspolne`.
+2. `DROP TABLE IF EXISTS` dla wszystkich siedmiu tabel (`chatl_qa`, `chatl_rozmowy`,
+   `chatl_sesje`, `chatl_zgloszenia`, `chatl_rate_limit`, `chatl_ai_uzycie`,
+   `chatl_zdarzenia`).
+3. `delete_option` dla ośmiu opcji: `chatl_ustawienia`, `chatl_wersja_schematu`,
+   `chatl_blad_maila`, `chatl_blad_ai`, `chatl_blad_bazy`, `chatl_rodo_sesje_wspolne`
+   oraz dwóch liczników ze schematu ≤ 7 (`chatl_blad_nonce`, `chatl_pulapka`) — na
+   wypadek instalacji, która nigdy nie weszła do panelu po aktualizacji.
 4. Sprzątanie transientów `chatl_rl_*` ze **starszych wersji wtyczki** (≤ 1.1.x, gdy licznik
    limitów żył w opcjach zamiast w tabeli). Zapytanie używa `esc_like()` — podkreślnik jest
    symbolem wieloznacznym w `LIKE`, więc bez eskejpowania mogłoby złapać cudze wpisy.
@@ -470,12 +490,24 @@ udanym wywołaniu.
 
 ## 10. Limity na IP
 
-Jeden mechanizm, dwa kubły — `chatl_rate_limit( $akcja, $prog, $okno_sekund )` w `includes/front.php`:
+Jeden mechanizm, cztery kubły — `chatl_rate_limit( $akcja, $prog, $okno_sekund )` w `includes/front.php`:
 
 | Kubeł | Próg | Okno | Czego pilnuje |
 |---|---|---|---|
 | `chat` | `CHATL_LIMIT_NA_MIN` = 10 | minuta | zalew bazy i mail-bombing właściciela; wspólny dla pytań i zgłoszeń |
 | `ai` | `CHATL_AI_LIMIT_IP_NA_DOBE` = 20 | doba | żeby jeden gość nie wypalił całego dobowego budżetu AI wszystkich |
+| `pulapka` | `CHATL_LIMIT_PULAPKA` = 5 | minuta | żeby złapany bot nie zalał tabel zdarzeniami i zgłoszeniami „podejrzanymi" |
+| `nonce-odrzucony` | `CHATL_LIMIT_NA_MIN` = 10 | minuta | żeby odrzucone zabezpieczenie nie było darmową drogą do zapisu w bazie |
+
+Kubły `pulapka` i `nonce-odrzucony` są **osobne** od `chat` z tego samego powodu: złapany bot
+ani gość ze stroną z cache nie mogą zjadać limitu prawdziwego klienta.
+
+> ⛔ **Kubeł `nonce-odrzucony` ogranicza ZAPIS, nie odpowiedź.** Powyżej progu wtyczka
+> odpowiada **tak samo** — z `kod => 'nonce'` — tylko nie dopisuje zdarzenia. Widget rozpoznaje
+> zły nonce wyłącznie po tym kluczu i tylko po nim dociąga świeży nonce i ponawia pytanie
+> (samonaprawa z sekcji o L1). Twarda odmowa powyżej progu wyłączyłaby ją dokładnie tam, gdzie
+> jest najpotrzebniejsza: za proxy z wyłączonym zaufaniem nagłówkom **wszyscy goście dzielą
+> jeden kubeł**, więc przy stronie z cache próg wyczerpuje się w sekundy.
 
 Inkrement jest atomowy (`ON DUPLICATE KEY UPDATE` + `LAST_INSERT_ID`), więc równoległe żądania
 nie gubią zliczeń. Kubeł AI sprawdzany jest **dopiero** gdy tryb AI jest w ogóle dostępny —
@@ -950,10 +982,17 @@ Naprawa ma trzy części, bo awaria miała trzy poziomy:
    `success`) dociąga świeże zabezpieczenie publicznym endpointem `chatl_nonce`
    i powtarza żądanie **dokładnie raz**. Druga porażka to już prawdziwa awaria
    i wtedy gość ma prawo zobaczyć komunikat.
-3. **Właściciel to widzi.** Każde odrzucenie zwiększa licznik w opcji
-   `chatl_blad_nonce`; panel pokazuje czerwone ostrzeżenie z liczbą, przyczyną
-   i tym, co zrobić. Ostrzeżenie cichnie po `CHATL_NONCE_OKNO_DNI` dniach bez
-   nowych odrzuceń albo po kliknięciu „ukryj".
+3. **Właściciel to widzi.** Odrzucenie dopisuje wiersz do **tabeli**
+   `chatl_zdarzenia` (rodzaj `nonce`); panel pokazuje czerwone ostrzeżenie z liczbą,
+   przyczyną i tym, co zrobić. Ostrzeżenie cichnie po `CHATL_NONCE_OKNO_DNI` dniach
+   bez nowych odrzuceń albo po kliknięciu „ukryj".
+   ⚠️ **Ta liczba jest DOLNYM ograniczeniem**, nie liczbą odrzuceń: zapis jest ucięty
+   kubłem `nonce-odrzucony` do `CHATL_LIMIT_NA_MIN` na minutę z adresu, żeby ścieżka
+   odrzucenia nie była darmową drogą do bazy. Ma to znaczenie **za proxy**, gdzie
+   wszyscy goście dzielą jeden adres: przy masowej awarii cache liczba rośnie
+   najwyżej o 10 na minutę, choć odrzuceń jest wielokrotnie więcej. Sama
+   samonaprawa widgetu limitowi **nie podlega** — odpowiedź z `kod = 'nonce'`
+   idzie zawsze (patrz ramka o kubłach w rozdziale o limitach).
 
 **Dlaczego endpoint `chatl_nonce` nie wymaga nonce'a:** jego jedynym zadaniem
 jest wydanie zabezpieczenia komuś, kto ma nieważne. Nie osłabia to niczego —

@@ -187,26 +187,85 @@ function chatl_ip_goscia() {
 }
 
 /**
+ * Zdarzenie strażnika wejścia (pułapka na boty / odrzucony nonce) — JEDEN wiersz
+ * na zdarzenie w tabeli chatl_zdarzenia.
+ *
+ * Do schematu 7 to były liczniki w wp_options (get_option → +1 →
+ * update_option). Odczyt-modyfikacja-zapis bez blokady gubił 13 z 20
+ * równoległych inkrementacji (audyt DK-5) — i to tym więcej, im większy ruch,
+ * czyli dokładnie wtedy, gdy liczba jest właścicielowi potrzebna. INSERT jest
+ * atomowy sam z siebie: N żądań naraz = N wierszy. Licznik w panelu = COUNT(*).
+ *
+ * @param string $rodzaj   'pulapka' albo 'nonce'.
+ * @param string $szczegol Powód (pułapka: 'ukryte pole' / 'zbyt szybkie żądanie').
+ * @param string $sciezka  Którędy przyszło: 'pytanie' / 'zgloszenie' / ''.
+ * @return bool Czy wiersz trafił do bazy.
+ */
+function chatl_odnotuj_zdarzenie( $rodzaj, $szczegol = '', $sciezka = '' ) {
+	global $wpdb;
+	$wstawiono = $wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$wpdb->prefix . 'chatl_zdarzenia',
+		array(
+			'rodzaj'    => (string) $rodzaj,
+			'szczegol'  => mb_substr( (string) $szczegol, 0, 40 ),
+			'sciezka'   => mb_substr( (string) $sciezka, 0, 20 ),
+			'utworzono' => current_time( 'mysql' ),
+		),
+		array( '%s', '%s', '%s', '%s' )
+	);
+	if ( false === $wstawiono ) {
+		chatl_log_bledu_bazy( 'chatl_odnotuj_zdarzenie', 'zdarzenie strażnika (' . $rodzaj . ')' );
+		return false;
+	}
+	return true;
+}
+
+/**
+ * Stan zdarzeń danego rodzaju dla panelu: ile, kiedy ostatnie, z jakiego powodu,
+ * rozbicie po ścieżce. Jedno źródło prawdy — ta sama tabela, którą zasila
+ * chatl_odnotuj_zdarzenie(); nie ma drugiej kopii liczby (DK-1).
+ *
+ * @param string $rodzaj 'pulapka' albo 'nonce'.
+ * @return array{ile:int,ostatnia:string,szczegol:string,sciezki:array<string,int>}
+ */
+function chatl_zdarzenia_stan( $rodzaj ) {
+	global $wpdb;
+	$t = $wpdb->prefix . 'chatl_zdarzenia';
+	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+	$ostatnie = $wpdb->get_row(
+		$wpdb->prepare( "SELECT utworzono, szczegol FROM {$t} WHERE rodzaj = %s ORDER BY id DESC LIMIT 1", $rodzaj ),
+		ARRAY_A
+	);
+	$wiersze  = $wpdb->get_results(
+		$wpdb->prepare( "SELECT sciezka, COUNT(*) AS ile FROM {$t} WHERE rodzaj = %s GROUP BY sciezka", $rodzaj ),
+		ARRAY_A
+	);
+	// phpcs:enable
+	$sciezki = array();
+	$ile     = 0;
+	foreach ( (array) $wiersze as $w ) {
+		$sciezki[ (string) $w['sciezka'] ] = (int) $w['ile'];
+		$ile                              += (int) $w['ile'];
+	}
+	return array(
+		'ile'      => $ile,
+		'ostatnia' => is_array( $ostatnie ) ? (string) $ostatnie['utworzono'] : '',
+		'szczegol' => is_array( $ostatnie ) ? (string) $ostatnie['szczegol'] : '',
+		'sciezki'  => $sciezki,
+	);
+}
+
+/**
  * Odnotowanie odrzuconego nonce'a — sygnał dla właściciela.
  *
  * Bez tego awaria jest CAŁKOWICIE cicha: strona z cache podaje gościom HTML
  * starszy niż życie nonce'a, każde pytanie kończy się odmową, a właściciel
  * widzi w panelu normalnie działający panel i pustą historię rozmów.
- * Wzorzec 1:1 z chatl_odnotuj_wysylke_powiadomienia().
  *
  * @return void
  */
 function chatl_odnotuj_odrzucony_nonce() {
-	$blad = get_option( 'chatl_blad_nonce' );
-	$ile  = is_array( $blad ) && isset( $blad['ile'] ) ? (int) $blad['ile'] + 1 : 1;
-	update_option(
-		'chatl_blad_nonce',
-		array(
-			'ostatni' => current_time( 'mysql' ),
-			'ile'     => $ile,
-		),
-		false
-	);
+	chatl_odnotuj_zdarzenie( 'nonce' );
 }
 
 /**
@@ -224,7 +283,24 @@ function chatl_wymagaj_nonce() {
 	if ( check_ajax_referer( 'chatl_front', 'nonce', false ) ) {
 		return;
 	}
-	chatl_odnotuj_odrzucony_nonce();
+	/*
+	 * Zły nonce też ma swój kubeł (P2-Z3 / LC-F2): ta ścieżka była jedyną bez
+	 * limitu — skrypt z zepsutym noncem przechodził 30/30 przy progu 10, a każde
+	 * żądanie kończyło się ZAPISEM do bazy. Osobny kubeł, nie wspólny „chat",
+	 * żeby odrzucenie nie zjadało właściwego limitu gościa.
+	 *
+	 * ⛔ Limit dotyczy WYŁĄCZNIE zapisu zdarzenia, nigdy KSZTAŁTU odpowiedzi.
+	 * Widget rozpoznaje „zły nonce" tylko po `kod === 'nonce'` (widget.js,
+	 * `toZlyNonce()`) i tylko wtedy dociąga świeży nonce i ponawia pytanie.
+	 * Odpowiedź bez tego klucza wyłączyłaby samonaprawę — a to jest dokładnie
+	 * luka L1: witryna za proxy z wyłączonym zaufaniem nagłówkom ma JEDEN kubeł
+	 * dla wszystkich gości, więc przy stronie z cache 11. gość na minutę
+	 * dostałby twardą odmowę zamiast cichego odświeżenia. Powyżej progu
+	 * odpowiadamy więc TAK SAMO, tylko bez dopisywania zdarzenia do bazy.
+	 */
+	if ( chatl_rate_limit( 'nonce-odrzucony', CHATL_LIMIT_NA_MIN ) ) {
+		chatl_odnotuj_odrzucony_nonce();
+	}
 	wp_send_json_error(
 		array(
 			'komunikat' => 'Sesja formularza wygasła — odświeżam i próbuję ponownie.',
@@ -369,7 +445,17 @@ function chatl_ajax_pytanie() {
 	$sesja_wstepna = isset( $_POST['sesja'] ) ? chatl_waliduj_sesje( wp_unslash( $_POST['sesja'] ) ) : '';
 	$pulapka       = chatl_pulapka_zlapala( $sesja_wstepna );
 	if ( '' !== $pulapka ) {
-		chatl_odnotuj_pulapke( $pulapka );
+		/*
+		 * OSOBNY kubeł dla złapanych (LC-F2): ścieżka pułapki była nielimitowana
+		 * (200 żądań / 7 s, 0×429) i każde żądanie pisało do bazy — bot miał
+		 * drogę TAŃSZĄ niż uczciwy gość. Kubeł jest osobny, więc złapane dalej
+		 * nie zjadają kubła gościa (WARUNEK 2 strażnika pułapki zostaje prawdą),
+		 * a 429 nie zdradza pułapki: tak samo kończy się zwykłe przekroczenie.
+		 */
+		if ( ! chatl_rate_limit( 'pulapka', CHATL_LIMIT_PULAPKA ) ) {
+			wp_send_json_error( array( 'komunikat' => 'Za dużo wiadomości w krótkim czasie — odczekaj chwilę i spróbuj ponownie.' ), 429 );
+		}
+		chatl_odnotuj_pulapke( $pulapka, 'pytanie' );
 		/*
 		 * Odpowiedź jest nieodróżnialna od zwykłego „nie znam odpowiedzi": bot
 		 * nie dowiaduje się, że wpadł, a człowiek fałszywie złapany dostaje
@@ -515,7 +601,15 @@ function chatl_ajax_zgloszenie() {
 	// w admin-ajax.php (patrz komentarz przy chatl_pulapka_zlapala).
 	$pulapka = chatl_pulapka_zlapala( $sesja_wstepna, false );
 	if ( '' !== $pulapka ) {
-		chatl_odnotuj_pulapke( $pulapka );
+		/*
+		 * Ten sam kubeł złapanych co przy pytaniu: powyżej progu 429 bez zapisu.
+		 * Wcześniej sufit CHATL_LIMIT_PULAPKA dotyczył tylko ZAPISU zgłoszenia,
+		 * a samo żądanie szło bez limitu z odpowiedzią „sukces" — złapany bot
+		 * mógł bez końca dopisywać zdarzenia (LC-F2, P2-Z3).
+		 */
+		if ( ! chatl_rate_limit( 'pulapka', CHATL_LIMIT_PULAPKA ) ) {
+			wp_send_json_error( array( 'komunikat' => 'Za dużo wiadomości w krótkim czasie — odczekaj chwilę i spróbuj ponownie.' ), 429 );
+		}
 	}
 
 	if ( '' === $pulapka && ! chatl_limit_ip_ok() ) {
@@ -564,19 +658,17 @@ function chatl_ajax_zgloszenie() {
 	 * Cisza dotyczy BOTA, nie bazy — odpowiedź niżej jest identyczna jak przy
 	 * czystym zgłoszeniu, więc skrypt się nie dowiaduje, że wpadł.
 	 *
-	 * Sufit na złapane zapisy: skoro złapane lądują w bazie, sama pułapka nie
-	 * może stać się drogą do zalania tabeli. Powyżej sufitu nie zapisujemy —
-	 * i to jest jedyne miejsce, w którym coś przepada. Nie dotyczy czystych
-	 * zgłoszeń, więc prawdziwy klient nigdy tędy nie wypada.
+	 * Sufit na złapane: skoro złapane lądują w bazie, sama pułapka nie może
+	 * stać się drogą do zalania tabeli. Sufit (CHATL_LIMIT_PULAPKA na minutę
+	 * z adresu) egzekwuje kubeł 'pulapka' WYŻEJ — powyżej niego żądanie kończy
+	 * się 429, zanim cokolwiek zostanie zapisane. Nie dotyczy czystych zgłoszeń,
+	 * więc prawdziwy klient nigdy tędy nie wypada. Dzięki temu każde złapane
+	 * zdarzenie z tej ścieżki ma swój wiersz zgłoszenia (licznik = lista, DK-1).
 	 */
-	$zapis_pominiety = false;
-	if ( '' !== $pulapka && ! chatl_rate_limit( 'pulapka', CHATL_LIMIT_PULAPKA ) ) {
-		$zapis_pominiety = true;
-	}
 
 	// Zapis MUSI być sprawdzony: bez tego padnięty INSERT kończył się „Dziękujemy",
 	// a wiadomość gościa przepadała bez śladu (cichy ubytek danych klienta).
-	$zapisano = $zapis_pominiety ? true : $wpdb->insert(
+	$zapisano = $wpdb->insert(
 		$wpdb->prefix . 'chatl_zgloszenia',
 		array(
 			'email'      => $email,
@@ -594,6 +686,20 @@ function chatl_ajax_zgloszenie() {
 			array( 'komunikat' => 'Nie udało się zapisać wiadomości — przepraszamy. Spróbuj ponownie za chwilę albo napisz do nas mailem.' ),
 			500
 		);
+	}
+
+	/*
+	 * Zdarzenie pułapki dopisujemy DOPIERO TERAZ, po udanym zapisie zgłoszenia —
+	 * bo pasek w panelu obiecuje na jego podstawie WIERSZE do obejrzenia pod
+	 * filtrem „podejrzane". Zapis wcześniej (przed walidacją) liczyłby też
+	 * żądania, które kończą się bez wiersza: wyłączony czat, zły adres e-mail,
+	 * pusta treść, brak zgody, padnięty INSERT — a bot wypełniający pole na
+	 * ślepo zwykle nie poda ani adresu, ani zgody. Licznik znów obiecywałby
+	 * wiersze, których nie ma (DK-1). Sufit zapisu stoi WYŻEJ i działa
+	 * niezależnie: powyżej progu żądanie kończy się, zanim tu dojdzie.
+	 */
+	if ( '' !== $pulapka ) {
+		chatl_odnotuj_pulapke( $pulapka, 'zgloszenie' );
 	}
 
 	/*
@@ -690,21 +796,16 @@ function chatl_pulapka_zlapala( $sesja, $sprawdzaj_czas = true ) {
  * czyni też widocznym FAŁSZYWY ALARM — jeśli rośnie, a klienci skarżą się, że
  * pisali i nie dostali odpowiedzi, właściciel wie, gdzie zajrzeć.
  *
- * @param string $powod 'pole' albo 'czas'.
+ * Od schematu 8 zdarzenie ma własny wiersz w chatl_zdarzenia (patrz
+ * chatl_odnotuj_zdarzenie): licznik w wp_options gubił równoległe zapisy
+ * i rozjeżdżał się z listą złapanych zgłoszeń (DK-1, DK-5).
+ *
+ * @param string $powod   'pole' albo 'czas'.
+ * @param string $sciezka 'pytanie' albo 'zgloszenie' (którędy przyszło).
  * @return void
  */
-function chatl_odnotuj_pulapke( $powod ) {
-	$stan = get_option( 'chatl_pulapka', array() );
-	$stan = is_array( $stan ) ? $stan : array();
-	update_option(
-		'chatl_pulapka',
-		array(
-			'ile'      => 1 + (int) ( $stan['ile'] ?? 0 ),
-			'ostatnia' => current_time( 'mysql' ),
-			'powod'    => 'pole' === $powod ? 'ukryte pole' : 'zbyt szybkie żądanie',
-		),
-		false
-	);
+function chatl_odnotuj_pulapke( $powod, $sciezka = '' ) {
+	chatl_odnotuj_zdarzenie( 'pulapka', 'pole' === $powod ? 'ukryte pole' : 'zbyt szybkie żądanie', $sciezka );
 }
 
 function chatl_odnotuj_wysylke_powiadomienia( $wyslano, $adres ) {

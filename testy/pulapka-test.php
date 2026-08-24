@@ -45,14 +45,14 @@ function chatl_test_sprzataj() {
 	global $wpdb;
 	$wpdb->query( "DELETE FROM {$wpdb->prefix}chatl_zgloszenia WHERE email LIKE 'pulapka-test%'" ); // phpcs:ignore
 	$wpdb->query( "DELETE FROM {$wpdb->prefix}chatl_sesje WHERE sesja LIKE 'pulapkaTest%'" ); // phpcs:ignore
-	delete_option( 'chatl_pulapka' );
+	$wpdb->query( "DELETE FROM {$wpdb->prefix}chatl_zdarzenia WHERE rodzaj IN ('pulapka','nonce')" ); // phpcs:ignore
 	/*
 	 * Czyscimy WLASNE kuble limitu. Powod jest merytoryczny, nie kosmetyczny:
 	 * kazdy przebieg wysyla dwa zgloszenia, a proba kontrolna odpala test
 	 * dziewiec razy pod rzad — bez tego dziewiaty przebieg dostaje 429 i "czysty
 	 * kod nie przechodzi", czyli proba mowilaby o wadzie, ktorej nie ma.
 	 */
-	$wpdb->query( "DELETE FROM {$wpdb->prefix}chatl_rate_limit WHERE klucz LIKE 'chat|%' OR klucz LIKE 'pulapka|%' OR klucz LIKE 'ai|%'" ); // phpcs:ignore
+	$wpdb->query( "DELETE FROM {$wpdb->prefix}chatl_rate_limit WHERE klucz LIKE 'chat|%' OR klucz LIKE 'pulapka|%' OR klucz LIKE 'ai|%' OR klucz LIKE 'nonce-odrzucony|%'" ); // phpcs:ignore
 }
 chatl_test_sprzataj();
 
@@ -78,13 +78,22 @@ rowne( 'nieznana sesja NIE jest lapana (mogla wygasnac)', '', chatl_pulapka_zlap
 rowne( 'prog czasu da sie WYLACZYC dla wybranej sciezki', '', chatl_pulapka_zlapala( $sesja_swieza, false ) );
 
 echo "\n=== C. Licznik czyni pulapke widoczna w panelu ===\n";
-delete_option( 'chatl_pulapka' );
-chatl_odnotuj_pulapke( 'pole' );
-chatl_odnotuj_pulapke( 'czas' );
-$stan = get_option( 'chatl_pulapka' );
+/*
+ * Od schematu 8 zdarzenia leza w tabeli chatl_zdarzenia (wiersz na zdarzenie),
+ * a nie w opcji chatl_pulapka: licznik w wp_options gubil rownolegle zapisy
+ * i rozjezdzal sie z lista zlapanych zgloszen (DK-1, DK-5). Licznik = COUNT(*),
+ * a rozbicie po sciezce mowi, ilu zlapanych wlasciciel ZNAJDZIE na liscie.
+ */
+$wpdb->query( "DELETE FROM {$wpdb->prefix}chatl_zdarzenia WHERE rodzaj = 'pulapka'" ); // phpcs:ignore
+chatl_odnotuj_pulapke( 'pole', 'zgloszenie' );
+chatl_odnotuj_pulapke( 'czas', 'pytanie' );
+$stan = chatl_zdarzenia_stan( 'pulapka' );
 rowne( 'licznik zlicza kazde zadzialanie', 2, (int) $stan['ile'] );
-sprawdz( 'i zapamietuje powod ostatniego', 'zbyt szybkie żądanie' === $stan['powod'], (string) $stan['powod'] );
-sprawdz( 'oraz kiedy', ! empty( $stan['ostatnia'] ) );
+sprawdz( 'i zapamietuje powod ostatniego', 'zbyt szybkie żądanie' === $stan['szczegol'], (string) $stan['szczegol'] );
+sprawdz( 'oraz kiedy', '' !== $stan['ostatnia'] );
+rowne( 'oraz KTOREDY przyszlo (zgloszenie)', 1, (int) ( $stan['sciezki']['zgloszenie'] ?? 0 ) );
+rowne( 'oraz KTOREDY przyszlo (pytanie)', 1, (int) ( $stan['sciezki']['pytanie'] ?? 0 ) );
+sprawdz( 'stara opcja chatl_pulapka NIE jest juz uzywana', false === get_option( 'chatl_pulapka' ) );
 
 echo "\n=== D. SEDNO: zlapane zgloszenie TRAFIA DO BAZY, z flaga ===\n";
 /*
@@ -258,13 +267,30 @@ sprawdz(
 );
 sprawdz(
 	'WARUNEK 3: odpowiedz dla zlapanego jest SUKCESEM, nie bledem',
-	false !== strpos( $kod, 'wp_send_json_success' ) && 1 === preg_match( '/chatl_odnotuj_pulapke\( \$pulapka \);\s*\/\*.*?wp_send_json_success/s', $kod ),
+	false !== strpos( $kod, 'wp_send_json_success' ) && 1 === preg_match( '/chatl_odnotuj_pulapke\( \$pulapka, .pytanie. \);\s*\/\*.*?wp_send_json_success/s', $kod ),
 	'zlapany dostaje inna odpowiedz niz udana — skrypt sie dowie'
 );
+/*
+ * Od C3 zlapany powyzej sufitu dostaje ODMOWE (429). To nie lamie WARUNKU 3:
+ * odmowa ma DOKLADNIE te sama tresc, co zwykle przekroczenie limitu u uczciwego
+ * goscia, wiec skrypt dowiaduje sie tylko, ze pisze za szybko — nie, ze wpadl
+ * w pulapke. Gdyby te dwa komunikaty sie rozjechaly, pulapka bylaby wykrywalna.
+ */
+preg_match_all( "/'komunikat' => 'Za dużo wiadomości[^']*'/u", $kod, $trafienia );
 sprawdz(
-	'sufit na ZAPISY zlapanych chroni tabele przed zalaniem',
-	false !== strpos( $kod, "chatl_rate_limit( 'pulapka', CHATL_LIMIT_PULAPKA )" ),
-	'brak sufitu na zapisy zlapanych'
+	'odmowa na sciezce pulapki jest NIEODROZNIALNA od zwyklego limitu',
+	count( $trafienia[0] ) >= 3 && 1 === count( array_unique( $trafienia[0] ) ),
+	'komunikaty: ' . implode( ' | ', array_unique( $trafienia[0] ) )
+);
+sprawdz(
+	'sufit na zlapane chroni tabele przed zalaniem (osobny kubel, 429 przed zapisem)',
+	2 === substr_count( $kod, "chatl_rate_limit( 'pulapka', CHATL_LIMIT_PULAPKA )" ),
+	'sufit ma stac na OBU sciezkach zlapanych (pytanie i zgloszenie)'
+);
+sprawdz(
+	'sciezka zlego nonce tez ma kubel (nie jest tansza niz dla goscia)',
+	false !== strpos( $kod, "chatl_rate_limit( 'nonce-odrzucony', CHATL_LIMIT_NA_MIN )" ),
+	'brak limitu na sciezce odrzuconego nonce'
 );
 
 echo "\n=== G. Widget: pole jest w DOM i wysylane zawsze ===\n";

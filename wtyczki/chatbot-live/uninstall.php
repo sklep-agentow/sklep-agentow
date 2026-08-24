@@ -27,13 +27,17 @@ $wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}chatl_rozmowy" ); // phpcs:ig
 $wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}chatl_ai_uzycie" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 $wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}chatl_rate_limit" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 $wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}chatl_sesje" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}chatl_zdarzenia" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 delete_option( 'chatl_ustawienia' );
 delete_option( 'chatl_wersja_schematu' );
 delete_option( 'chatl_blad_maila' );
 delete_option( 'chatl_blad_ai' );
-delete_option( 'chatl_blad_nonce' );
 delete_option( 'chatl_blad_bazy' );
+// Liczniki ze schematu ≤ 7 (przed przeniesieniem do chatl_zdarzenia) — instalacja,
+// która nigdy nie weszła do panelu po aktualizacji, może je jeszcze mieć (P2-Z2).
+delete_option( 'chatl_blad_nonce' );
+delete_option( 'chatl_pulapka' );
 // Nazwa wpisana wprost, a nie przez CHATL_RODO_OPCJA_WSPOLNE: uninstall.php biegnie
 // bez ladowania wtyczki, wiec stalej z includes/rodo.php tu nie ma. Slad sesji
 // wspoldzielonych (same identyfikatory, bez adresow i tresci) znika razem z danymi.
