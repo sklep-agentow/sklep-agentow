@@ -127,6 +127,14 @@ function sklepag_tresc_produktu( $slug ) {
 			'uczciwosc'    => 'Nie znajdziesz tu opinii z gwiazdkami — sprzedajemy od niedawna i nie fabrykujemy ocen; zamiast tego masz tryb testowy i seed demo, żeby sprawdzić samemu. Pełnoprawny silnik regułowy działa od razu — bez kluczy i opłat. „LIVE" znaczy dwie rzeczy: bot odpowiada natychmiast, a Ty możesz w każdej chwili PRZEJĄĆ rozmowę i pisać do gościa osobiście — wtedy bot w niej milczy, a gość widzi wprost, że rozmawia z człowiekiem; po pięciu minutach Twojej ciszy rozmowa sama wraca do bota. Gdy nie przejmiesz, bot zbiera kontakt i odpisujesz później. Bot nie udaje wszechwiedzy. Tryb AI włączasz WŁASNYM kluczem; przy limicie dziennym lub błędzie bot sam wraca do reguł. Prywatność: w trybie regułowym treść rozmów nie opuszcza Twojego serwera; w trybie AI pytanie gościa idzie do API dostawcy (informacja też do Twojej polityki prywatności).',
 			'galeria'      => array(
 				array(
+					'plik'   => 'chatbot-live--zywy.jpg',
+					'alt'    => 'Okno rozmowy ChatBota LIVE na stronie: gość pyta o godziny otwarcia, bot odpowiada wpisem z bazy pytań i odpowiedzi',
+					'podpis' => 'PRAWDZIWY ZRZUT Z TEJ STRONY — TRYB REGUŁOWY, BEZ KLUCZA AI',
+					'szer'   => 682,
+					'wys'    => 908,
+					'kadr'   => 'contain',
+				),
+				array(
 					'plik'   => 'chatbot-live--widget-formularz.png',
 					'alt'    => 'Formularz „Zostaw wiadomość" w oknie czatu: pola e-mail i treść, zgoda RODO',
 					'podpis' => 'GDY BOT NIE ZNA ODPOWIEDZI — ZBIERA KONTAKT',
@@ -221,6 +229,13 @@ function sklepag_tresc_produktu( $slug ) {
 			'dla_kogo'     => array( 'Biura i sekretariaty', 'Firmy usługowe z jedną wspólną skrzynką', 'Każdy, kto zaczyna dzień od przekopywania poczty' ),
 			'uczciwosc'    => 'Nie znajdziesz tu opinii z gwiazdkami — sprzedajemy od niedawna i nie fabrykujemy ocen; zamiast tego masz raport z liczbami z TWOJEJ próbki. Reguły układasz i sprawdzasz na próbce, a potem puszczasz je na PRAWDZIWEJ skrzynce: wtyczka rozkłada pocztę do folderów na serwerze poczty, domyślnie chodzi NA SUCHO i nie rusza ani jednej wiadomości, dopóki sam nie potwierdzisz, a ostatni przebieg cofniesz jednym kliknięciem. Czego nie ma, mówimy przed zakupem: logowanie tylko loginem i hasłem aplikacji, więc Microsoft 365 i Outlook.com NIE zadziałają (tam wymagane jest OAuth); na skrzynce klasyfikują reguły, nie AI; bez czytania załączników.',
 			'galeria'      => array(
+				array(
+					'plik'   => 'segregator-maila--zywy.jpg',
+					'alt'    => 'Raport przebiegu Segregatora maila w panelu WordPressa: 30 maili w próbce, pokrycie regułami 80 procent, trafność 100 procent, podział na kategorie',
+					'podpis' => 'PRAWDZIWY RAPORT Z PANELU — LICZBY BEZ RETUSZU',
+					'szer'   => 1200,
+					'wys'    => 470,
+				),
 				array(
 					'plik'   => 'segregator-maila--probka-demo.png',
 					'alt'    => 'Ekran Próbka maili: tabela 30 przykładowych wiadomości po polsku z nadawcą, tematem i treścią',
@@ -470,9 +485,10 @@ function sklepag_render_produkt( $slug ) {
 	$html  = '<div class="sklepag-wyspa sklepag-produkt">';
 	$html .= '<nav class="sklepag-okruszki" aria-label="Okruszki"><a href="' . esc_url( get_permalink( (int) get_option( 'sklepag_strona_sklep' ) ) ) . '">Sklep</a> <span aria-hidden="true">/</span> <span>' . esc_html( $p->nazwa ) . '</span></nav>';
 
-	// HERO — dwie kolumny: tekst + ŻYWY zrzut produktu (feedback 24.08: „nie
-	// wiadomo, co się kupuje" — produkt ma być widoczny od pierwszego ekranu).
-	$zrzut_hero = sklepag_zrzut_produktu( $slug );
+	// HERO — dwie kolumny: tekst + ILUSTRACJA BRANDOWA (feedback 24.08 v2: „tu ma
+	// być branding, wnętrze botów niżej"). Żywe zrzuty wnętrza są w galerii
+	// [ CO JEST W ŚRODKU ] — pierwszy kafel każdego produktu.
+	$zrzut_hero = sklepag_ilustracja_produktu( $slug );
 	$html      .= '<div class="sklepag-hero-uklad">';
 	$html      .= '<header class="sklepag-hero">';
 	$html      .= '<p class="sklepag-mono-etykieta">' . ( $t ? wp_kses( $t['etykieta'], array( 'span' => array( 'class' => array() ) ) ) : '[ <span class="sklepag-akcent">BOT</span> · TESTOWY ]' ) . '</p>';
@@ -487,7 +503,7 @@ function sklepag_render_produkt( $slug ) {
 	$html .= sklepag_baner_testowy();
 	$html .= '</header>';
 	if ( $zrzut_hero ) {
-		$html .= '<div class="sklepag-hero-wizual">' . sklepag_figure_zrzutu( $zrzut_hero, 'sklepag-zrzut sklepag-hero-zrzut', true ) . '</div>';
+		$html .= '<div class="sklepag-hero-wizual">' . sklepag_figure_zrzutu( $zrzut_hero, 'sklepag-zrzut sklepag-hero-zrzut', false, false ) . '</div>';
 	}
 	$html .= '</div>';
 

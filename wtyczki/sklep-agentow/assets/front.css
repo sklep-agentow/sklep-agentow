@@ -946,11 +946,9 @@ a.sklepag-kup {
 	width: 100%;
 	height: auto;
 }
-/* Raport segregatora ma treść z LEWEJ — kadr obcina pustą prawą połowę zrzutu. */
-.sklepag-hero-wizual .sklepag-zrzut--segregator-maila img {
-	aspect-ratio: 16 / 10;
-	object-fit: cover;
-	object-position: left top;
+/* Ilustracja brandowa w hero: karta bez paska okna, tło zgodne z grafiką. */
+.sklepag-hero-wizual .sklepag-hero-zrzut {
+	background: transparent;
 }
 .sklepag-galeria {
 	display: grid;
