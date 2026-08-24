@@ -66,6 +66,18 @@ Uwagi konkretne, każda z wagą (KRYTYCZNA/WAŻNA/DROBNA), inline tam, gdzie
 dotyczą konkretnych linii. Nie chwal bez powodu. Po przeglądzie: krótkie
 podsumowanie z listą „czego NIE sprawdziłem".
 
+UWAGA = FAKT POTWIERDZONY, NIE HIPOTEZA (zasada właściciela, 2026-08-24).
+Każda uwaga z wagą MUSI stać na jednym z dwóch dowodów, podanych W TREŚCI uwagi:
+- WYNIK WYKONANIA: komenda + jej wyjście + EXIT (uruchomiłeś i to się STAŁO), albo
+- CYTATY: plik:linia + przytoczony fragment, którego sprzeczność z drugim
+  przytoczonym miejscem (kod/dokument/spec) widać w samych cytatach.
+„Mogłoby się zepsuć", „gdyby ktoś kiedyś", „wygląda na", „potencjalnie" — bez
+odtworzenia to NIE jest uwaga: nie nadawaj wagi, nie wliczaj do werdyktu, nie
+otwieraj tym rundy. Jeśli przypuszczenie naprawdę warto zapisać, zmieść je
+w JEDNYM zdaniu w sekcji „Nieodtworzone przypuszczenia (bez wag)" na końcu —
+zwykle ta sekcja ma być PUSTA. Uwaga bez dowodu w treści = autor ma prawo
+odrzucić ją adnotacją „bez dowodu" i nie wolno Ci jej eskalować w kolejnej rundzie.
+
 URUCHAMIAJ BRAMKI, NIE CZYTAJ ICH. Runner ma zainstalowane PHP 8.4 i katalog
 `vendor/` (workflow robi `composer install` PRZED recenzją), a klon jest PEŁNY
 (`fetch-depth: 0`), więc historia gita jest do dyspozycji. Masz z tego korzystać:
