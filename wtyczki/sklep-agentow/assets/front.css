@@ -1101,3 +1101,13 @@ a.sklepag-kup {
 .sklepag-sticky .sklepag-kup {
 	margin: 0;
 }
+
+/* Kafel wideo: pelna szerokosc, bez kadru-crop. */
+.sklepag-galeria-kafel--wideo video {
+	display: block;
+	width: 100%;
+	height: auto;
+}
+.sklepag-galeria-kafel--wideo {
+	grid-column: 1 / -1;
+}

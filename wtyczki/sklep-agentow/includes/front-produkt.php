@@ -138,6 +138,13 @@ function sklepag_tresc_produktu( $slug ) {
 			 */
 			'galeria'      => array(
 				array(
+					'wideo'  => 'chatbot-demo.webm',
+					'alt'    => 'Nagranie: gość pyta o godziny otwarcia, bot odpowiada z bazy; na pytanie spoza bazy bot otwiera formularz „Zostaw wiadomość"',
+					'podpis' => 'NAGRANIE Z TEJ STRONY — PYTANIE, ODPOWIEDŹ I ZBIERANIE KONTAKTU',
+					'szer'   => 1280,
+					'wys'    => 800,
+				),
+				array(
 					'plik'   => 'chatbot-live--zywy.jpg',
 					'alt'    => 'Okno rozmowy ChatBota LIVE na stronie: gość pyta o godziny otwarcia, bot odpowiada wpisem z bazy pytań i odpowiedzi',
 					'podpis' => 'PRAWDZIWY ZRZUT Z TEJ STRONY — TRYB REGUŁOWY, BEZ KLUCZA AI',
@@ -248,6 +255,13 @@ function sklepag_tresc_produktu( $slug ) {
 				'Na skrzynce klasyfikują reguły, nie AI; bez czytania załączników.',
 			),
 			'galeria'        => array(
+				array(
+					'wideo'  => 'segregator-demo.webm',
+					'alt'    => 'Nagranie: kliknięcie Przepuść próbkę i świeży raport — liczby, trafienia per kategoria, każda wiadomość z regułą, która ją złapała',
+					'podpis' => 'NAGRANIE Z PANELU — PRZEBIEG PRÓBKI I RAPORT NA ŻYWO',
+					'szer'   => 1280,
+					'wys'    => 800,
+				),
 				array(
 					'plik'   => 'segregator-maila--zywy.jpg',
 					'kadr'   => 'cover',
@@ -546,6 +560,12 @@ function sklepag_render_produkt( $slug ) {
 			$html .= '<section class="sklepag-sekcja"><p class="sklepag-mono-etykieta">[ CO JEST W ŚRODKU ]</p>';
 			$html .= '<div class="sklepag-galeria">';
 			foreach ( $t['galeria'] as $g ) {
+				if ( ! empty( $g['wideo'] ) ) {
+					$zrodlo = esc_url( plugins_url( 'assets/w-srodku/' . $g['wideo'], SKLEPAG_PLIK ) );
+					$html  .= '<figure class="sklepag-galeria-kafel sklepag-galeria-kafel--wideo"><video src="' . $zrodlo . '" width="' . (int) $g['szer'] . '" height="' . (int) $g['wys'] . '" autoplay muted loop playsinline preload="metadata" aria-label="' . esc_attr( $g['alt'] ) . '"></video>';
+					$html  .= '<figcaption class="sklepag-mono-etykieta">' . esc_html( $g['podpis'] ) . '</figcaption></figure>';
+					continue;
+				}
 				$kadr_kl = 'sklepag-galeria-kadr' . ( isset( $g['kadr'] ) ? ' sklepag-galeria-kadr--' . sanitize_html_class( $g['kadr'] ) : '' );
 				$pelny   = esc_url( plugins_url( 'assets/w-srodku/' . $g['plik'], SKLEPAG_PLIK ) );
 				$html   .= '<figure class="sklepag-galeria-kafel"><a class="sklepag-lightbox" href="' . $pelny . '" aria-label="Powiększ zrzut"><div class="' . esc_attr( $kadr_kl ) . '"><img src="' . $pelny . '" alt="' . esc_attr( $g['alt'] ) . '" width="' . (int) $g['szer'] . '" height="' . (int) $g['wys'] . '" loading="lazy"></div></a>';
