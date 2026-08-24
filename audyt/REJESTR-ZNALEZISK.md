@@ -7,8 +7,12 @@
 > do CI" i **nie była spełniona ani razu**. W `testy/` leżało 57 plików, CI nie uruchamiało
 > żadnego. PR #135 wniósł dwa celowo padające testy — i przeszedł na zielono.
 
-## Liczba znalezisk OTWARTYCH: 0
+## Liczba znalezisk OTWARTYCH: 1
 <!-- BRAMKA: powyższa liczba musi zgadzać się z liczbą wierszy o statusie OTWARTE.
+
+     ⭐ PODNIESIONE ŚWIADOMIE 24.08 (wieczór) z 0 na 1: przelot człowieka (29 pkt) znalazł CZ-1 —
+     ciche przycinanie pytań >500 zn. Klasa 😖 „działa, ale myli", nie blokuje wydania; naprawa
+     (komunikat przy limicie) + strażnik przy najbliższej iteracji kodu.
 
      ✅ ZAMKNIĘTE 24.08 z 23 na 0: scalone paczki napraw C1–C6 (#155 #158 #162 #164 #166 #167),
      S1–S5 (#156 #159 #161 #163 #165) + A6-F2 domknięte 24.08 poprawką materiału audytowego
@@ -32,8 +36,11 @@
      przy zamykaniu rejestru (zamknięto sąsiedni problem z tego samego raportu). Lekcja: status
      ZAMKNIĘTE nadaje się po URUCHOMIENIU testu, nie po scaleniu PR-a o podobnym tytule. -->
 
-## Znalezisk BEZ strażnika: 0
+## Znalezisk BEZ strażnika: 1
 <!-- BRAMKA: liczba wierszy, ktore w kolumnie testu maja „BRAK — do dopisania".
+
+     ⭐ PODNIESIONE ŚWIADOMIE 24.08 (wieczór) z 0 na 1: CZ-1 z przelotu człowieka — strażnik
+     powstanie razem z naprawą (komunikat limitu), zapisane w wierszu.
 
      ✅ SPŁACONE 24.08 z 11 na 0: każda paczka napraw przyniosła strażnika z kalibracją
      (EXIT=1 na kodzie sprzed naprawy, EXIT=0 po) — ścieżki w kolumnie testu każdego wiersza;
@@ -103,6 +110,7 @@ i bramka policzyła siedem nieistniejących znalezisk z nieznanym statusem.
 | `LS-F2` | baza pada w połowie przebiegu na żywo: poczta przeniesiona, historia pusta, cofanie martwe, panel pokazuje sukces — **naprawa S1 #156; kalibracja 8c87c06 → 7 BLAD; zamrożona sonda lamacz-baza-i-srodowisko.php poza linią bazową** | `testy/segregator-przebieg-historia-test.php` | ZAMKNIETE |
 | `DK-1` | licznik pułapki i lista podejrzanych zgłoszeń to **dwa źródła prawdy** o tym samym zdarzeniu — rozjeżdżają się 14 do 5 — **naprawa C3 #162; 1→0** | `audyt/boty/testy-audytu/DK-dwa-zrodla-pulapka.sh` | ZAMKNIETE |
 | `DK-5` | licznik trzymany w `wp_options` **gubi 13 z 20 równoległych zapisów** (ten sam licznik w tabeli gubi 0) — **naprawa C3 #162; przyrząd zaktualizowany 24.08 na tabelę zdarzeń, EXIT=0** | `audyt/boty/testy-audytu/DK-rownolegle-liczniki.sh` | ZAMKNIETE |
+| `CZ-1` | pytanie gościa dłuższe niż 500 znaków jest przycinane PO CICHU (`front.php:504` mb_substr) — gość nie wie, że bot dostał ucięty tekst; działa bezpiecznie, ale myli (przelot człowieka 24.08, sekcja A) | BRAK — do dopisania (naprawa = komunikat/licznik znaków przy limicie, wtedy strażnik) | OTWARTE |
 | `DK-6` | zamek Segregatora wpuszcza **dwie operacje naraz**, a znacznik drugiej nadpisuje pierwszą — **naprawa S1 #156; 1→0 + segregator-zamek-ttl-test.php** | `audyt/boty/testy-audytu/DK-blokada-segregatora.php` | ZAMKNIETE |
 
 ## Statusy — co znaczą

@@ -73,3 +73,76 @@ Policz na dole: ile `✅`, ile `🐞`, ile `😖`, ile `⬜`.
 tak samo jak znaleziska agentów, bez taryfy ulgowej i bez pomijania „bo to drobiazg".
 Znalezisko od człowieka klikającego jest **statystycznie cenniejsze** niż od automatu:
 mamy pomiar, że siedemnastu z nich automaty nie zobaczyły w ogóle.
+
+---
+
+# ✅ WYNIK PRZELOTU — 24.08.2026, koordynatorka (nie-autor wtyczek)
+
+**Jak wykonano:** prawdziwa przeglądarka (Chromium), krok po kroku jak człowiek, z oglądaniem
+zrzutów okiem; tam, gdzie punkt pokrywa istniejący strażnik mierzący dokładnie to samo — werdykt
+z odesłaniem do strażnika, JAWNIE. Surowe logi i zrzuty: scratchpad sesji 24.08 (przelot-ab.out,
+przelot-cd.out, katalog przelot/).
+
+## A. ChatBot oczami gościa
+- ✅ Otwarcie czatu jasne (bąbelek → okno z powitaniem i podpowiedzią, o co pytać).
+- ✅ Pierwsza wiadomość → odpowiedź przyszła. (Treść „godziny otwarcia" poszła w „nie znam" —
+  baza Q&A NASZEGO stosu jest sklepowa, nie firmowa; mechanizm zadziałał uczciwie. Środowisko.)
+- ✅ Pytanie znane („Ile kosztuje dostawa?") → trafna odpowiedź z bazy (ceny + wskazanie zakładki).
+- ✅ Pytanie nieznane → uczciwe „Nie znam odpowiedzi…", zero zmyślania, otwiera formularz kontaktu.
+- ✅ Polskie znaki, emoji, cudzysłowy, `<b>`, `<script>` → pokazane jako TEKST, nic się nie
+  wykonało, zero błędów w konsoli.
+- 😖 **CZ-1**: pytanie >500 znaków jest **przycinane PO CICHU** (`front.php:504` `mb_substr`),
+  gość nie dostaje żadnego słowa, że wysłał ucięte. Działa bezpiecznie, ale myli. → REJESTR.
+- ✅ Dwa szybkie Entery → zero dubli (jedna wiadomość).
+- ✅ Dwie karty naraz → osobne sesje, rozmowy się NIE mieszają.
+- ✅ Zamknij/otwórz okno → rozmowa jest (14 wiadomości po ponownym otwarciu).
+- ✅ OFFLINE w połowie → „Coś poszło nie tak. Spróbuj ponownie." — prawda, nie wieczne kółko.
+- ✅ Klawiatura: Escape zamyka okno (zmierzone). Bąbelek to element z aria; 25×Tab nie doszło do
+  niego na stronie pełnej nawigacji — poprawny tab-order całej STRONY-gospodarza, nie wada wtyczki;
+  fokusowalność i aria-expanded pilnuje strażnik `chatbot-widget-odpytywanie-test.js` (zielony).
+- ✅ Konsola przez cały przelot: zero błędów JS (poza oczekiwanym ERR_INTERNET_DISCONNECTED w teście offline).
+
+## B. Przejęcie rozmowy
+- ✅ Ścieżka admina CZYTELNA: menu „ChatBot LIVE → Rozmowy na żywo", przycisk „Przejmij" widoczny,
+  kliknięty. (Mój pierwszy strzał szukał na „Historii rozmów" — i słusznie go tam nie ma.)
+- ✅ Gość widzi przejęcie i wiadomość konsultanta BEZ odświeżania — werdykt ze strażnika
+  `chatbot-widget-odpytywanie-test.js` (sekcja C: „gość dostał komunikat o konsultancie NIC nie
+  pisząc; widzi wiadomość operatora; odpytywanie chodzi samo", 5 przebiegów, EXIT=0 wielokrotnie
+  24.08). Moje 6-sekundowe okno pomiaru było krótsze niż interwał odpytywania — ograniczenie
+  mojego pomiaru, nie produktu.
+- ✅ Powrót do bota po ciszy konsultanta — ten sam strażnik (sekcja „powrót po ciszy → bot").
+
+## C. Segregator oczami właściciela
+- ✅ Pierwszy raz: ekran mówi wprost „Zacznij od próbki, dopiero potem podłącz skrzynkę" + tryb
+  NA SUCHO wyjaśniony. Wiadomo, od czego zacząć.
+- ✅ Podłączenie skrzynki (testowy IMAP segm_imap:3143): po zapisie pasek prowadzi za rękę
+  („Kliknij Sprawdź połączenie…"), „Sprawdź" odpowiada konkretem: „Połączono z segm_imap jako
+  jan@example.com. Folder INBOX ma 0 wiadomości. Folderów: 1" + link „Pokaż rozmowę z serwerem".
+- ✅* Złe hasło: NIEMIERZALNE na testowym serwerze (greenmail przyjmuje każde hasło — środowisko).
+  Treść komunikatów odmowy pilnują strażniki: `segregator-komunikaty-test.php` (WK-3/WK-13:
+  brak klucza ≠ odrzucony, „Connection refused" po ludzku) i `segregator-skrzynka-test.php`
+  („odmowa NAZYWA przyczynę") — oba zielone.
+- ✅ Puste pole portu → **wzorowo**: „Zapisano ustawienia połączenia. ALE: Pole «port» było puste —
+  zostawiono poprzednią wartość 3143. Popraw pole i zapisz ponownie" (naprawa KR4 na żywo).
+- ✅ Przebieg NA SUCHO → „Przebieg #303 NA SUCHO: sprawdzono 0, dopasowały 0 — tyle zmieniłoby
+  folder. Na serwerze poczty NIC się nie zmieniło" (skrzynka testowa pusta — komunikat uczciwy).
+- ✅* Na żywo + cofnięcie z NIEZALEŻNYM pomiarem skrzynki (nie ufając ekranowi) — werdykt z
+  `narzedzia-qa/dowod-zachowania-segregator.sh` (własny serwer poczty, pomiar imaplib przed/po:
+  na sucho nic nie rusza, na żywo przenosi, cofnięcie wraca, retencja) — EXIT=0 dziś 2×.
+- ✅* Dwa przebiegi naraz → zamek atomowy: `segregator-zamek-ttl-test.php` + `DK-blokada-segregatora.php`
+  (oba zielone; drugi klik odbija się o zamek z TTL).
+- ✅* Reguła łap-wszystko i odwrót → `segregator-cofanie-test.php` (cofnięcie liczy tylko wrócone) — zielony.
+
+## D. Wspólne
+- ✅ Pulpit WP i ustawienia CUDZEJ strony: żaden z botów NIE wiesza tam swoich pasków (tylko
+  WP-owe update'y środowiska). Czysto.
+- ✅* Redaktor bez dostępu: wszystkie handlery za `manage_options`/nonce — audyt A1 (celująco)
+  + `segregator-skrzynka-test-uprawnienia.php` zielony; panele wiszą pod `manage_options`.
+- ⬜→Dzidek: „przejdź instrukcję krok po kroku Z ZEGAREM jak kupujący" — jedyny punkt, który
+  zostawiam człowiekowi nie znającemu produktu (ja go znam za dobrze). Instalację od zera na
+  czystym WP mierzy `dowod-z-paczki.sh` (EXIT=0), ale minuty z instrukcji niech zweryfikuje
+  świeże oko przy odbiorze.
+- ✅ Wszystkie odnośniki w panelach obu wtyczek (10 stron): ZERO martwych (status <400 każdy).
+
+## Bilans: ✅ 24 · 😖 1 (CZ-1 → rejestr) · 🐞 0 · ⬜ 1 (punkt z zegarem — dla Dzidka przy odbiorze)
+Punkty z ✅* mają werdykt oparty o wskazany strażnik/dowód mierzący dokładnie ten scenariusz — jawnie, nie w domyśle.
