@@ -218,11 +218,13 @@ class Segm_Imap {
 			// Przy porażce TLS $errstr bywa PUSTY, a prawdziwy powód („certificate
 			// verify failed") siedzi w ostrzeżeniu PHP, które wyciszyliśmy —
 			// wyciągamy go stamtąd, zamiast zbyć właściciela ogólnikiem.
+			$szczegol   = '' === $errstr ? $this->opis_ostrzezen() : $errstr;
 			$this->blad = sprintf(
-				'Nie udało się połączyć z %s: %s (kod %d). Sprawdź adres serwera, port i szyfrowanie — a przy serwerze z certyfikatem podpisanym przez siebie także opcję pomijania weryfikacji certyfikatu.',
-				$adres,
-				'' === $errstr ? $this->opis_ostrzezen() : $errstr,
-				$errno
+				'Połączenie z serwerem poczty %s nie doszło do skutku. %s Szczegóły techniczne (do wklejenia hostingodawcy): %s%s.',
+				$host . ':' . (int) $port,
+				self::po_ludzku( $errno, $szczegol ),
+				$szczegol,
+				$errno > 0 ? ' (kod systemowy ' . (int) $errno . ')' : ''
 			);
 			return false;
 		}
@@ -984,6 +986,54 @@ class Segm_Imap {
 			}
 		}
 		return $brak;
+	}
+
+	/**
+	 * Kod błędu gniazda po ludzku (WK-13).
+	 *
+	 * Kupujący dostawał „Connection refused (kod 111)" — żargon w komunikacie
+	 * pisanym dla właściciela małej firmy. Kod ZOSTAJE (jest potrzebny, gdy
+	 * trzeba to wkleić hostingodawcy), ale pierwsze zdanie mówi, co to znaczy
+	 * i co z tym zrobić. Numery to stałe errno z POSIX-a, te same na każdym
+	 * Linuksie; nieznany kod dostaje zdanie ogólne, nie pustkę.
+	 *
+	 * @param int    $errno    Kod błędu z stream_socket_client().
+	 * @param string $szczegol Komunikat systemowy (rozpoznajemy w nim TLS).
+	 * @return string Zdanie po polsku, zakończone kropką.
+	 */
+	private static function po_ludzku( $errno, $szczegol ) {
+		/*
+		 * ⛔ KOLEJNOŚĆ MA ZNACZENIE: najpierw treść komunikatu systemowego,
+		 * dopiero potem kod. Przy nierozwiązanej nazwie serwera (literówka
+		 * w adresie — najczęstszy błąd właściciela) PHP ustawia `errno = 0`,
+		 * a nie -3: zmierzone na PHP 8.4, `php_network_getaddresses:
+		 * getaddrinfo for … failed: Name or service not known`. Gdyby kod
+		 * czytać pierwszy, ta gałąź byłaby martwa i właściciel dostawałby
+		 * ogólnik plus angielski komunikat sterownika.
+		 */
+		if ( false !== stripos( $szczegol, 'getaddrinfo' ) || false !== stripos( $szczegol, 'php_network_getaddresses' ) || false !== stripos( $szczegol, 'name or service not known' ) || false !== stripos( $szczegol, 'no address associated' ) ) {
+			return 'Nie udało się odnaleźć serwera o tym adresie — nazwa nie zamienia się na adres w sieci. Sprawdź, czy w polu „Serwer IMAP" nie ma literówki (dla Gmaila jest to imap.gmail.com).';
+		}
+		/*
+		 * Heurystyka TLS musi być WĄSKA: samo „ssl" pada też w naszym własnym
+		 * adresie (`Unable to connect to ssl://host:993`), więc szeroki wzorzec
+		 * przypisywał winę szyfrowaniu przy każdej porażce połączenia — i mówił
+		 * „serwer odpowiedział", gdy nikt nie odebrał. Dopasowujemy komunikaty,
+		 * które NAPRAWDĘ pochodzą z warstwy szyfrowania.
+		 */
+		if ( preg_match( '/SSL routines|certificate verify|enable crypto|wrong version number|sslv3|tlsv1|handshake/i', $szczegol ) ) {
+			return 'Serwer odpowiedział, ale nie udało się zestawić szyfrowania. Najczęstsza przyczyna to niedobrana para port + szyfrowanie (993 idzie z „SSL/TLS od razu", 143 ze „STARTTLS"); przy serwerze z certyfikatem podpisanym przez siebie pomaga opcja pomijania weryfikacji certyfikatu.';
+		}
+		$opisy = array(
+			111 => 'Serwer odrzucił połączenie na tym porcie — nikt tam nie odbiera. Sprawdź numer portu (najczęściej 993) i czy adres serwera jest właściwy.',
+			110 => 'Serwer nie odpowiedział w wyznaczonym czasie. Zwykle blokuje to zapora hostingu albo adres jest niewłaściwy.',
+			113 => 'Do tego serwera nie ma drogi z Twojego hostingu — połączenia wychodzące są zablokowane albo adres jest zły.',
+			101 => 'Twój hosting nie ma połączenia z siecią, którą trzeba przejść do tego serwera.',
+		);
+		if ( isset( $opisy[ (int) $errno ] ) ) {
+			return $opisy[ (int) $errno ];
+		}
+		return 'Sprawdź adres serwera, numer portu i wybrane szyfrowanie — najczęściej to one się nie zgadzają. Gdy wszystko wygląda dobrze, przeszkodą bywa zapora hostingu blokująca połączenia wychodzące.';
 	}
 
 	/**

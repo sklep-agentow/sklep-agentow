@@ -125,14 +125,23 @@ function segm_strona_skrzynka() {
 			<?php foreach ( segm_skrzynka_diagnostyka() as $wpis ) : ?>
 				<tr>
 					<td style="width:34%"><strong><?php echo esc_html( $wpis['nazwa'] ); ?></strong></td>
-					<td style="width:8%">
-						<?php if ( 'ok' === $wpis['stan'] ) : ?>
-							<span style="color:#008a20">✔ jest</span>
-						<?php elseif ( 'uwaga' === $wpis['stan'] ) : ?>
-							<span style="color:#996800">! uwaga</span>
-						<?php else : ?>
-							<span style="color:#d63638">✘ brak</span>
-						<?php endif; ?>
+					<td style="width:12%">
+						<?php
+						$kolory = array(
+							'ok'    => '#008a20',
+							'uwaga' => '#996800',
+							'blad'  => '#d63638',
+						);
+						$domysl = array(
+							'ok'    => '✔ jest',
+							'uwaga' => '! uwaga',
+							'blad'  => '✘ brak',
+						);
+						$stan   = isset( $domysl[ $wpis['stan'] ] ) ? $wpis['stan'] : 'blad';
+						?>
+						<span style="color:<?php echo esc_attr( $kolory[ $stan ] ); ?>">
+							<?php echo esc_html( isset( $wpis['znacznik'] ) && '' !== $wpis['znacznik'] ? $wpis['znacznik'] : $domysl[ $stan ] ); ?>
+						</span>
 					</td>
 					<td><?php echo esc_html( $wpis['opis'] ); ?></td>
 				</tr>
@@ -157,7 +166,8 @@ function segm_strona_skrzynka() {
 					<th scope="row"><label for="segm-port">Port i szyfrowanie</label></th>
 					<td>
 						<input type="number" id="segm-port" name="port" min="1" max="65535" value="<?php echo (int) $ust['port']; ?>" style="width:8em">
-						<select name="szyfrowanie">
+						<label for="segm-szyfrowanie" class="screen-reader-text">Szyfrowanie połączenia</label>
+						<select id="segm-szyfrowanie" name="szyfrowanie">
 							<option value="ssl" <?php selected( $ust['szyfrowanie'], 'ssl' ); ?>>SSL/TLS od razu (zwykle port 993)</option>
 							<option value="starttls" <?php selected( $ust['szyfrowanie'], 'starttls' ); ?>>STARTTLS (zwykle port 143)</option>
 							<option value="brak" <?php selected( $ust['szyfrowanie'], 'brak' ); ?>>bez szyfrowania (tylko serwer w tej samej sieci!)</option>

@@ -45,6 +45,14 @@ wersjonowanie według [SemVer](https://semver.org/lang/pl/).
 - **Wiersz przebiegu bez podsumowania ostrzega** zamiast mówić „w toku" w nieskończoność:
   gdy proces zginie albo baza odrzuci także końcowy zapis, komunikat mówi wprost, że
   przebieg nie doszedł do końca, a liczby w wierszu mogą być niepełne.
+- **Komunikaty po ludzku i prawdziwe** (WK-3, WK-4, WK-13, A4-F3): pasek trybu AI przy
+  BRAKU klucza jest żółtym ostrzeżeniem („nie ma klucza; tryb regułowy jest pełnoprawny;
+  klucz bierzesz stąd…"), a nie czerwonym „KLUCZ API ZOSTAŁ ODRZUCONY. Sprawdź, czy jest
+  wpisany w całości" o kluczu, którego właściciel nigdy nie wpisywał; tabelka zgodności
+  serwera nie pokazuje już „✔ jest" obok opisu „Nieobecne"; błędy połączenia zaczynają się
+  zdaniem po polsku („Serwer odrzucił połączenie na tym porcie — nikt tam nie odbiera"),
+  a kod systemowy zostaje w części „Szczegóły techniczne"; pole wyboru szyfrowania ma
+  etykietę dla czytnika ekranu.
 
 ---
 
