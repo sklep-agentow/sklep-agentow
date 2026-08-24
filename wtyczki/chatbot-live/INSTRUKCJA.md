@@ -44,6 +44,26 @@ W menu bocznym pojawia się pozycja **ChatBot LIVE**.
    odpowiedzieć, i jedno, na które nie ma — powinien uczciwie zaproponować
    zostawienie maila.
 
+> **Warto dodać wpis powitalny — ale to Twoja decyzja, i warto znać jej cenę.**
+> Pierwsze, co pisze człowiek do czatu, to zwykle „dzień dobry" — a bot z założenia
+> **nie zgaduje** i na nieznane pytanie odpowiada „nie znam odpowiedzi". Możesz to
+> zmienić, dodając w **Bazie Q&A** własny wpis (przycisk *Dodaj wpis*):
+>
+> - **pytanie wzorcowe:** `Dzień dobry / cześć — jak zacząć?`
+> - **słowa kluczowe:** `dzień dobry, dzien dobry, dobry wieczor, dobry wieczór, witam, witaj, czesc, cześć, hej, halo, siema, hello`
+> - **odpowiedź:** `Dzień dobry! Zapytaj o cennik, godziny otwarcia, ofertę, dojazd albo termin realizacji — odpowiem od ręki. Jeśli czegoś nie będę wiedzieć, zostawisz wiadomość i odezwiemy się osobiście.`
+>
+> ⚠️ **Cena tego wpisu:** przy pytaniu, które łączy powitanie z treścią
+> („**Dzień dobry, ile kosztuje wizyta?**"), bot może odpowiedzieć **powitaniem
+> zamiast cennika** — dopasowanie liczy trafione warianty, a przy remisie wygrywa
+> dłuższy, czyli „dzień dobry". Dlatego tego wpisu **nie ma** w bazie startowej.
+> Jeśli chcesz go mieć, a zależy Ci na pytaniach złożonych, zostaw w słowach
+> kluczowych **tylko krótkie** powitania (`witam, witaj, czesc, cześć, hej, halo,
+> siema, hello`) — wtedy „dzień dobry" samo w sobie dalej trafi w tekst awaryjny,
+> ale zagajenia z treścią pójdą do właściwej odpowiedzi. Ta sama zasada dotyczy
+> podziękowań („dziękuję", „ok") — jeśli chcesz na nie odpowiadać, dodaj im
+> własny wpis i sprawdź w **Teście bota**, czy nie przejmuje pytań.
+
 ### Test bota bez wychodzenia na stronę
 
 Na stronie **Baza Q&A**, pod listą wpisów, jest sekcja **„Test bota"**. Wpisujesz

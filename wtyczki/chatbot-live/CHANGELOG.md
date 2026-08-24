@@ -33,6 +33,19 @@ migracja odpala się sama przy pierwszym wejściu do panelu po aktualizacji
   za proxy i wszyscy goście dzielą jeden adres.
 - **Odinstalowanie nie zostawia już opcji `chatl_pulapka`** (dokumentacja obiecywała pustą
   różnicę bazy, a opcja przeżywała pełne czyszczenie).
+- **Przejęcie rozmowy przez człowieka dociera do gościa bez drugiego pytania.** Otwarcie
+  okna czatu kończyło się błędem JavaScriptu (`odpytaj is not defined`) i odpytywanie
+  w ogóle nie startowało: operator przejmował rozmowę i pisał, a gość patrzył
+  w nieruchome okno, dopóki sam czegoś nie napisał (zmierzone: zero zapytań przez
+  20 sekund). Ten sam błąd zamykał się na bąbelku (`zatrzymajOdpytywanie is not defined`).
+- **Bąbelek czatu mówi czytnikom ekranu, czy czat jest otwarty** (`aria-expanded`);
+  etykieta „Otwórz czat" zostaje bez zmian.
+- **Instrukcja ma gotowy wpis powitalny do wklejenia.** „Dzień dobry" to pierwsze, co
+  pisze człowiek — a bot z założenia nie zgaduje i odpowiada „nie znam odpowiedzi".
+  Wpisu **nie dokładamy do bazy startowej**: z wariantami „dzień dobry"/„dobry wieczór"
+  przejmowałby pytania złożone („Dzień dobry, ile kosztuje wizyta?" → powitanie zamiast
+  cennika). Instrukcja podaje gotową treść, ostrzega o tym skutku i mówi, jak go uniknąć —
+  decyzja należy do właściciela. Silnik dopasowania bez zmian.
 - **„Zapisano" dopiero po zmierzonym zapisie** (audyt A2, F1–F3). Przy odrzuconym
   przez bazę zapisie panel ustawień pokazuje komunikat błędu i obowiązują poprzednie
   ustawienia (m.in. dzienny limit wywołań AI) — wcześniej świecił „Ustawienia zapisane".

@@ -48,9 +48,20 @@
 
 	var sesja = wczytajSesje();
 	var okno, listaWiadomosci, formularzKontaktu, zamknijFormularz, polePulapki;
-	/* Ustawiane przy budowie okna — zamkniecie czatu (takze klawiszem Escape)
-	   ma UCISZYC odpytywanie, inaczej zamkniete okno dalej obciaza serwer. */
+	/*
+	 * MOSTY do wnetrza zbudujOkno(). Odpytywanie zyje w domkniecie tej funkcji
+	 * (widzi sesje, liste wiadomosci i pasek rozmowcy), a sterowac nim trzeba
+	 * TAKZE z zewnatrz: babelek otwiera i zamyka okno, Escape je zamyka.
+	 * Bez mostu wywolanie `odpytaj()` spod babelka to ReferenceError — zmienna
+	 * nie istnieje w tym zasiegu — i cala obsluga kliknięcia przerywa sie
+	 * w polowie: okno sie otwiera, ale odpytywanie NIE startuje, wiec gosc nie
+	 * dostaje ani komunikatu o przejeciu rozmowy, ani wiadomosci operatora,
+	 * dopoki sam czegos nie napisze (audyt A4-F1/F2).
+	 * Domyslne puste funkcje sa celowe: gdyby okno jeszcze nie powstalo,
+	 * klikniecie ma nic nie zrobic, a nie wywalic skrypt.
+	 */
 	var stopOdpytywania = function () {};
+	var startOdpytywania = function () {};
 
 	/* Zwraca obietnice sesji: z pamieci karty albo swiezo wydana przez serwer. */
 	function dajSesje() {
@@ -323,6 +334,8 @@
 	/* Zamkniecie okna czatu zwija TAKZE formularz — inaczej wracal otwarty. */
 	function zamknijOkno() {
 		okno.classList.remove('chatl-otwarty');
+		var babelek = document.querySelector('.chatl-babelek');
+		if (babelek) { babelek.setAttribute('aria-expanded', 'false'); }
 		if (zamknijFormularz) { zamknijFormularz(); }
 		stopOdpytywania();
 	}
@@ -436,7 +449,10 @@
 			if (odpytywanieId) { window.clearTimeout(odpytywanieId); }
 			odpytywanieId = null;
 		}
-		stopOdpytywania = zatrzymajOdpytywanie;
+		/* Oba mosty ustawiane RAZEM i w jednym miejscu — inaczej latwo dolozyc
+		   trzecie wywolanie spod babelka i wrocic do ReferenceError. */
+		stopOdpytywania  = zatrzymajOdpytywanie;
+		startOdpytywania = odpytaj;
 
 		/* Karta wraca na wierzch = pytamy OD RAZU: gosc wlasnie wrocil do rozmowy
 		   i najgorsze, co moze zobaczyc, to cisza przez pelny interwal. */
@@ -517,16 +533,22 @@
 
 		var babelek = el('button', 'chatl-babelek', '💬');
 		babelek.type = 'button';
+		/* Etykieta ZOSTAJE stala („Otwórz czat") — to po niej trafiaja w babelek
+		   testy i czytniki ekranu. Stan otwarcia niesie aria-expanded, ktore
+		   czytnik odczytuje jako „rozwiniete/zwiniete" niezaleznie od nazwy. */
 		babelek.setAttribute('aria-label', 'Otwórz czat');
+		babelek.setAttribute('aria-expanded', 'false');
 		babelek.addEventListener('click', function () {
 			okno.classList.toggle('chatl-otwarty');
-			if (okno.classList.contains('chatl-otwarty')) {
+			var otwarty = okno.classList.contains('chatl-otwarty');
+			babelek.setAttribute('aria-expanded', otwarty ? 'true' : 'false');
+			if (otwarty) {
 				okno.querySelector('.chatl-pole-pytania').focus();
 				/* Pierwsze pytanie OD RAZU po otwarciu: operator mogl przejac
 				   rozmowe, gdy okno bylo zamkniete i nikt nie pytal. */
-				dajSesje().then(odpytaj);
+				dajSesje().then(function () { startOdpytywania(); });
 			} else {
-				zatrzymajOdpytywanie();
+				stopOdpytywania();
 			}
 		});
 		korzen.appendChild(babelek);

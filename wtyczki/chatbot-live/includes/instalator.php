@@ -254,6 +254,18 @@ function chatl_seed_demo() {
 		),
 	);
 
+	/*
+	 * ⛔ CELOWO BEZ WPISU POWITALNEGO. Wcielenie kupującego (WK-8) pokazało, że
+	 * „dzień dobry" kończy się tekstem awaryjnym — ale wpis z wariantami
+	 * „dzień dobry"/„dobry wieczór" w danych startowych PRZEJMUJE pytania
+	 * złożone: przy remisie trafień wygrywa dłuższy wariant, więc „Dzień dobry,
+	 * ile kosztuje wizyta?" dostawało powitanie zamiast cennika (zmierzone).
+	 * Silnika nie zmieniamy — zamówienie §FRONT zakazuje
+	 * luźniejszego dopasowania — więc wpis powitalny zostaje DECYZJĄ właściciela:
+	 * gotowiec do wklejenia i ostrzeżenie o tym skutku ubocznym są w instrukcji,
+	 * w rozdziale o konfiguracji.
+	 */
+
 	$teraz = current_time( 'mysql' );
 	foreach ( $seed as $para ) {
 		$zapisano = $wpdb->insert(
