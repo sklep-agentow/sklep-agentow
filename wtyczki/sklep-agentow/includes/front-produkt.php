@@ -128,7 +128,7 @@ function sklepag_tresc_produktu( $slug ) {
 			/*
 			 * Pliki galerii to KOPIE zrzutow z wtyczek botow (assets/w-srodku/ —
 			 * samowystarczalnosc sklepu). Po regeneracji zrzutow instrukcji botow
-			 * (testy/zrzuty-instrukcje.js) skopiuj nowe wersje takze tutaj.
+			 * skopiuj nowe wersje takze tutaj.
 			 */
 			'galeria'      => array(
 				array(
@@ -216,7 +216,7 @@ function sklepag_tresc_produktu( $slug ) {
 			'przedpo'      => true,
 			'funkcje'      => array(
 				array( 'Reguły segregacji', 'Nadawca / temat / słowa w treści → kategoria. Kolejność na liście rozstrzyga: pierwsza pasująca wygrywa — zero niejednoznaczności.' ),
-				array( 'Kategorie pod Twoją firmę', 'Dowolne nazwy, pełny CRUD: Oferty, Faktury, Reklamacje — jak chcesz.' ),
+				array( 'Kategorie pod Twoją firmę', 'Dowolne nazwy: dodajesz i zmieniasz, jak chcesz — Oferty, Faktury, Reklamacje. Kategorii używanej przez regułę nie skasujesz przypadkiem.' ),
 				array( 'Próbki zamiast ryzyka', 'Wbudowane 30 maili demo po polsku + import WŁASNEJ próbki z CSV (od, temat, treść).' ),
 				array( 'Raport z liczbami', 'Ile do której kategorii, ile bez dopasowania, % pokrycia; przy próbce z oczekiwaną kategorią — trafność i lista pomyłek.' ),
 				array( 'Tryb AI (opcjonalny)', 'Twój klucz: klasyfikacja modelem + przebieg „porównaj reguły vs AI" z raportem różnic.' ),
