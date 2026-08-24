@@ -80,7 +80,7 @@ Faktury, Reklamacje, Reszta); strzałka między kolumnami.
 **CO DOSTAJESZ** (kafle):
 - Reguły segregacji: nadawca / temat / słowa w treści → kategoria; kolejność
   na liście rozstrzyga (pierwsza pasująca wygrywa — zero niejednoznaczności).
-- Kategorie pod Twoją firmę (CRUD, dowolne nazwy).
+- Kategorie pod Twoją firmę (dowolne nazwy: dodajesz i zmieniasz; używanej przez regułę nie skasujesz przypadkiem).
 - Wbudowana próbka 30 maili PL + import WŁASNEJ próbki z CSV (od, temat, treść).
 - Raport z przebiegu: ile do której kategorii, ile bez dopasowania, % pokrycia;
   przy próbce z oczekiwaną kategorią — trafność (accuracy) i lista pomyłek.
