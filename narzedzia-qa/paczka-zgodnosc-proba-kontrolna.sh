@@ -101,6 +101,11 @@ sprawdz() {
 # wtyczki, wywracałaby bramkę na kontroli treści zipa — i „OK" pod pozostałymi
 # przypadkami byłoby przypadkiem, nie dowodem. Katalog wtyczki pokrywa się
 # z allowlistą co do pliku, więc pakowanie całości daje ten sam zestaw.
+# Piaskownica próby NIE jest repo gita — zamek wydanych paczek w buduj-paczki
+# wymaga wtedy jawnej flagi (fail-closed). Tu jest ona ŚWIADOMA i bezpieczna:
+# budujemy kopie w /tmp, żadna wydana paczka nie jest osiągalna.
+export BUDUJ_POZA_REPO=1
+
 przepakuj_z_zrodla() {
 	local cel="$1" wersja etap
 	wersja="$(wersja_kopii "$cel")"

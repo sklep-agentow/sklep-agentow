@@ -43,8 +43,8 @@ spr "kazdy wpis CHANGELOG oddzielony kreska" "0" \
   "awk '/^## \\[1\\./ {if (NR>1 && poprz != \"---\") b++} {if (\$0 != \"\") poprz=\$0} END {print b+0}' $W/CHANGELOG.md"
 
 echo "=== A. Wersja i schemat ==="
-spr "naglowek Version"            "1.5.9" "grep -oP '(?<=^ \* Version: ).*' $W/chatbot-live.php"
-spr "stala CHATL_WERSJA"          "1.5.9" "grep -oP \"(?<=CHATL_WERSJA', ')[^']*\" $W/chatbot-live.php"
+spr "naglowek Version"            "1.5.10" "grep -oP '(?<=^ \* Version: ).*' $W/chatbot-live.php"
+spr "stala CHATL_WERSJA"          "1.5.10" "grep -oP \"(?<=CHATL_WERSJA', ')[^']*\" $W/chatbot-live.php"
 spr "CHATL_WERSJA_SCHEMATU"       "8"     "grep -oP \"(?<=CHATL_WERSJA_SCHEMATU', ')[^']*\" $W/chatbot-live.php"
 spr "Requires at least"           "6.0"   "grep -oP '(?<=^ \* Requires at least: ).*' $W/chatbot-live.php"
 spr "Requires PHP"                "8.1"   "grep -oP '(?<=^ \* Requires PHP: ).*' $W/chatbot-live.php"
@@ -131,7 +131,7 @@ spr "statystyki.php na liscie paczki" "1" "grep -c 'chatbot-live/includes/statys
 spr "import.php na liscie plikow paczki" "1" "grep -c 'chatbot-live/includes/import.php' boty/buduj-paczki.sh"
 spr "CHANGELOG.md na liscie paczki"  "1" "grep -c 'chatbot-live/CHANGELOG.md' boty/buduj-paczki.sh"
 spr "readme.txt na liscie paczki"    "1" "grep -c 'chatbot-live/readme.txt' boty/buduj-paczki.sh"
-spr "plikow chatbota w allowliscie"   "26" "sed -n '/^ALLOWLIST_CHATBOT=(/,/^)/p' boty/buduj-paczki.sh | grep -c '\"chatbot-live/'"
+spr "plikow chatbota w allowliscie"   "32" "sed -n '/^ALLOWLIST_CHATBOT=(/,/^)/p' boty/buduj-paczki.sh | grep -c '\"chatbot-live/'"
 # Klasa, ktora wyszla przy scalaniu 1.4.10 z 1.5.0: konflikt w chatbot-live.php
 # zjadl `require_once includes/przejecie.php`. Plik zostal w katalogu i w paczce,
 # wiec allowlista swiecila na zielono — a wtyczka po prostu nie ladowala polowy
@@ -391,6 +391,13 @@ else
 fi
 
 echo
+
+echo "=== Z. Zrzuty z INSTRUKCJI: plik istnieje i jedzie w paczce (uwaga D8 recenzji #169) ==="
+for obrazek in $(grep -oE '\]\(zrzuty/[a-z0-9-]+\.png\)' wtyczki/chatbot-live/INSTRUKCJA.md | tr -d ']()'); do
+  spr "plik $obrazek istnieje" "1" "test -f wtyczki/chatbot-live/$obrazek && echo 1 || echo 0"
+  spr "$obrazek na allowliscie paczki" "1" "grep -c '\"chatbot-live/$obrazek\"' boty/buduj-paczki.sh"
+done
+
 if [ "$BLEDY" -eq 0 ]; then
   echo "ZGODNE: dokumentacja i diagram nie rozjezdzaja sie z kodem"
 else

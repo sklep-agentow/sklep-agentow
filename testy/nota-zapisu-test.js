@@ -44,6 +44,7 @@ function przywrocPolityke() {
     /* Pad restore NIE zeruje migawki (kolejne wywolanie, np. z .catch, sprobuje
      * raz jeszcze) i melduje glosno — jak bliźniak w widget-formularz.js. */
     console.error('przywrocPolityke(): restore adres_polityki PADL — stos mogl zostac ze stanem testowym');
+    bledy++; /* pad restore = czerwony test (DROBNA 16 recenzji #168) */
     return;
   }
   notaMigawka = null;

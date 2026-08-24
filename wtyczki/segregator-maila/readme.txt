@@ -4,7 +4,7 @@ Tags: email, imap, inbox, automation, rules
 Requires at least: 6.0
 Tested up to: 7.0.4
 Requires PHP: 8.1
-Stable tag: 1.3.2
+Stable tag: 1.3.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -137,6 +137,10 @@ z serwerem. Hasło jest w nim zamaskowane.
 == Changelog ==
 
 Pełna historia zmian jest w pliku `CHANGELOG.md` w katalogu wtyczki.
+
+= 1.3.3 =
+Instrukcja z 6 zrzutami ekranu (próbka, przebiegi, reguły, kategorie, IMAP, ustawienia) — maszynowo.
+Zero zmian w kodzie.
 
 = 1.3.2 =
 Wyniki pełnego audytu wprawione w kod: przebieg na żywo zapisuje zamiar PRZED

@@ -13,6 +13,31 @@ set -euo pipefail
 KATALOG_SKRYPTU="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 KORZEN="$(dirname "$KATALOG_SKRYPTU")"
 WYJSCIE="$KATALOG_SKRYPTU/paczki"
+
+# ⛔ ZAMEK WYDANYCH PACZEK — klasa 10 (24.08: budowa zrzutów przed bumpem dwa razy
+# nadpisała wydane 1.5.9/1.3.2 nową treścią pod starym numerem).
+# FAIL-CLOSED: gdy nie umiem SPRAWDZIĆ, czy paczka jest wydana — ODMAWIAM, nie buduję.
+#   - poza repo gita:      wymaga BUDUJ_POZA_REPO=1 (ustawia piaskownica próby kontrolnej),
+#   - origin/main nieznane: ODMOWA,
+#   - paczka w origin/main: ODMOWA.
+# Świadome obejście każdej odmowy: BUDUJ_NADPISZ_WYDANE=1 (np. naprawa zepsutego zipa).
+zamek_wydanej_paczki() {
+	local NAZWA; NAZWA=$(basename "$1")
+	[ "${BUDUJ_NADPISZ_WYDANE:-0}" = "1" ] && return 0
+	if ! git rev-parse --git-dir >/dev/null 2>&1; then
+		[ "${BUDUJ_POZA_REPO:-0}" = "1" ] && return 0
+		echo "⛔ Nie jestem w repo gita — nie umiem sprawdzić, czy $NAZWA jest wydana. Odmowa (piaskownica: BUDUJ_POZA_REPO=1)." >&2
+		exit 1
+	fi
+	if ! git rev-parse --verify --quiet origin/main >/dev/null; then
+		echo "⛔ origin/main nieosiągalny — nie umiem sprawdzić, czy $NAZWA jest wydana. Odmowa." >&2
+		exit 1
+	fi
+	if git cat-file -e "origin/main:boty/paczki/$NAZWA" 2>/dev/null; then
+		echo "⛔ $NAZWA jest już WYDANA (origin/main) — podbij wersję wtyczki zamiast nadpisywać." >&2
+		exit 1
+	fi
+}
 mkdir -p "$WYJSCIE"
 
 # Pełna, jawna lista plików każdej paczki (ścieżki względem wtyczki/).
@@ -21,6 +46,12 @@ ALLOWLIST_CHATBOT=(
 	"chatbot-live/uninstall.php"
 	"chatbot-live/LICENSE"
 	"chatbot-live/INSTRUKCJA.md"
+	"chatbot-live/zrzuty/ustawienia.png"
+	"chatbot-live/zrzuty/zgloszenia.png"
+	"chatbot-live/zrzuty/statystyki.png"
+	"chatbot-live/zrzuty/widget-babelek.png"
+	"chatbot-live/zrzuty/widget-okno.png"
+	"chatbot-live/zrzuty/widget-formularz.png"
 	"chatbot-live/DOKUMENTACJA-TECHNICZNA.md"
 	"chatbot-live/DIAGRAM-PRZEPLYWU.svg"
 	"chatbot-live/CHANGELOG.md"
@@ -51,6 +82,12 @@ ALLOWLIST_SEGREGATOR=(
 	"segregator-maila/readme.txt"
 	"segregator-maila/CHANGELOG.md"
 	"segregator-maila/INSTRUKCJA.md"
+	"segregator-maila/zrzuty/skrzynka-imap.png"
+	"segregator-maila/zrzuty/reguly.png"
+	"segregator-maila/zrzuty/kategorie.png"
+	"segregator-maila/zrzuty/probka-demo.png"
+	"segregator-maila/zrzuty/przebiegi.png"
+	"segregator-maila/zrzuty/ustawienia.png"
 	"segregator-maila/DOKUMENTACJA-TECHNICZNA.md"
 	"segregator-maila/DIAGRAM-PRZEPLYWU.svg"
 	"segregator-maila/includes/instalator.php"
@@ -104,6 +141,7 @@ zbuduj() {
 
 	# 5) Zip TYLKO z plików allowlisty (katalog wtyczki w korzeniu — format WP).
 	local PACZKA="$WYJSCIE/$WTYCZKA-$WERSJA.zip"
+	zamek_wydanej_paczki "$PACZKA"
 	rm -f "$PACZKA"
 	( cd "$KORZEN/wtyczki" && zip -q "$PACZKA" "${ALLOWLIST[@]}" )
 
@@ -113,6 +151,8 @@ zbuduj() {
 	if [ -n "$ROZNICA" ]; then
 		echo "BLAD: zawartosc zipa $WTYCZKA rozni sie od allowlisty:" >&2
 		echo "$ROZNICA" >&2
+		# Sprzątanie WŁASNEGO, świeżo zbudowanego artefaktu po padzie kontroli —
+		# zamek wydanych paczek pilnuje wejścia do budowy, nie tego rm.
 		rm -f "$PACZKA"
 		exit 1
 	fi

@@ -11,6 +11,14 @@ Nic jeszcze.
 
 ---
 
+## [1.3.3] — 2026-08-24
+
+### Dodane
+- **Instrukcja z 6 zrzutami ekranu** (próbka, przebiegi z raportem, reguły, kategorie,
+  połączenie IMAP, ustawienia) — robionymi maszynowo. Zero zmian w kodzie wtyczki.
+
+---
+
 ## [1.3.2] — 2026-08-24 · schemat bazy 3 → 4
 
 ### Naprawione

@@ -4,7 +4,7 @@ Tags: chat, chatbot, faq, kontakt, wsparcie
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.5.9
+Stable tag: 1.5.10
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -152,6 +152,10 @@ w ustawieniach. Klucz API jest kasowany zawsze, niezależnie od tego przełączn
 
 Pełna historia zmian, z opisem każdej pozycji, jest w pliku `CHANGELOG.md`
 w paczce. Poniżej skrót.
+
+= 1.5.10 =
+Instrukcja z 6 zrzutami ekranu (panel, widget, statystyki) — maszynowo, odtwarzalnie.
+Zero zmian w kodzie.
 
 = 1.5.9 =
 Wyniki pełnego audytu wprawione w kod: przejęcie rozmowy przez konsultanta dociera

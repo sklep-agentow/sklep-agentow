@@ -25,6 +25,15 @@ Wymagania: WordPress 6.0+ i PHP 8.1+.
 
 ## 2. Pierwszy przebieg (1 minuta)
 
+
+Ekran **Próbka maili** — 30 wbudowanych maili demo, na których uczysz reguły:
+
+![Ekran Próbka maili](zrzuty/probka-demo.png)
+
+Sam przebieg uruchamiasz na ekranie **Przebiegi** — tam jest przycisk „Przepuść próbkę" i raport trafień:
+
+![Ekran Przebiegi — przycisk i raport](zrzuty/przebiegi.png)
+
 1. W menu bocznym: **Segregator maila → Przebiegi**.
 2. Kliknij **„Przepuść próbkę"** (tryb „reguły").
 3. Dostajesz raport: mail → kategoria → która reguła zadziałała, trafienia
@@ -33,6 +42,10 @@ Wymagania: WordPress 6.0+ i PHP 8.1+.
    Raport możesz pobrać jako CSV.
 
 ## 3. Reguły pod własną firmę w ~20 minut
+
+![Lista reguł](zrzuty/reguly.png)
+
+![Kategorie](zrzuty/kategorie.png)
 
 1. **Kategorie** → dodaj/zmień kategorie pod swoją skrzynkę.
 2. **Reguły** → każda reguła to: *warunek* (nadawca / temat / treść ZAWIERA
@@ -89,6 +102,8 @@ Co trzeba wiedzieć, zanim wczytasz:
 - po wczytaniu **sprawdź kolejność reguł** — to ona rozstrzyga, która wygrywa.
 
 ## 4. Tryb AI (opcjonalny — hybryda)
+
+![Ustawienia Segregatora — tryb AI, klucz, stop-lossy](zrzuty/ustawienia.png)
 
 **Najpierw zgoda — bez niej tryby AI się nie uruchomią.** W trybie AI nadawca,
 temat i treść każdego maila z próbki wychodzą z Twojego serwera do zewnętrznego
@@ -161,6 +176,7 @@ Koszty API ponosi właściciel klucza według cennika dostawcy.
 
 ## 5. Eksport filtrów do prawdziwej skrzynki
 
+
 Kiedy reguły dają na próbce wynik, który Cię zadowala, przenieś je tam, gdzie
 naprawdę stoi poczta: **Segregator maila → Eksport filtrów**.
 
@@ -197,6 +213,11 @@ Te same ostrzeżenia są wpisane w KAŻDY wygenerowany plik, żeby nie zgubiły 
 po drodze do osoby, która będzie klikać w skrzynce.
 
 ## 6. Prawdziwa skrzynka (IMAP) — segregacja na żywo
+
+
+Formularz połączenia ze skrzynką — pola opisane krok po kroku:
+
+![Połączenie ze skrzynką IMAP](zrzuty/skrzynka-imap.png)
 
 Zakładka **Segregator maila → Skrzynka (IMAP)**. Wtyczka loguje się do Twojej
 skrzynki, czyta wiadomości i przenosi je do folderów na serwerze poczty —
