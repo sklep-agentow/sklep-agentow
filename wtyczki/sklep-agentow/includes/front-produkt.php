@@ -125,6 +125,11 @@ function sklepag_tresc_produktu( $slug ) {
 			),
 			'dla_kogo'     => array( 'Usługi lokalne — fryzjer, warsztat, gabinet', 'Sklepy i firmy z powtarzalnymi pytaniami', 'Każdy, kto traci klientów piszących po godzinach' ),
 			'uczciwosc'    => 'Nie znajdziesz tu opinii z gwiazdkami — sprzedajemy od niedawna i nie fabrykujemy ocen; zamiast tego masz tryb testowy i seed demo, żeby sprawdzić samemu. Pełnoprawny silnik regułowy działa od razu — bez kluczy i opłat. „LIVE" znaczy dwie rzeczy: bot odpowiada natychmiast, a Ty możesz w każdej chwili PRZEJĄĆ rozmowę i pisać do gościa osobiście — wtedy bot w niej milczy, a gość widzi wprost, że rozmawia z człowiekiem; po pięciu minutach Twojej ciszy rozmowa sama wraca do bota. Gdy nie przejmiesz, bot zbiera kontakt i odpisujesz później. Bot nie udaje wszechwiedzy. Tryb AI włączasz WŁASNYM kluczem; przy limicie dziennym lub błędzie bot sam wraca do reguł. Prywatność: w trybie regułowym treść rozmów nie opuszcza Twojego serwera; w trybie AI pytanie gościa idzie do API dostawcy (informacja też do Twojej polityki prywatności).',
+			/*
+			 * Pliki galerii to KOPIE zrzutow z wtyczek botow (assets/w-srodku/ —
+			 * samowystarczalnosc sklepu). Po regeneracji zrzutow instrukcji botow
+			 * (testy/zrzuty-instrukcje.js) skopiuj nowe wersje takze tutaj.
+			 */
 			'galeria'      => array(
 				array(
 					'plik'   => 'chatbot-live--zywy.jpg',
@@ -254,7 +259,7 @@ function sklepag_tresc_produktu( $slug ) {
 				array(
 					'plik'   => 'segregator-maila--kategorie.png',
 					'alt'    => 'Lista kategorii poczty: Oferty, Faktury, Reklamacje i własne',
-					'podpis' => 'KATEGORIE POD TWOJĄ FIRMĘ — PEŁNY CRUD',
+					'podpis' => 'KATEGORIE POD TWOJĄ FIRMĘ — UŻYWANEJ NIE SKASUJESZ PRZYPADKIEM',
 					'szer'   => 1100,
 					'wys'    => 511,
 				),
@@ -304,34 +309,6 @@ function sklepag_tresc_produktu( $slug ) {
 }
 
 /**
- * Zrzut ŻYWEGO bota do karty i strony produktu (feedback Dzidka 19.08: „potrzeba
- * obrazów do produktów"). Zrzuty robione z tej instalacji, bez retuszu — spójne
- * z sekcją uczciwości. Wymiary wpisane na sztywno = brak CLS przy lazy-load.
- *
- * @param string $slug Slug produktu.
- * @return array|null Dane obrazu (plik/alt/podpis/szer/wys) albo null.
- */
-function sklepag_zrzut_produktu( $slug ) {
-	$zrzuty = array(
-		'chatbot-live'     => array(
-			'plik'   => 'chatbot-live.jpg',
-			'alt'    => 'Okno rozmowy ChatBota LIVE na stronie: gość pyta o godziny otwarcia, bot odpowiada wpisem z bazy pytań i odpowiedzi',
-			'podpis' => 'PRAWDZIWY ZRZUT Z TEJ STRONY — TRYB REGUŁOWY, BEZ KLUCZA AI',
-			'szer'   => 682,
-			'wys'    => 908,
-		),
-		'segregator-maila' => array(
-			'plik'   => 'segregator-maila.jpg',
-			'alt'    => 'Raport przebiegu Segregatora maila w panelu WordPressa: 30 maili w próbce, pokrycie regułami 80 procent, trafność 100 procent, podział na kategorie',
-			'podpis' => 'PRAWDZIWY RAPORT Z PANELU — PRÓBKA 30 MAILI DEMO, LICZBY BEZ RETUSZU',
-			'szer'   => 1200,
-			'wys'    => 470,
-		),
-	);
-	return isset( $zrzuty[ $slug ] ) ? $zrzuty[ $slug ] : null;
-}
-
-/**
  * Ilustracja produktu do KARTY listy (feedback Dzidka 19.08: „fajne obrazy —
  * robot segregujący maile, ktoś odpisujący na czacie"). Własne SVG w palecie
  * strony (limonkowy line-art, roboty-bliźniaki) zamiast generycznego stocka;
@@ -361,7 +338,7 @@ function sklepag_ilustracja_produktu( $slug ) {
 /**
  * Znacznik <figure> z obrazem produktu (wspólny dla karty listy i strony produktu).
  *
- * @param array  $zrzut Dane z sklepag_zrzut_produktu()/sklepag_ilustracja_produktu().
+ * @param array  $zrzut Dane z sklepag_ilustracja_produktu() albo wpis galerii (plik/alt/podpis/szer/wys).
  * @param string $klasa Klasa CSS figure.
  * @param bool   $z_podpisem Czy dodać figcaption.
  * @param bool   $z_paskiem  Czy dodać pasek „okna aplikacji" (tylko dla zrzutów —
