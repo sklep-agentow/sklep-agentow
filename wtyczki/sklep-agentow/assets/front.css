@@ -918,3 +918,75 @@ a.sklepag-kup {
 	color: var(--sklepag-pyl);
 	font-size: 0.9rem;
 }
+
+/* ===== 24.08 wieczór: hero 2-kol + galeria „CO JEST W ŚRODKU" + oprawa jasnych zrzutów ===== */
+.sklepag-hero-uklad {
+	display: grid;
+	grid-template-columns: 1.05fr 0.95fr;
+	gap: 36px;
+	align-items: center;
+}
+@media (max-width: 900px) {
+	.sklepag-hero-uklad {
+		grid-template-columns: 1fr;
+	}
+}
+/* Jasny zrzut na ciemnym tle ma siedzieć jak OKNO aplikacji, nie jak biała dziura:
+   obrys, mocny cień, zaokrąglenie — bez rozciągania na pełną szerokość. */
+.sklepag-hero-wizual .sklepag-zrzut {
+	margin: 0;
+	border: 1px solid var(--sklepag-linia);
+	border-radius: 12px;
+	overflow: hidden;
+	box-shadow: 0 18px 48px rgba(0, 0, 0, 0.55);
+	background: var(--sklepag-wegiel);
+}
+.sklepag-hero-wizual .sklepag-zrzut img {
+	display: block;
+	width: 100%;
+	height: auto;
+}
+/* Raport segregatora ma treść z LEWEJ — kadr obcina pustą prawą połowę zrzutu. */
+.sklepag-hero-wizual .sklepag-zrzut--segregator-maila img {
+	aspect-ratio: 16 / 10;
+	object-fit: cover;
+	object-position: left top;
+}
+.sklepag-galeria {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 16px;
+}
+@media (max-width: 700px) {
+	.sklepag-galeria {
+		grid-template-columns: 1fr;
+	}
+}
+.sklepag-galeria-kafel {
+	margin: 0;
+	background: var(--sklepag-wegiel);
+	border: 1px solid var(--sklepag-linia);
+	border-radius: 10px;
+	overflow: hidden;
+	box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+.sklepag-galeria-kadr {
+	aspect-ratio: 4 / 3;
+	overflow: hidden;
+	background: var(--sklepag-tusz);
+}
+.sklepag-galeria-kadr img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	object-position: top left;
+	display: block;
+}
+/* Mały pionowy zrzut (formularz widgetu): contain na ciemnym tle zamiast rozmytego upscale. */
+.sklepag-galeria-kadr--contain img {
+	object-fit: contain;
+	object-position: center;
+}
+.sklepag-galeria-kafel figcaption {
+	padding: 10px 14px;
+}
