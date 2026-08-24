@@ -8,7 +8,29 @@
    Kod wyjścia 0 = wszystkie kroki przeszły, 1 = któryś nie. */
 const { chromium } = require('playwright-core');
 const { wymagajChromium } = require('./lib/chromium');
+const { execFileSync } = require('child_process');
 const BAZA = process.argv[2] || 'http://localhost:8890';
+const KONTENER = 'strona_wp_wordpress';
+
+function wpEval(kod) {
+  try { return execFileSync('docker', ['exec', '-u', 'www-data', KONTENER, 'wp', 'eval', kod], { encoding: 'utf8' }).trim(); } catch (e) { return ''; }
+}
+
+/* Warunek wstepny STAWIANY PRZEZ TEST (uwaga 7 recenzji #168 — symetria
+   z pulapka-test.php): link do polityki renderuje sie tylko przy ustawionym
+   adres_polityki, a wspolny stos dryfuje (bywa pusty i test czerwienial bez
+   winy kodu). Migawka wraca na koncu, takze przy wywrotce. */
+const POLITYKA_TEST = BAZA + '/polityka-prywatnosci-test/';
+let politykaPrzed = null;
+function ustawPolityke() {
+  politykaPrzed = wpEval('$u = (array) get_option("chatl_ustawienia"); echo isset($u["adres_polityki"]) ? $u["adres_polityki"] : "";');
+  wpEval('$u = (array) get_option("chatl_ustawienia"); $u["adres_polityki"] = ' + JSON.stringify(POLITYKA_TEST) + '; update_option("chatl_ustawienia", $u); wp_cache_flush();');
+}
+function przywrocPolityke() {
+  if (politykaPrzed === null) { return; }
+  wpEval('$u = (array) get_option("chatl_ustawienia"); $u["adres_polityki"] = ' + JSON.stringify(politykaPrzed) + '; update_option("chatl_ustawienia", $u); wp_cache_flush();');
+  politykaPrzed = null;
+}
 
 let bledy = 0;
 function sprawdz(opis, warunek) {
@@ -17,8 +39,10 @@ function sprawdz(opis, warunek) {
 }
 
 (async () => {
+  ustawPolityke();
   const b = await chromium.launch({ executablePath: wymagajChromium() });
   const p = await b.newPage();
+  p.setDefaultTimeout(60000); // 60 s: pelna linia bazowa na 2 vCPU dlawi 30-sekundowy default (24.08)
   await p.goto(BAZA + '/', { waitUntil: 'load' });
 
   const otwarty = (sel) => p.$eval(sel, (e) => e.classList.contains('chatl-otwarty'));
@@ -44,6 +68,8 @@ function sprawdz(opis, warunek) {
   console.log('       tresc: ' + info.trim());
   sprawdz('informacja mowi o retencji 90 dni', /90 dni/.test(info));
   sprawdz('jest link do polityki prywatnosci', await jest('.chatl-info-prywatnosc a'));
+  sprawdz('link prowadzi pod USTAWIONY adres (nie zaszyty w kodzie)',
+    (await pole('.chatl-info-prywatnosc a', (e) => e.href, '')).indexOf('polityka-prywatnosci-test') !== -1);
   sprawdz('jest checkbox zgody', await jest('.chatl-zgoda input[type=checkbox]'));
   sprawdz('checkbox zgody jest WYMAGANY', await pole('.chatl-zgoda input', (e) => e.required, false));
 
@@ -76,6 +102,7 @@ function sprawdz(opis, warunek) {
   sprawdz('po ponownym otwarciu czatu formularz jest ZAMKNIETY', !(await otwarty('.chatl-formularz')));
 
   await b.close();
+  przywrocPolityke();
   console.log('\n' + (bledy ? 'NIEPOWODZENIE: ' + bledy + ' krokow nie przeszlo' : 'WSZYSTKIE KROKI PRZESZLY'));
   process.exit(bledy ? 1 : 0);
-})().catch((e) => { console.error(e); process.exit(1); });
+})().catch((e) => { przywrocPolityke(); console.error(e); process.exit(1); });

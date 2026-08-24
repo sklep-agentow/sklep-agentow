@@ -151,6 +151,27 @@ function segm_deaktywacja() {
 /**
  * Seed kategorii, reguł i próbki demo — tylko do PUSTEJ bazy.
  */
+/**
+ * Reguły demo — JEDNO źródło prawdy.
+ *
+ * Woła je seed poniżej oraz kontrola jakości produktu; wcześniej druga kopia
+ * tej tablicy żyła osobno i mogła się rozjechać z seedem bez żadnego sygnału.
+ *
+ * @return array<int, array{0:string,1:string,2:string}> pole, wzorzec, nazwa kategorii.
+ */
+function segm_reguly_demo() {
+	return array(
+		array( 'od', 'faktury@, ksiegowosc, księgowość, rozliczenia@', 'Faktury' ),
+		array( 'temat', 'faktur, rachunek, płatnoś, platnosc, nota księgowa, nota ksiegowa', 'Faktury' ),
+		array( 'temat', 'reklamac, zwrot, uszkodzon, wadliw', 'Reklamacje' ),
+		array( 'tresc', 'reklamuj, zepsu, nie działa, nie dziala, żądam zwrotu, zadam zwrotu', 'Reklamacje' ),
+		array( 'temat', 'ofert, wycen, zapytanie', 'Oferty' ),
+		array( 'tresc', 'proszę o wycenę, prosze o wycene, zainteresowan, ile kosztuje', 'Oferty' ),
+		array( 'od', 'no-reply, noreply, newsletter, mailing@', 'Spam-podejrzane' ),
+		array( 'temat', 'wygrałeś, wygrales, promocja, rabat, ostatnia szansa, gratis', 'Spam-podejrzane' ),
+	);
+}
+
 function segm_seed_demo() {
 	global $wpdb;
 	$teraz = current_time( 'mysql' );
@@ -177,16 +198,7 @@ function segm_seed_demo() {
 
 		if ( 0 === (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}segm_reguly" ) ) { // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			// Kolejność = jedyny mechanizm rozstrzygania: pierwsza pasująca wygrywa.
-			$reguly    = array(
-				array( 'od', 'faktury@, ksiegowosc, księgowość, rozliczenia@', 'Faktury' ),
-				array( 'temat', 'faktur, rachunek, płatnoś, platnosc, nota księgowa, nota ksiegowa', 'Faktury' ),
-				array( 'temat', 'reklamac, zwrot, uszkodzon, wadliw', 'Reklamacje' ),
-				array( 'tresc', 'reklamuj, zepsu, nie działa, nie dziala, żądam zwrotu, zadam zwrotu', 'Reklamacje' ),
-				array( 'temat', 'ofert, wycen, zapytanie', 'Oferty' ),
-				array( 'tresc', 'proszę o wycenę, prosze o wycene, zainteresowan, ile kosztuje', 'Oferty' ),
-				array( 'od', 'no-reply, noreply, newsletter, mailing@', 'Spam-podejrzane' ),
-				array( 'temat', 'wygrałeś, wygrales, promocja, rabat, ostatnia szansa, gratis', 'Spam-podejrzane' ),
-			);
+			$reguly    = segm_reguly_demo();
 			$kolejnosc = 1;
 			foreach ( $reguly as $r ) {
 				if ( false === $wpdb->insert(

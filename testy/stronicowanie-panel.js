@@ -5,6 +5,7 @@
    Użycie: node testy/stronicowanie-panel.js [adres] */
 const { chromium } = require('playwright-core');
 const { wymagajChromium } = require('./lib/chromium');
+const { zaloguj } = require('./lib/logowanie');
 const { execFileSync } = require('child_process');
 const BAZA = process.argv[2] || 'http://localhost:8890';
 
@@ -35,11 +36,8 @@ function sprzataj() {
   const b = await chromium.launch({ executablePath: wymagajChromium() });
   const ctx = await b.newContext({ viewport: { width: 1400, height: 1000 } });
   const p = await ctx.newPage();
-  await p.goto(BAZA + '/wp-login.php', { waitUntil: 'load' });
-  await p.fill('#user_login', user);
-  await p.fill('#user_pass', pass);
-  await p.click('#wp-submit');
-  await p.waitForLoadState('load');
+  p.setDefaultTimeout(60000); // 60 s: pelna linia bazowa na 2 vCPU dlawi 30-sekundowy default (24.08)
+  await zaloguj(p, BAZA, user, pass);
 
   const maileNaStronie = async () => p.$$eval('table.widefat tbody tr td:nth-child(3)',
     (k) => k.map((e) => e.textContent.trim()).filter((t) => t.indexOf('stronpanel-') === 0));

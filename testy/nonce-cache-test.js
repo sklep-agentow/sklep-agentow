@@ -16,6 +16,7 @@
  */
 const { chromium } = require('playwright-core');
 const { wymagajChromium } = require('./lib/chromium');
+const { zaloguj } = require('./lib/logowanie');
 const { execFileSync } = require('child_process');
 const BAZA = process.argv[2] || 'http://localhost:8890';
 const KONTENER = 'strona_wp_wordpress';
@@ -73,6 +74,7 @@ function skasujOdrzucenia() {
 
   const b = await chromium.launch({ executablePath: wymagajChromium() });
   const p = await b.newPage({ viewport: { width: 1280, height: 900 } });
+  p.setDefaultTimeout(60000); // 60 s: pelna linia bazowa na 2 vCPU dlawi 30-sekundowy default (24.08)
 
   console.log('\n[B] widget: pierwsza proba odbita, gosc i tak dostaje odpowiedz');
   /* Podkladamy DOKLADNIE to, co dzieje sie przy cache: pierwsze pytanie wraca
@@ -107,11 +109,7 @@ function skasujOdrzucenia() {
   await p.unroute('**/wp-admin/admin-ajax.php');
 
   console.log('\n[C] panel: wlasciciel widzi, ze gosciom odbija sie zabezpieczenie');
-  await p.goto(BAZA + '/wp-login.php', { waitUntil: 'load' });
-  await p.fill('#user_login', user);
-  await p.fill('#user_pass', pass);
-  await p.click('#wp-submit');
-  await p.waitForLoadState('load');
+  await zaloguj(p, BAZA, user, pass);
   await p.goto(BAZA + '/wp-admin/admin.php?page=chatl-qa', { waitUntil: 'load' });
   const panel = await p.$eval('.wrap', (e) => e.textContent.replace(/\s+/g, ' ').trim());
   sprawdz('jest czerwone ostrzezenie o odrzuconych zabezpieczeniach',

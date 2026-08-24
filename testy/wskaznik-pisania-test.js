@@ -24,6 +24,7 @@ function sprawdz(opis, warunek, szczegol) {
 (async () => {
   const b = await chromium.launch({ executablePath: wymagajChromium() });
   const p = await b.newPage({ viewport: { width: 1280, height: 900 } });
+  p.setDefaultTimeout(60000); // 60 s: pelna linia bazowa na 2 vCPU dlawi 30-sekundowy default (24.08)
 
   /* Opoznienie 1,5 s tylko dla pytania — dosc, zeby zmierzyc stan posredni. */
   let wyslanych = 0;

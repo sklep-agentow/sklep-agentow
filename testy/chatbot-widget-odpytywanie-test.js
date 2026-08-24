@@ -41,6 +41,7 @@ function wp(kod) {
   const b = await chromium.launch({ executablePath: wymagajChromium(), args: ['--no-sandbox', '--disable-dev-shm-usage'] });
   const ctx = await b.newContext({ viewport: { width: 1200, height: 900 } });
   const p = await ctx.newPage();
+  p.setDefaultTimeout(60000); // 60 s: pelna linia bazowa na 2 vCPU dlawi 30-sekundowy default (24.08)
   const bledyJs = [];
   let odpytan = 0;
   p.on('pageerror', (e) => bledyJs.push(e.message));

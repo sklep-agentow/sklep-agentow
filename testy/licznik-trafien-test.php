@@ -81,20 +81,18 @@ segm_seed_demo();
  * (Linia bazowa 24.08: „reguł: 0, maili: 30" — stąd ta dosiewka.)
  */
 if ( count( segm_pobierz_reguly() ) < 5 ) {
+	if ( ! function_exists( 'segm_reguly_demo' ) ) {
+		require_once WP_PLUGIN_DIR . '/segregator-maila/includes/instalator.php';
+	}
 	$lt_kat = array();
 	foreach ( $wpdb->get_results( "SELECT id, nazwa FROM {$wpdb->prefix}segm_kategorie" ) as $lt_k ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$lt_kat[ $lt_k->nazwa ] = (int) $lt_k->id;
 	}
-	$lt_demo = array(
-		array( 'od', 'faktury@, ksiegowosc, księgowość, rozliczenia@', 'Faktury' ),
-		array( 'temat', 'faktur, rachunek, płatnoś, platnosc, nota księgowa, nota ksiegowa', 'Faktury' ),
-		array( 'temat', 'reklamac, zwrot, uszkodzon, wadliw', 'Reklamacje' ),
-		array( 'tresc', 'reklamuj, zepsu, nie działa, nie dziala, żądam zwrotu, zadam zwrotu', 'Reklamacje' ),
-		array( 'temat', 'ofert, wycen, zapytanie', 'Oferty' ),
-		array( 'tresc', 'proszę o wycenę, prosze o wycene, zainteresowan, ile kosztuje', 'Oferty' ),
-		array( 'od', 'no-reply, noreply, newsletter, mailing@', 'Spam-podejrzane' ),
-		array( 'temat', 'wygrałeś, wygrales, promocja, rabat, ostatnia szansa, gratis', 'Spam-podejrzane' ),
-	);
+	// JEDNO źródło prawdy: ta sama tablica, którą sieje instalator (uwaga 5 recenzji #168
+	// — wcześniejsza kopia w teście mogła się rozjechać z seedem bez czerwonego).
+	// Dosiewka ŚWIADOMIE zostaje po teście: to odtworzenie kanonicznego materiału demo
+	// (stan po aktywacji), nie śmieć testowy — panel bez reguł był zepsuty dla ludzi.
+	$lt_demo = segm_reguly_demo();
 	$lt_kol  = 1 + (int) $wpdb->get_var( "SELECT COALESCE(MAX(kolejnosc),0) FROM {$wpdb->prefix}segm_reguly" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 	foreach ( $lt_demo as $lt_r ) {
 		if ( ! isset( $lt_kat[ $lt_r[2] ] ) ) {

@@ -7,7 +7,13 @@
 #
 # Użycie: testy/material-audytu-zgodnosc.sh [ścieżka-materiału]   (z katalogu repo)
 #   Parametr służy TYLKO kalibracji strażnika (podanie starej wersji pliku → EXIT=1).
-# EXIT 0 = materiał zgodny z kodem, EXIT 1 = materiał kłamie albo odsyła do niebytu.
+#
+# ⚠️ ZAKRES (uczciwie, po recenzji PR #168): strażnik sprawdza JEDEN plik materiału
+# (02-fakty-srodowiska.md) i TRZY klasy z listy „TEGO NIE ZGŁASZAJ": pozycję o IMAP,
+# pozycję o operatorze i zamrożone numery wersji — przez negację sformułowań PLUS
+# wymóg wskazania prawdziwych plików (przeredagowana nieprawda bez wskazania pliku
+# nadal padnie na sprawdzeniu pozytywnym). NIE czyta pozostałych plików materiału.
+# EXIT 0 = te trzy klasy zgodne z kodem, EXIT 1 = materiał kłamie albo odsyła do niebytu.
 set -u
 MAT="${1:-audyt/boty/material/02-fakty-srodowiska.md}"
 IMAP=wtyczki/segregator-maila/includes/class-segm-imap.php
@@ -34,5 +40,5 @@ echo "=== C. Bez zamrozonych numerow wersji (klasa gnicia: 1.2.1-idzie-1.2.2) ==
 ! grep -qE 'Wersja wtyczek .?[0-9]+\.[0-9]+\.[0-9]+' "$MAT"; spr "materiał nie przybija wersji paczek na sztywno" $?
 
 echo ""
-if [ "$BLEDY" -eq 0 ]; then echo "MATERIAL AUDYTU ZGODNY Z KODEM"; exit 0; fi
+if [ "$BLEDY" -eq 0 ]; then echo "02-fakty-srodowiska: pozycje IMAP / operator / wersje ZGODNE z kodem (zakres: te trzy klasy)"; exit 0; fi
 echo "PORAZEK: $BLEDY — materiał audytowy rozjechany z kodem (A6-F2 wraca)"; exit 1

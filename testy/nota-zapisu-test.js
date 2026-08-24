@@ -34,6 +34,7 @@ function ustawPolityke(adres) {
   const retencja = wpEval('echo CHATL_RETENCJA_DNI;');
   const b = await chromium.launch({ executablePath: wymagajChromium() });
   const p = await b.newPage({ viewport: { width: 1280, height: 900 } });
+  p.setDefaultTimeout(60000); // 60 s: pelna linia bazowa na 2 vCPU dlawi 30-sekundowy default (24.08)
 
   console.log('[1] nota jest widoczna PRZED napisaniem czegokolwiek');
   ustawPolityke('');

@@ -5,6 +5,7 @@
    Użycie: node testy/eksport-csv.js [adres] */
 const { chromium } = require('playwright-core');
 const { wymagajChromium } = require('./lib/chromium');
+const { zaloguj } = require('./lib/logowanie');
 const BAZA = process.argv[2] || 'http://localhost:8890';
 
 let bledy = 0;
@@ -47,11 +48,7 @@ function sprawdz(opis, warunek) {
   const obcy = await p.request.get(BAZA + '/wp-admin/admin-post.php?action=chatl_eksport_zgloszen');
   sprawdz('niezalogowany NIE dostaje pliku (HTTP ' + obcy.status() + ')', obcy.status() !== 200);
 
-  await p.goto(BAZA + '/wp-login.php', { waitUntil: 'load' });
-  await p.fill('#user_login', user);
-  await p.fill('#user_pass', pass);
-  await p.click('#wp-submit');
-  await p.waitForLoadState('load');
+  await zaloguj(p, BAZA, user, pass);
 
   console.log('\n[zalogowany admin, ale BEZ nonce]');
   const bezNonce = await p.request.get(BAZA + '/wp-admin/admin-post.php?action=chatl_eksport_zgloszen');

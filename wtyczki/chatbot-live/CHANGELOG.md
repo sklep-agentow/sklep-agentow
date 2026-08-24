@@ -10,6 +10,12 @@ migracja odpala się sama przy pierwszym wejściu do panelu po aktualizacji
 
 ---
 
+## [Niewydane]
+
+Nic jeszcze.
+
+---
+
 ## [1.5.9] — 2026-08-24 · schemat bazy 7 → 8
 
 ### Zmienione

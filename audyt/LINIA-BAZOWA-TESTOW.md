@@ -4,18 +4,21 @@
 > 13 czerwonych). Po scaleniu 15 PR-ów napraw: [po-naprawach] 04:03 (nocny, diagnostyczny — 4 regresje
 > + 1 nowy czerwony, WSZYSTKIE zdiagnozowane jako wady testów/dryf wspólnego stosu, kod wtyczek zdrowy;
 > szczegóły: TABLICA.md §Zamknięcie etapu 3) → naprawy przyrządów → [po-naprawach-2] 04:34 (kontrolny,
-> regresje=0) → **[etap3-final] 04:57 — OFICJALNY: 64 uruchomione · 60 przechodzi · 4 pada ·
-> `--porownaj` z bazą: regresje=0, naprawy=9, EXIT=0.**
-> (Pierwsze podejście [etap3-final] 04:46 usunięte z zapisu: eksport-csv padł TIMEOUTEM 30 s pod
-> obciążeniem pełnej linii na 2 vCPU — solo 2×EXIT=0; test dostał limit 60 s. TSV nadpisany przebiegiem 04:57.)
+> regresje=0) → seria przebiegów z bumpem 1.5.9/1.3.2, która wypaliła z testów przeglądarkowych DWIE
+> klasy kruchości pod pełnym obciążeniem 2 vCPU (30-sekundowy default Playwrighta → 60 s we wszystkich;
+> jednostrzałowe logowanie do wp-admin gubiące ciastko → wspólny `testy/lib/logowanie.js` z ponowieniem;
+> po drodze DK-1 przepisany na przyrząd po C3 — wcześniej bywał zielony PRZYPADKIEM przy wyczerpanym
+> kuble) → **[etap3-final] OFICJALNY: 64 uruchomione · 61 przechodzi · 3 pada ·
+> `--porownaj` z bazą: regresje=0, naprawy=10, EXIT=0.**
 >
-> **4 stałe czerwone — środowiskowe, czerwone JUŻ w [baza-766b4c9], nie regresje:**
+> **3 stałe czerwone — środowiskowe, czerwone JUŻ w [baza-766b4c9], nie regresje:**
 > `panel-statystyki.js` (baza Q&A stosu zna odpowiedź, która miała spaść do tekstu awaryjnego) ·
 > `stronicowanie-panel.js` (licznik pozycji zależny od narosłych danych stosu, >10 tys. wierszy) ·
-> `widget-formularz.js` (stos ma pusty `adres_polityki` — test oczekuje skonfigurowanego linku) ·
 > `a4-widget-konsola-kontrast.js` EXIT=2 (przyrząd pomiarowy, nie strażnik).
-> Kandydat po oddaniu: przepisać te trzy testy na samowystarczalność (własna migawka+konfiguracja,
-> wzorzec z `pulapka-test.php` 24.08).
+> `widget-formularz.js` zszedł z tej listy 24.08 (własna migawka `adres_polityki` — uwaga 7 recenzji #168).
+> Kandydat po oddaniu: samowystarczalność dwóch pozostałych (wzorzec migawki z `pulapka-test.php`).
+
+
 
 
 ## [baza-766b4c9] — HEAD `bbb4b03` — 2026-08-23 16:12 — uruchomione 51 · przechodzi 38 · pada 13
@@ -309,17 +312,17 @@ Logi: `/root/praca/zlecenia/wymiana/linia-bazowa-logi/po-naprawach/`. Plik poró
 
 Logi: `/root/praca/zlecenia/wymiana/linia-bazowa-logi/po-naprawach-2/`. Plik porównań: `audyt/linia-bazowa/po-naprawach-2.tsv`.
 
-## [etap3-final] — HEAD `0ed7639` — 2026-08-24 04:57 — uruchomione 64 · przechodzi 60 · pada 4
+## [etap3-final] — HEAD `1c9a272` — 2026-08-24 06:13 — uruchomione 64 · przechodzi 61 · pada 3
 
 | test | EXIT | s |
 |---|---|---|
-| `testy/a6-deklaracja-vs-ladunek-ai.php` | 0 | 0 |
-| `testy/blad-klucza-test.php` | 0 | 1 |
-| `testy/chatbot-awaria-zapisu-test.php` | 0 | 0 |
+| `testy/a6-deklaracja-vs-ladunek-ai.php` | 0 | 1 |
+| `testy/blad-klucza-test.php` | 0 | 0 |
+| `testy/chatbot-awaria-zapisu-test.php` | 0 | 1 |
 | `testy/chatbot-pulapka-licznik-test.php` | 0 | 5 |
-| `testy/chatbot-rodo-role-test.php` | 0 | 1 |
-| `testy/chatbot-sesje-retencja-rodo-test.php` | 0 | 0 |
-| `testy/chatbot-stoploss-awaria-test.php` | 0 | 1 |
+| `testy/chatbot-rodo-role-test.php` | 0 | 0 |
+| `testy/chatbot-sesje-retencja-rodo-test.php` | 0 | 1 |
+| `testy/chatbot-stoploss-awaria-test.php` | 0 | 0 |
 | `testy/chatbot-test-klucza-test.php` | 0 | 1 |
 | `testy/import-csv-test.php` | 0 | 0 |
 | `testy/ip-za-proxy-test.php` | 0 | 1 |
@@ -337,20 +340,20 @@ Logi: `/root/praca/zlecenia/wymiana/linia-bazowa-logi/po-naprawach-2/`. Plik por
 | `testy/segregator-skrzynka-test.php` | 0 | 5 |
 | `testy/segregator-skrzynka-test-uprawnienia.php` | 0 | 1 |
 | `testy/segregator-zamek-ttl-test.php` | 0 | 1 |
-| `testy/statystyki-test.php` | 0 | 0 |
-| `testy/stronicowanie-test.php` | 0 | 1 |
-| `testy/tokeny-koszt-test.php` | 0 | 0 |
-| `testy/uninstall-zombie-cron-test.php` | 0 | 1 |
+| `testy/statystyki-test.php` | 0 | 1 |
+| `testy/stronicowanie-test.php` | 0 | 0 |
+| `testy/tokeny-koszt-test.php` | 0 | 1 |
+| `testy/uninstall-zombie-cron-test.php` | 0 | 0 |
 | `testy/wybor-modelu-test.php` | 0 | 1 |
-| `testy/wyglad-test.php` | 0 | 1 |
-| `testy/znacznik-bledu-bazy-test.php` | 0 | 0 |
-| `testy/blad-klucza-panel.js` | 0 | 6 |
-| `testy/chatbot-widget-odpytywanie-test.js` | 0 | 36 |
+| `testy/wyglad-test.php` | 0 | 0 |
+| `testy/znacznik-bledu-bazy-test.php` | 0 | 1 |
+| `testy/blad-klucza-panel.js` | 0 | 7 |
+| `testy/chatbot-widget-odpytywanie-test.js` | 0 | 35 |
 | `testy/dziennik-test.js` | POMINIETE | 0 |
-| `testy/eksport-csv.js` | 0 | 6 |
+| `testy/eksport-csv.js` | 0 | 5 |
 | `testy/import-csv-panel.js` | 0 | 6 |
-| `testy/nonce-cache-test.js` | 0 | 7 |
-| `testy/nota-zapisu-test.js` | 0 | 4 |
+| `testy/nonce-cache-test.js` | 0 | 6 |
+| `testy/nota-zapisu-test.js` | 0 | 5 |
 | `testy/panel-statystyki.js` | 1 | 6 |
 | `testy/panel-test-bota.js` | 0 | 4 |
 | `testy/powitanie-test.js` | 0 | 10 |
@@ -359,12 +362,12 @@ Logi: `/root/praca/zlecenia/wymiana/linia-bazowa-logi/po-naprawach-2/`. Plik por
 | `testy/segregator-ekran-skrzynki.js` | 0 | 6 |
 | `testy/stronicowanie-panel.js` | 1 | 5 |
 | `testy/svg-pomiar-tekstow.js` | POMINIETE | 0 |
-| `testy/widget-formularz.js` | 1 | 2 |
-| `testy/wskaznik-pisania-test.js` | 0 | 6 |
-| `testy/wyglad-panel.js` | 0 | 8 |
+| `testy/widget-formularz.js` | 0 | 4 |
+| `testy/wskaznik-pisania-test.js` | 0 | 5 |
+| `testy/wyglad-panel.js` | 0 | 9 |
 | `testy/zrzuty-panelu.js` | POMINIETE | 0 |
 | `testy/blad-klucza-proba-kontrolna.sh` | POMINIETE | 0 |
-| `testy/dokumentacja-zgodnosc-segregator.sh` | 0 | 2 |
+| `testy/dokumentacja-zgodnosc-segregator.sh` | 0 | 1 |
 | `testy/dokumentacja-zgodnosc.sh` | 0 | 2 |
 | `testy/import-csv-proba-kontrolna.sh` | POMINIETE | 0 |
 | `testy/instrukcja-liczby-segregator.sh` | 0 | 0 |
@@ -398,9 +401,9 @@ Logi: `/root/praca/zlecenia/wymiana/linia-bazowa-logi/po-naprawach-2/`. Plik por
 | `audyt/boty/repro/lamacz-baza-i-srodowisko.php` | POMINIETE | 0 |
 | `audyt/boty/repro/lamacz-cofanie.php` | 0 | 8 |
 | `audyt/boty/testy-audytu/a4-przejecie-nie-dochodzi.js` | 0 | 36 |
-| `audyt/boty/testy-audytu/a4-widget-konsola-kontrast.js` | 2 | 42 |
+| `audyt/boty/testy-audytu/a4-widget-konsola-kontrast.js` | 2 | 73 |
 | `audyt/boty/testy-audytu/a4-zamkniecie-odpytywanie.js` | 0 | 89 |
-| `audyt/boty/testy-audytu/DK-dwa-zrodla-pulapka.sh` | 0 | 6 |
+| `audyt/boty/testy-audytu/DK-dwa-zrodla-pulapka.sh` | 0 | 5 |
 | `audyt/boty/testy-audytu/DK-rownolegle-liczniki.sh` | 0 | 10 |
 | `audyt/boty/testy-audytu/DK-znaki-pola.sh` | 0 | 4 |
 | `testy/e2e/` | POMINIETE | 0 |
