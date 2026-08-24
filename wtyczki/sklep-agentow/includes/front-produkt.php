@@ -125,8 +125,41 @@ function sklepag_tresc_produktu( $slug ) {
 			),
 			'dla_kogo'     => array( 'Usługi lokalne — fryzjer, warsztat, gabinet', 'Sklepy i firmy z powtarzalnymi pytaniami', 'Każdy, kto traci klientów piszących po godzinach' ),
 			'uczciwosc'    => 'Nie znajdziesz tu opinii z gwiazdkami — sprzedajemy od niedawna i nie fabrykujemy ocen; zamiast tego masz tryb testowy i seed demo, żeby sprawdzić samemu. Pełnoprawny silnik regułowy działa od razu — bez kluczy i opłat. „LIVE" znaczy dwie rzeczy: bot odpowiada natychmiast, a Ty możesz w każdej chwili PRZEJĄĆ rozmowę i pisać do gościa osobiście — wtedy bot w niej milczy, a gość widzi wprost, że rozmawia z człowiekiem; po pięciu minutach Twojej ciszy rozmowa sama wraca do bota. Gdy nie przejmiesz, bot zbiera kontakt i odpisujesz później. Bot nie udaje wszechwiedzy. Tryb AI włączasz WŁASNYM kluczem; przy limicie dziennym lub błędzie bot sam wraca do reguł. Prywatność: w trybie regułowym treść rozmów nie opuszcza Twojego serwera; w trybie AI pytanie gościa idzie do API dostawcy (informacja też do Twojej polityki prywatności).',
+			'pakiet'       => array(
+				'Plik ZIP wtyczki — instalujesz jak każdą wtyczkę WordPressa, w kilka minut.',
+				'Instrukcja krok po kroku z 6 zrzutami ekranu.',
+				'10 gotowych par pytań i odpowiedzi po polsku — zestaw startowy.',
+				'Dokumentacja techniczna z diagramem przepływu (dla Twojego informatyka).',
+				'Historia zmian i licencja w paczce.',
+			),
+			'porownanie'   => array(
+				'tytul'   => 'Telefon i skrzynka kontra bot',
+				'kol'     => array( 'Robione ręcznie', 'Z botem' ),
+				'wiersze' => array(
+					array( 'Odpowiadasz w godzinach pracy.', 'Bot odpowiada 24/7 — także w święta i po 22.' ),
+					array( 'Urlop albo chorobowe = cisza na stronie.', 'Bąbelek wisi na stronie zawsze.' ),
+					array( 'Każde „ile kosztuje?" przerywa robotę.', 'Powtarzalne pytania zdejmuje baza Q&A.' ),
+					array( 'Kontakt z telefonu łatwo zgubić.', 'Każde zgłoszenie zapisane, z mailem gościa.' ),
+				),
+				'przypis' => 'Bot nie zastępuje człowieka w trudnych sprawach — dlatego rozmowę możesz w każdej chwili przejąć i dokończyć osobiście.',
+			),
+			/*
+			 * ⛔ OPINIE: wyłącznie PRAWDZIWE, od zweryfikowanych kupujących (D6 + UZUPEŁNIENIE
+			 * 24.08, Omnibus). Puste = sekcja się nie renderuje. Format wpisu:
+			 * array( 'treść opinii', 'Imię, firma' ). Gdy dodajesz PIERWSZĄ opinię,
+			 * USUŃ z 'uczciwosc' zdanie „Nie znajdziesz tu opinii z gwiazdkami…" —
+			 * o pochodzeniu opinii mówi wtedy stała NOTA renderowana razem z sekcją
+			 * (patrz sklepag_render_produkt), więc strona nie zostaje bez tego zdania.
+			 */
+			'opinie'       => array(),
+			/*
+			 * ⛔ GWARANCJA: obietnica zwrotu pieniędzy = zobowiązanie WŁAŚCICIELA.
+			 * Treść i włączenie to decyzja WŁAŚCICIELA SKLEPU; puste = sekcja się nie renderuje.
+			 */
+			'gwarancja'    => '',
 			'faq'          => array(
 				array( 'Czy potrzebuję klucza AI?', 'Nie — bot w pełni działa bez niego, na Twojej bazie pytań i odpowiedzi.' ),
+				array( 'Jakie są wymagania techniczne?', 'WordPress 6.0 lub nowszy i PHP 8.1 lub nowszy — standard na dzisiejszych hostingach. Bez dodatkowych usług; tryb AI wymaga tylko Twojego klucza API.' ),
 				array( 'Co się dzieje, gdy bot nie zna odpowiedzi?', 'Prosi o maila, zapisuje zgłoszenie i może powiadomić Cię mailem — kontakt nie przepada.' ),
 				array( 'Czy bot sam się uczy?', 'Nie — odpowiada wyłącznie z Twojej bazy. To zaleta: zero zmyślonych odpowiedzi o Twojej firmie.' ),
 				array( 'Jak wstawię bota na stronę?', 'Instalujesz wtyczkę — bąbelek pojawia się sam; włącznik i teksty w ustawieniach.' ),
@@ -163,8 +196,30 @@ function sklepag_tresc_produktu( $slug ) {
 			),
 			'dla_kogo'     => array( 'Biura i sekretariaty', 'Firmy usługowe z jedną wspólną skrzynką', 'Każdy, kto zaczyna dzień od przekopywania poczty' ),
 			'uczciwosc'    => 'Nie znajdziesz tu opinii z gwiazdkami — sprzedajemy od niedawna i nie fabrykujemy ocen; zamiast tego masz raport z liczbami z TWOJEJ próbki. Reguły układasz i sprawdzasz na próbce, a potem puszczasz je na PRAWDZIWEJ skrzynce: wtyczka rozkłada pocztę do folderów na serwerze poczty, domyślnie chodzi NA SUCHO i nie rusza ani jednej wiadomości, dopóki sam nie potwierdzisz, a ostatni przebieg cofniesz jednym kliknięciem. Czego nie ma, mówimy przed zakupem: logowanie tylko loginem i hasłem aplikacji, więc Microsoft 365 i Outlook.com NIE zadziałają (tam wymagane jest OAuth); na skrzynce klasyfikują reguły, nie AI; bez czytania załączników.',
+			'pakiet'       => array(
+				'Plik ZIP wtyczki — instalujesz jak każdą wtyczkę WordPressa, w kilka minut.',
+				'Instrukcja krok po kroku z 6 zrzutami ekranu.',
+				'Próbka 30 maili demo po polsku — testujesz od pierwszej minuty, bez podpinania skrzynki.',
+				'Dokumentacja techniczna z diagramem przepływu (dla Twojego informatyka).',
+				'Historia zmian i licencja w paczce.',
+			),
+			'porownanie'   => array(
+				'tytul'   => 'Ręczne sortowanie kontra reguły',
+				'kol'     => array( 'Robione ręcznie', 'Z botem' ),
+				'wiersze' => array(
+					array( 'Każdy ranek zaczyna się od przekopywania skrzynki.', 'Przebieg układa pocztę według Twoich reguł.' ),
+					array( 'Przy setnym mailu uwaga siada.', 'Reguła numer 7 działa tak samo za setnym razem.' ),
+					array( 'Nie wiesz, ile czasu schodzi na sortowanie.', 'Raport z liczbami po każdym przebiegu.' ),
+					array( 'Pomyłka ginie w skrzynce.', 'Tryb na sucho i cofnięcie ostatniego przebiegu.' ),
+				),
+				'przypis' => 'Reguły układasz raz i poprawiasz, gdy raport pokaże pomyłki — bot nie zgaduje za Ciebie.',
+			),
+			/* ⛔ OPINIE i GWARANCJA: te same zasady co przy chatbot-live (komentarz wyżej). */
+			'opinie'       => array(),
+			'gwarancja'    => '',
 			'faq'          => array(
 				array( 'Czy muszę podpinać skrzynkę?', 'Nie musisz — możesz pracować wyłącznie na próbkach CSV. Ale możesz: wtyczka obsługuje prawdziwą skrzynkę i przenosi w niej pocztę do folderów.' ),
+				array( 'Jakie są wymagania techniczne?', 'WordPress 6.0 lub nowszy i PHP 8.1 lub nowszy. Praca na próbkach CSV nie potrzebuje nic więcej. Do połączenia z PRAWDZIWĄ skrzynką hosting musi mieć włączoną funkcję stream_socket_client (najtańsze hostingi bywają z nią na bakier) i rozszerzenie OpenSSL do szyfrowania — wbudowana diagnostyka wtyczki sprawdzi oba za Ciebie i powie, o co poprosić hostingodawcę. Tryb AI wymaga tylko Twojego klucza API.' ),
 				array( 'Zadziała z Microsoft 365 albo Outlook.com?', 'Nie. Tam wymagane jest logowanie OAuth, którego ta wtyczka nie obsługuje. Gmail i skrzynki hostingowe z hasłem aplikacji: tak.' ),
 				array( 'Czy coś mi się pomiesza w poczcie?', 'Domyślny tryb na sucho niczego nie rusza — pokazuje tylko, co by zrobił. Realne przenoszenie wymaga przełączenia i osobnego potwierdzenia, a ostatni przebieg da się cofnąć.' ),
 				array( 'Skąd wezmę CSV?', 'Eksport z klienta poczty (Gmail, Thunderbird, Outlook) — instrukcja pokazuje jak, krok po kroku.' ),
@@ -409,6 +464,15 @@ function sklepag_render_produkt( $slug ) {
 			$html .= '</section>';
 		}
 
+		// W PACZCE — policzalna zawartość zipa (fakty z paczki, nie obietnice).
+		if ( ! empty( $t['pakiet'] ) ) {
+			$html .= '<section class="sklepag-sekcja"><p class="sklepag-mono-etykieta">[ W PACZCE ]</p><ul class="sklepag-pakiet">';
+			foreach ( $t['pakiet'] as $poz ) {
+				$html .= '<li>' . esc_html( $poz ) . '</li>';
+			}
+			$html .= '</ul></section>';
+		}
+
 		// ILE CZASU ODZYSKUJESZ (S-03 — dedykowane miejsce).
 		$html .= '<section class="sklepag-sekcja"><p class="sklepag-mono-etykieta">[ ILE CZASU ODZYSKUJESZ ]</p>';
 		$html .= '<div class="sklepag-dowody">';
@@ -421,12 +485,37 @@ function sklepag_render_produkt( $slug ) {
 		}
 		$html .= '</section>';
 
+		// RĘCZNIE KONTRA BOT — porównanie jakościowe (bez wymyślonych stawek cudzej pracy).
+		if ( ! empty( $t['porownanie'] ) ) {
+			$por   = $t['porownanie'];
+			$html .= '<section class="sklepag-sekcja"><p class="sklepag-mono-etykieta">[ RĘCZNIE KONTRA BOT ]</p>';
+			$html .= '<h2 class="sklepag-sekcja-tytul">' . esc_html( $por['tytul'] ) . '</h2>';
+			$html .= '<div class="sklepag-vs"><div class="sklepag-vs-naglowek">' . esc_html( $por['kol'][0] ) . '</div><div class="sklepag-vs-naglowek sklepag-vs-bot">' . esc_html( $por['kol'][1] ) . '</div>';
+			foreach ( $por['wiersze'] as $w ) {
+				$html .= '<div class="sklepag-vs-lewa" data-kol="' . esc_attr( $por['kol'][0] ) . '">' . esc_html( $w[0] ) . '</div><div class="sklepag-vs-prawa" data-kol="' . esc_attr( $por['kol'][1] ) . '">' . esc_html( $w[1] ) . '</div>';
+			}
+			$html .= '</div>';
+			$html .= '<p class="sklepag-vs-przypis">' . esc_html( $por['przypis'] ) . '</p></section>';
+		}
+
 		// DLA KOGO.
 		$html .= '<section class="sklepag-sekcja"><p class="sklepag-mono-etykieta">[ DLA KOGO ]</p><ul class="sklepag-dla-kogo">';
 		foreach ( $t['dla_kogo'] as $dk ) {
 			$html .= '<li>' . esc_html( $dk ) . '</li>';
 		}
 		$html .= '</ul></section>';
+
+		// OPINIE KLIENTÓW — wyłącznie PRAWDZIWE, od zweryfikowanych kupujących
+		// (D6 + UZUPEŁNIENIE 24.08, Omnibus). Pusta lista = sekcji nie ma.
+		if ( ! empty( $t['opinie'] ) ) {
+			$html .= '<section class="sklepag-sekcja"><p class="sklepag-mono-etykieta">[ OPINIE KLIENTÓW ]</p><div class="sklepag-opinie">';
+			foreach ( $t['opinie'] as $op ) {
+				$html .= '<figure class="sklepag-opinia"><blockquote>' . esc_html( $op[0] ) . '</blockquote><figcaption class="sklepag-mono-etykieta">' . esc_html( $op[1] ) . '</figcaption></figure>';
+			}
+			$html .= '</div>';
+			$html .= '<p class="sklepag-opinie-nota">Publikujemy wyłącznie opinie osób, które kupiły ten produkt — przed publikacją potwierdzamy zakup w danych zamówień sklepu.</p>';
+			$html .= '</section>';
+		}
 
 		// UCZCIWOŚĆ (zamiast fejk-opinii — D6/Omnibus).
 		$html .= '<section class="sklepag-sekcja sklepag-uczciwosc"><p class="sklepag-mono-etykieta">[ CO DOKŁADNIE DOSTAJESZ — I CZEGO NIE MA ]</p>';
@@ -440,6 +529,12 @@ function sklepag_render_produkt( $slug ) {
 	// CENA + ZAKUP.
 	$html .= '<section class="sklepag-sekcja sklepag-sekcja-zakup"><p class="sklepag-mono-etykieta">[ CENA ]</p>';
 	$html .= $cena . sklepag_formularz_zakupu( $p ) . '</section>';
+
+	// GWARANCJA — obietnica zwrotu = zobowiązanie finansowe; treść ustala właściciel sklepu.
+	if ( $t && ! empty( $t['gwarancja'] ) ) {
+		$html .= '<section class="sklepag-sekcja sklepag-gwarancja"><p class="sklepag-mono-etykieta">[ GWARANCJA ]</p>';
+		$html .= '<p class="sklepag-sekcja-tekst">' . esc_html( $t['gwarancja'] ) . '</p></section>';
+	}
 
 	// FAQ.
 	if ( $t && ! empty( $t['faq'] ) ) {
