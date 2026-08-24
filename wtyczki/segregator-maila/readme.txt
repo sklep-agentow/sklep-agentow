@@ -139,7 +139,7 @@ z serwerem. Hasło jest w nim zamaskowane.
 Pełna historia zmian jest w pliku `CHANGELOG.md` w katalogu wtyczki.
 
 = 1.3.3 =
-Instrukcja z 6 zrzutami ekranu (próbka, reguły, IMAP, przebiegi) — maszynowo.
+Instrukcja z 6 zrzutami ekranu (próbka, przebiegi, reguły, kategorie, IMAP, ustawienia) — maszynowo.
 Zero zmian w kodzie.
 
 = 1.3.2 =
