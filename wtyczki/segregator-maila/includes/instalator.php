@@ -149,9 +149,6 @@ function segm_deaktywacja() {
 }
 
 /**
- * Seed kategorii, reguł i próbki demo — tylko do PUSTEJ bazy.
- */
-/**
  * Reguły demo — JEDNO źródło prawdy.
  *
  * Woła je seed poniżej oraz kontrola jakości produktu; wcześniej druga kopia
@@ -172,6 +169,9 @@ function segm_reguly_demo() {
 	);
 }
 
+/**
+ * Seed kategorii, reguł i próbki demo — tylko do PUSTEJ bazy.
+ */
 function segm_seed_demo() {
 	global $wpdb;
 	$teraz = current_time( 'mysql' );

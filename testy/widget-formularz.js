@@ -13,7 +13,11 @@ const BAZA = process.argv[2] || 'http://localhost:8890';
 const KONTENER = 'strona_wp_wordpress';
 
 function wpEval(kod) {
-  try { return execFileSync('docker', ['exec', '-u', 'www-data', KONTENER, 'wp', 'eval', kod], { encoding: 'utf8' }).trim(); } catch (e) { return ''; }
+  /* null = WYWROTKA wywolania (docker/wp-cli), '' = poprawna PUSTA odpowiedz.
+   * Rozroznienie jest krytyczne dla migawki: '' z wywrotki udawaloby prawidlowa
+   * migawke i restore SKASOWALBY cudza wartosc na wspolnym stosie (DROBNA C
+   * recenzji #168). */
+  try { return execFileSync('docker', ['exec', '-u', 'www-data', KONTENER, 'wp', 'eval', kod], { encoding: 'utf8' }).trim(); } catch (e) { return null; }
 }
 
 /* Warunek wstepny STAWIANY PRZEZ TEST (uwaga 7 recenzji #168 — symetria
@@ -23,8 +27,15 @@ function wpEval(kod) {
 const POLITYKA_TEST = BAZA + '/polityka-prywatnosci-test/';
 let politykaPrzed = null;
 function ustawPolityke() {
-  politykaPrzed = wpEval('$u = (array) get_option("chatl_ustawienia"); echo isset($u["adres_polityki"]) ? $u["adres_polityki"] : "";');
-  wpEval('$u = (array) get_option("chatl_ustawienia"); $u["adres_polityki"] = ' + JSON.stringify(POLITYKA_TEST) + '; update_option("chatl_ustawienia", $u); wp_cache_flush();');
+  const migawka = wpEval('$u = (array) get_option("chatl_ustawienia"); echo isset($u["adres_polityki"]) ? $u["adres_polityki"] : "";');
+  if (migawka === null) {
+    /* Bez migawki nie wolno ruszac wspolnego stosu — twardy stop zamiast
+     * pozniejszego restore, ktory zapisalby '' w miejsce cudzej wartosci. */
+    throw new Error('ustawPolityke(): nie odczytam migawki adres_polityki (docker/wp-cli padl) — nie ruszam stosu');
+  }
+  const zapis = wpEval('$u = (array) get_option("chatl_ustawienia"); $u["adres_polityki"] = ' + JSON.stringify(POLITYKA_TEST) + '; update_option("chatl_ustawienia", $u); wp_cache_flush(); echo "OK";');
+  if (zapis === null) { throw new Error('ustawPolityke(): zapis warunku wstepnego padl — nie ruszam stosu dalej'); }
+  politykaPrzed = migawka; /* dopiero po udanym zapisie jest co przywracac */
 }
 function przywrocPolityke() {
   if (politykaPrzed === null) { return; }
