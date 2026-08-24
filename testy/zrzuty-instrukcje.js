@@ -54,7 +54,24 @@ const ADMIN = [
   const wpEv = (kod) => { try { return execFileSync('docker', ['exec', '-u', 'www-data', 'strona_wp_wordpress', 'wp', 'eval', kod], { encoding: 'utf8' }).trim(); } catch (e) { return null; }
   };
   const kluczByl = wpEv('echo get_option("chatl_klucz_api") ? "TAK" : "NIE";');
-  if (kluczByl === 'TAK') { wpEv('update_option("chatl_klucz_api_migawka_zrzut", get_option("chatl_klucz_api"), false); delete_option("chatl_klucz_api"); wp_cache_flush();'); }
+  if (kluczByl === null) { console.error('nie odczytam stanu klucza — nie ruszam stosu'); process.exit(1); }
+  if (kluczByl === 'TAK') {
+    const m = wpEv('update_option("chatl_klucz_api_migawka_zrzut", get_option("chatl_klucz_api"), false); delete_option("chatl_klucz_api"); wp_cache_flush(); echo "OK";');
+    if (m !== 'OK') { console.error('migawka klucza PADLA — nie ruszam stosu dalej'); process.exit(1); }
+  }
+  /* WAZNA A (#169 r2): zrzut skrzynki NIE moze pokazywac naszego kontenera
+   * (segm_imap:3143, bez szyfrowania, haslo zapisane) — to anty-wzorzec, przed
+   * ktorym tekst obok ostrzega. Migawka konfiguracji skrzynki -> czysty formularz
+   * (placeholdery imap.przyklad.pl / 993 / SSL) -> przywrocenie po strzale. */
+  const skrzMig = wpEv('update_option("segm_skrzynka_migawka_zrzut", array(get_option("segm_skrzynka"), get_option("segm_imap_haslo")), false); delete_option("segm_skrzynka"); delete_option("segm_imap_haslo"); wp_cache_flush(); echo "OK";');
+  if (skrzMig !== 'OK') { console.error('migawka skrzynki PADLA — nie ruszam stosu dalej'); process.exit(1); }
+  /* WAZNA B (#169 r2): zdjecia segregatora maja pokazywac KANONICZNE demo
+   * (5 kategorii / 8 regul / 30 maili z instrukcji) — a wspolny stos dryfuje.
+   * Twardy reset materialu demo przed strzalami; to stos testowy, seed jest
+   * jego stanem kanonicznym. */
+  const seed = wpEv('global $wpdb; $p=$wpdb->prefix; $wpdb->query("DELETE FROM {$p}segm_reguly"); $wpdb->query("DELETE FROM {$p}segm_kategorie"); $wpdb->query("DELETE FROM {$p}segm_maile"); segm_seed_demo(); echo $wpdb->get_var("SELECT COUNT(*) FROM {$p}segm_kategorie")."/".$wpdb->get_var("SELECT COUNT(*) FROM {$p}segm_reguly")."/".$wpdb->get_var("SELECT COUNT(*) FROM {$p}segm_maile");');
+  if (seed !== '5/8/30') { console.error('seed demo nie dal 5/8/30, mam: ' + seed + ' — nie strzelam falszywych liczb'); process.exit(1); }
+  console.log('  seed demo: 5/8/30 potwierdzone');
 
   for (const [wtyczka, nazwa, slug, dowod, kadr, maxH] of ADMIN) {
     const cel = 'wtyczki/' + wtyczka + '/zrzuty/' + nazwa + '.png';
@@ -101,7 +118,12 @@ const ADMIN = [
     bledy++;
   }
 
-  if (kluczByl === 'TAK') { wpEv('update_option("chatl_klucz_api", get_option("chatl_klucz_api_migawka_zrzut"), false); delete_option("chatl_klucz_api_migawka_zrzut"); wp_cache_flush();'); }
+  if (kluczByl === 'TAK') {
+    const w = wpEv('update_option("chatl_klucz_api", get_option("chatl_klucz_api_migawka_zrzut"), false); delete_option("chatl_klucz_api_migawka_zrzut"); wp_cache_flush(); echo get_option("chatl_klucz_api") ? "OK" : "PUSTO";');
+    if (w !== 'OK') { console.error('PRZYWROCENIE KLUCZA PADLO (' + w + ') — klucz wlasciciela mogl zostac skasowany!'); bledy++; }
+  }
+  const skrzW = wpEv('$m = get_option("segm_skrzynka_migawka_zrzut"); if (is_array($m)) { if (false !== $m[0]) { update_option("segm_skrzynka", $m[0]); } if (false !== $m[1]) { update_option("segm_imap_haslo", $m[1]); } } delete_option("segm_skrzynka_migawka_zrzut"); wp_cache_flush(); echo "OK";');
+  if (skrzW !== 'OK') { console.error('PRZYWROCENIE SKRZYNKI PADLO — konfiguracja mogla zostac wyczyszczona!'); bledy++; }
   await b.close();
   console.log('\nZROBIONE: ' + zrobione + ', BLEDOW: ' + bledy);
   process.exit(bledy ? 1 : 0);

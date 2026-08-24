@@ -116,6 +116,16 @@ zbuduj() {
 
 	# 5) Zip TYLKO z plików allowlisty (katalog wtyczki w korzeniu — format WP).
 	local PACZKA="$WYJSCIE/$WTYCZKA-$WERSJA.zip"
+	# ⛔ Paczka WYDANA (istnieje w origin/main) jest ZAMROŻONA — nadpisanie jej nową
+	# treścią pod starym numerem to klasa 10 (stało się 24.08: budowa zrzutów przed
+	# bumpem podmieniła 1.5.9/1.3.2). Nowa treść = nowy numer w nagłówku wtyczki.
+	# Świadome obejście (np. naprawa zepsutego historycznego zipa): BUDUJ_NADPISZ_WYDANE=1.
+	# Poza repo gitem (proba kontrolna buduje w piaskownicy) — kontrola się nie odpala.
+	if [ "${BUDUJ_NADPISZ_WYDANE:-0}" != "1" ] && git rev-parse --git-dir >/dev/null 2>&1 \
+		&& git cat-file -e "origin/main:boty/paczki/$(basename "$PACZKA")" 2>/dev/null; then
+		echo "⛔ $(basename "$PACZKA") jest już WYDANA (origin/main) — podbij wersję wtyczki zamiast nadpisywać." >&2
+		exit 1
+	fi
 	rm -f "$PACZKA"
 	( cd "$KORZEN/wtyczki" && zip -q "$PACZKA" "${ALLOWLIST[@]}" )
 
@@ -125,6 +135,12 @@ zbuduj() {
 	if [ -n "$ROZNICA" ]; then
 		echo "BLAD: zawartosc zipa $WTYCZKA rozni sie od allowlisty:" >&2
 		echo "$ROZNICA" >&2
+	# ⛔ Ten sam zamek co wyżej — paczka wydana (origin/main) jest zamrożona.
+	if [ "${BUDUJ_NADPISZ_WYDANE:-0}" != "1" ] && git rev-parse --git-dir >/dev/null 2>&1 \
+		&& git cat-file -e "origin/main:boty/paczki/$(basename "$PACZKA")" 2>/dev/null; then
+		echo "⛔ $(basename "$PACZKA") jest już WYDANA (origin/main) — podbij wersję wtyczki zamiast nadpisywać." >&2
+		exit 1
+	fi
 		rm -f "$PACZKA"
 		exit 1
 	fi
