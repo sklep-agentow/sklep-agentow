@@ -186,3 +186,11 @@
   Start po padzie: `set -a; . /root/.claude/sekrety-sklep.env; set +a; stripe listen --api-key "$STRIPE_SECRET_KEY" --forward-to http://localhost:8890/wp-json/sklepag/v1/webhook`
 - Stack: `strona_wp_wordpress` (:8890), `strona_wp_db`, `sklep_mailpit` (:8025).
 - Builder1: tmux praca:1, worktree sklep-agentow-boty, stoi (boty domknięte).
+
+## Odroczenia z #172 (24.08, runda 1 — świadome, nieblokujące)
+- **readme.txt Segregatora, wiersz „Wymagania"** — dopisać `stream_socket_client` + OpenSSL
+  (dla prawdziwej skrzynki IMAP; FAQ sklepu już to mówi). Paczka 1.3.3 jest WYDANA i pod
+  zamkiem — poprawka wchodzi z NASTĘPNYM wydaniem bota, nie osobno.
+- **Bramka na LICZBY strony sprzedażowej** (`front-produkt.php`: „6 zrzutów", „10 par",
+  „30 maili demo") — dziś prawdziwe (zmierzone w r1 #172), ale bez strażnika zgniją po cichu
+  jak każda liczba; wzór: `dokumentacja-zgodnosc*.sh`.
