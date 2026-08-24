@@ -626,6 +626,32 @@ function sklepag_render_produkt( $slug ) {
 		if ( ! empty( $t['opinie'] ) ) {
 			$html .= '<section class="sklepag-sekcja"><p class="sklepag-mono-etykieta">[ OPINIE KLIENTÓW ]</p><div class="sklepag-opinie">';
 			foreach ( $t['opinie'] as $op ) {
+				/*
+				 * Dwa formaty wpisu: stary array( tresc, podpis ) oraz nowy z kluczami
+				 * 'tresc'/'imie'/'gwiazdki'(1-5)/'tytul'/'data'/'zweryfikowana' —
+				 * docelowy wyglad (feedback 25.08: gwiazdki, imie, avatar); te same
+				 * klucze odda tabela sklepag_opinie po zbudowaniu mechanizmu.
+				 */
+				if ( isset( $op['tresc'] ) ) {
+					$imie  = isset( $op['imie'] ) ? $op['imie'] : '';
+					$gw    = isset( $op['gwiazdki'] ) ? max( 1, min( 5, (int) $op['gwiazdki'] ) ) : 5;
+					$html .= '<figure class="sklepag-opinia"><div class="sklepag-opinia-glowa">';
+					$html .= '<span class="sklepag-avatar" aria-hidden="true">' . esc_html( mb_strtoupper( mb_substr( trim( $imie ), 0, 1 ) ) ) . '</span>';
+					$html .= '<div><p class="sklepag-opinia-imie"><strong>' . esc_html( $imie ) . '</strong>';
+					if ( ! empty( $op['zweryfikowana'] ) ) {
+						$html .= ' <span class="sklepag-opinia-badge">ZWERYFIKOWANY ZAKUP</span>';
+					}
+					$html .= '</p><p class="sklepag-gwiazdki" aria-label="Ocena ' . (int) $gw . ' na 5">' . str_repeat( '★', $gw ) . '<span class="sklepag-gwiazdki-puste">' . str_repeat( '★', 5 - $gw ) . '</span></p></div></div>';
+					if ( ! empty( $op['tytul'] ) ) {
+						$html .= '<p class="sklepag-opinia-tytul">' . esc_html( $op['tytul'] ) . '</p>';
+					}
+					$html .= '<blockquote>' . esc_html( $op['tresc'] ) . '</blockquote>';
+					if ( ! empty( $op['data'] ) ) {
+						$html .= '<figcaption class="sklepag-mono-etykieta">' . esc_html( $op['data'] ) . '</figcaption>';
+					}
+					$html .= '</figure>';
+					continue;
+				}
 				$html .= '<figure class="sklepag-opinia"><blockquote>' . esc_html( $op[0] ) . '</blockquote><figcaption class="sklepag-mono-etykieta">' . esc_html( $op[1] ) . '</figcaption></figure>';
 			}
 			$html .= '</div>';
