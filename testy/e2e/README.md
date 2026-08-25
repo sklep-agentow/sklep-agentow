@@ -44,3 +44,16 @@ cd /root/praca/zlecenia/sklep-agentow && node testy/e2e/sonda-sticky-pigulka.js
 
 Gdy `siteurl` stacku wskazuje inny host niż baza (np. tunel do pokazu), podaj
 go w `SKLEPAG_PRZEKIERUJ_HOST=host` — żądania do niego pójdą na bazę, bez pośrednika.
+
+## szelki-strona-produktu.js — szelki strony produktu (oba boty)
+
+Dziesięć kontroli tego, czego zrzut nie pokaże: skrypt zablokowany / opóźniony
+(bezpiecznik i kaskada), pigułka sticky, kotwica „Kup teraz", lightbox z pułapką
+fokusu (Tab nie wychodzi poza dialog), nagranie w kadrze, chipy w hero, „ogranicz
+ruch", bez JavaScriptu, lista `/sklep/` bez elementów strony produktu.
+Kod wyjścia 0 = wszystko OK, 1 = któraś pada. Slug jako drugi argument.
+
+```
+cd /root/praca/zlecenia/sklep-agentow && node testy/e2e/szelki-strona-produktu.js http://localhost:8890 chatbot-live
+cd /root/praca/zlecenia/sklep-agentow && node testy/e2e/szelki-strona-produktu.js http://localhost:8890 segregator-maila
+```

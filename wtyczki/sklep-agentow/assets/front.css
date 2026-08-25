@@ -923,7 +923,8 @@ a.sklepag-kup {
 	font-size: 0.9rem;
 }
 
-/* ===== 24.08 wieczór: hero 2-kol + galeria „CO JEST W ŚRODKU" + oprawa jasnych zrzutów ===== */
+/* ===== 24.08 wieczór: hero 2-kol + oprawa jasnych zrzutów (galeria-siatka „CO JEST W ŚRODKU" z tej
+   daty wypadła w rundzie stron — oba produkty mają galerię w FAZACH, patrz sekcja strony produktu) ===== */
 .sklepag-hero-uklad {
 	display: grid;
 	grid-template-columns: 1.05fr 0.95fr;
@@ -954,52 +955,6 @@ a.sklepag-kup {
 .sklepag-hero-wizual .sklepag-hero-zrzut {
 	background: transparent;
 }
-.sklepag-galeria {
-	display: grid;
-	grid-template-columns: repeat(2, 1fr);
-	gap: 16px;
-}
-@media (max-width: 700px) {
-	.sklepag-galeria {
-		grid-template-columns: 1fr;
-	}
-}
-.sklepag-galeria-kafel {
-	margin: 0;
-	background: var(--sklepag-wegiel);
-	border: 1px solid var(--sklepag-linia);
-	border-radius: 10px;
-	overflow: hidden;
-	box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
-}
-.sklepag-galeria-kadr {
-	aspect-ratio: 4 / 3;
-	overflow: hidden;
-	background: var(--sklepag-tusz);
-}
-/* Domyslnie: PELNA szerokosc zrzutu, kadr tnie tylko DOL — zadne napisy nie sa
-   ucinane w poziomie (feedback 24.08 v3: krawedz ucinala teksty w pol slowa). */
-.sklepag-galeria-kadr img {
-	width: 100%;
-	height: auto;
-	display: block;
-}
-/* Tryb cover (np. raport z pusta prawa polowa): wypelnia kafel, tnie od prawej. */
-.sklepag-galeria-kadr--cover img {
-	height: 100%;
-	object-fit: cover;
-	object-position: top left;
-}
-/* Mały pionowy zrzut (formularz widgetu): contain na ciemnym tle zamiast rozmytego upscale. */
-.sklepag-galeria-kadr--contain img {
-	height: 100%;
-	object-fit: contain;
-	object-position: center;
-}
-.sklepag-galeria-kafel figcaption {
-	padding: 10px 14px;
-}
-
 /* ===== Koszyk A (25.08): demo-CTA, zgodność, trigger, przypisy, punkty uczciwości, lightbox, sticky ===== */
 .sklepag-demo-cta {
 	color: var(--sklepag-papier);
@@ -1109,16 +1064,6 @@ a.sklepag-kup {
 }
 .sklepag-sticky .sklepag-kup {
 	margin: 0;
-}
-
-/* Kafel wideo: pelna szerokosc, bez kadru-crop. */
-.sklepag-galeria-kafel--wideo video {
-	display: block;
-	width: 100%;
-	height: auto;
-}
-.sklepag-galeria-kafel--wideo {
-	grid-column: 1 / -1;
 }
 
 /* ===== Opinie v2 (25.08): avatar-inicjal, gwiazdki, badge, tytul ===== */
@@ -2234,6 +2179,26 @@ a.sklepag-kup {
 	height: 26rem;
 }
 
+/* Faza „nagranie" (Segregator): dwa RÓWNE poziome kafle — nagranie panelu (900×622) obok kadru tabeli
+   próbki (1100×760, ta sama proporcja), bez sztywnej wysokości. Kadr tabeli gaśnie u dołu: widać, że
+   lista trwa dalej (całość w lightboxie), zamiast cięcia wiersza w pół słowa. */
+.sklepag-faza--nagranie .sklepag-faza-kafle {
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.sklepag-faza--nagranie .sklepag-kafel-kadr {
+	height: auto;
+	aspect-ratio: 1100 / 760;
+}
+
+.sklepag-faza--nagranie .sklepag-kafel:not(.sklepag-kafel--wideo) .sklepag-kafel-kadr::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(180deg, transparent 72%, rgba(16, 17, 22, 0.94) 100%);
+	pointer-events: none;
+}
+
 .sklepag-faza--formularz .sklepag-faza-kafle {
 	grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.45fr);
 }
@@ -2337,6 +2302,11 @@ a.sklepag-kup {
 	aspect-ratio: 1078 / 500;
 }
 
+/* Kadr raportu (1200×470) trzyma własną proporcję — w oknie 1078/500 tryb cover ucinałby mu boki z liczbami. */
+.sklepag-faza--panel .sklepag-kafel--raport .sklepag-kafel-kadr {
+	aspect-ratio: 1200 / 470;
+}
+
 .sklepag-kafel-kadr img,
 .sklepag-kafel-kadr video {
 	display: block;
@@ -2386,6 +2356,7 @@ a.sklepag-kup {
    (atrybut `hidden`), front-ruch.js odsłania go przy blokadzie i chowa, gdy nagranie gra. */
 .sklepag-kafel-odtworz {
 	position: absolute;
+	z-index: 2; /* nad plakatem i warstwami gaśnięcia kadru */
 	left: 50%;
 	bottom: 1rem;
 	translate: -50% 0;
@@ -2644,8 +2615,48 @@ html.sklepag-lightbox-otwarty {
 @media (max-width: 40rem) {
 	.sklepag-faza-kafle,
 	.sklepag-faza--wideo .sklepag-faza-kafle,
+	.sklepag-faza--nagranie .sklepag-faza-kafle,
 	.sklepag-faza--formularz .sklepag-faza-kafle {
 		grid-template-columns: 1fr;
+	}
+
+	/* Kadr tabeli próbki na telefonie: lewa, czytelna część w 4:3 (jak kadry panelu), gaśnie w prawo i w dół. */
+	.sklepag-faza--nagranie .sklepag-kafel:not(.sklepag-kafel--wideo) .sklepag-kafel-kadr {
+		aspect-ratio: 4 / 3;
+	}
+
+	.sklepag-faza--nagranie .sklepag-kafel:not(.sklepag-kafel--wideo) .sklepag-kafel-kadr img {
+		object-position: top left;
+	}
+
+	.sklepag-faza--nagranie .sklepag-kafel:not(.sklepag-kafel--wideo) .sklepag-kafel-kadr::after {
+		background: linear-gradient(90deg, transparent 62%, rgba(16, 17, 22, 0.92) 100%), linear-gradient(180deg, transparent 72%, rgba(16, 17, 22, 0.94) 100%);
+	}
+
+	/* Raport na telefonie jak inne kadry panelu: 4:3 od lewej-góry, całość w lightboxie. */
+	.sklepag-faza--panel .sklepag-kafel--raport .sklepag-kafel-kadr {
+		aspect-ratio: 4 / 3;
+	}
+
+	/* Nagranie panelu na telefonie (sędzia r1: 900 px panelu ściśnięte do 390 px = litery kilku pikseli):
+	   jak kadry — 4:3 od lewej-góry (przycisk przebiegu i pierwsze kolumny raportu), prawa krawędź gaśnie. */
+	.sklepag-faza--nagranie .sklepag-kafel--wideo .sklepag-kafel-kadr {
+		aspect-ratio: 4 / 3;
+	}
+
+	.sklepag-faza--nagranie .sklepag-kafel--wideo .sklepag-kafel-kadr video,
+	.sklepag-faza--nagranie .sklepag-kafel--wideo .sklepag-kafel-plakat {
+		object-fit: cover;
+		object-position: left top;
+	}
+
+	.sklepag-faza--nagranie .sklepag-kafel--wideo .sklepag-kafel-kadr::before {
+		content: "";
+		position: absolute;
+		inset: 0;
+		z-index: 1;
+		background: linear-gradient(90deg, transparent 62%, rgba(16, 17, 22, 0.92) 100%);
+		pointer-events: none;
 	}
 
 	.sklepag-kafel-kadr {
@@ -2786,6 +2797,20 @@ html.sklepag-lightbox-otwarty {
 @keyframes sklepag-chip-swiatlo {
 	0%, 27%, 100% { border-color: var(--sklepag-linia); color: var(--sklepag-papier); box-shadow: none; }
 	8%, 19% { border-color: var(--sklepag-limonka); color: var(--sklepag-limonka); box-shadow: 0 0 0 3px rgba(191, 255, 56, 0.12); }
+}
+
+/* Hero Segregatora: chipy „Twoje reguły" zapalają się W TAKT tagów maili w oknie wyżej — ta sama pętla
+   10 s i te same opóźnienia (0 / 0,6 / 1,2 s) co `sklepag-pn-tag`: reguła łapie mail, tag wskakuje, chip świeci. */
+.sklepag-panel-baza--reguly .sklepag-panel-chip {
+	animation: sklepag-pn-chip 10s ease-in-out infinite;
+}
+
+.sklepag-panel-baza--reguly .sklepag-panel-chip:nth-child(3) { animation-delay: 0.6s; }
+.sklepag-panel-baza--reguly .sklepag-panel-chip:nth-child(4) { animation-delay: 1.2s; }
+
+@keyframes sklepag-pn-chip {
+	0%, 46%, 92%, 100% { border-color: var(--sklepag-linia); color: var(--sklepag-papier); box-shadow: none; }
+	50%, 86% { border-color: var(--sklepag-limonka); color: var(--sklepag-limonka); box-shadow: 0 0 0 3px rgba(191, 255, 56, 0.12); }
 }
 
 /* Kadry panelu lekko przygaszone (bez retuszu treści): łagodniejszy skok jasności po ciemnych fazach 01/02. */

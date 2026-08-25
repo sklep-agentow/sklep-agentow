@@ -372,49 +372,96 @@ function sklepag_tresc_produktu( $slug ) {
 				'<strong>Czego nie ma, mówimy przed zakupem</strong>: logowanie tylko loginem i hasłem aplikacji, więc Microsoft 365 i Outlook.com NIE zadziałają (tam wymagane jest OAuth).',
 				'Na skrzynce klasyfikują reguły, nie AI; bez czytania załączników.',
 			),
-			'galeria'        => array(
+			/*
+			 * FAZY (runda dzialu stron, PR 2b): galeria opowiada w trzech wierszach
+			 * probka i przebieg -> reguly -> raport i kontrola. Narracje sklejone z istniejacych
+			 * tresci (funkcje, FAQ, alty) — zero nowych obietnic i liczb. Kadry (*-kadr.webp)
+			 * sa wyciete ffmpeg-iem z TYCH SAMYCH plikow (crop od podanego y: probka 930,
+			 * reguly 280, ustawienia 46; kategorie i raport w calosci). Nagranie przyciete do
+			 * obszaru panelu (crop=1100:760:170:40 z 1280x800 — bez menu gospodarza i plakietki
+			 * „Plugins"), skalowane do 900 px, plakat = jego klatka 0,2 s; oryginal
+			 * segregator-demo.webm zostaje w assets (na stronie nieuzywany).
+			 */
+			'fazy'           => array(
 				array(
-					'wideo'  => 'segregator-demo.webm',
-					'alt'    => 'Nagranie: kliknięcie Przepuść próbkę i świeży raport — liczby, trafienia per kategoria, każda wiadomość z regułą, która ją złapała',
-					'podpis' => 'NAGRANIE Z PANELU — PRZEBIEG PRÓBKI I RAPORT NA ŻYWO',
-					'szer'   => 1280,
-					'wys'    => 800,
+					'tytul' => 'Testujesz od razu',
+					'opis'  => 'Wbudowane 30 maili demo po polsku: puszczasz przebieg bez podpinania skrzynki i od razu czytasz raport z liczbami.',
+					'uklad' => 'nagranie',
+					'kafle' => array(
+						array(
+							'wideo'  => 'segregator-demo-kadr.webm',
+							'plakat' => 'segregator-demo-plakat.webp',
+							'alt'    => 'Nagranie: kliknięcie Przepuść próbkę i świeży raport — liczby, trafienia per kategoria, każda wiadomość z regułą, która ją złapała',
+							'podpis' => 'NAGRANIE Z PANELU — PRZEBIEG PRÓBKI I RAPORT NA ŻYWO',
+							'szer'   => 900,
+							'wys'    => 622,
+						),
+						array(
+							'plik'      => 'segregator-maila--probka-demo.png',
+							'kadr_plik' => 'segregator-maila--probka-demo-kadr.webp',
+							'kadr_szer' => 1100,
+							'kadr_wys'  => 760,
+							'alt'       => 'Ekran Próbka maili: tabela 30 przykładowych wiadomości po polsku z nadawcą, tematem i treścią',
+							'podpis'    => '30 MAILI DEMO — TESTUJESZ OD PIERWSZEJ MINUTY',
+							'szer'      => 1100,
+							'wys'       => 2726,
+						),
+					),
 				),
 				array(
-					'plik'   => 'segregator-maila--zywy.jpg',
-					'kadr'   => 'cover',
-					'alt'    => 'Raport przebiegu Segregatora maila w panelu WordPressa: 30 maili w próbce, pokrycie regułami 80 procent, trafność 100 procent, podział na kategorie',
-					'podpis' => 'PRAWDZIWY RAPORT Z PANELU — LICZBY BEZ RETUSZU',
-					'szer'   => 1200,
-					'wys'    => 470,
+					'tytul' => 'Twoje reguły',
+					'opis'  => 'Nadawca, temat albo słowa w treści → kategoria; pierwsza pasująca wygrywa. Kategorie nazywasz pod swoją firmę — używanej przez regułę nie skasujesz przypadkiem.',
+					'uklad' => 'panel',
+					'kafle' => array(
+						array(
+							'plik'      => 'segregator-maila--reguly.png',
+							'kadr_plik' => 'segregator-maila--reguly-kadr.webp',
+							'kadr_szer' => 1078,
+							'kadr_wys'  => 500,
+							'alt'       => 'Lista reguł segregacji: nadawca, temat, słowa w treści, kategoria i kolumny Pasuje/Zgarnia',
+							'podpis'    => 'REGUŁY — PIERWSZA PASUJĄCA WYGRYWA',
+							'szer'      => 1100,
+							'wys'       => 1070,
+						),
+						array(
+							'plik'      => 'segregator-maila--kategorie.png',
+							'kadr_plik' => 'segregator-maila--kategorie-kadr.webp',
+							'kadr_szer' => 1100,
+							'kadr_wys'  => 511,
+							'alt'       => 'Lista kategorii poczty: Oferty, Faktury, Reklamacje i własne',
+							'podpis'    => 'KATEGORIE POD TWOJĄ FIRMĘ — UŻYWANEJ NIE SKASUJESZ PRZYPADKIEM',
+							'szer'      => 1100,
+							'wys'       => 511,
+						),
+					),
 				),
 				array(
-					'plik'   => 'segregator-maila--probka-demo.png',
-					'alt'    => 'Ekran Próbka maili: tabela 30 przykładowych wiadomości po polsku z nadawcą, tematem i treścią',
-					'podpis' => '30 MAILI DEMO — TESTUJESZ OD PIERWSZEJ MINUTY',
-					'szer'   => 1100,
-					'wys'    => 2726,
-				),
-				array(
-					'plik'   => 'segregator-maila--reguly.png',
-					'alt'    => 'Lista reguł segregacji: nadawca, temat, słowa w treści, kategoria i kolumny Pasuje/Zgarnia',
-					'podpis' => 'REGUŁY — PIERWSZA PASUJĄCA WYGRYWA',
-					'szer'   => 1100,
-					'wys'    => 1070,
-				),
-				array(
-					'plik'   => 'segregator-maila--kategorie.png',
-					'alt'    => 'Lista kategorii poczty: Oferty, Faktury, Reklamacje i własne',
-					'podpis' => 'KATEGORIE POD TWOJĄ FIRMĘ — UŻYWANEJ NIE SKASUJESZ PRZYPADKIEM',
-					'szer'   => 1100,
-					'wys'    => 511,
-				),
-				array(
-					'plik'   => 'segregator-maila--ustawienia.png',
-					'alt'    => 'Ustawienia Segregatora: tryb AI (hybryda), klucz API, dzienny limit kosztów',
-					'podpis' => 'TRYB AI I STOP-LOSSY — TY TRZYMASZ BUDŻET',
-					'szer'   => 1078,
-					'wys'    => 719,
+					'tytul' => 'Raport i kontrola',
+					'opis'  => 'Ile do której kategorii, ile bez dopasowania, % pokrycia — a przy próbce z oczekiwaną kategorią także trafność i lista pomyłek. Tryb AI włączasz własnym kluczem, z dziennym limitem kosztów.',
+					'uklad' => 'panel',
+					'kafle' => array(
+						array(
+							'plik'      => 'segregator-maila--zywy.jpg',
+							'kadr_plik' => 'segregator-maila--zywy-kadr.webp',
+							'kadr_szer' => 1200,
+							'kadr_wys'  => 470,
+							'kadr'      => 'raport',
+							'alt'       => 'Raport przebiegu Segregatora maila w panelu WordPressa: 30 maili w próbce, pokrycie regułami 80 procent, trafność 100 procent, podział na kategorie',
+							'podpis'    => 'PRAWDZIWY RAPORT Z PANELU — LICZBY BEZ RETUSZU',
+							'szer'      => 1200,
+							'wys'       => 470,
+						),
+						array(
+							'plik'      => 'segregator-maila--ustawienia.png',
+							'kadr_plik' => 'segregator-maila--ustawienia-kadr.webp',
+							'kadr_szer' => 1078,
+							'kadr_wys'  => 500,
+							'alt'       => 'Ustawienia Segregatora: tryb AI (hybryda), klucz API, dzienny limit kosztów',
+							'podpis'    => 'TRYB AI I STOP-LOSSY — TY TRZYMASZ BUDŻET',
+							'szer'      => 1078,
+							'wys'       => 719,
+						),
+					),
 				),
 			),
 			'pakiet'         => array(
@@ -777,27 +824,10 @@ function sklepag_render_produkt( $slug ) {
 		}
 		$html .= '</ol></section>';
 
-		// CO JEST W ŚRODKU — fazy (nowy układ) albo dawna galeria (produkt jeszcze nie przeniesiony).
+		// CO JEST W ŚRODKU — galeria w fazach (oba produkty; dawna galeria-siatka wypadła razem
+		// z ostatnim produktem, który jej używał).
 		if ( ! empty( $t['fazy'] ) ) {
 			$html .= '<section class="sklepag-sekcja sklepag-sekcja--pelna">' . $etykieta( 'CO JEST W ŚRODKU' ) . sklepag_render_fazy( $t['fazy'], $nr ) . '</section>';
-		} elseif ( ! empty( $t['galeria'] ) ) {
-			// Zrzuty z żywej instalacji, bez retuszu; tasiemce kadruje CSS od góry
-			// (object-position: top), wymiary prawdziwe — brak CLS.
-			$html .= '<section class="sklepag-sekcja">' . $etykieta( 'CO JEST W ŚRODKU' );
-			$html .= '<div class="sklepag-galeria">';
-			foreach ( $t['galeria'] as $g ) {
-				if ( ! empty( $g['wideo'] ) ) {
-					$zrodlo = esc_url( plugins_url( 'assets/w-srodku/' . $g['wideo'], SKLEPAG_PLIK ) );
-					$html  .= '<figure class="sklepag-galeria-kafel sklepag-galeria-kafel--wideo"><video src="' . $zrodlo . '" width="' . (int) $g['szer'] . '" height="' . (int) $g['wys'] . '" autoplay muted loop playsinline preload="metadata" aria-label="' . esc_attr( $g['alt'] ) . '"></video>';
-					$html  .= '<figcaption class="sklepag-mono-etykieta">' . esc_html( $g['podpis'] ) . '</figcaption></figure>';
-					continue;
-				}
-				$kadr_kl = 'sklepag-galeria-kadr' . ( isset( $g['kadr'] ) ? ' sklepag-galeria-kadr--' . sanitize_html_class( $g['kadr'] ) : '' );
-				$pelny   = esc_url( plugins_url( 'assets/w-srodku/' . $g['plik'], SKLEPAG_PLIK ) );
-				$html   .= '<figure class="sklepag-galeria-kafel"><a class="sklepag-lightbox" href="' . $pelny . '" data-podpis="' . esc_attr( $g['podpis'] ) . '" aria-label="Powiększ zrzut"><div class="' . esc_attr( $kadr_kl ) . '"><img src="' . $pelny . '" alt="' . esc_attr( $g['alt'] ) . '" width="' . (int) $g['szer'] . '" height="' . (int) $g['wys'] . '" loading="lazy"></div></a>';
-				$html   .= '<figcaption class="sklepag-mono-etykieta">' . esc_html( $g['podpis'] ) . '</figcaption></figure>';
-			}
-			$html .= '</div></section>';
 		}
 
 		// W PACZCE — policzalna zawartość zipa (fakty z paczki, nie obietnice), 2 kolumny.

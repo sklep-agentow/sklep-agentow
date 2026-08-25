@@ -191,7 +191,18 @@
 		}
 		tlo.appendChild(zamknij);
 		tlo.appendChild(ramka);
-		var naKlawisz = function (ev) { if (ev.key === 'Escape') { sprzatnij(); } };
+		// Pułapka fokusu: dialog modalny nie wypuszcza Tab-a na stronę pod spodem — fokus krąży po
+		// elementach dialogu (dziś: przycisk zamknięcia), a gdy uciekł, wraca do pierwszego.
+		var naKlawisz = function (ev) {
+			if (ev.key === 'Escape') { sprzatnij(); return; }
+			if (ev.key !== 'Tab') { return; }
+			var pola = tlo.querySelectorAll('button, [href], [tabindex]:not([tabindex="-1"])');
+			if (!pola.length) { ev.preventDefault(); return; }
+			var pierwsze = pola[0], ostatnie = pola[pola.length - 1], aktywne = document.activeElement;
+			if (ev.shiftKey && aktywne === pierwsze) { ev.preventDefault(); ostatnie.focus(); }
+			else if (!ev.shiftKey && aktywne === ostatnie) { ev.preventDefault(); pierwsze.focus(); }
+			else if (!tlo.contains(aktywne)) { ev.preventDefault(); pierwsze.focus(); }
+		};
 		var sprzatnij = function () {
 			tlo.remove();
 			document.documentElement.classList.remove('sklepag-lightbox-otwarty');
