@@ -249,3 +249,74 @@ Galeria w 3 FAZACH z równymi rzędami · ciemne ramy okien wokół białych zrz
 pełny ekran w lightboxie · poster→fade dla kafli-nagrań · ożywione mikro-ilustracje SVG przy
 krokach „jak działa" · wideo segregatora przycięte ffmpeg-iem do obszaru panelu (bez menu
 gospodarza i plakietki „Plugins 1") · kompresja galerii pod 1,5 MB (WebP przez ffmpeg).
+
+## 7. GIGANT-PROMPT STRONY PRODUKTU — PR 2b: `/sklep/produkt/segregator-maila/` (25.08, po scaleniu PR 2a)
+
+Ta sama metoda i ten sam system co ChatBot (§6), od razu z lekcjami sześciu rund PR 2a: hero = panel
+na żywo, para kafli = dwie RÓŻNE rzeczy, kadr nagrania cięty DO produktu, faza z kadrami = narracja
+NAD kadrami, kadry sprawdzone klatkami (nie „na oko"). Treści sprzedażowe BEZ ZMIAN — narracje faz
+sklejone z istniejących zdań (funkcje, FAQ, alty). Wersja 0.9.11 → 0.9.12.
+
+### POMIAR PRZED (25.08, `zrzuty-produkt.js segregator-maila`, po wolnym scrollu)
+Dawna galeria-siatka: nagranie 1280×800 z menu gospodarza i plakietką „Plugins 1" (517 KB), tasiemiec
+próbki 1100×2726 w całości do kafla (513 KB), reguły (192 KB), ustawienia (125 KB) — waga strony
+**1538 KB** desktop i telefon, wysokość 8931 / 12654 px, 0 błędów JS, 0 przepełnienia.
+
+### GALERIA = 3 FAZY (`04.1 · TESTUJESZ OD RAZU → 04.2 · TWOJE REGUŁY → 04.3 · RAPORT I KONTROLA`)
+- **04.1 `nagranie`** (NOWY układ — decyzja: układ `wideo` z §6 jest skrojony pod PIONOWE okno czatu,
+  a tu oba kafle są poziome): dwa RÓWNE kafle bez sztywnej wysokości, proporcja 1100/760. Lewy:
+  nagranie przycięte do OBSZARU PANELU (`crop=1100:760:170:40` z 1280×800 — pasek admina y<32 i menu
+  x<160 poza kadrem, treść przewija się W kadrze, bo to jest demo), skalowane do 900 px, VP9 crf 36
+  → `segregator-demo-kadr.webm` 398 KB (crf 34 w 1100 px dawał 757 KB — więcej niż oryginał) + plakat
+  z klatki 0,2 s (33 KB). Prawy: KADR tabeli „Maile w próbce" (`crop=1100:760:0:930` — nagłówek
+  sekcji + kolumny + kilkanaście wierszy; góra pliku to formularz importu, nie „30 maili"), dół gaśnie
+  gradientem (widać, że lista trwa), całość 2726 px w lightboxie. Dwie różne rzeczy: przebieg + dane.
+  Na telefonie (sędzia r1: „litery rzędu kilku pikseli") nagranie też 4:3 od lewej-góry (przycisk
+  przebiegu + pierwsze kolumny raportu) z gaśnięciem prawej krawędzi — jak kadry panelu; nagranie
+  nie ma lightboxa (to ruch, nie treść do czytania — treść jest w kadrach obok i w pełnych ekranach).
+- **04.2 `panel`** (narracja nad kadrami, pełna szerokość — kadry na pół szerokości Dzidek odrzucił
+  w §6): reguły `crop=1078:500:0:280` (pole kategorii, przyciski i CAŁA lista 8 reguł z kolumnami
+  Pasuje/Zgarnia; koniec przed sekcją „Przeprowadzka"; szerokość 1078 = proporcja okna 1078/500 —
+  sędzia r1 złapał, że kadr 1100 px w trybie cover tracił po 11 px z boków i strzałkę „→ kategoria")
+  + kategorie w całości (1100×511).
+- **04.3 `panel`**: raport `--zywy.jpg` 1200×470 w całości — klasa `kadr => 'raport'` daje kaflowi
+  własną proporcję 1200/470 (w oknie 1078/500 tryb cover ucinałby boki z liczbami; telefon = 4:3 jak
+  reszta kadrów panelu) + ustawienia „Tryb AI" `crop=1078:500:0:46` (klucz, model, dzienny limit
+  z pełnym tekstem pomocy — przy 36 ostatnia linia była cięta).
+- Dawna galeria-siatka (`galeria` w danych, gałąź `elseif` w renderze, CSS `.sklepag-galeria*`)
+  USUNIĘTA — ostatni produkt, który jej używał, przeszedł na fazy. Oryginały PNG/JPG zostają jako
+  cele lightboxa; `segregator-demo.webm` zostaje w assets nieużywany (jak `chatbot-demo.webm`).
+
+### HERO = PANEL NA ŻYWO SEGREGATORA (sygnatura produktu)
+`sklepag_panel_nocnej_zmiany( 'segregator-maila' )` + wiersz „Twoje reguły" z chipami
+`[ Faktury ] [ Oferty ] [ Reklamacje ]` — chip zapala się W TAKT tagu maila w oknie wyżej (pętla
+10 s, opóźnienia 0 / 0,6 / 1,2 s jak `sklepag-pn-tag`): reguła łapie mail, tag wskakuje, chip świeci.
+Lista `/sklep/` woła `'oba'` — bez chipów (szelki 10: `sklepag-panel-baza` = 0 na liście).
+
+### DOŁOŻONE Z „CZEGO NIE MA" PR 2a
+Pułapka fokusu lightboxa (Tab / Shift+Tab krążą po dialogu) · szelki obu stron produktów W REPO
+(`testy/e2e/szelki-strona-produktu.js`, 10 kontroli, slug jako argument) · sonda pigułki z PR 2a.
+
+### KRYTERIA ODBIORU PR 2b
+Jak §6: sędzia ≥ 85 i zero P1 (max 2 rundy, potem oko Dzidka na tunelu) · zrzuty desktop+telefon po
+WOLNYM scrollu · bramki 8/8 EXIT 0 · waga strony < 1,5 MB (cel < 1 MB; media faz = 640 KB) · szelki
+10/10 dla OBU slugów · lista `/sklep/` i ChatBot bez regresji.
+
+### WYNIK PR 2b (dok = kod)
+- Pomiar PO (Playwright, po wolnym scrollu, `/sklep/produkt/segregator-maila/`): waga **1538 → 741 KB**
+  (desktop i telefon; najcięższe: nagranie-kadr 389 KB, kadr próbki 82 KB, kadr ustawień 50 KB),
+  0 błędów JS, 0 przepełnienia na 390 px, wysokość 8931 → 10185 px (desktop), 12654 → 13657 px (telefon).
+- Szelki w repo (`testy/e2e/szelki-strona-produktu.js`): **10/10 segregator-maila i 10/10 chatbot-live**
+  (skrypt zablokowany/opóźniony, pigułka, kotwica, lightbox + pułapka fokusu, nagranie, chipy hero,
+  „ogranicz ruch", bez JS, lista bez chipów).
+- **Sędzia r1 (sonnet, 31 zrzutów): 80, BLISKO, zero P1** (kolor 90, typografia 87, hierarchia 86; galeria 72,
+  media 74). Wdrożone: kadr reguł 1078 px (cover w oknie 1078/500 tracił po 11 px z boków i strzałkę
+  „→ kategoria") · nagranie na telefonie 4:3 od lewej-góry z gaśnięciem (900 px panelu ściśnięte do 390 px
+  = litery kilku pikseli). ŚWIADOMIE NIE: ramka wokół „W paczce" (wspólny system z ChatBotem) · ikony przy
+  chipach (chipy świecą w takt tagów — ruchu nie widać na zrzucie).
+- **Sędzia r2: 83, BLISKO, zero P1** (hierarchia 86, typografia 86, media 84, telefon 82). Wdrożone: adnotacja
+  pod panelem hero „Twoje foldery" zamiast „Poranny raport" (dublował etykietę w panelu; skrzynka → foldery
+  = to, co produkt robi wg istniejących treści). ŚWIADOMIE NIE: panel na żywo w pierwszym ekranie telefonu
+  (P2 — decyzja z §6: tekst + cena + CTA wyżej, panel POD tekstem, jak lista i ChatBot) · akcent wizualny
+  między fazami 04.2 i 04.3 (P3 — rytm faz identyczny z ChatBotem; arbitrem oko przeglądającego). Pętla
+  sędziego ZATRZYMANA po 2 rundach (80 → 83, sufit ≈ 85 — jak w §6).

@@ -3,7 +3,7 @@
  * Plugin Name: Sklep Agentów
  * Plugin URI: https://automaticai.pl/sklep/
  * Description: Sprzedawaj wtyczki-boty AI bezpośrednio ze swojej strony: płatność kartą, automatyczny mail z linkiem do pobrania, panel zamówień ze statystykami i dziennikiem logowań. Zamówienia, produkty i pliki zostają w Twojej bazie i na Twoim serwerze — bez abonamentu. Płatność obsługuje Stripe.
- * Version: 0.9.11
+ * Version: 0.9.12
  * Requires at least: 6.7
  * Requires PHP: 8.1
  * Author: Automatic AI
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SKLEPAG_WERSJA', '0.9.11' );
+define( 'SKLEPAG_WERSJA', '0.9.12' );
 define( 'SKLEPAG_WERSJA_SCHEMATU', 5 ); // v5: tabela opinie (mechanizm D32); v4: kolumna zamowienia.usunieto_dnia (anonimizacja RODO — K3d); v3: indeks para_logowania.
 define( 'SKLEPAG_LIMIT_POBRAN', 10 ); // Jedno źródło: INSERT zamówienia + treść maila.
 define( 'SKLEPAG_LINK_GODZIN', 72 );  // Ważność linku pobrania — jw.
@@ -162,7 +162,9 @@ function sklepag_panel_nocnej_zmiany( $tryb = 'oba' ) {
 	}
 	$html  = '<div class="sklepag-panel' . ( 'oba' === $tryb ? '' : ' sklepag-panel--' . sanitize_html_class( $tryb ) ) . '" aria-hidden="true">';
 	$html .= '<span class="sklepag-panel-adnotacja sklepag-panel-adnotacja--gora">' . ( $maile && ! $czat ? 'Twoja skrzynka' : 'Twoja strona' ) . '</span>';
-	$html .= '<span class="sklepag-panel-adnotacja sklepag-panel-adnotacja--dol">' . ( 'oba' === $tryb ? 'Twoja skrzynka' : ( $czat ? 'Twoja baza pytań' : 'Poranny raport' ) ) . '</span>';
+	// Adnotacja dolna hero Segregatora = „Twoje foldery" (skrzynka → foldery, jak w treściach produktu);
+	// „Poranny raport" dublował etykietę wiersza w panelu tuż nad nią (sędzia r2). Lista bez zmian.
+	$html .= '<span class="sklepag-panel-adnotacja sklepag-panel-adnotacja--dol">' . ( 'oba' === $tryb ? 'Twoja skrzynka' : ( $czat ? 'Twoja baza pytań' : 'Twoje foldery' ) ) . '</span>';
 	$html .= '<div class="sklepag-panel-okno">';
 	$html .= '<span class="sklepag-okno-pasek"><span></span><span></span><span></span></span>';
 	if ( $czat ) {
@@ -192,6 +194,11 @@ function sklepag_panel_nocnej_zmiany( $tryb = 'oba' ) {
 		$html   .= '<p class="sklepag-panel-mail">' . $koperta . '<span class="sklepag-panel-mail-temat">RE: wycena ogrodzenia</span><span class="sklepag-tag">Oferty</span></p>';
 		$html   .= '<p class="sklepag-panel-mail">' . $koperta . '<span class="sklepag-panel-mail-temat">reklamacja zamówienia 113</span><span class="sklepag-tag">Reklamacje</span></p>';
 		$html   .= '</div></div>';
+		if ( 'oba' !== $tryb ) {
+			// Wiersz „Twoje reguły" (tylko hero produktu): chipy = kategorie z wierszy maili wyżej; chip zapala
+			// się W TAKT tagu maila (CSS, te same opóźnienia) — reguła łapie mail, tag wskakuje, chip świeci.
+			$html .= '<div class="sklepag-panel-baza sklepag-panel-baza--reguly"><span class="sklepag-mono-etykieta">Twoje reguły</span><span class="sklepag-panel-chip">[ Faktury ]</span><span class="sklepag-panel-chip">[ Oferty ]</span><span class="sklepag-panel-chip">[ Reklamacje ]</span></div>';
+		}
 	}
 	$html .= '</div></div>';
 	return $html;
