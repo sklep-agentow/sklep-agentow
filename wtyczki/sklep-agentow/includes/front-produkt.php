@@ -197,8 +197,8 @@ function sklepag_tresc_produktu( $slug ) {
 			'galeria'      => array(
 				array(
 					'wideo'  => 'chatbot-demo.webm',
-					'alt'    => 'Nagranie: gość pyta o godziny otwarcia, bot odpowiada z bazy; na pytanie spoza bazy bot otwiera formularz „Zostaw wiadomość"',
-					'podpis' => 'NAGRANIE Z TEJ STRONY — PYTANIE, ODPOWIEDŹ I ZBIERANIE KONTAKTU',
+					'alt'    => 'Nagranie: gość pyta „Ile kosztuje ChatBot LIVE?", bot od razu odpowiada ceną 149,00 zł i opisem z bazy; na „Czy jest gwarancja?" bot podaje 14-dniową gwarancję zwrotu',
+					'podpis' => 'NAGRANIE Z TEJ STRONY — PYTANIA O CENĘ I GWARANCJĘ, ODPOWIEDZI Z BAZY',
 					'szer'   => 1280,
 					'wys'    => 800,
 				),
@@ -253,11 +253,17 @@ function sklepag_tresc_produktu( $slug ) {
 			),
 			/*
 			 * ⛔ OPINIE: wyłącznie PRAWDZIWE, od zweryfikowanych kupujących (D6 + UZUPEŁNIENIE
-			 * 24.08, Omnibus). Puste = sekcja się nie renderuje. Format wpisu:
-			 * array( 'treść opinii', 'Imię, firma' ). Gdy dodajesz PIERWSZĄ opinię,
-			 * USUŃ z 'uczciwosc' zdanie „Nie znajdziesz tu opinii z gwiazdkami…" —
-			 * o pochodzeniu opinii mówi wtedy stała NOTA renderowana razem z sekcją
-			 * (patrz sklepag_render_produkt), więc strona nie zostaje bez tego zdania.
+			 * 24.08, Omnibus). Puste = sekcja się nie renderuje. Format wpisu — WYŁĄCZNIE
+			 * tablica z kluczami (wpis bez klucza 'tresc' jest przez render POMIJANY):
+			 * array(
+			 *     'tresc'    => 'Treść opinii.',
+			 *     'imie'     => 'Imię',       // brak = „Klient"
+			 *     'gwiazdki' => 5,            // 1-5; brak = 5
+			 *     'tytul'    => 'Tytuł',      // opcjonalny
+			 *     'data'     => '25.08.2026', // opcjonalna
+			 * )
+			 * O pochodzeniu opinii mówi stała NOTA renderowana razem z sekcją
+			 * (sklepag_render_opinie) — niczego więcej nie trzeba zmieniać na stronie.
 			 */
 			'opinie'       => array(),
 			/*
