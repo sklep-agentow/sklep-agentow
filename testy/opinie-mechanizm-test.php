@@ -35,8 +35,9 @@ $zam1  = 9900001;
 $zam2  = 9900002;
 $teraz = current_time( 'mysql' );
 
-// SETUP: sprzątnij ewentualne resztki poprzedniego przebiegu, załóż produkt testowy.
-$wpdb->query( $wpdb->prepare( "DELETE FROM {$to} WHERE zamowienie_id IN (%d, %d)", $zam1, $zam2 ) );
+// SETUP: sprzątnij ewentualne resztki poprzedniego przebiegu (WSZYSTKIE zamówienia
+// testowe — przerwany przebieg nie może wywrócić następnego), załóż produkt testowy.
+$wpdb->query( $wpdb->prepare( "DELETE FROM {$to} WHERE zamowienie_id IN (%d, %d, %d, %d, %d)", $zam1, $zam2, 9900011, 9900012, 9900013 ) );
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}sklepag_zamowienia WHERE id IN (%d, %d)", $zam1, 9900011 ) );
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$tp} WHERE slug = %s", $slug ) );
 $wpdb->insert(
