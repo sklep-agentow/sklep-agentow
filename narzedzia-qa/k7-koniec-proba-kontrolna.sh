@@ -1,11 +1,14 @@
 #!/bin/bash
-# k7-koniec-proba-kontrolna.sh — dowód, że k7-koniec.sh nie jest ozdobą.                 WERSJA 1.0.0
+# k7-koniec-proba-kontrolna.sh — dowód, że k7-koniec.sh nie jest ozdobą.                 WERSJA 1.1.0
 #
 # Buduje w /tmp PEŁNĄ, ZIELONĄ atrapę stanu końca K7 (mapa, rejestr, przelot, log prób,
 # paczka + sha, repo git z tagiem i gałęzią mutantów, raport JSON) i sprawdza, że skrypt
 # mówi GO. Potem psuje KAŻDY z ośmiu warunków osobno i sprawdza, że skrypt mówi NO-GO
 # i nazywa ten właśnie warunek. Kontrola odwrotna jest pierwsza — inaczej „bramka, która
 # wszystko odrzuca” też by zdała.
+# ZASADA (lekcja recenzji #182 r2 W2): każda próba psuje DOKŁADNIE JEDEN warunek. Pierwsza wersja
+# psuła „FAIL" i „proby=3" naraz, więc martwy licznik prób przechodził 16/16. Atrapa = ten sam rodzaj
+# co produkcja: tag ADNOTOWANY (git tag -a), bo goły tag nie wykryłby rev-parse bez ^{commit} (W8).
 # Kody: 0 = bramka rozpoznaje każdy podłożony brak i przepuszcza czysty stan · 1 = pomyliła się
 set -u
 KORZEN="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -18,10 +21,10 @@ zbuduj_czysty() {
 	# paczka + sha
 	printf 'atrapa' > "$r/boty/paczki/plik.txt"; ( cd "$r/boty/paczki" && zip -q sklep-agentow-9.9.9.zip plik.txt )
 	# repo git z tagiem i gałęzią mutantów
-	( cd "$r" && git init -q && git config user.email a@b.c && git config user.name a && git add -A >/dev/null && git commit -qm baza && git tag k7-zamrozenie \
+	( cd "$r" && git init -q && git config user.email a@b.c && git config user.name a && git add -A >/dev/null && git commit -qm baza && git tag -a k7-zamrozenie -m zamrozenie \
 	  && git checkout -qb audyt/mutanty-sklep && printf '# rozliczenie\n| audytor | mutant | znalazl | falszywy | werdykt | proby |\n|---|---|---|---|---|---|\n| L1 | M1 | tak | nie | PASS | 1 |\n| L2 | M2 | tak | nie | PASS | 1 |\n| L3 | M3 | tak | nie | PASS | 2 |\n| L4 | M5 | tak | nie | PASS | 1 |\n| L5 | M6 | tak | nie | PASS | 1 |\n| L | M7 | tak | nie | PASS | 1 |\n' > audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP.md \
 	  && git add -A >/dev/null && git commit -qm mutanty && git checkout -q - )
-	local sha; sha=$(git -C "$r" rev-parse --short=7 k7-zamrozenie)
+	local sha; sha=$(git -C "$r" rev-parse --short=7 'k7-zamrozenie^{commit}')
 	printf 'PACZKA: boty/paczki/sklep-agentow-9.9.9.zip\nSHA256: %s\nCOMMIT: %s\n' "$(sha256sum "$r/boty/paczki/sklep-agentow-9.9.9.zip" | cut -d' ' -f1)" "$sha" > "$r/audyt/sklep/ZAMROZENIE.md"
 	# mapa: 2 cele zamknięte, zamrożona
 	printf '# mapa\n- ✅ L1-01 · cel · [A · %s]\n- 🐞 L2-01 · cel · [A · %s]\n\nCELE: 0 · ✅ 0 · 🐞 0 · ⚠️ 0 · ⛔ 0 · ⬜ 0\n' "$sha" "$sha" > "$r/audyt/sklep/material/06-mapa-polowania.md"
@@ -46,7 +49,10 @@ sprawdz() { # sprawdz <opis> <oczekiwany-exit> <funkcja-psujaca> <fragment-komun
 nic()            { :; }
 psuj_mapa()      { sed -i 's/^- ✅ L1-01/- ⬜ L1-01/' "$1/audyt/sklep/material/06-mapa-polowania.md"; }
 psuj_zamroz()    { printf -- '- ⬜ L9-99 · dopisany po zamrożeniu ·\n' >> "$1/audyt/sklep/material/06-mapa-polowania.md"; sed -i 's/^- ⬜ L9-99/- ✅ L9-99/' "$1/audyt/sklep/material/06-mapa-polowania.md"; }
-psuj_kalibracja(){ ( cd "$1" && git checkout -q audyt/mutanty-sklep && sed -i 's/| L3 | M3 | tak | nie | PASS | 2 |/| L3 | M3 | nie | nie | FAIL | 3 |/' audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP.md && git commit -qam zle && git checkout -q - ); }
+psuj_kalibracja(){ ( cd "$1" && git checkout -q audyt/mutanty-sklep && sed -i 's/| L3 | M3 | tak | nie | PASS | 2 |/| L3 | M3 | nie | nie | FAIL | 2 |/' audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP.md && git commit -qam zle && git checkout -q - ); }
+psuj_kal_proby() { ( cd "$1" && git checkout -q audyt/mutanty-sklep && sed -i 's/| L3 | M3 | tak | nie | PASS | 2 |/| L3 | M3 | tak | nie | PASS | 3 |/' audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP.md && git commit -qam zle && git checkout -q - ); }
+psuj_znacznik()  { sed -i 's/^- ✅ L1-01/- ❓ L1-01/' "$1/audyt/sklep/material/06-mapa-polowania.md"; }
+psuj_licznik()   { sed -i 's/^CELE: .*/CELE: 0 · ✅ 0 · 🐞 0 · ⚠️ 0 · ⛔ 0 · ⬜ 0/' "$1/audyt/sklep/material/06-mapa-polowania.md"; }
 psuj_rejestr()   { sed -i 's/| ZAMKNIETE | 1 |/| DO WERYFIKACJI | 1 |/' "$1/audyt/sklep/REJESTR-ZNALEZISK-SKLEP.md"; }
 psuj_proby()     { sed -i 's/| ZAMKNIETE | 1 |/| ZAMKNIETE | 3 |/' "$1/audyt/sklep/REJESTR-ZNALEZISK-SKLEP.md"; }
 psuj_straznik()  { rm -f "$1/testy/straznik-test.php"; }
@@ -54,7 +60,7 @@ psuj_anomalia()  { sed -i 's/| WYJAŚNIONA |/| OTWARTA |/' "$1/audyt/sklep/REJES
 psuj_przelot()   { sed -i 's/^- ✅ B1/- ⬜ B1/' "$1/audyt/sklep/PRZELOT-CZLOWIEKA-SKLEP.md"; }
 psuj_proby_log() { sed -i 's/proba-07 EXIT=0/proba-07 EXIT=1/' "$1/audyt/sklep/PROBY-KONTROLNE.log"; }
 psuj_sha()       { printf 'zmiana' >> "$1/boty/paczki/sklep-agentow-9.9.9.zip"; }
-psuj_tag()       { ( cd "$1" && git tag -d k7-zamrozenie >/dev/null && git commit -q --allow-empty -m inny && git tag k7-zamrozenie ); }
+psuj_tag()       { ( cd "$1" && git tag -d k7-zamrozenie >/dev/null && git commit -q --allow-empty -m inny && git tag -a k7-zamrozenie -m inny ); }
 psuj_raport_ch() { sed -i 's/"commit_head":"[0-9a-f]*"/"commit_head":"deadbee"/' "$1/audyt/sklep/raporty/A/L2.json"; }
 psuj_raport_sp() { sed -i 's/"plik":"a.php","linia":3}/"linia":0}/' "$1/audyt/sklep/raporty/A/L2.json"; }
 psuj_raport_br() { sed -i 's/"proba_kontrolna":"[^"]*"/"proba_kontrolna":""/' "$1/audyt/sklep/raporty/A/L2.json"; }
@@ -65,8 +71,11 @@ echo "=== KONTROLA ODWROTNA: czysty stan konca = GO ==="
 sprawdz "komplet warunkow → GO"                          0 nic              "K7: GO"
 echo; echo "=== KAZDY WARUNEK PSUTY OSOBNO → NO-GO z nazwa warunku ==="
 sprawdz "1a cel ⬜ na mapie"                              1 psuj_mapa        "1a mapa"
+sprawdz "1a nieznany znacznik ❓ na mapie (D7)"           1 psuj_znacznik    "1a mapa: nieznany znacznik"
+sprawdz "1a LICZNIK w pliku nieaktualny"                  1 psuj_licznik     "1a mapa: LICZNIK w pliku nieaktualny"
 sprawdz "1b cel dopisany po zamrozeniu"                   1 psuj_zamroz      "1b mapa"
-sprawdz "2 soczewka FAIL / proby>2 w rozliczeniu"         1 psuj_kalibracja  "2 kalibracja"
+sprawdz "2 soczewka FAIL (proby=2 — tylko werdykt)"       1 psuj_kalibracja  "2 kalibracja"
+sprawdz "2 proby=3 przy PASS (W2 — tylko licznik prob)"   1 psuj_kal_proby   "proby>2=1"
 sprawdz "3b znalezisko DO WERYFIKACJI"                    1 psuj_rejestr     "3b rejestr"
 sprawdz "3c naprawa_proby = 3"                            1 psuj_proby       "3c rejestr"
 sprawdz "3d ZAMKNIETE bez pliku straznika"                1 psuj_straznik    "3d rejestr"
@@ -79,6 +88,12 @@ sprawdz "8 raport z innym commit_head"                    1 psuj_raport_ch   "8 
 sprawdz "8 SPELNIONE bez plik:linia"                      1 psuj_raport_sp   "8 raporty"
 sprawdz "8 BRAK bez proby kontrolnej"                     1 psuj_raport_br   "8 raporty"
 sprawdz "8 brak sekcji czego-nie-bylo-na-liscie"          1 psuj_raport_li   "8 raporty"
+echo; echo "=== D7: BRAMKA NIE PISZE DO AUDYTOWANEJ MAPY ==="
+r="$BAZA/proba"; zbuduj_czysty "$r"; psuj_licznik "$r"
+PRZED=$(sha256sum "$r/audyt/sklep/material/06-mapa-polowania.md" | cut -d' ' -f1)
+bash "$r/narzedzia-qa/k7-koniec.sh" --korzen "$r" >/dev/null 2>&1 || true
+PO=$(sha256sum "$r/audyt/sklep/material/06-mapa-polowania.md" | cut -d' ' -f1)
+if [ "$PRZED" = "$PO" ]; then printf '  OK   %-52s\n' "mapa bajt w bajt ta sama po przebiegu bramki"; else printf '  BLAD %-52s\n' "k7-koniec.sh PRZEPISAL mape (D7)"; BLEDY=$((BLEDY+1)); fi
 echo
 if [ "$BLEDY" -eq 0 ]; then echo "K7-KONIEC ROZPOZNAJE KAZDY PODLOZONY BRAK — i przepuszcza czysty stan"; exit 0; fi
 echo "K7-KONIEC POMYLIL SIE $BLEDY RAZ(Y)"; exit 1

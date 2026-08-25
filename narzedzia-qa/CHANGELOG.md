@@ -14,6 +14,20 @@ wstecz nie dopisuję, bo nie umiałbym jej odtworzyć uczciwie. Ich zmiany od te
 pory lądują tutaj.
 
 ## [Niewydane]
+- **`k7-koniec.sh` 1.0.0 → 1.1.0 — trzy naprawy po recenzji #182 r2:** (W2) warunek 2 „proby ≤ 2” był MARTWY — `$NF` czytał pustą
+  kolumnę za końcowym `|`; teraz pole 7 po indeksie. (W8) 7b porównuje `k7-zamrozenie^{commit}` — tag jest adnotowany, goły
+  `rev-parse` dawał sha obiektu tagu = fałszywy FAIL na prawdziwym stanie. (D7) bramka NIE PISZE do audytowanej mapy: woła
+  `mapa-licznik.sh --tylko-licz`, nieznany znacznik celu = FAIL z listą linii, nieaktualny LICZNIK w pliku = FAIL.
+- **`k7-koniec-proba-kontrolna.sh` 1.0.0 → 1.1.0 — każdy przypadek psuje DOKŁADNIE JEDEN warunek** (stary „FAIL+proby=3” naraz
+  maskował martwy licznik prób); atrapa z tagiem ADNOTOWANYM jak produkcja; nowe przypadki: proby=3 przy PASS, znacznik ❓,
+  LICZNIK nieaktualny, mapa bajt w bajt ta sama po przebiegu (D7). 20/20.
+- **`mapa-licznik.sh` 1.0.0 → 1.1.0 — `--tylko-licz` (bez zapisu) i `--sprawdz-zamrozenie` tylko do odczytu;** wiersz „- ” z nieznanym
+  znacznikiem = EXIT 1 z numerami linii w każdym trybie (cel nie może zniknąć z sumy bez śladu). Powód: recenzja #182 r2 D7.
+- **`stos-proba-kontrolna.sh` — dwa odczyty tabel SKLEPU** (`tabele` widzi `wp_sklepag_zamowienia`, `wiersze wp_sklepag_produkty`
+  odpowiada) — strażnik dla `stos.sh` 1.3.1. Powód: recenzja #182 r2 D5.
+- **`testy/dokumentacja-zgodnosc-sklep.sh` — sekcja C w obie strony z licznikiem** (W3: etykiety z KODU, nie z zaszytej listy; nowa
+  pozycja menu bez readme i pozycja readme bez kodu padają) · **NOWA `testy/dokumentacja-zgodnosc-sklep-proba-kontrolna.sh`** (W4:
+  12 przypadków, jawna liczba rozjazdów) · wpięta do `.github/RECENZENT-BRIEFING.md` i allowlisty recenzenta (W1).
 - **`slady-wewnetrzne.sh` 1.1.1 → 1.2.0 — numer zgłoszenia BEZ słowa „PR"** (po myślniku/nawiasie/„nr"/„zgłoszenie"/„uwaga": `— #170)`), bez łapania kolorów `#000`; zmierzone na 3 wtyczkach: 1 trafienie właściwe, 0 fałszywych. Próba kontrolna bramki paczki dostała przypadek „goły numer". Powód: recenzja #182 WAŻNA 1.
 - **`stos.sh` 1.3.0 → 1.3.1 — okno widzi tabele sklepu** (`wp_sklepag_` w białej liście i w filtrze `tabele`); dotąd recenzent i audytor nie mogli zajrzeć do żadnej tabeli sklepu (recenzja #182 DROBNA 6, CO-WISI).
 - **`k7-koniec.sh` 1.0.0 (NOWE) — koniec audytu K7 ogłasza skrypt, nie uczucie.** Osiem warunków zamknięcia
@@ -21,7 +35,7 @@ pory lądują tutaj.
   i bez DO WERYFIKACJI, `naprawa_proby ≤ 2`, strażnik z dowodem przy każdym ZAMKNIETE, anomalie 0 OTWARTA,
   przelot człowieka komplet, 26 prób kontrolnych EXIT 0, sha256 paczki i tag `k7-zamrozenie`, parser raportów JSON:
   SPEŁNIONE bez plik:linia i BRAK bez próby kontrolnej = odrzucone). Powód: plan v1 mówił „liczone skryptem",
-  a skryptu nie było (krytyka r1). Próba kontrolna: do dopisania przed rundą A.
+  a skryptu nie było (krytyka r1). Próba kontrolna: `k7-koniec-proba-kontrolna.sh`.
 - **`mapa-licznik.sh` 1.0.0 (NOWE) — jedyny, któremu wolno pisać wiersz LICZNIK mapy polowania;** `--zamroz <sha>`
   i `--sprawdz-zamrozenie` (mapa rosnąca po zamrożeniu = EXIT 1). Powód: mapa botów miała licznik martwy (0/36 po
   pełnym przebiegu) — odhacza koordynator, liczy skrypt.

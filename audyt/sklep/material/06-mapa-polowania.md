@@ -128,4 +128,4 @@ Format wiersza: `- ⬜ ID · cel · [runda/raport · SHA]`.
 
 ## LICZNIK
 <!-- liczony skryptem narzedzia-qa/mapa-licznik.sh; nie edytować ręcznie -->
-CELE: 102 · ✅ 0 · 🐞 0 · ⚠️ 0 · ⛔ 0 · ⬜ 102
+CELE: 104 · ✅ 0 · 🐞 1 · ⚠️ 0 · ⛔ 0 · ⬜ 103

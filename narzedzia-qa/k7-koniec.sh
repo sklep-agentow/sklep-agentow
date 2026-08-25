@@ -1,5 +1,5 @@
 #!/bin/bash
-# k7-koniec.sh — KONIEC AUDYTU K7 OGŁASZA SKRYPT, NIE UCZUCIE.                       WERSJA 1.0.0
+# k7-koniec.sh — KONIEC AUDYTU K7 OGŁASZA SKRYPT, NIE UCZUCIE.                       WERSJA 1.1.0
 #
 # PO CO: plan K7 v1 mówił „GO/NO-GO = trzy liczby liczone skryptem”, a skryptu nie było
 # (krytyka r1: nasz krytyk K1, C2 #15, C3 #11). Bez maszyny koniec rozstrzyga pamięć
@@ -38,12 +38,22 @@ FAIL=0
 pass() { printf '  PASS  %s\n' "$1"; }
 fail() { printf '  FAIL  %s\n' "$1"; FAIL=$((FAIL+1)); }
 
-echo "=== K7-KONIEC 1.0.0 — osiem warunków zamknięcia ==="
+echo "=== K7-KONIEC 1.1.0 — osiem warunków zamknięcia ==="
 
-# 1. MAPA: 0 ⬜ i (domyślnie) zamrożona z niezmienioną liczbą celów
-LICZNIK=$(bash narzedzia-qa/mapa-licznik.sh "$MAPA" 2>/dev/null | tail -1)
-NIE=$(printf '%s' "$LICZNIK" | sed -n 's/.*⬜ \([0-9]*\).*/\1/p')
-[ "${NIE:-1}" -eq 0 ] && pass "1a mapa: $LICZNIK" || fail "1a mapa: $LICZNIK (⬜ musi być 0)"
+# 1. MAPA: 0 ⬜ i (domyślnie) zamrożona z niezmienioną liczbą celów.
+#    TYLKO ODCZYT (--tylko-licz): bramka końca nie pisze do tego, co audytuje (recenzja #182 r2 D7).
+#    Nieznany znacznik po „- " = FAIL z listą linii (cel nie może zniknąć z licznika bez śladu).
+LICZNIK_BLAD=$(bash narzedzia-qa/mapa-licznik.sh "$MAPA" --tylko-licz 2>&1 >/dev/null) ; LICZNIK_KOD=$?
+LICZNIK=$(bash narzedzia-qa/mapa-licznik.sh "$MAPA" --tylko-licz 2>/dev/null | tail -1)
+W_PLIKU=$(grep -m1 '^CELE: ' "$MAPA")
+if [ "$LICZNIK_KOD" -ne 0 ]; then
+	fail "1a mapa: nieznany znacznik celu (mapa-licznik EXIT=$LICZNIK_KOD)"; printf '%s\n' "$LICZNIK_BLAD" | sed 's/^/    /'
+elif [ "$W_PLIKU" != "$LICZNIK" ]; then
+	fail "1a mapa: LICZNIK w pliku nieaktualny — jest „$W_PLIKU”, policzone „$LICZNIK” (uruchom mapa-licznik.sh)"
+else
+	NIE=$(printf '%s' "$LICZNIK" | sed -n 's/.*⬜ \([0-9]*\).*/\1/p')
+	[ "${NIE:-1}" -eq 0 ] && pass "1a mapa: $LICZNIK" || fail "1a mapa: $LICZNIK (⬜ musi być 0)"
+fi
 if [ "$WYMAGAJ_ZAMROZENIA_MAPY" -eq 1 ]; then
 	if bash narzedzia-qa/mapa-licznik.sh "$MAPA" --sprawdz-zamrozenie >/dev/null 2>&1 && grep -q '^ZAMROZONA: ' "$MAPA"; then
 		pass "1b mapa zamrożona, liczba celów niezmieniona"
@@ -59,10 +69,11 @@ ROZL=$(git show audyt/mutanty-sklep:audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP.md 2>
 if [ -z "$ROZL" ]; then
 	fail "2 kalibracja: brak audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP.md na gałęzi audyt/mutanty-sklep"
 else
-	# wiersze werdyktów: | L2 | M2 | ... | PASS/FAIL | proby |
+	# wiersze werdyktów: | audytor | mutant | znalazl | falszywy | werdykt | proby |  → po split '|' proby = pole 7
+	# (recenzja #182 r2 W2: $NF czytał PUSTĄ kolumnę za końcowym „|" — warunek był martwy)
 	ILE=$(printf '%s\n' "$ROZL" | grep -cE '^\| L[1-5]|^\| L \|' )
 	ZLE=$(printf '%s\n' "$ROZL" | grep -E '^\| (L[1-5]|L) \|' | grep -vE '\| PASS \|' | wc -l)
-	PROBY_ZLE=$(printf '%s\n' "$ROZL" | grep -E '^\| (L[1-5]|L) \|' | awk -F'|' '{p=$NF; if (p+0>2) n++} END{print n+0}')
+	PROBY_ZLE=$(printf '%s\n' "$ROZL" | grep -E '^\| (L[1-5]|L) \|' | awk -F'|' '{gsub(/ /,"",$7); if ($7+0>2) n++} END{print n+0}')
 	if [ "$ILE" -ge 6 ] && [ "$ZLE" -eq 0 ] && [ "$PROBY_ZLE" -eq 0 ]; then pass "2 kalibracja: $ILE soczewek PASS, proby ≤ 2"; else fail "2 kalibracja: soczewek=$ILE, bez PASS=$ZLE, proby>2=$PROBY_ZLE"; fi
 fi
 
@@ -106,7 +117,8 @@ ZIP=$(sed -n 's/^PACZKA: *//p' "$ZAMROZENIE" | head -1)
 SHA_ZAP=$(sed -n 's/^SHA256: *//p' "$ZAMROZENIE" | head -1)
 COMMIT_ZAP=$(sed -n 's/^COMMIT: *//p' "$ZAMROZENIE" | head -1)
 if [ -n "$ZIP" ] && [ -f "$ZIP" ] && [ "$(sha256sum "$ZIP" | cut -d' ' -f1)" = "$SHA_ZAP" ]; then pass "7a paczka: sha256 zgodny ($ZIP)"; else fail "7a paczka: brak pliku albo sha256 ≠ ZAMROZENIE.md"; fi
-TAG_SHA=$(git rev-parse --short=7 k7-zamrozenie 2>/dev/null)
+# ^{commit}: tag k7-zamrozenie jest ADNOTOWANY — goły rev-parse dałby sha OBIEKTU TAGU, nie commitu (fałszywy FAIL, W8)
+TAG_SHA=$(git rev-parse --short=7 'k7-zamrozenie^{commit}' 2>/dev/null)
 [ -n "$TAG_SHA" ] && [ "$TAG_SHA" = "${COMMIT_ZAP:0:7}" ] && pass "7b tag k7-zamrozenie = $TAG_SHA" || fail "7b tag k7-zamrozenie ($TAG_SHA) ≠ COMMIT w ZAMROZENIE.md (${COMMIT_ZAP:0:7})"
 
 # 8. RAPORTY JSON: parser — SPEŁNIONE/ZGODNE bez plik+linia albo BRAK bez proba_kontrolna = odrzucone; commit_head = zamrożony
