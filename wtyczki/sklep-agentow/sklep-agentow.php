@@ -3,7 +3,7 @@
  * Plugin Name: Sklep Agentów
  * Plugin URI: https://automaticai.pl/sklep/
  * Description: Sprzedawaj wtyczki-boty AI bezpośrednio ze swojej strony: płatność kartą, automatyczny mail z linkiem do pobrania, panel zamówień ze statystykami i dziennikiem logowań. Zamówienia, produkty i pliki zostają w Twojej bazie i na Twoim serwerze — bez abonamentu. Płatność obsługuje Stripe.
- * Version: 0.9.10
+ * Version: 0.9.11
  * Requires at least: 6.7
  * Requires PHP: 8.1
  * Author: Automatic AI
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SKLEPAG_WERSJA', '0.9.10' );
+define( 'SKLEPAG_WERSJA', '0.9.11' );
 define( 'SKLEPAG_WERSJA_SCHEMATU', 5 ); // v5: tabela opinie (mechanizm D32); v4: kolumna zamowienia.usunieto_dnia (anonimizacja RODO — K3d); v3: indeks para_logowania.
 define( 'SKLEPAG_LIMIT_POBRAN', 10 ); // Jedno źródło: INSERT zamówienia + treść maila.
 define( 'SKLEPAG_LINK_GODZIN', 72 );  // Ważność linku pobrania — jw.
@@ -131,6 +131,73 @@ function sklepag_baner_testowy() {
 }
 
 /**
+ * Duet maskotek (te same kreski co ilustracje kart) — wizual banera końcowego listy
+ * i strony produktu: baner ma parę tekst + wizual jak hero i karty. aria-hidden.
+ *
+ * @param string $podpis Gotowy HTML podpisu pod duetem ('' = podpis listy z obiema nazwami).
+ */
+function sklepag_duet_maskotek( $podpis = '' ) {
+	if ( '' === $podpis ) {
+		// Domyślny podpis listy: oba produkty. Strona produktu podaje własny (nazwa TEGO bota).
+		$podpis = '<p class="sklepag-mono-etykieta sklepag-final-duet-podpis">[ ChatBot LIVE <span class="sklepag-akcent">·</span> Segregator maila ]</p>';
+	}
+	return '<div class="sklepag-final-duet" aria-hidden="true"><svg viewBox="0 0 520 300" fill="none" stroke="#bfff38" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><g class="sklepag-duet-unos"><path d="M196 70 h108 a14 14 0 0 1 14 14 v46 a14 14 0 0 1 -14 14 h-72 l-24 20 v-20 h-12 a14 14 0 0 1 -14 -14 v-46 a14 14 0 0 1 14 -14 z" fill="#bfff38" stroke="none"/><path d="M206 98 h68 M206 118 h44" stroke="#08090b" stroke-width="5"/></g><g><path d="M132 122 v-24"/><circle cx="132" cy="90" r="7" fill="#bfff38" stroke="none"/><rect x="88" y="122" width="88" height="72" rx="20" fill="#101116"/><circle class="sklepag-duet-oko" cx="118" cy="158" r="6" fill="#bfff38" stroke="none"/><circle class="sklepag-duet-oko" cx="146" cy="158" r="6" fill="#bfff38" stroke="none"/><path d="M120 176 q12 10 24 0"/><path d="M100 194 v40 a18 18 0 0 0 18 18 h28 a18 18 0 0 0 18 -18 v-40"/><path d="M100 214 q-30 12 -40 36"/><circle cx="58" cy="252" r="7" fill="#bfff38" stroke="none"/><path d="M164 214 q26 -18 34 -44"/><circle cx="200" cy="168" r="7" fill="#bfff38" stroke="none"/></g><g><path d="M392 122 v-24"/><circle cx="392" cy="90" r="7" fill="#bfff38" stroke="none"/><rect x="348" y="122" width="88" height="72" rx="20" fill="#101116"/><circle class="sklepag-duet-oko sklepag-duet-oko--b" cx="378" cy="158" r="6" fill="#bfff38" stroke="none"/><circle class="sklepag-duet-oko sklepag-duet-oko--b" cx="406" cy="158" r="6" fill="#bfff38" stroke="none"/><path d="M380 176 q12 10 24 0"/><path d="M360 194 v40 a18 18 0 0 0 18 18 h28 a18 18 0 0 0 18 -18 v-40"/><path d="M360 214 q-26 -16 -34 -40"/><circle cx="324" cy="170" r="7" fill="#bfff38" stroke="none"/><path d="M424 214 q28 10 38 32"/><circle cx="464" cy="248" r="7" fill="#bfff38" stroke="none"/></g><g class="sklepag-duet-unos sklepag-duet-unos--b"><rect x="270" y="130" width="64" height="44" rx="8" fill="#08090b" stroke="#8f929c" stroke-width="3"/><path d="m274 136 28 22 28 -22" stroke="#8f929c" stroke-width="3"/><rect x="270" y="130" width="64" height="44" rx="8" stroke="#bfff38" stroke-width="3" stroke-dasharray="6 10"/></g><path d="M214 236 q46 20 92 0" stroke-dasharray="2 10" stroke-width="3"/><path d="M40 276 h440" stroke="#8f929c" stroke-width="2" stroke-dasharray="2 10"/></svg>' . $podpis . '</div>';
+}
+
+/**
+ * PANEL NOCNEJ ZMIANY — okno aplikacji, w którym bot(y) „pracują" w pętli (czysty CSS, zero JS).
+ * ILUSTRACJA (aria-hidden): dymki i maile to TE SAME zatwierdzone teksty co mockup czatu i PRZED/PO
+ * na stronach produktów — żadnych nowych obietnic ani liczb. Bez JS / przy „ogranicz ruch" panel
+ * stoi w stanie końcowym (wszystko widoczne). Lista pokazuje oba wiersze; hero produktu — swój
+ * (przegląd na żywo 25.08: „ilustracja w hero za słaba" → żywy panel zamiast statycznego obrazka).
+ *
+ * @param string $tryb 'oba' (lista) | 'chatbot-live' | 'segregator-maila' (hero produktu).
+ * @return string HTML panelu; '' dla nieznanego trybu.
+ */
+function sklepag_panel_nocnej_zmiany( $tryb = 'oba' ) {
+	$czat  = in_array( $tryb, array( 'oba', 'chatbot-live' ), true );
+	$maile = in_array( $tryb, array( 'oba', 'segregator-maila' ), true );
+	if ( ! $czat && ! $maile ) {
+		return '';
+	}
+	$html  = '<div class="sklepag-panel' . ( 'oba' === $tryb ? '' : ' sklepag-panel--' . sanitize_html_class( $tryb ) ) . '" aria-hidden="true">';
+	$html .= '<span class="sklepag-panel-adnotacja sklepag-panel-adnotacja--gora">' . ( $maile && ! $czat ? 'Twoja skrzynka' : 'Twoja strona' ) . '</span>';
+	$html .= '<span class="sklepag-panel-adnotacja sklepag-panel-adnotacja--dol">' . ( 'oba' === $tryb ? 'Twoja skrzynka' : ( $czat ? 'Twoja baza pytań' : 'Poranny raport' ) ) . '</span>';
+	$html .= '<div class="sklepag-panel-okno">';
+	$html .= '<span class="sklepag-okno-pasek"><span></span><span></span><span></span></span>';
+	if ( $czat ) {
+		$html .= '<div class="sklepag-panel-wiersz">';
+		$html .= '<p class="sklepag-mono-etykieta"><span class="sklepag-kropka"></span>[ ChatBot LIVE · <span class="sklepag-akcent">online</span> ]</p>';
+		$html .= '<div class="sklepag-panel-czat">';
+		$html .= '<p class="sklepag-dymek sklepag-dymek-gosc">Ile kosztuje strzyżenie?</p>';
+		// Awatar = głowa TEJ SAMEJ maskotki co na ilustracjach kart (jedna „ręka" rysunku);
+		// oczy mrugają czystym CSS (sędzia r1: akcent marki zamiast generycznego UI).
+		$html .= '<div class="sklepag-panel-bot"><span class="sklepag-panel-avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5.5V3.6"/><circle cx="12" cy="2.6" r="1" fill="currentColor" stroke="none"/><rect x="4.5" y="5.5" width="15" height="12" rx="3.5"/><circle class="sklepag-oko" cx="9.3" cy="11" r="1.1" fill="currentColor" stroke="none"/><circle class="sklepag-oko" cx="14.7" cy="11" r="1.1" fill="currentColor" stroke="none"/><path d="M9.6 14.2q2.4 2 4.8 0"/></svg></span>';
+		$html .= '<div class="sklepag-panel-odpowiedz">';
+		$html .= '<p class="sklepag-dymek sklepag-dymek-bot sklepag-pisze"><span></span><span></span><span></span></p>';
+		$html .= '<p class="sklepag-dymek sklepag-dymek-bot">Strzyżenie damskie od 80 zł, męskie od 50 zł. Pełny cennik: automatic.ai/cennik</p>';
+		$html .= '</div></div></div></div>';
+		if ( 'oba' !== $tryb ) {
+			// Wiersz „baza pytań": tematy = to, co bot robi wg opisu produktu (cennik, godziny, kontakt) —
+			// jak na ilustracji karty; chipy podświetlają się po kolei (CSS).
+			$html .= '<div class="sklepag-panel-baza"><span class="sklepag-mono-etykieta">Baza pytań</span><span class="sklepag-panel-chip">[ Cennik ]</span><span class="sklepag-panel-chip">[ Godziny ]</span><span class="sklepag-panel-chip">[ Kontakt ]</span></div>';
+		}
+	}
+	if ( $maile ) {
+		$html   .= '<div class="sklepag-panel-wiersz">';
+		$html   .= '<p class="sklepag-mono-etykieta"><span class="sklepag-kropka"></span>[ Segregator maila · <span class="sklepag-akcent">poranny raport</span> ]</p>';
+		$html   .= '<div class="sklepag-panel-maile">';
+		$koperta = '<svg class="sklepag-panel-mail-ikona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="m3 6.5 9 7 9-7"/></svg>';
+		$html   .= '<p class="sklepag-panel-mail">' . $koperta . '<span class="sklepag-panel-mail-temat">FV 88/2026 — księgowość</span><span class="sklepag-tag">Faktury</span></p>';
+		$html   .= '<p class="sklepag-panel-mail">' . $koperta . '<span class="sklepag-panel-mail-temat">RE: wycena ogrodzenia</span><span class="sklepag-tag">Oferty</span></p>';
+		$html   .= '<p class="sklepag-panel-mail">' . $koperta . '<span class="sklepag-panel-mail-temat">reklamacja zamówienia 113</span><span class="sklepag-tag">Reklamacje</span></p>';
+		$html   .= '</div></div>';
+	}
+	$html .= '</div></div>';
+	return $html;
+}
+
+/**
  * Lista aktywnych produktów (K5: klimat gospodarza — PLAN-WYGLADU-K5 §2A).
  * Uczciwy stan pusty, bez atrap.
  */
@@ -177,32 +244,8 @@ function sklepag_shortcode_sklep() {
 	// to TE SAME zatwierdzone teksty co mockup czatu i PRZED/PO na stronach produktów —
 	// żadnych nowych obietnic ani liczb. Bez JS / przy „ogranicz ruch" panel stoi
 	// w stanie końcowym (wszystko widoczne).
-	$html .= '<div class="sklepag-panel" aria-hidden="true">';
-	$html .= '<span class="sklepag-panel-adnotacja sklepag-panel-adnotacja--gora">Twoja strona</span>';
-	$html .= '<span class="sklepag-panel-adnotacja sklepag-panel-adnotacja--dol">Twoja skrzynka</span>';
-	$html .= '<div class="sklepag-panel-okno">';
-	$html .= '<span class="sklepag-okno-pasek"><span></span><span></span><span></span></span>';
-	$html .= '<div class="sklepag-panel-wiersz">';
-	$html .= '<p class="sklepag-mono-etykieta"><span class="sklepag-kropka"></span>[ ChatBot LIVE · <span class="sklepag-akcent">online</span> ]</p>';
-	$html .= '<div class="sklepag-panel-czat">';
-	$html .= '<p class="sklepag-dymek sklepag-dymek-gosc">Ile kosztuje strzyżenie?</p>';
-	// Awatar = głowa TEJ SAMEJ maskotki co na ilustracjach kart (jedna „ręka" rysunku);
-	// oczy mrugają czystym CSS (sędzia r1: akcent marki zamiast generycznego UI).
-	$html   .= '<div class="sklepag-panel-bot"><span class="sklepag-panel-avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5.5V3.6"/><circle cx="12" cy="2.6" r="1" fill="currentColor" stroke="none"/><rect x="4.5" y="5.5" width="15" height="12" rx="3.5"/><circle class="sklepag-oko" cx="9.3" cy="11" r="1.1" fill="currentColor" stroke="none"/><circle class="sklepag-oko" cx="14.7" cy="11" r="1.1" fill="currentColor" stroke="none"/><path d="M9.6 14.2q2.4 2 4.8 0"/></svg></span>';
-	$html   .= '<div class="sklepag-panel-odpowiedz">';
-	$html   .= '<p class="sklepag-dymek sklepag-dymek-bot sklepag-pisze"><span></span><span></span><span></span></p>';
-	$html   .= '<p class="sklepag-dymek sklepag-dymek-bot">Strzyżenie damskie od 80 zł, męskie od 50 zł. Pełny cennik: automatic.ai/cennik</p>';
-	$html   .= '</div></div></div></div>';
-	$html   .= '<div class="sklepag-panel-wiersz">';
-	$html   .= '<p class="sklepag-mono-etykieta"><span class="sklepag-kropka"></span>[ Segregator maila · <span class="sklepag-akcent">poranny raport</span> ]</p>';
-	$html   .= '<div class="sklepag-panel-maile">';
-	$koperta = '<svg class="sklepag-panel-mail-ikona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="m3 6.5 9 7 9-7"/></svg>';
-	$html   .= '<p class="sklepag-panel-mail">' . $koperta . '<span class="sklepag-panel-mail-temat">FV 88/2026 — księgowość</span><span class="sklepag-tag">Faktury</span></p>';
-	$html   .= '<p class="sklepag-panel-mail">' . $koperta . '<span class="sklepag-panel-mail-temat">RE: wycena ogrodzenia</span><span class="sklepag-tag">Oferty</span></p>';
-	$html   .= '<p class="sklepag-panel-mail">' . $koperta . '<span class="sklepag-panel-mail-temat">reklamacja zamówienia 113</span><span class="sklepag-tag">Reklamacje</span></p>';
-	$html   .= '</div></div>';
-	$html   .= '</div></div>';
-	$html   .= '</div>';
+	$html .= sklepag_panel_nocnej_zmiany( 'oba' );
+	$html .= '</div>';
 
 	if ( empty( $produkty ) ) {
 		$html .= '<p class="sklepag-pusto">[ BRAK PRODUKTÓW W SPRZEDAŻY ]</p></div>';
@@ -281,7 +324,7 @@ function sklepag_shortcode_sklep() {
 	$html .= '<p class="sklepag-final-przyciski">' . $przyciski . '</p>';
 	$html .= '</div>';
 	// Duet maskotek (te same kreski co ilustracje kart) — baner ma parę tekst+wizual jak hero i karty.
-	$html .= '<div class="sklepag-final-duet" aria-hidden="true"><svg viewBox="0 0 520 300" fill="none" stroke="#bfff38" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><g class="sklepag-duet-unos"><path d="M196 70 h108 a14 14 0 0 1 14 14 v46 a14 14 0 0 1 -14 14 h-72 l-24 20 v-20 h-12 a14 14 0 0 1 -14 -14 v-46 a14 14 0 0 1 14 -14 z" fill="#bfff38" stroke="none"/><path d="M206 98 h68 M206 118 h44" stroke="#08090b" stroke-width="5"/></g><g><path d="M132 122 v-24"/><circle cx="132" cy="90" r="7" fill="#bfff38" stroke="none"/><rect x="88" y="122" width="88" height="72" rx="20" fill="#101116"/><circle class="sklepag-duet-oko" cx="118" cy="158" r="6" fill="#bfff38" stroke="none"/><circle class="sklepag-duet-oko" cx="146" cy="158" r="6" fill="#bfff38" stroke="none"/><path d="M120 176 q12 10 24 0"/><path d="M100 194 v40 a18 18 0 0 0 18 18 h28 a18 18 0 0 0 18 -18 v-40"/><path d="M100 214 q-30 12 -40 36"/><circle cx="58" cy="252" r="7" fill="#bfff38" stroke="none"/><path d="M164 214 q26 -18 34 -44"/><circle cx="200" cy="168" r="7" fill="#bfff38" stroke="none"/></g><g><path d="M392 122 v-24"/><circle cx="392" cy="90" r="7" fill="#bfff38" stroke="none"/><rect x="348" y="122" width="88" height="72" rx="20" fill="#101116"/><circle class="sklepag-duet-oko sklepag-duet-oko--b" cx="378" cy="158" r="6" fill="#bfff38" stroke="none"/><circle class="sklepag-duet-oko sklepag-duet-oko--b" cx="406" cy="158" r="6" fill="#bfff38" stroke="none"/><path d="M380 176 q12 10 24 0"/><path d="M360 194 v40 a18 18 0 0 0 18 18 h28 a18 18 0 0 0 18 -18 v-40"/><path d="M360 214 q-26 -16 -34 -40"/><circle cx="324" cy="170" r="7" fill="#bfff38" stroke="none"/><path d="M424 214 q28 10 38 32"/><circle cx="464" cy="248" r="7" fill="#bfff38" stroke="none"/></g><g class="sklepag-duet-unos sklepag-duet-unos--b"><rect x="270" y="130" width="64" height="44" rx="8" fill="#08090b" stroke="#8f929c" stroke-width="3"/><path d="m274 136 28 22 28 -22" stroke="#8f929c" stroke-width="3"/><rect x="270" y="130" width="64" height="44" rx="8" stroke="#bfff38" stroke-width="3" stroke-dasharray="6 10"/></g><path d="M214 236 q46 20 92 0" stroke-dasharray="2 10" stroke-width="3"/><path d="M40 276 h440" stroke="#8f929c" stroke-width="2" stroke-dasharray="2 10"/></svg><p class="sklepag-mono-etykieta sklepag-final-duet-podpis">[ ChatBot LIVE <span class="sklepag-akcent">·</span> Segregator maila ]</p></div>';
+	$html .= sklepag_duet_maskotek();
 	$html .= '</section>';
 
 	$html .= '</div>';

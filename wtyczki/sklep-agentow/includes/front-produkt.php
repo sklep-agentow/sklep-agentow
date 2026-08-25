@@ -100,10 +100,13 @@ function sklepag_produkt_po_slugu( $slug ) {
  * tablicy, niezależnie od danych produktów — i tu wepnie się render z bazy
  * po zbudowaniu mechanizmu opinii.
  *
- * @param mixed $opinie Lista wpisów opinii (tablica; inny typ = brak sekcji).
+ * @param mixed         $opinie   Lista wpisów opinii (tablica; inny typ = brak sekcji).
+ * @param callable|null $etykieta Generator numerowanej etykiety sekcji (strona produktu);
+ *                                null = etykieta bez numeru. Wołany dopiero, gdy sekcja
+ *                                naprawdę powstaje — numer nie rośnie dla pustej sekcji.
  * @return string HTML sekcji albo '' gdy nie ma czego pokazać.
  */
-function sklepag_render_opinie( $opinie ) {
+function sklepag_render_opinie( $opinie, $etykieta = null ) {
 	if ( ! is_array( $opinie ) ) {
 		return '';
 	}
@@ -138,7 +141,8 @@ function sklepag_render_opinie( $opinie ) {
 	if ( '' === $figury ) {
 		return '';
 	}
-	return '<section class="sklepag-sekcja"><p class="sklepag-mono-etykieta">[ OPINIE KLIENTÓW ]</p><div class="sklepag-opinie">'
+	$naglowek = is_callable( $etykieta ) ? $etykieta( 'OPINIE KLIENTÓW' ) : '<p class="sklepag-mono-etykieta">[ OPINIE KLIENTÓW ]</p>';
+	return '<section class="sklepag-sekcja">' . $naglowek . '<div class="sklepag-opinie">'
 		. $figury
 		. '</div><p class="sklepag-opinie-nota">Publikujemy wyłącznie opinie osób, które kupiły ten produkt — przed publikacją potwierdzamy zakup w danych zamówień sklepu.</p></section>';
 }
@@ -192,45 +196,92 @@ function sklepag_tresc_produktu( $slug ) {
 			/*
 			 * Pliki galerii to KOPIE zrzutow z wtyczek botow (assets/w-srodku/ —
 			 * samowystarczalnosc sklepu). Po regeneracji zrzutow instrukcji botow
-			 * skopiuj nowe wersje takze tutaj.
+			 * skopiuj nowe wersje takze tutaj. Kadry (*-kadr.webp) i plakat nagrania
+			 * (*-plakat.webp) sa wyciete ffmpeg-iem z TYCH SAMYCH plikow (crop od gory,
+			 * wymiary nizej) — po podmianie oryginalu wytnij je ponownie.
+			 *
+			 * FAZY (runda dzialu stron, PR 2a): galeria opowiada w trzech wierszach
+			 * strona -> brak odpowiedzi -> panel. Narracje sklejone z istniejacych tresci
+			 * (funkcje, FAQ, alty) — zero nowych obietnic i liczb.
 			 */
-			'galeria'      => array(
+			'fazy'         => array(
 				array(
-					'wideo'  => 'chatbot-demo.webm',
-					'alt'    => 'Nagranie: gość pyta „Ile kosztuje ChatBot LIVE?", bot od razu odpowiada ceną 149,00 zł i opisem z bazy; na „Czy jest gwarancja?" bot podaje 14-dniową gwarancję zwrotu',
-					'podpis' => 'NAGRANIE Z TEJ STRONY — PYTANIA O CENĘ I GWARANCJĘ, ODPOWIEDZI Z BAZY',
-					'szer'   => 1280,
-					'wys'    => 800,
+					'tytul' => 'Na Twojej stronie',
+					'opis'  => 'Bąbelek w rogu Twojej strony: gość pyta o cennik czy godziny, bot odpowiada z Twojej bazy pytań i odpowiedzi — także po godzinach.',
+					'uklad' => 'wideo',
+					'kafle' => array(
+						array(
+							// Świeży zrzut TEJ strony (Playwright, 1440 px): prawy dolny róg z ZAMKNIĘTYM bąbelkiem —
+							// kontekst „na Twojej stronie"; obok nagranie otwartej rozmowy (dwa różne kadry, nie dubel).
+							'plik'   => 'chatbot-live--babelek.webp',
+							'kadr'   => 'contain',
+							'alt'    => 'Prawy dolny róg strony z zielonym bąbelkiem czatu — okno rozmowy jest zamknięte, dopóki gość nie kliknie',
+							'podpis' => 'TAK TO WYGLĄDA NA TWOJEJ STRONIE — BĄBELEK W ROGU, ZANIM GOŚĆ KLIKNIE',
+							'szer'   => 1310,
+							'wys'    => 780,
+						),
+						array(
+							// Kadr okna czatu (crop 346×536 od x=930,y=260 z nagrania 1280×800 — okno stoi w tym samym
+							// miejscu przez całe 19,9 s); oryginał chatbot-demo.webm zostaje w assets.
+							'wideo'  => 'chatbot-demo-kadr.webm',
+							'plakat' => 'chatbot-demo-plakat.webp',
+							'alt'    => 'Nagranie: gość pyta „Ile kosztuje ChatBot LIVE?", bot od razu odpowiada ceną 149,00 zł i opisem z bazy; na „Czy jest gwarancja?" bot podaje 14-dniową gwarancję zwrotu',
+							'podpis' => 'NAGRANIE Z TEJ STRONY — PYTANIA O CENĘ I GWARANCJĘ, ODPOWIEDZI Z BAZY',
+							'szer'   => 346,
+							'wys'    => 536,
+						),
+					),
 				),
 				array(
-					'plik'   => 'chatbot-live--zywy.jpg',
-					'alt'    => 'Okno rozmowy ChatBota LIVE na stronie: gość pyta o godziny otwarcia, bot odpowiada wpisem z bazy pytań i odpowiedzi',
-					'podpis' => 'PRAWDZIWY ZRZUT Z TEJ STRONY — TRYB REGUŁOWY, BEZ KLUCZA AI',
-					'szer'   => 682,
-					'wys'    => 908,
-					'kadr'   => 'contain',
+					'tytul' => 'Gdy bot nie zna odpowiedzi',
+					'opis'  => 'Bot prosi o maila i zapisuje zgłoszenie — kontakt nie przepada. Przycisk „zostaw wiadomość" jest w oknie od początku rozmowy.',
+					'uklad' => 'formularz',
+					'kafle' => array(
+						array(
+							'plik'   => 'chatbot-live--widget-formularz.png',
+							'kadr'   => 'contain',
+							'alt'    => 'Formularz „Zostaw wiadomość" w oknie czatu: pola e-mail i treść, zgoda RODO',
+							'podpis' => 'GDY BOT NIE ZNA ODPOWIEDZI — ZBIERA KONTAKT',
+							'szer'   => 320,
+							'wys'    => 440,
+						),
+						array(
+							'tok'    => array(
+								'Gość pyta o coś, czego nie ma w Twojej bazie.',
+								'Bot prosi o adres e-mail i treść wiadomości.',
+								'Zgłoszenie zapisuje się w wp-admin — na życzenie z mailem do Ciebie.',
+								'Odpisujesz, kiedy masz chwilę. Kontakt nie przepada.',
+							),
+							'podpis' => 'TOK ZGŁOSZENIA — KONTAKT NIE PRZEPADA',
+						),
+					),
 				),
 				array(
-					'plik'   => 'chatbot-live--widget-formularz.png',
-					'alt'    => 'Formularz „Zostaw wiadomość" w oknie czatu: pola e-mail i treść, zgoda RODO',
-					'podpis' => 'GDY BOT NIE ZNA ODPOWIEDZI — ZBIERA KONTAKT',
-					'szer'   => 320,
-					'wys'    => 440,
-					'kadr'   => 'contain',
-				),
-				array(
-					'plik'   => 'chatbot-live--ustawienia.png',
-					'alt'    => 'Panel ustawień ChatBota w wp-admin: włącznik, teksty powitania, tryb AI z limitem dziennym',
-					'podpis' => 'PANEL USTAWIEŃ — WSZYSTKO PO POLSKU',
-					'szer'   => 1078,
-					'wys'    => 2857,
-				),
-				array(
-					'plik'   => 'chatbot-live--statystyki.png',
-					'alt'    => 'Statystyki ChatBota: 177 pytań, wykres ruchu dzień po dniu, lista pytań bez odpowiedzi',
-					'podpis' => 'STATYSTYKI I LUKI W BAZIE — WIDZISZ, O CO PYTAJĄ',
-					'szer'   => 1100,
-					'wys'    => 790,
+					'tytul' => 'Twój panel',
+					'opis'  => 'Ustawienia po polsku: włącznik bąbelka, teksty powitania, tryb AI z limitem dziennym. Statystyki pokazują, o co pytają goście i czego brakuje w bazie.',
+					'uklad' => 'panel',
+					'kafle' => array(
+						array(
+							'plik'      => 'chatbot-live--ustawienia.png',
+							'kadr_plik' => 'chatbot-live--ustawienia-kadr.webp',
+							'kadr_szer' => 1078,
+							'kadr_wys'  => 500,
+							'alt'       => 'Panel ustawień ChatBota w wp-admin: włącznik, teksty powitania, tryb AI z limitem dziennym',
+							'podpis'    => 'PANEL USTAWIEŃ — WSZYSTKO PO POLSKU',
+							'szer'      => 1078,
+							'wys'       => 2857,
+						),
+						array(
+							'plik'      => 'chatbot-live--statystyki.png',
+							'kadr_plik' => 'chatbot-live--statystyki-kadr.webp',
+							'kadr_szer' => 1100,
+							'kadr_wys'  => 520,
+							'alt'       => 'Statystyki ChatBota: 177 pytań, wykres ruchu dzień po dniu, lista pytań bez odpowiedzi',
+							'podpis'    => 'STATYSTYKI I LUKI W BAZIE — WIDZISZ, O CO PYTAJĄ',
+							'szer'      => 1100,
+							'wys'       => 790,
+						),
+					),
 				),
 			),
 			'pakiet'       => array(
@@ -541,6 +592,91 @@ function sklepag_przed_po() {
 }
 
 /**
+ * Tytuł hero z akcentem: ostatnie słowo pisane WIELKIMI literami (np. „LIVE") dostaje limonkę —
+ * jak „AI" w logo gospodarza. Nazwa bez takiego słowa (Segregator maila) zostaje jednolita.
+ *
+ * @param string $nazwa Nazwa produktu z bazy.
+ */
+function sklepag_tytul_z_akcentem( $nazwa ) {
+	if ( preg_match( '/^(.*\s)(\p{Lu}{2,})$/u', $nazwa, $m ) ) {
+		return esc_html( $m[1] ) . '<span class="sklepag-akcent">' . esc_html( $m[2] ) . '</span>';
+	}
+	return esc_html( $nazwa );
+}
+
+/**
+ * Galeria „CO JEST W ŚRODKU" w FAZACH (runda działu stron, PR 2a): każda faza to wiersz
+ * z narracją po lewej (numer, tytuł, jedno zdanie z istniejących treści) i kaflami-oknami
+ * po prawej. Biały zrzut wp-admin siedzi w ciemnej ramie okna jako KADR (osobny, mały plik),
+ * a pełny ekran otwiera się w lightboxie — całe białe ekrany na czarnej stronie były plamami,
+ * a ich gęsty interfejs w rozmiarze kafla był nieczytelny (przegląd na żywo 25.08).
+ *
+ * @param array $fazy      Lista faz: tytul, opis, uklad, kafle (numer fazy nadaje jej pozycja
+ *                         na liście — dane nie trzymają własnej numeracji, więc nie mogą się
+ *                         rozjechać przy zmianie kolejności).
+ * @param int   $nr_sekcji Numer sekcji na stronie — fazy numerują się „04.1, 04.2, 04.3"
+ *                         (przypięte do sekcji, odróżnialne od kroków 01/02/03 sekcji obok).
+ */
+function sklepag_render_fazy( $fazy, $nr_sekcji ) {
+	$html = '<div class="sklepag-fazy">';
+	foreach ( array_values( $fazy ) as $i => $f ) {
+		$numer = sprintf( '%02d.%d', (int) $nr_sekcji, $i + 1 );
+		// `sklepag-obserwuj`: faza wjeżdża, gdy SAMA wchodzi w ekran (front-ruch.js), nie razem
+		// z górą długiej sekcji — inaczej dolne fazy odsłaniałyby się poza kadrem.
+		$html .= '<div class="sklepag-faza sklepag-obserwuj sklepag-faza--' . sanitize_html_class( $f['uklad'] ) . '">';
+		$html .= '<div class="sklepag-faza-glowa"><p class="sklepag-faza-numer" aria-hidden="true">' . esc_html( $numer ) . '</p>';
+		$html .= '<h2 class="sklepag-faza-tytul">' . esc_html( $f['tytul'] ) . '</h2><p class="sklepag-faza-opis">' . esc_html( $f['opis'] ) . '</p></div>';
+		$html .= '<div class="sklepag-faza-kafle">';
+		foreach ( $f['kafle'] as $k ) {
+			$html .= sklepag_kafel_fazy( $k );
+		}
+		$html .= '</div></div>';
+	}
+	return $html . '</div>';
+}
+
+/**
+ * Jeden kafel fazy: nagranie (plakat → wideo), zrzut (kadr w kaflu, pełny ekran w lightboxie)
+ * albo karta toku (mono-lista kroków — dla fazy z jednym zrzutem, zamiast sierotki).
+ *
+ * @param array $k Dane kafla (wideo+plakat | plik [+kadr_plik] | tok).
+ */
+function sklepag_kafel_fazy( $k ) {
+	$pasek = '<span class="sklepag-okno-pasek" aria-hidden="true"><span></span><span></span><span></span></span>';
+	if ( ! empty( $k['tok'] ) ) {
+		$html = '<div class="sklepag-kafel sklepag-kafel--tok">' . $pasek . '<ol class="sklepag-tok">';
+		foreach ( $k['tok'] as $i => $krok ) {
+			$html .= '<li><span class="sklepag-tok-numer" aria-hidden="true">' . sprintf( '%02d', $i + 1 ) . '</span><span>' . esc_html( $krok ) . '</span></li>';
+		}
+		return $html . '</ol><p class="sklepag-mono-etykieta">' . esc_html( $k['podpis'] ) . '</p></div>';
+	}
+	if ( ! empty( $k['wideo'] ) ) {
+		$zrodlo = esc_url( plugins_url( 'assets/w-srodku/' . $k['wideo'], SKLEPAG_PLIK ) );
+		$plakat = esc_url( plugins_url( 'assets/w-srodku/' . $k['plakat'], SKLEPAG_PLIK ) );
+		// Plakat = stop-klatka nagrania: obraz jest od pierwszej klatki, a gaśnie dopiero, gdy
+		// nagranie naprawdę gra (front-ruch.js). Przy „ogranicz ruch" zostaje sam plakat.
+		$html  = '<figure class="sklepag-kafel sklepag-kafel--wideo">' . $pasek . '<div class="sklepag-kafel-kadr">';
+		$html .= '<video src="' . $zrodlo . '" poster="' . $plakat . '" width="' . (int) $k['szer'] . '" height="' . (int) $k['wys'] . '" autoplay muted loop playsinline preload="auto" aria-label="' . esc_attr( $k['alt'] ) . '"></video>';
+		$html .= '<img class="sklepag-kafel-plakat" src="' . $plakat . '" alt="" aria-hidden="true" width="' . (int) $k['szer'] . '" height="' . (int) $k['wys'] . '">';
+		// Prawdziwy przycisk (dostępny z klawiatury) na wypadek blokady autoodtwarzania — ukryty,
+		// dopóki front-ruch.js nie rozpozna blokady; bez JS nagranie i tak ma `autoplay`.
+		$html .= '<button type="button" class="sklepag-kafel-odtworz" hidden><span aria-hidden="true">▶</span> Odtwórz nagranie</button>';
+		return $html . '</div><figcaption class="sklepag-mono-etykieta">' . esc_html( $k['podpis'] ) . '</figcaption></figure>';
+	}
+	$pelny = esc_url( plugins_url( 'assets/w-srodku/' . $k['plik'], SKLEPAG_PLIK ) );
+	$kadr  = ! empty( $k['kadr_plik'] ) ? esc_url( plugins_url( 'assets/w-srodku/' . $k['kadr_plik'], SKLEPAG_PLIK ) ) : $pelny;
+	$szer  = ! empty( $k['kadr_plik'] ) ? (int) $k['kadr_szer'] : (int) $k['szer'];
+	$wys   = ! empty( $k['kadr_plik'] ) ? (int) $k['kadr_wys'] : (int) $k['wys'];
+	$klasa = 'sklepag-kafel' . ( ! empty( $k['kadr'] ) ? ' sklepag-kafel--' . sanitize_html_class( $k['kadr'] ) : '' );
+	$html  = '<figure class="' . esc_attr( $klasa ) . '">' . $pasek;
+	// Kafel pokazuje KADR (mały plik), odnośnik prowadzi do PEŁNEGO ekranu — ładowanego dopiero
+	// po kliknięciu (lightbox), nie razem ze stroną.
+	$html .= '<a class="sklepag-lightbox" href="' . $pelny . '" data-podpis="' . esc_attr( $k['podpis'] ) . '" aria-label="' . esc_attr( 'Powiększ: ' . $k['podpis'] ) . '">';
+	$html .= '<div class="sklepag-kafel-kadr"><img src="' . $kadr . '" alt="' . esc_attr( $k['alt'] ) . '" width="' . $szer . '" height="' . $wys . '" loading="lazy"></div></a>';
+	return $html . '<figcaption class="sklepag-mono-etykieta">' . esc_html( $k['podpis'] ) . '</figcaption></figure>';
+}
+
+/**
  * Pełny widok strony produktu.
  *
  * @param string $slug Slug produktu z query var.
@@ -558,24 +694,36 @@ function sklepag_render_produkt( $slug ) {
 	$t    = sklepag_tresc_produktu( $slug );
 	$cena = '<p class="sklepag-cena">' . esc_html( number_format( $p->cena_grosze / 100, 2, ',', ' ' ) ) . '<span class="sklepag-cena-waluta">' . esc_html( $p->waluta ) . '</span></p>';
 
-	$html  = '<div class="sklepag-wyspa sklepag-produkt">';
+	// Etykiety sekcji numerowane kolejno `[ 01 · … ]` jak na liście (runda działu stron, PR 2a).
+	// Numer rośnie tylko dla sekcji, które naprawdę się renderują (opinie i gwarancja bywają puste).
+	$nr       = 0;
+	$etykieta = static function ( $tekst ) use ( &$nr ) {
+		++$nr;
+		return '<p class="sklepag-mono-etykieta">[ <span class="sklepag-akcent">' . sprintf( '%02d', $nr ) . '</span> · ' . $tekst . ' ]</p>';
+	};
+
+	$html = '<div class="sklepag-wyspa sklepag-produkt">';
+	// Tło „blueprint z sygnałami" jak na liście (ta sama materia). Strona jest ~3× dłuższa od
+	// listy, więc pingów jest 14 — dodatkowe węzły niżej (CSS .sklepag-pingi--produkt).
+	$html .= '<div class="sklepag-tlo" aria-hidden="true"></div>';
+	$html .= '<div class="sklepag-pingi sklepag-pingi--produkt" aria-hidden="true">' . str_repeat( '<i></i>', 14 ) . '</div>';
 	$html .= '<nav class="sklepag-okruszki" aria-label="Okruszki"><a href="' . esc_url( get_permalink( (int) get_option( 'sklepag_strona_sklep' ) ) ) . '">Sklep</a> <span aria-hidden="true">/</span> <span>' . esc_html( $p->nazwa ) . '</span></nav>';
 
 	// HERO — dwie kolumny: tekst + ILUSTRACJA BRANDOWA (feedback 24.08 v2: „tu ma
 	// być branding, wnętrze botów niżej"). Żywe zrzuty wnętrza są w galerii
-	// [ CO JEST W ŚRODKU ] — pierwszy kafel każdego produktu.
+	// [ CO JEST W ŚRODKU ]. Kierunki wejść z motywu gospodarza ustawia CSS.
 	$zrzut_hero = sklepag_ilustracja_produktu( $slug );
 	$html      .= '<div class="sklepag-hero-uklad">';
 	$html      .= '<header class="sklepag-hero">';
 	$html      .= '<p class="sklepag-mono-etykieta">' . ( $t ? wp_kses( $t['etykieta'], array( 'span' => array( 'class' => array() ) ) ) : '[ <span class="sklepag-akcent">BOT</span> · TESTOWY ]' ) . '</p>';
-	$html      .= '<h1 class="sklepag-hero-tytul">' . esc_html( $p->nazwa ) . '</h1>';
+	$html      .= '<h1 class="sklepag-hero-tytul">' . sklepag_tytul_z_akcentem( $p->nazwa ) . '</h1>';
 	$html      .= '<p class="sklepag-lead">' . esc_html( $t ? $t['zdanie'] : $p->opis_krotki ) . '</p>';
 	if ( $t ) {
 		$glowa = explode( ' · ', $t['pasek_glowa'], 2 );
 		$html .= '<p class="sklepag-pasek-statusu"><span class="sklepag-kropka" aria-hidden="true"></span>[ <span class="sklepag-akcent">' . esc_html( $glowa[0] ) . '</span> · ' . esc_html( isset( $glowa[1] ) ? $glowa[1] : '' ) . ' ] ' . esc_html( $t['pasek'] . $t['pasek_zywy'] ) . '</p>';
 	}
 	$html .= $cena;
-	$html .= '<p><a class="sklepag-kup sklepag-kup-kotwica" href="#sklepag-kup-formularz">Kup teraz (płatność testowa)</a></p>';
+	$html .= '<p><a class="sklepag-kup sklepag-kup-kotwica" href="#sklepag-zakup">Kup teraz (płatność testowa)</a></p>';
 	if ( $t && ! empty( $t['gwarancja'] ) ) {
 		$html .= '<p class="sklepag-trigger">✔ 14 dni na zwrot — bez pytań</p>';
 	}
@@ -591,19 +739,25 @@ function sklepag_render_produkt( $slug ) {
 	}
 	$html .= sklepag_baner_testowy();
 	$html .= '</header>';
-	if ( $zrzut_hero ) {
+	// Wizual hero = PANEL NA ŻYWO tego produktu (przegląd na żywo 25.08: „ilustracja w hero za słaba") —
+	// ta sama sygnatura co hero listy; ilustracja brandowa zostaje na karcie listy. Produkt spoza
+	// dwójki (bez panelu) dostaje ilustrację, jeśli ją ma.
+	$panel = sklepag_panel_nocnej_zmiany( $slug );
+	if ( '' !== $panel ) {
+		$html .= '<div class="sklepag-hero-wizual sklepag-hero-wizual--panel">' . $panel . '</div>';
+	} elseif ( $zrzut_hero ) {
 		$html .= '<div class="sklepag-hero-wizual">' . sklepag_figure_zrzutu( $zrzut_hero, 'sklepag-zrzut sklepag-hero-zrzut', false, false ) . '</div>';
 	}
 	$html .= '</div>';
 
 	if ( $t ) {
-		// PROBLEM.
-		$html .= '<section class="sklepag-sekcja"><p class="sklepag-mono-etykieta">[ PROBLEM ]</p>';
+		// PROBLEM — tekst w torze czytania.
+		$html .= '<section class="sklepag-sekcja">' . $etykieta( 'PROBLEM' );
 		$html .= '<h2 class="sklepag-sekcja-tytul">' . esc_html( $t['problem_t'] ) . '</h2>';
 		$html .= '<p class="sklepag-sekcja-tekst">' . esc_html( $t['problem'] ) . '</p></section>';
 
-		// CO DOSTAJESZ (+ mockup czatu przy chatbocie).
-		$html .= '<section class="sklepag-sekcja"><p class="sklepag-mono-etykieta">[ CO DOSTAJESZ ]</p>';
+		// CO DOSTAJESZ — karty funkcji na pełnej szerokości (+ mockup czatu przy chatbocie).
+		$html .= '<section class="sklepag-sekcja sklepag-sekcja--pelna">' . $etykieta( 'CO DOSTAJESZ' );
 		$html .= '<div class="sklepag-funkcje-uklad">';
 		$html .= '<div class="sklepag-funkcje">';
 		foreach ( $t['funkcje'] as $f ) {
@@ -615,18 +769,21 @@ function sklepag_render_produkt( $slug ) {
 		}
 		$html .= '</div></section>';
 
-		// JAK DZIAŁA — 3 kroki (numeracja = realna sekwencja).
-		$html .= '<section class="sklepag-sekcja"><p class="sklepag-mono-etykieta">[ JAK DZIAŁA ]</p><ol class="sklepag-kroki">';
+		// JAK DZIAŁA — 3 równe karty z torem sygnału 01 → 02 → 03 (jak „od zakupu do działania"
+		// na liście); numeracja = realna sekwencja.
+		$html .= '<section class="sklepag-sekcja sklepag-sekcja--pelna">' . $etykieta( 'JAK DZIAŁA' ) . '<ol class="sklepag-kroki sklepag-kroki--siatka">';
 		foreach ( $t['kroki'] as $k ) {
-			$html .= '<li>' . esc_html( $k ) . '</li>';
+			$html .= '<li><span class="sklepag-krok-tekst">' . esc_html( $k ) . '</span></li>';
 		}
 		$html .= '</ol></section>';
 
-		// CO JEST W ŚRODKU — galeria zrzutów panelu (feedback 24.08: „pokazać, co
-		// jest w środku"). Zrzuty z żywej instalacji, bez retuszu; tasiemce kadruje
-		// CSS od góry (object-position: top), wymiary prawdziwe — brak CLS.
-		if ( ! empty( $t['galeria'] ) ) {
-			$html .= '<section class="sklepag-sekcja"><p class="sklepag-mono-etykieta">[ CO JEST W ŚRODKU ]</p>';
+		// CO JEST W ŚRODKU — fazy (nowy układ) albo dawna galeria (produkt jeszcze nie przeniesiony).
+		if ( ! empty( $t['fazy'] ) ) {
+			$html .= '<section class="sklepag-sekcja sklepag-sekcja--pelna">' . $etykieta( 'CO JEST W ŚRODKU' ) . sklepag_render_fazy( $t['fazy'], $nr ) . '</section>';
+		} elseif ( ! empty( $t['galeria'] ) ) {
+			// Zrzuty z żywej instalacji, bez retuszu; tasiemce kadruje CSS od góry
+			// (object-position: top), wymiary prawdziwe — brak CLS.
+			$html .= '<section class="sklepag-sekcja">' . $etykieta( 'CO JEST W ŚRODKU' );
 			$html .= '<div class="sklepag-galeria">';
 			foreach ( $t['galeria'] as $g ) {
 				if ( ! empty( $g['wideo'] ) ) {
@@ -637,23 +794,23 @@ function sklepag_render_produkt( $slug ) {
 				}
 				$kadr_kl = 'sklepag-galeria-kadr' . ( isset( $g['kadr'] ) ? ' sklepag-galeria-kadr--' . sanitize_html_class( $g['kadr'] ) : '' );
 				$pelny   = esc_url( plugins_url( 'assets/w-srodku/' . $g['plik'], SKLEPAG_PLIK ) );
-				$html   .= '<figure class="sklepag-galeria-kafel"><a class="sklepag-lightbox" href="' . $pelny . '" aria-label="Powiększ zrzut"><div class="' . esc_attr( $kadr_kl ) . '"><img src="' . $pelny . '" alt="' . esc_attr( $g['alt'] ) . '" width="' . (int) $g['szer'] . '" height="' . (int) $g['wys'] . '" loading="lazy"></div></a>';
+				$html   .= '<figure class="sklepag-galeria-kafel"><a class="sklepag-lightbox" href="' . $pelny . '" data-podpis="' . esc_attr( $g['podpis'] ) . '" aria-label="Powiększ zrzut"><div class="' . esc_attr( $kadr_kl ) . '"><img src="' . $pelny . '" alt="' . esc_attr( $g['alt'] ) . '" width="' . (int) $g['szer'] . '" height="' . (int) $g['wys'] . '" loading="lazy"></div></a>';
 				$html   .= '<figcaption class="sklepag-mono-etykieta">' . esc_html( $g['podpis'] ) . '</figcaption></figure>';
 			}
 			$html .= '</div></section>';
 		}
 
-		// W PACZCE — policzalna zawartość zipa (fakty z paczki, nie obietnice).
+		// W PACZCE — policzalna zawartość zipa (fakty z paczki, nie obietnice), 2 kolumny.
 		if ( ! empty( $t['pakiet'] ) ) {
-			$html .= '<section class="sklepag-sekcja"><p class="sklepag-mono-etykieta">[ W PACZCE ]</p><ul class="sklepag-pakiet">';
+			$html .= '<section class="sklepag-sekcja sklepag-sekcja--pelna">' . $etykieta( 'W PACZCE' ) . '<ul class="sklepag-pakiet sklepag-pakiet--siatka">';
 			foreach ( $t['pakiet'] as $poz ) {
 				$html .= '<li>' . esc_html( $poz ) . '</li>';
 			}
 			$html .= '</ul></section>';
 		}
 
-		// ILE CZASU ODZYSKUJESZ (S-03 — dedykowane miejsce).
-		$html .= '<section class="sklepag-sekcja"><p class="sklepag-mono-etykieta">[ ILE CZASU ODZYSKUJESZ ]</p>';
+		// ILE CZASU ODZYSKUJESZ (S-03 — dedykowane miejsce): 3 karty-dowody.
+		$html .= '<section class="sklepag-sekcja sklepag-sekcja--pelna">' . $etykieta( 'ILE CZASU ODZYSKUJESZ' );
 		$html .= '<div class="sklepag-dowody">';
 		foreach ( $t['dowody'] as $d ) {
 			$html .= '<div class="sklepag-dowod"><p class="sklepag-dowod-liczba">' . esc_html( $d[0] ) . '</p><p class="sklepag-dowod-podpis">' . esc_html( $d[1] ) . '</p></div>';
@@ -673,7 +830,7 @@ function sklepag_render_produkt( $slug ) {
 		// RĘCZNIE KONTRA BOT — porównanie jakościowe (bez wymyślonych stawek cudzej pracy).
 		if ( ! empty( $t['porownanie'] ) ) {
 			$por   = $t['porownanie'];
-			$html .= '<section class="sklepag-sekcja"><p class="sklepag-mono-etykieta">[ RĘCZNIE KONTRA BOT ]</p>';
+			$html .= '<section class="sklepag-sekcja sklepag-sekcja--pelna">' . $etykieta( 'RĘCZNIE KONTRA BOT' );
 			$html .= '<h2 class="sklepag-sekcja-tytul">' . esc_html( $por['tytul'] ) . '</h2>';
 			$html .= '<div class="sklepag-vs"><div class="sklepag-vs-naglowek">' . esc_html( $por['kol'][0] ) . '</div><div class="sklepag-vs-naglowek sklepag-vs-bot">' . esc_html( $por['kol'][1] ) . '</div>';
 			foreach ( $por['wiersze'] as $w ) {
@@ -683,8 +840,8 @@ function sklepag_render_produkt( $slug ) {
 			$html .= '<p class="sklepag-vs-przypis">' . esc_html( $por['przypis'] ) . '</p></section>';
 		}
 
-		// DLA KOGO.
-		$html .= '<section class="sklepag-sekcja"><p class="sklepag-mono-etykieta">[ DLA KOGO ]</p><ul class="sklepag-dla-kogo">';
+		// DLA KOGO — 3 równe karty.
+		$html .= '<section class="sklepag-sekcja sklepag-sekcja--pelna">' . $etykieta( 'DLA KOGO' ) . '<ul class="sklepag-dla-kogo sklepag-dla-kogo--karty">';
 		foreach ( $t['dla_kogo'] as $dk ) {
 			$html .= '<li>' . esc_html( $dk ) . '</li>';
 		}
@@ -693,12 +850,12 @@ function sklepag_render_produkt( $slug ) {
 		// OPINIE KLIENTÓW — wyłącznie PRAWDZIWE, od zweryfikowanych kupujących
 		// (D6 + UZUPEŁNIENIE 24.08, Omnibus). Najpierw PRZYJĘTE z mechanizmu (D32,
 		// tabela sklepag_opinie), po nich ewentualne wpisy ręczne z tej tablicy.
-		// Nic do pokazania = sekcji nie ma.
-		$html .= sklepag_render_opinie( array_merge( sklepag_opinie_z_bazy( $slug ), is_array( $t['opinie'] ) ? $t['opinie'] : array() ) );
+		// Nic do pokazania = sekcji nie ma (i numer sekcji nie rośnie).
+		$html .= sklepag_render_opinie( array_merge( sklepag_opinie_z_bazy( $slug ), is_array( $t['opinie'] ) ? $t['opinie'] : array() ), $etykieta );
 
 		// UCZCIWOŚĆ (zamiast fejk-opinii — D6/Omnibus). Punkty, nie ściana
 		// (badania: 53% kupujących samo szuka ograniczeń — forma ma być skanowalna).
-		$html .= '<section class="sklepag-sekcja sklepag-uczciwosc"><p class="sklepag-mono-etykieta">[ CO DOKŁADNIE DOSTAJESZ — I CZEGO NIE MA ]</p>';
+		$html .= '<section class="sklepag-sekcja sklepag-uczciwosc">' . $etykieta( 'CO DOKŁADNIE DOSTAJESZ — I CZEGO NIE MA' );
 		if ( is_array( $t['uczciwosc'] ) ) {
 			$html .= '<ul class="sklepag-uczciwosc-punkty">';
 			foreach ( $t['uczciwosc'] as $u ) {
@@ -711,7 +868,7 @@ function sklepag_render_produkt( $slug ) {
 		$html .= '</section>';
 	} elseif ( '' !== trim( (string) $p->opis_pelny ) ) {
 		// Produkt spoza dwójki: opis pełny z bazy, render jako tekst (XSS — plan §7).
-		$html .= '<section class="sklepag-sekcja"><p class="sklepag-mono-etykieta">[ O PRODUKCIE ]</p>';
+		$html .= '<section class="sklepag-sekcja">' . $etykieta( 'O PRODUKCIE' );
 		$html .= '<p class="sklepag-sekcja-tekst">' . nl2br( esc_html( $p->opis_pelny ) ) . '</p></section>';
 	}
 
@@ -720,11 +877,13 @@ function sklepag_render_produkt( $slug ) {
 		// więc przyjęte opinie muszą się pokazać także na stronie generycznej. Dwójka
 		// z bogatą treścią ma tę sekcję wyżej, w ustalonym porządku sekcji strony —
 		// dlatego dwa wywołania zamiast wspólnego (kolejność sekcji to decyzja projektu).
-		$html .= sklepag_render_opinie( sklepag_opinie_z_bazy( $slug ) );
+		$html .= sklepag_render_opinie( sklepag_opinie_z_bazy( $slug ), $etykieta );
 	}
 
 	// CENA + ZAKUP.
-	$html .= '<section class="sklepag-sekcja sklepag-sekcja-zakup"><p class="sklepag-mono-etykieta">[ CENA ]</p>';
+	// Kotwice „Kup teraz" (hero, finał, pigułka) celują w SEKCJĘ (id), nie w formularz: po skoku cena
+	// zostaje w kadrze pod sticky nagłówkiem gospodarza, a ramka formularza błyska (CSS :target).
+	$html .= '<section class="sklepag-sekcja sklepag-sekcja-zakup" id="sklepag-zakup">' . $etykieta( 'CENA' );
 	$html .= $cena;
 	if ( $t && ! empty( $t['gwarancja'] ) ) {
 		$html .= '<p class="sklepag-trigger">✔ 14 dni gwarancji satysfakcji — zwrot bez pytań</p>';
@@ -736,27 +895,30 @@ function sklepag_render_produkt( $slug ) {
 
 	// GWARANCJA — obietnica zwrotu = zobowiązanie finansowe; treść ustala właściciel sklepu.
 	if ( $t && ! empty( $t['gwarancja'] ) ) {
-		$html .= '<section class="sklepag-sekcja sklepag-gwarancja"><p class="sklepag-mono-etykieta">[ GWARANCJA ]</p>';
+		$html .= '<section class="sklepag-sekcja sklepag-gwarancja">' . $etykieta( 'GWARANCJA' );
 		$html .= '<p class="sklepag-sekcja-tekst">' . esc_html( $t['gwarancja'] ) . '</p></section>';
 	}
 
-	// FAQ.
+	// FAQ — siatka 2 kolumn, każdy blok pytanie+odpowiedź z górnym hairline'em (jak na liście).
 	if ( $t && ! empty( $t['faq'] ) ) {
-		$html .= '<section class="sklepag-sekcja"><p class="sklepag-mono-etykieta">[ FAQ ]</p><dl class="sklepag-faq">';
+		$html .= '<section class="sklepag-sekcja sklepag-sekcja--pelna">' . $etykieta( 'FAQ' ) . '<dl class="sklepag-faq sklepag-faq--siatka">';
 		foreach ( $t['faq'] as $f ) {
-			$html .= '<dt>' . esc_html( $f[0] ) . '</dt><dd>' . esc_html( $f[1] ) . '</dd>';
+			$html .= '<div class="sklepag-faq-blok"><dt>' . esc_html( $f[0] ) . '</dt><dd>' . esc_html( $f[1] ) . '</dd></div>';
 		}
 		$html .= '</dl></section>';
 	}
 
-	// FINALNY CTA.
-	$html .= '<section class="sklepag-sekcja sklepag-final">';
+	// FINALNY CTA — baner-panel z duetem maskotek (ta sama para tekst + wizual co na liście).
+	$html .= '<section class="sklepag-sekcja sklepag-sekcja--pelna sklepag-final sklepag-final--baner">';
+	$html .= '<div class="sklepag-final-tresc">';
 	$html .= '<h2 class="sklepag-sekcja-tytul">' . esc_html( $t ? $t['final'] : 'Gotowy na start?' ) . '</h2>';
-	$html .= '<p><a class="sklepag-kup sklepag-kup-kotwica" href="#sklepag-kup-formularz">Kup teraz (płatność testowa)</a></p>';
-	$html .= '</section>';
+	$html .= '<p class="sklepag-final-przyciski"><a class="sklepag-kup sklepag-kup-kotwica" href="#sklepag-zakup">Kup teraz (płatność testowa)</a></p>';
+	// Podpis duetu = TEN produkt (na stronie ChatBota podpis listy z nazwą Segregatora mylił).
+	$podpis_duetu = '<p class="sklepag-mono-etykieta sklepag-final-duet-podpis">[ <span class="sklepag-akcent">' . esc_html( $p->nazwa ) . '</span>' . ( $t && ! empty( $t['gwarancja'] ) ? ' · 14 dni na zwrot' : '' ) . ' ]</p>';
+	$html        .= '</div>' . sklepag_duet_maskotek( $podpis_duetu ) . '</section>';
 
 	// Sticky pasek CTA (badanie Baymard: przycisk z marginesem, NIE pelna szerokosc).
-	$html .= '<div class="sklepag-sticky" hidden><span class="sklepag-sticky-cena">' . esc_html( number_format( $p->cena_grosze / 100, 0, ',', ' ' ) ) . ' ' . esc_html( $p->waluta ) . '</span><a class="sklepag-kup sklepag-kup-kotwica" href="#sklepag-kup-formularz">Kup teraz</a></div>';
+	$html .= '<div class="sklepag-sticky" hidden><span class="sklepag-sticky-cena">' . esc_html( number_format( $p->cena_grosze / 100, 0, ',', ' ' ) ) . ' ' . esc_html( $p->waluta ) . '</span><a class="sklepag-kup sklepag-kup-kotwica" href="#sklepag-zakup">Kup teraz</a></div>';
 	$html .= '</div>';
 	return $html;
 }
