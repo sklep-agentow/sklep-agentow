@@ -194,6 +194,8 @@ function sklepag_dashboard_self_heal() {
 		return;
 	}
 	update_option( 'sklepag_reconciliation_ostatnia', time(), false );
+	// Znacznik ostatniego wejścia na pulpit — krótka nazwa poza prefiksem sklepu, żeby nie mieszać ze stanem sprzedaży.
+	update_option( 'sag_pulpit_ostatnie_wejscie', array( 'kiedy' => time(), 'kto' => get_current_user_id() ), false );
 	sklepag_dociagnij_zalegle( 8 ); // Budżet czasu: render admina nie może wisieć; resztę dociągnie cron.
 }
 
