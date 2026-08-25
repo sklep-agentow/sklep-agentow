@@ -203,9 +203,6 @@ add_action( 'admin_post_sklepag_dociagnij', 'sklepag_obsluz_dociagnij' );
  * Ręczny przycisk „Dociągnij zaległe teraz" (nonce + caps + log akcji).
  */
 function sklepag_obsluz_dociagnij() {
-	if ( ! current_user_can( 'manage_options' ) ) {
-		wp_die( 'Brak uprawnień.', 'Sklep Agentów', 403 );
-	}
 	check_admin_referer( 'sklepag_dociagnij' );
 
 	sklepag_zdarzenie( null, 'reconciliation_reczna', 'przycisk w panelu' );
