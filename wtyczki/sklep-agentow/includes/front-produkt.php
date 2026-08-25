@@ -86,6 +86,64 @@ function sklepag_produkt_po_slugu( $slug ) {
 }
 
 /**
+ * Sekcja OPINIE KLIENTÓW z tablicy wpisów. Nic do pokazania = pusty string (sekcji nie ma).
+ *
+ * Wpis = tablica z kluczami 'tresc'/'imie'/'gwiazdki'(1-5)/'tytul'/'data' — te same
+ * klucze odda tabela `sklepag_opinie` po zbudowaniu mechanizmu. Plakietka
+ * ZWERYFIKOWANY ZAKUP stoi przy KAŻDYM wpisie: nota pod sekcją gwarantuje
+ * weryfikację wszystkich publikowanych opinii, więc wpis bez plakietki wyglądałby
+ * jak „opinia podejrzana". Z tego samego powodu dawny format array( tresc, podpis )
+ * — bez plakietki — jest POMIJANY, nie renderowany: w repo nie ma ani jednego
+ * takiego wpisu, a lista mieszana przeczyłaby nocie.
+ *
+ * Wydzielone z sklepag_tresc_produktu, żeby render dało się udowodnić na dowolnej
+ * tablicy, niezależnie od danych produktów — i tu wepnie się render z bazy
+ * po zbudowaniu mechanizmu opinii.
+ *
+ * @param mixed $opinie Lista wpisów opinii (tablica; inny typ = brak sekcji).
+ * @return string HTML sekcji albo '' gdy nie ma czego pokazać.
+ */
+function sklepag_render_opinie( $opinie ) {
+	if ( ! is_array( $opinie ) ) {
+		return '';
+	}
+	$figury = '';
+	foreach ( $opinie as $op ) {
+		if ( ! is_array( $op ) || ! isset( $op['tresc'] ) ) {
+			continue; // Dawny format bez klucza 'tresc' — pomijany (komentarz nad funkcją).
+		}
+		$imie = isset( $op['imie'] ) ? trim( (string) $op['imie'] ) : '';
+		if ( '' === $imie ) {
+			$imie = 'Klient'; // Bez imienia: znak zastępczy zamiast pustego krążka i pustego <strong>.
+		}
+		$gw = isset( $op['gwiazdki'] ) ? max( 1, min( 5, (int) $op['gwiazdki'] ) ) : 5;
+		// mb_substr polyfilluje rdzeń WP (compat.php), mb_strtoupper NIE — bez
+		// strażnika host bez mbstring padłby fatalem na stronie produktu.
+		$inicjal = mb_substr( $imie, 0, 1 );
+		$inicjal = function_exists( 'mb_strtoupper' ) ? mb_strtoupper( $inicjal ) : strtoupper( $inicjal );
+		$figury .= '<figure class="sklepag-opinia"><div class="sklepag-opinia-glowa">';
+		$figury .= '<span class="sklepag-avatar" aria-hidden="true">' . esc_html( $inicjal ) . '</span>';
+		$figury .= '<div><p class="sklepag-opinia-imie"><strong>' . esc_html( $imie ) . '</strong>';
+		$figury .= ' <span class="sklepag-opinia-badge">ZWERYFIKOWANY ZAKUP</span>';
+		$figury .= '</p><p class="sklepag-gwiazdki" aria-label="Ocena ' . (int) $gw . ' na 5">' . str_repeat( '★', $gw ) . '<span class="sklepag-gwiazdki-puste">' . str_repeat( '★', 5 - $gw ) . '</span></p></div></div>';
+		if ( ! empty( $op['tytul'] ) ) {
+			$figury .= '<p class="sklepag-opinia-tytul">' . esc_html( $op['tytul'] ) . '</p>';
+		}
+		$figury .= '<blockquote>' . esc_html( $op['tresc'] ) . '</blockquote>';
+		if ( ! empty( $op['data'] ) ) {
+			$figury .= '<figcaption class="sklepag-mono-etykieta">' . esc_html( $op['data'] ) . '</figcaption>';
+		}
+		$figury .= '</figure>';
+	}
+	if ( '' === $figury ) {
+		return '';
+	}
+	return '<section class="sklepag-sekcja"><p class="sklepag-mono-etykieta">[ OPINIE KLIENTÓW ]</p><div class="sklepag-opinie">'
+		. $figury
+		. '</div><p class="sklepag-opinie-nota">Publikujemy wyłącznie opinie osób, które kupiły ten produkt — przed publikacją potwierdzamy zakup w danych zamówień sklepu.</p></section>';
+}
+
+/**
  * Bogata treść znanych produktów (TRESC-STRON-PRODUKTOW.md).
  * Null = produkt spoza dwójki → strona generyczna z pól bazy.
  *
@@ -139,8 +197,8 @@ function sklepag_tresc_produktu( $slug ) {
 			'galeria'      => array(
 				array(
 					'wideo'  => 'chatbot-demo.webm',
-					'alt'    => 'Nagranie: gość pyta o godziny otwarcia, bot odpowiada z bazy; na pytanie spoza bazy bot otwiera formularz „Zostaw wiadomość"',
-					'podpis' => 'NAGRANIE Z TEJ STRONY — PYTANIE, ODPOWIEDŹ I ZBIERANIE KONTAKTU',
+					'alt'    => 'Nagranie: gość pyta „Ile kosztuje ChatBot LIVE?", bot od razu odpowiada ceną 149,00 zł i opisem z bazy; na „Czy jest gwarancja?" bot podaje 14-dniową gwarancję zwrotu',
+					'podpis' => 'NAGRANIE Z TEJ STRONY — PYTANIA O CENĘ I GWARANCJĘ, ODPOWIEDZI Z BAZY',
 					'szer'   => 1280,
 					'wys'    => 800,
 				),
@@ -195,11 +253,17 @@ function sklepag_tresc_produktu( $slug ) {
 			),
 			/*
 			 * ⛔ OPINIE: wyłącznie PRAWDZIWE, od zweryfikowanych kupujących (D6 + UZUPEŁNIENIE
-			 * 24.08, Omnibus). Puste = sekcja się nie renderuje. Format wpisu:
-			 * array( 'treść opinii', 'Imię, firma' ). Gdy dodajesz PIERWSZĄ opinię,
-			 * USUŃ z 'uczciwosc' zdanie „Nie znajdziesz tu opinii z gwiazdkami…" —
-			 * o pochodzeniu opinii mówi wtedy stała NOTA renderowana razem z sekcją
-			 * (patrz sklepag_render_produkt), więc strona nie zostaje bez tego zdania.
+			 * 24.08, Omnibus). Puste = sekcja się nie renderuje. Format wpisu — WYŁĄCZNIE
+			 * tablica z kluczami (wpis bez klucza 'tresc' jest przez render POMIJANY):
+			 * array(
+			 *     'tresc'    => 'Treść opinii.',
+			 *     'imie'     => 'Imię',       // brak = „Klient"
+			 *     'gwiazdki' => 5,            // 1-5; brak = 5
+			 *     'tytul'    => 'Tytuł',      // opcjonalny
+			 *     'data'     => '25.08.2026', // opcjonalna
+			 * )
+			 * O pochodzeniu opinii mówi stała NOTA renderowana razem z sekcją
+			 * (sklepag_render_opinie) — niczego więcej nie trzeba zmieniać na stronie.
 			 */
 			'opinie'       => array(),
 			/*
@@ -623,15 +687,7 @@ function sklepag_render_produkt( $slug ) {
 
 		// OPINIE KLIENTÓW — wyłącznie PRAWDZIWE, od zweryfikowanych kupujących
 		// (D6 + UZUPEŁNIENIE 24.08, Omnibus). Pusta lista = sekcji nie ma.
-		if ( ! empty( $t['opinie'] ) ) {
-			$html .= '<section class="sklepag-sekcja"><p class="sklepag-mono-etykieta">[ OPINIE KLIENTÓW ]</p><div class="sklepag-opinie">';
-			foreach ( $t['opinie'] as $op ) {
-				$html .= '<figure class="sklepag-opinia"><blockquote>' . esc_html( $op[0] ) . '</blockquote><figcaption class="sklepag-mono-etykieta">' . esc_html( $op[1] ) . '</figcaption></figure>';
-			}
-			$html .= '</div>';
-			$html .= '<p class="sklepag-opinie-nota">Publikujemy wyłącznie opinie osób, które kupiły ten produkt — przed publikacją potwierdzamy zakup w danych zamówień sklepu.</p>';
-			$html .= '</section>';
-		}
+		$html .= sklepag_render_opinie( $t['opinie'] );
 
 		// UCZCIWOŚĆ (zamiast fejk-opinii — D6/Omnibus). Punkty, nie ściana
 		// (badania: 53% kupujących samo szuka ograniczeń — forma ma być skanowalna).

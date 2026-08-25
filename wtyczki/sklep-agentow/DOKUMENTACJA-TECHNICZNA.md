@@ -1,6 +1,6 @@
 # Sklep Agentów — dokumentacja techniczna
 
-**Wersja wtyczki: 0.9.6 · wersja schematu bazy: 4 · WordPress 6.7+ · PHP 8.1+**
+**Wersja wtyczki: 0.9.7 · wersja schematu bazy: 4 · WordPress 6.7+ · PHP 8.1+**
 
 > **Po co ten dokument.** To jest **mapa systemu dla audytora i programisty**, nie ulotka.
 > Każda liczba i nazwa tutaj jest wzięta z kodu, nie z pamięci — jeśli coś się rozjedzie,
@@ -122,7 +122,7 @@ po stronie serwera. To jest świadome ograniczenie, nie przeoczenie.
 
 | Stała | Wartość | Znaczenie |
 |---|---|---|
-| `SKLEPAG_WERSJA` | 0.9.6 | wersja wtyczki (assety, cache) |
+| `SKLEPAG_WERSJA` | 0.9.7 | wersja wtyczki (assety, cache) |
 | `SKLEPAG_WERSJA_SCHEMATU` | 4 | wersja schematu bazy (migracje) |
 | `SKLEPAG_LIMIT_POBRAN` | 10 | ile razy można pobrać zakup |
 | `SKLEPAG_LINK_GODZIN` | 72 | ważność linku pobrania |
@@ -150,8 +150,11 @@ w cronie bez wtyczki tylko sypie błędami — #170).
 ## 9. Granice — czego ta wtyczka NIE robi
 
 Nie zakłada kont kupujących · nie obsługuje płatności cyklicznych ani abonamentów ·
-nie prowadzi opinii ani ocen · nie robi przecen ani kuponów · nie dotyka motywu
-ani cudzych wtyczek · nie wysyła danych nigdzie poza Stripe.
+nie zbiera opinii formularzem od gości i nie liczy ocen zbiorczych (pokazuje wyłącznie
+opinie zweryfikowanych kupujących z oceną 1–5, dodawane ręcznie po potwierdzeniu
+zakupu; bez `aggregateRating` w danych strukturalnych — D6) · nie robi przecen
+ani kuponów · nie dotyka motywu ani cudzych wtyczek · nie wysyła danych nigdzie
+poza Stripe.
 
 ---
 
