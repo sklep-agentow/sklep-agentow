@@ -51,8 +51,10 @@ function sklepag_obsluz_pobranie() {
 	$rozmiar = filesize( $plik );
 	$nazwa   = sanitize_file_name( $zam->produkt_nazwa_kupiona ) . '.zip';
 
-	// HEAD: nagłówki bez zużywania limitu (skanery poczty dotykają linków).
+	// HEAD: same nagłówki. Slot zużywamy jak przy pobraniu — skaner, który dotyka linku,
+	// to też „użycie” i inaczej limit 10 nie chroni pliku przed botami.
 	if ( isset( $_SERVER['REQUEST_METHOD'] ) && 'HEAD' === $_SERVER['REQUEST_METHOD'] ) {
+		$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET pobrania_uzyte = pobrania_uzyte + 1, zmieniono = %s WHERE id = %d AND pobrania_uzyte < pobrania_limit", current_time( 'mysql' ), (int) $zam->id ) );
 		nocache_headers();
 		header( 'Content-Type: application/zip' );
 		header( 'Content-Length: ' . $rozmiar );
