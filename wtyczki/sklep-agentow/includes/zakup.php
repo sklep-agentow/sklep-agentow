@@ -487,8 +487,7 @@ function sklepag_dociagnij_zalegle( $budzet_s = 0 ) {
 		}
 		$sesja = sklepag_stripe_pobierz_sesje( $sid );
 		if ( is_wp_error( $sesja ) ) {
-			sklepag_zdarzenie( null, 'reconciliation_blad', $sid . ': ' . $sesja->get_error_message() );
-			continue;
+			continue; // Chwilowy błąd sieci/Stripe — następny przebieg spróbuje ponownie, bez zaśmiecania dziennika.
 		}
 		if ( isset( $sesja['payment_status'] ) && 'unpaid' !== $sesja['payment_status'] ) {
 			sklepag_domknij_zakup( $sesja ); // TEN SAM silnik co webhook (D24).
