@@ -2,7 +2,7 @@
 Contributors: automaticai
 Tags: email, imap, inbox, automation, rules
 Requires at least: 6.0
-Tested up to: 7.0.4
+Tested up to: 7.1
 Requires PHP: 8.1
 Stable tag: 1.3.4
 License: GPLv2 or later

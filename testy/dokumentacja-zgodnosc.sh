@@ -392,13 +392,28 @@ fi
 
 echo
 
-echo "=== Y. readme.txt w standardzie WordPressa (recenzja #181: test wcale go nie sprawdzal) ==="
+echo "=== Y. readme.txt w standardzie WordPressa (ten sam zakres, co sekcja N u Segregatora) ==="
 WER_KOD=$(grep -oP '(?<=^ \* Version: ).*' $W/chatbot-live.php)   # wersja Z KODU, nie na sztywno (klasa 11)
+WP_STACK=$(docker exec strona_wp_wordpress wp --allow-root --path=/var/www/html core version 2>/dev/null | grep -oE '^[0-9]+\.[0-9]+')
 spr "readme.txt istnieje"            "1" "test -f $W/readme.txt && echo 1 || echo 0"
 spr "naglowek === Nazwa ==="         "1" "head -1 $W/readme.txt | grep -c '^=== ChatBot LIVE ===$'"
-spr "Stable tag == wersja wtyczki"   "1" "test \"\$(grep -oP '(?<=^Stable tag: ).*' $W/readme.txt)\" = \"$WER_KOD\" && echo 1 || echo 0"
+spr "pole Contributors"              "1" "grep -c '^Contributors: ' $W/readme.txt"
+spr "pole Tags"                      "1" "grep -c '^Tags: ' $W/readme.txt"
 spr "Requires at least == naglowek wtyczki" "1" "test \"\$(grep -oP '(?<=^Requires at least: ).*' $W/readme.txt)\" = \"\$(grep -oP '(?<=^ \\* Requires at least: ).*' $W/chatbot-live.php)\" && echo 1 || echo 0"
 spr "Requires PHP == naglowek wtyczki"      "1" "test \"\$(grep -oP '(?<=^Requires PHP: ).*' $W/readme.txt)\" = \"\$(grep -oP '(?<=^ \\* Requires PHP: ).*' $W/chatbot-live.php)\" && echo 1 || echo 0"
+spr "Stable tag == wersja wtyczki"          "1" "test \"\$(grep -oP '(?<=^Stable tag: ).*' $W/readme.txt)\" = \"$WER_KOD\" && echo 1 || echo 0"
+if [ -n "$WP_STACK" ]; then
+  spr "Tested up to = wersja WP ze stacku ($WP_STACK)" "$WP_STACK" "grep -oP '(?<=^Tested up to: ).*' $W/readme.txt | grep -oE '^[0-9]+\\.[0-9]+'"
+else
+  echo "  POMINIETE Tested up to = wersja WP ze stacku (stack nie odpowiada)"
+fi
+spr "License == naglowek wtyczki"           "1" "test \"\$(grep -oP '(?<=^License: ).*' $W/readme.txt)\" = \"\$(grep -oP '(?<=^ \\* License: ).*' $W/chatbot-live.php)\" && echo 1 || echo 0"
+spr "License URI == naglowek wtyczki"       "1" "test \"\$(grep -oP '(?<=^License URI: ).*' $W/readme.txt)\" = \"\$(grep -oP '(?<=^ \\* License URI: ).*' $W/chatbot-live.php)\" && echo 1 || echo 0"
+for sek in Description Installation "Frequently Asked Questions" Changelog; do
+  spr "sekcja == $sek ==" "1" "grep -c '^== $sek ==$' $W/readme.txt"
+done
+KROTKI=$(sed -n '11p' $W/readme.txt | wc -m)
+spr "krotki opis <= 150 znakow"      "1" "test $KROTKI -le 150 && echo 1 || echo 0"
 spr "readme.txt ma changelog biezacej wersji" "1" "grep -c '^= $WER_KOD =$' $W/readme.txt"
 spr "CHANGELOG.md ma wpis biezacej wersji"    "1" "grep -c '^## \\[$WER_KOD\\]' $W/CHANGELOG.md"
 
