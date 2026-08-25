@@ -37,6 +37,7 @@ $teraz = current_time( 'mysql' );
 
 // SETUP: sprzątnij ewentualne resztki poprzedniego przebiegu, załóż produkt testowy.
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$to} WHERE zamowienie_id IN (%d, %d)", $zam1, $zam2 ) );
+$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}sklepag_zamowienia WHERE id IN (%d, %d)", $zam1, 9900011 ) );
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$tp} WHERE slug = %s", $slug ) );
 $wpdb->insert(
 	$tp,
@@ -225,7 +226,7 @@ sprawdz( 'zalazek po anonimizacji: zostaje zalazkiem, ale token martwy', $w_zal 
 // (np. SELECT z.id zamiast z.usunieto_dnia) swiecilaby na zielono caly test.
 $pz = $wpdb->prefix . 'sklepag_zamowienia';
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$pz} WHERE id = %d", $zam1 ) );
-$wpdb->insert(
+$wstaw_zam1 = $wpdb->insert(
 	$pz,
 	array(
 		'id'                    => $zam1,
@@ -238,6 +239,9 @@ $wpdb->insert(
 		'zmieniono'             => $teraz,
 	)
 );
+// Oprawa MUSI powstac — przy nieudanym insercie krok badalby sciezke "brak wiersza
+// zamowienia", czyli dokladnie te, ktora mial wyeliminowac (recenzja #177 r4).
+sprawdz( 'oprawa kontroli: wiersz zamowienia zam1 POWSTAL (usunieto_dnia=NULL)', 1 === (int) $wstaw_zam1 && null === $wpdb->get_var( $wpdb->prepare( "SELECT usunieto_dnia FROM {$pz} WHERE id = %d", $zam1 ) ) && 1 === (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$pz} WHERE id = %d", $zam1 ) ) );
 sprawdz( 'KONTROLA ksztaltu produkcyjnego: usunieto_dnia=NULL -> moderacja DZIALA (odrzuc i przyjmij)', true === sklepag_opinia_moderuj( (int) $wiersz->id, 'odrzuc' ) && true === sklepag_opinia_moderuj( (int) $wiersz->id, 'przyjmij' ) );
 sprawdz( 'opinia po kontroli produkcyjnej NADAL na stronie', false !== strpos( sklepag_render_produkt( $slug ), 'Test Ola' ) );
 
@@ -267,6 +271,7 @@ echo "\n=== I. SPRZATANIE po tescie ===\n";
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$to} WHERE zamowienie_id IN (%d, %d, %d, %d, %d)", $zam1, $zam2, $zam3, $zam4, $zam5 ) );
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$pz} WHERE id IN (%d, %d)", $zam1, $zam3 ) );
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$tp} WHERE id = %d", $prod_id ) );
+sprawdz( 'zero wierszy testowych w zamowieniach', 0 === (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$pz} WHERE id IN (%d, %d)", $zam1, $zam3 ) ) );
 sprawdz( 'zero wierszy testowych w opiniach', 0 === (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$to} WHERE zamowienie_id IN (%d, %d, %d, %d, %d)", $zam1, $zam2, $zam3, $zam4, $zam5 ) ) );
 sprawdz( 'produkt testowy skasowany', 0 === (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$tp} WHERE id = %d", $prod_id ) ) );
 
