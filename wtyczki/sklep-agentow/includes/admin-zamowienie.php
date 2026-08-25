@@ -29,6 +29,11 @@ function sklepag_obsluz_resend() {
 		wp_die( 'Brak uprawnień.', 'Sklep Agentów', 403 );
 	}
 	check_admin_referer( 'sklepag_resend' );
+	if ( ! current_user_can( 'manage_options' ) ) {
+		// Powtórka ŚWIADOMA: nonce nie niesie uprawnień (wp_verify_nonce nie sprawdza roli), a w tym
+		// handlerze między nonce a zapisem nie ma już żadnej bramki — zostawiamy obie kontrole.
+		wp_die( 'Brak uprawnień.', 'Sklep Agentów', 403 );
+	}
 
 	$id = isset( $_GET['zamowienie'] ) ? absint( $_GET['zamowienie'] ) : 0;
 
