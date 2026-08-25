@@ -4,8 +4,8 @@
 # ⛔ NIE DZIAŁA NIGDZIE INDZIEJ: sprawdza gałąź i przerywa, gdy to nie audyt/mutanty-sklep.
 # ⛔ KOTWICA = WZORZEC, nie numer linii: każda podmiana wymaga, żeby wzorzec wystąpił DOKŁADNIE raz;
 #    inaczej kod 3 i STOP (lekcja botów: kotwica po numerze linii po rebase kłamała).
-# ⛔ Jeden mutant = jeden commit „MUTANT Mx — do zdjęcia: git revert <sha>". Tabela rozliczenia
-#    COMMITOWANA NA TEJ GAŁĘZI (bank botów „poza repo" zniknął — lekcja 25.08).
+# ⛔ Jeden mutant = jeden commit „MUTANT Mx — do zdjęcia: git revert <sha>”. Tabela rozliczenia
+#    COMMITOWANA NA TEJ GAŁĘZI (bank botów „poza repo” zniknął — lekcja 25.08).
 #
 # Użycie: bash podloz-mutanty-sklep.sh [--sprawdz]
 #   --sprawdz  — tylko liczy kotwice (0 zmian, 0 commitów); EXIT 0 = wszystkie trafiają raz
@@ -83,7 +83,7 @@ function sklepag_obsluz_dociagnij() {
 EOF
 )"
 zapisz M2 L2 "includes/admin-dashboard.php" "function sklepag_obsluz_dociagnij" \
-	"„Dociągnij zaległe" sprawdza już tylko nonce; oczekiwana KWALIFIKACJA: para złamana, bez nonce nieeksploatowalne z zewnątrz — DUŻE, nie KRYTYCZNE"
+	"„Dociągnij zaległe” sprawdza już tylko nonce; oczekiwana KWALIFIKACJA: para złamana, bez nonce nieeksploatowalne z zewnątrz — DUŻE, nie KRYTYCZNE"
 
 # ── M3 · L3 (wyścig / dwa silniki) — okno odbioru claimu 5 min → 0 ──────────────────────────────
 podmien $W/includes/zakup.php \
@@ -133,7 +133,7 @@ EOF
 zapisz M5 L4 "includes/admin-dashboard.php" "sag_pulpit_ostatnie_wejscie" \
 	"nowa opcja zapisywana w samonaprawie pulpitu; uninstall.php kasuje LIKE 'sklepag_%' → ta zostaje po odinstalowaniu (z ID użytkownika)"
 
-# ── M6 · L5 — obietnica behawioralna: zamówienie mówi „HEAD nie zużywa limitu", kod zaczyna liczyć ─
+# ── M6 · L5 — obietnica behawioralna: zamówienie mówi „HEAD nie zużywa limitu”, kod zaczyna liczyć ─
 podmien $W/includes/pobieranie.php \
 "$(cat <<'EOF'
 	// HEAD: nagłówki bez zużywania limitu (skanery poczty dotykają linków).
@@ -143,14 +143,14 @@ EOF
 )" \
 "$(cat <<'EOF'
 	// HEAD: same nagłówki. Slot zużywamy jak przy pobraniu — skaner, który dotyka linku,
-	// to też „użycie" i inaczej limit 10 nie chroni pliku przed botami.
+	// to też „użycie” i inaczej limit 10 nie chroni pliku przed botami.
 	if ( isset( $_SERVER['REQUEST_METHOD'] ) && 'HEAD' === $_SERVER['REQUEST_METHOD'] ) {
 		$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET pobrania_uzyte = pobrania_uzyte + 1, zmieniono = %s WHERE id = %d AND pobrania_uzyte < pobrania_limit", current_time( 'mysql' ), (int) $zam->id ) );
 		nocache_headers();
 EOF
 )"
 zapisz M6 L5 "includes/pobieranie.php" "HEAD: same nagłówki" \
-	"HEAD zużywa slot pobrania; zamówienie (01-zamowienie.md: „HEAD nie zużywa") i readme („do 10 pobrań") obiecują inaczej; stała 10 bez zmian → dok=kod (L6) NIE łapie"
+	"HEAD zużywa slot pobrania; zamówienie (01-zamowienie.md: „HEAD nie zużywa”) i readme („do 10 pobrań”) obiecują inaczej; stała 10 bez zmian → dok=kod (L6) NIE łapie"
 
 # ── M7 · Ł — błąd Stripe (WP_Error) w reconciliation połknięty bez wpisu w zdarzenia ────────────
 podmien $W/includes/zakup.php \
@@ -176,7 +176,7 @@ EOF
 EOF
 )"
 zapisz M7 L "includes/zakup.php" "Chwilowy błąd sieci/Stripe" \
-	"WP_Error ze Stripe w reconciliation znika bez śladu w zdarzeniach: zły klucz = wieczne „oczekuje" i pusty dziennik; wyrocznia w prompcie Ł"
+	"WP_Error ze Stripe w reconciliation znika bez śladu w zdarzeniach: zły klucz = wieczne „oczekuje” i pusty dziennik; wyrocznia w prompcie Ł"
 
 echo; echo "=== CZĘŚĆ 2 — PUŁAPKI (wyglądają źle, SĄ POPRAWNE — alarm = FAIL kalibracji) ==="
 
@@ -232,7 +232,7 @@ function sklepag_dashboard_self_heal() {
 EOF
 )"
 zapisz F3 FAŁSZYWY "includes/admin-dashboard.php" "function_exists( 'sklepag_dociagnij_zalegle' )" \
-	"POPRAWNE: obronny guard, zachowanie bez zmian; „martwy kod" to nie usterka"
+	"POPRAWNE: obronny guard, zachowanie bez zmian; „martwy kod” to nie usterka"
 
 # ── F4 · phpcs:ignore z uzasadnieniem przy zapisie loginu ──────────────────────────────────────
 podmien $W/includes/logowania.php \
@@ -242,7 +242,7 @@ podmien $W/includes/logowania.php \
 EOF
 )" \
 "$(cat <<'EOF'
-	// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- $username to login z formularza rdzenia; do bazy idzie przez prepare() (%s) w sklepag_zapisz_logowanie(), zapis 1:1 jest CELOWY (S-09 „konkrety": co wpisano).
+	// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- $username to login z formularza rdzenia; do bazy idzie przez prepare() (%s) w sklepag_zapisz_logowanie(), zapis 1:1 jest CELOWY (S-09 „konkrety”: co wpisano).
 	sklepag_zapisz_logowanie( $username, 'blad' );
 }
 EOF
