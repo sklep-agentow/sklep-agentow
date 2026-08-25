@@ -71,6 +71,7 @@ function sklepag_loguj_nieudane( $username, $error ) {
 	if ( ! username_exists( $username ) ) {
 		return;
 	}
+	// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- $username to login z formularza rdzenia; do bazy idzie przez prepare() (%s) w sklepag_zapisz_logowanie(), zapis 1:1 jest CELOWY (S-09 „konkrety”: co wpisano).
 	sklepag_zapisz_logowanie( $username, 'blad' );
 }
 
