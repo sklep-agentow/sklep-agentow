@@ -95,7 +95,7 @@
 	font-size: 0.8rem; /* Spójnie z mono-etykietami. */
 	letter-spacing: 0.14em;
 	text-transform: uppercase;
-	color: var(--sklepag-limonka);
+	color: var(--sklepag-pyl); /* runda stron: limonka tylko na tytule pigułki — akcent ma znaczyć, nie być tłem */
 	background: var(--sklepag-wegiel);
 	border: 1px solid var(--sklepag-linia);
 	border-radius: 999px;
@@ -998,9 +998,14 @@ a.sklepag-kup {
 
 /* ===== Koszyk A (25.08): demo-CTA, zgodność, trigger, przypisy, punkty uczciwości, lightbox, sticky ===== */
 .sklepag-demo-cta {
-	color: var(--sklepag-limonka);
-	font-weight: 600;
+	color: var(--sklepag-papier);
+	font-weight: 500;
 	margin: 10px 0 0;
+}
+
+.sklepag-demo-cta .sklepag-akcent,
+.sklepag-baner-testowy-tytul {
+	color: var(--sklepag-limonka);
 }
 .sklepag-zgodnosc {
 	list-style: none;
@@ -1793,29 +1798,10 @@ a.sklepag-kup {
 		linear-gradient(90deg, rgba(245, 245, 245, 0.045) 1px, transparent 1px) 0 0 / 7rem 7rem,
 		linear-gradient(180deg, rgba(245, 245, 245, 0.045) 1px, transparent 1px) 0 0 / 7rem 7rem,
 		radial-gradient(circle, rgba(191, 255, 56, 0.16) 1px, transparent 1.8px) 0 0 / 7rem 7rem;
-	/* Gaśnie ku krawędziom i ku dołowi — tło ma być poziomem szumu, nie tapetą. */
-	-webkit-mask-image: radial-gradient(120% 90% at 55% 20%, #000 30%, rgba(0, 0, 0, 0.35) 70%, transparent 100%);
-	mask-image: radial-gradient(120% 90% at 55% 20%, #000 30%, rgba(0, 0, 0, 0.35) 70%, transparent 100%);
-}
-
-/* Promień skanu: pionowy pas światła sunie w poziomie (16 s), potem pauza. OSOBNA warstwa poza
-   maską tła i tylko górne 1400 px — mała tekstura, sam transform (zero repaintów, zero canvasa). */
-.sklepag-tlo-skan {
-	position: absolute;
-	top: 0;
-	height: min(1400px, 100%);
-	left: 0;
-	z-index: 0 !important;
-	pointer-events: none;
-	width: 34%;
-	background: linear-gradient(90deg, transparent 0%, rgba(191, 255, 56, 0.035) 40%, rgba(191, 255, 56, 0.075) 50%, rgba(191, 255, 56, 0.035) 60%, transparent 100%);
-	transform: translateX(-110%);
-	animation: sklepag-skan 16s cubic-bezier(0.45, 0, 0.55, 1) infinite;
-}
-
-@keyframes sklepag-skan {
-	0% { transform: translateX(-110%); }
-	70%, 100% { transform: translateX(330%); }
+	/* Łagodnie gaśnie ku dołowi, SYMETRYCZNIE i nigdy do zera — na szerokim ekranie lewa
+	   strona była gołą czernią (przegląd na żywo 25.08: „po lewej nie ma tła i siatki"). */
+	-webkit-mask-image: radial-gradient(160% 120% at 50% 18%, #000 38%, rgba(0, 0, 0, 0.5) 72%, rgba(0, 0, 0, 0.22) 100%);
+	mask-image: radial-gradient(160% 120% at 50% 18%, #000 38%, rgba(0, 0, 0, 0.5) 72%, rgba(0, 0, 0, 0.22) 100%);
 }
 
 /* Pingi: sygnały łapanych wiadomości — POZA maską, tylko opacity + transform (kompozytor). */
@@ -1862,20 +1848,89 @@ a.sklepag-kup {
 	100% { opacity: 0; transform: scale(4.2); }
 }
 
-.sklepag-pingi i:nth-child(1) { left: 9%;  top: 6%;  animation-delay: -1s; }
-.sklepag-pingi i:nth-child(2) { left: 63%; top: 4%;  animation-delay: -3.4s; }
-.sklepag-pingi i:nth-child(3) { left: 88%; top: 12%; animation-delay: -5.2s; }
-.sklepag-pingi i:nth-child(4) { left: 31%; top: 23%; animation-delay: -6.8s; }
-.sklepag-pingi i:nth-child(5) { left: 74%; top: 31%; animation-delay: -2.3s; }
-.sklepag-pingi i:nth-child(6) { left: 14%; top: 44%; animation-delay: -7.9s; }
-.sklepag-pingi i:nth-child(7) { left: 52%; top: 58%; animation-delay: -4.5s; }
-.sklepag-pingi i:nth-child(8) { left: 83%; top: 69%; animation-delay: -0.4s; }
-.sklepag-pingi i:nth-child(9) { left: 27%; top: 81%; animation-delay: -6s; }
+.sklepag-pingi i:nth-child(1) { left: 14rem; top: 7rem;  animation-delay: -1s; }
+.sklepag-pingi i:nth-child(2) { left: 63rem; top: 14rem; animation-delay: -3.4s; }
+.sklepag-pingi i:nth-child(3) { left: 84rem; top: 7rem;  animation-delay: -5.2s; }
+.sklepag-pingi i:nth-child(4) { left: 28rem; top: 35rem; animation-delay: -6.8s; }
+.sklepag-pingi i:nth-child(5) { left: 70rem; top: 42rem; animation-delay: -2.3s; }
+.sklepag-pingi i:nth-child(6) { left: 7rem;  top: 63rem; animation-delay: -7.9s; }
+.sklepag-pingi i:nth-child(7) { left: 49rem; top: 77rem; animation-delay: -4.5s; }
+.sklepag-pingi i:nth-child(8) { left: 77rem; top: 98rem; animation-delay: -0.4s; }
+.sklepag-pingi i:nth-child(9) { left: 21rem; top: 112rem; animation-delay: -6s; }
+
+/* Telefon: siatka ma inny moduł (4.5rem), pingi by nie trafiały w węzły — wyłączone. */
+@media (max-width: 48rem) {
+	.sklepag-pingi {
+		display: none;
+	}
+}
 
 /* Baner końcowy przepuszcza siatkę i skan (sędzia r3: pusta prawa połowa) — ta sama materia
    co reszta tła, plus własna cicha poświata po prawej. */
 .sklepag-final--baner {
 	background: rgba(16, 17, 22, 0.72);
+	display: grid;
+	grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+	gap: clamp(1.5rem, 4vw, 3rem);
+	align-items: center;
+}
+
+.sklepag-final--baner .sklepag-final-tresc {
+	max-width: none;
+}
+
+.sklepag-final-duet {
+	position: relative;
+	z-index: 1;
+	justify-self: end;
+	width: min(100%, 30rem);
+}
+
+.sklepag-final-duet svg {
+	display: block;
+	width: 100%;
+	height: auto;
+}
+
+.sklepag-final-duet-podpis {
+	margin: 0.4rem 0 0;
+	text-align: center;
+	font-size: 0.72rem;
+}
+
+/* Życie duetu: dymek i koperta unoszą się naprzemiennie, oczy mrugają (gaśnie przy reduced-motion). */
+.sklepag-duet-unos {
+	animation: sklepag-unos 4.2s ease-in-out infinite;
+}
+
+.sklepag-duet-unos--b {
+	animation-delay: -2.1s;
+}
+
+@keyframes sklepag-unos {
+	0%, 100% { transform: translateY(0); }
+	50% { transform: translateY(-7px); }
+}
+
+.sklepag-duet-oko {
+	transform-box: fill-box;
+	transform-origin: center;
+	animation: sklepag-mrug 5.2s ease-in-out infinite;
+}
+
+.sklepag-duet-oko--b {
+	animation-delay: -2.6s;
+}
+
+@media (max-width: 56rem) {
+	.sklepag-final--baner {
+		grid-template-columns: 1fr;
+	}
+
+	.sklepag-final-duet {
+		justify-self: start;
+		width: min(100%, 22rem);
+	}
 }
 
 /* Finał: przyciski jako wariant z obrysem — pełna limonka zostaje dla „Zobacz szczegóły" na
