@@ -56,9 +56,15 @@ function sklepag_obsluz_resend() {
 	$teraz = current_time( 'mysql' );
 	$link  = admin_url( 'admin-post.php' ) . '?action=sklepag_pobierz&z=' . (int) $zam->id . '&t=' . $token;
 
+	// Link do opinii jak w wysyłce automatycznej (D32): zalążek odświeża token
+	// w stanie 'zalazek', a dla opinii już przysłanej zwraca '' — mail idzie
+	// wtedy bez akapitu oceny. Bez tego resend gubił kupującemu drogę do opinii.
+	$token_op = sklepag_opinia_zalazek( (int) $zam->id, (int) $zam->produkt_id );
+	$link_op  = '' !== $token_op ? admin_url( 'admin-post.php' ) . '?action=sklepag_ocen&z=' . (int) $zam->id . '&t=' . $token_op : '';
+
 	$produkt_snapshot        = new stdClass();
 	$produkt_snapshot->nazwa = $zam->produkt_nazwa_kupiona;
-	$tresc                   = sklepag_zbuduj_mail( $produkt_snapshot, $zam, $link );
+	$tresc                   = sklepag_zbuduj_mail( $produkt_snapshot, $zam, $link, $link_op );
 
 	$wpdb->query(
 		$wpdb->prepare(

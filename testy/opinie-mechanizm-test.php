@@ -138,6 +138,18 @@ sprawdz(
 	)
 );
 
+echo "\n=== C2. Akapit OCEN w mailu — zakup i RESEND uzywaja tej samej pary funkcji ===\n";
+$prod_obj = (object) array( 'nazwa' => 'TEST mechanizmu opinii' );
+$zam_obj  = (object) array(
+	'kwota_grosze' => 100,
+	'waluta'       => 'PLN',
+);
+$mail_z   = sklepag_zbuduj_mail( $prod_obj, $zam_obj, 'LINK-POBRANIA', 'LINK-OPINII-XYZ' );
+sprawdz( 'mail z linkiem opinii MA akapit OCEN SWOJ ZAKUP i link', false !== strpos( $mail_z, 'OCEŃ SWÓJ ZAKUP' ) && false !== strpos( $mail_z, 'LINK-OPINII-XYZ' ) );
+$mail_bez = sklepag_zbuduj_mail( $prod_obj, $zam_obj, 'LINK-POBRANIA' );
+sprawdz( 'mail bez linku (opinia juz przyslana) NIE MA akapitu OCEN', false === strpos( $mail_bez, 'OCEŃ SWÓJ ZAKUP' ) );
+sprawdz( 'zalazek po przyslanej opinii zwraca pusty string (resend nie wskrzesza linku)', '' === sklepag_opinia_zalazek( $zam1, $prod_id ) );
+
 echo "\n=== D. Moderacja i render z bazy ===\n";
 sprawdz( 'przed moderacja: zero opinii na stronie', array() === sklepag_opinie_z_bazy( $slug ) );
 sprawdz( 'przyjmij dziala', true === sklepag_opinia_moderuj( (int) $wiersz->id, 'przyjmij' ) );
