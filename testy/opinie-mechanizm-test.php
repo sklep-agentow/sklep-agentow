@@ -257,7 +257,7 @@ sklepag_opinia_zapisz(
 $wiersz_g = $wpdb->get_row( $wpdb->prepare( "SELECT id FROM {$to} WHERE zamowienie_id = %d", $zam3 ) );
 sklepag_opinia_moderuj( (int) $wiersz_g->id, 'przyjmij' );
 $strona_g = sklepag_render_produkt( $slug );
-sprawdz( 'strona GENERYCZNA: sekcja opinii + plakietka + imie (WAZNA z recenzji)', false !== strpos( $strona_g, '[ OPINIE KLIENTÓW ]' ) && false !== strpos( $strona_g, 'ZWERYFIKOWANY ZAKUP' ) && false !== strpos( $strona_g, 'Generyczna Ewa' ) );
+sprawdz( 'strona GENERYCZNA: sekcja opinii + plakietka + imie (WAZNA z recenzji)', false !== strpos( $strona_g, 'OPINIE KLIENTÓW ]' ) /* etykiety sekcji sa NUMEROWANE od rundy stron (#179): `[ NN · OPINIE KLIENTÓW ]` */ && false !== strpos( $strona_g, 'ZWERYFIKOWANY ZAKUP' ) && false !== strpos( $strona_g, 'Generyczna Ewa' ) );
 
 $chat_id = (int) $wpdb->get_var( "SELECT id FROM {$tp} WHERE slug = 'chatbot-live'" );
 sprawdz( 'warunek testu: stack ma produkt chatbot-live', $chat_id > 0 );

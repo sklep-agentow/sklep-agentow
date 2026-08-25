@@ -82,7 +82,11 @@ function sklepag_seo_head() {
 		// listy 92 z tego powodu — audyt 25.08). Opis = lead hero listy + nazwy produktów (istniejące,
 		// zatwierdzone treści), okładka sklepu do OG/Twitter.
 		if ( is_page( (int) get_option( 'sklepag_strona_sklep' ) ) ) {
-			$opis_listy = 'Gotowe wtyczki-boty dla Twojej firmy: ChatBot LIVE i Segregator maila. Instalujesz jak każdą wtyczkę WordPressa — działają od pierwszej minuty.';
+			global $wpdb;
+			// Jedno źródło leadu (sklepag_lead_listy) + nazwy AKTYWNYCH produktów z bazy — nic na sztywno.
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery -- własna tabela wtyczki, nazwa z prefiksu WP.
+			$nazwy      = $wpdb->get_col( $wpdb->prepare( "SELECT nazwa FROM {$wpdb->prefix}sklepag_produkty WHERE aktywny = %d ORDER BY nazwa", 1 ) );
+			$opis_listy = sklepag_lead_listy() . ( $nazwy ? ' W sprzedaży: ' . implode( ', ', array_map( 'strval', $nazwy ) ) . '.' : '' );
 			$okladka    = sklepag_okladka_url( 'sklep' );
 			echo '<meta name="description" content="' . esc_attr( $opis_listy ) . '">' . "\n";
 			echo '<meta property="og:type" content="website">' . "\n";

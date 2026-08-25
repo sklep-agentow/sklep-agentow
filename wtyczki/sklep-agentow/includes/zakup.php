@@ -265,7 +265,9 @@ function sklepag_domknij_zakup( $sesja ) {
 			$kwota,
 			$waluta,
 			SKLEPAG_ZGODA_TRESC,
-			isset( $sesja['metadata']['zgoda_czas'] ) ? $sesja['metadata']['zgoda_czas'] : $teraz,
+			// Jedna baza czasu zgody = GMT (jak ścieżka główna w metadanych Stripe); mail i panel
+			// przeliczają na czas lokalny. Awaryjnie (brak metadanych) też GMT, nie czas lokalny.
+			isset( $sesja['metadata']['zgoda_czas'] ) ? $sesja['metadata']['zgoda_czas'] : current_time( 'mysql', true ),
 			SKLEPAG_LIMIT_POBRAN,
 			$teraz,
 			$teraz

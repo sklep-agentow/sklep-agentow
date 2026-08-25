@@ -131,6 +131,14 @@ function sklepag_baner_testowy() {
 }
 
 /**
+ * Lead hero listy — JEDNO źródło dla strony i dla meta description listy (front-seo.php);
+ * dwa egzemplarze tego zdania rozjechałyby się po cichu.
+ */
+function sklepag_lead_listy() {
+	return 'Gotowe wtyczki-boty dla Twojej firmy. Instalujesz jak każdą wtyczkę WordPressa — działają od pierwszej minuty.';
+}
+
+/**
  * Duet maskotek (te same kreski co ilustracje kart) — wizual banera końcowego listy
  * i strony produktu: baner ma parę tekst + wizual jak hero i karty. aria-hidden.
  *
@@ -235,7 +243,7 @@ function sklepag_shortcode_sklep() {
 	$html .= '<header class="sklepag-hero">';
 	$html .= '<p class="sklepag-mono-etykieta">[ SKLEP ]</p>';
 	$html .= '<h1 class="sklepag-hero-tytul"><span class="sklepag-akcent">Boty</span>, które robią robotę.</h1>';
-	$html .= '<p class="sklepag-lead">Gotowe wtyczki-boty dla Twojej firmy. Instalujesz jak każdą wtyczkę WordPressa — działają od pierwszej minuty.</p>';
+	$html .= '<p class="sklepag-lead">' . esc_html( sklepag_lead_listy() ) . '</p>';
 	$html .= sklepag_baner_testowy();
 	$html .= '<p class="sklepag-demo-cta"><span class="sklepag-akcent">▶</span> Zielony bąbelek w rogu strony to ChatBot LIVE — porozmawiaj z nim, zanim kupisz.</p>';
 	// Pasek konkretów: każda pozycja ma pokrycie w kodzie/pomiarze (dok=kod):

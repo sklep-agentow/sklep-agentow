@@ -392,6 +392,16 @@ fi
 
 echo
 
+echo "=== Y. readme.txt w standardzie WordPressa (recenzja #181: test wcale go nie sprawdzal) ==="
+WER_KOD=$(grep -oP '(?<=^ \* Version: ).*' $W/chatbot-live.php)   # wersja Z KODU, nie na sztywno (klasa 11)
+spr "readme.txt istnieje"            "1" "test -f $W/readme.txt && echo 1 || echo 0"
+spr "naglowek === Nazwa ==="         "1" "head -1 $W/readme.txt | grep -c '^=== ChatBot LIVE ===$'"
+spr "Stable tag == wersja wtyczki"   "1" "test \"\$(grep -oP '(?<=^Stable tag: ).*' $W/readme.txt)\" = \"$WER_KOD\" && echo 1 || echo 0"
+spr "Requires at least == naglowek wtyczki" "1" "test \"\$(grep -oP '(?<=^Requires at least: ).*' $W/readme.txt)\" = \"\$(grep -oP '(?<=^ \\* Requires at least: ).*' $W/chatbot-live.php)\" && echo 1 || echo 0"
+spr "Requires PHP == naglowek wtyczki"      "1" "test \"\$(grep -oP '(?<=^Requires PHP: ).*' $W/readme.txt)\" = \"\$(grep -oP '(?<=^ \\* Requires PHP: ).*' $W/chatbot-live.php)\" && echo 1 || echo 0"
+spr "readme.txt ma changelog biezacej wersji" "1" "grep -c '^= $WER_KOD =$' $W/readme.txt"
+spr "CHANGELOG.md ma wpis biezacej wersji"    "1" "grep -c '^## \\[$WER_KOD\\]' $W/CHANGELOG.md"
+
 echo "=== Z. Zrzuty z INSTRUKCJI: plik istnieje i jedzie w paczce (uwaga D8 recenzji #169) ==="
 for obrazek in $(grep -oE '\]\(zrzuty/[a-z0-9-]+\.png\)' wtyczki/chatbot-live/INSTRUKCJA.md | tr -d ']()'); do
   spr "plik $obrazek istnieje" "1" "test -f wtyczki/chatbot-live/$obrazek && echo 1 || echo 0"

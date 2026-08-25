@@ -5,8 +5,8 @@ Strony: `/sklep/`, `/sklep/produkt/chatbot-live/`, `/sklep/produkt/segregator-ma
 ≥ 95 w czterech kategoriach + dostępność, bezpieczeństwo, wymogi unijne. Audyt dzielony po PYTANIU
 (nie po terenie): wydajność · dostępność · dobre praktyki · SEO · bezpieczeństwo · prawo UE · maile.
 Przyrządy: Lighthouse 12.8.2 (Chromium Playwrighta, desktop preset + mobile), axe-core 4.x (WCAG 2.x
-A/AA + best-practice, po wolnym scrollu), Playwright, `curl -I`. Skrypty: `lighthouse-3-podstrony.sh`,
-`axe-3-podstrony.js` (warsztat; do przeniesienia do `testy/` przy K7).
+A/AA + best-practice, po wolnym scrollu), Playwright, `curl -I`. Skrypty w repo: `testy/e2e/lighthouse-3-podstrony.sh`,
+`testy/e2e/axe-3-podstrony.js` (pomiar bazowy zrobiono ich pierwowzorami z warsztatu; wersje w repo dały ten sam wynik).
 
 ## 1. Lighthouse — 4 kategorie (desktop / telefon)
 
