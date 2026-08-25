@@ -6,7 +6,7 @@ odinstalowana albo gdy WP-Cron nie biegnie — i co zostaje w systemie, gdy nas 
 
 ## Materiał (czytaj w tej kolejności)
 1. `audyt/sklep/material/02-fakty-srodowiska.md` — dwa stosy (czysty `wordpress:6.7-php8.1-apache` :8891 jest TWÓJ), paczki
-   starych wersji w `wymiana/k7-stare-wersje/` (0.2.0 = schemat 3, 0.5.0 = 4, 0.9.8 = 5), ⛔ „STAN ZASTANY — nie zgłaszaj”.
+   starych wersji w `/root/praca/zlecenia/wymiana/k7-stare-wersje/` (POZA repo; odtwarzanie: `bash narzedzia-qa/k7-stare-wersje.sh`) (0.2.0 = schemat 3, 0.5.0 = 4, 0.9.8 = 5), ⛔ „STAN ZASTANY — nie zgłaszaj”.
 2. `03-zalozenia.md` — D1–D33 (m.in. przełącznik `sklepag_usun_dane_przy_odinstalowaniu` domyślnie WYŁĄCZONY = dane
    zostają ŚWIADOMIE; sekrety kasowane ZAWSZE).
 3. `05-reguly-branzy.md` — retencja 90 dni (dziennik, zdarzenia), WP-Cron wymaga ruchu, `DISABLE_WP_CRON` + cron systemowy.
