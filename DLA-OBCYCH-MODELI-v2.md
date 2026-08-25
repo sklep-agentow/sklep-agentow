@@ -161,7 +161,9 @@ CodeQL/Dependabot w CI.
 
 Zgoda na natychmiastowe dostarczenie zapisywana per zamówienie (treść + czas) · regulamin
 i polityka prywatności jako SZABLONY wypełniane danymi sprzedawcy z config (paczka nie
-publikuje cudzego regulaminu; C18) · minimalizacja: tylko email · pseudonimizacja na żądanie ·
+publikuje cudzego regulaminu; C18) · minimalizacja: przy zakupie tylko email, przy
+dobrowolnej opinii imię i treść za zgodą na publikację (D32) · pseudonimizacja na żądanie
+(obejmuje też opinię: imię, token, publikacja) ·
 retencja logów 90 dni · polityka wymienia operatora płatności i dostawcę maili jako podmioty
 przetwarzające · **bez przecen → Omnibus-ceny nie dotyczy (jawnie)** · opinie wyłącznie
 zweryfikowanych kupujących → **Omnibus-opinie DOTYCZY i jest spełniony** (weryfikacja

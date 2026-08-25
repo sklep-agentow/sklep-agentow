@@ -713,6 +713,14 @@ function sklepag_render_produkt( $slug ) {
 		$html .= '<p class="sklepag-sekcja-tekst">' . nl2br( esc_html( $p->opis_pelny ) ) . '</p></section>';
 	}
 
+	if ( ! $t ) {
+		// OPINIE dla produktu SPOZA dwójki (D32): zalążek powstaje przy każdym zakupie,
+		// więc przyjęte opinie muszą się pokazać także na stronie generycznej. Dwójka
+		// z bogatą treścią ma tę sekcję wyżej, w ustalonym porządku sekcji strony —
+		// dlatego dwa wywołania zamiast wspólnego (kolejność sekcji to decyzja projektu).
+		$html .= sklepag_render_opinie( sklepag_opinie_z_bazy( $slug ) );
+	}
+
 	// CENA + ZAKUP.
 	$html .= '<section class="sklepag-sekcja sklepag-sekcja-zakup"><p class="sklepag-mono-etykieta">[ CENA ]</p>';
 	$html .= $cena;

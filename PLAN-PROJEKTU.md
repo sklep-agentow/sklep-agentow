@@ -246,13 +246,16 @@ testy przelotu; **manifest bramek rośnie TYLKO osobnym PR**.
 Zgoda na natychmiastowe dostarczenie treści cyfrowej zapisywana per zamówienie
 (treść + czas) · strony „Regulamin" i „Polityka prywatności" tworzone przy aktywacji
 jako SZABLONY z polami sprzedawcy do wypełnienia (paczka nie publikuje cudzego
-regulaminu) · minimalizacja: od kupującego tylko email · anonimizacja na żądanie ·
-retencja logów 90 dni · polityka wymienia Stripe i mechanizm maili jako
+regulaminu) · minimalizacja: przy ZAKUPIE od kupującego tylko email; przy DOBROWOLNEJ
+opinii (D32) imię i treść — za jawną zgodą na publikację (SKLEPAG_OPINIA_ZGODA_TRESC) ·
+anonimizacja na żądanie obejmuje też opinię (imię znika, token umiera, publikacja
+schodzi — sklepag_anonimizuj_opinie) · retencja logów 90 dni · polityka wymienia Stripe i mechanizm maili jako
 przetwarzających; instrukkcja właściciela: akceptacja DPA u operatorów · bez przecen
 → Omnibus-ceny jawnie nie dotyczy · opinie zweryfikowanych kupujących → Omnibus-opinie
 DOTYCZY i jest spełniony (weryfikacja zakupu przed publikacją + nota przy sekcji;
 bez aggregateRating) · WCAG-lite (EAA) · przed oddaniem: bramka
-`bezpieczenstwo-danych-klienta` (dane osobowe = mail kupujących + dziennik IP).
+`bezpieczenstwo-danych-klienta` (dane osobowe = mail kupujących + dziennik IP
++ imię i treść dobrowolnej opinii, publikowane za zgodą — D32).
 
 ## 9. PLAN PRACY v3 (harmonogram; POMIAR czasu per krok w audyt/POMIAR-CZASU.md)
 

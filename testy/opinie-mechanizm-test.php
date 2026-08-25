@@ -166,10 +166,64 @@ sprawdz(
 	)
 );
 
-echo "\n=== F. SPRZATANIE po tescie ===\n";
-$wpdb->query( $wpdb->prepare( "DELETE FROM {$to} WHERE zamowienie_id IN (%d, %d)", $zam1, $zam2 ) );
+echo "\n=== G. Render CALEJ strony produktu (sklepag_render_produkt), nie samej funkcji ===\n";
+$zam3 = 9900011; // produkt generyczny (spoza dwojki)
+$zam4 = 9900012; // produkt z dwojki (chatbot-live)
+$zam5 = 9900013; // zalazek do anonimizacji
+$wpdb->query( $wpdb->prepare( "UPDATE {$tp} SET aktywny = 1 WHERE id = %d", $prod_id ) ); // render wymaga aktywnego produktu
+$token4 = sklepag_opinia_zalazek( $zam3, $prod_id );
+sklepag_opinia_zapisz(
+	$zam3,
+	$token4,
+	array(
+		'imie'     => 'Generyczna Ewa',
+		'gwiazdki' => 5,
+		'tresc'    => 'Dziala u mnie od pierwszego dnia.',
+		'zgoda'    => 1,
+	)
+);
+$wiersz_g = $wpdb->get_row( $wpdb->prepare( "SELECT id FROM {$to} WHERE zamowienie_id = %d", $zam3 ) );
+sklepag_opinia_moderuj( (int) $wiersz_g->id, 'przyjmij' );
+$strona_g = sklepag_render_produkt( $slug );
+sprawdz( 'strona GENERYCZNA: sekcja opinii + plakietka + imie (WAZNA z recenzji)', false !== strpos( $strona_g, '[ OPINIE KLIENTÓW ]' ) && false !== strpos( $strona_g, 'ZWERYFIKOWANY ZAKUP' ) && false !== strpos( $strona_g, 'Generyczna Ewa' ) );
+
+$chat_id = (int) $wpdb->get_var( "SELECT id FROM {$tp} WHERE slug = 'chatbot-live'" );
+sprawdz( 'warunek testu: stack ma produkt chatbot-live', $chat_id > 0 );
+$token5 = sklepag_opinia_zalazek( $zam4, $chat_id );
+sklepag_opinia_zapisz(
+	$zam4,
+	$token5,
+	array(
+		'imie'     => 'Dwojkowa Ola',
+		'gwiazdki' => 4,
+		'tresc'    => 'Test pelnego ukladu strony.',
+		'zgoda'    => 1,
+	)
+);
+$wiersz_c = $wpdb->get_row( $wpdb->prepare( "SELECT id FROM {$to} WHERE zamowienie_id = %d", $zam4 ) );
+sklepag_opinia_moderuj( (int) $wiersz_c->id, 'przyjmij' );
+$strona_c = sklepag_render_produkt( 'chatbot-live' );
+sprawdz( 'strona DWOJKI: opinia z bazy renderuje sie w pelnym ukladzie sekcji', false !== strpos( $strona_c, 'Dwojkowa Ola' ) && false !== strpos( $strona_c, 'ZWERYFIKOWANY ZAKUP' ) );
+$wpdb->query( $wpdb->prepare( "DELETE FROM {$to} WHERE zamowienie_id = %d", $zam4 ) ); // od razu — zywe demo nie moze pokazac wpisu testowego
+sprawdz( 'wpis testowy dwojki sprzatniety OD RAZU', 0 === (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$to} WHERE zamowienie_id = %d", $zam4 ) ) );
+
+echo "\n=== H. Anonimizacja RODO (KRYTYCZNA z recenzji): imie i token umieraja, publikacja schodzi ===\n";
+sprawdz( 'anonimizacja zwraca true przy zmianie', true === sklepag_anonimizuj_opinie( $zam3 ) );
+$w_po = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$to} WHERE zamowienie_id = %d", $zam3 ) );
+sprawdz( 'imie puste, token martwy, status odrzucona', $w_po && '' === (string) $w_po->imie && '' === (string) $w_po->token_hash && null === $w_po->token_wygasa && 'odrzucona' === $w_po->status );
+$strona_po = sklepag_render_produkt( $slug );
+sprawdz( 'zanonimizowana opinia ZNIKNELA ze strony (a sekcja z opinia zam1 zostala)', false === strpos( $strona_po, 'Generyczna Ewa' ) && false !== strpos( $strona_po, 'Test Ola' ) );
+$w_kontrola = $wpdb->get_row( $wpdb->prepare( "SELECT imie, status FROM {$to} WHERE zamowienie_id = %d", $zam1 ) );
+sprawdz( 'przypadek KONTROLNY: opinia innego zamowienia NIETKNIETA', $w_kontrola && 'Test Ola' === $w_kontrola->imie && 'przyjeta' === $w_kontrola->status );
+$token6 = sklepag_opinia_zalazek( $zam5, $prod_id );
+sklepag_anonimizuj_opinie( $zam5 );
+$w_zal = $wpdb->get_row( $wpdb->prepare( "SELECT status, token_hash FROM {$to} WHERE zamowienie_id = %d", $zam5 ) );
+sprawdz( 'zalazek po anonimizacji: zostaje zalazkiem, ale token martwy', $w_zal && 'zalazek' === $w_zal->status && '' === (string) $w_zal->token_hash && null === sklepag_opinia_po_tokenie( $zam5, $token6 ) );
+
+echo "\n=== I. SPRZATANIE po tescie ===\n";
+$wpdb->query( $wpdb->prepare( "DELETE FROM {$to} WHERE zamowienie_id IN (%d, %d, %d, %d, %d)", $zam1, $zam2, $zam3, $zam4, $zam5 ) );
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$tp} WHERE id = %d", $prod_id ) );
-sprawdz( 'zero wierszy testowych w opiniach', 0 === (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$to} WHERE zamowienie_id IN (%d, %d)", $zam1, $zam2 ) ) );
+sprawdz( 'zero wierszy testowych w opiniach', 0 === (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$to} WHERE zamowienie_id IN (%d, %d, %d, %d, %d)", $zam1, $zam2, $zam3, $zam4, $zam5 ) ) );
 sprawdz( 'produkt testowy skasowany', 0 === (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$tp} WHERE id = %d", $prod_id ) ) );
 
 echo "\n";

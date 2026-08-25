@@ -133,7 +133,11 @@ function sklepag_obsluz_anonimizacje() {
 	}
 	// phpcs:enable
 
-	sklepag_zdarzenie( (int) $zam->id, 'anonimizacja', 'kupujący zanonimizowany na żądanie (RODO); token pobrania unieważniony' );
+	// Symetria RODO dla mechanizmu opinii (D32): imię i token opinii umierają razem
+	// z tokenem pobrania, publikacja schodzi ze strony — szczegóły w sklepag_anonimizuj_opinie().
+	sklepag_anonimizuj_opinie( (int) $zam->id );
+
+	sklepag_zdarzenie( (int) $zam->id, 'anonimizacja', 'kupujący zanonimizowany na żądanie (RODO); token pobrania i opinia unieważnione' );
 
 	wp_safe_redirect( add_query_arg( 'sklepag_anonimizacja', 'ok', sklepag_url_zamowienia( (int) $zam->id ) ) );
 	exit;

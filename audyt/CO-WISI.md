@@ -1,5 +1,11 @@
 # CO-WISI — rzeczy oddane komuś / bez strażnika (zasada: oddajesz ⇒ wiersz, wraca ⇒ kasujesz)
 
+## 🔧 PRZYRZĄDY (z recenzji #177, DROBNA, 25.08)
+- **`stos.sh` nie widzi ŻADNEJ tabeli sklepu** — okno odczytu recenzenta nie ma operacji
+  zaglądania do `wp_sklepag_*`, więc recenzent nie może sam obejrzeć np. wierszy opinii
+  (dostał odmowę przy #177 i oparł się na przebiegu testu). Rozszerzyć okno o bezpieczną
+  operację odczytu tabel sklepu (SELECT-only, bez danych osobowych w wyjściu — imię maskować).
+
 ## 📦 SKLEP — PRZED WYDANIEM (z recenzji #176, DROBNA 6, 25.08)
 - **Wtyczka sklep-agentow nie ma `readme.txt` ani `CHANGELOG.md`, a `boty/paczki/` nie ma
   paczki sklepu w żadnej wersji** — `paczka-zgodnosc.sh sklep-agentow` świeci 4 rozjazdami

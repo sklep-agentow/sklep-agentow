@@ -182,34 +182,70 @@ function sklepag_opinia_moderuj( $opinia_id, $akcja ) {
 }
 
 /**
+ * Anonimizacja RODO dla opinii zamówienia — symetria z „anonimizuj kupującego":
+ * imię znika, token opinii umiera (jak token pobrania: koniec relacji), a opinia
+ * opublikowana lub czekająca SCHODZI ze strony (status 'odrzucona') — publikacja
+ * stała na zgodzie i relacji, których już nie ma. Treść zostaje w bazie jako ślad
+ * moderacyjny bez atrybucji (render pokazuje wyłącznie 'przyjeta', więc nie wyjdzie).
+ * Zalążek zostaje zalążkiem — martwy token czyni go bezużytecznym.
+ *
+ * @param int $zamowienie_id Id zamówienia.
+ * @return bool Czy jakiś wiersz się zmienił.
+ */
+function sklepag_anonimizuj_opinie( $zamowienie_id ) {
+	global $wpdb;
+	$t     = $wpdb->prefix . 'sklepag_opinie';
+	$teraz = current_time( 'mysql' );
+	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- własna tabela; akcja RODO musi trafić w świeży stan.
+	$ok = $wpdb->query(
+		$wpdb->prepare(
+			"UPDATE {$t} SET imie='', token_hash='', token_wygasa=NULL,
+			 status = IF( status = 'zalazek', 'zalazek', 'odrzucona' ), zmieniono=%s
+			 WHERE zamowienie_id=%d",
+			$teraz,
+			$zamowienie_id
+		)
+	);
+	// phpcs:enable
+	if ( $ok && function_exists( 'sklepag_zdarzenie' ) ) {
+		sklepag_zdarzenie( $zamowienie_id, 'opinia_anonimizacja', 'imię i token opinii usunięte, publikacja zdjęta' );
+	}
+	return (bool) $ok;
+}
+
+/**
  * PRZYJĘTE opinie produktu w kluczach renderu (sklepag_render_opinie).
  *
  * @param string $slug Slug produktu.
- * @return array Lista wpisów (tresc/imie/gwiazdki/tytul/data), najnowsze pierwsze.
+ * @return array Lista wpisów (tresc/imie/gwiazdki/tytul/data), najnowsze WG DATY
+ *               PRZYSŁANIA (zgoda_czas) pierwsze — moderacja nie przestawia kolejności.
  */
 function sklepag_opinie_z_bazy( $slug ) {
 	global $wpdb;
 	$to = $wpdb->prefix . 'sklepag_opinie';
 	$tp = $wpdb->prefix . 'sklepag_produkty';
+	// Data i kolejność z zgoda_czas (chwila PRZYSŁANIA opinii) — zmieniono rusza się
+	// przy każdej moderacji, więc cofnięta pomyłka wskakiwałaby na górę z dzisiejszą datą.
 	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- jw.; widok musi być świeży po moderacji.
 	$wiersze = $wpdb->get_results(
 		$wpdb->prepare(
-			"SELECT o.imie, o.gwiazdki, o.tytul, o.tresc, o.zmieniono
+			"SELECT o.imie, o.gwiazdki, o.tytul, o.tresc, o.zgoda_czas, o.zmieniono
 			 FROM {$to} o JOIN {$tp} p ON p.id = o.produkt_id
 			 WHERE p.slug = %s AND o.status = 'przyjeta'
-			 ORDER BY o.zmieniono DESC LIMIT 20",
+			 ORDER BY COALESCE(o.zgoda_czas, o.zmieniono) DESC LIMIT 20",
 			$slug
 		)
 	);
 	// phpcs:enable
 	$lista = array();
 	foreach ( (array) $wiersze as $w ) {
+		$kiedy   = ! empty( $w->zgoda_czas ) ? (string) $w->zgoda_czas : (string) $w->zmieniono;
 		$lista[] = array(
 			'tresc'    => (string) $w->tresc,
 			'imie'     => (string) $w->imie,
 			'gwiazdki' => (int) $w->gwiazdki,
 			'tytul'    => (string) $w->tytul,
-			'data'     => date_i18n( 'd.m.Y', strtotime( (string) $w->zmieniono ) ),
+			'data'     => date_i18n( 'd.m.Y', strtotime( $kiedy ) ),
 		);
 	}
 	return $lista;

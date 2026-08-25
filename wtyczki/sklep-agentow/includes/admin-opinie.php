@@ -44,10 +44,13 @@ function sklepag_admin_opinie() {
 
 	echo '<div class="wrap"><h1>Opinie</h1>';
 
-	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- odczyt komunikatu z redirectu, zero zmiany stanu.
+	// phpcs:disable WordPress.Security.NonceVerification.Recommended -- odczyt komunikatu z redirectu, zero zmiany stanu.
 	if ( isset( $_GET['sklepag_ok'] ) ) {
 		echo '<div class="notice notice-success is-dismissible"><p>Zapisane.</p></div>';
+	} elseif ( isset( $_GET['sklepag_nic'] ) ) {
+		echo '<div class="notice notice-warning is-dismissible"><p>Nic się nie zmieniło — wiersz był już w tym stanie (podwójne kliknięcie?) albo nie istnieje.</p></div>';
 	}
+	// phpcs:enable
 
 	$baza = admin_url( 'admin.php?page=sklepag-opinie' );
 	echo '<ul class="subsubsub">';
@@ -112,13 +115,15 @@ function sklepag_obsluz_moderacje_opinii() {
 	$akcja  = isset( $_POST['akcja'] ) ? sanitize_key( $_POST['akcja'] ) : '';
 	$status = isset( $_POST['status_powrotu'] ) ? sanitize_key( $_POST['status_powrotu'] ) : 'oczekuje';
 
-	sklepag_opinia_moderuj( $id, $akcja );
+	$ok = sklepag_opinia_moderuj( $id, $akcja );
 
+	// „Zapisane." tylko gdy wiersz NAPRAWDĘ zmienił stan — podwójne kliknięcie,
+	// nieistniejące id i przegrany wyścig CAS dostają uczciwe ostrzeżenie.
 	wp_safe_redirect(
 		add_query_arg(
 			array(
-				'status'     => $status,
-				'sklepag_ok' => 1,
+				'status'                               => $status,
+				( $ok ? 'sklepag_ok' : 'sklepag_nic' ) => 1,
 			),
 			admin_url( 'admin.php?page=sklepag-opinie' )
 		)
