@@ -305,7 +305,7 @@ function sklepag_domknij_zakup( $sesja ) {
 					"UPDATE {$pz} SET zmieniono=%s WHERE stripe_session_id=%s AND status='mail_w_toku' AND zmieniono < %s",
 					$teraz,
 					$sid,
-					gmdate( 'Y-m-d H:i:s', strtotime( $teraz ) - 300 )
+					gmdate( 'Y-m-d H:i:s', strtotime( $teraz ) )
 				)
 			);
 			if ( ! $odebrane ) {
