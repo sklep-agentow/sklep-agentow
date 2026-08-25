@@ -13,7 +13,8 @@ add_action( 'admin_post_nopriv_sklepag_pobierz', 'sklepag_obsluz_pobranie' );
 add_action( 'admin_post_sklepag_pobierz', 'sklepag_obsluz_pobranie' );
 
 function sklepag_obsluz_pobranie() {
-	if ( ! sklepag_rate_limit( 'pobierz', 30 ) ) {
+	// 20/min: skaner poczty dotyka linku 2–3×, realny kupujący < 5; 30 zostawiało zapas dla botów.
+	if ( ! sklepag_rate_limit( 'pobierz', 20 ) ) {
 		wp_die( 'Za dużo prób. Odczekaj minutę.', 'Sklep Agentów', 429 );
 	}
 
