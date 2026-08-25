@@ -37,8 +37,19 @@ spr "link opinii N dni (SKLEPAG_OPINIA_DNI)"    "$(stala SKLEPAG_OPINIA_DNI)"  "
 spr "cron co N minut == interval/60"            "$(( $(grep -oE "'interval' *=> *[0-9]+" $W/sklep-agentow.php | grep -oE '[0-9]+$') / 60 ))" "grep -oE 'co [0-9]+ minut' $W/readme.txt | head -1 | grep -oE '[0-9]+'"
 spr "retencja dziennika N dni == kod"           "$(grep -oE '[0-9]+ \* DAY_IN_SECONDS' $W/includes/zakup.php | grep -oE '^[0-9]+' | head -1)" "grep -oE 'starsze niż [0-9]+ dni' $W/readme.txt | grep -oE '[0-9]+'"
 
-echo "=== C. Etykiety menu z readme == admin.php ==="
-for e in Pulpit Produkty Opinie Dziennik Ustawienia; do spr "menu '$e' w admin.php" "1" "grep -c \"'$e', 'manage_options'\" $W/includes/admin.php"; spr "menu '$e' w readme" "1" "grep -c \"\\*\\*$e\\*\\*\" $W/readme.txt"; done
+echo "=== C. Etykiety menu: admin.php ⇄ readme, W OBIE STRONY i z licznikiem (recenzja #182 r2 W3) ==="
+# Etykiety bierzemy z KODU (4. argument add_submenu_page), nie z zaszytej listy — nowa pozycja menu bez opisu
+# w readme ma tu paść. Ukryta podstrona zamówienia (sklepag-zamowienie, widok z pulpitu) nie jest pozycją menu;
+# readme opisuje ją jako „widok **Zamówienia**", a nazwa menu **Sklep Agentów** to nie podstrona — oba wyjątki jawne.
+ETYKIETY_KOD=$(sed -n "s/^[[:space:]]*add_submenu_page( 'sklepag', '[^']*', '\([^']*\)', 'manage_options', '\([^']*\)'.*/\2\t\1/p" $W/includes/admin.php | grep -v "^sklepag-zamowienie	" | cut -f2)
+N_KOD=$(printf '%s\n' "$ETYKIETY_KOD" | grep -c .)
+AKAPIT=$(awk '/^\* Panel w kokpicie/{f=1; print; next} f && (/^\* / || /^$/){exit} f{print}' $W/readme.txt)
+POGRUBIONE=$(printf '%s\n' "$AKAPIT" | grep -oE '\*\*[^*]+\*\*' | sed 's/\*\*//g' | grep -vxE 'Sklep Agentów|Zamówienia')
+N_README=$(printf '%s\n' "$POGRUBIONE" | grep -c .)
+while IFS= read -r e; do [ -n "$e" ] && spr "menu '$e' (z kodu) pogrubione w readme" "1" "printf '%s\n' \"\$POGRUBIONE\" | grep -cx \"$e\""; done <<< "$ETYKIETY_KOD"
+while IFS= read -r e; do [ -n "$e" ] && spr "readme '$e' (pogrubione) jest w admin.php" "1" "printf '%s\n' \"\$ETYKIETY_KOD\" | grep -cx \"$e\""; done <<< "$POGRUBIONE"
+spr "liczba pozycji menu: admin.php == readme" "$N_KOD" "echo $N_README"
+spr "pozycji menu w kodzie ≥ 5"               "1" "test $N_KOD -ge 5 && echo 1 || echo 0"
 
 echo "=== D. CHANGELOG.md i DOKUMENTACJA-TECHNICZNA.md ==="
 spr "CHANGELOG: format Keep a Changelog"  "1" "grep -c 'keepachangelog.com' $W/CHANGELOG.md"

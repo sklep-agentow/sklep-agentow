@@ -1,5 +1,5 @@
 #!/bin/bash
-# k7-koniec.sh — KONIEC AUDYTU K7 OGŁASZA SKRYPT, NIE UCZUCIE.                       WERSJA 1.0.0
+# k7-koniec.sh — KONIEC AUDYTU K7 OGŁASZA SKRYPT, NIE UCZUCIE.                       WERSJA 1.2.0
 #
 # PO CO: plan K7 v1 mówił „GO/NO-GO = trzy liczby liczone skryptem”, a skryptu nie było
 # (krytyka r1: nasz krytyk K1, C2 #15, C3 #11). Bez maszyny koniec rozstrzyga pamięć
@@ -38,12 +38,22 @@ FAIL=0
 pass() { printf '  PASS  %s\n' "$1"; }
 fail() { printf '  FAIL  %s\n' "$1"; FAIL=$((FAIL+1)); }
 
-echo "=== K7-KONIEC 1.0.0 — osiem warunków zamknięcia ==="
+echo "=== K7-KONIEC 1.2.0 — osiem warunków zamknięcia ==="
 
-# 1. MAPA: 0 ⬜ i (domyślnie) zamrożona z niezmienioną liczbą celów
-LICZNIK=$(bash narzedzia-qa/mapa-licznik.sh "$MAPA" 2>/dev/null | tail -1)
-NIE=$(printf '%s' "$LICZNIK" | sed -n 's/.*⬜ \([0-9]*\).*/\1/p')
-[ "${NIE:-1}" -eq 0 ] && pass "1a mapa: $LICZNIK" || fail "1a mapa: $LICZNIK (⬜ musi być 0)"
+# 1. MAPA: 0 ⬜ i (domyślnie) zamrożona z niezmienioną liczbą celów.
+#    TYLKO ODCZYT (--tylko-licz): bramka końca nie pisze do tego, co audytuje (recenzja #182 r2 D7).
+#    Nieznany znacznik po „- " = FAIL z listą linii (cel nie może zniknąć z licznika bez śladu).
+LICZNIK_BLAD=$(bash narzedzia-qa/mapa-licznik.sh "$MAPA" --tylko-licz 2>&1 >/dev/null) ; LICZNIK_KOD=$?
+LICZNIK=$(bash narzedzia-qa/mapa-licznik.sh "$MAPA" --tylko-licz 2>/dev/null | tail -1)
+W_PLIKU=$(grep -m1 '^CELE: ' "$MAPA")
+if [ "$LICZNIK_KOD" -ne 0 ]; then
+	fail "1a mapa: nieznany znacznik celu (mapa-licznik EXIT=$LICZNIK_KOD)"; printf '%s\n' "$LICZNIK_BLAD" | sed 's/^/    /'
+elif [ "$W_PLIKU" != "$LICZNIK" ]; then
+	fail "1a mapa: LICZNIK w pliku nieaktualny — jest „$W_PLIKU”, policzone „$LICZNIK” (uruchom mapa-licznik.sh)"
+else
+	NIE=$(printf '%s' "$LICZNIK" | sed -n 's/.*⬜ \([0-9]*\).*/\1/p')
+	[ "${NIE:-1}" -eq 0 ] && pass "1a mapa: $LICZNIK" || fail "1a mapa: $LICZNIK (⬜ musi być 0)"
+fi
 if [ "$WYMAGAJ_ZAMROZENIA_MAPY" -eq 1 ]; then
 	if bash narzedzia-qa/mapa-licznik.sh "$MAPA" --sprawdz-zamrozenie >/dev/null 2>&1 && grep -q '^ZAMROZONA: ' "$MAPA"; then
 		pass "1b mapa zamrożona, liczba celów niezmieniona"
@@ -59,15 +69,18 @@ ROZL=$(git show audyt/mutanty-sklep:audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP.md 2>
 if [ -z "$ROZL" ]; then
 	fail "2 kalibracja: brak audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP.md na gałęzi audyt/mutanty-sklep"
 else
-	# wiersze werdyktów: | L2 | M2 | ... | PASS/FAIL | proby |
+	# wiersze werdyktów: | audytor | mutant | znalazl | falszywy | werdykt | proby |  → po split '|' proby = pole 7
+	# (recenzja #182 r2 W2: $NF czytał PUSTĄ kolumnę za końcowym „|" — warunek był martwy)
 	ILE=$(printf '%s\n' "$ROZL" | grep -cE '^\| L[1-5]|^\| L \|' )
 	ZLE=$(printf '%s\n' "$ROZL" | grep -E '^\| (L[1-5]|L) \|' | grep -vE '\| PASS \|' | wc -l)
-	PROBY_ZLE=$(printf '%s\n' "$ROZL" | grep -E '^\| (L[1-5]|L) \|' | awk -F'|' '{p=$NF; if (p+0>2) n++} END{print n+0}')
+	PROBY_ZLE=$(printf '%s\n' "$ROZL" | grep -E '^\| (L[1-5]|L) \|' | awk -F'|' '{gsub(/ /,"",$7); if ($7+0>2) n++} END{print n+0}')
 	if [ "$ILE" -ge 6 ] && [ "$ZLE" -eq 0 ] && [ "$PROBY_ZLE" -eq 0 ]; then pass "2 kalibracja: $ILE soczewek PASS, proby ≤ 2"; else fail "2 kalibracja: soczewek=$ILE, bez PASS=$ZLE, proby>2=$PROBY_ZLE"; fi
 fi
 
 # 3. REJESTR: 0 KRYTYCZNE/DUŻE otwarte · 0 DO WERYFIKACJI · naprawa_proby ≤ 2 · ZAMKNIETE ma strażnika z dowodem
-WIERSZE=$(grep -E '^\| SK-' "$REJESTR")
+# Potok w komórce markdown to `\|` — dla awk -F'|' to separator (recenzja #184 W6). Zamieniamy na \x01 PRZED splitem,
+# a przy wypisywaniu przywracamy (`tr '\001' '|'`).
+WIERSZE=$(grep -E '^\| SK-' "$REJESTR" | sed 's/\\|/\x01/g')
 OTWARTE=$(printf '%s\n' "$WIERSZE" | awk -F'|' '$5 ~ /KRYTYCZNA|DUŻA/ && $10 !~ /ZAMKNIETE|OBALONE|POZA K7/' | wc -l)
 DOWER=$(printf '%s\n' "$WIERSZE" | awk -F'|' '$10 ~ /DO WERYFIKACJI/' | wc -l)
 PROBY3=$(printf '%s\n' "$WIERSZE" | awk -F'|' '$11+0 > 2' | wc -l)
@@ -76,8 +89,8 @@ while IFS= read -r w; do
 	[ -n "$w" ] || continue
 	st=$(printf '%s' "$w" | awk -F'|' '{gsub(/^ +| +$/,"",$10); print $10}')
 	[ "$st" = "ZAMKNIETE" ] || continue
-	plik=$(printf '%s' "$w" | awk -F'|' '{gsub(/^ +| +$/,"",$12); print $12}')
-	sha=$(printf '%s' "$w" | awk -F'|' '{gsub(/^ +| +$/,"",$13); print $13}')
+	plik=$(printf '%s' "$w" | awk -F'|' '{gsub(/^ +| +$/,"",$12); print $12}' | tr '\001' '|')
+	sha=$(printf '%s' "$w" | awk -F'|' '{gsub(/^ +| +$/,"",$13); print $13}' | tr '\001' '|')
 	if [ -z "$plik" ] || [ "$plik" = "—" ] || [ ! -f "$plik" ] || ! printf '%s' "$sha" | grep -qE '^[0-9a-f]{7,}$'; then BEZ_STRAZNIKA=$((BEZ_STRAZNIKA+1)); fi
 done <<< "$WIERSZE"
 [ "$OTWARTE" -eq 0 ] && pass "3a rejestr: 0 KRYTYCZNE/DUŻE otwartych" || fail "3a rejestr: $OTWARTE KRYTYCZNE/DUŻE otwartych"
@@ -85,13 +98,19 @@ done <<< "$WIERSZE"
 [ "$PROBY3" -eq 0 ] && pass "3c rejestr: naprawa_proby ≤ 2 wszędzie" || fail "3c rejestr: $PROBY3 znalezisk z > 2 próbami naprawy (zasada dwóch prób)"
 [ "$BEZ_STRAZNIKA" -eq 0 ] && pass "3d rejestr: każde ZAMKNIETE ma strażnika (plik istnieje) + sha padania na starym" || fail "3d rejestr: $BEZ_STRAZNIKA ZAMKNIETE bez strażnika z dowodem"
 
-# 4. ANOMALIE: 0 OTWARTA
-AN_OTW=$(grep -E '^\| AN-' "$REJESTR" | awk -F'|' '$6 ~ /OTWARTA/' | wc -l)
-[ "$AN_OTW" -eq 0 ] && pass "4 anomalie: 0 OTWARTA" || fail "4 anomalie: $AN_OTW OTWARTA"
+# 4. ANOMALIE: czytamy CAŁĄ tabelę sekcji „## Anomalie” (nie tylko wiersze z prefiksem — recenzja #184 W5);
+#    każdy wiersz musi mieć ID `AN-NNN` (inaczej FAIL), 0 OTWARTA. Wiersz-zaślepka `| — |` pomijany.
+AN_WIERSZE=$(awk '/^## Anomalie/{f=1;next} /^## /{f=0} f && /^\| /' "$REJESTR" | grep -vE '^\| ID \||^\|---|^\| — \|' | sed 's/\\|/\x01/g' || true)
+AN_ZLE_ID=$(printf '%s\n' "$AN_WIERSZE" | grep . | grep -vcE '^\| AN-[0-9]{3,} \|' || true)
+AN_OTW=$(printf '%s\n' "$AN_WIERSZE" | awk -F'|' '$6 ~ /OTWARTA/' | wc -l)
+if [ "$AN_ZLE_ID" -ne 0 ]; then fail "4 anomalie: $AN_ZLE_ID wiersz(y) bez ID AN-NNN (bramka by ich nie widziała)"; elif [ "$AN_OTW" -eq 0 ]; then pass "4 anomalie: 0 OTWARTA"; else fail "4 anomalie: $AN_OTW OTWARTA"; fi
 
-# 5. PRZELOT CZŁOWIEKA: 0 ⬜ w liście
-PRZ_NIE=$(grep -cE '^- ⬜ ' "$PRZELOT")
-[ "$PRZ_NIE" -eq 0 ] && pass "5 przelot człowieka: komplet" || fail "5 przelot człowieka: $PRZ_NIE punktów ⬜"
+# 5. PRZELOT CZŁOWIEKA: podłoga ≥ 27 punktów (pusty/obcięty plik NIE jest kompletem — recenzja #184 W4),
+#    0 ⬜ i 0 😖 (😖 = „coś dziwnego” bez wyjaśnienia → musi stać się 🐞 albo anomalią, zanim ogłosimy koniec).
+PRZ_MIN=27
+PRZ_ILE=$(grep -cE '^- (⬜|✅|😖|🐞) ' "$PRZELOT")
+PRZ_NIE=$(grep -cE '^- ⬜ ' "$PRZELOT"); PRZ_DZIW=$(grep -cE '^- 😖 ' "$PRZELOT")
+if [ "$PRZ_ILE" -lt "$PRZ_MIN" ]; then fail "5 przelot człowieka: tylko $PRZ_ILE punktów (wymagane ≥ $PRZ_MIN) — lista obcięta?"; elif [ "$PRZ_NIE" -eq 0 ] && [ "$PRZ_DZIW" -eq 0 ]; then pass "5 przelot człowieka: komplet ($PRZ_ILE punktów)"; else fail "5 przelot człowieka: $PRZ_NIE ⬜ + $PRZ_DZIW 😖 z $PRZ_ILE"; fi
 
 # 6. PRÓBY KONTROLNE STRAŻNIKÓW: log z jednego przebiegu, 26+ pozycji, wszystkie EXIT=0
 if [ -f "$PROBY" ]; then
@@ -106,7 +125,8 @@ ZIP=$(sed -n 's/^PACZKA: *//p' "$ZAMROZENIE" | head -1)
 SHA_ZAP=$(sed -n 's/^SHA256: *//p' "$ZAMROZENIE" | head -1)
 COMMIT_ZAP=$(sed -n 's/^COMMIT: *//p' "$ZAMROZENIE" | head -1)
 if [ -n "$ZIP" ] && [ -f "$ZIP" ] && [ "$(sha256sum "$ZIP" | cut -d' ' -f1)" = "$SHA_ZAP" ]; then pass "7a paczka: sha256 zgodny ($ZIP)"; else fail "7a paczka: brak pliku albo sha256 ≠ ZAMROZENIE.md"; fi
-TAG_SHA=$(git rev-parse --short=7 k7-zamrozenie 2>/dev/null)
+# ^{commit}: tag k7-zamrozenie jest ADNOTOWANY — goły rev-parse dałby sha OBIEKTU TAGU, nie commitu (fałszywy FAIL, W8)
+TAG_SHA=$(git rev-parse --short=7 'k7-zamrozenie^{commit}' 2>/dev/null)
 [ -n "$TAG_SHA" ] && [ "$TAG_SHA" = "${COMMIT_ZAP:0:7}" ] && pass "7b tag k7-zamrozenie = $TAG_SHA" || fail "7b tag k7-zamrozenie ($TAG_SHA) ≠ COMMIT w ZAMROZENIE.md (${COMMIT_ZAP:0:7})"
 
 # 8. RAPORTY JSON: parser — SPEŁNIONE/ZGODNE bez plik+linia albo BRAK bez proba_kontrolna = odrzucone; commit_head = zamrożony

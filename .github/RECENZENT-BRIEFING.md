@@ -26,7 +26,7 @@ uwaga KRYTYCZNA, niezależnie od jakości kodu.
 
 Czytaj zmiany na tle dokumentów repo: PLAN-PROJEKTU.md (sekcja 7 —
 bezpieczeństwo; sekcja 12 — kryteria GOTOWE), ZROZUMIENIE.md i DECYZJE.md
-(MUST NOT + decyzje D1-D24 — rzeczy ŚWIADOMIE nierobione; nie żądaj ich),
+(MUST NOT + decyzje D1-D33 — rzeczy ŚWIADOMIE nierobione; nie żądaj ich),
 ORAZ **audyt/SCIAGA-EGZAMINATORA.md** — 7 klas błędów, które oceniający
 (kolega) wytykał w poprzednich projektach. PILNUJ tych klas w każdym PR:
   1. Uninstall NIEKOMPLETNY — zostają opcje/tabele/pliki/cron, a zwłaszcza
@@ -103,9 +103,10 @@ URUCHAMIAJ BRAMKI, NIE CZYTAJ ICH. Runner ma zainstalowane PHP 8.4 i katalog
 - `vendor/bin/phpstan analyse --memory-limit=1G --no-progress` — statyka,
 - ⚠️ PRZED `dokumentacja-zgodnosc.sh`: `ln -s /root/praca/zlecenia/sklep-agentow/node_modules node_modules` (katalog
   roboczy akcji nie ma `node_modules`; bez nich sekcja O tego testu celowo dolicza błąd — EXIT=1 ze środowiska, nie z treści).
-- `bash testy/dokumentacja-zgodnosc.sh` oraz
-  `bash testy/dokumentacja-zgodnosc-segregator.sh` — czy dokumentacja nie kłamie
-  względem kodu,
+- `bash testy/dokumentacja-zgodnosc.sh`,
+  `bash testy/dokumentacja-zgodnosc-segregator.sh` oraz
+  `bash testy/dokumentacja-zgodnosc-sklep.sh` — czy dokumentacja nie kłamie
+  względem kodu (trzy wtyczki, trzy bramki; każda ma próbę kontrolną `*-proba-kontrolna.sh`),
 - `find wtyczki -name '*.php' -print0 | xargs -0 -n1 php -l` — składnia,
 - `git log`, `git diff`, `git show` — historia i pełny diff względem bazy.
 

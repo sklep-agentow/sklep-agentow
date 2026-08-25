@@ -120,6 +120,10 @@ odczyt "naglowki odpowiedzi"       "HTTP/"             naglowki "/"
 odczyt "lista wtyczek"             "segregator-maila"  wtyczki
 odczyt "tabele wtyczek w bazie"    "wp_segm_reguly"    tabele
 odczyt "liczba wierszy w tabeli"   "wierszy:"          wiersze wp_segm_reguly
+# stos.sh 1.3.1 (recenzja #182 r2 D5): okno musi widzieć tabele SKLEPU — bez tego strażnik przepuszczałby
+# powrót do białej listy bez wp_sklepag_ i audytor K7 nie zajrzałby do żadnego zamówienia.
+odczyt "tabele SKLEPU w bazie"     "wp_sklepag_zamowienia" tabele
+odczyt "wiersze tabeli SKLEPU"     "wierszy:"          wiersze wp_sklepag_produkty
 odczyt "opcja ustawien segregatora" "ai_limit_dzienny" opcja segm_ustawienia
 # 1.3.0: opcja z sekretem w nazwie ma wyjść ZAMASKOWANA — i NIGDY z wartością (poniżej druga kontrola)
 odczyt "opcja-sekret zamaskowana"   "[SEKRET ZAMASKOWANY]" opcja chatl_klucz_api

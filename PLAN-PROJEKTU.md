@@ -4,7 +4,7 @@ Wersja 3.0 — 2026-08-18, po piwocie na WordPressa (DECYZJE D16). Zastępuje v2
 (architektura Cloudflare — w historii gita; przeniesione z niej: wymagania, MUST NOT,
 prawo, wzorce Stripe/idempotencji, kadencja, kryteria GOTOWE — wymienione: architektura
 i harmonogram). Dokument bez adresów i sekretów.
-**Termin egzaminu: 30.08 · 3 próby oddania · próba 1 planowana 27.08 (bufor na zwroty).**
+**Termin egzaminu: 1.09.2026 (zmiana z 30.08 — Dzidek 20.08) · 3 próby oddania, po każdej TYLKO LICZBA błędów (Dzidek 25.08) · próba 1 ~31.08 po audycie K7 (PLAN-K7 §8c).**
 
 ## 1. CO BUDUJEMY I PO CO
 
