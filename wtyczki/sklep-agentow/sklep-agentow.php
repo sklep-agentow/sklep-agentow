@@ -97,8 +97,8 @@ function sklepag_assety_frontu() {
 			od pierwszej klatki (jak `html.js` gospodarza); skrypt tylko odsłania.
 			Inline dodaje klasę wyłącznie, gdy jest IntersectionObserver i nie ma
 			„ogranicz ruch", a po 2,5 s dodaje `sklepag-odslon` (CSS pokazuje wszystko)
-			TYLKO gdy front-ruch.js nie zgłosił gotowości klasą `sklepag-ruch-ok` (recenzja
-			#178: bezwarunkowy bezpiecznik gasił kaskadę sekcji poza pierwszym ekranem).
+			TYLKO gdy front-ruch.js nie zgłosił gotowości klasą `sklepag-ruch-ok` (bezwarunkowy
+			bezpiecznik gasił kaskadę sekcji poza pierwszym ekranem).
 			Bez JS klasa nie powstaje i CSS niczego nie ukrywa. */
 		wp_enqueue_script(
 			'sklepag-ruch',
