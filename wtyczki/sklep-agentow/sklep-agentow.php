@@ -130,12 +130,17 @@ function sklepag_shortcode_sklep() {
 	);
 
 	$html = '<div class="sklepag-wyspa sklepag-sklep">';
+	// TŁO „BLUEPRINT Z SYGNAŁAMI" na CAŁEJ wyspie (przegląd na żywo 25.08: „coś na całe tło, z inspiracji,
+	// nie 1:1 hero gospodarza"): siatka projektowa jak na ilustracjach kart + wolny promień skanu
+	// + pingi (czysty CSS, zero canvasa — lekkie dla każdej karty graficznej). aria-hidden.
+	$html .= '<div class="sklepag-tlo" aria-hidden="true"></div>';
+	// Pingi POZA maskowanym tłem (maska nad animacją = przeliczanie całej warstwy co klatkę).
+	$html .= '<div class="sklepag-pingi" aria-hidden="true">' . str_repeat( '<i></i>', 9 ) . '</div>';
+	// Skan jako OSOBNA warstwa (nie dziecko maskowanego tła): sam transform = tylko kompozytor.
+	$html .= '<span class="sklepag-tlo-skan" aria-hidden="true"></span>';
 	// Hero 2-kolumnowy (runda działu stron 25.08 — PLAN-WYGLADU-RUNDA-STRON §3):
 	// tekst po lewej, po prawej PANEL NOCNEJ ZMIANY. Na wąskim ekranie panel pod tekstem.
 	$html .= '<div class="sklepag-hero-lista">';
-	// GALAKTYKA — pole cząstek na całym hero (front-ruch.js), w rodzinie silnika gospodarza
-	// (volt.js: dysk/promień/pył). Poza przepływem siatki (position:absolute), pod treścią.
-	$html .= '<canvas class="sklepag-galaktyka" aria-hidden="true"></canvas>';
 	$html .= '<header class="sklepag-hero">';
 	$html .= '<p class="sklepag-mono-etykieta">[ SKLEP ]</p>';
 	$html .= '<h1 class="sklepag-hero-tytul"><span class="sklepag-akcent">Boty</span>, które robią robotę.</h1>';
@@ -156,7 +161,6 @@ function sklepag_shortcode_sklep() {
 	// żadnych nowych obietnic ani liczb. Bez JS / przy „ogranicz ruch" panel stoi
 	// w stanie końcowym (wszystko widoczne).
 	$html .= '<div class="sklepag-panel" aria-hidden="true">';
-	$html .= '<span class="sklepag-mglawica"></span>';
 	$html .= '<span class="sklepag-panel-adnotacja sklepag-panel-adnotacja--gora">Twoja strona</span>';
 	$html .= '<span class="sklepag-panel-adnotacja sklepag-panel-adnotacja--dol">Twoja skrzynka</span>';
 	$html .= '<div class="sklepag-panel-okno">';

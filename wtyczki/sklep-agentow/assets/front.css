@@ -27,7 +27,7 @@
 	   TREŚCI w środku 384→1536, czyli 1152px = 72rem — i to jest liczba, którą
 	   bierzemy, żeby nasze sekcje stały w jednej linii z jego logo i tekstem.
 	   Bez tego sekcje z własnym `max-width` lgnęły do LEWEJ krawędzi: treść
-	   kończyła się na 1032px i zostawało 888px pustki (znalezisko Dzidka
+	   kończyła się na 1032px i zostawało 888px pustki (znalezisko z przeglądu
 	   + pomiar getBoundingClientRect). Tło zostaje na pełną szerokość,
 	   centrowana jest sama treść — dokładnie jak u gospodarza. */
 	display: grid;
@@ -777,7 +777,7 @@ a.sklepag-kup {
 }
 
 /* ---------- Pojawianie się sekcji przy przewijaniu (spójność z motywem) ----------
-   Feedback Dzidka 20.08: „podstrona sklepu nie ma animacji jak reszta strony".
+   Feedback z przeglądu 20.08: „podstrona sklepu nie ma animacji jak reszta strony".
    Parametry ZMIERZONE z motywu gospodarza (26px, 0.3s ease-out, 0.5s cubic-bezier).
    ⛔ Ukrywamy WYŁĄCZNIE gdy oba warunki spełnione: `sklepag-js` na <html> (inline
    w head, przed renderem — zero mignięcia) I `sklepag-ruch` na wyspie (dodaje
@@ -1258,7 +1258,7 @@ a.sklepag-kup {
 	box-shadow: 28px 44px 90px rgba(0, 0, 0, 0.6), 0 12px 30px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(191, 255, 56, 0.08);
 	/* Głębia: lekkie pochylenie 3D w spoczynku (Linear/Stripe), prostuje się pod kursorem;
 	   paralaksa scrolla przez --sklepag-par (front-ruch.js, tylko bez „ogranicz ruch"). */
-	transform: perspective(1200px) rotateY(-6deg) rotateX(2deg) translateY(var(--sklepag-par));
+	transform: perspective(1200px) rotateY(-4deg) rotateX(1.5deg) translateY(var(--sklepag-par));
 	transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -1525,7 +1525,7 @@ a.sklepag-kup {
 	flex-direction: column;
 	align-items: stretch;
 	gap: 0.9rem;
-	padding: 1.3rem 1.4rem 1.5rem;
+	padding: 1.1rem 1.3rem 1.25rem;
 	min-height: 0;
 	background: var(--sklepag-wegiel);
 	border: 1px solid var(--sklepag-linia);
@@ -1699,41 +1699,10 @@ a.sklepag-kup {
 	95% { transform: scaleY(0.12); }
 }
 
-/* ===== GALAKTYKA + rodzina ruchu gospodarza (25.08, po oku Dzidka: „nie plamy — coś żywego") =====
+/* ===== GALAKTYKA + rodzina ruchu gospodarza (25.08, po przeglądzie na żywo: „nie plamy — coś żywego") =====
    Parametry ZMIERZONE w motywie: dashflow 1.4s linear (kreska 4/8, offset −24px) ·
    pulse-dot 2.4s (pierścień 7px) · glow-breathe 7s (opacity .7↔1) · poświata gospodarza
    jest CICHA (bg-volt/0.06 przy 26rem) — nasza wcześniejsza plama 0.42 była 7× za mocna. */
-
-/* Canvas na całym hero, pod treścią; lekko wychodzi poza tor, żeby pył nie urywał się na krawędzi. */
-.sklepag-galaktyka {
-	position: absolute;
-	top: -2rem;
-	left: -3vw;
-	/* Canvas to element ZASTĘPOWANY: z `width:auto` trzyma 300×150 zamiast rozciągnąć się
-	   między krawędziami — dlatego rozmiar jawnie procentami (zmierzone 25.08). */
-	width: calc(100% + 6vw);
-	height: calc(100% + 4rem);
-	z-index: 0;
-	pointer-events: none;
-}
-
-.sklepag-hero-lista > .sklepag-hero,
-.sklepag-hero-lista > .sklepag-panel {
-	position: relative;
-	z-index: 1;
-}
-
-/* Gdy canvas rysuje, poświata CSS schodzi ze sceny; okno panelu staje się szkłem nad galaktyką. */
-.sklepag-galaktyka-on .sklepag-mglawica {
-	display: none;
-}
-
-/* ⛔ BEZ backdrop-filter: rozmycie nad canvasem przerysowywanym co klatkę = ciągła praca GPU;
-   na laptopie Dzidka (iGPU, zoom) strona się dławiła. Półprzezroczyste tło daje ten sam efekt
-   „szkła" bez liczenia rozmycia. */
-.sklepag-galaktyka-on .sklepag-panel-okno {
-	background: rgba(16, 17, 22, 0.88);
-}
 
 /* Poświata CSS (fallback bez JS + baner końcowy) w sile gospodarza, z jego oddechem. */
 .sklepag-mglawica {
@@ -1802,5 +1771,130 @@ a.sklepag-kup {
 	.sklepag-panel-okno,
 	.sklepag-panel:hover .sklepag-panel-okno {
 		transform: translateY(var(--sklepag-par));
+	}
+}
+
+/* ===== TŁO „BLUEPRINT Z SYGNAŁAMI" — cała wyspa listy (przegląd na żywo 25.08: „na całe tło, z inspiracji,
+   nie 1:1 hero gospodarza"). Czysty CSS: siatka jak na ilustracjach kart, wolny promień skanu
+   (sam transform — kompozytor), pingi opacity. Zero canvasa = zero obciążenia GPU. ===== */
+.sklepag-sklep > * {
+	position: relative;
+	z-index: 1;
+}
+
+.sklepag-tlo {
+	position: absolute;
+	inset: 0;
+	z-index: 0 !important;
+	overflow: hidden;
+	pointer-events: none;
+	/* Siatka projektowa (linie co 7rem jak w SVG kart: 140px/880px) + kropki w węzłach. */
+	background:
+		linear-gradient(90deg, rgba(245, 245, 245, 0.045) 1px, transparent 1px) 0 0 / 7rem 7rem,
+		linear-gradient(180deg, rgba(245, 245, 245, 0.045) 1px, transparent 1px) 0 0 / 7rem 7rem,
+		radial-gradient(circle, rgba(191, 255, 56, 0.16) 1px, transparent 1.8px) 0 0 / 7rem 7rem;
+	/* Gaśnie ku krawędziom i ku dołowi — tło ma być poziomem szumu, nie tapetą. */
+	-webkit-mask-image: radial-gradient(120% 90% at 55% 20%, #000 30%, rgba(0, 0, 0, 0.35) 70%, transparent 100%);
+	mask-image: radial-gradient(120% 90% at 55% 20%, #000 30%, rgba(0, 0, 0, 0.35) 70%, transparent 100%);
+}
+
+/* Promień skanu: pionowy pas światła sunie w poziomie (16 s), potem pauza. OSOBNA warstwa poza
+   maską tła i tylko górne 1400 px — mała tekstura, sam transform (zero repaintów, zero canvasa). */
+.sklepag-tlo-skan {
+	position: absolute;
+	top: 0;
+	height: min(1400px, 100%);
+	left: 0;
+	z-index: 0 !important;
+	pointer-events: none;
+	width: 34%;
+	background: linear-gradient(90deg, transparent 0%, rgba(191, 255, 56, 0.035) 40%, rgba(191, 255, 56, 0.075) 50%, rgba(191, 255, 56, 0.035) 60%, transparent 100%);
+	transform: translateX(-110%);
+	animation: sklepag-skan 16s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+
+@keyframes sklepag-skan {
+	0% { transform: translateX(-110%); }
+	70%, 100% { transform: translateX(330%); }
+}
+
+/* Pingi: sygnały łapanych wiadomości — POZA maską, tylko opacity + transform (kompozytor). */
+.sklepag-pingi {
+	position: absolute;
+	inset: 0;
+	z-index: 0 !important;
+	pointer-events: none;
+	overflow: hidden;
+}
+
+.sklepag-pingi i {
+	position: absolute;
+	width: 6px;
+	height: 6px;
+	margin: -3px 0 0 -3px;
+	border-radius: 50%;
+	background: var(--sklepag-limonka);
+	opacity: 0;
+	animation: sklepag-ping 9s ease-out infinite;
+}
+
+.sklepag-pingi i::after {
+	content: "";
+	position: absolute;
+	inset: -3px;
+	border-radius: 50%;
+	border: 1px solid rgba(191, 255, 56, 0.45);
+	opacity: 0;
+	animation: sklepag-ping-krag 9s ease-out infinite;
+	animation-delay: inherit;
+}
+
+@keyframes sklepag-ping {
+	0%, 74% { opacity: 0; }
+	78% { opacity: 1; }
+	92% { opacity: 0.6; }
+	100% { opacity: 0; }
+}
+
+@keyframes sklepag-ping-krag {
+	0%, 76% { opacity: 0; transform: scale(0.4); }
+	80% { opacity: 0.8; transform: scale(0.6); }
+	100% { opacity: 0; transform: scale(4.2); }
+}
+
+.sklepag-pingi i:nth-child(1) { left: 9%;  top: 6%;  animation-delay: -1s; }
+.sklepag-pingi i:nth-child(2) { left: 63%; top: 4%;  animation-delay: -3.4s; }
+.sklepag-pingi i:nth-child(3) { left: 88%; top: 12%; animation-delay: -5.2s; }
+.sklepag-pingi i:nth-child(4) { left: 31%; top: 23%; animation-delay: -6.8s; }
+.sklepag-pingi i:nth-child(5) { left: 74%; top: 31%; animation-delay: -2.3s; }
+.sklepag-pingi i:nth-child(6) { left: 14%; top: 44%; animation-delay: -7.9s; }
+.sklepag-pingi i:nth-child(7) { left: 52%; top: 58%; animation-delay: -4.5s; }
+.sklepag-pingi i:nth-child(8) { left: 83%; top: 69%; animation-delay: -0.4s; }
+.sklepag-pingi i:nth-child(9) { left: 27%; top: 81%; animation-delay: -6s; }
+
+/* Baner końcowy przepuszcza siatkę i skan (sędzia r3: pusta prawa połowa) — ta sama materia
+   co reszta tła, plus własna cicha poświata po prawej. */
+.sklepag-final--baner {
+	background: rgba(16, 17, 22, 0.72);
+}
+
+/* Finał: przyciski jako wariant z obrysem — pełna limonka zostaje dla „Zobacz szczegóły" na
+   kartach (sędzia r3: pięć identycznych pigułek na jednym scrollu = akcent staje się tłem). */
+.sklepag-final--baner .sklepag-kup {
+	background: transparent;
+	color: var(--sklepag-limonka);
+	border: 1px solid rgba(191, 255, 56, 0.6);
+	transition: background 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.sklepag-final--baner .sklepag-kup:hover,
+.sklepag-final--baner .sklepag-kup:focus-visible {
+	background: var(--sklepag-limonka);
+	color: var(--sklepag-tusz);
+}
+
+@media (max-width: 48rem) {
+	.sklepag-tlo {
+		background-size: 4.5rem 4.5rem, 4.5rem 4.5rem, 4.5rem 4.5rem;
 	}
 }
