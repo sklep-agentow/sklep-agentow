@@ -66,6 +66,11 @@ function sklepag_loguj_udane( $user_login, $user ) {
  */
 function sklepag_loguj_nieudane( $username, $error ) {
 	unset( $error );
+	// Login z nieudanej próby bywa cudzym adresem e-mail (atak słownikowy) — nie utrwalamy go
+	// w dzienniku (minimalizacja danych); opóźnienie wykładnicze działa niezależnie.
+	if ( ! username_exists( $username ) ) {
+		return;
+	}
 	sklepag_zapisz_logowanie( $username, 'blad' );
 }
 
