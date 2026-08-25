@@ -189,6 +189,9 @@ function sklepag_delta_html( $teraz, $poprzednio ) {
  * starszy niż 10 min (WP-cron na cichej stronie może nie ruszyć wcale).
  */
 function sklepag_dashboard_self_heal() {
+	if ( ! function_exists( 'sklepag_dociagnij_zalegle' ) ) {
+		return; // Obronnie: pulpit ładowany bez zakup.php (np. wtyczka w trakcie aktualizacji) nie ma prawa się wywrócić.
+	}
 	$ostatni = (int) get_option( 'sklepag_reconciliation_ostatnia', 0 );
 	if ( time() - $ostatni < 600 ) {
 		return;
