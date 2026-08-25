@@ -45,6 +45,19 @@ cd /root/praca/zlecenia/sklep-agentow && node testy/e2e/sonda-sticky-pigulka.js
 Gdy `siteurl` stacku wskazuje inny host niż baza (np. tunel do pokazu), podaj
 go w `SKLEPAG_PRZEKIERUJ_HOST=host` — żądania do niego pójdą na bazę, bez pośrednika.
 
+## lighthouse-3-podstrony.sh i axe-3-podstrony.js — audyt jakości 3 podstron
+
+Lighthouse (4 kategorie, desktop + telefon, tabela + JSON) i axe-core (WCAG A/AA po wolnym
+scrollu, exit 1 przy naruszeniu serious/critical). Pułapki zapisane w nagłówkach skryptów:
+`blog_public=0` na stosie dev tnie SEO do 58–66 (noindex) — na czas pomiaru SEO włącz
+indeksowanie i przywróć; animowane opacity daje fałszywy kontrast w axe — powtórz z
+`--bez-ruchu`. Wyniki bazowe i po naprawach: `audyt/AUDYT-JAKOSC-PODSTRON-25-08.md`.
+
+```
+cd /root/praca/zlecenia/sklep-agentow && bash testy/e2e/lighthouse-3-podstrony.sh http://localhost:8890 /tmp/lh
+cd /root/praca/zlecenia/sklep-agentow && node testy/e2e/axe-3-podstrony.js http://localhost:8890
+```
+
 ## szelki-strona-produktu.js — szelki strony produktu (oba boty)
 
 Dziesięć kontroli tego, czego zrzut nie pokaże: skrypt zablokowany / opóźniony

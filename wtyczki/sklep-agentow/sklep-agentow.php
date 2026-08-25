@@ -3,7 +3,7 @@
  * Plugin Name: Sklep Agentów
  * Plugin URI: https://automaticai.pl/sklep/
  * Description: Sprzedawaj wtyczki-boty AI bezpośrednio ze swojej strony: płatność kartą, automatyczny mail z linkiem do pobrania, panel zamówień ze statystykami i dziennikiem logowań. Zamówienia, produkty i pliki zostają w Twojej bazie i na Twoim serwerze — bez abonamentu. Płatność obsługuje Stripe.
- * Version: 0.9.12
+ * Version: 0.9.13
  * Requires at least: 6.7
  * Requires PHP: 8.1
  * Author: Automatic AI
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SKLEPAG_WERSJA', '0.9.12' );
+define( 'SKLEPAG_WERSJA', '0.9.13' );
 define( 'SKLEPAG_WERSJA_SCHEMATU', 5 ); // v5: tabela opinie (mechanizm D32); v4: kolumna zamowienia.usunieto_dnia (anonimizacja RODO — K3d); v3: indeks para_logowania.
 define( 'SKLEPAG_LIMIT_POBRAN', 10 ); // Jedno źródło: INSERT zamówienia + treść maila.
 define( 'SKLEPAG_LINK_GODZIN', 72 );  // Ważność linku pobrania — jw.
@@ -131,6 +131,14 @@ function sklepag_baner_testowy() {
 }
 
 /**
+ * Lead hero listy — JEDNO źródło dla strony i dla meta description listy (front-seo.php);
+ * dwa egzemplarze tego zdania rozjechałyby się po cichu.
+ */
+function sklepag_lead_listy() {
+	return 'Gotowe wtyczki-boty dla Twojej firmy. Instalujesz jak każdą wtyczkę WordPressa — działają od pierwszej minuty.';
+}
+
+/**
  * Duet maskotek (te same kreski co ilustracje kart) — wizual banera końcowego listy
  * i strony produktu: baner ma parę tekst + wizual jak hero i karty. aria-hidden.
  *
@@ -235,7 +243,7 @@ function sklepag_shortcode_sklep() {
 	$html .= '<header class="sklepag-hero">';
 	$html .= '<p class="sklepag-mono-etykieta">[ SKLEP ]</p>';
 	$html .= '<h1 class="sklepag-hero-tytul"><span class="sklepag-akcent">Boty</span>, które robią robotę.</h1>';
-	$html .= '<p class="sklepag-lead">Gotowe wtyczki-boty dla Twojej firmy. Instalujesz jak każdą wtyczkę WordPressa — działają od pierwszej minuty.</p>';
+	$html .= '<p class="sklepag-lead">' . esc_html( sklepag_lead_listy() ) . '</p>';
 	$html .= sklepag_baner_testowy();
 	$html .= '<p class="sklepag-demo-cta"><span class="sklepag-akcent">▶</span> Zielony bąbelek w rogu strony to ChatBot LIVE — porozmawiaj z nim, zanim kupisz.</p>';
 	// Pasek konkretów: każda pozycja ma pokrycie w kodzie/pomiarze (dok=kod):

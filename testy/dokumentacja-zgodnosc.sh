@@ -43,8 +43,8 @@ spr "kazdy wpis CHANGELOG oddzielony kreska" "0" \
   "awk '/^## \\[1\\./ {if (NR>1 && poprz != \"---\") b++} {if (\$0 != \"\") poprz=\$0} END {print b+0}' $W/CHANGELOG.md"
 
 echo "=== A. Wersja i schemat ==="
-spr "naglowek Version"            "1.5.10" "grep -oP '(?<=^ \* Version: ).*' $W/chatbot-live.php"
-spr "stala CHATL_WERSJA"          "1.5.10" "grep -oP \"(?<=CHATL_WERSJA', ')[^']*\" $W/chatbot-live.php"
+spr "naglowek Version"            "1.5.11" "grep -oP '(?<=^ \* Version: ).*' $W/chatbot-live.php"
+spr "stala CHATL_WERSJA"          "1.5.11" "grep -oP \"(?<=CHATL_WERSJA', ')[^']*\" $W/chatbot-live.php"
 spr "CHATL_WERSJA_SCHEMATU"       "8"     "grep -oP \"(?<=CHATL_WERSJA_SCHEMATU', ')[^']*\" $W/chatbot-live.php"
 spr "Requires at least"           "6.0"   "grep -oP '(?<=^ \* Requires at least: ).*' $W/chatbot-live.php"
 spr "Requires PHP"                "8.1"   "grep -oP '(?<=^ \* Requires PHP: ).*' $W/chatbot-live.php"
@@ -333,7 +333,7 @@ echo "=== L2. Statystyki: znacznik trafienia i grupowanie ==="
 # Znacznik MUSI ladowac na obu wierszach wymiany (pytanie goscia + odpowiedz
 # bota): raport luk pokazuje TRESC PYTANIA, wiec sam wiersz bota by nie
 # wystarczyl. Cztery sciezki odpowiedzi = cztery wywolania chatl_oznacz_trafienie.
-spr "sciezek odpowiedzi oznaczajacych trafienie" "4" "grep -c 'chatl_oznacz_trafienie( \$id_pytania' $W/includes/front.php"
+spr "sciezek odpowiedzi oznaczajacych trafienie" "5" "grep -c 'chatl_oznacz_trafienie( \$id_pytania' $W/includes/front.php"
 spr "definicji chatl_oznacz_trafienie" "1" "grep -rc 'function chatl_oznacz_trafienie' $W --include=*.php | awk -F: '{s+=\$2} END {print s}'"
 spr "definicji chatl_grupuj_pytania"   "1" "grep -rc 'function chatl_grupuj_pytania' $W --include=*.php | awk -F: '{s+=\$2} END {print s}'"
 spr "grupowanie mieszka w statystyki.php" "1" "grep -c 'function chatl_grupuj_pytania' $W/includes/statystyki.php"
@@ -391,6 +391,31 @@ else
 fi
 
 echo
+
+echo "=== Y. readme.txt w standardzie WordPressa (ten sam zakres, co sekcja N u Segregatora) ==="
+WER_KOD=$(grep -oP '(?<=^ \* Version: ).*' $W/chatbot-live.php)   # wersja Z KODU, nie na sztywno (klasa 11)
+WP_STACK=$(docker exec strona_wp_wordpress wp --allow-root --path=/var/www/html core version 2>/dev/null | grep -oE '^[0-9]+\.[0-9]+')
+spr "readme.txt istnieje"            "1" "test -f $W/readme.txt && echo 1 || echo 0"
+spr "naglowek === Nazwa ==="         "1" "head -1 $W/readme.txt | grep -c '^=== ChatBot LIVE ===$'"
+spr "pole Contributors"              "1" "grep -c '^Contributors: ' $W/readme.txt"
+spr "pole Tags"                      "1" "grep -c '^Tags: ' $W/readme.txt"
+spr "Requires at least == naglowek wtyczki" "1" "test \"\$(grep -oP '(?<=^Requires at least: ).*' $W/readme.txt)\" = \"\$(grep -oP '(?<=^ \\* Requires at least: ).*' $W/chatbot-live.php)\" && echo 1 || echo 0"
+spr "Requires PHP == naglowek wtyczki"      "1" "test \"\$(grep -oP '(?<=^Requires PHP: ).*' $W/readme.txt)\" = \"\$(grep -oP '(?<=^ \\* Requires PHP: ).*' $W/chatbot-live.php)\" && echo 1 || echo 0"
+spr "Stable tag == wersja wtyczki"          "1" "test \"\$(grep -oP '(?<=^Stable tag: ).*' $W/readme.txt)\" = \"$WER_KOD\" && echo 1 || echo 0"
+if [ -n "$WP_STACK" ]; then
+  spr "Tested up to = wersja WP ze stacku ($WP_STACK)" "$WP_STACK" "grep -oP '(?<=^Tested up to: ).*' $W/readme.txt | grep -oE '^[0-9]+\\.[0-9]+'"
+else
+  echo "  POMINIETE Tested up to = wersja WP ze stacku (stack nie odpowiada)"
+fi
+spr "License == naglowek wtyczki"           "1" "test \"\$(grep -oP '(?<=^License: ).*' $W/readme.txt)\" = \"\$(grep -oP '(?<=^ \\* License: ).*' $W/chatbot-live.php)\" && echo 1 || echo 0"
+spr "License URI == naglowek wtyczki"       "1" "test \"\$(grep -oP '(?<=^License URI: ).*' $W/readme.txt)\" = \"\$(grep -oP '(?<=^ \\* License URI: ).*' $W/chatbot-live.php)\" && echo 1 || echo 0"
+for sek in Description Installation "Frequently Asked Questions" Changelog; do
+  spr "sekcja == $sek ==" "1" "grep -c '^== $sek ==$' $W/readme.txt"
+done
+KROTKI=$(sed -n '11p' $W/readme.txt | wc -m)
+spr "krotki opis <= 150 znakow"      "1" "test $KROTKI -le 150 && echo 1 || echo 0"
+spr "readme.txt ma changelog biezacej wersji" "1" "grep -c '^= $WER_KOD =$' $W/readme.txt"
+spr "CHANGELOG.md ma wpis biezacej wersji"    "1" "grep -c '^## \\[$WER_KOD\\]' $W/CHANGELOG.md"
 
 echo "=== Z. Zrzuty z INSTRUKCJI: plik istnieje i jedzie w paczce (uwaga D8 recenzji #169) ==="
 for obrazek in $(grep -oE '\]\(zrzuty/[a-z0-9-]+\.png\)' wtyczki/chatbot-live/INSTRUKCJA.md | tr -d ']()'); do

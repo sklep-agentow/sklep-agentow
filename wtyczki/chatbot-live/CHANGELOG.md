@@ -25,6 +25,8 @@ Nic jeszcze.
   Dotąd nadostrożność modelu (np. przy pytaniach o zwroty) zasłaniała odpowiedź
   leżącą w bazie. Zero zmian w trybie czysto regułowym.
 
+---
+
 ## [1.5.10] — 2026-08-24
 
 ### Dodane

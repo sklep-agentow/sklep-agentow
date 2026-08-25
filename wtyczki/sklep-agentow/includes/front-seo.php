@@ -78,6 +78,25 @@ add_filter( 'get_canonical_url', 'sklepag_seo_canonical' );
 function sklepag_seo_head() {
 	$p = sklepag_seo_biezacy_produkt();
 	if ( ! $p ) {
+		// LISTA /sklep/ (strona WP bez treści w edytorze → WP nie daje description; Lighthouse SEO
+		// listy 92 z tego powodu — audyt 25.08). Opis = lead hero listy + nazwy produktów (istniejące,
+		// zatwierdzone treści), okładka sklepu do OG/Twitter.
+		if ( is_page( (int) get_option( 'sklepag_strona_sklep' ) ) ) {
+			global $wpdb;
+			// Jedno źródło leadu (sklepag_lead_listy) + nazwy AKTYWNYCH produktów z bazy — nic na sztywno.
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery -- własna tabela wtyczki, nazwa z prefiksu WP.
+			$nazwy      = $wpdb->get_col( $wpdb->prepare( "SELECT nazwa FROM {$wpdb->prefix}sklepag_produkty WHERE aktywny = %d ORDER BY nazwa", 1 ) );
+			$opis_listy = sklepag_lead_listy() . ( $nazwy ? ' W sprzedaży: ' . implode( ', ', array_map( 'strval', $nazwy ) ) . '.' : '' );
+			$okladka    = sklepag_okladka_url( 'sklep' );
+			echo '<meta name="description" content="' . esc_attr( $opis_listy ) . '">' . "\n";
+			echo '<meta property="og:type" content="website">' . "\n";
+			echo '<meta property="og:title" content="' . esc_attr( wp_get_document_title() ) . '">' . "\n";
+			echo '<meta property="og:description" content="' . esc_attr( $opis_listy ) . '">' . "\n";
+			echo '<meta property="og:url" content="' . esc_url( get_permalink() ) . '">' . "\n";
+			echo '<meta property="og:image" content="' . esc_url( $okladka ) . '">' . "\n";
+			echo '<meta name="twitter:card" content="summary_large_image">' . "\n";
+			echo '<meta name="twitter:image" content="' . esc_url( $okladka ) . '">' . "\n";
+		}
 		return;
 	}
 

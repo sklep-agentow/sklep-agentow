@@ -265,7 +265,9 @@ function sklepag_domknij_zakup( $sesja ) {
 			$kwota,
 			$waluta,
 			SKLEPAG_ZGODA_TRESC,
-			isset( $sesja['metadata']['zgoda_czas'] ) ? $sesja['metadata']['zgoda_czas'] : $teraz,
+			// Jedna baza czasu zgody = GMT (jak ścieżka główna w metadanych Stripe); mail i panel
+			// przeliczają na czas lokalny. Awaryjnie (brak metadanych) też GMT, nie czas lokalny.
+			isset( $sesja['metadata']['zgoda_czas'] ) ? $sesja['metadata']['zgoda_czas'] : current_time( 'mysql', true ),
 			SKLEPAG_LIMIT_POBRAN,
 			$teraz,
 			$teraz
@@ -382,10 +384,17 @@ function sklepag_filtr_nadawca_nazwa( $name ) {
  * @return bool Wynik wp_mail.
  */
 function sklepag_wyslij_mail_sklepu( $adresat, $temat, $tresc ) {
+	// Reply-To = „mail kontaktowy właściciela" z ustawień (gdy ustawiony): mail mówi „odpisz na tego
+	// maila", a odpowiedź szła na adres NADAWCY — przy nadawcy typu noreply ginęła (audyt 25.08).
+	$naglowki = array();
+	$kontakt  = (string) get_option( 'sklepag_email_kontaktowy', '' );
+	if ( '' !== $kontakt && is_email( $kontakt ) ) {
+		$naglowki[] = 'Reply-To: ' . $kontakt;
+	}
 	add_filter( 'wp_mail_from', 'sklepag_filtr_nadawca_email' );
 	add_filter( 'wp_mail_from_name', 'sklepag_filtr_nadawca_nazwa' );
 	try {
-		return wp_mail( $adresat, $temat, $tresc );
+		return wp_mail( $adresat, $temat, $tresc, $naglowki );
 	} finally {
 		// Filtry schodzą też przy rzucie z wp_mail — nie mogą wisieć na resztę żądania.
 		remove_filter( 'wp_mail_from', 'sklepag_filtr_nadawca_email' );
@@ -398,12 +407,31 @@ function sklepag_zbuduj_mail( $produkt, $zam, $link, $link_opinii = '' ) {
 	$ocena = '' !== $link_opinii
 		? "OCEŃ SWÓJ ZAKUP:\nGdy przetestujesz bota, zostaw opinię — to 2 minuty:\n" . $link_opinii . "\nLink do opinii jest jednorazowy i ważny " . (int) SKLEPAG_OPINIA_DNI . " dni. Opinię publikujemy po potwierdzeniu zakupu i akceptacji.\n\n"
 		: '';
+	// Potwierdzenie zgody na trwałym nośniku (dyrektywa 2011/83/UE art. 8 ust. 7 lit. b — potwierdzenie
+	// umowy ma zawierać potwierdzenie uprzedniej wyraźnej zgody i przyjęcia do wiadomości z art. 16 lit. m).
+	// Treść i chwila zgody = dokładnie to, co zapisano w zamówieniu przy zakupie (audyt 25.08).
+	$zgoda = '';
+	if ( ! empty( $zam->zgoda_tresc ) ) {
+		$kiedy  = ! empty( $zam->zgoda_czas ) ? get_date_from_gmt( $zam->zgoda_czas, 'd.m.Y H:i' ) : '';
+		$zgoda  = "POTWIERDZENIE TWOJEJ ZGODY:\n" . $zam->zgoda_tresc . "\n";
+		$zgoda .= '' !== $kiedy ? 'Zgodę zaznaczyłeś przy zakupie ' . $kiedy . ".\n\n" : "\n";
+	}
+	// Gwarancja z danych produktu (ta sama, którą obiecuje strona produktu; puste = bez akapitu).
+	$gwarancja = '';
+	if ( ! empty( $produkt->slug ) && function_exists( 'sklepag_tresc_produktu' ) ) {
+		$t = sklepag_tresc_produktu( $produkt->slug );
+		if ( $t && ! empty( $t['gwarancja'] ) ) {
+			$gwarancja = "GWARANCJA:\n" . $t['gwarancja'] . "\nAby z niej skorzystać, odpisz na tego maila.\n\n";
+		}
+	}
 	return "Dziękujemy za zakup w sklepie!\n\n"
 		. 'Produkt: ' . $produkt->nazwa . "\n"
 		. 'Kwota: ' . number_format( $zam->kwota_grosze / 100, 2, ',', ' ' ) . ' ' . $zam->waluta . " (TRYB TESTOWY — płatność nie została pobrana)\n\n"
+		. $zgoda
 		. "POBIERZ SWÓJ PRODUKT:\n" . $link . "\n"
 		. 'Link jest ważny ' . $dni . ' dni i pozwala na ' . SKLEPAG_LIMIT_POBRAN . " pobrań.\n\n"
 		. "INSTRUKCJA W SKRÓCIE:\n1. Pobierz paczkę ZIP z linku powyżej.\n2. W kokpicie WordPressa: Wtyczki → Dodaj → Wyślij wtyczkę na serwer → wybierz ZIP.\n3. Aktywuj i działaj — pełna instrukcja jest w paczce.\n\n"
+		. $gwarancja
 		. $ocena
 		. "Masz pytanie? Odpisz na tego maila.\n";
 }
