@@ -191,12 +191,16 @@ Licznik mówi o POKRYCIU, nie o jakości: 95/95 = o każdy cel ktoś zapytał z 
 | **8** | `k7-koniec.sh` = GO → bump → CHANGELOG → paczki ×3 → `paczka-zgodnosc` ×3 → K8 (instrukcja, nagłówki HTTP, regulamin, release, „Latest" oczami, POBRANIE) | ja + Dzidek | 31.08; bufor 1.09 |
 
 **8b. `narzedzia-qa/k7-koniec.sh` — spec (budowany w kroku 1, z próbą kontrolną, EXIT 0 tylko gdy WSZYSTKO):**
-1) `06-mapa-polowania.md`: ⬜ = 0 i liczba celów == zapisana po zamrożeniu; 2) `ROZLICZENIE-MUTANTOW-SKLEP.md`: każda
-kalibrowana soczewka PASS, `proby ≤ 2`; 3) rejestr: 0 wierszy KRYTYCZNE/DUŻE ze statusem ≠ ZAMKNIETE/OBALONE, 0 `DO WERYFIKACJI`,
-`naprawa_proby ≤ 2`, każdy ZAMKNIETE ma `straznik` (plik istnieje) i `straznik_padl_na_starym` (sha); 4) anomalie: 0 `OTWARTA`;
-5) `PRZELOT-CZLOWIEKA-SKLEP.md`: 0 ⬜; 6) próby kontrolne: 26/26 EXIT 0 (log); 7) `ZAMROZENIE.md`: sha256 zipa == plik,
-`git rev-parse k7-zamrozenie` == SHA rund; 8) parser raportów: 0 werdyktów SPEŁNIONE bez `plik:linia`, 0 BRAK bez `proba_kontrolna`.
-Wynik = 8 linii PASS/FAIL + trzy liczby dla właściciela.
+1) `06-mapa-polowania.md`: ⬜ = 0, LICZNIK w pliku == policzony (`mapa-licznik.sh --tylko-licz`, nieznany znacznik = FAIL) i liczba
+celów == zapisana po zamrożeniu; 2) `ROZLICZENIE-MUTANTOW-SKLEP.md` z gałęzi `audyt/mutanty-sklep` (lokalnej albo `origin/`): każda
+kalibrowana soczewka PASS, `proby ≤ 2` (`\|` w komórkach osłonięte); 3) rejestr: 0 wierszy KRYTYCZNE/DUŻE ze statusem ≠
+ZAMKNIETE/OBALONE/POZA K7, 0 `DO WERYFIKACJI`, `naprawa_proby ≤ 2`, każdy ZAMKNIETE ma `straznik` (plik istnieje) i
+`straznik_padl_na_starym` (sha); 4) anomalie: CAŁA sekcja `## Anomalie`, każdy wiersz z ID `AN-NNN`, 0 `OTWARTA`;
+5) `PRZELOT-CZLOWIEKA-SKLEP.md`: ≥ 27 punktów, 0 ⬜, 0 😖, LICZNIK == policzony (`mapa-licznik.sh --przelot`); 6) próby kontrolne:
+≥ 26 pozycji, wszystkie EXIT 0 (log); 7) `ZAMROZENIE.md`: sha256 zipa == plik, `git rev-parse k7-zamrozenie^{commit}` == COMMIT;
+8) parser raportów JSON: `commit_head` == COMMIT, 0 werdyktów SPEŁNIONE/ZGODNE bez `plik:linia`, 0 BRAK bez `proba_kontrolna`,
+0 znalezisk bez `kroki_reprodukcji`, sekcja `czego_nie_bylo_na_mojej_liscie` niepusta, `werdykt` i `rodzaj_skutku` ze słownika
+`SCHEMAT-RAPORTU.json`. Wynik = 8 linii PASS/FAIL + trzy liczby dla właściciela. (Spec = to, co skrypt 1.3.1 mierzy; #186 D2.)
 
 **8c. Kolejność wg budżetu (25.08, reset limitu w niedzielę 30.08, zostało ~38 %):** środa 26 — kroki 0–2 · czwartek 27 —
 runda A (7 soczewek, po 3–4 naraz) · piątek 28 — weryfikacja A + rejestr + naprawy KRYTYCZNYCH + strażniki · sobota 29 —

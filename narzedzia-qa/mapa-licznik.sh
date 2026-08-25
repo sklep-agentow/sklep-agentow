@@ -1,11 +1,13 @@
 #!/bin/bash
-# mapa-licznik.sh — liczy cele mapy polowania i PRZEPISUJE wiersz LICZNIK.        WERSJA 1.1.1
+# mapa-licznik.sh — liczy cele mapy polowania i PRZEPISUJE wiersz LICZNIK.        WERSJA 1.2.0
 #
 # PO CO: mapa z licznikiem „N zamkniętych" była przy botach martwa — nikt jej nie
 # aktualizował (lekcja jak-audytowac §☑️: odhacza KOORDYNATOR, przelicza SKRYPT,
 # nie ręka). Ten skrypt jest jedynym, który wolno pisać do wiersza LICZNIK.
 #
-# Użycie: bash narzedzia-qa/mapa-licznik.sh <plik-mapy> [--zamroz <sha> | --sprawdz-zamrozenie | --tylko-licz]
+# Użycie: bash narzedzia-qa/mapa-licznik.sh <plik-mapy> [--przelot] [--zamroz <sha> | --sprawdz-zamrozenie | --tylko-licz]
+#   --przelot            — zestaw statusów PRZELOTU CZŁOWIEKA (⬜ ✅ 😖 🐞) i jego format LICZNIKA; jedyne narzędzie,
+#                          któremu wolno pisać `CELE:` w PRZELOT-CZLOWIEKA-SKLEP.md (recenzja #186 W2)
 #   bez opcji            — przelicza, przepisuje LICZNIK, wypisuje podsumowanie; EXIT 0
 #   --zamroz <sha>       — jw. + dopisuje pod LICZNIK wiersz ZAMROZONA (sha + liczba celów)
 #   --sprawdz-zamrozenie — TYLKO ODCZYT; EXIT 1, gdy mapa jest zamrożona, a liczba celów ≠ zapisana
@@ -18,19 +20,26 @@
 #
 # Cel = wiersz zaczynający się od „- ” + jeden ze statusów: ⬜ ✅ 🐞 ⚠️ ⛔. Każdy INNY wiersz „- ” = błąd.
 set -u
-PLIK="${1:-}"; TRYB="${2:-}"; SHA="${3:-}"
+PLIK="${1:-}"; shift || true; TRYB=""; SHA=""; ZESTAW=mapa
+while [ $# -gt 0 ]; do case "$1" in --przelot) ZESTAW=przelot ;; --zamroz) TRYB=--zamroz; SHA="${2:-}"; [ $# -gt 1 ] && shift ;; --*) TRYB="$1" ;; *) echo "MAPA-LICZNIK: nieznany argument $1" >&2; exit 2 ;; esac; shift; done
 [ -n "$PLIK" ] && [ -f "$PLIK" ] || { echo "Użycie: bash narzedzia-qa/mapa-licznik.sh <plik-mapy> [--zamroz <sha>|--sprawdz-zamrozenie]" >&2; exit 2; }
 grep -q '^CELE: ' "$PLIK" || { echo "MAPA-LICZNIK: brak wiersza LICZNIK (CELE: …) w $PLIK" >&2; exit 2; }
 
 licz() { grep -c "^- $1 " "$PLIK"; }
-N_OK=$(licz '✅'); N_BUG=$(licz '🐞'); N_AN=$(licz '⚠️'); N_POZA=$(licz '⛔'); N_NIE=$(licz '⬜')
-N_CELE=$(( N_OK + N_BUG + N_AN + N_POZA + N_NIE ))
-NOWY="CELE: $N_CELE · ✅ $N_OK · 🐞 $N_BUG · ⚠️ $N_AN · ⛔ $N_POZA · ⬜ $N_NIE"
+if [ "$ZESTAW" = przelot ]; then
+	N_OK=$(licz '✅'); N_BUG=$(licz '🐞'); N_DZIW=$(licz '😖'); N_NIE=$(licz '⬜')
+	N_CELE=$(( N_OK + N_BUG + N_DZIW + N_NIE )); STATUSY='⬜|✅|😖|🐞'
+	NOWY="CELE: $N_CELE · ✅ $N_OK · 😖 $N_DZIW · 🐞 $N_BUG · ⬜ $N_NIE"
+else
+	N_OK=$(licz '✅'); N_BUG=$(licz '🐞'); N_AN=$(licz '⚠️'); N_POZA=$(licz '⛔'); N_NIE=$(licz '⬜')
+	N_CELE=$(( N_OK + N_BUG + N_AN + N_POZA + N_NIE )); STATUSY='⬜|✅|🐞|⚠️|⛔'
+	NOWY="CELE: $N_CELE · ✅ $N_OK · 🐞 $N_BUG · ⚠️ $N_AN · ⛔ $N_POZA · ⬜ $N_NIE"
+fi
 
 # Nieznany znacznik: wiersz „- coś", gdzie „coś" nie jest jednym z pięciu statusów. Bez tej kontroli
 # cel oznaczony np. ❓ albo literówką po prostu wypadał z sumy — mapa „domykała się" przez zgubę.
 # (także WCIĘTY punkt listy `  - ⬜ …` — markdown nadal go renderuje, a licznik by go zgubił; recenzja #184 D1)
-NIEZNANE=$(grep -nE '^[[:space:]]*- ' "$PLIK" | grep -vE '^[0-9]+:- (⬜|✅|🐞|⚠️|⛔) ' || true)
+NIEZNANE=$(grep -nE '^[[:space:]]*- ' "$PLIK" | grep -vE "^[0-9]+:- ($STATUSY) " || true)
 if [ -n "$NIEZNANE" ]; then
 	echo "MAPA-LICZNIK: $(printf '%s\n' "$NIEZNANE" | wc -l) wiersz(y) „- ” z NIEZNANYM znacznikiem — nie liczę, nie przepisuję:" >&2
 	printf '%s\n' "$NIEZNANE" | cut -c1-120 | sed 's/^/  linia /' >&2

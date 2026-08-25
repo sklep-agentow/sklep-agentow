@@ -1,5 +1,5 @@
 #!/bin/bash
-# k7-koniec.sh — KONIEC AUDYTU K7 OGŁASZA SKRYPT, NIE UCZUCIE.                       WERSJA 1.3.0
+# k7-koniec.sh — KONIEC AUDYTU K7 OGŁASZA SKRYPT, NIE UCZUCIE.                       WERSJA 1.3.1
 #
 # PO CO: plan K7 v1 mówił „GO/NO-GO = trzy liczby liczone skryptem”, a skryptu nie było
 # (krytyka r1: nasz krytyk K1, C2 #15, C3 #11). Bez maszyny koniec rozstrzyga pamięć
@@ -39,7 +39,7 @@ FAIL=0
 pass() { printf '  PASS  %s\n' "$1"; }
 fail() { printf '  FAIL  %s\n' "$1"; FAIL=$((FAIL+1)); }
 
-echo "=== K7-KONIEC 1.3.0 — osiem warunków zamknięcia ==="
+echo "=== K7-KONIEC 1.3.1 — osiem warunków zamknięcia ==="
 
 # 1. MAPA: 0 ⬜ i (domyślnie) zamrożona z niezmienioną liczbą celów.
 #    TYLKO ODCZYT (--tylko-licz): bramka końca nie pisze do tego, co audytuje (recenzja #182 r2 D7).
@@ -72,9 +72,10 @@ GALAZ_MUT=""
 for ref in audyt/mutanty-sklep origin/audyt/mutanty-sklep; do git rev-parse --verify --quiet "$ref^{commit}" >/dev/null && { GALAZ_MUT="$ref"; break; }; done
 if [ -z "$GALAZ_MUT" ]; then
 	fail "2 kalibracja: brak gałęzi audyt/mutanty-sklep (ani lokalnej, ani origin/) — bank mutantów niedostępny"
-elif ! ROZL=$(git show "$GALAZ_MUT:audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP.md" 2>/dev/null | sed 's/\\|/\x01/g') || [ -z "$ROZL" ]; then
+elif ! ROZL_SUROWE=$(git show "$GALAZ_MUT:audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP.md" 2>/dev/null) || [ -z "$ROZL_SUROWE" ]; then
 	fail "2 kalibracja: gałąź $GALAZ_MUT jest, ale brak na niej audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP.md"
 else
+	ROZL=$(printf '%s\n' "$ROZL_SUROWE" | sed 's/\\|/\x01/g')  # osobno od git show: bez pipefail kod potoku = kod seda (recenzja #186 D3)
 	# wiersze werdyktów: | audytor | mutant | znalazl | falszywy | werdykt | proby |  → po split '|' proby = pole 7
 	# (recenzja #182 r2 W2: $NF czytał PUSTĄ kolumnę za końcowym „|" — warunek był martwy)
 	ILE=$(printf '%s\n' "$ROZL" | grep -cE '^\| L[1-5]|^\| L \|' )
@@ -116,9 +117,11 @@ if [ "$AN_ZLE_ID" -ne 0 ]; then fail "4 anomalie: $AN_ZLE_ID wiersz(y) bez ID AN
 PRZ_MIN=27
 PRZ_ILE=$(grep -cE '^- (⬜|✅|😖|🐞) ' "$PRZELOT")
 PRZ_NIE=$(grep -cE '^- ⬜ ' "$PRZELOT"); PRZ_DZIW=$(grep -cE '^- 😖 ' "$PRZELOT")
-PRZ_OCZ=$(grep -cE '^- ✅ ' "$PRZELOT"); PRZ_BUG=$(grep -cE '^- 🐞 ' "$PRZELOT")
-PRZ_LICZ="CELE: $PRZ_ILE · ✅ $PRZ_OCZ · 😖 $PRZ_DZIW · 🐞 $PRZ_BUG · ⬜ $PRZ_NIE"; PRZ_W_PLIKU=$(grep -m1 '^CELE: ' "$PRZELOT")
-if [ "$PRZ_W_PLIKU" != "$PRZ_LICZ" ]; then fail "5 przelot człowieka: LICZNIK w pliku nieaktualny — jest „$PRZ_W_PLIKU”, policzone „$PRZ_LICZ” (recenzja #184 r2 D2)"; elif [ "$PRZ_ILE" -lt "$PRZ_MIN" ]; then fail "5 przelot człowieka: tylko $PRZ_ILE punktów (wymagane ≥ $PRZ_MIN) — lista obcięta?"; elif [ "$PRZ_NIE" -eq 0 ] && [ "$PRZ_DZIW" -eq 0 ]; then pass "5 przelot człowieka: komplet ($PRZ_ILE punktów)"; else fail "5 przelot człowieka: $PRZ_NIE ⬜ + $PRZ_DZIW 😖 z $PRZ_ILE"; fi
+# LICZNIK przelotu liczy TEN SAM skrypt, który wolno go pisać: mapa-licznik.sh --przelot (recenzja #186 W2)
+PRZ_BLAD=$(bash narzedzia-qa/mapa-licznik.sh "$PRZELOT" --przelot --tylko-licz 2>&1 >/dev/null); PRZ_KOD=$?
+PRZ_LICZ=$(bash narzedzia-qa/mapa-licznik.sh "$PRZELOT" --przelot --tylko-licz 2>/dev/null | tail -1); PRZ_W_PLIKU=$(grep -m1 '^CELE: ' "$PRZELOT")
+if [ "$PRZ_KOD" -ne 0 ]; then fail "5 przelot człowieka: nieznany znacznik (mapa-licznik --przelot EXIT=$PRZ_KOD)"; printf '%s\n' "$PRZ_BLAD" | sed 's/^/    /'
+elif [ "$PRZ_W_PLIKU" != "$PRZ_LICZ" ]; then fail "5 przelot człowieka: LICZNIK w pliku nieaktualny — jest „$PRZ_W_PLIKU”, policzone „$PRZ_LICZ” (recenzja #184 r2 D2)"; elif [ "$PRZ_ILE" -lt "$PRZ_MIN" ]; then fail "5 przelot człowieka: tylko $PRZ_ILE punktów (wymagane ≥ $PRZ_MIN) — lista obcięta?"; elif [ "$PRZ_NIE" -eq 0 ] && [ "$PRZ_DZIW" -eq 0 ]; then pass "5 przelot człowieka: komplet ($PRZ_ILE punktów)"; else fail "5 przelot człowieka: $PRZ_NIE ⬜ + $PRZ_DZIW 😖 z $PRZ_ILE"; fi
 
 # 6. PRÓBY KONTROLNE STRAŻNIKÓW: log z jednego przebiegu, 26+ pozycji, wszystkie EXIT=0
 if [ -f "$PROBY" ]; then

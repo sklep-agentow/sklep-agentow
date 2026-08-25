@@ -14,9 +14,15 @@ wstecz nie dopisuję, bo nie umiałbym jej odtworzyć uczciwie. Ich zmiany od te
 pory lądują tutaj.
 
 ## [Niewydane]
+- **`mapa-licznik.sh` 1.1.1 → 1.2.0 — `--przelot`:** zestaw statusów przelotu człowieka (⬜ ✅ 😖 🐞) i jego format LICZNIKA;
+  jedyne narzędzie uprawnione do `CELE:` w `PRZELOT-CZLOWIEKA-SKLEP.md` (recenzja #186 W2: D2 wymagał LICZNIKA, którego nic nie utrzymywało).
+- **`k7-koniec.sh` 1.3.0 → 1.3.1** — warunek 5 liczy przelot przez `mapa-licznik.sh --przelot --tylko-licz` (nieznany znacznik = FAIL);
+  `git show` rozliczenia osobno od `sed` (bez `pipefail` kod potoku był kodem seda — martwy człon, #186 D3).
+- **`k7-koniec-proba-kontrolna.sh` 1.3.0 → 1.3.1 — 31 przypadków**: `\|` w komórce rozliczenia + `proby=3` → NO-GO (bez osłony pola
+  przesuwają się i bramka ŁAGODNIEJE — dlatego przypadek łączy `\|` z licznikiem, inaczej przechodziłby zawsze; #186 W1), przelot z ❓.
 - **`k7-koniec.sh` 1.2.0 → 1.3.0 — recenzja #184 r2:** (W1) warunek 2 rozstrzyga gałąź mutantów z FALLBACKIEM `origin/` i rozróżnia
   „brak gałęzi” od „brak pliku” (świeży klon dawał fałszywy FAIL — klasa W8); (W2) `\|`→`\x01` także w tabeli rozliczenia (bliźniak
-  W6, `grep -rn "awk -F'|'"` → wszystkie 4 miejsca za osłoną); (W4) warunek 8 egzekwuje słownik `werdykt` i `rodzaj_skutku` WPROST ze
+  W6, `grep -rn "awk -F'|'"` → wszystkie 6 miejsc za osłoną (ROZL, WIERSZE, AN_WIERSZE + 3 na `$w` z WIERSZE)); (W4) warunek 8 egzekwuje słownik `werdykt` i `rodzaj_skutku` WPROST ze
   `SCHEMAT-RAPORTU.json`; (D2) warunek 5 porównuje LICZNIK przelotu z policzonym, jak 1a dla mapy.
 - **`k7-koniec-proba-kontrolna.sh` 1.2.0 → 1.3.0 — 29 przypadków** (+ gałąź tylko jako `origin/` → GO, brak gałęzi → NO-GO,
   LICZNIK przelotu nieaktualny, werdykt spoza słownika, `rodzaj_skutku` spoza słownika); atrapa z `SCHEMAT-RAPORTU.json` i LICZNIKIEM przelotu.

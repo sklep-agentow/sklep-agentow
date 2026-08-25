@@ -1,5 +1,5 @@
 #!/bin/bash
-# k7-koniec-proba-kontrolna.sh — dowód, że k7-koniec.sh nie jest ozdobą.                 WERSJA 1.3.0
+# k7-koniec-proba-kontrolna.sh — dowód, że k7-koniec.sh nie jest ozdobą.                 WERSJA 1.3.1
 #
 # Buduje w /tmp PEŁNĄ, ZIELONĄ atrapę stanu końca K7 (mapa, rejestr, przelot, log prób,
 # paczka + sha, repo git z tagiem i gałęzią mutantów, raport JSON) i sprawdza, że skrypt
@@ -51,6 +51,8 @@ nic()            { :; }
 psuj_mapa()      { sed -i 's/^- ✅ L1-01/- ⬜ L1-01/' "$1/audyt/sklep/material/06-mapa-polowania.md"; }
 psuj_zamroz()    { printf -- '- ⬜ L9-99 · dopisany po zamrożeniu ·\n' >> "$1/audyt/sklep/material/06-mapa-polowania.md"; sed -i 's/^- ⬜ L9-99/- ✅ L9-99/' "$1/audyt/sklep/material/06-mapa-polowania.md"; }
 psuj_kalibracja(){ ( cd "$1" && git checkout -q audyt/mutanty-sklep && sed -i 's/| L3 | M3 | tak | nie | PASS | 2 |/| L3 | M3 | nie | nie | FAIL | 2 |/' audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP.md && git commit -qam zle && git checkout -q - ); }
+psuj_kal_potok() { ( cd "$1" && git checkout -q audyt/mutanty-sklep && sed -i 's/| L3 | M3 | tak | nie | PASS | 2 |/| L3 | M3 \\| M3b | tak | nie | PASS | 3 |/' audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP.md && git commit -qam zle && git checkout -q - ); }
+psuj_przelot_znak() { sed -i 's/^- ✅ B1/- ❓ B1/' "$1/audyt/sklep/PRZELOT-CZLOWIEKA-SKLEP.md"; }
 psuj_kal_proby() { ( cd "$1" && git checkout -q audyt/mutanty-sklep && sed -i 's/| L3 | M3 | tak | nie | PASS | 2 |/| L3 | M3 | tak | nie | PASS | 3 |/' audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP.md && git commit -qam zle && git checkout -q - ); }
 psuj_znacznik()  { sed -i 's/^- ✅ L1-01/- ❓ L1-01/' "$1/audyt/sklep/material/06-mapa-polowania.md"; }
 psuj_licznik()   { sed -i 's/^CELE: .*/CELE: 0 · ✅ 0 · 🐞 0 · ⚠️ 0 · ⛔ 0 · ⬜ 0/' "$1/audyt/sklep/material/06-mapa-polowania.md"; }
@@ -90,6 +92,8 @@ sprawdz "2 brak gałęzi mutantów w ogóle"                  1 psuj_galaz_brak 
 sprawdz "5 LICZNIK przelotu nieaktualny (D2)"             1 psuj_przelot_licz  "5 przelot człowieka: LICZNIK"
 sprawdz "8 werdykt spoza słownika schematu (W4)"          1 psuj_raport_enum   "SPOZA słownika"
 sprawdz "8 rodzaj_skutku spoza słownika (W4)"             1 psuj_raport_skutek "rodzaj_skutku SPOZA"
+sprawdz "2 proby=3 w wierszu z \\| w komórce (W2 #186)"      1 psuj_kal_potok     "proby>2=1"
+sprawdz "5 przelot z nieznanym znacznikiem ❓"             1 psuj_przelot_znak  "5 przelot człowieka: nieznany znacznik"
 sprawdz "2 soczewka FAIL (proby=2 — tylko werdykt)"       1 psuj_kalibracja  "2 kalibracja"
 sprawdz "2 proby=3 przy PASS (W2 — tylko licznik prob)"   1 psuj_kal_proby   "proby>2=1"
 sprawdz "3b znalezisko DO WERYFIKACJI"                    1 psuj_rejestr     "3b rejestr"
