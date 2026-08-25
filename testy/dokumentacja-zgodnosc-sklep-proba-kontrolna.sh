@@ -37,7 +37,7 @@ sprawdz() { # sprawdz <opis> <oczekiwany-exit> <funkcja-psujaca> <fragmenty-wyjs
 	printf '  OK   %-56s (EXIT=%s, rozjazdow: %s)\n' "$opis" "$kod" "$n"
 }
 # licznik przypadków (także tych z BLAD): każde wywołanie sprawdz = 1 przypadek
-sprawdz_() { PRZYPADKI=$((PRZYPADKI+1)); sprawdz "$@"; ROZJAZDY=$((ROZJAZDY+${5:-1})); }
+sprawdz_() { PRZYPADKI=$((PRZYPADKI+1)); sprawdz "$@"; [ "$2" -eq 1 ] && ROZJAZDY=$((ROZJAZDY+${5:-1})); return 0; }
 
 nic()               { :; }
 psuj_stable_tag()   { sed -i 's/^Stable tag: .*/Stable tag: 0.0.1/' "$1/$W/readme.txt"; }
@@ -63,6 +63,6 @@ sprawdz_ "D: CHANGELOG bez wpisu bieżącej wersji"             1 psuj_changelog
 sprawdz_ "D: DOK-TECH z inną wersją wtyczki"                  1 psuj_dok_tech     "DOK-TECH: Wersja wtyczki"
 sprawdz_ "E: readme obiecuje INSTRUKCJA-INSTALACJI, pliku brak" 1 psuj_brak_pliku "INSTRUKCJA-INSTALACJI.md"
 echo
-echo "PRZYPADKÓW: $((PRZYPADKI-BLEDY))/$PRZYPADKI OK · rozjazdów podłożonych łącznie: $((ROZJAZDY-1))"
+echo "PRZYPADKÓW: $((PRZYPADKI-BLEDY))/$PRZYPADKI OK · rozjazdów podłożonych łącznie: $ROZJAZDY"
 if [ "$BLEDY" -eq 0 ]; then echo "BRAMKA DOK=KOD SKLEPU ROZPOZNAJE KAZDY PODLOZONY ROZJAZD — i przepuszcza czysta kopie"; exit 0; fi
 echo "BRAMKA DOK=KOD SKLEPU POMYLILA SIE $BLEDY RAZ(Y)"; exit 1

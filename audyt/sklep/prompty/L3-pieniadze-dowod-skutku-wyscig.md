@@ -9,7 +9,8 @@ zbiegną się w czasie albo coś po drodze pada.** Rozróżnienie, które jest s
    mówi, czy chodzi), ⛔ „STAN ZASTANY — nie zgłaszaj” i „Rzeczy żyjące w PROCEDURZE”.
 2. `03-zalozenia.md` — zwłaszcza D5/D24 (świadomy kompromis: pad tuż po `wp_mail` = możliwy drugi mail; jeden silnik
    domykania dla webhooka i crona) — to NIE są znaleziska.
-3. `04-goldeny.md` — scenariusze zakupu z oczekiwanym stanem tabel; `05-reguly-branzy.md` — Stripe: kolejność zdarzeń,
+3. `04-goldeny.md` — 20 goldenów = reguł kontraktowych (naruszenie = znalezisko z numerem goldena; scenariusze budujesz sam
+   z sekcji B–D niżej); `05-reguly-branzy.md` — Stripe: kolejność zdarzeń,
    `payment_status`, retry ≥ 400; WP-Cron wymaga ruchu (⚠️ tam, gdzie `05` mówi „brak źródła w materiale”, cytujesz oficjalne
    docs Stripe/WP — nie zgadujesz).
 4. Klasy: `audyt/SCIAGA-EGZAMINATORA.md` (Twoje: 6 dowód skutku, 7 wyścig, 10 dwa silniki), `audyt/boty/SLEPE-PLAMY-NASZEGO-AUDYTU.md`.
@@ -34,8 +35,8 @@ D. PO SPRZEDAŻY: resend — stary link 403, nowy 200 (oba WYKONAJ); snapshot pr
 Każdy scenariusz = komenda + SUROWE wyjście + stan tabel PRZED/PO (`stos.sh wiersze-gdzie`). „Wygląda poprawnie” nie jest wynikiem.
 
 ## Werdykty i format (JSON, WYŁĄCZNIE — schemat `audyt/sklep/prompty/SCHEMAT-RAPORTU.json`)
-Znalezisko: `dowody[]` (plik:linia:cytat) + `mechanizm` + `skutek` z `rodzaj_skutku` **`zaobserwowany`** (masz wyjście) albo
-**`wywnioskowany`** (tylko czytanie — wtedy waga spada o stopień i piszesz, czego nie udało się wymusić) + `kroki_reprodukcji`
+Znalezisko: `dowody[]` (plik:linia:cytat) + `mechanizm` + `skutek` z `rodzaj_skutku` **`zaobserwowany`** (masz wyjście) / **`wyliczony`** (z liczb, np. z tabel) albo
+**`przypuszczalny`** (tylko czytanie — wtedy waga spada o stopień i piszesz, czego nie udało się wymusić) + `kroki_reprodukcji`
 + `test_padajacy`. Waga: pieniądze pobrane, produkt nie dostarczony i brak sygnału dla właściciela = KRYTYCZNA · podwójne
 dostarczenie / martwy link naprawialny z panelu = DUŻA · brak wpisu w dzienniku przy awarii = DUŻA. `BRAK` ma `proba_kontrolna`.
 Raport kończy sekcja **CZEGO NIE BYŁO NA MOJEJ LIŚCIE** (obowiązkowa). Podaj `commit_head` (z `audyt/sklep/ZAMROZENIE.md`).

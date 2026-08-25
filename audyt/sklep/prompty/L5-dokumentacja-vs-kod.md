@@ -17,7 +17,7 @@ przez koordynatorkę + repo jako źródło grepów. Inwentarz punktów wejścia:
 1. Wypisz z dokumentów WSZYSTKIE liczby i OBIETNICE (zdania „robi X", „po Y dniach", „nigdy Z") — zestawienie JEDNYM grepem
    po `[0-9]+` i po czasownikach, ZANIM otworzysz kod. To materiał, nie znalezisko.
 2. Dla każdej pozycji: miejsce w kodzie (plik:linia) i werdykt: `ZGODNE` / `ROZJAZD` (z obiema stronami cytowanymi) /
-   `NIE SPRAWDZIŁEM` / `NIE DA SIĘ SPRAWDZIĆ CZYTANIEM` (wtedy WYKONAJ: komenda + wyjście).
+   `NIE SPRAWDZIŁEM` / `NIE DA SIĘ SPRAWDZIĆ` (słownik ze schematu; wtedy WYKONAJ: komenda + wyjście).
 3. KIERUNEK ODWROTNY: weź inwentarz punktów wejścia z `02-fakty` i listę pozycji menu → dla każdego: gdzie w dokumentacji
    właściciela jest opisany? Brak opisu funkcji, za którą właściciel płaci = ZNALEZISKO (klasa „dokumentacja milczy").
 4. Komendy z INSTRUKCJI WPISUJESZ w terminal (docker/wp-cli), nie czytasz. Etykiety menu porównujesz z `includes/admin.php`.
