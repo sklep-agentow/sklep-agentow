@@ -200,7 +200,7 @@ ZAMKNIETE/OBALONE/POZA K7, 0 `DO WERYFIKACJI`, `naprawa_proby ≤ 2`, każdy ZAM
 ≥ 26 pozycji, wszystkie EXIT 0 (log); 7) `ZAMROZENIE.md`: sha256 zipa == plik, `git rev-parse k7-zamrozenie^{commit}` == COMMIT;
 8) parser raportów JSON: `commit_head` == COMMIT, 0 werdyktów SPEŁNIONE/ZGODNE bez `plik:linia`, 0 BRAK bez `proba_kontrolna`,
 0 znalezisk bez `kroki_reprodukcji`, sekcja `czego_nie_bylo_na_mojej_liscie` niepusta, `werdykt` i `rodzaj_skutku` ze słownika
-`SCHEMAT-RAPORTU.json`. Wynik = 8 linii PASS/FAIL + trzy liczby dla właściciela. (Spec = to, co skrypt 1.3.1 mierzy; #186 D2.)
+`SCHEMAT-RAPORTU.json`. Wynik = 13 linii PASS/FAIL (8 warunków, podpunkty 1a/1b/3a–3d/7a/7b) + trzy liczby dla właściciela. (Spec = to, co skrypt 1.3.2 mierzy.)
 
 **8c. Kolejność wg budżetu (25.08, reset limitu w niedzielę 30.08, zostało ~38 %):** środa 26 — kroki 0–2 · czwartek 27 —
 runda A (7 soczewek, po 3–4 naraz) · piątek 28 — weryfikacja A + rejestr + naprawy KRYTYCZNYCH + strażniki · sobota 29 —

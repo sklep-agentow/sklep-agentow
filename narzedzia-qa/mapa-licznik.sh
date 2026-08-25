@@ -1,5 +1,5 @@
 #!/bin/bash
-# mapa-licznik.sh — liczy cele mapy polowania i PRZEPISUJE wiersz LICZNIK.        WERSJA 1.2.0
+# mapa-licznik.sh — liczy cele mapy polowania i PRZEPISUJE wiersz LICZNIK.        WERSJA 1.2.1
 #
 # PO CO: mapa z licznikiem „N zamkniętych" była przy botach martwa — nikt jej nie
 # aktualizował (lekcja jak-audytowac §☑️: odhacza KOORDYNATOR, przelicza SKRYPT,
@@ -18,7 +18,8 @@
 #   EXIT 1 (KAŻDY tryb) = wiersz „- ” z NIEZNANYM znacznikiem (np. ❓): taki cel znikałby z licznika bez
 #   śladu — skrypt wypisuje numery linii i nic nie przepisuje.
 #
-# Cel = wiersz zaczynający się od „- ” + jeden ze statusów: ⬜ ✅ 🐞 ⚠️ ⛔. Każdy INNY wiersz „- ” = błąd.
+# Cel = wiersz zaczynający się od „- ” + status z ZESTAWU: mapa (domyślnie) ⬜ ✅ 🐞 ⚠️ ⛔ · przelot (`--przelot`) ⬜ ✅ 😖 🐞.
+# Każdy INNY wiersz „- ” (także wcięty) = błąd, EXIT 1.
 set -u
 PLIK="${1:-}"; shift || true; TRYB=""; SHA=""; ZESTAW=mapa
 while [ $# -gt 0 ]; do case "$1" in --przelot) ZESTAW=przelot ;; --zamroz) TRYB=--zamroz; SHA="${2:-}"; [ $# -gt 1 ] && shift ;; --*) TRYB="$1" ;; *) echo "MAPA-LICZNIK: nieznany argument $1" >&2; exit 2 ;; esac; shift; done
@@ -36,7 +37,7 @@ else
 	NOWY="CELE: $N_CELE · ✅ $N_OK · 🐞 $N_BUG · ⚠️ $N_AN · ⛔ $N_POZA · ⬜ $N_NIE"
 fi
 
-# Nieznany znacznik: wiersz „- coś", gdzie „coś" nie jest jednym z pięciu statusów. Bez tej kontroli
+# Nieznany znacznik: wiersz „- coś", gdzie „coś" nie jest statusem AKTYWNEGO zestawu ($STATUSY). Bez tej kontroli
 # cel oznaczony np. ❓ albo literówką po prostu wypadał z sumy — mapa „domykała się" przez zgubę.
 # (także WCIĘTY punkt listy `  - ⬜ …` — markdown nadal go renderuje, a licznik by go zgubił; recenzja #184 D1)
 NIEZNANE=$(grep -nE '^[[:space:]]*- ' "$PLIK" | grep -vE "^[0-9]+:- ($STATUSY) " || true)

@@ -14,6 +14,11 @@ wstecz nie dopisuję, bo nie umiałbym jej odtworzyć uczciwie. Ich zmiany od te
 pory lądują tutaj.
 
 ## [Niewydane]
+- **`k7-stos-rundy.sh` 1.0.0 (NOWE) — czysty stos pod rundę K7:** `probny_wp` na `wordpress:6.7-php8.1-apache` (PLAN-K7 §9) z PODANYM zipem
+  (runda A = paczka z mutantami, B = zamrożona), permalinki, `blog_public=0`, konta `audytor-admin`/`audytor-sub` z sekretów, dowody:
+  sha256 zipa, wersja, wzorzec w kodzie kontenera, debug.log 0 notice, HTTP 200. Stos ZOSTAJE. Zmierzone 26.08: EXIT 0, WP 6.7.2 / PHP 8.1.32.
+- **`k7-koniec.sh` 1.3.1 → 1.3.2** — komunikat warunku 5 przy nieaktualnym LICZNIKU podaje komendę naprawczą (`mapa-licznik.sh … --przelot`), jak 1a (#186 r2 D1).
+- Dokumenty (#186 r2 D1–D4): przelot wie, kto liczy jego LICZNIK; PLAN §8b „13 linii PASS/FAIL (8 warunków)”; nagłówek `mapa-licznik.sh` opisuje oba zestawy statusów; CHANGELOG bez liczby trafień grepa.
 - **`mapa-licznik.sh` 1.1.1 → 1.2.0 — `--przelot`:** zestaw statusów przelotu człowieka (⬜ ✅ 😖 🐞) i jego format LICZNIKA;
   jedyne narzędzie uprawnione do `CELE:` w `PRZELOT-CZLOWIEKA-SKLEP.md` (recenzja #186 W2: D2 wymagał LICZNIKA, którego nic nie utrzymywało).
 - **`k7-koniec.sh` 1.3.0 → 1.3.1** — warunek 5 liczy przelot przez `mapa-licznik.sh --przelot --tylko-licz` (nieznany znacznik = FAIL);
@@ -22,7 +27,7 @@ pory lądują tutaj.
   przesuwają się i bramka ŁAGODNIEJE — dlatego przypadek łączy `\|` z licznikiem, inaczej przechodziłby zawsze; #186 W1), przelot z ❓.
 - **`k7-koniec.sh` 1.2.0 → 1.3.0 — recenzja #184 r2:** (W1) warunek 2 rozstrzyga gałąź mutantów z FALLBACKIEM `origin/` i rozróżnia
   „brak gałęzi” od „brak pliku” (świeży klon dawał fałszywy FAIL — klasa W8); (W2) `\|`→`\x01` także w tabeli rozliczenia (bliźniak
-  W6, `grep -rn "awk -F'|'"` → wszystkie 6 miejsc za osłoną (ROZL, WIERSZE, AN_WIERSZE + 3 na `$w` z WIERSZE)); (W4) warunek 8 egzekwuje słownik `werdykt` i `rodzaj_skutku` WPROST ze
+  W6, każde wejście `awk -F'|'` w skrypcie czyta dane, które przeszły przez `sed 's/\\|/\x01/g'` — ROZL, WIERSZE, AN_WIERSZE i wiersze `$w` z WIERSZE; bez liczby, bo grep liczy też komentarze); (W4) warunek 8 egzekwuje słownik `werdykt` i `rodzaj_skutku` WPROST ze
   `SCHEMAT-RAPORTU.json`; (D2) warunek 5 porównuje LICZNIK przelotu z policzonym, jak 1a dla mapy.
 - **`k7-koniec-proba-kontrolna.sh` 1.2.0 → 1.3.0 — 29 przypadków** (+ gałąź tylko jako `origin/` → GO, brak gałęzi → NO-GO,
   LICZNIK przelotu nieaktualny, werdykt spoza słownika, `rodzaj_skutku` spoza słownika); atrapa z `SCHEMAT-RAPORTU.json` i LICZNIKIEM przelotu.

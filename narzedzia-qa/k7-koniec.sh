@@ -1,5 +1,5 @@
 #!/bin/bash
-# k7-koniec.sh — KONIEC AUDYTU K7 OGŁASZA SKRYPT, NIE UCZUCIE.                       WERSJA 1.3.1
+# k7-koniec.sh — KONIEC AUDYTU K7 OGŁASZA SKRYPT, NIE UCZUCIE.                       WERSJA 1.3.2
 #
 # PO CO: plan K7 v1 mówił „GO/NO-GO = trzy liczby liczone skryptem”, a skryptu nie było
 # (krytyka r1: nasz krytyk K1, C2 #15, C3 #11). Bez maszyny koniec rozstrzyga pamięć
@@ -39,7 +39,7 @@ FAIL=0
 pass() { printf '  PASS  %s\n' "$1"; }
 fail() { printf '  FAIL  %s\n' "$1"; FAIL=$((FAIL+1)); }
 
-echo "=== K7-KONIEC 1.3.1 — osiem warunków zamknięcia ==="
+echo "=== K7-KONIEC 1.3.2 — osiem warunków zamknięcia ==="
 
 # 1. MAPA: 0 ⬜ i (domyślnie) zamrożona z niezmienioną liczbą celów.
 #    TYLKO ODCZYT (--tylko-licz): bramka końca nie pisze do tego, co audytuje (recenzja #182 r2 D7).
@@ -121,7 +121,7 @@ PRZ_NIE=$(grep -cE '^- ⬜ ' "$PRZELOT"); PRZ_DZIW=$(grep -cE '^- 😖 ' "$PRZEL
 PRZ_BLAD=$(bash narzedzia-qa/mapa-licznik.sh "$PRZELOT" --przelot --tylko-licz 2>&1 >/dev/null); PRZ_KOD=$?
 PRZ_LICZ=$(bash narzedzia-qa/mapa-licznik.sh "$PRZELOT" --przelot --tylko-licz 2>/dev/null | tail -1); PRZ_W_PLIKU=$(grep -m1 '^CELE: ' "$PRZELOT")
 if [ "$PRZ_KOD" -ne 0 ]; then fail "5 przelot człowieka: nieznany znacznik (mapa-licznik --przelot EXIT=$PRZ_KOD)"; printf '%s\n' "$PRZ_BLAD" | sed 's/^/    /'
-elif [ "$PRZ_W_PLIKU" != "$PRZ_LICZ" ]; then fail "5 przelot człowieka: LICZNIK w pliku nieaktualny — jest „$PRZ_W_PLIKU”, policzone „$PRZ_LICZ” (recenzja #184 r2 D2)"; elif [ "$PRZ_ILE" -lt "$PRZ_MIN" ]; then fail "5 przelot człowieka: tylko $PRZ_ILE punktów (wymagane ≥ $PRZ_MIN) — lista obcięta?"; elif [ "$PRZ_NIE" -eq 0 ] && [ "$PRZ_DZIW" -eq 0 ]; then pass "5 przelot człowieka: komplet ($PRZ_ILE punktów)"; else fail "5 przelot człowieka: $PRZ_NIE ⬜ + $PRZ_DZIW 😖 z $PRZ_ILE"; fi
+elif [ "$PRZ_W_PLIKU" != "$PRZ_LICZ" ]; then fail "5 przelot człowieka: LICZNIK w pliku nieaktualny — jest „$PRZ_W_PLIKU”, policzone „$PRZ_LICZ” (uruchom: bash narzedzia-qa/mapa-licznik.sh $PRZELOT --przelot)"; elif [ "$PRZ_ILE" -lt "$PRZ_MIN" ]; then fail "5 przelot człowieka: tylko $PRZ_ILE punktów (wymagane ≥ $PRZ_MIN) — lista obcięta?"; elif [ "$PRZ_NIE" -eq 0 ] && [ "$PRZ_DZIW" -eq 0 ]; then pass "5 przelot człowieka: komplet ($PRZ_ILE punktów)"; else fail "5 przelot człowieka: $PRZ_NIE ⬜ + $PRZ_DZIW 😖 z $PRZ_ILE"; fi
 
 # 6. PRÓBY KONTROLNE STRAŻNIKÓW: log z jednego przebiegu, 26+ pozycji, wszystkie EXIT=0
 if [ -f "$PROBY" ]; then
