@@ -14,6 +14,17 @@ wstecz nie dopisuję, bo nie umiałbym jej odtworzyć uczciwie. Ich zmiany od te
 pory lądują tutaj.
 
 ## [Niewydane]
+- **`k7-koniec.sh` 1.1.0 → 1.2.0 — trzy klasy z recenzji #184 r1:** (W4) warunek 5 ma PODŁOGĘ ≥ 27 punktów przelotu i liczy 😖
+  jako niedomknięte (pusty/obcięty plik przechodził jako „komplet”); (W5) warunek 4 czyta CAŁĄ tabelę sekcji `## Anomalie`,
+  wiersz bez ID `AN-NNN` = FAIL (dotąd wiersz z innym ID był niewidzialny); (W6) `\|` w komórkach rejestru zamieniane na `\x01`
+  przed splitem `awk -F'|'` — potok w kolumnie dowodu nie przesuwa już statusu/prób (klasa bliźniacza W2).
+- **`k7-koniec-proba-kontrolna.sh` 1.1.0 → 1.2.0 — 24 przypadki** (+ przelot obcięty, przelot z 😖, anomalia z ID bez `AN-`,
+  wcięty punkt mapy, potok `\|` w dowodzie → nadal GO); atrapa rejestru z nagłówkami `## Znaleziska`/`## Anomalie` jak produkcja
+  (bez nich nowy parser sekcji nie widział tabeli — wada atrapy złapana przez próbę).
+- **`mapa-licznik.sh` 1.1.0 → 1.1.1** — (D1) wcięty punkt `  - ⬜` = nieznany znacznik (EXIT 1), nie cicha zguba; (D2) walidacja
+  `--zamroz <sha>` PRZED zapisem LICZNIKA.
+- **`testy/dokumentacja-zgodnosc-sklep-proba-kontrolna.sh`** — jawne podsumowanie „PRZYPADKÓW: N/N OK · rozjazdów M” (W2:
+  „12/12” w trzech miejscach było sumą rozjazdów, nie przypadków — poprawione na 10/10 przypadków, 12 rozjazdów).
 - **`k7-koniec.sh` 1.0.0 → 1.1.0 — trzy naprawy po recenzji #182 r2:** (W2) warunek 2 „proby ≤ 2” był MARTWY — `$NF` czytał pustą
   kolumnę za końcowym `|`; teraz pole 7 po indeksie. (W8) 7b porównuje `k7-zamrozenie^{commit}` — tag jest adnotowany, goły
   `rev-parse` dawał sha obiektu tagu = fałszywy FAIL na prawdziwym stanie. (D7) bramka NIE PISZE do audytowanej mapy: woła
@@ -27,7 +38,7 @@ pory lądują tutaj.
   odpowiada) — strażnik dla `stos.sh` 1.3.1. Powód: recenzja #182 r2 D5.
 - **`testy/dokumentacja-zgodnosc-sklep.sh` — sekcja C w obie strony z licznikiem** (W3: etykiety z KODU, nie z zaszytej listy; nowa
   pozycja menu bez readme i pozycja readme bez kodu padają) · **NOWA `testy/dokumentacja-zgodnosc-sklep-proba-kontrolna.sh`** (W4:
-  12 przypadków, jawna liczba rozjazdów) · wpięta do `.github/RECENZENT-BRIEFING.md` i allowlisty recenzenta (W1).
+  10 przypadków = 12 rozjazdów, jawna liczba rozjazdów na przypadek, podsumowanie „N/N przypadków”) · wpięta do `.github/RECENZENT-BRIEFING.md` i allowlisty recenzenta (W1).
 - **`slady-wewnetrzne.sh` 1.1.1 → 1.2.0 — numer zgłoszenia BEZ słowa „PR"** (po myślniku/nawiasie/„nr"/„zgłoszenie"/„uwaga": `— #170)`), bez łapania kolorów `#000`; zmierzone na 3 wtyczkach: 1 trafienie właściwe, 0 fałszywych. Próba kontrolna bramki paczki dostała przypadek „goły numer". Powód: recenzja #182 WAŻNA 1.
 - **`stos.sh` 1.3.0 → 1.3.1 — okno widzi tabele sklepu** (`wp_sklepag_` w białej liście i w filtrze `tabele`); dotąd recenzent i audytor nie mogli zajrzeć do żadnej tabeli sklepu (recenzja #182 DROBNA 6, CO-WISI).
 - **`k7-koniec.sh` 1.0.0 (NOWE) — koniec audytu K7 ogłasza skrypt, nie uczucie.** Osiem warunków zamknięcia

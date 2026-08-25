@@ -11,7 +11,7 @@ set -u
 KORZEN="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 W=wtyczki/sklep-agentow
 BAZA="$(mktemp -d)"; trap 'rm -rf "$BAZA"' EXIT
-BLEDY=0
+BLEDY=0; PRZYPADKI=0; ROZJAZDY=0
 WER=$(sed -n 's/^ \* Version:[[:space:]]*\([0-9.]*\).*/\1/p' "$KORZEN/$W/sklep-agentow.php" | head -1)
 
 zbuduj_czysty() {
@@ -36,6 +36,8 @@ sprawdz() { # sprawdz <opis> <oczekiwany-exit> <funkcja-psujaca> <fragmenty-wyjs
 	if [ "$ocz" -eq 1 ] && [ "$n" -ne "$ile" ]; then printf '  BLAD %-56s (psuje 1 rzecz, oczekiwano ROZJAZDOW: %s, jest %s)\n' "$opis" "$ile" "$n"; printf '%s\n' "$wy" | grep ROZJAZD | sed 's/^/         /'; BLEDY=$((BLEDY+1)); return; fi
 	printf '  OK   %-56s (EXIT=%s, rozjazdow: %s)\n' "$opis" "$kod" "$n"
 }
+# licznik przypadków (także tych z BLAD): każde wywołanie sprawdz = 1 przypadek
+sprawdz_() { PRZYPADKI=$((PRZYPADKI+1)); sprawdz "$@"; ROZJAZDY=$((ROZJAZDY+${5:-1})); }
 
 nic()               { :; }
 psuj_stable_tag()   { sed -i 's/^Stable tag: .*/Stable tag: 0.0.1/' "$1/$W/readme.txt"; }
@@ -49,17 +51,18 @@ psuj_dok_tech()     { sed -i 's/\(Wersja wtyczki:[* ]*\)[0-9.]*/\10.0.1/' "$1/$W
 psuj_brak_pliku()   { rm -f "$1/dokumentacja/INSTRUKCJA-INSTALACJI.md"; }
 
 echo "=== KONTROLA ODWROTNA: czysta kopia = 0 rozjazdow ==="
-sprawdz "czysta kopia repo → EXIT 0"                         0 nic               "0 rozjazdów"
+sprawdz_ "czysta kopia repo → EXIT 0"                         0 nic               "0 rozjazdów"
 echo; echo "=== KAZDY ROZJAZD PODLOZONY OSOBNO → EXIT 1, nazwa pozycji, DOKLADNIE 1 rozjazd ==="
-sprawdz "A: Stable tag ≠ Version"                            1 psuj_stable_tag   "Stable tag == Version"
-sprawdz "A: licencja w readme nie GPLv2"                     1 psuj_licencja     "License (forma readme WP)"
-sprawdz "B: readme mówi 48 godzin, stała mówi 72"            1 psuj_godziny      "link ważny N godzin"
-sprawdz "C: etykieta menu w readme przemianowana"            1 psuj_etykieta_rdm "menu 'Opinie'|readme 'Recenzje'" 2
-sprawdz "C: NOWA pozycja menu w admin.php bez readme (W3)"   1 psuj_menu_kod     "menu 'Raporty'|liczba pozycji menu" 2
-sprawdz "C: pozycja w readme, której nie ma w kodzie"        1 psuj_menu_readme  "readme 'Kupony'|liczba pozycji menu" 2
-sprawdz "D: CHANGELOG bez wpisu bieżącej wersji"             1 psuj_changelog    "CHANGELOG: wpis"
-sprawdz "D: DOK-TECH z inną wersją wtyczki"                  1 psuj_dok_tech     "DOK-TECH: Wersja wtyczki"
-sprawdz "E: readme obiecuje INSTRUKCJA-INSTALACJI, pliku brak" 1 psuj_brak_pliku "INSTRUKCJA-INSTALACJI.md"
+sprawdz_ "A: Stable tag ≠ Version"                            1 psuj_stable_tag   "Stable tag == Version"
+sprawdz_ "A: licencja w readme nie GPLv2"                     1 psuj_licencja     "License (forma readme WP)"
+sprawdz_ "B: readme mówi 48 godzin, stała mówi 72"            1 psuj_godziny      "link ważny N godzin"
+sprawdz_ "C: etykieta menu w readme przemianowana"            1 psuj_etykieta_rdm "menu 'Opinie'|readme 'Recenzje'" 2
+sprawdz_ "C: NOWA pozycja menu w admin.php bez readme (W3)"   1 psuj_menu_kod     "menu 'Raporty'|liczba pozycji menu" 2
+sprawdz_ "C: pozycja w readme, której nie ma w kodzie"        1 psuj_menu_readme  "readme 'Kupony'|liczba pozycji menu" 2
+sprawdz_ "D: CHANGELOG bez wpisu bieżącej wersji"             1 psuj_changelog    "CHANGELOG: wpis"
+sprawdz_ "D: DOK-TECH z inną wersją wtyczki"                  1 psuj_dok_tech     "DOK-TECH: Wersja wtyczki"
+sprawdz_ "E: readme obiecuje INSTRUKCJA-INSTALACJI, pliku brak" 1 psuj_brak_pliku "INSTRUKCJA-INSTALACJI.md"
 echo
+echo "PRZYPADKÓW: $((PRZYPADKI-BLEDY))/$PRZYPADKI OK · rozjazdów podłożonych łącznie: $((ROZJAZDY-1))"
 if [ "$BLEDY" -eq 0 ]; then echo "BRAMKA DOK=KOD SKLEPU ROZPOZNAJE KAZDY PODLOZONY ROZJAZD — i przepuszcza czysta kopie"; exit 0; fi
 echo "BRAMKA DOK=KOD SKLEPU POMYLILA SIE $BLEDY RAZ(Y)"; exit 1

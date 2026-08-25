@@ -1,5 +1,5 @@
 #!/bin/bash
-# k7-koniec-proba-kontrolna.sh — dowód, że k7-koniec.sh nie jest ozdobą.                 WERSJA 1.1.0
+# k7-koniec-proba-kontrolna.sh — dowód, że k7-koniec.sh nie jest ozdobą.                 WERSJA 1.2.0
 #
 # Buduje w /tmp PEŁNĄ, ZIELONĄ atrapę stanu końca K7 (mapa, rejestr, przelot, log prób,
 # paczka + sha, repo git z tagiem i gałęzią mutantów, raport JSON) i sprawdza, że skrypt
@@ -31,8 +31,8 @@ zbuduj_czysty() {
 	( cd "$r" && bash narzedzia-qa/mapa-licznik.sh audyt/sklep/material/06-mapa-polowania.md --zamroz "$sha" >/dev/null )
 	# rejestr: jedno ZAMKNIETE ze strażnikiem, jedna anomalia WYJAŚNIONA
 	printf 'x' > "$r/testy/straznik-test.php"
-	printf '# rejestr\n| ID | soczewka | runda | waga | klasa | teza | dowod | repro | status | naprawa_proby | straznik | straznik_padl_na_starym | PR |\n|---|---|---|---|---|---|---|---|---|---|---|---|---|\n| SK-L2-001 | L2 | A %s | DUŻA | k | teza | d | r | ZAMKNIETE | 1 | testy/straznik-test.php | %s | 1 |\n\n| ID | soczewka | runda | opis | status | dowod |\n|---|---|---|---|---|---|\n| AN-001 | L3 | A | opis | WYJAŚNIONA | dowod |\n' "$sha" "$sha" > "$r/audyt/sklep/REJESTR-ZNALEZISK-SKLEP.md"
-	printf '# przelot\n- ✅ A1 · ok\n- ✅ B1 · ok\n' > "$r/audyt/sklep/PRZELOT-CZLOWIEKA-SKLEP.md"
+	printf '# rejestr\n\n## Znaleziska\n| ID | soczewka | runda | waga | klasa | teza | dowod | repro | status | naprawa_proby | straznik | straznik_padl_na_starym | PR |\n|---|---|---|---|---|---|---|---|---|---|---|---|---|\n| SK-L2-001 | L2 | A %s | DUŻA | k | teza | d | r | ZAMKNIETE | 1 | testy/straznik-test.php | %s | 1 |\n\n## Anomalie\n| ID | soczewka | runda | opis | status | dowod |\n|---|---|---|---|---|---|\n| AN-001 | L3 | A | opis | WYJAŚNIONA | dowod |\n' "$sha" "$sha" > "$r/audyt/sklep/REJESTR-ZNALEZISK-SKLEP.md"
+	{ printf '# przelot\n'; for i in $(seq 1 26); do printf -- '- ✅ A%s · ok\n' "$i"; done; printf -- '- ✅ B1 · ok\n'; } > "$r/audyt/sklep/PRZELOT-CZLOWIEKA-SKLEP.md"
 	for i in $(seq 1 26); do printf 'proba-%02d EXIT=0\n' "$i"; done > "$r/audyt/sklep/PROBY-KONTROLNE.log"
 	printf '{"soczewka":"L2","runda":"A","commit_head":"%s","werdykty":[{"cel":"L2-01","werdykt":"SPEŁNIONE","plik":"a.php","linia":3},{"cel":"L2-02","werdykt":"BRAK","proba_kontrolna":"grep -rn x . → 0; próba kontrolna: grep y → 3"}],"znaleziska":[{"teza":"t","waga":"DUŻA","typ":"USTERKA","dowody":[{"plik":"a.php","linia":3,"cytat":"c"}],"mechanizm":"m","skutek":"s","rodzaj_skutku":"zaobserwowany","kroki_reprodukcji":["curl …"],"test_padajacy":"testy/x.php: FAIL"}],"anomalie":[],"czego_nie_bylo_na_mojej_liscie":["cache"],"czego_nie_obejrzalem":[]}\n' "$sha" > "$r/audyt/sklep/raporty/A/L2.json"
 }
@@ -57,6 +57,11 @@ psuj_rejestr()   { sed -i 's/| ZAMKNIETE | 1 |/| DO WERYFIKACJI | 1 |/' "$1/audy
 psuj_proby()     { sed -i 's/| ZAMKNIETE | 1 |/| ZAMKNIETE | 3 |/' "$1/audyt/sklep/REJESTR-ZNALEZISK-SKLEP.md"; }
 psuj_straznik()  { rm -f "$1/testy/straznik-test.php"; }
 psuj_anomalia()  { sed -i 's/| WYJAŚNIONA |/| OTWARTA |/' "$1/audyt/sklep/REJESTR-ZNALEZISK-SKLEP.md"; }
+psuj_przelot_pusty() { sed -i '/^- /d' "$1/audyt/sklep/PRZELOT-CZLOWIEKA-SKLEP.md"; }
+psuj_przelot_dziw()  { sed -i 's/^- ✅ B1/- 😖 B1/' "$1/audyt/sklep/PRZELOT-CZLOWIEKA-SKLEP.md"; }
+psuj_anomalia_id()   { sed -i 's/| AN-001 | L3 | A | opis | WYJAŚNIONA |/| AN-001 | L3 | A | opis | WYJAŚNIONA |\n| A-02 | L3 | A | bez prefiksu | OTWARTA |/' "$1/audyt/sklep/REJESTR-ZNALEZISK-SKLEP.md"; }
+psuj_wcieta()        { printf -- '  - ⬜ L9-98 · wcięty punkt ·\n' >> "$1/audyt/sklep/material/06-mapa-polowania.md"; }
+potok_w_dowodzie()   { sed -i 's/| ZAMKNIETE | 1 |/| ZAMKNIETE | 1 |/; s/| teza | d | r |/| teza | `git log \\| wc -l` → 3 | r |/' "$1/audyt/sklep/REJESTR-ZNALEZISK-SKLEP.md"; }
 psuj_przelot()   { sed -i 's/^- ✅ B1/- ⬜ B1/' "$1/audyt/sklep/PRZELOT-CZLOWIEKA-SKLEP.md"; }
 psuj_proby_log() { sed -i 's/proba-07 EXIT=0/proba-07 EXIT=1/' "$1/audyt/sklep/PROBY-KONTROLNE.log"; }
 psuj_sha()       { printf 'zmiana' >> "$1/boty/paczki/sklep-agentow-9.9.9.zip"; }
@@ -81,6 +86,11 @@ sprawdz "3c naprawa_proby = 3"                            1 psuj_proby       "3c
 sprawdz "3d ZAMKNIETE bez pliku straznika"                1 psuj_straznik    "3d rejestr"
 sprawdz "4 anomalia OTWARTA"                              1 psuj_anomalia    "4 anomalie"
 sprawdz "5 przelot z ⬜"                                   1 psuj_przelot     "5 przelot"
+sprawdz "5 przelot OBCIĘTY do zera punktów (W4)"          1 psuj_przelot_pusty "lista obcięta"
+sprawdz "5 przelot z 😖 bez wyjaśnienia"                   1 psuj_przelot_dziw  "1 😖"
+sprawdz "4 anomalia OTWARTA z ID bez AN- (W5)"             1 psuj_anomalia_id   "bez ID AN-NNN"
+sprawdz "1a wcięty punkt mapy (D1)"                        1 psuj_wcieta        "1a mapa: nieznany znacznik"
+sprawdz "3 potok \\| w kolumnie dowodu → nadal GO (W6)"     0 potok_w_dowodzie   "K7: GO"
 sprawdz "6 proba kontrolna EXIT=1 w logu"                 1 psuj_proby_log   "6 próby"
 sprawdz "7a paczka zmieniona po zamrozeniu (sha256)"      1 psuj_sha         "7a paczka"
 sprawdz "7b tag przesuniety na inny commit"               1 psuj_tag         "7b tag"

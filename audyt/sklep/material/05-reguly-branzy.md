@@ -4,7 +4,7 @@
 > bez źródła to opinia, nie reguła — i leci z raportu.
 >
 > Ten plik cytuje WYŁĄCZNIE sześć źródeł, jak każe zlecenie materiału: `PLAN-PROJEKTU.md`
-> §7 (linie 215–243), §8 (244–259), §13 (433–445), §13b (446–463) ·
+> sekcje „7. BEZPIECZEŃSTWO v3”, „8. PRAWO / RODO v3”, „13. CO ODDZIELA TRYB TESTOWY OD PRODUKCJI”, „13b. ŹRÓDŁA OFICJALNE DZIEDZINY” (po tytule, nie po numerze linii) ·
 > `audyt/AUDYT-JAKOSC-PODSTRON-25-08.md` §3–§5 · `audyt/SCIAGA-EGZAMINATORA.md` (7 klas) ·
 > `CLAUDE.md` (sekcje „Rzeczy, które wywalały nas wcześniej" i „Bezpieczeństwo — minimum
 > podręcznikowe") · skill `wp-plugin-directory-guidelines/SKILL.md` (tylko nagłówki, do

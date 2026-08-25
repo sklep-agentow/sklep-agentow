@@ -26,7 +26,7 @@ uwaga KRYTYCZNA, niezależnie od jakości kodu.
 
 Czytaj zmiany na tle dokumentów repo: PLAN-PROJEKTU.md (sekcja 7 —
 bezpieczeństwo; sekcja 12 — kryteria GOTOWE), ZROZUMIENIE.md i DECYZJE.md
-(MUST NOT + decyzje D1-D24 — rzeczy ŚWIADOMIE nierobione; nie żądaj ich),
+(MUST NOT + decyzje D1-D33 — rzeczy ŚWIADOMIE nierobione; nie żądaj ich),
 ORAZ **audyt/SCIAGA-EGZAMINATORA.md** — 7 klas błędów, które oceniający
 (kolega) wytykał w poprzednich projektach. PILNUJ tych klas w każdym PR:
   1. Uninstall NIEKOMPLETNY — zostają opcje/tabele/pliki/cron, a zwłaszcza

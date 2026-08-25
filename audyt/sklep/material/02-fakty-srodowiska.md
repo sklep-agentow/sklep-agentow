@@ -25,7 +25,7 @@ uwzględnienia w kwalifikacji, nie przeszkoda do obejścia.
 
 Narzędzia dla soczewek wykonawczych: `docker exec -u www-data strona_wp_wordpress wp --path=/var/www/html …` (wp-cli),
 `wp db query`, `wp eval` / `wp eval-file` (wzór: `narzedzia-qa/test-php.sh`), `curl`, Playwright (`node testy/e2e/…`),
-Stripe CLI (`stripe trigger`, `stripe listen`), Mailpit API, `narzedzia-qa/stos.sh` (⚠️ NIE widzi tabel `wp_sklepag_*` — używaj `wp db query`).
+Stripe CLI (`stripe trigger`, `stripe listen`), Mailpit API, `narzedzia-qa/stos.sh` 1.3.1 (widzi tabele `wp_sklepag_*` — `tabele`, `wiersze wp_sklepag_zamowienia`; strażnik `stos-proba-kontrolna.sh`).
 Wolumen docelowy (założenie Z6, PLAN-PROJEKTU §11): pojedyncze zakupy dziennie. Zasoby maszyny: 2 vCPU, 3,8 GB RAM — testy obciążeniowe z umiarem.
 
 ## Produkt — stan
@@ -58,7 +58,7 @@ Brak: AJAX (`wp_ajax_*`), REST poza dwiema trasami, `localStorage`.
 - Assety panelu ładowane tylko na ekranach `sklepag` (`includes/admin.php:96`); assety frontu tylko na stronach sklepu (D20).
 - `payment_status` metod asynchronicznych obsłużony (`zakup.php:182-184, 493, 523`) — CEL L3-18 to TEST tego, nie pytanie „czy jest".
 - Błędy Stripe HTTP ≥ 400 → `WP_Error` (`stripe.php:55-62`) — CEL L3-15 to „co widzi człowiek", nie „czy kod sprawdza kod".
-- Historia commitów: 288/288 adresów `noreply` (klasa K2 DESTYLATU czysta).
+- Historia commitów: 289/289 adresów `noreply` na `5d3dcf9` (`git log 5d3dcf9 --format=%ae | grep -vc noreply` → 0; klasa K2 DESTYLATU czysta).
 - Retencja dziennika 90 dni w kodzie (`zakup.php:535`, cron) z testem `testy/dziennik-test.js` §D.
 - Limity: kup 10 / status 30 / login 6 na okno (`zakup.php:20,70,442`, `logowania.php:94`) — CEL L2-08 = ZMIERZYĆ okno i zachowanie za proxy.
 
@@ -75,4 +75,4 @@ pytanie, nie z góry błąd) · 3 pliki mediów nieużywane na stronach zostają
 ## Znane, zapisane PRZED audytem (odkrycie = zbieżność, nie nowość; i tak wpisz do raportu)
 DOK-TECH §3 „7 tabel" vs §8 „6 tabel" · „#170" w DOK-TECH §8 · tabela DOK-TECH §2 bez `opinie.php`/`admin-opinie.php` ·
 formularz kupna gościa wymaga nonce (`zakup.php:66`) → pytanie o page-cache (L2-13) · brak `wp_privacy_personal_data_*` (L2-18) ·
-instrukcja milczy, że WP-Cron wymaga ruchu na stronie (L4-12) · `stos.sh` nie widzi tabel sklepu (L4-14).
+instrukcja milczy, że WP-Cron wymaga ruchu na stronie (L4-12) · (L4-14: okno `stos.sh` na tabele sklepu ZAMKNIĘTE w 1.3.1 — audytor potwierdza wykonaniem).

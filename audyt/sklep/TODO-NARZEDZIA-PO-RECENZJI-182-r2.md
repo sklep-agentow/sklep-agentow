@@ -15,5 +15,5 @@ naprawiamy w następnym PR-ze (`k7/material`), który dostaje własną recenzję
 | W8 | `k7-koniec.sh` 7b porównywał goły `rev-parse k7-zamrozenie` — tag jest ADNOTOWANY, więc dostawał sha obiektu tagu (`5e92e0b`) zamiast commitu (`5d3dcf9`) = fałszywy FAIL na prawdziwym stanie; próba 16/16 tego nie widziała, bo jej atrapa miała tag goły | `k7-zamrozenie^{commit}`; atrapa próby z tagiem `-a` jak produkcja; dowód: na prawdziwym stanie `PASS 7b tag k7-zamrozenie = 5d3dcf9` | ✅ 26.08 |
 
 **Zamknięte 26.08** (gałąź `k7/material`, jeden PR). Dowody: `k7-koniec-proba-kontrolna.sh` 20/20 EXIT 0 ·
-`dokumentacja-zgodnosc-sklep-proba-kontrolna.sh` 12/12 EXIT 0 · `stos-proba-kontrolna.sh` EXIT 0 · `dokumentacja-zgodnosc-sklep.sh`
+`dokumentacja-zgodnosc-sklep-proba-kontrolna.sh` 10/10 przypadków (12 rozjazdów) EXIT 0 · `stos-proba-kontrolna.sh` EXIT 0 · `dokumentacja-zgodnosc-sklep.sh`
 0 rozjazdów. W1 allowlista w `recenzent.yml` idzie OSOBNYM PR-em (PR dotykający workflow nie dostaje auto-recenzji — koordynatorka czyta).

@@ -1,5 +1,5 @@
 #!/bin/bash
-# mapa-licznik.sh — liczy cele mapy polowania i PRZEPISUJE wiersz LICZNIK.        WERSJA 1.1.0
+# mapa-licznik.sh — liczy cele mapy polowania i PRZEPISUJE wiersz LICZNIK.        WERSJA 1.1.1
 #
 # PO CO: mapa z licznikiem „N zamkniętych" była przy botach martwa — nikt jej nie
 # aktualizował (lekcja jak-audytowac §☑️: odhacza KOORDYNATOR, przelicza SKRYPT,
@@ -29,13 +29,20 @@ NOWY="CELE: $N_CELE · ✅ $N_OK · 🐞 $N_BUG · ⚠️ $N_AN · ⛔ $N_POZA �
 
 # Nieznany znacznik: wiersz „- coś", gdzie „coś" nie jest jednym z pięciu statusów. Bez tej kontroli
 # cel oznaczony np. ❓ albo literówką po prostu wypadał z sumy — mapa „domykała się" przez zgubę.
-NIEZNANE=$(grep -nE '^- ' "$PLIK" | grep -vE '^[0-9]+:- (⬜|✅|🐞|⚠️|⛔) ' || true)
+# (także WCIĘTY punkt listy `  - ⬜ …` — markdown nadal go renderuje, a licznik by go zgubił; recenzja #184 D1)
+NIEZNANE=$(grep -nE '^[[:space:]]*- ' "$PLIK" | grep -vE '^[0-9]+:- (⬜|✅|🐞|⚠️|⛔) ' || true)
 if [ -n "$NIEZNANE" ]; then
 	echo "MAPA-LICZNIK: $(printf '%s\n' "$NIEZNANE" | wc -l) wiersz(y) „- ” z NIEZNANYM znacznikiem — nie liczę, nie przepisuję:" >&2
 	printf '%s\n' "$NIEZNANE" | cut -c1-120 | sed 's/^/  linia /' >&2
 	exit 1
 fi
 
+# Walidacja argumentów PRZED zapisem (recenzja #184 D2: --zamroz bez sha przepisywał LICZNIK, zanim odmówił)
+case "$TRYB" in
+	--zamroz) [ -n "$SHA" ] || { echo "MAPA-LICZNIK: --zamroz wymaga sha" >&2; exit 2; } ;;
+	""|--tylko-licz|--sprawdz-zamrozenie) ;;
+	*) echo "MAPA-LICZNIK: nieznana opcja $TRYB" >&2; exit 2 ;;
+esac
 case "$TRYB" in
 	""|--zamroz)
 		TMP="$(mktemp)"
@@ -46,7 +53,6 @@ esac
 case "$TRYB" in
 	--tylko-licz) ;;
 	--zamroz)
-		[ -n "$SHA" ] || { echo "MAPA-LICZNIK: --zamroz wymaga sha" >&2; exit 2; }
 		grep -q '^ZAMROZONA: ' "$PLIK" && { echo "MAPA-LICZNIK: mapa już zamrożona — nie zamrażam drugi raz" >&2; exit 1; }
 		printf 'ZAMROZONA: %s · celow=%s · %s\n' "$SHA" "$N_CELE" "$(date +%Y-%m-%dT%H:%M)" >> "$PLIK"
 		;;

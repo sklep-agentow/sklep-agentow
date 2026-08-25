@@ -17,7 +17,7 @@
 | 1 | `audyt/sklep/material/01-zamowienie.md` | surowe zdania zamawiającego + CAŁA MAPA-SPEC + 12 kryteriów GOTOWE + §2/§3 planu | ⛔ nie nasze streszczenie — źródło |
 | 2 | `audyt/sklep/material/02-fakty-srodowiska.md` | stack, wersje — ZMIERZONE (nagłówek: „Dwa stosy" — stos warsztatowy vs stos czysty od zera) | ⭐ **Pojawił się W TRAKCIE pisania tej mapy** (koordynatorka pracowała równolegle) — treść NIE sprawdzona przeze mnie poza nagłówkiem, patrz „CZEGO NIE MA" niżej |
 | 3 | `wtyczki/sklep-agentow/DOKUMENTACJA-TECHNICZNA.md` | architektura, schemat bazy, punkty wejścia, przepływ zakupu, brama pobrań, stałe konfiguracyjne, instalacja/deinstalacja, granice — i WŁASNA sekcja 10 „MAPA DLA AUDYTORA — gdzie patrzeć najuważniej" | plik ISTNIEJE (sprawdzone: 10 sekcji, nagłówki zweryfikowane) |
-| 4 | `dokumentacja/INSTRUKCJA-INSTALACJI.md` | to, co widzi KUPUJĄCY/wdrażający: instalacja, klucze Stripe, webhook, produkty, pierwszy zakup, ustawienia produkcyjne, test-a-produkcja, najczęstsze problemy, odinstalowanie | plik ISTNIEJE (sprawdzone: 12 kroków/sekcji, nagłówki zweryfikowane) |
+| 4 | `dokumentacja/INSTRUKCJA-INSTALACJI.md` | to, co widzi KUPUJĄCY/wdrażający: instalacja, klucze Stripe, webhook, produkty, pierwszy zakup, ustawienia produkcyjne, test-a-produkcja, najczęstsze problemy, odinstalowanie | plik ISTNIEJE (sprawdzone 26.08: 13 sekcji `##`, w tym 7 kroków 0–6) |
 
 ## ❓ WEDŁUG PYTANIA — „chcę wiedzieć X, czytam Y"
 
@@ -92,16 +92,16 @@ NAPRAWACH"), nie tylko §1 — inaczej bierzesz stan SPRZED naprawy za stan dzis
   głównym.** Wg `DECYZJE.md` D33 mechanika banku to osobna gałąź `audyt/mutanty-sklep`
   (tabela rozliczenia COMMITOWANA na tej gałęzi, nie w luźnym pliku) — **audytor NIE
   dostaje tej gałęzi**.
-- **Lista przelotu człowieka DLA SKLEPU — powstaje.** Nie mylić z przelotem człowieka
-  BOTÓW, który już istnieje i ma wpis w `audyt/REJESTR-ZNALEZISK.md` jako `CZ-1`.
+- **Lista przelotu człowieka DLA SKLEPU ISTNIEJE: `audyt/sklep/PRZELOT-CZLOWIEKA-SKLEP.md` (27 punktów, statusy
+  ⬜/✅/😖/🐞, liczona przez `k7-koniec.sh` warunek 5).** Nie mylić z przelotem człowieka BOTÓW (`CZ-1` w `audyt/REJESTR-ZNALEZISK.md`).
 - **Rejestr znalezisk (`audyt/REJESTR-ZNALEZISK.md`) jest WSPÓLNY dla całego projektu —
   sprawdzone 25.08, nie założone z góry.** W chwili pisania tej mapy rejestr ma „Liczba
   znalezisk OTWARTYCH: 1" (`CZ-1` — ciche przycinanie pytań gościa dłuższych niż 500
   znaków w `front.php:504`), ale to znalezisko dotyczy ChatBota (strażnik leży w
-  `audyt/boty/testy-audytu/`), **NIE sklepu**. Dla SKLEPU konkretnie rejestr jest
-  pusty — `audyt/PLAN-K7-AUDYT-SKLEPU.md` istnieje jako PLAN (wersja 2, po rundzie
-  krytyki, klepnięcie 25.08), ale samo wykonanie audytu K7 (wpisywanie znalezisk do
-  rejestru) jeszcze nie ruszyło w chwili pisania tej mapy.
+  `audyt/boty/testy-audytu/`), **NIE sklepu**. **SKLEP ma WŁASNY rejestr:
+  `audyt/sklep/REJESTR-ZNALEZISK-SKLEP.md`** (znaleziska `SK-<soczewka>-NNN`, anomalie `AN-NNN`; czytany przez
+  `k7-koniec.sh` warunki 3–4). W chwili pisania ma JEDNO znalezisko sprzed audytu (`SK-L5-001`, z recenzji PR #182) —
+  rundy A/B dopiero je zapełnią. Plan: `audyt/PLAN-K7-AUDYT-SKLEPU.md` (v2, klepnięty 25.08).
 - **Dokumentacja funkcjonalna niepełna** — jak w mapie botów: to znany brak PROCESU, nie
   stan docelowy. Jeśli Twoje znalezisko zależy od czegoś, czego nie ma w tej mapie ani w
   żadnym z czterech plików materiału (`01`, `03`, `05`, `07`) — napisz „NIE DA SIĘ

@@ -1,5 +1,5 @@
 #!/bin/bash
-# k7-koniec.sh — KONIEC AUDYTU K7 OGŁASZA SKRYPT, NIE UCZUCIE.                       WERSJA 1.1.0
+# k7-koniec.sh — KONIEC AUDYTU K7 OGŁASZA SKRYPT, NIE UCZUCIE.                       WERSJA 1.2.0
 #
 # PO CO: plan K7 v1 mówił „GO/NO-GO = trzy liczby liczone skryptem”, a skryptu nie było
 # (krytyka r1: nasz krytyk K1, C2 #15, C3 #11). Bez maszyny koniec rozstrzyga pamięć
@@ -38,7 +38,7 @@ FAIL=0
 pass() { printf '  PASS  %s\n' "$1"; }
 fail() { printf '  FAIL  %s\n' "$1"; FAIL=$((FAIL+1)); }
 
-echo "=== K7-KONIEC 1.1.0 — osiem warunków zamknięcia ==="
+echo "=== K7-KONIEC 1.2.0 — osiem warunków zamknięcia ==="
 
 # 1. MAPA: 0 ⬜ i (domyślnie) zamrożona z niezmienioną liczbą celów.
 #    TYLKO ODCZYT (--tylko-licz): bramka końca nie pisze do tego, co audytuje (recenzja #182 r2 D7).
@@ -78,7 +78,9 @@ else
 fi
 
 # 3. REJESTR: 0 KRYTYCZNE/DUŻE otwarte · 0 DO WERYFIKACJI · naprawa_proby ≤ 2 · ZAMKNIETE ma strażnika z dowodem
-WIERSZE=$(grep -E '^\| SK-' "$REJESTR")
+# Potok w komórce markdown to `\|` — dla awk -F'|' to separator (recenzja #184 W6). Zamieniamy na \x01 PRZED splitem,
+# a przy wypisywaniu przywracamy (`tr '\001' '|'`).
+WIERSZE=$(grep -E '^\| SK-' "$REJESTR" | sed 's/\\|/\x01/g')
 OTWARTE=$(printf '%s\n' "$WIERSZE" | awk -F'|' '$5 ~ /KRYTYCZNA|DUŻA/ && $10 !~ /ZAMKNIETE|OBALONE|POZA K7/' | wc -l)
 DOWER=$(printf '%s\n' "$WIERSZE" | awk -F'|' '$10 ~ /DO WERYFIKACJI/' | wc -l)
 PROBY3=$(printf '%s\n' "$WIERSZE" | awk -F'|' '$11+0 > 2' | wc -l)
@@ -87,8 +89,8 @@ while IFS= read -r w; do
 	[ -n "$w" ] || continue
 	st=$(printf '%s' "$w" | awk -F'|' '{gsub(/^ +| +$/,"",$10); print $10}')
 	[ "$st" = "ZAMKNIETE" ] || continue
-	plik=$(printf '%s' "$w" | awk -F'|' '{gsub(/^ +| +$/,"",$12); print $12}')
-	sha=$(printf '%s' "$w" | awk -F'|' '{gsub(/^ +| +$/,"",$13); print $13}')
+	plik=$(printf '%s' "$w" | awk -F'|' '{gsub(/^ +| +$/,"",$12); print $12}' | tr '\001' '|')
+	sha=$(printf '%s' "$w" | awk -F'|' '{gsub(/^ +| +$/,"",$13); print $13}' | tr '\001' '|')
 	if [ -z "$plik" ] || [ "$plik" = "—" ] || [ ! -f "$plik" ] || ! printf '%s' "$sha" | grep -qE '^[0-9a-f]{7,}$'; then BEZ_STRAZNIKA=$((BEZ_STRAZNIKA+1)); fi
 done <<< "$WIERSZE"
 [ "$OTWARTE" -eq 0 ] && pass "3a rejestr: 0 KRYTYCZNE/DUŻE otwartych" || fail "3a rejestr: $OTWARTE KRYTYCZNE/DUŻE otwartych"
@@ -96,13 +98,19 @@ done <<< "$WIERSZE"
 [ "$PROBY3" -eq 0 ] && pass "3c rejestr: naprawa_proby ≤ 2 wszędzie" || fail "3c rejestr: $PROBY3 znalezisk z > 2 próbami naprawy (zasada dwóch prób)"
 [ "$BEZ_STRAZNIKA" -eq 0 ] && pass "3d rejestr: każde ZAMKNIETE ma strażnika (plik istnieje) + sha padania na starym" || fail "3d rejestr: $BEZ_STRAZNIKA ZAMKNIETE bez strażnika z dowodem"
 
-# 4. ANOMALIE: 0 OTWARTA
-AN_OTW=$(grep -E '^\| AN-' "$REJESTR" | awk -F'|' '$6 ~ /OTWARTA/' | wc -l)
-[ "$AN_OTW" -eq 0 ] && pass "4 anomalie: 0 OTWARTA" || fail "4 anomalie: $AN_OTW OTWARTA"
+# 4. ANOMALIE: czytamy CAŁĄ tabelę sekcji „## Anomalie” (nie tylko wiersze z prefiksem — recenzja #184 W5);
+#    każdy wiersz musi mieć ID `AN-NNN` (inaczej FAIL), 0 OTWARTA. Wiersz-zaślepka `| — |` pomijany.
+AN_WIERSZE=$(awk '/^## Anomalie/{f=1;next} /^## /{f=0} f && /^\| /' "$REJESTR" | grep -vE '^\| ID \||^\|---|^\| — \|' | sed 's/\\|/\x01/g' || true)
+AN_ZLE_ID=$(printf '%s\n' "$AN_WIERSZE" | grep . | grep -vcE '^\| AN-[0-9]{3,} \|' || true)
+AN_OTW=$(printf '%s\n' "$AN_WIERSZE" | awk -F'|' '$6 ~ /OTWARTA/' | wc -l)
+if [ "$AN_ZLE_ID" -ne 0 ]; then fail "4 anomalie: $AN_ZLE_ID wiersz(y) bez ID AN-NNN (bramka by ich nie widziała)"; elif [ "$AN_OTW" -eq 0 ]; then pass "4 anomalie: 0 OTWARTA"; else fail "4 anomalie: $AN_OTW OTWARTA"; fi
 
-# 5. PRZELOT CZŁOWIEKA: 0 ⬜ w liście
-PRZ_NIE=$(grep -cE '^- ⬜ ' "$PRZELOT")
-[ "$PRZ_NIE" -eq 0 ] && pass "5 przelot człowieka: komplet" || fail "5 przelot człowieka: $PRZ_NIE punktów ⬜"
+# 5. PRZELOT CZŁOWIEKA: podłoga ≥ 27 punktów (pusty/obcięty plik NIE jest kompletem — recenzja #184 W4),
+#    0 ⬜ i 0 😖 (😖 = „coś dziwnego” bez wyjaśnienia → musi stać się 🐞 albo anomalią, zanim ogłosimy koniec).
+PRZ_MIN=27
+PRZ_ILE=$(grep -cE '^- (⬜|✅|😖|🐞) ' "$PRZELOT")
+PRZ_NIE=$(grep -cE '^- ⬜ ' "$PRZELOT"); PRZ_DZIW=$(grep -cE '^- 😖 ' "$PRZELOT")
+if [ "$PRZ_ILE" -lt "$PRZ_MIN" ]; then fail "5 przelot człowieka: tylko $PRZ_ILE punktów (wymagane ≥ $PRZ_MIN) — lista obcięta?"; elif [ "$PRZ_NIE" -eq 0 ] && [ "$PRZ_DZIW" -eq 0 ]; then pass "5 przelot człowieka: komplet ($PRZ_ILE punktów)"; else fail "5 przelot człowieka: $PRZ_NIE ⬜ + $PRZ_DZIW 😖 z $PRZ_ILE"; fi
 
 # 6. PRÓBY KONTROLNE STRAŻNIKÓW: log z jednego przebiegu, 26+ pozycji, wszystkie EXIT=0
 if [ -f "$PROBY" ]; then

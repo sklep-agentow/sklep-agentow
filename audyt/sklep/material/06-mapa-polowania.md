@@ -79,7 +79,7 @@ Format wiersza: `- ⬜ ID · cel · [runda/raport · SHA]`.
 - ⬜ L4-11 · kontrakt INNER JOIN: opinia bez zamówienia → moderacja odmawia ·
 - ⬜ L4-12 · **WP-Cron bez ruchu**: strona bez odwiedzin przez godziny — czy druga droga domykania się wykona; instrukcja o cronie systemowym ·
 - ⬜ L4-13 · utf8mb4: długości kluczy indeksów; `get_charset_collate` (fakt: jest) ·
-- ⬜ L4-14 · `stos.sh` okno na `wp_sklepag_*` (luka przyrządu) ·
+- ⬜ L4-14 · `stos.sh` 1.3.1 okno na `wp_sklepag_*` — potwierdzić WYKONANIEM (`stos.sh tabele`, `wiersze wp_sklepag_zamowienia`); strażnik `stos-proba-kontrolna.sh` ·
 - ⬜ L4-15 · `LINIA-BAZOWA` ponownie: regresje 0; 3 czerwone wyjaśnione (dane stosu ×2, przyrząd ×1) ·
 - ⬜ L4-16 · migracje i aktywacja na PHP 8.1 / WP 6.7 (deklarowane minimum) bez notice ·
 
