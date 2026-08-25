@@ -2381,13 +2381,17 @@ a.sklepag-kup {
 	opacity: 1;
 }
 
-.sklepag-kafel--zablokowane .sklepag-kafel-kadr::after {
-	content: "▶  Odtwórz nagranie";
+/* Prawdziwy <button> (nie pseudo-element): dostępny z klawiatury — Enter/Spacja to też gest
+   użytkownika, którego wymaga przeglądarka z blokadą autoodtwarzania. Markup ma go zawsze
+   (atrybut `hidden`), front-ruch.js odsłania go przy blokadzie i chowa, gdy nagranie gra. */
+.sklepag-kafel-odtworz {
 	position: absolute;
 	left: 50%;
 	bottom: 1rem;
 	translate: -50% 0;
+	margin: 0;
 	padding: 0.55rem 1rem;
+	border: 0;
 	border-radius: 999px;
 	background: var(--sklepag-limonka);
 	color: var(--sklepag-tusz);
@@ -2395,8 +2399,14 @@ a.sklepag-kup {
 	font-size: 0.78rem;
 	letter-spacing: 0.1em;
 	text-transform: uppercase;
+	line-height: 1.2;
 	box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-	pointer-events: none;
+	cursor: pointer;
+}
+
+.sklepag-kafel-odtworz:focus-visible {
+	outline: 2px solid var(--sklepag-papier);
+	outline-offset: 3px;
 }
 
 .sklepag-kafel figcaption,
@@ -2799,8 +2809,13 @@ html.sklepag-lightbox-otwarty {
 	}
 
 	/* Pigułka sticky na telefonie: zwarta (cena mniejsza, ciaśniejszy przycisk) i dosunięta do LEWEJ —
-	   prawy dolny róg należy do bąbelka czatu (sędzia: dwa stałe elementy sklejały się w jeden kształt). */
-	.sklepag-sticky {
+	   prawy dolny róg należy do bąbelka czatu (sędzia: dwa stałe elementy sklejały się w jeden kształt).
+	   Selektory o TEJ SAMEJ specyficzności, co reguła wejścia pigułki (`.sklepag-js .sklepag-wyspa >
+	   .sklepag-sticky` z `transform: translateX(-50%)`) — sama klasa (0,1,0) przegrywała i pigułka
+	   wystawała poza lewą krawędź (`left: 12px` przechodziło, centrowanie zostawało). */
+	.sklepag-sticky,
+	.sklepag-wyspa > .sklepag-sticky,
+	.sklepag-js .sklepag-wyspa > .sklepag-sticky {
 		gap: 10px;
 		padding: 6px 8px 6px 14px;
 		bottom: 10px;

@@ -28,12 +28,15 @@ w środku pliku) — na innej maszynie popraw `executablePath`.
 
 ## sonda-sticky-pigulka.js — pigułka sticky na stronie produktu (sonda skalibrowana)
 
-Sprawdza, że pigułka „Kup teraz" zostaje wyśrodkowana także wtedy, gdy reguły
-hurtowe `.sklepag-wyspa > *` z `!important` wchodzą do gry: skrypt `front-ruch.js`
-opóźniony o 3,5 s (bezpiecznik `sklepag-odslon`) oraz „ogranicz ruch" włączone
-po załadowaniu strony. Na kodzie sprzed naprawy przebiegi B i C padają
-(`transform: none`, środek +120 px) — to jest kalibracja, nie przypadek.
-Kod wyjścia 0 = 3/3 OK, 1 = któryś pada.
+Pięć przebiegów. Desktop (1440 px): pigułka „Kup teraz" zostaje wyśrodkowana także
+wtedy, gdy reguły hurtowe `.sklepag-wyspa > *` z `!important` wchodzą do gry —
+skrypt `front-ruch.js` opóźniony o 3,5 s (bezpiecznik `sklepag-odslon`) oraz
+„ogranicz ruch" włączone po załadowaniu strony. Telefon (390 px): pigułka siedzi
+12 px od LEWEJ (z założenia nie jest wyśrodkowana — prawy róg należy do bąbelka
+czatu) i w całości w oknie, także z opóźnionym skryptem. Skalibrowana: na kodzie
+sprzed napraw przebiegi B i C padały (`transform: none`, środek +120 px), a D i E
+padały przez centrowanie bijące mobilne `transform: none` specyficznością
+(pigułka wystawała poza lewą krawędź). Kod wyjścia 0 = 5/5 OK, 1 = któryś pada.
 
 ```
 cd /root/praca/zlecenia/sklep-agentow && node testy/e2e/sonda-sticky-pigulka.js

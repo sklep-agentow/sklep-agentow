@@ -88,18 +88,30 @@
 			wideo.pause();
 			return;
 		}
+		// Przycisk „Odtwórz" jest w markupie (prawdziwy <button>, dostępny z klawiatury), ukryty do
+		// czasu rozpoznania blokady; jego klik bąbelkuje do nasłuchu na kaflu niżej.
+		var przycisk = kafel ? kafel.querySelector('.sklepag-kafel-odtworz') : null;
+		var zablokuj = function () {
+			if (kafel) { kafel.classList.add('sklepag-kafel--zablokowane'); }
+			if (przycisk) { przycisk.hidden = false; }
+		};
+		var odblokuj = function () {
+			if (kafel) { kafel.classList.remove('sklepag-kafel--zablokowane'); }
+			if (przycisk) { przycisk.hidden = true; }
+		};
 		var gra = function () {
-			if (kafel) { kafel.classList.add('sklepag-kafel--gra'); kafel.classList.remove('sklepag-kafel--zablokowane'); }
+			if (kafel) { kafel.classList.add('sklepag-kafel--gra'); }
+			odblokuj();
 		};
 		wideo.addEventListener('playing', gra);
 		if (!wideo.paused && wideo.readyState >= 3) { gra(); }
 		// Przeglądarka z blokadą autoodtwarzania (np. Brave) odrzuca play() bez gestu — wtedy plakat
-		// zostaje, a kafel dostaje przycisk „Odtwórz" (klik = gest użytkownika). Próba, gdy kafel
-		// wjeżdża w kadr (Chromium i tak pauzuje autoplay poza kadrem).
+		// zostaje, a kafel dostaje przycisk „Odtwórz" (klik / Enter = gest użytkownika). Próba, gdy
+		// kafel wjeżdża w kadr (Chromium i tak pauzuje autoplay poza kadrem).
 		var sprobuj = function () {
 			var obietnica = wideo.play();
 			if (obietnica && obietnica.catch) {
-				obietnica.catch(function () { if (kafel) { kafel.classList.add('sklepag-kafel--zablokowane'); } });
+				obietnica.catch(zablokuj);
 			}
 		};
 		var wKadrze = false;
@@ -130,11 +142,11 @@
 				var stoi = wideo.paused || wideo.currentTime === ostatniCzas;
 				ostatniCzas = wideo.currentTime;
 				if (!stoi) {
-					if (kafel) { kafel.classList.remove('sklepag-kafel--zablokowane'); }
+					odblokuj();
 					return;
 				}
 				zatrzymajStraznika();
-				if (kafel) { kafel.classList.add('sklepag-kafel--zablokowane'); }
+				zablokuj();
 				sprobuj();
 			}, 2000);
 		};
