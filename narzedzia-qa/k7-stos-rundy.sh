@@ -1,5 +1,5 @@
 #!/bin/bash
-# k7-stos-rundy.sh — CZYSTY stos pod rundę audytu K7 (PLAN-K7 §9): wordpress:6.7-php8.1 + paczka.  WERSJA 1.0.0
+# k7-stos-rundy.sh — CZYSTY stos pod rundę audytu K7 (PLAN-K7 §9): wordpress:6.7-php8.1 + paczka.  WERSJA 1.0.1
 #
 # Stawia `probny_wp` (:8891, baza `wp_probny` na wspólnym MariaDB) z `lib-stos-probny.sh`, wgrywa PODANY zip
 # (runda A = paczka z mutantami, runda B = zamrożona 0.9.13), ustawia permalinki, zakłada konta audytorów
@@ -7,7 +7,9 @@
 # zipa + odcisk podanego wzorca w kodzie). Stos ZOSTAJE (nie zwija) — zwija `zwin_stos` z lib albo
 # `docker rm -f probny_wp`.
 # Użycie: bash narzedzia-qa/k7-stos-rundy.sh <zip> [wzorzec-w-kodzie-do-potwierdzenia]
-#   EXIT 0 = stos stoi, wtyczka aktywna, konta są, debug.log pusty po aktywacji · 1 = coś nie wyszło · 2 = zła komenda
+#   EXIT 0 = stos stoi, wtyczka aktywna w podanej wersji, wzorzec (jeśli podany) w kodzie kontenera, oba konta z OCZEKIWANĄ rolą
+#            i DZIAŁAJĄCYM hasłem (`wp user check-password`), strona główna HTTP 200, debug.log pusty PO instalacji, aktywacji
+#            i renderze strony · 1 = coś nie wyszło · 2 = zła komenda / brak sekretu
 set -u
 KORZEN="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ZIP="${1:-}"; WZORZEC="${2:-}"
@@ -17,6 +19,8 @@ export ZOSTAW=tak
 # shellcheck source=lib-stos-probny.sh
 . "$KORZEN/narzedzia-qa/lib-stos-probny.sh"
 
+for konto in admin sub; do [ -s "/root/.claude/sekrety-audyt-$konto.txt" ] || { echo "k7-stos-rundy: brak/pusty sekret /root/.claude/sekrety-audyt-$konto.txt" >&2; exit 2; }; done
+wymagaj_narzedzi
 postaw_stos
 docker cp "$ZIP" "$KONTENER:/tmp/paczka.zip"
 wp plugin install /tmp/paczka.zip --force --activate | tail -2
@@ -40,12 +44,18 @@ if [ -n "$WZORZEC" ]; then
 	N=$(docker exec "$KONTENER" grep -rF "$WZORZEC" /var/www/html/wp-content/plugins/sklep-agentow/includes/ | wc -l)
 	[ "$N" -ge 1 ] && potwierdz "wzorzec „$WZORZEC” w kodzie kontenera ($N)" || zglos "wzorca „$WZORZEC” NIE MA w kontenerze"
 fi
-for u in audytor-admin audytor-sub; do
-	r=$(wp user get "$u" --field=roles 2>/dev/null | tr -d '\r'); [ -n "$r" ] && potwierdz "konto $u ($r)" || zglos "brak konta $u"
+# ⛔ wrapper wp() z lib scala stderr do stdout — „niepuste” nie znaczy „jest” (recenzja #187 WAŻNA): porównujemy z OCZEKIWANĄ rolą
+# i dowodzimy hasła `wp user check-password` (kod wyjścia), nie samą obecnością konta.
+for konto in admin sub; do
+	u="audytor-$konto"; ocz=administrator; [ "$konto" = sub ] && ocz=subscriber
+	r=$(wp user get "$u" --field=roles | tr -d '\r')
+	[ "$r" = "$ocz" ] && potwierdz "konto $u = $ocz" || zglos "konto $u: oczekiwano $ocz, jest „$r”"
+	if wp user check-password "$u" "$(tr -d '\n' < "/root/.claude/sekrety-audyt-$konto.txt")" > /dev/null; then potwierdz "hasło $u z sekretu DZIAŁA"; else zglos "hasło $u z sekretu NIE działa"; fi
 done
-LOG=$(docker exec "$KONTENER" sh -c 'cat /var/www/html/debug.log 2>/dev/null' | grep -cE 'Notice|Warning|Deprecated|Fatal')
-[ "$LOG" -eq 0 ] && potwierdz "debug.log po aktywacji: 0 notice/warning/fatal" || { zglos "debug.log: $LOG wpisów"; docker exec "$KONTENER" tail -5 /var/www/html/debug.log; }
 KOD=$(curl -s -o /dev/null -w '%{http_code}' "$ADRES/"); [ "$KOD" = 200 ] && potwierdz "strona główna HTTP $KOD ($ADRES)" || zglos "strona główna HTTP $KOD"
+# debug.log PO renderze strony (front też może rzucić notice — recenzja #187)
+LOG=$(docker exec "$KONTENER" sh -c 'cat /var/www/html/debug.log 2>/dev/null' | grep -cE 'Notice|Warning|Deprecated|Fatal')
+[ "$LOG" -eq 0 ] && potwierdz "debug.log po instalacji+aktywacji+renderze: 0 notice/warning/fatal" || { zglos "debug.log: $LOG wpisów"; docker exec "$KONTENER" tail -5 /var/www/html/debug.log; }
 
 echo
 if [ "$BLEDY" -eq 0 ]; then echo "STOS RUNDY STOI: $KONTENER $ADRES · paczka $SHA_ZIP"; exit 0; fi

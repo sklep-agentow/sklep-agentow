@@ -17,6 +17,8 @@ pory lądują tutaj.
 - **`k7-stos-rundy.sh` 1.0.0 (NOWE) — czysty stos pod rundę K7:** `probny_wp` na `wordpress:6.7-php8.1-apache` (PLAN-K7 §9) z PODANYM zipem
   (runda A = paczka z mutantami, B = zamrożona), permalinki, `blog_public=0`, konta `audytor-admin`/`audytor-sub` z sekretów, dowody:
   sha256 zipa, wersja, wzorzec w kodzie kontenera, debug.log 0 notice, HTTP 200. Stos ZOSTAJE. Zmierzone 26.08: EXIT 0, WP 6.7.2 / PHP 8.1.32.
+- **`mapa-licznik.sh` 1.2.0 → 1.2.1** — nagłówek opisuje oba zestawy statusów (mapa / `--przelot`) i wcięty punkt (#186 r2 D4).
+- **`k7-stos-rundy.sh` 1.0.0 → 1.0.1** — konta porównywane z OCZEKIWANĄ rolą + hasło dowiedzione `wp user check-password` (wrapper `wp` scala stderr — „niepuste” ≠ „jest”; #187 WAŻNA); brak sekretu = EXIT 2; `wymagaj_narzedzi`; debug.log liczony PO renderze strony.
 - **`k7-koniec.sh` 1.3.1 → 1.3.2** — komunikat warunku 5 przy nieaktualnym LICZNIKU podaje komendę naprawczą (`mapa-licznik.sh … --przelot`), jak 1a (#186 r2 D1).
 - Dokumenty (#186 r2 D1–D4): przelot wie, kto liczy jego LICZNIK; PLAN §8b „13 linii PASS/FAIL (8 warunków)”; nagłówek `mapa-licznik.sh` opisuje oba zestawy statusów; CHANGELOG bez liczby trafień grepa.
 - **`mapa-licznik.sh` 1.1.1 → 1.2.0 — `--przelot`:** zestaw statusów przelotu człowieka (⬜ ✅ 😖 🐞) i jego format LICZNIKA;
