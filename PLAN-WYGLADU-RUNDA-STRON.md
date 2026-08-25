@@ -64,8 +64,8 @@ Sędzia (sonnet, ±3): 68 → 80 → 83 → 82; arbitrem było oko przeglądają
   Reszta spokojna: reveal per element, hover łańcuchowy.
 - Media brandowe = SVG/CSS (0 KB, ostre, ożywialne) + nagrania ekranu prawdziwego produktu.
   Żadnych generatorów AI (brak kluczy/GPU; sędzia tnie spójność mediów za stockowy zgrzyt).
-- Mono-etykiety zostają BEZ numeracji na liście (spójność ze stronami produktów; numeracja
-  wszystkich stron do rozważenia w PR 2).
+- Mono-etykiety na liście NUMEROWANE `[ 01 · … ]` jak u gospodarza (decyzja zmieniona w rundzie 2
+  z okiem na żywo); strony produktów dostają numerację w PR 2 (spójność).
 
 ## 3. GIGANT-PROMPT `/sklep/` (PR 1: gałąź `wyglad/sklep-lista`, wersja 0.9.9)
 
@@ -74,9 +74,9 @@ Ciemna, spokojna strona produktu w świecie Automatic AI: **Linear spotyka panel
 gospodarza spotyka bento Supabase**. Zero stocku. Każda powierzchnia lekko żyje: dryf mgławicy,
 puls kropki statusu, pętla panelu w hero, elementy wchodzą po kolei.
 
-### HERO (2 kolumny: 1.05fr / 0.95fr, `align-items:center`; < 56 rem: 1 kolumna, panel POD tekstem)
-- LEWO: `[ SKLEP ]` · H1 „**Boty**, które robią robotę." — `clamp(2.6rem, 6vw, 4.6rem)`, 600,
-  `letter-spacing:-0.03em`, `line-height:1.02` · lead 1.15 rem pył, max 34 rem · pigułka trybu
+### HERO (2 kolumny: 1.18fr / 0.82fr, `align-items:center`; < 56 rem: 1 kolumna, panel POD tekstem)
+- LEWO: `[ SKLEP ]` · H1 „**Boty**, które robią robotę." — `clamp(2.8rem, 6.4vw, 5.75rem)`, 600,
+  `letter-spacing:-0.035em`, `line-height:0.98` (92 px przy 1440) · lead 1.15 rem pył, max 34 rem · pigułka trybu
   testowego · linia demo-CTA · pasek konkretów (mono).
 - PRAWO — **PANEL NOCNEJ ZMIANY** (sygnatura): okno aplikacji (pasek 3 kropek jak w kartach,
   węgiel, hairline, radius 16, cień `0 30px 80px rgba(0,0,0,.5)`), w środku dwa wiersze:

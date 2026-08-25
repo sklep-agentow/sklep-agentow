@@ -2,10 +2,11 @@
  * Pojawianie się sekcji sklepu przy przewijaniu — spójnie z motywem gospodarza
  * (feedback z przeglądu 20.08: „podstrona sklepu nie ma animacji jak reszta strony").
  *
- * ⛔ ZASADA BEZPIECZEŃSTWA: CSS ukrywa sekcje TYLKO gdy jest klasa `sklepag-js`
- * na <html> (dodawana inline w <head> przed renderem) ORAZ klasa `sklepag-ruch`
- * na wyspie (dodawana tutaj). Bez JavaScriptu, przy błędzie skryptu albo przy
- * `prefers-reduced-motion` — treść jest po prostu widoczna. Nic nie znika.
+ * ⛔ ZASADA BEZPIECZEŃSTWA: CSS ukrywa sekcje TYLKO gdy na <html> jest klasa `sklepag-js`
+ * (inline w <head>, przed renderem — warunkowo: IntersectionObserver + brak „ogranicz
+ * ruch"). Ten skrypt tylko ODSŁANIA i zgłasza gotowość klasą `sklepag-ruch-ok`; gdy jej
+ * nie zgłosi w 2,5 s (nie dojechał, padł), inline dodaje `sklepag-odslon` i CSS pokazuje
+ * wszystko. Bez JavaScriptu klasa nie powstaje i nic nie jest ukryte. Nic nie znika.
  *
  * Parametry ruchu zmierzone z motywu Automatic AI (volt.js + chunks CSS, 20.08):
  * przesunięcie 26px, opacity 0.3s ease-out, transform 0.5s cubic-bezier.
@@ -40,11 +41,12 @@
 	} );
 
 	Array.prototype.forEach.call( wyspy, function ( wyspa ) {
-		wyspa.classList.add( 'sklepag-ruch' );
 		Array.prototype.forEach.call( wyspa.children, function ( sekcja ) {
 			obserwator.observe( sekcja );
 		} );
 	} );
+	// Gotowość: bezpiecznik z <head> (sklepag-odslon po 2,5 s) odpala tylko BEZ tej klasy.
+	document.documentElement.classList.add( 'sklepag-ruch-ok' );
 
 	// Paralaksa panelu w hero listy (runda stron 25.08): okno jedzie o ułamek wolniej niż
 	// strona — tylko zmienna CSS, transform składa się w arkuszu. Pasywny nasłuch + rAF,

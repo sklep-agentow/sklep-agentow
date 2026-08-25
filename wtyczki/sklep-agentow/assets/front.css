@@ -804,7 +804,7 @@ a.sklepag-kup {
 		transition: none !important;
 	}
 
-	/* Pasek i szelki: skrypt i tak nie doda `sklepag-ruch` przy tym ustawieniu,
+	/* Pasek i szelki: inline w <head> nie doda `sklepag-js` przy tym ustawieniu,
 	   ale gdyby ktoś zmienił ustawienie systemu przy otwartej stronie — treść
 	   ma zostać widoczna, nie zamrozić się w stanie ukrytym. */
 	.sklepag-js .sklepag-wyspa > * {
@@ -2006,7 +2006,9 @@ a.sklepag-kup {
 	}
 }
 
-/* Bezpiecznik: skrypt nie dojechał / padł → po 2,5 s (inline w <head>) wszystko widoczne.
+/* Bezpiecznik: skrypt nie zgłosił `sklepag-ruch-ok` w 2,5 s (nie dojechał / padł) → inline
+   w <head> dodaje `sklepag-odslon` i wszystko jest widoczne. Przy działającym skrypcie klasa
+   NIE powstaje (recenzja #178: bezwarunkowo gasiła kaskadę sekcji poza pierwszym ekranem).
    Tylko kanały wejścia (opacity, translate) — transform hoveru i tiltu zostaje. */
 .sklepag-odslon .sklepag-wyspa > * {
 	opacity: 1 !important;

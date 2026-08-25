@@ -61,7 +61,7 @@ SLADY=(
 	# wp-env, vagrant, ddev — zostaje.
 	"adres maszyny dev|localhost|127\.0\.0\.1|:8890|:8025|mailpit|ngrok|wp-env|vagrant|\.ddev\b"
 	"ścieżka naszego drzewa roboczego|/root/praca|(^|[^a-zA-Z0-9/._-])(testy|boty|audyt|narzedzia-qa|wtyczki)/"
-	"nasz obieg pracy|PR #[0-9]|recenzent|recenzj|koordynator|builder[0-9]|prób[ay] kontroln|proba-kontrolna|mutant|\\bkrytyk|egzaminator|Dzidek"
+	"nasz obieg pracy|PR #[0-9]|recenzent|recenzj|koordynator|builder[0-9]|prób[ay] kontroln|proba-kontrolna|mutant|\\bkrytyk|egzaminator|Dzidk"
 )
 
 # --- wczytanie listy zaległości ----------------------------------------------
