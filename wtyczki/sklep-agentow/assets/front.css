@@ -1676,16 +1676,34 @@ a.sklepag-kup {
 	--sklepag-d: 0s;
 	opacity: 0;
 	translate: 0 26px;
-	transition: opacity 0.3s ease-out var(--sklepag-d), translate 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) var(--sklepag-d);
+	transition: opacity 0.3s ease-out var(--sklepag-d), translate 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) var(--sklepag-d), scale 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) var(--sklepag-d);
 }
+
+/* KIERUNKI jak u gospodarza (zmierzone 25.08 na jego stronach: 81 elementów): etykieta sekcji
+   z lewej 24 px · tytuł z lewej 36 px · akapit 28 px · CTA/mono 24 px · wizual w prawej kolumnie
+   z prawej 36 px · karty w siatce „wyskakują": 14 px z dołu + scale .94 · prawa kolumna tekstu
+   z prawej. Kanały `translate`/`scale` — osobne od `transform` hoveru. */
+.sklepag-js .sklepag-wyspa .sklepag-hero > * { translate: -28px 0; }
+.sklepag-js .sklepag-wyspa .sklepag-hero > .sklepag-mono-etykieta,
+.sklepag-js .sklepag-wyspa .sklepag-hero > .sklepag-demo-cta,
+.sklepag-js .sklepag-wyspa .sklepag-hero > .sklepag-konkrety { translate: -24px 0; }
+.sklepag-js .sklepag-wyspa .sklepag-hero > .sklepag-hero-tytul { translate: -36px 0; }
+.sklepag-js .sklepag-wyspa .sklepag-hero-lista > .sklepag-panel { translate: 36px 0; }
+.sklepag-js .sklepag-wyspa :is(.sklepag-karty, .sklepag-kroki--siatka, .sklepag-dla-kogo-kolumny--pelne) > * { translate: 0 14px; scale: 0.94; }
+.sklepag-js .sklepag-wyspa .sklepag-sekcja--pelna > .sklepag-mono-etykieta { translate: -24px 0; }
+.sklepag-js .sklepag-wyspa .sklepag-faq--siatka > :nth-child(odd) { translate: -28px 0; }
+.sklepag-js .sklepag-wyspa .sklepag-faq--siatka > :nth-child(even) { translate: 28px 0; }
+.sklepag-js .sklepag-wyspa .sklepag-final-tresc > .sklepag-sekcja-tytul { translate: -36px 0; }
+.sklepag-js .sklepag-wyspa .sklepag-final-tresc > .sklepag-final-przyciski { translate: -28px 0; }
+.sklepag-js .sklepag-wyspa .sklepag-final--baner > .sklepag-final-duet { translate: 36px 0; }
 
 /* Karta i karty kroków/dla-kogo mają też własne przejścia hoveru — jedna lista, bo `transition` się nie sumuje. */
 .sklepag-js .sklepag-wyspa .sklepag-karty > .sklepag-karta {
-	transition: opacity 0.3s ease-out var(--sklepag-d), translate 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) var(--sklepag-d), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.35s ease, box-shadow 0.35s ease;
+	transition: opacity 0.3s ease-out var(--sklepag-d), translate 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) var(--sklepag-d), scale 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) var(--sklepag-d), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.35s ease, box-shadow 0.35s ease;
 }
 
 .sklepag-js .sklepag-wyspa :is(.sklepag-kroki--siatka, .sklepag-dla-kogo-kolumny--pelne) > * {
-	transition: opacity 0.3s ease-out var(--sklepag-d), translate 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) var(--sklepag-d), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.35s ease;
+	transition: opacity 0.3s ease-out var(--sklepag-d), translate 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) var(--sklepag-d), scale 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) var(--sklepag-d), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.35s ease;
 }
 
 /* Stan widoczny: obserwowany jest bezpośredni potomek wyspy (hero-lista, karty, sekcja). */
@@ -1696,6 +1714,7 @@ a.sklepag-kup {
 .sklepag-js .sklepag-wyspa > .sklepag-widoczne > .sklepag-final-duet {
 	opacity: 1;
 	translate: 0 0;
+	scale: 1;
 }
 
 /* Opóźnienia kaskady (krok 0.08 s jak `data-cascade="0.08"` gospodarza). */
@@ -1719,6 +1738,7 @@ a.sklepag-kup {
 	.sklepag-js .sklepag-wyspa .sklepag-final--baner > .sklepag-final-duet {
 		opacity: 1 !important;
 		translate: none !important;
+		scale: none !important;
 	}
 }
 
@@ -1999,4 +2019,5 @@ a.sklepag-kup {
 .sklepag-odslon .sklepag-wyspa .sklepag-final--baner > .sklepag-final-duet {
 	opacity: 1 !important;
 	translate: none !important;
+	scale: none !important;
 }
