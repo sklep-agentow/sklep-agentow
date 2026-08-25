@@ -43,6 +43,19 @@ statyczna klatka przy reduced-motion, pauza poza ekranem; poświata CSS gospodar
 Zbudowane: WŁASNA galaktyka w tej rodzinie (front-ruch.js) na całym hero, panel-szkło z tiltem 3D
 i paralaksą, awatar-maskotka, dashflow na adnotacjach i torze kroków, pulse-dot z pierścieniem.
 
+## 1c. WYNIK PR 1 (`/sklep/`, 25.08 ~07:00, werdykt przeglądu na żywo: „pięknie") — dok = kod
+Zbudowane ostatecznie (po 4 rundach z okiem na żywo): hero 2-kol z panelem nocnej zmiany (pętla
+CSS, awatar-maskotka, tilt −4°, paralaksa, bez backdrop-filter) · tło „blueprint z sygnałami" na
+CAŁEJ wyspie (siatka jak na ilustracjach + pingi w węzłach; czysty CSS, zero canvasa — galaktyka
+z §1b USUNIĘTA po zgłoszeniu „nie 1:1 hero gospodarza" i przeciążeniu laptopa) · karty z głową
+gospodarza i hoverem łańcuchowym, ilustracja ChatBota z „bazą pytań" · kroki 3 karty z torem
+dashflow · dla kogo i FAQ pełna szerokość · baner z duetem maskotek · etykiety `[ 01 · … ]` ·
+pigułka TRYB TESTOWY cicha (limonka w tytule) · **wejścia 1:1 z motywem**: ukrycie od pierwszej
+klatki klasą z `<head>`, kaskada 26 px / .3 s / .5 s / krok 0,08 s, kierunki z `--reveal-from`
+(−24/−36/−28/+36, karty Y14+scale.94) · cache-busting `?ver` = wersja + mtime · **0.9.10**.
+Sędzia (sonnet, ±3): 68 → 80 → 83 → 82; arbitrem było oko przeglądającego. Lekcja działu:
+`docs/dzial-agencji/wiedza/LEKCJA-dopasowanie-do-stylu-gospodarza.md` + `narzedzia/zmierz-ruch-gospodarza.js`.
+
 ## 2. DECYZJE RUNDY (moje, z powodem)
 - **Zero bibliotek ruchu** (GSAP/Lenis) — wtyczka chodzi na cudzym motywie i nie może mu
   przejąć scrolla; DOWÓD: oba wzorce premium też ich nie używają. Ruch = CSS + istniejący
