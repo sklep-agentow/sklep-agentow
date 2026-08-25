@@ -1656,37 +1656,65 @@ a.sklepag-kup {
 	letter-spacing: -0.02em;
 }
 
-/* ---------- Wejście po kolei (stagger) — osobny kanał `translate`, więc nie bije się
-   z `transform` hoveru. Działa TYLKO pod tymi samymi szelkami, co reveal sekcji
-   (`sklepag-js` + `sklepag-ruch`); bez JS wszystko od razu widoczne. ---------- */
-.sklepag-js .sklepag-ruch :is(.sklepag-hero-lista, .sklepag-karty, .sklepag-kroki--siatka, .sklepag-dla-kogo-kolumny--pelne, .sklepag-faq--siatka) > * {
-	--sklepag-d: 0.12s;
-	opacity: 0;
-	translate: 0 18px;
-	transition: opacity 0.5s ease-out var(--sklepag-d), translate 0.65s cubic-bezier(0.16, 1, 0.3, 1) var(--sklepag-d);
+/* ---------- WEJŚCIE ELEMENTÓW: kaskada 1:1 z gospodarzem (zmierzone 25.08 w jego CSS):
+   `.reveal` = opacity 0 + translateY(26px) → `.reveal-in` = opacity .3s ease-out, transform .5s
+   cubic-bezier(.34,1.56,.64,1), opóźnienie kaskady i × 0.08 s. Jak u niego elementy wchodzą
+   POJEDYNCZO — sekcja z kaskadą nie rusza się jako całość. Kanał `translate` (nie `transform`),
+   bo karty mają własny transform na hover. Szelki te same co przy sekcjach (sklepag-js + ruch). */
+.sklepag-js .sklepag-ruch > :is(.sklepag-hero-lista, .sklepag-karty, .sklepag-sekcja--pelna, .sklepag-tlo, .sklepag-pingi) {
+	opacity: 1;
+	transform: none;
+	transition: none;
 }
 
-/* Karta ma też własne przejścia hoveru — jedna lista, bo `transition` się nie sumuje. */
+.sklepag-js .sklepag-ruch :is(.sklepag-hero, .sklepag-karty, .sklepag-kroki--siatka, .sklepag-dla-kogo-kolumny--pelne, .sklepag-faq--siatka, .sklepag-final-tresc) > *,
+.sklepag-js .sklepag-ruch .sklepag-hero-lista > .sklepag-panel,
+.sklepag-js .sklepag-ruch .sklepag-sekcja--pelna > .sklepag-mono-etykieta,
+.sklepag-js .sklepag-ruch .sklepag-final--baner > .sklepag-final-duet {
+	--sklepag-d: 0s;
+	opacity: 0;
+	translate: 0 26px;
+	transition: opacity 0.3s ease-out var(--sklepag-d), translate 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) var(--sklepag-d);
+}
+
+/* Karta i karty kroków/dla-kogo mają też własne przejścia hoveru — jedna lista, bo `transition` się nie sumuje. */
 .sklepag-js .sklepag-ruch .sklepag-karty > .sklepag-karta {
-	transition: opacity 0.5s ease-out var(--sklepag-d), translate 0.65s cubic-bezier(0.16, 1, 0.3, 1) var(--sklepag-d), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.35s ease, box-shadow 0.35s ease;
+	transition: opacity 0.3s ease-out var(--sklepag-d), translate 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) var(--sklepag-d), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.35s ease, box-shadow 0.35s ease;
 }
 
 .sklepag-js .sklepag-ruch :is(.sklepag-kroki--siatka, .sklepag-dla-kogo-kolumny--pelne) > * {
-	transition: opacity 0.5s ease-out var(--sklepag-d), translate 0.65s cubic-bezier(0.16, 1, 0.3, 1) var(--sklepag-d), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.35s ease;
+	transition: opacity 0.3s ease-out var(--sklepag-d), translate 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) var(--sklepag-d), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.35s ease;
 }
 
-.sklepag-js .sklepag-ruch > .sklepag-widoczne :is(.sklepag-hero-lista, .sklepag-karty, .sklepag-kroki--siatka, .sklepag-dla-kogo-kolumny--pelne, .sklepag-faq--siatka) > *,
-.sklepag-js .sklepag-ruch > .sklepag-widoczne:is(.sklepag-hero-lista, .sklepag-karty) > * {
+/* Stan widoczny: obserwowany jest bezpośredni potomek wyspy (hero-lista, karty, sekcja). */
+.sklepag-js .sklepag-ruch > .sklepag-widoczne :is(.sklepag-hero, .sklepag-karty, .sklepag-kroki--siatka, .sklepag-dla-kogo-kolumny--pelne, .sklepag-faq--siatka, .sklepag-final-tresc) > *,
+.sklepag-js .sklepag-ruch > .sklepag-widoczne.sklepag-karty > *,
+.sklepag-js .sklepag-ruch > .sklepag-widoczne .sklepag-panel,
+.sklepag-js .sklepag-ruch > .sklepag-widoczne > .sklepag-mono-etykieta,
+.sklepag-js .sklepag-ruch > .sklepag-widoczne > .sklepag-final-duet {
 	opacity: 1;
 	translate: 0 0;
 }
 
-.sklepag-js .sklepag-ruch :is(.sklepag-hero-lista, .sklepag-karty, .sklepag-kroki--siatka, .sklepag-dla-kogo-kolumny--pelne, .sklepag-faq--siatka) > :nth-child(2) { --sklepag-d: 0.22s; }
-.sklepag-js .sklepag-ruch :is(.sklepag-hero-lista, .sklepag-karty, .sklepag-kroki--siatka, .sklepag-dla-kogo-kolumny--pelne, .sklepag-faq--siatka) > :nth-child(3) { --sklepag-d: 0.32s; }
-.sklepag-js .sklepag-ruch :is(.sklepag-hero-lista, .sklepag-karty, .sklepag-kroki--siatka, .sklepag-dla-kogo-kolumny--pelne, .sklepag-faq--siatka) > :nth-child(4) { --sklepag-d: 0.42s; }
+/* Opóźnienia kaskady (krok 0.08 s jak `data-cascade="0.08"` gospodarza). */
+.sklepag-js .sklepag-ruch .sklepag-hero > :nth-child(2) { --sklepag-d: 0.08s; }
+.sklepag-js .sklepag-ruch .sklepag-hero > :nth-child(3) { --sklepag-d: 0.16s; }
+.sklepag-js .sklepag-ruch .sklepag-hero > :nth-child(4) { --sklepag-d: 0.24s; }
+.sklepag-js .sklepag-ruch .sklepag-hero > :nth-child(5) { --sklepag-d: 0.32s; }
+.sklepag-js .sklepag-ruch .sklepag-hero > :nth-child(6) { --sklepag-d: 0.4s; }
+.sklepag-js .sklepag-ruch .sklepag-hero-lista > .sklepag-panel { --sklepag-d: 0.24s; }
+.sklepag-js .sklepag-ruch :is(.sklepag-karty, .sklepag-kroki--siatka, .sklepag-dla-kogo-kolumny--pelne, .sklepag-faq--siatka) > :nth-child(1) { --sklepag-d: 0.08s; }
+.sklepag-js .sklepag-ruch :is(.sklepag-karty, .sklepag-kroki--siatka, .sklepag-dla-kogo-kolumny--pelne, .sklepag-faq--siatka) > :nth-child(2) { --sklepag-d: 0.16s; }
+.sklepag-js .sklepag-ruch :is(.sklepag-karty, .sklepag-kroki--siatka, .sklepag-dla-kogo-kolumny--pelne, .sklepag-faq--siatka) > :nth-child(3) { --sklepag-d: 0.24s; }
+.sklepag-js .sklepag-ruch :is(.sklepag-karty, .sklepag-kroki--siatka, .sklepag-dla-kogo-kolumny--pelne, .sklepag-faq--siatka) > :nth-child(4) { --sklepag-d: 0.32s; }
+.sklepag-js .sklepag-ruch .sklepag-final-tresc > :nth-child(2) { --sklepag-d: 0.08s; }
+.sklepag-js .sklepag-ruch .sklepag-final--baner > .sklepag-final-duet { --sklepag-d: 0.16s; }
 
 @media (prefers-reduced-motion: reduce) {
-	.sklepag-js .sklepag-ruch :is(.sklepag-hero-lista, .sklepag-karty, .sklepag-kroki--siatka, .sklepag-dla-kogo-kolumny--pelne, .sklepag-faq--siatka) > * {
+	.sklepag-js .sklepag-ruch :is(.sklepag-hero, .sklepag-karty, .sklepag-kroki--siatka, .sklepag-dla-kogo-kolumny--pelne, .sklepag-faq--siatka, .sklepag-final-tresc) > *,
+	.sklepag-js .sklepag-ruch .sklepag-hero-lista > .sklepag-panel,
+	.sklepag-js .sklepag-ruch .sklepag-sekcja--pelna > .sklepag-mono-etykieta,
+	.sklepag-js .sklepag-ruch .sklepag-final--baner > .sklepag-final-duet {
 		opacity: 1 !important;
 		translate: none !important;
 	}
@@ -1788,8 +1816,9 @@ a.sklepag-kup {
 }
 
 .sklepag-tlo {
+	grid-column: 1 / -1; /* absolutny potomek gridu odnosi się do SWOJEJ komórki — bez tego tło zaczynało się od toru treści, lewy margines był goły (przegląd na żywo 25.08) */
 	position: absolute;
-	inset: 0;
+	inset: -8rem -4rem; /* ujemnie: przykryć też padding wyspy; wyspa przycina na własnej krawędzi (overflow-x: clip) */
 	z-index: 0 !important;
 	overflow: hidden;
 	pointer-events: none;
@@ -1806,8 +1835,9 @@ a.sklepag-kup {
 
 /* Pingi: sygnały łapanych wiadomości — POZA maską, tylko opacity + transform (kompozytor). */
 .sklepag-pingi {
+	grid-column: 1 / -1;
 	position: absolute;
-	inset: 0;
+	inset: -8rem -4rem; /* ten sam offset co .sklepag-tlo — pingi zostają w węzłach siatki */
 	z-index: 0 !important;
 	pointer-events: none;
 	overflow: hidden;

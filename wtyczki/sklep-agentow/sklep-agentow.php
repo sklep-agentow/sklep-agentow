@@ -199,7 +199,8 @@ function sklepag_shortcode_sklep() {
 		$obraz = sklepag_ilustracja_produktu( $p->slug );
 		$html .= '<article class="sklepag-karta">';
 		if ( $obraz ) {
-			$html .= sklepag_figure_zrzutu( $obraz, 'sklepag-karta-obraz sklepag-karta-ilustracja', false, false );
+			// Bez lazy: ilustracja ma wejść RAZEM z kartą (kaskada), nie chwilę po niej.
+			$html .= sklepag_figure_zrzutu( $obraz, 'sklepag-karta-obraz sklepag-karta-ilustracja', false, false, false );
 		}
 		// Głowa karty w języku gospodarza: mono-numer + hairline + ikona (jak jego karty usług).
 		$html .= '<div class="sklepag-karta-glowa"><span class="sklepag-karta-nr">' . sprintf( '%02d', $nr ) . '</span><span class="sklepag-karta-linia"></span>' . sklepag_ikona_produktu( $p->slug ) . '</div>';
