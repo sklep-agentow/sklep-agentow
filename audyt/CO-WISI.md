@@ -8,6 +8,11 @@
   zamówienia otworzy z powrotem moderację opinii zapomnianego klienta.
 
 ## 🔧 PRZYRZĄDY (z recenzji #177, DROBNA, 25.08)
+- **Handlery admin-post NIE MAJĄ harnessu testowego** (nonce + redirect + exit — żaden test
+  w repo nie woła żadnego handlera; recenzja #177 r7 pokazała, że mutant ciała handlera
+  przechodzi testy funkcyjne). Klasa repo-wide, nie jednego PR. Domknięcie: harness
+  wołający handlery przez HTTP na stosie warsztatowym (z zalogowaną sesją) ALBO
+  ekstrakcja ciał handlerów do funkcji testowalnych — decyzja przy następnej rundzie QA.
 - **`stos.sh` nie widzi ŻADNEJ tabeli sklepu** — okno odczytu recenzenta nie ma operacji
   zaglądania do `wp_sklepag_*`, więc recenzent nie może sam obejrzeć np. wierszy opinii
   (dostał odmowę przy #177 i oparł się na przebiegu testu). Rozszerzyć okno o bezpieczną

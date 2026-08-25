@@ -58,7 +58,9 @@ sha256 w `token_hash`, ważny `SKLEPAG_OPINIA_DNI` dni) → `oczekuje` (kupując
 wysłał formularz; token spalony — wpis `''`) → `przyjeta` / `odrzucona`
 (moderacja w panelu, pomyłkę można cofnąć w obie strony). Na stronie produktu
 renderują się WYŁĄCZNIE `przyjeta` (`sklepag_opinie_z_bazy` → `sklepag_render_opinie`).
-Retry maila zakupowego odświeża token w stanie `zalazek`; opinii przysłanej nie rusza.
+Retry maila zakupowego i ręczny resend z panelu odświeżają token w stanie `zalazek`
+(resend ZAKŁADA zalążek także zamówieniu, które go nie miało — np. sprzed mechanizmu);
+opinii przysłanej żadna ścieżka nie rusza.
 Formularz (`admin-post.php?action=sklepag_ocen`) wymaga zgody na publikację imienia
 (treść zgody: `SKLEPAG_OPINIA_ZGODA_TRESC`, zapis w `zgoda_tresc`/`zgoda_czas`),
 ma pole-pułapkę i limity żądań; twarde sufity długości: imię 100 · tytuł 150 · treść 2000.
