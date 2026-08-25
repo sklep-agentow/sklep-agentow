@@ -2604,6 +2604,15 @@ html.sklepag-lightbox-otwarty {
 	}
 }
 
+/* Faza „nagranie" na tablecie (zmierzone 25.08: przy 700–768 px dwa kafle mają 314–345 px — tabela
+   1100 px w 314 px to miniatura): jedna kolumna już poniżej 56rem. Pionowe kafle ChatBota (`--wideo`)
+   są przy tej szerokości czytelne i zostają w dwóch kolumnach do 40rem. */
+@media (max-width: 56rem) {
+	.sklepag-faza--nagranie .sklepag-faza-kafle {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
 @media (max-width: 48rem) {
 	.sklepag-produkt .sklepag-sekcja--pelna .sklepag-dowody,
 	.sklepag-dla-kogo--karty,

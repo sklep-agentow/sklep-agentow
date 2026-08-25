@@ -78,6 +78,21 @@ add_filter( 'get_canonical_url', 'sklepag_seo_canonical' );
 function sklepag_seo_head() {
 	$p = sklepag_seo_biezacy_produkt();
 	if ( ! $p ) {
+		// LISTA /sklep/ (strona WP bez treści w edytorze → WP nie daje description; Lighthouse SEO
+		// listy 92 z tego powodu — audyt 25.08). Opis = lead hero listy + nazwy produktów (istniejące,
+		// zatwierdzone treści), okładka sklepu do OG/Twitter.
+		if ( is_page( (int) get_option( 'sklepag_strona_sklep' ) ) ) {
+			$opis_listy = 'Gotowe wtyczki-boty dla Twojej firmy: ChatBot LIVE i Segregator maila. Instalujesz jak każdą wtyczkę WordPressa — działają od pierwszej minuty.';
+			$okladka    = sklepag_okladka_url( 'sklep' );
+			echo '<meta name="description" content="' . esc_attr( $opis_listy ) . '">' . "\n";
+			echo '<meta property="og:type" content="website">' . "\n";
+			echo '<meta property="og:title" content="' . esc_attr( wp_get_document_title() ) . '">' . "\n";
+			echo '<meta property="og:description" content="' . esc_attr( $opis_listy ) . '">' . "\n";
+			echo '<meta property="og:url" content="' . esc_url( get_permalink() ) . '">' . "\n";
+			echo '<meta property="og:image" content="' . esc_url( $okladka ) . '">' . "\n";
+			echo '<meta name="twitter:card" content="summary_large_image">' . "\n";
+			echo '<meta name="twitter:image" content="' . esc_url( $okladka ) . '">' . "\n";
+		}
 		return;
 	}
 

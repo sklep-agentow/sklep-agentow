@@ -64,7 +64,11 @@ function sklepag_obsluz_resend() {
 
 	$produkt_snapshot        = new stdClass();
 	$produkt_snapshot->nazwa = $zam->produkt_nazwa_kupiona;
-	$tresc                   = sklepag_zbuduj_mail( $produkt_snapshot, $zam, $link, $link_op );
+	// Slug po id produktu: akapit gwarancji w mailu bierze treść z danych produktu (jak wysyłka
+	// automatyczna); produkt skasowany = brak sluga = mail bez tego akapitu, bez błędu.
+	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery -- własna tabela wtyczki, nazwa z prefiksu WP.
+	$produkt_snapshot->slug = (string) $wpdb->get_var( $wpdb->prepare( "SELECT slug FROM {$wpdb->prefix}sklepag_produkty WHERE id=%d", (int) $zam->produkt_id ) );
+	$tresc                  = sklepag_zbuduj_mail( $produkt_snapshot, $zam, $link, $link_op );
 
 	$wpdb->query(
 		$wpdb->prepare(

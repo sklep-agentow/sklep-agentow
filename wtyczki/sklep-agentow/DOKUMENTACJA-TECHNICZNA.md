@@ -1,6 +1,6 @@
 # Sklep Agentów — dokumentacja techniczna
 
-**Wersja wtyczki: 0.9.12 · wersja schematu bazy: 5 · WordPress 6.7+ · PHP 8.1+**
+**Wersja wtyczki: 0.9.13 · wersja schematu bazy: 5 · WordPress 6.7+ · PHP 8.1+**
 
 > **Po co ten dokument.** To jest **mapa systemu dla audytora i programisty**, nie ulotka.
 > Każda liczba i nazwa tutaj jest wzięta z kodu, nie z pamięci — jeśli coś się rozjedzie,
@@ -73,6 +73,14 @@ późniejsza edycja produktu nie zmieniła historii · `status` (`oczekuje` → 
 `pobrania_uzyte` — brama pobrań · `zgoda_tresc`, `zgoda_czas` — dowód zgody
 (RODO) · `mail_tresc` — wysłana treść · `usunieto_dnia` — znacznik anonimizacji.
 
+Mail po zakupie (`sklepag_zbuduj_mail`, tekstowy): produkt i kwota → **potwierdzenie zgody**
+(dosłowna `zgoda_tresc` + `zgoda_czas` w czasie lokalnym; dyrektywa 2011/83/UE art. 8 ust. 7
+lit. b — potwierdzenie umowy na trwałym nośniku zawiera potwierdzenie zgody z art. 16 lit. m)
+→ link pobrania z ważnością i limitem → instrukcja w skrócie → gwarancja z danych produktu
+(gdy produkt ją ma) → link do opinii (D32) → „odpisz na tego maila". Wysyłka
+`sklepag_wyslij_mail_sklepu`: nadawca z ustawień + nagłówek `Reply-To` na „mail kontaktowy
+właściciela" (gdy ustawiony). Treść i nagłówki pilnuje osobny test-strażnik (bez realnej wysyłki).
+
 ---
 
 ## 4. Punkty wejścia — pełna lista
@@ -140,7 +148,7 @@ po stronie serwera. To jest świadome ograniczenie, nie przeoczenie.
 
 | Stała | Wartość | Znaczenie |
 |---|---|---|
-| `SKLEPAG_WERSJA` | 0.9.12 | wersja wtyczki (assety, cache) |
+| `SKLEPAG_WERSJA` | 0.9.13 | wersja wtyczki (assety, cache) |
 | `SKLEPAG_WERSJA_SCHEMATU` | 5 | wersja schematu bazy (migracje) |
 | `SKLEPAG_LIMIT_POBRAN` | 10 | ile razy można pobrać zakup |
 | `SKLEPAG_LINK_GODZIN` | 72 | ważność linku pobrania |
