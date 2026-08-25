@@ -47,9 +47,10 @@ Kont/logowania KUPUJĄCYCH nie ma (konta w WP mają tylko adminowie) · kursów 
 sprzedajemy · faktur NIE wystawiamy · plików produktów NIE serwujemy bezpośrednio
 (tylko brama PHP) · prawdziwych płatności NIE włączamy · przecen NIE MA (Omnibus-ceny
 — jawnie nie dotyczy) · opinie WYŁĄCZNIE prawdziwe od zweryfikowanych kupujących,
-dodawane ręcznie po potwierdzeniu zakupu — bez zbierania formularzem od gości i bez
-ocen zbiorczych (D6 + UZUPEŁNIENIE 24.08; Omnibus-opinie DOTYCZY i jest spełniony
-weryfikacją zakupu przed publikacją oraz notą przy sekcji) · **WooCommerce NIE
+zbierane jednorazowym linkiem z maila zakupowego i publikowane po ręcznej akceptacji
+(D6 + UZUPEŁNIENIE 24.08 + D32) — bez zbierania od gości i bez ocen zbiorczych
+(Omnibus-opinie DOTYCZY i jest spełniony weryfikacją zakupu przed publikacją oraz
+notą przy sekcji) · **WooCommerce NIE
 używamy** (D17 — sklep to nasza
 wtyczka) · **tłumaczeń/i18n NIE robimy** (teksty polskie wprost — D21; omija też minę
 textdomain WP 6.7+) · multisite WP NIE (jedna zwykła instalacja) · monitoringu

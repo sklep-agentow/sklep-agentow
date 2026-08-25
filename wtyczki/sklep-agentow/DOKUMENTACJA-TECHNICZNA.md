@@ -1,6 +1,6 @@
 # Sklep Agentów — dokumentacja techniczna
 
-**Wersja wtyczki: 0.9.7 · wersja schematu bazy: 4 · WordPress 6.7+ · PHP 8.1+**
+**Wersja wtyczki: 0.9.8 · wersja schematu bazy: 5 · WordPress 6.7+ · PHP 8.1+**
 
 > **Po co ten dokument.** To jest **mapa systemu dla audytora i programisty**, nie ulotka.
 > Każda liczba i nazwa tutaj jest wzięta z kodu, nie z pamięci — jeśli coś się rozjedzie,
@@ -35,7 +35,7 @@ zero zewnętrznych bibliotek i zero CDN. Jedyna usługa zewnętrzna: **Stripe** 
 
 ---
 
-## 3. Schemat bazy — 6 tabel, prefiks `wp_sklepag_`
+## 3. Schemat bazy — 7 tabel, prefiks `wp_sklepag_`
 
 ⛔ **Wszystkie dane wtyczki żyją we własnych tabelach.** W `wp_options` trzymane są
 wyłącznie ustawienia i klucze — nigdy liczniki ani stan zamówień.
@@ -48,6 +48,20 @@ wyłącznie ustawienia i klucze — nigdy liczniki ani stan zamówień.
 | `zdarzenia` | dziennik zdarzeń zamówienia (audyt ścieżki) | wszystkie moduły zakupu |
 | `logowania` | kto i kiedy logował się do panelu, z jakim skutkiem | zaczepy logowania WP |
 | `rate_limit` | okna limitów żądań | brama zakupu i logowania |
+| `opinie` | mechanizm opinii kupujących (D32): zalążek+token przy mailu, treść z formularza, statusy moderacji | mail zakupowy → formularz kupującego → panel (moderacja) |
+
+### Tabela `opinie` — obieg (D32)
+
+Jedna opinia na zamówienie (`UNIQUE zamowienie_id`) — weryfikacja zakupu z danych
+zamówień, bez kont kupujących. Statusy: `zalazek` (mail z linkiem wysłany, token
+sha256 w `token_hash`, ważny `SKLEPAG_OPINIA_DNI` dni) → `oczekuje` (kupujący
+wysłał formularz; token spalony — wpis `''`) → `przyjeta` / `odrzucona`
+(moderacja w panelu, pomyłkę można cofnąć w obie strony). Na stronie produktu
+renderują się WYŁĄCZNIE `przyjeta` (`sklepag_opinie_z_bazy` → `sklepag_render_opinie`).
+Retry maila zakupowego odświeża token w stanie `zalazek`; opinii przysłanej nie rusza.
+Formularz (`admin-post.php?action=sklepag_ocen`) wymaga zgody na publikację imienia
+(treść zgody: `SKLEPAG_OPINIA_ZGODA_TRESC`, zapis w `zgoda_tresc`/`zgoda_czas`),
+ma pole-pułapkę i limity żądań; twarde sufity długości: imię 100 · tytuł 150 · treść 2000.
 
 ### Tabela `zamowienia` — kolumny istotne dla audytu
 `stripe_session_id` (klucz obcy do Stripe) · `produkt_nazwa_kupiona`,
@@ -122,10 +136,12 @@ po stronie serwera. To jest świadome ograniczenie, nie przeoczenie.
 
 | Stała | Wartość | Znaczenie |
 |---|---|---|
-| `SKLEPAG_WERSJA` | 0.9.7 | wersja wtyczki (assety, cache) |
-| `SKLEPAG_WERSJA_SCHEMATU` | 4 | wersja schematu bazy (migracje) |
+| `SKLEPAG_WERSJA` | 0.9.8 | wersja wtyczki (assety, cache) |
+| `SKLEPAG_WERSJA_SCHEMATU` | 5 | wersja schematu bazy (migracje) |
 | `SKLEPAG_LIMIT_POBRAN` | 10 | ile razy można pobrać zakup |
 | `SKLEPAG_LINK_GODZIN` | 72 | ważność linku pobrania |
+| `SKLEPAG_OPINIA_DNI` | 30 | ważność jednorazowego linku „oceń bota" |
+| `SKLEPAG_OPINIA_ZGODA_TRESC` | (zdanie zgody) | treść zgody na publikację opinii z imieniem |
 
 ⛔ **Każda z tych liczb pojawia się w treściach dla klienta** (mail, FAQ, strona
 produktu) **generowana ze stałej**, nie wpisana ręcznie — dokumentacja nie może
@@ -150,9 +166,10 @@ w cronie bez wtyczki tylko sypie błędami — #170).
 ## 9. Granice — czego ta wtyczka NIE robi
 
 Nie zakłada kont kupujących · nie obsługuje płatności cyklicznych ani abonamentów ·
-nie zbiera opinii formularzem od gości i nie liczy ocen zbiorczych (pokazuje wyłącznie
-opinie zweryfikowanych kupujących z oceną 1–5, dodawane ręcznie po potwierdzeniu
-zakupu; bez `aggregateRating` w danych strukturalnych — D6) · nie robi przecen
+nie zbiera opinii od GOŚCI i nie liczy ocen zbiorczych (formularz opinii działa
+wyłącznie z jednorazowego linku w mailu zakupowym — jedna opinia na zamówienie,
+publikacja dopiero po ręcznej akceptacji w panelu; bez `aggregateRating` w danych
+strukturalnych — D6/D32) · nie robi przecen
 ani kuponów · nie dotyka motywu ani cudzych wtyczek · nie wysyła danych nigdzie
 poza Stripe.
 

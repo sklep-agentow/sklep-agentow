@@ -105,6 +105,26 @@ function sklepag_tabele_sql() {
 			okno_do datetime NOT NULL,
 			PRIMARY KEY  (klucz)
 		) {$c};",
+
+		"CREATE TABLE {$p}opinie (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			zamowienie_id bigint(20) unsigned NOT NULL,
+			produkt_id bigint(20) unsigned NOT NULL,
+			imie varchar(100) NOT NULL DEFAULT '',
+			gwiazdki tinyint(1) unsigned NOT NULL DEFAULT 5,
+			tytul varchar(150) NOT NULL DEFAULT '',
+			tresc text,
+			status varchar(20) NOT NULL DEFAULT 'zalazek',
+			token_hash char(64) NOT NULL DEFAULT '',
+			token_wygasa datetime DEFAULT NULL,
+			zgoda_tresc text,
+			zgoda_czas datetime DEFAULT NULL,
+			utworzono datetime NOT NULL,
+			zmieniono datetime NOT NULL,
+			PRIMARY KEY  (id),
+			UNIQUE KEY zamowienie_id (zamowienie_id),
+			KEY produkt_status (produkt_id,status)
+		) {$c};",
 	);
 }
 

@@ -3,7 +3,7 @@
  * Plugin Name: Sklep Agentów
  * Plugin URI: https://automaticai.pl/sklep/
  * Description: Sprzedawaj wtyczki-boty AI bezpośrednio ze swojej strony: płatność kartą, automatyczny mail z linkiem do pobrania, panel zamówień ze statystykami i dziennikiem logowań. Zamówienia, produkty i pliki zostają w Twojej bazie i na Twoim serwerze — bez abonamentu. Płatność obsługuje Stripe.
- * Version: 0.9.7
+ * Version: 0.9.8
  * Requires at least: 6.7
  * Requires PHP: 8.1
  * Author: Automatic AI
@@ -16,10 +16,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SKLEPAG_WERSJA', '0.9.7' );
-define( 'SKLEPAG_WERSJA_SCHEMATU', 4 ); // v4: kolumna zamowienia.usunieto_dnia (anonimizacja RODO — K3d); v3: indeks para_logowania.
+define( 'SKLEPAG_WERSJA', '0.9.8' );
+define( 'SKLEPAG_WERSJA_SCHEMATU', 5 ); // v5: tabela opinie (mechanizm D32); v4: kolumna zamowienia.usunieto_dnia (anonimizacja RODO — K3d); v3: indeks para_logowania.
 define( 'SKLEPAG_LIMIT_POBRAN', 10 ); // Jedno źródło: INSERT zamówienia + treść maila.
 define( 'SKLEPAG_LINK_GODZIN', 72 );  // Ważność linku pobrania — jw.
+define( 'SKLEPAG_OPINIA_DNI', 30 );   // Ważność linku „oceń bota" — kupujący najpierw testuje produkt.
+define( 'SKLEPAG_OPINIA_ZGODA_TRESC', 'Zgadzam się na publikację mojej opinii wraz z podanym imieniem na stronie produktu.' );
 define( 'SKLEPAG_PLIK', __FILE__ );
 define( 'SKLEPAG_KATALOG', plugin_dir_path( __FILE__ ) );
 
@@ -30,6 +32,7 @@ require_once SKLEPAG_KATALOG . 'includes/pobieranie.php';
 require_once SKLEPAG_KATALOG . 'includes/logowania.php'; // ZAWSZE, nie za is_admin() — hooki logowania żyją na wp-login.php.
 require_once SKLEPAG_KATALOG . 'includes/front-produkt.php'; // K5: widok produktu + rewrite (init) — poza is_admin().
 require_once SKLEPAG_KATALOG . 'includes/front-seo.php';     // K5: title/meta/JSON-LD/sitemap (D27).
+require_once SKLEPAG_KATALOG . 'includes/opinie.php';        // D32: zalążek+token przy mailu, formularz admin-post (poza is_admin!), render z bazy.
 
 register_activation_hook( __FILE__, 'sklepag_aktywacja' );
 register_deactivation_hook( __FILE__, 'sklepag_deaktywacja' );
