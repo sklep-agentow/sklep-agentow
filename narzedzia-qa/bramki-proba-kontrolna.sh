@@ -150,6 +150,10 @@ slad_probuj "numer PR-a i recenzent"         "// uwaga recenzenta do PR #133" "n
 # Wzorzec 1.0.0 tego nie widzial i zostawil taki komentarz w Segregatorze.
 slad_probuj "nasze slownictwo bez numeru zgloszenia" "// zarzut z pierwszej rundy krytyk" "nasz obieg pracy"
 slad_probuj "sciaga egzaminatora w komentarzu"       "// klasa #1 sciagi egzaminatora" "nasz obieg pracy"
+# IMIE Z ZESPOLU: mianownik I odmiana osobno. Wzorzec `Dzidek` gubil odmiany, poprawka
+# na `Dzidk` gubila mianownik — bez tych DWOCH przypadkow regresja wzorca przeszla po cichu.
+slad_probuj "imie z zespolu w mianowniku"            "// feedback Dzidek 19.08: karty za ciasne" "nasz obieg pracy"
+slad_probuj "imie z zespolu w odmianie"              "// uwaga od Dzidka 19.08: karty za ciasne" "nasz obieg pracy"
 
 # ⭐ TO JEST TEN PRZYPADEK, O KTORY CHODZI W MANIFESCIE: nie „skaner widzi slad",
 # tylko „CI STOI NA CZERWONO". Mutacja idzie do PRAWDZIWEGO pliku wtyczki, uruchamiane

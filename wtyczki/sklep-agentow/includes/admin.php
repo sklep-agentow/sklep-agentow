@@ -96,7 +96,7 @@ function sklepag_admin_assety( $hook ) {
 	if ( 'toplevel_page_sklepag' !== $hook && false === strpos( $hook, 'page_sklepag-' ) ) {
 		return;
 	}
-	wp_enqueue_style( 'sklepag-admin', plugins_url( 'assets/admin.css', SKLEPAG_PLIK ), array(), SKLEPAG_WERSJA );
+	wp_enqueue_style( 'sklepag-admin', plugins_url( 'assets/admin.css', SKLEPAG_PLIK ), array(), sklepag_wersja_assetu( 'assets/admin.css' ) );
 }
 
 // Szkielet-liczniki z kości zastąpił pełny dashboard (includes/admin-dashboard.php);

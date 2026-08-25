@@ -405,7 +405,7 @@ function sklepag_tresc_produktu( $slug ) {
 }
 
 /**
- * Ilustracja produktu do KARTY listy i HERO strony produktu (feedback Dzidka 19.08: „fajne obrazy —
+ * Ilustracja produktu do KARTY listy i HERO strony produktu (feedback z przeglądu 19.08: „fajne obrazy —
  * robot segregujący maile, ktoś odpisujący na czacie"). Własne SVG w palecie
  * strony (limonkowy line-art, roboty-bliźniaki) zamiast generycznego stocka;
  * zrzut żywego bota jest na stronie produktu pierwszym kaflem galerii.
@@ -439,8 +439,10 @@ function sklepag_ilustracja_produktu( $slug ) {
  * @param bool   $z_podpisem Czy dodać figcaption.
  * @param bool   $z_paskiem  Czy dodać pasek „okna aplikacji" (tylko dla zrzutów —
  *                           ilustracja nie udaje okna programu).
+ * @param bool   $leniwie    Czy `loading="lazy"` (false dla ilustracji kart listy — obraz ma
+ *                           wejść razem z kartą w kaskadzie, nie chwilę po niej).
  */
-function sklepag_figure_zrzutu( $zrzut, $klasa, $z_podpisem, $z_paskiem = true ) {
+function sklepag_figure_zrzutu( $zrzut, $klasa, $z_podpisem, $z_paskiem = true, $leniwie = true ) {
 	// Modyfikator per produkt (kadr okna karty ustawiany w CSS, np. dolna
 	// część okna czatu zamiast uciętego nagłówka). Sufiks ZAWSZE na bazowym
 	// (pierwszym) członie klasy — przy wieloczłonowym $klasa doklejanie do
@@ -453,7 +455,7 @@ function sklepag_figure_zrzutu( $zrzut, $klasa, $z_podpisem, $z_paskiem = true )
 		// ciemny widget z jasnym panelem wp-admin — uwaga sędziego o dwóch językach.
 		$html .= '<span class="sklepag-okno-pasek" aria-hidden="true"><span></span><span></span><span></span></span>';
 	}
-	$html .= '<img src="' . esc_url( plugins_url( 'assets/produkty/' . $zrzut['plik'], SKLEPAG_PLIK ) ) . '" alt="' . esc_attr( $zrzut['alt'] ) . '" width="' . (int) $zrzut['szer'] . '" height="' . (int) $zrzut['wys'] . '" loading="lazy">';
+	$html .= '<img src="' . esc_url( plugins_url( 'assets/produkty/' . $zrzut['plik'], SKLEPAG_PLIK ) ) . '" alt="' . esc_attr( $zrzut['alt'] ) . '" width="' . (int) $zrzut['szer'] . '" height="' . (int) $zrzut['wys'] . '"' . ( $leniwie ? ' loading="lazy"' : '' ) . '>';
 	if ( $z_podpisem ) {
 		$html .= '<figcaption class="sklepag-mono-etykieta">' . esc_html( $zrzut['podpis'] ) . '</figcaption>';
 	}

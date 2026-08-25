@@ -3,7 +3,7 @@
  * Plugin Name: Sklep Agentów
  * Plugin URI: https://automaticai.pl/sklep/
  * Description: Sprzedawaj wtyczki-boty AI bezpośrednio ze swojej strony: płatność kartą, automatyczny mail z linkiem do pobrania, panel zamówień ze statystykami i dziennikiem logowań. Zamówienia, produkty i pliki zostają w Twojej bazie i na Twoim serwerze — bez abonamentu. Płatność obsługuje Stripe.
- * Version: 0.9.8
+ * Version: 0.9.10
  * Requires at least: 6.7
  * Requires PHP: 8.1
  * Author: Automatic AI
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SKLEPAG_WERSJA', '0.9.8' );
+define( 'SKLEPAG_WERSJA', '0.9.10' );
 define( 'SKLEPAG_WERSJA_SCHEMATU', 5 ); // v5: tabela opinie (mechanizm D32); v4: kolumna zamowienia.usunieto_dnia (anonimizacja RODO — K3d); v3: indeks para_logowania.
 define( 'SKLEPAG_LIMIT_POBRAN', 10 ); // Jedno źródło: INSERT zamówienia + treść maila.
 define( 'SKLEPAG_LINK_GODZIN', 72 );  // Ważność linku pobrania — jw.
@@ -71,6 +71,17 @@ function sklepag_start() {
 }
 
 /**
+ * Wersja assetu do cache-bustingu: numer wtyczki + czas modyfikacji pliku. Podmiana
+ * pliku bez podbicia wersji (rundy wyglądu 25.08) zostawiała przeglądarkom stary CSS/JS
+ * pod tym samym adresem `?ver=` — na żywo wyglądało to jak brak animacji wejścia.
+ */
+function sklepag_wersja_assetu( $sciezka ) {
+	$plik  = SKLEPAG_KATALOG . $sciezka;
+	$mtime = file_exists( $plik ) ? filemtime( $plik ) : 0;
+	return SKLEPAG_WERSJA . ( $mtime ? '.' . $mtime : '' );
+}
+
+/**
  * Assety TYLKO na stronach sklepu (nie spowalniamy reszty strony — plan §2).
  */
 function sklepag_assety_frontu() {
@@ -78,27 +89,35 @@ function sklepag_assety_frontu() {
 	$strona_dziekujemy = (int) get_option( 'sklepag_strona_dziekujemy' );
 
 	if ( is_page( $strona_sklep ) || is_page( $strona_dziekujemy ) ) {
-		wp_enqueue_style( 'sklepag-front', plugins_url( 'assets/front.css', SKLEPAG_PLIK ), array(), SKLEPAG_WERSJA );
+		wp_enqueue_style( 'sklepag-front', plugins_url( 'assets/front.css', SKLEPAG_PLIK ), array(), sklepag_wersja_assetu( 'assets/front.css' ) );
 
 		/* Pojawianie się sekcji przy przewijaniu (spójność z motywem gospodarza).
 			Skrypt w <head> z `defer` + inline PRZED nim: klasa `sklepag-js` musi
-			trafić na <html> ZANIM przeglądarka namaluje treść, inaczej sekcje
-			mignęłyby widoczne i dopiero potem zniknęły. Bez JS klasa nie powstaje
-			i CSS w ogóle nie ukrywa treści — to jest zabezpieczenie, nie ozdoba. */
+			trafić na <html> ZANIM przeglądarka namaluje treść — to ONA ukrywa elementy
+			od pierwszej klatki (jak `html.js` gospodarza); skrypt tylko odsłania.
+			Inline dodaje klasę wyłącznie, gdy jest IntersectionObserver i nie ma
+			„ogranicz ruch", a po 2,5 s dodaje `sklepag-odslon` (CSS pokazuje wszystko)
+			TYLKO gdy front-ruch.js nie zgłosił gotowości klasą `sklepag-ruch-ok` (bezwarunkowy
+			bezpiecznik gasił kaskadę sekcji poza pierwszym ekranem).
+			Bez JS klasa nie powstaje i CSS niczego nie ukrywa. */
 		wp_enqueue_script(
 			'sklepag-ruch',
 			plugins_url( 'assets/front-ruch.js', SKLEPAG_PLIK ),
 			array(),
-			SKLEPAG_WERSJA,
+			sklepag_wersja_assetu( 'assets/front-ruch.js' ),
 			array(
 				'in_footer' => false,
 				'strategy'  => 'defer',
 			)
 		);
-		wp_add_inline_script( 'sklepag-ruch', "document.documentElement.classList.add('sklepag-js');", 'before' );
+		wp_add_inline_script(
+			'sklepag-ruch',
+			"(function(){try{if(!('IntersectionObserver' in window)||(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)){return;}var h=document.documentElement;h.classList.add('sklepag-js');setTimeout(function(){if(!h.classList.contains('sklepag-ruch-ok')){h.classList.add('sklepag-odslon');}},2500);}catch(e){}})();",
+			'before'
+		);
 	}
 	if ( is_page( $strona_dziekujemy ) ) {
-		wp_enqueue_script( 'sklepag-dziekujemy', plugins_url( 'assets/dziekujemy.js', SKLEPAG_PLIK ), array(), SKLEPAG_WERSJA, true );
+		wp_enqueue_script( 'sklepag-dziekujemy', plugins_url( 'assets/dziekujemy.js', SKLEPAG_PLIK ), array(), sklepag_wersja_assetu( 'assets/dziekujemy.js' ), true );
 		wp_add_inline_script( 'sklepag-dziekujemy', 'window.sklepagRest = ' . wp_json_encode( esc_url_raw( rest_url( 'sklepag/v1/' ) ) ) . ';', 'before' );
 	}
 }
@@ -108,7 +127,7 @@ function sklepag_assety_frontu() {
  * napis bez zmian od K1 — testy i K2 na nim polegają).
  */
 function sklepag_baner_testowy() {
-	return '<p class="sklepag-baner-testowy">TRYB TESTOWY — płatności nie są pobierane. Przetestujesz cały zakup kartą testową, nic nie płacąc.</p>';
+	return '<p class="sklepag-baner-testowy"><span class="sklepag-baner-testowy-tytul">TRYB TESTOWY</span> — płatności nie są pobierane. Przetestujesz cały zakup kartą testową, nic nie płacąc.</p>';
 }
 
 /**
@@ -129,13 +148,22 @@ function sklepag_shortcode_sklep() {
 		$wpdb->prepare( "SELECT id, nazwa, slug, opis_krotki, cena_grosze, waluta FROM {$tabela} WHERE aktywny = %d ORDER BY nazwa", 1 ) // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- nazwa tabeli z prefiksu WP, nie z wejścia.
 	);
 
-	$html  = '<div class="sklepag-wyspa sklepag-sklep">';
+	$html = '<div class="sklepag-wyspa sklepag-sklep">';
+	// TŁO „BLUEPRINT Z SYGNAŁAMI" na CAŁEJ wyspie (przegląd na żywo 25.08: „coś na całe tło, z inspiracji,
+	// nie 1:1 hero gospodarza"): siatka projektowa jak na ilustracjach kart + wolny promień skanu
+	// + pingi (czysty CSS, zero canvasa — lekkie dla każdej karty graficznej). aria-hidden.
+	$html .= '<div class="sklepag-tlo" aria-hidden="true"></div>';
+	// Pingi POZA maskowanym tłem (maska nad animacją = przeliczanie całej warstwy co klatkę).
+	$html .= '<div class="sklepag-pingi" aria-hidden="true">' . str_repeat( '<i></i>', 9 ) . '</div>';
+	// Hero 2-kolumnowy (runda działu stron 25.08 — PLAN-WYGLADU-RUNDA-STRON §3):
+	// tekst po lewej, po prawej PANEL NOCNEJ ZMIANY. Na wąskim ekranie panel pod tekstem.
+	$html .= '<div class="sklepag-hero-lista">';
 	$html .= '<header class="sklepag-hero">';
 	$html .= '<p class="sklepag-mono-etykieta">[ SKLEP ]</p>';
 	$html .= '<h1 class="sklepag-hero-tytul"><span class="sklepag-akcent">Boty</span>, które robią robotę.</h1>';
 	$html .= '<p class="sklepag-lead">Gotowe wtyczki-boty dla Twojej firmy. Instalujesz jak każdą wtyczkę WordPressa — działają od pierwszej minuty.</p>';
 	$html .= sklepag_baner_testowy();
-	$html .= '<p class="sklepag-demo-cta">▶ Zielony bąbelek w rogu strony to ChatBot LIVE — porozmawiaj z nim, zanim kupisz.</p>';
+	$html .= '<p class="sklepag-demo-cta"><span class="sklepag-akcent">▶</span> Zielony bąbelek w rogu strony to ChatBot LIVE — porozmawiaj z nim, zanim kupisz.</p>';
 	// Pasek konkretów: każda pozycja ma pokrycie w kodzie/pomiarze (dok=kod):
 	// 6.0+ = „Requires at least" obu botów · czysta deinstalacja = zmierzona
 	// we wrogiej sesji botów (diff przed-po pusty) · bez abonamentu = zakup
@@ -144,6 +172,37 @@ function sklepag_shortcode_sklep() {
 	$html .= '<li>WordPress 6.0+</li><li>instalacja jak każdej wtyczki</li><li>czysta deinstalacja</li><li>bez abonamentu</li>';
 	$html .= '</ul>';
 	$html .= '</header>';
+	// PANEL NOCNEJ ZMIANY — sygnatura ruchu listy: okno aplikacji, w którym oba boty
+	// „pracują" w pętli (czysty CSS, zero JS). To ILUSTRACJA (aria-hidden): dymki i maile
+	// to TE SAME zatwierdzone teksty co mockup czatu i PRZED/PO na stronach produktów —
+	// żadnych nowych obietnic ani liczb. Bez JS / przy „ogranicz ruch" panel stoi
+	// w stanie końcowym (wszystko widoczne).
+	$html .= '<div class="sklepag-panel" aria-hidden="true">';
+	$html .= '<span class="sklepag-panel-adnotacja sklepag-panel-adnotacja--gora">Twoja strona</span>';
+	$html .= '<span class="sklepag-panel-adnotacja sklepag-panel-adnotacja--dol">Twoja skrzynka</span>';
+	$html .= '<div class="sklepag-panel-okno">';
+	$html .= '<span class="sklepag-okno-pasek"><span></span><span></span><span></span></span>';
+	$html .= '<div class="sklepag-panel-wiersz">';
+	$html .= '<p class="sklepag-mono-etykieta"><span class="sklepag-kropka"></span>[ ChatBot LIVE · <span class="sklepag-akcent">online</span> ]</p>';
+	$html .= '<div class="sklepag-panel-czat">';
+	$html .= '<p class="sklepag-dymek sklepag-dymek-gosc">Ile kosztuje strzyżenie?</p>';
+	// Awatar = głowa TEJ SAMEJ maskotki co na ilustracjach kart (jedna „ręka" rysunku);
+	// oczy mrugają czystym CSS (sędzia r1: akcent marki zamiast generycznego UI).
+	$html   .= '<div class="sklepag-panel-bot"><span class="sklepag-panel-avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5.5V3.6"/><circle cx="12" cy="2.6" r="1" fill="currentColor" stroke="none"/><rect x="4.5" y="5.5" width="15" height="12" rx="3.5"/><circle class="sklepag-oko" cx="9.3" cy="11" r="1.1" fill="currentColor" stroke="none"/><circle class="sklepag-oko" cx="14.7" cy="11" r="1.1" fill="currentColor" stroke="none"/><path d="M9.6 14.2q2.4 2 4.8 0"/></svg></span>';
+	$html   .= '<div class="sklepag-panel-odpowiedz">';
+	$html   .= '<p class="sklepag-dymek sklepag-dymek-bot sklepag-pisze"><span></span><span></span><span></span></p>';
+	$html   .= '<p class="sklepag-dymek sklepag-dymek-bot">Strzyżenie damskie od 80 zł, męskie od 50 zł. Pełny cennik: automatic.ai/cennik</p>';
+	$html   .= '</div></div></div></div>';
+	$html   .= '<div class="sklepag-panel-wiersz">';
+	$html   .= '<p class="sklepag-mono-etykieta"><span class="sklepag-kropka"></span>[ Segregator maila · <span class="sklepag-akcent">poranny raport</span> ]</p>';
+	$html   .= '<div class="sklepag-panel-maile">';
+	$koperta = '<svg class="sklepag-panel-mail-ikona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="m3 6.5 9 7 9-7"/></svg>';
+	$html   .= '<p class="sklepag-panel-mail">' . $koperta . '<span class="sklepag-panel-mail-temat">FV 88/2026 — księgowość</span><span class="sklepag-tag">Faktury</span></p>';
+	$html   .= '<p class="sklepag-panel-mail">' . $koperta . '<span class="sklepag-panel-mail-temat">RE: wycena ogrodzenia</span><span class="sklepag-tag">Oferty</span></p>';
+	$html   .= '<p class="sklepag-panel-mail">' . $koperta . '<span class="sklepag-panel-mail-temat">reklamacja zamówienia 113</span><span class="sklepag-tag">Reklamacje</span></p>';
+	$html   .= '</div></div>';
+	$html   .= '</div></div>';
+	$html   .= '</div>';
 
 	if ( empty( $produkty ) ) {
 		$html .= '<p class="sklepag-pusto">[ BRAK PRODUKTÓW W SPRZEDAŻY ]</p></div>';
@@ -151,15 +210,20 @@ function sklepag_shortcode_sklep() {
 	}
 
 	$html .= '<div class="sklepag-karty">';
+	$nr    = 0;
 	foreach ( $produkty as $p ) {
+		++$nr;
 		// Karta: ILUSTRACJA w brandzie (D28b + UZUPEŁNIENIE 24.08); zrzut żywego
 		// bota jest na stronie produktu pierwszym kaflem galerii [ CO JEST W ŚRODKU ].
 		$obraz = sklepag_ilustracja_produktu( $p->slug );
 		$html .= '<article class="sklepag-karta">';
 		if ( $obraz ) {
-			$html .= sklepag_figure_zrzutu( $obraz, 'sklepag-karta-obraz sklepag-karta-ilustracja', false, false );
+			// Bez lazy: ilustracja ma wejść RAZEM z kartą (kaskada), nie chwilę po niej.
+			$html .= sklepag_figure_zrzutu( $obraz, 'sklepag-karta-obraz sklepag-karta-ilustracja', false, false, false );
 		}
-		$html .= '<div class="sklepag-karta-glowa">' . sklepag_ikona_produktu( $p->slug ) . '<p class="sklepag-mono-etykieta">[ <span class="sklepag-akcent">BOT</span> · WTYCZKA WordPress ]</p></div>';
+		// Głowa karty w języku gospodarza: mono-numer + hairline + ikona (jak jego karty usług).
+		$html .= '<div class="sklepag-karta-glowa"><span class="sklepag-karta-nr">' . sprintf( '%02d', $nr ) . '</span><span class="sklepag-karta-linia"></span>' . sklepag_ikona_produktu( $p->slug ) . '</div>';
+		$html .= '<p class="sklepag-mono-etykieta">[ <span class="sklepag-akcent">BOT</span> · WTYCZKA WordPress ]</p>';
 		$html .= '<h2 class="sklepag-karta-tytul">' . esc_html( $p->nazwa ) . '</h2>';
 		$html .= '<p class="sklepag-karta-opis">' . esc_html( $p->opis_krotki ) . '</p>';
 		$html .= '<p class="sklepag-cena">' . esc_html( number_format( $p->cena_grosze / 100, 2, ',', ' ' ) ) . '<span class="sklepag-cena-waluta">' . esc_html( $p->waluta ) . '</span></p>';
@@ -170,11 +234,12 @@ function sklepag_shortcode_sklep() {
 
 	// OD ZAKUPU DO DZIAŁANIA (wzorzec „ile trwa uruchomienie" — zwiad 19.08;
 	// treść kroków = faktyczny przepływ S-02: mail z instrukcją i linkiem do zipa).
-	$html .= '<section class="sklepag-sekcja"><p class="sklepag-mono-etykieta">[ OD ZAKUPU DO DZIAŁANIA ]</p>';
-	$html .= '<ol class="sklepag-kroki">';
-	$html .= '<li>Kupujesz — płatność testowa Stripe, bez zakładania konta.</li>';
-	$html .= '<li>Dostajesz maila: potwierdzenie, instrukcja i link do paczki (zip wtyczki).</li>';
-	$html .= '<li>Instalujesz jak każdą wtyczkę WordPressa — bot działa od razu, na start z danymi demo.</li>';
+	// Trzy równe karty w rzędzie (runda stron 25.08) — numer z hairline'em jak u gospodarza.
+	$html .= '<section class="sklepag-sekcja sklepag-sekcja--pelna"><p class="sklepag-mono-etykieta">[ <span class="sklepag-akcent">01</span> · OD ZAKUPU DO DZIAŁANIA ]</p>';
+	$html .= '<ol class="sklepag-kroki sklepag-kroki--siatka">';
+	$html .= '<li><span class="sklepag-krok-tekst">Kupujesz — płatność testowa Stripe, bez zakładania konta.</span></li>';
+	$html .= '<li><span class="sklepag-krok-tekst">Dostajesz maila: potwierdzenie, instrukcja i link do paczki (zip wtyczki).</span></li>';
+	$html .= '<li><span class="sklepag-krok-tekst">Instalujesz jak każdą wtyczkę WordPressa — bot działa od razu, na start z danymi demo.</span></li>';
 	$html .= '</ol></section>';
 
 	// DLA KOGO — z tych samych treści co strony produktów (jedno źródło, zero rozjazdu).
@@ -184,34 +249,39 @@ function sklepag_shortcode_sklep() {
 		if ( ! $t || empty( $t['dla_kogo'] ) ) {
 			continue;
 		}
-		$kolumny .= '<div class="sklepag-dla-kogo-kol"><h3 class="sklepag-dla-kogo-tytul">' . esc_html( $p->nazwa ) . '</h3><ul class="sklepag-dla-kogo">';
+		$kolumny .= '<div class="sklepag-dla-kogo-kol"><h3 class="sklepag-dla-kogo-tytul">' . sklepag_ikona_produktu( $p->slug ) . esc_html( $p->nazwa ) . '</h3><ul class="sklepag-dla-kogo">';
 		foreach ( $t['dla_kogo'] as $dk ) {
 			$kolumny .= '<li>' . esc_html( $dk ) . '</li>';
 		}
 		$kolumny .= '</ul><p><a class="sklepag-link-powrot" href="' . esc_url( sklepag_url_produktu_front( $p->slug ) ) . '">Więcej o tym bocie →</a></p></div>';
 	}
 	if ( '' !== $kolumny ) {
-		$html .= '<section class="sklepag-sekcja"><p class="sklepag-mono-etykieta">[ DLA KOGO ]</p><div class="sklepag-dla-kogo-kolumny">' . $kolumny . '</div></section>';
+		$html .= '<section class="sklepag-sekcja sklepag-sekcja--pelna"><p class="sklepag-mono-etykieta">[ <span class="sklepag-akcent">02</span> · DLA KOGO ]</p><div class="sklepag-dla-kogo-kolumny sklepag-dla-kogo-kolumny--pelne">' . $kolumny . '</div></section>';
 	}
 
 	// PYTANIA — FAQ całego sklepu (pytania produktowe są na stronach produktów).
 	// Liczby linku pobrania generowane ze stałych = dok zawsze równy kodowi.
-	$html .= '<section class="sklepag-sekcja"><p class="sklepag-mono-etykieta">[ PYTANIA ]</p><dl class="sklepag-faq">';
-	$html .= '<dt>Co dokładnie dostaję po zakupie?</dt><dd>' . esc_html( sprintf( 'Maila z potwierdzeniem, instrukcją i linkiem do pobrania paczki: zip wtyczki bota z instrukcją po polsku. Link jest ważny %d godziny (limit %d pobrań).', SKLEPAG_LINK_GODZIN, SKLEPAG_LIMIT_POBRAN ) ) . '</dd>';
-	$html .= '<dt>Czy muszę zakładać konto?</dt><dd>Nie. Podajesz tylko adres e-mail przy płatności — na niego przychodzi paczka.</dd>';
-	$html .= '<dt>Co znaczy „tryb testowy”?</dt><dd>Sklep działa na testowych płatnościach Stripe — żadne prawdziwe pieniądze nie są pobierane. Do testów służy karta 4242 4242 4242 4242.</dd>';
-	$html .= '<dt>Czy boty wymagają klucza AI albo opłat?</dt><dd>Nie — oba w pełni działają w trybie regułowym, bez klucza i bez abonamentu. Tryb AI to opcja na Twój własny klucz.</dd>';
+	// Siatka 2 kolumn (runda stron 25.08): bloki <div> w <dl> to poprawny HTML5.
+	$html .= '<section class="sklepag-sekcja sklepag-sekcja--pelna"><p class="sklepag-mono-etykieta">[ <span class="sklepag-akcent">03</span> · PYTANIA ]</p><dl class="sklepag-faq sklepag-faq--siatka">';
+	$html .= '<div class="sklepag-faq-blok"><dt>Co dokładnie dostaję po zakupie?</dt><dd>' . esc_html( sprintf( 'Maila z potwierdzeniem, instrukcją i linkiem do pobrania paczki: zip wtyczki bota z instrukcją po polsku. Link jest ważny %d godziny (limit %d pobrań).', SKLEPAG_LINK_GODZIN, SKLEPAG_LIMIT_POBRAN ) ) . '</dd></div>';
+	$html .= '<div class="sklepag-faq-blok"><dt>Czy muszę zakładać konto?</dt><dd>Nie. Podajesz tylko adres e-mail przy płatności — na niego przychodzi paczka.</dd></div>';
+	$html .= '<div class="sklepag-faq-blok"><dt>Co znaczy „tryb testowy”?</dt><dd>Sklep działa na testowych płatnościach Stripe — żadne prawdziwe pieniądze nie są pobierane. Do testów służy karta 4242 4242 4242 4242.</dd></div>';
+	$html .= '<div class="sklepag-faq-blok"><dt>Czy boty wymagają klucza AI albo opłat?</dt><dd>Nie — oba w pełni działają w trybie regułowym, bez klucza i bez abonamentu. Tryb AI to opcja na Twój własny klucz.</dd></div>';
 	$html .= '</dl></section>';
 
 	// FINALNY CTA listy (sędzia #2: strona produktu domyka finałem, lista
-	// kończyła się FAQ bez zamknięcia sprzedażowego).
-	$html     .= '<section class="sklepag-sekcja sklepag-final">';
+	// kończyła się FAQ bez zamknięcia sprzedażowego). Baner-panel z mgławicą (runda stron).
+	$html     .= '<section class="sklepag-sekcja sklepag-sekcja--pelna sklepag-final sklepag-final--baner">';
+	$html     .= '<div class="sklepag-final-tresc">';
 	$html     .= '<h2 class="sklepag-sekcja-tytul">Wybierz bota i przetestuj go u siebie.</h2>';
 	$przyciski = '';
 	foreach ( $produkty as $p ) {
 		$przyciski .= '<a class="sklepag-kup sklepag-kup-kotwica" href="' . esc_url( sklepag_url_produktu_front( $p->slug ) ) . '">' . esc_html( $p->nazwa ) . ' <span aria-hidden="true">→</span></a> ';
 	}
 	$html .= '<p class="sklepag-final-przyciski">' . $przyciski . '</p>';
+	$html .= '</div>';
+	// Duet maskotek (te same kreski co ilustracje kart) — baner ma parę tekst+wizual jak hero i karty.
+	$html .= '<div class="sklepag-final-duet" aria-hidden="true"><svg viewBox="0 0 520 300" fill="none" stroke="#bfff38" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><g class="sklepag-duet-unos"><path d="M196 70 h108 a14 14 0 0 1 14 14 v46 a14 14 0 0 1 -14 14 h-72 l-24 20 v-20 h-12 a14 14 0 0 1 -14 -14 v-46 a14 14 0 0 1 14 -14 z" fill="#bfff38" stroke="none"/><path d="M206 98 h68 M206 118 h44" stroke="#08090b" stroke-width="5"/></g><g><path d="M132 122 v-24"/><circle cx="132" cy="90" r="7" fill="#bfff38" stroke="none"/><rect x="88" y="122" width="88" height="72" rx="20" fill="#101116"/><circle class="sklepag-duet-oko" cx="118" cy="158" r="6" fill="#bfff38" stroke="none"/><circle class="sklepag-duet-oko" cx="146" cy="158" r="6" fill="#bfff38" stroke="none"/><path d="M120 176 q12 10 24 0"/><path d="M100 194 v40 a18 18 0 0 0 18 18 h28 a18 18 0 0 0 18 -18 v-40"/><path d="M100 214 q-30 12 -40 36"/><circle cx="58" cy="252" r="7" fill="#bfff38" stroke="none"/><path d="M164 214 q26 -18 34 -44"/><circle cx="200" cy="168" r="7" fill="#bfff38" stroke="none"/></g><g><path d="M392 122 v-24"/><circle cx="392" cy="90" r="7" fill="#bfff38" stroke="none"/><rect x="348" y="122" width="88" height="72" rx="20" fill="#101116"/><circle class="sklepag-duet-oko sklepag-duet-oko--b" cx="378" cy="158" r="6" fill="#bfff38" stroke="none"/><circle class="sklepag-duet-oko sklepag-duet-oko--b" cx="406" cy="158" r="6" fill="#bfff38" stroke="none"/><path d="M380 176 q12 10 24 0"/><path d="M360 194 v40 a18 18 0 0 0 18 18 h28 a18 18 0 0 0 18 -18 v-40"/><path d="M360 214 q-26 -16 -34 -40"/><circle cx="324" cy="170" r="7" fill="#bfff38" stroke="none"/><path d="M424 214 q28 10 38 32"/><circle cx="464" cy="248" r="7" fill="#bfff38" stroke="none"/></g><g class="sklepag-duet-unos sklepag-duet-unos--b"><rect x="270" y="130" width="64" height="44" rx="8" fill="#08090b" stroke="#8f929c" stroke-width="3"/><path d="m274 136 28 22 28 -22" stroke="#8f929c" stroke-width="3"/><rect x="270" y="130" width="64" height="44" rx="8" stroke="#bfff38" stroke-width="3" stroke-dasharray="6 10"/></g><path d="M214 236 q46 20 92 0" stroke-dasharray="2 10" stroke-width="3"/><path d="M40 276 h440" stroke="#8f929c" stroke-width="2" stroke-dasharray="2 10"/></svg><p class="sklepag-mono-etykieta sklepag-final-duet-podpis">[ ChatBot LIVE <span class="sklepag-akcent">·</span> Segregator maila ]</p></div>';
 	$html .= '</section>';
 
 	$html .= '</div>';
