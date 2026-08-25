@@ -1,0 +1,187 @@
+# Changelog — Sklep Agentów
+
+Wszystkie istotne zmiany w tej wtyczce. Format według
+[Keep a Changelog](https://keepachangelog.com/pl/1.1.0/), numeracja według
+[Semantic Versioning](https://semver.org/lang/pl/).
+
+Wersja schematu bazy jest podana przy każdej wersji, która go zmieniała —
+migracja odpala się sama przy podniesieniu wersji wtyczki, bez deaktywacji
+(`SKLEPAG_WERSJA_SCHEMATU`).
+
+Wersje 0.x to okres budowy przed pierwszym wydaniem: wpisy do 0.9.8 są
+skrótowe (jedna linia na zmianę), od 0.9.10 pełne. Numer 0.9.9 nie był
+wydany osobno (podbicie pośrednie wewnątrz jednej zmiany).
+
+---
+
+## [Niewydane]
+
+Nic jeszcze.
+
+---
+
+## [0.9.13] — 2026-08-25
+
+### Naprawione
+- **Lista `/sklep/` ma opis meta (description) oraz znaczniki Open Graph i Twitter** —
+  z leadu strony i nazw produktów; strony produktów miały je od 0.8.0.
+- **Mail po zakupie potwierdza zgodę kupującego** na dostarczenie treści cyfrowej
+  przed upływem terminu odstąpienia — dosłowna treść zgody z zamówienia i jej data
+  (wymóg dyrektywy 2011/83/UE, art. 8 ust. 7 lit. b). Nagłówek `Reply-To` wskazuje
+  „mail kontaktowy właściciela" z ustawień (dotąd odpowiedzi szły na adres nadawcy).
+  Akapit o gwarancji, gdy produkt ją ma. Ręczna ponowna wysyłka z panelu bierze
+  adres strony produktu po jego identyfikatorze.
+- **Strona produktu Segregatora:** układ fazy z nagraniem przechodzi na jedną kolumnę
+  poniżej 56 rem — na tabletach 700–768 px dwa kafle miały 314–345 px szerokości.
+
+---
+
+## [0.9.12] — 2026-08-25
+
+### Zmienione
+- **Strona produktu Segregatora maila** w układzie wspólnym z ChatBotem: galeria
+  „Co jest w środku" w trzech fazach, nagranie przycięte do obszaru panelu (plakat
+  → wideo), kadry WebP zamiast długich zrzutów, pełne ekrany w oknie podglądu
+  z pułapką fokusu (Tab / Shift+Tab). Media faz 640 KB zamiast 1,45 MB; waga
+  strony 1538 → 741 KB.
+- Hero = panel Segregatora na żywo + wiersz „Twoje reguły" z chipami zapalanymi
+  w takt oznaczanych maili.
+- Dawna galeria-siatka usunięta w całości (dane, gałąź renderu, style).
+
+---
+
+## [0.9.11] — 2026-08-25
+
+### Zmienione
+- **Strona produktu ChatBot LIVE:** hero z panelem tego bota na żywo (ten sam
+  markup co na liście), galeria „Co jest w środku" w trzech fazach (miniatura
+  strony z bąbelkiem i nagranie przycięte do okna czatu · formularz i tok
+  zgłoszenia · kadry panelu), pełny ekran w oknie podglądu (podpis, Esc, blokada
+  przewijania, fokus), sekcje pełnej szerokości, kroki jako karty, FAQ w siatce,
+  finał z duetem maskotek. Waga strony 1293 → 507 KB.
+- Pigułka zakupu przyklejona do ekranu z własnym wejściem i wyjściem; jedno
+  miejsce zakupu na stronie z podświetleniem po przejściu; strażnik odtwarzania
+  nagrania.
+
+### Naprawione
+- Po przeglądzie: wstępne ładowanie galerii, zachowanie pigułki, strażnik
+  nagrania, numeracja faz.
+
+---
+
+## [0.9.10] — 2026-08-25
+
+### Zmienione
+- **Lista `/sklep/` w rodzinie ruchu strony gospodarza:** hero dwukolumnowe
+  z panelem „nocnej zmiany" (pętla z zatwierdzonych tekstów), własny canvas
+  z galaktyką (klatka statyczna przy „ogranicz ruch", poświata CSS bez JS jako
+  zapasowa), panel jako szkło z pochyleniem 3D i paralaksą, karty z hoverem
+  łańcuchowym, kroki z torem sygnału, „dla kogo" i FAQ na pełną szerokość,
+  baner końcowy.
+- Wersja lekka dla słabszych komputerów: bez rozmycia tła nad żywym canvasem,
+  limit cząstek, bezpiecznik wydajności.
+- Galaktyka czytelna w spoczynku, ilustracja ChatBota z kolumną bazy pytań,
+  perspektywa panelu widoczna bez najechania, znacznik przy pytaniach FAQ.
+
+---
+
+## Wcześniejsze wersje (skrót)
+
+### [0.9.8] — 2026-08-25 · schemat bazy 4 → 5
+- Mechanizm opinii kupujących: tabela `opinie`, jednorazowy token z maila po
+  zakupie, formularz opinii, moderacja w panelu, render zaakceptowanych opinii
+  na stronie produktu.
+
+### [0.9.7] — 2026-08-25
+- Opinie na stronach produktów: awatar, gwiazdki, oznaczenie zweryfikowanego
+  zakupu; nagrania sprzedażowe obu botów.
+
+### [0.9.6] — 2026-08-25
+- Blok zakupu w nowym układzie; gwarancja satysfakcji 14 dni na stronach produktów.
+
+### [0.9.5] — 2026-08-24
+- Hero z ilustracją w brandzie strony, galeria „Co jest w środku", oprawa jasnych
+  zrzutów ekranu.
+
+### [0.9.4] — 2026-08-24
+- Sekcje strony produktowej: „W paczce", zestawienie z botem generycznym, opis
+  mechanizmu prawdziwych opinii, gwarancja (wyłączona do czasu decyzji).
+
+### [0.9.3] — 2026-08-20/21
+- Treść strony Segregatora poprawiona (skrzynka IMAP, Microsoft 365) — mówiła
+  nieprawdę na niekorzyść produktu.
+- Porządki w komentarzach kodu, bez zmian działania.
+
+### [0.9.2] — 2026-08-20
+- Licencja GPL w paczce; opisy produktów napisane pod sprzedaż; adresy strony
+  w nagłówku wtyczki; poprawki po przeglądzie.
+
+### [0.9.1] — 2026-08-20
+- Siatka strony w stylu gospodarza; sekcje pojawiające się przy przewijaniu.
+
+### [0.9.0] — 2026-08-19
+- Zrzuty żywych botów na kartach i w sekcji „Jak to wygląda"; rozbudowa listy
+  sklepu (pasek konkretów, „Od zakupu do działania", „Dla kogo", pytania); własne
+  ilustracje SVG na kartach; końcowe wezwanie do zakupu i hierarchia linków;
+  link „Sklep" w nawigacji strony.
+
+### [0.8.2] — 2026-08-19
+- Po teście instalacji od zera: ostrzeżenie w kokpicie przy „zwykłych"
+  odnośnikach bezpośrednich; „Zamówienia" przemianowane na „Pulpit"; instrukcja
+  instalacji uzupełniona.
+
+### [0.8.1] — 2026-08-19
+- Szlif stron: ikony kart, jawna informacja o braku opinii, separatory FAQ,
+  pasek na telefonie.
+
+### [0.8.0] — 2026-08-19
+- Strona produktu (jedna strona WordPressa + adres `/sklep/produkt/…/`) z sekcjami
+  sprzedażowymi; SEO: tytuł, opis, canonical, Open Graph, dane strukturalne
+  (produkt, okruszki, FAQ), okładki, mapa witryny produktów, `noindex` na stronie
+  „Dziękujemy".
+
+### [0.7.0] — 2026-08-18
+- Fundament frontu w klimacie strony gospodarza (wyspa, tokeny z motywu, karty)
+  i lista sklepu.
+
+### [0.6.1] — 2026-08-18
+- Wynik zapisu do bazy przy produktach sprawdzany (awaria zapisu = błąd, nie fałszywy
+  sukces); osierocony plik sprzątany; dokumentacja zgodna z kodem.
+
+### [0.6.0] — 2026-08-18
+- Produkty w panelu: lista, formularz, wgrywanie paczki ZIP do katalogu chronionego,
+  walidacje; kopia danych produktu w zamówieniu nietykalna przy edycji.
+
+### [0.5.2] — 2026-08-18
+- Baner trybu testowego przy tytule, waluta na kartach.
+
+### [0.5.1] — 2026-08-18
+- Szlif panelu: pasek statusów, kolumna akcji, powiadomienie o trybie testowym,
+  hierarchia wskaźników.
+
+### [0.5.0] — 2026-08-18 · schemat bazy 3 → 4
+- Widok zamówienia: szczegóły, treść wysłanego maila, ponowna wysyłka ze świeżym
+  linkiem (stary link przestaje działać), anonimizacja danych kupującego
+  (kolumna `usunieto_dnia`).
+
+### [0.4.0] — 2026-08-18
+- Pulpit: wskaźniki z porównaniem do poprzedniego okresu, rozkład w czasie, tabela
+  zamówień, eksport CSV, samonaprawa zaległych zamówień z budżetem czasu.
+
+### [0.3.0] — 2026-08-18
+- Ustawienia sklepu (Settings API): klucze Stripe, nadawca maili, mail kontaktowy,
+  waluta, zachowanie danych przy odinstalowaniu; sekrety bez autoładowania.
+
+### [0.2.0] — 2026-08-18 · schemat bazy → 3
+- Dziennik logowań i zdarzeń w kokpicie; wykładnicze opóźnienie po nieudanych
+  próbach logowania; limit prób z jednego adresu; retencja 90 dni.
+
+### [0.1.0] — 2026-08-18
+- Szkielet: własne tabele (dbDelta) z wersją schematu, strony „Sklep" i „Dziękujemy"
+  oraz szablony prawne, katalog chroniony z próbą zapisu, odinstalowanie z opcją
+  (dane domyślnie zostają).
+- Zakup: Stripe Checkout, webhook z podpisem, atomowe przejścia stanu, dwie drogi
+  domykania (webhook + zadanie cykliczne), brama pobrań (token, termin, limit),
+  strona „Dziękujemy" odpytująca status.
+- Zadanie cykliczne podnosi także zamówienia w stanach błędu i w toku wysyłki;
+  limit żądań liczony atomowo w tabeli; limity pobrań i ważność linku jako stałe.

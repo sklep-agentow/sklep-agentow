@@ -69,11 +69,14 @@ rozstrzygnięcie K1: kursy = egzamin drugiego zdającego) · **nie ma wiersza �
 Wszystkie niejasności rozstrzygamy SAMI i dokumentujemy w rejestrze decyzji (PLAN-ETAP1.md).
 „Kursy" = egzamin DRUGIEGO zdającego, nie nasz temat. Koło ratunkowe (1 telefon) = na prawdziwy zator.
 
-## ⏰ TERMIN I ZASADY OCENY (Dzidek 17.08 ~02:20)
-**Termin: 30.08.2026 · 3 próby oddania · ocenia kolega (zasady jak przy MP).**
-Mamy 13 dni. Plan: PIERWSZA próba oddania z ZAPASEM (~26-27.08), nie 30-go wieczorem —
-lekcja MP: oddanie w dzień terminu = zero bufora na zwrot. 3 próby to zasób, nie ozdoba:
-próba 1 wcześnie łapie to, czego nasz audyt nie widzi.
+## ⏰ TERMIN I ZASADY OCENY (Dzidek 17.08 ~02:20; AKTUALIZACJE 20.08 i 25.08)
+**Termin: 1.09.2026 (zmiana z 30.08 — Dzidek 20.08) · 3 próby oddania · ocenia kolega (Manik), zasady jak przy MP.**
+⭐ **25.08 (Dzidek): po KAŻDEJ próbie dostajemy TYLKO LICZBĘ błędów, nie listę.** Konsekwencje: konkrety musi
+znaleźć NASZ audyt (K7), a liczba od kolegi po próbie 1 jest odważnikiem audytu (jego N kontra nasza lista —
+N > 0 przy naszej pustej liście = ślepa plama audytu, nie pech). 3 próby to zasób: próba 1 (~31.08) mierzy ślepe
+plamy, próby 2–3 (1.09) = hotfixy mini-cyklem. Limit tygodniowy Claude odnawia się w niedzielę 30.08 → przed
+niedzielą: materiał, kalibracja, runda A, naprawy krytycznych; po niedzieli: runda B, re-audyt, przelot człowieka.
+(Historia: pierwotny plan „próba 1 z zapasem ~26–27.08" — nieaktualny po rundzie stron 24–25.08 i K7.)
 
 ## ⭐ CEL I ZAKRES (decyzja Dzidka 16.08 ~23:45)
 **CEL NR 1 = ZDAĆ EGZAMIN u kolegi. Budujemy WSZYSTKO w trybie testowym płatności — zero prawdziwych pieniędzy, zero prawdziwych kont właścicieli.**

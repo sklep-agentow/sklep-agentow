@@ -8,6 +8,12 @@
 # (koperta QA u kolegi) — dlatego twarde PADANIE, nie ostrzeżenie.
 # Kontrola podwójna: (1) skan katalogu źródłowego przed pakowaniem,
 # (2) porównanie faktycznej zawartości zipa z allowlistą po spakowaniu.
+#
+# Użycie: bash boty/buduj-paczki.sh                 # wszystkie trzy wtyczki
+#         bash boty/buduj-paczki.sh sklep-agentow   # tylko wskazane (jedna lub więcej)
+# Wybór argumentem doszedł razem z paczką sklepu: zamek wydanych paczek (niżej)
+# ODMAWIA przebudowy zipa, który już leży na origin/main — bez wyboru budowa
+# sklepu padałaby na zamku CUDZEJ, dawno wydanej paczki bota.
 set -euo pipefail
 
 KATALOG_SKRYPTU="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -104,6 +110,69 @@ ALLOWLIST_SEGREGATOR=(
 	"segregator-maila/includes/skrzynka.php"
 	"segregator-maila/includes/skrzynka-przebieg.php"
 )
+# Sklep nie jest produktem na sprzedaż, ale idzie do właściciela tą samą drogą
+# (zip wtyczki) i przechodzi tę samą bramkę zamrożenia — dlatego ta sama lista.
+ALLOWLIST_SKLEP=(
+	"sklep-agentow/sklep-agentow.php"
+	"sklep-agentow/uninstall.php"
+	"sklep-agentow/LICENSE"
+	"sklep-agentow/readme.txt"
+	"sklep-agentow/CHANGELOG.md"
+	"sklep-agentow/DOKUMENTACJA-TECHNICZNA.md"
+	"sklep-agentow/DIAGRAM-PRZEPLYWU.svg"
+	"sklep-agentow/includes/aktywacja.php"
+	"sklep-agentow/includes/stripe.php"
+	"sklep-agentow/includes/zakup.php"
+	"sklep-agentow/includes/pobieranie.php"
+	"sklep-agentow/includes/logowania.php"
+	"sklep-agentow/includes/front-produkt.php"
+	"sklep-agentow/includes/front-seo.php"
+	"sklep-agentow/includes/opinie.php"
+	"sklep-agentow/includes/admin.php"
+	"sklep-agentow/includes/admin-dashboard.php"
+	"sklep-agentow/includes/admin-produkty.php"
+	"sklep-agentow/includes/admin-zamowienie.php"
+	"sklep-agentow/includes/admin-opinie.php"
+	"sklep-agentow/includes/admin-ustawienia.php"
+	"sklep-agentow/includes/admin-dziennik.php"
+	"sklep-agentow/includes/class-sklepag-lista-logowan.php"
+	"sklep-agentow/includes/class-sklepag-lista-produktow.php"
+	"sklep-agentow/includes/class-sklepag-lista-zamowien.php"
+	"sklep-agentow/includes/class-sklepag-lista-zdarzen.php"
+	"sklep-agentow/includes/class-sklepag-sitemap-produkty.php"
+	"sklep-agentow/assets/admin.css"
+	"sklep-agentow/assets/front.css"
+	"sklep-agentow/assets/front-ruch.js"
+	"sklep-agentow/assets/dziekujemy.js"
+	"sklep-agentow/assets/okladki/chatbot-live.png"
+	"sklep-agentow/assets/okladki/segregator-maila.png"
+	"sklep-agentow/assets/okladki/sklep.png"
+	"sklep-agentow/assets/produkty/chatbot-live.svg"
+	"sklep-agentow/assets/produkty/segregator-maila.svg"
+	"sklep-agentow/assets/w-srodku/chatbot-demo-kadr.webm"
+	"sklep-agentow/assets/w-srodku/chatbot-demo-plakat.webp"
+	"sklep-agentow/assets/w-srodku/chatbot-demo.webm"
+	"sklep-agentow/assets/w-srodku/chatbot-live--babelek.webp"
+	"sklep-agentow/assets/w-srodku/chatbot-live--statystyki-kadr.webp"
+	"sklep-agentow/assets/w-srodku/chatbot-live--statystyki.png"
+	"sklep-agentow/assets/w-srodku/chatbot-live--ustawienia-kadr.webp"
+	"sklep-agentow/assets/w-srodku/chatbot-live--ustawienia.png"
+	"sklep-agentow/assets/w-srodku/chatbot-live--widget-formularz.png"
+	"sklep-agentow/assets/w-srodku/chatbot-live--zywy.jpg"
+	"sklep-agentow/assets/w-srodku/segregator-demo-kadr.webm"
+	"sklep-agentow/assets/w-srodku/segregator-demo-plakat.webp"
+	"sklep-agentow/assets/w-srodku/segregator-demo.webm"
+	"sklep-agentow/assets/w-srodku/segregator-maila--kategorie-kadr.webp"
+	"sklep-agentow/assets/w-srodku/segregator-maila--kategorie.png"
+	"sklep-agentow/assets/w-srodku/segregator-maila--probka-demo-kadr.webp"
+	"sklep-agentow/assets/w-srodku/segregator-maila--probka-demo.png"
+	"sklep-agentow/assets/w-srodku/segregator-maila--reguly-kadr.webp"
+	"sklep-agentow/assets/w-srodku/segregator-maila--reguly.png"
+	"sklep-agentow/assets/w-srodku/segregator-maila--ustawienia-kadr.webp"
+	"sklep-agentow/assets/w-srodku/segregator-maila--ustawienia.png"
+	"sklep-agentow/assets/w-srodku/segregator-maila--zywy.jpg"
+	"sklep-agentow/assets/w-srodku/segregator-maila--zywy-kadr.webp"
+)
 
 zbuduj() {
 	local WTYCZKA="$1"; shift
@@ -164,5 +233,15 @@ zbuduj() {
 	unzip -Z1 "$PACZKA" | grep -v '/$' | sort | sed 's/^/    /'
 }
 
-zbuduj chatbot-live "${ALLOWLIST_CHATBOT[@]}"
-zbuduj segregator-maila "${ALLOWLIST_SEGREGATOR[@]}"
+# Bez argumentów = komplet (zachowanie sprzed wyboru); z argumentami = tylko wskazane.
+if [ "$#" -eq 0 ]; then
+	set -- chatbot-live segregator-maila sklep-agentow
+fi
+for WYBRANA in "$@"; do
+	case "$WYBRANA" in
+		chatbot-live)     zbuduj chatbot-live "${ALLOWLIST_CHATBOT[@]}" ;;
+		segregator-maila) zbuduj segregator-maila "${ALLOWLIST_SEGREGATOR[@]}" ;;
+		sklep-agentow)    zbuduj sklep-agentow "${ALLOWLIST_SKLEP[@]}" ;;
+		*) echo "BLAD: nieznana wtyczka '$WYBRANA' (znam: chatbot-live, segregator-maila, sklep-agentow)" >&2; exit 1 ;;
+	esac
+done
