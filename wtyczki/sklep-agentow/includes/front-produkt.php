@@ -206,7 +206,6 @@ function sklepag_tresc_produktu( $slug ) {
 			 */
 			'fazy'         => array(
 				array(
-					'numer' => '01',
 					'tytul' => 'Na Twojej stronie',
 					'opis'  => 'Bąbelek w rogu Twojej strony: gość pyta o cennik czy godziny, bot odpowiada z Twojej bazy pytań i odpowiedzi — także po godzinach.',
 					'uklad' => 'wideo',
@@ -234,7 +233,6 @@ function sklepag_tresc_produktu( $slug ) {
 					),
 				),
 				array(
-					'numer' => '02',
 					'tytul' => 'Gdy bot nie zna odpowiedzi',
 					'opis'  => 'Bot prosi o maila i zapisuje zgłoszenie — kontakt nie przepada. Przycisk „zostaw wiadomość" jest w oknie od początku rozmowy.',
 					'uklad' => 'formularz',
@@ -259,7 +257,6 @@ function sklepag_tresc_produktu( $slug ) {
 					),
 				),
 				array(
-					'numer' => '03',
 					'tytul' => 'Twój panel',
 					'opis'  => 'Ustawienia po polsku: włącznik bąbelka, teksty powitania, tryb AI z limitem dziennym. Statystyki pokazują, o co pytają goście i czego brakuje w bazie.',
 					'uklad' => 'panel',
@@ -614,15 +611,16 @@ function sklepag_tytul_z_akcentem( $nazwa ) {
  * a pełny ekran otwiera się w lightboxie — całe białe ekrany na czarnej stronie były plamami,
  * a ich gęsty interfejs w rozmiarze kafla był nieczytelny (przegląd na żywo 25.08).
  *
- * @param array    $fazy      Lista faz: numer, tytul, opis, uklad, kafle.
- * @param int|null $nr_sekcji Numer sekcji na stronie — fazy numerują się „04.1, 04.2, 04.3"
- *                            (przypięte do sekcji, odróżnialne od kroków 01/02/03 sekcji obok);
- *                            null = numer z danych fazy.
+ * @param array $fazy      Lista faz: tytul, opis, uklad, kafle (numer fazy nadaje jej pozycja
+ *                         na liście — dane nie trzymają własnej numeracji, więc nie mogą się
+ *                         rozjechać przy zmianie kolejności).
+ * @param int   $nr_sekcji Numer sekcji na stronie — fazy numerują się „04.1, 04.2, 04.3"
+ *                         (przypięte do sekcji, odróżnialne od kroków 01/02/03 sekcji obok).
  */
-function sklepag_render_fazy( $fazy, $nr_sekcji = null ) {
+function sklepag_render_fazy( $fazy, $nr_sekcji ) {
 	$html = '<div class="sklepag-fazy">';
 	foreach ( array_values( $fazy ) as $i => $f ) {
-		$numer = null === $nr_sekcji ? $f['numer'] : sprintf( '%02d.%d', $nr_sekcji, $i + 1 );
+		$numer = sprintf( '%02d.%d', (int) $nr_sekcji, $i + 1 );
 		// `sklepag-obserwuj`: faza wjeżdża, gdy SAMA wchodzi w ekran (front-ruch.js), nie razem
 		// z górą długiej sekcji — inaczej dolne fazy odsłaniałyby się poza kadrem.
 		$html .= '<div class="sklepag-faza sklepag-obserwuj sklepag-faza--' . sanitize_html_class( $f['uklad'] ) . '">';
@@ -787,7 +785,7 @@ function sklepag_render_produkt( $slug ) {
 			foreach ( $t['galeria'] as $g ) {
 				if ( ! empty( $g['wideo'] ) ) {
 					$zrodlo = esc_url( plugins_url( 'assets/w-srodku/' . $g['wideo'], SKLEPAG_PLIK ) );
-					$html  .= '<figure class="sklepag-galeria-kafel sklepag-galeria-kafel--wideo"><video src="' . $zrodlo . '" width="' . (int) $g['szer'] . '" height="' . (int) $g['wys'] . '" autoplay muted loop playsinline preload="auto" aria-label="' . esc_attr( $g['alt'] ) . '"></video>';
+					$html  .= '<figure class="sklepag-galeria-kafel sklepag-galeria-kafel--wideo"><video src="' . $zrodlo . '" width="' . (int) $g['szer'] . '" height="' . (int) $g['wys'] . '" autoplay muted loop playsinline preload="metadata" aria-label="' . esc_attr( $g['alt'] ) . '"></video>';
 					$html  .= '<figcaption class="sklepag-mono-etykieta">' . esc_html( $g['podpis'] ) . '</figcaption></figure>';
 					continue;
 				}

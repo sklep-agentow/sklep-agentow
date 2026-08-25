@@ -806,8 +806,10 @@ a.sklepag-kup {
 
 	/* Pasek i szelki: inline w <head> nie doda `sklepag-js` przy tym ustawieniu,
 	   ale gdyby ktoś zmienił ustawienie systemu przy otwartej stronie — treść
-	   ma zostać widoczna, nie zamrozić się w stanie ukrytym. */
-	.sklepag-js .sklepag-wyspa > * {
+	   ma zostać widoczna, nie zamrozić się w stanie ukrytym.
+	   BEZ pigułki sticky: centruje ją `transform: translateX(-50%)` bez !important —
+	   ta reguła zdejmowała je i stawiała pigułkę lewą krawędzią na środku ekranu. */
+	.sklepag-js .sklepag-wyspa > :not(.sklepag-sticky) {
 		opacity: 1 !important;
 		transform: none !important;
 	}
@@ -2011,8 +2013,10 @@ a.sklepag-kup {
 /* Bezpiecznik: skrypt nie zgłosił `sklepag-ruch-ok` w 2,5 s (nie dojechał / padł) → inline
    w <head> dodaje `sklepag-odslon` i wszystko jest widoczne. Przy działającym skrypcie klasa
    NIE powstaje (bezwarunkowy bezpiecznik gasił kaskadę sekcji poza pierwszym ekranem).
-   Tylko kanały wejścia (opacity, translate) — transform hoveru i tiltu zostaje. */
-.sklepag-odslon .sklepag-wyspa > * {
+   Tylko kanały wejścia (opacity, translate) — transform hoveru i tiltu zostaje.
+   BEZ pigułki sticky (ma własne wejście klasą stanu, a `transform: translateX(-50%)` ją centruje —
+   przy skrypcie wolniejszym niż 2,5 s ta reguła zdejmowała centrowanie). */
+.sklepag-odslon .sklepag-wyspa > :not(.sklepag-sticky) {
 	opacity: 1 !important;
 	transform: none !important;
 }

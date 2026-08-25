@@ -113,16 +113,33 @@
 			sprobuj();
 		}
 		// Strażnik: nagranie W KADRZE ma iść do przodu. Stoi (blokada bez odrzucenia play(), zacięcie
-		// ładowania) → przycisk „Odtwórz"; ruszyło → przycisk znika. Poza kadrem Chromium pauzuje
-		// autoplay samo — to nie blokada.
+		// ładowania) → przycisk „Odtwórz", JEDNA ponowna próba i STOP timera — dalej rusza je tylko
+		// gest użytkownika (bez clearInterval play() leciał co 2 s bez końca przy blokadzie
+		// autoodtwarzania). Timer wraca, gdy nagranie naprawdę gra (`playing`). Poza kadrem
+		// Chromium pauzuje autoplay samo — to nie blokada.
 		var ostatniCzas = -1;
-		window.setInterval(function () {
-			if (!wKadrze) { ostatniCzas = -1; return; }
-			var stoi = wideo.paused || wideo.currentTime === ostatniCzas;
-			ostatniCzas = wideo.currentTime;
-			if (stoi) { sprobuj(); kafel.classList.add('sklepag-kafel--zablokowane'); }
-			else { kafel.classList.remove('sklepag-kafel--zablokowane'); }
-		}, 2000);
+		var straznik = null;
+		var zatrzymajStraznika = function () {
+			if (straznik !== null) { window.clearInterval(straznik); straznik = null; }
+		};
+		var uruchomStraznika = function () {
+			if (straznik !== null) { return; }
+			ostatniCzas = -1;
+			straznik = window.setInterval(function () {
+				if (!wKadrze) { ostatniCzas = -1; return; }
+				var stoi = wideo.paused || wideo.currentTime === ostatniCzas;
+				ostatniCzas = wideo.currentTime;
+				if (!stoi) {
+					if (kafel) { kafel.classList.remove('sklepag-kafel--zablokowane'); }
+					return;
+				}
+				zatrzymajStraznika();
+				if (kafel) { kafel.classList.add('sklepag-kafel--zablokowane'); }
+				sprobuj();
+			}, 2000);
+		};
+		wideo.addEventListener('playing', uruchomStraznika);
+		uruchomStraznika();
 		if (kafel) {
 			kafel.addEventListener('click', function (e) {
 				if (kafel.classList.contains('sklepag-kafel--zablokowane') || wideo.paused) {
