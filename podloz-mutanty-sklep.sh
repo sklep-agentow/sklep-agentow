@@ -7,10 +7,12 @@
 # ⛔ Jeden mutant = jeden commit „MUTANT Mx — do zdjęcia: git revert <sha>”. Tabela rozliczenia
 #    COMMITOWANA NA TEJ GAŁĘZI (bank botów „poza repo” zniknął — lekcja 25.08).
 #
-# Użycie: bash podloz-mutanty-sklep.sh [--sprawdz]
-#   --sprawdz  — tylko liczy kotwice (0 zmian, 0 commitów); EXIT 0 = wszystkie trafiają raz
+# Użycie: bash podloz-mutanty-sklep.sh [--sprawdz | --tylko-tabela]
+#   --sprawdz      — tylko liczy kotwice (0 zmian, 0 commitów); EXIT 0 = wszystkie trafiają raz
+#   --tylko-tabela — nie podkłada; odtwarza ROZLICZENIE z commitów „MUTANT …” już na gałęzi i commituje tabelę
 set -euo pipefail
 TYLKO_SPRAWDZ=0; [ "${1:-}" = "--sprawdz" ] && TYLKO_SPRAWDZ=1
+TYLKO_TABELA=0; [ "${1:-}" = "--tylko-tabela" ] && TYLKO_TABELA=1
 
 GALAZ="$(git rev-parse --abbrev-ref HEAD)"
 [ "$GALAZ" = "audyt/mutanty-sklep" ] || { echo "STOP: jestem na [$GALAZ], mutanty wolno podkładać tylko na audyt/mutanty-sklep" >&2; exit 2; }
@@ -19,6 +21,21 @@ W=wtyczki/sklep-agentow
 TABELA=audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP.md
 WIERSZE="$(mktemp)"; trap 'rm -f "$WIERSZE"' EXIT
 ZLE_KOTWICE=0
+
+# Wiersze tabeli z GIT LOG (źródło prawdy = commity, nie plik tymczasowy): każdy commit „MUTANT <id> …”
+# niesie w treści soczewkę, plik, kotwicę i opis.
+wiersze_z_gita() {
+	git log --reverse --format='%h%x1f%s%x1f%b%x1e' 'k7-zamrozenie^{commit}..HEAD' | python3 -c '
+import sys,re
+for rec in sys.stdin.read().split("\x1e"):
+    if not rec.strip(): continue
+    sha, subj, body = (rec.strip("\n").split("\x1f")+["",""])[:3]
+    m = re.match(r"MUTANT (\S+) ", subj)
+    if not m: continue
+    pola = dict(re.findall(r"^(soczewka|plik|kotwica|co robi):\s*(.*)$", body, re.M))
+    print("| %s | %s | `%s` | `%s` | `%s` | %s |" % (m.group(1), pola.get("soczewka",""), pola.get("plik",""), pola.get("kotwica",""), sha, pola.get("co robi","")))
+'
+}
 
 podmien() { # podmien <plik> <kotwica> <nowa-treść>
 	local n; n=$(python3 -c 'import io,sys; print(io.open(sys.argv[1],encoding="utf-8").read().count(sys.argv[2]))' "$1" "$2")
@@ -41,6 +58,7 @@ co robi:  $5"
 	printf '  podłożony %-3s %-5s %s\n' "$1" "$2" "$sha"
 }
 
+if [ "$TYLKO_TABELA" -eq 0 ]; then
 echo "=== CZĘŚĆ 1 — MUTANTY PRAWDZIWE (7) ==="
 
 # ── M1 · L1 — dziennik przestaje zapisywać NIEUDANE próby (S-09 milczy o porażkach) ─────────────
@@ -254,9 +272,12 @@ if [ "$TYLKO_SPRAWDZ" -eq 1 ]; then
 	[ "$ZLE_KOTWICE" -eq 0 ] && { echo "KOTWICE: 11/11 trafiają dokładnie raz — można podkładać"; exit 0; }
 	echo "KOTWICE: $ZLE_KOTWICE zgniłych"; exit 3
 fi
+fi # TYLKO_TABELA
 
 # ── tabela rozliczenia (COMMITOWANA na gałęzi) ──────────────────────────────────────────────────
 BAZA=$(git rev-parse --short 'k7-zamrozenie^{commit}')
+mkdir -p "$(dirname "$TABELA")"
+ILE_M=$(wiersze_z_gita | wc -l); [ "$ILE_M" -eq 11 ] || { echo "STOP: w gicie jest $ILE_M commitów MUTANT, oczekiwano 11" >&2; exit 3; }
 {
 	echo "# ROZLICZENIE MUTANTÓW SKLEPU — gałąź audyt/mutanty-sklep (PLAN-K7 §5)"
 	echo
@@ -270,7 +291,7 @@ BAZA=$(git rev-parse --short 'k7-zamrozenie^{commit}')
 	echo
 	echo "| # | soczewka | plik | kotwica (wzorzec) | commit do odwrócenia | co robi / czego oczekujemy |"
 	echo "|---|---|---|---|---|---|"
-	cat "$WIERSZE"
+	wiersze_z_gita
 	echo
 	echo "Zdjęcie pojedynczego mutanta: \`git revert <commit>\`. Zdjęcie wszystkich: skasowanie gałęzi."
 	echo
@@ -292,4 +313,4 @@ BAZA=$(git rev-parse --short 'k7-zamrozenie^{commit}')
 } > "$TABELA"
 git add "$TABELA"
 git commit -q -m "kalibracja: ROZLICZENIE-MUTANTOW-SKLEP.md — bank 7 prawdziwych + 4 pułapki (baza $BAZA)"
-echo; echo "TABELA: $TABELA (commit $(git rev-parse --short HEAD)) — bank podłożony, 11 commitów + tabela"
+echo; echo "TABELA: $TABELA (commit $(git rev-parse --short HEAD)) — bank: $ILE_M commitów + tabela"
