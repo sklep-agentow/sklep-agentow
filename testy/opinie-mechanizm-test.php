@@ -12,6 +12,9 @@
  */
 
 require_once WP_PLUGIN_DIR . '/sklep-agentow/includes/opinie.php';
+// Handler resendu (sekcja C3) żyje w pliku panelu, ładowanym tylko przy is_admin() —
+// wp eval-file leci frontem, więc dociągamy jawnie (sam require rejestruje tylko hooki).
+require_once WP_PLUGIN_DIR . '/sklep-agentow/includes/admin-zamowienie.php';
 
 // phpcs:disable WordPress.DB -- test chodzi po prawdziwej bazie wprost (konwencja testy/): własne wiersze, sprzątanie na końcu.
 
@@ -149,6 +152,61 @@ sprawdz( 'mail z linkiem opinii MA akapit OCEN SWOJ ZAKUP i link', false !== str
 $mail_bez = sklepag_zbuduj_mail( $prod_obj, $zam_obj, 'LINK-POBRANIA' );
 sprawdz( 'mail bez linku (opinia juz przyslana) NIE MA akapitu OCEN', false === strpos( $mail_bez, 'OCEŃ SWÓJ ZAKUP' ) );
 sprawdz( 'zalazek po przyslanej opinii zwraca pusty string (resend nie wskrzesza linku)', '' === sklepag_opinia_zalazek( $zam1, $prod_id ) );
+
+echo "\n=== C3. HANDLER resendu na zywo (wzorzec domowy: nonce + przechwycony redirect i mail) ===\n";
+$zam6 = 9900014;
+$pzh  = $wpdb->prefix . 'sklepag_zamowienia';
+$wpdb->query( $wpdb->prepare( "DELETE FROM {$pzh} WHERE id = %d", $zam6 ) );
+$wpdb->query( $wpdb->prepare( "DELETE FROM {$to} WHERE zamowienie_id = %d", $zam6 ) );
+$wpdb->insert(
+	$pzh,
+	array(
+		'id'                    => $zam6,
+		'stripe_session_id'     => 'cs_test_opinie_mech_' . $zam6,
+		'produkt_id'            => $prod_id,
+		'produkt_nazwa_kupiona' => 'TEST mechanizmu opinii',
+		'produkt_cena_kupiona'  => 100,
+		'email_kupujacego'      => 'resend-test@example.com',
+		'kwota_grosze'          => 100,
+		'waluta'                => 'PLN',
+		'status'                => 'mail_wyslany',
+		'utworzono'             => $teraz,
+		'zmieniono'             => $teraz,
+	)
+);
+$admini = get_users(
+	array(
+		'role'   => 'administrator',
+		'number' => 1,
+	)
+);
+sprawdz( 'warunek testu: stack ma administratora', ! empty( $admini ) );
+wp_set_current_user( (int) $admini[0]->ID );
+$_GET['zamowienie']   = $zam6;
+$_REQUEST['_wpnonce'] = wp_create_nonce( 'sklepag_resend' );
+$przekieruj           = function ( $url ) {
+	throw new Exception( 'REDIRECT:' . $url );
+};
+$bez_maila            = '__return_true'; // pre_wp_mail: wyslano=true bez realnej wysylki.
+add_filter( 'wp_redirect', $przekieruj );
+add_filter( 'pre_wp_mail', $bez_maila );
+$wyjscie = '';
+try {
+	sklepag_obsluz_resend();
+} catch ( Exception $e ) {
+	$wyjscie = $e->getMessage();
+}
+remove_filter( 'wp_redirect', $przekieruj );
+remove_filter( 'pre_wp_mail', $bez_maila );
+wp_set_current_user( 0 );
+unset( $_GET['zamowienie'], $_REQUEST['_wpnonce'] );
+sprawdz( 'handler konczy przekierowaniem sklepag_resend=ok', 0 === strpos( $wyjscie, 'REDIRECT:' ) && false !== strpos( $wyjscie, 'sklepag_resend=ok' ) );
+$op_resend = $wpdb->get_row( $wpdb->prepare( "SELECT status, token_hash FROM {$to} WHERE zamowienie_id = %d", $zam6 ) );
+sprawdz( 'resend ZALOZYL zalazek opinii zamowieniu sprzed mechanizmu', $op_resend && 'zalazek' === $op_resend->status && 64 === strlen( (string) $op_resend->token_hash ) );
+$tresc_resend = (string) $wpdb->get_var( $wpdb->prepare( "SELECT mail_tresc FROM {$pzh} WHERE id = %d", $zam6 ) );
+sprawdz( 'mail ZAPISANY PRZEZ HANDLER ma akapit OCEN i link sklepag_ocen', false !== strpos( $tresc_resend, 'OCEŃ SWÓJ ZAKUP' ) && false !== strpos( $tresc_resend, 'action=sklepag_ocen&z=' . $zam6 ) );
+$wpdb->query( $wpdb->prepare( "DELETE FROM {$pzh} WHERE id = %d", $zam6 ) );
+$wpdb->query( $wpdb->prepare( "DELETE FROM {$to} WHERE zamowienie_id = %d", $zam6 ) );
 
 echo "\n=== D. Moderacja i render z bazy ===\n";
 sprawdz( 'przed moderacja: zero opinii na stronie', array() === sklepag_opinie_z_bazy( $slug ) );
