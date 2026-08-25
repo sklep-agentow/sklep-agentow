@@ -1662,7 +1662,9 @@ a.sklepag-kup {
    `.reveal` = opacity 0 + translateY(26px) → `.reveal-in` = opacity .3s ease-out, transform .5s
    cubic-bezier(.34,1.56,.64,1), opóźnienie kaskady i × 0.08 s. Jak u niego elementy wchodzą
    POJEDYNCZO — sekcja z kaskadą nie rusza się jako całość. Kanał `translate` (nie `transform`),
-   bo karty mają własny transform na hover. Szelki te same co przy sekcjach (sklepag-js + ruch). */
+   bo karty mają własny transform na hover. Szelki te same co przy sekcjach: `sklepag-js` z inline
+   w <head> ukrywa, `sklepag-widoczne` na rodzicu odsłania, a bezpiecznik `sklepag-odslon` (2,5 s)
+   odpala tylko wtedy, gdy skrypt nie zdążył dodać `sklepag-ruch-ok`. */
 .sklepag-js .sklepag-wyspa > :is(.sklepag-hero-lista, .sklepag-karty, .sklepag-sekcja--pelna, .sklepag-tlo, .sklepag-pingi) {
 	opacity: 1;
 	transform: none;

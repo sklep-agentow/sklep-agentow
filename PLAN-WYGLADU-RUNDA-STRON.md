@@ -67,7 +67,10 @@ Sędzia (sonnet, ±3): 68 → 80 → 83 → 82; arbitrem było oko przeglądają
 - Mono-etykiety na liście NUMEROWANE `[ 01 · … ]` jak u gospodarza (decyzja zmieniona w rundzie 2
   z okiem na żywo); strony produktów dostają numerację w PR 2 (spójność).
 
-## 3. GIGANT-PROMPT `/sklep/` (PR 1: gałąź `wyglad/sklep-lista`, wersja 0.9.9)
+## 3. GIGANT-PROMPT `/sklep/` (PR 1: gałąź `wyglad/sklep-lista`, wersja 0.9.9 → 0.9.10)
+
+Brief sprzed budowy, DOPROWADZONY po budowie do stanu kodu (liczby niżej = kod na wierzchołku
+gałęzi). Wynik rundy i to, co po drodze wypadło (poświata, galaktyka), opisuje §1c.
 
 ### KLIMAT
 Ciemna, spokojna strona produktu w świecie Automatic AI: **Linear spotyka panel systemowy
@@ -111,12 +114,13 @@ tusz #08090B · węgiel #101116 · papier #F5F5F5 · pył #8F929C · limonka #BF
 rgba(245,245,245,.08) · **mgławica** rgba(191,255,56,.16→0) · **cień okna** rgba(0,0,0,.5).
 
 ### TYPOGRAFIA (dziedziczona z motywu; role)
-Geist Sans → tytuły 600 (H1 −0.03 em, H2 −0.02 em) i body 400 · Geist Mono → etykiety,
+Geist Sans → tytuły 600 (H1 −0.035 em, H2 −0.02 em) i body 400 · Geist Mono → etykiety,
 numery, adnotacje, pasek konkretów (0.72–0.8 rem, 0.14–0.18 em).
 
 ### MOTION SYSTEM
-- Reveal: sekcja jak dziś (26 px, .3 s / .5 s, easing gospodarza) + **stagger dzieci**:
-  `transition-delay: calc(var(--sklepag-i) * 70ms)` (nth-child 1–8) — karty, kroki, FAQ.
+- Reveal: sekcja jak dziś (26 px, .3 s / .5 s, easing gospodarza) + **kaskada dzieci**:
+  opóźnienie `--sklepag-d` = n × 0,08 s (krok `data-cascade="0.08"` gospodarza), nth-child do 6
+  w hero i do 4 w siatkach (karty, kroki, dla kogo, FAQ); panel hero 0,24 s, duet banera 0,16 s.
 - Hover: `.35s cubic-bezier(.16,1,.3,1)`. Puls kropki: istniejący 2.2 s. Mgławica: 16 s.
   Panel: ~10 s pętla. Wszystko gaśnie przy `prefers-reduced-motion` (reguła globalna istnieje).
 - Fundament: `overflow-x: clip` NA WYSPIE (nie hidden — sticky-pigułka strony produktu).
@@ -124,7 +128,8 @@ numery, adnotacje, pasek konkretów (0.72–0.8 rem, 0.14–0.18 em).
 ### STACK
 PHP markup w `sklep-agentow.php` (`sklepag_shortcode_sklep`) · CSS w `assets/front.css`
 (nowy blok „RUNDA STRON 25.08") · JS: bez zmian poza ewentualnym `--sklepag-i` — zrobione
-CSS-em (nth-child). Bump 0.9.8 → 0.9.9 (nagłówek + stała; cache-bust assetów).
+CSS-em (nth-child). Bump 0.9.8 → 0.9.9 → 0.9.10 (nagłówek + stała; cache-bust assetów
+`?ver` = wersja + mtime).
 
 ### CZEGO NIE POWTÓRZYĆ (lekcje)
 Budować z głowy bez pomiaru · pokazywać surowe · `overflow-x:hidden` (zabija sticky) ·

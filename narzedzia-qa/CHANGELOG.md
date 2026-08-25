@@ -20,6 +20,17 @@ pory lądują tutaj.
   stosu z podpowłoki jest przekazywany dalej (EXIT 2). Próba kontrolna sprawdza maskowanie
   i brak wzorca klucza w wyjściu. Granica świadoma: filtr po NAZWIE, nie po treści.
 
+### Naprawione
+
+- **`slady-wewnetrzne.sh` 1.1.0 → 1.1.1 — imię z zespołu łapane po RDZENIU (`[Dd]zid`),
+  nie po jednej formie słowa.** Wzorzec `Dzidek` z 1.1.0 widział tylko mianownik i
+  przepuścił „Dzidka"; poprawka na `Dzidk` (na gałęzi, bez podbicia wersji) złapała odmiany,
+  ale przestała widzieć mianownik — dziura przesunięta, nie zamknięta. Dowód: `grep -E 'Dzidk'`
+  na linii „feedback Dzidek" nie daje trafienia. Próba kontrolna nie miała ŻADNEGO przypadku
+  z imieniem, więc regresja przeszła po cichu — dostała dwa (mianownik i odmiana); na wzorcu
+  `Dzidk` przypadek z mianownikiem PRZECHODZI NIEZAUWAŻONY, na `[Dd]zid` oba złapane.
+  Wpis 1.1.0 niżej mówi o `Dzidek` — tak było w 1.1.0 i tak zostaje w historii.
+
 ### Dodane
 
 - **`adresy-w-dokumencie.sh` 1.0.0 — mechaniczna kontrola, czy dokument nie kłamie

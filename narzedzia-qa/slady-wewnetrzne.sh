@@ -1,5 +1,5 @@
 #!/bin/bash
-# slady-wewnetrzne.sh — czy to, co dostaje kupujący, wiezie NASZE ślady.   WERSJA 1.1.0
+# slady-wewnetrzne.sh — czy to, co dostaje kupujący, wiezie NASZE ślady.   WERSJA 1.1.1
 #
 # PO CO TO POWSTAŁO: przy zamrażaniu ChatBota 1.5.7 okazało się, że paczka wiozła
 # klientowi 20 śladów w 8 plikach — odsyłacze do plików, których kupujący nie
@@ -29,7 +29,7 @@
 #               2 = zła liczba argumentów / nie ma katalogu
 set -u
 
-WERSJA_NARZEDZIA=1.1.0
+WERSJA_NARZEDZIA=1.1.1
 
 ETYKIETA="${1:-}"
 KATALOG="${2:-}"
@@ -51,6 +51,13 @@ ZALEGLOSCI="${SLADY_ZALEGLOSCI:-$KORZEN_NARZEDZIA/slady-zaleglosci.txt}"
 # „recenzja PR #27", tylko innymi słowami, więc wzorzec go NIE WIDZIAŁ. Naprawa
 # samego zdania byłaby naprawą egzemplarza. `\bkrytyk` z granicą słowa, bo bez
 # niej wzorzec łapie „diakrytyków".
+#
+# 1.1.1 — imię z zespołu szukane po RDZENIU (`[Dd]zid`), nie po jednej formie słowa.
+# Powód z życia: wzorzec `Dzidek` widział tylko mianownik i przepuścił „Dzidka";
+# poprawka na `Dzidk` złapała odmiany, ale PRZESTAŁA widzieć mianownik (między
+# `d` a `k` stoi `e`) — dziura przesunięta, nie zamknięta. Próba kontrolna nie
+# miała wtedy żadnego przypadku z imieniem, więc nie krzyknęła; teraz ma dwa
+# (mianownik i odmiana). Rdzeń łapie wszystkie formy, także małą literą.
 SLADY=(
 	"znacznik roboczy|TODO|FIXME|@todo|\bHACK\b|\bXXX\b|NOTATK[AI] QA|DO USUNIECIA PRZED"
 	# `0.0.0.0` WYPADA z tego wzorca (2026-08-21): to adres NIEOKREŚLONY, a nie
@@ -61,7 +68,7 @@ SLADY=(
 	# wp-env, vagrant, ddev — zostaje.
 	"adres maszyny dev|localhost|127\.0\.0\.1|:8890|:8025|mailpit|ngrok|wp-env|vagrant|\.ddev\b"
 	"ścieżka naszego drzewa roboczego|/root/praca|(^|[^a-zA-Z0-9/._-])(testy|boty|audyt|narzedzia-qa|wtyczki)/"
-	"nasz obieg pracy|PR #[0-9]|recenzent|recenzj|koordynator|builder[0-9]|prób[ay] kontroln|proba-kontrolna|mutant|\\bkrytyk|egzaminator|Dzidk"
+	"nasz obieg pracy|PR #[0-9]|recenzent|recenzj|koordynator|builder[0-9]|prób[ay] kontroln|proba-kontrolna|mutant|\\bkrytyk|egzaminator|[Dd]zid"
 )
 
 # --- wczytanie listy zaległości ----------------------------------------------
