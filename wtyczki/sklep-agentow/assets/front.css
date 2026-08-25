@@ -2025,3 +2025,796 @@ a.sklepag-kup {
 	translate: none !important;
 	scale: none !important;
 }
+
+/* ===== STRONA PRODUKTU — runda działu stron (PR 2a, 25.08): system listy przeniesiony 1:1 =====
+   Tło blueprint + pingi, etykiety numerowane, sekcje pełnej szerokości, karty z hoverem
+   łańcuchowym, kaskada i kierunki wejść z motywu, galeria w FAZACH z kadrami w ciemnych oknach. */
+/* Treść nad tłem — ale NIE tło/pingi (są absolutne pod spodem) i NIE pigułka sticky (jest fixed;
+   ta reguła bez wykluczenia robiła z niej zwykły element na końcu strony — przegląd na żywo 25.08). */
+.sklepag-produkt > :not(.sklepag-tlo, .sklepag-pingi, .sklepag-sticky) {
+	position: relative;
+	z-index: 1;
+}
+
+/* Pigułka sticky nie bierze udziału w kaskadzie wejścia (jest dzieckiem wyspy) — ma WŁASNE wejście:
+   wjazd z dołu z odbiciem (krzywa reveal gospodarza) i zjazd z wygaszeniem, sterowane klasą stanu
+   z front-ruch.js (przegląd na żywo 25.08: „nie wiem, czy jest animacja" — był przeskok display). */
+.sklepag-wyspa > .sklepag-sticky,
+.sklepag-js .sklepag-wyspa > .sklepag-sticky {
+	opacity: 0;
+	translate: 0 18px;
+	visibility: hidden;
+	transform: translateX(-50%);
+	transition: opacity 0.3s ease-out, translate 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), visibility 0s linear 0.3s;
+}
+
+.sklepag-wyspa > .sklepag-sticky.sklepag-sticky--widoczna,
+.sklepag-js .sklepag-wyspa > .sklepag-sticky.sklepag-sticky--widoczna {
+	opacity: 1;
+	translate: 0 0;
+	visibility: visible;
+	transition: opacity 0.3s ease-out, translate 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), visibility 0s;
+}
+
+.sklepag-produkt .sklepag-sekcja--pelna {
+	max-width: none;
+}
+
+.sklepag-produkt .sklepag-sekcja--pelna .sklepag-dowody,
+.sklepag-produkt .sklepag-sekcja--pelna .sklepag-vs {
+	max-width: none;
+}
+
+.sklepag-produkt .sklepag-sekcja--pelna .sklepag-dowody {
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* JAK DZIAŁA na stronie produktu: tor sygnału NAD kartami jako stepper z węzłami (01 ● — ● — ● 03),
+   węzeł pierwszego kroku pulsuje jak kropka statusu gospodarza (sędzia: goły myślnik w przerwie
+   między kartami wyglądał na niedokończony). */
+.sklepag-produkt .sklepag-kroki--siatka {
+	padding-top: 1.6rem;
+}
+
+.sklepag-produkt .sklepag-kroki--siatka::before {
+	top: 0.3rem;
+	left: 16.6%;
+	right: 16.6%;
+}
+
+.sklepag-produkt .sklepag-kroki--siatka li::after {
+	content: "";
+	position: absolute;
+	left: 50%;
+	top: -1.6rem;
+	width: 10px;
+	height: 10px;
+	margin-left: -5px;
+	border-radius: 50%;
+	background: var(--sklepag-limonka);
+	box-shadow: 0 0 0 4px var(--sklepag-tusz);
+}
+
+.sklepag-produkt .sklepag-kroki--siatka li:first-child::after {
+	animation: sklepag-pulse-dot 2.4s ease-in-out infinite;
+}
+
+@media (max-width: 48rem) {
+	.sklepag-produkt .sklepag-kroki--siatka {
+		padding-top: 0;
+	}
+
+	.sklepag-produkt .sklepag-kroki--siatka li::after {
+		display: none;
+	}
+}
+
+/* Pingi strony produktu: wyspa ~3× dłuższa niż lista — dodatkowe węzły niżej. */
+.sklepag-pingi--produkt i:nth-child(10) { left: 63rem; top: 133rem; animation-delay: -2.9s; }
+.sklepag-pingi--produkt i:nth-child(11) { left: 14rem; top: 161rem; animation-delay: -5.7s; }
+.sklepag-pingi--produkt i:nth-child(12) { left: 84rem; top: 189rem; animation-delay: -1.6s; }
+.sklepag-pingi--produkt i:nth-child(13) { left: 35rem; top: 224rem; animation-delay: -7.2s; }
+.sklepag-pingi--produkt i:nth-child(14) { left: 70rem; top: 259rem; animation-delay: -3.9s; }
+
+/* Karty funkcji, dowodów i „dla kogo": hover łańcuchowy jak karty listy. */
+.sklepag-produkt .sklepag-funkcja,
+.sklepag-produkt .sklepag-dowod,
+.sklepag-dla-kogo--karty li {
+	transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.35s ease, box-shadow 0.35s ease;
+}
+
+.sklepag-produkt .sklepag-funkcja:hover,
+.sklepag-produkt .sklepag-dowod:hover,
+.sklepag-dla-kogo--karty li:hover {
+	transform: translateY(-3px);
+	border-color: rgba(191, 255, 56, 0.35);
+	box-shadow: 0 18px 44px rgba(0, 0, 0, 0.4);
+}
+
+/* W paczce: 2 kolumny na pełnej szerokości; nieparzysty ostatni punkt na całą szerokość (bez sierotki). */
+.sklepag-pakiet--siatka {
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.sklepag-pakiet--siatka li:last-child:nth-child(odd) {
+	grid-column: 1 / -1;
+}
+
+/* Dla kogo: 3 równe karty. */
+.sklepag-dla-kogo--karty {
+	max-width: none;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 1.1rem;
+}
+
+.sklepag-dla-kogo--karty li {
+	padding: 1.1rem 1.3rem 1.1rem 2.7rem;
+	background: var(--sklepag-wegiel);
+	border: 1px solid var(--sklepag-linia);
+	border-radius: 14px;
+}
+
+.sklepag-dla-kogo--karty li::before {
+	left: 1.3rem;
+	top: 1.1rem;
+}
+
+/* ----- Galeria w FAZACH: wiersz = narracja po lewej + kafle-okna po prawej ----- */
+.sklepag-fazy {
+	display: grid;
+	gap: clamp(1.6rem, 3vw, 2.4rem);
+}
+
+.sklepag-faza {
+	display: grid;
+	grid-template-columns: minmax(0, 0.72fr) minmax(0, 2.28fr);
+	gap: clamp(1.2rem, 3vw, 2.2rem);
+	align-items: stretch;
+	padding-top: clamp(1.2rem, 2.5vw, 1.8rem);
+	border-top: 1px solid var(--sklepag-linia);
+}
+
+.sklepag-faza-glowa {
+	display: flex;
+	flex-direction: column;
+	gap: 0.55rem;
+}
+
+.sklepag-faza-numer {
+	font-family: var(--sklepag-mono);
+	font-size: clamp(2.2rem, 4vw, 3rem);
+	line-height: 1;
+	letter-spacing: -0.02em;
+	color: var(--sklepag-limonka);
+	margin: 0;
+	padding-bottom: 0.9rem;
+	border-bottom: 1px solid var(--sklepag-linia);
+}
+
+.sklepag-faza-tytul {
+	font-size: clamp(1.2rem, 2vw, 1.45rem);
+	font-weight: 600;
+	letter-spacing: -0.01em;
+	line-height: 1.2;
+	margin: 0.5rem 0 0;
+	color: var(--sklepag-papier);
+}
+
+.sklepag-faza-opis {
+	margin: 0;
+	color: var(--sklepag-pyl);
+	font-size: 0.97rem;
+	line-height: 1.55;
+}
+
+.sklepag-faza-kafle {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 1rem;
+	align-items: stretch;
+}
+
+/* Faza 01: nagranie przycięte do OKNA CZATU (pionowe 380×560) obok pionowego zrzutu okna —
+   dwa równe kafle, wyższy rząd, żeby dymki były czytelne (sędzia: „pomniejszona cała strona"). */
+.sklepag-faza--wideo .sklepag-faza-kafle {
+	grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+}
+
+/* Kafel „bąbelek w rogu strony": kadr trzyma prawy dolny róg (tam jest bąbelek), reszta strony = kontekst. */
+.sklepag-kafel--cover-dol .sklepag-kafel-kadr img {
+	object-fit: cover;
+	object-position: right bottom;
+}
+
+.sklepag-faza--wideo .sklepag-kafel-kadr {
+	height: 26rem;
+}
+
+.sklepag-faza--formularz .sklepag-faza-kafle {
+	grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.45fr);
+}
+
+.sklepag-faza--panel .sklepag-faza-kafle {
+	grid-template-columns: minmax(0, 1fr);
+}
+
+/* Faza z kadrami panelu (pełna szerokość, stos): narracja NAD kadrami w jednym wierszu — numer po lewej,
+   tytuł i opis obok — zamiast lewej kolumny z 650 px pustki pod tekstem (przegląd na żywo 25.08). */
+.sklepag-faza--panel {
+	grid-template-columns: minmax(0, 1fr);
+}
+
+.sklepag-faza--panel .sklepag-faza-glowa {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr);
+	column-gap: clamp(1.2rem, 3vw, 2rem);
+	row-gap: 0.3rem;
+	align-items: baseline;
+}
+
+.sklepag-faza--panel .sklepag-faza-numer {
+	grid-row: 1 / 3;
+	border-bottom: 0;
+	padding-bottom: 0;
+}
+
+.sklepag-faza--panel .sklepag-faza-tytul {
+	margin: 0;
+}
+
+.sklepag-faza--panel .sklepag-faza-opis {
+	max-width: 62rem;
+}
+
+/* Kafel = ciemne OKNO aplikacji (pasek 3 kropek, węgiel, hairline, cień): biały zrzut siedzi
+   w ramie, nie leży plamą na czerni. Hover łańcuchowy jak karty listy. */
+.sklepag-kafel {
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	background: var(--sklepag-wegiel);
+	border: 1px solid var(--sklepag-linia);
+	border-radius: 14px;
+	overflow: hidden;
+	box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
+	transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.35s ease, box-shadow 0.35s ease;
+}
+
+.sklepag-kafel:hover {
+	transform: translateY(-4px);
+	border-color: rgba(191, 255, 56, 0.4);
+	box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(191, 255, 56, 0.2);
+}
+
+.sklepag-kafel .sklepag-okno-pasek {
+	align-items: center;
+	padding: 0.6rem 0.9rem;
+}
+
+/* Kafel ze zrzutem mówi, że da się powiększyć — chip w pasku okna, limonka na hover. */
+.sklepag-kafel:has(.sklepag-lightbox) .sklepag-okno-pasek::after {
+	content: "POWIĘKSZ ⤢";
+	margin-left: auto;
+	font-family: var(--sklepag-mono);
+	font-size: 0.68rem;
+	letter-spacing: 0.14em;
+	color: var(--sklepag-pyl);
+	transition: color 0.3s ease;
+}
+
+.sklepag-kafel:hover .sklepag-okno-pasek::after {
+	color: var(--sklepag-limonka);
+}
+
+.sklepag-kafel .sklepag-lightbox {
+	display: flex;
+	flex: 1 1 auto;
+	min-height: 0;
+	cursor: zoom-in;
+}
+
+.sklepag-kafel .sklepag-lightbox:focus-visible {
+	outline-offset: -3px;
+}
+
+.sklepag-kafel-kadr {
+	position: relative;
+	flex: 1 1 auto;
+	min-height: 0;
+	width: 100%;
+	height: 20.5rem;
+	background: var(--sklepag-tusz);
+	overflow: hidden;
+}
+
+.sklepag-faza--panel .sklepag-kafel-kadr {
+	height: auto;
+	aspect-ratio: 1078 / 500;
+}
+
+.sklepag-kafel-kadr img,
+.sklepag-kafel-kadr video {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	object-position: top center;
+}
+
+.sklepag-kafel--wideo .sklepag-kafel-kadr video {
+	object-fit: contain;
+	object-position: center;
+}
+
+.sklepag-kafel--contain .sklepag-kafel-kadr img {
+	object-fit: contain;
+	object-position: center;
+	padding: 0.7rem;
+	box-sizing: border-box;
+}
+
+.sklepag-kafel-plakat {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+	object-position: center;
+	transition: opacity 0.7s ease;
+}
+
+.sklepag-kafel--gra .sklepag-kafel-plakat {
+	opacity: 0;
+}
+
+/* Autoodtwarzanie zablokowane przez przeglądarkę: plakat zostaje, kafel dostaje przycisk „Odtwórz". */
+.sklepag-kafel--zablokowane {
+	cursor: pointer;
+}
+
+.sklepag-kafel--zablokowane .sklepag-kafel-plakat {
+	opacity: 1;
+}
+
+.sklepag-kafel--zablokowane .sklepag-kafel-kadr::after {
+	content: "▶  Odtwórz nagranie";
+	position: absolute;
+	left: 50%;
+	bottom: 1rem;
+	translate: -50% 0;
+	padding: 0.55rem 1rem;
+	border-radius: 999px;
+	background: var(--sklepag-limonka);
+	color: var(--sklepag-tusz);
+	font-family: var(--sklepag-mono);
+	font-size: 0.78rem;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+	pointer-events: none;
+}
+
+.sklepag-kafel figcaption,
+.sklepag-kafel > .sklepag-mono-etykieta {
+	margin: auto 0 0;
+	padding: 0.7rem 0.9rem 0.85rem;
+	border-top: 1px solid var(--sklepag-linia);
+}
+
+/* Karta toku zgłoszenia (faza z jednym zrzutem — zamiast sierotki): mono-lista z torem sygnału. */
+.sklepag-kafel--tok .sklepag-tok {
+	list-style: none;
+	margin: 0;
+	padding: 1.2rem 1.2rem 1.2rem 1.3rem;
+	display: grid;
+	align-content: center;
+	gap: 0.95rem;
+	flex: 1 1 auto;
+	position: relative;
+	background: var(--sklepag-tusz);
+}
+
+.sklepag-kafel--tok .sklepag-tok::before {
+	content: "";
+	position: absolute;
+	left: calc(1.3rem + 0.95rem);
+	top: 2rem;
+	bottom: 2rem;
+	width: 1px;
+	background: repeating-linear-gradient(180deg, rgba(191, 255, 56, 0.5) 0 4px, transparent 4px 12px);
+	background-size: 1px 12px;
+	animation: sklepag-dashflow-pion 1.4s linear infinite;
+}
+
+@keyframes sklepag-dashflow-pion {
+	to { background-position: 0 -12px; }
+}
+
+.sklepag-tok li {
+	display: flex;
+	gap: 0.9rem;
+	align-items: flex-start;
+	color: var(--sklepag-papier);
+	font-size: 0.95rem;
+	line-height: 1.45;
+	position: relative;
+}
+
+.sklepag-tok-numer {
+	flex: 0 0 auto;
+	width: 1.9rem;
+	height: 1.9rem;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 50%;
+	border: 1px solid rgba(191, 255, 56, 0.45);
+	background: var(--sklepag-tusz);
+	color: var(--sklepag-limonka);
+	font-family: var(--sklepag-mono);
+	font-size: 0.72rem;
+	letter-spacing: 0.06em;
+}
+
+/* Lightbox: dialog z podpisem i przyciskiem zamknięcia; strona pod spodem nie przewija się. */
+html.sklepag-lightbox-otwarty {
+	overflow: hidden;
+}
+
+.sklepag-lightbox-tlo {
+	flex-direction: column;
+	gap: 0.8rem;
+}
+
+.sklepag-lightbox-ramka {
+	margin: 0;
+	max-width: min(1280px, 100%);
+	max-height: 100%;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.6rem;
+}
+
+.sklepag-lightbox-ramka img {
+	max-height: calc(100vh - 6rem);
+	object-fit: contain;
+}
+
+.sklepag-lightbox-ramka figcaption {
+	color: var(--sklepag-papier);
+	text-align: center;
+}
+
+.sklepag-lightbox-zamknij {
+	position: fixed;
+	top: 1rem;
+	right: 1rem;
+	width: 2.75rem;
+	height: 2.75rem;
+	border-radius: 50%;
+	border: 1px solid var(--sklepag-linia);
+	background: var(--sklepag-wegiel);
+	color: var(--sklepag-papier);
+	font-size: 1.6rem;
+	line-height: 1;
+	cursor: pointer;
+	z-index: 1;
+}
+
+.sklepag-lightbox-zamknij:hover,
+.sklepag-lightbox-zamknij:focus-visible {
+	border-color: var(--sklepag-limonka);
+	color: var(--sklepag-limonka);
+}
+
+/* ----- Wejścia elementów strony produktu: te same kanały, czasy i kierunki co lista ----- */
+.sklepag-js .sklepag-wyspa > .sklepag-hero-uklad {
+	opacity: 1;
+	transform: none;
+	transition: none;
+}
+
+.sklepag-js .sklepag-wyspa .sklepag-hero-uklad > .sklepag-hero-wizual,
+.sklepag-js .sklepag-wyspa :is(.sklepag-funkcje, .sklepag-dowody, .sklepag-dla-kogo--karty, .sklepag-pakiet--siatka) > *,
+.sklepag-js .sklepag-wyspa .sklepag-funkcje-uklad > .sklepag-mockup,
+.sklepag-js .sklepag-wyspa .sklepag-sekcja--pelna > :is(.sklepag-vs, .sklepag-vs-przypis, .sklepag-sekcja-tytul, .sklepag-przypis, .sklepag-przedpo),
+.sklepag-js .sklepag-wyspa .sklepag-faza > .sklepag-faza-glowa,
+.sklepag-js .sklepag-wyspa .sklepag-faza-kafle > * {
+	--sklepag-d: 0s;
+	opacity: 0;
+	translate: 0 14px;
+	scale: 0.94;
+	transition: opacity 0.3s ease-out var(--sklepag-d), translate 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) var(--sklepag-d), scale 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) var(--sklepag-d), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.35s ease, box-shadow 0.35s ease;
+}
+
+/* Kierunki: wizual/mockup z prawej 36 px, tekst z lewej 28/36 px, narracja fazy z lewej, kafle z prawej. */
+.sklepag-js .sklepag-wyspa .sklepag-hero-uklad > .sklepag-hero-wizual,
+.sklepag-js .sklepag-wyspa .sklepag-funkcje-uklad > .sklepag-mockup { --sklepag-d: 0.24s; translate: 36px 0; scale: 1; }
+.sklepag-js .sklepag-wyspa .sklepag-sekcja--pelna > :is(.sklepag-vs, .sklepag-vs-przypis, .sklepag-sekcja-tytul, .sklepag-przypis, .sklepag-przedpo) { translate: -28px 0; scale: 1; }
+.sklepag-js .sklepag-wyspa .sklepag-sekcja--pelna > .sklepag-sekcja-tytul { translate: -36px 0; }
+.sklepag-js .sklepag-wyspa .sklepag-faza > .sklepag-faza-glowa { translate: -28px 0; scale: 1; }
+.sklepag-js .sklepag-wyspa .sklepag-faza-kafle > * { translate: 28px 0; scale: 1; }
+
+/* Opóźnienia (krok 0,08 s): hero ma na stronie produktu do 9 dzieci; siatki do 5. */
+.sklepag-js .sklepag-wyspa .sklepag-hero > :nth-child(7) { --sklepag-d: 0.48s; }
+.sklepag-js .sklepag-wyspa .sklepag-hero > :nth-child(8) { --sklepag-d: 0.56s; }
+.sklepag-js .sklepag-wyspa .sklepag-hero > :nth-child(9) { --sklepag-d: 0.64s; }
+.sklepag-js .sklepag-wyspa :is(.sklepag-funkcje, .sklepag-dowody, .sklepag-dla-kogo--karty, .sklepag-pakiet--siatka, .sklepag-faza-kafle) > :nth-child(1) { --sklepag-d: 0.08s; }
+.sklepag-js .sklepag-wyspa :is(.sklepag-funkcje, .sklepag-dowody, .sklepag-dla-kogo--karty, .sklepag-pakiet--siatka, .sklepag-faza-kafle) > :nth-child(2) { --sklepag-d: 0.16s; }
+.sklepag-js .sklepag-wyspa :is(.sklepag-funkcje, .sklepag-dowody, .sklepag-dla-kogo--karty, .sklepag-pakiet--siatka) > :nth-child(3) { --sklepag-d: 0.24s; }
+.sklepag-js .sklepag-wyspa :is(.sklepag-funkcje, .sklepag-dowody, .sklepag-dla-kogo--karty, .sklepag-pakiet--siatka) > :nth-child(4) { --sklepag-d: 0.32s; }
+.sklepag-js .sklepag-wyspa :is(.sklepag-funkcje, .sklepag-pakiet--siatka) > :nth-child(5) { --sklepag-d: 0.4s; }
+.sklepag-js .sklepag-wyspa .sklepag-sekcja--pelna > .sklepag-vs { --sklepag-d: 0.08s; }
+.sklepag-js .sklepag-wyspa .sklepag-sekcja--pelna > :is(.sklepag-vs-przypis, .sklepag-przypis) { --sklepag-d: 0.16s; }
+.sklepag-js .sklepag-wyspa .sklepag-sekcja--pelna > .sklepag-przedpo { --sklepag-d: 0.24s; }
+
+/* Stan widoczny: sekcja (bezpośredni potomek wyspy) albo osobno obserwowana faza. */
+.sklepag-js .sklepag-wyspa > .sklepag-widoczne > .sklepag-hero-wizual,
+.sklepag-js .sklepag-wyspa > .sklepag-widoczne :is(.sklepag-funkcje, .sklepag-dowody, .sklepag-dla-kogo--karty, .sklepag-pakiet--siatka) > *,
+.sklepag-js .sklepag-wyspa > .sklepag-widoczne .sklepag-funkcje-uklad > .sklepag-mockup,
+.sklepag-js .sklepag-wyspa > .sklepag-widoczne > :is(.sklepag-vs, .sklepag-vs-przypis, .sklepag-sekcja-tytul, .sklepag-przypis, .sklepag-przedpo),
+.sklepag-js .sklepag-wyspa .sklepag-faza.sklepag-widoczne > .sklepag-faza-glowa,
+.sklepag-js .sklepag-wyspa .sklepag-faza.sklepag-widoczne .sklepag-faza-kafle > * {
+	opacity: 1;
+	translate: 0 0;
+	scale: 1;
+}
+
+/* Szelki: „ogranicz ruch" i bezpiecznik `sklepag-odslon` odsłaniają także elementy strony produktu. */
+@media (prefers-reduced-motion: reduce) {
+	.sklepag-js .sklepag-wyspa .sklepag-hero-uklad > .sklepag-hero-wizual,
+	.sklepag-js .sklepag-wyspa :is(.sklepag-funkcje, .sklepag-dowody, .sklepag-dla-kogo--karty, .sklepag-pakiet--siatka) > *,
+	.sklepag-js .sklepag-wyspa .sklepag-funkcje-uklad > .sklepag-mockup,
+	.sklepag-js .sklepag-wyspa .sklepag-sekcja--pelna > :is(.sklepag-vs, .sklepag-vs-przypis, .sklepag-sekcja-tytul, .sklepag-przypis, .sklepag-przedpo),
+	.sklepag-js .sklepag-wyspa .sklepag-faza > .sklepag-faza-glowa,
+	.sklepag-js .sklepag-wyspa .sklepag-faza-kafle > * {
+		opacity: 1 !important;
+		translate: none !important;
+		scale: none !important;
+	}
+}
+
+.sklepag-odslon .sklepag-wyspa .sklepag-hero-uklad > .sklepag-hero-wizual,
+.sklepag-odslon .sklepag-wyspa :is(.sklepag-funkcje, .sklepag-dowody, .sklepag-dla-kogo--karty, .sklepag-pakiet--siatka) > *,
+.sklepag-odslon .sklepag-wyspa .sklepag-funkcje-uklad > .sklepag-mockup,
+.sklepag-odslon .sklepag-wyspa .sklepag-sekcja--pelna > :is(.sklepag-vs, .sklepag-vs-przypis, .sklepag-sekcja-tytul, .sklepag-przypis, .sklepag-przedpo),
+.sklepag-odslon .sklepag-wyspa .sklepag-faza > .sklepag-faza-glowa,
+.sklepag-odslon .sklepag-wyspa .sklepag-faza-kafle > * {
+	opacity: 1 !important;
+	translate: none !important;
+	scale: none !important;
+}
+
+/* ----- RWD strony produktu ----- */
+@media (max-width: 64rem) {
+	.sklepag-faza {
+		grid-template-columns: 1fr;
+	}
+
+	.sklepag-faza-glowa {
+		flex-direction: row;
+		flex-wrap: wrap;
+		align-items: baseline;
+		gap: 0.4rem 1rem;
+	}
+
+	.sklepag-faza-numer {
+		border-bottom: 0;
+		padding-bottom: 0;
+	}
+
+	.sklepag-faza-tytul {
+		margin: 0;
+	}
+
+	.sklepag-faza-opis {
+		flex-basis: 100%;
+	}
+
+	.sklepag-kafel-kadr {
+		height: 16rem;
+	}
+}
+
+@media (max-width: 48rem) {
+	.sklepag-produkt .sklepag-sekcja--pelna .sklepag-dowody,
+	.sklepag-dla-kogo--karty,
+	.sklepag-pakiet--siatka {
+		grid-template-columns: 1fr;
+	}
+}
+
+@media (max-width: 40rem) {
+	.sklepag-faza-kafle,
+	.sklepag-faza--wideo .sklepag-faza-kafle,
+	.sklepag-faza--formularz .sklepag-faza-kafle {
+		grid-template-columns: 1fr;
+	}
+
+	.sklepag-kafel-kadr {
+		height: auto;
+		aspect-ratio: 16 / 10;
+	}
+
+	.sklepag-kafel--contain .sklepag-kafel-kadr {
+		aspect-ratio: 4 / 5;
+	}
+
+	/* Kadry panelu na telefonie: zamiast całej szerokości 1078 px ściśniętej do 390 px — lewa,
+	   czytelna część kadru (etykiety + pola, kafle liczb) w proporcji 4:3; całość w lightboxie. */
+	.sklepag-faza--panel .sklepag-kafel-kadr {
+		aspect-ratio: 4 / 3;
+	}
+
+	.sklepag-faza--panel .sklepag-kafel-kadr img {
+		object-position: top left;
+	}
+
+	.sklepag-faza--wideo .sklepag-kafel-kadr {
+		height: auto;
+		aspect-ratio: 346 / 536;
+	}
+}
+
+/* Pudełko zakupu: „Kup teraz" w hero, finale i pigułce to KOTWICE do sekcji ceny (zakup wymaga
+   checkboxa zgody z art. 38, który tu mieszka). Sekcja ma margines pod sticky nagłówkiem gospodarza
+   (cena zostaje w kadrze), a formularz jest RAMKĄ, która błyska limonką po przyjściu z kotwicy
+   (przegląd na żywo 25.08: „czemu Kup teraz jest tu i górny też tu przekierowuje?"). */
+.sklepag-sekcja-zakup {
+	scroll-margin-top: 7rem; /* nagłówek gospodarza ~3.5rem + oddech; skok liczy się przed wjazdem sekcji (26 px) */
+}
+
+.sklepag-produkt .sklepag-zakup {
+	background: var(--sklepag-wegiel);
+	border: 1px solid var(--sklepag-linia);
+	border-radius: 16px;
+	padding: 1.3rem 1.5rem 1.1rem;
+	margin-top: 1rem;
+}
+
+.sklepag-sekcja-zakup:target .sklepag-zakup {
+	animation: sklepag-zakup-blysk 1.8s ease-out 1;
+}
+
+@keyframes sklepag-zakup-blysk {
+	0% { border-color: var(--sklepag-limonka); box-shadow: 0 0 0 0 rgba(191, 255, 56, 0.55); }
+	70% { border-color: var(--sklepag-limonka); box-shadow: 0 0 0 16px rgba(191, 255, 56, 0); }
+	100% { border-color: var(--sklepag-linia); box-shadow: 0 0 0 0 rgba(191, 255, 56, 0); }
+}
+
+/* Poświata za ilustracją hero w sile gospodarza (0.14 → 0) — głębia zamiast gołego tła (sędzia r2). */
+.sklepag-produkt .sklepag-hero-wizual {
+	position: relative;
+}
+
+.sklepag-produkt .sklepag-hero-wizual::before {
+	content: "";
+	position: absolute;
+	inset: -22% -16%;
+	z-index: -1;
+	border-radius: 50%;
+	background: radial-gradient(52% 48% at 55% 50%, rgba(191, 255, 56, 0.14), rgba(191, 255, 56, 0.04) 48%, transparent 72%);
+	animation: sklepag-glow-breathe 7s ease-in-out infinite;
+	pointer-events: none;
+}
+
+/* Limonka ma wygrywać na „Kup teraz" (sędzia r4): numery faz i kroków przygaszone do 72 %, a zwycięska
+   kolumna porównania dostaje cień tła i lewy akcent — przewagę widać bez czytania. */
+.sklepag-faza-numer,
+.sklepag-produkt .sklepag-kroki--siatka li::before {
+	color: rgba(191, 255, 56, 0.72);
+}
+
+.sklepag-produkt .sklepag-vs-prawa {
+	/* Bez podbarwki tła (przez mgłę gospodarza wychodziła brudno-oliwkowo — przegląd 25.08); sama kreska. */
+	box-shadow: inset 2px 0 0 rgba(191, 255, 56, 0.45);
+}
+
+/* Ramki uczciwości i gwarancji trzymają linię z sąsiednimi sekcjami pełnej szerokości (przegląd 25.08:
+   „krzywo" — prawa krawędź kończyła się na torze tekstu 62 rem, sekcje obok na 72 rem). */
+.sklepag-produkt .sklepag-uczciwosc,
+.sklepag-produkt .sklepag-gwarancja {
+	max-width: none;
+}
+
+/* Hero produktu: PANEL NA ŻYWO tego bota (sygnatura listy) zamiast statycznej ilustracji —
+   większe okno, większe dymki, wiersz „baza pytań" z chipami podświetlanymi po kolei. */
+.sklepag-hero-wizual--panel .sklepag-panel {
+	padding: 1.2rem 0;
+}
+
+.sklepag-hero-wizual--panel .sklepag-panel-okno {
+	min-height: 21rem;
+	display: flex;
+	flex-direction: column;
+}
+
+.sklepag-hero-wizual--panel .sklepag-panel-wiersz {
+	flex: 1 1 auto;
+}
+
+.sklepag-hero-wizual--panel .sklepag-dymek {
+	font-size: 1rem;
+}
+
+.sklepag-panel-baza {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem 0.6rem;
+	padding: 0.9rem 1.2rem 1.1rem;
+	border-top: 1px solid var(--sklepag-linia);
+}
+
+.sklepag-panel-baza .sklepag-mono-etykieta {
+	margin: 0 0.4rem 0 0;
+	color: var(--sklepag-pyl);
+}
+
+.sklepag-panel-chip {
+	font-family: var(--sklepag-mono);
+	font-size: 0.72rem;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	color: var(--sklepag-papier);
+	border: 1px solid var(--sklepag-linia);
+	border-radius: 6px;
+	padding: 0.3rem 0.55rem;
+	animation: sklepag-chip-swiatlo 9.9s ease-in-out infinite;
+}
+
+.sklepag-panel-chip:nth-child(3) { animation-delay: 3.3s; }
+.sklepag-panel-chip:nth-child(4) { animation-delay: 6.6s; }
+
+@keyframes sklepag-chip-swiatlo {
+	0%, 27%, 100% { border-color: var(--sklepag-linia); color: var(--sklepag-papier); box-shadow: none; }
+	8%, 19% { border-color: var(--sklepag-limonka); color: var(--sklepag-limonka); box-shadow: 0 0 0 3px rgba(191, 255, 56, 0.12); }
+}
+
+/* Kadry panelu lekko przygaszone (bez retuszu treści): łagodniejszy skok jasności po ciemnych fazach 01/02. */
+.sklepag-faza--panel .sklepag-kafel-kadr img {
+	filter: brightness(0.93);
+}
+
+@media (max-width: 40rem) {
+	/* Telefon: kadr panelu 4:3 od lewej-góry + GASNĄCA prawa krawędź — widać, że kadr trwa dalej
+	   (sędzia r3: cięcie w pół słowa czytało się jak utrata treści); całość w lightboxie. */
+	.sklepag-faza--panel .sklepag-kafel-kadr {
+		aspect-ratio: 4 / 3;
+	}
+
+	.sklepag-faza--panel .sklepag-kafel-kadr::after {
+		content: "";
+		position: absolute;
+		inset: 0;
+		background: linear-gradient(90deg, transparent 62%, rgba(16, 17, 22, 0.92) 100%);
+		pointer-events: none;
+	}
+
+	/* Pigułka sticky na telefonie: zwarta (cena mniejsza, ciaśniejszy przycisk) i dosunięta do LEWEJ —
+	   prawy dolny róg należy do bąbelka czatu (sędzia: dwa stałe elementy sklejały się w jeden kształt). */
+	.sklepag-sticky {
+		gap: 10px;
+		padding: 6px 8px 6px 14px;
+		bottom: 10px;
+		left: 12px;
+		transform: none;
+	}
+
+	/* Oddech między panelem hero a etykietą pierwszej sekcji na telefonie. */
+	.sklepag-produkt .sklepag-hero-wizual {
+		margin-bottom: 1.6rem;
+	}
+
+	.sklepag-sticky-cena {
+		font-size: 0.9rem;
+	}
+
+	.sklepag-sticky .sklepag-kup {
+		padding: 0.55rem 1rem;
+		font-size: 0.9rem;
+	}
+}

@@ -141,6 +141,109 @@ Sędzia ≥ 85/100 i zero priority-1 (max 2 rundy sędziego, potem decyzja Gosi)
 desktop + telefon obejrzane w całości · `bash narzedzia-qa/bramki.sh` EXIT 0 · waga `/sklep/`
 < 0,5 MB · zero regresji (baner testowy = ten sam napis; linki produktów; reveal bez JS).
 
+## 6. GIGANT-PROMPT STRONY PRODUKTU — PR 2a: `/sklep/produkt/chatbot-live/` (25.08, po scaleniu PR 1)
+
+Kolejność (Dzidek 25.08): NAJPIERW ChatBot, Segregator osobnym PR-em tą samą metodą. Gałąź
+`wyglad/produkt-chatbot`. Wzorzec ruchu = GOSPODARZ (`recon-automatic-ai-RUCH.json`, lekcja działu),
+system z PR 1 przeniesiony 1:1: tło blueprint + pingi, etykiety `[ 01 · … ]`, kaskada/kierunki,
+sekcje pełnej szerokości, hover łańcuchowy, cache-busting. Funkcje i treści sprzedażowe BEZ ZMIAN
+(narracje faz galerii sklejone z istniejących zdań — zero nowych obietnic i liczb).
+
+### POMIAR PRZED (baza: `zrzuty-baza-chatbot.json` w scratchpadzie sesji)
+Galeria 2-kolumnowa: wideo na całą szerokość, dalej 4 kafle różnych wysokości (okno czatu 682×908,
+formularz 320×440, ustawienia 1078×2857 — biała plama tnąca panel w pół, statystyki 1100×790);
+kroki = goła lista; FAQ jednokolumnowe w torze 62 rem; brak tła i numeracji; waga ~1,3 MB
+(ustawienia.png 527 KB ładowane w całości do kafla).
+
+### GALERIA „CO JEST W ŚRODKU" = 3 FAZY (brief pkt 1/1a) — decyzja: NIE sklejam z [ JAK DZIAŁA ]
+Kroki odpowiadają na „jak zacząć" (instalacja → baza → bot pracuje, realna sekwencja), fazy na
+„co zobaczysz" (strona → brak odpowiedzi → panel) — inna oś; sklejenie łamałoby kolejność kroków.
+Każda faza = wiersz o STAŁEJ wysokości kafli (21 rem desktop, 16 rem tablet, auto telefon):
+lewa kolumna narracji (mono-numer limonka + hairline + tytuł + 1 zdanie z istniejących treści),
+prawa = kafle-okna (pasek 3 kropek, węgiel, hairline, radius 14, cień) — biały zrzut siedzi
+w ciemnej ramie, nigdy jako plama.
+- `01 · NA TWOJEJ STRONIE`: wideo-demo (poster→fade: `<video poster>` + warstwa plakatu gasnąca na
+  `playing`; przy „ogranicz ruch" wideo stoi na plakacie) + okno czatu (ciemne, `contain`).
+- `02 · GDY BOT NIE ZNA ODPOWIEDZI`: formularz „Zostaw wiadomość" (`contain`) + karta toku
+  „pyta → bot nie zna → prosi o maila → zgłoszenie w wp-admin" (mono, tor dashflow; treść z funkcji
+  „Zbieranie kontaktów" i FAQ) — sierotka rozwiązana projektem, nie wypełniaczem.
+- `03 · TWÓJ PANEL`: KADRY zamiast całych ekranów — `ustawienia` górny blok 1078×500 (włącznik,
+  teksty po polsku) i `statystyki` 1100×520 (KPI) jako osobne pliki WebP; pełny ekran dopiero w
+  lightboxie (href = oryginał PNG, ładowany po kliknięciu).
+Lightbox: dialog z przyciskiem zamknięcia, podpisem z figcaption, Esc/klik, blokada scrolla,
+powrót fokusu, `cursor: zoom-in/out`.
+
+### RESZTA STRONY (język listy)
+Sekcje numerowane kolejno `[ 01 · PROBLEM ] … [ 12 · FAQ ]` (licznik w PHP). Pełna szerokość:
+CO DOSTAJESZ (5 funkcji jako karty 2-kol + mockup), JAK DZIAŁA (3 karty z torem 01→02→03 jak na
+liście), FAZY, W PACZCE (2 kolumny), ILE CZASU (3 karty-dowody), RĘCZNIE KONTRA BOT, DLA KOGO
+(3 karty), FAQ (siatka 2 kolumn, bloki z hairline'em), FINAŁ (baner-panel). Tekst zostaje w torze
+62 rem: PROBLEM, uczciwość, gwarancja. Hero bez zmian układu (ilustracja brandowa — D28b), dostaje
+kierunki: etykieta −24, tytuł −36, akapity −28, wizual +36. Tło blueprint + 14 pingów (strona jest
+~3× dłuższa niż lista). Wersja 0.9.10 → 0.9.11.
+
+### KRYTERIA ODBIORU PR 2a
+Sędzia ≥ 85 i zero P1 (max 2 rundy, potem oko Dzidka na tunelu) · zrzuty desktop+telefon po WOLNYM
+scrollu obejrzane w całości · bramki 8/8 EXIT 0 · waga strony < 1,5 MB (cel < 1 MB) · zero regresji:
+checkout, lightbox, sticky, czat-bąbelek, `noscript`/`reduced-motion` = wszystko widoczne.
+
+### WYNIK PR 2a (dok = kod)
+- Pomiar PO (Playwright, po wolnym scrollu): waga **1293 → 798 KB**, 0 błędów JS, 0 przepełnienia
+  na 390 px; szelki 9/9 (skrypt zablokowany/opóźniony, bez JS, „ogranicz ruch", lightbox, wideo).
+- **Sędzia r1 (sonnet): 77/100, BLISKO, zero P1** (motion 68, fazy 75). Runda poprawek na uwagi P2–P3:
+  tor kroków nad kartami jako stepper z węzłami (pierwszy pulsuje) · kadry panelu na telefonie
+  w proporcji 4:3 od lewej-góry (całość w lightboxie) · nagranie przycięte ffmpeg-iem do OKNA CZATU
+  (`chatbot-demo-kadr.webm` 380×560, 229 KB zamiast 418 KB; okno stoi w miejscu przez 19,9 s —
+  sprawdzone klatkami 3 s i 16 s) + nowy plakat 4,7 KB · rząd fazy 01 wyższy (26 rem), dwa równe kafle.
+- ŚWIADOMIE NIE: ilustracja w pierwszym ekranie telefonu (P3 — hero na telefonie ma tekst+cenę+CTA
+  wyżej, jak na liście: panel POD tekstem) · wyrównanie wagi 3 faz do „wszystkie pół-szerokości"
+  (P4 — kadry panelu na pół szerokości wracają do nieczytelności, którą Dzidek zgłosił) · oryginał
+  `chatbot-demo.webm` zostaje w assets (418 KB, nieużywany na stronie) — do decyzji przy PR 3 media.
+- **Sędzia r2: 81/100, BLISKO, zero P1** (hierarchia 85, kolor 87, motion 76, mobile 77). Dzidek na
+  tunelu (25.08 ~08:03): pigułka sticky wisiała na końcu strony — MÓJ błąd z tej rundy (reguła
+  `.sklepag-produkt > *` nadpisała `position: fixed`, a kaskada zabrała centrowanie) → wykluczenie
+  z reguły + własna reguła wejścia; szelki dostały kontrolę pigułki (fixed, 14 px od dołu, środek).
+  Podpis duetu na stronie produktu = TEN produkt (`sklepag_duet_maskotek( $podpis )`).
+  Dzidek ~08:07 (Segregator): „czemu Kup teraz jest tu i górny też tu przekierowuje?" → kotwice
+  celują w sekcję `#sklepag-zakup` (scroll-margin pod nagłówkiem, cena w kadrze), formularz jako
+  ramka z błyskiem `:target`. Szare smugi w tle = `fw-canvas` gospodarza, nie nasze.
+- Runda 3 (uwagi sędziego r2): poświata za ilustracją hero (0.14, oddech 7 s) · kadry panelu
+  przygaszone `brightness(.93)` · kadr panelu 1:1 na telefonie. ŚWIADOMIE NIE: padding pod bąbelek
+  czatu (P2 — bąbelek to sam produkt, pływa nad każdą stroną; to nie wada układu) · faza 03 w dwóch
+  kolumnach (P3 — nieczytelność, patrz wyżej).
+- **Sędzia r3: 74, DALEKO** (niżej niż r2 = 81) — w r2 pigułka sticky była ZEPSUTA (leżała na końcu
+  strony) i nic nie zasłaniała; w r3 działa jak ma i sędzia liczy każde nachodzenie na treść jako
+  wadę (desktop i telefon). Jego P1 słuszne: kadry panelu 1:1 na telefonie cięły słowa. Runda 4:
+  kadr 4:3 + gasnąca prawa krawędź (widać ciąg dalszy) · pigułka zwarta na telefonie. ŚWIADOMIE NIE:
+  usunięcie/przesuwanie pigułki (sticky CTA = standard Baymard, koszyk A z #174) · faza 03 w dwóch
+  kolumnach (nieczytelność kadrów, patrz r1). Sufit sonneta przy tych decyzjach ≈ 80 — Dzidek: „kręć
+  rundy do 90" → po r4 meldunek z tą granicą i wybór Dzidka (pigułka zostaje / znika na telefonie).
+- **Sędzia r4: 84, BLISKO, zero P1** (media 90, telefon 88, odstępy 87, hierarchia 87). Runda 5 na
+  jego drobiazgi: akcent w H1 (ostatnie słowo WIELKIMI, „LIVE", limonką — `sklepag_tytul_z_akcentem`)
+  · fazy numerowane `04.1/04.2/04.3` (przypięte do sekcji, odróżnialne od kroków 01/02/03) · numery
+  faz i kroków przygaszone do 72 % limonki (CTA ma wygrywać) · kolumna „Z botem" w porównaniu
+  z tłem i lewym akcentem. NIE: ujednolicenie 3 faz do jednego szablonu (decyzja, patrz r1).
+- Dzidek na tunelu (~08:27–08:28): (a) faza 03 — 650 px pustki pod tekstem obok dwóch kadrów → faza
+  `--panel` ma narrację NAD kadrami (numer | tytuł+opis) i kadry na pełną szerokość; (b) „hero
+  i obrazy w hero produktów za słabe" → **hero = PANEL NA ŻYWO tego bota** (sygnatura listy: okno
+  z pętlą czatu, awatar-maskotka, tilt/paralaksa, adnotacje, + wiersz „baza pytań" z chipami
+  podświetlanymi po kolei); panel wydzielony do `sklepag_panel_nocnej_zmiany( $tryb )` — lista
+  woła 'oba' (markup identyczny bajt w bajt, sprawdzone md5), produkt swój slug; ilustracja
+  brandowa zostaje na karcie listy (D28b bez zmian dla listy). Sędzia r5 POMINIĘTY (zrzuty
+  nieaktualne po zmianach Dzidka) → sędzia r6 na stanie końcowym.
+- **Sędzia końcowy: 81, BLISKO, zero P1** (hero 88 — panel na żywo zadziałał; kolor 87; hierarchia 86).
+  Cztery werdykty 77 → 81 → 84 → 81: sonnet skacze ±5 zależnie od tego, na co spojrzy, a przy
+  świadomych decyzjach (sticky CTA, kadry panelu na pełną szerokość, bąbelek produktu) jego sufit to
+  ≈ 85 — pętla ZATRZYMANA (każda runda ≈ 5 $ i 3 % kontekstu bez wzrostu). Z ostatniej listy wzięte:
+  oddech pod panelem hero na telefonie, pigułka dosunięta do lewej (prawy róg = bąbelek). Po
+  przeglądzie Dzidka (~08:35): kolumna „Z botem" bez podbarwki (brudno-oliwkowa przez mgłę
+  gospodarza), ramki 09/11 na pełną szerokość („krzywo"); ~08:40 „animacja pigułki gówniana, nie wiem
+  czy jest" → klasa stanu zamiast `hidden`, wjazd z dołu z odbiciem i zjazd z wygaszeniem, zmierzone
+  klatkami (opacity 0→1 w ~300 ms, translate 18→0 z przestrzałem −1 px); ~08:52 „nagranie gówniane,
+  podobne do zrzutu obok" → para 04.1 = miniatura całej strony z bąbelkiem (świeży zrzut Playwright)
+  + nagranie rozmowy z bliska; zrzut okna czatu (dubel) wypadł; strażnik odtwarzania (przycisk
+  „Odtwórz", gdy przeglądarka blokuje autoplay), `preload=auto`. Arbiter = oko Dzidka → klepnięcie → commit.
+
 ## 5. PLAN MEDIÓW NA PR 2–3 (strony produktów) — do wykonania po pokazie `/sklep/`
 Galeria w 3 FAZACH z równymi rzędami · ciemne ramy okien wokół białych zrzutów · kadry +
 pełny ekran w lightboxie · poster→fade dla kafli-nagrań · ożywione mikro-ilustracje SVG przy
