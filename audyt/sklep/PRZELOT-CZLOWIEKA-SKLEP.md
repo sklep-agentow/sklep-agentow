@@ -2,7 +2,7 @@
 
 Kto: właściciel (Dzidek) — nie autor. Kiedy: po rundach A/B i naprawach, po moim „bezpiecznie". Gdzie: tunel (nowy)
 do stosu warsztatowego. Czas: ~40 min. Zasada: odhaczasz TYLKO to, co zobaczyłeś na ekranie. Coś dziwnego = 😖 + jedno
-zdanie, co się stało (nie diagnozuj). Lista liczona przez `k7-koniec.sh` (0 ⬜ = komplet). Statusy: ⬜ / ✅ / 😖 / 🐞.
+zdanie, co się stało (nie diagnozuj). LICZNIK na dole przelicza WYŁĄCZNIE `bash narzedzia-qa/mapa-licznik.sh audyt/sklep/PRZELOT-CZLOWIEKA-SKLEP.md --przelot` (po każdej sesji odhaczania); `k7-koniec.sh` tylko CZYTA (≥ 27 punktów, 0 ⬜, 0 😖, LICZNIK zgodny = komplet). Statusy: ⬜ / ✅ / 😖 / 🐞.
 
 ## A. KUPUJĄCY (bez logowania)
 - ⬜ A1 · wejście na `/sklep/` — lista ma 2 produkty, ceny, przycisk do produktu; baner „tryb testowy" widoczny
