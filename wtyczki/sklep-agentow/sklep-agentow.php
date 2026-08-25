@@ -93,9 +93,12 @@ function sklepag_assety_frontu() {
 
 		/* Pojawianie się sekcji przy przewijaniu (spójność z motywem gospodarza).
 			Skrypt w <head> z `defer` + inline PRZED nim: klasa `sklepag-js` musi
-			trafić na <html> ZANIM przeglądarka namaluje treść, inaczej sekcje
-			mignęłyby widoczne i dopiero potem zniknęły. Bez JS klasa nie powstaje
-			i CSS w ogóle nie ukrywa treści — to jest zabezpieczenie, nie ozdoba. */
+			trafić na <html> ZANIM przeglądarka namaluje treść — to ONA ukrywa elementy
+			od pierwszej klatki (jak `html.js` gospodarza); skrypt tylko odsłania.
+			Inline dodaje klasę wyłącznie, gdy jest IntersectionObserver i nie ma
+			„ogranicz ruch", a po 2,5 s dodaje `sklepag-odslon` (CSS pokazuje wszystko)
+			— gdy skrypt nie dojedzie albo padnie, treść i tak się pokaże. Bez JS klasa
+			nie powstaje i CSS niczego nie ukrywa. */
 		wp_enqueue_script(
 			'sklepag-ruch',
 			plugins_url( 'assets/front-ruch.js', SKLEPAG_PLIK ),
@@ -106,7 +109,11 @@ function sklepag_assety_frontu() {
 				'strategy'  => 'defer',
 			)
 		);
-		wp_add_inline_script( 'sklepag-ruch', "document.documentElement.classList.add('sklepag-js');", 'before' );
+		wp_add_inline_script(
+			'sklepag-ruch',
+			"(function(){try{if(!('IntersectionObserver' in window)||(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)){return;}var h=document.documentElement;h.classList.add('sklepag-js');setTimeout(function(){h.classList.add('sklepag-odslon');},2500);}catch(e){}})();",
+			'before'
+		);
 	}
 	if ( is_page( $strona_dziekujemy ) ) {
 		wp_enqueue_script( 'sklepag-dziekujemy', plugins_url( 'assets/dziekujemy.js', SKLEPAG_PLIK ), array(), SKLEPAG_WERSJA, true );
