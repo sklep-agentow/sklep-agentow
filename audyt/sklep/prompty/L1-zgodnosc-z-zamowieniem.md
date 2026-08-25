@@ -9,8 +9,8 @@ tego UŻYĆ tak, jak zamówienie zakłada.** Nie oceniasz bezpieczeństwa, wydaj
 2. `02-fakty-srodowiska.md` — dwa stosy, konta, ⛔ sekcja „STAN ZASTANY — nie zgłaszaj” (możesz zgłosić, jeśli WYKONANIEM
    pokażesz, że fakt jest nieprawdziwy) i „Rzeczy żyjące w PROCEDURZE”.
 3. `03-zalozenia.md` — decyzje D1–D33 właściciela: to, co tam stoi, NIE jest niezgodnością, choćby odbiegało od zamówienia.
-4. `04-goldeny.md` — 20 gotowych scenariuszy „wejście → oczekiwany stan świata”; użyj ich jako kroków, nie wymyślaj własnych
-   tam, gdzie golden już jest.
+4. `04-goldeny.md` — 20 goldenów = REGUŁ KONTRAKTOWYCH (złote zasady z naszych blizn), nie scenariuszy; naruszenie goldena
+   w kodzie = znalezisko z odwołaniem do numeru goldena. Kroki sprawdzania bierzesz z `01` (wiersze S-xx) i z własnych komend.
 5. Pliki: zestaw L1 z `08-zestawy-plikow.md` (ROZPAKOWANA PACZKA w katalogu od koordynatorki, tylko-odczyt; repo do grepów).
 ⛔ NIE czytasz: `readme.txt`, `CHANGELOG.md`, `DOKUMENTACJA-TECHNICZNA.md`, `ZROZUMIENIE.md`, `PLAN-*`, komentarzy „dlaczego tak”.
 Bywają spójne ze sobą i NIEZGODNE z zamówieniem. Jeśli komentarz w kodzie mówi „wg zamówienia” — sprawdź w `01`.
@@ -20,7 +20,7 @@ Bywają spójne ze sobą i NIEZGODNE z zamówieniem. Jeśli komentarz w kodzie m
    (czytanie / kliknięcie / Mailpit / komenda). To materiał, nie znalezisko.
 2. Dla KAŻDEGO wiersza orzeknij jeden z pięciu werdyktów: `SPEŁNIONE` (plik:linia + ŚCIEŻKA UŻYCIA) / `SPEŁNIONE INACZEJ`
    (obie wersje cytowane: zdanie z `01` i zachowanie kodu) / `BRAK` (z `proba_kontrolna`: czym i gdzie szukałeś, wyjście
-   grepa z próbą kontrolną na czymś, co NA PEWNO jest) / `NIE SPRAWDZIŁEM` (dlaczego) / `NIE DA SIĘ ORZEC CZYTANIEM` → wtedy
+   grepa z próbą kontrolną na czymś, co NA PEWNO jest) / `NIE SPRAWDZIŁEM` (dlaczego) / `NIE DA SIĘ SPRAWDZIĆ` (słownik ze schematu; „czytaniem” = powód) → wtedy
    WYKONAJ (kliknięcie na stosie warsztatowym, Mailpit :8025 tylko-odczyt, `narzedzia-qa/stos.sh`) i wklej wyjście.
 3. ⭐ Pole **JAK CZŁOWIEK TEGO UŻYWA** jest OBOWIĄZKOWE przy każdym `SPEŁNIONE`: gdzie klika właściciel / co widzi kupujący /
    skąd bierze link. Funkcja obecna w kodzie, do której nie prowadzi żadna ścieżka z panelu, strony ani maila = `SPEŁNIONE

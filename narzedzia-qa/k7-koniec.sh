@@ -1,5 +1,5 @@
 #!/bin/bash
-# k7-koniec.sh — KONIEC AUDYTU K7 OGŁASZA SKRYPT, NIE UCZUCIE.                       WERSJA 1.2.0
+# k7-koniec.sh — KONIEC AUDYTU K7 OGŁASZA SKRYPT, NIE UCZUCIE.                       WERSJA 1.3.0
 #
 # PO CO: plan K7 v1 mówił „GO/NO-GO = trzy liczby liczone skryptem”, a skryptu nie było
 # (krytyka r1: nasz krytyk K1, C2 #15, C3 #11). Bez maszyny koniec rozstrzyga pamięć
@@ -32,13 +32,14 @@ PRZELOT=audyt/sklep/PRZELOT-CZLOWIEKA-SKLEP.md
 ZAMROZENIE=audyt/sklep/ZAMROZENIE.md
 RAPORTY=audyt/sklep/raporty
 PROBY=audyt/sklep/PROBY-KONTROLNE.log
-for f in "$MAPA" "$REJESTR" "$PRZELOT" "$ZAMROZENIE"; do [ -f "$f" ] || { echo "k7-koniec: brak $f" >&2; exit 2; }; done
+SCHEMAT=audyt/sklep/prompty/SCHEMAT-RAPORTU.json
+for f in "$MAPA" "$REJESTR" "$PRZELOT" "$ZAMROZENIE" "$SCHEMAT"; do [ -f "$f" ] || { echo "k7-koniec: brak $f" >&2; exit 2; }; done
 
 FAIL=0
 pass() { printf '  PASS  %s\n' "$1"; }
 fail() { printf '  FAIL  %s\n' "$1"; FAIL=$((FAIL+1)); }
 
-echo "=== K7-KONIEC 1.2.0 — osiem warunków zamknięcia ==="
+echo "=== K7-KONIEC 1.3.0 — osiem warunków zamknięcia ==="
 
 # 1. MAPA: 0 ⬜ i (domyślnie) zamrożona z niezmienioną liczbą celów.
 #    TYLKO ODCZYT (--tylko-licz): bramka końca nie pisze do tego, co audytuje (recenzja #182 r2 D7).
@@ -65,16 +66,21 @@ else
 fi
 
 # 2. KALIBRACJA: tabela rozliczenia z gałęzi mutantów; każda kalibrowana soczewka PASS, proby ≤ 2
-ROZL=$(git show audyt/mutanty-sklep:audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP.md 2>/dev/null)
-if [ -z "$ROZL" ]; then
-	fail "2 kalibracja: brak audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP.md na gałęzi audyt/mutanty-sklep"
+#    Referencja z FALLBACKIEM (recenzja #184 r2 W1): w świeżym klonie (CI, recenzent) gałąź istnieje TYLKO jako
+#    origin/audyt/mutanty-sklep — goły `git show audyt/mutanty-sklep:…` dawał fałszywy FAIL (klasa jak W8).
+GALAZ_MUT=""
+for ref in audyt/mutanty-sklep origin/audyt/mutanty-sklep; do git rev-parse --verify --quiet "$ref^{commit}" >/dev/null && { GALAZ_MUT="$ref"; break; }; done
+if [ -z "$GALAZ_MUT" ]; then
+	fail "2 kalibracja: brak gałęzi audyt/mutanty-sklep (ani lokalnej, ani origin/) — bank mutantów niedostępny"
+elif ! ROZL=$(git show "$GALAZ_MUT:audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP.md" 2>/dev/null | sed 's/\\|/\x01/g') || [ -z "$ROZL" ]; then
+	fail "2 kalibracja: gałąź $GALAZ_MUT jest, ale brak na niej audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP.md"
 else
 	# wiersze werdyktów: | audytor | mutant | znalazl | falszywy | werdykt | proby |  → po split '|' proby = pole 7
 	# (recenzja #182 r2 W2: $NF czytał PUSTĄ kolumnę za końcowym „|" — warunek był martwy)
 	ILE=$(printf '%s\n' "$ROZL" | grep -cE '^\| L[1-5]|^\| L \|' )
 	ZLE=$(printf '%s\n' "$ROZL" | grep -E '^\| (L[1-5]|L) \|' | grep -vE '\| PASS \|' | wc -l)
 	PROBY_ZLE=$(printf '%s\n' "$ROZL" | grep -E '^\| (L[1-5]|L) \|' | awk -F'|' '{gsub(/ /,"",$7); if ($7+0>2) n++} END{print n+0}')
-	if [ "$ILE" -ge 6 ] && [ "$ZLE" -eq 0 ] && [ "$PROBY_ZLE" -eq 0 ]; then pass "2 kalibracja: $ILE soczewek PASS, proby ≤ 2"; else fail "2 kalibracja: soczewek=$ILE, bez PASS=$ZLE, proby>2=$PROBY_ZLE"; fi
+	if [ "$ILE" -ge 6 ] && [ "$ZLE" -eq 0 ] && [ "$PROBY_ZLE" -eq 0 ]; then pass "2 kalibracja ($GALAZ_MUT): $ILE soczewek PASS, proby ≤ 2"; else fail "2 kalibracja: soczewek=$ILE, bez PASS=$ZLE, proby>2=$PROBY_ZLE"; fi
 fi
 
 # 3. REJESTR: 0 KRYTYCZNE/DUŻE otwarte · 0 DO WERYFIKACJI · naprawa_proby ≤ 2 · ZAMKNIETE ma strażnika z dowodem
@@ -110,7 +116,9 @@ if [ "$AN_ZLE_ID" -ne 0 ]; then fail "4 anomalie: $AN_ZLE_ID wiersz(y) bez ID AN
 PRZ_MIN=27
 PRZ_ILE=$(grep -cE '^- (⬜|✅|😖|🐞) ' "$PRZELOT")
 PRZ_NIE=$(grep -cE '^- ⬜ ' "$PRZELOT"); PRZ_DZIW=$(grep -cE '^- 😖 ' "$PRZELOT")
-if [ "$PRZ_ILE" -lt "$PRZ_MIN" ]; then fail "5 przelot człowieka: tylko $PRZ_ILE punktów (wymagane ≥ $PRZ_MIN) — lista obcięta?"; elif [ "$PRZ_NIE" -eq 0 ] && [ "$PRZ_DZIW" -eq 0 ]; then pass "5 przelot człowieka: komplet ($PRZ_ILE punktów)"; else fail "5 przelot człowieka: $PRZ_NIE ⬜ + $PRZ_DZIW 😖 z $PRZ_ILE"; fi
+PRZ_OCZ=$(grep -cE '^- ✅ ' "$PRZELOT"); PRZ_BUG=$(grep -cE '^- 🐞 ' "$PRZELOT")
+PRZ_LICZ="CELE: $PRZ_ILE · ✅ $PRZ_OCZ · 😖 $PRZ_DZIW · 🐞 $PRZ_BUG · ⬜ $PRZ_NIE"; PRZ_W_PLIKU=$(grep -m1 '^CELE: ' "$PRZELOT")
+if [ "$PRZ_W_PLIKU" != "$PRZ_LICZ" ]; then fail "5 przelot człowieka: LICZNIK w pliku nieaktualny — jest „$PRZ_W_PLIKU”, policzone „$PRZ_LICZ” (recenzja #184 r2 D2)"; elif [ "$PRZ_ILE" -lt "$PRZ_MIN" ]; then fail "5 przelot człowieka: tylko $PRZ_ILE punktów (wymagane ≥ $PRZ_MIN) — lista obcięta?"; elif [ "$PRZ_NIE" -eq 0 ] && [ "$PRZ_DZIW" -eq 0 ]; then pass "5 przelot człowieka: komplet ($PRZ_ILE punktów)"; else fail "5 przelot człowieka: $PRZ_NIE ⬜ + $PRZ_DZIW 😖 z $PRZ_ILE"; fi
 
 # 6. PRÓBY KONTROLNE STRAŻNIKÓW: log z jednego przebiegu, 26+ pozycji, wszystkie EXIT=0
 if [ -f "$PROBY" ]; then
@@ -141,10 +149,15 @@ if [ -d "$RAPORTY" ] && ls "$RAPORTY"/*/*.json >/dev/null 2>&1; then
 		N2=$(jq '[.werdykty[]? | select(.werdykt=="BRAK" and ((.proba_kontrolna // "")==""))] | length' "$r")
 		N3=$(jq '[.znaleziska[]? | select((.kroki_reprodukcji // []) | length == 0)] | length' "$r")
 		N4=$(jq '(.czego_nie_bylo_na_mojej_liscie // []) | length' "$r")
+		# Słownik werdyktów i rodzaj_skutku WPROST ze schematu (recenzja #184 r2 W4: parser nie egzekwował enumów)
+		N5=$(jq --slurpfile s "$SCHEMAT" '[.werdykty[]? | select(.werdykt as $w | ($s[0].properties.werdykty.items.properties.werdykt.enum | index($w)) == null)] | length' "$r")
+		N6=$(jq --slurpfile s "$SCHEMAT" '[.znaleziska[]? | select(.rodzaj_skutku as $w | ($s[0].properties.znaleziska.items.properties.rodzaj_skutku.enum | index($w)) == null)] | length' "$r")
 		[ "$N1" -eq 0 ] || { echo "    $r: $N1 werdyktów SPEŁNIONE/ZGODNE bez plik:linia"; ZLE_R=$((ZLE_R+1)); }
 		[ "$N2" -eq 0 ] || { echo "    $r: $N2 werdyktów BRAK bez próby kontrolnej"; ZLE_R=$((ZLE_R+1)); }
 		[ "$N3" -eq 0 ] || { echo "    $r: $N3 znalezisk bez kroków reprodukcji"; ZLE_R=$((ZLE_R+1)); }
 		[ "$N4" -ge 1 ] || { echo "    $r: brak sekcji „czego nie było na mojej liście”"; ZLE_R=$((ZLE_R+1)); }
+		[ "$N5" -eq 0 ] || { echo "    $r: $N5 werdyktów SPOZA słownika schematu"; ZLE_R=$((ZLE_R+1)); }
+		[ "$N6" -eq 0 ] || { echo "    $r: $N6 znalezisk z rodzaj_skutku SPOZA słownika schematu"; ZLE_R=$((ZLE_R+1)); }
 	done
 	[ "$ZLE_R" -eq 0 ] && pass "8 raporty: $ILE_R plików, 0 odrzuconych werdyktów" || fail "8 raporty: $ZLE_R naruszeń w $ILE_R plikach"
 else

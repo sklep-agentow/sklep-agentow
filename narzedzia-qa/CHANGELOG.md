@@ -14,6 +14,15 @@ wstecz nie dopisuję, bo nie umiałbym jej odtworzyć uczciwie. Ich zmiany od te
 pory lądują tutaj.
 
 ## [Niewydane]
+- **`k7-koniec.sh` 1.2.0 → 1.3.0 — recenzja #184 r2:** (W1) warunek 2 rozstrzyga gałąź mutantów z FALLBACKIEM `origin/` i rozróżnia
+  „brak gałęzi” od „brak pliku” (świeży klon dawał fałszywy FAIL — klasa W8); (W2) `\|`→`\x01` także w tabeli rozliczenia (bliźniak
+  W6, `grep -rn "awk -F'|'"` → wszystkie 4 miejsca za osłoną); (W4) warunek 8 egzekwuje słownik `werdykt` i `rodzaj_skutku` WPROST ze
+  `SCHEMAT-RAPORTU.json`; (D2) warunek 5 porównuje LICZNIK przelotu z policzonym, jak 1a dla mapy.
+- **`k7-koniec-proba-kontrolna.sh` 1.2.0 → 1.3.0 — 29 przypadków** (+ gałąź tylko jako `origin/` → GO, brak gałęzi → NO-GO,
+  LICZNIK przelotu nieaktualny, werdykt spoza słownika, `rodzaj_skutku` spoza słownika); atrapa z `SCHEMAT-RAPORTU.json` i LICZNIKIEM przelotu.
+- **Prompty L1/L3/L5/STOPKA** — słownik werdyktów = enum schematu (`NIE DA SIĘ SPRAWDZIĆ`, `przypuszczalny`); goldeny opisane jako
+  REGUŁY kontraktowe, nie scenariusze (W3). **`dokumentacja-zgodnosc-sklep-proba-kontrolna.sh`** — rozjazdy liczone tylko z przypadków
+  `ocz=1`, bez magicznej `-1` (D1).
 - **`k7-koniec.sh` 1.1.0 → 1.2.0 — trzy klasy z recenzji #184 r1:** (W4) warunek 5 ma PODŁOGĘ ≥ 27 punktów przelotu i liczy 😖
   jako niedomknięte (pusty/obcięty plik przechodził jako „komplet”); (W5) warunek 4 czyta CAŁĄ tabelę sekcji `## Anomalie`,
   wiersz bez ID `AN-NNN` = FAIL (dotąd wiersz z innym ID był niewidzialny); (W6) `\|` w komórkach rejestru zamieniane na `\x01`

@@ -17,7 +17,7 @@ ZASADY TWARDE:
   krok po kroku. Znalezisko bez wykonalnego scenariusza ODRZUĆ SAM — to hipoteza, nie błąd.
 - ⛔ DOWÓD = WYNIK WYKONANIA, NIE DEKLARACJA. Nie wolno orzec „sprawdzone" na podstawie samego
   czytania kodu. Uruchom test / komendę / zapytanie i WKLEJ SUROWE WYJŚCIE do raportu.
-  Nie da się czegoś uruchomić? Napisz „NIE DA SIĘ ORZEC" i dlaczego — to poprawna odpowiedź.
+  Nie da się czegoś uruchomić? Napisz „NIE DA SIĘ SPRAWDZIĆ" (dokładnie tak — słownik ze schematu) i dlaczego — to poprawna odpowiedź.
   „Wygląda poprawnie" nie jest.
 - ⛔ ZAKAZ TESTÓW-ATRAP. Test ma WYWOŁYWAĆ prawdziwy kod produkcyjny i padać Z KONKRETNEGO POWODU.
   Zakazane: `assertFalse(true)`, asercje bez wywołania badanej funkcji, testy padające na braku
