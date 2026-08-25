@@ -3,7 +3,7 @@
  * Plugin Name: Sklep Agentów
  * Plugin URI: https://automaticai.pl/sklep/
  * Description: Sprzedawaj wtyczki-boty AI bezpośrednio ze swojej strony: płatność kartą, automatyczny mail z linkiem do pobrania, panel zamówień ze statystykami i dziennikiem logowań. Zamówienia, produkty i pliki zostają w Twojej bazie i na Twoim serwerze — bez abonamentu. Płatność obsługuje Stripe.
- * Version: 0.9.9
+ * Version: 0.9.10
  * Requires at least: 6.7
  * Requires PHP: 8.1
  * Author: Automatic AI
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SKLEPAG_WERSJA', '0.9.9' );
+define( 'SKLEPAG_WERSJA', '0.9.10' );
 define( 'SKLEPAG_WERSJA_SCHEMATU', 5 ); // v5: tabela opinie (mechanizm D32); v4: kolumna zamowienia.usunieto_dnia (anonimizacja RODO — K3d); v3: indeks para_logowania.
 define( 'SKLEPAG_LIMIT_POBRAN', 10 ); // Jedno źródło: INSERT zamówienia + treść maila.
 define( 'SKLEPAG_LINK_GODZIN', 72 );  // Ważność linku pobrania — jw.
@@ -71,6 +71,17 @@ function sklepag_start() {
 }
 
 /**
+ * Wersja assetu do cache-bustingu: numer wtyczki + czas modyfikacji pliku. Podmiana
+ * pliku bez podbicia wersji (rundy wyglądu 25.08) zostawiała przeglądarkom stary CSS/JS
+ * pod tym samym adresem `?ver=` — na żywo wyglądało to jak brak animacji wejścia.
+ */
+function sklepag_wersja_assetu( $sciezka ) {
+	$plik  = SKLEPAG_KATALOG . $sciezka;
+	$mtime = file_exists( $plik ) ? filemtime( $plik ) : 0;
+	return SKLEPAG_WERSJA . ( $mtime ? '.' . $mtime : '' );
+}
+
+/**
  * Assety TYLKO na stronach sklepu (nie spowalniamy reszty strony — plan §2).
  */
 function sklepag_assety_frontu() {
@@ -78,7 +89,7 @@ function sklepag_assety_frontu() {
 	$strona_dziekujemy = (int) get_option( 'sklepag_strona_dziekujemy' );
 
 	if ( is_page( $strona_sklep ) || is_page( $strona_dziekujemy ) ) {
-		wp_enqueue_style( 'sklepag-front', plugins_url( 'assets/front.css', SKLEPAG_PLIK ), array(), SKLEPAG_WERSJA );
+		wp_enqueue_style( 'sklepag-front', plugins_url( 'assets/front.css', SKLEPAG_PLIK ), array(), sklepag_wersja_assetu( 'assets/front.css' ) );
 
 		/* Pojawianie się sekcji przy przewijaniu (spójność z motywem gospodarza).
 			Skrypt w <head> z `defer` + inline PRZED nim: klasa `sklepag-js` musi
@@ -89,7 +100,7 @@ function sklepag_assety_frontu() {
 			'sklepag-ruch',
 			plugins_url( 'assets/front-ruch.js', SKLEPAG_PLIK ),
 			array(),
-			SKLEPAG_WERSJA,
+			sklepag_wersja_assetu( 'assets/front-ruch.js' ),
 			array(
 				'in_footer' => false,
 				'strategy'  => 'defer',
