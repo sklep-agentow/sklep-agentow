@@ -83,7 +83,8 @@ function sklepag_obsluz_resend() {
 
 	$wyslano = sklepag_wyslij_mail_sklepu( $zam->email_kupujacego, 'Twój zakup: ' . $zam->produkt_nazwa_kupiona . ' — potwierdzenie i pobranie', $tresc );
 
-	if ( $wyslano ) {
+	// wp_mail zwraca null, gdy filtr pre_wp_mail przejmie wysyłkę (wtyczki SMTP) — to też sukces.
+	if ( null !== $wyslano ) {
 		$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET status='mail_wyslany', zmieniono=%s WHERE id=%d", $teraz, (int) $zam->id ) );
 		sklepag_zdarzenie( (int) $zam->id, 'mail_resend', 'ręczna ponowna wysyłka do: ' . $zam->email_kupujacego . ' (świeży link)' );
 	} else {
