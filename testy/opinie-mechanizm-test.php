@@ -220,9 +220,29 @@ sklepag_anonimizuj_opinie( $zam5 );
 $w_zal = $wpdb->get_row( $wpdb->prepare( "SELECT status, token_hash FROM {$to} WHERE zamowienie_id = %d", $zam5 ) );
 sprawdz( 'zalazek po anonimizacji: zostaje zalazkiem, ale token martwy', $w_zal && 'zalazek' === $w_zal->status && '' === (string) $w_zal->token_hash && null === sklepag_opinia_po_tokenie( $zam5, $token6 ) );
 
+// Przypadek BEZ wady (ksztalt PRODUKCYJNY): zamowienie ISTNIEJE z usunieto_dnia=NULL
+// — moderacja MUSI dzialac. Bez tego kroku odmowa typu "dla kazdego zamowienia"
+// (np. SELECT z.id zamiast z.usunieto_dnia) swiecilaby na zielono caly test.
+$pz = $wpdb->prefix . 'sklepag_zamowienia';
+$wpdb->query( $wpdb->prepare( "DELETE FROM {$pz} WHERE id = %d", $zam1 ) );
+$wpdb->insert(
+	$pz,
+	array(
+		'id'                    => $zam1,
+		'stripe_session_id'     => 'cs_test_opinie_mech_' . $zam1,
+		'produkt_id'            => $prod_id,
+		'produkt_nazwa_kupiona' => 'TEST mechanizmu opinii',
+		'email_kupujacego'      => 'test-opinie@example.com',
+		'status'                => 'mail_wyslany',
+		'utworzono'             => $teraz,
+		'zmieniono'             => $teraz,
+	)
+);
+sprawdz( 'KONTROLA ksztaltu produkcyjnego: usunieto_dnia=NULL -> moderacja DZIALA (odrzuc i przyjmij)', true === sklepag_opinia_moderuj( (int) $wiersz->id, 'odrzuc' ) && true === sklepag_opinia_moderuj( (int) $wiersz->id, 'przyjmij' ) );
+sprawdz( 'opinia po kontroli produkcyjnej NADAL na stronie', false !== strpos( sklepag_render_produkt( $slug ), 'Test Ola' ) );
+
 // FURTKA (recenzja #177 r2): przycisk „Przyjmij" NIE moze wskrzesic zanonimizowanej
 // opinii. Odmowa stoi na zamowieniu (usunieto_dnia), wiec zakladamy wiersz zamowienia.
-$pz = $wpdb->prefix . 'sklepag_zamowienia';
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$pz} WHERE id = %d", $zam3 ) );
 $wpdb->insert(
 	$pz,
@@ -245,6 +265,7 @@ $wpdb->query( $wpdb->prepare( "DELETE FROM {$pz} WHERE id = %d", $zam3 ) );
 
 echo "\n=== I. SPRZATANIE po tescie ===\n";
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$to} WHERE zamowienie_id IN (%d, %d, %d, %d, %d)", $zam1, $zam2, $zam3, $zam4, $zam5 ) );
+$wpdb->query( $wpdb->prepare( "DELETE FROM {$pz} WHERE id IN (%d, %d)", $zam1, $zam3 ) );
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$tp} WHERE id = %d", $prod_id ) );
 sprawdz( 'zero wierszy testowych w opiniach', 0 === (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$to} WHERE zamowienie_id IN (%d, %d, %d, %d, %d)", $zam1, $zam2, $zam3, $zam4, $zam5 ) ) );
 sprawdz( 'produkt testowy skasowany', 0 === (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$tp} WHERE id = %d", $prod_id ) ) );
