@@ -264,6 +264,9 @@ function sklepag_tresc_produktu( $slug ) {
 			 * )
 			 * O pochodzeniu opinii mówi stała NOTA renderowana razem z sekcją
 			 * (sklepag_render_opinie) — niczego więcej nie trzeba zmieniać na stronie.
+			 * Od D32 opinie kupujących idą MECHANIZMEM (tabela sklepag_opinie, moderacja
+			 * w panelu) i renderują się PRZED wpisami z tej tablicy — ta tablica zostaje
+			 * jako ręczne uzupełnienie.
 			 */
 			'opinie'       => array(),
 			/*
@@ -686,8 +689,10 @@ function sklepag_render_produkt( $slug ) {
 		$html .= '</ul></section>';
 
 		// OPINIE KLIENTÓW — wyłącznie PRAWDZIWE, od zweryfikowanych kupujących
-		// (D6 + UZUPEŁNIENIE 24.08, Omnibus). Pusta lista = sekcji nie ma.
-		$html .= sklepag_render_opinie( $t['opinie'] );
+		// (D6 + UZUPEŁNIENIE 24.08, Omnibus). Najpierw PRZYJĘTE z mechanizmu (D32,
+		// tabela sklepag_opinie), po nich ewentualne wpisy ręczne z tej tablicy.
+		// Nic do pokazania = sekcji nie ma.
+		$html .= sklepag_render_opinie( array_merge( sklepag_opinie_z_bazy( $slug ), is_array( $t['opinie'] ) ? $t['opinie'] : array() ) );
 
 		// UCZCIWOŚĆ (zamiast fejk-opinii — D6/Omnibus). Punkty, nie ściana
 		// (badania: 53% kupujących samo szuka ograniczeń — forma ma być skanowalna).
@@ -706,6 +711,14 @@ function sklepag_render_produkt( $slug ) {
 		// Produkt spoza dwójki: opis pełny z bazy, render jako tekst (XSS — plan §7).
 		$html .= '<section class="sklepag-sekcja"><p class="sklepag-mono-etykieta">[ O PRODUKCIE ]</p>';
 		$html .= '<p class="sklepag-sekcja-tekst">' . nl2br( esc_html( $p->opis_pelny ) ) . '</p></section>';
+	}
+
+	if ( ! $t ) {
+		// OPINIE dla produktu SPOZA dwójki (D32): zalążek powstaje przy każdym zakupie,
+		// więc przyjęte opinie muszą się pokazać także na stronie generycznej. Dwójka
+		// z bogatą treścią ma tę sekcję wyżej, w ustalonym porządku sekcji strony —
+		// dlatego dwa wywołania zamiast wspólnego (kolejność sekcji to decyzja projektu).
+		$html .= sklepag_render_opinie( sklepag_opinie_z_bazy( $slug ) );
 	}
 
 	// CENA + ZAKUP.

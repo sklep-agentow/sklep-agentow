@@ -14,4 +14,6 @@ parameters:
 	paths:
 		- wtyczki/
 	parallel:
-		maximumNumberOfProcesses: 2
+		# 1 proces świadomie: 2 workery × 1536M (limit z bramki) na 3,8 GB RAM
+		# ryzykują OOM ubijający sesje; 1 worker mieści się z zapasem.
+		maximumNumberOfProcesses: 1

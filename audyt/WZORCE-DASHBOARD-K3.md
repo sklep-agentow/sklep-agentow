@@ -50,7 +50,8 @@ Przycisk **„Export"/„Download"** zawsze w **prawym górnym rogu** ekranu lis
 statusów, notice-info dla banera, elewacja Przychodu, zrzuty-dowody pustego stanu
 i widocznego przycisku resend (luka DOWODU — kod je miał).
 **Świadomie NIE robimy** (decyzje, nie przeoczenia): metryka „czas od wejścia do
-zakupu" — NIE ŚLEDZIMY wejść (minimalizacja RODO §8, zbieramy tylko email);
+zakupu" — NIE ŚLEDZIMY wejść (minimalizacja RODO §8: przy zakupie tylko email,
+przy dobrowolnej opinii imię i treść za zgodą — D32);
 sparkline per karta i bulk actions — przerost przy wolumenie Z6 (pojedyncze
 zakupy dziennie); karty KPI własnym stylem zamiast .postbox — Woo Analytics
 też ma własne karty, spójność trzymają natywne kolory/typografia wp-admin.

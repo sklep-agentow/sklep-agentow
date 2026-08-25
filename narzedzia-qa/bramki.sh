@@ -199,7 +199,10 @@ uruchom_phpcs() {
 
 uruchom_phpstan() {
 	[ -x vendor/bin/phpstan ] || { echo "BRAK vendor/bin/phpstan — czy composer install przeszedl?" >&2; return 1; }
-	vendor/bin/phpstan analyse --memory-limit=1G --no-progress
+	# 1536M + 1 proces (phpstan.neon.dist): przy 1G worker padal deterministycznie
+	# po dojsciu plikow mechanizmu opinii (D32), a 2 workery po 1,5G na maszynie
+	# 3,8 GB RAM to ryzyko OOM, ktory ubija sesje (zmierzone na tym serwerze).
+	vendor/bin/phpstan analyse --memory-limit=1536M --no-progress
 }
 
 # Ślady wewnętrzne w plikach wtyczek — czyli w tym, co trafia do paczki klienta.

@@ -47,9 +47,10 @@ Kont/logowania KUPUJĄCYCH nie ma (konta w WP mają tylko adminowie) · kursów 
 sprzedajemy · faktur NIE wystawiamy · plików produktów NIE serwujemy bezpośrednio
 (tylko brama PHP) · prawdziwych płatności NIE włączamy · przecen NIE MA (Omnibus-ceny
 — jawnie nie dotyczy) · opinie WYŁĄCZNIE prawdziwe od zweryfikowanych kupujących,
-dodawane ręcznie po potwierdzeniu zakupu — bez zbierania formularzem od gości i bez
-ocen zbiorczych (D6 + UZUPEŁNIENIE 24.08; Omnibus-opinie DOTYCZY i jest spełniony
-weryfikacją zakupu przed publikacją oraz notą przy sekcji) · **WooCommerce NIE
+zbierane jednorazowym linkiem z maila zakupowego i publikowane po ręcznej akceptacji
+(D6 + UZUPEŁNIENIE 24.08 + D32) — bez zbierania od gości i bez ocen zbiorczych
+(Omnibus-opinie DOTYCZY i jest spełniony weryfikacją zakupu przed publikacją oraz
+notą przy sekcji) · **WooCommerce NIE
 używamy** (D17 — sklep to nasza
 wtyczka) · **tłumaczeń/i18n NIE robimy** (teksty polskie wprost — D21; omija też minę
 textdomain WP 6.7+) · multisite WP NIE (jedna zwykła instalacja) · monitoringu
@@ -245,13 +246,16 @@ testy przelotu; **manifest bramek rośnie TYLKO osobnym PR**.
 Zgoda na natychmiastowe dostarczenie treści cyfrowej zapisywana per zamówienie
 (treść + czas) · strony „Regulamin" i „Polityka prywatności" tworzone przy aktywacji
 jako SZABLONY z polami sprzedawcy do wypełnienia (paczka nie publikuje cudzego
-regulaminu) · minimalizacja: od kupującego tylko email · anonimizacja na żądanie ·
-retencja logów 90 dni · polityka wymienia Stripe i mechanizm maili jako
+regulaminu) · minimalizacja: przy ZAKUPIE od kupującego tylko email; przy DOBROWOLNEJ
+opinii (D32) imię i treść — za jawną zgodą na publikację (SKLEPAG_OPINIA_ZGODA_TRESC) ·
+anonimizacja na żądanie obejmuje też opinię (imię znika, token umiera, publikacja
+schodzi — sklepag_anonimizuj_opinie) · retencja logów 90 dni · polityka wymienia Stripe i mechanizm maili jako
 przetwarzających; instrukkcja właściciela: akceptacja DPA u operatorów · bez przecen
 → Omnibus-ceny jawnie nie dotyczy · opinie zweryfikowanych kupujących → Omnibus-opinie
 DOTYCZY i jest spełniony (weryfikacja zakupu przed publikacją + nota przy sekcji;
 bez aggregateRating) · WCAG-lite (EAA) · przed oddaniem: bramka
-`bezpieczenstwo-danych-klienta` (dane osobowe = mail kupujących + dziennik IP).
+`bezpieczenstwo-danych-klienta` (dane osobowe = mail kupujących + dziennik IP
++ imię i treść dobrowolnej opinii, publikowane za zgodą — D32).
 
 ## 9. PLAN PRACY v3 (harmonogram; POMIAR czasu per krok w audyt/POMIAR-CZASU.md)
 

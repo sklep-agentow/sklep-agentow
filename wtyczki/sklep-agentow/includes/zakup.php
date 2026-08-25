@@ -328,9 +328,15 @@ function sklepag_domknij_zakup( $sesja ) {
 
 	$zam = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$pz} WHERE stripe_session_id=%s", $sid ) );
 
+	// 4b) Zalążek opinii + jednorazowy link „oceń bota" (D32) — w tej samej sekcji
+	// chronionej CAS-em mail_w_toku co token pobrania: retry maila odświeża token
+	// opinii, ale opinii już przysłanej nie rusza (wtedy mail idzie bez akapitu oceny).
+	$token_op = sklepag_opinia_zalazek( (int) $zam->id, (int) $produkt->id );
+	$link_op  = '' !== $token_op ? admin_url( 'admin-post.php' ) . '?action=sklepag_ocen&z=' . (int) $zam->id . '&t=' . $token_op : '';
+
 	// 5) Mail: zapis treści PRZED pomiarem skutku (podgląd w panelu niezależnie od wyniku).
 	$link  = admin_url( 'admin-post.php' ) . '?action=sklepag_pobierz&z=' . (int) $zam->id . '&t=' . $token;
-	$tresc = sklepag_zbuduj_mail( $produkt, $zam, $link );
+	$tresc = sklepag_zbuduj_mail( $produkt, $zam, $link, $link_op );
 	$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET mail_tresc=%s, zmieniono=%s WHERE id=%d", $tresc, $teraz, (int) $zam->id ) );
 
 	$wyslano = false;
@@ -387,14 +393,18 @@ function sklepag_wyslij_mail_sklepu( $adresat, $temat, $tresc ) {
 	}
 }
 
-function sklepag_zbuduj_mail( $produkt, $zam, $link ) {
-	$dni = (int) round( SKLEPAG_LINK_GODZIN / 24 );
+function sklepag_zbuduj_mail( $produkt, $zam, $link, $link_opinii = '' ) {
+	$dni   = (int) round( SKLEPAG_LINK_GODZIN / 24 );
+	$ocena = '' !== $link_opinii
+		? "OCEŃ SWÓJ ZAKUP:\nGdy przetestujesz bota, zostaw opinię — to 2 minuty:\n" . $link_opinii . "\nLink do opinii jest jednorazowy i ważny " . (int) SKLEPAG_OPINIA_DNI . " dni. Opinię publikujemy po potwierdzeniu zakupu i akceptacji.\n\n"
+		: '';
 	return "Dziękujemy za zakup w sklepie!\n\n"
 		. 'Produkt: ' . $produkt->nazwa . "\n"
 		. 'Kwota: ' . number_format( $zam->kwota_grosze / 100, 2, ',', ' ' ) . ' ' . $zam->waluta . " (TRYB TESTOWY — płatność nie została pobrana)\n\n"
 		. "POBIERZ SWÓJ PRODUKT:\n" . $link . "\n"
 		. 'Link jest ważny ' . $dni . ' dni i pozwala na ' . SKLEPAG_LIMIT_POBRAN . " pobrań.\n\n"
 		. "INSTRUKCJA W SKRÓCIE:\n1. Pobierz paczkę ZIP z linku powyżej.\n2. W kokpicie WordPressa: Wtyczki → Dodaj → Wyślij wtyczkę na serwer → wybierz ZIP.\n3. Aktywuj i działaj — pełna instrukcja jest w paczce.\n\n"
+		. $ocena
 		. "Masz pytanie? Odpisz na tego maila.\n";
 }
 

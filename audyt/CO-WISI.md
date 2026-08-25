@@ -1,5 +1,25 @@
 # CO-WISI — rzeczy oddane komuś / bez strażnika (zasada: oddajesz ⇒ wiersz, wraca ⇒ kasujesz)
 
+## 📌 KONTRAKT NA PRZYSZŁOŚĆ (z recenzji #177 r3–r5, 25.08)
+- **`sklepag_opinia_moderuj` przepuszcza opinię BEZ wiersza zamówienia** (INNER JOIN →
+  null → wolno moderować). Dziś taki stan nie powstaje produkcyjnie (zero ścieżek DELETE
+  na zamówieniach — grep recenzji). ⛔ GDY powstanie pierwsza ścieżka kasowania zamówień,
+  warunek MUSI przejść na „brak danych = odmowa" (reguła CLAUDE.md) — inaczej kasowanie
+  zamówienia otworzy z powrotem moderację opinii zapomnianego klienta.
+
+## 🔧 PRZYRZĄDY (z recenzji #177, DROBNA, 25.08)
+- **Wzorzec testowania handlerów admin-post ISTNIEJE w repo** (sprostowanie po recenzji
+  #177 r8 — mój wcześniejszy wpis „nie ma harnessu" był FAŁSZYWY, obalony grepem
+  recenzji): `segm_u_odpal` + `wp_die_handler` w testach segregatora, `dokad()`
+  u chatbota; handler resendu sklepu pokryty tym wzorcem w `opinie-mechanizm-test.php`
+  (sekcja C3: nonce + przechwycony redirect + `pre_wp_mail`). ⬜ POKRYĆ tym wzorcem
+  pozostałe handlery sklepu (produkt_zapisz/przelacz, anonimizuj, dociagnij,
+  eksport_csv, opinia_moderuj) przy następnej rundzie QA.
+- **`stos.sh` nie widzi ŻADNEJ tabeli sklepu** — okno odczytu recenzenta nie ma operacji
+  zaglądania do `wp_sklepag_*`, więc recenzent nie może sam obejrzeć np. wierszy opinii
+  (dostał odmowę przy #177 i oparł się na przebiegu testu). Rozszerzyć okno o bezpieczną
+  operację odczytu tabel sklepu (SELECT-only, bez danych osobowych w wyjściu — imię maskować).
+
 ## 📦 SKLEP — PRZED WYDANIEM (z recenzji #176, DROBNA 6, 25.08)
 - **Wtyczka sklep-agentow nie ma `readme.txt` ani `CHANGELOG.md`, a `boty/paczki/` nie ma
   paczki sklepu w żadnej wersji** — `paczka-zgodnosc.sh sklep-agentow` świeci 4 rozjazdami

@@ -27,8 +27,8 @@ if ( ! get_option( 'sklepag_usun_dane_przy_odinstalowaniu' ) ) {
 
 global $wpdb;
 
-// 1. Tabele (lista = ta sama szóstka co w aktywacji; nowa tabela = trzy miejsca).
-foreach ( array( 'produkty', 'sesje_checkout', 'zamowienia', 'zdarzenia', 'logowania', 'rate_limit' ) as $t ) {
+// 1. Tabele (lista = ta sama siódemka co w aktywacji; nowa tabela = trzy miejsca).
+foreach ( array( 'produkty', 'sesje_checkout', 'zamowienia', 'zdarzenia', 'logowania', 'rate_limit', 'opinie' ) as $t ) {
 	$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}sklepag_{$t}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery -- uninstall, nazwy stałe.
 }
 

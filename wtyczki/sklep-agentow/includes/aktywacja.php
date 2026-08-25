@@ -105,6 +105,26 @@ function sklepag_tabele_sql() {
 			okno_do datetime NOT NULL,
 			PRIMARY KEY  (klucz)
 		) {$c};",
+
+		"CREATE TABLE {$p}opinie (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			zamowienie_id bigint(20) unsigned NOT NULL,
+			produkt_id bigint(20) unsigned NOT NULL,
+			imie varchar(100) NOT NULL DEFAULT '',
+			gwiazdki tinyint(1) unsigned NOT NULL DEFAULT 5,
+			tytul varchar(150) NOT NULL DEFAULT '',
+			tresc text,
+			status varchar(20) NOT NULL DEFAULT 'zalazek',
+			token_hash char(64) NOT NULL DEFAULT '',
+			token_wygasa datetime DEFAULT NULL,
+			zgoda_tresc text,
+			zgoda_czas datetime DEFAULT NULL,
+			utworzono datetime NOT NULL,
+			zmieniono datetime NOT NULL,
+			PRIMARY KEY  (id),
+			UNIQUE KEY zamowienie_id (zamowienie_id),
+			KEY produkt_status (produkt_id,status)
+		) {$c};",
 	);
 }
 
@@ -159,7 +179,7 @@ function sklepag_utworz_strony() {
 		'sklepag_strona_sklep'      => array( 'Sklep', '[sklepag_sklep]', 'publish' ),
 		'sklepag_strona_dziekujemy' => array( 'Dziękujemy za zakup', '[sklepag_dziekujemy]', 'publish' ),
 		'sklepag_strona_regulamin'  => array( 'Regulamin sklepu (SZABLON)', "SZABLON — wypełnij danymi sprzedawcy przed publikacją.\n\nSprzedawca: [NAZWA, ADRES, KONTAKT]\nProdukty: treści cyfrowe (wtyczki WordPressa) dostarczane natychmiast po opłaceniu.\nZgoda na natychmiastowe dostarczenie: kupujący wyraża ją przy zakupie i przyjmuje utratę prawa odstąpienia (art. 38 ust. o prawach konsumenta).\nReklamacje: [MAIL WŁAŚCICIELA].", 'draft' ),
-		'sklepag_strona_polityka'   => array( 'Polityka prywatności sklepu (SZABLON)', "SZABLON — wypełnij danymi sprzedawcy przed publikacją.\n\nAdministrator danych: [NAZWA, KONTAKT]\nZakres: adres e-mail kupującego, dane transakcji, dziennik zdarzeń (90 dni).\nPodmioty przetwarzające: operator płatności Stripe; mechanizm poczty serwera.\nBoty w trybie AI wysyłają treść zapytań do dostawcy API — [UZUPEŁNIJ po włączeniu].", 'draft' ),
+		'sklepag_strona_polityka'   => array( 'Polityka prywatności sklepu (SZABLON)', "SZABLON — wypełnij danymi sprzedawcy przed publikacją.\n\nAdministrator danych: [NAZWA, KONTAKT]\nZakres: adres e-mail kupującego, dane transakcji, dziennik zdarzeń (90 dni); przy dobrowolnej opinii — imię i treść opinii, publikowane na stronie produktu wyłącznie za wyrażoną w formularzu zgodą (usunięcie/anonimizację można wykonać na żądanie).\nPodmioty przetwarzające: operator płatności Stripe; mechanizm poczty serwera.\nBoty w trybie AI wysyłają treść zapytań do dostawcy API — [UZUPEŁNIJ po włączeniu].", 'draft' ),
 	);
 
 	foreach ( $strony as $opcja => $dane ) {
