@@ -1160,3 +1160,639 @@ a.sklepag-kup {
 	margin: 0 0 6px;
 	font-weight: 700;
 }
+
+/* ===== RUNDA DZIAŁU STRON 25.08 — lista sklepu (PLAN-WYGLADU-RUNDA-STRON.md §3) =====
+   Zero bibliotek ruchu (Linear i Supabase też ich nie mają — recon 25.08). JEDNA sygnatura:
+   panel nocnej zmiany + mgławica gospodarza. Reszta spokojna: elementy wchodzą po kolei,
+   hover jako reakcja łańcuchowa. Wszystko gaśnie przy „ogranicz ruch" (blok na końcu). */
+
+/* Fundament: mgławice nie mogą wypchnąć strony w bok. `clip`, NIE `hidden` —
+   hidden zabija position:sticky (lekcja działu, PROCES-STRONY 1b). */
+.sklepag-wyspa {
+	overflow-x: clip;
+	position: relative;
+}
+
+/* Sekcje-komponenty na pełną szerokość toru 72rem; teksty trzymają własny max-width. */
+.sklepag-sekcja--pelna {
+	max-width: none;
+}
+
+/* ---------- Hero listy: 2 kolumny + panel ---------- */
+.sklepag-hero-lista {
+	display: grid;
+	grid-template-columns: minmax(0, 1.18fr) minmax(0, 0.82fr);
+	gap: clamp(2rem, 4vw, 3.5rem);
+	align-items: center;
+	margin: 0 0 clamp(2.5rem, 5vw, 4rem);
+	position: relative;
+}
+
+.sklepag-hero-lista .sklepag-hero {
+	max-width: 40rem;
+	margin: 0;
+}
+
+/* Skala gospodarza (H1 100px/600/−0.03em przy 1440px — zmierzone), u nas o stopień niżej,
+   bo to podstrona, nie strona główna. */
+.sklepag-hero-lista .sklepag-hero-tytul {
+	font-size: clamp(2.8rem, 6.4vw, 5.75rem);
+	letter-spacing: -0.035em;
+	line-height: 0.98;
+	margin-bottom: 1.3rem;
+}
+
+.sklepag-hero-lista .sklepag-lead {
+	font-size: 1.15rem;
+	max-width: 34rem;
+}
+
+@media (max-width: 56rem) {
+	.sklepag-hero-lista {
+		grid-template-columns: 1fr;
+	}
+
+	.sklepag-panel {
+		margin-top: 0.5rem;
+	}
+}
+
+/* Mgławica gospodarza: eliptyczny radial limonki, wolny dryf samym transformem. */
+.sklepag-mglawica {
+	position: absolute;
+	inset: -30% -18%;
+	pointer-events: none;
+	background: radial-gradient(58% 52% at 58% 46%, rgba(191, 255, 56, 0.42), rgba(191, 255, 56, 0.14) 46%, transparent 72%);
+	filter: blur(14px);
+	animation: sklepag-dryf 16s ease-in-out infinite alternate;
+	z-index: 0;
+}
+
+@keyframes sklepag-dryf {
+	from { transform: translate(0, 0) scale(1); }
+	to { transform: translate(3%, -4%) scale(1.08); }
+}
+
+/* Panel nocnej zmiany: okno aplikacji (ta sama rama co karty i mockup czatu). */
+.sklepag-panel {
+	position: relative;
+	z-index: 0;
+	padding: 1.5rem 0;
+	--sklepag-par: 0px;
+}
+
+/* Desktop: panel wychodzi poza tor siatki w prawo (Linear: okno produktu łamie kolumny). */
+@media (min-width: 56.01rem) {
+	.sklepag-panel {
+		margin-right: -7%;
+	}
+}
+
+.sklepag-panel-okno {
+	position: relative;
+	z-index: 1;
+	background: var(--sklepag-wegiel);
+	border: 1px solid rgba(245, 245, 245, 0.12);
+	border-radius: 16px;
+	overflow: hidden;
+	box-shadow: 0 40px 90px rgba(0, 0, 0, 0.55), 0 12px 30px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(191, 255, 56, 0.08);
+	/* Głębia: lekkie pochylenie 3D w spoczynku (Linear/Stripe), prostuje się pod kursorem;
+	   paralaksa scrolla przez --sklepag-par (front-ruch.js, tylko bez „ogranicz ruch"). */
+	transform: perspective(1400px) rotateY(-5deg) rotateX(1.5deg) translateY(var(--sklepag-par));
+	transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.7s ease;
+	will-change: transform;
+}
+
+.sklepag-panel:hover .sklepag-panel-okno {
+	transform: perspective(1400px) rotateY(0deg) rotateX(0deg) translateY(var(--sklepag-par));
+	box-shadow: 0 50px 110px rgba(0, 0, 0, 0.6), 0 12px 30px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(191, 255, 56, 0.2);
+}
+
+/* Awatar bota (ta sama linearna maskotka co na ilustracjach kart — jedna „ręka" rysunku). */
+.sklepag-panel-bot {
+	display: flex;
+	align-items: flex-end;
+	gap: 0.55rem;
+}
+
+.sklepag-panel-avatar {
+	flex-shrink: 0;
+	width: 1.9rem;
+	height: 1.9rem;
+	border-radius: 50%;
+	background: rgba(191, 255, 56, 0.1);
+	border: 1px solid rgba(191, 255, 56, 0.35);
+	display: grid;
+	place-items: center;
+	color: var(--sklepag-limonka);
+}
+
+.sklepag-panel-avatar svg {
+	width: 1.2rem;
+	height: 1.2rem;
+}
+
+.sklepag-panel-mail-ikona {
+	flex-shrink: 0;
+	width: 1rem;
+	height: 1rem;
+	color: var(--sklepag-pyl);
+}
+
+.sklepag-panel-mail-temat {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.sklepag-panel-okno .sklepag-okno-pasek {
+	background: rgba(245, 245, 245, 0.03);
+}
+
+.sklepag-panel-wiersz {
+	padding: 1rem 1.2rem 1.15rem;
+}
+
+.sklepag-panel-wiersz + .sklepag-panel-wiersz {
+	border-top: 1px solid var(--sklepag-linia);
+}
+
+.sklepag-panel-wiersz .sklepag-mono-etykieta {
+	margin: 0 0 0.75rem;
+	font-size: 0.72rem;
+}
+
+.sklepag-panel-czat {
+	display: flex;
+	flex-direction: column;
+	gap: 0.55rem;
+}
+
+.sklepag-panel-czat .sklepag-dymek {
+	font-size: 0.88rem;
+}
+
+/* Odpowiedź bota: kropki „pisze…" i tekst siedzą w TEJ SAMEJ komórce siatki —
+   zmiana stanu nie rusza układu (zero skoku). */
+.sklepag-panel-odpowiedz {
+	display: grid;
+}
+
+.sklepag-panel-odpowiedz > * {
+	grid-area: 1 / 1;
+	justify-self: start;
+}
+
+.sklepag-panel-odpowiedz .sklepag-pisze {
+	opacity: 0; /* bez animacji (reduced-motion / stary silnik) widać tylko odpowiedź */
+}
+
+.sklepag-panel-maile {
+	display: grid;
+	gap: 0.45rem;
+}
+
+.sklepag-panel-mail {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 0.8rem;
+	margin: 0;
+	padding: 0.5rem 0.75rem;
+	font-size: 0.86rem;
+	color: var(--sklepag-papier);
+	background: rgba(245, 245, 245, 0.04);
+	border: 1px solid var(--sklepag-linia);
+	border-radius: 8px;
+}
+
+.sklepag-panel-mail .sklepag-tag {
+	margin: 0;
+	font-size: 0.66rem;
+}
+
+/* Mono-adnotacje na hairline'ach — język hero gospodarza („WYNIK", „DANE"). */
+.sklepag-panel-adnotacja {
+	position: absolute;
+	z-index: 1;
+	font-family: var(--sklepag-mono);
+	font-size: 0.66rem;
+	letter-spacing: 0.2em;
+	text-transform: uppercase;
+	color: var(--sklepag-pyl);
+	display: flex;
+	align-items: center;
+	gap: 0.7rem;
+}
+
+.sklepag-panel-adnotacja::before {
+	content: "";
+	width: 2.4rem;
+	height: 1px;
+	background: rgba(245, 245, 245, 0.28);
+}
+
+.sklepag-panel-adnotacja--gora {
+	top: 0;
+	right: 0;
+	flex-direction: row-reverse;
+}
+
+.sklepag-panel-adnotacja--dol {
+	bottom: 0;
+	left: 0;
+}
+
+/* Pętla panelu (10 s): gość pyta → bot „pisze…" → odpowiada → maile dostają tagi.
+   Sterowane WYŁĄCZNIE opacity/transform — układ się nie rusza. */
+.sklepag-panel-czat .sklepag-dymek-gosc {
+	animation: sklepag-pn-gosc 10s ease-in-out infinite;
+}
+
+.sklepag-panel-odpowiedz .sklepag-pisze {
+	animation: sklepag-pn-pisze 10s ease-in-out infinite;
+}
+
+.sklepag-panel-odpowiedz .sklepag-dymek:not(.sklepag-pisze) {
+	animation: sklepag-pn-bot 10s ease-in-out infinite;
+}
+
+.sklepag-panel-mail .sklepag-tag {
+	animation: sklepag-pn-tag 10s ease-in-out infinite;
+}
+
+.sklepag-panel-mail:nth-child(2) .sklepag-tag {
+	animation-delay: 0.6s;
+}
+
+.sklepag-panel-mail:nth-child(3) .sklepag-tag {
+	animation-delay: 1.2s;
+}
+
+@keyframes sklepag-pn-gosc {
+	0%, 4% { opacity: 0; transform: translateY(6px); }
+	9%, 88% { opacity: 1; transform: none; }
+	94%, 100% { opacity: 0; transform: none; }
+}
+
+@keyframes sklepag-pn-pisze {
+	0%, 12% { opacity: 0; }
+	16%, 30% { opacity: 1; }
+	33%, 100% { opacity: 0; }
+}
+
+@keyframes sklepag-pn-bot {
+	0%, 32% { opacity: 0; transform: translateY(6px); }
+	37%, 88% { opacity: 1; transform: none; }
+	94%, 100% { opacity: 0; transform: none; }
+}
+
+@keyframes sklepag-pn-tag {
+	0%, 44% { opacity: 0; transform: translateX(6px); }
+	50%, 86% { opacity: 1; transform: none; }
+	92%, 100% { opacity: 0; transform: none; }
+}
+
+/* ---------- Karty produktów: głowa jak karta usług gospodarza + hover łańcuchowy ---------- */
+.sklepag-karta-nr {
+	font-family: var(--sklepag-mono);
+	font-size: 0.8rem;
+	letter-spacing: 0.18em;
+	color: var(--sklepag-pyl);
+}
+
+.sklepag-karta-linia {
+	flex: 1;
+	height: 1px;
+	background: linear-gradient(90deg, var(--sklepag-limonka), var(--sklepag-limonka)) no-repeat 0 0 / 0% 100%, var(--sklepag-linia);
+	transition: background-size 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Akcent marki na hover: numer „zapala się", linia ładuje się jak pasek postępu bota. */
+.sklepag-karta:hover .sklepag-karta-linia {
+	background-size: 100% 100%, auto;
+}
+
+.sklepag-karta-nr {
+	transition: color 0.35s ease;
+}
+
+.sklepag-karta:hover .sklepag-karta-nr {
+	color: var(--sklepag-limonka);
+}
+
+.sklepag-karta .sklepag-ikona {
+	width: 28px;
+	height: 28px;
+}
+
+.sklepag-karta {
+	transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.35s ease, box-shadow 0.35s ease;
+}
+
+.sklepag-karta:hover {
+	transform: translateY(-4px);
+	border-color: rgba(191, 255, 56, 0.45);
+	box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(191, 255, 56, 0.18);
+}
+
+.sklepag-karta .sklepag-kup span {
+	display: inline-block;
+	transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sklepag-karta:hover .sklepag-kup span {
+	transform: translateX(4px);
+}
+
+.sklepag-karta-ilustracja img {
+	transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sklepag-karta:hover .sklepag-karta-ilustracja img {
+	transform: scale(1.03);
+}
+
+/* ---------- Kroki: 3 równe karty, numer z hairline'em ---------- */
+.sklepag-kroki--siatka {
+	max-width: none;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 1.2rem;
+}
+
+.sklepag-kroki--siatka li {
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	gap: 0.9rem;
+	padding: 1.3rem 1.4rem 1.5rem;
+	min-height: 0;
+	background: var(--sklepag-wegiel);
+	border: 1px solid var(--sklepag-linia);
+	border-radius: 14px;
+	transition: border-color 0.35s ease, transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sklepag-kroki--siatka li:hover {
+	border-color: rgba(191, 255, 56, 0.35);
+	transform: translateY(-3px);
+}
+
+.sklepag-kroki--siatka li::before {
+	position: static;
+	font-size: 1.5rem;
+	line-height: 1;
+	padding-bottom: 0.9rem;
+	border-bottom: 1px solid var(--sklepag-linia);
+}
+
+.sklepag-krok-tekst {
+	color: var(--sklepag-papier);
+}
+
+/* ---------- Dla kogo: 2 równe karty na pełną szerokość ---------- */
+.sklepag-dla-kogo-kolumny--pelne {
+	max-width: none;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.sklepag-dla-kogo-kolumny--pelne .sklepag-dla-kogo-kol {
+	padding: 1.5rem 1.7rem;
+	transition: border-color 0.35s ease, transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sklepag-dla-kogo-kolumny--pelne .sklepag-dla-kogo-kol:hover {
+	border-color: rgba(191, 255, 56, 0.35);
+	transform: translateY(-3px);
+}
+
+.sklepag-dla-kogo-kolumny--pelne .sklepag-dla-kogo-tytul {
+	font-size: 1.2rem;
+	display: flex;
+	align-items: center;
+	gap: 0.6rem;
+	margin-bottom: 0.9rem;
+}
+
+.sklepag-dla-kogo-tytul .sklepag-ikona {
+	width: 1.35em;
+	height: 1.35em;
+}
+
+/* ---------- Pytania: siatka 2 kolumn, blok z górnym hairline'em ---------- */
+.sklepag-faq--siatka {
+	max-width: none;
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 0 clamp(1.5rem, 4vw, 3rem);
+}
+
+.sklepag-faq-blok {
+	border-top: 1px solid var(--sklepag-linia);
+	padding: 1.5rem 0 1.8rem;
+}
+
+.sklepag-faq--siatka dt,
+.sklepag-faq--siatka dd {
+	border: 0;
+	padding: 0;
+}
+
+.sklepag-faq--siatka dt {
+	margin: 0 0 0.55rem;
+}
+
+.sklepag-faq--siatka dd {
+	margin: 0;
+}
+
+@media (max-width: 48rem) {
+	.sklepag-kroki--siatka,
+	.sklepag-dla-kogo-kolumny--pelne,
+	.sklepag-faq--siatka {
+		grid-template-columns: 1fr;
+	}
+}
+
+/* ---------- Finał: baner-panel z mgławicą ---------- */
+.sklepag-final--baner {
+	position: relative;
+	overflow: hidden;
+	background: var(--sklepag-wegiel);
+	border: 1px solid var(--sklepag-linia);
+	border-radius: 20px;
+	padding: clamp(2rem, 5vw, 3.5rem);
+	margin-top: 1rem;
+}
+
+.sklepag-mglawica--final {
+	inset: -40% -20% -40% auto;
+	width: 60%;
+	opacity: 0.85;
+}
+
+.sklepag-final-tresc {
+	position: relative;
+	z-index: 1;
+	max-width: 40rem;
+}
+
+.sklepag-final--baner .sklepag-sekcja-tytul {
+	font-size: clamp(1.8rem, 4vw, 2.8rem);
+	letter-spacing: -0.02em;
+}
+
+/* ---------- Wejście po kolei (stagger) — osobny kanał `translate`, więc nie bije się
+   z `transform` hoveru. Działa TYLKO pod tymi samymi szelkami, co reveal sekcji
+   (`sklepag-js` + `sklepag-ruch`); bez JS wszystko od razu widoczne. ---------- */
+.sklepag-js .sklepag-ruch :is(.sklepag-hero-lista, .sklepag-karty, .sklepag-kroki--siatka, .sklepag-dla-kogo-kolumny--pelne, .sklepag-faq--siatka) > * {
+	--sklepag-d: 0.12s;
+	opacity: 0;
+	translate: 0 18px;
+	transition: opacity 0.5s ease-out var(--sklepag-d), translate 0.65s cubic-bezier(0.16, 1, 0.3, 1) var(--sklepag-d);
+}
+
+/* Karta ma też własne przejścia hoveru — jedna lista, bo `transition` się nie sumuje. */
+.sklepag-js .sklepag-ruch .sklepag-karty > .sklepag-karta {
+	transition: opacity 0.5s ease-out var(--sklepag-d), translate 0.65s cubic-bezier(0.16, 1, 0.3, 1) var(--sklepag-d), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.35s ease, box-shadow 0.35s ease;
+}
+
+.sklepag-js .sklepag-ruch :is(.sklepag-kroki--siatka, .sklepag-dla-kogo-kolumny--pelne) > * {
+	transition: opacity 0.5s ease-out var(--sklepag-d), translate 0.65s cubic-bezier(0.16, 1, 0.3, 1) var(--sklepag-d), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.35s ease;
+}
+
+.sklepag-js .sklepag-ruch > .sklepag-widoczne :is(.sklepag-hero-lista, .sklepag-karty, .sklepag-kroki--siatka, .sklepag-dla-kogo-kolumny--pelne, .sklepag-faq--siatka) > *,
+.sklepag-js .sklepag-ruch > .sklepag-widoczne:is(.sklepag-hero-lista, .sklepag-karty) > * {
+	opacity: 1;
+	translate: 0 0;
+}
+
+.sklepag-js .sklepag-ruch :is(.sklepag-hero-lista, .sklepag-karty, .sklepag-kroki--siatka, .sklepag-dla-kogo-kolumny--pelne, .sklepag-faq--siatka) > :nth-child(2) { --sklepag-d: 0.22s; }
+.sklepag-js .sklepag-ruch :is(.sklepag-hero-lista, .sklepag-karty, .sklepag-kroki--siatka, .sklepag-dla-kogo-kolumny--pelne, .sklepag-faq--siatka) > :nth-child(3) { --sklepag-d: 0.32s; }
+.sklepag-js .sklepag-ruch :is(.sklepag-hero-lista, .sklepag-karty, .sklepag-kroki--siatka, .sklepag-dla-kogo-kolumny--pelne, .sklepag-faq--siatka) > :nth-child(4) { --sklepag-d: 0.42s; }
+
+@media (prefers-reduced-motion: reduce) {
+	.sklepag-js .sklepag-ruch :is(.sklepag-hero-lista, .sklepag-karty, .sklepag-kroki--siatka, .sklepag-dla-kogo-kolumny--pelne, .sklepag-faq--siatka) > * {
+		opacity: 1 !important;
+		translate: none !important;
+	}
+}
+
+/* Mrugnięcie awatara bota w panelu (co 4,5 s; gaśnie z resztą przy „ogranicz ruch"). */
+.sklepag-panel-avatar .sklepag-oko {
+	transform-box: fill-box;
+	transform-origin: center;
+	animation: sklepag-mrug 4.5s ease-in-out infinite;
+}
+
+@keyframes sklepag-mrug {
+	0%, 92%, 100% { transform: scaleY(1); }
+	95% { transform: scaleY(0.12); }
+}
+
+/* ===== GALAKTYKA + rodzina ruchu gospodarza (25.08, po oku Dzidka: „nie plamy — coś żywego") =====
+   Parametry ZMIERZONE w motywie: dashflow 1.4s linear (kreska 4/8, offset −24px) ·
+   pulse-dot 2.4s (pierścień 7px) · glow-breathe 7s (opacity .7↔1) · poświata gospodarza
+   jest CICHA (bg-volt/0.06 przy 26rem) — nasza wcześniejsza plama 0.42 była 7× za mocna. */
+
+/* Canvas na całym hero, pod treścią; lekko wychodzi poza tor, żeby pył nie urywał się na krawędzi. */
+.sklepag-galaktyka {
+	position: absolute;
+	top: -2rem;
+	left: -3vw;
+	/* Canvas to element ZASTĘPOWANY: z `width:auto` trzyma 300×150 zamiast rozciągnąć się
+	   między krawędziami — dlatego rozmiar jawnie procentami (zmierzone 25.08). */
+	width: calc(100% + 6vw);
+	height: calc(100% + 4rem);
+	z-index: 0;
+	pointer-events: none;
+}
+
+.sklepag-hero-lista > .sklepag-hero,
+.sklepag-hero-lista > .sklepag-panel {
+	position: relative;
+	z-index: 1;
+}
+
+/* Gdy canvas rysuje, poświata CSS schodzi ze sceny; okno panelu staje się szkłem nad galaktyką. */
+.sklepag-galaktyka-on .sklepag-mglawica {
+	display: none;
+}
+
+.sklepag-galaktyka-on .sklepag-panel-okno {
+	background: rgba(16, 17, 22, 0.76);
+	-webkit-backdrop-filter: blur(14px) saturate(1.25);
+	backdrop-filter: blur(14px) saturate(1.25);
+}
+
+/* Poświata CSS (fallback bez JS + baner końcowy) w sile gospodarza, z jego oddechem. */
+.sklepag-mglawica {
+	background: radial-gradient(58% 52% at 58% 46%, rgba(191, 255, 56, 0.16), rgba(191, 255, 56, 0.05) 46%, transparent 72%);
+	animation: sklepag-glow-breathe 7s ease-in-out infinite;
+}
+
+@keyframes sklepag-glow-breathe {
+	0%, 100% { opacity: 0.7; }
+	50% { opacity: 1; }
+}
+
+/* Kropka statusu: pierścień jak `pulse-dot` gospodarza (zamiast samego mrugania). */
+.sklepag-kropka {
+	box-shadow: 0 0 0 0 rgba(191, 255, 56, 0.4);
+	animation: sklepag-pulse-dot 2.4s ease-in-out infinite;
+}
+
+@keyframes sklepag-pulse-dot {
+	0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(191, 255, 56, 0.4); }
+	50% { opacity: 0.75; box-shadow: 0 0 0 7px rgba(191, 255, 56, 0); }
+}
+
+/* Linie-sygnały (dashflow gospodarza): adnotacje panelu i tor między krokami. */
+.sklepag-panel-adnotacja::before {
+	background: repeating-linear-gradient(90deg, rgba(191, 255, 56, 0.55) 0 4px, transparent 4px 12px);
+	background-size: 12px 1px;
+	animation: sklepag-dashflow 1.4s linear infinite;
+}
+
+@keyframes sklepag-dashflow {
+	to { background-position: -12px 0; }
+}
+
+.sklepag-kroki--siatka {
+	position: relative;
+}
+
+/* Tor sygnału 01 → 02 → 03: widać go tylko w przerwach między kartami (karty go przykrywają). */
+.sklepag-kroki--siatka::before {
+	content: "";
+	position: absolute;
+	left: 2rem;
+	right: 2rem;
+	top: calc(1.3rem + 0.75rem);
+	height: 1px;
+	background: repeating-linear-gradient(90deg, rgba(191, 255, 56, 0.5) 0 4px, transparent 4px 12px);
+	background-size: 12px 1px;
+	animation: sklepag-dashflow 1.4s linear infinite;
+	z-index: 0;
+}
+
+.sklepag-kroki--siatka li {
+	position: relative;
+	z-index: 1;
+}
+
+@media (max-width: 48rem) {
+	.sklepag-kroki--siatka::before {
+		display: none;
+	}
+}
+
+/* Telefon/tablet: bez pochylenia 3D — bez kursora nie ma go czym wyprostować. */
+@media (max-width: 56rem) {
+	.sklepag-panel-okno,
+	.sklepag-panel:hover .sklepag-panel-okno {
+		transform: translateY(var(--sklepag-par));
+	}
+}
