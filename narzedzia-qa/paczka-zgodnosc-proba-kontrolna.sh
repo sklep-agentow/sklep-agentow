@@ -274,6 +274,8 @@ psuj_todo_w_paczce()      { dopisz_slad "$1" "// TODO: dopisac obsluge zalacznik
 psuj_adres_dev()          { dopisz_slad "$1" "// sprawdzone na http://localhost:8890/wp-admin/"; }
 psuj_sciezke_robocza()    { dopisz_slad "$1" "// liczbe pilnuje testy/statystyki-test.php"; }
 psuj_obieg_pracy()        { dopisz_slad "$1" "// uwaga recenzenta do PR #99 — zostawiamy swiadomie"; }
+# Goły numer zgłoszenia, bez słowa „PR" (recenzja #182 — wzorzec 1.1.1 tego nie widział).
+psuj_numer_goly()         { dopisz_slad "$1" "// martwy wpis w harmonogramie sypie bledami — #170)"; }
 
 psuj_doktech() {
 	# Szóste miejsce wersji (nagłówek DOKUMENTACJA-TECHNICZNA.md) — dopisane
@@ -318,6 +320,7 @@ sprawdz "TODO zapakowane do paczki klienta"                  1 psuj_todo_w_paczc
 sprawdz "adres maszyny dev w paczce (localhost:8890)"        1 psuj_adres_dev             "adres maszyny dev"
 sprawdz "sciezka naszego drzewa roboczego w paczce"          1 psuj_sciezke_robocza       "ścieżka naszego drzewa roboczego"
 sprawdz "numer PR-a i recenzent w paczce"                    1 psuj_obieg_pracy           "nasz obieg pracy"
+sprawdz "goly numer zgloszenia (— #170) bez slowa PR"        1 psuj_numer_goly            "nasz obieg pracy"
 
 echo
 echo "=== KONTROLA ODWROTNA: czysty stan ma PRZECHODZIC ==="

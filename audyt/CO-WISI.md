@@ -20,13 +20,19 @@
   (dostał odmowę przy #177 i oparł się na przebiegu testu). Rozszerzyć okno o bezpieczną
   operację odczytu tabel sklepu (SELECT-only, bez danych osobowych w wyjściu — imię maskować).
 
-## 📦 SKLEP — PRZED WYDANIEM (z recenzji #176, DROBNA 6, 25.08)
-- **Wtyczka sklep-agentow nie ma `readme.txt` ani `CHANGELOG.md`, a `boty/paczki/` nie ma
-  paczki sklepu w żadnej wersji** — `paczka-zgodnosc.sh sklep-agentow` świeci 4 rozjazdami
-  („NIE ZAMRAZAJ w tym stanie") i przy każdym bumpie będzie świecić mocniej, aż przestanie
-  cokolwiek znaczyć. Zastane, nie z #176. Domknąć PRZED zamrożeniem paczki wydania sklepu
-  (CLAUDE.md pkt 4 wymienia readme/CHANGELOG jako obowiązkowe punkty zgodności; klasa 10
-  ściągi: „paczka zamrożona przed ostatnią poprawką").
+## 🔍 K7 — AUDYT SKLEPU W TOKU (od 25.08 wieczór) — plan `audyt/PLAN-K7-AUDYT-SKLEPU.md` v2, krytyka r1 obok
+- Faza: PR-0 (paczka 0.9.13 + D33) → materiał `audyt/sklep/material/` → kalibracja → runda A. Stan bieżący
+  i decyzje: `/root/.claude/CONTEXT-SERWER.md`. ⛔ Kod zamrożony tagiem `k7-zamrozenie` po scaleniu PR-0.
+- Zaległości znalezione PRZY CZYTANIU (cele mapy, NIE naprawiać przed audytem): DOK-TECH §3 „7 tabel" vs §8 „6",
+  „#170" w dokumencie klienta, tabela §2 bez `opinie.php`; `REJESTR-WERYFIKACJI.md` martwe wpisy Cloudflare/Vercel;
+  zakup gościa wymaga nonce (`zakup.php:66`) → page-cache; brak eksportera/erasera RODO WP (D: dopisać w naprawach);
+  zwroty Stripe bez obsługi (decyzja po L3); WP-Cron bez ruchu nie w instrukcji.
+- 3 martwe pliki mediów w paczce (1,06 MB) — kasowanie ZGODA Dzidka 25.08, wykonać w rundzie napraw (bump).
+
+## ✅ ZAMKNIĘTE 25.08 (wieczór) — SKLEP: readme.txt + CHANGELOG.md + paczka 0.9.13 (PR-0 K7)
+- `paczka-zgodnosc.sh sklep-agentow` EXIT 0 (6 miejsc wersji, zip == repo 59 plików, treść wydania, 0 śladów),
+  próba kontrolna bramki EXIT 0, `bramki.sh --tryb pelny` 8/8. `buduj-paczki.sh` z wyborem wtyczki argumentem
+  (zamek wydanych zipów botów). Dług z #176 zamknięty.
 
 ## 🔄 W TOKU 20.08 (noc) — RUNDA BOTÓW, DWA BUILDERY
 ⏰ **TERMIN: do 1.09** (Dzidek 20.08 — zmiana z 30.08).

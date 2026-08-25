@@ -1,5 +1,5 @@
 #!/bin/bash
-# slady-wewnetrzne.sh — czy to, co dostaje kupujący, wiezie NASZE ślady.   WERSJA 1.1.1
+# slady-wewnetrzne.sh — czy to, co dostaje kupujący, wiezie NASZE ślady.   WERSJA 1.2.0
 #
 # PO CO TO POWSTAŁO: przy zamrażaniu ChatBota 1.5.7 okazało się, że paczka wiozła
 # klientowi 20 śladów w 8 plikach — odsyłacze do plików, których kupujący nie
@@ -29,7 +29,7 @@
 #               2 = zła liczba argumentów / nie ma katalogu
 set -u
 
-WERSJA_NARZEDZIA=1.1.1
+WERSJA_NARZEDZIA=1.2.0
 
 ETYKIETA="${1:-}"
 KATALOG="${2:-}"
@@ -68,8 +68,12 @@ SLADY=(
 	# wp-env, vagrant, ddev — zostaje.
 	"adres maszyny dev|localhost|127\.0\.0\.1|:8890|:8025|mailpit|ngrok|wp-env|vagrant|\.ddev\b"
 	"ścieżka naszego drzewa roboczego|/root/praca|(^|[^a-zA-Z0-9/._-])(testy|boty|audyt|narzedzia-qa|wtyczki)/"
-	"nasz obieg pracy|PR #[0-9]|recenzent|recenzj|koordynator|builder[0-9]|prób[ay] kontroln|proba-kontrolna|mutant|\\bkrytyk|egzaminator|[Dd]zid"
+	"nasz obieg pracy|PR #[0-9]|recenzent|recenzj|koordynator|builder[0-9]|prób[ay] kontroln|proba-kontrolna|mutant|\\bkrytyk|egzaminator|[Dd]zid|(—|–|\\(|\\bnr\\.?|zgłoszeni[ae]|uwag[ai])[[:space:]]*#[0-9]{2,4}([^[:alnum:]]|$)"
 )
+# 1.2.0 — numer zgłoszenia BEZ słowa „PR" (recenzja #182): „— #170)" w DOKUMENTACJA-TECHNICZNA
+# przechodziło, bo wzorzec znał tylko formę „PR #N". Goły „#[0-9]+" łapałby kolory (#000 w CSS/SVG),
+# więc numer liczy się TYLKO po myślniku, nawiasie, „nr", „zgłoszenie", „uwaga" — zmierzone na 3 wtyczkach:
+# 1 trafienie (to właściwe), 0 fałszywych.
 
 # --- wczytanie listy zaległości ----------------------------------------------
 # Format: etykieta|ścieżka-względna|treść linii (bez wiodących spacji).

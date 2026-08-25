@@ -14,6 +14,22 @@ wstecz nie dopisuję, bo nie umiałbym jej odtworzyć uczciwie. Ich zmiany od te
 pory lądują tutaj.
 
 ## [Niewydane]
+- **`slady-wewnetrzne.sh` 1.1.1 → 1.2.0 — numer zgłoszenia BEZ słowa „PR"** (po myślniku/nawiasie/„nr"/„zgłoszenie"/„uwaga": `— #170)`), bez łapania kolorów `#000`; zmierzone na 3 wtyczkach: 1 trafienie właściwe, 0 fałszywych. Próba kontrolna bramki paczki dostała przypadek „goły numer". Powód: recenzja #182 WAŻNA 1.
+- **`stos.sh` 1.3.0 → 1.3.1 — okno widzi tabele sklepu** (`wp_sklepag_` w białej liście i w filtrze `tabele`); dotąd recenzent i audytor nie mogli zajrzeć do żadnej tabeli sklepu (recenzja #182 DROBNA 6, CO-WISI).
+- **`k7-koniec.sh` 1.0.0 (NOWE) — koniec audytu K7 ogłasza skrypt, nie uczucie.** Osiem warunków zamknięcia
+  z PLAN-K7 §8b (mapa 0 ⬜ + zamrożenie, kalibracja z gałęzi mutantów, rejestr bez otwartych KRYTYCZNYCH/DUŻYCH
+  i bez DO WERYFIKACJI, `naprawa_proby ≤ 2`, strażnik z dowodem przy każdym ZAMKNIETE, anomalie 0 OTWARTA,
+  przelot człowieka komplet, 26 prób kontrolnych EXIT 0, sha256 paczki i tag `k7-zamrozenie`, parser raportów JSON:
+  SPEŁNIONE bez plik:linia i BRAK bez próby kontrolnej = odrzucone). Powód: plan v1 mówił „liczone skryptem",
+  a skryptu nie było (krytyka r1). Próba kontrolna: do dopisania przed rundą A.
+- **`mapa-licznik.sh` 1.0.0 (NOWE) — jedyny, któremu wolno pisać wiersz LICZNIK mapy polowania;** `--zamroz <sha>`
+  i `--sprawdz-zamrozenie` (mapa rosnąca po zamrożeniu = EXIT 1). Powód: mapa botów miała licznik martwy (0/36 po
+  pełnym przebiegu) — odhacza koordynator, liczy skrypt.
+- **`k7-stare-wersje.sh` 1.0.0 (NOWE) — paczki starych wersji sklepu z historii gita** (0.2.0 / 0.5.0 / 0.9.8) do testu
+  aktualizacji w miejscu (`dowod-aktualizacji.sh`), do katalogu POZA repo. Powód: test migracji przez podmianę numeru
+  schematu = fałszywy sukces (krytyka r1); artefakt odtwarzalny skryptem, nie plik luzem (lekcja banku mutantów).
+- **`lib-stos-probny.sh` 1.0.0 → 1.0.1 — obraz stosu próbnego parametrem `STOS_PROBNY_OBRAZ`** (domyślnie bez zmian);
+  K7 stawia czysty stos na `wordpress:6.7-php8.1-apache` = deklarowane minimum wtyczek, nie tylko nasz stos 7.1/8.4.
 - **`stos.sh` 1.2.0 → 1.3.0 — `opcja` maskuje sekrety.** Opcje, których nazwa wskazuje sekret
   (klucz/haslo/token/secret/api/key/pass), wypisują tylko długość i 2-znakowy ogon (ogon przy
   ≥ 12 zn.). Powód: 23.08 recenzent zobaczył w logach akcji pełny klucz API dostawcy. Błąd
