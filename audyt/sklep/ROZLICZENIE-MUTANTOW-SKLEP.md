@@ -22,6 +22,10 @@ Runda A biegnie na PACZCE Z TEJ GAŁĘZI (znaleziska poza liniami mutantów są 
 | F3 | FAŁSZYWY | `includes/admin-dashboard.php` | `function_exists( 'sklepag_dociagnij_zalegle' )` | `02ee551` | POPRAWNE: obronny guard, zachowanie bez zmian; „martwy kod” to nie usterka |
 | F4 | FAŁSZYWY | `includes/logowania.php` | `phpcs:ignore WordPress.Security.ValidatedSanitizedInput` | `613a36d` | POPRAWNE: wyłączenie reguły phpcs z uzasadnieniem; wartość idzie przez prepare() |
 
+PACZKA RUNDY A: `wymiana/k7-mutanty/sklep-agentow-0.9.13-MUTANTY.zip` (poza gitem; odtwarzalna: `git checkout audyt/mutanty-sklep && BUDUJ_NADPISZ_WYDANE=1 bash boty/buduj-paczki.sh sklep-agentow`, potem przenieść i przywrócić zamrożoną).
+SHA256 paczki z mutantami: `425a312458ad747fefeee06b86a49e11c3a74e33b0350714898eb9d7ee64d3ab` (zbudowana 26.08 z commitu `be5a218`).
+Zamrożona 0.9.13 po budowie przywrócona: sha256 `7e0cf726…f7cc` = ZAMROZENIE.md. Kontrola zawartości: 7 kotwic mutantów po 1 trafieniu w zipie, literówka kontrolna 0.
+
 Zdjęcie pojedynczego mutanta: `git revert <commit>`. Zdjęcie wszystkich: skasowanie gałęzi.
 
 ## Rozliczenie (wypełnia koordynatorka PO rundzie; czyta `narzedzia-qa/k7-koniec.sh` warunek 2)
