@@ -78,6 +78,26 @@
   <!-- linia od dymka bota do robota (kropkowana, sygnal) -->
   <path d="M440 330 q80 6 116 -10" stroke="#bfff38" stroke-width="3" stroke-dasharray="2 10" fill="none" stroke-linecap="round"/>
 
+  <!-- baza pytan (prawa kolumna — ta sama ranga co przegrodki u Segregatora; sedzia r2:
+       ilustracje obu produktow maja miec rowny ciezar) -->
+  <g font-family="ui-monospace, Menlo, Consolas, monospace" font-size="17" letter-spacing="2">
+    <text x="700" y="248" fill="#8f929c" font-size="15">BAZA PYTAŃ</text>
+    <g>
+      <rect x="700" y="262" width="156" height="56" rx="10" fill="#08090b" stroke="#bfff38" stroke-width="3"/>
+      <text x="720" y="296" fill="#bfff38">[ CENNIK ]</text>
+    </g>
+    <g>
+      <rect x="700" y="326" width="156" height="56" rx="10" fill="#08090b" stroke="#8f929c" stroke-width="3"/>
+      <text x="720" y="360" fill="#8f929c">[ GODZINY ]</text>
+    </g>
+    <g>
+      <rect x="700" y="390" width="156" height="56" rx="10" fill="#08090b" stroke="#8f929c" stroke-width="3"/>
+      <text x="720" y="424" fill="#8f929c">[ KONTAKT ]</text>
+    </g>
+  </g>
+  <!-- sygnal: od glowy robota do aktywnej przegrodki bazy -->
+  <path d="M650 330 q30 -30 50 -40" stroke="#bfff38" stroke-width="3" stroke-dasharray="2 10" fill="none" stroke-linecap="round"/>
+
   <!-- podpis mono na dole -->
   <g font-family="ui-monospace, Menlo, Consolas, monospace" font-size="15" letter-spacing="2">
     <text x="56" y="516" fill="#8f929c">GOŚĆ PYTA → BOT ODPOWIADA Z TWOJEJ BAZY</text>

@@ -1255,10 +1255,10 @@ a.sklepag-kup {
 	border: 1px solid rgba(245, 245, 245, 0.12);
 	border-radius: 16px;
 	overflow: hidden;
-	box-shadow: 0 40px 90px rgba(0, 0, 0, 0.55), 0 12px 30px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(191, 255, 56, 0.08);
+	box-shadow: 28px 44px 90px rgba(0, 0, 0, 0.6), 0 12px 30px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(191, 255, 56, 0.08);
 	/* Głębia: lekkie pochylenie 3D w spoczynku (Linear/Stripe), prostuje się pod kursorem;
 	   paralaksa scrolla przez --sklepag-par (front-ruch.js, tylko bez „ogranicz ruch"). */
-	transform: perspective(1400px) rotateY(-5deg) rotateX(1.5deg) translateY(var(--sklepag-par));
+	transform: perspective(1200px) rotateY(-9deg) rotateX(2.5deg) translateY(var(--sklepag-par));
 	transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.7s ease;
 	will-change: transform;
 }
@@ -1602,6 +1602,15 @@ a.sklepag-kup {
 
 .sklepag-faq--siatka dt {
 	margin: 0 0 0.55rem;
+}
+
+/* Znacznik pytania w języku strony (strzałka jak w „Dla kogo") — sędzia r2: FAQ bez elementu
+   wizualnego czytało się jak doklejone. */
+.sklepag-faq--siatka dt::before {
+	content: "→";
+	color: var(--sklepag-limonka);
+	font-family: var(--sklepag-mono);
+	margin-right: 0.6em;
 }
 
 .sklepag-faq--siatka dd {

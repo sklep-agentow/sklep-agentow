@@ -169,14 +169,14 @@
 	}
 
 	function docelowo() {
-		var ile = Math.round( szer * wys / 1900 );
+		var ile = Math.round( szer * wys / 1500 );
 		if ( szer < 768 ) {
 			ile = Math.min( ile, 320 );
 		}
 		if ( rdzenie <= 4 ) {
 			ile *= 0.65;
 		}
-		ile = Math.max( 220, Math.min( ile, 760 ) );
+		ile = Math.max( 260, Math.min( ile, 900 ) );
 		if ( bezRuchu() ) {
 			ile = Math.min( ile, 260 );
 		}
@@ -232,7 +232,7 @@
 		var oddech = 0.68 + 0.22 * Math.sin( czas * 0.55 );
 		ctx.globalCompositeOperation = 'lighter';
 		var g = ctx.createRadialGradient( cx, cy, 0, cx, cy, R * 0.5 );
-		g.addColorStop( 0, 'rgba(191, 255, 56, ' + ( 0.14 * oddech ) + ')' );
+		g.addColorStop( 0, 'rgba(191, 255, 56, ' + ( 0.18 * oddech ) + ')' );
 		g.addColorStop( 1, 'rgba(191, 255, 56, 0)' );
 		ctx.fillStyle = g;
 		ctx.fillRect( cx - R * 0.5, cy - R * 0.5, R, R );
@@ -258,7 +258,7 @@
 				if ( p.y > wys + 4 ) { p.y = -4; }
 				if ( p.y < -4 ) { p.y = wys + 4; }
 				sx = p.x; sy = p.y;
-				alfa = 0.07 + 0.09 * p.sp;
+				alfa = 0.1 + 0.12 * p.sp;
 				roz = p.sz * 0.9;
 			} else if ( p.tryb === DYSK ) {
 				p.a += dt * p.sp * ( 0.14 + 0.36 / ( p.r + 0.26 ) ) * tempo;
@@ -277,7 +277,7 @@
 				sy = cy + y2 * R * persp;
 				var glebia = Math.max( 0, Math.min( 1, ( z2 + 1 ) / 2 ) );
 				var wnetrze = 1 - Math.min( 1, p.r );
-				alfa = ( 0.16 + 0.5 * wnetrze ) * ( 1.05 - glebia * 0.7 );
+				alfa = ( 0.24 + 0.6 * wnetrze ) * ( 1.05 - glebia * 0.65 );
 				roz = p.sz * persp * ( 0.72 + wnetrze * 0.55 );
 			} else {
 				p.pr += dt * ( 0.28 + p.sp * 0.16 ) * tempo;
@@ -298,7 +298,7 @@
 				}
 			}
 			if ( alfa <= 0.012 ) { continue; }
-			ctx.globalAlpha = Math.min( alfa, 0.7 );
+			ctx.globalAlpha = Math.min( alfa, 0.85 );
 			ctx.fillStyle = 'rgb(' + KOLORY[ p.c ] + ')';
 			if ( roz < 1.4 ) {
 				ctx.fillRect( sx, sy, roz, roz );
