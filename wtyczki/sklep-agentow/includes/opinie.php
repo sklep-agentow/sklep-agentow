@@ -154,6 +154,11 @@ function sklepag_opinia_zapisz( $zamowienie_id, $token, $dane ) {
 /**
  * Moderacja: przyjmij/odrzuć (CAS na statusie; pomyłkę wolno naprawić w obie strony).
  *
+ * ⛔ Wyjątek RODO: opinia zamówienia ZANONIMIZOWANEGO (usunieto_dnia w zamówieniu)
+ * nie podlega moderacji WCALE — bez tej odmowy jeden klik „Przyjmij" wracałby
+ * treść zapomnianego klienta na stronę (jako „Klient" z plakietką). Warunek stoi
+ * na zamówieniu, nie na statusie opinii, więc kryje też stan 'oczekuje'.
+ *
  * @param int    $opinia_id Id opinii.
  * @param string $akcja     'przyjmij' albo 'odrzuc'.
  * @return bool Czy stan się zmienił.
@@ -161,6 +166,7 @@ function sklepag_opinia_zapisz( $zamowienie_id, $token, $dane ) {
 function sklepag_opinia_moderuj( $opinia_id, $akcja ) {
 	global $wpdb;
 	$t     = $wpdb->prefix . 'sklepag_opinie';
+	$pz    = $wpdb->prefix . 'sklepag_zamowienia';
 	$teraz = current_time( 'mysql' );
 
 	if ( 'przyjmij' === $akcja ) {
@@ -172,8 +178,18 @@ function sklepag_opinia_moderuj( $opinia_id, $akcja ) {
 	} else {
 		return false;
 	}
-	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- jw.; $z to stała lista statusów z tej funkcji, nie wejście.
+	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- jw.; $z to stała lista statusów z tej funkcji, nie wejście.
+	$zanonimizowane = $wpdb->get_var(
+		$wpdb->prepare(
+			"SELECT z.usunieto_dnia FROM {$t} o JOIN {$pz} z ON z.id = o.zamowienie_id WHERE o.id = %d",
+			$opinia_id
+		)
+	);
+	if ( $zanonimizowane ) {
+		return false;
+	}
 	$ok = $wpdb->query( $wpdb->prepare( "UPDATE {$t} SET status=%s, zmieniono=%s WHERE id=%d AND status IN {$z}", $nowy, $teraz, $opinia_id ) );
+	// phpcs:enable
 	if ( $ok && function_exists( 'sklepag_zdarzenie' ) ) {
 		$op = $wpdb->get_row( $wpdb->prepare( "SELECT zamowienie_id FROM {$t} WHERE id=%d", $opinia_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- jw.
 		sklepag_zdarzenie( $op ? (int) $op->zamowienie_id : null, 'opinia_' . $nowy, 'id opinii: ' . (int) $opinia_id );
@@ -186,7 +202,9 @@ function sklepag_opinia_moderuj( $opinia_id, $akcja ) {
  * imię znika, token opinii umiera (jak token pobrania: koniec relacji), a opinia
  * opublikowana lub czekająca SCHODZI ze strony (status 'odrzucona') — publikacja
  * stała na zgodzie i relacji, których już nie ma. Treść zostaje w bazie jako ślad
- * moderacyjny bez atrybucji (render pokazuje wyłącznie 'przyjeta', więc nie wyjdzie).
+ * moderacyjny bez atrybucji i BEZ drogi powrotu: render pokazuje wyłącznie
+ * 'przyjeta', a sklepag_opinia_moderuj ODMAWIA każdej moderacji, dopóki zamówienie
+ * ma usunieto_dnia — przycisk w panelu niczego tu nie wskrzesi.
  * Zalążek zostaje zalążkiem — martwy token czyni go bezużytecznym.
  *
  * @param int $zamowienie_id Id zamówienia.

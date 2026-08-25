@@ -33,9 +33,11 @@ function sklepag_admin_opinie() {
 		$status = 'oczekuje';
 	}
 
+	$pz      = $wpdb->prefix . 'sklepag_zamowienia';
 	$wiersze = $wpdb->get_results(
 		$wpdb->prepare(
-			"SELECT o.*, p.nazwa AS produkt_nazwa FROM {$to} o LEFT JOIN {$tp} p ON p.id = o.produkt_id
+			"SELECT o.*, p.nazwa AS produkt_nazwa, z.usunieto_dnia AS rodo_usunieto
+			 FROM {$to} o LEFT JOIN {$tp} p ON p.id = o.produkt_id LEFT JOIN {$pz} z ON z.id = o.zamowienie_id
 			 WHERE o.status = %s ORDER BY o.zmieniono DESC LIMIT 200",
 			$status
 		)
@@ -81,6 +83,14 @@ function sklepag_admin_opinie() {
 		echo '<td><a href="' . esc_url( admin_url( 'admin.php?page=sklepag-zamowienie&id=' . (int) $w->zamowienie_id ) ) . '">#' . (int) $w->zamowienie_id . '</a></td>';
 		echo '<td>' . esc_html( (string) $w->zmieniono ) . '</td>';
 		echo '<td>';
+		if ( ! empty( $w->rodo_usunieto ) ) {
+			// Kupujący zanonimizowany (RODO): moderacja odmawia (sklepag_opinia_moderuj),
+			// więc zamiast przycisków — jasna etykieta. Wiersz nie może wyglądać jak
+			// zwykłe odrzucenie, które wolno cofnąć.
+			echo '<span class="description">[ ZANONIMIZOWANA — RODO ] bez moderacji</span>';
+			echo '</td></tr>';
+			continue;
+		}
 		foreach ( array(
 			'przyjmij' => 'Przyjmij',
 			'odrzuc'   => 'Odrzuć',

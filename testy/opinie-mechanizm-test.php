@@ -220,6 +220,29 @@ sklepag_anonimizuj_opinie( $zam5 );
 $w_zal = $wpdb->get_row( $wpdb->prepare( "SELECT status, token_hash FROM {$to} WHERE zamowienie_id = %d", $zam5 ) );
 sprawdz( 'zalazek po anonimizacji: zostaje zalazkiem, ale token martwy', $w_zal && 'zalazek' === $w_zal->status && '' === (string) $w_zal->token_hash && null === sklepag_opinia_po_tokenie( $zam5, $token6 ) );
 
+// FURTKA (recenzja #177 r2): przycisk „Przyjmij" NIE moze wskrzesic zanonimizowanej
+// opinii. Odmowa stoi na zamowieniu (usunieto_dnia), wiec zakladamy wiersz zamowienia.
+$pz = $wpdb->prefix . 'sklepag_zamowienia';
+$wpdb->query( $wpdb->prepare( "DELETE FROM {$pz} WHERE id = %d", $zam3 ) );
+$wpdb->insert(
+	$pz,
+	array(
+		'id'                    => $zam3,
+		'stripe_session_id'     => 'cs_test_opinie_mech_' . $zam3,
+		'produkt_id'            => $prod_id,
+		'produkt_nazwa_kupiona' => 'TEST mechanizmu opinii',
+		'email_kupujacego'      => '',
+		'status'                => 'mail_wyslany',
+		'usunieto_dnia'         => $teraz,
+		'utworzono'             => $teraz,
+		'zmieniono'             => $teraz,
+	)
+);
+sprawdz( 'RODO-furtka: przyjecie zanonimizowanej opinii ODMOWIONE', false === sklepag_opinia_moderuj( (int) $wiersz_g->id, 'przyjmij' ) );
+$w_furtka = $wpdb->get_row( $wpdb->prepare( "SELECT status FROM {$to} WHERE zamowienie_id = %d", $zam3 ) );
+sprawdz( 'status zostal odrzucona, tresc NIE wrocila na strone', $w_furtka && 'odrzucona' === $w_furtka->status && false === strpos( sklepag_render_produkt( $slug ), 'Dziala u mnie od pierwszego dnia.' ) );
+$wpdb->query( $wpdb->prepare( "DELETE FROM {$pz} WHERE id = %d", $zam3 ) );
+
 echo "\n=== I. SPRZATANIE po tescie ===\n";
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$to} WHERE zamowienie_id IN (%d, %d, %d, %d, %d)", $zam1, $zam2, $zam3, $zam4, $zam5 ) );
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$tp} WHERE id = %d", $prod_id ) );

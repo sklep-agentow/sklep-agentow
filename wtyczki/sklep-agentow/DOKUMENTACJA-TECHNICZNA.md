@@ -80,12 +80,14 @@ późniejsza edycja produktu nie zmieniła historii · `status` (`oczekuje` → 
 |---|---|---|
 | `admin_post_nopriv_sklepag_kup` | rozpoczyna zakup | nonce + zgoda + limit żądań na adres IP |
 | `admin_post_nopriv_sklepag_pobierz` | wydaje kupiony plik | token 64 znaki + limit pobrań + termin ważności |
+| `admin_post_nopriv_sklepag_ocen` (GET) | formularz opinii z linku w mailu (D32) | token 64 znaki (sha256 w bazie, stałoczasowe) + termin ważności + limit żądań |
+| `admin_post_nopriv_sklepag_ocen_zapisz` (POST) | zapis opinii (zalążek → oczekuje) | ten sam token jednorazowy + zgoda + pole-pułapka + limit żądań + sufity długości |
 | `POST /wp-json/sklepag/v1/webhook` | powiadomienie od Stripe | **podpis webhooka Stripe** |
 | `GET /wp-json/sklepag/v1/status` | status zamówienia dla strony „Dziękujemy" | identyfikator sesji |
 
 ### Panel (wymagają uprawnień administratora)
 `sklepag_produkt_zapisz` · `sklepag_produkt_przelacz` · `sklepag_resend`
-`sklepag_anonimizuj` · `sklepag_dociagnij` · `sklepag_eksport_csv`
+`sklepag_anonimizuj` · `sklepag_dociagnij` · `sklepag_eksport_csv` · `sklepag_opinia_moderuj`
 — **każdy ma parę: nonce + `current_user_can( 'manage_options' )`**.
 
 ### Zadanie cykliczne
