@@ -9,7 +9,7 @@
 # Kontrola podwójna: (1) skan katalogu źródłowego przed pakowaniem,
 # (2) porównanie faktycznej zawartości zipa z allowlistą po spakowaniu.
 #
-# Użycie: bash boty/buduj-paczki.sh                 # wszystkie trzy wtyczki
+# Użycie: bash boty/buduj-paczki.sh                 # komplet — ale zamek (niżej) ZATRZYMA bieg na pierwszej paczce, która już leży na origin/main; w praktyce podawaj wtyczkę:
 #         bash boty/buduj-paczki.sh sklep-agentow   # tylko wskazane (jedna lub więcej)
 # Wybór argumentem doszedł razem z paczką sklepu: zamek wydanych paczek (niżej)
 # ODMAWIA przebudowy zipa, który już leży na origin/main — bez wyboru budowa

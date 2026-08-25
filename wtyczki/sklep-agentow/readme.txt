@@ -5,10 +5,10 @@ Requires at least: 6.7
 Tested up to: 7.1
 Requires PHP: 8.1
 Stable tag: 0.9.13
-License: GPL-2.0-or-later
+License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Sprzedawaj wtyczki-boty AI bezpośrednio ze swojej strony: płatność kartą przez Stripe, automatyczny mail z linkiem do pobrania, panel zamówień — wszystko w Twoim WordPressie.
+Sprzedaż wtyczek-botów AI ze swojej strony: płatność kartą przez Stripe, mail z linkiem do pobrania, panel zamówień — wszystko w Twoim WordPressie.
 
 == Description ==
 
@@ -92,7 +92,7 @@ i PHP 8.1.
 6. Zrób zakup testowy kartą testową Stripe i sprawdź zamówienie na Pulpicie.
 
 Pełna instrukcja krok po kroku (konfiguracja testowa i produkcyjna) jest
-w dokumentacji projektu, plik `INSTRUKCJA-INSTALACJI.md`; opis techniczny
+dołączona do wydania obok paczek (plik `INSTRUKCJA-INSTALACJI.md`); opis techniczny
 (schemat bazy, stałe, punkty wejścia) w `DOKUMENTACJA-TECHNICZNA.md` w paczce.
 
 == Frequently Asked Questions ==

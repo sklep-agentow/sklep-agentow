@@ -171,7 +171,7 @@ założenie stron „Sklep" i „Dziękujemy", zaplanowanie zadania cyklicznego.
 **Przy odinstalowaniu:** domyślnie dane zostają; przy włączonej opcji pełnego
 czyszczenia usuwane są tabele, ustawienia i strony. ⛔ **Klucze Stripe i zaplanowane
 zadanie cykliczne kasowane są ZAWSZE**, niezależnie od tej opcji (martwy wpis
-w cronie bez wtyczki tylko sypie błędami — #170).
+w cronie bez wtyczki tylko sypie błędami).
 
 ---
 

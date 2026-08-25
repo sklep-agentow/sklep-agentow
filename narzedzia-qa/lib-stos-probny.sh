@@ -23,7 +23,7 @@ KONTENER=probny_wp
 KONTENER_DB=strona_wp_db
 BAZA=wp_probny
 SIEC=strona_wp_default
-OBRAZ=wordpress:6.9.4-php8.4-apache
+OBRAZ="${STOS_PROBNY_OBRAZ:-wordpress:6.9.4-php8.4-apache}"  # K7: STOS_PROBNY_OBRAZ=wordpress:6.7-php8.1-apache = deklarowane minimum
 PORT=8891
 ADRES="http://localhost:$PORT"
 

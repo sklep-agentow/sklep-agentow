@@ -1,5 +1,5 @@
 #!/bin/bash
-# stos.sh — WĄSKIE, CZYSTO ODCZYTOWE okno recenzenta na żywy stos.     WERSJA 1.3.0
+# stos.sh — WĄSKIE, CZYSTO ODCZYTOWE okno recenzenta na żywy stos.     WERSJA 1.3.1
 #
 # PO CO TO POWSTAŁO (policzone 20.08): w dzisiejszych recenzjach padło
 # 91 zdań „czego nie sprawdziłem". PIĘĆDZIESIĄT JEDEN z nich brzmiało
@@ -32,7 +32,7 @@
 #                   albo argument odrzucony przez sprawdzenie wzorca
 set -u
 
-WERSJA=1.3.0
+WERSJA=1.3.1
 
 # ⛔ Stałe, nie parametry. Dzwoniący NIE wybiera kontenera ani adresu — wybiera
 #    co najwyżej STOS, i to wyłącznie z tej zamkniętej listy dwóch pozycji:
@@ -66,7 +66,7 @@ ADRES_LAPACZ=http://127.0.0.1:8025
 # Prefiksy tabel, o które wolno pytać. Tabele rdzenia WordPressa poza tą
 # trójką nie są recenzentowi do niczego potrzebne, a im węższe okno, tym
 # mniej jest do przemyślenia przy następnej zmianie.
-PREFIKSY_TABEL=(wp_segm_ wp_chatl_ wp_sklep_)
+PREFIKSY_TABEL=(wp_segm_ wp_chatl_ wp_sklep_ wp_sklepag_)
 TABELE_RDZENIA=(wp_options wp_posts wp_users)
 
 # ------------------------------------------------------------------------
@@ -313,7 +313,7 @@ op_wtyczki() {
 
 op_tabele() {
 	printf '=== tabele wtyczek w bazie ===\n'
-	wp_odczyt_lub_padnij db tables --all-tables | grep -E '^wp_(segm|chatl|sklep)_' || echo "(brak tabel wtyczek)"
+	wp_odczyt_lub_padnij db tables --all-tables | grep -E '^wp_(segm|chatl|sklep|sklepag)_' || echo "(brak tabel wtyczek)"
 }
 
 op_wiersze() {
