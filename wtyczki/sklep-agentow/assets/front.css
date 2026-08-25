@@ -1258,14 +1258,12 @@ a.sklepag-kup {
 	box-shadow: 28px 44px 90px rgba(0, 0, 0, 0.6), 0 12px 30px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(191, 255, 56, 0.08);
 	/* Głębia: lekkie pochylenie 3D w spoczynku (Linear/Stripe), prostuje się pod kursorem;
 	   paralaksa scrolla przez --sklepag-par (front-ruch.js, tylko bez „ogranicz ruch"). */
-	transform: perspective(1200px) rotateY(-9deg) rotateX(2.5deg) translateY(var(--sklepag-par));
-	transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.7s ease;
-	will-change: transform;
+	transform: perspective(1200px) rotateY(-6deg) rotateX(2deg) translateY(var(--sklepag-par));
+	transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .sklepag-panel:hover .sklepag-panel-okno {
-	transform: perspective(1400px) rotateY(0deg) rotateX(0deg) translateY(var(--sklepag-par));
-	box-shadow: 0 50px 110px rgba(0, 0, 0, 0.6), 0 12px 30px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(191, 255, 56, 0.2);
+	transform: perspective(1200px) rotateY(0deg) rotateX(0deg) translateY(var(--sklepag-par));
 }
 
 /* Awatar bota (ta sama linearna maskotka co na ilustracjach kart — jedna „ręka" rysunku). */
@@ -1730,10 +1728,11 @@ a.sklepag-kup {
 	display: none;
 }
 
+/* ⛔ BEZ backdrop-filter: rozmycie nad canvasem przerysowywanym co klatkę = ciągła praca GPU;
+   na laptopie Dzidka (iGPU, zoom) strona się dławiła. Półprzezroczyste tło daje ten sam efekt
+   „szkła" bez liczenia rozmycia. */
 .sklepag-galaktyka-on .sklepag-panel-okno {
-	background: rgba(16, 17, 22, 0.76);
-	-webkit-backdrop-filter: blur(14px) saturate(1.25);
-	backdrop-filter: blur(14px) saturate(1.25);
+	background: rgba(16, 17, 22, 0.88);
 }
 
 /* Poświata CSS (fallback bez JS + baner końcowy) w sile gospodarza, z jego oddechem. */

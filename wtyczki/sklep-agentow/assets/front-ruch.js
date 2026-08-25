@@ -129,11 +129,11 @@
 	var KOLORY = [ '237, 238, 240', '191, 255, 56', '143, 146, 156' ];
 	var DYSK = 0, PROMIEN = 1, PYL = 2;
 	var BX = 0.42, BY = -0.87;
-	var dpr   = Math.min( window.devicePixelRatio || 1, 1.75 );
+	var dpr   = Math.min( window.devicePixelRatio || 1, 1.25 ); // niżej niż gospodarz (1.75): wtyczka trafia na dowolny sprzęt
 	var rdzenie = navigator.hardwareConcurrency || 8;
 	var szer = 0, wys = 0, cx = 0, cy = 0, promien = 0;
 	var czastki = [], raf = 0, chodzi = false, wEkranie = true;
-	var ostatni = 0, czas = 0, klatki = 0, wolne = 0, redukcje = 0, timerRozmiaru = 0;
+	var ostatni = 0, czas = 0, klatki = 0, wolne = 0, redukcje = 0, timerRozmiaru = 0, zatrzymanyNaStale = false;
 	var mysz = { x: 0, y: 0, aktywna: false }, smx = 0, smy = 0, poswiataMyszy = 0;
 
 	var szum = function ( x, y, t ) {
@@ -169,14 +169,14 @@
 	}
 
 	function docelowo() {
-		var ile = Math.round( szer * wys / 1500 );
+		var ile = Math.round( szer * wys / 2600 );
 		if ( szer < 768 ) {
-			ile = Math.min( ile, 320 );
+			ile = Math.min( ile, 220 );
 		}
-		if ( rdzenie <= 4 ) {
-			ile *= 0.65;
+		if ( rdzenie <= 4 || ( navigator.deviceMemory && navigator.deviceMemory < 4 ) ) {
+			ile *= 0.55;
 		}
-		ile = Math.max( 260, Math.min( ile, 900 ) );
+		ile = Math.max( 180, Math.min( ile, 480 ) );
 		if ( bezRuchu() ) {
 			ile = Math.min( ile, 260 );
 		}
@@ -324,9 +324,17 @@
 		klatki++;
 		if ( dt > 0.024 ) { wolne++; }
 		if ( klatki >= 110 ) {
-			if ( wolne > 40 && redukcje < 2 && czastki.length > 300 ) {
-				redukcje++;
-				zrobCzastki( docelowo() );
+			if ( wolne > 40 ) {
+				if ( redukcje < 2 ) {
+					redukcje++;
+					zrobCzastki( docelowo() );
+				} else {
+					// Bezpiecznik: maszyna nie wyrabia mimo dwóch redukcji — zatrzymujemy pętlę
+					// i zostawiamy klatkę statyczną. Strona sklepu nie ma prawa dławić komputera.
+					zatrzymanyNaStale = true;
+					stop();
+					return;
+				}
 			}
 			klatki = 0; wolne = 0;
 		}
@@ -334,7 +342,7 @@
 	}
 
 	function start() {
-		if ( chodzi || bezRuchu() || ! wEkranie || document.hidden ) { return; }
+		if ( chodzi || bezRuchu() || zatrzymanyNaStale || ! wEkranie || document.hidden ) { return; }
 		chodzi = true;
 		ostatni = performance.now();
 		raf = window.requestAnimationFrame( klatka );
