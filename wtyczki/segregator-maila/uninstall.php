@@ -50,7 +50,7 @@ delete_option( 'segm_blad_bazy' );
 delete_metadata( 'user', 0, 'segm_powitanie_widziane', '', true );
 
 // Sekret właściciela (klucz API) kasowany ZAWSZE, niezależnie od opcji „usuń dane"
-// (zasada D22: poświadczenia ≠ dane użytkowe; martwa wtyczka nie zostawia klucza
+// (poświadczenia ≠ dane użytkowe; martwa wtyczka nie zostawia klucza
 // w bazie — znalezisko wrogiej sesji botów 19.08, zmierzone na czystym WP).
 delete_option( 'segm_klucz_api' );
 

@@ -95,6 +95,10 @@ echo 'STRAZNIK: WYNIK=' . ( $pass ? 'PASS' : 'FAIL - nieudany resend odebral kup
 // Bez tego „naprawa" mogłaby po prostu przestać wydawać świeże linki i część 1
 // świeciłaby na zielono z zupełnie złego powodu.
 remove_filter( 'pre_wp_mail', '__return_false', 99 );
+// Sukces wysyłki wymuszamy filtrem, zamiast polegać na poczcie stosu: na czystej maszynie
+// wp_mail() zwraca false z braku konfiguracji SMTP i próba kontrolna mierzyłaby środowisko,
+// nie produkt (wynik FAIL bez żadnej wady w kodzie).
+add_filter( 'pre_wp_mail', '__return_true', 99 );
 $wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET status='mail_wyslany', token_pobrania=%s, link_wygasa=%s WHERE id=%d", $stary_token, $stary_termin, $id ) );
 $_GET['_wpnonce']     = wp_create_nonce( 'sklepag_resend' );
 $_REQUEST['_wpnonce'] = $_GET['_wpnonce'];
@@ -112,6 +116,8 @@ echo 'KONTROLA: status_po_udanym=' . $po2->status . " (OCZEKIWANE: mail_wyslany)
 echo 'KONTROLA: WYNIK=' . ( $rotacja_ok ? 'PASS' : 'FAIL - naprawa zablokowala rotacje tokenu' ) . "\n";
 
 echo 'RAZEM: WYNIK=' . ( $pass && $rotacja_ok ? 'PASS' : 'FAIL' ) . "\n";
+
+remove_filter( 'pre_wp_mail', '__return_true', 99 );
 
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$pz} WHERE stripe_session_id=%s", $sid ) );
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}sklepag_opinie WHERE zamowienie_id=%d", $id ) );

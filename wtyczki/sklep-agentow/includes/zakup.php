@@ -323,7 +323,7 @@ function sklepag_zaksieguj_zwrot( $typ, $obiekt ) {
 	$pelny  = ( $kwota >= (int) $zam->kwota_grosze );
 	$status = $pelny ? 'zwrocone' : $zam->status;
 	$teraz  = current_time( 'mysql' );
-	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
+	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
 	$wpdb->query(
 		$wpdb->prepare(
 			"UPDATE {$pz} SET zwrocono_grosze=%d, zwrot_czas=%s, status=%s, zmieniono=%s WHERE id=%d",
@@ -334,6 +334,7 @@ function sklepag_zaksieguj_zwrot( $typ, $obiekt ) {
 			(int) $zam->id
 		)
 	);
+	// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
 	sklepag_zdarzenie(
 		(int) $zam->id,
 		$pelny ? 'zwrot_pelny' : 'zwrot_czesciowy',
@@ -351,24 +352,23 @@ function sklepag_zaksieguj_spor( $typ, $obiekt ) {
 	global $wpdb;
 	$pz = $wpdb->prefix . 'sklepag_zamowienia';
 
-	$pi = sklepag_platnosc_ze_zdarzenia( $obiekt );
+	$pi  = sklepag_platnosc_ze_zdarzenia( $obiekt );
 	$zam = '' === $pi ? null : sklepag_zamowienie_po_platnosci( $pi );
 	if ( ! $zam ) {
 		sklepag_zdarzenie( null, 'spor_bez_powiazania', $typ . ': brak zamówienia dla płatności ' . ( '' === $pi ? '(brak id)' : $pi ) );
 		return;
 	}
 
-	$teraz  = current_time( 'mysql' );
-	$wynik  = isset( $obiekt['status'] ) ? (string) $obiekt['status'] : '';
-	$kwota  = isset( $obiekt['amount'] ) ? (int) $obiekt['amount'] : (int) $zam->kwota_grosze;
+	$teraz = current_time( 'mysql' );
+	$wynik = isset( $obiekt['status'] ) ? (string) $obiekt['status'] : '';
+	$kwota = isset( $obiekt['amount'] ) ? (int) $obiekt['amount'] : (int) $zam->kwota_grosze;
 	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
 	if ( 'charge.dispute.closed' === $typ && 'won' === $wynik ) {
 		$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET zwrocono_grosze=0, zwrot_czas=NULL, status='mail_wyslany', zmieniono=%s WHERE id=%d", $teraz, (int) $zam->id ) );
 		sklepag_zdarzenie( (int) $zam->id, 'spor_wygrany', 'bank przyznał rację sprzedawcy — pieniądze wracają do przychodu' );
-		// phpcs:enable
 		return;
 	}
-	$wpdb->query( // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
+	$wpdb->query(
 		$wpdb->prepare(
 			"UPDATE {$pz} SET zwrocono_grosze=%d, zwrot_czas=%s, status='sporne', zmieniono=%s WHERE id=%d",
 			$kwota,
@@ -377,6 +377,7 @@ function sklepag_zaksieguj_spor( $typ, $obiekt ) {
 			(int) $zam->id
 		)
 	);
+	// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
 	sklepag_zdarzenie(
 		(int) $zam->id,
 		'charge.dispute.closed' === $typ ? 'spor_przegrany' : 'spor_otwarty',
@@ -740,7 +741,12 @@ function sklepag_dociagnij_zalegle( $budzet_s = 0 ) {
 		// zamykało JEDYNĄ drogę wysyłki: opłacony i zapisany zakup stał w `mail_w_toku`,
 		// dopóki Stripe nie odpowie, i nie trafiał nawet do licznika czerwonych na Pulpicie.
 		// Domykamy z danych własnych — płatność jest już potwierdzona, nie ma czego weryfikować.
-		sklepag_domknij_zakup( array( 'id' => $sid, 'payment_status' => 'paid' ) );
+		sklepag_domknij_zakup(
+			array(
+				'id'             => $sid,
+				'payment_status' => 'paid',
+			)
+		);
 	}
 
 	// 3) Sprzątanie liczników rate-limit po oknie (tabela techniczna, wiersz żyje ~2 min).
