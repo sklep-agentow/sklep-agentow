@@ -20,6 +20,53 @@ Nic jeszcze.
 
 ---
 
+## [0.9.14] — 2026-08-26
+
+Wersja schematu bazy: **6** (migracja odpala się sama, bez deaktywacji wtyczki).
+
+### Naprawione
+- **Opłacony zakup nie ginie, gdy baza zawiedzie w połowie.** Sesja płatności dostawała
+  znacznik „opłacona" nawet wtedy, gdy zamówienia nie udało się zapisać, a mechanizm
+  dociągania zaległych bierze wyłącznie sesje nieoznaczone — zakup przepadał bez śladu.
+  Teraz znacznik zapada dopiero po potwierdzeniu, że zamówienie jest w bazie, a nieudany
+  zapis zostawia wpis w dzienniku zdarzeń.
+- **„Wyślij ponownie" nie odbiera kupującemu dostępu.** Nowy link zapisywał się przed
+  wysyłką maila, więc nieudana wysyłka unieważniała stary, działający link, a nowy nigdy
+  nie docierał. Przy niepowodzeniu poprzedni link i termin wracają.
+- **Katalog na pliki produktów odtwarza się sam po aktualizacji wtyczki.** Powstawał tylko
+  przy aktywacji, a aktualizacja „w miejscu" aktywacji nie odpala.
+- **Wygasły formularz zakupu mówi po polsku i zostawia ślad.** Strona produktu podana
+  z pamięci podręcznej niosła token starszy niż doba: przycisk zakupu był martwy dla
+  wszystkich odwiedzających, komunikat przychodził po angielsku z rdzenia WordPressa,
+  a właściciel nie miał tego skąd zobaczyć.
+- **Komunikat o limicie wgrywanego pliku podaje limit, który naprawdę obowiązuje** —
+  wcześniej cytował limit wtyczki (20 MB) także wtedy, gdy plik odrzucił serwer przy 2 MB.
+- **Opinia bez powiązanego zamówienia nie przejdzie moderacji.** Zapytanie nie odróżniało
+  „zamówienie jest i nie jest zanonimizowane" od „zamówienia nie ma".
+- **Deinstalacja kasuje też dane tymczasowe wtyczki** (adres sesji płatności i skrót
+  adresu IP z okna zabezpieczającego przed podwójnym kliknięciem).
+- **Odmowa dostępu w panelu zwraca kod 403, nie 500** (siedem miejsc).
+- **Włączanie i wyłączanie sprzedaży produktu nie gubi się przy dwukliku** — zapis jest
+  warunkowany stanem widocznym na ekranie.
+
+### Dodane
+- **Zwroty i obciążenia zwrotne schodzą z przychodu.** Sklep przyjmuje ze Stripe
+  powiadomienia o zwrocie (`refund.created`, `refund.updated`, `charge.refunded`) oraz
+  o reklamacji płatności w banku (`charge.dispute.*`). Zwrot pełnej kwoty przestawia
+  zamówienie na „zwrócone", zwrot częściowy pomniejsza przychód o swoją kwotę, a spór
+  wygrany przywraca zamówienie do utargu. Każde zdarzenie zostawia wpis w dzienniku.
+  Nowe kolumny: `payment_intent_id`, `zwrocono_grosze`, `zwrot_czas`.
+- **Pulpit ostrzega, gdy sklep nie ma czym przyjąć pieniędzy** — brak klucza Stripe lub
+  sekretu webhooka, a także seria nieudanych rozmów ze Stripe w ostatniej dobie.
+
+### Zmienione
+- Kod i dokumentacja w paczce nie odwołują się już do wewnętrznej numeracji dokumentów
+  roboczych — komentarze niosą powód zmiany, nie numer ustalenia.
+- Dokumentacja techniczna: poprawiona liczba tabel, uzupełniona mapa plików o klasy list
+  panelu, opinie i dostawcę mapy witryny, opisane statusy zwrotu i obsługiwane zdarzenia Stripe.
+
+---
+
 ## [0.9.13] — 2026-08-25
 
 ### Naprawione

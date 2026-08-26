@@ -1,6 +1,6 @@
 # Sklep Agentów — dokumentacja techniczna
 
-**Wersja wtyczki: 0.9.13 · wersja schematu bazy: 5 · WordPress 6.7+ · PHP 8.1+**
+**Wersja wtyczki: 0.9.14 · wersja schematu bazy: 6 · WordPress 6.7+ · PHP 8.1+**
 
 > **Po co ten dokument.** To jest **mapa systemu dla audytora i programisty**, nie ulotka.
 > Każda liczba i nazwa tutaj jest wzięta z kodu, nie z pamięci — jeśli coś się rozjedzie,
@@ -31,7 +31,10 @@ zero zewnętrznych bibliotek i zero CDN. Jedyna usługa zewnętrzna: **Stripe** 
 | `includes/front-produkt.php` | strony produktów, przepisywanie adresów, treści sprzedażowe |
 | `includes/front-seo.php` | tytuły, opisy, dane strukturalne, mapa witryny |
 | `includes/logowania.php` | dziennik logowań administratorów, opóźnienie i limit prób |
-| `includes/admin*.php` | panel: pulpit, produkty, zamówienia, ustawienia, dziennik |
+| `includes/admin*.php` | panel: pulpit, produkty, zamówienia, opinie, ustawienia, dziennik |
+| `includes/opinie.php` | opinie kupujących: zalążek i token przy mailu, formularz, moderacja |
+| `includes/class-sklepag-lista-{zamowien,produktow,logowan,zdarzen}.php` | tabele list w panelu (na `WP_List_Table` z rdzenia): sortowanie, stronicowanie, filtry |
+| `includes/class-sklepag-sitemap-produkty.php` | dostawca stron produktów do mapy witryny WordPressa |
 
 ---
 
@@ -71,7 +74,15 @@ ma pole-pułapkę i limity żądań; twarde sufity długości: imię 100 · tytu
 późniejsza edycja produktu nie zmieniła historii · `status` (`oczekuje` → `oplacone`
 → `mail_wyslany`) · `token_pobrania`, `link_wygasa`, `pobrania_limit`,
 `pobrania_uzyte` — brama pobrań · `zgoda_tresc`, `zgoda_czas` — dowód zgody
-(RODO) · `mail_tresc` — wysłana treść · `usunieto_dnia` — znacznik anonimizacji.
+(RODO) · `mail_tresc` — wysłana treść · `usunieto_dnia` — znacznik anonimizacji ·
+`payment_intent_id` — identyfikator płatności Stripe, jedyne powiązanie zdarzeń o zwrocie
+z zamówieniem · `zwrocono_grosze`, `zwrot_czas` — księgowanie zwrotów i obciążeń zwrotnych.
+
+**Statusy zamówienia:** `oczekuje` → `oplacone` → `mail_w_toku` → `mail_wyslany`;
+`mail_blad` przy nieudanej wysyłce (cron ponawia do trzech prób); `zwrocone` po zwrocie
+pełnej kwoty; `sporne` po otwarciu obciążenia zwrotnego. Dwa ostatnie **nie liczą się
+do przychodu** na Pulpicie; zwrot częściowy zostawia status bez zmian, a jego kwota schodzi
+z sum przez odjęcie `zwrocono_grosze`. Spór wygrany przywraca zamówienie do przychodu.
 
 Mail po zakupie (`sklepag_zbuduj_mail`, tekstowy): produkt i kwota → **potwierdzenie zgody**
 (dosłowna `zgoda_tresc` + `zgoda_czas` w czasie lokalnym; dyrektywa 2011/83/UE art. 8 ust. 7
@@ -93,6 +104,17 @@ właściciela" (gdy ustawiony). Treść i nagłówki pilnuje osobny test-strażn
 | `admin_post_nopriv_sklepag_ocen` (GET) | formularz opinii z linku w mailu | token 64 znaki (sha256 w bazie, stałoczasowe) + termin ważności + limit żądań |
 | `admin_post_nopriv_sklepag_ocen_zapisz` (POST) | zapis opinii (zalążek → oczekuje) | ten sam token jednorazowy + zgoda + pole-pułapka + limit żądań + sufity długości |
 | `POST /wp-json/sklepag/v1/webhook` | powiadomienie od Stripe | **podpis webhooka Stripe** |
+
+**Obsługiwane zdarzenia Stripe.** Sprzedaż: `checkout.session.completed` i
+`checkout.session.async_payment_succeeded` (domknięcie zakupu; bramka na `payment_status`,
+bo przy metodach asynchronicznych, np. BLIK, pierwsze powiadomienie przychodzi jako
+nieopłacone), `checkout.session.async_payment_failed` i `checkout.session.expired`.
+Zwroty: `refund.created`, `refund.updated` i `charge.refunded` — Stripe zaleca dziś
+`refund.created`, ale `charge.refunded` nadal przychodzi, więc nasłuchujemy obu i
+księgujemy tak, żeby dwa powiadomienia o jednym zwrocie nie odjęły pieniędzy dwa razy.
+Obciążenia zwrotne: `charge.dispute.*`. Zdarzenia o zwrocie nie niosą identyfikatora
+sesji checkout — powiązanie idzie po `payment_intent_id` zapisanym przy zakupie, a dla
+zamówień sprzed wersji schematu 6 przez jednorazowe zapytanie do Stripe o sesję tej płatności.
 | `GET /wp-json/sklepag/v1/status` | status zamówienia dla strony „Dziękujemy" | identyfikator sesji |
 
 ### Panel (wymagają uprawnień administratora)
@@ -149,7 +171,7 @@ po stronie serwera. To jest świadome ograniczenie, nie przeoczenie.
 | Stała | Wartość | Znaczenie |
 |---|---|---|
 | `SKLEPAG_WERSJA` | 0.9.13 | wersja wtyczki (assety, cache) |
-| `SKLEPAG_WERSJA_SCHEMATU` | 5 | wersja schematu bazy (migracje) |
+| `SKLEPAG_WERSJA_SCHEMATU` | 6 | wersja schematu bazy (migracje) |
 | `SKLEPAG_LIMIT_POBRAN` | 10 | ile razy można pobrać zakup |
 | `SKLEPAG_LINK_GODZIN` | 72 | ważność linku pobrania |
 | `SKLEPAG_OPINIA_DNI` | 30 | ważność jednorazowego linku „oceń bota" |
@@ -163,7 +185,7 @@ rozjechać się z kodem.
 
 ## 8. Instalacja i deinstalacja
 
-**Przy aktywacji:** utworzenie 6 tabel przez `dbDelta`, zapis wersji schematu,
+**Przy aktywacji:** utworzenie 7 tabel przez `dbDelta`, zapis wersji schematu,
 założenie stron „Sklep" i „Dziękujemy", zaplanowanie zadania cyklicznego.
 
 **Przy deaktywacji:** odplanowanie zadania cyklicznego. Dane zostają.

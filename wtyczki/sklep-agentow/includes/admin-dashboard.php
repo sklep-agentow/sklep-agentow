@@ -314,6 +314,36 @@ function sklepag_admin_dashboard() {
 			. esc_html( '' !== $katalog_blad ? $katalog_blad : 'Katalog nie istnieje — deaktywuj i aktywuj wtyczkę, sprawdź uprawnienia uploads.' ) . '</p></div>';
 	}
 
+	// PŁATNOŚCI: bez klucza Stripe „Kup teraz" kończy się błędem, a jedyny ślad ląduje
+	// w dzienniku zdarzeń. Pulpit o tym milczał — właściciel widział zero sprzedaży i nie
+	// miał jak zgadnąć, że sklep w ogóle nie ma czym przyjąć pieniędzy.
+	$klucz_stripe = (string) get_option( 'sklepag_stripe_klucz_sekretny', '' );
+	$sekret_hook  = (string) get_option( 'sklepag_stripe_webhook_sekret', '' );
+	if ( '' === $klucz_stripe || '' === $sekret_hook ) {
+		$czego = ( '' === $klucz_stripe && '' === $sekret_hook )
+			? 'Brak klucza Stripe i sekretu webhooka'
+			: ( '' === $klucz_stripe ? 'Brak klucza Stripe' : 'Brak sekretu webhooka Stripe' );
+		echo '<div class="notice notice-error"><p><strong>Sklep nie przyjmie płatności.</strong> '
+			. esc_html( $czego ) . ' — kupujący zobaczy błąd zamiast okna płatności'
+			. ( '' === $sekret_hook ? ', a potwierdzenia zakupu nie zostaną przyjęte' : '' ) . '. '
+			. '<a href="' . esc_url( admin_url( 'admin.php?page=sklepag-ustawienia' ) ) . '">Uzupełnij w Ustawieniach</a>.</p></div>';
+	}
+
+	// Awarie rozmowy ze Stripe z ostatniej doby: odrzucony klucz, timeout, zły podpis.
+	// Pojedynczy błąd bywa przypadkiem sieci, seria znaczy, że sprzedaż stoi.
+	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
+	$awarie_stripe = (int) $wpdb->get_var(
+		"SELECT COUNT(*) FROM {$wpdb->prefix}sklepag_zdarzenia
+		 WHERE typ IN ('checkout_blad','reconciliation_blad','webhook_zly_podpis')
+		 AND czas > DATE_SUB(NOW(), INTERVAL 1 DAY)"
+	);
+	if ( $awarie_stripe >= 3 ) {
+		echo '<div class="notice notice-warning"><p><strong>' . (int) $awarie_stripe . '</strong> nieudanych rozmów ze Stripe w ostatniej dobie '
+			. '(odrzucony klucz, brak odpowiedzi albo zły podpis webhooka) — '
+			. '<a href="' . esc_url( admin_url( 'admin.php?page=sklepag-dziennik' ) ) . '">zobacz dziennik zdarzeń</a>. '
+			. 'Jeśli to się powtarza, sprawdź klucze w Ustawieniach.</p></div>';
+	}
+
 	// Panel-czerwone: nieudane wysyłki po wyczerpaniu prób crona.
 	if ( $czerwone > 0 ) {
 		echo '<div class="notice notice-error"><p><strong>' . (int) $czerwone . '</strong> zamówień z nieudaną wysyłką maila (3 próby wyczerpane) — '

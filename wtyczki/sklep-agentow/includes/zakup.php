@@ -91,7 +91,7 @@ function sklepag_obsluz_kup() {
 	$sklep_url = get_permalink( (int) get_option( 'sklepag_strona_sklep' ) );
 
 	if ( ! sklepag_rate_limit( 'kup', 10 ) ) {
-		wp_die( 'Za dużo prób. Odczekaj minutę.', 'Sklep Agentów', 429 );
+		wp_die( 'Za dużo prób zakupu z tego adresu w ciągu minuty. Odczekaj do pełnej minuty i kliknij przycisk zakupu ponownie — nic nie zostało pobrane z Twojego konta. Jeśli kupujesz z sieci firmowej, licznik obejmuje też inne osoby w tej sieci.', 'Sklep Agentów', 429 );
 	}
 
 	$produkt_id = isset( $_POST['produkt_id'] ) ? absint( $_POST['produkt_id'] ) : 0;

@@ -4,7 +4,7 @@ Tags: sklep, stripe, pliki cyfrowe, sprzedaz wtyczek, pobieranie
 Requires at least: 6.7
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.9.13
+Stable tag: 0.9.14
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -141,6 +141,18 @@ Nie. Zakup jest bez konta: adres e-mail podany na stronie płatności Stripe,
 link do pobrania w mailu, jednorazowy link do opinii.
 
 == Changelog ==
+
+= 0.9.14 =
+* Opłacony zakup nie ginie, gdy baza zawiedzie w połowie zapisu.
+* „Wyślij ponownie" nie unieważnia działającego linku, gdy mail nie wyjdzie.
+* Katalog na pliki produktów odtwarza się sam po aktualizacji wtyczki.
+* Wygasły formularz zakupu (strona z pamięci podręcznej) mówi po polsku
+  i zostawia ślad w dzienniku — właściciel widzi, że sprzedaż stoi.
+* Komunikat o limicie wgrywanego pliku podaje limit, który naprawdę obowiązuje.
+* Zwroty i obciążenia zwrotne ze Stripe schodzą z przychodu na Pulpicie.
+* Pulpit ostrzega, gdy brakuje klucza Stripe albo sekretu webhooka.
+* Opinia bez powiązanego zamówienia nie przejdzie moderacji.
+* Deinstalacja kasuje też dane tymczasowe wtyczki.
 
 = 0.9.13 =
 * Lista sklepu ma opis meta i znaczniki Open Graph/Twitter.

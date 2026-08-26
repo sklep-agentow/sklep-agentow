@@ -359,15 +359,24 @@ function sklepag_obsluz_przelacz_produkt() {
 		wp_safe_redirect( add_query_arg( 'sklepag_blad', rawurlencode( 'Nie można włączyć sprzedaży: produkt nie ma potwierdzonego pliku paczki.' ), admin_url( 'admin.php?page=sklepag-produkty' ) ) );
 		exit;
 	}
-	$wpdb->update(
-		$t,
-		array(
-			'aktywny'   => $nowy,
-			'zmieniono' => current_time( 'mysql' ),
-		),
-		array( 'id' => $id )
+	// Przełączenie warunkowe stanem, który przed chwilą przeczytaliśmy: dwa kliknięcia
+	// (dwuklik, dwie karty, odświeżenie akcji) trafiały wcześniej bezwarunkowym zapisem
+	// i produkt potrafił zostać w stanie odwrotnym do tego, co admin widzi na ekranie.
+	$zmieniono = $wpdb->query(
+		$wpdb->prepare(
+			"UPDATE {$t} SET aktywny=%d, zmieniono=%s WHERE id=%d AND aktywny=%d",
+			$nowy,
+			current_time( 'mysql' ),
+			$id,
+			(int) $p->aktywny
+		)
 	);
 	// phpcs:enable
+	if ( ! $zmieniono ) {
+		// Ktoś przełączył ten produkt w międzyczasie — nie nadpisujemy jego decyzji.
+		wp_safe_redirect( add_query_arg( 'sklepag_blad', rawurlencode( 'Ten produkt zmienił stan w innej karcie lub zakładce. Odśwież listę i sprawdź, zanim przełączysz ponownie.' ), admin_url( 'admin.php?page=sklepag-produkty' ) ) );
+		exit;
+	}
 	sklepag_zdarzenie( null, $nowy ? 'produkt_aktywowany' : 'produkt_deaktywowany', '#' . $id . ' ' . $p->nazwa );
 
 	wp_safe_redirect( add_query_arg( 'sklepag_ok', 'przelaczono', admin_url( 'admin.php?page=sklepag-produkty' ) ) );
