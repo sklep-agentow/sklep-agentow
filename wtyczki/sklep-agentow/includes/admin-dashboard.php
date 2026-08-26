@@ -2,9 +2,9 @@
 /**
  * Dashboard „jak dobre sklepy" — wzorowany na sklepach, które to robią dobrze:
  * karty KPI z porównaniem % do poprzedniego okresu → rozkład zakupów
- * w czasie (S-04) → tabela zamówień → eksport CSV z aktualnych filtrów.
- * Do tego: notice o zamówieniach z nieudaną wysyłką (panel-czerwone, plan §6),
- * self-heal reconciliation przy wejściu admina + ręczny przycisk (plan §4A).
+ * w czasie → tabela zamówień → eksport CSV z aktualnych filtrów.
+ * Do tego: notice o zamówieniach z nieudaną wysyłką (panel-czerwone),
+ * self-heal reconciliation przy wejściu admina + ręczny przycisk.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -16,7 +16,7 @@ require_once SKLEPAG_KATALOG . 'includes/class-sklepag-lista-zamowien.php';
 const SKLEPAG_STATUSY_OPLACONE = "'oplacone','mail_w_toku','mail_wyslany','mail_blad'";
 
 /**
- * Badge statusu zamówienia: słowo + kolor + tooltip (wzorce K3 §3 — nigdy goły tekst).
+ * Badge statusu zamówienia: słowo + kolor + tooltip (nigdy goły tekst).
  *
  * @param string $status Status z bazy.
  */
@@ -182,7 +182,7 @@ function sklepag_delta_html( $teraz, $poprzednio ) {
 	return '<span class="sklepag-delta sklepag-delta-zero">— bez zmian</span>';
 }
 
-/* ---------- Self-heal + ręczne dociąganie (plan §4A) ---------- */
+/* ---------- Self-heal + ręczne dociąganie ---------- */
 
 /**
  * Reconciliation przy wejściu admina na dashboard, jeśli ostatni bieg
@@ -216,7 +216,7 @@ function sklepag_obsluz_dociagnij() {
 	exit;
 }
 
-/* ---------- Eksport CSV (kryterium #6; log akcji) ---------- */
+/* ---------- Eksport CSV (z wpisem w dzienniku akcji) ---------- */
 
 add_action( 'admin_post_sklepag_eksport_csv', 'sklepag_obsluz_eksport_csv' );
 
@@ -310,7 +310,7 @@ function sklepag_admin_dashboard() {
 			. esc_html( '' !== $katalog_blad ? $katalog_blad : 'Katalog nie istnieje — deaktywuj i aktywuj wtyczkę, sprawdź uprawnienia uploads.' ) . '</p></div>';
 	}
 
-	// Panel-czerwone (plan §6): nieudane wysyłki po wyczerpaniu prób crona.
+	// Panel-czerwone: nieudane wysyłki po wyczerpaniu prób crona.
 	if ( $czerwone > 0 ) {
 		echo '<div class="notice notice-error"><p><strong>' . (int) $czerwone . '</strong> zamówień z nieudaną wysyłką maila (3 próby wyczerpane) — '
 			. '<a href="' . esc_url( admin_url( 'admin.php?page=sklepag&status=mail_blad' ) ) . '">pokaż je</a> i użyj „Wyślij ponownie" w szczegółach zamówienia.</p></div>';
@@ -445,7 +445,7 @@ function sklepag_pasek_statusow( $g ) {
 }
 
 /**
- * Rozkład zakupów w czasie (S-04: „w jakim czasie") — słupki czystym CSS,
+ * Rozkład zakupów w czasie („w jakim czasie kupowali") — słupki czystym CSS,
  * bez bibliotek zewnętrznych; dziś = godzinowo, 7/30 dni = dziennie.
  *
  * @param string $okres Klucz okresu.

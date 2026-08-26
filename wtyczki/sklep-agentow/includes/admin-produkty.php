@@ -1,10 +1,10 @@
 <?php
 /**
- * CRUD produktów (K4; plan §4A „Produkty", kryterium GOTOWE #7):
+ * CRUD produktów (ekran „Produkty"):
  * lista → formularz dodaj/edytuj → zapis z walidacjami → upload zipa do
  * katalogu chronionego (losowa nazwa BEZ rozszerzenia, MIME z TREŚCI,
  * limit 20 MB, weryfikacja PO zapisie: obecność+rozmiar+sha256).
- * Zasady: bez twardego usuwania (deaktywacja — D7); nowy plik = NOWA
+ * Zasady: bez twardego usuwania (deaktywacja); nowy plik = NOWA
  * ścieżka (stare zamówienia trzymają swój snapshot — §5); aktywacja
  * wymaga POTWIERDZONEGO pliku; każda mutacja nonce+caps parą.
  */
@@ -18,7 +18,7 @@ require_once SKLEPAG_KATALOG . 'includes/class-sklepag-lista-produktow.php';
 const SKLEPAG_UPLOAD_LIMIT_B = 20 * 1024 * 1024; // Plan §7: 20 MB (realne zipy botów <1 MB).
 
 /**
- * Realny sufit wgrania: MNIEJSZY z limitu wtyczki (plan §7) i limitu serwera
+ * Realny sufit wgrania: MNIEJSZY z limitu wtyczki i limitu serwera
  * (upload_max_filesize / post_max_size z php.ini, przez wp_max_upload_size()).
  *
  * Komunikaty muszą cytować TEN limit. Wcześniej wszystkie mówiły „Limit: 20 MB",
@@ -132,7 +132,7 @@ function sklepag_produkty_formularz( $id ) {
 	echo '<table class="form-table" role="presentation"><tbody>';
 	echo '<tr><th scope="row"><label for="sklepag-nazwa">Nazwa</label></th><td><input type="text" id="sklepag-nazwa" name="nazwa" class="regular-text" required value="' . esc_attr( $w( 'nazwa' ) ) . '"></td></tr>';
 	echo '<tr><th scope="row"><label for="sklepag-opis-krotki">Opis krótki (lista sklepu)</label></th><td><textarea id="sklepag-opis-krotki" name="opis_krotki" class="large-text" rows="2">' . esc_textarea( $w( 'opis_krotki' ) ) . '</textarea></td></tr>';
-	echo '<tr><th scope="row"><label for="sklepag-opis-pelny">Opis pełny (strona produktu)</label></th><td><textarea id="sklepag-opis-pelny" name="opis_pelny" class="large-text" rows="6">' . esc_textarea( $w( 'opis_pelny' ) ) . '</textarea><p class="description">Renderowany zawsze jako tekst (XSS: opisy nie niosą HTML — plan §7).</p></td></tr>';
+	echo '<tr><th scope="row"><label for="sklepag-opis-pelny">Opis pełny (strona produktu)</label></th><td><textarea id="sklepag-opis-pelny" name="opis_pelny" class="large-text" rows="6">' . esc_textarea( $w( 'opis_pelny' ) ) . '</textarea><p class="description">Renderowany zawsze jako tekst (XSS: opisy nie niosą HTML).</p></td></tr>';
 	echo '<tr><th scope="row"><label for="sklepag-cena">Cena</label></th><td><input type="number" id="sklepag-cena" name="cena" step="0.01" min="0.01" required class="small-text" value="' . esc_attr( $id ? number_format( $w( 'cena_grosze' ) / 100, 2, '.', '' ) : '' ) . '"> <input type="text" name="waluta" class="small-text" maxlength="3" pattern="[A-Za-z]{3}" value="' . esc_attr( $w( 'waluta', (string) get_option( 'sklepag_waluta_domyslna', 'PLN' ) ) ) . '"></td></tr>';
 
 	echo '<tr><th scope="row"><label for="sklepag-plik">Plik paczki (ZIP)</label></th><td>';
@@ -144,7 +144,7 @@ function sklepag_produkty_formularz( $id ) {
 	echo '<p class="description">Tylko ZIP, do ' . esc_html( size_format( sklepag_limit_uploadu_b() ) ) . '. Nowy plik dostaje NOWĄ chronioną ścieżkę — stare zamówienia trzymają swoją (snapshot). ' . ( $id ? 'Zostaw puste, by nie zmieniać.' : '' ) . '</p>';
 	echo '</td></tr>';
 
-	echo '<tr><th scope="row">W sprzedaży</th><td><label><input type="checkbox" name="aktywny" value="1"' . checked( (bool) $w( 'aktywny', false ), true, false ) . '> Produkt widoczny i kupowalny w sklepie</label><p class="description">Aktywacja wymaga POTWIERDZONEGO pliku paczki — bez pliku zapis wróci z błędem (kryterium #7).</p></td></tr>';
+	echo '<tr><th scope="row">W sprzedaży</th><td><label><input type="checkbox" name="aktywny" value="1"' . checked( (bool) $w( 'aktywny', false ), true, false ) . '> Produkt widoczny i kupowalny w sklepie</label><p class="description">Aktywacja wymaga POTWIERDZONEGO pliku paczki — bez pliku zapis wróci z błędem.</p></td></tr>';
 	echo '</tbody></table>';
 
 	submit_button( $id ? 'Zapisz zmiany' : 'Dodaj produkt' );
@@ -177,7 +177,7 @@ function sklepag_obsluz_zapis_produktu() {
 		exit;
 	};
 
-	// Walidacje (kryterium #7: cena<=0, pusta nazwa, nie-zip, ponad limit = odrzut).
+	// Walidacje: cena<=0, pusta nazwa, nie-zip, ponad limit = odrzut.
 	if ( '' === $nazwa ) {
 		$wroc( 'Nazwa nie może być pusta.' );
 	}
@@ -260,7 +260,7 @@ function sklepag_obsluz_zapis_produktu() {
 
 /**
  * Przyjęcie zipa do katalogu chronionego: rozszerzenie + MIME z TREŚCI +
- * limit + losowa nazwa BEZ .zip + weryfikacja PO zapisie (plan §7).
+ * limit + losowa nazwa BEZ .zip + weryfikacja PO zapisie.
  *
  * @param callable $wroc Funkcja przerywająca z komunikatem.
  * @return array{sciezka: string, rozmiar: int, sha256: string}
@@ -303,7 +303,7 @@ function sklepag_przyjmij_zip( $wroc ) {
 	if ( ! preg_match( '/\.zip$/i', $nazwa ) ) {
 		$wroc( 'Dozwolony wyłącznie plik .zip.' );
 	}
-	// MIME z TREŚCI, nie z nagłówka przeglądarki (plan §7).
+	// MIME z TREŚCI, nie z nagłówka przeglądarki.
 	$ft = wp_check_filetype_and_ext( $tmp, $nazwa, array( 'zip' => 'application/zip' ) );
 	if ( 'zip' !== $ft['ext'] || 'application/zip' !== $ft['type'] ) {
 		$wroc( 'Treść pliku nie jest zipem (MIME sprawdzany z zawartości).' );
@@ -321,7 +321,7 @@ function sklepag_przyjmij_zip( $wroc ) {
 		$wroc( 'Zapis do katalogu chronionego nie powiódł się (uprawnienia uploads?).' );
 	}
 
-	// Weryfikacja PO zapisie: obecność + rozmiar + suma (kryterium #7 „POTWIERDZONY").
+	// Weryfikacja PO zapisie: obecność + rozmiar + suma (plik POTWIERDZONY, nie tylko zapisany).
 	clearstatcache( true, $cel );
 	if ( ! file_exists( $cel ) || filesize( $cel ) !== $rozmiar ) {
 		$wroc( 'Plik po zapisie nie przeszedł potwierdzenia (obecność/rozmiar) — nie zapisano produktu.' );
@@ -334,7 +334,7 @@ function sklepag_przyjmij_zip( $wroc ) {
 	);
 }
 
-/* ---------- Przełącznik sprzedaży (deaktywacja zamiast usuwania — D7) ---------- */
+/* ---------- Przełącznik sprzedaży (deaktywacja zamiast usuwania) ---------- */
 
 add_action( 'admin_post_sklepag_produkt_przelacz', 'sklepag_obsluz_przelacz_produkt' );
 

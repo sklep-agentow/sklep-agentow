@@ -22,7 +22,7 @@ delete_option( 'sklepag_stripe_webhook_sekret' );
 wp_clear_scheduled_hook( 'sklepag_dociagnij_zalegle' );
 
 if ( ! get_option( 'sklepag_usun_dane_przy_odinstalowaniu' ) ) {
-	return; // Reszta danych zostaje — świadoma decyzja domyślna (DECYZJE D22).
+	return; // Reszta danych zostaje — świadoma decyzja domyślna.
 }
 
 global $wpdb;

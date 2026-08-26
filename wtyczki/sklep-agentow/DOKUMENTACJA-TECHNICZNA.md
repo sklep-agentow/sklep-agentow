@@ -48,9 +48,9 @@ wyłącznie ustawienia i klucze — nigdy liczniki ani stan zamówień.
 | `zdarzenia` | dziennik zdarzeń zamówienia (audyt ścieżki) | wszystkie moduły zakupu |
 | `logowania` | kto i kiedy logował się do panelu, z jakim skutkiem | zaczepy logowania WP |
 | `rate_limit` | okna limitów żądań | brama zakupu i logowania |
-| `opinie` | mechanizm opinii kupujących (D32): zalążek+token przy mailu, treść z formularza, statusy moderacji | mail zakupowy → formularz kupującego → panel (moderacja) |
+| `opinie` | mechanizm opinii kupujących: zalążek+token przy mailu, treść z formularza, statusy moderacji | mail zakupowy → formularz kupującego → panel (moderacja) |
 
-### Tabela `opinie` — obieg (D32)
+### Tabela `opinie` — obieg
 
 Jedna opinia na zamówienie (`UNIQUE zamowienie_id`) — weryfikacja zakupu z danych
 zamówień, bez kont kupujących. Statusy: `zalazek` (mail z linkiem wysłany, token
@@ -77,7 +77,7 @@ Mail po zakupie (`sklepag_zbuduj_mail`, tekstowy): produkt i kwota → **potwier
 (dosłowna `zgoda_tresc` + `zgoda_czas` w czasie lokalnym; dyrektywa 2011/83/UE art. 8 ust. 7
 lit. b — potwierdzenie umowy na trwałym nośniku zawiera potwierdzenie zgody z art. 16 lit. m)
 → link pobrania z ważnością i limitem → instrukcja w skrócie → gwarancja z danych produktu
-(gdy produkt ją ma) → link do opinii (D32) → „odpisz na tego maila". Wysyłka
+(gdy produkt ją ma) → link do opinii → „odpisz na tego maila". Wysyłka
 `sklepag_wyslij_mail_sklepu`: nadawca z ustawień + nagłówek `Reply-To` na „mail kontaktowy
 właściciela" (gdy ustawiony). Treść i nagłówki pilnuje osobny test-strażnik (bez realnej wysyłki).
 
@@ -90,7 +90,7 @@ właściciela" (gdy ustawiony). Treść i nagłówki pilnuje osobny test-strażn
 |---|---|---|
 | `admin_post_nopriv_sklepag_kup` | rozpoczyna zakup | nonce + zgoda + limit żądań na adres IP |
 | `admin_post_nopriv_sklepag_pobierz` | wydaje kupiony plik | token 64 znaki + limit pobrań + termin ważności |
-| `admin_post_nopriv_sklepag_ocen` (GET) | formularz opinii z linku w mailu (D32) | token 64 znaki (sha256 w bazie, stałoczasowe) + termin ważności + limit żądań |
+| `admin_post_nopriv_sklepag_ocen` (GET) | formularz opinii z linku w mailu | token 64 znaki (sha256 w bazie, stałoczasowe) + termin ważności + limit żądań |
 | `admin_post_nopriv_sklepag_ocen_zapisz` (POST) | zapis opinii (zalążek → oczekuje) | ten sam token jednorazowy + zgoda + pole-pułapka + limit żądań + sufity długości |
 | `POST /wp-json/sklepag/v1/webhook` | powiadomienie od Stripe | **podpis webhooka Stripe** |
 | `GET /wp-json/sklepag/v1/status` | status zamówienia dla strony „Dziękujemy" | identyfikator sesji |
@@ -181,7 +181,7 @@ Nie zakłada kont kupujących · nie obsługuje płatności cyklicznych ani abon
 nie zbiera opinii od GOŚCI i nie liczy ocen zbiorczych (formularz opinii działa
 wyłącznie z jednorazowego linku w mailu zakupowym — jedna opinia na zamówienie,
 publikacja dopiero po ręcznej akceptacji w panelu; bez `aggregateRating` w danych
-strukturalnych — D6/D32) · nie robi przecen
+strukturalnych) · nie robi przecen
 ani kuponów · nie dotyka motywu ani cudzych wtyczek · nie wysyła danych nigdzie
 poza Stripe.
 

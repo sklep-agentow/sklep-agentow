@@ -5,7 +5,7 @@
  * treść wysłanego maila + „Wyślij ponownie" TUŻ OBOK (wzorzec Stripe receipt).
  * PRAWA kolumna: oś czasu zdarzeń tego zamówienia.
  * Akcje: resend (regeneruje token+termin — stary link mógł wygasnąć) oraz
- * anonimizacja kupującego na żądanie RODO (plan §5/§8: email→NULL +
+ * anonimizacja kupującego na żądanie RODO (email→NULL +
  * usunieto_dnia; kwoty i czasy zostają — dashboard żyje).
  */
 
@@ -20,7 +20,7 @@ add_action( 'admin_post_sklepag_resend', 'sklepag_obsluz_resend' );
 /**
  * Resend generuje ŚWIEŻY token i termin (72 h) — stary link mógł wygasnąć,
  * a to właśnie najczęstszy powód ponownej wysyłki. Skrót w bazie nadpisany =
- * stary link przestaje działać (jeden ważny token na zamówienie — kryterium #4).
+ * stary link przestaje działać (jeden ważny token na zamówienie).
  * Wyścig dwóch równoczesnych resendów: wygrywa ostatni zapis skrótu, wcześniejszy
  * mail niesie martwy link — naprawialne kolejnym resendem, akceptowalne dla akcji ręcznej.
  */
@@ -56,7 +56,7 @@ function sklepag_obsluz_resend() {
 	$teraz = current_time( 'mysql' );
 	$link  = admin_url( 'admin-post.php' ) . '?action=sklepag_pobierz&z=' . (int) $zam->id . '&t=' . $token;
 
-	// Link do opinii jak w wysyłce automatycznej (D32): zalążek odświeża token
+	// Link do opinii jak w wysyłce automatycznej: zalążek odświeża token
 	// w stanie 'zalazek', a dla opinii już przysłanej zwraca '' — mail idzie
 	// wtedy bez akapitu oceny. Bez tego resend gubił kupującemu drogę do opinii.
 	$token_op = sklepag_opinia_zalazek( (int) $zam->id, (int) $zam->produkt_id );
@@ -120,12 +120,12 @@ function sklepag_obsluz_resend() {
 	exit;
 }
 
-/* ---------- Akcja: anonimizacja kupującego (RODO, plan §5/§8) ---------- */
+/* ---------- Akcja: anonimizacja kupującego (RODO) ---------- */
 
 add_action( 'admin_post_sklepag_anonimizuj', 'sklepag_obsluz_anonimizacje' );
 
 /**
- * Email → NULL + usunieto_dnia; kwoty i czasy ZOSTAJĄ (dashboard żyje — D11).
+ * Email → NULL + usunieto_dnia; kwoty i czasy ZOSTAJĄ (dashboard żyje).
  * Ślady adresu w opisach zdarzeń tego zamówienia zastępowane znacznikiem;
  * token pobrania unieważniany (zanonimizowany klient = koniec relacji).
  */
@@ -167,7 +167,7 @@ function sklepag_obsluz_anonimizacje() {
 	}
 	// phpcs:enable
 
-	// Symetria RODO dla mechanizmu opinii (D32): imię i token opinii umierają razem
+	// Symetria RODO dla mechanizmu opinii: imię i token opinii umierają razem
 	// z tokenem pobrania, publikacja schodzi ze strony — szczegóły w sklepag_anonimizuj_opinie().
 	sklepag_anonimizuj_opinie( (int) $zam->id );
 

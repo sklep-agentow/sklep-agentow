@@ -1,8 +1,8 @@
 <?php
 /**
- * Tabela zamówień dashboardu (S-04, kryterium #6) na rdzeniowym WP_List_Table.
+ * Tabela zamówień dashboardu na rdzeniowym WP_List_Table.
  * Kolumny ze SNAPSHOTU zakupu (produkt_nazwa_kupiona — edycja produktu nie
- * zmienia historii); status jako badge słowo+kolor z tooltipem (wzorce K3 §3).
+ * zmienia historii); status jako badge słowo+kolor z tooltipem.
  * Widok read-only; filtry (status, zakres dat, szukaj po mailu) niosą się
  * GET-em i są reużywane 1:1 przez eksport CSV.
  */

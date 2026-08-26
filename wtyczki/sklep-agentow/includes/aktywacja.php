@@ -142,7 +142,7 @@ function sklepag_aktywacja() {
 		wp_schedule_event( time() + 600, 'sklepag_10min', 'sklepag_dociagnij_zalegle' );
 	}
 
-	// K5: rewrite strony produktu + flush (strony właśnie powstały, więc slug
+	// rewrite strony produktu + flush (strony właśnie powstały, więc slug
 	// sklepu już jest); flush odbudowuje też reguły rdzenia (w tym wp-sitemap —
 	// na stacku były zgubione: /wp-sitemap.xml dawał 404).
 	if ( function_exists( 'sklepag_rejestruj_rewrite' ) ) {

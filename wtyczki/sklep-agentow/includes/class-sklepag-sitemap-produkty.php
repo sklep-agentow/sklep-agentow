@@ -1,6 +1,6 @@
 <?php
 /**
- * Provider wp-sitemaps dla produktów sklepu (K5 PR 2; PLAN-WYGLADU-K5 §7).
+ * Provider wp-sitemaps dla produktów sklepu.
  * Produkty żyją we własnej tabeli (nie CPT), więc rdzeń ich nie widzi —
  * oficjalna droga to własny WP_Sitemaps_Provider.
  */

@@ -1,6 +1,6 @@
 <?php
 /**
- * Brama pobrań — WYŁĄCZNIE w PHP (D4): token HMAC-owany (w bazie skrót),
+ * Brama pobrań — WYŁĄCZNIE w PHP: token HMAC-owany (w bazie skrót),
  * termin 72 h, limit 10, licznik ATOMOWY przy starcie GET, bez Accept-Ranges,
  * HEAD nie zużywa limitu.
  */
@@ -27,7 +27,7 @@ function sklepag_obsluz_pobranie() {
 	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
 	$zam = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$pz} WHERE id = %d", $id ) );
 
-	// Mail kontaktowy właściciela z ustawień (plan §6); bez niego — odesłanie do maila z zakupu.
+	// Mail kontaktowy właściciela z ustawień; bez niego — odesłanie do maila z zakupu.
 	$email_kontaktowy = (string) get_option( 'sklepag_email_kontaktowy', '' );
 	$kontakt          = ( '' !== $email_kontaktowy && is_email( $email_kontaktowy ) )
 		? 'Skontaktuj się z właścicielem sklepu: ' . $email_kontaktowy
@@ -60,7 +60,7 @@ function sklepag_obsluz_pobranie() {
 		exit;
 	}
 
-	// LICZNIK ATOMOWY przy STARCIE pobrania (UPDATE z warunkiem — D4).
+	// LICZNIK ATOMOWY przy STARCIE pobrania (UPDATE z warunkiem).
 	$slot = $wpdb->query(
 		$wpdb->prepare(
 			"UPDATE {$pz} SET pobrania_uzyte = pobrania_uzyte + 1, zmieniono = %s WHERE id = %d AND pobrania_uzyte < pobrania_limit",

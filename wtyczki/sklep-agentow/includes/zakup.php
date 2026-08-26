@@ -1,7 +1,7 @@
 <?php
 /**
  * Przepływ zakupu: Kup → Checkout Session → webhook/reconciliation → SILNIK
- * domykania (JEDEN dla obu dróg; przejścia stanu WYŁĄCZNIE przez CAS — D24).
+ * domykania (JEDEN dla obu dróg; przejścia stanu WYŁĄCZNIE przez CAS).
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -229,7 +229,7 @@ function sklepag_oznacz_sesje( $sesja_id, $stan ) {
 	$wpdb->update( $wpdb->prefix . 'sklepag_sesje_checkout', array( 'stan' => $stan ), array( 'stripe_session_id' => $sesja_id ), array( '%s' ), array( '%s' ) );
 }
 
-/* ---------- SILNIK DOMYKANIA — jeden dla webhooka i reconciliation (D24) ---------- */
+/* ---------- SILNIK DOMYKANIA — jeden dla webhooka i reconciliation ---------- */
 
 /**
  * true = domknięte/nic do roboty; false = niedomknięte (retry ma wrócić).
@@ -333,7 +333,7 @@ function sklepag_domknij_zakup( $sesja ) {
 		}
 		if ( 'mail_w_toku' === $stan->status ) {
 			// Przejęcie po crashu: claim starszy niż 5 min wolno odebrać (stale-claim).
-			// ŚWIADOMY KOMPROMIS (DECYZJE D5+D24): pad tuż PO wp_mail a PRZED zapisem
+			// ŚWIADOMY KOMPROMIS: pad tuż PO wp_mail a PRZED zapisem
 			// stanu = możliwy DRUGI mail po odebraniu claimu — lepszy podwójny niż
 			// żaden. Wyścig RÓWNOCZESNY wyklucza CAS (delta maili = 1, zmierzone E2E).
 			$odebrane = $wpdb->query(
@@ -348,7 +348,7 @@ function sklepag_domknij_zakup( $sesja ) {
 				return false; // Ktoś inny właśnie wysyła — retry wróci.
 			}
 		} else {
-			return false; // mail_blad z wyczerpanymi próbami → panel-czerwone (K3), retry nic nie wskóra... ale zwracamy false, żeby ślad w retry był.
+			return false; // mail_blad z wyczerpanymi próbami → panel-czerwone, retry nic nie wskóra... ale zwracamy false, żeby ślad w retry był.
 		}
 	}
 
@@ -366,7 +366,7 @@ function sklepag_domknij_zakup( $sesja ) {
 
 	$zam = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$pz} WHERE stripe_session_id=%s", $sid ) );
 
-	// 4b) Zalążek opinii + jednorazowy link „oceń bota" (D32) — w tej samej sekcji
+	// 4b) Zalążek opinii + jednorazowy link „oceń bota" — w tej samej sekcji
 	// chronionej CAS-em mail_w_toku co token pobrania: retry maila odświeża token
 	// opinii, ale opinii już przysłanej nie rusza (wtedy mail idzie bez akapitu oceny).
 	$token_op = sklepag_opinia_zalazek( (int) $zam->id, (int) $produkt->id );
@@ -411,7 +411,7 @@ function sklepag_filtr_nadawca_nazwa( $name ) {
 
 /**
  * wp_mail z nadawcą z ustawień sklepu — filtry zakładane WYŁĄCZNIE wokół
- * NASZEJ wysyłki i zdejmowane od razu (granica planu §3: maile reszty
+ * NASZEJ wysyłki i zdejmowane od razu (granica: maile reszty
  * strony pozostają nietknięte).
  *
  * @param string $adresat Adresat.
@@ -527,7 +527,7 @@ function sklepag_dociagnij_zalegle( $budzet_s = 0 ) {
 			continue;
 		}
 		if ( isset( $sesja['payment_status'] ) && 'unpaid' !== $sesja['payment_status'] ) {
-			sklepag_domknij_zakup( $sesja ); // TEN SAM silnik co webhook (D24).
+			sklepag_domknij_zakup( $sesja ); // TEN SAM silnik co webhook.
 		} elseif ( isset( $sesja['status'] ) && 'expired' === $sesja['status'] ) {
 			sklepag_oznacz_sesje( $sid, 'wygasla' );
 		}
@@ -537,7 +537,7 @@ function sklepag_dociagnij_zalegle( $budzet_s = 0 ) {
 	// 'oplacona' zaraz po CAS-ie płatności — ZANIM mail wyjdzie — więc pętla wyżej
 	// nigdy nie widzi zamówień uwięzionych w mail_blad (pad wysyłki) ani mail_w_toku
 	// (pad procesu). Podnosimy je tu TYM SAMYM silnikiem: CAS + stale-claim same
-	// rozstrzygają, mail_proby<3 trzyma plan §6 (3 próby crona → panel-czerwone K3).
+	// rozstrzygają, mail_proby<3 trzyma budżet trzech prób crona, potem zamówienie świeci na czerwono w panelu.
 	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
 	$pz           = $wpdb->prefix . 'sklepag_zamowienia';
 	$niedomkniete = $wpdb->get_col(
@@ -565,9 +565,9 @@ function sklepag_dociagnij_zalegle( $budzet_s = 0 ) {
 	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
 	$wpdb->query( "DELETE FROM {$wpdb->prefix}sklepag_rate_limit WHERE okno_do < UTC_TIMESTAMP()" );
 
-	// 4) Retencja 90 dni (plan §5/§8; polityka deklaruje „dziennik zdarzeń (90 dni)"):
+	// 4) Retencja 90 dni (polityka deklaruje „dziennik zdarzeń (90 dni)"):
 	// logowania i zdarzenia starsze wypadają. Historia SPRZEDAŻY żyje w `zamowienia`
-	// (status, kwoty, mail_tresc) — jej retencja to D22, nie ten krok.
+	// (status, kwoty, mail_tresc) — jej retencja to osobna decyzja właściciela, nie ten krok.
 	$retencja = gmdate( 'Y-m-d H:i:s', strtotime( current_time( 'mysql' ) ) - 90 * DAY_IN_SECONDS );
 	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
 	$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}sklepag_logowania WHERE czas < %s", $retencja ) );

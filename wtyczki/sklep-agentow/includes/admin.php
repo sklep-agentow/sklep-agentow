@@ -1,6 +1,6 @@
 <?php
 /**
- * Panel wp-admin (K3): menu wtyczki, wspólne assety admina i strona-pulpit
+ * Panel wp-admin: menu wtyczki, wspólne assety admina i strona-pulpit
  * z licznikami z bazy (prawdziwe zapytania, zero atrap). Widoki żyją w osobnych
  * plikach admin-*.php; dashboard „jak dobre sklepy".
  */
@@ -23,7 +23,7 @@ add_action( 'admin_notices', 'sklepag_ostrzez_permalinki' );
 /**
  * Świeży WordPress ma bezpośrednie odnośniki „Zwykłe" — wtedy /sklep/ po cichu
  * pokazuje bloga, a trasa webhooka /wp-json/... zwraca 404 (rest_no_route).
- * Znalezisko testu instalacji K6 (19.08): tester utknąłby tu bez komunikatu.
+ * Znalezisko testu instalacji (19.08): tester utknąłby tu bez komunikatu.
  * Notice trwały (nie do zamknięcia), dopóki struktura odnośników jest pusta.
  */
 function sklepag_ostrzez_permalinki() {

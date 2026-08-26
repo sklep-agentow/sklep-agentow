@@ -1,6 +1,6 @@
 <?php
 /**
- * Klient Stripe przez WP HTTP API — bez SDK (DECYZJE D18, ZWIAD-STRIPE).
+ * Klient Stripe przez WP HTTP API — bez SDK (świadomie, żeby paczka nie ciągnęła zewnętrznych zależności).
  * Zasady: timeout 15 s, JEDNA próba (ponowienia robią Stripe/cron — ściąga:
  * pętla retry nie może przekroczyć limitu PHP hostingu); wersja API przypięta.
  */

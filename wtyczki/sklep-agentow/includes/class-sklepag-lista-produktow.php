@@ -1,7 +1,7 @@
 <?php
 /**
- * Tabela produktów (K4) na rdzeniowym WP_List_Table. Akcje wierszowe:
- * Edytuj + Deaktywuj/Aktywuj (usuwania NIE ma — D7: historia zamówień
+ * Tabela produktów na rdzeniowym WP_List_Table. Akcje wierszowe:
+ * Edytuj + Deaktywuj/Aktywuj (usuwania NIE ma: historia zamówień
  * trzyma snapshot, produkt najwyżej znika ze sprzedaży).
  */
 

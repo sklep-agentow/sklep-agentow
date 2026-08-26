@@ -1,10 +1,10 @@
 <?php
 /**
- * Mechanizm opinii (D32): zalążek przy mailu zakupowym → formularz z jednorazowego
+ * Mechanizm opinii: zalążek przy mailu zakupowym → formularz z jednorazowego
  * linku → moderacja w panelu → render na stronie produktu.
  *
  * Zasady:
- * - Token jak w bramie pobrań (D4): surowy WYŁĄCZNIE w mailu, w bazie skrót
+ * - Token jak w bramie pobrań: surowy WYŁĄCZNIE w mailu, w bazie skrót
  *   sha256, porównanie stałoczasowe; ważność SKLEPAG_OPINIA_DNI dni.
  * - Jedna opinia na zamówienie (UNIQUE zamowienie_id) — weryfikacja zakupu
  *   z danych zamówień sklepu, bez kont kupujących (granica §9).

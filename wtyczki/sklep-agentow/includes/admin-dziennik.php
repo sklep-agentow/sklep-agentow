@@ -1,6 +1,6 @@
 <?php
 /**
- * Strona „Dziennik" w wp-admin (S-09): zakładka Logowania (kto/kiedy/wynik/IP/
+ * Strona „Dziennik" w wp-admin: zakładka Logowania (kto/kiedy/wynik/IP/
  * przeglądarka) + zakładka Zdarzenia (akcje adminów i zdarzenia systemowe).
  * Wyłącznie odczyt — mutacji tu nie ma.
  */

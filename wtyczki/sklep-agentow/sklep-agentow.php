@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 define( 'SKLEPAG_WERSJA', '0.9.13' );
-define( 'SKLEPAG_WERSJA_SCHEMATU', 5 ); // v5: tabela opinie (mechanizm D32); v4: kolumna zamowienia.usunieto_dnia (anonimizacja RODO — K3d); v3: indeks para_logowania.
+define( 'SKLEPAG_WERSJA_SCHEMATU', 5 ); // v5: tabela opinii; v4: kolumna zamowienia.usunieto_dnia (anonimizacja RODO); v3: indeks para_logowania.
 define( 'SKLEPAG_LIMIT_POBRAN', 10 ); // Jedno źródło: INSERT zamówienia + treść maila.
 define( 'SKLEPAG_LINK_GODZIN', 72 );  // Ważność linku pobrania — jw.
 define( 'SKLEPAG_OPINIA_DNI', 30 );   // Ważność linku „oceń bota" — kupujący najpierw testuje produkt.
@@ -30,15 +30,15 @@ require_once SKLEPAG_KATALOG . 'includes/stripe.php';
 require_once SKLEPAG_KATALOG . 'includes/zakup.php';
 require_once SKLEPAG_KATALOG . 'includes/pobieranie.php';
 require_once SKLEPAG_KATALOG . 'includes/logowania.php'; // ZAWSZE, nie za is_admin() — hooki logowania żyją na wp-login.php.
-require_once SKLEPAG_KATALOG . 'includes/front-produkt.php'; // K5: widok produktu + rewrite (init) — poza is_admin().
-require_once SKLEPAG_KATALOG . 'includes/front-seo.php';     // K5: title/meta/JSON-LD/sitemap (D27).
-require_once SKLEPAG_KATALOG . 'includes/opinie.php';        // D32: zalążek+token przy mailu, formularz admin-post (poza is_admin!), render z bazy.
+require_once SKLEPAG_KATALOG . 'includes/front-produkt.php'; // widok produktu + rewrite (init) — poza is_admin().
+require_once SKLEPAG_KATALOG . 'includes/front-seo.php';     // title/meta/JSON-LD/sitemap.
+require_once SKLEPAG_KATALOG . 'includes/opinie.php';        // opinie: zalążek+token przy mailu, formularz admin-post (poza is_admin!), render z bazy.
 
 register_activation_hook( __FILE__, 'sklepag_aktywacja' );
 register_deactivation_hook( __FILE__, 'sklepag_deaktywacja' );
 
 // Interwał 10 min dla „dociągnij zaległe" (reconciliation — druga droga domykania).
-// phpcs:disable WordPress.WP.CronInterval.CronSchedulesInterval -- 10 min świadomie (plan §4A): tryb testowy Stripe ponawia webhook tylko 3× w parę godzin, cron domyka zaległe zakupy.
+// phpcs:disable WordPress.WP.CronInterval.CronSchedulesInterval -- 10 min świadomie: tryb testowy Stripe ponawia webhook tylko 3× w parę godzin, cron domyka zaległe zakupy.
 add_filter(
 	'cron_schedules',
 	function ( $harmonogramy ) {
@@ -92,7 +92,7 @@ function sklepag_wersja_assetu( $sciezka ) {
 }
 
 /**
- * Assety TYLKO na stronach sklepu (nie spowalniamy reszty strony — plan §2).
+ * Assety TYLKO na stronach sklepu (nie spowalniamy reszty strony).
  */
 function sklepag_assety_frontu() {
 	$strona_sklep      = (int) get_option( 'sklepag_strona_sklep' );
@@ -133,8 +133,8 @@ function sklepag_assety_frontu() {
 }
 
 /**
- * Baner trybu testowego — jedna treść na wszystkich stronach sklepu (plan §4A;
- * napis bez zmian od K1 — testy i K2 na nim polegają).
+ * Baner trybu testowego — jedna treść na wszystkich stronach sklepu (
+ * napis bez zmian — testy na nim polegają).
  */
 function sklepag_baner_testowy() {
 	return '<p class="sklepag-baner-testowy"><span class="sklepag-baner-testowy-tytul">TRYB TESTOWY</span> — płatności nie są pobierane. Przetestujesz cały zakup kartą testową, nic nie płacąc.</p>';
@@ -223,11 +223,11 @@ function sklepag_panel_nocnej_zmiany( $tryb = 'oba' ) {
 }
 
 /**
- * Lista aktywnych produktów (K5: klimat gospodarza — PLAN-WYGLADU-K5 §2A).
+ * Lista aktywnych produktów (klimat strony-gospodarza).
  * Uczciwy stan pusty, bez atrap.
  */
 function sklepag_shortcode_sklep() {
-	// Widok produktu na TEJ SAMEJ stronie (query var — PLAN-WYGLADU-K5 §2B/PR 2).
+	// Widok produktu na TEJ SAMEJ stronie (query var).
 	$slug_produktu = get_query_var( 'sklepag_produkt' );
 	if ( is_string( $slug_produktu ) && '' !== $slug_produktu ) {
 		return sklepag_render_produkt( sanitize_title( $slug_produktu ) );
@@ -247,7 +247,7 @@ function sklepag_shortcode_sklep() {
 	$html .= '<div class="sklepag-tlo" aria-hidden="true"></div>';
 	// Pingi POZA maskowanym tłem (maska nad animacją = przeliczanie całej warstwy co klatkę).
 	$html .= '<div class="sklepag-pingi" aria-hidden="true">' . str_repeat( '<i></i>', 9 ) . '</div>';
-	// Hero 2-kolumnowy (runda działu stron 25.08 — PLAN-WYGLADU-RUNDA-STRON §3):
+	// Hero 2-kolumnowy:
 	// tekst po lewej, po prawej PANEL NOCNEJ ZMIANY. Na wąskim ekranie panel pod tekstem.
 	$html .= '<div class="sklepag-hero-lista">';
 	$html .= '<header class="sklepag-hero">';
@@ -301,7 +301,7 @@ function sklepag_shortcode_sklep() {
 	$html .= '</div>';
 
 	// OD ZAKUPU DO DZIAŁANIA (wzorzec „ile trwa uruchomienie" — zwiad 19.08;
-	// treść kroków = faktyczny przepływ S-02: mail z instrukcją i linkiem do zipa).
+	// treść kroków = faktyczny przepływ: mail z instrukcją i linkiem do zipa).
 	// Trzy równe karty w rzędzie (runda stron 25.08) — numer z hairline'em jak u gospodarza.
 	$html .= '<section class="sklepag-sekcja sklepag-sekcja--pelna"><p class="sklepag-mono-etykieta">[ <span class="sklepag-akcent">01</span> · OD ZAKUPU DO DZIAŁANIA ]</p>';
 	$html .= '<ol class="sklepag-kroki sklepag-kroki--siatka">';

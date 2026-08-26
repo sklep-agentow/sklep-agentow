@@ -23,7 +23,7 @@ add_action( 'admin_init', 'sklepag_ustawienia_rejestracja' );
  * Opcje sekretne zakładane tu PUSTE z autoload=no, ZANIM dotknie ich formularz:
  * options.php przy zapisie robi update_option, które ZACHOWUJE autoload
  * istniejącej opcji — bez tego pierwszy zapis dałby autoload=yes i sekrety
- * ładowałyby się na froncie przy każdym żądaniu (plan §7). Właśnie TU, nie
+ * ładowałyby się na froncie przy każdym żądaniu. Właśnie TU, nie
  * w aktywacji: hak aktywacji nie odpala przy update-in-place (podmiana plików
  * bez reaktywacji), a admin_init biegnie przy każdym wejściu
  * do admina i add_option jest no-opem, gdy opcja już istnieje; na froncie zero
@@ -93,7 +93,7 @@ function sklepag_ustawienia_rejestracja() {
 		)
 	);
 
-	// --- Dane (D22). ---
+	// --- Dane. ---
 	register_setting(
 		'sklepag_ustawienia',
 		'sklepag_usun_dane_przy_odinstalowaniu',

@@ -1,6 +1,6 @@
 <?php
 /**
- * Panel: moderacja opinii (D32). Lista wg statusu + przyjmij/odrzuć.
+ * Panel: moderacja opinii. Lista wg statusu + przyjmij/odrzuć.
  * Publikacja na stronie produktu = wyłącznie status 'przyjeta'.
  */
 
