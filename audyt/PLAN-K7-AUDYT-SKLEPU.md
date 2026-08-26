@@ -223,6 +223,10 @@ K7 = 3–4 takie dni. Limit dziś **61 %** → decyzja nr 1. Dryf > 1 dnia → t
 - `plugin-check` (oficjalna wtyczka WP.org) instalowana na stosie warsztatowym `wp plugin install plugin-check`.
 - Wtyczka page-cache na czystym stosie tylko na czas celu Ł (i po nim usunięta).
 - Lighthouse/axe zainstalowane — ⛔ nie instalować ponownie.
+- Czysty stos pod rundę stawia `bash narzedzia-qa/k7-stos-rundy.sh <zip> [wzorzec]` (1.0.2): kontener `probny_wp` :8891, baza `wp_probny`,
+  konta `audytor-admin`/`audytor-sub` z hasłami dowiedzionymi `check-password`, bramka wersji zip == kontener, debug.log 0; EXIT 0 = stoi.
+  ⚠️ Zmierzone 26.08 (runda A): `wp db query` NIE działa w kontenerach (brak klienta mysql) — SQL przez `docker exec strona_wp_db mariadb`;
+  na :8890 opcje Stripe są PUSTE; kontener probny po reboocie nie wstaje sam.
 
 ---
 

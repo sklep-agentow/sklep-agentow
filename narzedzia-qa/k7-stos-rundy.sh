@@ -1,5 +1,5 @@
 #!/bin/bash
-# k7-stos-rundy.sh — CZYSTY stos pod rundę audytu K7 (PLAN-K7 §9): wordpress:6.7-php8.1 + paczka.  WERSJA 1.0.1
+# k7-stos-rundy.sh — CZYSTY stos pod rundę audytu K7 (PLAN-K7 §9): wordpress:6.7-php8.1 + paczka.  WERSJA 1.0.2
 #
 # Stawia `probny_wp` (:8891, baza `wp_probny` na wspólnym MariaDB) z `lib-stos-probny.sh`, wgrywa PODANY zip
 # (runda A = paczka z mutantami, runda B = zamrożona 0.9.13), ustawia permalinki, zakłada konta audytorów
@@ -9,7 +9,8 @@
 # Użycie: bash narzedzia-qa/k7-stos-rundy.sh <zip> [wzorzec-w-kodzie-do-potwierdzenia]
 #   EXIT 0 = stos stoi, wtyczka aktywna w podanej wersji, wzorzec (jeśli podany) w kodzie kontenera, oba konta z OCZEKIWANĄ rolą
 #            i DZIAŁAJĄCYM hasłem (`wp user check-password`), strona główna HTTP 200, debug.log pusty PO instalacji, aktywacji
-#            i renderze strony · 1 = coś nie wyszło · 2 = zła komenda / brak sekretu
+#            i renderze strony · 1 = coś nie wyszło · 2 = zła komenda / brak pliku zip / brak sekretu `/root/.claude/sekrety-audyt-*.txt`
+#            / brak narzędzia z `wymagaj_narzedzi` (docker, unzip; brak `curl` = EXIT 1 przy teście HTTP)
 set -u
 KORZEN="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ZIP="${1:-}"; WZORZEC="${2:-}"
@@ -40,6 +41,9 @@ printf '  WP %s · PHP %s · obraz %s\n' "$(wp core version | tr -d '\r')" "$(do
 AKT=$(wp plugin list --status=active --field=name | tr -d '\r' | grep -c '^sklep-agentow$')
 [ "$AKT" -eq 1 ] && potwierdz "sklep-agentow AKTYWNA" || zglos "sklep-agentow nieaktywna"
 WER=$(wp plugin get sklep-agentow --field=version | tr -d '\r'); printf '  wersja wtyczki w kontenerze: %s\n' "$WER"
+# Bramka „aktywna w PODANEJ wersji” (recenzja #187 r2): wersja z nagłówka pliku głównego w zipie == wersja w kontenerze.
+WER_ZIP=$(unzip -p "$ZIP" 'sklep-agentow/sklep-agentow.php' 2>/dev/null | grep -m1 -E '^[[:space:]*]*Version:' | sed -E 's/.*Version:[[:space:]]*//; s/[[:space:]]*$//')
+[ -n "$WER_ZIP" ] && [ "$WER_ZIP" = "$WER" ] && potwierdz "wersja w kontenerze = wersja z zipa ($WER_ZIP)" || zglos "wersja: zip „${WER_ZIP:-?}” vs kontener „$WER”"
 if [ -n "$WZORZEC" ]; then
 	N=$(docker exec "$KONTENER" grep -rF "$WZORZEC" /var/www/html/wp-content/plugins/sklep-agentow/includes/ | wc -l)
 	[ "$N" -ge 1 ] && potwierdz "wzorzec „$WZORZEC” w kodzie kontenera ($N)" || zglos "wzorca „$WZORZEC” NIE MA w kontenerze"
