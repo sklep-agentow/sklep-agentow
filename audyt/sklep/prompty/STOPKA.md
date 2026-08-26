@@ -32,5 +32,28 @@ ZASADY TWARDE:
 - Zwróć WYŁĄCZNIE JSON wg schematu na końcu tego pliku.
 ```
 
+## LEKCJE Z POPRZEDNICH RUND (obowiązują jak zasady twarde; wpisane 26.08 po rundzie A)
+- BUDŻET liczy WYŁĄCZNIE wykonanie: komendy na stosie, SQL, curl, testy, grepy po kodzie. Czytanie materiału,
+  promptu i dokumentów wtyczki jest POZA budżetem — przeczytaj wszystko W CAŁOŚCI, zanim zaczniesz liczyć.
+- ZACHOWANIE = WYKONANIE. Werdykt SPEŁNIONE / ZGODNE / ODPORNE o tym, co kod robi W RUCHU (zapisuje, wysyła,
+  odmawia, liczy, zużywa), wymaga uruchomienia na stosie i wklejonego wyjścia. Czytanie kodu wystarcza tylko
+  dla STRUKTURY (istnieje plik / tabela / pole / pozycja menu).
+- ŚCIEŻKA WROGA, nie szczęśliwa. Wymaganie o ochronie, odmowie, limicie lub dzienniku sprawdzasz przypadkiem,
+  którego autor mógł nie przewidzieć: NIEISTNIEJĄCY login, cudzy token, pusty klucz, drugi klik, żądanie po
+  terminie, HEAD zamiast GET. „Działa dla poprawnych danych” nie mówi nic o wymaganiu.
+- OBIETNICA BEHAWIORALNA ≠ STRAŻNIK STAŁYCH. Skrypt porównujący LICZBY z dokumentacji z kodem
+  (`testy/dokumentacja-zgodnosc-*.sh`) dowodzi tylko, że liczba się zgadza — nie, że zachowanie jest takie,
+  jak obiecane. Obietnicę „X nie zużywa / Y odmawia / Z wysyła ponownie” sprawdzasz WYKONANIEM.
+- AWARIA ZALEŻNOŚCI NA KAŻDEJ ŚCIEŻCE WOŁAJĄCEJ. Zanim wymusisz awarię usługi (Stripe, baza, dysk, poczta),
+  zrób grep WSZYSTKICH miejsc, które ją wołają (start zakupu, webhook, cron / reconciliation, panel,
+  pobieranie), i wymuś awarię na KAŻDYM osobno. Jedno miejsce ODPORNE nie zalicza pozostałych.
+- ARTEFAKTY Z POŚWIADCZENIAMI (cookie-jar, nonce, sekrety testowe, zrzuty HTML/JSON z sesją) → WYŁĄCZNIE
+  `/tmp`. Do raportu i do katalogu testów trafiają TYLKO skrypty; wartości sekretów w cytowanym wyjściu
+  zastępujesz `[ZREDAGOWANE]`.
+- NAGŁÓWEK TESTU mówi, na jakim kodzie pada (SHA z `ZAMROZENIE.md`) i z jakiego powodu; test, który
+  niszczy stos (deinstalacja, `plugin install --force`, RENAME tabeli), ma w nagłówku ⛔ i sposób przywrócenia.
+- WERDYKT ZE SŁOWNIKA SCHEMATU. Tam, gdzie schemat wymaga `plik:linia`, linia jest > 0. Nie ma linii
+  (konfiguracja, środowisko, stos)? Werdykt `NIE DA SIĘ SPRAWDZIĆ` z powodem — nigdy `SPEŁNIONE` z linią 0.
+
 ---
 

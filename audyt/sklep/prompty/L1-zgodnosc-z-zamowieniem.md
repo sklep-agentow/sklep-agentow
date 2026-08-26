@@ -31,6 +31,13 @@ Bywają spójne ze sobą i NIEZGODNE z zamówieniem. Jeśli komentarz w kodzie m
 5. Cele mapy `L1-01…L1-12` (`06-mapa-polowania.md`) — każdy dostaje werdykt; nie ograniczaj się do nich.
 6. Wiersze, które w `01` mają status „interpretacja”, NIE liczą się jako spełnione — wypisz je osobno jako `PYTANIE DO
    ZAMAWIAJĄCEGO` (bez wagi).
+7. ⭐ ŚCIEŻKA WROGA przy każdym wierszu o ochronie / odmowie / limicie / dzienniku (S-09 i pokrewne, logowanie, pobrania,
+   limity): sprawdzasz przypadek, którego autor mógł nie przewidzieć, nie ten, dla którego kod pisano. Dziennik logowań
+   (S-09 „kto, kiedy, konkrety, także NIEUDANE”) testujesz TRZEMA próbami na stosie i po każdej robisz `SELECT` z tabeli
+   dziennika (trzy wyjścia obok siebie w raporcie): (a) dobre hasło na istniejące konto, (b) złe hasło na istniejące
+   konto, (c) złe hasło na NIEISTNIEJĄCY login (`log=nie-ma-takiego-$RANDOM`). Wiersz spełniony tylko, gdy wszystkie
+   trzy mają wpis z tym, co zamówienie wymienia. Ta sama zasada dla limitów (żądanie N+1, nie N) i pobrań (cudzy token,
+   po terminie, HEAD).
 
 ## Werdykty i format (JSON, WYŁĄCZNIE — schemat `audyt/sklep/prompty/SCHEMAT-RAPORTU.json`)
 Każdy `SPEŁNIONE`/`SPEŁNIONE INACZEJ` ma `plik:linia` ORAZ `jak_czlowiek_tego_uzywa`; każdy `BRAK` ma `proba_kontrolna`.
@@ -43,6 +50,6 @@ Podaj `commit_head` (z `audyt/sklep/ZAMROZENIE.md`).
 bezpieczeństwa, wydajności, stylu, architektury, dokumentacji, wyglądu (poza „czy da się dojść”), cudzych wtyczek,
 rzeczy z `03-zalozenia.md`, rzeczy, których zamówienie nie wymaga (wolno zadać PYTANIE DO ZAMAWIAJĄCEGO).
 
-Budżet: 20 wywołań narzędzi. Dwustopniowe czytanie: grep/head najpierw, pełny plik tylko gdy trzeba.
+Budżet: 25 wywołań narzędzi WYKONANIA (czytanie materiału poza budżetem — STOPKA). Dwustopniowe czytanie: grep/head najpierw, pełny plik tylko gdy trzeba.
 
 + STOPKA PRODUKCYJNA (`audyt/sklep/prompty/STOPKA.md`)

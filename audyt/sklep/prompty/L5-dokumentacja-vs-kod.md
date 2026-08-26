@@ -15,7 +15,13 @@ przez koordynatorkę + repo jako źródło grepów. Inwentarz punktów wejścia:
 
 ## Algorytm
 1. Wypisz z dokumentów WSZYSTKIE liczby i OBIETNICE (zdania „robi X", „po Y dniach", „nigdy Z") — zestawienie JEDNYM grepem
-   po `[0-9]+` i po czasownikach, ZANIM otworzysz kod. To materiał, nie znalezisko.
+   po `[0-9]+` i po czasownikach, ZANIM otworzysz kod. To materiał, nie znalezisko. Zestawienie ma DWIE kolumny rodzaju:
+   LICZBOWA (10 pobrań, 90 dni, 30/min) i BEHAWIORALNA („nie zużywa”, „odmawia”, „wysyła ponownie”, „kasuje”, „nigdy”).
+   Do zestawienia wchodzą też obietnice z `01-zamowienie.md` (klient je czytał) — nie tylko z readme.
+   ⭐ Obietnica BEHAWIORALNA dostaje werdykt WYŁĄCZNIE po WYKONANIU na stosie (np. „HEAD nie zużywa pobrania”: licznik
+   przed → `curl -I` → licznik po; „ponowna wysyłka”: `wp_mail` zwraca false → status i zdarzenie w bazie). Liczba
+   zgodna w kodzie NIE dowodzi zachowania. ⛔ `testy/dokumentacja-zgodnosc-sklep.sh` to strażnik STAŁYCH (BS4): możesz
+   go uruchomić, ale jego zielony wynik cytujesz tylko przy obietnicach LICZBOWYCH — nigdy jako dowód behawioralny.
 2. Dla każdej pozycji: miejsce w kodzie (plik:linia) i werdykt: `ZGODNE` / `ROZJAZD` (z obiema stronami cytowanymi) /
    `NIE SPRAWDZIŁEM` / `NIE DA SIĘ SPRAWDZIĆ` (słownik ze schematu; wtedy WYKONAJ: komenda + wyjście).
 3. KIERUNEK ODWROTNY: weź inwentarz punktów wejścia z `02-fakty` i listę pozycji menu → dla każdego: gdzie w dokumentacji
@@ -38,6 +44,6 @@ obowiązkowa; pusta = napisz, że pytanie Cię ograniczyło. Podaj `commit_head`
 bibliotek i cudzych wtyczek · stylu, nazewnictwa · architektury · rzeczy z `03-zalozenia.md` · rzeczy, których zamówienie nie
 wymaga (możesz zadać PYTANIE DO ZAMAWIAJĄCEGO, bez wagi).
 
-Budżet: 30 wywołań narzędzi. Dwustopniowe czytanie: grep/head najpierw, pełny plik tylko gdy trzeba.
+Budżet: 30 wywołań narzędzi WYKONANIA (czytanie materiału i dokumentów poza budżetem — STOPKA); minimum 10 z nich to obietnice behawioralne na stosie. Dwustopniowe czytanie: grep/head najpierw, pełny plik tylko gdy trzeba.
 
 + STOPKA PRODUKCYJNA (`audyt/sklep/prompty/STOPKA.md`)

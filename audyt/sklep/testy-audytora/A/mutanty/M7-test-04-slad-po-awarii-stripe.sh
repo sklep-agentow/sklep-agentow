@@ -1,5 +1,6 @@
 #!/bin/bash
-# PADA na 0.9.13: zakup.php:489-491 — gdy Stripe nie odpowiada, petla 1 reconciliation robi `continue`
+# PADA na paczce z MUTANTEM M7 (425a3124); na CZYSTEJ 0.9.13 (5d3dcf9, 7e0cf726) PRZECHODZI — patrz README.md w tym katalogu (recenzja #191 W1).
+# Opis wady MUTANTA: zakup.php:489-491 — gdy Stripe nie odpowiada, petla 1 reconciliation robi `continue`
 # BEZ wpisu do dziennika. Zaplacona sesja, ktorej webhook nie dotarl, nie zostawia zadnego sladu
 # (brak zamowienia, brak zdarzenia, brak licznika na Pulpicie).
 cd "$(dirname "$0")"; . ./lib.sh
