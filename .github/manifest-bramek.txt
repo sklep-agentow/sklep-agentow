@@ -32,3 +32,10 @@ phpcs
 phpstan
 gitleaks
 slady
+#
+# ROZSZERZENIE 2026-08-26 (PR „ci/manifest-poswiadczenia", po rundzie A audytu K7 sklepu):
+# bramka `poswiadczenia` — czy do drzewa i historii (od HEAD) nie wjeżdżają ŻYWE poświadczenia
+# z testów audytorów: ciasteczka sesji WP, nonce w URL/HTML/JSON, `whsec_`, klucze `sk_/rk_`.
+# Powód z życia: cookie-jar audytora ważny 46 h + nonce + sekret webhooka przeszły gitleaks
+# i slady (25.08) — bramka istnieje od #188 (1.1.2 w #191), ale POZA manifestem.
+poswiadczenia
