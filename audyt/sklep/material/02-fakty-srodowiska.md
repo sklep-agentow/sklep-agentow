@@ -12,7 +12,7 @@
 | serwer WWW | **Apache 2.4.67** — `.htaccess` DZIAŁA | Apache |
 | baza | MariaDB 11.8.8 (`strona_wp_db`) | MariaDB |
 | poczta | łapacz `sklep_mailpit` (:8025, API `http://localhost:8025/api/v1/messages`) — WordPress wysyła przez `wp_mail`, nic nie wychodzi w świat | jw. (ten sam łapacz) |
-| Stripe | **TRYB TESTOWY** (`sk_test_…`); webhooki doręcza `stripe listen --forward-to http://localhost:8890/wp-json/sklepag/v1/webhook` (uruchamia koordynatorka) | jw. |
+| Stripe | **TRYB TESTOWY**; ⚠️ zmierzone 26.08: opcje `sklepag_stripe_klucz_sekretny` i `sklepag_stripe_webhook_sekret` na :8890 są PUSTE (LENGTH=0) — start zakupu = 502 `checkout_blad`, webhook testujesz własnym sekretem; webhooki doręcza `stripe listen --forward-to http://localhost:8890/wp-json/sklepag/v1/webhook` (uruchamia koordynatorka) | jw. |
 | indeksowanie | `blog_public=0` → `<meta name="robots" content="noindex">` i brak sitemapy — **USTAWIENIE STOSU, NIE ZGŁASZAJ** | jw. |
 | motyw | kopia motywu gospodarza (Automatic AI) — nawigacja wpisana na sztywno w `header.php` | domyślny motyw WP |
 | wtyczki obok | `chatbot-live` 1.5.11, `segregator-maila` 1.3.4 (produkty sklepu), `plugin-check` (narzędzie audytu) | tylko badana |
@@ -24,7 +24,7 @@ nonce dla subscribera nie istnieje w żadnym ekranie panelu sklepu (ekrany wymag
 uwzględnienia w kwalifikacji, nie przeszkoda do obejścia.
 
 Narzędzia dla soczewek wykonawczych: `docker exec -u www-data strona_wp_wordpress wp --path=/var/www/html …` (wp-cli),
-`wp db query`, `wp eval` / `wp eval-file` (wzór: `narzedzia-qa/test-php.sh`), `curl`, Playwright (`node testy/e2e/…`),
+⛔ `wp db query` NIE działa w kontenerach (brak klienta mysql, zmierzone 26.08) — SQL: `docker exec strona_wp_db sh -c 'MYSQL_PWD="$MARIADB_ROOT_PASSWORD" mariadb wordpress -e "…"'` (probny: baza `wp_probny`), `wp eval` / `wp eval-file` (wzór: `narzedzia-qa/test-php.sh`), `curl`, Playwright (`node testy/e2e/…`),
 Stripe CLI (`stripe trigger`, `stripe listen`), Mailpit API, `narzedzia-qa/stos.sh` 1.3.1 (widzi tabele `wp_sklepag_*` — `tabele`, `wiersze wp_sklepag_zamowienia`; strażnik `stos-proba-kontrolna.sh`).
 Wolumen docelowy (założenie Z6, PLAN-PROJEKTU §11): pojedyncze zakupy dziennie. Zasoby maszyny: 2 vCPU, 3,8 GB RAM — testy obciążeniowe z umiarem.
 

@@ -1,0 +1,192 @@
+{
+  "soczewka": "L",
+  "runda": "A",
+  "commit_head": "5d3dcf9f0d99dedc1fe201c3e318f46d6f35ba5d",
+  "werdykty": [
+    {
+      "cel": "Ł-02",
+      "werdykt": "AWARIA CICHA",
+      "plik": "includes/zakup.php",
+      "linia": 483,
+      "dowod": "sklepag_dociagnij_zalegle() ma DWIE pętle wołające Stripe. Pętla 1 (linia ~483, sesje wp_sklepag_sesje_checkout w stanie 'utworzona' starsze niż 120 s) na WP_Error z sklepag_stripe_pobierz_sesje() robi WYŁĄCZNIE `continue;` (linia ~490) — ZERO wpisu w wp_sklepag_zdarzenia. Pętla 2 (linia ~518, zamówienia utknięte w oplacone/mail_w_toku/mail_blad) na TĘ SAMĄ klasę błędu Stripe woła `sklepag_zdarzenie(null,'reconciliation_blad', $sid.': '.$sesja->get_error_message())` (linia ~522). Reprodukcja na wp_probny (klucz Stripe sk_test_zly — stan zastany tej rundy): wstawiono sesję 'utworzona' (cs_test_recon_loop1, utworzono=NOW()-300s) i zamówienie 'mail_blad' (cs_test_recon_loop2, zmieniono=NOW()-300s, mail_proby=1). PRZED: liczba_zdarzen=3. Uruchomiono `wp eval 'sklepag_dociagnij_zalegle();'` (funkcja PRODUKCYJNA, bez modyfikacji). PO: liczba_zdarzen=4, nowy wpis id=4 typ='reconciliation_blad' opis='cs_test_recon_loop2: Invalid API Key provided: sk_test_zly' — WYŁĄCZNIE z pętli 2. Sesja cs_test_recon_loop1 (pętla 1) pozostała w stanie 'utworzona' PO cronie, BEZ jakiegokolwiek wpisu w dzienniku o próbie/awarii. Powtórzone padającym testem (patrz test_padajacy w znalezisku), świeże uruchomienie 26.08.2026: zdarzenia_przed=10031, zdarzenia_po=10033 (+2: 1 z Ł-05-testu równoległego seedu i 1 z pętli 2), wpis_dla_petli1=0, wpis_dla_petli2=1, WYNIK=FAIL (exit 1). Sprawdzono TAKŻE ścieżkę /status (linia 449 zakup.php) — ta NIE woła Stripe wcale (czysty SELECT z lokalnej bazy), więc nie jest ścieżką zależną od Stripe i nie podlega temu celowi. Ścieżka startu zakupu (linia 99, sklepag_stripe_utworz_sesje) była już przetestowana w poprzednim przebiegu tej rundy (raport L.json, cel Ł-02: ODPORNE — czytelny komunikat 502 dla kupującego + wpis 'checkout_blad' w dzienniku, zero osieroconych rekordów)."
+    },
+    {
+      "cel": "Ł-03",
+      "werdykt": "ODPORNE",
+      "plik": "includes/pobieranie.php",
+      "linia": 43,
+      "dowod": "Utworzono zamówienie SQL-em w stanie 'mail_wyslany' z prawdziwym tokenem 64-znakowym (token losowy przez openssl rand -hex 32, token_pobrania=SHA256(token) — zgodnie z logiką pobieranie.php:hash_equals($zam->token_pobrania, hash('sha256',$token))). Kontrola PRZED skasowaniem pliku: GET admin-post.php?action=sklepag_pobierz&z=2&t=<token> → HTTP 200, 146 bajtów (plik prawdziwy). Backup przez `docker cp`, potem `docker exec probny_wp rm .../agent-test-lamacz.zip` (kasowanie W KONTENERZE, nie na hoście). GET po skasowaniu → HTTP 503, body: 'Plik chwilowo niedostępny. Skontaktuj się z właścicielem sklepu (odpisz na maila z zakupem).' — brak fatala, brak stack trace. SELECT z wp_sklepag_zdarzenia: nowy wpis id=6 typ='pobranie_brak_pliku' opis=<pełna ścieżka pliku> zamowienie_id=2 — WPIS JEST, z konkretną ścieżką ułatwiającą diagnozę właścicielowi. SELECT pobrania_uzyte PO nieudanej próbie: 1 (bez zmiany od udanej próby kontrolnej sprzed skasowania — licznik NIE został zjedzony przez failed próbę, bo file_exists() jest sprawdzany PRZED atomowym UPDATE licznika, linie 43 vs 66). Plik przywrócony `docker cp` z powrotem + `chown www-data:www-data`, katalog zweryfikowany `ls -la` (plik obecny, właściciel poprawny)."
+    },
+    {
+      "cel": "Ł-05",
+      "werdykt": "AWARIA CICHA",
+      "plik": "includes/zakup.php",
+      "linia": 66,
+      "dowod": "check_admin_referer('sklepag_kup') wywoływany na starcie sklepag_obsluz_kup(), PRZED jakimkolwiek kodem wtyczki (rate-limit, logowanie zdarzeń). Policzono nonce dla ticka sprzed 25h dokładnie algorytmem core (wp_nonce_tick/wp_create_nonce: substr(wp_hash($i.'|sklepag_kup|0|','nonce'),-12,10) z $i policzonym dla time()-25*3600) — symulacja strony produktu odtworzonej z page-cache starszego niż 24h (życie nonce'u WP = 2 ticki po 12h). nonce_stary=ea147507a4, nonce_swiezy(bieżący)=d93953119b — różne, jak oczekiwano. PRZED próbą: SELECT COUNT(*) FROM wp_sklepag_zdarzenia = 6. POST admin-post.php action=sklepag_kup produkt_id=1 zgoda=1 _wpnonce=ea147507a4 → HTTP 403, body: '<div class=\"wp-die-message\">The link you followed has expired.</div>' (komunikat WP core, PO ANGIELSKU, na polskojęzycznej stronie, bez wskazówki 'odśwież stronę'). PO próbie: COUNT(*) = 6 — BEZ ZMIANY, zero wpisu w dzienniku. KONTROLA (dowód, że jedyną różnicą jest wiek nonce'u): świeży nonce pobrany z /sklep/produkt/agent-testowy-l/ (d93953119b) na TĘ SAMĄ akcję → HTTP 502 'Nie udało się rozpocząć płatności...' + NOWY wpis id=7 typ='checkout_blad' w dzienniku (bo klucz Stripe sk_test_zly — fakt środowiska, nie ten błąd) — POTWIERDZA że logowanie zdarzeń działa, gdy nonce przechodzi; nonce nieważny zabija żądanie ZANIM wtyczka zdąży cokolwiek zapisać."
+    },
+    {
+      "cel": "Ł-06",
+      "werdykt": "ODPORNE",
+      "plik": "includes/admin-dashboard.php",
+      "linia": 282,
+      "dowod": "Seed przez `wp eval-file` w pętli (batch INSERT po 1000/100 wierszy dla szybkości na 2 vCPU): 10 000 wierszy wp_sklepag_zdarzenia (0.48 s) + 1000 wierszy wp_sklepag_zamowienia (0.13 s) — count_zdarzenia=10007, count_zamowienia=1002 PO seedzie. Czas otwarcia jako admin (curl -w %{time_total}, sesja realna): pulpit (page=sklepag) = 0.397 s, dziennik (page=sklepag-dziennik, 10k wierszy) = 0.043 s, lista produktów (porównanie, mało danych) = 0.065 s — żaden nie zbliża się do limitu 30 s hostingu. Liczba zapytań SQL (SAVEQUERIES=true przez `wp config set` + bezpośrednie wywołanie produkcyjnej funkcji sklepag_admin_dashboard() z wp_set_current_user na audytor-admin, global $wpdb->queries zliczone): pulpit = 20 zapytań SELECT (wszystkie), dziennik = 2 zapytania — LICZBA STAŁA, niezależna od 10k/1k wierszy w tabelach (paginacja z LIMIT, nie pętla po wierszach) — brak wzorca N+1. Warningi 'Undefined array key HTTP_HOST' przy wywołaniu dziennika to artefakt środowiska testowego (wp eval bez kontekstu HTTP, $_SERVER['HTTP_HOST'] puste w CLI) w WP_List_Table core, NIE błąd wtyczki — potwierdzone przez czysty wynik przez prawdziwe żądanie HTTP (curl) wyżej (0.043 s, HTTP 200, bez warningów w debug.log)."
+    },
+    {
+      "cel": "Ł-07",
+      "werdykt": "ODPORNE",
+      "plik": "includes/zakup.php",
+      "linia": 20,
+      "dowod": "500 żądań łącznie (170+170+160) na trzy endpointy, 20 równoległych (xargs -P20), debug.log wyzerowany przed startem: /status (limit 30/min) → 30×200, 140×429 (limiter zadziałał precyzyjnie na progu); /kup (limit 10/min, wspólny świeży nonce) → 10×502 (checkout_blad — fakt: zły klucz Stripe, NIE błąd limitera) + 160×429; /pobierz (limit 10 pobrań NA ZAMÓWIENIE + limit 20/min per IP, zamówienie id=2 miało już 1/10 slot zużyty z testu Ł-03) → 9×200 (dokładnie tyle, ile brakowało do pobrania_limit=10: 1+9=10) + 11×410 ('Limit pobrań wyczerpany') + 140×429 — licznik atomowy `UPDATE...WHERE pobrania_uzyte<pobrania_limit` NIE przepuścił ani jednego pobrania ponad ustalony limit mimo 20 równoległych żądań, co jest dowodem poprawności mechanizmu CAS pod obciążeniem (bezpośrednio wspiera też L3-06 innej soczewki). `wc -l /var/www/html/debug.log` PO burzy = 0 — zero fatali/warningów/deprecated mimo 500 żądań i 3 różnych typów odrzuceń (429/502/410)."
+    },
+    {
+      "cel": "Ł-09",
+      "werdykt": "AWARIA CICHA",
+      "plik": "includes/admin-produkty.php",
+      "linia": 259,
+      "dowod": "Zmierzone php -i w kontenerze probny_wp: upload_max_filesize=2M, post_max_size=8M, memory_limit=128M — wielokrotnie PONIŻEJ zadeklarowanego w kodzie i w UI limitu wtyczki 20 MB (SKLEPAG_UPLOAD_LIMIT_B, admin-produkty.php:18, wyświetlane w formularzu jako 'Tylko ZIP, do 20 MB'). Realny multipart POST (curl -F) pliku 5 MB (POWYŻEJ upload_max_filesize=2M, ale PONIŻEJ post_max_size=8M i deklarowanych 20 MB — czysty przypadek PHP-level odrzutu) jako zalogowany administrator z nonce'em ze strony edycji produktu: HTTP 302, Location zdekodowany: 'Upload nie powiódł się (kod 1) — spróbuj ponownie; duży plik? Limit: 20 MB.' Kod 1 = UPLOAD_ERR_INI_SIZE (PHP odrzucił PRZED dotarciem do walidacji wtyczki), a mimo to komunikat cytuje 20 MB — LICZBA NIEPRAWDZIWA dla tej przyczyny, admin nie ma jak zdiagnozować, że prawdziwy sufit to 2 MB w php.ini. Test jednostkowy bezpośrednio na produkcyjnej funkcji sklepag_przyjmij_zip() z $_FILES['plik']['error']=UPLOAD_ERR_INI_SIZE potwierdza identyczny komunikat (świeże uruchomienie 26.08.2026: komunikat_bledu zawiera '20 MB', WYNIK=FAIL, exit 1). Stan produktu 1 PO próbie: plik_rozmiar=146, aktywny=1 — bez zmian (dobra strona: żadna częściowa/zła zapisana danych). ZERO wpisu w wp_sklepag_zdarzenia opisującego próbę uploadu — właściciel nie ma śladu, że administrator (albo ktoś z dostępem do panelu) wielokrotnie próbował i nie mógł wgrać pliku. Próba 21 MB (ponad post_max_size=8M) dała HTTP 200 z pustym ciałem (0 bajtów) — PHP odrzucił całe żądanie POST zanim skrypt się uruchomił (zerowe $_POST/$_FILES); zachowanie odnotowane w anomaliach, nie rozwijane dalej w tej rundzie (budżet)."
+    },
+    {
+      "cel": "Ł-10",
+      "werdykt": "AWARIA CICHA",
+      "plik": "includes/admin-produkty.php",
+      "linia": 325,
+      "dowod": "PRZEŁĄCZ PRODUKTU (linia ~325): `$nowy = $p->aktywny ? 0 : 1;` czyta stan, liczy odwrotność, zapisuje `$wpdb->update()` BEZ warunku CAS (`WHERE aktywny=$stary_stan`) — w przeciwieństwie do zamowienia.status (D24, atomowy UPDATE z warunkiem), rate_limit (ON DUPLICATE KEY z LAST_INSERT_ID) i pobrania_uzyte (UPDATE...WHERE pobrania_uzyte<limit) w TYM SAMYM repo. Reprodukcja: stan_przed aktywny=1 (produkt 1). Dwa GET-y RÓWNOLEGLE (background shell + wait) na admin-post.php?action=sklepag_produkt_przelacz&produkt=1 z tym samym ważnym noncem administratora → oba HTTP 302 ('sukces'). stan_po: aktywny=0 — ADMIN PO DWÓCH KLIKNIĘCIACH OCZEKUJE POWROTU DO 1, dostaje 0. wp_sklepag_zdarzenia: DWA identyczne wpisy 'produkt_deaktywowany #1 Agent Testowy Ł' z TYM SAMYM znacznikiem czasu (2026-08-25 23:45:56) — brak jakiegokolwiek wpisu 'produkt_aktywowany' mimo dwóch kliknięć, dziennik nie ujawnia że doszło do wyścigu. Stan przywrócony (aktywny=1) po teście. KONTROLA — RESEND (linia 27 admin-zamowienie.php) na tym samym wzorcu (2 równoległe resendy na zamówienie id=2): zachowanie DETERMINISTYCZNE i ZGODNE z jawnym komentarzem w kodzie ('wygrywa ostatni zapis skrótu... akceptowalne dla akcji ręcznej') — jeden token_pobrania końcowy, mail_proby=0 bez zmiany, DWA wpisy 'mail_resend' (oczekiwane, bo obie próby faktycznie wysłały mail) — TU race jest udokumentowanym, świadomym ryzykiem, nie znaleziskiem (odrzucone_wlasne)."
+    }
+  ],
+  "znaleziska": [
+    {
+      "teza": "sklepag_dociagnij_zalegle() (includes/zakup.php, pętla nad wp_sklepag_sesje_checkout w stanie 'utworzona', ~linia 483-497) połyka WP_Error z sklepag_stripe_pobierz_sesje() samym `continue;` bez żadnego wpisu w wp_sklepag_zdarzenia — podczas gdy DRUGA pętla tej samej funkcji (nad zamówieniami utkniętymi, ~linia 505-524) na IDENTYCZNĄ klasę błędu Stripe woła sklepag_zdarzenie(null,'reconciliation_blad',...). Ta sama funkcja cron, dwa standardy logowania błędów.",
+      "waga": "KRYTYCZNA",
+      "typ": "USTERKA",
+      "klasa": "SLEPE-PLAMY",
+      "dowody": [
+        { "plik": "includes/zakup.php", "linia": 483, "cytat": "$sesje = $wpdb->get_col( $wpdb->prepare( \"SELECT stripe_session_id FROM {$ps} WHERE stan='utworzona' AND utworzono < %s ORDER BY utworzono LIMIT 20\", $granica ) );" },
+        { "plik": "includes/zakup.php", "linia": 489, "cytat": "$sesja = sklepag_stripe_pobierz_sesje( $sid );\n\t\tif ( is_wp_error( $sesja ) ) {\n\t\t\tcontinue; // Chwilowy błąd sieci/Stripe — następny przebieg spróbuje ponownie, bez zaśmiecania dziennika." },
+        { "plik": "includes/zakup.php", "linia": 519, "cytat": "if ( is_wp_error( $sesja ) ) {\n\t\t\tsklepag_zdarzenie( null, 'reconciliation_blad', $sid . ': ' . $sesja->get_error_message() );\n\t\t\tcontinue;\n\t\t}" }
+      ],
+      "mechanizm": "Reconciliation (D24: DRUGA droga domykania zakupu, obok webhooka) ma dwie odpowiedzialności w JEDNEJ funkcji uruchamianej co 10 min przez cron: (1) sprawdzić, czy sesje Stripe jeszcze 'niedomknięte' (stan='utworzona') już zostały opłacone — to jedyny ratunek dla klienta, którego webhook Stripe nigdy nie doszedł; (2) domknąć zamówienia utknięte w pół-drodze. Gdy Stripe jest niedostępny/klucz jest zły (dokładnie stan zastany tej rundy: sk_test_zly), GAŁĄŹ (1) zawodzi identycznie jak gałąź (2) — ale tylko (2) zostawia ślad. Komentarz przy (1) ('bez zaśmiecania dziennika') zakłada, że błąd jest 'chwilowy' i kolejny przebieg naprawi — ale jeśli przyczyna jest TRWAŁA (zły klucz po rotacji, wygasła subskrypcja Stripe, awaria sieciowa trwająca godziny), KAŻDY kolejny przebieg cron powtarza dokładnie tę samą cichą porażkę w nieskończoność, bez jednego wpisu w dzienniku i bez żadnego sygnału w panelu właściciela.",
+      "skutek": "Klient zapłacił, webhook Stripe nie doszedł (sieć, restart serwera w złym momencie, cokolwiek — dokładnie scenariusz, dla którego D24 wprowadziło reconciliation jako REDUNDANTNĄ, drugą drogę). Reconciliation jest JEDYNYM mechanizmem, który miał to wykryć. Jeśli w chwili próby reconciliation Stripe jest niedostępny albo klucz jest zły, klient zostaje bez pliku, bez maila, i — kluczowe — właściciel NIE MA ŻADNEGO śladu w dzienniku sugerującego, że coś w ogóle poszło nie tak z tą konkretną sesją. Panel pokaże pustą historię zdarzeń dla tej sesji; jedyny widoczny efekt to sesja wisząca w stanie 'utworzona' bez końca — coś, czego żaden ekran administracyjny w tej wtyczce nie wylicza ani nie podświetla jako 'do sprawdzenia' (w przeciwieństwie do zamówień z mail_blad, które reconciliation przynajmniej PRÓBUJE i LOGUJE).",
+      "rodzaj_skutku": "zaobserwowany",
+      "kroki_reprodukcji": [
+        "Na wp_probny: INSERT INTO wp_sklepag_sesje_checkout (stripe_session_id, produkt_id, stan, utworzono) VALUES ('cs_x', 1, 'utworzona', NOW() - INTERVAL 300 SECOND);",
+        "Upewnić się, że sklepag_stripe_klucz_sekretny jest zły (np. sk_test_zly — stan zastany tej rundy) albo endpoint Stripe nieosiągalny.",
+        "docker exec -u www-data probny_wp wp --path=/var/www/html eval 'sklepag_dociagnij_zalegle();'",
+        "SELECT stan FROM wp_sklepag_sesje_checkout WHERE stripe_session_id='cs_x'; → 'utworzona' (bez zmiany)",
+        "SELECT * FROM wp_sklepag_zdarzenia WHERE opis LIKE '%cs_x%'; → 0 wierszy (porównać z zamówieniem w stanie mail_blad wstawionym tą samą metodą — TO daje wpis 'reconciliation_blad')"
+      ],
+      "test_padajacy": "/root/praca/warsztat/_robocze/k7-runda-A/testy-audytora/L/L-02b-reconciliation-sesje-utworzona-cichy-blad-stripe-test.php — wywołuje bezpośrednio produkcyjną sklepag_dociagnij_zalegle(). Świeże uruchomienie 26.08.2026 (docker exec -u www-data probny_wp wp --path=/var/www/html eval-file ...): \"PADA_TEST: zdarzenia_przed=10031 zdarzenia_po=10033\\nPADA_TEST: stan_sesji_petla1_po_cronie=utworzona (OCZEKIWANE do wykrycia bledu: utworzona, BEZ zadnego wpisu opisujacego awarie)\\nPADA_TEST: wpis_w_dzienniku_dla_petli1(sesje_utworzona)=0 (OCZEKIWANE ABY BYLO ODPORNE: >=1; DZIS: 0)\\nPADA_TEST: wpis_w_dzienniku_dla_petli2(zamowienia_utkniete)=1 (loguje poprawnie, kontrola)\\nPADA_TEST: WYNIK=FAIL - petla reconciliation dla sesji 'utworzona' polyka blad Stripe calkowicie po cichu (0 wpisow)...\" — exit 1 na obecnym kodzie 0.9.13 (5d3dcf9).",
+      "wyjscie_wykonania": "Patrz dowod w werdykcie Ł-02 (id zdarzeń 1-4) + wyjście testu wyżej (exit=1)."
+    },
+    {
+      "teza": "check_admin_referer('sklepag_kup') w sklepag_obsluz_kup() (includes/zakup.php:66) odrzuca nonce starszy niż ok. 24 h komunikatem WordPress core PO ANGIELSKU ('The link you followed has expired.') i kończy żądanie ZANIM jakikolwiek kod wtyczki zdąży cokolwiek zapisać w wp_sklepag_zdarzenia — strona produktu utrzymywana w page-cache dłużej niż ~24 h staje się martwym formularzem zakupu bez śladu dla właściciela.",
+      "waga": "DUŻA",
+      "typ": "USTERKA",
+      "klasa": "SLEPE-PLAMY",
+      "dowody": [
+        { "plik": "includes/zakup.php", "linia": 66, "cytat": "function sklepag_obsluz_kup() {\n\tcheck_admin_referer( 'sklepag_kup' );" },
+        { "plik": "includes/front-produkt.php", "linia": 45, "cytat": "wp_nonce_field( 'sklepag_kup' )" }
+      ],
+      "mechanizm": "wp_nonce_field/wp_create_nonce generuje nonce ważny przez dokładnie 2 'ticki' po 12h (domyślne nonce_life=DAY_IN_SECONDS) — po ~24-48h (zależnie od momentu wygenerowania względem granicy ticka) nonce zapisany w WYRENDEROWANYM HTML-u strony przestaje być ważny. Strona produktu nie jest wykluczona z żadnego cache'a przez samą wtyczkę (brak nagłówka no-cache/Cache-Control specyficznego dla tej strony — nagłówki HTTP to warstwa serwera/K8, ale FAKT braku odświeżania nonce'u w treści strony jest kodem wtyczki). Jeśli hosting klienta włączy full-page cache (bardzo częste na WordPressie: WP Super Cache, LiteSpeed Cache, Cloudflare cache-everything itp.) z TTL ≥24h, KAŻDY gość odwiedzający zcache'owaną wersję strony produktu i próbujący kupić dostaje odrzut check_admin_referer — a jest to funkcja RDZENIA WordPressa, wołana ZANIM wtyczka wykona choćby jedną linijkę własnego kodu (rate-limit, sklepag_zdarzenie). Nie ma zatem MIEJSCA w tej ścieżce, w którym wtyczka mogłaby to zalogować — architektonicznie niemożliwe bez owinięcia samego check_admin_referer.",
+      "skutek": "Sprzedawca traci sprzedaż w sposób, którego NIE MA JAK zauważyć z panelu — dziennik zdarzeń milczy, bo błąd występuje o warstwę wcześniej niż jakikolwiek kod wtyczki. Gość widzi obcojęzyczny, techniczny komunikat WordPressa bez wskazówki 'odśwież stronę i spróbuj ponownie' — najbardziej prawdopodobna reakcja to porzucenie zakupu, nie odświeżenie. Skala zależy od konfiguracji cache hostingu (poza kontrolą wtyczki), ale gdy występuje, dotyka KAŻDEGO gościa na tej wersji cache'u, nie tylko jednego.",
+      "rodzaj_skutku": "zaobserwowany",
+      "kroki_reprodukcji": [
+        "docker exec -u www-data probny_wp wp --path=/var/www/html eval '$i=ceil((time()-25*3600)/(DAY_IN_SECONDS/2)); echo substr(wp_hash($i.\"|sklepag_kup|0|\",\"nonce\"),-12,10);' → nonce_stary",
+        "SELECT COUNT(*) FROM wp_sklepag_zdarzenia; → zapamiętać liczbę",
+        "curl -X POST http://localhost:8891/wp-admin/admin-post.php --data-urlencode action=sklepag_kup --data-urlencode produkt_id=1 --data-urlencode zgoda=1 --data-urlencode _wpnonce=<nonce_stary> → HTTP 403 'The link you followed has expired.'",
+        "SELECT COUNT(*) FROM wp_sklepag_zdarzenia; → ta sama liczba co przed (bez zmiany)"
+      ],
+      "test_padajacy": "/root/praca/warsztat/_robocze/k7-runda-A/testy-audytora/L/L-05-nonce-page-cache-25h-test.sh — realny HTTP round-trip na produkcyjny endpoint. Wyjście z rzeczywistego uruchomienia 26.08.2026: nonce_stary=ea147507a4, zdarzenia_przed=6, http_stary_nonce=403, body zawiera 'The link you followed has expired.', zdarzenia_po=6 → WYNIK=FAIL (exit 1).",
+      "wyjscie_wykonania": "Patrz dowod w werdykcie Ł-05 (włącznie z próbą kontrolną świeżym noncem, która POTWIERDZA że logowanie zdarzeń działa poprawnie, gdy nonce jest ważny)."
+    },
+    {
+      "teza": "sklepag_przyjmij_zip() (includes/admin-produkty.php) przy UPLOAD_ERR_INI_SIZE zawsze zwraca komunikat cytujący WŁASNY zadeklarowany limit wtyczki ('Limit: 20 MB'), niezależnie od rzeczywistego upload_max_filesize środowiska (zmierzone na probny_wp: 2 MB) — administrator dostaje nieprawdziwą liczbę i nie ma jak zdiagnozować prawdziwej przyczyny odrzutu.",
+      "waga": "DUŻA",
+      "typ": "USTERKA",
+      "klasa": "NOWA",
+      "dowody": [
+        { "plik": "includes/admin-produkty.php", "linia": 259, "cytat": "$blad = isset( $_FILES['plik']['error'] ) ? (int) $_FILES['plik']['error'] : UPLOAD_ERR_NO_FILE;\n\tif ( UPLOAD_ERR_OK !== $blad ) {\n\t\t$wroc( 'Upload nie powiódł się (kod ' . $blad . ') — spróbuj ponownie; duży plik? Limit: ' . size_format( SKLEPAG_UPLOAD_LIMIT_B ) . '.' );" },
+        { "plik": "includes/admin-produkty.php", "linia": 18, "cytat": "const SKLEPAG_UPLOAD_LIMIT_B = 20 * 1024 * 1024; // Plan §7: 20 MB (realne zipy botów <1 MB)." }
+      ],
+      "mechanizm": "Kod NIGDY nie porównuje SKLEPAG_UPLOAD_LIMIT_B z realną pojemnością środowiska (WordPress udostępnia do tego `wp_max_upload_size()`, która bierze pod uwagę min(upload_max_filesize, post_max_size, memory_limit)) — ani w formularzu (który zawsze pokazuje '20 MB' jako obietnicę), ani w komunikacie błędu (który zawsze cytuje tę samą stałą, niezależnie od tego, czy PHP odrzucił plik z powodu WŁASNEGO ini_size dużo mniejszego). Kod błędu 1 (UPLOAD_ERR_INI_SIZE) jest jednoznacznym sygnałem 'to nie jest kwestia limitu wtyczki, to limit PHP' — kod ma tę informację (liczbę $blad) i ją IGNORUJE przy budowaniu komunikatu.",
+      "skutek": "Na hostingu, który nie podniósł domyślnych, ciasnych limitów PHP (bardzo częste na budżetowym/współdzielonym hostingu WP — 2-8 MB to typowe wartości fabryczne), administrator sklepu próbujący wgrać plik produktu w granicach ZADEKLAROWANYCH przez samą wtyczkę 20 MB dostanie odrzut z komunikatem, który każe mu wierzyć, że mieści się w limicie i 'spróbować ponownie' — co nigdy się nie uda, bo prawdziwa ściana jest gdzie indziej (php.ini/.htaccess/panel hostingu), o czym komunikat nic nie mówi. Traci czas na próby i nie wie, do kogo/czego się zwrócić (hosting? swój błąd? wtyczka zepsuta?). Zero śladu w dzienniku wtyczki dla właściciela sklepu monitorującego zdarzenia z zewnątrz.",
+      "rodzaj_skutku": "zaobserwowany",
+      "kroki_reprodukcji": [
+        "Zmierzyć: docker exec probny_wp php -i | grep -i upload_max_filesize → 2M",
+        "Zalogować się jako administrator, pobrać nonce z formularza edycji produktu (admin.php?page=sklepag-produkty&widok=formularz&produkt=1)",
+        "curl -F action=sklepag_produkt_zapisz -F produkt_id=1 -F _wpnonce=<nonce> -F nazwa=... -F cena=99.00 -F waluta=PLN -F aktywny=1 -F plik=@plik-5MB.zip http://localhost:8891/wp-admin/admin-post.php",
+        "Odczytać Location z odpowiedzi 302 → sklepag_blad=Upload nie powiódł się (kod 1) — spróbuj ponownie; duży plik? Limit: 20 MB."
+      ],
+      "test_padajacy": "/root/praca/warsztat/_robocze/k7-runda-A/testy-audytora/L/L-09-limit-uploadu-mylacy-komunikat-test.php — wywołuje bezpośrednio produkcyjną sklepag_przyjmij_zip() z $_FILES['plik']['error']=UPLOAD_ERR_INI_SIZE. Świeże uruchomienie 26.08.2026: \"PADA_TEST: komunikat_bledu=\\\"Upload nie powiódł się (kod 1) — spróbuj ponownie; duży plik? Limit: 20 MB.\\\"\\nPADA_TEST: rzeczywisty_upload_max_filesize_na_srodowisku=2M\\nPADA_TEST: WYNIK=FAIL\" — exit 1.",
+      "wyjscie_wykonania": "Patrz dowod w werdykcie Ł-09 (curl 5MB e2e + wynik testu jednostkowego, oba zgodne)."
+    },
+    {
+      "teza": "sklepag_obsluz_przelacz_produkt() (includes/admin-produkty.php:~310-336) czyta $p->aktywny i zapisuje jego odwrotność BEZ warunku CAS (`WHERE aktywny=<odczytany_stan>`) — w przeciwieństwie do WSZYSTKICH innych mutacji stanu w tym repo (zamowienia.status pod D24, rate_limit, pobrania_uzyte) — dwa równoległe kliknięcia 'przełącz' czytają ten sam stan startowy i oba zapisują tę samą wartość docelową, więc dwuklik NIE wraca do stanu wyjściowego, a dziennik dostaje dwa identyczne, mylące wpisy zamiast pary aktywacja/deaktywacja.",
+      "waga": "ŚREDNIA",
+      "typ": "USTERKA",
+      "klasa": "NOWA",
+      "dowody": [
+        { "plik": "includes/admin-produkty.php", "linia": 325, "cytat": "$nowy = $p->aktywny ? 0 : 1;" },
+        { "plik": "includes/admin-produkty.php", "linia": 330, "cytat": "$wpdb->update(\n\t\t$t,\n\t\tarray(\n\t\t\t'aktywny'   => $nowy,\n\t\t\t'zmieniono' => current_time( 'mysql' ),\n\t\t),\n\t\tarray( 'id' => $id )\n\t);" }
+      ],
+      "mechanizm": "Brak `array('id'=>$id,'aktywny'=>$stan_odczytany)` jako WHERE przy update() oznacza, że dwa równoległe żądania odczytujące ten sam wiersz PRZED zapisem żadnego z nich (klasyczny read-modify-write bez blokady) obliczą TĘ SAMĄ wartość docelową $nowy i oba ją zapiszą — jedno z dwóch przejść stanu, jakie admin faktycznie chciał wykonać (1→0→1), efektywnie znika. Dokładnie ta sama klasa problemu jest w kodzie ŚWIADOMIE rozwiązana CAS-em w trzech innych miejscach tego repo (rate_limit z LAST_INSERT_ID, pobrania_uzyte z WHERE pobrania_uzyte<limit, zamowienia.status pod D24) — przełącznik produktu jest jedynym mutatorem stanu bez tej ochrony.",
+      "skutek": "Admin klikający szybko dwa razy (przypadkowy dwuklik, dwie karty przeglądarki, timeout+retry) na 'Przełącz' oczekuje powrotu do stanu wyjściowego — dostaje ten sam kierunek zmiany utrwalony RAZ, i dziennik pokazujący dwa identyczne wpisy z tym samym znacznikiem czasu, bez żadnej wzmianki o drugim kliknięciu ani o tym, że produkt w rzeczywistości wciąż jest (albo nie jest) w sprzedaży zgodnie z jego ostatnią intencją. Przy produkcie, który akurat MIAŁ zostać włączony z powrotem (np. omyłkowo wyłączony, klik+klik = powrót), realny efekt to produkt PRZEZ POMYŁKĘ pozostający wyłączony ze sprzedaży — bez żadnego alarmu.",
+      "rodzaj_skutku": "zaobserwowany",
+      "kroki_reprodukcji": [
+        "UPDATE wp_sklepag_produkty SET aktywny=1 WHERE id=1;",
+        "Zalogować się jako administrator, pobrać nonce z listy produktów (link 'Przełącz')",
+        "Odpalić RÓWNOLEGLE (background shell + wait) dwa GET admin-post.php?action=sklepag_produkt_przelacz&produkt=1&_wpnonce=<nonce>",
+        "SELECT aktywny FROM wp_sklepag_produkty WHERE id=1; → 0 (oczekiwano: 1, bo dwa kliknięcia = dwa przejścia = powrót)",
+        "SELECT typ,opis,czas FROM wp_sklepag_zdarzenia ORDER BY id DESC LIMIT 2; → dwa identyczne 'produkt_deaktywowany' z tym samym czasem"
+      ],
+      "test_padajacy": "/root/praca/warsztat/_robocze/k7-runda-A/testy-audytora/L/L-10-przelacz-produkt-wyscig-test.sh — dwa realne, równoległe żądania HTTP na produkcyjny endpoint z sesją administratora. Wyjście z rzeczywistego uruchomienia 26.08.2026: stan_przed=1, req1=302, req2=302, stan_po=0, dziennik: dwa wpisy 'produkt_deaktywowany #1 Agent Testowy Ł' z identycznym znacznikiem czasu 2026-08-25 23:45:56, zero wpisów 'produkt_aktywowany' → WYNIK=FAIL (exit 1). Stan przywrócony do aktywny=1 po teście.",
+      "wyjscie_wykonania": "Patrz dowod w werdykcie Ł-10."
+    }
+  ],
+  "anomalie": [
+    {
+      "opis": "Budżet 30 wywołań lekko przekroczony (rzeczywiste zużycie ~31) — dwie ścieżki (Ł-02 na WSZYSTKICH miejscach wołających Stripe, Ł-09 z pomiarem realnych limitów php.ini) wymagały dodatkowego czytania kodu (grep+sed) ponad szacunek, żeby zlokalizować DRUGĄ pętlę reconciliation i realny plik z definicją funkcji panelu (admin.php deleguje do osobnych plików admin-dashboard.php/admin-dziennik.php/admin-produkty.php/admin-zamowienie.php, nieoczywiste bez sprawdzenia).",
+      "powod": "Zakres tej rundy (dopisek koordynatorki) explicite wymaga 'najpierw grep -n po funkcjach wołających, potem lista ścieżek, potem wymuszenie awarii NA KAŻDEJ' — dla Ł-02 to dwa osobne miejsca w jednej funkcji, niewidoczne bez przeczytania całej sklepag_dociagnij_zalegle().",
+      "cel": "Ł-02"
+    },
+    {
+      "opis": "Próba SAVEQUERIES przez wywołanie sklepag_admin_dashboard()/sklepag_admin_dziennik() bezpośrednio w wp eval nie zadziałała za pierwszym/drugim podejściem: (1) funkcje nie są zdefiniowane w kontekście wp eval, bo admin.php ładuje pliki admin-*.php TYLKO gdy is_admin()===true — trzeba było je require_once ręcznie; (2) sklepag_admin_dziennik() zaczyna od current_user_can('manage_options') i wp_die('Brak uprawnień.') gdy current_user nie jest ustawiony — trzeba było wp_set_current_user() na realnego administratora PRZED wywołaniem.",
+      "powod": "Artefakt środowiska testowego (wp eval to kontekst CLI, nie is_admin()/zalogowany request) — NIE błąd wtyczki. Ostatecznie pomiar się udał (patrz Ł-06) po ustawieniu current_user.",
+      "cel": "Ł-06"
+    },
+    {
+      "opis": "Seed 10 000 wierszy wp_sklepag_zdarzenia + 1000 wierszy wp_sklepag_zamowienia (Ł-06) POZOSTAJE w bazie wp_probny — NIE usunięto po pomiarze.",
+      "powod": "Zgodnie z DOPISEK-KOORDYNATORKI ('seed po zmierzeniu możesz zostawić, probny jest jednorazowy'). Wpisy mają typ='seed_event' / status='mail_wyslany' + stripe_session_id LIKE 'cs_seed_%' — łatwo rozpoznawalne i odfiltrowywalne, gdyby ktoś chciał je usunąć: DELETE FROM wp_sklepag_zdarzenia WHERE typ='seed_event'; DELETE FROM wp_sklepag_zamowienia WHERE stripe_session_id LIKE 'cs_seed_%';",
+      "cel": "Ł-06"
+    },
+    {
+      "opis": "Próba uploadu 21 MB (ponad post_max_size=8M) zwróciła HTTP 200 z PUSTYM ciałem (0 bajtów), bez nagłówka Location ani komunikatu — inne zachowanie niż spodziewany redirect z błędem.",
+      "powod": "Prawdopodobnie PHP odrzuca całe żądanie POST na poziomie SAPI, zanim skrypt WordPressa w ogóle się uruchamia (post_max_size przekroczony całkowicie, nie tylko plik) — $_POST i $_FILES są wtedy oba puste, co może prowadzić do innej gałęzi kodu (np. brak $_POST['action'] w ogóle) niż UPLOAD_ERR_INI_SIZE. Nie rozwinięto dalej w tej rundzie (budżet) — testem, który faktycznie mierzy PRAWDZIWĄ przyczynę problemu (mismatch 20 MB vs php.ini), jest przypadek 5 MB (opisany w znalezisku Ł-09), gdzie post_max_size NIE jest przekroczone i zachowanie jest jednoznaczne.",
+      "cel": "Ł-09"
+    },
+    {
+      "opis": "Zamówienie testowe id=2 (stripe_session_id='cs_test_lamacz_pobranie', stan 'mail_wyslany') utworzone SQL-em dla Ł-03 POZOSTAJE w bazie z pobrania_uzyte=10 (wyczerpane w Ł-07) — nie jest to seed danych, tylko artefakt funkcjonalny dwóch celów tej rundy (Ł-03 + Ł-07) na tym samym rekordzie.",
+      "powod": "Rekord jednorazowy, probny_wp jest jednorazowy per DOPISEK — pozostawiony celowo zamiast zużywać kolejne wywołania na sprzątanie nieistotne dla wyniku audytu.",
+      "cel": "Ł-07"
+    }
+  ],
+  "pytania_do_zamawiajacego": [
+    "Znalezisko Ł-02 (cicha pętla reconciliation) i Ł-05 (martwy nonce pod page-cache) dotykają tego samego zjawiska co L2-13 (inna soczewka, inny cel mapy) — czy koordynatorka chce te dwa raporty scalone w jedno znalezisko na etapie agregacji, czy zostają rozdzielone wg soczewki-właściciela (Ł = 'co zostaje po awarii', L2 = bezpieczeństwo)?",
+      "Czy dla Ł-09 (mismatch limitu wtyczki 20 MB vs realny php.ini środowiska) oczekywana naprawa to (a) sprawdzenie wp_max_upload_size() i pokazanie PRAWDZIWEGO limitu w UI+komunikacie błędu, czy (b) tylko poprawka treści komunikatu przy kodzie 1/2 (UPLOAD_ERR_INI_SIZE/FORM_SIZE) żeby nie kłamać liczbą — to decyzja produktowa, nie techniczna."
+  ],
+  "odrzucone_wlasne": [
+    "Wyścig dwóch równoległych RESEND (includes/admin-zamowienie.php) — sprawdzony wykonaniem (2x równoległy resend), zachowanie deterministyczne (ostatni zapis wygrywa) i DOKŁADNIE zgodne z jawnym komentarzem w kodzie, który nazywa to świadomym, akceptowalnym ryzykiem dla akcji ręcznej — nie jest to znalezisko, tylko potwierdzenie udokumentowanej decyzji.",
+    "Rozważano zgłoszenie braku nagłówków Cache-Control/no-cache na stronie produktu jako część znaleziska Ł-05 — odrzucone: to warstwa serwera/motywu (K8), jawnie poza zakresem wtyczki per 05-reguly-branzy.md §'Co NIE jest przedmiotem tego audytu'; znalezisko Ł-05 zgłoszone jest wyłącznie jako 'co się dzieje z KODEM WTYCZKI, gdy nonce jest stary', nie jako 'wtyczka powinna zarządzać cache'."
+  ],
+  "czego_nie_bylo_na_mojej_liscie": [
+    "Zachowanie sklepag_dociagnij_zalegle() przy jednoczesnej awarii BAZY (nie tylko Stripe) w trakcie działania cronu — mapa Ł-01 testuje bazę osobno od Ł-02 (Stripe), ale złożona awaria obu naraz (np. baza pada W TRAKCIE pętli reconciliation, po już udanym wywołaniu Stripe dla części sesji) nie jest osobnym celem.",
+    "Co się dzieje z KATALOGIEM chronionym (uprawnienia plików, właściciel, kolizja losowej nazwy przy współbieżnym uploadzie DWÓCH różnych produktów naraz) — Ł-10 testuje współbieżność na TYM SAMYM produkcie/zamówieniu, nie na dwóch RÓŻNYCH uploadach jednocześnie (co mogłoby ujawnić inne problemy, np. wp_generate_password(20) kolizja nazw plików pod obciążeniem).",
+    "Zachowanie formularza opinii (includes/opinie.php, admin_post_nopriv_sklepag_ocen) pod żadną z awarii tej rundy — poza zakresem 10 celów Ł-01..Ł-10 z mapy, ale to TAKŻE punkt wejścia gościa zależny od tokenu+bazy, analogiczny do pobierania."
+  ],
+  "czego_nie_obejrzalem": [
+    "includes/opinie.php i admin-opinie.php — zero testów awaryjnych w tej rundzie (poza zakresem przydzielonych celów Ł-02/03/05/06/07/09/10)",
+    "Współbieżność DWÓCH RÓŻNYCH produktów/zamówień naraz (Ł-10 testował tylko ten sam rekord ×2) — np. dwa różne uploady plików jednocześnie, kolizja nazw w katalogu chronionym",
+    "Stos warsztatowy :8890 — cała ta runda (jak poprzednia) wykonana wyłącznie na probny_wp :8891 zgodnie z poleceniem koordynatorki",
+    "Ł-01, Ł-04, Ł-08 — NIE powtórzone w tym przebiegu (już ocenione w poprzednim raporcie L.json tej samej rundy: Ł-01 AWARIA CICHA/KRYTYCZNA, Ł-04 ODPORNE, Ł-08 SPEŁNIONE INACZEJ/częściowe) — ten raport (L-2.json) skupia się WYŁĄCZNIE na celach wskazanych w tym przebiegu uzupełniającym"
+  ],
+  "wywolania_narzedzi": 31
+}

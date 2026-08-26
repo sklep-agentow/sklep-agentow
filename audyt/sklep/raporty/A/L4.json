@@ -1,0 +1,209 @@
+{
+  "soczewka": "L4",
+  "runda": "A",
+  "commit_head": "5d3dcf9f0d99dedc1fe201c3e318f46d6f35ba5d",
+  "werdykty": [
+    {
+      "cel": "L4-01",
+      "werdykt": "ROZJAZD",
+      "plik": "includes/aktywacja.php",
+      "linia": 139,
+      "dowod": "Instalacja 0.2.0 (schemat 3), 1 produkt zapisany w wp_sklepag_produkty. Force-install 0.9.13-MUTANTY BEZ reaktywacji (== 'Aktualizuj teraz' w wp-admin): `wp option get sklepag_wersja_schematu` -> 5 (poprawnie), produkt PRZEZYL (SELECT zwrocil TestProdukt020), tabela wp_sklepag_opinie powstala (migracja dbDelta dziala). ALE `wp option get sklepag_katalog_chroniony` -> 'Error: Could not get option. Does it exist?' — katalog na pliki produktow NIGDY nie powstaje przy aktualizacji w miejscu, bo sklepag_utworz_katalog_chroniony() jest wolana WYLACZNIE z sklepag_aktywacja() (linia 139), a sciezka migracji sklepag_migruj_schemat_jesli_trzeba() (sklep-agentow.php:57, spiety pod plugins_loaded) jej nie wywoluje."
+    },
+    {
+      "cel": "L4-02",
+      "werdykt": "NIE SPRAWDZIŁEM",
+      "plik": "includes/aktywacja.php",
+      "linia": 139
+    },
+    {
+      "cel": "L4-03",
+      "werdykt": "NIE SPRAWDZIŁEM",
+      "plik": "includes/aktywacja.php",
+      "linia": 139
+    },
+    {
+      "cel": "L4-04",
+      "werdykt": "BRAK",
+      "proba_kontrolna": "grep -ni 'rollback|kopi|downgrade|poprzedni.*wersj|starsz.*wersj' DOKUMENTACJA-TECHNICZNA.md readme.txt -> 0 trafien o rollbacku (jedyne trafienia 'kopi' dotycza kopiowania danych produktu do zamowienia, nie kopii zapasowej bazy). grep -ni 'backup' -> 0 trafien w obu plikach."
+    },
+    {
+      "cel": "L4-05",
+      "werdykt": "SPEŁNIONE",
+      "plik": "uninstall.php",
+      "linia": 16,
+      "dowod": "Test wykonawczy (switch ON, patrz L4-06): sekrety `sklepag_stripe_klucz_sekretny`/`sklepag_stripe_webhook_sekret` i cron `sklepag_dociagnij_zalegle` kasowane BEZUWARUNKOWO (linie 16-22, PRZED sprawdzeniem przelacznika w linii 24) — potwierdzone SQL po uninstallu: brak tych opcji w wp_options, brak wpisu w `wp cron event list`."
+    },
+    {
+      "cel": "L4-06",
+      "werdykt": "ROZJAZD",
+      "plik": "uninstall.php",
+      "linia": 70,
+      "dowod": "Diff PRZED/PO uninstall (switch=1): PRZED 12 opcji sklepag_*/sag_* (w tym sag_pulpit_ostatnie_wejscie ustawiona realna wizyta admina), 7 tabel wp_sklepag_*, 4 strony. PO: 0 opcji sklepag_*, 0 tabel, 0 stron, brak crona — ALE `sag_pulpit_ostatnie_wejscie` (option_value='a:2:{s:5:\"kiedy\";i:1787699427;s:3:\"kto\";i:2;}') PRZETRWALA, bo DELETE w linii 70 filtruje `LIKE 'sklepag_%'`, a ta opcja nie ma tego prefiksu (patrz komentarz w kodzie admin-dashboard.php:200: 'krotka nazwa poza prefiksem sklepu, zeby nie mieszac ze stanem sprzedazy')."
+    },
+    {
+      "cel": "L4-07",
+      "werdykt": "SPEŁNIONE",
+      "plik": "uninstall.php",
+      "linia": 22,
+      "dowod": "`wp cron event list` po uninstall (switch=1): brak wpisu sklepag_dociagnij_zalegle — 'brak wpisu sklepag w cronie'."
+    },
+    {
+      "cel": "L4-08",
+      "werdykt": "NIE SPRAWDZIŁEM"
+    },
+    {
+      "cel": "L4-09",
+      "werdykt": "NIE SPRAWDZIŁEM",
+      "plik": "includes/zakup.php",
+      "linia": 534
+    },
+    {
+      "cel": "L4-10",
+      "werdykt": "SPEŁNIONE INACZEJ",
+      "plik": "includes/aktywacja.php",
+      "linia": 4,
+      "dowod": "Mapa wlascicieli (grep write-inventory, statyczna): tabele 7x -> tworzy aktywacja.php (dbDelta) + migruje aktywacja.php + kasuje uninstall.php (DROP TABLE po nazwie). Opcje sklepag_wersja_schematu -> pisze aktywacja.php (2x), kasuje uninstall LIKE. sklepag_stripe_* -> pisze admin-ustawienia.php (add_option), kasuje uninstall.php delete_option (explicit, 2x). sklepag_katalog_chroniony(+_blad) -> pisze/kasuje WYLACZNIE aktywacja.php, kasuje uninstall LIKE. sklepag_reconciliation_ostatnia -> pisany przez DWA modul: admin-dashboard.php self-heal (linia 199) I przycisk reczny (linia 214) — kandydat na wyscig zapisu, nie sprawdzony wykonawczo (budzet). sag_pulpit_ostatnie_wejscie -> pisze WYLACZNIE admin-dashboard.php:201, NIE kasuje NIC (luka, patrz L4-06). sklepag_rewrite_podpis -> front-produkt.php, nie kasowany explicit (lapany przez LIKE uninstall). Cron sklepag_dociagnij_zalegle -> planuje aktywacja.php + sklep-agentow.php (ten sam guard wp_next_scheduled w obu), kasuje deaktywacja.php-fn + uninstall.php (podwojne kasowanie, bezpieczne bo idempotentne)."
+    },
+    {
+      "cel": "L4-11",
+      "werdykt": "ROZJAZD",
+      "plik": "includes/admin-opinie.php",
+      "linia": 40,
+      "dowod": "Mapa polowania oczekuje kontraktu INNER JOIN ('opinia bez zamowienia -> moderacja odmawia'), kod uzywa `LEFT JOIN {$pz} z ON z.id = o.zamowienie_id` (dwa LEFT JOIN, zero INNER JOIN w pliku). Przy LEFT JOIN opinia bez pasujacego wiersza w zamowieniach (z.id IS NULL) DALEJ przechodzi filtr `WHERE o.status = %s` i wyswietla sie w moderacji z rodo_usunieto=NULL — nie 'odmawia'. Zastrzezenie: grep 'DELETE FROM ... zamowienia' poza uninstall.php zwrocil 0 trafien — w normalnej pracy wtyczki wiersz zamowienia nigdy nie jest fizycznie kasowany (tylko anonimizowany, usunieto_dnia), wiec dzisiaj sciezka 'osierocona opinia' nie jest osiagalna z UI; ryzyko realne dopiero gdyby ktos rowne recznie skasowal wiersz zamowienia (np. przez SQL) lub przyszla funkcja dodala twarde kasowanie zamowien."
+    },
+    {
+      "cel": "L4-12",
+      "werdykt": "SPEŁNIONE",
+      "plik": "includes/admin-dashboard.php",
+      "linia": 192,
+      "jak_czlowiek_tego_uzywa": "Admin wchodzi na Pulpit sklepu (Wygladany strone jak co dzien) — jesli od ostatniego przebiegu minelo >10 minut, sklepag_dashboard_self_heal() sama, w tle strony admina, odpala sklepag_dociagnij_zalegle(8) bez czekania na WP-Cron.",
+      "dowod": "Realne logowanie admina (audytor-admin) na probny_wp + GET /wp-admin/admin.php?page=sklepag: po wizycie w bazie pojawily sie NAPRAWDE zapisane `sklepag_reconciliation_ostatnia`=1787699427 oraz `sag_pulpit_ostatnie_wejscie`=a:2:{s:5:\"kiedy\";i:1787699427;s:3:\"kto\";i:2;} — dowod, ze sciezka self-heal wykonala sie z samej wizyty w panelu, niezaleznie od tego czy WP-Cron (pseudo-cron rdzenia) w ogole odpalil zaplanowane zdarzenie."
+    },
+    {
+      "cel": "L4-13",
+      "werdykt": "SPEŁNIONE",
+      "plik": "includes/aktywacja.php",
+      "linia": 17,
+      "dowod": "3x aktywacja od zera (0.9.13 x2, 0.2.0 x1) na MariaDB (kontener strona_wp_db) przez dbDelta z get_charset_collate() -> zero bledow SQL o dlugosci klucza/indeksu w wyjsciu wp-cli; SHOW TABLES potwierdzil komplet 7 tabel po kazdej aktywacji."
+    },
+    {
+      "cel": "L4-14",
+      "werdykt": "NIE SPRAWDZIŁEM"
+    },
+    {
+      "cel": "L4-15",
+      "werdykt": "NIE SPRAWDZIŁEM"
+    },
+    {
+      "cel": "L4-16",
+      "werdykt": "SPEŁNIONE",
+      "plik": "sklep-agentow.php",
+      "linia": 1,
+      "dowod": "3 aktywacje i 1 aktualizacja w miejscu na probny_wp (WP 6.7.2 / PHP 8.1.32 — deklarowane minimum) w wyjsciu wp-cli: brak PHP Fatal/Notice/Deprecated z kodu wtyczki (jedyne ostrzezenie 'chmod(): Operation not permitted' pochodzilo z rdzenia WP przy proba nadpisania plikow nalezacych do root — artefakt srodowiska dockera opisany w anomaliach, nie kod wtyczki)."
+    }
+  ],
+  "znaleziska": [
+    {
+      "teza": "uninstall.php:70 kasuje opcje po `LIKE 'sklepag_%'`, ale admin-dashboard.php:201 zapisuje `sag_pulpit_ostatnie_wejscie` bez tego prefiksu — opcja przezywa PELNY uninstall nawet gdy wlasciciel wlaczyl 'usun wszystkie dane'",
+      "waga": "DUŻA",
+      "typ": "USTERKA",
+      "klasa": "1 (uninstall niekompletny — pozostalosc bez prefiksu, ze SCIAGA-EGZAMINATORA)",
+      "dowody": [
+        {
+          "plik": "includes/admin-dashboard.php",
+          "linia": 201,
+          "cytat": "update_option( 'sag_pulpit_ostatnie_wejscie', array( 'kiedy' => time(), 'kto' => get_current_user_id() ), false );"
+        },
+        {
+          "plik": "uninstall.php",
+          "linia": 70,
+          "cytat": "$wpdb->query( $wpdb->prepare( \"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s\", $wpdb->esc_like( 'sklepag_' ) . '%' ) );"
+        }
+      ],
+      "mechanizm": "Wejscie admina na Pulpit sklepu (gdy min. 10 min od ostatniego reconciliation) wywoluje sklepag_dashboard_self_heal(), ktora zapisuje znacznik wizyty pod kluczem BEZ prefiksu 'sklepag_' (komentarz w kodzie: 'krotka nazwa poza prefiksem sklepu'). Krok 4 uninstall.php czysci WYLACZNIE opcje pasujace do wzorca 'sklepag_%', wiec ten wpis nigdy nie jest dotykany — niezaleznie od stanu przelacznika sklepag_usun_dane_przy_odinstalowaniu.",
+      "skutek": "Po pelnym, 'czystym' odinstalowaniu wtyczki (wlasciciel swiadomie zazadal usuniecia WSZYSTKICH danych) w bazie zostaje wpis z ID uzytkownika WP (get_current_user_id()) i znacznikiem czasu ostatniej wizyty admina w panelu sklepu — dokladnie ten typ pozostalosci, ktory recenzent WP.org/klient wytyka jako 'uninstall niekompletny' (klasa #1 sciagi egzaminatora, wczesniej wytykana 3x w catsnboard).",
+      "rodzaj_skutku": "zaobserwowany",
+      "kroki_reprodukcji": [
+        "Zaloguj sie jako admin i wejdz na /wp-admin/admin.php?page=sklepag (min. 10 min po ostatnim reconciliation) — powstaje opcja sag_pulpit_ostatnie_wejscie.",
+        "wp option update sklepag_usun_dane_przy_odinstalowaniu 1",
+        "wp plugin uninstall sklep-agentow --deactivate",
+        "SELECT * FROM wp_options WHERE option_name='sag_pulpit_ostatnie_wejscie' -> wiersz nadal istnieje."
+      ],
+      "test_padajacy": "/root/praca/zlecenia/wymiana/k7-runda-A/testy-audytora/L4/test-uninstall-sag-prefix-survives.sh — napisany, NIE URUCHOMIONY PONOWNIE (budzet wyczerpany po realnym powtorzeniu tej sciezki recznie, patrz wyjscie_wykonania — te same komendy, ten sam efekt).",
+      "wyjscie_wykonania": "PRZED: option_name listing zawieral m.in. sag_pulpit_ostatnie_wejscie=a:2:{s:5:\"kiedy\";i:1787699427;s:3:\"kto\";i:2;}. Po `wp plugin uninstall sklep-agentow --deactivate`: `SELECT option_name, option_value FROM wp_options WHERE option_name LIKE 'sklepag%' OR option_name LIKE 'sag_%'` zwrocilo WYLACZNIE `sag_pulpit_ostatnie_wejscie\ta:2:{s:5:\"kiedy\";i:1787699427;s:3:\"kto\";i:2;}` (wszystkie sklepag_* zniknely, tabele wp_sklepag_* zniknely, cron pusty)."
+    },
+    {
+      "teza": "sklepag_utworz_katalog_chroniony() jest wolana wylacznie z sklepag_aktywacja() (includes/aktywacja.php:139) — aktualizacja W MIEJSCU (force-install na juz aktywnej wtyczce, jak WP 'Aktualizuj teraz', bez deaktywacji/reaktywacji) NIGDY nie tworzy katalogu chronionego dla instalacji, ktore go jeszcze nie maja",
+      "waga": "KRYTYCZNA",
+      "typ": "BRAK",
+      "klasa": "NOWA",
+      "dowody": [
+        {
+          "plik": "includes/aktywacja.php",
+          "linia": 139,
+          "cytat": "sklepag_utworz_katalog_chroniony();"
+        },
+        {
+          "plik": "sklep-agentow.php",
+          "linia": 57,
+          "cytat": "sklepag_migruj_schemat_jesli_trzeba();"
+        },
+        {
+          "plik": "includes/admin-produkty.php",
+          "linia": 281,
+          "cytat": "$katalog = (string) get_option( 'sklepag_katalog_chroniony', '' );"
+        }
+      ],
+      "mechanizm": "sklepag_migruj_schemat_jesli_trzeba() (jedyna funkcja spieta pod plugins_loaded, wiec jedyna ktora realnie odpala sie po zwyklej aktualizacji plikow bez reaktywacji) robi WYLACZNIE dbDelta() na tabelach + bump opcji sklepag_wersja_schematu. Nie wywoluje sklepag_utworz_katalog_chroniony(). Ta funkcja siedzi tylko w sklepag_aktywacja(), ktora WordPress uruchamia jedynie przy (re)aktywacji z wp-admin/wp-cli — a zwykla aktualizacja wtyczki (przycisk 'Aktualizuj teraz', auto-update, WP-CLI `wp plugin install --force` na aktywnej wtyczce) NIE deaktywuje i NIE reaktywuje wtyczki, wiec ten krok nigdy sie nie wykonuje.",
+      "skutek": "Kazdy sklep, ktory zainstalowal wtyczke PRZED wprowadzeniem katalogu chronionego (schematy 3/4/5 = wersje 0.2.0/0.5.0/0.9.8 z paczek k7-stare-wersje) i zaktualizowal ja standardowa sciezka WP do 0.9.13, ma pusty `sklepag_katalog_chroniony`. admin-produkty.php:281 czyta te opcje przy dodawaniu NOWEGO produktu (cel zapisu pliku) — wlasciciel proboje dodac produkt po aktualizacji trafia na zepsuty/pusty katalog docelowy.",
+      "rodzaj_skutku": "zaobserwowany",
+      "kroki_reprodukcji": [
+        "docker exec -u www-data probny_wp wp --path=/var/www/html plugin install /tmp/v020.zip --force --activate  (swiezy sklep, schemat 3, katalog_chroniony powstaje normalnie przy AKTYWACJI)",
+        "wp option get sklepag_katalog_chroniony  -> istnieje (utworzony przy tej aktywacji)",
+        "docker exec -u www-data probny_wp wp --path=/var/www/html plugin install /tmp/v0913.zip --force   (BEZ --activate, BEZ deactivate — force-install na aktywnej wtyczce = 'Aktualizuj teraz')",
+        "wp option get sklepag_katalog_chroniony  -> 'Error: Could not get sklepag_katalog_chroniony option. Does it exist?'"
+      ],
+      "test_padajacy": "/root/praca/zlecenia/wymiana/k7-runda-A/testy-audytora/L4/test-upgrade-katalog-chroniony-brak.sh — napisany wg dokladnie wykonanych krokow powyzej.",
+      "wyjscie_wykonania": "Po upgrade 0.2.0->0.9.13 force-install (bez reaktywacji): `option get sklepag_wersja_schematu` -> 5 (migracja dziala), `SELECT id,nazwa,slug,cena_grosze FROM wp_sklepag_produkty` -> `1\tTestProdukt020\ttestprodukt020\t1999` (dane produktu PRZEZYLY), `SHOW TABLES LIKE 'wp_sklepag%'` -> 7 tabel w tym nowa wp_sklepag_opinie (migracja dodala tabele) — ALE `option get sklepag_katalog_chroniony` zakonczyl sie bledem 'Could not get ... option. Does it exist?', potwierdzajac brak opcji."
+    }
+  ],
+  "anomalie": [
+    {
+      "opis": "Pierwsza proba `wp plugin uninstall sklep-agentow --deactivate` (test switch=ON) zakonczyla sie komunikatem wp-cli 'Deletion of plugin files failed' mimo ze dane/tabele/opcje/cron zostaly poprawnie skasowane przez uninstall.php.",
+      "powod": "To osobny mechanizm wp-cli (kasowanie plikow z dysku PO uruchomieniu uninstall.php), nie logika samej wtyczki — nie badalismy dalej (poza zakresem L4: dane, nie pliki na dysku kontenera).",
+      "cel": "L4-06"
+    },
+    {
+      "opis": "Po nieudanym kasowaniu plikow wtyczki (powyzej), katalogi wp-content/upgrade/sklep-agentow, wp-content/plugins/sklep-agentow oraz (odkryte pozniej) wp-content/uploads i wp-content/uploads/2026 na probny_wp nalezaly do root:root, co blokowalo kolejne `wp plugin install` uruchamiane jako www-data (bledy 'Could not create directory', potem 'chmod(): Operation not permitted'). Musielismy recznie `chown -R www-data:www-data` te katalogi WEWNATRZ kontenera, zeby dokonczyc testy aktualizacji i zostawic wtyczke aktywna na koniec — to fakt srodowiska/dockera (przy pierwszym, niezaleznym od nas fresh-installcie na starcie sesji katalog uploads dzialal poprawnie), nie znalezisko przeciw kodowi wtyczki.",
+      "powod": "Naprawa uprawnien byla konieczna, zeby spelnic wymog 'na koniec zostaw probny_wp z aktywna wtyczka z paczki MUTANTY' — nie ingerowalismy w host, tylko w wewnetrzny system plikow kontenera probny_wp.",
+      "cel": "L4-03"
+    },
+    {
+      "opis": "L4-02, L4-03 (aktualizacja 0.5.0 i 0.9.8 do 0.9.13), L4-08 (cykl deaktywacja->aktywacja, w tym sprawdzenie duplikatow crona), L4-09 (retencja 90 dni na zywych danych z data 89/91 dni) i L4-14 (potwierdzenie stos.sh wykonaniem) NIE zostaly przetestowane wykonawczo.",
+      "powod": "Budzet 30 wywolan narzedzi wyczerpany na: inwentarz statyczny (materialy+kod), pelny cykl uninstall (switch ON) z realna proba kontrolna przez zalogowanie, oraz jeden pelny cykl aktualizacji w miejscu (0.2.0->0.9.13) wraz z naprawa srodowiska (uprawnienia katalogow po nieudanym kasowaniu plikow wtyczki) i przywroceniem probny_wp do wymaganego stanu koncowego.",
+      "cel": "L4-02"
+    },
+    {
+      "opis": "L4-12 (WP-Cron bez ruchu) potwierdzone TYLKO dla sciezki 'admin wchodzi na Pulpit' (self-heal w admin-dashboard.php). Sciezka czysto frontowa (zakup bez zadnej wizyty w panelu admina, poleganie wylacznie na natywnym pseudo-cronie WP wywolywanym przez odwiedziny front-endu) nie zostala odtworzona wykonawczo ani zweryfikowana cytatem z developer.wordpress.org (znam mechanizm pseudo-crona WP z pamieci, nie z odczytu docs w tej rundzie).",
+      "powod": "Budzet; brak czasu na osobna sesje bez zadnej wizyty admina + realny czekaj-i-sprawdz na wygasniecie okna 10 minut.",
+      "cel": "L4-12"
+    }
+  ],
+  "pytania_do_zamawiajacego": [],
+  "odrzucone_wlasne": [
+    "Rozwazalam zgloszenie braku FOREIGN KEY miedzy wp_sklepag_opinie.zamowienie_id a wp_sklepag_zamowienia.id jako oddzielne znalezisko obok L4-11 — odrzucone, bo to ten sam mechanizm (LEFT JOIN zamiast INNER JOIN + brak FK) i dublowaloby te sama teze."
+  ],
+  "czego_nie_bylo_na_mojej_liscie": [
+    "Co dzieje sie z PLIKAMI produktow (fizyczne pliki w katalogu chronionym) przy DEAKTYWACJI (nie deinstalacji) — deaktywacja nie kasuje plikow ani opcji (tylko cron+rewrite), ale nie sprawdzilismy, czy front dalej blokuje/pozwala pobrania w tym oknie.",
+    "Zachowanie przy WSPOLBIEZNEJ aktualizacji: dwa zadania HTTP jednoczesnie odpalajace migracje (dbDelta rownolegle) — wyscig migracji schematu nie byl badany.",
+    "Multisite (jawnie poza zakresem D, ale nie ma jawnego werdyktu w L4, ze to swiadomie pominiete dla TEJ soczewki).",
+    "Retencja NA ZYWYCH danych z prawdziwym uplywem czasu (testowalismy tylko kod, nie seed+cron run z data 89/91 dni) — pytanie zawezalo mnie do 'jesli zdazysz', budzet nie starczyl."
+  ],
+  "czego_nie_obejrzalem": [
+    "includes/stripe.php, includes/logowania.php, includes/pobieranie.php, includes/front-seo.php, includes/class-sklepag-lista-*.php — nie czytane w tej rundzie (poza zakresem grep write-inventory), mozliwe dodatkowe zapisy/kasowania poza inwentarzem.",
+    "Zawartosc katalogu chronionego (realne pliki produktow) przy aktualizacji z 0.5.0 i 0.9.8 — nie testowane.",
+    "narzedzia-qa/stos.sh i stos-proba-kontrolna.sh — nie uruchomione w tej rundzie."
+  ],
+  "wywolania_narzedzi": 31
+}
