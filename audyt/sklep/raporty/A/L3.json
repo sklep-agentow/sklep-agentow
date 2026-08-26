@@ -1,0 +1,255 @@
+{
+  "soczewka": "L3",
+  "runda": "A",
+  "commit_head": "5d3dcf9f0d99dedc1fe201c3e318f46d6f35ba5d",
+  "werdykty": [
+    { "cel": "L3-01", "werdykt": "ODPORNE", "plik": "includes/zakup.php", "linia": 295,
+      "dowod": "Ponowienie webhooka 3 s po pierwszym, identyczne body: '--- WEBHOOK #1: {\"ok\":true} HTTP=200' / '--- WEBHOOK #2 (replay 3 s pozniej): {\"ok\":true} HTTP=200'; MAILE PRZED: 0 -> MAILE PO 2x WEBHOOK: 1; SELECT: 1 wiersz status=mail_wyslany, 1 zdarzenie 'mail_wyslany'. Proba kontrolna podpisu: v1=deadbeef -> {\"blad\":\"zly podpis\"} HTTP=400." },
+    { "cel": "L3-02", "werdykt": "ODPORNE", "plik": "includes/zakup.php", "linia": 282,
+      "dowod": "Dwa webhooki RÓWNOLEGLE (xargs -P2) na świeżej sesji cs_test_L3B_*: '{\"ok\":false} HTTP=500' i '{\"ok\":true} HTTP=200'; MAILE B PRZED: 0 -> MAILE B PO: 1; jedno zamówienie 9900919 status=mail_wyslany. CAS przejęcia działa — przegrany wyszedł BEZ maila (D24). ⚠️ Wariantu webhook ‖ CRON na tej samej sesji NIE wymusiłem: cron domyka wyłącznie po odpowiedzi Stripe, a na :8890 opcja sklepag_stripe_klucz_sekretny ma długość 0 (patrz anomalie)." },
+    { "cel": "L3-03", "werdykt": "SPEŁNIONE", "plik": "includes/zakup.php", "linia": 282,
+      "jak_czlowiek_tego_uzywa": "Kupujący nie robi nic — ponowienie webhooka ze Stripe dokańcza zakup i wysyła mail.",
+      "dowod": "sed w kontenerze wstrzyknął die(\"PRZERWANIE-TESTOWE-L3\") w zakup.php:344 (PRZED wp_mail). Webhook: odpowiedź 'PRZERWANIE-TESTOWE-L3 HTTP=200', MAILE D PO PRZERWANIU: 0, zamówienie 9900921 status=mail_w_toku, token zapisany, mail_tresc dł. 1431 B. Po przywróceniu pliku (md5 5828bb54000c643808190343a6b23a14 = jak w paczce) ponowienie webhooka: '{\"ok\":true} HTTP=200', status=mail_wyslany, MAILE D PO PONOWIENIU: 1." },
+    { "cel": "L3-04", "werdykt": "SPEŁNIONE INACZEJ", "plik": "includes/zakup.php", "linia": 517,
+      "jak_czlowiek_tego_uzywa": "Właściciel czeka na cron albo klika „Dociągnij zaległe teraz\" na Pulpicie.",
+      "dowod": "Zamówienie utknięte w mail_w_toku (po przerwaniu), zmieniono cofnięte o 5 min, 'wp cron event run sklepag_dociagnij_zalegle': dziennik dostał 'reconciliation_blad | cs_test_L3D_1787701607: Brak klucza Stripe w ustawieniach.', status pozostał mail_w_toku, MAILE D PO CRONIE: 0. Cron podnosi zamówienie TYLKO wtedy, gdy Stripe odpowie — mimo że płatność jest już potwierdzona i zapisana w naszej bazie (zakup.php:517-524). Ślad w dzienniku jest (w odróżnieniu od pętli 1, patrz znalezisko 3)." },
+    { "cel": "L3-05", "werdykt": "SPEŁNIONE", "plik": "includes/admin-zamowienie.php", "linia": 78,
+      "jak_czlowiek_tego_uzywa": "Panel → Zamówienie #… → przycisk „Wyślij ponownie (świeży link)\" obok podglądu treści maila.",
+      "dowod": "resend HTTP=302 redirect=…&sklepag_resend=ok; MAILE PRZED RESEND: 2 -> PO: 3; nowy token 752e3940…, link_wygasa 2026-08-28 23:44:55. Link z poprzedniego maila: HTTP=403. Link z nowego maila: HTTP=200, bytes=25354." },
+    { "cel": "L3-06", "werdykt": "ODPORNE", "plik": "includes/pobieranie.php", "linia": 67,
+      "dowod": "pobrania_uzyte=9, limit=10, dwa GET-y równolegle (xargs -P2): 'GET HTTP=200 bytes=25354' i 'GET HTTP=410 bytes=2581'; po_dwoch=10. Dokładnie jeden slot, dokładnie jedno wydanie pliku." },
+    { "cel": "L3-07", "werdykt": "ROZJAZD", "plik": "includes/pobieranie.php", "linia": 57,
+      "dowod": "Kontrakt (pobieranie.php:5 „HEAD nie zużywa limitu\" + cel L3-07) kontra pomiar: 'przed=1', 'HEAD HTTP=200', 'po_HEAD=2'. Patrz znalezisko 4." },
+    { "cel": "L3-08", "werdykt": "SPEŁNIONE", "plik": "includes/pobieranie.php", "linia": 42,
+      "jak_czlowiek_tego_uzywa": "Kupujący klika stary link z maila i czyta komunikat z adresem kontaktowym.",
+      "dowod": "link_wygasa='2026-08-01 00:00:00' -> 'GET HTTP=410', treść: 'Link pobrania wygasł. Skontaktuj się z właścicielem sklepu (odpisz na maila z zakupem).', po_probie_wygaslego=0 (nie zjadło slotu)." },
+    { "cel": "L3-09", "werdykt": "NIE DA SIĘ SPRAWDZIĆ",
+      "dowod": "Wymuszenie timeoutu 15 s na api.stripe.com wymagałoby zablokowania ruchu wychodzącego kontenera albo podstawienia proxy — obie rzeczy są poza moim mandatem (zakaz instalacji i zmian w konfiguracji kontenerów). Z kodu: stripe.php:129-131 'timeout' => 15 i JEDNA próba (bez pętli retry) — to STRUKTURA, nie zachowanie." },
+    { "cel": "L3-10", "werdykt": "ROZJAZD", "plik": "includes/admin-zamowienie.php", "linia": 92,
+      "dowod": "Ścieżka automatyczna mierzy skutek poprawnie (zakup.php:350 'if ( $wyslano )'), ręczny resend NIE: 'maile w Mailpit: przed=11 po=11 | status=mail_wyslany | ostatnie zdarzenie=mail_resend'. Patrz znalezisko 2." },
+    { "cel": "L3-11", "werdykt": "NIE SPRAWDZIŁEM",
+      "dowod": "Budżet czasu istnieje w kodzie: admin-dashboard.php:202 'sklepag_dociagnij_zalegle( 8 )' (self-heal przy wejściu admina) i :215 'sklepag_dociagnij_zalegle( 15 )' (przycisk), zakup.php:470-472 domknięcie $po_budzecie. ZACHOWANIA nie zmierzyłem — potrzebne byłyby wolne odpowiedzi Stripe (≥ 8 s), czego nie umiem wymusić bez proxy." },
+    { "cel": "L3-12", "werdykt": "NIE SPRAWDZIŁEM",
+      "dowod": "STRUKTURA jest: zamówienie trzyma snapshot (produkt_nazwa_kupiona, produkt_cena_kupiona, produkt_plik_kupiony — zakup.php:254-258), brama pobrań czyta wyłącznie snapshot (pobieranie.php:46 '$plik = (string) $zam->produkt_plik_kupiony; // Snapshot z chwili zakupu.'), resend odbudowuje mail ze snapshotu (admin-zamowienie.php:70-76). NIE wykonałem testu 'zmień cenę/plik produktu po zakupie i pobierz ponownie' — na :8890 pracuje równolegle inny audytor, a zmiana wiersza produktu dotknęłaby jego pomiarów." },
+    { "cel": "L3-13", "werdykt": "SPEŁNIONE", "plik": "includes/zakup.php", "linia": 86,
+      "jak_czlowiek_tego_uzywa": "Kupujący klika Kup przy produkcie, którego już nie ma / jest wyłączony.",
+      "dowod": "POST action=sklepag_kup&produkt_id=999 -> 'HTTP=404', treść 'Produkt niedostępny.'; POST bez pola zgoda -> 'HTTP=400', treść 'Zakup wymaga zgody na natychmiastowe dostarczenie treści cyfrowej.'. ⚠️ Warianty aktywny=0 i brakujący plik dzielą TĘ SAMĄ gałąź (zakup.php:84-88), ale osobno ich nie wymusiłem — na stosie oba produkty mają aktywny=1 i istniejące pliki, a ich edycja kolidowałaby z drugim audytorem." },
+    { "cel": "L3-14", "werdykt": "NIE DA SIĘ SPRAWDZIĆ",
+      "dowod": "Przelot wymaga rozpoczęcia zakupu przez formularz kup, a ten kończy się HTTP 502 ('Nie udało się rozpocząć płatności'), bo opcja sklepag_stripe_klucz_sekretny ma na :8890 długość 0 (zmierzone: 'SELECT option_name, LENGTH(option_value) … sklepag_stripe_klucz_sekretny 0 off'). Zamknięcie zakupu realną kartą w Checkout jest w tej rundzie wykluczone. Kryteria #2–#5 sprawdziłem inną drogą: mail po ręcznie doręczonym webhooku, świeży link 200/25354 B, stary link 403, limit i termin — patrz L3-05..L3-08." },
+    { "cel": "L3-15", "werdykt": "SPEŁNIONE INACZEJ", "plik": "includes/zakup.php", "linia": 101,
+      "jak_czlowiek_tego_uzywa": "Kupujący: strona błędu 502 z komunikatem po polsku. Właściciel: wpis w Dzienniku (menu Sklep Agentów → Dziennik), Pulpit milczy.",
+      "dowod": "Zmierzona ścieżka 'Stripe nieosiągalny' w wariancie braku klucza: 'kup_http=502' + zdarzenie 'checkout_blad | Brak klucza Stripe w ustawieniach.' (id 1421). ⚠️ Kodów 401/403/429/5xx z api.stripe.com NIE wymusiłem (wymagałoby wpisania cudzego/nieważnego klucza sk_ i realnych strzałów do Stripe albo proxy) — gałąź stripe.php:149-152 (HTTP ≥ 400 -> WP_Error z treścią z pola error.message) czytałem, nie uruchamiałem." },
+    { "cel": "L3-16", "werdykt": "SPEŁNIONE INACZEJ", "plik": "includes/admin-ustawienia.php", "linia": 237,
+      "jak_czlowiek_tego_uzywa": "Właściciel musi sam wejść na Sklep Agentów → Ustawienia, żeby zobaczyć czerwony badge „brak\" przy polach kluczy.",
+      "dowod": "Ekran ustawień z pustymi sekretami: '… placeholder=\"nieustawiony\"> <span class=\"sklepag-badge sklepag-badge-blad\">brak</span>' (dwa razy: klucz i sekret webhooka). Pulpit sklepu przy tym samym stanie: 'ostrzezen o Stripe na Pulpicie: 0', a przycisk Kup dalej przyjmuje kliknięcia i kończy się 502. Patrz znalezisko 6." },
+    { "cel": "L3-17", "werdykt": "SPEŁNIONE", "plik": "includes/stripe.php", "linia": 190,
+      "jak_czlowiek_tego_uzywa": "Właściciel wkleja nowy sekret w Ustawieniach; webhooki podpisane starym sekretem przestają być przyjmowane.",
+      "dowod": "Po zmianie opcji sklepag_stripe_webhook_sekret na mój sekret testowy: podpis policzony ZŁYM sekretem/niepoprawny ('v1=deadbeef') -> '{\"blad\":\"zly podpis\"} HTTP=400'; podpis policzony aktualnym sekretem -> '{\"ok\":true} HTTP=200'. Pusty sekret = odmowa z definicji (stripe.php:191-193 zwraca false, brak domyślnego otwarcia — golden 2)." },
+    { "cel": "L3-18", "werdykt": "SPEŁNIONE", "plik": "includes/zakup.php", "linia": 184,
+      "jak_czlowiek_tego_uzywa": "Kupujący płaci BLIK-iem/przelewem odroczonym: dostaje produkt dopiero po async_payment_succeeded.",
+      "dowod": "Webhook checkout.session.completed z payment_status=unpaid -> '{\"ok\":true} HTTP=200', 'zamowien: 0', zdarzenie 'webhook_unpaid | checkout.session.completed cs_test_L3C_… — czekamy na async'. Żadnego maila, żadnego zamówienia." },
+    { "cel": "L3-19", "werdykt": "BRAK",
+      "proba_kontrolna": "grep -rn \"refund|dispute|charge\" includes/*.php po całej paczce -> ZERO trafień (dla porównania grep 'checkout_blad' w tym samym przebiegu zwrócił zakup.php:102, więc grep działał). Wykonanie: podpisany webhook charge.refunded na opłacone zamówienie -> HTTP=200, status bez zmian ('mail_wyslany'), kwota_grosze bez zmian, link_wygasa bez zmian, ZERO nowych zdarzeń ('zdarzenia zamowienia: przed=1 po=1').",
+      "dowod": "Patrz znalezisko 5." }
+  ],
+  "znaleziska": [
+    {
+      "teza": "Stale-claim w silniku domykania (`sklepag_domknij_zakup`, zakup.php:303-310) nie ma ŻADNEJ karencji — komentarz obok obiecuje 5 minut — więc ponowienie webhooka 10 s po przejęciu wysyłki odbiera claim, wysyła DRUGI mail i unieważnia link z pierwszego.",
+      "waga": "DUŻA",
+      "typ": "USTERKA",
+      "klasa": "7 wyścig / 10 dwa silniki (ściąga: „licznik/stan\" + golden 5)",
+      "dowody": [
+        { "plik": "includes/zakup.php", "linia": 299, "cytat": "// Przejęcie po crashu: claim starszy niż 5 min wolno odebrać (stale-claim)." },
+        { "plik": "includes/zakup.php", "linia": 305, "cytat": "\"UPDATE {$pz} SET zmieniono=%s WHERE stripe_session_id=%s AND status='mail_w_toku' AND zmieniono < %s\"" },
+        { "plik": "includes/zakup.php", "linia": 308, "cytat": "gmdate( 'Y-m-d H:i:s', strtotime( $teraz ) )" },
+        { "plik": "includes/zakup.php", "linia": 321, "cytat": "\"UPDATE {$pz} SET token_pobrania=%s, link_wygasa=%s, zmieniono=%s WHERE stripe_session_id=%s AND status='mail_w_toku'\"" }
+      ],
+      "mechanizm": "Trzeci parametr UPDATE-u to `gmdate('Y-m-d H:i:s', strtotime($teraz))`, a $teraz = current_time('mysql'). WordPress ustawia PHP na UTC (zmierzone: php_tz=UTC, tz strony Europe/Warsaw), więc strtotime() czyta ten łańcuch jako UTC i gmdate() zwraca DOKŁADNIE ten sam łańcuch. Warunek redukuje się do `zmieniono < TERAZ`, czyli karencja = 0 s zamiast obiecanych 300 s. Wystarczy, że proces B startuje w innej sekundzie niż proces A (ponowienie Stripe po ≥1 s, cron, drugi webhook), a A jeszcze wisi na wp_mail (wolny SMTP hostingu), żeby B przejął claim, wygenerował NOWY token (zakup.php:321-329 nadpisuje token_pobrania) i wysłał drugi mail. Link z pierwszego maila umiera w tej samej chwili. Dodatkowo zapytanie przejmujące nie sprawdza mail_proby < 3 (w odróżnieniu od zakup.php:284), więc ta ścieżka omija limit prób.",
+      "skutek": "Kupujący dostaje dwa maile i klika ten, który przyszedł pierwszy — dostaje 403 „Nieprawidłowy link pobrania\". Właściciel widzi zamówienie w stanie mail_wyslany, bez śladu, że pierwszy link został unieważniony; w dzienniku są dwa wpisy 'mail_wyslany' i żadnego ostrzeżenia. Golden 5 („przegrywający silnik wycofuje się BEZ maila; dwa maile = KRYTYCZNA\") jest naruszony poza oknem, które D5 świadomie akceptuje (D5 dotyczy padu tuż PO wp_mail, nie odebrania świeżego claimu wolnemu nadawcy).",
+      "rodzaj_skutku": "zaobserwowany",
+      "kroki_reprodukcji": [
+        "docker exec -u www-data strona_wp_wordpress wp --path=/var/www/html option update sklepag_stripe_webhook_sekret whsec_[ZREDAGOWANE-sekret-testowy-wyczyszczony]",
+        "docker exec strona_wp_db sh -c 'MYSQL_PWD=\"$MARIADB_ROOT_PASSWORD\" mariadb wordpress -e \"INSERT INTO wp_sklepag_sesje_checkout (stripe_session_id, produkt_id, stan, utworzono) VALUES (\\'cs_test_X\\',1,\\'utworzona\\',NOW())\"'",
+        "bash /root/praca/warsztat/_robocze/k7-runda-A/testy-audytora/L3/wyslij-webhook.sh whsec_[ZREDAGOWANE-sekret-testowy-wyczyszczony] body.json   # body: checkout.session.completed, payment_status=paid, id=cs_test_X",
+        "docker exec strona_wp_db sh -c 'MYSQL_PWD=\"$MARIADB_ROOT_PASSWORD\" mariadb wordpress -e \"UPDATE wp_sklepag_zamowienia SET status=\\'mail_w_toku\\', zmieniono=DATE_SUB(NOW(), INTERVAL 10 SECOND) WHERE stripe_session_id=\\'cs_test_X\\'\"'   # symuluje proces A, który 10 s temu przejął wysyłkę i wciąż wisi na wp_mail",
+        "bash wyslij-webhook.sh whsec_[ZREDAGOWANE-sekret-testowy-wyczyszczony] body.json   # ponowienie Stripe",
+        "curl -s 'http://localhost:8025/api/v1/search?query=<adres>'   # dwa maile zamiast jednego",
+        "curl -s -o /dev/null -w '%{http_code}' '<link z PIERWSZEGO maila>'   # 403"
+      ],
+      "test_padajacy": "/root/praca/warsztat/_robocze/k7-runda-A/testy-audytora/L3/test-01-stale-claim.sh — wyjście: 'maile po 1. domknieciu: 1 / claim ustawiony na 10 s wstecz (proces A wciaz wysyla) / maile po ponowieniu webhooka: 2 / FAIL: claim sprzed 10 s zostal przejety -> 2 maili zamiast 1 (obiecana karencja 5 min NIE dziala)' EXIT=1",
+      "wyjscie_wykonania": "### TEST A: STALE-CLAIM\\nustawiam zamowienie w mail_w_toku, zmieniono=2026-08-26 01:42:55 (claim sprzed 10 SEKUND)\\nMAILE PRZED: 1\\n{\"ok\":true} HTTP=200\\nMAILE PO: 2\\nstatus=mail_wyslany mail_proby=0 zmieniono=2026-08-26 01:43:05\\n--- link ze STARSZEGO maila: HTTP=403 bytes=2585\\n--- link z NOWSZEGO maila: HTTP=200 bytes=25354"
+    },
+    {
+      "teza": "Ręczna ponowna wysyłka (`sklepag_obsluz_resend`, admin-zamowienie.php:92) uznaje każdą wysyłkę za udaną — warunek `null !== $wyslano` jest zawsze prawdziwy, bo wp_mail() nigdy nie zwraca null — więc nieudany mail zapisuje status 'mail_wyslany' i zdarzenie 'mail_resend'.",
+      "waga": "DUŻA",
+      "typ": "USTERKA",
+      "klasa": "6 dowód skutku (golden 13: „komunikat sukcesu bez dowodu = cicha awaria\")",
+      "dowody": [
+        { "plik": "includes/admin-zamowienie.php", "linia": 91, "cytat": "// wp_mail zwraca null, gdy filtr pre_wp_mail przejmie wysyłkę (wtyczki SMTP) — to też sukces." },
+        { "plik": "includes/admin-zamowienie.php", "linia": 92, "cytat": "if ( null !== $wyslano ) {" },
+        { "plik": "includes/admin-zamowienie.php", "linia": 93, "cytat": "$wpdb->query( $wpdb->prepare( \"UPDATE {$pz} SET status='mail_wyslany', zmieniono=%s WHERE id=%d\", $teraz, (int) $zam->id ) );" },
+        { "plik": "includes/zakup.php", "linia": 350, "cytat": "if ( $wyslano ) {" }
+      ],
+      "mechanizm": "wp_mail() w rdzeniu WordPressa zwraca bool: false przy błędzie PHPMailera, a przy przejęciu przez filtr pre_wp_mail zwraca wartość filtra, która z definicji jest RÓŻNA od null (rdzeń sprawdza `if ( null !== $pre_wp_mail ) return $pre_wp_mail;`). Warunek `null !== $wyslano` jest więc zawsze spełniony i gałąź porażki (admin-zamowienie.php:96) jest martwa. Zamówienie po nieudanym resendzie dostaje status 'mail_wyslany' i mail_proby bez zmian, więc: (a) wypada z licznika „panel-czerwone\" (admin-dashboard.php:300 liczy tylko mail_blad z mail_proby>=3), (b) przestaje być widoczne dla reconciliation (zakup.php:508 bierze wyłącznie 'oplacone','mail_w_toku','mail_blad'). Ścieżka automatyczna tego błędu nie ma — tam warunkiem jest samo $wyslano.",
+      "skutek": "Kupujący zapłacił i nie dostał maila. Właściciel po kliknięciu widzi jednorazowy komunikat „Ponowna wysyłka NIE powiodła się\" (parametr redirect sklepag_resend=blad), ale TRWAŁY zapis mówi coś przeciwnego: status „mail wysłany\" na liście zamówień i wpis na osi czasu „ręczna ponowna wysyłka do: … (świeży link)\". Po odświeżeniu ekranu nie ma już żadnego śladu awarii, a żaden automat tego zamówienia nie podniesie.",
+      "rodzaj_skutku": "zaobserwowany",
+      "kroki_reprodukcji": [
+        "Wybierz zamówienie w statusie mail_wyslany/mail_blad i podmień adres na taki, którego wp_mail nie przyjmie: UPDATE wp_sklepag_zamowienia SET email_kupujacego='to-nie-jest-adres' WHERE id=<ID>",
+        "Zaloguj się jako administrator, wejdź na admin.php?page=sklepag-zamowienie&zamowienie=<ID> i kliknij „Wyślij ponownie (świeży link)\"",
+        "Policz maile w Mailpit przed i po: curl -s 'http://localhost:8025/api/v1/messages?limit=1' (pole total)",
+        "SELECT status, mail_proby FROM wp_sklepag_zamowienia WHERE id=<ID>; SELECT typ, opis FROM wp_sklepag_zdarzenia WHERE zamowienie_id=<ID> ORDER BY id DESC LIMIT 1"
+      ],
+      "test_padajacy": "/root/praca/warsztat/_robocze/k7-runda-A/testy-audytora/L3/test-02-resend-dowod-skutku.sh — wyjście: 'maile w Mailpit: przed=11 po=11 | status=mail_wyslany | ostatnie zdarzenie=mail_resend / FAIL: zaden mail nie wyszedl, a zamowienie ma status mail_wyslany i zdarzenie mail_resend' EXIT=1",
+      "wyjscie_wykonania": "resend HTTP=302 redirect=http://localhost:8890/wp-admin/admin.php?page=sklepag-zamowienie&zamowienie=9900916&sklepag_resend=blad\\nmaile w Mailpit razem: przed=5 po=5\\nstatus=mail_wyslany mail_proby=0\\n1430 mail_resend ręczna ponowna wysyłka do: to-nie-jest-adres (świeży link)"
+    },
+    {
+      "teza": "Pierwsza pętla reconciliation (zakup.php:489-491) połyka awarię Stripe bez ŻADNEGO wpisu w dzienniku, więc zapłacona sesja, do której nie dotarł webhook, nie zostawia śladu nigdzie: brak zamówienia, brak zdarzenia, brak licznika na Pulpicie.",
+      "waga": "DUŻA",
+      "typ": "USTERKA",
+      "klasa": "6 dowód skutku / „awaria bez śladu\" (prompt L3: brak wpisu w dzienniku przy awarii = DUŻA)",
+      "dowody": [
+        { "plik": "includes/zakup.php", "linia": 489, "cytat": "if ( is_wp_error( $sesja ) ) {" },
+        { "plik": "includes/zakup.php", "linia": 490, "cytat": "continue; // Chwilowy błąd sieci/Stripe — następny przebieg spróbuje ponownie, bez zaśmiecania dziennika." },
+        { "plik": "includes/zakup.php", "linia": 519, "cytat": "sklepag_zdarzenie( null, 'reconciliation_blad', $sid . ': ' . $sesja->get_error_message() );" },
+        { "plik": "includes/admin-dashboard.php", "linia": 300, "cytat": "$czerwone = (int) $wpdb->get_var( \"SELECT COUNT(*) FROM {$t} WHERE status = 'mail_blad' AND mail_proby >= 3\" );" }
+      ],
+      "mechanizm": "Sesje w stanie 'utworzona' (kupujący poszedł do Checkoutu) to jedyna ścieżka ratunkowa, gdy webhook nie dotarł — a właśnie ta pętla milknie przy każdym błędzie Stripe (zły/pusty/obrócony klucz, 401, 429, 5xx, timeout). Druga pętla, dla zamówień już istniejących, loguje 'reconciliation_blad' — asymetria jest widoczna w jednym przebiegu crona. Pulpit nie ma żadnego licznika sesji utkniętych w 'utworzona', więc nic nie zastępuje brakującego wpisu.",
+      "skutek": "Kupujący zapłacił w Stripe, nie dostał nic i nie istnieje w sklepie (żadnego zamówienia). Właściciel nie ma jak się dowiedzieć, że coś przepadło — dziennik milczy, Pulpit pokazuje zdrowe KPI. Reklamację zobaczy dopiero z maila od kupującego.",
+      "rodzaj_skutku": "zaobserwowany",
+      "kroki_reprodukcji": [
+        "docker exec strona_wp_db sh -c 'MYSQL_PWD=\"$MARIADB_ROOT_PASSWORD\" mariadb wordpress -e \"INSERT INTO wp_sklepag_sesje_checkout (stripe_session_id, produkt_id, stan, utworzono) VALUES (\\'cs_test_U\\',1,\\'utworzona\\',DATE_SUB(NOW(), INTERVAL 10 MINUTE))\"'",
+        "Doprowadź Stripe do nieosiągalności (na :8890 wystarczy stan zastany: pusty klucz sekretny — każde wywołanie zwraca WP_Error)",
+        "docker exec -u www-data strona_wp_wordpress wp --path=/var/www/html cron event run sklepag_dociagnij_zalegle",
+        "docker exec strona_wp_db sh -c 'MYSQL_PWD=\"$MARIADB_ROOT_PASSWORD\" mariadb wordpress -e \"SELECT COUNT(*) FROM wp_sklepag_zdarzenia WHERE opis LIKE \\'%cs_test_U%\\'\"'   # 0"
+      ],
+      "test_padajacy": "/root/praca/warsztat/_robocze/k7-runda-A/testy-audytora/L3/test-04-slad-po-awarii-stripe.sh — wyjście: 'slady w dzienniku dla cs_test_T04_1787701706: 0 | stan sesji: utworzona / FAIL: awaria dociagania nie zostawila ANI JEDNEGO wpisu w dzienniku' EXIT=1",
+      "wyjscie_wykonania": "Executed the cron event 'sklepag_dociagnij_zalegle' in 0.027s.\\nzdarzenia dopisane przez cron: 1431..1437 reconciliation_blad cs_test_seed_* (to PĘTLA 2)\\nstan sesji cs_test_L3U_1787701558: utworzona\\nczy JAKIKOLWIEK slad o cs_test_L3U_1787701558: slady=0"
+    },
+    {
+      "teza": "Żądanie HEAD na link pobrania zużywa slot (pobieranie.php:57-58) wbrew nagłówkowi tego samego pliku („HEAD nie zużywa limitu\", linia 5) i wbrew celowi L3-07, a panel nie ma żadnej drogi zresetowania licznika.",
+      "waga": "ŚREDNIA",
+      "typ": "USTERKA",
+      "klasa": "3 dokumentacja kłamie względem kodu (ściąga) + „zły wymiar licznika\" (golden 7)",
+      "dowody": [
+        { "plik": "includes/pobieranie.php", "linia": 5, "cytat": "* termin 72 h, limit 10, licznik ATOMOWY przy starcie GET, bez Accept-Ranges, HEAD nie zużywa limitu." },
+        { "plik": "includes/pobieranie.php", "linia": 55, "cytat": "// HEAD: same nagłówki. Slot zużywamy jak przy pobraniu — skaner, który dotyka linku, to też „użycie”" },
+        { "plik": "includes/pobieranie.php", "linia": 58, "cytat": "$wpdb->query( $wpdb->prepare( \"UPDATE {$pz} SET pobrania_uzyte = pobrania_uzyte + 1, zmieniono = %s WHERE id = %d AND pobrania_uzyte < pobrania_limit\", current_time( 'mysql' ), (int) $zam->id ) );" },
+        { "plik": "includes/pobieranie.php", "linia": 16, "cytat": "// 20/min: skaner poczty dotyka linku 2–3×, realny kupujący < 5; 30 zostawiało zapas dla botów." }
+      ],
+      "mechanizm": "Kod sam zakłada, że skaner poczty dotyka linku 2–3 razy (komentarz w linii 16). Każde takie dotknięcie metodą HEAD (typowe dla antywirusów bram pocztowych i podglądów linków) zjada 2–3 z 10 slotów, zanim kupujący w ogóle kliknie. Dwa sprzeczne opisy w JEDNYM pliku (linia 5 kontra linia 55) oznaczają, że kontrakt nie jest rozstrzygnięty — a wersja wykonawcza działa na niekorzyść kupującego. Resend odnawia token i termin, ale NIE zeruje pobrania_uzyte (grep po całej paczce: jedyne zapisy do tej kolumny to dwa inkrementy w pobieranie.php:58 i :69; nigdzie nie ma resetu), więc właściciel nie ma jak tego naprawić z panelu.",
+      "skutek": "Kupujący z limitem 10 pobrań może realnie dostać 7–8, a w skrajnym przypadku (agresywny skaner) zero — i wtedy widzi „Limit pobrań wyczerpany\" (410). Właściciel widzi tylko liczbę „9 / 10\" i nie ma przycisku, żeby cokolwiek z tym zrobić.",
+      "rodzaj_skutku": "zaobserwowany",
+      "kroki_reprodukcji": [
+        "Weź świeże zamówienie i link pobrania z maila",
+        "docker exec strona_wp_db … 'SELECT pobrania_uzyte FROM wp_sklepag_zamowienia WHERE id=<ID>'",
+        "curl -s -I -o /dev/null '<link pobrania>'",
+        "docker exec strona_wp_db … 'SELECT pobrania_uzyte FROM wp_sklepag_zamowienia WHERE id=<ID>'   # o 1 więcej"
+      ],
+      "test_padajacy": "/root/praca/warsztat/_robocze/k7-runda-A/testy-audytora/L3/test-03-head-nie-zuzywa-slotu.sh — wyjście: 'pobrania_uzyte przed HEAD=0 po HEAD=1 / FAIL: HEAD zuzyl slot (0 -> 1)' EXIT=1",
+      "wyjscie_wykonania": "przed=1\\nHEAD HTTP=200\\npo_HEAD=2"
+    },
+    {
+      "teza": "Wtyczka nie obsługuje żadnego zdarzenia zwrotu (brak 'charge.refunded'/'charge.dispute.*' w całym kodzie), więc po zwrocie pieniędzy zamówienie nie dostaje wpisu na osi czasu, a KPI Pulpitu dalej liczy tę kwotę jako przychód.",
+      "waga": "ŚREDNIA",
+      "typ": "BRAK",
+      "klasa": "6 dowód skutku (stan świata po operacji) — NOWA dla tego produktu",
+      "dowody": [
+        { "plik": "includes/zakup.php", "linia": 183, "cytat": "if ( in_array( $typ, array( 'checkout.session.completed', 'checkout.session.async_payment_succeeded' ), true ) ) {" },
+        { "plik": "includes/zakup.php", "linia": 192, "cytat": "if ( 'checkout.session.async_payment_failed' === $typ || 'checkout.session.expired' === $typ ) {" },
+        { "plik": "includes/admin-dashboard.php", "linia": 148, "cytat": "'SELECT COALESCE(SUM(kwota_grosze),0) AS przychod, COUNT(*) AS zamowienia, COUNT(DISTINCT email_kupujacego) AS kupujacy'" },
+        { "plik": "includes/admin-dashboard.php", "linia": 16, "cytat": "const SKLEPAG_STATUSY_OPLACONE = \"'oplacone','mail_w_toku','mail_wyslany','mail_blad'\";" }
+      ],
+      "mechanizm": "Webhook przepuszcza nieznane typy zdarzeń i zwraca 200 bez śladu. Zamówienie po zwrocie zostaje w statusie 'mail_wyslany', który jest na liście SKLEPAG_STATUSY_OPLACONE, więc karta „Przychód\" i wykres sprzedaży liczą pieniądze, których już nie ma. D31 (gwarancja 14 dni, ryzyko „kupi-skopiuje-zwróci\" zaakceptowane) pokrywa świadomie DALEJ DZIAŁAJĄCY link — nie pokrywa braku jakiegokolwiek zapisu zwrotu ani zawyżonego przychodu w panelu.",
+      "skutek": "Właściciel patrzy na Pulpit i widzi przychód wyższy niż faktyczny; przy zwrocie nie ma w sklepie żadnego zapisu, że zwrot był (musi trzymać to w głowie albo w panelu Stripe). Przy rozliczeniu miesiąca liczby ze sklepu i ze Stripe się nie zgodzą.",
+      "rodzaj_skutku": "zaobserwowany",
+      "kroki_reprodukcji": [
+        "Ustaw sekret webhooka i wyślij podpisany POST z body {\"type\":\"charge.refunded\",\"data\":{\"object\":{…,\"refunded\":true}}} na /wp-json/sklepag/v1/webhook",
+        "SELECT status, kwota_grosze FROM wp_sklepag_zamowienia WHERE id=<ID>   # bez zmian",
+        "SELECT COUNT(*) FROM wp_sklepag_zdarzenia WHERE zamowienie_id=<ID>   # bez zmian"
+      ],
+      "test_padajacy": "/root/praca/warsztat/_robocze/k7-runda-A/testy-audytora/L3/test-05-zwrot-bez-sladu.sh — wyjście: 'webhook charge.refunded -> HTTP=200 | zdarzenia zamowienia: przed=1 po=1 | status=mail_wyslany / FAIL: zwrot nie zostawil ani jednego wpisu na osi czasu zamowienia' EXIT=1",
+      "wyjscie_wykonania": "przed zwrotem: status=mail_wyslany kwota=14900 link_wygasa=2026-08-28 23:44:56\\n{\"ok\":true} HTTP=200\\npo zwrocie: status=mail_wyslany kwota=14900 link_wygasa=2026-08-28 23:44:56\\nostatnie zdarzenia: 1430 mail_resend, 1429 mail_resend, 1428 pobranie (nic o zwrocie)"
+    },
+    {
+      "teza": "Sklep z niesprawną konfiguracją płatności sprzedaje w powietrze: przycisk Kup przyjmuje kliknięcia, kupujący dostaje surową stronę błędu 502, a Pulpit sklepu nie ma o tym ani słowa (jedyny sygnał to badge na ekranie Ustawień i wpis w dzienniku).",
+      "waga": "ŚREDNIA",
+      "typ": "USTERKA",
+      "klasa": "6 dowód skutku — co widzi WŁAŚCICIEL, gdy operacja po cichu zawiodła",
+      "dowody": [
+        { "plik": "includes/zakup.php", "linia": 103, "cytat": "wp_die( 'Nie udało się rozpocząć płatności. Spróbuj ponownie za chwilę.', 'Sklep Agentów', 502 );" },
+        { "plik": "includes/stripe.php", "linia": 117, "cytat": "return new WP_Error( 'sklepag_brak_klucza', 'Brak klucza Stripe w ustawieniach.' );" },
+        { "plik": "includes/admin-dashboard.php", "linia": 308, "cytat": "$katalog      = (string) get_option( 'sklepag_katalog_chroniony', '' );" },
+        { "plik": "includes/admin-dashboard.php", "linia": 316, "cytat": "if ( $czerwone > 0 ) {" }
+      ],
+      "mechanizm": "Pulpit ma dokładnie dwa ostrzeżenia: o katalogu chronionym i o zamówieniach z wyczerpanymi próbami maila. Stan „sklep nie jest w stanie przyjąć ani jednej płatności\" nie jest w ogóle sprawdzany na ekranie, na który właściciel wchodzi codziennie; front sklepu dalej pokazuje przyciski Kup. Zdarzenia 'checkout_blad' lądują w Dzienniku, ale nic ich nie podnosi wyżej (brak licznika, brak notice).",
+      "skutek": "Właściciel może przez wiele godzin nie wiedzieć, że sklep nie sprzedaje (np. po obróceniu klucza w Stripe albo literówce w ustawieniach), a każdy kupujący widzi w tym czasie białą stronę błędu 502 zamiast Checkoutu.",
+      "rodzaj_skutku": "zaobserwowany",
+      "kroki_reprodukcji": [
+        "Wyczyść klucz: docker exec … 'UPDATE wp_options SET option_value=\"\" WHERE option_name=\"sklepag_stripe_klucz_sekretny\"'",
+        "Wejdź jako administrator na admin.php?page=sklepag i policz ostrzeżenia o płatności (jest 0)",
+        "Pobierz stronę produktu, wyciągnij _wpnonce i wyślij POST action=sklepag_kup&produkt_id=1&zgoda=1 -> HTTP 502",
+        "SELECT typ, opis FROM wp_sklepag_zdarzenia ORDER BY id DESC LIMIT 1   # checkout_blad"
+      ],
+      "test_padajacy": "/root/praca/warsztat/_robocze/k7-runda-A/testy-audytora/L3/test-06-pulpit-milczy-o-stripe.sh — wyjście: 'ostrzezen o Stripe na Pulpicie: 0 | klikniecie Kup konczy sie HTTP=502 / FAIL: sklep przyjmuje klikniecia Kup i zwraca 502, a Pulpit nie ostrzega o niesprawnej platnosci' EXIT=1",
+      "wyjscie_wykonania": "kup_http=502\\n1421 NULL checkout_blad Brak klucza Stripe w ustawieniach. 2026-08-26 01:40:53\\nustawienia: placeholder=\"nieustawiony\" <span class=\"sklepag-badge sklepag-badge-blad\">brak</span> (2x)"
+    },
+    {
+      "teza": "Domknięcie WYSYŁKI zamówienia, które już jest w bazie jako opłacone, jest uzależnione od odpowiedzi Stripe (zakup.php:517-524) — gdy Stripe nie odpowiada, zamówienie w mail_w_toku/mail_blad nie zostanie domknięte przez cron, mimo że wszystkie dane do wysyłki są lokalne.",
+      "waga": "ŚREDNIA",
+      "typ": "USTERKA",
+      "klasa": "10 dwa silniki — druga droga domykania blokuje się na tym samym zasobie co pierwsza",
+      "dowody": [
+        { "plik": "includes/zakup.php", "linia": 517, "cytat": "$sesja = sklepag_stripe_pobierz_sesje( $sid );" },
+        { "plik": "includes/zakup.php", "linia": 518, "cytat": "if ( is_wp_error( $sesja ) ) {" },
+        { "plik": "includes/zakup.php", "linia": 522, "cytat": "if ( isset( $sesja['payment_status'] ) && 'unpaid' !== $sesja['payment_status'] ) {" },
+        { "plik": "includes/zakup.php", "linia": 278, "cytat": "\"UPDATE {$pz} SET status='oplacone', zmieniono=%s WHERE stripe_session_id=%s AND status='oczekuje'\"" }
+      ],
+      "mechanizm": "Wiersz zamówienia powstaje dopiero po zweryfikowanym podpisem webhooku i od razu dostaje status 'oplacone' (CAS w zakup.php:278). Mimo to pętla 2 reconciliation przed każdą próbą wysyłki znowu pyta Stripe o payment_status; przy WP_Error robi 'continue'. Skutkiem jest sprzężenie: awaria API Stripe (401 po obróceniu klucza, 429, 5xx, timeout) zatrzymuje nie tylko potwierdzanie płatności, ale i DOSTARCZANIE już opłaconych zakupów.",
+      "skutek": "Zakup zapłacony i zapisany może stać w mail_w_toku dowolnie długo, bo powodem jest niedostępność Stripe, a nie poczty. Właściciel widzi wpisy 'reconciliation_blad' w dzienniku, ale zamówienie nie trafia do licznika „panel-czerwone\" (ten liczy tylko mail_blad z mail_proby>=3), więc na Pulpicie nic nie świeci.",
+      "rodzaj_skutku": "zaobserwowany",
+      "kroki_reprodukcji": [
+        "Doprowadź zamówienie do stanu mail_w_toku (np. przerwanie przed wp_mail) i cofnij zmieniono o 5 minut",
+        "Ustaw Stripe w stan niedostępny (pusty/zły klucz sekretny)",
+        "docker exec -u www-data strona_wp_wordpress wp --path=/var/www/html cron event run sklepag_dociagnij_zalegle",
+        "SELECT status FROM wp_sklepag_zamowienia WHERE stripe_session_id='…'   # dalej mail_w_toku, zero maili w Mailpit"
+      ],
+      "test_padajacy": "NIE DA SIĘ — test odróżniający ten błąd od awarii środowiska wymaga DZIAŁAJĄCEGO klucza sk_test (żeby pokazać, że przy dostępnym Stripe cron domyka, a przy niedostępnym nie). Na :8890 opcja sklepag_stripe_klucz_sekretny ma długość 0, a wpisanie własnego klucza Stripe jest poza moim mandatem. Test padający na pustym kluczu byłby atrapą (padałby na środowisku, nie na kodzie).",
+      "wyjscie_wykonania": "1445 reconciliation_blad cs_test_L3D_1787701607: Brak klucza Stripe w ustawieniach.\\nstatus=mail_w_toku mail_proby=0\\nMAILE D PO CRONIE: 0"
+    }
+  ],
+  "anomalie": [
+    { "opis": "Na stosie :8890 obie opcje Stripe są PUSTE (LENGTH(option_value)=0 dla sklepag_stripe_klucz_sekretny i sklepag_stripe_webhook_sekret), mimo że zlecenie mówi „klucze TESTOWE Stripe w opcjach\". Zmierzone dwa razy: przez wp-cli (pusty wynik) i przez SQL.", "powod": "Bez klucza sk_test nie da się uruchomić ani przelotu przez Checkout (L3-14), ani wymuszenia 401/429/5xx z api.stripe.com (L3-15), ani sprawdzenia, czy cron domyka zamówienia przy DZIAŁAJĄCYM Stripe (L3-04). Webhooki testowałem po ustawieniu WŁASNEGO sekretu i przywróceniu pustej wartości po testach.", "cel": "L3-14" },
+    { "opis": "Przerwanie wstrzyknięte przez die() zwróciło Stripe'owi HTTP 200 z treścią 'PRZERWANIE-TESTOWE-L3' — czyli ponowienie w prawdziwym Stripe by NIE przyszło (ponawiane są odpowiedzi >= 400).", "powod": "To artefakt narzędzia, nie zachowanie produktu: prawdziwy błąd krytyczny PHP kończy się kodem 500. Nie orzekam z tego niczego o kodzie — zapisuję, bo mój dowód na L3-03 opiera się na ręcznym ponowieniu webhooka, a nie na naturalnym retry Stripe.", "cel": "L3-03" },
+    { "opis": "Pulpit sklepu na :8890 pokazuje czerwone ostrzeżenie „Katalog chroniony na pliki produktów: problem. Katalog nie istnieje…\", choć pliki produktów istnieją (pobranie zwróciło 200 i 25354 B, a walidacja zakupu przechodzi file_exists). W wp_options nie ma w ogóle wpisu sklepag_katalog_chroniony.", "powod": "Nie umiem rozstrzygnąć w moim zakresie, czy to wada kodu (aktywacja/migracja — teren L4), czy artefakt ręcznie zaszczepionego stosu. Zgłaszam jako obserwację dla soczewki L4, nie jako własne znalezisko.", "cel": "L3-16" },
+    { "opis": "Ścieżka przejęcia wygasłego claimu (zakup.php:303-310) nie sprawdza mail_proby < 3, w odróżnieniu od głównego przejęcia (zakup.php:284).", "powod": "Nie zbudowałem osobnego scenariusza z mail_proby=3 w stanie mail_w_toku, więc nie orzekam osobnego znaleziska — mechanizm opisałem w znalezisku 1.", "cel": "L3-04" },
+    { "opis": "W Mailpit zostały maile testowe na adresy l3-audyt*@example.test i t0*@example.test (11+ sztuk).", "powod": "Nie kasuję cudzej/wspólnej skrzynki warsztatowej bez zgody — na :8890 pracuje równolegle inny audytor, który może liczyć maile. Dane w bazie przywróciłem co do wiersza (22 mail_wyslany / 4 mail_blad / 4 oplacone / 3 mail_w_toku, sesje 9 oplacona / 1 wygasla, oba sekrety Stripe z powrotem puste, md5 zakup.php w kontenerze = md5 z paczki).", "cel": "L3-01" }
+  ],
+  "pytania_do_zamawiajacego": [
+    "Czy „HEAD nie zużywa limitu\" (nagłówek pobieranie.php i cel L3-07) to nadal obowiązujący kontrakt, czy decyzja się zmieniła na „HEAD zużywa slot\" (komentarz w pobieranie.php:55)? Jedno z dwóch trzeba usunąć — dziś w jednym pliku stoją obie wersje.",
+    "Czy po zwrocie w Stripe zamówienie ma dostawać widoczny ślad (status/oś czasu) i wypadać z KPI przychodu? D31 mówi tylko o świadomie zaakceptowanym ryzyku „kupi-skopiuje-zwróci\" i milczy o księgowości panelu.",
+    "Czy Pulpit ma ostrzegać, gdy sklep nie jest w stanie przyjąć płatności (pusty/zły klucz), czy wystarczy badge na ekranie Ustawień?"
+  ],
+  "odrzucone_wlasne": [
+    "sklepag_zdarzenie() nie sprawdza wyniku $wpdb->insert (zakup.php:128-138) — golden 13 formalnie naruszony, ale nie umiem napisać testu, który pada na TYM, bez wywracania wspólnej tabeli na cudzym stosie; bez dowodu skutku odrzucam własne znalezisko.",
+    "INSERT IGNORE sesji checkout (zakup.php:107-114) i UPDATE mail_tresc (zakup.php:342) też idą bez sprawdzenia wyniku — ta sama przyczyna odrzucenia; przy awarii zapisu ratuje je i tak CAS na statusie, którego wynik JEST sprawdzany.",
+    "sklepag_rate_limit() przy awarii licznika zwraca true (fail-open, zakup.php:54-56) — to świadomy wybór opisany w komentarzu i dotyczy limitera, nie autoryzacji; poza tym limity to teren L2.",
+    "„Webhook zwraca 500 przegranemu w wyścigu\" — sprawdzone, że tak jest (HTTP=500 przy dwóch równoległych), i tak MA być: Stripe ponawia odpowiedzi >= 400, a mail wyszedł dokładnie jeden."
+  ],
+  "czego_nie_bylo_na_mojej_liscie": [
+    "KSIĘGOWOŚĆ PANELU po zdarzeniach pieniężnych: mapa pyta o zwrot (L3-19) w kategoriach statusu i linku, ale nigdzie nie pyta, czy KPI („Przychód\", wykres, eksport CSV) odzwierciedla stan po zwrocie/korekcie. Wyszło mi to dopiero z wykonania — i to jest realna szkoda dla właściciela (rozjazd ze Stripe przy rozliczeniu).",
+    "SESJE, KTÓRE NIGDY NIE STAŁY SIĘ ZAMÓWIENIEM: cała kategoria „pieniądze w Stripe bez wiersza w sklepie\". Mapa ma cele o zamówieniach i mailach, ale ani jednego o tabeli sesje_checkout jako o miejscu, gdzie znika zapłacony zakup (u mnie: 0 sygnałów, 0 wpisów, 0 liczników).",
+    "ZALEŻNOŚĆ DOSTARCZENIA OD DOSTAWCY PŁATNOŚCI: nikt nie pyta, czy wysyłka produktu przeżyje awarię Stripe. Okazało się, że nie — druga droga domykania pyta Stripe nawet o zakup już potwierdzony i zapisany.",
+    "CO SIĘ DZIEJE Z LICZNIKIEM POBRAŃ PO INTERWENCJI: resend odnawia token i termin, ale nie ma ani jednej ścieżki (panel, cron, resend), która zeruje pobrania_uzyte. Mapa pyta o limit i o resend osobno, nie pyta o ich styk.",
+    "TREŚĆ KOMUNIKATU DLA KUPUJĄCEGO PRZY AWARII PŁATNOŚCI: cele mówią „co widzi kupujący\", ale nie ma kryterium, czy surowa strona wp_die (502, bez powrotu do sklepu, bez kontaktu) jest akceptowalna — porównaj: brama pobrań DAJE kontakt do właściciela, brama zakupu nie.",
+    "IDEMPOTENCJA NASZEGO OKNA 60 s (transient sklepag_idem_*) przy dwóch kliknięciach z RÓŻNYCH IP tego samego kupującego — mapa pokrywa idempotencję webhooka, nie kupna."
+  ],
+  "czego_nie_obejrzalem": [
+    "includes/opinie.php poza funkcją sklepag_opinia_zalazek (token opinii przy mailu) — moderacja, formularz i publikacja to teren L2/L1",
+    "includes/admin-dashboard.php: wykresy, eksport CSV i lista zamówień (poza zapytaniami KPI i notice'ami) — oglądałem tylko to, co niesie sygnał o pieniądzach",
+    "includes/front-produkt.php, front-seo.php, assets/* — teren L1/L6",
+    "uninstall.php, aktywacja.php, migracje schematu — teren L4",
+    "testy/e2e/przelot2.js NIE uruchomiony (powód w werdykcie L3-14 i w anomaliach)",
+    "Stos :8891 — zgodnie ze zleceniem nietknięty"
+  ],
+  "wywolania_narzedzi": 28
+}
