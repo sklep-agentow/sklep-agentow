@@ -5,15 +5,15 @@
 # aktualizował (lekcja jak-audytowac §☑️: odhacza KOORDYNATOR, przelicza SKRYPT,
 # nie ręka). Ten skrypt jest jedynym, który wolno pisać do wiersza LICZNIK.
 #
-# Użycie: bash narzedzia-qa/mapa-licznik.sh <plik-mapy> [--przelot] [--zamroz <sha> | --sprawdz-zamrozenie | --tylko-licz]
+# Użycie: bash narzedzia-qa/mapa-licznik.sh <plik-mapy> [--przelot] [--zamroz <sha> | --sprawdz-zamrozenie | --tylko-licz | --odcisk]
 #   --przelot            — zestaw statusów PRZELOTU CZŁOWIEKA (⬜ ✅ 😖 🐞) i jego format LICZNIKA; jedyne narzędzie,
 #                          któremu wolno pisać `CELE:` w PRZELOT-CZLOWIEKA-SKLEP.md (recenzja #186 W2)
 #   bez opcji            — przelicza, przepisuje LICZNIK, wypisuje podsumowanie; EXIT 0
 #   --zamroz <sha>       — jw. + dopisuje pod LICZNIK wiersz ZAMROZONA (sha + liczba celów)
 #   --sprawdz-zamrozenie — TYLKO ODCZYT; EXIT 1, gdy mapa jest zamrożona, a liczba celów ≠ zapisana ALBO odcisk TREŚCI celów
 #                          (ID + treść, bez statusu i odsyłacza; 1.3.0, recenzja #195 D3) ≠ zapisany `tresc=`
-#   --odcisk             — TYLKO ODCZYT; wypisuje odcisk treści celów (do ręcznego uzupełnienia starego wiersza ZAMROZONA)
 #                          (mapa „rosnąca w nieskończoność" po rundzie B — reguła 7 planu K7)
+#   --odcisk             — TYLKO ODCZYT; wypisuje WYŁĄCZNIE odcisk treści celów (do ręcznego uzupełnienia starego wiersza ZAMROZONA)
 #   --tylko-licz         — TYLKO ODCZYT; wypisuje policzony wiersz, NIE dotyka pliku (dla k7-koniec.sh —
 #                          bramka końca nie może pisać do tego, co audytuje; recenzja #182 r2 D7)
 #   Dodatkowo EXIT 2 = zła liczba argumentów / brak pliku / brak wiersza LICZNIK.
@@ -25,7 +25,7 @@
 set -u
 PLIK="${1:-}"; shift || true; TRYB=""; SHA=""; ZESTAW=mapa
 while [ $# -gt 0 ]; do case "$1" in --przelot) ZESTAW=przelot ;; --zamroz) TRYB=--zamroz; SHA="${2:-}"; [ $# -gt 1 ] && shift ;; --*) TRYB="$1" ;; *) echo "MAPA-LICZNIK: nieznany argument $1" >&2; exit 2 ;; esac; shift; done
-[ -n "$PLIK" ] && [ -f "$PLIK" ] || { echo "Użycie: bash narzedzia-qa/mapa-licznik.sh <plik-mapy> [--zamroz <sha>|--sprawdz-zamrozenie]" >&2; exit 2; }
+[ -n "$PLIK" ] && [ -f "$PLIK" ] || { echo "Użycie: bash narzedzia-qa/mapa-licznik.sh <plik-mapy> [--zamroz <sha>|--sprawdz-zamrozenie|--tylko-licz|--odcisk]" >&2; exit 2; }
 grep -q '^CELE: ' "$PLIK" || { echo "MAPA-LICZNIK: brak wiersza LICZNIK (CELE: …) w $PLIK" >&2; exit 2; }
 
 licz() { grep -c "^- $1 " "$PLIK"; }
@@ -67,7 +67,7 @@ esac
 ODCISK=$(grep -E "^- ($STATUSY) " "$PLIK" | sed -E 's/^- [^ ]+ //; s/ · \[[^]]*\][ ·]*$//; s/[ ·]+$//' | LC_ALL=C sort | sha256sum | cut -c1-12)
 case "$TRYB" in
 	--tylko-licz) ;;
-	--odcisk) echo "$ODCISK" ;;
+	--odcisk) echo "$ODCISK"; exit 0 ;;   # TYLKO hash — bez wiersza LICZNIKA na końcu (#196 W3: dwie linie w $(…) rozcięły wiersz mapy)
 	--zamroz)
 		grep -q '^ZAMROZONA: ' "$PLIK" && { echo "MAPA-LICZNIK: mapa już zamrożona — nie zamrażam drugi raz" >&2; exit 1; }
 		printf 'ZAMROZONA: %s · celow=%s · tresc=%s · %s\n' "$SHA" "$N_CELE" "$ODCISK" "$(date +%Y-%m-%dT%H:%M)" >> "$PLIK"

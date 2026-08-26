@@ -1,5 +1,5 @@
 #!/bin/bash
-# k7-koniec-proba-kontrolna.sh — dowód, że k7-koniec.sh nie jest ozdobą.                 WERSJA 1.3.2
+# k7-koniec-proba-kontrolna.sh — dowód, że k7-koniec.sh nie jest ozdobą.                 WERSJA 1.3.3
 #
 # Buduje w /tmp PEŁNĄ, ZIELONĄ atrapę stanu końca K7 (mapa, rejestr, przelot, log prób,
 # paczka + sha, repo git z tagiem i gałęzią mutantów, raport JSON) i sprawdza, że skrypt
@@ -50,6 +50,9 @@ sprawdz() { # sprawdz <opis> <oczekiwany-exit> <funkcja-psujaca> <fragment-komun
 nic()            { :; }
 wyjatek_sp()     { psuj_raport_sp "$1"; printf 'A/L2.json|L2-01|dowód komendą (próba kontrolna)\n' > "$1/audyt/sklep/raporty/WYJATKI-WARUNEK-8.txt"; }
 wyjatek_martwy() { printf 'A/L2.json|L2-01|nic nie narusza\n' > "$1/audyt/sklep/raporty/WYJATKI-WARUNEK-8.txt"; }
+wyjatek_zakomentowany() { psuj_raport_sp "$1"; printf '# A/L2.json|L2-01|wyłączony komentarzem\n' > "$1/audyt/sklep/raporty/WYJATKI-WARUNEK-8.txt"; }
+wyjatek_do_nieistniejacego() { printf 'C/NIE-MA.json|X-99|raport nie istnieje' > "$1/audyt/sklep/raporty/WYJATKI-WARUNEK-8.txt"; }   # celowo BEZ \\n na końcu
+psuj_dwa_cele()  { printf 'CELE: 0 · ✅ 0 · 🐞 0 · ⚠️ 0 · ⛔ 0 · ⬜ 0\n' >> "$1/audyt/sklep/material/06-mapa-polowania.md"; }
 psuj_tresc()     { sed -i 's/^- ✅ L1-01 · cel ·/- ✅ L1-01 · INNY cel ·/' "$1/audyt/sklep/material/06-mapa-polowania.md"; }
 psuj_mapa()      { sed -i 's/^- ✅ L1-01/- ⬜ L1-01/' "$1/audyt/sklep/material/06-mapa-polowania.md"; }
 psuj_zamroz()    { printf -- '- ⬜ L9-99 · dopisany po zamrożeniu ·\n' >> "$1/audyt/sklep/material/06-mapa-polowania.md"; sed -i 's/^- ⬜ L9-99/- ✅ L9-99/' "$1/audyt/sklep/material/06-mapa-polowania.md"; }
@@ -119,6 +122,9 @@ sprawdz "8 SPELNIONE bez plik:linia"                      1 psuj_raport_sp   "8 
 sprawdz "8 wyjątek koordynatorki zamyka naruszenie → GO (#195 W2)" 0 wyjatek_sp    "wyjątki koordynatorki"
 sprawdz "8 MARTWY wyjątek (nic nie narusza) → NO-GO (#195 W2)"   1 wyjatek_martwy "MARTWY wyjątek"
 sprawdz "1b cel PRZEREDAGOWANY przy tej samej liczbie (#195 D3)"  1 psuj_tresc     "1b mapa"
+sprawdz "8 wyjątek ZAKOMENTOWANY nie tłumi naruszenia (#196 W2)"   1 wyjatek_zakomentowany "8 raporty"
+sprawdz "8 martwy wyjątek do NIEISTNIEJĄCEGO raportu, bez \\n (#196 W2)" 1 wyjatek_do_nieistniejacego "MARTWY wyjątek"
+sprawdz "1a DWA wiersze CELE: w mapie (#196 W3)"                  1 psuj_dwa_cele  "wierszy LICZNIKA"
 sprawdz "8 BRAK bez proby kontrolnej"                     1 psuj_raport_br   "8 raporty"
 sprawdz "8 brak sekcji czego-nie-bylo-na-liscie"          1 psuj_raport_li   "8 raporty"
 echo; echo "=== D7: BRAMKA NIE PISZE DO AUDYTOWANEJ MAPY ==="
