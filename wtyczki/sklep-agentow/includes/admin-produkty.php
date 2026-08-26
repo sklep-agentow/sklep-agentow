@@ -18,6 +18,19 @@ require_once SKLEPAG_KATALOG . 'includes/class-sklepag-lista-produktow.php';
 const SKLEPAG_UPLOAD_LIMIT_B = 20 * 1024 * 1024; // Plan §7: 20 MB (realne zipy botów <1 MB).
 
 /**
+ * Realny sufit wgrania: MNIEJSZY z limitu wtyczki (plan §7) i limitu serwera
+ * (upload_max_filesize / post_max_size z php.ini, przez wp_max_upload_size()).
+ *
+ * Komunikaty muszą cytować TEN limit. Wcześniej wszystkie mówiły „Limit: 20 MB",
+ * także gdy serwer odrzucił plik przy 2 MB — właściciel czytał liczbę wtyczki
+ * i szukał przyczyny tam, gdzie jej nie było.
+ */
+function sklepag_limit_uploadu_b() {
+	$serwer = (int) wp_max_upload_size();
+	return ( $serwer > 0 && $serwer < SKLEPAG_UPLOAD_LIMIT_B ) ? $serwer : SKLEPAG_UPLOAD_LIMIT_B;
+}
+
+/**
  * Adres formularza produktu (0 = nowy).
  *
  * @param int $id Id produktu.
@@ -128,7 +141,7 @@ function sklepag_produkty_formularz( $id ) {
 		echo '<p>Obecny plik: ' . ( $jest ? '<span class="sklepag-badge sklepag-badge-ok">jest</span> ' . esc_html( size_format( (int) $w( 'plik_rozmiar' ) ) ) . ' · sha256 <code>' . esc_html( substr( $w( 'plik_sha256' ), 0, 12 ) ) . '…</code>' : '<span class="sklepag-badge sklepag-badge-blad">zgubiony na dysku</span>' ) . '</p>';
 	}
 	echo '<input type="file" id="sklepag-plik" name="plik" accept=".zip,application/zip">';
-	echo '<p class="description">Tylko ZIP, do ' . esc_html( size_format( SKLEPAG_UPLOAD_LIMIT_B ) ) . '. Nowy plik dostaje NOWĄ chronioną ścieżkę — stare zamówienia trzymają swoją (snapshot). ' . ( $id ? 'Zostaw puste, by nie zmieniać.' : '' ) . '</p>';
+	echo '<p class="description">Tylko ZIP, do ' . esc_html( size_format( sklepag_limit_uploadu_b() ) ) . '. Nowy plik dostaje NOWĄ chronioną ścieżkę — stare zamówienia trzymają swoją (snapshot). ' . ( $id ? 'Zostaw puste, by nie zmieniać.' : '' ) . '</p>';
 	echo '</td></tr>';
 
 	echo '<tr><th scope="row">W sprzedaży</th><td><label><input type="checkbox" name="aktywny" value="1"' . checked( (bool) $w( 'aktywny', false ), true, false ) . '> Produkt widoczny i kupowalny w sklepie</label><p class="description">Aktywacja wymaga POTWIERDZONEGO pliku paczki — bez pliku zapis wróci z błędem (kryterium #7).</p></td></tr>';
@@ -256,7 +269,25 @@ function sklepag_przyjmij_zip( $wroc ) {
 	// phpcs:disable WordPress.Security.ValidatedSanitizedInput, WordPress.Security.NonceVerification.Missing -- wywoływana WYŁĄCZNIE z handlera sklepag_obsluz_zapis_produktu PO check_admin_referer (sniff nie śledzi przepływu między funkcjami); $_FILES walidowane polami: error/size/tmp_name przez is_uploaded_file, nazwa tylko do rozszerzenia.
 	$blad = isset( $_FILES['plik']['error'] ) ? (int) $_FILES['plik']['error'] : UPLOAD_ERR_NO_FILE;
 	if ( UPLOAD_ERR_OK !== $blad ) {
-		$wroc( 'Upload nie powiódł się (kod ' . $blad . ') — spróbuj ponownie; duży plik? Limit: ' . size_format( SKLEPAG_UPLOAD_LIMIT_B ) . '.' );
+		$limit_realny = sklepag_limit_uploadu_b();
+		$serwer       = (int) wp_max_upload_size();
+		$dodatek      = '';
+		if ( UPLOAD_ERR_INI_SIZE === $blad || UPLOAD_ERR_FORM_SIZE === $blad ) {
+			$dodatek = ' Plik odrzucił serwer, zanim wtyczka go zobaczyła — obowiązuje limit ' . size_format( $limit_realny ) . '.';
+			if ( $limit_realny < SKLEPAG_UPLOAD_LIMIT_B ) {
+				$dodatek .= ' To ustawienie serwera, niższe niż limit wtyczki (' . size_format( SKLEPAG_UPLOAD_LIMIT_B ) .
+					') — żeby wgrać większy plik, podnieś upload_max_filesize i post_max_size w php.ini albo poproś o to hosting.';
+			}
+		}
+		// Bez tego wpisu nieudane wgranie produktu nie zostawiało w panelu żadnego śladu.
+		sklepag_zdarzenie(
+			null,
+			'upload_produktu_blad',
+			'kod ' . $blad . '; limit obowiązujący ' . size_format( $limit_realny ) .
+			'; limit wtyczki ' . size_format( SKLEPAG_UPLOAD_LIMIT_B ) .
+			'; limit serwera ' . ( $serwer > 0 ? size_format( $serwer ) : 'nieznany' )
+		);
+		$wroc( 'Wgranie pliku nie powiodło się (kod ' . $blad . ').' . $dodatek );
 	}
 	$tmp     = isset( $_FILES['plik']['tmp_name'] ) ? sanitize_text_field( $_FILES['plik']['tmp_name'] ) : '';
 	$nazwa   = isset( $_FILES['plik']['name'] ) ? sanitize_file_name( wp_unslash( $_FILES['plik']['name'] ) ) : '';
@@ -266,8 +297,8 @@ function sklepag_przyjmij_zip( $wroc ) {
 	if ( ! is_uploaded_file( $tmp ) ) {
 		$wroc( 'Nieprawidłowy upload.' );
 	}
-	if ( $rozmiar <= 0 || $rozmiar > SKLEPAG_UPLOAD_LIMIT_B ) {
-		$wroc( 'Plik ponad limit ' . size_format( SKLEPAG_UPLOAD_LIMIT_B ) . ' (albo pusty).' );
+	if ( $rozmiar <= 0 || $rozmiar > sklepag_limit_uploadu_b() ) {
+		$wroc( 'Plik ponad limit ' . size_format( sklepag_limit_uploadu_b() ) . ' (albo pusty).' );
 	}
 	if ( ! preg_match( '/\.zip$/i', $nazwa ) ) {
 		$wroc( 'Dozwolony wyłącznie plik .zip.' );

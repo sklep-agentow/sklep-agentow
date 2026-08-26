@@ -63,6 +63,29 @@ add_action( 'admin_post_nopriv_sklepag_kup', 'sklepag_obsluz_kup' );
 add_action( 'admin_post_sklepag_kup', 'sklepag_obsluz_kup' );
 
 function sklepag_obsluz_kup() {
+	// Nieważny nonce sprawdzamy PRZED rdzeniem, bo domyślna ścieżka (check_admin_referer →
+	// wp_nonce_ays) pokazuje kupującemu angielski komunikat rdzenia i NIE zostawia śladu.
+	// Najczęstsza przyczyna to pamięć podręczna strony: strona produktu serwowana z cache
+	// niesie nonce sprzed ponad doby, więc „Kup teraz" jest martwy dla WSZYSTKICH
+	// odwiedzających, a właściciel nie ma tego skąd zobaczyć. Wpis w dzienniku zamienia
+	// cichą awarię w głośną; sprawdzenie rdzenia zostaje niżej (referer + hooki).
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- to JEST weryfikacja nonce.
+	$nonce_kup = isset( $_REQUEST['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['_wpnonce'] ) ) : '';
+	if ( ! wp_verify_nonce( $nonce_kup, 'sklepag_kup' ) ) {
+		sklepag_zdarzenie(
+			null,
+			'kup_nonce_niewazny',
+			'formularz zakupu odrzucony: token strony wygasł lub go nie było' .
+			( '' === $nonce_kup ? ' (brak tokenu w żądaniu)' : ' (token starszy niż 24 h — typowe przy pamięci podręcznej strony)' )
+		);
+		wp_die(
+			'Ta strona była za długo otwarta albo pokazała się z pamięci podręcznej, więc formularz zakupu stracił ważność. ' .
+			'Odśwież stronę produktu (Ctrl+F5) i kliknij „Kup teraz" jeszcze raz — nic nie zostało pobrane z Twojego konta. ' .
+			'Jeśli to się powtarza, daj znać właścicielowi sklepu: przyczyną bywa pamięć podręczna na stronie produktu.',
+			'Sklep Agentów',
+			403
+		);
+	}
 	check_admin_referer( 'sklepag_kup' );
 
 	$sklep_url = get_permalink( (int) get_option( 'sklepag_strona_sklep' ) );
