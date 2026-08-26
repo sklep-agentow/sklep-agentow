@@ -548,6 +548,12 @@ function sklepag_domknij_zakup( $sesja ) {
 	$tresc = sklepag_zbuduj_mail( $produkt, $zam, $link, $link_op );
 	$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET mail_tresc=%s, zmieniono=%s WHERE id=%d", $tresc, $teraz, (int) $zam->id ) );
 
+	// Adres z zamówienia, gdy wywołanie nie niosło danych kupującego (domknięcie z danych
+	// własnych w reconciliation). Bez tego mail nie miałby dokąd pójść mimo kompletu danych w bazie.
+	if ( '' === $email && isset( $zam->email_kupujacego ) ) {
+		$email = (string) $zam->email_kupujacego;
+	}
+
 	$wyslano = false;
 	if ( '' !== $email && is_email( $email ) ) {
 		$wyslano = sklepag_wyslij_mail_sklepu( $email, 'Twój zakup: ' . $produkt->nazwa . ' — potwierdzenie i pobranie', $tresc );
@@ -722,14 +728,13 @@ function sklepag_dociagnij_zalegle( $budzet_s = 0 ) {
 		if ( $po_budzecie() ) {
 			break; // Jw.: budżet czasu wywołań synchronicznych.
 		}
-		$sesja = sklepag_stripe_pobierz_sesje( $sid );
-		if ( is_wp_error( $sesja ) ) {
-			sklepag_zdarzenie( null, 'reconciliation_blad', $sid . ': ' . $sesja->get_error_message() );
-			continue;
-		}
-		if ( isset( $sesja['payment_status'] ) && 'unpaid' !== $sesja['payment_status'] ) {
-			sklepag_domknij_zakup( $sesja );
-		}
+		// Te zamówienia są JUŻ opłacone w naszej bazie — przeszedł na nich atomowy zapis
+		// płatności. Brakuje im wyłącznie maila. Pytanie do Stripe o `payment_status` było
+		// tu nadmiarowe, a przy braku odpowiedzi (błąd sieci, timeout, odrzucony klucz)
+		// zamykało JEDYNĄ drogę wysyłki: opłacony i zapisany zakup stał w `mail_w_toku`,
+		// dopóki Stripe nie odpowie, i nie trafiał nawet do licznika czerwonych na Pulpicie.
+		// Domykamy z danych własnych — płatność jest już potwierdzona, nie ma czego weryfikować.
+		sklepag_domknij_zakup( array( 'id' => $sid, 'payment_status' => 'paid' ) );
 	}
 
 	// 3) Sprzątanie liczników rate-limit po oknie (tabela techniczna, wiersz żyje ~2 min).
