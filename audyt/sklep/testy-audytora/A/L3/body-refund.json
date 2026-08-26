@@ -1,0 +1,1 @@
+{"type":"charge.refunded","data":{"object":{"id":"ch_test_L3R","amount":14900,"amount_refunded":14900,"refunded":true,"payment_intent":"pi_test_L3R","metadata":{"checkout_session":"cs_test_L3A_1787701351"}}}}

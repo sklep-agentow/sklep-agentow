@@ -1,0 +1,1 @@
+{"type":"checkout.session.completed","data":{"object":{"id":"cs_test_L3D_1787701607","payment_status":"paid","amount_total":14900,"currency":"pln","customer_details":{"email":"l3-audyt-d@example.test"},"metadata":{"produkt_id":"1","zgoda_czas":"2026-08-25 23:00:00"}}}}

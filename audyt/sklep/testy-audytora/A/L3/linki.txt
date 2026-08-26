@@ -1,0 +1,2 @@
+http://localhost:8890/wp-admin/admin-post.php?action=sklepag_pobierz&z=9900916&t=bc41e1d802b3a49dcd5563e59aed663716a7e867fdb072a8ea4376f6bf593dbd
+http://localhost:8890/wp-admin/admin-post.php?action=sklepag_pobierz&z=9900916&t=18283ec5f32fc2bb1bd7c3183e11b9eee556ce15ed2240bab28089f474ad6f14

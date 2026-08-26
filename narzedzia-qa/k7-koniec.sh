@@ -1,5 +1,5 @@
 #!/bin/bash
-# k7-koniec.sh — KONIEC AUDYTU K7 OGŁASZA SKRYPT, NIE UCZUCIE.                       WERSJA 1.3.2
+# k7-koniec.sh — KONIEC AUDYTU K7 OGŁASZA SKRYPT, NIE UCZUCIE.                       WERSJA 1.3.3
 #
 # PO CO: plan K7 v1 mówił „GO/NO-GO = trzy liczby liczone skryptem”, a skryptu nie było
 # (krytyka r1: nasz krytyk K1, C2 #15, C3 #11). Bez maszyny koniec rozstrzyga pamięć
@@ -78,7 +78,8 @@ else
 	ROZL=$(printf '%s\n' "$ROZL_SUROWE" | sed 's/\\|/\x01/g')  # osobno od git show: bez pipefail kod potoku = kod seda (recenzja #186 D3)
 	# wiersze werdyktów: | audytor | mutant | znalazl | falszywy | werdykt | proby |  → po split '|' proby = pole 7
 	# (recenzja #182 r2 W2: $NF czytał PUSTĄ kolumnę za końcowym „|" — warunek był martwy)
-	ILE=$(printf '%s\n' "$ROZL" | grep -cE '^\| L[1-5]|^\| L \|' )
+	# ILE = liczba RÓŻNYCH soczewek (kolumna 2), nie wierszy — L3 ma dwa mutanty (M3, M4) i liczył się podwójnie (recenzja #188 D8)
+	ILE=$(printf '%s\n' "$ROZL" | grep -E '^\| (L[1-5]|L) \|' | awk -F'|' '{gsub(/ /,"",$2); print $2}' | sort -u | wc -l)
 	ZLE=$(printf '%s\n' "$ROZL" | grep -E '^\| (L[1-5]|L) \|' | grep -vE '\| PASS \|' | wc -l)
 	PROBY_ZLE=$(printf '%s\n' "$ROZL" | grep -E '^\| (L[1-5]|L) \|' | awk -F'|' '{gsub(/ /,"",$7); if ($7+0>2) n++} END{print n+0}')
 	if [ "$ILE" -ge 6 ] && [ "$ZLE" -eq 0 ] && [ "$PROBY_ZLE" -eq 0 ]; then pass "2 kalibracja ($GALAZ_MUT): $ILE soczewek PASS, proby ≤ 2"; else fail "2 kalibracja: soczewek=$ILE, bez PASS=$ZLE, proby>2=$PROBY_ZLE"; fi

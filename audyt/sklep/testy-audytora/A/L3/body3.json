@@ -1,0 +1,1 @@
+{"type":"checkout.session.completed","data":{"object":{"id":"cs_test_L3C_1787701386","payment_status":"unpaid","amount_total":14900,"currency":"pln","customer_details":{"email":"l3-audyt-c@example.test"}}}}

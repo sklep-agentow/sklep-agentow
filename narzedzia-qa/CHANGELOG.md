@@ -14,6 +14,8 @@ wstecz nie dopisuję, bo nie umiałbym jej odtworzyć uczciwie. Ich zmiany od te
 pory lądują tutaj.
 
 ## [Niewydane]
+- **`k7-stos-rundy.sh` 1.0.1 → 1.0.2** — bramka „wersja wtyczki w kontenerze == wersja z nagłówka pliku głównego w zipie” (nagłówek obiecywał „aktywna w podanej wersji”, skrypt tylko wypisywał — #187 r2 a); opis EXIT 2 rozszerzony o brak zipa/sekretu/narzędzia (#187 r2 b); wpis w PLAN §9 (#187 r2 c). Zmierzone 26.08 na zamrożonej paczce: `✅ wersja w kontenerze = wersja z zipa (0.9.13)`, EXIT 0.
+- **`k7-koniec.sh` 1.3.2 → 1.3.3** — warunek 2 liczy RÓŻNE soczewki w tabeli rozliczenia (kolumna 2, `sort -u`), nie wiersze — L3 z dwoma mutantami liczył się podwójnie, etykieta „soczewek” była szersza niż pomiar (recenzja #188 D8, klasa 11).
 - **`k7-stos-rundy.sh` 1.0.0 (NOWE) — czysty stos pod rundę K7:** `probny_wp` na `wordpress:6.7-php8.1-apache` (PLAN-K7 §9) z PODANYM zipem
   (runda A = paczka z mutantami, B = zamrożona), permalinki, `blog_public=0`, konta `audytor-admin`/`audytor-sub` z sekretów, dowody:
   sha256 zipa, wersja, wzorzec w kodzie kontenera, debug.log 0 notice, HTTP 200. Stos ZOSTAJE. Zmierzone 26.08: EXIT 0, WP 6.7.2 / PHP 8.1.32.

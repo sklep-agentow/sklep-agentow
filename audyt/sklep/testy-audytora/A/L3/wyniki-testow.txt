@@ -1,0 +1,26 @@
+================= test-01-stale-claim.sh
+maile po 1. domknieciu: 1
+claim ustawiony na 10 s wstecz (proces A wciaz wysyla)
+maile po ponowieniu webhooka: 2
+FAIL: claim sprzed 10 s zostal przejety -> 2 maili zamiast 1 (obiecana karencja 5 min NIE dziala)
+EXIT=1
+================= test-02-resend-dowod-skutku.sh
+maile w Mailpit: przed=11 po=11 | status=mail_wyslany | ostatnie zdarzenie=mail_resend
+FAIL: zaden mail nie wyszedl, a zamowienie ma status 'mail_wyslany' i zdarzenie 'mail_resend'
+EXIT=1
+================= test-03-head-nie-zuzywa-slotu.sh
+pobrania_uzyte przed HEAD=0 po HEAD=1
+FAIL: HEAD zuzyl slot (0 -> 1)
+EXIT=1
+================= test-04-slad-po-awarii-stripe.sh
+slady w dzienniku dla cs_test_T04_1787701706: 0 | stan sesji: utworzona
+FAIL: awaria dociagania nie zostawila ANI JEDNEGO wpisu w dzienniku
+EXIT=1
+================= test-05-zwrot-bez-sladu.sh
+webhook charge.refunded -> HTTP=200 | zdarzenia zamowienia: przed=1 po=1 | status=mail_wyslany
+FAIL: zwrot nie zostawil ani jednego wpisu na osi czasu zamowienia (status dalej 'mail_wyslany')
+EXIT=1
+================= test-06-pulpit-milczy-o-stripe.sh
+ostrzezen o Stripe na Pulpicie: 0 | klikniecie Kup konczy sie HTTP=502
+FAIL: sklep przyjmuje klikniecia Kup i zwraca 502, a Pulpit nie ostrzega o niesprawnej platnosci
+EXIT=1
