@@ -14,6 +14,7 @@ wstecz nie dopisuję, bo nie umiałbym jej odtworzyć uczciwie. Ich zmiany od te
 pory lądują tutaj.
 
 ## [Niewydane]
+- **`bramka-poswiadczenia.sh` 1.1.1** — historia od `HEAD` zamiast `--all`: runner GitHuba widzi `refs/pull/N/head` ZAMKNIĘTYCH PR-ów (niezmienialne), więc #188/#189 z martwym sekretem testowym paliłyby bramkę na zawsze; zmierzone w CI #190 (6 trafień w `refs/pull/188|189`).
 - **`bramka-poswiadczenia.sh` 1.1.0** (recenzja #189 W1/W2): nonce w URL (`[?&]_wpnonce=`) i JSON (`"nonce":`), `whsec_` od 6 znaków, faza 2 = skan HISTORII (`git grep` po `git rev-list --all`); próba kontrolna 1.1.0: 5 podłożonych przypadków, w tym cookie-jar w historii klonu usunięty `git rm` (musi paść).
 - **`bramka-poswiadczenia.sh` 1.0.0 (NOWE) + `bramki.sh` (9 bramek, PROG_PELNY 9, PROG_TEKSTOWY 6, manifest) — żywe poświadczenia w repo:** cookie-jar WP (`#HttpOnly_`, `wordpress_logged_in_<32hex>`), zrzuty z `_wpnonce`, sekrety `whsec_…`/`sk_test_…`; skan całego repo (śledzone + nieśledzone). Powód: recenzja #188 r2 KRYTYCZNA — gitleaks i `slady` (tylko `wtyczki/`) puściły ważną sesję admina. Próba kontrolna `bramka-poswiadczenia-proba-kontrolna.sh` (cookie-jar i sekret podłożone MUSZĄ paść).
 - **`k7-koniec-proba-kontrolna.sh`** — przypadek „5 soczewek w 6 wierszach” (L5→L3 dubel): stary licznik wierszy przepuszczał, nowy (1.3.3) pada „soczewek=5” (recenzja #189 W3).

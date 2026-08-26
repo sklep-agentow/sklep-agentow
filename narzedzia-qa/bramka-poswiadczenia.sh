@@ -1,5 +1,5 @@
 #!/bin/bash
-# bramka-poswiadczenia.sh — ŻYWE POŚWIADCZENIA W REPO (ciasteczka sesji WP, nonce ze zrzutów/URL/JSON, sekrety Stripe).   WERSJA 1.1.0
+# bramka-poswiadczenia.sh — ŻYWE POŚWIADCZENIA W REPO (ciasteczka sesji WP, nonce ze zrzutów/URL/JSON, sekrety Stripe).   WERSJA 1.1.1
 #
 # Po co (26.08, recenzja #188 r2 KRYTYCZNA): commit „dowody do repo” wniósł plik cookie-jar z ważną 46 h sesją
 # `audytor-admin`, zrzuty HTML panelu z aktualnymi nonce'ami i sekret webhooka — gitleaks (reguły ogólne) i `slady`
@@ -25,14 +25,16 @@ if [ -n "$TRAFIENIA" ]; then
 	exit 1
 fi
 
-# Faza 2: HISTORIA — każdy osiągalny commit (gałęzie, tagi, zdalne). `git grep` po liście rewizji jest szybki nawet
-# przy kilkuset commitach; wyjątki jak wyżej.
+# Faza 2: HISTORIA — każdy commit osiągalny z HEAD (na runnerze HEAD = merge PR-a z main, więc obejmuje całą gałąź
+# i cały main). NIE `--all` (1.1.1): GitHub trzyma `refs/pull/N/head` zamkniętych PR-ów na zawsze i runner je widzi —
+# #188/#189 (martwy sekret testowy, AN-012) świeciłyby czerwono do końca życia repo, choć nic z nich nie jest scalane.
+# Pytanie bramki: „czy TO, co scalamy, niesie sekret w historii”.
 # shellcheck disable=SC2086
-HIST=$(git grep -nIE -- "$WZORCE" $(git rev-list --all) -- . $WYJATKI 2>/dev/null | cut -c1-200 || true)
+HIST=$(git grep -nIE -- "$WZORCE" $(git rev-list HEAD) -- . $WYJATKI 2>/dev/null | cut -c1-200 || true)
 if [ -n "$HIST" ]; then
 	echo "POSWIADCZENIA: żywe poświadczenia w HISTORII (commit:plik:linia) — gałąź przepisać albo zastąpić czystą od main, sesje unieważnić, sekret obrócić:"
 	printf '%s\n' "$HIST" | head -20
 	echo "POSWIADCZENIA: $(printf '%s\n' "$HIST" | wc -l) trafień w historii → EXIT 1"
 	exit 1
 fi
-echo "POSWIADCZENIA: 0 trafień (drzewo: $(git ls-files --cached --others --exclude-standard | wc -l) plików; historia: $(git rev-list --all | wc -l) commitów)"
+echo "POSWIADCZENIA: 0 trafień (drzewo: $(git ls-files --cached --others --exclude-standard | wc -l) plików; historia od HEAD: $(git rev-list HEAD | wc -l) commitów)"
