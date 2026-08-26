@@ -4,7 +4,7 @@
   "type": "object",
   "required": ["soczewka", "runda", "commit_head", "werdykty", "znaleziska", "anomalie", "czego_nie_bylo_na_mojej_liscie", "czego_nie_obejrzalem"],
   "properties": {
-    "soczewka": { "type": "string", "enum": ["L1", "L2", "L3", "L4", "L5", "L6", "L"] },
+    "soczewka": { "type": "string", "enum": ["L1", "L2", "L3", "L4", "L5", "L6", "L", "E"] },
     "runda": { "type": "string", "enum": ["A", "B", "weryfikacja", "re-audyt"] },
     "commit_head": { "type": "string", "description": "SHA z audyt/sklep/ZAMROZENIE.md; raport z innym SHA jest nieważny" },
     "werdykty": {

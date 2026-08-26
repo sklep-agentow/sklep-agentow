@@ -14,6 +14,7 @@ wstecz nie dopisuję, bo nie umiałbym jej odtworzyć uczciwie. Ich zmiany od te
 pory lądują tutaj.
 
 ## [Niewydane]
+- **`k7-koniec.sh` 1.3.4** — wynik liczy KONTROLE, nie warunki: „NO-GO — N z M kontroli niespełnionych (8 warunków zamknięcia)” zamiast „N warunków” (recenzja #191 D1: „8 warunków niespełnionych” przy 5 PASS czytało się jak „padło wszystko”); licznik PASS.
 - **`bramka-poswiadczenia.sh` 1.1.2** — nonce w URL bez wymogu `?`/`&` przed `_wpnonce=` (zrzuty HTML niosą `&amp;`; recenzja #190 W1, fixture w próbie kontrolnej).
 - **`bramka-poswiadczenia.sh` 1.1.1** — historia od `HEAD` zamiast `--all`: runner GitHuba widzi `refs/pull/N/head` ZAMKNIĘTYCH PR-ów (niezmienialne), więc #188/#189 z martwym sekretem testowym paliłyby bramkę na zawsze; zmierzone w CI #190 (6 trafień w `refs/pull/188|189`).
 - **`bramka-poswiadczenia.sh` 1.1.0** (recenzja #189 W1/W2): nonce w URL (`[?&]_wpnonce=`) i JSON (`"nonce":`), `whsec_` od 6 znaków, faza 2 = skan HISTORII (`git grep` po `git rev-list --all`); próba kontrolna 1.1.0: 5 podłożonych przypadków, w tym cookie-jar w historii klonu usunięty `git rm` (musi paść).
