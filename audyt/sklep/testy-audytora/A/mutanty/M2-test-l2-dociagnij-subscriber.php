@@ -1,4 +1,6 @@
 <?php
+// PADA na paczce z MUTANTEM M2 (425a3124: handler dociągnij bez current_user_can); na CZYSTEJ 0.9.13 (5d3dcf9, 7e0cf726)
+// PRZECHODZI — patrz README.md w tym katalogu (recenzja #191 W1 / #194 W2). Poniżej opis wady MUTANTA.
 // admin-dashboard.php jest dołączany przez sklep-agentow.php TYLKO gdy is_admin() —
 // w kontekście wp-cli eval-file to fałsz (stała WP_ADMIN=false z bootstrapu CLI,
 // nie da się jej przełączyć w locie), więc funkcja handlera nie istnieje bez

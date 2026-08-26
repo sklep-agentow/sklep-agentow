@@ -1,5 +1,8 @@
 <?php
 /**
+ * PADA na paczce z MUTANTEM M7 (425a3124: pętla 1 reconciliation `continue` bez wpisu); na CZYSTEJ 0.9.13 (5d3dcf9)
+ * PRZECHODZI — obie pętle logują `reconciliation_blad` (zakup.php:490,520); patrz README.md (recenzja #194 W2).
+ * Poniżej opis wady MUTANTA:
  * Test padający — Ł-02 (runda A, uzupełniający): sklepag_dociagnij_zalegle()
  * (includes/zakup.php) ma DWIE pętle wołające Stripe. Pętla 1 (sesje
  * wp_sklepag_sesje_checkout w stanie 'utworzona') na WP_Error z

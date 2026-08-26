@@ -173,6 +173,6 @@ fi
 echo
 KRYT=$(printf '%s\n' "$WIERSZE" | awk -F'|' '$5 ~ /KRYTYCZNA/ && $10 !~ /ZAMKNIETE|OBALONE|POZA K7/' | wc -l)
 DUZE=$(printf '%s\n' "$WIERSZE" | awk -F'|' '$5 ~ /DUŻA/ && $10 !~ /ZAMKNIETE|OBALONE|POZA K7/' | wc -l)
-echo "TRZY LICZBY DLA WŁAŚCICIELA: KRYTYCZNE otwarte: $KRYT · DUŻE otwarte: $DUZE · warunków FAIL: $FAIL"
+echo "TRZY LICZBY DLA WŁAŚCICIELA: KRYTYCZNE otwarte: $KRYT · DUŻE otwarte: $DUZE · kontroli FAIL: $FAIL (z $((PASS+FAIL)))"
 if [ "$FAIL" -eq 0 ]; then echo "K7: GO — wszystkie warunki zamknięcia spełnione ($PASS kontroli PASS)"; exit 0; fi
 echo "K7: NO-GO — $FAIL z $((PASS+FAIL)) kontroli niespełnionych (8 warunków zamknięcia)"; exit 1
