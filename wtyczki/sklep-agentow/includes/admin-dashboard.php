@@ -13,6 +13,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 require_once SKLEPAG_KATALOG . 'includes/class-sklepag-lista-zamowien.php';
 
+// Statusy, które LICZĄ SIĘ DO PRZYCHODU. Nie ma tu 'zwrocone' ani 'sporne': pieniądze
+// za zwrócony zakup i za otwarte obciążenie zwrotne zeszły z konta właściciela, więc panel
+// nie może ich pokazywać jako utargu. Zwrot CZĘŚCIOWY zostawia zamówienie na liście, a jego
+// kwota schodzi z sum przez odjęcie `zwrocono_grosze`.
 const SKLEPAG_STATUSY_OPLACONE = "'oplacone','mail_w_toku','mail_wyslany','mail_blad'";
 
 /**
@@ -145,7 +149,7 @@ function sklepag_kpi_zakresu( $od, $do_kiedy ) {
 	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.NotPrepared -- nazwa tabeli z prefiksu, SKLEPAG_STATUSY_OPLACONE to stała pliku (nie wejście); KPI liczone na żywo.
 	$w = $wpdb->get_row(
 		$wpdb->prepare(
-			'SELECT COALESCE(SUM(kwota_grosze),0) AS przychod, COUNT(*) AS zamowienia, COUNT(DISTINCT email_kupujacego) AS kupujacy'
+			'SELECT COALESCE(SUM(GREATEST(kwota_grosze - zwrocono_grosze, 0)),0) AS przychod, COUNT(*) AS zamowienia, COUNT(DISTINCT email_kupujacego) AS kupujacy'
 			. " FROM {$t} WHERE status IN (" . SKLEPAG_STATUSY_OPLACONE . ') AND utworzono >= %s AND utworzono < %s',
 			$od,
 			$do_kiedy
@@ -279,7 +283,7 @@ function sklepag_obsluz_eksport_csv() {
  */
 function sklepag_admin_dashboard() {
 	if ( ! current_user_can( 'manage_options' ) ) {
-		wp_die( 'Brak uprawnień.' );
+		wp_die( 'Brak uprawnień.', 'Sklep Agentów', 403 );
 	}
 
 	sklepag_dashboard_self_heal();
@@ -420,6 +424,8 @@ function sklepag_pasek_statusow( $g ) {
 		'mail_w_toku'  => '#b98a00',
 		'mail_blad'    => '#b32d2e',
 		'oczekuje'     => '#8c8f94',
+		'zwrocone'     => '#6c7781',
+		'sporne'       => '#8a1f1f',
 	);
 
 	echo '<div class="sklepag-statusy-pasek-box"><h2>Statusy zamówień w okresie</h2>';
@@ -459,7 +465,7 @@ function sklepag_rozklad_w_czasie( $okres, $g ) {
 	if ( 'dzis' === $okres ) {
 		$wiersze  = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT HOUR(utworzono) AS klucz, SUM(kwota_grosze) AS suma FROM {$t} WHERE status IN (" . SKLEPAG_STATUSY_OPLACONE . ') AND utworzono >= %s GROUP BY HOUR(utworzono)',
+				"SELECT HOUR(utworzono) AS klucz, SUM(GREATEST(kwota_grosze - zwrocono_grosze, 0)) AS suma FROM {$t} WHERE status IN (" . SKLEPAG_STATUSY_OPLACONE . ') AND utworzono >= %s GROUP BY HOUR(utworzono)',
 				$g['od']
 			),
 			OBJECT_K
@@ -471,7 +477,7 @@ function sklepag_rozklad_w_czasie( $okres, $g ) {
 	} else {
 		$wiersze = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT DATE(utworzono) AS klucz, SUM(kwota_grosze) AS suma FROM {$t} WHERE status IN (" . SKLEPAG_STATUSY_OPLACONE . ') AND utworzono >= %s GROUP BY DATE(utworzono)',
+				"SELECT DATE(utworzono) AS klucz, SUM(GREATEST(kwota_grosze - zwrocono_grosze, 0)) AS suma FROM {$t} WHERE status IN (" . SKLEPAG_STATUSY_OPLACONE . ') AND utworzono >= %s GROUP BY DATE(utworzono)',
 				$g['od']
 			),
 			OBJECT_K

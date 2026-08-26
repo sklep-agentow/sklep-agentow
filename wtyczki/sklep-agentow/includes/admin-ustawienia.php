@@ -270,7 +270,7 @@ function sklepag_pole_usun_dane() {
  */
 function sklepag_admin_ustawienia() {
 	if ( ! current_user_can( 'manage_options' ) ) {
-		wp_die( 'Brak uprawnień.' );
+		wp_die( 'Brak uprawnień.', 'Sklep Agentów', 403 );
 	}
 	echo '<div class="wrap"><h1>Ustawienia sklepu</h1>';
 	settings_errors();

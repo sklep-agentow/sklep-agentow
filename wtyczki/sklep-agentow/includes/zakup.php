@@ -217,6 +217,20 @@ function sklepag_webhook( WP_REST_Request $zadanie ) {
 		sklepag_zdarzenie( null, 'sesja_niedoszla', $typ . ' ' . ( $sesja['id'] ?? '?' ) );
 	}
 
+	// ZWROT PIENIĘDZY. Stripe od aktualizacji z 28.10.2024 zaleca `refund.created` —
+	// `charge.refunded` nadal przychodzi, ale dokumentacja sama odsyła po szczegóły do
+	// `refund.created`. Nasłuchujemy OBU i rozstrzygamy po kwocie już zapisanej w bazie,
+	// żeby dwa zdarzenia o tym samym zwrocie nie odjęły pieniędzy dwa razy.
+	if ( 'refund.created' === $typ || 'refund.updated' === $typ || 'charge.refunded' === $typ ) {
+		sklepag_zaksieguj_zwrot( $typ, $sesja );
+	}
+
+	// OBCIĄŻENIE ZWROTNE (kupujący reklamuje płatność w swoim banku). Pieniądze schodzą
+	// z konta właściciela od razu, więc zamówienie przestaje być przychodem tak samo jak zwrot.
+	if ( 0 === strpos( $typ, 'charge.dispute.' ) ) {
+		sklepag_zaksieguj_spor( $typ, $sesja );
+	}
+
 	return new WP_REST_Response( array( 'ok' => true ), 200 );
 }
 
@@ -227,6 +241,148 @@ function sklepag_oznacz_sesje( $sesja_id, $stan ) {
 	global $wpdb;
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery
 	$wpdb->update( $wpdb->prefix . 'sklepag_sesje_checkout', array( 'stan' => $stan ), array( 'stripe_session_id' => $sesja_id ), array( '%s' ), array( '%s' ) );
+}
+
+/* ---------- ZWROTY I OBCIĄŻENIA ZWROTNE (księgowość panelu) ---------- */
+
+/**
+ * Identyfikator płatności ze zdarzenia o zwrocie/sporze. Obiekty `refund`, `charge`
+ * i `dispute` niosą `payment_intent`; identyfikatora sesji checkout NIE niesie żaden.
+ */
+function sklepag_platnosc_ze_zdarzenia( $obiekt ) {
+	if ( ! isset( $obiekt['payment_intent'] ) ) {
+		return '';
+	}
+	return is_array( $obiekt['payment_intent'] )
+		? (string) ( $obiekt['payment_intent']['id'] ?? '' )
+		: (string) $obiekt['payment_intent'];
+}
+
+/**
+ * Zamówienie po identyfikatorze płatności.
+ *
+ * Zamówienia sprzed wersji schematu 6 nie mają zapisanej płatności — dla nich pytamy
+ * Stripe o sesję checkout tej płatności i szukamy po identyfikatorze sesji. Znaleziony
+ * numer płatności dopisujemy, żeby drugi raz już nie pytać.
+ */
+function sklepag_zamowienie_po_platnosci( $payment_intent ) {
+	global $wpdb;
+	$pz = $wpdb->prefix . 'sklepag_zamowienia';
+	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
+	$zam = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$pz} WHERE payment_intent_id=%s", $payment_intent ) );
+	if ( $zam ) {
+		return $zam;
+	}
+
+	$sesja = sklepag_stripe_sesja_po_platnosci( $payment_intent );
+	if ( is_wp_error( $sesja ) || empty( $sesja['id'] ) ) {
+		return null;
+	}
+	$zam = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$pz} WHERE stripe_session_id=%s", (string) $sesja['id'] ) );
+	if ( $zam ) {
+		$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET payment_intent_id=%s WHERE id=%d", $payment_intent, (int) $zam->id ) );
+		$zam->payment_intent_id = $payment_intent;
+	}
+	// phpcs:enable
+	return $zam;
+}
+
+/**
+ * Zapisuje zwrot w zamówieniu: kwotę, czas i status.
+ *
+ * Kwota bierze się z obiektu `charge` jako `amount_refunded` (SUMA wszystkich zwrotów tej
+ * płatności — wartość autorytatywna) albo z obiektu `refund` jako `amount` (kwota jednego
+ * zwrotu). Zapisujemy WIĘKSZĄ z dotychczasowej i nowej, więc dwa zdarzenia o tym samym
+ * zwrocie nie odejmą pieniędzy dwa razy, a kolejny zwrot częściowy podniesie sumę.
+ */
+function sklepag_zaksieguj_zwrot( $typ, $obiekt ) {
+	global $wpdb;
+	$pz = $wpdb->prefix . 'sklepag_zamowienia';
+
+	$pi = sklepag_platnosc_ze_zdarzenia( $obiekt );
+	if ( '' === $pi ) {
+		sklepag_zdarzenie( null, 'zwrot_bez_powiazania', $typ . ': zdarzenie bez identyfikatora płatności' );
+		return;
+	}
+	$kwota = isset( $obiekt['amount_refunded'] ) ? (int) $obiekt['amount_refunded'] : (int) ( $obiekt['amount'] ?? 0 );
+	if ( $kwota <= 0 ) {
+		return;
+	}
+	$zam = sklepag_zamowienie_po_platnosci( $pi );
+	if ( ! $zam ) {
+		// Cudza płatność (inna wtyczka na tym samym koncie Stripe) albo zamówienie skasowane.
+		sklepag_zdarzenie( null, 'zwrot_bez_powiazania', $typ . ': brak zamówienia dla płatności ' . $pi );
+		return;
+	}
+
+	$juz = (int) $zam->zwrocono_grosze;
+	if ( $kwota <= $juz ) {
+		return; // Już zaksięgowane — powtórka zdarzenia nic nie zmienia.
+	}
+
+	$pelny  = ( $kwota >= (int) $zam->kwota_grosze );
+	$status = $pelny ? 'zwrocone' : $zam->status;
+	$teraz  = current_time( 'mysql' );
+	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
+	$wpdb->query(
+		$wpdb->prepare(
+			"UPDATE {$pz} SET zwrocono_grosze=%d, zwrot_czas=%s, status=%s, zmieniono=%s WHERE id=%d",
+			$kwota,
+			$teraz,
+			$status,
+			$teraz,
+			(int) $zam->id
+		)
+	);
+	sklepag_zdarzenie(
+		(int) $zam->id,
+		$pelny ? 'zwrot_pelny' : 'zwrot_czesciowy',
+		'zwrócono ' . number_format_i18n( $kwota / 100, 2 ) . ' ' . $zam->waluta .
+		' z ' . number_format_i18n( (int) $zam->kwota_grosze / 100, 2 ) . ' ' . $zam->waluta . ' (' . $typ . ')'
+	);
+}
+
+/**
+ * Obciążenie zwrotne: kupujący reklamuje płatność w banku. Stripe zdejmuje pieniądze
+ * z konta właściciela od chwili otwarcia sporu, więc zamówienie przestaje być przychodem;
+ * spór wygrany je przywraca.
+ */
+function sklepag_zaksieguj_spor( $typ, $obiekt ) {
+	global $wpdb;
+	$pz = $wpdb->prefix . 'sklepag_zamowienia';
+
+	$pi = sklepag_platnosc_ze_zdarzenia( $obiekt );
+	$zam = '' === $pi ? null : sklepag_zamowienie_po_platnosci( $pi );
+	if ( ! $zam ) {
+		sklepag_zdarzenie( null, 'spor_bez_powiazania', $typ . ': brak zamówienia dla płatności ' . ( '' === $pi ? '(brak id)' : $pi ) );
+		return;
+	}
+
+	$teraz  = current_time( 'mysql' );
+	$wynik  = isset( $obiekt['status'] ) ? (string) $obiekt['status'] : '';
+	$kwota  = isset( $obiekt['amount'] ) ? (int) $obiekt['amount'] : (int) $zam->kwota_grosze;
+	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
+	if ( 'charge.dispute.closed' === $typ && 'won' === $wynik ) {
+		$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET zwrocono_grosze=0, zwrot_czas=NULL, status='mail_wyslany', zmieniono=%s WHERE id=%d", $teraz, (int) $zam->id ) );
+		sklepag_zdarzenie( (int) $zam->id, 'spor_wygrany', 'bank przyznał rację sprzedawcy — pieniądze wracają do przychodu' );
+		// phpcs:enable
+		return;
+	}
+	$wpdb->query( // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
+		$wpdb->prepare(
+			"UPDATE {$pz} SET zwrocono_grosze=%d, zwrot_czas=%s, status='sporne', zmieniono=%s WHERE id=%d",
+			$kwota,
+			$teraz,
+			$teraz,
+			(int) $zam->id
+		)
+	);
+	sklepag_zdarzenie(
+		(int) $zam->id,
+		'charge.dispute.closed' === $typ ? 'spor_przegrany' : 'spor_otwarty',
+		'obciążenie zwrotne (' . $typ . ( '' !== $wynik ? ', status ' . $wynik : '' ) . '): ' .
+		number_format_i18n( $kwota / 100, 2 ) . ' ' . $zam->waluta . ' poza przychodem'
+	);
 }
 
 /* ---------- SILNIK DOMYKANIA — jeden dla webhooka i reconciliation ---------- */
@@ -312,6 +468,21 @@ function sklepag_domknij_zakup( $sesja ) {
 		// Sesja zostaje 'utworzona' → dociągnie ją reconciliation, a webhook Stripe ponowi.
 		return false;
 	}
+	// Identyfikator płatności zapisujemy JUŻ TERAZ, bo zdarzenia o zwrocie i obciążeniu
+	// zwrotnym przychodzą ze Stripe wyłącznie na poziomie płatności (refund.created,
+	// charge.dispute.*) i NIE niosą identyfikatora sesji checkout. Bez tej kolumny każdy
+	// zwrot wymagałby dodatkowego pytania do API tylko po to, żeby ustalić, czyj jest.
+	$pi = '';
+	if ( isset( $sesja['payment_intent'] ) ) {
+		$pi = is_array( $sesja['payment_intent'] )
+			? (string) ( $sesja['payment_intent']['id'] ?? '' )   // pole przyszło rozwinięte
+			: (string) $sesja['payment_intent'];
+	}
+	if ( '' !== $pi ) {
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
+		$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET payment_intent_id=%s WHERE stripe_session_id=%s AND payment_intent_id=''", $pi, $sid ) );
+	}
+
 	sklepag_oznacz_sesje( $sid, 'oplacona' );
 
 	// 3) CAS: przejęcie wysyłki (oplacone/mail_blad -> mail_w_toku). Przegrany wraca bez maila.

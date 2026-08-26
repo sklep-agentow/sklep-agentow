@@ -46,7 +46,7 @@ function sklepag_url_produktu( $id = 0 ) {
  */
 function sklepag_admin_produkty() {
 	if ( ! current_user_can( 'manage_options' ) ) {
-		wp_die( 'Brak uprawnień.' );
+		wp_die( 'Brak uprawnień.', 'Sklep Agentów', 403 );
 	}
 
 	// phpcs:disable WordPress.Security.NonceVerification.Recommended -- wybór widoku read-only.

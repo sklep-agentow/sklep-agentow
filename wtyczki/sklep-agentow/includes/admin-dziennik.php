@@ -17,7 +17,7 @@ require_once SKLEPAG_KATALOG . 'includes/class-sklepag-lista-zdarzen.php';
  */
 function sklepag_admin_dziennik() {
 	if ( ! current_user_can( 'manage_options' ) ) {
-		wp_die( 'Brak uprawnień.' );
+		wp_die( 'Brak uprawnień.', 'Sklep Agentów', 403 );
 	}
 
 	// Zakładka z GET po allowlist — nawigacja read-only (standard nav-tab wp-admin).

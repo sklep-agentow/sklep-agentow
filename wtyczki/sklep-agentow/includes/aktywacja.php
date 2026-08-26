@@ -67,12 +67,16 @@ function sklepag_tabele_sql() {
 			mail_proby smallint(5) unsigned NOT NULL DEFAULT 0,
 			mail_tresc longtext,
 			usunieto_dnia datetime DEFAULT NULL,
+			payment_intent_id varchar(255) NOT NULL DEFAULT '',
+			zwrocono_grosze int(11) unsigned NOT NULL DEFAULT 0,
+			zwrot_czas datetime DEFAULT NULL,
 			utworzono datetime NOT NULL,
 			zmieniono datetime NOT NULL,
 			PRIMARY KEY  (id),
 			UNIQUE KEY stripe_session_id (stripe_session_id),
 			KEY status (status),
-			KEY utworzono (utworzono)
+			KEY utworzono (utworzono),
+			KEY payment_intent_id (payment_intent_id)
 		) {$c};",
 
 		"CREATE TABLE {$p}zdarzenia (

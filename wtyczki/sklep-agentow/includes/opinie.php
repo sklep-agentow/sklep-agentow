@@ -179,13 +179,23 @@ function sklepag_opinia_moderuj( $opinia_id, $akcja ) {
 		return false;
 	}
 	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- jw.; $z to stała lista statusów z tej funkcji, nie wejście.
-	$zanonimizowane = $wpdb->get_var(
+	// Pytamy o CAŁY wiersz, nie o jedną kolumnę. get_var() zwracał NULL w DWÓCH różnych
+	// sytuacjach: „zamówienie jest i nie jest zanonimizowane" ORAZ „zamówienia w ogóle nie ma"
+	// (JOIN bez trafienia) — nie do odróżnienia. Skutkiem drugiej opinia bez zamówienia
+	// przechodziła moderację i lądowała na stronie produktu jako opinia zweryfikowanego kupującego.
+	$powiazanie = $wpdb->get_row(
 		$wpdb->prepare(
-			"SELECT z.usunieto_dnia FROM {$t} o JOIN {$pz} z ON z.id = o.zamowienie_id WHERE o.id = %d",
+			"SELECT z.id AS zamowienie_id, z.usunieto_dnia FROM {$t} o JOIN {$pz} z ON z.id = o.zamowienie_id WHERE o.id = %d",
 			$opinia_id
 		)
 	);
-	if ( $zanonimizowane ) {
+	if ( ! $powiazanie ) {
+		if ( function_exists( 'sklepag_zdarzenie' ) ) {
+			sklepag_zdarzenie( null, 'opinia_bez_zamowienia', 'moderacja wstrzymana: opinia ' . (int) $opinia_id . ' nie ma powiązanego zamówienia' );
+		}
+		return false;
+	}
+	if ( $powiazanie->usunieto_dnia ) {
 		return false;
 	}
 	$ok = $wpdb->query( $wpdb->prepare( "UPDATE {$t} SET status=%s, zmieniono=%s WHERE id=%d AND status IN {$z}", $nowy, $teraz, $opinia_id ) );

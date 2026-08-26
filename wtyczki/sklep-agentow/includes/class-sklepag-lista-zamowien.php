@@ -26,6 +26,8 @@ class Sklepag_Lista_Zamowien extends WP_List_Table {
 		'mail_w_toku'  => array( 'mail w toku', 'sklepag-badge-uwaga', 'Trwa wysyłka maila z linkiem pobrania' ),
 		'mail_wyslany' => array( 'mail wysłany', 'sklepag-badge-ok', 'Zakup domknięty — mail z linkiem dostarczony do wysyłki' ),
 		'mail_blad'    => array( 'błąd maila', 'sklepag-badge-blad', 'Wysyłka nieudana — cron ponawia do 3 prób, potem wymaga ręcznej interwencji' ),
+		'zwrocone'     => array( 'zwrócone', 'sklepag-badge-szary', 'Pieniądze zwrócone kupującemu — zamówienie nie liczy się do przychodu' ),
+		'sporne'       => array( 'obciążenie zwrotne', 'sklepag-badge-blad', 'Kupujący zareklamował płatność w banku — kwota zdjęta z konta do czasu rozstrzygnięcia' ),
 	);
 
 	public function __construct() {

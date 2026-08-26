@@ -69,6 +69,21 @@ if ( $katalog && false !== strpos( $katalog, 'sklepag-chronione-' ) && is_dir( $
 // nie skrót WC/EDD (goły LIKE bez prepare łamie regułę WPCS). Chroni cudze opcje.
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $wpdb->esc_like( 'sklepag_' ) . '%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- uninstall.
 
+// 4b. TRANSIENTY wtyczki. Transients API zapisuje je w wp_options POD WŁASNYM prefiksem
+// (`_transient_sklepag_…` i `_transient_timeout_sklepag_…`), więc czyszczenie po samym
+// „sklepag_" ich NIE łapie: po „usuń wszystkie dane" zostawał adres sesji Stripe i skrót IP
+// z okna idempotencji zakupu. WP sprząta wygasłe transienty własnym cronem, ale deinstalacja
+// nie może zostawiać danych i czekać na cudzy harmonogram.
+foreach ( array( '_transient_sklepag_', '_transient_timeout_sklepag_' ) as $prefiks ) {
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- uninstall.
+	$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $wpdb->esc_like( $prefiks ) . '%' ) );
+}
+// Instalacje z zewnętrznym cache obiektów (Redis/Memcached) trzymają transienty poza bazą —
+// tam kasuje je dopiero delete_transient(), dlatego czyścimy OBIEMA drogami.
+if ( wp_using_ext_object_cache() ) {
+	wp_cache_flush();
+}
+
 // 5. User meta wtyczki: Screen Options „na stronę" zapisuje się per użytkownik
 // w wp_usermeta, nie w wp_options (symetria zapis↔sprzątanie).
 delete_metadata( 'user', 0, 'sklepag_zamowien_na_strone', '', true );
