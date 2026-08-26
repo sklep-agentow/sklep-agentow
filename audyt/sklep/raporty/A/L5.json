@@ -1,0 +1,200 @@
+{
+  "soczewka": "L5",
+  "runda": "A",
+  "commit_head": "5d3dcf9f0d99dedc1fe201c3e318f46d6f35ba5d",
+  "werdykty": [
+    {
+      "cel": "L5-01",
+      "werdykt": "ROZJAZD",
+      "plik": "DOKUMENTACJA-TECHNICZNA.md",
+      "linia": 38,
+      "dowod": "§3 nagłówek (linia 38): 'Schemat bazy — 7 tabel'. §8 (linia 166): 'Przy aktywacji: utworzenie 6 tabel przez dbDelta'. Kod: grep -c 'CREATE TABLE' includes/aktywacja.php = 7. SQL na stosie :8890 (docker exec strona_wp_db ... SHOW TABLES LIKE 'wp_sklepag%') = 7 wierszy (logowania, opinie, produkty, rate_limit, sesje_checkout, zamowienia, zdarzenia). Test padający: testy-audytora/L5/test-doktech-liczba-tabel.sh (FAIL na obecnym dokumencie)."
+    },
+    {
+      "cel": "L5-02",
+      "werdykt": "BRAK",
+      "proba_kontrolna": "grep -n '#170\\|170' DOKUMENTACJA-TECHNICZNA.md (paczka 0.9.13) → zero trafień. Numer zgłoszenia '#170' opisany w mapie polowania NIE występuje w obecnej wersji pliku — albo już naprawiony wcześniej, albo dotyczył innej/wcześniejszej wersji dokumentu, której nie mam."
+    },
+    {
+      "cel": "L5-03",
+      "werdykt": "SPEŁNIONE INACZEJ",
+      "plik": "DOKUMENTACJA-TECHNICZNA.md",
+      "linia": 20,
+      "dowod": "Tabela architektury §2 (linie 20-30) wymienia: sklep-agentow.php, aktywacja.php, stripe.php, zakup.php, pobieranie.php, front-produkt.php, front-seo.php, logowania.php, 'admin*.php' (wildcard) — BEZ osobnego wiersza dla includes/opinie.php i bez wymienienia klas class-sklepag-lista-*.php. Potwierdzone: `ls includes/` pokazuje opinie.php, admin-opinie.php i 5 plików class-sklepag-lista-*.php jako osobne pliki. Funkcjonalnie moduł opinii JEST opisany gdzie indziej (§3 cała sekcja 'Tabela opinie — obieg D32', §4 dwa endpointy ocen) — luka w JEDNEJ tabeli, nie brak wiedzy o funkcji. Znany fakt PRZED audytem (02-fakty-srodowiska.md, sekcja 'Znane, zapisane PRZED audytem')."
+    },
+    {
+      "cel": "L5-04",
+      "werdykt": "ZGODNE",
+      "plik": "sklep-agentow.php",
+      "linia": 21,
+      "dowod": "testy/dokumentacja-zgodnosc-sklep.sh (repo, uruchomiony na paczce) sekcja B: 'link ważny N godzin (SKLEPAG_LINK_GODZIN) = 72' OK, 'do N pobrań (SKLEPAG_LIMIT_POBRAN) = 10' OK, 'link opinii N dni (SKLEPAG_OPINIA_DNI) = 30' OK, 'cron co N minut == interval/60 = 10' OK, 'retencja dziennika N dni == kod = 90' OK. Wszystkie liczby z readme.txt zgodne ze stałymi w kodzie (sklep-agentow.php:20-23)."
+    },
+    {
+      "cel": "L5-05",
+      "werdykt": "SPEŁNIONE INACZEJ",
+      "plik": "dokumentacja/INSTRUKCJA-INSTALACJI.md",
+      "linia": 1,
+      "jak_czlowiek_tego_uzywa": "Instrukcja jest opisem kliknięć w UI (Kokpit → Wtyczki → ...), nie serią komend terminalowych do wpisania — jedyna literalna komenda terminala to `stripe listen --forward-to ...` (Krok 3B), o której DOPISEK KOORDYNATORKI mówi wprost: 'stripe listen NIE CHODZI (fakt, nie znalezisko)' — nie testowałam jej z tego powodu (fakt środowiska, nie luka dokumentacji). Etykiety menu z instrukcji porównane z includes/admin.php przez strażnik testy/dokumentacja-zgodnosc-sklep.sh sekcja C: 5/5 pozycji menu (Pulpit, Produkty, Opinie, Dziennik, Ustawienia) zgodne w obie strony, liczba pozycji menu w kodzie == liczbie w readme (5)."
+    },
+    {
+      "cel": "L5-06",
+      "werdykt": "ZGODNE",
+      "plik": "CHANGELOG.md",
+      "linia": 15,
+      "dowod": "'## [Niewydane]' (linia 15) → 'Nic jeszcze.' (puste, potwierdzone strażnikiem: 'CHANGELOG: [Niewydane] puste = 0'). Wpis '## [0.9.13] — 2026-08-25' obecny i zgodny treściowo z readme.txt '= 0.9.13 =' (te same 3 punkty: meta/OG na liście, mail potwierdza zgodę+Reply-To+gwarancja, układ Segregatora na tabletach)."
+    },
+    {
+      "cel": "L5-07",
+      "werdykt": "NIE SPRAWDZIŁEM",
+      "dowod": "Budżet wyczerpany na inne cele o wyższym priorytecie (liczby-stałe, plugin-check, sweep, gitleaks). Nie porównałam szczegółowo liczb w treściach stron produktów (liczba zrzutów/faz galerii itd.) z zawartością paczek botów — to wymagałoby otwarcia paczek chatbot-live.zip/segregator-maila.zip, które nie były przedmiotem tej rundy (mam tylko sklep-agentow rozpakowany)."
+    },
+    {
+      "cel": "L5-08",
+      "werdykt": "SPEŁNIONE",
+      "plik": "readme.txt",
+      "linia": 20,
+      "jak_czlowiek_tego_uzywa": "Kierunek odwrotny: przeszłam inwentarz punktów wejścia z 02-fakty-srodowiska.md i sprawdziłam pokrycie w dokumentacji właściciela. Wszystkie punkty mające znaczenie DLA WŁAŚCICIELA są opisane: zakup+webhook+status (readme 'Installation' krok 4, DOK-TECH §4), panel CRUD/resend/anonimizacja/CSV/dociągnij (readme bullet 'Panel w kokpicie'), opinie (readme + DOK-TECH §3/§9), rewrite /sklep/produkt/ (readme), cron co 10 min (readme + INSTRUKCJA Krok 3), aktywacja/deaktywacja/uninstall (readme FAQ + DOK-TECH §8 + INSTRUKCJA 'Odinstalowanie'), menu (potwierdzone strażnikiem). NIE nazwane dosłownie: nazwy shortcode'ów ([sklepag_sklep]/[sklepag_dziekujemy]) i nazwy hooków logowania (wp_authenticate/wp_login/wp_login_failed) — ale to szczegóły implementacyjne bez wartości dla właściciela — nie kwalifikuję jako brak."
+    },
+    {
+      "cel": "L5-09",
+      "werdykt": "ZGODNE",
+      "plik": "includes/zakup.php",
+      "linia": 405,
+      "dowod": "sklepag_zbuduj_mail() (linie 405-433): 'INSTRUKCJA W SKRÓCIE: 1. Pobierz... 2. Wtyczki→Dodaj... 3. Aktywuj...' (3 kroki jak w readme 'krótka instrukcja'); ważność linku z $dni=round(SKLEPAG_LINK_GODZIN/24); limit z SKLEPAG_LIMIT_POBRAN; link opinii warunkowy z SKLEPAG_OPINIA_DNI; potwierdzenie zgody z zam->zgoda_tresc+zgoda_czas. Wszystko zgodne z opisem 'Mail po zakupie' w readme.txt i DOK-TECH §3."
+    },
+    {
+      "cel": "L5-10",
+      "werdykt": "ROZJAZD",
+      "plik": "includes/aktywacja.php",
+      "linia": 181,
+      "dowod": "Szablon 'sklepag_strona_regulamin' (linia 181) opisuje: sprzedawcę [placeholder], treści cyfrowe, utratę prawa odstąpienia (art. 38), reklamacje [placeholder] — ZERO wzmianki o gwarancji, nawet jako placeholder. Front-produkt.php:327 i :487 obiecują wprost obu kupującym: '14 dni gwarancji satysfakcji... zwracamy pieniądze bez pytań'. 05-reguly-branzy.md (cytując audyt/AUDYT-JAKOSC-PODSTRON-25-08.md §4) mówi wprost: 'regulamin musi opisać 14-dniową gwarancję satysfakcji — D31'. Test padający: testy-audytora/L5/test-regulamin-brak-gwarancji.sh (FAIL na obecnym kodzie). 90 dni retencji ✓ obecne (aktywacja.php:182), Stripe jako procesor ✓ obecne (aktywacja.php:182) — tylko gwarancja brakuje."
+    },
+    {
+      "cel": "L5-11",
+      "werdykt": "SPEŁNIONE",
+      "plik": "narzedzia-qa/slady-wewnetrzne.sh",
+      "linia": 1,
+      "dowod": "Uruchomione: SLADY_ZALEGLOSCI=/dev/null bash narzedzia-qa/slady-wewnetrzne.sh sklep-agentow /root/praca/zlecenia/wymiana/k7-runda-A/sklep-agentow → 'SLADY 1.2.0 [sklep-agentow]: nowe=0, dlug z listy=0, martwe wpisy=0'. Paczka rozpakowana bez śladów wewnętrznych wykrywalnych tym strażnikiem."
+    },
+    {
+      "cel": "L5-12",
+      "werdykt": "SPEŁNIONE INACZEJ",
+      "plik": "includes/zakup.php",
+      "linia": 32,
+      "dowod": "Uruchomiony `wp plugin check` (oficjalny WP.org) na 3 zipach zainstalowanych na :8890. sklep-agentow: WYŁĄCZNIE WARNING typu PluginCheck.Security.DirectDB.UnescapedDBParameter (~40 wystąpień) i WordPress.NamingConventions.PrefixAllGlobals. KWALIFIKACJA: spot-check zakup.php:31-34 pokazuje $t jako nazwę TABELI wstawianą do SQL wewnątrz $wpdb->prepare(...) z placeholderami %s dla realnych wartości (linia ma phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared — świadome, komentowane) — automatyczny skaner Plugin Check nie odróżnia interpolacji NAZWY TABELI (bezpieczna) od interpolacji WARTOŚCI (niebezpiecznej) — fałszywy alarm zgodny ze wzorcem w całym pliku. chatbot-live/segregator-maila: WARNING DirectDatabaseQuery.NoCaching/DirectQuery (świadomie, D25: boty mają WŁASNE tabele, sniff wyłączony w NASZYM phpcs.xml, ale Plugin Check to narzędzie ZEWNĘTRZNE i go nie zna) + WARNING PluginCheck.CodeAnalysis.AIProvider.DirectIntegration na api.anthropic.com (zgodne z D19). Brak ERROR w widzianej części wyjścia — ANOMALIA: wyjście obcięte `tail -100` dla chatbot-live/segregator-maila, nie mogę wykluczyć ERROR w pominiętej głowie listy."
+    },
+    {
+      "cel": "L5-13",
+      "werdykt": "NIE DA SIĘ SPRAWDZIĆ",
+      "dowod": "`which gitleaks` → brak wyniku, exit 1. gitleaks nie jest zainstalowany na serwerze; zgodnie z instrukcją koordynatorki nic nie instaluję. Nie da się uruchomić `gitleaks detect --log-opts=--all`."
+    },
+    {
+      "cel": "L5-14",
+      "werdykt": "ZGODNE",
+      "plik": "audyt/sklep/material/02-fakty-srodowiska.md",
+      "linia": 1,
+      "dowod": "git log 5d3dcf9f0d99dedc1fe201c3e318f46d6f35ba5d --format='%ae' | wc -l → 289; ...| grep -vc noreply → 0. 289/289 commitów z adresem *.noreply.github.com (2 warianty tego samego konta). Potwierdza dosłownie fakt z 02-fakty-srodowiska.md."
+    },
+    {
+      "cel": "L5-15",
+      "werdykt": "SPEŁNIONE INACZEJ",
+      "plik": "readme.txt",
+      "linia": 84,
+      "dowod": "docker exec strona_wp_wordpress cat .../segregator-maila/readme.txt: linia 84 zawiera wypełnioną sekcję 'Wymagania: WordPress 6.0 lub nowszy, PHP 8.1 lub nowszy. Rozszerzenie PHP imap nie jest potrzebne...'. Mapa polowania opisuje to jako 'odroczone do następnego wydania bota' — na stanie z 26.08 sekcja jest JUŻ wypełniona treściwie, nie jest placeholderem. Albo naprawione po dacie mapy, albo mapa opisuje inny, wcześniejszy stan. Status wygląda na już rozwiązany."
+    },
+    {
+      "cel": "L5-16",
+      "werdykt": "NIE SPRAWDZIŁEM",
+      "dowod": "Mapa polowania oznacza ten cel jako już znany i zamknięty w rejestrze (SK-L5-001, recenzja PR #182, commit 38f7ef8). Budżet wyczerpany na cele bez wcześniejszego wpisu w rejestrze; nie weryfikowałam ponownie, czy naprawa faktycznie usunęła numerację planu (D-numery, K-numery, S-numery) z tekstów UI/komentarzy widocznych dla klienta w paczce."
+    },
+    {
+      "cel": "L5-17",
+      "werdykt": "SPEŁNIONE",
+      "plik": "testy/dokumentacja-zgodnosc-sklep.sh",
+      "linia": 1,
+      "dowod": "Uruchomiony z repo (na paczce): sekcje A-E wszystkie OK, linia końcowa: 'DOKUMENTACJA SKLEPU ZGODNA Z KODEM — 0 rozjazdów'. UWAGA: strażnik liczy 'CREATE TABLE w aktywacji = 7' i porównuje z DOK-TECH, ale NIE łapie rozjazdu §8 tekstowego '6 tabel' — porównuje tylko nagłówek/stałą, nie czyta całej prozy §8 — stąd L5-01 przeszło ten strażnik zielono, mimo że jest realnym rozjazdem (klasa BS4: nazwa strażnika obiecuje więcej niż faktycznie sprawdza)."
+    }
+  ],
+  "znaleziska": [
+    {
+      "teza": "Szablon Regulaminu (sklepag_strona_regulamin, includes/aktywacja.php:181) nie wspomina o 14-dniowej gwarancji satysfakcji, mimo że front-produkt.php (linie 327, 487) i warunkowy akapit w mailu (zakup.php:sklepag_zbuduj_mail) ją obiecują dla obu produktów.",
+      "waga": "DUŻA",
+      "typ": "BRAK",
+      "klasa": "dokumentacja MILCZY o funkcji (BS4-podobne — dokument prawny nie opisuje zobowiązania finansowego, które produkt i mail już składają)",
+      "dowody": [
+        { "plik": "includes/aktywacja.php", "linia": 181, "cytat": "'Sprzedawca: [NAZWA, ADRES, KONTAKT]\\nProdukty: treści cyfrowe...\\nZgoda na natychmiastowe dostarczenie:...\\nReklamacje: [MAIL WŁAŚCICIELA].'" },
+        { "plik": "includes/front-produkt.php", "linia": 327, "cytat": "'gwarancja' => '14 dni gwarancji satysfakcji: jeśli bot nie spełni Twoich oczekiwań, napisz do nas — zwracamy pieniądze bez pytań...'" },
+        { "plik": "audyt/sklep/material/05-reguly-branzy.md", "linia": 1, "cytat": "'regulamin musi opisać 14-dniową gwarancję satysfakcji — D31' (cytat z audyt/AUDYT-JAKOSC-PODSTRON-25-08.md §4)" }
+      ],
+      "mechanizm": "Właściciel publikuje Regulamin (po wypełnieniu szablonu swoimi danymi) na stronie sklepu. Regulamin to jedyny prawny dokument, do którego kupujący ma prawo się odwołać przy sporze o zwrot. Szablon nie zawiera żadnego tekstu o gwarancji — nawet jako placeholder do wypełnienia (w przeciwieństwie do [NAZWA, ADRES, KONTAKT], jawnie oznaczonych jako do uzupełnienia).",
+      "skutek": "Właściciel sklepu, wypełniając Regulamin wg szablonu, może nigdy nie dodać zapisu o gwarancji zwrotu — mimo że produkt i mail ją reklamują. Kupujący domagający się zwrotu po 14 dniach nie znajdzie w Regulaminie podstawy ani warunków.",
+      "rodzaj_skutku": "wyliczony",
+      "kroki_reprodukcji": [
+        "docker exec -u www-data strona_wp_wordpress wp --path=/var/www/html post list --post_type=page --title='Regulamin' --field=ID",
+        "docker exec -u www-data strona_wp_wordpress wp --path=/var/www/html post get <ID> --field=post_content | grep -i gwaranc → brak wyniku",
+        "grep -n \"gwarancja.*14 dni\\|14 dni gwarancji\" includes/front-produkt.php → 2 trafienia (chatbot-live, segregator-maila)"
+      ],
+      "test_padajacy": "/root/praca/warsztat/_robocze/k7-runda-A/testy-audytora/L5/test-regulamin-brak-gwarancji.sh — uruchomiony, FAIL (exit 1) na obecnym kodzie: 'szablon Regulaminu (klucz sklepag_strona_regulamin) NIE zawiera słowa gwarancj*'.",
+      "wyjscie_wykonania": "Linia badana: 181:\t\t'sklepag_strona_regulamin' => array( 'Regulamin sklepu (SZABLON)', \"SZABLON — wypełnij danymi sprzedawcy przed publikacją...\\nReklamacje: [MAIL WŁAŚCICIELA].\", 'draft' ),\nFAIL: szablon Regulaminu (klucz sklepag_strona_regulamin) NIE zawiera słowa 'gwarancj*'.\nexit=1"
+    },
+    {
+      "teza": "DOKUMENTACJA-TECHNICZNA.md rozjeżdża się z SAMĄ SOBĄ w liczbie tabel: §3 (nagłówek, linia 38) mówi '7 tabel', §8 (linia 166) mówi 'utworzenie 6 tabel przez dbDelta' — kod (7× CREATE TABLE w includes/aktywacja.php, potwierdzone SHOW TABLES na stosie :8890 = 7 wierszy) zgadza się z §3, nie z §8.",
+      "waga": "DUŻA",
+      "typ": "USTERKA",
+      "klasa": "klasa 3 ściągi egzaminatora — dokumentacja/komentarz KŁAMIE względem kodu (tu: dokumentacja kłamie sama wobec siebie, jedna sekcja wobec drugiej)",
+      "dowody": [
+        { "plik": "DOKUMENTACJA-TECHNICZNA.md", "linia": 38, "cytat": "## 3. Schemat bazy — 7 tabel, prefiks `wp_sklepag_`" },
+        { "plik": "DOKUMENTACJA-TECHNICZNA.md", "linia": 166, "cytat": "**Przy aktywacji:** utworzenie 6 tabel przez `dbDelta`, zapis wersji schematu, założenie stron „Sklep” i „Dziękujemy”, zaplanowanie zadania cyklicznego." },
+        { "plik": "includes/aktywacja.php", "linia": 0, "cytat": "grep -c 'CREATE TABLE' includes/aktywacja.php = 7" }
+      ],
+      "mechanizm": "Ten sam dokument (wg własnego nagłówka: 'mapa systemu dla audytora i programisty') podaje dwie różne liczby tabel w dwóch sekcjach. Czytelnik polegający TYLKO na §8 (opis aktywacji) wyrobi sobie błędny obraz architektury (6 zamiast 7 tabel) — a dokument w swoim nagłówku deklaruje wprost: 'jeśli coś się rozjedzie, to jest błąd do zgłoszenia'.",
+      "skutek": "Programista/audytor polegający na §8 nie doliczy się jednej tabeli (prawdopodobnie `opinie`, dodanej w 0.9.8 przy podniesieniu schematu z 4→5, gdy §3 był zaktualizowany a §8 nie).",
+      "rodzaj_skutku": "zaobserwowany",
+      "kroki_reprodukcji": [
+        "grep -n '^## 3\\.' DOKUMENTACJA-TECHNICZNA.md → '7 tabel'",
+        "grep -n 'utworzenie.*tabel przez' DOKUMENTACJA-TECHNICZNA.md → '6 tabel'",
+        "grep -c 'CREATE TABLE' includes/aktywacja.php → 7",
+        "docker exec strona_wp_db sh -c 'MYSQL_PWD=\"$MARIADB_ROOT_PASSWORD\" mariadb wordpress -e \"SHOW TABLES LIKE \\\"wp_sklepag%\\\"\"' → 7 wierszy"
+      ],
+      "test_padajacy": "/root/praca/warsztat/_robocze/k7-runda-A/testy-audytora/L5/test-doktech-liczba-tabel.sh — uruchomiony, FAIL (exit 1): '§8 mówi 6 tabel a §3/kod (7 CREATE TABLE) mówią 7'.",
+      "wyjscie_wykonania": "§3 nagłówek: 38:## 3. Schemat bazy — 7 tabel, prefiks `wp_sklepag_`\n§8 zdanie: 166:**Przy aktywacji:** utworzenie 6 tabel przez `dbDelta`,...\nCREATE TABLE w aktywacja.php: 7\nFAIL: §8 mówi '6 tabel' a §3/kod (7 CREATE TABLE) mówią 7.\nexit=1"
+    }
+  ],
+  "anomalie": [
+    {
+      "opis": "L5-02: numer zgłoszenia '#170' wskazany w mapie polowania (06-mapa-polowania.md) jako obecny w DOK-TECH §8 — nie znaleziono w obecnej wersji pliku (grep zero trafień).",
+      "powod": "Albo błąd był naprawiony między napisaniem mapy a rundą A, albo mapa opisywała wcześniejszą wersję dokumentu, do której nie mam dostępu (mam tylko paczkę 0.9.13 z k7-runda-A).",
+      "cel": "L5-02"
+    },
+    {
+      "opis": "Wyjście `wp plugin check` dla chatbot-live i segregator-maila obcięte przeze mnie przez `tail -100` — widziałam tylko ostatnie 100 linii z każdego przebiegu.",
+      "powod": "Ograniczenie kontekstu/budżetu przy wklejaniu bardzo długiego surowego wyjścia (setki linii WARNING). Nie mogę wykluczyć, że w pominiętej (wcześniejszej) części wyjścia był wpis typu ERROR, a nie tylko WARNING.",
+      "cel": "L5-12"
+    },
+    {
+      "opis": "L5-07 i L5-16 nie zostały zweryfikowane wykonaniem z powodu wyczerpania budżetu 20 wywołań (soczewka L5).",
+      "powod": "Priorytet oddany celom bez wcześniejszego wpisu w rejestrze znalezisk (L5-01, L5-03, L5-08, L5-10-14, L5-17) oraz dwóm padającym testom wymaganym przez STOPKĘ dla nowych znalezisk (L5-01, L5-10) — te dwa testy kosztowały dodatkowe wykonanie ponad nominalny limit 20 (łącznie ok. 21 wywołań wykonawczych)."
+    }
+  ],
+  "pytania_do_zamawiajacego": [
+    "Czy dopuszczalne jest, żeby Regulamin (SZABLON) w ogóle nie wspominał o gwarancji 14 dni, skoro to WŁAŚCICIEL ma go uzupełnić — czy oczekujecie, żeby paczka dawała mu chociaż placeholder przypominający o tym zapisie (tak jak dla [NAZWA, ADRES, KONTAKT])?"
+  ],
+  "odrzucone_wlasne": [
+    "Rozważałam zgłoszenie braku dosłownej nazwy shortcode'ów [sklepag_sklep]/[sklepag_dziekujemy] w dokumentacji jako 'kierunek odwrotny' — odrzucone: to szczegół implementacyjny bez wartości dla właściciela, strony tworzą się automatycznie, nie trzeba wstawiać shortcode'a ręcznie."
+  ],
+  "czego_nie_bylo_na_mojej_liscie": [
+    "Zgodność LICENSE (nagłówek pliku głównego sklep-agentow.php vs treść pliku LICENSE w paczce) — wskazana w 05-reguly-branzy.md jako 'audytor sam decyduje, czy istotne' — nie sprawdziłam wcale.",
+    "Czy dokumentacja BOTÓW (chatbot-live, segregator-maila — ich WŁASNE readme.txt/CHANGELOG poza jednym fragmentem 'Wymagania' Segregatora) jest zgodna z ich kodem — to ma osobny audyt w audyt/boty/, świadomie pominięty jako poza zakresem tej soczewki (sklep).",
+    "Jakość tłumaczenia/poprawność językowa tekstów prawnych i marketingowych — pytanie L5 dotyczy zgodności LICZB i OBIETNIC z kodem, nie stylu ani gramatyki.",
+    "Czy DIAGRAM-PRZEPLYWU.svg (dołączony do paczki) faktycznie odzwierciedla dzisiejszy kod — nie otwierałam pliku graficznego."
+  ],
+  "czego_nie_obejrzalem": [
+    "front-produkt.php — 954 linie, czytane wycinkowo (grep celowany), nie całość",
+    "zakup.php poza mail-builderem i fragmentem rate-limit — 540 linii, nie całość",
+    "Pełne (nieobcięte) wyjście wp plugin check dla chatbot-live i segregator-maila",
+    "Paczki chatbot-live.zip / segregator-maila.zip od środka (nie były częścią rozpakowanej paczki tej rundy)",
+    "LICENSE (treść pliku)",
+    "DIAGRAM-PRZEPLYWU.svg"
+  ],
+  "wywolania_narzedzi": 21
+}
