@@ -1,10 +1,11 @@
 #!/bin/bash
-# k7-koniec.sh — KONIEC AUDYTU K7 OGŁASZA SKRYPT, NIE UCZUCIE.                       WERSJA 1.3.3
+# k7-koniec.sh — KONIEC AUDYTU K7 OGŁASZA SKRYPT, NIE UCZUCIE.                       WERSJA 1.3.4
 #
 # PO CO: plan K7 v1 mówił „GO/NO-GO = trzy liczby liczone skryptem”, a skryptu nie było
 # (krytyka r1: nasz krytyk K1, C2 #15, C3 #11). Bez maszyny koniec rozstrzyga pamięć
 # koordynatorki — dokładnie to, czemu plan miał zapobiec. Ten skrypt sprawdza OSIEM
-# warunków zamknięcia (PLAN-K7 §2 zasada 5, §8b) i wypisuje trzy liczby dla właściciela.
+# warunków zamknięcia (PLAN-K7 §2 zasada 5, §8b) rozpisanych na 13 KONTROLI (1a,1b,2,3a–3d,4,5,6,7a,7b,8)
+# i wypisuje trzy liczby dla właściciela. Wynik liczy KONTROLE, nie warunki (recenzja #191 D1).
 #
 # Użycie: bash narzedzia-qa/k7-koniec.sh [--korzen <repo>] [--bez-zamrozenia-mapy]
 #   EXIT 0 = wszystkie warunki PASS (GO) · 1 = choć jeden FAIL (NO-GO) · 2 = brak plików/narzędzi
@@ -35,12 +36,12 @@ PROBY=audyt/sklep/PROBY-KONTROLNE.log
 SCHEMAT=audyt/sklep/prompty/SCHEMAT-RAPORTU.json
 for f in "$MAPA" "$REJESTR" "$PRZELOT" "$ZAMROZENIE" "$SCHEMAT"; do [ -f "$f" ] || { echo "k7-koniec: brak $f" >&2; exit 2; }; done
 
-FAIL=0
-pass() { printf '  PASS  %s\n' "$1"; }
+FAIL=0; PASS=0
+pass() { printf '  PASS  %s\n' "$1"; PASS=$((PASS+1)); }
 fail() { printf '  FAIL  %s\n' "$1"; FAIL=$((FAIL+1)); }
 
 WERSJA_SKRYPTU=$(sed -n '2s/.*WERSJA \([0-9.]*\).*/\1/p' "$0")   # jedno źródło numeru (recenzja #188 r2 W4)
-echo "=== K7-KONIEC ${WERSJA_SKRYPTU:-?} — osiem warunków zamknięcia ==="
+echo "=== K7-KONIEC ${WERSJA_SKRYPTU:-?} — osiem warunków zamknięcia (rozpisanych na kontrole; wynik liczy kontrole) ==="
 
 # 1. MAPA: 0 ⬜ i (domyślnie) zamrożona z niezmienioną liczbą celów.
 #    TYLKO ODCZYT (--tylko-licz): bramka końca nie pisze do tego, co audytuje (recenzja #182 r2 D7).
@@ -172,6 +173,6 @@ fi
 echo
 KRYT=$(printf '%s\n' "$WIERSZE" | awk -F'|' '$5 ~ /KRYTYCZNA/ && $10 !~ /ZAMKNIETE|OBALONE|POZA K7/' | wc -l)
 DUZE=$(printf '%s\n' "$WIERSZE" | awk -F'|' '$5 ~ /DUŻA/ && $10 !~ /ZAMKNIETE|OBALONE|POZA K7/' | wc -l)
-echo "TRZY LICZBY DLA WŁAŚCICIELA: KRYTYCZNE otwarte: $KRYT · DUŻE otwarte: $DUZE · warunków FAIL: $FAIL"
-if [ "$FAIL" -eq 0 ]; then echo "K7: GO — wszystkie warunki zamknięcia spełnione"; exit 0; fi
-echo "K7: NO-GO — $FAIL warunków niespełnionych"; exit 1
+echo "TRZY LICZBY DLA WŁAŚCICIELA: KRYTYCZNE otwarte: $KRYT · DUŻE otwarte: $DUZE · kontroli FAIL: $FAIL (z $((PASS+FAIL)))"
+if [ "$FAIL" -eq 0 ]; then echo "K7: GO — wszystkie warunki zamknięcia spełnione ($PASS kontroli PASS)"; exit 0; fi
+echo "K7: NO-GO — $FAIL z $((PASS+FAIL)) kontroli niespełnionych (8 warunków zamknięcia)"; exit 1

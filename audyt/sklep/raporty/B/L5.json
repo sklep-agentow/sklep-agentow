@@ -1,0 +1,162 @@
+{
+  "soczewka": "L5",
+  "runda": "B",
+  "commit_head": "5d3dcf9f0d99dedc1fe201c3e318f46d6f35ba5d",
+  "werdykty": [
+    {
+      "cel": "L5-01",
+      "werdykt": "ROZJAZD",
+      "plik": "DOKUMENTACJA-TECHNICZNA.md",
+      "linia": 166,
+      "dowod": "DOK-TECH §3 (linia 38, nagłówek „## 3. Schemat bazy — 7 tabel”) wymienia 7 tabel (produkty, sesje_checkout, zamowienia, zdarzenia, logowania, rate_limit, opinie), ale DOK-TECH §8 (linia 166) mówi „utworzenie 6 tabel przez dbDelta”. Kod: `grep -c \"CREATE TABLE\" includes/aktywacja.php` = 7 (linie 21,39,50,78,90,102,109). Test padający: testy-audytora/L5/test-tabele-dok-tech-vs-kod.sh → 'PADA: rozjazd 7 (kod) vs 6 (DOK-TECH §8)'."
+    },
+    { "cel": "L5-02", "werdykt": "ZGODNE", "plik": "DOKUMENTACJA-TECHNICZNA.md", "linia": 1, "dowod": "grep -n \"170\" DOKUMENTACJA-TECHNICZNA.md → zero trafień; slady-wewnetrzne.sh 1.2.0 (wersja narzędzia z komentarzem jawnie opisującym ten dawny przypadek „— #170)”) → 'nowe=0'. Wpis usunięty, nie odtworzył się." },
+    {
+      "cel": "L5-03",
+      "werdykt": "BRAK",
+      "proba_kontrolna": "DOK-TECH §2 (linie 24-34) wymienia 8 plików architektury. `ls includes/` pokazuje 19 plików. Brakujące w tabeli §2: includes/opinie.php, includes/admin-opinie.php, includes/class-sklepag-lista-logowan.php, class-sklepag-lista-produktow.php, class-sklepag-lista-zamowien.php, class-sklepag-lista-zdarzen.php, class-sklepag-sitemap-produkty.php — 7 plików kodu bez jednej linii opisu w mapie architektury dla audytora/programisty."
+    },
+    { "cel": "L5-04", "werdykt": "ZGODNE", "plik": "sklep-agentow.php", "linia": 21, "dowod": "SKLEPAG_LIMIT_POBRAN=10 (readme „do 10 pobrań”), SKLEPAG_LINK_GODZIN=72 (readme „72 godziny”, mail „ważny 3 dni”=72h), SKLEPAG_OPINIA_DNI=30 (readme „ważnego 30 dni”), cron 600s=10min (sklep-agentow.php:45-46, readme „co 10 minut”), retencja 90 dni (zakup.php:535), limity kup=10/status=30/login=6 (zakup.php:20,70; logowania.php:94 — zgodne z 02-fakty), upload limit 20MB (admin-produkty.php:18) — wszystkie liczby z readme.txt zweryfikowane w kodzie, zgodne." },
+    { "cel": "L5-05", "werdykt": "ZGODNE", "plik": "includes/admin.php", "linia": 47, "dowod": "Etykiety menu w kodzie (Pulpit/Produkty/Opinie/Dziennik/Ustawienia/Zamówienie — admin.php:47-57) zgodne z opisem w readme.txt i INSTRUKCJA-INSTALACJI. Krok 0 (permalinki „Zwykłe” → ostrzeżenie) potwierdzony w kodzie: admin.php:21-33, `add_action('admin_notices', 'sklepag_ostrzez_permalinki')`, treść notice-error identyczna w duchu z instrukcją." },
+    { "cel": "L5-06", "werdykt": "ZGODNE", "plik": "CHANGELOG.md", "linia": 23, "dowod": "Wersja spójna w 4 miejscach: sklep-agentow.php:19 (Version 0.9.13), readme.txt:7 (Stable tag: 0.9.13), CHANGELOG.md:23 ([0.9.13]), DOKUMENTACJA-TECHNICZNA.md:3 (Wersja wtyczki: 0.9.13) — brak rozjazdu wersji (klasa #4 ściągi egzaminatora czysta). [Niewydane] (linia 17-19) puste: „Nic jeszcze.”. Treść wpisu 0.9.13 o nagłówku Reply-To zweryfikowana behawioralnie (patrz znalezisko-niezależne L5-09) — prawdziwa." },
+    { "cel": "L5-07", "werdykt": "NIE SPRAWDZIŁEM", "dowod": "Wymaga otwarcia paczek botów (chatbot-live.zip, segregator-maila.zip) i policzenia zrzutów/par Q&A/maili w ich materiale — poza budżetem wykonania tej rundy przy ustalonym priorytecie (behawioralne promesy sklepu miały pierwszeństwo nad tym celem wg DOPISKU)." },
+    { "cel": "L5-08", "werdykt": "SPEŁNIONE INACZEJ", "plik": "DOKUMENTACJA-TECHNICZNA.md", "linia": 88, "jak_czlowiek_tego_uzywa": "Programista/audytor otwierający DOK-TECH §4 znajduje pełną listę punktów wejścia (kup, pobierz, ocen/ocen_zapisz, webhook, status, panel, cron) 1:1 z inwentarzem 02-fakty — zgodne. Wyjątek: pliki opinie.php/admin-opinie.php i 4 klasy list ISTNIEJĄ i są opisane funkcjonalnie w §3/§4, ale nie w mapie architektury §2 (patrz L5-03/znalezisko #2) — stąd „inaczej”, nie „w pełni”." },
+    {
+      "cel": "L5-09",
+      "werdykt": "ZGODNE",
+      "plik": "includes/zakup.php",
+      "linia": 76,
+      "dowod": "Realny mail z bazy (zamówienie testowe na stosie warsztatowym, treść pobrana SQL-em z mail_tresc) zawiera: potwierdzenie zgody dosłownie identyczne ze zgoda_tresc w bazie + zgoda_czas w czasie LOKALNYM (DB 2026-08-26 00:00:00 UTC → mail „26.08.2026 02:00”, zgodnie z deklaracją DOK-TECH:76-78 „w czasie lokalnym”), link pobrania z terminem i limitem („ważny 3 dni i pozwala na 10 pobrań”), 3-krokową instrukcję, akapit gwarancji (14 dni), link do opinii (30 dni, jednorazowy) — wszystko zgodne z DOK-TECH §3 i readme."
+    },
+    {
+      "cel": "L5-10",
+      "werdykt": "BRAK",
+      "proba_kontrolna": "05-reguly-branzy.md cytuje AUDYT-JAKOSC-PODSTRON-25-08.md §4: „regulamin musi opisać 14-dniową gwarancję satysfakcji (D31)”. Szablon Regulaminu w kodzie (includes/aktywacja.php:181, funkcja sklepag_utworz_strony) NIE zawiera słowa „gwarancj” ani „zwrot” — sprawdzone `grep -iE \"gwaranc|zwrot\"` na treści szablonu = 0 trafień. Szablon Polityki (aktywacja.php:182) wspomina „90 dni” i „Stripe” poprawnie — brakuje wyłącznie klauzuli gwarancji w Regulaminie."
+    },
+    { "cel": "L5-11", "werdykt": "ZGODNE", "dowod": "`SLADY_ZALEGLOSCI=/dev/null bash narzedzia-qa/slady-wewnetrzne.sh sklep-agentow <paczka>` → „SLADY 1.2.0 [sklep-agentow]: nowe=0, dlug z listy=0, martwe wpisy=0”. Zastrzeżenie: bramka NIE łapie wewnętrznej numeracji planu (S-xx/D-xx/K-x) — patrz znalezisko #4, ten sam mechanizm co #170 (L5-02) w innej postaci." },
+    { "cel": "L5-12", "werdykt": "ZGODNE", "dowod": "`wp plugin check {sklep-agentow,chatbot-live,segregator-maila} --format=table` uruchomiony na :8890 — WYŁĄCZNIE ostrzeżenia WARNING klasy PluginCheck.Security.DirectDB.UnescapedDBParameter / WordPress.DB.DirectDatabaseQuery.{DirectQuery,NoCaching,SchemaChange}, zero ERROR. Kwalifikacja: wszystkie dotyczą interpolacji NAZW TABEL/STAŁYCH (np. `{$pz}` = `$wpdb->prefix.'sklepag_zamowienia'`) w zapytaniach, które i tak używają `$wpdb->prepare()` na WARTOŚCIACH — zgodne ze świadomą architekturą własnych tabel (D17) i świadomie NIE-wyłączonym sniffem DirectDatabaseQuery dla sklepu (D25 wyłącza go tylko dla botów). Nie dotyczy jako błąd." },
+    { "cel": "L5-13", "werdykt": "NIE DA SIĘ SPRAWDZIĆ", "dowod": "`gitleaks detect --log-opts=--all` → „timeout: failed to run command 'gitleaks': No such file or directory” w kontenerze i na hoście. Zgodnie z zasadą DOPISKU nie instaluję narzędzia." },
+    { "cel": "L5-14", "werdykt": "ZGODNE", "dowod": "Fakt potwierdzony w 02-fakty-srodowiska.md (STAN ZASTANY, zmierzone 25.08): „289/289 adresów noreply na 5d3dcf9”. Nie weryfikowałam ponownie (fakt uznany, poza budżetem wykonania tej rundy)." },
+    { "cel": "L5-15", "werdykt": "NIE SPRAWDZIŁEM", "dowod": "Dotyczy readme paczki bota Segregator maila (poza rdzeniem wtyczki sklep), ma własny audyt w audyt/boty/ — poza budżetem i priorytetem tej rundy L5." },
+    {
+      "cel": "L5-16",
+      "werdykt": "BRAK",
+      "proba_kontrolna": "grep -rnE '\\bK[0-9]\\b|\\bD3?[0-9]\\b|\\bS-[0-9]{2}\\b|kryterium GOTOWE ?#[0-9]|PLAN-WYGLADU|MAPA-SPEC|PLAN-PROJEKTU' includes/*.php sklep-agentow.php → 54 trafienia, WSZYSTKIE w komentarzach (`//`, `/* */`), ZERO w stringach renderowanych do UI (echo/esc_html) — sprawdzone ręcznie na pełnej liście trafień. Test padający: test-jargon-wewnetrzny-w-komentarzach.sh, exit 1, 54 trafień."
+    },
+    { "cel": "L5-17", "werdykt": "NIE SPRAWDZIŁEM", "dowod": "Budżet wykonania wyczerpany priorytetowymi testami behawioralnymi (min. 10 wymaganych) i obowiązkowymi narzędziami (plugin-check, slady, próba gitleaks) — nie uruchomiłam osobno testy/dokumentacja-zgodnosc-sklep.sh. Pozycje LICZBOWE, które ten strażnik sprawdza, zweryfikowałam już ręcznie w L5-04 z tym samym wynikiem (zgodne)." }
+  ],
+  "znaleziska": [
+    {
+      "teza": "DOKUMENTACJA-TECHNICZNA.md §8 (linia 166) mówi „utworzenie 6 tabel przez dbDelta” przy aktywacji, a `includes/aktywacja.php` tworzy realnie 7 tabel (produkty, sesje_checkout, zamowienia, zdarzenia, logowania, rate_limit, opinie) — dokładnie tyle, ile poprawnie podaje §3 tego samego dokumentu 128 linii wyżej.",
+      "waga": "DUŻA",
+      "typ": "USTERKA",
+      "klasa": "klasa 3 ściągi egzaminatora — „Dokumentacja/komentarz KŁAMIE względem kodu”",
+      "dowody": [
+        { "plik": "DOKUMENTACJA-TECHNICZNA.md", "linia": 166, "cytat": "**Przy aktywacji:** utworzenie 6 tabel przez `dbDelta`, zapis wersji schematu, założenie stron „Sklep” i „Dziękujemy”, zaplanowanie zadania cyklicznego." },
+        { "plik": "DOKUMENTACJA-TECHNICZNA.md", "linia": 38, "cytat": "## 3. Schemat bazy — 7 tabel, prefiks `wp_sklepag_`" },
+        { "plik": "includes/aktywacja.php", "linia": 109, "cytat": "\"CREATE TABLE {$p}opinie (" }
+      ],
+      "mechanizm": "Tabela `opinie` dodana w schemacie v5 (D32, komentarz sklep-agentow.php:20 „v5: tabela opinie”) — §3 dokumentu został wtedy zaktualizowany (7 tabel), ale zdanie w §8 zostało z czasów schematu v4 i nikt go nie podniósł do 7 przy okazji tej samej zmiany.",
+      "skutek": "Właściciel albo programista czytający §8 (jedyne miejsce, które opisuje SAM PROCES aktywacji, nie tylko listę tabel) dowiaduje się o jedną tabelę mniej niż realnie powstaje — przy własnym audycie bazy (np. porównanie z uninstallem) policzy złą liczbę oczekiwanych tabel.",
+      "rodzaj_skutku": "zaobserwowany",
+      "kroki_reprodukcji": [
+        "Otwórz DOKUMENTACJA-TECHNICZNA.md, przejdź do „## 8. Instalacja i deinstalacja” (linia 166).",
+        "Przeczytaj: „utworzenie 6 tabel przez dbDelta”.",
+        "W tym samym pliku, „## 3. Schemat bazy” (linia 38) i tabela pod nią (linie 45-51) — policz wiersze: 7.",
+        "W kodzie: `grep -c \"CREATE TABLE\" includes/aktywacja.php` → 7."
+      ],
+      "test_padajacy": "/root/praca/warsztat/_robocze/k7-runda-B/testy-audytora/L5/test-tabele-dok-tech-vs-kod.sh — wyjście: „CREATE TABLE w aktywacja.php (realne): 7 / Liczba zadeklarowana w DOK-TECH §8: 6 / PADA: rozjazd 7 (kod) vs 6 (DOK-TECH §8)”, exit 1.",
+      "wyjscie_wykonania": "CREATE TABLE w aktywacja.php (realne): 7\nLiczba zadeklarowana w DOK-TECH §8:     6\nPADA: rozjazd 7 (kod) vs 6 (DOK-TECH §8) — dokumentacja kłamie o liczbie tabel tworzonych przy aktywacji.\nexit=1"
+    },
+    {
+      "teza": "Tabela architektury w DOKUMENTACJA-TECHNICZNA.md §2 (linie 24-34) pomija 7 z 19 plików kodu paczki: `includes/opinie.php`, `includes/admin-opinie.php` oraz cztery klasy `class-sklepag-lista-*.php` i `class-sklepag-sitemap-produkty.php` — cały mechanizm opinii (D32) i wszystkie tabele wp-admin (WP_List_Table) nie mają wpisu w mapie „gdzie co siedzi”.",
+      "waga": "DUŻA",
+      "typ": "BRAK",
+      "klasa": "lekcja „dokumentacja MILCZY o funkcji” (jak-audytowac) — funkcja istnieje i działa, ale mapa architektury jej nie wymienia",
+      "dowody": [
+        { "plik": "DOKUMENTACJA-TECHNICZNA.md", "linia": 24, "cytat": "| Plik | Odpowiedzialność |" },
+        { "plik": "DOKUMENTACJA-TECHNICZNA.md", "linia": 34, "cytat": "| `includes/admin*.php` | panel: pulpit, produkty, zamówienia, ustawienia, dziennik |" },
+        { "plik": "includes/opinie.php", "linia": 3, "cytat": "* Mechanizm opinii (D32): zalążek przy mailu zakupowym → formularz z jednorazowego" }
+      ],
+      "mechanizm": "Mechanizm opinii (D32) i klasy WP_List_Table zostały dopisane w wersjach 0.6.0-0.9.8 (CHANGELOG), ale §2 DOK-TECH — jedyna tabela „gdzie co siedzi” w dokumencie — nie została uzupełniona o nowe pliki przy żadnej z tych zmian.",
+      "skutek": "Programista/audytor, który używa §2 jako mapy startowej (dokument sam się tak reklamuje: „mapa systemu dla audytora i programisty”), nie dowie się stamtąd, że mechanizm opinii kupujących w ogóle istnieje jako osobny moduł — musi go znaleźć przypadkiem albo czytając cały katalog `includes/`.",
+      "rodzaj_skutku": "zaobserwowany",
+      "kroki_reprodukcji": [
+        "Otwórz DOKUMENTACJA-TECHNICZNA.md §2 (linie 22-34).",
+        "Wypisz pliki wymienione w tabeli: 8 pozycji (sklep-agentow.php, aktywacja.php, stripe.php, zakup.php, pobieranie.php, front-produkt.php, front-seo.php, logowania.php, admin*.php).",
+        "`ls includes/` na rozpakowanej paczce → 19 plików.",
+        "Porównaj: opinie.php, admin-opinie.php, class-sklepag-lista-logowan.php, class-sklepag-lista-produktow.php, class-sklepag-lista-zamowien.php, class-sklepag-lista-zdarzen.php, class-sklepag-sitemap-produkty.php — żaden nie ma wiersza w §2."
+      ],
+      "test_padajacy": "NIE DA SIĘ napisać testu automatycznego wykrywającego „brak opisu” bez listy referencyjnej plików utrzymywanej ręcznie — zgłaszam jako dowód z zestawienia (grep -oE nazw plików w tabeli §2 vs `ls includes/`), nie jako padający skrypt.",
+      "wyjscie_wykonania": "ls includes/: admin-dashboard.php admin-dziennik.php admin-opinie.php admin.php admin-produkty.php admin-ustawienia.php admin-zamowienie.php aktywacja.php class-sklepag-lista-logowan.php class-sklepag-lista-produktow.php class-sklepag-lista-zamowien.php class-sklepag-lista-zdarzen.php class-sklepag-sitemap-produkty.php front-produkt.php front-seo.php logowania.php opinie.php pobieranie.php stripe.php zakup.php (19 plików) — DOK-TECH §2 wymienia 8."
+    },
+    {
+      "teza": "Szablon strony „Regulamin sklepu” tworzony przy aktywacji (`includes/aktywacja.php:181`, funkcja `sklepag_utworz_strony`) nie zawiera ani słowa o 14-dniowej gwarancji satysfakcji, mimo że tę samą gwarancję produkt obiecuje kupującemu w mailu po zakupie i na stronie każdego produktu.",
+      "waga": "DUŻA",
+      "typ": "BRAK",
+      "klasa": "NOWA — rozjazd między obietnicą marketingową a dokumentem prawnym tego samego produktu",
+      "dowody": [
+        { "plik": "includes/aktywacja.php", "linia": 181, "cytat": "'sklepag_strona_regulamin'  => array( 'Regulamin sklepu (SZABLON)', \"SZABLON — wypełnij danymi sprzedawcy przed publikacją.\\n\\nSprzedawca: [NAZWA, ADRES, KONTAKT]\\nProdukty: treści cyfrowe (wtyczki WordPressa) dostarczane natychmiast po opłaceniu.\\nZgoda na natychmiastowe dostarczenie: kupujący wyraża ją przy zakupie i przyjmuje utratę prawa odstąpienia (art. 38 ust. o prawach konsumenta).\\nReklamacje: [MAIL WŁAŚCICIELA].\", 'draft' )," },
+        { "plik": "includes/front-produkt.php", "linia": 919, "cytat": "$html .= '<p class=\"sklepag-trigger\">✔ 14 dni gwarancji satysfakcji — zwrot bez pytań</p>';" },
+        { "plik": "includes/zakup.php", "linia": 76, "cytat": "→ gwarancja z danych produktu (gdy produkt ją ma) → link do opinii (D32) → „odpisz na tego maila”." }
+      ],
+      "mechanizm": "Regulamin jest generowany jako statyczny szkic tekstu przy aktywacji, niezależnie od tego, że gwarancja jest globalną cechą produktów sklepu (zapisaną w danych produktu i wstrzykiwaną do maila/strony produktu). Nikt nie dopisał klauzuli gwarancji do generatora treści Regulaminu, mimo że wewnętrzny audyt z 25.08 (AUDYT-JAKOSC-PODSTRON-25-08.md §4, cytowany w 05-reguly-branzy.md) już to wcześniej wskazał jako wymóg (D31).",
+      "skutek": "Kupujący czyta w mailu i na stronie produktu „14 dni gwarancji satysfakcji: zwrot bez pytań”, a jedyny dokument prawny sklepu (Regulamin) milczy o warunkach tej gwarancji — właściciel wypełniający szablon nie ma podpowiedzi, że musi ją tam dopisać, i klient nie ma gdzie sprawdzić formalnych warunków zwrotu.",
+      "rodzaj_skutku": "wyliczony",
+      "kroki_reprodukcji": [
+        "Aktywuj wtyczkę na czystym WP (lub przeczytaj generator stron): otwórz stronę „Regulamin sklepu (SZABLON)”.",
+        "Poszukaj słowa „gwarancja” lub „zwrot” w treści — brak.",
+        "Porównaj z mailem po zakupie lub stroną dowolnego produktu — oba wymieniają „14 dni gwarancji satysfakcji”."
+      ],
+      "test_padajacy": "/root/praca/warsztat/_robocze/k7-runda-B/testy-audytora/L5/test-regulamin-brak-gwarancji.sh — wyjście: „PADA: szablon Regulaminu (...) NIE wspomina 14-dniowej gwarancji satysfakcji”, exit 1.",
+      "wyjscie_wykonania": "--- treść szablonu Regulaminu (wyciąg) ---\n'sklepag_strona_regulamin'  => array( 'Regulamin sklepu (SZABLON)', \"SZABLON — wypełnij danymi sprzedawcy przed publikacją.\\n\\nSprzedawca: [NAZWA, ADRES, KONTAKT]\\nProdukty: treści cyfrowe (wtyczki WordPressa) dostarczane natychmiast po opłaceniu.\\nZgoda na natychmiastowe dostarczenie: kupujący wyraża ją przy zakupie i przyjmuje utratę prawa odstąpienia (art. 38 ust. o prawach konsumenta).\\nReklamacje: [MAIL WŁAŚCICIELA].\", 'draft' ),\n-------------------------------------------\nPADA: szablon Regulaminu (includes/aktywacja.php) NIE wspomina 14-dniowej gwarancji satysfakcji...\nexit=1"
+    },
+    {
+      "teza": "Komentarze w 54 miejscach kodu paczki (`includes/*.php`, `sklep-agentow.php`) odwołują się do wewnętrznej numeracji planowania projektu (kody `S-04`…`S-09`, `D7`/`D32`, `K3`/`K4`/`K5`/`K6`, „kryterium GOTOWE #7”, „PLAN-WYGLADU-K5”), której klient odbierający paczkę nie posiada — a bramka `narzedzia-qa/slady-wewnetrzne.sh`, zaprojektowana właśnie do łapania „śladów wewnętrznych w paczce klienta”, tego wzorca nie wykrywa.",
+      "waga": "ŚREDNIA",
+      "typ": "USTERKA",
+      "klasa": "klasa 5 ściągi egzaminatora — „Ślady wewnętrzne w paczce klienta” (BS4-podobna: bramka nazwana pod tę klasę nie pokrywa całego jej zakresu)",
+      "dowody": [
+        { "plik": "includes/admin-produkty.php", "linia": 3, "cytat": "* CRUD produktów (K4; plan §4A „Produkty”, kryterium GOTOWE #7):" },
+        { "plik": "includes/admin.php", "linia": 3, "cytat": "* Panel wp-admin (K3): menu wtyczki, wspólne assety admina i strona-pulpit" },
+        { "plik": "narzedzia-qa/slady-wewnetrzne.sh", "linia": 64, "cytat": "\"nasz obieg pracy|PR #[0-9]|recenzent|recenzj|koordynator|builder[0-9]|prób[ay] kontroln|proba-kontrolna|mutant|\\\\bkrytyk|egzaminator|[Dd]zid|(—|–|\\\\(|\\\\bnr\\\\.?|zgłoszeni[ae]|uwag[ai])[[:space:]]*#[0-9]{2,4}([^[:alnum:]]|$)\"" }
+      ],
+      "mechanizm": "Wzorzec regexowy bramki wymaga separatora (PR/nr/zgłoszenie/uwaga/myślnik) przed numerem 2-4 cyfrowym; kody planu w stylu `S-04`, `D32`, `K5`, `#7` (jednocyfrowe) nie spełniają żadnego z tych warunków, więc przechodzą przez bramkę niezauważone — dokładnie ten sam mechanizm ograniczenia, który historycznie przepuścił „#170” (patrz L5-02, naprawione w wersji 1.2.0 bramki, ale tylko dla wzorca liczbowego, nie dla kodów literowych).",
+      "skutek": "Klient albo jego kolejny programista otwierający kod widzi dziesiątki odniesień do dokumentów planowania (`PLAN-WYGLADU-K5`, `MAPA-SPEC`), których nie ma w paczce ani nie dostał — nie stanowi to zagrożenia bezpieczeństwa, ale obniża wrażenie profesjonalizmu i utrudnia komuś z zewnątrz zrozumienie kodu bez kontekstu naszego wewnętrznego procesu.",
+      "rodzaj_skutku": "zaobserwowany",
+      "kroki_reprodukcji": [
+        "Otwórz dowolny plik z `includes/` w paczce klienta, np. `admin-produkty.php` linia 3.",
+        "Przeczytaj komentarz: „CRUD produktów (K4; plan §4A «Produkty», kryterium GOTOWE #7)”.",
+        "Uruchom bramkę `narzedzia-qa/slady-wewnetrzne.sh sklep-agentow <paczka>` — wynik zielony (0 nowe), mimo obecności tego zdania."
+      ],
+      "test_padajacy": "/root/praca/warsztat/_robocze/k7-runda-B/testy-audytora/L5/test-jargon-wewnetrzny-w-komentarzach.sh — wyjście: „Trafienia wewnętrznej numeracji planu w komentarzach kodu paczki: 54 ... PADA”, exit 1.",
+      "wyjscie_wykonania": "Trafienia wewnętrznej numeracji planu w komentarzach kodu paczki: 54\n.../includes/admin-dashboard.php:5: * w czasie (S-04) → tabela zamówień → eksport CSV z aktualnych filtrów.\n.../includes/admin-produkty.php:3: * CRUD produktów (K4; plan §4A „Produkty”, kryterium GOTOWE #7):\n... (14 z 54 pokazanych)\nPADA: 54 odwołań do wewnętrznych kodów planu (S-xx/D-xx/K-x/kryterium GOTOWE/PLAN-WYGLADU) w kodzie wysyłanym klientowi.\nexit=1"
+    }
+  ],
+  "anomalie": [
+    { "opis": "gitleaks nie jest zainstalowany ani w kontenerze WP, ani na hoście warsztatu.", "powod": "polecenie zwraca „No such file or directory”; zgodnie z zasadą audytu nie instaluję narzędzi — L5-13 werdykt NIE DA SIĘ SPRAWDZIĆ.", "cel": "L5-13" },
+    { "opis": "Pierwsza próba ręcznego resendu maila (test Reply-To/nadawcy) zwróciła w dzienniku zamówienia „mail_blad… wp_mail zwrócił false”, mimo że bezpośredni `wp eval 'wp_mail(...)'` w tej samej minucie zwrócił `true`, a druga próba resendu (identyczna sekwencja: te same ustawienia, ten sam admin, ~90 s później) zakończyła się sukcesem i poprawnym Reply-To/From w Mailpit.", "powod": "Najbardziej prawdopodobne wytłumaczenie: współbieżność z inną soczewką pracującą równolegle na :8890 (L3/Ł zgodnie z DOPISKIEM robią docker cp+sed na plikach wtyczki symulując awarię wp_mail) — nie odtworzone przy powtórce, nie przypisuję tego kodowi sklepu.", "cel": "L5-09" },
+    { "opis": "Zamówienie o nietypowym ID `9900917` (użyte do testów HEAD/download/resend) zniknęło z tabeli `wp_sklepag_zamowienia` w trakcie mojej pracy — SELECT po nim zwrócił 0 wierszy, mimo że chwilę wcześniej mój UPDATE przywracający oryginalne wartości (token_pobrania, link_wygasa, pobrania_uzyte) zadziałał poprawnie (wiersz istniał).", "powod": "ID w formacie 9900917 (poza sekwencją 32-35 pozostałych zamówień seed) wskazuje na fixture innej, równolegle pracującej soczewki (prawdopodobnie L3, test wyścigu webhook/reconciliation) — wiersz najpewniej został skasowany WŁASNYM sprzątaniem tamtego testu, nie przeze mnie. Zmiany, które sama wprowadziłam na tym zamówieniu (token/link/pobrania_uzyte/mail_tresc), zostały przywrócone PRZED zniknięciem wiersza; opcje globalne (sklepag_nadawca_nazwa/email, sklepag_email_kontaktowy), które zmieniłam na czas testu, przywróciłam do stanu pustego niezależnie od losu tego zamówienia — zweryfikowane SELECT-em po fakcie.", "cel": "L5-09" },
+    { "opis": "L5-07, L5-15, L5-17 (liczby stron produktów botów, readme Segregatora, uruchomienie testy/dokumentacja-zgodnosc-sklep.sh) nie zostały sprawdzone.", "powod": "Budżet wykonania wyczerpany priorytetami z DOPISKU KOORDYNATORKI (min. 10 obietnic behawioralnych na stosie + L5-07 + reszta) — behawioralne testy (HEAD/pobranie/token/resend/Reply-To/zgoda) oraz obowiązkowe narzędzia (plugin-check ×3, slady-wewnetrzne, próba gitleaks) pochłonęły dostępne wywołania przed dotarciem do tych trzech pozycji.", "cel": "L5-17" }
+  ],
+  "pytania_do_zamawiajacego": [
+    "Czy generator szablonu Regulaminu (aktywacja.php) powinien od razu zawierać gotową klauzulę 14-dniowej gwarancji satysfakcji (skoro to cecha WSZYSTKICH produktów sklepu, nie coś, co właściciel wymyśla sam), czy zostawiamy to świadomie jako pole do wypełnienia przez właściciela bez podpowiedzi?",
+    "Czy warto rozszerzyć bramkę `narzedzia-qa/slady-wewnetrzne.sh` o wzorzec kodów planu (S-xx/D-xx/K-x/„kryterium GOTOWE #”) skoro to ta sama klasa błędu co już raz naprawiony „#170”, czy uznajemy komentarze z kodami planu za akceptowalne bo klient i tak nie czyta kodu źródłowego?"
+  ],
+  "odrzucone_wlasne": [
+    "„HEAD zwraca 403 zamiast 200” — odrzucone: pierwsza próba użyła BŁĘDNEGO tokenu (pomyliłam skrót w bazie z tokenem jawnym z maila), po poprawce HEAD zwraca 200 i nie zużywa limitu — własny błąd testu, nie błąd kodu.",
+    "„Reply-To nie działa” — odrzucone: przy pustych ustawieniach (stan zastany na :8890) brak Reply-To jest zgodny z własną logiką kodu (`if ('' !== $email_kontaktowy)`); po ustawieniu wartości testowych Reply-To i From działają poprawnie — potwierdzone wykonaniem."
+  ],
+  "czego_nie_bylo_na_mojej_liscie": [
+    "Prompt L5 nie każe sprawdzać, czy DIAGRAM-PRZEPLYWU.svg (plik w paczce, obok CHANGELOG/readme/DOK-TECH) jest zgodny z realnym przepływem zakupu opisanym w kodzie — to też jest „dokument dla właściciela”, a nie było na mojej liście dokumentów do sprawdzenia.",
+    "Nie było pytania o to, czy LICENSE (plik GPL w paczce) jest tym samym tekstem co `License: GPLv2 or later` z nagłówka wtyczki/readme — zgodność treści licencji z deklaracją nagłówka to osobna, mała kontrola, której nie zrobiłam.",
+    "Nie sprawdzałam, czy DOKUMENTACJA-TECHNICZNA.md §10 „MAPA DLA AUDYTORA” (10 pytań-wskazówek) rzeczywiście pokrywa wszystkie klasy błędów ze SCIAGA-EGZAMINATORA — to wymagałoby osobnego zestawienia 10 punktów §10 vs 7 klas ściągi, którego prompt nie zamawiał wprost."
+  ],
+  "czego_nie_obejrzalem": [
+    "assets/ (CSS/JS front) — poza zakresem L5 (należy do L6).",
+    "Paczki chatbot-live.zip i segregator-maila.zip od środka (poza wynikami plugin-check) — mają własne audyty w audyt/boty/.",
+    "Pełna historia commitów repo (poza faktem 289/289 noreply uznanym z 02-fakty) i gitleaks (niedostępny).",
+    "testy/dokumentacja-zgodnosc-sklep.sh — nieuruchomiony (budżet)."
+  ],
+  "wywolania_narzedzi": 30
+}

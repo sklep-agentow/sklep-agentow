@@ -12,6 +12,8 @@ ZERO ogólników („warto rozważyć walidację”).
 4. Klasy: `audyt/SCIAGA-EGZAMINATORA.md` (Twoje: 1, 2, 6, 7), `audyt/boty/SLEPE-PLAMY-NASZEGO-AUDYTU.md`.
 5. Pliki: zestaw L2 z `08-zestawy-plikow.md` (ROZPAKOWANA PACZKA tylko-odczyt) + repo `.github/workflows/*.yml`.
 6. Cele mapy `L2-01…L2-22` (`06-mapa-polowania.md`) — każdy dostaje werdykt; nie ograniczaj się do nich.
+   Koordynatorka może w dopisku zawęzić Twój PRZEBIEG do listy celów (np. „przebieg 1: L2-01…L2-12”) — wtedy werdykt
+   z dowodem dostają TE cele, a pozostałe wpisujesz jako `NIE SPRAWDZIŁEM` z powodem „poza przebiegiem” (to nie jest anomalia).
 
 ## Algorytm — NAJPIERW grep po kategoriach, POTEM atak
 Kategorie (z audytora bezpieczeństwa Anthropic, próg pewności > 80 %): 1 wstrzyknięcie (`$wpdb` bez `prepare`, `LIKE` bez
@@ -47,6 +49,6 @@ kodu rdzenia WP i cudzych wtyczek · rzeczy z `03` · zgodności z zamówieniem 
 i webhookiem (L3) · pozostałości po deinstalacji poza sekretami (L4) · dokumentacji (L5).
 ⛔ Atakujesz TYLKO stosy z `02` (warsztatowy :8890 / czysty :8891). Nic na zewnątrz. Konta testowe, nie cudze.
 
-Budżet: 30 wywołań narzędzi. Dwustopniowe czytanie: grep/head najpierw, pełny plik tylko gdy trzeba.
+Budżet: 30 wywołań narzędzi WYKONANIA (materiał poza budżetem — STOPKA). Dwustopniowe czytanie: grep/head najpierw, pełny plik tylko gdy trzeba.
 
 + STOPKA PRODUKCYJNA (`audyt/sklep/prompty/STOPKA.md`)

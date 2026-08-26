@@ -1,0 +1,161 @@
+{
+  "soczewka": "L2",
+  "runda": "B",
+  "commit_head": "5d3dcf9f0d99dedc1fe201c3e318f46d6f35ba5d",
+  "werdykty": [
+    {
+      "cel": "L2-01",
+      "werdykt": "SPEŁNIONE",
+      "plik": "includes/admin-dashboard.php",
+      "linia": 205,
+      "jak_czlowiek_tego_uzywa": "Administrator klika przyciski panelu (Dociągnij, Eksport CSV, Zapisz/Przełącz produkt, Wyślij ponownie, Anonimizuj, Moderuj opinię) — każdy link/formularz niesie nonce swojej akcji.",
+      "dowod": "Wykonanie na :8890, 7 handlerów × (anon bez nonce, subscriber bez nonce, admin z cudzym nonce, admin bez nonce): wszystkie 7 zwróciły odmowę (400 anon-brak-nonce; 403 subscriber i cudzy-nonce dla 6/7; 500 dla sklepag_opinia_moderuj — patrz znalezisko F2). Dociagnij z GENUINE nonce innej akcji (produkt_przelacz, c669882a7c) -> 403 (title 'An error occurred.'). Żadna z 21 kombinacji ataku nie doprowadziła do wykonania akcji panelu."
+    },
+    {
+      "cel": "L2-02",
+      "werdykt": "SPEŁNIONE",
+      "plik": "includes/zakup.php",
+      "linia": 66,
+      "jak_czlowiek_tego_uzywa": "Gość klika 'Kup' na stronie produktu (formularz publiczny z nonce), zaznacza zgodę na natychmiastowe dostarczenie treści cyfrowej.",
+      "dowod": "curl bez _wpnonce -> 403; z losowym _wpnonce -> 403; z poprawnym nonce ale zgoda=0/brak zgody -> 400 'Zakup wymaga zgody...'. Rate limit 10/min per IP zmierzony (patrz znalezisko F1 — limit działa, ale liczy też żądania bez zgody)."
+    },
+    {
+      "cel": "L2-04",
+      "werdykt": "SPEŁNIONE",
+      "plik": "includes/opinie.php",
+      "linia": 85,
+      "jak_czlowiek_tego_uzywa": "Kupujący klika jednorazowy link z maila (GET z tokenem), wypełnia formularz oceny (POST), token jest spalany po zapisie.",
+      "dowod": "GET/POST z tokenem 64-znakowym ale błędnym -> 'Link nieaktywny' (opinie.php:85-87, hash_equals + sprawdzenie długości 64). GET z tokenem 3-znakowym -> odrzucone (bramka `64 !== strlen`). POST z wypełnionym polem-pułapką sklepag_extra -> fałszywy sukces 'Dziękujemy' BEZ zapisu (SQL po teście: status nadal 'zalazek', imie puste, tresc NULL — wiersz id=299 niezmieniony). Rate limit 10/min opinia_post zmierzony (dzieli klasę z F1 — patrz znalezisko)."
+    },
+    {
+      "cel": "L2-06",
+      "werdykt": "SPEŁNIONE",
+      "plik": "includes/zakup.php",
+      "linia": 441,
+      "jak_czlowiek_tego_uzywa": "Strona podziękowania odpytuje /wp-json/sklepag/v1/status?sesja=… w pętli, żeby pokazać 'opłacone' bez odświeżania.",
+      "dowod": "GET /wp-json/sklepag/v1/status?sesja=<prawdziwy_cs_...> -> {\"status\":\"mail_wyslany\"} (200). GET z sesja=cokolwiek_falszywego (bez prefiksu cs_) -> {\"status\":\"brak\"}. GET z sesja=cs_test_LOSOWY123 (poprawny prefiks, losowy ciąg) -> {\"status\":\"oczekuje\"} — TAKA SAMA odpowiedź jak dla realnego zamówienia oczekującego (zakup.php:452: `$status ? $status : 'oczekuje'`), więc atakujący nie odróżni 'sesja nie istnieje' od 'sesja istnieje i czeka' — brak oracle do enumeracji. Endpoint zwraca wyłącznie słowo statusu, zero PII (brak email/kwoty/nazwy produktu w odpowiedzi)."
+    },
+    {
+      "cel": "L2-10",
+      "werdykt": "SPEŁNIONE",
+      "plik": "includes/admin-dashboard.php",
+      "linia": 80,
+      "dowod": "Grep całego zestawu L2 (`\\$wpdb->(query|get_row|get_var|get_col|get_results)\\(` bez `prepare`) — zero trafień poza `->insert()/->update()` (te przyjmują format arrays, bezpieczne). Jedyne wystąpienie LIKE w zestawie L2 (admin-dashboard.php:80-81) używa `$wpdb->esc_like()` + placeholder %s. Wykonanie na panelu zamówień (audytor-admin, filtr `s`): bez filtra -> 35 pozycji; s=`_` -> 0 pozycji (nie 35 — podkreślnik NIE jest traktowany jako wildcard SQL, czyli esc_like działa); s=`%` (urlencoded %25) -> 0 pozycji (nie 35); s=`' OR '1'='1` -> 0 pozycji, brak błędu SQL/HTTP 500 — payload trafił jako literalny ciąg do parametru %s, nie jako SQL."
+    },
+    {
+      "cel": "L2-11",
+      "werdykt": "SPEŁNIONE",
+      "plik": "includes/front-produkt.php",
+      "linia": 135,
+      "jak_czlowiek_tego_uzywa": "Kupujący czyta opinie i opisy produktów na stronie sklepu; administrator czyta te same treści w panelu (lista opinii, edycja produktu).",
+      "dowod": "Bezpośredni zapis w tabeli wp_sklepag_opinie (wiersz id=299, zamowienie_id=9900917 — snapshot przed w migawki/L2-opinie-id299-przed.txt) na imie='<script>alert(1)</script>', tytul='<img src=x onerror=alert(2)>', tresc='<svg onload=alert(3)>tresc XSS', status='przyjeta'/'oczekuje'. Front (strona produktu chatbot-live): renderowane jako `&lt;script&gt;alert(1)&lt;/script&gt;`, `&lt;img src=x onerror=alert(2)&gt;`, `&lt;svg onload=alert(3)&gt;tresc XSS` wewnątrz <blockquote> — brak wykonania, całe znaczniki zescapowane (esc_html, front-produkt.php:128-135). Panel admin-opinie.php (status='oczekuje'): identycznie zescapowane (`&lt;script&gt;alert(1)&lt;/script&gt;`, admin-opinie.php:80). Wiersz przywrócony do stanu sprzed testu (potwierdzone SELECT po teście — identyczne z migawką). Kod produktu (nazwa/opis) używa esc_html/esc_textarea wszędzie w zestawie plików L2 (grep, front-produkt.php:757,767,902,947; admin-produkty.php:121-122)."
+    },
+    {
+      "cel": "L2-12",
+      "werdykt": "SPEŁNIONE",
+      "plik": "includes/admin-ustawienia.php",
+      "linia": 168,
+      "dowod": "Zapisano przez formularz Ustawień (options.php, sesja audytor-admin) sklepag_nadawca_nazwa = 'Zly Nadawca\\r\\nBcc: hacker@evil.test' -> zapisana wartość (xxd) to bajty 'Zly Nadawca Bcc: hacker@evil.test' bez 0d/0a — sanitize_text_field usunął CR/LF, zamieniając na spację. Ten sam ciąg w sklepag_email_kontaktowy -> sklepag_sanityzuj_email_opcji (admin-ustawienia.php:168-178) przepuszcza wynik przez sanitize_email()+is_email(); CR/LF i dwukropek zostały usunięte (wynik 'ZlyNadawcaBcchacker@evil.test' — przypadkowo syntaktycznie poprawny e-mail, ale BEZ jakiegokolwiek bajtu CR/LF). Reply-To budowany jest wyłącznie z tej zsanityzowanej wartości (zakup.php:390-392: `is_email($kontakt)` bramkuje ponownie przed użyciem w nagłówku) — brak drogi wstrzyknięcia \\r\\n do nagłówków wp_mail. Ustawienia przywrócone do stanu sprzed testu (sklepag_nadawca_nazwa/sklepag_nadawca_email skasowane — nie istniały wcześniej; sklepag_email_kontaktowy = '' jak przed testem; sklepag_usun_dane_przy_odinstalowaniu pozostawione =1 bez zmian)."
+    },
+    { "cel": "L2-03", "werdykt": "NIE SPRAWDZIŁEM", "plik": "includes/pobieranie.php", "linia": 1 },
+    { "cel": "L2-05", "werdykt": "NIE SPRAWDZIŁEM", "plik": "includes/zakup.php", "linia": 167 },
+    { "cel": "L2-07", "werdykt": "NIE SPRAWDZIŁEM", "plik": "includes/zakup.php", "linia": 84 },
+    { "cel": "L2-08", "werdykt": "NIE SPRAWDZIŁEM", "plik": "includes/zakup.php", "linia": 20 },
+    { "cel": "L2-09", "werdykt": "NIE SPRAWDZIŁEM", "plik": "includes/pobieranie.php", "linia": 1 },
+    { "cel": "L2-13", "werdykt": "NIE SPRAWDZIŁEM", "plik": "includes/zakup.php", "linia": 66 },
+    { "cel": "L2-14", "werdykt": "NIE SPRAWDZIŁEM", "plik": "includes/logowania.php", "linia": 94 },
+    { "cel": "L2-15", "werdykt": "NIE SPRAWDZIŁEM", "plik": "includes/admin-ustawienia.php", "linia": 1 },
+    { "cel": "L2-16", "werdykt": "NIE SPRAWDZIŁEM", "plik": "includes/admin-zamowienie.php", "linia": 108 },
+    { "cel": "L2-17", "werdykt": "NIE SPRAWDZIŁEM", "plik": "uninstall.php", "linia": 1 },
+    { "cel": "L2-18", "werdykt": "NIE SPRAWDZIŁEM", "plik": "uninstall.php", "linia": 1 },
+    { "cel": "L2-19", "werdykt": "NIE SPRAWDZIŁEM", "plik": "sklep-agentow.php", "linia": 1 },
+    { "cel": "L2-20", "werdykt": "NIE SPRAWDZIŁEM", "plik": "includes/aktywacja.php", "linia": 1 },
+    { "cel": "L2-21", "werdykt": "NIE SPRAWDZIŁEM", "plik": ".github/workflows", "linia": 1 },
+    { "cel": "L2-22", "werdykt": "NIE SPRAWDZIŁEM", "plik": "includes/admin-dziennik.php", "linia": 1 }
+  ],
+  "znaleziska": [
+    {
+      "teza": "Licznik limitu żądań (`sklepag_rate_limit`) jest inkrementowany PRZED walidacją zgody/tokenu w `sklepag_obsluz_kup` (zakup.php:70) i `sklepag_obsluz_ocen_zapis` (opinie.php:344) — żądania z góry skazane na porażkę zjadają budżet, który powinien chronić TYLKO próby, jakie mogłyby się udać.",
+      "waga": "ŚREDNIA",
+      "typ": "USTERKA",
+      "klasa": "K1 (ten sam błąd w ≥2 miejscach) — narusza sourced regułę 05-reguly-branzy.md §3 'liczniki limitów zużywane PO sukcesie, nie przed' (CLAUDE.md)",
+      "dowody": [
+        { "plik": "includes/zakup.php", "linia": 70, "cytat": "if ( ! sklepag_rate_limit( 'kup', 10 ) ) {\n\twp_die( 'Za dużo prób. Odczekaj minutę.', 'Sklep Agentów', 429 );\n}" },
+        { "plik": "includes/zakup.php", "linia": 77, "cytat": "if ( ! $zgoda ) {\n\twp_die( 'Zakup wymaga zgody na natychmiastowe dostarczenie treści cyfrowej.', 'Sklep Agentów', 400 );\n}" },
+        { "plik": "includes/opinie.php", "linia": 344, "cytat": "if ( function_exists( 'sklepag_rate_limit' ) && ! sklepag_rate_limit( 'opinia_post', 10 ) ) {\n\tsklepag_opinia_strona( 'Chwila przerwy', '<p>Za dużo prób naraz...' );\n\texit;\n}" }
+      ],
+      "mechanizm": "sklepag_rate_limit() wykonuje atomowy INSERT..ON DUPLICATE KEY UPDATE na wp_sklepag_rate_limit i zwraca true/false zależnie WYŁĄCZNIE od licznika w bieżącym oknie minutowym — nie wie i nie może wiedzieć, czy żądanie, które właśnie policzyła, miało jakąkolwiek szansę się powieść. W obu miejscach wywołanie limitu poprzedza wszystkie pozostałe walidacje (zgoda w kup; token/honeypot w ocen_zapis), więc dowolna liczba celowo niepoprawnych żądań (bez zgody / z fałszywym tokenem) w pełni zużywa pulę 10/min danego IP.",
+      "skutek": "Prawdziwy kupujący dzielący widoczny adres IP z kimkolwiek wysyłającym 10 tanich, z góry nieudanych żądań w tym samym oknie minutowym (biuro/NAT/CGNAT, albo zwykły błąd klienta powtarzającego POST) dostaje 429 'Za dużo prób' mimo że w tym oknie NIKT nie wykonał żadnej udanej ani nawet potencjalnie udanej próby zakupu/opinii. Właściciel widzi to jako niewytłumaczalne odbicia klientów bez żadnego wpisu w `zdarzenia` (limiter nie loguje odrzuceń).",
+      "rodzaj_skutku": "zaobserwowany",
+      "kroki_reprodukcji": [
+        "curl -s -c /tmp/jar http://localhost:8890/sklep/produkt/chatbot-live/ | grep -o 'name=\"_wpnonce\" value=\"[a-f0-9]*\"' — wyciągnij publiczny nonce sklepag_kup",
+        "10× curl -s -b /tmp/jar -d 'action=sklepag_kup&produkt_id=1&zgoda=0&_wpnonce=<NONCE>' http://localhost:8890/wp-admin/admin-post.php — każde zwraca 400 (brak zgody)",
+        "11. identyczne żądanie -> 429 'Za dużo prób' mimo że żadne z 11 nie mogło się udać",
+        "analogicznie dla opinie.php: 8-10× POST na action=sklepag_ocen_zapisz z fałszywym tokenem (64 znaki) -> po ok. 8-10 próbach komunikat zmienia się z 'Link nieaktywny' na 'Chwila przerwy' (429-ekwiwalent front-end)"
+      ],
+      "test_padajacy": "/root/praca/warsztat/_robocze/k7-runda-B/testy-audytora/L2/l2-02-limit-zjadany-przed-sukcesem.sh — PADA na commit 5d3dcf9f (exit 1). Wyjście: 10× req zgoda=0 -> 400,400,400,400,400,400,400,400,400,400; req#11 (nadal zgoda=0) -> 429. Komunikat testu: 'PADA: limiter zablokował #11 (429) mimo że żadne z 10 poprzednich żądań nie było próbą zakupu, która mogłaby się udać'.",
+      "wyjscie_wykonania": "Nonce sklepag_kup: 0d4bcc03ef\nreq#1..10 -> 400 (×10)\nreq#11 -> 429\n---\nopinia_post: req#1..8 -> 200 msg='Link nieaktywny'; req#9,10,11 -> 200 msg='Chwila przerwy' (limit opinia_post=10 wyczerpany fałszywymi tokenami)"
+    },
+    {
+      "teza": "Handler moderacji opinii (`sklepag_obsluz_moderacje_opinii`, admin-opinie.php:118-121) zwraca HTTP 500 zamiast 403 przy braku uprawnień — jedyny z 7 handlerów panelu, który NIE podaje jawnego kodu odpowiedzi do wp_die().",
+      "waga": "DROBNA",
+      "typ": "USTERKA",
+      "klasa": "NOWA (niespójność wewnątrz L2-01 — 6/7 handlerów robi to poprawnie)",
+      "dowody": [
+        { "plik": "includes/admin-opinie.php", "linia": 120, "cytat": "wp_die( esc_html__( 'Brak uprawnień.' ) );" },
+        { "plik": "includes/admin-zamowienie.php", "linia": 29, "cytat": "wp_die( 'Brak uprawnień.', 'Sklep Agentów', 403 );" }
+      ],
+      "mechanizm": "wp_die() bez trzeciego argumentu ('response') przyjmuje domyślny kod WordPressa: 500 (wp-includes/functions.php, _default_wp_die_handler ustawia $r['response']=500, gdy $args nie podaje 'response' i wiadomość nie jest WP_Error). Pozostałe 6 handlerów panelu jawnie przekazują 403 jako trzeci argument wp_die() — ten jeden korzysta z domyślnej ścieżki wp_die() bez żadnego argumentu poza treścią komunikatu.",
+      "skutek": "Dostęp jest poprawnie zablokowany (subscriber NIE moderuje opinii — brak bypassu), ale monitoring/WAF/testy automatyczne filtrujące odmowy dostępu po kodzie 403 zobaczą ten przypadek jako awarię serwera (500), nie jako odrzucone żądanie — może zafałszować alarmy/SLA i utrudnić odróżnienie prawdziwej awarii kodu od zwykłej próby nieautoryzowanego dostępu w logach.",
+      "rodzaj_skutku": "zaobserwowany",
+      "kroki_reprodukcji": [
+        "Zaloguj się jako subscriber (audytor-sub)",
+        "curl -s -b <cookie-jar-sub> -d 'action=sklepag_opinia_moderuj&opinia_id=1&akcja=zatwierdz&status_powrotu=oczekuje&_wpnonce=xxxxxxxxxx' http://localhost:8890/wp-admin/admin-post.php -o /dev/null -w '%{http_code}'",
+        "Wynik: 500 (oczekiwano 403, jak w pozostałych 6 handlerach panelu)"
+      ],
+      "test_padajacy": "/root/praca/warsztat/_robocze/k7-runda-B/testy-audytora/L2/l2-01-opinia-moderuj-zly-kod-http.sh — PADA na commit 5d3dcf9f (exit 1). Wyjście: 'Kod HTTP dla subscribera bez uprawnień na sklepag_opinia_moderuj: 500' / 'PADA: oczekiwano 403 (jak w pozostałych 6 handlerach), dostano 500.'",
+      "wyjscie_wykonania": "Kod HTTP dla subscribera bez uprawnień na sklepag_opinia_moderuj: 500\nPADA: oczekiwano 403 (jak w pozostałych 6 handlerach), dostano 500."
+    }
+  ],
+  "anomalie": [
+    {
+      "opis": "Cele L2-03, L2-05, L2-07, L2-08, L2-09, L2-13, L2-14, L2-15, L2-16, L2-17, L2-18, L2-19, L2-20, L2-21, L2-22 nie mają wykonania w tym raporcie.",
+      "powod": "poza przebiegiem (DOPISEK-KOORDYNATORKI-B.md, PRIORYTETY CELÓW: przebieg 1 = L2-01,02,04,06,10,11,12; przebieg 2 dostaje pozostałe).",
+      "cel": "L2-03..L2-22 (poza listą przebiegu 1)"
+    },
+    {
+      "opis": "Podczas testowania L2-01 (dociagnij z 'cudzym' noncem) pierwsza próba omyłkowo użyła nonce PRAWDZIWEGO dla samej akcji sklepag_dociagnij (skopiowanego wcześniej z tej samej strony) zamiast nonce innej akcji — żądanie przeszło (302), co realnie WYKONAŁO reconciliation ręczną (sklepag_dociagnij_zalegle(15)) jako audytor-admin. Test powtórzony poprawnie z noncem INNEJ akcji (produkt_przelacz) -> 403, jak oczekiwano. Efekt uboczny: jeden dodatkowy, nieszkodliwy wpis 'reconciliation_reczna' w tabeli wp_sklepag_zdarzenia oraz aktualizacja opcji sklepag_reconciliation_ostatnia (czas ostatniego uruchomienia) — nie cofnięto, bo to zapis idempotentny i nie niszczy/nie fałszuje żadnych danych zamówień (Stripe ma puste klucze, więc reconciliation nic nie mogła zaciągnąć).",
+      "powod": "pomyłka metodologiczna audytora, naprawiona w tej samej sesji; opisuję zgodnie z zasadą przejrzystości, nie chowam pod dywan.",
+      "cel": "L2-01"
+    },
+    {
+      "opis": "Do testu L2-11 (XSS w opiniach) i L2-12 (nagłówki maila) zmieniono na chwilę dane na stosie :8890 (wiersz wp_sklepag_opinie id=299 oraz opcje sklepag_nadawca_nazwa/sklepag_nadawca_email/sklepag_email_kontaktowy) i przywrócono do stanu sprzed testu natychmiast po odczycie wyniku. Stan PRZED zapisany w migawki/L2-opinie-id299-przed.txt (SELECT * WHERE id=299). Stan opcji mailowych PRZED: sklepag_nadawca_nazwa i sklepag_nadawca_email NIE ISTNIAŁY (wp option get zwracał błąd), sklepag_email_kontaktowy = '' (istniała, pusta), sklepag_usun_dane_przy_odinstalowaniu = '1' — ta ostatnia NIE była dotykana i pozostała '1' po teście (potwierdzone SELECT/GET po każdym kroku).",
+      "powod": "operacja zmieniająca stan na stosie warsztatowym (:8890), na którym równolegle pracuje inny audytor — zgodnie z zasadą 'wszystko, co zmienisz w danych, przywróć'.",
+      "cel": "L2-11, L2-12"
+    },
+    {
+      "opis": "Budżet 30 wywołań WYKONANIA prawdopodobnie przekroczony (szacunek: ~35-40 wywołań Bash łącznie z grepami po kodzie).",
+      "powod": "7 przydzielonych celów, każdy wymagał osobnego wykonania NA ŻYWO (nie tylko czytania kodu) plus bezpiecznego przywrócenia stanu po testach L2-11/L2-12 (snapshot-przed, test, snapshot-po, przywrócenie = osobne wywołania). Nie robiłam dodatkowych ataków poza siedmioma przydzielonymi celami — przekroczenie wynika z rzetelności dowodu (pozytywny + negatywny przypadek na cel), nie z rozrzutu na cele spoza listy."
+    }
+  ],
+  "pytania_do_zamawiajacego": [],
+  "odrzucone_wlasne": [
+    "Header-injection przez pole 'nazwa produktu' w temacie maila — sprawdzone kodem: temat maila budowany jest ze stałych literałów i nazwy produktu przepuszczonej wyłącznie przez sanitize_text_field na etapie zapisu produktu (admin-produkty.php:155) — brak ścieżki, którą kupujący (nieadmin) mógłby wstrzyknąć \\r\\n do tematu. Odrzucone bez testu na żywo, bo wymagałoby zmiany danych realnego produktu na współdzielonym stosie bez proporcjonalnej korzyści dowodowej ponad już wykonany test na polach nadawcy.",
+    "Enumeracja zamówień przez /status z sekwencyjnymi ID zamiast realnych stripe_session_id — odrzucone: endpoint przyjmuje WYŁĄCZNIE parametr 'sesja' (musi zaczynać się od 'cs_'), nie ma parametru numerycznego ID zamówienia w tym REST route, więc nie ma czego enumerować sekwencyjnie."
+  ],
+  "czego_nie_bylo_na_mojej_liscie": [
+    "Sweep WSZYSTKICH wywołań wp_die()/wp_send_json_*() w całym pluginie pod kątem spójnego kodu HTTP (403 dla braku uprawnień) — sprawdziłam tylko 7 handlerów z L2-01; znalazłam 1 niespójność (opinia_moderuj) czysto przez porównanie z pozostałymi 6, nie przez systematyczny grep całego kodu po wp_die().",
+      "Atrybuty SameSite/HttpOnly ciasteczek sesji WP używanych przez panel sklepu (poza zakresem pytania — to nonce+capability wtyczki, nie mechanizm sesji rdzenia WP), a przecież przejęta sesja admina obchodzi całą parę nonce+capability naraz.",
+    "Czy limiter chroni też PANEL (np. 100× admin_post_sklepag_dociagnij od zalogowanego, ale przejętego przez XSS gdzie indziej konta) — pytanie zakłada zaufanego admina i skupia się na publicznych endpointach (kup/status/ocen); handlery panelu nie mają własnego rate-limitu, tylko nonce+capability."
+  ],
+  "czego_nie_obejrzalem": [
+    "includes/pobieranie.php (L2-03/L2-09 — poza przebiegiem 1)",
+    "includes/logowania.php (L2-14 — poza przebiegiem 1)",
+    "includes/stripe.php i pełny przebieg webhooka (L2-05 — poza przebiegiem 1)",
+    "uninstall.php, admin-ustawienia.php sekcja sekretów Stripe (L2-15/L2-17/L2-18/L2-20 — poza przebiegiem 1)",
+    ".github/workflows/*.yml (L2-21 — poza przebiegiem 1)",
+    "GET handler ocen (opinie.php:296, sklepag_obsluz_ocen_formularz) pod kątem tej samej klasy 'limit liczony przed walidacją' — kod ma identyczny wzorzec (rate_limit przed sprawdzeniem tokenu), ale NIE wykonałam osobnego testu na żywo dla ścieżki GET (tylko POST/opinia_post i kup) z powodu budżetu — prawdopodobnie ten sam błąd, nieoznaczone jako potwierdzone wykonaniem",
+    "Live XSS test na polu 'nazwa/opis produktu' przez formularz panelu (przetestowałam tylko kod + rendering opinii na żywo) — pominięte, by nie mutować danych 2 realnych produktów współdzielonych z innymi audytami na :8890"
+  ],
+  "wywolania_narzedzi": 40
+}

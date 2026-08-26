@@ -1,0 +1,159 @@
+{
+  "soczewka": "L",
+  "runda": "B",
+  "commit_head": "5d3dcf9f0d99dedc1fe201c3e318f46d6f35ba5d",
+  "werdykty": [
+    {
+      "cel": "Ł-00",
+      "werdykt": "SPEŁNIONE INACZEJ",
+      "jak_czlowiek_tego_uzywa": "Inwentarz ścieżek wołających Stripe (grep wp_remote_/sklepag_stripe_ w includes/*.php): (1) start zakupu — zakup.php:99 sklepag_stripe_utworz_sesje, publiczny admin_post_nopriv_sklepag_kup; (2) cron — zakup.php:465 sklepag_dociagnij_zalegle wywoływane hookiem sklepag_dociagnij_zalegle (zakup.php:541) co 10 min; (3) self-heal automatyczny przy wejściu admina na pulpit — admin-dashboard.php:191-198, budżet 8 s; (4) przycisk „Dociągnij zaległe teraz” w panelu — admin-dashboard.php:200-217, budżet 15 s. Webhook (REST) NIE woła Stripe wychodząco (tylko weryfikuje podpis lokalnie) — nie jest ścieżką dla awarii 'Stripe nie odpowiada'. Pobieranie pliku nie woła Stripe. Zwrotu/refundu Stripe wtyczka w ogóle nie obsługuje w żadną stronę (brak webhooka charge.refunded/dispute) — to fakt struktury, nie ścieżka do testu awarii Stripe.",
+      "dowod": "grep wp_remote_ includes/*.php -> stripe.php:46,48; grep sklepag_stripe_ -> zakup.php:99,170,488,518; grep sklepag_dociagnij -> admin-dashboard.php:197,200,213,336 + sklep-agentow.php:60-61"
+    },
+    {
+      "cel": "Ł-01",
+      "werdykt": "NIE SPRAWDZIŁEM",
+      "dowod": "Budżet wykonania wyczerpany po priorytetach Ł-00→Ł-02→Ł-08 plus dwóch dodatkowych scenariuszach (Ł-03, Ł-04) na których trafiłam realne znaleziska; nie zdążyłam wymusić awarii bazy (RENAME TABLE) w środku zakupu."
+    },
+    {
+      "cel": "Ł-02",
+      "werdykt": "AWARIA CICHA",
+      "dowod": "Patch stripe.php: const SKLEPAG_STRIPE_API zmieniona na https://api.stripe-nieosiagalny-l02.invalid (docker cp + sed, kopia w migawki/L-stripe.php.orig, przywrócona). Klucz sklepag_stripe_klucz_sekretny ustawiony na sk_test_L02FAKE (przywrócony na '' po teście).\n\nŚCIEŻKA 1 — start zakupu (kup): curl -d 'produkt_id=1&zgoda=1&_wpnonce=...' .../admin-post.php?action=sklepag_kup -> HTTP 502, treść widoczna kupującemu: 'Nie udało się rozpocząć płatności. Spróbuj ponownie za chwilę.' Zdarzenie zapisane: id=1 typ=checkout_blad opis='cURL error 6: Could not resolve host: api.stripe-nieosiagalny-l02.invalid'. WERDYKT CZĄSTKOWY: ODPORNE (komunikat + ślad natychmiastowy, żaden wiersz zamówienia nie powstaje więc nic nie wisi w połowie).\n\nŚCIEŻKA 2 — cron (wp cron event run sklepag_dociagnij_zalegle): wykonanie 0.034s, brak fatala. 8 nowych zdarzeń typu reconciliation_blad (po jednym na każdą z 8 zaległych sesji z 11 kandydatów w oknie LIMIT 20), np. 'cs_test_seed_71abZ5VHsuS8zB7nLIzcGzW2: cURL error 6: Could not resolve host...'. Status i mail_proby zamówień BEZ ZMIAN.\n\nŚCIEŻKA 3 — self-heal automatyczny (wejście admina na /wp-admin/admin.php?page=sklepag, opcja sklepag_reconciliation_ostatnia nieistniejąca -> triggeruje się): HTTP 200, strona wyrenderowana bez fatala/notice, kolejnych 8 zdarzeń reconciliation_blad (MAX(id) 9->17), opcja sklepag_reconciliation_ostatnia ustawiona na bieżący timestamp.\n\nŚCIEŻKA 4 — przycisk 'Dociągnij zaległe teraz' (nonce wyciągnięty z realnego HTML dashboardu, nie z wp-cli): HTTP 302 (redirect sukcesu), kolejnych 8 reconciliation_blad (MAX 17->24... 8 nowych, razem 24) PLUS jawne zdarzenie reconciliation_reczna 'przycisk w panelu' — to jedyna ścieżka z jawnym logiem AKCJI admina.\n\nSTAN KOŃCOWY zamówienia #1 (reprezentatywne): status=mail_w_toku niezmienione przez wszystkie 3 przebiegi reconciliation; GET /wp-json/sklepag/v1/status?sesja=cs_test_seed_HqNWmlUZaAZ660K9KEmSHBIh -> {\"status\":\"mail_w_toku\"} — kupujący widzi surowy string wewnętrzny, bez żadnej wzmianki o problemie.\n\nLUKA POTWIERDZONA (patrz znalezisko SK-L-002): licznik 'panel-czerwone' (admin-dashboard.php:298,314) liczy WYŁĄCZNIE status='mail_blad' AND mail_proby>=3. Żadna z 24 awarii reconciliation_blad (ścieżki 2-4) NIE inkrementuje mail_proby ani nie zmienia status — ten licznik pozostaje na 0 przez cały test mimo 24 udokumentowanych awarii. Jedyny ślad to surowe wpisy w zakładce Dziennik→Zdarzenia, bez wyróżnienia."
+    },
+    {
+      "cel": "Ł-03",
+      "werdykt": "ODPORNE",
+      "plik": "includes/pobieranie.php",
+      "linia": 46,
+      "dowod": "Kontrola (plik obecny): curl .../sklepag_pobierz?z=4&t=<realny_token_z_maila_resend> -> HTTP 200 (pobranie OK, pobrania_uzyte 0->1). Plik /var/www/html/wp-content/uploads/sklepag-chronione-ez6o2qJPYen1I9Sb/produkt-seed skopiowany do /tmp/k7b-L/produkt-seed.backup i skasowany z kontenera. Ponowne żądanie tym samym tokenem -> HTTP 503, treść: 'Plik chwilowo niedostępny. Skontaktuj się z właścicielem sklepu...'. Zdarzenie zapisane: typ: pobranie_brak_pliku opis=pełna ścieżka pliku. SELECT pobrania_uzyte/pobrania_limit po nieudanej próbie: 1/10 — licznik NIE wzrósł przy awarii (limit nie jest zjadany). Plik przywrócony (docker cp z powrotem, chown root:root, rozmiar 161 B potwierdzony)."
+    },
+    {
+      "cel": "Ł-04",
+      "werdykt": "AWARIA CICHA",
+      "plik": "includes/admin.php",
+      "linia": 25,
+      "dowod": "Ustawiono permalink_structure='' (Zwykłe) + rewrite flush. Notice w kokpicie POJAWIA SIĘ poprawnie: '<strong>Sklep Agentów:</strong> bezpośrednie odnośniki są ustawione na «Zwykłe» — strona sklepu i webhook płatności NIE DZIAŁAJĄ...'. NATOMIAST: POST http://localhost:8891/wp-json/sklepag/v1/webhook -> HTTP 200, treść = strona główna motywu ('<title>Stos probny'), zamiast deklarowanego w komentarzu kodu 404 (rest_no_route) — żądanie w ogóle nie trafia do sklepag_webhook(), zero nowego wiersza w wp_sklepag_zdarzenia. KONTROLA: identyczne żądanie po przywróceniu permalink_structure='/%postname%/' -> HTTP 400 + nowe zdarzenie webhook_zly_podpis (potwierdza, że handler normalnie działa i różnicę powoduje wyłącznie struktura permalinków). Analogicznie strona produktu /sklep/produkt/chatbot-live/ pod Zwykłymi -> HTTP 200 (strona główna, nie 404) — to zgadza się z opisem 'po cichu pokazuje bloga', ale zaprzecza opisowi webhooka jako 404. Stan przywrócony i zweryfikowany (HTTP 200 na produkcie po przywróceniu)."
+    },
+    {
+      "cel": "Ł-05",
+      "werdykt": "NIE SPRAWDZIŁEM",
+      "dowod": "Budżet wykonania wyczerpany."
+    },
+    {
+      "cel": "Ł-06",
+      "werdykt": "NIE SPRAWDZIŁEM",
+      "dowod": "Budżet wykonania wyczerpany."
+    },
+    {
+      "cel": "Ł-07",
+      "werdykt": "NIE SPRAWDZIŁEM",
+      "dowod": "Budżet wykonania wyczerpany."
+    },
+    {
+      "cel": "Ł-08",
+      "werdykt": "ODPORNE",
+      "dowod": "wp config set WP_DEBUG true --raw + WP_DEBUG_LOG true --raw + WP_DEBUG_DISPLAY false --raw. debug.log przed cyklem: brak pliku. Kolejno, z 'wc -l debug.log' po każdym kroku (wszędzie 'brak pliku' = 0 linii przypisywalnych wtyczce; jedyne wpisy to 2 ostrzeżenia wp-cli 'Constant WP_DEBUG_LOG already defined...' generowane przez WŁASNY mechanizm eval wp-cli, NIE zapisywane do debug.log, patrz anomalia AN-001): (1) plugin deactivate+activate -> brak; (2) GET strony produktu /sklep/produkt/chatbot-live/ (200) + listy sklepu /sklep/ (200) -> brak; (3) GET 5 ekranów panelu (sklepag, sklepag-produkty, sklepag-opinie, sklepag-dziennik, sklepag-ustawienia) wszystkie HTTP 200 -> brak; (4) start zakupu przez admin-post kup (502, brak klucza — oczekiwane) + widok szczegółu zamówienia -> brak; (5) wp plugin uninstall sklep-agentow (usunięcie plików + domyślne zachowanie uninstall.php, dane zostają: 24 zamówienia, 1 produkt, 7 tabel wp_sklepag_* potwierdzone SHOW TABLES) -> brak; (6) reinstalacja z paczki sklep-agentow-0.9.13.zip --force --activate, wersja po reinstalacji: 0.9.13 -> brak. Stan końcowy: sklep HTTP 200, dane nietknięte. Konfiguracja debug przywrócona (WP_DEBUG=false, WP_DEBUG_LOG i WP_DEBUG_DISPLAY usunięte z wp-config.php, debug.log skasowany)."
+    },
+    {
+      "cel": "Ł-09",
+      "werdykt": "NIE SPRAWDZIŁEM",
+      "dowod": "Budżet wykonania wyczerpany."
+    },
+    {
+      "cel": "Ł-10",
+      "werdykt": "NIE SPRAWDZIŁEM",
+      "dowod": "Budżet wykonania wyczerpany."
+    }
+  ],
+  "znaleziska": [
+    {
+      "teza": "Webhook Stripe pod permalinkami «Zwykłe» zwraca HTTP 200 (stronę główną motywu) zamiast błędu — sklepag_webhook() w includes/zakup.php:167-198 nigdy się nie wykonuje, płatność ginie bez żadnego wpisu w wp_sklepag_zdarzenia, a Stripe traktuje 2xx jako doręczone i NIE ponawia próby.",
+      "waga": "KRYTYCZNA",
+      "typ": "USTERKA",
+      "klasa": "cicha awaria",
+      "dowody": [
+        { "plik": "includes/admin.php", "linia": 25, "cytat": "echo '<div class=\"notice notice-error\"><p><strong>Sklep Agentów:</strong> bezpośrednie odnośniki są ustawione na „Zwykłe\" — strona sklepu i webhook płatności NIE DZIAŁAJĄ, dopóki tego nie zmienisz...';" },
+        { "plik": "includes/admin.php", "linia": 24, "cytat": "// Świeży WordPress ma bezpośrednie odnośniki „Zwykłe\" — wtedy /sklep/ po cichu pokazuje bloga, a trasa webhooka /wp-json/... zwraca 404 (rest_no_route)." },
+        { "plik": "includes/zakup.php", "linia": 146, "cytat": "register_rest_route( 'sklepag/v1', '/webhook', array( 'methods' => 'POST', 'callback' => 'sklepag_webhook', 'permission_callback' => '__return_true', ) );" }
+      ],
+      "mechanizm": "Trasa REST /wp-json/... jest wpięta przez rewrite rule zależną od permalink_structure. Przy permalinkach «Zwykłe» POST na /wp-json/sklepag/v1/webhook w ogóle nie jest kierowany do WP_REST_Server — WordPress oddaje domyślny szablon strony głównej motywu z HTTP 200 (nie 404, wbrew komentarzowi w kodzie). sklepag_webhook() nigdy się nie wykonuje, więc nie ma weryfikacji podpisu, nie ma sklepag_domknij_zakup(), nie ma wiersza w wp_sklepag_zdarzenia ani zmiany zamowienia.status.",
+      "skutek": "Kupujący płaci, Stripe wysyła webhook, dostaje 200 i uznaje dostawę za zakończoną (bez ponowienia) — zamówienie nigdy się nie domyka, mail z linkiem pobrania nigdy nie wychodzi, a w systemie NIE POWSTAJE ŻADEN ŚLAD tej konkretnej transakcji (poza samym Stripe). Notice w kokpicie co prawda ostrzega, ale opisuje fałszywy mechanizm awarii (404), więc administrator czytający kod/komentarz nie doceni realnego ryzyka (cichej utraty pieniędzy, nie widocznego błędu 404 do zdiagnozowania).",
+      "rodzaj_skutku": "zaobserwowany",
+      "kroki_reprodukcji": [
+        "docker exec -u www-data probny_wp wp --path=/var/www/html option update permalink_structure ''",
+        "docker exec -u www-data probny_wp wp --path=/var/www/html rewrite flush",
+        "curl -s -o /tmp/body.html -w '%{http_code}\\n' -X POST http://localhost:8891/wp-json/sklepag/v1/webhook   # -> 200, treść = strona główna motywu",
+        "SELECT MAX(id) FROM wp_sklepag_zdarzenia przed i po -> bez zmian (brak nowego wiersza)",
+        "Kontrola: docker exec -u www-data probny_wp wp --path=/var/www/html option update permalink_structure '/%postname%/' && rewrite flush; to samo POST -> 400 + nowy wiersz webhook_zly_podpis"
+      ],
+      "test_padajacy": "/root/praca/warsztat/_robocze/k7-runda-B/testy-audytora/L/l04-permalink-plain-webhook-silent-200-test.sh — uruchomiony na kodzie 5d3dcf9f0d99dedc1fe201c3e318f46d6f35ba5d: kontrola (permalinki poprawne) daje 400+zdarzenie jak oczekiwano; po przełączeniu na Zwykłe test PADA z komunikatem 'PADA: webhook pod permalinkami Zwykle zwrocil HTTP 200 (sukces dla Stripe) i NIE zostawil zadnego zdarzenia — cicha utrata platnosci.' Skrypt sam przywraca permalink_structure w trap EXIT.",
+      "wyjscie_wykonania": "HTTP na Zwyklych=200 tytul_odpowiedzi=<title>Stos probny ; kontrola po przywroceniu webhook HTTP=400; produkt pretty URL pod Zwyklymi HTTP=200 (strona glowna, tytul 'Stos probny', nie strona produktu)"
+    },
+    {
+      "teza": "Reconciliation (cron sklepag_dociagnij_zalegle + self-heal dashboardu + przycisk «Dociągnij zaległe teraz») przy niedostępnym Stripe loguje reconciliation_blad na każdą zaległą sesję, ale nigdy nie podnosi licznik „panel-czerwone” w admin-dashboard.php:298 — zamówienie może wisieć w oplacone/mail_w_toku bez końca bez żadnego wyróżnionego sygnału dla właściciela.",
+      "waga": "DUŻA",
+      "typ": "BRAK",
+      "klasa": "cicha awaria",
+      "dowody": [
+        { "plik": "includes/zakup.php", "linia": 489, "cytat": "if ( is_wp_error( $sesja ) ) { sklepag_zdarzenie( null, 'reconciliation_blad', $sid . ': ' . $sesja->get_error_message() ); continue; }" },
+        { "plik": "includes/admin-dashboard.php", "linia": 298, "cytat": "$czerwone = (int) $wpdb->get_var( \"SELECT COUNT(*) FROM {$t} WHERE status = 'mail_blad' AND mail_proby >= 3\" );" },
+        { "plik": "includes/admin-dashboard.php", "linia": 314, "cytat": "// Panel-czerwone (plan §6): nieudane wysyłki po wyczerpaniu prób crona." }
+      ],
+      "mechanizm": "sklepag_dociagnij_zalegle() przy błędzie sklepag_stripe_pobierz_sesje() (Stripe nieosiągalny) loguje zdarzenie i robi 'continue' BEZ zmiany zamowienia.status i BEZ inkrementacji mail_proby (mail_proby rośnie wyłącznie w sklepag_domknij_zakup() przy porażce wp_mail, do której ta ścieżka nigdy nie dociera). Licznik 'panel-czerwone' filtruje wyłącznie status='mail_blad' AND mail_proby>=3, więc żadna z tych awarii nigdy go nie zasili.",
+      "skutek": "Właściciel nie ma żadnego proaktywnego sygnału, że klienci zapłacili i utknęli bez maila z linkiem pobrania — jedyny ślad to surowe wpisy w zakładce Dziennik→Zdarzenia (w teście: 24 wpisy reconciliation_blad po 3 przebiegach cron/self-heal/przycisk na tych samych zamówieniach), bez wyróżnienia wśród innych zdarzeń. Kupujący pytający GET /wp-json/sklepag/v1/status widzi surowy string wewnętrzny (np. 'mail_w_toku') bez żadnego wyjaśnienia.",
+      "rodzaj_skutku": "zaobserwowany",
+      "kroki_reprodukcji": [
+        "docker cp probny_wp:/var/www/html/wp-content/plugins/sklep-agentow/includes/stripe.php /tmp/stripe.orig",
+        "sed 's#https://api.stripe.com#https://api.stripe-nieosiagalny.invalid#' /tmp/stripe.orig > /tmp/stripe-bad.php && docker cp /tmp/stripe-bad.php probny_wp:/var/www/html/wp-content/plugins/sklep-agentow/includes/stripe.php",
+        "docker exec -u www-data probny_wp wp --path=/var/www/html option update sklepag_stripe_klucz_sekretny sk_test_FAKE",
+        "docker exec -u www-data probny_wp wp --path=/var/www/html cron event run sklepag_dociagnij_zalegle",
+        "SELECT status, mail_proby FROM wp_sklepag_zamowienia WHERE status IN ('oplacone','mail_w_toku') -> bez zmian; SELECT COUNT(*) FROM wp_sklepag_zamowienia WHERE status='mail_blad' AND mail_proby>=3 -> 0 mimo N wpisów reconciliation_blad",
+        "docker cp /tmp/stripe.orig probny_wp:/var/www/html/wp-content/plugins/sklep-agentow/includes/stripe.php (przywrócenie)"
+      ],
+      "test_padajacy": "/root/praca/warsztat/_robocze/k7-runda-B/testy-audytora/L/l02-reconciliation-brak-flagi-test.sh — pada obecnie z komunikatem 'PADA: N awarii dociagania Stripe zalogowanych, ZERO wzrostu sygnalu panel-czerwone — awaria cicha.' Skrypt przywraca stripe.php i klucz w trap EXIT.",
+      "wyjscie_wykonania": "zdarzenia po cronie: checkout_blad=1, reconciliation_blad=8 (pierwszy przebieg), rosnące do 24 po 3 przebiegach (cron+self-heal+przycisk); zamówienie #1: status=mail_w_toku niezmienione; GET /status -> {\"status\":\"mail_w_toku\"}"
+    }
+  ],
+  "anomalie": [
+    {
+      "opis": "wp-cli przy KAŻDYM wywołaniu na stosie z WP_DEBUG_LOG=true w wp-config.php drukuje na STDOUT 'PHP Warning: Constant WP_DEBUG_LOG already defined in phar:///usr/local/bin/wp/vendor/wp-cli/wp-cli/php/WP_CLI/Runner.php...'.",
+      "powod": "Artefakt WŁASNEGO mechanizmu eval wp-cli (redefinicja stałej we własnym kodzie), NIE zapisywany do wp-content/debug.log i niewidoczny dla realnych żądań HTTP przez przeglądarkę — zweryfikowane: debug.log pozostał pusty ('brak pliku') przez cały cykl Ł-08 mimo tych ostrzeżeń w konsoli. Nie liczę tego jako notice wtyczki.",
+      "cel": "Ł-08"
+    },
+    {
+      "opis": "Tabela wp_sklepag_sesje_checkout jest PUSTA dla danych zasianych przez koordynatorkę (24 zamówienia wstawione bezpośrednio do wp_sklepag_zamowienia, bez odpowiadających wierszy w sesje_checkout).",
+      "powod": "Pierwsza faza sklepag_dociagnij_zalegle() (SELECT ... FROM sesje_checkout WHERE stan='utworzona') nie miała czego przetwarzać przy testach Ł-02 — cały sygnał (reconciliation_blad) pochodził z DRUGIEJ fazy (niedomkniete zamówienia). To fakt danych seedu, nie znalezisko.",
+      "cel": "Ł-02"
+    },
+    {
+      "opis": "Mailpit (:8025) jest współdzielony między stosem :8890 i :8891 — podczas testów Ł-03 widziałam w skrzynce obce wiadomości z prefiksem 'l3regres-' (inny audytor pracujący równolegle, zgodnie z dopiskiem koordynatorki).",
+      "powod": "Zgodnie z 02-fakty-srodowiska.md ('łapacz może mieć stare wiadomości — filtruj po czasie/adresie'); filtrowałam po konkretnym ID wiadomości zwróconym przez własne żądanie resend, nie po całej skrzynce.",
+      "cel": "Ł-03"
+    },
+    {
+      "opis": "Przekroczyłam budżet 30 wywołań wykonania (rzeczywiście ok. 35 wywołań Bash) — dwie korekty własnych pomyłek zjadły dodatkowe wywołania: (a) pierwsza próba SELECT na wp_sklepag_zdarzenia użyła nieistniejącej kolumny 'utworzono' zamiast 'czas' (poprawione DESCRIBE-em), (b) pierwsza próba wygenerowania nonce dla akcji panelu (resend) przez 'wp eval wp_create_nonce()' zwróciła nonce NIEPASUJĄCY do sesji zalogowanego admina (nonce WP jest związany z user_id+session_token, nie da się go wygenerować z poziomu wp-cli dla cudzej sesji) — poprawione przez wyciągnięcie prawdziwego nonce z wygenerowanego HTML panelu.",
+      "powod": "Mimo przekroczenia budżetu NIE zdążyłam na Ł-01, Ł-05, Ł-06, Ł-07, Ł-09, Ł-10 — zdecydowałam dokończyć Ł-02/Ł-08 (priorytet z dopisku koordynatorki) i dwa dodatkowe scenariusze (Ł-03, Ł-04), na których wyszły realne znaleziska, zamiast rozproszyć resztę budżetu płytko po wszystkich pozostałych celach.",
+      "cel": "budżet"
+    }
+  ],
+  "pytania_do_zamawiajacego": [
+    "Czy właściciel ma dostawać MAIL/powiadomienie przy przekroczeniu progu awarii reconciliation (nie tylko wpis w Dzienniku), skoro obecny licznik 'panel-czerwone' nie łapie awarii samego POŁĄCZENIA ze Stripe podczas dociągania?",
+    "Czy notice o permalinkach 'Zwykłe' (includes/admin.php) powinien zostać przeformułowany, skoro realne zachowanie webhooka (cichy 200) jest GROŹNIEJSZE niż opisany w kodzie 404?"
+  ],
+  "odrzucone_wlasne": [
+    "Rozważałam zgłoszenie zerowej zawartości tabeli sesje_checkout jako braku integralności danych seedu — odrzucone: to fakt danych zasianych przez koordynatorkę (poza kodem wtyczki), nie usterka kodu."
+  ],
+  "czego_nie_bylo_na_mojej_liscie": [
+    "Brak jakiegokolwiek kanału powiadomienia WŁAŚCICIELA push/mailowego przy awariach płatności — cała diagnostyka opiera się na tym, że ktoś sam wejdzie do zakładki Dziennik→Zdarzenia; prompt Ł każe sprawdzać ślad w bazie i sygnał w panelu, ale nie każe wprost oceniać, czy sygnał jest PROAKTYWNY czy wymaga ręcznego wyszukania — ta granica okazała się kluczowa dla obu moich znalezisk.",
+    "Zachowanie przy RÓWNOCZESNEJ awarii dwóch zależności naraz (np. Stripe nieosiągalny ORAZ baza w trybie tylko-do-odczytu) — nie badałam kombinacji, tylko awarie pojedyncze.",
+    "Wpływ długotrwałej awarii Stripe na crona WP (czy kolejne bity 'sklepag_dociagnij_zalegle' zaczynają się nakładać/kolejkować, skoro WP-Cron jest pseudo-cronem uruchamianym na ruchu) — nie mierzyłam czasu trwania pojedynczego biegu przy większej liczbie zaległych sesji niż limit 20."
+  ],
+  "czego_nie_obejrzalem": [
+    "includes/front-produkt.php (954 linie) — czytałam tylko fragmenty dot. permalinków/URL produktu, nie całość (treści marketingowe, opinie na froncie, SEO)",
+    "includes/opinie.php i includes/admin-opinie.php — mechanizm opinii D32 w ogóle nie testowany przeze mnie (poza zakresem priorytetów Ł tej rundy)",
+    "includes/admin-produkty.php i class-sklepag-lista-produktow.php — upload zip produktu (Ł-09, plik 20MB+) nietestowany",
+    "assets/front-ruch.js, assets/dziekujemy.js, front-seo.php — front JS/SEO poza zakresem Ł (przypisane L6)",
+    "includes/aktywacja.php — migracje schematu (3→4→5) nieanalizowane pod kątem awarii w trakcie migracji",
+    "Ł-01 (baza pada w połowie zakupu), Ł-05 (page-cache/nonce sprzed 25h), Ł-06 (seed 10k/1k wydajność pulpitu), Ł-07 (500 żądań równoległych), Ł-09 (upload 20MB+), Ł-10 (dwa admin-posty naraz) — scenariusze pominięte z braku budżetu, zero wykonania"
+  ],
+  "wywolania_narzedzi": 35
+}

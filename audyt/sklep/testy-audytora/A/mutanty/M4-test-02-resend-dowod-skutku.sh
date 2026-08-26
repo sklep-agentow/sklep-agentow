@@ -1,5 +1,6 @@
 #!/bin/bash
-# PADA na 0.9.13: admin-zamowienie.php:92 `if ( null !== $wyslano )` — wp_mail nigdy nie zwraca null,
+# PADA na paczce z MUTANTEM M4 (425a3124); na CZYSTEJ 0.9.13 (5d3dcf9, 7e0cf726) PRZECHODZI — patrz README.md w tym katalogu (recenzja #191 W1).
+# Opis wady MUTANTA: admin-zamowienie.php:92 `if ( null !== $wyslano )` — wp_mail nigdy nie zwraca null,
 # wiec gałąź sukcesu wykonuje sie ZAWSZE: nieudana wysylka zapisuje status 'mail_wyslany'
 # i zdarzenie 'mail_resend'. Golden 13: komunikat sukcesu bez dowodu = cicha awaria.
 cd "$(dirname "$0")"; . ./lib.sh; sekret_ustaw

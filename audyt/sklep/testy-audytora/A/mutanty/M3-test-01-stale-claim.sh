@@ -1,5 +1,6 @@
 #!/bin/bash
-# PADA na 0.9.13: zakup.php:303-310 obiecuje w komentarzu "claim starszy niz 5 min wolno odebrac",
+# PADA na paczce z MUTANTEM M3 (425a3124); na CZYSTEJ 0.9.13 (5d3dcf9, 7e0cf726) PRZECHODZI — patrz README.md w tym katalogu (recenzja #191 W1).
+# Opis wady MUTANTA: zakup.php:303-310 obiecuje w komentarzu "claim starszy niz 5 min wolno odebrac",
 # a warunek SQL to `zmieniono < $teraz` (zero karencji) -> ponowienie webhooka 10 s po przejeciu
 # wysyla DRUGI mail i uniewaznia link z pierwszego. Golden 5: "Dwa maile = KRYTYCZNA".
 cd "$(dirname "$0")"; . ./lib.sh; sekret_ustaw

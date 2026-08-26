@@ -1,5 +1,6 @@
 #!/bin/bash
-# PADA na 0.9.13: pobieranie.php:5 deklaruje "HEAD nie zuzywa limitu" (i tak brzmi cel L3-07),
+# PADA na paczce z MUTANTEM M6 (425a3124); na CZYSTEJ 0.9.13 (5d3dcf9, 7e0cf726) PRZECHODZI — patrz README.md w tym katalogu (recenzja #191 W1).
+# Opis wady MUTANTA: pobieranie.php:5 deklaruje "HEAD nie zuzywa limitu" (i tak brzmi cel L3-07),
 # a pobieranie.php:57-58 inkrementuje pobrania_uzyte takze dla HEAD. Skaner poczty (2-3 dotkniecia)
 # zjada kupujacemu sloty, a panel nie ma zadnego sposobu na zresetowanie licznika.
 cd "$(dirname "$0")"; . ./lib.sh; sekret_ustaw
