@@ -637,8 +637,14 @@ function sklepag_zbuduj_mail( $produkt, $zam, $link, $link_opinii = '' ) {
 			$gwarancja = "GWARANCJA:\n" . $t['gwarancja'] . "\nAby z niej skorzystać, odpisz na tego maila.\n\n";
 		}
 	}
+	// Data zakupu OBOK potwierdzenia zgody. Mail podawał wyłącznie chwilę zgody, przez co
+	// kupujący nie miał w potwierdzeniu odpowiedzi na proste „kiedy to kupiłem" — a to pierwsza
+	// rzecz, której szuka po miesiącu. Czas zgody zostaje osobno, bo niesie inną treść prawną.
+	$kupiono = ! empty( $zam->utworzono ) ? get_date_from_gmt( get_gmt_from_date( $zam->utworzono ), 'd.m.Y H:i' ) : '';
+
 	return "Dziękujemy za zakup w sklepie!\n\n"
 		. 'Produkt: ' . $produkt->nazwa . "\n"
+		. ( '' !== $kupiono ? 'Data zakupu: ' . $kupiono . "\n" : '' )
 		. 'Kwota: ' . number_format( $zam->kwota_grosze / 100, 2, ',', ' ' ) . ' ' . $zam->waluta . " (TRYB TESTOWY — płatność nie została pobrana)\n\n"
 		. $zgoda
 		. "POBIERZ SWÓJ PRODUKT:\n" . $link . "\n"

@@ -195,6 +195,26 @@ czyszczenia usuwane są tabele, ustawienia i strony. ⛔ **Klucze Stripe i zapla
 zadanie cykliczne kasowane są ZAWSZE**, niezależnie od tej opcji (martwy wpis
 w cronie bez wtyczki tylko sypie błędami).
 
+**Aktualizacja wtyczki „w miejscu"** (Wtyczki → Aktualizuj teraz) NIE odpala aktywacji.
+Migracja schematu i odtworzenie chronionego katalogu na pliki produktów dzieją się same
+przy pierwszym wejściu do panelu albo przy zadaniu cyklicznym — deaktywacja i ponowna
+aktywacja nie są potrzebne.
+
+**Wycofanie wersji (rollback).** Wgranie starszej wersji wtyczki NIE cofa schematu bazy:
+dołożone kolumny zostają i nie przeszkadzają starszemu kodowi, bo mają wartości domyślne.
+Cofnięcie poniżej wersji, która wprowadziła daną kolumnę, oznacza jednak, że dane w niej
+przestaną być aktualizowane (np. zapis zwrotów). Zalecana kolejność przy wycofaniu:
+kopia bazy → wgranie starszej paczki → sprawdzenie Pulpitu. Przy powrocie do nowszej wersji
+migracja dopisze brakujące kolumny sama.
+
+**Zadanie cykliczne a `DISABLE_WP_CRON`.** Domykanie zaległych zamówień (co 10 minut) jedzie
+na harmonogramie WordPressa. Jeśli w `wp-config.php` stoi `define( 'DISABLE_WP_CRON', true );`
+— częste na hostingach z własnym harmonogramem systemowym — zadanie NIE uruchomi się samo
+z ruchu na stronie i trzeba mieć wpis w systemowym harmonogramie, np. co 5 minut:
+`wget -q -O - https://TWOJA-DOMENA/wp-cron.php?doing_wp_cron >/dev/null 2>&1`.
+Bez tego zamówienia opłacone w chwili, gdy powiadomienie od Stripe nie dotarło, poczekają
+na mail do najbliższego wejścia do panelu.
+
 ---
 
 ## 9. Granice — czego ta wtyczka NIE robi
