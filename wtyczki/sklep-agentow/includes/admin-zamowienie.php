@@ -87,8 +87,32 @@ function sklepag_obsluz_resend() {
 		$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET status='mail_wyslany', zmieniono=%s WHERE id=%d", $teraz, (int) $zam->id ) );
 		sklepag_zdarzenie( (int) $zam->id, 'mail_resend', 'ręczna ponowna wysyłka do: ' . $zam->email_kupujacego . ' (świeży link)' );
 	} else {
-		$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET status='mail_blad', mail_proby=mail_proby+1, zmieniono=%s WHERE id=%d", $teraz, (int) $zam->id ) );
-		sklepag_zdarzenie( (int) $zam->id, 'mail_blad', 'ręczna ponowna wysyłka nieudana (wp_mail zwrócił false)' );
+		// KOMPENSACJA: nowy token wszedł do bazy PRZED wysyłką, więc nieudany mail zostawiłby
+		// kupującego bez niczego — stary link daje 403, a nowy nigdy nie dotarł. Przywracamy
+		// poprzedni token i termin, żeby „Wyślij ponownie" nigdy nie ODBIERAŁO dostępu.
+		if ( null === $zam->link_wygasa ) {
+			// Kolumna `link_wygasa` jest DATETIME NULL — prepare() z %s zrobiłby z NULL-a pusty
+			// string (data zerowa albo błąd w trybie ścisłym), więc NULL zapisujemy dosłownie.
+			$wpdb->query(
+				$wpdb->prepare(
+					"UPDATE {$pz} SET token_pobrania=%s, link_wygasa=NULL, status='mail_blad', mail_proby=mail_proby+1, zmieniono=%s WHERE id=%d",
+					(string) $zam->token_pobrania,
+					$teraz,
+					(int) $zam->id
+				)
+			);
+		} else {
+			$wpdb->query(
+				$wpdb->prepare(
+					"UPDATE {$pz} SET token_pobrania=%s, link_wygasa=%s, status='mail_blad', mail_proby=mail_proby+1, zmieniono=%s WHERE id=%d",
+					(string) $zam->token_pobrania,
+					(string) $zam->link_wygasa,
+					$teraz,
+					(int) $zam->id
+				)
+			);
+		}
+		sklepag_zdarzenie( (int) $zam->id, 'mail_blad', 'ręczna ponowna wysyłka nieudana (wp_mail zwrócił false) — poprzedni link pobrania przywrócony' );
 	}
 	// phpcs:enable
 

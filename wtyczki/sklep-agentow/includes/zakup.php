@@ -276,6 +276,19 @@ function sklepag_domknij_zakup( $sesja ) {
 
 	// 2) CAS: oczekuje -> oplacone.
 	$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET status='oplacone', zmieniono=%s WHERE stripe_session_id=%s AND status='oczekuje'", $teraz, $sid ) );
+
+	// DOWÓD SKUTKU PRZED FLAGĄ STANU. Sesję wolno oznaczyć jako obsłużoną DOPIERO gdy
+	// zamówienie naprawdę jest w bazie. Wcześniej flaga szła bezwarunkowo: awaria zapisu
+	// (tabela niedostępna, pełny dysk, przekroczony limit) dawała sesję 'oplacona' BEZ
+	// zamówienia, a sklepag_dociagnij_zalegle() bierze tylko stan='utworzona' — opłacony
+	// zakup ginął bez śladu i bez sygnału dla właściciela.
+	$zamowienie_jest = $wpdb->get_row( $wpdb->prepare( "SELECT status FROM {$pz} WHERE stripe_session_id=%s", $sid ) );
+	if ( ! $zamowienie_jest ) {
+		$powod = '' !== (string) $wpdb->last_error ? (string) $wpdb->last_error : 'brak wiersza po INSERT/UPDATE';
+		sklepag_zdarzenie( null, 'domkniecie_blad_zapisu', $sid . ': ' . $powod );
+		// Sesja zostaje 'utworzona' → dociągnie ją reconciliation, a webhook Stripe ponowi.
+		return false;
+	}
 	sklepag_oznacz_sesje( $sid, 'oplacona' );
 
 	// 3) CAS: przejęcie wysyłki (oplacone/mail_blad -> mail_w_toku). Przegrany wraca bez maila.
