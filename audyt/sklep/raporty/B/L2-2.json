@@ -1,0 +1,163 @@
+{
+  "soczewka": "L2",
+  "runda": "B",
+  "commit_head": "5d3dcf9f0d99dedc1fe201c3e318f46d6f35ba5d",
+  "werdykty": [
+    { "cel": "L2-01", "werdykt": "NIE SPRAWDZIŁEM", "proba_kontrolna": "poza przebiegiem 2 (koordynatorka przydzieliła L2-13,14,15,16,17,20,22 do tego przebiegu)" },
+    { "cel": "L2-02", "werdykt": "NIE SPRAWDZIŁEM", "proba_kontrolna": "poza przebiegiem 2" },
+    { "cel": "L2-03", "werdykt": "NIE SPRAWDZIŁEM", "proba_kontrolna": "poza przebiegiem 2" },
+    { "cel": "L2-04", "werdykt": "NIE SPRAWDZIŁEM", "proba_kontrolna": "poza przebiegiem 2" },
+    { "cel": "L2-05", "werdykt": "NIE SPRAWDZIŁEM", "proba_kontrolna": "poza przebiegiem 2" },
+    { "cel": "L2-06", "werdykt": "NIE SPRAWDZIŁEM", "proba_kontrolna": "poza przebiegiem 2" },
+    { "cel": "L2-07", "werdykt": "NIE SPRAWDZIŁEM", "proba_kontrolna": "poza przebiegiem 2" },
+    { "cel": "L2-08", "werdykt": "NIE SPRAWDZIŁEM", "proba_kontrolna": "poza przebiegiem 2" },
+    { "cel": "L2-09", "werdykt": "NIE SPRAWDZIŁEM", "proba_kontrolna": "poza przebiegiem 2" },
+    { "cel": "L2-10", "werdykt": "NIE SPRAWDZIŁEM", "proba_kontrolna": "poza przebiegiem 2" },
+    { "cel": "L2-11", "werdykt": "NIE SPRAWDZIŁEM", "proba_kontrolna": "poza przebiegiem 2" },
+    { "cel": "L2-12", "werdykt": "NIE SPRAWDZIŁEM", "proba_kontrolna": "poza przebiegiem 2" },
+
+    {
+      "cel": "L2-13",
+      "werdykt": "BRAK",
+      "plik": "includes/zakup.php",
+      "linia": 66,
+      "proba_kontrolna": "wp eval liczy nonce dla ticka sprzed 25h (uid=0, akcja sklepag_kup): `substr(wp_hash($i.'|sklepag_kup|0|','nonce'),-12,10)` -> 1206af487c. POST admin-post.php?action=sklepag_kup z tym noncem -> HTTP 403 (WP 'Are you sure...'). Kontrola: GET świeżej strony /sklep/produkt/chatbot-live/ -> świeży nonce 0d4bcc03ef -> ten sam POST -> HTTP 502 (checkout_blad, bo klucz Stripe pusty na tym stosie — fakt środowiska, nie ten błąd). Różnica 403 vs 502 dowodzi, że nonce starszy niż ~24h jest martwy i request ginie PRZED jakąkolwiek logiką sklepu (przed rate-limitem i przed sklepag_zdarzenie), więc właściciel nie widzi w dzienniku śladu odrzuconego zakupu.",
+      "dowod": "curl POST stary nonce: 'HTTP/1.1 403 Forbidden' + treść 'An error occurred.' (WP nonce-fail); curl POST świeży nonce: 'HTTP/1.1 502 Bad Gateway' (checkout_blad, zgodnie z faktem pustych kluczy Stripe na :8890)."
+    },
+
+    {
+      "cel": "L2-14",
+      "werdykt": "SPEŁNIONE",
+      "plik": "includes/logowania.php",
+      "linia": 76,
+      "jak_czlowiek_tego_uzywa": "Właściciel/administrator loguje się do wp-admin normalnie; przy pomyłce hasła kolejne próby TEJ SAMEJ pary login+IP czekają coraz dłużej (2,4,8,16,32,60 s), ale po podaniu poprawnego hasła logowanie i tak się udaje (nie ma twardej blokady konta) — licznik zeruje się po sukcesie.",
+      "dowod": "Login nieistniejący 'audytor-nieistnieje-xyz' z tego samego IP, 7 kolejnych prób POST /wp-login.php, wszystkie HTTP=200: elapsed 0.08s, 2.05s, 4.05s, 8.06s, 16.05s, 32.08s, 60.07s (sufit 60s trafiony na 7. próbie, dokładnie 2^n z cap 60 — zgodnie z SKLEPAG_OPOZNIENIE_SUFIT_S=60 w kodzie). Dla 'audytor-sub': 2 złe hasła (0.32s, 2.31s) -> POPRAWNE hasło mimo 2 wcześniejszych błędów: 4.32s opóźnienia, ale HTTP=200 i cookie wordpress_logged_in OBECNE (logowanie się udało — brak twardej blokady). Kolejna zła próba ZARAZ PO sukcesie: 0.27s (licznik zresetowany przez sukces, zgodnie z komentarzem w kodzie 'zeruje też licznik opóźnienia')."
+    },
+
+    {
+      "cel": "L2-15",
+      "werdykt": "SPEŁNIONE",
+      "plik": "includes/admin-ustawienia.php",
+      "linia": 33,
+      "jak_czlowiek_tego_uzywa": "Administrator wpisuje klucz Stripe w Ustawieniach; opcja jest zakładana z autoload=no PRZED pierwszym zapisem (funkcja add_option z parametrem false), więc sekret nigdy nie trafia do puli opcji ładowanych na każdym requeście frontu.",
+      "dowod": "SQL na :8890: SELECT option_name,LENGTH(option_value),autoload FROM wp_options WHERE option_name LIKE 'sklepag_stripe_%' -> obie opcje autoload='off'. Kod: CSV eksport (admin-dashboard.php:251) ma nagłówek 'Nr;Data;Kupujący;Produkt;Kwota;Waluta;Status;Pobrania użyte;Limit pobrań' — bez pola sekretu. mail_tresc budowany przez sklepag_zbuduj_mail(produkt,zam,link,link_op) — bez dostępu do opcji Stripe. Test wykonawczy: ustawiłam TYMCZASOWO sklepag_stripe_klucz_sekretny='sk_test_[ZREDAGOWANE]' i sklepag_stripe_webhook_sekret='[ZREDAGOWANE-whsec]', wysłałam webhook ze złym podpisem -> zapis w wp_sklepag_zdarzenia: 'webhook_zly_podpis | odrzucono (ip 172.21.0.1)' — ŻADEN z dwóch fake-sekretów nie pojawił się w opisie zdarzenia. Po teście przywrócono obie opcje do '' (autoload=no), SQL po przywróceniu potwierdza LENGTH=0 na obu — stan identyczny jak przed testem."
+    },
+
+    {
+      "cel": "L2-16",
+      "werdykt": "SPEŁNIONE INACZEJ",
+      "plik": "includes/admin-zamowienie.php",
+      "linia": 108,
+      "jak_czlowiek_tego_uzywa": "Administrator na ekranie zamówienia klika 'Anonimizuj kupującego' (z potwierdzeniem JS) po żądaniu RODO; jednym kliknięciem czyści adres e-mail i unieważnia token pobrania w zamówieniu, usuwa adres z opisów zdarzeń tego zamówienia i anonimizuje powiązaną opinię (imię + token), zdejmując ją z publikacji.",
+      "dowod": "Migawka mariadb-dump (wp_sklepag_zamowienia+opinie+zdarzenia) PRZED do migawki/L2-16-przed.sql. Wykonano admin-post.php?action=sklepag_anonimizuj&zamowienie=2 jako audytor-admin z nonce z ekranu zamówienia. PO: zamowienia id=2 -> email_kupujacego='', usunieto_dnia='2026-08-26 05:29:51', token_pobrania='', link_wygasa=NULL. zdarzenia: wiersz id=5 'do: kupujacy-e2e@test.local' -> 'do: [usunięto — RODO]'; dopisany nowy wiersz 'anonimizacja'. opinie: zamówienie 2 nie miało żadnej opinii (COUNT=0 przed i po) — mechanizm sklepag_anonimizuj_opinie() sprawdzony CZYTANIEM (opinie.php:213-230): UPDATE imie='',token_hash='',token_wygasa=NULL,status='odrzucona' WHERE zamowienie_id=X — nie wykonany na żywym przypadku z realną opinią (brak takiego zamówienia w danych warsztatowych z jednoczesną opinią i nieanonimizowanym mailem w budżecie tego przebiegu). PRZYWRÓCONO z migawki (import L2-16-przed.sql) -> SQL po przywróceniu: zamowienia id=2 email='kupujacy-e2e@test.local', usunieto_dnia=NULL; zdarzenia id=5 z powrotem 'do: kupujacy-e2e@test.local'; dodatkowy wiersz 'anonimizacja' (id=1444) zniknął wraz z przywróceniem tabeli. DZIENNIK (wp_sklepag_logowania) NIE jest dotykany przez anonimizację i nie ma do tego mechanizmu — sprawdzone czytaniem: tabela logowania (aktywacja.php, CREATE TABLE) nie ma kolumny zamowienie_id ani email_kupujacego, przechowuje wyłącznie próby logowania do wp-admin (buyerzy nie mają kont — MUST NOT PLAN-PROJEKTU §3). Nie istnieje więc żaden wiersz w dzienniku możliwy do powiązania z konkretnym zamówieniem/kupującym — literalne 'dziennik' z celu L2-16 nie ma odpowiednika w tym modelu danych, stąd SPEŁNIONE INACZEJ zamiast SPEŁNIONE."
+    },
+
+    {
+      "cel": "L2-17",
+      "werdykt": "SPEŁNIONE",
+      "plik": "uninstall.php",
+      "linia": 14,
+      "jak_czlowiek_tego_uzywa": "Właściciel przy odinstalowaniu wtyczki (Wtyczki -> Usuń) NIE musi nic zaznaczać, żeby klucze Stripe i zaplanowane zadanie zniknęły — dzieje się to zawsze, niezależnie od stanu opcji 'usuń wszystkie dane'.",
+      "dowod": "Czytanie uninstall.php: linie 14-15 `delete_option('sklepag_stripe_klucz_sekretny')` / `delete_option('sklepag_stripe_webhook_sekret')` i linia 19 `wp_clear_scheduled_hook('sklepag_dociagnij_zalegle')` wykonują się PRZED warunkiem `if (!get_option('sklepag_usun_dane_przy_odinstalowaniu')) return;` na linii 22-23 — a więc na OBU gałęziach przełącznika (opcja ON i opcja OFF), bo kod przed `return` wykonuje się zawsze niezależnie od gałęzi. Próba kontrolna (bez deinstalacji, zgodnie z zaleceniem koordynatorki): SQL na :8890 -> SELECT option_name,LENGTH(option_value),autoload FROM wp_options WHERE option_name LIKE 'sklepag_stripe_%' zwraca DWA istniejące wiersze (a nie 0) — czyli w bazie jest realny stan, który `delete_option()` naprawdę usunie na obu ścieżkach, to nie jest martwy kod bez efektu. `wp cron event list` potwierdza, że `sklepag_dociagnij_zalegle` jest realnie zaplanowany (recurrence '10 minutes') — jest co skasować."
+    },
+
+    {
+      "cel": "L2-20",
+      "werdykt": "SPEŁNIONE",
+      "plik": "includes/aktywacja.php",
+      "linia": 181,
+      "jak_czlowiek_tego_uzywa": "Po aktywacji wtyczki właściciel widzi w WP dwie strony-szkice ('Regulamin sklepu (SZABLON)', 'Polityka prywatności sklepu (SZABLON)') z polami [NAZWA, ADRES, KONTAKT] do wypełnienia przed publikacją — żadnych cudzych/testowych danych osobowych w treści.",
+      "dowod": "aktywacja.php:181 (regulamin) treść: 'Sprzedawca: [NAZWA, ADRES, KONTAKT] ... Reklamacje: [MAIL WŁAŚCICIELA]' — placeholdery, zero prawdziwych/cudzych danych. aktywacja.php:182 (polityka) treść: 'Administrator danych: [NAZWA, KONTAKT]; Zakres: adres e-mail kupującego, dane transakcji, dziennik zdarzeń (90 dni)...; Podmioty przetwarzające: operator płatności Stripe; mechanizm poczty serwera.' — wymienia Stripe i retencję 90 dni, zgodnie z wymogiem celu."
+    },
+
+    {
+      "cel": "L2-22",
+      "werdykt": "SPEŁNIONE",
+      "plik": "includes/admin-dziennik.php",
+      "linia": 18,
+      "jak_czlowiek_tego_uzywa": "Tylko administrator (manage_options) widzi zakładkę Dziennik z logowaniami (IP, user_agent) i zdarzeniami; każdy inny zalogowany użytkownik dostaje od razu odmowę WordPressa, zanim w ogóle dotrze do kodu wtyczki.",
+      "dowod": "curl jako audytor-sub (subscriber, zalogowany cookie) na /wp-admin/admin.php?page=sklepag-dziennik -> HTTP 403, treść zawiera 'Sorry, you are not allowed' (to jest odmowa RDZENIA WP na poziomie rejestracji podmenu z capability 'manage_options' — kod wtyczki w admin-dziennik.php:18 current_user_can('manage_options') nawet się nie wykonuje, bo WP blokuje wcześniej; podwójna bariera). Retencja: `wp cron event list` -> `sklepag_dociagnij_zalegle | now | 10 minutes` (cron realnie zaplanowany i aktywny). Kod retencji: zakup.php:535 `$retencja = gmdate(...) - 90*DAY_IN_SECONDS` + zakup.php:537-538 `DELETE FROM wp_sklepag_logowania WHERE czas < %s` i `DELETE FROM wp_sklepag_zdarzenia WHERE czas < %s` — user_agent/IP w dzienniku logowań kasowane po 90 dniach w TYM SAMYM przebiegu crona co dociąganie zaległych zamówień."
+    },
+
+    { "cel": "L2-18", "werdykt": "NIE SPRAWDZIŁEM", "proba_kontrolna": "poza przebiegiem 2" },
+    { "cel": "L2-19", "werdykt": "NIE SPRAWDZIŁEM", "proba_kontrolna": "poza przebiegiem 2" },
+    { "cel": "L2-21", "werdykt": "NIE SPRAWDZIŁEM", "proba_kontrolna": "poza przebiegiem 2" }
+  ],
+
+  "znaleziska": [
+    {
+      "teza": "Nonce gościa w formularzu 'Kup' (check_admin_referer('sklepag_kup') w includes/zakup.php:66) umiera po ~24h wg standardowego ticka WordPressa i nie jest niczym odświeżany po stronie klienta — strona produktu wyrenderowana i skeszowana (pełna strona/CDN) starzej niż ~24h serwuje MARTWY nonce, więc gość klikający 'Kup' dostaje surowy ekran WordPressa 403 zamiast checkoutu, a odrzucenie NIE trafia do dziennika zdarzeń sklepu.",
+      "waga": "ŚREDNIA",
+      "typ": "BRAK",
+      "klasa": "NOWA (pokrewna BS1 ze SLEPE-PLAMY: kontrola zgodności z tekstem 'formularz ma nonce' nie sprawdza, czy da się dojść do końca ścieżki w realnych warunkach cache'owania)",
+      "dowody": [
+        { "plik": "includes/zakup.php", "linia": 66, "cytat": "check_admin_referer( 'sklepag_kup' );" },
+        { "plik": "includes/front-produkt.php", "linia": 45, "cytat": "formularz kupna gościa wymaga nonce (wg inwentarza 02-fakty-srodowiska.md, punkt wejścia zakup.php:62-66) — brak jakiegokolwiek mechanizmu odświeżania nonce po stronie klienta w assets/front.css/front-ruch.js dla tej ścieżki" }
+      ],
+      "mechanizm": "wp_nonce_tick() dzieli czas na okna po nonce_life/2 (domyślnie 12h); nonce jest ważny na bieżącym i poprzednim ticku, czyli maksymalnie ~24h. Strona produktu renderowana jest raz i może trafić do pełnostronicowego cache'u/CDN — HTML z osadzonym _wpnonce zostaje wtedy zamrożony. Gdy odwiedzający otworzy tę skeszowaną kopię po >24h i wypełni formularz, check_admin_referer() w sklepag_obsluz_kup() umiera przez wp_nonce_ays() (die 403) ZANIM dojdzie do sklepag_rate_limit(), walidacji produktu czy sklepag_zdarzenie() — czyli zanim cokolwiek zostanie zapisane w bazie.",
+      "skutek": "Właściciel traci realną sprzedaż bez żadnego śladu w panelu (dashboard/dziennik zdarzeń) — z jego perspektywy nic się nie wydarzyło, mimo że klient próbował kupić i zobaczył nieprofesjonalny błąd WordPressa. Atakujący nic tu nie zyskuje (to nie jest luka bezpieczeństwa, to utrata dostępności funkcji dla uprawnionego gościa) — stąd waga ŚREDNIA, nie KRYTYCZNA/DUŻA z siatki L2 (te opisują eksploatowalność przez atakującego, nie utracone przychody).",
+      "rodzaj_skutku": "zaobserwowany",
+      "kroki_reprodukcji": [
+        "docker exec -u www-data strona_wp_wordpress wp --path=/var/www/html eval 'echo substr(wp_hash(ceil((time()-25*3600)/(DAY_IN_SECONDS/2)).\"|sklepag_kup|0|\",\"nonce\"),-12,10);' # nonce jak sprzed 25h",
+        "curl -i -X POST http://localhost:8890/wp-admin/admin-post.php -d 'action=sklepag_kup&produkt_id=1&zgoda=1&_wpnonce=<NONCE_Z_KROKU_1>'  # -> HTTP 403",
+        "Kontrola: curl -s http://localhost:8890/sklep/produkt/chatbot-live/ | grep _wpnonce  # pobierz ŚWIEŻY nonce",
+        "curl -i -X POST http://localhost:8890/wp-admin/admin-post.php -d 'action=sklepag_kup&produkt_id=1&zgoda=1&_wpnonce=<NONCE_SWIEZY>'  # -> HTTP 502 (checkout_blad, NIE 403) — różnica dowodzi, że to nonce, nie coś innego, blokuje starą ścieżkę"
+      ],
+      "test_padajacy": "/root/praca/warsztat/_robocze/k7-runda-B/testy-audytora/L2/p2-l2-13-nonce-page-cache.sh — skrypt liczy nonce dla ticka sprzed 25h przez `wp eval`, wykonuje POST zakupu gościa i porównuje z kontrolą na świeżym noncu z aktualnej strony produktu; PADA (exit 1) gdy stary nonce daje 403, a świeży nie. Uruchomienie na obecnym kodzie (odtworzone ręcznie przed zapisem skryptu, te same komendy): stary nonce -> HTTP 403 'An error occurred.' (WP nonce-fail), świeży nonce -> HTTP 502 (checkout_blad z powodu pustego klucza Stripe na stosie — fakt środowiska). Różne kody potwierdzają, że wina leży w noncu, nie w czymś innym.",
+      "wyjscie_wykonania": "POST z noncem '1206af487c' (obliczonym dla ticka sprzed 25h): HTTP/1.1 403 Forbidden, Content-Length: 2525, tytuł 'An error occurred.' (standardowy ekran wp_nonce_ays). POST z świeżym noncem '0d4bcc03ef' pobranym GET-em ze strony produktu: HTTP/1.1 502 Bad Gateway (sklepag_zdarzenie 'checkout_blad' — 'Brak klucza Stripe w ustawieniach', zgodnie ze znanym faktem pustych kluczy na :8890)."
+    }
+  ],
+
+  "anomalie": [
+    {
+      "opis": "Budżet 30 wywołań WYKONANIA przekroczony (szacunkowo ~31-32 wywołań) z powodu dwóch ślepych zaułków przy ekstrakcji noncy z HTML: (1) ekran eksportu CSV — nonce z linku w dashboardzie nie wyciągnięty poprawnym grepem, próba zwróciła HTTP 403 (test roli 'brak leaku w CSV' oparty ostatecznie na czytaniu kolumn fputcsv + na teście webhooka, nie na realnym eksporcie); (2) strona zamówienia — pierwsza próba użyła złego parametru GET ('id' zamiast 'zamowienie'), co dało 'Zamówienie nie istnieje' i wymagało dodatkowego grepu kodu (includes/admin-zamowienie.php) żeby znaleźć właściwą nazwę parametru.",
+      "powod": "Narzędzie testowe (mój curl/grep) się myliło, nie produkt — parametr GET faktycznie nazywa się 'zamowienie', a nonce eksportu CSV faktycznie jest w HTML dashboardu, tylko mój regex go nie złapał za pierwszym razem.",
+      "cel": "L2-15, L2-16"
+    },
+    {
+      "opis": "Test webhooka ze złym podpisem (użyty do sprawdzenia L2-15) dopisał do wp_sklepag_zdarzenia realny wiersz 'webhook_zly_podpis | odrzucono (ip 172.21.0.1)' (id=1443) PRZED wykonaniem migawki dla L2-16, więc restore L2-16 go NIE usunął — ten wiersz zostaje w bazie stosu warsztatowego jako trwały artefakt mojego testu.",
+      "powod": "Kolejność: test L2-15 (webhook) wykonany przed migawką L2-16, więc migawka 'przed' już go zawierała; to nieszkodliwy wiersz dziennika (opis nie zawiera żadnego sekretu ani danych osobowych), ale zgłaszam dla przejrzystości, bo inny audytor patrzący na wp_sklepag_zdarzenia zobaczy ten wpis.",
+      "cel": "L2-15"
+    },
+    {
+      "opis": "Przy okazji szukania zamówienia z opinią do testu L2-16 natrafiłam na wiersze w wp_sklepag_opinie z zamowienie_id (9900917, 9900919, 9900923, 9900925, 9900926, 9900927), których NIE MA w wp_sklepag_zamowienia — opinie sieroty bez zamówienia.",
+      "powod": "To wygląda na kontrakt INNER JOIN z celu L4-11 ('opinia bez zamówienia → moderacja odmawia') — poza moim przebiegiem/soczewką, ale zgłaszam jako możliwie istotne dla L1/L4, bo mogą to być dane testowe innego audytora sprzed rundy albo realny brak integralności referencyjnej.",
+      "cel": "poza L2 — sygnał dla L1/L4"
+    },
+    {
+      "opis": "Cele L2-01, 02, 03, 04, 05, 06, 07, 08, 09, 10, 11, 12, 18, 19, 21 nie zostały sprawdzone w tym przebiegu.",
+      "powod": "Koordynatorka zawęziła przebieg 2 do L2-13, 14, 15, 16, 17, 20, 22 (DOPISEK-KOORDYNATORKI-B.md, PRIORYTETY CELÓW) — pozostałe cele bierze przebieg 1.",
+      "cel": "L2-01…L2-12, L2-18, L2-19, L2-21"
+    },
+    {
+      "opis": "L2-16: składnik 'dziennik' celu (anonimizacja obejmująca dziennik logowań) nie ma odpowiednika w modelu danych produktu — tabela wp_sklepag_logowania nie ma kolumny łączącej wiersz z zamówieniem/kupującym (buyerzy nie mają kont WP, MUST NOT PLAN-PROJEKTU §3), więc nie istnieje mechanizm DO wykonania i nie mógł zostać przetestowany wykonaniem w sensie 'ten sam kupujący, ten sam wiersz w dzienniku'.",
+      "powod": "Strukturalne ograniczenie modelu danych, nie luka w kodzie anonimizacji — potwierdzone czytaniem CREATE TABLE (aktywacja.php) i logiki logowania (logowania.php).",
+      "cel": "L2-16"
+    }
+  ],
+
+  "pytania_do_zamawiajacego": [
+    "L2-16 w mapie polowania wymienia 'dziennik (IP)' jako jeden z czterech obszarów objętych anonimizacją — czy intencja jest inna niż to, co znalazłam (dziennik logowań admina, niepowiązany z zamówieniami)? Może chodziło o coś, czego jeszcze nie ma w schemacie (np. IP kupującego zapisywane gdzieś indziej), a nie o tabelę wp_sklepag_logowania."
+  ],
+
+  "odrzucone_wlasne": [
+    "Rozważałam zgłoszenie braku rate-limitu na samym formularzu /wp-login.php ZANIM zadziała hook sklepag (np. przez XML-RPC albo REST /wp-json/wp/v2/users) jako osobne znalezisko — odrzucone: to jest ochrona na poziomie rdzenia WP/serwera (K8), nie kodu wtyczki, i D26 wprost zrzeka się ochrony przed atakiem z wielu IP na poziomie wtyczki."
+  ],
+
+  "czego_nie_bylo_na_mojej_liscie": [
+    "Maskowanie sekretu W POLU FORMULARZA Ustawień: sprawdziłam, że klucz Stripe nie wycieka do logów/CSV/mail_tresc/eksportu (przydzielony zakres L2-15), ale NIE sprawdziłam, czy pole <input> w ekranie Ustawień pokazuje pełną wartość sekretu w atrybucie value w źródle HTML (widoczne każdemu z dostępem do przeglądarki/network administratora, albo w cache'u przeglądarki/proxy pośredniczącego) — to osobna kategoria od 'logi/CSV/eksport' z celu L2-15 i nie jest nazwana wprost nigdzie w mapie polowania L2."
+  ],
+
+  "czego_nie_obejrzalem": [
+    "includes/pobieranie.php (brama pobrań — poza przebiegiem 2, właściciel L3/L2-przebieg1)",
+    "includes/opinie.php front-end render i formularz GET/POST /_ocen (L2-04, poza przebiegiem)",
+    "includes/admin-opinie.php (moderacja, poza przebiegiem)",
+    "includes/admin-produkty.php, class-sklepag-lista-produktow.php (poza przebiegiem)",
+    "includes/admin.php (rejestracja menu — cytowana z materiału 02, nie otworzona linia po linii)",
+    "includes/front-produkt.php w całości (tylko fragment przez pobrany HTML strony produktu)",
+    ".github/workflows/*.yml (L2-21, poza przebiegiem)",
+    "class-sklepag-lista-logowan.php, class-sklepag-lista-zdarzen.php (renderowanie tabel panelu, poza przebiegiem — L2-11)"
+  ],
+
+  "wywolania_narzedzi": 32
+}

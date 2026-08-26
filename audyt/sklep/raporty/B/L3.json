@@ -1,0 +1,118 @@
+{
+  "soczewka": "L3",
+  "runda": "B",
+  "commit_head": "5d3dcf9f0d99dedc1fe201c3e318f46d6f35ba5d",
+  "werdykty": [
+    { "cel": "L3-01", "werdykt": "SPEŁNIONE", "plik": "includes/zakup.php", "linia": 251,
+      "dowod": "Webhook wysłany 2x sekwencyjnie (cs_test_l3_dbl) i 2x PRAWDZIWIE równolegle (cs_test_l3_race, curl w tle): oba razy dokładnie 1 wiersz w wp_sklepag_zamowienia, dokładnie 1 mail w Mailpit (search count=1). Przy race: zwycięzca HTTP 200 {ok:true}, przegrany HTTP 500 {ok:false}, status końcowy mail_wyslany." },
+    { "cel": "L3-02", "werdykt": "NIE DA SIĘ SPRAWDZIĆ", "plik": "includes/zakup.php", "linia": 465,
+      "dowod": "Reconciliation (sklepag_dociagnij_zalegle) woła najpierw sklepag_stripe_pobierz_sesje(), które z pustym kluczem Stripe (fakt środowiska :8890) zwraca WP_Error natychmiast — reconciliation NIGDY nie dochodzi do sklepag_domknij_zakup, więc prawdziwej kolizji webhook‖cron nie da się na tym stosie wymusić. Sam mechanizm CAS współdzielony przez oba silniki (D24) sprawdzony pośrednio przez test L3-01 (2 wywołania tej samej funkcji naraz na tej samej sesji = bezpieczne)." },
+    { "cel": "L3-03", "werdykt": "SPEŁNIONE", "plik": "includes/zakup.php", "linia": 281,
+      "dowod": "Wstrzyknięto warunkowy die() tuż przed sekcją '4) Token pobrania' (linia 319) TYLKO dla sesji testowej. Webhook padł w trakcie (status->mail_w_toku, token_pobrania puste). Retry natychmiastowy (<5 min): HTTP 500 {ok:false}, stan bez zmian (poprawnie odrzucony — brak podwójnego maila). Po cofnięciu zmieniono o 6 min (symulacja stale-claim): retry -> HTTP 200 {ok:true}, status mail_wyslany, dokładnie 1 mail w Mailpit." },
+    { "cel": "L3-04", "werdykt": "SPEŁNIONE INACZEJ", "plik": "includes/zakup.php", "linia": 500,
+      "jak_czlowiek_tego_uzywa": "Administrator nie widzi różnicy między webhookiem a cronem — oba silniki to TA SAMA funkcja sklepag_domknij_zakup (D24); podniesienie mail_w_toku/mail_blad zademonstrowane w L3-03 przez ponowne wywołanie webhooka po upływie stale-claim, co jest kodowo identyczne z tym, co robi sklepag_dociagnij_zalegle (linie 507-526) po pobraniu sesji ze Stripe.",
+      "dowod": "Kod: pętla 'niedomkniete' (linie 506-526) filtruje status IN ('oplacone','mail_w_toku','mail_blad') AND mail_proby<3 AND zmieniono<granica(2 min), i woła DOKŁADNIE tę samą sklepag_domknij_zakup() co webhook — potwierdzone działaniem w L3-03." },
+    { "cel": "L3-05", "werdykt": "SPEŁNIONE", "plik": "includes/admin-zamowienie.php", "linia": 27,
+      "jak_czlowiek_tego_uzywa": "Administrator klika 'Wyślij ponownie' w widoku zamówienia; stary link z poprzedniego maila przestaje działać, nowy działa — ALE gdy nowa wysyłka po cichu zawiedzie, stary też już nie działa (patrz znalezisko ZN-1).",
+      "dowod": "Test automatyczny (test-l3-resend-utrata-linku.sh): resend z sukcesem -> stary token 403, nowy 200 (potwierdzone przez HEAD/GET na sesji cs_test_l3_int po pierwszym udanym domknięciu). Resend z symulowaną awarią wp_mail -> stary token TEŻ 403, a nowy nigdy nie dotarł -> ZN-1." },
+    { "cel": "L3-06", "werdykt": "SPEŁNIONE", "plik": "includes/pobieranie.php", "linia": 64,
+      "dowod": "pobrania_uzyte ustawione na 9/10, 2 GET-y wysłane PRAWDZIWIE równolegle (curl & / curl & / wait): A=HTTP 200, B=HTTP 410, licznik końcowy dokładnie 10/10 (brak przekroczenia limitu)." },
+    { "cel": "L3-07", "werdykt": "SPEŁNIONE", "plik": "includes/pobieranie.php", "linia": 55,
+      "dowod": "HEAD na ważny link: HTTP 200 z poprawnymi nagłówkami (Content-Length, Content-Type), pobrania_uzyte pozostało 0. Kolejny GET: HTTP 200 z plikiem, pobrania_uzyte -> 1." },
+    { "cel": "L3-08", "werdykt": "SPEŁNIONE", "plik": "includes/pobieranie.php", "linia": 41,
+      "dowod": "Zamówienie testowe z link_wygasa = NOW()-1h -> GET zwrócił HTTP 410 Gone z komunikatem 'Link pobrania wygasł'." },
+    { "cel": "L3-09", "werdykt": "SPEŁNIONE INACZEJ", "plik": "includes/stripe.php", "linia": 51,
+      "dowod": "Realnego timeoutu sieciowego do api.stripe.com nie dało się bezpiecznie wymusić na współdzielonym stosie bez ingerencji w firewall/DNS (poza zakresem dozwolonych operacji z DOPISEK-u). Kod (linie 51-63) traktuje is_wp_error() [obejmuje timeout WP_HTTP] identycznie jak każdy HTTP>=400 — jedna gałąź, jeden komunikat. Zademonstrowano na REALNYM, zawsze-występującym na tym stosie błędzie tej samej klasy (pusty klucz -> WP_Error): POST /admin-post.php?action=sklepag_kup -> HTTP 502 'Nie udało się rozpocząć płatności. Spróbuj ponownie za chwilę.', zdarzenie 'checkout_blad' zapisane (id 1242 i kolejne, opis 'Brak klucza Stripe w ustawieniach.')." },
+    { "cel": "L3-10", "werdykt": "SPEŁNIONE INACZEJ", "plik": "includes/zakup.php", "linia": 252,
+      "dowod": "Główny silnik domknięcia (sklepag_domknij_zakup) sprawdza wynik KAŻDEGO kroku przez odczyt stanu po operacji (CAS na wpdb->query, SELECT po UPDATE) — potwierdzone działaniem w L3-01/03/06. WYJĄTEK: resend (admin-zamowienie.php:73-84) zapisuje token BEZWARUNKOWO przed sprawdzeniem wyniku wysyłki -> ZN-1." },
+    { "cel": "L3-11", "werdykt": "SPEŁNIONE", "plik": "includes/admin-dashboard.php", "linia": 197,
+      "dowod": "Kod: self-heal przy wejściu na dashboard woła sklepag_dociagnij_zalegle(8) (linia 197), ręczny przycisk 'Dociągnij zaległe teraz' woła sklepag_dociagnij_zalegle(15) (linia 213); domknij_zalegle sprawdza $po_budzecie() na starcie KAŻDEJ iteracji obu pętli (zakup.php:470-486, 514-517) i przerywa, resztę zostawiając cronowi." },
+    { "cel": "L3-12", "werdykt": "SPEŁNIONE", "plik": "includes/zakup.php", "linia": 260,
+      "dowod": "Cena produktu #1 podniesiona z 14900 na 99999 na żywo -> SELECT produkt_cena_kupiona z istniejącego zamówienia (utworzonego PRZED zmianą) nadal 14900 (snapshot nietknięty). Cena przywrócona natychmiast po teście." },
+    { "cel": "L3-13", "werdykt": "SPEŁNIONE", "plik": "includes/zakup.php", "linia": 86,
+      "dowod": "Produkt #1 tymczasowo aktywny=0 -> POST sklepag_kup zwrócił HTTP 404 'Produkt niedostępny'. Produkt przywrócony (aktywny=1) natychmiast po teście." },
+    { "cel": "L3-14", "werdykt": "NIE DA SIĘ SPRAWDZIĆ", "plik": "testy/e2e/przelot2.js", "linia": 27,
+      "dowod": "Skrypt wymaga prawdziwego przekierowania na checkout.stripe.com (odczytuje 'location' z odpowiedzi na admin-post.php?action=sklepag_kup) — na :8890 klucz Stripe jest pusty (fakt z 02-fakty-srodowiska.md), więc sklepag_kup kończy się HTTP 502 PRZED wygenerowaniem jakiejkolwiek sesji Stripe. Uruchomienie potwierdziłoby tylko znany fakt środowiska, nie zachowanie kodu." },
+    { "cel": "L3-15", "werdykt": "SPEŁNIONE", "plik": "includes/stripe.php", "linia": 58,
+      "dowod": "Jedna, jednolita gałąź `if ($kod>=400 || !is_array($dane))` (linia 58) obsługuje 401/403/429/5xx identycznie. Żywy test: pusty klucz -> kupujący widzi HTTP 502 z czytelnym komunikatem PL, właściciel ma wpis w dzienniku (typ checkout_blad, opis z treścią błędu Stripe)." },
+    { "cel": "L3-16", "werdykt": "SPEŁNIONE", "plik": "includes/zakup.php", "linia": 101,
+      "dowod": "Pusty/zły klucz nie ginie po cichu: sklepag_obsluz_kup (linia 101-104) loguje sklepag_zdarzenie('checkout_blad', ...) I zwraca wp_die z kodem 502 widocznym dla kupującego — zweryfikowane żywym żądaniem (patrz L3-09/15)." },
+    { "cel": "L3-17", "werdykt": "SPEŁNIONE", "plik": "includes/stripe.php", "linia": 122,
+      "dowod": "Payload podpisany sekretem A zaakceptowany (HTTP 200) gdy opcja=sekret A. Po rotacji opcji na sekret B, TEN SAM podpis (nadal liczony sekretem A) odrzucony: HTTP 400 {\"blad\":\"zly podpis\"}." },
+    { "cel": "L3-18", "werdykt": "SPEŁNIONE", "plik": "includes/zakup.php", "linia": 183,
+      "dowod": "Webhook checkout.session.completed z payment_status=unpaid (symulacja BLIK w toku) -> HTTP 200 {ok:true}, ZERO wierszy w wp_sklepag_zamowienia dla tej sesji, zdarzenie 'webhook_unpaid' zapisane z opisem '... — czekamy na async'." },
+    { "cel": "L3-19", "werdykt": "BRAK", "plik": "includes/zakup.php", "linia": 197,
+      "proba_kontrolna": "grep -rniE \"refund|dispute\" --include=*.php includes/ (poza tekstami marketingowymi front-produkt.php o gwarancji) -> 0 wyników. Webhook obsługuje wyłącznie 4 typy zdarzeń (linie 183,192); każdy inny typ, w tym charge.refunded/charge.dispute.created, spada do domyślnego `return ... 200 ok:true` (linia 197) bez żadnego zapisu. Test na ŻYWO (test-l3-brak-obslugi-zwrotu.sh) na realnym istniejącym zamówieniu #1: po webhooku charge.refunded status bez zmian (mail_wyslany), liczba zdarzeń bez zmian (4/4), HTTP 200 {ok:true}." }
+  ],
+  "znaleziska": [
+    {
+      "teza": "sklepag_obsluz_resend() (includes/admin-zamowienie.php:73-84) nadpisuje token_pobrania i link_wygasa PRZED sprawdzeniem wyniku sklepag_wyslij_mail_sklepu() — gdy nowa wysyłka zawiedzie, stary działający link ginie razem z nią.",
+      "waga": "DUŻA",
+      "typ": "USTERKA",
+      "klasa": "dowód skutku — zapis bezwarunkowy względem powodzenia (algorytm A)",
+      "dowody": [
+        { "plik": "includes/admin-zamowienie.php", "linia": 73, "cytat": "$wpdb->query(\n\t\t$wpdb->prepare(\n\t\t\t\"UPDATE {$pz} SET token_pobrania=%s, link_wygasa=%s, mail_tresc=%s, zmieniono=%s WHERE id=%d\"," },
+        { "plik": "includes/admin-zamowienie.php", "linia": 84, "cytat": "$wyslano = sklepag_wyslij_mail_sklepu( $zam->email_kupujacego, 'Twój zakup: ' . $zam->produkt_nazwa_kupiona . ' — potwierdzenie i pobranie', $tresc );" }
+      ],
+      "mechanizm": "Resend generuje świeży token i ZAPISUJE go w bazie (linia 73-82) zanim w ogóle wywoła wp_mail (linia 84). Jeśli wp_mail zwróci false, kod poprawnie ustawia status=mail_blad (linia 90) i loguje zdarzenie — ale token_pobrania JUŻ jest nadpisany hashem tokenu, który nigdy nie dotarł do kupującego. Stary token (z poprzedniego, faktycznie dostarczonego maila) przestaje pasować do hasha w bazie -> 403.",
+      "skutek": "Kupujący, który miał działający link pobrania (bo poprzedni mail doszedł), po nieudanej próbie ponownej wysyłki traci DOSTĘP CAŁKOWICIE: stary link 403, nowego nigdy nie dostał. Właściciel widzi komunikat błędu w panelu, ale nic nie mówi mu wprost, że przy okazji zabił działający wcześniej link.",
+      "rodzaj_skutku": "zaobserwowany",
+      "kroki_reprodukcji": [
+        "Mieć zamówienie ze statusem mail_wyslany i działającym linkiem pobrania (potwierdzić GET/HEAD -> 200).",
+        "Zalogować się jako administrator, wejść na admin.php?page=sklepag-zamowienie&zamowienie=<id>.",
+        "Tymczasowo wstawić `return false;` na początek sklepag_wyslij_mail_sklepu() w includes/zakup.php (docker cp+sed+docker cp).",
+        "Kliknąć/wywołać 'Wyślij ponownie' (admin-post.php?action=sklepag_resend&zamowienie=<id>&_wpnonce=...).",
+        "Przywrócić oryginalny plik zakup.php.",
+        "Sprawdzić: status zamówienia = mail_blad; stary (wcześniej działający) link pobrania -> HTTP 403."
+      ],
+      "test_padajacy": "/root/praca/warsztat/_robocze/k7-runda-B/testy-audytora/L3/test-l3-resend-utrata-linku.sh — uruchomiony na commit_head 5d3dcf9f0d99dedc1fe201c3e318f46d6f35ba5d, PADA (exit 1). Surowe wyjście: 'webhook poczatkowy: HTTP 200' / 'stary link PRZED resendem: HTTP 200' / 'opcache zresetowany' / 'status zamowienia po nieudanym resendzie: mail_blad' / 'stary link PO nieudanym resendzie: HTTP 403' / 'FAIL: resend nadpisal token PRZED potwierdzeniem dostarczenia maila...'",
+      "wyjscie_wykonania": "webhook poczatkowy: HTTP 200\nstary link PRZED resendem: HTTP 200 (oczekiwane 200)\nopcache zresetowany\nwywoluje resend (mail zasymulowany jako niedostarczony)...\nstatus zamowienia po nieudanym resendzie: mail_blad\nstary link PO nieudanym resendzie: HTTP 403 (PASS gdy 200, FAIL gdy 403)\nFAIL: resend nadpisal token PRZED potwierdzeniem dostarczenia maila —\nkupujący stracił dostęp: stary link martwy (403), nowy mail nigdy nie dotarł.\nMiejsce: includes/admin-zamowienie.php:73-84 (UPDATE token_pobrania przed sprawdzeniem $wyslano).\nEXIT KOD: 1"
+    },
+    {
+      "teza": "sklepag_webhook() (includes/zakup.php:167-198) nie obsługuje ŻADNEGO zdarzenia Stripe dotyczącego zwrotu/sporu (charge.refunded, charge.dispute.created) — po zwrocie pieniędzy sklep nic nie zapisuje i niczego nie zmienia.",
+      "waga": "DUŻA",
+      "typ": "BRAK",
+      "klasa": "dowód skutku — brak jakiegokolwiek śladu operacji finansowej (algorytm C, cel L3-19)",
+      "dowody": [
+        { "plik": "includes/zakup.php", "linia": 183, "cytat": "if ( in_array( $typ, array( 'checkout.session.completed', 'checkout.session.async_payment_succeeded' ), true ) ) {" },
+        { "plik": "includes/zakup.php", "linia": 192, "cytat": "if ( 'checkout.session.async_payment_failed' === $typ || 'checkout.session.expired' === $typ ) {" },
+        { "plik": "includes/zakup.php", "linia": 197, "cytat": "return new WP_REST_Response( array( 'ok' => true ), 200 );" }
+      ],
+      "mechanizm": "Handler webhooka rozpoznaje wyłącznie 4 typy zdarzeń (linie 183 i 192). Każdy inny typ — w tym charge.refunded i charge.dispute.created, które Stripe wysyła po ręcznym zwrocie w Dashboardzie — trafia od razu do domyślnego `return ... 200` na końcu funkcji, bez wywołania jakiejkolwiek funkcji zapisującej. D31 zakłada zwrot 'bez pytań' realizowany ręcznie przez właściciela w Stripe, ale nic w kodzie nie odbiera powiadomienia o tym fakcie.",
+      "skutek": "Po zwrocie pieniędzy: (1) status zamówienia zostaje 'mail_wyslany' (jakby nic się nie stało), (2) link pobrania i pozostały limit pobrań DALEJ działają — kupujący, któremu oddano pieniądze, nadal może pobierać produkt, (3) dziennik zdarzeń zamówienia nie ma ŻADNEGO wpisu o zwrocie, (4) karta KPI 'Przychód' na dashboardzie nadal liczy tę sprzedaż jako przychód mimo zwróconych pieniędzy — właściciel nie ma z panelu żadnego sygnału, że coś wymaga jego uwagi.",
+      "rodzaj_skutku": "zaobserwowany",
+      "kroki_reprodukcji": [
+        "Wziąć dowolne istniejące zamówienie o statusie mail_wyslany (np. #1).",
+        "Wysłać POST na /wp-json/sklepag/v1/webhook z poprawnym podpisem (ustawionym testowo sekretem) i body {\"type\":\"charge.refunded\",...}.",
+        "Sprawdzić: status zamówienia bez zmian, COUNT(*) z wp_sklepag_zdarzenia dla tego zamówienia bez zmian, odpowiedź HTTP 200 {\"ok\":true}."
+      ],
+      "test_padajacy": "/root/praca/warsztat/_robocze/k7-runda-B/testy-audytora/L3/test-l3-brak-obslugi-zwrotu.sh — uruchomiony na commit_head 5d3dcf9f0d99dedc1fe201c3e318f46d6f35ba5d na realnym zamówieniu #1 (bez modyfikacji danych), PADA (exit 1).",
+      "wyjscie_wykonania": "zamówienie testowe (istniejące, NIE zmieniamy poza tym testem): #1 / cs_test_a1QbBj9CAtd4sQ6C0n72zEoddMGprBg1X8NJkRDRcP2uIjgecZ9GwsVpO2\nstatus PRZED: mail_wyslany   pobrania_uzyte PRZED: 1\nwysylam webhook charge.refunded dla tego zamowienia...\nHTTP 200\n{\"ok\":true}\nstatus PO: mail_wyslany   zdarzeń PRZED/PO: 4/4\ngrep w includes/ (poza tekstami marketingowymi front-produkt.php): 0 wynikow — brak jakiejkolwiek obslugi refund/dispute\nFAIL: webhook zwrotu nie zostawił ŻADNEGO śladu (status i dziennik bez zmian).\nZamówienie nadal wygląda jak opłacone: link pobrania nadal działa, KPI dashboardu nadal liczy przychód.\nEXIT KOD: 1"
+    }
+  ],
+  "anomalie": [
+    { "opis": "L3-02 (webhook‖cron jednocześnie na tej samej sesji) nie dało się wymusić dosłownie.", "powod": "Stripe klucz pusty na :8890 -> sklepag_stripe_pobierz_sesje() zwraca WP_Error natychmiast, reconciliation nigdy nie dochodzi do sklepag_domknij_zakup. Zastępczo zweryfikowano ten sam współdzielony silnik CAS przez PRAWDZIWIE równoległe wywołanie webhooka x2 (L3-01/L3-06 pattern).", "cel": "L3-02" },
+    { "opis": "L3-14 (przelot2.js x2, kryteria #2-#5) nie uruchomiony.", "powod": "Skrypt wymaga realnego przekierowania do checkout.stripe.com, niemożliwego przy pustym kluczu Stripe (fakt środowiska z 02-fakty-srodowiska.md) — sklepag_kup kończy się HTTP 502 zanim powstanie jakakolwiek sesja Stripe.", "cel": "L3-14" },
+    { "opis": "L3-09 (Stripe 401/403/429/5xx/timeout osobno) zweryfikowany tylko pośrednio.", "powod": "Bez realnych kluczy Stripe i bez ingerencji w sieć/firewall (poza dozwolonym zakresem operacji) nie da się wymusić KONKRETNIE 401 vs 429 vs timeout — kod i tak obsługuje je jedną, niewarunkową gałęzią (stripe.php:58), co zweryfikowano na REALNYM błędzie tej samej klasy (pusty klucz).", "cel": "L3-09" },
+    { "opis": "OPcache (opcache.validate_timestamps=On, revalidate_freq=2s) potrafił przez chwilę serwować STARY kod po podmianie pliku przez docker cp.", "powod": "Pierwsze uruchomienie test-l3-resend-utrata-linku.sh dało fałszywie 'mail_wyslany' zamiast 'mail_blad', mimo poprawnie podmienionego pliku — naprawione dodaniem opcache_reset() + sleep 3 w skrypcie. Warto, żeby inni audytorzy modyfikujący pliki w tym kontenerze wiedzieli o tym opóźnieniu.", "cel": "L3-03" },
+    { "opis": "W /tmp/k7b-L3/ zostały robocze artefakty z sesją administratora (ck-admin.txt — ciasteczko zalogowanego audytor-admin) oraz zrzuty HTML odpowiedzi.", "powod": "Zgodnie z DOPISEK-KOORDYNATORKI-B.md artefakty z poświadczeniami trzymane wyłącznie w /tmp, nie w repo/raporcie; do raportu i katalogu testów trafiły tylko skrypty. Wartości sekretów/tokenów w tym raporcie są [ZREDAGOWANE] albo dotyczą wyłącznie danych testowych wygenerowanych przeze mnie (nie prawdziwych kluczy).", "cel": "" },
+    { "opis": "W wp_sklepag_zdarzenia zostały 2 dodatkowe wpisy typu checkout_blad (zamowienie_id=NULL) i 1 webhook_zly_podpis z testów L3-09/L3-17.", "powod": "Te zdarzenia mają zamowienie_id=NULL (nie są powiązane z żadnym konkretnym zamówieniem), więc nie dało się ich wyczyścić selektywnie bez ryzyka skasowania wpisów innych audytorów o tym samym typie. Są to PRAWDZIWE, poprawne logi (dokładnie to, co system miał zrobić w tej sytuacji) — nie dane fabrykowane.", "cel": "" }
+  ],
+  "pytania_do_zamawiajacego": [
+    "D31 mówi 'gwarancja 14 dni bez mechanizmu w kodzie' i każe L3-19 sprawdzić 'co się dzieje po zwrocie' — czy brak JAKIEJKOLWIEK obsługi webhooka charge.refunded/charge.dispute.created (ZN-2) mieści się w tej świadomej decyzji, czy jest realną luką do naprawy przed oddaniem?"
+  ],
+  "odrzucone_wlasne": [
+    "Hipoteza 'HEAD zużywa rate-limiter (kup/pobierz 30/min)' — sklepag_rate_limit('pobierz',30) jest wołany PRZED rozgałęzieniem na HEAD (pobieranie.php:16), więc HEAD faktycznie konsumuje okno rate-limitera. Odrzucone jako osobne znalezisko: cel L3-07 i D4 dotyczą wyłącznie licznika pobrań (pobrania_limit), nie ogólnego rate-limitera przeciw-spamowego, który celowo chroni WSZYSTKIE metody jednakowo (golden #7: 'limit mierzy wymiar, który robi szkodę') — to nie jest niespójność, tylko dwa różne liczniki o różnym celu."
+  ],
+  "czego_nie_bylo_na_mojej_liscie": [
+    "Zachowanie idempotency-key (60 s transient) przy podwójnym kliknięciu 'Kup' z DWÓCH RÓŻNYCH kart/urządzeń tego samego kupującego w tym samym oknie — kod używa transientu WordPressa (pamięć/baza opcji, nie tabeli atomowej jak rate-limiter), co przy dwóch równoległych żądaniach może dać DWIE sesje Stripe dla tego samego zamiaru zakupu (dublet po stronie Stripe, nie po stronie naszej bazy) — poza zakresem promptu (dotyczy fazy PRZED webhookiem), ale warto to sprawdzić osobno.",
+    "Zachowanie przy dwóch RÓWNOCZESNYCH kliknięciach 'Dociągnij zaległe teraz' przez dwóch administratorów naraz (Ł-10 dotyczy tego ogólnie, ale nie w kontekście pieniędzy/dowodu skutku specyficznie dla tej funkcji) — nie testowane w budżecie tej soczewki.",
+    "Zachowanie limitu rate-limitera (fail-open przy awarii zapisu licznika, zakup.php:54-56) w praktyce — kod jawnie komentuje to jako świadomy wybór, ale nie zweryfikowano wykonaniem, co się dzieje, gdy tabela rate_limit faktycznie nie odpowiada (np. zablokowana)."
+  ],
+  "czego_nie_obejrzalem": [
+    "includes/front-produkt.php, front-seo.php, admin.php, logowania.php, aktywacja.php, class-sklepag-lista-*.php — poza fragmentami cytowanymi z 02-fakty-srodowiska.md i grepem po 'refund/dispute'; nie są w zestawie plików L3 z 08-zestawy-plikow.md.",
+    "testy/nonce-cache-test.js (wzór równoległości wskazany w promptcie) nie uruchomiony — priorytet oddany bezpośrednim testom na stosie przez curl/SQL, które dały te same lub mocniejsze dowody (prawdziwa równoległość przez curl w tle) przy niższym koszcie budżetu.",
+    "Rzeczywiste zdarzenia Stripe 'payment_intent.*' i webhooki dotyczące metod płatności spoza checkout.session.* — kod jawnie nie subskrybuje ich wcale (potwierdzone grepem), nie badano dalej niż stwierdzenie braku."
+  ],
+  "wywolania_narzedzi": 33
+}

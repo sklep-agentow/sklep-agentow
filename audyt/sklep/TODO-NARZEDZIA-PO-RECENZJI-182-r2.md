@@ -17,3 +17,10 @@ naprawiamy w następnym PR-ze (`k7/material`), który dostaje własną recenzję
 **Zamknięte 26.08** (gałąź `k7/material`, jeden PR). Dowody: `k7-koniec-proba-kontrolna.sh` 20/20 EXIT 0 ·
 `dokumentacja-zgodnosc-sklep-proba-kontrolna.sh` 10/10 przypadków (12 rozjazdów) EXIT 0 · `stos-proba-kontrolna.sh` EXIT 0 · `dokumentacja-zgodnosc-sklep.sh`
 0 rozjazdów. W1 allowlista w `recenzent.yml` idzie OSOBNYM PR-em (PR dotykający workflow nie dostaje auto-recenzji — koordynatorka czyta).
+
+## Po rundzie B (26.08)
+- `SCHEMAT-RAPORTU.json` + `k7-koniec.sh` warunek 8: werdykt narzędziowy (`SPEŁNIONE`/`ZGODNE` z `dowod` = komenda, bez `plik:linia`) — dziś 5 legalnych werdyktów B pali warunek (AN-021).
+- `k7-stos-rundy.sh` 1.0.3: `chown -R www-data` na `wp-content/{uploads,upgrade,plugins}` po `docker cp` (AN-017) + seed na życzenie (`--seed N`).
+- `slady-wewnetrzne.sh`: wzorce kodów planu `S-\d\d`, `D\d\d`, `K\d`, `kryterium( GOTOWE)? #`, `PLAN-` (SK-L5-001/B: 54 trafienia niewidoczne dla bramki).
+- DOPISEK rundy: OPcache `opcache_reset()` po `docker cp`; nonce panelu z HTML; `gitleaks` w `/tmp/bramki-narzedzia/` (AN-019, L5-13).
+

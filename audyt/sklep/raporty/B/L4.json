@@ -1,0 +1,213 @@
+{
+  "soczewka": "L4",
+  "runda": "B",
+  "commit_head": "5d3dcf9f0d99dedc1fe201c3e318f46d6f35ba5d",
+  "werdykty": [
+    {
+      "cel": "L4-01",
+      "werdykt": "NIE SPRAWDZIŁEM",
+      "dowod": "Priorytet DOPISEKu B dla L4 stawia 0.5.0 i 0.9.8 przed 0.2.0; przy budżecie 30 wywołań (już zużytym na L4-02/03/05/06/07/08/09/10/11/13/14/16) nie starczyło na trzeci pełny cykl instalacja-dane-upgrade."
+    },
+    {
+      "cel": "L4-02",
+      "werdykt": "SPEŁNIONE",
+      "plik": "includes/aktywacja.php",
+      "linia": 170,
+      "dowod": "Zainstalowano 0.5.0 (schemat 4, 6 tabel, bez `opinie`), wstawiono produkt+zamówienie SQL-em, potem `wp plugin install sklep-agentow-0.9.13.zip --force --activate`: `plugin get --field=version` -> 0.9.13, `option get sklepag_wersja_schematu` -> 5, `SHOW TABLES LIKE 'wp_sklepag%'` pokazuje 7 tabel (w tym nową `opinie`), `SELECT ... FROM wp_sklepag_produkty/zamowienia` zwraca ten sam wiersz (Produkt V050 / kupiec-v050@seed.local / status oplacone) bez zmian, cron `sklepag_dociagnij_zalegle` obecny po upgrade."
+    },
+    {
+      "cel": "L4-03",
+      "werdykt": "SPEŁNIONE",
+      "plik": "includes/aktywacja.php",
+      "linia": 162,
+      "dowod": "Zainstalowano 0.9.8 (schemat 5, 7 tabel), wstawiono produkt+zamówienie, upgrade do 0.9.13: wersja 0.9.13, schemat pozostał 5 (dbDelta idempotentne, brak migracji bo już schemat 5), `DESCRIBE wp_sklepag_opinie` i `DESCRIBE wp_sklepag_zamowienia` identyczne przed/po (0 różnic kolumn), dane (Produkt V098 / kupiec-v098@seed.local / oplacone) zachowane bez zmian."
+    },
+    {
+      "cel": "L4-04",
+      "werdykt": "BRAK",
+      "proba_kontrolna": "`grep -n -i \"DISABLE_WP_CRON|cron systemow|kopia zapas|rollback|cofni\" readme.txt DOKUMENTACJA-TECHNICZNA.md dokumentacja/INSTRUKCJA-INSTALACJI.md` -> 0 trafień. Próba kontrolna (grep -c -i 'stripe|krok' na tych samych plikach -> 20 / 10 / 27 trafień) potwierdza, że narzędzie działa i pliki nie są puste — to prawdziwe zero, nie błąd szukania. Kod (`includes/aktywacja.php`) też nie definiuje żadnej ścieżki rollbacku (dbDelta jest jednokierunkowe, brak funkcji `sklepag_rollback*`/`sklepag_migruj_w_dol*` — grep na tym samym repo zero trafień)."
+    },
+    {
+      "cel": "L4-05",
+      "werdykt": "SPEŁNIONE",
+      "plik": "uninstall.php",
+      "linia": 16,
+      "dowod": "Ścieżka A (przełącznik sklepag_usun_dane_przy_odinstalowaniu domyślnie nieustawiony): ustawiono sklepag_stripe_webhook_sekret='whsec_[ZREDAGOWANE]', `wp plugin deactivate && wp plugin uninstall`. PO: `option list --search='*sklepag*'` nie zawiera już sekretu (był, zniknął), 7 tabel wp_sklepag_* nadal istnieje, 24 zamówienia nadal w bazie (`SELECT COUNT(*) FROM wp_sklepag_zamowienia` -> 24), 6 stron nadal istnieje, `cron event list` nie zawiera już `sklepag_dociagnij_zalegle` (był, zniknął)."
+    },
+    {
+      "cel": "L4-06",
+      "werdykt": "ROZJAZD",
+      "dowod": "Ścieżka B (sklepag_usun_dane_przy_odinstalowaniu=1): PO uninstall `SHOW TABLES LIKE 'wp_sklepag%'` = puste (0 wierszy), `option list --search='*sklepag*'` = puste, 4 strony wtyczki skasowane. Diff NIE jest jednak pusty: (1) `SELECT option_name FROM wp_options WHERE option_name LIKE '%sklepag%'` PO uninstall nadal zwraca `_transient_sklepag_idem_...` i `_transient_timeout_sklepag_idem_...` — patrz znalezisko 'transient sklepag_idem przeżywa pełne czyszczenie'; (2) katalog chroniony z plikiem produktu (`sklepag-chronione-ez6o2qJPYen1I9Sb/produkt-seed`) PRZETRWAŁ na dysku (ls -la po uninstall identyczny jak przed, te same daty modyfikacji) — patrz znalezisko 'katalog chroniony przeżywa pełne czyszczenie'."
+    },
+    {
+      "cel": "L4-07",
+      "werdykt": "SPEŁNIONE",
+      "plik": "uninstall.php",
+      "linia": 22,
+      "dowod": "`wp_clear_scheduled_hook('sklepag_dociagnij_zalegle')` wykonuje się PRZED wczesnym `return` (linia 24-26), więc cron znika w OBU ścieżkach: `cron event list` po ścieżce A i po ścieżce B nie zawiera już `sklepag_dociagnij_zalegle` (zostają tylko crony rdzenia WP: wp_version_check itp.)."
+    },
+    {
+      "cel": "L4-08",
+      "werdykt": "SPEŁNIONE",
+      "plik": "includes/aktywacja.php",
+      "linia": 154,
+      "dowod": "`plugin deactivate`: `cron event list | grep -c sklepag` -> 0. `plugin activate`: `grep -c sklepag` -> 1 (bez duplikatu). `option get sklepag_katalog_chroniony` niezmieniony przed/po cyklu. `SELECT COUNT(*) FROM wp_sklepag_produkty/zamowienia` niezmienione (1/1 w tym momencie testu) — brak utraty danych, brak duplikatu harmonogramu."
+    },
+    {
+      "cel": "L4-09",
+      "werdykt": "SPEŁNIONE",
+      "plik": "includes/zakup.php",
+      "linia": 535,
+      "dowod": "Wstawiono 2 wiersze do wp_sklepag_logowania: czas=NOW-91dni ('stary91'), czas=NOW-89dni ('mlody89'). `wp cron event run sklepag_dociagnij_zalegle` -> 'Executed'. PO: SELECT zwraca WYŁĄCZNIE 'mlody89' — 'stary91' usunięty. Próba kontrolna (wiersz 89-dniowy) potwierdza, że retencja tnie DOKŁADNIE granicę 90 dni, nie kasuje na oślep."
+    },
+    {
+      "cel": "L4-10",
+      "werdykt": "SPEŁNIONE INACZEJ",
+      "plik": "includes/aktywacja.php",
+      "linia": 141,
+      "jak_czlowiek_tego_uzywa": "Mapa właścicieli zbudowana grepem po `update_option|add_option|delete_option|set_transient|wp_schedule|wp_insert_post|mkdir|file_put_contents|CREATE TABLE` w całym `includes/`: KAŻDA opcja/tabela/cron ma dokładnie JEDNEGO pisarza-właściciela poza jednym wyjątkiem świadomie zdublowanym z zabezpieczeniem idempotencji: `sklepag_dociagnij_zalegle` jest planowany zarówno w `includes/aktywacja.php:142` (aktywacja) jak i w `sklep-agentow.php:61` (self-heal na `plugins_loaded`, chroniony `wp_next_scheduled()` — nie tworzy duplikatu, potwierdzone w L4-08). `sklepag_reconciliation_ostatnia` zapisywana z dwóch miejsc w `admin-dashboard.php` (linie 196 i 212) — to ten sam moduł (self-heal/dociągnij), nie dwa niezależne pisarze. Sprzątanie: `uninstall.php` kasuje wszystko przez jeden zbiorczy `DELETE ... LIKE 'sklepag_%'` (poza wyjątkiem opisanym w L4-06) + jawne DROP TABLE + wp_clear_scheduled_hook + delete_metadata dla `sklepag_zamowien_na_strone` (per-user meta z WP core Screen Options, jedyny zapis NIE mający jawnego `update_user_meta` w kodzie wtyczki — ustawia go WP core)."
+    },
+    {
+      "cel": "L4-11",
+      "werdykt": "ROZJAZD",
+      "plik": "includes/opinie.php",
+      "linia": 184,
+      "dowod": "Wstawiono opinię z zamowienie_id=999999 (nieistniejące). Wywołano bezpośrednio produkcyjną funkcję `sklepag_opinia_moderuj(999999_id, 'przyjmij')` przez `wp eval`. Wynik: funkcja zwróciła `true`, status opinii zmienił się na 'przyjeta' (OPUBLIKOWANA), zamiast odmowy. Patrz znalezisko 'moderacja publikuje opinię bez zamówienia'."
+    },
+    {
+      "cel": "L4-12",
+      "werdykt": "BRAK",
+      "proba_kontrolna": "Ten sam grep co L4-04 (`DISABLE_WP_CRON|cron systemow`) na readme.txt/DOKUMENTACJA-TECHNICZNA.md/dokumentacja/INSTRUKCJA-INSTALACJI.md = 0 trafień, próba kontrolna (stripe/krok) > 0 w tych samych plikach. Behawioralna część (czy `sklepag_dociagnij_zalegle` faktycznie NIE odpali się bez żadnych odwiedzin przez godziny) NIE DA SIĘ SPRAWDZIĆ w budżecie tej rundy — wymagałoby wyłączenia WP-Cron i pozostawienia stosu bez JAKIEGOKOLWIEK żądania HTTP (w tym mojego własnego `wp-cli`, które NIE wyzwala pseudo-crona jak żądanie HTTP, więc test i tak byłby pośredni). Fakt WordPressa cytowany ze źródła: developer.wordpress.org/plugins/cron/ — „WP-Cron does not run constantly as the system cron does; it is only triggered on page load.”"
+    },
+    {
+      "cel": "L4-13",
+      "werdykt": "SPEŁNIONE",
+      "plik": "includes/aktywacja.php",
+      "linia": 17,
+      "dowod": "`SHOW CREATE TABLE wp_sklepag_zamowienia` -> `ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci`, klucz UNIQUE na `stripe_session_id varchar(255)` utworzony bez błędu/ostrzeżenia o przekroczeniu limitu indeksu (MariaDB 11.8.8 ma domyślnie włączony large_prefix/DYNAMIC row format)."
+    },
+    {
+      "cel": "L4-14",
+      "werdykt": "SPEŁNIONE",
+      "dowod": "`bash narzedzia-qa/stos.sh --stos probny tabele` -> lista 7 tabel wp_sklepag_*. `bash narzedzia-qa/stos.sh --stos probny wiersze wp_sklepag_zamowienia` -> 'wierszy: 1' (zgodnie ze stanem bazy w tamtym momencie testu). Okno na tabele sklepu potwierdzone wykonaniem, nie samą lekturą."
+    },
+    {
+      "cel": "L4-15",
+      "werdykt": "NIE SPRAWDZIŁEM",
+      "dowod": "Priorytet niższy w DOPISEKu B ('L4-08,09,14,15 → reszta'); budżet 30 wywołań wyczerpany na celach wyższego priorytetu (L4-06/02/03/09/11) zanim doszłam do porównania z pełną LINIĄ-BAZOWĄ."
+    },
+    {
+      "cel": "L4-16",
+      "werdykt": "SPEŁNIONE INACZEJ",
+      "plik": "includes/aktywacja.php",
+      "linia": 131,
+      "jak_czlowiek_tego_uzywa": "3 pełne cykle `plugin install --force --activate` na WP 6.7.2 / PHP 8.1.32 (0.5.0, 0.9.8, 0.9.13×2) nie wypisały w wyjściu wp-cli żadnego PHP Warning/Notice/Deprecated związanego z migracją/aktywacją — jedyny komunikat błędu w całej sesji ('Deletion of plugin files failed') dotyczy niezwiązanej z kodem wtyczki awarii uprawnień plików kontenera (patrz anomalie). Nie uruchomiłam jednak jawnie WP_DEBUG_LOG z przechwyceniem debug.log przez cały cykl (budżet) — to częściowy dowód, nie wyczerpujące potwierdzenie 'zero notice'."
+    }
+  ],
+  "znaleziska": [
+    {
+      "teza": "Transient `sklepag_idem_*` (klucz idempotencji zakupu z includes/zakup.php:91,116) NIGDY nie jest usuwany przez uninstall.php, nawet przy pełnym czyszczeniu danych — DELETE w uninstall.php:70 dopasowuje tylko opcje zaczynające się od `sklepag_`, a WP Transients API owija nazwę prefiksem `_transient_`/`_transient_timeout_` PRZED nią.",
+      "waga": "DUŻA",
+      "typ": "USTERKA",
+      "klasa": "NOWA (wariant SCIAGA #2 — LIKE poprawnie eskejpowany, ale wzorzec dopasowania nie uwzględnia, że Transients API dokleja własny prefiks PRZED nazwą klucza)",
+      "dowody": [
+        { "plik": "uninstall.php", "linia": 70, "cytat": "$wpdb->query( $wpdb->prepare( \"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s\", $wpdb->esc_like( 'sklepag_' ) . '%' ) );" },
+        { "plik": "includes/zakup.php", "linia": 91, "cytat": "$okno = 'sklepag_idem_' . md5( sklepag_ip() . '|' . $produkt_id );" },
+        { "plik": "includes/zakup.php", "linia": 116, "cytat": "set_transient( $okno, array( 'url' => $sesja['url'] ), MINUTE_IN_SECONDS );" }
+      ],
+      "mechanizm": "set_transient('sklepag_idem_X', ...) zapisuje w wp_options DWA wiersze: '_transient_sklepag_idem_X' i '_transient_timeout_sklepag_idem_X'. Żaden z nich nie zaczyna się od 'sklepag_' (zaczyna się od '_transient_'), więc `... LIKE 'sklepag\\_%'` (LIKE z symbolem % na końcu, dopasowanie od POCZĄTKU stringa) nigdy go nie złapie — niezależnie od stanu przełącznika sklepag_usun_dane_przy_odinstalowaniu.",
+      "skutek": "Po deklarowanym przez właściciela 'pełnym usunięciu wszystkich danych' (checkbox D22) w bazie zostaje na zawsze (WP core nie ma domyślnego, zaplanowanego globalnego sprzątania wygasłych transientów) wiersz z adresem URL sesji Stripe Checkout powiązanej z hashem IP kupującego i identyfikatorem produktu. Dane utrzymują się bez wiedzy właściciela — narusza to explicit obietnicę pełnego czyszczenia z komentarza uninstall.php:1-8 ('Symetria zapis<->sprzątanie: każda rzecz zapisywana przez wtyczkę ma tu swój wiersz').",
+      "rodzaj_skutku": "zaobserwowany",
+      "kroki_reprodukcji": [
+        "docker exec -u www-data probny_wp wp --path=/var/www/html option update sklepag_usun_dane_przy_odinstalowaniu 1",
+        "docker exec -u www-data probny_wp wp --path=/var/www/html eval '$okno=\"sklepag_idem_\".md5(\"203.0.113.9|1\"); set_transient($okno, array(\"url\"=>\"https://checkout.stripe.com/test/sesja123\"), 60);'",
+        "docker exec -u www-data probny_wp wp --path=/var/www/html plugin deactivate sklep-agentow",
+        "docker exec -u www-data probny_wp wp --path=/var/www/html plugin uninstall sklep-agentow",
+        "docker exec strona_wp_db sh -c 'MYSQL_PWD=\"$MARIADB_ROOT_PASSWORD\" mariadb wp_probny -e \"SELECT option_name FROM wp_options WHERE option_name LIKE \\\"%sklepag_idem%\\\"\"'  # zwraca 2 wiersze mimo pełnego czyszczenia"
+      ],
+      "test_padajacy": "/root/praca/warsztat/_robocze/k7-runda-B/testy-audytora/L4/test-transient-idem-przezywa-uninstall.sh — komendy w skrypcie są identyczne z tymi, które faktycznie wykonałam na żywo podczas audytu (nie uruchamiałam skryptu powtórnie, żeby nie zużywać budżetu na powtórną destrukcję stosu tuż przed obowiązkowym przywróceniem). Surowe wyjście z rzeczywistego uruchomienia jest w polu wyjscie_wykonania.",
+      "wyjscie_wykonania": "ustawiony klucz: sklepag_idem_f5850929a2f70010dea75586b9b6d8d7\nPRZED uninstall: option_name = _transient_sklepag_idem_f5850929a2f70010dea75586b9b6d8d7, _transient_timeout_sklepag_idem_f5850929a2f70010dea75586b9b6d8d7\n`wp plugin uninstall sklep-agentow` -> \"Ran uninstall procedure for 'sklep-agentow' plugin. Deletion of plugin files failed\"\nPO uninstall: SELECT option_name, LENGTH(option_value) FROM wp_options WHERE option_name LIKE '%sklepag%' ->\n_transient_timeout_sklepag_idem_f5850929a2f70010dea75586b9b6d8d7\t10\n_transient_sklepag_idem_f5850929a2f70010dea75586b9b6d8d7\t65\n(SHOW TABLES LIKE 'wp_sklepag%' -> 0 wierszy w tym samym momencie — tabele i pozostałe opcje sklepag_ POPRAWNIE skasowane, TYLKO transient przeżył)"
+    },
+    {
+      "teza": "sklepag_opinia_moderuj() w includes/opinie.php:166-196 publikuje opinię, której zamówienie NIE ISTNIEJE, zamiast odmówić — INNER JOIN bez dopasowania i 'zamówienie istnieje ale nie jest zanonimizowane' dają dokładnie tę samą wartość NULL z get_var().",
+      "waga": "DUŻA",
+      "typ": "USTERKA",
+      "klasa": "NOWA",
+      "dowody": [
+        { "plik": "includes/opinie.php", "linia": 184, "cytat": "\"SELECT z.usunieto_dnia FROM {$t} o JOIN {$pz} z ON z.id = o.zamowienie_id WHERE o.id = %d\"" },
+        { "plik": "includes/opinie.php", "linia": 188, "cytat": "if ( $zanonimizowane ) { return false; }" }
+      ],
+      "mechanizm": "INNER JOIN na nieistniejące zamowienie_id zwraca ZERO wierszy -> $wpdb->get_var() zwraca NULL. Dla zamówienia ISTNIEJĄCEGO ale NIEZANONIMIZOWANEGO (usunieto_dnia IS NULL, stan normalny każdego świeżego zamówienia) get_var() też zwraca NULL. Funkcja nie rozróżnia tych dwóch przypadków — w obu $zanonimizowane jest falsy i kod PRZECHODZI do UPDATE, zamiast odmówić moderacji, gdy zamówienie referencyjne w ogóle nie istnieje.",
+      "skutek": "Opinia bez żadnego możliwego do zweryfikowania zamówienia zostaje opublikowana na stronie produktu (status='przyjeta') po kliknięciu 'przyjmij' przez administratora — łamie kontrakt 'wyłącznie prawdziwe opinie od zweryfikowanych kupujących' (D6/D32, Omnibus-opinie) w dokładnie tym scenariuszu, który mapa polowania L4-11 nazywa wprost.",
+      "rodzaj_skutku": "zaobserwowany",
+      "kroki_reprodukcji": [
+        "INSERT INTO wp_sklepag_opinie (zamowienie_id, produkt_id, imie, gwiazdki, tytul, tresc, status, token_hash, utworzono, zmieniono) VALUES (999999, 1, 'Osierocona', 5, 't', 'tresc', 'oczekuje', 'h', NOW(), NOW());  -- 999999 NIE istnieje w wp_sklepag_zamowienia",
+        "docker exec -u www-data probny_wp wp --path=/var/www/html eval '$id=(int)$GLOBALS[\"wpdb\"]->get_var(\"SELECT id FROM wp_sklepag_opinie WHERE zamowienie_id=999999\"); var_export(sklepag_opinia_moderuj($id,\"przyjmij\"));'",
+        "SELECT status FROM wp_sklepag_opinie WHERE zamowienie_id=999999;  -- oczekiwane: nadal 'oczekuje' (odmowa); FAKTYCZNIE: 'przyjeta'"
+      ],
+      "test_padajacy": "/root/praca/warsztat/_robocze/k7-runda-B/testy-audytora/L4/test-opinia-osierocona-moderacja.sh — wywołuje bezpośrednio prawdziwą funkcję produkcyjną sklepag_opinia_moderuj() przez wp eval. Surowe wyjście z faktycznego uruchomienia podczas audytu w polu wyjscie_wykonania.",
+      "wyjscie_wykonania": "opinia id=1\nwynik funkcji sklepag_opinia_moderuj: true\nstatus po moderacji: przyjeta"
+    },
+    {
+      "teza": "Katalog chroniony z plikiem produktu przeżywa uninstall.php nawet przy pełnym usuwaniu danych, gdy pliki należą do innego użytkownika systemowego niż ten, który wykonuje uninstall (@unlink/@rmdir w uninstall.php:56,63 są celowo ciche, ale ich wynik nigdy nie jest sprawdzany ani zgłaszany właścicielowi).",
+      "waga": "ŚREDNIA",
+      "typ": "BRAK",
+      "klasa": "SCIAGA #1 (uninstall niekompletny) — wariant plikowy zamiast opcji/klucza API",
+      "dowody": [
+        { "plik": "uninstall.php", "linia": 56, "cytat": "@unlink( $pelna ); // phpcs:ignore WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors -- uninstall best-effort, obcy właściciel nie może wywalić deinstalacji." },
+        { "plik": "uninstall.php", "linia": 63, "cytat": "@rmdir( $katalog ); // phpcs:ignore WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors" }
+      ],
+      "mechanizm": "Komentarz w kodzie sam nazywa to 'best-effort' dla scenariusza z audyt/UNINSTALL-HANDBOOK.md pkt 2 ('deploy FTP userem X, PHP jako www-data'). Na stosie probny_wp katalog wtyczki i katalog chroniony są root:root, a `wp plugin uninstall` (wywoływany przez wp-cli jako www-data) nie może ich skasować — @unlink/@rmdir zwracają false po cichu, kod NIE sprawdza wyniku, nie loguje zdarzenia, nie ustawia żadnej opcji-ostrzeżenia (analogicznej do sklepag_katalog_chroniony_blad używanej przy TWORZENIU katalogu w aktywacja.php:221/232/245 — tam błąd JEST widoczny, przy kasowaniu nie).",
+      "skutek": "Administrator klika 'usuń wszystkie dane' oczekując zera plików na dysku (obietnica D22), a plik produktu i cały katalog zostają fizycznie na serwerze bez żadnego powiadomienia — jedyne co go chroni przed publicznym dostępem to fakt, że .htaccess/index.php W TYM SAMYM katalogu z tego samego powodu też przeżywają (ten sam problem uprawnień działa na całą zawartość), więc katalog pozostaje zablokowany na Apache — ale to przypadkowa, nie zamierzona ochrona.",
+      "rodzaj_skutku": "zaobserwowany",
+      "kroki_reprodukcji": [
+        "docker exec -u www-data probny_wp wp --path=/var/www/html option update sklepag_usun_dane_przy_odinstalowaniu 1",
+        "KAT=$(docker exec -u www-data probny_wp wp --path=/var/www/html option get sklepag_katalog_chroniony)",
+        "docker exec -u www-data probny_wp wp --path=/var/www/html plugin deactivate sklep-agentow && docker exec -u www-data probny_wp wp --path=/var/www/html plugin uninstall sklep-agentow",
+        "docker exec probny_wp sh -c \"ls -la '$KAT'\"  # katalog i produkt-seed nadal obecne, brak jakiegokolwiek logu/ostrzeżenia o tym w panelu czy w tabeli zdarzen (ktora zostala juz skasowana razem z reszta tabel)"
+      ],
+      "test_padajacy": "/root/praca/warsztat/_robocze/k7-runda-B/testy-audytora/L4/test-katalog-chroniony-przezywa-pelne-czyszczenie.sh — komendy identyczne z faktycznie wykonanymi podczas path B (audyt L4-06); nie uruchamiałam ponownie z tych samych powodów budżetowych co przy poprzednim znalezisku.",
+      "wyjscie_wykonania": "katalog=/var/www/html/wp-content/uploads/sklepag-chronione-ez6o2qJPYen1I9Sb\nPRZED: drwxr-xr-x 2 root root ... .htaccess (114B) index.php (15B) produkt-seed (161B)\n`wp plugin uninstall sklep-agentow` -> \"Ran uninstall procedure ... Deletion of plugin files failed\"\nPO: drwxr-xr-x 2 root root ... .htaccess (114B, sama data modyfikacji Aug 26 01:03) index.php (15B, Aug 26 01:03) produkt-seed (161B, Aug 26 02:48) — bajt w bajt te same pliki, te same znaczniki czasu, katalog istnieje nadal mimo przelacznika ustawionego na 1"
+    }
+  ],
+  "anomalie": [
+    {
+      "opis": "`wp plugin uninstall sklep-agentow` konsekwentnie kończy się komunikatem 'Ran uninstall procedure for ... Deletion of plugin files failed / Error: No plugins uninstalled.' na stosie probny_wp — folder wtyczki (`/var/www/html/wp-content/plugins/sklep-agentow`) jest root:root 755, a wp-cli wykonuje polecenia jako www-data (which nie ma prawa zapisu w katalogu nadrzędnym), więc WordPress core nie może skasować plików PO uruchomieniu uninstall.php.",
+      "powod": "STAN ZASTANY środowiska demo, nie kod wtyczki: `/var/www/html/wp-content/plugins` jest www-data:www-data (poprawnie), ale konkretny podkatalog `sklep-agentow` i katalogi `wp-content/upgrade`, `wp-content/uploads` są root:root — wskazuje to, że proces Apache/PHP obsługujący żądania HTTP w tym kontenerze działa jako root (pliki tworzone przez sam plugin przy aktywacji przez przeglądarkę, np. katalog chroniony, też wychodzą root:root), podczas gdy wp-cli jest celowo uruchamiany jako www-data (`-u www-data` z dopisku koordynatorki). To rozjazd dwóch tożsamości procesu w JEDNYM kontenerze — nietypowe dla realnego hostingu (tam PHP-FPM/CLI zwykle mają tego samego użytkownika) i nie jest czymś, co kod wtyczki może naprawić. UNINSTALL-HANDBOOK.md w materiale audytowym explicite przewiduje ten scenariusz jako 'deploy FTP userem X, PHP jako www-data' — więc jest to znany, zaakceptowany kompromis, a nie luka bezpieczeństwa specyficzna dla tego audytu. Wykorzystałam ten fakt środowiska jako naturalną (nie sztuczną) próbę kontrolną dla znaleziska 'katalog chroniony przeżywa pełne czyszczenie' zamiast go pomijać.",
+      "cel": "L4-06"
+    },
+    {
+      "opis": "Przed testami aktualizacji w miejscu (L4-02/03) `wp plugin install <stara_wersja>.zip --force` jako www-data padał z 'Warning: Could not create directory. /var/www/html/wp-content/upgrade/...' — katalog `wp-content/upgrade` był root:root, niezapisywalny dla www-data.",
+      "powod": "Ten sam rozjazd tożsamości procesu co wyżej. Naprawiłam TYMCZASOWO `chown www-data:www-data wp-content/upgrade wp-content/uploads` (jako root, przez docker exec), żeby wykonać zlecone testy L4-02/03 zgodnie z dosłowną receptą z dopisku koordynatorki, i przywróciłam `chown root:root` na te same dwa katalogi jako ostatni krok przed zakończeniem (patrz komenda przywracania). To zmiana środowiska potrzebna do wykonania zlecenia, nie znalezisko przeciw wtyczce.",
+      "cel": "L4-02"
+    },
+    {
+      "opis": "L4-01 (0.2.0→0.9.13) i L4-15 (LINIA-BAZOWA ponownie) nie zostały sprawdzone.",
+      "powod": "Budżet 30 wywołań wykonawczych wyczerpany na celach wyższego priorytetu z DOPISEKu ('L4-06 → L4-02,03 → L4-08,09,14 → reszta'); L4-11 i dwa dodatkowe znaleziska (transient, katalog) pochłonęły dodatkowe wywołania nieprzewidziane w pierwotnym planie, bo wyszły z samego wykonania L4-06.",
+      "cel": "L4-01"
+    },
+    {
+      "opis": "Behawioralna część L4-12 ('WP-Cron bez ruchu — czy druga droga domykania w ogóle się wykona') nie została sprawdzona wykonaniem, tylko oceniona dokumentacyjnie (grep + cytat z developer.wordpress.org).",
+      "powod": "Wymagałoby to odcięcia WP-Cron i pozostawienia stosu bez ŻADNEGO żądania HTTP przez godziny — niepraktyczne w budżecie i czasie tej rundy; nawet własne polecenia wp-cli nie są miarodajnym substytutem żądania HTTP (nie przechodzą przez ten sam hak `init` co pseudo-cron przeglądarki).",
+      "cel": "L4-12"
+    }
+  ],
+  "pytania_do_zamawiajacego": [],
+  "odrzucone_wlasne": [
+    "Rozważałam zgłoszenie samego faktu 'plik wtyczki nie usuwa się po uninstall' jako znalezisko przeciwko kodowi wtyczki — odrzucone i przeniesione do anomalii, bo to jawnie kwestia uprawnień systemu plików kontenera (rozjazd root/www-data), a nie czegoś, co uninstall.php mógłby naprawić (WordPress core, nie wtyczka, odpowiada za kasowanie własnego folderu po zakończeniu uninstall.php)."
+  ],
+  "czego_nie_bylo_na_mojej_liscie": [
+    "Czy plik produktu jest poprawnie SERWOWANY (pobieranie.php) zaraz PO aktualizacji w miejscu — sprawdziłam tylko trwałość rekordów w bazie i obecność pliku na dysku, nie realny request pobrania po dbDelta upgrade (to styka się z L2/L3).",
+    "Czy przełącznik 'usuń wszystkie dane' jest sam odpowiednio zabezpieczony (nonce+capability) przed przypadkowym/złośliwym włączeniem — to L2, nie L4, ale wpływa bezpośrednio na ryzyko z moich znalezisk.",
+    "Zachowanie przy uszkodzonej/częściowo brakującej tabeli sklepag_* (np. ręcznie skasowanej przez admina bazy) — nie testowane, inny rodzaj awarii niż uninstall.",
+    "Wpływ typowych wtyczek do backupu (UpdraftPlus itp.) na tabele wp_sklepag_* — poza zakresem wtyczki, ale mogłoby wpłynąć na realne 'co przeżywa' u klienta."
+  ],
+  "czego_nie_obejrzalem": [
+    "L4-01: pełny cykl 0.2.0 (schemat 3) → 0.9.13 z danymi — pominięty z powodu budżetu.",
+    "L4-15: pełne porównanie z LINIA-BAZOWA (regresje 0, 3 czerwone wyjaśnione) — pominięte z powodu budżetu.",
+    "includes/stripe.php, includes/pobieranie.php, includes/logowania.php, class-sklepag-lista-*.php — czytane tylko pobieżnie przy grepie inwentarza zapisu, nie analizowane linia po linii pod kątem L4.",
+    "includes/front-produkt.php — nie sprawdziłam, czy publiczny render listy opinii (front) ma ten sam brak rozróżnienia NULL co sklepag_opinia_moderuj(), tylko funkcję moderacji w panelu.",
+    "Pełny log WP_DEBUG (WP_DEBUG_LOG) przez cały cykl instalacja/aktywacja/migracja — oceniałam tylko brak ostrzeżeń w standardowym wyjściu wp-cli, nie dedykowany plik debug.log."
+  ],
+  "wywolania_narzedzi": 30
+}

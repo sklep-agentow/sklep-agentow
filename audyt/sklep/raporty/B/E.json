@@ -1,0 +1,166 @@
+{
+  "soczewka": "E",
+  "runda": "B",
+  "commit_head": "5d3dcf9f0d99dedc1fe201c3e318f46d6f35ba5d",
+  "werdykty": [
+    {
+      "cel": "E-1",
+      "werdykt": "ODPORNE",
+      "dowod": "unzip -l sklep-agentow-0.9.13.zip (59 plikow) + grep -rniE 'TODO|FIXME|XXX|HACK|nie dla klienta|notatka QA|wewnetrzn' i grep -rniE 'localhost|127.0.0.1|dzidek|gosia|allsh0ortss|PR #|8890|8891|manik' na rozpakowanej kopii: ZERO trafien w obu grepach. find *.bak/*.orig/*.swp/*~: ZERO plikow.",
+      "jak_czlowiek_tego_uzywa": "kolega rozpakowuje zip jak klient i szuka smieci wewnetrznych — nie znajduje zadnych"
+    },
+    {
+      "cel": "E-2",
+      "werdykt": "ODPORNE",
+      "dowod": "Na :8891: permalink_structure='/%postname%/' (nie 'Zwykle'), po aktywacji istnieja 4 strony (Sklep/publish, Dziekujemy za zakup/publish, Regulamin sklepu (SZABLON)/draft, Polityka prywatnosci sklepu (SZABLON)/draft) — zgodnie z Krokiem 1 instrukcji. grep na includes/admin-ustawienia.php: etykiety pol 'Klucz sekretny (sk_test_...)','Sekret webhooka (whsec_...)','Nazwa nadawcy','Adres nadawcy','Mail kontaktowy wlasciciela','Domyslna waluta nowych produktow' identyczne z Krokiem 2 instrukcji co do slowa. Nazwa menu w kodzie 'Sklep Agentow' (includes/admin.php:37-39) = jak w instrukcji. Tresc ostrzezenia o permalinkach w kodzie (includes/admin.php:33) zgodna tresciowo z Krokiem 0.",
+      "jak_czlowiek_tego_uzywa": "kolega idzie krok po kroku wg INSTRUKCJA-INSTALACJI.md i nie znajduje rozjazdu nazw/kolejnosci na etapach 0-2"
+    },
+    {
+      "cel": "E-3",
+      "werdykt": "ROZJAZD",
+      "dowod": "Liczby zgodne kod<->dokumentacja: SKLEPAG_LIMIT_POBRAN=10, SKLEPAG_LINK_GODZIN=72, SKLEPAG_OPINIA_DNI=30 (sklep-agentow.php:21-23), cron 'sklepag_10min' interval=600 (sklep-agentow.php:45-46, includes/aktywacja.php:142), retencja 90*DAY_IN_SECONDS (includes/zakup.php:535), limity rate_limit kup=10/status=30/login=6 (includes/zakup.php:70,442, includes/logowania.php:94) — wszystko zgodne z readme.txt/DOKUMENTACJA-TECHNICZNA. ALE: DOKUMENTACJA-TECHNICZNA.md SS3 mowi '7 tabel', SS8 mowi 'utworzenie 6 tabel' o tym samym schemacie (uninstall.php:31 i faktyczny kod dbDelta tworza 7 tabel: produkty, sesje_checkout, zamowienia, zdarzenia, logowania, rate_limit, opinie) — patrz znalezisko klasy 3.",
+      "plik": "DOKUMENTACJA-TECHNICZNA.md",
+      "linia": 166
+    },
+    {
+      "cel": "E-4",
+      "werdykt": "ODPORNE",
+      "dowod": "Migawka wp_probny -> E-start.sql. OFF (domyslnie): 'wp plugin uninstall sklep-agentow --deactivate' -> tabele wp_sklepag_* zostaja (7/7), opcje sklepag_* zostaja (w tym katalog_chroniony, strony), CRON usuniety (poprawnie, D22), pliki/strony zostaja. ON: reinstalacja, ustawiono sklepag_stripe_klucz_sekretny=sk_test_ZREDAGOWANE i sklepag_stripe_webhook_sekret=[ZREDAGOWANE-whsec] oraz sklepag_usun_dane_przy_odinstalowaniu=1, potem uninstall --deactivate -> SHOW TABLES LIKE 'wp_sklepag%' PUSTE, SELECT option_name WHERE LIKE 'sklepag%' OR 'sag%' PUSTE (sekrety tez skasowane), cron PUSTY, katalog chroniony (z plikiem produkt-seed) fizycznie zniknal calkowicie, strony Sklep/Dziekujemy/Regulamin/Polityka zniknely (zostaly tylko domyslne WP). Diff przed-po PUSTY dokladnie jak D22/uninstall.php obiecuja.",
+      "jak_czlowiek_tego_uzywa": "kolega odinstalowuje wtyczke z wlaczona opcja pelnego czyszczenia i sprawdza w bazie, czy klucz Stripe zostal — nie zostal"
+    },
+    {
+      "cel": "E-5",
+      "werdykt": "ODPORNE",
+      "dowod": "grep -n LIKE includes/*.php uninstall.php sklep-agentow.php: 2 miejsca (includes/admin-dashboard.php:81 filtr email_kupujacego, uninstall.php:70 czyszczenie opcji) — OBA uzywaja $wpdb->esc_like() + $wpdb->prepare(). Proba kontrolna WYKONANIEM: ustawiono opcje testowe 'sklepagX_nie_ruszaj' i 'sag_test_obce' na zywym :8891, uruchomiono TEN SAM zapytanie co uninstall.php (DELETE ... WHERE option_name LIKE esc_like('sklepag_').'%') przez wp eval — po zapytaniu obie opcje TRWAJA (wp option get zwrocil wartosci 'wartosc1'/'wartosc2' bez bledu) — sprzatanie nie lapie cudzych/podobnych nazw.",
+      "jak_czlowiek_tego_uzywa": "kolega ma na tej samej stronie inna wtyczke z opcja 'sklepagX_cos' — po odinstalowaniu Sklepu Agentow jej opcja przezywa"
+    },
+    {
+      "cel": "E-6",
+      "werdykt": "SPEŁNIONE INACZEJ",
+      "dowod": "Rozszerzenia ponad litere zamowienia 01 (SEO stron sklepu, dual-engine domykania webhook+cron, mechanizm opinii D32, log akcji admina ponad S-09, eksport CSV) SA opisane wprost w readme.txt sekcja 'Co dostajesz po instalacji' i w DOKUMENTACJA-TECHNICZNA.md — klient WIDZI, ze to dostaje. Brakuje jednak osobnego pliku PONAD-SPECYFIKACJE.md dla sklepu, mimo ze D27 (DECYZJE.md) go zapowiada, i mimo ze taki plik ISTNIEJE dla botow (boty/PONAD-SPECYFIKACJE-BOTY.md) — asymetria miedzy trzema produktami w tym samym wydaniu.",
+      "plik": "readme.txt",
+      "linia": 22
+    },
+    {
+      "cel": "E-7",
+      "werdykt": "ODPORNE",
+      "dowod": "includes/pobieranie.php: kolejnosc kodu to file_exists($plik) (linia 46, wp_die 503 gdy brak) PRZED atomowym UPDATE licznika pobrania_uzyte (linia 64-70). WYKONANIEM na :8891: dla zamowienia id=2 wygenerowano swiezy token+hash, ustawiono link_wygasa w przyszlosci, plik produktu byl fizycznie NIEOBECNY na dysku (po wczesniejszym tescie deinstalacji) -> curl na admin-post.php?action=sklepag_pobierz zwrocil HTTP 503, a SELECT pobrania_uzyte PRZED i PO probie = 0/0 (licznik NIE zjedzony przy awarii). grep timeout w includes/stripe.php:38 = 15 (sekund), komentarz w kodzie potwierdza 'JEDNA proba (ponowienia robia Stripe/cron)' — brak petli slepego retry.",
+      "jak_czlowiek_tego_uzywa": "kolega usuwa plik z dysku administracyjnie i sprawdza, czy klient traci jedno z 10 pobran przez awarie serwera — nie traci"
+    }
+  ],
+  "znaleziska": [
+    {
+      "teza": "readme.txt (sekcja Installation) obiecuje plik `INSTRUKCJA-INSTALACJI.md` 'dolaczona do wydania obok paczek', ale w katalogu wydania `boty/paczki/` (jedyne miejsce, gdzie faktycznie lezy `sklep-agentow-0.9.13.zip`) tego pliku nie ma — plik istnieje wylacznie w repo pod `dokumentacja/INSTRUKCJA-INSTALACJI.md`, poza zasiegiem klienta, ktory dostaje tylko paczke(i).",
+      "waga": "DUŻA",
+      "typ": "BRAK",
+      "klasa": "3",
+      "dowody": [
+        { "plik": "readme.txt", "linia": 94, "cytat": "Pełna instrukcja krok po kroku (konfiguracja testowa i produkcyjna) jest dołączona do wydania obok paczek (plik `INSTRUKCJA-INSTALACJI.md`)" },
+        { "plik": "boty/paczki/", "linia": 0, "cytat": "ls boty/paczki/ = 10 plikow .zip, ZERO plikow .md" }
+      ],
+      "mechanizm": "Klient/wdrazajacy trafia na zdanie w readme.txt kierujace go do pliku, ktorego fizycznie nie ma tam, gdzie readme mowi ze jest — jedyna kopia lezy w repo (dokumentacja/INSTRUKCJA-INSTALACJI.md), do ktorego zewnetrzny odbiorca nie ma dostepu.",
+      "skutek": "Kolega instalujacy wtyczke jak klient szuka obiecanej pelnej instrukcji 'obok paczki' i jej nie znajduje — dokladnie ten typ uwagi ('napisales ze jest, a nie ma'), ktory u tego recenzenta wraca jako krytyka dokumentacji niespojnej z rzeczywistoscia.",
+      "rodzaj_skutku": "zaobserwowany",
+      "kroki_reprodukcji": [
+        "cat /root/praca/zlecenia/sklep-agentow/boty/paczki/../../dokumentacja-nie-ma-w-paczce (patrz test)",
+        "ls /root/praca/zlecenia/sklep-agentow/boty/paczki/ — brak INSTRUKCJA-INSTALACJI.md",
+        "grep -n 'obok paczek' /root/praca/zlecenia/wymiana/k7-runda-B/sklep-agentow/readme.txt"
+      ],
+      "test_padajacy": "/root/praca/warsztat/_robocze/k7-runda-B/testy-audytora/E/test-instrukcja-brak-obok-paczki.sh — uruchomione: PADA, exit 1, komunikat 'Klient, ktory dostaje TYLKO zip, nie ma pelnej instrukcji krok po kroku.'",
+      "wyjscie_wykonania": "PADA: readme.txt obiecuje plik INSTRUKCJA-INSTALACJI.md 'obok paczek' w katalogu wydania (/root/praca/zlecenia/sklep-agentow/boty/paczki), a pliku tam nie ma."
+    },
+    {
+      "teza": "DOKUMENTACJA-TECHNICZNA.md podaje dwie rozne liczby tabel dla tego samego schematu bazy: SS3 'Schemat bazy — 7 tabel', SS8 'Przy aktywacji: utworzenie 6 tabel'.",
+      "waga": "ŚREDNIA",
+      "typ": "USTERKA",
+      "klasa": "3",
+      "dowody": [
+        { "plik": "DOKUMENTACJA-TECHNICZNA.md", "linia": 38, "cytat": "## 3. Schemat bazy — 7 tabel, prefiks `wp_sklepag_`" },
+        { "plik": "DOKUMENTACJA-TECHNICZNA.md", "linia": 166, "cytat": "**Przy aktywacji:** utworzenie 6 tabel przez `dbDelta`, zapis wersji schematu," }
+      ],
+      "mechanizm": "SS3 wymienia 7 tabel (produkty, sesje_checkout, zamowienia, zdarzenia, logowania, rate_limit, opinie) i uninstall.php:31 tez iteruje po tej samej siodemce — SS8 nie zostal zaktualizowany, gdy tabela `opinie` doszla (0.9.8, schemat 4->5).",
+      "skutek": "Ten sam recenzent, ktory czyta dokumenty ZDANIE PO ZDANIU DWA RAZY, zlapie to jako niespojnosc liczby w jednym pliku — dokladnie klasa bledu z jego historii ('badge wersji nieaktualny, zapomniany 3x').",
+      "rodzaj_skutku": "zaobserwowany",
+      "kroki_reprodukcji": [
+        "grep -n '7 tabel\\|6 tabel' DOKUMENTACJA-TECHNICZNA.md"
+      ],
+      "test_padajacy": "/root/praca/warsztat/_robocze/k7-runda-B/testy-audytora/E/test-doktech-liczba-tabel-niespojna.sh — uruchomione: PADA, exit 1.",
+      "wyjscie_wykonania": "PADA: dokument jednoczesnie mowi '7 tabel' i '6 tabel' o tym samym schemacie.\n38:## 3. Schemat bazy — 7 tabel...\n166:**Przy aktywacji:** utworzenie 6 tabel..."
+    },
+    {
+      "teza": "3 pliki graficzne w paczce (assets/okladki/chatbot-live.png, assets/w-srodku/chatbot-live--zywy.jpg, assets/okladki/segregator-maila.png) nie maja ZADNEGO odwolania w PHP/CSS/JS wtyczki — balast w paczce, ktora dostaje klient.",
+      "waga": "DROBNA",
+      "typ": "BRAK",
+      "klasa": "5",
+      "dowody": [
+        { "plik": "assets/okladki/chatbot-live.png", "linia": 0, "cytat": "grep -rl chatbot-live.png includes/ sklep-agentow.php assets/*.css assets/*.js = 0 trafien" },
+        { "plik": "assets/w-srodku/chatbot-live--zywy.jpg", "linia": 0, "cytat": "grep -rl chatbot-live--zywy.jpg ... = 0 trafien" },
+        { "plik": "assets/okladki/segregator-maila.png", "linia": 0, "cytat": "grep -rl segregator-maila.png ... = 0 trafien" }
+      ],
+      "mechanizm": "Pliki zostaly w assets/ po zmianie ukladu galerii (D28b — 'karta listy = wlasna ilustracja SVG', zrzut zywego bota przeniesiony na strone produktu) bez usuniecia starych wersji zrzutow.",
+      "skutek": "Kolega rozpakowujacy zip 'jak klient' widzi wieksza paczke niz potrzeba; gdy porownuje liste plikow z tym, co widac na stronie, znajdzie martwe zasoby — typowa uwaga 'po co to tu jest'.",
+      "rodzaj_skutku": "zaobserwowany",
+      "kroki_reprodukcji": [
+        "unzip -l sklep-agentow-0.9.13.zip | grep assets",
+        "dla kazdego pliku: grep -rl <nazwa_pliku> includes/ sklep-agentow.php assets/*.css assets/*.js"
+      ],
+      "test_padajacy": "/root/praca/warsztat/_robocze/k7-runda-B/testy-audytora/E/test-media-nieuzywane-w-paczce.sh — uruchomione: PADA, exit 1, lista 3 plikow.",
+      "wyjscie_wykonania": "PADA: 3 plikow medialnych bez ZADNEGO odwolania w kodzie:\n - chatbot-live--zywy.jpg\n - chatbot-live.png\n - segregator-maila.png"
+    },
+    {
+      "teza": "Dla sklepu (w odroznieniu od botow) nie istnieje plik PONAD-SPECYFIKACJE.md zapowiedziany przez D27, mimo ze wtyczka robi realnie wiecej niz litera zamowienia 01 (SEO, dual-engine domykania, mechanizm opinii, log akcji admina).",
+      "waga": "ŚREDNIA",
+      "typ": "BRAK",
+      "klasa": "6",
+      "dowody": [
+        { "plik": "boty/PONAD-SPECYFIKACJE-BOTY.md", "linia": 0, "cytat": "plik istnieje TYLKO dla botow" },
+        { "plik": "DECYZJE.md", "linia": 0, "cytat": "D27: SEO PODSTAWOWE-DOBRE 'rozszerzenie ponad litere -> do PONAD-SPECYFIKACJE.md'" }
+      ],
+      "mechanizm": "D27 deklaruje mechanizm dokumentowania rozszerzen ponad spec dla CALEGO wydania (sklep+2 boty), ale zrealizowano go tylko dla botow; dla sklepu rozszerzenia sa opisane rozproszone w readme.txt/DOKUMENTACJA-TECHNICZNA, nie w dedykowanym zestawieniu.",
+      "skutek": "Klient/recenzent nie ma jednego miejsca, w ktorym sklep przyznaje 'to jest wiecej niz zamowiles' — musi sam wywnioskowac z ogolnego opisu funkcji, co jest litera zamowienia a co dodatkiem; ryzyko niskie (funkcje SA opisane), ale niespojne z wlasnym wzorcem paczki botow.",
+      "rodzaj_skutku": "wyliczony",
+      "kroki_reprodukcji": [
+        "find /root/praca/zlecenia/sklep-agentow -iname 'PONAD-SPECYFIKACJE*'",
+        "porownaj z boty/PONAD-SPECYFIKACJE-BOTY.md"
+      ],
+      "test_padajacy": "/root/praca/warsztat/_robocze/k7-runda-B/testy-audytora/E/test-brak-ponad-specyfikacje-sklep.sh — uruchomione: PADA, exit 1.",
+      "wyjscie_wykonania": "PADA: D27 zapowiada PONAD-SPECYFIKACJE.md dla rozszerzen sklepu (SEO i inne), plik dla botow istnieje (boty/PONAD-SPECYFIKACJE-BOTY.md), dla sklepu -- brak."
+    }
+  ],
+  "anomalie": [
+    {
+      "opis": "Katalog chroniony z plikiem produktu ('produkt-seed') zostal fizycznie skasowany podczas mojego wlasnego testu deinstalacji ze wlaczonym czyszczeniem (E-4, sciezka ON) — po przywroceniu bazy z migawki SQL katalog na dysku NIE wrocil sam (dbDelta/aktywacja nie odtwarza per-produktowego pliku danych, tylko strukture). Odtworzylam katalog + index.php + .htaccess + placeholder 'produkt-seed' (161 B) recznie, zeby stos zostal w stanie uzywalnym dla kolejnych soczewek — TRESC placeholdera NIE jest identyczna z oryginalnym plikiem seeda (nie mialam jego kopii sprzed skasowania).",
+      "powod": "Filesystem nie jest czescia migawki SQL (mariadb-dump) — restore bazy nie odtwarza plikow na dysku. To ograniczenie mechanizmu migawek z dopisku koordynatorki, nie blad wtyczki.",
+      "cel": "E-4"
+    },
+    {
+      "opis": "Nie udalo sie odczytac pozycji menu 'Sklep Agentow' przez 'wp eval' (global $menu/$submenu) — WP-CLI nie laduje hookow admin_menu poza kontekstem wp-admin.",
+      "powod": "Ograniczenie WP-CLI (brak konteksu ekranu admina), nie usterka wtyczki — nazwe menu potwierdzilam grepem w kodzie zamiast tym sposobem.",
+      "cel": "E-2"
+    },
+    {
+      "opis": "Nie sprawdzilam zdalnie (przez GitHub Releases) czy plik INSTRUKCJA-INSTALACJI.md faktycznie towarzyszy paczce w prawdziwym 'wydaniu' publikowanym klientowi — repo jest odciete od pushowania/pobierania z serwera (zasada warsztatu), a jedyny lokalny odpowiednik katalogu wydania to boty/paczki/, gdzie pliku nie ma.",
+      "powod": "Brak dostepu do zewnetrznego mechanizmu wydania (GitHub Release) z tego stanowiska audytu — ograniczenie srodowiska, nie proba unikniecia sprawdzenia.",
+      "cel": "E-1"
+    }
+  ],
+  "pytania_do_zamawiajacego": [
+    "Czy 'wydanie obok paczek' z readme.txt to katalog boty/paczki/ (obecnie bez pliku INSTRUKCJA-INSTALACJI.md), czy osobny mechanizm (np. GitHub Release z zalacznikami), ktorego nie widze z tego stanowiska?",
+    "Czy PONAD-SPECYFIKACJE.md dla sklepu jest planowane w K8 (finalizacja), czy uznajecie readme.txt/DOKUMENTACJA-TECHNICZNA za wystarczajaca deklaracje rozszerzen (D27)?"
+  ],
+  "odrzucone_wlasne": [
+    "Rozwazalam zglosic caly zestaw rozszerzen (SEO, opinie, dual-engine) jako 'kod ponad spec bez deklaracji' wagi DUZEJ — odrzucone, bo readme.txt i DOKUMENTACJA-TECHNICZNA opisuja je wprost klientowi; zostawilam tylko brak dedykowanego pliku PONAD-SPECYFIKACJE.md jako ŚREDNIA.",
+      "Rozwazalam zglosic '#170' z historii commitow jako przeciek numeru PR do dokumentacji (fakt z 02-fakty-srodowiska.md) — sprawdzilam grepem obecna tresc DOKUMENTACJA-TECHNICZNA.md: '170' juz tam nie wystepuje, wiec problem zostal naprawiony PRZED ta runda — nie zglaszam jako nowego."
+  ],
+  "czego_nie_bylo_na_mojej_liscie": [
+    "Prompt E nie kazal mi sprawdzic, czy strona 'Dziekujemy' i mail po zakupie faktycznie DZIALAJA end-to-end (wymaga to prawdziwego klucza Stripe, ktorego na obu stosach nie ma) — kolega-recenzent w Kroku 5 wlasnej instrukcji ('pierwszy testowy zakup') na pewno by tego probowal i utknal na 502 checkout_blad; to jest jednak stan zastany (fakty srodowiska), nie znalezisko tej rundy.",
+    "Prompt nie kazal mi ocenic czasu instalacji (~30 min z instrukcji) WYKONANIEM ze stoperem — oceniam to jako poza budzetem/poza zakresem mojej soczewki (kroki techniczne sprawdzilam tresciowo, nie czasowo)."
+  ],
+  "czego_nie_obejrzalem": [
+    "includes/front-produkt.php (54 KB) — najwiekszy plik front-endu, nie czytany linia po linii (poza zakresem klas 1-7 tego promptu: tresc sprzedazowa/wyglad to zakres negatywny E)",
+    "assets/front.css (82 KB), assets/front-ruch.js — styl/animacje poza zakresem (zakres negatywny: wyglad)",
+    "Krok 5-6 instrukcji (pierwszy zakup testowy, instalacja botow jako osobnych wtyczek) — nie wykonane WYKONANIEM z powodu braku dzialajacych kluczy Stripe na tym stosie (fakt srodowiska) i budzetu 30 wywolan",
+    "Pelna tresc CHANGELOG.md wersje 0.1.0-0.9.13 nie byla zestawiana linia po linii z historia commitow git (tylko punktowo, przy szukaniu '#170')"
+  ],
+  "wywolania_narzedzi": 25
+}

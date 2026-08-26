@@ -1,0 +1,243 @@
+{
+  "soczewka": "L1",
+  "runda": "B",
+  "commit_head": "5d3dcf9f0d99dedc1fe201c3e318f46d6f35ba5d",
+  "werdykty": [
+    {
+      "cel": "L1-01",
+      "werdykt": "SPEŁNIONE",
+      "plik": "sklep-agentow.php",
+      "linia": 229,
+      "jak_czlowiek_tego_uzywa": "Kupujący wchodzi na /sklep/ (shortcode [sklepag_sklep]) i widzi listę kart obu produktów aktywnych z ceną i przyciskiem „Zobacz szczegóły”; właściciel widzi te same dwa produkty w panelu Produkty.",
+      "dowod": "curl -s -L http://localhost:8890/sklep/produkt/chatbot-live/ -> HTTP 200, cena 149,00 widoczna. Panel produktów (cookie audytor-admin): grep 'ChatBot LIVE'=11, 'Segregator maila'=12, 'Dodaj produkt'=1, 'Edytuj'=2, 'Deaktywuj'=3 trafień w /tmp/k7b-L1/produkty.html."
+    },
+    {
+      "cel": "L1-02",
+      "werdykt": "SPEŁNIONE",
+      "plik": "includes/zakup.php",
+      "linia": 405,
+      "jak_czlowiek_tego_uzywa": "Po opłaceniu kupujący dostaje mail „Twój zakup: <produkt> — potwierdzenie i pobranie” z linkiem do pobrania paczki ZIP i 3-krokową instrukcją instalacji.",
+      "dowod": "SQL SELECT mail_tresc FROM wp_sklepag_zamowienia WHERE id=35 (wordpress): 'Dziękujemy za zakup w sklepie!\\n\\nProdukt: ChatBot LIVE\\nKwota: 149,00 PLN (TRYB TESTOWY...)\\n\\nPOBIERZ SWÓJ PRODUKT:\\n[ZREDAGOWANE-LINK-Z-TOKENEM]\\nLink jest ważny 3 dni i pozwala na 10 pobrań.\\n\\nINSTRUKCJA W SKRÓCIE:\\n1. Pobierz paczkę ZIP...\\n2. Wtyczki → Dodaj...\\n3. Aktywuj i działaj...'"
+    },
+    {
+      "cel": "L1-03",
+      "werdykt": "SPEŁNIONE INACZEJ",
+      "plik": "includes/front-produkt.php",
+      "linia": 156,
+      "jak_czlowiek_tego_uzywa": "Kupujący na stronie produktu widzi: co robi (problem/funkcje), jak działa (kroki), cenę, FAQ; ile-czasu-oszczędza jest opisane wprost TYLKO dla ChatBot LIVE (akapit „kalkulacja”), dla Segregatora maila jest wyłącznie opisem jakościowym (bez konkretnej matematyki czasu).",
+      "dowod": "Zdanie z 01-zamowienie.md: 'co robi - na zachete klienta, jak dziala jak funkcjonuje, jak skraca czas pracy w firmie' vs zachowanie kodu: chatbot-live ma front-produkt.php:328 'kalkulacja' => 'Policz po swojemu: 10 pytań dziennie × 3 minuty = około 5 godzin miesięcznie z głowy...'; segregator-maila (linie 339-500) NIE MA klucza 'kalkulacja' — grep 'kalkulacja' front-produkt.php: tylko linie 328/849/850, żadna w bloku segregator-maila. Test padający: /root/praca/warsztat/_robocze/k7-runda-B/testy-audytora/L1/test-s03-kalkulacja-czasu.php uruchomiony przez `wp eval-file` na stosie warsztatowym -> 'FAIL segregator-maila: brak klucza kalkulacja'."
+    },
+    {
+      "cel": "L1-04",
+      "werdykt": "SPEŁNIONE",
+      "plik": "includes/admin-dashboard.php",
+      "linia": 280,
+      "jak_czlowiek_tego_uzywa": "Właściciel wchodzi Sklep Agentów → panel główny: karty KPI (przychód/zamówienia/średnia/kupujący z deltą %), wykres słupkowy rozkładu zakupów w czasie, tabela zamówień z filtrami data/status/e-mail.",
+      "dowod": "curl (cookie admin) /wp-admin/admin.php?page=sklepag&okres=30dni -> HTTP 200; grep sklepag-karta-liczba: '4 619,00 PLN', '31', '149,00 PLN', '24'; obecny blok 'sklepag-rozklad' (wykres w czasie)."
+    },
+    {
+      "cel": "L1-05",
+      "werdykt": "SPEŁNIONE",
+      "plik": "includes/aktywacja.php",
+      "linia": 50,
+      "jak_czlowiek_tego_uzywa": "Właściciel widzi w panelu i w eksporcie CSV dane każdego kupującego (e-mail) i transakcji (kwota, waluta, status, data) — bez zakładania kont.",
+      "dowod": "Schemat tabeli wp_sklepag_zamowienia (aktywacja.php:50-76): email_kupujacego, kwota_grosze, waluta, status, utworzono. SQL SELECT id,utworzono,email_kupujacego,produkt_nazwa_kupiona,kwota_grosze,waluta,status FROM wp_sklepag_zamowienia WHERE id=35 -> '35 | 2026-08-19 17:28:45 | kupujacy-e2e@test.local | ChatBot LIVE | 14900 | PLN | mail_wyslany'."
+    },
+    {
+      "cel": "L1-06",
+      "werdykt": "SPEŁNIONE",
+      "plik": "includes/admin-produkty.php",
+      "linia": 306,
+      "jak_czlowiek_tego_uzywa": "Właściciel w Produkty → Dodaj/Edytuj tworzy i zmienia produkty (nazwa, opis, cena, plik ZIP); przycisk „Deaktywuj” wyłącza sprzedaż bez kasowania — komunikat w panelu wprost mówi „Usuwania nie ma celowo”.",
+      "dowod": "sklepag_obsluz_przelacz_produkt (admin-produkty.php:308-344): UPDATE aktywny, brak DELETE. sklepag_admin_produkty (linia 54): echo 'Usuwania nie ma celowo: zamówienia trzymają snapshot produktu...'. Panel live: grep 'Deaktywuj'=3, 'Edytuj'=2, brak 'Usuń'/'Delete' w produkty.html."
+    },
+    {
+      "cel": "L1-07",
+      "werdykt": "SPEŁNIONE",
+      "plik": "includes/logowania.php",
+      "linia": 30,
+      "jak_czlowiek_tego_uzywa": "Właściciel w Sklep Agentów → Dziennik widzi każdą próbę logowania na dowolne konto adminów: login wpisany, wynik, IP, przeglądarka, czas — także próby na nieistniejący login.",
+      "dowod": "Trzy próby na stosie warsztatowym (curl -> wp-login.php), potem SQL SELECT id,czas,login_wpisany,wynik,ip FROM wp_sklepag_logowania ORDER BY id DESC LIMIT 6:\n(a) dobre hasło, istniejące konto -> id 286 | 2026-08-26 05:03:08 | audytor-sub | ok | 172.21.0.1\n(b) złe hasło, istniejące konto -> id 287 | 2026-08-26 05:03:09 | audytor-sub | blad | 172.21.0.1\n(c) złe hasło, login NIEISTNIEJĄCY (nie-ma-takiego-14610) -> id 288 | 2026-08-26 05:03:10 | nie-ma-takiego-14610 | blad | 172.21.0.1\nWszystkie trzy przypadki mają wpis z wymaganymi konkretami (kto/kiedy/wynik/IP)."
+    },
+    {
+      "cel": "L1-08",
+      "werdykt": "SPEŁNIONE",
+      "plik": "sklep-agentow.php",
+      "linia": 129,
+      "jak_czlowiek_tego_uzywa": "Każda strona sklepu (lista i strona produktu) pokazuje na górze pasek „TRYB TESTOWY — płatności nie są pobierane...”.",
+      "dowod": "curl -s -L http://localhost:8890/sklep/produkt/chatbot-live/ | grep sklepag-baner-testowy-tytul -> 'TRYB TESTOWY'."
+    },
+    {
+      "cel": "L1-09",
+      "werdykt": "SPEŁNIONE",
+      "plik": "includes/admin-ustawienia.php",
+      "linia": 32,
+      "jak_czlowiek_tego_uzywa": "Właściciel w Sklep Agentów → Ustawienia wpisuje klucz Stripe, sekret webhooka, nadawcę maila, mail kontaktowy, walutę domyślną i przełącznik pełnego czyszczenia przy odinstalowaniu — bez grzebania w kodzie.",
+      "dowod": "curl (cookie admin) /wp-admin/admin.php?page=sklepag-ustawienia -> HTTP 200; grep sklepag_stripe_klucz_sekretny|sklepag_nadawca_email|sklepag_usun_dane_przy_odinstalowaniu -> 3 trafienia (pola obecne w formularzu)."
+    },
+    {
+      "cel": "L1-10",
+      "werdykt": "SPEŁNIONE",
+      "plik": "includes/stripe.php",
+      "linia": 31,
+      "jak_czlowiek_tego_uzywa": "Właściciel nie instaluje niczego poza wtyczką: tabele własne w bazie WP, panel w wp-admin, wywołania Stripe idą z serwera WP przez wp_remote_post (bez SDK/CDN zewnętrznego).",
+      "dowod": "Fakt środowiska (02-fakty-srodowiska.md, zmierzone 25.08): 'Stripe bez SDK, bez zależności zewnętrznych, bez CDN: wp_remote_post (includes/stripe.php); nagłówek Stripe-Version przypięty (stripe.php:31)'. Potwierdzone kodem: sklepag_tabele_sql() (aktywacja.php) tworzy 7 tabel wp_sklepag_*, sklepag_utworz_strony() tworzy strony przez wp_insert_post."
+    },
+    {
+      "cel": "L1-11 (#1 instalacja ≤30min bez fatali)",
+      "werdykt": "NIE DA SIĘ SPRAWDZIĆ",
+      "dowod": "Świeża instalacja na czystym WP w limicie czasu to zakres L4-16/Ł-08 (stos :8891 czysty), poza budżetem i zestawem plików L1. Częściowa poszlaka z warsztatu: trzy ekrany panelu (dashboard, produkty, ustawienia) odpowiedziały HTTP 200 bez fatala w tej samej sesji."
+    },
+    {
+      "cel": "L1-11 (#2 zakup webhook→zamówienie→mail ≤60s)",
+      "werdykt": "NIE SPRAWDZIŁEM",
+      "dowod": "Mechanizm istnieje i działa (dowód historyczny: zamówienie #35, status mail_wyslany, mail z treścią w bazie) — ale POMIAR czasu ≤60s wymaga pełnego przelotu E2E z Stripe CLI (testy/e2e/przelot2.js), co jest przypisane L3-14. Poza budżetem 25 wywołań L1."
+    },
+    {
+      "cel": "L1-11 (#3 link pobrania: plik/termin/limit/2 równoległe/HEAD)",
+      "werdykt": "NIE SPRAWDZIŁEM",
+      "dowod": "Kod (includes/pobieranie.php:36-86) spełnia literę: token porównywany hash_equals na SHA-256, termin sprawdzany przed odczytem pliku, licznik atomowy UPDATE...WHERE pobrania_uzyte<limit PRZED streamowaniem, gałąź HEAD nie inkrementuje licznika. Nie mam surowego tokenu (w bazie jest tylko skrót SHA-256) więc nie wykonałam żywego pobrania — adwersaryjne warianty (cudzy token, po terminie, 2 równolegle) są przypisane L2-03/L3-06/07/08."
+    },
+    {
+      "cel": "L1-11 (#4 webhook race webhook‖reconciliation)",
+      "werdykt": "NIE SPRAWDZIŁEM",
+      "dowod": "Poza zakresem L1 (zgodność) i poza zestawem plików L1 z 08-zestawy-plikow.md; test wyścigu jest przypisany L3-01/L3-02."
+    },
+    {
+      "cel": "L1-11 (#5 bezpieczeństwo: cena z bazy/zgoda/capability/nonce/rate-limit)",
+      "werdykt": "NIE SPRAWDZIŁEM",
+      "dowod": "Jawnie poza zakresem promptu L1 ('nie oceniasz bezpieczeństwa... inne soczewki'). Przypisane L2."
+    },
+    {
+      "cel": "L1-11 (#6 dashboard jak dobre sklepy + eksport CSV + snapshot)",
+      "werdykt": "SPEŁNIONE",
+      "plik": "includes/admin-dashboard.php",
+      "linia": 219,
+      "jak_czlowiek_tego_uzywa": "Właściciel klika „Eksport CSV” obok tabeli zamówień i dostaje plik z tymi samymi danymi co na ekranie (te same filtry).",
+      "dowod": "CSV pobrany (cookie admin, nonce z HTML dashboardu): wiersz '35;\"2026-08-19 17:28:45\";kupujacy-e2e@test.local;\"ChatBot LIVE\";149,00;PLN;\"mail wysłany\";0;10' — zgodny z wierszem dashboardu 'August 19, 2026 5:28 pm / kupujacy-e2e@test.local / 149,00 PLN'."
+    },
+    {
+      "cel": "L1-11 (#7 CRUD produktów + walidacje + upload potwierdzony)",
+      "werdykt": "SPEŁNIONE",
+      "plik": "includes/admin-produkty.php",
+      "linia": 167,
+      "jak_czlowiek_tego_uzywa": "Właściciel dodaje/edytuje produkt w formularzu; próba zapisu z ceną ≤0, pustą nazwą, plikiem nie-zip albo ponad 20 MB wraca z komunikatem błędu bez zapisu.",
+      "dowod": "Kod: walidacje linie 168-177 (pusta nazwa, cena≤0, waluta), sklepag_przyjmij_zip (255-304): rozszerzenie .zip + MIME z treści (wp_check_filetype_and_ext) + limit 20MB + losowa nazwa BEZ rozszerzenia + weryfikacja PO zapisie (file_exists+filesize). Aktywacja bez pliku zablokowana (linia 192-194, 327-330)."
+    },
+    {
+      "cel": "L1-11 (#8 dziennik logowań + opóźnienie wykładnicze)",
+      "werdykt": "SPEŁNIONE INACZEJ",
+      "plik": "includes/logowania.php",
+      "linia": 88,
+      "jak_czlowiek_tego_uzywa": "Dziennik logowań zmierzony wykonaniem (patrz L1-07, SPEŁNIONE w pełni). Mechanizm opóźnienia wykładniczego (sleep min(2^n,60) po n nieudanych próbach pary login+IP) jest w kodzie, ale POMIAR realnego czasu odpowiedzi po kolejnych błędach jest przypisany L2-14 — nie mierzyłam czasu odpowiedzi w tej sesji (żeby nie zafałszować dziennika L1-07 dodatkowymi próbami/opóźnieniami).",
+      "dowod": "logowania.php:88-127: sleep(min(2 ** $n, SKLEPAG_OPOZNIENIE_SUFIT_S)) po n błędach pary login+IP liczonych od ostatniego sukcesu; limit 6/min per IP odbija PRZED sleep (429)."
+    },
+    {
+      "cel": "L1-11 (#9 uninstall: domyślnie dane zostają / pełne czyszczenie = diff pusty)",
+      "werdykt": "NIE SPRAWDZIŁEM",
+      "dowod": "Poza zakresem L1 (dane/uninstall = L4-05/06); plik uninstall.php nie jest w zestawie plików L1 (08-zestawy-plikow.md)."
+    },
+    {
+      "cel": "L1-11 (#10 boty działają + strona produktu komplet z S-03)",
+      "werdykt": "SPEŁNIONE INACZEJ",
+      "plik": "includes/front-produkt.php",
+      "linia": 156,
+      "jak_czlowiek_tego_uzywa": "Strona produktu ma komplet S-03 (patrz L1-03) z zastrzeżeniem asymetrii kalkulacji czasu. Czy silniki botów REALNIE odpowiadają/segregują (część kryterium #10 „oba rdzenie DZIAŁAJĄ”) to zakres audytu botów (audyt/boty/), nie sklepu K7 L1 — materiał 01 wprost oddziela literę zamówienia botów do osobnego audytu.",
+      "dowod": "01-zamowienie.md nagłówek: 'Pełna litera zamówienia botów (co bot ma robić OD ŚRODKA) jest osobno w audyt/boty/material/01-zamowienie.md — nie duplikuję jej tu.'"
+    },
+    {
+      "cel": "L1-11 (#11 WCAG-lite/RWD/przeglądarki + baner + Regulamin/Polityka)",
+      "werdykt": "SPEŁNIONE INACZEJ",
+      "plik": "includes/aktywacja.php",
+      "linia": 177,
+      "jak_czlowiek_tego_uzywa": "Baner TRYB TESTOWY widoczny na stronach sklepu (potwierdzone L1-08). Strony Regulamin/Polityka istnieją jako szkice-szablony do wypełnienia przez właściciela, nieopublikowane. WCAG-lite/RWD/3 przeglądarki są jawnie poza zakresem L1 ('nie oceniasz... wyglądu poza czy da się dojść') — przypisane L6.",
+      "dowod": "wp post list --post_type=page: '120 | Regulamin sklepu (SZABLON) | draft', '121 | Polityka prywatności sklepu (SZABLON) | draft', '118 | Sklep | publish', '119 | Dziękujemy za zakup | publish'."
+    },
+    {
+      "cel": "L1-12",
+      "werdykt": "SPEŁNIONE",
+      "plik": "includes/zakup.php",
+      "linia": 415,
+      "jak_czlowiek_tego_uzywa": "Data/godzina widoczna właścicielowi (pulpit, CSV) i wzmiankowana kupującemu w mailu (data zgody) są tą samą chwilą, tylko różnie sformatowaną — nie ma rozjazdu strefy czasowej.",
+      "dowod": "Zamówienie #35: utworzono (lokalny czas WP, current_time('mysql')) = '2026-08-19 17:28:45'; zgoda_czas (GMT, current_time('mysql', true)) = '2026-08-19 15:28:31' -> po konwersji get_date_from_gmt na lokalny (Europe/Warsaw, +2h) = 17:28:31, zgodne z utworzono w granicach 14 s (naturalna różnica klik-zgody -> webhook). Dashboard formatuje 'August 19, 2026 5:28 pm' (mysql2date, lokalnie), CSV drukuje surowe '2026-08-19 17:28:45' (też lokalnie) — spójne. Dodatkowe potwierdzenie mechanizmu konwersji na żywym (współbieżnym) zamówieniu #9900917: zgoda_czas GMT '2026-08-26 00:00:00' -> mail pokazuje 'Zgodę zaznaczyłeś przy zakupie 26.08.2026 02:00' (poprawne +2h)."
+    },
+    {
+      "cel": "S-04 (trzy miejsca: pulpit / CSV / mail)",
+      "werdykt": "SPEŁNIONE",
+      "plik": "includes/class-sklepag-lista-zamowien.php",
+      "linia": 137,
+      "jak_czlowiek_tego_uzywa": "Właściciel porównując pulpit, eksport CSV i treść maila (podgląd w bazie) widzi tę samą kwotę, produkt i chwilę zakupu zamówienia #35.",
+      "dowod": "Pulpit: 'August 19, 2026 5:28 pm | kupujacy-e2e@test.local | 149,00 PLN'. CSV: '35;\"2026-08-19 17:28:45\";kupujacy-e2e@test.local;\"ChatBot LIVE\";149,00;PLN;...'. Mail (mail_tresc z bazy): 'Produkt: ChatBot LIVE\\nKwota: 149,00 PLN (TRYB TESTOWY...)'. Trzy wartości kwoty/produktu identyczne; czas w mailu tej KONKRETNEJ (starszej) wiadomości nie jest wypisany wprost, bo zamówienie #35 powstało PRZED dodaniem akapitu potwierdzenia zgody z datą (funkcja obecna w dzisiejszym kodzie, patrz L1-12) — opisane w anomalie."
+    }
+  ],
+  "znaleziska": [
+    {
+      "teza": "Strona produktu Segregatora maila nie ma odpowiednika akapitu 'kalkulacja' (ile-czasu-oszczędza) obecnego u ChatBota LIVE — sklepag_tresc_produktu('segregator-maila') nie zwraca klucza 'kalkulacja' (includes/front-produkt.php, blok linii 339-500).",
+      "waga": "ŚREDNIA",
+      "typ": "BRAK",
+      "klasa": "NOWA",
+      "dowody": [
+        {
+          "plik": "includes/front-produkt.php",
+          "linia": 328,
+          "cytat": "'kalkulacja'   => 'Policz po swojemu: 10 pytań dziennie × 3 minuty = około 5 godzin miesięcznie z głowy. Podstaw własne liczby — matematyka jest jawna.',"
+        },
+        {
+          "plik": "includes/front-produkt.php",
+          "linia": 849,
+          "cytat": "if ( ! empty( $t['kalkulacja'] ) ) { $html .= '<p class=\"sklepag-przypis\">' . esc_html( $t['kalkulacja'] ) . '</p>'; }"
+        }
+      ],
+      "mechanizm": "sklepag_tresc_produktu() zwraca tablicę treści per slug; blok 'chatbot-live' ma klucz 'kalkulacja' z konkretnym wyliczeniem oszczędności czasu, blok 'segregator-maila' (linie 339-500) tego klucza nie ma wcale — renderer (linia 849) po prostu pomija akapit, gdy klucz brak, więc strona milczy o konkretnej korzyści czasowej dla drugiego produktu.",
+      "skutek": "Klient przeglądający Segregator maila nie dostaje żadnej policzalnej wskazówki 'ile czasu oszczędza' (S-03 wymaga tego wprost dla obu produktów) — ma tylko ogólne zdania jakościowe ('ile roboty zeszło z Ciebie'), słabszy argument sprzedażowy niż przy ChatBot LIVE.",
+      "rodzaj_skutku": "zaobserwowany",
+      "kroki_reprodukcji": [
+        "docker cp test-s03-kalkulacja-czasu.php strona_wp_wordpress:/tmp/t.php",
+        "docker exec -u www-data strona_wp_wordpress wp --path=/var/www/html eval-file /tmp/t.php",
+        "Zobacz wynik: 'FAIL segregator-maila: brak klucza kalkulacja'",
+        "Alternatywnie: otwórz /sklep/produkt/segregator-maila/ w przeglądarce i porównaj z /sklep/produkt/chatbot-live/ — u ChatBota jest dodatkowy akapit z wyliczeniem godzin miesięcznie, u Segregatora go nie ma."
+      ],
+      "test_padajacy": "/root/praca/warsztat/_robocze/k7-runda-B/testy-audytora/L1/test-s03-kalkulacja-czasu.php — uruchomiony przez `wp eval-file` na stosie warsztatowym, wywołuje bezpośrednio produkcyjną sklepag_tresc_produktu(). Wynik na obecnym kodzie: 'OK chatbot-live: kalkulacja = ...' / 'FAIL segregator-maila: brak klucza kalkulacja...' / 'WYNIK: PADA'. Po dopisaniu klucza 'kalkulacja' do bloku segregator-maila test przejdzie (obie linie 'OK')."
+    }
+  ],
+  "anomalie": [
+    {
+      "opis": "Zamówienie #35 (na którym oparłam porównanie S-04 trzy-miejsca) ma w mail_tresc treść BEZ akapitu 'POTWIERDZENIE TWOJEJ ZGODY', bez gwarancji i bez linku do opinii — mimo że dzisiejszy kod (sklepag_zbuduj_mail, zakup.php:405-437) je dodaje.",
+      "powod": "mail_tresc to zapisany snapshot treści WYSŁANEJ w chwili domknięcia zakupu (19.08.2026) — te elementy dodano do kodu PÓŹNIEJ (zgoda potwierdzona 25.08 wg 05-reguly-branzy.md: '9/9 OK' po naprawie). To NIE jest błąd dzisiejszego kodu: potwierdziłam na współbieżnym, świeżym zamówieniu #9900917 (utworzone 2026-08-26 05:05:41, prawdopodobnie przez innego audytora testującego równolegle na tym samym stosie :8890), którego mail_tresc ZAWIERA 'Zgodę zaznaczyłeś przy zakupie 26.08.2026 02:00.' — czyli aktualny kod generuje ten akapit poprawnie z konwersją GMT→lokalny.",
+      "cel": "L1-12 / S-04"
+    },
+    {
+      "opis": "W debug.log kontenera strona_wp_wordpress jest wpis 'PHP Fatal error: Uncaught Error: Call to undefined function sklepag_obsluz_dociagnij() ... eval()'d code:30' z 26-Aug-2026 00:07:24 UTC.",
+      "powod": "sklepag_obsluz_dociagnij() jest zdefiniowana w includes/admin-dashboard.php, który ładuje się WYŁĄCZNIE gdy is_admin() (sklep-agentow.php:68-70). `wp eval` nie ustawia is_admin() na true, więc wywołanie tej funkcji przez `wp eval 'sklepag_obsluz_dociagnij();'` (najpewniej próba innego audytora testującego reconciliation z CLI) musi się wywalić — to artefakt METODY testowania z CLI, nie błąd normalnego użycia panelu. W tej samej sesji trzy ekrany panelu (dashboard/produkty/ustawienia) zadziałały bez fatala przez HTTP.",
+      "cel": "L1-11 (#1)"
+    },
+    {
+      "opis": "Mailpit (:8025) nie ma już wiadomości dla zamówienia #35 (sprzed tygodnia) — API zwraca tylko 14 najnowszych wiadomości, wszystkie z 25-26.08 (najpewniej testy L3 na innym adresie/stosie).",
+      "powod": "Fakt środowiska (02-fakty-srodowiska.md): 'łapacz może mieć stare wiadomości — filtruj po czasie/adresie'; retencja/pojemność Mailpit jest ograniczona (nie jest to trwały magazyn). Zastąpiłam porównanie mail-owe treścią mail_tresc zapisaną w bazie (ta sama treść co Mailpit dostał, zapisywana PRZED wysyłką — zakup.php:340-342), więc dowód dla S-04/L1-02 pozostaje ważny.",
+      "cel": "S-04"
+    },
+    {
+      "opis": "W dzienniku logowań (wp_sklepag_logowania) są dwa wcześniejsze udane logowania (id 284 audytor-admin, id 285 audytor-sub) sprzed moich trzech prób testowych oraz jedno logowanie 'admin_roboczy' z 25.08 — dane na stosie :8890 zmieniają się przez innego, równolegle pracującego audytora.",
+      "powod": "Zgodnie z DOPISKIEM: 'Na :8890 pracuje równolegle inny audytor — wszystko, co zmienisz w danych, przywróć z migawki, gdy skończysz.' Moje 3 wiersze (id 286-288) są rozróżnialne po loginie/czasie i nie zostały przeze mnie cofnięte (instrukcja mówi, że nie trzeba) — zostają jako trwały ślad w dzienniku produkcyjnym stosu warsztatowego.",
+      "cel": "L1-07"
+    }
+  ],
+  "pytania_do_zamawiajacego": [
+    "Czy Segregator maila POWINIEN mieć symetryczny akapit z wyliczeniem 'ile czasu oszczędza' (jak ChatBot LIVE), czy jakościowy opis czasu ('ile roboty zeszło z Ciebie') jest świadomie wystarczający dla tego produktu?"
+  ],
+  "odrzucone_wlasne": [
+    "Rozważałam zgłoszenie braku 'POTWIERDZENIE ZGODY' w mailu zamówienia #35 jako znalezisko — odrzucone: to stary snapshot sprzed dodania funkcji do kodu, nie stan dzisiejszego kodu (patrz anomalie)."
+  ],
+  "czego_nie_bylo_na_mojej_liscie": [
+    "Nie sprawdziłam, czy TRZECI, nowo dodany w locie produkt (poza chatbot-live/segregator-maila) faktycznie renderuje kompletną, sensowną stronę generyczną z pól bazy (kryterium #7 'nowy produkt bez zmian kodu') — mapa L1 tego wprost nie wymienia, a próba wymagałaby CRUD-owej mutacji danych na stosie współdzielonym z innym audytorem.",
+      "Nie porównałam symetrycznie strony produktu Segregatora maila NA ŻYWO (curl) — sprawdziłam ją tylko czytaniem kodu (front-produkt.php), podczas gdy ChatBot LIVE sprawdziłam też HTTP-em; nierówne pokrycie dowodowe między dwoma produktami tej samej soczewki.",
+    "Pytanie ograniczyło mnie do 'zgodności z zamówieniem' bez badania, czy TREŚĆ strony produktu (liczby, obietnice) ma pokrycie w paczce bota — to jawnie zadanie L5, ale zachodzi na S-03; nie badałam tego przecięcia."
+  ],
+  "czego_nie_obejrzalem": [
+    "includes/admin-zamowienie.php i includes/admin.php (menu, szczegóły zamówienia) — poza zestawem plików L1 z 08-zestawy-plikow.md.",
+    "includes/opinie.php i includes/admin-opinie.php — mechanizm opinii (D32) jest formalnie w zestawie L2/L3, nie L1; nie czytałam go w tej rundzie.",
+    "Strona produktu segregator-maila NA ŻYWO przez HTTP (tylko przez kod front-produkt.php).",
+    "Cały plik includes/front-produkt.php (954 linie) — przeczytałam ~450 linii obejmujące obie treści produktowe i funkcje renderujące; nie czytałam sekcji SEO/meta (front-seo.php nie jest w zestawie L1) ani końcowych funkcji layoutu strony produktu."
+  ],
+  "wywolania_narzedzi": 21
+}
