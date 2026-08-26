@@ -36,10 +36,20 @@ Mutant trafiony przez CUDZĄ soczewkę = znalezisko tej soczewki, nie zmienia ka
 
 | audytor | mutant | znalazl | falszywy | werdykt | proby |
 |---|---|---|---|---|---|
-| L1 | M1 | | | | |
-| L2 | M2 | | | | |
-| L3 | M3 | | | | |
-| L3 | M4 | | | | |
-| L4 | M5 | | | | |
-| L5 | M6 | | | | |
-| L | M7 | | | | |
+| L1 | M1 | NIE | 0 | FAIL — NIEKALIBROWANA | 2 |
+| L2 | M2 | TAK (DUŻA — kwalifikacja poprawna) | 0 | PASS | 1 |
+| L3 | M3 | TAK (test padający) | 0 | PASS | 1 |
+| L3 | M4 | TAK (test padający) | 0 | PASS | 1 |
+| L4 | M5 | TAK (diff uninstall) | 0 | PASS | 1 |
+| L5 | M6 | NIE (trafiony przez L3 jako unia — nie liczy się do kalibracji L5) | 0 | FAIL — NIEKALIBROWANA | 2 |
+| L | M7 | TAK (próba 2, test padający) | 0 | PASS | 2 |
+
+### Runda A — przebieg (26.08.2026 01:10–02:40, koordynatorka Gosia-17)
+- Oba stosy z paczką MUTANTY (`425a3124…`): :8891 ze skryptu `k7-stos-rundy.sh`, :8890 podłożona po migawce i przywrócona po rundzie (diff kodu = 0).
+- Fałszywe alarmy F1–F4: 0 u wszystkich siedmiu soczewek (L3 zauważył F2 „20/min" w komentarzu i nie zgłosił; L2 odnotował F1 „PODWÓJNIE" bez alarmu).
+- L1 próba 1: 20 wywołań zjedzone na czytaniu, S-09 zaliczone po kodzie. Poprawka (jedna, wspólna dla wszystkich): materiał poza budżetem, werdykt o ZACHOWANIU wymaga wykonania. Próba 2: nieudane logowanie wykonane, ale złym hasłem na ISTNIEJĄCE konto — M1 (nieistniejący login) nietrafiony. Wniosek do promptu L1 przed B: ścieżka WROGA, nie szczęśliwa.
+- L5 próba 1: obietnice behawioralne z `01` nie zestawione; próba 2: zaufał strażnikowi stałych (`dokumentacja-zgodnosc-sklep.sh`) — klasa BS4. M6 nietrafiony. Wniosek: obietnica behawioralna = wykonanie, nie grep stałej.
+- Ł próba 1: zły klucz Stripe sprawdzony tylko na starcie zakupu (ODPORNE), pętla reconciliation pominięta; 6/10 scenariuszy bez budżetu (setup pustego probny). Poprawka: awaria zależności na KAŻDEJ ścieżce wołającej (grep → lista → wymuszenie) + dane startowe od koordynatorki. Próba 2: M7 trafiony z testem.
+- L3 na Opusie (zgoda Dzidka): M3 + M4 + M6 (unia) w jednym przebiegu.
+- Kalibracja mierzy CZUŁOŚĆ na podłożony błąd, nie jakość: L2 zdał, a pokrył 8/22 celów — pokrycie rozlicza mapa polowania, nie ta tabela.
+
