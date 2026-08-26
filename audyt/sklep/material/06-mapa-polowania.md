@@ -129,4 +129,5 @@ Format wiersza: `- ⬜ ID · cel · [runda/raport · SHA]`.
 ## LICZNIK
 <!-- liczony skryptem narzedzia-qa/mapa-licznik.sh; nie edytować ręcznie -->
 CELE: 104 · ✅ 72 · 🐞 19 · ⚠️ 0 · ⛔ 0 · ⬜ 13
-ZAMROZONA: 5d3dcf9f0d99dedc1fe201c3e318f46d6f35ba5d · celow=104 · 2026-08-26T06:11
+ZAMROZONA: 5d3dcf9f0d99dedc1fe201c3e318f46d6f35ba5d · celow=104 · tresc=2d2a15920151
+CELE: 104 · ✅ 72 · 🐞 19 · ⚠️ 0 · ⛔ 0 · ⬜ 13 · 2026-08-26T06:11

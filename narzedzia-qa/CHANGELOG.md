@@ -14,6 +14,9 @@ wstecz nie dopisuję, bo nie umiałbym jej odtworzyć uczciwie. Ich zmiany od te
 pory lądują tutaj.
 
 ## [Niewydane]
+- **`bramki.sh`** — gitleaks po `--log-opts=HEAD` zamiast wszystkich referencji: klon runnera/recenzenta ma `refs/pull/N/*` zamkniętych PR-ów, więc zatruty commit ze SKASOWANEJ gałęzi (#194) palił bramkę na zawsze (#195 W1; lekcja = `bramka-poswiadczenia` 1.1.1). **`gitleaks-proba-kontrolna.sh` 1.0.0 (NOWE)** — klucz na cudzej gałęzi przechodzi, w historii HEAD pada.
+- **`k7-koniec.sh` 1.3.5** — warunek 8: plik `audyt/sklep/raporty/WYJATKI-WARUNEK-8.txt` (koordynatorka; `raport|cel|powód`) dla werdyktów, których dowód jest komendą (AN-011, AN-021); wyjątki wypisywane, MARTWY wyjątek = FAIL (#195 W2: warunek był niespełnialny z założenia). Próba kontrolna 1.3.2: +3 przypadki (wyjątek → GO, martwy → NO-GO, cel przeredagowany → 1b).
+- **`mapa-licznik.sh` 1.3.0** — zamrożenie pilnuje ODCISKU TREŚCI celów (`tresc=` = sha256 „ID · treść” bez statusu/odsyłacza), nie tylko liczby (#195 D3: podmiana celu przy tej samej liczbie przechodziła); `--odcisk`; stary wiersz bez `tresc=` = ostrzeżenie.
 - **`k7-koniec.sh` 1.3.4** — wynik liczy KONTROLE, nie warunki: „NO-GO — N z M kontroli niespełnionych (8 warunków zamknięcia)” zamiast „N warunków” — także w linii „TRZY LICZBY DLA WŁAŚCICIELA” (#194 W3) (recenzja #191 D1: „8 warunków niespełnionych” przy 5 PASS czytało się jak „padło wszystko”); licznik PASS.
 - **`bramka-poswiadczenia.sh` 1.1.2** — nonce w URL bez wymogu `?`/`&` przed `_wpnonce=` (zrzuty HTML niosą `&amp;`; recenzja #190 W1, fixture w próbie kontrolnej).
 - **`bramka-poswiadczenia.sh` 1.1.1** — historia od `HEAD` zamiast `--all`: runner GitHuba widzi `refs/pull/N/head` ZAMKNIĘTYCH PR-ów (niezmienialne), więc #188/#189 z martwym sekretem testowym paliłyby bramkę na zawsze; zmierzone w CI #190 (6 trafień w `refs/pull/188|189`).

@@ -3,8 +3,8 @@
 #    kasuje wszystkie opcje sklepag_*) na kontenerze probny_wp / bazie wp_probny (:8891).
 #    PRZYWRÓCENIE PO TEŚCIE:
 #      docker exec -i strona_wp_db sh -c 'MYSQL_PWD="$MARIADB_ROOT_PASSWORD" mariadb wp_probny' \
-#        < /root/praca/zlecenia/wymiana/k7-runda-B/migawki/L4-start.sql
-#      docker cp /root/praca/zlecenia/sklep-agentow/boty/paczki/sklep-agentow-0.9.13.zip probny_wp:/tmp/paczka.zip
+#      bash narzedzia-qa/k7-stos-rundy.sh boty/paczki/sklep-agentow-0.9.13.zip   (z katalogu repo; stawia probny_wp od nowa)
+#      + dane: sed 's/strona_wp_wordpress/probny_wp/g' testy/seed-demo.sh | bash -s 24   (recenzja #195 D4)
 #      docker exec -u www-data probny_wp wp --path=/var/www/html plugin install /tmp/paczka.zip --force --activate
 #
 # Pada NA KODZIE 5d3dcf9f0d99dedc1fe201c3e318f46d6f35ba5d (uninstall.php:70):
