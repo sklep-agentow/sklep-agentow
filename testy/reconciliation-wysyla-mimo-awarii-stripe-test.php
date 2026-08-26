@@ -53,9 +53,15 @@ update_option( 'sklepag_stripe_klucz_sekretny', $klucz_kopia, false );
 $po = (string) $wpdb->get_var( $wpdb->prepare( "SELECT status FROM {$pz} WHERE id=%d", $id ) );
 echo "STRAZNIK: status_po=$po (OCZEKIWANE: mail_wyslany albo mail_blad — NIE oplacone/mail_w_toku)\n";
 $pass = in_array( $po, array( 'mail_wyslany', 'mail_blad' ), true );
-echo 'STRAZNIK: WYNIK=' . ( $pass ? 'PASS' : 'FAIL - oplacony zakup stoi, bo Stripe nie odpowiada' ) . "\n";
+
 
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}sklepag_opinie WHERE zamowienie_id=%d", $id ) );
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}sklepag_zdarzenia WHERE zamowienie_id=%d", $id ) );
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$pz} WHERE stripe_session_id=%s", $sid ) );
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$ps} WHERE stripe_session_id=%s", $sid ) );
+
+// Kod wyjścia MUSI zgadzać się z werdyktem — inaczej strażnik krzyczy FAIL, a CI
+// widzi zero i przepuszcza wadę (klasa 11: nazwa bramki szersza niż to, co sprawdza).
+$straznik_ok = ( $pass );
+echo 'STRAZNIK: WYNIK=' . ( $straznik_ok ? 'PASS' : 'FAIL - oplacony zakup stoi, bo Stripe nie odpowiada' ) . "\n";
+exit( $straznik_ok ? 0 : 1 );

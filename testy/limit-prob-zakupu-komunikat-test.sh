@@ -22,6 +22,10 @@ if [ -z "$NONCE" ]; then
   echo "STRAZNIK: WYNIK=BLAD-SRODOWISKA (nie udalo sie wygenerowac tokenu)"; exit 2
 fi
 
+# WŁASNE WARUNKI WSTĘPNE: licznik limitera wyczyszczony PRZED serią. Bez tego wynik zależy
+# od tego, co zostawił poprzedni przebieg w tym samym oknie minuty — czyli test migałby.
+$WP eval 'global $wpdb; $wpdb->query("DELETE FROM {$wpdb->prefix}sklepag_rate_limit");' >/dev/null 2>&1
+
 KOD=""; TRESC=""
 for i in $(seq 1 14); do
   ODP=$(docker exec "$KONTENER" curl -s -w '\nHTTP=%{http_code}' \

@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 define( 'SKLEPAG_WERSJA', '0.9.14' );
-define( 'SKLEPAG_WERSJA_SCHEMATU', 6 ); // v6: kolumny zwrotu (payment_intent_id, zwrocono_grosze, zwrot_czas); v5: tabela opinii; v4: kolumna zamowienia.usunieto_dnia (anonimizacja RODO); v3: indeks para_logowania.
+define( 'SKLEPAG_WERSJA_SCHEMATU', 7 ); // v7: status_przed_sporem (powrót po wygranym sporze bez zmyślania stanu wysyłki); v6: kolumny zwrotu (payment_intent_id, zwrocono_grosze, zwrot_czas); v5: tabela opinii; v4: kolumna zamowienia.usunieto_dnia (anonimizacja RODO); v3: indeks para_logowania.
 define( 'SKLEPAG_LIMIT_POBRAN', 10 ); // Jedno źródło: INSERT zamówienia + treść maila.
 define( 'SKLEPAG_LINK_GODZIN', 72 );  // Ważność linku pobrania — jw.
 define( 'SKLEPAG_OPINIA_DNI', 30 );   // Ważność linku „oceń bota" — kupujący najpierw testuje produkt.
@@ -67,7 +67,12 @@ function sklepag_start() {
 	// katalog nie, a bez niego pliki produktów nie mają chronionego miejsca. Sprawdzamy w
 	// panelu i w cronie (funkcja jest idempotentna: gdy katalog jest, wraca natychmiast) —
 	// nie na każdym żądaniu frontu, żeby wizyta kupującego nie płaciła za to sprawdzeniem dysku.
-	if ( is_admin() || wp_doing_cron() ) {
+	// ⛔ WYŁĄCZNIE gdy opcji NIE MA. Nie „gdy katalog nieosiągalny" — bo ścieżka bywa czasowo
+	// nie do odczytania (przeniesienie sklepu na inny hosting, odpięty dysk sieciowy), a wtedy
+	// utworzenie NOWEGO katalogu nadpisałoby opcję i osierociło pliki wszystkich produktów:
+	// zapisane ścieżki prowadziłyby donikąd, linki kupujących padłyby, a ostrzeżenie na Pulpicie
+	// zgasłoby, bo opcja formalnie jest. Nieosiągalny katalog ma zostać widocznym błędem.
+	if ( '' === (string) get_option( 'sklepag_katalog_chroniony', '' ) && ( is_admin() || wp_doing_cron() ) ) {
 		sklepag_utworz_katalog_chroniony();
 	}
 

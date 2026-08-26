@@ -57,6 +57,12 @@ $slad           = ( $zdarzen_po > $zdarzen_przed );
 echo 'STRAZNIK: cytuje_realny_limit=' . ( $mowi_o_realnym ? 'TAK' : 'NIE' ) . " (OCZEKIWANE: TAK)\n";
 echo 'STRAZNIK: myli_limitem_wtyczki=' . ( $myli_limitem ? 'TAK' : 'NIE' ) . " (OCZEKIWANE: NIE)\n";
 echo 'STRAZNIK: slad_w_dzienniku=' . ( $slad ? 'TAK' : 'NIE' ) . " (OCZEKIWANE: TAK)\n";
-echo 'STRAZNIK: WYNIK=' . ( $mowi_o_realnym && ! $myli_limitem && $slad ? 'PASS' : 'FAIL - komunikat o limicie wprowadza w blad' ) . "\n";
+
 
 $wpdb->query( "DELETE FROM {$wpdb->prefix}sklepag_zdarzenia WHERE typ='upload_produktu_blad'" );
+
+// Kod wyjścia MUSI zgadzać się z werdyktem — inaczej strażnik krzyczy FAIL, a CI
+// widzi zero i przepuszcza wadę (klasa 11: nazwa bramki szersza niż to, co sprawdza).
+$straznik_ok = ( $mowi_o_realnym && ! $myli_limitem && $slad );
+echo 'STRAZNIK: WYNIK=' . ( $straznik_ok ? 'PASS' : 'FAIL - komunikat o limicie wprowadza w blad' ) . "\n";
+exit( $straznik_ok ? 0 : 1 );

@@ -55,6 +55,12 @@ $wpdb->query(
 	)
 );
 $id = (int) $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$pz} WHERE stripe_session_id=%s", $sid ) );
+$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET mail_tresc='STARA TRESC MAILA' WHERE id=%d", $id ) );
+// Zalążek opinii jak po prawdziwym zakupie — resend go rotuje, więc musi być z czego wracać.
+if ( function_exists( 'sklepag_opinia_zalazek' ) ) {
+	sklepag_opinia_zalazek( $id, (int) $produkt->id );
+}
+$opinia_przed = (string) $wpdb->get_var( $wpdb->prepare( "SELECT token_hash FROM {$wpdb->prefix}sklepag_opinie WHERE zamowienie_id=%d", $id ) );
 
 // Administrator klika „Wyślij ponownie" — prawdziwa ścieżka, prawdziwy nonce.
 wp_set_current_user( 1 );
@@ -81,14 +87,20 @@ try {
 	$przekierowanie = $e->getMessage();
 }
 
-$po = $wpdb->get_row( $wpdb->prepare( "SELECT token_pobrania, link_wygasa, status, mail_proby FROM {$pz} WHERE id=%d", $id ) );
+$po = $wpdb->get_row( $wpdb->prepare( "SELECT token_pobrania, link_wygasa, status, mail_proby, mail_tresc FROM {$pz} WHERE id=%d", $id ) );
+$opinia_po = (string) $wpdb->get_var( $wpdb->prepare( "SELECT token_hash FROM {$wpdb->prefix}sklepag_opinie WHERE zamowienie_id=%d", $id ) );
 
 echo 'STRAZNIK: przekierowanie=' . ( false !== strpos( $przekierowanie, 'sklepag_resend=blad' ) ? 'blad (OK)' : $przekierowanie ) . "\n";
 echo 'STRAZNIK: token_niezmieniony=' . ( $po->token_pobrania === $stary_token ? 'TAK' : 'NIE' ) . " (OCZEKIWANE: TAK)\n";
 echo 'STRAZNIK: termin_niezmieniony=' . ( (string) $po->link_wygasa === $stary_termin ? 'TAK' : 'NIE' ) . " (OCZEKIWANE: TAK)\n";
 echo 'STRAZNIK: status=' . $po->status . " (OCZEKIWANE: mail_blad)\n";
 
-$pass = ( $po->token_pobrania === $stary_token && (string) $po->link_wygasa === $stary_termin && 'mail_blad' === $po->status );
+// Treść maila w panelu też musi zostać ta stara — inaczej właściciel widzi link, który
+// nie działa, a ten działający nie jest pokazany nigdzie.
+$tresc_ok = ( 'STARA TRESC MAILA' === (string) $po->mail_tresc );
+echo 'STRAZNIK: tresc_maila_niezmieniona=' . ( $tresc_ok ? 'TAK' : 'NIE' ) . " (OCZEKIWANE: TAK)\n";
+echo 'STRAZNIK: token_opinii_niezmieniony=' . ( $opinia_po === $opinia_przed ? 'TAK' : 'NIE' ) . " (OCZEKIWANE: TAK)\n";
+$pass = ( $po->token_pobrania === $stary_token && (string) $po->link_wygasa === $stary_termin && 'mail_blad' === $po->status && $tresc_ok && $opinia_po === $opinia_przed );
 echo 'STRAZNIK: WYNIK=' . ( $pass ? 'PASS' : 'FAIL - nieudany resend odebral kupujacemu dzialajacy link' ) . "\n";
 
 // ---- CZĘŚĆ 2 (próba kontrolna): UDANY resend MUSI nadal rotować token ----
@@ -115,10 +127,16 @@ echo 'KONTROLA: udany_resend_rotuje_token=' . ( $po2->token_pobrania !== $stary_
 echo 'KONTROLA: status_po_udanym=' . $po2->status . " (OCZEKIWANE: mail_wyslany)\n";
 echo 'KONTROLA: WYNIK=' . ( $rotacja_ok ? 'PASS' : 'FAIL - naprawa zablokowala rotacje tokenu' ) . "\n";
 
-echo 'RAZEM: WYNIK=' . ( $pass && $rotacja_ok ? 'PASS' : 'FAIL' ) . "\n";
+
 
 remove_filter( 'pre_wp_mail', '__return_true', 99 );
 
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$pz} WHERE stripe_session_id=%s", $sid ) );
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}sklepag_opinie WHERE zamowienie_id=%d", $id ) );
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}sklepag_zdarzenia WHERE zamowienie_id=%d", $id ) );
+
+// Kod wyjścia MUSI zgadzać się z werdyktem — inaczej strażnik krzyczy FAIL, a CI
+// widzi zero i przepuszcza wadę (klasa 11: nazwa bramki szersza niż to, co sprawdza).
+$straznik_ok = ( $pass && $rotacja_ok );
+echo 'RAZEM: WYNIK=' . ( $straznik_ok ? 'PASS' : 'FAIL' ) . "\n";
+exit( $straznik_ok ? 0 : 1 );

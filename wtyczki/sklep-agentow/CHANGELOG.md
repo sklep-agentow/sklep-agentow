@@ -22,7 +22,7 @@ Nic jeszcze.
 
 ## [0.9.14] — 2026-08-26
 
-Wersja schematu bazy: **6** (migracja odpala się sama, bez deaktywacji wtyczki).
+Wersja schematu bazy: **7** (migracja odpala się sama, bez deaktywacji wtyczki).
 
 ### Naprawione
 - **Opłacony zakup nie ginie, gdy baza zawiedzie w połowie.** Sesja płatności dostawała
@@ -58,6 +58,27 @@ Wersja schematu bazy: **6** (migracja odpala się sama, bez deaktywacji wtyczki)
   Nowe kolumny: `payment_intent_id`, `zwrocono_grosze`, `zwrot_czas`.
 - **Pulpit ostrzega, gdy sklep nie ma czym przyjąć pieniędzy** — brak klucza Stripe lub
   sekretu webhooka, a także seria nieudanych rozmów ze Stripe w ostatniej dobie.
+- **Zapytanie z banku nie zeruje sprzedaży.** Prośba o wyjaśnienia nie zabiera pieniędzy,
+  więc zamówienie zostaje w przychodzie — schodzi z niego dopiero pobranie środków albo
+  przegrany spór. Spór wygrany i zwrot środków przywracają sprzedaż do stanu **sprzed sporu**:
+  zamówienie, do którego mail nie doszedł, wraca do „błąd maila", a nie zostaje oznaczone
+  jako wysłane (nowa kolumna `status_przed_sporem`).
+- **Zwrot odrzucony przez bank wraca do przychodu** — zwrot ze stanem „nieudany" nie jest
+  zwrotem, pieniądze zostały u sprzedawcy.
+- **Dwa różne zwroty częściowe o tej samej kwocie liczą się osobno** — księgowanie idzie po
+  identyfikatorze zwrotu, nie po samej kwocie.
+- **Zwrot nie ginie, gdy Stripe nie odpowie** — sklep prosi wtedy o ponowne przysłanie
+  powiadomienia, zamiast potwierdzać przyjęcie czegoś, czego nie zapisał.
+
+### Bezpieczeństwo
+- **Publiczne wejście zakupu ma limit żądań PRZED zapisem czegokolwiek do bazy** — inaczej
+  obcy skrypt mógł jednym strumieniem żądań zapełnić właścicielowi dziennik zdarzeń.
+- **Samonaprawa katalogu z plikami produktów odpala się wyłącznie, gdy ścieżki NIE MA.**
+  Katalog chwilowo nieosiągalny (przeniesiony hosting, odpięty dysk) zostaje widocznym
+  błędem — inaczej powstałby nowy, pusty katalog, a pliki produktów zostałyby sierotami.
+- **Wskaźniki Pulpitu nie pokażą fałszywego zera**, gdy zapytanie padnie — zamiast „Przychód
+  0,00 zł" pojawia się jawne ostrzeżenie. Odejmowanie kwot zabezpieczone przed błędem zakresu
+  bazy, a okno „ostatniej doby" liczone czasem witryny, nie zegarem serwera bazy.
 
 ### Zmienione
 - Kod i dokumentacja w paczce nie odwołują się już do wewnętrznej numeracji dokumentów

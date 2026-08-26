@@ -59,8 +59,13 @@ function sklepag_obsluz_resend() {
 	// Link do opinii jak w wysyłce automatycznej: zalążek odświeża token
 	// w stanie 'zalazek', a dla opinii już przysłanej zwraca '' — mail idzie
 	// wtedy bez akapitu oceny. Bez tego resend gubił kupującemu drogę do opinii.
-	$token_op = sklepag_opinia_zalazek( (int) $zam->id, (int) $zam->produkt_id );
-	$link_op  = '' !== $token_op ? admin_url( 'admin-post.php' ) . '?action=sklepag_ocen&z=' . (int) $zam->id . '&t=' . $token_op : '';
+	// Zapamiętujemy skrót tokenu opinii SPRZED rotacji. Nieudana wysyłka nie może zabrać
+	// kupującemu także drogi do opinii — to ta sama wada co przy linku pobrania, tylko na
+	// drugim tokenie: stary link z pierwszego maila przestałby działać, a nowy nie dotarł.
+	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
+	$opinia_hash_przed = (string) $wpdb->get_var( $wpdb->prepare( "SELECT token_hash FROM {$wpdb->prefix}sklepag_opinie WHERE zamowienie_id=%d", (int) $zam->id ) );
+	$token_op          = sklepag_opinia_zalazek( (int) $zam->id, (int) $zam->produkt_id );
+	$link_op           = '' !== $token_op ? admin_url( 'admin-post.php' ) . '?action=sklepag_ocen&z=' . (int) $zam->id . '&t=' . $token_op : '';
 
 	$produkt_snapshot        = new stdClass();
 	$produkt_snapshot->nazwa = $zam->produkt_nazwa_kupiona;
@@ -112,7 +117,15 @@ function sklepag_obsluz_resend() {
 				)
 			);
 		}
-		sklepag_zdarzenie( (int) $zam->id, 'mail_blad', 'ręczna ponowna wysyłka nieudana (wp_mail zwrócił false) — poprzedni link pobrania przywrócony' );
+		// Treść maila też wraca: panel pokazuje „treść wysłanego maila" i po nieudanej próbie
+		// wyświetlałby link, który już nie działa, a ten działający nie byłby widoczny nigdzie.
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
+		$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET mail_tresc=%s WHERE id=%d", (string) $zam->mail_tresc, (int) $zam->id ) );
+		if ( '' !== $opinia_hash_przed ) {
+			$wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->prefix}sklepag_opinie SET token_hash=%s WHERE zamowienie_id=%d AND status='zalazek'", $opinia_hash_przed, (int) $zam->id ) );
+		}
+		// phpcs:enable
+		sklepag_zdarzenie( (int) $zam->id, 'mail_blad', 'ręczna ponowna wysyłka nieudana (wp_mail zwrócił false) — poprzedni link pobrania, treść maila i link do opinii przywrócone' );
 	}
 	// phpcs:enable
 

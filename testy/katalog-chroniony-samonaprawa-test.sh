@@ -33,11 +33,27 @@ docker exec "$KONTENER" curl -s -o /dev/null -w '' "$URL" 2>/dev/null || true
 PO=$($WP option get sklepag_katalog_chroniony 2>/dev/null || echo '')
 echo "STRAZNIK: opcja_po_cronie=${PO:-BRAK} (OCZEKIWANE: sciezka katalogu)"
 
-if [ -n "$PO" ]; then
-  echo "STRAZNIK: WYNIK=PASS"
-  exit 0
+if [ -z "$PO" ]; then
+  [ -n "$PRZED" ] && $WP option update sklepag_katalog_chroniony "$PRZED" >/dev/null 2>&1
+  echo "STRAZNIK: WYNIK=FAIL - katalog chroniony nie wraca bez ponownej aktywacji"
+  exit 1
 fi
-# Przywrocenie stanu sprzed testu, zeby nie zostawic stosu bez katalogu.
-[ -n "$PRZED" ] && $WP option update sklepag_katalog_chroniony "$PRZED" >/dev/null 2>&1
-echo "STRAZNIK: WYNIK=FAIL - katalog chroniony nie wraca bez ponownej aktywacji"
-exit 1
+
+# --- PRÓBA KONTROLNA: opcja JEST, ale ścieżka nieosiągalna (przeniesiony hosting,
+# odpięty dysk). Samonaprawa NIE MOŻE wtedy utworzyć nowego katalogu i nadpisać opcji —
+# to osierociłoby pliki wszystkich produktów i zgasiłoby ostrzeżenie na Pulpicie.
+NIEISTNIEJACA="/var/www/html/wp-content/uploads/sklepag-chronione-NIEOSIAGALNA-$$"
+$WP option update sklepag_katalog_chroniony "$NIEISTNIEJACA" >/dev/null 2>&1
+docker exec "$KONTENER" curl -s -o /dev/null "$URL" 2>/dev/null || true
+PO_NIEOSIAGALNEJ=$($WP option get sklepag_katalog_chroniony 2>/dev/null || echo '')
+echo "STRAZNIK: sciezka_po_nieosiagalnej=$PO_NIEOSIAGALNEJ"
+echo "STRAZNIK: (OCZEKIWANE: bez zmian — $NIEISTNIEJACA)"
+$WP option update sklepag_katalog_chroniony "$PO" >/dev/null 2>&1   # przywrócenie stanu
+
+if [ "$PO_NIEOSIAGALNEJ" != "$NIEISTNIEJACA" ]; then
+  echo "STRAZNIK: WYNIK=FAIL - samonaprawa PODMIENILA sciezke, ktora byla tylko nieosiagalna (pliki produktow osierocone)"
+  exit 1
+fi
+
+echo "STRAZNIK: WYNIK=PASS"
+exit 0

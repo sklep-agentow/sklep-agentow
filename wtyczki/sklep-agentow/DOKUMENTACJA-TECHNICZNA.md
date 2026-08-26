@@ -1,6 +1,6 @@
 # Sklep Agentów — dokumentacja techniczna
 
-**Wersja wtyczki: 0.9.14 · wersja schematu bazy: 6 · WordPress 6.7+ · PHP 8.1+**
+**Wersja wtyczki: 0.9.14 · wersja schematu bazy: 7 · WordPress 6.7+ · PHP 8.1+**
 
 > **Po co ten dokument.** To jest **mapa systemu dla audytora i programisty**, nie ulotka.
 > Każda liczba i nazwa tutaj jest wzięta z kodu, nie z pamięci — jeśli coś się rozjedzie,
@@ -76,7 +76,9 @@ późniejsza edycja produktu nie zmieniła historii · `status` (`oczekuje` → 
 `pobrania_uzyte` — brama pobrań · `zgoda_tresc`, `zgoda_czas` — dowód zgody
 (RODO) · `mail_tresc` — wysłana treść · `usunieto_dnia` — znacznik anonimizacji ·
 `payment_intent_id` — identyfikator płatności Stripe, jedyne powiązanie zdarzeń o zwrocie
-z zamówieniem · `zwrocono_grosze`, `zwrot_czas` — księgowanie zwrotów i obciążeń zwrotnych.
+z zamówieniem · `zwrocono_grosze`, `zwrot_czas` — księgowanie zwrotów i obciążeń zwrotnych ·
+`status_przed_sporem` — stan sprzed obciążenia zwrotnego, żeby powrót po wygranym sporze
+nie zmyślał historii wysyłki (zamówienie bez maila wraca do `mail_blad`, nie do „wysłany").
 
 **Statusy zamówienia:** `oczekuje` → `oplacone` → `mail_w_toku` → `mail_wyslany`;
 `mail_blad` przy nieudanej wysyłce (cron ponawia do trzech prób); `zwrocone` po zwrocie
@@ -105,6 +107,8 @@ właściciela" (gdy ustawiony). Treść i nagłówki pilnuje osobny test-strażn
 | `admin_post_nopriv_sklepag_ocen_zapisz` (POST) | zapis opinii (zalążek → oczekuje) | ten sam token jednorazowy + zgoda + pole-pułapka + limit żądań + sufity długości |
 | `POST /wp-json/sklepag/v1/webhook` | powiadomienie od Stripe | **podpis webhooka Stripe** |
 
+| `GET /wp-json/sklepag/v1/status` | status zamówienia dla strony „Dziękujemy" | identyfikator sesji |
+
 **Obsługiwane zdarzenia Stripe.** Sprzedaż: `checkout.session.completed` i
 `checkout.session.async_payment_succeeded` (domknięcie zakupu; bramka na `payment_status`,
 bo przy metodach asynchronicznych, np. BLIK, pierwsze powiadomienie przychodzi jako
@@ -114,8 +118,12 @@ Zwroty: `refund.created`, `refund.updated` i `charge.refunded` — Stripe zaleca
 księgujemy tak, żeby dwa powiadomienia o jednym zwrocie nie odjęły pieniędzy dwa razy.
 Obciążenia zwrotne: `charge.dispute.*`. Zdarzenia o zwrocie nie niosą identyfikatora
 sesji checkout — powiązanie idzie po `payment_intent_id` zapisanym przy zakupie, a dla
-zamówień sprzed wersji schematu 6 przez jednorazowe zapytanie do Stripe o sesję tej płatności.
-| `GET /wp-json/sklepag/v1/status` | status zamówienia dla strony „Dziękujemy" | identyfikator sesji |
+zamówień sprzed wersji schematu 6 przez jednorazowe zapytanie do Stripe o sesję tej płatności
+(nietrafienie zapamiętywane na dobę, żeby cudze zwroty na wspólnym koncie nie odpytywały
+Stripe w kółko). Zapytanie z banku (`warning_needs_response`) NIE zdejmuje pieniędzy — dopiero
+pobranie środków albo przegrany spór; zwrot środków i spór wygrany przywracają sprzedaż.
+Zwrot ze stanem `failed`/`canceled` wraca do przychodu. Zwroty liczone są po identyfikatorze
+zwrotu, więc dwa różne zwroty częściowe o tej samej kwocie sumują się poprawnie.
 
 ### Panel (wymagają uprawnień administratora)
 `sklepag_produkt_zapisz` · `sklepag_produkt_przelacz` · `sklepag_resend`
@@ -170,8 +178,8 @@ po stronie serwera. To jest świadome ograniczenie, nie przeoczenie.
 
 | Stała | Wartość | Znaczenie |
 |---|---|---|
-| `SKLEPAG_WERSJA` | 0.9.13 | wersja wtyczki (assety, cache) |
-| `SKLEPAG_WERSJA_SCHEMATU` | 6 | wersja schematu bazy (migracje) |
+| `SKLEPAG_WERSJA` | 0.9.14 | wersja wtyczki (assety, cache) |
+| `SKLEPAG_WERSJA_SCHEMATU` | 7 | wersja schematu bazy (migracje) |
 | `SKLEPAG_LIMIT_POBRAN` | 10 | ile razy można pobrać zakup |
 | `SKLEPAG_LINK_GODZIN` | 72 | ważność linku pobrania |
 | `SKLEPAG_OPINIA_DNI` | 30 | ważność jednorazowego linku „oceń bota" |

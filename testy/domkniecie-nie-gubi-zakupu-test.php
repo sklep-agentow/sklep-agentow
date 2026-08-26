@@ -77,7 +77,7 @@ echo "KONTROLA: zamowien=$zamowien_b (OCZEKIWANE: 1)\n";
 $pass_b = ( 'oplacona' === $stan_b && 1 === $zamowien_b );
 echo 'KONTROLA: WYNIK=' . ( $pass_b ? 'PASS' : 'FAIL - naprawa zepsula zdrowy zakup' ) . "\n";
 
-echo 'RAZEM: WYNIK=' . ( $pass_a && $pass_b ? 'PASS' : 'FAIL' ) . "\n";
+
 
 /* ---------- sprzątanie ---------- */
 foreach ( array( $sid_a, $sid_b ) as $s ) {
@@ -90,3 +90,9 @@ foreach ( array( $sid_a, $sid_b ) as $s ) {
 	$wpdb->query( $wpdb->prepare( "DELETE FROM {$ps} WHERE stripe_session_id=%s", $s ) );
 	$wpdb->query( $wpdb->prepare( "DELETE FROM {$pd} WHERE opis LIKE %s", $wpdb->esc_like( $s ) . '%' ) );
 }
+
+// Kod wyjścia MUSI zgadzać się z werdyktem — inaczej strażnik krzyczy FAIL, a CI
+// widzi zero i przepuszcza wadę (klasa 11: nazwa bramki szersza niż to, co sprawdza).
+$straznik_ok = ( $pass_a && $pass_b );
+echo 'RAZEM: WYNIK=' . ( $straznik_ok ? 'PASS' : 'FAIL' ) . "\n";
+exit( $straznik_ok ? 0 : 1 );

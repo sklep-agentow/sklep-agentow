@@ -70,6 +70,7 @@ function sklepag_tabele_sql() {
 			payment_intent_id varchar(255) NOT NULL DEFAULT '',
 			zwrocono_grosze int(11) unsigned NOT NULL DEFAULT 0,
 			zwrot_czas datetime DEFAULT NULL,
+			status_przed_sporem varchar(20) NOT NULL DEFAULT '',
 			utworzono datetime NOT NULL,
 			zmieniono datetime NOT NULL,
 			PRIMARY KEY  (id),

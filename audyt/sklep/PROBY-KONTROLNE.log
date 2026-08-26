@@ -1,0 +1,44 @@
+# PRÓBY KONTROLNE NARZĘDZI — przebieg 2026-08-26 (po paczce napraw K7)
+#
+# Każda pozycja: skrypt podkłada narzędziu znaną wadę i sprawdza, czy narzędzie ją WIDZI.
+# Kod wyjścia zero znaczy: narzędzie zareagowało na podłożoną wadę i przepuściło czysty kod.
+# Przebieg: wszystkie próby w repo poza dowod-zachowania-segregator-proba-kontrolna.sh
+# (oznaczona ⛔ — deinstaluje stos; do przelotu ręcznego przed wydaniem).
+#
+# ⚠️ 7 pozycji NIE przechodzi (kod wyjścia różny od zera). Żadna nie dotyczy wtyczki sklepu — to dług narzędzi BOTÓW:
+#   nonce-proba-kontrolna.sh: strażnik ślepy na 6 podłożonych błędów I nie przepuszcza czystego
+#     kodu — czyli nie znaczy nic w żadną stronę (wada narzędzia, nie produktu).
+#   dowod-z-paczki-proba-kontrolna.sh: kod wyjścia 2 = brak artefaktu boty/paczki/chatbot-live-1.5.0.zip
+#     (odwołanie do wersji, której nie ma w repo — do poprawy razem z narzędziem).
+#   bramki, blad-klucza, ip-za-proxy, przejecie, pulapka: do zdiagnozowania osobno.
+# Zapisane jako stan faktyczny — bez wycinania pozycji, żeby warunek świecił na zielono.
+#
+bramka-poswiadczenia-proba-kontrolna.sh EXIT=0 22s
+bramka-recenzji-proba-kontrolna.sh EXIT=0 0s
+bramki-proba-kontrolna.sh EXIT=1 117s
+dowod-aktualizacji-proba-kontrolna.sh EXIT=0 61s
+dowod-z-paczki-proba-kontrolna.sh EXIT=2 0s
+gitleaks-proba-kontrolna.sh EXIT=0 1s
+k7-koniec-proba-kontrolna.sh EXIT=0 11s
+paczka-zgodnosc-proba-kontrolna.sh EXIT=0 7s
+stos-proba-kontrolna.sh EXIT=0 7s
+test-php-proba-kontrolna.sh EXIT=0 0s
+blad-klucza-proba-kontrolna.sh EXIT=1 7s
+dokumentacja-zgodnosc-sklep-proba-kontrolna.sh EXIT=0 3s
+import-csv-proba-kontrolna.sh EXIT=0 7s
+ip-za-proxy-proba-kontrolna.sh EXIT=1 3s
+licznik-trafien-proba-kontrolna.sh EXIT=0 5s
+nonce-proba-kontrolna.sh EXIT=1 5s
+nota-zapisu-proba-kontrolna.sh EXIT=0 26s
+pamiec-rozmowy-proba-kontrolna.sh EXIT=0 6s
+przejecie-proba-kontrolna.sh EXIT=1 14s
+pulapka-proba-kontrolna.sh EXIT=1 7s
+rodo-proba-kontrolna.sh EXIT=0 12s
+segregator-skrzynka-proba-kontrolna.sh EXIT=0 38s
+statystyki-proba-kontrolna.sh EXIT=0 3s
+stronicowanie-proba-kontrolna.sh EXIT=0 6s
+svg-proba-kontrolna.sh EXIT=0 7s
+tokeny-koszt-proba-kontrolna.sh EXIT=0 6s
+wskaznik-pisania-proba-kontrolna.sh EXIT=0 36s
+wybor-modelu-proba-kontrolna.sh EXIT=0 4s
+zgodnosc-proba-kontrolna.sh EXIT=0 16s
