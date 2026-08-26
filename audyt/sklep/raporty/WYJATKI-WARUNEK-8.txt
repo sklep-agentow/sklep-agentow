@@ -1,0 +1,9 @@
+# WYJĄTKI WARUNKU 8 (k7-koniec.sh ≥ 1.3.5) — pisze WYŁĄCZNIE koordynatorka; raporty audytorów zostają surowe.
+# Format: <raport względem audyt/sklep/raporty>|<cel>|<powód>. Wyjątek musi trafiać w realne naruszenie (martwy = FAIL).
+# Kryterium: werdykt SPEŁNIONE/ZGODNE, którego dowód jest KOMENDĄ z wklejonym wyjściem, nie linią pliku (AN-011, AN-021).
+A/L.json|Ł-08|AN-011: wp-config.php linia 0 — werdykt o konfiguracji stosu; B/L.json Ł-08 ODPORNE pełnym cyklem WP_DEBUG
+B/L4.json|L4-14|AN-021: dowód = `stos.sh --stos probny tabele/wiersze` (wyjście w raporcie)
+B/L5.json|L5-11|AN-021: dowód = `slady-wewnetrzne.sh` nowe=0 (wyjście w raporcie)
+B/L5.json|L5-12|AN-021: dowód = `wp plugin check` ×3 (tabela w raporcie)
+B/L5.json|L5-14|AN-021: dowód = fakt 02 (289/289 noreply, `git log`)
+B/L.json|Ł-00|AN-021: inwentarz ścieżek wołających (grepy w raporcie), nie cel plikowy

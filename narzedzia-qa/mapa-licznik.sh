@@ -1,17 +1,19 @@
 #!/bin/bash
-# mapa-licznik.sh — liczy cele mapy polowania i PRZEPISUJE wiersz LICZNIK.        WERSJA 1.2.1
+# mapa-licznik.sh — liczy cele mapy polowania i PRZEPISUJE wiersz LICZNIK.        WERSJA 1.3.0
 #
 # PO CO: mapa z licznikiem „N zamkniętych" była przy botach martwa — nikt jej nie
 # aktualizował (lekcja jak-audytowac §☑️: odhacza KOORDYNATOR, przelicza SKRYPT,
 # nie ręka). Ten skrypt jest jedynym, który wolno pisać do wiersza LICZNIK.
 #
-# Użycie: bash narzedzia-qa/mapa-licznik.sh <plik-mapy> [--przelot] [--zamroz <sha> | --sprawdz-zamrozenie | --tylko-licz]
+# Użycie: bash narzedzia-qa/mapa-licznik.sh <plik-mapy> [--przelot] [--zamroz <sha> | --sprawdz-zamrozenie | --tylko-licz | --odcisk]
 #   --przelot            — zestaw statusów PRZELOTU CZŁOWIEKA (⬜ ✅ 😖 🐞) i jego format LICZNIKA; jedyne narzędzie,
 #                          któremu wolno pisać `CELE:` w PRZELOT-CZLOWIEKA-SKLEP.md (recenzja #186 W2)
 #   bez opcji            — przelicza, przepisuje LICZNIK, wypisuje podsumowanie; EXIT 0
 #   --zamroz <sha>       — jw. + dopisuje pod LICZNIK wiersz ZAMROZONA (sha + liczba celów)
-#   --sprawdz-zamrozenie — TYLKO ODCZYT; EXIT 1, gdy mapa jest zamrożona, a liczba celów ≠ zapisana
+#   --sprawdz-zamrozenie — TYLKO ODCZYT; EXIT 1, gdy mapa jest zamrożona, a liczba celów ≠ zapisana ALBO odcisk TREŚCI celów
+#                          (ID + treść, bez statusu i odsyłacza; 1.3.0, recenzja #195 D3) ≠ zapisany `tresc=`
 #                          (mapa „rosnąca w nieskończoność" po rundzie B — reguła 7 planu K7)
+#   --odcisk             — TYLKO ODCZYT; wypisuje WYŁĄCZNIE odcisk treści celów (do ręcznego uzupełnienia starego wiersza ZAMROZONA)
 #   --tylko-licz         — TYLKO ODCZYT; wypisuje policzony wiersz, NIE dotyka pliku (dla k7-koniec.sh —
 #                          bramka końca nie może pisać do tego, co audytuje; recenzja #182 r2 D7)
 #   Dodatkowo EXIT 2 = zła liczba argumentów / brak pliku / brak wiersza LICZNIK.
@@ -23,7 +25,7 @@
 set -u
 PLIK="${1:-}"; shift || true; TRYB=""; SHA=""; ZESTAW=mapa
 while [ $# -gt 0 ]; do case "$1" in --przelot) ZESTAW=przelot ;; --zamroz) TRYB=--zamroz; SHA="${2:-}"; [ $# -gt 1 ] && shift ;; --*) TRYB="$1" ;; *) echo "MAPA-LICZNIK: nieznany argument $1" >&2; exit 2 ;; esac; shift; done
-[ -n "$PLIK" ] && [ -f "$PLIK" ] || { echo "Użycie: bash narzedzia-qa/mapa-licznik.sh <plik-mapy> [--zamroz <sha>|--sprawdz-zamrozenie]" >&2; exit 2; }
+[ -n "$PLIK" ] && [ -f "$PLIK" ] || { echo "Użycie: bash narzedzia-qa/mapa-licznik.sh <plik-mapy> [--zamroz <sha>|--sprawdz-zamrozenie|--tylko-licz|--odcisk]" >&2; exit 2; }
 grep -q '^CELE: ' "$PLIK" || { echo "MAPA-LICZNIK: brak wiersza LICZNIK (CELE: …) w $PLIK" >&2; exit 2; }
 
 licz() { grep -c "^- $1 " "$PLIK"; }
@@ -50,7 +52,7 @@ fi
 # Walidacja argumentów PRZED zapisem (recenzja #184 D2: --zamroz bez sha przepisywał LICZNIK, zanim odmówił)
 case "$TRYB" in
 	--zamroz) [ -n "$SHA" ] || { echo "MAPA-LICZNIK: --zamroz wymaga sha" >&2; exit 2; } ;;
-	""|--tylko-licz|--sprawdz-zamrozenie) ;;
+	""|--tylko-licz|--sprawdz-zamrozenie|--odcisk) ;;
 	*) echo "MAPA-LICZNIK: nieznana opcja $TRYB" >&2; exit 2 ;;
 esac
 case "$TRYB" in
@@ -60,20 +62,30 @@ case "$TRYB" in
 		;;
 esac
 
+# Odcisk TREŚCI celów: „ID · treść” bez statusu i bez odsyłacza [..] — status wolno zmieniać po zamrożeniu (⬜→✅ to
+# postęp), ale podmiana celu na inny albo przeredagowanie treści przy tej samej liczbie NIE (recenzja #195 D3).
+ODCISK=$(grep -E "^- ($STATUSY) " "$PLIK" | sed -E 's/^- [^ ]+ //; s/ · \[[^]]*\][ ·]*$//; s/[ ·]+$//' | LC_ALL=C sort | sha256sum | cut -c1-12)
 case "$TRYB" in
 	--tylko-licz) ;;
+	--odcisk) echo "$ODCISK"; exit 0 ;;   # TYLKO hash — bez wiersza LICZNIKA na końcu (#196 W3: dwie linie w $(…) rozcięły wiersz mapy)
 	--zamroz)
 		grep -q '^ZAMROZONA: ' "$PLIK" && { echo "MAPA-LICZNIK: mapa już zamrożona — nie zamrażam drugi raz" >&2; exit 1; }
-		printf 'ZAMROZONA: %s · celow=%s · %s\n' "$SHA" "$N_CELE" "$(date +%Y-%m-%dT%H:%M)" >> "$PLIK"
+		printf 'ZAMROZONA: %s · celow=%s · tresc=%s · %s\n' "$SHA" "$N_CELE" "$ODCISK" "$(date +%Y-%m-%dT%H:%M)" >> "$PLIK"
 		;;
 	--sprawdz-zamrozenie)
 		if grep -q '^ZAMROZONA: ' "$PLIK"; then
 			ZAP=$(sed -n 's/^ZAMROZONA: .*celow=\([0-9]*\).*/\1/p' "$PLIK" | tail -1)
+			ZAP_T=$(sed -n 's/^ZAMROZONA: .*tresc=\([0-9a-f]*\).*/\1/p' "$PLIK" | tail -1)
 			if [ "$ZAP" != "$N_CELE" ]; then
 				echo "MAPA-LICZNIK: mapa zamrożona z $ZAP celami, a ma $N_CELE — cele dopisane po zamrożeniu" >&2
 				echo "$NOWY"; exit 1
 			fi
-			echo "zamrożenie OK ($ZAP celów)"
+			if [ -n "$ZAP_T" ] && [ "$ZAP_T" != "$ODCISK" ]; then
+				echo "MAPA-LICZNIK: mapa zamrożona z odciskiem treści $ZAP_T, a ma $ODCISK — cel podmieniony/przeredagowany po zamrożeniu" >&2
+				echo "$NOWY"; exit 1
+			fi
+			[ -n "$ZAP_T" ] || echo "MAPA-LICZNIK: wiersz ZAMROZONA bez odcisku treści (sprzed 1.3.0) — pilnuję tylko liczby" >&2
+			echo "zamrożenie OK ($ZAP celów, tresc=${ZAP_T:-brak})"
 		else
 			echo "mapa NIE jest zamrożona"
 		fi

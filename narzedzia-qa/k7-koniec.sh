@@ -1,5 +1,5 @@
 #!/bin/bash
-# k7-koniec.sh — KONIEC AUDYTU K7 OGŁASZA SKRYPT, NIE UCZUCIE.                       WERSJA 1.3.4
+# k7-koniec.sh — KONIEC AUDYTU K7 OGŁASZA SKRYPT, NIE UCZUCIE.                       WERSJA 1.3.6
 #
 # PO CO: plan K7 v1 mówił „GO/NO-GO = trzy liczby liczone skryptem”, a skryptu nie było
 # (krytyka r1: nasz krytyk K1, C2 #15, C3 #11). Bez maszyny koniec rozstrzyga pamięć
@@ -48,8 +48,10 @@ echo "=== K7-KONIEC ${WERSJA_SKRYPTU:-?} — osiem warunków zamknięcia (rozpis
 #    Nieznany znacznik po „- " = FAIL z listą linii (cel nie może zniknąć z licznika bez śladu).
 LICZNIK_BLAD=$(bash narzedzia-qa/mapa-licznik.sh "$MAPA" --tylko-licz 2>&1 >/dev/null) ; LICZNIK_KOD=$?
 LICZNIK=$(bash narzedzia-qa/mapa-licznik.sh "$MAPA" --tylko-licz 2>/dev/null | tail -1)
-W_PLIKU=$(grep -m1 '^CELE: ' "$MAPA")
-if [ "$LICZNIK_KOD" -ne 0 ]; then
+W_PLIKU=$(grep -m1 '^CELE: ' "$MAPA"); ILE_CELE=$(grep -c '^CELE: ' "$MAPA")
+if [ "$ILE_CELE" -ne 1 ]; then
+	fail "1a mapa: $ILE_CELE wierszy LICZNIKA „CELE:” (ma być dokładnie 1; #196 W3 — zdublowany wiersz ukrywa datę zamrożenia)"
+elif [ "$LICZNIK_KOD" -ne 0 ]; then
 	fail "1a mapa: nieznany znacznik celu (mapa-licznik EXIT=$LICZNIK_KOD)"; printf '%s\n' "$LICZNIK_BLAD" | sed 's/^/    /'
 elif [ "$W_PLIKU" != "$LICZNIK" ]; then
 	fail "1a mapa: LICZNIK w pliku nieaktualny — jest „$W_PLIKU”, policzone „$LICZNIK” (uruchom mapa-licznik.sh)"
@@ -59,7 +61,7 @@ else
 fi
 if [ "$WYMAGAJ_ZAMROZENIA_MAPY" -eq 1 ]; then
 	if bash narzedzia-qa/mapa-licznik.sh "$MAPA" --sprawdz-zamrozenie >/dev/null 2>&1 && grep -q '^ZAMROZONA: ' "$MAPA"; then
-		pass "1b mapa zamrożona, liczba celów niezmieniona"
+		pass "1b mapa zamrożona, liczba i treść celów niezmienione"
 	else
 		fail "1b mapa NIE zamrożona albo cele dopisane po zamrożeniu"
 	fi
@@ -144,14 +146,27 @@ TAG_SHA=$(git rev-parse --short=7 'k7-zamrozenie^{commit}' 2>/dev/null)
 [ -n "$TAG_SHA" ] && [ "$TAG_SHA" = "${COMMIT_ZAP:0:7}" ] && pass "7b tag k7-zamrozenie = $TAG_SHA" || fail "7b tag k7-zamrozenie ($TAG_SHA) ≠ COMMIT w ZAMROZENIE.md (${COMMIT_ZAP:0:7})"
 
 # 8. RAPORTY JSON: parser — SPEŁNIONE/ZGODNE bez plik+linia albo BRAK bez proba_kontrolna = odrzucone; commit_head = zamrożony
+#    WYJĄTKI KOORDYNATORKI (1.3.5, recenzja #195 W2): raporty audytorów zostają SUROWE (AN-011), a werdykt, którego dowód
+#    jest KOMENDĄ (stos.sh, plugin check, git log, inwentarz grepów — AN-021), nie ma linii pliku. Plik
+#    $RAPORTY/WYJATKI-WARUNEK-8.txt: `<raport względem $RAPORTY>|<cel>|<powód>` — każdy wyjątek musi trafiać w REALNE
+#    naruszenie (martwy wyjątek = FAIL), jest wypisywany w wyjściu i zostaje w repo do recenzji.
+WYJATKI8="$RAPORTY/WYJATKI-WARUNEK-8.txt"
 if [ -d "$RAPORTY" ] && ls "$RAPORTY"/*/*.json >/dev/null 2>&1; then
 	ZLE_R=0; ILE_R=0
+	# Wyjątki: bez komentarzy i pustych, ostatni wiersz także bez znaku nowej linii (#196 W2); dopasowanie DOKŁADNE po kolumnach.
+	WYJ8=""; [ -f "$WYJATKI8" ] && WYJ8=$(grep -vE '^[[:space:]]*(#|$)' "$WYJATKI8"; printf x); WYJ8="${WYJ8%x}"
 	for r in "$RAPORTY"/*/*.json; do
 		ILE_R=$((ILE_R+1))
 		jq -e . "$r" >/dev/null 2>&1 || { echo "    zły JSON: $r"; ZLE_R=$((ZLE_R+1)); continue; }
 		CH=$(jq -r '.commit_head // ""' "$r")
 		[ "${CH:0:7}" = "${COMMIT_ZAP:0:7}" ] || { echo "    $r: commit_head=$CH ≠ ${COMMIT_ZAP:0:7}"; ZLE_R=$((ZLE_R+1)); }
-		N1=$(jq '[.werdykty[]? | select((.werdykt=="SPEŁNIONE" or .werdykt=="SPEŁNIONE INACZEJ" or .werdykt=="ZGODNE") and ((.plik // "")=="" or (.linia // 0)==0))] | length' "$r")
+		NAR=$(jq -r '.werdykty[]? | select((.werdykt=="SPEŁNIONE" or .werdykt=="SPEŁNIONE INACZEJ" or .werdykt=="ZGODNE") and ((.plik // "")=="" or (.linia // 0)==0)) | .cel' "$r")
+		N1=0; WYJ_UZYTE=""; REL="${r#"$RAPORTY"/}"
+		while IFS= read -r cel; do
+			[ -n "$cel" ] || continue
+			if printf '%s\n' "$WYJ8" | awk -F'|' -v p="$REL" -v c="$cel" '$1==p && $2==c {f=1} END {exit !f}'; then WYJ_UZYTE="$WYJ_UZYTE $cel"; else N1=$((N1+1)); fi
+		done <<< "$NAR"
+		[ -z "$WYJ_UZYTE" ] || echo "    $r: wyjątki koordynatorki (dowód = komenda):$WYJ_UZYTE"
 		N2=$(jq '[.werdykty[]? | select(.werdykt=="BRAK" and ((.proba_kontrolna // "")==""))] | length' "$r")
 		N3=$(jq '[.znaleziska[]? | select((.kroki_reprodukcji // []) | length == 0)] | length' "$r")
 		N4=$(jq '(.czego_nie_bylo_na_mojej_liscie // []) | length' "$r")
@@ -165,6 +180,15 @@ if [ -d "$RAPORTY" ] && ls "$RAPORTY"/*/*.json >/dev/null 2>&1; then
 		[ "$N5" -eq 0 ] || { echo "    $r: $N5 werdyktów SPOZA słownika schematu"; ZLE_R=$((ZLE_R+1)); }
 		[ "$N6" -eq 0 ] || { echo "    $r: $N6 znalezisk z rodzaj_skutku SPOZA słownika schematu"; ZLE_R=$((ZLE_R+1)); }
 	done
+	# MARTWE wyjątki — sprawdzane po WSZYSTKICH wierszach pliku (także celujących w raport, którego nie ma; #196 W2)
+	printf '%s\n' "$WYJ8" | while IFS='|' read -r wp wc _; do
+		[ -n "$wp" ] || continue
+		if [ ! -f "$RAPORTY/$wp" ]; then echo "    $wp: MARTWY wyjątek — raport nie istnieje ($wc)"; continue; fi
+		jq -r '.werdykty[]? | select((.werdykt=="SPEŁNIONE" or .werdykt=="SPEŁNIONE INACZEJ" or .werdykt=="ZGODNE") and ((.plik // "")=="" or (.linia // 0)==0)) | .cel' "$RAPORTY/$wp" \
+			| grep -qxF -- "$wc" || echo "    $wp: MARTWY wyjątek dla celu $wc (nie narusza warunku 8)"
+	done > "${TMPDIR:-/tmp}/k7-martwe-$$.txt"
+	if [ -s "${TMPDIR:-/tmp}/k7-martwe-$$.txt" ]; then cat "${TMPDIR:-/tmp}/k7-martwe-$$.txt"; ZLE_R=$((ZLE_R+$(wc -l < "${TMPDIR:-/tmp}/k7-martwe-$$.txt"))); fi
+	rm -f "${TMPDIR:-/tmp}/k7-martwe-$$.txt"
 	[ "$ZLE_R" -eq 0 ] && pass "8 raporty: $ILE_R plików, 0 odrzuconych werdyktów" || fail "8 raporty: $ZLE_R naruszeń w $ILE_R plikach"
 else
 	fail "8 raporty: brak $RAPORTY/*/*.json"

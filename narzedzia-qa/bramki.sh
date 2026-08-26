@@ -228,7 +228,10 @@ uruchom_gitleaks() {
 	bin="$(zapewnij_narzedzie gitleaks \
 		"https://github.com/gitleaks/gitleaks/releases/download/v${WERSJA_GITLEAKS}/gitleaks_${WERSJA_GITLEAKS}_linux_x64.tar.gz" \
 		gitleaks)" || { echo "BRAK gitleaksa i nie udalo sie go pobrac" >&2; return 1; }
-	"$bin" git --no-banner --redact .
+	# Historia od HEAD, nie --all: klon recenzenta/runnera widzi refs/pull/N/* ZAMKNIĘTYCH PR-ów (niezmienialne),
+	# więc zatruty commit ze skasowanej gałęzi paliłby bramkę na zawsze (recenzja #195 W1; ta sama lekcja
+	# co bramka-poswiadczenia 1.1.1). Próba kontrolna: narzedzia-qa/gitleaks-proba-kontrolna.sh
+	"$bin" git --no-banner --redact --log-opts=HEAD .
 }
 
 # --- przebieg -----------------------------------------------------------------
