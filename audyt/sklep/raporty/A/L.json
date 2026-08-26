@@ -1,0 +1,126 @@
+{
+  "soczewka": "L",
+  "runda": "A",
+  "commit_head": "5d3dcf9f0d99dedc1fe201c3e318f46d6f35ba5d",
+  "werdykty": [
+    {
+      "cel": "Ł-01",
+      "werdykt": "AWARIA CICHA",
+      "plik": "includes/zakup.php",
+      "linia": 234,
+      "dowod": "Setup: INSERT INTO wp_sklepag_sesje_checkout (stripe_session_id='cs_test_lamacz01', produkt_id=1, stan='utworzona'). RENAME TABLE wp_sklepag_zamowienia TO wp_sklepag_zamowienia_x (symulacja awarii bazy w połowie zakupu, na wp_probny, bez zatrzymywania kontenera db). Wywołanie realnej funkcji sklepag_domknij_zakup() z sesją Stripe (checkout.session.completed, payment_status=paid) przez POST na /wp-json/sklepag/v1/webhook z poprawnym podpisem HMAC (whsec ustawiony testowo, t=<ts>,v1=hmac_sha256). Odpowiedź: HTTP 500 {\"ok\":false}. WordPress database error (x4, z każdego zapytania do zniknionej tabeli) — INSERT IGNORE, UPDATE status='oplacone', UPDATE status='mail_w_toku', SELECT status — wszystkie do nieistniejącej tabeli. RENAME z powrotem NATYCHMIAST po teście. Stan po: SELECT stan FROM wp_sklepag_sesje_checkout WHERE stripe_session_id='cs_test_lamacz01' → 'oplacona'. SELECT COUNT(*) FROM wp_sklepag_zamowienia WHERE stripe_session_id='cs_test_lamacz01' → 0. SELECT COUNT(*) FROM wp_sklepag_zdarzenia WHERE czas > NOW()-2min → 1, ale ten jeden wpis to STARY 'webhook_zly_podpis' z próby wcześniejszej (empty webhook secret), nie nowy wpis o TEJ awarii — zero nowych zdarzeń opisujących awarię zapisu zamówienia. Powtórzone bezpośrednim wywołaniem sklepag_domknij_zakup() przez wp eval (test padający L-01, patrz test_padajacy) z identycznym wynikiem."
+    },
+    {
+      "cel": "Ł-02",
+      "werdykt": "ODPORNE",
+      "plik": "includes/zakup.php",
+      "linia": 62,
+      "dowod": "wp option update sklepag_stripe_klucz_sekretny sk_test_zly. POST admin-post.php action=sklepag_kup produkt_id=1 (nonce świeży z formularza /sklep/produkt/agent-testowy-l/, zgoda=1) → HTTP 502, body: 'Nie udało się rozpocząć płatności. Spróbuj ponownie za chwilę.' (komunikat czytelny dla kupującego, bez śladu klucza/stack trace). SELECT z wp_sklepag_zdarzenia: id=1, typ='checkout_blad', opis='Invalid API Key provided: sk_test_zly', zamowienie_id=NULL, czas=2026-08-25 23:25:55 — WPIS JEST. SELECT z wp_sklepag_sesje_checkout i wp_sklepag_zamowienia: puste — żaden osierocony rekord 'oczekuje' nie powstał (awaria nastąpiła przed zapisem do bazy), więc kupujący może bezpiecznie spróbować ponownie bez ryzyka duplikatu."
+    },
+    {
+      "cel": "Ł-03",
+      "werdykt": "NIE DA SIĘ SPRAWDZIĆ",
+      "dowod": "Budżet 30 wywołań wyczerpany na Ł-01/Ł-02/Ł-04 (wymagały wielokrotnych setupów: produkt+zip+SQL, sesja checkout, sekret webhooka, sygnatura HMAC, RENAME+restore ×2). Wymagałoby to dodatkowo: kompletnego przelotu zakupu do stanu 'mail_wyslany' z realnym tokenem pobrania (niemożliwe bez działającego klucza Stripe w tej rundzie — DOPISEK: 'Zamknięcie zakupu realną kartą testową w Checkout NIE jest możliwe'), więc token trzeba by wstrzyknąć bezpośrednio SQL-em, potem docker cp usunąć plik z katalogu chronionego, potem GET na admin-post.php?action=sklepag_pobierz z tokenem. Nie wykonano."
+    },
+    {
+      "cel": "Ł-04",
+      "werdykt": "ODPORNE",
+      "plik": "includes/admin.php",
+      "linia": 29,
+      "dowod": "wp option update permalink_structure \"\" + wp rewrite flush --hard → WARNING 'Rewrite rules are empty'. curl /sklep/produkt/agent-testowy-l/ (pretty URL, permalinki='Zwykłe') → HTTP 200 (nie 404) — front-produkt.php ma fallback ?sklepag_produkt=slug, cytat z kodu (front-produkt.php:7): 'fallback ?sklepag_produkt=slug działa zawsze (permalinki wyłączone też)'. curl POST /index.php?rest_route=/sklepag/v1/webhook → HTTP 400 'zly podpis' (endpoint REST osiągalny przez fallback query-var niezależnie od permalinków — standardowe zachowanie WP REST API). grep includes/admin.php:29-33: funkcja sklepag_ostrzez_permalinki() zaczepiona na admin_notices, warunek 'manage_options' i permalink_structure==='' pokazuje czerwony notice z linkiem do Ustawienia→Bezpośrednie odnośniki. Przywrócono permalink_structure='/%postname%/' i rewrite flush, curl potwierdza HTTP 200 po przywróceniu."
+    },
+    {
+      "cel": "Ł-05",
+      "werdykt": "NIE DA SIĘ SPRAWDZIĆ",
+      "dowod": "Budżet wyczerpany. Wymaga: pobrania HTML strony produktu z realnym noncem, wygenerowania nonce 'sprzed 25h' (wp eval z przesuniętym current_time albo wp_hash z ticka -1), złożenia formularza z tym noncem. Nie wykonano w tej rundzie."
+    },
+    {
+      "cel": "Ł-06",
+      "werdykt": "NIE DA SIĘ SPRAWDZIĆ",
+      "dowod": "Budżet wyczerpany; seed 10k+1k wierszy przez wp eval w pętli i pomiar czasu otwarcia pulpitu/listy zamówień + SAVEQUERIES wymagałby osobnej rundy z dedykowanym budżetem (koszt zasobowy na maszynie 2 vCPU/3,8GB też wymaga rozwagi). Nie wykonano."
+    },
+    {
+      "cel": "Ł-07",
+      "werdykt": "NIE DA SIĘ SPRAWDZIĆ",
+      "dowod": "Budżet wyczerpany. 500 żądań ×3 endpointy (kup/status/pobierz) po 20 równoległych — nie wykonano w tej rundzie."
+    },
+    {
+      "cel": "Ł-08",
+      "werdykt": "SPEŁNIONE INACZEJ",
+      "plik": "wp-config.php",
+      "linia": 0,
+      "dowod": "wp config get WP_DEBUG → 1, WP_DEBUG_LOG → /var/www/html/debug.log (już włączone na probny_wp przed startem audytu — nie ja to ustawiłam). docker exec probny_wp wc -l /var/www/html/debug.log → 0 PRZED testami. Po trzech wymuszonych awariach (zły klucz Stripe/checkout_blad, zły podpis webhooka whsec pusty, RENAME TABLE zamowienia + 4 błędy $wpdb w trakcie webhooka i testu wp eval) debug.log nadal ma 0 linii — zero notice/warning/deprecated trafiło do pliku logu mimo trzech różnych typów awarii. NIE PRZETESTOWANO pełnego cyklu aktywacja→zakup→deinstalacja od zera (wtyczka była już aktywna na probny_wp przed rozpoczęciem tej rundy; reaktywacja/deinstalacja niosłaby ryzyko utraty ustawień potrzebnych reszcie audytu przy tym budżecie) — pokrycie częściowe, nie pełne kryterium."
+    },
+    {
+      "cel": "Ł-09",
+      "werdykt": "NIE DA SIĘ SPRAWDZIĆ",
+      "dowod": "Budżet wyczerpany. Upload pliku 20MB+ przez panel wymaga zalogowanej sesji administratora (nonce panelu, manage_options) + multipart POST do sklepag_produkt_zapisz — nie wykonano w tej rundzie. Kod deklaruje limit 20 MB (PLAN-PROJEKTU §7, cytat z materiału 05) — to STRUKTURA, nie zachowanie zmierzone wykonaniem."
+    },
+    {
+      "cel": "Ł-10",
+      "werdykt": "NIE DA SIĘ SPRAWDZIĆ",
+      "dowod": "Budżet wyczerpany. Dwa równoległe admin-post (przełącz produkt ×2, resend ×2) wymagają sesji administratora zalogowanego przez curl -c/-b z hasłem ze zmiennej — nie wykonano w tej rundzie."
+    }
+  ],
+  "znaleziska": [
+    {
+      "teza": "sklepag_domknij_zakup() (includes/zakup.php) oznacza sesję Stripe jako 'oplacona' w wp_sklepag_sesje_checkout NIEZALEŻNIE od tego, czy zapis do wp_sklepag_zamowienia się powiódł — a sklepag_dociagnij_zalegle() (reconciliation) dociąga WYŁĄCZNIE sesje w stanie 'utworzona', więc sesja tak oznaczona jest trwale wykluczona z odzyskania.",
+      "waga": "KRYTYCZNA",
+      "typ": "USTERKA",
+      "klasa": "SLEPE-PLAMY",
+      "dowody": [
+        { "plik": "includes/zakup.php", "linia": 234, "cytat": "$wpdb->query( $wpdb->prepare( \"INSERT IGNORE INTO {$pz} ...\", ... ) );" },
+        { "plik": "includes/zakup.php", "linia": 277, "cytat": "$wpdb->query( $wpdb->prepare( \"UPDATE {$pz} SET status='oplacone', zmieniono=%s WHERE stripe_session_id=%s AND status='oczekuje'\", $teraz, $sid ) );\n\tsklepag_oznacz_sesje( $sid, 'oplacona' );" },
+        { "plik": "includes/zakup.php", "linia": 478, "cytat": "\"SELECT stripe_session_id FROM {$ps} WHERE stan='utworzona' AND utworzono < %s ORDER BY utworzono LIMIT 20\"" }
+      ],
+      "mechanizm": "Gdy wp_sklepag_zamowienia jest niedostępna w chwili przetwarzania webhooka (awaria bazy, blokada, przekroczony limit połączeń — cokolwiek co powiedzie przy sesje_checkout, ale zawiedzie przy zamowienia): INSERT IGNORE do zamowienia zawodzi po cichu ($wpdb->query zwraca false, brak wyjątku), UPDATE status='oplacone' też zawodzi (0 wierszy), ale linijkę niżej sklepag_oznacz_sesje($sid,'oplacona') jest wywoływana BEZWARUNKOWO i zapisuje się do sesje_checkout (ta tabela żyje, nie jest zerwana). Efekt: sesje_checkout.stan='oplacona', a wp_sklepag_zamowienia nie ma żadnego wiersza dla tej sesji. Reconciliation (cron co 10 min) filtruje WHERE stan='utworzona' — sesja w stanie 'oplacona' nigdy więcej nie zostanie sprawdzona, mimo że logicznie nic nie zostało domknięte.",
+      "skutek": "Klient zapłacił (w warunkach produkcyjnych), webhook Stripe dostał 500 i normalnie by ponowił próbę — ale KAŻDA kolejna próba webhooka trafi w tę samą ścieżkę tylko jeśli baza dalej padnięta; jeśli baza wróci PO pierwszej próbie, kolejne retry Stripe i tak zadziałają (bo webhook nie sprawdza stan sesji, tylko istnienie wiersza). Prawdziwe ryzyko: jeśli akurat TA jedyna próba webhooka trafiła w okno awarii bazy, a Stripe wyczerpie swoje retry (Stripe próbuje przez ok. 3 dni), zamówienie zostaje trwale zgubione — bez zamówienia w bazie, bez maila, bez linku pobrania, BEZ ŚLADU w wp_sklepag_zdarzenia opisującego tę konkretną awarię, i BEZ możliwości odzyskania przez cron reconciliation, bo ten filtruje po stanie, który już został (błędnie) nadpisany na 'oplacona'. Właściciel widzi płatność w Stripe Dashboard, ale u siebie — nic.",
+      "rodzaj_skutku": "zaobserwowany",
+      "kroki_reprodukcji": [
+        "Na wp_probny: INSERT INTO wp_sklepag_sesje_checkout (stripe_session_id, produkt_id, stan, utworzono) VALUES ('cs_test_x', 1, 'utworzona', NOW());",
+        "docker exec strona_wp_db ... RENAME TABLE wp_sklepag_zamowienia TO wp_sklepag_zamowienia_x;",
+        "Policzyć podpis Stripe: t=$(date +%s); SIG=$(printf '%s.%s' \"$t\" \"$BODY\" | openssl dgst -sha256 -hmac \"$WHSEC\" | sed 's/^.* //') z body {\"type\":\"checkout.session.completed\",\"data\":{\"object\":{\"id\":\"cs_test_x\",\"payment_status\":\"paid\",...}}}",
+        "curl -X POST http://localhost:8891/wp-json/sklepag/v1/webhook -H \"Stripe-Signature: t=$t,v1=$SIG\" --data-binary @body.json → oczekiwane 500 {\"ok\":false}",
+        "docker exec strona_wp_db ... RENAME TABLE wp_sklepag_zamowienia_x TO wp_sklepag_zamowienia;",
+        "SELECT stan FROM wp_sklepag_sesje_checkout WHERE stripe_session_id='cs_test_x'; → 'oplacona'",
+        "SELECT COUNT(*) FROM wp_sklepag_zamowienia WHERE stripe_session_id='cs_test_x'; → 0",
+        "SELECT stripe_session_id FROM wp_sklepag_sesje_checkout WHERE stan='utworzona'; → sesja NIE pojawia się (potwierdza wykluczenie z reconciliation)"
+      ],
+      "test_padajacy": "/root/praca/warsztat/_robocze/k7-runda-A/testy-audytora/L/L-01-baza-pada-w-polowie-zakupu-test.php — wywołuje bezpośrednio produkcyjną sklepag_domknij_zakup(). Wyjście z uruchomienia (wp eval, 26.08.2026): \"PADA_TEST: domknij_zakup_zwrocil='false'\\nPADA_TEST: sesja_stan_po=oplacona (OCZEKIWANE: utworzona, bo zamowienie NIE powstalo)\\nPADA_TEST: liczba_zamowien_dla_sesji=0 (OCZEKIWANE: 0)\\nPADA_TEST: nowe_zdarzenia_w_ostatnich_2min=1 (OCZEKIWANE: >=1 NOWY wpis o tej awarii)\\nPADA_TEST: WYNIK=FAIL - sesja oznaczona jako oplacona mimo braku zamowienia; sklepag_dociagnij_zalegle() (WHERE stan='utworzona') NIGDY jej nie dociagnie. Zakup trwale zgubiony, bez sladu w panelu.\" — test kończy się exit(1) na obecnym kodzie 0.9.13 (5d3dcf9).",
+      "wyjscie_wykonania": "HTTP/1.1 500 Internal Server Error {\"ok\":false} + 4× 'WordPress database error Table wp_probny.wp_sklepag_zamowienia doesn't exist' (INSERT IGNORE, UPDATE status='oplacone', UPDATE status='mail_w_toku', SELECT status) + po przywróceniu tabeli: stan sesji='oplacona', 0 zamówień, 0 nowych zdarzeń opisujących tę awarię."
+    }
+  ],
+  "anomalie": [
+    {
+      "opis": "wp_sklepag_zamowienia NIE ma kolumny 'mail_blad' ani 'mail_w_toku' jako osobnej flagi bool — jest kolumna 'status' (varchar) przyjmująca m.in. wartości 'oplacone'/'mail_w_toku'/'mail_blad'/'mail_wyslany' oraz 'mail_proby' (licznik). Zapytanie-wzór z promptu Ł ('mail_blad IS NOT NULL AS blad') nie pasuje do realnego schematu.",
+      "powod": "Schemat bazy różni się od uproszczonego przykładu w promptcie audytora — nie jest to błąd wtyczki, tylko rozjazd między przykładową wyrocznią a rzeczywistą tabelą; potwierdzone DESCRIBE wp_sklepag_zamowienia.",
+      "cel": "Ł-01"
+    },
+    {
+      "opis": "Na świeżym probny_wp opcja sklepag_stripe_webhook_sekret była PUSTA (nie tylko klucz sekretny był zły) — pierwsza próba obliczenia sygnatury HMAC z pustym sekretem dała podpis, który wtyczka odrzuciła jako zły (co jest poprawnym zachowaniem: pusty sekret ≠ akceptacja).",
+      "powod": "Fakt środowiska (świeża instalacja bez konfiguracji Stripe) — nie błąd; ustawiłam testowy sekret (whsec_[ZREDAGOWANE-sekret-testowy-jednorazowego-stosu]) żeby w ogóle móc przetestować Ł-01, co jest zgodne z poleceniem 'sam przygotuj to, czego scenariusz wymaga'.",
+      "cel": "Ł-01"
+    },
+    {
+      "opis": "6 scenariuszy z mapy polowania (Ł-03, Ł-05, Ł-06, Ł-07, Ł-09, Ł-10) NIE zostało wykonanych w tej rundzie.",
+      "powod": "Budżet 30 wywołań narzędzi wyczerpany na: przygotowanie środowiska (produkt+zip+SQL na czystym probny_wp bez danych), Ł-01 (najkosztowniejszy — 2× cykl RENAME/restore + kalibracja sekretu webhooka + padający test), Ł-02, Ł-04, częściowe Ł-08. Setup zjadł więcej wywołań niż planowano, bo probny_wp startował z ZEREM danych (trzeba było ręcznie stworzyć plik zip przez ZipArchive, poprawić ścieżkę pliku w produkcie po pierwszym błędnym założeniu, i dopiero wtedy testować zakup).",
+      "cel": "Ł-03/Ł-05/Ł-06/Ł-07/Ł-09/Ł-10"
+    }
+  ],
+  "pytania_do_zamawiajacego": [
+    "Czy runda B może dostać dedykowany, osobny budżet na Ł-03/05/06/07/09/10, skoro na probny_wp trzeba było ręcznie zbudować od zera produkt+plik+sesję checkout+sekret webhooka (0 danych startowych zjadło ~10 z 30 wywołań przed pierwszym realnym testem awarii)?"
+  ],
+  "odrzucone_wlasne": [],
+  "czego_nie_bylo_na_mojej_liscie": [
+    "Awaria PODCZAS mail_w_toku (crash między wysłaniem maila a zapisem tokenu) — DOKUMENTACJA-TECHNICZNA §10 pkt 1 pyta o to explicite, ale mapa Ł nie ma osobnego celu na 'crash między wp_mail() a zapisem stanu' (jest tylko L3-03 u innego audytora dla ścieżki webhook×2/reconciliation, nie dla czystej awarii bazy w tym miejscu).",
+      "Zachowanie sklepag_stripe_pobierz_sesje() (reconciliation → Stripe) przy jednoczesnej awarii bazy I Stripe niedostępnego — złożona awaria podwójna nie jest w scenariuszach Ł-01..Ł-10.",
+    "Co się dzieje z KATALOGIEM chronionym (uprawnienia, właściciel pliku) po awarii bazy w trakcie uploadu nowego produktu przez panel — dotyka L2-09/L4 bardziej niż Ł, ale styk nie jest pokryty żadną soczewką explicite."
+  ],
+  "czego_nie_obejrzalem": [
+    "includes/pobieranie.php — nie wykonano żadnego testu bramy pobrań w tej rundzie (Ł-03 NIE DA SIĘ SPRAWDZIĆ)",
+    "includes/admin.php poza funkcją sklepag_ostrzez_permalinki — reszta panelu (produkt_zapisz, resend, eksport CSV) nie testowana pod kątem awarii (Ł-09, Ł-10)",
+    "seed wydajnościowy (Ł-06) i test obciążeniowy (Ł-07) — zero wykonania",
+    "stos warsztatowy :8890 — cała runda wykonana wyłącznie na probny_wp :8891 zgodnie z poleceniem"
+  ],
+  "wywolania_narzedzi": 26
+}

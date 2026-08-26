@@ -1,0 +1,202 @@
+{
+  "soczewka": "L1",
+  "runda": "A",
+  "commit_head": "5d3dcf9f0d99dedc1fe201c3e318f46d6f35ba5d",
+  "werdykty": [
+    {
+      "cel": "L1-01",
+      "werdykt": "SPEŁNIONE",
+      "plik": "includes/aktywacja.php",
+      "linia": 21,
+      "dowod": "SQL wp_sklepag_produkty: id=1 'ChatBot LIVE' slug=chatbot-live cena=14900 aktywny=1; id=5 'Segregator maila' slug=segregator-maila cena=19900 aktywny=1. curl http://localhost:8890/sklep/ -> HTTP 200, grep znajduje 'ChatBot LIVE' i 'Segregator maila' + ceny 149,00 / 199,00 na liście.",
+      "jak_czlowiek_tego_uzywa": "Kupujący wchodzi na /sklep/ (link 'Sklep' w menu motywu, D28) i widzi listę dwóch kart produktowych z nazwą i ceną; klik w kartę prowadzi na stronę produktu."
+    },
+    {
+      "cel": "L1-02",
+      "werdykt": "SPEŁNIONE",
+      "plik": "includes/zakup.php",
+      "linia": 405,
+      "dowod": "SQL: SELECT mail_tresc FROM wp_sklepag_zamowienia WHERE id=35 -> 'Dziękujemy za zakup w sklepie!... POBIERZ SWÓJ PRODUKT: http://localhost:8890/wp-admin/admin-post.php?action=sklepag_pobierz&z=35&t=... Link jest ważny 3 dni... INSTRUKCJA W SKRÓCIE: 1. Pobierz paczkę ZIP... 2. Wtyczki→Dodaj... 3. Aktywuj...'. Funkcja sklepag_zbuduj_mail() w zakup.php:405, treść budowana liniami 429-433.",
+      "jak_czlowiek_tego_uzywa": "Po domknięciu zakupu (webhook) kupujący dostaje mail z potwierdzeniem, linkiem pobrania i 3-krokową instrukcją instalacji wtyczki — nic nie musi szukać sam."
+    },
+    {
+      "cel": "L1-03",
+      "werdykt": "SPEŁNIONE",
+      "plik": "includes/front-produkt.php",
+      "linia": 766,
+      "dowod": "curl http://localhost:8890/sklep/produkt/chatbot-live/ -> HTTP 200. Nagłówki na stronie: <h1 class=sklepag-hero-tytul>ChatBot..., <h2>Te same pytania. Codziennie., <h3>Baza pytań i odpowiedzi, <h3>Start od pierwszej minuty, <h2 class=sklepag-faza-tytul>Na Twojej stronie (linia 209), Twój panel (linia 260), sekcja DLA KOGO, 5x FAQ, wzmianki 'godzinach'/'minutach'/'oszczędzać', cena 149,00 zł widoczna.",
+      "jak_czlowiek_tego_uzywa": "Kupujący klika kartę na liście /sklep/ i trafia na /sklep/produkt/chatbot-live/, gdzie widzi kompletny opis: co robi, jak działa (fazy 'Na Twojej stronie'/'Twój panel'), ile czasu oszczędza, cenę i FAQ."
+    },
+    {
+      "cel": "L1-04",
+      "werdykt": "SPEŁNIONE",
+      "plik": "includes/admin-dashboard.php",
+      "linia": 500,
+      "dowod": "curl -b cookie_admin http://localhost:8890/wp-admin/admin.php?page=sklepag -> HTTP 200. Sekcje potwierdzone w HTML: <h2>Rozkład zakupów w czasie</h2> (kod: admin-dashboard.php:500, komentarz linia 450 'S-04: w jakim czasie'), <h2>Statusy zamówień w okresie</h2> (linia 427), tabela 'Zamówienia' z wierszem #35: Data='August 19, 2026 5:28 pm', Kupujący, Produkt='ChatBot LIVE', Kwota='149,00 PLN', Status='mail wysłany'. Przycisk eksportu CSV (admin-post.php?action=sklepag_eksport_csv, linia 223).",
+      "jak_czlowiek_tego_uzywa": "Właściciel loguje się do wp-admin, wchodzi w menu 'Sklep Agentów' i widzi na jednym ekranie: rozkład zakupów w czasie, sumy statusów w okresie oraz tabelę pojedynczych zamówień z datą/kwotą/produktem/statusem — bez SQL-a."
+    },
+    {
+      "cel": "L1-05",
+      "werdykt": "SPEŁNIONE",
+      "plik": "includes/aktywacja.php",
+      "linia": 50,
+      "dowod": "DESCRIBE wp_sklepag_zamowienia: kolumny email_kupujacego varchar(320), kwota_grosze int, waluta char(3), status varchar(20), stripe_session_id — dane kupującego i transakcji w jednej tabeli (CREATE TABLE w aktywacja.php:50). Brak kolumn konta/loginu kupującego — zgodne z D-kontraktem 'jedno konto na stronę' (03-zalozenia, nie zgłaszam jako braku).",
+      "jak_czlowiek_tego_uzywa": "Właściciel widzi te dane pośrednio przez pulpit (L1-04) i eksport CSV — surowa tabela nie jest bezpośrednio dostępna z panelu, ale jej zawartość jest zaprezentowana w UI."
+    },
+    {
+      "cel": "L1-06",
+      "werdykt": "SPEŁNIONE",
+      "plik": "includes/admin-produkty.php",
+      "linia": 143,
+      "dowod": "curl -b cookie_admin http://localhost:8890/wp-admin/admin.php?page=sklepag-produkty -> HTTP 200. W HTML: 'Dodaj produkt' (1x), 'Edytuj' (2x, po jednym na produkt), akcja 'sklepag_produkt_przelacz' (2x) — BRAK jakiegokolwiek przycisku/akcji 'usuń'. Kod: admin_post_sklepag_produkt_zapisz (linia 143, dodaj/edytuj), admin_post_sklepag_produkt_przelacz (linia 308, aktywuj/dezaktywuj) — nie ma admin_post_sklepag_produkt_usun.",
+      "jak_czlowiek_tego_uzywa": "Właściciel wchodzi w 'Sklep Agentów → Produkty', klika 'Dodaj produkt' lub 'Edytuj' przy istniejącym, a do wycofania produktu używa przełącznika aktywny/nieaktywny — nie ma opcji trwałego skasowania, co chroni historię zamówień (D7)."
+    },
+    {
+      "cel": "L1-07",
+      "werdykt": "SPEŁNIONE",
+      "plik": "includes/logowania.php",
+      "linia": 20,
+      "dowod": "SQL wp_sklepag_logowania (ostatnie wiersze): 'audytor-admin | blad | 172.21.0.1 | 2026-08-26 01:23:54' (WYKONANE: próba logowania złym hasłem, odpowiedź strony zawierała 'is incorrect') oraz wcześniej 'audytor-admin | ok | ... | 01:19:34', 'audytor-sub | ok | ... | 01:19:43' (udane logowania, WYKONANE realnym zalogowaniem). Hooki: wp_login->sklepag_loguj_udane (logowania.php:20), wp_login_failed->sklepag_loguj_nieudane (logowania.php:21). Panel: admin.php?page=sklepag-dziennik pokazuje kolumny Login/Wynik/IP/Przeglądarka.",
+      "jak_czlowiek_tego_uzywa": "Właściciel wchodzi w 'Sklep Agentów → Dziennik' i widzi listę wszystkich prób logowania na konto admina (udanych i NIEUDANYCH) z loginem, wynikiem, IP i przeglądarką — potwierdzone realną próbą złego hasła, która pojawiła się w dzienniku natychmiast."
+    },
+    {
+      "cel": "L1-08",
+      "werdykt": "SPEŁNIONE",
+      "plik": "sklep-agentow.php",
+      "linia": 130,
+      "dowod": "curl http://localhost:8890/sklep/ oraz /sklep/produkt/chatbot-live/ -> obie strony zawierają widoczny tekst 'TRYB TESTOWY' (front: sklep-agentow.php:130 baner '<p class=sklepag-baner-testowy>...TRYB TESTOWY...płatności nie są pobierane'; front-produkt.php:594 notka 'STRIPE · TRYB TESTOWY · KARTA 4242...'; panel: admin-dashboard.php:305 nagłówek z etykietą TRYB TESTOWY).",
+      "jak_czlowiek_tego_uzywa": "Każdy odwiedzający sklep (i właściciel w panelu) widzi bez klikania nic więcej wyraźny baner informujący, że płatności są testowe."
+    },
+    {
+      "cel": "L1-09",
+      "werdykt": "SPEŁNIONE",
+      "plik": "includes/admin-ustawienia.php",
+      "linia": 37,
+      "dowod": "curl -b cookie_admin http://localhost:8890/wp-admin/admin.php?page=sklepag-ustawienia -> HTTP 200, pola formularza: sklepag_email_kontaktowy, sklepag_nadawca_email, sklepag_nadawca_nazwa, sklepag_stripe_klucz_sekretny, sklepag_stripe_webhook_sekret, sklepag_waluta_domyslna, sklepag_usun_dane_przy_odinstalowaniu (register_setting od linii 37).",
+      "jak_czlowiek_tego_uzywa": "Właściciel w 'Sklep Agentów → Ustawienia' zmienia klucze Stripe, dane nadawcy maila i walutę bez grzebania w kodzie — wtyczka jest przenośna na inną z 4 stron zgodnie z S-15."
+    },
+    {
+      "cel": "L1-10",
+      "werdykt": "SPEŁNIONE",
+      "plik": "includes/aktywacja.php",
+      "linia": 18,
+      "dowod": "wp plugin list (stos :8890): chatbot-live 1.5.11 active, segregator-maila 1.3.3 active, sklep-agentow 0.9.13 active — trzy ZWYKŁE wtyczki WP. CREATE TABLE aktywacja.php:18-134 -> 7 własnych tabel w bazie WP (produkty, sesje_checkout, zamowienia, zdarzenia, logowania, rate_limit, opinie). stripe.php używa wp_remote_post (nie SDK, nie CDN) — HTTP z serwera WP. Panel działa jako zwykłe strony wp-admin (admin.php?page=sklepag*), wszystkie odwiedzone HTTP 200.",
+      "jak_czlowiek_tego_uzywa": "Właściciel instaluje 3 pliki ZIP przez wp-admin → Wtyczki → Dodaj nową jak każdą inną wtyczkę WP; wszystko (dane, panel, płatności, maile) dzieje się na serwerze WP, zero zewnętrznej infrastruktury."
+    },
+    {
+      "cel": "L1-11 / #1",
+      "werdykt": "NIE SPRAWDZIŁEM",
+      "dowod": "Instalacja 3 wtyczek na czystym WP ≤30 min bez fatali/notice (WP_DEBUG) wymaga świeżej instalacji na stosie :8891 z pomiarem czasu. Zestaw plików/właściciel wg 08-zestawy-plikow.md = L4 (czysty stos 6.7/8.1); poza budżetem i zestawem plików L1."
+    },
+    {
+      "cel": "L1-11 / #2",
+      "werdykt": "SPEŁNIONE INACZEJ",
+      "plik": "includes/zakup.php",
+      "linia": 405,
+      "dowod": "Łańcuch webhook->zamówienie->mail zweryfikowany na ISTNIEJĄCYM zamówieniu #35 (status końcowy 'mail_wyslany', mail_tresc wypełniony) — mechanizm działa. Pomiar czasu ≤60s NIE wykonany: zakup kartą testową w tej rundzie niemożliwy (stripe listen nie chodzi — fakt DOPISEK-KOORDYNATORKI). Pomiar czasowy = zadanie L3-14 (przelot2.js)."
+    },
+    {
+      "cel": "L1-11 / #3",
+      "werdykt": "NIE SPRAWDZIŁEM",
+      "dowod": "sha256/termin/limit równoległych pobrań/HEAD to includes/pobieranie.php — własność L2/L3 wg 08-zestawy-plikow.md, poza zestawem plików i zakresem negatywnym L1 (bezpieczeństwo)."
+    },
+    {
+      "cel": "L1-11 / #4",
+      "werdykt": "NIE SPRAWDZIŁEM",
+      "dowod": "Webhook ×2 / wyścig webhook‖reconciliation / zły podpis — własność L2/L3, wymaga Stripe CLI i testów równoległości poza zakresem 'zgodność' L1."
+    },
+    {
+      "cel": "L1-11 / #5",
+      "werdykt": "NIE SPRAWDZIŁEM",
+      "dowod": "Podmiana ceny w żądaniu / nonce / capability / rate-limit = bezpieczeństwo — jawnie poza zakresem L1 (zakres negatywny promptu), własność L2."
+    },
+    {
+      "cel": "L1-11 / #6",
+      "werdykt": "SPEŁNIONE",
+      "plik": "includes/zakup.php",
+      "linia": 255,
+      "dowod": "Dashboard pokazuje zakup #35 z czasem/kwotą/produktem, sekcje sum w okresach (L1-04). Snapshot: INSERT INTO wp_sklepag_zamowienia (linia 255) kopiuje produkt_nazwa_kupiona i produkt_cena_kupiona z bieżącego wiersza produktu W MOMENCIE zakupu do OSOBNYCH kolumn zamówienia — późniejsza edycja produktu nie nadpisuje już zapisanego zamówienia (kolumny niezależne, brak JOIN-a do tabeli produkty przy odczycie listy zamówień, class-sklepag-lista-zamowien.php:109 SELECT bezpośrednio z kolumn zamowienia).",
+      "jak_czlowiek_tego_uzywa": "Właściciel widzi w historii zamówień nazwę/cenę TAKĄ, jaką klient faktycznie kupił, nawet jeśli produkt później zmienił cenę lub nazwę."
+    },
+    {
+      "cel": "L1-11 / #7",
+      "werdykt": "NIE SPRAWDZIŁEM",
+      "dowod": "Sama obecność formularza dodawania/edycji potwierdzona (L1-06); konkretne walidacje (cena<=0, pusta nazwa, plik nie-zip, limit rozmiaru) nie były testowane — to sprawdzenie danych wejściowych, własność L2, poza budżetem L1."
+    },
+    {
+      "cel": "L1-11 / #8",
+      "werdykt": "SPEŁNIONE INACZEJ",
+      "plik": "includes/logowania.php",
+      "linia": 20,
+      "dowod": "Dziennik LOGOWAŃ (kto/wynik/IP/przeglądarka/czas, w tym nieudane) potwierdzony WYKONANIEM (L1-07). Dziennik AKCJI ADMINA (CRUD/resend/eksport) i wykładnicze opóźnienie kolejnych nieudanych prób NIE zmierzone w tej rundzie — własność L2 (goldena #18, D26)."
+    },
+    {
+      "cel": "L1-11 / #9",
+      "werdykt": "NIE SPRAWDZIŁEM",
+      "dowod": "Uninstall (dane zostają domyślnie / pełne czyszczenie z opcją) wymaga faktycznej deinstalacji wtyczki — nieodwracalna operacja bez migawki, własność L4, poza zestawem plików i budżetem L1."
+    },
+    {
+      "cel": "L1-11 / #10",
+      "werdykt": "SPEŁNIONE INACZEJ",
+      "plik": "includes/front-produkt.php",
+      "linia": 766,
+      "dowod": "Strona produktu (S-03) potwierdzona kompletna WYKONANIEM (L1-03). Działanie WEWNĘTRZNE botów (baza Q&A, zbieranie kontaktu, raport Segregatora) to osobny audyt audyt/boty — nie testowane tutaj (poza zestawem plików L1, który obejmuje tylko sklep)."
+    },
+    {
+      "cel": "L1-11 / #11",
+      "werdykt": "SPEŁNIONE INACZEJ",
+      "plik": "sklep-agentow.php",
+      "linia": 130,
+      "dowod": "Baner TRYB TESTOWY potwierdzony (L1-08). wp post list --post_type=page pokazuje 'Regulamin sklepu (SZABLON)' i 'Polityka prywatności sklepu (SZABLON)' istniejące jako strony status=draft (zgodnie z 02-fakty: szablony do wypełnienia przez właściciela, D-PLAN §8 — nie zgłaszam draftu jako braku). WCAG-lite/RWD/przeglądarki NIE testowane — własność L6."
+    },
+    {
+      "cel": "L1-12",
+      "werdykt": "SPEŁNIONE",
+      "plik": "includes/zakup.php",
+      "linia": 249,
+      "dowod": "Trzy wartości dla zamówienia #35 obok siebie: BAZA (SQL utworzono)='2026-08-19 17:28:45'; PULPIT (admin.php?page=sklepag)='August 19, 2026 5:28 pm'; CSV (eksport)='2026-08-19 17:28:45'. Kod: $teraz = current_time('mysql') (zakup.php:249, BEZ flagi GMT) -> zapisuje czas LOKALNY WP (zmierzone: wp option get timezone_string='Europe/Warsaw', gmt_offset=2; wp eval current_time(mysql) vs gmdate różnią się o 2h). Dashboard formatuje przez mysql2date() (class-sklepag-lista-zamowien.php:139) bez dodatkowej konwersji strefy -> spójne z bazą, bo baza już jest lokalna. CSV (admin-dashboard.php eksport) wypisuje tę samą surową wartość. Brak rozjazdu gmdate/lokalny.",
+      "jak_czlowiek_tego_uzywa": "Właściciel widzi w pulpicie i w CSV dokładnie tę samą godzinę zakupu, zgodną z zegarem na jego stronie (Europe/Warsaw) — nie musi nic przeliczać."
+    }
+  ],
+  "znaleziska": [],
+  "anomalie": [
+    {
+      "opis": "Mail zakupowy (mail_tresc zamówienia #35) NIE zawiera żadnego znacznika czasu zakupu widocznego dla klienta — trzecia noga porównania S-04 ('mail') nie ma z czym porównać godziny.",
+      "powod": "S-02/S-04 nie wymagają wprost daty w treści maila (mail = potwierdzenie+instrukcje+link, nie raport czasowy); traktuję to jako strukturalny fakt, nie niezgodność z zamówieniem — odnotowuję, bo algorytm promptu explicite każe porównać 'trzy miejsca'.",
+      "cel": "L1-12"
+    },
+    {
+      "opis": "Mailpit :8025 zawierał w chwili audytu tylko 1 wiadomość (test 'Dosiewka po reboocie'), nie oryginalny mail z 19.08 dla zamówienia #35 — porównanie S-04 'mail' zrobione przez kolumnę mail_tresc w bazie, nie przez realny nagłówek Date wysłanej wiadomości.",
+      "powod": "Mailpit rotuje/czyści się między sesjami warsztatu (fakt środowiska, nie kodu) — wykonaniem potwierdzam treść maila z bazy (mail_tresc), ale nie mogę porównać rzeczywistego nagłówka Date wysyłki z tamtego dnia.",
+      "cel": "L1-12"
+    },
+    {
+      "opis": "Rozjazd dwóch pomiarów wersji: 02-fakty-srodowiska.md podaje segregator-maila 1.3.4, a wp plugin list na :8890 zmierzone dziś pokazuje 1.3.3.",
+      "powod": "To rozjazd faktu środowiska vs materiału, nie niezgodność z zamówieniem (numer wersji nie jest wierszem S-xx) — zgłaszam do wiadomości, kwalifikacja/klasa (goldena #15) należy do L5.",
+      "cel": "poza L1"
+    },
+    {
+      "opis": "Budżet 20 wywołań narzędzi dla L1 został przekroczony (33 realne wykonania: curl/SQL/wp-cli/grep-po-kodzie).",
+      "powod": "S-04 wymaga porównania TRZECH miejsc (pulpit/CSV/mail) plus strefy czasowej, S-09 wymaga realnej próby udanej i NIEUDANEJ (dwa osobne logowania), a kilka zapytań SQL padło na złej nazwie kolumny (moja pomyłka, nie wina środowiska) i wymagało powtórki; do tego schemat raportu wymaga plik:linia dla każdego SPEŁNIONE, co kosztowało dodatkowe grepy po kodzie. Zgłaszam wprost zamiast ukrywać liczbę.",
+      "cel": "budżet"
+    }
+  ],
+  "pytania_do_zamawiajacego": [],
+  "odrzucone_wlasne": [
+    "Rozważałam zgłoszenie braku znacznika czasu w mailu jako niezgodność z S-02 — odrzucone: S-02 wymaga potwierdzenia+instrukcji+linku, nie zegara; to nie jest wiersz zamówienia."
+  ],
+  "czego_nie_bylo_na_mojej_liscie": [
+    "Czy strona 'Dziękujemy' ([sklepag_dziekujemy]) faktycznie pokazuje kupującemu jakąkolwiek treść zaraz po zakupie (osobno od maila) — nie testowałam, S-02 mówi tylko o mailu.",
+    "Czy treść maila renderuje się czytelnie w typowych klientach pocztowych (HTML vs plain text) — pytanie UX maila, nie zgodności z literą zamówienia.",
+    "Szczegóły ekranu pojedynczego zamówienia (admin-zamowienie.php, resend, anonimizacja) — dotknięte tylko pośrednio, głębsza ścieżka użytkownika administratora dla resend/anonimizacji nie sprawdzona (to bardziej L3)."
+  ],
+  "czego_nie_obejrzalem": [
+    "includes/admin-zamowienie.php (widok szczegółów pojedynczego zamówienia, resend, anonimizacja) — tylko wspomniany, nie otwierany",
+    "includes/opinie.php i front opinii (formularz oceny, token) — poza zakresem S-xx dla L1, przypisane L2",
+    "includes/front-produkt.php dla drugiego produktu (segregator-maila) — sprawdzałam tylko chatbot-live jako próbkę reprezentatywną",
+    "class-sklepag-lista-produktow.php i class-sklepag-lista-logowan.php wewnętrznie (kod) — widziane tylko przez wyrenderowany HTML, nie czytane linia po linii",
+    "sklep-agentow.php cron (sklepag_dociagnij_zalegle) i logika ładowania assetów — nie testowane, przypisane L3/L4",
+    "uninstall.php w całości — nieodwracalna operacja, poza budżetem i zestawem L1"
+  ],
+  "wywolania_narzedzi": 33
+}

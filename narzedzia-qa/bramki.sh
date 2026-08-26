@@ -36,11 +36,11 @@ set -u
 # ⛔ Rejestr bramek. Nazwy MUSZĄ zgadzać się z .github/manifest-bramek.txt —
 # pilnuje tego narzedzia-qa/sprawdz-manifest.sh. Kolejność jak w quality.yml
 # sprzed zbicia zadań: najpierw tanie i statyczne, na końcu skan historii.
-BRAMKI=(actionlint manifest slady znaleziska php-lint phpcs phpstan gitleaks)
+BRAMKI=(actionlint manifest slady znaleziska php-lint phpcs phpstan gitleaks poswiadczenia)
 # Bramki dotykające WYŁĄCZNIE kodu PHP — pomijane, gdy zmiana jest tekstowa.
 BRAMKI_PHP=(php-lint phpcs phpstan)
-PROG_PELNY=8
-PROG_TEKSTOWY=5
+PROG_PELNY=9
+PROG_TEKSTOWY=6
 
 # Wersje narzędzi pobieranych, gdy nie ma ich w PATH. Pinowane świadomie:
 # „najnowsza" w bramce oznacza, że CI potrafi zmienić zdanie bez naszej zmiany.
@@ -219,6 +219,10 @@ uruchom_slady() {
 	return $kod
 }
 
+uruchom_poswiadczenia() {
+	bash narzedzia-qa/bramka-poswiadczenia.sh
+}
+
 uruchom_gitleaks() {
 	local bin
 	bin="$(zapewnij_narzedzie gitleaks \
@@ -239,6 +243,7 @@ bramka php-lint   uruchom_php_lint
 bramka phpcs      uruchom_phpcs
 bramka phpstan    uruchom_phpstan
 bramka gitleaks   uruchom_gitleaks
+bramka poswiadczenia uruchom_poswiadczenia
 
 # --- podsumowanie i strażnik liczby -------------------------------------------
 

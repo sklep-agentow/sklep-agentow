@@ -50,6 +50,7 @@ sprawdz() { # sprawdz <opis> <oczekiwany-exit> <funkcja-psujaca> <fragment-komun
 nic()            { :; }
 psuj_mapa()      { sed -i 's/^- ✅ L1-01/- ⬜ L1-01/' "$1/audyt/sklep/material/06-mapa-polowania.md"; }
 psuj_zamroz()    { printf -- '- ⬜ L9-99 · dopisany po zamrożeniu ·\n' >> "$1/audyt/sklep/material/06-mapa-polowania.md"; sed -i 's/^- ⬜ L9-99/- ✅ L9-99/' "$1/audyt/sklep/material/06-mapa-polowania.md"; }
+psuj_kal_dubel()  { ( cd "$1" && git checkout -q audyt/mutanty-sklep && sed -i 's/| L5 | M6 |/| L3 | M6 |/' audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP.md && git commit -qam dubel && git checkout -q - ); }  # 6 wierszy, 5 soczewek (#189 W3)
 psuj_kalibracja(){ ( cd "$1" && git checkout -q audyt/mutanty-sklep && sed -i 's/| L3 | M3 | tak | nie | PASS | 2 |/| L3 | M3 | nie | nie | FAIL | 2 |/' audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP.md && git commit -qam zle && git checkout -q - ); }
 psuj_kal_potok() { ( cd "$1" && git checkout -q audyt/mutanty-sklep && sed -i 's/| L3 | M3 | tak | nie | PASS | 2 |/| L3 | M3 \\| M3b | tak | nie | PASS | 3 |/' audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP.md && git commit -qam zle && git checkout -q - ); }
 psuj_przelot_znak() { sed -i 's/^- ✅ B1/- ❓ B1/' "$1/audyt/sklep/PRZELOT-CZLOWIEKA-SKLEP.md"; }
@@ -96,6 +97,7 @@ sprawdz "2 proby=3 w wierszu z \\| w komórce (W2 #186)"      1 psuj_kal_potok  
 sprawdz "5 przelot z nieznanym znacznikiem ❓"             1 psuj_przelot_znak  "5 przelot człowieka: nieznany znacznik"
 sprawdz "2 soczewka FAIL (proby=2 — tylko werdykt)"       1 psuj_kalibracja  "2 kalibracja"
 sprawdz "2 proby=3 przy PASS (W2 — tylko licznik prob)"   1 psuj_kal_proby   "proby>2=1"
+sprawdz "2 dubel soczewki: 6 wierszy, 5 soczewek (#189 W3)" 1 psuj_kal_dubel   "soczewek=5"
 sprawdz "3b znalezisko DO WERYFIKACJI"                    1 psuj_rejestr     "3b rejestr"
 sprawdz "3c naprawa_proby = 3"                            1 psuj_proby       "3c rejestr"
 sprawdz "3d ZAMKNIETE bez pliku straznika"                1 psuj_straznik    "3d rejestr"
