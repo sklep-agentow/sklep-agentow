@@ -61,6 +61,16 @@ function sklepag_start() {
 		wp_schedule_event( time() + 600, 'sklepag_10min', 'sklepag_dociagnij_zalegle' );
 	}
 
+	// Self-heal katalogu chronionego — DRUGI zasób tworzony tylko przy aktywacji.
+	// Aktualizacja w miejscu („Aktualizuj teraz") aktywacji NIE odpala, więc instalacja bez
+	// opcji `sklepag_katalog_chroniony` nie odzyskiwała jej niczym: cron miał samonaprawę,
+	// katalog nie, a bez niego pliki produktów nie mają chronionego miejsca. Sprawdzamy w
+	// panelu i w cronie (funkcja jest idempotentna: gdy katalog jest, wraca natychmiast) —
+	// nie na każdym żądaniu frontu, żeby wizyta kupującego nie płaciła za to sprawdzeniem dysku.
+	if ( is_admin() || wp_doing_cron() ) {
+		sklepag_utworz_katalog_chroniony();
+	}
+
 	add_shortcode( 'sklepag_sklep', 'sklepag_shortcode_sklep' );
 	add_shortcode( 'sklepag_dziekujemy', 'sklepag_shortcode_dziekujemy' );
 	add_action( 'wp_enqueue_scripts', 'sklepag_assety_frontu' );
