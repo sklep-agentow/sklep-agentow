@@ -27,7 +27,8 @@
  * EXIT 0 = A, B i C zgodne z oczekiwaniem · 1 = któryś nie (REGRESJA)
  *      2 = środowisko: brak aktywnego produktu z plikiem ALBO wyczerpany limiter zakupu
  *          (10 prób na adres i minutę; w CLI adres jest stały, więc licznik dzielą wszystkie
- *          przebiegi — trzeci przebieg w minucie już go dobija). Kod 2 NIE znaczy regresji.
+ *          przebiegi. Strażnik woła handler 3 razy na przebieg przy progu 10 na minutę, więc
+ *          limiter pada na 11. wywołaniu, czyli w CZWARTYM przebiegu — zmierzone). Kod 2 NIE znaczy regresji.
  */
 
 global $wpdb;
@@ -126,10 +127,13 @@ $wpdb->query(
 );
 set_transient( $okno, array( 'url' => $stary_url, 'sid' => $stary_sid, 'czas' => time() ), MINUTE_IN_SECONDS );
 $a    = $probuj_kup();
-$a_ok = ( $a !== $stary_url );
+// ⛔ ROWNOSC z nowym adresem, nie sama roznosc od starego: `wp_die` jest teraz przechwytywane
+// i jego tresc trafia do $a, a komunikat bledu z definicji nie rowna sie $stary_url — wiec
+// warunek `!==` mowil PASS takze przy CALKOWICIE zepsutej sciezce zakupu (recenzja #199 r3).
+$a_ok = ( $a === $nowy_url );
 echo 'A. okno z sesja OPLACONA -> ' . ( '' === $a ? '(brak przekierowania)' : $a ) . "\n";
-echo '   OCZEKIWANE: cokolwiek INNEGO niz ' . $stary_url . "\n";
-echo '   WYNIK=' . ( $a_ok ? 'PASS' : 'FAIL - oddal kupujacemu oplacona sesje' ) . "\n";
+echo '   OCZEKIWANE: ' . $nowy_url . " (NOWY checkout, nie sam brak starego)\n";
+echo '   WYNIK=' . ( $a_ok ? 'PASS' : 'FAIL - nie powstal nowy checkout (oddal oplacona sesje albo sciezka zakupu jest zepsuta)' ) . "\n";
 $wynik[] = $a_ok;
 
 /* ---------- B) KONTROLA: w oknie siedzi sesja CZEKAJĄCA (ochrona ma działać) ---------- */
@@ -175,10 +179,10 @@ set_transient(
 	MINUTE_IN_SECONDS
 );
 $c    = $probuj_kup();
-$c_ok = ( $c !== $stary_url );
+$c_ok = ( $c === $nowy_url );   // jw. — rownosc z nowym checkoutem, nie sama roznosc
 echo 'C. okno STARE (' . ( $prog_okna + 25 ) . ' s), sesja u nas wciaz CZEKAJACA -> ' . ( '' === $c ? '(brak przekierowania)' : $c ) . "\n";
-echo '   OCZEKIWANE: cokolwiek INNEGO niz ' . $stary_url . " (po tylu sekundach to nie jest podwojny klik)\n";
-echo '   WYNIK=' . ( $c_ok ? 'PASS' : 'FAIL - oddal adres sesji, ktora mogla juz zostac oplacona' ) . "\n";
+echo '   OCZEKIWANE: ' . $nowy_url . " (NOWY checkout; po tylu sekundach to nie jest podwojny klik)\n";
+echo '   WYNIK=' . ( $c_ok ? 'PASS' : 'FAIL - nie powstal nowy checkout (oddal sesje, ktora mogla juz byc oplacona, albo zakup jest zepsuty)' ) . "\n";
 $wynik[] = $c_ok;
 
 $posprzataj();

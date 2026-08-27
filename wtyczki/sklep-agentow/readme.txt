@@ -146,8 +146,8 @@ link do pobrania w mailu, jednorazowy link do opinii.
 * Poprawka: po opłaceniu zakupu ponowne kliknięcie przycisku zakupu zaczyna nową
   płatność zamiast pokazywać opłacony już ekran Stripe.
 * Zmiana widoczna dla kupującego: okno ochrony przed podwójnym kliknięciem trwa teraz
-  5 sekund zamiast minuty. Dwa kliknięcia pod rząd nadal prowadzą do jednej płatności,
-  ale powrót na stronę produktu po kilkunastu sekundach rozpocznie nową.
+  5 sekund zamiast minuty. Dwa kliknięcia pod rząd nadal nie kończą się podwójnym
+  obciążeniem, ale powrót na stronę produktu po kilkunastu sekundach rozpocznie nową płatność.
 
 = 0.9.17 =
 * Ponowna wysyłka maila nie może zmienić stanu zamówienia zwróconego
