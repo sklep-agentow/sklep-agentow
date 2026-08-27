@@ -109,3 +109,31 @@ w DOKUMENTACJA-TECHNICZNA.md (tabela opisana jako informacyjna zaczela rozstrzyg
 zakupu), raz w CHANGELOG.md i readme.txt (twierdzily, ze ochrona dziala bez zmian, gdy okno
 skurczylo sie z 60 s do 5 s). ⭐ **Odruch: po naprawie zapytaj nie tylko czego to dotyka w KODZIE,
 ale ktore ZDANIE o tym kodzie przestalo byc prawdziwe.**
+
+---
+
+## KLASY DOPISANE 2026-08-28 — z 4 rund recenzji PR #201 (przelot człowieka po sklepie)
+
+Źródło: naprawa DWÓCH wad znalezionych przez człowieka klikającego produkt, nie przez test.
+Cztery rundy. Kod produktu był czysty od rundy 3 — **wszystkie trzy klasy niżej to wady
+MOJEGO WŁASNEGO SPRAWDZANIA**, złapane na sobie w trakcie rund, i to jest cała lekcja tego
+rozdziału: im lepszy kod, tym bardziej wąskim gardłem staje się przyrząd, którym go mierzę.
+
+| # | Klasa (skąd wzięcie) | Dowód z tych rund | Co ją łapie U NAS |
+|---|---|---|---|
+| 17 | **TEST KOŃCZĄCY SIĘ NA FUNKCJI, KTÓRA WOŁA `exit` — fałszywa zieleń nie do odróżnienia od zdanego testu** | Pierwsza wersja testu bliźniaka wołała handler opinii jako ostatnią instrukcję. Handler kończy `exit`, więc **cztery ostatnie asercje nigdy się nie wykonały**, a kod wyjścia i tak był ZEROWY — test meldował sukces, nie wykonawszy połowy sprawdzeń. Pod `wp eval-file` nie da się tego przechwycić: `exit` ubija proces, a funkcja zamknięcia biegnie po tym, jak WP-CLI opróżni bufory | Ścieżkę kończącą się `exit` mierzy się **z zewnątrz**: kroki w PHP tylko DRUKUJĄ, a werdykt i kod wyjścia liczy skrypt powłoki, który czyta TREŚĆ (wzorzec: `testy/opinia-formularz-trzyma-tresc-po-odrzucie-test.sh` + trzy kroki `opinia-odrzut-krok*.php`). ⛔ Pytanie kontrolne do każdego testu: **czy ostatnia instrukcja może zakończyć proces?** Jeśli tak — asercje po niej są ozdobą |
+| 18 | **POSZERZENIE OKNA POMIARU NIE WYSTARCZA — asercja bywa martwa, bo WARUNEK WADY nie zachodzi** | Recenzent wytknął, że pauza mierzona 300 ms po Enterze nie dowodzi kryterium 2.2.2 (ruch >5 s). Wydłużyłam pomiar do 6,5 s — i asercja **nadal przechodziła nawet z CAŁKOWICIE usuniętą ochroną pauzy**, bo kafel wypadał z ekranu po 16 Tabach, a strażnik postępu pomija nagrania poza kadrem. Mierzyłam ciszę i nazywała się zgodnością | Każda asercja mierząca skutek uboczny musi **sprawdzić własny warunek wstępny i PAŚĆ jako błąd przyrządu**, gdy go nie osiągnęła (`kafel-wideo-klawiatura.js`: jedna asercja wymaga kafla W kadrze, sąsiednia wymaga, żeby WYPADŁ). ⛔ Test kalibruj **podkładając wadę**, nie tylko starą wersję pliku: jeśli asercja nie pada na kodzie bez ochrony, jest martwa — niezależnie od tego, jak długo czeka |
+| 19 | **NARZĘDZIE, KTÓRE CICHO OBCINA WEJŚCIE — odbiorca nie ma jak zobaczyć własnej dziury** | Hook startowy wstrzykiwał żywy mózg maszyny poleceniem `head -60`, a plik urósł do 136 linii: **76 linii znikało bez jednego znaku ostrzeżenia**, w tym ścieżka repozytorium zlecenia i wskaźnik na ten rejestr. Skutek jest gorszy niż brak narzędzia: sesja startuje przekonana, że ma komplet | Każde `head -N`, `\| head`, `cut`, limit trafień i „pierwsze N wyników" w rzeczy, która KARMI kontekst albo decyzję, musi **powiedzieć, że uciął**: ile było, ile pokazano, gdzie reszta. ⛔ Drugie dno: limit ustawiony słusznie przestaje chronić, gdy pilnowany plik rośnie — pilnuje wtedy nie pliku, tylko cudzej wiedzy o nim |
+
+### Meta-lekcja tych rund
+
+**Kod produktu przestał być wąskim gardłem — stał się nim przyrząd.** Klasy 17 i 18 mają ten
+sam kształt co klasy 11 i 12 z PR #198 (bramka o zakresie węższym niż nazwa, zero jako sukces),
+tylko na wyższym piętrze: tam narzędzie nie widziało części terenu, tu **nie wykonało się w ogóle**
+albo mierzyło stan, w którym wada nie mogła się objawić. Obie przechodzą na zielono i obie
+wyglądają dokładnie jak dowód.
+
+⭐ **Trzy pytania, które wychodzą z tych rund i kosztują sekundy, a nie rundę recenzji:**
+1. Czy ostatnia instrukcja mojego testu może **zakończyć proces**?
+2. Czy asercja **PADA**, gdy podłożę wadę — nie „czy przechodzi, gdy jest naprawa"?
+3. Czy warunek, w którym wada się objawia, **na pewno zachodzi** w chwili pomiaru?
