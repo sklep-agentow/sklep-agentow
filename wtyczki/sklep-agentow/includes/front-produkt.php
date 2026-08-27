@@ -705,8 +705,12 @@ function sklepag_kafel_fazy( $k ) {
 		$html  = '<figure class="sklepag-kafel sklepag-kafel--wideo">' . $pasek . '<div class="sklepag-kafel-kadr">';
 		$html .= '<video src="' . $zrodlo . '" poster="' . $plakat . '" width="' . (int) $k['szer'] . '" height="' . (int) $k['wys'] . '" autoplay muted loop playsinline preload="auto" aria-label="' . esc_attr( $k['alt'] ) . '"></video>';
 		$html .= '<img class="sklepag-kafel-plakat" src="' . $plakat . '" alt="" aria-hidden="true" width="' . (int) $k['szer'] . '" height="' . (int) $k['wys'] . '">';
-		// Prawdziwy przycisk (dostępny z klawiatury) na wypadek blokady autoodtwarzania — ukryty,
-		// dopóki front-ruch.js nie rozpozna blokady; bez JS nagranie i tak ma `autoplay`.
+		// Prawdziwy przycisk (dostępny z klawiatury), a nie pseudo-element. Od 0.9.19 przy
+		// DZIAŁAJĄCYM JS jest widoczny ZAWSZE — `front-ruch.js` zdejmuje `hidden` przy starcie,
+		// bo ruch trwający dłużej niż 5 s musi dać się zatrzymać, a element `display:none`
+		// wypada z kolejności Tab. Atrybut `hidden` w markupie jest zapasem na BRAK JS:
+		// przycisk, którego nie ma czym obsłużyć, byłby gorszy niż jego brak — wtedy zostaje
+		// samo `autoplay`. Ta sama zasada opisana przy regule w `assets/front.css`.
 		$html .= '<button type="button" class="sklepag-kafel-odtworz" hidden><span aria-hidden="true">▶</span> Odtwórz nagranie</button>';
 		return $html . '</div><figcaption class="sklepag-mono-etykieta">' . esc_html( $k['podpis'] ) . '</figcaption></figure>';
 	}

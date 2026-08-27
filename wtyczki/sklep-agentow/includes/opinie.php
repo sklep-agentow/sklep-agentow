@@ -320,9 +320,32 @@ function sklepag_obsluz_ocen_formularz() {
 	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- własna tabela, prefiks WP.
 	$nazwa = (string) $wpdb->get_var( $wpdb->prepare( "SELECT nazwa FROM {$wpdb->prefix}sklepag_produkty WHERE id = %d", (int) $op->produkt_id ) );
 
+	// ⛔ ODRZUT NIE MOŻE KASOWAĆ TREŚCI, KTÓRĄ NAPISAŁ KUPUJĄCY. Tu w grę wchodzi do 2000
+	// znaków, a kupującemu — inaczej niż właścicielowi sklepu — nikt tego nie odtworzy.
+	// Odrzut odkłada wypełnione pola w przechowalni na 15 minut i wraca tu z `blad=1`;
+	// szkic nakładamy WYŁĄCZNIE na tym powrocie i kasujemy po pierwszym odczycie.
+	// Klucz nie niesie tokenu jawnie (token jest tu autoryzacją), tylko jego skrót.
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- powrót po odrzucie; autoryzacją całej ścieżki jest token sprawdzony wyżej.
+	$po_odrzucie  = isset( $_GET['blad'] );
+	$klucz_szkicu = 'sklepag_szkic_opinii_' . md5( (int) $z . '|' . $token );
+	$szkic        = $po_odrzucie ? get_transient( $klucz_szkicu ) : false;
+	if ( is_array( $szkic ) ) {
+		delete_transient( $klucz_szkicu );
+	} else {
+		$szkic = array();
+	}
+	$we = static function ( $pole ) use ( $szkic ) {
+		return isset( $szkic[ $pole ] ) ? (string) $szkic[ $pole ] : '';
+	};
+	// ⛔ ZGODY NIE ODTWARZAMY NIGDY. Zaznaczenie zgody na publikację imienia musi być
+	// świeżym gestem człowieka; gdyby wracała zaznaczona, odrzut „brak zgody" sam by ją
+	// za kupującego postawił.
+	$ocena_szkicu = isset( $szkic['gwiazdki'] ) ? (int) $szkic['gwiazdki'] : 0;
+
 	$gwiazdki = '';
 	for ( $i = 1; $i <= 5; $i++ ) {
-		$gwiazdki .= '<label><input type="radio" name="sklepag_gwiazdki" value="' . (int) $i . '"' . ( 5 === $i ? ' checked' : '' ) . '> ' . (int) $i . '★</label>';
+		$wybrana   = $ocena_szkicu > 0 ? ( $ocena_szkicu === $i ) : ( 5 === $i );
+		$gwiazdki .= '<label><input type="radio" name="sklepag_gwiazdki" value="' . (int) $i . '"' . ( $wybrana ? ' checked' : '' ) . '> ' . (int) $i . '★</label>';
 	}
 
 	$formularz  = '<p>Oceniasz: <strong>' . esc_html( '' !== $nazwa ? $nazwa : 'zakupiony produkt' ) . '</strong>. Publikujemy opinię dopiero po potwierdzeniu zakupu i akceptacji — dlatego przy opinii pojawi się plakietka „ZWERYFIKOWANY ZAKUP".</p>';
@@ -332,9 +355,9 @@ function sklepag_obsluz_ocen_formularz() {
 	$formularz .= '<input type="hidden" name="t" value="' . esc_attr( $token ) . '">';
 	$formularz .= '<div class="sklepag-extra" aria-hidden="true"><label>Zostaw to pole puste<input type="text" name="sklepag_extra" tabindex="-1" autocomplete="off"></label></div>';
 	$formularz .= '<fieldset><label>Ocena</label><div class="sklepag-gw">' . $gwiazdki . '</div></fieldset>';
-	$formularz .= '<label for="sklepag-imie">Imię (pokażemy je przy opinii)</label><input id="sklepag-imie" type="text" name="sklepag_imie" maxlength="100" required>';
-	$formularz .= '<label for="sklepag-tytul">Tytuł opinii (opcjonalnie)</label><input id="sklepag-tytul" type="text" name="sklepag_tytul" maxlength="150">';
-	$formularz .= '<label for="sklepag-tresc">Twoja opinia</label><textarea id="sklepag-tresc" name="sklepag_tresc" maxlength="2000" required></textarea>';
+	$formularz .= '<label for="sklepag-imie">Imię (pokażemy je przy opinii)</label><input id="sklepag-imie" type="text" name="sklepag_imie" maxlength="100" required value="' . esc_attr( $we( 'imie' ) ) . '">';
+	$formularz .= '<label for="sklepag-tytul">Tytuł opinii (opcjonalnie)</label><input id="sklepag-tytul" type="text" name="sklepag_tytul" maxlength="150" value="' . esc_attr( $we( 'tytul' ) ) . '">';
+	$formularz .= '<label for="sklepag-tresc">Twoja opinia</label><textarea id="sklepag-tresc" name="sklepag_tresc" maxlength="2000" required>' . esc_textarea( $we( 'tresc' ) ) . '</textarea>';
 	$formularz .= '<label class="sklepag-zgoda"><input type="checkbox" name="sklepag_zgoda" value="1" required> ' . esc_html( SKLEPAG_OPINIA_ZGODA_TRESC ) . '</label>';
 	$formularz .= '<button type="submit">Wyślij opinię</button>';
 	$formularz .= '<p class="sklepag-nota">Link jest jednorazowy. Opinia trafia najpierw do moderacji — na stronie pojawi się po akceptacji.</p>';
@@ -381,7 +404,18 @@ function sklepag_obsluz_ocen_zapis() {
 		$powod = 'zgoda' === $wynik
 			? 'Bez zgody na publikację nie możemy pokazać opinii — zaznacz zgodę i wyślij ponownie.'
 			: 'Uzupełnij imię, treść opinii i ocenę (1–5), potem wyślij ponownie.';
-		sklepag_opinia_strona( 'Prawie się udało', '<p>' . esc_html( $powod ) . '</p><p><a href="' . esc_url( admin_url( 'admin-post.php' ) . '?action=sklepag_ocen&z=' . (int) $z . '&t=' . rawurlencode( $token ) ) . '">← Wróć do formularza</a></p>' );
+		// Odkładamy to, co kupujący już napisał — bez zgody, która musi być świeżym gestem.
+		set_transient(
+			'sklepag_szkic_opinii_' . md5( (int) $z . '|' . $token ),
+			array(
+				'imie'     => $dane['imie'],
+				'tytul'    => $dane['tytul'],
+				'tresc'    => $dane['tresc'],
+				'gwiazdki' => (int) $dane['gwiazdki'],
+			),
+			15 * MINUTE_IN_SECONDS
+		);
+		sklepag_opinia_strona( 'Prawie się udało', '<p>' . esc_html( $powod ) . '</p><p><a href="' . esc_url( admin_url( 'admin-post.php' ) . '?action=sklepag_ocen&z=' . (int) $z . '&t=' . rawurlencode( $token ) . '&blad=1' ) . '">← Wróć do formularza (Twoja treść czeka)</a></p>' );
 		exit;
 	}
 	sklepag_opinia_strona( 'Link nieaktywny', '<p>Nie udało się zapisać: opinia mogła już zostać wysłana albo link wygasł.</p>' );

@@ -41,6 +41,24 @@ z linkiem do tego ustawienia.
 
 ## Krok 1 — instalacja wtyczki sklepu (5 min)
 
+⚠️ **NAJPIERW SPRAWDŹ, ILE WOLNO WGRAĆ — to zatrzymuje instalację najczęściej.**
+Paczka `sklep-agentow.zip` waży około **4 MB**, a świeży WordPress na wielu
+hostingach przyjmuje pliki **do 2 MB**. Wtedy Krok 1 kończy się komunikatem
+w rodzaju „Przesłany plik przekracza dyrektywę upload_max_filesize" i dalej
+nie da się przejść.
+
+- Limit zobaczysz w: Kokpit → **Media → Dodaj nowy** (napis „Maksymalny rozmiar
+  pliku przesyłania") albo Narzędzia → Zdrowie witryny → Informacje → Serwer.
+- Za mało? Masz trzy drogi, od najprostszej:
+  1. **Poproś hosting** o podniesienie `upload_max_filesize` i `post_max_size`
+     do 32 MB — na większości paneli to jeden przełącznik, często zrobisz to sam
+     w sekcji PHP.
+  2. **Wgraj wtyczkę przez menedżer plików albo FTP**: rozpakuj `sklep-agentow.zip`
+     i skopiuj folder `sklep-agentow` do `wp-content/plugins/`, potem włącz ją
+     w Kokpit → Wtyczki. Limit przesyłania w ogóle wtedy nie obowiązuje.
+  3. Jeśli hosting nie pozwala na żadne z powyższych — daj znać, przygotujemy
+     paczkę dzieloną.
+
 1. Kokpit → Wtyczki → Dodaj nową → Wyślij wtyczkę na serwer →
    wybierz `sklep-agentow.zip` → Zainstaluj → **Włącz**.
 2. Przy włączeniu wtyczka SAMA tworzy strony: „Sklep", „Dziękujemy za zakup"
@@ -114,6 +132,17 @@ Ręczny przycisk „dociągnij zaległe" jest na dashboardzie sklepu.
 4. Sprawdź: Kokpit → Sklep Agentów → **Pulpit** — zakup jest na liście
    zamówień (razem ze statystykami), a treść maila obejrzysz w szczegółach
    zamówienia (przycisk „Wyślij ponownie" gdyby mail nie dotarł).
+
+⚠️ **Ekran Stripe potrafi zaproponować INNĄ WALUTĘ niż Twoja cena.** Sklep wysyła
+do Stripe walutę produktu (np. 199 PLN) i tyle Ci wpływa — ale Stripe ma ustawienie
+**Adaptive Pricing**, które kupującemu z zagranicy pokazuje cenę przeliczoną na jego
+walutę, z doliczoną opłatą za przewalutowanie (przy naszym pomiarze: euro i około 4%).
+Kupujący widzi wtedy kwotę, której nie ma na Twojej stronie, i łatwo to przeoczyć.
+
+- Sprawdzisz i wyłączysz to w: Dashboard Stripe → **Settings → Payments → Adaptive
+  Pricing** (w trybie testowym i produkcyjnym osobno).
+- Zostawiasz włączone świadomie? Napisz na stronie produktu, że kupujący spoza strefy
+  złotego zobaczy cenę w swojej walucie — to Twoja decyzja handlowa, nie usterka sklepu.
 
 ⚠️ **Maile:** wtyczka używa standardowej wysyłki WordPressa. Na hostingu
 wysyłką rządzi hosting — jeśli maile nie wychodzą, skontaktuj się z pomocą

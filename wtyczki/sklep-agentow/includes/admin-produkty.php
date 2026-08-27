@@ -108,7 +108,32 @@ function sklepag_produkty_formularz( $id ) {
 		}
 	}
 
-	$w = static function ( $pole, $domyslne = '' ) use ( $produkt ) {
+	// ⛔ ODRZUT WALIDACJI NIE MOŻE KASOWAĆ WPISANEJ TREŚCI.
+	// Handler zapisu jest za `admin-post` i kończy błąd PRZEKIEROWANIEM, więc formularz
+	// renderuje się od nowa z bazy — właściciel, który zapomniał pliku, tracił CAŁY
+	// wpisany opis. Handler odkłada teraz wysłane pola w przechowalni na 5 minut, a tu je
+	// odczytujemy. Przechowalnia jest JEDNORAZOWA: po odczycie znika.
+	// ⛔ NAKŁADAMY SZKIC WYŁĄCZNIE NA RENDERZE BĘDĄCYM ODPOWIEDZIĄ NA ODRZUT (`sklepag_blad`
+	// w adresie). Bez tego warunku wystarczyło, że strona po odrzucie się nie wyrenderuje
+	// (zamknięta karta, Esc, powrót na listę), a porzucony szkic dożywał 5 minut i nakładał
+	// się przy NASTĘPNYM, świadomym wejściu w edycję — bez komunikatu błędu, więc właściciel
+	// nie miał jak poznać, że patrzy na szkic zamiast na bazę, a „Zapisz zmiany" wpisałoby
+	// wtedy porzuconą cenę.
+	// Odczyt służy WYŁĄCZNIE rozpoznaniu, że to render po odrzucie; sam komunikat błędu
+	// jest escapowany w sklepag_produkty_komunikaty(), a nic tu nie mutuje stanu.
+	$po_odrzucie  = isset( $_GET['sklepag_blad'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	$klucz_szkicu = 'sklepag_szkic_produktu_' . get_current_user_id();
+	$szkic        = $po_odrzucie ? get_transient( $klucz_szkicu ) : false;
+	if ( is_array( $szkic ) && isset( $szkic['produkt_id'] ) && (int) $szkic['produkt_id'] === (int) $id ) {
+		delete_transient( $klucz_szkicu );
+	} else {
+		$szkic = null;
+	}
+
+	$w = static function ( $pole, $domyslne = '' ) use ( $produkt, $szkic ) {
+		if ( null !== $szkic && array_key_exists( $pole, $szkic ) ) {
+			return $szkic[ $pole ];
+		}
 		return $produkt ? $produkt->$pole : $domyslne;
 	};
 
@@ -129,11 +154,21 @@ function sklepag_produkty_formularz( $id ) {
 	echo '<input type="hidden" name="produkt_id" value="' . (int) $id . '">';
 	wp_nonce_field( 'sklepag_produkt_zapisz' );
 
+	// Cena ma osobny rachunek: w bazie są grosze, a w szkicu wartość z formularza po jednej
+	// zamianie — przecinek na kropkę (pole jest `type="number"` i przecinka by nie przyjęło).
+	// Poza tym jednym znakiem właściciel widzi to, co wpisał, a nie wynik zaokrąglenia w bazie.
+	$cena_pokaz = '';
+	if ( null !== $szkic && isset( $szkic['cena_wpisana'] ) ) {
+		$cena_pokaz = (string) $szkic['cena_wpisana'];
+	} elseif ( $id ) {
+		$cena_pokaz = number_format( $w( 'cena_grosze' ) / 100, 2, '.', '' );
+	}
+
 	echo '<table class="form-table" role="presentation"><tbody>';
 	echo '<tr><th scope="row"><label for="sklepag-nazwa">Nazwa</label></th><td><input type="text" id="sklepag-nazwa" name="nazwa" class="regular-text" required value="' . esc_attr( $w( 'nazwa' ) ) . '"></td></tr>';
 	echo '<tr><th scope="row"><label for="sklepag-opis-krotki">Opis krótki (lista sklepu)</label></th><td><textarea id="sklepag-opis-krotki" name="opis_krotki" class="large-text" rows="2">' . esc_textarea( $w( 'opis_krotki' ) ) . '</textarea></td></tr>';
 	echo '<tr><th scope="row"><label for="sklepag-opis-pelny">Opis pełny (strona produktu)</label></th><td><textarea id="sklepag-opis-pelny" name="opis_pelny" class="large-text" rows="6">' . esc_textarea( $w( 'opis_pelny' ) ) . '</textarea><p class="description">Renderowany zawsze jako tekst (XSS: opisy nie niosą HTML).</p></td></tr>';
-	echo '<tr><th scope="row"><label for="sklepag-cena">Cena</label></th><td><input type="number" id="sklepag-cena" name="cena" step="0.01" min="0.01" required class="small-text" value="' . esc_attr( $id ? number_format( $w( 'cena_grosze' ) / 100, 2, '.', '' ) : '' ) . '"> <input type="text" name="waluta" class="small-text" maxlength="3" pattern="[A-Za-z]{3}" value="' . esc_attr( $w( 'waluta', (string) get_option( 'sklepag_waluta_domyslna', 'PLN' ) ) ) . '"></td></tr>';
+	echo '<tr><th scope="row"><label for="sklepag-cena">Cena</label></th><td><input type="number" id="sklepag-cena" name="cena" step="0.01" min="0.01" required class="small-text" value="' . esc_attr( $cena_pokaz ) . '"> <input type="text" name="waluta" class="small-text" maxlength="3" pattern="[A-Za-z]{3}" value="' . esc_attr( $w( 'waluta', (string) get_option( 'sklepag_waluta_domyslna', 'PLN' ) ) ) . '"></td></tr>';
 
 	echo '<tr><th scope="row"><label for="sklepag-plik">Plik paczki (ZIP)</label></th><td>';
 	if ( $id && '' !== $w( 'plik_sciezka' ) ) {
@@ -172,7 +207,24 @@ function sklepag_obsluz_zapis_produktu() {
 	$waluta      = isset( $_POST['waluta'] ) ? strtoupper( sanitize_text_field( wp_unslash( $_POST['waluta'] ) ) ) : 'PLN';
 	$aktywny     = ! empty( $_POST['aktywny'] ) ? 1 : 0;
 
-	$wroc = static function ( $blad ) use ( $id ) {
+	// ⛔ KAŻDE wyjście błędem odkłada wpisane pola do przechowalni — inaczej właściciel traci
+	// wszystko, co napisał (potwierdzone trzykrotnie ręcznym przejściem). Pliku nie da się
+	// odtworzyć (przeglądarka nie pozwala wypełnić pola pliku) i tego nie udajemy.
+	// Wszystkie wartości są już po sanityzacji z linii wyżej.
+	$wroc = static function ( $blad ) use ( $id, $nazwa, $opis_krotki, $opis_pelny, $cena_raw, $waluta, $aktywny ) {
+		set_transient(
+			'sklepag_szkic_produktu_' . get_current_user_id(),
+			array(
+				'produkt_id'   => (int) $id,
+				'nazwa'        => $nazwa,
+				'opis_krotki'  => $opis_krotki,
+				'opis_pelny'   => $opis_pelny,
+				'cena_wpisana' => $cena_raw,
+				'waluta'       => $waluta,
+				'aktywny'      => (int) $aktywny,
+			),
+			5 * MINUTE_IN_SECONDS
+		);
 		wp_safe_redirect( add_query_arg( 'sklepag_blad', rawurlencode( $blad ), sklepag_url_produktu( $id ) ) );
 		exit;
 	};

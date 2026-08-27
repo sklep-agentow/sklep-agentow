@@ -4,7 +4,7 @@ Tags: sklep, stripe, pliki cyfrowe, sprzedaz wtyczek, pobieranie
 Requires at least: 6.7
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.9.18
+Stable tag: 0.9.19
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -141,6 +141,19 @@ Nie. Zakup jest bez konta: adres e-mail podany na stronie płatności Stripe,
 link do pobrania w mailu, jednorazowy link do opinii.
 
 == Changelog ==
+
+= 0.9.19 =
+* Poprawka: formularz produktu nie gubi już wpisanej treści, gdy zapis wróci z błędem
+  (brak paczki, zły plik, zła waluta) — nazwa, opisy i cena zostają na miejscu. Pole
+  pliku trzeba wskazać ponownie: przeglądarka nie pozwala wypełnić go za Ciebie.
+* Poprawka: formularz opinii kupującego też nie gubi już napisanej treści — po odrzucie
+  (puste imię, brak zgody) imię, tytuł, ocena i treść wracają na formularz. Zgoda na
+  publikację wraca NIEZAZNACZONA: to musi być świadomy gest kupującego.
+* Poprawka dostępności: nagranie w galerii „Co jest w środku" ma teraz widoczny przycisk,
+  który da się obsłużyć klawiaturą — Tab dochodzi do niego, Enter zatrzymuje i wznawia.
+* Instrukcja instalacji: ostrzeżenie o limicie przesyłania plików mniejszym niż paczka
+  wtyczki oraz o ustawieniu Adaptive Pricing w Stripe (cena pokazana kupującemu w innej
+  walucie, z opłatą za przewalutowanie).
 
 = 0.9.18 =
 * Poprawka: po opłaceniu zakupu ponowne kliknięcie przycisku zakupu zaczyna nową
