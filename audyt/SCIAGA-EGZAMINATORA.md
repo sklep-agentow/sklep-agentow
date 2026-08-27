@@ -80,8 +80,10 @@ pytanie „czego to narzędzie NIE widzi", zadane osobno od pytania „co znalaz
 
 ## KLASY DOPISANE 2026-08-27 (wieczor) — z 3 rund recenzji PR #199 (naprawa SK-L3-005)
 
-Zrodlo: naprawa JEDNEJ wady w sciezce pieniedzy. Trzy rundy, dwie uwagi WAZNE w kazdej z pierwszych
-dwoch. Wszystkie ponizsze klasy laczy jedno: **kod produktu byl poprawny, klamal DOWOD albo OPIS.**
+Zrodlo: naprawa JEDNEJ wady w sciezce pieniedzy. CZTERY rundy, uwaga WAZNA w kazdej z pierwszych
+trzech. **Runda 1 dotyczyla KODU PRODUKTU** (naprawa opierala sie na stanie, ktory przestawia
+webhook — klasa 13 nizej). Dopiero od rundy 2 kod byl czysty, a uwagi dotyczyly juz wylacznie
+DOWODU i OPISU — i to rozroznienie jest cala lekcja tego rozdzialu.
 
 | # | Klasa (skad wziecie) | Dowod z tego dnia | Co ja lapie U NAS |
 |---|---|---|---|

@@ -100,9 +100,12 @@ $probuj_kup = static function () use ( $produkt ) {
 	} catch ( Throwable $e ) {
 		$tresc = $e->getMessage();
 		// Handler zaczyna od limitera (10 prob na IP i minute), a w CLI sklepag_ip() zwraca
-		// stale 0.0.0.0 — wiec licznik jest WSPOLNY dla wszystkich przebiegow. Szosty przebieg
-		// w tej samej minucie konczyl sie 429 i kodem 1, czyli slowem REGRESJA, choc zaden kod
-		// sie nie zmienil. To awaria srodowiska: kod 2, zgodnie z naglowkiem pliku.
+		// stale 0.0.0.0 — wiec licznik jest WSPOLNY dla wszystkich przebiegow. Straznik wola
+		// handler 3 razy na przebieg, wiec limiter dobija na 11. WYWOLANIU w obrebie minuty.
+		// Konczylo sie to kodem 1, czyli slowem REGRESJA, choc zaden kod sie nie zmienil.
+		// To awaria srodowiska: kod 2, zgodnie z naglowkiem pliku.
+		// ⛔ Nie przeliczaj tego na numer przebiegu — licznik chodzi po MINUTACH, wiec przebiegi
+		// rozlozone w czasie nie dobija go wcale (patrz naglowek).
 		if ( false !== strpos( $tresc, 'Za dużo prób zakupu' ) ) {
 			echo "STRAZNIK: WYNIK=BLAD-SRODOWISKA (limiter zakupu: 10 prob na minute z tego adresu;\n";
 			echo "          w CLI adres jest staly, wiec licznik dziela wszystkie przebiegi.\n";
