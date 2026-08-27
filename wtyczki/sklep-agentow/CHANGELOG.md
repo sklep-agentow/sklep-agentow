@@ -20,6 +20,35 @@ Nic jeszcze.
 
 ---
 
+## [0.9.19] — 2026-08-27
+
+Wydanie z ręcznego przejścia po produkcie: instalacja od zera i przeklikanie sklepu
+oczami kogoś, kto nie widział tego kodu. Obie poprawki dotyczą rzeczy, których nie
+mierzył żaden test automatyczny: utraty pracy właściciela i drogi do treści z klawiatury.
+
+### Poprawione
+- **Formularz produktu gubił wszystko, co właściciel wpisał, gdy zapis kończył się
+  odrzutem** (brak paczki, zły plik, zła waluta). Formularz stoi za `admin-post` i wraca
+  przekierowaniem, więc renderował się od nowa z bazy — dłuższy opis trzeba było pisać
+  drugi raz. Odrzut odkłada teraz wysłane pola w przechowalni na 5 minut, a formularz
+  odczytuje je JEDEN raz (odświeżenie pokazuje znów stan z bazy) i wyłącznie dla tego
+  konta, które je wysłało. Pola pliku nie da się odtworzyć i tego nie udajemy.
+- **Nagranie w galerii „Co jest w środku" było nieosiągalne z klawiatury.** Przycisk
+  odtwarzania miał `hidden` do czasu, aż przeglądarka odrzuci autoodtwarzanie, a element
+  `display:none` wypada z kolejności Tab — przy działającym nagraniu nie było ani
+  widocznego sygnału, ani żadnej drogi bez myszy. Przycisk jest teraz widoczny zawsze
+  (stonowany, pełny pod kursorem i przy fokusie), przełącza odtwarzanie i zatrzymanie,
+  a jego etykieta mówi, co zrobi kolejne naciśnięcie. Bez JavaScriptu zachowanie jest
+  jak dotąd: nagranie z `autoplay`, bez martwego przycisku.
+
+### Zmienione
+- Instrukcja instalacji ostrzega przed dwiema pułapkami, na których audytor stanął:
+  limitem przesyłania plików mniejszym niż paczka wtyczki (z trzema drogami wyjścia)
+  oraz ustawieniem Adaptive Pricing w Stripe, które kupującemu potrafi pokazać cenę
+  w innej walucie z opłatą za przewalutowanie.
+
+---
+
 ## [0.9.18] — 2026-08-27
 
 ### Poprawione

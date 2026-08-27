@@ -2352,9 +2352,16 @@ a.sklepag-kup {
 }
 
 /* Prawdziwy <button> (nie pseudo-element): dostępny z klawiatury — Enter/Spacja to też gest
-   użytkownika, którego wymaga przeglądarka z blokadą autoodtwarzania. Markup ma go zawsze
-   (atrybut `hidden`), front-ruch.js odsłania go przy blokadzie i chowa, gdy nagranie gra. */
+   użytkownika, którego wymaga przeglądarka z blokadą autoodtwarzania.
+   ⛔ Od 0.9.19 przycisk jest WIDOCZNY ZAWSZE, gdy działa JS:
+   wcześniej wychodził dopiero przy zablokowanym autoodtwarzaniu, więc przy działającym
+   nagraniu nie było ani sygnału dla oka, ani ŻADNEJ ścieżki z klawiatury — element `hidden`
+   wypada z kolejności Tab. Domyślnie stonowany, pełną siłę bierze pod kursorem i przy
+   fokusie: sygnał ma być, ale nie ma krzyczeć nad każdym kaflem.
+   ⛔ NIE wolno go chować `display:none` ani `visibility:hidden` — obie zabierają fokus. */
 .sklepag-kafel-odtworz {
+	opacity: 0.72;
+	transition: opacity 0.18s ease-out;
 	position: absolute;
 	z-index: 2; /* nad plakatem i warstwami gaśnięcia kadru */
 	left: 50%;
@@ -2378,6 +2385,21 @@ a.sklepag-kup {
 .sklepag-kafel-odtworz:focus-visible {
 	outline: 2px solid var(--sklepag-papier);
 	outline-offset: 3px;
+}
+
+/* Pełna siła pod kursorem, przy fokusie i wtedy, gdy autoodtwarzanie jest zablokowane —
+   w tym ostatnim przypadku przycisk jest JEDYNĄ drogą do nagrania, więc ma być najgłośniejszy. */
+.sklepag-kafel:hover .sklepag-kafel-odtworz,
+.sklepag-kafel-odtworz:hover,
+.sklepag-kafel-odtworz:focus-visible,
+.sklepag-kafel--zablokowane .sklepag-kafel-odtworz {
+	opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.sklepag-kafel-odtworz {
+		transition: none;
+	}
 }
 
 .sklepag-kafel figcaption,

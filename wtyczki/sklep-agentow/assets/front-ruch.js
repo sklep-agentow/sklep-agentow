@@ -83,21 +83,57 @@
 	// stoi na plakacie: zero ruchu, o który użytkownik nie prosił.
 	Array.prototype.forEach.call(document.querySelectorAll('.sklepag-kafel--wideo video'), function (wideo) {
 		var kafel = wideo.closest('.sklepag-kafel');
+		var przycisk = kafel ? kafel.querySelector('.sklepag-kafel-odtworz') : null;
+		// ⛔ PRZYCISK JEST TERAZ ZAWSZE. Wcześniej wychodził
+		// z `hidden` dopiero przy blokadzie autoodtwarzania — a element z `display:none`
+		// przeglądarka POMIJA w kolejności Tab, więc przy działającym autoplay nagranie nie
+		// miało ŻADNEJ ścieżki z klawiatury i żadnego widocznego sygnału dla myszy.
+		// Kryterium 2.2.2 (zatrzymaj ruch) wymaga tego niezależnie od autoplay.
+		// `hidden` zostaje w HTML na wypadek BRAKU JS — przycisk, którego nie ma czym obsłużyć,
+		// byłby gorszy niż jego brak; tu odsłaniamy go w chwili, w której zaczyna działać.
+		// Tekst budujemy węzłami, nie `innerHTML` — treść jest stała, ale w tym pliku nie
+		// zostawiamy wzorca, który przy następnej zmianie mógłby przyjąć dane z zewnątrz.
+		var etykieta = function () {
+			if (!przycisk) { return; }
+			var gra = !wideo.paused && !wideo.ended;
+			var znak = document.createElement('span');
+			znak.setAttribute('aria-hidden', 'true');
+			znak.textContent = gra ? '⏸' : '▶';
+			przycisk.textContent = '';
+			przycisk.appendChild(znak);
+			przycisk.appendChild(document.createTextNode(gra ? ' Zatrzymaj nagranie' : ' Odtwórz nagranie'));
+			przycisk.setAttribute('aria-pressed', gra ? 'true' : 'false');
+		};
+		if (przycisk) {
+			przycisk.hidden = false;
+			etykieta();
+			wideo.addEventListener('play', etykieta);
+			wideo.addEventListener('pause', etykieta);
+			// ⛔ `stopPropagation`: klik bąbelkujący do nasłuchu na kaflu wznowiłby nagranie
+			// natychmiast po pauzie (kafel wznawia, gdy widzi `paused`) — przycisk pauzy
+			// wyglądałby wtedy na zepsuty.
+			przycisk.addEventListener('click', function (e) {
+				e.preventDefault();
+				e.stopPropagation();
+				if (wideo.paused || wideo.ended) { wideo.play(); } else { wideo.pause(); }
+				etykieta();
+			});
+		}
 		if (bezRuchu) {
+			// „Ogranicz ruch": nie startujemy sami, ale sterowanie ZOSTAJE — użytkownik prosił
+			// o brak ruchu, którego nie zamawiał, nie o odebranie mu nagrania.
 			wideo.removeAttribute('autoplay');
 			wideo.pause();
+			etykieta();
 			return;
 		}
-		// Przycisk „Odtwórz" jest w markupie (prawdziwy <button>, dostępny z klawiatury), ukryty do
-		// czasu rozpoznania blokady; jego klik bąbelkuje do nasłuchu na kaflu niżej.
-		var przycisk = kafel ? kafel.querySelector('.sklepag-kafel-odtworz') : null;
 		var zablokuj = function () {
 			if (kafel) { kafel.classList.add('sklepag-kafel--zablokowane'); }
-			if (przycisk) { przycisk.hidden = false; }
+			etykieta();
 		};
 		var odblokuj = function () {
 			if (kafel) { kafel.classList.remove('sklepag-kafel--zablokowane'); }
-			if (przycisk) { przycisk.hidden = true; }
+			etykieta();
 		};
 		var gra = function () {
 			if (kafel) { kafel.classList.add('sklepag-kafel--gra'); }
