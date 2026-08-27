@@ -6,10 +6,19 @@
  * ścieżki klawiaturowej (C2). Audytor przeszedł pełną sekwencję 32 elementów tabbable na
  * stronie produktu i kafla wideo nie było tam ani razu.
  *
- * Ten test mierzy TRZY rzeczy, bo naprawa bez którejkolwiek z nich jest połowiczna:
- *   1. przycisk jest w kolejności Tab (dochodzi do niego sam Tab, bez myszy),
- *   2. Enter na nim ZATRZYMUJE grające nagranie (kryterium 2.2.2 — da się zatrzymać ruch),
- *   3. kolejny Enter je wznawia, a etykieta mówi, co się właśnie stanie.
+ * Ten test mierzy SIEDEM rzeczy, bo naprawa bez którejkolwiek z nich jest połowiczna:
+ *   1. przycisk jest WIDOCZNY (nie `display:none`) — sygnał dla oka,
+ *   2. dochodzi do niego sam Tab, bez myszy — droga dla klawiatury,
+ *   3. Enter go zatrzymuje (sam fakt pauzy, mierzony od razu),
+ *   4. ⭐ zatrzymanie TRZYMA SIĘ po 6,5 s — DOPIERO TO jest kryterium 2.2.2, bo mówi ono
+ *      o ruchu dłuższym niż 5 sekund; pomiar tuż po Enterze przechodził także wtedy, gdy
+ *      strażnik postępu wznawiał nagranie po dwóch sekundach (patrz komentarz przy tej asercji),
+ *   5. zjazd z kafla i powrót NIE wznawia zatrzymanego nagrania — druga ścieżka wznawiania,
+ *   6. etykieta zapowiada, co zrobi kolejne naciśnięcie,
+ *   7. kolejny Enter faktycznie wznawia.
+ * ⛔ Punkty 4 i 5 mają WŁASNE strażniki warunku wstępnego: pierwszy wymaga kafla W kadrze,
+ *    drugi wymaga, żeby kafel z kadru WYPADŁ. Bez nich obie asercje potrafią przejść z powodu,
+ *    dla którego nic nie zostało zmierzone — i wtedy test kłamie, zamiast paść.
  *
  * ⛔ Test nie ufa `autoplay` — gdy nagranie nie zdąży ruszyć, mówi to wprost i kończy się
  *    kodem 2 (błąd przyrządu), zamiast zaliczyć pauzę, której nie było czego zatrzymać.
