@@ -42,7 +42,7 @@ pokaz() { # pokaz <opis> <komenda...>
 pokaz "komplet bramek jakosci"        bash narzedzia-qa/bramki.sh
 pokaz "paczka zgodna z repozytorium"  bash narzedzia-qa/paczka-zgodnosc.sh sklep-agentow
 pokaz "dokumentacja zgodna z kodem"   bash testy/dokumentacja-zgodnosc-sklep.sh
-pokaz "bramka klasy zapisu statusu"   python3 narzedzia-qa/bramka-status-bez-warunku.py .
+pokaz "bramka klasy zapisu statusu"   php narzedzia-qa/bramka-status-bez-warunku.php .
 pokaz "proba kontrolna tej bramki"    bash narzedzia-qa/bramka-status-bez-warunku-proba-kontrolna.sh
 pokaz "bramka koncowa K7"             bash narzedzia-qa/k7-koniec.sh
 pokaz "wersja wtyczki na stosie"      bash narzedzia-qa/stos.sh wtyczki
