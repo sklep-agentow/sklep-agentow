@@ -243,7 +243,18 @@ function sklepag_webhook( WP_REST_Request $zadanie ) {
 	// OBCIĄŻENIE ZWROTNE (kupujący reklamuje płatność w swoim banku). Pieniądze schodzą
 	// z konta właściciela od razu, więc zamówienie przestaje być przychodem tak samo jak zwrot.
 	if ( 0 === strpos( $typ, 'charge.dispute.' ) ) {
-		sklepag_zaksieguj_spor( $typ, $sesja );
+		if ( ! sklepag_zaksieguj_spor( $typ, $sesja ) ) {
+			// Ten sam powód co przy zwrocie: nie udało się ustalić, czyje to obciążenie,
+			// bo Stripe nie odpowiedział. Odpowiedź 200 znaczyłaby „przyjęte", a pieniądze
+			// zabrane przez bank zostałyby w przychodzie na zawsze.
+			return new WP_REST_Response(
+				array(
+					'ok'    => false,
+					'powod' => 'ponow',
+				),
+				500
+			);
+		}
 	}
 
 	return new WP_REST_Response( array( 'ok' => true ), 200 );
@@ -460,35 +471,62 @@ function sklepag_zaksieguj_zwrot( $typ, $obiekt ) {
  *
  * @return bool true = zamknięte, false = niech Stripe ponowi.
  */
-function sklepag_zwrot_nieprzypisany( $typ, $payment_intent, $powod = '' ) {
+function sklepag_zwrot_nieprzypisany( $typ, $payment_intent, $powod = '', $co = 'zwrot' ) {
 	if ( 0 === strpos( (string) $powod, 'awaria:' ) ) {
 		sklepag_zdarzenie(
 			null,
-			'zwrot_odlozony',
+			$co . '_odlozony',
 			$typ . ': nie udało się zapytać Stripe o płatność ' . $payment_intent . ' (' . substr( (string) $powod, 7 ) . ') — poprosimy o ponowienie'
 		);
 		return false;
 	}
-	sklepag_zdarzenie( null, 'zwrot_bez_powiazania', $typ . ': płatność ' . $payment_intent . ' nie należy do żadnego zamówienia tego sklepu' );
+	sklepag_zdarzenie( null, $co . '_bez_powiazania', $typ . ': płatność ' . $payment_intent . ' nie należy do żadnego zamówienia tego sklepu' );
 	return true;
 }
 
-/** Jeden zapis kwoty zwrotu + wpis w dzienniku (wspólny dla wszystkich dróg). */
+/**
+ * Jeden zapis kwoty zwrotu + wpis w dzienniku (wspólny dla wszystkich dróg).
+ *
+ * Stan sprzed zwrotu zapamiętujemy w `status_przed_sporem` — tej samej kolumnie, której
+ * używa ścieżka sporu, bo pytanie jest identyczne: „do czego wrócić, gdy pieniądze wrócą".
+ * Bez tego cofnięcie zwrotu wpisywało `mail_wyslany` NA SZTYWNO i zamówienie, do którego
+ * mail nigdy nie doszedł, wypadało z licznika czerwonych i z ponowień. Ścieżka sporu
+ * rozwiązywała to samo pytanie już wcześniej — tu jest jej bliźniak.
+ *
+ * Zapisujemy TYLKO gdy kolumna jest pusta: pierwsze zdarzenie finansowe (zwrot albo spór)
+ * ustala punkt powrotu, kolejne go nie nadpisują.
+ */
 function sklepag_zapisz_zwrot( $zam, $kwota, $typ_wpisu, $opis ) {
 	global $wpdb;
 	$pz    = $wpdb->prefix . 'sklepag_zamowienia';
 	$teraz = current_time( 'mysql' );
 	$pelny = ( $kwota >= (int) $zam->kwota_grosze );
+	$przed = (string) $zam->status_przed_sporem;
+
 	// Status zmieniamy tylko przy zwrocie CAŁOŚCI; zwrot częściowy zostawia zamówienie
 	// na liście, a jego kwota schodzi z sum przez `zwrocono_grosze`.
-	$status = $pelny ? 'zwrocone' : ( 'zwrocone' === $zam->status && $kwota < (int) $zam->kwota_grosze ? 'mail_wyslany' : $zam->status );
+	if ( $pelny ) {
+		if ( '' === $przed && 'zwrocone' !== $zam->status && 'sporne' !== $zam->status ) {
+			$przed = (string) $zam->status; // punkt powrotu, zanim nadpiszemy status
+		}
+		$status = 'zwrocone';
+	} elseif ( 'zwrocone' === $zam->status ) {
+		// Zwrot cofnięty albo pomniejszony — wracamy do stanu SPRZED, nie do wymyślonego.
+		$status = '' !== $przed ? $przed : 'oplacone';
+		if ( 0 === (int) $kwota && 'sporne' !== $status ) {
+			$przed = ''; // nic już nie wisi: punkt powrotu przestaje być potrzebny
+		}
+	} else {
+		$status = (string) $zam->status;
+	}
 	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
 	$wpdb->query(
 		$wpdb->prepare(
-			"UPDATE {$pz} SET zwrocono_grosze=%d, zwrot_czas=%s, status=%s, zmieniono=%s WHERE id=%d",
+			"UPDATE {$pz} SET zwrocono_grosze=%d, zwrot_czas=%s, status=%s, status_przed_sporem=%s, zmieniono=%s WHERE id=%d",
 			(int) $kwota,
 			$kwota > 0 ? $teraz : null,
 			$status,
+			$przed,
 			$teraz,
 			(int) $zam->id
 		)
@@ -508,16 +546,26 @@ function sklepag_zapisz_zwrot( $zam, $kwota, $typ_wpisu, $opis ) {
  * Stan sprzed sporu zapamiętujemy w `status_przed_sporem`, żeby powrót nie zmyślał historii
  * wysyłki: zamówienie, do którego mail nigdy nie doszedł, ma wrócić do `mail_blad`,
  * a nie zostać oznaczone jako wysłane (bo wypadłoby z licznika czerwonych i z ponowień).
+ *
+ * @return bool true = zamknięte, false = niech Stripe ponowi (awaria łączności ze Stripe).
  */
 function sklepag_zaksieguj_spor( $typ, $obiekt ) {
 	global $wpdb;
 	$pz = $wpdb->prefix . 'sklepag_zamowienia';
 
-	$pi  = sklepag_platnosc_ze_zdarzenia( $obiekt );
-	$zam = '' === $pi ? null : sklepag_zamowienie_po_platnosci( $pi );
+	$pi = sklepag_platnosc_ze_zdarzenia( $obiekt );
+	if ( '' === $pi ) {
+		sklepag_zdarzenie( null, 'spor_bez_powiazania', $typ . ': zdarzenie bez identyfikatora płatności' );
+		return true;
+	}
+	$powod = '';
+	$zam   = sklepag_zamowienie_po_platnosci( $pi, $powod );
 	if ( ! $zam ) {
-		sklepag_zdarzenie( null, 'spor_bez_powiazania', $typ . ': brak zamówienia dla płatności ' . ( '' === $pi ? '(brak id)' : $pi ) );
-		return;
+		// Bliźniak zachowania ze ścieżki zwrotu: awaria łączności
+		// ze Stripe NIE jest werdyktem „to cudza płatność". Oddajemy false, żeby webhook
+		// odpowiedział 500 i Stripe ponowił — inaczej jeden timeout zostawiał pieniądze
+		// zabrane przez bank w przychodzie na zawsze.
+		return sklepag_zwrot_nieprzypisany( $typ, $pi, $powod, 'spor' );
 	}
 
 	$wynik = isset( $obiekt['status'] ) ? (string) $obiekt['status'] : '';
@@ -535,7 +583,7 @@ function sklepag_zaksieguj_spor( $typ, $obiekt ) {
 	if ( $pieniadze_wrocily ) {
 		if ( 'sporne' !== $zam->status && 0 === (int) $zam->zwrocono_grosze ) {
 			sklepag_zdarzenie( (int) $zam->id, 'spor_zamkniety', 'bank zamknął sprawę (' . $typ . ', status ' . $wynik . ') — zamówienie i tak nie było w sporze' );
-			return;
+			return true;
 		}
 		$powrot = '' !== (string) $zam->status_przed_sporem ? (string) $zam->status_przed_sporem : 'oplacone';
 		$reszta = max( 0, (int) $zam->zwrocono_grosze - $kwota ); // prawdziwy zwrot częściowy sprzed sporu zostaje
@@ -550,7 +598,7 @@ function sklepag_zaksieguj_spor( $typ, $obiekt ) {
 			)
 		);
 		sklepag_zdarzenie( (int) $zam->id, 'spor_wygrany', 'pieniądze wracają do przychodu (' . $typ . ', status ' . $wynik . '); zamówienie wraca do stanu „' . $powrot . '"' );
-		return;
+		return true;
 	}
 
 	if ( ! $pieniadze_zeszly ) {
@@ -560,7 +608,7 @@ function sklepag_zaksieguj_spor( $typ, $obiekt ) {
 			'spor_zapytanie',
 			'bank prosi o wyjaśnienia (' . $typ . ', status ' . $wynik . ') — pieniądze na razie zostają; odpowiedz w panelu Stripe'
 		);
-		return;
+		return true;
 	}
 
 	$przed = '' !== (string) $zam->status_przed_sporem ? (string) $zam->status_przed_sporem : (string) $zam->status;
@@ -581,6 +629,7 @@ function sklepag_zaksieguj_spor( $typ, $obiekt ) {
 		'obciążenie zwrotne (' . $typ . ( '' !== $wynik ? ', status ' . $wynik : '' ) . '): ' .
 		number_format_i18n( $kwota / 100, 2 ) . ' ' . $zam->waluta . ' poza przychodem'
 	);
+	return true;
 }
 
 /* ---------- SILNIK DOMYKANIA — jeden dla webhooka i reconciliation ---------- */

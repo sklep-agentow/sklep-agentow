@@ -20,6 +20,23 @@ Nic jeszcze.
 
 ---
 
+## [0.9.16] — 2026-08-27
+
+Wersja schematu bazy: **7** (bez zmian; korzysta z istniejącej kolumny `status_przed_sporem`).
+
+### Naprawione
+- **Odrzucony zwrot nie zmyśla, że mail doszedł.** Zamówienie, do którego mail nigdy nie
+  dotarł, po zwrocie pieniędzy i późniejszym odrzuceniu zwrotu przez bank dostawało status
+  „mail wysłany" — wypadało z licznika nieudanych wysyłek i z ponowień, a właściciel był
+  przekonany, że kupujący dostał plik. Teraz sklep zapamiętuje stan sprzed zwrotu i do niego
+  wraca, dokładnie tak jak przy sporze z bankiem.
+- **Obciążenie zwrotne nie ginie po cichu przy awarii łączności.** Gdy Stripe nie odpowiadał,
+  sklep i tak potwierdzał przyjęcie powiadomienia, więc Stripe go nie ponawiał — a pieniądze
+  zabrane przez bank zostawały w przychodzie na zawsze. Teraz, tak samo jak przy zwrocie,
+  sklep prosi o ponowienie i rozróżnia awarię od cudzej płatności.
+
+---
+
 ## [0.9.15] — 2026-08-27
 
 Wersja schematu bazy: **7** (bez zmian względem 0.9.14).

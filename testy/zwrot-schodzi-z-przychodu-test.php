@@ -189,8 +189,28 @@ echo 'POWTORKA_ODRZUCONY: WYNIK=' . ( $pass9 ? 'PASS' : 'FAIL - powtorzone odrzu
 
 $posprzataj();
 
+/* ---------- 10) COFNIĘTY ZWROT wraca do stanu SPRZED, nie zmyśla wysyłki ---------- */
+// Bliźniak przypadku 7 (spór wygrany), tylko dla ścieżki ZWROTU. Zamówienie, do którego mail
+// nie doszedł, po odrzuceniu zwrotu przez bank ma wrócić do `mail_blad` — inaczej wypada
+// z licznika czerwonych i z ponowień, a właściciel myśli, że kupujący dostał plik.
+$id10 = $zaloz();
+$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET status='mail_blad', mail_proby=3 WHERE id=%d", $id10 ) );
+$zwrot10 = array( 'id' => 're_test_cofniety', 'payment_intent' => $pi, 'amount' => $kwota, 'status' => 'succeeded' );
+sklepag_zaksieguj_zwrot( 'refund.created', $zwrot10 );
+$po_zwrocie10 = $wpdb->get_row( $wpdb->prepare( "SELECT status, status_przed_sporem FROM {$pz} WHERE id=%d", $id10 ) );
+sklepag_zaksieguj_zwrot( 'refund.updated', array( 'id' => 're_test_cofniety', 'payment_intent' => $pi, 'amount' => $kwota, 'status' => 'failed' ) );
+$po_cofnieciu10 = $wpdb->get_row( $wpdb->prepare( "SELECT status, zwrocono_grosze FROM {$pz} WHERE id=%d", $id10 ) );
+echo 'COFNIETY_ZWROT: po_zwrocie=' . $po_zwrocie10->status . ' (zapamietany: ' . $po_zwrocie10->status_przed_sporem . ") (OCZEKIWANE: zwrocone / mail_blad)\n";
+echo 'COFNIETY_ZWROT: po_cofnieciu=' . $po_cofnieciu10->status . " (OCZEKIWANE: mail_blad — mail nadal NIE doszedl)\n";
+echo 'COFNIETY_ZWROT: zwrocono=' . (int) $po_cofnieciu10->zwrocono_grosze . " (OCZEKIWANE: 0)\n";
+$pass10 = ( 'zwrocone' === $po_zwrocie10->status && 'mail_blad' === $po_zwrocie10->status_przed_sporem
+	&& 'mail_blad' === $po_cofnieciu10->status && 0 === (int) $po_cofnieciu10->zwrocono_grosze );
+echo 'COFNIETY_ZWROT: WYNIK=' . ( $pass10 ? 'PASS' : 'FAIL - cofniety zwrot zmyslil, ze mail poszedl' ) . "\n";
+
+$posprzataj();
+
 // Kod wyjścia MUSI zgadzać się z werdyktem — inaczej strażnik krzyczy FAIL, a CI
 // widzi zero i przepuszcza wadę (klasa 11: nazwa bramki szersza niż to, co sprawdza).
-$straznik_ok = ( $pass1 && $pass2 && $pass3 && $pass4 && $pass5 && $pass6 && $pass7 && $pass8 && $pass9 );
+$straznik_ok = ( $pass1 && $pass2 && $pass3 && $pass4 && $pass5 && $pass6 && $pass7 && $pass8 && $pass9 && $pass10 );
 echo 'RAZEM: WYNIK=' . ( $straznik_ok ? 'PASS' : 'FAIL' ) . "\n";
 exit( $straznik_ok ? 0 : 1 );

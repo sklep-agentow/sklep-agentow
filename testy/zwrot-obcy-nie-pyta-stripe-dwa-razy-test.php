@@ -99,6 +99,19 @@ echo 'AWARIA: zapamietane_jako_obce=' . ( false === $pamiec3 ? 'NIE' : 'TAK' ) .
 $pass3 = ( 1 === $pytan3 && false === $wynik3 && false === $pamiec3 );
 echo 'AWARIA: WYNIK=' . ( $pass3 ? 'PASS' : 'FAIL - awaria lacznosci pyta Stripe dwa razy w jednym zadaniu' ) . "\n";
 
+/* ---------- 4) SPÓR przy awarii łączności też prosi o ponowienie (bliźniak zwrotu) ---------- */
+// Runda 2 naprawiła to dla zwrotów; obciążenie zwrotne zabiera te same pieniądze, a stało
+// z cichym 200: jeden timeout i kwota zabrana przez bank zostawała w przychodzie na zawsze.
+$posprzataj();
+$licznik = 0;
+$tryb    = 'awaria';
+$wynik4  = sklepag_zaksieguj_spor( 'charge.dispute.funds_withdrawn', array( 'payment_intent' => $pi, 'amount' => 5000, 'status' => 'lost' ) );
+$pytan4  = $licznik;
+echo "SPOR_AWARIA: pytan_do_stripe=$pytan4 (OCZEKIWANE: 1)\n";
+echo 'SPOR_AWARIA: prosi_o_ponowienie=' . ( false === $wynik4 ? 'TAK' : 'NIE' ) . " (OCZEKIWANE: TAK)\n";
+$pass4 = ( 1 === $pytan4 && false === $wynik4 );
+echo 'SPOR_AWARIA: WYNIK=' . ( $pass4 ? 'PASS' : 'FAIL - obciazenie zwrotne ginie po cichu przy awarii lacznosci' ) . "\n";
+
 remove_filter( 'pre_http_request', $filtr, 10 );
 $posprzataj();
 if ( '' === $klucz_przed ) {
@@ -109,6 +122,6 @@ if ( '' === $klucz_przed ) {
 
 // Kod wyjścia MUSI zgadzać się z werdyktem — inaczej strażnik krzyczy FAIL, a CI
 // widzi zero i przepuszcza wadę (klasa 11: nazwa bramki szersza niż to, co sprawdza).
-$straznik_ok = ( $pass1 && $pass2 && $pass3 );
+$straznik_ok = ( $pass1 && $pass2 && $pass3 && $pass4 );
 echo 'RAZEM: WYNIK=' . ( $straznik_ok ? 'PASS' : 'FAIL' ) . "\n";
 exit( $straznik_ok ? 0 : 1 );
