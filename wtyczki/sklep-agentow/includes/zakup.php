@@ -279,9 +279,14 @@ function sklepag_platnosc_ze_zdarzenia( $obiekt ) {
  * Zamówienia sprzed wersji schematu 6 nie mają zapisanej płatności — dla nich pytamy
  * Stripe o sesję checkout tej płatności i szukamy po identyfikatorze sesji. Znaleziony
  * numer płatności dopisujemy, żeby drugi raz już nie pytać.
+ *
+ * `$powod` (parametr wyjściowy) niesie DLACZEGO nie ma zamówienia — 'nie_nasze' albo
+ * 'awaria:<opis>'. Bez tego wołający musiał pytać Stripe DRUGI raz w tym samym żądaniu,
+ * żeby odróżnić te dwa przypadki: dwa razy 15 s limitu i pamięć nietrafień omijana.
  */
-function sklepag_zamowienie_po_platnosci( $payment_intent ) {
+function sklepag_zamowienie_po_platnosci( $payment_intent, &$powod = null ) {
 	global $wpdb;
+	$powod = '';
 	$pz = $wpdb->prefix . 'sklepag_zamowienia';
 	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
 	$zam = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$pz} WHERE payment_intent_id=%s", $payment_intent ) );
@@ -294,19 +299,29 @@ function sklepag_zamowienie_po_platnosci( $payment_intent ) {
 	// powiadomienia. Raz ustalone „to nie nasza płatność" trzymamy dobę.
 	$klucz_pudla = 'sklepag_niepowiazana_' . md5( $payment_intent );
 	if ( 'nie' === get_transient( $klucz_pudla ) ) {
+		$powod = 'nie_nasze';
 		return null;
 	}
 	$sesja = sklepag_stripe_sesja_po_platnosci( $payment_intent );
 	if ( is_wp_error( $sesja ) || empty( $sesja['id'] ) ) {
-		if ( is_wp_error( $sesja ) && 'sklepag_brak_sesji' === $sesja->get_error_code() ) {
+		if ( is_wp_error( $sesja ) && 'sklepag_brak_sesji' !== $sesja->get_error_code() ) {
+			// AWARIA łączności — dane wciąż mogą być nasze. Nie zapamiętujemy nietrafienia
+			// (zapamiętane zamknęłoby zwrot na dobę przez jeden timeout).
+			$powod = 'awaria:' . $sesja->get_error_message();
+			return null;
+		}
+		if ( is_wp_error( $sesja ) ) {
 			set_transient( $klucz_pudla, 'nie', DAY_IN_SECONDS ); // Stripe odpowiedział: nie zna takiej sesji.
 		}
+		$powod = 'nie_nasze';
 		return null;
 	}
 	$zam = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$pz} WHERE stripe_session_id=%s", (string) $sesja['id'] ) );
 	if ( $zam ) {
 		$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET payment_intent_id=%s WHERE id=%d", $payment_intent, (int) $zam->id ) );
 		$zam->payment_intent_id = $payment_intent;
+	} else {
+		$powod = 'nie_nasze'; // sesja u Stripe jest, ale nie należy do tego sklepu
 	}
 	// phpcs:enable
 	return $zam;
@@ -318,11 +333,27 @@ function sklepag_zamowienie_po_platnosci( $payment_intent ) {
  * Sprawdzamy po identyfikatorze zwrotu zapisanym w dzienniku zdarzeń. Bez tego dwa RÓŻNE
  * zwroty częściowe po tyle samo (np. dwa razy po 50 zł z zamówienia za 200 zł) policzyłyby
  * się jak jeden, bo porównanie samych kwot ich nie odróżnia.
+ *
+ * `$typ_wpisu` zawęża pytanie do JEDNEGO rodzaju wpisu. Bez tego zawężenia ścieżka
+ * COFNIĘCIA zwrotu nie miała własnego znacznika: jej własny wpis `zwrot_nieudany` pasował
+ * do wzorca `zwrot_%`, więc powtórzone powiadomienie o odrzuceniu odejmowało kwotę drugi raz.
  */
-function sklepag_zwrot_juz_zaksiegowany( $zamowienie_id, $refund_id ) {
+function sklepag_zwrot_juz_zaksiegowany( $zamowienie_id, $refund_id, $typ_wpisu = '' ) {
 	global $wpdb;
 	if ( '' === $refund_id ) {
 		return false;
+	}
+	$opis_jak = '%' . $wpdb->esc_like( $refund_id ) . '%';
+	if ( '' !== $typ_wpisu ) {
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
+		return (bool) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT id FROM {$wpdb->prefix}sklepag_zdarzenia WHERE zamowienie_id=%d AND typ=%s AND opis LIKE %s LIMIT 1",
+				(int) $zamowienie_id,
+				$typ_wpisu,
+				$opis_jak
+			)
+		);
 	}
 	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
 	return (bool) $wpdb->get_var(
@@ -330,7 +361,7 @@ function sklepag_zwrot_juz_zaksiegowany( $zamowienie_id, $refund_id ) {
 			"SELECT id FROM {$wpdb->prefix}sklepag_zdarzenia WHERE zamowienie_id=%d AND typ LIKE %s AND opis LIKE %s LIMIT 1",
 			(int) $zamowienie_id,
 			$wpdb->esc_like( 'zwrot_' ) . '%',
-			'%' . $wpdb->esc_like( $refund_id ) . '%'
+			$opis_jak
 		)
 	);
 }
@@ -357,9 +388,10 @@ function sklepag_zaksieguj_zwrot( $typ, $obiekt ) {
 		sklepag_zdarzenie( null, 'zwrot_bez_powiazania', $typ . ': zdarzenie bez identyfikatora płatności' );
 		return true;
 	}
-	$zam = sklepag_zamowienie_po_platnosci( $pi );
+	$powod = '';
+	$zam   = sklepag_zamowienie_po_platnosci( $pi, $powod );
 	if ( ! $zam ) {
-		return sklepag_zwrot_nieprzypisany( $typ, $pi );
+		return sklepag_zwrot_nieprzypisany( $typ, $pi, $powod );
 	}
 
 	$juz         = (int) $zam->zwrocono_grosze;
@@ -372,8 +404,14 @@ function sklepag_zaksieguj_zwrot( $typ, $obiekt ) {
 		$kwota = (int) $obiekt['amount_refunded'];
 	} elseif ( $nieudany ) {
 		// Zwrot odrzucony: pieniądze zostają u sprzedawcy. Odejmujemy, jeśli był policzony.
+		// KOLEJNOŚĆ MA ZNACZENIE: najpierw pytamy o WŁASNY wpis cofnięcia, bo po pierwszym
+		// cofnięciu wpis `zwrot_nieudany` sam pasuje do wzorca `zwrot_%` i drugie pytanie
+		// odpowiedziałoby „tak, było" także przy powtórce.
+		if ( sklepag_zwrot_juz_zaksiegowany( (int) $zam->id, $refund_id, 'zwrot_nieudany' ) ) {
+			return true; // to cofnięcie już policzyliśmy — powtórka powiadomienia.
+		}
 		if ( ! sklepag_zwrot_juz_zaksiegowany( (int) $zam->id, $refund_id ) ) {
-			return true;
+			return true; // tego zwrotu nigdy nie policzyliśmy — nie ma czego cofać.
 		}
 		$kwota = max( 0, $juz - (int) ( $obiekt['amount'] ?? 0 ) );
 		sklepag_zapisz_zwrot( $zam, $kwota, 'zwrot_nieudany', 'zwrot ' . $refund_id . ' odrzucony (' . $stan_zwrotu . ') — pieniądze wracają do przychodu' );
@@ -415,15 +453,19 @@ function sklepag_zaksieguj_zwrot( $typ, $obiekt ) {
  * W drugim przypadku oddajemy błąd, żeby Stripe ponowił powiadomienie — inaczej
  * zwrot przepadał po cichu przy jednym timeoucie.
  *
+ * Rozstrzygnięcie bierzemy z `$powod` ustalonego przez `sklepag_zamowienie_po_platnosci`.
+ * Wcześniej ta funkcja pytała Stripe SAMA — drugi raz w tym samym żądaniu (15 s + 15 s
+ * przy awarii, ponad regułę „jedna próba" z includes/stripe.php) i z pominięciem pamięci
+ * nietrafień, przez co cudzy zwrot odpytywał Stripe przy każdym powtórzeniu.
+ *
  * @return bool true = zamknięte, false = niech Stripe ponowi.
  */
-function sklepag_zwrot_nieprzypisany( $typ, $payment_intent ) {
-	$sesja = sklepag_stripe_sesja_po_platnosci( $payment_intent );
-	if ( is_wp_error( $sesja ) && 'sklepag_brak_sesji' !== $sesja->get_error_code() ) {
+function sklepag_zwrot_nieprzypisany( $typ, $payment_intent, $powod = '' ) {
+	if ( 0 === strpos( (string) $powod, 'awaria:' ) ) {
 		sklepag_zdarzenie(
 			null,
 			'zwrot_odlozony',
-			$typ . ': nie udało się zapytać Stripe o płatność ' . $payment_intent . ' (' . $sesja->get_error_message() . ') — poprosimy o ponowienie'
+			$typ . ': nie udało się zapytać Stripe o płatność ' . $payment_intent . ' (' . substr( (string) $powod, 7 ) . ') — poprosimy o ponowienie'
 		);
 		return false;
 	}

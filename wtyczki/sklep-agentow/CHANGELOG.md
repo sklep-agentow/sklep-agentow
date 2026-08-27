@@ -20,6 +20,29 @@ Nic jeszcze.
 
 ---
 
+## [0.9.15] — 2026-08-27
+
+Wersja schematu bazy: **7** (bez zmian względem 0.9.14).
+
+### Naprawione
+- **Odrzucony zwrot nie odejmuje kwoty drugi raz.** Gdy bank odrzucał zwrot, pieniądze
+  wracały do przychodu — ale powtórzone powiadomienie o tym samym odrzuceniu odejmowało
+  kwotę ponownie. Przy dwóch zwrotach częściowych panel pokazywał pełny przychód, choć
+  część pieniędzy naprawdę zeszła z konta. Ścieżka cofnięcia ma teraz własny znacznik,
+  niezależny od znacznika dopisania zwrotu.
+- **Cudzy zwrot nie odpytuje Stripe w kółko.** Pamięć nietrafień („to nie nasza płatność",
+  trzymana dobę) była omijana: druga funkcja pytała Stripe bezwarunkowo zaraz po tym, jak
+  pierwsza odpowiedziała z pamięci. Przy awarii łączności jedno powiadomienie brało dwa
+  limity czasu po 15 sekund zamiast jednego.
+
+### Zmienione
+- Bramka zgodności dokumentacji sprawdza też wiersz `SKLEPAG_WERSJA` w tabeli stałych —
+  wcześniej patrzyła wyłącznie na nagłówek dokumentu i przepuszczała rozjazd w tabeli.
+- Tabela punktów wejścia w dokumentacji technicznej znów jest jedną tabelą (pusta linia
+  wyrzucała ostatni wiersz poza nią).
+
+---
+
 ## [0.9.14] — 2026-08-26
 
 Wersja schematu bazy: **7** (migracja odpala się sama, bez deaktywacji wtyczki).

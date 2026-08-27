@@ -128,12 +128,29 @@ PRZ_LICZ=$(bash narzedzia-qa/mapa-licznik.sh "$PRZELOT" --przelot --tylko-licz 2
 if [ "$PRZ_KOD" -ne 0 ]; then fail "5 przelot człowieka: nieznany znacznik (mapa-licznik --przelot EXIT=$PRZ_KOD)"; printf '%s\n' "$PRZ_BLAD" | sed 's/^/    /'
 elif [ "$PRZ_W_PLIKU" != "$PRZ_LICZ" ]; then fail "5 przelot człowieka: LICZNIK w pliku nieaktualny — jest „$PRZ_W_PLIKU”, policzone „$PRZ_LICZ” (uruchom: bash narzedzia-qa/mapa-licznik.sh $PRZELOT --przelot)"; elif [ "$PRZ_ILE" -lt "$PRZ_MIN" ]; then fail "5 przelot człowieka: tylko $PRZ_ILE punktów (wymagane ≥ $PRZ_MIN) — lista obcięta?"; elif [ "$PRZ_NIE" -eq 0 ] && [ "$PRZ_DZIW" -eq 0 ]; then pass "5 przelot człowieka: komplet ($PRZ_ILE punktów)"; else fail "5 przelot człowieka: $PRZ_NIE ⬜ + $PRZ_DZIW 😖 z $PRZ_ILE"; fi
 
-# 6. PRÓBY KONTROLNE STRAŻNIKÓW: log z jednego przebiegu, 26+ pozycji, wszystkie EXIT=0
-if [ -f "$PROBY" ]; then
-	ILE_P=$(grep -cE 'EXIT=' "$PROBY"); ZLE_P=$(grep -E 'EXIT=' "$PROBY" | grep -vc 'EXIT=0')
-	[ "$ILE_P" -ge 26 ] && [ "$ZLE_P" -eq 0 ] && pass "6 próby kontrolne: $ILE_P/$ILE_P EXIT=0" || fail "6 próby kontrolne: $ILE_P pozycji, $ZLE_P z EXIT≠0 (wymagane ≥26 i 0)"
-else
+# 6. PRÓBY KONTROLNE STRAŻNIKÓW: log MUSI pochodzić z przelotu maszynowego i z TEGO commitu.
+#    Recenzja #198 (runda 3, W3): wcześniej ta kontrola tylko grepowała plik pisany ręcznie —
+#    log mówił „bramki-proba-kontrolna.sh EXIT=1", a uruchomienie tej próby na HEAD dawało 0.
+#    Dowód bez daty ważności to dowód o nieznanym wieku, dlatego porównujemy COMMIT z HEAD.
+if [ ! -f "$PROBY" ]; then
 	fail "6 próby kontrolne: brak $PROBY"
+elif ! grep -q '^WYGENEROWANE-PRZEZ: narzedzia-qa/proby-kontrolne-przelot.sh' "$PROBY"; then
+	fail "6 próby kontrolne: $PROBY bez znacznika przelotu — log pisany ręcznie nie jest dowodem (uruchom: bash narzedzia-qa/proby-kontrolne-przelot.sh)"
+else
+	P_COMMIT=$(sed -n 's/^COMMIT: *//p' "$PROBY" | head -1)
+	HEAD_KR=$(git rev-parse --short=7 HEAD 2>/dev/null)
+	ILE_P=$(grep -cE '^[A-Za-z0-9_.-]+\.sh EXIT=' "$PROBY")
+	ZLE_P=$(grep -E '^[A-Za-z0-9_.-]+\.sh EXIT=' "$PROBY" | grep -vc 'EXIT=0')
+	POM_P=$(grep -cE '^POMINIETO ' "$PROBY")
+	if [ -z "$P_COMMIT" ] || [ "$P_COMMIT" != "$HEAD_KR" ]; then
+		fail "6 próby kontrolne: przelot z commitu „${P_COMMIT:-brak}", a HEAD to „$HEAD_KR" — dowód przeterminowany (uruchom: bash narzedzia-qa/proby-kontrolne-przelot.sh)"
+	elif [ "$ILE_P" -lt 26 ]; then
+		fail "6 próby kontrolne: uruchomionych tylko $ILE_P (wymagane ≥26) — zakres zawężony, pominiętych $POM_P"
+	elif [ "$ZLE_P" -ne 0 ]; then
+		fail "6 próby kontrolne: $ZLE_P z $ILE_P ma EXIT≠0 (przelot na $P_COMMIT)"
+	else
+		pass "6 próby kontrolne: $ILE_P/$ILE_P EXIT=0 na commicie $P_COMMIT (pominiętych: $POM_P)"
+	fi
 fi
 
 # 7. ZAMROŻENIE: sha256 zipa == zapisany; tag == zapisany SHA; raporty mają ten SHA

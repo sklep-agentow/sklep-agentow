@@ -32,3 +32,10 @@ phpcs
 phpstan
 gitleaks
 slady
+#
+# ROZSZERZENIE 2026-08-27 (PR #198, po recenzji #193): bramka `znaleziska` — waga i domknięcie
+# znalezisk audytu. Była w rejestrze BRAMKI=() i realnie wołana, ale POZA manifestem, czyli
+# w dokładnie tym stanie, który #193 opisał jako wadę dla `poswiadczenia`. Druga taka pozycja
+# w ciągu doby, dlatego razem z tym wpisem sprawdz-manifest.sh dostaje kontrolę ODWROTNĄ:
+# bramka w rejestrze, której nie ma w manifeście, świeci na czerwono.
+znaleziska

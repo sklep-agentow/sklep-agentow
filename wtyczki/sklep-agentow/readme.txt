@@ -4,7 +4,7 @@ Tags: sklep, stripe, pliki cyfrowe, sprzedaz wtyczek, pobieranie
 Requires at least: 6.7
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.9.14
+Stable tag: 0.9.15
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -141,6 +141,12 @@ Nie. Zakup jest bez konta: adres e-mail podany na stronie płatności Stripe,
 link do pobrania w mailu, jednorazowy link do opinii.
 
 == Changelog ==
+
+= 0.9.15 =
+* Odrzucony przez bank zwrot nie odejmuje kwoty drugi raz przy powtórzonym
+  powiadomieniu — panel pokazuje prawdziwy przychód.
+* Zwrot z cudzej płatności na wspólnym koncie Stripe nie odpytuje Stripe
+  w kółko; przy awarii łączności zapytanie idzie raz, nie dwa.
 
 = 0.9.14 =
 * Opłacony zakup nie ginie, gdy baza zawiedzie w połowie zapisu.

@@ -11,6 +11,7 @@
 # GDZIE ich szukamy: w rejestrze bramek skryptu zamiast w nazwach jobów.
 #
 # Skrypt świeci na czerwono, gdy: (1) bramka z manifestu zniknęła z rejestru w bramki.sh,
+# (1a) bramka biegnie w bramki.sh, ale nie ma jej w manifeście (spis został w tyle),
 # (2) bramka jest w rejestrze, ale nikt jej nie woła, (3) próg pełnego przebiegu jest
 # niższy niż liczba bramek w manifeście (ciche obniżenie poprzeczki), (4) quality.yml
 # przestał wołać bramki.sh, (5) ktokolwiek dodał continue-on-error,
@@ -56,6 +57,18 @@ while IFS= read -r BRAMKA; do
     BLAD=1
   fi
 done < "$MANIFEST"
+
+# 1a) KIERUNEK ODWROTNY: bramka, która jest w rejestrze i realnie biegnie, musi być też
+#     w manifeście. Bez tego manifest da się cicho zostawić w tyle — i tak się stało DWA razy
+#     w ciągu doby (`poswiadczenia` w #193, `znaleziska` w #198). Manifest jest spisem tego,
+#     co MUSI biec; bramka poza spisem to bramka, którą wolno usunąć bez śladu.
+while IFS= read -r W_REJESTRZE; do
+  [ -n "$W_REJESTRZE" ] || continue
+  if ! grep -vE '^\s*#' "$MANIFEST" | grep -qx "$W_REJESTRZE"; then
+    echo "MANIFEST-GUARD: bramka '$W_REJESTRZE' biegnie w bramki.sh, ale NIE MA jej w manifescie — spis został w tyle." >&2
+    BLAD=1
+  fi
+done < <(printf '%s\n' $REJESTR)
 
 # 1b) Próg pełnego przebiegu nie może być niższy niż liczba bramek z manifestu —
 #     inaczej dałoby się po cichu obniżyć poprzeczkę zamiast usuwać bramkę.

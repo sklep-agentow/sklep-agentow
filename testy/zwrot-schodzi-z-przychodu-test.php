@@ -11,7 +11,8 @@
  *
  * PASS = pełny zwrot zdejmuje zamówienie z przychodu i zapisuje status 'zwrocone';
  *        zwrot częściowy pomniejsza przychód o swoją kwotę i zostawia zamówienie na liście;
- *        powtórka tego samego zdarzenia niczego nie zmienia (brak podwójnego księgowania).
+ *        powtórka tego samego zdarzenia niczego nie zmienia (brak podwójnego księgowania)
+ *        — dotyczy OBU stron: dopisania zwrotu i jego cofnięcia po odrzuceniu przez bank.
  * FAIL = przychód nadal liczy zwrócone pieniądze albo brak śladu w dzienniku.
  */
 
@@ -165,8 +166,31 @@ echo 'PO_ZWROCIE_SRODKOW: status=' . $po8->status . " (OCZEKIWANE: mail_wyslany 
 $pass8 = ( 'sporne' !== $po8->status && 0 === (int) $po8->zwrocono_grosze );
 echo 'PO_ZWROCIE_SRODKOW: WYNIK=' . ( $pass8 ? 'PASS' : 'FAIL - spozniony komunikat o zwrocie srodkow znow wyrzucil zamowienie ze sprzedazy' ) . "\n";
 
+/* ---------- 9) POWTÓRKA ZWROTU ODRZUCONEGO nie odejmuje kwoty drugi raz ---------- */
+// Ścieżka DOPISANIA zwrotu ma znacznik po identyfikatorze od początku (przypadek 2).
+// Ścieżka COFNIĘCIA go nie miała: jej własny wpis `zwrot_nieudany` pasował do wzorca
+// `zwrot_%`, więc druga dostawa tego samego `refund.updated` przechodziła dalej i
+// odejmowała kwotę ponownie. Przy DWÓCH zwrotach częściowych bezpiecznik `$kwota === $juz`
+// tego nie łapie — dlatego przypadek ma tu dwa zwroty, nie jeden.
+$id9 = $zaloz();
+sklepag_zaksieguj_zwrot( 'refund.created', array( 'id' => 're_test_powt_A', 'payment_intent' => $pi, 'amount' => 3000, 'status' => 'succeeded' ) );
+sklepag_zaksieguj_zwrot( 'refund.created', array( 'id' => 're_test_powt_B', 'payment_intent' => $pi, 'amount' => 2000, 'status' => 'succeeded' ) );
+$po_dwoch = (int) $wpdb->get_var( $wpdb->prepare( "SELECT zwrocono_grosze FROM {$pz} WHERE id=%d", $id9 ) );
+$odrzucenie = array( 'id' => 're_test_powt_A', 'payment_intent' => $pi, 'amount' => 3000, 'status' => 'failed' );
+sklepag_zaksieguj_zwrot( 'refund.updated', $odrzucenie );
+$po_odrzuceniu9 = (int) $wpdb->get_var( $wpdb->prepare( "SELECT zwrocono_grosze FROM {$pz} WHERE id=%d", $id9 ) );
+sklepag_zaksieguj_zwrot( 'refund.updated', $odrzucenie ); // TA SAMA wiadomość dostarczona drugi raz
+$po_powtorce9 = (int) $wpdb->get_var( $wpdb->prepare( "SELECT zwrocono_grosze FROM {$pz} WHERE id=%d", $id9 ) );
+echo "POWTORKA_ODRZUCONY: po_dwoch_zwrotach=$po_dwoch (OCZEKIWANE: 5000)\n";
+echo "POWTORKA_ODRZUCONY: po_odrzuceniu_A=$po_odrzuceniu9 (OCZEKIWANE: 2000 — zostaje sam zwrot B)\n";
+echo "POWTORKA_ODRZUCONY: po_powtorce=$po_powtorce9 (OCZEKIWANE: 2000 — bez drugiego odjecia)\n";
+$pass9 = ( 5000 === $po_dwoch && 2000 === $po_odrzuceniu9 && 2000 === $po_powtorce9 );
+echo 'POWTORKA_ODRZUCONY: WYNIK=' . ( $pass9 ? 'PASS' : 'FAIL - powtorzone odrzucenie odjelo kwote drugi raz' ) . "\n";
+
+$posprzataj();
+
 // Kod wyjścia MUSI zgadzać się z werdyktem — inaczej strażnik krzyczy FAIL, a CI
 // widzi zero i przepuszcza wadę (klasa 11: nazwa bramki szersza niż to, co sprawdza).
-$straznik_ok = ( $pass1 && $pass2 && $pass3 && $pass4 && $pass5 && $pass6 && $pass7 && $pass8 );
+$straznik_ok = ( $pass1 && $pass2 && $pass3 && $pass4 && $pass5 && $pass6 && $pass7 && $pass8 && $pass9 );
 echo 'RAZEM: WYNIK=' . ( $straznik_ok ? 'PASS' : 'FAIL' ) . "\n";
 exit( $straznik_ok ? 0 : 1 );
