@@ -80,7 +80,7 @@ Format wiersza: `- ⬜ ID · cel · [runda/raport · SHA]`.
 - ✅ L4-12 · **WP-Cron bez ruchu**: strona bez odwiedzin przez godziny — czy druga droga domykania się wykona; instrukcja o cronie systemowym · [A/L4.json · 425a3124]
 - ✅ L4-13 · utf8mb4: długości kluczy indeksów; `get_charset_collate` (fakt: jest) · [B/L4.json · 7e0cf726]
 - ✅ L4-14 · `stos.sh` 1.3.1 okno na `wp_sklepag_*` — potwierdzić WYKONANIEM (`stos.sh tabele`, `wiersze wp_sklepag_zamowienia`); strażnik `stos-proba-kontrolna.sh` · [B/L4.json · 7e0cf726]
-- ⬜ L4-15 · `LINIA-BAZOWA` ponownie: regresje 0; 3 czerwone wyjaśnione (dane stosu ×2, przyrząd ×1) ·
+- ✅ L4-15 · `LINIA-BAZOWA` ponownie: regresje 0; 3 czerwone wyjaśnione (dane stosu ×2, przyrząd ×1) · [POMIAR 27.08 - 581e869 - REGRESJI PRODUKTU: 0. Przebieg po-198: 80 uruchomionych, 71 przechodzi, 9 czerwonych - wszystkie rozliczone: 3x zly kontener w wywolaniu (linia bazowa wolala testy .sh bez argumentu -> domyslny probny_wp, ktory nie stoi; z wlasciwym kontenerem wszystkie trzy EXIT=0) - NAPRAWIONE w linia-bazowa.sh; 1x test opinii nieaktualny po naprawie SK-L4-003 (zakladal opinie-sierote, ktora od 0.9.17 slusznie nie przechodzi moderacji) - NAPRAWIONY, teraz 48 kontroli OK EXIT=0; 1x panel-test-bota - dryf bazy Q&A stosu (ziarno demo podmienione na tresci sklepu, brak pary o cenniku), nie kod; 1x zrzuty-instrukcje to NARZEDZIE, nie test - broni sie EXIT=2 bez ZRZUTY_RESET_DEMO=1; 3x znane od 24.08 (dane stosu x2, przyrzad x1)]
 - ✅ L4-16 · migracje i aktywacja na PHP 8.1 / WP 6.7 (deklarowane minimum) bez notice · [B/L4.json · 7e0cf726]
 
 ## L5 — DOKUMENTACJA I PACZKA vs KOD (dwa kierunki; plugin-check; historia gita)
@@ -128,5 +128,5 @@ Format wiersza: `- ⬜ ID · cel · [runda/raport · SHA]`.
 
 ## LICZNIK
 <!-- liczony skryptem narzedzia-qa/mapa-licznik.sh; nie edytować ręcznie -->
-CELE: 104 · ✅ 77 · 🐞 20 · ⚠️ 0 · ⛔ 0 · ⬜ 7
+CELE: 104 · ✅ 78 · 🐞 20 · ⚠️ 0 · ⛔ 0 · ⬜ 6
 ZAMROZONA: 5d3dcf9f0d99dedc1fe201c3e318f46d6f35ba5d · celow=104 · tresc=2d2a15920151 · 2026-08-26T06:11
