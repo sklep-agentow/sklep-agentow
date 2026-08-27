@@ -108,7 +108,12 @@ uruchom() { # $1 = ścieżka testu, $2 = typ (php|js|sh), $3 = czy przywracać b
 	case "$typ" in
 		php) docker cp "$t" "$KONTENER:/tmp/lb-test.php" >/dev/null && timeout "$LIMIT_S" docker exec -u www-data "$KONTENER" wp --path=/var/www/html eval-file /tmp/lb-test.php > "$log" 2>&1; kod=$? ;;
 		js)  timeout "$LIMIT_S" flock /root/praca/zlecenia/wymiana/stos.lock node "$t" > "$log" 2>&1; kod=$? ;;
-		sh)  timeout "$LIMIT_S" flock /root/praca/zlecenia/wymiana/stos.lock bash "$t" > "$log" 2>&1; kod=$? ;;
+		# Testy powloki, ktore przyjmuja kontener jako $1, mialy domyslnie `probny_wp` — stos rundy,
+		# ktory tu NIE stoi. Wolane bez argumentu czytaly pustke i raportowaly FAIL w 0 s: 3 fałszywe
+		# czerwone na przebieg (zmierzone 27.08 — po podaniu kontenera wszystkie trzy EXIT=0).
+		sh)  args=""; grep -q "probny_wp" "$t" 2>/dev/null && args="$KONTENER"
+		     # shellcheck disable=SC2086
+		     timeout "$LIMIT_S" flock /root/praca/zlecenia/wymiana/stos.lock bash "$t" $args > "$log" 2>&1; kod=$? ;;
 	esac
 	koniec=$(date +%s)
 	printf '%s\t%s\t%s\n' "$t" "$kod" "$((koniec-start))" >> "$TSV"

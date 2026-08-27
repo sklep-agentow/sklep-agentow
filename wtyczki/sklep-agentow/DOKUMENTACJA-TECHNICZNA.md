@@ -1,6 +1,6 @@
 # Sklep Agentów — dokumentacja techniczna
 
-**Wersja wtyczki: 0.9.17 · wersja schematu bazy: 7 · WordPress 6.7+ · PHP 8.1+**
+**Wersja wtyczki: 0.9.18 · wersja schematu bazy: 7 · WordPress 6.7+ · PHP 8.1+**
 
 > **Po co ten dokument.** To jest **mapa systemu dla audytora i programisty**, nie ulotka.
 > Każda liczba i nazwa tutaj jest wzięta z kodu, nie z pamięci — jeśli coś się rozjedzie,
@@ -46,7 +46,7 @@ wyłącznie ustawienia i klucze — nigdy liczniki ani stan zamówień.
 | Tabela | Po co jest | Kto zapisuje |
 |---|---|---|
 | `produkty` | katalog: nazwa, adres, opis, cena, plik, aktywność | panel (CRUD) |
-| `sesje_checkout` | ślad rozpoczętych płatności — **informacyjnie** | rozpoczęcie zakupu |
+| `sesje_checkout` | ślad rozpoczętych płatności; kolumna `stan` **współrozstrzyga**, czy powtórne kliknięcie zakupu dostaje zapamiętany adres checkoutu, czy nowy | rozpoczęcie zakupu |
 | `zamowienia` | ⭐ **jedyne źródło prawdy o stanie zakupu** | webhook + reconciliation |
 | `zdarzenia` | dziennik zdarzeń zamówienia (audyt ścieżki) | wszystkie moduły zakupu |
 | `logowania` | kto i kiedy logował się do panelu, z jakim skutkiem | zaczepy logowania WP |
@@ -143,19 +143,27 @@ nie dotarł (druga, niezależna droga domykania).
 gość klika „Kup teraz"
    → walidacja zgody + limit żądań
    → utworzenie sesji Stripe Checkout          [tabela sesje_checkout]
-   → zamówienie w stanie „oczekuje"            [tabela zamowienia]
    → przekierowanie do Stripe (płatność kartą)
    → powrót na stronę „Dziękujemy" (odpytuje /status)
 
-RÓWNOLEGLE, dwa niezależne silniki domykania:
-   A) webhook od Stripe        → status „oplacone" → mail z linkiem
+RÓWNOLEGLE, dwa niezależne silniki domykania — TU powstaje wiersz zamówienia:
+   A) webhook od Stripe        → sklepag_domknij_zakup(): zamówienie „oczekuje"
+                                 [tabela zamowienia] → status „oplacone" → mail z linkiem
    B) cron co 10 min           → to samo, gdy webhook nie dotarł
+   UWAGA: sklepag_obsluz_kup() NIE dotyka tabeli zamowienia ani razu. Ten krok nie należy
+   do ścieżki liniowej kupującego i często dzieje się ZANIM wróci on na stronę podziękowania.
 ```
 
 ⭐ **Kluczowa zasada: przejęcie zamówienia jest atomowe.** Każde przejście stanu to
 jeden `UPDATE` z warunkiem na poprzedni stan — silnik, który przegra wyścig, wycofuje
-się **bez wysyłania drugiego maila**. Źródłem prawdy jest wyłącznie `zamowienia.status`;
-`sesje_checkout` jest tylko śladem informacyjnym.
+się **bez wysyłania drugiego maila**. Źródłem prawdy o ZAMÓWIENIU jest wyłącznie `zamowienia.status`.
+
+⚠️ `sesje_checkout` nie jest już wyłącznie śladem informacyjnym: od 0.9.18 jej kolumna `stan`
+bierze udział w decyzji, czy powtórne kliknięcie przycisku zakupu w oknie idempotencji dostanie
+zapamiętany adres checkoutu, czy nowy (`sklepag_sesja_czeka_na_platnosc()`). Warunkiem
+NADRZĘDNYM jest tam wiek okna (`SKLEPAG_IDEM_OKNO_S`), bo `stan` przestawia dopiero webhook —
+zanim dotrze, sesja opłacona leży w bazie jako `utworzona` i jest nieodróżnialna od czekającej.
+Na stan zamówienia ta tabela nadal nie wpływa.
 
 ## 6. Brama pobrań
 
@@ -179,7 +187,7 @@ po stronie serwera. To jest świadome ograniczenie, nie przeoczenie.
 
 | Stała | Wartość | Znaczenie |
 |---|---|---|
-| `SKLEPAG_WERSJA` | 0.9.17 | wersja wtyczki (assety, cache) |
+| `SKLEPAG_WERSJA` | 0.9.18 | wersja wtyczki (assety, cache) |
 | `SKLEPAG_WERSJA_SCHEMATU` | 7 | wersja schematu bazy (migracje) |
 | `SKLEPAG_LIMIT_POBRAN` | 10 | ile razy można pobrać zakup |
 | `SKLEPAG_LINK_GODZIN` | 72 | ważność linku pobrania |

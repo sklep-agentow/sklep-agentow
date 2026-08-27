@@ -42,3 +42,64 @@ SAMYCH klas — każda ma tu swoją bramkę u nas albo dopisaną akcję.**
   nasz `wp_remote_post` do Stripe/AI: timeout 15 s, jeden retry, nigdy pętla ślepa.
 - README/instrukcja czytana przez niego ZDANIE PO ZDANIU dwa razy — niespójność
   wytknięta ponownie boli podwójnie („nie poprawiłeś tego xd").
+
+---
+
+## KLASY DOPISANE 2026-08-27 — z 10 rund recenzji PR #198 (sklep)
+
+Źródło: nie cudze projekty, tylko TEN PR. Dziesięć rund recenzji CI, około trzydziestu uwag,
+z czego kod produktu był czysty od rundy 6 — cała reszta dotyczyła NASZEGO SPRAWDZANIA.
+Każda klasa niżej ma dowód z tego dnia, bo klasa bez dowodu jest tylko notatką.
+
+| # | Klasa (ile razy wróciła 27.08) | Dowód z tego dnia | Co ją łapie U NAS |
+|---|---|---|---|
+| 8 | **BLIŹNIAK naprawy** — załatana jedna ścieżka, siostrzana została (×3) | spór naprawiony w rundzie 2, zwrot dopiero w 4, „Wyślij ponownie” w 5 — za każdym razem znajdował to recenzent, po jednym egzemplarzu na rundę | bramka `status-bez-warunku` pyta o CAŁĄ klasę zapisu statusu naraz (11 zapisów; próba kontrolna 11/11) |
+| 9 | **DOWÓD SKLEJANY RĘCZNIE, nie wzięty z przebiegu** | opis PR cytował sha z bieżącego przebiegu i liczbę sprzed dwóch rund — plik NIGDY nie miał takiego stanu; werdykt recenzenta: „cytat nie pochodzi z żadnego przebiegu” | `narzedzia-qa/dowody-do-opisu.sh` — uruchamia kontrole i składa blok z ICH wyjść; niczego nie ocenia i nie ukrywa (złapał własny martwy odsyłacz, wypisując `EXIT=2`) |
+| 10 | **OPIS PR O RUNDĘ DO TYŁU** — recenzent czyta stan z chwili STARTU przebiegu (×3) | rundy 4, 5 i 10 postawiły tę samą uwagę; między pushem a podmianą opisu mijały dwie minuty i to wystarczyło | ⛔ **LUKA — jedyna klasa z dzisiaj bez bramki.** Kolejność commit → bramki → opis → push jest zapisana i **wracała mimo zapisu**. Do zamknięcia hookiem na `git push` |
+| 11 | **BRAMKA O ZAKRESIE WĘŻSZYM NIŻ NAZWA** (×5 na jednym narzędziu) | ta sama bramka po kolei: widziała tylko jedną nazwę zmiennej · pomijała plik bez przypisania tabeli · szukała liniowo · regex parował „co drugi cudzysłów” i **zabrał pokrycie dwóm zapisom w ścieżce pieniędzy** (uwaga KRYTYCZNA) · nie znała `wpdb->update()` z tablicą danych w zmiennej | próba kontrolna ma osobny **test POKRYCIA na liczbie** (8 z 8 kształtów), nie tylko werdykt; bramka stoi na `token_get_all()`, nie na regeksach |
+| 12 | **ZERO JAKO SUKCES** — narzędzie nic nie znalazło i świeci zielono | bramka meldowała „0 zapisów — każdy chroniony”, EXIT=0, a grep na tym samym pliku dawał 9 trafień | bramka **PADA** przy zerze znalezisk; próba kontrolna ma mutanta „zero w zakresie to ślepota, nie czystość” |
+
+### Meta-lekcja dnia, ważniejsza od pojedynczych klas
+
+**Cztery razy winne było NARZĘDZIE POMIAROWE, nie mierzony kod.** Fałszywe zero bramki (dwa
+razy), test kłamiący o naprawie, która działała (atrapa z wywołaniami stojącymi za blisko
+siebie), oraz sonda recenzenta, która mierzyła zapytanie zamiast ścieżki — pomijając białą
+listę stojącą osiemnaście linii wyżej. Odruch „sprawdź własne narzędzie, zanim oskarżysz
+cudze” zadziałał za każdym razem i za każdym razem oszczędził fałszywą naprawę.
+
+**Notatka nie jest bramką.** Klasa 10 wróciła TRZY razy, mimo że po pierwszym nawrocie
+zapisałam ją w pamięci razem z gotową komendą. Wróciła, bo nie miała wyzwalacza w narzędziu.
+Te klasy, które bramkę dostały (8, 9, 11, 12), nie wróciły ani razu po jej postawieniu.
+
+**Dla przyszłego audytu:** klasy 8 i 11 są najkosztowniejsze — obie objawiają się jako zielone
+światło, więc nie da się ich zauważyć przez patrzenie na wynik. Widać je wyłącznie przez
+pytanie „czego to narzędzie NIE widzi", zadane osobno od pytania „co znalazło".
+
+
+---
+
+## KLASY DOPISANE 2026-08-27 (wieczor) — z 3 rund recenzji PR #199 (naprawa SK-L3-005)
+
+Zrodlo: naprawa JEDNEJ wady w sciezce pieniedzy. Trzy rundy, dwie uwagi WAZNE w kazdej z pierwszych
+dwoch. Wszystkie ponizsze klasy laczy jedno: **kod produktu byl poprawny, klamal DOWOD albo OPIS.**
+
+| # | Klasa (skad wziecie) | Dowod z tego dnia | Co ja lapie U NAS |
+|---|---|---|---|
+| 13 | **NAPRAWA ZWEZA OKNO WADY, zamiast zamknac klase** — decyzja oparta na stanie, ktory przestawia ZEWNETRZNE zdarzenie | naprawa czytala `sesje_checkout.stan`, ale `oplacona` zapisuje wylacznie webhook albo reconciliation (ta druga pomija sesje mlodsze niz 120 s). Przez cale okno zaplacona sesja lezy jako `utworzona` — NIEODROZNIALNA od czekajacej. Recenzent odtworzyl wade sonda mimo naprawy | pytanie do KAZDEJ naprawy zaleznej od webhooka/cronu/callbacku: **co widzi kod, ZANIM to zdarzenie dotrze?** Jesli stan jest wtedy nieodroznialny — naprawa nie zamyka klasy; potrzebny warunek NIEZALEZNY od tego zdarzenia (u nas: wiek okna) |
+| 14 | **DOWOD Z ZYWEGO STOSU SLEPY NA OPOZNIENIE, ktorego ten stos nie ma** | 2 przeloty E2E przez zywy Stripe, oba EXIT=0, rozne sesje — a wada byla nadal odtwarzalna. Przeloty szly przez `stripe listen` na TEJ SAMEJ maszynie, wiec webhook wracal natychmiast | gdy dwa przypadki testowe maja w bazie IDENTYCZNY wiersz, test NIE odroznia naprawy od jej braku w tym kierunku. Trzeba przypadku odtwarzajacego STAN POSREDNI wprost w bazie (u nas: przypadek C straznika) |
+| 15 | **GALAZ RATUNKOWA W MARTWYM KODZIE** — deklarowana obsluga bledu nigdy sie nie wykonuje | straznik mial lapac limiter (429) i konczyc kodem 2; limiter konczy przez `wp_die()`, a to pod `wp eval-file` NIE rzuca wyjatku — uchwyt WP-CLI drukuje `Error:` i konczy proces. `catch` nigdy nie dostal tresci, `exit( 2 )` byl martwy. Commit deklarowal, ze dziala | ⛔ **kazda galaz ratunkowa musi miec wlasne URUCHOMIENIE w opisie.** Nie wystarczy ja napisac — trzeba pokazac kod wyjscia z sytuacji, ktora ma ja wywolac (u nas: 5 przebiegow pod rzad) |
+| 16 | **BRAMKA SPRAWDZA ISTNIENIE WPISU, NIE JEGO PRAWDZIWOSC** | `dokumentacja-zgodnosc-sklep.sh` EXIT=0 i `0 rozjazdow`, podczas gdy CHANGELOG i readme mowily o produkcie nieprawde. Bramka sprawdza, czy wpis `[0.9.18]` ISTNIEJE — nie czy jest zgodny ze zmiana | to granica narzedzia, nie jego wada. ⛔ Przy KAZDEJ zmianie zachowania widocznego dla kupujacego teksty klienta czyta CZLOWIEK, nie bramka. Bramka pilnuje obecnosci, sens zostaje po naszej stronie |
+
+### Meta-lekcja tej naprawy
+
+**Kod produktu nie mial ani jednej uwagi przez wszystkie trzy rundy.** Uwagi dotyczyly: dowodu
+(klasa 14), zakresu naprawy (13), martwej galezi w tescie (15) i tekstow dla klienta (16).
+To odwrotnosc odruchu, ktory kaze sprawdzac przede wszystkim kod.
+
+⛔ **Klasa 3 (dokumentacja klamie) ma nowy, grozniejszy wariant: dokumentacja klamie WSKUTEK
+NASZEJ WLASNEJ ZMIANY.** Zdanie bylo prawdziwe wczoraj i przestalo byc dzisiaj, bo zmienilismy
+zachowanie — a nikt nie wraca do tekstu, ktorego nie dotykal. Dwa razy w jednym PR: raz
+w DOKUMENTACJA-TECHNICZNA.md (tabela opisana jako informacyjna zaczela rozstrzygac o sciezce
+zakupu), raz w CHANGELOG.md i readme.txt (twierdzily, ze ochrona dziala bez zmian, gdy okno
+skurczylo sie z 60 s do 5 s). ⭐ **Odruch: po naprawie zapytaj nie tylko czego to dotyka w KODZIE,
+ale ktore ZDANIE o tym kodzie przestalo byc prawdziwe.**

@@ -20,6 +20,26 @@ Nic jeszcze.
 
 ---
 
+## [0.9.18] — 2026-08-27
+
+### Poprawione
+- **Drugi zakup tego samego produktu tuż po opłaceniu pierwszego nie dochodził do skutku**
+  (SK-L3-005). Okno idempotencji (60 s, klucz `md5(IP|produkt_id)`) oddawało zapamiętany
+  adres checkoutu bez sprawdzenia, czy tamta sesja nie została już opłacona — kupujący
+  trafiał na opłacony ekran Stripe, bez pól karty i bez wyjaśnienia. Ponieważ okno jest
+  kluczowane `REMOTE_ADDR`, dotyczyło to także DWÓCH RÓŻNYCH kupujących za jednym adresem
+  (CGNAT operatora komórkowego, biuro za NAT-em).
+  **Okno ochrony przed podwójnym kliknięciem skróciło się z 60 do 5 sekund** i to jest
+  zmiana widoczna dla kupującego: dwa kliknięcia pod rząd nadal nie kończą się podwójnym
+  obciążeniem, ale powrót na stronę produktu po kilkunastu sekundach (na przykład przyciskiem
+  wstecz) rozpocznie już nową płatność. Tak być musi: informacja o zapłacie przychodzi ze Stripe
+  z opóźnieniem, a do tego czasu płatność opłacona i płatność czekająca wyglądają u nas
+  identycznie. O tym, czy oddać zapamiętany adres, rozstrzyga więc przede wszystkim WIEK
+  okna; stan płatności jest drugim, dodatkowym warunkiem i czytamy go z własnej bazy, żeby
+  awaria łączności ze Stripe nie blokowała zakupu.
+  Zmiana ma test regresji sprawdzający trzy przypadki naraz, w tym ten z opóźnioną
+  informacją o zapłacie.
+
 ## [0.9.17] — 2026-08-27
 
 Wersja schematu bazy: **7** (bez zmian).

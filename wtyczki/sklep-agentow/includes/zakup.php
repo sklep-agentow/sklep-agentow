@@ -13,6 +13,14 @@ const SKLEPAG_ZGODA_TRESC = 'Wyrażam zgodę na natychmiastowe dostarczenie tre�
 /* ---------- RATE LIMIT (atomowy licznik w tabeli, per IP i okno minutowe;
 	webhook JAWNIE poza limiterem) ---------- */
 
+/**
+ * Ile sekund okno idempotencji wolno oddawać zapamiętany adres checkoutu.
+ * Podwójny klik mieści się poniżej sekundy; wpisanie karty u Stripe trwa dziesiątki sekund,
+ * więc ten próg rozdziela oba zdarzenia BEZ pytania Stripe o stan — awaria łączności ze Stripe
+ * nie może blokować ścieżki zakupu.
+ */
+const SKLEPAG_IDEM_OKNO_S = 5;
+
 function sklepag_ip() {
 	return isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '0.0.0.0';
 }
@@ -115,12 +123,34 @@ function sklepag_obsluz_kup() {
 		wp_die( 'Produkt niedostępny.', 'Sklep Agentów', 404 );
 	}
 
-	// Okno idempotencji 60 s: podwójny klik nie tworzy drugiej sesji.
+	// Okno idempotencji: podwójny klik nie tworzy drugiej sesji (SK-L3-005).
+	//
+	// DWA warunki, oba konieczne, bo każdy z osobna ma dziurę:
+	//
+	// 1. WIEK OKNA (SKLEPAG_IDEM_OKNO_S). Podwójny klik trwa ułamek sekundy; opłacenie
+	//    checkoutu wymaga wpisania karty, więc trwa dziesiątki sekund. Krótkie okno
+	//    rozdziela te dwa zdarzenia bez pytania kogokolwiek o stan.
+	//    ⛔ To jest warunek NADRZĘDNY i nie da się go zastąpić kontrolą stanu sesji:
+	//    `oplacona` zapisuje wyłącznie sklepag_domknij_zakup(), wołane z webhooka i z
+	//    reconciliation — a reconciliation pomija sesje młodsze niż 120 s. Zanim webhook
+	//    dotrze, opłacona sesja LEŻY W BAZIE JAKO `utworzona` i jest nieodróżnialna od
+	//    czekającej. Sam stan lokalny zwężał więc okno wady, zamiast ją zamknąć.
+	// 2. STAN SESJI. Łapie przypadki, w których webhook JUŻ wrócił (sesja opłacona,
+	//    wygaszona) albo wiersza sesji w ogóle nie ma — brak danych to odmowa, nie domysł.
+	//
+	// Okno jest kluczowane adresem IP (`sklepag_ip()` czyta goły REMOTE_ADDR), więc za
+	// wspólnym adresem (CGNAT operatora, biuro za NAT) trafia też w DRUGĄ osobę. Krótkie
+	// okno ogranicza to do kilku sekund; pełne rozdzielenie kupujących wymagałoby klucza
+	// związanego z sesją przeglądarki i jest zapisane jako otwarta połowa klasy SK-L3-005.
 	$okno = 'sklepag_idem_' . md5( sklepag_ip() . '|' . $produkt_id );
 	$juz  = get_transient( $okno );
 	if ( is_array( $juz ) && ! empty( $juz['url'] ) ) {
-		wp_redirect( $juz['url'] ); // phpcs:ignore WordPress.Security.SafeRedirect -- adres Stripe (zewnętrzny, z API).
-		exit;
+		$wiek_ok = ! empty( $juz['czas'] ) && ( time() - (int) $juz['czas'] ) <= SKLEPAG_IDEM_OKNO_S;
+		if ( $wiek_ok && ! empty( $juz['sid'] ) && sklepag_sesja_czeka_na_platnosc( $juz['sid'] ) ) {
+			wp_redirect( $juz['url'] ); // phpcs:ignore WordPress.Security.SafeRedirect -- adres Stripe (zewnętrzny, z API).
+			exit;
+		}
+		delete_transient( $okno );
 	}
 
 	$zgoda_czas = current_time( 'mysql', true );
@@ -141,7 +171,15 @@ function sklepag_obsluz_kup() {
 		)
 	);
 
-	set_transient( $okno, array( 'url' => $sesja['url'] ), MINUTE_IN_SECONDS );
+	set_transient(
+		$okno,
+		array(
+			'url'  => $sesja['url'],
+			'sid'  => $sesja['id'],
+			'czas' => time(),
+		),
+		MINUTE_IN_SECONDS
+	);
 
 	wp_redirect( $sesja['url'] ); // phpcs:ignore WordPress.Security.SafeRedirect
 	exit;
@@ -258,6 +296,25 @@ function sklepag_webhook( WP_REST_Request $zadanie ) {
 	}
 
 	return new WP_REST_Response( array( 'ok' => true ), 200 );
+}
+
+/**
+ * Czy sesja checkout WCIĄŻ czeka na płatność — a więc czy wolno oddać jej adres z okna
+ * idempotencji (SK-L3-005)? Stan trzymamy u siebie (`sklepag_oznacz_sesje`), więc pytanie
+ * nie kosztuje wywołania Stripe i nie psuje się przy awarii łączności.
+ * Brak wiersza = false: nieznanego checkoutu nie podajemy kupującemu.
+ */
+function sklepag_sesja_czeka_na_platnosc( $sesja_id ) {
+	if ( '' === $sesja_id ) {
+		return false;
+	}
+	global $wpdb;
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+	$stan = $wpdb->get_var(
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- nazwa tabeli z prefiksu.
+		$wpdb->prepare( "SELECT stan FROM {$wpdb->prefix}sklepag_sesje_checkout WHERE stripe_session_id = %s", $sesja_id )
+	);
+	return 'utworzona' === $stan;
 }
 
 function sklepag_oznacz_sesje( $sesja_id, $stan ) {

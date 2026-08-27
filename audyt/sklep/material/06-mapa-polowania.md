@@ -58,7 +58,7 @@ Format wiersza: `- ⬜ ID · cel · [runda/raport · SHA]`.
 - ✅ L3-11 · budżet czasu reconciliation 8/15 s · [B/L3.json · 7e0cf726]
 - ✅ L3-12 · snapshot produktu w zamówieniu vs edycja produktu · [B/L3.json · 7e0cf726]
 - ✅ L3-13 · zakup produktu nieaktywnego / bez pliku = odmowa · [B/L3.json · 7e0cf726]
-- ⬜ L3-14 · kryteria #2–#5 przelotem `testy/e2e/przelot2.js` ×2 (mail ≤ 60 s zmierzony) ·
+- 🐞 L3-14 · kryteria #2–#5 przelotem `testy/e2e/przelot2.js` ×2 (mail ≤ 60 s zmierzony) · [PRZELOT 27.08 - 581e869 - SK-L3-005 - mail <=60 s SPELNIONE (17/18/17/16 s do mail_wyslany); przeloty 2 i 4 odslonily SK-L3-005 (okno idempotencji oddawalo oplacona sesje) - po naprawie 0.9.18 przeloty 5 i 6 EXIT=0 z ROZNYMI sesjami]
 - 🐞 L3-15 · Stripe 401 / 403 / 429 / 5xx → co widzi kupujący, co właściciel · [A/SK-L3-002 · L3.json · 425a3124]
 - 🐞 L3-16 · zły / pusty klucz Stripe = sygnał w panelu, nie cicha awaria · [A/SK-L3-002 · L3.json · 425a3124]
 - ✅ L3-17 · zmiana sekretu webhooka w ustawieniach → stare podpisy odrzucane · [B/L3.json · 7e0cf726]
@@ -80,7 +80,7 @@ Format wiersza: `- ⬜ ID · cel · [runda/raport · SHA]`.
 - ✅ L4-12 · **WP-Cron bez ruchu**: strona bez odwiedzin przez godziny — czy druga droga domykania się wykona; instrukcja o cronie systemowym · [A/L4.json · 425a3124]
 - ✅ L4-13 · utf8mb4: długości kluczy indeksów; `get_charset_collate` (fakt: jest) · [B/L4.json · 7e0cf726]
 - ✅ L4-14 · `stos.sh` 1.3.1 okno na `wp_sklepag_*` — potwierdzić WYKONANIEM (`stos.sh tabele`, `wiersze wp_sklepag_zamowienia`); strażnik `stos-proba-kontrolna.sh` · [B/L4.json · 7e0cf726]
-- ⬜ L4-15 · `LINIA-BAZOWA` ponownie: regresje 0; 3 czerwone wyjaśnione (dane stosu ×2, przyrząd ×1) ·
+- ✅ L4-15 · `LINIA-BAZOWA` ponownie: regresje 0; 3 czerwone wyjaśnione (dane stosu ×2, przyrząd ×1) · [POMIAR 27.08 - 581e869 - REGRESJI PRODUKTU: 0. Przebieg po-198: 80 uruchomionych, 71 przechodzi, 9 czerwonych - wszystkie rozliczone: 3x zly kontener w wywolaniu (linia bazowa wolala testy .sh bez argumentu -> domyslny probny_wp, ktory nie stoi; z wlasciwym kontenerem wszystkie trzy EXIT=0) - NAPRAWIONE w linia-bazowa.sh; 1x test opinii nieaktualny po naprawie SK-L4-003 (zakladal opinie-sierote, ktora od 0.9.17 slusznie nie przechodzi moderacji) - NAPRAWIONY, teraz 48 kontroli OK EXIT=0; 1x panel-test-bota - dryf bazy Q&A stosu (ziarno demo podmienione na tresci sklepu, brak pary o cenniku), nie kod; 1x zrzuty-instrukcje to NARZEDZIE, nie test - broni sie EXIT=2 bez ZRZUTY_RESET_DEMO=1; 3x znane od 24.08 (dane stosu x2, przyrzad x1)]
 - ✅ L4-16 · migracje i aktywacja na PHP 8.1 / WP 6.7 (deklarowane minimum) bez notice · [B/L4.json · 7e0cf726]
 
 ## L5 — DOKUMENTACJA I PACZKA vs KOD (dwa kierunki; plugin-check; historia gita)
@@ -90,7 +90,7 @@ Format wiersza: `- ⬜ ID · cel · [runda/raport · SHA]`.
 - ✅ L5-04 · readme.txt: każda liczba i obietnica → kod · [B/L5.json · 7e0cf726]
 - ✅ L5-05 · INSTRUKCJA-INSTALACJI: etykiety menu, Krok 0, komendy WPISANE w terminal · [B/L5.json · 7e0cf726]
 - ✅ L5-06 · CHANGELOG = wersja; `[Niewydane]` puste; treść wpisu 0.9.13 prawdziwa · [B/L5.json · 7e0cf726]
-- ⬜ L5-07 · liczby stron produktów („6 zrzutów", „10 par", „30 maili") vs paczki botów ·
+- ✅ L5-07 · liczby stron produktów („6 zrzutów", „10 par", „30 maili") vs paczki botów · [POMIAR 27.08 - 581e869 - 6 zrzutow w OBU paczkach + 6 odsylaczy w instrukcjach; ziarno chatbota = 10 par; ziarno segregatora = 30 maili (i 30 w bazie). Zgodne w komplecie]
 - ✅ L5-08 · kierunek ODWROTNY: każdy punkt wejścia z inwentarza (02) → opisany w dokumentacji · [B/L5.json · 7e0cf726]
 - ✅ L5-09 · treść maila vs instrukcja (3 kroki, ważność, limit, opinia) · [B/L5.json · 7e0cf726]
 - ✅ L5-10 · szablony prawne: 90 dni, Stripe jako procesor, gwarancja 14 dni (D31) · [A/L5.json · 425a3124]
@@ -103,10 +103,10 @@ Format wiersza: `- ⬜ ID · cel · [runda/raport · SHA]`.
 - ✅ L5-17 · `testy/dokumentacja-zgodnosc-sklep.sh` (strażnik readme/CHANGELOG/DOK-TECH = kod) zielony na paczce · [A/L5.json · 425a3124]
 
 ## L6 — FRONT / UX (przyrządy + człowiek; NIEKALIBROWANA)
-- ⬜ L6-01 · Lighthouse 4 kategorie ≥ 95 ×3 strony (z `blog_public=1` na czas pomiaru) ·
-- ⬜ L6-02 · axe `--bez-ruchu` = 0 naruszeń ·
-- ⬜ L6-03 · szelki 10/10 ×2 slugi, chromium + firefox ·
-- ⬜ L6-04 · sonda pigułki sticky 5/5 ·
+- ✅ L6-01 · Lighthouse 4 kategorie ≥ 95 ×3 strony (z `blog_public=1` na czas pomiaru) · [POMIAR 27.08 - 581e869 - 4 kategorie x 3 strony x 2 tryby wszystkie >=95; segregator-mobile perf 93 pod obciazeniem -> powtorka x3 = 97/99/99, mediana 99; prog 95 dodany do przyrzadu i skalibrowany 3/3]
+- ✅ L6-02 · axe `--bez-ruchu` = 0 naruszeń · [POMIAR 27.08 - 581e869 - 3 strony x desktop/mobile = 6 przebiegow, 0 serious/critical]
+- ✅ L6-03 · szelki 10/10 ×2 slugi, chromium + firefox · [POMIAR 27.08 - 581e869 - 4 przebiegi EXIT=0 (2 slugi x chromium+firefox); obsluga firefoksa dopisana do przyrzadu jako 3. argument]
+- ✅ L6-04 · sonda pigułki sticky 5/5 · [POMIAR 27.08 - 581e869 - 5/5 OK: desktop, telefon 390 px, skrypt opozniony 3,5 s]
 - ⬜ L6-05 · przelot człowieka (`PRZELOT-CZLOWIEKA-SKLEP.md`) — komplet ·
 - ⬜ L6-06 · 3 kroki klawiaturowe (lista → produkt → zakup; lightbox; formularz opinii) ·
 
@@ -128,5 +128,5 @@ Format wiersza: `- ⬜ ID · cel · [runda/raport · SHA]`.
 
 ## LICZNIK
 <!-- liczony skryptem narzedzia-qa/mapa-licznik.sh; nie edytować ręcznie -->
-CELE: 104 · ✅ 72 · 🐞 19 · ⚠️ 0 · ⛔ 0 · ⬜ 13
+CELE: 104 · ✅ 78 · 🐞 20 · ⚠️ 0 · ⛔ 0 · ⬜ 6
 ZAMROZONA: 5d3dcf9f0d99dedc1fe201c3e318f46d6f35ba5d · celow=104 · tresc=2d2a15920151 · 2026-08-26T06:11

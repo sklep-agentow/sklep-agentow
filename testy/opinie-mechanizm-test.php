@@ -42,6 +42,7 @@ $teraz = current_time( 'mysql' );
 // testowe — przerwany przebieg nie może wywrócić następnego), załóż produkt testowy.
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$to} WHERE zamowienie_id IN (%d, %d, %d, %d, %d)", $zam1, $zam2, 9900011, 9900012, 9900013 ) );
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}sklepag_zamowienia WHERE id IN (%d, %d)", $zam1, 9900011 ) );
+
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$tp} WHERE slug = %s", $slug ) );
 $wpdb->insert(
 	$tp,
@@ -59,6 +60,28 @@ $wpdb->insert(
 );
 $prod_id = (int) $wpdb->insert_id;
 sprawdz( 'SETUP: produkt testowy zalozony (aktywny=0)', $prod_id > 0 );
+// Zamowienie dla $zam1 MUSI istniec: od naprawy SK-L4-003 (0.9.17) sklepag_opinia_moderuj()
+// odmawia moderacji opinii bez powiazanego zamowienia (JOIN bez trafienia = odmowa, zamiast
+// dawnego NULL czytanego jako zgoda). Test powstal przed ta naprawa i zakladal wylacznie
+// opinie-sierote, wiec cala sekcja D szla na odmowie: 9 kontroli padalo z JEDNEJ przyczyny,
+// a produkt zachowywal sie poprawnie. Sciezke osierocona pilnuje osobny straznik:
+// audyt/sklep/testy-audytora/B/L4/test-opinia-osierocona-moderacja.sh
+$wpdb->insert(
+	$wpdb->prefix . 'sklepag_zamowienia',
+	array(
+		'id'                    => $zam1,
+		'stripe_session_id'     => 'cs_test_opinie_mech_' . $zam1,
+		'produkt_id'            => $prod_id,
+		'produkt_nazwa_kupiona' => 'TEST mechanizmu opinii',
+		'produkt_cena_kupiona'  => 100,
+		'email_kupujacego'      => 'opinie-test@example.com',
+		'kwota_grosze'          => 100,
+		'waluta'                => 'PLN',
+		'status'                => 'mail_wyslany',
+		'utworzono'             => $teraz,
+		'zmieniono'             => $teraz,
+	)
+);
 
 echo "\n=== A. Zalazek przy mailu: token jednorazowy, retry odswieza ===\n";
 $token1 = sklepag_opinia_zalazek( $zam1, $prod_id );
@@ -242,7 +265,32 @@ echo "\n=== G. Render CALEJ strony produktu (sklepag_render_produkt), nie samej 
 $zam3 = 9900011; // produkt generyczny (spoza dwojki)
 $zam4 = 9900012; // produkt z dwojki (chatbot-live)
 $zam5 = 9900013; // zalazek do anonimizacji
+$pzh_g = $wpdb->prefix . 'sklepag_zamowienia';
 $wpdb->query( $wpdb->prepare( "UPDATE {$tp} SET aktywny = 1 WHERE id = %d", $prod_id ) ); // render wymaga aktywnego produktu
+
+// Oprawa sekcji G: od naprawy SK-L4-003 (0.9.17) moderacja ODMAWIA opinii bez powiazanego
+// zamowienia, a render pokazuje wylacznie opinie przyjete. Bez tych dwoch wierszy obie
+// kontrole renderu padaly na odmowie moderacji, nie na renderze. (Sekcja H ma juz wlasna
+// oprawe dla zam1/zam3 nizej; tutaj potrzebna jest PRZED uzyciem.)
+foreach ( array( $zam3 => $prod_id, $zam4 => $prod_id ) as $zam_g => $prod_g ) {
+	$wpdb->query( $wpdb->prepare( "DELETE FROM {$pzh_g} WHERE id = %d", $zam_g ) );
+	$wpdb->insert(
+		$pzh_g,
+		array(
+			'id'                    => $zam_g,
+			'stripe_session_id'     => 'cs_test_opinie_mech_' . $zam_g,
+			'produkt_id'            => $prod_g,
+			'produkt_nazwa_kupiona' => 'TEST mechanizmu opinii',
+			'produkt_cena_kupiona'  => 100,
+			'email_kupujacego'      => 'opinie-test@example.com',
+			'kwota_grosze'          => 100,
+			'waluta'                => 'PLN',
+			'status'                => 'mail_wyslany',
+			'utworzono'             => $teraz,
+			'zmieniono'             => $teraz,
+		)
+	);
+}
 $token4 = sklepag_opinia_zalazek( $zam3, $prod_id );
 sklepag_opinia_zapisz(
 	$zam3,

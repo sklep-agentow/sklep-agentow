@@ -15,15 +15,17 @@
  *  10. lista /sklep/ bez wiersza chipów (panel listy nie dostaje elementów strony produktu).
  *
  * Kod wyjścia 0 = wszystko OK, 1 = którakolwiek kontrola pada, 2 = błąd przyrządu.
- * Użycie: node testy/e2e/szelki-strona-produktu.js [adres] [slug]
+ * Użycie: node testy/e2e/szelki-strona-produktu.js [adres] [slug] [silnik]
+ *   silnik: chromium (domyślnie) albo firefox — cel L6-03 mapy wymaga obu silników.
  *   slug: chatbot-live (domyślnie) albo segregator-maila. SKLEPAG_PRZEKIERUJ_HOST=host — gdy
  *   siteurl stacku wskazuje inny host (np. tunel), żądania do niego idą na adres bazy.
  */
-const { chromium } = require('playwright-core');
+const { chromium, firefox } = require('playwright-core');
 const { wymagajChromium } = require('../lib/chromium');
 
 const BAZA = process.argv[2] || 'http://localhost:8890';
 const SLUG = process.argv[3] || 'chatbot-live';
+const SILNIK = (process.argv[4] || 'chromium').toLowerCase();
 const URL = BAZA + '/sklep/produkt/' + SLUG + '/';
 const PRZEKIERUJ = process.env.SKLEPAG_PRZEKIERUJ_HOST || '';
 const OSTATNIA_FAZA = '.sklepag-fazy > .sklepag-faza:last-child';
@@ -52,7 +54,9 @@ async function kontekst(browser, opcje) {
 const op = (page, sel) => page.$eval(sel, (e) => getComputedStyle(e).opacity);
 
 (async () => {
-  const browser = await chromium.launch({ executablePath: wymagajChromium() });
+  const browser = 'firefox' === SILNIK
+    ? await firefox.launch()
+    : await chromium.launch({ executablePath: wymagajChromium() });
   try {
     // 1. skrypt zablokowany
     let { ctx, page } = await kontekst(browser);
