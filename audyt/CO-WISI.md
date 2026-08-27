@@ -85,7 +85,7 @@
   `docker exec strona_wp_wordpress wp --allow-root --path=/var/www/html option update siteurl "http://localhost:8890" && docker exec strona_wp_wordpress wp --allow-root --path=/var/www/html option update home "http://localhost:8890"`
   + ubić tunel (`pkill -f "cloudflared tunnel --url http://127.0.0.1:8890"`).
   ⛔ Do tego czasu testy automatyczne po localhost NIE są miarodajne (canonical
-  redirect na tunel); E2E przez tunel: kopia `przelot2-tunel.js` w scratchpadzie.
+  redirect na tunel); E2E przez tunel: kopia `przelot2-tunel.js` ⛔ scratchpad tamtej sesji JUŻ NIE ISTNIEJE — do odtworzenia z `testy/e2e/przelot2.js` przez podmianę adresu bazowego na tunel.
 - **header.php motywu KOPII zmieniony poza repo** (link „Sklep" w obu nav —
   D28): backup w kontenerze `header.php.przed-sklepem`; dosłowne fragmenty
   w INSTRUKCJA-INSTALACJI (sekcja Ustawienia produkcyjne).
@@ -225,7 +225,7 @@
 - **Sędzia wyglądu #1: 66/100** (przynęty rozbrojone — wiarygodny); TOP-braki
   zaadresowane w #47 (pasek statusów, kolumna Akcje, notice, hierarchia KPI,
   zrzuty-dowody); świadome odstępstwa w WZORCE-DASHBOARD-K3 §8. Sędzia #2 w toku.
-- Zrzuty panelu: scratchpad sesji `zrzuty/` (10 szt.); skrypt `testy/zrzuty-panelu.js`.
+- Zrzuty panelu (10 szt.) ⛔ scratchpad tamtej sesji JUŻ NIE ISTNIEJE; odtwarza je `testy/zrzuty-panelu.js` — skrypt jest w repo, więc dowód jest ODTWARZALNY, choć pliki przepadły.
 
 ## Blokuje wydanie
 - (nic pilnego) — Live-smoke AI na żywym api.anthropic.com w ODWODZIE (~5$ za zgodą

@@ -4,7 +4,7 @@ Tags: sklep, stripe, pliki cyfrowe, sprzedaz wtyczek, pobieranie
 Requires at least: 6.7
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.9.19
+Stable tag: 0.9.20
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -141,6 +141,11 @@ Nie. Zakup jest bez konta: adres e-mail podany na stronie płatności Stripe,
 link do pobrania w mailu, jednorazowy link do opinii.
 
 == Changelog ==
+
+= 0.9.20 =
+* Poprawka: gdy klikniesz „Kup teraz” bez zaznaczonej zgody, sklep mówi o tym
+  PO POLSKU. Wcześniej komunikat rysowała przeglądarka i na polskiej stronie
+  potrafił pojawić się po angielsku. Sam zakup był i jest blokowany tak samo.
 
 = 0.9.19 =
 * Poprawka: formularz produktu nie gubi już wpisanej treści, gdy zapis wróci z błędem

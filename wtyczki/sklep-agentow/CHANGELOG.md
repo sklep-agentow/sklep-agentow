@@ -20,6 +20,24 @@ Nic jeszcze.
 
 ---
 
+## [0.9.20] — 2026-08-28
+
+Domknięcie przelotu 27 punktów po produkcie: ostatnia rzecz z tej listy, którą widzi
+kupujący, a której nie napisaliśmy my.
+
+### Poprawione
+- **Blokada zakupu bez zgody odzywała się po ANGIELSKU.** Pole zgody stało na samym
+  `required`, więc komunikat rysowała przeglądarka własnym tekstem („Please check this
+  box if you want to proceed.”) — zależnie od jej ustawień językowych. Na stronie w
+  całości polskiej był to jedyny obcojęzyczny tekst, i to dokładnie w chwili płatności.
+  Sklep podaje teraz własny komunikat: „Zaznacz zgodę, żeby przejść do płatności.”
+  ⛔ Sama blokada się NIE zmieniła: zakup bez zgody odrzuca także serwer
+  (`includes/zakup.php`), niezależnie od JavaScriptu — zmienił się wyłącznie język
+  komunikatu. Pilnuje tego test automatyczny, który sprawdza OBIE rzeczy naraz: że zakup
+  bez zgody dalej nie przechodzi i że człowiek czyta komunikat po polsku.
+
+---
+
 ## [0.9.19] — 2026-08-27
 
 Wydanie z ręcznego przejścia po produkcie: instalacja od zera i przeklikanie sklepu

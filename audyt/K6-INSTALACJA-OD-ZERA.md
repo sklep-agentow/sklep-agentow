@@ -9,7 +9,7 @@ WordPress 7.0.2 (jednorazowy stack :8891), trzy zipy (sklep 0.8.1 z `git archive
 main` + boty 1.2.1 z `boty/paczki/`), `INSTRUKCJA-INSTALACJI.md` i konto Stripe
 testowe — dokładnie tyle, ile dostanie egzaminator. Działał przez przeglądarkę
 (playwright), terminal tylko do Stripe CLI. Pełny raport testera (verbatim):
-`audyt/K6-RAPORT-TESTERA.md` (+ zrzuty w scratchpadzie sesji `k6-stanowisko/zrzuty/`).
+`audyt/K6-RAPORT-TESTERA.md` (w repo, więc ocalał). Zrzuty z `k6-stanowisko/zrzuty/` ⛔ scratchpad tamtej sesji JUŻ NIE ISTNIEJE.
 
 ## Wynik: ZALICZONE — pełna ścieżka przeszła
 Instalacja → klucze Stripe → webhook (CLI) → 2 produkty z paczek → **zakup testowy

@@ -80,8 +80,10 @@ mamy pomiar, że siedemnastu z nich automaty nie zobaczyły w ogóle.
 
 **Jak wykonano:** prawdziwa przeglądarka (Chromium), krok po kroku jak człowiek, z oglądaniem
 zrzutów okiem; tam, gdzie punkt pokrywa istniejący strażnik mierzący dokładnie to samo — werdykt
-z odesłaniem do strażnika, JAWNIE. Surowe logi i zrzuty: scratchpad sesji 24.08 (przelot-ab.out,
-przelot-cd.out, katalog przelot/).
+z odesłaniem do strażnika, JAWNIE. Surowe logi i zrzuty z 24.08 (`przelot-ab.out`, `przelot-cd.out`, katalog `przelot/`)
+⛔ scratchpad tamtej sesji JUŻ NIE ISTNIEJE i nie zostały nigdzie przeniesione — werdykty poniżej stoją na tym, co
+przepisano do tego pliku, a nie na dowodzie, który da się dziś otworzyć.
+Dowody z późniejszych przelotów są trwałe: `/root/praca/k7-dowody-27-08/` (27.08).
 
 ## A. ChatBot oczami gościa
 - ✅ Otwarcie czatu jasne (bąbelek → okno z powitaniem i podpowiedzią, o co pytać).
