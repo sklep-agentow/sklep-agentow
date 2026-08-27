@@ -3,7 +3,7 @@
  * Plugin Name: Sklep Agentów
  * Plugin URI: https://automaticai.pl/sklep/
  * Description: Sprzedawaj wtyczki-boty AI bezpośrednio ze swojej strony: płatność kartą, automatyczny mail z linkiem do pobrania, panel zamówień ze statystykami i dziennikiem logowań. Zamówienia, produkty i pliki zostają w Twojej bazie i na Twoim serwerze — bez abonamentu. Płatność obsługuje Stripe.
- * Version: 0.9.16
+ * Version: 0.9.17
  * Requires at least: 6.7
  * Requires PHP: 8.1
  * Author: Automatic AI
@@ -16,8 +16,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SKLEPAG_WERSJA', '0.9.16' );
-define( 'SKLEPAG_WERSJA_SCHEMATU', 7 ); // v7: status_przed_sporem (powrót po wygranym sporze bez zmyślania stanu wysyłki); v6: kolumny zwrotu (payment_intent_id, zwrocono_grosze, zwrot_czas); v5: tabela opinii; v4: kolumna zamowienia.usunieto_dnia (anonimizacja RODO); v3: indeks para_logowania.
+define( 'SKLEPAG_WERSJA', '0.9.17' );
+define( 'SKLEPAG_WERSJA_SCHEMATU', 7 ); // v7: status_przed_sporem (punkt powrotu po zdarzeniu finansowym — sporze LUB zwrocie — bez zmyślania stanu wysyłki); v6: kolumny zwrotu (payment_intent_id, zwrocono_grosze, zwrot_czas); v5: tabela opinii; v4: kolumna zamowienia.usunieto_dnia (anonimizacja RODO); v3: indeks para_logowania.
+// Stany ZAMKNIĘTE FINANSOWO: pieniądze wyszły albo wiszą u banku. Żadna ścieżka mailowa nie
+// ma prawa ich nadpisać. ⛔ TU, a nie w pliku Pulpitu: używa jej `admin-zamowienie.php`
+// w ścieżce `admin_post`, która plików Pulpitu NIE ładuje — stała zdefiniowana tam dawała
+// fatal error przy każdym „Wyślij ponownie" (zmierzone strażnikiem, EXIT=255).
+define( 'SKLEPAG_STATUSY_ZAMKNIETE', "'zwrocone','sporne'" );
 define( 'SKLEPAG_LIMIT_POBRAN', 10 ); // Jedno źródło: INSERT zamówienia + treść maila.
 define( 'SKLEPAG_LINK_GODZIN', 72 );  // Ważność linku pobrania — jw.
 define( 'SKLEPAG_OPINIA_DNI', 30 );   // Ważność linku „oceń bota" — kupujący najpierw testuje produkt.

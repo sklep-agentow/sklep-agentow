@@ -1,6 +1,6 @@
 # Sklep Agentów — dokumentacja techniczna
 
-**Wersja wtyczki: 0.9.16 · wersja schematu bazy: 7 · WordPress 6.7+ · PHP 8.1+**
+**Wersja wtyczki: 0.9.17 · wersja schematu bazy: 7 · WordPress 6.7+ · PHP 8.1+**
 
 > **Po co ten dokument.** To jest **mapa systemu dla audytora i programisty**, nie ulotka.
 > Każda liczba i nazwa tutaj jest wzięta z kodu, nie z pamięci — jeśli coś się rozjedzie,
@@ -77,8 +77,10 @@ późniejsza edycja produktu nie zmieniła historii · `status` (`oczekuje` → 
 (RODO) · `mail_tresc` — wysłana treść · `usunieto_dnia` — znacznik anonimizacji ·
 `payment_intent_id` — identyfikator płatności Stripe, jedyne powiązanie zdarzeń o zwrocie
 z zamówieniem · `zwrocono_grosze`, `zwrot_czas` — księgowanie zwrotów i obciążeń zwrotnych ·
-`status_przed_sporem` — stan sprzed obciążenia zwrotnego, żeby powrót po wygranym sporze
-nie zmyślał historii wysyłki (zamówienie bez maila wraca do `mail_blad`, nie do „wysłany").
+`status_przed_sporem` — stan sprzed zdarzenia finansowego, żeby powrót nie zmyślał historii
+wysyłki (zamówienie bez maila wraca do `mail_blad`, nie do „wysłany"). Mimo nazwy zapisują ją
+i czyszczą OBIE ścieżki: obciążenie zwrotne (spór) oraz zwykły zwrot pieniędzy. Punkt powrotu
+ustala pierwsze z tych zdarzeń — kolejne go nie nadpisuje.
 
 **Statusy zamówienia:** `oczekuje` → `oplacone` → `mail_w_toku` → `mail_wyslany`;
 `mail_blad` przy nieudanej wysyłce (cron ponawia do trzech prób); `zwrocone` po zwrocie
@@ -177,7 +179,7 @@ po stronie serwera. To jest świadome ograniczenie, nie przeoczenie.
 
 | Stała | Wartość | Znaczenie |
 |---|---|---|
-| `SKLEPAG_WERSJA` | 0.9.16 | wersja wtyczki (assety, cache) |
+| `SKLEPAG_WERSJA` | 0.9.17 | wersja wtyczki (assety, cache) |
 | `SKLEPAG_WERSJA_SCHEMATU` | 7 | wersja schematu bazy (migracje) |
 | `SKLEPAG_LIMIT_POBRAN` | 10 | ile razy można pobrać zakup |
 | `SKLEPAG_LINK_GODZIN` | 72 | ważność linku pobrania |

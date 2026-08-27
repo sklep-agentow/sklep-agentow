@@ -22,7 +22,6 @@ require_once SKLEPAG_KATALOG . 'includes/class-sklepag-lista-zamowien.php';
 // nie może ich pokazywać jako utargu. Zwrot CZĘŚCIOWY zostawia zamówienie na liście, a jego
 // kwota schodzi z sum przez odjęcie `zwrocono_grosze`.
 const SKLEPAG_STATUSY_OPLACONE = "'oplacone','mail_w_toku','mail_wyslany','mail_blad'";
-
 /**
  * Badge statusu zamówienia: słowo + kolor + tooltip (nigdy goły tekst).
  *

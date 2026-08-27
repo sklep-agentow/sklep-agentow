@@ -36,10 +36,10 @@ set -u
 # ⛔ Rejestr bramek. Nazwy MUSZĄ zgadzać się z .github/manifest-bramek.txt —
 # pilnuje tego narzedzia-qa/sprawdz-manifest.sh. Kolejność jak w quality.yml
 # sprzed zbicia zadań: najpierw tanie i statyczne, na końcu skan historii.
-BRAMKI=(actionlint manifest slady znaleziska php-lint phpcs phpstan gitleaks poswiadczenia)
+BRAMKI=(actionlint manifest slady znaleziska status-bez-warunku php-lint phpcs phpstan gitleaks poswiadczenia)
 # Bramki dotykające WYŁĄCZNIE kodu PHP — pomijane, gdy zmiana jest tekstowa.
 BRAMKI_PHP=(php-lint phpcs phpstan)
-PROG_PELNY=9
+PROG_PELNY=10
 PROG_TEKSTOWY=6
 
 # Wersje narzędzi pobieranych, gdy nie ma ich w PATH. Pinowane świadomie:
@@ -187,6 +187,13 @@ uruchom_znaleziska() {
 	bash narzedzia-qa/bramka-znaleziska.sh
 }
 
+# Zapis statusu zamowienia MUSI chronic stan poprzedni. Wzorzec zlapany TRZY razy w jednym
+# PR-ze (spor, zwrot, resend) — bramka pyta o cala klase naraz. Naglowek z uzasadnieniem:
+# narzedzia-qa/bramka-status-bez-warunku.sh.
+uruchom_status_bez_warunku() {
+	bash narzedzia-qa/bramka-status-bez-warunku.sh
+}
+
 uruchom_php_lint() {
 	find wtyczki -name '*.php' -print0 | xargs -0 -n1 php -l > /dev/null || return 1
 	echo "Skladnia czysta."
@@ -242,6 +249,7 @@ bramka actionlint uruchom_actionlint
 bramka manifest   uruchom_manifest
 bramka slady      uruchom_slady
 bramka znaleziska uruchom_znaleziska
+bramka status-bez-warunku uruchom_status_bez_warunku
 bramka php-lint   uruchom_php_lint
 bramka phpcs      uruchom_phpcs
 bramka phpstan    uruchom_phpstan

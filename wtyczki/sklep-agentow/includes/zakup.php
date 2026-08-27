@@ -503,8 +503,9 @@ function sklepag_zapisz_zwrot( $zam, $kwota, $typ_wpisu, $opis ) {
 	$pelny = ( $kwota >= (int) $zam->kwota_grosze );
 	$przed = (string) $zam->status_przed_sporem;
 
-	// Status zmieniamy tylko przy zwrocie CAŁOŚCI; zwrot częściowy zostawia zamówienie
-	// na liście, a jego kwota schodzi z sum przez `zwrocono_grosze`.
+	// Status zmieniamy przy zwrocie CAŁOŚCI oraz przy jego COFNIĘCIU (kwota schodzi poniżej
+	// całości ze stanu `zwrocone`). Zwykły zwrot częściowy zostawia zamówienie na liście,
+	// a jego kwota schodzi z sum przez `zwrocono_grosze`.
 	if ( $pelny ) {
 		if ( '' === $przed && 'zwrocone' !== $zam->status && 'sporne' !== $zam->status ) {
 			$przed = (string) $zam->status; // punkt powrotu, zanim nadpiszemy status
@@ -522,6 +523,8 @@ function sklepag_zapisz_zwrot( $zam, $kwota, $typ_wpisu, $opis ) {
 	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
 	$wpdb->query(
 		$wpdb->prepare(
+			// status-bez-warunku: $status wyliczony wyżej z `$zam->status` i `$przed`, z jawną
+			// gałęzią dla cofnięcia zwrotu — to jest właśnie ochrona stanu poprzedniego.
 			"UPDATE {$pz} SET zwrocono_grosze=%d, zwrot_czas=%s, status=%s, status_przed_sporem=%s, zmieniono=%s WHERE id=%d",
 			(int) $kwota,
 			$kwota > 0 ? $teraz : null,
@@ -589,6 +592,8 @@ function sklepag_zaksieguj_spor( $typ, $obiekt ) {
 		$reszta = max( 0, (int) $zam->zwrocono_grosze - $kwota ); // prawdziwy zwrot częściowy sprzed sporu zostaje
 		$wpdb->query(
 			$wpdb->prepare(
+				// status-bez-warunku: $powrot wyliczony wyżej z `status_przed_sporem`, czyli
+				// z zapamiętanego stanu poprzedniego — nie jest stałą.
 				"UPDATE {$pz} SET zwrocono_grosze=%d, zwrot_czas=%s, status=%s, status_przed_sporem='', zmieniono=%s WHERE id=%d",
 				$reszta,
 				$reszta > 0 ? $zam->zwrot_czas : null,
@@ -614,6 +619,8 @@ function sklepag_zaksieguj_spor( $typ, $obiekt ) {
 	$przed = '' !== (string) $zam->status_przed_sporem ? (string) $zam->status_przed_sporem : (string) $zam->status;
 	$wpdb->query(
 		$wpdb->prepare(
+			// status-bez-warunku: 'sporne' ustawiamy świadomie, a stan sprzed zapisujemy w tym
+			// samym zapytaniu do `status_przed_sporem` (wyliczony wyżej z `$zam->status`).
 			"UPDATE {$pz} SET zwrocono_grosze=%d, zwrot_czas=%s, status='sporne', status_przed_sporem=%s, zmieniono=%s WHERE id=%d",
 			max( (int) $zam->zwrocono_grosze, $kwota ),
 			$teraz,

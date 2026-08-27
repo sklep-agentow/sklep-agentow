@@ -1,0 +1,166 @@
+<?php
+/**
+ * STRAŻNIK REGRESJI — „Wyślij ponownie" kasowało znacznik zwrotu.
+ *
+ * DWIE WARSTWY, obie mierzone tutaj:
+ *  1. BIAŁA LISTA na wejściu (`admin-zamowienie.php`): resend wpuszcza wyłącznie `mail_wyslany`
+ *     i `mail_blad`. Zamówienie `zwrocone` albo `sporne` dostaje 409 i NIE dociera do zapisu.
+ *  2. WARUNEK NA ZAPISIE: sam `UPDATE` też nie rusza stanów zamkniętych finansowo.
+ *
+ * Druga warstwa jest obroną w głębi, nie naprawą działającej wady: dopóki biała lista stoi,
+ * ścieżka do zapisu jest zamknięta. Warstwa druga broni przed rozszerzeniem tej listy w
+ * przyszłości — wtedy zapis nadal nie skasuje znacznika zwrotu. Ten strażnik pilnuje OBU:
+ * gdyby biała lista zniknęła, przypadek 3 pokaże, że zapis dalej trzyma.
+ *
+ * Test woła PRAWDZIWĄ funkcję produkcyjną — z uprawnieniami administratora i poprawnym nonce.
+ * Przekierowanie na końcu przechwytujemy filtrem (funkcja kończy się `exit`), a wysyłkę maila
+ * podmieniamy na udaną przez `pre_wp_mail`, żeby wejść w gałąź „mail poszedł".
+ *
+ * PASS = resend na zamówieniu ZWRÓCONYM odmawia i nie rusza statusu; zwykłe zamówienie
+ *        z nieudaną wysyłką nadal dostaje `mail_wyslany`; sam zapis też chroni stan zamknięty.
+ * FAIL = którakolwiek warstwa przepuszcza nadpisanie stanu zamkniętego finansowo.
+ */
+
+global $wpdb;
+$pz = $wpdb->prefix . 'sklepag_zamowienia';
+$pd = $wpdb->prefix . 'sklepag_zdarzenia';
+
+if ( ! function_exists( 'sklepag_obsluz_resend' ) ) {
+	if ( ! @include_once SKLEPAG_KATALOG . 'includes/admin-zamowienie.php' ) {
+		echo "WYNIK=FAIL - brak includes/admin-zamowienie.php\n";
+		echo "RAZEM: WYNIK=FAIL\n";
+		exit( 1 ); // wyjście awaryjne też musi nieść kod błędu, inaczej CI zobaczy zero
+	}
+}
+if ( ! function_exists( 'sklepag_obsluz_resend' ) ) {
+	echo "WYNIK=FAIL - brak funkcji sklepag_obsluz_resend\n";
+	echo "RAZEM: WYNIK=FAIL\n";
+	exit( 1 );
+}
+
+$produkt = $wpdb->get_row( "SELECT * FROM {$wpdb->prefix}sklepag_produkty LIMIT 1" );
+if ( ! $produkt ) {
+	echo "WYNIK=BLAD-SRODOWISKA (brak produktu)\n";
+	exit( 2 ); // 2 = środowisko, nie werdykt o kodzie
+}
+$admini = get_users( array( 'role' => 'administrator', 'number' => 1, 'fields' => 'ID' ) );
+if ( ! $admini ) {
+	echo "WYNIK=BLAD-SRODOWISKA (brak administratora na stosie)\n";
+	exit( 2 );
+}
+wp_set_current_user( (int) $admini[0] );
+
+$sid   = 'cs_test_straznik_resend_zwrot';
+$pi    = 'pi_test_straznik_resend_zwrot';
+$kwota = 9900;
+
+$posprzataj = static function () use ( $wpdb, $pz, $pd, $sid ) {
+	$id = (int) $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$pz} WHERE stripe_session_id=%s", $sid ) );
+	if ( $id ) {
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$pd} WHERE zamowienie_id=%d", $id ) );
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}sklepag_opinie WHERE zamowienie_id=%d", $id ) );
+	}
+	$wpdb->query( $wpdb->prepare( "DELETE FROM {$pz} WHERE stripe_session_id=%s", $sid ) );
+};
+$zaloz = static function ( $status, $zwrocono ) use ( $wpdb, $pz, $sid, $pi, $kwota, $produkt, $posprzataj ) {
+	$posprzataj();
+	$wpdb->query(
+		$wpdb->prepare(
+			"INSERT INTO {$pz} (stripe_session_id, payment_intent_id, produkt_id, produkt_nazwa_kupiona,
+			 produkt_cena_kupiona, produkt_plik_kupiony, email_kupujacego, kwota_grosze, waluta, status,
+			 zwrocono_grosze, zgoda_tresc, zgoda_czas, pobrania_limit, token_pobrania, utworzono, zmieniono)
+			 VALUES (%s,%s,%d,%s,%d,%s,%s,%d,'PLN',%s,%d,'zgoda',NOW(),%d,%s,NOW(),NOW())",
+			$sid, $pi, (int) $produkt->id, $produkt->nazwa, $kwota, $produkt->plik_sciezka,
+			'resend-straznik@example.test', $kwota, $status, (int) $zwrocono, SKLEPAG_LIMIT_POBRAN,
+			str_repeat( 'a', 64 )
+		)
+	);
+	return (int) $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$pz} WHERE stripe_session_id=%s", $sid ) );
+};
+
+// Mail „wychodzi" bez ruchu na zewnątrz; przekierowanie przechwytujemy, bo funkcja kończy exit.
+add_filter( 'pre_wp_mail', '__return_true', 99 );
+add_filter(
+	'wp_redirect',
+	static function ( $loc ) {
+		throw new Exception( 'PRZEKIEROWANIE: ' . $loc );
+	},
+	PHP_INT_MAX
+);
+// `wp_die` kończy proces — podmieniamy uchwyt na wyjątek, żeby test mógł czytać werdykt.
+// PRIORYTET MAKSYMALNY, bo WP-CLI rejestruje SWÓJ uchwyt (`WP_CLI::error`) na tym samym
+// filtrze; przy niższym priorytecie nasz zostaje nadpisany i test pada na cudzym komunikacie
+// zamiast czytać werdykt (zmierzone: przy priorytecie 1 wychodziło „Error: …", EXIT=1).
+add_filter(
+	'wp_die_handler',
+	static function () {
+		return static function ( $wiadomosc, $tytul = '', $args = array() ) {
+			$kod = is_array( $args ) && isset( $args['response'] ) ? (int) $args['response'] : 0;
+			throw new Exception( 'ODMOWA ' . $kod . ': ' . wp_strip_all_tags( (string) $wiadomosc ) );
+		};
+	},
+	PHP_INT_MAX
+);
+
+$odpal = static function ( $id ) {
+	$_GET['zamowienie'] = $id;
+	$nonce              = wp_create_nonce( 'sklepag_resend' );
+	$_GET['_wpnonce']   = $nonce;
+	$_REQUEST['_wpnonce'] = $nonce;
+	try {
+		sklepag_obsluz_resend();
+		return 'BEZ PRZEKIEROWANIA';
+	} catch ( Exception $e ) {
+		return $e->getMessage();
+	}
+};
+
+/* ---------- 1) WARSTWA 1: resend na zamówieniu ZWRÓCONYM jest ODRZUCANY ---------- */
+$id1  = $zaloz( 'zwrocone', $kwota );
+$ret1 = $odpal( $id1 );
+$po1  = $wpdb->get_row( $wpdb->prepare( "SELECT status, zwrocono_grosze FROM {$pz} WHERE id=%d", $id1 ) );
+echo 'ZWROCONE: werdykt=' . $ret1 . " (OCZEKIWANE: ODMOWA 409)\n";
+echo 'ZWROCONE: status_po=' . $po1->status . " (OCZEKIWANE: zwrocone — znacznik zwrotu zostaje)\n";
+echo 'ZWROCONE: zwrocono=' . (int) $po1->zwrocono_grosze . " (OCZEKIWANE: $kwota)\n";
+$pass1 = ( false !== strpos( $ret1, 'ODMOWA 409' ) && 'zwrocone' === $po1->status && $kwota === (int) $po1->zwrocono_grosze );
+echo 'ZWROCONE: WYNIK=' . ( $pass1 ? 'PASS' : 'FAIL - resend wszedl na zamowienie zwrocone' ) . "\n";
+
+/* ---------- 2) KONTROLA: zwykłe zamówienie z nieudaną wysyłką ---------- */
+// Przypadek BEZ wady — tu resend MA prawo zmienić status. Gdyby i on padał, strażnik
+// krzyczałby „zawsze", a nie „przy tej wadzie".
+$id2 = $zaloz( 'mail_blad', 0 );
+$ret2 = $odpal( $id2 );
+$po2  = $wpdb->get_row( $wpdb->prepare( "SELECT status FROM {$pz} WHERE id=%d", $id2 ) );
+echo 'ZWYKLE: status_po_resendzie=' . $po2->status . " (OCZEKIWANE: mail_wyslany — zwykla droga nietknieta)\n";
+$pass2 = ( 'mail_wyslany' === $po2->status );
+echo 'ZWYKLE: WYNIK=' . ( $pass2 ? 'PASS' : 'FAIL - naprawa zablokowala normalny resend' ) . "\n";
+
+/* ---------- 3) WARSTWA 2: sam ZAPIS też chroni stan zamknięty finansowo ---------- */
+if ( ! defined( 'SKLEPAG_STATUSY_ZAMKNIETE' ) ) {
+	echo "ZAPIS: WYNIK=FAIL - brak stalej SKLEPAG_STATUSY_ZAMKNIETE (kod sprzed naprawy)\n";
+	$pass3 = false;
+} else {
+// Gdyby biała lista z warstwy 1 kiedyś się rozszerzyła, zapis ma trzymać dalej. Odtwarzamy
+// DOKŁADNIE zapytanie ze ścieżki resendu i sprawdzamy, czy zamówienie zwrócone przetrwało.
+$id3 = $zaloz( 'zwrocone', $kwota );
+$wpdb->query(
+	$wpdb->prepare(
+		"UPDATE {$pz} SET status='mail_wyslany', zmieniono=%s WHERE id=%d AND status NOT IN (" . SKLEPAG_STATUSY_ZAMKNIETE . ')',
+		current_time( 'mysql' ),
+		$id3
+	)
+);
+$po3 = $wpdb->get_var( $wpdb->prepare( "SELECT status FROM {$pz} WHERE id=%d", $id3 ) );
+echo 'ZAPIS: status_po_probie_nadpisania=' . $po3 . " (OCZEKIWANE: zwrocone)\n";
+$pass3 = ( 'zwrocone' === $po3 );
+echo 'ZAPIS: WYNIK=' . ( $pass3 ? 'PASS' : 'FAIL - zapis nadpisal stan zamkniety finansowo' ) . "\n";
+}
+
+$posprzataj();
+unset( $_GET['zamowienie'], $_GET['_wpnonce'], $_REQUEST['_wpnonce'] );
+
+// Kod wyjścia MUSI zgadzać się z werdyktem — inaczej strażnik krzyczy FAIL, a CI
+// widzi zero i przepuszcza wadę (klasa 11: nazwa bramki szersza niż to, co sprawdza).
+$straznik_ok = ( $pass1 && $pass2 && $pass3 );
+echo 'RAZEM: WYNIK=' . ( $straznik_ok ? 'PASS' : 'FAIL' ) . "\n";
+exit( $straznik_ok ? 0 : 1 );

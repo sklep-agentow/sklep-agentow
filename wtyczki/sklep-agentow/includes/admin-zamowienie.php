@@ -89,7 +89,11 @@ function sklepag_obsluz_resend() {
 	$wyslano = sklepag_wyslij_mail_sklepu( $zam->email_kupujacego, 'Twój zakup: ' . $zam->produkt_nazwa_kupiona . ' — potwierdzenie i pobranie', $tresc );
 
 	if ( $wyslano ) {
-		$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET status='mail_wyslany', zmieniono=%s WHERE id=%d", $teraz, (int) $zam->id ) );
+		// Status nadpisujemy TYLKO gdy zamówienie nie jest zamknięte finansowo. Bez tego jedno
+		// kliknięcie „Wyślij ponownie" na zamówieniu zwróconym kasowało znacznik zwrotu i wracało
+		// je do liczby sprzedaży na Pulpicie. Mail wychodzi tak czy tak — blokujemy zapis stanu,
+		// nie wysyłkę.
+		$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET status='mail_wyslany', zmieniono=%s WHERE id=%d AND status NOT IN (" . SKLEPAG_STATUSY_ZAMKNIETE . ')', $teraz, (int) $zam->id ) );
 		sklepag_zdarzenie( (int) $zam->id, 'mail_resend', 'ręczna ponowna wysyłka do: ' . $zam->email_kupujacego . ' (świeży link)' );
 	} else {
 		// KOMPENSACJA: nowy token wszedł do bazy PRZED wysyłką, więc nieudany mail zostawiłby
@@ -100,7 +104,7 @@ function sklepag_obsluz_resend() {
 			// string (data zerowa albo błąd w trybie ścisłym), więc NULL zapisujemy dosłownie.
 			$wpdb->query(
 				$wpdb->prepare(
-					"UPDATE {$pz} SET token_pobrania=%s, link_wygasa=NULL, status='mail_blad', mail_proby=mail_proby+1, zmieniono=%s WHERE id=%d",
+					"UPDATE {$pz} SET token_pobrania=%s, link_wygasa=NULL, zmieniono=%s WHERE id=%d",
 					(string) $zam->token_pobrania,
 					$teraz,
 					(int) $zam->id
@@ -109,7 +113,7 @@ function sklepag_obsluz_resend() {
 		} else {
 			$wpdb->query(
 				$wpdb->prepare(
-					"UPDATE {$pz} SET token_pobrania=%s, link_wygasa=%s, status='mail_blad', mail_proby=mail_proby+1, zmieniono=%s WHERE id=%d",
+					"UPDATE {$pz} SET token_pobrania=%s, link_wygasa=%s, zmieniono=%s WHERE id=%d",
 					(string) $zam->token_pobrania,
 					(string) $zam->link_wygasa,
 					$teraz,
@@ -117,6 +121,16 @@ function sklepag_obsluz_resend() {
 				)
 			);
 		}
+		// Stan i licznik prób osobno od kompensacji tokenu: token i termin MUSZĄ wrócić zawsze
+		// (inaczej „Wyślij ponownie" odbierałoby dostęp), a status wolno ruszyć tylko wtedy,
+		// gdy zamówienie nie jest zamknięte finansowo.
+		$wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$pz} SET status='mail_blad', mail_proby=mail_proby+1, zmieniono=%s WHERE id=%d AND status NOT IN (" . SKLEPAG_STATUSY_ZAMKNIETE . ')',
+				$teraz,
+				(int) $zam->id
+			)
+		);
 		// Treść maila też wraca: panel pokazuje „treść wysłanego maila" i po nieudanej próbie
 		// wyświetlałby link, który już nie działa, a ten działający nie byłby widoczny nigdzie.
 		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery

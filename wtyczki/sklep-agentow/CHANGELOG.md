@@ -20,6 +20,20 @@ Nic jeszcze.
 
 ---
 
+## [0.9.17] — 2026-08-27
+
+Wersja schematu bazy: **7** (bez zmian).
+
+### Zmienione
+- **Druga warstwa ochrony stanu zamówienia.** Ponowna wysyłka maila już wcześniej odmawiała
+  pracy na zamówieniu zwróconym albo spornym; teraz nie pozwala na to również sam zapis do
+  bazy. Jedna warstwa mniej do przeoczenia, gdyby reguły wejścia kiedyś się rozluźniły.
+- Dokumentacja techniczna mówi wprost, że kolumna zapamiętująca stan sprzed zdarzenia
+  finansowego jest używana przez obie drogi — zwrot pieniędzy i spór z bankiem — mimo nazwy
+  sugerującej wyłącznie spór.
+
+---
+
 ## [0.9.16] — 2026-08-27
 
 Wersja schematu bazy: **7** (bez zmian; korzysta z istniejącej kolumny `status_przed_sporem`).
