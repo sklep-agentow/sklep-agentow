@@ -78,7 +78,7 @@ pytanie „czego to narzędzie NIE widzi", zadane osobno od pytania „co znalaz
 
 ---
 
-## KLASY DOPISANE 2026-08-27 (wieczor) — z 3 rund recenzji PR #199 (naprawa SK-L3-005)
+## KLASY DOPISANE 2026-08-27 (wieczor) — z 4 rund recenzji PR #199 (naprawa SK-L3-005)
 
 Zrodlo: naprawa JEDNEJ wady w sciezce pieniedzy. CZTERY rundy, uwaga WAZNA w kazdej z pierwszych
 trzech. **Runda 1 dotyczyla KODU PRODUKTU** (naprawa opierala sie na stanie, ktory przestawia
@@ -97,8 +97,9 @@ DOWODU i OPISU — i to rozroznienie jest cala lekcja tego rozdzialu.
 **Kod produktu byl czysty od RUNDY 2, nie od poczatku — i to rozroznienie jest cala lekcja.**
 Runda 1 dala uwage WAZNA wprost do `zakup.php` (naprawa opierala sie na stanie, ktory przestawia
 webhook) i skonczyla sie zmiana PRODUKTU: znacznikiem czasu w oknie. Dopiero od rundy 2 uwagi
-przestaly dotyczyc kodu. Kolejne dotyczyly: dowodu
-(klasa 14), zakresu naprawy (13), martwej galezi w tescie (15) i tekstow dla klienta (16).
+przestaly dotyczyc kodu. Kolejne dotyczyly juz wylacznie DOWODU i OPISU: dowodu (klasa 14), martwej galezi w tescie (15)
+i tekstow dla klienta (16). ⛔ Klasa 13 nalezy do RUNDY 1 i jest jedyna, ktora dotyczyla kodu
+produktu — nie licz jej wsrod uwag od rundy 2.
 To odwrotnosc odruchu, ktory kaze sprawdzac przede wszystkim kod.
 
 ⛔ **Klasa 3 (dokumentacja klamie) ma nowy, grozniejszy wariant: dokumentacja klamie WSKUTEK

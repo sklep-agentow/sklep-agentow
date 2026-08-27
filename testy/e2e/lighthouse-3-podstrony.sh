@@ -59,14 +59,23 @@ for wpis in $STRONY; do
     # werdyktem. Metoda MUSI byc tutaj, nie w komentarzu: notatka bez wyzwalacza w narzedziu
     # wraca (SCIAGA-EGZAMINATORA, meta-lekcja o klasie 10). Prog to NIE rusza.
     if [ "$POWTORKI" -gt 1 ] && ! python3 "$REPO/testy/e2e/lh-werdykt.py" "$PROG" cicho "$plik"; then
-      i=2
+      i=2; ile=1
       while [ "$i" -le "$POWTORKI" ]; do
         dodatkowy="$OUT/$nazwa-$tryb-p$i.json"
         if zmierz "$BAZA$sciezka" "$PRESET" "$dodatkowy" "$OUT/$nazwa-$tryb-p$i.err"; then
-          PLIKI="$PLIKI $dodatkowy"
+          PLIKI="$PLIKI $dodatkowy"; ile=$((ile+1))
+        else
+          # ⛔ Nieudana powtorka NIE moze zniknac po cichu: bez tego zestaw robi sie PARZYSTY,
+          # a mediana z parzystej liczby to SREDNIA — czyli dokladnie to, czego zabrania naglowek.
+          echo "  ! lighthouse $nazwa $tryb powtórka $i padła (patrz $OUT/$nazwa-$tryb-p$i.err)"
         fi
         i=$((i+1))
       done
+      # Do werdyktu nigdy nie trafia zestaw parzysty — odrzucamy ostatni przebieg.
+      if [ $(( ile % 2 )) -eq 0 ]; then
+        echo "  ! $nazwa $tryb: zebrano $ile przebiegow (parzyscie) — odrzucam ostatni, zeby mediana nie byla srednia"
+        PLIKI="${PLIKI% *}"
+      fi
     fi
     # shellcheck disable=SC2086
     if ! python3 "$REPO/testy/e2e/lh-werdykt.py" "$PROG" "$nazwa $tryb" $PLIKI; then
