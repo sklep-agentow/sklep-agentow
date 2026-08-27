@@ -146,6 +146,9 @@ link do pobrania w mailu, jednorazowy link do opinii.
 * Poprawka: formularz produktu nie gubi już wpisanej treści, gdy zapis wróci z błędem
   (brak paczki, zły plik, zła waluta) — nazwa, opisy i cena zostają na miejscu. Pole
   pliku trzeba wskazać ponownie: przeglądarka nie pozwala wypełnić go za Ciebie.
+* Poprawka: formularz opinii kupującego też nie gubi już napisanej treści — po odrzucie
+  (puste imię, brak zgody) imię, tytuł, ocena i treść wracają na formularz. Zgoda na
+  publikację wraca NIEZAZNACZONA: to musi być świadomy gest kupującego.
 * Poprawka dostępności: nagranie w galerii „Co jest w środku" ma teraz widoczny przycisk,
   który da się obsłużyć klawiaturą — Tab dochodzi do niego, Enter zatrzymuje i wznawia.
 * Instrukcja instalacji: ostrzeżenie o limicie przesyłania plików mniejszym niż paczka

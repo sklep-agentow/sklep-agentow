@@ -33,6 +33,14 @@ mierzył żaden test automatyczny: utraty pracy właściciela i drogi do treści
   drugi raz. Odrzut odkłada teraz wysłane pola w przechowalni na 5 minut, a formularz
   odczytuje je JEDEN raz (odświeżenie pokazuje znów stan z bazy) i wyłącznie dla tego
   konta, które je wysłało. Pola pliku nie da się odtworzyć i tego nie udajemy.
+- **Formularz OPINII kupującego gubił napisaną treść tak samo jak formularz produktu.**
+  Odrzut walidacji (puste imię, brak zgody) odsyłał na czysty formularz, a przepadało do
+  2000 znaków — i to treść KUPUJĄCEGO, której właściciel sklepu nie ma jak odtworzyć.
+  Odrzut odkłada teraz imię, tytuł, ocenę i treść na 15 minut (kupujący wraca z maila,
+  więc okno jest dłuższe niż w panelu), a powrót na formularz je oddaje. Link ze strony
+  odrzutu mówi teraz wprost: „Wróć do formularza (Twoja treść czeka)".
+  ⛔ **Zgoda na publikację NIE jest odtwarzana** — musi być świeżym gestem kupującego,
+  inaczej odrzut „brak zgody" sam by ją za niego postawił.
 - **Nagranie w galerii „Co jest w środku" było nieosiągalne z klawiatury.** Przycisk
   odtwarzania miał `hidden` do czasu, aż przeglądarka odrzuci autoodtwarzanie, a element
   `display:none` wypada z kolejności Tab — przy działającym nagraniu nie było ani

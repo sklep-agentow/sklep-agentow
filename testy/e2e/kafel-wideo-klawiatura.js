@@ -95,8 +95,17 @@ const przyrzad = (powod) => { console.error('PRZYRZAD: ' + powod); process.exit(
     if (nadalStoi) { ok('zatrzymanie TRZYMA SIE po 6,5 s (kryterium 2.2.2 realnie spelnione)'); } else { zle('nagranie samo wznowilo sie w ciagu 6,5 s', 'straznik postepu albo obserwator kadru nie odrozniaja pauzy czlowieka od zaciecia'); }
 
     // Druga sciezka tego samego: obserwator kadru wznawia nagranie przy powrocie w ekran.
+    // ⛔ TA ASERCJA TEZ POTRZEBUJE STRAZNIKA KADRU — tyle ze ODWROTNEGO niz wyzej. Jesli kafel
+    // wcale nie wypadnie z ekranu, obserwator sie nie odpali i „nagranie stoi" bedzie znaczylo
+    // „nikt nie probowal go wznowic", a nie „flaga zostala uszanowana". Dwie rozne historie
+    // wygladajace identycznie — wiec pytamy przyrzad, czy w ogole wykonal swoja czesc.
     await strona.evaluate(() => window.scrollTo(0, 0));
     await strona.waitForTimeout(700);
+    const wypadlZKadru = await kafel.evaluate((el) => {
+      const r = el.getBoundingClientRect();
+      return r.top >= window.innerHeight || r.bottom <= 0;
+    });
+    if (!wypadlZKadru) { await browser.close(); przyrzad('kafel NIE wypadl z kadru po przewinieciu — obserwator kadru nie zostalby wywolany, wiec pomiar tej sciezki bylby slepy'); }
     await kafel.scrollIntoViewIfNeeded();
     await strona.waitForTimeout(1200);
     const stoiPoPowrocie = await kafel.locator('video').evaluate((w) => w.paused);
