@@ -2,23 +2,26 @@
 /**
  * STRAŻNIK REGRESJI — „Wyślij ponownie" kasowało znacznik zwrotu.
  *
- * DWIE WARSTWY, obie mierzone tutaj:
- *  1. BIAŁA LISTA na wejściu (`admin-zamowienie.php`): resend wpuszcza wyłącznie `mail_wyslany`
- *     i `mail_blad`. Zamówienie `zwrocone` albo `sporne` dostaje 409 i NIE dociera do zapisu.
- *  2. WARUNEK NA ZAPISIE: sam `UPDATE` też nie rusza stanów zamkniętych finansowo.
+ * ⛔ ZAKRES TEGO STRAŻNIKA — tylko WARSTWA PIERWSZA, i tylko tyle obiecuje jego nazwa:
+ * biała lista na wejściu (`admin-zamowienie.php`) wpuszcza wyłącznie `mail_wyslany`
+ * i `mail_blad`, więc zamówienie `zwrocone`/`sporne` dostaje 409 i NIE dociera do zapisu.
  *
- * Druga warstwa jest obroną w głębi, nie naprawą działającej wady: dopóki biała lista stoi,
- * ścieżka do zapisu jest zamknięta. Warstwa druga broni przed rozszerzeniem tej listy w
- * przyszłości — wtedy zapis nadal nie skasuje znacznika zwrotu. Ten strażnik pilnuje OBU:
- * gdyby biała lista zniknęła, przypadek 3 pokaże, że zapis dalej trzyma.
+ * Warstwy DRUGIEJ (warunek `AND status NOT IN (…)` na samym zapisie) ten plik NIE mierzy
+ * i mierzyć nie może: żeby tam dojść, trzeba by najpierw rozluźnić białą listę, czyli zmienić
+ * produkcję. Wcześniejsza wersja miała tu przypadek `ZAPIS`, który wykonywał WŁASNE zapytanie
+ * przepisane w teście — to mierzyło test, nie produkcję, i wypadało jak dowód, którym nie było.
+ * Usunięty świadomie.
+ *
+ * ⭐ Dowodem drugiej warstwy jest `narzedzia-qa/bramka-status-bez-warunku.sh` (statycznie,
+ * na całej klasie zapisów) wraz z jej próbą kontrolną — nie ten strażnik.
  *
  * Test woła PRAWDZIWĄ funkcję produkcyjną — z uprawnieniami administratora i poprawnym nonce.
  * Przekierowanie na końcu przechwytujemy filtrem (funkcja kończy się `exit`), a wysyłkę maila
  * podmieniamy na udaną przez `pre_wp_mail`, żeby wejść w gałąź „mail poszedł".
  *
- * PASS = resend na zamówieniu ZWRÓCONYM odmawia i nie rusza statusu; zwykłe zamówienie
- *        z nieudaną wysyłką nadal dostaje `mail_wyslany`; sam zapis też chroni stan zamknięty.
- * FAIL = którakolwiek warstwa przepuszcza nadpisanie stanu zamkniętego finansowo.
+ * PASS = resend na zamówieniu ZWRÓCONYM odmawia (409) i nie rusza ani statusu, ani kwoty
+ *        zwrotu; zamówienie w stanie `mail_blad` nadal przechodzi normalną drogę.
+ * FAIL = wejście do resendu przepuszcza stan zamknięty finansowo.
  */
 
 global $wpdb;
@@ -125,9 +128,10 @@ echo 'ZWROCONE: zwrocono=' . (int) $po1->zwrocono_grosze . " (OCZEKIWANE: $kwota
 $pass1 = ( false !== strpos( $ret1, 'ODMOWA 409' ) && 'zwrocone' === $po1->status && $kwota === (int) $po1->zwrocono_grosze );
 echo 'ZWROCONE: WYNIK=' . ( $pass1 ? 'PASS' : 'FAIL - resend wszedl na zamowienie zwrocone' ) . "\n";
 
-/* ---------- 2) KONTROLA: zwykłe zamówienie z nieudaną wysyłką ---------- */
-// Przypadek BEZ wady — tu resend MA prawo zmienić status. Gdyby i on padał, strażnik
-// krzyczałby „zawsze", a nie „przy tej wadzie".
+/* ---------- 2) KONTROLA: zamówienie w stanie `mail_blad` przechodzi normalnie ---------- */
+// Przypadek BEZ wady — tu resend MA prawo zmienić status, bo `mail_blad` jest na białej
+// liście. Wysyłkę wymuszamy UDANĄ (`pre_wp_mail`), więc status ma wyjść `mail_wyslany`.
+// Gdyby i ten przypadek padał, strażnik krzyczałby „zawsze", a nie „przy tej wadzie".
 $id2 = $zaloz( 'mail_blad', 0 );
 $ret2 = $odpal( $id2 );
 $po2  = $wpdb->get_row( $wpdb->prepare( "SELECT status FROM {$pz} WHERE id=%d", $id2 ) );
@@ -135,32 +139,11 @@ echo 'ZWYKLE: status_po_resendzie=' . $po2->status . " (OCZEKIWANE: mail_wyslany
 $pass2 = ( 'mail_wyslany' === $po2->status );
 echo 'ZWYKLE: WYNIK=' . ( $pass2 ? 'PASS' : 'FAIL - naprawa zablokowala normalny resend' ) . "\n";
 
-/* ---------- 3) WARSTWA 2: sam ZAPIS też chroni stan zamknięty finansowo ---------- */
-if ( ! defined( 'SKLEPAG_STATUSY_ZAMKNIETE' ) ) {
-	echo "ZAPIS: WYNIK=FAIL - brak stalej SKLEPAG_STATUSY_ZAMKNIETE (kod sprzed naprawy)\n";
-	$pass3 = false;
-} else {
-// Gdyby biała lista z warstwy 1 kiedyś się rozszerzyła, zapis ma trzymać dalej. Odtwarzamy
-// DOKŁADNIE zapytanie ze ścieżki resendu i sprawdzamy, czy zamówienie zwrócone przetrwało.
-$id3 = $zaloz( 'zwrocone', $kwota );
-$wpdb->query(
-	$wpdb->prepare(
-		"UPDATE {$pz} SET status='mail_wyslany', zmieniono=%s WHERE id=%d AND status NOT IN (" . SKLEPAG_STATUSY_ZAMKNIETE . ')',
-		current_time( 'mysql' ),
-		$id3
-	)
-);
-$po3 = $wpdb->get_var( $wpdb->prepare( "SELECT status FROM {$pz} WHERE id=%d", $id3 ) );
-echo 'ZAPIS: status_po_probie_nadpisania=' . $po3 . " (OCZEKIWANE: zwrocone)\n";
-$pass3 = ( 'zwrocone' === $po3 );
-echo 'ZAPIS: WYNIK=' . ( $pass3 ? 'PASS' : 'FAIL - zapis nadpisal stan zamkniety finansowo' ) . "\n";
-}
-
 $posprzataj();
 unset( $_GET['zamowienie'], $_GET['_wpnonce'], $_REQUEST['_wpnonce'] );
 
 // Kod wyjścia MUSI zgadzać się z werdyktem — inaczej strażnik krzyczy FAIL, a CI
 // widzi zero i przepuszcza wadę (klasa 11: nazwa bramki szersza niż to, co sprawdza).
-$straznik_ok = ( $pass1 && $pass2 && $pass3 );
+$straznik_ok = ( $pass1 && $pass2 );
 echo 'RAZEM: WYNIK=' . ( $straznik_ok ? 'PASS' : 'FAIL' ) . "\n";
 exit( $straznik_ok ? 0 : 1 );
