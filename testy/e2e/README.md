@@ -54,7 +54,11 @@ indeksowanie i przywróć; animowane opacity daje fałszywy kontrast w axe — p
 `--bez-ruchu`. Wyniki bazowe i po naprawach: `audyt/AUDYT-JAKOSC-PODSTRON-25-08.md`.
 
 ```
-cd /root/praca/zlecenia/sklep-agentow && bash testy/e2e/lighthouse-3-podstrony.sh http://localhost:8890 /tmp/lh
+cd /root/praca/zlecenia/sklep-agentow && bash testy/e2e/lighthouse-3-podstrony.sh http://localhost:8890 /tmp/lh 95 3
+# 3. argument = PROG (domyslnie 95), 4. = POWTORKI komorki, ktora wypadla ponizej progu.
+# ⛔ Wydajnosc na tej maszynie jest szumna (2 vCPU; tryb telefonu spowalnia procesor 4x) — bez
+# powtorek dostaniesz werdykt z jednego przebiegu. Uzywaj wartosci NIEPARZYSTEJ >= 3.
+# Kategorie a11y/bp/seo sa stabilne; perf na tym stosie NIE jest odbierany (anomalia AN-022).
 cd /root/praca/zlecenia/sklep-agentow && node testy/e2e/axe-3-podstrony.js http://localhost:8890
 ```
 

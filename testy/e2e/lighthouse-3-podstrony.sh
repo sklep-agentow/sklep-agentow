@@ -7,7 +7,7 @@
 # pomiaru włącz indeksowanie (`wp option update blog_public 1`) i PRZYWRÓĆ 0 po pomiarze.
 #
 # Wymaga: lighthouse (npm -g), Chromium (rejestr Playwrighta przez testy/lib/chromium.js), python3.
-# Użycie: bash testy/e2e/lighthouse-3-podstrony.sh [adres-bazy] [katalog-wyjściowy] [próg=95]
+# Użycie: bash testy/e2e/lighthouse-3-podstrony.sh [adres-bazy] [katalog-wyjściowy] [próg=95] [POWTORKI=1]
 # EXIT: 0 = wszystkie 4 kategorie >= próg na wszystkich stronach.
 #       N > 0 = tyle PRZEBIEGOW sie nie powiodlo, z DWOCH roznych powodow: wynik ponizej progu
 #       ALBO lighthouse w ogole nie wstal. Ktory to przypadek, mowi wyjscie: przebieg ponizej
@@ -71,10 +71,13 @@ for wpis in $STRONY; do
         fi
         i=$((i+1))
       done
-      # Do werdyktu nigdy nie trafia zestaw parzysty — odrzucamy ostatni przebieg.
+      # Do werdyktu nigdy nie trafia zestaw parzysty — mediana z parzystej liczby to srednia.
+      # ⛔ Odrzucamy przebieg WYZWALAJACY (pierwszy), nie ostatni: to on zostal wybrany DLATEGO,
+      # ze wypadl ponizej progu, wiec jako jedyny jest stronniczy. Odrzucanie ostatniego zostawialo
+      # przy `ile=2` wylacznie ten wyzwalajacy — werdykt komorki bylby wtedy z gory EXIT=1.
       if [ $(( ile % 2 )) -eq 0 ]; then
-        echo "  ! $nazwa $tryb: zebrano $ile przebiegow (parzyscie) — odrzucam ostatni, zeby mediana nie byla srednia"
-        PLIKI="${PLIKI% *}"
+        echo "  ! $nazwa $tryb: zebrano $ile przebiegow (parzyscie) — odrzucam przebieg wyzwalajacy, zeby mediana nie byla srednia"
+        PLIKI="${PLIKI#* }"
       fi
     fi
     # shellcheck disable=SC2086

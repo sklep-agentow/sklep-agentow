@@ -1,5 +1,18 @@
 # CO-WISI — rzeczy oddane komuś / bez strażnika (zasada: oddajesz ⇒ wiersz, wraca ⇒ kasujesz)
 
+## 🟡 ODDANE DO K8 — odbior WYDAJNOSCI (perf) na docelowym hostingu · AN-022
+- `perf` z Lighthouse NIE zostal odebrany w K7 i to jest decyzja, nie przeoczenie: na tym stosie
+  pomiar mierzy OBCIAZENIE NASZEJ MASZYNY, nie jakosc strony. Ta sama komorka (sklep/mobile)
+  dawala 100 · 87 · mediane 100 przy load 1,47 · mediane 93 przy load 2,94. Serwer ma 2 vCPU,
+  a tryb telefonu spowalnia procesor 4x; sam pomiar dokłada sie do obciazenia.
+- ODEBRANE i NIE wymagaja powtorki: `a11y`, `bp`, `seo` — >=96 w kazdej komorce, stabilne.
+- ⛔ DO ZROBIENIA PRZY WYDANIU (K8): zmierzyc `perf` na DOCELOWYM hostingu klienta komenda
+  `bash testy/e2e/lighthouse-3-podstrony.sh <adres-klienta> <katalog> 95 3`. Dopiero ten wynik
+  jest werdyktem dla celu L6-01 — liczba z naszego stosu nie przenosi sie na produkcje.
+- Cel L6-01 stoi w mapie jako ⚠️ (anomalia AN-022, status WYJAŚNIONA), NIE jako zamkniety.
+- ⛔ WRACA ⇒ kasujesz ten wpis i przestawiasz L6-01 na ✅ z wynikiem z hostingu klienta.
+
+
 ## 🟡 DŁUG ZASTANY — okno idempotencji nie obejmuje JEDNOCZESNEGO podwójnego kliknięcia
 (z recenzji #199 r2, DROBNA 5 — NIE regresja z tego PR, mechanizm istnieje od 0.9.0)
 - Odczyt okna (`zakup.php` `get_transient`) i jego zapis (`set_transient`) dzieli wyjście do
