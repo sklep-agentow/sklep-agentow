@@ -191,7 +191,7 @@ uruchom_znaleziska() {
 # PR-ze (spor, zwrot, resend) — bramka pyta o cala klase naraz. Naglowek z uzasadnieniem:
 # narzedzia-qa/bramka-status-bez-warunku.sh.
 uruchom_status_bez_warunku() {
-	bash narzedzia-qa/bramka-status-bez-warunku.sh
+	python3 narzedzia-qa/bramka-status-bez-warunku.py
 }
 
 uruchom_php_lint() {
