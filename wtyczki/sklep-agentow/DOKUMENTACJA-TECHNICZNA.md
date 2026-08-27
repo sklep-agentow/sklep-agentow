@@ -1,6 +1,6 @@
 # Sklep Agentów — dokumentacja techniczna
 
-**Wersja wtyczki: 0.9.13 · wersja schematu bazy: 5 · WordPress 6.7+ · PHP 8.1+**
+**Wersja wtyczki: 0.9.17 · wersja schematu bazy: 7 · WordPress 6.7+ · PHP 8.1+**
 
 > **Po co ten dokument.** To jest **mapa systemu dla audytora i programisty**, nie ulotka.
 > Każda liczba i nazwa tutaj jest wzięta z kodu, nie z pamięci — jeśli coś się rozjedzie,
@@ -31,7 +31,10 @@ zero zewnętrznych bibliotek i zero CDN. Jedyna usługa zewnętrzna: **Stripe** 
 | `includes/front-produkt.php` | strony produktów, przepisywanie adresów, treści sprzedażowe |
 | `includes/front-seo.php` | tytuły, opisy, dane strukturalne, mapa witryny |
 | `includes/logowania.php` | dziennik logowań administratorów, opóźnienie i limit prób |
-| `includes/admin*.php` | panel: pulpit, produkty, zamówienia, ustawienia, dziennik |
+| `includes/admin*.php` | panel: pulpit, produkty, zamówienia, opinie, ustawienia, dziennik |
+| `includes/opinie.php` | opinie kupujących: zalążek i token przy mailu, formularz, moderacja |
+| `includes/class-sklepag-lista-{zamowien,produktow,logowan,zdarzen}.php` | tabele list w panelu (na `WP_List_Table` z rdzenia): sortowanie, stronicowanie, filtry |
+| `includes/class-sklepag-sitemap-produkty.php` | dostawca stron produktów do mapy witryny WordPressa |
 
 ---
 
@@ -48,9 +51,9 @@ wyłącznie ustawienia i klucze — nigdy liczniki ani stan zamówień.
 | `zdarzenia` | dziennik zdarzeń zamówienia (audyt ścieżki) | wszystkie moduły zakupu |
 | `logowania` | kto i kiedy logował się do panelu, z jakim skutkiem | zaczepy logowania WP |
 | `rate_limit` | okna limitów żądań | brama zakupu i logowania |
-| `opinie` | mechanizm opinii kupujących (D32): zalążek+token przy mailu, treść z formularza, statusy moderacji | mail zakupowy → formularz kupującego → panel (moderacja) |
+| `opinie` | mechanizm opinii kupujących: zalążek+token przy mailu, treść z formularza, statusy moderacji | mail zakupowy → formularz kupującego → panel (moderacja) |
 
-### Tabela `opinie` — obieg (D32)
+### Tabela `opinie` — obieg
 
 Jedna opinia na zamówienie (`UNIQUE zamowienie_id`) — weryfikacja zakupu z danych
 zamówień, bez kont kupujących. Statusy: `zalazek` (mail z linkiem wysłany, token
@@ -71,13 +74,25 @@ ma pole-pułapkę i limity żądań; twarde sufity długości: imię 100 · tytu
 późniejsza edycja produktu nie zmieniła historii · `status` (`oczekuje` → `oplacone`
 → `mail_wyslany`) · `token_pobrania`, `link_wygasa`, `pobrania_limit`,
 `pobrania_uzyte` — brama pobrań · `zgoda_tresc`, `zgoda_czas` — dowód zgody
-(RODO) · `mail_tresc` — wysłana treść · `usunieto_dnia` — znacznik anonimizacji.
+(RODO) · `mail_tresc` — wysłana treść · `usunieto_dnia` — znacznik anonimizacji ·
+`payment_intent_id` — identyfikator płatności Stripe, jedyne powiązanie zdarzeń o zwrocie
+z zamówieniem · `zwrocono_grosze`, `zwrot_czas` — księgowanie zwrotów i obciążeń zwrotnych ·
+`status_przed_sporem` — stan sprzed zdarzenia finansowego, żeby powrót nie zmyślał historii
+wysyłki (zamówienie bez maila wraca do `mail_blad`, nie do „wysłany"). Mimo nazwy zapisują ją
+i czyszczą OBIE ścieżki: obciążenie zwrotne (spór) oraz zwykły zwrot pieniędzy. Punkt powrotu
+ustala pierwsze z tych zdarzeń — kolejne go nie nadpisuje.
+
+**Statusy zamówienia:** `oczekuje` → `oplacone` → `mail_w_toku` → `mail_wyslany`;
+`mail_blad` przy nieudanej wysyłce (cron ponawia do trzech prób); `zwrocone` po zwrocie
+pełnej kwoty; `sporne` po otwarciu obciążenia zwrotnego. Dwa ostatnie **nie liczą się
+do przychodu** na Pulpicie; zwrot częściowy zostawia status bez zmian, a jego kwota schodzi
+z sum przez odjęcie `zwrocono_grosze`. Spór wygrany przywraca zamówienie do przychodu.
 
 Mail po zakupie (`sklepag_zbuduj_mail`, tekstowy): produkt i kwota → **potwierdzenie zgody**
 (dosłowna `zgoda_tresc` + `zgoda_czas` w czasie lokalnym; dyrektywa 2011/83/UE art. 8 ust. 7
 lit. b — potwierdzenie umowy na trwałym nośniku zawiera potwierdzenie zgody z art. 16 lit. m)
 → link pobrania z ważnością i limitem → instrukcja w skrócie → gwarancja z danych produktu
-(gdy produkt ją ma) → link do opinii (D32) → „odpisz na tego maila". Wysyłka
+(gdy produkt ją ma) → link do opinii → „odpisz na tego maila". Wysyłka
 `sklepag_wyslij_mail_sklepu`: nadawca z ustawień + nagłówek `Reply-To` na „mail kontaktowy
 właściciela" (gdy ustawiony). Treść i nagłówki pilnuje osobny test-strażnik (bez realnej wysyłki).
 
@@ -90,10 +105,26 @@ właściciela" (gdy ustawiony). Treść i nagłówki pilnuje osobny test-strażn
 |---|---|---|
 | `admin_post_nopriv_sklepag_kup` | rozpoczyna zakup | nonce + zgoda + limit żądań na adres IP |
 | `admin_post_nopriv_sklepag_pobierz` | wydaje kupiony plik | token 64 znaki + limit pobrań + termin ważności |
-| `admin_post_nopriv_sklepag_ocen` (GET) | formularz opinii z linku w mailu (D32) | token 64 znaki (sha256 w bazie, stałoczasowe) + termin ważności + limit żądań |
+| `admin_post_nopriv_sklepag_ocen` (GET) | formularz opinii z linku w mailu | token 64 znaki (sha256 w bazie, stałoczasowe) + termin ważności + limit żądań |
 | `admin_post_nopriv_sklepag_ocen_zapisz` (POST) | zapis opinii (zalążek → oczekuje) | ten sam token jednorazowy + zgoda + pole-pułapka + limit żądań + sufity długości |
 | `POST /wp-json/sklepag/v1/webhook` | powiadomienie od Stripe | **podpis webhooka Stripe** |
 | `GET /wp-json/sklepag/v1/status` | status zamówienia dla strony „Dziękujemy" | identyfikator sesji |
+
+**Obsługiwane zdarzenia Stripe.** Sprzedaż: `checkout.session.completed` i
+`checkout.session.async_payment_succeeded` (domknięcie zakupu; bramka na `payment_status`,
+bo przy metodach asynchronicznych, np. BLIK, pierwsze powiadomienie przychodzi jako
+nieopłacone), `checkout.session.async_payment_failed` i `checkout.session.expired`.
+Zwroty: `refund.created`, `refund.updated` i `charge.refunded` — Stripe zaleca dziś
+`refund.created`, ale `charge.refunded` nadal przychodzi, więc nasłuchujemy obu i
+księgujemy tak, żeby dwa powiadomienia o jednym zwrocie nie odjęły pieniędzy dwa razy.
+Obciążenia zwrotne: `charge.dispute.*`. Zdarzenia o zwrocie nie niosą identyfikatora
+sesji checkout — powiązanie idzie po `payment_intent_id` zapisanym przy zakupie, a dla
+zamówień sprzed wersji schematu 6 przez jednorazowe zapytanie do Stripe o sesję tej płatności
+(nietrafienie zapamiętywane na dobę, żeby cudze zwroty na wspólnym koncie nie odpytywały
+Stripe w kółko). Zapytanie z banku (`warning_needs_response`) NIE zdejmuje pieniędzy — dopiero
+pobranie środków albo przegrany spór; zwrot środków i spór wygrany przywracają sprzedaż.
+Zwrot ze stanem `failed`/`canceled` wraca do przychodu. Zwroty liczone są po identyfikatorze
+zwrotu, więc dwa różne zwroty częściowe o tej samej kwocie sumują się poprawnie.
 
 ### Panel (wymagają uprawnień administratora)
 `sklepag_produkt_zapisz` · `sklepag_produkt_przelacz` · `sklepag_resend`
@@ -148,8 +179,8 @@ po stronie serwera. To jest świadome ograniczenie, nie przeoczenie.
 
 | Stała | Wartość | Znaczenie |
 |---|---|---|
-| `SKLEPAG_WERSJA` | 0.9.13 | wersja wtyczki (assety, cache) |
-| `SKLEPAG_WERSJA_SCHEMATU` | 5 | wersja schematu bazy (migracje) |
+| `SKLEPAG_WERSJA` | 0.9.17 | wersja wtyczki (assety, cache) |
+| `SKLEPAG_WERSJA_SCHEMATU` | 7 | wersja schematu bazy (migracje) |
 | `SKLEPAG_LIMIT_POBRAN` | 10 | ile razy można pobrać zakup |
 | `SKLEPAG_LINK_GODZIN` | 72 | ważność linku pobrania |
 | `SKLEPAG_OPINIA_DNI` | 30 | ważność jednorazowego linku „oceń bota" |
@@ -163,7 +194,7 @@ rozjechać się z kodem.
 
 ## 8. Instalacja i deinstalacja
 
-**Przy aktywacji:** utworzenie 6 tabel przez `dbDelta`, zapis wersji schematu,
+**Przy aktywacji:** utworzenie 7 tabel przez `dbDelta`, zapis wersji schematu,
 założenie stron „Sklep" i „Dziękujemy", zaplanowanie zadania cyklicznego.
 
 **Przy deaktywacji:** odplanowanie zadania cyklicznego. Dane zostają.
@@ -173,6 +204,26 @@ czyszczenia usuwane są tabele, ustawienia i strony. ⛔ **Klucze Stripe i zapla
 zadanie cykliczne kasowane są ZAWSZE**, niezależnie od tej opcji (martwy wpis
 w cronie bez wtyczki tylko sypie błędami).
 
+**Aktualizacja wtyczki „w miejscu"** (Wtyczki → Aktualizuj teraz) NIE odpala aktywacji.
+Migracja schematu i odtworzenie chronionego katalogu na pliki produktów dzieją się same
+przy pierwszym wejściu do panelu albo przy zadaniu cyklicznym — deaktywacja i ponowna
+aktywacja nie są potrzebne.
+
+**Wycofanie wersji (rollback).** Wgranie starszej wersji wtyczki NIE cofa schematu bazy:
+dołożone kolumny zostają i nie przeszkadzają starszemu kodowi, bo mają wartości domyślne.
+Cofnięcie poniżej wersji, która wprowadziła daną kolumnę, oznacza jednak, że dane w niej
+przestaną być aktualizowane (np. zapis zwrotów). Zalecana kolejność przy wycofaniu:
+kopia bazy → wgranie starszej paczki → sprawdzenie Pulpitu. Przy powrocie do nowszej wersji
+migracja dopisze brakujące kolumny sama.
+
+**Zadanie cykliczne a `DISABLE_WP_CRON`.** Domykanie zaległych zamówień (co 10 minut) jedzie
+na harmonogramie WordPressa. Jeśli w `wp-config.php` stoi `define( 'DISABLE_WP_CRON', true );`
+— częste na hostingach z własnym harmonogramem systemowym — zadanie NIE uruchomi się samo
+z ruchu na stronie i trzeba mieć wpis w systemowym harmonogramie, np. co 5 minut:
+`wget -q -O - https://TWOJA-DOMENA/wp-cron.php?doing_wp_cron >/dev/null 2>&1`.
+Bez tego zamówienia opłacone w chwili, gdy powiadomienie od Stripe nie dotarło, poczekają
+na mail do najbliższego wejścia do panelu.
+
 ---
 
 ## 9. Granice — czego ta wtyczka NIE robi
@@ -181,7 +232,7 @@ Nie zakłada kont kupujących · nie obsługuje płatności cyklicznych ani abon
 nie zbiera opinii od GOŚCI i nie liczy ocen zbiorczych (formularz opinii działa
 wyłącznie z jednorazowego linku w mailu zakupowym — jedna opinia na zamówienie,
 publikacja dopiero po ręcznej akceptacji w panelu; bez `aggregateRating` w danych
-strukturalnych — D6/D32) · nie robi przecen
+strukturalnych) · nie robi przecen
 ani kuponów · nie dotyka motywu ani cudzych wtyczek · nie wysyła danych nigdzie
 poza Stripe.
 

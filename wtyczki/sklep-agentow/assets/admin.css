@@ -33,7 +33,7 @@
 	color: #646970;
 }
 
-/* Badge statusów zamówień (wzorce K3 §3; pary kolorów ≥4.5:1). */
+/* Badge statusów zamówień (pary kolorów o kontraście ≥4.5:1). */
 .sklepag-badge-szary {
 	background: #f6f7f7;
 	color: #3c434a;
@@ -174,7 +174,7 @@
 	color: #646970;
 }
 
-/* Rozkład zakupów w czasie — słupki czystym CSS (S-04). */
+/* Rozkład zakupów w czasie — słupki czystym CSS. */
 .sklepag-rozklad {
 	background: #fff;
 	border: 1px solid #c3c4c7;

@@ -4,7 +4,7 @@ Tags: sklep, stripe, pliki cyfrowe, sprzedaz wtyczek, pobieranie
 Requires at least: 6.7
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.9.13
+Stable tag: 0.9.17
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -141,6 +141,33 @@ Nie. Zakup jest bez konta: adres e-mail podany na stronie płatności Stripe,
 link do pobrania w mailu, jednorazowy link do opinii.
 
 == Changelog ==
+
+= 0.9.17 =
+* Ponowna wysyłka maila nie może zmienić stanu zamówienia zwróconego
+  ani spornego — ochrona działa teraz na dwóch poziomach.
+
+= 0.9.16 =
+* Odrzucony przez bank zwrot nie oznacza zamówienia jako „mail wysłany",
+  jeśli mail nigdy nie doszedł — wraca do stanu sprzed zwrotu.
+* Obciążenie zwrotne nie ginie po cichu, gdy Stripe nie odpowiada.
+
+= 0.9.15 =
+* Odrzucony przez bank zwrot nie odejmuje kwoty drugi raz przy powtórzonym
+  powiadomieniu — panel pokazuje prawdziwy przychód.
+* Zwrot z cudzej płatności na wspólnym koncie Stripe nie odpytuje Stripe
+  w kółko; przy awarii łączności zapytanie idzie raz, nie dwa.
+
+= 0.9.14 =
+* Opłacony zakup nie ginie, gdy baza zawiedzie w połowie zapisu.
+* „Wyślij ponownie" nie unieważnia działającego linku, gdy mail nie wyjdzie.
+* Katalog na pliki produktów odtwarza się sam po aktualizacji wtyczki.
+* Wygasły formularz zakupu (strona z pamięci podręcznej) mówi po polsku
+  i zostawia ślad w dzienniku — właściciel widzi, że sprzedaż stoi.
+* Komunikat o limicie wgrywanego pliku podaje limit, który naprawdę obowiązuje.
+* Zwroty i obciążenia zwrotne ze Stripe schodzą z przychodu na Pulpicie.
+* Pulpit ostrzega, gdy brakuje klucza Stripe albo sekretu webhooka.
+* Opinia bez powiązanego zamówienia nie przejdzie moderacji.
+* Deinstalacja kasuje też dane tymczasowe wtyczki.
 
 = 0.9.13 =
 * Lista sklepu ma opis meta i znaczniki Open Graph/Twitter.

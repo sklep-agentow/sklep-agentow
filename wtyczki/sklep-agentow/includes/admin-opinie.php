@@ -1,6 +1,6 @@
 <?php
 /**
- * Panel: moderacja opinii (D32). Lista wg statusu + przyjmij/odrzuć.
+ * Panel: moderacja opinii. Lista wg statusu + przyjmij/odrzuć.
  * Publikacja na stronie produktu = wyłącznie status 'przyjeta'.
  */
 
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 function sklepag_admin_opinie() {
 	if ( ! current_user_can( 'manage_options' ) ) {
-		wp_die( esc_html__( 'Brak uprawnień.' ) );
+		wp_die( esc_html__( 'Brak uprawnień.' ), 'Sklep Agentów', 403 );
 	}
 	global $wpdb;
 	$to = $wpdb->prefix . 'sklepag_opinie';
@@ -117,7 +117,7 @@ function sklepag_admin_opinie() {
  */
 function sklepag_obsluz_moderacje_opinii() {
 	if ( ! current_user_can( 'manage_options' ) ) {
-		wp_die( esc_html__( 'Brak uprawnień.' ) );
+		wp_die( esc_html__( 'Brak uprawnień.' ), 'Sklep Agentów', 403 );
 	}
 	check_admin_referer( 'sklepag_opinia_moderuj' );
 

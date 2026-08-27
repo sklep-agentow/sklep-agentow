@@ -1,6 +1,6 @@
 <?php
 /**
- * Tabela dziennika zdarzeń: log AKCJI adminów (CRUD/resend/eksport — S-09
+ * Tabela dziennika zdarzeń: log AKCJI adminów (CRUD/resend/eksport
  * rozszerzenie) + zdarzenia systemowe (webhooki, maile, pobrania) w jednej
  * osi czasu, z filtrem źródła. Widok wyłącznie do odczytu.
  */

@@ -20,6 +20,128 @@ Nic jeszcze.
 
 ---
 
+## [0.9.17] — 2026-08-27
+
+Wersja schematu bazy: **7** (bez zmian).
+
+### Zmienione
+- **Druga warstwa ochrony stanu zamówienia.** Ponowna wysyłka maila już wcześniej odmawiała
+  pracy na zamówieniu zwróconym albo spornym; teraz nie pozwala na to również sam zapis do
+  bazy. Jedna warstwa mniej do przeoczenia, gdyby reguły wejścia kiedyś się rozluźniły.
+- Dokumentacja techniczna mówi wprost, że kolumna zapamiętująca stan sprzed zdarzenia
+  finansowego jest używana przez obie drogi — zwrot pieniędzy i spór z bankiem — mimo nazwy
+  sugerującej wyłącznie spór.
+
+---
+
+## [0.9.16] — 2026-08-27
+
+Wersja schematu bazy: **7** (bez zmian; korzysta z istniejącej kolumny `status_przed_sporem`).
+
+### Naprawione
+- **Odrzucony zwrot nie zmyśla, że mail doszedł.** Zamówienie, do którego mail nigdy nie
+  dotarł, po zwrocie pieniędzy i późniejszym odrzuceniu zwrotu przez bank dostawało status
+  „mail wysłany" — wypadało z licznika nieudanych wysyłek i z ponowień, a właściciel był
+  przekonany, że kupujący dostał plik. Teraz sklep zapamiętuje stan sprzed zwrotu i do niego
+  wraca, dokładnie tak jak przy sporze z bankiem.
+- **Obciążenie zwrotne nie ginie po cichu przy awarii łączności.** Gdy Stripe nie odpowiadał,
+  sklep i tak potwierdzał przyjęcie powiadomienia, więc Stripe go nie ponawiał — a pieniądze
+  zabrane przez bank zostawały w przychodzie na zawsze. Teraz, tak samo jak przy zwrocie,
+  sklep prosi o ponowienie i rozróżnia awarię od cudzej płatności.
+
+---
+
+## [0.9.15] — 2026-08-27
+
+Wersja schematu bazy: **7** (bez zmian względem 0.9.14).
+
+### Naprawione
+- **Odrzucony zwrot nie odejmuje kwoty drugi raz.** Gdy bank odrzucał zwrot, pieniądze
+  wracały do przychodu — ale powtórzone powiadomienie o tym samym odrzuceniu odejmowało
+  kwotę ponownie. Przy dwóch zwrotach częściowych panel pokazywał pełny przychód, choć
+  część pieniędzy naprawdę zeszła z konta. Ścieżka cofnięcia ma teraz własny znacznik,
+  niezależny od znacznika dopisania zwrotu.
+- **Cudzy zwrot nie odpytuje Stripe w kółko.** Pamięć nietrafień („to nie nasza płatność",
+  trzymana dobę) była omijana: druga funkcja pytała Stripe bezwarunkowo zaraz po tym, jak
+  pierwsza odpowiedziała z pamięci. Przy awarii łączności jedno powiadomienie brało dwa
+  limity czasu po 15 sekund zamiast jednego.
+
+### Zmienione
+- Bramka zgodności dokumentacji sprawdza też wiersz `SKLEPAG_WERSJA` w tabeli stałych —
+  wcześniej patrzyła wyłącznie na nagłówek dokumentu i przepuszczała rozjazd w tabeli.
+- Tabela punktów wejścia w dokumentacji technicznej znów jest jedną tabelą (pusta linia
+  wyrzucała ostatni wiersz poza nią).
+
+---
+
+## [0.9.14] — 2026-08-26
+
+Wersja schematu bazy: **7** (migracja odpala się sama, bez deaktywacji wtyczki).
+
+### Naprawione
+- **Opłacony zakup nie ginie, gdy baza zawiedzie w połowie.** Sesja płatności dostawała
+  znacznik „opłacona" nawet wtedy, gdy zamówienia nie udało się zapisać, a mechanizm
+  dociągania zaległych bierze wyłącznie sesje nieoznaczone — zakup przepadał bez śladu.
+  Teraz znacznik zapada dopiero po potwierdzeniu, że zamówienie jest w bazie, a nieudany
+  zapis zostawia wpis w dzienniku zdarzeń.
+- **„Wyślij ponownie" nie odbiera kupującemu dostępu.** Nowy link zapisywał się przed
+  wysyłką maila, więc nieudana wysyłka unieważniała stary, działający link, a nowy nigdy
+  nie docierał. Przy niepowodzeniu poprzedni link i termin wracają.
+- **Katalog na pliki produktów odtwarza się sam po aktualizacji wtyczki.** Powstawał tylko
+  przy aktywacji, a aktualizacja „w miejscu" aktywacji nie odpala.
+- **Wygasły formularz zakupu mówi po polsku i zostawia ślad.** Strona produktu podana
+  z pamięci podręcznej niosła token starszy niż doba: przycisk zakupu był martwy dla
+  wszystkich odwiedzających, komunikat przychodził po angielsku z rdzenia WordPressa,
+  a właściciel nie miał tego skąd zobaczyć.
+- **Komunikat o limicie wgrywanego pliku podaje limit, który naprawdę obowiązuje** —
+  wcześniej cytował limit wtyczki (20 MB) także wtedy, gdy plik odrzucił serwer przy 2 MB.
+- **Opinia bez powiązanego zamówienia nie przejdzie moderacji.** Zapytanie nie odróżniało
+  „zamówienie jest i nie jest zanonimizowane" od „zamówienia nie ma".
+- **Deinstalacja kasuje też dane tymczasowe wtyczki** (adres sesji płatności i skrót
+  adresu IP z okna zabezpieczającego przed podwójnym kliknięciem).
+- **Odmowa dostępu w panelu zwraca kod 403, nie 500** (siedem miejsc).
+- **Włączanie i wyłączanie sprzedaży produktu nie gubi się przy dwukliku** — zapis jest
+  warunkowany stanem widocznym na ekranie.
+
+### Dodane
+- **Zwroty i obciążenia zwrotne schodzą z przychodu.** Sklep przyjmuje ze Stripe
+  powiadomienia o zwrocie (`refund.created`, `refund.updated`, `charge.refunded`) oraz
+  o reklamacji płatności w banku (`charge.dispute.*`). Zwrot pełnej kwoty przestawia
+  zamówienie na „zwrócone", zwrot częściowy pomniejsza przychód o swoją kwotę, a spór
+  wygrany przywraca zamówienie do utargu. Każde zdarzenie zostawia wpis w dzienniku.
+  Nowe kolumny: `payment_intent_id`, `zwrocono_grosze`, `zwrot_czas`.
+- **Pulpit ostrzega, gdy sklep nie ma czym przyjąć pieniędzy** — brak klucza Stripe lub
+  sekretu webhooka, a także seria nieudanych rozmów ze Stripe w ostatniej dobie.
+- **Zapytanie z banku nie zeruje sprzedaży.** Prośba o wyjaśnienia nie zabiera pieniędzy,
+  więc zamówienie zostaje w przychodzie — schodzi z niego dopiero pobranie środków albo
+  przegrany spór. Spór wygrany i zwrot środków przywracają sprzedaż do stanu **sprzed sporu**:
+  zamówienie, do którego mail nie doszedł, wraca do „błąd maila", a nie zostaje oznaczone
+  jako wysłane (nowa kolumna `status_przed_sporem`).
+- **Zwrot odrzucony przez bank wraca do przychodu** — zwrot ze stanem „nieudany" nie jest
+  zwrotem, pieniądze zostały u sprzedawcy.
+- **Dwa różne zwroty częściowe o tej samej kwocie liczą się osobno** — księgowanie idzie po
+  identyfikatorze zwrotu, nie po samej kwocie.
+- **Zwrot nie ginie, gdy Stripe nie odpowie** — sklep prosi wtedy o ponowne przysłanie
+  powiadomienia, zamiast potwierdzać przyjęcie czegoś, czego nie zapisał.
+
+### Bezpieczeństwo
+- **Publiczne wejście zakupu ma limit żądań PRZED zapisem czegokolwiek do bazy** — inaczej
+  obcy skrypt mógł jednym strumieniem żądań zapełnić właścicielowi dziennik zdarzeń.
+- **Samonaprawa katalogu z plikami produktów odpala się wyłącznie, gdy ścieżki NIE MA.**
+  Katalog chwilowo nieosiągalny (przeniesiony hosting, odpięty dysk) zostaje widocznym
+  błędem — inaczej powstałby nowy, pusty katalog, a pliki produktów zostałyby sierotami.
+- **Wskaźniki Pulpitu nie pokażą fałszywego zera**, gdy zapytanie padnie — zamiast „Przychód
+  0,00 zł" pojawia się jawne ostrzeżenie. Odejmowanie kwot zabezpieczone przed błędem zakresu
+  bazy, a okno „ostatniej doby" liczone czasem witryny, nie zegarem serwera bazy.
+
+### Zmienione
+- Kod i dokumentacja w paczce nie odwołują się już do wewnętrznej numeracji dokumentów
+  roboczych — komentarze niosą powód zmiany, nie numer ustalenia.
+- Dokumentacja techniczna: poprawiona liczba tabel, uzupełniona mapa plików o klasy list
+  panelu, opinie i dostawcę mapy witryny, opisane statusy zwrotu i obsługiwane zdarzenia Stripe.
+
+---
+
 ## [0.9.13] — 2026-08-25
 
 ### Naprawione

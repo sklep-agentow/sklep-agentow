@@ -1,11 +1,11 @@
 <?php
 /**
- * Strona produktu (K5, PLAN-WYGLADU-K5 §2B; PR 2 z 3):
+ * Strona produktu:
  * lista i produkt żyją na JEDNEJ stronie WP „Sklep" — przełącza query var
  * `sklepag_produkt` (slug). Przyjazny adres /{slug-sklepu}/produkt/{slug}/
  * przez rewrite (slug strony czytany z opcji — NIE hardkod „sklep");
  * fallback ?sklepag_produkt=slug działa zawsze (permalinki wyłączone też).
- * KAŻDY produkt dostaje pełną stronę z pól bazy (kryterium #7: nowy produkt
+ * KAŻDY produkt dostaje pełną stronę z pól bazy (nowy produkt
  * bez zmian kodu); dwa znane slugi dostają DODATKOWO bogate sekcje
  * (układ sekcji: problem/kroki/dowody/FAQ/mockupy).
  */
@@ -49,7 +49,7 @@ function sklepag_rejestruj_rewrite() {
 	);
 
 	// Self-heal flush: raz, gdy zmienił się slug/strona/wersja reguły
-	// (aktualizacja wtyczki nie odpala aktywacji — wzorzec crona z K1).
+	// (aktualizacja wtyczki nie odpala aktywacji — jak przy harmonogramie crona).
 	$podpis = md5( $slug . '|' . $id . '|v1' );
 	if ( get_option( 'sklepag_rewrite_podpis' ) !== $podpis ) {
 		flush_rewrite_rules( false );
@@ -303,7 +303,7 @@ function sklepag_tresc_produktu( $slug ) {
 				'przypis' => 'Bot nie zastępuje człowieka w trudnych sprawach — dlatego rozmowę możesz w każdej chwili przejąć i dokończyć osobiście.',
 			),
 			/*
-			 * ⛔ OPINIE: wyłącznie PRAWDZIWE, od zweryfikowanych kupujących (D6 + UZUPEŁNIENIE
+			 * ⛔ OPINIE: wyłącznie PRAWDZIWE, od zweryfikowanych kupujących (zasada uczciwości +
 			 * 24.08, Omnibus). Puste = sekcja się nie renderuje. Format wpisu — WYŁĄCZNIE
 			 * tablica z kluczami (wpis bez klucza 'tresc' jest przez render POMIJANY):
 			 * array(
@@ -315,7 +315,7 @@ function sklepag_tresc_produktu( $slug ) {
 			 * )
 			 * O pochodzeniu opinii mówi stała NOTA renderowana razem z sekcją
 			 * (sklepag_render_opinie) — niczego więcej nie trzeba zmieniać na stronie.
-			 * Od D32 opinie kupujących idą MECHANIZMEM (tabela sklepag_opinie, moderacja
+			 * Opinie kupujących idą MECHANIZMEM (tabela sklepag_opinie, moderacja
 			 * w panelu) i renderują się PRZED wpisami z tej tablicy — ta tablica zostaje
 			 * jako ręczne uzupełnienie.
 			 */
@@ -563,7 +563,7 @@ function sklepag_figure_zrzutu( $zrzut, $klasa, $z_podpisem, $z_paskiem = true, 
 
 /**
  * Mono-pictogram produktu (sędzia wyglądu: karty nierozróżnialne bez ikon).
- * Inline SVG w limonce — zero CDN/fontów ikon (D27). Fallback: iskra.
+ * Inline SVG w limonce — zero CDN/fontów ikon. Fallback: iskra.
  *
  * @param string $slug Slug produktu.
  */
@@ -579,7 +579,7 @@ function sklepag_ikona_produktu( $slug ) {
 }
 
 /**
- * Formularz zakupu (jedyna droga: checkbox zgody + nonce — mechanika K1 bez zmian).
+ * Formularz zakupu (jedyna droga: checkbox zgody + nonce — mechanika bez zmian).
  *
  * @param object $p Produkt (wiersz bazy).
  */
@@ -611,7 +611,7 @@ function sklepag_mockup_czatu() {
 }
 
 /**
- * Wizualizacja PRZED/PO segregacji (nasza przewaga — PLAN-WYGLADU-K5 §5b.3).
+ * Wizualizacja PRZED/PO segregacji (nasza przewaga).
  */
 function sklepag_przed_po() {
 	$przed = array( 'FV 88/2026 — księgowość', 'RE: wycena ogrodzenia', 'Wygraj bon 5000 zł!!!', 'reklamacja zamówienia 113', 'oferta współpracy B2B' );
@@ -839,7 +839,7 @@ function sklepag_render_produkt( $slug ) {
 			$html .= '</ul></section>';
 		}
 
-		// ILE CZASU ODZYSKUJESZ (S-03 — dedykowane miejsce): 3 karty-dowody.
+		// ILE CZASU ODZYSKUJESZ (dedykowane miejsce): 3 karty-dowody.
 		$html .= '<section class="sklepag-sekcja sklepag-sekcja--pelna">' . $etykieta( 'ILE CZASU ODZYSKUJESZ' );
 		$html .= '<div class="sklepag-dowody">';
 		foreach ( $t['dowody'] as $d ) {
@@ -878,12 +878,12 @@ function sklepag_render_produkt( $slug ) {
 		$html .= '</ul></section>';
 
 		// OPINIE KLIENTÓW — wyłącznie PRAWDZIWE, od zweryfikowanych kupujących
-		// (D6 + UZUPEŁNIENIE 24.08, Omnibus). Najpierw PRZYJĘTE z mechanizmu (D32,
+		// (zasada uczciwości + UZUPEŁNIENIE 24.08, Omnibus). Najpierw PRZYJĘTE z mechanizmu (
 		// tabela sklepag_opinie), po nich ewentualne wpisy ręczne z tej tablicy.
 		// Nic do pokazania = sekcji nie ma (i numer sekcji nie rośnie).
 		$html .= sklepag_render_opinie( array_merge( sklepag_opinie_z_bazy( $slug ), is_array( $t['opinie'] ) ? $t['opinie'] : array() ), $etykieta );
 
-		// UCZCIWOŚĆ (zamiast fejk-opinii — D6/Omnibus). Punkty, nie ściana
+		// UCZCIWOŚĆ (zamiast fejk-opinii — Omnibus). Punkty, nie ściana
 		// (badania: 53% kupujących samo szuka ograniczeń — forma ma być skanowalna).
 		$html .= '<section class="sklepag-sekcja sklepag-uczciwosc">' . $etykieta( 'CO DOKŁADNIE DOSTAJESZ — I CZEGO NIE MA' );
 		if ( is_array( $t['uczciwosc'] ) ) {
@@ -897,13 +897,13 @@ function sklepag_render_produkt( $slug ) {
 		}
 		$html .= '</section>';
 	} elseif ( '' !== trim( (string) $p->opis_pelny ) ) {
-		// Produkt spoza dwójki: opis pełny z bazy, render jako tekst (XSS — plan §7).
+		// Produkt spoza dwójki: opis pełny z bazy, render jako tekst (XSS).
 		$html .= '<section class="sklepag-sekcja">' . $etykieta( 'O PRODUKCIE' );
 		$html .= '<p class="sklepag-sekcja-tekst">' . nl2br( esc_html( $p->opis_pelny ) ) . '</p></section>';
 	}
 
 	if ( ! $t ) {
-		// OPINIE dla produktu SPOZA dwójki (D32): zalążek powstaje przy każdym zakupie,
+		// OPINIE dla produktu SPOZA dwójki: zalążek powstaje przy każdym zakupie,
 		// więc przyjęte opinie muszą się pokazać także na stronie generycznej. Dwójka
 		// z bogatą treścią ma tę sekcję wyżej, w ustalonym porządku sekcji strony —
 		// dlatego dwa wywołania zamiast wspólnego (kolejność sekcji to decyzja projektu).

@@ -5,7 +5,7 @@
  * treść wysłanego maila + „Wyślij ponownie" TUŻ OBOK (wzorzec Stripe receipt).
  * PRAWA kolumna: oś czasu zdarzeń tego zamówienia.
  * Akcje: resend (regeneruje token+termin — stary link mógł wygasnąć) oraz
- * anonimizacja kupującego na żądanie RODO (plan §5/§8: email→NULL +
+ * anonimizacja kupującego na żądanie RODO (email→NULL +
  * usunieto_dnia; kwoty i czasy zostają — dashboard żyje).
  */
 
@@ -20,7 +20,7 @@ add_action( 'admin_post_sklepag_resend', 'sklepag_obsluz_resend' );
 /**
  * Resend generuje ŚWIEŻY token i termin (72 h) — stary link mógł wygasnąć,
  * a to właśnie najczęstszy powód ponownej wysyłki. Skrót w bazie nadpisany =
- * stary link przestaje działać (jeden ważny token na zamówienie — kryterium #4).
+ * stary link przestaje działać (jeden ważny token na zamówienie).
  * Wyścig dwóch równoczesnych resendów: wygrywa ostatni zapis skrótu, wcześniejszy
  * mail niesie martwy link — naprawialne kolejnym resendem, akceptowalne dla akcji ręcznej.
  */
@@ -56,11 +56,16 @@ function sklepag_obsluz_resend() {
 	$teraz = current_time( 'mysql' );
 	$link  = admin_url( 'admin-post.php' ) . '?action=sklepag_pobierz&z=' . (int) $zam->id . '&t=' . $token;
 
-	// Link do opinii jak w wysyłce automatycznej (D32): zalążek odświeża token
+	// Link do opinii jak w wysyłce automatycznej: zalążek odświeża token
 	// w stanie 'zalazek', a dla opinii już przysłanej zwraca '' — mail idzie
 	// wtedy bez akapitu oceny. Bez tego resend gubił kupującemu drogę do opinii.
-	$token_op = sklepag_opinia_zalazek( (int) $zam->id, (int) $zam->produkt_id );
-	$link_op  = '' !== $token_op ? admin_url( 'admin-post.php' ) . '?action=sklepag_ocen&z=' . (int) $zam->id . '&t=' . $token_op : '';
+	// Zapamiętujemy skrót tokenu opinii SPRZED rotacji. Nieudana wysyłka nie może zabrać
+	// kupującemu także drogi do opinii — to ta sama wada co przy linku pobrania, tylko na
+	// drugim tokenie: stary link z pierwszego maila przestałby działać, a nowy nie dotarł.
+	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
+	$opinia_hash_przed = (string) $wpdb->get_var( $wpdb->prepare( "SELECT token_hash FROM {$wpdb->prefix}sklepag_opinie WHERE zamowienie_id=%d", (int) $zam->id ) );
+	$token_op          = sklepag_opinia_zalazek( (int) $zam->id, (int) $zam->produkt_id );
+	$link_op           = '' !== $token_op ? admin_url( 'admin-post.php' ) . '?action=sklepag_ocen&z=' . (int) $zam->id . '&t=' . $token_op : '';
 
 	$produkt_snapshot        = new stdClass();
 	$produkt_snapshot->nazwa = $zam->produkt_nazwa_kupiona;
@@ -84,11 +89,59 @@ function sklepag_obsluz_resend() {
 	$wyslano = sklepag_wyslij_mail_sklepu( $zam->email_kupujacego, 'Twój zakup: ' . $zam->produkt_nazwa_kupiona . ' — potwierdzenie i pobranie', $tresc );
 
 	if ( $wyslano ) {
-		$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET status='mail_wyslany', zmieniono=%s WHERE id=%d", $teraz, (int) $zam->id ) );
+		// Status nadpisujemy TYLKO gdy zamówienie nie jest zamknięte finansowo. Bez tego jedno
+		// kliknięcie „Wyślij ponownie" na zamówieniu zwróconym kasowało znacznik zwrotu i wracało
+		// je do liczby sprzedaży na Pulpicie. Mail wychodzi tak czy tak — blokujemy zapis stanu,
+		// nie wysyłkę.
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- SKLEPAG_STATUSY_ZAMKNIETE to stała wtyczki, nie wejście użytkownika (jak SKLEPAG_STATUSY_OPLACONE w admin-dashboard.php).
+		$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET status='mail_wyslany', zmieniono=%s WHERE id=%d AND status NOT IN (" . SKLEPAG_STATUSY_ZAMKNIETE . ')', $teraz, (int) $zam->id ) );
 		sklepag_zdarzenie( (int) $zam->id, 'mail_resend', 'ręczna ponowna wysyłka do: ' . $zam->email_kupujacego . ' (świeży link)' );
 	} else {
-		$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET status='mail_blad', mail_proby=mail_proby+1, zmieniono=%s WHERE id=%d", $teraz, (int) $zam->id ) );
-		sklepag_zdarzenie( (int) $zam->id, 'mail_blad', 'ręczna ponowna wysyłka nieudana (wp_mail zwrócił false)' );
+		// KOMPENSACJA: nowy token wszedł do bazy PRZED wysyłką, więc nieudany mail zostawiłby
+		// kupującego bez niczego — stary link daje 403, a nowy nigdy nie dotarł. Przywracamy
+		// poprzedni token i termin, żeby „Wyślij ponownie" nigdy nie ODBIERAŁO dostępu.
+		if ( null === $zam->link_wygasa ) {
+			// Kolumna `link_wygasa` jest DATETIME NULL — prepare() z %s zrobiłby z NULL-a pusty
+			// string (data zerowa albo błąd w trybie ścisłym), więc NULL zapisujemy dosłownie.
+			$wpdb->query(
+				$wpdb->prepare(
+					"UPDATE {$pz} SET token_pobrania=%s, link_wygasa=NULL, zmieniono=%s WHERE id=%d",
+					(string) $zam->token_pobrania,
+					$teraz,
+					(int) $zam->id
+				)
+			);
+		} else {
+			$wpdb->query(
+				$wpdb->prepare(
+					"UPDATE {$pz} SET token_pobrania=%s, link_wygasa=%s, zmieniono=%s WHERE id=%d",
+					(string) $zam->token_pobrania,
+					(string) $zam->link_wygasa,
+					$teraz,
+					(int) $zam->id
+				)
+			);
+		}
+		// Stan i licznik prób osobno od kompensacji tokenu: token i termin MUSZĄ wrócić zawsze
+		// (inaczej „Wyślij ponownie" odbierałoby dostęp), a status wolno ruszyć tylko wtedy,
+		// gdy zamówienie nie jest zamknięte finansowo.
+		$wpdb->query(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- SKLEPAG_STATUSY_ZAMKNIETE to stała wtyczki, nie wejście użytkownika (jak SKLEPAG_STATUSY_OPLACONE w admin-dashboard.php).
+				"UPDATE {$pz} SET status='mail_blad', mail_proby=mail_proby+1, zmieniono=%s WHERE id=%d AND status NOT IN (" . SKLEPAG_STATUSY_ZAMKNIETE . ')',
+				$teraz,
+				(int) $zam->id
+			)
+		);
+		// Treść maila też wraca: panel pokazuje „treść wysłanego maila" i po nieudanej próbie
+		// wyświetlałby link, który już nie działa, a ten działający nie byłby widoczny nigdzie.
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
+		$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET mail_tresc=%s WHERE id=%d", (string) $zam->mail_tresc, (int) $zam->id ) );
+		if ( '' !== $opinia_hash_przed ) {
+			$wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->prefix}sklepag_opinie SET token_hash=%s WHERE zamowienie_id=%d AND status='zalazek'", $opinia_hash_przed, (int) $zam->id ) );
+		}
+		// phpcs:enable
+		sklepag_zdarzenie( (int) $zam->id, 'mail_blad', 'ręczna ponowna wysyłka nieudana (wp_mail zwrócił false) — poprzedni link pobrania, treść maila i link do opinii przywrócone' );
 	}
 	// phpcs:enable
 
@@ -96,12 +149,12 @@ function sklepag_obsluz_resend() {
 	exit;
 }
 
-/* ---------- Akcja: anonimizacja kupującego (RODO, plan §5/§8) ---------- */
+/* ---------- Akcja: anonimizacja kupującego (RODO) ---------- */
 
 add_action( 'admin_post_sklepag_anonimizuj', 'sklepag_obsluz_anonimizacje' );
 
 /**
- * Email → NULL + usunieto_dnia; kwoty i czasy ZOSTAJĄ (dashboard żyje — D11).
+ * Email → NULL + usunieto_dnia; kwoty i czasy ZOSTAJĄ (dashboard żyje).
  * Ślady adresu w opisach zdarzeń tego zamówienia zastępowane znacznikiem;
  * token pobrania unieważniany (zanonimizowany klient = koniec relacji).
  */
@@ -143,7 +196,7 @@ function sklepag_obsluz_anonimizacje() {
 	}
 	// phpcs:enable
 
-	// Symetria RODO dla mechanizmu opinii (D32): imię i token opinii umierają razem
+	// Symetria RODO dla mechanizmu opinii: imię i token opinii umierają razem
 	// z tokenem pobrania, publikacja schodzi ze strony — szczegóły w sklepag_anonimizuj_opinie().
 	sklepag_anonimizuj_opinie( (int) $zam->id );
 
@@ -169,7 +222,7 @@ function sklepag_url_zamowienia( $id ) {
  */
 function sklepag_admin_zamowienie() {
 	if ( ! current_user_can( 'manage_options' ) ) {
-		wp_die( 'Brak uprawnień.' );
+		wp_die( 'Brak uprawnień.', 'Sklep Agentów', 403 );
 	}
 
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- odczyt identyfikatora widoku read-only.

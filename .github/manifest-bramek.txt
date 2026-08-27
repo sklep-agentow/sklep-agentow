@@ -39,3 +39,16 @@ slady
 # Powód z życia: cookie-jar audytora ważny 46 h + nonce + sekret webhooka przeszły gitleaks
 # i slady (25.08) — bramka istnieje od #188 (1.1.2 w #191), ale POZA manifestem.
 poswiadczenia
+#
+# ROZSZERZENIE 2026-08-27 (PR #198, po recenzji #193): bramka `znaleziska` — waga i domknięcie
+# znalezisk audytu. Była w rejestrze BRAMKI=() i realnie wołana, ale POZA manifestem, czyli
+# w dokładnie tym stanie, który #193 opisał jako wadę dla `poswiadczenia`. Druga taka pozycja
+# w ciągu doby, dlatego razem z tym wpisem sprawdz-manifest.sh dostaje kontrolę ODWROTNĄ:
+# bramka w rejestrze, której nie ma w manifeście, świeci na czerwono.
+znaleziska
+#
+# ROZSZERZENIE 2026-08-27 (PR #198, po rundzie 5): bramka `status-bez-warunku` — zapis statusu
+# zamówienia musi chronić stan poprzedni. Trzy egzemplarze tego samego wzorca w jednym PR-ze
+# (spór w rundzie 2, zwrot w rundzie 4, „Wyślij ponownie" w rundzie 5), za każdym razem
+# znalezione przez recenzenta po jednym. Bramka pyta o klasę, nie o egzemplarz.
+status-bez-warunku

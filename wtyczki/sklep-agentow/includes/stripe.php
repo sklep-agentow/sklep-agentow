@@ -1,6 +1,6 @@
 <?php
 /**
- * Klient Stripe przez WP HTTP API — bez SDK (DECYZJE D18, ZWIAD-STRIPE).
+ * Klient Stripe przez WP HTTP API — bez SDK (świadomie, żeby paczka nie ciągnęła zewnętrznych zależności).
  * Zasady: timeout 15 s, JEDNA próba (ponowienia robią Stripe/cron — ściąga:
  * pętla retry nie może przekroczyć limitu PHP hostingu); wersja API przypięta.
  */
@@ -89,6 +89,26 @@ function sklepag_stripe_utworz_sesje( $produkt, $zgoda_czas, $klucz_idempotencji
 
 function sklepag_stripe_pobierz_sesje( $sesja_id ) {
 	return sklepag_stripe_request( '/v1/checkout/sessions/' . rawurlencode( $sesja_id ) );
+}
+
+/**
+ * Sesja checkout po identyfikatorze płatności.
+ *
+ * Zdarzenia o zwrocie i obciążeniu zwrotnym niosą wyłącznie `payment_intent` — ani obiekt
+ * zwrotu, ani obciążenia nie zawiera identyfikatora sesji. Dla zamówień zapisanych PRZED
+ * dodaniem kolumny `payment_intent_id` to jedyna droga, żeby ustalić, czyj jest zwrot.
+ *
+ * @return array|WP_Error Sesja checkout albo błąd (także gdy Stripe nie zna takiej płatności).
+ */
+function sklepag_stripe_sesja_po_platnosci( $payment_intent ) {
+	$odp = sklepag_stripe_request( '/v1/checkout/sessions?limit=1&payment_intent=' . rawurlencode( $payment_intent ) );
+	if ( is_wp_error( $odp ) ) {
+		return $odp;
+	}
+	if ( empty( $odp['data'][0]['id'] ) ) {
+		return new WP_Error( 'sklepag_brak_sesji', 'Stripe nie zna sesji dla płatności ' . $payment_intent );
+	}
+	return $odp['data'][0];
 }
 
 /**

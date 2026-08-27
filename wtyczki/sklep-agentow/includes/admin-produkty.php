@@ -1,10 +1,10 @@
 <?php
 /**
- * CRUD produktów (K4; plan §4A „Produkty", kryterium GOTOWE #7):
+ * CRUD produktów (ekran „Produkty"):
  * lista → formularz dodaj/edytuj → zapis z walidacjami → upload zipa do
  * katalogu chronionego (losowa nazwa BEZ rozszerzenia, MIME z TREŚCI,
  * limit 20 MB, weryfikacja PO zapisie: obecność+rozmiar+sha256).
- * Zasady: bez twardego usuwania (deaktywacja — D7); nowy plik = NOWA
+ * Zasady: bez twardego usuwania (deaktywacja); nowy plik = NOWA
  * ścieżka (stare zamówienia trzymają swój snapshot — §5); aktywacja
  * wymaga POTWIERDZONEGO pliku; każda mutacja nonce+caps parą.
  */
@@ -16,6 +16,19 @@ if ( ! defined( 'ABSPATH' ) ) {
 require_once SKLEPAG_KATALOG . 'includes/class-sklepag-lista-produktow.php';
 
 const SKLEPAG_UPLOAD_LIMIT_B = 20 * 1024 * 1024; // Plan §7: 20 MB (realne zipy botów <1 MB).
+
+/**
+ * Realny sufit wgrania: MNIEJSZY z limitu wtyczki i limitu serwera
+ * (upload_max_filesize / post_max_size z php.ini, przez wp_max_upload_size()).
+ *
+ * Komunikaty muszą cytować TEN limit. Wcześniej wszystkie mówiły „Limit: 20 MB",
+ * także gdy serwer odrzucił plik przy 2 MB — właściciel czytał liczbę wtyczki
+ * i szukał przyczyny tam, gdzie jej nie było.
+ */
+function sklepag_limit_uploadu_b() {
+	$serwer = (int) wp_max_upload_size();
+	return ( $serwer > 0 && $serwer < SKLEPAG_UPLOAD_LIMIT_B ) ? $serwer : SKLEPAG_UPLOAD_LIMIT_B;
+}
 
 /**
  * Adres formularza produktu (0 = nowy).
@@ -33,7 +46,7 @@ function sklepag_url_produktu( $id = 0 ) {
  */
 function sklepag_admin_produkty() {
 	if ( ! current_user_can( 'manage_options' ) ) {
-		wp_die( 'Brak uprawnień.' );
+		wp_die( 'Brak uprawnień.', 'Sklep Agentów', 403 );
 	}
 
 	// phpcs:disable WordPress.Security.NonceVerification.Recommended -- wybór widoku read-only.
@@ -119,7 +132,7 @@ function sklepag_produkty_formularz( $id ) {
 	echo '<table class="form-table" role="presentation"><tbody>';
 	echo '<tr><th scope="row"><label for="sklepag-nazwa">Nazwa</label></th><td><input type="text" id="sklepag-nazwa" name="nazwa" class="regular-text" required value="' . esc_attr( $w( 'nazwa' ) ) . '"></td></tr>';
 	echo '<tr><th scope="row"><label for="sklepag-opis-krotki">Opis krótki (lista sklepu)</label></th><td><textarea id="sklepag-opis-krotki" name="opis_krotki" class="large-text" rows="2">' . esc_textarea( $w( 'opis_krotki' ) ) . '</textarea></td></tr>';
-	echo '<tr><th scope="row"><label for="sklepag-opis-pelny">Opis pełny (strona produktu)</label></th><td><textarea id="sklepag-opis-pelny" name="opis_pelny" class="large-text" rows="6">' . esc_textarea( $w( 'opis_pelny' ) ) . '</textarea><p class="description">Renderowany zawsze jako tekst (XSS: opisy nie niosą HTML — plan §7).</p></td></tr>';
+	echo '<tr><th scope="row"><label for="sklepag-opis-pelny">Opis pełny (strona produktu)</label></th><td><textarea id="sklepag-opis-pelny" name="opis_pelny" class="large-text" rows="6">' . esc_textarea( $w( 'opis_pelny' ) ) . '</textarea><p class="description">Renderowany zawsze jako tekst (XSS: opisy nie niosą HTML).</p></td></tr>';
 	echo '<tr><th scope="row"><label for="sklepag-cena">Cena</label></th><td><input type="number" id="sklepag-cena" name="cena" step="0.01" min="0.01" required class="small-text" value="' . esc_attr( $id ? number_format( $w( 'cena_grosze' ) / 100, 2, '.', '' ) : '' ) . '"> <input type="text" name="waluta" class="small-text" maxlength="3" pattern="[A-Za-z]{3}" value="' . esc_attr( $w( 'waluta', (string) get_option( 'sklepag_waluta_domyslna', 'PLN' ) ) ) . '"></td></tr>';
 
 	echo '<tr><th scope="row"><label for="sklepag-plik">Plik paczki (ZIP)</label></th><td>';
@@ -128,10 +141,10 @@ function sklepag_produkty_formularz( $id ) {
 		echo '<p>Obecny plik: ' . ( $jest ? '<span class="sklepag-badge sklepag-badge-ok">jest</span> ' . esc_html( size_format( (int) $w( 'plik_rozmiar' ) ) ) . ' · sha256 <code>' . esc_html( substr( $w( 'plik_sha256' ), 0, 12 ) ) . '…</code>' : '<span class="sklepag-badge sklepag-badge-blad">zgubiony na dysku</span>' ) . '</p>';
 	}
 	echo '<input type="file" id="sklepag-plik" name="plik" accept=".zip,application/zip">';
-	echo '<p class="description">Tylko ZIP, do ' . esc_html( size_format( SKLEPAG_UPLOAD_LIMIT_B ) ) . '. Nowy plik dostaje NOWĄ chronioną ścieżkę — stare zamówienia trzymają swoją (snapshot). ' . ( $id ? 'Zostaw puste, by nie zmieniać.' : '' ) . '</p>';
+	echo '<p class="description">Tylko ZIP, do ' . esc_html( size_format( sklepag_limit_uploadu_b() ) ) . '. Nowy plik dostaje NOWĄ chronioną ścieżkę — stare zamówienia trzymają swoją (snapshot). ' . ( $id ? 'Zostaw puste, by nie zmieniać.' : '' ) . '</p>';
 	echo '</td></tr>';
 
-	echo '<tr><th scope="row">W sprzedaży</th><td><label><input type="checkbox" name="aktywny" value="1"' . checked( (bool) $w( 'aktywny', false ), true, false ) . '> Produkt widoczny i kupowalny w sklepie</label><p class="description">Aktywacja wymaga POTWIERDZONEGO pliku paczki — bez pliku zapis wróci z błędem (kryterium #7).</p></td></tr>';
+	echo '<tr><th scope="row">W sprzedaży</th><td><label><input type="checkbox" name="aktywny" value="1"' . checked( (bool) $w( 'aktywny', false ), true, false ) . '> Produkt widoczny i kupowalny w sklepie</label><p class="description">Aktywacja wymaga POTWIERDZONEGO pliku paczki — bez pliku zapis wróci z błędem.</p></td></tr>';
 	echo '</tbody></table>';
 
 	submit_button( $id ? 'Zapisz zmiany' : 'Dodaj produkt' );
@@ -164,7 +177,7 @@ function sklepag_obsluz_zapis_produktu() {
 		exit;
 	};
 
-	// Walidacje (kryterium #7: cena<=0, pusta nazwa, nie-zip, ponad limit = odrzut).
+	// Walidacje: cena<=0, pusta nazwa, nie-zip, ponad limit = odrzut.
 	if ( '' === $nazwa ) {
 		$wroc( 'Nazwa nie może być pusta.' );
 	}
@@ -247,7 +260,7 @@ function sklepag_obsluz_zapis_produktu() {
 
 /**
  * Przyjęcie zipa do katalogu chronionego: rozszerzenie + MIME z TREŚCI +
- * limit + losowa nazwa BEZ .zip + weryfikacja PO zapisie (plan §7).
+ * limit + losowa nazwa BEZ .zip + weryfikacja PO zapisie.
  *
  * @param callable $wroc Funkcja przerywająca z komunikatem.
  * @return array{sciezka: string, rozmiar: int, sha256: string}
@@ -256,7 +269,25 @@ function sklepag_przyjmij_zip( $wroc ) {
 	// phpcs:disable WordPress.Security.ValidatedSanitizedInput, WordPress.Security.NonceVerification.Missing -- wywoływana WYŁĄCZNIE z handlera sklepag_obsluz_zapis_produktu PO check_admin_referer (sniff nie śledzi przepływu między funkcjami); $_FILES walidowane polami: error/size/tmp_name przez is_uploaded_file, nazwa tylko do rozszerzenia.
 	$blad = isset( $_FILES['plik']['error'] ) ? (int) $_FILES['plik']['error'] : UPLOAD_ERR_NO_FILE;
 	if ( UPLOAD_ERR_OK !== $blad ) {
-		$wroc( 'Upload nie powiódł się (kod ' . $blad . ') — spróbuj ponownie; duży plik? Limit: ' . size_format( SKLEPAG_UPLOAD_LIMIT_B ) . '.' );
+		$limit_realny = sklepag_limit_uploadu_b();
+		$serwer       = (int) wp_max_upload_size();
+		$dodatek      = '';
+		if ( UPLOAD_ERR_INI_SIZE === $blad || UPLOAD_ERR_FORM_SIZE === $blad ) {
+			$dodatek = ' Plik odrzucił serwer, zanim wtyczka go zobaczyła — obowiązuje limit ' . size_format( $limit_realny ) . '.';
+			if ( $limit_realny < SKLEPAG_UPLOAD_LIMIT_B ) {
+				$dodatek .= ' To ustawienie serwera, niższe niż limit wtyczki (' . size_format( SKLEPAG_UPLOAD_LIMIT_B ) .
+					') — żeby wgrać większy plik, podnieś upload_max_filesize i post_max_size w php.ini albo poproś o to hosting.';
+			}
+		}
+		// Bez tego wpisu nieudane wgranie produktu nie zostawiało w panelu żadnego śladu.
+		sklepag_zdarzenie(
+			null,
+			'upload_produktu_blad',
+			'kod ' . $blad . '; limit obowiązujący ' . size_format( $limit_realny ) .
+			'; limit wtyczki ' . size_format( SKLEPAG_UPLOAD_LIMIT_B ) .
+			'; limit serwera ' . ( $serwer > 0 ? size_format( $serwer ) : 'nieznany' )
+		);
+		$wroc( 'Wgranie pliku nie powiodło się (kod ' . $blad . ').' . $dodatek );
 	}
 	$tmp     = isset( $_FILES['plik']['tmp_name'] ) ? sanitize_text_field( $_FILES['plik']['tmp_name'] ) : '';
 	$nazwa   = isset( $_FILES['plik']['name'] ) ? sanitize_file_name( wp_unslash( $_FILES['plik']['name'] ) ) : '';
@@ -266,13 +297,13 @@ function sklepag_przyjmij_zip( $wroc ) {
 	if ( ! is_uploaded_file( $tmp ) ) {
 		$wroc( 'Nieprawidłowy upload.' );
 	}
-	if ( $rozmiar <= 0 || $rozmiar > SKLEPAG_UPLOAD_LIMIT_B ) {
-		$wroc( 'Plik ponad limit ' . size_format( SKLEPAG_UPLOAD_LIMIT_B ) . ' (albo pusty).' );
+	if ( $rozmiar <= 0 || $rozmiar > sklepag_limit_uploadu_b() ) {
+		$wroc( 'Plik ponad limit ' . size_format( sklepag_limit_uploadu_b() ) . ' (albo pusty).' );
 	}
 	if ( ! preg_match( '/\.zip$/i', $nazwa ) ) {
 		$wroc( 'Dozwolony wyłącznie plik .zip.' );
 	}
-	// MIME z TREŚCI, nie z nagłówka przeglądarki (plan §7).
+	// MIME z TREŚCI, nie z nagłówka przeglądarki.
 	$ft = wp_check_filetype_and_ext( $tmp, $nazwa, array( 'zip' => 'application/zip' ) );
 	if ( 'zip' !== $ft['ext'] || 'application/zip' !== $ft['type'] ) {
 		$wroc( 'Treść pliku nie jest zipem (MIME sprawdzany z zawartości).' );
@@ -290,7 +321,7 @@ function sklepag_przyjmij_zip( $wroc ) {
 		$wroc( 'Zapis do katalogu chronionego nie powiódł się (uprawnienia uploads?).' );
 	}
 
-	// Weryfikacja PO zapisie: obecność + rozmiar + suma (kryterium #7 „POTWIERDZONY").
+	// Weryfikacja PO zapisie: obecność + rozmiar + suma (plik POTWIERDZONY, nie tylko zapisany).
 	clearstatcache( true, $cel );
 	if ( ! file_exists( $cel ) || filesize( $cel ) !== $rozmiar ) {
 		$wroc( 'Plik po zapisie nie przeszedł potwierdzenia (obecność/rozmiar) — nie zapisano produktu.' );
@@ -303,7 +334,7 @@ function sklepag_przyjmij_zip( $wroc ) {
 	);
 }
 
-/* ---------- Przełącznik sprzedaży (deaktywacja zamiast usuwania — D7) ---------- */
+/* ---------- Przełącznik sprzedaży (deaktywacja zamiast usuwania) ---------- */
 
 add_action( 'admin_post_sklepag_produkt_przelacz', 'sklepag_obsluz_przelacz_produkt' );
 
@@ -328,15 +359,24 @@ function sklepag_obsluz_przelacz_produkt() {
 		wp_safe_redirect( add_query_arg( 'sklepag_blad', rawurlencode( 'Nie można włączyć sprzedaży: produkt nie ma potwierdzonego pliku paczki.' ), admin_url( 'admin.php?page=sklepag-produkty' ) ) );
 		exit;
 	}
-	$wpdb->update(
-		$t,
-		array(
-			'aktywny'   => $nowy,
-			'zmieniono' => current_time( 'mysql' ),
-		),
-		array( 'id' => $id )
+	// Przełączenie warunkowe stanem, który przed chwilą przeczytaliśmy: dwa kliknięcia
+	// (dwuklik, dwie karty, odświeżenie akcji) trafiały wcześniej bezwarunkowym zapisem
+	// i produkt potrafił zostać w stanie odwrotnym do tego, co admin widzi na ekranie.
+	$zmieniono = $wpdb->query(
+		$wpdb->prepare(
+			"UPDATE {$t} SET aktywny=%d, zmieniono=%s WHERE id=%d AND aktywny=%d",
+			$nowy,
+			current_time( 'mysql' ),
+			$id,
+			(int) $p->aktywny
+		)
 	);
 	// phpcs:enable
+	if ( ! $zmieniono ) {
+		// Ktoś przełączył ten produkt w międzyczasie — nie nadpisujemy jego decyzji.
+		wp_safe_redirect( add_query_arg( 'sklepag_blad', rawurlencode( 'Ten produkt zmienił stan w innej karcie lub zakładce. Odśwież listę i sprawdź, zanim przełączysz ponownie.' ), admin_url( 'admin.php?page=sklepag-produkty' ) ) );
+		exit;
+	}
 	sklepag_zdarzenie( null, $nowy ? 'produkt_aktywowany' : 'produkt_deaktywowany', '#' . $id . ' ' . $p->nazwa );
 
 	wp_safe_redirect( add_query_arg( 'sklepag_ok', 'przelaczono', admin_url( 'admin.php?page=sklepag-produkty' ) ) );

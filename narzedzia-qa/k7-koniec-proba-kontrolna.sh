@@ -34,7 +34,12 @@ zbuduj_czysty() {
 	printf 'x' > "$r/testy/straznik-test.php"
 	printf '# rejestr\n\n## Znaleziska\n| ID | soczewka | runda | waga | klasa | teza | dowod | repro | status | naprawa_proby | straznik | straznik_padl_na_starym | PR |\n|---|---|---|---|---|---|---|---|---|---|---|---|---|\n| SK-L2-001 | L2 | A %s | DUŻA | k | teza | d | r | ZAMKNIETE | 1 | testy/straznik-test.php | %s | 1 |\n\n## Anomalie\n| ID | soczewka | runda | opis | status | dowod |\n|---|---|---|---|---|---|\n| AN-001 | L3 | A | opis | WYJAŚNIONA | dowod |\n' "$sha" "$sha" > "$r/audyt/sklep/REJESTR-ZNALEZISK-SKLEP.md"
 	{ printf '# przelot\n'; for i in $(seq 1 26); do printf -- '- ✅ A%s · ok\n' "$i"; done; printf -- '- ✅ B1 · ok\n'; printf '\n## LICZNIK\nCELE: 27 · ✅ 27 · 😖 0 · 🐞 0 · ⬜ 0\n'; } > "$r/audyt/sklep/PRZELOT-CZLOWIEKA-SKLEP.md"
-	for i in $(seq 1 26); do printf 'proba-%02d EXIT=0\n' "$i"; done > "$r/audyt/sklep/PROBY-KONTROLNE.log"
+	# Log prób MUSI być tego samego RODZAJU co produkcyjny: znacznik przelotu, COMMIT równy
+	# HEAD i pozycje w kształcie „nazwa.sh EXIT=n". Atrapa uboższa niż produkcja sprawdzałaby
+	# inną bramkę niż ta, która biegnie u klienta.
+	local head_sha; head_sha=$(git -C "$r" rev-parse --short=7 HEAD)
+	{ printf '# atrapa przelotu prob kontrolnych\n#\nWYGENEROWANE-PRZEZ: narzedzia-qa/proby-kontrolne-przelot.sh\nCOMMIT: %s\nGALAZ: atrapa\nPODSUMOWANIE: uruchomionych 26, z EXIT≠0: 0, pominiętych: 0\n#\n' "$head_sha"
+	  for i in $(seq 1 26); do printf 'proba-%02d.sh EXIT=0 1s\n' "$i"; done; } > "$r/audyt/sklep/PROBY-KONTROLNE.log"
 	printf '{"soczewka":"L2","runda":"A","commit_head":"%s","werdykty":[{"cel":"L2-01","werdykt":"SPEŁNIONE","plik":"a.php","linia":3},{"cel":"L2-02","werdykt":"BRAK","proba_kontrolna":"grep -rn x . → 0; próba kontrolna: grep y → 3"}],"znaleziska":[{"teza":"t","waga":"DUŻA","typ":"USTERKA","dowody":[{"plik":"a.php","linia":3,"cytat":"c"}],"mechanizm":"m","skutek":"s","rodzaj_skutku":"zaobserwowany","kroki_reprodukcji":["curl …"],"test_padajacy":"testy/x.php: FAIL"}],"anomalie":[],"czego_nie_bylo_na_mojej_liscie":["cache"],"czego_nie_obejrzalem":[]}\n' "$sha" > "$r/audyt/sklep/raporty/A/L2.json"
 }
 
@@ -43,7 +48,9 @@ sprawdz() { # sprawdz <opis> <oczekiwany-exit> <funkcja-psujaca> <fragment-komun
 	zbuduj_czysty "$r"; "$psuj" "$r"
 	wy="$(bash "$r/narzedzia-qa/k7-koniec.sh" --korzen "$r" 2>&1)" || kod=$?
 	if [ "$kod" -ne "$ocz" ]; then printf '  BLAD %-52s (EXIT=%s, oczekiwano %s)\n' "$opis" "$kod" "$ocz"; printf '%s\n' "$wy" | sed 's/^/         /' | head -20; BLEDY=$((BLEDY+1)); return; fi
-	if [ -n "$frag" ] && ! printf '%s' "$wy" | grep -qF "$frag"; then printf '  BLAD %-52s (kod OK, nie nazwala warunku: %s)\n' "$opis" "$frag"; BLEDY=$((BLEDY+1)); return; fi
+	# Gdy kod się zgadza, a komunikat nie — POKAŻ, co bramka napisała. Bez tego czyta się
+	# „nie nazwała warunku" i nie wiadomo, czy zawiodła bramka, czy wzorzec w tej próbie.
+	if [ -n "$frag" ] && ! printf '%s' "$wy" | grep -qF "$frag"; then printf '  BLAD %-52s (kod OK, nie nazwala warunku: %s)\n' "$opis" "$frag"; printf '%s\n' "$wy" | grep -E 'FAIL|PASS' | sed 's/^/         /' | head -20; BLEDY=$((BLEDY+1)); return; fi
 	printf '  OK   %-52s (EXIT=%s)\n' "$opis" "$kod"
 }
 
@@ -78,7 +85,14 @@ psuj_anomalia_id()   { sed -i 's/| AN-001 | L3 | A | opis | WYJAŚNIONA |/| AN-0
 psuj_wcieta()        { printf -- '  - ⬜ L9-98 · wcięty punkt ·\n' >> "$1/audyt/sklep/material/06-mapa-polowania.md"; }
 potok_w_dowodzie()   { sed -i 's/| ZAMKNIETE | 1 |/| ZAMKNIETE | 1 |/; s/| teza | d | r |/| teza | `git log \\| wc -l` → 3 | r |/' "$1/audyt/sklep/REJESTR-ZNALEZISK-SKLEP.md"; }
 psuj_przelot()   { sed -i 's/^- ✅ B1/- ⬜ B1/; s/^CELE: 27 · ✅ 27 · 😖 0 · 🐞 0 · ⬜ 0/CELE: 27 · ✅ 26 · 😖 0 · 🐞 0 · ⬜ 1/' "$1/audyt/sklep/PRZELOT-CZLOWIEKA-SKLEP.md"; }
-psuj_proby_log() { sed -i 's/proba-07 EXIT=0/proba-07 EXIT=1/' "$1/audyt/sklep/PROBY-KONTROLNE.log"; }
+psuj_proby_log() { sed -i 's/proba-07.sh EXIT=0/proba-07.sh EXIT=1/' "$1/audyt/sklep/PROBY-KONTROLNE.log"; }
+# Dwa psucia dla DATY WAŻNOŚCI dowodu (recenzja #198 runda 3, W3). Każde psuje DOKŁADNIE
+# jeden warunek: pierwsze odbiera logowi znacznik maszynowy, drugie zostawia znacznik,
+# a przesuwa commit — inaczej nie wiadomo, który warunek bramkę zatrzymał.
+psuj_proby_znacznik() { sed -i '/^WYGENEROWANE-PRZEZ:/d' "$1/audyt/sklep/PROBY-KONTROLNE.log"; }
+psuj_proby_commit()   { sed -i 's/^COMMIT: .*/COMMIT: 0000000/' "$1/audyt/sklep/PROBY-KONTROLNE.log"; }
+# Przelot zostaje w historii, ale PO nim zmienia się narzędzie — dowód traci ważność.
+psuj_proby_po()       { ( cd "$1" && printf '# zmiana po przelocie\n' >> narzedzia-qa/mapa-licznik.sh && git add -A >/dev/null && git commit -qm 'zmiana narzedzia po przelocie' ); }
 psuj_sha()       { printf 'zmiana' >> "$1/boty/paczki/sklep-agentow-9.9.9.zip"; }
 psuj_tag()       { ( cd "$1" && git tag -d k7-zamrozenie >/dev/null && git commit -q --allow-empty -m inny && git tag -a k7-zamrozenie -m inny ); }
 psuj_raport_ch() { sed -i 's/"commit_head":"[0-9a-f]*"/"commit_head":"deadbee"/' "$1/audyt/sklep/raporty/A/L2.json"; }
@@ -115,6 +129,9 @@ sprawdz "4 anomalia OTWARTA z ID bez AN- (W5)"             1 psuj_anomalia_id   
 sprawdz "1a wcięty punkt mapy (D1)"                        1 psuj_wcieta        "1a mapa: nieznany znacznik"
 sprawdz "3 potok \\| w kolumnie dowodu → nadal GO (W6)"     0 potok_w_dowodzie   "K7: GO"
 sprawdz "6 proba kontrolna EXIT=1 w logu"                 1 psuj_proby_log   "6 próby"
+sprawdz "6 log BEZ znacznika przelotu (pisany recznie)"   1 psuj_proby_znacznik "bez znacznika przelotu"
+sprawdz "6 log z commitu spoza historii HEAD"              1 psuj_proby_commit   "dowód z innej linii"
+sprawdz "6 narzedzie zmienione PO przelocie"               1 psuj_proby_po      "przeterminowany"
 sprawdz "7a paczka zmieniona po zamrozeniu (sha256)"      1 psuj_sha         "7a paczka"
 sprawdz "7b tag przesuniety na inny commit"               1 psuj_tag         "7b tag"
 sprawdz "8 raport z innym commit_head"                    1 psuj_raport_ch   "8 raporty"

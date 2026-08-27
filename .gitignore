@@ -3,3 +3,6 @@ vendor
 *.log
 # artefakty testów przeglądarkowych (testy/wyglad-panel.js) — nie wersjonujemy
 zrzuty-wygladu/
+
+# Dowody audytu MUSZĄ być w repo — log poza `origin` nie istnieje (wpadka #198).
+!audyt/sklep/PROBY-KONTROLNE.log

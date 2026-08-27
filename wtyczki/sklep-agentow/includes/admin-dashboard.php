@@ -2,9 +2,9 @@
 /**
  * Dashboard „jak dobre sklepy" — wzorowany na sklepach, które to robią dobrze:
  * karty KPI z porównaniem % do poprzedniego okresu → rozkład zakupów
- * w czasie (S-04) → tabela zamówień → eksport CSV z aktualnych filtrów.
- * Do tego: notice o zamówieniach z nieudaną wysyłką (panel-czerwone, plan §6),
- * self-heal reconciliation przy wejściu admina + ręczny przycisk (plan §4A).
+ * w czasie → tabela zamówień → eksport CSV z aktualnych filtrów.
+ * Do tego: notice o zamówieniach z nieudaną wysyłką (panel-czerwone),
+ * self-heal reconciliation przy wejściu admina + ręczny przycisk.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -13,10 +13,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 require_once SKLEPAG_KATALOG . 'includes/class-sklepag-lista-zamowien.php';
 
+// ⚠️ Odejmowanie kwot ZAWSZE przez CAST na SIGNED: obie kolumny są `int unsigned`, a
+// MariaDB przy różnicy ujemnej przerywa zapytanie błędem „BIGINT UNSIGNED value is out of
+// range" (zmierzone) — samo GREATEST nie chroni, bo liczy się już po odejmowaniu. Bez tego
+// jeden zwrot większy od kwoty zamówienia wywracałby cały Pulpit, nie tylko jedną liczbę.
+// Statusy, które LICZĄ SIĘ DO PRZYCHODU. Nie ma tu 'zwrocone' ani 'sporne': pieniądze
+// za zwrócony zakup i za otwarte obciążenie zwrotne zeszły z konta właściciela, więc panel
+// nie może ich pokazywać jako utargu. Zwrot CZĘŚCIOWY zostawia zamówienie na liście, a jego
+// kwota schodzi z sum przez odjęcie `zwrocono_grosze`.
 const SKLEPAG_STATUSY_OPLACONE = "'oplacone','mail_w_toku','mail_wyslany','mail_blad'";
-
 /**
- * Badge statusu zamówienia: słowo + kolor + tooltip (wzorce K3 §3 — nigdy goły tekst).
+ * Badge statusu zamówienia: słowo + kolor + tooltip (nigdy goły tekst).
  *
  * @param string $status Status z bazy.
  */
@@ -137,7 +144,9 @@ function sklepag_granice_okresu( $okres ) {
  *
  * @param string $od Początek (Y-m-d H:i:s).
  * @param string $do_kiedy Koniec.
- * @return array{przychod: int, zamowienia: int, kupujacy: int}
+ * @return array{przychod: int|null, zamowienia: int|null, kupujacy: int|null, blad?: string}
+ *         Klucz `blad` pojawia się TYLKO wtedy, gdy zapytanie padło — wtedy liczby są `null`,
+ *         żeby awaria nie udawała zerowej sprzedaży.
  */
 function sklepag_kpi_zakresu( $od, $do_kiedy ) {
 	global $wpdb;
@@ -145,13 +154,27 @@ function sklepag_kpi_zakresu( $od, $do_kiedy ) {
 	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.NotPrepared -- nazwa tabeli z prefiksu, SKLEPAG_STATUSY_OPLACONE to stała pliku (nie wejście); KPI liczone na żywo.
 	$w = $wpdb->get_row(
 		$wpdb->prepare(
-			'SELECT COALESCE(SUM(kwota_grosze),0) AS przychod, COUNT(*) AS zamowienia, COUNT(DISTINCT email_kupujacego) AS kupujacy'
+			'SELECT COALESCE(SUM(GREATEST(CAST(kwota_grosze AS SIGNED) - CAST(zwrocono_grosze AS SIGNED), 0)),0) AS przychod, COUNT(*) AS zamowienia, COUNT(DISTINCT email_kupujacego) AS kupujacy'
 			. " FROM {$t} WHERE status IN (" . SKLEPAG_STATUSY_OPLACONE . ') AND utworzono >= %s AND utworzono < %s',
 			$od,
 			$do_kiedy
 		)
 	);
 	// phpcs:enable
+
+	// Puste $w znaczy, że zapytanie PADŁO (np. migracja schematu nie dołożyła kolumn zwrotu,
+	// bo użytkownik bazy nie ma prawa ALTER). Bez tej osłony Pulpit pokazywałby sklepowi,
+	// który sprzedaje, „Przychód 0,00 zł" i błąd PHP w logu — czyli cichą nieprawdę zamiast
+	// widocznej awarii. Zero jest tu POMIAREM tylko wtedy, gdy zapytanie się udało.
+	if ( ! $w ) {
+		return array(
+			'przychod'   => null,
+			'zamowienia' => null,
+			'kupujacy'   => null,
+			'blad'       => 'Nie udało się policzyć wskaźników — sprawdź, czy aktualizacja bazy przeszła (Dziennik → zdarzenia).',
+		);
+	}
+
 	return array(
 		'przychod'   => (int) $w->przychod,
 		'zamowienia' => (int) $w->zamowienia,
@@ -182,7 +205,7 @@ function sklepag_delta_html( $teraz, $poprzednio ) {
 	return '<span class="sklepag-delta sklepag-delta-zero">— bez zmian</span>';
 }
 
-/* ---------- Self-heal + ręczne dociąganie (plan §4A) ---------- */
+/* ---------- Self-heal + ręczne dociąganie ---------- */
 
 /**
  * Reconciliation przy wejściu admina na dashboard, jeśli ostatni bieg
@@ -216,7 +239,7 @@ function sklepag_obsluz_dociagnij() {
 	exit;
 }
 
-/* ---------- Eksport CSV (kryterium #6; log akcji) ---------- */
+/* ---------- Eksport CSV (z wpisem w dzienniku akcji) ---------- */
 
 add_action( 'admin_post_sklepag_eksport_csv', 'sklepag_obsluz_eksport_csv' );
 
@@ -279,7 +302,7 @@ function sklepag_obsluz_eksport_csv() {
  */
 function sklepag_admin_dashboard() {
 	if ( ! current_user_can( 'manage_options' ) ) {
-		wp_die( 'Brak uprawnień.' );
+		wp_die( 'Brak uprawnień.', 'Sklep Agentów', 403 );
 	}
 
 	sklepag_dashboard_self_heal();
@@ -290,6 +313,18 @@ function sklepag_admin_dashboard() {
 	$g     = sklepag_granice_okresu( $okres );
 	$kpi   = sklepag_kpi_zakresu( $g['od'], $g['do'] );
 	$poprz = sklepag_kpi_zakresu( $g['poprz_od'], $g['poprz_do'] );
+
+	// Awaria liczenia wskaźników ma być WIDOCZNA, nie udawać zerowej sprzedaży.
+	$kpi_blad = ! empty( $kpi['blad'] ) ? (string) $kpi['blad'] : ( ! empty( $poprz['blad'] ) ? (string) $poprz['blad'] : '' );
+	if ( '' !== $kpi_blad ) {
+		$puste = array(
+			'przychod'   => 0,
+			'zamowienia' => 0,
+			'kupujacy'   => 0,
+		);
+		$kpi   = $puste;
+		$poprz = $puste;
+	}
 
 	$aov       = $kpi['zamowienia'] > 0 ? $kpi['przychod'] / $kpi['zamowienia'] : 0;
 	$aov_poprz = $poprz['zamowienia'] > 0 ? $poprz['przychod'] / $poprz['zamowienia'] : 0;
@@ -310,7 +345,52 @@ function sklepag_admin_dashboard() {
 			. esc_html( '' !== $katalog_blad ? $katalog_blad : 'Katalog nie istnieje — deaktywuj i aktywuj wtyczkę, sprawdź uprawnienia uploads.' ) . '</p></div>';
 	}
 
-	// Panel-czerwone (plan §6): nieudane wysyłki po wyczerpaniu prób crona.
+	if ( '' !== $kpi_blad ) {
+		echo '<div class="notice notice-error"><p><strong>Wskaźniki poniżej są niewiarygodne.</strong> '
+			. esc_html( $kpi_blad ) . '</p></div>';
+	}
+
+	// PŁATNOŚCI: bez klucza Stripe „Kup teraz" kończy się błędem, a jedyny ślad ląduje
+	// w dzienniku zdarzeń. Pulpit o tym milczał — właściciel widział zero sprzedaży i nie
+	// miał jak zgadnąć, że sklep w ogóle nie ma czym przyjąć pieniędzy.
+	$klucz_stripe = (string) get_option( 'sklepag_stripe_klucz_sekretny', '' );
+	$sekret_hook  = (string) get_option( 'sklepag_stripe_webhook_sekret', '' );
+	if ( '' === $klucz_stripe || '' === $sekret_hook ) {
+		$czego = ( '' === $klucz_stripe && '' === $sekret_hook )
+			? 'Brak klucza Stripe i sekretu webhooka'
+			: ( '' === $klucz_stripe ? 'Brak klucza Stripe' : 'Brak sekretu webhooka Stripe' );
+		echo '<div class="notice notice-error"><p><strong>Sklep nie przyjmie płatności.</strong> '
+			. esc_html( $czego ) . ' — kupujący zobaczy błąd zamiast okna płatności'
+			. ( '' === $sekret_hook ? ', a potwierdzenia zakupu nie zostaną przyjęte' : '' ) . '. '
+			. '<a href="' . esc_url( admin_url( 'admin.php?page=sklepag-ustawienia' ) ) . '">Uzupełnij w Ustawieniach</a>.</p></div>';
+	}
+
+	// Awarie rozmowy ze Stripe z ostatniej doby: odrzucony klucz, timeout, zły podpis.
+	// Pojedynczy błąd bywa przypadkiem sieci, seria znaczy, że sprzedaż stoi.
+	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
+	// Okno liczone czasem WITRYNY, nie zegarem serwera bazy. Kolumna `czas` jest zapisywana
+	// przez current_time('mysql'), a NOW() zwraca czas MySQL (zwykle UTC) — na sklepie
+	// w Warszawie „ostatnia doba" robiła się z tego 26 godzin, a przy ujemnym przesunięciu
+	// 19, więc świeże awarie wypadały z ostrzeżenia. Reszta filtrów czasu w tej wtyczce
+	// robi to tak samo (granica reconciliation, retencja).
+	$doba_wstecz = gmdate( 'Y-m-d H:i:s', strtotime( current_time( 'mysql' ) ) - DAY_IN_SECONDS );
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- dziennik zdarzeń wtyczki, licznik na żywo.
+	$awarie_stripe = (int) $wpdb->get_var(
+		$wpdb->prepare(
+			"SELECT COUNT(*) FROM {$wpdb->prefix}sklepag_zdarzenia
+			 WHERE typ IN ('checkout_blad','reconciliation_blad','webhook_zly_podpis')
+			 AND czas > %s",
+			$doba_wstecz
+		)
+	);
+	if ( $awarie_stripe >= 3 ) {
+		echo '<div class="notice notice-warning"><p><strong>' . (int) $awarie_stripe . '</strong> nieudanych rozmów ze Stripe w ostatniej dobie '
+			. '(odrzucony klucz, brak odpowiedzi albo zły podpis webhooka) — '
+			. '<a href="' . esc_url( admin_url( 'admin.php?page=sklepag-dziennik' ) ) . '">zobacz dziennik zdarzeń</a>. '
+			. 'Jeśli to się powtarza, sprawdź klucze w Ustawieniach.</p></div>';
+	}
+
+	// Panel-czerwone: nieudane wysyłki po wyczerpaniu prób crona.
 	if ( $czerwone > 0 ) {
 		echo '<div class="notice notice-error"><p><strong>' . (int) $czerwone . '</strong> zamówień z nieudaną wysyłką maila (3 próby wyczerpane) — '
 			. '<a href="' . esc_url( admin_url( 'admin.php?page=sklepag&status=mail_blad' ) ) . '">pokaż je</a> i użyj „Wyślij ponownie" w szczegółach zamówienia.</p></div>';
@@ -420,6 +500,8 @@ function sklepag_pasek_statusow( $g ) {
 		'mail_w_toku'  => '#b98a00',
 		'mail_blad'    => '#b32d2e',
 		'oczekuje'     => '#8c8f94',
+		'zwrocone'     => '#6c7781',
+		'sporne'       => '#8a1f1f',
 	);
 
 	echo '<div class="sklepag-statusy-pasek-box"><h2>Statusy zamówień w okresie</h2>';
@@ -445,7 +527,7 @@ function sklepag_pasek_statusow( $g ) {
 }
 
 /**
- * Rozkład zakupów w czasie (S-04: „w jakim czasie") — słupki czystym CSS,
+ * Rozkład zakupów w czasie („w jakim czasie kupowali") — słupki czystym CSS,
  * bez bibliotek zewnętrznych; dziś = godzinowo, 7/30 dni = dziennie.
  *
  * @param string $okres Klucz okresu.
@@ -459,7 +541,7 @@ function sklepag_rozklad_w_czasie( $okres, $g ) {
 	if ( 'dzis' === $okres ) {
 		$wiersze  = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT HOUR(utworzono) AS klucz, SUM(kwota_grosze) AS suma FROM {$t} WHERE status IN (" . SKLEPAG_STATUSY_OPLACONE . ') AND utworzono >= %s GROUP BY HOUR(utworzono)',
+				"SELECT HOUR(utworzono) AS klucz, SUM(GREATEST(CAST(kwota_grosze AS SIGNED) - CAST(zwrocono_grosze AS SIGNED), 0)) AS suma FROM {$t} WHERE status IN (" . SKLEPAG_STATUSY_OPLACONE . ') AND utworzono >= %s GROUP BY HOUR(utworzono)',
 				$g['od']
 			),
 			OBJECT_K
@@ -471,7 +553,7 @@ function sklepag_rozklad_w_czasie( $okres, $g ) {
 	} else {
 		$wiersze = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT DATE(utworzono) AS klucz, SUM(kwota_grosze) AS suma FROM {$t} WHERE status IN (" . SKLEPAG_STATUSY_OPLACONE . ') AND utworzono >= %s GROUP BY DATE(utworzono)',
+				"SELECT DATE(utworzono) AS klucz, SUM(GREATEST(CAST(kwota_grosze AS SIGNED) - CAST(zwrocono_grosze AS SIGNED), 0)) AS suma FROM {$t} WHERE status IN (" . SKLEPAG_STATUSY_OPLACONE . ') AND utworzono >= %s GROUP BY DATE(utworzono)',
 				$g['od']
 			),
 			OBJECT_K

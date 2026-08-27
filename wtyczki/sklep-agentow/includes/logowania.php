@@ -1,6 +1,6 @@
 <?php
 /**
- * Dziennik logowań na konta adminów (S-09) + opóźnienie wykładnicze po nieudanych.
+ * Dziennik logowań na konta adminów + opóźnienie wykładnicze po nieudanych.
  *
  * ⛔ Ten plik MUSI być ładowany ZAWSZE (nie za is_admin()): wp-login.php
  * nie jest ekranem admina, a to właśnie tam odpalają się hooki logowania.
@@ -47,7 +47,7 @@ function sklepag_zapisz_logowanie( $login, $wynik ) {
 }
 
 /**
- * Udane logowanie — „kto, kiedy, konkrety" (S-09). Zeruje też licznik
+ * Udane logowanie — „kto, kiedy, konkrety". Zeruje też licznik
  * opóźnienia: kolejne próby liczą się od NAJNOWSZEGO sukcesu tej pary.
  *
  * @param string  $user_login Login.
@@ -59,7 +59,7 @@ function sklepag_loguj_udane( $user_login, $user ) {
 }
 
 /**
- * Nieudana próba — też do dziennika (S-09 „konkrety": IP, przeglądarka).
+ * Nieudana próba — też do dziennika (konkrety: IP, przeglądarka).
  *
  * @param string   $username Login wpisany.
  * @param WP_Error $error    Powód (nie zapisujemy treści — komunikaty rdzenia zdradzają, czy konto istnieje).
@@ -70,7 +70,7 @@ function sklepag_loguj_nieudane( $username, $error ) {
 }
 
 /**
- * Opóźnienie wykładnicze PRZED sprawdzeniem hasła (plan §7): po n nieudanych
+ * Opóźnienie wykładnicze PRZED sprawdzeniem hasła: po n nieudanych
  * próbach pary (login+IP) od ostatniego sukcesu następna próba czeka
  * min(2^n, 60) s. Sleep nie wlicza się do max_execution_time (zegar liczy
  * czas CPU skryptu), a sufit 60 s trzyma workera krótko.
@@ -81,7 +81,7 @@ function sklepag_loguj_nieudane( $username, $error ) {
  * NATYCHMIAST (worker wolny od razu). Człowiek nie zrobi >6 prób/min przy
  * rosnących opóźnieniach — prawdziwego użytkownika to nie dotyka (i nie jest to
  * blokada konta, tylko chwilowy limit adresu). Rezydualne ryzyko
- * (wiele IP = DDoS) — poza zakresem wtyczki, D26.
+ * (wiele IP = DDoS) — poza zakresem wtyczki.
  *
  * @param string $username Login z formularza (przez referencję w rdzeniu — tu tylko czytany).
  */

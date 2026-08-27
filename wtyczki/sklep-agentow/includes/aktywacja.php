@@ -67,12 +67,17 @@ function sklepag_tabele_sql() {
 			mail_proby smallint(5) unsigned NOT NULL DEFAULT 0,
 			mail_tresc longtext,
 			usunieto_dnia datetime DEFAULT NULL,
+			payment_intent_id varchar(255) NOT NULL DEFAULT '',
+			zwrocono_grosze int(11) unsigned NOT NULL DEFAULT 0,
+			zwrot_czas datetime DEFAULT NULL,
+			status_przed_sporem varchar(20) NOT NULL DEFAULT '',
 			utworzono datetime NOT NULL,
 			zmieniono datetime NOT NULL,
 			PRIMARY KEY  (id),
 			UNIQUE KEY stripe_session_id (stripe_session_id),
 			KEY status (status),
-			KEY utworzono (utworzono)
+			KEY utworzono (utworzono),
+			KEY payment_intent_id (payment_intent_id)
 		) {$c};",
 
 		"CREATE TABLE {$p}zdarzenia (
@@ -142,7 +147,7 @@ function sklepag_aktywacja() {
 		wp_schedule_event( time() + 600, 'sklepag_10min', 'sklepag_dociagnij_zalegle' );
 	}
 
-	// K5: rewrite strony produktu + flush (strony właśnie powstały, więc slug
+	// rewrite strony produktu + flush (strony właśnie powstały, więc slug
 	// sklepu już jest); flush odbudowuje też reguły rdzenia (w tym wp-sitemap —
 	// na stacku były zgubione: /wp-sitemap.xml dawał 404).
 	if ( function_exists( 'sklepag_rejestruj_rewrite' ) ) {

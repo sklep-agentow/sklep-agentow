@@ -3,7 +3,7 @@
  * Plugin Name: Sklep Agentów
  * Plugin URI: https://automaticai.pl/sklep/
  * Description: Sprzedawaj wtyczki-boty AI bezpośrednio ze swojej strony: płatność kartą, automatyczny mail z linkiem do pobrania, panel zamówień ze statystykami i dziennikiem logowań. Zamówienia, produkty i pliki zostają w Twojej bazie i na Twoim serwerze — bez abonamentu. Płatność obsługuje Stripe.
- * Version: 0.9.13
+ * Version: 0.9.17
  * Requires at least: 6.7
  * Requires PHP: 8.1
  * Author: Automatic AI
@@ -16,8 +16,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SKLEPAG_WERSJA', '0.9.13' );
-define( 'SKLEPAG_WERSJA_SCHEMATU', 5 ); // v5: tabela opinie (mechanizm D32); v4: kolumna zamowienia.usunieto_dnia (anonimizacja RODO — K3d); v3: indeks para_logowania.
+define( 'SKLEPAG_WERSJA', '0.9.17' );
+define( 'SKLEPAG_WERSJA_SCHEMATU', 7 ); // v7: status_przed_sporem (punkt powrotu po zdarzeniu finansowym — sporze LUB zwrocie — bez zmyślania stanu wysyłki); v6: kolumny zwrotu (payment_intent_id, zwrocono_grosze, zwrot_czas); v5: tabela opinii; v4: kolumna zamowienia.usunieto_dnia (anonimizacja RODO); v3: indeks para_logowania.
+// Stany ZAMKNIĘTE FINANSOWO: pieniądze wyszły albo wiszą u banku. Żadna ścieżka mailowa nie
+// ma prawa ich nadpisać. ⛔ TU, a nie w pliku Pulpitu: używa jej `admin-zamowienie.php`
+// w ścieżce `admin_post`, która plików Pulpitu NIE ładuje — stała zdefiniowana tam dawała
+// fatal error przy każdym „Wyślij ponownie" (zmierzone strażnikiem, EXIT=255).
+define( 'SKLEPAG_STATUSY_ZAMKNIETE', "'zwrocone','sporne'" );
 define( 'SKLEPAG_LIMIT_POBRAN', 10 ); // Jedno źródło: INSERT zamówienia + treść maila.
 define( 'SKLEPAG_LINK_GODZIN', 72 );  // Ważność linku pobrania — jw.
 define( 'SKLEPAG_OPINIA_DNI', 30 );   // Ważność linku „oceń bota" — kupujący najpierw testuje produkt.
@@ -30,15 +35,15 @@ require_once SKLEPAG_KATALOG . 'includes/stripe.php';
 require_once SKLEPAG_KATALOG . 'includes/zakup.php';
 require_once SKLEPAG_KATALOG . 'includes/pobieranie.php';
 require_once SKLEPAG_KATALOG . 'includes/logowania.php'; // ZAWSZE, nie za is_admin() — hooki logowania żyją na wp-login.php.
-require_once SKLEPAG_KATALOG . 'includes/front-produkt.php'; // K5: widok produktu + rewrite (init) — poza is_admin().
-require_once SKLEPAG_KATALOG . 'includes/front-seo.php';     // K5: title/meta/JSON-LD/sitemap (D27).
-require_once SKLEPAG_KATALOG . 'includes/opinie.php';        // D32: zalążek+token przy mailu, formularz admin-post (poza is_admin!), render z bazy.
+require_once SKLEPAG_KATALOG . 'includes/front-produkt.php'; // widok produktu + rewrite (init) — poza is_admin().
+require_once SKLEPAG_KATALOG . 'includes/front-seo.php';     // title/meta/JSON-LD/sitemap.
+require_once SKLEPAG_KATALOG . 'includes/opinie.php';        // opinie: zalążek+token przy mailu, formularz admin-post (poza is_admin!), render z bazy.
 
 register_activation_hook( __FILE__, 'sklepag_aktywacja' );
 register_deactivation_hook( __FILE__, 'sklepag_deaktywacja' );
 
 // Interwał 10 min dla „dociągnij zaległe" (reconciliation — druga droga domykania).
-// phpcs:disable WordPress.WP.CronInterval.CronSchedulesInterval -- 10 min świadomie (plan §4A): tryb testowy Stripe ponawia webhook tylko 3× w parę godzin, cron domyka zaległe zakupy.
+// phpcs:disable WordPress.WP.CronInterval.CronSchedulesInterval -- 10 min świadomie: tryb testowy Stripe ponawia webhook tylko 3× w parę godzin, cron domyka zaległe zakupy.
 add_filter(
 	'cron_schedules',
 	function ( $harmonogramy ) {
@@ -59,6 +64,21 @@ function sklepag_start() {
 	// Self-heal harmonogramu (aktualizacja wtyczki nie odpala aktywacji).
 	if ( ! wp_next_scheduled( 'sklepag_dociagnij_zalegle' ) ) {
 		wp_schedule_event( time() + 600, 'sklepag_10min', 'sklepag_dociagnij_zalegle' );
+	}
+
+	// Self-heal katalogu chronionego — DRUGI zasób tworzony tylko przy aktywacji.
+	// Aktualizacja w miejscu („Aktualizuj teraz") aktywacji NIE odpala, więc instalacja bez
+	// opcji `sklepag_katalog_chroniony` nie odzyskiwała jej niczym: cron miał samonaprawę,
+	// katalog nie, a bez niego pliki produktów nie mają chronionego miejsca. Sprawdzamy w
+	// panelu i w cronie (funkcja jest idempotentna: gdy katalog jest, wraca natychmiast) —
+	// nie na każdym żądaniu frontu, żeby wizyta kupującego nie płaciła za to sprawdzeniem dysku.
+	// ⛔ WYŁĄCZNIE gdy opcji NIE MA. Nie „gdy katalog nieosiągalny" — bo ścieżka bywa czasowo
+	// nie do odczytania (przeniesienie sklepu na inny hosting, odpięty dysk sieciowy), a wtedy
+	// utworzenie NOWEGO katalogu nadpisałoby opcję i osierociło pliki wszystkich produktów:
+	// zapisane ścieżki prowadziłyby donikąd, linki kupujących padłyby, a ostrzeżenie na Pulpicie
+	// zgasłoby, bo opcja formalnie jest. Nieosiągalny katalog ma zostać widocznym błędem.
+	if ( '' === (string) get_option( 'sklepag_katalog_chroniony', '' ) && ( is_admin() || wp_doing_cron() ) ) {
+		sklepag_utworz_katalog_chroniony();
 	}
 
 	add_shortcode( 'sklepag_sklep', 'sklepag_shortcode_sklep' );
@@ -82,7 +102,7 @@ function sklepag_wersja_assetu( $sciezka ) {
 }
 
 /**
- * Assety TYLKO na stronach sklepu (nie spowalniamy reszty strony — plan §2).
+ * Assety TYLKO na stronach sklepu (nie spowalniamy reszty strony).
  */
 function sklepag_assety_frontu() {
 	$strona_sklep      = (int) get_option( 'sklepag_strona_sklep' );
@@ -123,8 +143,8 @@ function sklepag_assety_frontu() {
 }
 
 /**
- * Baner trybu testowego — jedna treść na wszystkich stronach sklepu (plan §4A;
- * napis bez zmian od K1 — testy i K2 na nim polegają).
+ * Baner trybu testowego — jedna treść na wszystkich stronach sklepu (
+ * napis bez zmian — testy na nim polegają).
  */
 function sklepag_baner_testowy() {
 	return '<p class="sklepag-baner-testowy"><span class="sklepag-baner-testowy-tytul">TRYB TESTOWY</span> — płatności nie są pobierane. Przetestujesz cały zakup kartą testową, nic nie płacąc.</p>';
@@ -213,11 +233,11 @@ function sklepag_panel_nocnej_zmiany( $tryb = 'oba' ) {
 }
 
 /**
- * Lista aktywnych produktów (K5: klimat gospodarza — PLAN-WYGLADU-K5 §2A).
+ * Lista aktywnych produktów (klimat strony-gospodarza).
  * Uczciwy stan pusty, bez atrap.
  */
 function sklepag_shortcode_sklep() {
-	// Widok produktu na TEJ SAMEJ stronie (query var — PLAN-WYGLADU-K5 §2B/PR 2).
+	// Widok produktu na TEJ SAMEJ stronie (query var).
 	$slug_produktu = get_query_var( 'sklepag_produkt' );
 	if ( is_string( $slug_produktu ) && '' !== $slug_produktu ) {
 		return sklepag_render_produkt( sanitize_title( $slug_produktu ) );
@@ -237,7 +257,7 @@ function sklepag_shortcode_sklep() {
 	$html .= '<div class="sklepag-tlo" aria-hidden="true"></div>';
 	// Pingi POZA maskowanym tłem (maska nad animacją = przeliczanie całej warstwy co klatkę).
 	$html .= '<div class="sklepag-pingi" aria-hidden="true">' . str_repeat( '<i></i>', 9 ) . '</div>';
-	// Hero 2-kolumnowy (runda działu stron 25.08 — PLAN-WYGLADU-RUNDA-STRON §3):
+	// Hero 2-kolumnowy:
 	// tekst po lewej, po prawej PANEL NOCNEJ ZMIANY. Na wąskim ekranie panel pod tekstem.
 	$html .= '<div class="sklepag-hero-lista">';
 	$html .= '<header class="sklepag-hero">';
@@ -291,7 +311,7 @@ function sklepag_shortcode_sklep() {
 	$html .= '</div>';
 
 	// OD ZAKUPU DO DZIAŁANIA (wzorzec „ile trwa uruchomienie" — zwiad 19.08;
-	// treść kroków = faktyczny przepływ S-02: mail z instrukcją i linkiem do zipa).
+	// treść kroków = faktyczny przepływ: mail z instrukcją i linkiem do zipa).
 	// Trzy równe karty w rzędzie (runda stron 25.08) — numer z hairline'em jak u gospodarza.
 	$html .= '<section class="sklepag-sekcja sklepag-sekcja--pelna"><p class="sklepag-mono-etykieta">[ <span class="sklepag-akcent">01</span> · OD ZAKUPU DO DZIAŁANIA ]</p>';
 	$html .= '<ol class="sklepag-kroki sklepag-kroki--siatka">';

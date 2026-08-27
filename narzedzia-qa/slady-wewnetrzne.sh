@@ -1,5 +1,5 @@
 #!/bin/bash
-# slady-wewnetrzne.sh — czy to, co dostaje kupujący, wiezie NASZE ślady.   WERSJA 1.2.0
+# slady-wewnetrzne.sh — czy to, co dostaje kupujący, wiezie NASZE ślady.   WERSJA 1.3.0
 #
 # PO CO TO POWSTAŁO: przy zamrażaniu ChatBota 1.5.7 okazało się, że paczka wiozła
 # klientowi 20 śladów w 8 plikach — odsyłacze do plików, których kupujący nie
@@ -29,7 +29,7 @@
 #               2 = zła liczba argumentów / nie ma katalogu
 set -u
 
-WERSJA_NARZEDZIA=1.2.0
+WERSJA_NARZEDZIA=1.3.0
 
 ETYKIETA="${1:-}"
 KATALOG="${2:-}"
@@ -69,6 +69,12 @@ SLADY=(
 	"adres maszyny dev|localhost|127\.0\.0\.1|:8890|:8025|mailpit|ngrok|wp-env|vagrant|\.ddev\b"
 	"ścieżka naszego drzewa roboczego|/root/praca|(^|[^a-zA-Z0-9/._-])(testy|boty|audyt|narzedzia-qa|wtyczki)/"
 	"nasz obieg pracy|PR #[0-9]|recenzent|recenzj|koordynator|builder[0-9]|prób[ay] kontroln|proba-kontrolna|mutant|\\bkrytyk|egzaminator|[Dd]zid|(—|–|\\(|\\bnr\\.?|zgłoszeni[ae]|uwag[ai])[[:space:]]*#[0-9]{2,4}([^[:alnum:]]|$)"
+	# 1.3.0 — numeracja NASZYCH dokumentów roboczych w paczce klienta (znalezisko SK-L5-001):
+	# „(kryterium #7)" było WIDOCZNE w wp-admin, a 54 komentarze cytowały plan/decyzje/kroki.
+	# Klient dostaje kod ze wskazówkami do dokumentów, których nigdy nie zobaczy. Komentarz ma
+	# nieść POWÓD, numer zostaje w PR i commicie. Wzorce celowo wąskie: samo „D24"/„K5" bez
+	# granicy słowa łapałoby kolory i identyfikatory CSS — zmierzone na paczce 0.9.14: 0 fałszywych.
+	"numeracja naszych dokumentów|plan(u)? §[0-9]|kryteri(um|a) (GOTOWE )?#[0-9]|PLAN-WYGLADU|PLAN-PROJEKTU|DECYZJE D[0-9]|\\bD[0-9]{1,2}\\b|\\bK[0-9]\\b|\\bS-0[0-9]\\b|SLEPE-PLAMY|SCIAGA"
 )
 # 1.2.0 — numer zgłoszenia BEZ słowa „PR" (recenzja #182): „— #170)" w DOKUMENTACJA-TECHNICZNA
 # przechodziło, bo wzorzec znał tylko formę „PR #N". Goły „#[0-9]+" łapałby kolory (#000 w CSS/SVG),

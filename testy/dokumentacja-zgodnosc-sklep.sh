@@ -56,6 +56,7 @@ spr "CHANGELOG: format Keep a Changelog"  "1" "grep -c 'keepachangelog.com' $W/C
 spr "CHANGELOG: wpis [$WER]"              "1" "grep -c '^## \[$WER\]' $W/CHANGELOG.md"
 spr "CHANGELOG: [Niewydane] puste"        "0" "awk '/^## \[Niewydane\]/{f=1;next} /^## \[/{f=0} f' $W/CHANGELOG.md | grep -c '^- '"
 spr "DOK-TECH: Wersja wtyczki == $WER"    "$WER" "grep -oE 'Wersja wtyczki:[* ]*[0-9.]+' $W/DOKUMENTACJA-TECHNICZNA.md | grep -oE '[0-9.]+$'"
+spr "DOK-TECH: tabela stalych — SKLEPAG_WERSJA == $WER" "$WER" "grep -oE '^\\| .SKLEPAG_WERSJA. \\| [0-9.]+' $W/DOKUMENTACJA-TECHNICZNA.md | grep -oE '[0-9.]+$'"
 spr "DOK-TECH: schemat == SKLEPAG_WERSJA_SCHEMATU" "$(stala SKLEPAG_WERSJA_SCHEMATU)" "grep -oE 'wersja schematu bazy: [0-9]+' $W/DOKUMENTACJA-TECHNICZNA.md | grep -oE '[0-9]+$'"
 spr "DOK-TECH: liczba tabel == CREATE TABLE w aktywacji" "$(grep -c 'CREATE TABLE' $W/includes/aktywacja.php)" "grep -oE 'Schemat bazy — [0-9]+ tabel' $W/DOKUMENTACJA-TECHNICZNA.md | grep -oE '[0-9]+'"
 

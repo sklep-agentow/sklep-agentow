@@ -1,6 +1,6 @@
 <?php
 /**
- * SEO podstawowe stron sklepu (K5 PR 2; PLAN-WYGLADU-K5 §7, D27):
+ * SEO podstawowe stron sklepu:
  * title/description per produkt, canonical, OpenGraph/Twitter, JSON-LD
  * (Product z image + BreadcrumbList + FAQPage — bez obiecywania rich
  * results FAQ, Google wycofał je dla zwykłych stron w 2023), noindex na

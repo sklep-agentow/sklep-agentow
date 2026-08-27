@@ -49,6 +49,9 @@ $zam->kwota_grosze = 14900;
 $zam->waluta       = 'PLN';
 $zam->zgoda_tresc  = SKLEPAG_ZGODA_TRESC;
 $zam->zgoda_czas   = '2026-08-25 09:30:00'; // UTC, jak zapisuje zakup.
+// Kolumna `utworzono` jest w bazie NOT NULL — atrapa musi być tego samego rodzaju co
+// prawdziwe zamówienie, inaczej test mierzy uboższy obiekt niż produkcja.
+$zam->utworzono    = '2026-08-25 09:29:00';
 $link              = 'https://example.test/wp-admin/admin-post.php?action=sklepag_pobierz&z=1&t=abc';
 
 $tresc = sklepag_zbuduj_mail( $produkt, $zam, $link, '' );
@@ -67,6 +70,10 @@ $stare->zgoda_czas  = null;
 $tresc2 = sklepag_zbuduj_mail( $bez_slugu, $stare, $link, '' );
 sprawdz( 'A6 brak zgody w zamówieniu = brak akapitu zgody, mail dalej się buduje', false === strpos( $tresc2, 'POTWIERDZENIE TWOJEJ ZGODY' ) && false !== strpos( $tresc2, $link ) );
 sprawdz( 'A7 produkt bez gwarancji = brak akapitu gwarancji', false === strpos( $tresc2, 'GWARANCJA:' ) );
+// A8: mail podawał wyłącznie chwilę ZGODY — kupujący nie znajdował w potwierdzeniu
+// odpowiedzi na „kiedy to kupiłem". Data zakupu stoi teraz obok, osobno od zgody,
+// bo obie niosą inną treść (jedna handlową, druga prawną).
+sprawdz( 'A8 mail podaje datę zakupu, osobno od chwili zgody', false !== strpos( $tresc, 'Data zakupu: ' ) );
 
 // --- B. NAGŁÓWKI (bez realnej wysyłki) ---
 $przechwycone = array();

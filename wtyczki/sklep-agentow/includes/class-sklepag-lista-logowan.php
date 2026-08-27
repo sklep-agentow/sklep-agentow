@@ -1,7 +1,7 @@
 <?php
 /**
- * Tabela dziennika logowań (S-09) na rdzeniowym WP_List_Table —
- * paginacja/sortowanie/wygląd 1:1 z resztą wp-admin (wzorce K3).
+ * Tabela dziennika logowań na rdzeniowym WP_List_Table —
+ * paginacja/sortowanie/wygląd 1:1 z resztą wp-admin.
  * Widok WYŁĄCZNIE do odczytu: zero mutacji, zero akcji wierszowych.
  */
 
@@ -95,7 +95,7 @@ class Sklepag_Lista_Logowan extends WP_List_Table {
 	}
 
 	/**
-	 * Wynik jako kolorowy badge (wzorce K3: nigdy goły tekst) — słowo + kolor,
+	 * Wynik jako kolorowy badge (nigdy goły tekst) — słowo + kolor,
 	 * żeby status nie był niesiony SAMYM kolorem (WCAG).
 	 */
 	public function column_wynik( $item ) {
@@ -106,7 +106,7 @@ class Sklepag_Lista_Logowan extends WP_List_Table {
 	}
 
 	/**
-	 * Pusty stan z wskazówką (wzorce K3), nie goła tabela.
+	 * Pusty stan z wskazówką, nie goła tabela.
 	 */
 	public function no_items() {
 		echo 'Dziennik jest pusty — wpisy pojawią się przy pierwszym (udanym lub nieudanym) logowaniu na konto.';
