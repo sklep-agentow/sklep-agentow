@@ -8,7 +8,11 @@
 #
 # Wymaga: lighthouse (npm -g), Chromium (rejestr Playwrighta przez testy/lib/chromium.js), python3.
 # Użycie: bash testy/e2e/lighthouse-3-podstrony.sh [adres-bazy] [katalog-wyjściowy] [próg=95]
-# EXIT: 0 = wszystkie 4 kategorie >= próg wszędzie; N = tyle przebiegów poniżej progu.
+# EXIT: 0 = wszystkie 4 kategorie >= próg na wszystkich stronach.
+#       N > 0 = tyle PRZEBIEGOW sie nie powiodlo, z DWOCH roznych powodow: wynik ponizej progu
+#       ALBO lighthouse w ogole nie wstal. Ktory to przypadek, mowi wyjscie: przebieg ponizej
+#       progu drukuje wiersz z dopiskiem PONIZEJ <prog>, a padniecie narzedzia wiersz
+#       zaczynajacy sie od "! lighthouse ... padl" i wskazuje plik .err.
 set -u
 BAZA="${1:-http://localhost:8890}"
 OUT="${2:-/tmp/lighthouse-sklep}"

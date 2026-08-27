@@ -46,7 +46,7 @@ wyłącznie ustawienia i klucze — nigdy liczniki ani stan zamówień.
 | Tabela | Po co jest | Kto zapisuje |
 |---|---|---|
 | `produkty` | katalog: nazwa, adres, opis, cena, plik, aktywność | panel (CRUD) |
-| `sesje_checkout` | ślad rozpoczętych płatności — **informacyjnie** | rozpoczęcie zakupu |
+| `sesje_checkout` | ślad rozpoczętych płatności; kolumna `stan` **współrozstrzyga**, czy powtórne kliknięcie zakupu dostaje zapamiętany adres checkoutu, czy nowy | rozpoczęcie zakupu |
 | `zamowienia` | ⭐ **jedyne źródło prawdy o stanie zakupu** | webhook + reconciliation |
 | `zdarzenia` | dziennik zdarzeń zamówienia (audyt ścieżki) | wszystkie moduły zakupu |
 | `logowania` | kto i kiedy logował się do panelu, z jakim skutkiem | zaczepy logowania WP |
@@ -143,9 +143,11 @@ nie dotarł (druga, niezależna droga domykania).
 gość klika „Kup teraz"
    → walidacja zgody + limit żądań
    → utworzenie sesji Stripe Checkout          [tabela sesje_checkout]
-   → zamówienie w stanie „oczekuje"            [tabela zamowienia]
    → przekierowanie do Stripe (płatność kartą)
    → powrót na stronę „Dziękujemy" (odpytuje /status)
+   → zamówienie w stanie „oczekuje"            [tabela zamowienia]
+     UWAGA: wiersz zamówienia powstaje DOPIERO po płatności, w sklepag_domknij_zakup();
+     sklepag_obsluz_kup() nie dotyka tabeli zamowienia ani razu
 
 RÓWNOLEGLE, dwa niezależne silniki domykania:
    A) webhook od Stripe        → status „oplacone" → mail z linkiem
@@ -154,8 +156,14 @@ RÓWNOLEGLE, dwa niezależne silniki domykania:
 
 ⭐ **Kluczowa zasada: przejęcie zamówienia jest atomowe.** Każde przejście stanu to
 jeden `UPDATE` z warunkiem na poprzedni stan — silnik, który przegra wyścig, wycofuje
-się **bez wysyłania drugiego maila**. Źródłem prawdy jest wyłącznie `zamowienia.status`;
-`sesje_checkout` jest tylko śladem informacyjnym.
+się **bez wysyłania drugiego maila**. Źródłem prawdy o ZAMÓWIENIU jest wyłącznie `zamowienia.status`.
+
+⚠️ `sesje_checkout` nie jest już wyłącznie śladem informacyjnym: od 0.9.18 jej kolumna `stan`
+bierze udział w decyzji, czy powtórne kliknięcie przycisku zakupu w oknie idempotencji dostanie
+zapamiętany adres checkoutu, czy nowy (`sklepag_sesja_czeka_na_platnosc()`). Warunkiem
+NADRZĘDNYM jest tam wiek okna (`SKLEPAG_IDEM_OKNO_S`), bo `stan` przestawia dopiero webhook —
+zanim dotrze, sesja opłacona leży w bazie jako `utworzona` i jest nieodróżnialna od czekającej.
+Na stan zamówienia ta tabela nadal nie wpływa.
 
 ## 6. Brama pobrań
 

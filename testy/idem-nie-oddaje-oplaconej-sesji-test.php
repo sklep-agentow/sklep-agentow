@@ -38,6 +38,9 @@ $stary_url = 'https://checkout.stripe.com/c/pay/' . $stary_sid;
 $nowy_sid  = 'cs_test_NOWA_SESJA_STRAZNIK';
 $nowy_url  = 'https://checkout.stripe.com/c/pay/' . $nowy_sid;
 $okno      = 'sklepag_idem_' . md5( sklepag_ip() . '|' . (int) $produkt->id );
+// Prog czytamy z produktu; gdy stalej nie ma, to znaczy, ze badamy kod SPRZED naprawy —
+// wtedy bierzemy wartosc kalibracyjna, zeby straznik dal sie w ogole uruchomic i PADL.
+$prog_okna = defined( 'SKLEPAG_IDEM_OKNO_S' ) ? SKLEPAG_IDEM_OKNO_S : 5;
 
 // Atrapa Stripe: utworzenie sesji zwraca NOWY identyfikator, w kształcie prawdziwej
 // odpowiedzi /v1/checkout/sessions (id + url).
@@ -72,8 +75,19 @@ $probuj_kup = static function () use ( $produkt ) {
 	$gdzie = '';
 	try {
 		sklepag_obsluz_kup();
-	} catch ( Exception $e ) {
-		$gdzie = str_replace( 'REDIRECT:', '', $e->getMessage() );
+	} catch ( Throwable $e ) {
+		$tresc = $e->getMessage();
+		// Handler zaczyna od limitera (10 prob na IP i minute), a w CLI sklepag_ip() zwraca
+		// stale 0.0.0.0 — wiec licznik jest WSPOLNY dla wszystkich przebiegow. Szosty przebieg
+		// w tej samej minucie konczyl sie 429 i kodem 1, czyli slowem REGRESJA, choc zaden kod
+		// sie nie zmienil. To awaria srodowiska: kod 2, zgodnie z naglowkiem pliku.
+		if ( false !== strpos( $tresc, 'Za dużo prób zakupu' ) ) {
+			echo "STRAZNIK: WYNIK=BLAD-SRODOWISKA (limiter zakupu: 10 prob na minute z tego adresu;\n";
+			echo "          w CLI adres jest staly, wiec licznik dziela wszystkie przebiegi.\n";
+			echo "          Odczekaj do pelnej minuty i uruchom ponownie.)\n";
+			exit( 2 );
+		}
+		$gdzie = str_replace( 'REDIRECT:', '', $tresc );
 	}
 	remove_filter( 'wp_redirect', $lap, 1 );
 	return $gdzie;
@@ -91,7 +105,7 @@ $wpdb->query(
 		current_time( 'mysql' )
 	)
 );
-set_transient( $okno, array( 'url' => $stary_url, 'sid' => $stary_sid ), MINUTE_IN_SECONDS );
+set_transient( $okno, array( 'url' => $stary_url, 'sid' => $stary_sid, 'czas' => time() ), MINUTE_IN_SECONDS );
 $a    = $probuj_kup();
 $a_ok = ( $a !== $stary_url );
 echo 'A. okno z sesja OPLACONA -> ' . ( '' === $a ? '(brak przekierowania)' : $a ) . "\n";
@@ -109,13 +123,44 @@ $wpdb->query(
 		current_time( 'mysql' )
 	)
 );
-set_transient( $okno, array( 'url' => $stary_url, 'sid' => $stary_sid ), MINUTE_IN_SECONDS );
+set_transient( $okno, array( 'url' => $stary_url, 'sid' => $stary_sid, 'czas' => time() ), MINUTE_IN_SECONDS );
 $b    = $probuj_kup();
 $b_ok = ( $b === $stary_url );
 echo 'B. okno z sesja CZEKAJACA -> ' . ( '' === $b ? '(brak przekierowania)' : $b ) . "\n";
 echo '   OCZEKIWANE: ' . $stary_url . " (podwojny klik nie tworzy drugiej platnosci)\n";
 echo '   WYNIK=' . ( $b_ok ? 'PASS' : 'FAIL - ochrona przed podwojnym klikiem przestala dzialac' ) . "\n";
 $wynik[] = $b_ok;
+
+/* ---------- C) WEBHOOK W DRODZE: zaplacone u Stripe, u nas wciaz `utworzona` ---------- */
+/* To jest ta sama tresc wiersza co w przypadku B — rozstrzyga WYLACZNIE wiek okna.
+   `oplacona` zapisuje tylko sklepag_domknij_zakup() (webhook / reconciliation), a
+   reconciliation pomija sesje mlodsze niz 120 s. Przez pierwsze sekundy po zaplacie
+   stan lokalny NIE odroznia sesji oplaconej od czekajacej — dlatego wiek okna jest
+   warunkiem nadrzednym. Uwaga recenzenta WAZNA 1 do PR #199. */
+$posprzataj();
+$wpdb->query(
+	$wpdb->prepare(
+		"INSERT INTO {$ps} (stripe_session_id, produkt_id, stan, utworzono) VALUES (%s,%d,'utworzona',%s)",
+		$stary_sid,
+		(int) $produkt->id,
+		current_time( 'mysql' )
+	)
+);
+set_transient(
+	$okno,
+	array(
+		'url'  => $stary_url,
+		'sid'  => $stary_sid,
+		'czas' => time() - ( $prog_okna + 25 ),
+	),
+	MINUTE_IN_SECONDS
+);
+$c    = $probuj_kup();
+$c_ok = ( $c !== $stary_url );
+echo 'C. okno STARE (' . ( $prog_okna + 25 ) . ' s), sesja u nas wciaz CZEKAJACA -> ' . ( '' === $c ? '(brak przekierowania)' : $c ) . "\n";
+echo '   OCZEKIWANE: cokolwiek INNEGO niz ' . $stary_url . " (po tylu sekundach to nie jest podwojny klik)\n";
+echo '   WYNIK=' . ( $c_ok ? 'PASS' : 'FAIL - oddal adres sesji, ktora mogla juz zostac oplacona' ) . "\n";
+$wynik[] = $c_ok;
 
 $posprzataj();
 remove_filter( 'pre_http_request', $atrapa, 10 );
