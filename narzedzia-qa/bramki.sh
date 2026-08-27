@@ -189,9 +189,9 @@ uruchom_znaleziska() {
 
 # Zapis statusu zamowienia MUSI chronic stan poprzedni. Wzorzec zlapany TRZY razy w jednym
 # PR-ze (spor, zwrot, resend) — bramka pyta o cala klase naraz. Naglowek z uzasadnieniem:
-# narzedzia-qa/bramka-status-bez-warunku.sh.
+# narzedzia-qa/bramka-status-bez-warunku.php.
 uruchom_status_bez_warunku() {
-	python3 narzedzia-qa/bramka-status-bez-warunku.py
+	php narzedzia-qa/bramka-status-bez-warunku.php
 }
 
 uruchom_php_lint() {
