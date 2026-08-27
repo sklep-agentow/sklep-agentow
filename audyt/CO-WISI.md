@@ -1,5 +1,20 @@
 # CO-WISI — rzeczy oddane komuś / bez strażnika (zasada: oddajesz ⇒ wiersz, wraca ⇒ kasujesz)
 
+## 🟡 DŁUG ZASTANY — okno idempotencji nie obejmuje JEDNOCZESNEGO podwójnego kliknięcia
+(z recenzji #199 r2, DROBNA 5 — NIE regresja z tego PR, mechanizm istnieje od 0.9.0)
+- Odczyt okna (`zakup.php` `get_transient`) i jego zapis (`set_transient`) dzieli wyjście do
+  sieci: `sklepag_stripe_utworz_sesje()`. Dwa żądania wysłane NAPRAWDĘ jednocześnie przechodzą
+  przez odczyt, zanim którekolwiek dojdzie do zapisu — więc oba tworzą własną sesję Stripe.
+- Po stronie przeglądarki nic tego nie blokuje: formularz zakupu (`front-produkt.php`) nie ma
+  `onsubmit` ani `disabled`, a w `wtyczki/sklep-agentow/assets/*.js` nie ma ani jednego trafienia
+  na `disabled|submit` (dowód z braku, podany przez recenzenta).
+- Skutek: dwie sesje checkout dla jednego kliknięcia-dubletu. Opłacona zostanie jedna (druga
+  wygasa), więc NIE jest to podwójne obciążenie — ale dziennik dostaje sesję-sierotę.
+- ⭐ Najtańsze domknięcie: wyłączenie przycisku na czas wysyłki po stronie przeglądarki
+  (jedna linia JS) ALBO atomowa rezerwacja okna przed wyjściem do Stripe.
+- ⛔ WRACA ⇒ kasujesz ten wpis. Nie blokuje wydania: skutek jest kosmetyczny, nie finansowy.
+
+
 ## 📌 KONTRAKT NA PRZYSZŁOŚĆ (z recenzji #177 r3–r5, 25.08)
 - **`sklepag_opinia_moderuj` przepuszcza opinię BEZ wiersza zamówienia** (INNER JOIN →
   null → wolno moderować). Dziś taki stan nie powstaje produkcyjnie (zero ścieżek DELETE

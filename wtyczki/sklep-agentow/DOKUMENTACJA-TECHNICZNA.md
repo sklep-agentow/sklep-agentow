@@ -145,13 +145,13 @@ gość klika „Kup teraz"
    → utworzenie sesji Stripe Checkout          [tabela sesje_checkout]
    → przekierowanie do Stripe (płatność kartą)
    → powrót na stronę „Dziękujemy" (odpytuje /status)
-   → zamówienie w stanie „oczekuje"            [tabela zamowienia]
-     UWAGA: wiersz zamówienia powstaje DOPIERO po płatności, w sklepag_domknij_zakup();
-     sklepag_obsluz_kup() nie dotyka tabeli zamowienia ani razu
 
-RÓWNOLEGLE, dwa niezależne silniki domykania:
-   A) webhook od Stripe        → status „oplacone" → mail z linkiem
+RÓWNOLEGLE, dwa niezależne silniki domykania — TU powstaje wiersz zamówienia:
+   A) webhook od Stripe        → sklepag_domknij_zakup(): zamówienie „oczekuje"
+                                 [tabela zamowienia] → status „oplacone" → mail z linkiem
    B) cron co 10 min           → to samo, gdy webhook nie dotarł
+   UWAGA: sklepag_obsluz_kup() NIE dotyka tabeli zamowienia ani razu. Ten krok nie należy
+   do ścieżki liniowej kupującego i często dzieje się ZANIM wróci on na stronę podziękowania.
 ```
 
 ⭐ **Kluczowa zasada: przejęcie zamówienia jest atomowe.** Każde przejście stanu to

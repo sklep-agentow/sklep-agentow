@@ -9,10 +9,13 @@
  * Stripe bez pól karty) zamiast na nowy zakup. Okno jest kluczowane REMOTE_ADDR, więc za
  * wspólnym adresem (CGNAT operatora, biuro za NAT) dotyka DWÓCH RÓŻNYCH kupujących.
  *
- * Test sprawdza OBA kierunki, bo naprawa polegająca na wyłączeniu okna też usunęłaby objaw —
- * i zabrałaby ochronę przed podwójnym kliknięciem, która jest zamierzona (PLAN-PROJEKTU §206):
- *   A) sesja OPŁACONA w oknie  => NIE wolno oddać starego adresu (ma powstać nowy checkout),
- *   B) sesja CZEKAJĄCA w oknie => WOLNO oddać stary adres (podwójny klik nie tworzy dwóch płatności).
+ * Test sprawdza TRZY kierunki, bo naprawa polegająca na wyłączeniu okna też usunęłaby objaw —
+ * i zabrałaby ochronę przed podwójnym kliknięciem, która jest zamierzona:
+ *   A) sesja OPŁACONA w oknie                => NIE wolno oddać starego adresu (nowy checkout),
+ *   B) sesja CZEKAJĄCA w ŚWIEŻYM oknie       => WOLNO (podwójny klik nie tworzy dwóch płatności),
+ *   C) sesja CZEKAJĄCA w STARYM oknie        => NIE wolno — zapłacone leży u nas jako `utworzona`,
+ *      dopóki nie wróci webhook, więc w bazie C i B to DOKŁADNIE ten sam wiersz i rozstrzyga
+ *      wyłącznie wiek okna. Bez C strażnik nie odróżniłby naprawy od jej braku w tym kierunku.
  *
  * Odpowiedź Stripe podstawiona filtrem rdzenia `pre_http_request` — test nie rusza sieci
  * ani plików wtyczki, więc mierzy PRODUKT, nie atrapę.
@@ -21,7 +24,10 @@
  *   docker cp testy/idem-nie-oddaje-oplaconej-sesji-test.php <kontener>:/tmp/t.php
  *   docker exec -u www-data <kontener> wp --path=/var/www/html eval-file /tmp/t.php
  *
- * EXIT 0 = A i B zgodne z oczekiwaniem · 1 = któryś nie · 2 = środowisko bez produktu.
+ * EXIT 0 = A, B i C zgodne z oczekiwaniem · 1 = któryś nie (REGRESJA)
+ *      2 = środowisko: brak aktywnego produktu z plikiem ALBO wyczerpany limiter zakupu
+ *          (10 prób na adres i minutę; w CLI adres jest stały, więc licznik dzielą wszystkie
+ *          przebiegi — trzeci przebieg w minucie już go dobija). Kod 2 NIE znaczy regresji.
  */
 
 global $wpdb;
@@ -71,6 +77,18 @@ $probuj_kup = static function () use ( $produkt ) {
 	$lap                  = static function ( $u ) {
 		throw new Exception( 'REDIRECT:' . $u );
 	};
+	// wp_die() pod `wp eval-file` trafia na uchwyt WP-CLI: drukuje `Error: …` i KONCZY PROCES,
+	// zamiast rzucic wyjatek — wiec sam `catch` nigdy nie zobaczy limitera (recenzja #199 r2).
+	// Podmieniamy uchwyt na rzucajacy, tak jak juz zrobiono z wp_redirect.
+	$lap_die              = static function () {
+		return static function ( $tresc ) {
+			if ( is_wp_error( $tresc ) ) {
+				$tresc = $tresc->get_error_message();
+			}
+			throw new Exception( 'WPDIE:' . wp_strip_all_tags( (string) $tresc ) );
+		};
+	};
+	add_filter( 'wp_die_handler', $lap_die, 99 );
 	add_filter( 'wp_redirect', $lap, 1 );
 	$gdzie = '';
 	try {
@@ -87,9 +105,10 @@ $probuj_kup = static function () use ( $produkt ) {
 			echo "          Odczekaj do pelnej minuty i uruchom ponownie.)\n";
 			exit( 2 );
 		}
-		$gdzie = str_replace( 'REDIRECT:', '', $tresc );
+		$gdzie = str_replace( array( 'REDIRECT:', 'WPDIE:' ), '', $tresc );
 	}
 	remove_filter( 'wp_redirect', $lap, 1 );
+	remove_filter( 'wp_die_handler', $lap_die, 99 );
 	return $gdzie;
 };
 

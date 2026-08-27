@@ -29,13 +29,16 @@ Nic jeszcze.
   trafiał na opłacony ekran Stripe, bez pól karty i bez wyjaśnienia. Ponieważ okno jest
   kluczowane `REMOTE_ADDR`, dotyczyło to także DWÓCH RÓŻNYCH kupujących za jednym adresem
   (CGNAT operatora komórkowego, biuro za NAT-em).
-  Adres z okna jest teraz oddawany wyłącznie wtedy, gdy sesja wciąż ma stan `utworzona`
-  (`sklepag_sesja_czeka_na_platnosc()`, `zakup.php`); w przeciwnym razie okno jest kasowane
-  i powstaje nowy checkout. Stan czytany jest z własnej tabeli `sklepag_sesje_checkout`,
-  więc kontrola nie kosztuje wywołania Stripe i nie psuje się przy awarii łączności.
-  Ochrona przed podwójnym kliknięciem pozostaje nienaruszona: dopóki płatność czeka na
-  dokończenie, ponowne kliknięcie prowadzi do tej samej płatności, a nie do drugiej.
-  Zmiana ma test regresji sprawdzający oba kierunki naraz.
+  **Okno ochrony przed podwójnym kliknięciem skróciło się z 60 do 5 sekund** i to jest
+  zmiana widoczna dla kupującego: dwa kliknięcia pod rząd nadal prowadzą do tej samej
+  płatności, ale powrót na stronę produktu po kilkunastu sekundach (na przykład przyciskiem
+  wstecz) rozpocznie już nową. Tak być musi: informacja o zapłacie przychodzi ze Stripe
+  z opóźnieniem, a do tego czasu płatność opłacona i płatność czekająca wyglądają u nas
+  identycznie. O tym, czy oddać zapamiętany adres, rozstrzyga więc przede wszystkim WIEK
+  okna; stan płatności jest drugim, dodatkowym warunkiem i czytamy go z własnej bazy, żeby
+  awaria łączności ze Stripe nie blokowała zakupu.
+  Zmiana ma test regresji sprawdzający trzy przypadki naraz, w tym ten z opóźnioną
+  informacją o zapłacie.
 
 ## [0.9.17] — 2026-08-27
 
