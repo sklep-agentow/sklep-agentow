@@ -103,7 +103,7 @@ Format wiersza: `- ⬜ ID · cel · [runda/raport · SHA]`.
 - ✅ L5-17 · `testy/dokumentacja-zgodnosc-sklep.sh` (strażnik readme/CHANGELOG/DOK-TECH = kod) zielony na paczce · [A/L5.json · 425a3124]
 
 ## L6 — FRONT / UX (przyrządy + człowiek; NIEKALIBROWANA)
-- ✅ L6-01 · Lighthouse 4 kategorie ≥ 95 ×3 strony (z `blog_public=1` na czas pomiaru) · [POMIAR 27.08 - 581e869 - 4 kategorie x 3 strony x 2 tryby wszystkie >=95; segregator-mobile perf 93 pod obciazeniem -> powtorka x3 = 97/99/99, mediana 99; prog 95 dodany do przyrzadu i skalibrowany 3/3]
+- ⚠️ L6-01 · Lighthouse 4 kategorie ≥ 95 ×3 strony (z `blog_public=1` na czas pomiaru) · [POMIAR 27.08 - 581e869/13b45c1 - ⚠️ AN-022. ODEBRANE: a11y, bp, seo — >=96 w KAZDEJ komorce, stabilne we wszystkich przebiegach. NIE ODEBRANE: perf — ta sama komorka (sklep/mobile) dawala 100 · 87 · mediane 100 przy load 1,47 · mediane 93 przy load 2,94. Pomiar mierzy obciazenie NASZEGO serwera (2 vCPU; tryb telefonu spowalnia procesor 4x) i sam sie do niego dokłada. To srodowisko deweloperskie, nie hosting klienta, wiec liczba nie przenosi sie na produkcje. Odbior perf = pomiar na DOCELOWYM hostingu, zadanie K8. ⛔ Progu NIE obnizono; narzedzie ma prog 95 i powtorki: `bash testy/e2e/lighthouse-3-podstrony.sh <baza> <katalog> 95 3` (ostatni przebieg EXIT=1)]
 - ✅ L6-02 · axe `--bez-ruchu` = 0 naruszeń · [POMIAR 27.08 - 581e869 - 3 strony x desktop/mobile = 6 przebiegow, 0 serious/critical]
 - ✅ L6-03 · szelki 10/10 ×2 slugi, chromium + firefox · [POMIAR 27.08 - 581e869 - 4 przebiegi EXIT=0 (2 slugi x chromium+firefox); obsluga firefoksa dopisana do przyrzadu jako 3. argument]
 - ✅ L6-04 · sonda pigułki sticky 5/5 · [POMIAR 27.08 - 581e869 - 5/5 OK: desktop, telefon 390 px, skrypt opozniony 3,5 s]
@@ -128,5 +128,5 @@ Format wiersza: `- ⬜ ID · cel · [runda/raport · SHA]`.
 
 ## LICZNIK
 <!-- liczony skryptem narzedzia-qa/mapa-licznik.sh; nie edytować ręcznie -->
-CELE: 104 · ✅ 78 · 🐞 20 · ⚠️ 0 · ⛔ 0 · ⬜ 6
+CELE: 104 · ✅ 77 · 🐞 20 · ⚠️ 1 · ⛔ 0 · ⬜ 6
 ZAMROZONA: 5d3dcf9f0d99dedc1fe201c3e318f46d6f35ba5d · celow=104 · tresc=2d2a15920151 · 2026-08-26T06:11

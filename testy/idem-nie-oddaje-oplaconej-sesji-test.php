@@ -27,8 +27,11 @@
  * EXIT 0 = A, B i C zgodne z oczekiwaniem · 1 = któryś nie (REGRESJA)
  *      2 = środowisko: brak aktywnego produktu z plikiem ALBO wyczerpany limiter zakupu
  *          (10 prób na adres i minutę; w CLI adres jest stały, więc licznik dzielą wszystkie
- *          przebiegi. Strażnik woła handler 3 razy na przebieg przy progu 10 na minutę, więc
- *          limiter pada na 11. wywołaniu, czyli w CZWARTYM przebiegu — zmierzone). Kod 2 NIE znaczy regresji.
+ *          przebiegi. Strażnik woła handler 3 razy na przebieg, więc limiter dobija na 11.
+ *          WYWOŁANIU w obrębie jednej minuty. ⛔ Nie przeliczaj tego na numer przebiegu:
+ *          licznik chodzi po MINUTACH, więc przebiegi rozłożone w czasie nie dobiją go wcale
+ *          (zmierzone: 4 przebiegi rozłożone = 4× EXIT=0; 4 pod rząd = EXIT=2 na czwartym).
+ *          Kod 2 NIE znaczy regresji.
  */
 
 global $wpdb;
@@ -97,9 +100,12 @@ $probuj_kup = static function () use ( $produkt ) {
 	} catch ( Throwable $e ) {
 		$tresc = $e->getMessage();
 		// Handler zaczyna od limitera (10 prob na IP i minute), a w CLI sklepag_ip() zwraca
-		// stale 0.0.0.0 — wiec licznik jest WSPOLNY dla wszystkich przebiegow. Szosty przebieg
-		// w tej samej minucie konczyl sie 429 i kodem 1, czyli slowem REGRESJA, choc zaden kod
-		// sie nie zmienil. To awaria srodowiska: kod 2, zgodnie z naglowkiem pliku.
+		// stale 0.0.0.0 — wiec licznik jest WSPOLNY dla wszystkich przebiegow. Straznik wola
+		// handler 3 razy na przebieg, wiec limiter dobija na 11. WYWOLANIU w obrebie minuty.
+		// Konczylo sie to kodem 1, czyli slowem REGRESJA, choc zaden kod sie nie zmienil.
+		// To awaria srodowiska: kod 2, zgodnie z naglowkiem pliku.
+		// ⛔ Nie przeliczaj tego na numer przebiegu — licznik chodzi po MINUTACH, wiec przebiegi
+		// rozlozone w czasie nie dobija go wcale (patrz naglowek).
 		if ( false !== strpos( $tresc, 'Za dużo prób zakupu' ) ) {
 			echo "STRAZNIK: WYNIK=BLAD-SRODOWISKA (limiter zakupu: 10 prob na minute z tego adresu;\n";
 			echo "          w CLI adres jest staly, wiec licznik dziela wszystkie przebiegi.\n";
