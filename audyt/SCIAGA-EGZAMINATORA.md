@@ -42,3 +42,35 @@ SAMYCH klas — każda ma tu swoją bramkę u nas albo dopisaną akcję.**
   nasz `wp_remote_post` do Stripe/AI: timeout 15 s, jeden retry, nigdy pętla ślepa.
 - README/instrukcja czytana przez niego ZDANIE PO ZDANIU dwa razy — niespójność
   wytknięta ponownie boli podwójnie („nie poprawiłeś tego xd").
+
+---
+
+## KLASY DOPISANE 2026-08-27 — z 10 rund recenzji PR #198 (sklep)
+
+Źródło: nie cudze projekty, tylko TEN PR. Dziesięć rund recenzji CI, około trzydziestu uwag,
+z czego kod produktu był czysty od rundy 6 — cała reszta dotyczyła NASZEGO SPRAWDZANIA.
+Każda klasa niżej ma dowód z tego dnia, bo klasa bez dowodu jest tylko notatką.
+
+| # | Klasa (ile razy wróciła 27.08) | Dowód z tego dnia | Co ją łapie U NAS |
+|---|---|---|---|
+| 8 | **BLIŹNIAK naprawy** — załatana jedna ścieżka, siostrzana została (×3) | spór naprawiony w rundzie 2, zwrot dopiero w 4, „Wyślij ponownie” w 5 — za każdym razem znajdował to recenzent, po jednym egzemplarzu na rundę | bramka `status-bez-warunku` pyta o CAŁĄ klasę zapisu statusu naraz (11 zapisów; próba kontrolna 11/11) |
+| 9 | **DOWÓD SKLEJANY RĘCZNIE, nie wzięty z przebiegu** | opis PR cytował sha z bieżącego przebiegu i liczbę sprzed dwóch rund — plik NIGDY nie miał takiego stanu; werdykt recenzenta: „cytat nie pochodzi z żadnego przebiegu” | `narzedzia-qa/dowody-do-opisu.sh` — uruchamia kontrole i składa blok z ICH wyjść; niczego nie ocenia i nie ukrywa (złapał własny martwy odsyłacz, wypisując `EXIT=2`) |
+| 10 | **OPIS PR O RUNDĘ DO TYŁU** — recenzent czyta stan z chwili STARTU przebiegu (×3) | rundy 4, 5 i 10 postawiły tę samą uwagę; między pushem a podmianą opisu mijały dwie minuty i to wystarczyło | ⛔ **LUKA — jedyna klasa z dzisiaj bez bramki.** Kolejność commit → bramki → opis → push jest zapisana i **wracała mimo zapisu**. Do zamknięcia hookiem na `git push` |
+| 11 | **BRAMKA O ZAKRESIE WĘŻSZYM NIŻ NAZWA** (×5 na jednym narzędziu) | ta sama bramka po kolei: widziała tylko jedną nazwę zmiennej · pomijała plik bez przypisania tabeli · szukała liniowo · regex parował „co drugi cudzysłów” i **zabrał pokrycie dwóm zapisom w ścieżce pieniędzy** (uwaga KRYTYCZNA) · nie znała `wpdb->update()` z tablicą danych w zmiennej | próba kontrolna ma osobny **test POKRYCIA na liczbie** (8 z 8 kształtów), nie tylko werdykt; bramka stoi na `token_get_all()`, nie na regeksach |
+| 12 | **ZERO JAKO SUKCES** — narzędzie nic nie znalazło i świeci zielono | bramka meldowała „0 zapisów — każdy chroniony”, EXIT=0, a grep na tym samym pliku dawał 9 trafień | bramka **PADA** przy zerze znalezisk; próba kontrolna ma mutanta „zero w zakresie to ślepota, nie czystość” |
+
+### Meta-lekcja dnia, ważniejsza od pojedynczych klas
+
+**Cztery razy winne było NARZĘDZIE POMIAROWE, nie mierzony kod.** Fałszywe zero bramki (dwa
+razy), test kłamiący o naprawie, która działała (atrapa z wywołaniami stojącymi za blisko
+siebie), oraz sonda recenzenta, która mierzyła zapytanie zamiast ścieżki — pomijając białą
+listę stojącą osiemnaście linii wyżej. Odruch „sprawdź własne narzędzie, zanim oskarżysz
+cudze” zadziałał za każdym razem i za każdym razem oszczędził fałszywą naprawę.
+
+**Notatka nie jest bramką.** Klasa 10 wróciła TRZY razy, mimo że po pierwszym nawrocie
+zapisałam ją w pamięci razem z gotową komendą. Wróciła, bo nie miała wyzwalacza w narzędziu.
+Te klasy, które bramkę dostały (8, 9, 11, 12), nie wróciły ani razu po jej postawieniu.
+
+**Dla przyszłego audytu:** klasy 8 i 11 są najkosztowniejsze — obie objawiają się jako zielone
+światło, więc nie da się ich zauważyć przez patrzenie na wynik. Widać je wyłącznie przez
+pytanie „czego to narzędzie NIE widzi", zadane osobno od pytania „co znalazło".

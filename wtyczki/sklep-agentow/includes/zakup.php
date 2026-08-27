@@ -116,11 +116,19 @@ function sklepag_obsluz_kup() {
 	}
 
 	// Okno idempotencji 60 s: podwójny klik nie tworzy drugiej sesji.
+	// Zapamiętany adres oddajemy WYŁĄCZNIE wtedy, gdy tamta sesja wciąż czeka na płatność
+	// (SK-L3-005). Bez tego warunku opłacony checkout wracał do kolejnego kupującego: ekran
+	// Stripe bez pól karty zamiast nowego zakupu. Okno jest kluczowane adresem IP, więc za
+	// wspólnym adresem (CGNAT operatora, biuro za NAT) trafiało w DRUGĄ osobę.
+	// Brak wiersza sesji = brak zgody na stary adres (brak danych to odmowa, nie domysł).
 	$okno = 'sklepag_idem_' . md5( sklepag_ip() . '|' . $produkt_id );
 	$juz  = get_transient( $okno );
 	if ( is_array( $juz ) && ! empty( $juz['url'] ) ) {
-		wp_redirect( $juz['url'] ); // phpcs:ignore WordPress.Security.SafeRedirect -- adres Stripe (zewnętrzny, z API).
-		exit;
+		if ( ! empty( $juz['sid'] ) && sklepag_sesja_czeka_na_platnosc( $juz['sid'] ) ) {
+			wp_redirect( $juz['url'] ); // phpcs:ignore WordPress.Security.SafeRedirect -- adres Stripe (zewnętrzny, z API).
+			exit;
+		}
+		delete_transient( $okno );
 	}
 
 	$zgoda_czas = current_time( 'mysql', true );
@@ -141,7 +149,14 @@ function sklepag_obsluz_kup() {
 		)
 	);
 
-	set_transient( $okno, array( 'url' => $sesja['url'] ), MINUTE_IN_SECONDS );
+	set_transient(
+		$okno,
+		array(
+			'url' => $sesja['url'],
+			'sid' => $sesja['id'],
+		),
+		MINUTE_IN_SECONDS
+	);
 
 	wp_redirect( $sesja['url'] ); // phpcs:ignore WordPress.Security.SafeRedirect
 	exit;
@@ -258,6 +273,25 @@ function sklepag_webhook( WP_REST_Request $zadanie ) {
 	}
 
 	return new WP_REST_Response( array( 'ok' => true ), 200 );
+}
+
+/**
+ * Czy sesja checkout WCIĄŻ czeka na płatność — a więc czy wolno oddać jej adres z okna
+ * idempotencji (SK-L3-005)? Stan trzymamy u siebie (`sklepag_oznacz_sesje`), więc pytanie
+ * nie kosztuje wywołania Stripe i nie psuje się przy awarii łączności.
+ * Brak wiersza = false: nieznanego checkoutu nie podajemy kupującemu.
+ */
+function sklepag_sesja_czeka_na_platnosc( $sesja_id ) {
+	if ( '' === $sesja_id ) {
+		return false;
+	}
+	global $wpdb;
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+	$stan = $wpdb->get_var(
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- nazwa tabeli z prefiksu.
+		$wpdb->prepare( "SELECT stan FROM {$wpdb->prefix}sklepag_sesje_checkout WHERE stripe_session_id = %s", $sesja_id )
+	);
+	return 'utworzona' === $stan;
 }
 
 function sklepag_oznacz_sesje( $sesja_id, $stan ) {

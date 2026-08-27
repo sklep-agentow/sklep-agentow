@@ -4,7 +4,7 @@ Tags: sklep, stripe, pliki cyfrowe, sprzedaz wtyczek, pobieranie
 Requires at least: 6.7
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.9.17
+Stable tag: 0.9.18
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -141,6 +141,11 @@ Nie. Zakup jest bez konta: adres e-mail podany na stronie płatności Stripe,
 link do pobrania w mailu, jednorazowy link do opinii.
 
 == Changelog ==
+
+= 0.9.18 =
+* Poprawka: po opłaceniu zakupu ponowne kliknięcie przycisku zakupu w ciągu minuty
+  zaczyna nową płatność zamiast pokazywać opłacony już ekran Stripe. Ochrona przed
+  podwójnym kliknięciem działa bez zmian.
 
 = 0.9.17 =
 * Ponowna wysyłka maila nie może zmienić stanu zamówienia zwróconego

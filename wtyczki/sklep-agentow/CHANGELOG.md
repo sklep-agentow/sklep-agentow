@@ -20,6 +20,23 @@ Nic jeszcze.
 
 ---
 
+## [0.9.18] — 2026-08-27
+
+### Poprawione
+- **Drugi zakup tego samego produktu tuż po opłaceniu pierwszego nie dochodził do skutku**
+  (SK-L3-005). Okno idempotencji (60 s, klucz `md5(IP|produkt_id)`) oddawało zapamiętany
+  adres checkoutu bez sprawdzenia, czy tamta sesja nie została już opłacona — kupujący
+  trafiał na opłacony ekran Stripe, bez pól karty i bez wyjaśnienia. Ponieważ okno jest
+  kluczowane `REMOTE_ADDR`, dotyczyło to także DWÓCH RÓŻNYCH kupujących za jednym adresem
+  (CGNAT operatora komórkowego, biuro za NAT-em).
+  Adres z okna jest teraz oddawany wyłącznie wtedy, gdy sesja wciąż ma stan `utworzona`
+  (`sklepag_sesja_czeka_na_platnosc()`, `zakup.php`); w przeciwnym razie okno jest kasowane
+  i powstaje nowy checkout. Stan czytany jest z własnej tabeli `sklepag_sesje_checkout`,
+  więc kontrola nie kosztuje wywołania Stripe i nie psuje się przy awarii łączności.
+  Ochrona przed podwójnym kliknięciem pozostaje nienaruszona: dopóki płatność czeka na
+  dokończenie, ponowne kliknięcie prowadzi do tej samej płatności, a nie do drugiej.
+  Zmiana ma test regresji sprawdzający oba kierunki naraz.
+
 ## [0.9.17] — 2026-08-27
 
 Wersja schematu bazy: **7** (bez zmian).
