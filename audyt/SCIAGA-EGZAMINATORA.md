@@ -92,7 +92,10 @@ dwoch. Wszystkie ponizsze klasy laczy jedno: **kod produktu byl poprawny, klamal
 
 ### Meta-lekcja tej naprawy
 
-**Kod produktu nie mial ani jednej uwagi przez wszystkie trzy rundy.** Uwagi dotyczyly: dowodu
+**Kod produktu byl czysty od RUNDY 2, nie od poczatku — i to rozroznienie jest cala lekcja.**
+Runda 1 dala uwage WAZNA wprost do `zakup.php` (naprawa opierala sie na stanie, ktory przestawia
+webhook) i skonczyla sie zmiana PRODUKTU: znacznikiem czasu w oknie. Dopiero od rundy 2 uwagi
+przestaly dotyczyc kodu. Kolejne dotyczyly: dowodu
 (klasa 14), zakresu naprawy (13), martwej galezi w tescie (15) i tekstow dla klienta (16).
 To odwrotnosc odruchu, ktory kaze sprawdzac przede wszystkim kod.
 

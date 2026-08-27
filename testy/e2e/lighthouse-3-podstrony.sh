@@ -16,7 +16,13 @@
 set -u
 BAZA="${1:-http://localhost:8890}"
 OUT="${2:-/tmp/lighthouse-sklep}"
-PROG="${3:-95}"   # prog celu L6-01; pomiar na obciazonej maszynie bywa zanizony — POWTORZ, nie obnizaj
+PROG="${3:-95}"   # prog celu L6-01.
+# ⛔ WYDAJNOSC (perf) na tej maszynie JEST SZUMNA i pojedynczy przebieg nie jest wyrocznia.
+# Zmierzone 27.08: dwa pelne przebiegi, DWIE ROZNE komorki ponizej progu (segregator/mobile 93,
+# potem sklep/mobile 87), a powtorki tych samych komorek dawaly 97-99. Serwer ma 2 vCPU, a tryb
+# telefonu dodatkowo spowalnia procesor 4x, wiec wynik zalezy od chwilowego obciazenia.
+# ⭐ METODA: komorke ponizej progu POWTORZ 3x i wez MEDIANE. Progu NIE obnizaj.
+# Pozostale kategorie (a11y, bp, seo) sa stabilne — tam pojedynczy przebieg wystarcza.
 REPO="$(cd "$(dirname "$0")/../.." && pwd)"
 mkdir -p "$OUT"
 CHROME_PATH="$(node "$REPO/testy/lib/chromium.js")" || { echo "brak chromium"; exit 2; }

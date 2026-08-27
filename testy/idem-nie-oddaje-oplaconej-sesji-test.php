@@ -27,8 +27,11 @@
  * EXIT 0 = A, B i C zgodne z oczekiwaniem · 1 = któryś nie (REGRESJA)
  *      2 = środowisko: brak aktywnego produktu z plikiem ALBO wyczerpany limiter zakupu
  *          (10 prób na adres i minutę; w CLI adres jest stały, więc licznik dzielą wszystkie
- *          przebiegi. Strażnik woła handler 3 razy na przebieg przy progu 10 na minutę, więc
- *          limiter pada na 11. wywołaniu, czyli w CZWARTYM przebiegu — zmierzone). Kod 2 NIE znaczy regresji.
+ *          przebiegi. Strażnik woła handler 3 razy na przebieg, więc limiter dobija na 11.
+ *          WYWOŁANIU w obrębie jednej minuty. ⛔ Nie przeliczaj tego na numer przebiegu:
+ *          licznik chodzi po MINUTACH, więc przebiegi rozłożone w czasie nie dobiją go wcale
+ *          (zmierzone: 4 przebiegi rozłożone = 4× EXIT=0; 4 pod rząd = EXIT=2 na czwartym).
+ *          Kod 2 NIE znaczy regresji.
  */
 
 global $wpdb;
