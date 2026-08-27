@@ -91,6 +91,8 @@ psuj_proby_log() { sed -i 's/proba-07.sh EXIT=0/proba-07.sh EXIT=1/' "$1/audyt/s
 # a przesuwa commit — inaczej nie wiadomo, który warunek bramkę zatrzymał.
 psuj_proby_znacznik() { sed -i '/^WYGENEROWANE-PRZEZ:/d' "$1/audyt/sklep/PROBY-KONTROLNE.log"; }
 psuj_proby_commit()   { sed -i 's/^COMMIT: .*/COMMIT: 0000000/' "$1/audyt/sklep/PROBY-KONTROLNE.log"; }
+# Przelot zostaje w historii, ale PO nim zmienia się narzędzie — dowód traci ważność.
+psuj_proby_po()       { ( cd "$1" && printf '# zmiana po przelocie\n' >> narzedzia-qa/mapa-licznik.sh && git add -A >/dev/null && git commit -qm 'zmiana narzedzia po przelocie' ); }
 psuj_sha()       { printf 'zmiana' >> "$1/boty/paczki/sklep-agentow-9.9.9.zip"; }
 psuj_tag()       { ( cd "$1" && git tag -d k7-zamrozenie >/dev/null && git commit -q --allow-empty -m inny && git tag -a k7-zamrozenie -m inny ); }
 psuj_raport_ch() { sed -i 's/"commit_head":"[0-9a-f]*"/"commit_head":"deadbee"/' "$1/audyt/sklep/raporty/A/L2.json"; }
@@ -128,7 +130,8 @@ sprawdz "1a wcięty punkt mapy (D1)"                        1 psuj_wcieta       
 sprawdz "3 potok \\| w kolumnie dowodu → nadal GO (W6)"     0 potok_w_dowodzie   "K7: GO"
 sprawdz "6 proba kontrolna EXIT=1 w logu"                 1 psuj_proby_log   "6 próby"
 sprawdz "6 log BEZ znacznika przelotu (pisany recznie)"   1 psuj_proby_znacznik "bez znacznika przelotu"
-sprawdz "6 log z INNEGO commitu (dowod przeterminowany)"  1 psuj_proby_commit   "przeterminowany"
+sprawdz "6 log z commitu spoza historii HEAD"              1 psuj_proby_commit   "dowód z innej linii"
+sprawdz "6 narzedzie zmienione PO przelocie"               1 psuj_proby_po      "przeterminowany"
 sprawdz "7a paczka zmieniona po zamrozeniu (sha256)"      1 psuj_sha         "7a paczka"
 sprawdz "7b tag przesuniety na inny commit"               1 psuj_tag         "7b tag"
 sprawdz "8 raport z innym commit_head"                    1 psuj_raport_ch   "8 raporty"

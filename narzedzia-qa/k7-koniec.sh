@@ -142,8 +142,15 @@ else
 	ILE_P=$(grep -cE '^[A-Za-z0-9_.-]+\.sh EXIT=' "$PROBY")
 	ZLE_P=$(grep -E '^[A-Za-z0-9_.-]+\.sh EXIT=' "$PROBY" | grep -vc 'EXIT=0')
 	POM_P=$(grep -cE '^POMINIETO ' "$PROBY")
-	if [ -z "$P_COMMIT" ] || [ "$P_COMMIT" != "$HEAD_KR" ]; then
-		fail "6 próby kontrolne: przelot z commitu ${P_COMMIT:-brak}, a HEAD to $HEAD_KR — dowód przeterminowany (uruchom: bash narzedzia-qa/proby-kontrolne-przelot.sh)"
+	# DATA WAŻNOŚCI: nie „ten sam commit" (commit zapisujący log sam przesuwa HEAD, więc taki
+	# warunek nie dałby się spełnić nigdy), tylko „od przelotu nie zmieniło się nic, czego ten
+	# przelot dowodzi". Zmiana w narzędziach, testach albo kodzie wtyczki unieważnia dowód;
+	# zmiana w dokumentach audytu — nie.
+	if [ -z "$P_COMMIT" ] || ! git merge-base --is-ancestor "$P_COMMIT" HEAD 2>/dev/null; then
+		fail "6 próby kontrolne: przelot z commitu ${P_COMMIT:-brak}, którego nie ma w historii HEAD ($HEAD_KR) — dowód z innej linii (uruchom: bash narzedzia-qa/proby-kontrolne-przelot.sh)"
+	elif [ -n "$(git diff --name-only "$P_COMMIT" HEAD -- narzedzia-qa testy wtyczki boty/paczki 2>/dev/null)" ]; then
+		POTEM=$(git diff --name-only "$P_COMMIT" HEAD -- narzedzia-qa testy wtyczki boty/paczki 2>/dev/null | head -3 | tr '\n' ' ')
+		fail "6 próby kontrolne: po przelocie ($P_COMMIT) zmieniło się to, czego on dowodzi — $POTEM… — dowód przeterminowany (uruchom: bash narzedzia-qa/proby-kontrolne-przelot.sh)"
 	elif [ "$ILE_P" -lt 26 ]; then
 		fail "6 próby kontrolne: uruchomionych tylko $ILE_P (wymagane ≥26) — zakres zawężony, pominiętych $POM_P"
 	elif [ "$ZLE_P" -ne 0 ]; then

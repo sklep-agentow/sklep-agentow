@@ -287,7 +287,7 @@ function sklepag_platnosc_ze_zdarzenia( $obiekt ) {
 function sklepag_zamowienie_po_platnosci( $payment_intent, &$powod = null ) {
 	global $wpdb;
 	$powod = '';
-	$pz = $wpdb->prefix . 'sklepag_zamowienia';
+	$pz    = $wpdb->prefix . 'sklepag_zamowienia';
 	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
 	$zam = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$pz} WHERE payment_intent_id=%s", $payment_intent ) );
 	if ( $zam ) {
