@@ -143,7 +143,7 @@ else
 	ZLE_P=$(grep -E '^[A-Za-z0-9_.-]+\.sh EXIT=' "$PROBY" | grep -vc 'EXIT=0')
 	POM_P=$(grep -cE '^POMINIETO ' "$PROBY")
 	if [ -z "$P_COMMIT" ] || [ "$P_COMMIT" != "$HEAD_KR" ]; then
-		fail "6 próby kontrolne: przelot z commitu „${P_COMMIT:-brak}", a HEAD to „$HEAD_KR" — dowód przeterminowany (uruchom: bash narzedzia-qa/proby-kontrolne-przelot.sh)"
+		fail "6 próby kontrolne: przelot z commitu ${P_COMMIT:-brak}, a HEAD to $HEAD_KR — dowód przeterminowany (uruchom: bash narzedzia-qa/proby-kontrolne-przelot.sh)"
 	elif [ "$ILE_P" -lt 26 ]; then
 		fail "6 próby kontrolne: uruchomionych tylko $ILE_P (wymagane ≥26) — zakres zawężony, pominiętych $POM_P"
 	elif [ "$ZLE_P" -ne 0 ]; then
