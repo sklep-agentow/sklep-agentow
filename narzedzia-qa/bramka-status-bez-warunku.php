@@ -1,6 +1,6 @@
 <?php
 /**
- * bramka-status-bez-warunku.php — zapis statusu zamowienia MUSI chronic stan poprzedni.  3.0.0
+ * bramka-status-bez-warunku.php — zapis statusu zamowienia MUSI chronic stan poprzedni.  3.1.0
  *
  * PO CO (recenzje PR #198, rundy 2, 4, 5): TRZY razy pod rzad ten sam wzorzec — status
  * zamowienia wpisywany jako stala, bez pytania, w jakim stanie zamowienie bylo. Wygrany spor
@@ -21,9 +21,16 @@
  * Komentarze i stringi apostrofowe sa osobnymi tokenami, wiec `"` w ich srodku nie moze
  * niczego rozjechac. To jedyny sposob, ktory nie jest przyblizeniem skladni.
  *
- * ZASADA: kazdy `UPDATE <tabela zamowien> ... SET ... status=...` musi albo miec w tym samym
- * zapytaniu warunek na `status` w `WHERE`, albo niesc w promieniu trzech linii nad poczatkiem
- * zapytania jawny znacznik:   // status-bez-warunku: <dlaczego to bezpieczne>
+ * ZASADA (dwie drogi zapisu, obie objete):
+ *   1. SQL: kazdy `UPDATE <tabela zamowien> ... SET ... status=...` musi albo miec w tym samym
+ *      zapytaniu warunek na `status` w `WHERE`, albo niesc w promieniu trzech linii nad
+ *      poczatkiem zapytania jawny znacznik:   // status-bez-warunku: <dlaczego to bezpieczne>
+ *   2. API: kazde `$wpdb->update()` na tabeli zamowien wymaga tego znacznika ZAWSZE — tam nie
+ *      ma stringu SQL do przeczytania, a tablica danych bywa w zmiennej.
+ *
+ * 3.1.0 (runda 10): `update()` byl widziany tylko z tablica WPROST w wywolaniu; ksztalt
+ * `$wpdb->update( $t, $dane, ... )` — obecny w tym repozytorium — przechodzil na zielono.
+ * Interpolacja bez klamer (`"UPDATE $pz SET ..."`) tez byla niewidoczna (runda 9).
  *
  * Wywolanie: php narzedzia-qa/bramka-status-bez-warunku.php [sciezka-repo]
  * Kody wyjscia: 0 = kazdy zapis chroniony albo jawnie zwolniony · 1 = zapis bez ochrony
@@ -134,9 +141,11 @@ function wywolania_update(string $kod, array $zmienne): array {
 		if (!$nasza) {
 			continue;
 		}
-		if (!preg_match('/[\x27"]status[\x27"]\s*=>/', $okno)) {
-			continue;
-		}
+		// ⛔ NIE wymagamy widocznego 'status' => w wywolaniu. Tablica danych bywa w ZMIENNEJ
+		// (`$wpdb->update( $t, $dane, ... )` — ksztalt obecny w tym repozytorium), a wtedy
+		// zawartosci nie widac w miejscu wywolania. Kazdy `update()` na tabeli ZAMOWIEN
+		// wymaga wiec swiadomej decyzji: albo przejscie na query() z warunkiem, albo znacznik.
+		// (Recenzja rundy 10: wersja wymagajaca widocznego klucza przepuszczala 10/10 bramek.)
 		$wynik[] = [preg_replace('/\s+/', ' ', trim($okno)), $i + 1];
 	}
 	return $wynik;

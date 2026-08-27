@@ -41,6 +41,11 @@ $wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET status_przed_sporem=%s WHERE id=
 $wpdb->query( $wpdb->prepare( "UPDATE $pz SET status=%s WHERE id=%d AND status NOT IN (%s)", $s, $id, $z ) );
 // status-bez-warunku: podrecznikowy update() — swiadomie zwolniony w atrapie.
 $wpdb->update( $wpdb->prefix . 'sklepag_zamowienia', array( 'status' => 'mail_wyslany' ), array( 'id' => $id ) );
+$dane = array( 'status' => 'mail_wyslany' );
+$licznik = 0;
+$inny = 1;
+// status-bez-warunku: tablica danych w ZMIENNEJ — ksztalt, ktory wersja 3.0.0 przepuszczala.
+$wpdb->update( $pz, $dane, array( 'id' => $id ) );
 PHP
 }
 
@@ -68,6 +73,11 @@ psuj_zakres()     { sed -i '/UPDATE/d;/wpdb->update/d' "$1/$PLIK"; }
 # Dwie formy, ktorych wersja 3.0.0 nie widziala (uwaga z rundy 9, obie zmierzone sonda).
 psuj_bez_klamer() { sed -i '/UPDATE \$pz SET status=/s/ AND status NOT IN (%s)//' "$1/$PLIK"; }
 psuj_wpdb_update(){ sed -i '/status-bez-warunku: podrecznikowy/d' "$1/$PLIK"; }
+# Tablica danych w ZMIENNEJ — w miejscu wywolania nie widac klucza 'status'. Wersja 3.0.0
+# przepuszczala ten ksztalt na zielono, mimo ze wystepuje w tym repozytorium (runda 10).
+# ⛔ Wywolania MUSZA byc rozsuniete: znacznik z sasiedniej linii wpadalby w okno trzech linii
+#    i zwalnial nie to wywolanie, co trzeba — to byla wada ATRAPY, nie bramki (zmierzone).
+psuj_dane_w_zmiennej(){ sed -i '/status-bez-warunku: tablica danych w ZMIENNEJ/d' "$1/$PLIK"; }
 
 echo "=== PROBA KONTROLNA: bramka status-bez-warunku 3.0.0 (tokenizer PHP) ==="
 sprawdz "czysty stan przechodzi"                                0 nic
@@ -79,16 +89,17 @@ sprawdz "znacznik zwolnienia USUNIETY"                          1 psuj_znacznik
 sprawdz "ZERO zapisow w zakresie = bramka slepa, nie czysta"    1 psuj_zakres
 sprawdz "interpolacja BEZ klamer (UPDATE \$pz SET ...)"          1 psuj_bez_klamer
 sprawdz "wpdb->update() ustawiajacy status bez znacznika"       1 psuj_wpdb_update
+sprawdz "wpdb->update() z tablica danych w ZMIENNEJ"           1 psuj_dane_w_zmiennej
 
 # ⭐ Kontrola POKRYCIA — sedno uwagi KRYTYCZNEJ z rundy 8. Atrapa ma 5 zapisow statusu
 # i wszystkie MUSZA byc widoczne mimo cudzyslowow w stringu apostrofowym i w komentarzu
 # koncowym. Wersja 2.0.0 widziala tu mniej i meldowala sukces — dlatego liczba, nie werdykt.
 r_pokrycie="$(mktemp -d "$BAZA/pokrycie.XXXXXX")"; zbuduj "$r_pokrycie"
 ILE=$(php "$BRAMKA" "$r_pokrycie" 2>/dev/null | grep -oE 'STATUS-GUARD: [0-9]+' | grep -oE '[0-9]+')
-if [ "${ILE:-0}" -eq 7 ]; then
-	printf '  OK   %-58s (zapisow=%s z 7)\n' "POKRYCIE mimo cudzyslowow w apostrofach i komentarzu" "$ILE"
+if [ "${ILE:-0}" -eq 8 ]; then
+	printf '  OK   %-58s (zapisow=%s z 8)\n' "POKRYCIE mimo cudzyslowow w apostrofach i komentarzu" "$ILE"
 else
-	printf '  BLAD %-58s (zapisow=%s, oczekiwano 7)\n' "POKRYCIE mimo cudzyslowow w apostrofach i komentarzu" "${ILE:-0}"
+	printf '  BLAD %-58s (zapisow=%s, oczekiwano 8)\n' "POKRYCIE mimo cudzyslowow w apostrofach i komentarzu" "${ILE:-0}"
 	PRZEOCZONE=$((PRZEOCZONE + 1))
 fi
 
