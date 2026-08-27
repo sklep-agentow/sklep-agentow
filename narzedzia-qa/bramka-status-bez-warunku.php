@@ -90,7 +90,9 @@ function stringi_z_pliku(string $kod): array {
 		}
 		if ($w_stringu) {
 			if ($typ === T_VARIABLE) {
-				$bufor .= '{' . $tresc; // `{$pz` — domkniecie `}` przyjdzie jako string
+				// Bez sztucznego znaku klamry: PHP pozwala interpolowac i {$pz}, i $pz.
+				// Klamry (jesli byly) przyjda osobnymi tokenami, wiec zapis wychodzi wiernie.
+				$bufor .= $tresc;
 			} elseif ($typ === T_CURLY_OPEN || $typ === T_DOLLAR_OPEN_CURLY_BRACES) {
 				// sam znacznik otwarcia, tresc dopisze T_VARIABLE
 			} else {
@@ -105,6 +107,40 @@ function stringi_z_pliku(string $kod): array {
 
 $bledy   = [];
 $zbadane = 0;
+
+/**
+ * wpdb->update() — podrecznikowy sposob WordPressa na ten sam zapis, ktorego bramka dotad
+ * NIE widziala (uwaga z rundy 9, zmierzona sonda). Tu nie ma stringu SQL, wiec warunku
+ * WHERE-ze-statusem nie da sie przeczytac tak samo. Zglaszamy KAZDE takie wywolanie
+ * ustawiajace status na tabeli zamowien — autor ma podjac swiadoma decyzje: albo przejsc
+ * na query() z warunkiem, albo dopisac znacznik z powodem.
+ */
+function wywolania_update(string $kod, array $zmienne): array {
+	$wynik = [];
+	$linie = explode("\n", $kod);
+	foreach ($linie as $i => $linia) {
+		if (strpos($linia, '$wpdb->update') === false) {
+			continue;
+		}
+		// Okno 6 linii — argumenty update() czesto stoja w kolejnych wierszach.
+		$okno  = implode("\n", array_slice($linie, $i, 6));
+		$nasza = (bool) preg_match('/\{?\$wpdb->prefix\}?\s*\.?\s*[\x27"]?' . TABELA . '/', $okno);
+		foreach ($zmienne as $z) {
+			if (preg_match('/\$' . preg_quote($z, '/') . '(?![A-Za-z0-9_])/', $okno)) {
+				$nasza = true;
+				break;
+			}
+		}
+		if (!$nasza) {
+			continue;
+		}
+		if (!preg_match('/[\x27"]status[\x27"]\s*=>/', $okno)) {
+			continue;
+		}
+		$wynik[] = [preg_replace('/\s+/', ' ', trim($okno)), $i + 1];
+	}
+	return $wynik;
+}
 
 $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($wtyczka));
 foreach ($iterator as $plik) {
@@ -125,14 +161,26 @@ foreach ($iterator as $plik) {
 	);
 	$zmienne = array_unique($trafienia[1]);
 
+	foreach (wywolania_update($kod, $zmienne) as [$fragment, $nr]) {
+		$zbadane++;
+		$od       = max(0, $nr - 4);
+		$kontekst = implode("\n", array_slice($linie, $od, $nr - $od));
+		if (strpos($kontekst, ZNACZNIK) !== false) {
+			continue;
+		}
+		$wzgledna = ltrim(str_replace(realpath($repo), '', realpath($sciezka)), '/');
+		$bledy[]  = [$wzgledna, $nr, 'wpdb->update() ustawia status: ' . substr($fragment, 0, 110)];
+	}
+
 	foreach (stringi_z_pliku($kod) as [$sql, $nr]) {
 		if (stripos($sql, 'UPDATE') === false || stripos($sql, 'SET') === false) {
 			continue;
 		}
 		// Tabela rozpoznawana na DWA sposoby: przez zmienna i przez nazwe wpisana wprost.
-		$nasza = strpos($sql, '{$wpdb->prefix}' . TABELA) !== false;
+		// Tabela rozpoznawana niezaleznie od tego, czy interpolacja ma klamry.
+		$nasza = (bool) preg_match('/\{?\$wpdb->prefix\}?' . TABELA . '/', $sql);
 		foreach ($zmienne as $z) {
-			if (strpos($sql, '{$' . $z . '}') !== false) {
+			if (preg_match('/\{?\$' . preg_quote($z, '/') . '\}?(?![A-Za-z0-9_])/', $sql)) {
 				$nasza = true;
 				break;
 			}

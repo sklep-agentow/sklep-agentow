@@ -37,6 +37,10 @@ $wpdb->query( $wpdb->prepare(
 // status-bez-warunku: $status wyliczony wyzej ze stanu poprzedniego, nie jest stala.
 $wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET status=%s, zmieniono=%s WHERE id=%d", $status, $teraz, $id ) );
 $wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET status_przed_sporem=%s WHERE id=%d", $przed, $id ) );
+// Interpolacja BEZ klamer — PHP na to pozwala, wersja 3.0.0 tego nie widziala.
+$wpdb->query( $wpdb->prepare( "UPDATE $pz SET status=%s WHERE id=%d AND status NOT IN (%s)", $s, $id, $z ) );
+// status-bez-warunku: podrecznikowy update() — swiadomie zwolniony w atrapie.
+$wpdb->update( $wpdb->prefix . 'sklepag_zamowienia', array( 'status' => 'mail_wyslany' ), array( 'id' => $id ) );
 PHP
 }
 
@@ -60,7 +64,10 @@ psuj_alias()      { sed -i '/UPDATE {$t}/s/ AND status NOT IN (%s)//' "$1/$PLIK"
 psuj_wprost()     { sed -i '/UPDATE {$wpdb->prefix}sklepag_zamowienia/s/ AND status NOT IN (%s)//' "$1/$PLIK"; }
 psuj_dwie_linie() { sed -i '/zmieniono=%s WHERE id=%d AND status NOT IN/s/ AND status NOT IN (%s)//' "$1/$PLIK"; }
 psuj_znacznik()   { sed -i '/status-bez-warunku:/d' "$1/$PLIK"; }
-psuj_zakres()     { sed -i '/UPDATE/d' "$1/$PLIK"; }
+psuj_zakres()     { sed -i '/UPDATE/d;/wpdb->update/d' "$1/$PLIK"; }
+# Dwie formy, ktorych wersja 3.0.0 nie widziala (uwaga z rundy 9, obie zmierzone sonda).
+psuj_bez_klamer() { sed -i '/UPDATE \$pz SET status=/s/ AND status NOT IN (%s)//' "$1/$PLIK"; }
+psuj_wpdb_update(){ sed -i '/status-bez-warunku: podrecznikowy/d' "$1/$PLIK"; }
 
 echo "=== PROBA KONTROLNA: bramka status-bez-warunku 3.0.0 (tokenizer PHP) ==="
 sprawdz "czysty stan przechodzi"                                0 nic
@@ -70,16 +77,18 @@ sprawdz "nazwa tabeli WPROST, bez przypisania do zmiennej"      1 psuj_wprost
 sprawdz "zapytanie rozbite na DWIE LINIE"                       1 psuj_dwie_linie
 sprawdz "znacznik zwolnienia USUNIETY"                          1 psuj_znacznik
 sprawdz "ZERO zapisow w zakresie = bramka slepa, nie czysta"    1 psuj_zakres
+sprawdz "interpolacja BEZ klamer (UPDATE \$pz SET ...)"          1 psuj_bez_klamer
+sprawdz "wpdb->update() ustawiajacy status bez znacznika"       1 psuj_wpdb_update
 
 # ⭐ Kontrola POKRYCIA — sedno uwagi KRYTYCZNEJ z rundy 8. Atrapa ma 5 zapisow statusu
 # i wszystkie MUSZA byc widoczne mimo cudzyslowow w stringu apostrofowym i w komentarzu
 # koncowym. Wersja 2.0.0 widziala tu mniej i meldowala sukces — dlatego liczba, nie werdykt.
 r_pokrycie="$(mktemp -d "$BAZA/pokrycie.XXXXXX")"; zbuduj "$r_pokrycie"
 ILE=$(php "$BRAMKA" "$r_pokrycie" 2>/dev/null | grep -oE 'STATUS-GUARD: [0-9]+' | grep -oE '[0-9]+')
-if [ "${ILE:-0}" -eq 5 ]; then
-	printf '  OK   %-58s (zapisow=%s z 5)\n' "POKRYCIE mimo cudzyslowow w apostrofach i komentarzu" "$ILE"
+if [ "${ILE:-0}" -eq 7 ]; then
+	printf '  OK   %-58s (zapisow=%s z 7)\n' "POKRYCIE mimo cudzyslowow w apostrofach i komentarzu" "$ILE"
 else
-	printf '  BLAD %-58s (zapisow=%s, oczekiwano 5)\n' "POKRYCIE mimo cudzyslowow w apostrofach i komentarzu" "${ILE:-0}"
+	printf '  BLAD %-58s (zapisow=%s, oczekiwano 7)\n' "POKRYCIE mimo cudzyslowow w apostrofach i komentarzu" "${ILE:-0}"
 	PRZEOCZONE=$((PRZEOCZONE + 1))
 fi
 
