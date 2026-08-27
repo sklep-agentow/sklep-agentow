@@ -112,10 +112,18 @@ function sklepag_produkty_formularz( $id ) {
 	// Handler zapisu jest za `admin-post` i kończy błąd PRZEKIEROWANIEM, więc formularz
 	// renderuje się od nowa z bazy — właściciel, który zapomniał pliku, tracił CAŁY
 	// wpisany opis. Handler odkłada teraz wysłane pola w przechowalni na 5 minut, a tu je
-	// odczytujemy. Przechowalnia jest JEDNORAZOWA: po odczycie znika, żeby zwykłe wejście
-	// w formularz (albo odświeżenie) pokazywało stan z bazy, nie wskrzeszony szkic.
+	// odczytujemy. Przechowalnia jest JEDNORAZOWA: po odczycie znika.
+	// ⛔ NAKŁADAMY SZKIC WYŁĄCZNIE NA RENDERZE BĘDĄCYM ODPOWIEDZIĄ NA ODRZUT (`sklepag_blad`
+	// w adresie). Bez tego warunku wystarczyło, że strona po odrzucie się nie wyrenderuje
+	// (zamknięta karta, Esc, powrót na listę), a porzucony szkic dożywał 5 minut i nakładał
+	// się przy NASTĘPNYM, świadomym wejściu w edycję — bez komunikatu błędu, więc właściciel
+	// nie miał jak poznać, że patrzy na szkic zamiast na bazę, a „Zapisz zmiany" wpisałoby
+	// wtedy porzuconą cenę.
+	// Odczyt służy WYŁĄCZNIE rozpoznaniu, że to render po odrzucie; sam komunikat błędu
+	// jest escapowany w sklepag_produkty_komunikaty(), a nic tu nie mutuje stanu.
+	$po_odrzucie  = isset( $_GET['sklepag_blad'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	$klucz_szkicu = 'sklepag_szkic_produktu_' . get_current_user_id();
-	$szkic        = get_transient( $klucz_szkicu );
+	$szkic        = $po_odrzucie ? get_transient( $klucz_szkicu ) : false;
 	if ( is_array( $szkic ) && isset( $szkic['produkt_id'] ) && (int) $szkic['produkt_id'] === (int) $id ) {
 		delete_transient( $klucz_szkicu );
 	} else {
@@ -146,8 +154,9 @@ function sklepag_produkty_formularz( $id ) {
 	echo '<input type="hidden" name="produkt_id" value="' . (int) $id . '">';
 	wp_nonce_field( 'sklepag_produkt_zapisz' );
 
-	// Cena ma osobny rachunek: w bazie są grosze, a w szkicu to, co właściciel WPISAŁ —
-	// pokazujemy jego zapis znak w znak, nie wynik zaokrąglenia.
+	// Cena ma osobny rachunek: w bazie są grosze, a w szkicu wartość z formularza po jednej
+	// zamianie — przecinek na kropkę (pole jest `type="number"` i przecinka by nie przyjęło).
+	// Poza tym jednym znakiem właściciel widzi to, co wpisał, a nie wynik zaokrąglenia w bazie.
 	$cena_pokaz = '';
 	if ( null !== $szkic && isset( $szkic['cena_wpisana'] ) ) {
 		$cena_pokaz = (string) $szkic['cena_wpisana'];

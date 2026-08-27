@@ -75,6 +75,33 @@ const przyrzad = (powod) => { console.error('PRZYRZAD: ' + powod); process.exit(
     const stoi = await kafel.locator('video').evaluate((w) => w.paused);
     if (stoi) { ok('Enter na przycisku ZATRZYMUJE nagranie'); } else { zle('Enter nie zatrzymal nagrania', 'kryterium 2.2.2: ruch trwajacy dluzej niz 5 s musi dac sie zatrzymac'); }
 
+    // ⛔ POMIAR MUSI BYC DLUZSZY NIZ WADA. Na stronie chodzi timer pilnujacy, zeby nagranie
+    // w kadrze nie stalo — tika co 2 s i przy pierwszej wersji tej naprawy WZNAWIAL pauze
+    // uzytkownika. Sprawdzenie 300 ms po Enterze przechodzilo po wlasciwej stronie tiku
+    // i oglaszalo spelnione kryterium 2.2.2, ktore mowi o ruchu dluzszym niz 5 sekund.
+    // Dlatego czekamy 6,5 s: dluzej niz trzy tiki i dluzej niz prog samego kryterium.
+    // ⛔ KAFEL MUSI ZOSTAC W KADRZE NA CZAS POMIARU. Straznik postepu pomija nagrania poza
+    // ekranem, a Tab po 16 elementach potrafi przewinac strone tak, ze kafel z niego wypada
+    // — pomiar przechodzil wtedy nawet z CALKOWICIE usunieta ochrona pauzy (sprawdzone
+    // podkladajac wersje bez niej). Bez tej linii asercja nizej jest martwa.
+    await kafel.scrollIntoViewIfNeeded();
+    const wKadrzeNaCzasPomiaru = await kafel.evaluate((el) => {
+      const r = el.getBoundingClientRect();
+      return r.top < window.innerHeight && r.bottom > 0;
+    });
+    if (!wKadrzeNaCzasPomiaru) { await browser.close(); przyrzad('nie umiem utrzymac kafla w kadrze — pomiar zatrzymania bylby slepy'); }
+    await strona.waitForTimeout(6500);
+    const nadalStoi = await kafel.locator('video').evaluate((w) => w.paused);
+    if (nadalStoi) { ok('zatrzymanie TRZYMA SIE po 6,5 s (kryterium 2.2.2 realnie spelnione)'); } else { zle('nagranie samo wznowilo sie w ciagu 6,5 s', 'straznik postepu albo obserwator kadru nie odrozniaja pauzy czlowieka od zaciecia'); }
+
+    // Druga sciezka tego samego: obserwator kadru wznawia nagranie przy powrocie w ekran.
+    await strona.evaluate(() => window.scrollTo(0, 0));
+    await strona.waitForTimeout(700);
+    await kafel.scrollIntoViewIfNeeded();
+    await strona.waitForTimeout(1200);
+    const stoiPoPowrocie = await kafel.locator('video').evaluate((w) => w.paused);
+    if (stoiPoPowrocie) { ok('zjazd z kafla i powrot NIE wznawia zatrzymanego nagrania'); } else { zle('powrot kafla w kadr wznowil nagranie mimo pauzy uzytkownika'); }
+
     const etykietaPoStopie = (await przycisk.textContent() || '').trim();
     if (/Odtw/i.test(etykietaPoStopie)) { ok('etykieta mowi, co zrobi kolejne nacisniecie: ' + etykietaPoStopie); } else { zle('etykieta po zatrzymaniu nie zapowiada wznowienia', 'widziano: ' + etykietaPoStopie); }
 

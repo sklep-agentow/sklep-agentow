@@ -104,6 +104,13 @@
 			przycisk.appendChild(document.createTextNode(gra ? ' Zatrzymaj nagranie' : ' Odtwórz nagranie'));
 			przycisk.setAttribute('aria-pressed', gra ? 'true' : 'false');
 		};
+		// ⛔ PAUZA CZŁOWIEKA MUSI PRZEŻYĆ WŁASNE MECHANIZMY TEJ STRONY. Poniżej chodzi timer
+		// pilnujący, żeby nagranie w kadrze nie stało, oraz obserwator wznawiający je przy
+		// powrocie w kadr — oba widzą wyłącznie `paused` i nie odróżniają zacięcia od
+		// świadomego zatrzymania. Bez tej flagi zatrzymanie żyło najwyżej do najbliższego
+		// tiku (2 s), a kryterium „da się zatrzymać ruch" mówi o nagraniach dłuższych niż 5 s.
+		// Flagę zdejmuje WYŁĄCZNIE ponowne uruchomienie przez człowieka.
+		var zatrzymalCzlowiek = false;
 		if (przycisk) {
 			przycisk.hidden = false;
 			etykieta();
@@ -115,7 +122,13 @@
 			przycisk.addEventListener('click', function (e) {
 				e.preventDefault();
 				e.stopPropagation();
-				if (wideo.paused || wideo.ended) { wideo.play(); } else { wideo.pause(); }
+				if (wideo.paused || wideo.ended) {
+					zatrzymalCzlowiek = false;
+					wideo.play();
+				} else {
+					zatrzymalCzlowiek = true;
+					wideo.pause();
+				}
 				etykieta();
 			});
 		}
@@ -144,7 +157,12 @@
 		// Przeglądarka z blokadą autoodtwarzania (np. Brave) odrzuca play() bez gestu — wtedy plakat
 		// zostaje, a kafel dostaje przycisk „Odtwórz" (klik / Enter = gest użytkownika). Próba, gdy
 		// kafel wjeżdża w kadr (Chromium i tak pauzuje autoplay poza kadrem).
+		// ⛔ JEDEN PUNKT, PRZEZ KTÓRY PRZECHODZI KAŻDE AUTOMATYCZNE URUCHOMIENIE — obserwator
+		// kadru, strażnik postępu i gałąź bez IntersectionObserver. Warunek stoi TUTAJ, a nie
+		// przy wywołaniach, bo trzy sprawdzenia w trzech miejscach to trzy okazje, żeby przy
+		// następnej zmianie zapomnieć o jednym. Człowiek zatrzymał — maszyna nie wznawia.
 		var sprobuj = function () {
+			if (zatrzymalCzlowiek) { return; }
 			var obietnica = wideo.play();
 			if (obietnica && obietnica.catch) {
 				obietnica.catch(zablokuj);
@@ -175,6 +193,13 @@
 			ostatniCzas = -1;
 			straznik = window.setInterval(function () {
 				if (!wKadrze) { ostatniCzas = -1; return; }
+				// Zatrzymane ręką to nie zacięcie: strażnik schodzi z drogi i NIE oznacza kafla
+				// jako zablokowanego, bo nic tu nie zawiodło. Wróci przy zdarzeniu `playing`,
+				// czyli gdy człowiek sam wznowi.
+				if (zatrzymalCzlowiek) {
+					zatrzymajStraznika();
+					return;
+				}
 				var stoi = wideo.paused || wideo.currentTime === ostatniCzas;
 				ostatniCzas = wideo.currentTime;
 				if (!stoi) {
@@ -192,6 +217,10 @@
 			kafel.addEventListener('click', function (e) {
 				if (kafel.classList.contains('sklepag-kafel--zablokowane') || wideo.paused) {
 					e.preventDefault();
+					// Klik w kafel to gest CZŁOWIEKA proszącego o odtworzenie — zdejmuje jego
+					// własną wcześniejszą pauzę (inaczej blokada, którą sam postawił, nie dałaby
+					// się odkliknąć niczym poza przyciskiem).
+					zatrzymalCzlowiek = false;
 					sprobuj();
 				}
 			});
