@@ -34,7 +34,7 @@ function sklepag_obsluz_resend() {
 
 	global $wpdb;
 	$pz = $wpdb->prefix . 'sklepag_zamowienia';
-	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery -- nazwa tabeli z prefiksu; akcja admina na żywych danych.
+	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.NotPrepared -- nazwa tabeli z prefiksu; SKLEPAG_STATUSY_ZAMKNIETE to stała wtyczki (nie wejście użytkownika), tak samo jak SKLEPAG_STATUSY_OPLACONE w admin-dashboard.php; akcja admina na żywych danych.
 	$zam = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$pz} WHERE id = %d", $id ) );
 
 	if ( ! $zam ) {
