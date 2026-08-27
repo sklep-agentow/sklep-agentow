@@ -74,3 +74,32 @@ Te klasy, które bramkę dostały (8, 9, 11, 12), nie wróciły ani razu po jej 
 **Dla przyszłego audytu:** klasy 8 i 11 są najkosztowniejsze — obie objawiają się jako zielone
 światło, więc nie da się ich zauważyć przez patrzenie na wynik. Widać je wyłącznie przez
 pytanie „czego to narzędzie NIE widzi", zadane osobno od pytania „co znalazło".
+
+
+---
+
+## KLASY DOPISANE 2026-08-27 (wieczor) — z 3 rund recenzji PR #199 (naprawa SK-L3-005)
+
+Zrodlo: naprawa JEDNEJ wady w sciezce pieniedzy. Trzy rundy, dwie uwagi WAZNE w kazdej z pierwszych
+dwoch. Wszystkie ponizsze klasy laczy jedno: **kod produktu byl poprawny, klamal DOWOD albo OPIS.**
+
+| # | Klasa (skad wziecie) | Dowod z tego dnia | Co ja lapie U NAS |
+|---|---|---|---|
+| 13 | **NAPRAWA ZWEZA OKNO WADY, zamiast zamknac klase** — decyzja oparta na stanie, ktory przestawia ZEWNETRZNE zdarzenie | naprawa czytala `sesje_checkout.stan`, ale `oplacona` zapisuje wylacznie webhook albo reconciliation (ta druga pomija sesje mlodsze niz 120 s). Przez cale okno zaplacona sesja lezy jako `utworzona` — NIEODROZNIALNA od czekajacej. Recenzent odtworzyl wade sonda mimo naprawy | pytanie do KAZDEJ naprawy zaleznej od webhooka/cronu/callbacku: **co widzi kod, ZANIM to zdarzenie dotrze?** Jesli stan jest wtedy nieodroznialny — naprawa nie zamyka klasy; potrzebny warunek NIEZALEZNY od tego zdarzenia (u nas: wiek okna) |
+| 14 | **DOWOD Z ZYWEGO STOSU SLEPY NA OPOZNIENIE, ktorego ten stos nie ma** | 2 przeloty E2E przez zywy Stripe, oba EXIT=0, rozne sesje — a wada byla nadal odtwarzalna. Przeloty szly przez `stripe listen` na TEJ SAMEJ maszynie, wiec webhook wracal natychmiast | gdy dwa przypadki testowe maja w bazie IDENTYCZNY wiersz, test NIE odroznia naprawy od jej braku w tym kierunku. Trzeba przypadku odtwarzajacego STAN POSREDNI wprost w bazie (u nas: przypadek C straznika) |
+| 15 | **GALAZ RATUNKOWA W MARTWYM KODZIE** — deklarowana obsluga bledu nigdy sie nie wykonuje | straznik mial lapac limiter (429) i konczyc kodem 2; limiter konczy przez `wp_die()`, a to pod `wp eval-file` NIE rzuca wyjatku — uchwyt WP-CLI drukuje `Error:` i konczy proces. `catch` nigdy nie dostal tresci, `exit( 2 )` byl martwy. Commit deklarowal, ze dziala | ⛔ **kazda galaz ratunkowa musi miec wlasne URUCHOMIENIE w opisie.** Nie wystarczy ja napisac — trzeba pokazac kod wyjscia z sytuacji, ktora ma ja wywolac (u nas: 5 przebiegow pod rzad) |
+| 16 | **BRAMKA SPRAWDZA ISTNIENIE WPISU, NIE JEGO PRAWDZIWOSC** | `dokumentacja-zgodnosc-sklep.sh` EXIT=0 i `0 rozjazdow`, podczas gdy CHANGELOG i readme mowily o produkcie nieprawde. Bramka sprawdza, czy wpis `[0.9.18]` ISTNIEJE — nie czy jest zgodny ze zmiana | to granica narzedzia, nie jego wada. ⛔ Przy KAZDEJ zmianie zachowania widocznego dla kupujacego teksty klienta czyta CZLOWIEK, nie bramka. Bramka pilnuje obecnosci, sens zostaje po naszej stronie |
+
+### Meta-lekcja tej naprawy
+
+**Kod produktu nie mial ani jednej uwagi przez wszystkie trzy rundy.** Uwagi dotyczyly: dowodu
+(klasa 14), zakresu naprawy (13), martwej galezi w tescie (15) i tekstow dla klienta (16).
+To odwrotnosc odruchu, ktory kaze sprawdzac przede wszystkim kod.
+
+⛔ **Klasa 3 (dokumentacja klamie) ma nowy, grozniejszy wariant: dokumentacja klamie WSKUTEK
+NASZEJ WLASNEJ ZMIANY.** Zdanie bylo prawdziwe wczoraj i przestalo byc dzisiaj, bo zmienilismy
+zachowanie — a nikt nie wraca do tekstu, ktorego nie dotykal. Dwa razy w jednym PR: raz
+w DOKUMENTACJA-TECHNICZNA.md (tabela opisana jako informacyjna zaczela rozstrzygac o sciezce
+zakupu), raz w CHANGELOG.md i readme.txt (twierdzily, ze ochrona dziala bez zmian, gdy okno
+skurczylo sie z 60 s do 5 s). ⭐ **Odruch: po naprawie zapytaj nie tylko czego to dotyka w KODZIE,
+ale ktore ZDANIE o tym kodzie przestalo byc prawdziwe.**
