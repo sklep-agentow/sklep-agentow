@@ -1,36 +1,36 @@
-# PRÓBY KONTROLNE NARZĘDZI — przelot 2026-08-28 03:37
+# PRÓBY KONTROLNE NARZĘDZI — przelot 2026-08-28 03:27
 #
 # Każda pozycja: skrypt podkłada narzędziu znaną wadę i sprawdza, czy narzędzie ją WIDZI.
 # Kod wyjścia zero znaczy: narzędzie zareagowało na podłożoną wadę i przepuściło czysty kod.
 #
 WYGENEROWANE-PRZEZ: narzedzia-qa/proby-kontrolne-przelot.sh
-COMMIT: 28533e0
-GALAZ: domkniecie-przelotu-0.9.20
+COMMIT: f038451
+GALAZ: cele-k7-l1-11-ci-01-02
 PODSUMOWANIE: uruchomionych 30, z EXIT≠0: 6, pominiętych: 1
 #
-bramka-poswiadczenia-proba-kontrolna.sh EXIT=0 34s
+bramka-poswiadczenia-proba-kontrolna.sh EXIT=0 35s
 bramka-recenzji-proba-kontrolna.sh EXIT=0 0s
-bramka-status-bez-warunku-proba-kontrolna.sh EXIT=0 1s
-bramki-proba-kontrolna.sh EXIT=0 115s
-dowod-aktualizacji-proba-kontrolna.sh EXIT=0 60s
+bramka-status-bez-warunku-proba-kontrolna.sh EXIT=0 2s
+bramki-proba-kontrolna.sh EXIT=0 164s
+dowod-aktualizacji-proba-kontrolna.sh EXIT=0 64s
 POMINIETO dowod-zachowania-segregator-proba-kontrolna.sh — deinstaluje wtyczkę ze stosu — do przelotu ręcznego przed wydaniem
 dowod-z-paczki-proba-kontrolna.sh EXIT=2 0s
 gitleaks-proba-kontrolna.sh EXIT=0 1s
-k7-koniec-proba-kontrolna.sh EXIT=0 18s
-paczka-zgodnosc-proba-kontrolna.sh EXIT=0 8s
-stos-proba-kontrolna.sh EXIT=0 7s
-test-php-proba-kontrolna.sh EXIT=0 1s
+k7-koniec-proba-kontrolna.sh EXIT=0 12s
+paczka-zgodnosc-proba-kontrolna.sh EXIT=0 7s
+stos-proba-kontrolna.sh EXIT=0 8s
+test-php-proba-kontrolna.sh EXIT=0 0s
 blad-klucza-proba-kontrolna.sh EXIT=1 7s
-dokumentacja-zgodnosc-sklep-proba-kontrolna.sh EXIT=0 5s
+dokumentacja-zgodnosc-sklep-proba-kontrolna.sh EXIT=0 3s
 import-csv-proba-kontrolna.sh EXIT=0 7s
 ip-za-proxy-proba-kontrolna.sh EXIT=1 4s
-licznik-trafien-proba-kontrolna.sh EXIT=0 6s
+licznik-trafien-proba-kontrolna.sh EXIT=0 5s
 nonce-proba-kontrolna.sh EXIT=1 4s
 nota-zapisu-proba-kontrolna.sh EXIT=0 26s
-pamiec-rozmowy-proba-kontrolna.sh EXIT=0 5s
+pamiec-rozmowy-proba-kontrolna.sh EXIT=0 6s
 przejecie-proba-kontrolna.sh EXIT=1 11s
-pulapka-proba-kontrolna.sh EXIT=1 8s
-rodo-proba-kontrolna.sh EXIT=0 11s
+pulapka-proba-kontrolna.sh EXIT=1 7s
+rodo-proba-kontrolna.sh EXIT=0 12s
 segregator-skrzynka-proba-kontrolna.sh EXIT=0 42s
 statystyki-proba-kontrolna.sh EXIT=0 3s
 stronicowanie-proba-kontrolna.sh EXIT=0 6s
