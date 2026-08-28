@@ -289,7 +289,10 @@ function sklepag_obsluz_anonimizacje() {
 		&& 0 === $slady_dziennik
 		&& 0 === $slady_opinia;
 
-	if ( false === $ok_zam || false === $ok_zdarzenia || ! $skutek_ok ) {
+	/* `$ok_zdarzenia` nie jest tu juz sprawdzane: jego porazka konczy sciezke WYZEJ,
+		zanim cokolwiek tkniemy w zamowieniu. Powtorzenie warunku byloby martwym kodem
+		(phpstan: identical.alwaysFalse) i sugerowaloby ochrone, ktorej to miejsce nie daje. */
+	if ( false === $ok_zam || ! $skutek_ok ) {
 		sklepag_zdarzenie(
 			(int) $zam->id,
 			'anonimizacja_blad',
