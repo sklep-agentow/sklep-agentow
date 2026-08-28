@@ -75,7 +75,7 @@ sprzatanie, chatl_blad_ai wrocil do: array ( 'kiedy' => '2026-08-21 19:29:33', '
 WYNIK: PADA — przycisk testuje INNY model niz bot.
 ```
 
-Sonda `proba-model.php` (⛔ scratchpad tamtej sesji JUŻ NIE ISTNIEJE; opis mechanizmu niżej wystarcza do napisania jej od nowa) (klucz i ustawienia podstawione filtrami
+Sonda `audyt/boty/proba-model.php` (⭐ leży W REPO — wjechała w PR #147; wcześniej ten wiersz odsyłał do scratchpada i twierdził, że sondy nie ma) (klucz i ustawienia podstawione filtrami
 w pamięci, `pre_http_request` przechwytuje wywołania — do api.anthropic.com nic
 nie poszło).
 
@@ -112,7 +112,7 @@ Do tego trafia klasa nr 3 z CLAUDE.md: dokumentacja kłamie względem kodu.
 
 ### Odtworzenie — test PADA na kodzie sprzed naprawy
 
-Sonda `proba-uninstall.php` (⛔ scratchpad tamtej sesji JUŻ NIE ISTNIEJE) stawiała atrapę WordPressa (własne
+Sonda `audyt/boty/proba-uninstall.php` (⭐ leży W REPO — wjechała w PR #147) stawia atrapę WordPressa (własne
 `get_option`/`delete_option`/`$wpdb`), zapełnia `wp_options` kompletem ośmiu
 opcji wtyczki, ustawia `usun_dane = 1`, wykonuje **prawdziwy `uninstall.php`**
 z repozytorium i wypisuje, co zostało. Żadna prawdziwa baza nie jest dotykana.

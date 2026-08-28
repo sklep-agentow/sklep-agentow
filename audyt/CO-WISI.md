@@ -263,7 +263,9 @@
   Przelot `narzedzia-qa/proby-kontrolne-przelot.sh` z 28.08 (commit `d28c971`): uruchomionych 30,
   `EXIT≠0` w sześciu — `dowod-z-paczki` (EXIT=2, brak `boty/paczki/chatbot-live-1.5.0.zip`),
   `blad-klucza`, `nonce`, `ip-za-proxy`, `przejecie`, `pulapka`. Wszystkie sześć dotyczą
-  **chatbota i segregatora**, żadna nie tyka sklepu.
+  **chatbota** — pięć ma `CEL=…/plugins/chatbot-live`, szósta wymaga starej paczki chatbota.
+  Żadna nie tyka sklepu ani segregatora. [zawężone po recenzji #203 r2: wcześniej pisało tu
+  „chatbota i segregatora”, co było nieścisłe]
   ⭐ POMIAR, NIE PRZYPUSZCZENIE: te same dwa strażniki (`blad-klucza`, `nonce`) uruchomione
   w osobnym drzewie roboczym na `origin/main` padają IDENTYCZNIE (`EXIT=1`, komunikat
   „czysty kod NIE przechodzi — strażnik pada zawsze, więc nic nie znaczy”). PR #203 nie zmienia
@@ -274,3 +276,17 @@
   To pilne, ale to teren botów (chatbot ma świadomie otwartą klasę 8) — do rozstrzygnięcia
   osobno, nie w PR-ze o przelocie sklepu.
   Skutek dla domknięcia: `k7-koniec.sh` kontrola 6 zostaje czerwona niezależnie od tego PR-a.
+
+- ⛔ **DWA POLA `required` W PANELU WŁAŚCICIELA NADAL BEZ POLSKIEGO KOMUNIKATU — świadomie nie objęte przez PR #203.**
+  `wtyczki/sklep-agentow/includes/admin-produkty.php:168` (Nazwa) i `:171` (Cena) stoją na samym
+  `required`, więc puste pole odpowie właścicielowi dymkiem przeglądarki — tym samym, który
+  PR #203 usunął z frontu. Naprawa tam nie sięga **z definicji**: `assets/front-ruch.js` ładuje się
+  wyłącznie na stronach sklepu (`sklep-agentow.php:118-149`, `is_page( $strona_sklep ) || is_page( $strona_dziekujemy )`),
+  a ekrany `wp-admin` żadnego z tych skryptów nie dostają.
+  **Dlaczego odłożone, a nie naprawione:** to tekst dla WŁAŚCICIELA (jedna osoba, która i tak zna
+  swój sklep), nie dla kupującego. Nasza reguła każe zawsze wracać do tekstu czytanego przez
+  KLIENTA — ten nim nie jest. Objęcie panelu wymaga osobnej kolejki assetów dla `wp-admin`,
+  czyli zmiany szerszej niż PR o przelocie.
+  **Co trzeba zrobić, gdy wróci:** wpiąć te same stałe `SKLEPAG_BLAD_*` przez atrybut
+  `data-sklepag-blad` i dołożyć tę samą czterolinijkową procedurę do assetów panelu.
+  Zgłoszone przez recenzenta w #203 r2 jako DROBNA 2, przyjęte jako dług z nazwą.

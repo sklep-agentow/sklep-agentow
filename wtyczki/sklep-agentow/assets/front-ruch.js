@@ -309,11 +309,15 @@
 	/* Pola wymagane mówią do kupującego PO POLSKU.
 	   Pole bez własnego komunikatu dostaje go od przeglądarki — po ANGIELSKU
 	   („Please check this box if you want to proceed.”), zależnie od jej ustawień
-	   językowych. Na stronie w całości polskiej to jedyne obcojęzyczne zdanie, jakie
-	   widzi kupujący, i pojawia się dokładnie w chwili płatności.
+	   językowych. Na stronie w całości polskiej były to jedyne obcojęzyczne zdania,
+	   jakie widział kupujący, i pojawiały się w dwóch miejscach: przy płatności
+	   i przy wysyłaniu opinii.
 	   Tekst bierzemy z atrybutu `data-sklepag-blad` PRZY POLU, żeby ta sama procedura
-	   obsłużyła każde pole wymagane — także formularz opinii, który rysuje się
-	   samodzielnym dokumentem i ma własną kopię tych czterech linii (`opinie.php`).
+	   obsłużyła każde pole opisane tym atrybutem — także formularz opinii, który rysuje
+	   się samodzielnym dokumentem i ma własną kopię tych czterech linii (`opinie.php`).
+	   ⛔ Zasięg: strony sklepu i strona opinii. Formularz produktu w panelu
+	   (`admin-produkty.php`) NIE jest objęty — ten skrypt nie ładuje się w `wp-admin`,
+	   a tam czyta go właściciel, nie kupujący — świadoma decyzja, nie przeoczenie.
 	   ⛔ Blokady to NIE dotyczy: zakup bez zgody odrzuca też serwer (`includes/zakup.php`),
 	   więc gdy skrypt nie wstanie, blokada trzyma dalej — tylko po angielsku.
 	   Komunikat ustawiamy Z GÓRY i przestawiamy przy każdej zmianie, zamiast liczyć

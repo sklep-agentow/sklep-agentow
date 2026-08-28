@@ -2,8 +2,9 @@
  *
  * Sklep jest w calosci polski, ale pole zgody stalo na samym `required`, wiec
  * komunikat rysowala przegladarka — po angielsku („Please check this box if you
- * want to proceed."), zaleznie od jezyka przegladarki klienta. Jedyny obcojezyczny
- * tekst, jaki widzial kupujacy, i to dokladnie w chwili platnosci.
+ * want to proceed.”), zaleznie od jezyka przegladarki klienta. Byly to jedyne
+ * obcojezyczne zdania, jakie widzial kupujacy — przy platnosci ORAZ przy wysylaniu
+ * opinii (patrz sekcja [6] nizej).
  *
  * Test pilnuje DWOCH rzeczy naraz, bo jedna bez drugiej jest bezwartosciowa:
  *   1) zakup bez zgody nadal NIE przechodzi (obietnica prawna, nie kosmetyka),
