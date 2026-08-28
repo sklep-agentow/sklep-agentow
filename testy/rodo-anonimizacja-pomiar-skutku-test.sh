@@ -42,20 +42,31 @@ pole() { printf '%s\n' "$1" | sed -n "s/^$2=//p" | head -1; }
 # ⛔ WAZNA 4 recenzji #207: test na wspolnym stosie moze mierzyc STARA kopie wtyczki,
 #    a wtedy zielone nie znaczy nic. Rozstrzygamy PRZED pomiarem: suma pliku handlera
 #    w kontenerze musi byc rowna sumie pliku z repo.
-HANDLER=wtyczki/sklep-agentow/includes/admin-zamowienie.php
-SUMA_REPO=$(sha256sum "$HANDLER" | cut -d" " -f1)
-SUMA_STOS=$(docker exec "$KONTENER" sha256sum /var/www/html/wp-content/plugins/sklep-agentow/includes/admin-zamowienie.php 2>/dev/null | cut -d" " -f1)
+# ⛔ Sprawdzamy CALA wtyczke, nie jeden plik. Zgodnosc jednego pliku znaczylaby tylko,
+#    ze handler jest swiezy — a mierzylibysmy mieszanke: nowy handler i STARA reszta.
+#    Nazwa kontroli musi pokrywac to, co naprawde mierzy.
+#    ⛔ LC_ALL=C przy OBU sortowaniach: bez tego kontener i host ustawiaja pliki w innej
+#    kolejnosci (inne locale) i suma sum sie rozjezdza mimo IDENTYCZNEJ tresci — przyrzad
+#    dawal wtedy falszywy alarm. Zlapane na sobie.
+KAT_REPO=wtyczki/sklep-agentow
+KAT_STOS=/var/www/html/wp-content/plugins/sklep-agentow
+SUMA_REPO=$(cd "$KAT_REPO" && find . -type f -name '*.php' -print0 | LC_ALL=C sort -z | xargs -0 sha256sum | LC_ALL=C sort | sha256sum | cut -d" " -f1)
+SUMA_STOS=$(docker exec "$KONTENER" sh -c "cd $KAT_STOS && find . -type f -name '*.php' -print0 | LC_ALL=C sort -z | xargs -0 sha256sum | LC_ALL=C sort | sha256sum" 2>/dev/null | cut -d" " -f1)
+LICZ_REPO=$(cd "$KAT_REPO" && find . -type f -name '*.php' | wc -l)
+LICZ_STOS=$(docker exec "$KONTENER" sh -c "cd $KAT_STOS && find . -type f -name '*.php' | wc -l" 2>/dev/null | tr -d '\r')
+echo "PLIKI_PHP_REPO=$LICZ_REPO · PLIKI_PHP_STOS=$LICZ_STOS"
 echo "SUMA_REPO=$SUMA_REPO"
 echo "SUMA_STOS=$SUMA_STOS"
 if [ -z "$SUMA_STOS" ]; then
-  echo "PRZYRZAD: nie umiem odczytac handlera na stosie ($KONTENER)"; exit 2
+  echo "PRZYRZAD: nie umiem policzyc sumy wtyczki na stosie ($KONTENER)"; exit 2
 fi
 if [ "$SUMA_REPO" != "$SUMA_STOS" ]; then
-  echo "PRZYRZAD: na stosie stoi INNA wersja handlera niz w repo — pomiar nic nie znaczy."
-  echo "PRZYRZAD: wgraj kod na stos, np. docker cp $HANDLER $KONTENER:/var/www/html/wp-content/plugins/sklep-agentow/includes/admin-zamowienie.php"
+  echo "PRZYRZAD: na stosie stoi INNA wersja wtyczki niz w repo — pomiar nic nie znaczy."
+  echo "PRZYRZAD: wgraj CALA wtyczke, np.:"
+  echo "PRZYRZAD:   docker cp $KAT_REPO/. $KONTENER:$KAT_STOS/"
   exit 2
 fi
-echo "  OK   przyrzad mierzy TEN kod, ktory jest w repo (sha256 zgodne)"
+echo "  OK   przyrzad mierzy TE wtyczke, ktora jest w repo ($LICZ_REPO plikow PHP, sha256 zgodne)"
 echo
 
 echo "=== A. sciezka szczesliwa: zapis sie udaje ==="

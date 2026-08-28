@@ -380,3 +380,8 @@ rejestr dostanie czwarty stan dla znalezisk typu „brak pomiaru”, których ni
 - ⬜ **`#207` WAŻNA 4, druga połowa** — asercja zgodności kodu ze stosem stoi w teście RODO,
   ale POZOSTAŁE testy na żywym stosie jej nie mają. Do przeglądu przy następnej rundzie QA:
   każdy test mierzący stos powinien najpierw dowieść, że mierzy TEN kod, który jest w repo.
+- ⬜ **`#207` DROBNA 5** — `sklepag_obsluz_anonimizacje()` wciąga `mail_tresc` do pamięci
+  (`SELECT id, email_kupujacego, mail_tresc`) i nigdy go nie używa ani nie czyści. Dziś nieszkodliwe:
+  treść maila nie niesie adresu w innej postaci niż ta czyszczona. Do przeglądu przy następnej
+  rundzie QA: albo pole wypada z zapytania, albo zostaje objęte anonimizacją — obecny stan jest
+  niejednoznaczny dla czytającego (docblock mówi o tym wprost, żeby nie było wątpliwości).

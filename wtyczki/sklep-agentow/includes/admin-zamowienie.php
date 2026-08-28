@@ -154,9 +154,24 @@ function sklepag_obsluz_resend() {
 add_action( 'admin_post_sklepag_anonimizuj', 'sklepag_obsluz_anonimizacje' );
 
 /**
- * Email → NULL + usunieto_dnia; kwoty i czasy ZOSTAJĄ (dashboard żyje).
- * Ślady adresu w opisach zdarzeń tego zamówienia zastępowane znacznikiem;
- * token pobrania unieważniany (zanonimizowany klient = koniec relacji).
+ * Anonimizacja kupującego na żądanie (RODO).
+ *
+ * Kolejność jest kontraktem, nie stylem: najpierw ślady WTÓRNE (adres w opisach zdarzeń,
+ * imię i token przy opinii), na końcu ŹRÓDŁO (adres w zamówieniu). Źródło jest kluczem
+ * do znalezienia śladów, więc ginie ostatnie — inaczej powtórzenie po awarii nie miałoby
+ * czego szukać. Gdy czyszczenie śladów zawiedzie, funkcja przerywa NIE TKNĄWSZY źródła.
+ *
+ * Adres → pusty + `usunieto_dnia`; token pobrania unieważniany (zanonimizowany klient =
+ * koniec relacji). Kwoty i czasy ZOSTAJĄ — dashboard żyje.
+ *
+ * Potwierdzenie usunięcia idzie WYŁĄCZNIE za zmierzonym stanem po zapisie, i to we
+ * wszystkich trzech miejscach naraz. Przy niepowodzeniu: zdarzenie `anonimizacja_blad`
+ * z nazwaniem, które miejsce nie zostało domknięte, oraz `wp_die` z ostrzeżeniem, żeby
+ * NIE potwierdzać usunięcia osobie składającej żądanie.
+ *
+ * ⛔ `mail_tresc` jest w zapytaniu, bo pole bywa potrzebne przy diagnozie zamówienia,
+ * ale ta funkcja go NIE zmienia — treść maila nie zawiera adresu w postaci innej niż
+ * ta czyszczona wyżej.
  */
 function sklepag_obsluz_anonimizacje() {
 	if ( ! current_user_can( 'manage_options' ) ) {
