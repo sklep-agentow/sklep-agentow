@@ -48,6 +48,18 @@
   (dostał odmowę przy #177 i oparł się na przebiegu testu). Rozszerzyć okno o bezpieczną
   operację odczytu tabel sklepu (SELECT-only, bez danych osobowych w wyjściu — imię maskować).
 
+- **`dowod-z-paczki-proba-kontrolna.sh` umiera na ZASZYTEJ NA SZTYWNO wersji paczki** —
+  szuka `boty/paczki/chatbot-live-1.5.0.zip`, którego w repo nie ma od dawna (są 1.5.7–1.5.11).
+  Kończy **EXIT=2**, czyli „błąd przyrządu”, i tak samo zachowuje się na czystym `origin/main`
+  (zmierzone 28.08: log prób z `main`, commit `28533e0`, ta sama pozycja `EXIT=2 0s`).
+  ⛔ Znaczenie: nie wiemy dziś, czy `dowod-z-paczki.sh` **potrafi paść** — a to on pilnuje
+  paczki jadącej do klienta. Luka dotyczy WIARYGODNOŚCI narzędzia, nie samej paczki:
+  zgodność paczki 0.9.20 jest zmierzona osobno (`paczka-zgodnosc.sh` → EXIT=0, 59/59 plików).
+  **CO ZAMYKA:** wskazać w próbie paczkę, która w repo istnieje (albo wyliczać najnowszą
+  zamiast wpisywać wersję), potem przelot prób od nowa. ⚠️ Naprawa unieważnia świeży log
+  prób (warunek 6 `k7-koniec` przeterminowuje dowód po zmianie w `narzedzia-qa/`), więc
+  robi się ją RAZEM z pozostałymi pięcioma padającymi próbami chatbota, nie osobno.
+
 ## 🔍 K7 — AUDYT SKLEPU W TOKU (od 25.08 wieczór) — plan `audyt/PLAN-K7-AUDYT-SKLEPU.md` v2, krytyka r1 obok
 - Faza: PR-0 (paczka 0.9.13 + D33) → materiał `audyt/sklep/material/` → kalibracja → runda A. Stan bieżący
   i decyzje: `/root/.claude/CONTEXT-SERWER.md`. ⛔ Kod zamrożony tagiem `k7-zamrozenie` po scaleniu PR-0.
