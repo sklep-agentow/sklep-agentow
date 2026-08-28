@@ -258,3 +258,19 @@
   jak każda liczba; wzór: `dokumentacja-zgodnosc*.sh`.
 - **Regulamin sklepu (strona DRAFT #120)**: dopisać gwarancję satysfakcji 14 dni (D31)
   i tryb wygaśnięcia aktualizacji przy zwrocie — przy finalizacji regulaminu w K8.
+
+- ⛔ **SZEŚĆ PRÓB KONTROLNYCH NARZĘDZI PADA — dług sprzed PR #203, nie z niego.**
+  Przelot `narzedzia-qa/proby-kontrolne-przelot.sh` z 28.08 (commit `d28c971`): uruchomionych 30,
+  `EXIT≠0` w sześciu — `dowod-z-paczki` (EXIT=2, brak `boty/paczki/chatbot-live-1.5.0.zip`),
+  `blad-klucza`, `nonce`, `ip-za-proxy`, `przejecie`, `pulapka`. Wszystkie sześć dotyczą
+  **chatbota i segregatora**, żadna nie tyka sklepu.
+  ⭐ POMIAR, NIE PRZYPUSZCZENIE: te same dwa strażniki (`blad-klucza`, `nonce`) uruchomione
+  w osobnym drzewie roboczym na `origin/main` padają IDENTYCZNIE (`EXIT=1`, komunikat
+  „czysty kod NIE przechodzi — strażnik pada zawsze, więc nic nie znaczy”). PR #203 nie zmienia
+  ani jednego pliku botów — `git diff --stat origin/main...HEAD -- wtyczki/chatbot-live/ wtyczki/segregator-maila/ boty/`
+  jest pusty.
+  ⛔ Dwa z nich (`blad-klucza`, `nonce`) to nie ślepota na część wad, tylko **strażnik, który
+  pada ZAWSZE** — czyli nie odróżnia kodu z wadą od kodu bez wady i jako bramka nie znaczy nic.
+  To pilne, ale to teren botów (chatbot ma świadomie otwartą klasę 8) — do rozstrzygnięcia
+  osobno, nie w PR-ze o przelocie sklepu.
+  Skutek dla domknięcia: `k7-koniec.sh` kontrola 6 zostaje czerwona niezależnie od tego PR-a.
