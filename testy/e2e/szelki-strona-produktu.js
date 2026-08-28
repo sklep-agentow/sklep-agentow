@@ -27,6 +27,16 @@ const { wymagajChromium } = require('../lib/chromium');
 const BAZA = process.argv[2] || 'http://localhost:8890';
 const SLUG = process.argv[3] || 'chatbot-live';
 const SILNIK = (process.argv[4] || 'chromium').toLowerCase();
+/* ⛔ NAZWA SILNIKA MUSI BYC ZNANA. Bez tego kazda inna wartosc — literowka `edge`, `webkit`,
+   cokolwiek — wpadala w ostatnia galaz wyboru nizej, uruchamiala chromium, wypisywala
+   `WSZYSTKO OK` i konczyla EXIT=0. Czlowiek zapisywal wtedy w tabeli „Edge ✅”, majac pomiar
+   z chromium. To ta sama klasa klamiacego straznika, ktora ten przyrzad mial zamknac dla
+   `msedge` — zamknieta wtedy dla JEDNEGO literalu, nie dla calej klasy (recenzja WAZNA 4). */
+const SILNIKI_ZNANE = [ 'chromium', 'firefox', 'msedge' ];
+if ( ! SILNIKI_ZNANE.includes( SILNIK ) ) {
+  console.error( 'BLAD PRZYRZADU: nieznany silnik „' + SILNIK + '”. Znane: ' + SILNIKI_ZNANE.join( ', ' ) + '.' );
+  process.exit( 2 );
+}
 const URL = BAZA + '/sklep/produkt/' + SLUG + '/';
 const PRZEKIERUJ = process.env.SKLEPAG_PRZEKIERUJ_HOST || '';
 const OSTATNIA_FAZA = '.sklepag-fazy > .sklepag-faza:last-child';

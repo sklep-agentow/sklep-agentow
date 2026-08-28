@@ -164,3 +164,54 @@ naprawczą, ZOBACZ, co dokładnie ona zmienia** — `--stat` przed `apply`, nigd
 1. Czy baza mojej gałęzi została scalona **squashem**? Jeśli tak, jej historia już nie istnieje.
 2. Czy liczę różnicę od punktu, w którym **naprawdę się rozeszliśmy**, czy od `main`?
 3. Czy w łatce są pliki, **których nie tykałem**? Każdy taki to cofnięcie cudzej zmiany.
+
+---
+
+## KLASY DOPISANE 2026-08-28 (noc) — RUNDA 4: MP SERVICE SUITE 1.3.13, projekt NIE ZDANY
+
+⛔ **Skąd to się tu bierze i dlaczego tak późno.** Te klasy leżały od 2026-08-09 w warsztacie
+(`docs/BRAMKI-ANTY-POWTORKA-bledy-kolegi.md`, sekcja „RUNDA 4"), ale **nigdy nie trafiły do TEGO
+rejestru** — zmierzone 28.08: `grep` na `Attachments.php`, `CaseRepo`, `magic-link`, `FormConfig`
+w tym pliku dawał **0 trafień**, przy próbie kontrolnej `catsnboard` → 7 trafień. Rejestr znał
+rundy 1–3 i nie znał rundy 4, czyli **tej jedynej, po której projekt przepadł**. Ocena recenzenta:
+**9,5/10 i NIEZALICZONE**, jego słowami *„zabrakło bardzo mało"*, a same błędy nazwał „małymi".
+
+⭐ **Wszystkie sześć przeszło przez ~10 naszych audytów.** Nie zostały przeoczone przez pośpiech —
+przeszły przez proces, który uważaliśmy za wystarczający.
+
+| # | Klasa (skąd wzięcie) | Dowód z tamtego projektu | Co ją łapie U NAS |
+|---|---|---|---|
+| 23 | **KASOWANIE POZORNE — flaga „usunięto" stawiana bezwarunkowo, plik z danymi klienta zostaje** | `Attachments.php:519`. `wp_delete_file()` **nie zwraca wyniku**, więc kod nie miał jak wiedzieć, czy usunięcie się udało — a mimo to zapisywał stan „usunięty". Recenzent: „załącznik oznaczony jako usunięty potwierdza usunięcia pliku ale plik nadal zawiera dane klienta" | Test: skasuj przy katalogu **bez prawa zapisu** → stan MUSI zostać „nieusunięty". Po każdym `wp_delete_file()` weryfikuj `is_file()` PO operacji. ⛔ Dotyczy danych osobowych: pozorne kasowanie to nie bug, to niezrealizowane żądanie usunięcia |
+| 24 | **LIMIT MIERZY INNY WYMIAR NIŻ TEN, KTÓRY ROBI SZKODĘ** | `Attachments.php:334` — limit BAJTÓW był, limit PIKSELI nie. PNG 2 MB o wymiarach 20000×20000 przechodzi limit rozmiaru i kładzie serwer przy dekodowaniu (obraz-bomba) | Przy KAŻDYM limicie nazwij, co robi szkodę, i sprawdź, czy limit mierzy TO. Tu: `getimagesize()` + próg w pikselach **przed** dekodowaniem. To samo pytanie stoi w `PULL_REQUEST_TEMPLATE.md` („limity mierzą to, co robi szkodę") |
+| 25 | **TOKEN JEDNORAZOWY BEZ BLOKADY — dwie sesje z jednego linku** | `Front/Login.php:204` — odczyt tokenu i skasowanie go jako dwie osobne operacje. Recenzent: „jeden token moze w bardzo krotkim oknie utworzyc wiecej niz jedna sesje". ⛔ **POWTÓRKA błędu #3 z rund 1–3** (race condition w blokadzie importera), który mieliśmy oznaczony ✅ | Zużycie tokenu = **JEDNA operacja z warunkiem**, nie „sprawdź, potem zapisz". Wzorce w tym repo: `pobieranie.php` (`UPDATE … WHERE id=%d AND pobrania_uzyte < pobrania_limit`) i `opinie.php` (CAS `… WHERE zamowienie_id=%d AND status='zalazek'`). Test **równoległy**: 2 żądania z tym samym tokenem → przechodzi dokładnie 1 |
+| 26 | **TRANSAKCJA BEZ SPRAWDZENIA WYNIKU I BEZ ROLLBACK** | `CaseRepo.php:2042` — sprawa traciła klienta ORAZ zapasowy e-mail, czyli kontakt przepadał bezpowrotnie. ⛔ W tym samym pliku **10 innych transakcji miało ROLLBACK** — wzorzec leżał obok, nikt go nie sprawdził | Każdy zapis stanu poprzedzony **POMIAREM skutku**, nie samym wywołaniem funkcji. `COMMIT` warunkowy, żaden zapasowy ślad nie znika przed potwierdzeniem nowego zapisu. Test z **wymuszoną porażką zapisu** → dane zapasowe MUSZĄ przeżyć |
+| 27 | **DWA REJESTRY TEJ SAMEJ RZECZY — filtr niespójny z walidacją** | `FormConfig.php:56` (twarda stała w intake) kontra `Categories.php` (dynamiczna lista z bazy). Recenzent: „powinien uzywac jednego przefiltrowanego rejestru a tak nie jest" | Jedno źródło prawdy: filtr i walidacja czytają **ten sam** rejestr. Test: dodaj pozycję w rejestrze → zgłoszenie z nią MUSI przejść walidację bez dotykania drugiego pliku |
+| 28 | **KOSZT ROZWIĄZANIA PRZY ISTNIEJĄCEJ DARMOWEJ ALTERNATYWIE** (runda 1, `catsnboard` — uwaga NIGDY dotąd niezapisana) | Recenzent o silniku tłumaczeń na AI: *„nie jest to złe, że za claude tlumaczy, ale jest to koszt — gdzie istnieja tlumaczenia jakby darmowe"*. Nie zakwestionował poprawności, tylko **wybór płatnej drogi tam, gdzie istnieje darmowa** | Przy każdym module wołającym płatne API: nazwij w dokumentacji, **dlaczego nie darmowa alternatywa** (jakość / zakres / brak alternatywy), i podaj koszt jednostkowy. ⛔ Brak tego zdania czyta się jako niewiedzę o alternatywie, a nie jako decyzję |
+
+### Dwie PRZYCZYNY-MATKI stojące pod tymi klasami
+
+| # | Przyczyna-matka | Które klasy | Lek systemowy |
+|---|---|---|---|
+| **H** | **Nie sprawdzamy, czy operacja się udała — a mimo to zapisujemy jej skutek.** Kasujemy plik → stawiamy „usunięto". Zapisujemy klienta → robimy `COMMIT`. Zawsze bezwarunkowo | 23, 26 | Każdy zapis stanu poprzedzony POMIAREM skutku, nie wywołaniem funkcji |
+| **I** | **Kontrola mierzy inny wymiar niż ten, który robi szkodę.** Limit bajtów przy zagrożeniu w pikselach. Zielona i ślepa | 24 | Przy każdym limicie: nazwij, co robi szkodę, i sprawdź, czy limit mierzy TO |
+
+### ⛔ Meta-lekcja, którą tamten plik napisał sam o sobie
+
+1. **Wszystkie bramki z rund 1–3 miały status „🔴 zbudować" albo „🟡 checklista". Ani jednej ✅.**
+   Zaprojektowaliśmy maszyny i nie zbudowaliśmy żadnej. Plik miał na to trzy tygodnie.
+2. **✅ na tamtej liście znaczyło „wiemy o tym", nie „nie może wrócić".** Błąd #3 (race condition)
+   był oznaczony ✅, bo zapisaliśmy pamięć. Wrócił jako klasa 25 wyżej.
+   ⭐ **Wiedza nie blokuje wydania — blokuje TEST.**
+3. Pierwsze zdanie tamtego pliku brzmi: *„każdy błąd dostaje MASZYNĘ, nie notatkę «pamiętaj».
+   Notatka zawiodła — dlatego się powtarzały."* **Ten plik stał się notatką.**
+
+⭐ **Dlatego ten rozdział ma sens tylko wtedy, gdy każda klasa 23–28 dostanie u nas test z `exit 1`.**
+Sam wpis w rejestrze jest dokładnie tym, co już raz nie zadziałało.
+
+**STAN SPRAWDZENIA W TYM REPO (28.08, z odczytu kodu):**
+- ✅ **25** zamknięta: `pobieranie.php` licznik atomowy w jednym `UPDATE` z warunkiem; `opinie.php`
+  CAS na statusie + zerowanie tokenu w tej samej operacji.
+- ✅ **26** zamknięta w tym samym miejscu: `if ( ! $zapisane ) { return 'wyscig'; }` — wynik operacji
+  jest sprawdzany, nie zakładany.
+- ⬜ **23, 24, 27, 28** — NIESPRAWDZONE w tym repo. Do przelotu osobno, klasa 23 pierwsza
+  (dotyka danych osobowych kupujących).
