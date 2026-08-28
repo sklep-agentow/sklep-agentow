@@ -125,6 +125,7 @@ if [ "${TRAF_C:-0}" = "0" ]; then
   exit 2
 fi
 ok "C: podlozenie trafilo w zapytanie ($TRAF_C x) — jest co mierzyc"
+[ "$(pole "$WY_C" ADRES_LUZEM_PRZED)" = "1" ] && ok "C: warunek wstepny — jest slad BEZ zamowienie_id (jak z eksportu CSV)" || zle "C: brak sladu luzem — przypadek nic by nie zmierzyl"
 
 STAN_C=$($WP eval-file - "$ID_C" < testy/kroki-rodo/rodo-anonimizacja-krok-stan.php 2>&1)
 printf '%s\n' "$STAN_C" | sed 's/^/    | /'

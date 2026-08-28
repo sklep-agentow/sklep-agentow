@@ -24,6 +24,16 @@ add_action( 'admin_post_sklepag_resend', 'sklepag_obsluz_resend' );
  * Wyścig dwóch równoczesnych resendów: wygrywa ostatni zapis skrótu, wcześniejszy
  * mail niesie martwy link — naprawialne kolejnym resendem, akceptowalne dla akcji ręcznej.
  */
+/*
+ * ⛔ DŁUG NAZWANY, NIE UKRYTY: ta ścieżka ma SZEŚĆ zapisów `$wpdb->query()`, których wynik
+ * nie jest sprawdzany, i zapisuje skutek (status, token, treść maila) niezależnie od tego,
+ * czy zapis się udał. To ta sama klasa co naprawiona niżej w anonimizacji — tam mierzymy
+ * STAN po zapisie, tu jeszcze nie.
+ *
+ * Świadomie nietknięte w tej zmianie: to inna ścieżka, z własnym ryzykiem i własnym zestawem
+ * przypadków (ponowna wysyłka, kompensacja po nieudanym mailu), więc wymaga własnych testów.
+ * Dopisanie jej do naprawy anonimizacji rozdmuchałoby zakres jednej zmiany.
+ */
 function sklepag_obsluz_resend() {
 	if ( ! current_user_can( 'manage_options' ) ) {
 		wp_die( 'Brak uprawnień.', 'Sklep Agentów', 403 );
@@ -164,6 +174,10 @@ add_action( 'admin_post_sklepag_anonimizuj', 'sklepag_obsluz_anonimizacje' );
  * Adres → pusty + `usunieto_dnia`; token pobrania unieważniany (zanonimizowany klient =
  * koniec relacji). Kwoty i czasy ZOSTAJĄ — dashboard żyje.
  *
+ * Ślady adresu w dzienniku zdarzeń czyszczone są po TREŚCI, w całej tabeli — także w wierszach
+ * niezwiązanych z tym zamówieniem (np. wpis o eksporcie CSV zapisujący frazę wyszukiwania,
+ * która bywa adresem). Żądanie dotyczy adresu człowieka, nie pojedynczego wiersza.
+ *
  * Potwierdzenie usunięcia idzie WYŁĄCZNIE za zmierzonym stanem po zapisie, i to we
  * wszystkich trzech miejscach naraz. Przy niepowodzeniu: zdarzenie `anonimizacja_blad`
  * z nazwaniem, które miejsce nie zostało domknięte, oraz `wp_die` z ostrzeżeniem, żeby
@@ -210,11 +224,23 @@ function sklepag_obsluz_anonimizacje() {
 	 */
 	$ok_zdarzenia = true;
 	if ( '' !== $email ) {
+		/*
+		 * ⛔ SZUKAMY PO TRESCI ADRESU, NIE PO PRZYPISANIU DO ZAMOWIENIA.
+		 *
+		 * Zadanie usuniecia dotyczy ADRESU CZLOWIEKA, a nie jednego wiersza. Adres trafia
+		 * do dziennika takze w wierszach BEZ `zamowienie_id` — np. wpis o eksporcie CSV
+		 * zapisuje uzyte filtry, a wsrod nich fraze wyszukiwania, ktora bywa e-mailem
+		 * (wyszukiwarka zamowien nazywa sie wprost „Szukaj po e-mailu”). Czyszczenie
+		 * ograniczone do `zamowienie_id = %d` zostawialoby taki slad, a wtyczka i tak
+		 * meldowalaby usuniecie.
+		 *
+		 * `esc_like()` obowiazkowy: `_` i `%` sa dzikimi kartami SQL, a adres moze je zawierac.
+		 */
 		$ok_zdarzenia = $wpdb->query(
 			$wpdb->prepare(
-				"UPDATE {$wpdb->prefix}sklepag_zdarzenia SET opis = REPLACE(opis, %s, '[usunięto — RODO]') WHERE zamowienie_id = %d",
+				"UPDATE {$wpdb->prefix}sklepag_zdarzenia SET opis = REPLACE(opis, %s, '[usunięto — RODO]') WHERE opis LIKE %s",
 				$email,
-				(int) $zam->id
+				'%' . $wpdb->esc_like( $email ) . '%'
 			)
 		);
 	}
@@ -282,10 +308,11 @@ function sklepag_obsluz_anonimizacje() {
 	 */
 	$slady_dziennik = 0;
 	if ( '' !== $email ) {
+		/* Pomiar MUSI byc dokladnie tak szeroki jak czyszczenie — inaczej nazwa kontroli
+			(„brak sladow adresu”) obiecuje wiecej, niz kontrola sprawdza. */
 		$slady_dziennik = (int) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$wpdb->prefix}sklepag_zdarzenia WHERE zamowienie_id = %d AND opis LIKE %s",
-				(int) $zam->id,
+				"SELECT COUNT(*) FROM {$wpdb->prefix}sklepag_zdarzenia WHERE opis LIKE %s",
 				'%' . $wpdb->esc_like( $email ) . '%'
 			)
 		);

@@ -58,8 +58,7 @@ Nic jeszcze.
 ### Sprawdzenie
 - Naprawa anonimizacji ma automatyczny test, który **pada na wersji sprzed naprawy** i przechodzi
   po niej. Test podkłada awarię zapisu i sprawdza, że wtyczka w takiej sytuacji NIE potwierdza
-  usunięcia, a po powtórzeniu operacji dane znikają ze wszystkich trzech miejsc: dwadzieścia
-  sprawdzeń na dwadzieścia.
+  usunięcia, a po powtórzeniu operacji dane znikają ze wszystkich trzech miejsc.
 - ⚠️ Naprawa komunikatu przy nieudanym zapisie produktu **nie ma jeszcze własnego testu** —
   jest sprawdzona odczytem kodu. Dopisanie testu wymaga wymuszenia nieudanego usunięcia pliku
   i jest zaplanowane na następną rundę.

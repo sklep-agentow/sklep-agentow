@@ -151,8 +151,8 @@ link do pobrania w mailu, jednorazowy link do opinii.
   usuniety, takze gdy usuniecie sie nie powiodlo. Komunikat opisuje teraz stan faktyczny.
 * Naprawione: adres kupujacego mogl zostac w dzienniku zdarzen mimo potwierdzenia usuniecia.
   Potwierdzenie wymaga teraz czystosci w trzech miejscach: adres w zamowieniu, slady w opisach
-  zdarzen oraz imie i token przy opinii. Naprawa ma automatyczny test z podlozona awaria zapisu
-  (20 sprawdzen); naprawa komunikatu przy nieudanym zapisie produktu testu jeszcze nie ma.
+  zdarzen oraz imie i token przy opinii. Naprawa ma automatyczny test z podlozona awaria zapisu;
+  naprawa komunikatu przy nieudanym zapisie produktu testu jeszcze nie ma.
 
 = 0.9.20 =
 * Poprawka: gdy zostawisz puste pole wymagane — zgodę przy zakupie albo imię, treść

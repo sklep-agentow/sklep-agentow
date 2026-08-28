@@ -393,3 +393,13 @@ rejestr dostanie czwarty stan dla znalezisk typu „brak pomiaru”, których ni
   przelotami (raz jest w szóstce, raz w siódemce), stąd rozbieżne liczby w logach — **nie jest to
   regresja żadnego PR-a sklepu**. **CO ZAMYKA:** naprawa razem z pozostałymi strażnikami chatbota
   — to jeden teren, jedna robota, nie sześć osobnych.
+- ⬜ **BLIŹNIAK klasy „zapisujemy skutek, nie sprawdziwszy, czy operacja się udała" —
+  ścieżka ponownej wysyłki maila** (`wtyczki/sklep-agentow/includes/admin-zamowienie.php`,
+  `sklepag_obsluz_resend()`). Zmierzone 28.08 (recenzja `#207`, runda 3): **sześć** wywołań
+  `$wpdb->query()` bez sprawdzenia wyniku — zapisy tokenu, `link_wygasa`, `mail_tresc`, statusu
+  `mail_blad` i licznika prób oraz tokenu opinii. Skutek zapisywany niezależnie od powodzenia.
+  ⛔ To ta sama klasa, którą ten PR naprawił w anonimizacji — czyli klasa 8 briefingu (naprawa
+  egzemplarza zamiast klasy). Nazwana w kodzie, przy funkcji.
+  **CO ZAMYKA:** przenieść wzorzec z anonimizacji — pomiar STANU po zapisie zamiast kodu powrotu —
+  wraz z testem podkładającym awarię każdego z sześciu zapisów osobno. Osobna robota, bo to inna
+  ścieżka: ponowna wysyłka i kompensacja po nieudanym mailu mają własne przypadki brzegowe.

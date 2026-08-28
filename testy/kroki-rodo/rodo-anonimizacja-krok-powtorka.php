@@ -67,6 +67,22 @@ $wpdb->insert(
 		'czas'          => $teraz,
 	)
 );
+/* ⛔ SLAD BEZ `zamowienie_id` — dokladnie taki zapisuje eksport CSV z filtrem
+   „szukaj po e-mailu”. Anonimizacja ograniczona do wierszy zamowienia zostawialaby go,
+   a wtyczka i tak meldowalaby usuniecie. */
+$wpdb->insert(
+	$tz,
+	array(
+		'zamowienie_id' => null,
+		'typ'           => 'eksport_csv',
+		'opis'          => '3 wierszy; filtry: {"szukaj":"' . $mail . '"}',
+		'uzytkownik'    => 'test',
+		'czas'          => $teraz,
+	)
+);
+$luzem = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$tz} WHERE zamowienie_id IS NULL AND opis LIKE %s", '%' . $wpdb->esc_like( $mail ) . '%' ) ); // phpcs:ignore
+echo 'ADRES_LUZEM_PRZED=' . $luzem . "\n";
+
 $w_dzienniku = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$tz} WHERE zamowienie_id = %d AND opis LIKE %s", $id, '%' . $wpdb->esc_like( $mail ) . '%' ) ); // phpcs:ignore
 echo 'ID=' . $id . "\n";
 echo 'ADRES_W_DZIENNIKU_PRZED=' . $w_dzienniku . "\n";
