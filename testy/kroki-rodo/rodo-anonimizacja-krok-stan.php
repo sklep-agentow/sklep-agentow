@@ -36,8 +36,15 @@ echo 'ZDARZENIE_ANONIMIZACJA_BLAD=' . ( in_array( 'anonimizacja_blad', $rodz, tr
 /* ⛔ Slady adresu w CALEJ tabeli zdarzen — takze w wierszach BEZ `zamowienie_id`
    Krok nie zna adresu, wiec szuka po markerze testowym:
    wszystkie adresy tego testu koncza sie na @example.test. */
-$slady = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$tz} WHERE opis LIKE %s", '%' . $wpdb->esc_like( '@example.test' ) . '%' ) ); // phpcs:ignore
+/* ⛔ Wpis OBCEGO kupujacego jest WYKLUCZONY z licznika: jego adres tez konczy sie markerem
+   testowym, ale MA zostac — to inny czlowiek. Liczenie go jako naszego sladu sprawialoby,
+   ze licznik nigdy nie zejdzie do zera, niezaleznie od tego, czy naprawa dziala. */
+$slady = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$tz} WHERE typ <> 'proba_obcy' AND opis LIKE %s", '%' . $wpdb->esc_like( '@example.test' ) . '%' ) ); // phpcs:ignore
 echo 'SLADY_W_DZIENNIKU=' . $slady . "\n";
+
+/* ⛔ Wpis OBCEGO kupujacego (adres zawierajacy nasz jako koncowke) MUSI przezyc nietkniety. */
+$obcy = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$tz} WHERE typ = 'proba_obcy' AND opis LIKE %s", '%' . $wpdb->esc_like( '@example.test' ) . '%' ) ); // phpcs:ignore
+echo 'WPIS_OBCEGO_CALY=' . $obcy . "\n";
 
 /* Sprzatanie: test stawia WLASNE warunki wstepne i po sobie zmywa — stos jest wspolny. */
 $wpdb->delete( $tz, array( 'zamowienie_id' => $id ) );

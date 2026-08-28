@@ -125,7 +125,7 @@ if [ "${TRAF_C:-0}" = "0" ]; then
   exit 2
 fi
 ok "C: podlozenie trafilo w zapytanie ($TRAF_C x) — jest co mierzyc"
-[ "$(pole "$WY_C" ADRES_LUZEM_PRZED)" = "1" ] && ok "C: warunek wstepny — jest slad BEZ zamowienie_id (jak z eksportu CSV)" || zle "C: brak sladu luzem — przypadek nic by nie zmierzyl"
+[ "$(pole "$WY_C" ADRES_LUZEM_PRZED)" != "0" ] && ok "C: warunek wstepny — sa slady BEZ zamowienie_id ($(pole "$WY_C" ADRES_LUZEM_PRZED)): nasz z eksportu + wpis obcego" || zle "C: brak sladow luzem — przypadek nic by nie zmierzyl"
 
 STAN_C=$($WP eval-file - "$ID_C" < testy/kroki-rodo/rodo-anonimizacja-krok-stan.php 2>&1)
 printf '%s\n' "$STAN_C" | sed 's/^/    | /'
@@ -135,6 +135,7 @@ case "$WY_C" in *"PROBA1_REDIRECT="*"sklepag_anonimizacja=ok"*) zle "C: pierwsza
 [ "$(pole "$WY_C" ADRES_W_ZRODLE_PO_PROBIE1)" = "ZOSTAL" ] && ok "C: po nieudanej probie zrodlo NIETKNIETE (jest z czego powtorzyc)" || zle "C: zrodlo wyczyszczone mimo odmowy — powtorka nie ma jak domknac dziennika"
 case "$WY_C" in *"PROBA2_REDIRECT="*"sklepag_anonimizacja=ok"*) ok "C: druga proba domknela i potwierdzila" ;; *) zle "C: druga proba NIE domknela anonimizacji" ;; esac
 [ "$(pole "$STAN_C" MAIL_PO)" = "PUSTY" ] && ok "C: adres zniknal ze zrodla" || zle "C: adres ZOSTAL w zrodle po powtorce"
+[ "$(pole "$STAN_C" WPIS_OBCEGO_CALY)" = "1" ] && ok "C: wpis INNEGO kupujacego (adres z naszym jako koncowka) NIETKNIETY" || zle "C: przepisano wpis INNEGO kupujacego — niezakotwiczone dopasowanie psuje cudze dane"
 [ "$(pole "$STAN_C" SLADY_W_DZIENNIKU)" = "0" ] && ok "C: adres zniknal TAKZE z dziennika zdarzen" || zle "C: adres ZOSTAL w dzienniku — to jest wada z WAZNEJ 2 recenzji #207"
 
 echo

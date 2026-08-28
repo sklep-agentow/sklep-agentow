@@ -177,6 +177,8 @@ add_action( 'admin_post_sklepag_anonimizuj', 'sklepag_obsluz_anonimizacje' );
  * Ślady adresu w dzienniku zdarzeń czyszczone są po TREŚCI, w całej tabeli — także w wierszach
  * niezwiązanych z tym zamówieniem (np. wpis o eksporcie CSV zapisujący frazę wyszukiwania,
  * która bywa adresem). Żądanie dotyczy adresu człowieka, nie pojedynczego wiersza.
+ * ⛔ Dopasowanie jest ZAKOTWICZONE na granicy znaków adresu: adres jednego kupującego bywa
+ * końcówką adresu innego, więc niezakotwiczona podmiana przepisywałaby cudze wpisy.
  *
  * Potwierdzenie usunięcia idzie WYŁĄCZNIE za zmierzonym stanem po zapisie, i to we
  * wszystkich trzech miejscach naraz. Przy niepowodzeniu: zdarzenie `anonimizacja_blad`
@@ -236,13 +238,35 @@ function sklepag_obsluz_anonimizacje() {
 		 *
 		 * `esc_like()` obowiazkowy: `_` i `%` sa dzikimi kartami SQL, a adres moze je zawierac.
 		 */
-		$ok_zdarzenia = $wpdb->query(
+		/*
+		 * ⛔ DOPASOWANIE MUSI BYC ZAKOTWICZONE. `REPLACE` w SQL zamienia KAZDY podciag,
+		 * a adres jednego kupujacego bywa koncowka adresu innego (`ala@x.pl` siedzi
+		 * w `bala@x.pl`). Czyszczenie jednej osoby przepisywaloby wtedy wpis dotyczacy
+		 * DRUGIEJ — czyli naprawiajac wyciek, psulibysmy cudze dane.
+		 *
+		 * Dlatego dopasowanie liczone jest w PHP, z granica na znakach dozwolonych
+		 * w adresie: podmieniamy tylko wystapienia, przed ktorymi i za ktorymi NIE MA
+		 * kolejnego znaku adresu. SQL sluzy wylacznie do ZAWEZENIA kandydatow.
+		 */
+		$znacznik  = '[usunięto — RODO]';
+		$kandydaci = $wpdb->get_results(
 			$wpdb->prepare(
-				"UPDATE {$wpdb->prefix}sklepag_zdarzenia SET opis = REPLACE(opis, %s, '[usunięto — RODO]') WHERE opis LIKE %s",
-				$email,
+				"SELECT id, opis FROM {$wpdb->prefix}sklepag_zdarzenia WHERE opis LIKE %s",
 				'%' . $wpdb->esc_like( $email ) . '%'
 			)
 		);
+		$wzor      = '/(?<![A-Za-z0-9._%+\-])' . preg_quote( $email, '/' ) . '(?![A-Za-z0-9._%+\-])/';
+		foreach ( (array) $kandydaci as $k ) {
+			$nowy = preg_replace( $wzor, $znacznik, (string) $k->opis );
+			if ( null === $nowy || $nowy === (string) $k->opis ) {
+				/* Brak zakotwiczonego wystapienia = to NIE jest adres tego kupujacego.
+					Wiersz zostaje nietkniety — celowo. */
+				continue;
+			}
+			if ( false === $wpdb->update( $wpdb->prefix . 'sklepag_zdarzenia', array( 'opis' => $nowy ), array( 'id' => (int) $k->id ) ) ) {
+				$ok_zdarzenia = false;
+			}
+		}
 	}
 
 	/*
@@ -310,12 +334,20 @@ function sklepag_obsluz_anonimizacje() {
 	if ( '' !== $email ) {
 		/* Pomiar MUSI byc dokladnie tak szeroki jak czyszczenie — inaczej nazwa kontroli
 			(„brak sladow adresu”) obiecuje wiecej, niz kontrola sprawdza. */
-		$slady_dziennik = (int) $wpdb->get_var(
+		/* Pomiar zakotwiczony DOKLADNIE tak samo jak czyszczenie — inaczej liczylby
+			cudze adresy jako nasze slady i nigdy nie zszedlby do zera. */
+		$do_sprawdzenia = $wpdb->get_col(
 			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$wpdb->prefix}sklepag_zdarzenia WHERE opis LIKE %s",
+				"SELECT opis FROM {$wpdb->prefix}sklepag_zdarzenia WHERE opis LIKE %s",
 				'%' . $wpdb->esc_like( $email ) . '%'
 			)
 		);
+		$wzor_pomiar    = '/(?<![A-Za-z0-9._%+\-])' . preg_quote( $email, '/' ) . '(?![A-Za-z0-9._%+\-])/';
+		foreach ( (array) $do_sprawdzenia as $tresc ) {
+			if ( preg_match( $wzor_pomiar, (string) $tresc ) ) {
+				++$slady_dziennik;
+			}
+		}
 	}
 	$slady_opinia = (int) $wpdb->get_var(
 		$wpdb->prepare(

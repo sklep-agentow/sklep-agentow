@@ -80,6 +80,22 @@ $wpdb->insert(
 		'czas'          => $teraz,
 	)
 );
+/* ⛔ WPIS INNEGO KUPUJACEGO, ktorego adres ZAWIERA nasz jako koncowke.
+   Niezakotwiczone `REPLACE(opis, adres, ...)` przepisaloby ten wiersz — czyli anonimizacja
+   jednej osoby psulaby dane drugiej. Ten wiersz MUSI przezyc nietkniety. */
+$mail_obcy = 'b' . $mail;
+$wpdb->insert(
+	$tz,
+	array(
+		'zamowienie_id' => null,
+		'typ'           => 'proba_obcy',
+		'opis'          => 'mail wyslany na ' . $mail_obcy,
+		'uzytkownik'    => 'test',
+		'czas'          => $teraz,
+	)
+);
+echo 'MAIL_OBCY=' . $mail_obcy . "\n";
+
 $luzem = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$tz} WHERE zamowienie_id IS NULL AND opis LIKE %s", '%' . $wpdb->esc_like( $mail ) . '%' ) ); // phpcs:ignore
 echo 'ADRES_LUZEM_PRZED=' . $luzem . "\n";
 
@@ -107,7 +123,10 @@ $_REQUEST['_wpnonce'] = $nonce;
    Zrodlo MUSI zostac nietkniete, inaczej powtorka nie ma czego szukac. */
 $trafione = 0;
 $psuj     = static function ( $zapytanie ) use ( &$trafione ) {
-	if ( false !== strpos( $zapytanie, 'sklepag_zdarzenia SET opis = REPLACE' ) ) {
+	/* ⛔ Celujemy w KSZTALT, ktory istnieje TERAZ: czyszczenie dziennika przeszlo z jednego
+	   `REPLACE` w SQL na `$wpdb->update()` per wiersz. Stary wzorzec przestal trafiac i test
+	   cicho niczego nie mierzyl — zlapal to wlasny warunek wstepny (PODLOZENIE_TRAFILO=0). */
+	if ( false !== strpos( $zapytanie, 'sklepag_zdarzenia' ) && false !== strpos( $zapytanie, 'SET' ) && false !== strpos( $zapytanie, 'opis' ) ) {
 		++$trafione;
 		return 'UPDATE tabela_ktora_nie_istnieje_rodo SET x=1';
 	}
