@@ -20,6 +20,52 @@ Nic jeszcze.
 
 ---
 
+## [0.9.21] — 2026-08-28
+
+### Naprawione
+- **Anonimizacja na żądanie RODO potwierdzała usunięcie, nie sprawdziwszy, czy zapis się udał.**
+  Handler zapisywał do dziennika zdarzenie `anonimizacja` i przekierowywał właściciela
+  z komunikatem powodzenia **bez patrzenia na wynik** obu zapytań `UPDATE`. Przy porażce
+  zapisu właściciel widział potwierdzenie i mógł w dobrej wierze odpowiedzieć osobie, która
+  złożyła żądanie, że jej dane usunięto — podczas gdy e-mail zostawał w bazie. Czyli
+  niezrealizowane żądanie usunięcia danych z fałszywym dowodem wykonania w dzienniku.
+  Teraz rozstrzyga **stan po zapisie**, a nie fakt wywołania: e-mail musi być pusty,
+  `usunieto_dnia` ustawione. Przy niepowodzeniu zapisywane jest zdarzenie
+  `anonimizacja_blad`, a właściciel dostaje wyraźne ostrzeżenie, żeby NIE potwierdzał
+  usunięcia, dopóki nie powtórzy operacji.
+- **Komunikat po nieudanym zapisie produktu twierdził, że wgrany plik został usunięty,**
+  także wtedy, gdy usunięcie się nie powiodło (`wp_delete_file()` nie zwraca wyniku).
+  Właściciel zostawał wtedy z plikiem-sierotą w katalogu paczek i przekonaniem, że go nie ma.
+  Komunikat opisuje teraz stan faktyczny, zmierzony po operacji.
+
+- **Adres kupującego mógł zostać w dzienniku zdarzeń mimo potwierdzenia usunięcia.**
+  Anonimizacja czyściła najpierw adres w zamówieniu, a dopiero potem jego ślady w opisach
+  zdarzeń. Gdy to drugie czyszczenie zawiodło, powtórzenie operacji było już bezskuteczne:
+  adres w zamówieniu był pusty, więc nie było czego szukać w dzienniku, a wtyczka meldowała
+  powodzenie. Ślad adresu zostawał wtedy w bazie na stałe. Teraz kolejność jest odwrotna —
+  ślady wtórne giną PRZED adresem w zamówieniu, a jeśli którekolwiek czyszczenie zawiedzie,
+  wtyczka przerywa **nie tknąwszy** adresu w zamówieniu, żeby powtórzenie miało z czego
+  odtworzyć cały zakres pracy.
+- **Potwierdzenie usunięcia wymaga teraz czystości we wszystkich trzech miejscach**, w których
+  siedziały dane kupującego: adres w zamówieniu, jego ślady w opisach zdarzeń oraz imię
+  i token przy opinii. Wcześniej sprawdzane było tylko pierwsze z nich.
+- ⚠️ **Znana granica:** adres zawierający ukośnik przed znakiem „@" (dopuszczalny, ale w praktyce
+  spotykany wyjątkowo) może zostać w dzienniku zdarzeń mimo potwierdzenia usunięcia. Jeśli
+  obsługujesz takie adresy, sprawdź dziennik ręcznie po anonimizacji.
+
+### Bezpieczeństwo
+- Wszystkie naprawy należą do jednej klasy: **zapisywaliśmy skutek operacji, nie sprawdziwszy,
+  czy operacja się udała** — i mierzyliśmy ten skutek w jednym miejscu z trzech.
+  Dotyczy danych osobowych kupujących (RODO) oraz plików paczek.
+
+### Sprawdzenie
+- Naprawa anonimizacji ma automatyczny test, który **pada na wersji sprzed naprawy** i przechodzi
+  po niej. Test podkłada awarię zapisu i sprawdza, że wtyczka w takiej sytuacji NIE potwierdza
+  usunięcia, a po powtórzeniu operacji dane znikają ze wszystkich trzech miejsc.
+- ⚠️ Naprawa komunikatu przy nieudanym zapisie produktu **nie ma jeszcze własnego testu** —
+  jest sprawdzona odczytem kodu. Dopisanie testu wymaga wymuszenia nieudanego usunięcia pliku
+  i jest zaplanowane na następną rundę.
+
 ## [0.9.20] — 2026-08-28
 
 Domknięcie przelotu 27 punktów po produkcie: ostatnia rzecz z tej listy, którą widzi

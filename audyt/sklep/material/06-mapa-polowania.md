@@ -123,7 +123,7 @@ Format wiersza: `- ⬜ ID · cel · [runda/raport · SHA]`.
 - ✅ Ł-10 · dwa admin-posty naraz (przełącz produkt ×2, resend ×2) · [A/L-2.json · 425a3124]
 
 ## STRAŻNICY CI
-- 🐞 CI-01 · wszystkie `*-proba-kontrolna.sh` (26) jednym przebiegiem — tabela EXIT · [`audyt/sklep/PROBY-KONTROLNE.log` · 30 uruchomionych, 1 pominięta świadomie, 6 z EXIT≠0 — wszystkie sześć to chatbot · znalezisko SK-CI-001: dwa strażniki padają ZAWSZE, także na czystym kodzie (potwierdzone osobnym drzewem roboczym na origin/main) · d28c971]
+- 🐞 CI-01 · wszystkie `*-proba-kontrolna.sh` (26) jednym przebiegiem — tabela EXIT · [`audyt/sklep/PROBY-KONTROLNE.log` · 30 uruchomionych, 1 pominięta świadomie, 6 z EXIT≠0 — pięć z sześciu to chatbot; szósta (`dowod-z-paczki-proba-kontrolna.sh`) kończy EXIT=2, czyli błędem PRZYRZĄDU — szuka `boty/paczki/chatbot-live-1.5.0.zip`, którego w repo nie ma (są 1.5.7–1.5.11); dług nazwany w `audyt/CO-WISI.md` · znalezisko SK-CI-001: dwa strażniki padają ZAWSZE, także na czystym kodzie (potwierdzone osobnym drzewem roboczym na origin/main) · d28c971]
 - 🐞 CI-02 · BS4: dla każdej bramki „nazwa ↔ to, co naprawdę liczy" · [`audyt/sklep/BRAMKI-NAZWA-VS-POMIAR.md` · 10 bramek przejrzanych, 4 rozjazdy nazwa↔zasięg · znaleziska SK-CI-002 (trzy bramki PHP nie widzą 65 ze 117 plików PHP — zmierzone: dziś 0 błędów składni, luka pusta), SK-CI-003, SK-CI-004 · d5f8b6f] ·
 
 ## LICZNIK

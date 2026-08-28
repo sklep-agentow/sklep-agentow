@@ -368,3 +368,46 @@ był BRAK pomiaru, nie wada produktu, więc nie istnieje commit, na którym stra
 odrzuciliśmy w `#205` przy kalibracji jako obronę robioną na narzędziu w dniu oddania.
 **CO ZAMYKA:** albo bramka dostanie jawny rejestr wyjątków (osobny PR, poza dniem oddania), albo
 rejestr dostanie czwarty stan dla znalezisk typu „brak pomiaru”, których nie da się skalibrować.
+
+## 🟡 DŁUG Z RECENZJI `#206` i `#207` — drobne, nie zmieniają tego, co dostaje klient (28.08)
+- **`#206` DROBNA 6** — kalibracja walidacji nazwy silnika była zadeklarowana, nie pokazana.
+  ✅ ZAMKNIĘTE w `#207`: mutant odtwarzający starą logikę (`msedge` → chromium) kończy `EXIT=2`,
+  bez mutanta `EXIT=0`.
+- **`#206` DROBNA 4** — strażnik z rejestru nie był uruchamiany przez nic. ✅ ZAMKNIĘTE: sędzia
+  `testy/rodo-anonimizacja-pomiar-skutku-test.sh` leży w `testy/`, a `narzedzia-qa/linia-bazowa.sh`
+  zbiera `testy/*.sh`. Kroki pomocnicze przeniesione do `testy/kroki-rodo/`, żeby linia bazowa
+  nie uruchamiała ich osobno (bez sędziego nie sprzątają po sobie).
+- ⬜ **`#207` WAŻNA 4, druga połowa** — asercja zgodności kodu ze stosem stoi w teście RODO,
+  ale POZOSTAŁE testy na żywym stosie jej nie mają. Do przeglądu przy następnej rundzie QA:
+  każdy test mierzący stos powinien najpierw dowieść, że mierzy TEN kod, który jest w repo.
+- ⬜ **`#207` DROBNA 5** — `sklepag_obsluz_anonimizacje()` wciąga `mail_tresc` do pamięci
+  (`SELECT id, email_kupujacego, mail_tresc`) i nigdy go nie używa ani nie czyści. Dziś nieszkodliwe:
+  treść maila nie niesie adresu w innej postaci niż ta czyszczona. Do przeglądu przy następnej
+  rundzie QA: albo pole wypada z zapytania, albo zostaje objęte anonimizacją — obecny stan jest
+  niejednoznaczny dla czytającego (docblock mówi o tym wprost, żeby nie było wątpliwości).
+- ⬜ **Siódmy migoczący strażnik chatbota: `testy/statystyki-proba-kontrolna.sh`.** Kończy `EXIT=1`
+  z komunikatem „TEST SLEPY NA 1 PODLOZONYCH BLEDOW” — nie łapie wady „wiersze bez znacznika wliczone
+  do skuteczności” w raporcie skuteczności chatbota. ⛔ Zmierzone 28.08 dowodem przez wykluczenie:
+  pada **także na czystym `origin/main`** (`EXIT=1`), a PR-y sklepu nie ruszały ani jednego pliku
+  chatbota (`git diff --stat origin/main..HEAD -- wtyczki/chatbot-live/` → pusto). Migocze między
+  przelotami (raz jest w szóstce, raz w siódemce), stąd rozbieżne liczby w logach — **nie jest to
+  regresja żadnego PR-a sklepu**. **CO ZAMYKA:** naprawa razem z pozostałymi strażnikami chatbota
+  — to jeden teren, jedna robota, nie sześć osobnych.
+- ⬜ **BLIŹNIAK klasy „zapisujemy skutek, nie sprawdziwszy, czy operacja się udała" —
+  ścieżka ponownej wysyłki maila** (`wtyczki/sklep-agentow/includes/admin-zamowienie.php`,
+  `sklepag_obsluz_resend()`). Zmierzone 28.08 (recenzja `#207`, runda 3): **sześć** wywołań
+  `$wpdb->query()` bez sprawdzenia wyniku — zapisy tokenu, `link_wygasa`, `mail_tresc`, statusu
+  `mail_blad` i licznika prób oraz tokenu opinii. Skutek zapisywany niezależnie od powodzenia.
+  ⛔ To ta sama klasa, którą ten PR naprawił w anonimizacji — czyli klasa 8 briefingu (naprawa
+  egzemplarza zamiast klasy). Nazwana w kodzie, przy funkcji.
+  **CO ZAMYKA:** przenieść wzorzec z anonimizacji — pomiar STANU po zapisie zamiast kodu powrotu —
+  wraz z testem podkładającym awarię każdego z sześciu zapisów osobno. Osobna robota, bo to inna
+  ścieżka: ponowna wysyłka i kompensacja po nieudanym mailu mają własne przypadki brzegowe.
+- ⬜ **Adres z `/` w części lokalnej zostaje w dzienniku mimo potwierdzenia usunięcia.**
+  `wp_json_encode` bez flag zapisuje ukośnik jako `\/`, a anonimizacja szuka SUROWEJ postaci
+  adresu (`opis LIKE %adres%`). Adres taki jak `a/b@x.pl` (RFC dopuszcza, w praktyce spotykany
+  wyjątkowo) nie zostanie znaleziony — ślad zostanie, a wtyczka potwierdzi usunięcie.
+  ⛔ Nazwane świadomie, nie przeoczone (recenzja `#207`, runda 7; recenzent zgodził się na
+  nazwanie zamiast naprawy). Granica opisana także w docblocku funkcji.
+  **CO ZAMYKA:** szukać obu postaci naraz (surowej i po `wp_json_encode`) oraz dołożyć przypadek
+  testowy z adresem zawierającym `/` — z kalibracją, że na dzisiejszym kodzie ślad zostaje.

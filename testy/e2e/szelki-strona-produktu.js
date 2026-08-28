@@ -32,6 +32,10 @@ const SILNIK = (process.argv[4] || 'chromium').toLowerCase();
    `WSZYSTKO OK` i konczyla EXIT=0. Czlowiek zapisywal wtedy w tabeli „Edge ✅”, majac pomiar
    z chromium. To ta sama klasa klamiacego straznika, ktora ten przyrzad mial zamknac dla
    `msedge` — zamknieta wtedy dla JEDNEGO literalu, nie dla calej klasy (recenzja WAZNA 4). */
+/* ⛔ DOKLADAJAC SILNIK, ZMIEN TRZY MIEJSCA — nie jedno: (1) te liste, (2) galaz wyboru
+   `browser` nizej, (3) asercje tozsamosci pod nia (sygnal w identyfikatorze przegladarki).
+   Pominiecie (2) da odrzucenie znanej nazwy, a pominiecie (3) wroci dokladnie do wady,
+   ktora ten plik zamyka: zielone niezgodne z nazwa silnika. */
 const SILNIKI_ZNANE = [ 'chromium', 'firefox', 'msedge' ];
 if ( ! SILNIKI_ZNANE.includes( SILNIK ) ) {
   console.error( 'BLAD PRZYRZADU: nieznany silnik „' + SILNIK + '”. Znane: ' + SILNIKI_ZNANE.join( ', ' ) + '.' );
@@ -75,6 +79,51 @@ const op = (page, sel) => page.$eval(sel, (e) => getComputedStyle(e).opacity);
     : 'msedge' === SILNIK
       ? await chromium.launch({ channel: 'msedge' })
       : await chromium.launch({ executablePath: wymagajChromium() });
+
+  /*
+   * ⛔ ASERCJA TOZSAMOSCI SILNIKA — dowod, ze wstala TA przegladarka, ktora podano.
+   *
+   * Dotad ten dowod istnial tylko w prozie rejestru: `Edg/` w identyfikatorze przy
+   * prawdziwym Edge i jego brak przy chromium byly zmierzone RECZNIE i przepisane do
+   * opisu znaleziska. Przyrzad tego sygnalu NIE sprawdzal — cztery wzmianki o `Edg/`
+   * w tym pliku byly komentarzami, ani jedna asercja. Skutek: stara wersja przyrzadu
+   * na argumencie `msedge` uruchamiala chromium i konczyla zerem, a czlowiek wpisywal
+   * do tabeli „Edge ✅”.
+   *
+   * ⭐ To jest tez KALIBRACJA tej naprawy: na kodzie sprzed niej ta asercja PADA
+   *    (uruchomione chromium nie ma `Edg/` w identyfikatorze), po niej przechodzi.
+   *    Sygnal opisuje STAN SWIATA (jaka przegladarka wstala), nie ksztalt kodu
+   *    przyrzadu — dlatego nie jest to test sprawdzajacy sam siebie.
+   *
+   * Kod 2 = blad przyrzadu, nie wada produktu: pomiar nie odbyl sie na tym, na czym
+   * mial sie odbyc, wiec ani zielone, ani czerwone nie znaczyloby tego, co mowi nazwa.
+   */
+  {
+    const ctxTozsamosc = await browser.newContext();
+    const stronaTozsamosc = await ctxTozsamosc.newPage();
+    const ua = String(await stronaTozsamosc.evaluate(() => navigator.userAgent));
+    await ctxTozsamosc.close();
+    const maEdge = ua.includes('Edg/');
+    const maFirefox = ua.includes('Firefox/');
+    const zle = async (nazwa, powod) => {
+      console.error('BLAD PRZYRZADU: silnik „' + SILNIK + '” mial byc ' + nazwa + ', a ' + powod + '. Identyfikator: ' + ua);
+      /* ⛔ Zamykamy przegladarke PRZED wyjsciem: `process.exit` na tej sciezce zostawial
+         uruchomiony proces przegladarki, a przyrzad ma po sobie sprzatac takze wtedy,
+         gdy konczy bledem. */
+      await browser.close();
+      process.exit(2);
+    };
+    if ('msedge' === SILNIK && !maEdge) {
+      await zle('Microsoft Edge', 'w identyfikatorze NIE MA „Edg/” (to chromium pod inna nazwa)');
+    }
+    if ('firefox' === SILNIK && !maFirefox) {
+      await zle('Firefox', 'w identyfikatorze NIE MA „Firefox/”');
+    }
+    if ('chromium' === SILNIK && maEdge) {
+      await zle('czyste chromium', 'w identyfikatorze JEST „Edg/”');
+    }
+    console.log('SILNIK POTWIERDZONY: ' + SILNIK + ' · wersja ' + browser.version() + ' · Edg/ w identyfikatorze: ' + maEdge);
+  }
   try {
     // 1. skrypt zablokowany
     let { ctx, page } = await kontekst(browser);

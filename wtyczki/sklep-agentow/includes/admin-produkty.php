@@ -261,10 +261,24 @@ function sklepag_obsluz_zapis_produktu() {
 	// Porażka INSERT/UPDATE (np. kolizja UNIQUE slug w wyścigu równoczesnych zapisów)
 	// nie może udawać sukcesu ani zostawić świeżo wgranego zipa bez wiersza w bazie.
 	$padl_zapis = static function () use ( $plik, $wroc ) {
+		/*
+		 * Komunikat MUSI opisywac stan faktyczny, nie zamiar. `wp_delete_file()` nie
+		 * zwraca wyniku, wiec wczesniej to zdanie twierdzilo, ze plik zostal usuniety,
+		 * takze wtedy, gdy kasowanie sie nie udalo — a wlasciciel zostawal z plikiem
+		 * -sierota w katalogu chronionym i z przekonaniem, ze go nie ma. Rozstrzyga
+		 * POMIAR PO operacji, nie samo jej wywolanie.
+		 */
+		$zostal = false;
 		if ( $plik && file_exists( $plik['sciezka'] ) ) {
 			wp_delete_file( $plik['sciezka'] );
+			clearstatcache( true, $plik['sciezka'] );
+			$zostal = file_exists( $plik['sciezka'] );
 		}
-		$wroc( 'Zapis produktu do bazy nie powiódł się — spróbuj ponownie (wgrany plik został usunięty, nic nie zapisano).' );
+		$wroc(
+			$zostal
+				? 'Zapis produktu do bazy nie powiódł się, a wgranego pliku NIE udało się usunąć — został w katalogu paczek bez wpisu w bazie. Usuń go ręcznie albo zgłoś osobie technicznej.'
+				: 'Zapis produktu do bazy nie powiódł się — spróbuj ponownie (wgrany plik został usunięty, nic nie zapisano).'
+		);
 	};
 
 	$slug  = sanitize_title( $nazwa );

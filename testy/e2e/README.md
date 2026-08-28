@@ -68,7 +68,15 @@ Dziesięć kontroli tego, czego zrzut nie pokaże: skrypt zablokowany / opóźni
 (bezpiecznik i kaskada), pigułka sticky, kotwica „Kup teraz", lightbox z pułapką
 fokusu (Tab nie wychodzi poza dialog), nagranie w kadrze, chipy w hero, „ogranicz
 ruch", bez JavaScriptu, lista `/sklep/` bez elementów strony produktu.
-Kod wyjścia 0 = wszystko OK, 1 = któraś pada. Slug jako drugi argument.
+Kod wyjścia **0** = wszystko OK, **1** = któraś kontrola pada, **2** = błąd przyrządu (pomiar NIE odbył się na tym, na czym miał).
+
+Argumenty: 1. adres bazowy · 2. slug produktu · 3. **silnik** — `chromium` (domyślny), `firefox` albo `msedge`.
+
+⛔ Nazwa silnika jest **sprawdzana dwustopniowo** i oba stopnie kończą kodem 2, nie zerem:
+- **nieznana nazwa** (np. literówka `edge`) jest odrzucana zanim wstanie przeglądarka — wcześniej wpadała w gałąź chromium, wypisywała `WSZYSTKO OK` i kończyła zerem, a człowiek wpisywał do tabeli „Edge ✅”, mając pomiar z chromium;
+- **tożsamość silnika** jest potwierdzana po starcie: `msedge` musi mieć `Edg/` w identyfikatorze przeglądarki, `firefox` — `Firefox/`, a `chromium` nie może mieć `Edg/`. Skrypt drukuje wtedy wiersz `SILNIK POTWIERDZONY: … · wersja … · Edg/ w identyfikatorze: …`.
+
+Ta druga asercja jest **skalibrowana**: na logice sprzed naprawy (gałąź `msedge` wskazana na chromium) kończy `EXIT=2` z komunikatem „w identyfikatorze NIE MA Edg/”, a na naprawionej `EXIT=0`.
 
 ```
 cd /root/praca/zlecenia/sklep-agentow && node testy/e2e/szelki-strona-produktu.js http://localhost:8890 chatbot-live
