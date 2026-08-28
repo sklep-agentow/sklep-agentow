@@ -260,8 +260,10 @@
   i tryb wygaśnięcia aktualizacji przy zwrocie — przy finalizacji regulaminu w K8.
 
 - ⛔ **SZEŚĆ PRÓB KONTROLNYCH NARZĘDZI PADA — dług sprzed PR #203, nie z niego.**
-  ⭐ **STAN AKTUALNY: przelot z commitu `15540a9` — 30 uruchomionych, PIĘĆ z EXIT≠0** (tyle
-  niesie log). Poniższy akapit opisuje pierwszy przelot; różnica między nimi jest sednem
+  ⭐ **TRZY POMIARY, KTÓRE ROZSTRZYGAJĄ:** przelot `d28c971` → 6 padających · `15540a9` → **5**
+  (`przejecie` przeszła) · przelot na gałęzi celów → znowu **6** (`przejecie` znowu padła).
+  Między żadnym z nich nie ruszyłam pliku chatbota. Liczba padających jest więc RUCHOMA,
+  a log niesie zawsze stan z ostatniego przebiegu — nie traktuj żadnej z tych liczb jako stałej. Poniższy akapit opisuje pierwszy przelot; różnica między nimi jest sednem
   znaleziska o chwiejności.
   Pierwszy przelot, z commitu `d28c971`: uruchomionych 30,
   `EXIT≠0` w sześciu — `dowod-z-paczki` (EXIT=2, brak `boty/paczki/chatbot-live-1.5.0.zip`),
@@ -298,7 +300,7 @@
   KLIENTA — ten nim nie jest. Objęcie panelu wymaga osobnej kolejki assetów dla `wp-admin`,
   czyli zmiany szerszej niż PR o przelocie.
   **Ile naprawdę liczy ta klasa** (wskazane w recenzji #203 r3, przemiot poprawiony po r4):
-  `admin-produkty.php:168` (`required`), `:171` (`required` + `type="number"` + `min`),
+  `admin-produkty.php:168` (`required`), `:171` (`required` + `type="number"` + `min` + `pattern` — `pattern` dopisany po recenzji #203 r5, wcześniej go gubiłam),
   `admin-ustawienia.php:249` i `:254` (`type="email"`), `:259` (`pattern`).
   Czyli **pięć miejsc, nie dwa** — samo `required` to dopiero część.
   ⛔ We wcześniejszej wersji tego wpisu liczyłam sześć, bo doliczyłam `admin-produkty.php:158`
