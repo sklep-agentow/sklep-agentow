@@ -357,3 +357,14 @@
   (`L1`: ścieżka WROGA, nie szczęśliwa — logowanie na nieistniejący login; `L5`: obietnica behawioralna
   = wykonanie, nie grep stałej), zbudować NOWY bank mutantów i przebiec kalibrację od zera —
   jako osobne zadanie z własnym licznikiem prób, nie jako trzecią próbę tej samej.
+
+## 🟡 TRZECI NO-GO w `k7-koniec` (kontrola 3d) — ZAMIERZONY, nie regresja (28.08)
+`SK-L6-003` ma status `ZAMKNIETE` i **nie ma dowodu kalibracji** — kolumna
+`straznik_padl_na_starym` niesie `—` zamiast SHA. To jest poprawka, nie usterka: wcześniej stał tam
+`b7fe60e`, a teza tego samego wiersza mówiła, że na `b7fe60e` przyrząd **nie padał** (po cichu
+uruchamiał chromium i kończył zerem). Kalibracja jest tu **niewykonalna z natury** — znaleziskiem
+był BRAK pomiaru, nie wada produktu, więc nie istnieje commit, na którym strażnik mógłby paść.
+⛔ **Odrzucone świadomie:** dorobienie bramce wyjątku na wzór `WYJATKI-WARUNEK-8.txt`. Ten sam ruch
+odrzuciliśmy w `#205` przy kalibracji jako obronę robioną na narzędziu w dniu oddania.
+**CO ZAMYKA:** albo bramka dostanie jawny rejestr wyjątków (osobny PR, poza dniem oddania), albo
+rejestr dostanie czwarty stan dla znalezisk typu „brak pomiaru”, których nie da się skalibrować.
