@@ -177,7 +177,7 @@ function sklepag_obsluz_anonimizacje() {
 	$email = (string) $zam->email_kupujacego;
 	$teraz = current_time( 'mysql' );
 
-	$ok_zam = $wpdb->query(
+	$ok_zam       = $wpdb->query(
 		$wpdb->prepare(
 			"UPDATE {$pz} SET email_kupujacego='', usunieto_dnia=%s, token_pobrania='', link_wygasa=NULL, zmieniono=%s WHERE id=%d",
 			$teraz,
