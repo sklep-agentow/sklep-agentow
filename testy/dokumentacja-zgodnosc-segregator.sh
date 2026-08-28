@@ -388,11 +388,18 @@ spr "Niewydane jest PIERWSZA sekcja (Keep a Changelog)" "Niewydane" "grep -oP '^
 # Porownanie samych LICZB mowiloby tylko "tyle samo pozycji po obu stronach" — a nazwa
 # obiecuje odpowiedniosc. Sprawdzamy wiec KAZDA wersje z readme z osobna.
 BRAK_WPISU=0
+SPRAWDZONYCH=0
 for WER in $(grep -oP '^= \K[0-9]+(\.[0-9]+)*' $W/readme.txt); do
-  grep -q "^## \[$WER\]" $W/CHANGELOG.md || { BRAK_WPISU=$((BRAK_WPISU+1)); echo "  BLAD wydanie $WER jest w readme, nie ma go w CHANGELOG.md"; BLEDY=$((BLEDY+1)); }
+  SPRAWDZONYCH=$((SPRAWDZONYCH+1))
+  # Sam komunikat, BEZ doliczania bledu — blad doliczy ponizsze spr. Inaczej jedna wada
+  # daje w podsumowaniu "2" i liczba przestaje odpowiadac liczbie rzeczy do naprawienia.
+  grep -q "^## \[$WER\]" $W/CHANGELOG.md || { BRAK_WPISU=$((BRAK_WPISU+1)); echo "  (wydanie $WER jest w readme, nie ma go w CHANGELOG.md)"; }
 done
 spr "wydan z readme bez wpisu w CHANGELOG" "0" "echo $BRAK_WPISU"
-spr "wydan sprawdzonych po numerze" "$(grep -c '^= [0-9]' $W/readme.txt)" "grep -c '^= [0-9]' $W/readme.txt"
+# Kontrola pokrycia: ile wydan petla NAPRAWDE przeszla. Oczekiwanie czytane z readme,
+# wartosc to LICZNIK PETLI — dwa rozne zrodla. Wczesniejsza wersja porownywala te sama
+# komende ze soba, wiec nie mogla pasc: pusta petla przechodzila na zielono (klasa 11).
+spr "wydan sprawdzonych po numerze" "$(grep -c '^= [0-9]' $W/readme.txt)" "echo $SPRAWDZONYCH"
 for v in 1.0.0 1.1.0 1.2.0 1.2.1; do
   spr "wersja $v z historii gita opisana" "1" "grep -c '^## \\[$v\\]' $W/CHANGELOG.md"
 done
