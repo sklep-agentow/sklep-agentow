@@ -17,7 +17,7 @@ Format wiersza: `- ⬜ ID · cel · [runda/raport · SHA]`.
 - ✅ L1-08 · S-14 tryb testowy jawny (baner) · [B/L1.json · 7e0cf726]
 - ✅ L1-09 · S-15 konfigurowalność w Ustawieniach (przenośność) · [B/L1.json · 7e0cf726]
 - ✅ L1-10 · S-18/S-19 wszystko w WordPressie (tabele, panel, Stripe z serwera WP) · [B/L1.json · 7e0cf726]
-- 🐞 L1-11 · kryteria GOTOWE §12 #1–#11 — werdykt per kryterium (11 wierszy w raporcie) · [`audyt/sklep/L1-11-WERDYKTY-KRYTERIOW.md` · 5 ✅ · 5 🐞 · 1 ⛔ · znalezisko SK-L6-003 (kryterium #11 wymienia Edge, nie sprawdzony ANI RAZU — grep zero trafień przy działającej próbie kontrolnej) · ⛔ 10 z 11 kryteriów zmierzono NIE na paczce, tylko na stosie — do powtórzenia w kroku 8 · d5f8b6f]
+- 🐞 L1-11 · kryteria GOTOWE §12 #1–#11 — werdykt per kryterium (11 wierszy w raporcie) · [`audyt/sklep/L1-11-WERDYKTY-KRYTERIOW.md` · 6 ✅ · 5 🐞 · 0 ⛔ (kryterium #11 bylo ⛔ z powodu braku Edge; domkniete 28.08 pomiarem, wiec rozliczenie 5/5/1 sprzed domkniecia bylo nieaktualne) · znalezisko SK-L6-003 (kryterium #11 wymienia Edge, nie sprawdzony ANI RAZU — grep zero trafień przy działającej próbie kontrolnej) · ⛔ 10 z 11 kryteriów zmierzono NIE na paczce, tylko na stosie — do powtórzenia w kroku 8 · d5f8b6f]
 - ✅ L1-12 · „kiedy kupili": znacznik czasu zakupu — gmdate vs czas lokalny w pulpicie / CSV / mailu · [B/L1.json · 7e0cf726]
 
 ## L2 — BEZPIECZEŃSTWO + RODO (atakujący; wykonanie na stosie; konto subscriber)
