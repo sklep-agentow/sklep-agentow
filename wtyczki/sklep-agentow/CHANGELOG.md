@@ -49,6 +49,9 @@ Nic jeszcze.
 - **Potwierdzenie usunięcia wymaga teraz czystości we wszystkich trzech miejscach**, w których
   siedziały dane kupującego: adres w zamówieniu, jego ślady w opisach zdarzeń oraz imię
   i token przy opinii. Wcześniej sprawdzane było tylko pierwsze z nich.
+- ⚠️ **Znana granica:** adres zawierający ukośnik przed znakiem „@" (dopuszczalny, ale w praktyce
+  spotykany wyjątkowo) może zostać w dzienniku zdarzeń mimo potwierdzenia usunięcia. Jeśli
+  obsługujesz takie adresy, sprawdź dziennik ręcznie po anonimizacji.
 
 ### Bezpieczeństwo
 - Wszystkie naprawy należą do jednej klasy: **zapisywaliśmy skutek operacji, nie sprawdziwszy,

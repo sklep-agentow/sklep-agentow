@@ -31,6 +31,15 @@ if ( ! function_exists( 'sklepag_obsluz_anonimizacje' ) ) {
 	require_once $plik_handlera;
 }
 
+/*
+ * ⛔ WLASNE WARUNKI WSTEPNE: kasujemy pozostalosci po WCZESNIEJSZYCH przebiegach, zanim
+ * cokolwiek zmierzymy. Bez tego licznik wpisow obcych widzialby cudze wiersze i asercja
+ * przeszlaby TAKZE wtedy, gdy biezacy wpis zostal przepisany — czyli falszywy alarm
+ * zamieniony w SLEPOTE. Przebieg przerwany w polowie (np. przy kalibracji) zostawia takie
+ * wiersze, wiec to nie jest teoria.
+ */
+$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}sklepag_zdarzenia WHERE zamowienie_id IS NULL AND opis LIKE %s", '%' . $wpdb->esc_like( '@example.test' ) . '%' ) ); // phpcs:ignore
+
 $pz    = $wpdb->prefix . 'sklepag_zamowienia';
 $tz    = $wpdb->prefix . 'sklepag_zdarzenia';
 $teraz = current_time( 'mysql' );
