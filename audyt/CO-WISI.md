@@ -403,3 +403,11 @@ rejestr dostanie czwarty stan dla znalezisk typu „brak pomiaru”, których ni
   **CO ZAMYKA:** przenieść wzorzec z anonimizacji — pomiar STANU po zapisie zamiast kodu powrotu —
   wraz z testem podkładającym awarię każdego z sześciu zapisów osobno. Osobna robota, bo to inna
   ścieżka: ponowna wysyłka i kompensacja po nieudanym mailu mają własne przypadki brzegowe.
+- ⬜ **Adres z `/` w części lokalnej zostaje w dzienniku mimo potwierdzenia usunięcia.**
+  `wp_json_encode` bez flag zapisuje ukośnik jako `\/`, a anonimizacja szuka SUROWEJ postaci
+  adresu (`opis LIKE %adres%`). Adres taki jak `a/b@x.pl` (RFC dopuszcza, w praktyce spotykany
+  wyjątkowo) nie zostanie znaleziony — ślad zostanie, a wtyczka potwierdzi usunięcie.
+  ⛔ Nazwane świadomie, nie przeoczone (recenzja `#207`, runda 7; recenzent zgodził się na
+  nazwanie zamiast naprawy). Granica opisana także w docblocku funkcji.
+  **CO ZAMYKA:** szukać obu postaci naraz (surowej i po `wp_json_encode`) oraz dołożyć przypadek
+  testowy z adresem zawierającym `/` — z kalibracją, że na dzisiejszym kodzie ślad zostaje.

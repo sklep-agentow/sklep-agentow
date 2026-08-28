@@ -180,6 +180,12 @@ add_action( 'admin_post_sklepag_anonimizuj', 'sklepag_obsluz_anonimizacje' );
  * ⛔ Dopasowanie jest ZAKOTWICZONE na granicy znaków adresu: adres jednego kupującego bywa
  * końcówką adresu innego, więc niezakotwiczona podmiana przepisywałaby cudze wpisy.
  *
+ * ⚠️ ZNANA GRANICA TEJ FUNKCJI: adres zawierający `/` w części lokalnej (RFC dopuszcza,
+ * w praktyce spotykany wyjątkowo) trafia do dziennika przez `wp_json_encode` jako `\/`
+ * i NIE zostanie tu znaleziony — wyszukiwanie idzie po surowej postaci adresu. Taki ślad
+ * zostanie w dzienniku, mimo potwierdzenia usunięcia. Nazwane świadomie, nie przeoczone:
+ * domknięcie wymaga szukania obu postaci naraz i własnego przypadku testowego.
+ *
  * Potwierdzenie usunięcia idzie WYŁĄCZNIE za zmierzonym stanem po zapisie, i to we
  * wszystkich trzech miejscach naraz. Przy niepowodzeniu: zdarzenie `anonimizacja_blad`
  * z nazwaniem, które miejsce nie zostało domknięte, oraz `wp_die` z ostrzeżeniem, żeby
@@ -262,8 +268,7 @@ function sklepag_obsluz_anonimizacje() {
 		 * ta sama korupcja cudzych wpisow, ktora ta naprawa zamyka.
 		 * ⛔ JEDNA definicja, dwa uzycia: czyszczenie i pomiar MUSZA dopasowywac identycznie.
 		 */
-		$granica = '[A-Za-z0-9!#$%&\'*+\/=?^_`{|}~.-]';
-		$wzor    = '/(?<!' . $granica . ')' . preg_quote( $email, '/' ) . '(?!' . $granica . ')/';
+		$wzor = '/(?<!' . SKLEPAG_GRANICA_ADRESU . ')' . preg_quote( $email, '/' ) . '(?!' . SKLEPAG_GRANICA_ADRESU . ')/';
 		foreach ( (array) $kandydaci as $k ) {
 			$nowy = preg_replace( $wzor, $znacznik, (string) $k->opis );
 			if ( null === $nowy ) {
@@ -357,8 +362,8 @@ function sklepag_obsluz_anonimizacje() {
 			)
 		);
 		/* Ta sama granica co przy czyszczeniu — inaczej pomiar mierzylby co innego niz naprawa. */
-		$granica_pomiar = '[A-Za-z0-9!#$%&\'*+\/=?^_`{|}~.-]';
-		$wzor_pomiar    = '/(?<!' . $granica_pomiar . ')' . preg_quote( $email, '/' ) . '(?!' . $granica_pomiar . ')/';
+		/* TA SAMA definicja co przy czyszczeniu — stala wtyczki, zeby nie dalo sie rozjechac. */
+		$wzor_pomiar = '/(?<!' . SKLEPAG_GRANICA_ADRESU . ')' . preg_quote( $email, '/' ) . '(?!' . SKLEPAG_GRANICA_ADRESU . ')/';
 		foreach ( (array) $do_sprawdzenia as $tresc ) {
 			$trafienie = preg_match( $wzor_pomiar, (string) $tresc );
 			if ( false === $trafienie || 1 === $trafienie ) {
