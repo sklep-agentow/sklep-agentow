@@ -287,6 +287,14 @@
   swój sklep), nie dla kupującego. Nasza reguła każe zawsze wracać do tekstu czytanego przez
   KLIENTA — ten nim nie jest. Objęcie panelu wymaga osobnej kolejki assetów dla `wp-admin`,
   czyli zmiany szerszej niż PR o przelocie.
+  **Ile naprawdę liczy ta klasa** (wskazane w recenzji #203 r3, pełny przemiot atrybutów
+  oddających komunikat przeglądarce): `admin-produkty.php:168` (`required`), `:171`
+  (`required` + `type="number"` + `min`), `:158` (`type="number"`), `admin-ustawienia.php:249,254`
+  (`type="email"`), `:259` (`pattern`). Czyli **sześć miejsc, nie dwa** — samo `required` to
+  dopiero część.
   **Co trzeba zrobić, gdy wróci:** wpiąć te same stałe `SKLEPAG_BLAD_*` przez atrybut
-  `data-sklepag-blad` i dołożyć tę samą czterolinijkową procedurę do assetów panelu.
+  `data-sklepag-blad` i dołożyć tę samą procedurę do assetów panelu. ⛔ To zamknie WYŁĄCZNIE
+  brak wartości: procedura ustawia tekst pod warunkiem `pole.validity.valueMissing`, więc
+  `typeMismatch` (`type="email"`) i `patternMismatch` (`pattern`) nadal rysowałaby przeglądarka.
+  Na froncie to bez znaczenia — cztery objęte pola mogą naruszyć wyłącznie `valueMissing`.
   Zgłoszone przez recenzenta w #203 r2 jako DROBNA 2, przyjęte jako dług z nazwą.

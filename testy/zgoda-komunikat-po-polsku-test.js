@@ -81,50 +81,91 @@ function sprawdz(opis, warunek, szczegol) {
     'komunikat: "' + poZaznaczeniu + '"');
 
   console.log('[6] FORMULARZ OPINII — ten sam blad w drugim miejscu (klasa, nie egzemplarz)');
-  /* Link opinii buduje wtyczka: kupujacy przychodzi z maila, wiec token liczymy jej wlasna
-     funkcja zamiast go podrabiac. Bierzemy pierwsze zamowienie, ktore opinii jeszcze nie ma. */
-  const link = execFileSync('docker', ['exec', '-u', 'www-data', KONTENER, 'wp', 'eval', `
+  /* ⛔ `sklepag_opinia_zalazek()` NIE JEST ODCZYTEM — mintuje nowy token i nadpisuje
+     `token_hash` istniejacego wiersza `zalazek` (`opinie.php:54-63`). Zawolane wprost
+     unieważniloby link, ktory kupujacy dostal mailem przy zakupie (`zakup.php:854`).
+     Dlatego robimy to, co produkt robi u siebie w `admin-zamowienie.php:64-67`:
+     zapamietujemy stan SPRZED rotacji i oddajemy go po pomiarze. Gdy wiersza nie bylo,
+     kasujemy ten, ktory sami wstawilismy — test nie zostawia po sobie zaproszen do opinii,
+     ktorych nikt nie wyslal. Przywrocenie leci w `finally`, wiec dziala takze gdy test padnie. */
+  const wp = (kod) => execFileSync('docker', ['exec', '-u', 'www-data', KONTENER, 'wp', 'eval', kod], { encoding: 'utf8' }).trim();
+  const surowe = wp(`
     global $wpdb;
+    $tab = $wpdb->prefix . 'sklepag_opinie';
     foreach ( $wpdb->get_results( "SELECT id,produkt_id FROM {$wpdb->prefix}sklepag_zamowienia ORDER BY id DESC LIMIT 12" ) as $z ) {
+      $przed = $wpdb->get_row( $wpdb->prepare( "SELECT token_hash, token_wygasa, zmieniono FROM {$tab} WHERE zamowienie_id=%d AND status='zalazek'", $z->id ) );
       $t = sklepag_opinia_zalazek( (int) $z->id, (int) $z->produkt_id );
-      if ( '' !== $t ) { echo admin_url( 'admin-post.php' ) . '?action=sklepag_ocen&z=' . (int) $z->id . '&t=' . $t; return; }
+      if ( '' === $t ) { continue; }
+      echo implode( '|', array(
+        admin_url( 'admin-post.php' ) . '?action=sklepag_ocen&z=' . (int) $z->id . '&t=' . $t,
+        (int) $z->id,
+        $przed ? $przed->token_hash  : '',
+        $przed ? $przed->token_wygasa : '',
+        $przed ? $przed->zmieniono    : '',
+        $przed ? '1' : '0'
+      ) );
+      return;
     }
-  `], { encoding: 'utf8' }).trim();
-  sprawdz('udalo sie zbudowac link do formularza opinii', /action=sklepag_ocen/.test(link),
-    link ? bezTokenu(link) : '(pusty — wszystkie zamowienia maja juz opinie)');
+  `);
+  const [link, zamId, hashPrzed, wygasaPrzed, zmienionoPrzed, bylWiersz] = surowe.split('|');
+  const przywroc = () => {
+    if (!zamId) { return; }
+    try {
+      wp(bylWiersz === '1'
+        ? `global $wpdb; $wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->prefix}sklepag_opinie SET token_hash=%s, token_wygasa=%s, zmieniono=%s WHERE zamowienie_id=%d AND status='zalazek'", '${hashPrzed}', '${wygasaPrzed}', '${zmienionoPrzed}', ${zamId} ) ); echo 'ODDANE';`
+        : `global $wpdb; $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}sklepag_opinie WHERE zamowienie_id=%d AND status='zalazek'", ${zamId} ) ); echo 'SKASOWANE';`);
+    } catch (e) { console.error('  UWAGA: nie udalo sie oddac stanu tokenu opinii dla zamowienia ' + zamId + ': ' + e.message); }
+  };
 
-  if (/action=sklepag_ocen/.test(link)) {
-    await p.goto(link, { waitUntil: 'load' });
-    const przedOpinia = p.url();
-    await p.click('button[type="submit"]');
-    await p.waitForTimeout(1200);
-    sprawdz('formularz opinii nie przeszedl z pustymi polami', p.url() === przedOpinia, 'url: ' + bezTokenu(p.url()));
+  try {
+    sprawdz('udalo sie zbudowac link do formularza opinii', /action=sklepag_ocen/.test(link || ''),
+      link ? bezTokenu(link) : '(pusty — wszystkie zamowienia maja juz opinie)');
 
-    for (const nazwa of ['sklepag_imie', 'sklepag_tresc', 'sklepag_zgoda']) {
-      const kom = await p.evaluate((n) => {
-        const e = document.querySelector('[name="' + n + '"]');
-        if (!e) { return null; }
-        e.checkValidity();
-        return e.validationMessage || '';
-      }, nazwa);
-      sprawdz(nazwa + ': komunikat NIE jest natywnym dymkiem po angielsku',
-        kom !== null && !/please|fill out this field|check this box|proceed/i.test(kom),
-        'komunikat: "' + kom + '"');
-      sprawdz(nazwa + ': komunikat jest po polsku',
-        kom !== null && /[ąćęłńóśźż]/i.test(kom), 'komunikat: "' + kom + '"');
+    if (/action=sklepag_ocen/.test(link || '')) {
+      await p.goto(link, { waitUntil: 'load' });
+      const przedOpinia = p.url();
+      await p.click('button[type="submit"]');
+      await p.waitForTimeout(1200);
+      sprawdz('formularz opinii nie przeszedl z pustymi polami', p.url() === przedOpinia, 'url: ' + bezTokenu(p.url()));
+
+      for (const nazwa of ['sklepag_imie', 'sklepag_tresc', 'sklepag_zgoda']) {
+        const kom = await p.evaluate((n) => {
+          const e = document.querySelector('[name="' + n + '"]');
+          if (!e) { return null; }
+          e.checkValidity();
+          return e.validationMessage || '';
+        }, nazwa);
+        sprawdz(nazwa + ': komunikat NIE jest natywnym dymkiem po angielsku',
+          kom !== null && !/please|fill out this field|check this box|proceed/i.test(kom),
+          'komunikat: "' + kom + '"');
+        sprawdz(nazwa + ': komunikat jest po polsku',
+          kom !== null && /[ąćęłńóśźż]/i.test(kom), 'komunikat: "' + kom + '"');
+      }
+
+      console.log('[7] wypelnione pola nie zostawiaja przyklejonego bledu');
+      await p.fill('[name="sklepag_imie"]', 'Sonda');
+      await p.fill('[name="sklepag_tresc"]', 'Tresc probna, dosc dluga zeby przejsc walidacje.');
+      await p.check('[name="sklepag_zgoda"]');
+      const resztki = await p.evaluate(() => ['sklepag_imie', 'sklepag_tresc', 'sklepag_zgoda']
+        .map((n) => { const e = document.querySelector('[name="' + n + '"]'); e.checkValidity(); return e.validationMessage; })
+        .filter((m) => m !== ''));
+      sprawdz('po wypelnieniu zaden komunikat nie zostal przyklejony', resztki.length === 0, JSON.stringify(resztki));
+      /* ⛔ Formularza NIE wysylamy: wyslanie zamknieloby zalazek na dobre, a wtedy zadne
+         przywrocenie by juz nie pomoglo. */
     }
-
-    console.log('[7] wypelnione pola nie zostawiaja przyklejonego bledu');
-    await p.fill('[name="sklepag_imie"]', 'Sonda');
-    await p.fill('[name="sklepag_tresc"]', 'Tresc probna, dosc dluga zeby przejsc walidacje.');
-    await p.check('[name="sklepag_zgoda"]');
-    const resztki = await p.evaluate(() => ['sklepag_imie', 'sklepag_tresc', 'sklepag_zgoda']
-      .map((n) => { const e = document.querySelector('[name="' + n + '"]'); e.checkValidity(); return e.validationMessage; })
-      .filter((m) => m !== ''));
-    sprawdz('po wypelnieniu zaden komunikat nie zostal przyklejony', resztki.length === 0, JSON.stringify(resztki));
-    /* ⛔ Celowo NIE wysylamy formularza: link opinii jest jednorazowy, a test ma nie
-       zuzywac cudzego zamowienia ani zasmiecac moderacji opiniami z sondy. */
+  } finally {
+    przywroc();
   }
+
+  console.log('[8] stan tokenu opinii oddany — link kupujacego dziala jak przed testem');
+  const poTescie = zamId ? wp(`
+    global $wpdb;
+    $r = $wpdb->get_row( $wpdb->prepare( "SELECT token_hash FROM {$wpdb->prefix}sklepag_opinie WHERE zamowienie_id=%d AND status='zalazek'", ${zamId} ) );
+    echo $r ? $r->token_hash : 'BRAK-WIERSZA';
+  `) : 'BRAK-WIERSZA';
+  sprawdz('token opinii wrocil do stanu sprzed testu',
+    bylWiersz === '1' ? poTescie === hashPrzed : poTescie === 'BRAK-WIERSZA',
+    bylWiersz === '1' ? ('zgodny ze skrotem sprzed testu: ' + (poTescie === hashPrzed)) : ('wiersz wstawiony przez test skasowany: ' + (poTescie === 'BRAK-WIERSZA')));
 
   await b.close();
   console.log('\n' + (bledy ? 'NIEPOWODZENIE: ' + bledy + ' krokow nie przeszlo' : 'WSZYSTKIE KROKI PRZESZLY'));
