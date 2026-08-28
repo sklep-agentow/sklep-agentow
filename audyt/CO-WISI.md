@@ -368,3 +368,15 @@ był BRAK pomiaru, nie wada produktu, więc nie istnieje commit, na którym stra
 odrzuciliśmy w `#205` przy kalibracji jako obronę robioną na narzędziu w dniu oddania.
 **CO ZAMYKA:** albo bramka dostanie jawny rejestr wyjątków (osobny PR, poza dniem oddania), albo
 rejestr dostanie czwarty stan dla znalezisk typu „brak pomiaru”, których nie da się skalibrować.
+
+## 🟡 DŁUG Z RECENZJI `#206` i `#207` — drobne, nie zmieniają tego, co dostaje klient (28.08)
+- **`#206` DROBNA 6** — kalibracja walidacji nazwy silnika była zadeklarowana, nie pokazana.
+  ✅ ZAMKNIĘTE w `#207`: mutant odtwarzający starą logikę (`msedge` → chromium) kończy `EXIT=2`,
+  bez mutanta `EXIT=0`.
+- **`#206` DROBNA 4** — strażnik z rejestru nie był uruchamiany przez nic. ✅ ZAMKNIĘTE: sędzia
+  `testy/rodo-anonimizacja-pomiar-skutku-test.sh` leży w `testy/`, a `narzedzia-qa/linia-bazowa.sh`
+  zbiera `testy/*.sh`. Kroki pomocnicze przeniesione do `testy/kroki-rodo/`, żeby linia bazowa
+  nie uruchamiała ich osobno (bez sędziego nie sprzątają po sobie).
+- ⬜ **`#207` WAŻNA 4, druga połowa** — asercja zgodności kodu ze stosem stoi w teście RODO,
+  ale POZOSTAŁE testy na żywym stosie jej nie mają. Do przeglądu przy następnej rundzie QA:
+  każdy test mierzący stos powinien najpierw dowieść, że mierzy TEN kod, który jest w repo.

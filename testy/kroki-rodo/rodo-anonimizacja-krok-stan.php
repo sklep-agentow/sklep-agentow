@@ -33,6 +33,12 @@ $rodz  = array_map( 'strval', (array) $rodz );
 echo 'ZDARZENIE_ANONIMIZACJA=' . ( in_array( 'anonimizacja', $rodz, true ) ? 'JEST' : 'BRAK' ) . "\n";
 echo 'ZDARZENIE_ANONIMIZACJA_BLAD=' . ( in_array( 'anonimizacja_blad', $rodz, true ) ? 'JEST' : 'BRAK' ) . "\n";
 
+/* ⛔ Slady adresu w DZIENNIKU — pomiar drugiego miejsca, w ktorym siedzial adres
+   (recenzja #207, WAZNA 2). Krok nie zna adresu, wiec szuka po markerze testowym:
+   wszystkie adresy tego testu koncza sie na @example.test. */
+$slady = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$tz} WHERE zamowienie_id = %d AND opis LIKE %s", $id, '%' . $wpdb->esc_like( '@example.test' ) . '%' ) ); // phpcs:ignore
+echo 'SLADY_W_DZIENNIKU=' . $slady . "\n";
+
 /* Sprzatanie: test stawia WLASNE warunki wstepne i po sobie zmywa — stos jest wspolny. */
 $wpdb->delete( $tz, array( 'zamowienie_id' => $id ) );
 $wpdb->delete( $wpdb->prefix . 'sklepag_opinie', array( 'zamowienie_id' => $id ) );

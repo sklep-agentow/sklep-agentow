@@ -177,14 +177,22 @@ function sklepag_obsluz_anonimizacje() {
 	$email = (string) $zam->email_kupujacego;
 	$teraz = current_time( 'mysql' );
 
-	$ok_zam       = $wpdb->query(
-		$wpdb->prepare(
-			"UPDATE {$pz} SET email_kupujacego='', usunieto_dnia=%s, token_pobrania='', link_wygasa=NULL, zmieniono=%s WHERE id=%d",
-			$teraz,
-			$teraz,
-			(int) $zam->id
-		)
-	);
+	/*
+	 * ⛔ KOLEJNOSC JEST CZESCIA NAPRAWY, nie stylem.
+	 *
+	 * Najpierw slady WTORNE (dziennik zdarzen, opinia), na koncu ZRODLO (adres
+	 * w zamowieniu). Powod: adresu w dzienniku szukamy PO TRESCI, wiec potrzebny
+	 * jest do tego sam adres — a on znika razem ze zrodlem.
+	 *
+	 * Przy odwrotnej kolejnosci powtorzenie operacji po awarii dziennika bylo
+	 * NIEMOZLIWE: zrodlo bylo juz czyste, `$email` wracalo puste, warunek pomijal
+	 * czyszczenie dziennika w calosci, a pomiar skutku patrzyl tylko na zamowienie
+	 * i meldowal sukces. Adres kupujacego zostawal w `opis` wierszy zdarzen NA STALE,
+	 * z potwierdzeniem usuniecia dla wlasciciela.
+	 *
+	 * Teraz kazda porazka zostawia zrodlo nietkniete, wiec powtorzenie ma z czego
+	 * odtworzyc caly zakres pracy.
+	 */
 	$ok_zdarzenia = true;
 	if ( '' !== $email ) {
 		$ok_zdarzenia = $wpdb->query(
@@ -195,11 +203,42 @@ function sklepag_obsluz_anonimizacje() {
 			)
 		);
 	}
-	// phpcs:enable
 
-	// Symetria RODO dla mechanizmu opinii: imię i token opinii umierają razem
-	// z tokenem pobrania, publikacja schodzi ze strony — szczegóły w sklepag_anonimizuj_opinie().
+	/*
+	 * ⛔ PRZERWANIE PRZED ZRODLEM, gdy slad wtorny nie zostal usuniety.
+	 *
+	 * Sama kolejnosc nie wystarcza: gdyby kod poleciał dalej i wyczyscil adres
+	 * w zamowieniu mimo nieudanego czyszczenia dziennika, powtorzenie operacji
+	 * NIE mialoby juz czego szukac — `$email` wracaloby puste, warunek pominalby
+	 * dziennik, licznik sladow nie mialby wzorca, a skutek wyszedlby „ok".
+	 * Adres kupujacego zostalby w dzienniku NA STALE. To ta sama wada, ktora
+	 * naprawiamy, tylko przesunieta o jeden krok — dlatego stoi tu twarde wyjscie.
+	 *
+	 * Zrodlo jest KLUCZEM do sladow wtornych, wiec ginie ostatnie i tylko wtedy,
+	 * gdy slady wtorne juz zniknely.
+	 */
+	if ( false === $ok_zdarzenia ) {
+		sklepag_zdarzenie( (int) $zam->id, 'anonimizacja_blad', 'nie udało się usunąć adresu z dziennika zdarzeń — adres w zamówieniu NIETKNIĘTY, żeby powtórzenie miało z czego odtworzyć zakres' );
+		wp_die(
+			'Anonimizacja NIE doszła do skutku: nie udało się usunąć adresu z dziennika zdarzeń. Dane kupującego są nadal w bazie i NIC nie zostało zmienione. Nie potwierdzaj usunięcia osobie, która złożyła żądanie — powtórz operację.',
+			'Sklep Agentów',
+			500
+		);
+	}
+
+	/* Symetria RODO dla mechanizmu opinii — TAKZE przed zrodlem. Wynik nie rozstrzyga
+		(false znaczy tu rowniez „zamowienie nie ma opinii"), rozstrzyga pomiar nizej. */
 	sklepag_anonimizuj_opinie( (int) $zam->id );
+
+	$ok_zam = $wpdb->query(
+		$wpdb->prepare(
+			"UPDATE {$pz} SET email_kupujacego='', usunieto_dnia=%s, token_pobrania='', link_wygasa=NULL, zmieniono=%s WHERE id=%d",
+			$teraz,
+			$teraz,
+			(int) $zam->id
+		)
+	);
+	// phpcs:enable
 
 	/*
 	 * ⛔ POMIAR SKUTKU, NIE WYWOLANIA. Wczesniej ta funkcja zapisywala do dziennika
@@ -215,11 +254,50 @@ function sklepag_obsluz_anonimizacje() {
 	 * prostu NIE MA opinii — to normalny przypadek, wiec jej wynik nie rozstrzyga.
 	 * Rozstrzyga STAN PO ZAPISIE: e-mail ma byc pusty, `usunieto_dnia` ustawione.
 	 */
-	$po        = $wpdb->get_row( $wpdb->prepare( "SELECT email_kupujacego, usunieto_dnia FROM {$pz} WHERE id = %d", (int) $zam->id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- jw.
-	$skutek_ok = $po && '' === (string) $po->email_kupujacego && ! empty( $po->usunieto_dnia );
+	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- nazwy tabel z prefiksu; akcja admina.
+	$po = $wpdb->get_row( $wpdb->prepare( "SELECT email_kupujacego, usunieto_dnia FROM {$pz} WHERE id = %d", (int) $zam->id ) );
+
+	/*
+	 * ⛔ SKUTEK LICZY SIE WE WSZYSTKICH TRZECH MIEJSCACH, w ktorych siedzial adres
+	 * albo dane kupujacego. Pomiar tylko w tabeli
+	 * zamowien meldowal sukces, gdy adres zostawal w dzienniku zdarzen.
+	 *
+	 * `esc_like()` przy LIKE jest OBOWIAZKOWY — `_` i `%` sa dzikimi kartami SQL,
+	 * a adres e-mail moze je zawierac.
+	 */
+	$slady_dziennik = 0;
+	if ( '' !== $email ) {
+		$slady_dziennik = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$wpdb->prefix}sklepag_zdarzenia WHERE zamowienie_id = %d AND opis LIKE %s",
+				(int) $zam->id,
+				'%' . $wpdb->esc_like( $email ) . '%'
+			)
+		);
+	}
+	$slady_opinia = (int) $wpdb->get_var(
+		$wpdb->prepare(
+			"SELECT COUNT(*) FROM {$wpdb->prefix}sklepag_opinie WHERE zamowienie_id = %d AND ( imie <> '' OR token_hash <> '' )",
+			(int) $zam->id
+		)
+	);
+	// phpcs:enable
+
+	$skutek_ok = $po
+		&& '' === (string) $po->email_kupujacego
+		&& ! empty( $po->usunieto_dnia )
+		&& 0 === $slady_dziennik
+		&& 0 === $slady_opinia;
 
 	if ( false === $ok_zam || false === $ok_zdarzenia || ! $skutek_ok ) {
-		sklepag_zdarzenie( (int) $zam->id, 'anonimizacja_blad', 'anonimizacja NIE doszla do skutku — dane kupujacego moga nadal byc w bazie' );
+		sklepag_zdarzenie(
+			(int) $zam->id,
+			'anonimizacja_blad',
+			'anonimizacja NIE doszła do skutku — '
+			. 'adres w zamówieniu: ' . ( ( $po && '' === (string) $po->email_kupujacego ) ? 'usunięty' : 'ZOSTAŁ' )
+			. ', ślady w dzienniku: ' . (int) $slady_dziennik
+			. ', dane opinii: ' . (int) $slady_opinia
+		);
 		wp_die(
 			'Anonimizacja NIE doszła do skutku — dane kupującego mogą nadal być w bazie. Nie potwierdzaj usunięcia osobie, która złożyła żądanie, dopóki nie powtórzysz operacji.',
 			'Sklep Agentów',

@@ -39,6 +39,25 @@ zle() { printf '  BLAD %s\n' "$1"; BLEDY=$(( BLEDY + 1 )); }
 
 pole() { printf '%s\n' "$1" | sed -n "s/^$2=//p" | head -1; }
 
+# ⛔ WAZNA 4 recenzji #207: test na wspolnym stosie moze mierzyc STARA kopie wtyczki,
+#    a wtedy zielone nie znaczy nic. Rozstrzygamy PRZED pomiarem: suma pliku handlera
+#    w kontenerze musi byc rowna sumie pliku z repo.
+HANDLER=wtyczki/sklep-agentow/includes/admin-zamowienie.php
+SUMA_REPO=$(sha256sum "$HANDLER" | cut -d" " -f1)
+SUMA_STOS=$(docker exec "$KONTENER" sha256sum /var/www/html/wp-content/plugins/sklep-agentow/includes/admin-zamowienie.php 2>/dev/null | cut -d" " -f1)
+echo "SUMA_REPO=$SUMA_REPO"
+echo "SUMA_STOS=$SUMA_STOS"
+if [ -z "$SUMA_STOS" ]; then
+  echo "PRZYRZAD: nie umiem odczytac handlera na stosie ($KONTENER)"; exit 2
+fi
+if [ "$SUMA_REPO" != "$SUMA_STOS" ]; then
+  echo "PRZYRZAD: na stosie stoi INNA wersja handlera niz w repo — pomiar nic nie znaczy."
+  echo "PRZYRZAD: wgraj kod na stos, np. docker cp $HANDLER $KONTENER:/var/www/html/wp-content/plugins/sklep-agentow/includes/admin-zamowienie.php"
+  exit 2
+fi
+echo "  OK   przyrzad mierzy TEN kod, ktory jest w repo (sha256 zgodne)"
+echo
+
 echo "=== A. sciezka szczesliwa: zapis sie udaje ==="
 WY_A=$($WP eval-file - < testy/kroki-rodo/rodo-anonimizacja-krok-szczesliwa.php 2>&1)
 printf '%s\n' "$WY_A" | sed 's/^/    | /'
@@ -80,6 +99,31 @@ case "$WY_B" in *"WPDIE="*) ok "B: wlasciciel dostal ostrzezenie zamiast potwier
 [ "$(pole "$STAN_B" MAIL_PO)" = "ZOSTAL" ] && ok "B: e-mail faktycznie zostal (awaria byla prawdziwa)" || zle "B: e-mail zniknal — podlozenie nie zadzialalo, wynik nic nie znaczy"
 [ "$(pole "$STAN_B" ZDARZENIE_ANONIMIZACJA)" = "BRAK" ] && ok "B: NIE zapisano falszywego zdarzenia anonimizacja" || zle "B: dziennik KLAMIE — zapisano anonimizacja mimo ze dane zostaly"
 [ "$(pole "$STAN_B" ZDARZENIE_ANONIMIZACJA_BLAD)" = "JEST" ] && ok "B: zapisano anonimizacja_blad" || zle "B: brak sladu bledu w dzienniku"
+
+echo
+echo "=== C. POWTORZENIE po awarii — czy druga proba domyka WSZYSTKIE miejsca ==="
+WY_C=$($WP eval-file - < testy/kroki-rodo/rodo-anonimizacja-krok-powtorka.php 2>&1)
+printf '%s\n' "$WY_C" | sed 's/^/    | /'
+ID_C=$(pole "$WY_C" ID)
+[ -n "$ID_C" ] || { echo "PRZYRZAD: krok C nie oddal ID zamowienia"; exit 2; }
+
+TRAF_C=$(pole "$WY_C" PROBA1_PODLOZENIE_TRAFILO)
+if [ "${TRAF_C:-0}" = "0" ]; then
+  echo "PRZYRZAD: podlozona wada NIE trafila w zapytanie czyszczace zrodlo — przypadek C nic nie zmierzyl"
+  $WP eval-file - "$ID_C" < testy/kroki-rodo/rodo-anonimizacja-krok-stan.php >/dev/null 2>&1
+  exit 2
+fi
+ok "C: podlozenie trafilo w zapytanie ($TRAF_C x) — jest co mierzyc"
+
+STAN_C=$($WP eval-file - "$ID_C" < testy/kroki-rodo/rodo-anonimizacja-krok-stan.php 2>&1)
+printf '%s\n' "$STAN_C" | sed 's/^/    | /'
+
+case "$WY_C" in *"PROBA1_WPDIE="*) ok "C: pierwsza proba ODMOWILA (awaria zrodla zlapana)" ;; *) zle "C: pierwsza proba nie odmowila mimo awarii zapisu" ;; esac
+case "$WY_C" in *"PROBA1_REDIRECT="*"sklepag_anonimizacja=ok"*) zle "C: pierwsza proba POTWIERDZILA mimo awarii" ;; *) ok "C: brak falszywego potwierdzenia w probie 1" ;; esac
+[ "$(pole "$WY_C" ADRES_W_ZRODLE_PO_PROBIE1)" = "ZOSTAL" ] && ok "C: po nieudanej probie zrodlo NIETKNIETE (jest z czego powtorzyc)" || zle "C: zrodlo wyczyszczone mimo odmowy — powtorka nie ma jak domknac dziennika"
+case "$WY_C" in *"PROBA2_REDIRECT="*"sklepag_anonimizacja=ok"*) ok "C: druga proba domknela i potwierdzila" ;; *) zle "C: druga proba NIE domknela anonimizacji" ;; esac
+[ "$(pole "$STAN_C" MAIL_PO)" = "PUSTY" ] && ok "C: adres zniknal ze zrodla" || zle "C: adres ZOSTAL w zrodle po powtorce"
+[ "$(pole "$STAN_C" SLADY_W_DZIENNIKU)" = "0" ] && ok "C: adres zniknal TAKZE z dziennika zdarzen" || zle "C: adres ZOSTAL w dzienniku — to jest wada z WAZNEJ 2 recenzji #207"
 
 echo
 if [ "$BLEDY" -eq 0 ]; then
