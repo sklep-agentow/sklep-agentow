@@ -190,7 +190,7 @@ więc deinstalacja kasuje go zapytaniem `LIKE` po `wp_options` (razem z wierszam
 
 | Stała | Wartość | Gdzie | Znaczenie |
 |---|---|---|---|
-| `SEGM_WERSJA` | `1.3.4` | plik główny | wersja wtyczki |
+| `SEGM_WERSJA` | `1.3.5` | plik główny | wersja wtyczki |
 | `SEGM_WERSJA_SCHEMATU` | `4` | plik główny | wyzwala migrację tabel |
 | `SEGM_RETENCJA_DNI` | `90` | plik główny | po tylu dniach cron kasuje cudzą korespondencję |
 | `SEGM_BLOKADA` | `segm_operacja_w_toku` | plik główny | nazwa znacznika „operacja trwa" |

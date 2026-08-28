@@ -26,8 +26,10 @@ spr() { # spr "opis" "oczekiwane" "polecenie"
 }
 
 echo "=== A. Wersja, naglowek, licencja ==="
-spr "naglowek Version"               "1.3.4" "grep -oP '(?<=^ \* Version: ).*' $W/segregator-maila.php"
-spr "stala SEGM_WERSJA"              "1.3.4" "grep -oP \"(?<=SEGM_WERSJA', ')[^']*\" $W/segregator-maila.php"
+# WER_KOD (linia 12) juz czyta wersje z kodu — te dwie kontrole mialy literal mimo to
+# (klasa 8 SLEPE-PLAMY: naprawa trafila w jeden egzemplarz wzorca, blizniak zostal).
+spr "naglowek Version ma postac semver" "1" "printf '%s' '$WER_KOD' | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$' && echo 1 || echo 0"
+spr "stala SEGM_WERSJA rowna naglowkowi" "$WER_KOD" "grep -oP \"(?<=SEGM_WERSJA', ')[^']*\" $W/segregator-maila.php"
 spr "SEGM_WERSJA_SCHEMATU"           "4"     "grep -oP \"(?<=SEGM_WERSJA_SCHEMATU', ')[^']*\" $W/segregator-maila.php"
 spr "Requires at least"              "6.0"   "grep -oP '(?<=^ \* Requires at least: ).*' $W/segregator-maila.php"
 spr "Requires PHP"                   "8.1"   "grep -oP '(?<=^ \* Requires PHP: ).*' $W/segregator-maila.php"
@@ -329,7 +331,10 @@ spr "CHANGELOG istnieje"             "1" "test -f $W/CHANGELOG.md && echo 1 || e
 spr "format Keep a Changelog"        "1" "grep -c 'keepachangelog.com' $W/CHANGELOG.md"
 spr "biezaca wersja ma wpis"         "1" "grep -c '^## \\[$WER_KOD\\]' $W/CHANGELOG.md"
 spr "Niewydane jest PIERWSZA sekcja (Keep a Changelog)" "Niewydane" "grep -oP '^## \\[\\K[^\\]]+' $W/CHANGELOG.md | head -1"
-spr "liczba wydan opisanych"         "10" "grep -c '^## \\[' $W/CHANGELOG.md"
+# Literal 10 wywracal bramke przy KAZDYM wydaniu. Pytanie, ktore ta kontrola ma zadawac,
+# brzmi "czy ktos nie skasowal historii", a nie "czy wydan jest dokladnie dziesiec" —
+# wiec sprawdzamy monotonicznosc: liczba wpisow nigdy nie maleje ponizej osiagnietego progu.
+spr "historia wydan nie zmalala (>= 10 wpisow)" "1" "[ \$(grep -c '^## \\[' $W/CHANGELOG.md) -ge 10 ] && echo 1 || echo 0"
 for v in 1.0.0 1.1.0 1.2.0 1.2.1; do
   spr "wersja $v z historii gita opisana" "1" "grep -c '^## \\[$v\\]' $W/CHANGELOG.md"
 done
