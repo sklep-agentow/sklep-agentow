@@ -96,6 +96,22 @@ $wpdb->insert(
 );
 echo 'MAIL_OBCY=' . $mail_obcy . "\n";
 
+/* ⛔ DRUGI wpis obcego — adres poprzedzony znakiem, ktory RFC dopuszcza w czesci lokalnej
+   (`!`), a ktorego WEZSZA kotwica nie znala. Stara granica (`[A-Za-z0-9._%+-]`) przepuszczala
+   takie wystapienie i przepisywala cudzy wpis. Ten wiersz TEZ musi przezyc nietkniety. */
+$mail_obcy_rfc = '!' . $mail;
+$wpdb->insert(
+	$tz,
+	array(
+		'zamowienie_id' => null,
+		'typ'           => 'proba_obcy_rfc',
+		'opis'          => 'mail wyslany na ' . $mail_obcy_rfc,
+		'uzytkownik'    => 'test',
+		'czas'          => $teraz,
+	)
+);
+echo 'MAIL_OBCY_RFC=' . $mail_obcy_rfc . "\n";
+
 $luzem = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$tz} WHERE zamowienie_id IS NULL AND opis LIKE %s", '%' . $wpdb->esc_like( $mail ) . '%' ) ); // phpcs:ignore
 echo 'ADRES_LUZEM_PRZED=' . $luzem . "\n";
 

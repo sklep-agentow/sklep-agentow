@@ -255,10 +255,24 @@ function sklepag_obsluz_anonimizacje() {
 				'%' . $wpdb->esc_like( $email ) . '%'
 			)
 		);
-		$wzor      = '/(?<![A-Za-z0-9._%+\-])' . preg_quote( $email, '/' ) . '(?![A-Za-z0-9._%+\-])/';
+		/*
+		 * ⛔ KOTWICA MUSI POKRYWAC PELNY ZBIOR ZNAKOW ADRESU, nie wygodny podzbior.
+		 * RFC 5322 dopuszcza w czesci lokalnej takze `!#$%&'*+-/=?^_`{|}~`, wiec kotwica
+		 * z samych liter, cyfr i `._%+-` przepuszczalaby adresy typu `!x@a.pl` — i wracalaby
+		 * ta sama korupcja cudzych wpisow, ktora ta naprawa zamyka.
+		 * ⛔ JEDNA definicja, dwa uzycia: czyszczenie i pomiar MUSZA dopasowywac identycznie.
+		 */
+		$granica = '[A-Za-z0-9!#$%&\'*+\/=?^_`{|}~.-]';
+		$wzor    = '/(?<!' . $granica . ')' . preg_quote( $email, '/' ) . '(?!' . $granica . ')/';
 		foreach ( (array) $kandydaci as $k ) {
 			$nowy = preg_replace( $wzor, $znacznik, (string) $k->opis );
-			if ( null === $nowy || $nowy === (string) $k->opis ) {
+			if ( null === $nowy ) {
+				/* ⛔ `null` to AWARIA silnika wyrazen, nie „brak dopasowania”. Ciche
+					potraktowanie jej jak braku adresu zostawiloby dane i zameldowalo sukces. */
+				$ok_zdarzenia = false;
+				continue;
+			}
+			if ( $nowy === (string) $k->opis ) {
 				/* Brak zakotwiczonego wystapienia = to NIE jest adres tego kupujacego.
 					Wiersz zostaje nietkniety — celowo. */
 				continue;
@@ -285,7 +299,7 @@ function sklepag_obsluz_anonimizacje() {
 	if ( false === $ok_zdarzenia ) {
 		sklepag_zdarzenie( (int) $zam->id, 'anonimizacja_blad', 'nie udało się usunąć adresu z dziennika zdarzeń — adres w zamówieniu NIETKNIĘTY, żeby powtórzenie miało z czego odtworzyć zakres' );
 		wp_die(
-			'Anonimizacja NIE doszła do skutku: nie udało się usunąć adresu z dziennika zdarzeń. Dane kupującego są nadal w bazie i NIC nie zostało zmienione. Nie potwierdzaj usunięcia osobie, która złożyła żądanie — powtórz operację.',
+			'Anonimizacja NIE doszła do skutku: nie udało się usunąć adresu z dziennika zdarzeń. Adres w zamówieniu jest NIETKNIĘTY, więc powtórzenie operacji domknie całość — ale część śladów w dzienniku mogła już zostać usunięta. Nie potwierdzaj usunięcia osobie, która złożyła żądanie, dopóki nie powtórzysz operacji i nie zobaczysz potwierdzenia.',
 			'Sklep Agentów',
 			500
 		);
@@ -342,9 +356,13 @@ function sklepag_obsluz_anonimizacje() {
 				'%' . $wpdb->esc_like( $email ) . '%'
 			)
 		);
-		$wzor_pomiar    = '/(?<![A-Za-z0-9._%+\-])' . preg_quote( $email, '/' ) . '(?![A-Za-z0-9._%+\-])/';
+		/* Ta sama granica co przy czyszczeniu — inaczej pomiar mierzylby co innego niz naprawa. */
+		$granica_pomiar = '[A-Za-z0-9!#$%&\'*+\/=?^_`{|}~.-]';
+		$wzor_pomiar    = '/(?<!' . $granica_pomiar . ')' . preg_quote( $email, '/' ) . '(?!' . $granica_pomiar . ')/';
 		foreach ( (array) $do_sprawdzenia as $tresc ) {
-			if ( preg_match( $wzor_pomiar, (string) $tresc ) ) {
+			$trafienie = preg_match( $wzor_pomiar, (string) $tresc );
+			if ( false === $trafienie || 1 === $trafienie ) {
+				/* Awaria silnika liczy sie JAK SLAD: nie wolno jej czytac jako „czysto”. */
 				++$slady_dziennik;
 			}
 		}
