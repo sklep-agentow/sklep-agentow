@@ -40,12 +40,12 @@ zle() { printf '  BLAD %s\n' "$1"; BLEDY=$(( BLEDY + 1 )); }
 pole() { printf '%s\n' "$1" | sed -n "s/^$2=//p" | head -1; }
 
 echo "=== A. sciezka szczesliwa: zapis sie udaje ==="
-WY_A=$($WP eval-file - < testy/rodo-anonimizacja-krok-szczesliwa.php 2>&1)
+WY_A=$($WP eval-file - < testy/kroki-rodo/rodo-anonimizacja-krok-szczesliwa.php 2>&1)
 printf '%s\n' "$WY_A" | sed 's/^/    | /'
 ID_A=$(pole "$WY_A" ID)
 [ -n "$ID_A" ] || { echo "PRZYRZAD: krok A nie oddal ID zamowienia"; exit 2; }
 
-STAN_A=$($WP eval-file - "$ID_A" < testy/rodo-anonimizacja-krok-stan.php 2>&1)
+STAN_A=$($WP eval-file - "$ID_A" < testy/kroki-rodo/rodo-anonimizacja-krok-stan.php 2>&1)
 printf '%s\n' "$STAN_A" | sed 's/^/    | /'
 
 case "$WY_A" in *"REDIRECT="*"sklepag_anonimizacja=ok"*) ok "A: wlasciciel dostal potwierdzenie" ;; *) zle "A: brak przekierowania z potwierdzeniem" ;; esac
@@ -57,7 +57,7 @@ case "$WY_A" in *"REDIRECT="*"sklepag_anonimizacja=ok"*) ok "A: wlasciciel dosta
 
 echo
 echo "=== B. PODLOZONA AWARIA zapisu — handler NIE moze potwierdzic usuniecia ==="
-WY_B=$($WP eval-file - < testy/rodo-anonimizacja-krok-awaria.php 2>&1)
+WY_B=$($WP eval-file - < testy/kroki-rodo/rodo-anonimizacja-krok-awaria.php 2>&1)
 printf '%s\n' "$WY_B" | sed 's/^/    | /'
 ID_B=$(pole "$WY_B" ID)
 [ -n "$ID_B" ] || { echo "PRZYRZAD: krok B nie oddal ID zamowienia"; exit 2; }
@@ -67,12 +67,12 @@ ID_B=$(pole "$WY_B" ID)
 TRAF=$(pole "$WY_B" PODLOZENIE_TRAFILO)
 if [ "${TRAF:-0}" = "0" ]; then
   echo "PRZYRZAD: podlozona wada NIE trafila w zapytanie czyszczace e-mail — test nic nie zmierzyl"
-  $WP eval-file - "$ID_B" < testy/rodo-anonimizacja-krok-stan.php >/dev/null 2>&1
+  $WP eval-file - "$ID_B" < testy/kroki-rodo/rodo-anonimizacja-krok-stan.php >/dev/null 2>&1
   exit 2
 fi
 ok "B: podlozenie trafilo w zapytanie ($TRAF x) — jest co mierzyc"
 
-STAN_B=$($WP eval-file - "$ID_B" < testy/rodo-anonimizacja-krok-stan.php 2>&1)
+STAN_B=$($WP eval-file - "$ID_B" < testy/kroki-rodo/rodo-anonimizacja-krok-stan.php 2>&1)
 printf '%s\n' "$STAN_B" | sed 's/^/    | /'
 
 case "$WY_B" in *"REDIRECT="*"sklepag_anonimizacja=ok"*) zle "B: handler POTWIERDZIL usuniecie mimo awarii zapisu" ;; *) ok "B: brak falszywego potwierdzenia" ;; esac
