@@ -14,11 +14,21 @@
  * ten test dotyczy warstwy jezyka — ale wprost sprawdza, ze naprawa jezyka nie
  * rozszczelnila blokady.
  *
- * Wymaga playwright-core i dzialajacego stacku. Bez logowania (strona publiczna).
+ * ⛔ Test obejmuje OBA formularze, ktore widzi kupujacy — strone produktu ORAZ formularz
+ * opinii. Ten drugi rysuje sie samodzielnym dokumentem bez `wp_head()` (link z maila), wiec
+ * nie widzi assetow sklepu i ma wlasna kopie procedury. Naprawa jednego bez drugiego to
+ * zamkniecie EGZEMPLARZA zamiast KLASY — recenzja #203 zlapala dokladnie to.
+ *
+ * Wymaga playwright-core i dzialajacego stacku. Bez logowania (strony publiczne).
  * Uzycie: node testy/zgoda-komunikat-po-polsku-test.js [adres]
  */
 const { chromium } = require('playwright-core');
 const { wymagajChromium } = require('./lib/chromium');
+const { execFileSync } = require('child_process');
+/* Token opinii jest jednorazowym poswiadczeniem kupujacego — do logu (takze do przebiegu
+   CI) idzie wylacznie w wersji zamaskowanej. */
+const bezTokenu = (s) => String(s).replace(/([?&]t=)[^&\s]+/g, '$1…');
+const KONTENER = 'strona_wp_wordpress';
 const BAZA = process.argv[2] || 'http://localhost:8890';
 const PRODUKT = BAZA + '/sklep/produkt/chatbot-live/';
 
@@ -68,6 +78,52 @@ function sprawdz(opis, warunek, szczegol) {
   const poZaznaczeniu = await pole.evaluate((e) => { e.checkValidity(); return e.validationMessage || ''; });
   sprawdz('zaznaczona zgoda nie zostawia komunikatu bledu', poZaznaczeniu.trim() === '',
     'komunikat: "' + poZaznaczeniu + '"');
+
+  console.log('[6] FORMULARZ OPINII — ten sam blad w drugim miejscu (klasa, nie egzemplarz)');
+  /* Link opinii buduje wtyczka: kupujacy przychodzi z maila, wiec token liczymy jej wlasna
+     funkcja zamiast go podrabiac. Bierzemy pierwsze zamowienie, ktore opinii jeszcze nie ma. */
+  const link = execFileSync('docker', ['exec', '-u', 'www-data', KONTENER, 'wp', 'eval', `
+    global $wpdb;
+    foreach ( $wpdb->get_results( "SELECT id,produkt_id FROM {$wpdb->prefix}sklepag_zamowienia ORDER BY id DESC LIMIT 12" ) as $z ) {
+      $t = sklepag_opinia_zalazek( (int) $z->id, (int) $z->produkt_id );
+      if ( '' !== $t ) { echo admin_url( 'admin-post.php' ) . '?action=sklepag_ocen&z=' . (int) $z->id . '&t=' . $t; return; }
+    }
+  `], { encoding: 'utf8' }).trim();
+  sprawdz('udalo sie zbudowac link do formularza opinii', /action=sklepag_ocen/.test(link),
+    link ? bezTokenu(link) : '(pusty — wszystkie zamowienia maja juz opinie)');
+
+  if (/action=sklepag_ocen/.test(link)) {
+    await p.goto(link, { waitUntil: 'load' });
+    const przedOpinia = p.url();
+    await p.click('button[type="submit"]');
+    await p.waitForTimeout(1200);
+    sprawdz('formularz opinii nie przeszedl z pustymi polami', p.url() === przedOpinia, 'url: ' + bezTokenu(p.url()));
+
+    for (const nazwa of ['sklepag_imie', 'sklepag_tresc', 'sklepag_zgoda']) {
+      const kom = await p.evaluate((n) => {
+        const e = document.querySelector('[name="' + n + '"]');
+        if (!e) { return null; }
+        e.checkValidity();
+        return e.validationMessage || '';
+      }, nazwa);
+      sprawdz(nazwa + ': komunikat NIE jest natywnym dymkiem po angielsku',
+        kom !== null && !/please|fill out this field|check this box|proceed/i.test(kom),
+        'komunikat: "' + kom + '"');
+      sprawdz(nazwa + ': komunikat jest po polsku',
+        kom !== null && /[ąćęłńóśźż]/i.test(kom), 'komunikat: "' + kom + '"');
+    }
+
+    console.log('[7] wypelnione pola nie zostawiaja przyklejonego bledu');
+    await p.fill('[name="sklepag_imie"]', 'Sonda');
+    await p.fill('[name="sklepag_tresc"]', 'Tresc probna, dosc dluga zeby przejsc walidacje.');
+    await p.check('[name="sklepag_zgoda"]');
+    const resztki = await p.evaluate(() => ['sklepag_imie', 'sklepag_tresc', 'sklepag_zgoda']
+      .map((n) => { const e = document.querySelector('[name="' + n + '"]'); e.checkValidity(); return e.validationMessage; })
+      .filter((m) => m !== ''));
+    sprawdz('po wypelnieniu zaden komunikat nie zostal przyklejony', resztki.length === 0, JSON.stringify(resztki));
+    /* ⛔ Celowo NIE wysylamy formularza: link opinii jest jednorazowy, a test ma nie
+       zuzywac cudzego zamowienia ani zasmiecac moderacji opiniami z sondy. */
+  }
 
   await b.close();
   console.log('\n' + (bledy ? 'NIEPOWODZENIE: ' + bledy + ' krokow nie przeszlo' : 'WSZYSTKIE KROKI PRZESZLY'));

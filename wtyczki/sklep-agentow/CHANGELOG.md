@@ -26,15 +26,19 @@ Domknięcie przelotu 27 punktów po produkcie: ostatnia rzecz z tej listy, któr
 kupujący, a której nie napisaliśmy my.
 
 ### Poprawione
-- **Blokada zakupu bez zgody odzywała się po ANGIELSKU.** Pole zgody stało na samym
-  `required`, więc komunikat rysowała przeglądarka własnym tekstem („Please check this
-  box if you want to proceed.”) — zależnie od jej ustawień językowych. Na stronie w
-  całości polskiej był to jedyny obcojęzyczny tekst, i to dokładnie w chwili płatności.
-  Sklep podaje teraz własny komunikat: „Zaznacz zgodę, żeby przejść do płatności.”
-  ⛔ Sama blokada się NIE zmieniła: zakup bez zgody odrzuca także serwer
+- **Pola wymagane odzywały się do kupującego po ANGIELSKU.** Stały na samym `required`,
+  więc komunikat rysowała przeglądarka własnym tekstem („Please check this box if you
+  want to proceed.”, „Please fill out this field.”) — zależnie od jej ustawień
+  językowych. Były to jedyne obcojęzyczne zdania, jakie widział kupujący, i pojawiały
+  się w dwóch najgorszych możliwych momentach: przy płatności i przy wysyłaniu opinii.
+  Sklep podaje teraz własne komunikaty w **obu** formularzach:
+  – zakup: „Zaznacz zgodę, żeby przejść do płatności.”
+  – opinia: „Wpisz imię — pokażemy je przy opinii.”, „Napisz swoją opinię.”,
+    „Zaznacz zgodę na publikację, żeby wysłać opinię.”
+  ⛔ Same blokady się NIE zmieniły: zakup bez zgody odrzuca także serwer
   (`includes/zakup.php`), niezależnie od JavaScriptu — zmienił się wyłącznie język
-  komunikatu. Pilnuje tego test automatyczny, który sprawdza OBIE rzeczy naraz: że zakup
-  bez zgody dalej nie przechodzi i że człowiek czyta komunikat po polsku.
+  komunikatów. Pilnuje tego test automatyczny, który sprawdza OBIE rzeczy naraz: że
+  formularz dalej nie przechodzi i że człowiek czyta komunikat po polsku.
 
 ---
 

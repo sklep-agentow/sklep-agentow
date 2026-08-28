@@ -1,0 +1,323 @@
+=== A5 · przycisk odtwarzania nagrania (0.9.19) ===
+{
+ "przyciski": [
+  {
+   "tekst": "▶ Odtwórz nagranie",
+   "display": "block",
+   "visibility": "visible",
+   "opacity": "0.72",
+   "w": 176,
+   "h": 48,
+   "tag": "BUTTON"
+  }
+ ],
+ "plakaty": [
+  {
+   "tag": "VIDEO",
+   "opacity": "1",
+   "src": "ntow/assets/w-srodku/chatbot-demo-plakat.webp"
+  },
+  {
+   "tag": "IMG",
+   "opacity": "1",
+   "src": "ntow/assets/w-srodku/chatbot-demo-plakat.webp"
+  }
+ ]
+}
+=== C2 · czy Tab dosiega przycisku nagrania (0.9.19) ===
+TAK -> {"tag":"BUTTON","txt":"▶ Odtwórz nagranie","cls":"sklepag-kafel-odtworz","w":176}
+trasa Tab (pierwsze 20): ["A:Przejdź do treści","A:Automatic AI","A:Usługi","BUTTON:flex size-6 items-cent","A:Realizacje","A:Portfolio","A:Proces","A:Blog","A:O nas","A:FAQ","A:Sklep","A:Porozmawiajmy","A:Sklep","A:Kup teraz (płatność te","A:sklepag-lightbox","BUTTON:▶ Odtwórz nagranie","A:sklepag-lightbox","A:sklepag-lightbox","A:sklepag-lightbox","INPUT:1"]
+=== A6 · pole zgody (0.9.19) ===
+{"name":"zgoda","id":"sklepag-zgoda-1","required":true,"checked":false,"etykieta":"Wyrażam zgodę na natychmiastowe dostarczenie treści cyfrowej i przyjmuję do wiadomości utr"}
+URL przed klikiem: http://localhost:8890/sklep/produkt/chatbot-live/
+{
+ "natywny_komunikat": "Please check this box if you want to proceed.",
+ "wlasne_komunikaty_w_DOM": [],
+ "url": "http://localhost:8890/sklep/produkt/chatbot-live/"
+}
+=== A12 · pigulka zakupu vs tresc, 390x844 (0.9.19) ===
+[
+ {
+  "scrollY": 800,
+  "pigulka_top": 779,
+  "zderzenia": [
+   {
+    "txt": "Wpisujesz własne pary z wariantami słów ",
+    "naklada_px": 42
+   }
+  ]
+ },
+ {
+  "scrollY": 1000,
+  "pigulka_top": 779,
+  "zderzenia": [
+   {
+    "txt": "Bot nie zna odpowiedzi → prosi o maila i",
+    "naklada_px": 2
+   }
+  ]
+ },
+ {
+  "scrollY": 1200,
+  "pigulka_top": 779,
+  "zderzenia": [
+   {
+    "txt": "Start od pierwszej minuty",
+    "naklada_px": 20
+   },
+   {
+    "txt": "10 gotowych par pytań po polsku w zestaw",
+    "naklada_px": 29
+   }
+  ]
+ },
+ {
+  "scrollY": 1400,
+  "pigulka_top": 779,
+  "zderzenia": [
+   {
+    "txt": "Twój klucz API, odpowiedzi tylko z infor",
+    "naklada_px": 34
+   }
+  ]
+ },
+ {
+  "scrollY": 1600,
+  "pigulka_top": 779,
+  "zderzenia": [
+   {
+    "txt": "Strzyżenie damskie od 80 zł, męskie od 5",
+    "naklada_px": 55
+   }
+  ]
+ },
+ {
+  "scrollY": 2200,
+  "pigulka_top": 779,
+  "zderzenia": [
+   {
+    "txt": "Bot odpowiada, Ty dostajesz kontakty do ",
+    "naklada_px": 12
+   }
+  ]
+ },
+ {
+  "scrollY": 2400,
+  "pigulka_top": 779,
+  "zderzenia": [
+   {
+    "txt": "Na Twojej stronie",
+    "naklada_px": 6
+   }
+  ]
+ },
+ {
+  "scrollY": 4000,
+  "pigulka_top": 779,
+  "zderzenia": [
+   {
+    "txt": "Gdy bot nie zna odpowiedzi",
+    "naklada_px": 15
+   },
+   {
+    "txt": "Bot prosi o maila i zapisuje zgłoszenie ",
+    "naklada_px": 33
+   }
+  ]
+ },
+ {
+  "scrollY": 4800,
+  "pigulka_top": 779,
+  "zderzenia": [
+   {
+    "txt": "Bot prosi o adres e-mail i treść wiadomo",
+    "naklada_px": 33
+   },
+   {
+    "txt": "Zgłoszenie zapisuje się w wp-admin — na ",
+    "naklada_px": 6
+   }
+  ]
+ },
+ {
+  "scrollY": 5000,
+  "pigulka_top": 779,
+  "zderzenia": [
+   {
+    "txt": "TOK ZGŁOSZENIA — KONTAKT NIE PRZEPADA",
+    "naklada_px": 38
+   }
+  ]
+ },
+ {
+  "scrollY": 5200,
+  "pigulka_top": 779,
+  "zderzenia": [
+   {
+    "txt": "Ustawienia po polsku: włącznik bąbelka, ",
+    "naklada_px": 45
+   }
+  ]
+ },
+ {
+  "scrollY": 6200,
+  "pigulka_top": 779,
+  "zderzenia": [
+   {
+    "txt": "Plik ZIP wtyczki — instalujesz jak każdą",
+    "naklada_px": 5
+   },
+   {
+    "txt": "Instrukcja krok po kroku z 6 zrzutami ek",
+    "naklada_px": 41
+   }
+  ]
+ },
+ {
+  "scrollY": 6400,
+  "pigulka_top": 779,
+  "zderzenia": [
+   {
+    "txt": "Dokumentacja techniczna z diagramem prze",
+    "naklada_px": 55
+   }
+  ]
+ },
+ {
+  "scrollY": 7000,
+  "pigulka_top": 779,
+  "zderzenia": [
+   {
+    "txt": "100% rozmów u Ciebie",
+    "naklada_px": 4
+   },
+   {
+    "txt": "tryb regułowy: treść nie opuszcza Twojeg",
+    "naklada_px": 45
+   }
+  ]
+ },
+ {
+  "scrollY": 8000,
+  "pigulka_top": 779,
+  "zderzenia": [
+   {
+    "txt": "Bot nie zastępuje człowieka w trudnych s",
+    "naklada_px": 54
+   }
+  ]
+ },
+ {
+  "scrollY": 8200,
+  "pigulka_top": 779,
+  "zderzenia": [
+   {
+    "txt": "Usługi lokalne — fryzjer, warsztat, gabi",
+    "naklada_px": 44
+   }
+  ]
+ },
+ {
+  "scrollY": 8400,
+  "pigulka_top": 779,
+  "zderzenia": [
+   {
+    "txt": "Każdy, kto traci klientów piszących po g",
+    "naklada_px": 55
+   }
+  ]
+ },
+ {
+  "scrollY": 8800,
+  "pigulka_top": 779,
+  "zderzenia": [
+   {
+    "txt": "„LIVE\" znaczy: w każdej chwili możesz PR",
+    "naklada_px": 55
+   }
+  ]
+ },
+ {
+  "scrollY": 9000,
+  "pigulka_top": 779,
+  "zderzenia": [
+   {
+    "txt": "Pełnoprawny silnik regułowy działa od ra",
+    "naklada_px": 55
+   }
+  ]
+ },
+ {
+  "scrollY": 9200,
+  "pigulka_top": 779,
+  "zderzenia": [
+   {
+    "txt": "Prywatność: w trybie regułowym treść roz",
+    "naklada_px": 55
+   }
+  ]
+ },
+ {
+  "scrollY": 11200,
+  "pigulka_top": 779,
+  "zderzenia": [
+   {
+    "txt": "Zacznij odpowiadać w nocy. Bez nocek.",
+    "naklada_px": 55
+   }
+  ]
+ },
+ {
+  "scrollY": 11800,
+  "pigulka_top": 779,
+  "zderzenia": [
+   {
+    "txt": "Tu kończy się strona.",
+    "naklada_px": 20
+   },
+   {
+    "txt": "System pracuje dalej.",
+    "naklada_px": 34
+   }
+  ]
+ }
+]
+
+=== A12 · czy jakis tekst jest ZAWSZE pod pigulka (390x844, 0.9.19) ===
+elementow tekstowych zbadanych: 49 · dalo sie przeczytac bez zaslony: 49
+WYNIK: zero tekstu trwale zaslonietego — kazdy da sie wyscrollowac spod pigulki
+=== C2b · pelny ekran otwarty? ===
+{"klasa":"geistsanssubset_f4ad2603-module__Rj9zRq__variable geistmonosubset_eb78","display":"block"}
+=== C2b · 20 x Tab w otwartym pelnym ekranie ===
+fokus zostal w pelnym ekranie przez wszystkie 20 krokow (pulapka dziala)
+slad: ["×|true","×|true","×|true","×|true","×|true","×|true","×|true","×|true","×|true","×|true","×|true","×|true","×|true","×|true","×|true","×|true","×|true","×|true","×|true","×|true"]
+po Esc, display pelnego ekranu: (brak elementu)
+
+=== C2b · PANEL pelnego ekranu (0.9.19) ===
+null
+BLAD SONDY: nie znalazlam panelu — nie orzekam.
+po Esc panel obecny? usuniety z DOM
+
+=== C2b · PANEL pelnego ekranu (0.9.19) ===
+{
+ "tag": "DIV",
+ "id": "",
+ "cls": "sklepag-lightbox-tlo",
+ "zIndex": "9999",
+ "ogniskowalne": [
+  "BUTTON:×"
+ ]
+}
+fokus nie wyszedl poza panel w 15 krokach Tab
+slad: ["×|true","×|true","×|true","×|true","×|true","×|true","×|true","×|true","×|true","×|true","×|true","×|true","×|true","×|true","×|true"]
+po Esc panel obecny? usuniety z DOM
+
+zalogowana? TAK
+=== pola formularza produktu ===
+[{"tag":"INPUT","type":"hidden","name":"action","id":""},{"tag":"INPUT","type":"hidden","name":"produkt_id","id":""},{"tag":"INPUT","type":"hidden","name":"_wpnonce","id":"_wpnonce"},{"tag":"INPUT","type":"hidden","name":"_wp_http_referer","id":""},{"tag":"INPUT","type":"text","name":"nazwa","id":"sklepag-nazwa"},{"tag":"TEXTAREA","type":"textarea","name":"opis_krotki","id":"sklepag-opis-krotki"},{"tag":"TEXTAREA","type":"textarea","name":"opis_pelny","id":"sklepag-opis-pelny"},{"tag":"INPUT","type":"number","name":"cena","id":"sklepag-cena"},{"tag":"INPUT","type":"text","name":"waluta","id":""},{"tag":"INPUT","type":"file","name":"plik","id":"sklepag-plik"},{"tag":"INPUT","type":"checkbox","name":"aktywny","id":""},{"tag":"INPUT","type":"submit","name":"submit","id":"submit"}]
+zaznaczono: aktywny
+WYSLANE pola: ["nazwa","opis_krotki","opis_pelny","cena"]
+=== PO ODRZUCIE (0.9.19) ===
+komunikaty: ["Nie można włączyć sprzedaży bez POTWIERDZONEGO pliku paczki — wgraj ZIP."]
+pola wyslane: 4 · ZACHOWANE po odrzucie: 4 · zgubione: 0
+WERDYKT B6: tresc TRZYMA sie po odrzucie — naprawione w 0.9.19

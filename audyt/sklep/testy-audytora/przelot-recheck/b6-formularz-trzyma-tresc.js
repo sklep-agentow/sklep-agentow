@@ -1,13 +1,14 @@
 // B6 re-check na 0.9.19: czy odrzut walidacji TRZYMA wpisana tresc?
-const { chromium } = require('/usr/lib/node_modules/playwright');
-const fs=require('fs'); const D='/root/praca/k7-dowody-28-08';
+const { chromium } = require('playwright-core');
+const { wymagajChromium } = require('../../../../testy/lib/chromium');
+const fs=require('fs'); const D = __dirname + '/wyniki';
 const PASS=process.env.WP_ADMIN_PASS; const USER=process.env.WP_ADMIN_USER;
 if(!PASS||!USER){console.error('Brak WP_ADMIN_USER/WP_ADMIN_PASS w env (patrz /root/.claude/sklep-admin-roboczy.env).');process.exit(1);}
 const out=[]; const log=s=>{console.log(s);out.push(s);};
 const NAZWA='SONDA B6 nazwa '+process.argv[2];
 const OPIS='SONDA B6 dlugi opis, ktory ma NIE zginac przy odrzucie walidacji. '.repeat(4);
 (async()=>{
- const b=await chromium.launch(); const p=await b.newPage({viewport:{width:1440,height:1000}});
+ const b=await chromium.launch({ executablePath: wymagajChromium() }); const p=await b.newPage({viewport:{width:1440,height:1000}});
  await p.goto('http://localhost:8890/wp-login.php',{waitUntil:'networkidle'});
  await p.fill('#user_login',USER); await p.fill('#user_pass',PASS);
  await p.click('#wp-submit'); await p.waitForLoadState('networkidle');

@@ -1,12 +1,13 @@
 // Re-check 5 punktow przelotu na kodzie 0.9.19 (A5, A6, A12, C2). B6 osobno (wymaga logowania).
-const { chromium } = require('/usr/lib/node_modules/playwright');
-const D = '/root/praca/k7-dowody-28-08';
+const { chromium } = require('playwright-core');
+const { wymagajChromium } = require('../../../../testy/lib/chromium');
+const D = __dirname + '/wyniki';
 const PROD = 'http://localhost:8890/sklep/produkt/chatbot-live/';
 const out = [];
 const log = (s) => { console.log(s); out.push(s); };
 
 (async () => {
-  const b = await chromium.launch();
+  const b = await chromium.launch({ executablePath: wymagajChromium() });
 
   // ---------- A5: nagranie w galerii — widoczny przycisk? ----------
   let p = await b.newPage({ viewport: { width: 1440, height: 900 } });

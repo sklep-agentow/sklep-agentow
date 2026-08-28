@@ -143,9 +143,10 @@ link do pobrania w mailu, jednorazowy link do opinii.
 == Changelog ==
 
 = 0.9.20 =
-* Poprawka: gdy klikniesz „Kup teraz” bez zaznaczonej zgody, sklep mówi o tym
-  PO POLSKU. Wcześniej komunikat rysowała przeglądarka i na polskiej stronie
-  potrafił pojawić się po angielsku. Sam zakup był i jest blokowany tak samo.
+* Poprawka: gdy zostawisz puste pole wymagane — zgodę przy zakupie albo imię, treść
+  i zgodę w formularzu opinii — sklep mówi o tym PO POLSKU. Wcześniej komunikat
+  rysowała przeglądarka i na polskiej stronie potrafił pojawić się po angielsku.
+  Same blokady były i są takie same — zmienił się wyłącznie język komunikatu.
 
 = 0.9.19 =
 * Poprawka: formularz produktu nie gubi już wpisanej treści, gdy zapis wróci z błędem

@@ -31,4 +31,10 @@ set -a; . /root/.claude/sklep-admin-roboczy.env; set +a
 node audyt/sklep/testy-audytora/przelot-recheck/b6-formularz-trzyma-tresc.js 2
 ```
 
-Surowe wyjścia i zrzuty: `/root/praca/k7-dowody-28-08/`.
+Surowe wyjście z pomiaru 28.08 leży **w repo**, obok skryptów: `wyniki/wynik-28-08-na-0.9.19.txt`.
+Zrzuty ekranu (pliki PNG) zostają poza repozytorium w `/root/praca/k7-dowody-28-08/` — nie wnoszą
+nic ponad to, co mierzą asercje, a wagą zaśmieciłyby historię. ⛔ Gdyby były jedynym dowodem,
+musiałyby wejść: dowodu, którego nie da się otworzyć, nie ma.
+
+Sondy chodzą na `playwright-core` i `testy/lib/chromium` — tak jak reszta testów tego repo, więc
+nie są przywiązane do jednej maszyny (recenzja #203, uwaga 4).

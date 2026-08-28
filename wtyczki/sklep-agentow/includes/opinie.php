@@ -295,6 +295,13 @@ function sklepag_opinia_strona( $tytul, $tresc_html ) {
 	echo '<p style="color:#8f929c;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;letter-spacing:1px">[ SKLEP · OPINIA ]</p>';
 	echo '<h1>' . esc_html( $tytul ) . '</h1>';
 	echo $tresc_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- składane wyłącznie z literałów i wartości zescapowanych w wołających.
+	/* Ta sama procedura co w `assets/front-ruch.js`: komunikat pola wymaganego bierzemy
+		z atrybutu PRZY POLU, żeby przeglądarka nie odezwała się do kupującego po angielsku.
+		⛔ Kopia, a nie wspólny plik, jest tu ŚWIADOMA: ta strona rysuje się samodzielnym
+		dokumentem bez `wp_head()` (link przychodzi z maila, kupujący nie ma sesji WP), więc
+		nie widzi assetów sklepu — dołożenie kolejki WordPressa złamałoby jej samodzielność.
+		Walidację i tak rozstrzyga serwer; to wyłącznie warstwa języka. */
+	echo '<script>(function(){Array.prototype.forEach.call(document.querySelectorAll("[data-sklepag-blad]"),function(p){"use strict";var t=p.getAttribute("data-sklepag-blad");var u=function(){p.setCustomValidity(p.validity.valueMissing?t:"");};p.setCustomValidity("");u();p.addEventListener("change",u);p.addEventListener("input",u);p.addEventListener("invalid",u);});})();</script>';
 	echo '</main></body></html>';
 }
 
@@ -355,10 +362,10 @@ function sklepag_obsluz_ocen_formularz() {
 	$formularz .= '<input type="hidden" name="t" value="' . esc_attr( $token ) . '">';
 	$formularz .= '<div class="sklepag-extra" aria-hidden="true"><label>Zostaw to pole puste<input type="text" name="sklepag_extra" tabindex="-1" autocomplete="off"></label></div>';
 	$formularz .= '<fieldset><label>Ocena</label><div class="sklepag-gw">' . $gwiazdki . '</div></fieldset>';
-	$formularz .= '<label for="sklepag-imie">Imię (pokażemy je przy opinii)</label><input id="sklepag-imie" type="text" name="sklepag_imie" maxlength="100" required value="' . esc_attr( $we( 'imie' ) ) . '">';
+	$formularz .= '<label for="sklepag-imie">Imię (pokażemy je przy opinii)</label><input id="sklepag-imie" type="text" name="sklepag_imie" maxlength="100" required data-sklepag-blad="' . esc_attr( SKLEPAG_BLAD_OPINIA_IMIE ) . '" value="' . esc_attr( $we( 'imie' ) ) . '">';
 	$formularz .= '<label for="sklepag-tytul">Tytuł opinii (opcjonalnie)</label><input id="sklepag-tytul" type="text" name="sklepag_tytul" maxlength="150" value="' . esc_attr( $we( 'tytul' ) ) . '">';
-	$formularz .= '<label for="sklepag-tresc">Twoja opinia</label><textarea id="sklepag-tresc" name="sklepag_tresc" maxlength="2000" required>' . esc_textarea( $we( 'tresc' ) ) . '</textarea>';
-	$formularz .= '<label class="sklepag-zgoda"><input type="checkbox" name="sklepag_zgoda" value="1" required> ' . esc_html( SKLEPAG_OPINIA_ZGODA_TRESC ) . '</label>';
+	$formularz .= '<label for="sklepag-tresc">Twoja opinia</label><textarea id="sklepag-tresc" name="sklepag_tresc" maxlength="2000" required data-sklepag-blad="' . esc_attr( SKLEPAG_BLAD_OPINIA_TRESC ) . '">' . esc_textarea( $we( 'tresc' ) ) . '</textarea>';
+	$formularz .= '<label class="sklepag-zgoda"><input type="checkbox" name="sklepag_zgoda" value="1" required data-sklepag-blad="' . esc_attr( SKLEPAG_BLAD_OPINIA_ZGODA ) . '"> ' . esc_html( SKLEPAG_OPINIA_ZGODA_TRESC ) . '</label>';
 	$formularz .= '<button type="submit">Wyślij opinię</button>';
 	$formularz .= '<p class="sklepag-nota">Link jest jednorazowy. Opinia trafia najpierw do moderacji — na stronie pojawi się po akceptacji.</p>';
 	$formularz .= '</form>';

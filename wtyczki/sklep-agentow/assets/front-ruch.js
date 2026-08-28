@@ -306,20 +306,25 @@
 			new IntersectionObserver(function (w) { formularzWidoczny = w[0].isIntersecting; przelacz(); }).observe(formularz);
 		}
 	}
-	/* Blokada zgody mówi do kupującego PO POLSKU.
-	   Pole stoi na samym `required`, więc bez tego komunikat rysuje przeglądarka —
-	   po ANGIELSKU („Please check this box if you want to proceed.”), zależnie od jej
-	   ustawień językowych. To jedyny obcojęzyczny tekst w całym sklepie i pojawia się
-	   dokładnie w chwili płatności.
-	   Zakup bez zgody odrzuca TEŻ serwer (`includes/zakup.php`), niezależnie od JS —
-	   więc gdy ten skrypt nie wstanie, blokada trzyma dalej, tylko po angielsku.
+	/* Pola wymagane mówią do kupującego PO POLSKU.
+	   Pole bez własnego komunikatu dostaje go od przeglądarki — po ANGIELSKU
+	   („Please check this box if you want to proceed.”), zależnie od jej ustawień
+	   językowych. Na stronie w całości polskiej to jedyne obcojęzyczne zdanie, jakie
+	   widzi kupujący, i pojawia się dokładnie w chwili płatności.
+	   Tekst bierzemy z atrybutu `data-sklepag-blad` PRZY POLU, żeby ta sama procedura
+	   obsłużyła każde pole wymagane — także formularz opinii, który rysuje się
+	   samodzielnym dokumentem i ma własną kopię tych czterech linii (`opinie.php`).
+	   ⛔ Blokady to NIE dotyczy: zakup bez zgody odrzuca też serwer (`includes/zakup.php`),
+	   więc gdy skrypt nie wstanie, blokada trzyma dalej — tylko po angielsku.
 	   Komunikat ustawiamy Z GÓRY i przestawiamy przy każdej zmianie, zamiast liczyć
 	   na to, że podmiana w trakcie zdarzenia `invalid` zdąży przed narysowaniem dymka. */
-	var KOMUNIKAT_ZGODY = 'Zaznacz zgodę, żeby przejść do płatności.';
-	Array.prototype.forEach.call(document.querySelectorAll('input[name="zgoda"]'), function (pole) {
-		var ustaw = function () { pole.setCustomValidity(pole.checked ? '' : KOMUNIKAT_ZGODY); };
+	Array.prototype.forEach.call(document.querySelectorAll('[data-sklepag-blad]'), function (pole) {
+		var tekst = pole.getAttribute('data-sklepag-blad');
+		var ustaw = function () { pole.setCustomValidity(pole.validity.valueMissing ? tekst : ''); };
+		pole.setCustomValidity('');
 		ustaw();
 		pole.addEventListener('change', ustaw);
+		pole.addEventListener('input', ustaw);
 		pole.addEventListener('invalid', ustaw);
 	});
 })();

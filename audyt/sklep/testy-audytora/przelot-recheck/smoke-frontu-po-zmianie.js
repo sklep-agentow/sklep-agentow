@@ -1,7 +1,8 @@
-const { chromium } = require('/usr/lib/node_modules/playwright');
+const { chromium } = require('playwright-core');
+const { wymagajChromium } = require('../../../../testy/lib/chromium');
 (async()=>{
  let bledy=0; const ok=(o,w,s)=>{console.log((w?'  OK   ':'  BLAD ')+o+(s?' :: '+s:'')); if(!w)bledy++;};
- const b=await chromium.launch(); const p=await b.newPage({viewport:{width:1440,height:900}});
+ const b=await chromium.launch({ executablePath: wymagajChromium() }); const p=await b.newPage({viewport:{width:1440,height:900}});
  const konsola=[]; p.on('console',m=>{if(m.type()==='error')konsola.push(m.text());});
  p.on('pageerror',e=>konsola.push('PAGEERROR: '+e.message));
  await p.goto('http://localhost:8890/sklep/produkt/chatbot-live/',{waitUntil:'networkidle'});

@@ -1,12 +1,13 @@
 // A12 poprawnie: czy JAKIS tekst jest ZAWSZE pod pigulka (nie do przeczytania na zadnym scrollu)?
 // C2 czesc druga: czy w otwartym pelnym ekranie Tab NIE ucieka pod spod (pulapka fokusu)?
-const { chromium } = require('/usr/lib/node_modules/playwright');
-const D = '/root/praca/k7-dowody-28-08';
+const { chromium } = require('playwright-core');
+const { wymagajChromium } = require('../../../../testy/lib/chromium');
+const D = __dirname + '/wyniki';
 const PROD = 'http://localhost:8890/sklep/produkt/chatbot-live/';
 const out = []; const log = s => { console.log(s); out.push(s); };
 
 (async () => {
-  const b = await chromium.launch();
+  const b = await chromium.launch({ executablePath: wymagajChromium() });
 
   // ---------- A12 ----------
   let p = await b.newPage({ viewport: { width: 390, height: 844 } });

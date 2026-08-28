@@ -1,7 +1,8 @@
-const { chromium } = require('/usr/lib/node_modules/playwright');
-const D='/root/praca/k7-dowody-28-08'; const out=[]; const log=s=>{console.log(s);out.push(s);};
+const { chromium } = require('playwright-core');
+const { wymagajChromium } = require('../../../../testy/lib/chromium');
+const D = __dirname + '/wyniki'; const out=[]; const log=s=>{console.log(s);out.push(s);};
 (async()=>{
- const b=await chromium.launch();
+ const b=await chromium.launch({ executablePath: wymagajChromium() });
  const p=await b.newPage({viewport:{width:1440,height:900}});
  await p.goto('http://localhost:8890/sklep/produkt/chatbot-live/',{waitUntil:'networkidle'});
  const przed = await p.evaluate(()=>document.body.innerHTML.length);

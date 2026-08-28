@@ -1,7 +1,8 @@
 // PROBA KONTROLNA sondy C2b: czy detektor UMIE powiedziec "fokus poza panelem"?
-const { chromium } = require('/usr/lib/node_modules/playwright');
+const { chromium } = require('playwright-core');
+const { wymagajChromium } = require('../../../../testy/lib/chromium');
 (async()=>{
- const b=await chromium.launch(); const p=await b.newPage({viewport:{width:1440,height:900}});
+ const b=await chromium.launch({ executablePath: wymagajChromium() }); const p=await b.newPage({viewport:{width:1440,height:900}});
  await p.goto('http://localhost:8890/sklep/produkt/chatbot-live/',{waitUntil:'networkidle'});
  await (await p.$('a.sklepag-lightbox')).click(); await p.waitForTimeout(800);
  await p.evaluate(()=>{const e=document.querySelector('.sklepag-lightbox-tlo'); if(e) e.setAttribute('data-panel','1');});

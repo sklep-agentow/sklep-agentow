@@ -18,6 +18,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 define( 'SKLEPAG_WERSJA', '0.9.20' );
 define( 'SKLEPAG_WERSJA_SCHEMATU', 7 ); // v7: status_przed_sporem (punkt powrotu po zdarzeniu finansowym — sporze LUB zwrocie — bez zmyślania stanu wysyłki); v6: kolumny zwrotu (payment_intent_id, zwrocono_grosze, zwrot_czas); v5: tabela opinii; v4: kolumna zamowienia.usunieto_dnia (anonimizacja RODO); v3: indeks para_logowania.
+
+/* Komunikaty blokady pol wymaganych — po POLSKU.
+	Bez nich rysuje je przegladarka wlasnym tekstem (po angielsku, zaleznie od jej
+	ustawien jezykowych), a to jedyne obcojezyczne zdania, jakie widzi kupujacy.
+	Tekst stoi PRZY POLU (atrybut `data-sklepag-blad`), a nie w skrypcie, zeby ta sama
+	krotka procedura obsluzyla kazde pole wymagane — takze na stronie opinii, ktora
+	rysuje sie samodzielnym dokumentem bez `wp_head()` i nie widzi assetow sklepu. */
+define( 'SKLEPAG_BLAD_ZGODA_ZAKUP', 'Zaznacz zgodę, żeby przejść do płatności.' );
+define( 'SKLEPAG_BLAD_OPINIA_IMIE', 'Wpisz imię — pokażemy je przy opinii.' );
+define( 'SKLEPAG_BLAD_OPINIA_TRESC', 'Napisz swoją opinię.' );
+define( 'SKLEPAG_BLAD_OPINIA_ZGODA', 'Zaznacz zgodę na publikację, żeby wysłać opinię.' );
 // Stany ZAMKNIĘTE FINANSOWO: pieniądze wyszły albo wiszą u banku. Żadna ścieżka mailowa nie
 // ma prawa ich nadpisać. ⛔ TU, a nie w pliku Pulpitu: używa jej `admin-zamowienie.php`
 // w ścieżce `admin_post`, która plików Pulpitu NIE ładuje — stała zdefiniowana tam dawała

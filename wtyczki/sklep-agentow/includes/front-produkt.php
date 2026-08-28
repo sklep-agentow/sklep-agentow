@@ -589,7 +589,7 @@ function sklepag_formularz_zakupu( $p ) {
 	$html    .= '<input type="hidden" name="action" value="sklepag_kup">';
 	$html    .= '<input type="hidden" name="produkt_id" value="' . (int) $p->id . '">';
 	$html    .= wp_nonce_field( 'sklepag_kup', '_wpnonce', true, false );
-	$html    .= '<label class="sklepag-zgoda" for="' . esc_attr( $id_zgody ) . '"><input type="checkbox" id="' . esc_attr( $id_zgody ) . '" name="zgoda" value="1" required> <span>' . esc_html( SKLEPAG_ZGODA_TRESC ) . '</span></label>';
+	$html    .= '<label class="sklepag-zgoda" for="' . esc_attr( $id_zgody ) . '"><input type="checkbox" id="' . esc_attr( $id_zgody ) . '" name="zgoda" value="1" required data-sklepag-blad="' . esc_attr( SKLEPAG_BLAD_ZGODA_ZAKUP ) . '"> <span>' . esc_html( SKLEPAG_ZGODA_TRESC ) . '</span></label>';
 	$html    .= '<button type="submit" class="sklepag-kup">Kup teraz (płatność testowa)</button>';
 	$html    .= '<p class="sklepag-mono-etykieta sklepag-zakup-notka">STRIPE · TRYB TESTOWY · KARTA 4242 4242 4242 4242</p>';
 	$html    .= '</form>';
