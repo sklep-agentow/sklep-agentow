@@ -20,6 +20,33 @@ Nic jeszcze.
 
 ---
 
+## [0.9.21] — 2026-08-28
+
+### Naprawione
+- **Anonimizacja na żądanie RODO potwierdzała usunięcie, nie sprawdziwszy, czy zapis się udał.**
+  Handler zapisywał do dziennika zdarzenie `anonimizacja` i przekierowywał właściciela
+  z komunikatem powodzenia **bez patrzenia na wynik** obu zapytań `UPDATE`. Przy porażce
+  zapisu właściciel widział potwierdzenie i mógł w dobrej wierze odpowiedzieć osobie, która
+  złożyła żądanie, że jej dane usunięto — podczas gdy e-mail zostawał w bazie. Czyli
+  niezrealizowane żądanie usunięcia danych z fałszywym dowodem wykonania w dzienniku.
+  Teraz rozstrzyga **stan po zapisie**, a nie fakt wywołania: e-mail musi być pusty,
+  `usunieto_dnia` ustawione. Przy niepowodzeniu zapisywane jest zdarzenie
+  `anonimizacja_blad`, a właściciel dostaje wyraźne ostrzeżenie, żeby NIE potwierdzał
+  usunięcia, dopóki nie powtórzy operacji.
+- **Komunikat po nieudanym zapisie produktu twierdził, że wgrany plik został usunięty,**
+  także wtedy, gdy usunięcie się nie powiodło (`wp_delete_file()` nie zwraca wyniku).
+  Właściciel zostawał wtedy z plikiem-sierotą w katalogu paczek i przekonaniem, że go nie ma.
+  Komunikat opisuje teraz stan faktyczny, zmierzony po operacji.
+
+### Bezpieczeństwo
+- Obie naprawy należą do jednej klasy: **zapisywaliśmy skutek operacji, nie sprawdziwszy,
+  czy operacja się udała.** Dotyczy danych osobowych kupujących (RODO) oraz plików paczek.
+
+### Sprawdzenie
+- Obie naprawy mają automatyczny test, który **pada na wersji sprzed naprawy** i przechodzi po
+  niej. Test anonimizacji podkłada awarię zapisu i sprawdza, że wtyczka w takiej sytuacji NIE
+  potwierdza usunięcia: dwanaście sprawdzeń na dwanaście.
+
 ## [0.9.20] — 2026-08-28
 
 Domknięcie przelotu 27 punktów po produkcie: ostatnia rzecz z tej listy, którą widzi

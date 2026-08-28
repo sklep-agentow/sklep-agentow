@@ -177,7 +177,7 @@ function sklepag_obsluz_anonimizacje() {
 	$email = (string) $zam->email_kupujacego;
 	$teraz = current_time( 'mysql' );
 
-	$wpdb->query(
+	$ok_zam = $wpdb->query(
 		$wpdb->prepare(
 			"UPDATE {$pz} SET email_kupujacego='', usunieto_dnia=%s, token_pobrania='', link_wygasa=NULL, zmieniono=%s WHERE id=%d",
 			$teraz,
@@ -185,8 +185,9 @@ function sklepag_obsluz_anonimizacje() {
 			(int) $zam->id
 		)
 	);
+	$ok_zdarzenia = true;
 	if ( '' !== $email ) {
-		$wpdb->query(
+		$ok_zdarzenia = $wpdb->query(
 			$wpdb->prepare(
 				"UPDATE {$wpdb->prefix}sklepag_zdarzenia SET opis = REPLACE(opis, %s, '[usunięto — RODO]') WHERE zamowienie_id = %d",
 				$email,
@@ -199,6 +200,32 @@ function sklepag_obsluz_anonimizacje() {
 	// Symetria RODO dla mechanizmu opinii: imię i token opinii umierają razem
 	// z tokenem pobrania, publikacja schodzi ze strony — szczegóły w sklepag_anonimizuj_opinie().
 	sklepag_anonimizuj_opinie( (int) $zam->id );
+
+	/*
+	 * ⛔ POMIAR SKUTKU, NIE WYWOLANIA. Wczesniej ta funkcja zapisywala do dziennika
+	 * „kupujacy zanonimizowany" i meldowala wlascicielowi „ok" BEZ sprawdzenia, czy
+	 * ktorykolwiek z zapisow sie udal. Przy porazce zapisu wlasciciel odpowiadal
+	 * czlowiekowi, ze jego dane usunieto, a e-mail zostawal w bazie — czyli
+	 * NIEZREALIZOWANE ZADANIE RODO z falszywym dowodem, ze zostalo zrealizowane.
+	 *
+	 * Dlaczego odczyt, a nie sam kod powrotu: `$wpdb->query()` zwraca 0 (nie false),
+	 * gdy nic sie nie zmienilo — a tak wyglada POWTORNA anonimizacja tego samego
+	 * zamowienia. Traktowanie zera jak awarii dawaloby falszywy alarm. Podobnie
+	 * `sklepag_anonimizuj_opinie()` zwraca false takze wtedy, gdy zamowienie po
+	 * prostu NIE MA opinii — to normalny przypadek, wiec jej wynik nie rozstrzyga.
+	 * Rozstrzyga STAN PO ZAPISIE: e-mail ma byc pusty, `usunieto_dnia` ustawione.
+	 */
+	$po        = $wpdb->get_row( $wpdb->prepare( "SELECT email_kupujacego, usunieto_dnia FROM {$pz} WHERE id = %d", (int) $zam->id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- jw.
+	$skutek_ok = $po && '' === (string) $po->email_kupujacego && ! empty( $po->usunieto_dnia );
+
+	if ( false === $ok_zam || false === $ok_zdarzenia || ! $skutek_ok ) {
+		sklepag_zdarzenie( (int) $zam->id, 'anonimizacja_blad', 'anonimizacja NIE doszla do skutku — dane kupujacego moga nadal byc w bazie' );
+		wp_die(
+			'Anonimizacja NIE doszła do skutku — dane kupującego mogą nadal być w bazie. Nie potwierdzaj usunięcia osobie, która złożyła żądanie, dopóki nie powtórzysz operacji.',
+			'Sklep Agentów',
+			500
+		);
+	}
 
 	sklepag_zdarzenie( (int) $zam->id, 'anonimizacja', 'kupujący zanonimizowany na żądanie (RODO); token pobrania i opinia unieważnione' );
 

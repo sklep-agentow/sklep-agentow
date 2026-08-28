@@ -4,7 +4,7 @@ Tags: sklep, stripe, pliki cyfrowe, sprzedaz wtyczek, pobieranie
 Requires at least: 6.7
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.9.20
+Stable tag: 0.9.21
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -141,6 +141,14 @@ Nie. Zakup jest bez konta: adres e-mail podany na stronie płatności Stripe,
 link do pobrania w mailu, jednorazowy link do opinii.
 
 == Changelog ==
+
+= 0.9.21 =
+* Naprawione: anonimizacja na zadanie RODO potwierdzala usuniecie danych, nie sprawdziwszy,
+  czy zapis sie udal. Teraz potwierdzenie idzie wylacznie za faktycznym usunieciem, a przy
+  niepowodzeniu wlasciciel dostaje ostrzezenie, zeby nie potwierdzac usuniecia osobie,
+  ktora zlozyla zadanie.
+* Naprawione: komunikat po nieudanym zapisie produktu twierdzil, ze wgrany plik zostal
+  usuniety, takze gdy usuniecie sie nie powiodlo. Komunikat opisuje teraz stan faktyczny.
 
 = 0.9.20 =
 * Poprawka: gdy zostawisz puste pole wymagane — zgodę przy zakupie albo imię, treść
