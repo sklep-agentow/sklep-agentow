@@ -52,7 +52,10 @@ echo 'WPIS_OBCEGO_RFC_CALY=' . $obcy_rfc . "\n";
 $wpdb->delete( $tz, array( 'zamowienie_id' => $id ) );
 /* ⛔ TAKZE wiersze BEZ `zamowienie_id` z markerem testowym — inaczej slady zostawione przez
    kalibracje na starym kodzie przezyja przebieg i zatruja NASTEPNY pomiar (zlapane na sobie). */
-$wpdb->query( $wpdb->prepare( "DELETE FROM {$tz} WHERE zamowienie_id IS NULL AND opis LIKE %s", '%' . $wpdb->esc_like( '@example.test' ) . '%' ) ); // phpcs:ignore
+/* ⛔ Sprzatamy po TYPIE, nie po markerze w tresci: udana anonimizacja PODMIENIA adres na
+   znacznik, wiec wiersz przestaje zawierac marker i sprzatanie po tresci przestaje go widziec.
+   Kazdy UDANY przebieg zostawialby wtedy wiersz na wspolnym stosie. */
+$wpdb->query( "DELETE FROM {$tz} WHERE zamowienie_id IS NULL AND typ IN ('eksport_csv','proba_obcy','proba_obcy_rfc','proba_rodo')" ); // phpcs:ignore
 $wpdb->delete( $wpdb->prefix . 'sklepag_opinie', array( 'zamowienie_id' => $id ) );
 $wpdb->delete( $pz, array( 'id' => $id ) );
 echo "SPRZATNIETE=TAK\n";

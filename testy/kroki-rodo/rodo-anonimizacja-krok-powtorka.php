@@ -38,7 +38,7 @@ if ( ! function_exists( 'sklepag_obsluz_anonimizacje' ) ) {
  * zamieniony w SLEPOTE. Przebieg przerwany w polowie (np. przy kalibracji) zostawia takie
  * wiersze, wiec to nie jest teoria.
  */
-$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}sklepag_zdarzenia WHERE zamowienie_id IS NULL AND opis LIKE %s", '%' . $wpdb->esc_like( '@example.test' ) . '%' ) ); // phpcs:ignore
+$wpdb->query( "DELETE FROM {$wpdb->prefix}sklepag_zdarzenia WHERE zamowienie_id IS NULL AND typ IN ('eksport_csv','proba_obcy','proba_obcy_rfc','proba_rodo')" ); // phpcs:ignore
 
 $pz    = $wpdb->prefix . 'sklepag_zamowienia';
 $tz    = $wpdb->prefix . 'sklepag_zdarzenia';

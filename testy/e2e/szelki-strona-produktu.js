@@ -105,18 +105,22 @@ const op = (page, sel) => page.$eval(sel, (e) => getComputedStyle(e).opacity);
     await ctxTozsamosc.close();
     const maEdge = ua.includes('Edg/');
     const maFirefox = ua.includes('Firefox/');
-    const zle = (nazwa, powod) => {
+    const zle = async (nazwa, powod) => {
       console.error('BLAD PRZYRZADU: silnik „' + SILNIK + '” mial byc ' + nazwa + ', a ' + powod + '. Identyfikator: ' + ua);
+      /* ⛔ Zamykamy przegladarke PRZED wyjsciem: `process.exit` na tej sciezce zostawial
+         uruchomiony proces przegladarki, a przyrzad ma po sobie sprzatac takze wtedy,
+         gdy konczy bledem. */
+      await browser.close();
       process.exit(2);
     };
     if ('msedge' === SILNIK && !maEdge) {
-      zle('Microsoft Edge', 'w identyfikatorze NIE MA „Edg/” (to chromium pod inna nazwa)');
+      await zle('Microsoft Edge', 'w identyfikatorze NIE MA „Edg/” (to chromium pod inna nazwa)');
     }
     if ('firefox' === SILNIK && !maFirefox) {
-      zle('Firefox', 'w identyfikatorze NIE MA „Firefox/”');
+      await zle('Firefox', 'w identyfikatorze NIE MA „Firefox/”');
     }
     if ('chromium' === SILNIK && maEdge) {
-      zle('czyste chromium', 'w identyfikatorze JEST „Edg/”');
+      await zle('czyste chromium', 'w identyfikatorze JEST „Edg/”');
     }
     console.log('SILNIK POTWIERDZONY: ' + SILNIK + ' · wersja ' + browser.version() + ' · Edg/ w identyfikatorze: ' + maEdge);
   }
