@@ -48,6 +48,18 @@
   (dostał odmowę przy #177 i oparł się na przebiegu testu). Rozszerzyć okno o bezpieczną
   operację odczytu tabel sklepu (SELECT-only, bez danych osobowych w wyjściu — imię maskować).
 
+- **`dowod-z-paczki-proba-kontrolna.sh` umiera na ZASZYTEJ NA SZTYWNO wersji paczki** —
+  szuka `boty/paczki/chatbot-live-1.5.0.zip`, którego w repo nie ma od dawna (są 1.5.7–1.5.11).
+  Kończy **EXIT=2**, czyli „błąd przyrządu”, i tak samo zachowuje się na czystym `origin/main`
+  (zmierzone 28.08: log prób z `main`, commit `28533e0`, ta sama pozycja `EXIT=2 0s`).
+  ⛔ Znaczenie: nie wiemy dziś, czy `dowod-z-paczki.sh` **potrafi paść** — a to on pilnuje
+  paczki jadącej do klienta. Luka dotyczy WIARYGODNOŚCI narzędzia, nie samej paczki:
+  zgodność paczki 0.9.20 jest zmierzona osobno (`paczka-zgodnosc.sh` → EXIT=0, 59/59 plików).
+  **CO ZAMYKA:** wskazać w próbie paczkę, która w repo istnieje (albo wyliczać najnowszą
+  zamiast wpisywać wersję), potem przelot prób od nowa. ⚠️ Naprawa unieważnia świeży log
+  prób (warunek 6 `k7-koniec` przeterminowuje dowód po zmianie w `narzedzia-qa/`), więc
+  robi się ją RAZEM z pozostałymi pięcioma padającymi próbami chatbota, nie osobno.
+
 ## 🔍 K7 — AUDYT SKLEPU W TOKU (od 25.08 wieczór) — plan `audyt/PLAN-K7-AUDYT-SKLEPU.md` v2, krytyka r1 obok
 - Faza: PR-0 (paczka 0.9.13 + D33) → materiał `audyt/sklep/material/` → kalibracja → runda A. Stan bieżący
   i decyzje: `/root/.claude/CONTEXT-SERWER.md`. ⛔ Kod zamrożony tagiem `k7-zamrozenie` po scaleniu PR-0.
@@ -312,3 +324,36 @@
   `typeMismatch` (`type="email"`) i `patternMismatch` (`pattern`) nadal rysowałaby przeglądarka.
   Na froncie to bez znaczenia — cztery objęte pola mogą naruszyć wyłącznie `valueMissing`.
   Zgłoszone przez recenzenta w #203 r2 jako DROBNA 2, przyjęte jako dług z nazwą.
+
+- ⛔⭐ **KONTROLA 2 `k7-koniec.sh` ZOSTAJE CZERWONA ŚWIADOMIE — decyzja właściciela 28.08, nie przeoczenie.**
+  Dwie soczewki, `L1` i `L5`, mają w `ROZLICZENIE-MUTANTOW-SKLEP.md` werdykt **FAIL — NIEKALIBROWANA**,
+  każda po **dwóch** próbach. `L1` nie złapał M1 (nieudane logowanie na NIEISTNIEJĄCY login nie trafia
+  do dziennika), `L5` nie złapał M6 (`HEAD` zużywa slot pobrania, wbrew zamówieniu i readme).
+  ⛔ **Trzeciej próby NIE MA i nie będzie** — zasada zapisana w tej samej tabeli brzmi: „jedna poprawka
+  promptu/materiału i jeden ponowny przebieg (`proby` ≤ 2); drugi FAIL = soczewka NIEKALIBROWANA”.
+  Bramka osobno sprawdza `proby ≤ 2`, więc trzecie podejście i tak by ją zapaliło. Reguła dwóch prób
+  istnieje po to, żeby nie kręcić promptem aż audytor trafi przypadkiem — wtedy kalibracja przestaje
+  cokolwiek mierzyć.
+
+  ⭐ **ROZJAZD NARZĘDZIA Z RUBRYKĄ KLIENTA — i to jest sedno tej decyzji.**
+  Kryterium GOTOWE #12 (`PLAN-PROJEKTU.md` §12) wymaga kalibracji **≥ 2/3 mutantów**. Policzone
+  z tabeli rozliczenia: mutantów prawdziwych 7 (M1–M7), złapanych 5 (M2, M3, M4, M5, M7) = **71 %**,
+  przy 0 fałszywych alarmach na F1–F4. **Kryterium klienta jest SPEŁNIONE.**
+  `k7-koniec.sh` warunek 2 jest OSTRZEJSZY: żąda, żeby KAŻDA soczewka miała PASS. Bramka i rubryka
+  mierzą więc dwie różne rzeczy, a bramka jest surowsza od tego, co obiecaliśmy.
+
+  **DECYZJA (Dzidek, 28.08): oddajemy z jawnym zapisem.** Odrzucone świadomie:
+  – trzecia próba dla `L1`/`L5` → łamie własną regułę, psuje sens kalibracji;
+  – poluzowanie warunku 2 w `k7-koniec.sh` do „≥ 2/3” → obrona robiona na narzędziu w dniu oddania,
+    czyli dokładnie wtedy, kiedy najłatwiej sobie coś przyklepać.
+
+  **CO TO ZNACZY DLA KLIENTA, po ludzku:** audyt sprawdził sklep siedmioma niezależnymi soczewkami.
+  Pięć z nich udowodniło na podłożonych błędach, że naprawdę widzą wady. Dwie tego nie udowodniły —
+  więc **to, czego nie znalazły w obszarze dziennika logowań (`L1`) i zgodności dokumentacji
+  z zachowaniem (`L5`), nie jest dowodem, że tam nic nie ma.** Ich „czysto” waży mniej niż pozostałych.
+  ⛔ To zdanie ma trafić do raportu oddania. Nie wolno go zastąpić zdaniem „audyt przeszedł”.
+
+  **CO ZAMYKA TĘ POZYCJĘ, gdy wróci:** przepisać prompty `L1` i `L5` wg wniosków z rundy A
+  (`L1`: ścieżka WROGA, nie szczęśliwa — logowanie na nieistniejący login; `L5`: obietnica behawioralna
+  = wykonanie, nie grep stałej), zbudować NOWY bank mutantów i przebiec kalibrację od zera —
+  jako osobne zadanie z własnym licznikiem prób, nie jako trzecią próbę tej samej.

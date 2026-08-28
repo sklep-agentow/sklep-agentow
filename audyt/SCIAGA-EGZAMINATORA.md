@@ -137,3 +137,30 @@ wyglądają dokładnie jak dowód.
 1. Czy ostatnia instrukcja mojego testu może **zakończyć proces**?
 2. Czy asercja **PADA**, gdy podłożę wadę — nie „czy przechodzi, gdy jest naprawa"?
 3. Czy warunek, w którym wada się objawia, **na pewno zachodzi** w chwili pomiaru?
+
+---
+
+## KLASY DOPISANE 2026-08-28 (wieczór) — z rozplątywania PR #204 po squashu PR #203
+
+Źródło: PR #204 stanął `CONFLICTING` natychmiast po scaleniu #203, mimo że nie zawierał ani
+jednej sprzecznej zmiany. Trzy klasy niżej **nie dotyczą kodu produktu w ogóle** — dotyczą
+historii repozytorium i tego, że zapisana wcześniej RECEPTA NAPRAWCZA sama była miną.
+
+| # | Klasa (skąd wzięcie) | Dowód z tej sesji | Co ją łapie U NAS |
+|---|---|---|---|
+| 20 | **SQUASH-MERGE BAZY ROZJEŻDŻA GAŁĄŹ ZBUDOWANĄ NA JEJ SZCZYCIE** | #203 poszedł na `main` przez squash (jeden nowy commit `5073220`). Gałąź #204 była odbita z gałęzi #203, więc git widzi te same zmiany dwa razy pod innymi hashami: `gh pr view 204` → `mergeable: CONFLICTING`, `mergeStateStatus: DIRTY`, konflikt w 4 plikach. ⛔ Zero sprzecznych zmian w treści — konflikt jest wyłącznie skutkiem sposobu scalenia bazy | Zanim odbijesz gałąź NA gałęzi, ustal, czy baza pójdzie squashem. Jeśli tak — nie planuj scalania historii, tylko **przeniesienia commitów** (`cherry-pick`) po scaleniu bazy. ⛔ Sygnał wczesny: `git merge-base --is-ancestor <tip bazy> <twoja gałąź>` zwraca NIE — znaczy, że baza pojechała dalej bez ciebie |
+| 21 | **NAPRAWIAJĄC JEDNĄ RZECZ, GASZĘ POMIAR OBOK** | Poprawka do uwagi recenzenta dopisała do `PRZELOT-CZLOWIEKA-SKLEP.md` dwa wiersze zaczynające się od „- ”. Licznik czyta takie wiersze jako pozycje listy i odmówił przeliczenia: `mapa-licznik.sh … --przelot --tylko-licz` → „2 wiersz(y) „- ” z NIEZNANYM znacznikiem”. Kontrola 5 w `k7-koniec.sh` zeszła na czerwono **przez moją poprawkę do czego innego** | Bramka JEST i zadziałała (`k7-koniec` warunek 5) — do rejestru idzie sama klasa, nie budowa nowej bramki. ⛔ Odruch: plik, który jest CZYTANY PRZEZ SKRYPT, ma składnię, nie tylko treść. Przed dopiskiem sprawdź, czy coś go parsuje, i puść ten licznik po dopisku |
+| 22 | **RECEPTA NAPRAWCZA, KTÓRA CICHO COFA CUDZĄ ROBOTĘ — „odtwórz gałąź z `git diff origin/main...gałąź`” po squashu** | Zapisana w notatkach droga wyjścia z klasy 20 kazała zrobić łatkę przez `git diff origin/main...cele-k7-l1-11-ci-01-02`. Zmierzone: ta łatka ma **28 plików i 1304 wstawienia**, podczas gdy prawdziwa robota gałęzi to **8 plików i 281 wstawień**. Nadmiar to **5 commitów z rund 4 i 5 recenzji #203**, których gałąź #204 nigdy nie widziała — łatka nałożona na `main` COFNĘŁABY je. Trójkropek liczy od `merge-base(main, gałąź)` = `b7fe60e`, czyli sprzed squasha, a nie od punktu rozejścia gałęzi = `d5f8b6f`. Dowód przez wykluczenie: `git diff origin/domkniecie-przelotu-0.9.20 origin/main` → PUSTO (drzewo tipa bazy identyczne z `main`), a `git log cele-k7-l1-11-ci-01-02..origin/domkniecie-przelotu-0.9.20` → 5 commitów, których gałąź nie ma | ⛔ Przenosząc gałąź po squashu, licz od **punktu rozejścia z gałęzią bazową**, nie od `main`: `git merge-base <gałąź bazowa> <twoja gałąź>`, potem `git cherry-pick <rozejście>..<twoja gałąź>`. **Kontrola obowiązkowa po przeniesieniu**, obie muszą przejść: (1) `git diff --stat origin/main..<nowa gałąź>` pokazuje WYŁĄCZNIE pliki twojej roboty — każdy plik z nadmiaru to cudza zmiana, którą właśnie cofasz; (2) `grep` na charakterystyczne zdanie wniesione przez bazę — MUSI się znaleźć w drzewie nowej gałęzi |
+
+### Meta-lekcja tych klas
+
+**Zapisana recepta starzeje się razem z repozytorium.** Klasa 22 jest groźniejsza od klasy 20,
+bo klasa 20 sama się zgłasza — git świeci `CONFLICTING` i nie da się jej przeoczyć. Recepta na
+nią świeci na zielono: łatka nakłada się bez błędu, bramki przechodzą, a cudza robota znika po
+cichu i wygląda to na porządek. ⛔ **Odruch: zanim zastosujesz zapisaną wcześniej komendę
+naprawczą, ZOBACZ, co dokładnie ona zmienia** — `--stat` przed `apply`, nigdy po.
+
+⭐ Trzy pytania z tej sesji:
+1. Czy baza mojej gałęzi została scalona **squashem**? Jeśli tak, jej historia już nie istnieje.
+2. Czy liczę różnicę od punktu, w którym **naprawdę się rozeszliśmy**, czy od `main`?
+3. Czy w łatce są pliki, **których nie tykałem**? Każdy taki to cofnięcie cudzej zmiany.
