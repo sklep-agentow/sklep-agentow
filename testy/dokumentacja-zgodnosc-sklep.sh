@@ -30,6 +30,42 @@ for sek in Description Installation "Frequently Asked Questions" Changelog; do s
 spr "krótki opis <= 150 znaków"      "1" "test \$(sed -n '11p' $W/readme.txt | wc -m) -le 150 && echo 1 || echo 0"
 spr "changelog readme: sekcja = $WER =" "1" "grep -c '^= $WER =$' $W/readme.txt"
 
+
+echo "=== A1. DOK=KOD: tabela stalych w dokumentacji vs kod ==="
+# TRZECI egzemplarz tej samej klasy (recenzja r3). ChatBot mial ta kontrole, Segregator dostal
+# ja w rundzie 2, a Sklep — najwiekszy z trzech — nie mial jej wcale. Tabela stalych Sklepu ma
+# JESZCZE INNY uklad niz oba boty: wartosc stoi bez apostrofow wstecznych, wiec zaden z dwoch
+# wczesniejszych wzorcow tu nie pasowal i dlatego brak nie rzucal sie w oczy.
+BT=$(printf '\140')   # wsteczny apostrof skladany z kodu — nigdy wprost, bo eval by go wykonal
+
+wartosc_stalej_sklepu() { # NAZWA -> wartosc define z dowolnego pliku PHP wtyczki
+	# Stale liczbowe stoja bez apostrofow — `define( 'X', 7 )` — wiec surowe trafienie
+	# konczy sie na " )". Ucinamy nawias zamykajacy i biale znaki z obu stron.
+	grep -rhoP "define\(\s*'$1',\s*'?\K[^';]+" "$W" --include=*.php 2>/dev/null \
+		| head -1 | sed "s/[[:space:]]*)[[:space:]]*$//; s/^[[:space:]]*//; s/[[:space:]]*$//"
+}
+
+STALYCH_DOK=0
+OPISOWYCH=0
+while IFS='|' read -r _ NAZWA WART _; do
+	NAZWA=$(echo "$NAZWA" | tr -d " $BT")
+	WART=$(echo "$WART" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//;s/\*\*//g')
+	[ -n "$NAZWA" ] || continue
+	STALYCH_DOK=$((STALYCH_DOK+1))
+	# Wiersz, w ktorym dokumentacja podaje OPIS w nawiasie zamiast wartosci (np. "(zdanie zgody)"),
+	# nie jest porownywalny wprost — liczymy go jawnie, zeby pomijanie nie roslo po cichu.
+	case "$WART" in
+		"("*")") OPISOWYCH=$((OPISOWYCH+1))
+			printf '  ---  %-58s opis zamiast wartosci: %s\n' "DOK=KOD: $NAZWA" "$WART"
+			continue ;;
+	esac
+	spr "DOK=KOD: $NAZWA" "$WART" "wartosc_stalej_sklepu $NAZWA"
+done < <(grep -P "^\| ${BT}SKLEPAG_[A-Z_]+${BT} \| [^|]+ \|" $W/DOKUMENTACJA-TECHNICZNA.md)
+
+# Petla, ktora przestala cokolwiek dopasowywac, bylaby cicho pusta i swiecila na zielono.
+spr "wierszy tabeli stalych przeczytanych" "6" "echo $STALYCH_DOK"
+spr "wierszy opisowych (pominiete w porownaniu)" "1" "echo $OPISOWYCH"
+
 echo "=== B. Liczby z readme == stałe w kodzie ==="
 spr "link ważny N godzin (SKLEPAG_LINK_GODZIN)" "$(stala SKLEPAG_LINK_GODZIN)" "grep -oE 'ważny [0-9]+ godzin' $W/readme.txt | grep -oE '[0-9]+'"
 spr "do N pobrań (SKLEPAG_LIMIT_POBRAN)"       "$(stala SKLEPAG_LIMIT_POBRAN)" "grep -oE 'do [0-9]+ pobrań' $W/readme.txt | grep -oE '[0-9]+'"

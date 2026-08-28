@@ -86,7 +86,9 @@ spr "LICENSE istnieje"               "1" "test -f $W/LICENSE && echo 1 || echo 0
 spr "LICENSE zaczyna sie GPL"        "1" "head -1 $W/LICENSE | grep -c 'GNU GENERAL PUBLIC LICENSE'"
 
 echo
-echo "=== B. Stale konfiguracyjne (kazda liczba z tabeli w par. 6) ==="
+echo "=== B. Stale konfiguracyjne — wybrane liczby z TRESCI readme vs kod ==="
+# Naglowek mowil wczesniej "kazda liczba z tabeli w par. 6" i tego nie robil: tabela par. 6
+# jest czytana w sekcji A1 (DOK=KOD), a ta sekcja porownuje liczby z tresci readme.
 spr "SEGM_RETENCJA_DNI"              "90"      "grep -oP '(?<=SEGM_RETENCJA_DNI = )\d+' $W/segregator-maila.php"
 spr "SEGM_BLOKADA"                   "segm_operacja_w_toku" "grep -oP \"(?<=SEGM_BLOKADA       = ')[^']*\" $W/segregator-maila.php"
 spr "SEGM_BLOKADA_WAZNA"             "120"     "grep -oP '(?<=SEGM_BLOKADA_WAZNA = )\d+' $W/segregator-maila.php"
@@ -383,7 +385,14 @@ spr "Niewydane jest PIERWSZA sekcja (Keep a Changelog)" "Niewydane" "grep -oP '^
 # dokumenty ze soba: kazde wydanie opisane w readme MUSI miec wpis w CHANGELOG-u.
 # Oba rosna razem przy wydaniu, wiec asercja nie wymaga aktualizacji, a skasowanie
 # opisu po jednej stronie pada.
-spr "kazde wydanie z readme ma wpis w CHANGELOG" "$(grep -c '^= [0-9]' $W/readme.txt)" "grep -c '^## \\[[0-9]' $W/CHANGELOG.md"
+# Porownanie samych LICZB mowiloby tylko "tyle samo pozycji po obu stronach" — a nazwa
+# obiecuje odpowiedniosc. Sprawdzamy wiec KAZDA wersje z readme z osobna.
+BRAK_WPISU=0
+for WER in $(grep -oP '^= \K[0-9]+(\.[0-9]+)*' $W/readme.txt); do
+  grep -q "^## \[$WER\]" $W/CHANGELOG.md || { BRAK_WPISU=$((BRAK_WPISU+1)); echo "  BLAD wydanie $WER jest w readme, nie ma go w CHANGELOG.md"; BLEDY=$((BLEDY+1)); }
+done
+spr "wydan z readme bez wpisu w CHANGELOG" "0" "echo $BRAK_WPISU"
+spr "wydan sprawdzonych po numerze" "$(grep -c '^= [0-9]' $W/readme.txt)" "grep -c '^= [0-9]' $W/readme.txt"
 for v in 1.0.0 1.1.0 1.2.0 1.2.1; do
   spr "wersja $v z historii gita opisana" "1" "grep -c '^## \\[$v\\]' $W/CHANGELOG.md"
 done
