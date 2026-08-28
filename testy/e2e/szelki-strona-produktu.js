@@ -16,7 +16,8 @@
  *
  * Kod wyjścia 0 = wszystko OK, 1 = którakolwiek kontrola pada, 2 = błąd przyrządu.
  * Użycie: node testy/e2e/szelki-strona-produktu.js [adres] [slug] [silnik]
- *   silnik: chromium (domyślnie) albo firefox — cel L6-03 mapy wymaga obu silników.
+ *   silnik: chromium (domyślnie), firefox albo msedge — cel L6-03 mapy wymaga wszystkich
+ *   trzech, bo kryterium GOTOWE #11 wymienia Chrome, Edge i Firefox z nazwy.
  *   slug: chatbot-live (domyślnie) albo segregator-maila. SKLEPAG_PRZEKIERUJ_HOST=host — gdy
  *   siteurl stacku wskazuje inny host (np. tunel), żądania do niego idą na adres bazy.
  */
@@ -54,9 +55,16 @@ async function kontekst(browser, opcje) {
 const op = (page, sel) => page.$eval(sel, (e) => getComputedStyle(e).opacity);
 
 (async () => {
+  /* Edge idzie kanalem `msedge` (prawdziwa przegladarka Microsoftu z systemu), a nie
+     chromium z Playwrighta — kryterium GOTOWE #11 wymienia Edge z nazwy, wiec proxy przez
+     wspolny silnik Blink byloby argumentem, a nie pomiarem. Brak przegladarki w systemie
+     konczy sie kodem 2 (blad przyrzadu), nie cichym zjazdem na chromium — inaczej zielone
+     znaczyloby cos innego, niz mowi nazwa silnika. */
   const browser = 'firefox' === SILNIK
     ? await firefox.launch()
-    : await chromium.launch({ executablePath: wymagajChromium() });
+    : 'msedge' === SILNIK
+      ? await chromium.launch({ channel: 'msedge' })
+      : await chromium.launch({ executablePath: wymagajChromium() });
   try {
     // 1. skrypt zablokowany
     let { ctx, page } = await kontekst(browser);

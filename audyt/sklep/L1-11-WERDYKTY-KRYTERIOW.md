@@ -93,21 +93,26 @@ wprost, zastrzeżenie zostaje.
 ⛔ **Nie mam dowodu na tryb AI z żywym kluczem** — kryterium nazywa go „testem ręcznym przy
 dostępnym kluczu”, więc to nie brak procesu, tylko brak okazji. Do odnotowania przed oddaniem.
 
-### #11 · WCAG-lite, RWD, trzy przeglądarki, baner trybu testowego, szablony prawne — ⛔ NIESPEŁNIONE (jedna trzecia wymagania bez dowodu)
-Większość tego kryterium stoi mocno: `L6-02` ✅ (axe: 0 naruszeń), `L6-04` ✅ (sonda pigułki 5/5),
-`L6-05` i `L6-06` ✅ (przelot 27 punktów i trzy ścieżki klawiaturowe, domknięte 28.08),
-`L1-08` ✅ (baner „TRYB TESTOWY”), `L2-20` ✅ (Regulamin i Polityka jako szablony, zero cudzych
-danych, polityka wymienia Stripe i dziennik 90 dni). Zakup telefonem sprawdzony (przelot A12).
+### #11 · WCAG-lite, RWD, trzy przeglądarki, baner trybu testowego, szablony prawne — ✅ SPEŁNIONE
+⛔ **Ten werdykt był ⛔ NIESPEŁNIONE do 28.08 i domknął go osobny ruch, nie przepisanie ocen.**
+Kryterium wymienia Chrome, Edge i Firefox z nazwy, a Edge nie był sprawdzony ani razu:
+`grep -rin "edge"` po mapie polowania i rejestrze dawał **zero trafień**, przy próbie kontrolnej
+na słowie, które tam być musi (`grep -ric "firefox"` → trafienie). Cel `L6-03` mówił wprost
+„chromium + firefox”. Właściciel zdecydował o instalacji Edge; przyrząd `szelki-strona-produktu.js`
+przyjmuje trzeci silnik `msedge`, obie strony produktów przechodzą 10/10, EXIT=0 ×2 (`SK-L6-003`).
 
-⛔ **Kryterium wymienia Chrome, Edge i Firefox. Edge nie został sprawdzony ani razu.**
-Zmierzone: `grep -rin "edge"` po mapie polowania i rejestrze znalezisk → **zero trafień**, przy
-próbie kontrolnej na słowie, które tam być musi (`grep -ric "firefox"` → trafienie). Cel `L6-03`
-mówi wprost: „szelki 10/10 ×2 slugi, **chromium + firefox**”, a jego dowód to cztery przebiegi
-dwóch przeglądarek. Trzeciej nie ma.
+⭐ **Dowód, że mierzymy Edge, a nie chromium pod inną nazwą:** `b.version()` → `151.0.4129.107`
+z `Edg/` w identyfikatorze, przy chromium `151.0.7922.34` — inny numer budowy.
+⛔ I rzecz ważniejsza niż samo domknięcie: **stary przyrząd na argumencie `msedge` NIE PADAŁ,
+tylko po cichu uruchamiał chromium i świecił na zielono.** Zmierzone starą logiką wyboru
+silnika. Gdyby ktoś dopisał Edge do tabeli bez zmiany przyrządu, miałby ✅ na przeglądarce,
+której nigdy nie uruchomił. Nowy przyrząd na braku przeglądarki kończy kodem 2.
 
-To jedyny werdykt ⛔ w tym zestawieniu i jedyne miejsce, gdzie **kryterium wymienia coś, czego
-nie dotknęliśmy**. Nie nazywam tego drobiazgiem: Edge to domyślna przeglądarka Windowsa, czyli
-najbardziej prawdopodobna przeglądarka właściciela sklepu.
+Reszta kryterium stała mocno od początku: `L6-02` ✅ (axe: 0 naruszeń), `L6-04` ✅ (sonda pigułki
+5/5), `L6-05` i `L6-06` ✅ (przelot 27 punktów i trzy ścieżki klawiaturowe), `L1-08` ✅ (baner
+„TRYB TESTOWY”), `L2-20` ✅ (Regulamin i Polityka jako szablony, zero cudzych danych).
+Zakup telefonem sprawdzony przelotem (A12).
+
 
 ---
 
@@ -115,9 +120,9 @@ najbardziej prawdopodobna przeglądarka właściciela sklepu.
 
 | werdykt | ile | kryteria |
 |---|---|---|
-| ✅ SPEŁNIONE | 5 | #1, #3, #4, #6, #8 |
+| ✅ SPEŁNIONE | 6 | #1, #3, #4, #6, #8, #11 |
 | 🐞 SPEŁNIONE Z ZASTRZEŻENIEM | 5 | #2, #5, #7, #9, #10 |
-| ⛔ NIESPEŁNIONE | 1 | #11 (brak Edge) |
+| ⛔ NIESPEŁNIONE | 0 | — (było #11 z powodu braku Edge; domknięte 28.08) |
 
 ⛔ **Czego to zestawienie NIE dowodzi.** Kryteria §12 każą wykonywać je NA PACZCE, na świeżej
 instalacji. Na tej drodze przeszło tylko kryterium #1 (instalacja od zera przez audytora,
