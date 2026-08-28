@@ -107,8 +107,8 @@ Format wiersza: `- ⬜ ID · cel · [runda/raport · SHA]`.
 - ✅ L6-02 · axe `--bez-ruchu` = 0 naruszeń · [POMIAR 27.08 - 581e869 - 3 strony x desktop/mobile = 6 przebiegow, 0 serious/critical]
 - ✅ L6-03 · szelki 10/10 ×2 slugi, chromium + firefox · [POMIAR 27.08 - 581e869 - 4 przebiegi EXIT=0 (2 slugi x chromium+firefox); obsluga firefoksa dopisana do przyrzadu jako 3. argument]
 - ✅ L6-04 · sonda pigułki sticky 5/5 · [POMIAR 27.08 - 581e869 - 5/5 OK: desktop, telefon 390 px, skrypt opozniony 3,5 s]
-- ⬜ L6-05 · przelot człowieka (`PRZELOT-CZLOWIEKA-SKLEP.md`) — komplet ·
-- ⬜ L6-06 · 3 kroki klawiaturowe (lista → produkt → zakup; lightbox; formularz opinii) ·
+- ✅ L6-05 · przelot człowieka (`PRZELOT-CZLOWIEKA-SKLEP.md`) — komplet · [PRZELOT 27/27 · agent-audytor 27.08 (ZADANIE 2 raportu), punkty z werdyktem złym zmierzone PONOWNIE 28.08 na kodzie po naprawach · licznik: 26 ✅ · 1 🐞 (SK-L6-002) · 0 😖 · 0 ⬜ · b7fe60e]
+- ✅ L6-06 · 3 kroki klawiaturowe (lista → produkt → zakup; lightbox; formularz opinii) · [C1/C2/C3 przelotu · Tab dosięga „▶ Odtwórz nagranie” po naprawie 0.9.19, pułapka fokusu w pełnym ekranie trzyma 15/15 z PRÓBĄ KONTROLNĄ detektora · b7fe60e]
 
 ## Ł — ŁAMACZ (wykonanie; wyrocznia: po każdej awarii SELECT z `zdarzenia`)
 - 🐞 Ł-01 · baza pada w połowie zakupu (kontener db zatrzymany) → stan + zdarzenie · [A/SK-L-001 · L.json · 425a3124]
@@ -128,5 +128,5 @@ Format wiersza: `- ⬜ ID · cel · [runda/raport · SHA]`.
 
 ## LICZNIK
 <!-- liczony skryptem narzedzia-qa/mapa-licznik.sh; nie edytować ręcznie -->
-CELE: 104 · ✅ 77 · 🐞 20 · ⚠️ 1 · ⛔ 0 · ⬜ 6
+CELE: 104 · ✅ 79 · 🐞 20 · ⚠️ 1 · ⛔ 0 · ⬜ 4
 ZAMROZONA: 5d3dcf9f0d99dedc1fe201c3e318f46d6f35ba5d · celow=104 · tresc=2d2a15920151 · 2026-08-26T06:11

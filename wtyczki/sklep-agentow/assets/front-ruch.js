@@ -306,4 +306,29 @@
 			new IntersectionObserver(function (w) { formularzWidoczny = w[0].isIntersecting; przelacz(); }).observe(formularz);
 		}
 	}
+	/* Pola wymagane mówią do kupującego PO POLSKU.
+	   Pole bez własnego komunikatu dostaje go od przeglądarki — po ANGIELSKU
+	   („Please check this box if you want to proceed.”), zależnie od jej ustawień
+	   językowych. Na stronie w całości polskiej były to jedyne obcojęzyczne zdania,
+	   jakie widział kupujący, i pojawiały się w dwóch miejscach: przy płatności
+	   i przy wysyłaniu opinii.
+	   Tekst bierzemy z atrybutu `data-sklepag-blad` PRZY POLU, żeby ta sama procedura
+	   obsłużyła każde pole opisane tym atrybutem — także formularz opinii, który rysuje
+	   się samodzielnym dokumentem i ma własną kopię tych czterech linii (`opinie.php`).
+	   ⛔ Zasięg: strony sklepu i strona opinii. Formularz produktu w panelu
+	   (`admin-produkty.php`) NIE jest objęty — ten skrypt nie ładuje się w `wp-admin`,
+	   a tam czyta go właściciel, nie kupujący — świadoma decyzja, nie przeoczenie.
+	   ⛔ Blokady to NIE dotyczy: zakup bez zgody odrzuca też serwer (`includes/zakup.php`),
+	   więc gdy skrypt nie wstanie, blokada trzyma dalej — tylko po angielsku.
+	   Komunikat ustawiamy Z GÓRY i przestawiamy przy każdej zmianie, zamiast liczyć
+	   na to, że podmiana w trakcie zdarzenia `invalid` zdąży przed narysowaniem dymka. */
+	Array.prototype.forEach.call(document.querySelectorAll('[data-sklepag-blad]'), function (pole) {
+		var tekst = pole.getAttribute('data-sklepag-blad');
+		var ustaw = function () { pole.setCustomValidity(pole.validity.valueMissing ? tekst : ''); };
+		pole.setCustomValidity('');
+		ustaw();
+		pole.addEventListener('change', ustaw);
+		pole.addEventListener('input', ustaw);
+		pole.addEventListener('invalid', ustaw);
+	});
 })();

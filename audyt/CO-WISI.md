@@ -85,7 +85,7 @@
   `docker exec strona_wp_wordpress wp --allow-root --path=/var/www/html option update siteurl "http://localhost:8890" && docker exec strona_wp_wordpress wp --allow-root --path=/var/www/html option update home "http://localhost:8890"`
   + ubić tunel (`pkill -f "cloudflared tunnel --url http://127.0.0.1:8890"`).
   ⛔ Do tego czasu testy automatyczne po localhost NIE są miarodajne (canonical
-  redirect na tunel); E2E przez tunel: kopia `przelot2-tunel.js` w scratchpadzie.
+  redirect na tunel); E2E przez tunel: kopia `przelot2-tunel.js` ⛔ scratchpad tamtej sesji JUŻ NIE ISTNIEJE — do odtworzenia z `testy/e2e/przelot2.js` przez podmianę adresu bazowego na tunel.
 - **header.php motywu KOPII zmieniony poza repo** (link „Sklep" w obu nav —
   D28): backup w kontenerze `header.php.przed-sklepem`; dosłowne fragmenty
   w INSTRUKCJA-INSTALACJI (sekcja Ustawienia produkcyjne).
@@ -225,7 +225,7 @@
 - **Sędzia wyglądu #1: 66/100** (przynęty rozbrojone — wiarygodny); TOP-braki
   zaadresowane w #47 (pasek statusów, kolumna Akcje, notice, hierarchia KPI,
   zrzuty-dowody); świadome odstępstwa w WZORCE-DASHBOARD-K3 §8. Sędzia #2 w toku.
-- Zrzuty panelu: scratchpad sesji `zrzuty/` (10 szt.); skrypt `testy/zrzuty-panelu.js`.
+- Zrzuty panelu (10 szt.) ⛔ scratchpad tamtej sesji JUŻ NIE ISTNIEJE; odtwarza je `testy/zrzuty-panelu.js` — skrypt jest w repo, więc dowód jest ODTWARZALNY, choć pliki przepadły.
 
 ## Blokuje wydanie
 - (nic pilnego) — Live-smoke AI na żywym api.anthropic.com w ODWODZIE (~5$ za zgodą
@@ -258,3 +258,57 @@
   jak każda liczba; wzór: `dokumentacja-zgodnosc*.sh`.
 - **Regulamin sklepu (strona DRAFT #120)**: dopisać gwarancję satysfakcji 14 dni (D31)
   i tryb wygaśnięcia aktualizacji przy zwrocie — przy finalizacji regulaminu w K8.
+
+- ⛔ **SZEŚĆ PRÓB KONTROLNYCH NARZĘDZI PADA — dług sprzed PR #203, nie z niego.**
+  ⭐ **TRZY POMIARY, KTÓRE ROZSTRZYGAJĄ:** przelot `d28c971` → 6 padających · `15540a9` → **5**
+  (`przejecie` przeszła) · przelot na gałęzi celów → znowu **6** (`przejecie` znowu padła).
+  Między żadnym z nich nie ruszyłam pliku chatbota. Liczba padających jest więc RUCHOMA,
+  a log niesie zawsze stan z ostatniego przebiegu — nie traktuj żadnej z tych liczb jako stałej. Poniższy akapit opisuje pierwszy przelot; różnica między nimi jest sednem
+  znaleziska o chwiejności.
+  Pierwszy przelot, z commitu `d28c971`: uruchomionych 30,
+  `EXIT≠0` w sześciu — `dowod-z-paczki` (EXIT=2, brak `boty/paczki/chatbot-live-1.5.0.zip`),
+  `blad-klucza`, `nonce`, `ip-za-proxy`, `przejecie`, `pulapka`. Wszystkie sześć dotyczą
+  **chatbota** — pięć ma `CEL=…/plugins/chatbot-live`, szósta wymaga starej paczki chatbota.
+  Żadna nie tyka sklepu ani segregatora. [zawężone po recenzji #203 r2: wcześniej pisało tu
+  „chatbota i segregatora”, co było nieścisłe]
+  ⭐ POMIAR, NIE PRZYPUSZCZENIE: te same dwa strażniki (`blad-klucza`, `nonce`) uruchomione
+  w osobnym drzewie roboczym na `origin/main` padają IDENTYCZNIE (`EXIT=1`, komunikat
+  „czysty kod NIE przechodzi — strażnik pada zawsze, więc nic nie znaczy”). PR #203 nie zmienia
+  ani jednego pliku botów — `git diff --stat origin/main...HEAD -- wtyczki/chatbot-live/ wtyczki/segregator-maila/ boty/`
+  jest pusty.
+  ⛔ Dwa z nich (`blad-klucza`, `nonce`) to nie ślepota na część wad, tylko **strażnik, który
+  pada ZAWSZE** — czyli nie odróżnia kodu z wadą od kodu bez wady i jako bramka nie znaczy nic.
+  To pilne, ale to teren botów (chatbot ma świadomie otwartą klasę 8) — do rozstrzygnięcia
+  osobno, nie w PR-ze o przelocie sklepu.
+  ⭐ **JEDNA Z NICH JEST CHWIEJNA — zmierzone dwoma przelotami tej samej gałęzi.**
+  Przelot z `d28c971`: 6 z EXIT≠0. Przelot z `15540a9`: **5** — `przejecie-proba-kontrolna.sh`
+  przeszła, choć między tymi commitami nie ruszyłam ani jednego pliku chatbota (zmiany to
+  komentarze, dokumentacja i test sklepu). Czyli jej wynik zależy od stanu wspólnego stosu,
+  a nie od kodu, który ma pilnować.
+  ⛔ Chwiejny strażnik jest GORSZY od stale czerwonego: stale czerwony zmusza do naprawy,
+  chwiejny uczy, żeby uruchomić ponownie i pojechać dalej na zielonym z przypadku.
+  Skutek dla domknięcia: `k7-koniec.sh` kontrola 6 zostaje czerwona niezależnie od tego PR-a.
+
+- ⛔ **DWA POLA `required` W PANELU WŁAŚCICIELA NADAL BEZ POLSKIEGO KOMUNIKATU — świadomie nie objęte przez PR #203.**
+  `wtyczki/sklep-agentow/includes/admin-produkty.php:168` (Nazwa) i `:171` (Cena) stoją na samym
+  `required`, więc puste pole odpowie właścicielowi dymkiem przeglądarki — tym samym, który
+  PR #203 usunął z frontu. Naprawa tam nie sięga **z definicji**: `assets/front-ruch.js` ładuje się
+  wyłącznie na stronach sklepu (`sklep-agentow.php:118-149`, `is_page( $strona_sklep ) || is_page( $strona_dziekujemy )`),
+  a ekrany `wp-admin` żadnego z tych skryptów nie dostają.
+  **Dlaczego odłożone, a nie naprawione:** to tekst dla WŁAŚCICIELA (jedna osoba, która i tak zna
+  swój sklep), nie dla kupującego. Nasza reguła każe zawsze wracać do tekstu czytanego przez
+  KLIENTA — ten nim nie jest. Objęcie panelu wymaga osobnej kolejki assetów dla `wp-admin`,
+  czyli zmiany szerszej niż PR o przelocie.
+  **Ile naprawdę liczy ta klasa** (wskazane w recenzji #203 r3, przemiot poprawiony po r4):
+  `admin-produkty.php:168` (`required`), `:171` (`required` + `type="number"` + `min` + `pattern` — `pattern` dopisany po recenzji #203 r5, wcześniej go gubiłam),
+  `admin-ustawienia.php:249` i `:254` (`type="email"`), `:259` (`pattern`).
+  Czyli **pięć miejsc, nie dwa** — samo `required` to dopiero część.
+  ⛔ We wcześniejszej wersji tego wpisu liczyłam sześć, bo doliczyłam `admin-produkty.php:158`
+  — a to KOMENTARZ o polu, nie pole. Sprawdzone `sed -n 158p`. Ta sama klasa, na którą
+  łapię się w tym audycie: numer linii przepisany bez otwarcia linii.
+  **Co trzeba zrobić, gdy wróci:** wpiąć te same stałe `SKLEPAG_BLAD_*` przez atrybut
+  `data-sklepag-blad` i dołożyć tę samą procedurę do assetów panelu. ⛔ To zamknie WYŁĄCZNIE
+  brak wartości: procedura ustawia tekst pod warunkiem `pole.validity.valueMissing`, więc
+  `typeMismatch` (`type="email"`) i `patternMismatch` (`pattern`) nadal rysowałaby przeglądarka.
+  Na froncie to bez znaczenia — cztery objęte pola mogą naruszyć wyłącznie `valueMissing`.
+  Zgłoszone przez recenzenta w #203 r2 jako DROBNA 2, przyjęte jako dług z nazwą.
