@@ -399,7 +399,10 @@ spr "wydan z readme bez wpisu w CHANGELOG" "0" "echo $BRAK_WPISU"
 # Kontrola pokrycia: ile wydan petla NAPRAWDE przeszla. Oczekiwanie czytane z readme,
 # wartosc to LICZNIK PETLI — dwa rozne zrodla. Wczesniejsza wersja porownywala te sama
 # komende ze soba, wiec nie mogla pasc: pusta petla przechodzila na zielono (klasa 11).
-spr "wydan sprawdzonych po numerze" "$(grep -c '^= [0-9]' $W/readme.txt)" "echo $SPRAWDZONYCH"
+# Oczekiwanie MUSI pochodzic z INNEGO PLIKU niz petla, inaczej opustoszale readme daje
+# 0 == 0 i pusta petla znowu przechodzi (recenzja r5: "dwa zrodla" to nadal bylo jedno).
+# Petla chodzi po readme.txt, wiec prog czytamy z CHANGELOG.md.
+spr "wydan sprawdzonych po numerze" "$(grep -c '^## \[[0-9]' $W/CHANGELOG.md)" "echo $SPRAWDZONYCH"
 for v in 1.0.0 1.1.0 1.2.0 1.2.1; do
   spr "wersja $v z historii gita opisana" "1" "grep -c '^## \\[$v\\]' $W/CHANGELOG.md"
 done

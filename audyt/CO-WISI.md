@@ -1,5 +1,24 @@
 # CO-WISI — rzeczy oddane komuś / bez strażnika (zasada: oddajesz ⇒ wiersz, wraca ⇒ kasujesz)
 
+## 🟡 Kontrola „każde wydanie z readme ma wpis w CHANGELOG” istnieje TYLKO u Segregatora (29.08, z recenzji #208 r5)
+
+Wzorzec dodany w `#208` żyje w `testy/dokumentacja-zgodnosc-segregator.sh`. ChatBot i Sklep go
+nie mają — czyli u nich skasowanie opisu wydania po jednej stronie nadal przejdzie na zielono.
+
+To **klasa 8** (naprawa trafia w jeden egzemplarz wzorca, bliźniak zostaje) — ta sama, przez którą
+kontrola `DOK=KOD` wracała w tym PR-ze trzy razy, zanim trafiła do wszystkich trzech wtyczek.
+Zapisuję ją świadomie zamiast dokładać czwartą rundę zmian do PR-a o paczkach.
+
+Kształt roboty: przenieść pętlę po wersjach z readme (z progiem czytanym z `CHANGELOG.md`,
+czyli z INNEGO pliku niż pętla — inaczej wraca tautologia z r4/r5) do
+`testy/dokumentacja-zgodnosc.sh` i `testy/dokumentacja-zgodnosc-sklep.sh`, plus po jednym
+przypadku w ich próbach kontrolnych.
+
+⛔ Do zrobienia przy najbliższym PR-ze dotykającym bramek dokumentacji — nie pilne dla klienta,
+bo dotyczy naszego oprzyrządowania, nie produktu.
+
+---
+
 ## 🔴 STRAŻNIK PACZEK ISTNIEJE, ALE NIE STRZELA SAM — wymaga PR-a manifestowego (29.08, z recenzji #208 r1)
 
 `narzedzia-qa/paczka-zgodnosc.sh` wykrywa rozjazd paczki z repo i **pada poprawnie** (kod 1 na
