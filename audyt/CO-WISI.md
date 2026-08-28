@@ -385,3 +385,11 @@ rejestr dostanie czwarty stan dla znalezisk typu „brak pomiaru”, których ni
   treść maila nie niesie adresu w innej postaci niż ta czyszczona. Do przeglądu przy następnej
   rundzie QA: albo pole wypada z zapytania, albo zostaje objęte anonimizacją — obecny stan jest
   niejednoznaczny dla czytającego (docblock mówi o tym wprost, żeby nie było wątpliwości).
+- ⬜ **Siódmy migoczący strażnik chatbota: `testy/statystyki-proba-kontrolna.sh`.** Kończy `EXIT=1`
+  z komunikatem „TEST SLEPY NA 1 PODLOZONYCH BLEDOW” — nie łapie wady „wiersze bez znacznika wliczone
+  do skuteczności” w raporcie skuteczności chatbota. ⛔ Zmierzone 28.08 dowodem przez wykluczenie:
+  pada **także na czystym `origin/main`** (`EXIT=1`), a PR-y sklepu nie ruszały ani jednego pliku
+  chatbota (`git diff --stat origin/main..HEAD -- wtyczki/chatbot-live/` → pusto). Migocze między
+  przelotami (raz jest w szóstce, raz w siódemce), stąd rozbieżne liczby w logach — **nie jest to
+  regresja żadnego PR-a sklepu**. **CO ZAMYKA:** naprawa razem z pozostałymi strażnikami chatbota
+  — to jeden teren, jedna robota, nie sześć osobnych.
