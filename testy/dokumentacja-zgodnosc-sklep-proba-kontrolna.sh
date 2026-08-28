@@ -49,6 +49,11 @@ psuj_menu_readme()  { sed -i 's/· \*\*Opinie\*\* —/· **Kupony** — rabaty �
 psuj_changelog()    { sed -i "s/^## \[$WER\]/## [0.0.0]/" "$1/$W/CHANGELOG.md"; }
 psuj_dok_tech()     { sed -i 's/\(Wersja wtyczki:[* ]*\)[0-9.]*/\10.0.1/' "$1/$W/DOKUMENTACJA-TECHNICZNA.md"; }
 psuj_brak_pliku()   { rm -f "$1/dokumentacja/INSTRUKCJA-INSTALACJI.md"; }
+# Sekcja A1 (DOK=KOD tabeli stalych) doszla w PR #208 i nie miala tu ANI JEDNEGO przypadku,
+# a ten skrypt konczy zdaniem "ROZPOZNAJE KAZDY PODLOZONY ROZJAZD" — nazwa szersza niz pomiar.
+psuj_tabela_stalych() { sed -i 's/^| `SKLEPAG_LIMIT_POBRAN` | 10 |/| `SKLEPAG_LIMIT_POBRAN` | 11 |/' "$1/$W/DOKUMENTACJA-TECHNICZNA.md"; }
+# Druga strona tej samej sekcji: petla, ktora przestaje dopasowywac wiersze, byla by cicho pusta.
+psuj_uklad_tabeli()   { sed -i '0,/^| `SKLEPAG_WERSJA` |/s/^| `SKLEPAG_WERSJA` |/| SKLEPAG_WERSJA |/' "$1/$W/DOKUMENTACJA-TECHNICZNA.md"; }
 
 echo "=== KONTROLA ODWROTNA: czysta kopia = 0 rozjazdow ==="
 sprawdz_ "czysta kopia repo → EXIT 0"                         0 nic               "0 rozjazdów"
@@ -62,6 +67,10 @@ sprawdz_ "C: pozycja w readme, której nie ma w kodzie"        1 psuj_menu_readm
 sprawdz_ "D: CHANGELOG bez wpisu bieżącej wersji"             1 psuj_changelog    "CHANGELOG: wpis"
 sprawdz_ "D: DOK-TECH z inną wersją wtyczki"                  1 psuj_dok_tech     "DOK-TECH: Wersja wtyczki"
 sprawdz_ "E: readme obiecuje INSTRUKCJA-INSTALACJI, pliku brak" 1 psuj_brak_pliku "INSTRUKCJA-INSTALACJI.md"
+sprawdz_ "A1: tabela stalych podaje inna wartosc niz kod"      1 psuj_tabela_stalych "DOK=KOD: SKLEPAG_LIMIT_POBRAN"
+# Psucie ukladu trafia w DWIE asercje naraz (licznik wierszy + kontrola DOK-TECH czytajaca
+# ten sam wiersz), wiec liczba podana JAWNIE i obie pozycje muszą byc nazwane.
+sprawdz_ "A1: rozjechany uklad tabeli — petla widzi mniej"     1 psuj_uklad_tabeli   "wierszy tabeli stalych przeczytanych|DOK-TECH: tabela stalych" 2
 echo
 echo "PRZYPADKÓW: $((PRZYPADKI-BLEDY))/$PRZYPADKI OK · rozjazdów podłożonych łącznie: $ROZJAZDY"
 if [ "$BLEDY" -eq 0 ]; then echo "BRAMKA DOK=KOD SKLEPU ROZPOZNAJE KAZDY PODLOZONY ROZJAZD — i przepuszcza czysta kopie"; exit 0; fi

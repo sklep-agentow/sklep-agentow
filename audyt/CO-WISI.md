@@ -1,5 +1,79 @@
 # CO-WISI — rzeczy oddane komuś / bez strażnika (zasada: oddajesz ⇒ wiersz, wraca ⇒ kasujesz)
 
+## 🟡 Kontrola „każde wydanie z readme ma wpis w CHANGELOG” istnieje TYLKO u Segregatora (29.08, z recenzji #208 r5)
+
+Wzorzec dodany w `#208` żyje w `testy/dokumentacja-zgodnosc-segregator.sh`. ChatBot i Sklep go
+nie mają — czyli u nich skasowanie opisu wydania po jednej stronie nadal przejdzie na zielono.
+
+To **klasa 8** (naprawa trafia w jeden egzemplarz wzorca, bliźniak zostaje) — ta sama, przez którą
+kontrola `DOK=KOD` wracała w tym PR-ze trzy razy, zanim trafiła do wszystkich trzech wtyczek.
+Zapisuję ją świadomie zamiast dokładać czwartą rundę zmian do PR-a o paczkach.
+
+Kształt roboty: przenieść pętlę po wersjach z readme (z progiem czytanym z `CHANGELOG.md`,
+czyli z INNEGO pliku niż pętla — inaczej wraca tautologia z r4/r5) do
+`testy/dokumentacja-zgodnosc.sh` i `testy/dokumentacja-zgodnosc-sklep.sh`, plus po jednym
+przypadku w ich próbach kontrolnych.
+
+⛔ Do zrobienia przy najbliższym PR-ze dotykającym bramek dokumentacji — nie pilne dla klienta,
+bo dotyczy naszego oprzyrządowania, nie produktu.
+
+---
+
+## 🔴 STRAŻNIK PACZEK ISTNIEJE, ALE NIE STRZELA SAM — wymaga PR-a manifestowego (29.08, z recenzji #208 r1)
+
+`narzedzia-qa/paczka-zgodnosc.sh` wykrywa rozjazd paczki z repo i **pada poprawnie** (kod 1 na
+`f310eec` dla obu botów, kod 0 po naprawie). Ale nie ma go w `BRAMKI=()` w `narzedzia-qa/bramki.sh`
+ani w `.github/workflows/quality.yml:84`, który uruchamia dokładnie jedną komendę: `bash
+narzedzia-qa/bramki.sh`. Czyli wykrycie rozjazdu zależy od tego, czy komuś przyjdzie do głowy
+sięgnąć po paczkę.
+
+**To już trzecie wystąpienie tej klasy** (1.5.8/1.3.1 → 1.5.11/1.3.4 → teraz), udokumentowane
+w `audyt/boty/material/06-mapa-polowania.md:286`.
+
+Dlaczego nie zrobione od razu: `.github/manifest-bramek.txt` ma własną zasadę wpisaną w nagłówku —
+*„każda zmiana = osobny PR, który Dzidek czyta w całości"* oraz *„agent NIE dotyka tego pliku
+w PR-ach z kodem"*. A `sprawdz-manifest.sh` ma kontrolę odwrotną: bramka w `BRAMKI=()`, której nie
+ma w manifeście, świeci na czerwono. Więc dopisanie jej w PR #208 złamałoby zasadę domu.
+
+Kształt, który ma sens (za recenzją #208 r1) — **nie** samo dopisanie `paczka-zgodnosc` do listy,
+bo to wywracałoby każdy PR ruszający kod wtyczki bez wydania. Warunek: *pliki wtyczki zmienione
+po commicie budującym aktualny zip **ORAZ** wersja nie podbita* → PAD.
+
+⛔ Do decyzji właściciela: osobny PR manifestowy teraz czy po oddaniu.
+
+---
+
+## 🟡 KLASA 5 (ślady wewnętrzne w paczce) NIE JEST DOMKNIĘTA — 47 trafień rodziny, której skaner nie widzi (29.08, z recenzji #208 r1)
+
+`#208` usunął z paczek jeden ślad (`zasada D22`). Skaner `narzedzia-qa/slady-wewnetrzne.sh`
+zna wzorce `\bD[0-9]{1,2}\b` i `\bK[0-9]\b` (linia 77) — i dlatego zobaczył `D22`. **Nie zna**
+form `A2-F3`, `P2-Z1`, `DK-5`, `KR1/KR2`, `WK-13` ani zwrotu „wroga sesja".
+
+Pomiar (29.08, komenda do powtórzenia):
+
+```
+grep -rnE "audyt (A[0-9]|DK-|P2-|KR[0-9])|\(audyt [A-Z0-9-]+\)|A[0-9]-F[0-9]|DK-[0-9]|P2-Z[0-9]|wrogiej sesji|wroga sesja" \
+  wtyczki/chatbot-live/ wtyczki/segregator-maila/ wtyczki/sklep-agentow/ \
+  --include=*.php --include=*.js --include=*.txt --include=*.md | wc -l
+→ 47   (chatbot-live 34 · segregator-maila 12 · sklep-agentow 1)
+```
+
+Trzy z tych plików **jadą do klienta** (są na allowliście `boty/buduj-paczki.sh`):
+`wtyczki/chatbot-live/CHANGELOG.md`, `wtyczki/chatbot-live/DOKUMENTACJA-TECHNICZNA.md`,
+`wtyczki/segregator-maila/CHANGELOG.md`. Kupujący czyta w historii zmian „audyt A5, KR1/KR2"
+i „A2-F3" — numery raportów, których nigdy nie zobaczy.
+
+⚠️ To jest **tekst czytany przez klienta**, czyli kategoria, która wg reguły rund zawsze wraca
+do naprawy. Nie zrobione w #208 świadomie: PR nie tyka kodu produktu, a czyszczenie 47 komentarzy
+plus rozszerzenie skanera plus przypadki do próby kontrolnej to osobna robota — recenzent #208 r1
+wprost dopuścił drogę „nazwany dług zamiast czyszczenia w tym PR-ze".
+
+⛔ Do zrobienia przed oddaniem klientowi: rozszerzyć wzorzec skanera o tę rodzinę, dopisać
+przypadki do `narzedzia-qa/paczka-zgodnosc-proba-kontrolna.sh`, wyczyścić trafienia w trzech
+plikach jadących do klienta (komentarz ma nieść POWÓD, numer zostaje w PR i commicie).
+
+---
+
 ## 🟡 ODDANE DO K8 — odbior WYDAJNOSCI (perf) na docelowym hostingu · AN-022
 - `perf` z Lighthouse NIE zostal odebrany w K7 i to jest decyzja, nie przeoczenie: na tym stosie
   pomiar mierzy OBCIAZENIE NASZEJ MASZYNY, nie jakosc strony. Ta sama komorka (sklep/mobile)
@@ -49,7 +123,9 @@
   operację odczytu tabel sklepu (SELECT-only, bez danych osobowych w wyjściu — imię maskować).
 
 - **`dowod-z-paczki-proba-kontrolna.sh` umiera na ZASZYTEJ NA SZTYWNO wersji paczki** —
-  szuka `boty/paczki/chatbot-live-1.5.0.zip`, którego w repo nie ma od dawna (są 1.5.7–1.5.11).
+  szuka `boty/paczki/chatbot-live-1.5.0.zip`, którego w repo nie ma — katalog zawiera
+  wyłącznie wersje od 1.5.7 wzwyż (lista rośnie z każdym wydaniem, dlatego nie wymieniam jej tu
+  po numerze: zdanie z listą wersji dezaktualizuje się przy najbliższej paczce).
   Kończy **EXIT=2**, czyli „błąd przyrządu”, i tak samo zachowuje się na czystym `origin/main`
   (zmierzone 28.08: log prób z `main`, commit `28533e0`, ta sama pozycja `EXIT=2 0s`).
   ⛔ Znaczenie: nie wiemy dziś, czy `dowod-z-paczki.sh` **potrafi paść** — a to on pilnuje

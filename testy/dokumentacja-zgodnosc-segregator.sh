@@ -26,8 +26,10 @@ spr() { # spr "opis" "oczekiwane" "polecenie"
 }
 
 echo "=== A. Wersja, naglowek, licencja ==="
-spr "naglowek Version"               "1.3.4" "grep -oP '(?<=^ \* Version: ).*' $W/segregator-maila.php"
-spr "stala SEGM_WERSJA"              "1.3.4" "grep -oP \"(?<=SEGM_WERSJA', ')[^']*\" $W/segregator-maila.php"
+# WER_KOD (linia 12) juz czyta wersje z kodu — te dwie kontrole mialy literal mimo to
+# (klasa 8 SLEPE-PLAMY: naprawa trafila w jeden egzemplarz wzorca, blizniak zostal).
+spr "naglowek Version ma postac semver" "1" "printf '%s' '$WER_KOD' | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$' && echo 1 || echo 0"
+spr "stala SEGM_WERSJA rowna naglowkowi" "$WER_KOD" "grep -oP \"(?<=SEGM_WERSJA', ')[^']*\" $W/segregator-maila.php"
 spr "SEGM_WERSJA_SCHEMATU"           "4"     "grep -oP \"(?<=SEGM_WERSJA_SCHEMATU', ')[^']*\" $W/segregator-maila.php"
 spr "Requires at least"              "6.0"   "grep -oP '(?<=^ \* Requires at least: ).*' $W/segregator-maila.php"
 spr "Requires PHP"                   "8.1"   "grep -oP '(?<=^ \* Requires PHP: ).*' $W/segregator-maila.php"
@@ -36,11 +38,57 @@ spr "naglowek License"               "GPL-2.0-or-later" "grep -oP '(?<=^ \* Lice
 spr "naglowek License URI"           "https://www.gnu.org/licenses/gpl-2.0.html" "grep -oP '(?<=^ \* License URI: ).*' $W/segregator-maila.php"
 spr "naglowek Text Domain"           "segregator-maila" "grep -oP '(?<=^ \* Text Domain: ).*' $W/segregator-maila.php"
 spr "dokumentacja podaje te wersje"  "1" "grep -c '\*\*Wersja wtyczki: $WER_KOD · wersja schematu bazy: 4 · WordPress 6.0+ · PHP 8.1+\*\*' $DOK"
+
+# --- DOK=KOD: tabela stalych w dokumentacji vs kod (uwaga WAZNA, recenzja r2) ---
+# ChatBot mial ta kontrole od dawna (jego sekcja A1), Segregator NIE — dlatego wpisanie
+# starej wersji do wiersza tabeli zostawialo bramke na EXIT=0, mimo ze dokumentacja
+# klamala wzgledem kodu. Klasa 8: blizniak wzorca bez straznika.
+# Trzecia kolumna tabeli ma u Segregatora dwa formaty (`plik.php` albo "plik glowny"),
+# wiec nie kopiujemy wzorca ChatBota co do znaku — stalej szukamy w plikach PHP wtyczki.
+BT=$(printf '\140')   # wsteczny apostrof skladany z kodu — nigdy wprost, bo eval by go wykonal
+
+wartosc_stalej_wtyczki() { # NAZWA -> wartosc const/define z dowolnego pliku PHP wtyczki
+  grep -rhoP "(?:const\s+$1\s*=\s*|define\(\s*'$1',\s*)'?\K[^';]+" \
+    "$W" --include=*.php 2>/dev/null | head -1 | sed 's/[[:space:]]*$//'
+}
+
+STALYCH=0
+WYLICZANYCH=0
+while IFS='|' read -r _ NAZWA WART _; do
+  NAZWA=$(echo "$NAZWA" | tr -d " $BT")
+  WART=$(echo "$WART" | tr -d "$BT" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+  # Dokumentacja czesto dopisuje jednostke w nawiasie ("5242880 (5 MB)") — to objasnienie
+  # dla czytajacego, nie druga wartosc. Porownujemy sama wartosc, nawias ucinamy.
+  WART=$(echo "$WART" | sed 's/[[:space:]]*(.*)$//')
+  [ -n "$NAZWA" ] || continue
+  STALYCH=$((STALYCH+1))
+  Z_KODU=$(wartosc_stalej_wtyczki "$NAZWA")
+  # Czesc stalych kod WYLICZA z innych ("SEGM_AI_PARTIA * SEGM_AI_MAX_WYWOLAN_PRZEBIEG"),
+  # a dokumentacja podaje wynik. Takiego wiersza nie porownujemy wprost — ale LICZYMY,
+  # zeby nowe wyrazenie nie przeszlo niezauwazone (kontrola nizej).
+  if printf '%s' "$Z_KODU" | grep -qE '[A-Z_]{4,}[[:space:]]*[*+][[:space:]]*[A-Z_]{4,}'; then
+    WYLICZANYCH=$((WYLICZANYCH+1))
+    printf '  ---  %-58s wyliczana ze stalych: %s\n' "DOK=KOD: $NAZWA" "$Z_KODU"
+    continue
+  fi
+  spr "DOK=KOD: $NAZWA" "$WART" "wartosc_stalej_wtyczki $NAZWA"
+done < <(grep -P "^\| ${BT}SEGM_[A-Z_]+${BT} \| ${BT}[^${BT}]+${BT}" $DOK)
+
+# Gdyby doszla kolejna stala wyliczana, ta kontrola padnie i kaze ja obejrzec —
+# inaczej "pomijamy wyrazenia" po cichu rosloby w dziure.
+spr "stalych wyliczanych ze stalych (pominiete w porownaniu)" "1" "echo $WYLICZANYCH"
+
+# Bez tej kontroli petla, ktora przestala cokolwiek dopasowywac (zmiana ukladu tabeli),
+# bylaby cicho pusta i sekcja swiecilaby na zielono nie sprawdziwszy niczego.
+spr "stalych sprawdzonych z tabeli dokumentacji" "28" "echo $STALYCH"
+
 spr "LICENSE istnieje"               "1" "test -f $W/LICENSE && echo 1 || echo 0"
 spr "LICENSE zaczyna sie GPL"        "1" "head -1 $W/LICENSE | grep -c 'GNU GENERAL PUBLIC LICENSE'"
 
 echo
-echo "=== B. Stale konfiguracyjne (kazda liczba z tabeli w par. 6) ==="
+echo "=== B. Stale konfiguracyjne — wybrane liczby z TRESCI readme vs kod ==="
+# Naglowek mowil wczesniej "kazda liczba z tabeli w par. 6" i tego nie robil: tabela par. 6
+# jest czytana w sekcji A1 (DOK=KOD), a ta sekcja porownuje liczby z tresci readme.
 spr "SEGM_RETENCJA_DNI"              "90"      "grep -oP '(?<=SEGM_RETENCJA_DNI = )\d+' $W/segregator-maila.php"
 spr "SEGM_BLOKADA"                   "segm_operacja_w_toku" "grep -oP \"(?<=SEGM_BLOKADA       = ')[^']*\" $W/segregator-maila.php"
 spr "SEGM_BLOKADA_WAZNA"             "120"     "grep -oP '(?<=SEGM_BLOKADA_WAZNA = )\d+' $W/segregator-maila.php"
@@ -329,7 +377,32 @@ spr "CHANGELOG istnieje"             "1" "test -f $W/CHANGELOG.md && echo 1 || e
 spr "format Keep a Changelog"        "1" "grep -c 'keepachangelog.com' $W/CHANGELOG.md"
 spr "biezaca wersja ma wpis"         "1" "grep -c '^## \\[$WER_KOD\\]' $W/CHANGELOG.md"
 spr "Niewydane jest PIERWSZA sekcja (Keep a Changelog)" "Niewydane" "grep -oP '^## \\[\\K[^\\]]+' $W/CHANGELOG.md | head -1"
-spr "liczba wydan opisanych"         "10" "grep -c '^## \\[' $W/CHANGELOG.md"
+# Literal 10 wywracal bramke przy KAZDYM wydaniu. Pytanie, ktore ta kontrola ma zadawac,
+# brzmi "czy ktos nie skasowal historii", a nie "czy wydan jest dokladnie dziesiec" —
+# wiec sprawdzamy monotonicznosc: liczba wpisow nigdy nie maleje ponizej osiagnietego progu.
+# Prog staly ("co najmniej 10") obiecywal wiecej, niz mierzyl: przy 11 wpisach mozna bylo
+# skasowac jeden i przejsc na zielono, a luz roslby z kazdym wydaniem. Wiazemy wiec dwa
+# dokumenty ze soba: kazde wydanie opisane w readme MUSI miec wpis w CHANGELOG-u.
+# Oba rosna razem przy wydaniu, wiec asercja nie wymaga aktualizacji, a skasowanie
+# opisu po jednej stronie pada.
+# Porownanie samych LICZB mowiloby tylko "tyle samo pozycji po obu stronach" — a nazwa
+# obiecuje odpowiedniosc. Sprawdzamy wiec KAZDA wersje z readme z osobna.
+BRAK_WPISU=0
+SPRAWDZONYCH=0
+for WER in $(grep -oP '^= \K[0-9]+(\.[0-9]+)*' $W/readme.txt); do
+  SPRAWDZONYCH=$((SPRAWDZONYCH+1))
+  # Sam komunikat, BEZ doliczania bledu — blad doliczy ponizsze spr. Inaczej jedna wada
+  # daje w podsumowaniu "2" i liczba przestaje odpowiadac liczbie rzeczy do naprawienia.
+  grep -q "^## \[$WER\]" $W/CHANGELOG.md || { BRAK_WPISU=$((BRAK_WPISU+1)); echo "  (wydanie $WER jest w readme, nie ma go w CHANGELOG.md)"; }
+done
+spr "wydan z readme bez wpisu w CHANGELOG" "0" "echo $BRAK_WPISU"
+# Kontrola pokrycia: ile wydan petla NAPRAWDE przeszla. Oczekiwanie czytane z readme,
+# wartosc to LICZNIK PETLI — dwa rozne zrodla. Wczesniejsza wersja porownywala te sama
+# komende ze soba, wiec nie mogla pasc: pusta petla przechodzila na zielono (klasa 11).
+# Oczekiwanie MUSI pochodzic z INNEGO PLIKU niz petla, inaczej opustoszale readme daje
+# 0 == 0 i pusta petla znowu przechodzi (recenzja r5: "dwa zrodla" to nadal bylo jedno).
+# Petla chodzi po readme.txt, wiec prog czytamy z CHANGELOG.md.
+spr "wydan sprawdzonych po numerze" "$(grep -c '^## \[[0-9]' $W/CHANGELOG.md)" "echo $SPRAWDZONYCH"
 for v in 1.0.0 1.1.0 1.2.0 1.2.1; do
   spr "wersja $v z historii gita opisana" "1" "grep -c '^## \\[$v\\]' $W/CHANGELOG.md"
 done

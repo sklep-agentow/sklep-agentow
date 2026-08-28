@@ -43,8 +43,11 @@ spr "kazdy wpis CHANGELOG oddzielony kreska" "0" \
   "awk '/^## \\[1\\./ {if (NR>1 && poprz != \"---\") b++} {if (\$0 != \"\") poprz=\$0} END {print b+0}' $W/CHANGELOG.md"
 
 echo "=== A. Wersja i schemat ==="
-spr "naglowek Version"            "1.5.11" "grep -oP '(?<=^ \* Version: ).*' $W/chatbot-live.php"
-spr "stala CHATL_WERSJA"          "1.5.11" "grep -oP \"(?<=CHATL_WERSJA', ')[^']*\" $W/chatbot-live.php"
+# Wersja czytana Z KODU, nie wpisana na sztywno (klasa 11 briefingu, klasa 8 SLEPE-PLAMY:
+# wzorzec z sekcji Y byl juz poprawny, sekcja A miala literal — bumpy wywracaly bramke).
+WER_KOD=$(grep -oP '(?<=^ \* Version: ).*' $W/chatbot-live.php)
+spr "naglowek Version ma postac semver" "1" "printf '%s' '$WER_KOD' | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$' && echo 1 || echo 0"
+spr "stala CHATL_WERSJA rowna naglowkowi" "$WER_KOD" "grep -oP \"(?<=CHATL_WERSJA', ')[^']*\" $W/chatbot-live.php"
 spr "CHATL_WERSJA_SCHEMATU"       "8"     "grep -oP \"(?<=CHATL_WERSJA_SCHEMATU', ')[^']*\" $W/chatbot-live.php"
 spr "Requires at least"           "6.0"   "grep -oP '(?<=^ \* Requires at least: ).*' $W/chatbot-live.php"
 spr "Requires PHP"                "8.1"   "grep -oP '(?<=^ \* Requires PHP: ).*' $W/chatbot-live.php"
