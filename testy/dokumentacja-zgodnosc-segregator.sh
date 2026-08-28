@@ -38,6 +38,50 @@ spr "naglowek License"               "GPL-2.0-or-later" "grep -oP '(?<=^ \* Lice
 spr "naglowek License URI"           "https://www.gnu.org/licenses/gpl-2.0.html" "grep -oP '(?<=^ \* License URI: ).*' $W/segregator-maila.php"
 spr "naglowek Text Domain"           "segregator-maila" "grep -oP '(?<=^ \* Text Domain: ).*' $W/segregator-maila.php"
 spr "dokumentacja podaje te wersje"  "1" "grep -c '\*\*Wersja wtyczki: $WER_KOD · wersja schematu bazy: 4 · WordPress 6.0+ · PHP 8.1+\*\*' $DOK"
+
+# --- DOK=KOD: tabela stalych w dokumentacji vs kod (uwaga WAZNA, recenzja r2) ---
+# ChatBot mial ta kontrole od dawna (jego sekcja A1), Segregator NIE — dlatego wpisanie
+# starej wersji do wiersza tabeli zostawialo bramke na EXIT=0, mimo ze dokumentacja
+# klamala wzgledem kodu. Klasa 8: blizniak wzorca bez straznika.
+# Trzecia kolumna tabeli ma u Segregatora dwa formaty (`plik.php` albo "plik glowny"),
+# wiec nie kopiujemy wzorca ChatBota co do znaku — stalej szukamy w plikach PHP wtyczki.
+BT=$(printf '\140')   # wsteczny apostrof skladany z kodu — nigdy wprost, bo eval by go wykonal
+
+wartosc_stalej_wtyczki() { # NAZWA -> wartosc const/define z dowolnego pliku PHP wtyczki
+  grep -rhoP "(?:const\s+$1\s*=\s*|define\(\s*'$1',\s*)'?\K[^';]+" \
+    "$W" --include=*.php 2>/dev/null | head -1 | sed 's/[[:space:]]*$//'
+}
+
+STALYCH=0
+WYLICZANYCH=0
+while IFS='|' read -r _ NAZWA WART _; do
+  NAZWA=$(echo "$NAZWA" | tr -d " $BT")
+  WART=$(echo "$WART" | tr -d "$BT" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+  # Dokumentacja czesto dopisuje jednostke w nawiasie ("5242880 (5 MB)") — to objasnienie
+  # dla czytajacego, nie druga wartosc. Porownujemy sama wartosc, nawias ucinamy.
+  WART=$(echo "$WART" | sed 's/[[:space:]]*(.*)$//')
+  [ -n "$NAZWA" ] || continue
+  STALYCH=$((STALYCH+1))
+  Z_KODU=$(wartosc_stalej_wtyczki "$NAZWA")
+  # Czesc stalych kod WYLICZA z innych ("SEGM_AI_PARTIA * SEGM_AI_MAX_WYWOLAN_PRZEBIEG"),
+  # a dokumentacja podaje wynik. Takiego wiersza nie porownujemy wprost — ale LICZYMY,
+  # zeby nowe wyrazenie nie przeszlo niezauwazone (kontrola nizej).
+  if printf '%s' "$Z_KODU" | grep -qE '[A-Z_]{4,}[[:space:]]*[*+][[:space:]]*[A-Z_]{4,}'; then
+    WYLICZANYCH=$((WYLICZANYCH+1))
+    printf '  ---  %-58s wyliczana ze stalych: %s\n' "DOK=KOD: $NAZWA" "$Z_KODU"
+    continue
+  fi
+  spr "DOK=KOD: $NAZWA" "$WART" "wartosc_stalej_wtyczki $NAZWA"
+done < <(grep -P "^\| ${BT}SEGM_[A-Z_]+${BT} \| ${BT}[^${BT}]+${BT}" $DOK)
+
+# Gdyby doszla kolejna stala wyliczana, ta kontrola padnie i kaze ja obejrzec —
+# inaczej "pomijamy wyrazenia" po cichu rosloby w dziure.
+spr "stalych wyliczanych ze stalych (pominiete w porownaniu)" "1" "echo $WYLICZANYCH"
+
+# Bez tej kontroli petla, ktora przestala cokolwiek dopasowywac (zmiana ukladu tabeli),
+# bylaby cicho pusta i sekcja swiecilaby na zielono nie sprawdziwszy niczego.
+spr "stalych sprawdzonych z tabeli dokumentacji" "28" "echo $STALYCH"
+
 spr "LICENSE istnieje"               "1" "test -f $W/LICENSE && echo 1 || echo 0"
 spr "LICENSE zaczyna sie GPL"        "1" "head -1 $W/LICENSE | grep -c 'GNU GENERAL PUBLIC LICENSE'"
 
@@ -334,7 +378,12 @@ spr "Niewydane jest PIERWSZA sekcja (Keep a Changelog)" "Niewydane" "grep -oP '^
 # Literal 10 wywracal bramke przy KAZDYM wydaniu. Pytanie, ktore ta kontrola ma zadawac,
 # brzmi "czy ktos nie skasowal historii", a nie "czy wydan jest dokladnie dziesiec" —
 # wiec sprawdzamy monotonicznosc: liczba wpisow nigdy nie maleje ponizej osiagnietego progu.
-spr "historia wydan nie zmalala (>= 10 wpisow)" "1" "[ \$(grep -c '^## \\[' $W/CHANGELOG.md) -ge 10 ] && echo 1 || echo 0"
+# Prog staly ("co najmniej 10") obiecywal wiecej, niz mierzyl: przy 11 wpisach mozna bylo
+# skasowac jeden i przejsc na zielono, a luz roslby z kazdym wydaniem. Wiazemy wiec dwa
+# dokumenty ze soba: kazde wydanie opisane w readme MUSI miec wpis w CHANGELOG-u.
+# Oba rosna razem przy wydaniu, wiec asercja nie wymaga aktualizacji, a skasowanie
+# opisu po jednej stronie pada.
+spr "kazde wydanie z readme ma wpis w CHANGELOG" "$(grep -c '^= [0-9]' $W/readme.txt)" "grep -c '^## \\[[0-9]' $W/CHANGELOG.md"
 for v in 1.0.0 1.1.0 1.2.0 1.2.1; do
   spr "wersja $v z historii gita opisana" "1" "grep -c '^## \\[$v\\]' $W/CHANGELOG.md"
 done

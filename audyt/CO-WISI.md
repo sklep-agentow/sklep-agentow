@@ -104,7 +104,9 @@ plikach jadących do klienta (komentarz ma nieść POWÓD, numer zostaje w PR i 
   operację odczytu tabel sklepu (SELECT-only, bez danych osobowych w wyjściu — imię maskować).
 
 - **`dowod-z-paczki-proba-kontrolna.sh` umiera na ZASZYTEJ NA SZTYWNO wersji paczki** —
-  szuka `boty/paczki/chatbot-live-1.5.0.zip`, którego w repo nie ma od dawna (są 1.5.7–1.5.11).
+  szuka `boty/paczki/chatbot-live-1.5.0.zip`, którego w repo nie ma — katalog zawiera
+  wyłącznie wersje od 1.5.7 wzwyż (lista rośnie z każdym wydaniem, dlatego nie wymieniam jej tu
+  po numerze: zdanie z listą wersji dezaktualizuje się przy najbliższej paczce).
   Kończy **EXIT=2**, czyli „błąd przyrządu”, i tak samo zachowuje się na czystym `origin/main`
   (zmierzone 28.08: log prób z `main`, commit `28533e0`, ta sama pozycja `EXIT=2 0s`).
   ⛔ Znaczenie: nie wiemy dziś, czy `dowod-z-paczki.sh` **potrafi paść** — a to on pilnuje
