@@ -16,6 +16,15 @@ Nic jeszcze.
 
 ---
 
+## [1.5.13] — 2026-08-29
+
+### Zmienione
+- **Wydanie porządkowe.** Z komentarzy w kodzie i z dokumentacji technicznej usunięte
+  wewnętrzne oznaczenia naszych raportów z testów — komentarz niesie powód, dla którego
+  kod tak wygląda, a nie numer dokumentu. Zero zmian w działaniu bota.
+
+---
+
 ## [1.5.12] — 2026-08-28
 
 ### Zmienione
@@ -97,7 +106,7 @@ Nic jeszcze.
   i sesje innych osób zostają nietknięte.
 - **Odinstalowanie zdejmuje zadanie cykliczne wtyczki.** Po usunięciu wtyczki z pominięciem
   dezaktywacji w bazie zostawał zaplanowany zaczep, w który WordPress uderzał codziennie.
-- **„Zapisano" dopiero po zmierzonym zapisie** (audyt A2, F1–F3). Przy odrzuconym
+- **„Zapisano" dopiero po zmierzonym zapisie**. Przy odrzuconym
   przez bazę zapisie panel ustawień pokazuje komunikat błędu i obowiązują poprzednie
   ustawienia (m.in. dzienny limit wywołań AI) — wcześniej świecił „Ustawienia zapisane".
   Zapis klucza API zwraca wynik i panel mówi wprost, gdy klucz NIE został zapisany
@@ -109,15 +118,15 @@ Nic jeszcze.
   RODO sesji współdzielonych przy padniętym zapisie zostawiają trwały ślad błędu bazy;
   kasownik RODO bez zapisanego śladu nic nie usuwa i mówi to wprost.
   Nowa funkcja pomocnicza `chatl_zapisz_opcje()` (bliźniak Segregatora).
-- **Stop-loss nie jest fail-open** (T-1): gdy licznika dobowego AI nie da się odczytać
+- **Stop-loss nie jest fail-open**: gdy licznika dobowego AI nie da się odczytać
   (uszkodzona/usunięta tabela), tryb AI jest wstrzymany i bot odpowiada z reguł — wcześniej
   błąd odczytu wyglądał jak „0 wywołań" i płatne API było wołane bez limitu. Panel mówi,
   że licznik jest nieczytelny; ślad w pasku błędu bazy.
-- **Puste pole liczbowe nie nadpisuje limitu** (audyt A5, KR1/KR2): „50 000" ze spacją albo
+- **Puste pole liczbowe nie nadpisuje limitu**: „50 000" ze spacją albo
   puste pole w limicie tokenów wyłączało stop-loss (0), w limicie wywołań zjeżdżało do 1 —
   przy zielonym „zapisano". Teraz poprzednia wartość zostaje, a panel mówi, którego pola
   nie zmienił i dlaczego.
-- **Retencja liczona w strefie witryny** (KR6): granica 90 dni szła w UTC, a czas wpisów
+- **Retencja liczona w strefie witryny**: granica 90 dni szła w UTC, a czas wpisów
   w strefie witryny — w strefie ujemnej rozmowy ginęły godziny przed terminem.
 
 ---

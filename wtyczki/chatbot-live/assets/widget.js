@@ -56,7 +56,7 @@
 	 * nie istnieje w tym zasiegu — i cala obsluga kliknięcia przerywa sie
 	 * w polowie: okno sie otwiera, ale odpytywanie NIE startuje, wiec gosc nie
 	 * dostaje ani komunikatu o przejeciu rozmowy, ani wiadomosci operatora,
-	 * dopoki sam czegos nie napisze (audyt A4-F1/F2).
+	 * dopoki sam czegos nie napisze.
 	 * Domyslne puste funkcje sa celowe: gdyby okno jeszcze nie powstalo,
 	 * klikniecie ma nic nie zrobic, a nie wywalic skrypt.
 	 */

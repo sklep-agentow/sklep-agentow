@@ -51,7 +51,7 @@ delete_metadata( 'user', 0, 'segm_powitanie_widziane', '', true );
 
 // Sekret właściciela (klucz API) kasowany ZAWSZE, niezależnie od opcji „usuń dane"
 // (poświadczenia ≠ dane użytkowe; martwa wtyczka nie zostawia klucza
-// w bazie — znalezisko wrogiej sesji botów 19.08, zmierzone na czystym WP).
+// w bazie — zmierzone na czystej instalacji).
 delete_option( 'segm_klucz_api' );
 
 // HASŁO DO CUDZEJ SKRZYNKI — kasowane ZAWSZE i bezwarunkowo, niezależnie od

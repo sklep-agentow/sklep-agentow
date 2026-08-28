@@ -128,9 +128,9 @@ function chatl_utworz_tabele() {
 	 * Zdarzenia strażnika wejścia: zadziałania pułapki na boty i odrzucone
 	 * nonce'y. Do wersji schematu 7 były to LICZNIKI w wp_options
 	 * (get_option → +1 → update_option): odczyt-modyfikacja-zapis bez blokady
-	 * gubił 13 z 20 równoległych inkrementacji (audyt DK-5), licznik i lista
-	 * „podejrzanych" zgłoszeń rozjeżdżały się (DK-1), a opcja przeżywała
-	 * odinstalowanie (P2-Z2) — klasa nr 7 z CLAUDE.md. Wiersz na zdarzenie
+	 * gubił 13 z 20 równoległych inkrementacji, licznik i lista
+	 * „podejrzanych" zgłoszeń rozjeżdżały się, a opcja przeżywała
+	 * odinstalowanie — klasa nr 7 z CLAUDE.md. Wiersz na zdarzenie
 	 * = INSERT jest atomowy sam z siebie, licznik = COUNT(*), a co i kiedy
 	 * się stało widać w tabeli. Rośnie tylko do CHATL_RETENCJA_DNI — starsze
 	 * zdarzenia kasuje ten sam cron, co historię rozmów.
@@ -255,7 +255,7 @@ function chatl_seed_demo() {
 	);
 
 	/*
-	 * ⛔ CELOWO BEZ WPISU POWITALNEGO. Wcielenie kupującego (WK-8) pokazało, że
+	 * ⛔ CELOWO BEZ WPISU POWITALNEGO. Wcielenie kupującego pokazało, że
 	 * „dzień dobry" kończy się tekstem awaryjnym — ale wpis z wariantami
 	 * „dzień dobry"/„dobry wieczór" w danych startowych PRZEJMUJE pytania
 	 * złożone: przy remisie trafień wygrywa dłuższy wariant, więc „Dzień dobry,

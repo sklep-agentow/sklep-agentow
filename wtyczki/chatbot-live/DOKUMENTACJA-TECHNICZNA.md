@@ -1,6 +1,6 @@
 # ChatBot LIVE — dokumentacja techniczna
 
-Wersja wtyczki: **1.5.12** · schemat bazy: **8** · licencja: **GPL-2.0-or-later**
+Wersja wtyczki: **1.5.13** · schemat bazy: **8** · licencja: **GPL-2.0-or-later**
 
 Dokument opisuje **kod, który jest**, nie plan. Każda liczba i nazwa poniżej ma pokrycie
 w źródle — przy każdej podano plik i symbol, żeby dało się to sprawdzić `grep`-em, a nie
@@ -191,8 +191,8 @@ więc **brakujący klucz nigdy nie jest błędem** — nowe pole dostaje wartoś
 | `powiadomienia` | `1` | Czy w ogóle wysyłać ten mail. |
 | `usun_dane` | `0` | Przełącznik ścieżki deinstalacji (rozdział **Cykl życia**). |
 | `ai_informacje` | `''` | Opis firmy wstrzykiwany do instrukcji systemowej modelu. |
-| `ai_limit_dzienny` | `100` | Globalny dobowy limit **wywołań** AI. Zapis ograniczany do zakresu 1–100000; jak przy limicie tokenów, **puste albo nieczytelne pole liczbowe NIE nadpisuje poprzedniej wartości** (`chatl_pole_liczbowe()`, audyt A5 KR1/KR2). |
-| `ai_limit_tokenow` | `200000` | Globalny dobowy limit **tokenów płatnych** — drugi stop-loss. `0` = wyłączony (jawne zero z formularza; **puste albo nieczytelne pole liczbowe NIE nadpisuje poprzedniej wartości** i panel mówi to zamiast „zapisano" — `chatl_pole_liczbowe()`, audyt A5 KR1/KR2). |
+| `ai_limit_dzienny` | `100` | Globalny dobowy limit **wywołań** AI. Zapis ograniczany do zakresu 1–100000; jak przy limicie tokenów, **puste albo nieczytelne pole liczbowe NIE nadpisuje poprzedniej wartości** (`chatl_pole_liczbowe()`). |
+| `ai_limit_tokenow` | `200000` | Globalny dobowy limit **tokenów płatnych** — drugi stop-loss. `0` = wyłączony (jawne zero z formularza; **puste albo nieczytelne pole liczbowe NIE nadpisuje poprzedniej wartości** i panel mówi to zamiast „zapisano" — `chatl_pole_liczbowe()`). |
 | `kolor_glowny` | `#bfff38` | Bąbelek, dymki bota, przyciski, obwódka fokusu. Wartość spoza `#rrggbb` jest odrzucana i wraca domyślna. |
 | `kolor_naglowka` | `#08090b` | Pasek z tytułem okna czatu i paski formularza kontaktu. |
 | `kolor_tekstu` | `auto` | `auto` = wtyczka dobiera kolor tekstu osobno dla bąbelka i dla nagłówka, biorąc ten o lepszym kontraście. Wartość `#rrggbb` = ten sam kolor na obu. |
@@ -209,7 +209,7 @@ Wszystkie liczby, którymi wtyczka się rządzi, są stałymi — nie ma ich roz
 
 | Stała | Wartość | Plik | Do czego |
 |---|---|---|---|
-| `CHATL_WERSJA` | `1.5.12` | `chatbot-live.php` | wersja wtyczki; służy też jako `?ver=` assetów (przeglądarka nie poda starego pliku po aktualizacji) |
+| `CHATL_WERSJA` | `1.5.13` | `chatbot-live.php` | wersja wtyczki; służy też jako `?ver=` assetów (przeglądarka nie poda starego pliku po aktualizacji) |
 | `CHATL_WERSJA_SCHEMATU` | `8` | `chatbot-live.php` | wyzwalacz migracji schematu |
 | `CHATL_KATALOG`, `CHATL_URL` | ścieżka i adres wtyczki | `chatbot-live.php` | `require` i adresy assetów |
 | `CHATL_MAX_PYTANIE` | `500` | `includes/front.php` | maksymalna długość pytania gościa (nadmiar jest **przycinany**, nie odrzucany) |
@@ -313,7 +313,7 @@ Codziennie, cztery `DELETE`:
 
 Granice retencji **rozmów, zdarzeń i sesji** liczymy w strefie witryny (`wp_date()`),
 bo wszystkie trzy kolumny (`utworzono`, `utworzono`, `aktywnosc`) są zapisywane przez
-`current_time( 'mysql' )`, czyli też w strefie witryny. Do audytu A5 (KR6) granica szła w UTC i próg przesuwał się
+`current_time( 'mysql' )`, czyli też w strefie witryny. Wcześniej granica szła w UTC i próg przesuwał się
 o offset strefy — w strefie ujemnej rozmowy ginęły godziny PRZED obiecanymi 90 dniami.
 Okna rate-limitu zostają w UTC, bo `okno_do` jest zapisywane przez `gmdate()` — tam oba
 końce są w tym samym układzie.
@@ -704,7 +704,7 @@ Właściciel płacił za tryb AI, którego nie ma, i **nie miał jak tego zauwa�
 
 **Przycisk sprawdza TĘ konfigurację, która obsługuje gości.** Model bierze
 `chatl_ai_model()` (ustawienie właściciela → stała produktu → filtr), a nie samą
-stałą `CHATL_AI_MODEL`. Do naprawy P2-Z1 diagnostyka pomijała pole „własny model":
+stałą `CHATL_AI_MODEL`. Wcześniej diagnostyka pomijała pole „własny model":
 właściciel z literówką w nazwie widział „Klucz działa", a bot po cichu odpowiadał
 z reguł — wtyczka produkowała fałszywy dowód poprawności. Udany test gasi czerwony
 pasek `chatl_blad_ai` i jest to uczciwe **dlatego**, że pyta tym samym kluczem
@@ -717,7 +717,7 @@ zdejmowany przy pierwszym sukcesie. Oba znaczniki idą przez `chatl_zapisz_opcje
 z Segregatora) — gdy sam znacznik padnie po cichu, jego porażka trafia do trwałego
 śladu błędu bazy (`chatl_blad_bazy`, pasek w panelu). Bez tego znacznik awarii,
 który jest jedynym sygnałem cichego zjazdu do reguł, sam milczałby przy awarii bazy
-(audyt A2, znalezisko F4).
+.
 
 **HTTP 200 to jeszcze nie sukces.** Ciało odpowiedzi bywa nie do odczytania:
 proxy albo brama zgodności podmieniła treść, hosting dokleił swój HTML, model
@@ -1090,7 +1090,7 @@ stan **z bazy** (`czlowiek`) i próbuje ponownie przy następnym wejściu. Ten s
 wzorzec obowiązuje w `chatl_nowa_sesja()` (odrzucony INSERT = brak sesji i brak
 ciastka, widget dostaje błąd zamiast identyfikatora widma) i w zapisie ustawień
 oraz klucza API (`chatl_zapisz_klucz()` zwraca `bool`; „zapisano" dopiero po
-zmierzonym zapisie — audyt A2, znaleziska F1–F3).
+zmierzonym zapisie).
 
 ### 23.2. Bot milczy — i to jest sedno
 

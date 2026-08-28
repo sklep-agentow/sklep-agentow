@@ -635,7 +635,7 @@ class Segm_Imap {
 	 *    i po nim — wiadomość, której nie było, albo która dalej leży w źródle,
 	 *    to porażka, nie sukces.
 	 * Zwracamy też UIDVALIDITY folderu docelowego (z COPYUID albo STATUS) —
-	 * cofanie porównuje ją z bieżącą, zanim zaufa zapamiętanemu UID-owi (T-3).
+	 * cofanie porównuje ją z bieżącą, zanim zaufa zapamiętanemu UID-owi.
 	 *
 	 * @param int    $uid   UID wiadomości w otwartym folderze.
 	 * @param string $cel   Nazwa folderu docelowego w kodowaniu serwera.
@@ -989,7 +989,7 @@ class Segm_Imap {
 	}
 
 	/**
-	 * Kod błędu gniazda po ludzku (WK-13).
+	 * Kod błędu gniazda po ludzku.
 	 *
 	 * Kupujący dostawał „Connection refused (kod 111)" — żargon w komunikacie
 	 * pisanym dla właściciela małej firmy. Kod ZOSTAJE (jest potrzebny, gdy

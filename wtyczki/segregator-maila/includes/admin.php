@@ -1406,7 +1406,7 @@ function segm_post_ustawienia_zapisz() {
 	}
 
 	// Klucz API: osobna opcja (autoload=no), nigdy nie wraca do formularza.
-	// Wynik zapisu MIERZONY (A2-F3): bez tego „Przetestuj klucz" testował stary
+	// Wynik zapisu MIERZONY: bez tego „Przetestuj klucz" testował stary
 	// klucz i dawał zielone potwierdzenie klucza, którego nie było w bazie.
 	$klucz_ok = true;
 	if ( ! empty( $_POST['usun_klucz'] ) ) {

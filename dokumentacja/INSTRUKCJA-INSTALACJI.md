@@ -25,6 +25,11 @@ instalację całości i uruchomienie sklepu.
 - Konto Stripe (darmowe) — do testów wystarczy samo konto, BEZ aktywacji
   płatności i weryfikacji firmy: <https://dashboard.stripe.com/register>.
 - Dostęp administratora do kokpitu WordPressa (wp-admin).
+- **Limit wysyłki plików: co najmniej 8 MB.** Paczka sklepu waży około 4 MB, a wiele
+  hostingów ma domyślnie ustawione 2 MB — wtedy WordPress odmówi wgrania wtyczki.
+  Sprawdzisz to w: Narzędzia → Zdrowie witryny → Informacje → Serwer, pozycja
+  „Maksymalny rozmiar przesyłanego pliku". Jeśli jest mniejszy niż 8 MB, zajrzyj do
+  sekcji „Najczęstsze problemy" na końcu tej instrukcji — jest tam, co zrobić.
 
 ## Krok 0 — bezpośrednie odnośniki (1 min, WAŻNE na świeżym WordPressie)
 
@@ -206,6 +211,22 @@ banera testowego. Pełna lista różnic: rozdział „Co oddziela tryb testowy
 od produkcji" w dokumentacji projektu.
 
 ## Najczęstsze problemy
+
+- **Przy wgrywaniu wtyczki: „Przesłany plik przekracza dyrektywę upload_max_filesize"**
+  (po angielsku: „The uploaded file exceeds the upload_max_filesize directive in php.ini")
+  → limit wysyłki plików na Twoim hostingu jest mniejszy niż paczka sklepu (~4 MB).
+  Masz trzy wyjścia, od najprostszego:
+  1. W panelu hostingu znajdź ustawienia PHP i podnieś **upload_max_filesize** oraz
+     **post_max_size** do 32 MB. U większości dostawców to jedno pole do zmiany.
+  2. Jeśli nie widzisz takiej opcji — napisz do obsługi hostingu jedno zdanie:
+     „Proszę o podniesienie upload_max_filesize i post_max_size do 32 MB".
+  3. Gdy żadne z powyższych nie wchodzi w grę — rozpakuj paczkę na komputerze i wgraj
+     powstały katalog przez menedżer plików albo FTP do `wp-content/plugins/`, a potem
+     włącz wtyczkę w zakładce Wtyczki. Efekt jest ten sam.
+- **Przy wgrywaniu wtyczki: „Nie udało się przenieść przesłanego pliku do wp-content/uploads/…"**
+  → katalog, w którym WordPress trzyma przesyłane pliki, ma złego właściciela i serwer nie
+  może do niego pisać. To ustawienie hostingu, nie wtyczki. Napisz do obsługi: „Proszę
+  ustawić właściciela katalogu wp-content/uploads na użytkownika serwera WWW".
 
 - **Zakup „wisi" na Dziękujemy** → webhook nie dochodzi. Sprawdź sekret
   webhooka (Dashboard vs CLI — to RÓŻNE sekrety!). Sklep i tak domknie

@@ -76,7 +76,7 @@ function segm_skrzynka_skonfigurowana() {
 }
 
 /**
- * Czego brakuje do połączenia — po nazwach pól z formularza (WK-5).
+ * Czego brakuje do połączenia — po nazwach pól z formularza.
  *
  * JEDNO źródło prawdy: „skrzynka gotowa" to po prostu pusta lista braków.
  * Dwie funkcje sprawdzające te same trzy warunki osobno rozjechałyby się przy

@@ -306,7 +306,7 @@ function chatl_post_przejmij() {
 		chatl_przekieruj_blad( 'chatl-rozmowy', 'Nieprawidłowa rozmowa.' );
 	}
 	// „Przejęta" tylko wtedy, gdy przejęcie ZMIERZONO w bazie — inaczej operator
-	// pisałby do rozmowy, w której dalej odpowiada bot (A2-F2).
+	// pisałby do rozmowy, w której dalej odpowiada bo.
 	if ( ! chatl_przejmij( $sesja, get_current_user_id() ) ) {
 		chatl_przekieruj_blad( 'chatl-rozmowy&sesja=' . rawurlencode( $sesja ), 'Nie udało się przejąć rozmowy — baza odrzuciła zapis. Rozmowa NADAL jest przy bocie; gość nie dostał komunikatu o konsultancie. Sprawdź stan bazy i spróbuj ponownie.' );
 	}

@@ -2,7 +2,7 @@
 /**
  * Plugin Name: ChatBot LIVE
  * Description: Bot na stronę firmową: 24/7 odpowiada na powtarzalne pytania z bazy Q&A, a gdy nie zna odpowiedzi — zbiera kontakt, żeby właściciel odezwał się na żywo.
- * Version: 1.5.12
+ * Version: 1.5.13
  * Requires at least: 6.0
  * Requires PHP: 8.1
  * Author: Automatic AI
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'CHATL_WERSJA', '1.5.12' );
+define( 'CHATL_WERSJA', '1.5.13' );
 define( 'CHATL_WERSJA_SCHEMATU', '8' );
 define( 'CHATL_KATALOG', plugin_dir_path( __FILE__ ) );
 define( 'CHATL_URL', plugin_dir_url( __FILE__ ) );
@@ -106,8 +106,8 @@ function chatl_log_bledu_bazy( $funkcja, $operacja, $szczegol = null ) {
  * Przy padniętym zapisie update_option() wychodzi PRZED zasileniem cache'u,
  * więc get_option() zwraca wtedy starą wartość i różnica jest widoczna.
  *
- * Do audytu A2 ChatBot nie miał tej funkcji wcale i wszystkie zapisy opcji
- * zakładały sukces („Ustawienia zapisane" po odrzuconym zapisie — A2-F1).
+ * Wcześniej ChatBot nie miał tej funkcji wcale i wszystkie zapisy opcji
+ * zakładały sukces („Ustawienia zapisane" po odrzuconym zapisie).
  *
  * @param string    $nazwa    Nazwa opcji.
  * @param mixed     $wartosc  Wartość do zapisania.
@@ -151,7 +151,7 @@ function chatl_sprawdz_schemat() {
 		/*
 		 * Schemat 8: liczniki pułapki i odrzuconych nonce'ów przeniesione
 		 * z wp_options do tabeli chatl_zdarzenia. Stare opcje kasujemy —
-		 * ich liczby były zaniżone (wyścig, DK-5) i nie da się ich zamienić
+		 * ich liczby były zaniżone (wyścig) i nie da się ich zamienić
 		 * na wiersze zdarzeń; licznik w panelu zaczyna od zera po aktualizacji
 		 * (zapisane w CHANGELOG).
 		 */
@@ -177,7 +177,7 @@ function chatl_czyszczenie_historii() {
 	$tabela = $wpdb->prefix . 'chatl_rozmowy';
 	/*
 	 * Granica liczona w STREFIE WITRYNY, bo `utworzono` jest zapisywane przez
-	 * `current_time( 'mysql' )` — też w strefie witryny. Do audytu A5 (KR6)
+	 * `current_time( 'mysql' )` — też w strefie witryny. Do audytu A5
 	 * granica szła z `gmdate( …, time() - … )`, czyli w UTC: porównywane były dwa
 	 * różne układy odniesienia i próg przesuwał się o offset strefy — u kupującego
 	 * w strefie ujemnej (UTC-5) rozmowy ginęły 5 h PRZED obiecanymi 90 dniami.

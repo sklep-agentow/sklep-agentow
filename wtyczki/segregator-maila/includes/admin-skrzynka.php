@@ -480,7 +480,7 @@ function segm_post_skrzynka_zapisz() {
 		$szyfrowanie = 'ssl';
 	}
 
-	// Puste albo błędne pole liczbowe NIE nadpisuje poprzedniej wartości (KR4):
+	// Puste albo błędne pole liczbowe NIE nadpisuje poprzedniej wartości:
 	// `max( 1, (int) '' )` robiło z pustego portu port 1 i pustego limitu
 	// limit 1 — a panel mówił „Zapisano". Właściciel dostaje o tym zdanie.
 	$uwagi = array();

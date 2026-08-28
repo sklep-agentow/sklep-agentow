@@ -20,6 +20,13 @@ Nic jeszcze.
 
 ---
 
+## [0.9.22] — 2026-08-29
+
+### Zmienione
+- **Wydanie porządkowe.** Z komentarzy w kodzie i z dokumentacji technicznej usunięte
+  wewnętrzne oznaczenia naszych raportów z testów — komentarz niesie powód, dla którego
+  kod tak wygląda, a nie numer dokumentu. Zero zmian w działaniu sklepu.
+
 ## [0.9.21] — 2026-08-28
 
 ### Naprawione

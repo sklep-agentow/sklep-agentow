@@ -156,7 +156,7 @@ function segm_klucz_api() {
  * Gdy klucz jest w konfiguracji serwera, panel go NIE nadpisuje — inaczej wpis
  * w polu formularza po cichu wygrywałby ze stałą wbrew deklaracji w panelu.
  *
- * „Skąd kod wie, że się udało" (A2-F3): wynik mierzymy ODCZYTEM po zapisie,
+ * „Skąd kod wie, że się udało": wynik mierzymy ODCZYTEM po zapisie,
  * jak w `segm_skrzynka_zapisz_haslo()` — `update_option()` zwraca false także
  * wtedy, gdy wartość się nie zmieniła, a `add_option()` nie mówi nic o tym, co
  * zostało w bazie. Wcześniej funkcja była `void`: przy odrzuconym zapisie
@@ -226,7 +226,7 @@ function segm_zapisz_blad_ai( $komunikat, $kod ) {
 	 * Ten znacznik jest JEDYNYM sygnałem, że tryb AI po cichu zjechał do reguł.
 	 * Gdy sam padnie po cichu, wraca dokładnie ta cisza, przed którą broni —
 	 * dlatego jego porażka idzie do trwałego śladu błędu bazy (pasek w panelu).
-	 * Ten sam wzorzec co w ChatBocie (A2-F4).
+	 * Ten sam wzorzec co w ChatBocie.
 	 */
 	if ( ! $zapisano ) {
 		segm_log_bledu_bazy( 'segm_zapisz_blad_ai', 'znacznik awarii trybu AI (kod ' . (int) $kod . ')' );

@@ -348,7 +348,7 @@ function chatl_rodo_kasownik( $email, $strona = 1 ) { // phpcs:ignore Generic.Co
 	 * zabrałoby jedyny dowód, że sesja była współdzielona, i następny wniosek
 	 * (drugiej osoby) dostałby eksport z cudzymi wiadomościami. Wniosek można
 	 * powtórzyć po naprawie bazy; wycieku cofnąć się nie da. Komunikat mówi
-	 * wprost, że nic nie usunięto (A2-F4, rodo.php).
+	 * wprost, że nic nie usunięto.
 	 */
 	if ( ! chatl_rodo_zapamietaj_wspolne( $podzial['wspoldzielone'] ) ) {
 		return array(
