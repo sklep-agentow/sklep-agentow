@@ -11,6 +11,12 @@ Nic jeszcze.
 
 ---
 
+## [1.3.5] — 2026-08-28
+
+### Zmienione
+- **Wydanie porządkowe.** Zgodność z WordPress 7.1 podana w opisie wtyczki,
+  drobne porządki w komentarzach kodu. Zero zmian w działaniu segregatora.
+
 ## [1.3.4] — 2026-08-25
 
 ### Zmienione

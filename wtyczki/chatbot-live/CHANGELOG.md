@@ -16,6 +16,14 @@ Nic jeszcze.
 
 ---
 
+## [1.5.12] — 2026-08-28
+
+### Zmienione
+- **Wydanie porządkowe.** Zgodność z WordPress 7.1 podana w opisie wtyczki,
+  uporządkowana historia zmian. Zero zmian w działaniu bota.
+
+---
+
 ## [1.5.11] — 2026-08-25
 
 ### Naprawione

@@ -1,6 +1,6 @@
 # Segregator maila — dokumentacja techniczna
 
-**Wersja wtyczki: 1.3.4 · wersja schematu bazy: 4 · WordPress 6.0+ · PHP 8.1+**
+**Wersja wtyczki: 1.3.5 · wersja schematu bazy: 4 · WordPress 6.0+ · PHP 8.1+**
 
 > **Po co ten dokument.** To jest **mapa systemu dla audytora i programisty**, nie ulotka.
 > Każda liczba i każda nazwa tutaj jest wzięta z kodu, nie z pamięci — jeśli coś się

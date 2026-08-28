@@ -4,7 +4,7 @@ Tags: email, imap, inbox, automation, rules
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.3.4
+Stable tag: 1.3.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -142,6 +142,9 @@ z serwerem. Hasło jest w nim zamaskowane.
 == Changelog ==
 
 Pełna historia zmian jest w pliku `CHANGELOG.md` w katalogu wtyczki.
+
+= 1.3.5 =
+* Wydanie porządkowe: zgodność z WordPress 7.1 w opisie wtyczki, drobne porządki w komentarzach kodu. Zero zmian w działaniu.
 
 = 1.3.4 =
 * Wymagania w readme mówią pełną prawdę: stream_socket_client + OpenSSL dla prawdziwej skrzynki; Microsoft 365/Outlook.com nieobsługiwane (OAuth). Zero zmian w kodzie.
