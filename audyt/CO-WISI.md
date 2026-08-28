@@ -275,6 +275,13 @@
   pada ZAWSZE** — czyli nie odróżnia kodu z wadą od kodu bez wady i jako bramka nie znaczy nic.
   To pilne, ale to teren botów (chatbot ma świadomie otwartą klasę 8) — do rozstrzygnięcia
   osobno, nie w PR-ze o przelocie sklepu.
+  ⭐ **JEDNA Z NICH JEST CHWIEJNA — zmierzone dwoma przelotami tej samej gałęzi.**
+  Przelot z `d28c971`: 6 z EXIT≠0. Przelot z `15540a9`: **5** — `przejecie-proba-kontrolna.sh`
+  przeszła, choć między tymi commitami nie ruszyłam ani jednego pliku chatbota (zmiany to
+  komentarze, dokumentacja i test sklepu). Czyli jej wynik zależy od stanu wspólnego stosu,
+  a nie od kodu, który ma pilnować.
+  ⛔ Chwiejny strażnik jest GORSZY od stale czerwonego: stale czerwony zmusza do naprawy,
+  chwiejny uczy, żeby uruchomić ponownie i pojechać dalej na zielonym z przypadku.
   Skutek dla domknięcia: `k7-koniec.sh` kontrola 6 zostaje czerwona niezależnie od tego PR-a.
 
 - ⛔ **DWA POLA `required` W PANELU WŁAŚCICIELA NADAL BEZ POLSKIEGO KOMUNIKATU — świadomie nie objęte przez PR #203.**
