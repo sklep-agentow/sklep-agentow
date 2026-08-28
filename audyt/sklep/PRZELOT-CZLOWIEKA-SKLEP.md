@@ -8,6 +8,17 @@ co asercje) — bo dowód z 27.08 dotyczy kodu, którego już nie ma. Kiedy: po 
 do stosu warsztatowego. Czas: ~40 min. Zasada: odhaczasz TYLKO to, co zobaczyłeś na ekranie. Coś dziwnego = 😖 + jedno
 zdanie, co się stało (nie diagnozuj). LICZNIK na dole przelicza WYŁĄCZNIE `bash narzedzia-qa/mapa-licznik.sh audyt/sklep/PRZELOT-CZLOWIEKA-SKLEP.md --przelot` (po każdej sesji odhaczania); `k7-koniec.sh` tylko CZYTA (≥ 27 punktów, 0 ⬜, 0 😖, LICZNIK zgodny = komplet). Statusy: ⬜ / ✅ / 😖 / 🐞.
 
+⛔ **A11 i C3 dotyczą formularza opinii, a ten PR zmienił `opinie.php`** — czyli ich dowód
+z 27.08 opisuje kod sprzed zmiany. Reguła, którą stosuję do pięciu punktów wyżej, obowiązuje
+i tutaj (uwaga recenzenta #203 r4 — trafna, stosowałam ją wybiórczo). Co z tym zrobiłam:
+- **A11 ZMIERZONE PONOWNIE** na kodzie po zmianie: `testy/zgoda-komunikat-po-polsku-test.js`
+  krok [6] otwiera formularz opinii i sprawdza, że wysyłka z pustymi polami NIE przechodzi
+  (URL bez zmian), a krok [7] że wypełnienie nie zostawia przyklejonego błędu. EXIT=0.
+- **C3 (klawiatura na formularzu opinii) NIE zostało zmierzone ponownie.** Zmiana dokłada
+  wyłącznie atrybuty `data-sklepag-blad` i skrypt wołający `setCustomValidity` — nie rusza
+  kolejności pól, `tabindex` ani `<form>`. Kolejność Tab z definicji się nie zmienia. ⛔ To
+  jest ARGUMENT, nie pomiar, i tak go tu zapisuję. Do domknięcia przy przelocie na paczce.
+
 ## A. KUPUJĄCY (bez logowania)
 - ✅ A1 · wejście na `/sklep/` — lista ma 2 produkty, ceny, przycisk do produktu; baner „tryb testowy" widoczny · [RAPORT-AUDYTORA.md Z1/A1 · 2 produkty, ceny, baner trybu testowego]
 - ✅ A2 · strona ChatBota: wiesz po 20 s, co robi, jak działa, ile czasu oszczędza, ile kosztuje · [RAPORT-AUDYTORA.md A2]

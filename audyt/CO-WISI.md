@@ -260,7 +260,10 @@
   i tryb wygaśnięcia aktualizacji przy zwrocie — przy finalizacji regulaminu w K8.
 
 - ⛔ **SZEŚĆ PRÓB KONTROLNYCH NARZĘDZI PADA — dług sprzed PR #203, nie z niego.**
-  Przelot `narzedzia-qa/proby-kontrolne-przelot.sh` z 28.08 (commit `d28c971`): uruchomionych 30,
+  ⭐ **STAN AKTUALNY: przelot z commitu `15540a9` — 30 uruchomionych, PIĘĆ z EXIT≠0** (tyle
+  niesie log). Poniższy akapit opisuje pierwszy przelot; różnica między nimi jest sednem
+  znaleziska o chwiejności.
+  Pierwszy przelot, z commitu `d28c971`: uruchomionych 30,
   `EXIT≠0` w sześciu — `dowod-z-paczki` (EXIT=2, brak `boty/paczki/chatbot-live-1.5.0.zip`),
   `blad-klucza`, `nonce`, `ip-za-proxy`, `przejecie`, `pulapka`. Wszystkie sześć dotyczą
   **chatbota** — pięć ma `CEL=…/plugins/chatbot-live`, szósta wymaga starej paczki chatbota.
@@ -294,11 +297,13 @@
   swój sklep), nie dla kupującego. Nasza reguła każe zawsze wracać do tekstu czytanego przez
   KLIENTA — ten nim nie jest. Objęcie panelu wymaga osobnej kolejki assetów dla `wp-admin`,
   czyli zmiany szerszej niż PR o przelocie.
-  **Ile naprawdę liczy ta klasa** (wskazane w recenzji #203 r3, pełny przemiot atrybutów
-  oddających komunikat przeglądarce): `admin-produkty.php:168` (`required`), `:171`
-  (`required` + `type="number"` + `min`), `:158` (`type="number"`), `admin-ustawienia.php:249,254`
-  (`type="email"`), `:259` (`pattern`). Czyli **sześć miejsc, nie dwa** — samo `required` to
-  dopiero część.
+  **Ile naprawdę liczy ta klasa** (wskazane w recenzji #203 r3, przemiot poprawiony po r4):
+  `admin-produkty.php:168` (`required`), `:171` (`required` + `type="number"` + `min`),
+  `admin-ustawienia.php:249` i `:254` (`type="email"`), `:259` (`pattern`).
+  Czyli **pięć miejsc, nie dwa** — samo `required` to dopiero część.
+  ⛔ We wcześniejszej wersji tego wpisu liczyłam sześć, bo doliczyłam `admin-produkty.php:158`
+  — a to KOMENTARZ o polu, nie pole. Sprawdzone `sed -n 158p`. Ta sama klasa, na którą
+  łapię się w tym audycie: numer linii przepisany bez otwarcia linii.
   **Co trzeba zrobić, gdy wróci:** wpiąć te same stałe `SKLEPAG_BLAD_*` przez atrybut
   `data-sklepag-blad` i dołożyć tę samą procedurę do assetów panelu. ⛔ To zamknie WYŁĄCZNIE
   brak wartości: procedura ustawia tekst pod warunkiem `pole.validity.valueMissing`, więc

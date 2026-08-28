@@ -23,8 +23,10 @@ define( 'SKLEPAG_WERSJA_SCHEMATU', 7 ); // v7: status_przed_sporem (punkt powrot
 	Bez nich rysuje je przegladarka wlasnym tekstem (po angielsku, zaleznie od jej
 	ustawien jezykowych), a to jedyne obcojezyczne zdania, jakie widzi kupujacy.
 	Tekst stoi PRZY POLU (atrybut `data-sklepag-blad`), a nie w skrypcie, zeby ta sama
-	krotka procedura obsluzyla kazde pole wymagane — takze na stronie opinii, ktora
-	rysuje sie samodzielnym dokumentem bez `wp_head()` i nie widzi assetow sklepu. */
+	krotka procedura obsluzyla kazde pole OPISANE TYM ATRYBUTEM — takze na stronie opinii,
+	ktora rysuje sie samodzielnym dokumentem bez `wp_head()` i nie widzi assetow sklepu.
+	⛔ Zasieg: strony sklepu i strona opinii. Ekrany panelu wlasciciela NIE sa objete: nie
+	dostaja tych assetow, a czyta je wlasciciel, nie kupujacy. */
 define( 'SKLEPAG_BLAD_ZGODA_ZAKUP', 'Zaznacz zgodę, żeby przejść do płatności.' );
 define( 'SKLEPAG_BLAD_OPINIA_IMIE', 'Wpisz imię — pokażemy je przy opinii.' );
 define( 'SKLEPAG_BLAD_OPINIA_TRESC', 'Napisz swoją opinię.' );

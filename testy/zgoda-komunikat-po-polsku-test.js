@@ -20,6 +20,14 @@
  * nie widzi assetow sklepu i ma wlasna kopie procedury. Naprawa jednego bez drugiego to
  * zamkniecie EGZEMPLARZA zamiast KLASY — recenzja #203 zlapala dokladnie to.
  *
+ * ⛔ TEN TEST PISZE DO WSPOLNEGO STOSU (rotuje token opinii, zeby zbudowac link) — a to
+ * jedyne kryterium, po ktorym repo wylacza skrypt z listy uruchamialnej w linii bazowej.
+ * ZOSTAJE na liscie SWIADOMIE i roznica jest mierzalna, nie deklaratywna: skrypty wylaczone
+ * (`dziennik-test.js` zatruwa limiter logowan) zostawiaja stan zmieniony. Ten ODDAJE stan
+ * w `finally` i SPRAWDZA to krokiem [8], ktory ma wlasna probe kontrolna — po wylaczeniu
+ * przywracania krok [8] pada i test konczy sie EXIT=1. Czyli jesli kiedys przestanie oddawac,
+ * dowiemy sie od niego samego, a nie z rozjechanego stosu.
+ *
  * Wymaga playwright-core i dzialajacego stacku. Bez logowania (strony publiczne).
  * Uzycie: node testy/zgoda-komunikat-po-polsku-test.js [adres]
  */
