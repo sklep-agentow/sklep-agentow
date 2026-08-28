@@ -17,7 +17,7 @@ Format wiersza: `- ⬜ ID · cel · [runda/raport · SHA]`.
 - ✅ L1-08 · S-14 tryb testowy jawny (baner) · [B/L1.json · 7e0cf726]
 - ✅ L1-09 · S-15 konfigurowalność w Ustawieniach (przenośność) · [B/L1.json · 7e0cf726]
 - ✅ L1-10 · S-18/S-19 wszystko w WordPressie (tabele, panel, Stripe z serwera WP) · [B/L1.json · 7e0cf726]
-- ⬜ L1-11 · kryteria GOTOWE §12 #1–#11 — werdykt per kryterium (11 wierszy w raporcie) ·
+- 🐞 L1-11 · kryteria GOTOWE §12 #1–#11 — werdykt per kryterium (11 wierszy w raporcie) · [`audyt/sklep/L1-11-WERDYKTY-KRYTERIOW.md` · 5 ✅ · 5 🐞 · 1 ⛔ · znalezisko SK-L6-003 (kryterium #11 wymienia Edge, nie sprawdzony ANI RAZU — grep zero trafień przy działającej próbie kontrolnej) · ⛔ 10 z 11 kryteriów zmierzono NIE na paczce, tylko na stosie — do powtórzenia w kroku 8 · d5f8b6f]
 - ✅ L1-12 · „kiedy kupili": znacznik czasu zakupu — gmdate vs czas lokalny w pulpicie / CSV / mailu · [B/L1.json · 7e0cf726]
 
 ## L2 — BEZPIECZEŃSTWO + RODO (atakujący; wykonanie na stosie; konto subscriber)
@@ -123,10 +123,10 @@ Format wiersza: `- ⬜ ID · cel · [runda/raport · SHA]`.
 - ✅ Ł-10 · dwa admin-posty naraz (przełącz produkt ×2, resend ×2) · [A/L-2.json · 425a3124]
 
 ## STRAŻNICY CI
-- ⬜ CI-01 · wszystkie `*-proba-kontrolna.sh` (26) jednym przebiegiem — tabela EXIT ·
-- ⬜ CI-02 · BS4: dla każdej bramki „nazwa ↔ to, co naprawdę liczy" ·
+- 🐞 CI-01 · wszystkie `*-proba-kontrolna.sh` (26) jednym przebiegiem — tabela EXIT · [`audyt/sklep/PROBY-KONTROLNE.log` · 30 uruchomionych, 1 pominięta świadomie, 6 z EXIT≠0 — wszystkie sześć to chatbot · znalezisko SK-CI-001: dwa strażniki padają ZAWSZE, także na czystym kodzie (potwierdzone osobnym drzewem roboczym na origin/main) · d28c971]
+- 🐞 CI-02 · BS4: dla każdej bramki „nazwa ↔ to, co naprawdę liczy" · [`audyt/sklep/BRAMKI-NAZWA-VS-POMIAR.md` · 10 bramek przejrzanych, 4 rozjazdy nazwa↔zasięg · znaleziska SK-CI-002 (trzy bramki PHP nie widzą 65 ze 117 plików PHP — zmierzone: dziś 0 błędów składni, luka pusta), SK-CI-003, SK-CI-004 · d5f8b6f] ·
 
 ## LICZNIK
 <!-- liczony skryptem narzedzia-qa/mapa-licznik.sh; nie edytować ręcznie -->
-CELE: 104 · ✅ 79 · 🐞 20 · ⚠️ 1 · ⛔ 0 · ⬜ 4
+CELE: 104 · ✅ 79 · 🐞 23 · ⚠️ 1 · ⛔ 0 · ⬜ 1
 ZAMROZONA: 5d3dcf9f0d99dedc1fe201c3e318f46d6f35ba5d · celow=104 · tresc=2d2a15920151 · 2026-08-26T06:11
