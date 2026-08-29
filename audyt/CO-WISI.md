@@ -202,10 +202,28 @@ funkcji mówi: *„napis bez zmian — testy na nim polegają"*, więc zmiana wa
 zamrożeniem grozi regresją w testach, które ten napis sprawdzają. Naprawa tekstu **zamyka klasę
 błędu** (dokumentacja przestaje kłamać); wada produktu zostaje tu nazwana.
 
-**CO ZAMYKA:** warunek w `sklepag_baner_testowy()` — baner wyłącznie gdy klucz zaczyna się od
-`sk_test_`, pusty string przy `sk_live_`. Do tego przypadek testowy na OBA tryby (przy kluczu
-testowym napis JEST, przy produkcyjnym GO NIE MA) — inaczej naprawa mogłaby zabrać baner
-wszystkim i świecić na zielono. Bump wersji sklepu + przebudowa paczki.
+⛔ **UWAGA — TO NIE JEST JEDNA FUNKCJA. Recepta poniżej była raz za wąska** (recenzja r8/r9:
+obejmowała wyłącznie `sklepag_baner_testowy()`, czyli mniej niż połowę wady). Oznaczeń trybu
+testowego widzianych przez KUPUJĄCEGO jest **sześć**:
+
+```
+sklep-agentow.php:286             baner — lista produktów          ⟵ sklepag_baner_testowy()
+includes/front-produkt.php:791    baner — strona produktu          ⟵ sklepag_baner_testowy()
+sklep-agentow.php:393             baner — strona „Dziękujemy”      ⟵ sklepag_baner_testowy()
+includes/front-produkt.php:594    notka przy przycisku zakupu (karta 4242…)
+sklep-agentow.php:365             FAQ „Co znaczy tryb testowy?”
+includes/zakup.php:959            ⛔ TREŚĆ MAILA po zakupie („płatność nie została pobrana”)
+```
+
+Panel administratora ma własne oznaczenia (`admin-dashboard.php:338`, `admin-zamowienie.php:475`,
+`admin-ustawienia.php:107`) — te widzi WYŁĄCZNIE właściciel, więc zostają.
+
+**CO ZAMYKA:** jedno źródło prawdy o trybie — funkcja typu `sklepag_tryb_testowy()` czytająca
+prefiks klucza (`sk_test_` / `sk_live_`), i **wszystkie sześć miejsc pyta JEJ**, zamiast każde
+osobno trzymać swój napis. Do tego przypadek testowy na OBA tryby dla KAŻDEGO z sześciu miejsc
+(przy kluczu testowym napis JEST, przy produkcyjnym GO NIE MA) — inaczej naprawa mogłaby zabrać
+oznaczenia wszystkim i świecić na zielono, a kryterium 11 zamówienia wymaga banera WIDOCZNEGO
+w trybie testowym. Bump wersji sklepu + przebudowa paczki.
 ⚠️ **Do decyzji właściciela: czy robimy to przed oddaniem, czy po.** Przy oddaniu na kluczach
 TESTOWYCH baner jest poprawny i egzaminu nie psuje — problem pojawia się dopiero przy pierwszym
 prawdziwym wdrożeniu.

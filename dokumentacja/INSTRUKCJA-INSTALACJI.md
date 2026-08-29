@@ -209,8 +209,8 @@ Włącz. Dalej prowadzą instrukcje W paczkach botów (konfiguracja w kwadrans).
 
 Obecnie WSZYSTKO działa w trybie testowym Stripe (baner na stronach sklepu
 o tym przypomina). Przejście na prawdziwe płatności to osobna decyzja.
-Poniżej PEŁNA lista tego, co trzeba zmienić — nic poza tą listą nie jest
-potrzebne:
+Poniżej najważniejsze kroki. ⛔ **Nie zaczynaj ich sam** — punkt 6 wyjaśnia,
+dlaczego przejście na produkcję wymaga kontaktu z nami:
 
 1. **Aktywacja konta Stripe** — weryfikacja tożsamości i rachunek bankowy,
    po stronie Stripe.
