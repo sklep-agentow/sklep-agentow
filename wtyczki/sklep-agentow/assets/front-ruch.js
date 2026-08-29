@@ -1,6 +1,6 @@
 /**
  * Pojawianie się sekcji sklepu przy przewijaniu — spójnie z motywem gospodarza
- * (feedback z przeglądu 20.08: „podstrona sklepu nie ma animacji jak reszta strony").
+ * (podstrona sklepu nie miała animacji jak reszta strony).
  *
  * ⛔ ZASADA BEZPIECZEŃSTWA: CSS ukrywa sekcje TYLKO gdy na <html> jest klasa `sklepag-js`
  * (inline w <head>, przed renderem — warunkowo: IntersectionObserver + brak „ogranicz
@@ -8,7 +8,7 @@
  * nie zgłosi w 2,5 s (nie dojechał, padł), inline dodaje `sklepag-odslon` i CSS pokazuje
  * wszystko. Bez JavaScriptu klasa nie powstaje i nic nie jest ukryte. Nic nie znika.
  *
- * Parametry ruchu zmierzone z motywu Automatic AI (volt.js + chunks CSS, 20.08):
+ * Parametry ruchu zmierzone z motywu Automatic AI (volt.js + chunks CSS):
  * przesunięcie 26px, opacity 0.3s ease-out, transform 0.5s cubic-bezier.
  * Własny mechanizm zamiast doczepiania się do klas motywu — wtyczka musi działać
  * na KAŻDYM motywie, a cudza klasa `reveal` bez cudzego obserwatora = znikająca treść.
@@ -53,7 +53,7 @@
 	// Gotowość: bezpiecznik z <head> (sklepag-odslon po 2,5 s) odpala tylko BEZ tej klasy.
 	document.documentElement.classList.add( 'sklepag-ruch-ok' );
 
-	// Paralaksa panelu w hero listy (runda stron 25.08): okno jedzie o ułamek wolniej niż
+	// Paralaksa panelu w hero listy: okno jedzie o ułamek wolniej niż
 	// strona — tylko zmienna CSS, transform składa się w arkuszu. Pasywny nasłuch + rAF,
 	// zero pracy poza pierwszym ekranem. Stoi tu, za tą samą bramką „ogranicz ruch".
 	var okno = document.querySelector( '.sklepag-panel-okno' );
@@ -295,7 +295,7 @@
 	var formularz = document.getElementById('sklepag-kup-formularz');
 	if (pasek && hero && 'IntersectionObserver' in window) {
 		// `hidden` schodzi raz (bez JS pigułki nie ma wcale); dalej steruje KLASA stanu, żeby CSS mógł
-		// zrobić wjazd z dołu i zjazd z wygaszeniem zamiast przeskoku display (przegląd na żywo 25.08).
+		// zrobić wjazd z dołu i zjazd z wygaszeniem zamiast przeskoku display.
 		pasek.removeAttribute('hidden');
 		var heroWidoczne = true, formularzWidoczny = false;
 		var przelacz = function () {

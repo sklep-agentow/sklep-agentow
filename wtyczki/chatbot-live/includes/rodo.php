@@ -381,7 +381,7 @@ function chatl_rodo_kasownik( $email, $strona = 1 ) { // phpcs:ignore Generic.Co
 		/*
 		 * Wiersz sesji też jest śladem osoby (kiedy pisała, czy przejął ją
 		 * człowiek), więc „usunięcie danych" musi go objąć — inaczej po wniosku
-		 * RODO w bazie zostaje dowód, że ta rozmowa była (część B).
+		 * RODO w bazie zostaje dowód, że ta rozmowa była.
 		 * Kasujemy WYŁĄCZNIE sesje wyłączne wnioskodawcy. Sesja współdzielona
 		 * ZOSTAJE nietknięta — tak samo jak jej rozmowa wyżej — bo należy też
 		 * do drugiej osoby.

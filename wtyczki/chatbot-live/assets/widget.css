@@ -1,5 +1,5 @@
 /* ChatBot LIVE — widget. Własna warstwa (z-index), nie rusza motywu.
-   Paleta 1:1 ze sklepu/strony-gospodarza (front.css .sklepag-wyspa, 19.08):
+   Paleta 1:1 ze sklepu/strony-gospodarza (front.css .sklepag-wyspa):
    tusz #08090b · węgiel #101116 · papier #f5f5f5 · pył #8f929c · limonka #bfff38
    · linia rgba(245,245,245,0.08) · hover = pierścień rgba(191,255,56,0.18).
    Dymki jak mockup strony produktu: bot = limonka na tuszu, gość = jasny na ciemnym.

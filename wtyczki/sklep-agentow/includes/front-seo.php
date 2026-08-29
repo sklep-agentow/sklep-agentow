@@ -79,7 +79,7 @@ function sklepag_seo_head() {
 	$p = sklepag_seo_biezacy_produkt();
 	if ( ! $p ) {
 		// LISTA /sklep/ (strona WP bez treści w edytorze → WP nie daje description; Lighthouse SEO
-		// listy 92 z tego powodu — audyt 25.08). Opis = lead hero listy + nazwy produktów (istniejące,
+		// listy 92 z tego powodu). Opis = lead hero listy + nazwy produktów (istniejące,
 		// zatwierdzone treści), okładka sklepu do OG/Twitter.
 		if ( is_page( (int) get_option( 'sklepag_strona_sklep' ) ) ) {
 			global $wpdb;

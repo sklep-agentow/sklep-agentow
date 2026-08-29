@@ -546,7 +546,7 @@ function chatl_ajax_pytanie() {
 				 * Próg pewności: model nie zgaduje. Ale zanim padnie „nie znam" —
 				 * SIATKA BEZPIECZEŃSTWA: reguły wpisane ręcznie przez właściciela.
 				 * Bez tego bot mówił „nie znam" przy odpowiedzi LEŻĄCEJ w bazie
-				 * (zmierzone 25.08: para o gwarancji trafiała w chatl_dopasuj,
+				 * (zmierzone: para o gwarancji trafiała w chatl_dopasuj,
 				 * a hybryda oddawała tekst awaryjny — model bywa nadostrożny
 				 * przy tematach pieniędzy i to jest OK, od pewników są reguły).
 				 */

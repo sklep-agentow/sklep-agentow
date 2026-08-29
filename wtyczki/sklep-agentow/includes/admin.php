@@ -27,7 +27,7 @@ add_action( 'admin_notices', 'sklepag_ostrzez_permalinki' );
  * uzna takie 2xx za doręczenie i nie ponowi). Sama trasa REST działa, tylko pod adresem
  * ?rest_route=/sklepag/v1/webhook. Potwierdzenia zakupu dociąga wtedy reconciliation
  * (co 10 minut), więc zakup nie ginie, ale mail potrafi się spóźnić o te 10 minut.
- * Znalezisko testu instalacji (19.08): tester utknąłby tu bez komunikatu.
+ * Test instalacji od zera: bez tego komunikatu instalujący utknąłby w tym miejscu.
  * Notice trwały (nie do zamknięcia), dopóki struktura odnośników jest pusta.
  */
 function sklepag_ostrzez_permalinki() {

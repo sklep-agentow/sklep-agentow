@@ -18,6 +18,8 @@ Nic jeszcze.
   wewnętrzne oznaczenia naszych raportów z testów — komentarz niesie powód, dla którego
   kod tak wygląda, a nie numer dokumentu. Zero zmian w działaniu segregatora.
 
+---
+
 ## [1.3.5] — 2026-08-28
 
 ### Zmienione

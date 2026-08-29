@@ -200,7 +200,7 @@ function sklepag_tresc_produktu( $slug ) {
 			 * (*-plakat.webp) sa wyciete ffmpeg-iem z TYCH SAMYCH plikow (crop od gory,
 			 * wymiary nizej) — po podmianie oryginalu wytnij je ponownie.
 			 *
-			 * FAZY (runda dzialu stron, PR 2a): galeria opowiada w trzech wierszach
+			 * FAZY: galeria opowiada w trzech wierszach
 			 * strona -> brak odpowiedzi -> panel. Narracje sklejone z istniejacych tresci
 			 * (funkcje, FAQ, alty) — zero nowych obietnic i liczb.
 			 */
@@ -373,7 +373,7 @@ function sklepag_tresc_produktu( $slug ) {
 				'Na skrzynce klasyfikują reguły, nie AI; bez czytania załączników.',
 			),
 			/*
-			 * FAZY (runda dzialu stron, PR 2b): galeria opowiada w trzech wierszach
+			 * FAZY: galeria opowiada w trzech wierszach
 			 * probka i przebieg -> reguly -> raport i kontrola. Narracje sklejone z istniejacych
 			 * tresci (funkcje, FAQ, alty) — zero nowych obietnic i liczb. Kadry (*-kadr.webp)
 			 * sa wyciete ffmpeg-iem z TYCH SAMYCH plikow (crop od podanego y: probka 930,
@@ -503,8 +503,8 @@ function sklepag_tresc_produktu( $slug ) {
 }
 
 /**
- * Ilustracja produktu do KARTY listy i HERO strony produktu (feedback z przeglądu 19.08: „fajne obrazy —
- * robot segregujący maile, ktoś odpisujący na czacie"). Własne SVG w palecie
+ * Ilustracja produktu do KARTY listy i HERO strony produktu (obraz ma pokazywać, co produkt robi:
+ * robot segregujący maile, ktoś odpisujący na czacie). Własne SVG w palecie
  * strony (limonkowy line-art, roboty-bliźniaki) zamiast generycznego stocka;
  * zrzut żywego bota jest na stronie produktu pierwszym kaflem galerii.
  *
@@ -562,7 +562,7 @@ function sklepag_figure_zrzutu( $zrzut, $klasa, $z_podpisem, $z_paskiem = true, 
 }
 
 /**
- * Mono-pictogram produktu (sędzia wyglądu: karty nierozróżnialne bez ikon).
+ * Mono-pictogram produktu (bez ikon karty są nierozróżnialne).
  * Inline SVG w limonce — zero CDN/fontów ikon. Fallback: iskra.
  *
  * @param string $slug Slug produktu.
@@ -652,11 +652,11 @@ function sklepag_tytul_z_akcentem( $nazwa ) {
 }
 
 /**
- * Galeria „CO JEST W ŚRODKU" w FAZACH (runda działu stron, PR 2a): każda faza to wiersz
+ * Galeria „CO JEST W ŚRODKU" w FAZACH: każda faza to wiersz
  * z narracją po lewej (numer, tytuł, jedno zdanie z istniejących treści) i kaflami-oknami
  * po prawej. Biały zrzut wp-admin siedzi w ciemnej ramie okna jako KADR (osobny, mały plik),
  * a pełny ekran otwiera się w lightboxie — całe białe ekrany na czarnej stronie były plamami,
- * a ich gęsty interfejs w rozmiarze kafla był nieczytelny (przegląd na żywo 25.08).
+ * a ich gęsty interfejs w rozmiarze kafla był nieczytelny.
  *
  * @param array $fazy      Lista faz: tytul, opis, uklad, kafle (numer fazy nadaje jej pozycja
  *                         na liście — dane nie trzymają własnej numeracji, więc nie mogą się
@@ -745,7 +745,7 @@ function sklepag_render_produkt( $slug ) {
 	$t    = sklepag_tresc_produktu( $slug );
 	$cena = '<p class="sklepag-cena">' . esc_html( number_format( $p->cena_grosze / 100, 2, ',', ' ' ) ) . '<span class="sklepag-cena-waluta">' . esc_html( $p->waluta ) . '</span></p>';
 
-	// Etykiety sekcji numerowane kolejno `[ 01 · … ]` jak na liście (runda działu stron, PR 2a).
+	// Etykiety sekcji numerowane kolejno `[ 01 · … ]` jak na liście.
 	// Numer rośnie tylko dla sekcji, które naprawdę się renderują (opinie i gwarancja bywają puste).
 	$nr       = 0;
 	$etykieta = static function ( $tekst ) use ( &$nr ) {
@@ -760,8 +760,8 @@ function sklepag_render_produkt( $slug ) {
 	$html .= '<div class="sklepag-pingi sklepag-pingi--produkt" aria-hidden="true">' . str_repeat( '<i></i>', 14 ) . '</div>';
 	$html .= '<nav class="sklepag-okruszki" aria-label="Okruszki"><a href="' . esc_url( get_permalink( (int) get_option( 'sklepag_strona_sklep' ) ) ) . '">Sklep</a> <span aria-hidden="true">/</span> <span>' . esc_html( $p->nazwa ) . '</span></nav>';
 
-	// HERO — dwie kolumny: tekst + ILUSTRACJA BRANDOWA (feedback 24.08 v2: „tu ma
-	// być branding, wnętrze botów niżej"). Żywe zrzuty wnętrza są w galerii
+	// HERO — dwie kolumny: tekst + ILUSTRACJA BRANDOWA (w hero ma być branding,
+	// wnętrze botów pokazujemy niżej). Żywe zrzuty wnętrza są w galerii
 	// [ CO JEST W ŚRODKU ]. Kierunki wejść z motywu gospodarza ustawia CSS.
 	$zrzut_hero = sklepag_ilustracja_produktu( $slug );
 	$html      .= '<div class="sklepag-hero-uklad">';
@@ -790,7 +790,7 @@ function sklepag_render_produkt( $slug ) {
 	}
 	$html .= sklepag_baner_testowy();
 	$html .= '</header>';
-	// Wizual hero = PANEL NA ŻYWO tego produktu (przegląd na żywo 25.08: „ilustracja w hero za słaba") —
+	// Wizual hero = PANEL NA ŻYWO tego produktu (statyczna ilustracja w hero była za słaba) —
 	// ta sama sygnatura co hero listy; ilustracja brandowa zostaje na karcie listy. Produkt spoza
 	// dwójki (bez panelu) dostaje ilustrację, jeśli ją ma.
 	$panel = sklepag_panel_nocnej_zmiany( $slug );
@@ -882,7 +882,7 @@ function sklepag_render_produkt( $slug ) {
 		$html .= '</ul></section>';
 
 		// OPINIE KLIENTÓW — wyłącznie PRAWDZIWE, od zweryfikowanych kupujących
-		// (zasada uczciwości + UZUPEŁNIENIE 24.08, Omnibus). Najpierw PRZYJĘTE z mechanizmu (
+		// (zasada uczciwości, dyrektywa Omnibus). Najpierw PRZYJĘTE z mechanizmu (
 		// tabela sklepag_opinie), po nich ewentualne wpisy ręczne z tej tablicy.
 		// Nic do pokazania = sekcji nie ma (i numer sekcji nie rośnie).
 		$html .= sklepag_render_opinie( array_merge( sklepag_opinie_z_bazy( $slug ), is_array( $t['opinie'] ) ? $t['opinie'] : array() ), $etykieta );

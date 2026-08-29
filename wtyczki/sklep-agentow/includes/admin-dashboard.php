@@ -334,7 +334,7 @@ function sklepag_admin_dashboard() {
 	// phpcs:enable
 
 	// Baner testowy jako cienka linijka PRZY tytule, nie pełny pas — Przychód ma
-	// być pierwszą rzeczą na ekranie (sędzia #2: hierarchia + czas do liczby).
+	// być pierwszą rzeczą na ekranie (hierarchia widoku: najkrótsza droga do liczby).
 	echo '<div class="wrap sklepag-dashboard"><h1>Sklep Agentów <span class="sklepag-tryb-testowy" title="Płatności Stripe testowe — zero prawdziwych pieniędzy">TRYB TESTOWY</span></h1>';
 
 	// Diagnostyka katalogu chronionego (przejęta ze szkieletu kości) — bez niego wydawanie plików nie działa.
@@ -426,7 +426,7 @@ function sklepag_admin_dashboard() {
 	// Karty KPI (wzorce §1-2: przychód i zamówienia pierwsze, delta % przy każdej;
 	// hierarchia typografią — przychód elewowany jak u Stripe, uwaga sędziego wyglądu).
 	echo '<div class="sklepag-kpi" role="list">';
-	// Waluta jak w tabeli (PLN, kod ISO) — jedna etykieta w całym widoku (sędzia #2).
+	// Waluta jak w tabeli (PLN, kod ISO) — jedna etykieta w całym widoku.
 	sklepag_karta_kpi( 'Przychód', number_format( $kpi['przychod'] / 100, 2, ',', ' ' ) . ' PLN', sklepag_delta_html( $kpi['przychod'], $poprz['przychod'] ), true );
 	sklepag_karta_kpi( 'Zamówienia', (string) $kpi['zamowienia'], sklepag_delta_html( $kpi['zamowienia'], $poprz['zamowienia'] ) );
 	sklepag_karta_kpi( 'Średnia wartość', $aov > 0 ? number_format( $aov / 100, 2, ',', ' ' ) . ' PLN' : '—', sklepag_delta_html( $aov, $aov_poprz ) );

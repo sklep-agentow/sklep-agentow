@@ -716,8 +716,7 @@ zdejmowany przy pierwszym sukcesie. Oba znaczniki idą przez `chatl_zapisz_opcje
 (wynik **mierzony** odczytem opcji po zapisie, bliźniak `segm_zapisz_opcje()`
 z Segregatora) — gdy sam znacznik padnie po cichu, jego porażka trafia do trwałego
 śladu błędu bazy (`chatl_blad_bazy`, pasek w panelu). Bez tego znacznik awarii,
-który jest jedynym sygnałem cichego zjazdu do reguł, sam milczałby przy awarii bazy
-.
+który jest jedynym sygnałem cichego zjazdu do reguł, sam milczałby przy awarii bazy.
 
 **HTTP 200 to jeszcze nie sukces.** Ciało odpowiedzi bywa nie do odczytania:
 proxy albo brama zgodności podmieniła treść, hosting dokleił swój HTML, model
