@@ -204,12 +204,14 @@ błędu** (dokumentacja przestaje kłamać); wada produktu zostaje tu nazwana.
 
 ⛔ **UWAGA — TO NIE JEST JEDNA FUNKCJA. Recepta poniżej była raz za wąska** (recenzja r8/r9:
 obejmowała wyłącznie `sklepag_baner_testowy()`, czyli mniej niż połowę wady). Oznaczeń trybu
-testowego widzianych przez KUPUJĄCEGO jest **sześć**:
+testowego widzianych przez KUPUJĄCEGO jest **siedem** (liczba rosła w rundach 6-10:
+trzy -> sześć -> siedem, za każdym razem bo wypisywałam listę zamiast ją policzyć):
 
 ```
 sklep-agentow.php:286             baner — lista produktów          ⟵ sklepag_baner_testowy()
 includes/front-produkt.php:791    baner — strona produktu          ⟵ sklepag_baner_testowy()
 sklep-agentow.php:393             baner — strona „Dziękujemy”      ⟵ sklepag_baner_testowy()
+includes/front-produkt.php:593    ⛔ ETYKIETA PRZYCISKU: „Kup teraz (płatność testowa)”
 includes/front-produkt.php:594    notka przy przycisku zakupu (karta 4242…)
 sklep-agentow.php:365             FAQ „Co znaczy tryb testowy?”
 includes/zakup.php:959            ⛔ TREŚĆ MAILA po zakupie („płatność nie została pobrana”)

@@ -322,7 +322,7 @@ const SEGM_BLOKADA_WAZNA = 120;
  *    pomijało, a add_option() odbijał się od istniejącego;
  *  - błąd bazy przy zajmowaniu = ODMOWA, nie zgoda (brak danych ≠ wolne).
  * Własna tabela byłaby zmianą schematu bez zysku: klucz unikalny na
- * `option_name` daje tę samą atomowość, a zamrożony test audytu mierzy
+ * `option_name` daje tę samą atomowość, a test współbieżności mierzy
  * dokładnie ten kształt (proces B = INSERT do `wp_options`).
  *
  * Transakcja nie wchodzi w grę: TRUNCATE w MySQL robi niejawny COMMIT, więc

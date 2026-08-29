@@ -17,8 +17,8 @@ class Sklepag_Sitemap_Produkty extends WP_Sitemaps_Provider {
 	}
 
 	/**
-	 * Lista URL-i aktywnych produktów (wolumen Z6: pojedyncze produkty —
-	 * jedna strona sitemapy wystarcza na zawsze).
+	 * Lista URL-i aktywnych produktów (przy tym wolumenie — pojedyncze
+	 * produkty — jedna strona sitemapy wystarcza na zawsze).
 	 *
 	 * @param int    $page_num Numer strony sitemapy.
 	 * @param string $object_subtype Nieużywane (brak podtypów).
@@ -40,7 +40,7 @@ class Sklepag_Sitemap_Produkty extends WP_Sitemaps_Provider {
 	}
 
 	/**
-	 * Liczba stron sitemapy (Z6: zawsze 1).
+	 * Liczba stron sitemapy (przy tym wolumenie: zawsze 1).
 	 *
 	 * @param string $object_subtype Nieużywane.
 	 */
