@@ -244,7 +244,7 @@ function sklepag_obsluz_dociagnij() {
 add_action( 'admin_post_sklepag_eksport_csv', 'sklepag_obsluz_eksport_csv' );
 
 /**
- * CSV z AKTUALNYCH filtrów listy (eksport = to, co widać na ekranie — wzorce §5).
+ * CSV z AKTUALNYCH filtrów listy (eksport = to, co widać na ekranie).
  * Średnik + BOM: polski Excel otwiera poprawnie bez importu.
  */
 function sklepag_obsluz_eksport_csv() {
@@ -334,7 +334,7 @@ function sklepag_admin_dashboard() {
 	// phpcs:enable
 
 	// Baner testowy jako cienka linijka PRZY tytule, nie pełny pas — Przychód ma
-	// być pierwszą rzeczą na ekranie (sędzia #2: hierarchia + czas do liczby).
+	// być pierwszą rzeczą na ekranie (hierarchia widoku: najkrótsza droga do liczby).
 	echo '<div class="wrap sklepag-dashboard"><h1>Sklep Agentów <span class="sklepag-tryb-testowy" title="Płatności Stripe testowe — zero prawdziwych pieniędzy">TRYB TESTOWY</span></h1>';
 
 	// Diagnostyka katalogu chronionego (przejęta ze szkieletu kości) — bez niego wydawanie plików nie działa.
@@ -399,7 +399,7 @@ function sklepag_admin_dashboard() {
 		echo '<div class="notice notice-success is-dismissible"><p>Dociąganie zaległych wykonane — świeże dane poniżej.</p></div>';
 	}
 
-	// Przełącznik okresu + akcje (prawy górny róg — wzorce §5).
+	// Przełącznik okresu + akcje (prawy górny róg).
 	$baza = admin_url( 'admin.php?page=sklepag' );
 	echo '<div class="sklepag-pasek">';
 	echo '<nav class="sklepag-okresy" aria-label="Okres statystyk">';
@@ -423,10 +423,10 @@ function sklepag_admin_dashboard() {
 	echo '<a href="' . esc_url( $eksport ) . '" class="button">Eksport CSV</a>';
 	echo '</div></div>';
 
-	// Karty KPI (wzorce §1-2: przychód i zamówienia pierwsze, delta % przy każdej;
-	// hierarchia typografią — przychód elewowany jak u Stripe, uwaga sędziego wyglądu).
+	// Karty KPI: przychód i zamówienia pierwsze, delta % przy każdej;
+	// hierarchia typografią — przychód elewowany jak u Stripe.
 	echo '<div class="sklepag-kpi" role="list">';
-	// Waluta jak w tabeli (PLN, kod ISO) — jedna etykieta w całym widoku (sędzia #2).
+	// Waluta jak w tabeli (PLN, kod ISO) — jedna etykieta w całym widoku.
 	sklepag_karta_kpi( 'Przychód', number_format( $kpi['przychod'] / 100, 2, ',', ' ' ) . ' PLN', sklepag_delta_html( $kpi['przychod'], $poprz['przychod'] ), true );
 	sklepag_karta_kpi( 'Zamówienia', (string) $kpi['zamowienia'], sklepag_delta_html( $kpi['zamowienia'], $poprz['zamowienia'] ) );
 	sklepag_karta_kpi( 'Średnia wartość', $aov > 0 ? number_format( $aov / 100, 2, ',', ' ' ) . ' PLN' : '—', sklepag_delta_html( $aov, $aov_poprz ) );
@@ -465,8 +465,8 @@ function sklepag_karta_kpi( $tytul, $liczba, $delta, $glowna = false ) {
 }
 
 /**
- * Pasek proporcji statusów zamówień w okresie (uwaga sędziego: „ile % ma
- * problem" na jeden rzut oka, bez liczenia wierszy tabeli) — stacked bar
+ * Pasek proporcji statusów zamówień w okresie („ile % ma problem”
+ * na jeden rzut oka, bez liczenia wierszy tabeli) — stacked bar
  * czystym CSS + legenda z liczbami (status nigdy samym kolorem — WCAG).
  *
  * @param array $g Granice okresu.

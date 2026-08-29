@@ -149,7 +149,7 @@ function sklepag_aktywacja() {
 
 	// rewrite strony produktu + flush (strony właśnie powstały, więc slug
 	// sklepu już jest); flush odbudowuje też reguły rdzenia (w tym wp-sitemap —
-	// na stacku były zgubione: /wp-sitemap.xml dawał 404).
+	// bywały zgubione: /wp-sitemap.xml dawał 404).
 	if ( function_exists( 'sklepag_rejestruj_rewrite' ) ) {
 		sklepag_rejestruj_rewrite();
 	}
@@ -210,7 +210,7 @@ function sklepag_utworz_strony() {
 /**
  * Katalog chroniony na pliki produktów: losowy sufiks + index.php + .htaccess
  * (Apache). Na nginx .htaccess nie działa — brama i tak jest w PHP, a instrukcja
- * wdrożenia podaje regułę location deny (plan v3 par. 4A).
+ * wdrożenia podaje regułę location deny.
  */
 function sklepag_utworz_katalog_chroniony() {
 	$istniejacy = get_option( 'sklepag_katalog_chroniony', '' );
@@ -222,12 +222,13 @@ function sklepag_utworz_katalog_chroniony() {
 	$sciezka = trailingslashit( $upload['basedir'] ) . 'sklepag-chronione-' . wp_generate_password( 16, false, false );
 
 	if ( ! wp_mkdir_p( $sciezka ) ) {
-		// Ta sama widzialność błędu co niżej — porażka mkdir to też cicha ślepota.
+		// Porażka mkdir też musi być widoczna — inaczej przeszłaby niezauważona.
 		update_option( 'sklepag_katalog_chroniony_blad', 'mkdir nieudany — sprawdź uprawnienia uploads', false );
 		return;
 	}
 
-	// Próba kontrolna zapisu (docker/uprawnienia) — bez niej cicha ślepota.
+	// Sprawdzamy zapisem, czy katalog naprawdę jest zapisywalny (uprawnienia)
+	// — bez tego błąd przeszedłby niezauważony.
 	$test = trailingslashit( $sciezka ) . 'index.php';
 	$ok   = file_put_contents( $test, "<?php // cisza\n" ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- katalog w uploads; WP_Filesystem (abstrakcja FTP) przy aktywacji potrafi pytać o poświadczenia.
 
@@ -238,7 +239,7 @@ function sklepag_utworz_katalog_chroniony() {
 		return;
 	}
 
-	// Apache 2.4 (Require) i 2.2 (Deny) — hosting docelowy nieznany (Z10); brama i tak w PHP.
+	// Apache 2.4 (Require) i 2.2 (Deny) — hosting docelowy nieznany; brama i tak w PHP.
 	$ht = file_put_contents( // phpcs:ignore WordPress.WP.AlternativeFunctions -- jw.: uploads, bez WP_Filesystem.
 		trailingslashit( $sciezka ) . '.htaccess',
 		"<IfModule mod_authz_core.c>\nRequire all denied\n</IfModule>\n<IfModule !mod_authz_core.c>\nDeny from all\n</IfModule>\n"

@@ -97,10 +97,10 @@ function chatl_klucz_api() {
  * wpis w polu formularza po cichu wygrywałby ze stałą wbrew deklaracji.
  *
  * Wynik jest MIERZONY odczytem opcji po zapisie (wzorzec
- * segm_skrzynka_zapisz_haslo() z Segregatora), nie zakładany. Do audytu A2
+ * segm_skrzynka_zapisz_haslo() z Segregatora), nie zakładany. Wcześniej
  * funkcja zwracała void: przy odrzuconym zapisie w bazie zostawał stary klucz,
  * panel mówił „zapisano", a „Przetestuj klucz" testował STARY klucz i dawał
- * zielone potwierdzenie klucza, którego właściciel właśnie nie zapisał (A2-F3).
+ * zielone potwierdzenie klucza, którego właściciel właśnie nie zapisał.
  *
  * @param string $klucz Klucz ('' = skasuj).
  * @return bool True, gdy po operacji w bazie leży to, co miało tam trafić.
@@ -154,7 +154,7 @@ function chatl_ai_zuzycie_dnia( $dzien = '' ) {
 	);
 	/*
 	 * „Brak wiersza" (dziś nikt jeszcze nie pytał) i „odczyt się nie udał" NIE są
-	 * tym samym — a `get_row()` zwraca `null` w obu. Do naprawy T-1 oba dawały
+	 * tym samym — a `get_row()` zwraca `null` w obu. Wcześniej oba dawały
 	 * zera, zera były poniżej limitu i stop-loss przepuszczał wywołania płatnego
 	 * API przy liczniku, który nie liczy: fail-open na rachunku właściciela.
 	 *
@@ -289,7 +289,7 @@ function chatl_ai_dostepny() {
 	/*
 	 * Licznik nie do odczytania = NIE WIEMY, ile dziś poszło, więc zakładamy
 	 * najgorsze: limit wyczerpany. Bot odpowiada z reguł, rachunek nie rośnie,
-	 * właściciel widzi pasek błędu bazy w panelu (T-1, audyt etap 3).
+	 * właściciel widzi pasek błędu bazy w panelu.
 	 */
 	if ( ! empty( $d['blad'] ) ) {
 		return false;
@@ -555,7 +555,7 @@ function chatl_ai_test_klucza() {
 	$url = apply_filters( 'chatl_ai_url', 'https://api.anthropic.com/v1/messages' );
 	/*
 	 * TEN SAM model, którym pyta bot — przez chatl_ai_model(), nie przez samą
-	 * stałą. Do audytu (P2-Z1) diagnostyka brała CHATL_AI_MODEL, więc pomijała
+	 * stałą. Wcześniej diagnostyka brała CHATL_AI_MODEL, więc pomijała
 	 * pole „własny model" z ustawień: właściciel wpisywał nazwę z literówką,
 	 * bot po cichu zjeżdżał do reguł, a „Przetestuj klucz" mówił „działa",
 	 * bo pytał modelu domyślnego. Przycisk ma iść TYM SAMYM KLUCZEM I MODELEM co
@@ -593,7 +593,7 @@ function chatl_ai_test_klucza() {
 	if ( ! is_wp_error( $odp ) && 200 === $kod ) {
 		/*
 		 * Udany test GASI alarm — ale dopiero teraz jest to uczciwe. Do naprawy
-		 * P2-Z1 przycisk pytał modelem ze stałej, więc zgaszenie paska znaczyło
+		 * Przycisk pytał modelem ze stałej, więc zgaszenie paska znaczyło
 		 * „zadziałało coś, czego bot nie używa": właściciel z literówką w polu
 		 * „własny model" tracił jedyny sygnał o martwym trybie AI. Teraz test
 		 * idzie tym samym KLUCZEM i MODELEM co odpowiedź dla gościa (kształt

@@ -112,7 +112,7 @@ function sklepag_stripe_sesja_po_platnosci( $payment_intent ) {
 }
 
 /**
- * Ręczna weryfikacja podpisu webhooka (docs: „Verify manually"; ZWIAD-STRIPE):
+ * Ręczna weryfikacja podpisu webhooka (dokumentacja Stripe: „Verify manually”):
  * nagłówek `t=...,v1=...[,v1=...]`, signed_payload = t + "." + SUROWE body,
  * HMAC-SHA256, porównanie stałoczasowe, tolerancja czasu 5 min (nigdy 0).
  */

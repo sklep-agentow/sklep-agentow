@@ -15,7 +15,7 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
  * `wp_options -> cron`, w który WordPress uderza codziennie. Normalnie zdejmuje
  * go deaktywacja, ale wtyczkę da się usunąć z jej pominięciem (skasowany
  * katalog, „usuń" z listy) — wtedy `uninstall.php` jest jedynym sprzątaczem.
- * Wzorzec bliźniaczej wtyczki (`segregator-maila/uninstall.php`), A3-2.
+ * Wzorzec bliźniaczej wtyczki (`segregator-maila/uninstall.php`).
  */
 wp_clear_scheduled_hook( 'chatl_czyszczenie_historii' );
 
@@ -45,7 +45,7 @@ delete_option( 'chatl_blad_maila' );
 delete_option( 'chatl_blad_ai' );
 delete_option( 'chatl_blad_bazy' );
 // Liczniki ze schematu ≤ 7 (przed przeniesieniem do chatl_zdarzenia) — instalacja,
-// która nigdy nie weszła do panelu po aktualizacji, może je jeszcze mieć (P2-Z2).
+// która nigdy nie weszła do panelu po aktualizacji, może je jeszcze mieć.
 delete_option( 'chatl_blad_nonce' );
 delete_option( 'chatl_pulapka' );
 // Nazwa wpisana wprost, a nie przez CHATL_RODO_OPCJA_WSPOLNE: uninstall.php biegnie

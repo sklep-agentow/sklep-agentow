@@ -130,7 +130,7 @@ function segm_aktywacja() {
 	// Zapala ekran powitalny. Samo przekierowanie robi admin_init, bo z uchwytu
 	// aktywacji nie wolno przekierowywać — WordPress jest w środku własnej
 	// procedury i po drodze potrafi jeszcze coś wypisać.
-	// Zapis MIERZONY jak reszta (A2-F4): gdy padnie, właściciel nie zobaczy
+	// Zapis MIERZONY jak reszta: gdy padnie, właściciel nie zobaczy
 	// ekranu powitalnego i nie będzie wiedział dlaczego — ślad w pasku błędu
 	// bazy jest wtedy jedynym sygnałem, że to nie „wtyczka się nie włączyła".
 	if ( ! segm_zapisz_opcje( 'segm_powitanie_gotowe', 1 ) ) {

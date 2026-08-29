@@ -3,7 +3,7 @@
  * Plugin Name: Sklep Agentów
  * Plugin URI: https://automaticai.pl/sklep/
  * Description: Sprzedawaj wtyczki-boty AI bezpośrednio ze swojej strony: płatność kartą, automatyczny mail z linkiem do pobrania, panel zamówień ze statystykami i dziennikiem logowań. Zamówienia, produkty i pliki zostają w Twojej bazie i na Twoim serwerze — bez abonamentu. Płatność obsługuje Stripe.
- * Version: 0.9.21
+ * Version: 0.9.22
  * Requires at least: 6.7
  * Requires PHP: 8.1
  * Author: Automatic AI
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SKLEPAG_WERSJA', '0.9.21' );
+define( 'SKLEPAG_WERSJA', '0.9.22' );
 define( 'SKLEPAG_WERSJA_SCHEMATU', 7 ); // v7: status_przed_sporem (punkt powrotu po zdarzeniu finansowym — sporze LUB zwrocie — bez zmyślania stanu wysyłki); v6: kolumny zwrotu (payment_intent_id, zwrocono_grosze, zwrot_czas); v5: tabela opinii; v4: kolumna zamowienia.usunieto_dnia (anonimizacja RODO); v3: indeks para_logowania.
 
 /* Komunikaty blokady pol wymaganych — po POLSKU.
@@ -111,7 +111,7 @@ function sklepag_start() {
 
 /**
  * Wersja assetu do cache-bustingu: numer wtyczki + czas modyfikacji pliku. Podmiana
- * pliku bez podbicia wersji (rundy wyglądu 25.08) zostawiała przeglądarkom stary CSS/JS
+ * pliku bez podbicia wersji zostawiała przeglądarkom stary CSS/JS
  * pod tym samym adresem `?ver=` — na żywo wyglądało to jak brak animacji wejścia.
  */
 function sklepag_wersja_assetu( $sciezka ) {
@@ -196,7 +196,7 @@ function sklepag_duet_maskotek( $podpis = '' ) {
  * ILUSTRACJA (aria-hidden): dymki i maile to TE SAME zatwierdzone teksty co mockup czatu i PRZED/PO
  * na stronach produktów — żadnych nowych obietnic ani liczb. Bez JS / przy „ogranicz ruch" panel
  * stoi w stanie końcowym (wszystko widoczne). Lista pokazuje oba wiersze; hero produktu — swój
- * (przegląd na żywo 25.08: „ilustracja w hero za słaba" → żywy panel zamiast statycznego obrazka).
+ * (żywy panel zamiast statycznego obrazka — statyczny był za słaby).
  *
  * @param string $tryb 'oba' (lista) | 'chatbot-live' | 'segregator-maila' (hero produktu).
  * @return string HTML panelu; '' dla nieznanego trybu.
@@ -210,7 +210,7 @@ function sklepag_panel_nocnej_zmiany( $tryb = 'oba' ) {
 	$html  = '<div class="sklepag-panel' . ( 'oba' === $tryb ? '' : ' sklepag-panel--' . sanitize_html_class( $tryb ) ) . '" aria-hidden="true">';
 	$html .= '<span class="sklepag-panel-adnotacja sklepag-panel-adnotacja--gora">' . ( $maile && ! $czat ? 'Twoja skrzynka' : 'Twoja strona' ) . '</span>';
 	// Adnotacja dolna hero Segregatora = „Twoje foldery" (skrzynka → foldery, jak w treściach produktu);
-	// „Poranny raport" dublował etykietę wiersza w panelu tuż nad nią (sędzia r2). Lista bez zmian.
+	// „Poranny raport" dublował etykietę wiersza w panelu tuż nad nią. Lista bez zmian.
 	$html .= '<span class="sklepag-panel-adnotacja sklepag-panel-adnotacja--dol">' . ( 'oba' === $tryb ? 'Twoja skrzynka' : ( $czat ? 'Twoja baza pytań' : 'Twoje foldery' ) ) . '</span>';
 	$html .= '<div class="sklepag-panel-okno">';
 	$html .= '<span class="sklepag-okno-pasek"><span></span><span></span><span></span></span>';
@@ -220,7 +220,7 @@ function sklepag_panel_nocnej_zmiany( $tryb = 'oba' ) {
 		$html .= '<div class="sklepag-panel-czat">';
 		$html .= '<p class="sklepag-dymek sklepag-dymek-gosc">Ile kosztuje strzyżenie?</p>';
 		// Awatar = głowa TEJ SAMEJ maskotki co na ilustracjach kart (jedna „ręka" rysunku);
-		// oczy mrugają czystym CSS (sędzia r1: akcent marki zamiast generycznego UI).
+		// oczy mrugają czystym CSS (akcent marki zamiast generycznego UI).
 		$html .= '<div class="sklepag-panel-bot"><span class="sklepag-panel-avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5.5V3.6"/><circle cx="12" cy="2.6" r="1" fill="currentColor" stroke="none"/><rect x="4.5" y="5.5" width="15" height="12" rx="3.5"/><circle class="sklepag-oko" cx="9.3" cy="11" r="1.1" fill="currentColor" stroke="none"/><circle class="sklepag-oko" cx="14.7" cy="11" r="1.1" fill="currentColor" stroke="none"/><path d="M9.6 14.2q2.4 2 4.8 0"/></svg></span>';
 		$html .= '<div class="sklepag-panel-odpowiedz">';
 		$html .= '<p class="sklepag-dymek sklepag-dymek-bot sklepag-pisze"><span></span><span></span><span></span></p>';
@@ -270,8 +270,8 @@ function sklepag_shortcode_sklep() {
 	);
 
 	$html = '<div class="sklepag-wyspa sklepag-sklep">';
-	// TŁO „BLUEPRINT Z SYGNAŁAMI" na CAŁEJ wyspie (przegląd na żywo 25.08: „coś na całe tło, z inspiracji,
-	// nie 1:1 hero gospodarza"): siatka projektowa jak na ilustracjach kart + wolny promień skanu
+	// TŁO „BLUEPRINT Z SYGNAŁAMI" na CAŁEJ wyspie (coś na całe tło, z inspiracji,
+	// nie 1:1 hero gospodarza): siatka projektowa jak na ilustracjach kart + wolny promień skanu
 	// + pingi (czysty CSS, zero canvasa — lekkie dla każdej karty graficznej). aria-hidden.
 	$html .= '<div class="sklepag-tlo" aria-hidden="true"></div>';
 	// Pingi POZA maskowanym tłem (maska nad animacją = przeliczanie całej warstwy co klatkę).
@@ -287,7 +287,7 @@ function sklepag_shortcode_sklep() {
 	$html .= '<p class="sklepag-demo-cta"><span class="sklepag-akcent">▶</span> Zielony bąbelek w rogu strony to ChatBot LIVE — porozmawiaj z nim, zanim kupisz.</p>';
 	// Pasek konkretów: każda pozycja ma pokrycie w kodzie/pomiarze (dok=kod):
 	// 6.0+ = „Requires at least" obu botów · czysta deinstalacja = zmierzona
-	// we wrogiej sesji botów (diff przed-po pusty) · bez abonamentu = zakup
+	// (diff przed-po pusty) · bez abonamentu = zakup
 	// jednorazowy, żadnych płatności cyklicznych w kodzie.
 	$html .= '<ul class="sklepag-konkrety" aria-label="Najważniejsze informacje o produktach">';
 	$html .= '<li>WordPress 6.0+</li><li>instalacja jak każdej wtyczki</li><li>czysta deinstalacja</li><li>bez abonamentu</li>';
@@ -310,7 +310,7 @@ function sklepag_shortcode_sklep() {
 	$nr    = 0;
 	foreach ( $produkty as $p ) {
 		++$nr;
-		// Karta: ILUSTRACJA w brandzie (D28b + UZUPEŁNIENIE 24.08); zrzut żywego
+		// Karta: ILUSTRACJA w brandzie; zrzut żywego
 		// bota jest na stronie produktu pierwszym kaflem galerii [ CO JEST W ŚRODKU ].
 		$obraz = sklepag_ilustracja_produktu( $p->slug );
 		$html .= '<article class="sklepag-karta">';
@@ -329,9 +329,9 @@ function sklepag_shortcode_sklep() {
 	}
 	$html .= '</div>';
 
-	// OD ZAKUPU DO DZIAŁANIA (wzorzec „ile trwa uruchomienie" — zwiad 19.08;
+	// OD ZAKUPU DO DZIAŁANIA (wzorzec „ile trwa uruchomienie”;
 	// treść kroków = faktyczny przepływ: mail z instrukcją i linkiem do zipa).
-	// Trzy równe karty w rzędzie (runda stron 25.08) — numer z hairline'em jak u gospodarza.
+	// Trzy równe karty w rzędzie — numer z hairline'em jak u gospodarza.
 	$html .= '<section class="sklepag-sekcja sklepag-sekcja--pelna"><p class="sklepag-mono-etykieta">[ <span class="sklepag-akcent">01</span> · OD ZAKUPU DO DZIAŁANIA ]</p>';
 	$html .= '<ol class="sklepag-kroki sklepag-kroki--siatka">';
 	$html .= '<li><span class="sklepag-krok-tekst">Kupujesz — płatność testowa Stripe, bez zakładania konta.</span></li>';
@@ -358,7 +358,7 @@ function sklepag_shortcode_sklep() {
 
 	// PYTANIA — FAQ całego sklepu (pytania produktowe są na stronach produktów).
 	// Liczby linku pobrania generowane ze stałych = dok zawsze równy kodowi.
-	// Siatka 2 kolumn (runda stron 25.08): bloki <div> w <dl> to poprawny HTML5.
+	// Siatka 2 kolumn: bloki <div> w <dl> to poprawny HTML5.
 	$html .= '<section class="sklepag-sekcja sklepag-sekcja--pelna"><p class="sklepag-mono-etykieta">[ <span class="sklepag-akcent">03</span> · PYTANIA ]</p><dl class="sklepag-faq sklepag-faq--siatka">';
 	$html .= '<div class="sklepag-faq-blok"><dt>Co dokładnie dostaję po zakupie?</dt><dd>' . esc_html( sprintf( 'Maila z potwierdzeniem, instrukcją i linkiem do pobrania paczki: zip wtyczki bota z instrukcją po polsku. Link jest ważny %d godziny (limit %d pobrań).', SKLEPAG_LINK_GODZIN, SKLEPAG_LIMIT_POBRAN ) ) . '</dd></div>';
 	$html .= '<div class="sklepag-faq-blok"><dt>Czy muszę zakładać konto?</dt><dd>Nie. Podajesz tylko adres e-mail przy płatności — na niego przychodzi paczka.</dd></div>';
@@ -366,8 +366,8 @@ function sklepag_shortcode_sklep() {
 	$html .= '<div class="sklepag-faq-blok"><dt>Czy boty wymagają klucza AI albo opłat?</dt><dd>Nie — oba w pełni działają w trybie regułowym, bez klucza i bez abonamentu. Tryb AI to opcja na Twój własny klucz.</dd></div>';
 	$html .= '</dl></section>';
 
-	// FINALNY CTA listy (sędzia #2: strona produktu domyka finałem, lista
-	// kończyła się FAQ bez zamknięcia sprzedażowego). Baner-panel z mgławicą (runda stron).
+	// FINALNY CTA listy (strona produktu domyka finałem, lista
+	// kończyła się FAQ bez zamknięcia sprzedażowego). Baner-panel z mgławicą.
 	$html     .= '<section class="sklepag-sekcja sklepag-sekcja--pelna sklepag-final sklepag-final--baner">';
 	$html     .= '<div class="sklepag-final-tresc">';
 	$html     .= '<h2 class="sklepag-sekcja-tytul">Wybierz bota i przetestuj go u siebie.</h2>';

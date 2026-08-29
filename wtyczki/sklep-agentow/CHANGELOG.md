@@ -20,6 +20,15 @@ Nic jeszcze.
 
 ---
 
+## [0.9.22] — 2026-08-29
+
+### Zmienione
+- **Wydanie porządkowe.** Z komentarzy w kodzie i z dokumentacji technicznej usunięte
+  wewnętrzne oznaczenia naszych raportów z testów — komentarz niesie powód, dla którego
+  kod tak wygląda, a nie numer dokumentu. Zero zmian w działaniu sklepu.
+
+---
+
 ## [0.9.21] — 2026-08-28
 
 ### Naprawione
@@ -118,7 +127,7 @@ mierzył żaden test automatyczny: utraty pracy właściciela i drogi do treści
   jak dotąd: nagranie z `autoplay`, bez martwego przycisku.
 
 ### Zmienione
-- Instrukcja instalacji ostrzega przed dwiema pułapkami, na których audytor stanął:
+- Instrukcja instalacji ostrzega przed dwiema pułapkami, na których potyka się instalacja:
   limitem przesyłania plików mniejszym niż paczka wtyczki (z trzema drogami wyjścia)
   oraz ustawieniem Adaptive Pricing w Stripe, które kupującemu potrafi pokazać cenę
   w innej walucie z opłatą za przewalutowanie.
@@ -128,8 +137,8 @@ mierzył żaden test automatyczny: utraty pracy właściciela i drogi do treści
 ## [0.9.18] — 2026-08-27
 
 ### Poprawione
-- **Drugi zakup tego samego produktu tuż po opłaceniu pierwszego nie dochodził do skutku**
-  (SK-L3-005). Okno idempotencji (60 s, klucz `md5(IP|produkt_id)`) oddawało zapamiętany
+- **Drugi zakup tego samego produktu tuż po opłaceniu pierwszego nie dochodził do skutku**.
+  Okno idempotencji (60 s, klucz `md5(IP|produkt_id)`) oddawało zapamiętany
   adres checkoutu bez sprawdzenia, czy tamta sesja nie została już opłacona — kupujący
   trafiał na opłacony ekran Stripe, bez pól karty i bez wyjaśnienia. Ponieważ okno jest
   kluczowane `REMOTE_ADDR`, dotyczyło to także DWÓCH RÓŻNYCH kupujących za jednym adresem
@@ -311,7 +320,7 @@ Wersja schematu bazy: **7** (migracja odpala się sama, bez deaktywacji wtyczki)
   nagrania.
 
 ### Naprawione
-- Po przeglądzie: wstępne ładowanie galerii, zachowanie pigułki, strażnik
+- Poprawki: wstępne ładowanie galerii, zachowanie pigułki, strażnik
   nagrania, numeracja faz.
 
 ---
@@ -361,7 +370,7 @@ Wersja schematu bazy: **7** (migracja odpala się sama, bez deaktywacji wtyczki)
 
 ### [0.9.2] — 2026-08-20
 - Licencja GPL w paczce; opisy produktów napisane pod sprzedaż; adresy strony
-  w nagłówku wtyczki; poprawki po przeglądzie.
+  w nagłówku wtyczki; drobne poprawki.
 
 ### [0.9.1] — 2026-08-20
 - Siatka strony w stylu gospodarza; sekcje pojawiające się przy przewijaniu.

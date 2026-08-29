@@ -624,7 +624,7 @@ class Segm_Imap {
 	 * to WPROST — zwykłe EXPUNGE skasowałoby też cudze wiadomości oznaczone
 	 * \Deleted przez inny program (RFC 4315 2.1 ostrzega o tym wprost).
 	 *
-	 * ⭐ Liczy się SKUTEK, nie status (LS-F1): RFC 3501 §6.4.8 — polecenie UID
+	 * ⭐ Liczy się SKUTEK, nie status: RFC 3501 §6.4.8 — polecenie UID
 	 * z numerem, który nie pasuje do żadnej wiadomości, kończy się „OK", bo
 	 * serwer nie ma nic do zgłoszenia. Wtyczka liczyła kiedyś „przeniesiono"
 	 * za sam status, więc cofnięcie meldowało sukces dla wiadomości, którą
@@ -635,7 +635,7 @@ class Segm_Imap {
 	 *    i po nim — wiadomość, której nie było, albo która dalej leży w źródle,
 	 *    to porażka, nie sukces.
 	 * Zwracamy też UIDVALIDITY folderu docelowego (z COPYUID albo STATUS) —
-	 * cofanie porównuje ją z bieżącą, zanim zaufa zapamiętanemu UID-owi (T-3).
+	 * cofanie porównuje ją z bieżącą, zanim zaufa zapamiętanemu UID-owi.
 	 *
 	 * @param int    $uid   UID wiadomości w otwartym folderze.
 	 * @param string $cel   Nazwa folderu docelowego w kodowaniu serwera.
@@ -989,7 +989,7 @@ class Segm_Imap {
 	}
 
 	/**
-	 * Kod błędu gniazda po ludzku (WK-13).
+	 * Kod błędu gniazda po ludzku.
 	 *
 	 * Kupujący dostawał „Connection refused (kod 111)" — żargon w komunikacie
 	 * pisanym dla właściciela małej firmy. Kod ZOSTAJE (jest potrzebny, gdy

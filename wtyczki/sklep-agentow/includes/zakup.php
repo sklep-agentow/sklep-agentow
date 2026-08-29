@@ -123,7 +123,7 @@ function sklepag_obsluz_kup() {
 		wp_die( 'Produkt niedostępny.', 'Sklep Agentów', 404 );
 	}
 
-	// Okno idempotencji: podwójny klik nie tworzy drugiej sesji (SK-L3-005).
+	// Okno idempotencji: podwójny klik nie tworzy drugiej sesji.
 	//
 	// DWA warunki, oba konieczne, bo każdy z osobna ma dziurę:
 	//
@@ -141,7 +141,7 @@ function sklepag_obsluz_kup() {
 	// Okno jest kluczowane adresem IP (`sklepag_ip()` czyta goły REMOTE_ADDR), więc za
 	// wspólnym adresem (CGNAT operatora, biuro za NAT) trafia też w DRUGĄ osobę. Krótkie
 	// okno ogranicza to do kilku sekund; pełne rozdzielenie kupujących wymagałoby klucza
-	// związanego z sesją przeglądarki i jest zapisane jako otwarta połowa klasy SK-L3-005.
+	// związanego z sesją przeglądarki i jest znanym, świadomie otwartym ograniczeniem tego okna.
 	$okno = 'sklepag_idem_' . md5( sklepag_ip() . '|' . $produkt_id );
 	$juz  = get_transient( $okno );
 	if ( is_array( $juz ) && ! empty( $juz['url'] ) ) {
@@ -300,7 +300,7 @@ function sklepag_webhook( WP_REST_Request $zadanie ) {
 
 /**
  * Czy sesja checkout WCIĄŻ czeka na płatność — a więc czy wolno oddać jej adres z okna
- * idempotencji (SK-L3-005)? Stan trzymamy u siebie (`sklepag_oznacz_sesje`), więc pytanie
+ * idempotencji? Stan trzymamy u siebie (`sklepag_oznacz_sesje`), więc pytanie
  * nie kosztuje wywołania Stripe i nie psuje się przy awarii łączności.
  * Brak wiersza = false: nieznanego checkoutu nie podajemy kupującemu.
  */
@@ -909,7 +909,7 @@ function sklepag_filtr_nadawca_nazwa( $name ) {
  */
 function sklepag_wyslij_mail_sklepu( $adresat, $temat, $tresc ) {
 	// Reply-To = „mail kontaktowy właściciela" z ustawień (gdy ustawiony): mail mówi „odpisz na tego
-	// maila", a odpowiedź szła na adres NADAWCY — przy nadawcy typu noreply ginęła (audyt 25.08).
+	// maila", a odpowiedź szła na adres NADAWCY — przy nadawcy typu noreply ginęła.
 	$naglowki = array();
 	$kontakt  = (string) get_option( 'sklepag_email_kontaktowy', '' );
 	if ( '' !== $kontakt && is_email( $kontakt ) ) {
@@ -933,7 +933,7 @@ function sklepag_zbuduj_mail( $produkt, $zam, $link, $link_opinii = '' ) {
 		: '';
 	// Potwierdzenie zgody na trwałym nośniku (dyrektywa 2011/83/UE art. 8 ust. 7 lit. b — potwierdzenie
 	// umowy ma zawierać potwierdzenie uprzedniej wyraźnej zgody i przyjęcia do wiadomości z art. 16 lit. m).
-	// Treść i chwila zgody = dokładnie to, co zapisano w zamówieniu przy zakupie (audyt 25.08).
+	// Treść i chwila zgody = dokładnie to, co zapisano w zamówieniu przy zakupie.
 	$zgoda = '';
 	if ( ! empty( $zam->zgoda_tresc ) ) {
 		$kiedy  = ! empty( $zam->zgoda_czas ) ? get_date_from_gmt( $zam->zgoda_czas, 'd.m.Y H:i' ) : '';

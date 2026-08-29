@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Segregator maila
  * Description: Porządkuje firmową skrzynkę: łączy się z nią po IMAP i rozkłada pocztę do folderów według Twoich reguł. Domyślnie pracuje NA SUCHO — pokazuje, co by przeniósł, i nie rusza ani jednej wiadomości, dopóki sam tego nie włączysz. Do tego zadanie cykliczne, historia i cofnięcie ostatniego przebiegu.
- * Version: 1.3.5
+ * Version: 1.3.6
  * Requires at least: 6.0
  * Requires PHP: 8.1
  * Author: Automatic AI
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SEGM_WERSJA', '1.3.5' );
+define( 'SEGM_WERSJA', '1.3.6' );
 define( 'SEGM_WERSJA_SCHEMATU', '4' );
 define( 'SEGM_KATALOG', plugin_dir_path( __FILE__ ) );
 
@@ -180,7 +180,7 @@ function segm_sprawdz_schemat() {
 		segm_utworz_tabele();
 		// Porażka jest idempotentna (migracja pobiegnie przy następnym żądaniu),
 		// ale ma zostawić ślad — inaczej dbDelta leciałoby przy każdym żądaniu
-		// bez jednego słowa dlaczego (A2-F4, niższa waga).
+		// bez jednego słowa dlaczego.
 		if ( ! segm_zapisz_opcje( 'segm_wersja_schematu', SEGM_WERSJA_SCHEMATU ) ) {
 			segm_log_bledu_bazy( 'segm_sprawdz_schemat', 'zapis wersji schematu ' . SEGM_WERSJA_SCHEMATU );
 		}
@@ -289,7 +289,7 @@ function segm_zapewnij_cron() {
 add_action( 'plugins_loaded', 'segm_zapewnij_cron' );
 
 /*
- * Znacznik „operacja na próbce w toku" (P2.3). Nazwa opcji + ile sekund wpis
+ * Znacznik „operacja na próbce w toku". Nazwa opcji + ile sekund wpis
  * jest ważny: po tym czasie znacznik po padniętym procesie przestaje blokować
  * wtyczkę (najdłuższa chroniona operacja to przebieg AI, ~18 s).
  */
@@ -304,7 +304,7 @@ const SEGM_BLOKADA_WAZNA = 120;
  * czyta tę tabelę — druga karta w przeglądarce wystarczy. Efektem był raport
  * policzony na pustej albo połowicznej próbce, BEZ jednego słowa ostrzeżenia.
  *
- * Zamek jest ATOMOWY na poziomie bazy, nie cache opcji (DK-6, T-4):
+ * Zamek jest ATOMOWY na poziomie bazy, nie cache opcji:
  *  - stan czytamy PROSTO z `wp_options` — cache opcji tego procesu
  *    (`notoptions`, alloptions, trwały object cache) nie widzi wpisu, który
  *    sekundę temu zrobił inny proces PHP, a zamek ma chronić właśnie przed nim;
@@ -319,10 +319,10 @@ const SEGM_BLOKADA_WAZNA = 120;
  *    ten przeterminowany wiersz (po wartości), nie to, co w międzyczasie mógł
  *    zająć kto inny; to samo dla wiersza w obcym kształcie (bez pola `do`),
  *    który wcześniej blokował wtyczkę NA ZAWSZE, bo sprawdzenie terminu go
- *    pomijało, a add_option() odbijał się od istniejącego (T-4);
+ *    pomijało, a add_option() odbijał się od istniejącego;
  *  - błąd bazy przy zajmowaniu = ODMOWA, nie zgoda (brak danych ≠ wolne).
  * Własna tabela byłaby zmianą schematu bez zysku: klucz unikalny na
- * `option_name` daje tę samą atomowość, a zamrożony test audytu mierzy
+ * `option_name` daje tę samą atomowość, a test współbieżności mierzy
  * dokładnie ten kształt (proces B = INSERT do `wp_options`).
  *
  * Transakcja nie wchodzi w grę: TRUNCATE w MySQL robi niejawny COMMIT, więc
@@ -385,7 +385,7 @@ function segm_stempel_blokady( $opis ) {
  * Zwolnienie znacznika (wołane na KAŻDEJ drodze wyjścia z operacji).
  *
  * Kasujemy WYŁĄCZNIE własny stempel (`option_value` = to, co sami wstawiliśmy).
- * Bezwarunkowe `delete_option()` miało wadę symetryczną do DK-6: proces, który
+ * Bezwarunkowe `delete_option()` miało wadę symetryczną do opisanej wyżej: proces, który
  * przekroczył `SEGM_BLOKADA_WAZNA` i którego zamek ktoś w międzyczasie przejął,
  * na wyjściu kasował CUDZY, świeży znacznik i wpuszczał trzecią operację.
  * Gdy tego stempla nie mamy (zamek nie był nasz), nie ruszamy niczego.

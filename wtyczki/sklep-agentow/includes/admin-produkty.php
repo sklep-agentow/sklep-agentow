@@ -5,7 +5,7 @@
  * katalogu chronionego (losowa nazwa BEZ rozszerzenia, MIME z TREŚCI,
  * limit 20 MB, weryfikacja PO zapisie: obecność+rozmiar+sha256).
  * Zasady: bez twardego usuwania (deaktywacja); nowy plik = NOWA
- * ścieżka (stare zamówienia trzymają swój snapshot — §5); aktywacja
+ * ścieżka (stare zamówienia trzymają swój snapshot); aktywacja
  * wymaga POTWIERDZONEGO pliku; każda mutacja nonce+caps parą.
  */
 
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 require_once SKLEPAG_KATALOG . 'includes/class-sklepag-lista-produktow.php';
 
-const SKLEPAG_UPLOAD_LIMIT_B = 20 * 1024 * 1024; // Plan §7: 20 MB (realne zipy botów <1 MB).
+const SKLEPAG_UPLOAD_LIMIT_B = 20 * 1024 * 1024; // 20 MB (realne zipy botów <1 MB).
 
 /**
  * Realny sufit wgrania: MNIEJSZY z limitu wtyczki i limitu serwera
@@ -380,7 +380,7 @@ function sklepag_przyjmij_zip( $wroc ) {
 		$wroc( 'Brak katalogu chronionego — deaktywuj i aktywuj wtyczkę.' );
 	}
 
-	// Losowa nazwa BEZ rozszerzenia (warstwa ochrony uploads — §4A).
+	// Losowa nazwa BEZ rozszerzenia (warstwa ochrony katalogu uploads).
 	$cel = trailingslashit( $katalog ) . 'produkt-' . wp_generate_password( 20, false, false );
 	// phpcs:ignore WordPress.WP.AlternativeFunctions -- katalog w uploads, przenosimy zaufany upload; WP_Filesystem zbędne.
 	if ( ! move_uploaded_file( $tmp, $cel ) ) {

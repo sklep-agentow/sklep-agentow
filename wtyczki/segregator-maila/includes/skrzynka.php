@@ -76,7 +76,7 @@ function segm_skrzynka_skonfigurowana() {
 }
 
 /**
- * Czego brakuje do połączenia — po nazwach pól z formularza (WK-5).
+ * Czego brakuje do połączenia — po nazwach pól z formularza.
  *
  * JEDNO źródło prawdy: „skrzynka gotowa" to po prostu pusta lista braków.
  * Dwie funkcje sprawdzające te same trzy warunki osobno rozjechałyby się przy
@@ -226,14 +226,14 @@ function segm_skrzynka_diagnostyka() {
 			: 'Brak obsługi kodowania UTF7-IMAP w mbstring. Foldery z polskimi znakami mogą mieć na serwerze przekręcone nazwy — używaj nazw kategorii bez polskich liter.',
 	);
 
-	// ⛔ Wymóg z briefu: sprawdzić rozszerzenie imap i powiedzieć WPROST.
+	// ⛔ Sprawdzamy rozszerzenie imap i mówimy o nim WPROST.
 	// Ono NIE jest nam potrzebne (mamy własny klient po gnieździe), ale
 	// właściciel ma prawo wiedzieć, dlaczego wtyczka działa bez niego.
 	$ext_imap = extension_loaded( 'imap' );
 	$wynik[]  = array(
 		'nazwa'    => 'Rozszerzenie PHP „imap" (NIEwymagane)',
 		'stan'     => 'ok',
-		// WK-4: kolumna stanu mówiła „✔ jest", a opis obok zaczynał się od
+		// Kolumna stanu mówiła „✔ jest", a opis obok zaczynał się od
 		// „Nieobecne" — kupujący czytał to jako błąd w tabelce. Kolumna ma
 		// mówić o STANIE RZECZY, a nie tylko „u nas wszystko gra": własny
 		// znacznik rozstrzyga, co widać, i zgadza się z pierwszym słowem opisu.

@@ -156,7 +156,7 @@ function segm_klucz_api() {
  * Gdy klucz jest w konfiguracji serwera, panel go NIE nadpisuje — inaczej wpis
  * w polu formularza po cichu wygrywałby ze stałą wbrew deklaracji w panelu.
  *
- * „Skąd kod wie, że się udało" (A2-F3): wynik mierzymy ODCZYTEM po zapisie,
+ * „Skąd kod wie, że się udało": wynik mierzymy ODCZYTEM po zapisie,
  * jak w `segm_skrzynka_zapisz_haslo()` — `update_option()` zwraca false także
  * wtedy, gdy wartość się nie zmieniła, a `add_option()` nie mówi nic o tym, co
  * zostało w bazie. Wcześniej funkcja była `void`: przy odrzuconym zapisie
@@ -226,7 +226,7 @@ function segm_zapisz_blad_ai( $komunikat, $kod ) {
 	 * Ten znacznik jest JEDYNYM sygnałem, że tryb AI po cichu zjechał do reguł.
 	 * Gdy sam padnie po cichu, wraca dokładnie ta cisza, przed którą broni —
 	 * dlatego jego porażka idzie do trwałego śladu błędu bazy (pasek w panelu).
-	 * Ten sam wzorzec co w ChatBocie (A2-F4).
+	 * Ten sam wzorzec co w ChatBocie.
 	 */
 	if ( ! $zapisano ) {
 		segm_log_bledu_bazy( 'segm_zapisz_blad_ai', 'znacznik awarii trybu AI (kod ' . (int) $kod . ')' );
@@ -539,8 +539,8 @@ function segm_ai_klasyfikuj_partie( $maile, $kategorie ) {
  * rekordów [{"id": "12", "kategoria": "Faktury"}, ...] — i tak było naprawdę:
  * przy takiej odpowiedzi KAŻDY mail lądował w kuble domyślnym, a raport
  * pokazywał 0% pokrycia bez jednego słowa o błędzie. Format odpowiedzi modelu
- * nie jest gwarantowany (output_config.format nie działa na tym modelu —
- * patrz Z0), więc parser przyjmuje OBIE postaci.
+ * nie jest gwarantowany (output_config.format nie działa na tym modelu),
+ * więc parser przyjmuje OBIE postaci.
  *
  * @param array $mapa Zdekodowany JSON od modelu.
  * @return array Mapa id => kategoria (może być pusta).

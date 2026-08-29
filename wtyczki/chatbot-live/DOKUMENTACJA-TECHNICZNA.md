@@ -1,6 +1,6 @@
 # ChatBot LIVE — dokumentacja techniczna
 
-Wersja wtyczki: **1.5.12** · schemat bazy: **8** · licencja: **GPL-2.0-or-later**
+Wersja wtyczki: **1.5.13** · schemat bazy: **8** · licencja: **GPL-2.0-or-later**
 
 Dokument opisuje **kod, który jest**, nie plan. Każda liczba i nazwa poniżej ma pokrycie
 w źródle — przy każdej podano plik i symbol, żeby dało się to sprawdzić `grep`-em, a nie
@@ -163,7 +163,7 @@ Licznik w panelu to `COUNT(*)` z tej tabeli — **jedno** źródło prawdy, nie 
 | `chatl_rodo_sesje_wspolne` | lista identyfikatorów sesji, o których wiemy, że **były współdzielone** przez dwie osoby | **nie** | przy wniosku RODO o usunięcie dotyczącym takiej sesji; przycinana przy każdym zapisie (patrz 23.2) |
 
 Klucz API jest bez autoloadu celowo: nie wchodzi do zapytania ładowanego na każdej odsłonie
-strony. Weryfikacja na żywym stacku po pełnym cyklu instalacja→deinstalacja→instalacja:
+strony. Weryfikacja na żywej instalacji po pełnym cyklu instalacja→deinstalacja→instalacja:
 `autoload` = `off`.
 
 ### Metadane użytkownika
@@ -191,8 +191,8 @@ więc **brakujący klucz nigdy nie jest błędem** — nowe pole dostaje wartoś
 | `powiadomienia` | `1` | Czy w ogóle wysyłać ten mail. |
 | `usun_dane` | `0` | Przełącznik ścieżki deinstalacji (rozdział **Cykl życia**). |
 | `ai_informacje` | `''` | Opis firmy wstrzykiwany do instrukcji systemowej modelu. |
-| `ai_limit_dzienny` | `100` | Globalny dobowy limit **wywołań** AI. Zapis ograniczany do zakresu 1–100000; jak przy limicie tokenów, **puste albo nieczytelne pole liczbowe NIE nadpisuje poprzedniej wartości** (`chatl_pole_liczbowe()`, audyt A5 KR1/KR2). |
-| `ai_limit_tokenow` | `200000` | Globalny dobowy limit **tokenów płatnych** — drugi stop-loss. `0` = wyłączony (jawne zero z formularza; **puste albo nieczytelne pole liczbowe NIE nadpisuje poprzedniej wartości** i panel mówi to zamiast „zapisano" — `chatl_pole_liczbowe()`, audyt A5 KR1/KR2). |
+| `ai_limit_dzienny` | `100` | Globalny dobowy limit **wywołań** AI. Zapis ograniczany do zakresu 1–100000; jak przy limicie tokenów, **puste albo nieczytelne pole liczbowe NIE nadpisuje poprzedniej wartości** (`chatl_pole_liczbowe()`). |
+| `ai_limit_tokenow` | `200000` | Globalny dobowy limit **tokenów płatnych** — drugi stop-loss. `0` = wyłączony (jawne zero z formularza; **puste albo nieczytelne pole liczbowe NIE nadpisuje poprzedniej wartości** i panel mówi to zamiast „zapisano" — `chatl_pole_liczbowe()`). |
 | `kolor_glowny` | `#bfff38` | Bąbelek, dymki bota, przyciski, obwódka fokusu. Wartość spoza `#rrggbb` jest odrzucana i wraca domyślna. |
 | `kolor_naglowka` | `#08090b` | Pasek z tytułem okna czatu i paski formularza kontaktu. |
 | `kolor_tekstu` | `auto` | `auto` = wtyczka dobiera kolor tekstu osobno dla bąbelka i dla nagłówka, biorąc ten o lepszym kontraście. Wartość `#rrggbb` = ten sam kolor na obu. |
@@ -209,7 +209,7 @@ Wszystkie liczby, którymi wtyczka się rządzi, są stałymi — nie ma ich roz
 
 | Stała | Wartość | Plik | Do czego |
 |---|---|---|---|
-| `CHATL_WERSJA` | `1.5.12` | `chatbot-live.php` | wersja wtyczki; służy też jako `?ver=` assetów (przeglądarka nie poda starego pliku po aktualizacji) |
+| `CHATL_WERSJA` | `1.5.13` | `chatbot-live.php` | wersja wtyczki; służy też jako `?ver=` assetów (przeglądarka nie poda starego pliku po aktualizacji) |
 | `CHATL_WERSJA_SCHEMATU` | `8` | `chatbot-live.php` | wyzwalacz migracji schematu |
 | `CHATL_KATALOG`, `CHATL_URL` | ścieżka i adres wtyczki | `chatbot-live.php` | `require` i adresy assetów |
 | `CHATL_MAX_PYTANIE` | `500` | `includes/front.php` | maksymalna długość pytania gościa (nadmiar jest **przycinany**, nie odrzucany) |
@@ -300,7 +300,7 @@ Codziennie, cztery `DELETE`:
   `CHATL_RETENCJA_DNI` dni,
 - z `chatl_sesje` wiersze, w których `aktywnosc` jest starsza niż `CHATL_RETENCJA_DNI`
   dni. Po `aktywnosc`, nie po `utworzono`: sesja, do której gość wraca po tygodniach,
-  jest żywa i nie może zniknąć spod otwartego okna. Do audytu danych (A3-1) ta tabela
+  jest żywa i nie może zniknąć spod otwartego okna. Wcześniej ta tabela
   nie miała **żadnej** ścieżki kasowania i rosła o wiersz na każde otwarcie widgetu.
   ⚠️ `aktywnosc` liczy ruch **gościa** (pytanie, odpytywanie); wiadomość operatora
   odświeża osobną kolumnę `operator_akt`. Rozmowa, w której przez cały okres retencji
@@ -313,7 +313,7 @@ Codziennie, cztery `DELETE`:
 
 Granice retencji **rozmów, zdarzeń i sesji** liczymy w strefie witryny (`wp_date()`),
 bo wszystkie trzy kolumny (`utworzono`, `utworzono`, `aktywnosc`) są zapisywane przez
-`current_time( 'mysql' )`, czyli też w strefie witryny. Do audytu A5 (KR6) granica szła w UTC i próg przesuwał się
+`current_time( 'mysql' )`, czyli też w strefie witryny. Wcześniej granica szła w UTC i próg przesuwał się
 o offset strefy — w strefie ujemnej rozmowy ginęły godziny PRZED obiecanymi 90 dniami.
 Okna rate-limitu zostają w UTC, bo `okno_do` jest zapisywane przez `gmdate()` — tam oba
 końce są w tym samym układzie.
@@ -354,7 +354,7 @@ Zdarzenie cron `chatl_czyszczenie_historii` zdejmuje **każda** ścieżka odinst
 zanim jeszcze sprawdzimy opcję „usuń dane": zwykle robi to deaktywacja, ale wtyczkę da
 się usunąć z jej pominięciem (skasowany katalog, „usuń" z listy) i wtedy `uninstall.php`
 jest jedynym sprzątaczem. Zaplanowany zaczep bez kodu to nie są dane właściciela, tylko
-wpis w `wp_options → cron`, w który WordPress uderza codziennie (A3-2).
+wpis w `wp_options → cron`, w który WordPress uderza codziennie.
 
 Czego **żadna** ścieżka nie rusza: stałej `CHATL_KLUCZ_API` w `wp-config.php` — wtyczka nie
 modyfikuje plików konfiguracyjnych.
@@ -525,7 +525,7 @@ ani gość ze stroną z cache nie mogą zjadać limitu prawdziwego klienta.
 > ⛔ **Kubeł `nonce-odrzucony` ogranicza ZAPIS, nie odpowiedź.** Powyżej progu wtyczka
 > odpowiada **tak samo** — z `kod => 'nonce'` — tylko nie dopisuje zdarzenia. Widget rozpoznaje
 > zły nonce wyłącznie po tym kluczu i tylko po nim dociąga świeży nonce i ponawia pytanie
-> (samonaprawa z sekcji o L1). Twarda odmowa powyżej progu wyłączyłaby ją dokładnie tam, gdzie
+> (samonaprawa opisana wyżej). Twarda odmowa powyżej progu wyłączyłaby ją dokładnie tam, gdzie
 > jest najpotrzebniejsza: za proxy z wyłączonym zaufaniem nagłówkom **wszyscy goście dzielą
 > jeden kubeł**, więc przy stronie z cache próg wyczerpuje się w sekundy.
 
@@ -704,7 +704,7 @@ Właściciel płacił za tryb AI, którego nie ma, i **nie miał jak tego zauwa�
 
 **Przycisk sprawdza TĘ konfigurację, która obsługuje gości.** Model bierze
 `chatl_ai_model()` (ustawienie właściciela → stała produktu → filtr), a nie samą
-stałą `CHATL_AI_MODEL`. Do naprawy P2-Z1 diagnostyka pomijała pole „własny model":
+stałą `CHATL_AI_MODEL`. Wcześniej diagnostyka pomijała pole „własny model":
 właściciel z literówką w nazwie widział „Klucz działa", a bot po cichu odpowiadał
 z reguł — wtyczka produkowała fałszywy dowód poprawności. Udany test gasi czerwony
 pasek `chatl_blad_ai` i jest to uczciwe **dlatego**, że pyta tym samym kluczem
@@ -716,8 +716,7 @@ zdejmowany przy pierwszym sukcesie. Oba znaczniki idą przez `chatl_zapisz_opcje
 (wynik **mierzony** odczytem opcji po zapisie, bliźniak `segm_zapisz_opcje()`
 z Segregatora) — gdy sam znacznik padnie po cichu, jego porażka trafia do trwałego
 śladu błędu bazy (`chatl_blad_bazy`, pasek w panelu). Bez tego znacznik awarii,
-który jest jedynym sygnałem cichego zjazdu do reguł, sam milczałby przy awarii bazy
-(audyt A2, znalezisko F4).
+który jest jedynym sygnałem cichego zjazdu do reguł, sam milczałby przy awarii bazy.
 
 **HTTP 200 to jeszcze nie sukces.** Ciało odpowiedzi bywa nie do odczytania:
 proxy albo brama zgodności podmieniła treść, hosting dokleił swój HTML, model
@@ -993,8 +992,8 @@ Cztery rzeczy, które ta funkcja musi robić dobrze:
 **Skąd sześć wymian.** Tyle wystarcza na realny ciąg dopytań („jak dojechać" →
 „gdzie zaparkować" → „a w sobotę?"), a każda wymiana to tokeny właściciela.
 Przy krótkich wiadomościach czatu sześć wymian to rząd 300–600 tokenów dołożonych
-do żądania, które i tak niesie całą bazę Q&A w instrukcji systemowej — na stacku
-warsztatowym sama instrukcja ma 3651 znaków, czyli ok. 1200 tokenów. Wyżej rośnie
+do żądania, które i tak niesie całą bazę Q&A w instrukcji systemowej — przy
+pomiarze sama instrukcja miała 3651 znaków, czyli ok. 1200 tokenów. Wyżej rośnie
 rachunek, a nie jakość: gość firmowego czatu rzadko wraca do czegoś sprzed
 dziesięciu wiadomości.
 ## 21. Zabezpieczenie formularza a cache strony
@@ -1090,7 +1089,7 @@ stan **z bazy** (`czlowiek`) i próbuje ponownie przy następnym wejściu. Ten s
 wzorzec obowiązuje w `chatl_nowa_sesja()` (odrzucony INSERT = brak sesji i brak
 ciastka, widget dostaje błąd zamiast identyfikatora widma) i w zapisie ustawień
 oraz klucza API (`chatl_zapisz_klucz()` zwraca `bool`; „zapisano" dopiero po
-zmierzonym zapisie — audyt A2, znaleziska F1–F3).
+zmierzonym zapisie).
 
 ### 23.2. Bot milczy — i to jest sedno
 
@@ -1143,7 +1142,7 @@ w pliku rozpoznania i w opisie PR.
 `zatrzymajOdpytywanie()` żyją w domknięciu `zbudujOkno()` (widzą sesję, listę
 wiadomości i pasek rozmówcy), a startować i zatrzymywać trzeba je także spoza
 niego: z bąbelka i z obsługi klawisza Escape. Służą do tego dwie zmienne
-ustawiane w jednym miejscu — `startOdpytywania` i `stopOdpytywania`. Do audytu A4
+ustawiane w jednym miejscu — `startOdpytywania` i `stopOdpytywania`. Wcześniej
 bąbelek wołał `odpytaj` po nazwie, spoza zasięgu: przeglądarka zgłaszała
 `ReferenceError`, obsługa kliknięcia przerywała się w połowie i **odpytywanie
 nie startowało wcale** — gość nie widział ani komunikatu o przejęciu rozmowy,

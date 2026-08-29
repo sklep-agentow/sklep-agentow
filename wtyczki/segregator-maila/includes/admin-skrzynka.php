@@ -49,7 +49,7 @@ function segm_skrzynka_zapamietaj( $typ, $tekst, $dziennik = array() ) {
  */
 function segm_skrzynka_pokaz_komunikat() {
 	/*
-	 * WK-17: komunikat ISTNIAŁ, ale renderował się w środku strony, jako szósty
+	 * Komunikat ISTNIAŁ, ale renderował się w środku strony, jako szósty
 	 * pasek — pod dwoma paskami WordPressa i paskami wtyczki (błąd AI, błąd
 	 * bazy, wskazówka startowa). Kupujący go nie zobaczył i nie wiedział, czy
 	 * zapis zadziałał. Teraz idzie przez `admin_notices` z priorytetem 1, czyli
@@ -256,7 +256,7 @@ function segm_strona_skrzynka() {
 				<?php else : ?>
 					<?php
 					/*
-					 * WK-5: kupujący wypełnił pola, przycisk został szary i nic
+					 * Kupujący wypełnił pola, przycisk został szary i nic
 					 * nie mówiło dlaczego. Sprawdzenie łączy się z danymi
 					 * ZAPISANYMI w bazie, nie z zawartością pól — więc mówimy
 					 * to wprost i wymieniamy, czego brakuje po zapisie.
@@ -480,7 +480,7 @@ function segm_post_skrzynka_zapisz() {
 		$szyfrowanie = 'ssl';
 	}
 
-	// Puste albo błędne pole liczbowe NIE nadpisuje poprzedniej wartości (KR4):
+	// Puste albo błędne pole liczbowe NIE nadpisuje poprzedniej wartości:
 	// `max( 1, (int) '' )` robiło z pustego portu port 1 i pustego limitu
 	// limit 1 — a panel mówił „Zapisano". Właściciel dostaje o tym zdanie.
 	$uwagi = array();

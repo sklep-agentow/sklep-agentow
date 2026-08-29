@@ -1,6 +1,6 @@
 /**
  * Front sklepu — klimat strony-gospodarza Automatic AI.
- * Tokeny zmierzone z motywu 19.08. Wszystko scope'owane pod .sklepag-wyspa:
+ * Tokeny zmierzone z motywu gospodarza. Wszystko scope'owane pod .sklepag-wyspa:
  * na stronie gospodarza zlewa się 1:1, na czystym WP jest spójną ciemną
  * wyspą. Zero bibliotek, zero CDN, fonty dziedziczone z motywu.
  */
@@ -22,13 +22,13 @@
 	border-radius: 0;
 	line-height: 1.6;
 
-	/* RAMA TREŚCI — 1:1 z siatką motywu gospodarza. ZMIERZONE 20.08 w przeglądarce
+	/* RAMA TREŚCI — 1:1 z siatką motywu gospodarza. ZMIERZONE w przeglądarce
 	   przy oknie 1920px: jego `container-site` idzie 352→1568 (1216px), a OBSZAR
 	   TREŚCI w środku 384→1536, czyli 1152px = 72rem — i to jest liczba, którą
 	   bierzemy, żeby nasze sekcje stały w jednej linii z jego logo i tekstem.
 	   Bez tego sekcje z własnym `max-width` lgnęły do LEWEJ krawędzi: treść
-	   kończyła się na 1032px i zostawało 888px pustki (znalezisko z przeglądu
-	   + pomiar getBoundingClientRect). Tło zostaje na pełną szerokość,
+	   kończyła się na 1032px i zostawało 888px pustki (pomiar
+	   getBoundingClientRect). Tło zostaje na pełną szerokość,
 	   centrowana jest sama treść — dokładnie jak u gospodarza. */
 	display: grid;
 	grid-template-columns: 1fr min(72rem, 100%) 1fr;
@@ -59,7 +59,7 @@
 
 .sklepag-mono-etykieta {
 	font-family: var(--sklepag-mono);
-	font-size: 0.8rem; /* Podbite po sędzi wyglądu — czytelność drobnych wersalików. */
+	font-size: 0.8rem; /* Podbite — czytelność drobnych wersalików. */
 	letter-spacing: 0.18em;
 	text-transform: uppercase;
 	color: var(--sklepag-pyl);
@@ -71,7 +71,7 @@
 }
 
 /* Pulsująca kropka statusu (signature — gaśnie przy reduced-motion).
-   Rozmiar+glow po sędzi (T5): na zrzucie 1440px była niezauważalna. */
+   Rozmiar+glow: przy szerokości 1440 px była niezauważalna. */
 .sklepag-kropka {
 	display: inline-block;
 	width: 0.62em;
@@ -95,7 +95,7 @@
 	font-size: 0.8rem; /* Spójnie z mono-etykietami. */
 	letter-spacing: 0.14em;
 	text-transform: uppercase;
-	color: var(--sklepag-pyl); /* runda stron: limonka tylko na tytule pigułki — akcent ma znaczyć, nie być tłem */
+	color: var(--sklepag-pyl); /* limonka tylko na tytule pigułki — akcent ma znaczyć, nie być tłem */
 	background: var(--sklepag-wegiel);
 	border: 1px solid var(--sklepag-linia);
 	border-radius: 999px;
@@ -258,7 +258,7 @@
 	margin: 0;
 }
 
-/* ---------- Strona produktu (PR 2) ---------- */
+/* ---------- Strona produktu ---------- */
 
 .sklepag-okruszki {
 	font-family: var(--sklepag-mono);
@@ -362,7 +362,7 @@ a.sklepag-kup {
 	margin: 0;
 }
 
-/* Mockup okna czatu (wzór tidio: dymki ZAWSZE w ramce — §5b.1). */
+/* Mockup okna czatu (wzór tidio: dymki ZAWSZE w ramce). */
 .sklepag-mockup {
 	background: var(--sklepag-wegiel);
 	border: 1px solid var(--sklepag-linia);
@@ -502,7 +502,7 @@ a.sklepag-kup {
 	margin: 0;
 }
 
-/* PRZED/PO segregacji (§5b.3; etykieta DEMO). */
+/* PRZED/PO segregacji (etykieta DEMO). */
 .sklepag-przedpo {
 	margin-top: 2rem;
 }
@@ -585,7 +585,7 @@ a.sklepag-kup {
 	border-top: 1px solid var(--sklepag-linia);
 }
 
-/* FAQ — hairline separatory (sędzia: gołe stosy tekstu łamały rytm komponentów). */
+/* FAQ — hairline separatory (gołe stosy tekstu łamały rytm komponentów). */
 .sklepag-faq {
 	margin: 0;
 	max-width: 44rem;
@@ -610,7 +610,7 @@ a.sklepag-kup {
 	color: var(--sklepag-pyl);
 }
 
-/* Głowa karty: pictogram + etykieta (sędzia: karty nierozróżnialne). */
+/* Głowa karty: pictogram + etykieta (bez tego karty są nierozróżnialne). */
 .sklepag-karta-glowa {
 	display: flex;
 	align-items: center;
@@ -643,7 +643,7 @@ a.sklepag-kup {
 		text-align: center;
 	}
 
-	/* Pasek statusu na wąskim ekranie: luźniejsze zawijanie (uwaga sędziego). */
+	/* Pasek statusu na wąskim ekranie: luźniejsze zawijanie. */
 	.sklepag-pasek-statusu {
 		letter-spacing: 0.08em;
 		line-height: 1.8;
@@ -777,12 +777,12 @@ a.sklepag-kup {
 }
 
 /* ---------- Pojawianie się sekcji przy przewijaniu (spójność z motywem) ----------
-   Feedback z przeglądu 20.08: „podstrona sklepu nie ma animacji jak reszta strony".
+   Powód: podstrona sklepu nie miała animacji jak reszta strony.
    Parametry ZMIERZONE z motywu gospodarza (26px, 0.3s ease-out, 0.5s cubic-bezier).
    ⛔ Ukrycie zależy TYLKO od `sklepag-js` na <html> — klasa wstawiana inline w <head>
    (jak `html.js` gospodarza), więc treść jest ukryta już w PIERWSZEJ klatce, a skrypt
    (defer) tylko odsłania. Wcześniej ukrywał dopiero skrypt: przy wolniejszym łączu hero
-   malowało się widoczne i wjazdu nie było (przegląd na żywo 25.08). Szelki: inline
+   malowało się widoczne i wjazdu nie było. Szelki: inline
    dodaje klasę tylko z IntersectionObserver i bez „ogranicz ruch", a po 2,5 s dodaje
    `sklepag-odslon` — gdy skrypt nie dojedzie, wszystko i tak się pokazuje. */
 .sklepag-js .sklepag-wyspa > * {
@@ -815,7 +815,7 @@ a.sklepag-kup {
 	}
 }
 
-/* ===== Sekcje z 24.08: W PACZCE / RĘCZNIE KONTRA BOT / OPINIE / GWARANCJA ===== */
+/* ===== Sekcje: W PACZCE / RĘCZNIE KONTRA BOT / OPINIE / GWARANCJA ===== */
 .sklepag-pakiet {
 	list-style: none;
 	margin: 0;
@@ -923,8 +923,8 @@ a.sklepag-kup {
 	font-size: 0.9rem;
 }
 
-/* ===== 24.08 wieczór: hero 2-kol + oprawa jasnych zrzutów (galeria-siatka „CO JEST W ŚRODKU" z tej
-   daty wypadła w rundzie stron — oba produkty mają galerię w FAZACH, patrz sekcja strony produktu) ===== */
+/* ===== Hero 2-kol + oprawa jasnych zrzutów (osobna galeria-siatka „CO JEST W ŚRODKU”
+   wypadła — oba produkty mają galerię w FAZACH, patrz sekcja strony produktu) ===== */
 .sklepag-hero-uklad {
 	display: grid;
 	grid-template-columns: 1.05fr 0.95fr;
@@ -955,7 +955,7 @@ a.sklepag-kup {
 .sklepag-hero-wizual .sklepag-hero-zrzut {
 	background: transparent;
 }
-/* ===== Koszyk A (25.08): demo-CTA, zgodność, trigger, przypisy, punkty uczciwości, lightbox, sticky ===== */
+/* ===== Koszyk: demo-CTA, zgodność, trigger, przypisy, punkty uczciwości, lightbox, sticky ===== */
 .sklepag-demo-cta {
 	color: var(--sklepag-papier);
 	font-weight: 500;
@@ -1066,7 +1066,7 @@ a.sklepag-kup {
 	margin: 0;
 }
 
-/* ===== Opinie v2 (25.08): avatar-inicjal, gwiazdki, badge, tytul ===== */
+/* ===== Opinie: avatar-inicjal, gwiazdki, badge, tytul ===== */
 .sklepag-opinia-glowa {
 	display: flex;
 	align-items: center;
@@ -1116,7 +1116,7 @@ a.sklepag-kup {
 }
 
 /* ===== Lista sklepu — układ kafli =====
-   Zero bibliotek ruchu (Linear i Supabase też ich nie mają — recon 25.08). JEDNA sygnatura:
+   Zero bibliotek ruchu (Linear i Supabase też ich nie mają). JEDNA sygnatura:
    panel nocnej zmiany + mgławica gospodarza. Reszta spokojna: elementy wchodzą po kolei,
    hover jako reakcja łańcuchowa. Wszystko gaśnie przy „ogranicz ruch" (blok na końcu). */
 
@@ -1556,7 +1556,7 @@ a.sklepag-kup {
 	margin: 0 0 0.55rem;
 }
 
-/* Znacznik pytania w języku strony (strzałka jak w „Dla kogo") — sędzia r2: FAQ bez elementu
+/* Znacznik pytania w języku strony (strzałka jak w „Dla kogo") — powód: FAQ bez elementu
    wizualnego czytało się jak doklejone. */
 .sklepag-faq--siatka dt::before {
 	content: "→";
@@ -1605,7 +1605,7 @@ a.sklepag-kup {
 	letter-spacing: -0.02em;
 }
 
-/* ---------- WEJŚCIE ELEMENTÓW: kaskada 1:1 z gospodarzem (zmierzone 25.08 w jego CSS):
+/* ---------- WEJŚCIE ELEMENTÓW: kaskada 1:1 z gospodarzem (zmierzone w jego CSS):
    `.reveal` = opacity 0 + translateY(26px) → `.reveal-in` = opacity .3s ease-out, transform .5s
    cubic-bezier(.34,1.56,.64,1), opóźnienie kaskady i × 0.08 s. Jak u niego elementy wchodzą
    POJEDYNCZO — sekcja z kaskadą nie rusza się jako całość. Kanał `translate` (nie `transform`),
@@ -1628,7 +1628,7 @@ a.sklepag-kup {
 	transition: opacity 0.3s ease-out var(--sklepag-d), translate 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) var(--sklepag-d), scale 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) var(--sklepag-d);
 }
 
-/* KIERUNKI jak u gospodarza (zmierzone 25.08 na jego stronach: 81 elementów): etykieta sekcji
+/* KIERUNKI jak u gospodarza (zmierzone na jego stronach: 81 elementów): etykieta sekcji
    z lewej 24 px · tytuł z lewej 36 px · akapit 28 px · CTA/mono 24 px · wizual w prawej kolumnie
    z prawej 36 px · karty w siatce „wyskakują": 14 px z dołu + scale .94 · prawa kolumna tekstu
    z prawej. Kanały `translate`/`scale` — osobne od `transform` hoveru. */
@@ -1703,7 +1703,7 @@ a.sklepag-kup {
 	95% { transform: scaleY(0.12); }
 }
 
-/* ===== GALAKTYKA + rodzina ruchu gospodarza (25.08, po przeglądzie na żywo: „nie plamy — coś żywego") =====
+/* ===== GALAKTYKA + rodzina ruchu gospodarza (nie plamy — coś żywego) =====
    Parametry ZMIERZONE w motywie: dashflow 1.4s linear (kreska 4/8, offset −24px) ·
    pulse-dot 2.4s (pierścień 7px) · glow-breathe 7s (opacity .7↔1) · poświata gospodarza
    jest CICHA (bg-volt/0.06 przy 26rem) — nasza wcześniejsza plama 0.42 była 7× za mocna. */
@@ -1778,8 +1778,8 @@ a.sklepag-kup {
 	}
 }
 
-/* ===== TŁO „BLUEPRINT Z SYGNAŁAMI" — cała wyspa listy (przegląd na żywo 25.08: „na całe tło, z inspiracji,
-   nie 1:1 hero gospodarza"). Czysty CSS: siatka jak na ilustracjach kart, wolny promień skanu
+/* ===== TŁO „BLUEPRINT Z SYGNAŁAMI" — cała wyspa listy (na całe tło, z inspiracji,
+   nie 1:1 hero gospodarza). Czysty CSS: siatka jak na ilustracjach kart, wolny promień skanu
    (sam transform — kompozytor), pingi opacity. Zero canvasa = zero obciążenia GPU. ===== */
 .sklepag-sklep > * {
 	position: relative;
@@ -1787,7 +1787,7 @@ a.sklepag-kup {
 }
 
 .sklepag-tlo {
-	grid-column: 1 / -1; /* absolutny potomek gridu odnosi się do SWOJEJ komórki — bez tego tło zaczynało się od toru treści, lewy margines był goły (przegląd na żywo 25.08) */
+	grid-column: 1 / -1; /* absolutny potomek gridu odnosi się do SWOJEJ komórki — bez tego tło zaczynało się od toru treści, lewy margines był goły */
 	position: absolute;
 	inset: -8rem -4rem; /* ujemnie: przykryć też padding wyspy; wyspa przycina na własnej krawędzi (overflow-x: clip) */
 	z-index: 0 !important;
@@ -1799,7 +1799,7 @@ a.sklepag-kup {
 		linear-gradient(180deg, rgba(245, 245, 245, 0.045) 1px, transparent 1px) 0 0 / 7rem 7rem,
 		radial-gradient(circle, rgba(191, 255, 56, 0.16) 1px, transparent 1.8px) 0 0 / 7rem 7rem;
 	/* Łagodnie gaśnie ku dołowi, SYMETRYCZNIE i nigdy do zera — na szerokim ekranie lewa
-	   strona była gołą czernią (przegląd na żywo 25.08: „po lewej nie ma tła i siatki"). */
+	   strona była gołą czernią (po lewej nie było tła ani siatki). */
 	-webkit-mask-image: radial-gradient(160% 120% at 50% 18%, #000 38%, rgba(0, 0, 0, 0.5) 72%, rgba(0, 0, 0, 0.22) 100%);
 	mask-image: radial-gradient(160% 120% at 50% 18%, #000 38%, rgba(0, 0, 0, 0.5) 72%, rgba(0, 0, 0, 0.22) 100%);
 }
@@ -1866,7 +1866,7 @@ a.sklepag-kup {
 	}
 }
 
-/* Baner końcowy przepuszcza siatkę i skan (sędzia r3: pusta prawa połowa) — ta sama materia
+/* Baner końcowy przepuszcza siatkę i skan (pusta prawa połowa) — ta sama materia
    co reszta tła, plus własna cicha poświata po prawej. */
 .sklepag-final--baner {
 	background: rgba(16, 17, 22, 0.72);
@@ -1935,7 +1935,7 @@ a.sklepag-kup {
 }
 
 /* Finał: przyciski jako wariant z obrysem — pełna limonka zostaje dla „Zobacz szczegóły" na
-   kartach (sędzia r3: pięć identycznych pigułek na jednym scrollu = akcent staje się tłem). */
+   kartach (pięć identycznych pigułek na jednym scrollu = akcent staje się tłem). */
 .sklepag-final--baner .sklepag-kup {
 	background: transparent;
 	color: var(--sklepag-limonka);
@@ -1975,11 +1975,11 @@ a.sklepag-kup {
 	scale: none !important;
 }
 
-/* ===== STRONA PRODUKTU — runda działu stron (PR 2a, 25.08): system listy przeniesiony 1:1 =====
+/* ===== STRONA PRODUKTU — system listy przeniesiony 1:1 =====
    Tło blueprint + pingi, etykiety numerowane, sekcje pełnej szerokości, karty z hoverem
    łańcuchowym, kaskada i kierunki wejść z motywu, galeria w FAZACH z kadrami w ciemnych oknach. */
 /* Treść nad tłem — ale NIE tło/pingi (są absolutne pod spodem) i NIE pigułka sticky (jest fixed;
-   ta reguła bez wykluczenia robiła z niej zwykły element na końcu strony — przegląd na żywo 25.08). */
+   ta reguła bez wykluczenia robiła z niej zwykły element na końcu strony). */
 .sklepag-produkt > :not(.sklepag-tlo, .sklepag-pingi, .sklepag-sticky) {
 	position: relative;
 	z-index: 1;
@@ -1987,7 +1987,7 @@ a.sklepag-kup {
 
 /* Pigułka sticky nie bierze udziału w kaskadzie wejścia (jest dzieckiem wyspy) — ma WŁASNE wejście:
    wjazd z dołu z odbiciem (krzywa reveal gospodarza) i zjazd z wygaszeniem, sterowane klasą stanu
-   z front-ruch.js (przegląd na żywo 25.08: „nie wiem, czy jest animacja" — był przeskok display). */
+   z front-ruch.js (nie było widać animacji — był przeskok display). */
 .sklepag-wyspa > .sklepag-sticky,
 .sklepag-js .sklepag-wyspa > .sklepag-sticky {
 	opacity: 0;
@@ -2019,7 +2019,7 @@ a.sklepag-kup {
 }
 
 /* JAK DZIAŁA na stronie produktu: tor sygnału NAD kartami jako stepper z węzłami (01 ● — ● — ● 03),
-   węzeł pierwszego kroku pulsuje jak kropka statusu gospodarza (sędzia: goły myślnik w przerwie
+   węzeł pierwszego kroku pulsuje jak kropka statusu gospodarza (goły myślnik w przerwie
    między kartami wyglądał na niedokończony). */
 .sklepag-produkt .sklepag-kroki--siatka {
 	padding-top: 1.6rem;
@@ -2164,7 +2164,7 @@ a.sklepag-kup {
 }
 
 /* Faza 01: nagranie przycięte do OKNA CZATU (pionowe 380×560) obok pionowego zrzutu okna —
-   dwa równe kafle, wyższy rząd, żeby dymki były czytelne (sędzia: „pomniejszona cała strona"). */
+   dwa równe kafle, wyższy rząd, żeby dymki były czytelne (inaczej wygląda jak pomniejszona cała strona). */
 .sklepag-faza--wideo .sklepag-faza-kafle {
 	grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
 }
@@ -2208,7 +2208,7 @@ a.sklepag-kup {
 }
 
 /* Faza z kadrami panelu (pełna szerokość, stos): narracja NAD kadrami w jednym wierszu — numer po lewej,
-   tytuł i opis obok — zamiast lewej kolumny z 650 px pustki pod tekstem (przegląd na żywo 25.08). */
+   tytuł i opis obok — zamiast lewej kolumny z 650 px pustki pod tekstem. */
 .sklepag-faza--panel {
 	grid-template-columns: minmax(0, 1fr);
 }
@@ -2626,7 +2626,7 @@ html.sklepag-lightbox-otwarty {
 	}
 }
 
-/* Faza „nagranie" na tablecie (zmierzone 25.08: przy 700–768 px dwa kafle mają 314–345 px — tabela
+/* Faza „nagranie" na tablecie (zmierzone: przy 700–768 px dwa kafle mają 314–345 px — tabela
    1100 px w 314 px to miniatura): jedna kolumna już poniżej 56rem. Pionowe kafle ChatBota (`--wideo`)
    są przy tej szerokości czytelne i zostają w dwóch kolumnach do 40rem. */
 @media (max-width: 56rem) {
@@ -2669,7 +2669,7 @@ html.sklepag-lightbox-otwarty {
 		aspect-ratio: 4 / 3;
 	}
 
-	/* Nagranie panelu na telefonie (sędzia r1: 900 px panelu ściśnięte do 390 px = litery kilku pikseli):
+	/* Nagranie panelu na telefonie (900 px panelu ściśnięte do 390 px = litery kilku pikseli):
 	   jak kadry — 4:3 od lewej-góry (przycisk przebiegu i pierwsze kolumny raportu), prawa krawędź gaśnie. */
 	.sklepag-faza--nagranie .sklepag-kafel--wideo .sklepag-kafel-kadr {
 		aspect-ratio: 4 / 3;
@@ -2718,7 +2718,7 @@ html.sklepag-lightbox-otwarty {
 /* Pudełko zakupu: „Kup teraz" w hero, finale i pigułce to KOTWICE do sekcji ceny (zakup wymaga
    checkboxa zgody z art. 38, który tu mieszka). Sekcja ma margines pod sticky nagłówkiem gospodarza
    (cena zostaje w kadrze), a formularz jest RAMKĄ, która błyska limonką po przyjściu z kotwicy
-   (przegląd na żywo 25.08: „czemu Kup teraz jest tu i górny też tu przekierowuje?"). */
+   (górny przycisk prowadził w to samo miejsce co „Kup teraz” niżej). */
 .sklepag-sekcja-zakup {
 	scroll-margin-top: 7rem; /* nagłówek gospodarza ~3.5rem + oddech; skok liczy się przed wjazdem sekcji (26 px) */
 }
@@ -2741,7 +2741,7 @@ html.sklepag-lightbox-otwarty {
 	100% { border-color: var(--sklepag-linia); box-shadow: 0 0 0 0 rgba(191, 255, 56, 0); }
 }
 
-/* Poświata za ilustracją hero w sile gospodarza (0.14 → 0) — głębia zamiast gołego tła (sędzia r2). */
+/* Poświata za ilustracją hero w sile gospodarza (0.14 → 0) — głębia zamiast gołego tła. */
 .sklepag-produkt .sklepag-hero-wizual {
 	position: relative;
 }
@@ -2757,7 +2757,7 @@ html.sklepag-lightbox-otwarty {
 	pointer-events: none;
 }
 
-/* Limonka ma wygrywać na „Kup teraz" (sędzia r4): numery faz i kroków przygaszone do 72 %, a zwycięska
+/* Limonka ma wygrywać na „Kup teraz”: numery faz i kroków przygaszone do 72 %, a zwycięska
    kolumna porównania dostaje cień tła i lewy akcent — przewagę widać bez czytania. */
 .sklepag-faza-numer,
 .sklepag-produkt .sklepag-kroki--siatka li::before {
@@ -2765,12 +2765,12 @@ html.sklepag-lightbox-otwarty {
 }
 
 .sklepag-produkt .sklepag-vs-prawa {
-	/* Bez podbarwki tła (przez mgłę gospodarza wychodziła brudno-oliwkowo — przegląd 25.08); sama kreska. */
+	/* Bez podbarwki tła (przez mgłę gospodarza wychodziła brudno-oliwkowo); sama kreska. */
 	box-shadow: inset 2px 0 0 rgba(191, 255, 56, 0.45);
 }
 
-/* Ramki uczciwości i gwarancji trzymają linię z sąsiednimi sekcjami pełnej szerokości (przegląd 25.08:
-   „krzywo" — prawa krawędź kończyła się na torze tekstu 62 rem, sekcje obok na 72 rem). */
+/* Ramki uczciwości i gwarancji trzymają linię z sąsiednimi sekcjami pełnej szerokości (prawa krawędź
+   kończyła się na torze tekstu 62 rem, sekcje obok na 72 rem). */
 .sklepag-produkt .sklepag-uczciwosc,
 .sklepag-produkt .sklepag-gwarancja {
 	max-width: none;
@@ -2851,7 +2851,7 @@ html.sklepag-lightbox-otwarty {
 
 @media (max-width: 40rem) {
 	/* Telefon: kadr panelu 4:3 od lewej-góry + GASNĄCA prawa krawędź — widać, że kadr trwa dalej
-	   (sędzia r3: cięcie w pół słowa czytało się jak utrata treści); całość w lightboxie. */
+	   (cięcie w pół słowa czytało się jak utrata treści); całość w lightboxie. */
 	.sklepag-faza--panel .sklepag-kafel-kadr {
 		aspect-ratio: 4 / 3;
 	}
@@ -2865,7 +2865,7 @@ html.sklepag-lightbox-otwarty {
 	}
 
 	/* Pigułka sticky na telefonie: zwarta (cena mniejsza, ciaśniejszy przycisk) i dosunięta do LEWEJ —
-	   prawy dolny róg należy do bąbelka czatu (sędzia: dwa stałe elementy sklejały się w jeden kształt).
+	   prawy dolny róg należy do bąbelka czatu (dwa stałe elementy sklejały się w jeden kształt).
 	   Selektory o TEJ SAMEJ specyficzności, co reguła wejścia pigułki (`.sklepag-js .sklepag-wyspa >
 	   .sklepag-sticky` z `transform: translateX(-50%)`) — sama klasa (0,1,0) przegrywała i pigułka
 	   wystawała poza lewą krawędź (`left: 12px` przechodziło, centrowanie zostawało). */

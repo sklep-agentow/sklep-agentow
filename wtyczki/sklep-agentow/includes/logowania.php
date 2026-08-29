@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-const SKLEPAG_OPOZNIENIE_SUFIT_S = 60;      // Plan §7: sufit opóźnienia; OPÓŹNIENIE, nie blokada (wspólne konta — nie wolno zablokować prawdziwego użytkownika).
+const SKLEPAG_OPOZNIENIE_SUFIT_S = 60;      // Sufit opóźnienia; OPÓŹNIENIE, nie blokada (wspólne konta — nie wolno zablokować prawdziwego użytkownika).
 const SKLEPAG_OPOZNIENIE_OKNO_S  = 15 * 60; // Błędy starsze niż okno nie podbijają opóźnienia.
 
 add_action( 'wp_login', 'sklepag_loguj_udane', 10, 2 );

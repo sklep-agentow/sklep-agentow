@@ -1,6 +1,5 @@
 # Instrukcja instalacji — Sklep Agentów + 2 boty (WordPress)
 
-Wersja robocza (przyrostowa, do finalizacji w K8: zrzuty + diagram).
 Dla właściciela strony — instalacja od zera do pierwszego testowego zakupu.
 Czas: ~30 minut. Nic tu nie wymaga programowania.
 
@@ -25,6 +24,11 @@ instalację całości i uruchomienie sklepu.
 - Konto Stripe (darmowe) — do testów wystarczy samo konto, BEZ aktywacji
   płatności i weryfikacji firmy: <https://dashboard.stripe.com/register>.
 - Dostęp administratora do kokpitu WordPressa (wp-admin).
+- **Limit wysyłki plików: co najmniej 8 MB.** Paczka sklepu waży około 4 MB, a wiele
+  hostingów ma domyślnie ustawione 2 MB — wtedy WordPress odmówi wgrania wtyczki.
+  Sprawdzisz to w: Narzędzia → Zdrowie witryny → Informacje → Serwer, pozycja
+  „Maksymalny rozmiar przesyłanego pliku". Jeśli jest mniejszy niż 8 MB, zajrzyj do
+  sekcji „Najczęstsze problemy" na końcu tej instrukcji — jest tam, co zrobić.
 
 ## Krok 0 — bezpośrednie odnośniki (1 min, WAŻNE na świeżym WordPressie)
 
@@ -89,7 +93,13 @@ powstaje zamówienie i mail. Skąd wziąć sekret webhooka:
 **A. Strona na hostingu z publicznym adresem (docelowo):**
 1. Dashboard Stripe (Test mode) → Developers → Webhooks → Add endpoint.
 2. Adres endpointu: `https://TWOJA-DOMENA/wp-json/sklepag/v1/webhook`
-3. Zdarzenie do nasłuchu: `checkout.session.completed`.
+3. Zdarzenia do nasłuchu — zaznacz **OBA**:
+   - `checkout.session.completed` — zwykła płatność kartą,
+   - `checkout.session.async_payment_succeeded` — płatności, które potwierdzają
+     się z opóźnieniem (m.in. **BLIK**, przelewy).
+
+   ⚠️ Podpięcie tylko pierwszego nie psuje zakupu, ale przy BLIK-u kupujący czeka
+   na mail do najbliższego dociągania (do 10 minut) zamiast dostać go od razu.
 4. Po utworzeniu skopiuj **Signing secret** (`whsec_…`) → wklej w
    Ustawieniach sklepu.
 
@@ -184,8 +194,8 @@ Włącz. Dalej prowadzą instrukcje W paczkach botów (konfiguracja w kwadrans).
   ```
 - **Ustawienia → Czytanie → ODZNACZ opcję zniechęcania wyszukiwarek do
   indeksowania** (oficjalny angielski tekst opcji: „Discourage search engines
-  from indexing this site" — zmierzony na stacku; polskie brzmienie zależy od
-  tłumaczenia Twojego WP, zrzut ekranu dojdzie przy finalizacji instrukcji) —
+  from indexing this site"; polskie brzmienie zależy od tłumaczenia Twojego
+  WordPressa) —
   bez odznaczenia WordPress nie wystawia mapy strony (sitemap) i Google nie
   zaindeksuje sklepu.
 - Rozważ ochronę logowania na poziomie serwera (np. fail2ban albo reguła
@@ -198,14 +208,64 @@ Włącz. Dalej prowadzą instrukcje W paczkach botów (konfiguracja w kwadrans).
 ## Test a produkcja — co trzeba zmienić, żeby sprzedawać naprawdę
 
 Obecnie WSZYSTKO działa w trybie testowym Stripe (baner na stronach sklepu
-o tym przypomina). Przejście na prawdziwe płatności to osobna decyzja
-i osobne kroki — m.in.: aktywacja konta Stripe (weryfikacja tożsamości,
-rachunek), klucze `sk_live_…` i nowy webhook produkcyjny, wysyłka maili
-przez hosting/SMTP, wypełnione Regulamin i Polityka prywatności, usunięcie
-banera testowego. Pełna lista różnic: rozdział „Co oddziela tryb testowy
-od produkcji" w dokumentacji projektu.
+o tym przypomina). Przejście na prawdziwe płatności to osobna decyzja.
+Poniżej najważniejsze kroki. ⛔ **Nie zaczynaj ich sam** — punkt 6 wyjaśnia,
+dlaczego przejście na produkcję wymaga kontaktu z nami:
+
+1. **Aktywacja konta Stripe** — weryfikacja tożsamości i rachunek bankowy,
+   po stronie Stripe.
+2. **Klucze produkcyjne** `sk_live_…` w Ustawieniach sklepu, w miejsce
+   testowych `sk_test_…`.
+3. **Nowy webhook produkcyjny** z własnym sekretem `whsec_…` — sekret z trybu
+   testowego NIE działa na produkcji (to osobne środowiska Stripe).
+4. **Wysyłka maili przez hosting lub SMTP** — bez tego mail po zakupie NIE
+   wyjdzie, a kupujący nie dostanie linku do pobrania.
+5. **Regulamin i Polityka prywatności** wypełnione Twoimi danymi sprzedawcy
+   i opublikowane (przy instalacji powstały jako szkice).
+6. **Oznaczenia trybu testowego** — ⛔ **żadne z nich nie znika samo.**
+   Sklep mówi o trybie testowym w wielu miejscach naraz, wszystkie wpisane na
+   stałe w kod. Kupujący widzi je m.in.:
+   - w banerze na liście produktów i na stronie produktu,
+   - ⛔ **w banerze na stronie „Dziękujemy za zakup", czyli na ekranie oglądanym
+     PO ZAPŁACENIU** — ktoś, kto właśnie zapłacił prawdziwie, przeczytałby tam,
+     że płatności nie są pobierane,
+   - w notce przy przycisku zakupu (numer karty testowej),
+   - w pytaniu „Co znaczy tryb testowy?" w sekcji FAQ,
+   - ⛔ **w treści e-maila wysyłanego po zakupie.**
+
+   Do tego panel administratora ma własne oznaczenia trybu testowego — te widzisz
+   tylko Ty, nie kupujący.
+
+   ⛔ **Nie traktuj powyższej listy jako kompletnej** — dlatego przejście na
+   prawdziwe płatności zaczyna się od jednego kroku: **napisz do nas**.
+   Przejrzenie całego sklepu i usunięcie wszystkich oznaczeń to nasza robota
+   i nowa paczka. Sam z panelu tego nie wyłączysz.
+7. **Wtyczka bezpieczeństwa lub WAF** (jeśli działa na stronie) — dopuść
+   publiczny POST na `…/wp-json/sklepag/v1/webhook`; autoryzacją jest podpis
+   Stripe, nie logowanie.
+8. **Podatki (VAT/OSS)** — to sprawa Twojej księgowości. Sklep przekazuje do
+   Stripe cenę produktu i nie wylicza podatku za Ciebie.
+9. **Boty z prawdziwym AI** (jeśli używasz ich u siebie) — każdy bot ma
+   własne ustawienia i własny klucz API dostawcy AI; w paczkach botów są
+   osobne instrukcje.
 
 ## Najczęstsze problemy
+
+- **Przy wgrywaniu wtyczki: „Przesłany plik przekracza dyrektywę upload_max_filesize"**
+  (po angielsku: „The uploaded file exceeds the upload_max_filesize directive in php.ini")
+  → limit wysyłki plików na Twoim hostingu jest mniejszy niż paczka sklepu (~4 MB).
+  Masz trzy wyjścia, od najprostszego:
+  1. W panelu hostingu znajdź ustawienia PHP i podnieś **upload_max_filesize** oraz
+     **post_max_size** do 32 MB. U większości dostawców to jedno pole do zmiany.
+  2. Jeśli nie widzisz takiej opcji — napisz do obsługi hostingu jedno zdanie:
+     „Proszę o podniesienie upload_max_filesize i post_max_size do 32 MB".
+  3. Gdy żadne z powyższych nie wchodzi w grę — rozpakuj paczkę na komputerze i wgraj
+     powstały katalog przez menedżer plików albo FTP do `wp-content/plugins/`, a potem
+     włącz wtyczkę w zakładce Wtyczki. Efekt jest ten sam.
+- **Przy wgrywaniu wtyczki: „Nie udało się przenieść przesłanego pliku do wp-content/uploads/…"**
+  → katalog, w którym WordPress trzyma przesyłane pliki, ma złego właściciela i serwer nie
+  może do niego pisać. To ustawienie hostingu, nie wtyczki. Napisz do obsługi: „Proszę
+  ustawić właściciela katalogu wp-content/uploads na użytkownika serwera WWW".
 
 - **Zakup „wisi" na Dziękujemy** → webhook nie dochodzi. Sprawdź sekret
   webhooka (Dashboard vs CLI — to RÓŻNE sekrety!). Sklep i tak domknie

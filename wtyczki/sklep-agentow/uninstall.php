@@ -16,7 +16,7 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 delete_option( 'sklepag_stripe_klucz_sekretny' );
 delete_option( 'sklepag_stripe_webhook_sekret' );
 
-// Cron też ZAWSZE out, PRZED wczesnym return (ta sama klasa co A3-2 w Segregatorze):
+// Cron też ZAWSZE out, PRZED wczesnym return (ta sama klasa co w Segregatorze):
 // harmonogram to nie dane sprzedaży, a martwy wpis w cronie bez wtyczki
 // tylko sypie błędami „nie ma takiej funkcji".
 wp_clear_scheduled_hook( 'sklepag_dociagnij_zalegle' );

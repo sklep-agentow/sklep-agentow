@@ -149,7 +149,7 @@ class Sklepag_Lista_Zamowien extends WP_List_Table {
 			case 'status':
 				return sklepag_badge_statusu( $item->status );
 			case 'akcje':
-				// Akcja widoczna bez hovera (uwaga sędziego wyglądu — wzorce §3).
+				// Akcja widoczna bez hovera (ukryta pod najechaniem bywa nieodkrywalna).
 				return '<a href="' . esc_url( sklepag_url_zamowienia( (int) $item->id ) ) . '" class="button button-small">Szczegóły</a>';
 			default:
 				return '';

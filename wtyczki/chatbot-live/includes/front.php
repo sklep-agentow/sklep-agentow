@@ -145,7 +145,7 @@ function chatl_rate_limit( $akcja, $prog = CHATL_LIMIT_NA_MIN, $okno_sekund = MI
  * żądaniem, więc na stronie BEZ proxy zaufanie mu oznaczałoby, że każdy obchodzi
  * limit, podając za każdym razem inny adres. Domyślnie przełącznik jest WYŁĄCZONY.
  *
- * Kolejność (jak w opisie luki L2): CF-Connecting-IP, potem pierwszy adres
+ * Kolejność: CF-Connecting-IP, potem pierwszy adres
  * z X-Forwarded-For, potem REMOTE_ADDR.
  *
  * @return string Adres IP albo pusty string, gdy nie da się go ustalić.
@@ -192,7 +192,7 @@ function chatl_ip_goscia() {
  *
  * Do schematu 7 to były liczniki w wp_options (get_option → +1 →
  * update_option). Odczyt-modyfikacja-zapis bez blokady gubił 13 z 20
- * równoległych inkrementacji (audyt DK-5) — i to tym więcej, im większy ruch,
+ * równoległych inkrementacji — i to tym więcej, im większy ruch,
  * czyli dokładnie wtedy, gdy liczba jest właścicielowi potrzebna. INSERT jest
  * atomowy sam z siebie: N żądań naraz = N wierszy. Licznik w panelu = COUNT(*).
  *
@@ -223,7 +223,7 @@ function chatl_odnotuj_zdarzenie( $rodzaj, $szczegol = '', $sciezka = '' ) {
 /**
  * Stan zdarzeń danego rodzaju dla panelu: ile, kiedy ostatnie, z jakiego powodu,
  * rozbicie po ścieżce. Jedno źródło prawdy — ta sama tabela, którą zasila
- * chatl_odnotuj_zdarzenie(); nie ma drugiej kopii liczby (DK-1).
+ * chatl_odnotuj_zdarzenie(); nie ma drugiej kopii liczby.
  *
  * @param string $rodzaj 'pulapka' albo 'nonce'.
  * @return array{ile:int,ostatnia:string,szczegol:string,sciezki:array<string,int>}
@@ -284,7 +284,7 @@ function chatl_wymagaj_nonce() {
 		return;
 	}
 	/*
-	 * Zły nonce też ma swój kubeł (P2-Z3 / LC-F2): ta ścieżka była jedyną bez
+	 * Zły nonce też ma swój kubeł: ta ścieżka była jedyną bez
 	 * limitu — skrypt z zepsutym noncem przechodził 30/30 przy progu 10, a każde
 	 * żądanie kończyło się ZAPISEM do bazy. Osobny kubeł, nie wspólny „chat",
 	 * żeby odrzucenie nie zjadało właściwego limitu gościa.
@@ -293,7 +293,7 @@ function chatl_wymagaj_nonce() {
 	 * Widget rozpoznaje „zły nonce" tylko po `kod === 'nonce'` (widget.js,
 	 * `toZlyNonce()`) i tylko wtedy dociąga świeży nonce i ponawia pytanie.
 	 * Odpowiedź bez tego klucza wyłączyłaby samonaprawę — a to jest dokładnie
-	 * luka L1: witryna za proxy z wyłączonym zaufaniem nagłówkom ma JEDEN kubeł
+	 * Witryna za proxy z wyłączonym zaufaniem nagłówkom ma JEDEN kubeł
 	 * dla wszystkich gości, więc przy stronie z cache 11. gość na minutę
 	 * dostałby twardą odmowę zamiast cichego odświeżenia. Powyżej progu
 	 * odpowiadamy więc TAK SAMO, tylko bez dopisywania zdarzenia do bazy.
@@ -446,7 +446,7 @@ function chatl_ajax_pytanie() {
 	$pulapka       = chatl_pulapka_zlapala( $sesja_wstepna );
 	if ( '' !== $pulapka ) {
 		/*
-		 * OSOBNY kubeł dla złapanych (LC-F2): ścieżka pułapki była nielimitowana
+		 * OSOBNY kubeł dla złapanych: ścieżka pułapki była nielimitowana
 		 * (200 żądań / 7 s, 0×429) i każde żądanie pisało do bazy — bot miał
 		 * drogę TAŃSZĄ niż uczciwy gość. Kubeł jest osobny, więc złapane dalej
 		 * nie zjadają kubła gościa (WARUNEK 2 strażnika pułapki zostaje prawdą),
@@ -546,7 +546,7 @@ function chatl_ajax_pytanie() {
 				 * Próg pewności: model nie zgaduje. Ale zanim padnie „nie znam" —
 				 * SIATKA BEZPIECZEŃSTWA: reguły wpisane ręcznie przez właściciela.
 				 * Bez tego bot mówił „nie znam" przy odpowiedzi LEŻĄCEJ w bazie
-				 * (zmierzone 25.08: para o gwarancji trafiała w chatl_dopasuj,
+				 * (zmierzone: para o gwarancji trafiała w chatl_dopasuj,
 				 * a hybryda oddawała tekst awaryjny — model bywa nadostrożny
 				 * przy tematach pieniędzy i to jest OK, od pewników są reguły).
 				 */
@@ -623,7 +623,7 @@ function chatl_ajax_zgloszenie() {
 		 * Ten sam kubeł złapanych co przy pytaniu: powyżej progu 429 bez zapisu.
 		 * Wcześniej sufit CHATL_LIMIT_PULAPKA dotyczył tylko ZAPISU zgłoszenia,
 		 * a samo żądanie szło bez limitu z odpowiedzią „sukces" — złapany bot
-		 * mógł bez końca dopisywać zdarzenia (LC-F2, P2-Z3).
+		 * mógł bez końca dopisywać zdarzenia.
 		 */
 		if ( ! chatl_rate_limit( 'pulapka', CHATL_LIMIT_PULAPKA ) ) {
 			wp_send_json_error( array( 'komunikat' => 'Za dużo wiadomości w krótkim czasie — odczekaj chwilę i spróbuj ponownie.' ), 429 );
@@ -681,7 +681,7 @@ function chatl_ajax_zgloszenie() {
 	 * z adresu) egzekwuje kubeł 'pulapka' WYŻEJ — powyżej niego żądanie kończy
 	 * się 429, zanim cokolwiek zostanie zapisane. Nie dotyczy czystych zgłoszeń,
 	 * więc prawdziwy klient nigdy tędy nie wypada. Dzięki temu każde złapane
-	 * zdarzenie z tej ścieżki ma swój wiersz zgłoszenia (licznik = lista, DK-1).
+	 * zdarzenie z tej ścieżki ma swój wiersz zgłoszenia (licznik = lista).
 	 */
 
 	// Zapis MUSI być sprawdzony: bez tego padnięty INSERT kończył się „Dziękujemy",
@@ -713,7 +713,7 @@ function chatl_ajax_zgloszenie() {
 	 * żądania, które kończą się bez wiersza: wyłączony czat, zły adres e-mail,
 	 * pusta treść, brak zgody, padnięty INSERT — a bot wypełniający pole na
 	 * ślepo zwykle nie poda ani adresu, ani zgody. Licznik znów obiecywałby
-	 * wiersze, których nie ma (DK-1). Sufit zapisu stoi WYŻEJ i działa
+	 * wiersze, których nie ma. Sufit zapisu stoi WYŻEJ i działa
 	 * niezależnie: powyżej progu żądanie kończy się, zanim tu dojdzie.
 	 */
 	if ( '' !== $pulapka ) {
@@ -816,7 +816,7 @@ function chatl_pulapka_zlapala( $sesja, $sprawdzaj_czas = true ) {
  *
  * Od schematu 8 zdarzenie ma własny wiersz w chatl_zdarzenia (patrz
  * chatl_odnotuj_zdarzenie): licznik w wp_options gubił równoległe zapisy
- * i rozjeżdżał się z listą złapanych zgłoszeń (DK-1, DK-5).
+ * i rozjeżdżał się z listą złapanych zgłoszeń.
  *
  * @param string $powod   'pole' albo 'czas'.
  * @param string $sciezka 'pytanie' albo 'zgloszenie' (którędy przyszło).
@@ -840,7 +840,7 @@ function chatl_odnotuj_wysylke_powiadomienia( $wyslano, $adres ) {
 		false
 	);
 	// Znacznik awarii poczty, który sam pada po cichu, to podwójna cisza —
-	// porażka jego zapisu idzie do trwałego śladu błędu bazy (A2-F4).
+	// porażka jego zapisu idzie do trwałego śladu błędu bazy.
 	if ( ! $zapisano ) {
 		chatl_log_bledu_bazy( 'chatl_odnotuj_wysylke_powiadomienia', 'znacznik „powiadomienia mailowe nie wychodzą”' );
 	}

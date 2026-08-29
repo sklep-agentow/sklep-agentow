@@ -1,6 +1,6 @@
 # Segregator maila — dokumentacja techniczna
 
-**Wersja wtyczki: 1.3.5 · wersja schematu bazy: 4 · WordPress 6.0+ · PHP 8.1+**
+**Wersja wtyczki: 1.3.6 · wersja schematu bazy: 4 · WordPress 6.0+ · PHP 8.1+**
 
 > **Po co ten dokument.** To jest **mapa systemu dla audytora i programisty**, nie ulotka.
 > Każda liczba i każda nazwa tutaj jest wzięta z kodu, nie z pamięci — jeśli coś się
@@ -175,7 +175,7 @@ zamknięcie karty zamiast kliknięcia „Zaczynam” też liczy się jako „wid
 
 `segm_komunikat_{ID_użytkownika}` — komunikat i zapis rozmowy z serwerem poczty
 (wyświetlany przez `admin_notices` z priorytetem **1**, czyli przed paskami wtyczki:
-inaczej potwierdzenie zapisu tonęło pod paskami błędu AI i błędu bazy — WK-17)
+inaczej potwierdzenie zapisu tonęło pod paskami błędu AI i błędu bazy)
 przenoszony przez przekierowanie, ważny **5 minut**.
 
 `segm_liczenie_{ID_użytkownika}` — wynik „Policz na próbce" wraz z wpisanymi
@@ -190,7 +190,7 @@ więc deinstalacja kasuje go zapytaniem `LIKE` po `wp_options` (razem z wierszam
 
 | Stała | Wartość | Gdzie | Znaczenie |
 |---|---|---|---|
-| `SEGM_WERSJA` | `1.3.5` | plik główny | wersja wtyczki |
+| `SEGM_WERSJA` | `1.3.6` | plik główny | wersja wtyczki |
 | `SEGM_WERSJA_SCHEMATU` | `4` | plik główny | wyzwala migrację tabel |
 | `SEGM_RETENCJA_DNI` | `90` | plik główny | po tylu dniach cron kasuje cudzą korespondencję |
 | `SEGM_BLOKADA` | `segm_operacja_w_toku` | plik główny | nazwa znacznika „operacja trwa" |
@@ -643,7 +643,7 @@ Kod HTTP jest tłumaczony na zdanie po polsku (`segm_opis_bledu_ai()`), bo samo
 stronie (odrzucony klucz, zła nazwa modelu, brak uprawnień) od awarii
 u dostawcy — żeby nie szukał błędu u siebie, gdy go tam nie ma.
 
-**Co dokładnie opuszcza WordPressa w trybie AI** (A3-3 — deklaracja ma to mówić
+**Co dokładnie opuszcza WordPressa w trybie AI** (deklaracja ma to mówić
 wprost, bo właściciel pisze z niej własną politykę prywatności): nadawca (190
 znaków), temat (300), treść maila z próbki (pierwsze 800) i identyfikator wiersza
 próbki — dla każdego maila w partii do `SEGM_AI_PARTIA`; do tego **nazwy

@@ -76,7 +76,7 @@
 	margin: 8px 0 16px;
 }
 
-/* Karty KPI (wzorce §1-2: 4 w rzędzie, na wąskim ekranie łamią się w kolumnę). */
+/* Karty KPI: 4 w rzędzie, na wąskim ekranie łamią się w kolumnę. */
 .sklepag-kpi {
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -228,7 +228,7 @@
 	}
 }
 
-/* Widok zamówienia (K3d): dwie kolumny wg wzorców §4 — na wąskim ekranie jedna. */
+/* Widok zamówienia: dwie kolumny — na wąskim ekranie jedna. */
 .sklepag-zamowienie-kolumny {
 	display: grid;
 	grid-template-columns: minmax(0, 2fr) minmax(240px, 1fr);

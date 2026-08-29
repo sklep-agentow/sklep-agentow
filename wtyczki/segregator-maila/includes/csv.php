@@ -65,7 +65,7 @@ function segm_wykryj_kodowanie( $probka ) {
  * Przekodowanie pojedynczej komórki na UTF-8 (baza i cała wtyczka są w UTF-8).
  *
  * Robi to ICONV, nie mbstring — i to nie jest kwestia gustu: mbstring w PHP
- * NIE ZNA Windows-1250. Sprawdzone na stacku (PHP 8.4):
+ * NIE ZNA Windows-1250. Sprawdzone na PHP 8.4:
  *   mb_list_encodings() => Windows-1252, Windows-1254, ISO-8859-2, Windows-1251
  * a mb_convert_encoding( ..., 'Windows-1250' ) rzuca ValueError „contains
  * invalid encoding". Podstawienie ISO-8859-2 „bo podobne" byłoby zgadywaniem:
@@ -241,7 +241,7 @@ function segm_importuj_csv( $sciezka ) {
 		return new WP_Error( 'segm_csv', 'Plik nie zawiera żadnego poprawnego wiersza (kolumny: od, temat, tresc, opcjonalnie kategoria_oczekiwana).' );
 	}
 
-	// P2.3: od tego miejsca ruszamy tabelę, więc bierzemy znacznik — przebieg
+	// Od tego miejsca ruszamy tabelę, więc bierzemy znacznik — przebieg
 	// uruchomiony w drugiej karcie policzyłby się na próbce w połowie wymiany.
 	$zajeta = segm_zajmij_blokade( 'import próbki z pliku CSV' );
 	if ( true !== $zajeta ) {

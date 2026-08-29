@@ -11,6 +11,15 @@ Nic jeszcze.
 
 ---
 
+## [1.3.6] — 2026-08-29
+
+### Zmienione
+- **Wydanie porządkowe.** Z komentarzy w kodzie i z dokumentacji technicznej usunięte
+  wewnętrzne oznaczenia naszych raportów z testów — komentarz niesie powód, dla którego
+  kod tak wygląda, a nie numer dokumentu. Zero zmian w działaniu segregatora.
+
+---
+
 ## [1.3.5] — 2026-08-28
 
 ### Zmienione
@@ -35,34 +44,34 @@ Nic jeszcze.
 ## [1.3.2] — 2026-08-24 · schemat bazy 3 → 4
 
 ### Naprawione
-- **Przebieg na żywo zapisuje zamiar PRZED ruchem poczty** (LS-F2): wiersz przebiegu
+- **Przebieg na żywo zapisuje zamiar PRZED ruchem poczty**: wiersz przebiegu
   i pozycja „w toku" trafiają do bazy, zanim poleci `UID MOVE`; potwierdzenie od serwera
   zmienia ją na „przeniesiono". Gdy baza odmówi zapisu, wiadomość NIE jest ruszana,
   przebieg przerywa się z widocznym błędem, a `przeniesionych` liczy tylko potwierdzone
   ruchy. Wcześniej przy padzie bazy poczta była rozłożona po folderach, historia pusta,
   cofanie martwe, a panel pokazywał sukces.
-- **Cofnięcie liczy tylko to, co naprawdę wróciło** (LS-F1): klient IMAP uznaje ruch za
+- **Cofnięcie liczy tylko to, co naprawdę wróciło**: klient IMAP uznaje ruch za
   udany po niepustym `COPYUID` (na serwerze bez UIDPLUS — po porównaniu stanu folderu),
   bo `UID MOVE` nieistniejącego UID-a kończy się „OK" (RFC 3501 §6.4.8). Wiadomość
   przeciągnięta w międzyczasie ręcznie dostaje błąd przy pozycji, przebieg nie jest
   oznaczany jako cofnięty w całości i drugą próbę da się zrobić.
 - **UIDVALIDITY folderu docelowego zapisywana przy przenoszeniu i sprawdzana przy
-  cofaniu** (T-3): folder skasowany i założony na nowo nie podsunie obcej wiadomości
+  cofaniu**: folder skasowany i założony na nowo nie podsunie obcej wiadomości
   o tym samym numerze — wtyczka szuka wtedy po `Message-ID`. Schemat bazy 3 → 4
   (kolumna `segm_skrz_ruchy.uidvalidity_do`, podniesienie automatyczne).
-- **Zamek operacji atomowy** (DK-6, T-4): `segm_zajmij_blokade()` zajmuje znacznik jednym
+- **Zamek operacji atomowy**: `segm_zajmij_blokade()` zajmuje znacznik jednym
   `INSERT IGNORE` i liczy wiersze, zamiast `get_option()`+`add_option()` (które nadpisywało
   cudzy wpis i wpuszczało dwie operacje naraz); stan czyta prosto z bazy. Znacznik
   w obcym kształcie (bez terminu) nie blokuje już wtyczki na zawsze.
-- **Zapis klucza API ma wynik** (A2-F3): `segm_zapisz_klucz()` zwraca `bool` zmierzony
+- **Zapis klucza API ma wynik**: `segm_zapisz_klucz()` zwraca `bool` zmierzony
   odczytem po zapisie; gdy baza odrzuci zapis, panel mówi o niezapisanym kluczu zamiast
   „Zapisano" (wcześniej „Przetestuj klucz" testował stary klucz i dawał zielone
   potwierdzenie). Znacznik awarii trybu AI, wersja schematu — zapis mierzony, porażka
-  zostawia ślad błędu bazy (A2-F4).
-- **Puste pole liczbowe nie zjeżdża po cichu do 1** (KR4): port i limit skrzynki oraz
+  zostawia ślad błędu bazy.
+- **Puste pole liczbowe nie zjeżdża po cichu do 1**: port i limit skrzynki oraz
   dzienny limit wywołań AI — pole puste, nie-liczba albo poza zakresem zostawia
   poprzednią wartość, a właściciel dostaje ostrzeżenie zamiast „Zapisano".
-- **Ekran „Skrzynka (IMAP)" w pierwszych minutach** (WK-5, WK-15, WK-17): szary przycisk
+- **Ekran „Skrzynka (IMAP)" w pierwszych minutach**: szary przycisk
   „Sprawdź połączenie" mówi teraz, że dane trzeba najpierw ZAPISAĆ, i wymienia brakujące
   pola; opis pola hasła mówi, skąd wziąć hasło aplikacji, i odsyła do sekcji instrukcji
   po tytule; potwierdzenie zapisu pokazuje się jako pierwszy pasek wtyczki (wcześniej
@@ -72,7 +81,7 @@ Nic jeszcze.
 - **Wiersz przebiegu bez podsumowania ostrzega** zamiast mówić „w toku" w nieskończoność:
   gdy proces zginie albo baza odrzuci także końcowy zapis, komunikat mówi wprost, że
   przebieg nie doszedł do końca, a liczby w wierszu mogą być niepełne.
-- **Komunikaty po ludzku i prawdziwe** (WK-3, WK-4, WK-13, A4-F3): pasek trybu AI przy
+- **Komunikaty po ludzku i prawdziwe**: pasek trybu AI przy
   BRAKU klucza jest żółtym ostrzeżeniem („nie ma klucza; tryb regułowy jest pełnoprawny;
   klucz bierzesz stąd…"), a nie czerwonym „KLUCZ API ZOSTAŁ ODRZUCONY. Sprawdź, czy jest
   wpisany w całości" o kluczu, którego właściciel nigdy nie wpisywał; tabelka zgodności
@@ -80,7 +89,7 @@ Nic jeszcze.
   zdaniem po polsku („Serwer odrzucił połączenie na tym porcie — nikt tam nie odbiera"),
   a kod systemowy zostaje w części „Szczegóły techniczne"; pole wyboru szyfrowania ma
   etykietę dla czytnika ekranu.
-- **Deklaracja prywatności mówi wprost, co wychodzi do dostawcy AI** (A3-3): pełna lista
+- **Deklaracja prywatności mówi wprost, co wychodzi do dostawcy AI**: pełna lista
   składników żądania (nadawca, temat, treść do 800 znaków, identyfikator wiersza próbki,
   nazwy kategorii, nazwa modelu), lista tego, co NIE wychodzi, informacja o jednym
   ponowieniu żądania oraz o tym, że „Przetestuj klucz" wysyła wyłącznie słowo „ping".

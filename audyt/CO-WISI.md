@@ -72,6 +72,164 @@ wprost dopuścił drogę „nazwany dług zamiast czyszczenia w tym PR-ze".
 przypadki do `narzedzia-qa/paczka-zgodnosc-proba-kontrolna.sh`, wyczyścić trafienia w trzech
 plikach jadących do klienta (komentarz ma nieść POWÓD, numer zostaje w PR i commicie).
 
+### STAN PO `#209` (29.08) — CZTERY RODZINY, TRZY RUNDY, I DLACZEGO ZA KAŻDYM RAZEM „ZERO" BYŁO PRZEDWCZESNE
+
+⛔ **Ten wpis był raz nieprawdziwy i to jest część lekcji.** Po rundzie 2 stało tu zdanie
+„rodzina odsyłaczy słownych — **wyczyszczona**". Runda 3 wykazała, że w paczce zostaje wtedy
+**20 wierszy**, w tym siedem będących odmienioną formą słowa poprawionego w tym samym pliku
+i tym samym commicie. Zdanie zostało poprawione dopiero po tej uwadze.
+
+**Co znalazła która runda — i czym mierzona:**
+
+| runda | rodzina | ile | miara |
+|---|---|---|---|
+| r1 | identyfikatory (`SK-L3-005`, `LS-F1`, `A3-2`, `Do audytu`) | 22 | wzorzec recenzenta |
+| r2 | odsyłacze słowne, mianownik (`przegląd na żywo DD.MM`, `sędzia`, `Znalezisko testu`) | 42 | wzorzec recenzenta |
+| r2 (moje) | formy poza oboma wzorcami (`feedback`, `recon`, `runda stron`, `ZMIERZONE DD.MM`) | 65 podmian | wzorzec własny — **za wąski** |
+| r3 | odmiany polskie (`sędzi`, `sędziego`) + nasze rundy robocze (`Koszyk A`, `Opinie v2`) + nazwy dokumentów (`ZWIAD-STRIPE`, `K3d`, `raport audytora`) | 20 | wzorzec recenzenta |
+| r3 (moje) | odsyłacze do `PLAN-PROJEKTU.md` i naszych PR: `Plan §7`, `granica §9`, `§4A`, `§5b.1`, `§5b.3`, `(PR 2)` | 8 | **wyliczenie kandydatów** |
+
+⛔ **Rodzina z ostatniego wiersza nie była na liście żadnego z nas.** Znalazło ją dopiero
+wyliczenie po znaku `§` i po kształcie naszych oznaczeń — nie szukanie form, o których się
+pamiętało. To jest cała różnica między „mój wzorzec nic nie znajduje" a „nie ma już kandydatów".
+
+**Miara, która ma zostać** (trzy niezależne wyliczenia, wszystkie odtwarzalne):
+
+```
+# A — każda linia z datą, BEZ żadnego kontekstu przed datą
+grep -rnE '[0-9]{2}\.[0-9]{2}' wtyczki --include=*.php --include=*.md --include=*.js \
+     --include=*.txt --include=*.css
+
+# B — rdzenie słowne, NIE całe słowa (polski odmienia: sędzia → sędziego → sędzi)
+grep -rniE '(sędzi|zwiad|wzorc[eóa]w? §|Koszyk A|Opinie v2|rundzie stron|feedback|recon |znalezisk|UZUPEŁNIEN|przegląd|audyt [0-9]|raport audytora)' \
+     wtyczki --include=*.php --include=*.md --include=*.js --include=*.txt --include=*.css \
+  | grep -viE 'przeglądark|reconciliation'
+
+# C — kształt NASZYCH oznaczeń (to wyliczenie znalazło rodzinę, której nikt nie szukał)
+grep -rnE '(§[0-9]|\bK[0-9][a-z]?\b|\bA[0-9]-|\bT[0-9]\b|ZWIAD|\bD2[0-9]\b|\bPR [0-9])' \
+     wtyczki --include=*.php --include=*.md --include=*.js --include=*.txt --include=*.css
+```
+
+Fałszywe trafienia tych wyliczeń są znane i mają zostać: daty w API Stripe (`28.10.2024`),
+przykład formatu wpisu (`'25.08.2026'`), `56.01rem`, `50.000`, stała gamma `12.92`, słowa
+„przeglądarka" i „reconciliation", `uzupełnienie` jako zwykłe słowo, odsyłacze do **publicznych**
+standardów (RFC 3501 §6.4.8, XML 1.0 §2.5) oraz `§N` odsyłające **wewnątrz** dokumentacji
+technicznej, którą klient dostaje w paczce.
+
+⛔ **Co ZOSTAJE długiem — i UWAGA, pierwotny opis tego długu był NIETRAFNY.** Napisałam tu
+„skaner nie zna żadnej z tych czterech rodzin". Recenzja r4 wykazała, że dla rodziny
+`\bK[0-9]\b` to nieprawda: skaner **zna** ten wzorzec od wersji 1.3.0
+(`narzedzia-qa/slady-wewnetrzne.sh:78`), a mimo to przepuścił `K8`
+w `dokumentacja/INSTRUKCJA-INSTALACJI.md`. Prawdziwa wada była w **ZASIĘGU**, nie we
+wzorcach: pętla `for katalog in wtyczki/*/` nigdy nie patrzyła poza katalogi wtyczek,
+przy własnym komentarzu stawiającym znak równości między „pliki wtyczek" a „to, co
+trafia do klienta". ⭐ To ma znaczenie praktyczne: dopisywanie wzorców niczego by nie naprawiło.
+
+⛔ **Zasięgu NIE rozszerzyłam w tym PR-ze i to jest decyzja z pomiaru, nie zaniechanie.**
+Próba rozszerzenia pętli o `dokumentacja/` została **skalibrowana przed scaleniem** i kalibracja
+ją odrzuciła — skaner na CZYSTEJ dokumentacji kończy `EXIT=1`:
+
+```
+$ SLADY_ZALEGLOSCI=/dev/null bash narzedzia-qa/slady-wewnetrzne.sh dokumentacja dokumentacja
+  SLAD  INSTRUKCJA-INSTALACJI.md:101 (adres maszyny dev): Serwery Stripe nie widzą localhosta — użyj oficjalnego Stripe CLI:
+  SLAD  INSTRUKCJA-INSTALACJI.md:103 (adres maszyny dev): stripe listen --forward-to http://localhost:PORT/wp-json/sklepag/v1/webhook
+SLADY 1.3.0 [dokumentacja]: nowe=2, dlug z listy=0, martwe wpisy=0   → EXIT=1
+```
+
+Oba trafienia są **fałszywe**: `localhost` w pliku wtyczki jest śladem, ale w instrukcji
+instalacji jest **treścią, której klient potrzebuje** — bez niej nie skonfiguruje webhooka.
+Wpięcie tego zasięgu postawiłoby CI na czerwono od pierwszego przebiegu. ⛔ Dopisanie tych
+dwóch wierszy do `slady-zaleglosci.txt` **nie wchodzi w grę** — nagłówek tego pliku mówi wprost:
+*„ta lista ma się wyłącznie KURCZYĆ; dopisanie nowego śladu, żeby przepchnąć swój PR, jest
+obejściem bramki, nie jej użyciem"*.
+
+**CO NAPRAWDĘ ZAMYKA tę wadę:** rozdzielić wzorce per TEREN — dla `wtyczki/` pełny zestaw,
+dla `dokumentacja/` węższy (rodzina „numeracja naszych dokumentów”: `K[0-9]`, `D[0-9]{1,2}`,
+`§[0-9]`, `S-0[0-9]`), **bez** wzorca „adres maszyny dev”. Dopiero wtedy pętla może objąć
+`dokumentacja/` i kontrola odwrotna („czysty tekst przechodzi”) będzie zielona. To zmiana
+narzędzia QA, nie produktu — osobny PR.
+
+⛔ **ALE SAMA TA RECEPTA NIE WYSTARCZY — i to jest najważniejsze zdanie tego wpisu.**
+Recenzja r5 wykazała dwa ślady w `dokumentacja/INSTRUKCJA-INSTALACJI.md`, których **żaden
+wzorzec z tej recepty by nie złapał**:
+- „zrzut ekranu dojdzie przy finalizacji instrukcji” — notatka o stanie NASZEJ pracy zapisana
+  zwykłym **słowem**, bez jednego oznaczenia (bliźniak skreślonego w tym samym commicie zdania
+  „do finalizacji w K8: zrzuty + diagram”);
+- „Pełna lista różnic: rozdział «Co oddziela tryb testowy od produkcji» **w dokumentacji
+  projektu**” — odsyłacz do `PLAN-PROJEKTU.md:433`, czyli pliku, którego klient nigdy nie
+  dostaje, podany **parafrazą** zamiast nazwą. Wzorzec `PLAN-PROJEKTU` jest w skanerze
+  (`slady-wewnetrzne.sh:77`) i był bezradny, bo tej nazwy w zdaniu nie ma.
+
+⭐ **Wniosek, który przenosi się na cały projekt:** dla `dokumentacja/` miarą nie jest wzorzec,
+tylko **przeczytanie pliku w całości**. To JEDEN plik na 263 wiersze — przeczytanie go kosztuje
+minuty, a wzorzec przepuścił tam ślad trzy rundy z rzędu. Wzorce zostają jako **siatka
+bezpieczeństwa dla regresji**, nie jako dowód czystości. ⛔ Zasada ogólna: gdy teren da się
+przeczytać w całości, czytanie JEST wyliczeniem — wzorzec jest wtedy zgadywaniem, nie pomiarem.
+
+Nadal długiem zostaje też to, że skaner nie zna rodzin: odsyłaczy słownych, naszych rund
+roboczych i dat `DD.MM`. Teksty są czyste dziś, ale nic nie broni ich jutro — pierwszy nowy komentarz
+z odsyłaczem wjedzie do paczki klienta bez jednego czerwonego światła. To już **trzeci** PR
+z rzędu, w którym ten sam dług kosztuje rundę recenzji.
+**CO ZAMYKA:** wpiąć te trzy wyliczenia do skanera (każda rodzina osobno, plus lista znanych
+fałszywych trafień jako allowlista) i dołożyć po jednym przypadku na rodzinę do
+`narzedzia-qa/paczka-zgodnosc-proba-kontrolna.sh`, **żeby próba mierzyła POKRYCIE, nie samo
+działanie wzorca** — bo dokładnie ta różnica kosztowała trzy rundy.
+⛔ Świadomie NIE robione przed oddaniem: to zmiana narzędzia QA, nie produktu.
+
+---
+
+## 🔴 BANER „TRYB TESTOWY" JEST ZASZYTY W KODZIE — na produkcji skłamie kupującemu (29.08, recenzja #209 r6)
+
+`sklepag_baner_testowy()` (`wtyczki/sklep-agentow/sklep-agentow.php:168`) zwraca **stały HTML,
+bez jednego warunku**, a **wszystkie TRZY wywołania są bezwarunkowe**: `sklep-agentow.php:286` (lista),
+`includes/front-produkt.php:791` (strona produktu) oraz `sklep-agentow.php:393` — ⛔ **strona
+„Dziękujemy za zakup”, czyli ekran widziany PO ZAPŁACIE**. Trzecie miejsce przeoczyłam
+w rundzie 6 i wykazała je dopiero recenzja r7: ktoś, kto właśnie zapłacił prawdziwe
+pieniądze, przeczytałby tam, że płatności nie są pobierane. Treść banera:
+
+> **TRYB TESTOWY** — płatności nie są pobierane. Przetestujesz cały zakup kartą testową, nic nie płacąc.
+
+⛔ **Po przejściu na klucze `sk_live_…` ten napis zostaje.** Kupujący czyta, że nie płaci —
+i płaci. To ścieżka pieniędzy, nie kosmetyka.
+
+**Skąd się wzięło:** instrukcja instalacji obiecywała, że baner „znika sam po przełączeniu na
+klucze produkcyjne" — nieprawda o kodzie (klasa 3, wykazana w recenzji `#209` r6). **Tekst
+poprawiony na prawdziwy w tym PR-ze**: instrukcja mówi teraz wprost, że baner nie znika sam
+i że usunięcie go jest po naszej stronie.
+
+⛔ **KODU NIE RUSZAM PRZED ODDANIEM — decyzja z powodem, nie zaniechanie.** Komentarz przy
+funkcji mówi: *„napis bez zmian — testy na nim polegają"*, więc zmiana warunku tuż przed
+zamrożeniem grozi regresją w testach, które ten napis sprawdzają. Naprawa tekstu **zamyka klasę
+błędu** (dokumentacja przestaje kłamać); wada produktu zostaje tu nazwana.
+
+⛔ **UWAGA — TO NIE JEST JEDNA FUNKCJA. Recepta poniżej była raz za wąska** (recenzja r8/r9:
+obejmowała wyłącznie `sklepag_baner_testowy()`, czyli mniej niż połowę wady). Oznaczeń trybu
+testowego widzianych przez KUPUJĄCEGO jest **siedem** (liczba rosła w rundach 6-10:
+trzy -> sześć -> siedem, za każdym razem bo wypisywałam listę zamiast ją policzyć):
+
+```
+sklep-agentow.php:286             baner — lista produktów          ⟵ sklepag_baner_testowy()
+includes/front-produkt.php:791    baner — strona produktu          ⟵ sklepag_baner_testowy()
+sklep-agentow.php:393             baner — strona „Dziękujemy”      ⟵ sklepag_baner_testowy()
+includes/front-produkt.php:593    ⛔ ETYKIETA PRZYCISKU: „Kup teraz (płatność testowa)”
+includes/front-produkt.php:594    notka przy przycisku zakupu (karta 4242…)
+sklep-agentow.php:365             FAQ „Co znaczy tryb testowy?”
+includes/zakup.php:959            ⛔ TREŚĆ MAILA po zakupie („płatność nie została pobrana”)
+```
+
+Panel administratora ma własne oznaczenia (`admin-dashboard.php:338`, `admin-zamowienie.php:475`,
+`admin-ustawienia.php:107`) — te widzi WYŁĄCZNIE właściciel, więc zostają.
+
+**CO ZAMYKA:** jedno źródło prawdy o trybie — funkcja typu `sklepag_tryb_testowy()` czytająca
+prefiks klucza (`sk_test_` / `sk_live_`), i **wszystkie siedem miejsc pyta JEJ**, zamiast każde
+osobno trzymać swój napis. Do tego przypadek testowy na OBA tryby dla KAŻDEGO z siedmiu miejsc
+(przy kluczu testowym napis JEST, przy produkcyjnym GO NIE MA) — inaczej naprawa mogłaby zabrać
+oznaczenia wszystkim i świecić na zielono, a kryterium 11 zamówienia wymaga banera WIDOCZNEGO
+w trybie testowym. Bump wersji sklepu + przebudowa paczki.
+⚠️ **Do decyzji właściciela: czy robimy to przed oddaniem, czy po.** Przy oddaniu na kluczach
+TESTOWYCH baner jest poprawny i egzaminu nie psuje — problem pojawia się dopiero przy pierwszym
+prawdziwym wdrożeniu.
+
 ---
 
 ## 🟡 ODDANE DO K8 — odbior WYDAJNOSCI (perf) na docelowym hostingu · AN-022
@@ -487,3 +645,27 @@ rejestr dostanie czwarty stan dla znalezisk typu „brak pomiaru”, których ni
   nazwanie zamiast naprawy). Granica opisana także w docblocku funkcji.
   **CO ZAMYKA:** szukać obu postaci naraz (surowej i po `wp_json_encode`) oraz dołożyć przypadek
   testowy z adresem zawierającym `/` — z kalibracją, że na dzisiejszym kodzie ślad zostaje.
+
+---
+
+## 🟡 SKANER ŚLADÓW MIJA WZORZEC PRZEZ WIELKOŚĆ LITERY (29.08, recenzja `#209` r6 i r8)
+
+⛔ **Ten wpis powstał z opóźnieniem i to jest część lekcji.** W opisie PR-a rundy 7 napisałam,
+że ten dług „zostaje nazwany w `CO-WISI.md`" — a nie było go tutaj. Recenzja r8 sprawdziła to
+komendą i wykazała: `grep -c 'wielkość litery' audyt/CO-WISI.md` → **0**. Czyli odhaczyłam
+w liście kontrolnej rzecz, której nie zrobiłam. Klasa 3 zastosowana do **własnego opisu**.
+
+**Wada:** `narzedzia-qa/slady-wewnetrzne.sh` zna wzorzec „próba kontrolna", ale mija go, gdy
+w tekście stoi z wielkiej litery (`Próba kontrolna`). Egzemplarz w kodzie klienta
+(`sklep-agentow/includes/aktywacja.php:230`) usunięty w `#209`; **sam wzorzec nadal jest ślepy**.
+
+**CO ZAMYKA:** dopisać `-i` albo jawne warianty wielkości liter do tej rodziny wzorców
+i dołożyć przypadek do próby kontrolnej, który podkłada ślad **z wielkiej litery** — inaczej
+próba przechodzi, bo mierzy wyłącznie wariant z małej. To zmiana narzędzia QA, nie produktu.
+
+⛔ **Rodzina pokrewna, wykazana w r8 i szersza niż ta:** odsyłacze do naszych dokumentów
+zapisane **słowem, nie oznaczeniem** — `plan v3 par. 4A`, `(Z10)`, `patrz Z0`, `Wymóg z briefu`.
+Żaden z trzech wzorców z tego pliku ich nie widzi, bo wszystkie szukają `§`, `K[0-9]`, `D2[0-9]`.
+Egzemplarze usunięte w `#209`; wzorce nadal ich nie znają. ⭐ To potwierdza zasadę zapisaną
+wyżej: **wzorzec jest siatką na regresję, nie dowodem czystości** — dla plików, które da się
+przeczytać, miarą jest przeczytanie.

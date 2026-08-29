@@ -230,7 +230,7 @@ function chatl_sesja_stan_z_bazy( $sesja ) {
  *
  * Komunikat dla gościa idzie DOPIERO po zmierzeniu, że rozmowa naprawdę wróciła
  * do bota — inaczej gość czytałby „konsultant zakończył", a rozmowa zostawałaby
- * przy człowieku (A2-F2, rodzeństwo chatl_przejmij()).
+ * przy człowieku (ten sam wzorzec co w chatl_przejmij()).
  *
  * @param string $sesja      Sesja.
  * @param string $komunikat  Co ma zobaczyć gość.
@@ -297,7 +297,7 @@ function chatl_przejmij( $sesja, $kto ) {
 	);
 	/*
 	 * „Czy przejęcie doszło do skutku" = ODCZYT stanu po zapisie, nie założenie.
-	 * Do audytu A2 stało tu bezwarunkowe `return true`: przy odrzuconym zapisie
+	 * Wcześniej stało tu bezwarunkowe `return true`: przy odrzuconym zapisie
 	 * rozmowa zostawała przy bocie, operator dostawał „przejęta", a gość czytał
 	 * „Do rozmowy dołączył konsultant" i czekał na człowieka, którego nie było.
 	 */

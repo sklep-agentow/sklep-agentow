@@ -4,7 +4,7 @@ Tags: sklep, stripe, pliki cyfrowe, sprzedaz wtyczek, pobieranie
 Requires at least: 6.7
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.9.21
+Stable tag: 0.9.22
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -141,6 +141,9 @@ Nie. Zakup jest bez konta: adres e-mail podany na stronie płatności Stripe,
 link do pobrania w mailu, jednorazowy link do opinii.
 
 == Changelog ==
+
+= 0.9.22 =
+* Wydanie porządkowe: z komentarzy w kodzie i z dokumentacji usunięte wewnętrzne oznaczenia naszych raportów. Zero zmian w działaniu.
 
 = 0.9.21 =
 * Naprawione: anonimizacja na zadanie RODO potwierdzala usuniecie danych, nie sprawdziwszy,

@@ -150,7 +150,7 @@ function chatl_notice_pulapki() {
 	}
 	global $wpdb;
 	/*
-	 * ⛔ DWIE RÓŻNE LICZBY, z dwóch różnych źródeł — i to jest sedno DK-1.
+	 * ⛔ DWIE RÓŻNE LICZBY, z dwóch różnych źródeł — i w tym był problem.
 	 *
 	 * „Ile razy zadziałała pułapka" liczymy ze ZDARZEŃ (chatl_zdarzenia), bo to
 	 * zapis zdarzenia, nie stanu. Ale zdanie „zobaczysz je pod filtrem
@@ -284,7 +284,7 @@ add_action( 'admin_post_chatl_test_klucza', 'chatl_post_test_klucza' );
  * To JEDYNY kanał, którym właściciel się o tym dowie. Log PHP nie wystarcza:
  * `wp_trigger_error()` nic nie zapisuje przy WP_DEBUG=false, a wyłączony jest
  * na każdej normalnej instalacji — bez tego paska 29 miejsc w obu wtyczkach
- * gubiło błąd bez śladu (raport audytora awarii, punkt najgroźniejszy).
+ * gubiło błąd bez śladu — z braków w obsłudze awarii ten był najgroźniejszy.
  *
  * Pasek sam cichnie po CHATL_BLAD_BAZY_OKNO_DNI dniach bez nowego błędu.
  *
@@ -732,7 +732,7 @@ function chatl_strona_historia() {
 						<?php
 						/*
 						 * Nazwa roli z chatl_nazwa_roli() — tego samego źródła co eksport
-						 * RODO i CSV (P2-Z4). Wcześniej panel miał TRZECIĄ własną mapę
+						 * RODO i CSV. Wcześniej panel miał TRZECIĄ własną mapę
 						 * „wszystko poza gościem to Bot", więc wiadomość konsultanta była
 						 * tu podpisana „Bot (reguły)". Silnik dopisujemy tylko przy bocie:
 						 * to informacja o TYM, czym odpowiedział, a nie o tym, KTO pisał.
@@ -1108,7 +1108,7 @@ add_action( 'admin_enqueue_scripts', 'chatl_assety_panelu' );
  * zapis liczby. `(int) ''` daje 0, a 0 w „dobowym limicie tokenów" znaczy
  * „stop-loss WYŁĄCZONY", w „dziennym limicie wywołań" po `max( 1, … )` — 1.
  * Właściciel widział „zapisano" i nie wiedział, że literówką zdjął bezpiecznik
- * kosztowy (audyt A5, KR1/KR2). Teraz puste/nieczytelne pole zostawia POPRZEDNIĄ
+ * kosztowy. Teraz puste/nieczytelne pole zostawia POPRZEDNIĄ
  * wartość i trafia na listę pominiętych, o której handler mówi wprost zamiast
  * „zapisano". Jawne „0" jest liczbą i zapisuje się normalnie (świadome wyłączenie).
  *
@@ -1179,8 +1179,8 @@ function chatl_post_ustawienia_zapisz() {
 		$nowe['tekst_awaryjny'] = $stare['tekst_awaryjny'];
 	}
 	/*
-	 * „Zapisano" dopiero po ZMIERZENIU, że zapis doszedł do skutku (A2-F1).
-	 * Do audytu wynik update_option() był wyrzucany i przekierowanie z
+	 * „Zapisano" dopiero po ZMIERZENIU, że zapis doszedł do skutku.
+	 * Wcześniej wynik update_option() był wyrzucany i przekierowanie z
 	 * chatl_ok=zapisano leciało bezwarunkowo — właściciel podnosił dzienny limit
 	 * wywołań AI, widział zielone potwierdzenie, a obowiązywała stara liczba.
 	 * Wzorzec 1:1 z segm_post_ustawienia_zapisz() w Segregatorze.
@@ -1201,13 +1201,13 @@ function chatl_post_ustawienia_zapisz() {
 		/*
 		 * Bez tej gałęzi właściciel po wymianie klucza kliknąłby „Przetestuj
 		 * klucz" i przetestował STARY klucz — wtyczka sama produkowałaby
-		 * fałszywy dowód, że nowy klucz działa (A2-F3).
+		 * fałszywy dowód, że nowy klucz działa.
 		 */
 		chatl_log_bledu_bazy( 'chatl_post_ustawienia_zapisz', 'klucz API dostawcy (zapis/kasowanie)' );
 		chatl_przekieruj_blad( 'chatl-ustawienia', 'Ustawienia zapisane, ale klucz API NIE — baza odrzuciła zapis. Obowiązuje POPRZEDNI klucz (także przy „Przetestuj klucz"). Sprawdź stan bazy i wpisz klucz jeszcze raz.' );
 	}
 
-	// Pominięte pole liczbowe = komunikat INNY niż „zapisano" (KR1/KR2): właściciel
+	// Pominięte pole liczbowe = komunikat INNY niż „zapisano": właściciel
 	// ma wiedzieć, że limit, który wpisał, NIE wszedł i obowiązuje poprzedni.
 	if ( $pominiete ) {
 		chatl_przekieruj_blad( 'chatl-ustawienia', 'Zapisano pozostałe ustawienia, ale NIE zmieniono pola: ' . implode( '; ', $pominiete ) . '. Wpisz samą liczbę, bez spacji i kropek (np. 50000), i zapisz ponownie.' );

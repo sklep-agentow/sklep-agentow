@@ -1,6 +1,6 @@
 <?php
 /**
- * Widok pojedynczego zamówienia (K3d; wzorce §4 — WooCommerce/Stripe):
+ * Widok pojedynczego zamówienia (układ wzorowany na WooCommerce i Stripe):
  * LEWA kolumna: status (badge) → dane zamówienia/kupującego/płatności →
  * treść wysłanego maila + „Wyślij ponownie" TUŻ OBOK (wzorzec Stripe receipt).
  * PRAWA kolumna: oś czasu zdarzeń tego zamówienia.

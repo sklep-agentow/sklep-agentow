@@ -7,7 +7,7 @@
  * - Token jak w bramie pobrań: surowy WYŁĄCZNIE w mailu, w bazie skrót
  *   sha256, porównanie stałoczasowe; ważność SKLEPAG_OPINIA_DNI dni.
  * - Jedna opinia na zamówienie (UNIQUE zamowienie_id) — weryfikacja zakupu
- *   z danych zamówień sklepu, bez kont kupujących (granica §9).
+ *   z danych zamówień sklepu, bez kont kupujących.
  * - Publikacja WYŁĄCZNIE po ręcznej akceptacji właściciela (status 'przyjeta') —
  *   nota pod sekcją opinii mówi prawdę z konstrukcji, nie z obietnicy.
  *
