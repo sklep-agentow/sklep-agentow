@@ -181,8 +181,11 @@ działanie wzorca** — bo dokładnie ta różnica kosztowała trzy rundy.
 ## 🔴 BANER „TRYB TESTOWY" JEST ZASZYTY W KODZIE — na produkcji skłamie kupującemu (29.08, recenzja #209 r6)
 
 `sklepag_baner_testowy()` (`wtyczki/sklep-agentow/sklep-agentow.php:168`) zwraca **stały HTML,
-bez jednego warunku**, a oba wywołania są bezwarunkowe (`sklep-agentow.php:286` — lista,
-`includes/front-produkt.php:791` — strona produktu). Treść banera:
+bez jednego warunku**, a **wszystkie TRZY wywołania są bezwarunkowe**: `sklep-agentow.php:286` (lista),
+`includes/front-produkt.php:791` (strona produktu) oraz `sklep-agentow.php:393` — ⛔ **strona
+„Dziękujemy za zakup”, czyli ekran widziany PO ZAPŁACIE**. Trzecie miejsce przeoczyłam
+w rundzie 6 i wykazała je dopiero recenzja r7: ktoś, kto właśnie zapłacił prawdziwe
+pieniądze, przeczytałby tam, że płatności nie są pobierane. Treść banera:
 
 > **TRYB TESTOWY** — płatności nie są pobierane. Przetestujesz cały zakup kartą testową, nic nie płacąc.
 

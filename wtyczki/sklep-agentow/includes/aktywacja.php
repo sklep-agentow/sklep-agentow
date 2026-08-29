@@ -227,7 +227,8 @@ function sklepag_utworz_katalog_chroniony() {
 		return;
 	}
 
-	// Próba kontrolna zapisu (docker/uprawnienia) — bez niej cicha ślepota.
+	// Sprawdzamy zapisem, czy katalog naprawdę jest zapisywalny (uprawnienia)
+	// — bez tego błąd przeszedłby niezauważony.
 	$test = trailingslashit( $sciezka ) . 'index.php';
 	$ok   = file_put_contents( $test, "<?php // cisza\n" ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- katalog w uploads; WP_Filesystem (abstrakcja FTP) przy aktywacji potrafi pytać o poświadczenia.
 

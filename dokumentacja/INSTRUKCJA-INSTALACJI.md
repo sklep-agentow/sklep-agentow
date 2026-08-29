@@ -223,10 +223,16 @@ potrzebne:
 5. **Regulamin i Polityka prywatności** wypełnione Twoimi danymi sprzedawcy
    i opublikowane (przy instalacji powstały jako szkice).
 6. **Usunięcie banera „TRYB TESTOWY"** — ⛔ **ten baner NIE znika sam.** Jest
-   wpisany na stałe w kod sklepu i pokazuje się na liście produktów oraz na
-   stronie produktu niezależnie od tego, jakich kluczy używasz. Zanim włączysz
-   prawdziwe płatności, **napisz do nas** — usunięcie to dla nas jedna zmiana
-   w kodzie i nowa paczka. Sam z panelu tego nie wyłączysz.
+   wpisany na stałe w kod sklepu i pokazuje się w **TRZECH** miejscach,
+   niezależnie od tego, jakich kluczy używasz:
+   - na liście produktów (strona „Sklep"),
+   - na stronie pojedynczego produktu,
+   - ⛔ **na stronie „Dziękujemy za zakup" — czyli na ekranie, który kupujący
+     widzi PO ZAPŁACENIU.** Ktoś, kto właśnie zapłacił prawdziwe pieniądze,
+     przeczytałby tam „płatności nie są pobierane".
+
+   Zanim włączysz prawdziwe płatności, **napisz do nas** — usunięcie to dla nas
+   jedna zmiana w kodzie i nowa paczka. Sam z panelu tego nie wyłączysz.
 7. **Wtyczka bezpieczeństwa lub WAF** (jeśli działa na stronie) — dopuść
    publiczny POST na `…/wp-json/sklepag/v1/webhook`; autoryzacją jest podpis
    Stripe, nie logowanie.

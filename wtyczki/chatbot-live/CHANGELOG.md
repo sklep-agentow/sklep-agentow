@@ -182,7 +182,7 @@ Nic jeszcze.
   dokumentacji technicznej odsyłały do plików, których kupujący nie dostaje
   (nasze testy i wewnętrzne rozpoznania), i powoływały się na numery naszych
   zgłoszeń oraz na osoby z zespołu. Treść merytoryczna została bez zmian — zniknęły same
-  odsyłacze do naszego warsztatu. **Działanie wtyczki jest nietknięte.**
+  odsyłacze do dokumentów, których kupujący nie dostaje. **Działanie wtyczki jest nietknięte.**
 - W `readme.txt` zdanie o pełnej historii zmian stoi teraz **nad** listą wydań,
   a nie w środku wpisu 1.5.7, gdzie czytało się jak jego część.
 
