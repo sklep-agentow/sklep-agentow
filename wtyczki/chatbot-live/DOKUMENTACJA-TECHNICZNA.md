@@ -163,7 +163,7 @@ Licznik w panelu to `COUNT(*)` z tej tabeli — **jedno** źródło prawdy, nie 
 | `chatl_rodo_sesje_wspolne` | lista identyfikatorów sesji, o których wiemy, że **były współdzielone** przez dwie osoby | **nie** | przy wniosku RODO o usunięcie dotyczącym takiej sesji; przycinana przy każdym zapisie (patrz 23.2) |
 
 Klucz API jest bez autoloadu celowo: nie wchodzi do zapytania ładowanego na każdej odsłonie
-strony. Weryfikacja na żywym stacku po pełnym cyklu instalacja→deinstalacja→instalacja:
+strony. Weryfikacja na żywej instalacji po pełnym cyklu instalacja→deinstalacja→instalacja:
 `autoload` = `off`.
 
 ### Metadane użytkownika
@@ -992,8 +992,8 @@ Cztery rzeczy, które ta funkcja musi robić dobrze:
 **Skąd sześć wymian.** Tyle wystarcza na realny ciąg dopytań („jak dojechać" →
 „gdzie zaparkować" → „a w sobotę?"), a każda wymiana to tokeny właściciela.
 Przy krótkich wiadomościach czatu sześć wymian to rząd 300–600 tokenów dołożonych
-do żądania, które i tak niesie całą bazę Q&A w instrukcji systemowej — na stacku
-warsztatowym sama instrukcja ma 3651 znaków, czyli ok. 1200 tokenów. Wyżej rośnie
+do żądania, które i tak niesie całą bazę Q&A w instrukcji systemowej — przy
+pomiarze sama instrukcja miała 3651 znaków, czyli ok. 1200 tokenów. Wyżej rośnie
 rachunek, a nie jakość: gość firmowego czatu rzadko wraca do czegoś sprzed
 dziesięciu wiadomości.
 ## 21. Zabezpieczenie formularza a cache strony

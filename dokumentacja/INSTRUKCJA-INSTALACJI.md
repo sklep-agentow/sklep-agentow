@@ -93,7 +93,13 @@ powstaje zamówienie i mail. Skąd wziąć sekret webhooka:
 **A. Strona na hostingu z publicznym adresem (docelowo):**
 1. Dashboard Stripe (Test mode) → Developers → Webhooks → Add endpoint.
 2. Adres endpointu: `https://TWOJA-DOMENA/wp-json/sklepag/v1/webhook`
-3. Zdarzenie do nasłuchu: `checkout.session.completed`.
+3. Zdarzenia do nasłuchu — zaznacz **OBA**:
+   - `checkout.session.completed` — zwykła płatność kartą,
+   - `checkout.session.async_payment_succeeded` — płatności, które potwierdzają
+     się z opóźnieniem (m.in. **BLIK**, przelewy).
+
+   ⚠️ Podpięcie tylko pierwszego nie psuje zakupu, ale przy BLIK-u kupujący czeka
+   na mail do najbliższego dociągania (do 10 minut) zamiast dostać go od razu.
 4. Po utworzeniu skopiuj **Signing secret** (`whsec_…`) → wklej w
    Ustawieniach sklepu.
 
@@ -216,8 +222,11 @@ potrzebne:
    wyjdzie, a kupujący nie dostanie linku do pobrania.
 5. **Regulamin i Polityka prywatności** wypełnione Twoimi danymi sprzedawcy
    i opublikowane (przy instalacji powstały jako szkice).
-6. **Usunięcie banera testowego** — znika sam po przełączeniu na klucze
-   produkcyjne.
+6. **Usunięcie banera „TRYB TESTOWY"** — ⛔ **ten baner NIE znika sam.** Jest
+   wpisany na stałe w kod sklepu i pokazuje się na liście produktów oraz na
+   stronie produktu niezależnie od tego, jakich kluczy używasz. Zanim włączysz
+   prawdziwe płatności, **napisz do nas** — usunięcie to dla nas jedna zmiana
+   w kodzie i nowa paczka. Sam z panelu tego nie wyłączysz.
 7. **Wtyczka bezpieczeństwa lub WAF** (jeśli działa na stronie) — dopuść
    publiczny POST na `…/wp-json/sklepag/v1/webhook`; autoryzacją jest podpis
    Stripe, nie logowanie.

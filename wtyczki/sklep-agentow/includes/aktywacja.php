@@ -149,7 +149,7 @@ function sklepag_aktywacja() {
 
 	// rewrite strony produktu + flush (strony właśnie powstały, więc slug
 	// sklepu już jest); flush odbudowuje też reguły rdzenia (w tym wp-sitemap —
-	// na stacku były zgubione: /wp-sitemap.xml dawał 404).
+	// bywały zgubione: /wp-sitemap.xml dawał 404).
 	if ( function_exists( 'sklepag_rejestruj_rewrite' ) ) {
 		sklepag_rejestruj_rewrite();
 	}

@@ -178,6 +178,37 @@ działanie wzorca** — bo dokładnie ta różnica kosztowała trzy rundy.
 
 ---
 
+## 🔴 BANER „TRYB TESTOWY" JEST ZASZYTY W KODZIE — na produkcji skłamie kupującemu (29.08, recenzja #209 r6)
+
+`sklepag_baner_testowy()` (`wtyczki/sklep-agentow/sklep-agentow.php:168`) zwraca **stały HTML,
+bez jednego warunku**, a oba wywołania są bezwarunkowe (`sklep-agentow.php:286` — lista,
+`includes/front-produkt.php:791` — strona produktu). Treść banera:
+
+> **TRYB TESTOWY** — płatności nie są pobierane. Przetestujesz cały zakup kartą testową, nic nie płacąc.
+
+⛔ **Po przejściu na klucze `sk_live_…` ten napis zostaje.** Kupujący czyta, że nie płaci —
+i płaci. To ścieżka pieniędzy, nie kosmetyka.
+
+**Skąd się wzięło:** instrukcja instalacji obiecywała, że baner „znika sam po przełączeniu na
+klucze produkcyjne" — nieprawda o kodzie (klasa 3, wykazana w recenzji `#209` r6). **Tekst
+poprawiony na prawdziwy w tym PR-ze**: instrukcja mówi teraz wprost, że baner nie znika sam
+i że usunięcie go jest po naszej stronie.
+
+⛔ **KODU NIE RUSZAM PRZED ODDANIEM — decyzja z powodem, nie zaniechanie.** Komentarz przy
+funkcji mówi: *„napis bez zmian — testy na nim polegają"*, więc zmiana warunku tuż przed
+zamrożeniem grozi regresją w testach, które ten napis sprawdzają. Naprawa tekstu **zamyka klasę
+błędu** (dokumentacja przestaje kłamać); wada produktu zostaje tu nazwana.
+
+**CO ZAMYKA:** warunek w `sklepag_baner_testowy()` — baner wyłącznie gdy klucz zaczyna się od
+`sk_test_`, pusty string przy `sk_live_`. Do tego przypadek testowy na OBA tryby (przy kluczu
+testowym napis JEST, przy produkcyjnym GO NIE MA) — inaczej naprawa mogłaby zabrać baner
+wszystkim i świecić na zielono. Bump wersji sklepu + przebudowa paczki.
+⚠️ **Do decyzji właściciela: czy robimy to przed oddaniem, czy po.** Przy oddaniu na kluczach
+TESTOWYCH baner jest poprawny i egzaminu nie psuje — problem pojawia się dopiero przy pierwszym
+prawdziwym wdrożeniu.
+
+---
+
 ## 🟡 ODDANE DO K8 — odbior WYDAJNOSCI (perf) na docelowym hostingu · AN-022
 - `perf` z Lighthouse NIE zostal odebrany w K7 i to jest decyzja, nie przeoczenie: na tym stosie
   pomiar mierzy OBCIAZENIE NASZEJ MASZYNY, nie jakosc strony. Ta sama komorka (sklep/mobile)
