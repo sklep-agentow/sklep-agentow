@@ -145,7 +145,7 @@ function chatl_rate_limit( $akcja, $prog = CHATL_LIMIT_NA_MIN, $okno_sekund = MI
  * żądaniem, więc na stronie BEZ proxy zaufanie mu oznaczałoby, że każdy obchodzi
  * limit, podając za każdym razem inny adres. Domyślnie przełącznik jest WYŁĄCZONY.
  *
- * Kolejność (jak w opisie luki L2): CF-Connecting-IP, potem pierwszy adres
+ * Kolejność: CF-Connecting-IP, potem pierwszy adres
  * z X-Forwarded-For, potem REMOTE_ADDR.
  *
  * @return string Adres IP albo pusty string, gdy nie da się go ustalić.
@@ -293,7 +293,7 @@ function chatl_wymagaj_nonce() {
 	 * Widget rozpoznaje „zły nonce" tylko po `kod === 'nonce'` (widget.js,
 	 * `toZlyNonce()`) i tylko wtedy dociąga świeży nonce i ponawia pytanie.
 	 * Odpowiedź bez tego klucza wyłączyłaby samonaprawę — a to jest dokładnie
-	 * luka L1: witryna za proxy z wyłączonym zaufaniem nagłówkom ma JEDEN kubeł
+	 * Witryna za proxy z wyłączonym zaufaniem nagłówkom ma JEDEN kubeł
 	 * dla wszystkich gości, więc przy stronie z cache 11. gość na minutę
 	 * dostałby twardą odmowę zamiast cichego odświeżenia. Powyżej progu
 	 * odpowiadamy więc TAK SAMO, tylko bez dopisywania zdarzenia do bazy.

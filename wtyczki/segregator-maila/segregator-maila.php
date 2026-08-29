@@ -289,7 +289,7 @@ function segm_zapewnij_cron() {
 add_action( 'plugins_loaded', 'segm_zapewnij_cron' );
 
 /*
- * Znacznik „operacja na próbce w toku" (P2.3). Nazwa opcji + ile sekund wpis
+ * Znacznik „operacja na próbce w toku". Nazwa opcji + ile sekund wpis
  * jest ważny: po tym czasie znacznik po padniętym procesie przestaje blokować
  * wtyczkę (najdłuższa chroniona operacja to przebieg AI, ~18 s).
  */

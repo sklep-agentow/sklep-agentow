@@ -95,7 +95,7 @@ function segm_pobierz_reguly() {
 function segm_wykonaj_przebieg( $tryb = 'reguly' ) {
 	global $wpdb;
 
-	// P2.3: przebieg czyta próbkę, a import/demo/„wyczyść teraz"/retencja ją
+	// Przebieg czyta próbkę, a import/demo/„wyczyść teraz"/retencja ją
 	// kasują — bez znacznika dwie karty naraz dawały raport policzony na
 	// pustej próbce, i to bez słowa ostrzeżenia.
 	$zajeta = segm_zajmij_blokade( 'przebieg segregacji' );
@@ -116,7 +116,7 @@ function segm_wykonaj_przebieg( $tryb = 'reguly' ) {
 	$zjazd   = false;
 	$mapa_ai = null;
 	if ( in_array( $tryb, array( 'ai', 'porownaj' ), true ) ) {
-		// P0.4: bez wyraźnej zgody właściciela treść cudzych maili NIE wychodzi
+		// Bez wyraźnej zgody właściciela treść cudzych maili NIE wychodzi
 		// do zewnętrznego dostawcy. To NIE jest zjazd do reguł — cichy zjazd
 		// wyglądałby jak „AI nie odpowiedziało", a tu chodzi o świadomą decyzję,
 		// której nikt jeszcze nie podjął. Przebieg NIE startuje.

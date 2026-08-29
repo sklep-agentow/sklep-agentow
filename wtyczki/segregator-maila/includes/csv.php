@@ -241,7 +241,7 @@ function segm_importuj_csv( $sciezka ) {
 		return new WP_Error( 'segm_csv', 'Plik nie zawiera żadnego poprawnego wiersza (kolumny: od, temat, tresc, opcjonalnie kategoria_oczekiwana).' );
 	}
 
-	// P2.3: od tego miejsca ruszamy tabelę, więc bierzemy znacznik — przebieg
+	// Od tego miejsca ruszamy tabelę, więc bierzemy znacznik — przebieg
 	// uruchomiony w drugiej karcie policzyłby się na próbce w połowie wymiany.
 	$zajeta = segm_zajmij_blokade( 'import próbki z pliku CSV' );
 	if ( true !== $zajeta ) {

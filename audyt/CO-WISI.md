@@ -221,8 +221,8 @@ Panel administratora ma własne oznaczenia (`admin-dashboard.php:338`, `admin-za
 `admin-ustawienia.php:107`) — te widzi WYŁĄCZNIE właściciel, więc zostają.
 
 **CO ZAMYKA:** jedno źródło prawdy o trybie — funkcja typu `sklepag_tryb_testowy()` czytająca
-prefiks klucza (`sk_test_` / `sk_live_`), i **wszystkie sześć miejsc pyta JEJ**, zamiast każde
-osobno trzymać swój napis. Do tego przypadek testowy na OBA tryby dla KAŻDEGO z sześciu miejsc
+prefiks klucza (`sk_test_` / `sk_live_`), i **wszystkie siedem miejsc pyta JEJ**, zamiast każde
+osobno trzymać swój napis. Do tego przypadek testowy na OBA tryby dla KAŻDEGO z siedmiu miejsc
 (przy kluczu testowym napis JEST, przy produkcyjnym GO NIE MA) — inaczej naprawa mogłaby zabrać
 oznaczenia wszystkim i świecić na zielono, a kryterium 11 zamówienia wymaga banera WIDOCZNEGO
 w trybie testowym. Bump wersji sklepu + przebudowa paczki.

@@ -1,6 +1,6 @@
 <?php
 /**
- * EKSPORT REGUŁ DO FILTRÓW SKRZYNKI (P1.3) — Gmail i Outlook.
+ * EKSPORT REGUŁ DO FILTRÓW SKRZYNKI — Gmail i Outlook.
  *
  * Po co: bez tego Segregator kończy się na raporcie, czyli jest analizatorem
  * pliku, a nie segregatorem. Eksport przenosi sprawdzone reguły tam, gdzie

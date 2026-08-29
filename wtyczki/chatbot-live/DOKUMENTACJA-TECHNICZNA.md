@@ -525,7 +525,7 @@ ani gość ze stroną z cache nie mogą zjadać limitu prawdziwego klienta.
 > ⛔ **Kubeł `nonce-odrzucony` ogranicza ZAPIS, nie odpowiedź.** Powyżej progu wtyczka
 > odpowiada **tak samo** — z `kod => 'nonce'` — tylko nie dopisuje zdarzenia. Widget rozpoznaje
 > zły nonce wyłącznie po tym kluczu i tylko po nim dociąga świeży nonce i ponawia pytanie
-> (samonaprawa z sekcji o L1). Twarda odmowa powyżej progu wyłączyłaby ją dokładnie tam, gdzie
+> (samonaprawa opisana wyżej). Twarda odmowa powyżej progu wyłączyłaby ją dokładnie tam, gdzie
 > jest najpotrzebniejsza: za proxy z wyłączonym zaufaniem nagłówkom **wszyscy goście dzielą
 > jeden kubeł**, więc przy stronie z cache próg wyczerpuje się w sekundy.
 
