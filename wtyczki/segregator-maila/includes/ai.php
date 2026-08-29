@@ -539,8 +539,8 @@ function segm_ai_klasyfikuj_partie( $maile, $kategorie ) {
  * rekordów [{"id": "12", "kategoria": "Faktury"}, ...] — i tak było naprawdę:
  * przy takiej odpowiedzi KAŻDY mail lądował w kuble domyślnym, a raport
  * pokazywał 0% pokrycia bez jednego słowa o błędzie. Format odpowiedzi modelu
- * nie jest gwarantowany (output_config.format nie działa na tym modelu —
- * patrz Z0), więc parser przyjmuje OBIE postaci.
+ * nie jest gwarantowany (output_config.format nie działa na tym modelu),
+ * więc parser przyjmuje OBIE postaci.
  *
  * @param array $mapa Zdekodowany JSON od modelu.
  * @return array Mapa id => kategoria (może być pusta).

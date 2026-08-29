@@ -625,3 +625,27 @@ rejestr dostanie czwarty stan dla znalezisk typu „brak pomiaru”, których ni
   nazwanie zamiast naprawy). Granica opisana także w docblocku funkcji.
   **CO ZAMYKA:** szukać obu postaci naraz (surowej i po `wp_json_encode`) oraz dołożyć przypadek
   testowy z adresem zawierającym `/` — z kalibracją, że na dzisiejszym kodzie ślad zostaje.
+
+---
+
+## 🟡 SKANER ŚLADÓW MIJA WZORZEC PRZEZ WIELKOŚĆ LITERY (29.08, recenzja `#209` r6 i r8)
+
+⛔ **Ten wpis powstał z opóźnieniem i to jest część lekcji.** W opisie PR-a rundy 7 napisałam,
+że ten dług „zostaje nazwany w `CO-WISI.md`" — a nie było go tutaj. Recenzja r8 sprawdziła to
+komendą i wykazała: `grep -c 'wielkość litery' audyt/CO-WISI.md` → **0**. Czyli odhaczyłam
+w liście kontrolnej rzecz, której nie zrobiłam. Klasa 3 zastosowana do **własnego opisu**.
+
+**Wada:** `narzedzia-qa/slady-wewnetrzne.sh` zna wzorzec „próba kontrolna", ale mija go, gdy
+w tekście stoi z wielkiej litery (`Próba kontrolna`). Egzemplarz w kodzie klienta
+(`sklep-agentow/includes/aktywacja.php:230`) usunięty w `#209`; **sam wzorzec nadal jest ślepy**.
+
+**CO ZAMYKA:** dopisać `-i` albo jawne warianty wielkości liter do tej rodziny wzorców
+i dołożyć przypadek do próby kontrolnej, który podkłada ślad **z wielkiej litery** — inaczej
+próba przechodzi, bo mierzy wyłącznie wariant z małej. To zmiana narzędzia QA, nie produktu.
+
+⛔ **Rodzina pokrewna, wykazana w r8 i szersza niż ta:** odsyłacze do naszych dokumentów
+zapisane **słowem, nie oznaczeniem** — `plan v3 par. 4A`, `(Z10)`, `patrz Z0`, `Wymóg z briefu`.
+Żaden z trzech wzorców z tego pliku ich nie widzi, bo wszystkie szukają `§`, `K[0-9]`, `D2[0-9]`.
+Egzemplarze usunięte w `#209`; wzorce nadal ich nie znają. ⭐ To potwierdza zasadę zapisaną
+wyżej: **wzorzec jest siatką na regresję, nie dowodem czystości** — dla plików, które da się
+przeczytać, miarą jest przeczytanie.

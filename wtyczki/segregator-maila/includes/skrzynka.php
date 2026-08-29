@@ -226,7 +226,7 @@ function segm_skrzynka_diagnostyka() {
 			: 'Brak obsługi kodowania UTF7-IMAP w mbstring. Foldery z polskimi znakami mogą mieć na serwerze przekręcone nazwy — używaj nazw kategorii bez polskich liter.',
 	);
 
-	// ⛔ Wymóg z briefu: sprawdzić rozszerzenie imap i powiedzieć WPROST.
+	// ⛔ Sprawdzamy rozszerzenie imap i mówimy o nim WPROST.
 	// Ono NIE jest nam potrzebne (mamy własny klient po gnieździe), ale
 	// właściciel ma prawo wiedzieć, dlaczego wtyczka działa bez niego.
 	$ext_imap = extension_loaded( 'imap' );

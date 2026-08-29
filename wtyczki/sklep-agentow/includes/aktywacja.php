@@ -210,7 +210,7 @@ function sklepag_utworz_strony() {
 /**
  * Katalog chroniony na pliki produktów: losowy sufiks + index.php + .htaccess
  * (Apache). Na nginx .htaccess nie działa — brama i tak jest w PHP, a instrukcja
- * wdrożenia podaje regułę location deny (plan v3 par. 4A).
+ * wdrożenia podaje regułę location deny.
  */
 function sklepag_utworz_katalog_chroniony() {
 	$istniejacy = get_option( 'sklepag_katalog_chroniony', '' );
@@ -222,7 +222,7 @@ function sklepag_utworz_katalog_chroniony() {
 	$sciezka = trailingslashit( $upload['basedir'] ) . 'sklepag-chronione-' . wp_generate_password( 16, false, false );
 
 	if ( ! wp_mkdir_p( $sciezka ) ) {
-		// Ta sama widzialność błędu co niżej — porażka mkdir to też cicha ślepota.
+		// Porażka mkdir też musi być widoczna — inaczej przeszłaby niezauważona.
 		update_option( 'sklepag_katalog_chroniony_blad', 'mkdir nieudany — sprawdź uprawnienia uploads', false );
 		return;
 	}
@@ -239,7 +239,7 @@ function sklepag_utworz_katalog_chroniony() {
 		return;
 	}
 
-	// Apache 2.4 (Require) i 2.2 (Deny) — hosting docelowy nieznany (Z10); brama i tak w PHP.
+	// Apache 2.4 (Require) i 2.2 (Deny) — hosting docelowy nieznany; brama i tak w PHP.
 	$ht = file_put_contents( // phpcs:ignore WordPress.WP.AlternativeFunctions -- jw.: uploads, bez WP_Filesystem.
 		trailingslashit( $sciezka ) . '.htaccess',
 		"<IfModule mod_authz_core.c>\nRequire all denied\n</IfModule>\n<IfModule !mod_authz_core.c>\nDeny from all\n</IfModule>\n"

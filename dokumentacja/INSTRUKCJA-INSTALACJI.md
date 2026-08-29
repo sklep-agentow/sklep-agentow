@@ -222,17 +222,24 @@ potrzebne:
    wyjdzie, a kupujący nie dostanie linku do pobrania.
 5. **Regulamin i Polityka prywatności** wypełnione Twoimi danymi sprzedawcy
    i opublikowane (przy instalacji powstały jako szkice).
-6. **Usunięcie banera „TRYB TESTOWY"** — ⛔ **ten baner NIE znika sam.** Jest
-   wpisany na stałe w kod sklepu i pokazuje się w **TRZECH** miejscach,
-   niezależnie od tego, jakich kluczy używasz:
-   - na liście produktów (strona „Sklep"),
-   - na stronie pojedynczego produktu,
-   - ⛔ **na stronie „Dziękujemy za zakup" — czyli na ekranie, który kupujący
-     widzi PO ZAPŁACENIU.** Ktoś, kto właśnie zapłacił prawdziwe pieniądze,
-     przeczytałby tam „płatności nie są pobierane".
+6. **Oznaczenia trybu testowego** — ⛔ **żadne z nich nie znika samo.**
+   Sklep mówi o trybie testowym w wielu miejscach naraz, wszystkie wpisane na
+   stałe w kod. Kupujący widzi je m.in.:
+   - w banerze na liście produktów i na stronie produktu,
+   - ⛔ **w banerze na stronie „Dziękujemy za zakup", czyli na ekranie oglądanym
+     PO ZAPŁACENIU** — ktoś, kto właśnie zapłacił prawdziwie, przeczytałby tam,
+     że płatności nie są pobierane,
+   - w notce przy przycisku zakupu (numer karty testowej),
+   - w pytaniu „Co znaczy tryb testowy?" w sekcji FAQ,
+   - ⛔ **w treści e-maila wysyłanego po zakupie.**
 
-   Zanim włączysz prawdziwe płatności, **napisz do nas** — usunięcie to dla nas
-   jedna zmiana w kodzie i nowa paczka. Sam z panelu tego nie wyłączysz.
+   Do tego panel administratora ma własne oznaczenia trybu testowego — te widzisz
+   tylko Ty, nie kupujący.
+
+   ⛔ **Nie traktuj powyższej listy jako kompletnej** — dlatego przejście na
+   prawdziwe płatności zaczyna się od jednego kroku: **napisz do nas**.
+   Przejrzenie całego sklepu i usunięcie wszystkich oznaczeń to nasza robota
+   i nowa paczka. Sam z panelu tego nie wyłączysz.
 7. **Wtyczka bezpieczeństwa lub WAF** (jeśli działa na stronie) — dopuść
    publiczny POST na `…/wp-json/sklepag/v1/webhook`; autoryzacją jest podpis
    Stripe, nie logowanie.

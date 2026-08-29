@@ -181,8 +181,8 @@ Nic jeszcze.
 - **Z paczki znikają nasze ślady wewnętrzne.** Komentarze w kodzie i akapity
   dokumentacji technicznej odsyłały do plików, których kupujący nie dostaje
   (nasze testy i wewnętrzne rozpoznania), i powoływały się na numery naszych
-  zgłoszeń oraz na osoby z zespołu. Treść merytoryczna została bez zmian — zniknęły same
-  odsyłacze do dokumentów, których kupujący nie dostaje. **Działanie wtyczki jest nietknięte.**
+  zgłoszeń oraz na osoby z zespołu. Treść merytoryczna została bez zmian —
+  zniknęły same odsyłacze. **Działanie wtyczki jest nietknięte.**
 - W `readme.txt` zdanie o pełnej historii zmian stoi teraz **nad** listą wydań,
   a nie w środku wpisu 1.5.7, gdzie czytało się jak jego część.
 
