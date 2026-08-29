@@ -116,8 +116,41 @@ przykład formatu wpisu (`'25.08.2026'`), `56.01rem`, `50.000`, stała gamma `12
 standardów (RFC 3501 §6.4.8, XML 1.0 §2.5) oraz `§N` odsyłające **wewnątrz** dokumentacji
 technicznej, którą klient dostaje w paczce.
 
-⛔ **Co ZOSTAJE długiem:** `narzedzia-qa/slady-wewnetrzne.sh` **nie zna żadnej z tych czterech
-rodzin.** Teksty są czyste dziś, ale nic nie broni ich jutro — pierwszy nowy komentarz
+⛔ **Co ZOSTAJE długiem — i UWAGA, pierwotny opis tego długu był NIETRAFNY.** Napisałam tu
+„skaner nie zna żadnej z tych czterech rodzin". Recenzja r4 wykazała, że dla rodziny
+`\bK[0-9]\b` to nieprawda: skaner **zna** ten wzorzec od wersji 1.3.0
+(`narzedzia-qa/slady-wewnetrzne.sh:78`), a mimo to przepuścił `K8`
+w `dokumentacja/INSTRUKCJA-INSTALACJI.md`. Prawdziwa wada była w **ZASIĘGU**, nie we
+wzorcach: pętla `for katalog in wtyczki/*/` nigdy nie patrzyła poza katalogi wtyczek,
+przy własnym komentarzu stawiającym znak równości między „pliki wtyczek" a „to, co
+trafia do klienta". ⭐ To ma znaczenie praktyczne: dopisywanie wzorców niczego by nie naprawiło.
+
+⛔ **Zasięgu NIE rozszerzyłam w tym PR-ze i to jest decyzja z pomiaru, nie zaniechanie.**
+Próba rozszerzenia pętli o `dokumentacja/` została **skalibrowana przed scaleniem** i kalibracja
+ją odrzuciła — skaner na CZYSTEJ dokumentacji kończy `EXIT=1`:
+
+```
+$ SLADY_ZALEGLOSCI=/dev/null bash narzedzia-qa/slady-wewnetrzne.sh dokumentacja dokumentacja
+  SLAD  INSTRUKCJA-INSTALACJI.md:101 (adres maszyny dev): Serwery Stripe nie widzą localhosta — użyj oficjalnego Stripe CLI:
+  SLAD  INSTRUKCJA-INSTALACJI.md:103 (adres maszyny dev): stripe listen --forward-to http://localhost:PORT/wp-json/sklepag/v1/webhook
+SLADY 1.3.0 [dokumentacja]: nowe=2, dlug z listy=0, martwe wpisy=0   → EXIT=1
+```
+
+Oba trafienia są **fałszywe**: `localhost` w pliku wtyczki jest śladem, ale w instrukcji
+instalacji jest **treścią, której klient potrzebuje** — bez niej nie skonfiguruje webhooka.
+Wpięcie tego zasięgu postawiłoby CI na czerwono od pierwszego przebiegu. ⛔ Dopisanie tych
+dwóch wierszy do `slady-zaleglosci.txt` **nie wchodzi w grę** — nagłówek tego pliku mówi wprost:
+*„ta lista ma się wyłącznie KURCZYĆ; dopisanie nowego śladu, żeby przepchnąć swój PR, jest
+obejściem bramki, nie jej użyciem"*.
+
+**CO NAPRAWDĘ ZAMYKA tę wadę:** rozdzielić wzorce per TEREN — dla `wtyczki/` pełny zestaw,
+dla `dokumentacja/` węższy (rodzina „numeracja naszych dokumentów”: `K[0-9]`, `D[0-9]{1,2}`,
+`§[0-9]`, `S-0[0-9]`), **bez** wzorca „adres maszyny dev”. Dopiero wtedy pętla może objąć
+`dokumentacja/` i kontrola odwrotna („czysty tekst przechodzi”) będzie zielona. To zmiana
+narzędzia QA, nie produktu — osobny PR.
+
+Nadal długiem zostaje też to, że skaner nie zna rodzin: odsyłaczy słownych, naszych rund
+roboczych i dat `DD.MM`. Teksty są czyste dziś, ale nic nie broni ich jutro — pierwszy nowy komentarz
 z odsyłaczem wjedzie do paczki klienta bez jednego czerwonego światła. To już **trzeci** PR
 z rzędu, w którym ten sam dług kosztuje rundę recenzji.
 **CO ZAMYKA:** wpiąć te trzy wyliczenia do skanera (każda rodzina osobno, plus lista znanych
@@ -125,6 +158,7 @@ fałszywych trafień jako allowlista) i dołożyć po jednym przypadku na rodzin
 `narzedzia-qa/paczka-zgodnosc-proba-kontrolna.sh`, **żeby próba mierzyła POKRYCIE, nie samo
 działanie wzorca** — bo dokładnie ta różnica kosztowała trzy rundy.
 ⛔ Świadomie NIE robione przed oddaniem: to zmiana narzędzia QA, nie produktu.
+
 ---
 
 ## 🟡 ODDANE DO K8 — odbior WYDAJNOSCI (perf) na docelowym hostingu · AN-022

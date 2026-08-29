@@ -1,6 +1,5 @@
 # Instrukcja instalacji — Sklep Agentów + 2 boty (WordPress)
 
-Wersja robocza (przyrostowa, do finalizacji w K8: zrzuty + diagram).
 Dla właściciela strony — instalacja od zera do pierwszego testowego zakupu.
 Czas: ~30 minut. Nic tu nie wymaga programowania.
 
