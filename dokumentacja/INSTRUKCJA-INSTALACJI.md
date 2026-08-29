@@ -188,8 +188,8 @@ Włącz. Dalej prowadzą instrukcje W paczkach botów (konfiguracja w kwadrans).
   ```
 - **Ustawienia → Czytanie → ODZNACZ opcję zniechęcania wyszukiwarek do
   indeksowania** (oficjalny angielski tekst opcji: „Discourage search engines
-  from indexing this site" — zmierzony na stacku; polskie brzmienie zależy od
-  tłumaczenia Twojego WP, zrzut ekranu dojdzie przy finalizacji instrukcji) —
+  from indexing this site"; polskie brzmienie zależy od tłumaczenia Twojego
+  WordPressa) —
   bez odznaczenia WordPress nie wystawia mapy strony (sitemap) i Google nie
   zaindeksuje sklepu.
 - Rozważ ochronę logowania na poziomie serwera (np. fail2ban albo reguła
@@ -202,12 +202,30 @@ Włącz. Dalej prowadzą instrukcje W paczkach botów (konfiguracja w kwadrans).
 ## Test a produkcja — co trzeba zmienić, żeby sprzedawać naprawdę
 
 Obecnie WSZYSTKO działa w trybie testowym Stripe (baner na stronach sklepu
-o tym przypomina). Przejście na prawdziwe płatności to osobna decyzja
-i osobne kroki — m.in.: aktywacja konta Stripe (weryfikacja tożsamości,
-rachunek), klucze `sk_live_…` i nowy webhook produkcyjny, wysyłka maili
-przez hosting/SMTP, wypełnione Regulamin i Polityka prywatności, usunięcie
-banera testowego. Pełna lista różnic: rozdział „Co oddziela tryb testowy
-od produkcji" w dokumentacji projektu.
+o tym przypomina). Przejście na prawdziwe płatności to osobna decyzja.
+Poniżej PEŁNA lista tego, co trzeba zmienić — nic poza tą listą nie jest
+potrzebne:
+
+1. **Aktywacja konta Stripe** — weryfikacja tożsamości i rachunek bankowy,
+   po stronie Stripe.
+2. **Klucze produkcyjne** `sk_live_…` w Ustawieniach sklepu, w miejsce
+   testowych `sk_test_…`.
+3. **Nowy webhook produkcyjny** z własnym sekretem `whsec_…` — sekret z trybu
+   testowego NIE działa na produkcji (to osobne środowiska Stripe).
+4. **Wysyłka maili przez hosting lub SMTP** — bez tego mail po zakupie NIE
+   wyjdzie, a kupujący nie dostanie linku do pobrania.
+5. **Regulamin i Polityka prywatności** wypełnione Twoimi danymi sprzedawcy
+   i opublikowane (przy instalacji powstały jako szkice).
+6. **Usunięcie banera testowego** — znika sam po przełączeniu na klucze
+   produkcyjne.
+7. **Wtyczka bezpieczeństwa lub WAF** (jeśli działa na stronie) — dopuść
+   publiczny POST na `…/wp-json/sklepag/v1/webhook`; autoryzacją jest podpis
+   Stripe, nie logowanie.
+8. **Podatki (VAT/OSS)** — to sprawa Twojej księgowości. Sklep przekazuje do
+   Stripe cenę produktu i nie wylicza podatku za Ciebie.
+9. **Boty z prawdziwym AI** (jeśli używasz ich u siebie) — każdy bot ma
+   własne ustawienia i własny klucz API dostawcy AI; w paczkach botów są
+   osobne instrukcje.
 
 ## Najczęstsze problemy
 

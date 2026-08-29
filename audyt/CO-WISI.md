@@ -149,6 +149,23 @@ dla `dokumentacja/` węższy (rodzina „numeracja naszych dokumentów”: `K[0-
 `dokumentacja/` i kontrola odwrotna („czysty tekst przechodzi”) będzie zielona. To zmiana
 narzędzia QA, nie produktu — osobny PR.
 
+⛔ **ALE SAMA TA RECEPTA NIE WYSTARCZY — i to jest najważniejsze zdanie tego wpisu.**
+Recenzja r5 wykazała dwa ślady w `dokumentacja/INSTRUKCJA-INSTALACJI.md`, których **żaden
+wzorzec z tej recepty by nie złapał**:
+- „zrzut ekranu dojdzie przy finalizacji instrukcji” — notatka o stanie NASZEJ pracy zapisana
+  zwykłym **słowem**, bez jednego oznaczenia (bliźniak skreślonego w tym samym commicie zdania
+  „do finalizacji w K8: zrzuty + diagram”);
+- „Pełna lista różnic: rozdział «Co oddziela tryb testowy od produkcji» **w dokumentacji
+  projektu**” — odsyłacz do `PLAN-PROJEKTU.md:433`, czyli pliku, którego klient nigdy nie
+  dostaje, podany **parafrazą** zamiast nazwą. Wzorzec `PLAN-PROJEKTU` jest w skanerze
+  (`slady-wewnetrzne.sh:77`) i był bezradny, bo tej nazwy w zdaniu nie ma.
+
+⭐ **Wniosek, który przenosi się na cały projekt:** dla `dokumentacja/` miarą nie jest wzorzec,
+tylko **przeczytanie pliku w całości**. To JEDEN plik na 263 wiersze — przeczytanie go kosztuje
+minuty, a wzorzec przepuścił tam ślad trzy rundy z rzędu. Wzorce zostają jako **siatka
+bezpieczeństwa dla regresji**, nie jako dowód czystości. ⛔ Zasada ogólna: gdy teren da się
+przeczytać w całości, czytanie JEST wyliczeniem — wzorzec jest wtedy zgadywaniem, nie pomiarem.
+
 Nadal długiem zostaje też to, że skaner nie zna rodzin: odsyłaczy słownych, naszych rund
 roboczych i dat `DD.MM`. Teksty są czyste dziś, ale nic nie broni ich jutro — pierwszy nowy komentarz
 z odsyłaczem wjedzie do paczki klienta bez jednego czerwonego światła. To już **trzeci** PR
