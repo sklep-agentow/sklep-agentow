@@ -72,6 +72,31 @@ wprost dopuścił drogę „nazwany dług zamiast czyszczenia w tym PR-ze".
 przypadki do `narzedzia-qa/paczka-zgodnosc-proba-kontrolna.sh`, wyczyścić trafienia w trzech
 plikach jadących do klienta (komentarz ma nieść POWÓD, numer zostaje w PR i commicie).
 
+### STAN PO `#209` (29.08) — TEKSTY WYCZYSZCZONE, SKANER NADAL ŚLEPY
+
+Czyszczenie tekstów jest **zrobione**, i to w trzech rodzinach, nie w jednej:
+
+1. **Rodzina identyfikatorów** (`A2-F3`, `DK-5`, `KR1/KR2`, `SK-L3-005`, `LS-F1`, „wroga sesja") —
+   wyczyszczona w `#209`; recenzent rundy 2 potwierdził własnym, szerszym wzorcem **0 trafień**.
+2. **Rodzina odsyłaczy słownych** (`przegląd na żywo DD.MM`, `sędzia rN`, `Znalezisko testu`,
+   `UZUPEŁNIENIE DD.MM`) — wykazana przez recenzenta rundy 2 jako 42 wiersze, wyczyszczona.
+3. **Trzecia rodzina, której nie widział ani mój, ani jego wzorzec** — `feedback z przeglądu`,
+   `recon DD.MM`, `runda stron`, `rundy wyglądu`, `ZMIERZONE DD.MM`, `Sekcje z DD.MM`,
+   `chunks CSS, DD.MM`, `D28b`. Znaleziona przez wypisanie KANDYDATÓW (każda linia z datą
+   `DD.MM` plus formy słowne) zamiast zgadywania listy form: **68 kandydatów, 65 podmian,
+   6 fałszywych trafień**. Sięgała też ChatBota (`includes/front.php`, `assets/widget.css`),
+   nie tylko sklepu.
+
+⛔ **Co ZOSTAJE długiem:** `narzedzia-qa/slady-wewnetrzne.sh` **nie zna żadnej z tych trzech
+rodzin.** Teksty są czyste dziś, ale nic nie broni ich jutro — pierwszy nowy komentarz
+z odsyłaczem wjedzie do paczki klienta bez jednego czerwonego światła. To już **trzeci** PR
+z rzędu, w którym ten sam dług kosztuje rundę recenzji.
+**CO ZAMYKA:** rozszerzyć skaner o wszystkie trzy rodziny + przypadki w
+`narzedzia-qa/paczka-zgodnosc-proba-kontrolna.sh` (każda rodzina osobno, żeby próba mierzyła
+pokrycie, nie samo działanie wzorca). ⛔ Świadomie NIE robione przed oddaniem: to zmiana
+narzędzia QA, nie produktu, a reguła rund mówi, że taki PR dostaje jedną rundę.
+
+
 ---
 
 ## 🟡 ODDANE DO K8 — odbior WYDAJNOSCI (perf) na docelowym hostingu · AN-022
