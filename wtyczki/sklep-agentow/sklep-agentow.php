@@ -329,7 +329,7 @@ function sklepag_shortcode_sklep() {
 	}
 	$html .= '</div>';
 
-	// OD ZAKUPU DO DZIAŁANIA (wzorzec „ile trwa uruchomienie" — zwiad 19.08;
+	// OD ZAKUPU DO DZIAŁANIA (wzorzec „ile trwa uruchomienie”;
 	// treść kroków = faktyczny przepływ: mail z instrukcją i linkiem do zipa).
 	// Trzy równe karty w rzędzie — numer z hairline'em jak u gospodarza.
 	$html .= '<section class="sklepag-sekcja sklepag-sekcja--pelna"><p class="sklepag-mono-etykieta">[ <span class="sklepag-akcent">01</span> · OD ZAKUPU DO DZIAŁANIA ]</p>';

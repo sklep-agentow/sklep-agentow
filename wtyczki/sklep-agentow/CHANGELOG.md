@@ -127,7 +127,7 @@ mierzył żaden test automatyczny: utraty pracy właściciela i drogi do treści
   jak dotąd: nagranie z `autoplay`, bez martwego przycisku.
 
 ### Zmienione
-- Instrukcja instalacji ostrzega przed dwiema pułapkami, na których audytor stanął:
+- Instrukcja instalacji ostrzega przed dwiema pułapkami, na których potyka się instalacja:
   limitem przesyłania plików mniejszym niż paczka wtyczki (z trzema drogami wyjścia)
   oraz ustawieniem Adaptive Pricing w Stripe, które kupującemu potrafi pokazać cenę
   w innej walucie z opłatą za przewalutowanie.

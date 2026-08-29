@@ -73,7 +73,7 @@
 	}
 }() );
 
-/* ===== Koszyk A (25.08): lightbox galerii + sticky CTA ===== */
+/* ===== Koszyk: lightbox galerii + sticky CTA ===== */
 (function () {
 	'use strict';
 	var bezRuchu = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;

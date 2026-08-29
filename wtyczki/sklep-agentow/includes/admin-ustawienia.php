@@ -1,6 +1,6 @@
 <?php
 /**
- * Ustawienia sklepu (K3b) — Settings API wg Plugin Handbook:
+ * Ustawienia sklepu — Settings API wg Plugin Handbook:
  * register_setting + add_settings_section/field, zapis przez options.php
  * (nonce i capability robi rdzeń), sanitize_callback na każdej opcji.
  *

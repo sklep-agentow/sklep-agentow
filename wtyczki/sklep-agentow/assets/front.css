@@ -59,7 +59,7 @@
 
 .sklepag-mono-etykieta {
 	font-family: var(--sklepag-mono);
-	font-size: 0.8rem; /* Podbite po sędzi wyglądu — czytelność drobnych wersalików. */
+	font-size: 0.8rem; /* Podbite — czytelność drobnych wersalików. */
 	letter-spacing: 0.18em;
 	text-transform: uppercase;
 	color: var(--sklepag-pyl);
@@ -71,7 +71,7 @@
 }
 
 /* Pulsująca kropka statusu (signature — gaśnie przy reduced-motion).
-   Rozmiar+glow po sędzi (T5): na zrzucie 1440px była niezauważalna. */
+   Rozmiar+glow: przy szerokości 1440 px była niezauważalna. */
 .sklepag-kropka {
 	display: inline-block;
 	width: 0.62em;
@@ -258,7 +258,7 @@
 	margin: 0;
 }
 
-/* ---------- Strona produktu (PR 2) ---------- */
+/* ---------- Strona produktu ---------- */
 
 .sklepag-okruszki {
 	font-family: var(--sklepag-mono);
@@ -362,7 +362,7 @@ a.sklepag-kup {
 	margin: 0;
 }
 
-/* Mockup okna czatu (wzór tidio: dymki ZAWSZE w ramce — §5b.1). */
+/* Mockup okna czatu (wzór tidio: dymki ZAWSZE w ramce). */
 .sklepag-mockup {
 	background: var(--sklepag-wegiel);
 	border: 1px solid var(--sklepag-linia);
@@ -502,7 +502,7 @@ a.sklepag-kup {
 	margin: 0;
 }
 
-/* PRZED/PO segregacji (§5b.3; etykieta DEMO). */
+/* PRZED/PO segregacji (etykieta DEMO). */
 .sklepag-przedpo {
 	margin-top: 2rem;
 }
@@ -643,7 +643,7 @@ a.sklepag-kup {
 		text-align: center;
 	}
 
-	/* Pasek statusu na wąskim ekranie: luźniejsze zawijanie (uwaga sędziego). */
+	/* Pasek statusu na wąskim ekranie: luźniejsze zawijanie. */
 	.sklepag-pasek-statusu {
 		letter-spacing: 0.08em;
 		line-height: 1.8;
@@ -923,8 +923,8 @@ a.sklepag-kup {
 	font-size: 0.9rem;
 }
 
-/* ===== 24.08 wieczór: hero 2-kol + oprawa jasnych zrzutów (galeria-siatka „CO JEST W ŚRODKU" z tej
-   daty wypadła w rundzie stron — oba produkty mają galerię w FAZACH, patrz sekcja strony produktu) ===== */
+/* ===== Hero 2-kol + oprawa jasnych zrzutów (osobna galeria-siatka „CO JEST W ŚRODKU”
+   wypadła — oba produkty mają galerię w FAZACH, patrz sekcja strony produktu) ===== */
 .sklepag-hero-uklad {
 	display: grid;
 	grid-template-columns: 1.05fr 0.95fr;
@@ -955,7 +955,7 @@ a.sklepag-kup {
 .sklepag-hero-wizual .sklepag-hero-zrzut {
 	background: transparent;
 }
-/* ===== Koszyk A (25.08): demo-CTA, zgodność, trigger, przypisy, punkty uczciwości, lightbox, sticky ===== */
+/* ===== Koszyk: demo-CTA, zgodność, trigger, przypisy, punkty uczciwości, lightbox, sticky ===== */
 .sklepag-demo-cta {
 	color: var(--sklepag-papier);
 	font-weight: 500;
@@ -1066,7 +1066,7 @@ a.sklepag-kup {
 	margin: 0;
 }
 
-/* ===== Opinie v2 (25.08): avatar-inicjal, gwiazdki, badge, tytul ===== */
+/* ===== Opinie: avatar-inicjal, gwiazdki, badge, tytul ===== */
 .sklepag-opinia-glowa {
 	display: flex;
 	align-items: center;

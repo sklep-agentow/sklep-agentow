@@ -303,8 +303,8 @@ function sklepag_tresc_produktu( $slug ) {
 				'przypis' => 'Bot nie zastępuje człowieka w trudnych sprawach — dlatego rozmowę możesz w każdej chwili przejąć i dokończyć osobiście.',
 			),
 			/*
-			 * ⛔ OPINIE: wyłącznie PRAWDZIWE, od zweryfikowanych kupujących (zasada uczciwości +
-			 * 24.08, Omnibus). Puste = sekcja się nie renderuje. Format wpisu — WYŁĄCZNIE
+			 * ⛔ OPINIE: wyłącznie PRAWDZIWE, od zweryfikowanych kupujących (zasada uczciwości,
+			 * dyrektywa Omnibus). Puste = sekcja się nie renderuje. Format wpisu — WYŁĄCZNIE
 			 * tablica z kluczami (wpis bez klucza 'tresc' jest przez render POMIJANY):
 			 * array(
 			 *     'tresc'    => 'Treść opinii.',
@@ -550,7 +550,7 @@ function sklepag_figure_zrzutu( $zrzut, $klasa, $z_podpisem, $z_paskiem = true, 
 	$html   = '<figure class="' . esc_attr( $klasa ) . '">';
 	if ( $z_paskiem ) {
 		// Pasek „okna aplikacji" (3 kropki jak w mockupie czatu): wspólna rama godzi
-		// ciemny widget z jasnym panelem wp-admin — uwaga sędziego o dwóch językach.
+		// ciemny widget z jasnym panelem wp-admin — inaczej czyta się jak dwa różne języki wizualne.
 		$html .= '<span class="sklepag-okno-pasek" aria-hidden="true"><span></span><span></span><span></span></span>';
 	}
 	$html .= '<img src="' . esc_url( plugins_url( 'assets/produkty/' . $zrzut['plik'], SKLEPAG_PLIK ) ) . '" alt="' . esc_attr( $zrzut['alt'] ) . '" width="' . (int) $zrzut['szer'] . '" height="' . (int) $zrzut['wys'] . '"' . ( $leniwie ? ' loading="lazy"' : '' ) . '>';

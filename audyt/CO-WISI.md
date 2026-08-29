@@ -72,31 +72,59 @@ wprost dopuścił drogę „nazwany dług zamiast czyszczenia w tym PR-ze".
 przypadki do `narzedzia-qa/paczka-zgodnosc-proba-kontrolna.sh`, wyczyścić trafienia w trzech
 plikach jadących do klienta (komentarz ma nieść POWÓD, numer zostaje w PR i commicie).
 
-### STAN PO `#209` (29.08) — TEKSTY WYCZYSZCZONE, SKANER NADAL ŚLEPY
+### STAN PO `#209` (29.08) — CZTERY RODZINY, TRZY RUNDY, I DLACZEGO ZA KAŻDYM RAZEM „ZERO" BYŁO PRZEDWCZESNE
 
-Czyszczenie tekstów jest **zrobione**, i to w trzech rodzinach, nie w jednej:
+⛔ **Ten wpis był raz nieprawdziwy i to jest część lekcji.** Po rundzie 2 stało tu zdanie
+„rodzina odsyłaczy słownych — **wyczyszczona**". Runda 3 wykazała, że w paczce zostaje wtedy
+**20 wierszy**, w tym siedem będących odmienioną formą słowa poprawionego w tym samym pliku
+i tym samym commicie. Zdanie zostało poprawione dopiero po tej uwadze.
 
-1. **Rodzina identyfikatorów** (`A2-F3`, `DK-5`, `KR1/KR2`, `SK-L3-005`, `LS-F1`, „wroga sesja") —
-   wyczyszczona w `#209`; recenzent rundy 2 potwierdził własnym, szerszym wzorcem **0 trafień**.
-2. **Rodzina odsyłaczy słownych** (`przegląd na żywo DD.MM`, `sędzia rN`, `Znalezisko testu`,
-   `UZUPEŁNIENIE DD.MM`) — wykazana przez recenzenta rundy 2 jako 42 wiersze, wyczyszczona.
-3. **Trzecia rodzina, której nie widział ani mój, ani jego wzorzec** — `feedback z przeglądu`,
-   `recon DD.MM`, `runda stron`, `rundy wyglądu`, `ZMIERZONE DD.MM`, `Sekcje z DD.MM`,
-   `chunks CSS, DD.MM`, `D28b`. Znaleziona przez wypisanie KANDYDATÓW (każda linia z datą
-   `DD.MM` plus formy słowne) zamiast zgadywania listy form: **68 kandydatów, 65 podmian,
-   6 fałszywych trafień**. Sięgała też ChatBota (`includes/front.php`, `assets/widget.css`),
-   nie tylko sklepu.
+**Co znalazła która runda — i czym mierzona:**
 
-⛔ **Co ZOSTAJE długiem:** `narzedzia-qa/slady-wewnetrzne.sh` **nie zna żadnej z tych trzech
+| runda | rodzina | ile | miara |
+|---|---|---|---|
+| r1 | identyfikatory (`SK-L3-005`, `LS-F1`, `A3-2`, `Do audytu`) | 22 | wzorzec recenzenta |
+| r2 | odsyłacze słowne, mianownik (`przegląd na żywo DD.MM`, `sędzia`, `Znalezisko testu`) | 42 | wzorzec recenzenta |
+| r2 (moje) | formy poza oboma wzorcami (`feedback`, `recon`, `runda stron`, `ZMIERZONE DD.MM`) | 65 podmian | wzorzec własny — **za wąski** |
+| r3 | odmiany polskie (`sędzi`, `sędziego`) + nasze rundy robocze (`Koszyk A`, `Opinie v2`) + nazwy dokumentów (`ZWIAD-STRIPE`, `K3d`, `raport audytora`) | 20 | wzorzec recenzenta |
+| r3 (moje) | odsyłacze do `PLAN-PROJEKTU.md` i naszych PR: `Plan §7`, `granica §9`, `§4A`, `§5b.1`, `§5b.3`, `(PR 2)` | 8 | **wyliczenie kandydatów** |
+
+⛔ **Rodzina z ostatniego wiersza nie była na liście żadnego z nas.** Znalazło ją dopiero
+wyliczenie po znaku `§` i po kształcie naszych oznaczeń — nie szukanie form, o których się
+pamiętało. To jest cała różnica między „mój wzorzec nic nie znajduje" a „nie ma już kandydatów".
+
+**Miara, która ma zostać** (trzy niezależne wyliczenia, wszystkie odtwarzalne):
+
+```
+# A — każda linia z datą, BEZ żadnego kontekstu przed datą
+grep -rnE '[0-9]{2}\.[0-9]{2}' wtyczki --include=*.php --include=*.md --include=*.js \
+     --include=*.txt --include=*.css
+
+# B — rdzenie słowne, NIE całe słowa (polski odmienia: sędzia → sędziego → sędzi)
+grep -rniE '(sędzi|zwiad|wzorc[eóa]w? §|Koszyk A|Opinie v2|rundzie stron|feedback|recon |znalezisk|UZUPEŁNIEN|przegląd|audyt [0-9]|raport audytora)' \
+     wtyczki --include=*.php --include=*.md --include=*.js --include=*.txt --include=*.css \
+  | grep -viE 'przeglądark|reconciliation'
+
+# C — kształt NASZYCH oznaczeń (to wyliczenie znalazło rodzinę, której nikt nie szukał)
+grep -rnE '(§[0-9]|\bK[0-9][a-z]?\b|\bA[0-9]-|\bT[0-9]\b|ZWIAD|\bD2[0-9]\b|\bPR [0-9])' \
+     wtyczki --include=*.php --include=*.md --include=*.js --include=*.txt --include=*.css
+```
+
+Fałszywe trafienia tych wyliczeń są znane i mają zostać: daty w API Stripe (`28.10.2024`),
+przykład formatu wpisu (`'25.08.2026'`), `56.01rem`, `50.000`, stała gamma `12.92`, słowa
+„przeglądarka" i „reconciliation", `uzupełnienie` jako zwykłe słowo, odsyłacze do **publicznych**
+standardów (RFC 3501 §6.4.8, XML 1.0 §2.5) oraz `§N` odsyłające **wewnątrz** dokumentacji
+technicznej, którą klient dostaje w paczce.
+
+⛔ **Co ZOSTAJE długiem:** `narzedzia-qa/slady-wewnetrzne.sh` **nie zna żadnej z tych czterech
 rodzin.** Teksty są czyste dziś, ale nic nie broni ich jutro — pierwszy nowy komentarz
 z odsyłaczem wjedzie do paczki klienta bez jednego czerwonego światła. To już **trzeci** PR
 z rzędu, w którym ten sam dług kosztuje rundę recenzji.
-**CO ZAMYKA:** rozszerzyć skaner o wszystkie trzy rodziny + przypadki w
-`narzedzia-qa/paczka-zgodnosc-proba-kontrolna.sh` (każda rodzina osobno, żeby próba mierzyła
-pokrycie, nie samo działanie wzorca). ⛔ Świadomie NIE robione przed oddaniem: to zmiana
-narzędzia QA, nie produktu, a reguła rund mówi, że taki PR dostaje jedną rundę.
-
-
+**CO ZAMYKA:** wpiąć te trzy wyliczenia do skanera (każda rodzina osobno, plus lista znanych
+fałszywych trafień jako allowlista) i dołożyć po jednym przypadku na rodzinę do
+`narzedzia-qa/paczka-zgodnosc-proba-kontrolna.sh`, **żeby próba mierzyła POKRYCIE, nie samo
+działanie wzorca** — bo dokładnie ta różnica kosztowała trzy rundy.
+⛔ Świadomie NIE robione przed oddaniem: to zmiana narzędzia QA, nie produktu.
 ---
 
 ## 🟡 ODDANE DO K8 — odbior WYDAJNOSCI (perf) na docelowym hostingu · AN-022

@@ -284,7 +284,7 @@ add_action( 'admin_post_chatl_test_klucza', 'chatl_post_test_klucza' );
  * To JEDYNY kanał, którym właściciel się o tym dowie. Log PHP nie wystarcza:
  * `wp_trigger_error()` nic nie zapisuje przy WP_DEBUG=false, a wyłączony jest
  * na każdej normalnej instalacji — bez tego paska 29 miejsc w obu wtyczkach
- * gubiło błąd bez śladu (raport audytora awarii, punkt najgroźniejszy).
+ * gubiło błąd bez śladu — z braków w obsłudze awarii ten był najgroźniejszy.
  *
  * Pasek sam cichnie po CHATL_BLAD_BAZY_OKNO_DNI dniach bez nowego błędu.
  *
