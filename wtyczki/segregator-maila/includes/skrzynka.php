@@ -233,7 +233,7 @@ function segm_skrzynka_diagnostyka() {
 	$wynik[]  = array(
 		'nazwa'    => 'Rozszerzenie PHP „imap" (NIEwymagane)',
 		'stan'     => 'ok',
-		// WK-4: kolumna stanu mówiła „✔ jest", a opis obok zaczynał się od
+		// Kolumna stanu mówiła „✔ jest", a opis obok zaczynał się od
 		// „Nieobecne" — kupujący czytał to jako błąd w tabelce. Kolumna ma
 		// mówić o STANIE RZECZY, a nie tylko „u nas wszystko gra": własny
 		// znacznik rozstrzyga, co widać, i zgadza się z pierwszym słowem opisu.

@@ -300,7 +300,7 @@ Codziennie, cztery `DELETE`:
   `CHATL_RETENCJA_DNI` dni,
 - z `chatl_sesje` wiersze, w których `aktywnosc` jest starsza niż `CHATL_RETENCJA_DNI`
   dni. Po `aktywnosc`, nie po `utworzono`: sesja, do której gość wraca po tygodniach,
-  jest żywa i nie może zniknąć spod otwartego okna. Do audytu danych (A3-1) ta tabela
+  jest żywa i nie może zniknąć spod otwartego okna. Wcześniej ta tabela
   nie miała **żadnej** ścieżki kasowania i rosła o wiersz na każde otwarcie widgetu.
   ⚠️ `aktywnosc` liczy ruch **gościa** (pytanie, odpytywanie); wiadomość operatora
   odświeża osobną kolumnę `operator_akt`. Rozmowa, w której przez cały okres retencji
@@ -354,7 +354,7 @@ Zdarzenie cron `chatl_czyszczenie_historii` zdejmuje **każda** ścieżka odinst
 zanim jeszcze sprawdzimy opcję „usuń dane": zwykle robi to deaktywacja, ale wtyczkę da
 się usunąć z jej pominięciem (skasowany katalog, „usuń" z listy) i wtedy `uninstall.php`
 jest jedynym sprzątaczem. Zaplanowany zaczep bez kodu to nie są dane właściciela, tylko
-wpis w `wp_options → cron`, w który WordPress uderza codziennie (A3-2).
+wpis w `wp_options → cron`, w który WordPress uderza codziennie.
 
 Czego **żadna** ścieżka nie rusza: stałej `CHATL_KLUCZ_API` w `wp-config.php` — wtyczka nie
 modyfikuje plików konfiguracyjnych.
@@ -1143,7 +1143,7 @@ w pliku rozpoznania i w opisie PR.
 `zatrzymajOdpytywanie()` żyją w domknięciu `zbudujOkno()` (widzą sesję, listę
 wiadomości i pasek rozmówcy), a startować i zatrzymywać trzeba je także spoza
 niego: z bąbelka i z obsługi klawisza Escape. Służą do tego dwie zmienne
-ustawiane w jednym miejscu — `startOdpytywania` i `stopOdpytywania`. Do audytu A4
+ustawiane w jednym miejscu — `startOdpytywania` i `stopOdpytywania`. Wcześniej
 bąbelek wołał `odpytaj` po nazwie, spoza zasięgu: przeglądarka zgłaszała
 `ReferenceError`, obsługa kliknięcia przerywała się w połowie i **odpytywanie
 nie startowało wcale** — gość nie widział ani komunikatu o przejęciu rozmowy,

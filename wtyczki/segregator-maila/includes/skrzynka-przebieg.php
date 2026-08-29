@@ -134,7 +134,7 @@ const SEGM_SKRZ_KOMUNIKAT_W_TOKU = 'Przebieg w toku. Jeśli ten tekst został tu
 /**
  * Jeden przebieg segregacji na skrzynce.
  *
- * ⭐ KOLEJNOŚĆ: ZAPIS ZAMIARU PRZED RUCHEM (LS-F2). Historia jest jedynym
+ * ⭐ KOLEJNOŚĆ: ZAPIS ZAMIARU PRZED RUCHEM. Historia jest jedynym
  * źródłem, z którego da się cofnąć przebieg — więc powstaje ZANIM cokolwiek
  * ruszy na serwerze: najpierw wiersz przebiegu, potem dla każdej wiadomości
  * wiersz „w toku", dopiero po udanym zapisie `UID MOVE`, a po potwierdzeniu
@@ -548,13 +548,13 @@ function segm_skrzynka_potwierdz_ruch( $id_ruchu, $uid_docelowy, $uidvalidity_do
  * Message-ID. Gdy i to zawiedzie, mówimy wprost, której wiadomości nie
  * odnaleziono, zamiast zgadywać.
  *
- * ⭐ Liczymy TYLKO to, co naprawdę wróciło (LS-F1): `Segm_Imap::przenies()`
+ * ⭐ Liczymy TYLKO to, co naprawdę wróciło: `Segm_Imap::przenies()`
  * sprawdza skutek ruchu, więc wiadomość, którą właściciel w międzyczasie
  * przeciągnął gdzie indziej, dostaje BŁĄD przy swojej pozycji, a nie
  * „wróciła". Przebieg jest „cofnięty w całości" tylko przy zerze błędów —
  * inaczej przycisk zostaje i drugą próbę da się zrobić.
  *
- * ⭐ UIDVALIDITY (T-3, RFC 3501 §2.3.1.1): zapamiętany UID znaczy coś tylko
+ * ⭐ UIDVALIDITY (RFC 3501 §2.3.1.1): zapamiętany UID znaczy coś tylko
  * w folderze o TEJ SAMEJ UIDVALIDITY. Folder skasowany i założony na nowo
  * zaczyna UID-y od 1 — stary UID wskazywałby OBCĄ wiadomość i to ją byśmy
  * „cofnęli". Gdy UIDVALIDITY się różni, UID-owi nie ufamy i szukamy po

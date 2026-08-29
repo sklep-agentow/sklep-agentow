@@ -136,7 +136,7 @@ mierzył żaden test automatyczny: utraty pracy właściciela i drogi do treści
 
 ### Poprawione
 - **Drugi zakup tego samego produktu tuż po opłaceniu pierwszego nie dochodził do skutku**
-  (SK-L3-005). Okno idempotencji (60 s, klucz `md5(IP|produkt_id)`) oddawało zapamiętany
+  Okno idempotencji (60 s, klucz `md5(IP|produkt_id)`) oddawało zapamiętany
   adres checkoutu bez sprawdzenia, czy tamta sesja nie została już opłacona — kupujący
   trafiał na opłacony ekran Stripe, bez pól karty i bez wyjaśnienia. Ponieważ okno jest
   kluczowane `REMOTE_ADDR`, dotyczyło to także DWÓCH RÓŻNYCH kupujących za jednym adresem

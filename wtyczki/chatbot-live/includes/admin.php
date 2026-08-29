@@ -1180,7 +1180,7 @@ function chatl_post_ustawienia_zapisz() {
 	}
 	/*
 	 * „Zapisano" dopiero po ZMIERZENIU, że zapis doszedł do skutku.
-	 * Do audytu wynik update_option() był wyrzucany i przekierowanie z
+	 * Wcześniej wynik update_option() był wyrzucany i przekierowanie z
 	 * chatl_ok=zapisano leciało bezwarunkowo — właściciel podnosił dzienny limit
 	 * wywołań AI, widział zielone potwierdzenie, a obowiązywała stara liczba.
 	 * Wzorzec 1:1 z segm_post_ustawienia_zapisz() w Segregatorze.

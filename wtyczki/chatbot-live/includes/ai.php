@@ -97,7 +97,7 @@ function chatl_klucz_api() {
  * wpis w polu formularza po cichu wygrywałby ze stałą wbrew deklaracji.
  *
  * Wynik jest MIERZONY odczytem opcji po zapisie (wzorzec
- * segm_skrzynka_zapisz_haslo() z Segregatora), nie zakładany. Do audytu A2
+ * segm_skrzynka_zapisz_haslo() z Segregatora), nie zakładany. Wcześniej
  * funkcja zwracała void: przy odrzuconym zapisie w bazie zostawał stary klucz,
  * panel mówił „zapisano", a „Przetestuj klucz" testował STARY klucz i dawał
  * zielone potwierdzenie klucza, którego właściciel właśnie nie zapisał.
@@ -289,7 +289,7 @@ function chatl_ai_dostepny() {
 	/*
 	 * Licznik nie do odczytania = NIE WIEMY, ile dziś poszło, więc zakładamy
 	 * najgorsze: limit wyczerpany. Bot odpowiada z reguł, rachunek nie rośnie,
-	 * właściciel widzi pasek błędu bazy w panelu (T-1, audyt etap 3).
+	 * właściciel widzi pasek błędu bazy w panelu.
 	 */
 	if ( ! empty( $d['blad'] ) ) {
 		return false;
@@ -555,7 +555,7 @@ function chatl_ai_test_klucza() {
 	$url = apply_filters( 'chatl_ai_url', 'https://api.anthropic.com/v1/messages' );
 	/*
 	 * TEN SAM model, którym pyta bot — przez chatl_ai_model(), nie przez samą
-	 * stałą. Do audytu diagnostyka brała CHATL_AI_MODEL, więc pomijała
+	 * stałą. Wcześniej diagnostyka brała CHATL_AI_MODEL, więc pomijała
 	 * pole „własny model" z ustawień: właściciel wpisywał nazwę z literówką,
 	 * bot po cichu zjeżdżał do reguł, a „Przetestuj klucz" mówił „działa",
 	 * bo pytał modelu domyślnego. Przycisk ma iść TYM SAMYM KLUCZEM I MODELEM co

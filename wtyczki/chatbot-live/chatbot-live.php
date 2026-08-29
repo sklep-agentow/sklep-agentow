@@ -177,7 +177,7 @@ function chatl_czyszczenie_historii() {
 	$tabela = $wpdb->prefix . 'chatl_rozmowy';
 	/*
 	 * Granica liczona w STREFIE WITRYNY, bo `utworzono` jest zapisywane przez
-	 * `current_time( 'mysql' )` — też w strefie witryny. Do audytu A5
+	 * `current_time( 'mysql' )` — też w strefie witryny. Wcześniej
 	 * granica szła z `gmdate( …, time() - … )`, czyli w UTC: porównywane były dwa
 	 * różne układy odniesienia i próg przesuwał się o offset strefy — u kupującego
 	 * w strefie ujemnej (UTC-5) rozmowy ginęły 5 h PRZED obiecanymi 90 dniami.
@@ -218,7 +218,7 @@ function chatl_czyszczenie_historii() {
 	}
 
 	/*
-	 * Sesje rozmów. Do audytu danych (A3-1) tabela `chatl_sesje` nie miała
+	 * Sesje rozmów. Wcześniej tabela `chatl_sesje` nie miała
 	 * ŻADNEJ ścieżki kasowania: jeden wiersz na każde otwarcie widgetu, także
 	 * długo po tym, jak retencja skasowała samą rozmowę. Kasujemy po
 	 * `aktywnosc` (ostatni ruch w rozmowie), nie po `utworzono`: sesja, do
@@ -227,7 +227,7 @@ function chatl_czyszczenie_historii() {
 	 * Ta sama granica co historia rozmów, ten sam próg dla obietnicy „90 dni"
 	 * i ta sama PODSTAWA CZASU: `wp_date()`, czyli strefa witryny. `aktywnosc`
 	 * jest zapisywana przez `current_time( 'mysql' )`, więc porównanie w UTC
-	 * przesuwałoby próg o offset strefy — dokładnie wada KR6, naprawiona wyżej
+	 * przesuwałoby próg o offset strefy — dokładnie ta wada, naprawiona wyżej
 	 * dla historii rozmów.
 	 */
 	$sesje = $wpdb->prefix . 'chatl_sesje';

@@ -624,7 +624,7 @@ class Segm_Imap {
 	 * to WPROST — zwykłe EXPUNGE skasowałoby też cudze wiadomości oznaczone
 	 * \Deleted przez inny program (RFC 4315 2.1 ostrzega o tym wprost).
 	 *
-	 * ⭐ Liczy się SKUTEK, nie status (LS-F1): RFC 3501 §6.4.8 — polecenie UID
+	 * ⭐ Liczy się SKUTEK, nie status: RFC 3501 §6.4.8 — polecenie UID
 	 * z numerem, który nie pasuje do żadnej wiadomości, kończy się „OK", bo
 	 * serwer nie ma nic do zgłoszenia. Wtyczka liczyła kiedyś „przeniesiono"
 	 * za sam status, więc cofnięcie meldowało sukces dla wiadomości, którą

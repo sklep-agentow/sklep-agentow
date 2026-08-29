@@ -42,13 +42,13 @@ Nic jeszcze.
 ## [1.3.2] — 2026-08-24 · schemat bazy 3 → 4
 
 ### Naprawione
-- **Przebieg na żywo zapisuje zamiar PRZED ruchem poczty** (LS-F2): wiersz przebiegu
+- **Przebieg na żywo zapisuje zamiar PRZED ruchem poczty**: wiersz przebiegu
   i pozycja „w toku" trafiają do bazy, zanim poleci `UID MOVE`; potwierdzenie od serwera
   zmienia ją na „przeniesiono". Gdy baza odmówi zapisu, wiadomość NIE jest ruszana,
   przebieg przerywa się z widocznym błędem, a `przeniesionych` liczy tylko potwierdzone
   ruchy. Wcześniej przy padzie bazy poczta była rozłożona po folderach, historia pusta,
   cofanie martwe, a panel pokazywał sukces.
-- **Cofnięcie liczy tylko to, co naprawdę wróciło** (LS-F1): klient IMAP uznaje ruch za
+- **Cofnięcie liczy tylko to, co naprawdę wróciło**: klient IMAP uznaje ruch za
   udany po niepustym `COPYUID` (na serwerze bez UIDPLUS — po porównaniu stanu folderu),
   bo `UID MOVE` nieistniejącego UID-a kończy się „OK" (RFC 3501 §6.4.8). Wiadomość
   przeciągnięta w międzyczasie ręcznie dostaje błąd przy pozycji, przebieg nie jest
@@ -87,7 +87,7 @@ Nic jeszcze.
   zdaniem po polsku („Serwer odrzucił połączenie na tym porcie — nikt tam nie odbiera"),
   a kod systemowy zostaje w części „Szczegóły techniczne"; pole wyboru szyfrowania ma
   etykietę dla czytnika ekranu.
-- **Deklaracja prywatności mówi wprost, co wychodzi do dostawcy AI** (A3-3): pełna lista
+- **Deklaracja prywatności mówi wprost, co wychodzi do dostawcy AI**: pełna lista
   składników żądania (nadawca, temat, treść do 800 znaków, identyfikator wiersza próbki,
   nazwy kategorii, nazwa modelu), lista tego, co NIE wychodzi, informacja o jednym
   ponowieniu żądania oraz o tym, że „Przetestuj klucz" wysyła wyłącznie słowo „ping".

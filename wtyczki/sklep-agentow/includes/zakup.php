@@ -123,7 +123,7 @@ function sklepag_obsluz_kup() {
 		wp_die( 'Produkt niedostępny.', 'Sklep Agentów', 404 );
 	}
 
-	// Okno idempotencji: podwójny klik nie tworzy drugiej sesji (SK-L3-005).
+	// Okno idempotencji: podwójny klik nie tworzy drugiej sesji.
 	//
 	// DWA warunki, oba konieczne, bo każdy z osobna ma dziurę:
 	//
@@ -141,7 +141,7 @@ function sklepag_obsluz_kup() {
 	// Okno jest kluczowane adresem IP (`sklepag_ip()` czyta goły REMOTE_ADDR), więc za
 	// wspólnym adresem (CGNAT operatora, biuro za NAT) trafia też w DRUGĄ osobę. Krótkie
 	// okno ogranicza to do kilku sekund; pełne rozdzielenie kupujących wymagałoby klucza
-	// związanego z sesją przeglądarki i jest zapisane jako otwarta połowa klasy SK-L3-005.
+	// związanego z sesją przeglądarki i jest znanym, świadomie otwartym ograniczeniem tego okna.
 	$okno = 'sklepag_idem_' . md5( sklepag_ip() . '|' . $produkt_id );
 	$juz  = get_transient( $okno );
 	if ( is_array( $juz ) && ! empty( $juz['url'] ) ) {
@@ -300,7 +300,7 @@ function sklepag_webhook( WP_REST_Request $zadanie ) {
 
 /**
  * Czy sesja checkout WCIĄŻ czeka na płatność — a więc czy wolno oddać jej adres z okna
- * idempotencji (SK-L3-005)? Stan trzymamy u siebie (`sklepag_oznacz_sesje`), więc pytanie
+ * idempotencji? Stan trzymamy u siebie (`sklepag_oznacz_sesje`), więc pytanie
  * nie kosztuje wywołania Stripe i nie psuje się przy awarii łączności.
  * Brak wiersza = false: nieznanego checkoutu nie podajemy kupującemu.
  */

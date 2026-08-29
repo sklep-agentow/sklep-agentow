@@ -99,7 +99,7 @@ function segm_pasek_bledu_ai() {
 		return;
 	}
 	/*
-	 * WK-3: świeżo kupiona wtyczka witała właściciela czerwonym „KLUCZ API
+	 * Świeżo kupiona wtyczka witała właściciela czerwonym „KLUCZ API
 	 * ZOSTAŁ ODRZUCONY. Sprawdź, czy jest wpisany w całości…" — o kluczu,
 	 * którego ten człowiek nigdy nie wpisywał (ślad błędu został po kimś
 	 * innym albo po kluczu skasowanym później). Brak klucza to NIE jest
@@ -1389,7 +1389,7 @@ function segm_post_ustawienia_zapisz() {
 	$stare = segm_ustawienia();
 	$uwagi = array();
 	// Pole liczbowe puste albo nie-liczba NIE nadpisuje poprzedniej wartości
-	// (KR4 — ta sama klasa co port/limit skrzynki): `max( 1, (int) '' )` robiło
+	// (ta sama klasa co port/limit skrzynki): `max( 1, (int) '' )` robiło
 	// z pustego pola limit 1 i mówiło „Zapisano".
 	$limit_ai = segm_liczba_z_pola( 'ai_limit_dzienny', (int) $stare['ai_limit_dzienny'], 1, 100000, 'dzienny limit wywołań AI', $uwagi );
 	$nowe     = array_merge(

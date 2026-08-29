@@ -15,7 +15,7 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
  * `wp_options -> cron`, w który WordPress uderza codziennie. Normalnie zdejmuje
  * go deaktywacja, ale wtyczkę da się usunąć z jej pominięciem (skasowany
  * katalog, „usuń" z listy) — wtedy `uninstall.php` jest jedynym sprzątaczem.
- * Wzorzec bliźniaczej wtyczki (`segregator-maila/uninstall.php`), A3-2.
+ * Wzorzec bliźniaczej wtyczki (`segregator-maila/uninstall.php`).
  */
 wp_clear_scheduled_hook( 'chatl_czyszczenie_historii' );
 
