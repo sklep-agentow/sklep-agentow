@@ -80,6 +80,24 @@ if ( $inna ) {
 $e = sklepag_test_canonicale( array( 'page_id' => $strona_sklep, 'sklepag_produkt' => 'nie-ma-takiego-produktu' ) );
 sprawdz( 'E. nieistniejący produkt (404): zero canonicali', 0 === count( $e ), 'mam ' . implode( ' | ', $e ) );
 
+// E2. TA SAMA reguła u gospodarza z DOMYŚLNYM WordPressem (rel_canonical podpięty) —
+// krok E mierzył tylko konfigurację „gospodarz wyciął rel_canonical" (linia wyżej zdejmuje
+// go na starcie testu). Filtr get_canonical_url musi oddać pusty adres, inaczej rdzeń
+// wskaże listę jako „główną" wersję 404 (zmierzone sondą: canonical /sklep/ na stronie 404).
+add_action( 'wp_head', 'rel_canonical' );
+$e2 = sklepag_test_canonicale( array( 'page_id' => $strona_sklep, 'sklepag_produkt' => 'nie-ma-takiego-produktu' ) );
+sprawdz( 'E2. nieistniejący produkt (404) Z rel_canonical WP: zero canonicali', 0 === count( $e2 ), 'mam ' . implode( ' | ', $e2 ) );
+
+// D2. CUDZA strona z doklejonym ?sklepag_produkt= przy PODPIĘTYM rel_canonical:
+// canonical GOSPODARZA zostaje. Bez bramki strony sklepu w sklepag_seo_canonical
+// filtr oddawał pusty adres i kasował cudzy canonical — nawrót klasy „naprawa
+// wprowadza tę samą klasę"; reguła „TYLKO na stronie sklepu" z docblocka pliku.
+if ( $inna ) {
+	$d2 = sklepag_test_canonicale( array( 'page_id' => $inna, 'sklepag_produkt' => 'nie-ma-takiego-produktu' ) );
+	sprawdz( 'D2. cudza strona + query var, Z rel_canonical WP: canonical gospodarza ZOSTAJE', in_array( get_permalink( $inna ), $d2, true ), 'mam ' . implode( ' | ', $d2 ) . ' oczekiwano wśród nich [' . get_permalink( $inna ) . ']' );
+}
+remove_action( 'wp_head', 'rel_canonical' );
+
 // Opcja strony sklepu PUSTA (aktywacja nie utworzyła strony): is_page( 0 ) jest prawdą wszędzie,
 // więc bez bramki wtyczka pisała canonical i meta listy w cudze <head>. Opcję podmieniamy tylko
 // w pamięci procesu (pre_option_), baza nietknięta.
@@ -125,6 +143,12 @@ ob_start();
 sklepag_seo_head();
 $glowa404 = ob_get_clean();
 sprawdz( 'G. nieistniejący produkt (404): zero og:url/description listy', false === strpos( $glowa404, 'og:url' ) && false === strpos( $glowa404, 'name="description"' ), 'mam: ' . substr( $glowa404, 0, 120 ) );
+
+// Wtyczka SEO gospodarza (symulacja: stała Yoast) — nie drukujemy drugiego canonicala.
+// UWAGA: define zostaje do końca procesu, dlatego ten krok jest OSTATNI.
+define( 'WPSEO_VERSION', 'test' );
+$h = sklepag_test_canonicale( array( 'page_id' => $strona_sklep, 'sklepag_produkt' => $slug ) );
+sprawdz( 'H. gospodarz z wtyczką SEO (WPSEO_VERSION): nasz canonical milczy', 0 === count( $h ), 'mam ' . implode( ' | ', $h ) );
 
 echo "\nBŁĘDY: {$GLOBALS['sklepag_test_bledy']}\n";
 exit( $GLOBALS['sklepag_test_bledy'] > 0 ? 1 : 0 );

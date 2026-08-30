@@ -68,7 +68,18 @@ add_filter( 'document_title_parts', 'sklepag_seo_tytul' );
  */
 function sklepag_seo_canonical( $url ) {
 	$p = sklepag_seo_biezacy_produkt();
-	return $p ? sklepag_url_produktu_front( $p->slug ) : $url;
+	if ( $p ) {
+		return sklepag_url_produktu_front( $p->slug );
+	}
+	if ( sklepag_jest_strona_z_opcji( 'sklepag_strona_sklep' ) && '' !== (string) get_query_var( 'sklepag_produkt' ) ) {
+		// TYLKO na stronie sklepu (ta sama bramka co w sklepag_seo_biezacy_produkt
+		// i sklepag_status_404_wczesnie): bez niej cudza strona z doklejonym
+		// ?sklepag_produkt= traciła WŁASNY canonical. Slug w adresie, produktu nie ma:
+		// to 404 — bez canonicala także u gospodarza z rel_canonical WP (ta sama reguła
+		// co w sklepag_seo_canonical_wlasny()). Pusty adres = rdzeń nie drukuje nic.
+		return '';
+	}
+	return $url;
 }
 add_filter( 'get_canonical_url', 'sklepag_seo_canonical' );
 
@@ -84,7 +95,12 @@ add_filter( 'get_canonical_url', 'sklepag_seo_canonical' );
  * inaczej byłyby dwa znaczniki.
  */
 function sklepag_seo_canonical_wlasny() {
-	if ( has_action( 'wp_head', 'rel_canonical' ) ) {
+	// `false !==`: has_action zwraca PRIORYTET (0 też jest podpięciem) albo false.
+	if ( false !== has_action( 'wp_head', 'rel_canonical' ) ) {
+		return;
+	}
+	// Wtyczki SEO drukują własny canonical bez rel_canonical WP — z naszym byłyby dwa.
+	if ( defined( 'WPSEO_VERSION' ) || class_exists( 'RankMath' ) ) {
 		return;
 	}
 	$p = sklepag_seo_biezacy_produkt();

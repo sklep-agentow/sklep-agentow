@@ -59,6 +59,24 @@ function sklepag_rejestruj_rewrite() {
 add_action( 'init', 'sklepag_rejestruj_rewrite' );
 
 /**
+ * Status 404 USTAWIANY WCZEŚNIE (template_redirect), gdy slug wskazuje produkt,
+ * którego nie ma. Dotąd 404 ustawiał dopiero render skrótu (już w treści strony)
+ * — żądanie HEAD dostawało 200, GET 404 (zmierzone curl 30.08). Strona przyjazna
+ * „produkt nie istnieje” renderuje się dalej — zmieniamy tylko kod statusu.
+ */
+function sklepag_status_404_wczesnie() {
+	$slug = (string) get_query_var( 'sklepag_produkt' );
+	if ( '' === $slug || ! sklepag_jest_strona_z_opcji( 'sklepag_strona_sklep' ) ) {
+		return;
+	}
+	if ( ! sklepag_produkt_po_slugu( sanitize_title( $slug ) ) ) {
+		status_header( 404 );
+		nocache_headers();
+	}
+}
+add_action( 'template_redirect', 'sklepag_status_404_wczesnie' );
+
+/**
  * Adres strony produktu: ładny przy permalinkach, query var bez nich.
  *
  * @param string $slug Slug produktu.

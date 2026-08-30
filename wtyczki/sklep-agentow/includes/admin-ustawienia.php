@@ -280,7 +280,7 @@ function sklepag_sanityzuj_nip( $wartosc ) {
 	}
 	// Ta sama suma kontrolna co w formularzu zakupu (dane do faktury) — jedna definicja w zakup.php.
 	if ( ! sklepag_nip_poprawny( $cyfry ) ) {
-		add_settings_error( 'sklepag_firma_nip', 'sklepag_nip', 'NIP „' . esc_html( $wartosc ) . '” nie jest poprawny (10 cyfr z sumą kontrolną) — pole pozostawione bez zmian.', 'error' );
+		add_settings_error( 'sklepag_firma_nip', 'sklepag_nip', 'NIP „' . esc_html( $wartosc ) . '” nie jest poprawny (10 cyfr z sumą kontrolną) — pole wróciło do poprzednio zapisanej wartości, wpisz NIP ponownie.', 'error' );
 		return (string) get_option( 'sklepag_firma_nip', '' );
 	}
 	return $cyfry;

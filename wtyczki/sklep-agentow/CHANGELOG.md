@@ -20,6 +20,39 @@ Nic jeszcze.
 
 ---
 
+## [0.9.27] — 2026-08-30 · schemat bazy 8 (bez zmian)
+
+### Naprawione
+- **Strona nieistniejącego produktu zwraca 404 także na HEAD.** Status ustawiał dopiero render treści
+  (za późno dla nagłówków żądania HEAD → 200); teraz `template_redirect` ustawia 404 zanim cokolwiek
+  wyjdzie, a przyjazna strona „produkt nie istnieje” renderuje się jak dotąd.
+- **Zgoda z wtyczkami SEO gospodarza:** gdy działa Yoast (`WPSEO_VERSION`) lub Rank Math, wtyczka nie
+  drukuje własnego canonicala (uniknięcie dwóch znaczników). Dokładniejszy warunek `false !== has_action`
+  (priorytet 0 to też podpięcie).
+- **Strona nieistniejącego produktu (404) bez canonicala także przy domyślnym WordPressie.** Gdy motyw
+  zostawia `rel_canonical` WP, filtr `get_canonical_url` oddaje pusty adres — 404 nie wskazuje już listy
+  sklepu jako „głównej” wersji; cudze strony z doklejonym `?sklepag_produkt=` zachowują własny canonical.
+- Doprecyzowane zdanie w opisie wtyczki: bez stron „Sklep”/„Dziękujemy” wtyczka nie dokleja niczego do
+  innych stron — sklep pokazuje się tam, gdzie właściciel sam wstawi skrót.
+
+- **Awaria poczty przy automatycznym ponowieniu nie zabija już działającego linku.** Cron rotował token
+  przed wysyłką; gdy mail padł, w bazie zostawał skrót, którego nie niósł żaden doręczony mail — kupujący
+  z działającym starym linkiem tracił go na stałe. Teraz gałąź porażki przywraca token, termin i licznik
+  sprzed rotacji (ta sama zasada co przy ręcznym „Wyślij ponownie”); pilnują tego części 4–5
+  strażnika `resend-odnawia-limit-pobran` (część 4 pada na kodzie 0.9.26; część 5 pilnuje
+  warunku własności dodanego w trakcie prac nad tym wydaniem i pada na kodzie sprzed niego).
+  Znany wyjątek (do 0.9.28):
+  gdy wysyłka urwie się w pół (pad serwera w jej trakcie) i ponowienie po przejęciu też zawiedzie,
+  w bazie może zostać skrót niedoręczonego maila — ratunkiem przycisk „Wyślij ponownie” w panelu.
+- **Komunikat po wpisaniu błędnego NIP mówi, co się stało z polem** — że wróciło do poprzednio
+  zapisanej wartości i NIP trzeba wpisać ponownie (dotąd brzmiał, jakby pole się czyściło).
+
+### Dodane
+- Strażnik weryfikacji podpisu webhooka (poprawny/zły/rotowany sekret/przeterminowany znacznik/podmienione
+  body/dwa podpisy) z próbą kontrolną — dotąd odrzut złego podpisu dowodziły tylko raporty audytu.
+
+---
+
 ## [0.9.26] — 2026-08-30 · schemat bazy 8 (bez zmian)
 
 ### Naprawione

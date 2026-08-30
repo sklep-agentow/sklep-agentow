@@ -105,8 +105,8 @@ klienta**; pominięte są wyłącznie długi narzędzi warsztatu (skanery, prób
 
 ## 5. Gdzie leżą dowody
 
-`audyt/sklep/PROBY-KONTROLNE.log` (przelot maszynowy, commit `a1b2495`) · `audyt/sklep/raporty/` ·
-`audyt/sklep/REJESTR-ZNALEZISK-SKLEP.md` · `audyt/SCIAGA-EGZAMINATORA.md` (60 klas błędów z dowodami) ·
+`audyt/sklep/PROBY-KONTROLNE.log` (przelot maszynowy; od 0.9.26 log w repo niesie bieżący przelot — stan z `a1b2495` odtworzysz przez `git log -- audyt/sklep/PROBY-KONTROLNE.log`) · `audyt/sklep/raporty/` ·
+`audyt/sklep/REJESTR-ZNALEZISK-SKLEP.md` · `audyt/SCIAGA-EGZAMINATORA.md` (66 klas błędów z dowodami — licznik rośnie, rozstrzyga `grep -cE "^\| [0-9]+ \|" audyt/SCIAGA-EGZAMINATORA.md`) ·
 `audyt/PLUGIN-CHECK-30-08.md` · `audyt/CO-WISI.md` · `DECYZJE.md` (32 decyzje z uzasadnieniem) ·
 `MAPA-SPEC.md` (wymagania S-01…S-20 ze statusem) · opisy PR `#213` i `#214` (każda runda recenzji z tabelą
 uwaga → naprawa → wynik uruchomienia).
@@ -233,3 +233,13 @@ Lighthouse `perf` nadal tylko na hostingu klienta (AN-022). Kolega ma 100/100 z 
 
 **Długi na 0.9.27** (`audyt/CO-WISI.md`): HEAD 200 na 404 produktu · Yoast/RankMath a własny canonical · `has_action` priorytet 0 ·
 próba kontrolna podpisu webhooka · zdanie w readme o skrócie · honeypot w formularzu opinii · inline skrypty z nonce pod CSP.
+
+### §8a. Rubryka GOTOWE (dopisek 0.9.26/0.9.27)
+Bez zmian względem §7: ✅ 6 · 🐞 5 · ⛔ 1 (#12 drugi człon, oddanie decyzją). Delta 0.9.26/0.9.27 nie dotyka żadnego kryterium
+rubryki poza #11 (WCAG-lite/SEO) — tam DOKŁADA canonical i 404, niczego nie odbiera; dowody L1-11 pozostają ważne.
+
+### §8b. Czego dopisek 0.9.26/0.9.27 NIE dowodzi
+Wydajność `perf` Lighthouse — wyłącznie na hostingu klienta (AN-022: ta maszyna mierzy własne obciążenie). Klik prawdziwej
+karty w osadzonym formularzu — człowiek (hCaptcha Stripe). Rich Results Test i Search Console — po publikacji. Zachowanie
+z realnym Yoast/RankMath — symulowane stałą `WPSEO_VERSION` w strażniku (krok H), nie instalacją wtyczki. Chwiejność próby
+`przejecie` — nierozstrzygnięta (raz pada, raz przechodzi na tym stosie).

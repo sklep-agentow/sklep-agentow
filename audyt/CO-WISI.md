@@ -854,3 +854,22 @@ maszynowo do końca (zam #9901178 z danymi faktury).
   wstawiony ręcznie na dowolnej stronie nadal renderuje sklep (i ma). Poprawne zdanie: „nie dokleja niczego do innych
   stron; sklep pokaże się tylko tam, gdzie sam wstawisz skrót”. Nie weszło do 0.9.26: paczka była już na `origin/main`
   (zamek klasy 10 → podbicie wersji), a zdanie nie szkodzi. Wchodzi z 0.9.27 razem z HEAD-200 i próbą kontrolną podpisu.
+
+## ✅ ROZLICZENIE DŁUGÓW w 0.9.27 (30.08 późny wieczór, decyzja Dzidka „mamy czas do rana”)
+ZROBIONE: kompensacja tokenu w cronie (decyzja Dzidka 30.08 ~22:15 „wszystko co jest błędem naprawiamy”; CZĘŚĆ 4 strażnika resend — na 0.9.26 pada: token_przywrocony=NIE) · HEAD-200 na 404 (template_redirect + `testy/produkt-404-proba-kontrolna.sh`) · próba kontrolna podpisu webhooka
+(`testy/webhook-podpis-test.php` + mutanty hash_equals/tolerancja) · wyjątek Yoast/RankMath (krok H strażnika SEO) ·
+`false !== has_action` · zdanie o skrócie w readme · A3/licznik klas/§8a-b/odsyłacz a1b2495 z recenzji #227 r3.
+ZAMKNIĘTE UZASADNIENIEM: honeypot opinii (formularz tylko z jednorazowego tokenu z maila — bot bez zakupu go nie widzi).
+ZOSTAJE: front.css 83 kB (kandydat, nie wada) · `perf` na hostingu klienta · klik karty (człowiek) · NIP→faktury (decyzja).
+
+## 🟡 DŁUG: allowlista recenzenta (workflow) nie zna prób `produkt-404`/`webhook-podpis` (#228 r1 u5/r2 u10)
+`.github/workflows/recenzent.yml` wymienia próby po nazwie — dwie nowe wymagają PR-a ruszającego workflow (bez recenzji automatycznej, czyta koordynator). Zrobić jako pierwszy PR po 0.9.27.
+
+## 🟡 DŁUG: `statystyki-proba-kontrolna.sh` (ChatBot) ślepa na mutanta 3 na tym stosie (30.08 ~23:15)
+Przelot na `a2f9dc2`: „TEST SLEPY NA 1 PODLOZONYCH BLEDOW” — mutant „wiersze bez znacznika wliczone do skuteczności” przechodzi na zielono. ChatBot nietknięty PR-em #228 (diff pusty), więc to nie regresja kodu — kandydat: dane wspólnego stosu maskują wadę (klasa z pamięci: test na wspólnym stosie bez własnych warunków wstępnych). Diagnoza na czystym stanowisku przy K11/0.9.28. AKTUALIZACJA 31.08: przelot na `9b86106` — próba PRZESZŁA (mutant 3 widoczny); ślepota CHWIEJNA, zależna od aktualnych danych stosu, co wzmacnia diagnozę — dług zostaje.
+
+## 🟡 DŁUG: zapis `status='mail_blad'` bez CAS-a własności claimu (#228 r4 u5, wada sprzed PR)
+`zakup.php` — gałąź porażki `sklepag_domknij_zakup`: UPDATE na `mail_blad` warunkuje tylko `status='mail_w_toku'`, bez `AND token_pobrania=<własny skrót>` (jak mają trzy sąsiednie zapisy kompensacji po #228). Kolejność A(claim, wp_mail wisi) → B(odbiera claim po 5 min, wysyła) → A(pad, przestawia status) → B(sukces nie trafia, statusu już nie ma) zostawia zamówienie z DORĘCZONYM mailem opisane w panelu jako `mail_blad` z podbitym `mail_proby`. Skutek kosmetyczny (link kupującego żyje, mail doszedł — tylko panel kłamie); recenzent r4 świadomie dał DROBNĄ, wady nie wnosi #228. Naprawa = `AND token_pobrania=%s` albo zapis pod `$przywrocono > 0` + krok strażnika skalibrowany jak CZĘŚĆ 5. Zrobić w 0.9.28 razem z diagnozą `statystyki-proba-kontrolna`.
+
+## 🟡 DŁUG: kompensacja crona zamyka egzemplarz, nie klasę — snapshot z „tego, co zastałem", nie z ostatniej DORĘCZONEJ wysyłki (#228 r5 u1)
+`zakup.php` — gdy proces A zrotował token i padł W TRAKCIE `wp_mail` (dokładnie przypadek stale-claim z ok. linii 920), proces B odbiera claim po 5 min i robi snapshot STANU A (`$przed_rotacja`, ok. linii 948) — czyli skrótu, którego nie niósł żaden doręczony mail. Gdy wysyłka B też pada, kompensacja B „przywraca" stan A: w bazie znów skrót niedoręczonego maila, panel pokazuje treść, której nikt nie dostał, link opinii z ostatniego DORĘCZONEGO maila martwy. Zmierzone sondą recenzenta r5 (krok A: wada; krok B: kontrola bez wady przechodzi). Ten PR tego NIE psuje (przedtem zostawał skrót B, równie niedoręczony) — to niedomknięta klasa. Naprawa właściwa: przechowywać stan ostatniej UDANEJ wysyłki (osobna kolumna/ślad z rotacji, która się doręczyła) i przywracać JEGO + krok strażnika skalibrowany jak CZĘŚĆ 5 (rola: A padł, B pada — dziś nie pilnuje jej nic). Nie jednolinijkowa — 0.9.28, razem z długiem u5 r4 (`mail_blad` bez CAS-a własności, sąsiednia linia tej samej gałęzi). readme/CHANGELOG 0.9.27 mówią o wyjątku jawnie (ratunek: przycisk „Wyślij ponownie").

@@ -4,7 +4,7 @@ Tags: sklep, stripe, pliki cyfrowe, sprzedaz wtyczek, pobieranie
 Requires at least: 6.7
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.9.26
+Stable tag: 0.9.27
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -149,9 +149,15 @@ link do pobrania w mailu, jednorazowy link do opinii.
 
 == Changelog ==
 
+= 0.9.27 =
+* Naprawione: gdy poczta ma awarię przy automatycznym ponowieniu maila, wcześniej wysłany link do pobrania dalej działa (dotąd mógł zgasnąć na stałe). Znany wyjątek: gdy wysyłka urwie się w pół (np. pad serwera w jej trakcie) i ponowienie po niej też zawiedzie, link może przestać działać — ratunkiem jest przycisk „Wyślij ponownie" przy zamówieniu w panelu.
+* Naprawione: strona nieistniejącego produktu zwraca kod 404 także dla żądań HEAD (dotąd narzędzia sprawdzające widziały 200).
+* Naprawione: gdy na stronie działa wtyczka SEO (Yoast, Rank Math), sklep nie dokłada drugiego znacznika canonical.
+* Naprawione: strona nieistniejącego produktu (404) nie dostaje znacznika canonical wskazującego listę sklepu — także przy domyślnych ustawieniach WordPressa.
+
 = 0.9.26 =
 * Naprawione: strony sklepu (lista i produkt) dostają znacznik canonical także na motywach, które wyłączają canonical WordPressa — dotąd Google widział stronę produktu pod dwoma adresami jako dwie strony.
-* Naprawione: gdy przy instalacji nie powstała strona „Sklep” lub „Dziękujemy”, wtyczka doklejała swoje style, skrypty i opisy do wszystkich stron witryny; teraz bez tych stron nie robi nic poza własnym panelem.
+* Naprawione: gdy przy instalacji nie powstała strona „Sklep” lub „Dziękujemy”, wtyczka doklejała swoje style, skrypty i opisy do wszystkich stron witryny; teraz bez tych stron nie dokleja niczego do innych stron (sklep pokaże się tylko tam, gdzie sam wstawisz skrót [sklepag_sklep]).
 
 = 0.9.25 =
 * Dodane: formularz płatności na stronie produktu, w kolorach strony (Stripe Checkout Sessions w trybie „elements”: e-mail i karta w ramce Stripe, przycisk „Zapłać”, powrót na „Dziękujemy”); wymaga wpisania klucza publikowalnego w Ustawieniach — bez niego działa dotychczasowa strona płatności Stripe.
