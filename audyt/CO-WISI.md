@@ -685,6 +685,13 @@ Raport i triage: `audyt/PLUGIN-CHECK-30-08.md` (surowe wyniki `audyt/plugin-chec
   nie zna, a `phpcs.xml.dist` zna (D25). Świadomie NIE wyciszane — Plugin Check to raport, nie bramka.
 - Plugin Check w CI: **świadomie nie** — wykonawca własny na 3,8 GB RAM, akcja stawia drugi WP.
 
+## 🟡 TRZY LICZBY BRAMKI KOŃCOWEJ ŻYJĄ W TRZECH PLIKACH, PRZEPISANE RĘCZNIE (30.08, recenzja PR rubryki, D8)
+
+`AUDYT-RAPORT.md` (korzeń, czyta go hook `oddanie-guard` spoza repo), `rubryka-GOTOWE.md` i `audyt/RAPORT-ODDANIA.md` §2
+niosą te same `KRYTYCZNE 0 · DUŻE 0 · FAIL 2 z 13` — nic w repo nie sprawdza, że się zgadzają z wyjściem `k7-koniec.sh`.
+**Dług:** jedna kontrola w `narzedzia-qa/k7-koniec.sh` (porównanie nagłówka `AUDYT-RAPORT.md` z policzonymi liczbami,
+FAIL przy rozjeździe) + próba kontrolna. Po oddaniu.
+
 ## 🟡 BRAMKA ODSYŁACZY STRONY TYTUŁOWEJ: NIEWPIĘTA, BEZ PRÓBY KONTROLNEJ, CZYTA TYLKO README (30.08, recenzja PR oddania r2–r3, W3–W5, D7–D8)
 
 `testy/odsylacze-strony-tytulowej.sh` (36 celów po `#213`) nikt nie woła — do `BRAMKI=` nie wchodzi z zasady
