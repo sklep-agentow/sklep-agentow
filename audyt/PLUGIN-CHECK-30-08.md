@@ -2,8 +2,9 @@
 
 > Oficjalne narzędzie WordPress.org (`plugin-check` 2.1.0) uruchomione **na trzech paczkach, które
 > dostaje klient**, w stosie próbnym `probny_wp` (WP 6.9.4 / PHP 8.4.21). Surowe wyniki:
-> `audyt/plugin-check/<slug>.txt`. Powtórzenie: `bash narzedzia-qa/k7-stos-rundy.sh <zip>`, potem
-> `bash narzedzia-qa/plugin-check-paczki.sh <zip> [<zip> ...]`.
+> `audyt/plugin-check/<slug>.txt` (każdy zaczyna się wierszem z wersją paczki i stosu). Powtórzenie:
+> `STOS_PROBNY_OBRAZ=wordpress:6.9.4-php8.4-apache bash narzedzia-qa/k7-stos-rundy.sh <zip>` (bez tej zmiennej
+> `k7-stos-rundy.sh` stawia domyślny obraz 6.7/8.1), potem `bash narzedzia-qa/plugin-check-paczki.sh <zip> [<zip> ...]`.
 
 ## Skąd to się wzięło
 
@@ -14,7 +15,7 @@ a w tym repo nie było go nigdzie — `grep -rn -i "plugin.check" .github/ DECYZ
 kontenerów to ryzyko OOM, które już raz ubiło sesje. Zamiast tego: przebieg w stosie próbnym,
 na żądanie, z wynikiem w repo.
 
-## Liczby (przebieg `plugin-check-paczki.sh`, 30.08)
+## Liczby (przebieg `plugin-check-paczki.sh` 1.1.0, 30.08 — każdy raport podpisany wersją paczki; skrypt odmawia zapisu, gdy wersja w kontenerze ≠ wersja z nazwy zipa)
 
 ```
 sklep-agentow (0.9.22):     ERROR=5  WARNING=78
@@ -37,8 +38,12 @@ i nie czyta naszego `phpcs.xml.dist`. Poniżej każdy kod z werdyktem i dowodem.
 | `WordPress.Security.ValidatedSanitizedInput.InputNotSanitized` | 14 chatbot | własne sanitizery `chatl_waliduj_sesje()` (allowlist `^[a-zA-Z0-9-]{8,64}$`) i `chatl_sanitize_kolor()` — zarejestrowane w `phpcs.xml.dist` jako `customSanitizingFunctions`; Plugin Check ich nie zna | `front.php:483` `chatl_waliduj_sesje( wp_unslash( $_POST['sesja'] ) )` |
 | `WordPress.Security.NonceVerification.Missing` | 11 chatbot | brama `chatl_wymagaj_nonce()` (woła `check_ajax_referer( …, false )` i sama kończy żądanie, żeby odnotować awarię dla właściciela — luka L1) — zarejestrowana jako `customNonceVerificationFunctions` | `phpcs.xml.dist`, komentarz przy `WordPress.Security.NonceVerification` |
 | `WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound` | 9 (sklep `uninstall.php`) | zmienne lokalne w `uninstall.php` bez prefiksu — reguła katalogu przeciw kolizjom z innymi wtyczkami; `uninstall.php` ładuje się sam, w izolacji | styl, zero wpływu na działanie |
-| `unexpected_markdown_file` | 1 sklep, 2 segregator | `DOKUMENTACJA-TECHNICZNA.md` w korzeniu wtyczki — świadomie, bo klient dostaje dokumentację razem z kodem | K8: „dokumentacja w paczce” |
-| `PluginCheck.CodeAnalysis.AIProvider.DirectIntegration` | 1 segregator | informacja katalogu o bezpośredniej integracji z dostawcą AI — to jest cel produktu | — |
+| `unexpected_markdown_file` | 5: 1 sklep (`DOKUMENTACJA-TECHNICZNA.md`), 2 chatbot i 2 segregator (`DOKUMENTACJA-TECHNICZNA.md` + `INSTRUKCJA.md`) | pliki `.md` w korzeniu wtyczki — świadomie, bo klient dostaje dokumentację i instrukcję razem z kodem, w tej samej paczce | zamówienie: dokumentacja w paczce |
+| `PluginCheck.CodeAnalysis.AIProvider.DirectIntegration` | 3: 2 chatbot, 1 segregator | informacja katalogu o bezpośredniej integracji z dostawcą AI — to jest cel obu botów (tryb AI chatbota, klasyfikacja segregatora) | `chatbot-live.txt:161-162`, `segregator-maila.txt:145` |
+
+**Suma kolumny „Ile” = 416** — tyle, ile dają surowe raporty:
+`grep -hE $'\\t(ERROR|WARNING)\\t' audyt/plugin-check/*.txt | wc -l` → 416 (po naprawie po rundzie 1 recenzji:
+pierwsza wersja tabeli gubiła 4 pozycje ChatBota w dwóch wierszach i sumowała się do 412).
 
 ## Co z tego wynika
 
