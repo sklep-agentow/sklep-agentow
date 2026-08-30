@@ -31,7 +31,8 @@ Nic jeszcze.
   każda pozycja z powodem; plus lista tego, czego świadomie nie ma.
 
 ### Naprawione
-- **„Wyślij ponownie” odnawia limit pobrań.** Świeży link dostaje licznik pobrań od zera; dotąd
+- **Świeży link do pobrania odnawia limit pobrań** — zarówno z „Wyślij ponownie”, jak i z automatycznego
+  ponowienia po nieudanej wysyłce. Świeży link dostaje licznik pobrań od zera; dotąd
   zerowany był tylko termin, więc kupujący z wyczerpanym limitem — czyli ten, którego instrukcja po ten
   przycisk odsyła — dostawał nowy link i od razu „Limit pobrań wyczerpany”. Nieudana wysyłka przywraca
   stary link razem z jego licznikiem.

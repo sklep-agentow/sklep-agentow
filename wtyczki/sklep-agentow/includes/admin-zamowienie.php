@@ -28,7 +28,10 @@ add_action( 'admin_post_sklepag_resend', 'sklepag_obsluz_resend' );
  * ⛔ DŁUG NAZWANY, NIE UKRYTY: ta ścieżka ma SZEŚĆ zapisów `$wpdb->query()`, których wynik
  * nie jest sprawdzany, i zapisuje skutek (status, token, treść maila) niezależnie od tego,
  * czy zapis się udał. To ta sama klasa co naprawiona niżej w anonimizacji — tam mierzymy
- * STAN po zapisie, tu jeszcze nie.
+ * STAN po zapisie, tu jeszcze nie. Do tego samego długu należy kompensacja licznika pobrań po
+ * nieudanej wysyłce: przywraca wartość ze zdjęcia `$zam` z wejścia, nie ze stanu bazy — pobranie,
+ * które trafi w okno między odczytem a zapisem (stary link jeszcze żyje), ginie z licznika
+ * (kupujący dostaje jedno pobranie ponad limit). Okno wąskie, skutek mały, klasa ta sama.
  *
  * Świadomie nietknięte w tej zmianie: to inna ścieżka, z własnym ryzykiem i własnym zestawem
  * przypadków (ponowna wysyłka, kompensacja po nieudanym mailu), więc wymaga własnych testów.

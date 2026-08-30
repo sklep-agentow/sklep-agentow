@@ -99,7 +99,9 @@ prosto do nich.
 ![Szczegóły zamówienia](zrzuty/zamowienie-naglowek.png)
 
 - data zakupu, kupujący, produkt (kopia z chwili zakupu), kwota, identyfikator sesji Stripe,
-- **Pobrania** — ile razy z limitu 10 kupujący pobrał plik i czy link jest jeszcze ważny,
+- **Pobrania** — ile razy z limitu 10 kupujący pobrał plik **z obecnego linku** i czy link jest jeszcze
+  ważny; po każdej ponownej wysyłce (ręcznej albo automatycznej) licznik startuje od zera — pełna
+  historia pobrań jest w osi czasu,
 - **Zgoda na dostarczenie treści cyfrowej** — treść i czas zgody, którą kupujący zaznaczył
   przed zapłatą (ważne przy prawie do odstąpienia od umowy),
 - **Treść wysłanego maila** — dokładnie to, co dostał kupujący, z przyciskiem **Wyślij ponownie**,

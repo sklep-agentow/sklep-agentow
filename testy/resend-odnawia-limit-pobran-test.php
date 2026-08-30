@@ -14,6 +14,8 @@
  * CZĘŚĆ 1: udany resend przy wyczerpanym limicie → pobrania_uzyte = 0 (świeży link daje pobrania).
  * CZĘŚĆ 2 (kompensacja): NIEUDANY resend → pobrania_uzyte wraca do wartości sprzed kliknięcia
  *   (stary link zachowuje swój stan; kupujący nie dostaje ekstra pobrań na starym linku).
+ * CZĘŚĆ 3 (klasa): automatyczne ponowienie przez cron (sklepag_domknij_zakup przy mail_blad)
+ *   też rotuje token — i też musi zerować licznik. Runda 5: naprawa objęła egzemplarz, nie klasę.
  */
 
 global $wpdb;
@@ -106,10 +108,29 @@ $pass2 = ( 7 === (int) $po2->pobrania_uzyte && $po2->token_pobrania === $stary_t
 echo 'KONTROLA: WYNIK=' . ( $pass2 ? 'PASS' : 'FAIL - nieudany resend zmienil licznik pobran starego linku' ) . "\n";
 remove_filter( 'pre_wp_mail', '__return_false', 99 );
 
+// ---- CZĘŚĆ 3 (klasa, nie egzemplarz): AUTOMATYCZNE ponowienie przez cron też wydaje świeży link ----
+// Nieudany resend zostawia mail_blad z wyczerpanym licznikiem; cron bierze go przez
+// sklepag_domknij_zakup(), rotuje token — i ten link też musi mieć licznik od zera.
+$ps = $wpdb->prefix . 'sklepag_sesje_checkout';
+$wpdb->query( $wpdb->prepare( "DELETE FROM {$ps} WHERE stripe_session_id=%s", $sid ) );
+$wpdb->query( $wpdb->prepare( "INSERT INTO {$ps} (stripe_session_id, produkt_id, stan, utworzono) VALUES (%s,%d,'oplacona',NOW())", $sid, (int) $produkt->id ) );
+$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET status='mail_blad', mail_proby=1, token_pobrania=%s, link_wygasa=%s, pobrania_uzyte=%d WHERE id=%d", $stary_token, $stary_termin, $limit, $id ) );
+add_filter( 'pre_wp_mail', '__return_true', 99 );
+$wynik3 = sklepag_domknij_zakup( array( 'id' => $sid, 'payment_status' => 'paid' ) );
+remove_filter( 'pre_wp_mail', '__return_true', 99 );
+$po3 = $wpdb->get_row( $wpdb->prepare( "SELECT pobrania_uzyte, token_pobrania, status FROM {$pz} WHERE id=%d", $id ) );
+echo 'CRON: domkniecie=' . ( $wynik3 ? 'true' : 'false' ) . " (OCZEKIWANE: true)\n";
+echo 'CRON: status_po=' . $po3->status . " (OCZEKIWANE: mail_wyslany)\n";
+echo 'CRON: token_rotowany=' . ( $po3->token_pobrania !== $stary_token ? 'TAK' : 'NIE' ) . " (OCZEKIWANE: TAK)\n";
+echo 'CRON: pobrania_uzyte_po_ponowieniu=' . (int) $po3->pobrania_uzyte . " (OCZEKIWANE: 0)\n";
+$pass3 = ( $wynik3 && 'mail_wyslany' === $po3->status && $po3->token_pobrania !== $stary_token && 0 === (int) $po3->pobrania_uzyte );
+echo 'CRON: WYNIK=' . ( $pass3 ? 'PASS' : 'FAIL - link z automatycznego ponowienia ma wyczerpany limit (410)' ) . "\n";
+
+$wpdb->query( $wpdb->prepare( "DELETE FROM {$ps} WHERE stripe_session_id=%s", $sid ) );
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$pz} WHERE stripe_session_id=%s", $sid ) );
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}sklepag_opinie WHERE zamowienie_id=%d", $id ) );
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}sklepag_zdarzenia WHERE zamowienie_id=%d", $id ) );
 
-$ok = ( $pass1 && $pass2 );
+$ok = ( $pass1 && $pass2 && $pass3 );
 echo 'RAZEM: WYNIK=' . ( $ok ? 'PASS' : 'FAIL' ) . "\n";
 exit( $ok ? 0 : 1 );

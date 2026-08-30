@@ -835,10 +835,13 @@ function sklepag_domknij_zakup( $sesja ) {
 	}
 
 	// 4) Token pobrania (surowy do maila, skrót do bazy) + termin — dopiero PO przejęciu.
+	// Świeży link = licznik pobrań od zera (ta sama zasada co przycisk ponownej wysyłki w panelu):
+	// ponowienie po nieudanym resendzie kupującego z wyczerpanym limitem inaczej wydawało
+	// link, który od pierwszego kliknięcia dawał 410. Przy pierwszym domknięciu zakupu licznik i tak jest 0.
 	$token = bin2hex( random_bytes( 32 ) );
 	$wpdb->query(
 		$wpdb->prepare(
-			"UPDATE {$pz} SET token_pobrania=%s, link_wygasa=%s, zmieniono=%s WHERE stripe_session_id=%s AND status='mail_w_toku'",
+			"UPDATE {$pz} SET token_pobrania=%s, link_wygasa=%s, pobrania_uzyte=0, zmieniono=%s WHERE stripe_session_id=%s AND status='mail_w_toku'",
 			hash( 'sha256', $token ),
 			gmdate( 'Y-m-d H:i:s', time() + SKLEPAG_LINK_GODZIN * HOUR_IN_SECONDS ),
 			$teraz,
