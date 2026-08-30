@@ -168,7 +168,7 @@ Jedna wada PRODUKTU: „Dociągnij zaległe teraz” kliknięte 71 s po zapłaci
 (zepsuta pętla zwrotna) opłacony zakup wisiał 20 min; do tego `ORDER BY utworzono LIMIT 20` pozwalał porzuconym koszykom
 blokować nowszą opłaconą sesję. **Naprawione w 0.9.25**: wynik przycisku (5 liczników) w notice i Dzienniku, ręczny przycisk pyta
 Stripe o każdą sesję od razu, zadanie w tle: najnowsze najpierw + przerwa 9 min; strażnik
-`testy/reconciliation-wynik-i-przerwa-test.php` 6/6 (na kodzie 0.9.24 pada 5/5). Reszta 🐞 = stanowisko (limit uploadu obrazu,
+`testy/reconciliation-wynik-i-przerwa-test.php` 6/6 (na kodzie 0.9.24 pada w całości). Reszta 🐞 = stanowisko (limit uploadu obrazu,
 brak sekretu webhooka w mojej karcie startowej, WP po angielsku) albo instrukcja (→ CO-WISI §K10).
 
 **Trzy liczby na `2992247`** (`k7-koniec.sh`): KRYTYCZNE 0 · DUŻE 0 · kontroli FAIL **2 (z 13)** — kontrole 2 i 6 jak w §2 i §6.
@@ -179,7 +179,7 @@ w historii gita) — ten sam zestaw 6 prób z EXIT≠0, delta 0.9.25 nie dołoż
 E2E ścieżki zapasowej z danymi faktury do `mail_wyslany` (zam #9901178), **E2E osadzony z prawdziwymi kluczami właściciela**
 (konto `acct_1U5Fhg7…`): panel w brandzie, e-mail i karta 4242 w ramkach Stripe, „Zapłać” aktywne i kliknięte → Stripe
 wystawia hCaptcha dla zautomatyzowanej przeglądarki (sesja `open/unpaid`; kod 3, nie wada sklepu) — **klik karty w osadzonym
-formularzu potwierdza człowiek w przeglądarce** (dług w CO-WISI); strażnik maila 28/28; strażnik reconciliation 6/6; RODO krok
+formularzu potwierdza człowiek w przeglądarce** (dług w CO-WISI); strażnik maila 27/27; strażnik reconciliation 6/6; RODO krok
 ✓; `bramki.sh` 10/10; zgodność dokumentacji 0 rozjazdów + próba 21/21; `paczka-zgodnosc.sh` EXIT=0; `pakuj-dla-klienta.sh` 17/17.
 Paczka zbiorcza `sklep-agentow-KLIENT-0.9.25.zip` sha256 `4cc66c3834a7ca2194cecac85fd349914fd3188fcdcef54722e5a82e581d2eab`
 (sklep `c519c505…`, boty bez zmian).

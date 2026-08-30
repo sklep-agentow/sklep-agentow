@@ -29,7 +29,7 @@ i ~10–11 min obchodzenia wad STANOWISKA. **22 ✅ · 11 🐞 · 6 😖 · 6 �
   #1 → `mail_wyslany`, mail w łapaczu. Do tego `ORDER BY utworzono LIMIT 20` = 20 porzuconych koszyków blokowało nowszą
   opłaconą sesję na dobę. Naprawa: wynik przycisku (domknięte/pominięte młodsze/otwarte/błędy) w notice i Dzienniku,
   najnowsze najpierw + przerwa 9 min po sprawdzeniu, instrukcje o WP-Cron; strażnik
-  `testy/reconciliation-wynik-i-przerwa-test.php` 5/5 (na kodzie 0.9.24 pada 5/5).
+  `testy/reconciliation-wynik-i-przerwa-test.php` 6/6 (na kodzie 0.9.24 pada w całości).
 
 ### Wady STANOWISKA (nie produktu; tester poprawnie je rozpoznał)
 - Limit uploadu 2 MB (obraz Dockera `upload_max_filesize`) i `uploads/` należący do roota — oba opisane w instrukcji

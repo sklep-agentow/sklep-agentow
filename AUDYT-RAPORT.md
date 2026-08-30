@@ -18,7 +18,7 @@ Dwie kontrole przed oddaniem, których żąda bramka: krytyk = rundy recenzji `#
 `narzedzia-qa/k7-koniec.sh` (13 kontroli, przelot prób na `2992247`) + `narzedzia-qa/paczka-zgodnosc.sh` (zip = repo co do sumy)
 + `narzedzia-qa/pakuj-dla-klienta.sh` (17 kontroli, `sklep-agentow-KLIENT-0.9.25.zip` sha `4cc66c38…`).
 
-Delta 0.9.25 sprawdzona dodatkowo: strażnik maila 28/28 (C3, C3b — dane do faktury), strażnik reconciliation
-`testy/reconciliation-wynik-i-przerwa-test.php` 6/6 (na 0.9.24 pada 5/5), E2E ścieżki zapasowej z danymi faktury
+Delta 0.9.25 sprawdzona dodatkowo: strażnik maila 27/27 (C3, C3b — dane do faktury), strażnik reconciliation
+`testy/reconciliation-wynik-i-przerwa-test.php` 6/6 (na kodzie 0.9.24 pada w całości), E2E ścieżki zapasowej z danymi faktury
 (zam #9901178, mail z blokiem DANE DO FAKTURY), E2E osadzony z prawdziwymi kluczami do kliknięcia „Zapłać” (dalej hCaptcha
 Stripe — kod 3, dowód ręczny), `bramki.sh` 10/10, zgodność dokumentacji 0 rozjazdów, próba kontrolna 21/21.
