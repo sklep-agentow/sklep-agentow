@@ -41,11 +41,9 @@ FAIL  6 próby kontrolne: 6 z 30 ma EXIT≠0 (przelot na 89ba47a)        ← k7-
 - [ ] `bash narzedzia-qa/k7-koniec.sh` **na samym końcu** — każda zmiana ją unieważnia
 
 ## 3. REJESTR KLAS BŁĘDÓW → `audyt/SCIAGA-EGZAMINATORA.md`
-Osobną gałęzią ze świeżego `main` + PR (rejestr żyje w repo klienta).
-Gotowy tekst: `/root/.claude/KLASY-Z-SESJI-29-08.md` (5 klas) **plus 3 z rund 4–6**:
-- **zakres węższy niż wzorzec** — wyliczenia celowane w `wtyczki/`, ślad leżał w `dokumentacja/`
-- **kalibracja odrzuciła własną bramkę** — rozszerzenie zasięgu padało na CZYSTEJ dokumentacji
-- **gdy teren da się przeczytać, czytanie JEST wyliczeniem** — 263 wiersze, wzorzec przepuścił 3×
+- [x] **ZROBIONE 30.08, PR `#211`: klasy 29–47** (4 z dziesięciu rund `#207`, 12 z rund `#208`/`#209`
+      i kontroli po squashu, 3 z rund 4–6 `#209` o skanerze śladów — te ostatnie przeoczone w pierwszej
+      wersji PR-a i dopisane po recenzji r1). Kontrola: każda z klas 29–47 w rejestrze dokładnie raz.
 
 ## 4. ⬜ DO ROZSTRZYGNIĘCIA — DRUGI PRZELOT, NA PACZCE
 ⛔ **Nie zgaduję, potrzebna decyzja.** Są DWA różne przeloty i mylą się ze sobą:
