@@ -89,9 +89,12 @@ function sklepag_obsluz_resend() {
 	$produkt_snapshot->slug = (string) $wpdb->get_var( $wpdb->prepare( "SELECT slug FROM {$wpdb->prefix}sklepag_produkty WHERE id=%d", (int) $zam->produkt_id ) );
 	$tresc                  = sklepag_zbuduj_mail( $produkt_snapshot, $zam, $link, $link_op );
 
+	// Świeży link = świeży termin ORAZ świeży limit pobrań. Instrukcja kieruje po ten przycisk
+	// kupującego z WYCZERPANYM limitem — bez zerowania `pobrania_uzyte` nowy link dawał 410
+	// od pierwszego kliknięcia, a mail obiecywał „pozwala na 10 pobrań".
 	$wpdb->query(
 		$wpdb->prepare(
-			"UPDATE {$pz} SET token_pobrania=%s, link_wygasa=%s, mail_tresc=%s, zmieniono=%s WHERE id=%d",
+			"UPDATE {$pz} SET token_pobrania=%s, link_wygasa=%s, pobrania_uzyte=0, mail_tresc=%s, zmieniono=%s WHERE id=%d",
 			hash( 'sha256', $token ),
 			gmdate( 'Y-m-d H:i:s', time() + SKLEPAG_LINK_GODZIN * HOUR_IN_SECONDS ),
 			$tresc,
@@ -113,14 +116,16 @@ function sklepag_obsluz_resend() {
 	} else {
 		// KOMPENSACJA: nowy token wszedł do bazy PRZED wysyłką, więc nieudany mail zostawiłby
 		// kupującego bez niczego — stary link daje 403, a nowy nigdy nie dotarł. Przywracamy
-		// poprzedni token i termin, żeby „Wyślij ponownie" nigdy nie ODBIERAŁO dostępu.
+		// poprzedni token, termin i licznik pobrań (stary link wraca ze SWOIM stanem — bez
+		// ekstra pobrań), żeby „Wyślij ponownie" nigdy nie ODBIERAŁO dostępu.
 		if ( null === $zam->link_wygasa ) {
 			// Kolumna `link_wygasa` jest DATETIME NULL — prepare() z %s zrobiłby z NULL-a pusty
 			// string (data zerowa albo błąd w trybie ścisłym), więc NULL zapisujemy dosłownie.
 			$wpdb->query(
 				$wpdb->prepare(
-					"UPDATE {$pz} SET token_pobrania=%s, link_wygasa=NULL, zmieniono=%s WHERE id=%d",
+					"UPDATE {$pz} SET token_pobrania=%s, link_wygasa=NULL, pobrania_uzyte=%d, zmieniono=%s WHERE id=%d",
 					(string) $zam->token_pobrania,
+					(int) $zam->pobrania_uzyte,
 					$teraz,
 					(int) $zam->id
 				)
@@ -128,9 +133,10 @@ function sklepag_obsluz_resend() {
 		} else {
 			$wpdb->query(
 				$wpdb->prepare(
-					"UPDATE {$pz} SET token_pobrania=%s, link_wygasa=%s, zmieniono=%s WHERE id=%d",
+					"UPDATE {$pz} SET token_pobrania=%s, link_wygasa=%s, pobrania_uzyte=%d, zmieniono=%s WHERE id=%d",
 					(string) $zam->token_pobrania,
 					(string) $zam->link_wygasa,
+					(int) $zam->pobrania_uzyte,
 					$teraz,
 					(int) $zam->id
 				)

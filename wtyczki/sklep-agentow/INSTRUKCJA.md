@@ -79,7 +79,7 @@ przefiltrowane.
 
 | Status | Co znaczy | Co robić |
 |---|---|---|
-| **oczekuje** | powiadomienie od Stripe przyjęte, płatność jeszcze niepotwierdzona (np. przelew albo BLIK w toku) | nic — poczekaj; gdy wisi długo, „Dociągnij zaległe teraz” |
+| **oczekuje** | powiadomienie od Stripe przyjęte, zamówienie założone, ale sklep nie zdążył go domknąć (stan przejściowy na ułamek sekundy; płatność w toku — np. BLIK — NIE tworzy jeszcze zamówienia, zostawia tylko wpis `webhook_unpaid` w Dzienniku → Zdarzenia) | nic — odśwież; jeśli wisi dłużej niż kilka minut, to błąd zapisu w bazie: sprawdź oś czasu i napisz do wykonawcy („Dociągnij zaległe” tego statusu nie rusza) |
 | **opłacone** | Stripe potwierdził płatność, mail jeszcze nie poszedł | nic — mail wychodzi za chwilę |
 | **mail w toku** | sklep właśnie wysyła mail | poczekaj |
 | **mail wysłany** | kupujący dostał link do pobrania | nic |
@@ -126,7 +126,7 @@ Po opłaceniu kupujący dostaje **jeden** mail (sklep pilnuje, żeby nie wysła�
 - jednorazowy link do wystawienia opinii (ważny 30 dni).
 
 **Wyślij ponownie** (w szczegółach zamówienia) wysyła mail ze **świeżym linkiem** — nowy termin
-72 godzin i nowy limit pobrań; poprzedni link przestaje działać. Gdyby wysyłka się nie udała,
+72 godzin i licznik pobrań od zera; poprzedni link przestaje działać. Gdyby wysyłka się nie udała,
 sklep przywraca poprzedni link.
 Przycisk jest dostępny tylko dla zamówień w stanie „mail wysłany” albo „błąd maila”: dla zwróconych,
 spornych i jeszcze niedomkniętych sklep odmawia — link, który kupujący już ma, działa do końca
@@ -159,7 +159,7 @@ i nie da się jej już przyjąć ani odrzucić — sklep odmawia na stałe. Stro
 
 Co sklep przechowuje o kupującym: adres e-mail z płatności Stripe, kwotę, czas i treść zgody,
 historię pobrań (każde pobranie z adresem internetowym, z którego przyszło — w osi czasu zamówienia);
-jeśli kupujący wystawił opinię — jego **imię, tytuł i treść opinii** (imię i treść są publikowane
+jeśli kupujący wystawił opinię — jego **imię, tytuł i treść opinii** (imię, tytuł i treść są publikowane
 na stronie produktu, za zgodą z formularza). Dane karty obsługuje wyłącznie Stripe — na Twoim serwerze ich nie ma.
 
 **Anonimizacja na żądanie kupującego:** Szczegóły zamówienia → **Dane osobowe (RODO)** →
@@ -178,6 +178,9 @@ operację, aż przejdzie.
 
 Przy instalacji powstały dwa szkice stron: **Regulamin sklepu** i **Polityka prywatności
 sklepu**. Uzupełnij je swoimi danymi sprzedawcy i opublikuj, zanim zaczniesz sprzedawać naprawdę.
+Szkice powstają tylko raz, przy pierwszej instalacji — jeśli opublikowałeś Politykę z wersji
+wcześniejszej niż 0.9.23, dopisz do niej sam: „dziennik zdarzeń (90 dni, w tym adres IP przy
+każdym pobraniu pliku)”.
 
 ---
 

@@ -146,6 +146,8 @@ link do pobrania w mailu, jednorazowy link do opinii.
 == Changelog ==
 
 = 0.9.23 =
+* Naprawione: „Wyślij ponownie” daje świeży link z licznikiem pobrań od zera (dotąd tylko nowy termin — kupujący z wyczerpanym limitem dostawał nowy link i od razu odmowę).
+* Zmienione: szkic Polityki prywatności wymienia adres IP przy pobraniu pliku; sklepy zainstalowane wcześniej mają stary szkic — dopisz zdanie ręcznie, jeśli Polityka jest opublikowana.
 * Dodane: instrukcja właściciela (INSTRUKCJA.md ze zrzutami panelu) i jawna lista tego, co sklep robi ponad zamówienie (PONAD-SPECYFIKACJE.md) — oba pliki w paczce.
 * Zmienione: przycisk „Wyślij ponownie” pokazuje się tylko przy zamówieniu w stanie „mail wysłany” albo „błąd maila”; przy zwróconym lub spornym sklep mówi wprost, że ponowna wysyłka nie jest dostępna.
 * Zmienione: dwa komunikaty „Brak uprawnień.” w moderacji opinii wypisywane wprost, bez funkcji tłumaczenia (wtyczka nie tłumaczy tekstów).

@@ -30,7 +30,16 @@ Nic jeszcze.
 - **`PONAD-SPECYFIKACJE.md`** — jawna lista wszystkiego, co sklep robi ponad literę zamówienia,
   każda pozycja z powodem; plus lista tego, czego świadomie nie ma.
 
+### Naprawione
+- **„Wyślij ponownie” odnawia limit pobrań.** Świeży link dostaje licznik pobrań od zera; dotąd
+  zerowany był tylko termin, więc kupujący z wyczerpanym limitem — czyli ten, którego instrukcja po ten
+  przycisk odsyła — dostawał nowy link i od razu „Limit pobrań wyczerpany”. Nieudana wysyłka przywraca
+  stary link razem z jego licznikiem.
+
 ### Zmienione
+- **Szkic Polityki prywatności wymienia adres IP przy pobraniu pliku** (dziennik zdarzeń, 90 dni).
+  Szkic powstaje tylko przy pierwszej aktywacji — sklep zainstalowany wcześniej ma stary szkic;
+  jeśli Polityka jest już opublikowana, dopisz to zdanie ręcznie (instrukcja, rozdział 6).
 - **„Wyślij ponownie” tylko tam, gdzie zadziała.** Przycisk pokazuje się wyłącznie przy zamówieniu w stanie
   „mail wysłany” albo „błąd maila”; przy zwróconym lub spornym sklep mówi wprost, że ponowna wysyłka nie jest
   dostępna (wcześniej przycisk był widoczny, a kliknięcie kończyło się mylącym komunikatem o „domykaniu
