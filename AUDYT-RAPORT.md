@@ -41,4 +41,4 @@ nietknięte; mutant „stan 0.9.26” widoczny — HEAD wraca do 200); `testy/we
 padają, czysty EXIT=0); strażnik SEO kroki A–H (H: symulacja Yoast stałą `WPSEO_VERSION` → nasz canonical milczy), 3 mutanty
 padają; `bramki.sh --tryb pelny` 10/10; zgodność dokumentacji 0 rozjazdów; `paczka-zgodnosc.sh` EXIT=0 (0.9.27).
 Kompensacja tokenu w cronie: `resend-odnawia-limit-pobran-test.php` części 1–4 PASS (EXIT=0); na `zakup.php` z 0.9.26
-CZĘŚĆ 4 FAIL (token_przywrocony=NIE, pobrania_uzyte 0 zamiast 3) — kalibracja stary/nowy kod. Przelot prób: sha i liczby FINALNE niżej (poprzednie przebiegi: `e95de75` 31/5, `bc1ef2f` 33/6 — historia w gicie loga).
+CZĘŚĆ 4 FAIL (token_przywrocony=NIE, pobrania_uzyte 0 zamiast 3) — kalibracja stary/nowy kod. Przelot prób FINALNY na `0eea6b0` (log w repo): 33 uruchomionych, 5 z EXIT≠0 — znany zestaw prób ChatBota (±chwiejna przejecie), żadnej nowej. Poprzednie przebiegi (e95de75 31/5, bc1ef2f 33/6) — historia w gicie loga.
