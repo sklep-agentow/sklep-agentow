@@ -18,7 +18,9 @@ wyczyszczenie kontekstu, są w `CLAUDE.md`; to, według czego recenzent ocenia P
 2. Postaw WordPress w Dockerze (stos z `CLAUDE.md` → „Środowisko”: WP na `localhost:8890`,
    łapacz poczty Mailpit na `:8025`, IMAP testowy dla Segregatora).
 3. Wgraj wtyczki: `docker cp wtyczki/sklep-agentow/. <kontener>:/var/www/html/wp-content/plugins/sklep-agentow/`
-   (tak samo dwie pozostałe), aktywuj w wp-admin, wpisz klucze testowe Stripe w Ustawieniach.
+   **i zaraz po tym** `docker exec <kontener> chown -R www-data:www-data /var/www/html/wp-content/plugins/sklep-agentow`
+   (bez tego pliki należą do roota i upload/aktywacja padają po cichu); tak samo dwie pozostałe.
+   Aktywuj w wp-admin, wpisz klucze testowe Stripe w Ustawieniach.
 4. Przejdź `dokumentacja/INSTRUKCJA-INSTALACJI.md` jak klient — pierwszy zakup kartą testową
    ma skończyć się mailem w Mailpicie z działającym linkiem.
 
@@ -65,7 +67,9 @@ wyczyszczenie kontekstu, są w `CLAUDE.md`; to, według czego recenzent ocenia P
 ## Kontrole, które zatrzymają PR
 
 - `Quality` (CI) — te same bramki co lokalnie; lista tylko w `narzedzia-qa/bramki.sh`.
-- `Recenzent` (CI) — recenzja każdego PR-a według briefingu; PR bez dowodu = nie do scalenia.
+- `Recenzent` (CI) — recenzja PR-a według briefingu; PR bez dowodu = nie do scalenia. Wyjątek: PR
+  dotykający plików `.github/workflows/` nie dostaje recenzji automatycznej (akcja odmawia wymiany
+  tokenu) — taki PR czyta koordynator.
 - Ślady wewnętrzne w plikach wtyczek (numery zgłoszeń, ścieżki naszego drzewa roboczego,
   adresy dev) — skaner `slady` pada. Komentarz w kodzie niesie **powód**, nie numer PR-a.
 - Bramka wydania `narzedzia-qa/k7-koniec.sh` przed każdym Release.

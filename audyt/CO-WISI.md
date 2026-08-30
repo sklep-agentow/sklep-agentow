@@ -832,3 +832,6 @@ maszynowo do końca (zam #9901178 z danymi faktury).
 
 
 ## 🟡 DŁUGI Z RECENZJI #222 r4 (30.08): strażnik reconciliation (R4) woła prawdziwe `api.stripe.com` przy domykaniu opłaconej atrapy (nagłówek obiecuje „bez sieci”) i nie asertuje `bledy`; trzy komentarze w strażniku opisują poprzednie asercje. Do korekty przy 0.9.26 razem z długami K10.
+
+## 🟡 DŁUG Z RECENZJI #226 r2 (30.08, SECURITY.md)
+- Brak PRÓBY KONTROLNEJ strażnika dla podpisu webhooka (odrzut złego/brakującego podpisu dowodzą tylko testy audytu L3 na żywym stosie). Do zrobienia: `testy/webhook-podpis-test.php` + `-proba-kontrolna.sh` (mutant: `hash_equals` → `true`).
