@@ -41,8 +41,8 @@ Nic jeszcze.
 ### Naprawione (K10 — instalacja od zera przez niezależnego testera, 30.08)
 - **„Dociągnij zaległe teraz” milczało o pominiętych sesjach**: kliknięte 71 s po zapłacie pomijało sesję młodszą niż
   2 minuty bez słowa, a na hostingu bez działającego WP-Cron (zepsuta pętla zwrotna) opłacony zakup „wisiał”
-  20 minut. Teraz przycisk mówi: domknięte / pominięte jako młodsze niż 2 min (kliknij ponownie) / otwarte
-  nieopłacone / błędy; wynik trafia też do Dziennika (`reconciliation_wynik`).
+  20 minut. Teraz przycisk mówi: domknięte / pominięte jako młodsze niż 2 min (kliknij ponownie) / sprawdzone
+  teraz i nieopłacone / sprawdzone chwilę temu (z przerwą) / błędy; wynik trafia też do Dziennika (`reconciliation_wynik`).
 - **Porzucone koszyki blokowały nowszą opłaconą sesję**: kolejka brała 20 NAJSTARSZYCH sesji „utworzona”, więc
   dwadzieścia „kliknął Kup i wyszedł” (u Stripe otwarte do 24 h) odkładało domknięcie prawdziwego zakupu na dobę.
   Teraz najnowsze najpierw, do 100 w biegu, a sesja sprawdzona i nadal nieopłacona dostaje 9 minut przerwy.

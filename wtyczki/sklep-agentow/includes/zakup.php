@@ -1226,9 +1226,10 @@ function sklepag_dociagnij_zalegle( $budzet_s = 0 ) {
 		}
 		$klucz_przerwy = 'sklepag_recon_' . md5( $sid );
 		if ( get_transient( $klucz_przerwy ) ) {
-			// Sprawdzona przed chwilą i nadal nieopłacona — nie pytamy Stripe co bieg, ale LICZYMY ją jako
-			// otwartą: inaczej ręczny przycisk mówił „0 · 0 · 0 · 0” przy sesji, którą sam widział 3 minuty temu.
-			++$wynik['sprawdzone_otwarte'];
+			// Sprawdzona przed chwilą i nadal nieopłacona — nie pytamy Stripe co bieg, ale LICZYMY ją OSOBNO:
+			// „0 · 0 · 0 · 0” przy sesji widzianej 3 minuty temu kłamało, a wrzucenie jej do „nieopłacone” też
+			// (w tym biegu nikt Stripe o nią nie pytał). Osobny kubełek mówi prawdę: „z przerwą, pytanie za ≤ 9 min”.
+			++$wynik['z_przerwa'];
 			continue;
 		}
 		++$sprawdzone;

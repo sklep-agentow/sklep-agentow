@@ -235,7 +235,7 @@ function sklepag_obsluz_dociagnij() {
 	update_option( 'sklepag_reconciliation_ostatnia', time(), false );
 	$w = sklepag_dociagnij_zalegle( 15 ); // Budżet czasu < limit PHP hostingu (30 s); reszta na cron.
 	$w = is_array( $w ) ? $w : array();
-	sklepag_zdarzenie( null, 'reconciliation_wynik', sprintf( 'domknięte %d · młodsze niż 2 min (pominięte) %d · otwarte nieopłacone %d · błędy %d', (int) ( $w['domkniete'] ?? 0 ), (int) ( $w['pominiete_mlode'] ?? 0 ), (int) ( $w['sprawdzone_otwarte'] ?? 0 ), (int) ( $w['bledy'] ?? 0 ) ) );
+	sklepag_zdarzenie( null, 'reconciliation_wynik', sprintf( 'domknięte %d · młodsze niż 2 min (pominięte) %d · sprawdzone teraz, nieopłacone %d · sprawdzone chwilę temu (z przerwą) %d · błędy %d', (int) ( $w['domkniete'] ?? 0 ), (int) ( $w['pominiete_mlode'] ?? 0 ), (int) ( $w['sprawdzone_otwarte'] ?? 0 ), (int) ( $w['z_przerwa'] ?? 0 ), (int) ( $w['bledy'] ?? 0 ) ) );
 
 	// Liczby jadą w adresie, żeby Pulpit powiedział właścicielowi, CO się stało — „pominięto młodsze”
 	// to jedyna wskazówka, że trzeba kliknąć jeszcze raz za chwilę (K10: cisza = 20 min czekania).
@@ -246,6 +246,7 @@ function sklepag_obsluz_dociagnij() {
 				'd'                   => (int) ( $w['domkniete'] ?? 0 ),
 				'm'                   => (int) ( $w['pominiete_mlode'] ?? 0 ),
 				'o'                   => (int) ( $w['sprawdzone_otwarte'] ?? 0 ),
+				'p'                   => (int) ( $w['z_przerwa'] ?? 0 ),
 				'b'                   => (int) ( $w['bledy'] ?? 0 ),
 			),
 			admin_url( 'admin.php?page=sklepag' )
@@ -423,13 +424,15 @@ function sklepag_admin_dashboard() {
 		$d = isset( $_GET['d'] ) ? absint( $_GET['d'] ) : 0;
 		$m = isset( $_GET['m'] ) ? absint( $_GET['m'] ) : 0;
 		$o = isset( $_GET['o'] ) ? absint( $_GET['o'] ) : 0;
+		$p = isset( $_GET['p'] ) ? absint( $_GET['p'] ) : 0;
 		$b = isset( $_GET['b'] ) ? absint( $_GET['b'] ) : 0;
 		// phpcs:enable
 		$klasa = $b > 0 ? 'notice-warning' : 'notice-success';
 		echo '<div class="notice ' . esc_attr( $klasa ) . ' is-dismissible"><p><strong>Dociąganie zaległych wykonane.</strong> '
 			. 'Domknięte zakupy: <strong>' . (int) $d . '</strong> · '
 			. 'pominięte jako młodsze niż 2 minuty: <strong>' . (int) $m . '</strong>' . ( $m > 0 ? ' (Stripe bywa jeszcze w trakcie — kliknij ponownie za chwilę)' : '' ) . ' · '
-			. 'otwarte, nieopłacone (kupujący nie zapłacił, same wygasną): ' . (int) $o
+			. 'sprawdzone teraz u Stripe i nieopłacone (kupujący nie zapłacił, same wygasną): ' . (int) $o . ' · '
+			. 'sprawdzone chwilę temu i nadal nieopłacone (Stripe zapytany ponownie najpóźniej za 9 minut): ' . (int) $p
 			. ( $b > 0 ? ' · <strong>błędy rozmowy ze Stripe: ' . (int) $b . '</strong> — szczegóły w Dzienniku' : '' ) . '.</p></div>';
 	}
 
