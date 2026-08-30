@@ -95,7 +95,7 @@ sprawdz_ "F: INSTRUKCJA mówi co 15 minut, cron 10"              1 psuj_instr_mi
 sprawdz_ "F: zrzut z instrukcji nie istnieje w repo"            1 psuj_instr_zrzut    "INSTRUKCJA: odsyłacze do zrzutów"
 sprawdz_ "F: zrzut z instrukcji poza allowlistą paczki"         1 psuj_instr_allow    "INSTRUKCJA: zrzuty wpisane do allowlisty"
 # Brak pliku instrukcji trafia w asercje, które go CZYTAJĄ (plik + 5 liczb = 6); dwie asercje o odsyłaczach liczą wtedy 0 == 0 i przechodzą — liczba jawnie.
-sprawdz_ "F: readme obiecuje INSTRUKCJA.md, pliku brak"         1 psuj_instr_brak     "plik wtyczki/sklep-agentow/INSTRUKCJA.md" 6
+sprawdz_ "F: readme obiecuje INSTRUKCJA.md, pliku brak"         1 psuj_instr_brak     "plik wtyczki/sklep-agentow/INSTRUKCJA.md" 7
 sprawdz_ "F: readme obiecuje PONAD-SPECYFIKACJE.md, pliku brak" 1 psuj_ponad_brak     "plik wtyczki/sklep-agentow/PONAD-SPECYFIKACJE.md"
 echo
 echo "PRZYPADKÓW: $((PRZYPADKI-BLEDY))/$PRZYPADKI OK · rozjazdów podłożonych łącznie: $ROZJAZDY"

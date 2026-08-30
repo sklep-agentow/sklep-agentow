@@ -83,7 +83,9 @@ nie da się przejść.
      stoi strona).
 4. Uzupełnij też: **Nazwa nadawcy** i **Adres nadawcy** (od kogo przychodzą
    maile po zakupie), **Mail kontaktowy właściciela** (pokazywany kupującym
-   przy problemach z linkiem), **Domyślna waluta nowych produktów** (np. PLN).
+   przy problemach z linkiem), **Dane sprzedawcy** (nazwa firmy, adres, NIP —
+   stopka maila po zakupie; bez nich Pulpit pokazuje ostrzeżenie), **Domyślna
+   waluta nowych produktów** (np. PLN).
 
 ## Krok 3 — webhook (informacja o opłaceniu zakupu)
 

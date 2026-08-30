@@ -34,7 +34,7 @@ function sprawdz( $opis, $warunek, $szczegol = '' ) {
 	}
 }
 
-if ( ! function_exists( 'sklepag_zbuduj_mail' ) || ! function_exists( 'sklepag_wyslij_mail_sklepu' ) ) {
+if ( ! function_exists( 'sklepag_zbuduj_mail' ) || ! function_exists( 'sklepag_wyslij_mail_sklepu' ) || ! function_exists( 'sklepag_zbuduj_mail_html' ) ) {
 	echo "  BLAD funkcje maila niedostepne (wtyczka sklep-agentow nieaktywna?)\n";
 	exit( 1 );
 }
@@ -94,8 +94,65 @@ sklepag_wyslij_mail_sklepu( 'kupujacy@example.test', 'test', 'x' );
 $naglowki2 = isset( $przechwycone[1]['headers'] ) ? (array) $przechwycone[1]['headers'] : array();
 sprawdz( 'B2 pusty mail kontaktowy = brak Reply-To (odpowiedź idzie do nadawcy)', 0 === count( array_filter( $naglowki2, static fn( $h ) => 0 === stripos( $h, 'Reply-To' ) ) ), wp_json_encode( $naglowki2 ) );
 
-// Sprzątanie po sobie: opcja jak była, filtr zdjęty.
-update_option( 'sklepag_email_kontaktowy', $poprzedni );
+// --- C. WERSJA HTML (0.9.24) + tekst z numerem, fakturą i stopką sprzedawcy ---
+// Atrapa zamówienia z id jak w bazie (numer zamówienia = id wiersza) i dane sprzedawcy
+// z Ustawień — przywracane na końcu.
+// `false` = opcji nie było (wspólny stos warsztatowy) — sprzątanie ją KASUJE, nie zostawia pustej.
+$poprz_firma = array(
+	'sklepag_firma_nazwa' => get_option( 'sklepag_firma_nazwa', false ),
+	'sklepag_firma_adres' => get_option( 'sklepag_firma_adres', false ),
+	'sklepag_firma_nip'   => get_option( 'sklepag_firma_nip', false ),
+);
+// Sprzątanie w shutdown: fatal albo exit między zapisem a końcem testu zostawiały fikcyjnego
+// sprzedawcę na WSPÓLNYM stosie (recenzja #220 r1: test padł na linii z nową funkcją, opcje zostały).
+$GLOBALS['sklepag_test_sprzatanie'] = static function () use ( $poprz_firma, $poprzedni ) {
+	foreach ( $poprz_firma as $opcja => $wartosc ) {
+		if ( false === $wartosc ) {
+			delete_option( $opcja );
+		} else {
+			update_option( $opcja, $wartosc );
+		}
+	}
+	update_option( 'sklepag_email_kontaktowy', $poprzedni );
+};
+register_shutdown_function( $GLOBALS['sklepag_test_sprzatanie'] );
+update_option( 'sklepag_firma_nazwa', 'Firma Testowa Sp. z o.o.' );
+update_option( 'sklepag_firma_adres', "ul. Próbna 7\n00-002 Warszawa" );
+update_option( 'sklepag_firma_nip', '5260250274' );
+update_option( 'sklepag_email_kontaktowy', 'wlasciciel@example.test' );
+
+$zam_id     = clone $zam;
+$zam_id->id = 4321;
+$link_op    = 'https://example.test/wp-admin/admin-post.php?action=sklepag_ocen&z=4321&t=def';
+$tekst      = sklepag_zbuduj_mail( $produkt, $zam_id, $link, $link_op );
+$html       = sklepag_zbuduj_mail_html( $produkt, $zam_id, $link, $link_op );
+
+sprawdz( 'C1 tekst: numer zamówienia = id wiersza', false !== strpos( $tekst, 'Numer zamówienia: #4321' ) );
+sprawdz( 'C2 tekst: stopka sprzedawcy z nazwą, adresem i NIP-em', false !== strpos( $tekst, "SPRZEDAWCA:\nFirma Testowa Sp. z o.o.\nul. Próbna 7\n00-002 Warszawa\nNIP 5260250274" ) );
+sprawdz( 'C2b tekst i html: zdanie o zgodzie bezosobowe w OBU wersjach (bez „zaznaczyłeś”)', false !== strpos( $tekst, 'Zgoda zaznaczona przy zakupie' ) && false !== strpos( $html, 'Zgoda zaznaczona przy zakupie' ) && false === strpos( $tekst . $html, 'zaznaczyłeś' ) );
+sprawdz( 'C3 tekst: dopisek o fakturze', false !== strpos( $tekst, 'FAKTURA:' ) );
+sprawdz( 'C4 html: dosłowna treść zgody (esc_html nie zmienia polskich znaków)', false !== strpos( $html, esc_html( SKLEPAG_ZGODA_TRESC ) ) );
+sprawdz( 'C5 html: link pobrania w przycisku ORAZ jako tekst zapasowy (2 wystąpienia)', 2 === substr_count( $html, esc_url( $link ) ) );
+sprawdz( 'C6 html: okładka produktu z alt = nazwa produktu', false !== strpos( $html, sklepag_okladka_url( 'chatbot-live' ) ) && false !== strpos( $html, 'alt="ChatBot LIVE"' ) );
+sprawdz( 'C7 html: numer zamówienia, stopka sprzedawcy i NIP', false !== strpos( $html, '#4321' ) && false !== strpos( $html, 'Firma Testowa Sp. z o.o.' ) && false !== strpos( $html, 'NIP 5260250274' ) );
+sprawdz( 'C8 html: gwarancja z danych produktu', false !== strpos( $html, esc_html( $t_prod['gwarancja'] ) ) );
+sprawdz( 'C9 html: link do opinii, gdy podany', false !== strpos( $html, esc_url( $link_op ) ) );
+sprawdz( 'C10 html: bez <style> w <head> (Gmail wycina) i poniżej 60 KB (Gmail obcina od 102 KB)', false === stripos( $html, '<style' ) && strlen( $html ) < 60000, strlen( $html ) . ' B' );
+sprawdz( 'C11 html: tryb testowy oznaczony tym samym zdaniem co w tekście', false !== strpos( $html, 'TRYB TESTOWY — płatność nie została pobrana' ) );
+$html2 = sklepag_zbuduj_mail_html( $bez_slugu, $stare, $link, '' );
+sprawdz( 'C12 html: bez zgody/gwarancji/opinii mail dalej się buduje z linkiem', false !== strpos( $html2, esc_url( $link ) ) && false === strpos( $html2, 'Potwierdzenie Twojej zgody' ) && false === strpos( $html2, 'Gwarancja</p>' ) && false === strpos( $html2, 'Oceń swój zakup' ) );
+
+// --- D. WYSYŁKA: nagłówek HTML tylko przy wersji HTML; wersja tekstowa nie wisi w globalu ---
+sklepag_wyslij_mail_sklepu( 'kupujacy@example.test', 'test', 'tekst', '<p>html</p>' );
+$n3 = isset( $przechwycone[2]['headers'] ) ? (array) $przechwycone[2]['headers'] : array();
+sprawdz( 'D1 z HTML: nagłówek Content-Type text/html i treść = HTML', in_array( 'Content-Type: text/html; charset=UTF-8', $n3, true ) && '<p>html</p>' === $przechwycone[2]['message'], wp_json_encode( $n3 ) );
+sprawdz( 'D2 po wysyłce global wersji tekstowej i hak phpmailer_init zdjęte', empty( $GLOBALS['sklepag_mail_alt_tekst'] ) && false === has_action( 'phpmailer_init', 'sklepag_phpmailer_wersja_tekstowa' ) );
+sklepag_wyslij_mail_sklepu( 'kupujacy@example.test', 'test', 'tekst' );
+$n4 = isset( $przechwycone[3]['headers'] ) ? (array) $przechwycone[3]['headers'] : array();
+sprawdz( 'D3 bez HTML: brak nagłówka Content-Type (mail tekstowy jak do 0.9.23)', 0 === count( array_filter( $n4, static fn( $h ) => 0 === stripos( $h, 'Content-Type' ) ) ) && 'tekst' === $przechwycone[3]['message'], wp_json_encode( $n4 ) );
+
+// Sprzątanie po sobie: opcje jak były (ta sama procedura biegnie też w shutdown), filtr zdjęty.
+$GLOBALS['sklepag_test_sprzatanie']();
 remove_filter( 'pre_wp_mail', $zwrot_pre, 10 );
 
 echo $GLOBALS['sklepag_test_bledy'] ? 'BLEDY: ' . $GLOBALS['sklepag_test_bledy'] . "\n" : "WSZYSTKO OK\n";

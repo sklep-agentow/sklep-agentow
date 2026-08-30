@@ -870,7 +870,12 @@ function sklepag_domknij_zakup( $sesja ) {
 
 	$wyslano = false;
 	if ( '' !== $email && is_email( $email ) ) {
-		$wyslano = sklepag_wyslij_mail_sklepu( $email, 'Twój zakup: ' . $produkt->nazwa . ' — potwierdzenie i pobranie', $tresc );
+		$wyslano = sklepag_wyslij_mail_sklepu(
+			$email,
+			'Twój zakup: ' . $produkt->nazwa . ' — potwierdzenie i pobranie',
+			$tresc,
+			sklepag_zbuduj_mail_html( $produkt, $zam, $link, $link_op )
+		);
 	}
 
 	// 6) Stan PO POMIARZE skutku (CAS z mail_w_toku).
@@ -905,12 +910,19 @@ function sklepag_filtr_nadawca_nazwa( $name ) {
  * NASZEJ wysyłki i zdejmowane od razu (granica: maile reszty
  * strony pozostają nietknięte).
  *
- * @param string $adresat Adresat.
- * @param string $temat   Temat.
- * @param string $tresc   Treść.
+ * Z wersją HTML mail idzie jako multipart/alternative: HTML w treści, tekst jako AltBody
+ * PHPMailera (klient bez HTML albo z wyłączonymi obrazkami czyta ten sam tekst, który panel
+ * pokazuje w podglądzie). Typ treści ustawiany NAGŁÓWKIEM tej jednej wysyłki, nie filtrem
+ * `wp_mail_content_type` — filtr zostawiony na żądanie przestawiłby na HTML także reset hasła
+ * i resztę poczty WordPressa.
+ *
+ * @param string $adresat    Adresat.
+ * @param string $temat      Temat.
+ * @param string $tresc      Treść tekstowa (zawsze; bez HTML = cały mail).
+ * @param string $tresc_html Treść HTML (puste = mail tekstowy, jak do 0.9.23).
  * @return bool Wynik wp_mail.
  */
-function sklepag_wyslij_mail_sklepu( $adresat, $temat, $tresc ) {
+function sklepag_wyslij_mail_sklepu( $adresat, $temat, $tresc, $tresc_html = '' ) {
 	// Reply-To = „mail kontaktowy właściciela" z ustawień (gdy ustawiony): mail mówi „odpisz na tego
 	// maila", a odpowiedź szła na adres NADAWCY — przy nadawcy typu noreply ginęła.
 	$naglowki = array();
@@ -918,15 +930,81 @@ function sklepag_wyslij_mail_sklepu( $adresat, $temat, $tresc ) {
 	if ( '' !== $kontakt && is_email( $kontakt ) ) {
 		$naglowki[] = 'Reply-To: ' . $kontakt;
 	}
+	$html = '' !== $tresc_html;
+	if ( $html ) {
+		$naglowki[]                        = 'Content-Type: text/html; charset=UTF-8';
+		$GLOBALS['sklepag_mail_alt_tekst'] = $tresc;
+	}
 	add_filter( 'wp_mail_from', 'sklepag_filtr_nadawca_email' );
 	add_filter( 'wp_mail_from_name', 'sklepag_filtr_nadawca_nazwa' );
+	if ( $html ) {
+		add_action( 'phpmailer_init', 'sklepag_phpmailer_wersja_tekstowa' );
+	}
 	try {
-		return wp_mail( $adresat, $temat, $tresc, $naglowki );
+		return wp_mail( $adresat, $temat, $html ? $tresc_html : $tresc, $naglowki );
 	} finally {
 		// Filtry schodzą też przy rzucie z wp_mail — nie mogą wisieć na resztę żądania.
 		remove_filter( 'wp_mail_from', 'sklepag_filtr_nadawca_email' );
 		remove_filter( 'wp_mail_from_name', 'sklepag_filtr_nadawca_nazwa' );
+		remove_action( 'phpmailer_init', 'sklepag_phpmailer_wersja_tekstowa' );
+		unset( $GLOBALS['sklepag_mail_alt_tekst'] );
 	}
+}
+
+/**
+ * Wersja tekstowa (AltBody) dla wysyłki HTML — PHPMailer z niepustym AltBody składa
+ * multipart/alternative sam. Hak zakładany i zdejmowany wyłącznie wokół naszej wysyłki.
+ *
+ * @param PHPMailer\PHPMailer\PHPMailer $phpmailer Instancja z wp_mail.
+ */
+function sklepag_phpmailer_wersja_tekstowa( $phpmailer ) {
+	if ( ! empty( $GLOBALS['sklepag_mail_alt_tekst'] ) ) {
+		$phpmailer->AltBody = (string) $GLOBALS['sklepag_mail_alt_tekst']; // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- własność PHPMailera.
+	}
+}
+
+/**
+ * Dane sprzedawcy do stopki maila (Ustawienia → Dane sprzedawcy). Nazwa ma zapas: nadawca
+ * maili, potem nazwa strony — stopka nigdy nie jest pusta, ale kompletna jest tylko
+ * z wypełnionymi polami (Pulpit ostrzega, gdy ich brak).
+ *
+ * @return array{nazwa:string,adres:string,nip:string,kompletne:bool}
+ */
+function sklepag_sprzedawca() {
+	$nazwa = trim( (string) get_option( 'sklepag_firma_nazwa', '' ) );
+	$adres = trim( (string) get_option( 'sklepag_firma_adres', '' ) );
+	$nip   = trim( (string) get_option( 'sklepag_firma_nip', '' ) );
+	if ( '' === $nazwa ) {
+		$nazwa = trim( (string) get_option( 'sklepag_nadawca_nazwa', '' ) );
+	}
+	if ( '' === $nazwa ) {
+		$nazwa = wp_specialchars_decode( (string) get_option( 'blogname', '' ), ENT_QUOTES );
+	}
+	return array(
+		'nazwa'     => $nazwa,
+		'adres'     => $adres,
+		'nip'       => $nip,
+		'kompletne' => '' !== trim( (string) get_option( 'sklepag_firma_nazwa', '' ) ) && '' !== $adres,
+	);
+}
+
+/**
+ * Stopka sprzedawcy w wersji tekstowej maila.
+ */
+function sklepag_stopka_sprzedawcy_tekst() {
+	$s     = sklepag_sprzedawca();
+	$linie = array( $s['nazwa'] );
+	if ( '' !== $s['adres'] ) {
+		$linie[] = str_replace( array( "\r\n", "\r" ), "\n", $s['adres'] );
+	}
+	if ( '' !== $s['nip'] ) {
+		$linie[] = 'NIP ' . $s['nip'];
+	}
+	$kontakt = (string) get_option( 'sklepag_email_kontaktowy', '' );
+	if ( '' !== $kontakt && is_email( $kontakt ) ) {
+		$linie[] = 'Reklamacje i faktury: ' . $kontakt;
+	}
+	return "SPRZEDAWCA:\n" . implode( "\n", $linie ) . "\n";
 }
 
 function sklepag_zbuduj_mail( $produkt, $zam, $link, $link_opinii = '' ) {
@@ -941,7 +1019,7 @@ function sklepag_zbuduj_mail( $produkt, $zam, $link, $link_opinii = '' ) {
 	if ( ! empty( $zam->zgoda_tresc ) ) {
 		$kiedy  = ! empty( $zam->zgoda_czas ) ? get_date_from_gmt( $zam->zgoda_czas, 'd.m.Y H:i' ) : '';
 		$zgoda  = "POTWIERDZENIE TWOJEJ ZGODY:\n" . $zam->zgoda_tresc . "\n";
-		$zgoda .= '' !== $kiedy ? 'Zgodę zaznaczyłeś przy zakupie ' . $kiedy . ".\n\n" : "\n";
+		$zgoda .= '' !== $kiedy ? 'Zgoda zaznaczona przy zakupie ' . $kiedy . ".\n\n" : "\n";
 	}
 	// Gwarancja z danych produktu (ta sama, którą obiecuje strona produktu; puste = bez akapitu).
 	$gwarancja = '';
@@ -955,8 +1033,12 @@ function sklepag_zbuduj_mail( $produkt, $zam, $link, $link_opinii = '' ) {
 	// kupujący nie miał w potwierdzeniu odpowiedzi na proste „kiedy to kupiłem" — a to pierwsza
 	// rzecz, której szuka po miesiącu. Czas zgody zostaje osobno, bo niesie inną treść prawną.
 	$kupiono = ! empty( $zam->utworzono ) ? get_date_from_gmt( get_gmt_from_date( $zam->utworzono ), 'd.m.Y H:i' ) : '';
+	// Numer zamówienia = id wiersza, ten sam, który panel pokazuje w „Zamówienie #N": kupujący
+	// piszący do wsparcia ma czym się przedstawić (dotąd id siedziało tylko w linku pobrania).
+	$numer = ! empty( $zam->id ) ? '#' . (int) $zam->id : '';
 
 	return "Dziękujemy za zakup w sklepie!\n\n"
+		. ( '' !== $numer ? 'Numer zamówienia: ' . $numer . "\n" : '' )
 		. 'Produkt: ' . $produkt->nazwa . "\n"
 		. ( '' !== $kupiono ? 'Data zakupu: ' . $kupiono . "\n" : '' )
 		. 'Kwota: ' . number_format( $zam->kwota_grosze / 100, 2, ',', ' ' ) . ' ' . $zam->waluta . " (TRYB TESTOWY — płatność nie została pobrana)\n\n"
@@ -966,7 +1048,9 @@ function sklepag_zbuduj_mail( $produkt, $zam, $link, $link_opinii = '' ) {
 		. "INSTRUKCJA W SKRÓCIE:\n1. Pobierz paczkę ZIP z linku powyżej.\n2. W kokpicie WordPressa: Wtyczki → Dodaj → Wyślij wtyczkę na serwer → wybierz ZIP.\n3. Aktywuj i działaj — pełna instrukcja jest w paczce.\n\n"
 		. $gwarancja
 		. $ocena
-		. "Masz pytanie? Odpisz na tego maila.\n";
+		. "FAKTURA:\nPotrzebujesz faktury? Odpisz na tego maila i podaj dane firmy (nazwa, adres, NIP).\n\n"
+		. "Masz pytanie? Odpisz na tego maila.\n\n"
+		. sklepag_stopka_sprzedawcy_tekst();
 }
 
 /* ---------- STATUS dla strony „Dziękujemy" (bez danych osobowych) ---------- */

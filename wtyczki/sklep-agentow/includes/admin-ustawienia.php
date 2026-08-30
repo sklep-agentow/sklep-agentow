@@ -82,6 +82,39 @@ function sklepag_ustawienia_rejestracja() {
 		)
 	);
 
+	// --- Sprzedawca (stopka maila po zakupie). ---
+	// Potwierdzenie zakupu na trwałym nośniku ma nieść dane przedsiębiorcy (ustawa o prawach
+	// konsumenta art. 21 ust. 2 → art. 12 ust. 1: nazwa, adres, dane do reklamacji), chyba że
+	// kupujący dostał je wcześniej na trwałym nośniku — strona WWW nim nie jest. Bez tych pól
+	// mail nie miał skąd wziąć stopki sprzedawcy.
+	register_setting(
+		'sklepag_ustawienia',
+		'sklepag_firma_nazwa',
+		array(
+			'type'              => 'string',
+			'sanitize_callback' => 'sanitize_text_field',
+			'default'           => '',
+		)
+	);
+	register_setting(
+		'sklepag_ustawienia',
+		'sklepag_firma_adres',
+		array(
+			'type'              => 'string',
+			'sanitize_callback' => 'sklepag_sanityzuj_adres_firmy',
+			'default'           => '',
+		)
+	);
+	register_setting(
+		'sklepag_ustawienia',
+		'sklepag_firma_nip',
+		array(
+			'type'              => 'string',
+			'sanitize_callback' => 'sklepag_sanityzuj_nip',
+			'default'           => '',
+		)
+	);
+
 	// --- Sklep. ---
 	register_setting(
 		'sklepag_ustawienia',
@@ -112,6 +145,11 @@ function sklepag_ustawienia_rejestracja() {
 	add_settings_field( 'sklepag_nadawca_nazwa', 'Nazwa nadawcy', 'sklepag_pole_nadawca_nazwa', 'sklepag-ustawienia', 'sklepag_sekcja_maile', array( 'label_for' => 'sklepag_nadawca_nazwa' ) );
 	add_settings_field( 'sklepag_nadawca_email', 'Adres nadawcy', 'sklepag_pole_nadawca_email', 'sklepag-ustawienia', 'sklepag_sekcja_maile', array( 'label_for' => 'sklepag_nadawca_email' ) );
 	add_settings_field( 'sklepag_email_kontaktowy', 'Mail kontaktowy właściciela', 'sklepag_pole_email_kontaktowy', 'sklepag-ustawienia', 'sklepag_sekcja_maile', array( 'label_for' => 'sklepag_email_kontaktowy' ) );
+
+	add_settings_section( 'sklepag_sekcja_sprzedawca', 'Dane sprzedawcy (stopka maila po zakupie)', 'sklepag_sekcja_sprzedawca_opis', 'sklepag-ustawienia' );
+	add_settings_field( 'sklepag_firma_nazwa', 'Nazwa firmy', 'sklepag_pole_firma_nazwa', 'sklepag-ustawienia', 'sklepag_sekcja_sprzedawca', array( 'label_for' => 'sklepag_firma_nazwa' ) );
+	add_settings_field( 'sklepag_firma_adres', 'Adres', 'sklepag_pole_firma_adres', 'sklepag-ustawienia', 'sklepag_sekcja_sprzedawca', array( 'label_for' => 'sklepag_firma_adres' ) );
+	add_settings_field( 'sklepag_firma_nip', 'NIP', 'sklepag_pole_firma_nip', 'sklepag-ustawienia', 'sklepag_sekcja_sprzedawca', array( 'label_for' => 'sklepag_firma_nip' ) );
 
 	add_settings_section( 'sklepag_sekcja_sklep', 'Sklep', '__return_null', 'sklepag-ustawienia' );
 	add_settings_field( 'sklepag_waluta_domyslna', 'Domyślna waluta nowych produktów', 'sklepag_pole_waluta', 'sklepag-ustawienia', 'sklepag_sekcja_sklep', array( 'label_for' => 'sklepag_waluta_domyslna' ) );
@@ -200,7 +238,54 @@ function sklepag_sanityzuj_walute( $wartosc ) {
 	return $wartosc;
 }
 
+/**
+ * Adres firmy: kilka linii tekstu, bez znaczników; sufit 300 znaków (stopka maila, nie regulamin).
+ *
+ * @param string $wartosc Wartość z formularza.
+ */
+function sklepag_sanityzuj_adres_firmy( $wartosc ) {
+	$wartosc = sanitize_textarea_field( (string) $wartosc );
+	$wartosc = trim( preg_replace( "/\n{3,}/", "\n\n", $wartosc ) );
+	if ( mb_strlen( $wartosc ) > 300 ) {
+		// Jak bliźniacze pole NIP: błąd na ekranie + stara wartość, nie ciche ucięcie w każdym mailu.
+		add_settings_error( 'sklepag_firma_adres', 'sklepag_adres', 'Adres ma ' . mb_strlen( $wartosc ) . ' znaków, a stopka maila mieści 300 — pole pozostawione bez zmian.', 'error' );
+		return (string) get_option( 'sklepag_firma_adres', '' );
+	}
+	return $wartosc;
+}
+
+/**
+ * NIP: puste dozwolone; inaczej 10 cyfr (myślniki i spacje odrzucane przy zapisie), z poprawną
+ * sumą kontrolną — literówka w NIP-ie na potwierdzeniu zakupu to reklamacja faktury.
+ *
+ * @param string $wartosc Wartość z formularza.
+ */
+function sklepag_sanityzuj_nip( $wartosc ) {
+	$cyfry = preg_replace( '/[\s-]/', '', trim( (string) $wartosc ) );
+	if ( '' === $cyfry ) {
+		return '';
+	}
+	$wagi  = array( 6, 5, 7, 2, 3, 4, 5, 6, 7 );
+	$suma  = 0;
+	$dobry = (bool) preg_match( '/^[0-9]{10}$/', $cyfry );
+	if ( $dobry ) {
+		for ( $i = 0; $i < 9; $i++ ) {
+			$suma += $wagi[ $i ] * (int) $cyfry[ $i ];
+		}
+		$dobry = ( $suma % 11 ) === (int) $cyfry[9];
+	}
+	if ( ! $dobry ) {
+		add_settings_error( 'sklepag_firma_nip', 'sklepag_nip', 'NIP „' . esc_html( $wartosc ) . '” nie jest poprawny (10 cyfr z sumą kontrolną) — pole pozostawione bez zmian.', 'error' );
+		return (string) get_option( 'sklepag_firma_nip', '' );
+	}
+	return $cyfry;
+}
+
 /* ---------- Sekcje (opisy) ---------- */
+
+function sklepag_sekcja_sprzedawca_opis() {
+	echo '<p>Trafiają do stopki każdego maila po zakupie — kupujący ma tam Twoje dane do reklamacji i faktury, jak wymaga ustawa o prawach konsumenta (art. 21). Puste pola = stopka tylko z nazwą (nadawcy maili, a gdy i ta jest pusta — nazwą strony), a Pulpit pokazuje ostrzeżenie.</p>';
+}
 
 function sklepag_sekcja_stripe_opis() {
 	echo '<p>Klucze z panelu Stripe (tryb TESTOWY: <code>sk_test_…</code>). Sekret webhooka: z Dashboardu (endpoint na hostingu) albo z <code>stripe listen --print-secret</code> (lokalnie). Wartości są przechowywane bez podglądu i nie wracają do formularza.</p>';
@@ -253,6 +338,21 @@ function sklepag_pole_nadawca_email() {
 function sklepag_pole_email_kontaktowy() {
 	echo '<input type="email" id="sklepag_email_kontaktowy" name="sklepag_email_kontaktowy" value="' . esc_attr( (string) get_option( 'sklepag_email_kontaktowy', '' ) ) . '" class="regular-text" placeholder="kontakt@twoja-domena.pl">';
 	echo '<p class="description">Pokazywany kupującym przy problemie z pobraniem (link wygasł / limit wyczerpany).</p>';
+}
+
+function sklepag_pole_firma_nazwa() {
+	echo '<input type="text" id="sklepag_firma_nazwa" name="sklepag_firma_nazwa" value="' . esc_attr( (string) get_option( 'sklepag_firma_nazwa', '' ) ) . '" class="regular-text" placeholder="np. Automatic AI Jan Kowalski">';
+	echo '<p class="description">Pełna nazwa, pod którą sprzedajesz (jak na fakturze).</p>';
+}
+
+function sklepag_pole_firma_adres() {
+	echo '<textarea id="sklepag_firma_adres" name="sklepag_firma_adres" rows="3" maxlength="300" class="regular-text" placeholder="ul. Przykładowa 1&#10;00-001 Warszawa">' . esc_textarea( (string) get_option( 'sklepag_firma_adres', '' ) ) . '</textarea>';
+	echo '<p class="description">Adres do reklamacji — każdy wiersz osobno, do 300 znaków.</p>';
+}
+
+function sklepag_pole_firma_nip() {
+	echo '<input type="text" id="sklepag_firma_nip" name="sklepag_firma_nip" value="' . esc_attr( (string) get_option( 'sklepag_firma_nip', '' ) ) . '" class="regular-text" inputmode="numeric" placeholder="1234563218">';
+	echo '<p class="description">10 cyfr; sklep sprawdza sumę kontrolną przy zapisie.</p>';
 }
 
 function sklepag_pole_waluta() {

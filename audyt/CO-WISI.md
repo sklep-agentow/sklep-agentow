@@ -205,7 +205,8 @@ błędu** (dokumentacja przestaje kłamać); wada produktu zostaje tu nazwana.
 ⛔ **UWAGA — TO NIE JEST JEDNA FUNKCJA. Recepta poniżej była raz za wąska** (recenzja r8/r9:
 obejmowała wyłącznie `sklepag_baner_testowy()`, czyli mniej niż połowę wady). Oznaczeń trybu
 testowego widzianych przez KUPUJĄCEGO jest **siedem** (liczba rosła w rundach 6-10:
-trzy -> sześć -> siedem, za każdym razem bo wypisywałam listę zamiast ją policzyć):
+trzy -> sześć -> siedem, za każdym razem bo wypisywałam listę zamiast ją policzyć; od 0.9.24
+OSIEM — wersja HTML maila niesie to samo zdanie, `grep -rn "płatność nie została pobrana" wtyczki/sklep-agentow` liczy oba):
 
 ```
 sklep-agentow.php:286             baner — lista produktów          ⟵ sklepag_baner_testowy()
@@ -215,6 +216,7 @@ includes/front-produkt.php:593    ⛔ ETYKIETA PRZYCISKU: „Kup teraz (płatno�
 includes/front-produkt.php:594    notka przy przycisku zakupu (karta 4242…)
 sklep-agentow.php:365             FAQ „Co znaczy tryb testowy?”
 includes/zakup.php:959            ⛔ TREŚĆ MAILA po zakupie („płatność nie została pobrana”)
+includes/mail-html.php            ⛔ to samo zdanie w wersji HTML maila (0.9.24) — szukaj po frazie, nie po numerze linii
 ```
 
 Panel administratora ma własne oznaczenia (`admin-dashboard.php:338`, `admin-zamowienie.php:475`,
@@ -762,3 +764,16 @@ z `admin_roboczy` i adresem sieci dockera; naprawione w `testy/zrzuty-panelu.js`
 tożsamości, front w niezalogowanym kontekście, kadr bez osi czasu) i sprawdzone OCZAMI.
 **Dług:** jedyną kontrolą obrazów jest człowiek. Ewentualny automat: OCR (tesseract) na PNG z paczki
 z tą samą listą wzorców co skaner — po oddaniu, jeśli zrzutów przybędzie.
+
+## 🟡 MAIL PO ZAKUPIE — DŁUGI PO 0.9.24 (30.08, po audycie maila i przebudowie na HTML)
+
+- **Metoda płatności w mailu** („Visa •••• 4242” — standard Stripe/Apple): sesja Checkout nie niesie
+  marki i końcówki karty; trzeba dociągnąć `payment_intent` → `payment_method` (1 zapytanie do API
+  na zamówienie, w webhooku). Wraca, gdy będzie decyzja o kolejnej wersji.
+- **Logo obrazkiem w nagłówku maila**: dziś nazwa nadawcy tekstem (D34). Gdy właściciel ustawi
+  `custom_logo` w motywie — czytać `get_custom_logo` z fallbackiem na tekst; motyw kolegi go nie ma.
+- **Zrzut `zrzuty/ustawienia.png` w INSTRUKCJA.md** pokazuje Ustawienia BEZ sekcji „Dane sprzedawcy”
+  (0.9.23). Odświeżyć maszynowo przy następnej rundzie zrzutów.
+- **Stanowisko `:8892` dostało mu-plugin `mailpit-smtp.php`** (kopia z `:8890`) — bez niego
+  `wp_mail` na stosie próbnym pada „Could not instantiate mail function” i E2E kończy się
+  `mail_blad`, choć kod jest dobry. Do `lib-stos-probny.sh` dopisać ten krok (dług narzędzia).

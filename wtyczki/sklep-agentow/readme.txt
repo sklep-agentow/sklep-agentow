@@ -4,7 +4,7 @@ Tags: sklep, stripe, pliki cyfrowe, sprzedaz wtyczek, pobieranie
 Requires at least: 6.7
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.9.23
+Stable tag: 0.9.24
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -47,8 +47,8 @@ serwerze — bez abonamentu i bez pośredników. Jedyna usługa zewnętrzna to S
   pliku · widok **Zamówienia** — szczegóły, treść wysłanego maila, ponowna
   wysyłka ze świeżym linkiem, anonimizacja danych kupującego · **Opinie** —
   moderacja · **Dziennik** — logowania i zdarzenia · **Ustawienia** — klucze
-  Stripe, nadawca maili, mail kontaktowy właściciela, waluta, zachowanie danych
-  przy odinstalowaniu.
+  Stripe, nadawca maili, mail kontaktowy właściciela, dane sprzedawcy do stopki
+  maila, waluta, zachowanie danych przy odinstalowaniu.
 * Opinie kupujących: jedna opinia na zamówienie, wyłącznie z jednorazowego
   linku w mailu (ważnego 30 dni), publikowana dopiero po ręcznej akceptacji
   w panelu. Bez ocen od anonimowych gości i bez zbiorczej średniej.
@@ -144,6 +144,11 @@ Nie. Zakup jest bez konta: adres e-mail podany na stronie płatności Stripe,
 link do pobrania w mailu, jednorazowy link do opinii.
 
 == Changelog ==
+
+= 0.9.24 =
+* Dodane: mail po zakupie w wersji graficznej (nazwa sklepu w nagłówku, okładka produktu, przycisk „Pobierz”, kolory strony) wysyłany razem z wersją tekstową w jednej wiadomości; dotąd mail był czystym tekstem.
+* Dodane: w mailu numer zamówienia (ten sam co w panelu), dopisek o fakturze i stopka z danymi sprzedawcy — nowa sekcja Ustawień „Dane sprzedawcy” (nazwa, adres, NIP ze sprawdzeniem sumy kontrolnej); Pulpit ostrzega, gdy pola są puste (ustawa o prawach konsumenta, art. 21).
+* Zmienione: zdanie o zgodzie w mailu bez formy męskiej („Zgoda zaznaczona przy zakupie”).
 
 = 0.9.23 =
 * Naprawione: świeży link do pobrania (z „Wyślij ponownie” i z automatycznego ponowienia) ma licznik pobrań od zera (dotąd tylko nowy termin — kupujący z wyczerpanym limitem dostawał nowy link i od razu odmowę).
