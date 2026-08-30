@@ -200,13 +200,13 @@ Włącz. Dalej prowadzą instrukcje W paczkach botów (konfiguracja w kwadrans).
   ```
 
   Nawigacja mobilna (szablon `tpl-menu-mobilne`): wklej PO OSTATNIEJ pozycji
-  listy (w motywie kolegi ostatnia to FAQ z numerkiem `08`). W wklejanym
-  fragmencie podmień DWIE rzeczy na kolejne wolne wartości: numerek w
-  `<span class="font-mono …">` (po `08` → `09`) i opóźnienie animacji
-  `--menu-delay` (o 0,05 s większe niż w ostatniej pozycji):
+  listy (w motywie kolegi ostatnia to FAQ z numerkiem `08`). Gotowiec niżej ma
+  już obie wartości przesunięte o jeden względem tej pozycji (numerek `09`,
+  `--menu-delay: 0.45s`); jeśli u Ciebie ostatnia pozycja ma inny numerek lub
+  inne opóźnienie, przesuń o jeden numerek i o 0,05 s względem niej:
 
   ```html
-  <li class="menu-item-in" style="--menu-delay: 0.4s;"><a class="flex items-baseline gap-4 py-4 text-3xl font-semibold tracking-tight transition-colors border-b border-line hover:text-volt" href="/sklep/"><span class="font-mono text-xs text-steel">08</span>Sklep</a></li>
+  <li class="menu-item-in" style="--menu-delay: 0.45s;"><a class="flex items-baseline gap-4 py-4 text-3xl font-semibold tracking-tight transition-colors border-b border-line hover:text-volt" href="/sklep/"><span class="font-mono text-xs text-steel">09</span>Sklep</a></li>
   ```
 
   Nawigacja w STOPCE (`footer.php`, lista „Nawigacja"), zaraz po `<li>` z FAQ:
