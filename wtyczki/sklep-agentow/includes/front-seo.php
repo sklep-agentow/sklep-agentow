@@ -68,7 +68,16 @@ add_filter( 'document_title_parts', 'sklepag_seo_tytul' );
  */
 function sklepag_seo_canonical( $url ) {
 	$p = sklepag_seo_biezacy_produkt();
-	return $p ? sklepag_url_produktu_front( $p->slug ) : $url;
+	if ( $p ) {
+		return sklepag_url_produktu_front( $p->slug );
+	}
+	if ( '' !== (string) get_query_var( 'sklepag_produkt' ) ) {
+		// Slug w adresie, produktu nie ma: to 404 — bez canonicala TAKŻE u gospodarza,
+		// który zostawił rel_canonical WP (ta sama reguła co w drukarzu niżej, linia ~99).
+		// Pusty adres = rdzeń nie drukuje nic (wp_get_canonical_url sprawdza ! empty).
+		return '';
+	}
+	return $url;
 }
 add_filter( 'get_canonical_url', 'sklepag_seo_canonical' );
 

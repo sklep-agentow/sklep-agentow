@@ -80,6 +80,15 @@ if ( $inna ) {
 $e = sklepag_test_canonicale( array( 'page_id' => $strona_sklep, 'sklepag_produkt' => 'nie-ma-takiego-produktu' ) );
 sprawdz( 'E. nieistniejący produkt (404): zero canonicali', 0 === count( $e ), 'mam ' . implode( ' | ', $e ) );
 
+// E2. TA SAMA reguła u gospodarza z DOMYŚLNYM WordPressem (rel_canonical podpięty) —
+// krok E mierzył tylko konfigurację „gospodarz wyciął rel_canonical" (linia wyżej zdejmuje
+// go na starcie testu). Filtr get_canonical_url musi oddać pusty adres, inaczej rdzeń
+// wskaże listę jako „główną" wersję 404 (zmierzone sondą: canonical /sklep/ na stronie 404).
+add_action( 'wp_head', 'rel_canonical' );
+$e2 = sklepag_test_canonicale( array( 'page_id' => $strona_sklep, 'sklepag_produkt' => 'nie-ma-takiego-produktu' ) );
+sprawdz( 'E2. nieistniejący produkt (404) Z rel_canonical WP: zero canonicali', 0 === count( $e2 ), 'mam ' . implode( ' | ', $e2 ) );
+remove_action( 'wp_head', 'rel_canonical' );
+
 // Opcja strony sklepu PUSTA (aktywacja nie utworzyła strony): is_page( 0 ) jest prawdą wszędzie,
 // więc bez bramki wtyczka pisała canonical i meta listy w cudze <head>. Opcję podmieniamy tylko
 // w pamięci procesu (pre_option_), baza nietknięta.

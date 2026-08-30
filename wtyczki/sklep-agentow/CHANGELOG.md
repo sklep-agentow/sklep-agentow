@@ -35,8 +35,10 @@ Nic jeszcze.
 - **Awaria poczty przy automatycznym ponowieniu nie zabija już działającego linku.** Cron rotował token
   przed wysyłką; gdy mail padł, w bazie zostawał skrót, którego nie niósł żaden doręczony mail — kupujący
   z działającym starym linkiem tracił go na stałe. Teraz gałąź porażki przywraca token, termin i licznik
-  sprzed rotacji (ta sama zasada co przy ręcznym „Wyślij ponownie”); części 4–5 strażnika
-  `resend-odnawia-limit-pobran` pilnują (na kodzie 0.9.26 padają). Znany wyjątek (do 0.9.28):
+  sprzed rotacji (ta sama zasada co przy ręcznym „Wyślij ponownie”); pilnują tego części 4–5
+  strażnika `resend-odnawia-limit-pobran` (część 4 pada na kodzie 0.9.26; część 5 pilnuje
+  warunku własności dodanego w trakcie prac nad tym wydaniem i pada na kodzie sprzed niego).
+  Znany wyjątek (do 0.9.28):
   gdy wysyłka urwie się w pół (pad serwera w jej trakcie) i ponowienie po przejęciu też zawiedzie,
   w bazie może zostać skrót niedoręczonego maila — ratunkiem przycisk „Wyślij ponownie” w panelu.
 - **Komunikat po wpisaniu błędnego NIP mówi, co się stało z polem** — że wróciło do poprzednio
