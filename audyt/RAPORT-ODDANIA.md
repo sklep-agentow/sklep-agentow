@@ -1,4 +1,4 @@
-# RAPORT ODDANIA — Sklep Agentów, próba 1 (2026-08-30, wydanie `v0.9.23`; §6 = dopisek dla `v0.9.24`)
+# RAPORT ODDANIA — Sklep Agentów, próba 1 (2026-08-30, wydanie `v0.9.23`; §6 = dopisek `v0.9.24`; §7 = dopisek `v0.9.25` + K10)
 
 > Dla Dzidka i dla oceniającego. Każda liczba ma komendę, którą ją policzono, i commit, na którym
 > ją policzono: **`a1b2495`** (`main` po scaleniu `#213` i `#214`). Każda zmiana w repo po tym
@@ -150,3 +150,44 @@ z linkiem i zgodą) i #3 (link) dalej przechodzą tym samym strażnikiem, rozsze
 klikniętej na żywo (ten sam kod, nieklikane); zachowania wtyczek SMTP nadpisujących `AltBody`. Instalację od zera z paczki
 Release przez niezależnego testera robi K10 (osobny raport).
 
+
+
+## 7. Dopisek — wydanie `v0.9.25` (2026-08-30 wieczór; zbudowane z `main` `2992247`) + K10
+
+**Co się zmieniło (decyzja Dzidka 30.08, oddanie 31.08 rano):** płatność **osadzona na stronie produktu** (Stripe Checkout
+Session `ui_mode=elements` + Payment Element, Appearance API w brandzie strony, Stripe.js po polsku; ten sam obiekt sesji,
+webhook i reconciliation; hostowana strona Stripe zostaje zapasem bez klucza publikowalnego/JS) — DECYZJE `D35`; **dane do
+faktury przy zakupie** (nazwa+NIP+adres, komplet albo nic; zwiad prawny: art. 106e VAT, art. 38a upk, NIP JDG = dana osobowa)
+— `D36`; nowa opcja „Klucz publikowalny”; schemat bazy 8. Do tego **naprawa wady z K10** (patrz niżej). PR `#222`, 4 rundy
+(r1: 2 WAŻNE + 3 DROBNE, r2: 2 WAŻNE + 1 DROBNA, r3: 1 WAŻNA + 1 DROBNA, r4: 1 WAŻNA + 2 DROBNE — wszystkie WAŻNE naprawione,
+DROBNE r4 → `CO-WISI.md`).
+
+**K10 — instalacja od zera przez niezależnego testera** (`audyt/K10-INSTALACJA-OD-ZERA-0.9.24.md`, raport i 52 zrzuty
+w `/root/do-panelu/K10-0.9.24-tester/`): 26 min zegara, ~15 min pracy z instrukcją (w limicie 30), 22 ✅ / 11 🐞 / 6 😖 / 6 ⬜.
+Jedna wada PRODUKTU: „Dociągnij zaległe teraz” kliknięte 71 s po zapłacie pomijało sesję < 2 min **bez słowa**, a bez WP-Cron
+(zepsuta pętla zwrotna) opłacony zakup wisiał 20 min; do tego `ORDER BY utworzono LIMIT 20` pozwalał porzuconym koszykom
+blokować nowszą opłaconą sesję. **Naprawione w 0.9.25**: wynik przycisku (5 liczników) w notice i Dzienniku, ręczny przycisk pyta
+Stripe o każdą sesję od razu, zadanie w tle: najnowsze najpierw + przerwa 9 min; strażnik
+`testy/reconciliation-wynik-i-przerwa-test.php` 6/6 (na kodzie 0.9.24 pada 5/5). Reszta 🐞 = stanowisko (limit uploadu obrazu,
+brak sekretu webhooka w mojej karcie startowej, WP po angielsku) albo instrukcja (→ CO-WISI §K10).
+
+**Trzy liczby na `2992247`** (`k7-koniec.sh`): KRYTYCZNE 0 · DUŻE 0 · kontroli FAIL **2 (z 13)** — kontrole 2 i 6 jak w §2 i §6.
+Przelot prób kontrolnych powtórzony na czystym `2992247` (log `audyt/sklep/PROBY-KONTROLNE.log`; wersje z `a1b2495` i `d0a45a9`
+w historii gita) — ten sam zestaw 6 prób z EXIT≠0, delta 0.9.25 nie dołożyła żadnej.
+
+**Jak sprawdzona delta:** serwer (JSON `client_secret`, `ui_mode=elements`, metadata faktury, walidacja NIP/kompletu, zapas 302),
+E2E ścieżki zapasowej z danymi faktury do `mail_wyslany` (zam #9901178), **E2E osadzony z prawdziwymi kluczami właściciela**
+(konto `acct_1U5Fhg7…`): panel w brandzie, e-mail i karta 4242 w ramkach Stripe, „Zapłać” aktywne i kliknięte → Stripe
+wystawia hCaptcha dla zautomatyzowanej przeglądarki (sesja `open/unpaid`; kod 3, nie wada sklepu) — **klik karty w osadzonym
+formularzu potwierdza człowiek w przeglądarce** (dług w CO-WISI); strażnik maila 28/28; strażnik reconciliation 6/6; RODO krok
+✓; `bramki.sh` 10/10; zgodność dokumentacji 0 rozjazdów + próba 21/21; `paczka-zgodnosc.sh` EXIT=0; `pakuj-dla-klienta.sh` 17/17.
+Paczka zbiorcza `sklep-agentow-KLIENT-0.9.25.zip` sha256 `4cc66c3834a7ca2194cecac85fd349914fd3188fcdcef54722e5a82e581d2eab`
+(sklep `c519c505…`, boty bez zmian).
+
+**Rubryka GOTOWE bez zmian** (zamrożona 0.9.23): ścieżka hostowana (na której stoją dowody #1) jest nadal żywa jako zapas;
+kryterium #2 (mail) przechodzi rozszerzonym strażnikiem.
+
+**Czego ten dopisek NIE dowodzi:** kliknięcia karty w osadzonym formularzu (hCaptcha Stripe — do zrobienia ręcznie przez
+właściciela/kolegę), BLIK-u w trybie osadzonym (metoda widoczna w kafelkach, nieklikana), zachowania `return_url` przy metodach
+z przekierowaniem. Klucze: sklep testowy przełączony na konto właściciela (stary sandbox z 17.08 bez e-maila zostaje w sekretach
+jako historia; dowody K7–K10 na nim nie giną).
