@@ -245,8 +245,13 @@ function sklepag_sanityzuj_walute( $wartosc ) {
  */
 function sklepag_sanityzuj_adres_firmy( $wartosc ) {
 	$wartosc = sanitize_textarea_field( (string) $wartosc );
-	$wartosc = preg_replace( "/\n{3,}/", "\n\n", $wartosc );
-	return mb_substr( trim( $wartosc ), 0, 300 );
+	$wartosc = trim( preg_replace( "/\n{3,}/", "\n\n", $wartosc ) );
+	if ( mb_strlen( $wartosc ) > 300 ) {
+		// Jak bliźniacze pole NIP: błąd na ekranie + stara wartość, nie ciche ucięcie w każdym mailu.
+		add_settings_error( 'sklepag_firma_adres', 'sklepag_adres', 'Adres ma ' . mb_strlen( $wartosc ) . ' znaków, a stopka maila mieści 300 — pole pozostawione bez zmian.', 'error' );
+		return (string) get_option( 'sklepag_firma_adres', '' );
+	}
+	return $wartosc;
 }
 
 /**
@@ -279,7 +284,7 @@ function sklepag_sanityzuj_nip( $wartosc ) {
 /* ---------- Sekcje (opisy) ---------- */
 
 function sklepag_sekcja_sprzedawca_opis() {
-	echo '<p>Trafiają do stopki każdego maila po zakupie — kupujący ma tam Twoje dane do reklamacji i faktury, jak wymaga ustawa o prawach konsumenta (art. 21). Puste pola = stopka tylko z nazwą strony, a Pulpit pokazuje ostrzeżenie.</p>';
+	echo '<p>Trafiają do stopki każdego maila po zakupie — kupujący ma tam Twoje dane do reklamacji i faktury, jak wymaga ustawa o prawach konsumenta (art. 21). Puste pola = stopka tylko z nazwą (nadawcy maili, a gdy i ta jest pusta — nazwą strony), a Pulpit pokazuje ostrzeżenie.</p>';
 }
 
 function sklepag_sekcja_stripe_opis() {
@@ -341,8 +346,8 @@ function sklepag_pole_firma_nazwa() {
 }
 
 function sklepag_pole_firma_adres() {
-	echo '<textarea id="sklepag_firma_adres" name="sklepag_firma_adres" rows="3" class="regular-text" placeholder="ul. Przykładowa 1&#10;00-001 Warszawa">' . esc_textarea( (string) get_option( 'sklepag_firma_adres', '' ) ) . '</textarea>';
-	echo '<p class="description">Adres do reklamacji — każdy wiersz osobno.</p>';
+	echo '<textarea id="sklepag_firma_adres" name="sklepag_firma_adres" rows="3" maxlength="300" class="regular-text" placeholder="ul. Przykładowa 1&#10;00-001 Warszawa">' . esc_textarea( (string) get_option( 'sklepag_firma_adres', '' ) ) . '</textarea>';
+	echo '<p class="description">Adres do reklamacji — każdy wiersz osobno, do 300 znaków.</p>';
 }
 
 function sklepag_pole_firma_nip() {

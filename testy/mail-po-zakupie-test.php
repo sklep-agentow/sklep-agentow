@@ -97,11 +97,25 @@ sprawdz( 'B2 pusty mail kontaktowy = brak Reply-To (odpowiedź idzie do nadawcy)
 // --- C. WERSJA HTML (0.9.24) + tekst z numerem, fakturą i stopką sprzedawcy ---
 // Atrapa zamówienia z id jak w bazie (numer zamówienia = id wiersza) i dane sprzedawcy
 // z Ustawień — przywracane na końcu.
+// `false` = opcji nie było (wspólny stos warsztatowy) — sprzątanie ją KASUJE, nie zostawia pustej.
 $poprz_firma = array(
-	'sklepag_firma_nazwa' => get_option( 'sklepag_firma_nazwa', '' ),
-	'sklepag_firma_adres' => get_option( 'sklepag_firma_adres', '' ),
-	'sklepag_firma_nip'   => get_option( 'sklepag_firma_nip', '' ),
+	'sklepag_firma_nazwa' => get_option( 'sklepag_firma_nazwa', false ),
+	'sklepag_firma_adres' => get_option( 'sklepag_firma_adres', false ),
+	'sklepag_firma_nip'   => get_option( 'sklepag_firma_nip', false ),
 );
+// Sprzątanie w shutdown: fatal albo exit między zapisem a końcem testu zostawiały fikcyjnego
+// sprzedawcę na WSPÓLNYM stosie (recenzja #220 r1: test padł na linii z nową funkcją, opcje zostały).
+$GLOBALS['sklepag_test_sprzatanie'] = static function () use ( $poprz_firma, $poprzedni ) {
+	foreach ( $poprz_firma as $opcja => $wartosc ) {
+		if ( false === $wartosc ) {
+			delete_option( $opcja );
+		} else {
+			update_option( $opcja, $wartosc );
+		}
+	}
+	update_option( 'sklepag_email_kontaktowy', $poprzedni );
+};
+register_shutdown_function( $GLOBALS['sklepag_test_sprzatanie'] );
 update_option( 'sklepag_firma_nazwa', 'Firma Testowa Sp. z o.o.' );
 update_option( 'sklepag_firma_adres', "ul. Próbna 7\n00-002 Warszawa" );
 update_option( 'sklepag_firma_nip', '5260250274' );
@@ -137,11 +151,8 @@ sklepag_wyslij_mail_sklepu( 'kupujacy@example.test', 'test', 'tekst' );
 $n4 = isset( $przechwycone[3]['headers'] ) ? (array) $przechwycone[3]['headers'] : array();
 sprawdz( 'D3 bez HTML: brak nagłówka Content-Type (mail tekstowy jak do 0.9.23)', 0 === count( array_filter( $n4, static fn( $h ) => 0 === stripos( $h, 'Content-Type' ) ) ) && 'tekst' === $przechwycone[3]['message'], wp_json_encode( $n4 ) );
 
-// Sprzątanie po sobie: opcje jak były, filtr zdjęty.
-foreach ( $poprz_firma as $opcja => $wartosc ) {
-	update_option( $opcja, $wartosc );
-}
-update_option( 'sklepag_email_kontaktowy', $poprzedni );
+// Sprzątanie po sobie: opcje jak były (ta sama procedura biegnie też w shutdown), filtr zdjęty.
+$GLOBALS['sklepag_test_sprzatanie']();
 remove_filter( 'pre_wp_mail', $zwrot_pre, 10 );
 
 echo $GLOBALS['sklepag_test_bledy'] ? 'BLEDY: ' . $GLOBALS['sklepag_test_bledy'] . "\n" : "WSZYSTKO OK\n";
