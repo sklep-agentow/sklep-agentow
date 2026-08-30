@@ -103,10 +103,10 @@ function sklepag_obsluz_resend() {
 	$wyslano = sklepag_wyslij_mail_sklepu( $zam->email_kupujacego, 'Twój zakup: ' . $zam->produkt_nazwa_kupiona . ' — potwierdzenie i pobranie', $tresc );
 
 	if ( $wyslano ) {
-		// Status nadpisujemy TYLKO gdy zamówienie nie jest zamknięte finansowo. Bez tego jedno
-		// kliknięcie „Wyślij ponownie" na zamówieniu zwróconym kasowało znacznik zwrotu i wracało
-		// je do liczby sprzedaży na Pulpicie. Mail wychodzi tak czy tak — blokujemy zapis stanu,
-		// nie wysyłkę.
+		// Zamówienia zwrócone i sporne (SKLEPAG_STATUSY_ZAMKNIETE) nie docierają tutaj — bramka wyżej
+		// odmawia im ponownej wysyłki (wp_die 409), mail dla nich NIE wychodzi. Warunek NOT IN zostaje
+		// jako druga warstwa: gdyby bramka kiedyś zniknęła, jedno kliknięcie „Wyślij ponownie" na
+		// zamówieniu zwróconym kasowałoby znacznik zwrotu i wracało je do liczby sprzedaży na Pulpicie.
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- SKLEPAG_STATUSY_ZAMKNIETE to stała wtyczki, nie wejście użytkownika (jak SKLEPAG_STATUSY_OPLACONE w admin-dashboard.php).
 		$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET status='mail_wyslany', zmieniono=%s WHERE id=%d AND status NOT IN (" . SKLEPAG_STATUSY_ZAMKNIETE . ')', $teraz, (int) $zam->id ) );
 		sklepag_zdarzenie( (int) $zam->id, 'mail_resend', 'ręczna ponowna wysyłka do: ' . $zam->email_kupujacego . ' (świeży link)' );
@@ -138,7 +138,7 @@ function sklepag_obsluz_resend() {
 		}
 		// Stan i licznik prób osobno od kompensacji tokenu: token i termin MUSZĄ wrócić zawsze
 		// (inaczej „Wyślij ponownie" odbierałoby dostęp), a status wolno ruszyć tylko wtedy,
-		// gdy zamówienie nie jest zamknięte finansowo.
+		// gdy zamówienie nie jest zamknięte finansowo (druga warstwa — zamknięte odpadają już na bramce 409 wyżej).
 		$wpdb->query(
 			$wpdb->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- SKLEPAG_STATUSY_ZAMKNIETE to stała wtyczki, nie wejście użytkownika (jak SKLEPAG_STATUSY_OPLACONE w admin-dashboard.php).

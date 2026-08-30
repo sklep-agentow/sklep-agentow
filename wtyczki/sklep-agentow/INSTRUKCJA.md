@@ -105,6 +105,8 @@ prosto do nich.
 - **Treść wysłanego maila** — dokładnie to, co dostał kupujący, z przyciskiem **Wyślij ponownie**,
 - **Dane osobowe (RODO)** — przycisk anonimizacji (rozdział 6),
 - **Oś czasu** — każde zdarzenie tego zamówienia: płatność, wysyłki, pobrania, zwroty, kto co zrobił.
+  Wpisy starsze niż **90 dni** znikają same (tak jak cały Dziennik, rozdział 7) — jeśli potrzebujesz
+  zapisu na dłużej (np. do sporu), zapisz go wcześniej; kwoty i statusy zamówień zostają na zawsze.
 
 **„Dociągnij zaległe teraz”** (Pulpit, prawy górny róg). Zakup domyka się dwiema drogami:
 Stripe wysyła powiadomienie (webhook) natychmiast, a niezależnie od tego sklep co 10 minut
@@ -125,7 +127,7 @@ Po opłaceniu kupujący dostaje **jeden** mail (sklep pilnuje, żeby nie wysła�
 
 **Wyślij ponownie** (w szczegółach zamówienia) wysyła mail ze **świeżym linkiem** — nowy termin
 72 godzin i nowy limit pobrań; poprzedni link przestaje działać. Gdyby wysyłka się nie udała,
-sklep przywraca poprzedni link — ponowna wysyłka nigdy nie zostawia kupującego bez dostępu.
+sklep przywraca poprzedni link.
 Przycisk jest dostępny tylko dla zamówień w stanie „mail wysłany” albo „błąd maila”: dla zwróconych,
 spornych i jeszcze niedomkniętych sklep odmawia — link, który kupujący już ma, działa do końca
 swojej ważności.
@@ -154,13 +156,15 @@ klikniesz **Przyjmij**. **Odrzuć** chowa ją; możesz ją później przyjąć z
 ## 6. Dane osobowe (RODO)
 
 Co sklep przechowuje o kupującym: adres e-mail z płatności Stripe, kwotę, czas i treść zgody,
-historię pobrań. Dane karty obsługuje wyłącznie Stripe — na Twoim serwerze ich nie ma.
+historię pobrań (każde pobranie z adresem internetowym, z którego przyszło — w osi czasu zamówienia). Dane karty obsługuje wyłącznie Stripe — na Twoim serwerze ich nie ma.
 
 **Anonimizacja na żądanie kupującego:** Szczegóły zamówienia → **Dane osobowe (RODO)** →
 przycisk anonimizacji. Sklep usuwa adres e-mail z zamówienia, z dziennika zdarzeń i z opinii
 tego zamówienia, unieważnia link do pobrania (zanonimizowany kupujący nie ma już dokąd dostać
 świeżego linku) i zapisuje datę anonimizacji. **Kwoty i czasy zostają** — statystyki sprzedaży
-nie tracą historii. Operacja jest nieodwracalna.
+nie tracą historii. Operacja jest nieodwracalna. Adresów internetowych przy pobraniach anonimizacja
+**nie** usuwa — znikają razem z całą osią czasu po 90 dniach (rozdział 7); odpowiadając kupującemu
+na pytanie, co sklep o nim ma, wymień też je.
 
 Jeśli usunięcie nie uda się w całości (np. błąd zapisu), sklep **nie udaje**, że się udało:
 pokazuje błąd, nie potwierdza usunięcia (dane mogą nadal być w bazie — nie potwierdzaj ich
@@ -177,11 +181,14 @@ sklepu**. Uzupełnij je swoimi danymi sprzedawcy i opublikuj, zanim zaczniesz sp
 **Sklep Agentów → Dziennik**, dwie zakładki:
 
 - **Logowania** — udane i nieudane logowania do kokpitu, z adresem, z którego przyszły.
-  Po nieudanych próbach sklep wydłuża czas odpowiedzi (do minuty), a od szóstej próby w ciągu
+  Po nieudanych próbach sklep wydłuża czas odpowiedzi (do minuty), a od siódmej próby w ciągu
   minuty z tego samego adresu odmawia na minutę — spowalnia zgadywanie hasła, nie blokuje konta
-  na stałe. Wpisy starsze niż 90 dni znikają same.
+  na stałe.
 - **Zdarzenia** — to samo, co osie czasu wszystkich zamówień, w jednym miejscu: płatności,
   wysyłki, pobrania, zwroty, spory, anonimizacje, eksporty CSV.
+
+W **obu** zakładkach — a więc także w osiach czasu zamówień — wpisy starsze niż **90 dni** znikają
+same (sprzątanie co 10 minut). Zamówienia, kwoty i statusy zostają.
 
 ---
 

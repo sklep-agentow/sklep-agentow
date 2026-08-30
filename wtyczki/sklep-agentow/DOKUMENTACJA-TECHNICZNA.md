@@ -48,8 +48,8 @@ wyłącznie ustawienia i klucze — nigdy liczniki ani stan zamówień.
 | `produkty` | katalog: nazwa, adres, opis, cena, plik, aktywność | panel (CRUD) |
 | `sesje_checkout` | ślad rozpoczętych płatności; kolumna `stan` **współrozstrzyga**, czy powtórne kliknięcie zakupu dostaje zapamiętany adres checkoutu, czy nowy | rozpoczęcie zakupu |
 | `zamowienia` | ⭐ **jedyne źródło prawdy o stanie zakupu** | webhook + reconciliation |
-| `zdarzenia` | dziennik zdarzeń zamówienia (audyt ścieżki) | wszystkie moduły zakupu |
-| `logowania` | kto i kiedy logował się do panelu, z jakim skutkiem | zaczepy logowania WP |
+| `zdarzenia` | dziennik zdarzeń zamówienia (audyt ścieżki); retencja 90 dni — kasuje krok 4 crona `sklepag_dociagnij_zalegle` (`zakup.php`) | wszystkie moduły zakupu |
+| `logowania` | kto i kiedy logował się do panelu, z jakim skutkiem; retencja 90 dni (ten sam cron) | zaczepy logowania WP |
 | `rate_limit` | okna limitów żądań | brama zakupu i logowania |
 | `opinie` | mechanizm opinii kupujących: zalążek+token przy mailu, treść z formularza, statusy moderacji | mail zakupowy → formularz kupującego → panel (moderacja) |
 

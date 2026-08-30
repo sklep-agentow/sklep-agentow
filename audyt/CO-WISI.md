@@ -685,6 +685,17 @@ Raport i triage: `audyt/PLUGIN-CHECK-30-08.md` (surowe wyniki `audyt/plugin-chec
   nie zna, a `phpcs.xml.dist` zna (D25). Świadomie NIE wyciszane — Plugin Check to raport, nie bramka.
 - Plugin Check w CI: **świadomie nie** — wykonawca własny na 3,8 GB RAM, akcja stawia drugi WP.
 
+## 🟡 SEKCJA F MIERZY PIĘĆ Z DZIEWIĘCIU LICZB INSTRUKCJI + ZRZUTY Z OBCYM MENU (30.08, recenzja PR instrukcji r2, WAŻNA 3 + DROBNA 5)
+
+`testy/dokumentacja-zgodnosc-sklep.sh` §F pilnuje 72 h / 10 pobrań / 30 dni / 20 MB / co 10 min; NIE mierzy
+90 dni retencji, progu 7 prób logowania, 3 prób maila, minuty odmowy i „pięciu stron” menu. Nazwa bramki
+zawężona do tego, co mierzy (klasa 11). Dwie z niemierzonych liczb były nieprawdziwe w tekście i przeszły
+z EXIT=0 — naprawione w tekście ręcznie. **Dług:** cztery asercje (`90`, `6` w `sklepag_rate_limit`, `3`, `60`)
++ przypadki do próby kontrolnej — po oddaniu, wzorzec `stala`/`grep -oP` gotowy w §F.
+Osobno: pięć PNG w paczce pokazuje menu z **ChatBot LIVE** i **Segregator maila** oraz plakietkę Plugins ① —
+u klienta z samym sklepem tych pozycji nie będzie. Nie blokuje; przy następnym `testy/zrzuty-panelu.js`
+robić zrzuty na stosie z JEDNĄ wtyczką.
+
 ## 🟡 ZRZUTY PNG W PACZCE SĄ POZA SKANEREM ŚLADÓW (30.08, recenzja PR o instrukcji sklepu, WAŻNA)
 
 `narzedzia-qa/paczka-zgodnosc.sh` melduje „w 66 plikach paczki nie ma śladów wewnętrznych”, ale pięć

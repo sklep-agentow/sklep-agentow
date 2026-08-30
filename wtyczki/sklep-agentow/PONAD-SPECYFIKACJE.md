@@ -29,7 +29,7 @@ to jest w paczce, bo bez tego sklep nie nadawałby się do sprzedaży, a nie dla
    72 godzin, limit 10 pobrań, licznik zwiększany atomowo. Pliki produktów leżą w katalogu chronionym
    o losowej nazwie, nigdy pod publicznym adresem. Powód: plik pod jawnym adresem to produkt za darmo.
 6. **Ponowna wysyłka ze świeżym linkiem** z panelu, z zapisem w osi czasu zamówienia; nieudana wysyłka
-   przywraca poprzedni link. Powód: „nie dostałem maila” to najczęstszy kontakt po zakupie.
+   przywraca poprzedni link; dla zamówień zwróconych i spornych przycisk jest niedostępny. Powód: „nie dostałem maila” to najczęstszy kontakt po zakupie.
 7. **Sprzedaż tylko z potwierdzonym plikiem** — sklep sprawdza ZIP po zapisie (obecność, rozmiar,
    suma kontrolna) i nie pozwala włączyć produktu bez pliku. Powód: sprzedanie czegoś, czego nie ma
    czym wydać, kończy się zwrotem i utratą zaufania.
@@ -71,9 +71,9 @@ to jest w paczce, bo bez tego sklep nie nadawałby się do sprzedaży, a nie dla
 15. **Dziennik zdarzeń** (obok dziennika logowań): płatności, wysyłki, pobrania, zwroty, spory,
     anonimizacje, eksporty — z osi czasu każdego zamówienia. Powód: „co się stało z tym zamówieniem”
     musi mieć odpowiedź bez grzebania w bazie.
-16. **Spowalnianie nieudanych logowań** (wydłużany czas odpowiedzi do minuty; od szóstej próby w ciągu
+16. **Spowalnianie nieudanych logowań** (wydłużany czas odpowiedzi do minuty; od siódmej próby w ciągu
     minuty z jednego adresu — odmowa na minutę, bez blokowania konta na stałe)
-    i **usuwanie wpisów dziennika logowań starszych niż 90 dni**. Powód: zgadywanie hasła ma być
+    i **usuwanie wpisów obu dzienników — logowań i zdarzeń (osi czasu zamówień) — starszych niż 90 dni**. Powód: zgadywanie hasła ma być
     nieopłacalne, a dziennik nie może rosnąć bez końca.
 17. **Pulpit z porównaniem do poprzedniego okresu, rozkładem zakupów w czasie, filtrami po statusie
     i datach, szukaniem po e-mailu i eksportem CSV** z aktualnych filtrów. Powód: tak wyglądają
