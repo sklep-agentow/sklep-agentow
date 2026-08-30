@@ -80,5 +80,36 @@ if ( $inna ) {
 $e = sklepag_test_canonicale( array( 'page_id' => $strona_sklep, 'sklepag_produkt' => 'nie-ma-takiego-produktu' ) );
 sprawdz( 'E. nieistniejący produkt (404): zero canonicali', 0 === count( $e ), 'mam ' . implode( ' | ', $e ) );
 
+// Opcja strony sklepu PUSTA (aktywacja nie utworzyła strony): is_page( 0 ) jest prawdą wszędzie,
+// więc bez bramki wtyczka pisała canonical i meta listy w cudze <head>. Opcję podmieniamy tylko
+// w pamięci procesu (pre_option_), baza nietknięta.
+if ( $inna ) {
+	$pusta = function () {
+		return 0;
+	};
+	add_filter( 'pre_option_sklepag_strona_sklep', $pusta );
+	$f     = sklepag_test_canonicale( array( 'page_id' => $inna ) );
+	$nasze = array_filter( $f, function ( $h ) { return false !== strpos( $h, '/uslugi/' ) || false !== strpos( $h, '/produkt/' ); } );
+	sprawdz( 'F. opcja strony sklepu pusta, cudza strona: zero naszych canonicali', 0 === count( $nasze ), 'mam ' . implode( ' | ', $f ) );
+	$q                       = new WP_Query( array( 'page_id' => $inna ) );
+	$GLOBALS['wp_the_query'] = $q;
+	$GLOBALS['wp_query']     = $q;
+	ob_start();
+	sklepag_seo_head();
+	$glowa = ob_get_clean();
+	sprawdz( 'F. …i zero meta listy (description/og:url) w cudzym <head>', '' === trim( $glowa ), 'mam: ' . substr( $glowa, 0, 120 ) );
+	remove_filter( 'pre_option_sklepag_strona_sklep', $pusta );
+	sprawdz( 'F. kontrola: opcja w bazie nietknięta', (int) get_option( 'sklepag_strona_sklep' ) === $strona_sklep );
+}
+
+// 404 nieistniejącego produktu: także bez meta listy (og:url nie może wskazywać /sklep/).
+$q                       = new WP_Query( array( 'page_id' => $strona_sklep, 'sklepag_produkt' => 'nie-ma-takiego-produktu' ) );
+$GLOBALS['wp_the_query'] = $q;
+$GLOBALS['wp_query']     = $q;
+ob_start();
+sklepag_seo_head();
+$glowa404 = ob_get_clean();
+sprawdz( 'G. nieistniejący produkt (404): zero og:url/description listy', false === strpos( $glowa404, 'og:url' ) && false === strpos( $glowa404, 'name="description"' ), 'mam: ' . substr( $glowa404, 0, 120 ) );
+
 echo "\nBŁĘDY: {$GLOBALS['sklepag_test_bledy']}\n";
 exit( $GLOBALS['sklepag_test_bledy'] > 0 ? 1 : 0 );

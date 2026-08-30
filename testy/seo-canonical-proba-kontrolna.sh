@@ -45,6 +45,9 @@ echo "== Mutant 2: drukuje zawsze (dwa znaczniki, gdy WP ma swój) =="
 probuj "wyciety warunek has_action" \
   "docker exec $KONTENER sed -i \"s/if ( has_action( 'wp_head', 'rel_canonical' ) ) {/if ( false ) {/\" $PLIK" "C\\."
 
+echo "== Mutant 3: is_page( 0 ) bez bramki (stan sprzed naprawy klasy) =="
+probuj "wycieta bramka \$id > 0 w sklepag_jest_strona_z_opcji" \
+  "docker exec $KONTENER sed -i 's/return \$id > 0 \&\& is_page( \$id );/return is_page( \$id );/' $PLIK" "F\\."
 echo "== Czysty kod: strażnik ma PRZEJŚĆ =="
 wdroz_czysty
 wyjscie=$(odpal); kod=$?

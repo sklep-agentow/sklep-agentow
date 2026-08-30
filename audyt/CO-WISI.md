@@ -832,3 +832,17 @@ maszynowo do końca (zam #9901178 z danymi faktury).
 
 
 ## 🟡 DŁUGI Z RECENZJI #222 r4 (30.08): strażnik reconciliation (R4) woła prawdziwe `api.stripe.com` przy domykaniu opłaconej atrapy (nagłówek obiecuje „bez sieci”) i nie asertuje `bledy`; trzy komentarze w strażniku opisują poprzednie asercje. Do korekty przy 0.9.26 razem z długami K10.
+
+## 🟡 DŁUGI Z RECENZJI #225 r1 (30.08, canonical 0.9.26) — drobne, poza regułą rund
+- **HEAD na stronie nieistniejącego produktu oddaje 200, GET oddaje 404** (`status_header( 404 )` w renderze
+  skrótkodu, po `wp_head`; mechanizm różnicy GET/HEAD nieustalony — recenzent też nie ustalił). Zwykłe 404 WP
+  oddaje 404 obiema metodami. Do zbadania przy 0.9.27: przenieść ustawienie statusu na `template_redirect`
+  po sprawdzeniu produktu z query vara.
+- **Wtyczki SEO gospodarza (Yoast/RankMath)** drukują własny canonical bez `rel_canonical` WP → z naszym byłyby
+  dwa. Na stosie ich nie ma; jeśli klient je zainstaluje — wyjątek (nie drukować, gdy `defined('WPSEO_VERSION')`
+  lub klasa RankMath). Nie mierzone.
+- `has_action( 'wp_head', 'rel_canonical' )` traktuje priorytet `0` jak brak podpięcia — `false !== has_action(…)`
+  byłoby ściślejsze. Stan nieodtworzony.
+- Statyczna sonda wydajności strony produktu (30.08): 63 kB HTML + ~1,3 MB zasobów, z czego 1 MB to `stripe.js`
+  ładowany w stopce na każdej stronie (zalecenie Stripe); nasz `assets/front.css` 83 kB — kandydat do odchudzenia.
+  `perf` Lighthouse nadal tylko na hostingu klienta (sekcja wyżej).
