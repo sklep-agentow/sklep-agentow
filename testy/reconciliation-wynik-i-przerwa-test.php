@@ -82,6 +82,7 @@ $obce = $wpdb->get_col( $wpdb->prepare( "SELECT stripe_session_id FROM {$ps} WHE
 foreach ( $obce as $sid ) {
 	set_transient( 'sklepag_recon_' . md5( $sid ), 1, 15 * MINUTE_IN_SECONDS );
 }
+$n_obce     = count( $obce ); // obce z przerwą liczą się teraz jako „otwarte” — oczekiwania niżej to uwzględniają
 $mlode_obce = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$ps} WHERE stan='utworzona' AND utworzono >= %s", gmdate( 'Y-m-d H:i:s', strtotime( current_time( 'mysql' ) ) - 120 ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
 
 $produkt_id = (int) $wpdb->get_var( "SELECT id FROM {$wpdb->prefix}sklepag_produkty WHERE aktywny=1 ORDER BY id LIMIT 1" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
@@ -108,12 +109,12 @@ $wstaw( $pf . 'STARA', 600 );
 $w = sklepag_dociagnij_zalegle( 0 );
 sprawdz( 'R5 funkcja zwraca tablicę z 4 licznikami', is_array( $w ) && isset( $w['domkniete'], $w['pominiete_mlode'], $w['sprawdzone_otwarte'], $w['bledy'] ), wp_json_encode( $w ) );
 sprawdz( 'R1 młodsza niż 2 min = pominięta (policzona, nie pytana)', ( 1 + $mlode_obce ) === (int) ( $w['pominiete_mlode'] ?? -1 ) && 1 === $GLOBALS['rw_zapytania'], 'zapytań do Stripe: ' . $GLOBALS['rw_zapytania'] . ', młode obce: ' . $mlode_obce );
-sprawdz( 'R2 stara otwarta/nieopłacona = sprawdzona 1× i ma przerwę', 1 === (int) ( $w['sprawdzone_otwarte'] ?? -1 ) && false !== get_transient( 'sklepag_recon_' . md5( $pf . 'STARA' ) ) );
+sprawdz( 'R2 stara otwarta/nieopłacona = sprawdzona 1× i ma przerwę', ( 1 + $n_obce ) === (int) ( $w['sprawdzone_otwarte'] ?? -1 ) && false !== get_transient( 'sklepag_recon_' . md5( $pf . 'STARA' ) ), 'otwarte=' . (int) ( $w['sprawdzone_otwarte'] ?? -1 ) . ' obce=' . $n_obce );
 
 // --- R3: drugi bieg od razu — bez zapytania o STARA ---
 $GLOBALS['rw_zapytania'] = 0;
 $w2                      = sklepag_dociagnij_zalegle( 0 );
-sprawdz( 'R3 drugi bieg nie pyta ponownie o sesję z przerwą, ale LICZY ją jako otwartą', 0 === $GLOBALS['rw_zapytania'] && 1 === (int) ( $w2['sprawdzone_otwarte'] ?? -1 ), 'zapytań: ' . $GLOBALS['rw_zapytania'] . ' otwarte: ' . (int) ( $w2['sprawdzone_otwarte'] ?? -1 ) );
+sprawdz( 'R3 drugi bieg nie pyta ponownie o sesję z przerwą, ale LICZY ją jako otwartą', 0 === $GLOBALS['rw_zapytania'] && ( 1 + $n_obce ) === (int) ( $w2['sprawdzone_otwarte'] ?? -1 ), 'zapytań: ' . $GLOBALS['rw_zapytania'] . ' otwarte: ' . (int) ( $w2['sprawdzone_otwarte'] ?? -1 ) );
 
 // --- R4: 22 porzucone STARSZE + 1 opłacona NOWSZA (ale > 2 min) — opłacona domknięta od razu ---
 $sprzatanie();
