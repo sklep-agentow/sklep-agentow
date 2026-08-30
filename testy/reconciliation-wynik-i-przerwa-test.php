@@ -78,7 +78,8 @@ $sprzatanie();
 
 // Izolacja od WSPÓLNEGO stosu: cudze sesje „utworzone” (E2E, próby ręczne) dostają przerwę na czas testu,
 // żeby liczniki mierzyły wyłącznie sesje tego testu, a atrapa nie musiała udawać Stripe dla obcych id.
-$obce = $wpdb->get_col( $wpdb->prepare( "SELECT stripe_session_id FROM {$ps} WHERE stan='utworzona' AND stripe_session_id NOT LIKE %s", $wpdb->esc_like( $pf ) . '%' ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
+$granica_t = gmdate( 'Y-m-d H:i:s', strtotime( current_time( 'mysql' ) ) - 120 );
+$obce      = $wpdb->get_col( $wpdb->prepare( "SELECT stripe_session_id FROM {$ps} WHERE stan='utworzona' AND utworzono < %s AND stripe_session_id NOT LIKE %s", $granica_t, $wpdb->esc_like( $pf ) . '%' ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
 foreach ( $obce as $sid ) {
 	set_transient( 'sklepag_recon_' . md5( $sid ), 1, 15 * MINUTE_IN_SECONDS );
 }
@@ -107,14 +108,14 @@ $wstaw = function ( $sid, $wiek_s ) use ( $wpdb, $ps, $produkt_id, $teraz ) {
 $wstaw( $pf . 'MLODA', 60 );
 $wstaw( $pf . 'STARA', 600 );
 $w = sklepag_dociagnij_zalegle( 0 );
-sprawdz( 'R5 funkcja zwraca tablicę z 4 licznikami', is_array( $w ) && isset( $w['domkniete'], $w['pominiete_mlode'], $w['sprawdzone_otwarte'], $w['bledy'] ), wp_json_encode( $w ) );
+sprawdz( 'R5 funkcja zwraca tablicę z 5 licznikami', is_array( $w ) && isset( $w['domkniete'], $w['pominiete_mlode'], $w['sprawdzone_otwarte'], $w['z_przerwa'], $w['bledy'] ), wp_json_encode( $w ) );
 sprawdz( 'R1 młodsza niż 2 min = pominięta (policzona, nie pytana)', ( 1 + $mlode_obce ) === (int) ( $w['pominiete_mlode'] ?? -1 ) && 1 === $GLOBALS['rw_zapytania'], 'zapytań do Stripe: ' . $GLOBALS['rw_zapytania'] . ', młode obce: ' . $mlode_obce );
-sprawdz( 'R2 stara otwarta/nieopłacona = sprawdzona 1× i ma przerwę', ( 1 + $n_obce ) === (int) ( $w['sprawdzone_otwarte'] ?? -1 ) && false !== get_transient( 'sklepag_recon_' . md5( $pf . 'STARA' ) ), 'otwarte=' . (int) ( $w['sprawdzone_otwarte'] ?? -1 ) . ' obce=' . $n_obce );
+sprawdz( 'R2 stara otwarta/nieopłacona = sprawdzona 1× i ma przerwę (obce z przerwą w OSOBNYM kubełku)', 1 === (int) ( $w['sprawdzone_otwarte'] ?? -1 ) && $n_obce === (int) ( $w['z_przerwa'] ?? -1 ) && false !== get_transient( 'sklepag_recon_' . md5( $pf . 'STARA' ) ), 'otwarte=' . (int) ( $w['sprawdzone_otwarte'] ?? -1 ) . ' z_przerwa=' . (int) ( $w['z_przerwa'] ?? -1 ) . ' obce=' . $n_obce );
 
 // --- R3: drugi bieg od razu — bez zapytania o STARA ---
 $GLOBALS['rw_zapytania'] = 0;
 $w2                      = sklepag_dociagnij_zalegle( 0 );
-sprawdz( 'R3 drugi bieg nie pyta ponownie o sesję z przerwą, ale LICZY ją jako otwartą', 0 === $GLOBALS['rw_zapytania'] && ( 1 + $n_obce ) === (int) ( $w2['sprawdzone_otwarte'] ?? -1 ), 'zapytań: ' . $GLOBALS['rw_zapytania'] . ' otwarte: ' . (int) ( $w2['sprawdzone_otwarte'] ?? -1 ) );
+sprawdz( 'R3 drugi bieg nie pyta ponownie o sesję z przerwą i liczy ją w kubełku „z przerwą”', 0 === $GLOBALS['rw_zapytania'] && 0 === (int) ( $w2['sprawdzone_otwarte'] ?? -1 ) && ( 1 + $n_obce ) === (int) ( $w2['z_przerwa'] ?? -1 ), 'zapytań: ' . $GLOBALS['rw_zapytania'] . ' z_przerwa: ' . (int) ( $w2['z_przerwa'] ?? -1 ) );
 
 // --- R4: 22 porzucone STARSZE + 1 opłacona NOWSZA (ale > 2 min) — opłacona domknięta od razu ---
 $sprzatanie();
