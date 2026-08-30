@@ -14,6 +14,7 @@ wstecz nie dopisuję, bo nie umiałbym jej odtworzyć uczciwie. Ich zmiany od te
 pory lądują tutaj.
 
 ## [Niewydane]
+- **`pakuj-dla-klienta.sh` 1.0.0 (NOWE)** — zbiorcza paczka wydania jednym poleceniem: 3 zipy wtyczek (wersje z naglowkow, zipy musza istniec w boty/paczki/) + PRZECZYTAJ-MNIE.txt + INSTRUKCJA-INSTALACJI.md + diagramy PNG + SHA256SUMS.txt; SAMOKONTROLA na rozpakowanej paczce (komplet, sumy, kazdy plik w sumach, brak sladow wewnetrznych w dokumentach). Wynik do wydanie/ (poza repo).
 - **`plugin-check-paczki.sh` 1.1.0** (recenzja PR o raporcie, W3): raport przywiązany do WERSJI paczki — `docker cp` i `wp plugin install` sprawdzane po kodzie wyjścia, wersja w kontenerze == wersja z nazwy zipa, inaczej raport tej paczki NIE jest zapisywany (EXIT=1); pierwszy wiersz raportu = slug, wersja, zip, WP/PHP, data.
 - **`plugin-check-paczki.sh` 1.0.0 (NOWE) — RAPORT (nie bramka) z oficjalnego Plugin Check WordPress.org na PACZKACH klienta**, w stosie próbnym `probny_wp`; surowe wyniki do `audyt/plugin-check/<slug>.txt`, triage w `audyt/PLUGIN-CHECK-30-08.md`. Świadomie poza CI (wykonawca własny, 3,8 GB RAM).
 - **`bramki.sh`** — gitleaks po `--log-opts=HEAD` zamiast wszystkich referencji: klon runnera/recenzenta ma `refs/pull/N/*` zamkniętych PR-ów, więc zatruty commit ze SKASOWANEJ gałęzi (#194) palił bramkę na zawsze (#195 W1; lekcja = `bramka-poswiadczenia` 1.1.1). **`gitleaks-proba-kontrolna.sh` 1.0.0 (NOWE)** — klucz na cudzej gałęzi przechodzi, w historii HEAD pada.

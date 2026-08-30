@@ -1,48 +1,125 @@
-# sklep-agentow
+# Sklep Agentów
 
-**Trzy wtyczki WordPressa** (piwot z 17.08 — D16; wcześniejszy świat
-Cloudflare tylko w historii gita): **SKLEP** (`sklep-agentow` — Stripe
-Checkout w trybie TESTOWYM, mail po zakupie, wydanie plików bramą PHP,
-panel w wp-admin) + 2 sprzedawane w nim testowe boty: **ChatBot LIVE**
-(`chatbot-live`) i **Segregator maila** (`segregator-maila`).
-Zero prawdziwych pieniędzy: wszystko na kluczach testowych Stripe.
+[![Kontrole jakości](https://github.com/szydlowskikonrad95-art/sklep-agentow/actions/workflows/quality.yml/badge.svg?branch=main)](https://github.com/szydlowskikonrad95-art/sklep-agentow/actions/workflows/quality.yml)
+[![Wydanie](https://img.shields.io/github/v/release/szydlowskikonrad95-art/sklep-agentow?label=wydanie)](https://github.com/szydlowskikonrad95-art/sklep-agentow/releases/latest)
+[![Licencja](https://img.shields.io/badge/licencja-GPL--2.0-blue)](LICENSE)
+[![WordPress](https://img.shields.io/badge/WordPress-6.7%2B-blue)](#wymagania)
+[![PHP](https://img.shields.io/badge/PHP-8.1%2B-blue)](#wymagania)
 
-Repo robocze zlecenia. Oddanie = zipy 3 wtyczek + instrukcja instalacji
-(`dokumentacja/`); stack testowy: WP 7.0.4 / PHP 8.4 (kopia strony-gospodarza).
+Sklep z wtyczkami-botami AI, działający w całości na Twoim WordPressie — **trzy wtyczki**:
+sklep oraz dwa produkty, które sklep sprzedaje.
 
-## Mapa dokumentów
+> **Chcesz tylko zainstalować?** Pobierz paczkę z **[najnowszego wydania](https://github.com/szydlowskikonrad95-art/sklep-agentow/releases/latest)**
+> i zacznij od pliku `PRZECZYTAJ-MNIE.txt`, a potem `INSTRUKCJA-INSTALACJI.md` — krok po kroku, bez wiedzy
+> programistycznej. Reszta tego dokumentu opisuje system od strony technicznej.
 
-| Plik | Co trzyma |
+| Wtyczka | Rola | Najkrócej |
+|---|---|---|
+| **Sklep Agentów** (`sklep-agentow`) | sklep | lista i strony produktów pod `/sklep/`, płatność kartą przez Stripe Checkout, mail z linkiem do pobrania (72 h, 10 pobrań), brama pobrań, panel w kokpicie: pulpit, produkty, zamówienia, opinie, dziennik, ustawienia |
+| **ChatBot LIVE** (`chatbot-live`) | produkt 1 | bot czatu na stronę: odpowiada z własnej bazy pytań, zbiera kontakty, opcjonalny tryb AI, statystyki i raport luk |
+| **Segregator maila** (`segregator-maila`) | produkt 2 | rozdziela pocztę do kategorii według Twoich reguł i pokazuje raport, ile zrobił |
+
+Dane żyją w **własnych tabelach** bazy WordPressa (nie we wpisach): zamówienia z kopią danych produktu
+z chwili zakupu, każde przejście stanu jednorazowe, zgoda kupującego zapisana z treścią i czasem, dziennik
+zdarzeń i logowań. Schemat tabel i stałe: `DOKUMENTACJA-TECHNICZNA.md` w każdej wtyczce.
+
+## Wymagania
+
+WordPress 6.7+ (boty: 6.0+) · PHP 8.1+ · bezpośrednie odnośniki inne niż „Zwykłe” · konto Stripe
+(testowe wystarczy) · wysyłka maili z serwera albo wtyczka SMTP. Sprawdzone na WordPressie 7.1
+i PHP 8.4; deklarowane minimum WP 6.7 / PHP 8.1 sprawdzone na czystym stosie z tymi wersjami
+i analizą statyczną pod PHP 8.1.
+
+## Szybki start
+
+1. **Ustawienia → Bezpośrednie odnośniki** — wybierz strukturę inną niż „Zwykłe”.
+2. **Wtyczki → Dodaj nową → Wyślij wtyczkę na serwer** — `sklep-agentow-<wersja>.zip` → Zainstaluj → Włącz.
+   Sklep sam tworzy strony „Sklep” i „Dziękujemy za zakup” oraz szkice regulaminu i polityki prywatności.
+3. **Sklep Agentów → Ustawienia** — klucz sekretny Stripe (testowy), sekret webhooka, nadawca maili,
+   mail kontaktowy, waluta.
+4. **W Stripe** dodaj webhook na `https://TWOJA-DOMENA/wp-json/sklepag/v1/webhook`.
+5. **Sklep Agentów → Produkty → Dodaj produkt** — nazwa, opisy, cena, plik ZIP (to zipy botów z paczki),
+   zaznacz „W sprzedaży”. Zrób zakup kartą testową i sprawdź zamówienie na Pulpicie.
+
+Pełny opis: `dokumentacja/INSTRUKCJA-INSTALACJI.md` (wdrożenie) i `wtyczki/sklep-agentow/INSTRUKCJA.md`
+(obsługa na co dzień, ze zrzutami).
+
+## Jak biegnie zakup
+
+Gość ogląda listę produktów i stronę produktu, klika „Kup”, zaznacza zgodę na dostarczenie treści
+cyfrowej i trafia na stronę płatności Stripe. Po zapłacie Stripe wysyła powiadomienie (webhook
+z podpisem); niezależnie od niego sklep co 10 minut sam dopytuje Stripe o opłacone sesje. Zamówienie
+przechodzi ze stanu „opłacone” w „mail wysłany” dokładnie raz — kupujący dostaje jeden mail z linkiem
+do pobrania, potwierdzeniem zgody, krótką instrukcją i jednorazowym linkiem do opinii. Plik wydaje
+wyłącznie sklep, po sprawdzeniu tokenu, terminu i limitu; pliki produktów leżą w katalogu chronionym
+o losowej nazwie. Zwroty i spory z powiadomień Stripe trafiają do zamówienia i do statystyk.
+Rysunek: `dokumentacja/diagramy/01-sklep-droga-zakupu.png`.
+
+## Jak to wygląda
+
+| Lista sklepu | Pulpit właściciela |
 |---|---|
-| `ZROZUMIENIE.md` | Treść zlecenia (verbatim), piwot na WP, fakty, MUST NOT |
-| `MAPA-SPEC.md` | Wymagania S-01…S-20 — co dokładnie ma działać |
-| `PLAN-PROJEKTU.md` | Plan v3: architektura (§4), bezpieczeństwo (§7), harmonogram (§9), kryteria GOTOWE (§12) |
-| `DECYZJE.md` | Rejestr decyzji D1–D27 (z uzasadnieniami) |
-| `PLAN-WYGLADU-K5.md` | Wygląd witryny: tokeny z motywu, układy, SEO (D27) |
-| `boty/` | Szkice, wzorce, treść stron produktów, paczki zipów botów |
-| `dokumentacja/` | Instrukcja instalacji dla właściciela strony |
-| `audyt/` | CO-WISI (stan), REJESTR-WERYFIKACJI, wroga sesja K2, ściąga egzaminatora |
-| `testy/` | Skrypty na żywy stack: E2E przelotu, CRUD produktów, seed demo, zrzuty |
-| `wtyczki/` | Kod 3 wtyczek |
-| `krytyki/` | Rundy krytyki planu |
-| `narzedzia-qa/` | Strażnicy CI (manifest bramek) |
+| ![Lista sklepu](wtyczki/sklep-agentow/zrzuty/sklep-front.png) | ![Pulpit](wtyczki/sklep-agentow/zrzuty/dashboard-wskazniki.png) |
 
-## CI
+| ChatBot LIVE — okno rozmowy | Segregator maila — reguły |
+|---|---|
+| ![ChatBot LIVE](wtyczki/chatbot-live/zrzuty/widget-okno.png) | ![Segregator](wtyczki/segregator-maila/zrzuty/reguly.png) |
 
-Po sklonowaniu, JEDNORAZOWO: `git config core.hooksPath .githooks` — włącza strażnika
-pre-push (blokada bezpośredniego pusha na `main`; GitHub free+private nie daje branch
-protection, szczegóły w nagłówku `quality.yml`).
+Wszystkie zrzuty powstają maszynowo, z prawdziwej przeglądarki (`testy/zrzuty-panelu.js`,
+`testy/zrzuty-instrukcje.js`) — nie są retuszowane.
 
-- `quality.yml` — php-lint (8.4) + phpcs (WPCS) + phpstan (L5) + gitleaks +
-  actionlint + strażnik manifestu bramek (scalamy TYLKO po ich zieleni).
-- `recenzent.yml` — recenzja Claude na każdym PR (zasada dowodu: opis PR musi
-  zawierać dowód działania, nie deklarację).
+## Co jest w wydaniu
 
-## Status
+Paczka zbiorcza `sklep-agentow-KLIENT-<wersja>.zip` (składa ją `narzedzia-qa/pakuj-dla-klienta.sh`):
+trzy zipy wtyczek · `PRZECZYTAJ-MNIE.txt` · `INSTRUKCJA-INSTALACJI.md` · `diagramy/` (PNG) ·
+`SHA256SUMS.txt` (sprawdzenie: `sha256sum -c SHA256SUMS.txt`). W każdym zipie wtyczki: `INSTRUKCJA.md`,
+`readme.txt`, `CHANGELOG.md`, `DOKUMENTACJA-TECHNICZNA.md`, `DIAGRAM-PRZEPLYWU.svg`, `LICENSE`;
+w paczce sklepu dodatkowo `PONAD-SPECYFIKACJE.md`.
 
-K1–K5 domknięte (kość → wroga sesja → panel wp-admin → CRUD produktów →
-witryna sklepu z SEO; sklep 0.8.1, boty 1.2.1 — pakiet botów z 19.08: phpcs
-na wszystkie wtyczki, widget w palecie strony, przebudowane paczki po wrogiej
-sesji na czystym WP). Przed nami: instalacja od zera na czystym WP (K6, 24.08) →
-audyt końcowy (K7) → paczka i próba oddania nr 1 (K8, 27.08).
-Bieżący stan i wiszące sprawy: `audyt/CO-WISI.md`.
+## Czego ten system NIE robi (świadome granice)
+
+Nie zakłada kont kupującym, nie obsługuje płatności cyklicznych, kuponów ani przecen, nie dotyka motywu
+ani innych wtyczek, nie wysyła danych nigdzie poza Stripe. **Całość pracuje w trybie testowym Stripe** —
+płatności nie są pobierane, kupujący widzi oznaczenia trybu testowego. Przejście na prawdziwe płatności
+to osobna paczka: `INSTRUKCJA-INSTALACJI.md`, rozdział „Test a produkcja”.
+
+## Struktura repo
+
+| Katalog / plik | Co trzyma |
+|---|---|
+| `wtyczki/` | kod trzech wtyczek, każda z własną dokumentacją, instrukcją, zrzutami i licencją |
+| `boty/paczki/` | wydane zipy wtyczek (każda wersja zostaje; buduje `boty/buduj-paczki.sh` z allowlistą plików) |
+| `dokumentacja/` | instrukcja instalacji, diagramy PNG i skrypt, który je renderuje ze źródeł SVG |
+| `dla-klienta/` | `PRZECZYTAJ-MNIE.txt` — pierwszy plik wydania |
+| `testy/` | testy na żywym stosie WordPressa: przeloty E2E, sondy strażników, zrzuty, zgodność dokumentacji z kodem |
+| `narzedzia-qa/` | bramki jakości (`bramki.sh`), zgodność paczki z repo, bramka końcowa `k7-koniec.sh`, pakowanie wydania |
+| `audyt/` | rejestry znalezisk, raporty audytów, rejestr klas błędów, stan wiszących spraw |
+| `PLAN-PROJEKTU.md`, `DECYZJE.md`, `MAPA-SPEC.md`, `ZROZUMIENIE.md` | plan, rejestr decyzji, mapa wymagań, treść zlecenia |
+
+## Jakość — maszyny, nie obietnice
+
+- **CI na każdym PR** (`quality.yml`): php-lint, phpcs (WordPress Coding Standards), phpstan (poziom 5,
+  pod PHP 8.1), gitleaks, actionlint, strażnik manifestu bramek; do tego `recenzent.yml` — recenzja
+  Claude każdego PR-a według `.github/RECENZENT-BRIEFING.md` (opis PR musi nieść wynik uruchomienia,
+  nie słowo „działa”).
+- **Dokumentacja == kod**: `testy/dokumentacja-zgodnosc*.sh` porównują każdą liczbę i obietnicę z readme,
+  instrukcji i dokumentacji technicznej ze stałą w kodzie.
+- **Paczka == repo**: `narzedzia-qa/paczka-zgodnosc.sh` — zip musi zgadzać się z allowlistą i nie nieść
+  śladów wewnętrznych.
+- **Strażnicy z próbami kontrolnymi**: każdy strażnik ma test, który podkłada mu znaną wadę
+  i sprawdza, czy ją widzi (`testy/*-proba-kontrolna.sh`, `narzedzia-qa/proby-kontrolne-przelot.sh`).
+- **Audyt końcowy z kalibracją mutantami** i bramką `narzedzia-qa/k7-koniec.sh` (13 kontroli); Plugin Check
+  WordPress.org na paczkach: `audyt/PLUGIN-CHECK-30-08.md`.
+
+Po sklonowaniu, jednorazowo: `git config core.hooksPath .githooks` — włącza strażnika pre-push
+(blokada bezpośredniego pusha na `main`).
+
+## Dokumentacja techniczna
+
+`wtyczki/<wtyczka>/DOKUMENTACJA-TECHNICZNA.md` — schemat bazy, stałe, punkty wejścia, ścieżki żądań;
+`DIAGRAM-PRZEPLYWU.svg` w każdej wtyczce; `PLAN-PROJEKTU.md` §4 (architektura) i §7 (bezpieczeństwo);
+`DECYZJE.md` — każda decyzja z uzasadnieniem.
+
+## Licencja
+
+GPL-2.0 lub nowsza — plik `LICENSE` w korzeniu repozytorium i w każdej wtyczce.
