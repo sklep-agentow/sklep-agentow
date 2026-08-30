@@ -24,16 +24,30 @@
     blad.hidden = !tekst;
   }
 
+  /* Paleta z tych samych zmiennych CSS co reszta sklepu (front.css) — jedno źródło prawdy o kolorach;
+     wartości domyślne tylko na wypadek, gdyby arkusz nie doszedł. */
+  function kolor(nazwa, domyslny) {
+    try {
+      var v = getComputedStyle(document.documentElement).getPropertyValue(nazwa).trim();
+      return v || domyslny;
+    } catch (e) { return domyslny; }
+  }
+
   function appearance() {
-    var k = cfg.kolory || {};
+    var k = {
+      limonka: kolor('--sklepag-limonka', '#bfff38'),
+      tlo: kolor('--sklepag-wegiel', '#101116'),
+      papier: kolor('--sklepag-papier', '#f5f5f5'),
+      pyl: kolor('--sklepag-pyl', '#8f929c')
+    };
     return {
       theme: 'night',
       variables: {
-        colorPrimary: k.limonka || '#bfff38',
-        colorBackground: k.tlo || '#101116',
-        colorText: k.papier || '#f5f5f5',
-        colorTextSecondary: k.pyl || '#8f929c',
-        colorTextPlaceholder: k.pyl || '#8f929c',
+        colorPrimary: k.limonka,
+        colorBackground: k.tlo,
+        colorText: k.papier,
+        colorTextSecondary: k.pyl,
+        colorTextPlaceholder: k.pyl,
         colorDanger: '#ffb454',
         fontFamily: 'Geist, "Segoe UI", Helvetica, Arial, sans-serif',
         fontSizeBase: '15px',
@@ -42,10 +56,10 @@
       },
       rules: {
         '.Input': { border: '1px solid rgba(245,245,245,0.14)', boxShadow: 'none' },
-        '.Input:focus': { border: '1px solid ' + (k.limonka || '#bfff38'), boxShadow: 'none' },
-        '.Label': { color: k.pyl || '#8f929c', fontSize: '12px', letterSpacing: '0.08em', textTransform: 'uppercase' },
+        '.Input:focus': { border: '1px solid ' + k.limonka, boxShadow: 'none' },
+        '.Label': { color: k.pyl, fontSize: '12px', letterSpacing: '0.08em', textTransform: 'uppercase' },
         '.Tab': { border: '1px solid rgba(245,245,245,0.14)' },
-        '.Tab--selected': { border: '1px solid ' + (k.limonka || '#bfff38'), color: k.papier || '#f5f5f5' }
+        '.Tab--selected': { border: '1px solid ' + k.limonka, color: k.papier }
       }
     };
   }
@@ -122,15 +136,23 @@
     btnZaplac.disabled = true;
     btnZaplac.textContent = 'Przetwarzam…';
     pokazBlad('');
+    var odblokuj = function () {
+      wToku = false;
+      btnZaplac.disabled = false;
+      btnZaplac.textContent = 'Zapłać (płatność testowa)';
+    };
     actions.confirm().then(function (wynik) {
       /* Tu trafiamy TYLKO przy natychmiastowym błędzie (np. karta odrzucona). Przy sukcesie Stripe
          przekierowuje na return_url (strona „Dziękujemy”), a 3-D Secure obsługuje w swojej ramce. */
       if (wynik && wynik.type === 'error') {
         pokazBlad(wynik.error && wynik.error.message ? wynik.error.message : 'Płatność nie przeszła. Sprawdź dane karty i spróbuj ponownie.');
       }
-      wToku = false;
-      btnZaplac.disabled = false;
-      btnZaplac.textContent = 'Zapłać (płatność testowa)';
+      odblokuj();
+    }).catch(function (err) {
+      /* Odrzucona obietnica (sieć, wyjątek Stripe.js) — bez tej gałęzi `wToku` zostawało true i ani
+         „Zapłać”, ani „Wróć” nie dało się użyć (recenzja #222 r1). */
+      pokazBlad(err && err.message ? err.message : 'Płatność przerwana. Spróbuj ponownie.');
+      odblokuj();
     });
   });
 

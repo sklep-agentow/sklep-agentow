@@ -159,7 +159,10 @@ function sklepag_assety_frontu() {
 	// 0.9.25: płatność osadzona — Stripe.js (wersja „dahlia”, wymagana przez Checkout Sessions + Elements)
 	// i nasz `platnosc.js` TYLKO na stronie sklepu/produktu i TYLKO gdy jest klucz publikowalny.
 	// Bez klucza formularz zakupu działa jak dotąd (POST → strona hostowana Stripe).
-	if ( is_page( $strona_sklep ) && function_exists( 'sklepag_stripe_klucz_publikowalny' ) && '' !== sklepag_stripe_klucz_publikowalny() ) {
+	// Wyłącznie na STRONIE PRODUKTU (query var `sklepag_produkt`) — formularz zakupu żyje tylko tam; lista
+	// sklepu nie ma czego montować, więc nie ładuje skryptu z sieci (recenzja #222 r1). Kolory bierze
+	// `platnosc.js` z tych samych zmiennych CSS co reszta sklepu (`front.css`) — jedno źródło palety.
+	if ( is_page( $strona_sklep ) && '' !== (string) get_query_var( 'sklepag_produkt' ) && function_exists( 'sklepag_stripe_klucz_publikowalny' ) && '' !== sklepag_stripe_klucz_publikowalny() ) {
 		wp_enqueue_script( 'stripe-js', 'https://js.stripe.com/dahlia/stripe.js', array(), null, true ); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion -- Stripe wymaga adresu bez wersji (aktualizacje po ich stronie, PCI).
 		wp_enqueue_script( 'sklepag-platnosc', plugins_url( 'assets/platnosc.js', SKLEPAG_PLIK ), array( 'stripe-js' ), sklepag_wersja_assetu( 'assets/platnosc.js' ), true );
 		wp_add_inline_script(
@@ -168,13 +171,6 @@ function sklepag_assety_frontu() {
 				array(
 					'pk'       => sklepag_stripe_klucz_publikowalny(),
 					'endpoint' => esc_url_raw( admin_url( 'admin-post.php' ) ),
-					'kolory'   => array(
-						'tlo'     => '#101116',
-						'tusz'    => '#08090b',
-						'papier'  => '#f5f5f5',
-						'pyl'     => '#8f929c',
-						'limonka' => '#bfff38',
-					),
 				)
 			) . ';',
 			'before'

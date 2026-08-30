@@ -807,3 +807,17 @@ z tą samą listą wzorców co skaner — po oddaniu, jeśli zrzutów przybędzi
   anonimizacja w sklepie czyści `dane_faktury` razem z e-mailem. Zapisać w INSTRUKCJA §6 przy następnej korekcie
   (dziś: §9 FAQ).
 
+## 🟡 K10 (30.08, tester niezależny, instalacja z Release 0.9.24 na czystym WP 6.9.4 + motyw kolegi) — co wyszło
+Raport: `/root/praca/zlecenia/k10-tester-stanowisko/dowody/RAPORT-TESTERA.md` (+ kopia w `/root/do-panelu/K10-…`).
+26 min zegara (≈15 min czystej pracy z instrukcją — w limicie 30), 22 ✅ · 11 🐞 · 6 😖 · 6 ⬜.
+- **NAPRAWIONE w 0.9.25** (#222): „Dociągnij zaległe” milczało o pominiętych (młodszych niż 2 min) + starwacja przez
+  porzucone koszyki; instrukcje o WP-Cron/pętli zwrotnej.
+- **Stanowisko, nie produkt**: limit uploadu 2 MB i `uploads` należący do roota (obraz Dockera — instrukcja „Najczęstsze
+  problemy” to opisuje i tester to potwierdził), brak sekretu webhooka w pliku (moja karta startowa obiecała zmienną,
+  której nie było — `stripe listen --print-secret` do karty na K11), „Settings saved.” po angielsku (WP w `en_US`,
+  bo `wp core install` bez `--locale=pl_PL` — do `lib-stos-probny.sh`), wspólny łapacz poczty dla wielu stanowisk.
+- **Dług produktu/instrukcji**: Theme File Editor cofa zapis przy zepsutej pętli zwrotnej („Unable to communicate back
+  with site”) — instrukcja nawigacji ma wspomnieć SFTP jako drogę główną; „po pozycji 08” nadal myli (dług K9 → 0.9.25?
+  NIE weszło, zostaje 0.9.26); Adaptive Pricing Stripe (EUR zamiast PLN) — instrukcja ostrzega, rozważyć wyłączenie
+  w Dashboardzie jako krok instalacji; zły NIP w Ustawieniach czyści pole zamiast zostawić do poprawki (UX).
+

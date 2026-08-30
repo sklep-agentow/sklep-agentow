@@ -15,7 +15,8 @@ lista produktów i strony sprzedażowe → płatność kartą przez Stripe Check
 mail z linkiem do pobrania → panel zamówień, statystyk i dziennika logowań.
 
 **Zaplecze w całości w WordPressie** — własne tabele, własne strony przez skróty,
-zero zewnętrznych bibliotek i zero CDN. Jedyna usługa zewnętrzna: **Stripe** (płatność).
+zero zewnętrznych bibliotek PHP; jedyny skrypt z sieci to Stripe.js (`js.stripe.com`), ładowany wyłącznie na stronie
+produktu i tylko z kluczem publikowalnym (od 0.9.25 — formularz karty musi być ramką Stripe). Jedyna usługa zewnętrzna: **Stripe** (płatność).
 
 ---
 

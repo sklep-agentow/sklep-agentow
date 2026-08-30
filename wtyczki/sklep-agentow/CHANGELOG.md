@@ -38,8 +38,21 @@ Nic jeszcze.
 - Mail bez danych do faktury: „chcesz fakturę? odpisz w ciągu 3 miesięcy” (art. 106b ust. 3 ustawy o VAT).
 - Strażnik maila: C3 (termin 3 miesięcy), C3b (dane do faktury w obu wersjach) — 28 sprawdzeń.
 
+### Naprawione (K10 — instalacja od zera przez niezależnego testera, 30.08)
+- **„Dociągnij zaległe teraz” milczało o pominiętych sesjach**: kliknięte 71 s po zapłacie pomijało sesję młodszą niż
+  2 minuty bez słowa, a na hostingu bez działającego WP-Cron (zepsuta pętla zwrotna) opłacony zakup „wisiał”
+  20 minut. Teraz przycisk mówi: domknięte / pominięte jako młodsze niż 2 min (kliknij ponownie) / otwarte
+  nieopłacone / błędy; wynik trafia też do Dziennika (`reconciliation_wynik`).
+- **Porzucone koszyki blokowały nowszą opłaconą sesję**: kolejka brała 20 NAJSTARSZYCH sesji „utworzona”, więc
+  dwadzieścia „kliknął Kup i wyszedł” (u Stripe otwarte do 24 h) odkładało domknięcie prawdziwego zakupu na dobę.
+  Teraz najnowsze najpierw, do 100 w biegu, a sesja sprawdzona i nadal nieopłacona dostaje 9 minut przerwy.
+  Strażnik `testy/reconciliation-wynik-i-przerwa-test.php` (5 sprawdzeń; na kodzie 0.9.24 pada 5/5).
+- Instrukcje: kiedy WP-Cron nie działa (Kondycja witryny: pętla zwrotna) i co wtedy; „odczekaj 2 minuty od zapłaty”.
+
 ### Zmienione
 - Schemat bazy **8**: kolumna `zamowienia.dane_faktury varchar(300)` (migracja `dbDelta` przy podbiciu wersji).
+- Stripe.js i `platnosc.js` ładują się wyłącznie na stronie produktu (nie na liście sklepu); paleta panelu płatności
+  czytana ze zmiennych CSS sklepu (jedno źródło kolorów).
 
 ---
 

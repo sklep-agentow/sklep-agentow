@@ -1193,29 +1193,57 @@ function sklepag_dociagnij_zalegle( $budzet_s = 0 ) {
 		return $budzet_s > 0 && ( microtime( true ) - $start ) >= $budzet_s;
 	};
 
+	// Wynik dla wołającego (przycisk w panelu pokazuje go właścicielowi). K10 (30.08): tester kliknął
+	// „Dociągnij zaległe” 71 s po zapłacie, sesja była młodsza niż 120 s, przycisk pominął ją BEZ SŁOWA,
+	// cron na tym hostingu nie chodził (zepsuta pętla zwrotna) — i zakup „wisiał” 20 minut mimo opłacenia.
+	$wynik = array(
+		'domkniete'          => 0,
+		'pominiete_mlode'    => 0,
+		'sprawdzone_otwarte' => 0,
+		'bledy'              => 0,
+	);
+
 	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
-	$granica = gmdate( 'Y-m-d H:i:s', strtotime( current_time( 'mysql' ) ) - 120 );
-	$sesje   = $wpdb->get_col(
+	$granica                  = gmdate( 'Y-m-d H:i:s', strtotime( current_time( 'mysql' ) ) - 120 );
+	$wynik['pominiete_mlode'] = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$ps} WHERE stan='utworzona' AND utworzono >= %s", $granica ) );
+	// NAJNOWSZE NAJPIERW + LIMIT 100 + przerwa po sprawdzeniu: porzucone koszyki (kliknął „Kup”, nie zapłacił)
+	// zostają „utworzone” do wygaśnięcia u Stripe (24 h). Przy ORDER BY utworzono (najstarsze) LIMIT 20
+	// dwadzieścia takich sesji blokowało nowszą OPŁACONĄ na dobę — a to właśnie „przed chwilą zapłacił,
+	// nic nie przyszło” jest przypadkiem, na który właściciel czeka z palcem na przycisku. Sesja sprawdzona
+	// i nadal otwarta dostaje 9 min przerwy (transient), więc kolejne biegi schodzą do starszych.
+	$sesje = $wpdb->get_col(
 		$wpdb->prepare(
-			"SELECT stripe_session_id FROM {$ps} WHERE stan='utworzona' AND utworzono < %s ORDER BY utworzono LIMIT 20",
+			"SELECT stripe_session_id FROM {$ps} WHERE stan='utworzona' AND utworzono < %s ORDER BY utworzono DESC LIMIT 100",
 			$granica
 		)
 	);
 	// phpcs:enable
 
+	$sprawdzone = 0;
 	foreach ( $sesje as $sid ) {
-		if ( $po_budzecie() ) {
+		if ( $po_budzecie() || $sprawdzone >= 20 ) {
 			break; // Resztę dociągnie cron — render admina nie może wisieć.
 		}
+		$klucz_przerwy = 'sklepag_recon_' . md5( $sid );
+		if ( get_transient( $klucz_przerwy ) ) {
+			continue; // Sprawdzona przed chwilą i nadal nieopłacona — nie pytamy Stripe co bieg.
+		}
+		++$sprawdzone;
 		$sesja = sklepag_stripe_pobierz_sesje( $sid );
 		if ( is_wp_error( $sesja ) ) {
+			++$wynik['bledy'];
 			sklepag_zdarzenie( null, 'reconciliation_blad', $sid . ': ' . $sesja->get_error_message() );
 			continue;
 		}
 		if ( isset( $sesja['payment_status'] ) && 'unpaid' !== $sesja['payment_status'] ) {
-			sklepag_domknij_zakup( $sesja ); // TEN SAM silnik co webhook.
+			if ( sklepag_domknij_zakup( $sesja ) ) { // TEN SAM silnik co webhook.
+				++$wynik['domkniete'];
+			}
 		} elseif ( isset( $sesja['status'] ) && 'expired' === $sesja['status'] ) {
 			sklepag_oznacz_sesje( $sid, 'wygasla' );
+		} else {
+			++$wynik['sprawdzone_otwarte'];
+			set_transient( $klucz_przerwy, 1, 9 * MINUTE_IN_SECONDS );
 		}
 	}
 
@@ -1263,5 +1291,7 @@ function sklepag_dociagnij_zalegle( $budzet_s = 0 ) {
 	$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}sklepag_logowania WHERE czas < %s", $retencja ) );
 	$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}sklepag_zdarzenia WHERE czas < %s", $retencja ) );
 	// phpcs:enable
+
+	return $wynik;
 }
 add_action( 'sklepag_dociagnij_zalegle', 'sklepag_dociagnij_zalegle' );

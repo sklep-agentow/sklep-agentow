@@ -259,6 +259,13 @@ dlaczego przejście na produkcję wymaga kontaktu z nami:
 
 ## Najczęstsze problemy
 
+- **Zakup opłacony, a na „Dziękujemy” wisi „Przetwarzamy…” i Pulpit pokazuje 0 zamówień** —
+  webhook nie dociera (zły sekret, Krok 3) ORAZ zadania w tle WordPressa nie chodzą. Sprawdź:
+  Kokpit → Narzędzia → Kondycja witryny: „Żądanie zwrotne (loopback) nie powiodło się” /
+  „zadania zaplanowane”. Do czasu naprawy: Pulpit → **Dociągnij zaległe teraz** (odczekaj 2 minuty
+  od zapłaty; przycisk mówi, ile domknął, a ile pominął jako zbyt młode). Trwale: poproś hosting
+  o cron systemowy wołający `wp-cron.php` co 10 minut (wtedy w `wp-config.php`
+  `define( 'DISABLE_WP_CRON', true );`) — standardowa rada WordPressa, nie wymóg sklepu.
 - **Przy wgrywaniu wtyczki: „Przesłany plik przekracza dyrektywę upload_max_filesize"**
   (po angielsku: „The uploaded file exceeds the upload_max_filesize directive in php.ini")
   → limit wysyłki plików na Twoim hostingu jest mniejszy niż paczka sklepu (~4 MB).

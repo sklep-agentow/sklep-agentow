@@ -113,7 +113,16 @@ prosto do nich.
 **„Dociągnij zaległe teraz”** (Pulpit, prawy górny róg). Zakup domyka się dwiema drogami:
 Stripe wysyła powiadomienie (webhook) natychmiast, a niezależnie od tego sklep co 10 minut
 sam dopytuje Stripe o opłacone sesje. Jeśli kupujący mówi „zapłaciłem, a nic nie przyszło”,
-ten przycisk robi to dopytanie od ręki.
+ten przycisk robi to dopytanie od ręki. Po kliknięciu Pulpit mówi, co zrobił: ile zakupów domknął,
+ile sesji **pominął, bo są młodsze niż 2 minuty** (Stripe bywa jeszcze w trakcie — kliknij za chwilę
+ponownie), ile jest otwartych i nieopłaconych (kupujący kliknął „Kup”, ale nie zapłacił — same wygasną).
+
+⚠️ **„Co 10 minut” działa tylko wtedy, gdy WordPress potrafi uruchamiać swoje zadania w tle** (WP-Cron).
+Na części hostingów i na stronach z małym ruchem to nie działa: Kokpit → Narzędzia → Kondycja witryny
+pokazuje wtedy „Żądanie zwrotne (loopback) nie powiodło się” albo „zadania zaplanowane nie działają”.
+Wtedy zakupy bez webhooka domyka **tylko** ten przycisk (i wejście na Pulpit, które też dopytuje raz na
+10 minut) — albo poproś hosting o prawdziwy cron systemowy dla `wp-cron.php` (rozdział „Najczęstsze
+problemy” w instrukcji instalacji).
 
 ---
 
@@ -127,7 +136,6 @@ Po opłaceniu kupujący dostaje **jeden** mail (sklep pilnuje, żeby nie wysła�
 - informację o gwarancji, jeśli produkt ją ma,
 - jednorazowy link do wystawienia opinii (ważny 30 dni),
 - numer zamówienia (ten sam, który widzisz w panelu), datę i kwotę,
-- dopisek o fakturze („odpisz na tego maila i podaj dane firmy”),
 - stopkę z Twoimi danymi sprzedawcy z Ustawień (nazwa, adres, NIP, mail do reklamacji),
 - **dane do faktury**, jeśli kupujący podał je przy zakupie (nazwa firmy, NIP, adres) — z informacją, że fakturę
   wystawisz i prześlesz osobno; gdy ich nie podał — zdanie „chcesz fakturę? odpisz w ciągu 3 miesięcy”.
@@ -273,8 +281,9 @@ nie potrzebuje.
 
 **Zakup „wisi” na stronie Dziękujemy.** Powiadomienie od Stripe nie dociera — najczęściej
 przez zły sekret webhooka (sekret z panelu Stripe i z narzędzia Stripe CLI to dwa różne
-sekrety). Sklep i tak domknie zakup w ciągu ok. 10 minut, a od ręki zrobi to „Dociągnij
-zaległe teraz” na Pulpicie.
+sekrety). Sklep i tak domknie zakup w ciągu ok. 10 minut (jeśli WP-Cron działa — rozdział 3), a od ręki
+zrobi to „Dociągnij zaległe teraz” na Pulpicie — **odczekaj 2 minuty od zapłaty**, bo młodsze sesje
+przycisk pomija (i mówi, ile pominął).
 
 **Mail z linkiem nie przyszedł.** Treść maila jest w szczegółach zamówienia razem
 z „Wyślij ponownie”. Jeśli wysyłki padają regularnie — SMTP (rozdział 4).

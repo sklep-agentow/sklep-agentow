@@ -153,6 +153,7 @@ link do pobrania w mailu, jednorazowy link do opinii.
 * Dodane: formularz płatności na stronie produktu, w kolorach strony (Stripe Checkout Sessions w trybie „elements”: e-mail i karta w ramce Stripe, przycisk „Zapłać”, powrót na „Dziękujemy”); wymaga wpisania klucza publikowalnego w Ustawieniach — bez niego działa dotychczasowa strona płatności Stripe.
 * Dodane: nieobowiązkowe „Dane do faktury” przy zakupie (nazwa firmy, NIP z sumą kontrolną, adres — komplet albo nic); trafiają do maila, do szczegółów zamówienia i są czyszczone przy anonimizacji. Sklep faktur nie wystawia; podanie NIP-u nie zmienia praw kupującego.
 * Zmienione: baza — nowa kolumna dane_faktury (schemat 8, migracja sama); szkic Polityki prywatności wymienia dane do faktury (sklepy zainstalowane wcześniej: dopisz ręcznie).
+* Naprawione: „Dociągnij zaległe teraz” mówi, ile zakupów domknął i ile sesji pominął jako młodsze niż 2 minuty (dotąd milczał); porzucone, nieopłacone sesje nie blokują już domknięcia nowszego, opłaconego zakupu (najnowsze sprawdzane najpierw, przerwa po sprawdzeniu).
 
 = 0.9.24 =
 * Dodane: mail po zakupie w wersji graficznej (nazwa sklepu w nagłówku, okładka produktu, przycisk „Pobierz”, kolory strony) wysyłany razem z wersją tekstową w jednej wiadomości; dotąd mail był czystym tekstem.
