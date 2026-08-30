@@ -1200,6 +1200,7 @@ function sklepag_dociagnij_zalegle( $budzet_s = 0 ) {
 		'domkniete'          => 0,
 		'pominiete_mlode'    => 0,
 		'sprawdzone_otwarte' => 0,
+		'z_przerwa'          => 0,
 		'bledy'              => 0,
 	);
 
