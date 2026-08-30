@@ -32,7 +32,7 @@ osobnej bazy ani logowania poza WordPressem. Jedyna usługa zewnętrzna: **Strip
 | Zgadywanie haseł | Opóźnienie wykładnicze po nieudanych logowaniach (sufit 60 s) + limit prób z jednego adresu; dziennik logowań udanych i nieudanych (IP, przeglądarka) |
 | Zalew żądań (spam, boty) | Limity na adres IP (z obsługą proxy/Cloudflare tylko na jawną decyzję właściciela — nagłówkom nie ufa się domyślnie); ChatBot: pole-pułapka + limit czasu; Stripe stawia własną kontrolę (hCaptcha) przy podejrzanym ruchu |
 | Wyciek kluczy Stripe | Klucze w ustawieniach WordPressa (baza), nigdy w kodzie ani w repo; `.gitignore` wyklucza `.env*` i `*.pem`; realną zaporą jest skaner `gitleaks` (skanuje historię) i skaner poświadczeń w CI na każdym PR |
-| Ślady wewnętrzne w paczce klienta | Skaner śladów (`narzedzia-qa/slady-wewnetrzne.sh`) w CI na każdym PR; zgodność paczki z allowlistą (`narzedzia-qa/paczka-zgodnosc.sh`) uruchamiana przy pakowaniu wydania (`narzedzia-qa/pakuj-dla-klienta.sh`), nie w CI |
+| Ślady wewnętrzne w paczce klienta | Skaner śladów (`narzedzia-qa/slady-wewnetrzne.sh`) w CI na każdym PR; zgodność paczki z allowlistą (`narzedzia-qa/paczka-zgodnosc.sh`) to **ręczny punkt listy wydania** (przed `pakuj-dla-klienta.sh`; skrypt pakowania robi własne kontrole zipów, tej bramki nie woła) — nie w CI |
 
 Wymagania środowiska: WordPress 6.7+ (testowane do 7.1), PHP 8.1+ (testowane na 8.4), HTTPS.
 
@@ -66,16 +66,29 @@ Wtyczka WordPressa **nie ustawia nagłówków HTTP** serwera. Na docelowym hosti
 
 ## 4. Dane osobowe (RODO)
 
-Zapisywane (zgodnie z szablonem Polityki prywatności, który generuje wtyczka): e-mail kupującego,
+**Sklep** (zgodnie z szablonem Polityki prywatności, który generuje wtyczka): e-mail kupującego,
 dane transakcji (kwota, produkt ze snapshotu, identyfikatory Stripe), nieobowiązkowe dane do faktury
 (nazwa, NIP, adres), treść i czas zgody na dostarczenie treści cyfrowej przed upływem terminu
 odstąpienia, **adres IP kupującego przy każdym pobraniu pliku** (dziennik zdarzeń, 90 dni), przy
 dobrowolnej opinii — **imię i treść opinii, publikowane na stronie produktu**, oraz adres IP
-i przeglądarka w dzienniku logowań administratorów. Kupującego można **zanonimizować
-z panelu** (historia zamówienia zostaje bez danych osoby); dziennik starszy niż 90 dni jest
-usuwany automatycznie. Odinstalowanie z opcją czyszczenia usuwa wszystkie tabele, opcje,
-strony, pliki i zadania cron wtyczki. Szablony Regulaminu i Polityki prywatności generuje
-wtyczka — właściciel uzupełnia je własnymi danymi i przegląda z prawnikiem.
+i przeglądarka w dzienniku logowań administratorów. Kupującego można **zanonimizować z panelu**
+(historia zamówienia zostaje bez danych osoby); dziennik starszy niż 90 dni jest usuwany automatycznie.
+
+**ChatBot LIVE** (dane gości strony klienta): zgłoszenia kontaktowe (`chatl_zgloszenia`: e-mail
+i wiadomość) oraz treść rozmów (`chatl_rozmowy`); historia rozmów kasowana automatycznie po 90 dniach,
+adresy IP gości nie są zapisywane; wnioski o eksport i usunięcie danych obsługuje wbudowany kreator
+prywatności WordPressa (wtyczka rejestruje eksporter i mechanizm usuwania w `includes/rodo.php`).
+⚠️ W opcjonalnym **trybie AI** treść pytań gościa wychodzi do dostawcy modelu — Polityka klienta musi
+to wymieniać (szablon ma miejsce „[UZUPEŁNIJ po włączeniu]”).
+
+**Segregator maila** (dane korespondentów klienta): nadawca, temat i treść maili z jego skrzynki
+(`segm_maile`, `segm_skrz_ruchy`) — przetwarzane na jego serwerze, retencja 90 dni; hasło IMAP
+przechowywane poza bazą (stała w `wp-config.php`), więc nie wychodzi z kopią bazy. ⚠️ W trybie AI
+do dostawcy modelu wychodzi PRÓBKA: nadawca (190 znaków), temat (300) i pierwsze 800 znaków treści.
+
+Odinstalowanie każdej wtyczki z opcją czyszczenia usuwa jej tabele, opcje, strony, pliki i zadania cron.
+Szablony Regulaminu i Polityki prywatności generuje sklep — właściciel uzupełnia je własnymi danymi
+i przegląda z prawnikiem.
 
 ## 5. Zależności i łańcuch dostaw
 
@@ -103,7 +116,8 @@ nie przepisujemy; m.in. PHPCS ze standardem WordPress, PHPStan, `gitleaks`, skan
 i recenzja według
 `.github/RECENZENT-BRIEFING.md`. Strażniki mają **próby kontrolne** — testy, które podkładają
 znaną wadę (np. limit liczony z adresu proxy zamiast gościa, brak nonce) i sprawdzają, że strażnik
-ją widzi (`testy/*-proba-kontrolna.sh`). Odrzut webhooka ze złym lub brakującym podpisem dowodzą testy
-audytu (`audyt/sklep/testy-audytora/A/L3/`, wysyłka podrobionego webhooka na żywy stos) — osobnej próby
-kontrolnej strażnika dla podpisu nie ma (dług w `audyt/CO-WISI.md`). Audyty przed wydaniem:
+ją widzi (`testy/*-proba-kontrolna.sh`). Odrzut webhooka ze złym lub brakującym podpisem dowodzą raporty
+audytu na żywym stosie (`audyt/sklep/raporty/A/L3.json`: podpis `v1=deadbeef` → HTTP 400 „zły podpis”;
+`A/L2.json`: znacznik czasu sprzed 400 s przy tolerancji 300 s → HTTP 400; `B/L3.json`: po rotacji sekretu
+stary podpis → HTTP 400) — osobnej próby kontrolnej strażnika dla podpisu nie ma (dług w `audyt/CO-WISI.md`). Audyty przed wydaniem:
 `audyt/AUDYT-RAPORT.md`. Świadomie niezrobione rzeczy: `DECYZJE.md`; otwarte: `audyt/CO-WISI.md`.

@@ -19,7 +19,7 @@ wyczyszczenie kontekstu, są w `CLAUDE.md`; to, według czego recenzent ocenia P
    łapacz poczty Mailpit na `:8025`, IMAP testowy dla Segregatora).
 3. Wgraj wtyczki: `docker cp wtyczki/sklep-agentow/. <kontener>:/var/www/html/wp-content/plugins/sklep-agentow/`
    **i zaraz po tym** `docker exec <kontener> chown -R www-data:www-data /var/www/html/wp-content/plugins/sklep-agentow`
-   (bez tego pliki należą do roota i upload/aktywacja padają po cichu); tak samo dwie pozostałe.
+   (gdy `wp-content/uploads` należy do roota, aktywacja sklepu kończy się błędem „Brak katalogu chronionego” — tak padł test instalacji K9, naprawa: `chown` + deaktywacja/aktywacja); tak samo dwie pozostałe.
    Aktywuj w wp-admin, wpisz klucze testowe Stripe w Ustawieniach.
 4. Przejdź `dokumentacja/INSTRUKCJA-INSTALACJI.md` jak klient — pierwszy zakup kartą testową
    ma skończyć się mailem w Mailpicie z działającym linkiem.
