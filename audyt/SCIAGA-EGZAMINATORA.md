@@ -215,3 +215,93 @@ Sam wpis w rejestrze jest dokładnie tym, co już raz nie zadziałało.
   jest sprawdzany, nie zakładany.
 - ⬜ **23, 24, 27, 28** — NIESPRAWDZONE w tym repo. Do przelotu osobno, klasa 23 pierwsza
   (dotyka danych osobowych kupujących).
+
+---
+
+## POCHODZENIE KLAS 29–44 (dopisane 2026-08-30)
+
+Klasy 29–32 leżały od 28.08 w `/root/.claude/KLASY-29-32-DO-REJESTRU.md` (limit tygodniowy
+95 %, świadomie odłożone), klasy 33–44 powstały 29.08 w dwóch plikach poza repo. ⛔ Rejestr nie
+był karmiony przez dwa dni — dokładnie wbrew własnej meta-lekcji z 28.08. Dopisane jednym PR-em
+przy starcie sesji 30.08, po sprawdzeniu `grep -cE '^\| (29|30|31|32) \|'` → 0.
+
+## KLASY DOPISANE 2026-08-28 (późny wieczór) — z DZIESIĘCIU rund recenzji PR #207
+
+Źródło: naprawa wady RODO `SK-L2-003`. **Cztery z dziesięciu rund znalazły wadę, którą wprowadziła
+POPRZEDNIA runda tej samej naprawy.** Recenzent nie pomylił się ani razu — każda uwaga została
+zweryfikowana pomiarem; jedna hipoteza postawiona przeze mnie samą („dwa rejestry statusów”)
+**nie potwierdziła się** i została odrzucona, więc weryfikacja działa w obie strony.
+
+| # | Klasa | Dowód z tych rund | Co ją łapie U NAS |
+|---|---|---|---|
+| 29 | **NAPRAWA PRZESUWA WADĘ O KROK ZAMIAST JĄ ZAMKNĄĆ — i wygląda wtedy jak naprawa** | Łańcuch z jednej sprawy: sprawdzanie wyniku → za mało (powtórka bezskuteczna, bo pierwszy zapis kasował klucz do znalezienia śladu) → odwrócenie kolejności → za mało (kod przechodził wszystkie zapisy przed sprawdzeniem) → twarde wyjście → za mało (pomiar w 1 miejscu z 3) → pomiar w trzech → za mało (czyszczenie po `zamowienie_id`, a adres bywa w wierszach bez niego) → po treści → **GORZEJ** (`REPLACE` bez zakotwiczenia przepisywał wpisy INNEGO kupującego) → kotwica → za mało (kotwica na 9 znakach, RFC dopuszcza więcej) | ⛔ Cztery pytania z `jak-audytowac/references/audyt-wlasnej-naprawy.md` **PRZED** wysłaniem naprawy recenzentowi; pierwsze brzmi: *czy zamknąłeś klasę, czy tylko zwęziłeś okno?* Zadziałało natychmiast, gdy je w końcu otworzyłam: wskazało `mail_tresc` jako podejrzany → sprawdzone na żywych danych: **5 zamówień z treścią maila, 0 z adresem w treści**. ⬜ DO ZROBIENIA: bramka wymuszająca te pytania — plik istniał i nie zadziałał, bo nic go nie podsuwało |
+| 30 | **NAPRAWA FAŁSZYWEGO ALARMU PRZEZ POLUZOWANIE PROGU = ZAMIANA GO W ŚLEPOTĘ** | Asercja żądała „dokładnie jednego” wpisu i mogła się wywrócić przez pozostałość po wcześniejszym przebiegu. Poluzowałam próg do „co najmniej jeden” — wtedy przechodziłaby **także wtedy, gdy bieżący wpis został przepisany**, a licznik złapał cudzy. Recenzent: *„przeszła z fałszywego alarmu w ŚLEPOTĘ”* | ⛔ Fałszywy alarm naprawia się **warunkami wstępnymi**, nie progiem: test kasuje pozostałości PRZED pomiarem, asercja zostaje ostra. Dowód, że nie oślepła: kod sprzed naprawy → `WPIS_OBCEGO_RFC_CALY=0`, asercja PADA; po naprawie → `=1`, przechodzi. **Pytanie kontrolne: czy po mojej zmianie asercja NADAL pada na podłożonej wadzie?** |
+| 31 | **SPRZĄTANIE KLUCZUJĄCE PO TREŚCI, KTÓRĄ SAMA TESTOWANA OPERACJA PODMIENIA** | Test sprzątał wiersze po adresie w treści (`opis LIKE %marker%`). UDANA anonimizacja **podmienia ten adres na znacznik**, więc wiersz przestawał zawierać marker i sprzątanie przestawało go widzieć. **Każdy UDANY przebieg zostawiał wiersz na wspólnym stosie**, a nieudany sprzątał się poprawnie — objaw wyglądał odwrotnie niż przyczyna | Sprzątanie kluczuj po polu, którego testowana operacja **NIE dotyka** (u nas `typ` zdarzenia, nie `opis`). ⛔ Pytanie: *czy klucz, po którym sprzątam, przeżyje operację, którą testuję?* Zmierzone po naprawie: `WIERSZE_TESTOWE=0` |
+| 32 | **LOCALE ROZJEŻDŻA SUMY KONTROLNE MIMO IDENTYCZNEJ TREŚCI** | Asercja „mierzę ten sam kod” liczyła `sha256` katalogu w kontenerze i na hoście. Sumy się różniły, choć pliki były co do bajtu takie same: `sort` w obu miejscach ma inne locale i układał je w innej kolejności. Kuszące było „poprawiać aż zadziała” — zostałby przyrząd kłamiący w drugą stronę | Dowód rozstrzygnął jedną komendą: różnica **per plik** pokazała TEN SAM plik z TĄ SAMĄ sumą, tylko w innej pozycji. ⛔ Każde sortowanie w porównaniu maszyna–maszyna: `LC_ALL=C`. Ogólniej: **fałszywy alarm przyrządu rozkłada się na czynniki, nigdy nie obchodzi** |
+
+### Meta-lekcja tych rund
+
+**Recenzent znajdował wady w NAPRAWIE, nie w produkcie.** Kod wtyczki był bez uwag od rundy 4 —
+kolejne sześć rund dotyczyło przyrządu, zapisów i tekstów. Ta sama diagnoza co przy `#198` i `#199`,
+tylko ostrzejsza: **im lepszy kod, tym bardziej wąskim gardłem staje się to, czym go mierzę,
+i to, co o nim piszę.**
+
+⛔ Osobno do zapamiętania: **bramka `slady` złapała mnie TRZY RAZY jednego dnia** na tej samej
+klasie — numery recenzji i odniesienia do naszego audytu w komentarzach kodu klienta — mimo że
+mam ją zapisaną w pamięci. Wpis w pamięci nie zatrzymał ręki. Zatrzymała bramka.
+
+---
+
+## KLASY DOPISANE 2026-08-29 — z rund 1–3 recenzji PR #208 i #209 (teksty jadące do klienta)
+
+Źródło: dwa PR-y, których **jedynym produktem jest jakość tekstu czytanego przez kupującego** —
+komentarze w kodzie, CHANGELOG-i, dokumentacja techniczna w paczce. Kod produktu nie zmienił się
+ani o instrukcję. Mimo to poszły trzy rundy recenzji, w tym dwie uwagi KRYTYCZNE. ⛔ To jest
+lekcja sama w sobie: **PR bez linijki logiki potrafi być trudniejszy od PR-a z logiką**, bo nie
+broni go żadna bramka — `php-lint`, `phpcs`, `phpstan` i `paczka-zgodnosc.sh` przepuszczają
+zepsute zdanie tak samo chętnie jak poprawne.
+
+| # | Klasa | Dowód z tych rund | Co ją łapie U NAS |
+|---|---|---|---|
+| 33 | **PRÓBA KONTROLNA WZORCA DOWODZI, ŻE PRZYRZĄD MIERZY — NIE ŻE MIERZY CAŁĄ KLASĘ** | Zgłosiłam „47 trafień → 0" i uzasadniłam próbą kontrolną: ten sam wzorzec na innym katalogu nadal coś znajdował, więc „szuka poprawnie". To dowodzi, że wzorzec DZIAŁA, nie że OBEJMUJE KLASĘ. `#209` r1: recenzent szerszym wzorcem znalazł **22** pozostałe odniesienia (`SK-L3-005`, `LS-F1`, `A3-2`, `Do audytu`). Po mojej naprawie r2 znalazł **42 kolejne** innej rodziny. Po naprawie r2 mój własny szeroki zwiad znalazł **trzecią** rodzinę, której nie łapał ani mój, ani jego wzorzec (`feedback z przeglądu`, `recon`, `runda stron`, `ZMIERZONE DD.MM`) — **68 kandydatów, 65 podmian**. Trzy rundy, trzy wzorce, za każdym razem „zero" było przedwczesne | ⛔ Nie pytaj „czy mój wzorzec nic nie znajduje" — pytaj **„co w ogóle wygląda tu jak odsyłacz"**. Wypisz KANDYDATÓW i przejrzyj ich listę: `grep -rhoE '<szeroki kształt>' <katalog> \| sort \| uniq -c`. Dopiero brak kandydatów jest zerem. ⛔ **Wzorzec recenzenta też bywa za wąski** — jego 42 to nie była cała klasa |
+| 34 | **KONTROLA WYBRANA TAK, ŻE Z ZAŁOŻENIA NIE WIDZI TEJ KLASY BŁĘDU** | Po masowej podmianie w 22 plikach wybrałam kontrolę „liczba linii w każdym pliku bez zmian". Wyglądała solidnie i złapała realny problem (sklejanie wierszy). Ale moje uszkodzenia były **wewnątrz linii**: `operator.php:309` urwane słowo („dalej odpowiada **bo**." zamiast „bot"), `DOKUMENTACJA-TECHNICZNA.md` osierocony wiersz z samą kropką, `CHANGELOG.md:138` zniknięta kropka kończąca zdanie. Wszystkie trzy przeszły przez `php-lint`, `phpcs`, `phpstan` i `paczka-zgodnosc.sh`, i **wszystkie trzy były już w zamrożonych paczkach** | ⛔ Pytanie PRZED wyborem kontroli: **czy ta kontrola potrafiłaby zobaczyć błąd, którego się boję?** Przy podmianach w tekście: przeczytać KAŻDĄ zmienioną linię w całości (było ich 31, potem 82 — dało się), plus wzorce na SKUTKI: `^[[:space:]]*[.,;][[:space:]]*$`, podwójna spacja między literami, `\*\*$` w wierszu listy |
+| 35 | **KALIBRACJA NAPRAWY WYGODNIEJSZYM SCENARIUSZEM ZAMIAST ORYGINALNYM** | `#208`, rundy 4→5. Recenzent udowodnił wadę scenariuszem A („opustoszałe readme"). Naprawiłam i skalibrowałam scenariuszem B — psując **wzorzec pętli** (mój), nie **plik** (oryginalny). Wszystko zielone, wada została. R5: *„dwa różne źródła to nadal jedno źródło — pomiar z rundy 4 dalej przechodzi na EXIT=0"* | Kalibruj **tym samym scenariuszem, którym wykazano wadę**, i dopiero potem dokładaj własne. W opisie PR podaj scenariusz kalibracji dosłownie, żeby recenzent widział, czy to ten sam |
+| 36 | **`\s*` W REGEXIE MASOWEJ PODMIANY SKLEJA WIERSZE** | `\s` łapie znak nowej linii. Wzorzec `\s*\(…\)` usuwający nawias na początku linii zjada koniec linii poprzedniej. Podgląd przed zapisem: **1536** zmienionych linii zamiast spodziewanych ~55, w 22 plikach. Po zamianie `\s` na `[ \t]` — 57 linii | W podmianach tekstowych `[ \t]*`, nigdy `\s*`. ⭐ Zawsze **podgląd przed zapisem** i patrz na LICZBĘ zmienionych linii, nie na przykłady — liczba wyła, przykłady wyglądały dobrze |
+| 37 | **PRZECZYTANIE TYLKO PIERWSZEJ UWAGI RECENZJI** | `#209` r1 miała uwagę KRYTYCZNĄ i trzy dalsze. Rzuciłam się na krytyczną i wypchnęłam, nie przeczytawszy reszty. W r2 wróciły wszystkie trzy, a jedna **awansowała na KRYTYCZNĄ**, bo doszło do niej trzecie uszkodzenie. Trzy z pięciu uwag rundy 2 to niezaadresowane uwagi rundy 1 | Po każdej recenzji: **wypisz WSZYSTKIE uwagi jako tabelę i odhacz każdą osobno w opisie PR** — także te świadomie zostawiane jako dług, z powodem. Recenzent sprawdza właśnie to |
+| 38 | **NARZĘDZIE PODMIAN, KTÓRE CICHO NIE TRAFIA — część podmian przechodzi, część znika bez śladu** | Skrypt podmian w Perlu bez `use utf8;`: literały z polskimi znakami nie pasowały do zdekodowanego tekstu, więc **55 z 65 podmian nie trafiło**, a 10 (te bez polskich liter) przeszło i pliki zostały ZAPISANE. Gdyby skrypt tylko podmieniał i milczał, zobaczyłabym zmienione pliki, uznała robotę za zrobioną i oddała 55 nietkniętych odsyłaczy jako „wyczyszczone" | ⛔ Każda masowa podmiana musi mieć **bramkę na trafienie**: dokładnie jedno dopasowanie na podmianę, inaczej skrypt PADA z listą nietrafionych (`PODMIANY OK: 65 · BLEDY: 0`, `exit 1` przy jakimkolwiek błędzie). ⛔ Osobno: przy polskich tekstach w Perlu `use utf8;` + `:encoding(UTF-8)` na wejściu i wyjściu — brak `use utf8` nie jest błędem składni, tylko cichym niedopasowaniem |
+| 39 | **TEST PADA PRZEZ BRAKUJĄCY WARUNEK ŚRODOWISKA, A WYGLĄDA NA REGRESJĘ GAŁĘZI** | `segregator-skrzynka-proba-kontrolna.sh` kończył `EXIT=1` i trafił do logu dowodowego jako jedna z „7 z 30 padających prób". Recenzent słusznie zauważył, że commit deklarujący „te same co przed" ma diff pokazujący `EXIT=0 → EXIT=1` — czyli twierdzenie nie miało pokrycia w dowodzie. Przyczyna: **zatrzymany kontener `segm_imap`**, nie kod. Dowód przez wykluczenie: dwa przebiegi pod rząd przy wyłączonym kontenerze → `EXIT=1` z komunikatem *„czysty kod NIE przechodzi — proba nic nie znaczy"*; po samym `docker start segm_imap`, bez zmiany w kodzie → `EXIT=0` i *„STRAZNIK SKRZYNKI JEST SKALIBROWANY"* | ⛔ Zanim wpiszesz padającą próbę do dowodu, ustal **czy jej warunki wstępne w ogóle zachodziły**. Skrypt sam to mówił (*„proba nic nie znaczy"*) — komunikat trzeba przeczytać, nie tylko kod wyjścia. ⭐ Powtarzalny odruch: uruchom DWA razy pod rząd, potem zmień JEDEN warunek środowiska i uruchom trzeci raz. To rozdziela wadę kodu od dryfu wspólnego stosu |
+
+### Meta-lekcja tych rund
+
+**Ten rozdział nie zawiera ani jednej klasy dotyczącej kodu produktu.** Wszystkie siedem dotyczy
+albo tekstu dla klienta, albo przyrządu, którym ten tekst mierzyłam. To ta sama linia, która
+zaczęła się przy `#198` (klasy 11–12) i `#201` (17–19): **im czystszy kod, tym bardziej wąskim
+gardłem staje się sprawdzanie.**
+
+⛔ **Klasy 33 i 34 to jedna para i tak trzeba je czytać.** Klasa 33 mówi, że wzorzec szukający
+może nie obejmować całej klasy. Klasa 34 mówi, że kontrola sprawdzająca może nie widzieć rodzaju
+uszkodzenia. Obie kończą się zielonym światłem i obie wyglądają dokładnie jak dowód. Pytanie,
+które rozbraja obie, jest jedno i to samo: **„czego to narzędzie NIE widzi?"** — zadane osobno
+od pytania „co znalazło?".
+
+⭐ **Pytania, które wychodzą z tego rozdziału i kosztują sekundy zamiast rundy:**
+1. Czy wypisałam KANDYDATÓW, czy tylko sprawdziłam, że mój wzorzec nic nie znajduje?
+2. Czy moja kontrola potrafi zobaczyć **ten rodzaj** uszkodzenia, którego się boję?
+3. Czy skrypt podmian **PADA**, gdy podmiana nie trafi — czy po cichu jej nie robi?
+4. Czy padająca próba miała spełnione **warunki wstępne**, zanim nazwę ją regresją?
+5. Czy odhaczyłam **każdą** uwagę recenzji z osobna — łącznie z tymi, które zostawiam jako dług?
+
+---
+
+## KLASY DOPISANE 2026-08-29 (noc) — z rund 8–11 PR #209 i z kontroli po squashu (30.08)
+
+| # | Klasa | Dowód | Czym obstawione |
+|---|---|---|---|
+| 40 | **ODHACZASZ W OPISIE PR RZECZ, KTÓREJ NIE ZROBIŁAŚ** | `#209` r8: opis PR i lista kontrolna twierdziły, że dług „wielkość litery w skanerze” jest zapisany w `CO-WISI.md`. Recenzent sprawdził: `grep -c 'wielkość litery' audyt/CO-WISI.md` → **0**. Własna klasa 3 (dokumentacja kłamie) zastosowana do własnego opisu | ⛔ Każdy odhaczony punkt listy kontrolnej musi mieć **komendę potwierdzającą** przed wysłaniem opisu. Odhaczenie z pamięci = deklaracja, nie dowód |
+| 41 | **OBIETNICA KOMPLETNOŚCI, KTÓREJ NIE UMIESZ UTRZYMAĆ** | `#209` r6→r10: „PEŁNA lista” oznaczeń trybu testowego rosła **trzy → sześć → siedem** miejsc, za każdym razem niepełna. Osobno r9: zmieniłam punkt 6 na „nie traktuj listy jako kompletnej”, ale **nagłówek 27 wierszy wyżej** nadal obiecywał „nic poza tą listą nie jest potrzebne” | ⭐ Gdy nie umiesz zagwarantować kompletności — **nie obiecuj jej**, daj jedno działanie („napisz do nas”). Zdania bez obietnicy nie da się obalić kolejnym znalezionym miejscem. ⛔ Zmieniasz obietnicę? Zmień JĄ W CAŁYM dokumencie, nie w jednym akapicie |
+| 42 | **SZUKASZ FORM ZAMIAST KSZTAŁTU — i dlatego każda runda przynosi nową rodzinę** | `#209` r6-r11: `Z10` → `Z6` → `luka L1` → `P0.4`, sześć rund łatania po jednej rodzinie. Wyliczenie po KSZTAŁCIE (`grep -rhoE '\b[A-Z]{1,3}[0-9]+(\.[0-9]+)?[a-z]?\b' … \| sort \| uniq -c`) dało **całą listę naraz**: 8 naszych oznaczeń plus rozpoznawalne fałszywe (UTF7, CP1250, SHA256, współrzędne SVG, `Z0` z regexów `a-zA-Z0-9`, ⛔ `Ctrl+F5` — skrót klawiszowy DLA KLIENTA, o mało nie wycięty) | ⛔ **Zero mojego wzorca ≠ zero listy kandydatów.** Przy rodzinach oznaczeń pytaj „co tu W OGÓLE wygląda jak oznaczenie”, nie „czy mój wzorzec coś znajduje”. Po naprawie **powtórz TO SAMO wyliczenie** — dopiero brak kandydatów jest zerem |
+| 43 | **POTOK MASKUJE NIE TYLKO PORAŻKĘ, ALE I CZĘŚCIOWY SUKCES** | 29.08, scalanie `#209`: `gh pr merge … \| tail` wypisało `MERGE EXIT=0`, a komenda odmówiła (niezacommitowany plik). Prawda była JESZCZE INNA: **merge się udał**, padło tylko lokalne przełączenie gałęzi — pokazał to komunikat „was already merged” przy drugiej próbie. Potok zamaskował stan pośredni, groźniejszy od czystej porażki | ⛔ `$?` **nigdy** po potoku. Do operacji nieodwracalnych (merge, tag, release) dodaj **potwierdzenie NIEZALEŻNE od komendy**: `gh pr view N --json state,mergedAt` |
+
+| # | Klasa | Dowód | Czym obstawione |
+|---|---|---|---|
+| 44 | **PO SQUASHU „COMMITY SPOZA MAIN” TO NIE DOWÓD UTRATY TREŚCI — i panika w drugą stronę też kosztuje** | 30.08, kontrola po pytaniu Dzidka „wszystko zapisane na pewno?”. `git log origin/main..origin/fix/…` pokazał **PIĘĆ commitów spoza main** i wyglądało to na utratę wszystkich napraw rund 8–11 (mail „płatność nie została pobrana”, `Z6`, `luka L1`, `P2.3`). NIEPRAWDA: PR scalono **squashem**, więc treść weszła JEDNYM commitem, a gałąź trzyma stare hashe. Rozstrzygnął dopiero pomiar TREŚCI: `git show main:…sitemap-produkty.php \| grep -c Z6` → 0, to samo dla `luka L1` i `P2.3`. Realna strata: **jeden plik, 37 linii** dokumentu wewnętrznego (commit powstał PO merge) | ⛔ Dowodem utraty jest **`git diff main <gałąź> --stat`** — porównanie DRZEW, nie historii. `git log main..gałąź` po squashu kłamie ZAWSZE. ⭐ Osobno: commit wypchnięty na gałąź **już scaloną** nie trafia nigdzie — po merge sprawdź `git diff main HEAD --stat`, zanim uznasz robotę za zapisaną |
