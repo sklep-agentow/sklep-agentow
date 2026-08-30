@@ -148,11 +148,42 @@ echo 'CRON-PAD: opinia_hash_przywrocony=' . ( '' === $op_przed || $op_po === $op
 $pass4 = ( ! $wynik4 && 'mail_blad' === $po4->status && $po4->token_pobrania === $stary_token && 3 === (int) $po4->pobrania_uzyte && $po4->link_wygasa === $stary_termin && 'TRESC-DORECZONEGO-MAILA-K4' === $tresc4 && ( '' === $op_przed || $op_po === $op_przed ) );
 echo 'CRON-PAD: WYNIK=' . ( $pass4 ? 'PASS' : 'FAIL - pad poczty w cronie zabil dzialajacy stary link' ) . "\n";
 
+// ---- CZĘŚĆ 5 (CAS własności): proces B przejmuje wysyłkę stale-claimem — kompensacja A NIE nadpisuje stanu B ----
+// Filtr pre_wp_mail symuluje proces B: W TRAKCIE wysyłki A podmienia w bazie token,
+// mail_tresc i skrót opinii (jakby B odebrał claim po 5 min i sam rotował), po czym
+// zwraca false (mail A pada). Kompensacja A ma NIE wejść: CAS `AND token_pobrania=<skrót A>`
+// nie trafia (w bazie leży skrót B), więc `if ( $przywrocono > 0 )` (zakup.php) pomija
+// wszystkie trzy zapisy. Na kodzie sprzed a2f9dc2 (mail_tresc i skrót opinii przywracane
+// BEZ warunku) ten krok PADA na mail_tresc/opinii — kalibracja w opisie PR.
+$token_b_hash = hash( 'sha256', 'TOKEN-PROCESU-B-CZESC5' );
+$termin_b     = gmdate( 'Y-m-d H:i:s', time() + 72 * HOUR_IN_SECONDS );
+$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET status='mail_blad', mail_proby=1, token_pobrania=%s, link_wygasa=%s, pobrania_uzyte=3, mail_tresc='TRESC-A-SPRZED' WHERE id=%d", $stary_token, $stary_termin, $id ) );
+$wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->prefix}sklepag_opinie SET token_hash='HASH-OPINII-A-PRZED' WHERE zamowienie_id=%d AND status='zalazek'", $id ) );
+$op_jest5    = (string) $wpdb->get_var( $wpdb->prepare( "SELECT token_hash FROM {$wpdb->prefix}sklepag_opinie WHERE zamowienie_id=%d AND status='zalazek'", $id ) );
+$symulacja_b = static function ( $pre ) use ( $wpdb, $pz, $sid, $id, $token_b_hash, $termin_b ) {
+	// Proces B: rotacja + doręczenie — jego stan jest od teraz jedyny prawdziwy.
+	$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET token_pobrania=%s, link_wygasa=%s, pobrania_uzyte=0, mail_tresc='TRESC-B-DORECZONA' WHERE stripe_session_id=%s", $token_b_hash, $termin_b, $sid ) );
+	$wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->prefix}sklepag_opinie SET token_hash='HASH-OPINII-B' WHERE zamowienie_id=%d AND status='zalazek'", $id ) );
+	return false; // Mail A pada — wchodzi gałąź kompensacji A.
+};
+add_filter( 'pre_wp_mail', $symulacja_b, 99 );
+$wynik5 = sklepag_domknij_zakup( array( 'id' => $sid, 'payment_status' => 'paid' ) );
+remove_filter( 'pre_wp_mail', $symulacja_b, 99 );
+$po5     = $wpdb->get_row( $wpdb->prepare( "SELECT token_pobrania, mail_tresc, status FROM {$pz} WHERE id=%d", $id ) );
+$op_po5  = (string) $wpdb->get_var( $wpdb->prepare( "SELECT token_hash FROM {$wpdb->prefix}sklepag_opinie WHERE zamowienie_id=%d AND status='zalazek'", $id ) );
+echo 'CAS-B: domkniecie=' . ( $wynik5 ? 'true' : 'false' ) . " (OCZEKIWANE: false)\n";
+echo 'CAS-B: token_nalezy_do_B=' . ( $po5->token_pobrania === $token_b_hash ? 'TAK' : 'NIE' ) . " (OCZEKIWANE: TAK)\n";
+echo 'CAS-B: mail_tresc_B_zachowana=' . ( 'TRESC-B-DORECZONA' === $po5->mail_tresc ? 'TAK' : 'NIE' ) . " (OCZEKIWANE: TAK)\n";
+echo 'CAS-B: opinia_hash_B_zachowany=' . ( '' === $op_jest5 || 'HASH-OPINII-B' === $op_po5 ? 'TAK' : 'NIE' ) . " (OCZEKIWANE: TAK)\n";
+echo 'CAS-B: status_po=' . $po5->status . " (OCZEKIWANE: mail_blad)\n";
+$pass5 = ( ! $wynik5 && $po5->token_pobrania === $token_b_hash && 'TRESC-B-DORECZONA' === $po5->mail_tresc && ( '' === $op_jest5 || 'HASH-OPINII-B' === $op_po5 ) && 'mail_blad' === $po5->status );
+echo 'CAS-B: WYNIK=' . ( $pass5 ? 'PASS' : 'FAIL - kompensacja stale-claima nadpisala stan procesu, ktory przejal wysylke' ) . "\n";
+
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$ps} WHERE stripe_session_id=%s", $sid ) );
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$pz} WHERE stripe_session_id=%s", $sid ) );
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}sklepag_opinie WHERE zamowienie_id=%d", $id ) );
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}sklepag_zdarzenia WHERE zamowienie_id=%d", $id ) );
 
-$ok = ( $pass1 && $pass2 && $pass3 && $pass4 );
+$ok = ( $pass1 && $pass2 && $pass3 && $pass4 && $pass5 );
 echo 'RAZEM: WYNIK=' . ( $ok ? 'PASS' : 'FAIL' ) . "\n";
 exit( $ok ? 0 : 1 );
