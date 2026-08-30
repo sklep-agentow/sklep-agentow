@@ -151,10 +151,13 @@ Ręczny przycisk „dociągnij zaległe" jest na dashboardzie sklepu.
    zamówień (razem ze statystykami), a treść maila obejrzysz w szczegółach
    zamówienia (przycisk „Wyślij ponownie" gdyby mail nie dotarł).
 
-⚠️ **Wyłącz Adaptive Pricing w Stripe (krok, nie ciekawostka).** W panelu Stripe:
-**Settings → Payments → Checkout and Payment Links → Adaptive Pricing → wyłącz** —
-inaczej kupujący z zagranicy zobaczy cenę przeliczoną na swoją walutę (np. EUR),
-co w teście instalacji K10 zmyliło testera przy pierwszym zakupie.
+⚠️ **Wyłącz Adaptive Pricing w Stripe (krok, nie ciekawostka)** — inaczej kupujący
+z zagranicy zobaczy cenę przeliczoną na swoją walutę (np. EUR), co w teście
+instalacji zmyliło testera przy pierwszym zakupie. Gdzie: ścieżka opisana trzy
+akapity niżej (Dashboard Stripe → Settings → Payments → Adaptive Pricing;
+układ menu Stripe bywa przestawiany — w razie czego wpisz "Adaptive Pricing"
+w wyszukiwarkę ustawień Dashboardu). W trybie testowym i produkcyjnym osobno.
+
 ⚠️ **Ekran Stripe potrafi zaproponować INNĄ WALUTĘ niż Twoja cena.** Sklep wysyła
 do Stripe walutę produktu (np. 199 PLN) i tyle Ci wpływa — ale Stripe ma ustawienie
 **Adaptive Pricing**, które kupującemu z zagranicy pokazuje cenę przeliczoną na jego

@@ -1004,7 +1004,7 @@ function sklepag_domknij_zakup( $sesja ) {
 		// nie może nadpisać tokenu procesu, który przejął wysyłkę — przywracamy tylko wtedy,
 		// gdy w bazie nadal leży skrót Z NASZEJ rotacji. `link_wygasa` przy niepustym tokenie
 		// jest zawsze ustawiony (nadawane razem), więc %s nie dostanie NULL-a.
-		$wpdb->query(
+		$przywrocono = (int) $wpdb->query(
 			$wpdb->prepare(
 				"UPDATE {$pz} SET token_pobrania=%s, link_wygasa=%s, pobrania_uzyte=%d WHERE stripe_session_id=%s AND status='mail_w_toku' AND token_pobrania=%s",
 				$przed_rotacja->token_pobrania,
@@ -1014,11 +1014,16 @@ function sklepag_domknij_zakup( $sesja ) {
 				hash( 'sha256', $token )
 			)
 		);
-		// Treść maila też wraca (jak w bliźniaku admin-zamowienie.php): panel pokazuje
-		// „treść wysłanego maila” — po padzie pokazywałby link, którego nikt nie dostał.
-		$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET mail_tresc=%s WHERE id=%d", (string) $przed_rotacja->mail_tresc, (int) $zam->id ) );
-		if ( '' !== $opinia_hash_przed ) {
-			$wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->prefix}sklepag_opinie SET token_hash=%s WHERE zamowienie_id=%d AND status='zalazek'", $opinia_hash_przed, (int) $zam->id ) );
+		// Pozostale dwa zapisy TYLKO gdy CAS przeszedl (>=1 wiersz): jesli w bazie nie ma juz
+		// NASZEGO skrotu, wysylke przejal inny proces (stale-claim) i jego mail_tresc oraz
+		// skrot opinii sa aktualne - nie wolno ich nadpisac stanem sprzed naszej rotacji.
+		if ( $przywrocono > 0 ) {
+			// Tresc maila tez wraca (jak w blizniaku admin-zamowienie.php): panel pokazuje
+			// tresc wyslanego maila - po padzie pokazywalby link, ktorego nikt nie dostal.
+			$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET mail_tresc=%s WHERE id=%d", (string) $przed_rotacja->mail_tresc, (int) $zam->id ) );
+			if ( '' !== $opinia_hash_przed ) {
+				$wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->prefix}sklepag_opinie SET token_hash=%s WHERE zamowienie_id=%d AND status='zalazek'", $opinia_hash_przed, (int) $zam->id ) );
+			}
 		}
 	}
 	$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET status='mail_blad', mail_proby=mail_proby+1, zmieniono=%s WHERE stripe_session_id=%s AND status='mail_w_toku'", $teraz, $sid ) );
