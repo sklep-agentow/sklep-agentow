@@ -4,7 +4,7 @@ Tags: sklep, stripe, pliki cyfrowe, sprzedaz wtyczek, pobieranie
 Requires at least: 6.7
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.9.25
+Stable tag: 0.9.26
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -148,6 +148,10 @@ Nie. Zakup jest bez konta: adres e-mail podany na stronie płatności Stripe,
 link do pobrania w mailu, jednorazowy link do opinii.
 
 == Changelog ==
+
+= 0.9.26 =
+* Naprawione: strony sklepu (lista i produkt) dostają znacznik canonical także na motywach, które wyłączają canonical WordPressa — dotąd Google widział stronę produktu pod dwoma adresami jako dwie strony.
+* Naprawione: gdy przy instalacji nie powstała strona „Sklep” lub „Dziękujemy”, wtyczka doklejała swoje style, skrypty i opisy do wszystkich stron witryny; teraz bez tych stron nie robi nic poza własnym panelem.
 
 = 0.9.25 =
 * Dodane: formularz płatności na stronie produktu, w kolorach strony (Stripe Checkout Sessions w trybie „elements”: e-mail i karta w ramce Stripe, przycisk „Zapłać”, powrót na „Dziękujemy”); wymaga wpisania klucza publikowalnego w Ustawieniach — bez niego działa dotychczasowa strona płatności Stripe.
