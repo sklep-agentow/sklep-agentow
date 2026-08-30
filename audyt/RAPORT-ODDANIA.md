@@ -66,6 +66,11 @@ Dwa FAIL-e są **decyzją, nie wadą** — obie zapisane w `audyt/CO-WISI.md` i 
   powtarzany — rdzeń tak, reszta mierzy ten sam kod co przelot audytora (decyzja z `DO-ODDANIA.md` §4).
   Przelot wersji 0.9.23 na żywym stosie po naprawie limitu pobrań: trzy strażniki resendu + reconciliation
   (EXIT=0 ×4 na stosie warsztatowym), nie pełny przelot człowieka.
+- **Po wydaniu (K9, 30.08):** paczka POBRANA z Release zainstalowana „jak klient” przez świeżego agenta na czystym WP 6.9.4
+  z motywem kolegi z jego repo (stan 28.08): instrukcja przeszła w całości — link „Sklep” w 3 miejscach nawigacji, zakup przez
+  prawdziwy Stripe Checkout, pobranie z SHA zgodnym, „Wyślij ponownie”; 0 notice’ów PHP na 8 adresach frontu (logger sprawdzony
+  podłożonym błędem). Plugin Check na zipie z Release: 3 błędy (było 5). `/security-review` delty po 28.08: zero. `/code-review ultra`
+  na `#213`: jeden „nit”. Szczegóły i trzy długi: `audyt/K9-INSTALACJA-Z-RELEASE-0.9.23.md`.
 
 ## 4. Co jest świadomie niedomknięte (z `audyt/CO-WISI.md`, stan 2026-08-30)
 

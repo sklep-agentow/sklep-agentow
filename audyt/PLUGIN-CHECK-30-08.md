@@ -19,6 +19,7 @@ na żądanie, z wynikiem w repo.
 
 ```
 sklep-agentow (0.9.22):     ERROR=5  WARNING=78
+sklep-agentow (0.9.23):     ERROR=3  WARNING=80   ← powtórka 30.08 ~13:30 na zipie POBRANYM z Release v0.9.23; ubyły dwa `esc_html__` bez domeny (naprawa #213); zostały `move_uploaded_file` + 2× readme nie po angielsku (reguły katalogu WP.org, poza zakresem)
 chatbot-live (1.5.13):      ERROR=2  WARNING=164
 segregator-maila (1.3.6):   ERROR=2  WARNING=165
 ```
