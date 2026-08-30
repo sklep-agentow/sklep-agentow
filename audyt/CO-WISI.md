@@ -685,6 +685,12 @@ Raport i triage: `audyt/PLUGIN-CHECK-30-08.md` (surowe wyniki `audyt/plugin-chec
   nie zna, a `phpcs.xml.dist` zna (D25). Świadomie NIE wyciszane — Plugin Check to raport, nie bramka.
 - Plugin Check w CI: **świadomie nie** — wykonawca własny na 3,8 GB RAM, akcja stawia drugi WP.
 
+## 🟡 INSTRUKCJA INSTALACJI BEZ ZRZUTÓW (30.08, recenzja PR `#217`)
+
+`dokumentacja/INSTRUKCJA-INSTALACJI.md` jest tekstowa (0 obrazów; K8 planu żądał zrzutów maszynowych). Kroki nazywają ekrany
+po nazwie, instrukcja OBSŁUGI sklepu ma 5 zrzutów. **Dług:** przebieg `testy/zrzuty-instrukcje.js` na czystym stosie → 4–6
+zrzutów (wgranie wtyczki, aktywacja, Ustawienia sklepu, webhook) — po oddaniu, przy 0.9.24.
+
 ## 🟡 TRZY LICZBY BRAMKI KOŃCOWEJ ŻYJĄ W TRZECH PLIKACH, PRZEPISANE RĘCZNIE (30.08, recenzja PR rubryki, D8)
 
 `AUDYT-RAPORT.md` (korzeń, czyta go hook `oddanie-guard` spoza repo), `rubryka-GOTOWE.md` i `audyt/RAPORT-ODDANIA.md` §2
