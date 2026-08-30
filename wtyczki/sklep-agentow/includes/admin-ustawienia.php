@@ -53,6 +53,18 @@ function sklepag_ustawienia_rejestracja() {
 		)
 	);
 
+	// Klucz PUBLIKOWALNY (pk_…) — jawny z założenia (trafia do przeglądarki kupującego); bez niego
+	// płatność wraca na stronę hostowaną Stripe (zapas), z nim formularz karty rysuje się na naszej stronie.
+	register_setting(
+		'sklepag_ustawienia',
+		'sklepag_stripe_klucz_publikowalny',
+		array(
+			'type'              => 'string',
+			'sanitize_callback' => 'sklepag_sanityzuj_klucz_publikowalny',
+			'default'           => '',
+		)
+	);
+
 	// --- Maile. ---
 	register_setting(
 		'sklepag_ustawienia',
@@ -140,6 +152,7 @@ function sklepag_ustawienia_rejestracja() {
 	add_settings_section( 'sklepag_sekcja_stripe', 'Stripe (tryb testowy)', 'sklepag_sekcja_stripe_opis', 'sklepag-ustawienia' );
 	add_settings_field( 'sklepag_stripe_klucz_sekretny', 'Klucz sekretny (sk_test_…)', 'sklepag_pole_klucz_stripe', 'sklepag-ustawienia', 'sklepag_sekcja_stripe', array( 'label_for' => 'sklepag_stripe_klucz_sekretny' ) );
 	add_settings_field( 'sklepag_stripe_webhook_sekret', 'Sekret webhooka (whsec_…)', 'sklepag_pole_sekret_webhooka', 'sklepag-ustawienia', 'sklepag_sekcja_stripe', array( 'label_for' => 'sklepag_stripe_webhook_sekret' ) );
+	add_settings_field( 'sklepag_stripe_klucz_publikowalny', 'Klucz publikowalny (pk_test_…)', 'sklepag_pole_klucz_publikowalny', 'sklepag-ustawienia', 'sklepag_sekcja_stripe', array( 'label_for' => 'sklepag_stripe_klucz_publikowalny' ) );
 
 	add_settings_section( 'sklepag_sekcja_maile', 'Maile', 'sklepag_sekcja_maile_opis', 'sklepag-ustawienia' );
 	add_settings_field( 'sklepag_nadawca_nazwa', 'Nazwa nadawcy', 'sklepag_pole_nadawca_nazwa', 'sklepag-ustawienia', 'sklepag_sekcja_maile', array( 'label_for' => 'sklepag_nadawca_nazwa' ) );
@@ -265,16 +278,8 @@ function sklepag_sanityzuj_nip( $wartosc ) {
 	if ( '' === $cyfry ) {
 		return '';
 	}
-	$wagi  = array( 6, 5, 7, 2, 3, 4, 5, 6, 7 );
-	$suma  = 0;
-	$dobry = (bool) preg_match( '/^[0-9]{10}$/', $cyfry );
-	if ( $dobry ) {
-		for ( $i = 0; $i < 9; $i++ ) {
-			$suma += $wagi[ $i ] * (int) $cyfry[ $i ];
-		}
-		$dobry = ( $suma % 11 ) === (int) $cyfry[9];
-	}
-	if ( ! $dobry ) {
+	// Ta sama suma kontrolna co w formularzu zakupu (dane do faktury) — jedna definicja w zakup.php.
+	if ( ! sklepag_nip_poprawny( $cyfry ) ) {
 		add_settings_error( 'sklepag_firma_nip', 'sklepag_nip', 'NIP „' . esc_html( $wartosc ) . '” nie jest poprawny (10 cyfr z sumą kontrolną) — pole pozostawione bez zmian.', 'error' );
 		return (string) get_option( 'sklepag_firma_nip', '' );
 	}
@@ -324,6 +329,27 @@ function sklepag_pole_klucz_stripe() {
 
 function sklepag_pole_sekret_webhooka() {
 	sklepag_pole_sekretu( 'sklepag_stripe_webhook_sekret', 'sklepag_usun_sekret_webhooka' );
+}
+
+/**
+ * Klucz publikowalny: pusty dozwolony (płatność osadzona wyłączona); inaczej musi zaczynać się od pk_.
+ * Nie jest sekretem — wraca do formularza jak każde zwykłe pole.
+ */
+function sklepag_sanityzuj_klucz_publikowalny( $wartosc ) {
+	$wartosc = trim( sanitize_text_field( (string) $wartosc ) );
+	if ( '' === $wartosc ) {
+		return '';
+	}
+	if ( ! str_starts_with( $wartosc, 'pk_' ) ) {
+		add_settings_error( 'sklepag_stripe_klucz_publikowalny', 'sklepag_pk', 'Klucz publikowalny musi zaczynać się od pk_ (to NIE jest klucz sekretny sk_) — pole pozostawione bez zmian.', 'error' );
+		return (string) get_option( 'sklepag_stripe_klucz_publikowalny', '' );
+	}
+	return $wartosc;
+}
+
+function sklepag_pole_klucz_publikowalny() {
+	echo '<input type="text" id="sklepag_stripe_klucz_publikowalny" name="sklepag_stripe_klucz_publikowalny" value="' . esc_attr( (string) get_option( 'sklepag_stripe_klucz_publikowalny', '' ) ) . '" class="regular-text" placeholder="pk_test_…">';
+	echo '<p class="description">Z tego samego miejsca w Stripe co klucz sekretny (Developers → API keys → „Publishable key”). Jawny — trafia do przeglądarki kupującego. <strong>Z kluczem</strong> formularz karty pokazuje się na stronie produktu, w kolorach strony. <strong>Bez klucza</strong> kupujący przechodzi na stronę płatności Stripe (jak do 0.9.24).</p>';
 }
 
 function sklepag_pole_nadawca_nazwa() {

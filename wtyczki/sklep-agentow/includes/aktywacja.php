@@ -71,6 +71,7 @@ function sklepag_tabele_sql() {
 			zwrocono_grosze int(11) unsigned NOT NULL DEFAULT 0,
 			zwrot_czas datetime DEFAULT NULL,
 			status_przed_sporem varchar(20) NOT NULL DEFAULT '',
+			dane_faktury varchar(300) NOT NULL DEFAULT '',
 			utworzono datetime NOT NULL,
 			zmieniono datetime NOT NULL,
 			PRIMARY KEY  (id),
@@ -184,7 +185,7 @@ function sklepag_utworz_strony() {
 		'sklepag_strona_sklep'      => array( 'Sklep', '[sklepag_sklep]', 'publish' ),
 		'sklepag_strona_dziekujemy' => array( 'Dziękujemy za zakup', '[sklepag_dziekujemy]', 'publish' ),
 		'sklepag_strona_regulamin'  => array( 'Regulamin sklepu (SZABLON)', "SZABLON — wypełnij danymi sprzedawcy przed publikacją.\n\nSprzedawca: [NAZWA, ADRES, KONTAKT]\nProdukty: treści cyfrowe (wtyczki WordPressa) dostarczane natychmiast po opłaceniu.\nZgoda na natychmiastowe dostarczenie: kupujący wyraża ją przy zakupie i przyjmuje utratę prawa odstąpienia (art. 38 ust. o prawach konsumenta).\nReklamacje: [MAIL WŁAŚCICIELA].", 'draft' ),
-		'sklepag_strona_polityka'   => array( 'Polityka prywatności sklepu (SZABLON)', "SZABLON — wypełnij danymi sprzedawcy przed publikacją.\n\nAdministrator danych: [NAZWA, KONTAKT]\nZakres: adres e-mail kupującego, dane transakcji, dziennik zdarzeń (90 dni, w tym adres IP przy każdym pobraniu pliku); przy dobrowolnej opinii — imię i treść opinii, publikowane na stronie produktu wyłącznie za wyrażoną w formularzu zgodą (usunięcie/anonimizację można wykonać na żądanie).\nPodmioty przetwarzające: operator płatności Stripe; mechanizm poczty serwera.\nBoty w trybie AI wysyłają treść zapytań do dostawcy API — [UZUPEŁNIJ po włączeniu].", 'draft' ),
+		'sklepag_strona_polityka'   => array( 'Polityka prywatności sklepu (SZABLON)', "SZABLON — wypełnij danymi sprzedawcy przed publikacją.\n\nAdministrator danych: [NAZWA, KONTAKT]\nZakres: adres e-mail kupującego, dane transakcji, dziennik zdarzeń (90 dni, w tym adres IP przy każdym pobraniu pliku); dobrowolnie podane dane do faktury (nazwa firmy, NIP, adres — cel: wystawienie faktury, podstawa: obowiązek prawny z ustawy o VAT); przy dobrowolnej opinii — imię i treść opinii, publikowane na stronie produktu wyłącznie za wyrażoną w formularzu zgodą (usunięcie/anonimizację można wykonać na żądanie).\nPodmioty przetwarzające: operator płatności Stripe; mechanizm poczty serwera.\nBoty w trybie AI wysyłają treść zapytań do dostawcy API — [UZUPEŁNIJ po włączeniu].", 'draft' ),
 	);
 
 	foreach ( $strony as $opcja => $dane ) {

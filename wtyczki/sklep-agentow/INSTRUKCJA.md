@@ -128,7 +128,16 @@ Po opłaceniu kupujący dostaje **jeden** mail (sklep pilnuje, żeby nie wysła�
 - jednorazowy link do wystawienia opinii (ważny 30 dni),
 - numer zamówienia (ten sam, który widzisz w panelu), datę i kwotę,
 - dopisek o fakturze („odpisz na tego maila i podaj dane firmy”),
-- stopkę z Twoimi danymi sprzedawcy z Ustawień (nazwa, adres, NIP, mail do reklamacji).
+- stopkę z Twoimi danymi sprzedawcy z Ustawień (nazwa, adres, NIP, mail do reklamacji),
+- **dane do faktury**, jeśli kupujący podał je przy zakupie (nazwa firmy, NIP, adres) — z informacją, że fakturę
+  wystawisz i prześlesz osobno; gdy ich nie podał — zdanie „chcesz fakturę? odpisz w ciągu 3 miesięcy”.
+
+**Faktura to Twoja robota, nie sklepu.** Sklep faktur nie wystawia — zbiera dane i pokazuje je w mailu
+i w szczegółach zamówienia. Firmie fakturę musisz wystawić (ustawa o VAT: do 15. dnia następnego miesiąca),
+osobie prywatnej — na jej żądanie zgłoszone w 3 miesiące. ⛔ Podanie NIP-u przez kupującego **nie odbiera mu
+praw kupującego** (zgoda, gwarancja, reklamacje działają tak samo) — nie traktuj „jest NIP” jako „to firma,
+bez zwrotów”: osoba prowadząca jednoosobową działalność, która kupuje poza swoją specjalnością, ma ochronę
+konsumenta (art. 38a ustawy o prawach konsumenta).
 
 Mail jest w wersji graficznej — nazwa sklepu w nagłówku, okładka produktu, przycisk „Pobierz”,
 kolory strony — a w tej samej wiadomości jedzie wersja tekstowa dla programów pocztowych bez
@@ -177,7 +186,7 @@ jeśli kupujący wystawił opinię — jego **imię, tytuł i treść opinii** (
 na stronie produktu, za zgodą z formularza). Dane karty obsługuje wyłącznie Stripe — na Twoim serwerze ich nie ma.
 
 **Anonimizacja na żądanie kupującego:** Szczegóły zamówienia → **Dane osobowe (RODO)** →
-przycisk anonimizacji. Sklep usuwa adres e-mail z zamówienia i z dziennika zdarzeń; przy opinii
+przycisk anonimizacji. Sklep usuwa adres e-mail (i dane do faktury, jeśli były) z zamówienia i z dziennika zdarzeń; przy opinii
 tego zamówienia kasuje **imię** i zdejmuje opinię ze strony produktu (trafia do Odrzuconych, bez
 możliwości przywrócenia — treść i ocena zostają w bazie, już bez autora); unieważnia link do pobrania (zanonimizowany kupujący nie ma już dokąd dostać
 świeżego linku) i zapisuje datę anonimizacji. **Kwoty i czasy zostają** — statystyki sprzedaży
@@ -227,6 +236,10 @@ same (sprzątanie co 10 minut). Zamówienia, kwoty i statusy zostają.
   Adres musi być dopuszczony przez Twój hosting (SPF/DKIM), inaczej maile lądują w spamie.
 - **Mail kontaktowy właściciela** — pokazywany kupującemu, gdy link wygasł albo limit się wyczerpał;
   w mailu po zakupie stoi jako adres do reklamacji i faktur.
+- **Klucz publikowalny (pk_test_…)** — z tego samego miejsca w Stripe co klucz sekretny. **Z kluczem** formularz
+  karty pokazuje się na stronie produktu, w kolorach strony (kupujący nie opuszcza Twojej strony; dane karty
+  i tak idą prosto do Stripe, w ramce Stripe). **Bez klucza** kupujący przechodzi na stronę płatności Stripe —
+  wszystko działa, tylko wygląda jak Stripe, nie jak Twoja strona. Klucz jest jawny (trafia do przeglądarki).
 - **Dane sprzedawcy** — nazwa firmy, adres, NIP: trafiają do stopki każdego maila po zakupie.
   Potwierdzenie zakupu na trwałym nośniku ma zawierać dane przedsiębiorcy (ustawa o prawach
   konsumenta, art. 21), więc dopóki są puste, Pulpit pokazuje ostrzeżenie. NIP sklep sprawdza
@@ -247,6 +260,16 @@ listę kroków i tego, co **nie** znika samo, znajdziesz w `INSTRUKCJA-INSTALACJ
 ---
 
 ## 9. Najczęstsze pytania
+
+**Gdzie kupujący wpisuje kartę?** Gdy w Ustawieniach jest klucz publikowalny — na stronie produktu, w panelu
+płatności pod przyciskiem „Kup teraz” (pola karty to ramka Stripe: numer karty nigdy nie trafia na Twój serwer).
+Gdy klucza nie ma albo kupujący ma wyłączone skrypty — na stronie płatności Stripe, jak dawniej. Obie drogi
+kończą się tą samą stroną „Dziękujemy” i tym samym mailem.
+
+**Kupujący podał NIP — co robię?** Dane są w mailu i w szczegółach zamówienia (wiersz „Dane do faktury”).
+Wystawiasz fakturę w swoim programie księgowym i wysyłasz na jego e-mail; sklep nic tu nie automatyzuje.
+Anonimizacja (rozdział 6) czyści te dane razem z e-mailem — fakturę masz już w księgowości, sklep jej kopii
+nie potrzebuje.
 
 **Zakup „wisi” na stronie Dziękujemy.** Powiadomienie od Stripe nie dociera — najczęściej
 przez zły sekret webhooka (sekret z panelu Stripe i z narzędzia Stripe CLI to dwa różne

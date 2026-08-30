@@ -3,7 +3,7 @@
  * Plugin Name: Sklep Agentów
  * Plugin URI: https://automaticai.pl/sklep/
  * Description: Sprzedawaj wtyczki-boty AI bezpośrednio ze swojej strony: płatność kartą, automatyczny mail z linkiem do pobrania, panel zamówień ze statystykami i dziennikiem logowań. Zamówienia, produkty i pliki zostają w Twojej bazie i na Twoim serwerze — bez abonamentu. Płatność obsługuje Stripe.
- * Version: 0.9.24
+ * Version: 0.9.25
  * Requires at least: 6.7
  * Requires PHP: 8.1
  * Author: Automatic AI
@@ -16,8 +16,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SKLEPAG_WERSJA', '0.9.24' );
-define( 'SKLEPAG_WERSJA_SCHEMATU', 7 ); // v7: status_przed_sporem (punkt powrotu po zdarzeniu finansowym — sporze LUB zwrocie — bez zmyślania stanu wysyłki); v6: kolumny zwrotu (payment_intent_id, zwrocono_grosze, zwrot_czas); v5: tabela opinii; v4: kolumna zamowienia.usunieto_dnia (anonimizacja RODO); v3: indeks para_logowania.
+define( 'SKLEPAG_WERSJA', '0.9.25' );
+define( 'SKLEPAG_WERSJA_SCHEMATU', 8 ); // v8: zamowienia.dane_faktury (firma + NIP podane przez kupującego przy zakupie, 0.9.25); v7: status_przed_sporem (punkt powrotu po zdarzeniu finansowym — sporze LUB zwrocie — bez zmyślania stanu wysyłki); v6: kolumny zwrotu (payment_intent_id, zwrocono_grosze, zwrot_czas); v5: tabela opinii; v4: kolumna zamowienia.usunieto_dnia (anonimizacja RODO); v3: indeks para_logowania.
 
 /* Komunikaty blokady pol wymaganych — po POLSKU.
 	Bez nich rysuje je przegladarka wlasnym tekstem (po angielsku, zaleznie od jej
@@ -153,6 +153,30 @@ function sklepag_assety_frontu() {
 		wp_add_inline_script(
 			'sklepag-ruch',
 			"(function(){try{if(!('IntersectionObserver' in window)||(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)){return;}var h=document.documentElement;h.classList.add('sklepag-js');setTimeout(function(){if(!h.classList.contains('sklepag-ruch-ok')){h.classList.add('sklepag-odslon');}},2500);}catch(e){}})();",
+			'before'
+		);
+	}
+	// 0.9.25: płatność osadzona — Stripe.js (wersja „dahlia”, wymagana przez Checkout Sessions + Elements)
+	// i nasz `platnosc.js` TYLKO na stronie sklepu/produktu i TYLKO gdy jest klucz publikowalny.
+	// Bez klucza formularz zakupu działa jak dotąd (POST → strona hostowana Stripe).
+	if ( is_page( $strona_sklep ) && function_exists( 'sklepag_stripe_klucz_publikowalny' ) && '' !== sklepag_stripe_klucz_publikowalny() ) {
+		wp_enqueue_script( 'stripe-js', 'https://js.stripe.com/dahlia/stripe.js', array(), null, true ); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion -- Stripe wymaga adresu bez wersji (aktualizacje po ich stronie, PCI).
+		wp_enqueue_script( 'sklepag-platnosc', plugins_url( 'assets/platnosc.js', SKLEPAG_PLIK ), array( 'stripe-js' ), sklepag_wersja_assetu( 'assets/platnosc.js' ), true );
+		wp_add_inline_script(
+			'sklepag-platnosc',
+			'window.sklepagPlatnosc = ' . wp_json_encode(
+				array(
+					'pk'       => sklepag_stripe_klucz_publikowalny(),
+					'endpoint' => esc_url_raw( admin_url( 'admin-post.php' ) ),
+					'kolory'   => array(
+						'tlo'     => '#101116',
+						'tusz'    => '#08090b',
+						'papier'  => '#f5f5f5',
+						'pyl'     => '#8f929c',
+						'limonka' => '#bfff38',
+					),
+				)
+			) . ';',
 			'before'
 		);
 	}

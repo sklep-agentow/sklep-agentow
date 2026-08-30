@@ -590,9 +590,30 @@ function sklepag_formularz_zakupu( $p ) {
 	$html    .= '<input type="hidden" name="produkt_id" value="' . (int) $p->id . '">';
 	$html    .= wp_nonce_field( 'sklepag_kup', '_wpnonce', true, false );
 	$html    .= '<label class="sklepag-zgoda" for="' . esc_attr( $id_zgody ) . '"><input type="checkbox" id="' . esc_attr( $id_zgody ) . '" name="zgoda" value="1" required data-sklepag-blad="' . esc_attr( SKLEPAG_BLAD_ZGODA_ZAKUP ) . '"> <span>' . esc_html( SKLEPAG_ZGODA_TRESC ) . '</span></label>';
-	$html    .= '<button type="submit" class="sklepag-kup">Kup teraz (płatność testowa)</button>';
-	$html    .= '<p class="sklepag-mono-etykieta sklepag-zakup-notka">STRIPE · TRYB TESTOWY · KARTA 4242 4242 4242 4242</p>';
-	$html    .= '</form>';
+	// Dane do faktury — nieobowiązkowe, nasze pola (0.9.25). Zwinięte pod <details>, żeby osoba prywatna
+	// nie widziała pól firmowych; NIP sprawdzany po stronie serwera (suma kontrolna), tu tylko podpowiedź.
+	$html .= '<details class="sklepag-faktura"><summary class="sklepag-mono-etykieta">[ KUPUJESZ NA FIRMĘ? DANE DO FAKTURY ]</summary>'
+		. '<div class="sklepag-faktura-pola">'
+		. '<label><span>Nazwa firmy</span><input type="text" name="faktura_nazwa" maxlength="200" autocomplete="organization" placeholder="np. Firma Sp. z o.o."></label>'
+		. '<label><span>NIP</span><input type="text" name="faktura_nip" inputmode="numeric" maxlength="13" autocomplete="off" placeholder="10 cyfr"></label>'
+		. '<label class="sklepag-faktura-adres"><span>Adres firmy</span><textarea name="faktura_adres" rows="2" maxlength="200" autocomplete="street-address" placeholder="ul. Przykładowa 1, 00-001 Warszawa"></textarea></label>'
+		. '<p class="sklepag-faktura-notka">Pola nieobowiązkowe — wypełnij wszystkie trzy, jeśli chcesz fakturę na firmę. Dane trafią do potwierdzenia zakupu i posłużą wyłącznie do wystawienia faktury; fakturę prześlemy osobno mailem. Podanie NIP-u nie zmienia Twoich praw kupującego.</p>'
+		. '</div></details>';
+	$html .= '<button type="submit" class="sklepag-kup">Kup teraz (płatność testowa)</button>';
+	$html .= '<p class="sklepag-mono-etykieta sklepag-zakup-notka">STRIPE · TRYB TESTOWY · KARTA 4242 4242 4242 4242</p>';
+	$html .= '</form>';
+	// Panel płatności osadzonej (0.9.25): `platnosc.js` odsłania go po utworzeniu sesji i montuje w nim
+	// elementy Stripe (e-mail, karta) — formularz karty jest w ramce Stripe (PCI), my dajemy tylko ramy i kolory.
+	// Bez JS/klucza publikowalnego panel zostaje ukryty, a formularz wyżej idzie na stronę hostowaną.
+	$html .= '<section class="sklepag-platnosc" id="sklepag-platnosc" hidden aria-live="polite">'
+		. '<p class="sklepag-mono-etykieta">[ PŁATNOŚĆ · ' . esc_html( $p->nazwa ) . ' · ' . esc_html( number_format( $p->cena_grosze / 100, 2, ',', ' ' ) . ' ' . $p->waluta ) . ' ]</p>'
+		. '<div id="sklepag-platnosc-kontakt"></div>'
+		. '<div id="sklepag-platnosc-karta"></div>'
+		. '<p class="sklepag-platnosc-blad" id="sklepag-platnosc-blad" role="alert" hidden></p>'
+		. '<button type="button" class="sklepag-kup" id="sklepag-platnosc-zaplac" disabled>Zapłać (płatność testowa)</button>'
+		. '<button type="button" class="sklepag-platnosc-wroc" id="sklepag-platnosc-wroc">Wróć</button>'
+		. '<p class="sklepag-platnosc-notka">Dane karty trafiają bezpośrednio do Stripe (ramka Stripe na tej stronie). Po zapłacie wrócisz na stronę potwierdzenia, a link do pobrania przyjdzie mailem.</p>'
+		. '</section>';
 	return $html;
 }
 

@@ -791,3 +791,19 @@ z tą samą listą wzorców co skaner — po oddaniu, jeśli zrzutów przybędzi
   z `$poprzedni` (`get_option(…, '')`), więc gdy opcji nie było, zostaje PUSTA zamiast skasowana (klasa 8).
   Naprawa: `get_option(…, false)` + `delete_option` jak przy trzech pozostałych.
 
+## 🟡 0.9.25 — PŁATNOŚĆ OSADZONA I DANE DO FAKTURY: długi (30.08 wieczór)
+
+- **Font w ramce Stripe = systemowy** (Geist tylko jeśli klient ma go w systemie). Appearance API bierze własny font
+  wyłącznie z publicznego URL-a CSS (`fonts.cssSrc`); motyw kolegi trzyma Geist lokalnie jako woff2 bez pliku CSS
+  z `@font-face` pod publicznym adresem. Naprawa: wystawić `assets/fonty.css` z `@font-face` i podać `cssSrc` (+ CSP `connect-src`).
+- **E2E płatności osadzonej** (`testy/e2e/przelot-osadzony.js`: ramki Payment Element na NASZEJ stronie) — do napisania
+  i uruchomienia po otrzymaniu klucza publikowalnego; do tego czasu dowód = próby serwera (JSON `client_secret`,
+  `ui_mode=elements`, metadata) + E2E ścieżki zapasowej z danymi faktury.
+- **Ewidencja pod zwolnienie z kasy fiskalnej** (zwiad prawny 30.08, rozporządzenie o zwolnieniach z kas, poz. 37):
+  płatność online przez operatora liczy się jako „na rachunek”, o ile z ewidencji jednoznacznie wynika, jakiej
+  czynności dotyczy — panel ma numer zamówienia, kwotę, sesję Stripe. Do „Test a produkcja” w instrukcji: zdanie
+  dla właściciela, żeby to potwierdził ze swoją księgową (sklep nie jest kasą i nie zastępuje ewidencji).
+- **Retencja danych do faktury**: obowiązek 5-letni dotyczy FAKTURY u sprzedawcy (jego księgowość), nie kopii w sklepie —
+  anonimizacja w sklepie czyści `dane_faktury` razem z e-mailem. Zapisać w INSTRUKCJA §6 przy następnej korekcie
+  (dziś: §9 FAQ).
+

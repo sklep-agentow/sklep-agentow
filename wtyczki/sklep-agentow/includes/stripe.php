@@ -67,7 +67,18 @@ function sklepag_stripe_request( $sciezka, $dane = null, $klucz_idempotencji = '
  * Checkout Session dla produktu. BEZ payment_method_types (dynamiczne metody —
  * best practice Stripe; BLIK/karty rządzone Dashboardem). Cena WYŁĄCZNIE z bazy.
  */
-function sklepag_stripe_utworz_sesje( $produkt, $zgoda_czas, $klucz_idempotencji ) {
+/**
+ * @param object $produkt           Produkt z bazy.
+ * @param string $zgoda_czas        Chwila zgody (GMT).
+ * @param string $klucz_idempotencji Klucz idempotencji Stripe.
+ * @param bool   $osadzona          true = sesja `ui_mode=elements` (formularz płatności NA NASZEJ stronie,
+ *                                  0.9.25): zamiast `success_url`/`cancel_url` — `return_url` (Stripe ich
+ *                                  w tym trybie nie przyjmuje), Stripe zwraca `client_secret` zamiast `url`.
+ *                                  false = dotychczasowa strona hostowana (zapas bez JS / bez klucza publikowalnego).
+ * @param array  $faktura           Dane do faktury podane przez kupującego (nazwa, nip) — jadą w metadanych
+ *                                  sesji, żeby webhook i reconciliation dostały je tą samą drogą co zgodę.
+ */
+function sklepag_stripe_utworz_sesje( $produkt, $zgoda_czas, $klucz_idempotencji, $osadzona = false, $faktura = array() ) {
 	$dziekujemy = get_permalink( (int) get_option( 'sklepag_strona_dziekujemy' ) );
 	$sklep      = get_permalink( (int) get_option( 'sklepag_strona_sklep' ) );
 
@@ -78,11 +89,25 @@ function sklepag_stripe_utworz_sesje( $produkt, $zgoda_czas, $klucz_idempotencji
 		'line_items[0][price_data][product_data][name]' => $produkt->nazwa,
 		'line_items[0][price_data][product_data][description]' => wp_trim_words( $produkt->opis_krotki, 20 ),
 		'line_items[0][quantity]'                       => 1,
-		'success_url'                                   => add_query_arg( 'sesja', '{CHECKOUT_SESSION_ID}', $dziekujemy ),
-		'cancel_url'                                    => $sklep,
 		'metadata[produkt_id]'                          => (int) $produkt->id,
 		'metadata[zgoda_czas]'                          => $zgoda_czas,
 	);
+	if ( $osadzona ) {
+		$dane['ui_mode']    = 'elements';
+		$dane['return_url'] = add_query_arg( 'sesja', '{CHECKOUT_SESSION_ID}', $dziekujemy );
+	} else {
+		$dane['success_url'] = add_query_arg( 'sesja', '{CHECKOUT_SESSION_ID}', $dziekujemy );
+		$dane['cancel_url']  = $sklep;
+	}
+	if ( ! empty( $faktura['nazwa'] ) ) {
+		$dane['metadata[faktura_nazwa]'] = mb_substr( (string) $faktura['nazwa'], 0, 200 );
+	}
+	if ( ! empty( $faktura['nip'] ) ) {
+		$dane['metadata[faktura_nip]'] = (string) $faktura['nip'];
+	}
+	if ( ! empty( $faktura['adres'] ) ) {
+		$dane['metadata[faktura_adres]'] = mb_substr( (string) $faktura['adres'], 0, 200 );
+	}
 
 	return sklepag_stripe_request( '/v1/checkout/sessions', $dane, $klucz_idempotencji );
 }

@@ -130,7 +130,13 @@ $html       = sklepag_zbuduj_mail_html( $produkt, $zam_id, $link, $link_op );
 sprawdz( 'C1 tekst: numer zamówienia = id wiersza', false !== strpos( $tekst, 'Numer zamówienia: #4321' ) );
 sprawdz( 'C2 tekst: stopka sprzedawcy z nazwą, adresem i NIP-em', false !== strpos( $tekst, "SPRZEDAWCA:\nFirma Testowa Sp. z o.o.\nul. Próbna 7\n00-002 Warszawa\nNIP 5260250274" ) );
 sprawdz( 'C2b tekst i html: zdanie o zgodzie bezosobowe w OBU wersjach (bez „zaznaczyłeś”)', false !== strpos( $tekst, 'Zgoda zaznaczona przy zakupie' ) && false !== strpos( $html, 'Zgoda zaznaczona przy zakupie' ) && false === strpos( $tekst . $html, 'zaznaczyłeś' ) );
-sprawdz( 'C3 tekst: dopisek o fakturze', false !== strpos( $tekst, 'FAKTURA:' ) );
+sprawdz( 'C3 tekst: dopisek o fakturze z terminem 3 miesięcy (art. 106b ust. 3 VAT), gdy brak danych', false !== strpos( $tekst, 'FAKTURA:' ) && false !== strpos( $tekst, '3 miesięcy' ) );
+// C3b (0.9.25): dane do faktury podane przy zakupie — w OBU wersjach zamiast „chcesz fakturę?”.
+$zam_fv               = clone $zam_id;
+$zam_fv->dane_faktury = 'Firma Próbna Sp. z o.o., NIP 5260250274, ul. Testowa 5, 00-950 Warszawa';
+$tekst_fv             = sklepag_zbuduj_mail( $produkt, $zam_fv, $link, '' );
+$html_fv              = sklepag_zbuduj_mail_html( $produkt, $zam_fv, $link, '' );
+sprawdz( 'C3b tekst i html: dane do faktury z zamówienia w obu wersjach, bez „chcesz fakturę?”', false !== strpos( $tekst_fv, "DANE DO FAKTURY (podane przy zakupie):\n" . $zam_fv->dane_faktury ) && false !== strpos( $html_fv, esc_html( $zam_fv->dane_faktury ) ) && false === strpos( $tekst_fv, 'FAKTURA:' ) && false === strpos( $html_fv, 'Chcesz fakturę?' ) );
 sprawdz( 'C4 html: dosłowna treść zgody (esc_html nie zmienia polskich znaków)', false !== strpos( $html, esc_html( SKLEPAG_ZGODA_TRESC ) ) );
 sprawdz( 'C5 html: link pobrania w przycisku ORAZ jako tekst zapasowy (2 wystąpienia)', 2 === substr_count( $html, esc_url( $link ) ) );
 sprawdz( 'C6 html: okładka produktu z alt = nazwa produktu', false !== strpos( $html, sklepag_okladka_url( 'chatbot-live' ) ) && false !== strpos( $html, 'alt="ChatBot LIVE"' ) );

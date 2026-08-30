@@ -81,6 +81,9 @@ nie da się przejść.
    - **Klucz sekretny (sk_test_…)** — wklej klucz z punktu 2.
    - **Sekret webhooka (whsec_…)** — patrz Krok 3 (zależy od tego, gdzie
      stoi strona).
+   - **Klucz publikowalny (pk_test_…)** — obok klucza sekretnego („Publishable
+     key”). Z nim formularz karty jest na Twojej stronie produktu, w jej kolorach;
+     bez niego kupujący przechodzi na stronę płatności Stripe (też działa).
 4. Uzupełnij też: **Nazwa nadawcy** i **Adres nadawcy** (od kogo przychodzą
    maile po zakupie), **Mail kontaktowy właściciela** (pokazywany kupującym
    przy problemach z linkiem), **Dane sprzedawcy** (nazwa firmy, adres, NIP —
@@ -137,8 +140,11 @@ Ręczny przycisk „dociągnij zaległe" jest na dashboardzie sklepu.
 
 1. Wejdź na stronę **Sklep** → wybierz produkt → „Zobacz szczegóły" →
    zaznacz zgodę → **Kup teraz (płatność testowa)**.
-2. Na stronie Stripe podaj dowolny mail i testową kartę:
+2. Pod przyciskiem rozwija się panel płatności (gdy wpisałeś klucz publikowalny)
+   albo otwiera strona Stripe (gdy nie). Podaj dowolny mail i testową kartę:
    **4242 4242 4242 4242**, dowolna przyszła data ważności, dowolne CVC.
+   Kupujący na firmę może rozwinąć „Dane do faktury” i podać nazwę, NIP i adres —
+   trafią do maila i do szczegółów zamówienia (fakturę wystawiasz sam).
 3. Po płatności wrócisz na „Dziękujemy" — strona sama odświeża status aż do
    „Mail wysłany".
 4. Sprawdź: Kokpit → Sklep Agentów → **Pulpit** — zakup jest na liście

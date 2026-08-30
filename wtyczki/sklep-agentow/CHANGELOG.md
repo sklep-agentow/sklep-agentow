@@ -20,6 +20,29 @@ Nic jeszcze.
 
 ---
 
+## [0.9.25] — 2026-08-30 · schemat bazy 8
+
+### Dodane
+- **Płatność osadzona na stronie produktu** (`assets/platnosc.js`, Stripe.js „dahlia”): Checkout Session tworzona
+  z `ui_mode=elements` i `return_url` (zamiast `success_url`/`cancel_url`), formularz e-mail + karta jako elementy
+  Stripe w naszym panelu, Appearance API w kolorach strony (limonka na czerni), `confirm()` → powrót na „Dziękujemy”.
+  Ten sam obiekt sesji, ten sam webhook i ta sama reconciliation co dotąd. Zapas: bez klucza publikowalnego albo bez
+  JS formularz idzie zwykłym POST-em na hostowaną stronę Stripe (jak do 0.9.24) — obie drogi obsługuje jeden endpoint
+  (`osadzona=1` → JSON z `client_secret`).
+- **Ustawienia → Klucz publikowalny (pk_…)** — jawny, walidowany prefiksem.
+- **Dane do faktury przy zakupie** (nazwa firmy, NIP, adres): nieobowiązkowe, komplet albo nic (ustawa o VAT
+  art. 106e — faktura wymaga nazwy, NIP-u i adresu nabywcy); NIP z sumą kontrolną (`sklepag_nip_poprawny()`, wspólna
+  z Ustawieniami); jadą w metadanych sesji, zapisywane w `zamowienia.dane_faktury`, w mailu (tekst i HTML) i w
+  szczegółach zamówienia; anonimizacja RODO czyści je razem z e-mailem; szkic Polityki prywatności wymienia cel
+  i podstawę. ⛔ Podanie NIP-u nie zmienia praw kupującego (art. 38a ustawy o prawach konsumenta).
+- Mail bez danych do faktury: „chcesz fakturę? odpisz w ciągu 3 miesięcy” (art. 106b ust. 3 ustawy o VAT).
+- Strażnik maila: C3 (termin 3 miesięcy), C3b (dane do faktury w obu wersjach) — 28 sprawdzeń.
+
+### Zmienione
+- Schemat bazy **8**: kolumna `zamowienia.dane_faktury varchar(300)` (migracja `dbDelta` przy podbiciu wersji).
+
+---
+
 ## [0.9.24] — 2026-08-30
 
 ### Dodane
