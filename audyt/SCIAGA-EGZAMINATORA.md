@@ -252,11 +252,11 @@ mam ją zapisaną w pamięci. Wpis w pamięci nie zatrzymał ręki. Zatrzymała 
 
 ---
 
-## KLASY DOPISANE 2026-08-29 — z rund 1–3 recenzji PR #208 i #209 (teksty jadące do klienta)
+## KLASY DOPISANE 2026-08-29 — z rund 1–3 PR #209 i rund 4–5 PR #208 (teksty jadące do klienta)
 
 Źródło: dwa PR-y, których **jedynym produktem jest jakość tekstu czytanego przez kupującego** —
 komentarze w kodzie, CHANGELOG-i, dokumentacja techniczna w paczce. Kod produktu nie zmienił się
-ani o instrukcję. Mimo to poszły trzy rundy recenzji, w tym dwie uwagi KRYTYCZNE. ⛔ To jest
+ani o instrukcję. Mimo to poszły trzy pierwsze rundy `#209` i co najmniej pięć rund `#208`, w tym dwie uwagi KRYTYCZNE. ⛔ To jest
 lekcja sama w sobie: **PR bez linijki logiki potrafi być trudniejszy od PR-a z logiką**, bo nie
 broni go żadna bramka — `php-lint`, `phpcs`, `phpstan` i `paczka-zgodnosc.sh` przepuszczają
 zepsute zdanie tak samo chętnie jak poprawne.
@@ -293,15 +293,27 @@ od pytania „co znalazło?".
 
 ---
 
-## KLASY DOPISANE 2026-08-29 (noc) — z rund 8–11 PR #209 i z kontroli po squashu (30.08)
+## KLASY DOPISANE 2026-08-29 (noc) — z rund 6–11 PR #209 i z kontroli po squashu (30.08)
 
 | # | Klasa | Dowód | Czym obstawione |
 |---|---|---|---|
-| 40 | **ODHACZASZ W OPISIE PR RZECZ, KTÓREJ NIE ZROBIŁAŚ** | `#209` r8: opis PR i lista kontrolna twierdziły, że dług „wielkość litery w skanerze” jest zapisany w `CO-WISI.md`. Recenzent sprawdził: `grep -c 'wielkość litery' audyt/CO-WISI.md` → **0**. Własna klasa 3 (dokumentacja kłamie) zastosowana do własnego opisu | ⛔ Każdy odhaczony punkt listy kontrolnej musi mieć **komendę potwierdzającą** przed wysłaniem opisu. Odhaczenie z pamięci = deklaracja, nie dowód |
+| 40 | **ODHACZASZ W OPISIE PR RZECZ, KTÓREJ NIE ZROBIŁAŚ** | `#209` r8: opis PR i lista kontrolna twierdziły, że dług „wielkość litery w skanerze” jest zapisany w `CO-WISI.md`. Recenzent sprawdził: `grep -c 'wielkość litery' audyt/CO-WISI.md` → **0** (stan z r8, 29.08; dziś ta sama komenda daje **1**, bo wpis o skanerze w `CO-WISI.md` sam zawiera tę frazę — dług został dopisany PO tej uwadze). Własna klasa 3 (dokumentacja kłamie) zastosowana do własnego opisu | ⛔ Każdy odhaczony punkt listy kontrolnej musi mieć **komendę potwierdzającą** przed wysłaniem opisu. Odhaczenie z pamięci = deklaracja, nie dowód |
 | 41 | **OBIETNICA KOMPLETNOŚCI, KTÓREJ NIE UMIESZ UTRZYMAĆ** | `#209` r6→r10: „PEŁNA lista” oznaczeń trybu testowego rosła **trzy → sześć → siedem** miejsc, za każdym razem niepełna. Osobno r9: zmieniłam punkt 6 na „nie traktuj listy jako kompletnej”, ale **nagłówek 27 wierszy wyżej** nadal obiecywał „nic poza tą listą nie jest potrzebne” | ⭐ Gdy nie umiesz zagwarantować kompletności — **nie obiecuj jej**, daj jedno działanie („napisz do nas”). Zdania bez obietnicy nie da się obalić kolejnym znalezionym miejscem. ⛔ Zmieniasz obietnicę? Zmień JĄ W CAŁYM dokumencie, nie w jednym akapicie |
 | 42 | **SZUKASZ FORM ZAMIAST KSZTAŁTU — i dlatego każda runda przynosi nową rodzinę** | `#209` r6-r11: `Z10` → `Z6` → `luka L1` → `P0.4`, sześć rund łatania po jednej rodzinie. Wyliczenie po KSZTAŁCIE (`grep -rhoE '\b[A-Z]{1,3}[0-9]+(\.[0-9]+)?[a-z]?\b' … \| sort \| uniq -c`) dało **całą listę naraz**: 8 naszych oznaczeń plus rozpoznawalne fałszywe (UTF7, CP1250, SHA256, współrzędne SVG, `Z0` z regexów `a-zA-Z0-9`, ⛔ `Ctrl+F5` — skrót klawiszowy DLA KLIENTA, o mało nie wycięty) | ⛔ **Zero mojego wzorca ≠ zero listy kandydatów.** Przy rodzinach oznaczeń pytaj „co tu W OGÓLE wygląda jak oznaczenie”, nie „czy mój wzorzec coś znajduje”. Po naprawie **powtórz TO SAMO wyliczenie** — dopiero brak kandydatów jest zerem |
 | 43 | **POTOK MASKUJE NIE TYLKO PORAŻKĘ, ALE I CZĘŚCIOWY SUKCES** | 29.08, scalanie `#209`: `gh pr merge … \| tail` wypisało `MERGE EXIT=0`, a komenda odmówiła (niezacommitowany plik). Prawda była JESZCZE INNA: **merge się udał**, padło tylko lokalne przełączenie gałęzi — pokazał to komunikat „was already merged” przy drugiej próbie. Potok zamaskował stan pośredni, groźniejszy od czystej porażki | ⛔ `$?` **nigdy** po potoku. Do operacji nieodwracalnych (merge, tag, release) dodaj **potwierdzenie NIEZALEŻNE od komendy**: `gh pr view N --json state,mergedAt` |
-
-| # | Klasa | Dowód | Czym obstawione |
-|---|---|---|---|
 | 44 | **PO SQUASHU „COMMITY SPOZA MAIN” TO NIE DOWÓD UTRATY TREŚCI — i panika w drugą stronę też kosztuje** | 30.08, kontrola po pytaniu Dzidka „wszystko zapisane na pewno?”. `git log origin/main..origin/fix/…` pokazał **PIĘĆ commitów spoza main** i wyglądało to na utratę wszystkich napraw rund 8–11 (mail „płatność nie została pobrana”, `Z6`, `luka L1`, `P2.3`). NIEPRAWDA: PR scalono **squashem**, więc treść weszła JEDNYM commitem, a gałąź trzyma stare hashe. Rozstrzygnął dopiero pomiar TREŚCI: `git show main:…sitemap-produkty.php \| grep -c Z6` → 0, to samo dla `luka L1` i `P2.3`. Realna strata: **jeden plik, 37 linii** dokumentu wewnętrznego (commit powstał PO merge) | ⛔ Dowodem utraty jest **`git diff main <gałąź> --stat`** — porównanie DRZEW, nie historii. `git log main..gałąź` po squashu kłamie ZAWSZE. ⭐ Osobno: commit wypchnięty na gałąź **już scaloną** nie trafia nigdzie — po merge sprawdź `git diff main HEAD --stat`, zanim uznasz robotę za zapisaną |
+
+---
+
+## KLASY DOPISANE 2026-08-30 — z rund 4–6 PR #209 (skaner śladów a `dokumentacja/`)
+
+⛔ Te trzy klasy `DO-ODDANIA.md` wymieniał od 29.08 jako „do przeniesienia”, a PR `#211` w pierwszej
+wersji ich nie przeniósł — dowód recenzji r1: `grep -nE '263|czytanie JEST wyliczeniem' audyt/SCIAGA-EGZAMINATORA.md`
+→ 0. Źródło treści: `audyt/CO-WISI.md`, sekcja o skanerze śladów (r4–r6). To jest własna klasa 41
+(obietnica kompletności) na własnym PR-ze o rejestrze.
+
+| # | Klasa | Dowód z tych rund | Co ją łapie U NAS |
+|---|---|---|---|
+| 45 | **ZASIĘG WĘŻSZY NIŻ WZORZEC — skaner zna wzorzec, ale pętla nigdy nie patrzy tam, gdzie ślad leży** | `#209` r4: napisałam „skaner nie zna żadnej z tych rodzin”. Nieprawda — `narzedzia-qa/slady-wewnetrzne.sh:78` zna `\bK[0-9]\b` od wersji 1.3.0, a mimo to przepuścił `K8` w `dokumentacja/INSTRUKCJA-INSTALACJI.md`, bo pętla `for katalog in wtyczki/*/` z własnym komentarzem stawiała znak równości między „pliki wtyczek” a „to, co trafia do klienta”. Dopisywanie wzorców niczego by nie naprawiło | ⛔ Przy każdym skanerze pytaj o TEREN pętli osobno od wzorców: „po czym iteruje i czy to jest wszystko, co dostaje klient?”. Próba kontrolna z podłożonym śladem **w każdym katalogu, który jedzie do klienta**, nie tylko w `wtyczki/` |
+| 46 | **KALIBRACJA ODRZUCIŁA WŁASNĄ NAPRAWĘ — rozszerzenie zasięgu pada na CZYSTEJ treści** | `#209` r5: rozszerzenie pętli o `dokumentacja/` skalibrowane przed scaleniem: `SLADY_ZALEGLOSCI=/dev/null bash narzedzia-qa/slady-wewnetrzne.sh dokumentacja dokumentacja` → `EXIT=1` na dwóch **fałszywych** trafieniach (`localhost` w instrukcji Stripe CLI to treść, której klient potrzebuje). Wpięcie postawiłoby CI na czerwono od pierwszego przebiegu; dopisanie wyjątków do `slady-zaleglosci.txt` byłoby obejściem bramki („ta lista ma wyłącznie KURCZYĆ się”) | ⭐ Naprawa bramki ma DWIE kontrole: podłożona wada → czerwone **i** czysta treść → zielone. Odrzucenie własnej naprawy przez kalibrację to wynik, nie porażka — zapisz go i zostaw zasięg węższy z JAWNYM powodem. Recepta: wzorce **per teren** (dla `dokumentacja/` bez „adresu maszyny dev”), osobnym PR-em |
+| 47 | **GDY TEREN DA SIĘ PRZECZYTAĆ W CAŁOŚCI, CZYTANIE JEST WYLICZENIEM — wzorzec jest wtedy zgadywaniem** | `#209` r5: dwa ślady w `dokumentacja/INSTRUKCJA-INSTALACJI.md` (263 wiersze), których **żaden** wzorzec by nie złapał: „zrzut ekranu dojdzie przy finalizacji instrukcji” (notatka o naszej pracy zwykłym słowem) i odsyłacz do `PLAN-PROJEKTU.md:433` podany **parafrazą** („w dokumentacji projektu”) — wzorzec `PLAN-PROJEKTU` był w skanerze i bezradny. Wzorzec przepuścił ślad trzy rundy z rzędu | ⛔ Dla katalogu, który da się przeczytać w minuty, miarą czystości jest **przeczytanie w całości**; wzorce zostają siatką na REGRESJE, nie dowodem. Para do klas 33 i 34: tam „czego wzorzec nie znajduje”, tu „kiedy wzorzec w ogóle nie jest właściwym narzędziem” |
