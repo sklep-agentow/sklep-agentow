@@ -1,0 +1,37 @@
+# RUBRYKA „GOTOWE” — Sklep Agentów, wydanie `v0.9.23` (zamrożona 2026-08-30)
+
+Kryteria = `PLAN-PROJEKTU.md` §12 (v3), przepisane co do treści. Plan mówi „binarne”; werdykty tutaj
+mają **jawny trzeci stan** — dokładnie tę samą skalę, którą przyjął nasz werdykt po kryteriach
+`audyt/sklep/L1-11-WERDYKTY-KRYTERIOW.md` (28.08, wtyczka 0.9.20): ✅ SPEŁNIONE · 🐞 SPEŁNIONE
+Z ZASTRZEŻENIEM (działa, ale z otwartym lub nazwanym znaleziskiem) · ⛔ NIESPEŁNIONE. Ten plik
+**nie ocenia od nowa** — przepisuje werdykty z L1-11 i dopisuje, co zmieniło się do 0.9.23 (#3, #11, #12).
+Plan zapowiadał rubrykę „po K2”; powstała przy oddaniu, bo jej rolę pełniły mapa polowania K7
+(`audyt/sklep/material/06-mapa-polowania.md`, 104 cele), przelot człowieka
+(`audyt/sklep/PRZELOT-CZLOWIEKA-SKLEP.md`, 27 punktów) i L1-11. Korekta po zamrożeniu — wyłącznie
+osobnym PR z wpisem w `DECYZJE.md` (§12 planu).
+
+Notacja dowodów: `Lx-yy` = cel mapy polowania (z raportem audytora w `audyt/sklep/raporty/` i sha
+paczki); `A7`/`B6`/`C1` = punkt przelotu człowieka; `SK-…` = wpis rejestru
+`audyt/sklep/REJESTR-ZNALEZISK-SKLEP.md`; rozliczenie mutantów leży na gałęzi — otwierasz je tak:
+`git show origin/audyt/mutanty-sklep:audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP.md`.
+
+| # | Kryterium (§12) | Werdykt | Dowód (plik, cel, wynik) |
+|---|---|---|---|
+| 1 | Instalacja 3 wtyczek na czystym WP wg instrukcji przez NIE-autora ≤ 30 min, bez fatali i notice’ów (`WP_DEBUG`) | ✅ SPEŁNIONE | L1-11 #1: świeża sesja audytora na osobnym czystym WP, ok. 28 min (`audyt/K6-INSTALACJA-OD-ZERA.md`, `audyt/K6-RAPORT-TESTERA.md`); notice’y: cel `Ł-08` ✅. Zastrzeżenie L1-11: tester = agent piszący skrypty przeglądarkowe, nie osoba klikająca — człowiek byłby szybszy |
+| 2 | Zakup kartą testową: webhook → zamówienie → mail ≤ 60 s (pomiar skryptem); mail w łapaczu; treść maila w panelu | 🐞 Z ZASTRZEŻENIEM | L1-11 #2: przelot A7–A9 ✅, `L1-02` ✅; pomiar `testy/e2e/przelot2.js` — **17/18/17/16 s** do `mail_wyslany` w czterech przelotach (`L3-14`). Zastrzeżenie: miarą jest skrypt e2e, nie raport audytora (oba raporty A/B: „nie da się sprawdzić” na ich stanowisku); L3-14 stoi w mapie jako 🐞 |
+| 3 | Link pobrania: właściwy plik (sha256 = snapshot); po terminie/limicie odmowa; 2 równoległe przy ostatnim slocie → 1; HEAD nie zużywa limitu | ✅ SPEŁNIONE | L1-11 #3: `L2-03`, `L3-06`, `L3-07`, `L3-08` ✅; przelot A10, B3 ✅. **Od 0.9.23**: świeży link (resend z panelu i ponowienie przez cron) ma licznik od zera — `testy/resend-odnawia-limit-pobran-test.php` 3 części, FAIL na starym kodzie / PASS na nowym (PR `#213` r4–r5) |
+| 4 | Webhook 2× = 1 zamówienie i 1 mail; webhook ‖ reconciliation równolegle = 1 mail i 1 ważny token; ponowienie po przerwaniu DOKAŃCZA; zły/brak podpisu = odrzut | ✅ SPEŁNIONE | L1-11 #4: `L3-01`, `L3-02`, `L3-03`, `L2-05` ✅; strażniki `testy/domkniecie-nie-gubi-zakupu-test.php`, `testy/idem-nie-oddaje-oplaconej-sesji-test.php`, `testy/reconciliation-wysyla-mimo-awarii-stripe-test.php` (EXIT=0, 30.08) |
+| 5 | Podmieniona cena/produkt = zignorowane; zakup bez zgody niemożliwy; akcje admina bez capability = odmowa; mutacja bez nonce = odmowa; rate limit ZMIERZONY | 🐞 Z ZASTRZEŻENIEM | L1-11 #5: `L2-07`, `L2-02`, `L2-01` (7 handlerów, konto subscribera), `L2-08` (limity zmierzone) ✅. Zastrzeżenie: nonce może być **przeterminowany, nie nieobecny** — strona produktu z page-cache z noncem sprzed 25 h (`L2-13`, `Ł-05`, w rejestrze) |
+| 6 | Dashboard: zakup widoczny (czas webhooka, kwota, produkt ze SNAPSHOTU), sumy w okresach, eksport CSV; edycja/deaktywacja produktu NIE zmienia historii | ✅ SPEŁNIONE | L1-11 #6: `L1-04`, `L3-12` ✅; przelot B2, B6 ✅; `testy/eksport-csv.js`, `testy/statystyki-test.php`, `testy/zwrot-schodzi-z-przychodu-test.php` |
+| 7 | CRUD: nowy produkt bez zmian kodu; bez potwierdzonego pliku nie da się aktywować; walidacje (cena ≤ 0, pusta nazwa, nie-zip, ponad limit); upload pod losową nazwą w katalogu chronionym, POTWIERDZONY po zapisie | 🐞 Z ZASTRZEŻENIEM | L1-11 #7: `L1-06`, `L2-09` ✅; przelot B6, B7 ✅; kod `admin-produkty.php:237` (cena ≤ 0), `:373-374` (typ zip). Zastrzeżenie: zip ponad limit przy uploadzie — `Ł-09` (`testy/limit-uploadu-realny-test.php`; instrukcja od 0.9.23 tłumaczy mniejszy z dwóch limitów) |
+| 8 | Dziennik: logowania adminów (udane i nieudane, IP, przeglądarka) + log akcji admina; po nieudanych próbach opóźnienie wykładnicze (pomiar) | ✅ SPEŁNIONE | L1-11 #8: `L1-07`, `L2-14` (lockout zmierzony, sufit 60 s), `L2-22` ✅; przelot B9 ✅; kod `logowania.php:126` `sleep( min( 2 ** $n, SUFIT ) )`, próg 7. próby (`:94`) |
+| 9 | Uninstall: domyślnie dane zostają; z opcją czyszczenia — zero naszych tabel/opcji/stron/plików/cronów (diff pusty) | 🐞 Z ZASTRZEŻENIEM | L1-11 #9: `L4-05`, `L2-17`, `L4-07`, `L4-10` ✅. Zastrzeżenie: pełne czyszczenie z pustym diffem — `L4-06` (SK-L4-002/003, strażnik `testy/uninstall-zombie-cron-test.php`); audytor tego nie powtórzył, bo kończy stanowisko; K6 przeszło deinstalację w ścieżce testera |
+| 10 | Boty: oba rdzenie DZIAŁAJĄ na czystym WP; instrukcje kompletne; „ile czasu oszczędza” z pokryciem; strona produktu z KOMPLETEM S-03; tryb regułowy = test obowiązkowy; tryb AI = ręczny przy dostępnym kluczu | 🐞 Z ZASTRZEŻENIEM | L1-11 #10: audyt botów `audyt/boty/`, K6 („chatbot odpowiada; segregator 80 % pokrycia, 100 % accuracy na próbce”), przelot A2, A3 ✅; `testy/dokumentacja-zgodnosc.sh`, `testy/dokumentacja-zgodnosc-segregator.sh` EXIT=0 (30.08). Zastrzeżenia: `L1-03` (komplet S-03 na stronie produktu) w rejestrze; ⛔ **tryb AI z żywym kluczem NIE był testowany** — kryterium mówi „przy dostępnym kluczu”, klucza nie było (L1-11 #10, `:93`) |
+| 11 | WCAG-lite + RWD (zakup telefonem) + Chrome/Edge/Firefox; baner „TRYB TESTOWY”; Regulamin i Polityka jako szablony bez cudzych danych | ✅ SPEŁNIONE | L1-11 #11: `L6-02` (axe 0 naruszeń), `L6-04`, `L6-05`, `L6-06`, `L1-08`, `L2-20` ✅; A12 (telefon). Edge: **zamknięte 28.08** — `SK-L6-003`, `testy/e2e/szelki-strona-produktu.js … msedge` EXIT=0 ×2, `b.version()` z `Edg/` (nie chromium pod inną nazwą). Wydajność Lighthouse (`L6-01` ⚠️) oddana do K8 (AN-022) — nie jest częścią tego kryterium |
+| 12 | Kalibracja audytu ≥ 2/3 mutantów **ORAZ** strażnicy CI przechodzą własny audyt mutacyjny — inaczej audyt nieważny, nie oddajemy | ⛔ DRUGI CZŁON NIESPEŁNIONY — oddajemy decyzją | Człon 1 ✅: 7 mutantów, 5 złapanych = 71 % ≥ 2/3 (rozliczenie na gałęzi, komenda wyżej). Człon 2 ⛔: 6 z 30 prób kontrolnych strażników EXIT≠0 (`audyt/sklep/PROBY-KONTROLNE.log`, `a1b2495`), w tym `nonce` i `blad-klucza` padają zawsze → te dwa zabezpieczenia chatbota są NIEPILNOWANE. `narzedzia-qa/k7-koniec.sh`: kontrole 2 i 6 FAIL, **NO-GO, EXIT=1**. **Decyzja Dzidka 28.08: oddajemy z jawnym zapisem** (`audyt/CO-WISI.md`, `audyt/RAPORT-ODDANIA.md` §2) |
+
+**Wynik:** ✅ 6 (#1, #3, #4, #6, #8, #11) · 🐞 z zastrzeżeniem 5 (#2, #5, #7, #9, #10) · ⛔ 1 (#12, drugi
+człon; oddanie decyzją właściciela, nie werdyktem rubryki). Zgodne z podsumowaniem L1-11 (6/5/0 dla #1–#11).
+Bramka maszynowa: `KRYTYCZNE otwarte: 0 · DUŻE otwarte: 0 · kontroli FAIL: 2 (z 13) · K7: NO-GO · EXIT=1`.
+⛔ Czego rubryka NIE dowodzi (za L1-11): kryteria każą mierzyć NA PACZCE na świeżej instalacji — na tej drodze
+przeszło #1 i rdzeń zakupu; reszta stoi na dowodach ze stosu warsztatowego i przelotu (to samo zachowanie, inna droga).
