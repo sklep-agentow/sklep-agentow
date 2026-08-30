@@ -1184,7 +1184,12 @@ function sklepag_status_zamowienia( WP_REST_Request $zadanie ) {
  *                      0 = bez limitu (WP-cron — kontekst tolerancyjny na czas).
  *                      Niedociągnięte w budżecie zostają na następny bieg (idempotentne).
  */
-function sklepag_dociagnij_zalegle( $budzet_s = 0 ) {
+/**
+ * @param int  $budzet_s Budżet czasu (s); 0 = bez limitu (cron).
+ * @param bool $wymus    true = RĘCZNY przycisk: pyta Stripe o KAŻDĄ sesję, także tę z przerwą — właściciel
+ *                       klika, bo czeka; na hostingu bez WP-Cron nikt inny nie zapyta („za 9 minut” byłoby nieprawdą).
+ */
+function sklepag_dociagnij_zalegle( $budzet_s = 0, $wymus = false ) {
 	global $wpdb;
 	$ps    = $wpdb->prefix . 'sklepag_sesje_checkout';
 	$start = microtime( true );
@@ -1226,7 +1231,7 @@ function sklepag_dociagnij_zalegle( $budzet_s = 0 ) {
 			break; // Resztę dociągnie cron — render admina nie może wisieć.
 		}
 		$klucz_przerwy = 'sklepag_recon_' . md5( $sid );
-		if ( get_transient( $klucz_przerwy ) ) {
+		if ( ! $wymus && get_transient( $klucz_przerwy ) ) {
 			// Sprawdzona przed chwilą i nadal nieopłacona — nie pytamy Stripe co bieg, ale LICZYMY ją OSOBNO:
 			// „0 · 0 · 0 · 0” przy sesji widzianej 3 minuty temu kłamało, a wrzucenie jej do „nieopłacone” też
 			// (w tym biegu nikt Stripe o nią nie pytał). Osobny kubełek mówi prawdę: „z przerwą, pytanie za ≤ 9 min”.

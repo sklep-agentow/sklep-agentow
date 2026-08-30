@@ -233,7 +233,7 @@ function sklepag_obsluz_dociagnij() {
 
 	sklepag_zdarzenie( null, 'reconciliation_reczna', 'przycisk w panelu' );
 	update_option( 'sklepag_reconciliation_ostatnia', time(), false );
-	$w = sklepag_dociagnij_zalegle( 15 ); // Budżet czasu < limit PHP hostingu (30 s); reszta na cron.
+	$w = sklepag_dociagnij_zalegle( 15, true ); // Budżet czasu < limit PHP hostingu (30 s); ręczny klik pyta o wszystko, bez przerw.
 	$w = is_array( $w ) ? $w : array();
 	sklepag_zdarzenie( null, 'reconciliation_wynik', sprintf( 'domknięte %d · młodsze niż 2 min (pominięte) %d · sprawdzone teraz, nieopłacone %d · sprawdzone chwilę temu (z przerwą) %d · błędy %d', (int) ( $w['domkniete'] ?? 0 ), (int) ( $w['pominiete_mlode'] ?? 0 ), (int) ( $w['sprawdzone_otwarte'] ?? 0 ), (int) ( $w['z_przerwa'] ?? 0 ), (int) ( $w['bledy'] ?? 0 ) ) );
 
@@ -432,7 +432,7 @@ function sklepag_admin_dashboard() {
 			. 'Domknięte zakupy: <strong>' . (int) $d . '</strong> · '
 			. 'pominięte jako młodsze niż 2 minuty: <strong>' . (int) $m . '</strong>' . ( $m > 0 ? ' (Stripe bywa jeszcze w trakcie — kliknij ponownie za chwilę)' : '' ) . ' · '
 			. 'sprawdzone teraz u Stripe i nieopłacone (kupujący nie zapłacił, same wygasną): ' . (int) $o . ' · '
-			. 'sprawdzone chwilę temu i nadal nieopłacone (Stripe zapytany ponownie najpóźniej za 9 minut): ' . (int) $p
+			. 'sprawdzone przez zadanie w tle chwilę temu i nadal nieopłacone (przycisk pyta Stripe od razu, zadanie w tle — po 9 minutach, jeśli działa): ' . (int) $p
 			. ( $b > 0 ? ' · <strong>błędy rozmowy ze Stripe: ' . (int) $b . '</strong> — szczegóły w Dzienniku' : '' ) . '.</p></div>';
 	}
 

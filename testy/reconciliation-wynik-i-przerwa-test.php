@@ -9,11 +9,12 @@
  *
  * Strażnik (Stripe ATRAPOWANE filtrem `pre_http_request` — bez sieci, bez klucza):
  *  R1 wynik liczy sesję młodszą niż 2 min jako POMINIĘTĄ (i jej nie pyta),
- *  R2 sesja stara, u Stripe otwarta i nieopłacona → sprawdzona 1×, dostaje przerwę (transient),
- *  R3 drugi bieg od razu → NIE pyta Stripe o tę samą sesję (0 zapytań), ale liczy ją jako otwartą (Pulpit nie mówi „0·0·0·0”),
+ *  R2 sesja stara, u Stripe otwarta i nieopłacona → sprawdzona 1×, dostaje przerwę (transient); obce z przerwą w osobnym kubełku,
+ *  R3 drugi bieg CRONA od razu → NIE pyta Stripe o tę samą sesję (0 zapytań), liczy ją w kubełku „z przerwą”,
  *  R4 22 porzucone starsze sesje + 1 opłacona nowsza → opłacona domknięta w PIERWSZYM biegu
  *     (na starym kodzie: LIMIT 20 najstarszych = opłacona nietknięta),
- *  R5 funkcja zwraca tablicę z czterema licznikami (przycisk w panelu ją pokazuje).
+ *  R5 funkcja zwraca tablicę z pięcioma licznikami (przycisk w panelu ją pokazuje),
+ *  R6 ręczny przycisk ($wymus) pyta także o sesję z przerwą (hosting bez WP-Cron).
  *
  * Uruchomienie:
  *   docker cp testy/reconciliation-wynik-i-przerwa-test.php strona_wp_wordpress:/tmp/rw.php
@@ -116,6 +117,11 @@ sprawdz( 'R2 stara otwarta/nieopłacona = sprawdzona 1× i ma przerwę (obce z p
 $GLOBALS['rw_zapytania'] = 0;
 $w2                      = sklepag_dociagnij_zalegle( 0 );
 sprawdz( 'R3 drugi bieg nie pyta ponownie o sesję z przerwą i liczy ją w kubełku „z przerwą”', 0 === $GLOBALS['rw_zapytania'] && 0 === (int) ( $w2['sprawdzone_otwarte'] ?? -1 ) && ( 1 + $n_obce ) === (int) ( $w2['z_przerwa'] ?? -1 ), 'zapytań: ' . $GLOBALS['rw_zapytania'] . ' z_przerwa: ' . (int) ( $w2['z_przerwa'] ?? -1 ) );
+
+// --- R6: RĘCZNY przycisk ($wymus) pyta Stripe także o sesję z przerwą (hosting bez crona: nikt inny nie zapyta) ---
+$GLOBALS['rw_zapytania'] = 0;
+$w6                      = sklepag_dociagnij_zalegle( 0, true );
+sprawdz( 'R6 wymuszony bieg (przycisk) pyta o sesję z przerwą od razu', 1 === $GLOBALS['rw_zapytania'] && 0 === (int) ( $w6['z_przerwa'] ?? -1 ), 'zapytań: ' . $GLOBALS['rw_zapytania'] );
 
 // --- R4: 22 porzucone STARSZE + 1 opłacona NOWSZA (ale > 2 min) — opłacona domknięta od razu ---
 $sprzatanie();

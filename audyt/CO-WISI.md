@@ -830,3 +830,5 @@ sesja zostaje `open/unpaid`. To zabezpieczenie Stripe dla zautomatyzowanej przeg
 → reguły testowe, albo Playwright w trybie z nagłówkiem — nie sprawdzałam. Ścieżka zapasowa (hostowana) przetestowana
 maszynowo do końca (zam #9901178 z danymi faktury).
 
+
+## 🟡 DŁUGI Z RECENZJI #222 r4 (30.08): strażnik reconciliation (R4) woła prawdziwe `api.stripe.com` przy domykaniu opłaconej atrapy (nagłówek obiecuje „bez sieci”) i nie asertuje `bledy`; trzy komentarze w strażniku opisują poprzednie asercje. Do korekty przy 0.9.26 razem z długami K10.
