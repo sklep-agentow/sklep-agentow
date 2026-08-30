@@ -1,6 +1,6 @@
 # Sklep Agentów — dokumentacja techniczna
 
-**Wersja wtyczki: 0.9.23 · wersja schematu bazy: 7 · WordPress 6.7+ · PHP 8.1+**
+**Wersja wtyczki: 0.9.24 · wersja schematu bazy: 7 · WordPress 6.7+ · PHP 8.1+**
 
 > **Po co ten dokument.** To jest **mapa systemu dla audytora i programisty**, nie ulotka.
 > Każda liczba i nazwa tutaj jest wzięta z kodu, nie z pamięci — jeśli coś się rozjedzie,
@@ -26,7 +26,8 @@ zero zewnętrznych bibliotek i zero CDN. Jedyna usługa zewnętrzna: **Stripe** 
 | `sklep-agentow.php` | ładowanie, stałe, skróty, assety frontu, lista produktów, cron |
 | `includes/aktywacja.php` | schemat bazy (dbDelta), migracje, zakładanie stron |
 | `includes/stripe.php` | komunikacja z API Stripe |
-| `includes/zakup.php` | rozpoczęcie zakupu, webhook, status, domykanie zamówień |
+| `includes/zakup.php` | rozpoczęcie zakupu, webhook, status, domykanie zamówień, treść tekstowa maila i wysyłka |
+| `includes/mail-html.php` | wersja HTML maila po zakupie (wysyłana razem z tekstem jako multipart) |
 | `includes/pobieranie.php` | brama pobrań: token, limit, wygaśnięcie, wydanie pliku |
 | `includes/front-produkt.php` | strony produktów, przepisywanie adresów, treści sprzedażowe |
 | `includes/front-seo.php` | tytuły, opisy, dane strukturalne, mapa witryny |
@@ -189,7 +190,7 @@ po stronie serwera. To jest świadome ograniczenie, nie przeoczenie.
 
 | Stała | Wartość | Znaczenie |
 |---|---|---|
-| `SKLEPAG_WERSJA` | 0.9.23 | wersja wtyczki (assety, cache) |
+| `SKLEPAG_WERSJA` | 0.9.24 | wersja wtyczki (assety, cache) |
 | `SKLEPAG_WERSJA_SCHEMATU` | 7 | wersja schematu bazy (migracje) |
 | `SKLEPAG_LIMIT_POBRAN` | 10 | ile razy można pobrać plik z jednego wydanego linku (zerowane przy świeżym linku) |
 | `SKLEPAG_LINK_GODZIN` | 72 | ważność linku pobrania |

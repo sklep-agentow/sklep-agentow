@@ -108,6 +108,8 @@ echo "=== F. INSTRUKCJA.md — WYBRANE LICZBY (72 h, 10 pobrań, 30 dni, 20 MB, 
 # porównujemy z NIĄ, nie z readme (te same zasady co sekcja B). Zrzuty, do których odsyła, muszą
 # istnieć w katalogu wtyczki, bo inaczej paczka niesie pusty odsyłacz.
 spr "plik $W/INSTRUKCJA.md"                 "1" "test -f $W/INSTRUKCJA.md && echo 1 || echo 0"
+spr "INSTRUKCJA: sekcja Ustawień „Dane sprzedawcy” opisana (0.9.24)" "1" "grep -c '^- \*\*Dane sprzedawcy\*\*' $W/INSTRUKCJA.md"
+spr "readme: Ustawienia wymieniają dane sprzedawcy (0.9.24)" "1" "grep -c 'dane sprzedawcy do stopki' $W/readme.txt"
 spr "INSTRUKCJA: link ważny N godzin == SKLEPAG_LINK_GODZIN" "$(stala SKLEPAG_LINK_GODZIN)" "grep -oE 'ważny \*\*[0-9]+ godzin' $W/INSTRUKCJA.md | head -1 | grep -oE '[0-9]+'"
 spr "INSTRUKCJA: do N pobrań == SKLEPAG_LIMIT_POBRAN"       "$(stala SKLEPAG_LIMIT_POBRAN)" "grep -oE 'do \*\*[0-9]+ pobrań' $W/INSTRUKCJA.md | head -1 | grep -oE '[0-9]+'"
 spr "INSTRUKCJA: opinia ważna N dni == SKLEPAG_OPINIA_DNI"  "$(stala SKLEPAG_OPINIA_DNI)" "grep -oE 'opinii \(ważny [0-9]+ dni' $W/INSTRUKCJA.md | head -1 | grep -oE '[0-9]+'"

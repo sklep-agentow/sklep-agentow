@@ -106,7 +106,12 @@ function sklepag_obsluz_resend() {
 		)
 	);
 
-	$wyslano = sklepag_wyslij_mail_sklepu( $zam->email_kupujacego, 'Twój zakup: ' . $zam->produkt_nazwa_kupiona . ' — potwierdzenie i pobranie', $tresc );
+	$wyslano = sklepag_wyslij_mail_sklepu(
+		$zam->email_kupujacego,
+		'Twój zakup: ' . $zam->produkt_nazwa_kupiona . ' — potwierdzenie i pobranie',
+		$tresc,
+		sklepag_zbuduj_mail_html( $produkt_snapshot, $zam, $link, $link_op )
+	);
 
 	if ( $wyslano ) {
 		// Zamówienia zwrócone i sporne (SKLEPAG_STATUSY_ZAMKNIETE) nie docierają tutaj — bramka wyżej

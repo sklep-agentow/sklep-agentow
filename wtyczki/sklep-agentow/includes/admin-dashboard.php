@@ -365,6 +365,14 @@ function sklepag_admin_dashboard() {
 			. '<a href="' . esc_url( admin_url( 'admin.php?page=sklepag-ustawienia' ) ) . '">Uzupełnij w Ustawieniach</a>.</p></div>';
 	}
 
+	// DANE SPRZEDAWCY: bez nazwy firmy i adresu stopka maila po zakupie nie spełnia art. 21 ustawy
+	// o prawach konsumenta (potwierdzenie na trwałym nośniku ma nieść dane przedsiębiorcy).
+	if ( function_exists( 'sklepag_sprzedawca' ) && ! sklepag_sprzedawca()['kompletne'] ) {
+		echo '<div class="notice notice-warning"><p><strong>Mail po zakupie idzie bez danych sprzedawcy.</strong> '
+			. 'Kupujący nie ma w potwierdzeniu nazwy firmy i adresu do reklamacji — '
+			. '<a href="' . esc_url( admin_url( 'admin.php?page=sklepag-ustawienia' ) ) . '">uzupełnij „Dane sprzedawcy” w Ustawieniach</a>.</p></div>';
+	}
+
 	// Awarie rozmowy ze Stripe z ostatniej doby: odrzucony klucz, timeout, zły podpis.
 	// Pojedynczy błąd bywa przypadkiem sieci, seria znaczy, że sprzedaż stoi.
 	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery

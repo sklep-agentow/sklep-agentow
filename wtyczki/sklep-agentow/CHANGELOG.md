@@ -20,6 +20,30 @@ Nic jeszcze.
 
 ---
 
+## [0.9.24] — 2026-08-30
+
+### Dodane
+- **Mail po zakupie w wersji HTML** (`includes/mail-html.php`): nazwa sklepu w nagłówku, okładka
+  produktu (ta sama co w podglądach linków), przycisk „Pobierz” jako główny element, karta
+  zamówienia, blok zgody, kroki instalacji, gwarancja, opinia, stopka sprzedawcy — kolory strony
+  (limonka na czerni), układ na tabelach, CSS inline, 600 px, ~11 KB. Wysyłka jako
+  `multipart/alternative`: HTML + dotychczasowy tekst jako wersja zapasowa (typ treści nagłówkiem
+  jednej wysyłki, nie filtrem globalnym — reszta poczty WordPressa bez zmian). Do 0.9.23 mail był
+  czystym tekstem, bez brandingu.
+- **Ustawienia → „Dane sprzedawcy”**: nazwa firmy, adres, NIP (suma kontrolna przy zapisie).
+  Trafiają do stopki maila (tekst i HTML) razem z mailem kontaktowym jako adresem do reklamacji
+  i faktur — potwierdzenie zakupu na trwałym nośniku ma nieść dane przedsiębiorcy (ustawa
+  o prawach konsumenta art. 21 ust. 2 → art. 12 ust. 1). Pulpit ostrzega, gdy nazwa albo adres
+  są puste.
+- **Numer zamówienia w mailu** (`#id`, ten sam co w panelu) i **dopisek o fakturze**.
+- Strażnik treści maila rozszerzony o wersję HTML i nowe elementy tekstu (25 sprawdzeń; próba
+  kontrolna z dwiema podłożonymi wadami pada dokładnie w tych dwóch).
+
+### Zmienione
+- Zdanie o zgodzie w mailu bez formy męskiej: „Zgoda zaznaczona przy zakupie …”.
+
+---
+
 ## [0.9.23] — 2026-08-30
 
 ### Dodane

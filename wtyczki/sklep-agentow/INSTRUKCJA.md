@@ -21,7 +21,7 @@ W kokpicie WordPressa, w menu po lewej, jest pozycja **Sklep Agentów** z pięci
 | **Produkty** | dodawanie i edycja produktów, wgrywanie pliku ZIP, włączanie sprzedaży |
 | **Opinie** | moderacja opinii kupujących — pojawiają się na stronie produktu dopiero po przyjęciu |
 | **Dziennik** | logowania administratorów i zdarzenia sklepu |
-| **Ustawienia** | klucze Stripe, nadawca maili, mail kontaktowy, waluta, dane przy odinstalowaniu |
+| **Ustawienia** | klucze Stripe, nadawca maili, mail kontaktowy, dane sprzedawcy (stopka maila), waluta, dane przy odinstalowaniu |
 
 Szczegóły pojedynczego zamówienia otwierasz z listy na Pulpicie przyciskiem **Szczegóły**.
 
@@ -125,7 +125,16 @@ Po opłaceniu kupujący dostaje **jeden** mail (sklep pilnuje, żeby nie wysła�
 - potwierdzenie zgody na dostarczenie treści cyfrowej (dosłowna treść i data),
 - krótką instrukcję instalacji wtyczki,
 - informację o gwarancji, jeśli produkt ją ma,
-- jednorazowy link do wystawienia opinii (ważny 30 dni).
+- jednorazowy link do wystawienia opinii (ważny 30 dni),
+- numer zamówienia (ten sam, który widzisz w panelu), datę i kwotę,
+- dopisek o fakturze („odpisz na tego maila i podaj dane firmy”),
+- stopkę z Twoimi danymi sprzedawcy z Ustawień (nazwa, adres, NIP, mail do reklamacji).
+
+Mail jest w wersji graficznej — nazwa sklepu w nagłówku, okładka produktu, przycisk „Pobierz”,
+kolory strony — a w tej samej wiadomości jedzie wersja tekstowa dla programów pocztowych bez
+obrazków. Obrazek okładki ładuje się z Twojej strony, więc w skrzynce kupującego pokaże się
+dopiero, gdy strona jest dostępna publicznie (na komputerze testowym zobaczysz zamiast niego
+nazwę produktu). W panelu, w szczegółach zamówienia, podgląd pokazuje wersję tekstową.
 
 **Wyślij ponownie** (w szczegółach zamówienia) wysyła mail ze **świeżym linkiem** — nowy termin
 72 godzin i licznik pobrań od zera; poprzedni link przestaje działać. Gdyby wysyłka się nie udała,
@@ -216,7 +225,12 @@ same (sprzątanie co 10 minut). Zamówienia, kwoty i statusy zostają.
   = bez zmian; kasujesz przez „Usuń zapisany sekret”.
 - **Nazwa i adres nadawcy** — tylko dla maili sklepu; reszta poczty WordPressa zostaje bez zmian.
   Adres musi być dopuszczony przez Twój hosting (SPF/DKIM), inaczej maile lądują w spamie.
-- **Mail kontaktowy właściciela** — pokazywany kupującemu, gdy link wygasł albo limit się wyczerpał.
+- **Mail kontaktowy właściciela** — pokazywany kupującemu, gdy link wygasł albo limit się wyczerpał;
+  w mailu po zakupie stoi jako adres do reklamacji i faktur.
+- **Dane sprzedawcy** — nazwa firmy, adres, NIP: trafiają do stopki każdego maila po zakupie.
+  Potwierdzenie zakupu na trwałym nośniku ma zawierać dane przedsiębiorcy (ustawa o prawach
+  konsumenta, art. 21), więc dopóki są puste, Pulpit pokazuje ostrzeżenie. NIP sklep sprawdza
+  przy zapisie (10 cyfr z sumą kontrolną).
 - **Domyślna waluta nowych produktów.**
 - **Dane przy odinstalowaniu** — domyślnie po usunięciu wtyczki dane sprzedaży **zostają**
   w bazie (historia zamówień to nie śmieć). Zaznaczone „Pełne czyszczenie” usuwa przy

@@ -1,7 +1,7 @@
 /* E2E kości v2: akordeon "card" + pola karty w iframe'ach Elements. */
 const { chromium } = require('playwright-core');
 const { wymagajChromium } = require('../lib/chromium');
-const BAZA = 'http://localhost:8890';
+const BAZA = process.env.SKLEPAG_BAZA || 'http://localhost:8890';
 
 async function wypelnijWRamkach(p, dopasowania) {
   for (const [wzor, wartosc] of dopasowania) {
