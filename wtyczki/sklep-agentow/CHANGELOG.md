@@ -32,6 +32,12 @@ Nic jeszcze.
 - Doprecyzowane zdanie w opisie wtyczki: bez stron „Sklep”/„Dziękujemy” wtyczka nie dokleja niczego do
   innych stron — sklep pokazuje się tam, gdzie właściciel sam wstawi skrót.
 
+- **Awaria poczty przy automatycznym ponowieniu nie zabija już działającego linku.** Cron rotował token
+  przed wysyłką; gdy mail padł, w bazie zostawał skrót, którego nie niósł żaden doręczony mail — kupujący
+  z działającym starym linkiem tracił go na stałe. Teraz gałąź porażki przywraca token, termin i licznik
+  sprzed rotacji (ta sama zasada co przy ręcznym „Wyślij ponownie”); część 4 strażnika
+  `resend-odnawia-limit-pobran` pilnuje (na kodzie 0.9.26 pada).
+
 ### Dodane
 - Strażnik weryfikacji podpisu webhooka (poprawny/zły/rotowany sekret/przeterminowany znacznik/podmienione
   body/dwa podpisy) z próbą kontrolną — dotąd odrzut złego podpisu dowodziły tylko raporty audytu.

@@ -941,7 +941,12 @@ function sklepag_domknij_zakup( $sesja ) {
 	// Świeży link = licznik pobrań od zera (ta sama zasada co przycisk ponownej wysyłki w panelu):
 	// ponowienie po nieudanym resendzie kupującego z wyczerpanym limitem inaczej wydawało
 	// link, który od pierwszego kliknięcia dawał 410. Przy pierwszym domknięciu zakupu licznik i tak jest 0.
-	$token = bin2hex( random_bytes( 32 ) );
+	// Zdjęcie stanu linku PRZED rotacją — gałąź porażki (krok 6) przywraca je, żeby
+	// kupujący z DZIAŁAJĄCYM starym linkiem nie tracił go przy trwałej awarii poczty
+	// (dotąd: cron rotował token, pad wysyłki zostawiał w bazie skrót, którego nie niósł
+	// żaden mail — link z ostatniego doręczonego maila umierał; CO-WISI „kompensacja w cronie”).
+	$przed_rotacja = $wpdb->get_row( $wpdb->prepare( "SELECT token_pobrania, link_wygasa, pobrania_uzyte FROM {$pz} WHERE stripe_session_id=%s", $sid ) );
+	$token         = bin2hex( random_bytes( 32 ) );
 	$wpdb->query(
 		$wpdb->prepare(
 			"UPDATE {$pz} SET token_pobrania=%s, link_wygasa=%s, pobrania_uzyte=0, zmieniono=%s WHERE stripe_session_id=%s AND status='mail_w_toku'",
@@ -988,6 +993,20 @@ function sklepag_domknij_zakup( $sesja ) {
 		return true;
 	}
 
+	// Kompensacja: mail NIE wyszedł, więc świeży token nie dotarł do nikogo — przywracamy
+	// stan linku sprzed rotacji (jeśli był; pierwsze domknięcie nie ma czego przywracać).
+	// Ta sama zasada co przy ręcznym „Wyślij ponownie” (admin-zamowienie.php).
+	if ( $przed_rotacja && '' !== (string) $przed_rotacja->token_pobrania ) {
+		$wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$pz} SET token_pobrania=%s, link_wygasa=%s, pobrania_uzyte=%d WHERE stripe_session_id=%s AND status='mail_w_toku'",
+				$przed_rotacja->token_pobrania,
+				$przed_rotacja->link_wygasa,
+				(int) $przed_rotacja->pobrania_uzyte,
+				$sid
+			)
+		);
+	}
 	$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET status='mail_blad', mail_proby=mail_proby+1, zmieniono=%s WHERE stripe_session_id=%s AND status='mail_w_toku'", $teraz, $sid ) );
 	sklepag_zdarzenie( (int) $zam->id, 'mail_blad', '' === $email ? 'brak adresu email w sesji' : 'wp_mail zwrocil false' );
 	return false;

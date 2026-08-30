@@ -150,6 +150,7 @@ link do pobrania w mailu, jednorazowy link do opinii.
 == Changelog ==
 
 = 0.9.27 =
+* Naprawione: gdy poczta ma awarię przy automatycznym ponowieniu maila, wcześniej wysłany link do pobrania dalej działa (dotąd mógł zgasnąć na stałe).
 * Naprawione: strona nieistniejącego produktu zwraca kod 404 także dla żądań HEAD (dotąd narzędzia sprawdzające widziały 200).
 * Naprawione: gdy na stronie działa wtyczka SEO (Yoast, Rank Math), sklep nie dokłada drugiego znacznika canonical.
 
