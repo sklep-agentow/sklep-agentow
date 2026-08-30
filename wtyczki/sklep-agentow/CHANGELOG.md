@@ -20,6 +20,37 @@ Nic jeszcze.
 
 ---
 
+## [0.9.23] — 2026-08-30
+
+### Dodane
+- **`INSTRUKCJA.md` — instrukcja właściciela** (panel, produkty, zamówienia i statusy, mail
+  i link do pobrania, opinie, RODO, dziennik, ustawienia, najczęstsze pytania), ze zrzutami
+  panelu robionymi maszynowo (`zrzuty/`). Do tej pory sklep miał tylko instrukcję instalacji
+  obok paczek — oba boty instrukcję użytkownika w paczce już miały.
+- **`PONAD-SPECYFIKACJE.md`** — jawna lista wszystkiego, co sklep robi ponad literę zamówienia,
+  każda pozycja z powodem; plus lista tego, czego świadomie nie ma.
+
+### Naprawione
+- **Świeży link do pobrania odnawia limit pobrań** — zarówno z „Wyślij ponownie”, jak i z automatycznego
+  ponowienia po nieudanej wysyłce. Świeży link dostaje licznik pobrań od zera; dotąd
+  zerowany był tylko termin, więc kupujący z wyczerpanym limitem — czyli ten, którego instrukcja po ten
+  przycisk odsyła — dostawał nowy link i od razu „Limit pobrań wyczerpany”. Nieudana wysyłka przywraca
+  stary link razem z jego licznikiem.
+
+### Zmienione
+- **Szkic Polityki prywatności wymienia adres IP przy pobraniu pliku** (dziennik zdarzeń, 90 dni).
+  Szkic powstaje tylko przy pierwszej aktywacji — sklep zainstalowany wcześniej ma stary szkic;
+  jeśli Polityka jest już opublikowana, dopisz to zdanie ręcznie (instrukcja, rozdział 6).
+- **„Wyślij ponownie” tylko tam, gdzie zadziała.** Przycisk pokazuje się wyłącznie przy zamówieniu w stanie
+  „mail wysłany” albo „błąd maila”; przy zwróconym lub spornym sklep mówi wprost, że ponowna wysyłka nie jest
+  dostępna (wcześniej przycisk był widoczny, a kliknięcie kończyło się mylącym komunikatem o „domykaniu
+  automatycznym”).
+- Dwa komunikaty „Brak uprawnień.” w moderacji opinii wypisywane wprost (`esc_html`), a nie przez
+  funkcję tłumaczenia bez domeny — wtyczka nie tłumaczy tekstów, więc wywołanie było niespójne
+  (wskazał to Plugin Check). Zero zmian w działaniu.
+
+---
+
 ## [0.9.22] — 2026-08-29
 
 ### Zmienione

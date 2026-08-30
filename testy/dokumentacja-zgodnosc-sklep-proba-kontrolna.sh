@@ -1,5 +1,5 @@
 #!/bin/bash
-# dokumentacja-zgodnosc-sklep-proba-kontrolna.sh — dowód, że bramka dok=kod SKLEPU potrafi PAŚĆ.   WERSJA 1.0.0
+# dokumentacja-zgodnosc-sklep-proba-kontrolna.sh — dowód, że bramka dok=kod SKLEPU potrafi PAŚĆ.   WERSJA 1.1.0
 #
 # Recenzja #182 r2 W4: nowa bramka weszła bez dowodu, że rozpoznaje rozjazd (zasada dowodu CLAUDE.md / D14).
 # Kopiuje do /tmp TYLKO to, co test czyta, i w każdym przypadku psuje DOKŁADNIE JEDNĄ rzecz — oczekuje EXIT 1,
@@ -15,11 +15,17 @@ BLEDY=0; PRZYPADKI=0; ROZJAZDY=0
 WER=$(sed -n 's/^ \* Version:[[:space:]]*\([0-9.]*\).*/\1/p' "$KORZEN/$W/sklep-agentow.php" | head -1)
 
 zbuduj_czysty() {
-	local r="$1"; rm -rf "$r"; mkdir -p "$r/testy" "$r/$W/includes" "$r/dokumentacja"
+	local r="$1"; rm -rf "$r"; mkdir -p "$r/testy" "$r/$W/includes" "$r/$W/zrzuty" "$r/dokumentacja" "$r/boty"
 	cp "$KORZEN/testy/dokumentacja-zgodnosc-sklep.sh" "$r/testy/"
 	cp "$KORZEN/$W/readme.txt" "$KORZEN/$W/CHANGELOG.md" "$KORZEN/$W/DOKUMENTACJA-TECHNICZNA.md" "$KORZEN/$W/sklep-agentow.php" "$r/$W/"
-	cp "$KORZEN/$W/includes/admin.php" "$KORZEN/$W/includes/zakup.php" "$KORZEN/$W/includes/aktywacja.php" "$r/$W/includes/"
+	# 1.1.0: sekcja F bramki czyta INSTRUKCJA.md, PONAD-SPECYFIKACJE.md, zrzuty/, admin-produkty.php i allowlistę
+	# buduj-paczki.sh — bez nich czysta kopia padała na 12/12 przypadkach (recenzja PR o instrukcji, KRYTYCZNA).
+	# Reguła: kopia musi zawierać KAŻDY plik, który bramka otwiera; nowa asercja w bramce = nowy plik tutaj.
+	cp "$KORZEN/$W/INSTRUKCJA.md" "$KORZEN/$W/PONAD-SPECYFIKACJE.md" "$r/$W/"
+	cp "$KORZEN/$W/zrzuty/"*.png "$r/$W/zrzuty/"
+	cp "$KORZEN/$W/includes/admin.php" "$KORZEN/$W/includes/zakup.php" "$KORZEN/$W/includes/aktywacja.php" "$KORZEN/$W/includes/admin-produkty.php" "$r/$W/includes/"
 	cp "$KORZEN/dokumentacja/INSTRUKCJA-INSTALACJI.md" "$r/dokumentacja/"
+	cp "$KORZEN/boty/buduj-paczki.sh" "$r/boty/"
 }
 
 sprawdz() { # sprawdz <opis> <oczekiwany-exit> <funkcja-psujaca> <fragmenty-wyjscia rozdzielone |> [oczekiwana-liczba-rozjazdow=1]
@@ -54,6 +60,16 @@ psuj_brak_pliku()   { rm -f "$1/dokumentacja/INSTRUKCJA-INSTALACJI.md"; }
 psuj_tabela_stalych() { sed -i 's/^| `SKLEPAG_LIMIT_POBRAN` | 10 |/| `SKLEPAG_LIMIT_POBRAN` | 11 |/' "$1/$W/DOKUMENTACJA-TECHNICZNA.md"; }
 # Druga strona tej samej sekcji: petla, ktora przestaje dopasowywac wiersze, byla by cicho pusta.
 psuj_uklad_tabeli()   { sed -i '0,/^| `SKLEPAG_WERSJA` |/s/^| `SKLEPAG_WERSJA` |/| SKLEPAG_WERSJA |/' "$1/$W/DOKUMENTACJA-TECHNICZNA.md"; }
+# Sekcja F (INSTRUKCJA.md) — jeden przypadek na KAŻDĄ liczbę i na odsyłacze; bez tego 10 asercji weszło z jedną ręczną kalibracją.
+psuj_instr_godziny()  { sed -i 's/ważny \*\*72 godziny\*\*/ważny **48 godziny**/' "$1/$W/INSTRUKCJA.md"; }
+psuj_instr_pobran()   { sed -i 's/do \*\*10 pobrań\*\*/do **99 pobrań**/' "$1/$W/INSTRUKCJA.md"; }
+psuj_instr_opinia()   { sed -i 's/opinii (ważny 30 dni)/opinii (ważny 14 dni)/' "$1/$W/INSTRUKCJA.md"; }
+psuj_instr_mb()       { sed -i 's/ZIP, do 20 MB/ZIP, do 50 MB/' "$1/$W/INSTRUKCJA.md"; }
+psuj_instr_minut()    { sed -i 's/co 10 minut/co 15 minut/' "$1/$W/INSTRUKCJA.md"; }
+psuj_instr_zrzut()    { rm -f "$1/$W/zrzuty/ustawienia.png"; }
+psuj_instr_allow()    { sed -i '/sklep-agentow\/zrzuty\/ustawienia.png/d' "$1/boty/buduj-paczki.sh"; }
+psuj_instr_brak()     { rm -f "$1/$W/INSTRUKCJA.md"; }
+psuj_ponad_brak()     { rm -f "$1/$W/PONAD-SPECYFIKACJE.md"; }
 
 echo "=== KONTROLA ODWROTNA: czysta kopia = 0 rozjazdow ==="
 sprawdz_ "czysta kopia repo → EXIT 0"                         0 nic               "0 rozjazdów"
@@ -71,6 +87,16 @@ sprawdz_ "A1: tabela stalych podaje inna wartosc niz kod"      1 psuj_tabela_sta
 # Psucie ukladu trafia w DWIE asercje naraz (licznik wierszy + kontrola DOK-TECH czytajaca
 # ten sam wiersz), wiec liczba podana JAWNIE i obie pozycje muszą byc nazwane.
 sprawdz_ "A1: rozjechany uklad tabeli — petla widzi mniej"     1 psuj_uklad_tabeli   "wierszy tabeli stalych przeczytanych|DOK-TECH: tabela stalych" 2
+sprawdz_ "F: INSTRUKCJA mówi 48 godzin, stała 72"               1 psuj_instr_godziny  "INSTRUKCJA: link ważny N godzin"
+sprawdz_ "F: INSTRUKCJA mówi 99 pobrań, stała 10"               1 psuj_instr_pobran   "INSTRUKCJA: do N pobrań"
+sprawdz_ "F: INSTRUKCJA mówi opinia 14 dni, stała 30"           1 psuj_instr_opinia   "INSTRUKCJA: opinia ważna N dni"
+sprawdz_ "F: INSTRUKCJA mówi ZIP 50 MB, stała 20"               1 psuj_instr_mb       "INSTRUKCJA: ZIP do N MB"
+sprawdz_ "F: INSTRUKCJA mówi co 15 minut, cron 10"              1 psuj_instr_minut    "INSTRUKCJA: dopytanie co N minut"
+sprawdz_ "F: zrzut z instrukcji nie istnieje w repo"            1 psuj_instr_zrzut    "INSTRUKCJA: odsyłacze do zrzutów"
+sprawdz_ "F: zrzut z instrukcji poza allowlistą paczki"         1 psuj_instr_allow    "INSTRUKCJA: zrzuty wpisane do allowlisty"
+# Brak pliku instrukcji trafia w asercje, które go CZYTAJĄ (plik + 5 liczb = 6); dwie asercje o odsyłaczach liczą wtedy 0 == 0 i przechodzą — liczba jawnie.
+sprawdz_ "F: readme obiecuje INSTRUKCJA.md, pliku brak"         1 psuj_instr_brak     "plik wtyczki/sklep-agentow/INSTRUKCJA.md" 6
+sprawdz_ "F: readme obiecuje PONAD-SPECYFIKACJE.md, pliku brak" 1 psuj_ponad_brak     "plik wtyczki/sklep-agentow/PONAD-SPECYFIKACJE.md"
 echo
 echo "PRZYPADKÓW: $((PRZYPADKI-BLEDY))/$PRZYPADKI OK · rozjazdów podłożonych łącznie: $ROZJAZDY"
 if [ "$BLEDY" -eq 0 ]; then echo "BRAMKA DOK=KOD SKLEPU ROZPOZNAJE KAZDY PODLOZONY ROZJAZD — i przepuszcza czysta kopie"; exit 0; fi

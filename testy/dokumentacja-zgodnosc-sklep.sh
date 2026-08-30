@@ -103,6 +103,22 @@ for p in CHANGELOG.md DOKUMENTACJA-TECHNICZNA.md; do spr "readme: '$p' w paczce"
 spr "readme: instrukcja 'obok paczek'"      "1" "grep -c 'obok paczek (plik \`INSTRUKCJA-INSTALACJI.md\`)' $W/readme.txt"
 spr "plik dokumentacja/INSTRUKCJA-INSTALACJI.md" "1" "test -f dokumentacja/INSTRUKCJA-INSTALACJI.md && echo 1 || echo 0"
 
+echo "=== F. INSTRUKCJA.md — WYBRANE LICZBY (72 h, 10 pobrań, 30 dni, 20 MB, co 10 min) i ODSYŁACZE == kod (treści zdań ta bramka NIE mierzy; to robi czytanie w całości) ==="
+# Instrukcja właściciela weszła do paczki w 0.9.23. Każda liczba, którą podaje, ma stałą w kodzie —
+# porównujemy z NIĄ, nie z readme (te same zasady co sekcja B). Zrzuty, do których odsyła, muszą
+# istnieć w katalogu wtyczki, bo inaczej paczka niesie pusty odsyłacz.
+spr "plik $W/INSTRUKCJA.md"                 "1" "test -f $W/INSTRUKCJA.md && echo 1 || echo 0"
+spr "INSTRUKCJA: link ważny N godzin == SKLEPAG_LINK_GODZIN" "$(stala SKLEPAG_LINK_GODZIN)" "grep -oE 'ważny \*\*[0-9]+ godzin' $W/INSTRUKCJA.md | head -1 | grep -oE '[0-9]+'"
+spr "INSTRUKCJA: do N pobrań == SKLEPAG_LIMIT_POBRAN"       "$(stala SKLEPAG_LIMIT_POBRAN)" "grep -oE 'do \*\*[0-9]+ pobrań' $W/INSTRUKCJA.md | head -1 | grep -oE '[0-9]+'"
+spr "INSTRUKCJA: opinia ważna N dni == SKLEPAG_OPINIA_DNI"  "$(stala SKLEPAG_OPINIA_DNI)" "grep -oE 'opinii \(ważny [0-9]+ dni' $W/INSTRUKCJA.md | head -1 | grep -oE '[0-9]+'"
+spr "INSTRUKCJA: ZIP do N MB == SKLEPAG_UPLOAD_LIMIT_B"     "$(grep -oP 'const SKLEPAG_UPLOAD_LIMIT_B = \K[0-9]+' $W/includes/admin-produkty.php)" "grep -oE 'ZIP, do [0-9]+ MB' $W/INSTRUKCJA.md | head -1 | grep -oE '[0-9]+'"
+spr "INSTRUKCJA: dopytanie co N minut == interwał cron"     "$(( $(grep -oP "'interval' => \K[0-9]+" $W/sklep-agentow.php | head -1) / 60 ))" "grep -oE 'co [0-9]+ minut' $W/INSTRUKCJA.md | head -1 | grep -oE '[0-9]+'"
+spr "INSTRUKCJA: odsyłacze do zrzutów"                      "$(grep -oE '\(zrzuty/[a-z0-9-]+\.png\)' $W/INSTRUKCJA.md | sort -u | wc -l)" "n=0; for z in \$(grep -oE 'zrzuty/[a-z0-9-]+\.png' $W/INSTRUKCJA.md | sort -u); do [ -f $W/\$z ] && n=\$((n+1)); done; echo \$n"
+spr "INSTRUKCJA: zrzuty wpisane do allowlisty paczki"       "$(grep -oE 'zrzuty/[a-z0-9-]+\.png' $W/INSTRUKCJA.md | sort -u | wc -l)" "n=0; for z in \$(grep -oE 'zrzuty/[a-z0-9-]+\.png' $W/INSTRUKCJA.md | sort -u); do grep -q \"sklep-agentow/\$z\" boty/buduj-paczki.sh && n=\$((n+1)); done; echo \$n"
+spr "readme: 'INSTRUKCJA.md' w paczce"                      "1" "grep -c 'w \`INSTRUKCJA.md\`' $W/readme.txt"
+spr "readme: 'PONAD-SPECYFIKACJE.md' w paczce"              "1" "grep -c '\`PONAD-SPECYFIKACJE.md\` w paczce' $W/readme.txt"
+spr "plik $W/PONAD-SPECYFIKACJE.md"                         "1" "test -f $W/PONAD-SPECYFIKACJE.md && echo 1 || echo 0"
+
 echo
-if [ "$ZLE" -eq 0 ]; then echo "DOKUMENTACJA SKLEPU ZGODNA Z KODEM — 0 rozjazdów"; exit 0; fi
+if [ "$ZLE" -eq 0 ]; then echo "PIEC LICZB (72h/10/30d/20MB/10min), ETYKIETY I ODSYLACZE DOKUMENTACJI SKLEPU ZGODNE Z KODEM — 0 rozjazdów (90 dni, 7 prob, 3 proby, 1 min, 5 stron i tresc zdan: czytanie w calosci)"; exit 0; fi
 echo "NIEZGODNE: $ZLE pozycji"; exit 1
