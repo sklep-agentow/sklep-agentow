@@ -1,4 +1,4 @@
-# RAPORT ODDANIA — Sklep Agentów, próba 1 (2026-08-30, wydanie `v0.9.23`)
+# RAPORT ODDANIA — Sklep Agentów, próba 1 (2026-08-30, wydanie `v0.9.23`; §6 = dopisek dla `v0.9.24`)
 
 > Dla Dzidka i dla oceniającego. Każda liczba ma komendę, którą ją policzono, i commit, na którym
 > ją policzono: **`a1b2495`** (`main` po scaleniu `#213` i `#214`). Każda zmiana w repo po tym
@@ -125,6 +125,14 @@ kontroli FAIL **2 (z 13)** — kontrole 2 i 6, **te same co w §2**. Przelot pr�
 `a1b2495` (`dowod-z-paczki` EXIT=2, `blad-klucza`, `ip-za-proxy`, `nonce`, `przejecie`, `pulapka`; porównane z logiem
 w `git show HEAD:audyt/sklep/PROBY-KONTROLNE.log`). Delta 0.9.24 nie dołożyła ani jednej padającej próby i żadnej nie naprawiła
 (strażniki botów — poza zakresem tej zmiany).
+
+⛔ **Log prób został NADPISANY w miejscu** przelotem 0.9.24 (`COMMIT: d0a45a9`). Wersja z `a1b2495`, do której odsyłają §2, §5,
+`rubryka-GOTOWE.md` #12 i `audyt/DO-ODDANIA.md` §2, jest w historii: `git show a1b2495:audyt/sklep/PROBY-KONTROLNE.log`
+(ten sam zestaw 6 prób, inne czasy).
+
+**Długi zapisane w `CO-WISI.md` „na 0.9.24” NIE weszły do 0.9.24** i są przedatowane na 0.9.25: trzy długi po K9
+(numeracja pozycji w instrukcji nawigacji, zrzuty kroków instalacji, jedna tablica PHP jako źródło menu ze strażnikiem).
+0.9.24 objęło wyłącznie mail i dane sprzedawcy — decyzja: poprawki instrukcji czekają na uwagi kolegi po odbiorze.
 
 **Jak sprawdzona delta:** recenzja `#220` — 3 rundy świeżym agentem (r1: 2 WAŻNE + 2 DROBNE, r2: 1 WAŻNA + 3 DROBNE,
 r3: 0 WAŻNYCH + 3 DROBNE → długi w `CO-WISI.md`); strażnik `testy/mail-po-zakupie-test.php` 26/26 z próbą kontrolną
