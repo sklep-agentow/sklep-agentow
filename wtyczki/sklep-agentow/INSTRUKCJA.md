@@ -27,8 +27,8 @@ Szczegóły pojedynczego zamówienia otwierasz z listy na Pulpicie przyciskiem *
 
 ![Pulpit sklepu — wskaźniki sprzedaży](zrzuty/dashboard-wskazniki.png)
 
-Na górze Pulpitu widzisz też oznaczenie **TRYB TESTOWY**, dopóki sklep pracuje na testowych
-kluczach Stripe — o tym w rozdziale 8.
+Na górze Pulpitu jest oznaczenie **TRYB TESTOWY** — w tej wersji wpisane na stałe, niezależnie od
+tego, jakie klucze Stripe wpiszesz (rozdział 8).
 
 ---
 
@@ -45,8 +45,9 @@ kluczach Stripe — o tym w rozdziale 8.
    znaczników HTML w opisach (to celowe zabezpieczenie).
 4. **Cena i waluta** — cena w pełnych jednostkach (np. `149.00`). Waluta nowego produktu
    bierze się z Ustawień, tu możesz ją zmienić dla tego produktu.
-5. **Plik paczki (ZIP)** — to, co kupujący pobiera. Wyłącznie ZIP, do 20 MB, o ile Twój
-   hosting pozwala na taki rozmiar wysyłki (formularz pokazuje aktualny limit serwera).
+5. **Plik paczki (ZIP)** — to, co kupujący pobiera. Wyłącznie ZIP, do 20 MB — ale nie więcej,
+   niż pozwala Twój serwer: formularz pokazuje **mniejszy** z tych dwóch limitów (na zrzucie wyżej
+   „do 2 MB”, bo tyle pozwalał serwer, na którym robiono zrzut).
    Sklep sprawdza plik po zapisie (obecność, rozmiar, suma kontrolna) i dopiero wtedy uznaje
    go za **potwierdzony**.
 6. **W sprzedaży** — zaznacz „Produkt widoczny i kupowalny w sklepie”.
@@ -78,12 +79,13 @@ przefiltrowane.
 
 | Status | Co znaczy | Co robić |
 |---|---|---|
+| **oczekuje** | powiadomienie od Stripe przyjęte, płatność jeszcze niepotwierdzona (np. przelew albo BLIK w toku) | nic — poczekaj; gdy wisi długo, „Dociągnij zaległe teraz” |
 | **opłacone** | Stripe potwierdził płatność, mail jeszcze nie poszedł | nic — mail wychodzi za chwilę |
-| **mail w toku** | sklep próbuje wysłać mail | poczekaj; po nieudanych próbach zmieni się w „błąd maila” |
+| **mail w toku** | sklep właśnie wysyła mail | poczekaj |
 | **mail wysłany** | kupujący dostał link do pobrania | nic |
-| **błąd maila** | trzy próby wysyłki nie powiodły się | otwórz **Szczegóły → Wyślij ponownie**; jeśli błąd się powtarza — patrz rozdział 4 (SMTP) |
-| **zwrócone** | płatność zwrócona w Stripe (pełny lub częściowy zwrot) | nic — sklep odnotował zwrot z powiadomienia Stripe i odjął go od statystyk |
-| **sporne** | kupujący zakwestionował płatność w banku (chargeback) | odpowiadasz w panelu Stripe; po zamknięciu sporu sklep sam wraca do poprzedniego statusu albo zapisuje przegraną |
+| **błąd maila** | ostatnia próba wysyłki nie powiodła się; sklep ponawia sam do trzech prób, potem zostaje ten status i pasek na Pulpicie | otwórz **Szczegóły → Wyślij ponownie**; jeśli błąd się powtarza — patrz rozdział 4 (SMTP) |
+| **zwrócone** | Stripe zwrócił kupującemu **całą** kwotę | nic — sklep odnotował zwrot z powiadomienia Stripe i odjął go od statystyk. Zwrot **częściowy** nie zmienia statusu: kwota schodzi ze statystyk, a zwrot widać w osi czasu zamówienia |
+| **obciążenie zwrotne** (spór) | kupujący zakwestionował płatność w banku (chargeback) — kwota zdjęta z Twojego konta do rozstrzygnięcia | odpowiadasz w panelu Stripe; spór wygrany albo wycofany → sklep wraca do poprzedniego statusu; spór przegrany → zamówienie zostaje jako obciążenie zwrotne |
 
 ⚠️ Zwrot ani spór **nie odcinają** wcześniej wysłanego linku do pobrania — działa do końca
 swojej ważności (72 godziny, 10 pobrań). Jeśli chcesz, żeby zwrot odcinał dostęp od razu,
@@ -124,8 +126,9 @@ Po opłaceniu kupujący dostaje **jeden** mail (sklep pilnuje, żeby nie wysła�
 **Wyślij ponownie** (w szczegółach zamówienia) wysyła mail ze **świeżym linkiem** — nowy termin
 72 godzin i nowy limit pobrań; poprzedni link przestaje działać. Gdyby wysyłka się nie udała,
 sklep przywraca poprzedni link — ponowna wysyłka nigdy nie zostawia kupującego bez dostępu.
-Dla zamówienia zwróconego albo spornego mail też wychodzi, ale status zamówienia się nie zmienia
-— zwrot i spór zostają w historii.
+Przycisk jest dostępny tylko dla zamówień w stanie „mail wysłany” albo „błąd maila”: dla zwróconych,
+spornych i jeszcze niedomkniętych sklep odmawia — link, który kupujący już ma, działa do końca
+swojej ważności.
 
 Gdy link wygaśnie albo limit się wyczerpie, kupujący widzi na stronie pobierania Twój
 **mail kontaktowy** z Ustawień — żeby napisał do Ciebie, a Ty użyjesz „Wyślij ponownie”.
@@ -144,8 +147,7 @@ Opinię może wystawić wyłącznie kupujący — z jednorazowego linku w mailu 
 opinia na zamówienie, w ciągu 30 dni. Nie ma ocen od anonimowych gości ani zbiorczej średniej.
 
 Nowa opinia trafia do **Oczekujących** i **nie jest widoczna** na stronie produktu, dopóki nie
-klikniesz **Przyjmij**. **Odrzuć** chowa ją na stałe (możesz później przywrócić z zakładki
-Odrzucone). Strona Opinii pokazuje też, ile maili z linkiem do opinii wysłano bez odpowiedzi.
+klikniesz **Przyjmij**. **Odrzuć** chowa ją; możesz ją później przyjąć z zakładki Odrzucone. Strona Opinii pokazuje też, ile maili z linkiem do opinii wysłano bez odpowiedzi.
 
 ---
 
@@ -161,7 +163,9 @@ tego zamówienia, unieważnia link do pobrania (zanonimizowany kupujący nie ma 
 nie tracą historii. Operacja jest nieodwracalna.
 
 Jeśli usunięcie nie uda się w całości (np. błąd zapisu), sklep **nie udaje**, że się udało:
-adres zostaje nietknięty, w osi czasu pojawia się zdarzenie błędu, a Ty powtarzasz operację.
+pokazuje błąd, nie potwierdza usunięcia (dane mogą nadal być w bazie — nie potwierdzaj ich
+usunięcia osobie, która o to prosiła), w osi czasu pojawia się zdarzenie błędu, a Ty powtarzasz
+operację, aż przejdzie.
 
 Przy instalacji powstały dwa szkice stron: **Regulamin sklepu** i **Polityka prywatności
 sklepu**. Uzupełnij je swoimi danymi sprzedawcy i opublikuj, zanim zaczniesz sprzedawać naprawdę.
@@ -173,8 +177,9 @@ sklepu**. Uzupełnij je swoimi danymi sprzedawcy i opublikuj, zanim zaczniesz sp
 **Sklep Agentów → Dziennik**, dwie zakładki:
 
 - **Logowania** — udane i nieudane logowania do kokpitu, z adresem, z którego przyszły.
-  Po nieudanych próbach sklep wydłuża czas odpowiedzi (do minuty) — spowalnia zgadywanie hasła,
-  ale nikogo nie blokuje. Wpisy starsze niż 90 dni znikają same.
+  Po nieudanych próbach sklep wydłuża czas odpowiedzi (do minuty), a od szóstej próby w ciągu
+  minuty z tego samego adresu odmawia na minutę — spowalnia zgadywanie hasła, nie blokuje konta
+  na stałe. Wpisy starsze niż 90 dni znikają same.
 - **Zdarzenia** — to samo, co osie czasu wszystkich zamówień, w jednym miejscu: płatności,
   wysyłki, pobrania, zwroty, spory, anonimizacje, eksporty CSV.
 
@@ -199,11 +204,11 @@ sklepu**. Uzupełnij je swoimi danymi sprzedawcy i opublikuj, zanim zaczniesz sp
   i zaplanowane zadanie sklep usuwa zawsze.
 
 **Tryb testowy a sprzedaż naprawdę.** Dopóki w Ustawieniach są klucze testowe (`sk_test_…`),
-płatności nie są pobierane, a kupujący widzi oznaczenia trybu testowego — na liście sklepu,
-na stronie produktu, na stronie po zapłacie i w mailu. Przejście na prawdziwe płatności to
-osobna decyzja i osobna paczka: pełną listę kroków i tego, co **nie** znika samo, znajdziesz
-w `INSTRUKCJA-INSTALACJI.md`, rozdział „Test a produkcja”. Zaczyna się od jednego kroku:
-napisz do nas.
+płatności nie są pobierane. Oznaczenia trybu testowego — na Pulpicie, na liście sklepu, na stronie
+produktu, na stronie po zapłacie i w mailu — są w tej wersji **wpisane na stałe** i nie znikną po
+samej zmianie kluczy. Przejście na prawdziwe płatności to osobna decyzja i osobna paczka: pełną
+listę kroków i tego, co **nie** znika samo, znajdziesz w `INSTRUKCJA-INSTALACJI.md`, rozdział
+„Test a produkcja”. Zaczyna się od jednego kroku: napisz do nas.
 
 ---
 

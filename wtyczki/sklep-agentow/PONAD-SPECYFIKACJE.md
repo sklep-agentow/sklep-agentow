@@ -19,8 +19,9 @@ to jest w paczce, bo bez tego sklep nie nadawałby się do sprzedaży, a nie dla
 3. **Każde przejście stanu zamówienia jest jednorazowe** (blokada w bazie) — kupujący dostaje dokładnie
    jeden mail, nawet gdy Stripe wyśle powiadomienie dwa razy.
 4. **Zwroty i spory (chargeback) z powiadomień Stripe** trafiają do zamówienia jako statusy „zwrócone”
-   i „sporne”, z kwotą, i są odejmowane od statystyk sprzedaży; po zamkniętym sporze sklep wraca do
-   poprzedniego statusu. Powód: bez tego Pulpit liczyłby jako sprzedaż pieniądze, których nie ma.
+   (pełny zwrot) i „obciążenie zwrotne”, z kwotą, i są odejmowane od statystyk sprzedaży; zwrot częściowy
+   nie zmienia statusu, tylko kwotę. Spór wygrany albo wycofany przywraca poprzedni status; przegrany
+   zostaje jako obciążenie zwrotne. Powód: bez tego Pulpit liczyłby jako sprzedaż pieniądze, których nie ma.
 
 ## Wydawanie pliku
 
@@ -33,7 +34,10 @@ to jest w paczce, bo bez tego sklep nie nadawałby się do sprzedaży, a nie dla
    suma kontrolna) i nie pozwala włączyć produktu bez pliku. Powód: sprzedanie czegoś, czego nie ma
    czym wydać, kończy się zwrotem i utratą zaufania.
 8. **Kopia danych produktu w zamówieniu** (nazwa, cena, plik z chwili zakupu). Powód: zmiana ceny
-   albo pliku nie może przepisywać historii sprzedaży ani odbierać kupionej wersji.
+   albo pliku nie może przepisywać historii sprzedaży ani odbierać kupionej wersji. Skutek uboczny,
+   świadomie zostawiony: po podmianie pliku produktu stary plik zostaje w katalogu chronionym (nie
+   wycieka — katalog jest zamknięty), bo sklep nie odróżnia jeszcze pliku trzymanego przez stare
+   zamówienia od wolnego; sprzątanie to osobna zmiana na życzenie.
 
 ## Mail po zakupie
 
@@ -67,7 +71,8 @@ to jest w paczce, bo bez tego sklep nie nadawałby się do sprzedaży, a nie dla
 15. **Dziennik zdarzeń** (obok dziennika logowań): płatności, wysyłki, pobrania, zwroty, spory,
     anonimizacje, eksporty — z osi czasu każdego zamówienia. Powód: „co się stało z tym zamówieniem”
     musi mieć odpowiedź bez grzebania w bazie.
-16. **Spowalnianie nieudanych logowań** (wydłużany czas odpowiedzi do minuty, bez blokowania konta)
+16. **Spowalnianie nieudanych logowań** (wydłużany czas odpowiedzi do minuty; od szóstej próby w ciągu
+    minuty z jednego adresu — odmowa na minutę, bez blokowania konta na stałe)
     i **usuwanie wpisów dziennika logowań starszych niż 90 dni**. Powód: zgadywanie hasła ma być
     nieopłacalne, a dziennik nie może rosnąć bez końca.
 17. **Pulpit z porównaniem do poprzedniego okresu, rozkładem zakupów w czasie, filtrami po statusie

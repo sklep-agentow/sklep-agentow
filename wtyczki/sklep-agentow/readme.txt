@@ -147,7 +147,8 @@ link do pobrania w mailu, jednorazowy link do opinii.
 
 = 0.9.23 =
 * Dodane: instrukcja właściciela (INSTRUKCJA.md ze zrzutami panelu) i jawna lista tego, co sklep robi ponad zamówienie (PONAD-SPECYFIKACJE.md) — oba pliki w paczce.
-* Zmienione: dwa komunikaty „Brak uprawnień.” w moderacji opinii wypisywane wprost, bez funkcji tłumaczenia (wtyczka nie tłumaczy tekstów). Zero zmian w działaniu.
+* Zmienione: przycisk „Wyślij ponownie” pokazuje się tylko przy zamówieniu w stanie „mail wysłany” albo „błąd maila”; przy zwróconym lub spornym sklep mówi wprost, że ponowna wysyłka nie jest dostępna.
+* Zmienione: dwa komunikaty „Brak uprawnień.” w moderacji opinii wypisywane wprost, bez funkcji tłumaczenia (wtyczka nie tłumaczy tekstów).
 
 = 0.9.22 =
 * Wydanie porządkowe: z komentarzy w kodzie i z dokumentacji usunięte wewnętrzne oznaczenia naszych raportów. Zero zmian w działaniu.

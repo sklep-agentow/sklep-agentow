@@ -57,6 +57,10 @@ function sklepag_obsluz_resend() {
 	// właśnie domyka (resend nadpisałby token bez CAS), `oczekuje`/`oplacone` =
 	// silnik zaraz wyśle sam. Utknięte `mail_w_toku` odzyskuje reconciliation
 	// (stale-claim po 5 min) i przestawia status — wtedy resend się odblokuje.
+	if ( in_array( $zam->status, array( 'zwrocone', 'sporne' ), true ) ) {
+		// Zamknięte finansowo: ponowna wysyłka niedostępna — nie „domykanie automatyczne”, tylko decyzja.
+		wp_die( 'Zamówienie zwrócone albo sporne — ponowna wysyłka linku nie jest dostępna. Link, który kupujący już ma, działa do końca swojej ważności.', 'Sklep Agentów', 409 );
+	}
 	if ( ! in_array( $zam->status, array( 'mail_wyslany', 'mail_blad' ), true ) ) {
 		wp_die( 'Zamówienie jest właśnie domykane automatycznie (status: ' . esc_html( $zam->status ) . ') — ponowna wysyłka dostępna, gdy silnik skończy.', 'Sklep Agentów', 409 );
 	}
@@ -486,7 +490,9 @@ function sklepag_admin_zamowienie() {
 	echo $zam->mail_tresc
 		? '<pre class="sklepag-mail-tresc">' . esc_html( $zam->mail_tresc ) . '</pre>'
 		: '<p class="description">Treść maila jeszcze nie powstała (zamówienie niedomknięte).</p>';
-	if ( ! $zanonimizowane && '' !== (string) $zam->email_kupujacego ) {
+	// Przycisk tylko w stanach, w których akcja go przyjmie (mail_wyslany, mail_blad) — wcześniej pokazywał się
+	// też na zamówieniu zwróconym/spornym, a kliknięcie kończyło się odmową o „domykaniu automatycznym”.
+	if ( ! $zanonimizowane && '' !== (string) $zam->email_kupujacego && in_array( $zam->status, array( 'mail_wyslany', 'mail_blad' ), true ) ) {
 		echo '<p><a href="' . esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=sklepag_resend&zamowienie=' . (int) $zam->id ), 'sklepag_resend' ) ) . '" class="button button-primary">Wyślij ponownie (świeży link)</a></p>';
 	}
 	echo '</div></div>';

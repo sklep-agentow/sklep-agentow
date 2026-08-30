@@ -31,6 +31,10 @@ Nic jeszcze.
   każda pozycja z powodem; plus lista tego, czego świadomie nie ma.
 
 ### Zmienione
+- **„Wyślij ponownie” tylko tam, gdzie zadziała.** Przycisk pokazuje się wyłącznie przy zamówieniu w stanie
+  „mail wysłany” albo „błąd maila”; przy zwróconym lub spornym sklep mówi wprost, że ponowna wysyłka nie jest
+  dostępna (wcześniej przycisk był widoczny, a kliknięcie kończyło się mylącym komunikatem o „domykaniu
+  automatycznym”).
 - Dwa komunikaty „Brak uprawnień.” w moderacji opinii wypisywane wprost (`esc_html`), a nie przez
   funkcję tłumaczenia bez domeny — wtyczka nie tłumaczy tekstów, więc wywołanie było niespójne
   (wskazał to Plugin Check). Zero zmian w działaniu.

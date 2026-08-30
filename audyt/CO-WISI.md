@@ -670,3 +670,13 @@ zapisane **słowem, nie oznaczeniem** — `plan v3 par. 4A`, `(Z10)`, `patrz Z0`
 Egzemplarze usunięte w `#209`; wzorce nadal ich nie znają. ⭐ To potwierdza zasadę zapisaną
 wyżej: **wzorzec jest siatką na regresję, nie dowodem czystości** — dla plików, które da się
 przeczytać, miarą jest przeczytanie.
+
+## 🟡 ZRZUTY PNG W PACZCE SĄ POZA SKANEREM ŚLADÓW (30.08, recenzja PR o instrukcji sklepu, WAŻNA)
+
+`narzedzia-qa/paczka-zgodnosc.sh` melduje „w 66 plikach paczki nie ma śladów wewnętrznych”, ale pięć
+z nich to PNG — skaner tekstowy nie czyta obrazów, więc nazwa kontroli jest szersza niż jej zasięg
+(klasa 5 i klasa 11 naraz). Zrzuty z 30.08 były robione z widocznym kontem `audytor-admin`, osią czasu
+z `admin_roboczy` i adresem sieci dockera; naprawione w `testy/zrzuty-panelu.js` (pasek admina bez
+tożsamości, front w niezalogowanym kontekście, kadr bez osi czasu) i sprawdzone OCZAMI.
+**Dług:** jedyną kontrolą obrazów jest człowiek. Ewentualny automat: OCR (tesseract) na PNG z paczki
+z tą samą listą wzorców co skaner — po oddaniu, jeśli zrzutów przybędzie.

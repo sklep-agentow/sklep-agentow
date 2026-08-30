@@ -18,7 +18,8 @@ const EKRANY = [
   ['dziennik-zdarzenia', '/wp-admin/admin.php?page=sklepag-dziennik&zakladka=zdarzenia'],
   ['ustawienia', '/wp-admin/admin.php?page=sklepag-ustawienia'],
   ['zamowienie', '/wp-admin/admin.php?page=sklepag-zamowienie&zamowienie=1'],
-  ['zamowienie-naglowek', '/wp-admin/admin.php?page=sklepag-zamowienie&zamowienie=1', { fullPage: false, clip: { x: 0, y: 0, width: 1440, height: 440 } }],
+  // tylko lewa karta zamówienia — oś czasu po prawej niesie nazwy kont i adresy sieci stosu
+  ['zamowienie-naglowek', '/wp-admin/admin.php?page=sklepag-zamowienie&zamowienie=1', { fullPage: false, clip: { x: 0, y: 0, width: 1000, height: 440 } }],
   ['produkty', '/wp-admin/admin.php?page=sklepag-produkty'],
   // Formularz NOWEGO produktu (pusty): zrzut jedzie do instrukcji klienta, więc bez danych testowych stosu.
   ['produkt-formularz', '/wp-admin/admin.php?page=sklepag-produkty&widok=formularz'],
@@ -35,6 +36,10 @@ const EKRANY = [
 
   const b = await chromium.launch({ executablePath: wymagajChromium() });
   const p = await b.newPage({ viewport: { width: 1440, height: 1000 } });
+  // Zrzuty jadą do instrukcji klienta: pasek admina nie może nieść nazwy NASZEGO konta ani witryny stosu,
+  // a strony sklepu (front) robimy w OSOBNYM, niezalogowanym kontekście — kupujący nie widzi paska WP.
+  const bezSladow = async (strona) => strona.addStyleTag({ content: '#wp-admin-bar-my-account, #wp-admin-bar-site-name, #wp-admin-bar-updates, #wp-admin-bar-comments, #wp-admin-bar-new-content, #wp-admin-bar-search { visibility: hidden !important; }' });
+  const gosc = await b.newContext({ viewport: { width: 1440, height: 1000 } });
   p.setDefaultTimeout(60000); // 60 s: pelna linia bazowa na 2 vCPU dlawi 30-sekundowy default (24.08)
 
   await p.goto(BAZA + '/wp-login.php', { waitUntil: 'load' });
@@ -44,9 +49,13 @@ const EKRANY = [
   console.log('ZALOGOWANO:', p.url().split('?')[0]);
 
   for (const [nazwa, sciezka, opcje] of EKRANY) {
-    await p.goto(BAZA + sciezka, { waitUntil: 'load' });
-    await p.waitForTimeout(400);
-    await p.screenshot({ path: `${GDZIE}/${nazwa}.png`, fullPage: true, ...(opcje || {}) });
+    const front = !sciezka.startsWith('/wp-admin/');
+    const s = front ? await gosc.newPage() : p;
+    await s.goto(BAZA + sciezka, { waitUntil: 'load' });
+    await s.waitForTimeout(400);
+    if (!front) await bezSladow(s);
+    await s.screenshot({ path: `${GDZIE}/${nazwa}.png`, fullPage: true, ...(opcje || {}) });
+    if (front) await s.close();
     console.log('ZRZUT:', nazwa);
   }
 

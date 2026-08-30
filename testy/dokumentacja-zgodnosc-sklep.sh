@@ -103,7 +103,7 @@ for p in CHANGELOG.md DOKUMENTACJA-TECHNICZNA.md; do spr "readme: '$p' w paczce"
 spr "readme: instrukcja 'obok paczek'"      "1" "grep -c 'obok paczek (plik \`INSTRUKCJA-INSTALACJI.md\`)' $W/readme.txt"
 spr "plik dokumentacja/INSTRUKCJA-INSTALACJI.md" "1" "test -f dokumentacja/INSTRUKCJA-INSTALACJI.md && echo 1 || echo 0"
 
-echo "=== F. INSTRUKCJA.md (instrukcja właściciela, w paczce) == kod ==="
+echo "=== F. INSTRUKCJA.md — LICZBY i ODSYŁACZE == kod (treści zdań ta bramka NIE mierzy; to robi czytanie w całości) ==="
 # Instrukcja właściciela weszła do paczki w 0.9.23. Każda liczba, którą podaje, ma stałą w kodzie —
 # porównujemy z NIĄ, nie z readme (te same zasady co sekcja B). Zrzuty, do których odsyła, muszą
 # istnieć w katalogu wtyczki, bo inaczej paczka niesie pusty odsyłacz.
@@ -120,5 +120,5 @@ spr "readme: 'PONAD-SPECYFIKACJE.md' w paczce"              "1" "grep -c '\`PONA
 spr "plik $W/PONAD-SPECYFIKACJE.md"                         "1" "test -f $W/PONAD-SPECYFIKACJE.md && echo 1 || echo 0"
 
 echo
-if [ "$ZLE" -eq 0 ]; then echo "DOKUMENTACJA SKLEPU ZGODNA Z KODEM — 0 rozjazdów"; exit 0; fi
+if [ "$ZLE" -eq 0 ]; then echo "LICZBY, ETYKIETY I ODSYLACZE DOKUMENTACJI SKLEPU ZGODNE Z KODEM — 0 rozjazdów (treść zdań: czytanie w całości)"; exit 0; fi
 echo "NIEZGODNE: $ZLE pozycji"; exit 1
