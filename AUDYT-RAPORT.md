@@ -1,9 +1,10 @@
-# AUDYT-RAPORT — Sklep Agentów, wydanie `v0.9.26` (delta nad `v0.9.25`)
+# AUDYT-RAPORT — Sklep Agentów, wydanie `v0.9.27` (delta nad `v0.9.26`)
 
 Data: 2026-08-30 · Zakres: audyt końcowy K7 (6 soczewek, 104 cele) + naprawy K7b + audyt delty 0.9.24 (mail HTML) + audyt
 delty 0.9.25 (płatność osadzona, dane do faktury, reconciliation po K10 — PR `#222`, 4 rundy) + test instalacji od zera
 przez niezależnego testera (K10) + audyt delty 0.9.26 (canonical stron sklepu, klasa `is_page( 0 )` — PR `#225`, 4 rundy;
-dokumenty SECURITY/CONTRIBUTING — PR `#226`, 3 rundy) + bramka końcowa na `main` `a3d9568` i przelot prób kontrolnych
+dokumenty SECURITY/CONTRIBUTING — PR `#226`, 3 rundy; delta 0.9.27: HEAD-404, podpis webhooka jako strażnik CI, Yoast/RankMath,
+has_action prio 0, zdanie o skrócie — długi z CO-WISI decyzją Dzidka 31.08) + bramka końcowa i przelot prób kontrolnych
 na `e95de75` (docs nad `a3d9568`, kod wtyczek identyczny — log w repo) · KRYTYCZNE: 0 · DUZE: 0 · kontroli FAIL: 2 (z 13) · **K7: NO-GO · EXIT=1** (kontrole 2 i 6 — te same co przy 0.9.23 i 0.9.24: decyzja właściciela 28.08; na `e95de75` 5 z 31 prób z EXIT≠0 — podzbiór zestawu 6 z `a1b2495`/`2992247`, żadnej nowej; powody w raporcie)
 
 Ten plik jest **wskaźnikiem maszynowym** dla bramki oddania (hook `oddanie-guard` czyta liczniki
@@ -33,3 +34,9 @@ na stosie; żywy HTML na motywie gospodarza; `grep -rnE 'is_(page|single|singula
 (log w repo): 31 uruchomionych, 5 z EXIT≠0 — **podzbiór zestawu 6 z logu 0.9.25** (`dowod-z-paczki` EXIT=2, `blad-klucza`,
 `ip-za-proxy`, `nonce`, `pulapka` — próby ChatBota na tym stosie, §7; `przejecie` tym razem przeszła — chwiejna), delta 0.9.26 nie
 dołożyła żadnej nowej.
+
+Delta 0.9.27 sprawdzona: `testy/produkt-404-proba-kontrolna.sh` (czysty: 404 GET i HEAD, produkt 200/200, naturalne 404 WP
+nietknięte; mutant „stan 0.9.26” widoczny — HEAD wraca do 200); `testy/webhook-podpis-test.php` A–G na PRAWDZIWEJ
+`sklepag_stripe_weryfikuj_podpis` + próba kontrolna (mutant „przyjmuje każdy podpis” i mutant „bez progu świeżości” — oba
+padają, czysty EXIT=0); strażnik SEO kroki A–H (H: symulacja Yoast stałą `WPSEO_VERSION` → nasz canonical milczy), 3 mutanty
+padają; `bramki.sh --tryb pelny` 10/10; zgodność dokumentacji 0 rozjazdów; `paczka-zgodnosc.sh` EXIT=0 (0.9.27).

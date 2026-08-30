@@ -126,5 +126,11 @@ sklepag_seo_head();
 $glowa404 = ob_get_clean();
 sprawdz( 'G. nieistniejący produkt (404): zero og:url/description listy', false === strpos( $glowa404, 'og:url' ) && false === strpos( $glowa404, 'name="description"' ), 'mam: ' . substr( $glowa404, 0, 120 ) );
 
+// Wtyczka SEO gospodarza (symulacja: stała Yoast) — nie drukujemy drugiego canonicala.
+// UWAGA: define zostaje do końca procesu, dlatego ten krok jest OSTATNI.
+define( 'WPSEO_VERSION', 'test' );
+$h = sklepag_test_canonicale( array( 'page_id' => $strona_sklep, 'sklepag_produkt' => $slug ) );
+sprawdz( 'H. gospodarz z wtyczką SEO (WPSEO_VERSION): nasz canonical milczy', 0 === count( $h ), 'mam ' . implode( ' | ', $h ) );
+
 echo "\nBŁĘDY: {$GLOBALS['sklepag_test_bledy']}\n";
 exit( $GLOBALS['sklepag_test_bledy'] > 0 ? 1 : 0 );

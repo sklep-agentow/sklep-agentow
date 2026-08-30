@@ -44,7 +44,7 @@ probuj "wyciety add_action sklepag_seo_canonical_wlasny" \
   "docker exec $KONTENER sed -i \"s/^add_action( 'wp_head', 'sklepag_seo_canonical_wlasny', 3 );/\\/\\/ MUTANT/\" $PLIK" "A\\."
 echo "== Mutant 2: drukuje zawsze (dwa znaczniki, gdy WP ma swój) =="
 probuj "wyciety warunek has_action" \
-  "docker exec $KONTENER sed -i \"s/if ( has_action( 'wp_head', 'rel_canonical' ) ) {/if ( false ) {/\" $PLIK" "C\\."
+  "docker exec $KONTENER sed -i \"s/if ( false !== has_action( 'wp_head', 'rel_canonical' ) ) {/if ( false ) {/\" $PLIK" "C\\."
 
 echo "== Mutant 3: is_page( 0 ) bez bramki (stan sprzed naprawy klasy) =="
 probuj "wycieta bramka \$id > 0 w sklepag_jest_strona_z_opcji (plik glowny)" \

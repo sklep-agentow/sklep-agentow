@@ -20,6 +20,24 @@ Nic jeszcze.
 
 ---
 
+## [0.9.27] — 2026-08-31 · schemat bazy 8 (bez zmian)
+
+### Naprawione
+- **Strona nieistniejącego produktu zwraca 404 także na HEAD.** Status ustawiał dopiero render treści
+  (za późno dla nagłówków żądania HEAD → 200); teraz `template_redirect` ustawia 404 zanim cokolwiek
+  wyjdzie, a przyjazna strona „produkt nie istnieje” renderuje się jak dotąd.
+- **Zgoda z wtyczkami SEO gospodarza:** gdy działa Yoast (`WPSEO_VERSION`) lub Rank Math, wtyczka nie
+  drukuje własnego canonicala (uniknięcie dwóch znaczników). Dokładniejszy warunek `false !== has_action`
+  (priorytet 0 to też podpięcie).
+- Doprecyzowane zdanie w opisie wtyczki: bez stron „Sklep”/„Dziękujemy” wtyczka nie dokleja niczego do
+  innych stron — sklep pokazuje się tam, gdzie właściciel sam wstawi skrót.
+
+### Dodane
+- Strażnik weryfikacji podpisu webhooka (poprawny/zły/rotowany sekret/przeterminowany znacznik/podmienione
+  body/dwa podpisy) z próbą kontrolną — dotąd odrzut złego podpisu dowodziły tylko raporty audytu.
+
+---
+
 ## [0.9.26] — 2026-08-30 · schemat bazy 8 (bez zmian)
 
 ### Naprawione

@@ -854,3 +854,10 @@ maszynowo do końca (zam #9901178 z danymi faktury).
   wstawiony ręcznie na dowolnej stronie nadal renderuje sklep (i ma). Poprawne zdanie: „nie dokleja niczego do innych
   stron; sklep pokaże się tylko tam, gdzie sam wstawisz skrót”. Nie weszło do 0.9.26: paczka była już na `origin/main`
   (zamek klasy 10 → podbicie wersji), a zdanie nie szkodzi. Wchodzi z 0.9.27 razem z HEAD-200 i próbą kontrolną podpisu.
+
+## ✅ ROZLICZENIE DŁUGÓW w 0.9.27 (31.08 noc, decyzja Dzidka „mamy czas do rana”)
+ZROBIONE: HEAD-200 na 404 (template_redirect + `testy/produkt-404-proba-kontrolna.sh`) · próba kontrolna podpisu webhooka
+(`testy/webhook-podpis-test.php` + mutanty hash_equals/tolerancja) · wyjątek Yoast/RankMath (krok H strażnika SEO) ·
+`false !== has_action` · zdanie o skrócie w readme · A3/„63 klasy”/§8a-b/odsyłacz a1b2495 z recenzji #227 r3.
+ZAMKNIĘTE UZASADNIENIEM: honeypot opinii (formularz tylko z jednorazowego tokenu z maila — bot bez zakupu go nie widzi).
+ZOSTAJE: front.css 83 kB (kandydat, nie wada) · `perf` na hostingu klienta · klik karty (człowiek) · NIP→faktury (decyzja).

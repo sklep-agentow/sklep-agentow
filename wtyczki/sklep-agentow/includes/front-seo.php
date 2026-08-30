@@ -84,7 +84,12 @@ add_filter( 'get_canonical_url', 'sklepag_seo_canonical' );
  * inaczej byłyby dwa znaczniki.
  */
 function sklepag_seo_canonical_wlasny() {
-	if ( has_action( 'wp_head', 'rel_canonical' ) ) {
+	// `false !==`: has_action zwraca PRIORYTET (0 też jest podpięciem) albo false.
+	if ( false !== has_action( 'wp_head', 'rel_canonical' ) ) {
+		return;
+	}
+	// Wtyczki SEO drukują własny canonical bez rel_canonical WP — z naszym byłyby dwa.
+	if ( defined( 'WPSEO_VERSION' ) || class_exists( 'RankMath' ) ) {
 		return;
 	}
 	$p = sklepag_seo_biezacy_produkt();
