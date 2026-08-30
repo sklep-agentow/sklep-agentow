@@ -24,12 +24,20 @@ tekstu klienta**. Reszta → nazwany dług w `CO-WISI.md`.
 ## 2. ODŚWIEŻYĆ PRZETERMINOWANE DOWODY
 ⛔ **To nie jest usterka produktu — to zestarzały dowód**, i bramka końcowa to widzi:
 
+Było (przed `#210`):
 ```
 FAIL 6 próby kontrolne: po przelocie (d66e6f5) zmieniło się to, czego on dowodzi
      — dowód przeterminowany (uruchom: bash narzedzia-qa/proby-kontrolne-przelot.sh)
 ```
-
-- [ ] Po scaleniu `#209`: `bash narzedzia-qa/proby-kontrolne-przelot.sh` (drzewo musi być CZYSTE)
+- [x] Po scaleniu `#209`: `bash narzedzia-qa/proby-kontrolne-przelot.sh` — **wykonane na `89ba47a`**,
+      log w `audyt/sklep/PROBY-KONTROLNE.log` (`#210`). Kontrola 6 zmieniła POWÓD, nie wynik:
+```
+FAIL  6 próby kontrolne: 6 z 30 ma EXIT≠0 (przelot na 89ba47a)        ← k7-koniec.sh, EXIT=1
+```
+      Sześć padających to długi narzędziowe (`blad-klucza`, `ip-za-proxy`, `nonce`, `przejecie`,
+      `pulapka` padają identycznie na czystym `main`; `dowod-z-paczki` ma zaszytą wersję 1.5.0) —
+      opis w `CO-WISI.md`, sekcja o próbach kontrolnych. **Nie da się ich „odświeżyć” — to naprawa
+      narzędzi, świadomie po oddaniu.**
 - [ ] `bash narzedzia-qa/k7-koniec.sh` **na samym końcu** — każda zmiana ją unieważnia
 
 ## 3. REJESTR KLAS BŁĘDÓW → `audyt/SCIAGA-EGZAMINATORA.md`
@@ -96,7 +104,7 @@ Musi nieść JAWNIE:
 | # | Kontrola | Stan | Co to znaczy |
 |---|---|---|---|
 | 2 | kalibracja | **FAIL** | soczewki L1/L5 bez PASS. ⭐ Kryterium klienta #12 (≥2/3) **SPEŁNIONE**: 7 mutantów, 5 złapanych = 71%. Bramka jest OSTRZEJSZA od rubryki. **Decyzja Dzidka 28.08: oddajemy z jawnym zapisem.** |
-| 6 | próby kontrolne | **FAIL** | dowód przeterminowany moimi commitami — patrz pozycja 2 wyżej. Do odświeżenia, nie do naprawy. |
+| 6 | próby kontrolne | **FAIL** | przelot POWTÓRZONY na `89ba47a` (`#210`): 6 z 30 ma EXIT≠0. To sześć długów narzędziowych (pięć pada tak samo na czystym `main`, szósty ma zaszytą wersję 1.5.0) — patrz pozycja 2 wyżej. Nie wada produktu; naprawa narzędzi po oddaniu. |
 
 Pozostałe **11 na zielono**: mapa, rejestr (4 kontrole), anomalie, przelot, paczka, tag, raporty.
 
@@ -122,10 +130,13 @@ i widzi 51 gałęzi zamiast czystego `main`.
 ⛔ **PUŁAPKA, przez którą NIE WOLNO tego zrobić „szybko":**
 
 ```
+$ git fetch --prune origin
+$ git branch -r | grep -v 'origin/HEAD' | grep -v 'origin/main$' | wc -l
+51                   ← tyle gałęzi poza main (pomiar 30.08, po prune)
 $ git branch -r --merged origin/main | grep -v origin/main | wc -l
-0                    ← ZERO scalonych
+0                    ← ZERO z nich git widzi jako scalone
 $ git branch -r --no-merged origin/main | grep -v origin/main | wc -l
-54                   ← wszystkie jako NIEscalone
+51                   ← wszystkie 51 jako NIEscalone
 ```
 
 Scaliliśmy kilkadziesiąt PR-ów, a `--merged` pokazuje zero. Powód: **scalamy SQUASHEM**, a wtedy
