@@ -222,8 +222,9 @@ webhooka” — nie istnieje, RODO tylko dla sklepu — boty trzymają zgłoszen
 dostawcy modelu). Każde zdanie poprawione z plikiem i linią. Wniosek → klasa 62 rejestru: SECURITY.md dostaje bramkę „tekst = kod”.
 
 **Trzy liczby na `a3d9568`** (`k7-koniec.sh`): KRYTYCZNE 0 · DUŻE 0 · kontroli FAIL **2 (z 13)** — kontrole 2 i 6 jak w §2, §6, §7.
-Przelot prób kontrolnych na czystym `a3d9568` (drzewo z cudzym `SPRZATANIE-RAPORT.md` schowane w `git stash -u` na czas przelotu
-i przywrócone 1:1): 31 uruchomionych, 6 z EXIT≠0 — ten sam zestaw co przy 0.9.25, delta nie dołożyła żadnej.
+Przelot prób kontrolnych na czystym `e95de75` (docs nad `a3d9568`; drzewo z cudzym `SPRZATANIE-RAPORT.md` schowane w `git stash -u`
+na czas przelotu i przywrócone 1:1; log `audyt/sklep/PROBY-KONTROLNE.log` W REPO): 31 uruchomionych, 5 z EXIT≠0 — podzbiór
+zestawu 6 z logu 0.9.25 (`przejecie` chwiejna: raz pada, raz przechodzi), delta nie dołożyła żadnej nowej.
 
 **Pomiary poza kodem (30.08):** motyw WP gospodarza NIE niesie CSP (jego statyczna strona ma CSP bez `unsafe-inline`) — gdyby
 przeniósł je na hosting, płatność by padła (Stripe.js + 4 inline) → akapit w instrukcji i SECURITY §3. Statyczna sonda wydajności
