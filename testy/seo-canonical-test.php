@@ -76,5 +76,9 @@ if ( $inna ) {
 	sprawdz( 'D. cudza strona: wtyczka nie dokłada swojego canonicala', 0 === count( $nasze ), 'mam ' . implode( ' | ', $d ) );
 }
 
+// Nieistniejący produkt = 404: żadnego canonicala (nie wolno wskazać listy jako „głównej” wersji 404).
+$e = sklepag_test_canonicale( array( 'page_id' => $strona_sklep, 'sklepag_produkt' => 'nie-ma-takiego-produktu' ) );
+sprawdz( 'E. nieistniejący produkt (404): zero canonicali', 0 === count( $e ), 'mam ' . implode( ' | ', $e ) );
+
 echo "\nBŁĘDY: {$GLOBALS['sklepag_test_bledy']}\n";
 exit( $GLOBALS['sklepag_test_bledy'] > 0 ? 1 : 0 );

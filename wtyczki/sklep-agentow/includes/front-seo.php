@@ -90,6 +90,8 @@ function sklepag_seo_canonical_wlasny() {
 	$p = sklepag_seo_biezacy_produkt();
 	if ( $p ) {
 		$url = sklepag_url_produktu_front( $p->slug );
+	} elseif ( '' !== (string) get_query_var( 'sklepag_produkt' ) ) {
+		return; // Slug w adresie, produktu nie ma: to 404 — bez canonicala (nie wskazujemy listy).
 	} elseif ( is_page( (int) get_option( 'sklepag_strona_sklep' ) ) ) {
 		$url = get_permalink( (int) get_option( 'sklepag_strona_sklep' ) ); // Jawne ID: poza pętlą get_permalink() bywa puste.
 	} else {
