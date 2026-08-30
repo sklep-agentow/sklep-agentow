@@ -1,4 +1,4 @@
-# CO ZOSTAŁO DO ODDANIA — stan 2026-08-29
+# CO ZOSTAŁO DO ODDANIA — stan 2026-08-30 (WYDANE `v0.9.23`)
 
 > Spisane na prośbę Dzidka. **Każda pozycja ma źródło** (bramka, plan, recenzja) — nic tu nie
 > jest z pamięci. Termin: **1.09.2026**, próba 1 z 3, ocenia kolega.
@@ -38,7 +38,7 @@ FAIL  6 próby kontrolne: 6 z 30 ma EXIT≠0 (przelot na 89ba47a)        ← k7-
       `pulapka` padają identycznie na czystym `main`; `dowod-z-paczki` ma zaszytą wersję 1.5.0) —
       opis w `CO-WISI.md`, sekcja o próbach kontrolnych. **Nie da się ich „odświeżyć” — to naprawa
       narzędzi, świadomie po oddaniu.**
-- [ ] `bash narzedzia-qa/k7-koniec.sh` **na samym końcu** — każda zmiana ją unieważnia
+- [x] `bash narzedzia-qa/k7-koniec.sh` — 30.08 12:35 na `a1b2495`: KRYTYCZNE 0 · DUŻE 0 · FAIL 2 z 13, EXIT=1 (log przelotu z tego samego commita; po nim zmieniła się tylko dokumentacja — §7)
 
 ## 3. REJESTR KLAS BŁĘDÓW → `audyt/SCIAGA-EGZAMINATORA.md`
 - [x] **ZROBIONE 30.08, PR `#211`: klasy 29–47** (4 z dziesięciu rund `#207`, 12 z rund `#208`/`#209`
@@ -57,47 +57,26 @@ FAIL  6 próby kontrolne: 6 z 30 ma EXIT≠0 (przelot na 89ba47a)        ← k7-
 reszty punktów NIE powtarzam na paczce, bo mierzą ten sam kod co przelot audytora, a paliwa
 jest mało. ⛔ **Do klepnięcia albo odrzucenia — to twoja decyzja, nie moja** (zakres oddania).
 
-## 5. DOKUMENTACJA ODDANIOWA — największa pozycja
-Źródło wymagań: `PLAN-PROJEKTU.md` K8 + wzorzec z `mp-service-suite` (patrz pamięć:
-`katalog-repozytoriow-projektu`).
+## 5. DOKUMENTACJA ODDANIOWA — ✅ ZROBIONE 30.08 (`#213`, `#214`)
+Lista „braków” z 29.08 sprawdzona ponownie komendą (recenzja `#217`): 7 z 8 zamknięte —
+`wtyczki/sklep-agentow/INSTRUKCJA.md` (+5 zrzutów panelu) · 3 diagramy PNG w `dokumentacja/diagramy/` ·
+`SHA256SUMS.txt` z `pakuj-dla-klienta.sh` · `PONAD-SPECYFIKACJE.md` sklepu w paczce (allowlista) · `LICENSE`
+w korzeniu · `dla-klienta/PRZECZYTAJ-MNIE.txt` · README dla klienta (5 badge’ów, 4 zrzuty).
+- [ ] **Zrzuty w `dokumentacja/INSTRUKCJA-INSTALACJI.md`: nadal ZERO** — jedyna otwarta pozycja; dług w `audyt/CO-WISI.md`
+  (instrukcja instalacji jest tekstowa, kroki nazywają ekrany po nazwie).
 
-**Braki (sprawdzone komendą, nie z pamięci):**
-- [ ] ⛔ **SKLEP nie ma `INSTRUKCJA.md`** — oba boty mają. Instrukcja *instalacji* ≠ instrukcja
-      *obsługi*: brak opisu, jak dodać produkt, obsłużyć zamówienie, wysłać mail ponownie.
-      **Największa luka, dotyczy głównego produktu.**
-- [ ] **Diagramy** — K8 żąda „diagram architektury dla informatyka". Jest jeden ASCII
-      w segregatorze. Gotowiec: `mp-service-suite/build/render-diagramy.py` (HTML→PNG).
-      Wzorzec nazw po ludzku: „z czego składa się system", „droga zakupu", „gdzie mieszkają dane".
-- [ ] **Zrzuty w instrukcji instalacji: ZERO** (policzone). K8 żąda „zrzuty robione maszynowo".
-      Mamy własne skrypty: `testy/zrzuty-instrukcje.js`, `testy/zrzuty-panelu.js`.
-- [ ] **Sumy kontrolne zipów** — brak. K8: „zipy 3 wtyczek + sumy kontrolne".
-- [ ] **`PONAD-SPECYFIKACJE` nie wchodzi do paczki** (`grep PONAD boty/buduj-paczki.sh` → 0)
-      i istnieje tylko dla botów, nie dla sklepu. To **klasa 6 ściągi** (kod robi więcej niż spec).
-- [ ] **`LICENSE` w korzeniu** — wtyczki mają swoje, repo nie.
-- [ ] **Katalog `dla-klienta/`** wzorem MP + `PRZECZYTAJ-MNIE.txt` jako pierwszy plik dla laika.
-- [ ] **README dla klienta** — nasze jest robocze: zero badge'ów, zero zrzutów, mapa dokumentów
-      dla nas. Wzorzec MP: badge'y, ramka „chcesz tylko zainstalować?", szybki start, przepływ
-      prozą, sekcja „Jak to wygląda" ZE ZRZUTAMI.
+## 6. RAPORT ODDANIA — ✅ ZROBIONE 30.08 (`#215`, `audyt/RAPORT-ODDANIA.md`)
+Niesie jawnie: NO-GO 2 z 13 z powodami i zdaniem z CO-WISI o soczewkach L1/L5 · instalację od zera robiła świeża sesja
+audytora (agent przez przeglądarkę, nie osoba postronna — K1 ✅ z tym zastrzeżeniem, jak w L1-11) · 11 długów z CO-WISI dotykających produktu/danych · Plugin Check
+416/1 · minimum WP 6.7 / PHP 8.1 testowane w K7 (`ZAMROZENIE.md:8`), `phpstan.neon.dist` `phpVersion: 80100`.
+Rubryka GOTOWE (12 kryteriów §12, werdykty 1:1 z L1-11: **6 ✅ · 5 🐞 z zastrzeżeniem · 1 ⛔** — #12 drugi człon
+niespełniony, oddanie decyzją Dzidka 28.08) i `AUDYT-RAPORT.md` z licznikami i `K7: NO-GO · EXIT=1` — `#216`.
 
-⚠️ **Nie kopiujemy MP żywcem:** MP miał 4 role użytkowników i 4 instrukcje. U nas są dwie —
-właściciel strony i kupujący, a kupujący instrukcji nie potrzebuje.
-
-**Szacunek: 5–6 godzin**, z gotowcami z MP.
-
-## 6. RAPORT ODDANIA
-Musi nieść JAWNIE:
-- [ ] **NO-GO bramki `k7-koniec` z DWOMA powodami** (patrz niżej) — nie chowamy tego
-- [ ] że **instalację robiła AUTORKA, nie osoba postronna** — rubryka żąda nie-autora
-- [ ] długi z `audyt/CO-WISI.md`
-- [ ] **wynik Plugin Check na paczkach** (30.08: 416 pozycji, 1 w kodzie, zero wpływu na klienta —
-      `audyt/PLUGIN-CHECK-30-08.md`) i że **deklarowane minimum WP 6.7 / PHP 8.1 było testowane**
-      w rundach K7 na obrazie `wordpress:6.7-php8.1-apache` (`audyt/sklep/ZAMROZENIE.md:8`),
-      a kod sprawdza `phpstan` pod `phpVersion: 80100`
-
-## 7. WYDANIE
-- [ ] tag + Release + zipy z sumami
-- [ ] ⛔ **runbook: OTWORZYĆ stronę Releases i POTWIERDZIĆ OCZAMI, że „Latest" = oddawana
-      wersja** — klasa 4 ściągi, fakt „kolega widzi 1.1.0"
+## 7. WYDANIE — ✅ ZROBIONE 30.08
+- [x] tag `v0.9.23` na `a3dd051` + Release z 4 zipami i sumami. Trzy liczby bramki liczone na `a1b2495`
+  POZOSTAJĄ WAŻNE: `git diff --stat a1b2495..a3dd051 -- narzedzia-qa testy wtyczki boty/paczki` → pusto (tylko
+  `audyt/`, `README.md`, rubryka), a `k7-koniec` kontrola 6 porównuje log z HEAD właśnie po tych katalogach (opis Release = `opis-wydania`, sumy z `sha256sum`)
+- [x] Releases otwarte, „Latest” = **v0.9.23** — potwierdzone 30.08 13:10 (`gh release list` → `Latest v0.9.23`; pobrana paczka zbiorcza sha `94f31a50…` = lokalna)
 
 ---
 
