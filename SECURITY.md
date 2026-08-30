@@ -1,8 +1,8 @@
 # SECURITY.md — Sklep Agentów
 
-> Stan dla wydania **0.9.26** (2026-08-30). Trzy wtyczki WordPressa: `sklep-agentow`,
-> `chatbot-live`, `segregator-maila`. Wersje wspierane: **najnowsze wydanie** z zakładki
-> Releases — starsze 0.9.x nie dostają poprawek, tylko podniesienie wersji.
+> Stan na 2026-08-30. Trzy wtyczki WordPressa: `sklep-agentow` (wydane 0.9.25; 0.9.26 w przygotowaniu),
+> `chatbot-live` (1.5.13), `segregator-maila` (1.3.6). Wersje wspierane: **najnowsze wydanie każdej
+> wtyczki** z zakładki Releases — starsze nie dostają poprawek, tylko podniesienie wersji.
 
 ## 1. Jak zgłosić lukę
 
@@ -25,13 +25,13 @@ osobnej bazy ani logowania poza WordPressem. Jedyna usługa zewnętrzna: **Strip
 | Podmiana ceny lub produktu w żądaniu zakupu | Cena i produkt brane z bazy po stronie serwera, nie z formularza; snapshot produktu w zamówieniu |
 | Fałszywe „opłacono” (podrobiony webhook) | Podpis `Stripe-Signature` liczony HMAC-SHA256 z sekretem webhooka; zły lub brak podpisu = odrzut; okno czasu |
 | Dwukrotny webhook / wyścig z dociąganiem zaległych | Jedno zamówienie i jeden mail — przejścia stanu jednorazowe (operacja atomowa w bazie) |
-| Pobranie pliku bez zakupu, po terminie, ponad limit | Token jednorazowy; ważność 72 h; 10 pobrań; pliki w katalogu chronionym pod losową nazwą; `HEAD` nie zużywa limitu |
+| Pobranie pliku bez zakupu, po terminie, ponad limit | Token pobrania z maila: ważność 72 h, do 10 pobrań, licznik zużywany atomowo przy starcie pobrania (`UPDATE … WHERE pobrania_uzyte < pobrania_limit`); `HEAD` nie zużywa limitu; pliki w katalogu chronionym pod losową nazwą. Wyciek linku z maila = do 10 pobrań przez 72 h — dlatego link jest w mailu do kupującego, nigdzie indziej. Jednorazowy jest osobny token **opinii** |
 | Akcja w panelu bez uprawnień / CSRF | Nonce **i** `current_user_can()` parą na każdej mutacji; jawny `permission_callback` na każdej trasie REST |
 | SQL injection | `$wpdb->prepare()` do każdego zapytania z wejściem; `esc_like()` przy `LIKE` |
 | XSS | Sanityzacja wejścia (konkretne klucze + `wp_unslash`), escapowanie wyjścia (`esc_html`/`esc_attr`/`esc_url`/`wp_kses`) |
 | Zgadywanie haseł | Opóźnienie wykładnicze po nieudanych logowaniach (sufit 60 s) + limit prób z jednego adresu; dziennik logowań udanych i nieudanych (IP, przeglądarka) |
 | Zalew żądań (spam, boty) | Limity na adres IP (z obsługą proxy/Cloudflare tylko na jawną decyzję właściciela — nagłówkom nie ufa się domyślnie); ChatBot: pole-pułapka + limit czasu; Stripe stawia własną kontrolę (hCaptcha) przy podejrzanym ruchu |
-| Wyciek kluczy Stripe | Klucze w ustawieniach WordPressa (baza), nigdy w kodzie ani w repo; `.gitignore` z `.env*`; skaner `gitleaks` i skaner poświadczeń w CI na każdym PR |
+| Wyciek kluczy Stripe | Klucze w ustawieniach WordPressa (baza), nigdy w kodzie ani w repo; `.gitignore` wyklucza `.env*` i `*.pem`; realną zaporą jest skaner `gitleaks` (skanuje historię) i skaner poświadczeń w CI na każdym PR |
 | Ślady wewnętrzne w paczce klienta | Skaner śladów (`narzedzia-qa/slady-wewnetrzne.sh`) i zgodność paczki z allowlistą (`narzedzia-qa/paczka-zgodnosc.sh`) w CI |
 
 Wymagania środowiska: WordPress 6.7+ (testowane do 7.1), PHP 8.1+ (testowane na 8.4), HTTPS.
@@ -52,6 +52,13 @@ Wtyczka WordPressa **nie ustawia nagłówków HTTP** serwera. Na docelowym hosti
   drukują też krótkie skrypty inline (konfiguracja formularza) — CSP bez `'unsafe-inline'`
   wymaga nonce'a lub hasha dla nich; bez tego **płatność na stronie przestanie działać**.
   Sprawdź po wdrożeniu CSP testowym zakupem kartą testową.
+- **Katalog plików produktów na nginx**: wtyczka kładzie w nim `.htaccess` i `index.php`, ale
+  `.htaccess` działa tylko na Apache. Prawdziwą bramą jest PHP (token, termin, limit) i losowa
+  nazwa katalogu (`wp-content/uploads/sklepag-chronione-<16 losowych znaków>/`) — na nginx dołóż
+  regułę blokującą bezpośredni dostęp, np. w bloku `server`:
+  `location ~ ^/wp-content/uploads/sklepag-chronione-[^/]+/ { deny all; return 404; }`
+  i sprawdź `curl -I` na pełnej ścieżce pliku (ma być 404), a potem testowy zakup (link z maila
+  ma działać — plik podaje PHP, nie serwer).
 - **Zapora / WAF**: dopuść publiczny `POST` na `…/wp-json/sklepag/v1/webhook` (autoryzacją
   jest podpis Stripe); rozważ `fail2ban` lub regułę na `wp-login.php` — zmasowany atak z wielu
   adresów to praca zapory, nie wtyczki.
@@ -88,8 +95,9 @@ wchodzą do paczki klienta.
 
 ## 7. Jak to jest sprawdzane
 
-Na każdym PR: 10 bramek jakości (`narzedzia-qa/bramki.sh`: lint, PHPCS ze standardem
-WordPress, PHPStan, `gitleaks`, skaner poświadczeń, skaner śladów…) i recenzja według
+Na każdym PR: bramki jakości z `narzedzia-qa/bramki.sh` (jedyne źródło listy — tu jej celowo
+nie przepisujemy; m.in. PHPCS ze standardem WordPress, PHPStan, `gitleaks`, skaner poświadczeń)
+i recenzja według
 `.github/RECENZENT-BRIEFING.md`. Strażniki bezpieczeństwa mają **próby kontrolne** — testy,
 które podkładają znaną wadę (np. podrobiony podpis webhooka, limit liczony z adresu proxy)
 i sprawdzają, że strażnik ją widzi (`testy/*-proba-kontrolna.sh`). Audyty przed wydaniem:

@@ -9,3 +9,8 @@ zrzuty-wygladu/
 
 # paczki zbiorcze wydania (zaloguj w Releases, nie w repo)
 wydanie/
+
+# sekrety lokalne — nigdy do repo (zapora właściwa: gitleaks + skaner poświadczeń w CI)
+.env
+.env.*
+*.pem

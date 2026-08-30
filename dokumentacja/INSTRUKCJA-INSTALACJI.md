@@ -215,7 +215,7 @@ Włącz. Dalej prowadzą instrukcje W paczkach botów (konfiguracja w kwadrans).
   `frame-src https://js.stripe.com https://hooks.stripe.com`,
   `connect-src 'self' https://api.stripe.com`; krótkie skrypty osadzone w stronie
   (konfiguracja formularza) wymagają `'unsafe-inline'` albo nonce'a/hasha. Po każdej
-  zmianie CSP zrób testowy zakup kartą testową. Szczegóły: `SECURITY.md` w repozytorium.
+  zmianie CSP zrób testowy zakup kartą testową.
 - Rozważ ochronę logowania na poziomie serwera (np. fail2ban albo reguła
   WAF na `wp-login.php`) — wtyczka spowalnia zgadywanie haseł i ogranicza
   próby z jednego adresu, ale zmasowany atak z WIELU adresów to robota dla

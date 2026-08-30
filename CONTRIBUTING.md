@@ -44,12 +44,14 @@ wyczyszczenie kontekstu, są w `CLAUDE.md`; to, według czego recenzent ocenia P
   wpis w `CHANGELOG.md` (Keep a Changelog). Bramka `testy/dokumentacja-zgodnosc*.sh` to sprawdza.
 - **Nowa tabela lub opcja = trzy miejsca w tym samym PR:** aktywacja (`dbDelta`),
   `uninstall.php`, ścieżka podniesienia schematu.
-- **Kod robi więcej niż zamówienie?** Dopisz do `PONAD-SPECYFIKACJE.md` wtyczki z powodem.
+- **Kod robi więcej niż zamówienie?** Dopisz z powodem: sklep → `wtyczki/sklep-agentow/PONAD-SPECYFIKACJE.md`,
+  boty → `boty/PONAD-SPECYFIKACJE-BOTY.md`.
 
 ## Zanim otworzysz PR
 
-1. `bash narzedzia-qa/bramki.sh` — musi skończyć się `EXIT=0` (10 bramek: actionlint, manifest,
-   ślady, znaleziska, status-bez-warunku, php-lint, PHPCS, PHPStan, gitleaks, poświadczenia).
+1. `bash narzedzia-qa/bramki.sh --tryb pelny` — musi skończyć się `EXIT=0`. Lista bramek jest
+   **tylko** w tym skrypcie (`BRAMKI=`); bez `--tryb pelny` skrypt sam dobiera tryb do zmian
+   (dla samych dokumentów pomija lint/PHPCS/PHPStan) — do opisu PR wklej wynik trybu pełnego.
 2. Dotykasz wtyczki → `bash testy/dokumentacja-zgodnosc-sklep.sh` (albo `-segregator.sh`,
    `dokumentacja-zgodnosc.sh` dla ChatBota) — dokumentacja musi zgadzać się z kodem.
 3. Naprawiasz błąd → **test, który pada na kodzie sprzed naprawy** i przechodzi po niej, plus
@@ -62,7 +64,7 @@ wyczyszczenie kontekstu, są w `CLAUDE.md`; to, według czego recenzent ocenia P
 
 ## Kontrole, które zatrzymają PR
 
-- `Quality` (CI) — te same 10 bramek co lokalnie; lista tylko w `narzedzia-qa/bramki.sh`.
+- `Quality` (CI) — te same bramki co lokalnie; lista tylko w `narzedzia-qa/bramki.sh`.
 - `Recenzent` (CI) — recenzja każdego PR-a według briefingu; PR bez dowodu = nie do scalenia.
 - Ślady wewnętrzne w plikach wtyczek (numery zgłoszeń, ścieżki naszego drzewa roboczego,
   adresy dev) — skaner `slady` pada. Komentarz w kodzie niesie **powód**, nie numer PR-a.
