@@ -821,3 +821,12 @@ Raport: `/root/praca/zlecenia/k10-tester-stanowisko/dowody/RAPORT-TESTERA.md` (+
   NIE weszło, zostaje 0.9.26); Adaptive Pricing Stripe (EUR zamiast PLN) — instrukcja ostrzega, rozważyć wyłączenie
   w Dashboardzie jako krok instalacji; zły NIP w Ustawieniach czyści pole zamiast zostawić do poprawki (UX).
 
+## 🟡 E2E PŁATNOŚCI OSADZONEJ — automat zatrzymuje się na hCaptcha Stripe (30.08 wieczór)
+`testy/e2e/przelot-osadzony.js` z prawdziwymi kluczami (konto `acct_1U5Fhg7…`, kontakt.dobrastrona@gmail.com) dochodzi do
+końca ramek: panel bez błędu, e-mail + karta 4242 wypełnione w ramkach Stripe, „Zapłać” aktywne i kliknięte — po czym Stripe
+wystawia niewidzialną hCaptcha (ramka `hcaptcha-invisible`, `POST api.hcaptcha.com/getcaptcha`) i `confirm()` czeka;
+sesja zostaje `open/unpaid`. To zabezpieczenie Stripe dla zautomatyzowanej przeglądarki, nie wada sklepu (kod wyjścia 3).
+**Dowód końcowy = człowiek w przeglądarce** (Dzidek/kolega przez tunel albo na hostingu). Do rozważenia: Stripe Radar
+→ reguły testowe, albo Playwright w trybie z nagłówkiem — nie sprawdzałam. Ścieżka zapasowa (hostowana) przetestowana
+maszynowo do końca (zam #9901178 z danymi faktury).
+

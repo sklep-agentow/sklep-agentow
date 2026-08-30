@@ -81,7 +81,8 @@
   }
 
   function zamontuj(clientSecret) {
-    var stripe = window.Stripe(cfg.pk);
+    /* Polskie etykiety w ramkach Stripe („Karta”, „Numer karty”, „Data ważności”) — reszta sklepu jest po polsku. */
+    var stripe = window.Stripe(cfg.pk, { locale: 'pl' });
     checkout = stripe.initCheckoutElementsSdk({
       clientSecret: Promise.resolve(clientSecret),
       elementsOptions: { appearance: appearance() }
