@@ -325,7 +325,7 @@ prawdziwym wdrożeniu.
 
 
 ## ⚠️ WISZĄCE OD 19.08 (sesja Gosia-3) — TUNEL PUBLICZNY na czas oglądania Dzidka
-- **Tunel cloudflared AKTYWNY**: `https://linda-refrigerator-potato-objective.trycloudflare.com`
+- ~~Tunel cloudflared AKTYWNY~~ **NIEAKTUALNE (sprawdzone 30.08: proces `cloudflared` nie żyje, `siteurl`=`http://localhost:8890`)** — wpis zostawiony jako ślad procedury: `https://linda-refrigerator-potato-objective.trycloudflare.com`
   → :8890 (proces w tle sesji; log `/tmp/cf-sklep-8890.log`). **siteurl+home stacka
   PRZESTAWIONE na adres tunelu** — po seansie Dzidka PRZYWRÓCIĆ:
   `docker exec strona_wp_wordpress wp --allow-root --path=/var/www/html option update siteurl "http://localhost:8890" && docker exec strona_wp_wordpress wp --allow-root --path=/var/www/html option update home "http://localhost:8890"`
@@ -690,6 +690,24 @@ Raport i triage: `audyt/PLUGIN-CHECK-30-08.md` (surowe wyniki `audyt/plugin-chec
 `dokumentacja/INSTRUKCJA-INSTALACJI.md` jest tekstowa (0 obrazów; K8 planu żądał zrzutów maszynowych). Kroki nazywają ekrany
 po nazwie, instrukcja OBSŁUGI sklepu ma 5 zrzutów. **Dług:** przebieg `testy/zrzuty-instrukcje.js` na czystym stosie → 4–6
 zrzutów (wgranie wtyczki, aktywacja, Ustawienia sklepu, webhook) — po oddaniu, przy 0.9.24.
+
+## 🟡 PO K9 (instalacja z Release na motywie kolegi, 30.08) — trzy długi na 0.9.24, `audyt/K9-INSTALACJA-Z-RELEASE-0.9.23.md`
+
+1. `dokumentacja/INSTRUKCJA-INSTALACJI.md`, menu mobilne: „po pozycji 08” — w pliku FAQ ma „07” (opóźnienie 0,35 s); tester trafił,
+   numeracja myli. Tekst dla klienta, ale paczka zbiorcza już w Release → poprawka = nowe wydanie (0.9.24), nie w miejscu.
+2. Komunikat aktywacji „Brak katalogu chronionego — deaktywuj i aktywuj” nie nazywa przyczyny (uprawnienia `wp-content/uploads`);
+   „Najczęstsze problemy” wiąże `chown` tylko z uploadem mediów. Dopisać przyczynę w komunikacie i w instrukcji.
+3. Narzędzie: `narzedzia-qa/lib-stos-probny.sh` deklaruje `WP_DEBUG_LOG` przez `WORDPRESS_CONFIG_EXTRA`, obraz `wordpress:6.9.4` tego
+   NIE wpisuje → „0 notice’ów” na tym stosie było zerem z martwego loggera (tester to wyłapał). Naprawa: `wp config set` po `postaw_stos`
+   + próba kontrolna z podłożonym `trigger_error` (K9 zrobiła to ręcznie: 1 trafienie, potem 0 na 8 adresach).
+
+## 🟡 LISTA STATUSÓW ZAMKNIĘTYCH W TRZECH SKŁADNIACH (30.08, `/code-review ultra` na `#213` — jedyne znalezisko, waga „nit”)
+
+`'zwrocone','sporne'` żyje jako fragment SQL `SKLEPAG_STATUSY_ZAMKNIETE` (`sklep-agentow.php:44`), tablica PHP w bramce 409
+(`admin-zamowienie.php:63`) i konkatenacja `NOT IN` (`:117`, `:154`); `'mail_wyslany','mail_blad'` — bramka 409 (`:67`)
+i widoczność przycisku (`:504`). Scenariusz: nowy status zamknięty dopisany do stałej SQL, zapomniany w tablicy → „Wyślij
+ponownie” przechodzi mimo chargebacku. **Dług:** jedna tablica PHP jako źródło, fragment SQL budowany z niej (`implode`),
+strażnik porównujący oba. Po oddaniu, przy 0.9.24. Zero blokerów w tej recenzji.
 
 ## 🟡 TRZY LICZBY BRAMKI KOŃCOWEJ ŻYJĄ W TRZECH PLIKACH, PRZEPISANE RĘCZNIE (30.08, recenzja PR rubryki, D8)
 

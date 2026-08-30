@@ -1,15 +1,4 @@
-# PLUGIN CHECK: sklep-agentow 0.9.22 · zip sklep-agentow-0.9.22.zip · WP 6.9.4 / PHP 8.4.21 · 2026-08-30 09:32
-FILE: includes/admin-opinie.php
-line	column	type	code	message	docs
-16	17	ERROR	WordPress.WP.I18n.MissingArgDomain	Missing $domain parameter in function call to esc_html__().	https://developer.wordpress.org/plugins/internationalization/how-to-internationalize-your-plugin/
-24	31	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $to used in $wpdb-&gt;get_var()\n$to assigned unsafely at line 19.	
-25	31	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $to used in $wpdb-&gt;get_var()\n$to assigned unsafely at line 19.	
-26	31	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $to used in $wpdb-&gt;get_var()\n$to assigned unsafely at line 19.	
-27	31	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $to used in $wpdb-&gt;get_var()\n$to assigned unsafely at line 19.	
-37	20	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $to used in $wpdb-&gt;get_results()\n$to assigned unsafely at line 19.	
-120	17	ERROR	WordPress.WP.I18n.MissingArgDomain	Missing $domain parameter in function call to esc_html__().	https://developer.wordpress.org/plugins/internationalization/how-to-internationalize-your-plugin/
-
-
+# PLUGIN CHECK: sklep-agentow 0.9.23 · zip sklep-agentow-0.9.23.zip · WP 6.9.4 / PHP 8.4.21 · 2026-08-30 13:30
 FILE: includes/admin-produkty.php
 line	column	type	code	message	docs
 104	21	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $t used in $wpdb-&gt;get_row()\n$t assigned unsafely at line 100.	
@@ -24,9 +13,19 @@ line	column	type	code	message	docs
 0	0	ERROR	readme_description_non_official_language	The readme description contains unofficial language. It must be written in standard English.	https://make.wordpress.org/plugins/2025/07/28/requiring-the-readme-to-be-written-in-english/
 
 
+FILE: PONAD-SPECYFIKACJE.md
+line	column	type	code	message	docs
+0	0	WARNING	unexpected_markdown_file	Unexpected markdown file "PONAD-SPECYFIKACJE.md" detected in plugin root. Only specific markdown files are expected in production plugins.	
+
+
 FILE: DOKUMENTACJA-TECHNICZNA.md
 line	column	type	code	message	docs
 0	0	WARNING	unexpected_markdown_file	Unexpected markdown file "DOKUMENTACJA-TECHNICZNA.md" detected in plugin root. Only specific markdown files are expected in production plugins.	
+
+
+FILE: INSTRUKCJA.md
+line	column	type	code	message	docs
+0	0	WARNING	unexpected_markdown_file	Unexpected markdown file "INSTRUKCJA.md" detected in plugin root. Only specific markdown files are expected in production plugins.	
 
 
 FILE: uninstall.php
@@ -73,6 +72,15 @@ line	column	type	code	message	docs
 61	25	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $orderby used in $wpdb-&gt;get_results()\n$order assigned unsafely at line 54.	
 
 
+FILE: includes/admin-opinie.php
+line	column	type	code	message	docs
+24	31	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $to used in $wpdb-&gt;get_var()\n$to assigned unsafely at line 19.	
+25	31	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $to used in $wpdb-&gt;get_var()\n$to assigned unsafely at line 19.	
+26	31	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $to used in $wpdb-&gt;get_var()\n$to assigned unsafely at line 19.	
+27	31	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $to used in $wpdb-&gt;get_var()\n$to assigned unsafely at line 19.	
+37	20	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $to used in $wpdb-&gt;get_results()\n$to assigned unsafely at line 19.	
+
+
 FILE: includes/logowania.php
 line	column	type	code	message	docs
 104	20	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $t used in $wpdb-&gt;get_var()\n$t assigned unsafely at line 99.	
@@ -86,17 +94,17 @@ line	column	type	code	message	docs
 
 FILE: includes/admin-zamowienie.php
 line	column	type	code	message	docs
-48	16	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $pz used in $wpdb-&gt;get_row()\n$pz assigned unsafely at line 46.	
-88	9	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $pz used in $wpdb-&gt;query()\n$pz assigned unsafely at line 46.	
-107	10	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $pz used in $wpdb-&gt;query()\n$pz assigned unsafely at line 46.	
-116	11	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $pz used in $wpdb-&gt;query()\n$pz assigned unsafely at line 46.	
-125	11	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $pz used in $wpdb-&gt;query()\n$pz assigned unsafely at line 46.	
-138	10	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $pz used in $wpdb-&gt;query()\n$pz assigned unsafely at line 46.	
-149	10	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $pz used in $wpdb-&gt;query()\n$pz assigned unsafely at line 46.	
-209	16	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $pz used in $wpdb-&gt;get_row()\n$pz assigned unsafely at line 207.	
-317	19	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $pz used in $wpdb-&gt;query()\n$pz assigned unsafely at line 207.	
-342	15	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $pz used in $wpdb-&gt;get_row()\n$pz assigned unsafely at line 207.	
-439	16	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $pz used in $wpdb-&gt;get_row()\n$pz assigned unsafely at line 437.	
+51	16	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $pz used in $wpdb-&gt;get_row()\n$pz assigned unsafely at line 49.	
+98	9	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $pz used in $wpdb-&gt;query()\n$pz assigned unsafely at line 49.	
+117	10	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $pz used in $wpdb-&gt;query()\n$pz assigned unsafely at line 49.	
+127	11	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $pz used in $wpdb-&gt;query()\n$pz assigned unsafely at line 49.	
+137	11	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $pz used in $wpdb-&gt;query()\n$pz assigned unsafely at line 49.	
+151	10	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $pz used in $wpdb-&gt;query()\n$pz assigned unsafely at line 49.	
+162	10	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $pz used in $wpdb-&gt;query()\n$pz assigned unsafely at line 49.	
+222	16	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $pz used in $wpdb-&gt;get_row()\n$pz assigned unsafely at line 220.	
+330	19	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $pz used in $wpdb-&gt;query()\n$pz assigned unsafely at line 220.	
+355	15	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $pz used in $wpdb-&gt;get_row()\n$pz assigned unsafely at line 220.	
+452	16	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $pz used in $wpdb-&gt;get_row()\n$pz assigned unsafely at line 450.	
 
 
 FILE: includes/admin-dashboard.php
@@ -128,13 +136,13 @@ line	column	type	code	message	docs
 800	21	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $pz used in $wpdb-&gt;query()\n$pz assigned unsafely at line 713.	
 809	18	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $pz used in $wpdb-&gt;get_row()\n$pz assigned unsafely at line 713.	
 821	23	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $pz used in $wpdb-&gt;query()\n$pz assigned unsafely at line 713.	
-839	9	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $pz used in $wpdb-&gt;query()\n$pz assigned unsafely at line 713.	
-849	16	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $pz used in $wpdb-&gt;get_row()\n$pz assigned unsafely at line 713.	
-860	9	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $pz used in $wpdb-&gt;query()\n$pz assigned unsafely at line 713.	
-875	10	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $pz used in $wpdb-&gt;query()\n$pz assigned unsafely at line 713.	
-880	9	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $pz used in $wpdb-&gt;query()\n$pz assigned unsafely at line 713.	
-1006	20	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $ps used in $wpdb-&gt;get_col()\n$ps assigned unsafely at line 997.	
-1037	25	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $pz used in $wpdb-&gt;get_col()\n$pz assigned unsafely at line 1036.	
+842	9	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $pz used in $wpdb-&gt;query()\n$pz assigned unsafely at line 713.	
+852	16	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $pz used in $wpdb-&gt;get_row()\n$pz assigned unsafely at line 713.	
+863	9	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $pz used in $wpdb-&gt;query()\n$pz assigned unsafely at line 713.	
+878	10	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $pz used in $wpdb-&gt;query()\n$pz assigned unsafely at line 713.	
+883	9	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $pz used in $wpdb-&gt;query()\n$pz assigned unsafely at line 713.	
+1009	20	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $ps used in $wpdb-&gt;get_col()\n$ps assigned unsafely at line 1000.	
+1040	25	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $pz used in $wpdb-&gt;get_col()\n$pz assigned unsafely at line 1039.	
 
 
 FILE: sklep-agentow.php
