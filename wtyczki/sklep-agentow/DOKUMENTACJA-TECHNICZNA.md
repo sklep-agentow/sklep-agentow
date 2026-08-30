@@ -61,7 +61,8 @@ sha256 w `token_hash`, ważny `SKLEPAG_OPINIA_DNI` dni) → `oczekuje` (kupując
 wysłał formularz; token spalony — wpis `''`) → `przyjeta` / `odrzucona`
 (moderacja w panelu, pomyłkę można cofnąć w obie strony). Na stronie produktu
 renderują się WYŁĄCZNIE `przyjeta` (`sklepag_opinie_z_bazy` → `sklepag_render_opinie`).
-Retry maila zakupowego i ręczny resend z panelu odświeżają token w stanie `zalazek`
+Retry maila zakupowego i ręczny resend z panelu odświeżają token w stanie `zalazek` (i zerują
+`pobrania_uzyte` zamówienia — świeży link = pełny limit)
 (resend ZAKŁADA zalążek także zamówieniu, które go nie miało — np. sprzed mechanizmu);
 opinii przysłanej żadna ścieżka nie rusza.
 Formularz (`admin-post.php?action=sklepag_ocen`) wymaga zgody na publikację imienia
@@ -169,7 +170,8 @@ Na stan zamówienia ta tabela nadal nie wpływa.
 
 Link z maila zawiera token (64 znaki). Przy każdym pobraniu sprawdzane są **trzy
 warunki naraz**: token istnieje, nie minął termin (`SKLEPAG_LINK_GODZIN` = **72 h**),
-licznik nie przekroczył limitu (`SKLEPAG_LIMIT_POBRAN` = **10**). Plik wydawany jest strumieniem
+licznik nie przekroczył limitu (`SKLEPAG_LIMIT_POBRAN` = **10**; licznik jest zerowany przy każdym
+wydaniu świeżego linku — resend z panelu i ponowienie przez cron — więc limit jest na link, nie na zakup). Plik wydawany jest strumieniem
 przez PHP (`readfile()` z nagłówkami `Content-Disposition` i `X-Robots-Tag: noindex`)
 — **nigdy przez publiczny adres**.
 
@@ -189,7 +191,7 @@ po stronie serwera. To jest świadome ograniczenie, nie przeoczenie.
 |---|---|---|
 | `SKLEPAG_WERSJA` | 0.9.23 | wersja wtyczki (assety, cache) |
 | `SKLEPAG_WERSJA_SCHEMATU` | 7 | wersja schematu bazy (migracje) |
-| `SKLEPAG_LIMIT_POBRAN` | 10 | ile razy można pobrać zakup |
+| `SKLEPAG_LIMIT_POBRAN` | 10 | ile razy można pobrać plik z jednego wydanego linku (zerowane przy świeżym linku) |
 | `SKLEPAG_LINK_GODZIN` | 72 | ważność linku pobrania |
 | `SKLEPAG_OPINIA_DNI` | 30 | ważność jednorazowego linku „oceń bota" |
 | `SKLEPAG_OPINIA_ZGODA_TRESC` | (zdanie zgody) | treść zgody na publikację opinii z imieniem |

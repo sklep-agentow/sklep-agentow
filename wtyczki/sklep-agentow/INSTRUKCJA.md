@@ -100,8 +100,8 @@ prosto do nich.
 
 - data zakupu, kupujący, produkt (kopia z chwili zakupu), kwota, identyfikator sesji Stripe,
 - **Pobrania** — ile razy z limitu 10 kupujący pobrał plik **z obecnego linku** i czy link jest jeszcze
-  ważny; po każdej ponownej wysyłce (ręcznej albo automatycznej) licznik startuje od zera — pełna
-  historia pobrań jest w osi czasu,
+  ważny; po każdej ponownej wysyłce (ręcznej albo automatycznej) licznik startuje od zera — historia
+  wszystkich pobrań (z każdego linku) jest w osi czasu, przez 90 dni,
 - **Zgoda na dostarczenie treści cyfrowej** — treść i czas zgody, którą kupujący zaznaczył
   przed zapłatą (ważne przy prawie do odstąpienia od umowy),
 - **Treść wysłanego maila** — dokładnie to, co dostał kupujący, z przyciskiem **Wyślij ponownie**,
@@ -129,7 +129,10 @@ Po opłaceniu kupujący dostaje **jeden** mail (sklep pilnuje, żeby nie wysła�
 
 **Wyślij ponownie** (w szczegółach zamówienia) wysyła mail ze **świeżym linkiem** — nowy termin
 72 godzin i licznik pobrań od zera; poprzedni link przestaje działać. Gdyby wysyłka się nie udała,
-sklep przywraca poprzedni link.
+sklep przywraca poprzedni link — ale tylko do następnej automatycznej próby (sklep ponawia sam po
+ok. 2 minutach, do trzech razy): każda próba wydaje nowy link, a nieudana go nie cofa. Przy trwałej
+awarii poczty poprzedni link więc przepada; gdy poczta znów działa, kliknij „Wyślij ponownie” —
+kupujący dostanie świeży link z pełnym limitem.
 Przycisk jest dostępny tylko dla zamówień w stanie „mail wysłany” albo „błąd maila”: dla zwróconych,
 spornych i jeszcze niedomkniętych sklep odmawia — link, który kupujący już ma, działa do końca
 swojej ważności.

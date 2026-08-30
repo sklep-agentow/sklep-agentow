@@ -26,10 +26,12 @@ to jest w paczce, bo bez tego sklep nie nadawałby się do sprzedaży, a nie dla
 ## Wydawanie pliku
 
 5. **Brama pobrań** — plik wydaje wyłącznie sklep, po sprawdzeniu linku z maila: token, termin
-   72 godzin, limit 10 pobrań, licznik zwiększany atomowo. Pliki produktów leżą w katalogu chronionym
+   72 godzin, limit 10 pobrań na każdy wydany link, licznik zwiększany atomowo. Pliki produktów leżą w katalogu chronionym
    o losowej nazwie, nigdy pod publicznym adresem. Powód: plik pod jawnym adresem to produkt za darmo.
-6. **Ponowna wysyłka ze świeżym linkiem** z panelu, z zapisem w osi czasu zamówienia; nieudana wysyłka
-   przywraca poprzedni link; dla zamówień zwróconych i spornych przycisk jest niedostępny. Powód: „nie dostałem maila” to najczęstszy kontakt po zakupie.
+6. **Ponowna wysyłka ze świeżym linkiem** — z panelu albo automatycznie (do trzech prób po nieudanej
+   wysyłce), z zapisem w osi czasu zamówienia; każdy świeży link ma licznik pobrań od zera; nieudana
+   wysyłka z panelu przywraca poprzedni link do następnej próby automatycznej; dla zamówień zwróconych
+   i spornych przycisk jest niedostępny. Powód: „nie dostałem maila” to najczęstszy kontakt po zakupie.
 7. **Sprzedaż tylko z potwierdzonym plikiem** — sklep sprawdza ZIP po zapisie (obecność, rozmiar,
    suma kontrolna) i nie pozwala włączyć produktu bez pliku. Powód: sprzedanie czegoś, czego nie ma
    czym wydać, kończy się zwrotem i utratą zaufania.

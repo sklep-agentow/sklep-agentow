@@ -685,6 +685,17 @@ Raport i triage: `audyt/PLUGIN-CHECK-30-08.md` (surowe wyniki `audyt/plugin-chec
   nie zna, a `phpcs.xml.dist` zna (D25). Świadomie NIE wyciszane — Plugin Check to raport, nie bramka.
 - Plugin Check w CI: **świadomie nie** — wykonawca własny na 3,8 GB RAM, akcja stawia drugi WP.
 
+## 🟡 PONOWIENIE PRZEZ CRON NIE MA KOMPENSACJI TOKENU (30.08, recenzja PR instrukcji r6, WAŻNA 1)
+
+`admin-zamowienie.php` po nieudanym resendzie przywraca stary token/termin/licznik, ale zostawia `mail_blad`,
+więc po ~2 min `sklepag_domknij_zakup()` (cron) rotuje token; gdy TA wysyłka też pada, gałąź porażki
+(`zakup.php`, `status='mail_blad', mail_proby+1`) niczego nie przywraca — kupujący z działającym linkiem
+traci go na stałe przy trwałej awarii poczty. Zachowanie sprzed PR-a `#213`. **Decyzja:** w `#213` naprawiony
+TEKST (instrukcja i PONAD mówią, że przywrócenie trwa do następnej próby automatycznej, a droga ratunku to
+„Wyślij ponownie” po naprawie poczty). **Dług:** kompensacja w cronie (zdjęcie tokenu/terminu/licznika przed
+krokiem 4, przywrócenie w gałęzi porażki) + część 4 strażnika `resend-odnawia-limit-pobran-test.php`
+(cron z `pre_wp_mail=false` → stary token żyje). Własny PR po oddaniu — zmiana zachowania silnika wysyłki.
+
 ## 🟡 SEKCJA F MIERZY PIĘĆ Z DZIEWIĘCIU LICZB INSTRUKCJI + ZRZUTY Z OBCYM MENU (30.08, recenzja PR instrukcji r2, WAŻNA 3 + DROBNA 5)
 
 `testy/dokumentacja-zgodnosc-sklep.sh` §F pilnuje 72 h / 10 pobrań / 30 dni / 20 MB / co 10 min; NIE mierzy
