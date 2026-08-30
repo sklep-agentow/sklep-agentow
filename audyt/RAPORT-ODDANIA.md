@@ -32,11 +32,18 @@ Dwa FAIL-e są **decyzją, nie wadą** — obie zapisane w `audyt/CO-WISI.md` i 
 - **Kontrola 2 — kalibracja audytorów.** `soczewek=6, bez PASS=2` (L1, L5 nie osiągnęły PASS przy progu
   bramki). Kryterium klienta #12 (≥ 2/3 mutantów złapanych) jest SPEŁNIONE: 7 mutantów, 5 złapanych = 71 %.
   Bramka jest ostrzejsza od rubryki. Decyzja Dzidka 28.08: oddajemy z jawnym zapisem.
+  **Co to znaczy dla klienta, po ludzku:** pięć soczewek udowodniło na podłożonych błędach, że naprawdę widzą
+  wady. Dwie tego nie udowodniły — więc **to, czego nie znalazły w obszarze dziennika logowań (L1) i zgodności
+  dokumentacji z zachowaniem (L5), nie jest dowodem, że tam nic nie ma.** Ich „czysto” waży mniej niż pozostałych.
 - **Kontrola 6 — próby kontrolne strażników.** `6 z 30` prób kończy EXIT≠0 (`audyt/sklep/PROBY-KONTROLNE.log`,
   przelot maszynowy na `a1b2495`, 30.08 12:18; 1 pominięta z powodem w logu). Zmierzone przez wykluczenie
   na czystym `origin/main`: pięć pada identycznie bez naszych zmian (`blad-klucza`, `ip-za-proxy`, `nonce`,
   `przejecie`, `pulapka` — strażniki botów, dwa ślepe w obie strony), szósta (`dowod-z-paczki`, EXIT=2) ma
-  zaszytą wersję 1.5.0. To długi NARZĘDZI QA, nie wady produktu.
+  zaszytą wersję 1.5.0. Jedna z nich (`przejecie`) jest chwiejna — wynik zależy od stanu wspólnego stosu
+  (w innym przelocie przeszła bez zmian w kodzie); siódma (`statystyki`) migocze i w tym przelocie akurat przeszła.
+  Wady leżą w NARZĘDZIACH QA, nie w produkcie — **ale skutkiem jest, że zabezpieczenie nonce i obsługa błędu
+  klucza w chatbocie są dziś NIEPILNOWANE** (`blad-klucza` i `nonce` padają zawsze): regresji w tych dwóch
+  miejscach nie złapie żadna bramka. To dług bezpieczeństwa narzędzi, zapisany tak samo w `CO-WISI.md`.
 
 ## 3. Jak to było sprawdzane (i czego to NIE dowodzi)
 
@@ -46,7 +53,7 @@ Dwa FAIL-e są **decyzją, nie wadą** — obie zapisane w `audyt/CO-WISI.md` i 
 - Przelot człowieka po sklepie **27/27 punktów** (`audyt/sklep/PRZELOT-CZLOWIEKA-SKLEP.md`) na stosie
   warsztatowym WP 7.1 / PHP 8.4; rdzeń zakupu (zakup → webhook → mail → pobranie, sumy zgodne) powtórzony
   NA PACZCE, na świeżej instalacji (`audyt/K6-INSTALACJA-OD-ZERA.md`).
-- Statyka pod PHP 8.1 (`phpstan.neon`: `phpVersion: 80100`, poziom 5), WPCS, gitleaks, skaner śladów
+- Statyka pod PHP 8.1 (`phpstan.neon.dist`: `phpVersion: 80100`, poziom 5), WPCS, gitleaks, skaner śladów
   wewnętrznych i poświadczeń — dziesięć bramek `narzedzia-qa/bramki.sh` w CI na każdym PR; recenzja Claude
   każdego PR-a wg `.github/RECENZENT-BRIEFING.md`. Ostatnie dwa PR-y: `#213` 6 rund (w tym jedna KRYTYCZNA
   naprawiona w kodzie ze strażnikiem — świeży link do pobrania odnawia limit), `#214` 3 rundy.
@@ -62,7 +69,10 @@ Dwa FAIL-e są **decyzją, nie wadą** — obie zapisane w `audyt/CO-WISI.md` i 
 
 ## 4. Co jest świadomie niedomknięte (z `audyt/CO-WISI.md`, stan 2026-08-30)
 
-1. **Baner „TRYB TESTOWY” zaszyty w kodzie w 7 miejscach** widzianych przez kupującego (w tym mail po zakupie
+Pełna lista jest w `CO-WISI.md` (14 wpisów). Tu **wszystkie pozycje, które dotykają produktu lub danych
+klienta**; pominięte są wyłącznie długi narzędzi warsztatu (skanery, próby kontrolne, rejestr).
+
+1. **Oznaczenia trybu testowego zaszyte w kodzie w 7 miejscach** (trzy banery, cztery inne teksty) widzianych przez kupującego (w tym mail po zakupie
    i ekran po zapłacie). Na kluczach testowych — zgodnie z zamówieniem — jest prawdą; na produkcji skłamałby.
    Instrukcje mówią to wprost i każą zacząć od kontaktu z nami. Naprawa = nowa paczka, PO egzaminie.
 2. **Ponowienie wysyłki przez cron nie ma kompensacji tokenu**: po nieudanym „Wyślij ponownie” sklep przywraca
@@ -81,7 +91,12 @@ Dwa FAIL-e są **decyzją, nie wadą** — obie zapisane w `audyt/CO-WISI.md` i 
    zapisane wprost w instrukcji właściciela; zmiana na życzenie.
 8. **Szkice Regulaminu i Polityki prywatności powstają tylko przy pierwszej aktywacji** — sklep zainstalowany
    przed 0.9.23 ma szkic Polityki bez adresu IP przy pobraniu; instrukcja (rozdz. 6) i CHANGELOG mówią, co dopisać.
-9. Odbiór wydajności na docelowym hostingu (AN-022) — poza naszym stanowiskiem.
+9. **Anonimizacja może potwierdzić usunięcie, którego nie wykonała w całości**: adres e-mail z `/` w części
+   lokalnej zostaje w dzienniku zdarzeń, a wtyczka melduje sukces (przypadek brzegowy, zapisany w `CO-WISI.md`
+   z dowodem). Tej samej ścieżki dotyczy: `sklepag_obsluz_resend()` ma sześć zapisów bez sprawdzenia wyniku —
+   skutek zapisywany niezależnie od powodzenia (dług nazwany w kodzie i w rejestrze).
+10. Pięć pól panelu (produkty, ustawienia) bez polskiego komunikatu walidacji — kosmetyka, zapisana z liniami.
+11. Odbiór wydajności na docelowym hostingu (AN-022) — poza naszym stanowiskiem.
 
 ## 5. Gdzie leżą dowody
 
