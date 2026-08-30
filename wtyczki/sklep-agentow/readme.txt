@@ -153,6 +153,7 @@ link do pobrania w mailu, jednorazowy link do opinii.
 * Naprawione: gdy poczta ma awarię przy automatycznym ponowieniu maila, wcześniej wysłany link do pobrania dalej działa (dotąd mógł zgasnąć na stałe). Znany wyjątek: gdy wysyłka urwie się w pół (np. pad serwera w jej trakcie) i ponowienie po niej też zawiedzie, link może przestać działać — ratunkiem jest przycisk „Wyślij ponownie" przy zamówieniu w panelu.
 * Naprawione: strona nieistniejącego produktu zwraca kod 404 także dla żądań HEAD (dotąd narzędzia sprawdzające widziały 200).
 * Naprawione: gdy na stronie działa wtyczka SEO (Yoast, Rank Math), sklep nie dokłada drugiego znacznika canonical.
+* Naprawione: strona nieistniejącego produktu (404) nie dostaje znacznika canonical wskazującego listę sklepu — także przy domyślnych ustawieniach WordPressa.
 
 = 0.9.26 =
 * Naprawione: strony sklepu (lista i produkt) dostają znacznik canonical także na motywach, które wyłączają canonical WordPressa — dotąd Google widział stronę produktu pod dwoma adresami jako dwie strony.

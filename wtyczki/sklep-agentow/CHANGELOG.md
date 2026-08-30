@@ -29,6 +29,9 @@ Nic jeszcze.
 - **Zgoda z wtyczkami SEO gospodarza:** gdy działa Yoast (`WPSEO_VERSION`) lub Rank Math, wtyczka nie
   drukuje własnego canonicala (uniknięcie dwóch znaczników). Dokładniejszy warunek `false !== has_action`
   (priorytet 0 to też podpięcie).
+- **Strona nieistniejącego produktu (404) bez canonicala także przy domyślnym WordPressie.** Gdy motyw
+  zostawia `rel_canonical` WP, filtr `get_canonical_url` oddaje pusty adres — 404 nie wskazuje już listy
+  sklepu jako „głównej” wersji; cudze strony z doklejonym `?sklepag_produkt=` zachowują własny canonical.
 - Doprecyzowane zdanie w opisie wtyczki: bez stron „Sklep”/„Dziękujemy” wtyczka nie dokleja niczego do
   innych stron — sklep pokazuje się tam, gdzie właściciel sam wstawi skrót.
 
