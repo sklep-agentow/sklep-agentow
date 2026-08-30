@@ -124,35 +124,16 @@ Pozostałe **11 na zielono**: mapa, rejestr (4 kontrole), anomalie, przelot, pac
 
 ---
 
-## 8. PORZĄDEK W REPO PRZED ODDANIEM — 51 GAŁĘZI (dopisane 29.08 na prośbę Dzidka)
+## 8. PORZĄDEK W REPO PRZED ODDANIEM — ✅ ZROBIONE 30.08 (decyzja Dzidka)
 
-Na GitHubie stoi **51 gałęzi zdalnych** i jeden tag. Tak zostać nie może — kolega otwiera repo
-i widzi 51 gałęzi zamiast czystego `main`.
-
-⛔ **PUŁAPKA, przez którą NIE WOLNO tego zrobić „szybko":**
-
-```
-$ git fetch --prune origin
-$ git branch -r | grep -v 'origin/HEAD' | grep -v 'origin/main$' | wc -l
-51                   ← tyle gałęzi poza main (pomiar 30.08, po prune)
-$ git branch -r --merged origin/main | grep -v origin/main | wc -l
-0                    ← ZERO z nich git widzi jako scalone
-$ git branch -r --no-merged origin/main | grep -v origin/main | wc -l
-51                   ← wszystkie 51 jako NIEscalone
-```
-
-Scaliliśmy kilkadziesiąt PR-ów, a `--merged` pokazuje zero. Powód: **scalamy SQUASHEM**, a wtedy
-git nie widzi gałęzi jako scalonej (to klasa 20 z `SCIAGA-EGZAMINATORA.md`). Kasowanie „tych
-zmergowanych" tą komendą skasowałoby albo wszystko, albo nic.
-
-**BEZPIECZNA DROGA:** kasować po **statusie PR-a**, nie po `--merged`:
-```
-gh pr list --state merged --limit 100 --json number,headRefName,state
-# i kasować WYŁĄCZNIE gałęzie, których PR ma state = MERGED
-```
-⛔ Przed kasowaniem czegokolwiek: sprawdzić, czy gałąź nie jest bazą innego, otwartego PR-a
-(klasa: stackowane PR-y — skasowanie bazy zamyka dzieci).
-⛔ **Nieodwracalne → pytam Dzidka PRZED**, z gotową listą do klepnięcia.
+Było 52 gałęzi zdalnych. Kasowanie **po stanie PR-a** (`gh pr list --state merged`), nie po
+`git branch --merged` — po squashu ta komenda pokazywała 0 scalonych. Przed kasowaniem sprawdzone,
+że żadna z kasowanych nie jest bazą otwartego PR-a (oba mają bazę `main`).
+- 45 gałęzi ze scalonym PR-em — skasowane (treść jest w `main`, historię PR trzyma GitHub w `refs/pull/N`).
+- 4 gałęzie bez PR-a (`awaria/revert-recenzent`, `cele-k7-l1-11-ci-01-02`, `koord/przelot-czlowieka`,
+  `kosc-k1`) — najpierw tagi `archiwum/<nazwa>` wypchnięte na origin, potem skasowane.
+- Zostały: `main` · `audyt/mutanty-sklep` (bank mutantów — czyta go `k7-koniec`, kasować NIE wolno) ·
+  gałęzie otwartych PR-ów. Wynik: `git push origin --delete` × 49, 0 błędów; `git branch -r` → 4 pozycje.
 
 ## 9. SKILL DO STEROWANIA GITHUBEM — PO ODDANIU, nie teraz
 Dzidek 29.08: wiedza o prowadzeniu repo jest rozsypana, przydałby się **jeden** skill
