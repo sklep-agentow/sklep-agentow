@@ -1,6 +1,6 @@
 # Sklep Agentów — dokumentacja techniczna
 
-**Wersja wtyczki: 0.9.22 · wersja schematu bazy: 7 · WordPress 6.7+ · PHP 8.1+**
+**Wersja wtyczki: 0.9.23 · wersja schematu bazy: 7 · WordPress 6.7+ · PHP 8.1+**
 
 > **Po co ten dokument.** To jest **mapa systemu dla audytora i programisty**, nie ulotka.
 > Każda liczba i nazwa tutaj jest wzięta z kodu, nie z pamięci — jeśli coś się rozjedzie,
@@ -48,8 +48,8 @@ wyłącznie ustawienia i klucze — nigdy liczniki ani stan zamówień.
 | `produkty` | katalog: nazwa, adres, opis, cena, plik, aktywność | panel (CRUD) |
 | `sesje_checkout` | ślad rozpoczętych płatności; kolumna `stan` **współrozstrzyga**, czy powtórne kliknięcie zakupu dostaje zapamiętany adres checkoutu, czy nowy | rozpoczęcie zakupu |
 | `zamowienia` | ⭐ **jedyne źródło prawdy o stanie zakupu** | webhook + reconciliation |
-| `zdarzenia` | dziennik zdarzeń zamówienia (audyt ścieżki) | wszystkie moduły zakupu |
-| `logowania` | kto i kiedy logował się do panelu, z jakim skutkiem | zaczepy logowania WP |
+| `zdarzenia` | dziennik zdarzeń zamówienia (audyt ścieżki); retencja 90 dni — kasuje krok 4 crona `sklepag_dociagnij_zalegle` (`zakup.php`) | wszystkie moduły zakupu |
+| `logowania` | kto i kiedy logował się do panelu, z jakim skutkiem; retencja 90 dni (ten sam cron) | zaczepy logowania WP |
 | `rate_limit` | okna limitów żądań | brama zakupu i logowania |
 | `opinie` | mechanizm opinii kupujących: zalążek+token przy mailu, treść z formularza, statusy moderacji | mail zakupowy → formularz kupującego → panel (moderacja) |
 
@@ -61,7 +61,8 @@ sha256 w `token_hash`, ważny `SKLEPAG_OPINIA_DNI` dni) → `oczekuje` (kupując
 wysłał formularz; token spalony — wpis `''`) → `przyjeta` / `odrzucona`
 (moderacja w panelu, pomyłkę można cofnąć w obie strony). Na stronie produktu
 renderują się WYŁĄCZNIE `przyjeta` (`sklepag_opinie_z_bazy` → `sklepag_render_opinie`).
-Retry maila zakupowego i ręczny resend z panelu odświeżają token w stanie `zalazek`
+Retry maila zakupowego i ręczny resend z panelu odświeżają token w stanie `zalazek` (i zerują
+`pobrania_uzyte` zamówienia — świeży link = pełny limit)
 (resend ZAKŁADA zalążek także zamówieniu, które go nie miało — np. sprzed mechanizmu);
 opinii przysłanej żadna ścieżka nie rusza.
 Formularz (`admin-post.php?action=sklepag_ocen`) wymaga zgody na publikację imienia
@@ -169,7 +170,8 @@ Na stan zamówienia ta tabela nadal nie wpływa.
 
 Link z maila zawiera token (64 znaki). Przy każdym pobraniu sprawdzane są **trzy
 warunki naraz**: token istnieje, nie minął termin (`SKLEPAG_LINK_GODZIN` = **72 h**),
-licznik nie przekroczył limitu (`SKLEPAG_LIMIT_POBRAN` = **10**). Plik wydawany jest strumieniem
+licznik nie przekroczył limitu (`SKLEPAG_LIMIT_POBRAN` = **10**; licznik jest zerowany przy każdym
+wydaniu świeżego linku — resend z panelu i ponowienie przez cron — więc limit jest na link, nie na zakup). Plik wydawany jest strumieniem
 przez PHP (`readfile()` z nagłówkami `Content-Disposition` i `X-Robots-Tag: noindex`)
 — **nigdy przez publiczny adres**.
 
@@ -187,9 +189,9 @@ po stronie serwera. To jest świadome ograniczenie, nie przeoczenie.
 
 | Stała | Wartość | Znaczenie |
 |---|---|---|
-| `SKLEPAG_WERSJA` | 0.9.22 | wersja wtyczki (assety, cache) |
+| `SKLEPAG_WERSJA` | 0.9.23 | wersja wtyczki (assety, cache) |
 | `SKLEPAG_WERSJA_SCHEMATU` | 7 | wersja schematu bazy (migracje) |
-| `SKLEPAG_LIMIT_POBRAN` | 10 | ile razy można pobrać zakup |
+| `SKLEPAG_LIMIT_POBRAN` | 10 | ile razy można pobrać plik z jednego wydanego linku (zerowane przy świeżym linku) |
 | `SKLEPAG_LINK_GODZIN` | 72 | ważność linku pobrania |
 | `SKLEPAG_OPINIA_DNI` | 30 | ważność jednorazowego linku „oceń bota" |
 | `SKLEPAG_OPINIA_ZGODA_TRESC` | (zdanie zgody) | treść zgody na publikację opinii z imieniem |

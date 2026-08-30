@@ -684,3 +684,35 @@ Raport i triage: `audyt/PLUGIN-CHECK-30-08.md` (surowe wyniki `audyt/plugin-chec
   fałszywe alarmy na nazwach tabel oraz nasze własne sanitizery/brama nonce, których Plugin Check
   nie zna, a `phpcs.xml.dist` zna (D25). Świadomie NIE wyciszane — Plugin Check to raport, nie bramka.
 - Plugin Check w CI: **świadomie nie** — wykonawca własny na 3,8 GB RAM, akcja stawia drugi WP.
+
+## 🟡 PONOWIENIE PRZEZ CRON NIE MA KOMPENSACJI TOKENU (30.08, recenzja PR instrukcji r6, WAŻNA 1)
+
+`admin-zamowienie.php` po nieudanym resendzie przywraca stary token/termin/licznik, ale zostawia `mail_blad`,
+więc po ~2 min `sklepag_domknij_zakup()` (cron) rotuje token; gdy TA wysyłka też pada, gałąź porażki
+(`zakup.php`, `status='mail_blad', mail_proby+1`) niczego nie przywraca — kupujący z działającym linkiem
+traci go na stałe przy trwałej awarii poczty. Zachowanie sprzed PR-a `#213`. **Decyzja:** w `#213` naprawiony
+TEKST (instrukcja i PONAD mówią, że przywrócenie trwa do następnej próby automatycznej, a droga ratunku to
+„Wyślij ponownie” po naprawie poczty). **Dług:** kompensacja w cronie (zdjęcie tokenu/terminu/licznika przed
+krokiem 4, przywrócenie w gałęzi porażki) + część 4 strażnika `resend-odnawia-limit-pobran-test.php`
+(cron z `pre_wp_mail=false` → stary token żyje). Własny PR po oddaniu — zmiana zachowania silnika wysyłki.
+
+## 🟡 SEKCJA F MIERZY PIĘĆ Z DZIEWIĘCIU LICZB INSTRUKCJI + ZRZUTY Z OBCYM MENU (30.08, recenzja PR instrukcji r2, WAŻNA 3 + DROBNA 5)
+
+`testy/dokumentacja-zgodnosc-sklep.sh` §F pilnuje 72 h / 10 pobrań / 30 dni / 20 MB / co 10 min; NIE mierzy
+90 dni retencji, progu 7 prób logowania, 3 prób maila, minuty odmowy i „pięciu stron” menu. Nazwa bramki
+zawężona do tego, co mierzy (klasa 11). Dwie z niemierzonych liczb były nieprawdziwe w tekście i przeszły
+z EXIT=0 — naprawione w tekście ręcznie. **Dług:** cztery asercje (`90`, `6` w `sklepag_rate_limit`, `3`, `60`)
++ przypadki do próby kontrolnej — po oddaniu, wzorzec `stala`/`grep -oP` gotowy w §F.
+Osobno: pięć PNG w paczce pokazuje menu z **ChatBot LIVE** i **Segregator maila** oraz plakietkę Plugins ① —
+u klienta z samym sklepem tych pozycji nie będzie. Nie blokuje; przy następnym `testy/zrzuty-panelu.js`
+robić zrzuty na stosie z JEDNĄ wtyczką.
+
+## 🟡 ZRZUTY PNG W PACZCE SĄ POZA SKANEREM ŚLADÓW (30.08, recenzja PR o instrukcji sklepu, WAŻNA)
+
+`narzedzia-qa/paczka-zgodnosc.sh` melduje „w 66 plikach paczki nie ma śladów wewnętrznych”, ale pięć
+z nich to PNG — skaner tekstowy nie czyta obrazów, więc nazwa kontroli jest szersza niż jej zasięg
+(klasa 5 i klasa 11 naraz). Zrzuty z 30.08 były robione z widocznym kontem `audytor-admin`, osią czasu
+z `admin_roboczy` i adresem sieci dockera; naprawione w `testy/zrzuty-panelu.js` (pasek admina bez
+tożsamości, front w niezalogowanym kontekście, kadr bez osi czasu) i sprawdzone OCZAMI.
+**Dług:** jedyną kontrolą obrazów jest człowiek. Ewentualny automat: OCR (tesseract) na PNG z paczki
+z tą samą listą wzorców co skaner — po oddaniu, jeśli zrzutów przybędzie.

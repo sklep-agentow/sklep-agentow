@@ -28,7 +28,10 @@ add_action( 'admin_post_sklepag_resend', 'sklepag_obsluz_resend' );
  * ⛔ DŁUG NAZWANY, NIE UKRYTY: ta ścieżka ma SZEŚĆ zapisów `$wpdb->query()`, których wynik
  * nie jest sprawdzany, i zapisuje skutek (status, token, treść maila) niezależnie od tego,
  * czy zapis się udał. To ta sama klasa co naprawiona niżej w anonimizacji — tam mierzymy
- * STAN po zapisie, tu jeszcze nie.
+ * STAN po zapisie, tu jeszcze nie. Do tego samego długu należy kompensacja licznika pobrań po
+ * nieudanej wysyłce: przywraca wartość ze zdjęcia `$zam` z wejścia, nie ze stanu bazy — pobranie,
+ * które trafi w okno między odczytem a zapisem (stary link jeszcze żyje), ginie z licznika
+ * (kupujący dostaje jedno pobranie ponad limit). Okno wąskie, skutek mały, klasa ta sama.
  *
  * Świadomie nietknięte w tej zmianie: to inna ścieżka, z własnym ryzykiem i własnym zestawem
  * przypadków (ponowna wysyłka, kompensacja po nieudanym mailu), więc wymaga własnych testów.
@@ -57,6 +60,10 @@ function sklepag_obsluz_resend() {
 	// właśnie domyka (resend nadpisałby token bez CAS), `oczekuje`/`oplacone` =
 	// silnik zaraz wyśle sam. Utknięte `mail_w_toku` odzyskuje reconciliation
 	// (stale-claim po 5 min) i przestawia status — wtedy resend się odblokuje.
+	if ( in_array( $zam->status, array( 'zwrocone', 'sporne' ), true ) ) {
+		// Zamknięte finansowo: ponowna wysyłka niedostępna — nie „domykanie automatyczne”, tylko decyzja.
+		wp_die( 'Zamówienie zwrócone albo sporne — ponowna wysyłka linku nie jest dostępna. Link, który kupujący już ma, działa do końca swojej ważności.', 'Sklep Agentów', 409 );
+	}
 	if ( ! in_array( $zam->status, array( 'mail_wyslany', 'mail_blad' ), true ) ) {
 		wp_die( 'Zamówienie jest właśnie domykane automatycznie (status: ' . esc_html( $zam->status ) . ') — ponowna wysyłka dostępna, gdy silnik skończy.', 'Sklep Agentów', 409 );
 	}
@@ -85,9 +92,12 @@ function sklepag_obsluz_resend() {
 	$produkt_snapshot->slug = (string) $wpdb->get_var( $wpdb->prepare( "SELECT slug FROM {$wpdb->prefix}sklepag_produkty WHERE id=%d", (int) $zam->produkt_id ) );
 	$tresc                  = sklepag_zbuduj_mail( $produkt_snapshot, $zam, $link, $link_op );
 
+	// Świeży link = świeży termin ORAZ świeży limit pobrań. Instrukcja kieruje po ten przycisk
+	// kupującego z WYCZERPANYM limitem — bez zerowania `pobrania_uzyte` nowy link dawał 410
+	// od pierwszego kliknięcia, a mail obiecywał „pozwala na 10 pobrań".
 	$wpdb->query(
 		$wpdb->prepare(
-			"UPDATE {$pz} SET token_pobrania=%s, link_wygasa=%s, mail_tresc=%s, zmieniono=%s WHERE id=%d",
+			"UPDATE {$pz} SET token_pobrania=%s, link_wygasa=%s, pobrania_uzyte=0, mail_tresc=%s, zmieniono=%s WHERE id=%d",
 			hash( 'sha256', $token ),
 			gmdate( 'Y-m-d H:i:s', time() + SKLEPAG_LINK_GODZIN * HOUR_IN_SECONDS ),
 			$tresc,
@@ -99,24 +109,26 @@ function sklepag_obsluz_resend() {
 	$wyslano = sklepag_wyslij_mail_sklepu( $zam->email_kupujacego, 'Twój zakup: ' . $zam->produkt_nazwa_kupiona . ' — potwierdzenie i pobranie', $tresc );
 
 	if ( $wyslano ) {
-		// Status nadpisujemy TYLKO gdy zamówienie nie jest zamknięte finansowo. Bez tego jedno
-		// kliknięcie „Wyślij ponownie" na zamówieniu zwróconym kasowało znacznik zwrotu i wracało
-		// je do liczby sprzedaży na Pulpicie. Mail wychodzi tak czy tak — blokujemy zapis stanu,
-		// nie wysyłkę.
+		// Zamówienia zwrócone i sporne (SKLEPAG_STATUSY_ZAMKNIETE) nie docierają tutaj — bramka wyżej
+		// odmawia im ponownej wysyłki (wp_die 409), mail dla nich NIE wychodzi. Warunek NOT IN zostaje
+		// jako druga warstwa: gdyby bramka kiedyś zniknęła, jedno kliknięcie „Wyślij ponownie" na
+		// zamówieniu zwróconym kasowałoby znacznik zwrotu i wracało je do liczby sprzedaży na Pulpicie.
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- SKLEPAG_STATUSY_ZAMKNIETE to stała wtyczki, nie wejście użytkownika (jak SKLEPAG_STATUSY_OPLACONE w admin-dashboard.php).
 		$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET status='mail_wyslany', zmieniono=%s WHERE id=%d AND status NOT IN (" . SKLEPAG_STATUSY_ZAMKNIETE . ')', $teraz, (int) $zam->id ) );
 		sklepag_zdarzenie( (int) $zam->id, 'mail_resend', 'ręczna ponowna wysyłka do: ' . $zam->email_kupujacego . ' (świeży link)' );
 	} else {
 		// KOMPENSACJA: nowy token wszedł do bazy PRZED wysyłką, więc nieudany mail zostawiłby
 		// kupującego bez niczego — stary link daje 403, a nowy nigdy nie dotarł. Przywracamy
-		// poprzedni token i termin, żeby „Wyślij ponownie" nigdy nie ODBIERAŁO dostępu.
+		// poprzedni token, termin i licznik pobrań (stary link wraca ze SWOIM stanem — bez
+		// ekstra pobrań), żeby „Wyślij ponownie" nigdy nie ODBIERAŁO dostępu.
 		if ( null === $zam->link_wygasa ) {
 			// Kolumna `link_wygasa` jest DATETIME NULL — prepare() z %s zrobiłby z NULL-a pusty
 			// string (data zerowa albo błąd w trybie ścisłym), więc NULL zapisujemy dosłownie.
 			$wpdb->query(
 				$wpdb->prepare(
-					"UPDATE {$pz} SET token_pobrania=%s, link_wygasa=NULL, zmieniono=%s WHERE id=%d",
+					"UPDATE {$pz} SET token_pobrania=%s, link_wygasa=NULL, pobrania_uzyte=%d, zmieniono=%s WHERE id=%d",
 					(string) $zam->token_pobrania,
+					(int) $zam->pobrania_uzyte,
 					$teraz,
 					(int) $zam->id
 				)
@@ -124,9 +136,10 @@ function sklepag_obsluz_resend() {
 		} else {
 			$wpdb->query(
 				$wpdb->prepare(
-					"UPDATE {$pz} SET token_pobrania=%s, link_wygasa=%s, zmieniono=%s WHERE id=%d",
+					"UPDATE {$pz} SET token_pobrania=%s, link_wygasa=%s, pobrania_uzyte=%d, zmieniono=%s WHERE id=%d",
 					(string) $zam->token_pobrania,
 					(string) $zam->link_wygasa,
+					(int) $zam->pobrania_uzyte,
 					$teraz,
 					(int) $zam->id
 				)
@@ -134,7 +147,7 @@ function sklepag_obsluz_resend() {
 		}
 		// Stan i licznik prób osobno od kompensacji tokenu: token i termin MUSZĄ wrócić zawsze
 		// (inaczej „Wyślij ponownie" odbierałoby dostęp), a status wolno ruszyć tylko wtedy,
-		// gdy zamówienie nie jest zamknięte finansowo.
+		// gdy zamówienie nie jest zamknięte finansowo (druga warstwa — zamknięte odpadają już na bramce 409 wyżej).
 		$wpdb->query(
 			$wpdb->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- SKLEPAG_STATUSY_ZAMKNIETE to stała wtyczki, nie wejście użytkownika (jak SKLEPAG_STATUSY_OPLACONE w admin-dashboard.php).
@@ -486,7 +499,9 @@ function sklepag_admin_zamowienie() {
 	echo $zam->mail_tresc
 		? '<pre class="sklepag-mail-tresc">' . esc_html( $zam->mail_tresc ) . '</pre>'
 		: '<p class="description">Treść maila jeszcze nie powstała (zamówienie niedomknięte).</p>';
-	if ( ! $zanonimizowane && '' !== (string) $zam->email_kupujacego ) {
+	// Przycisk tylko w stanach, w których akcja go przyjmie (mail_wyslany, mail_blad) — wcześniej pokazywał się
+	// też na zamówieniu zwróconym/spornym, a kliknięcie kończyło się odmową o „domykaniu automatycznym”.
+	if ( ! $zanonimizowane && '' !== (string) $zam->email_kupujacego && in_array( $zam->status, array( 'mail_wyslany', 'mail_blad' ), true ) ) {
 		echo '<p><a href="' . esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=sklepag_resend&zamowienie=' . (int) $zam->id ), 'sklepag_resend' ) ) . '" class="button button-primary">Wyślij ponownie (świeży link)</a></p>';
 	}
 	echo '</div></div>';
