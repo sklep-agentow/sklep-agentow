@@ -71,10 +71,12 @@ function sklepag_seo_canonical( $url ) {
 	if ( $p ) {
 		return sklepag_url_produktu_front( $p->slug );
 	}
-	if ( '' !== (string) get_query_var( 'sklepag_produkt' ) ) {
-		// Slug w adresie, produktu nie ma: to 404 — bez canonicala TAKŻE u gospodarza,
-		// który zostawił rel_canonical WP (ta sama reguła co w drukarzu niżej, linia ~99).
-		// Pusty adres = rdzeń nie drukuje nic (wp_get_canonical_url sprawdza ! empty).
+	if ( sklepag_jest_strona_z_opcji( 'sklepag_strona_sklep' ) && '' !== (string) get_query_var( 'sklepag_produkt' ) ) {
+		// TYLKO na stronie sklepu (ta sama bramka co w sklepag_seo_biezacy_produkt
+		// i sklepag_status_404_wczesnie): bez niej cudza strona z doklejonym
+		// ?sklepag_produkt= traciła WŁASNY canonical. Slug w adresie, produktu nie ma:
+		// to 404 — bez canonicala także u gospodarza z rel_canonical WP (ta sama reguła
+		// co w sklepag_seo_canonical_wlasny()). Pusty adres = rdzeń nie drukuje nic.
 		return '';
 	}
 	return $url;

@@ -87,6 +87,15 @@ sprawdz( 'E. nieistniejący produkt (404): zero canonicali', 0 === count( $e ), 
 add_action( 'wp_head', 'rel_canonical' );
 $e2 = sklepag_test_canonicale( array( 'page_id' => $strona_sklep, 'sklepag_produkt' => 'nie-ma-takiego-produktu' ) );
 sprawdz( 'E2. nieistniejący produkt (404) Z rel_canonical WP: zero canonicali', 0 === count( $e2 ), 'mam ' . implode( ' | ', $e2 ) );
+
+// D2. CUDZA strona z doklejonym ?sklepag_produkt= przy PODPIĘTYM rel_canonical:
+// canonical GOSPODARZA zostaje. Bez bramki strony sklepu w sklepag_seo_canonical
+// filtr oddawał pusty adres i kasował cudzy canonical — nawrót klasy „naprawa
+// wprowadza tę samą klasę"; reguła „TYLKO na stronie sklepu" z docblocka pliku.
+if ( $inna ) {
+	$d2 = sklepag_test_canonicale( array( 'page_id' => $inna, 'sklepag_produkt' => 'nie-ma-takiego-produktu' ) );
+	sprawdz( 'D2. cudza strona + query var, Z rel_canonical WP: canonical gospodarza ZOSTAJE', in_array( get_permalink( $inna ), $d2, true ), 'mam ' . implode( ' | ', $d2 ) . ' oczekiwano wśród nich [' . get_permalink( $inna ) . ']' );
+}
 remove_action( 'wp_head', 'rel_canonical' );
 
 // Opcja strony sklepu PUSTA (aktywacja nie utworzyła strony): is_page( 0 ) jest prawdą wszędzie,
