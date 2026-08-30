@@ -34,7 +34,7 @@ function sprawdz( $opis, $warunek, $szczegol = '' ) {
 	}
 }
 
-if ( ! function_exists( 'sklepag_zbuduj_mail' ) || ! function_exists( 'sklepag_wyslij_mail_sklepu' ) ) {
+if ( ! function_exists( 'sklepag_zbuduj_mail' ) || ! function_exists( 'sklepag_wyslij_mail_sklepu' ) || ! function_exists( 'sklepag_zbuduj_mail_html' ) ) {
 	echo "  BLAD funkcje maila niedostepne (wtyczka sklep-agentow nieaktywna?)\n";
 	exit( 1 );
 }
@@ -115,6 +115,7 @@ $html       = sklepag_zbuduj_mail_html( $produkt, $zam_id, $link, $link_op );
 
 sprawdz( 'C1 tekst: numer zamówienia = id wiersza', false !== strpos( $tekst, 'Numer zamówienia: #4321' ) );
 sprawdz( 'C2 tekst: stopka sprzedawcy z nazwą, adresem i NIP-em', false !== strpos( $tekst, "SPRZEDAWCA:\nFirma Testowa Sp. z o.o.\nul. Próbna 7\n00-002 Warszawa\nNIP 5260250274" ) );
+sprawdz( 'C2b tekst i html: zdanie o zgodzie bezosobowe w OBU wersjach (bez „zaznaczyłeś”)', false !== strpos( $tekst, 'Zgoda zaznaczona przy zakupie' ) && false !== strpos( $html, 'Zgoda zaznaczona przy zakupie' ) && false === strpos( $tekst . $html, 'zaznaczyłeś' ) );
 sprawdz( 'C3 tekst: dopisek o fakturze', false !== strpos( $tekst, 'FAKTURA:' ) );
 sprawdz( 'C4 html: dosłowna treść zgody (esc_html nie zmienia polskich znaków)', false !== strpos( $html, esc_html( SKLEPAG_ZGODA_TRESC ) ) );
 sprawdz( 'C5 html: link pobrania w przycisku ORAZ jako tekst zapasowy (2 wystąpienia)', 2 === substr_count( $html, esc_url( $link ) ) );

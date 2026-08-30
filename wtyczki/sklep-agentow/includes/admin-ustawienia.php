@@ -270,7 +270,7 @@ function sklepag_sanityzuj_nip( $wartosc ) {
 		$dobry = ( $suma % 11 ) === (int) $cyfry[9];
 	}
 	if ( ! $dobry ) {
-		add_settings_error( 'sklepag_firma_nip', 'sklepag_nip', 'NIP „' . esc_html( $wartosc ) . '" nie jest poprawny (10 cyfr z sumą kontrolną) — pole pozostawione bez zmian.', 'error' );
+		add_settings_error( 'sklepag_firma_nip', 'sklepag_nip', 'NIP „' . esc_html( $wartosc ) . '” nie jest poprawny (10 cyfr z sumą kontrolną) — pole pozostawione bez zmian.', 'error' );
 		return (string) get_option( 'sklepag_firma_nip', '' );
 	}
 	return $cyfry;

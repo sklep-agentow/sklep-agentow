@@ -1019,7 +1019,7 @@ function sklepag_zbuduj_mail( $produkt, $zam, $link, $link_opinii = '' ) {
 	if ( ! empty( $zam->zgoda_tresc ) ) {
 		$kiedy  = ! empty( $zam->zgoda_czas ) ? get_date_from_gmt( $zam->zgoda_czas, 'd.m.Y H:i' ) : '';
 		$zgoda  = "POTWIERDZENIE TWOJEJ ZGODY:\n" . $zam->zgoda_tresc . "\n";
-		$zgoda .= '' !== $kiedy ? 'Zgodę zaznaczyłeś przy zakupie ' . $kiedy . ".\n\n" : "\n";
+		$zgoda .= '' !== $kiedy ? 'Zgoda zaznaczona przy zakupie ' . $kiedy . ".\n\n" : "\n";
 	}
 	// Gwarancja z danych produktu (ta sama, którą obiecuje strona produktu; puste = bez akapitu).
 	$gwarancja = '';

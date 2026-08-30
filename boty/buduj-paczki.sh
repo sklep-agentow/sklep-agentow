@@ -130,6 +130,7 @@ ALLOWLIST_SKLEP=(
 	"sklep-agentow/includes/aktywacja.php"
 	"sklep-agentow/includes/stripe.php"
 	"sklep-agentow/includes/zakup.php"
+	"sklep-agentow/includes/mail-html.php"
 	"sklep-agentow/includes/pobieranie.php"
 	"sklep-agentow/includes/logowania.php"
 	"sklep-agentow/includes/front-produkt.php"
