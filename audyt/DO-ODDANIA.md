@@ -111,3 +111,40 @@ Pozostałe **11 na zielono**: mapa, rejestr (4 kontrole), anomalie, przelot, pac
       zipy są dowodem wydań. ⚠️ Dysk maszyny **87%**.
 - ⬜ **Commit warsztatu** — niezacommitowane skille w `/root/praca/warsztat`
       (⛔ gałąź ma ~960 widmowych kasowań, `git add -A` = katastrofa; dodawać ŚCIEŻKAMI)
+
+---
+
+## 8. PORZĄDEK W REPO PRZED ODDANIEM — 51 GAŁĘZI (dopisane 29.08 na prośbę Dzidka)
+
+Na GitHubie stoi **51 gałęzi zdalnych** i jeden tag. Tak zostać nie może — kolega otwiera repo
+i widzi 51 gałęzi zamiast czystego `main`.
+
+⛔ **PUŁAPKA, przez którą NIE WOLNO tego zrobić „szybko":**
+
+```
+$ git branch -r --merged origin/main | grep -v origin/main | wc -l
+0                    ← ZERO scalonych
+$ git branch -r --no-merged origin/main | grep -v origin/main | wc -l
+54                   ← wszystkie jako NIEscalone
+```
+
+Scaliliśmy kilkadziesiąt PR-ów, a `--merged` pokazuje zero. Powód: **scalamy SQUASHEM**, a wtedy
+git nie widzi gałęzi jako scalonej (to klasa 20 z `SCIAGA-EGZAMINATORA.md`). Kasowanie „tych
+zmergowanych" tą komendą skasowałoby albo wszystko, albo nic.
+
+**BEZPIECZNA DROGA:** kasować po **statusie PR-a**, nie po `--merged`:
+```
+gh pr list --state merged --limit 100 --json number,headRefName,state
+# i kasować WYŁĄCZNIE gałęzie, których PR ma state = MERGED
+```
+⛔ Przed kasowaniem czegokolwiek: sprawdzić, czy gałąź nie jest bazą innego, otwartego PR-a
+(klasa: stackowane PR-y — skasowanie bazy zamyka dzieci).
+⛔ **Nieodwracalne → pytam Dzidka PRZED**, z gotową listą do klepnięcia.
+
+## 9. SKILL DO STEROWANIA GITHUBEM — PO ODDANIU, nie teraz
+Dzidek 29.08: wiedza o prowadzeniu repo jest rozsypana, przydałby się **jeden** skill
+z najważniejszymi informacjami. ⭐ Zgoda co do kierunku — i to jest robota **warsztatowa**,
+nie zlecenia. Materiał już mamy: `github-wydania-klienta` (istnieje), klasy 20/22 ze ściągi
+(squash i przenoszenie gałęzi), pamięć o bramkach lokalnych przed pushem, o odświeżaniu opisu
+PR przed pushem i o tym, że auto-merge scala zanim recenzja spadnie.
+⛔ **NIE robimy przed oddaniem** — termin 1.09, a to nie dotyka produktu klienta.
