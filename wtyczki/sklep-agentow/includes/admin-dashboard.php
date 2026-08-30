@@ -233,9 +233,25 @@ function sklepag_obsluz_dociagnij() {
 
 	sklepag_zdarzenie( null, 'reconciliation_reczna', 'przycisk w panelu' );
 	update_option( 'sklepag_reconciliation_ostatnia', time(), false );
-	sklepag_dociagnij_zalegle( 15 ); // Budżet czasu < limit PHP hostingu (30 s); reszta na cron.
+	$w = sklepag_dociagnij_zalegle( 15, true ); // Budżet czasu < limit PHP hostingu (30 s); ręczny klik pyta o wszystko, bez przerw.
+	$w = is_array( $w ) ? $w : array();
+	sklepag_zdarzenie( null, 'reconciliation_wynik', sprintf( 'domknięte %d · młodsze niż 2 min (pominięte) %d · sprawdzone teraz, nieopłacone %d · sprawdzone chwilę temu (z przerwą) %d · błędy %d', (int) ( $w['domkniete'] ?? 0 ), (int) ( $w['pominiete_mlode'] ?? 0 ), (int) ( $w['sprawdzone_otwarte'] ?? 0 ), (int) ( $w['z_przerwa'] ?? 0 ), (int) ( $w['bledy'] ?? 0 ) ) );
 
-	wp_safe_redirect( add_query_arg( 'sklepag_dociagnieto', '1', admin_url( 'admin.php?page=sklepag' ) ) );
+	// Liczby jadą w adresie, żeby Pulpit powiedział właścicielowi, CO się stało — „pominięto młodsze”
+	// to jedyna wskazówka, że trzeba kliknąć jeszcze raz za chwilę (K10: cisza = 20 min czekania).
+	wp_safe_redirect(
+		add_query_arg(
+			array(
+				'sklepag_dociagnieto' => '1',
+				'd'                   => (int) ( $w['domkniete'] ?? 0 ),
+				'm'                   => (int) ( $w['pominiete_mlode'] ?? 0 ),
+				'o'                   => (int) ( $w['sprawdzone_otwarte'] ?? 0 ),
+				'p'                   => (int) ( $w['z_przerwa'] ?? 0 ),
+				'b'                   => (int) ( $w['bledy'] ?? 0 ),
+			),
+			admin_url( 'admin.php?page=sklepag' )
+		)
+	);
 	exit;
 }
 
@@ -404,7 +420,20 @@ function sklepag_admin_dashboard() {
 			. '<a href="' . esc_url( admin_url( 'admin.php?page=sklepag&status=mail_blad' ) ) . '">pokaż je</a> i użyj „Wyślij ponownie" w szczegółach zamówienia.</p></div>';
 	}
 	if ( isset( $_GET['sklepag_dociagnieto'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- komunikat po redirekcie, bez mutacji.
-		echo '<div class="notice notice-success is-dismissible"><p>Dociąganie zaległych wykonane — świeże dane poniżej.</p></div>';
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- liczby z redirectu po własnej akcji, tylko do wyświetlenia.
+		$d = isset( $_GET['d'] ) ? absint( $_GET['d'] ) : 0;
+		$m = isset( $_GET['m'] ) ? absint( $_GET['m'] ) : 0;
+		$o = isset( $_GET['o'] ) ? absint( $_GET['o'] ) : 0;
+		$p = isset( $_GET['p'] ) ? absint( $_GET['p'] ) : 0;
+		$b = isset( $_GET['b'] ) ? absint( $_GET['b'] ) : 0;
+		// phpcs:enable
+		$klasa = $b > 0 ? 'notice-warning' : 'notice-success';
+		echo '<div class="notice ' . esc_attr( $klasa ) . ' is-dismissible"><p><strong>Dociąganie zaległych wykonane.</strong> '
+			. 'Domknięte zakupy: <strong>' . (int) $d . '</strong> · '
+			. 'pominięte jako młodsze niż 2 minuty: <strong>' . (int) $m . '</strong>' . ( $m > 0 ? ' (Stripe bywa jeszcze w trakcie — kliknij ponownie za chwilę)' : '' ) . ' · '
+			. 'sprawdzone teraz u Stripe i nieopłacone (kupujący nie zapłacił, same wygasną): ' . (int) $o . ' · '
+			. 'sprawdzone przez zadanie w tle chwilę temu i nadal nieopłacone (przycisk pyta Stripe od razu, zadanie w tle — po 9 minutach, jeśli działa): ' . (int) $p
+			. ( $b > 0 ? ' · <strong>błędy rozmowy ze Stripe: ' . (int) $b . '</strong> — szczegóły w Dzienniku' : '' ) . '.</p></div>';
 	}
 
 	// Przełącznik okresu + akcje (prawy górny róg).

@@ -27,7 +27,7 @@ async function wypelnijWRamkach(p, dopasowania) {
   const odp = await fetch(BAZA + '/wp-admin/admin-post.php', {
     method: 'POST', redirect: 'manual',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: 'action=sklepag_kup&produkt_id=1&zgoda=1&_wpnonce=' + nonce,
+    body: 'action=sklepag_kup&produkt_id=1&zgoda=1&_wpnonce=' + nonce + (process.env.SKLEPAG_FAKTURA ? '&faktura_nazwa=Firma+Probna+E2E&faktura_nip=5260250274&faktura_adres=ul.+Testowa+5,+00-950+Warszawa' : ''),
   });
   const url = odp.headers.get('location');
   const cs = (url.match(/cs_test_[A-Za-z0-9]+/) || [])[0];

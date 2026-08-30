@@ -791,3 +791,44 @@ z tą samą listą wzorców co skaner — po oddaniu, jeśli zrzutów przybędzi
   z `$poprzedni` (`get_option(…, '')`), więc gdy opcji nie było, zostaje PUSTA zamiast skasowana (klasa 8).
   Naprawa: `get_option(…, false)` + `delete_option` jak przy trzech pozostałych.
 
+## 🟡 0.9.25 — PŁATNOŚĆ OSADZONA I DANE DO FAKTURY: długi (30.08 wieczór)
+
+- **Font w ramce Stripe = systemowy** (Geist tylko jeśli klient ma go w systemie). Appearance API bierze własny font
+  wyłącznie z publicznego URL-a CSS (`fonts.cssSrc`); motyw kolegi trzyma Geist lokalnie jako woff2 bez pliku CSS
+  z `@font-face` pod publicznym adresem. Naprawa: wystawić `assets/fonty.css` z `@font-face` i podać `cssSrc` (+ CSP `connect-src`).
+- **E2E płatności osadzonej** (`testy/e2e/przelot-osadzony.js`: ramki Payment Element na NASZEJ stronie) — do napisania
+  i uruchomienia po otrzymaniu klucza publikowalnego; do tego czasu dowód = próby serwera (JSON `client_secret`,
+  `ui_mode=elements`, metadata) + E2E ścieżki zapasowej z danymi faktury.
+- **Ewidencja pod zwolnienie z kasy fiskalnej** (zwiad prawny 30.08, rozporządzenie o zwolnieniach z kas, poz. 37):
+  płatność online przez operatora liczy się jako „na rachunek”, o ile z ewidencji jednoznacznie wynika, jakiej
+  czynności dotyczy — panel ma numer zamówienia, kwotę, sesję Stripe. Do „Test a produkcja” w instrukcji: zdanie
+  dla właściciela, żeby to potwierdził ze swoją księgową (sklep nie jest kasą i nie zastępuje ewidencji).
+- **Retencja danych do faktury**: obowiązek 5-letni dotyczy FAKTURY u sprzedawcy (jego księgowość), nie kopii w sklepie —
+  anonimizacja w sklepie czyści `dane_faktury` razem z e-mailem. Zapisać w INSTRUKCJA §6 przy następnej korekcie
+  (dziś: §9 FAQ).
+
+## 🟡 K10 (30.08, tester niezależny, instalacja z Release 0.9.24 na czystym WP 6.9.4 + motyw kolegi) — co wyszło
+Raport: `/root/praca/zlecenia/k10-tester-stanowisko/dowody/RAPORT-TESTERA.md` (+ kopia w `/root/do-panelu/K10-…`).
+26 min zegara (≈15 min czystej pracy z instrukcją — w limicie 30), 22 ✅ · 11 🐞 · 6 😖 · 6 ⬜.
+- **NAPRAWIONE w 0.9.25** (#222): „Dociągnij zaległe” milczało o pominiętych (młodszych niż 2 min) + starwacja przez
+  porzucone koszyki; instrukcje o WP-Cron/pętli zwrotnej.
+- **Stanowisko, nie produkt**: limit uploadu 2 MB i `uploads` należący do roota (obraz Dockera — instrukcja „Najczęstsze
+  problemy” to opisuje i tester to potwierdził), brak sekretu webhooka w pliku (moja karta startowa obiecała zmienną,
+  której nie było — `stripe listen --print-secret` do karty na K11), „Settings saved.” po angielsku (WP w `en_US`,
+  bo `wp core install` bez `--locale=pl_PL` — do `lib-stos-probny.sh`), wspólny łapacz poczty dla wielu stanowisk.
+- **Dług produktu/instrukcji**: Theme File Editor cofa zapis przy zepsutej pętli zwrotnej („Unable to communicate back
+  with site”) — instrukcja nawigacji ma wspomnieć SFTP jako drogę główną; „po pozycji 08” nadal myli (dług K9 → 0.9.25?
+  NIE weszło, zostaje 0.9.26); Adaptive Pricing Stripe (EUR zamiast PLN) — instrukcja ostrzega, rozważyć wyłączenie
+  w Dashboardzie jako krok instalacji; zły NIP w Ustawieniach czyści pole zamiast zostawić do poprawki (UX).
+
+## 🟡 E2E PŁATNOŚCI OSADZONEJ — automat zatrzymuje się na hCaptcha Stripe (30.08 wieczór)
+`testy/e2e/przelot-osadzony.js` z prawdziwymi kluczami (konto `acct_1U5Fhg7…`, kontakt.dobrastrona@gmail.com) dochodzi do
+końca ramek: panel bez błędu, e-mail + karta 4242 wypełnione w ramkach Stripe, „Zapłać” aktywne i kliknięte — po czym Stripe
+wystawia niewidzialną hCaptcha (ramka `hcaptcha-invisible`, `POST api.hcaptcha.com/getcaptcha`) i `confirm()` czeka;
+sesja zostaje `open/unpaid`. To zabezpieczenie Stripe dla zautomatyzowanej przeglądarki, nie wada sklepu (kod wyjścia 3).
+**Dowód końcowy = człowiek w przeglądarce** (Dzidek/kolega przez tunel albo na hostingu). Do rozważenia: Stripe Radar
+→ reguły testowe, albo Playwright w trybie z nagłówkiem — nie sprawdzałam. Ścieżka zapasowa (hostowana) przetestowana
+maszynowo do końca (zam #9901178 z danymi faktury).
+
+
+## 🟡 DŁUGI Z RECENZJI #222 r4 (30.08): strażnik reconciliation (R4) woła prawdziwe `api.stripe.com` przy domykaniu opłaconej atrapy (nagłówek obiecuje „bez sieci”) i nie asertuje `bledy`; trzy komentarze w strażniku opisują poprzednie asercje. Do korekty przy 0.9.26 razem z długami K10.

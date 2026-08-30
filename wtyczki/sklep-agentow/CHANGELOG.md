@@ -20,6 +20,44 @@ Nic jeszcze.
 
 ---
 
+## [0.9.25] — 2026-08-30 · schemat bazy 8
+
+### Dodane
+- **Płatność osadzona na stronie produktu** (`assets/platnosc.js`, Stripe.js „dahlia”): Checkout Session tworzona
+  z `ui_mode=elements` i `return_url` (zamiast `success_url`/`cancel_url`), formularz e-mail + karta jako elementy
+  Stripe w naszym panelu, Appearance API w kolorach strony (limonka na czerni), `confirm()` → powrót na „Dziękujemy”.
+  Ten sam obiekt sesji, ten sam webhook i ta sama reconciliation co dotąd. Zapas: bez klucza publikowalnego albo bez
+  JS formularz idzie zwykłym POST-em na hostowaną stronę Stripe (jak do 0.9.24) — obie drogi obsługuje jeden endpoint
+  (`osadzona=1` → JSON z `client_secret`).
+- **Ustawienia → Klucz publikowalny (pk_…)** — jawny, walidowany prefiksem.
+- **Dane do faktury przy zakupie** (nazwa firmy, NIP, adres): nieobowiązkowe, komplet albo nic (ustawa o VAT
+  art. 106e — faktura wymaga nazwy, NIP-u i adresu nabywcy); NIP z sumą kontrolną (`sklepag_nip_poprawny()`, wspólna
+  z Ustawieniami); jadą w metadanych sesji, zapisywane w `zamowienia.dane_faktury`, w mailu (tekst i HTML) i w
+  szczegółach zamówienia; anonimizacja RODO czyści je razem z e-mailem; szkic Polityki prywatności wymienia cel
+  i podstawę. ⛔ Podanie NIP-u nie zmienia praw kupującego (art. 38a ustawy o prawach konsumenta).
+- Mail bez danych do faktury: „chcesz fakturę? odpisz w ciągu 3 miesięcy” (art. 106b ust. 3 ustawy o VAT).
+- Strażnik maila: C3 (termin 3 miesięcy), C3b (dane do faktury w obu wersjach) — 28 sprawdzeń.
+
+### Naprawione (K10 — instalacja od zera przez niezależnego testera, 30.08)
+- **„Dociągnij zaległe teraz” milczało o pominiętych sesjach**: kliknięte 71 s po zapłacie pomijało sesję młodszą niż
+  2 minuty bez słowa, a na hostingu bez działającego WP-Cron (zepsuta pętla zwrotna) opłacony zakup „wisiał”
+  20 minut. Teraz przycisk mówi: domknięte / pominięte jako młodsze niż 2 min (kliknij ponownie) / sprawdzone
+  teraz i nieopłacone / sprawdzone chwilę temu (z przerwą) / błędy; wynik trafia też do Dziennika (`reconciliation_wynik`).
+  Ręczny przycisk pyta Stripe o KAŻDĄ sesję od razu (przerwa dotyczy tylko zadania w tle) — na hostingu bez WP-Cron
+  nikt inny nie zapyta.
+- **Porzucone koszyki blokowały nowszą opłaconą sesję**: kolejka brała 20 NAJSTARSZYCH sesji „utworzona”, więc
+  dwadzieścia „kliknął Kup i wyszedł” (u Stripe otwarte do 24 h) odkładało domknięcie prawdziwego zakupu na dobę.
+  Teraz najnowsze najpierw, do 100 w biegu, a sesja sprawdzona i nadal nieopłacona dostaje 9 minut przerwy.
+  Strażnik regresji z atrapą Stripe (5 sprawdzeń; na kodzie 0.9.24 pada 5/5).
+- Instrukcje: kiedy WP-Cron nie działa (Kondycja witryny: pętla zwrotna) i co wtedy; „odczekaj 2 minuty od zapłaty”.
+
+### Zmienione
+- Schemat bazy **8**: kolumna `zamowienia.dane_faktury varchar(300)` (migracja `dbDelta` przy podbiciu wersji).
+- Stripe.js i `platnosc.js` ładują się wyłącznie na stronie produktu (nie na liście sklepu); paleta panelu płatności
+  czytana ze zmiennych CSS sklepu (jedno źródło kolorów).
+
+---
+
 ## [0.9.24] — 2026-08-30
 
 ### Dodane

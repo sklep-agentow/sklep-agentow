@@ -1,6 +1,6 @@
 # Sklep Agentów — dokumentacja techniczna
 
-**Wersja wtyczki: 0.9.24 · wersja schematu bazy: 7 · WordPress 6.7+ · PHP 8.1+**
+**Wersja wtyczki: 0.9.25 · wersja schematu bazy: 8 · WordPress 6.7+ · PHP 8.1+**
 
 > **Po co ten dokument.** To jest **mapa systemu dla audytora i programisty**, nie ulotka.
 > Każda liczba i nazwa tutaj jest wzięta z kodu, nie z pamięci — jeśli coś się rozjedzie,
@@ -15,7 +15,8 @@ lista produktów i strony sprzedażowe → płatność kartą przez Stripe Check
 mail z linkiem do pobrania → panel zamówień, statystyk i dziennika logowań.
 
 **Zaplecze w całości w WordPressie** — własne tabele, własne strony przez skróty,
-zero zewnętrznych bibliotek i zero CDN. Jedyna usługa zewnętrzna: **Stripe** (płatność).
+zero zewnętrznych bibliotek PHP; jedyny skrypt z sieci to Stripe.js (`js.stripe.com`), ładowany wyłącznie na stronie
+produktu i tylko z kluczem publikowalnym (od 0.9.25 — formularz karty musi być ramką Stripe). Jedyna usługa zewnętrzna: **Stripe** (płatność).
 
 ---
 
@@ -77,6 +78,7 @@ późniejsza edycja produktu nie zmieniła historii · `status` (`oczekuje` → 
 → `mail_wyslany`) · `token_pobrania`, `link_wygasa`, `pobrania_limit`,
 `pobrania_uzyte` — brama pobrań · `zgoda_tresc`, `zgoda_czas` — dowód zgody
 (RODO) · `mail_tresc` — wysłana treść · `usunieto_dnia` — znacznik anonimizacji ·
+`dane_faktury` — nazwa firmy, NIP i adres podane przez kupującego (0.9.25; czyszczone przy anonimizacji) ·
 `payment_intent_id` — identyfikator płatności Stripe, jedyne powiązanie zdarzeń o zwrocie
 z zamówieniem · `zwrocono_grosze`, `zwrot_czas` — księgowanie zwrotów i obciążeń zwrotnych ·
 `status_przed_sporem` — stan sprzed zdarzenia finansowego, żeby powrót nie zmyślał historii
@@ -145,7 +147,9 @@ nie dotarł (druga, niezależna droga domykania).
 gość klika „Kup teraz"
    → walidacja zgody + limit żądań
    → utworzenie sesji Stripe Checkout          [tabela sesje_checkout]
-   → przekierowanie do Stripe (płatność kartą)
+   → (od 0.9.25, gdy jest klucz publikowalny) JSON z client_secret → formularz karty
+     na stronie produktu (assets/platnosc.js, elementy Stripe w ramce) → confirm()
+   → (zapas: bez klucza/JS) przekierowanie do Stripe (płatność kartą)
    → powrót na stronę „Dziękujemy" (odpytuje /status)
 
 RÓWNOLEGLE, dwa niezależne silniki domykania — TU powstaje wiersz zamówienia:
@@ -190,8 +194,8 @@ po stronie serwera. To jest świadome ograniczenie, nie przeoczenie.
 
 | Stała | Wartość | Znaczenie |
 |---|---|---|
-| `SKLEPAG_WERSJA` | 0.9.24 | wersja wtyczki (assety, cache) |
-| `SKLEPAG_WERSJA_SCHEMATU` | 7 | wersja schematu bazy (migracje) |
+| `SKLEPAG_WERSJA` | 0.9.25 | wersja wtyczki (assety, cache) |
+| `SKLEPAG_WERSJA_SCHEMATU` | 8 | wersja schematu bazy (migracje) |
 | `SKLEPAG_LIMIT_POBRAN` | 10 | ile razy można pobrać plik z jednego wydanego linku (zerowane przy świeżym linku) |
 | `SKLEPAG_LINK_GODZIN` | 72 | ważność linku pobrania |
 | `SKLEPAG_OPINIA_DNI` | 30 | ważność jednorazowego linku „oceń bota" |

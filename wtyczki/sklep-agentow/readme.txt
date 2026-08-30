@@ -4,7 +4,7 @@ Tags: sklep, stripe, pliki cyfrowe, sprzedaz wtyczek, pobieranie
 Requires at least: 6.7
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.9.24
+Stable tag: 0.9.25
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -17,7 +17,9 @@ WordPressie: lista produktów i strony sprzedażowe → płatność kartą przez
 Checkout → mail z linkiem do pobrania → panel zamówień, statystyk i dziennika
 logowań. Zamówienia, produkty i pliki zostają w Twojej bazie i na Twoim
 serwerze — bez abonamentu i bez pośredników. Jedyna usługa zewnętrzna to Stripe
-(płatność); wtyczka nie ładuje żadnych bibliotek z sieci.
+(płatność): jedyny skrypt z sieci to Stripe.js (js.stripe.com), ładowany wyłącznie
+na stronie produktu i tylko gdy w Ustawieniach jest klucz publikowalny — bo formularz
+karty musi być ramką Stripe, nie naszym kodem.
 
 **Co dostajesz po instalacji**
 
@@ -27,8 +29,10 @@ serwerze — bez abonamentu i bez pośredników. Jedyna usługa zewnętrzna to S
 * Strony produktów pod adresem `/sklep/produkt/…/` — dla ChatBota LIVE
   i Segregatora maila z wbudowaną prezentacją sprzedażową (sekcje, galeria,
   pytania i odpowiedzi, opinie kupujących).
-* Płatność kartą przez **Stripe Checkout** — dane karty podaje się na stronie
-  płatności Stripe, nie na Twoim serwerze.
+* Płatność kartą przez **Stripe** — formularz karty na stronie produktu, w kolorach
+  strony (ramka Stripe: dane karty nie trafiają na Twój serwer); bez klucza
+  publikowalnego albo bez skryptów — strona płatności Stripe. Nieobowiązkowe dane
+  do faktury (nazwa, NIP, adres) w mailu i w panelu.
 * Domykanie zakupu dwiema niezależnymi drogami: powiadomienie od Stripe
   (webhook z podpisem) oraz zadanie cykliczne co 10 minut, które dopytuje Stripe
   o opłacone sesje. Każde przejście stanu zamówienia jest atomowe — kupujący
@@ -144,6 +148,12 @@ Nie. Zakup jest bez konta: adres e-mail podany na stronie płatności Stripe,
 link do pobrania w mailu, jednorazowy link do opinii.
 
 == Changelog ==
+
+= 0.9.25 =
+* Dodane: formularz płatności na stronie produktu, w kolorach strony (Stripe Checkout Sessions w trybie „elements”: e-mail i karta w ramce Stripe, przycisk „Zapłać”, powrót na „Dziękujemy”); wymaga wpisania klucza publikowalnego w Ustawieniach — bez niego działa dotychczasowa strona płatności Stripe.
+* Dodane: nieobowiązkowe „Dane do faktury” przy zakupie (nazwa firmy, NIP z sumą kontrolną, adres — komplet albo nic); trafiają do maila, do szczegółów zamówienia i są czyszczone przy anonimizacji. Sklep faktur nie wystawia; podanie NIP-u nie zmienia praw kupującego.
+* Zmienione: baza — nowa kolumna dane_faktury (schemat 8, migracja sama); szkic Polityki prywatności wymienia dane do faktury (sklepy zainstalowane wcześniej: dopisz ręcznie).
+* Naprawione: „Dociągnij zaległe teraz” mówi, ile zakupów domknął i ile sesji pominął jako młodsze niż 2 minuty (dotąd milczał); porzucone, nieopłacone sesje nie blokują już domknięcia nowszego, opłaconego zakupu (najnowsze sprawdzane najpierw, przerwa po sprawdzeniu).
 
 = 0.9.24 =
 * Dodane: mail po zakupie w wersji graficznej (nazwa sklepu w nagłówku, okładka produktu, przycisk „Pobierz”, kolory strony) wysyłany razem z wersją tekstową w jednej wiadomości; dotąd mail był czystym tekstem.

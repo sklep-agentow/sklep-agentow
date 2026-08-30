@@ -78,6 +78,8 @@ kod adminowy za `is_admin()`.
   Checkout Session przez **WP HTTP API** (`wp_remote_post` na api.stripe.com,
   form-encoded, timeout 15 s, klucz sekretny z opcji; D18 — bez SDK, wg ZWIAD-STRIPE)
   → przekierowanie na hostowaną stronę Stripe (kart nie dotykamy).
+  *(0.9.25, D35: z kluczem publikowalnym formularz karty osadzony na stronie produktu — `ui_mode=elements`,
+  ramka Stripe; hostowana strona zostaje zapasem. Sesja, webhook i reconciliation bez zmian.)*
 - **WEBHOOK:** trasa REST `POST /wp-json/sklepag/v1/webhook` — SUROWE body, podpis
   weryfikowany ręcznie (rozbiór nagłówka `Stripe-Signature`, HMAC-SHA256
   `hash_hmac` + porównanie `hash_equals`, tolerancja 5 min — algorytm z ZWIAD-STRIPE,

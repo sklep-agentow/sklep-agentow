@@ -2893,3 +2893,104 @@ html.sklepag-lightbox-otwarty {
 		font-size: 0.9rem;
 	}
 }
+
+/* ---------- 0.9.25: dane do faktury + płatność osadzona (formularz karty Stripe w naszych kolorach) ---------- */
+.sklepag-faktura {
+	margin: 0 0 1rem;
+	border: 1px solid var(--sklepag-linia);
+	border-radius: 10px;
+	padding: 0.6rem 0.9rem;
+}
+.sklepag-faktura summary {
+	cursor: pointer;
+	list-style: none;
+	color: var(--sklepag-pyl);
+}
+.sklepag-faktura summary::-webkit-details-marker { display: none; }
+.sklepag-faktura[open] summary { color: var(--sklepag-limonka); }
+.sklepag-faktura-pola {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 0.75rem;
+	padding-top: 0.75rem;
+}
+.sklepag-faktura-pola label { display: grid; gap: 0.3rem; }
+.sklepag-faktura-pola label span {
+	font-family: var(--sklepag-mono);
+	font-size: 0.72rem;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--sklepag-pyl);
+}
+.sklepag-faktura-pola input {
+	font: inherit;
+	color: var(--sklepag-papier);
+	background: var(--sklepag-wegiel);
+	border: 1px solid rgba(245, 245, 245, 0.14);
+	border-radius: 6px;
+	padding: 0.6em 0.75em;
+}
+.sklepag-faktura-pola input:focus {
+	outline: none;
+	border-color: var(--sklepag-limonka);
+}
+.sklepag-faktura-notka {
+	grid-column: 1 / -1;
+	margin: 0;
+	font-size: 0.82rem;
+	color: var(--sklepag-pyl);
+}
+.sklepag-zakup-notka--blad { color: #ffb454; }
+
+.sklepag-platnosc {
+	margin: 1rem 0 0;
+	padding: 1.25rem 1.25rem 1.5rem;
+	background: var(--sklepag-wegiel);
+	border: 1px solid var(--sklepag-linia);
+	border-radius: 14px;
+	display: grid;
+	gap: 0.9rem;
+}
+.sklepag-platnosc[hidden] { display: none; }
+.sklepag-platnosc .sklepag-mono-etykieta { color: var(--sklepag-limonka); }
+.sklepag-platnosc-blad {
+	margin: 0;
+	padding: 0.6em 0.8em;
+	border-left: 3px solid #ffb454;
+	color: #ffb454;
+	font-size: 0.9rem;
+}
+.sklepag-platnosc-blad[hidden] { display: none; }
+.sklepag-platnosc .sklepag-kup[disabled] { opacity: 0.45; cursor: not-allowed; transform: none; }
+.sklepag-platnosc-wroc {
+	justify-self: start;
+	font: inherit;
+	font-size: 0.9rem;
+	color: var(--sklepag-pyl);
+	background: transparent;
+	border: 0;
+	padding: 0.2em 0;
+	cursor: pointer;
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+.sklepag-platnosc-wroc:hover { color: var(--sklepag-papier); }
+.sklepag-platnosc-notka {
+	margin: 0;
+	font-size: 0.8rem;
+	color: var(--sklepag-pyl);
+}
+@media (max-width: 640px) {
+	.sklepag-faktura-pola { grid-template-columns: 1fr; }
+}
+.sklepag-faktura-adres { grid-column: 1 / -1; }
+.sklepag-faktura-pola textarea {
+	font: inherit;
+	color: var(--sklepag-papier);
+	background: var(--sklepag-wegiel);
+	border: 1px solid rgba(245, 245, 245, 0.14);
+	border-radius: 6px;
+	padding: 0.6em 0.75em;
+	resize: vertical;
+}
+.sklepag-faktura-pola textarea:focus { outline: none; border-color: var(--sklepag-limonka); }

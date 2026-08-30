@@ -334,7 +334,7 @@ function sklepag_obsluz_anonimizacje() {
 
 	$ok_zam = $wpdb->query(
 		$wpdb->prepare(
-			"UPDATE {$pz} SET email_kupujacego='', usunieto_dnia=%s, token_pobrania='', link_wygasa=NULL, zmieniono=%s WHERE id=%d",
+			"UPDATE {$pz} SET email_kupujacego='', dane_faktury='', usunieto_dnia=%s, token_pobrania='', link_wygasa=NULL, zmieniono=%s WHERE id=%d",
 			$teraz,
 			$teraz,
 			(int) $zam->id
@@ -490,6 +490,8 @@ function sklepag_admin_zamowienie() {
 	echo '<tr><td>Data zakupu (czas webhooka)</td><td>' . esc_html( $zam->utworzono ) . '</td></tr>';
 	echo '<tr><td>Kupujący</td><td>' . ( $zanonimizowane ? '<em>zanonimizowany (' . esc_html( $zam->usunieto_dnia ) . ')</em>' : esc_html( $zam->email_kupujacego ) ) . '</td></tr>';
 	echo '<tr><td>Produkt (snapshot z chwili zakupu)</td><td>' . esc_html( $zam->produkt_nazwa_kupiona ) . '</td></tr>';
+	// Dane do faktury podane przez kupującego (0.9.25) — anonimizacja RODO czyści je razem z e-mailem.
+	echo '<tr><td>Dane do faktury</td><td>' . ( $zanonimizowane ? '<em>zanonimizowane</em>' : ( '' !== (string) ( $zam->dane_faktury ?? '' ) ? esc_html( $zam->dane_faktury ) : '<span class="sklepag-szary">nie podano (zakup prywatny)</span>' ) ) . '</td></tr>';
 	echo '<tr><td>Kwota</td><td>' . esc_html( number_format( $zam->kwota_grosze / 100, 2, ',', ' ' ) . ' ' . $zam->waluta ) . ' <span class="sklepag-szary">(tryb testowy)</span></td></tr>';
 	echo '<tr><td>Sesja Stripe</td><td><code>' . esc_html( $zam->stripe_session_id ) . '</code></td></tr>';
 	echo '<tr><td>Pobrania</td><td>' . esc_html( (int) $zam->pobrania_uzyte . ' / ' . (int) $zam->pobrania_limit ) . ( $zam->link_wygasa ? ' · link ważny do ' . esc_html( $zam->link_wygasa ) : ' · link unieważniony' ) . '</td></tr>';

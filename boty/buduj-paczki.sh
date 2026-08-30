@@ -151,6 +151,7 @@ ALLOWLIST_SKLEP=(
 	"sklep-agentow/assets/admin.css"
 	"sklep-agentow/assets/front.css"
 	"sklep-agentow/assets/front-ruch.js"
+	"sklep-agentow/assets/platnosc.js"
 	"sklep-agentow/assets/dziekujemy.js"
 	"sklep-agentow/assets/okladki/chatbot-live.png"
 	"sklep-agentow/assets/okladki/segregator-maila.png"

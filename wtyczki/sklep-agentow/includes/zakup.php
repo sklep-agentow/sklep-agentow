@@ -114,6 +114,36 @@ function sklepag_obsluz_kup() {
 		wp_die( 'Zakup wymaga zgody na natychmiastowe dostarczenie treści cyfrowej.', 'Sklep Agentów', 400 );
 	}
 
+	// 0.9.25: płatność OSADZONA (formularz karty na naszej stronie). Skrypt `platnosc.js` woła ten sam
+	// endpoint z polem `osadzona=1` i dostaje JSON z `client_secret` zamiast przekierowania. Bez JS
+	// (albo bez klucza publikowalnego w Ustawieniach) formularz idzie zwykłym POST-em i kupujący
+	// trafia na hostowaną stronę Stripe jak do 0.9.24 — obie drogi kończą się tą samą sesją,
+	// tym samym webhookiem i tą samą stroną „Dziękujemy”.
+	$osadzona = isset( $_POST['osadzona'] ) && '1' === $_POST['osadzona'] && '' !== sklepag_stripe_klucz_publikowalny();
+
+	// Dane do faktury — NIEOBOWIĄZKOWE, nasze własne pola (nie Stripe): nazwa, NIP, ADRES. Faktura dla
+	// firmy wymaga nazwy, NIP-u i adresu nabywcy (ustawa o VAT art. 106e ust. 1 pkt 3), więc albo komplet,
+	// albo wszystkie puste — sam NIP dawałby właścicielowi fałszywe „mam dane do faktury”. Zły NIP = odmowa
+	// z komunikatem (kupujący poprawia). ⛔ Podanie NIP-u NICZEGO nie zmienia w prawach kupującego (zgoda z art. 38,
+	// gwarancja, reklamacje): art. 38a ustawy o prawach konsumenta wiąże ochronę z charakterem zakupu, nie z NIP-em.
+	$faktura      = array(
+		'nazwa' => isset( $_POST['faktura_nazwa'] ) ? sanitize_text_field( wp_unslash( $_POST['faktura_nazwa'] ) ) : '',
+		'nip'   => isset( $_POST['faktura_nip'] ) ? preg_replace( '/[\s-]/', '', sanitize_text_field( wp_unslash( $_POST['faktura_nip'] ) ) ) : '',
+		'adres' => isset( $_POST['faktura_adres'] ) ? trim( preg_replace( '/\s*\n\s*/', ', ', sanitize_textarea_field( wp_unslash( $_POST['faktura_adres'] ) ) ) ) : '',
+	);
+	$blad_faktury = '';
+	if ( '' !== $faktura['nip'] && ! sklepag_nip_poprawny( $faktura['nip'] ) ) {
+		$blad_faktury = 'NIP nie jest poprawny (10 cyfr z sumą kontrolną). Popraw albo zostaw dane do faktury puste.';
+	} elseif ( ( '' !== $faktura['nazwa'] || '' !== $faktura['nip'] || '' !== $faktura['adres'] ) && ( '' === $faktura['nazwa'] || '' === $faktura['nip'] || '' === $faktura['adres'] ) ) {
+		$blad_faktury = 'Do faktury potrzebne są wszystkie trzy dane: nazwa firmy, NIP i adres. Uzupełnij brakujące albo zostaw wszystkie pola puste.';
+	}
+	if ( '' !== $blad_faktury ) {
+		if ( $osadzona ) {
+			wp_send_json( array( 'blad' => $blad_faktury ), 400 );
+		}
+		wp_die( esc_html( $blad_faktury ) . ' Wróć do strony produktu i popraw formularz.', 'Sklep Agentów', 400 );
+	}
+
 	global $wpdb;
 	$t = $wpdb->prefix . 'sklepag_produkty';
 	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery -- nazwa tabeli z prefiksu; walidacja zakupu czyta świeży stan produktu.
@@ -142,11 +172,21 @@ function sklepag_obsluz_kup() {
 	// wspólnym adresem (CGNAT operatora, biuro za NAT) trafia też w DRUGĄ osobę. Krótkie
 	// okno ogranicza to do kilku sekund; pełne rozdzielenie kupujących wymagałoby klucza
 	// związanego z sesją przeglądarki i jest znanym, świadomie otwartym ograniczeniem tego okna.
-	$okno = 'sklepag_idem_' . md5( sklepag_ip() . '|' . $produkt_id );
+	// Okno kluczowane też TRYBEM: sesja hostowana ma `url`, osadzona ma `client_secret` — pomieszanie
+	// oddałoby JS-owi adres do przekierowania albo formularzowi sekret bez strony.
+	$okno = 'sklepag_idem_' . md5( sklepag_ip() . '|' . $produkt_id . '|' . ( $osadzona ? 'o' : 'h' ) );
 	$juz  = get_transient( $okno );
-	if ( is_array( $juz ) && ! empty( $juz['url'] ) ) {
+	if ( is_array( $juz ) && ( ! empty( $juz['url'] ) || ! empty( $juz['client_secret'] ) ) ) {
 		$wiek_ok = ! empty( $juz['czas'] ) && ( time() - (int) $juz['czas'] ) <= SKLEPAG_IDEM_OKNO_S;
 		if ( $wiek_ok && ! empty( $juz['sid'] ) && sklepag_sesja_czeka_na_platnosc( $juz['sid'] ) ) {
+			if ( $osadzona ) {
+				wp_send_json(
+					array(
+						'clientSecret' => $juz['client_secret'],
+						'sesja'        => $juz['sid'],
+					)
+				);
+			}
 			wp_redirect( $juz['url'] ); // phpcs:ignore WordPress.Security.SafeRedirect -- adres Stripe (zewnętrzny, z API).
 			exit;
 		}
@@ -154,10 +194,14 @@ function sklepag_obsluz_kup() {
 	}
 
 	$zgoda_czas = current_time( 'mysql', true );
-	$sesja      = sklepag_stripe_utworz_sesje( $produkt, $zgoda_czas, wp_generate_uuid4() );
+	$sesja      = sklepag_stripe_utworz_sesje( $produkt, $zgoda_czas, wp_generate_uuid4(), $osadzona, $faktura );
 
-	if ( is_wp_error( $sesja ) || empty( $sesja['id'] ) || empty( $sesja['url'] ) ) {
-		sklepag_zdarzenie( null, 'checkout_blad', is_wp_error( $sesja ) ? $sesja->get_error_message() : 'brak id/url w odpowiedzi' );
+	$brak = is_wp_error( $sesja ) || empty( $sesja['id'] ) || ( $osadzona ? empty( $sesja['client_secret'] ) : empty( $sesja['url'] ) );
+	if ( $brak ) {
+		sklepag_zdarzenie( null, 'checkout_blad', is_wp_error( $sesja ) ? $sesja->get_error_message() : ( $osadzona ? 'brak id/client_secret w odpowiedzi' : 'brak id/url w odpowiedzi' ) );
+		if ( $osadzona ) {
+			wp_send_json( array( 'blad' => 'Nie udało się rozpocząć płatności. Spróbuj ponownie za chwilę.' ), 502 );
+		}
 		wp_die( 'Nie udało się rozpocząć płatności. Spróbuj ponownie za chwilę.', 'Sklep Agentów', 502 );
 	}
 
@@ -174,15 +218,73 @@ function sklepag_obsluz_kup() {
 	set_transient(
 		$okno,
 		array(
-			'url'  => $sesja['url'],
-			'sid'  => $sesja['id'],
-			'czas' => time(),
+			'url'           => isset( $sesja['url'] ) ? (string) $sesja['url'] : '',
+			'client_secret' => isset( $sesja['client_secret'] ) ? (string) $sesja['client_secret'] : '',
+			'sid'           => $sesja['id'],
+			'czas'          => time(),
 		),
 		MINUTE_IN_SECONDS
 	);
 
+	if ( $osadzona ) {
+		wp_send_json(
+			array(
+				'clientSecret' => (string) $sesja['client_secret'],
+				'sesja'        => (string) $sesja['id'],
+			)
+		);
+	}
 	wp_redirect( $sesja['url'] ); // phpcs:ignore WordPress.Security.SafeRedirect
 	exit;
+}
+
+/**
+ * Klucz publikowalny Stripe (pk_…). Pusty = płatność osadzona wyłączona, zostaje strona hostowana.
+ */
+function sklepag_stripe_klucz_publikowalny() {
+	$pk = trim( (string) get_option( 'sklepag_stripe_klucz_publikowalny', '' ) );
+	return ( '' !== $pk && str_starts_with( $pk, 'pk_' ) ) ? $pk : '';
+}
+
+/**
+ * NIP: 10 cyfr z poprawną sumą kontrolną (wagi 6,5,7,2,3,4,5,6,7; reszta z 11 = ostatnia cyfra).
+ * Jedna definicja dla Ustawień (dane sprzedawcy) i formularza zakupu (dane do faktury).
+ *
+ * @param string $cyfry Same cyfry (bez myślników i spacji).
+ */
+function sklepag_nip_poprawny( $cyfry ) {
+	if ( ! preg_match( '/^[0-9]{10}$/', (string) $cyfry ) ) {
+		return false;
+	}
+	$wagi = array( 6, 5, 7, 2, 3, 4, 5, 6, 7 );
+	$suma = 0;
+	for ( $i = 0; $i < 9; $i++ ) {
+		$suma += $wagi[ $i ] * (int) $cyfry[ $i ];
+	}
+	return ( $suma % 11 ) === (int) $cyfry[9];
+}
+
+/**
+ * Dane do faktury z metadanych sesji (podane przez kupującego w formularzu) — jedna linia do bazy i maila.
+ *
+ * @param array $sesja Obiekt sesji Stripe.
+ */
+function sklepag_dane_faktury_z_sesji( $sesja ) {
+	$m      = isset( $sesja['metadata'] ) && is_array( $sesja['metadata'] ) ? $sesja['metadata'] : array();
+	$nazwa  = isset( $m['faktura_nazwa'] ) ? sanitize_text_field( (string) $m['faktura_nazwa'] ) : '';
+	$nip    = isset( $m['faktura_nip'] ) ? preg_replace( '/[^0-9]/', '', (string) $m['faktura_nip'] ) : '';
+	$adres  = isset( $m['faktura_adres'] ) ? sanitize_text_field( (string) $m['faktura_adres'] ) : '';
+	$czesci = array();
+	if ( '' !== $nazwa ) {
+		$czesci[] = $nazwa;
+	}
+	if ( '' !== $nip ) {
+		$czesci[] = 'NIP ' . $nip;
+	}
+	if ( '' !== $adres ) {
+		$czesci[] = $adres;
+	}
+	return mb_substr( implode( ', ', $czesci ), 0, 300 );
 }
 
 /* ---------- ZDARZENIA (append-only oś czasu) ---------- */
@@ -744,8 +846,8 @@ function sklepag_domknij_zakup( $sesja ) {
 			"INSERT IGNORE INTO {$pz}
 		 (stripe_session_id, produkt_id, produkt_nazwa_kupiona, produkt_cena_kupiona, produkt_plik_kupiony,
 		  email_kupujacego, kwota_grosze, waluta, status, zgoda_tresc, zgoda_czas,
-		  pobrania_limit, utworzono, zmieniono)
-		 VALUES (%s, %d, %s, %d, %s, %s, %d, %s, 'oczekuje', %s, %s, %d, %s, %s)",
+		  pobrania_limit, dane_faktury, utworzono, zmieniono)
+		 VALUES (%s, %d, %s, %d, %s, %s, %d, %s, 'oczekuje', %s, %s, %d, %s, %s, %s)",
 			$sid,
 			$produkt->id,
 			$produkt->nazwa,
@@ -759,6 +861,7 @@ function sklepag_domknij_zakup( $sesja ) {
 			// przeliczają na czas lokalny. Awaryjnie (brak metadanych) też GMT, nie czas lokalny.
 			isset( $sesja['metadata']['zgoda_czas'] ) ? $sesja['metadata']['zgoda_czas'] : current_time( 'mysql', true ),
 			SKLEPAG_LIMIT_POBRAN,
+			sklepag_dane_faktury_z_sesji( $sesja ),
 			$teraz,
 			$teraz
 		)
@@ -1048,7 +1151,9 @@ function sklepag_zbuduj_mail( $produkt, $zam, $link, $link_opinii = '' ) {
 		. "INSTRUKCJA W SKRÓCIE:\n1. Pobierz paczkę ZIP z linku powyżej.\n2. W kokpicie WordPressa: Wtyczki → Dodaj → Wyślij wtyczkę na serwer → wybierz ZIP.\n3. Aktywuj i działaj — pełna instrukcja jest w paczce.\n\n"
 		. $gwarancja
 		. $ocena
-		. "FAKTURA:\nPotrzebujesz faktury? Odpisz na tego maila i podaj dane firmy (nazwa, adres, NIP).\n\n"
+		. ( ! empty( $zam->dane_faktury )
+			? "DANE DO FAKTURY (podane przy zakupie):\n" . $zam->dane_faktury . "\nFakturę wystawimy na te dane i prześlemy osobno na ten adres e-mail.\n\n"
+			: "FAKTURA:\nChcesz fakturę? Odpisz na tego maila w ciągu 3 miesięcy od zakupu i podaj dane firmy (nazwa, adres, NIP).\n\n" )
 		. "Masz pytanie? Odpisz na tego maila.\n\n"
 		. sklepag_stopka_sprzedawcy_tekst();
 }
@@ -1079,7 +1184,12 @@ function sklepag_status_zamowienia( WP_REST_Request $zadanie ) {
  *                      0 = bez limitu (WP-cron — kontekst tolerancyjny na czas).
  *                      Niedociągnięte w budżecie zostają na następny bieg (idempotentne).
  */
-function sklepag_dociagnij_zalegle( $budzet_s = 0 ) {
+/**
+ * @param int  $budzet_s Budżet czasu (s); 0 = bez limitu (cron).
+ * @param bool $wymus    true = RĘCZNY przycisk: pyta Stripe o KAŻDĄ sesję, także tę z przerwą — właściciel
+ *                       klika, bo czeka; na hostingu bez WP-Cron nikt inny nie zapyta („za 9 minut” byłoby nieprawdą).
+ */
+function sklepag_dociagnij_zalegle( $budzet_s = 0, $wymus = false ) {
 	global $wpdb;
 	$ps    = $wpdb->prefix . 'sklepag_sesje_checkout';
 	$start = microtime( true );
@@ -1088,29 +1198,62 @@ function sklepag_dociagnij_zalegle( $budzet_s = 0 ) {
 		return $budzet_s > 0 && ( microtime( true ) - $start ) >= $budzet_s;
 	};
 
+	// Wynik dla wołającego (przycisk w panelu pokazuje go właścicielowi). K10 (30.08): tester kliknął
+	// „Dociągnij zaległe” 71 s po zapłacie, sesja była młodsza niż 120 s, przycisk pominął ją BEZ SŁOWA,
+	// cron na tym hostingu nie chodził (zepsuta pętla zwrotna) — i zakup „wisiał” 20 minut mimo opłacenia.
+	$wynik = array(
+		'domkniete'          => 0,
+		'pominiete_mlode'    => 0,
+		'sprawdzone_otwarte' => 0,
+		'z_przerwa'          => 0,
+		'bledy'              => 0,
+	);
+
 	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
-	$granica = gmdate( 'Y-m-d H:i:s', strtotime( current_time( 'mysql' ) ) - 120 );
-	$sesje   = $wpdb->get_col(
+	$granica                  = gmdate( 'Y-m-d H:i:s', strtotime( current_time( 'mysql' ) ) - 120 );
+	$wynik['pominiete_mlode'] = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$ps} WHERE stan='utworzona' AND utworzono >= %s", $granica ) );
+	// NAJNOWSZE NAJPIERW + LIMIT 100 + przerwa po sprawdzeniu: porzucone koszyki (kliknął „Kup”, nie zapłacił)
+	// zostają „utworzone” do wygaśnięcia u Stripe (24 h). Przy ORDER BY utworzono (najstarsze) LIMIT 20
+	// dwadzieścia takich sesji blokowało nowszą OPŁACONĄ na dobę — a to właśnie „przed chwilą zapłacił,
+	// nic nie przyszło” jest przypadkiem, na który właściciel czeka z palcem na przycisku. Sesja sprawdzona
+	// i nadal otwarta dostaje 9 min przerwy (transient), więc kolejne biegi schodzą do starszych.
+	$sesje = $wpdb->get_col(
 		$wpdb->prepare(
-			"SELECT stripe_session_id FROM {$ps} WHERE stan='utworzona' AND utworzono < %s ORDER BY utworzono LIMIT 20",
+			"SELECT stripe_session_id FROM {$ps} WHERE stan='utworzona' AND utworzono < %s ORDER BY utworzono DESC LIMIT 100",
 			$granica
 		)
 	);
 	// phpcs:enable
 
+	$sprawdzone = 0;
 	foreach ( $sesje as $sid ) {
-		if ( $po_budzecie() ) {
+		if ( $po_budzecie() || $sprawdzone >= 20 ) {
 			break; // Resztę dociągnie cron — render admina nie może wisieć.
 		}
+		$klucz_przerwy = 'sklepag_recon_' . md5( $sid );
+		if ( ! $wymus && get_transient( $klucz_przerwy ) ) {
+			// Sprawdzona przed chwilą i nadal nieopłacona — nie pytamy Stripe co bieg, ale LICZYMY ją OSOBNO:
+			// „0 · 0 · 0 · 0” przy sesji widzianej 3 minuty temu kłamało, a wrzucenie jej do „nieopłacone” też
+			// (w tym biegu nikt Stripe o nią nie pytał). Osobny kubełek mówi prawdę: „z przerwą, pytanie za ≤ 9 min”.
+			++$wynik['z_przerwa'];
+			continue;
+		}
+		++$sprawdzone;
 		$sesja = sklepag_stripe_pobierz_sesje( $sid );
 		if ( is_wp_error( $sesja ) ) {
+			++$wynik['bledy'];
 			sklepag_zdarzenie( null, 'reconciliation_blad', $sid . ': ' . $sesja->get_error_message() );
 			continue;
 		}
 		if ( isset( $sesja['payment_status'] ) && 'unpaid' !== $sesja['payment_status'] ) {
-			sklepag_domknij_zakup( $sesja ); // TEN SAM silnik co webhook.
+			if ( sklepag_domknij_zakup( $sesja ) ) { // TEN SAM silnik co webhook.
+				++$wynik['domkniete'];
+			}
 		} elseif ( isset( $sesja['status'] ) && 'expired' === $sesja['status'] ) {
 			sklepag_oznacz_sesje( $sid, 'wygasla' );
+		} else {
+			++$wynik['sprawdzone_otwarte'];
+			set_transient( $klucz_przerwy, 1, 9 * MINUTE_IN_SECONDS );
 		}
 	}
 
@@ -1158,5 +1301,7 @@ function sklepag_dociagnij_zalegle( $budzet_s = 0 ) {
 	$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}sklepag_logowania WHERE czas < %s", $retencja ) );
 	$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}sklepag_zdarzenia WHERE czas < %s", $retencja ) );
 	// phpcs:enable
+
+	return $wynik;
 }
 add_action( 'sklepag_dociagnij_zalegle', 'sklepag_dociagnij_zalegle' );

@@ -9,9 +9,12 @@ to jest w paczce, bo bez tego sklep nie nadawałby się do sprzedaży, a nie dla
 
 ## Płatność i domknięcie zakupu
 
-1. **Stripe Checkout** — dane karty podaje się na stronie Stripe, nie na Twoim serwerze. Powód:
-   przyjmowanie numerów kart we własnym formularzu wymagałoby certyfikacji, której sklep WordPress
-   nie ma; to standard sklepów tej wielkości.
+1. **Stripe Checkout** — dane karty podaje się w ramce Stripe (od 0.9.25 osadzonej na stronie produktu,
+   w kolorach strony; zapasowo na stronie Stripe), nigdy na Twoim serwerze. Powód: przyjmowanie numerów
+   kart we własnym formularzu wymagałoby certyfikacji, której sklep WordPress nie ma; ramka Stripe daje
+   wygląd strony bez tej odpowiedzialności.
+1a. **Dane do faktury przy zakupie** (0.9.25) — nieobowiązkowe pola nazwa/NIP/adres, komplet albo nic,
+   NIP z sumą kontrolną; sklep faktur nie wystawia i nie różnicuje praw kupującego po NIP-ie.
 2. **Domknięcie zakupu dwiema niezależnymi drogami** — powiadomienie od Stripe (webhook z podpisem)
    oraz zadanie co 10 minut, które dopytuje Stripe o opłacone sesje; do tego przycisk „Dociągnij
    zaległe teraz” na Pulpicie. Powód: webhook bywa zablokowany przez hosting albo zły sekret —
