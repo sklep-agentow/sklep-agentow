@@ -848,3 +848,9 @@ maszynowo do końca (zam #9901178 z danymi faktury).
 - Statyczna sonda wydajności strony produktu (30.08): 63 kB HTML + ~1,3 MB zasobów, z czego 1 MB to `stripe.js`
   ładowany w stopce TYLKO na stronie produktu z kluczem publikowalnym (lista i cudze strony: 0 — zmierzone); nasz `assets/front.css` 83 kB — kandydat do odchudzenia.
   `perf` Lighthouse nadal tylko na hostingu klienta (sekcja wyżej).
+
+## 🟡 DŁUG NA 0.9.27 z recenzji #225 r4 (30.08, tekst klienta w readme.txt)
+- `readme.txt` 0.9.26 mówi „bez tych stron nie robi nic poza własnym panelem” — nieprecyzyjne: skrót `[sklepag_sklep]`
+  wstawiony ręcznie na dowolnej stronie nadal renderuje sklep (i ma). Poprawne zdanie: „nie dokleja niczego do innych
+  stron; sklep pokaże się tylko tam, gdzie sam wstawisz skrót”. Nie weszło do 0.9.26: paczka była już na `origin/main`
+  (zamek klasy 10 → podbicie wersji), a zdanie nie szkodzi. Wchodzi z 0.9.27 razem z HEAD-200 i próbą kontrolną podpisu.
