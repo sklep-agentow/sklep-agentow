@@ -151,6 +151,10 @@ Ręczny przycisk „dociągnij zaległe" jest na dashboardzie sklepu.
    zamówień (razem ze statystykami), a treść maila obejrzysz w szczegółach
    zamówienia (przycisk „Wyślij ponownie" gdyby mail nie dotarł).
 
+⚠️ **Wyłącz Adaptive Pricing w Stripe (krok, nie ciekawostka).** W panelu Stripe:
+**Settings → Payments → Checkout and Payment Links → Adaptive Pricing → wyłącz** —
+inaczej kupujący z zagranicy zobaczy cenę przeliczoną na swoją walutę (np. EUR),
+co w teście instalacji K10 zmyliło testera przy pierwszym zakupie.
 ⚠️ **Ekran Stripe potrafi zaproponować INNĄ WALUTĘ niż Twoja cena.** Sklep wysyła
 do Stripe walutę produktu (np. 199 PLN) i tyle Ci wpływa — ale Stripe ma ustawienie
 **Adaptive Pricing**, które kupującemu z zagranicy pokazuje cenę przeliczoną na jego
@@ -179,8 +183,13 @@ Włącz. Dalej prowadzą instrukcje W paczkach botów (konfiguracja w kwadrans).
   sklepu z nawigacji. Na motywie z menu WordPressa: Wygląd → Menu → dodaj
   pozycję wskazującą stronę „Sklep". Na motywie z nawigacją wpisaną na
   sztywno w kod (tak jest na stronie Automatic AI po konwersji): dopisz
-  w `header.php` obok pozycji „FAQ" — w OBU listach (nawigacja główna
-  i mobilna) — gotowe fragmenty:
+  w `header.php` obok pozycji „FAQ” — w OBU listach (nawigacja główna
+  i mobilna) — gotowe fragmenty. ⚠️ **Edytuj plik przez SFTP albo menedżer
+  plików hostingu (droga główna).** Wbudowany edytor WordPressa (Wygląd →
+  Edytor plików motywu) przed zapisem sprawdza, czy strona odpowiada sama
+  sobie — na świeżym serwerze bez tej pętli zwrotnej pokazuje „Unable to
+  communicate back with site” i **cofa zapis bez śladu** (tak wyszło w teście
+  instalacji K10). Fragmenty do wklejenia:
 
   Nawigacja główna (desktop), zaraz po `<li>` z FAQ:
 
@@ -188,8 +197,11 @@ Włącz. Dalej prowadzą instrukcje W paczkach botów (konfiguracja w kwadrans).
   <li class=""><a class="text-sm transition-colors hover:text-fg text-steel" href="/sklep/">Sklep</a></li>
   ```
 
-  Nawigacja mobilna (szablon `tpl-menu-mobilne`), po pozycji `08` licząc
-  kolejny numer i opóźnienie animacji:
+  Nawigacja mobilna (szablon `tpl-menu-mobilne`): wklej PO OSTATNIEJ pozycji
+  listy (w motywie kolegi ostatnia to FAQ z numerkiem `08`). W wklejanym
+  fragmencie podmień DWIE rzeczy na kolejne wolne wartości: numerek w
+  `<span class="font-mono …">` (po `08` → `09`) i opóźnienie animacji
+  `--menu-delay` (o 0,05 s większe niż w ostatniej pozycji):
 
   ```html
   <li class="menu-item-in" style="--menu-delay: 0.4s;"><a class="flex items-baseline gap-4 py-4 text-3xl font-semibold tracking-tight transition-colors border-b border-line hover:text-volt" href="/sklep/"><span class="font-mono text-xs text-steel">08</span>Sklep</a></li>
