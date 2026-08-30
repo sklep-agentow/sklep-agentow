@@ -1,0 +1,59 @@
+SKLEP AGENTÓW — sklep z wtyczkami-botami na Twoim WordPressie
+================================================================
+
+OD CZEGO ZACZĄĆ
+---------------
+1. ZANIM cokolwiek wgrasz — zrób kopię bazy danych i plików strony
+   (u hostingu jest do tego jeden przycisk; bez kopii nie ma odwrotu).
+2. Otwórz INSTRUKCJA-INSTALACJI.md — instalacja krok po kroku, klucze Stripe,
+   webhook, pierwszy zakup testowy, ustawienia produkcyjne. To jedyny dokument
+   potrzebny do wdrożenia. Liczy się w minutach, nie w godzinach.
+3. Zainstaluj wtyczkę sklepu (plik sklep-agentow-*.zip) w panelu WordPressa:
+   Wtyczki → Dodaj nową → Wyślij wtyczkę na serwer → Zainstaluj → Włącz.
+   Dwa boty (chatbot-live-*.zip, segregator-maila-*.zip) to PRODUKTY sklepu —
+   wgrywasz je jako pliki produktów w panelu sklepu (instrukcja, krok 4),
+   a jeśli chcesz ich używać także u siebie, instalujesz jak każdą wtyczkę.
+4. Po instalacji, na co dzień: w środku paczki sklepu jest INSTRUKCJA.md
+   (produkty, zamówienia, maile, opinie, RODO) — otwiera się w każdym
+   edytorze tekstu i na GitHubie.
+
+CO JEST W PACZCE
+----------------
+  sklep-agentow-<wersja>.zip     sklep: lista i strony produktów, płatność
+                                 Stripe, mail z linkiem do pobrania, panel
+  chatbot-live-<wersja>.zip      produkt 1: bot czatu na stronę
+  segregator-maila-<wersja>.zip  produkt 2: segregator poczty
+
+  INSTRUKCJA-INSTALACJI.md       wdrożenie: instalacja, Stripe, webhook,
+                                 test a produkcja, najczęstsze problemy
+  diagramy/                      droga zakupu i przepływy botów (PNG);
+                                 te same rysunki w SVG są w każdej paczce
+  SHA256SUMS.txt                 sumy kontrolne plików — jak sprawdzić,
+                                 patrz niżej
+
+  W każdym zipie wtyczki: INSTRUKCJA.md (obsługa), readme.txt (skrót),
+  CHANGELOG.md (co się zmieniało), DOKUMENTACJA-TECHNICZNA.md (dla
+  informatyka), LICENSE. W paczce sklepu dodatkowo PONAD-SPECYFIKACJE.md —
+  jawna lista tego, co sklep robi ponad literę zamówienia, z powodami.
+
+WYMAGANIA
+---------
+  WordPress 6.7 lub nowszy (boty: 6.0+), PHP 8.1 lub nowszy,
+  bezpośrednie odnośniki inne niż „Zwykłe”, konto Stripe (testowe wystarczy
+  do sprawdzenia całości), wysyłka maili z serwera (albo wtyczka SMTP).
+  Sprawdzone na WordPressie 7.1 i PHP 8.4.
+
+TRYB TESTOWY
+------------
+  Całość pracuje na kluczach testowych Stripe: płatności nie są pobierane,
+  a kupujący widzi oznaczenia trybu testowego. Przejście na prawdziwe
+  płatności to osobna decyzja i osobna paczka — INSTRUKCJA-INSTALACJI.md,
+  rozdział „Test a produkcja”. Zaczyna się od jednego kroku: napisz do nas.
+
+JAK SPRAWDZIĆ, ŻE PLIKI SĄ CAŁE
+-------------------------------
+  W katalogu z rozpakowaną paczką:  sha256sum -c SHA256SUMS.txt
+  (Windows PowerShell: Get-FileHash <plik> -Algorithm SHA256 i porównaj
+  z wierszem w SHA256SUMS.txt). Każdy wiersz musi pokazać „OK”.
+
+Masz pytanie? Napisz do nas — odpowiadamy na to, na co instrukcja nie odpowiada.

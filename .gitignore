@@ -6,3 +6,6 @@ zrzuty-wygladu/
 
 # Dowody audytu MUSZĄ być w repo — log poza `origin` nie istnieje (wpadka #198).
 !audyt/sklep/PROBY-KONTROLNE.log
+
+# paczki zbiorcze wydania (zaloguj w Releases, nie w repo)
+wydanie/
