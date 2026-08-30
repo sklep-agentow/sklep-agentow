@@ -31,8 +31,8 @@ Nic jeszcze.
   ale TYLKO gdy WordPress swojego nie drukuje (inaczej byłyby dwa). Cudze strony motywu nie są dotykane.
 - **Pusta opcja strony sklepu nie „przejmuje” już cudzych stron.** `is_page( 0 )` jest w WordPressie prawdą
   na każdej stronie, więc gdy aktywacja nie zdołała utworzyć strony „Sklep”, wtyczka drukowała opis, OpenGraph
-  i canonical sklepu w `<head>` każdej strony motywu. Jedna bramka (`sklepag_jest_strona_z_opcji`) w czterech
-  miejscach, także dla strony „Dziękujemy”. Strona nieistniejącego produktu (404) nie dostaje już meta listy.
+  i canonical sklepu w `<head>` każdej strony motywu. Jedna bramka (`sklepag_jest_strona_z_opcji`) we wszystkich
+  siedmiu miejscach (meta, canonical, noindex „Dziękujemy” i ładowanie assetów — CSS/JS sklepu też trafiały na cudze strony). Strona nieistniejącego produktu (404) nie dostaje już meta listy.
 
 ---
 

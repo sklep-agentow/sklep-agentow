@@ -8,6 +8,7 @@ set -u
 KONTENER=strona_wp_wordpress
 CEL=/var/www/html/wp-content/plugins/sklep-agentow
 PLIK=$CEL/includes/front-seo.php
+PLIK_GLOWNY=$CEL/sklep-agentow.php
 BLEDY=0
 
 wdroz_czysty() {
@@ -19,12 +20,12 @@ odpal() {
   docker exec -u www-data "$KONTENER" wp eval-file /tmp/canon.php 2>&1
 }
 probuj() {
-  local opis="$1" mutacja="$2" krok="$3"
+  local opis="$1" mutacja="$2" krok="$3" plik="${4:-$PLIK}"
   wdroz_czysty
   local przed po
-  przed=$(docker exec "$KONTENER" md5sum "$PLIK" | cut -d' ' -f1)
+  przed=$(docker exec "$KONTENER" md5sum "$plik" | cut -d' ' -f1)
   eval "$mutacja"
-  po=$(docker exec "$KONTENER" md5sum "$PLIK" | cut -d' ' -f1)
+  po=$(docker exec "$KONTENER" md5sum "$plik" | cut -d' ' -f1)
   if [ "$przed" = "$po" ]; then
     printf '  BLAD mutacja NIE weszla do pliku: %s\n' "$opis"; BLEDY=$((BLEDY+1)); return
   fi
@@ -46,8 +47,8 @@ probuj "wyciety warunek has_action" \
   "docker exec $KONTENER sed -i \"s/if ( has_action( 'wp_head', 'rel_canonical' ) ) {/if ( false ) {/\" $PLIK" "C\\."
 
 echo "== Mutant 3: is_page( 0 ) bez bramki (stan sprzed naprawy klasy) =="
-probuj "wycieta bramka \$id > 0 w sklepag_jest_strona_z_opcji" \
-  "docker exec $KONTENER sed -i 's/return \$id > 0 \&\& is_page( \$id );/return is_page( \$id );/' $PLIK" "F\\."
+probuj "wycieta bramka \$id > 0 w sklepag_jest_strona_z_opcji (plik glowny)" \
+  "docker exec $KONTENER sed -i 's/return \$id > 0 \&\& is_page( \$id );/return is_page( \$id );/' $PLIK_GLOWNY" "F\\." "$PLIK_GLOWNY"
 echo "== Czysty kod: strażnik ma PRZEJŚĆ =="
 wdroz_czysty
 wyjscie=$(odpal); kod=$?

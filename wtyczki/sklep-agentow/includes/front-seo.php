@@ -18,20 +18,6 @@ if ( ! defined( 'ABSPATH' ) ) {
  * (zmierzone na /kontakt/ przed naprawą). Slug przez sanitize_title — ta sama
  * sanityzacja co w renderze.
  */
-/**
- * Czy bieżące żądanie to strona WP zapisana w opcji wtyczki (sklep / „Dziękujemy”).
- *
- * ⛔ `is_page( 0 )` jest PRAWDĄ na każdej stronie — a opcja bywa pusta (aktywacja
- * nie utworzyła strony: `wp_insert_post` zwrócił 0). Bez tej bramki wtyczka
- * drukowała opis, OG i canonical w cudze <head> (zmierzone na /uslugi/).
- *
- * @param string $opcja Nazwa opcji z ID strony.
- */
-function sklepag_jest_strona_z_opcji( $opcja ) {
-	$id = (int) get_option( $opcja );
-	return $id > 0 && is_page( $id );
-}
-
 function sklepag_seo_biezacy_produkt() {
 	if ( ! sklepag_jest_strona_z_opcji( 'sklepag_strona_sklep' ) ) {
 		return null;

@@ -844,5 +844,5 @@ maszynowo do końca (zam #9901178 z danymi faktury).
 - `has_action( 'wp_head', 'rel_canonical' )` traktuje priorytet `0` jak brak podpięcia — `false !== has_action(…)`
   byłoby ściślejsze. Stan nieodtworzony.
 - Statyczna sonda wydajności strony produktu (30.08): 63 kB HTML + ~1,3 MB zasobów, z czego 1 MB to `stripe.js`
-  ładowany w stopce na każdej stronie (zalecenie Stripe); nasz `assets/front.css` 83 kB — kandydat do odchudzenia.
+  ładowany w stopce TYLKO na stronie produktu z kluczem publikowalnym (lista i cudze strony: 0 — zmierzone); nasz `assets/front.css` 83 kB — kandydat do odchudzenia.
   `perf` Lighthouse nadal tylko na hostingu klienta (sekcja wyżej).

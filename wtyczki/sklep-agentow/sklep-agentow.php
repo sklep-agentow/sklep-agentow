@@ -122,13 +122,27 @@ function sklepag_wersja_assetu( $sciezka ) {
 }
 
 /**
+ * Czy bieżące żądanie to strona WP zapisana w opcji wtyczki (sklep / „Dziękujemy”).
+ *
+ * ⛔ `is_page( 0 )` jest PRAWDĄ na każdej stronie — a opcja bywa pusta (aktywacja
+ * nie utworzyła strony: `wp_insert_post` zwrócił 0). Bez tej bramki wtyczka
+ * drukowała opis, OG i canonical w cudze <head> (zmierzone na /uslugi/).
+ *
+ * @param string $opcja Nazwa opcji z ID strony.
+ */
+function sklepag_jest_strona_z_opcji( $opcja ) {
+	$id = (int) get_option( $opcja );
+	return $id > 0 && is_page( $id );
+}
+
+/**
  * Assety TYLKO na stronach sklepu (nie spowalniamy reszty strony).
  */
 function sklepag_assety_frontu() {
 	$strona_sklep      = (int) get_option( 'sklepag_strona_sklep' );
 	$strona_dziekujemy = (int) get_option( 'sklepag_strona_dziekujemy' );
 
-	if ( is_page( $strona_sklep ) || is_page( $strona_dziekujemy ) ) {
+	if ( sklepag_jest_strona_z_opcji( 'sklepag_strona_sklep' ) || sklepag_jest_strona_z_opcji( 'sklepag_strona_dziekujemy' ) ) {
 		wp_enqueue_style( 'sklepag-front', plugins_url( 'assets/front.css', SKLEPAG_PLIK ), array(), sklepag_wersja_assetu( 'assets/front.css' ) );
 
 		/* Pojawianie się sekcji przy przewijaniu (spójność z motywem gospodarza).
@@ -162,7 +176,7 @@ function sklepag_assety_frontu() {
 	// Wyłącznie na STRONIE PRODUKTU (query var `sklepag_produkt`) — formularz zakupu żyje tylko tam; lista
 	// sklepu nie ma czego montować, więc nie ładuje skryptu z sieci. Kolory bierze
 	// `platnosc.js` z tych samych zmiennych CSS co reszta sklepu (`front.css`) — jedno źródło palety.
-	if ( is_page( $strona_sklep ) && '' !== (string) get_query_var( 'sklepag_produkt' ) && function_exists( 'sklepag_stripe_klucz_publikowalny' ) && '' !== sklepag_stripe_klucz_publikowalny() ) {
+	if ( sklepag_jest_strona_z_opcji( 'sklepag_strona_sklep' ) && '' !== (string) get_query_var( 'sklepag_produkt' ) && function_exists( 'sklepag_stripe_klucz_publikowalny' ) && '' !== sklepag_stripe_klucz_publikowalny() ) {
 		wp_enqueue_script( 'stripe-js', 'https://js.stripe.com/dahlia/stripe.js', array(), null, true ); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion -- Stripe wymaga adresu bez wersji (aktualizacje po ich stronie, PCI).
 		wp_enqueue_script( 'sklepag-platnosc', plugins_url( 'assets/platnosc.js', SKLEPAG_PLIK ), array( 'stripe-js' ), sklepag_wersja_assetu( 'assets/platnosc.js' ), true );
 		wp_add_inline_script(
@@ -176,7 +190,7 @@ function sklepag_assety_frontu() {
 			'before'
 		);
 	}
-	if ( is_page( $strona_dziekujemy ) ) {
+	if ( sklepag_jest_strona_z_opcji( 'sklepag_strona_dziekujemy' ) ) {
 		wp_enqueue_script( 'sklepag-dziekujemy', plugins_url( 'assets/dziekujemy.js', SKLEPAG_PLIK ), array(), sklepag_wersja_assetu( 'assets/dziekujemy.js' ), true );
 		wp_add_inline_script( 'sklepag-dziekujemy', 'window.sklepagRest = ' . wp_json_encode( esc_url_raw( rest_url( 'sklepag/v1/' ) ) ) . ';', 'before' );
 	}

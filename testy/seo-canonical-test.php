@@ -98,6 +98,11 @@ if ( $inna ) {
 	sklepag_seo_head();
 	$glowa = ob_get_clean();
 	sprawdz( 'F. …i zero meta listy (description/og:url) w cudzym <head>', '' === trim( $glowa ), 'mam: ' . substr( $glowa, 0, 120 ) );
+	// Kolejka assetów jest globalna — kroki A–C (strona produktu) już ją napełniły; zerujemy przed pomiarem.
+	wp_dequeue_style( 'sklepag-front' );
+	wp_dequeue_script( 'sklepag-ruch' );
+	do_action( 'wp_enqueue_scripts' );
+	sprawdz( 'F. …i zero assetów sklepu (front.css / front-ruch.js) na cudzej stronie', ! wp_style_is( 'sklepag-front', 'enqueued' ) && ! wp_script_is( 'sklepag-ruch', 'enqueued' ), 'front.css=' . var_export( wp_style_is( 'sklepag-front', 'enqueued' ), true ) . ' ruch=' . var_export( wp_script_is( 'sklepag-ruch', 'enqueued' ), true ) );
 	remove_filter( 'pre_option_sklepag_strona_sklep', $pusta );
 	sprawdz( 'F. kontrola: opcja w bazie nietknięta', (int) get_option( 'sklepag_strona_sklep' ) === $strona_sklep );
 }
