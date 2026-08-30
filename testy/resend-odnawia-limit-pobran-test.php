@@ -130,7 +130,8 @@ echo 'CRON: WYNIK=' . ( $pass3 ? 'PASS' : 'FAIL - link z automatycznego ponowien
 // Stan: mail_blad, stary token DZIAŁA (3 z 10 pobrań zużyte). Cron rotuje token, wp_mail pada
 // (pre_wp_mail=false) — stary token/termin/licznik mają WRÓCIĆ (do 0.9.27: w bazie zostawał
 // skrót, którego nie niósł żaden doręczony mail → kupujący tracił link na stałe).
-$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET status='mail_blad', mail_proby=1, token_pobrania=%s, link_wygasa=%s, pobrania_uzyte=3 WHERE id=%d", $stary_token, $stary_termin, $id ) );
+$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET status='mail_blad', mail_proby=1, token_pobrania=%s, link_wygasa=%s, pobrania_uzyte=3, mail_tresc='TRESC-DORECZONEGO-MAILA-K4' WHERE id=%d", $stary_token, $stary_termin, $id ) );
+$op_przed = (string) $wpdb->get_var( $wpdb->prepare( "SELECT token_hash FROM {$wpdb->prefix}sklepag_opinie WHERE zamowienie_id=%d AND status='zalazek'", $id ) );
 add_filter( 'pre_wp_mail', '__return_false', 99 );
 $wynik4 = sklepag_domknij_zakup( array( 'id' => $sid, 'payment_status' => 'paid' ) );
 remove_filter( 'pre_wp_mail', '__return_false', 99 );
@@ -140,7 +141,11 @@ echo 'CRON-PAD: status_po=' . $po4->status . " (OCZEKIWANE: mail_blad)\n";
 echo 'CRON-PAD: token_przywrocony=' . ( $po4->token_pobrania === $stary_token ? 'TAK' : 'NIE' ) . " (OCZEKIWANE: TAK)\n";
 echo 'CRON-PAD: pobrania_uzyte_po=' . (int) $po4->pobrania_uzyte . " (OCZEKIWANE: 3)\n";
 echo 'CRON-PAD: termin_przywrocony=' . ( $po4->link_wygasa === $stary_termin ? 'TAK' : 'NIE' ) . " (OCZEKIWANE: TAK)\n";
-$pass4 = ( ! $wynik4 && 'mail_blad' === $po4->status && $po4->token_pobrania === $stary_token && 3 === (int) $po4->pobrania_uzyte && $po4->link_wygasa === $stary_termin );
+$tresc4 = (string) $wpdb->get_var( $wpdb->prepare( "SELECT mail_tresc FROM {$pz} WHERE id=%d", $id ) );
+$op_po   = (string) $wpdb->get_var( $wpdb->prepare( "SELECT token_hash FROM {$wpdb->prefix}sklepag_opinie WHERE zamowienie_id=%d AND status='zalazek'", $id ) );
+echo 'CRON-PAD: mail_tresc_przywrocona=' . ( 'TRESC-DORECZONEGO-MAILA-K4' === $tresc4 ? 'TAK' : 'NIE' ) . " (OCZEKIWANE: TAK)\n";
+echo 'CRON-PAD: opinia_hash_przywrocony=' . ( '' === $op_przed || $op_po === $op_przed ? 'TAK' : 'NIE' ) . " (OCZEKIWANE: TAK)\n";
+$pass4 = ( ! $wynik4 && 'mail_blad' === $po4->status && $po4->token_pobrania === $stary_token && 3 === (int) $po4->pobrania_uzyte && $po4->link_wygasa === $stary_termin && 'TRESC-DORECZONEGO-MAILA-K4' === $tresc4 && ( '' === $op_przed || $op_po === $op_przed ) );
 echo 'CRON-PAD: WYNIK=' . ( $pass4 ? 'PASS' : 'FAIL - pad poczty w cronie zabil dzialajacy stary link' ) . "\n";
 
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$ps} WHERE stripe_session_id=%s", $sid ) );

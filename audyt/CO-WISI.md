@@ -861,3 +861,6 @@ ZROBIONE: kompensacja tokenu w cronie (decyzja Dzidka 31.08 ~22:15 „wszystko c
 `false !== has_action` · zdanie o skrócie w readme · A3/„63 klasy”/§8a-b/odsyłacz a1b2495 z recenzji #227 r3.
 ZAMKNIĘTE UZASADNIENIEM: honeypot opinii (formularz tylko z jednorazowego tokenu z maila — bot bez zakupu go nie widzi).
 ZOSTAJE: front.css 83 kB (kandydat, nie wada) · `perf` na hostingu klienta · klik karty (człowiek) · NIP→faktury (decyzja).
+
+## 🟡 DŁUG: allowlista recenzenta (workflow) nie zna prób `produkt-404`/`webhook-podpis` (#228 r1 u5/r2 u10)
+`.github/workflows/recenzent.yml` wymienia próby po nazwie — dwie nowe wymagają PR-a ruszającego workflow (bez recenzji automatycznej, czyta koordynator). Zrobić jako pierwszy PR po 0.9.27.

@@ -945,7 +945,7 @@ function sklepag_domknij_zakup( $sesja ) {
 	// kupujący z DZIAŁAJĄCYM starym linkiem nie tracił go przy trwałej awarii poczty
 	// (dotąd: cron rotował token, pad wysyłki zostawiał w bazie skrót, którego nie niósł
 	// żaden mail — link z ostatniego doręczonego maila umierał; CO-WISI „kompensacja w cronie”).
-	$przed_rotacja = $wpdb->get_row( $wpdb->prepare( "SELECT token_pobrania, link_wygasa, pobrania_uzyte FROM {$pz} WHERE stripe_session_id=%s", $sid ) );
+	$przed_rotacja = $wpdb->get_row( $wpdb->prepare( "SELECT token_pobrania, link_wygasa, pobrania_uzyte, mail_tresc FROM {$pz} WHERE stripe_session_id=%s", $sid ) );
 	$token         = bin2hex( random_bytes( 32 ) );
 	$wpdb->query(
 		$wpdb->prepare(
@@ -962,8 +962,11 @@ function sklepag_domknij_zakup( $sesja ) {
 	// 4b) Zalążek opinii + jednorazowy link „oceń bota" — w tej samej sekcji
 	// chronionej CAS-em mail_w_toku co token pobrania: retry maila odświeża token
 	// opinii, ale opinii już przysłanej nie rusza (wtedy mail idzie bez akapitu oceny).
-	$token_op = sklepag_opinia_zalazek( (int) $zam->id, (int) $produkt->id );
-	$link_op  = '' !== $token_op ? admin_url( 'admin-post.php' ) . '?action=sklepag_ocen&z=' . (int) $zam->id . '&t=' . $token_op : '';
+	// Zdjęcie skrótu opinii PRZED rotacją (sklepag_opinia_zalazek nadpisuje zalążek) —
+	// gałąź porażki przywraca go, żeby link „oceń bota” z ostatniego DORĘCZONEGO maila żył dalej.
+	$opinia_hash_przed = (string) $wpdb->get_var( $wpdb->prepare( "SELECT token_hash FROM {$wpdb->prefix}sklepag_opinie WHERE zamowienie_id=%d AND status='zalazek'", (int) $zam->id ) );
+	$token_op          = sklepag_opinia_zalazek( (int) $zam->id, (int) $produkt->id );
+	$link_op           = '' !== $token_op ? admin_url( 'admin-post.php' ) . '?action=sklepag_ocen&z=' . (int) $zam->id . '&t=' . $token_op : '';
 
 	// 5) Mail: zapis treści PRZED pomiarem skutku (podgląd w panelu niezależnie od wyniku).
 	$link  = admin_url( 'admin-post.php' ) . '?action=sklepag_pobierz&z=' . (int) $zam->id . '&t=' . $token;
@@ -997,15 +1000,26 @@ function sklepag_domknij_zakup( $sesja ) {
 	// stan linku sprzed rotacji (jeśli był; pierwsze domknięcie nie ma czego przywracać).
 	// Ta sama zasada co przy ręcznym „Wyślij ponownie” (admin-zamowienie.php).
 	if ( $przed_rotacja && '' !== (string) $przed_rotacja->token_pobrania ) {
+		// CAS na WŁASNY świeży skrót: proces, którego claim odebrano po 5 min (stale-claim),
+		// nie może nadpisać tokenu procesu, który przejął wysyłkę — przywracamy tylko wtedy,
+		// gdy w bazie nadal leży skrót Z NASZEJ rotacji. `link_wygasa` przy niepustym tokenie
+		// jest zawsze ustawiony (nadawane razem), więc %s nie dostanie NULL-a.
 		$wpdb->query(
 			$wpdb->prepare(
-				"UPDATE {$pz} SET token_pobrania=%s, link_wygasa=%s, pobrania_uzyte=%d WHERE stripe_session_id=%s AND status='mail_w_toku'",
+				"UPDATE {$pz} SET token_pobrania=%s, link_wygasa=%s, pobrania_uzyte=%d WHERE stripe_session_id=%s AND status='mail_w_toku' AND token_pobrania=%s",
 				$przed_rotacja->token_pobrania,
 				$przed_rotacja->link_wygasa,
 				(int) $przed_rotacja->pobrania_uzyte,
-				$sid
+				$sid,
+				hash( 'sha256', $token )
 			)
 		);
+		// Treść maila też wraca (jak w bliźniaku admin-zamowienie.php): panel pokazuje
+		// „treść wysłanego maila” — po padzie pokazywałby link, którego nikt nie dostał.
+		$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET mail_tresc=%s WHERE id=%d", (string) $przed_rotacja->mail_tresc, (int) $zam->id ) );
+		if ( '' !== $opinia_hash_przed ) {
+			$wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->prefix}sklepag_opinie SET token_hash=%s WHERE zamowienie_id=%d AND status='zalazek'", $opinia_hash_przed, (int) $zam->id ) );
+		}
 	}
 	$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET status='mail_blad', mail_proby=mail_proby+1, zmieniono=%s WHERE stripe_session_id=%s AND status='mail_w_toku'", $teraz, $sid ) );
 	sklepag_zdarzenie( (int) $zam->id, 'mail_blad', '' === $email ? 'brak adresu email w sesji' : 'wp_mail zwrocil false' );

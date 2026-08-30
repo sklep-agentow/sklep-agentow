@@ -20,7 +20,7 @@ Nic jeszcze.
 
 ---
 
-## [0.9.27] — 2026-08-31 · schemat bazy 8 (bez zmian)
+## [0.9.27] — 2026-08-30 · schemat bazy 8 (bez zmian)
 
 ### Naprawione
 - **Strona nieistniejącego produktu zwraca 404 także na HEAD.** Status ustawiał dopiero render treści

@@ -66,7 +66,7 @@ add_action( 'init', 'sklepag_rejestruj_rewrite' );
  */
 function sklepag_status_404_wczesnie() {
 	$slug = (string) get_query_var( 'sklepag_produkt' );
-	if ( '' === $slug || ! is_page( (int) get_option( 'sklepag_strona_sklep' ) ) ) {
+	if ( '' === $slug || ! sklepag_jest_strona_z_opcji( 'sklepag_strona_sklep' ) ) {
 		return;
 	}
 	if ( ! sklepag_produkt_po_slugu( sanitize_title( $slug ) ) ) {

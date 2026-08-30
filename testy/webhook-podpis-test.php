@@ -4,8 +4,9 @@
  * Test-strażnik, kod wyjścia 1 przy porażce. Woła PRAWDZIWĄ funkcję produkcyjną
  * (nie kopię zapytania — lekcja z sondy, która mierzyła zapytanie zamiast ścieżki).
  *
- * Dotąd odrzut złego podpisu dowodziły tylko raporty audytu L3 na żywym stosie;
- * ta para (test + próba kontrolna) czyni z tego strażnika CI (dług z CO-WISI §#226 r2).
+ * Dotąd odrzut złego podpisu dowodziły tylko raporty audytu L3 na żywym stosie; ta para
+ * (test + próba kontrolna) to strażnik PRZELOTU RĘCZNEGO (proby-kontrolne-przelot.sh) —
+ * do BRAMKI= CI nie wchodzi; wpięcie do allowlisty recenzenta = osobny PR (workflow).
  *
  * Uruchomienie:
  *   docker cp testy/webhook-podpis-test.php strona_wp_wordpress:/tmp/wh.php

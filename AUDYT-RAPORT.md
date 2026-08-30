@@ -3,9 +3,9 @@
 Data: 2026-08-30 · Zakres: audyt końcowy K7 (6 soczewek, 104 cele) + naprawy K7b + audyt delty 0.9.24 (mail HTML) + audyt
 delty 0.9.25 (płatność osadzona, dane do faktury, reconciliation po K10 — PR `#222`, 4 rundy) + test instalacji od zera
 przez niezależnego testera (K10) + audyt delty 0.9.26 (canonical stron sklepu, klasa `is_page( 0 )` — PR `#225`, 4 rundy;
-dokumenty SECURITY/CONTRIBUTING — PR `#226`, 3 rundy; delta 0.9.27: HEAD-404, podpis webhooka jako strażnik CI, Yoast/RankMath,
+dokumenty SECURITY/CONTRIBUTING — PR `#226`, 3 rundy; delta 0.9.27: HEAD-404, podpis webhooka jako strażnik przelotu ręcznego, Yoast/RankMath,
 has_action prio 0, zdanie o skrócie — długi z CO-WISI decyzją Dzidka 31.08) + bramka końcowa i przelot prób kontrolnych
-na `e95de75` (docs nad `a3d9568`, kod wtyczek identyczny — log w repo) · KRYTYCZNE: 0 · DUZE: 0 · kontroli FAIL: 2 (z 13) · **K7: NO-GO · EXIT=1** (kontrole 2 i 6 — te same co przy 0.9.23 i 0.9.24: decyzja właściciela 28.08; na `e95de75` 5 z 31 prób z EXIT≠0 — podzbiór zestawu 6 z `a1b2495`/`2992247`, żadnej nowej; powody w raporcie)
+na commicie FINALNYM tej gałęzi (log w repo — sekcja delty 0.9.27 niżej niesie sha i liczby) · KRYTYCZNE: 0 · DUZE: 0 · kontroli FAIL: 2 (z 13) · **K7: NO-GO · EXIT=1** (kontrole 2 i 6 — te same co przy 0.9.23 i 0.9.24: decyzja właściciela 28.08; na `e95de75` 5 z 31 prób z EXIT≠0 — podzbiór zestawu 6 z `a1b2495`/`2992247`, żadnej nowej; powody w raporcie)
 
 Ten plik jest **wskaźnikiem maszynowym** dla bramki oddania (hook `oddanie-guard` czyta liczniki
 w nagłówku). Treść audytu — liczby z komendami, decyzje z powodami, długi i miejsca dowodów —
@@ -18,8 +18,8 @@ Tester niezależny K10: `audyt/K10-INSTALACJA-OD-ZERA-0.9.24.md` (1 wada produkt
 
 Dwie kontrole przed oddaniem, których żąda bramka: krytyk = rundy recenzji `#213` ×6, `#214` ×3, `#220` ×3, `#221` ×1,
 **`#222` ×4**, **`#225` ×4** (r1: 2 WAŻNE, r2: 1 WAŻNA, r3: 3 DROBNE wzięte, r4: 1 WAŻNA o zdaniu w readme → 0.9.27 przez zamek paczki), **`#226` ×3** (8 uwag WAŻNYCH „tekst SECURITY vs kod” — wszystkie naprawione z plikiem i linią); audytor spójności =
-`narzedzia-qa/k7-koniec.sh` (13 kontroli na `a3d9568`; przelot prób na `e95de75`, log `audyt/sklep/PROBY-KONTROLNE.log`) + `narzedzia-qa/paczka-zgodnosc.sh` (zip = repo co do sumy)
-+ `narzedzia-qa/pakuj-dla-klienta.sh` (17 kontroli, `sklep-agentow-KLIENT-0.9.26.zip` sha `6d3ee000…`; `sklep-agentow-0.9.26.zip` sha `38f78381…`).
+`narzedzia-qa/k7-koniec.sh` (13 kontroli; przelot prób — log `audyt/sklep/PROBY-KONTROLNE.log`, sha w sekcji delty niżej) + `narzedzia-qa/paczka-zgodnosc.sh` (zip = repo co do sumy)
++ `narzedzia-qa/pakuj-dla-klienta.sh` (17 kontroli; sumy paczek 0.9.27 w notatce wydania i Release).
 
 Delta 0.9.25 sprawdzona dodatkowo: strażnik maila 27/27 (C3, C3b — dane do faktury), strażnik reconciliation
 `testy/reconciliation-wynik-i-przerwa-test.php` 6/6 (na kodzie 0.9.24 pada w całości), E2E ścieżki zapasowej z danymi faktury
@@ -41,4 +41,4 @@ nietknięte; mutant „stan 0.9.26” widoczny — HEAD wraca do 200); `testy/we
 padają, czysty EXIT=0); strażnik SEO kroki A–H (H: symulacja Yoast stałą `WPSEO_VERSION` → nasz canonical milczy), 3 mutanty
 padają; `bramki.sh --tryb pelny` 10/10; zgodność dokumentacji 0 rozjazdów; `paczka-zgodnosc.sh` EXIT=0 (0.9.27).
 Kompensacja tokenu w cronie: `resend-odnawia-limit-pobran-test.php` części 1–4 PASS (EXIT=0); na `zakup.php` z 0.9.26
-CZĘŚĆ 4 FAIL (token_przywrocony=NIE, pobrania_uzyte 0 zamiast 3) — kalibracja stary/nowy kod. Przelot prób na `bc1ef2f` (log w repo): 33 uruchomionych, 6 z EXIT≠0.
+CZĘŚĆ 4 FAIL (token_przywrocony=NIE, pobrania_uzyte 0 zamiast 3) — kalibracja stary/nowy kod. Przelot prób: sha i liczby FINALNE niżej (poprzednie przebiegi: `e95de75` 31/5, `bc1ef2f` 33/6 — historia w gicie loga).
