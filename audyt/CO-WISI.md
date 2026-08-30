@@ -808,7 +808,7 @@ z tą samą listą wzorców co skaner — po oddaniu, jeśli zrzutów przybędzi
   (dziś: §9 FAQ).
 
 ## 🟡 K10 (30.08, tester niezależny, instalacja z Release 0.9.24 na czystym WP 6.9.4 + motyw kolegi) — co wyszło
-Raport: `/root/praca/zlecenia/k10-tester-stanowisko/dowody/RAPORT-TESTERA.md` (+ kopia w `/root/do-panelu/K10-…`).
+Raport (oryginał): `/root/praca/k7-dowody-30-08/k10-tester-0.9.24/RAPORT-TESTERA.md` (kopia dla Dzidka: `/root/do-panelu/K10-0.9.24-tester/`).
 26 min zegara (≈15 min czystej pracy z instrukcją — w limicie 30), 22 ✅ · 11 🐞 · 6 😖 · 6 ⬜.
 - **NAPRAWIONE w 0.9.25** (#222): „Dociągnij zaległe” milczało o pominiętych (młodszych niż 2 min) + starwacja przez
   porzucone koszyki; instrukcje o WP-Cron/pętli zwrotnej.
