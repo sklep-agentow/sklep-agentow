@@ -714,9 +714,9 @@ i widoczność przycisku (`:504`). Scenariusz: nowy status zamknięty dopisany d
 ponownie” przechodzi mimo chargebacku. **Dług:** jedna tablica PHP jako źródło, fragment SQL budowany z niej (`implode`),
 strażnik porównujący oba. Po oddaniu, przy 0.9.24. Zero blokerów w tej recenzji.
 
-## 🟡 TRZY LICZBY BRAMKI KOŃCOWEJ ŻYJĄ W TRZECH PLIKACH, PRZEPISANE RĘCZNIE (30.08, recenzja PR rubryki, D8)
+## 🟡 TRZY LICZBY BRAMKI KOŃCOWEJ ŻYJĄ W CZTERECH PLIKACH, PRZEPISANE RĘCZNIE (30.08, recenzja PR rubryki, D8)
 
-`AUDYT-RAPORT.md` (korzeń, czyta go hook `oddanie-guard` spoza repo), `rubryka-GOTOWE.md` i `audyt/RAPORT-ODDANIA.md` §2
+`AUDYT-RAPORT.md` (korzeń, czyta go hook `oddanie-guard` spoza repo), `rubryka-GOTOWE.md`, `audyt/RAPORT-ODDANIA.md` §2 i `audyt/DO-ODDANIA.md`
 niosą te same `KRYTYCZNE 0 · DUŻE 0 · FAIL 2 z 13` — nic w repo nie sprawdza, że się zgadzają z wyjściem `k7-koniec.sh`.
 **Dług:** jedna kontrola w `narzedzia-qa/k7-koniec.sh` (porównanie nagłówka `AUDYT-RAPORT.md` z policzonymi liczbami,
 FAIL przy rozjeździe) + próba kontrolna. Po oddaniu.

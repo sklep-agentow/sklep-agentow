@@ -106,7 +106,7 @@ klienta**; pominięte są wyłącznie długi narzędzi warsztatu (skanery, prób
 ## 5. Gdzie leżą dowody
 
 `audyt/sklep/PROBY-KONTROLNE.log` (przelot maszynowy, commit `a1b2495`) · `audyt/sklep/raporty/` ·
-`audyt/sklep/REJESTR-ZNALEZISK-SKLEP.md` · `audyt/SCIAGA-EGZAMINATORA.md` (54 klasy błędów z dowodami) ·
+`audyt/sklep/REJESTR-ZNALEZISK-SKLEP.md` · `audyt/SCIAGA-EGZAMINATORA.md` (56 klas błędów z dowodami) ·
 `audyt/PLUGIN-CHECK-30-08.md` · `audyt/CO-WISI.md` · `DECYZJE.md` (32 decyzje z uzasadnieniem) ·
 `MAPA-SPEC.md` (wymagania S-01…S-20 ze statusem) · opisy PR `#213` i `#214` (każda runda recenzji z tabelą
 uwaga → naprawa → wynik uruchomienia).
