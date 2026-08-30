@@ -24,12 +24,20 @@ tekstu klienta**. Reszta → nazwany dług w `CO-WISI.md`.
 ## 2. ODŚWIEŻYĆ PRZETERMINOWANE DOWODY
 ⛔ **To nie jest usterka produktu — to zestarzały dowód**, i bramka końcowa to widzi:
 
+Było (przed `#210`):
 ```
 FAIL 6 próby kontrolne: po przelocie (d66e6f5) zmieniło się to, czego on dowodzi
      — dowód przeterminowany (uruchom: bash narzedzia-qa/proby-kontrolne-przelot.sh)
 ```
-
-- [ ] Po scaleniu `#209`: `bash narzedzia-qa/proby-kontrolne-przelot.sh` (drzewo musi być CZYSTE)
+- [x] Po scaleniu `#209`: `bash narzedzia-qa/proby-kontrolne-przelot.sh` — **wykonane na `89ba47a`**,
+      log w `audyt/sklep/PROBY-KONTROLNE.log` (`#210`). Kontrola 6 zmieniła POWÓD, nie wynik:
+```
+FAIL  6 próby kontrolne: 6 z 30 ma EXIT≠0 (przelot na 89ba47a)        ← k7-koniec.sh, EXIT=1
+```
+      Sześć padających to długi narzędziowe (`blad-klucza`, `ip-za-proxy`, `nonce`, `przejecie`,
+      `pulapka` padają identycznie na czystym `main`; `dowod-z-paczki` ma zaszytą wersję 1.5.0) —
+      opis w `CO-WISI.md`, sekcja o próbach kontrolnych. **Nie da się ich „odświeżyć” — to naprawa
+      narzędzi, świadomie po oddaniu.**
 - [ ] `bash narzedzia-qa/k7-koniec.sh` **na samym końcu** — każda zmiana ją unieważnia
 
 ## 3. REJESTR KLAS BŁĘDÓW → `audyt/SCIAGA-EGZAMINATORA.md`
@@ -96,7 +104,7 @@ Musi nieść JAWNIE:
 | # | Kontrola | Stan | Co to znaczy |
 |---|---|---|---|
 | 2 | kalibracja | **FAIL** | soczewki L1/L5 bez PASS. ⭐ Kryterium klienta #12 (≥2/3) **SPEŁNIONE**: 7 mutantów, 5 złapanych = 71%. Bramka jest OSTRZEJSZA od rubryki. **Decyzja Dzidka 28.08: oddajemy z jawnym zapisem.** |
-| 6 | próby kontrolne | **FAIL** | dowód przeterminowany moimi commitami — patrz pozycja 2 wyżej. Do odświeżenia, nie do naprawy. |
+| 6 | próby kontrolne | **FAIL** | przelot POWTÓRZONY na `89ba47a` (`#210`): 6 z 30 ma EXIT≠0. To sześć długów narzędziowych (pięć pada tak samo na czystym `main`, szósty ma zaszytą wersję 1.5.0) — patrz pozycja 2 wyżej. Nie wada produktu; naprawa narzędzi po oddaniu. |
 
 Pozostałe **11 na zielono**: mapa, rejestr (4 kontrole), anomalie, przelot, paczka, tag, raporty.
 
@@ -111,3 +119,43 @@ Pozostałe **11 na zielono**: mapa, rejestr (4 kontrole), anomalie, przelot, pac
       zipy są dowodem wydań. ⚠️ Dysk maszyny **87%**.
 - ⬜ **Commit warsztatu** — niezacommitowane skille w `/root/praca/warsztat`
       (⛔ gałąź ma ~960 widmowych kasowań, `git add -A` = katastrofa; dodawać ŚCIEŻKAMI)
+
+---
+
+## 8. PORZĄDEK W REPO PRZED ODDANIEM — 51 GAŁĘZI (dopisane 29.08 na prośbę Dzidka)
+
+Na GitHubie stoi **51 gałęzi zdalnych** i jeden tag. Tak zostać nie może — kolega otwiera repo
+i widzi 51 gałęzi zamiast czystego `main`.
+
+⛔ **PUŁAPKA, przez którą NIE WOLNO tego zrobić „szybko":**
+
+```
+$ git fetch --prune origin
+$ git branch -r | grep -v 'origin/HEAD' | grep -v 'origin/main$' | wc -l
+51                   ← tyle gałęzi poza main (pomiar 30.08, po prune)
+$ git branch -r --merged origin/main | grep -v origin/main | wc -l
+0                    ← ZERO z nich git widzi jako scalone
+$ git branch -r --no-merged origin/main | grep -v origin/main | wc -l
+51                   ← wszystkie 51 jako NIEscalone
+```
+
+Scaliliśmy kilkadziesiąt PR-ów, a `--merged` pokazuje zero. Powód: **scalamy SQUASHEM**, a wtedy
+git nie widzi gałęzi jako scalonej (to klasa 20 z `SCIAGA-EGZAMINATORA.md`). Kasowanie „tych
+zmergowanych" tą komendą skasowałoby albo wszystko, albo nic.
+
+**BEZPIECZNA DROGA:** kasować po **statusie PR-a**, nie po `--merged`:
+```
+gh pr list --state merged --limit 100 --json number,headRefName,state
+# i kasować WYŁĄCZNIE gałęzie, których PR ma state = MERGED
+```
+⛔ Przed kasowaniem czegokolwiek: sprawdzić, czy gałąź nie jest bazą innego, otwartego PR-a
+(klasa: stackowane PR-y — skasowanie bazy zamyka dzieci).
+⛔ **Nieodwracalne → pytam Dzidka PRZED**, z gotową listą do klepnięcia.
+
+## 9. SKILL DO STEROWANIA GITHUBEM — PO ODDANIU, nie teraz
+Dzidek 29.08: wiedza o prowadzeniu repo jest rozsypana, przydałby się **jeden** skill
+z najważniejszymi informacjami. ⭐ Zgoda co do kierunku — i to jest robota **warsztatowa**,
+nie zlecenia. Materiał już mamy: `github-wydania-klienta` (istnieje), klasy 20/22 ze ściągi
+(squash i przenoszenie gałęzi), pamięć o bramkach lokalnych przed pushem, o odświeżaniu opisu
+PR przed pushem i o tym, że auto-merge scala zanim recenzja spadnie.
+⛔ **NIE robimy przed oddaniem** — termin 1.09, a to nie dotyka produktu klienta.

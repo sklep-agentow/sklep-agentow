@@ -524,6 +524,7 @@ prawdziwym wdrożeniu.
   jest pusty.
   ⛔ Dwa z nich (`blad-klucza`, `nonce`) to nie ślepota na część wad, tylko **strażnik, który
   pada ZAWSZE** — czyli nie odróżnia kodu z wadą od kodu bez wady i jako bramka nie znaczy nic.
+  ⛔ Skutek (recenzja #210): **przez ten dług zabezpieczenie nonce i obsługa błędu klucza w chatbocie są dziś NIEPILNOWANE** — regresji w nich nie złapie żadna bramka. To dług bezpieczeństwa, nie tylko padająca próba.
   To pilne, ale to teren botów (chatbot ma świadomie otwartą klasę 8) — do rozstrzygnięcia
   osobno, nie w PR-ze o przelocie sklepu.
   ⭐ **JEDNA Z NICH JEST CHWIEJNA — zmierzone dwoma przelotami tej samej gałęzi.**
