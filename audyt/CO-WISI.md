@@ -700,11 +700,16 @@ zrzutów (wgranie wtyczki, aktywacja, Ustawienia sklepu, webhook) — po oddaniu
 3. Narzędzie: `narzedzia-qa/lib-stos-probny.sh` deklaruje `WP_DEBUG_LOG` przez `WORDPRESS_CONFIG_EXTRA`, obraz `wordpress:6.9.4` tego
    NIE wpisuje → „0 notice’ów” na tym stosie było zerem z martwego loggera (tester to wyłapał). Naprawa: `wp config set` po `postaw_stos`
    + próba kontrolna z podłożonym `trigger_error` (K9 zrobiła to ręcznie: 1 trafienie, potem 0 na 8 adresach).
+   ⛔ Mechanizm, który to ukrył (recenzja `#218`): `log_bledow()` w tej bibliotece robi `cat debug.log 2>/dev/null … || true` —
+   brak pliku i brak loggera dają TEN SAM pusty wynik co „zero błędów”, a konsumenci (`dowod-z-paczki.sh:171-177,195,249`,
+   `dowod-aktualizacji.sh:228`, `dowod-zachowania-chatbot.sh:190,247,281`, `dowod-zachowania-segregator.sh:195,238`) piszą
+   „(WP_DEBUG włączony)”, czego nie mierzą. Naprawa klasy: `log_bledow()` ma PADAĆ (exit 2), gdy `debug.log` nie istnieje lub
+   `WP_DEBUG_LOG` nie jest zdefiniowany, a `postaw_stos` ma kończyć się podłożonym notice’em i `grep -c` = 1.
 
 ## 🟡 LISTA STATUSÓW ZAMKNIĘTYCH W TRZECH SKŁADNIACH (30.08, `/code-review ultra` na `#213` — jedyne znalezisko, waga „nit”)
 
-`'zwrocone','sporne'` żyje jako fragment SQL `SKLEPAG_STATUSY_ZAMKNIETE` (`sklep-agentow.php:44`), tablica PHP w bramce 409
-(`admin-zamowienie.php:63`) i konkatenacja `NOT IN` (`:117`, `:154`); `'mail_wyslany','mail_blad'` — bramka 409 (`:67`)
+`'zwrocone','sporne'` żyje jako fragment SQL `SKLEPAG_STATUSY_ZAMKNIETE` (`wtyczki/sklep-agentow/sklep-agentow.php:44`), tablica PHP
+w bramce 409 (`wtyczki/sklep-agentow/includes/admin-zamowienie.php:63`) i konkatenacja `NOT IN` (`:117`, `:154`); `'mail_wyslany','mail_blad'` — bramka 409 (`:67`)
 i widoczność przycisku (`:504`). Scenariusz: nowy status zamknięty dopisany do stałej SQL, zapomniany w tablicy → „Wyślij
 ponownie” przechodzi mimo chargebacku. **Dług:** jedna tablica PHP jako źródło, fragment SQL budowany z niej (`implode`),
 strażnik porównujący oba. Po oddaniu, przy 0.9.24. Zero blokerów w tej recenzji.

@@ -19,7 +19,8 @@ na diffie do `98e4363`. Ten przebieg mierzy **to, co kolega pobierze**.
 ## Tester
 Świeży agent (Sonnet, osobny kontekst), bez wglądu w kod: dostał paczkę, instrukcję, panel WP i klucze. Playwright
 (chromium) jako przeglądarka; „FTP” = `docker cp`. Zakaz `wp`/SQL (jedno naruszenie: raz `wp option get` przy
-fallbacku — zapisał sam). Raport verbatim: `audyt/K9-RAPORT-TESTERA-0.9.23.md`. Zrzuty (4 z 25): `audyt/k9-zrzuty/`.
+fallbacku — zapisał sam). Raport verbatim: `audyt/K9-RAPORT-TESTERA-0.9.23.md`. Zrzuty (5 z 25): `audyt/k9-zrzuty/` — zrzut szczegółów zamówienia
+i zrzuty checkoutu celowo POZA repo (pokazują pełny token pobrania i identyfikator sesji Stripe; leżą w dowodach sesji poza repo).
 
 ## Wynik: ŚCIEŻKA Z INSTRUKCJI PRZESZŁA W CAŁOŚCI
 | Co | Wynik | Dowód |
@@ -27,13 +28,13 @@ fallbacku — zapisał sam). Raport verbatim: `audyt/K9-RAPORT-TESTERA-0.9.23.md
 | Wgranie 3 wtyczek przez panel | panel odmówił (`upload_max_filesize=2M` < 4,5 MB) → **wyjście nr 2 z instrukcji** („rozpakuj do `wp-content/plugins/`”) zadziałało | raport krok 1a–1b |
 | Pierwsza aktywacja sklepu | komunikat wtyczki „Brak katalogu chronionego — deaktywuj i aktywuj” (`uploads` należał do `root` — cecha obrazu dockera); `chown` wg „Najczęstsze problemy” → aktywacja OK, katalog chroniony z `.htaccess` | krok 1d–1e |
 | Strony „Sklep”, „Dziękujemy”, szkice Regulaminu/Polityki, menu kokpitu | powstały same | `/sklep/` 200 |
-| Ustawienia (klucz, sekret webhooka, nadawca, mail kontaktowy, waluta) | nazwy pól **1:1 z instrukcją** | `krok2-ustawienia-po-zapisie.png` |
+| Ustawienia (klucz, sekret webhooka, nadawca, mail kontaktowy, waluta) | nazwy pól **1:1 z instrukcją** | `k9-zrzuty/krok2-ustawienia-po-zapisie.png` (sekrety tylko jako plakietka „ustawiony”) |
 | **Link „Sklep” w nawigacji motywu kolegi** (header desktop, `tpl-menu-mobilne`, stopka) | fragmenty z instrukcji **pasowały 1:1** (klasy, miejsce po `<li>` z FAQ); `curl /` → 3× `href="/sklep/"` | `k9-zrzuty/krok3-desktop-1440-menu.png`, `krok3-mobile-390-menu-otwarte.png` |
 | Dwa produkty z zipów botów | „plik paczki wgrany i POTWIERDZONY (obecność + rozmiar + suma)” | `k9-zrzuty/krok4-sklep-lista-desktop.png` |
-| Zakup kartą testową przez prawdziwy Stripe Checkout | 14,1 s od strony produktu do „Dziękujemy”; **Adaptive Pricing** zaproponował EUR +4 % — dokładnie jak ostrzega instrukcja; wybór PLN → 199,00 | `krok5-*.png` |
-| Zamówienie w panelu (bez poczty) | status „błąd maila”, **treść maila widoczna w panelu**, link z niej → HTTP 200, `Content-Length 922248`, **SHA-256 = oryginalny `chatbot-live-1.5.13.zip`**; licznik 1/10 | `k9-zrzuty/krok5-szczegoly-zamowienia.png` |
+| Zakup kartą testową przez prawdziwy Stripe Checkout | 14,1 s od strony produktu do „Dziękujemy”; **Adaptive Pricing** zaproponował EUR +4 % — dokładnie jak ostrzega instrukcja; wybór PLN → 199,00 | `k9-zrzuty/krok5-po-platnosci-final.png`; zrzuty checkoutu poza repo |
+| Zamówienie w panelu (bez poczty) | status „błąd maila”, **treść maila widoczna w panelu**, link z niej → HTTP 200, `Content-Length 922248`, **SHA-256 = oryginalny `chatbot-live-1.5.13.zip`**; licznik 0/10 przed pobraniem → 1/10 po (raport testera, w. 38) | raport testera krok 5; zrzut szczegółów zamówienia poza repo (widoczny token) |
 | „Wyślij ponownie” bez poczty | komunikat o nieudanej wysyłce, oś czasu: stary link przywrócony, ten sam token dalej pobiera (200, ten sam SHA) | krok 6 |
-| Baner trybu testowego | widoczny także na stronie „Dziękujemy” — zgodne z ostrzeżeniem instrukcji i z długiem w CO-WISI | `krok5-po-platnosci-final.png` |
+| Baner trybu testowego | widoczny także na stronie „Dziękujemy” — zgodne z ostrzeżeniem instrukcji i z długiem w CO-WISI | `k9-zrzuty/krok5-po-platnosci-final.png` |
 
 ## Weryfikacja koordynatorki (po raporcie)
 - ⛔ **Zero w logu PHP testera było FAŁSZYWE** — tester sam to oznaczył. Sprawdzone: `wp-config.php` nie miał
