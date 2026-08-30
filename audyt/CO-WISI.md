@@ -864,3 +864,6 @@ ZOSTAJE: front.css 83 kB (kandydat, nie wada) · `perf` na hostingu klienta · k
 
 ## 🟡 DŁUG: allowlista recenzenta (workflow) nie zna prób `produkt-404`/`webhook-podpis` (#228 r1 u5/r2 u10)
 `.github/workflows/recenzent.yml` wymienia próby po nazwie — dwie nowe wymagają PR-a ruszającego workflow (bez recenzji automatycznej, czyta koordynator). Zrobić jako pierwszy PR po 0.9.27.
+
+## 🟡 DŁUG: `statystyki-proba-kontrolna.sh` (ChatBot) ślepa na mutanta 3 na tym stosie (30.08 ~23:15)
+Przelot na `a2f9dc2`: „TEST SLEPY NA 1 PODLOZONYCH BLEDOW” — mutant „wiersze bez znacznika wliczone do skuteczności” przechodzi na zielono. ChatBot nietknięty PR-em #228 (diff pusty), więc to nie regresja kodu — kandydat: dane wspólnego stosu maskują wadę (klasa z pamięci: test na wspólnym stosie bez własnych warunków wstępnych). Diagnoza na czystym stanowisku przy K11/0.9.28.
