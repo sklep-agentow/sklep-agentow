@@ -38,7 +38,7 @@ spr_plik "diagramy/ (render-diagramy.js → dokumentacja/diagramy/)" "ls dokumen
 spr_plik "SHA256SUMS.txt (składa pakuj-dla-klienta.sh)"            "grep -q SHA256SUMS.txt narzedzia-qa/pakuj-dla-klienta.sh"
 for w in sklep-agentow chatbot-live segregator-maila; do
 	spr_plik "$w: INSTRUKCJA.md w repo I na allowliście paczki"      "test -f wtyczki/$w/INSTRUKCJA.md && grep -q \"\\\"$w/INSTRUKCJA.md\\\"\" boty/buduj-paczki.sh"
-	for f in readme.txt CHANGELOG.md DOKUMENTACJA-TECHNICZNA.md LICENSE; do
+	for f in readme.txt CHANGELOG.md DOKUMENTACJA-TECHNICZNA.md DIAGRAM-PRZEPLYWU.svg LICENSE; do
 		spr_plik "$w: $f w repo I na allowliście paczki"              "test -f wtyczki/$w/$f && grep -q \"\\\"$w/$f\\\"\" boty/buduj-paczki.sh"
 	done
 done

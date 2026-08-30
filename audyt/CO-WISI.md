@@ -685,6 +685,16 @@ Raport i triage: `audyt/PLUGIN-CHECK-30-08.md` (surowe wyniki `audyt/plugin-chec
   nie zna, a `phpcs.xml.dist` zna (D25). Świadomie NIE wyciszane — Plugin Check to raport, nie bramka.
 - Plugin Check w CI: **świadomie nie** — wykonawca własny na 3,8 GB RAM, akcja stawia drugi WP.
 
+## 🟡 BRAMKA ODSYŁACZY STRONY TYTUŁOWEJ: NIEWPIĘTA, BEZ PRÓBY KONTROLNEJ, CZYTA TYLKO README (30.08, recenzja PR oddania r2–r3, W3–W5, D7–D8)
+
+`testy/odsylacze-strony-tytulowej.sh` (36 celów po `#213`) nikt nie woła — do `BRAMKI=` nie wchodzi z zasady
+manifestu (osobny PR), więc uruchamiać ręcznie przed wydaniem. Nie ma próby kontrolnej (`*-proba-kontrolna.sh`,
+przelot znajduje je po nazwie) — kalibracja „pada 5/36 bez #213” zniknęła ze scaleniem. Czyta treść tylko `README.md`;
+`dla-klienta/PRZECZYTAJ-MNIE.txt` sprawdza wyłącznie istnieniem. **Dług:** próba kontrolna (podłożony martwy odsyłacz
+→ EXIT=1), pętla po treści PRZECZYTAJ-MNIE, wpięcie przez manifest. Osobno: trzy PNG w `dokumentacja/` są generowane
+(`render-diagramy.js`) i nic nie sprawdza zgodności ze źródłem SVG (klasa 10); liczba kontroli w komunikacie
+`pakuj-dla-klienta.sh` wpisana ręcznie, nie policzona. Wszystko po oddaniu — narzędzia, nie produkt.
+
 ## 🟡 PONOWIENIE PRZEZ CRON NIE MA KOMPENSACJI TOKENU (30.08, recenzja PR instrukcji r6, WAŻNA 1)
 
 `admin-zamowienie.php` po nieudanym resendzie przywraca stary token/termin/licznik, ale zostawia `mail_blad`,

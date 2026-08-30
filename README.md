@@ -98,16 +98,19 @@ to osobna paczka: `INSTRUKCJA-INSTALACJI.md`, rozdział „Test a produkcja”.
 
 ## Jakość — maszyny, nie obietnice
 
-- **CI na każdym PR** (`quality.yml`): php-lint, phpcs (WordPress Coding Standards), phpstan (poziom 5,
-  pod PHP 8.1), gitleaks, actionlint, strażnik manifestu bramek; do tego `recenzent.yml` — recenzja
+- **CI na każdym PR** (`quality.yml`): dziesięć bramek jakości — od lintu i PHPStan po skaner śladów
+  wewnętrznych i poświadczeń; jedynym źródłem listy jest `narzedzia-qa/bramki.sh` (`BRAMKI=`), tu jej
+  celowo nie przepisujemy; do tego `recenzent.yml` — recenzja
   Claude każdego PR-a według `.github/RECENZENT-BRIEFING.md` (opis PR musi nieść wynik uruchomienia,
   nie słowo „działa”).
-- **Dokumentacja == kod**: `testy/dokumentacja-zgodnosc*.sh` porównują każdą liczbę i obietnicę z readme,
-  instrukcji i dokumentacji technicznej ze stałą w kodzie.
+- **Dokumentacja == kod**: `testy/dokumentacja-zgodnosc*.sh` porównują wybrane liczby (dla sklepu: pięć,
+  wypisane w nagłówku bramki), etykiety statusów i odsyłacze z readme, instrukcji i dokumentacji technicznej
+  ze stałymi w kodzie. Treść zdań bramka nie mierzy — to robi czytanie w całości w recenzji.
 - **Paczka == repo**: `narzedzia-qa/paczka-zgodnosc.sh` — zip musi zgadzać się z allowlistą i nie nieść
   śladów wewnętrznych.
-- **Strażnicy z próbami kontrolnymi**: każdy strażnik ma test, który podkłada mu znaną wadę
-  i sprawdza, czy ją widzi (`testy/*-proba-kontrolna.sh`, `narzedzia-qa/proby-kontrolne-przelot.sh`).
+- **Strażnicy z próbami kontrolnymi**: strażniki wymienione w `narzedzia-qa/proby-kontrolne-przelot.sh` mają
+  test, który podkłada im znaną wadę i sprawdza, czy ją widzą (`testy/*-proba-kontrolna.sh`); które jeszcze
+  nie mają — stoi w `audyt/CO-WISI.md`.
 - **Audyt końcowy z kalibracją mutantami** i bramką `narzedzia-qa/k7-koniec.sh` (13 kontroli); Plugin Check
   WordPress.org na paczkach: `audyt/PLUGIN-CHECK-30-08.md`.
 
