@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * sanityzacja co w renderze.
  */
 function sklepag_seo_biezacy_produkt() {
-	if ( ! is_page( (int) get_option( 'sklepag_strona_sklep' ) ) ) {
+	if ( ! sklepag_jest_strona_z_opcji( 'sklepag_strona_sklep' ) ) {
 		return null;
 	}
 	$slug = get_query_var( 'sklepag_produkt' );
@@ -73,15 +73,47 @@ function sklepag_seo_canonical( $url ) {
 add_filter( 'get_canonical_url', 'sklepag_seo_canonical' );
 
 /**
+ * <link rel="canonical"> wypisany PRZEZ WTYCZKĘ, gdy gospodarz wyciął WP-owy.
+ *
+ * Filtr wyżej działa tylko wtedy, gdy WP w ogóle drukuje canonical (`rel_canonical`
+ * na `wp_head`). Motyw gospodarza robi `remove_action( 'wp_head', 'rel_canonical' )`
+ * i drukuje własne canonicale tylko dla stron z builda — strony sklepu (lista
+ * i produkt) zostawały BEZ canonicala (zmierzone 30.08 na stosie: 0 znaczników).
+ * Skutek: /sklep/produkt/x/ i /sklep/?sklepag_produkt=x to dla Google dwa
+ * adresy jednej treści. Gdy `rel_canonical` jest podpięty, nie drukujemy nic —
+ * inaczej byłyby dwa znaczniki.
+ */
+function sklepag_seo_canonical_wlasny() {
+	if ( has_action( 'wp_head', 'rel_canonical' ) ) {
+		return;
+	}
+	$p = sklepag_seo_biezacy_produkt();
+	if ( $p ) {
+		$url = sklepag_url_produktu_front( $p->slug );
+	} elseif ( '' !== (string) get_query_var( 'sklepag_produkt' ) ) {
+		return; // Slug w adresie, produktu nie ma: to 404 — bez canonicala (nie wskazujemy listy).
+	} elseif ( sklepag_jest_strona_z_opcji( 'sklepag_strona_sklep' ) ) {
+		$url = get_permalink( (int) get_option( 'sklepag_strona_sklep' ) ); // Jawne ID: poza pętlą get_permalink() bywa puste.
+	} else {
+		return;
+	}
+	echo '<link rel="canonical" href="' . esc_url( $url ) . '">' . "\n";
+}
+add_action( 'wp_head', 'sklepag_seo_canonical_wlasny', 3 );
+
+/**
  * Meta description + OpenGraph + Twitter + JSON-LD w <head> strony produktu.
  */
 function sklepag_seo_head() {
 	$p = sklepag_seo_biezacy_produkt();
 	if ( ! $p ) {
+		if ( '' !== (string) get_query_var( 'sklepag_produkt' ) ) {
+			return; // Slug w adresie, produktu nie ma (404): żadnych meta listy (og:url też nie).
+		}
 		// LISTA /sklep/ (strona WP bez treści w edytorze → WP nie daje description; Lighthouse SEO
 		// listy 92 z tego powodu). Opis = lead hero listy + nazwy produktów (istniejące,
 		// zatwierdzone treści), okładka sklepu do OG/Twitter.
-		if ( is_page( (int) get_option( 'sklepag_strona_sklep' ) ) ) {
+		if ( sklepag_jest_strona_z_opcji( 'sklepag_strona_sklep' ) ) {
 			global $wpdb;
 			// Jedno źródło leadu (sklepag_lead_listy) + nazwy AKTYWNYCH produktów z bazy — nic na sztywno.
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery -- własna tabela wtyczki, nazwa z prefiksu WP.
@@ -186,7 +218,7 @@ add_action( 'wp_head', 'sklepag_seo_head', 4 );
  * @param array $roboty Dyrektywy robots WP.
  */
 function sklepag_seo_noindex_dziekujemy( $roboty ) {
-	if ( is_page( (int) get_option( 'sklepag_strona_dziekujemy' ) ) ) {
+	if ( sklepag_jest_strona_z_opcji( 'sklepag_strona_dziekujemy' ) ) {
 		$roboty['noindex']  = true;
 		$roboty['nofollow'] = true;
 	}
