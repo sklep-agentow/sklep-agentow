@@ -1,4 +1,4 @@
-# CO ZOSTAŁO DO ODDANIA — stan 2026-08-29
+# CO ZOSTAŁO DO ODDANIA — stan 2026-08-30 (WYDANE `v0.9.23`)
 
 > Spisane na prośbę Dzidka. **Każda pozycja ma źródło** (bramka, plan, recenzja) — nic tu nie
 > jest z pamięci. Termin: **1.09.2026**, próba 1 z 3, ocenia kolega.
@@ -84,20 +84,15 @@ właściciel strony i kupujący, a kupujący instrukcji nie potrzebuje.
 
 **Szacunek: 5–6 godzin**, z gotowcami z MP.
 
-## 6. RAPORT ODDANIA
-Musi nieść JAWNIE:
-- [ ] **NO-GO bramki `k7-koniec` z DWOMA powodami** (patrz niżej) — nie chowamy tego
-- [ ] że **instalację robiła AUTORKA, nie osoba postronna** — rubryka żąda nie-autora
-- [ ] długi z `audyt/CO-WISI.md`
-- [ ] **wynik Plugin Check na paczkach** (30.08: 416 pozycji, 1 w kodzie, zero wpływu na klienta —
-      `audyt/PLUGIN-CHECK-30-08.md`) i że **deklarowane minimum WP 6.7 / PHP 8.1 było testowane**
-      w rundach K7 na obrazie `wordpress:6.7-php8.1-apache` (`audyt/sklep/ZAMROZENIE.md:8`),
-      a kod sprawdza `phpstan` pod `phpVersion: 80100`
+## 6. RAPORT ODDANIA — ✅ ZROBIONE 30.08 (`#215`, `audyt/RAPORT-ODDANIA.md`)
+Niesie jawnie: NO-GO 2 z 13 z powodami i zdaniem z CO-WISI o soczewkach L1/L5 · instalację robił tester-agent, nie osoba
+postronna (K1 z zastrzeżeniem w `rubryka-GOTOWE.md`) · 11 długów z CO-WISI dotykających produktu/danych · Plugin Check
+416/1 · minimum WP 6.7 / PHP 8.1 testowane w K7 (`ZAMROZENIE.md:8`), `phpstan.neon.dist` `phpVersion: 80100`.
+Rubryka GOTOWE (12 kryteriów §12, 12 × PASS, 3 z zastrzeżeniem) i `AUDYT-RAPORT.md` z licznikami — `#216`.
 
-## 7. WYDANIE
-- [ ] tag + Release + zipy z sumami
-- [ ] ⛔ **runbook: OTWORZYĆ stronę Releases i POTWIERDZIĆ OCZAMI, że „Latest" = oddawana
-      wersja** — klasa 4 ściągi, fakt „kolega widzi 1.1.0"
+## 7. WYDANIE — ✅ ZROBIONE 30.08
+- [x] tag `v0.9.23` na `a3dd051` + Release z 4 zipami i sumami (opis Release = `opis-wydania`, sumy z `sha256sum`)
+- [x] Releases otwarte, „Latest” = **v0.9.23** — potwierdzone 30.08 13:10 (`gh release list` → `Latest v0.9.23`; pobrana paczka zbiorcza sha `94f31a50…` = lokalna)
 
 ---
 
