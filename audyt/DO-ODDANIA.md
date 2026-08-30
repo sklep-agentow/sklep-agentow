@@ -91,6 +91,10 @@ Musi nieść JAWNIE:
 - [ ] **NO-GO bramki `k7-koniec` z DWOMA powodami** (patrz niżej) — nie chowamy tego
 - [ ] że **instalację robiła AUTORKA, nie osoba postronna** — rubryka żąda nie-autora
 - [ ] długi z `audyt/CO-WISI.md`
+- [ ] **wynik Plugin Check na paczkach** (30.08: 416 pozycji, 1 w kodzie, zero wpływu na klienta —
+      `audyt/PLUGIN-CHECK-30-08.md`) i że **deklarowane minimum WP 6.7 / PHP 8.1 było testowane**
+      w rundach K7 na obrazie `wordpress:6.7-php8.1-apache` (`audyt/sklep/ZAMROZENIE.md:8`),
+      a kod sprawdza `phpstan` pod `phpVersion: 80100`
 
 ## 7. WYDANIE
 - [ ] tag + Release + zipy z sumami
