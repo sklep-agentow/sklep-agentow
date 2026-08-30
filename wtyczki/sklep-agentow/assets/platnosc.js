@@ -150,7 +150,7 @@
       odblokuj();
     }).catch(function (err) {
       /* Odrzucona obietnica (sieć, wyjątek Stripe.js) — bez tej gałęzi `wToku` zostawało true i ani
-         „Zapłać”, ani „Wróć” nie dało się użyć (recenzja #222 r1). */
+         „Zapłać”,ani „Wróć” nie dało się użyć. */
       pokazBlad(err && err.message ? err.message : 'Płatność przerwana. Spróbuj ponownie.');
       odblokuj();
     });

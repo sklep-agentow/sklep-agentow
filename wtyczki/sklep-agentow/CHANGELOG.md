@@ -46,7 +46,7 @@ Nic jeszcze.
 - **Porzucone koszyki blokowały nowszą opłaconą sesję**: kolejka brała 20 NAJSTARSZYCH sesji „utworzona”, więc
   dwadzieścia „kliknął Kup i wyszedł” (u Stripe otwarte do 24 h) odkładało domknięcie prawdziwego zakupu na dobę.
   Teraz najnowsze najpierw, do 100 w biegu, a sesja sprawdzona i nadal nieopłacona dostaje 9 minut przerwy.
-  Strażnik `testy/reconciliation-wynik-i-przerwa-test.php` (5 sprawdzeń; na kodzie 0.9.24 pada 5/5).
+  Strażnik regresji z atrapą Stripe (5 sprawdzeń; na kodzie 0.9.24 pada 5/5).
 - Instrukcje: kiedy WP-Cron nie działa (Kondycja witryny: pętla zwrotna) i co wtedy; „odczekaj 2 minuty od zapłaty”.
 
 ### Zmienione

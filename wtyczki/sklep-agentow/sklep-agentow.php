@@ -160,7 +160,7 @@ function sklepag_assety_frontu() {
 	// i nasz `platnosc.js` TYLKO na stronie sklepu/produktu i TYLKO gdy jest klucz publikowalny.
 	// Bez klucza formularz zakupu działa jak dotąd (POST → strona hostowana Stripe).
 	// Wyłącznie na STRONIE PRODUKTU (query var `sklepag_produkt`) — formularz zakupu żyje tylko tam; lista
-	// sklepu nie ma czego montować, więc nie ładuje skryptu z sieci (recenzja #222 r1). Kolory bierze
+	// sklepu nie ma czego montować, więc nie ładuje skryptu z sieci. Kolory bierze
 	// `platnosc.js` z tych samych zmiennych CSS co reszta sklepu (`front.css`) — jedno źródło palety.
 	if ( is_page( $strona_sklep ) && '' !== (string) get_query_var( 'sklepag_produkt' ) && function_exists( 'sklepag_stripe_klucz_publikowalny' ) && '' !== sklepag_stripe_klucz_publikowalny() ) {
 		wp_enqueue_script( 'stripe-js', 'https://js.stripe.com/dahlia/stripe.js', array(), null, true ); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion -- Stripe wymaga adresu bez wersji (aktualizacje po ich stronie, PCI).
