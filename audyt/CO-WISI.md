@@ -671,6 +671,20 @@ Egzemplarze usunięte w `#209`; wzorce nadal ich nie znają. ⭐ To potwierdza z
 wyżej: **wzorzec jest siatką na regresję, nie dowodem czystości** — dla plików, które da się
 przeczytać, miarą jest przeczytanie.
 
+## 🟡 PLUGIN CHECK NA PACZKACH (30.08) — jedno znalezisko w kodzie, reszta poza zakresem wtyczki dla klienta
+
+Raport i triage: `audyt/PLUGIN-CHECK-30-08.md` (surowe wyniki `audyt/plugin-check/`, narzędzie
+`narzedzia-qa/plugin-check-paczki.sh`). 416 pozycji, z czego **jedna dotyczy kodu**:
+- ⬜ **`wtyczki/sklep-agentow/includes/admin-opinie.php:16` i `:120`** — `esc_html__( 'Brak uprawnień.' )`
+  bez domeny w wtyczce, która nie tłumaczy niczego (brak `Text Domain`, 0 innych `__`). Naprawa:
+  `esc_html( 'Brak uprawnień.' )`. Zero wpływu na kupującego i właściciela — string jest po polsku
+  i wyświetla się poprawnie. **Wchodzi z pierwszą następną zmianą kodu sklepu** (podbicie wersji,
+  paczka, runda) — nie samo przed 1.09.
+- Pozostałe: reguły katalogu WP.org (readme po angielsku, `.md` w korzeniu, prefiksy w `uninstall.php`),
+  fałszywe alarmy na nazwach tabel oraz nasze własne sanitizery/brama nonce, których Plugin Check
+  nie zna, a `phpcs.xml.dist` zna (D25). Świadomie NIE wyciszane — Plugin Check to raport, nie bramka.
+- Plugin Check w CI: **świadomie nie** — wykonawca własny na 3,8 GB RAM, akcja stawia drugi WP.
+
 ## 🟡 ZRZUTY PNG W PACZCE SĄ POZA SKANEREM ŚLADÓW (30.08, recenzja PR o instrukcji sklepu, WAŻNA)
 
 `narzedzia-qa/paczka-zgodnosc.sh` melduje „w 66 plikach paczki nie ma śladów wewnętrznych”, ale pięć

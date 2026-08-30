@@ -1,0 +1,235 @@
+# PLUGIN CHECK: chatbot-live 1.5.13 · zip chatbot-live-1.5.13.zip · WP 6.9.4 / PHP 8.4.21 · 2026-08-30 09:33
+FILE: readme.txt
+line	column	type	code	message	docs
+0	0	ERROR	readme_short_description_non_official_language	The readme short description contains unofficial language. It must be written in standard English.	https://make.wordpress.org/plugins/2025/07/28/requiring-the-readme-to-be-written-in-english/
+0	0	ERROR	readme_description_non_official_language	The readme description contains unofficial language. It must be written in standard English.	https://make.wordpress.org/plugins/2025/07/28/requiring-the-readme-to-be-written-in-english/
+
+
+FILE: DOKUMENTACJA-TECHNICZNA.md
+line	column	type	code	message	docs
+0	0	WARNING	unexpected_markdown_file	Unexpected markdown file "DOKUMENTACJA-TECHNICZNA.md" detected in plugin root. Only specific markdown files are expected in production plugins.	
+
+
+FILE: INSTRUKCJA.md
+line	column	type	code	message	docs
+0	0	WARNING	unexpected_markdown_file	Unexpected markdown file "INSTRUKCJA.md" detected in plugin root. Only specific markdown files are expected in production plugins.	
+
+
+FILE: includes/operator.php
+line	column	type	code	message	docs
+37	24	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $s used in $wpdb-&gt;get_results()	
+124	70	WARNING	WordPress.Security.ValidatedSanitizedInput.InputNotSanitized	Detected usage of a non-sanitized input variable: $_GET[&#039;sesja&#039;]	
+304	70	WARNING	WordPress.Security.ValidatedSanitizedInput.InputNotSanitized	Detected usage of a non-sanitized input variable: $_GET[&#039;sesja&#039;]	
+329	70	WARNING	WordPress.Security.ValidatedSanitizedInput.InputNotSanitized	Detected usage of a non-sanitized input variable: $_GET[&#039;sesja&#039;]	
+352	71	WARNING	WordPress.Security.ValidatedSanitizedInput.InputNotSanitized	Detected usage of a non-sanitized input variable: $_POST[&#039;sesja&#039;]	
+391	71	WARNING	WordPress.Security.ValidatedSanitizedInput.InputNotSanitized	Detected usage of a non-sanitized input variable: $_POST[&#039;sesja&#039;]	
+
+
+FILE: includes/csv.php
+line	column	type	code	message	docs
+82	20	WARNING	WordPress.DB.DirectDatabaseQuery.DirectQuery	Use of a direct database call is discouraged.	
+82	20	WARNING	WordPress.DB.DirectDatabaseQuery.NoCaching	Direct database call without caching detected. Consider using wp_cache_get() / wp_cache_set() or wp_cache_delete().	
+82	21	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $tabela used in $wpdb-&gt;get_results()\n$tabela assigned unsafely at line 74.	
+117	70	WARNING	WordPress.Security.ValidatedSanitizedInput.InputNotSanitized	Detected usage of a non-sanitized input variable: $_GET[&#039;sesja&#039;]	
+128	22	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $tabela used in $wpdb-&gt;get_results()\n$tabela assigned unsafely at line 115.	
+128	24	WARNING	WordPress.DB.DirectDatabaseQuery.DirectQuery	Use of a direct database call is discouraged.	
+128	24	WARNING	WordPress.DB.DirectDatabaseQuery.NoCaching	Direct database call without caching detected. Consider using wp_cache_get() / wp_cache_set() or wp_cache_delete().	
+130	22	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $tabela used in $wpdb-&gt;get_results()\n$tabela assigned unsafely at line 115.	
+130	24	WARNING	WordPress.DB.DirectDatabaseQuery.DirectQuery	Use of a direct database call is discouraged.	
+130	24	WARNING	WordPress.DB.DirectDatabaseQuery.NoCaching	Direct database call without caching detected. Consider using wp_cache_get() / wp_cache_set() or wp_cache_delete().	
+176	20	WARNING	WordPress.DB.DirectDatabaseQuery.DirectQuery	Use of a direct database call is discouraged.	
+176	20	WARNING	WordPress.DB.DirectDatabaseQuery.NoCaching	Direct database call without caching detected. Consider using wp_cache_get() / wp_cache_set() or wp_cache_delete().	
+176	21	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $tabela used in $wpdb-&gt;get_results()\n$tabela assigned unsafely at line 170.	
+
+
+FILE: includes/admin.php
+line	column	type	code	message	docs
+361	22	WARNING	WordPress.DB.DirectDatabaseQuery.DirectQuery	Use of a direct database call is discouraged.	
+361	22	WARNING	WordPress.DB.DirectDatabaseQuery.NoCaching	Direct database call without caching detected. Consider using wp_cache_get() / wp_cache_set() or wp_cache_delete().	
+361	23	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $tabela used in $wpdb-&gt;get_row()\n$tabela assigned unsafely at line 357.	
+363	14	WARNING	WordPress.DB.DirectDatabaseQuery.DirectQuery	Use of a direct database call is discouraged.	
+363	14	WARNING	WordPress.DB.DirectDatabaseQuery.NoCaching	Direct database call without caching detected. Consider using wp_cache_get() / wp_cache_set() or wp_cache_delete().	
+363	18	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $tabela used in $wpdb-&gt;get_results()\n$tabela assigned unsafely at line 357.	
+531	12	WARNING	WordPress.DB.DirectDatabaseQuery.DirectQuery	Use of a direct database call is discouraged.	
+531	12	WARNING	WordPress.DB.DirectDatabaseQuery.NoCaching	Direct database call without caching detected. Consider using wp_cache_get() / wp_cache_set() or wp_cache_delete().	
+555	18	WARNING	WordPress.DB.DirectDatabaseQuery.DirectQuery	Use of a direct database call is discouraged.	
+555	18	WARNING	WordPress.DB.DirectDatabaseQuery.NoCaching	Direct database call without caching detected. Consider using wp_cache_get() / wp_cache_set() or wp_cache_delete().	
+558	30	WARNING	WordPress.DB.DirectDatabaseQuery.DirectQuery	Use of a direct database call is discouraged.	
+578	20	WARNING	WordPress.DB.DirectDatabaseQuery.DirectQuery	Use of a direct database call is discouraged.	
+578	20	WARNING	WordPress.DB.DirectDatabaseQuery.NoCaching	Direct database call without caching detected. Consider using wp_cache_get() / wp_cache_set() or wp_cache_delete().	
+676	20	WARNING	WordPress.DB.DirectDatabaseQuery.DirectQuery	Use of a direct database call is discouraged.	
+676	20	WARNING	WordPress.DB.DirectDatabaseQuery.NoCaching	Direct database call without caching detected. Consider using wp_cache_get() / wp_cache_set() or wp_cache_delete().	
+694	20	WARNING	WordPress.DB.DirectDatabaseQuery.DirectQuery	Use of a direct database call is discouraged.	
+694	20	WARNING	WordPress.DB.DirectDatabaseQuery.NoCaching	Direct database call without caching detected. Consider using wp_cache_get() / wp_cache_set() or wp_cache_delete().	
+716	45	WARNING	WordPress.Security.ValidatedSanitizedInput.InputNotSanitized	Detected usage of a non-sanitized input variable: $_GET[&#039;sesja&#039;]	
+720	20	WARNING	WordPress.DB.DirectDatabaseQuery.DirectQuery	Use of a direct database call is discouraged.	
+720	20	WARNING	WordPress.DB.DirectDatabaseQuery.NoCaching	Direct database call without caching detected. Consider using wp_cache_get() / wp_cache_set() or wp_cache_delete().	
+720	21	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $tabela used in $wpdb-&gt;get_results()\n$tabela assigned unsafely at line 708.	
+759	27	WARNING	WordPress.DB.DirectDatabaseQuery.DirectQuery	Use of a direct database call is discouraged.	
+759	27	WARNING	WordPress.DB.DirectDatabaseQuery.NoCaching	Direct database call without caching detected. Consider using wp_cache_get() / wp_cache_set() or wp_cache_delete().	
+759	31	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $tabela used in $wpdb-&gt;get_var()\n$tabela assigned unsafely at line 708.	
+762	21	WARNING	WordPress.DB.DirectDatabaseQuery.DirectQuery	Use of a direct database call is discouraged.	
+762	21	WARNING	WordPress.DB.DirectDatabaseQuery.NoCaching	Direct database call without caching detected. Consider using wp_cache_get() / wp_cache_set() or wp_cache_delete().	
+762	25	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $tabela used in $wpdb-&gt;get_results()\n$tabela assigned unsafely at line 708.	
+1164	93	WARNING	WordPress.Security.ValidatedSanitizedInput.InputNotSanitized	Detected usage of a non-sanitized input variable: $_POST[&#039;kolor_glowny&#039;]	
+1165	95	WARNING	WordPress.Security.ValidatedSanitizedInput.InputNotSanitized	Detected usage of a non-sanitized input variable: $_POST[&#039;kolor_naglowka&#039;]	
+1167	40	WARNING	WordPress.Security.ValidatedSanitizedInput.InputNotSanitized	Detected usage of a non-sanitized input variable: $_POST[&#039;kolor_tekstu&#039;]	
+
+
+FILE: includes/front.php
+line	column	type	code	message	docs
+112	18	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $t used in $wpdb-&gt;query()	
+235	21	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $t used in $wpdb-&gt;get_row()\n$t assigned unsafely at line 233.	
+239	21	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $t used in $wpdb-&gt;get_results()\n$t assigned unsafely at line 233.	
+445	79	WARNING	WordPress.Security.ValidatedSanitizedInput.InputNotSanitized	Detected usage of a non-sanitized input variable: $_POST[&#039;sesja&#039;]	
+482	20	WARNING	WordPress.Security.NonceVerification.Missing	Processing form data without nonce verification.	
+482	79	WARNING	WordPress.Security.NonceVerification.Missing	Processing form data without nonce verification.	
+483	20	WARNING	WordPress.Security.NonceVerification.Missing	Processing form data without nonce verification.	
+483	73	WARNING	WordPress.Security.NonceVerification.Missing	Processing form data without nonce verification.	
+483	73	WARNING	WordPress.Security.ValidatedSanitizedInput.InputNotSanitized	Detected usage of a non-sanitized input variable: $_POST[&#039;sesja&#039;]	
+616	79	WARNING	WordPress.Security.ValidatedSanitizedInput.InputNotSanitized	Detected usage of a non-sanitized input variable: $_POST[&#039;sesja&#039;]	
+642	22	WARNING	WordPress.Security.NonceVerification.Missing	Processing form data without nonce verification.	
+642	70	WARNING	WordPress.Security.NonceVerification.Missing	Processing form data without nonce verification.	
+643	22	WARNING	WordPress.Security.NonceVerification.Missing	Processing form data without nonce verification.	
+643	83	WARNING	WordPress.Security.NonceVerification.Missing	Processing form data without nonce verification.	
+644	22	WARNING	WordPress.Security.NonceVerification.Missing	Processing form data without nonce verification.	
+644	75	WARNING	WordPress.Security.NonceVerification.Missing	Processing form data without nonce verification.	
+644	75	WARNING	WordPress.Security.ValidatedSanitizedInput.InputNotSanitized	Detected usage of a non-sanitized input variable: $_POST[&#039;sesja&#039;]	
+656	14	WARNING	WordPress.Security.NonceVerification.Missing	Processing form data without nonce verification.	
+689	17	WARNING	WordPress.DB.DirectDatabaseQuery.DirectQuery	Use of a direct database call is discouraged.	
+800	22	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $t used in $wpdb-&gt;get_var()\n$t assigned unsafely at line 798.	
+
+
+FILE: includes/silnik.php
+line	column	type	code	message	docs
+80	15	WARNING	WordPress.DB.DirectDatabaseQuery.DirectQuery	Use of a direct database call is discouraged.	
+80	15	WARNING	WordPress.DB.DirectDatabaseQuery.NoCaching	Direct database call without caching detected. Consider using wp_cache_get() / wp_cache_set() or wp_cache_delete().	
+80	19	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $tabela used in $wpdb-&gt;get_results()\n$tabela assigned unsafely at line 79.	
+165	17	WARNING	WordPress.DB.DirectDatabaseQuery.DirectQuery	Use of a direct database call is discouraged.	
+190	14	WARNING	WordPress.DB.DirectDatabaseQuery.DirectQuery	Use of a direct database call is discouraged.	
+190	14	WARNING	WordPress.DB.DirectDatabaseQuery.NoCaching	Direct database call without caching detected. Consider using wp_cache_get() / wp_cache_set() or wp_cache_delete().	
+
+
+FILE: includes/import.php
+line	column	type	code	message	docs
+269	19	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $tabela used in $wpdb-&gt;get_col()\n$tabela assigned unsafely at line 268.	
+611	18	WARNING	WordPress.DB.DirectDatabaseQuery.DirectQuery	Use of a direct database call is discouraged.	
+
+
+FILE: includes/statystyki.php
+line	column	type	code	message	docs
+372	10	WARNING	WordPress.DB.DirectDatabaseQuery.DirectQuery	Use of a direct database call is discouraged.	
+372	10	WARNING	WordPress.DB.DirectDatabaseQuery.NoCaching	Direct database call without caching detected. Consider using wp_cache_get() / wp_cache_set() or wp_cache_delete().	
+372	14	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $t used in $wpdb-&gt;get_row()\n$t assigned unsafely at line 370.	
+389	11	WARNING	WordPress.DB.DirectDatabaseQuery.DirectQuery	Use of a direct database call is discouraged.	
+389	11	WARNING	WordPress.DB.DirectDatabaseQuery.NoCaching	Direct database call without caching detected. Consider using wp_cache_get() / wp_cache_set() or wp_cache_delete().	
+389	15	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $tz used in $wpdb-&gt;get_row()\n$tz assigned unsafely at line 388.	
+431	16	WARNING	WordPress.DB.DirectDatabaseQuery.DirectQuery	Use of a direct database call is discouraged.	
+431	16	WARNING	WordPress.DB.DirectDatabaseQuery.NoCaching	Direct database call without caching detected. Consider using wp_cache_get() / wp_cache_set() or wp_cache_delete().	
+431	20	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $t used in $wpdb-&gt;get_results()\n$t assigned unsafely at line 429.	
+463	10	WARNING	WordPress.DB.DirectDatabaseQuery.DirectQuery	Use of a direct database call is discouraged.	
+463	10	WARNING	WordPress.DB.DirectDatabaseQuery.NoCaching	Direct database call without caching detected. Consider using wp_cache_get() / wp_cache_set() or wp_cache_delete().	
+463	14	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $t used in $wpdb-&gt;get_row()\n$t assigned unsafely at line 461.	
+503	25	WARNING	WordPress.DB.DirectDatabaseQuery.DirectQuery	Use of a direct database call is discouraged.	
+503	25	WARNING	WordPress.DB.DirectDatabaseQuery.NoCaching	Direct database call without caching detected. Consider using wp_cache_get() / wp_cache_set() or wp_cache_delete().	
+503	29	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $t used in $wpdb-&gt;get_var()	
+510	19	WARNING	WordPress.DB.DirectDatabaseQuery.DirectQuery	Use of a direct database call is discouraged.	
+510	19	WARNING	WordPress.DB.DirectDatabaseQuery.NoCaching	Direct database call without caching detected. Consider using wp_cache_get() / wp_cache_set() or wp_cache_delete().	
+510	23	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $t used in $wpdb-&gt;get_results()	
+
+
+FILE: includes/powitanie.php
+line	column	type	code	message	docs
+92	21	WARNING	WordPress.DB.DirectDatabaseQuery.DirectQuery	Use of a direct database call is discouraged.	
+92	21	WARNING	WordPress.DB.DirectDatabaseQuery.NoCaching	Direct database call without caching detected. Consider using wp_cache_get() / wp_cache_set() or wp_cache_delete().	
+
+
+FILE: includes/ai.php
+line	column	type	code	message	docs
+143	15	WARNING	WordPress.DB.DirectDatabaseQuery.DirectQuery	Use of a direct database call is discouraged.	
+143	15	WARNING	WordPress.DB.DirectDatabaseQuery.NoCaching	Direct database call without caching detected. Consider using wp_cache_get() / wp_cache_set() or wp_cache_delete().	
+143	19	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $tabela used in $wpdb-&gt;get_row()\n$tabela assigned unsafely at line 142.	
+247	14	WARNING	WordPress.DB.DirectDatabaseQuery.DirectQuery	Use of a direct database call is discouraged.	
+247	14	WARNING	WordPress.DB.DirectDatabaseQuery.NoCaching	Direct database call without caching detected. Consider using wp_cache_get() / wp_cache_set() or wp_cache_delete().	
+318	14	WARNING	WordPress.DB.DirectDatabaseQuery.DirectQuery	Use of a direct database call is discouraged.	
+318	14	WARNING	WordPress.DB.DirectDatabaseQuery.NoCaching	Direct database call without caching detected. Consider using wp_cache_get() / wp_cache_set() or wp_cache_delete().	
+360	20	WARNING	WordPress.DB.DirectDatabaseQuery.DirectQuery	Use of a direct database call is discouraged.	
+360	20	WARNING	WordPress.DB.DirectDatabaseQuery.NoCaching	Direct database call without caching detected. Consider using wp_cache_get() / wp_cache_set() or wp_cache_delete().	
+360	21	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $tabela used in $wpdb-&gt;get_results()	
+369	20	WARNING	WordPress.DB.DirectDatabaseQuery.DirectQuery	Use of a direct database call is discouraged.	
+369	20	WARNING	WordPress.DB.DirectDatabaseQuery.NoCaching	Direct database call without caching detected. Consider using wp_cache_get() / wp_cache_set() or wp_cache_delete().	
+369	21	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $tabela used in $wpdb-&gt;get_results()	
+448	42	WARNING	PluginCheck.CodeAnalysis.AIProvider.DirectIntegration	Direct integration with a third-party AI provider (api.anthropic.com) detected. Consider the WordPress AI Client (wp_ai_client_prompt()) introduced in WordPress 7.0.	
+555	40	WARNING	PluginCheck.CodeAnalysis.AIProvider.DirectIntegration	Direct integration with a third-party AI provider (api.anthropic.com) detected. Consider the WordPress AI Client (wp_ai_client_prompt()) introduced in WordPress 7.0.	
+
+
+FILE: includes/instalator.php
+line	column	type	code	message	docs
+189	18	WARNING	WordPress.DB.DirectDatabaseQuery.DirectQuery	Use of a direct database call is discouraged.	
+189	18	WARNING	WordPress.DB.DirectDatabaseQuery.NoCaching	Direct database call without caching detected. Consider using wp_cache_get() / wp_cache_set() or wp_cache_delete().	
+189	22	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $tabela used in $wpdb-&gt;get_var()	
+271	21	WARNING	WordPress.DB.DirectDatabaseQuery.DirectQuery	Use of a direct database call is discouraged.	
+
+
+FILE: uninstall.php
+line	column	type	code	message	docs
+34	1	WARNING	WordPress.DB.DirectDatabaseQuery.DirectQuery	Use of a direct database call is discouraged.	
+34	1	WARNING	WordPress.DB.DirectDatabaseQuery.NoCaching	Direct database call without caching detected. Consider using wp_cache_get() / wp_cache_set() or wp_cache_delete().	
+34	15	WARNING	WordPress.DB.DirectDatabaseQuery.SchemaChange	Attempting a database schema change is discouraged.	
+35	1	WARNING	WordPress.DB.DirectDatabaseQuery.DirectQuery	Use of a direct database call is discouraged.	
+35	1	WARNING	WordPress.DB.DirectDatabaseQuery.NoCaching	Direct database call without caching detected. Consider using wp_cache_get() / wp_cache_set() or wp_cache_delete().	
+35	15	WARNING	WordPress.DB.DirectDatabaseQuery.SchemaChange	Attempting a database schema change is discouraged.	
+36	1	WARNING	WordPress.DB.DirectDatabaseQuery.DirectQuery	Use of a direct database call is discouraged.	
+36	1	WARNING	WordPress.DB.DirectDatabaseQuery.NoCaching	Direct database call without caching detected. Consider using wp_cache_get() / wp_cache_set() or wp_cache_delete().	
+36	15	WARNING	WordPress.DB.DirectDatabaseQuery.SchemaChange	Attempting a database schema change is discouraged.	
+37	1	WARNING	WordPress.DB.DirectDatabaseQuery.DirectQuery	Use of a direct database call is discouraged.	
+37	1	WARNING	WordPress.DB.DirectDatabaseQuery.NoCaching	Direct database call without caching detected. Consider using wp_cache_get() / wp_cache_set() or wp_cache_delete().	
+37	15	WARNING	WordPress.DB.DirectDatabaseQuery.SchemaChange	Attempting a database schema change is discouraged.	
+38	1	WARNING	WordPress.DB.DirectDatabaseQuery.DirectQuery	Use of a direct database call is discouraged.	
+38	1	WARNING	WordPress.DB.DirectDatabaseQuery.NoCaching	Direct database call without caching detected. Consider using wp_cache_get() / wp_cache_set() or wp_cache_delete().	
+38	15	WARNING	WordPress.DB.DirectDatabaseQuery.SchemaChange	Attempting a database schema change is discouraged.	
+39	1	WARNING	WordPress.DB.DirectDatabaseQuery.DirectQuery	Use of a direct database call is discouraged.	
+39	1	WARNING	WordPress.DB.DirectDatabaseQuery.NoCaching	Direct database call without caching detected. Consider using wp_cache_get() / wp_cache_set() or wp_cache_delete().	
+39	15	WARNING	WordPress.DB.DirectDatabaseQuery.SchemaChange	Attempting a database schema change is discouraged.	
+40	1	WARNING	WordPress.DB.DirectDatabaseQuery.DirectQuery	Use of a direct database call is discouraged.	
+40	1	WARNING	WordPress.DB.DirectDatabaseQuery.NoCaching	Direct database call without caching detected. Consider using wp_cache_get() / wp_cache_set() or wp_cache_delete().	
+40	15	WARNING	WordPress.DB.DirectDatabaseQuery.SchemaChange	Attempting a database schema change is discouraged.	
+
+
+FILE: chatbot-live.php
+line	column	type	code	message	docs
+188	14	WARNING	WordPress.DB.DirectDatabaseQuery.DirectQuery	Use of a direct database call is discouraged.	
+188	14	WARNING	WordPress.DB.DirectDatabaseQuery.NoCaching	Direct database call without caching detected. Consider using wp_cache_get() / wp_cache_set() or wp_cache_delete().	
+188	18	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $tabela used in $wpdb-&gt;query()\n$tabela assigned unsafely at line 177.	
+198	15	WARNING	WordPress.DB.DirectDatabaseQuery.DirectQuery	Use of a direct database call is discouraged.	
+198	15	WARNING	WordPress.DB.DirectDatabaseQuery.NoCaching	Direct database call without caching detected. Consider using wp_cache_get() / wp_cache_set() or wp_cache_delete().	
+198	19	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $limity used in $wpdb-&gt;query()\n$limity assigned unsafely at line 197.	
+210	18	WARNING	WordPress.DB.DirectDatabaseQuery.DirectQuery	Use of a direct database call is discouraged.	
+210	18	WARNING	WordPress.DB.DirectDatabaseQuery.NoCaching	Direct database call without caching detected. Consider using wp_cache_get() / wp_cache_set() or wp_cache_delete().	
+210	22	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $zdarzenia used in $wpdb-&gt;query()\n$zdarzenia assigned unsafely at line 209.	
+234	14	WARNING	WordPress.DB.DirectDatabaseQuery.DirectQuery	Use of a direct database call is discouraged.	
+234	14	WARNING	WordPress.DB.DirectDatabaseQuery.NoCaching	Direct database call without caching detected. Consider using wp_cache_get() / wp_cache_set() or wp_cache_delete().	
+234	18	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $sesje used in $wpdb-&gt;query()\n$sesje assigned unsafely at line 233.	
+
+
+FILE: includes/rodo.php
+line	column	type	code	message	docs
+99	17	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $tr used in $wpdb-&gt;get_col()	
+145	18	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $t used in $wpdb-&gt;get_col()	
+153	21	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $t used in $wpdb-&gt;get_col()\n$t assigned unsafely at line 135.	
+193	23	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $tz used in $wpdb-&gt;get_results()\n$tz assigned unsafely at line 191.	
+249	33	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $tz_count used in $wpdb-&gt;get_var()	
+253	27	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $tr used in $wpdb-&gt;get_results()	
+377	17	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $tr used in $wpdb-&gt;query()	
+391	19	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $ts used in $wpdb-&gt;query()\n$ts assigned unsafely at line 390.	
+400	18	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $tz used in $wpdb-&gt;query()\n$tz assigned unsafely at line 398.	
+
+
+FILE: includes/przejecie.php
+line	column	type	code	message	docs
+172	14	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $t used in $wpdb-&gt;get_row()\n$t assigned unsafely at line 170.	
+223	17	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $t used in $wpdb-&gt;get_var()\n$t assigned unsafely at line 221.	
+428	18	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $t used in $wpdb-&gt;query()\n$t assigned unsafely at line 420.	
+523	20	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $t used in $wpdb-&gt;get_results()\n$t assigned unsafely at line 521.	
+
+
