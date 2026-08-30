@@ -28,7 +28,9 @@
      wartości domyślne tylko na wypadek, gdyby arkusz nie doszedł. */
   function kolor(nazwa, domyslny) {
     try {
-      var v = getComputedStyle(document.documentElement).getPropertyValue(nazwa).trim();
+      /* Tokeny sklepu żyją na `.sklepag-wyspa` (front.css), nie na <html> — pytamy element, który je ma. */
+      var zrodlo = document.querySelector('.sklepag-wyspa') || panel || document.documentElement;
+      var v = getComputedStyle(zrodlo).getPropertyValue(nazwa).trim();
       return v || domyslny;
     } catch (e) { return domyslny; }
   }

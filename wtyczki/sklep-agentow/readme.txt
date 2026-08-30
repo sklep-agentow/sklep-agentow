@@ -18,7 +18,7 @@ Checkout → mail z linkiem do pobrania → panel zamówień, statystyk i dzienn
 logowań. Zamówienia, produkty i pliki zostają w Twojej bazie i na Twoim
 serwerze — bez abonamentu i bez pośredników. Jedyna usługa zewnętrzna to Stripe
 (płatność): jedyny skrypt z sieci to Stripe.js (js.stripe.com), ładowany wyłącznie
-na stronie sklepu i tylko gdy w Ustawieniach jest klucz publikowalny — bo formularz
+na stronie produktu i tylko gdy w Ustawieniach jest klucz publikowalny — bo formularz
 karty musi być ramką Stripe, nie naszym kodem.
 
 **Co dostajesz po instalacji**

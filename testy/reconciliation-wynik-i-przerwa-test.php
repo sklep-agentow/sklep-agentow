@@ -10,7 +10,7 @@
  * Strażnik (Stripe ATRAPOWANE filtrem `pre_http_request` — bez sieci, bez klucza):
  *  R1 wynik liczy sesję młodszą niż 2 min jako POMINIĘTĄ (i jej nie pyta),
  *  R2 sesja stara, u Stripe otwarta i nieopłacona → sprawdzona 1×, dostaje przerwę (transient),
- *  R3 drugi bieg od razu → NIE pyta Stripe o tę samą sesję (0 zapytań, 0 sprawdzonych),
+ *  R3 drugi bieg od razu → NIE pyta Stripe o tę samą sesję (0 zapytań), ale liczy ją jako otwartą (Pulpit nie mówi „0·0·0·0”),
  *  R4 22 porzucone starsze sesje + 1 opłacona nowsza → opłacona domknięta w PIERWSZYM biegu
  *     (na starym kodzie: LIMIT 20 najstarszych = opłacona nietknięta),
  *  R5 funkcja zwraca tablicę z czterema licznikami (przycisk w panelu ją pokazuje).
@@ -113,7 +113,7 @@ sprawdz( 'R2 stara otwarta/nieopłacona = sprawdzona 1× i ma przerwę', 1 === (
 // --- R3: drugi bieg od razu — bez zapytania o STARA ---
 $GLOBALS['rw_zapytania'] = 0;
 $w2                      = sklepag_dociagnij_zalegle( 0 );
-sprawdz( 'R3 drugi bieg nie pyta ponownie o sesję z przerwą', 0 === $GLOBALS['rw_zapytania'] && 0 === (int) ( $w2['sprawdzone_otwarte'] ?? -1 ), 'zapytań: ' . $GLOBALS['rw_zapytania'] );
+sprawdz( 'R3 drugi bieg nie pyta ponownie o sesję z przerwą, ale LICZY ją jako otwartą', 0 === $GLOBALS['rw_zapytania'] && 1 === (int) ( $w2['sprawdzone_otwarte'] ?? -1 ), 'zapytań: ' . $GLOBALS['rw_zapytania'] . ' otwarte: ' . (int) ( $w2['sprawdzone_otwarte'] ?? -1 ) );
 
 // --- R4: 22 porzucone STARSZE + 1 opłacona NOWSZA (ale > 2 min) — opłacona domknięta od razu ---
 $sprzatanie();
