@@ -123,6 +123,11 @@ Po sklonowaniu, jednorazowo: `git config core.hooksPath .githooks` — włącza 
 `DIAGRAM-PRZEPLYWU.svg` w każdej wtyczce; `PLAN-PROJEKTU.md` §4 (architektura) i §7 (bezpieczeństwo);
 `DECYZJE.md` — każda decyzja z uzasadnieniem.
 
+## Bezpieczeństwo i współpraca
+
+`SECURITY.md` — model zagrożeń, co musi ustawić hosting (nagłówki, CSP ze Stripe), jak zgłosić lukę,
+reakcja na incydent. `CONTRIBUTING.md` — jak uruchomić, konwencje gałęzi i commitów, co zatrzyma PR.
+
 ## Licencja
 
 GPL-2.0 lub nowsza — plik `LICENSE` w korzeniu repozytorium i w każdej wtyczce.
