@@ -149,18 +149,23 @@ Opinię może wystawić wyłącznie kupujący — z jednorazowego linku w mailu 
 opinia na zamówienie, w ciągu 30 dni. Nie ma ocen od anonimowych gości ani zbiorczej średniej.
 
 Nowa opinia trafia do **Oczekujących** i **nie jest widoczna** na stronie produktu, dopóki nie
-klikniesz **Przyjmij**. **Odrzuć** chowa ją; możesz ją później przyjąć z zakładki Odrzucone. Strona Opinii pokazuje też, ile maili z linkiem do opinii wysłano bez odpowiedzi.
+klikniesz **Przyjmij**. **Odrzuć** chowa ją; możesz ją później przyjąć z zakładki Odrzucone. Wyjątek: opinia kupującego,
+którego dane zanonimizowałeś (rozdział 6), ląduje w Odrzuconych z etykietą **[ ZANONIMIZOWANA — RODO ]**
+i nie da się jej już przyjąć ani odrzucić — sklep odmawia na stałe. Strona Opinii pokazuje też, ile maili z linkiem do opinii wysłano bez odpowiedzi.
 
 ---
 
 ## 6. Dane osobowe (RODO)
 
 Co sklep przechowuje o kupującym: adres e-mail z płatności Stripe, kwotę, czas i treść zgody,
-historię pobrań (każde pobranie z adresem internetowym, z którego przyszło — w osi czasu zamówienia). Dane karty obsługuje wyłącznie Stripe — na Twoim serwerze ich nie ma.
+historię pobrań (każde pobranie z adresem internetowym, z którego przyszło — w osi czasu zamówienia);
+jeśli kupujący wystawił opinię — jego **imię, tytuł i treść opinii** (imię i treść są publikowane
+na stronie produktu, za zgodą z formularza). Dane karty obsługuje wyłącznie Stripe — na Twoim serwerze ich nie ma.
 
 **Anonimizacja na żądanie kupującego:** Szczegóły zamówienia → **Dane osobowe (RODO)** →
-przycisk anonimizacji. Sklep usuwa adres e-mail z zamówienia, z dziennika zdarzeń i z opinii
-tego zamówienia, unieważnia link do pobrania (zanonimizowany kupujący nie ma już dokąd dostać
+przycisk anonimizacji. Sklep usuwa adres e-mail z zamówienia i z dziennika zdarzeń; przy opinii
+tego zamówienia kasuje **imię** i zdejmuje opinię ze strony produktu (trafia do Odrzuconych, bez
+możliwości przywrócenia — treść i ocena zostają w bazie, już bez autora); unieważnia link do pobrania (zanonimizowany kupujący nie ma już dokąd dostać
 świeżego linku) i zapisuje datę anonimizacji. **Kwoty i czasy zostają** — statystyki sprzedaży
 nie tracą historii. Operacja jest nieodwracalna. Adresów internetowych przy pobraniach anonimizacja
 **nie** usuwa — znikają razem z całą osią czasu po 90 dniach (rozdział 7); odpowiadając kupującemu

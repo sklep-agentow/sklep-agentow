@@ -56,8 +56,9 @@ to jest w paczce, bo bez tego sklep nie nadawałby się do sprzedaży, a nie dla
 
 ## Dane osobowe i porządek po sobie
 
-12. **Anonimizacja kupującego na żądanie** z panelu (adres znika z zamówienia, dziennika zdarzeń
-    i opinii; link do pobrania unieważniony; kwoty i czasy zostają). Sklep potwierdza usunięcie
+12. **Anonimizacja kupującego na żądanie** z panelu (adres znika z zamówienia i dziennika zdarzeń;
+    z opinii znika imię, a sama opinia schodzi ze strony produktu na stałe; link do pobrania
+    unieważniony; kwoty i czasy zostają). Sklep potwierdza usunięcie
     dopiero po sprawdzeniu, że zapis się udał. Powód: obowiązek z RODO — a potwierdzenie bez
     sprawdzenia to niezrealizowane żądanie.
 13. **Szkice Regulaminu i Polityki prywatności** tworzone przy instalacji. Powód: sklep bez tych
