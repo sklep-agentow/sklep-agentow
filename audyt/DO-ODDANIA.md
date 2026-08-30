@@ -38,7 +38,7 @@ FAIL  6 próby kontrolne: 6 z 30 ma EXIT≠0 (przelot na 89ba47a)        ← k7-
       `pulapka` padają identycznie na czystym `main`; `dowod-z-paczki` ma zaszytą wersję 1.5.0) —
       opis w `CO-WISI.md`, sekcja o próbach kontrolnych. **Nie da się ich „odświeżyć” — to naprawa
       narzędzi, świadomie po oddaniu.**
-- [x] `bash narzedzia-qa/k7-koniec.sh` — 30.08 12:35 na `a1b2495`: KRYTYCZNE 0 · DUŻE 0 · FAIL 2 z 13, EXIT=1 (log przelotu z tego samego commita; po nim zmieniła się tylko dokumentacja — §7)
+- [x] `bash narzedzia-qa/k7-koniec.sh` — 30.08 12:35 na `a1b2495`: KRYTYCZNE 0 · DUŻE 0 · FAIL 2 z 13, EXIT=1 (log przelotu z tego samego commita w historii: `git show a1b2495:audyt/sklep/PROBY-KONTROLNE.log`; plik w drzewie jest po 0.9.24 nadpisany przelotem na `d0a45a9` — ten sam zestaw 6 prób; `audyt/RAPORT-ODDANIA.md` §6)
 
 ## 3. REJESTR KLAS BŁĘDÓW → `audyt/SCIAGA-EGZAMINATORA.md`
 - [x] **ZROBIONE 30.08, PR `#211`: klasy 29–47** (4 z dziesięciu rund `#207`, 12 z rund `#208`/`#209`

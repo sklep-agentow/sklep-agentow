@@ -1,4 +1,4 @@
-# RAPORT ODDANIA — Sklep Agentów, próba 1 (2026-08-30, wydanie `v0.9.23`)
+# RAPORT ODDANIA — Sklep Agentów, próba 1 (2026-08-30, wydanie `v0.9.23`; §6 = dopisek dla `v0.9.24`)
 
 > Dla Dzidka i dla oceniającego. Każda liczba ma komendę, którą ją policzono, i commit, na którym
 > ją policzono: **`a1b2495`** (`main` po scaleniu `#213` i `#214`). Każda zmiana w repo po tym
@@ -110,3 +110,43 @@ klienta**; pominięte są wyłącznie długi narzędzi warsztatu (skanery, prób
 `audyt/PLUGIN-CHECK-30-08.md` · `audyt/CO-WISI.md` · `DECYZJE.md` (32 decyzje z uzasadnieniem) ·
 `MAPA-SPEC.md` (wymagania S-01…S-20 ze statusem) · opisy PR `#213` i `#214` (każda runda recenzji z tabelą
 uwaga → naprawa → wynik uruchomienia).
+
+## 6. Dopisek — wydanie `v0.9.24` (2026-08-30, delta nad 0.9.23; zbudowane z `main` `d0a45a9`)
+
+**Co się zmieniło:** mail po zakupie w wersji HTML (brand strony, okładka produktu, przycisk „Pobierz”, karta zamówienia,
+stopka sprzedawcy) wysyłany razem z tekstem jako `multipart/alternative`; Ustawienia → „Dane sprzedawcy” (nazwa, adres, NIP
+z sumą kontrolną; Pulpit ostrzega, gdy puste); numer zamówienia i dopisek o fakturze w mailu. Powód: audyt maila 30.08 —
+tekst bez brandingu i bez danych przedsiębiorcy (ustawa o prawach konsumenta art. 21 ust. 2 → art. 12 ust. 1). PR `#220`,
+DECYZJE `D34`.
+
+**Trzy liczby na `d0a45a9`** (`bash narzedzia-qa/k7-koniec.sh`, 30.08 ~16:50): KRYTYCZNE otwarte 0 · DUŻE otwarte 0 ·
+kontroli FAIL **2 (z 13)** — kontrole 2 i 6, **te same co w §2**. Przelot prób kontrolnych powtórzony na czystym `d0a45a9`
+(`proby-kontrolne-przelot.sh`, log `audyt/sklep/PROBY-KONTROLNE.log`): 30 prób, 6 z EXIT≠0 — **identyczny zestaw** jak na
+`a1b2495` (`dowod-z-paczki` EXIT=2, `blad-klucza`, `ip-za-proxy`, `nonce`, `przejecie`, `pulapka`; porównane z logiem
+w `git show HEAD:audyt/sklep/PROBY-KONTROLNE.log`). Delta 0.9.24 nie dołożyła ani jednej padającej próby i żadnej nie naprawiła
+(strażniki botów — poza zakresem tej zmiany).
+
+⛔ **Log prób został NADPISANY w miejscu** przelotem 0.9.24 (`COMMIT: d0a45a9`). Wersja z `a1b2495`, do której odsyłają §2, §5,
+`rubryka-GOTOWE.md` #12 i `audyt/DO-ODDANIA.md` §2, jest w historii: `git show a1b2495:audyt/sklep/PROBY-KONTROLNE.log`
+(ten sam zestaw 6 prób, inne czasy).
+
+**Długi zapisane w `CO-WISI.md` „na 0.9.24” NIE weszły do 0.9.24** i są przedatowane na 0.9.25: trzy długi po K9
+(numeracja pozycji w instrukcji nawigacji, zrzuty kroków instalacji, jedna tablica PHP jako źródło menu ze strażnikiem).
+0.9.24 objęło wyłącznie mail i dane sprzedawcy — decyzja: poprawki instrukcji czekają na uwagi kolegi po odbiorze.
+
+**Jak sprawdzona delta:** recenzja `#220` — 3 rundy świeżym agentem (r1: 2 WAŻNE + 2 DROBNE, r2: 1 WAŻNA + 3 DROBNE,
+r3: 0 WAŻNYCH + 3 DROBNE → długi w `CO-WISI.md`); strażnik `testy/mail-po-zakupie-test.php` 26/26 z próbą kontrolną
+(2 podłożone wady → dokładnie C2 i C6 BLAD); pełny zakup E2E na czystym WP 6.9.4 z motywem strony
+(`STATUS KONCOWY: mail_wyslany`; mail w łapaczu: `Content-Type: multipart/alternative`, 1 część tekstowa + 1 HTML, 11 432 B);
+render HTML w Chromium 720 i 390 px (karta 366 px na telefonie); `bramki.sh` 10/10; zgodność dokumentacji sklepu 0 rozjazdów,
+próba kontrolna 21/21; `paczka-zgodnosc.sh` 67/67 sum; `pakuj-dla-klienta.sh` 17/17.
+Paczka zbiorcza `wydanie/sklep-agentow-KLIENT-0.9.24.zip` sha256 `4b0fafc26363ee85f5ed4e8e407bc4fd0257c1e66f30422b165693c8a1e1b0b4`
+(sklep `3c1e0cbb…`, chatbot-live 1.5.13 `699523ae…`, segregator-maila 1.3.6 `2a133d8b…` — boty bez zmian).
+
+**Rubryka GOTOWE bez zmian** (zamrożona 0.9.23): żadne z 12 kryteriów nie mówi o wyglądzie ani stopce maila; #2 (jeden mail
+z linkiem i zgodą) i #3 (link) dalej przechodzą tym samym strażnikiem, rozszerzonym o wersję HTML.
+
+**Czego ten dopisek NIE dowodzi:** renderu w prawdziwym Gmailu/Outlooku (tylko Chromium i łapacz); ścieżki „Wyślij ponownie”
+klikniętej na żywo (ten sam kod, nieklikane); zachowania wtyczek SMTP nadpisujących `AltBody`. Instalację od zera z paczki
+Release przez niezależnego testera robi K10 (osobny raport).
+

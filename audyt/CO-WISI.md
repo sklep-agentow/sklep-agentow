@@ -691,12 +691,12 @@ Raport i triage: `audyt/PLUGIN-CHECK-30-08.md` (surowe wyniki `audyt/plugin-chec
 
 `dokumentacja/INSTRUKCJA-INSTALACJI.md` jest tekstowa (0 obrazów; K8 planu żądał zrzutów maszynowych). Kroki nazywają ekrany
 po nazwie, instrukcja OBSŁUGI sklepu ma 5 zrzutów. **Dług:** przebieg `testy/zrzuty-instrukcje.js` na czystym stosie → 4–6
-zrzutów (wgranie wtyczki, aktywacja, Ustawienia sklepu, webhook) — po oddaniu, przy 0.9.24.
+zrzutów (wgranie wtyczki, aktywacja, Ustawienia sklepu, webhook) — po oddaniu, przy 0.9.25 (0.9.24 objęło tylko mail — RAPORT-ODDANIA §6).
 
-## 🟡 PO K9 (instalacja z Release na motywie kolegi, 30.08) — trzy długi na 0.9.24, `audyt/K9-INSTALACJA-Z-RELEASE-0.9.23.md`
+## 🟡 PO K9 (instalacja z Release na motywie kolegi, 30.08) — trzy długi na 0.9.25 (NIE weszły do 0.9.24 — RAPORT-ODDANIA §6), `audyt/K9-INSTALACJA-Z-RELEASE-0.9.23.md`
 
 1. `dokumentacja/INSTRUKCJA-INSTALACJI.md`, menu mobilne: „po pozycji 08” — w pliku FAQ ma „07” (opóźnienie 0,35 s); tester trafił,
-   numeracja myli. Tekst dla klienta, ale paczka zbiorcza już w Release → poprawka = nowe wydanie (0.9.24), nie w miejscu.
+   numeracja myli. Tekst dla klienta, ale paczka zbiorcza już w Release → poprawka = nowe wydanie (0.9.25), nie w miejscu.
 2. Komunikat aktywacji „Brak katalogu chronionego — deaktywuj i aktywuj” nie nazywa przyczyny (uprawnienia `wp-content/uploads`);
    „Najczęstsze problemy” wiąże `chown` tylko z uploadem mediów. Dopisać przyczynę w komunikacie i w instrukcji.
 3. Narzędzie: `narzedzia-qa/lib-stos-probny.sh` deklaruje `WP_DEBUG_LOG` przez `WORDPRESS_CONFIG_EXTRA`, obraz `wordpress:6.9.4` tego
@@ -714,7 +714,7 @@ zrzutów (wgranie wtyczki, aktywacja, Ustawienia sklepu, webhook) — po oddaniu
 w bramce 409 (`wtyczki/sklep-agentow/includes/admin-zamowienie.php:63`) i konkatenacja `NOT IN` (`:117`, `:154`); `'mail_wyslany','mail_blad'` — bramka 409 (`:67`)
 i widoczność przycisku (`:504`). Scenariusz: nowy status zamknięty dopisany do stałej SQL, zapomniany w tablicy → „Wyślij
 ponownie” przechodzi mimo chargebacku. **Dług:** jedna tablica PHP jako źródło, fragment SQL budowany z niej (`implode`),
-strażnik porównujący oba. Po oddaniu, przy 0.9.24. Zero blokerów w tej recenzji.
+strażnik porównujący oba. Po oddaniu, przy 0.9.25. Zero blokerów w tej recenzji.
 
 ## 🟡 TRZY LICZBY BRAMKI KOŃCOWEJ ŻYJĄ W CZTERECH PLIKACH, PRZEPISANE RĘCZNIE (30.08, recenzja PR rubryki, D8)
 
@@ -777,3 +777,17 @@ z tą samą listą wzorców co skaner — po oddaniu, jeśli zrzutów przybędzi
 - **Stanowisko `:8892` dostało mu-plugin `mailpit-smtp.php`** (kopia z `:8890`) — bez niego
   `wp_mail` na stosie próbnym pada „Could not instantiate mail function” i E2E kończy się
   `mail_blad`, choć kod jest dobry. Do `lib-stos-probny.sh` dopisać ten krok (dług narzędzia).
+
+## 🟡 DŁUGI Z RECENZJI #220 RUNDA 3 (30.08, po scaleniu 0.9.24 — 0 WAŻNYCH, 3 DROBNE, reguła rund: produkt czysty → dług)
+
+- **CHANGELOG 0.9.24 mówi „25 sprawdzeń” strażnika maila, test ma 26** (asercja C2b doszła w rundzie 1, liczba
+  w CHANGELOG-u została; klasa 3). Naprawa = jedna liczba w `wtyczki/sklep-agentow/CHANGELOG.md` — ale CHANGELOG
+  jest w zipie, więc zmiana = nowy zip i nowa wersja. Wchodzi do następnej wersji (0.9.25), nie osobno.
+- **Sanityzacja adresu firmy liczy `\r\n` inaczej niż `maxlength` w polu i nie zwija pustych wierszy**, choć oba
+  miejsca odbierające wartość (`sklepag_stopka_sprzedawcy_tekst`, `mail-html.php`) normalizują `\r\n`.
+  Skutek: adres o 300 znakach z przeglądarki może dostać błąd „301 znaków” po stronie serwera. Naprawa:
+  normalizować `\r\n → \n` PRZED liczeniem w `sklepag_sanityzuj_adres_firmy()`.
+- **Sprzątanie strażnika maila w shutdown obejmuje 3 z 4 opcji** — `sklepag_email_kontaktowy` jest przywracany
+  z `$poprzedni` (`get_option(…, '')`), więc gdy opcji nie było, zostaje PUSTA zamiast skasowana (klasa 8).
+  Naprawa: `get_option(…, false)` + `delete_option` jak przy trzech pozostałych.
+
