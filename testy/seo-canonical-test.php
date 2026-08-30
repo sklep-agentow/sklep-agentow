@@ -104,6 +104,16 @@ if ( $inna ) {
 	do_action( 'wp_enqueue_scripts' );
 	sprawdz( 'F. …i zero assetów sklepu (front.css / front-ruch.js) na cudzej stronie', ! wp_style_is( 'sklepag-front', 'enqueued' ) && ! wp_script_is( 'sklepag-ruch', 'enqueued' ), 'front.css=' . var_export( wp_style_is( 'sklepag-front', 'enqueued' ), true ) . ' ruch=' . var_export( wp_script_is( 'sklepag-ruch', 'enqueued' ), true ) );
 	remove_filter( 'pre_option_sklepag_strona_sklep', $pusta );
+	// Ta sama klasa dla strony „Dziękujemy”: pusta opcja nie może ładować dziekujemy.js ani noindexować cudzej strony.
+	add_filter( 'pre_option_sklepag_strona_dziekujemy', $pusta );
+	wp_dequeue_script( 'sklepag-dziekujemy' );
+	$q                       = new WP_Query( array( 'page_id' => $inna ) );
+	$GLOBALS['wp_the_query'] = $q;
+	$GLOBALS['wp_query']     = $q;
+	do_action( 'wp_enqueue_scripts' );
+	$roboty = sklepag_seo_noindex_dziekujemy( array() );
+	sprawdz( 'F. opcja „Dziękujemy” pusta, cudza strona: zero dziekujemy.js i zero noindex', ! wp_script_is( 'sklepag-dziekujemy', 'enqueued' ) && empty( $roboty['noindex'] ), 'dziekujemy.js=' . var_export( wp_script_is( 'sklepag-dziekujemy', 'enqueued' ), true ) . ' noindex=' . var_export( ! empty( $roboty['noindex'] ), true ) );
+	remove_filter( 'pre_option_sklepag_strona_dziekujemy', $pusta );
 	sprawdz( 'F. kontrola: opcja w bazie nietknięta', (int) get_option( 'sklepag_strona_sklep' ) === $strona_sklep );
 }
 

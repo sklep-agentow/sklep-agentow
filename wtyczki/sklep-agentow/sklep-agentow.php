@@ -139,9 +139,6 @@ function sklepag_jest_strona_z_opcji( $opcja ) {
  * Assety TYLKO na stronach sklepu (nie spowalniamy reszty strony).
  */
 function sklepag_assety_frontu() {
-	$strona_sklep      = (int) get_option( 'sklepag_strona_sklep' );
-	$strona_dziekujemy = (int) get_option( 'sklepag_strona_dziekujemy' );
-
 	if ( sklepag_jest_strona_z_opcji( 'sklepag_strona_sklep' ) || sklepag_jest_strona_z_opcji( 'sklepag_strona_dziekujemy' ) ) {
 		wp_enqueue_style( 'sklepag-front', plugins_url( 'assets/front.css', SKLEPAG_PLIK ), array(), sklepag_wersja_assetu( 'assets/front.css' ) );
 
