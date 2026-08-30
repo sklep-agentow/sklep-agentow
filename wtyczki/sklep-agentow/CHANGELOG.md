@@ -20,6 +20,23 @@ Nic jeszcze.
 
 ---
 
+## [0.9.23] — 2026-08-30
+
+### Dodane
+- **`INSTRUKCJA.md` — instrukcja właściciela** (panel, produkty, zamówienia i statusy, mail
+  i link do pobrania, opinie, RODO, dziennik, ustawienia, najczęstsze pytania), ze zrzutami
+  panelu robionymi maszynowo (`zrzuty/`). Do tej pory sklep miał tylko instrukcję instalacji
+  obok paczek — oba boty instrukcję użytkownika w paczce już miały.
+- **`PONAD-SPECYFIKACJE.md`** — jawna lista wszystkiego, co sklep robi ponad literę zamówienia,
+  każda pozycja z powodem; plus lista tego, czego świadomie nie ma.
+
+### Zmienione
+- Dwa komunikaty „Brak uprawnień.” w moderacji opinii wypisywane wprost (`esc_html`), a nie przez
+  funkcję tłumaczenia bez domeny — wtyczka nie tłumaczy tekstów, więc wywołanie było niespójne
+  (wskazał to Plugin Check). Zero zmian w działaniu.
+
+---
+
 ## [0.9.22] — 2026-08-29
 
 ### Zmienione

@@ -11,12 +11,21 @@ const fs = require('fs');
 
 const EKRANY = [
   ['dashboard-7dni', '/wp-admin/admin.php?page=sklepag&okres=7dni'],
+  ['dashboard-wskazniki', '/wp-admin/admin.php?page=sklepag&okres=7dni', { fullPage: false, clip: { x: 0, y: 0, width: 1440, height: 640 } }],
   ['dashboard-30dni', '/wp-admin/admin.php?page=sklepag&okres=30dni'],
   ['dashboard-filtr-blad', '/wp-admin/admin.php?page=sklepag&status=mail_blad'],
   ['dziennik-logowania', '/wp-admin/admin.php?page=sklepag-dziennik&zakladka=logowania'],
   ['dziennik-zdarzenia', '/wp-admin/admin.php?page=sklepag-dziennik&zakladka=zdarzenia'],
   ['ustawienia', '/wp-admin/admin.php?page=sklepag-ustawienia'],
   ['zamowienie', '/wp-admin/admin.php?page=sklepag-zamowienie&zamowienie=1'],
+  ['zamowienie-naglowek', '/wp-admin/admin.php?page=sklepag-zamowienie&zamowienie=1', { fullPage: false, clip: { x: 0, y: 0, width: 1440, height: 440 } }],
+  ['produkty', '/wp-admin/admin.php?page=sklepag-produkty'],
+  // Formularz NOWEGO produktu (pusty): zrzut jedzie do instrukcji klienta, więc bez danych testowych stosu.
+  ['produkt-formularz', '/wp-admin/admin.php?page=sklepag-produkty&widok=formularz'],
+  ['opinie', '/wp-admin/admin.php?page=sklepag-opinie'],
+  // Lista sklepu: tylko góra strony (hero + kafle) — pełna strona ma sekcje odsłaniane dopiero przy przewijaniu.
+  ['sklep-front', '/sklep/', { fullPage: false, clip: { x: 0, y: 0, width: 1440, height: 1460 } }],
+  ['produkt-front', '/sklep/produkt/chatbot-live/'],
 ];
 
 (async () => {
@@ -34,10 +43,10 @@ const EKRANY = [
   await Promise.all([p.waitForURL(/wp-admin/, { timeout: 30000 }), p.click('#wp-submit')]);
   console.log('ZALOGOWANO:', p.url().split('?')[0]);
 
-  for (const [nazwa, sciezka] of EKRANY) {
+  for (const [nazwa, sciezka, opcje] of EKRANY) {
     await p.goto(BAZA + sciezka, { waitUntil: 'load' });
     await p.waitForTimeout(400);
-    await p.screenshot({ path: `${GDZIE}/${nazwa}.png`, fullPage: true });
+    await p.screenshot({ path: `${GDZIE}/${nazwa}.png`, fullPage: true, ...(opcje || {}) });
     console.log('ZRZUT:', nazwa);
   }
 

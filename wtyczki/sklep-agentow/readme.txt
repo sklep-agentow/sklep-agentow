@@ -4,7 +4,7 @@ Tags: sklep, stripe, pliki cyfrowe, sprzedaz wtyczek, pobieranie
 Requires at least: 6.7
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.9.22
+Stable tag: 0.9.23
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -92,8 +92,11 @@ i PHP 8.1.
 6. Zrób zakup testowy kartą testową Stripe i sprawdź zamówienie na Pulpicie.
 
 Pełna instrukcja krok po kroku (konfiguracja testowa i produkcyjna) jest
-dołączona do wydania obok paczek (plik `INSTRUKCJA-INSTALACJI.md`); opis techniczny
-(schemat bazy, stałe, punkty wejścia) w `DOKUMENTACJA-TECHNICZNA.md` w paczce.
+dołączona do wydania obok paczek (plik `INSTRUKCJA-INSTALACJI.md`); instrukcja
+właściciela na co dzień (produkty, zamówienia, maile, opinie, RODO) w `INSTRUKCJA.md`
+w paczce, ze zrzutami panelu; opis techniczny (schemat bazy, stałe, punkty wejścia)
+w `DOKUMENTACJA-TECHNICZNA.md` w paczce; lista tego, co sklep robi ponad literę
+zamówienia — `PONAD-SPECYFIKACJE.md` w paczce.
 
 == Frequently Asked Questions ==
 
@@ -141,6 +144,10 @@ Nie. Zakup jest bez konta: adres e-mail podany na stronie płatności Stripe,
 link do pobrania w mailu, jednorazowy link do opinii.
 
 == Changelog ==
+
+= 0.9.23 =
+* Dodane: instrukcja właściciela (INSTRUKCJA.md ze zrzutami panelu) i jawna lista tego, co sklep robi ponad zamówienie (PONAD-SPECYFIKACJE.md) — oba pliki w paczce.
+* Zmienione: dwa komunikaty „Brak uprawnień.” w moderacji opinii wypisywane wprost, bez funkcji tłumaczenia (wtyczka nie tłumaczy tekstów). Zero zmian w działaniu.
 
 = 0.9.22 =
 * Wydanie porządkowe: z komentarzy w kodzie i z dokumentacji usunięte wewnętrzne oznaczenia naszych raportów. Zero zmian w działaniu.
