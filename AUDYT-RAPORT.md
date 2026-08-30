@@ -4,7 +4,7 @@ Data: 2026-08-30 · Zakres: audyt końcowy K7 (6 soczewek, 104 cele) + naprawy K
 delty 0.9.25 (płatność osadzona, dane do faktury, reconciliation po K10 — PR `#222`, 4 rundy) + test instalacji od zera
 przez niezależnego testera (K10) + audyt delty 0.9.26 (canonical stron sklepu, klasa `is_page( 0 )` — PR `#225`, 4 rundy;
 dokumenty SECURITY/CONTRIBUTING — PR `#226`, 3 rundy) + bramka końcowa na `main` `a3d9568` i przelot prób kontrolnych
-na `e95de75` (docs nad `a3d9568`, kod wtyczek identyczny — log w repo) · KRYTYCZNE: 0 · DUZE: 0 · kontroli FAIL: 2 (z 13) · **K7: NO-GO · EXIT=1** (kontrole 2 i 6 — te same co przy 0.9.23 i 0.9.24: decyzja właściciela 28.08; zestaw 6 prób z EXIT≠0 identyczny jak na `a1b2495` — powody w raporcie)
+na `e95de75` (docs nad `a3d9568`, kod wtyczek identyczny — log w repo) · KRYTYCZNE: 0 · DUZE: 0 · kontroli FAIL: 2 (z 13) · **K7: NO-GO · EXIT=1** (kontrole 2 i 6 — te same co przy 0.9.23 i 0.9.24: decyzja właściciela 28.08; na `e95de75` 5 z 31 prób z EXIT≠0 — podzbiór zestawu 6 z `a1b2495`/`2992247`, żadnej nowej; powody w raporcie)
 
 Ten plik jest **wskaźnikiem maszynowym** dla bramki oddania (hook `oddanie-guard` czyta liczniki
 w nagłówku). Treść audytu — liczby z komendami, decyzje z powodami, długi i miejsca dowodów —

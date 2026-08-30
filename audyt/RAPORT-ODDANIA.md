@@ -35,7 +35,7 @@ Dwa FAIL-e są **decyzją, nie wadą** — obie zapisane w `audyt/CO-WISI.md` i 
   **Co to znaczy dla klienta, po ludzku:** pięć soczewek udowodniło na podłożonych błędach, że naprawdę widzą
   wady. Dwie tego nie udowodniły — więc **to, czego nie znalazły w obszarze dziennika logowań (L1) i zgodności
   dokumentacji z zachowaniem (L5), nie jest dowodem, że tam nic nie ma.** Ich „czysto” waży mniej niż pozostałych.
-- **Kontrola 6 — próby kontrolne strażników.** `6 z 30` prób kończy EXIT≠0 (`audyt/sklep/PROBY-KONTROLNE.log`,
+- **Kontrola 6 — próby kontrolne strażników.** `6 z 30` prób kończyło EXIT≠0 przy 0.9.23 (od 0.9.26 log w repo niesie `e95de75`: 5 z 31, ten sam zestaw minus chwiejna `przejecie` — §8; `audyt/sklep/PROBY-KONTROLNE.log`,
   przelot maszynowy na `a1b2495`, 30.08 12:18; 1 pominięta z powodem w logu). Zmierzone przez wykluczenie
   na czystym `origin/main`: pięć pada identycznie bez naszych zmian (`blad-klucza`, `ip-za-proxy`, `nonce`,
   `przejecie`, `pulapka` — strażniki botów, dwa ślepe w obie strony), szósta (`dowod-z-paczki`, EXIT=2) ma
