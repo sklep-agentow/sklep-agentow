@@ -57,7 +57,7 @@ spr "SHA256SUMS.txt zgadza się po rozpakowaniu"    "sha256sum -c --quiet SHA256
 spr "sumy obejmują KAŻDY plik paczki"              "[ \$(find . -type f ! -name SHA256SUMS.txt | wc -l) -eq \$(wc -l < SHA256SUMS.txt) ]"
 spr "wersja sklepu w nazwie paczki == nagłówek"    "[ -f sklep-agentow-$WER.zip ]"
 # ślady wewnętrzne w DOKUMENTACH paczki (zipy wtyczek sprawdza osobno paczka-zgodnosc.sh)
-spr "brak śladów wewnętrznych w dokumentach paczki" "[ -f PRZECZYTAJ-MNIE.txt ] && [ -f INSTRUKCJA-INSTALACJI.md ] && ! grep -lE 'localhost:[0-9]+|/root/|scratchpad|PLAN-PROJEKTU|CO-WISI|SCIAGA' PRZECZYTAJ-MNIE.txt INSTRUKCJA-INSTALACJI.md"
+spr "brak śladów wewnętrznych w dokumentach paczki" "[ -f PRZECZYTAJ-MNIE.txt ] && [ -f INSTRUKCJA-INSTALACJI.md ] && ! grep -lE 'localhost:[0-9]+|/root/|scratchpad|PLAN-PROJEKTU|CO-WISI|SCIAGA|SECURITY\.md|CONTRIBUTING|RECENZENT-BRIEFING' PRZECZYTAJ-MNIE.txt INSTRUKCJA-INSTALACJI.md"
 # zipy wtyczek: nie tylko nazwa — treść (klasa 10: zip o dobrej nazwie zamrożony na starej treści)
 for z in *.zip; do
 	w="${z%-*}"; v="${z##*-}"; v="${v%.zip}"

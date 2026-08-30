@@ -833,6 +833,8 @@ maszynowo do końca (zam #9901178 z danymi faktury).
 
 ## 🟡 DŁUGI Z RECENZJI #222 r4 (30.08): strażnik reconciliation (R4) woła prawdziwe `api.stripe.com` przy domykaniu opłaconej atrapy (nagłówek obiecuje „bez sieci”) i nie asertuje `bledy`; trzy komentarze w strażniku opisują poprzednie asercje. Do korekty przy 0.9.26 razem z długami K10.
 
+## 🟡 DŁUG Z RECENZJI #226 r2 (30.08, SECURITY.md)
+- Brak PRÓBY KONTROLNEJ strażnika dla podpisu webhooka (odrzut złego/brakującego podpisu dowodzą tylko testy audytu L3 na żywym stosie). Do zrobienia: `testy/webhook-podpis-test.php` + `-proba-kontrolna.sh` (mutant: `hash_equals` → `true`).
 ## 🟡 DŁUGI Z RECENZJI #225 r1 (30.08, canonical 0.9.26) — drobne, poza regułą rund
 - **HEAD na stronie nieistniejącego produktu oddaje 200, GET oddaje 404** (`status_header( 404 )` w renderze
   skrótkodu, po `wp_head`; mechanizm różnicy GET/HEAD nieustalony — recenzent też nie ustalił). Zwykłe 404 WP
@@ -846,3 +848,9 @@ maszynowo do końca (zam #9901178 z danymi faktury).
 - Statyczna sonda wydajności strony produktu (30.08): 63 kB HTML + ~1,3 MB zasobów, z czego 1 MB to `stripe.js`
   ładowany w stopce TYLKO na stronie produktu z kluczem publikowalnym (lista i cudze strony: 0 — zmierzone); nasz `assets/front.css` 83 kB — kandydat do odchudzenia.
   `perf` Lighthouse nadal tylko na hostingu klienta (sekcja wyżej).
+
+## 🟡 DŁUG NA 0.9.27 z recenzji #225 r4 (30.08, tekst klienta w readme.txt)
+- `readme.txt` 0.9.26 mówi „bez tych stron nie robi nic poza własnym panelem” — nieprecyzyjne: skrót `[sklepag_sklep]`
+  wstawiony ręcznie na dowolnej stronie nadal renderuje sklep (i ma). Poprawne zdanie: „nie dokleja niczego do innych
+  stron; sklep pokaże się tylko tam, gdzie sam wstawisz skrót”. Nie weszło do 0.9.26: paczka była już na `origin/main`
+  (zamek klasy 10 → podbicie wersji), a zdanie nie szkodzi. Wchodzi z 0.9.27 razem z HEAD-200 i próbą kontrolną podpisu.

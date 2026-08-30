@@ -206,6 +206,16 @@ Włącz. Dalej prowadzą instrukcje W paczkach botów (konfiguracja w kwadrans).
   WordPressa) —
   bez odznaczenia WordPress nie wystawia mapy strony (sitemap) i Google nie
   zaindeksuje sklepu.
+- **Nagłówki bezpieczeństwa i CSP to robota serwera, nie wtyczki.** Poproś
+  informatyka (albo ustaw w panelu hostingu / Cloudflare), żeby strona wysyłała
+  nagłówki `Strict-Transport-Security`, `X-Content-Type-Options: nosniff`,
+  `Referrer-Policy` i `X-Frame-Options: SAMEORIGIN`. ⚠️ Jeśli strona ma
+  **Content-Security-Policy**, musi dopuszczać Stripe — inaczej formularz karty
+  na stronie produktu przestanie działać: `script-src 'self' https://js.stripe.com`,
+  `frame-src https://js.stripe.com https://hooks.stripe.com`,
+  `connect-src 'self' https://api.stripe.com`; krótkie skrypty osadzone w stronie
+  (konfiguracja formularza) wymagają `'unsafe-inline'` albo nonce'a/hasha. Po każdej
+  zmianie CSP zrób testowy zakup kartą testową.
 - Rozważ ochronę logowania na poziomie serwera (np. fail2ban albo reguła
   WAF na `wp-login.php`) — wtyczka spowalnia zgadywanie haseł i ogranicza
   próby z jednego adresu, ale zmasowany atak z WIELU adresów to robota dla
