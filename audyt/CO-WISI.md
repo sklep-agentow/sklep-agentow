@@ -777,3 +777,17 @@ z tą samą listą wzorców co skaner — po oddaniu, jeśli zrzutów przybędzi
 - **Stanowisko `:8892` dostało mu-plugin `mailpit-smtp.php`** (kopia z `:8890`) — bez niego
   `wp_mail` na stosie próbnym pada „Could not instantiate mail function” i E2E kończy się
   `mail_blad`, choć kod jest dobry. Do `lib-stos-probny.sh` dopisać ten krok (dług narzędzia).
+
+## 🟡 DŁUGI Z RECENZJI #220 RUNDA 3 (30.08, po scaleniu 0.9.24 — 0 WAŻNYCH, 3 DROBNE, reguła rund: produkt czysty → dług)
+
+- **CHANGELOG 0.9.24 mówi „25 sprawdzeń” strażnika maila, test ma 26** (asercja C2b doszła w rundzie 1, liczba
+  w CHANGELOG-u została; klasa 3). Naprawa = jedna liczba w `wtyczki/sklep-agentow/CHANGELOG.md` — ale CHANGELOG
+  jest w zipie, więc zmiana = nowy zip i nowa wersja. Wchodzi do następnej wersji (0.9.25), nie osobno.
+- **Sanityzacja adresu firmy liczy `\r\n` inaczej niż `maxlength` w polu i nie zwija pustych wierszy**, choć oba
+  miejsca odbierające wartość (`sklepag_stopka_sprzedawcy_tekst`, `mail-html.php`) normalizują `\r\n`.
+  Skutek: adres o 300 znakach z przeglądarki może dostać błąd „301 znaków” po stronie serwera. Naprawa:
+  normalizować `\r\n → \n` PRZED liczeniem w `sklepag_sanityzuj_adres_firmy()`.
+- **Sprzątanie strażnika maila w shutdown obejmuje 3 z 4 opcji** — `sklepag_email_kontaktowy` jest przywracany
+  z `$poprzedni` (`get_option(…, '')`), więc gdy opcji nie było, zostaje PUSTA zamiast skasowana (klasa 8).
+  Naprawa: `get_option(…, false)` + `delete_option` jak przy trzech pozostałych.
+
