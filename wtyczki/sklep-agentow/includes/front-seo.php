@@ -73,6 +73,33 @@ function sklepag_seo_canonical( $url ) {
 add_filter( 'get_canonical_url', 'sklepag_seo_canonical' );
 
 /**
+ * <link rel="canonical"> wypisany PRZEZ WTYCZKĘ, gdy gospodarz wyciął WP-owy.
+ *
+ * Filtr wyżej działa tylko wtedy, gdy WP w ogóle drukuje canonical (`rel_canonical`
+ * na `wp_head`). Motyw gospodarza robi `remove_action( 'wp_head', 'rel_canonical' )`
+ * i drukuje własne canonicale tylko dla stron z builda — strony sklepu (lista
+ * i produkt) zostawały BEZ canonicala (zmierzone 30.08 na stosie: 0 znaczników).
+ * Skutek: /sklep/produkt/x/ i /sklep/?sklepag_produkt=x to dla Google dwa
+ * adresy jednej treści. Gdy `rel_canonical` jest podpięty, nie drukujemy nic —
+ * inaczej byłyby dwa znaczniki.
+ */
+function sklepag_seo_canonical_wlasny() {
+	if ( has_action( 'wp_head', 'rel_canonical' ) ) {
+		return;
+	}
+	$p = sklepag_seo_biezacy_produkt();
+	if ( $p ) {
+		$url = sklepag_url_produktu_front( $p->slug );
+	} elseif ( is_page( (int) get_option( 'sklepag_strona_sklep' ) ) ) {
+		$url = get_permalink( (int) get_option( 'sklepag_strona_sklep' ) ); // Jawne ID: poza pętlą get_permalink() bywa puste.
+	} else {
+		return;
+	}
+	echo '<link rel="canonical" href="' . esc_url( $url ) . '">' . "\n";
+}
+add_action( 'wp_head', 'sklepag_seo_canonical_wlasny', 3 );
+
+/**
  * Meta description + OpenGraph + Twitter + JSON-LD w <head> strony produktu.
  */
 function sklepag_seo_head() {

@@ -1,6 +1,6 @@
 # Sklep Agentów — dokumentacja techniczna
 
-**Wersja wtyczki: 0.9.25 · wersja schematu bazy: 8 · WordPress 6.7+ · PHP 8.1+**
+**Wersja wtyczki: 0.9.26 · wersja schematu bazy: 8 · WordPress 6.7+ · PHP 8.1+**
 
 > **Po co ten dokument.** To jest **mapa systemu dla audytora i programisty**, nie ulotka.
 > Każda liczba i nazwa tutaj jest wzięta z kodu, nie z pamięci — jeśli coś się rozjedzie,
@@ -31,7 +31,7 @@ produktu i tylko z kluczem publikowalnym (od 0.9.25 — formularz karty musi by�
 | `includes/mail-html.php` | wersja HTML maila po zakupie (wysyłana razem z tekstem jako multipart) |
 | `includes/pobieranie.php` | brama pobrań: token, limit, wygaśnięcie, wydanie pliku |
 | `includes/front-produkt.php` | strony produktów, przepisywanie adresów, treści sprzedażowe |
-| `includes/front-seo.php` | tytuły, opisy, dane strukturalne, mapa witryny |
+| `includes/front-seo.php` | tytuły, opisy, canonical (własny, gdy motyw wyłączył `rel_canonical` WP), dane strukturalne, mapa witryny |
 | `includes/logowania.php` | dziennik logowań administratorów, opóźnienie i limit prób |
 | `includes/admin*.php` | panel: pulpit, produkty, zamówienia, opinie, ustawienia, dziennik |
 | `includes/opinie.php` | opinie kupujących: zalążek i token przy mailu, formularz, moderacja |
@@ -194,7 +194,7 @@ po stronie serwera. To jest świadome ograniczenie, nie przeoczenie.
 
 | Stała | Wartość | Znaczenie |
 |---|---|---|
-| `SKLEPAG_WERSJA` | 0.9.25 | wersja wtyczki (assety, cache) |
+| `SKLEPAG_WERSJA` | 0.9.26 | wersja wtyczki (assety, cache) |
 | `SKLEPAG_WERSJA_SCHEMATU` | 8 | wersja schematu bazy (migracje) |
 | `SKLEPAG_LIMIT_POBRAN` | 10 | ile razy można pobrać plik z jednego wydanego linku (zerowane przy świeżym linku) |
 | `SKLEPAG_LINK_GODZIN` | 72 | ważność linku pobrania |

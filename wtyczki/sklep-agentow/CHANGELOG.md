@@ -20,6 +20,18 @@ Nic jeszcze.
 
 ---
 
+## [0.9.26] — 2026-08-30 · schemat bazy 8 (bez zmian)
+
+### Naprawione
+- **Canonical stron sklepu, gdy motyw wyłącza `rel_canonical` WordPressa.** Dotąd wtyczka tylko
+  podmieniała adres w mechanizmie WordPressa, więc na motywie, który ten mechanizm wyłącza
+  (`remove_action( 'wp_head', 'rel_canonical' )`), lista `/sklep/` i strony produktów nie miały ŻADNEGO
+  znacznika canonical — dla Google `/sklep/produkt/x/` i `/sklep/?sklepag_produkt=x` były dwiema stronami
+  jednej treści. Teraz `includes/front-seo.php` drukuje własny `<link rel="canonical">` dla listy i produktu,
+  ale TYLKO gdy WordPress swojego nie drukuje (inaczej byłyby dwa). Cudze strony motywu nie są dotykane.
+
+---
+
 ## [0.9.25] — 2026-08-30 · schemat bazy 8
 
 ### Dodane
