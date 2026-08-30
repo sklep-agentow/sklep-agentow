@@ -35,7 +35,7 @@ Dwa FAIL-e są **decyzją, nie wadą** — obie zapisane w `audyt/CO-WISI.md` i 
   **Co to znaczy dla klienta, po ludzku:** pięć soczewek udowodniło na podłożonych błędach, że naprawdę widzą
   wady. Dwie tego nie udowodniły — więc **to, czego nie znalazły w obszarze dziennika logowań (L1) i zgodności
   dokumentacji z zachowaniem (L5), nie jest dowodem, że tam nic nie ma.** Ich „czysto” waży mniej niż pozostałych.
-- **Kontrola 6 — próby kontrolne strażników.** `6 z 30` prób kończy EXIT≠0 (`audyt/sklep/PROBY-KONTROLNE.log`,
+- **Kontrola 6 — próby kontrolne strażników.** `6 z 30` prób kończyło EXIT≠0 przy 0.9.23 (od 0.9.26 log w repo niesie `e95de75`: 5 z 31, ten sam zestaw minus chwiejna `przejecie` — §8; `audyt/sklep/PROBY-KONTROLNE.log`,
   przelot maszynowy na `a1b2495`, 30.08 12:18; 1 pominięta z powodem w logu). Zmierzone przez wykluczenie
   na czystym `origin/main`: pięć pada identycznie bez naszych zmian (`blad-klucza`, `ip-za-proxy`, `nonce`,
   `przejecie`, `pulapka` — strażniki botów, dwa ślepe w obie strony), szósta (`dowod-z-paczki`, EXIT=2) ma
@@ -191,3 +191,45 @@ kryterium #2 (mail) przechodzi rozszerzonym strażnikiem.
 właściciela/kolegę), BLIK-u w trybie osadzonym (metoda widoczna w kafelkach, nieklikana), zachowania `return_url` przy metodach
 z przekierowaniem. Klucze: sklep testowy przełączony na konto właściciela (stary sandbox z 17.08 bez e-maila zostaje w sekretach
 jako historia; dowody K7–K10 na nim nie giną).
+
+## 8. Dopisek — wydanie `v0.9.26` (2026-08-30 noc; zbudowane z `main` `a3d9568`)
+
+**Skąd ta delta:** Dzidek zapytał, czy produkt jest sprawdzony pod TEMATY z lekcji z kolegą (nie tylko pod nasz rejestr błędów).
+Lista tematów odnaleziona w warsztacie (notatnik z telefonu, 9 zrzutów) → tabela `audyt/TEMATY-LEKCJI-vs-PRODUKT.md`
+(17 wierszy: dowód / brak / poza zakresem). Z tabeli wyszły dwie rzeczy do zrobienia od razu: **canonical** i **SECURITY/CONTRIBUTING**.
+
+**Co się zmieniło (PR `#225`, 4 rundy):** strony sklepu (lista i produkt) nie miały ŻADNEGO `<link rel="canonical">` na motywie
+gospodarza, bo motyw robi `remove_action( 'wp_head', 'rel_canonical' )`, a nasz filtr `get_canonical_url` nigdy nie był wołany
+(zmierzone `curl`: 0 znaczników) — dla Google `/sklep/produkt/x/` i `/sklep/?sklepag_produkt=x` były dwiema stronami. Wtyczka drukuje
+własny canonical TYLKO gdy WP swojego nie drukuje. **Klasa `is_page( 0 )`** (recenzent r1+r2): przy pustej opcji strony sklepu
+`is_page( 0 )` jest prawdą na każdej stronie — wtyczka drukowała opis/OG/canonical i ładowała CSS/JS sklepu w cudze strony; siedziało
+w 3 miejscach od K5, moja naprawa dołożyła 4., a w pliku głównym były jeszcze 3 (mój grep „po naprawie” był zawężony do `includes/`
+i jednego kształtu idiomu). Jeden pomocnik `sklepag_jest_strona_z_opcji()` w 7 miejscach. 404 nieistniejącego produktu bez meta listy.
+DECYZJE `D37` (D10 przestarzałe). Paczka `sklep-agentow-0.9.26.zip` sha `38f78381…`.
+
+**Rundy `#225`:** r1: 2 WAŻNE (brak paczki 0.9.26; `is_page( 0 )`) + 3 DROBNE (HEAD 200 na 404 → CO-WISI; `og:url` na 404 →
+naprawione; odsyłacz w D10 → naprawione) · r2: 1 WAŻNA (klasa niedomknięta w `sklep-agentow.php` ×3 — naprawione, krok F asertuje
+kolejkę assetów) + 1 DROBNA (zdanie w CO-WISI → naprawione) · r3: „do scalenia”, 3 DROBNE wzięte (martwe zmienne, krok F dla
+„Dziękujemy”, readme) · r4: 1 WAŻNA o zdaniu w `readme.txt` („nie robi nic poza panelem” — skrót `[sklepag_sklep]` na własnej stronie
+nadal renderuje sklep, i ma) — **przeczytana PO scaleniu** (scaliłam w tej samej komendzie, w której czytałam werdykt; własna
+pamięć zakazuje tego wprost); zdanie nie szkodzi, paczka zamknięta zamkiem klasy 10 → poprawka w 0.9.27 (`CO-WISI.md`).
+
+**PR `#226` (3 rundy, docs):** `SECURITY.md`, `CONTRIBUTING.md`, akapit o nagłówkach bezpieczeństwa i CSP ze Stripe w instrukcji
+instalacji, `.gitignore` z `.env*`/`*.pem`, skaner paczki łapie odsyłacze do plików repo. Recenzent: **8 uwag WAŻNYCH, wszystkie
+„tekst SECURITY vs kod”** (wersja nieistniejąca, `.gitignore` bez `.env`, „token jednorazowy” = token opinii nie pobrania, przepisana
+lista bramek, brak reguły nginx dla katalogu plików, `paczka-zgodnosc` „w CI” — ręczny punkt listy wydania, „próba kontrolna podpisu
+webhooka” — nie istnieje, RODO tylko dla sklepu — boty trzymają zgłoszenia/rozmowy/maile i w trybie AI wysyłają fragmenty do
+dostawcy modelu). Każde zdanie poprawione z plikiem i linią. Wniosek → klasa 62 rejestru: SECURITY.md dostaje bramkę „tekst = kod”.
+
+**Trzy liczby na `a3d9568`** (`k7-koniec.sh`): KRYTYCZNE 0 · DUŻE 0 · kontroli FAIL **2 (z 13)** — kontrole 2 i 6 jak w §2, §6, §7.
+Przelot prób kontrolnych na czystym `e95de75` (docs nad `a3d9568`; drzewo z cudzym `SPRZATANIE-RAPORT.md` schowane w `git stash -u`
+na czas przelotu i przywrócone 1:1; log `audyt/sklep/PROBY-KONTROLNE.log` W REPO): 31 uruchomionych, 5 z EXIT≠0 — podzbiór
+zestawu 6 z logu 0.9.25 (`przejecie` chwiejna: raz pada, raz przechodzi), delta nie dołożyła żadnej nowej.
+
+**Pomiary poza kodem (30.08):** motyw WP gospodarza NIE niesie CSP (jego statyczna strona ma CSP bez `unsafe-inline`) — gdyby
+przeniósł je na hosting, płatność by padła (Stripe.js + 4 inline) → akapit w instrukcji i SECURITY §3. Statyczna sonda wydajności
+strony produktu: 63 kB HTML + ~1,3 MB zasobów, z czego 1 MB `stripe.js` tylko na stronie produktu; `front.css` 83 kB (CO-WISI).
+Lighthouse `perf` nadal tylko na hostingu klienta (AN-022). Kolega ma 100/100 z DOSTĘPNOŚCI i SEO, wydajność 94–98 — statyczna strona.
+
+**Długi na 0.9.27** (`audyt/CO-WISI.md`): HEAD 200 na 404 produktu · Yoast/RankMath a własny canonical · `has_action` priorytet 0 ·
+próba kontrolna podpisu webhooka · zdanie w readme o skrócie · honeypot w formularzu opinii · inline skrypty z nonce pod CSP.

@@ -1,17 +1,17 @@
-# PRÓBY KONTROLNE NARZĘDZI — przelot 2026-08-30 17:46
+# PRÓBY KONTROLNE NARZĘDZI — przelot 2026-08-30 20:40
 #
 # Każda pozycja: skrypt podkłada narzędziu znaną wadę i sprawdza, czy narzędzie ją WIDZI.
 # Kod wyjścia zero znaczy: narzędzie zareagowało na podłożoną wadę i przepuściło czysty kod.
 #
 WYGENEROWANE-PRZEZ: narzedzia-qa/proby-kontrolne-przelot.sh
-COMMIT: 2992247
-GALAZ: main
-PODSUMOWANIE: uruchomionych 30, z EXIT≠0: 6, pominiętych: 1
+COMMIT: e95de75
+GALAZ: docs/oddanie-0.9.26
+PODSUMOWANIE: uruchomionych 31, z EXIT≠0: 5, pominiętych: 1
 #
-bramka-poswiadczenia-proba-kontrolna.sh EXIT=0 25s
-bramka-recenzji-proba-kontrolna.sh EXIT=0 0s
-bramka-status-bez-warunku-proba-kontrolna.sh EXIT=0 1s
-bramki-proba-kontrolna.sh EXIT=0 149s
+bramka-poswiadczenia-proba-kontrolna.sh EXIT=0 27s
+bramka-recenzji-proba-kontrolna.sh EXIT=0 1s
+bramka-status-bez-warunku-proba-kontrolna.sh EXIT=0 0s
+bramki-proba-kontrolna.sh EXIT=0 131s
 dowod-aktualizacji-proba-kontrolna.sh EXIT=0 61s
 POMINIETO dowod-zachowania-segregator-proba-kontrolna.sh — deinstaluje wtyczkę ze stosu — do przelotu ręcznego przed wydaniem
 dowod-z-paczki-proba-kontrolna.sh EXIT=2 0s
@@ -20,22 +20,23 @@ k7-koniec-proba-kontrolna.sh EXIT=0 12s
 paczka-zgodnosc-proba-kontrolna.sh EXIT=0 7s
 stos-proba-kontrolna.sh EXIT=0 7s
 test-php-proba-kontrolna.sh EXIT=0 1s
-blad-klucza-proba-kontrolna.sh EXIT=1 6s
+blad-klucza-proba-kontrolna.sh EXIT=1 7s
 dokumentacja-zgodnosc-sklep-proba-kontrolna.sh EXIT=0 10s
 import-csv-proba-kontrolna.sh EXIT=0 7s
-ip-za-proxy-proba-kontrolna.sh EXIT=1 4s
+ip-za-proxy-proba-kontrolna.sh EXIT=1 3s
 licznik-trafien-proba-kontrolna.sh EXIT=0 6s
-nonce-proba-kontrolna.sh EXIT=1 4s
+nonce-proba-kontrolna.sh EXIT=1 5s
 nota-zapisu-proba-kontrolna.sh EXIT=0 26s
 pamiec-rozmowy-proba-kontrolna.sh EXIT=0 6s
-przejecie-proba-kontrolna.sh EXIT=1 11s
+przejecie-proba-kontrolna.sh EXIT=0 10s
 pulapka-proba-kontrolna.sh EXIT=1 8s
 rodo-proba-kontrolna.sh EXIT=0 11s
-segregator-skrzynka-proba-kontrolna.sh EXIT=0 47s
+segregator-skrzynka-proba-kontrolna.sh EXIT=0 49s
+seo-canonical-proba-kontrolna.sh EXIT=0 3s
 statystyki-proba-kontrolna.sh EXIT=0 4s
-stronicowanie-proba-kontrolna.sh EXIT=0 5s
+stronicowanie-proba-kontrolna.sh EXIT=0 6s
 svg-proba-kontrolna.sh EXIT=0 8s
-tokeny-koszt-proba-kontrolna.sh EXIT=0 6s
-wskaznik-pisania-proba-kontrolna.sh EXIT=0 35s
+tokeny-koszt-proba-kontrolna.sh EXIT=0 5s
+wskaznik-pisania-proba-kontrolna.sh EXIT=0 36s
 wybor-modelu-proba-kontrolna.sh EXIT=0 4s
-zgodnosc-proba-kontrolna.sh EXIT=0 17s
+zgodnosc-proba-kontrolna.sh EXIT=0 16s
