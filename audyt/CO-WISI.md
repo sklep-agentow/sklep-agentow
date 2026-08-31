@@ -646,10 +646,16 @@ rejestr dostanie czwarty stan dla znalezisk typu „brak pomiaru”, których ni
   (:179 — CAS własności siedzi w klauzuli WHERE, co NIE jest sprawdzeniem wyniku zapisu),
   przywrót treści maila (:194) i skrótu opinii (:196). Spłacona część: kompensacja
   mierzona przez `$przywrocono`.
+  DRUGI CZŁON tego samego długu (kod przypisuje go wprost: `admin-zamowienie.php:33-36`;
+  r1 #235): kompensacja licznika pobrań po nieudanej wysyłce przywraca `pobrania_uzyte`
+  ze ZDJĘCIA `$zam` z wejścia (`:142`, `$zrodlo_uzyte`), nie ze stanu bazy — pobranie
+  wykonane w oknie między odczytem a zapisem ginie z licznika.
   ⛔ To ta sama klasa, którą ten PR naprawił w anonimizacji — czyli klasa 8 briefingu (naprawa
   egzemplarza zamiast klasy). Nazwana w kodzie, przy funkcji.
   **CO ZAMYKA:** przenieść wzorzec z anonimizacji — pomiar STANU po zapisie zamiast kodu powrotu —
-  wraz z testem podkładającym awarię każdego z pięciu zapisów osobno. Osobna robota, bo to inna
+  wraz z testem podkładającym awarię każdego z pięciu zapisów osobno, ORAZ odczyt
+  `pobrania_uzyte` ze stanu bazy w chwili kompensacji (nie ze zdjęcia wejścia) z własnym
+  przypadkiem testowym „pobranie w oknie kompensacji". Osobna robota, bo to inna
   ścieżka: ponowna wysyłka i kompensacja po nieudanym mailu mają własne przypadki brzegowe.
 - ⬜ **Adres z `/` w części lokalnej zostaje w dzienniku mimo potwierdzenia usunięcia.**
   `wp_json_encode` bez flag zapisuje ukośnik jako `\/`, a anonimizacja szuka SUROWEJ postaci
