@@ -18,10 +18,24 @@ set -u
 
 KORZEN="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DOWOD="$KORZEN/narzedzia-qa/dowod-z-paczki.sh"
-ZRODLO="$KORZEN/boty/paczki/chatbot-live-1.5.0.zip"
 WTYCZKA=chatbot-live
 
-[ -f "$ZRODLO" ] || { echo "PROBA: nie ma paczki $ZRODLO" >&2; exit 2; }
+# ⛔ PACZKA BRANA Z KATALOGU, NIE WPISANA NA SZTYWNO (znalezisko I-13, 31.08).
+# Do 31.08 stało tu `chatbot-live-1.5.0.zip` — paczki o tej wersji NIE MA w repo od dawna
+# (są 1.5.7 i nowsze), więc ta próba kontrolna kończyła się kodem 2 na KAŻDYM przebiegu
+# i od miesiąca nie mierzyła niczego. Wyglądało to jak „pominięte", a znaczyło „martwe".
+# Klasa: test odwołujący się do nośnika, który zniknął.
+# Bierzemy NAJNOWSZĄ paczkę wtyczki — sortowanie wersji, nie alfabetyczne, żeby 1.5.13
+# nie przegrało z 1.5.9.
+ZRODLO="$(find "$KORZEN/boty/paczki" -maxdepth 1 -name "$WTYCZKA-*.zip" 2> /dev/null \
+	| sort -V | tail -1)"
+WERSJA_PACZKI="$(basename "${ZRODLO:-brak}" .zip | sed "s/^$WTYCZKA-//")"
+
+if [ -z "$ZRODLO" ] || [ ! -f "$ZRODLO" ]; then
+	echo "PROBA: nie znalazlem ZADNEJ paczki $WTYCZKA-*.zip w $KORZEN/boty/paczki" >&2
+	exit 2
+fi
+echo "PROBA: pracuje na paczce $(basename "$ZRODLO")"
 command -v zip > /dev/null || { echo "PROBA: brak narzedzia zip" >&2; exit 2; }
 
 BLEDY=0
@@ -39,8 +53,8 @@ zbuduj_mutanta() {
 	rm -rf "$kat"; mkdir -p "$kat/rozpakowane"
 	unzip -q -o "$ZRODLO" -d "$kat/rozpakowane"
 	"$psuj" "$kat/rozpakowane/$WTYCZKA"
-	( cd "$kat/rozpakowane" && zip -q -r "$kat/$WTYCZKA-1.5.0.zip" . )
-	printf '%s' "$kat/$WTYCZKA-1.5.0.zip"
+	( cd "$kat/rozpakowane" && zip -q -r "$kat/$WTYCZKA-$WERSJA_PACZKI.zip" . )
+	printf '%s' "$kat/$WTYCZKA-$WERSJA_PACZKI.zip"
 }
 
 # --- mutanty: każdy psuje DOKŁADNIE JEDNĄ rzecz ------------------------------

@@ -13,6 +13,22 @@ KORZEN="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$KORZEN" || exit 2
 BRAMKI=narzedzia-qa/bramki.sh
 WORKFLOW=.github/workflows/quality.yml
+
+# ⛔ WLASNE WARUNKI WSTEPNE (znalezisko I-12, 31.08). Ta proba uruchamia KOMPLET bramek,
+# w tym phpcs i phpstan — a te potrzebuja `vendor/`. W swiezym klonie albo w oderwanym
+# drzewie roboczym bez `composer install` obie padaja i proba meldowala wtedy
+# „PRZEOCZONYCH AWARII: 1", czyli OSKARZALA PRODUKT o wade, ktorej nie ma.
+# Zmierzone tego samego dnia: to samo repo, dwa katalogi — z `vendor/` kod 0 i 10 bramek
+# zielonych, bez `vendor/` kod 1 i falszywy alarm. Brak warunkow wstepnych to „nie
+# zmierzylam" (kod 2), nigdy „znalazlam wade" (kod 1).
+for N in phpstan phpcs; do
+	if [ ! -x "vendor/bin/$N" ]; then
+		echo "PROBA-BRAMKI: brak vendor/bin/$N — komplet bramek nie ma czym liczyc." >&2
+		echo "              To NIE jest wada bramek. Uruchom: composer install --no-scripts" >&2
+		exit 2
+	fi
+done
+
 KOPIA_B=$(mktemp)
 KOPIA_W=$(mktemp)
 BLEDY=0
