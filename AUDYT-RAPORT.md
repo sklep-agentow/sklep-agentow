@@ -7,7 +7,7 @@ dokumenty SECURITY/CONTRIBUTING — PR `#226`, 3 rundy; delta 0.9.27: HEAD-404, 
 has_action prio 0, zdanie o skrócie — długi z CO-WISI decyzją właściciela 30.08 ~22:15) + bramka końcowa i przelot prób kontrolnych
 na commicie FINALNYM tej gałęzi (log w repo — sekcja delty 0.9.27 niżej niesie sha i liczby) + audyt delty 0.9.28 (kompensacja
 poczty ze śladu `dor_*` schemat 9, `mail_blad` pod własnością tokenu, anonimizacja RODO czyści `mail_tresc`, wygląd CENA/kafle —
-PR `#234`, 7 rund do 0 KRYT/0 WAŻ; zamrożenie paczki i rejestr długów — PR `#235`, 2 rundy; sekcja delty 0.9.28 na końcu) · KRYTYCZNE: 0 · DUZE: 0 · kontroli FAIL: 2 (z 13) · **K7: NO-GO · EXIT=1** (kontrole 2 i 6 — te same co przy 0.9.23 i 0.9.24: decyzja właściciela 28.08; liczby i sha przelotu rozstrzyga nagłówek `audyt/sklep/PROBY-KONTROLNE.log` — sekcja delty 0.9.27 niżej; powody w raporcie)
+PR `#234`, 7 rund do 0 KRYT/0 WAŻ; zamrożenie paczki i rejestr długów — PR `#235`, 2 rundy; sekcja delty 0.9.28 na końcu) · KRYTYCZNE: 0 · DUZE: 0 · kontroli FAIL: 2 (z 13) · **K7: NO-GO · EXIT=1** (kontrola 2 — ta sama co przy 0.9.23 i 0.9.24: decyzja właściciela 28.08; kontrola 6 — dowód przelotu prób PRZETERMINOWANY po squashach 0.9.28: log `audyt/sklep/PROBY-KONTROLNE.log` niesie COMMIT `6a7922c` z linii 0.9.27, sprzed `#234`/`#235` — klasa 67; świeży przelot 33 prób na `0433fc6` = nazwany dług w CO-WISI, przelot bramek i strażników na main 0.9.28 WYKONANY — sekcja delty 0.9.28 na końcu; powody w raporcie)
 
 Ten plik jest **wskaźnikiem maszynowym** dla bramki oddania (hook `oddanie-guard` czyta liczniki
 w nagłówku). Treść audytu — liczby z komendami, decyzje z powodami, długi i miejsca dowodów —
