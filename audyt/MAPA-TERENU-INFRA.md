@@ -73,9 +73,10 @@
 | D2 | Wydania — czy załączniki podmieniane | ✅ | **31.08 wieczór** | czysto: czas dodania każdego załącznika = czas wydania; paczka bota 1.5.13 istniała PRZED najstarszym wydaniem |
 | D3 | Zawartość paczek ZIP — sekrety | ✅ | 31.08 | 29 archiwów, 1313 plików, 43,84 MB → **0 sekretów** |
 | D4 | Zawartość paczek ZIP — ślady wewnętrzne | 🟡 | bramka `slady` per-PR | brak przeglądu wszystkich 29 naraz |
-| D5 | CHANGELOG — kompletność wobec commitów | ⬜ | — | **NIETKNIĘTE** |
+| D5 | CHANGELOG — kompletność wobec commitów | 🟡 | **1.09** | każda z 3 wtyczek ma `CHANGELOG.md`, `readme.txt` niesie `Stable tag: 0.9.28` i wpisy dla 0.9.26-0.9.28 — **nadąża za wydaniami**. Nie porównano wpis-po-wpisie z historią commitów |
 | D6 | Zgodność wersji: kod ↔ tag ↔ dokument | ✅ | 31.08 | `D-1` SECURITY.md — naprawione + strażnik |
-| D7 | Sumy kontrolne paczek dla klienta | ⬜ | — | **NIETKNIĘTE**: czy klient może zweryfikować, co pobrał |
+| D7 | Sumy kontrolne paczek dla klienta | ✅ | **1.09** | **CZYSTO** — paczka zbiorcza wiezie `SHA256SUMS.txt`, a treść wydania podaje sumy SHA-256. Klient MOŻE zweryfikować, co pobrał |
+| D8 | Licencje: nagłówki wtyczek i zgodność z GPL | ✅ | **1.09**, wg skilla `wp-plugin-directory-guidelines` | **CZYSTO**: wszystkie 3 wtyczki mają `License` **i** `License URI` w PHP oraz w `readme.txt`, każda paczka wiezie pełny tekst `LICENSE`. Drobiazg: `composer.json` deklaruje `proprietary` (dotyczy narzędzi dev, NIE trafia do paczek — mylące, nie naruszenie); zapis `GPL-2.0-or-later` w PHP vs `GPLv2 or later` w readme — obie formy dozwolone |
 
 ## E. DOKUMENTY DLA CZŁOWIEKA
 
@@ -84,7 +85,7 @@
 | E1 | `SECURITY.md` | ✅ | 31.08 | `D-1` mówił o wydaniu sprzed trzech releasów |
 | E2 | `CONTRIBUTING.md` | 🟡 | 31.08 | `D-2` obiecuje bramkę, której nie ma — OTWARTE |
 | E3 | `README.md` | 🟡 | rundy #234/#237 | odznaki i licencja poprawione |
-| E4 | `LICENSE` — zgodność z zależnościami | ⬜ | — | **NIETKNIĘTE** |
+| E4 | `LICENSE` — zgodność z zależnościami | ✅ | **1.09** | patrz `D8`. Zależności to wyłącznie narzędzia dev (phpcs, phpstan, wpcs) — nie są dystrybuowane z wtyczką, więc nie mieszają się z GPL produktu |
 | E5 | `DECYZJE.md` — czy aktualne | ⬜ | — | **NIETKNIĘTE** |
 | E6 | Instrukcja dla klienta w paczce | 🟡 | `pakuj-dla-klienta.sh` sprawdza obecność | treść nieoceniana |
 | E7 | Teksty widziane przez klienta (panel, maile) | 🟡 | audyt sklepu | osobny rejestr |
@@ -95,8 +96,9 @@
 |---|---|---|---|---|
 | F1 | RODO — dane osobowe w bazie i logach | 🟡 | strażnik RODO (jednostronny, klasa 72) | dług |
 | F2 | Prawo konsumenckie — zgoda art. 16(m) | 🟡 | zapisane w pamięci warsztatu | czy w mailu — sprawdzone w audycie sklepu |
-| F3 | Polityka prywatności i regulamin | ⬜ | — | **NIETKNIĘTE** |
+| F3 | Wpięcie w mechanizm prywatności WordPressa | ✅ | **1.09** | ⛔ `I-16`: **ZERO** eksporterów/erasersów/`wp_add_privacy_policy_content` (kontrola dodatnia: 33× `add_action`). Wtyczka MA własną anonimizację, ale wbudowane narzędzie WP „Eksportuj/Usuń dane osobowe” **nie widzi danych sklepu** — administrator uzna obowiązek za wypełniony, a dane zostaną. Dług był ZAPISANY w `CO-WISI.md:304` i pojechał do klienta |
 | F4 | Retencja danych kupujących | ⬜ | — | **NIETKNIĘTE** |
+| F5 | Regulamin sklepu (osobny dokument) | ⬜ | — | **NIETKNIĘTE** — sklep sprzedaje konsumentom |
 
 ## G. REPOZYTORIUM I HISTORIA
 
@@ -104,7 +106,7 @@
 |---|---|---|---|---|
 | G1 | Historia gita — sekrety | ✅ | gitleaks + `bramka-poswiadczenia` per-PR | 347 commitów, 0 trafień |
 | G2 | Co jest ŚLEDZONE (vendor, node_modules) | ✅ | 31.08 | 0 i 0; ale 29 ZIP-ów → `B-10` |
-| G3 | `.gitignore` — czy nie przepuszcza | ⬜ | — | **NIETKNIĘTE** (16 reguł, nikt ich nie przeglądał) |
+| G3 | `.gitignore` — czy nie przepuszcza | ✅ | **1.09** | **CZYSTO**: ignoruje `vendor`, `node_modules`, `*.log`, `.env*`, `*.pem`, `wydanie/`, zrzuty; jawny wyjątek `!audyt/sklep/PROBY-KONTROLNE.log` z powodem (dowód poza origin nie istnieje). Zapora właściwa i tak jest w CI (gitleaks + skaner poświadczeń) |
 | G4 | Rozmiar repo i `.git` | 🟡 | 31.08 | repo 24 MB, `.git` 324 MB — nikt nie badał czemu |
 | G5 | Gałęzie — sieroty, niescalone | 🟡 | mózg: 9 lokalnych sierot | czeka na decyzję właściciela |
 
@@ -127,8 +129,23 @@ siedziało `B-3` (runner jako root), `B-8` (ruchome tagi Akcji), `B-11` (wyłąc
 powiedział „większość to błędy infrastruktury” — i mapa pokazuje, dlaczego: infrastruktura
 to głównie rzeczy, których NIE WIDAĆ w plikach repozytorium.
 
-**Po drugie:** pozycji `⬜ NIETKNIĘTE` jest **dwanaście**. To nie znaczy, że tam są błędy —
-znaczy, że nie mamy prawa powiedzieć, że ich nie ma.
+**Po drugie:** pozycji `⬜ NIETKNIĘTE` jest **osiem** (stan 1.09, po domknięciu D5, D7, D8,
+E4, F3 i G3). To nie znaczy, że tam są błędy — znaczy, że nie mamy prawa powiedzieć, że ich
+nie ma.
 
-**Po trzecie:** najgęstsze białe plamy to **dokumenty prawne** (F3, F4), **front wtyczek**
-(A4), **schemat bazy** (A6) i **weryfikowalność paczki przez klienta** (D7).
+⛔ **Liczby w tym pliku licz komendą, nie z pamięci.** Pierwsza wersja deklarowała
+„34 pozycje”, bo autorka wpisała liczbę z głowy; faktyczny pomiar dał **57**.
+To ta sama klasa błędu, którą ten sam plik opisuje. Sprawdzenie:
+```
+grep -cE '^\| [A-H][0-9]+ \|' audyt/MAPA-TERENU-INFRA.md      # wszystkie pozycje
+grep -cE '^\| [A-H][0-9]+ \| [^|]+ \| ⬜ \|' audyt/MAPA-TERENU-INFRA.md   # nietknięte
+```
+
+**Po trzecie:** najgroźniejsza biała plama zamknęła się 1.09 i wyszła z niej rzecz najgorsza
+z dzisiejszych — `I-16`: dług dotyczący **danych osobowych kupujących** był ZAPISANY
+w `CO-WISI.md` i mimo to **pojechał do klienta**, bo nikt nie przenosi długów z tamtego
+dokumentu do rejestru znalezisk ani nie pyta przed wydaniem, które z nich jadą.
+
+**Co zostało nietknięte:** front wtyczek (A4), schemat bazy (A6), kod produktu naszą siatką
+po recenzji kolegi (A7), `CODEOWNERS` (C12), wydajność CI (C13), aktualność `DECYZJE.md` (E5),
+retencja danych kupujących (F4) i regulamin sklepu (F5).
