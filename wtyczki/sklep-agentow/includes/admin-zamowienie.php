@@ -195,7 +195,13 @@ function sklepag_obsluz_resend() {
 			}
 		}
 		// phpcs:enable
-		sklepag_zdarzenie( (int) $zam->id, 'mail_blad', 'ręczna ponowna wysyłka nieudana (wp_mail zwrócił false) — przywrócony stan ostatniej doręczonej wysyłki (link pobrania, treść maila, link do opinii)' );
+		// Treść wpisu pod POMIAREM skutku: „przywrócony" wolno napisać tylko, gdy CAS przeszedł
+		// — inaczej panel twierdziłby, że kupujący ma link, którego w bazie nie ma.
+		if ( $przywrocono > 0 ) {
+			sklepag_zdarzenie( (int) $zam->id, 'mail_blad', 'ręczna ponowna wysyłka nieudana (wp_mail zwrócił false) — przywrócony stan ostatniej doręczonej wysyłki (link pobrania, treść maila, link do opinii)' );
+		} else {
+			sklepag_zdarzenie( (int) $zam->id, 'mail_przejety', 'ręczna ponowna wysyłka nieudana, a token przejął w międzyczasie inny proces — jego stan jest aktualny, niczego nie przywrócono' );
+		}
 	}
 	// phpcs:enable
 

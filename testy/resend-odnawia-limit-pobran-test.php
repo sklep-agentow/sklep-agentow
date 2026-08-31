@@ -201,6 +201,7 @@ $termin_b     = gmdate( 'Y-m-d H:i:s', time() + 72 * HOUR_IN_SECONDS );
 $wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET status='mail_blad', mail_proby=1, token_pobrania=%s, link_wygasa=%s, pobrania_uzyte=3, mail_tresc='TRESC-A-SPRZED', dor_token_pobrania='', dor_link_wygasa=NULL, dor_mail_tresc=NULL, dor_opinia_hash='' WHERE id=%d", $stary_token, $stary_termin, $id ) );
 $wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->prefix}sklepag_opinie SET token_hash='HASH-OPINII-A-PRZED' WHERE zamowienie_id=%d AND status='zalazek'", $id ) );
 $op_jest5    = (string) $wpdb->get_var( $wpdb->prepare( "SELECT token_hash FROM {$wpdb->prefix}sklepag_opinie WHERE zamowienie_id=%d AND status='zalazek'", $id ) );
+$zdb5_przed  = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}sklepag_zdarzenia WHERE zamowienie_id=%d AND typ='mail_blad'", $id ) );
 $symulacja_b = static function ( $pre ) use ( $wpdb, $pz, $sid, $id, $token_b_hash, $termin_b ) {
 	// Proces B: rotacja + doręczenie — jego stan jest od teraz jedyny prawdziwy.
 	$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET token_pobrania=%s, link_wygasa=%s, pobrania_uzyte=0, mail_tresc='TRESC-B-DORECZONA' WHERE stripe_session_id=%s", $token_b_hash, $termin_b, $sid ) );
@@ -217,7 +218,9 @@ echo 'CAS-B: token_nalezy_do_B=' . ( $po5->token_pobrania === $token_b_hash ? 'T
 echo 'CAS-B: mail_tresc_B_zachowana=' . ( 'TRESC-B-DORECZONA' === $po5->mail_tresc ? 'TAK' : 'NIE' ) . " (OCZEKIWANE: TAK)\n";
 echo 'CAS-B: opinia_hash_B_zachowany=' . ( '' === $op_jest5 || 'HASH-OPINII-B' === $op_po5 ? 'TAK' : 'NIE' ) . " (OCZEKIWANE: TAK)\n";
 echo 'CAS-B: status_po=' . $po5->status . " (OCZEKIWANE: mail_w_toku — status należy do B; przed 0.9.28 A błędnie stawiał mail_blad)\n";
-$pass5 = ( ! $wynik5 && $po5->token_pobrania === $token_b_hash && 'TRESC-B-DORECZONA' === $po5->mail_tresc && ( '' === $op_jest5 || 'HASH-OPINII-B' === $op_po5 ) && 'mail_w_toku' === $po5->status );
+$zdb5_po = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}sklepag_zdarzenia WHERE zamowienie_id=%d AND typ='mail_blad'", $id ) );
+echo 'CAS-B: wpis_mail_blad_w_dzienniku=' . ( $zdb5_po - $zdb5_przed ) . " (OCZEKIWANE: 0 — dziennik pod tym samym warunkiem co status; przegrany melduje mail_przejety)\n";
+$pass5 = ( ! $wynik5 && $po5->token_pobrania === $token_b_hash && 'TRESC-B-DORECZONA' === $po5->mail_tresc && ( '' === $op_jest5 || 'HASH-OPINII-B' === $op_po5 ) && 'mail_w_toku' === $po5->status && 0 === ( $zdb5_po - $zdb5_przed ) );
 echo 'CAS-B: WYNIK=' . ( $pass5 ? 'PASS' : 'FAIL - kompensacja/status stale-claima nadpisaly stan procesu, ktory przejal wysylke' ) . "\n";
 
 // ---- CZĘŚĆ 6 (0.9.28): kompensacja przywraca stan DORĘCZONY (dor_*), nie zastany ----

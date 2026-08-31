@@ -976,7 +976,9 @@ function sklepag_render_produkt( $slug ) {
 	$html .= '<li>instrukcja po polsku: instalacja i konfiguracja w kwadrans</li>';
 	$html .= '<li>mail po zakupie z linkiem pobrania — ważny ' . (int) SKLEPAG_LINK_GODZIN . ' h, do ' . (int) SKLEPAG_LIMIT_POBRAN . ' pobrań</li>';
 	if ( $t && ! empty( $t['gwarancja'] ) ) {
-		$html .= '<li>14 dni gwarancji satysfakcji — zwrot bez pytań</li>';
+		// NIE powtarzamy zdania o 14 dniach — stoi 30 cm w lewo (p.sklepag-trigger).
+		// Panel niesie to, czego w kadrze nie ma: co obejmuje kupiona kopia.
+		$html .= '<li>aktualizacje i wsparcie dla kupionej kopii</li>';
 	}
 	$html .= '</ul></aside></div></section>';
 

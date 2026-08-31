@@ -1052,8 +1052,15 @@ function sklepag_domknij_zakup( $sesja ) {
 	// Zapis mail_blad TYLKO pod dowodem własności (AND token_pobrania=%s): gdy stale-claim
 	// odebrał nam wysyłkę i tamten proces doręczył, nasz pad nie może przestawić statusu
 	// jego DORĘCZONEGO maila na mail_blad (panel kłamałby, mail_proby rosłoby cudzej wysyłce).
-	$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET status='mail_blad', mail_proby=mail_proby+1, zmieniono=%s WHERE stripe_session_id=%s AND status='mail_w_toku' AND token_pobrania=%s", $teraz, $sid, $token_wlasnosci ) );
-	sklepag_zdarzenie( (int) $zam->id, 'mail_blad', '' === $email ? 'brak adresu email w sesji' : 'wp_mail zwrocil false' );
+	$blad_zapisany = (int) $wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET status='mail_blad', mail_proby=mail_proby+1, zmieniono=%s WHERE stripe_session_id=%s AND status='mail_w_toku' AND token_pobrania=%s", $teraz, $sid, $token_wlasnosci ) );
+	// Dziennik pod TYM SAMYM warunkiem co status (pomiar skutku, nie wywołania — ta sama
+	// zasada co przy anonimizacji): 0 wierszy = wysyłkę przejął inny proces i jego stan
+	// jest aktualny, więc wpis „mail_blad" kłamałby właścicielowi w panelu.
+	if ( $blad_zapisany > 0 ) {
+		sklepag_zdarzenie( (int) $zam->id, 'mail_blad', '' === $email ? 'brak adresu email w sesji' : 'wp_mail zwrocil false' );
+	} else {
+		sklepag_zdarzenie( (int) $zam->id, 'mail_przejety', 'nieudana wysyłka przegranego procesu — wysyłkę przejął inny proces, statusu nie ruszamy' );
+	}
 	return false;
 	// phpcs:enable
 }
