@@ -40,6 +40,30 @@ if [ ! -f "$BRAMKI" ]; then
   exit 2
 fi
 
+# 0) PODŁOGA BEZPIECZEŃSTWA — bramki, których NIE WOLNO usunąć nawet PORZĄDNIE.
+#    POWÓD (polowanie 31.08, znalezisko B-2): kontrole 1–6 pilnują WZAJEMNEJ ZGODNOŚCI
+#    trzech miejsc (manifest, rejestr BRAMKI=(), próg). Łapią więc ciche pominięcie
+#    bramki — ale przepuszczają jej JAWNE, spójne wykreślenie z wszystkich trzech naraz.
+#    Odtworzone: usunięcie `gitleaks` z rejestru + próg 10→9 + wiersz z manifestu
+#    => "MANIFEST-GUARD: zgodne", kod 0. Paczka mogła wyjść bez skanu sekretów przy
+#    zielonych kontrolach.
+#    ⛔ Ta lista jest ostatnią rzeczą, która nie wynika z innych plików. Usunięcie
+#    bramki stąd wymaga edycji SAMEGO STRAŻNIKA — czyli widocznej zmiany w PR-ze,
+#    obstawionej dodatkowo próbą kontrolną (sprawdz-manifest-proba-kontrolna).
+#    To NIE jest ochrona przed kimś złośliwym z prawem zapisu (tej bez ochrony gałęzi
+#    nie da się zbudować) — to ochrona przed CICHĄ EROZJĄ i pomyłką pod presją.
+PODLOGA=(gitleaks poswiadczenia slady)
+for OBOWIAZKOWA in "${PODLOGA[@]}"; do
+  if ! grep -qE "^${OBOWIAZKOWA}$" "$MANIFEST"; then
+    echo "MANIFEST-GUARD: bramka '$OBOWIAZKOWA' to PODŁOGA BEZPIECZEŃSTWA i musi być w manifeście — nie ma jej." >&2
+    BLAD=1
+  fi
+  if ! grep -qE "^BRAMKI=\([^)]*\b${OBOWIAZKOWA}\b" "$BRAMKI"; then
+    echo "MANIFEST-GUARD: bramka '$OBOWIAZKOWA' to PODŁOGA BEZPIECZEŃSTWA i musi być w rejestrze BRAMKI=() — nie ma jej." >&2
+    BLAD=1
+  fi
+done
+
 # 1) Każda bramka z manifestu musi być W REJESTRZE skryptu ORAZ realnie wołana.
 #    Sam wpis w rejestrze nie wystarcza: tablica, po której nikt nie iteruje, to
 #    deklaracja, nie kontrola.
