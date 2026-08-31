@@ -12,7 +12,7 @@ bierze PACZKĘ z `audyt/PLAN-NAPRAW.md` §3 w podanej kolejności i melduje po k
 - Pełne zasady repo: `CLAUDE.md` (ładuje się sam) — zasada dowodu, 7 klas błędów, bramki.
 
 ## JAK ROBISZ JEDNĄ PACZKĘ (cykl, powtarzasz)
-1. **Meldunek w swoim oknie**: „biorę paczkę X, gałąź fix/X" — PRZED czytaniem kodu. ⛔ `TABLICA.md` i `audyt/REJESTR-ZNALEZISK.md` edytuje TYLKO koordynatorka (wspólne pliki obu builderów, liczniki w nagłówku → konflikt i czerwony `main`); Ty piszesz proponowaną zmianę w opisie PR.
+1. **Meldunek w swoim oknie**: „biorę paczkę X, gałąź fix/X" — PRZED czytaniem kodu. ⛔ `archiwum-procesu/TABLICA.md` i `audyt/REJESTR-ZNALEZISK.md` edytuje TYLKO koordynatorka (wspólne pliki obu builderów, liczniki w nagłówku → konflikt i czerwony `main`); Ty piszesz proponowaną zmianę w opisie PR.
 2. `git fetch origin && git checkout -b fix/<paczka> origin/main`
 3. **Czytasz kartę paczki** w `audyt/PLAN-NAPRAW.md` §3 + sekcje raportów, które karta wskazuje (`audyt/boty/RAPORT-*.md`). Tam jest plik, linia, objaw, przyczyna i test. **Nie szukasz od zera, nie zgadujesz.**
 4. **Najpierw ODTWARZASZ błąd** (`superpowers:systematic-debugging`): wgrywasz SWOJĄ wtyczkę na stos (`docker cp wtyczki/<nazwa>/. strona_wp_wordpress:/var/www/html/wp-content/plugins/<nazwa>/ && docker exec strona_wp_wordpress chown -R www-data:www-data /var/www/html/wp-content/plugins/<nazwa>`) i uruchamiasz test znaleziska — **musi PAŚĆ (EXIT=1)**. ⚠️ Gdy karta mówi, że plik to SONDA (EXIT zawsze 0: `repro/*.php`, `a4-*.js`) — odtwarzasz nią błąd (czytasz wyjście), a strażnikiem będzie TWÓJ nowy test [N]. Jeśli nie pada — STOP, meldujesz (znalezisko mogło zniknąć albo test kłamie), nie „naprawiasz" w ciemno.
@@ -65,7 +65,7 @@ bierze PACZKĘ z `audyt/PLAN-NAPRAW.md` §3 w podanej kolejności i melduje po k
 ## CZEGO NIE ROBISZ
 - Nie podbijasz wersji wtyczek (1.5.9 / 1.3.2 wchodzi RAZ, na końcu, robi to koordynatorka).
 - Nie scalasz własnych PR-ów. Nie pushujesz `--force`. Nie kasujesz gałęzi.
-- Nie edytujesz `audyt/boty/testy-audytu/`, `audyt/boty/repro/`, `audyt/boty/RAPORT-*.md`, `audyt/REJESTR-ZNALEZISK.md`, `TABLICA.md`, `boty/PONAD-SPECYFIKACJE-BOTY.md`, `boty/buduj-paczki.sh`, `boty/paczki/`, `.github/`, `narzedzia-qa/bramki.sh`.
+- Nie edytujesz `audyt/boty/testy-audytu/`, `audyt/boty/repro/`, `audyt/boty/RAPORT-*.md`, `audyt/REJESTR-ZNALEZISK.md`, `archiwum-procesu/TABLICA.md`, `boty/PONAD-SPECYFIKACJE-BOTY.md`, `boty/buduj-paczki.sh`, `boty/paczki/`, `.github/`, `narzedzia-qa/bramki.sh`.
 - Nie zmieniasz zakresu produktu (nowa funkcja ≠ naprawa) — jeśli karta wygląda jak funkcja, pytasz.
 - Nie odpalasz subagentów mocnym modelem (hook blokuje) — `model:'sonnet'` z dietą; Lighthouse NIE (OOM).
 - Nie wysyłasz niczego na zewnątrz, nie ruszasz sekretów poza `set -a; . plik; set +a` bez wypisywania.

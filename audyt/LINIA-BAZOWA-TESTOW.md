@@ -3,7 +3,7 @@
 > **PODSUMOWANIE ETAPU 3 (24.08):** punkt odniesienia = [baza-766b4c9] (zamrożony stan audytu,
 > 13 czerwonych). Po scaleniu 15 PR-ów napraw: [po-naprawach] 04:03 (nocny, diagnostyczny — 4 regresje
 > + 1 nowy czerwony, WSZYSTKIE zdiagnozowane jako wady testów/dryf wspólnego stosu, kod wtyczek zdrowy;
-> szczegóły: TABLICA.md §Zamknięcie etapu 3) → naprawy przyrządów → [po-naprawach-2] 04:34 (kontrolny,
+> szczegóły: TABLICA.md — dziś: archiwum-procesu/TABLICA.md — §Zamknięcie etapu 3) → naprawy przyrządów → [po-naprawach-2] 04:34 (kontrolny,
 > regresje=0) → seria przebiegów z bumpem 1.5.9/1.3.2, która wypaliła z testów przeglądarkowych DWIE
 > klasy kruchości pod pełnym obciążeniem 2 vCPU (30-sekundowy default Playwrighta → 60 s we wszystkich;
 > jednostrzałowe logowanie do wp-admin gubiące ciastko → wspólny `testy/lib/logowanie.js` z ponowieniem;

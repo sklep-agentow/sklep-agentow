@@ -13,7 +13,7 @@
 
 ⛔ **Nie otworzyłem żadnego z plików objętych zakazem** — ani `audyt/boty/RAPORT-*.md`,
 ani `audyt/REJESTR-ZNALEZISK.md`, ani `audyt/boty/WERYFIKACJA-ZNALEZISK.md`,
-ani `audyt/boty/material/06-mapa-polowania.md`, ani `TABLICA.md`, ani opisów
+ani `audyt/boty/material/06-mapa-polowania.md`, ani `archiwum-procesu/TABLICA.md`, ani opisów
 PR-ów z prefiksem `audyt/`. Nie czytałem też materiałów dozwolonych (01–05, 07,
 ściągi egzaminatora) — cała runda poszła z kodu, dokumentacji produktu i CLAUDE.md.
 Pomiar jest nieskażony.

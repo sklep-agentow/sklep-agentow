@@ -78,7 +78,7 @@ DOSŁOWNIE:
 ### ⭐ ZASADA EGZAMINU (Dzidek 17.08 ~00:20): ZERO PYTAŃ DO KOLEGI
 
 > Wszystkie niejasności rozstrzygamy SAMI i dokumentujemy w rejestrze decyzji
-> (PLAN-ETAP1.md). „Kursy" = egzamin DRUGIEGO zdającego, nie nasz temat. Koło ratunkowe
+> (archiwum-procesu/PLAN-ETAP1.md). „Kursy" = egzamin DRUGIEGO zdającego, nie nasz temat. Koło ratunkowe
 > (1 telefon) = na prawdziwy zator.
 
 ### ⏰ TERMIN I ZASADY OCENY (Dzidek 17.08 ~02:20; AKTUALIZACJE 20.08 i 25.08)

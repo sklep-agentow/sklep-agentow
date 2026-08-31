@@ -31,8 +31,8 @@
 
 Te pliki opisują świat **sprzed zwrotu D16** (projekt miał być na Cloudflare/Worker/Next.js;
 dziś jest **w całości w WordPressie**). Zostawione dla historii decyzji:
-`ARCHITEKTURA-PROPOZYCJA.md` · `DO-PLANU-V2.md` · `DLA-OBCYCH-MODELI.md` ·
-`DLA-OBCYCH-MODELI-v2.md` · `PLAN-ETAP1.md` · `ZWIAD-WZORCE.md`
+`archiwum-procesu/ARCHITEKTURA-PROPOZYCJA.md` · `archiwum-procesu/DO-PLANU-V2.md` · `archiwum-procesu/DLA-OBCYCH-MODELI.md` ·
+`archiwum-procesu/DLA-OBCYCH-MODELI-v2.md` · `archiwum-procesu/PLAN-ETAP1.md` · `archiwum-procesu/ZWIAD-WZORCE.md`
 ⚠️ `CLAUDE.md` mówi o tym wprost: „jeśli gdzieś tak napisano, to świat sprzed zwrotu D16
 i jest nieaktualny".
 
@@ -42,7 +42,7 @@ i jest nieaktualny".
 to zdjęcia stanu z konkretnego dnia. Odwołują się do starej architektury **jako do przeszłości**
 — więc trafienia na „Cloudflare/Worker/Next.js" NIE znaczą, że plik jest nieaktualny.
 
-- `SPRZATANIE-RAPORT.md` (18.08) — 14 trafień na słowa starej architektury, ale opisuje
+- `archiwum-procesu/SPRZATANIE-RAPORT.md` (18.08) — 14 trafień na słowa starej architektury, ale opisuje
   **dzisiejsze śmieci**: `node_modules/` jako relikt po zwrocie D16. ⭐ Sprawdzone 21.08:
   `node_modules/` **nadal istnieje** (~195 MB), więc raport jest **aktualny**.
 - `audyt/POMIAR-CZASU.md`, `audyt/K6-RAPORT-TESTERA.md`, `audyt/DZIEN-1.md` — ta sama zasada.

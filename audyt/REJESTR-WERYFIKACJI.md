@@ -5,9 +5,9 @@ Wpis bez dowodu = wrażenie, nie fakt. „Nie ma X" wymaga próby kontrolnej.
 
 | Data | Co | Czym sprawdzone | Wynik | Dowód |
 |------|----|-----------------|-------|-------|
-| 16.08 | Strona docelowa = statyczny eksport Next.js, tylko branch gh-pages, bez źródeł, bez CNAME | klon repo + ls/grep + git ls-remote | POTWIERDZONE | ZWIAD w ARCHITEKTURA-PROPOZYCJA.md |
-| 16.08 | Limity darmowe Cloudflare (Worker 100k/d; D1 5GB, 5M odczytów/d, 100k zapisów/d; R2 10GB) | WebFetch oficjalnego cennika developers.cloudflare.com | POTWIERDZONE | ARCHITEKTURA-PROPOZYCJA.md |
-| 16.08 | Vercel Hobby zakazuje komercji | WebFetch vercel.com/docs/limits/fair-use-guidelines (cytat) | POTWIERDZONE | ARCHITEKTURA-PROPOZYCJA.md |
+| 16.08 | Strona docelowa = statyczny eksport Next.js, tylko branch gh-pages, bez źródeł, bez CNAME | klon repo + ls/grep + git ls-remote | POTWIERDZONE | ZWIAD w ARCHITEKTURA-PROPOZYCJA.md (dziś: archiwum-procesu/) |
+| 16.08 | Limity darmowe Cloudflare (Worker 100k/d; D1 5GB, 5M odczytów/d, 100k zapisów/d; R2 10GB) | WebFetch oficjalnego cennika developers.cloudflare.com | POTWIERDZONE | ARCHITEKTURA-PROPOZYCJA.md (dziś: archiwum-procesu/) |
+| 16.08 | Vercel Hobby zakazuje komercji | WebFetch vercel.com/docs/limits/fair-use-guidelines (cytat) | POTWIERDZONE | ARCHITEKTURA-PROPOZYCJA.md (dziś: archiwum-procesu/) |
 | 16.08 | Stripe PL: cennik bez opłat stałych; BLIK 1,6%+1 zł | WebFetch stripe.com/pl/pricing | POTWIERDZONE | ZROZUMIENIE.md §P4 |
 | 16.08 | Stripe działa bez zarejestrowanej firmy | źródła NIEOFICJALNE (blogi/forum ×3) | NIEPOTWIERDZONE OFICJALNIE — zweryfikować przy zakładaniu konta | ZROZUMIENIE.md §P4 |
 | 17.08 | sprawdz-manifest.sh działa w tym repo | uruchomienie lokalne, exit 0 | POTWIERDZONE | czat 17.08 ~01:30 |

@@ -63,10 +63,10 @@ rozstrzygnięcie K1: kursy = egzamin drugiego zdającego) · **nie ma wiersza �
 **OTWARTE PO PIWOCIE — STAN 18.08: WSZYSTKO ZAMKNIĘTE:** ~~trzeci produkt~~ ✅ (PW-3: produkty = 2 boty; „3" = łącznie ze sklepem) · ~~głębokość botów~~ ✅ rozstrzygnięta w planie v3 (§14 wycena + D19): DZIAŁAJĄCY RDZEŃ DEMO + instrukcja, pełne AI/IMAP jawnie po egzaminie — klepnięcie razem z planem · ~~kto/kiedy konwertuje~~ ✅ MY, WYKONANE nocą 17/18.08 (PR #86, patrz PW-1) · ~~na czym testujemy~~ ✅ stack warsztatowy (WP 7.0.4/PHP 8.4, pełna kopia strony po konwersji) + drugi CZYSTY WP do testu instalacji od zera (K6) · ~~granica „NIE dotykamy reszty strony"~~ ✅ zdefiniowana w planie v3 §3: żyjemy we własnych tabelach/opcjach/stronach/shortcode'ach, motyw i cudze wtyczki nietykalne, odpięcie = deinstalacja z czystym uninstall (symetria zapis↔sprzątanie) · ~~czy „wiadomość, co ułatwi" padła~~ ✅ Dzidek 18.08: nic nowszego nie ma, planujemy na stanie 17.08 — ułatwiaczem była notatka-wersja-aktualna ~23:20 + info o 2 botach. **Dodatkowo 18.08: S-04/S-07/S-09 KLEPNIĘTE** („robimy jak dobre sklepy" — wytyczna wiążąca, D12/MAPA-SPEC).
 
 ---
-**Status (HISTORIA sprzed piwotu): PLAN KLEPNIĘTY w wersji egzaminowej (16.08 ~23:45)** — architektura z `ARCHITEKTURA-PROPOZYCJA.md` zaakceptowana kierunkowo przez Dzidka z twardym zakresem:
+**Status (HISTORIA sprzed piwotu): PLAN KLEPNIĘTY w wersji egzaminowej (16.08 ~23:45)** — architektura z `archiwum-procesu/ARCHITEKTURA-PROPOZYCJA.md` zaakceptowana kierunkowo przez Dzidka z twardym zakresem:
 
 ## ⭐ ZASADA EGZAMINU (Dzidek 17.08 ~00:20): ZERO PYTAŃ DO KOLEGI
-Wszystkie niejasności rozstrzygamy SAMI i dokumentujemy w rejestrze decyzji (PLAN-ETAP1.md).
+Wszystkie niejasności rozstrzygamy SAMI i dokumentujemy w rejestrze decyzji (archiwum-procesu/PLAN-ETAP1.md).
 „Kursy" = egzamin DRUGIEGO zdającego, nie nasz temat. Koło ratunkowe (1 telefon) = na prawdziwy zator.
 
 ## ⏰ TERMIN I ZASADY OCENY (Dzidek 17.08 ~02:20; AKTUALIZACJE 20.08 i 25.08)
@@ -149,9 +149,9 @@ Tekst mały, ale funkcje = mała **aplikacja z zapleczem**: baza + panel z logow
 
 ## OTWARTE PYTANIA
 
-- ~~P1 DOSTĘPY~~ ✅ 16.08 ~23:00: `matthewplugins.github.io` + repo `MatthewPlugins/matthewplugins.github.io` (TYLKO ODCZYT). Zwiad zrobiony sama — wynik i propozycja: `ARCHITEKTURA-PROPOZYCJA.md`. Hosting docelowy: darmowy GitHub Pages (Dzidek: kolega może KIEDYŚ przenieść na płatny — projektujemy przenośnie). ⚠️ ZDEZAKTUALIZOWANE 17.08: repo przemianowane na `automatic-ai`, dostęp podniesiony do ZAPISU, hosting docelowy = WordPress — patrz §PIWOT PW-1/PW-6.
+- ~~P1 DOSTĘPY~~ ✅ 16.08 ~23:00: `matthewplugins.github.io` + repo `MatthewPlugins/matthewplugins.github.io` (TYLKO ODCZYT). Zwiad zrobiony sama — wynik i propozycja: `archiwum-procesu/ARCHITEKTURA-PROPOZYCJA.md`. Hosting docelowy: darmowy GitHub Pages (Dzidek: kolega może KIEDYŚ przenieść na płatny — projektujemy przenośnie). ⚠️ ZDEZAKTUALIZOWANE 17.08: repo przemianowane na `automatic-ai`, dostęp podniesiony do ZAPISU, hosting docelowy = WordPress — patrz §PIWOT PW-1/PW-6.
 - ~~P7. KOLEGA = MatthewPlugins?~~ ✅ 17.08: potwierdzone pośrednio — kolega dodał NAS do SWOJEGO repo strony (`MatthewPlugins/automatic-ai`), czyli egzaminator = właściciel strony.
-- **P8. ARCHITEKTURA** — czeka na klepnięcie Dzidka (`ARCHITEKTURA-PROPOZYCJA.md`). [OTWARTE]
+- **P8. ARCHITEKTURA** — czeka na klepnięcie Dzidka (`archiwum-procesu/ARCHITEKTURA-PROPOZYCJA.md`). [OTWARTE]
 - **K1. KURSY W BAZIE** — potwierdzić odczyt godzący. [OTWARTE]
 - ~~P2 KLIENT/KURSY~~ ✅ egzamin nr 2 od kolegi, 4 strony. ~~P3 POSTAĆ PRODUKTU~~ ✅ paczka cyfrowa (pliki). ~~P5 KONTA~~ ✅ nie robimy, jedno konto admina. ~~P6 TELEFON~~ ✅ zasada egzaminu (FAKT 11), nie funkcja.
 

@@ -44,14 +44,14 @@ POZA tą jedną wtyczką: `PLAN-PROJEKTU.md`, `DECYZJE.md`, instrukcja instalacj
 R2, frontend statyczny HTML/Next.js; dziś jest **w całości wtyczką WordPressa**).
 Sprawdzone nagłówkami/treścią (nie zgaduję z samego tytułu pliku):
 
-- **`PLAN-ETAP1.md`** (40 linii) — CAŁY plik. Ostatnia linia (40) wprost: „architektura:
+- **`archiwum-procesu/PLAN-ETAP1.md`** (40 linii) — CAŁY plik. Ostatnia linia (40) wprost: „architektura:
   statyczna witryna + darmowe zaplecze (Cloudflare) + Stripe Checkout + mail z
   wygasającym linkiem…" — plik z 17.08 ~00:15, czyli SPRZED wieczornego piwotu tego
   samego dnia.
-- **`ARCHITEKTURA-PROPOZYCJA.md`** (54 linie) — CAŁY plik ma WŁASNY nagłówek: „⚠️
+- **`archiwum-procesu/ARCHITEKTURA-PROPOZYCJA.md`** (54 linie) — CAŁY plik ma WŁASNY nagłówek: „⚠️
   HISTORIA — UNIEWAŻNIONE PIWOTEM 17.08 (D16): cały ten dokument opisuje wariant
   «statyczny HTML + Cloudflare», który odpadł (sklep = wtyczka WP, zaplecze w WP)".
-- **`DO-PLANU-V2.md`** (199 linii) — wielokrotne odwołania do starej architektury:
+- **`archiwum-procesu/DO-PLANU-V2.md`** (199 linii) — wielokrotne odwołania do starej architektury:
   „Worker+D1+R2" (linia 22: „wyłączenie zaplecza (Worker+D1+R2) wg instrukcji"), „Worker
   nie loguje kluczy ani tokenów" (linia 41), „eksport bazy D1 przed każdą migracją
   schematu" (linia 143), „oficjalne przykłady Stripe/Cloudflare" (linia 107).
@@ -64,7 +64,7 @@ Sprawdzone nagłówkami/treścią (nie zgaduję z samego tytułu pliku):
   sklepu: aktywacja CZYSTA"…) opisują już weryfikacje na stosie WordPress i **SĄ
   aktualne**.
 
-(`DLA-OBCYCH-MODELI.md`, `DLA-OBCYCH-MODELI-v2.md`, `ZWIAD-WZORCE.md` w katalogu głównym
+(`DLA-OBCYCH-MODELI.md`, `DLA-OBCYCH-MODELI-v2.md`, `ZWIAD-WZORCE.md` — wtedy w katalogu głównym, dziś: `archiwum-procesu/`;
 nie były w zleceniu tego materiału do sprawdzenia — nie orzekam o ich statusie tutaj.)
 
 ## 📅 RAPORTY Z DATĄ — osobna kategoria (zdjęcie stanu, nie dokument żywy)
