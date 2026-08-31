@@ -61,7 +61,7 @@ jest mało. ⛔ **Do klepnięcia albo odrzucenia — to twoja decyzja, nie moja*
 Lista „braków” z 29.08 sprawdzona ponownie komendą (recenzja `#217`): 7 z 8 zamknięte —
 `wtyczki/sklep-agentow/INSTRUKCJA.md` (+5 zrzutów panelu) · 3 diagramy PNG w `dokumentacja/diagramy/` ·
 `SHA256SUMS.txt` z `pakuj-dla-klienta.sh` · `PONAD-SPECYFIKACJE.md` sklepu w paczce (allowlista) · `LICENSE`
-w korzeniu · `dla-klienta/PRZECZYTAJ-MNIE.txt` · README dla klienta (5 badge’ów, 4 zrzuty).
+w korzeniu · `dla-klienta/PRZECZYTAJ-MNIE.txt` · README dla klienta (5 badge’ów, 4 zrzuty; dziś: 4 badge’e — ślepa odznaka wydania zdjęta w #237, shields nie widzi prywatnego repo).
 - [ ] **Zrzuty w `dokumentacja/INSTRUKCJA-INSTALACJI.md`: nadal ZERO** — jedyna otwarta pozycja; dług w `audyt/CO-WISI.md`
   (instrukcja instalacji jest tekstowa, kroki nazywają ekrany po nazwie).
 
