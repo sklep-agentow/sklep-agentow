@@ -39,6 +39,17 @@ if [ -z "$ETYKIETA" ] || [ -z "$KATALOG" ]; then
 fi
 [ -d "$KATALOG" ] || { echo "SLADY: nie ma katalogu $KATALOG" >&2; exit 2; }
 
+# MIANOWNIK. Katalog moze ISTNIEC i byc pusty (albo miec same pliki binarne) —
+# wtedy skaner konczyl: nowe=0, EXIT 0, czyli meldowal CZYSTO, choc nie przeczytal
+# ani jednego pliku. Literowka w sciezce wywolania robila z niego wiecznie zielone
+# swiatlo. Znalezisko 31.08 (rejestr infra I-2, klasa 74 sciagi).
+# EXIT 2 = nie zmierzylam (blad wywolania), a nie 1 = znalazlam slady.
+SKANOWANE=$(find "$KATALOG" -type f 2>/dev/null | wc -l)
+if [ "$SKANOWANE" -eq 0 ]; then
+	echo "SLADY: katalog $KATALOG nie ma ANI JEDNEGO pliku — nic nie zeskanowane, to nie jest czysto. EXIT 2" >&2
+	exit 2
+fi
+
 KORZEN_NARZEDZIA="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ZALEGLOSCI="${SLADY_ZALEGLOSCI:-$KORZEN_NARZEDZIA/slady-zaleglosci.txt}"
 
@@ -136,8 +147,8 @@ for klucz in "${!ZNANE[@]}"; do
 	fi
 done
 
-printf 'SLADY %s [%s]: nowe=%d, dlug z listy=%d, martwe wpisy=%d\n' \
-	"$WERSJA_NARZEDZIA" "$ETYKIETA" "$NOWE" "$DLUG" "$OSIEROCONE"
+printf 'SLADY %s [%s]: nowe=%d, dlug z listy=%d, martwe wpisy=%d (przeskanowanych plikow: %d)\n' \
+	"$WERSJA_NARZEDZIA" "$ETYKIETA" "$NOWE" "$DLUG" "$OSIEROCONE" "$SKANOWANE"
 
 if [ "$NOWE" -gt 0 ] || [ "$OSIEROCONE" -gt 0 ]; then
 	exit 1

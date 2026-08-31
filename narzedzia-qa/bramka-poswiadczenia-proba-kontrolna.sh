@@ -3,7 +3,11 @@
 # Przypadki: cookie-jar WP · sekret webhooka · nonce w URL (`&_wpnonce=`) · nonce w JSON · cookie-jar W HISTORII
 # (zacommitowany i usunięty następnym commitem w klonie tymczasowym — drzewo czyste, historia brudna).
 set -u
-cd "$(git rev-parse --show-toplevel)" || exit 2
+# Ta sama pulapka, ktorej pilnuje ten plik: `cd "$(...)"` poza repo dostaje PUSTKE,
+# a `cd ""` melduje sukces — wiec `|| exit 2` bylby martwy (rejestr infra I-5).
+KORZEN="$(git rev-parse --show-toplevel 2>/dev/null)"
+[ -n "$KORZEN" ] || { echo "PROBA: nie w repo git" >&2; exit 2; }
+cd "$KORZEN" || exit 2
 BLEDY=0
 PLIK=audyt/.proba-kontrolna-cookie.txt
 KLON=""
@@ -32,6 +36,21 @@ if git clone -q . "$KLON" && cp narzedzia-qa/bramka-poswiadczenia.sh "$KLON/narz
 	&& git add ck.txt && git commit -qm "brud" && git rm -q ck.txt && git commit -qm "sprzatanie w nowym commicie" \
 	&& bash narzedzia-qa/bramka-poswiadczenia.sh > /dev/null
 ); then echo "  BLAD cookie-jar w HISTORII (usunięty nowym commitem) PRZESZEDL"; BLEDY=$((BLEDY+1)); else echo "  OK   cookie-jar w HISTORII złapany mimo git rm (EXIT 1)"; fi
+
+# PRZYPADEK, KTOREGO TU NIGDY NIE BYLO: bramka uruchomiona SPOZA repo.
+# To wlasnie ta luka dala znalezisko kolegi 31.08 — bramka skanowala zero plikow
+# i zero commitow, i konczyla EXIT 0, czyli meldowala czysto. Kontrola musi umiec
+# zobaczyc blad, ktorego sie boi: oczekujemy EXIT 2 (nie zmierzylam), nie 0.
+POZA="$(mktemp -d)"
+( cd "$POZA" && bash "$KORZEN/narzedzia-qa/bramka-poswiadczenia.sh" >/dev/null 2>&1 )
+KOD_POZA=$?
+rmdir "$POZA" 2>/dev/null
+if [ "$KOD_POZA" -eq 2 ]; then
+	echo "  OK   uruchomiona SPOZA repo odmawia (EXIT 2)"
+else
+	echo "  BLAD uruchomiona SPOZA repo dala EXIT $KOD_POZA (oczekiwano 2) — zielone bez pomiaru"
+	BLEDY=$((BLEDY+1))
+fi
 
 if [ "$BLEDY" -eq 0 ]; then echo "BRAMKA POSWIADCZENIA ROZPOZNAJE PODLOZONE POSWIADCZENIA (drzewo + historia) — i przepuszcza czysty stan"; exit 0; fi
 echo "BLEDOW: $BLEDY"; exit 1
