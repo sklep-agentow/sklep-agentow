@@ -617,11 +617,13 @@ rejestr dostanie czwarty stan dla znalezisk typu „brak pomiaru”, których ni
 - ⬜ **`#207` WAŻNA 4, druga połowa** — asercja zgodności kodu ze stosem stoi w teście RODO,
   ale POZOSTAŁE testy na żywym stosie jej nie mają. Do przeglądu przy następnej rundzie QA:
   każdy test mierzący stos powinien najpierw dowieść, że mierzy TEN kod, który jest w repo.
-- ⬜ **`#207` DROBNA 5** — `sklepag_obsluz_anonimizacje()` wciąga `mail_tresc` do pamięci
-  (`SELECT id, email_kupujacego, mail_tresc`) i nigdy go nie używa ani nie czyści. Dziś nieszkodliwe:
-  treść maila nie niesie adresu w innej postaci niż ta czyszczona. Do przeglądu przy następnej
-  rundzie QA: albo pole wypada z zapytania, albo zostaje objęte anonimizacją — obecny stan jest
-  niejednoznaczny dla czytającego (docblock mówi o tym wprost, żeby nie było wątpliwości).
+- ✅ ZAMKNIĘTE 31.08 (0.9.28, #234 r5): **`#207` DROBNA 5** — `mail_tresc` w anonimizacji
+  rozstrzygnięte w OBIE strony naraz: pole wypadło z SELECT-a na wejściu (`admin-zamowienie.php:264`)
+  ORAZ zostało objęte anonimizacją (`mail_tresc=NULL` w UPDATE :374 + człon w pomiarze skutku).
+  Teza „dziś nieszkodliwe" obalona w r5 #234: treść niosła pełną kopię danych do faktury
+  (nazwa firmy, NIP, adres). Dowód: commit `22fe4a4` + strażnik
+  `testy/rodo-anonimizacja-pomiar-skutku-test.sh` (przypadek z fakturą w treści maila,
+  kalibrowany na kodzie sprzed naprawy: FAIL dokładnie na nowej asercji).
 - ⬜ **Siódmy migoczący strażnik chatbota: `testy/statystyki-proba-kontrolna.sh`.** Kończy `EXIT=1`
   z komunikatem „TEST SLEPY NA 1 PODLOZONYCH BLEDOW” — nie łapie wady „wiersze bez znacznika wliczone
   do skuteczności” w raporcie skuteczności chatbota. ⛔ Zmierzone 28.08 dowodem przez wykluczenie:
@@ -632,13 +634,15 @@ rejestr dostanie czwarty stan dla znalezisk typu „brak pomiaru”, których ni
   — to jeden teren, jedna robota, nie sześć osobnych.
 - ⬜ **BLIŹNIAK klasy „zapisujemy skutek, nie sprawdziwszy, czy operacja się udała" —
   ścieżka ponownej wysyłki maila** (`wtyczki/sklep-agentow/includes/admin-zamowienie.php`,
-  `sklepag_obsluz_resend()`). Zmierzone 28.08 (recenzja `#207`, runda 3): **sześć** wywołań
-  `$wpdb->query()` bez sprawdzenia wyniku — zapisy tokenu, `link_wygasa`, `mail_tresc`, statusu
-  `mail_blad` i licznika prób oraz tokenu opinii. Skutek zapisywany niezależnie od powodzenia.
+  `sklepag_obsluz_resend()`). Zmierzone 28.08 (recenzja `#207`, runda 3) jako sześć wywołań;
+  po 0.9.28 (#234) zostało **pięć** `$wpdb->query()` bez sprawdzenia wyniku (zgodnie
+  z komentarzem nagłówkowym pliku, :28) — zapisy tokenu, `link_wygasa`, `mail_tresc` i tokenu
+  opinii; status `mail_blad` idzie już pod CAS własności, a kompensacja jest mierzona przez
+  `$przywrocono` — częściowa spłata, nie całość klasy.
   ⛔ To ta sama klasa, którą ten PR naprawił w anonimizacji — czyli klasa 8 briefingu (naprawa
   egzemplarza zamiast klasy). Nazwana w kodzie, przy funkcji.
   **CO ZAMYKA:** przenieść wzorzec z anonimizacji — pomiar STANU po zapisie zamiast kodu powrotu —
-  wraz z testem podkładającym awarię każdego z sześciu zapisów osobno. Osobna robota, bo to inna
+  wraz z testem podkładającym awarię każdego z pięciu zapisów osobno. Osobna robota, bo to inna
   ścieżka: ponowna wysyłka i kompensacja po nieudanym mailu mają własne przypadki brzegowe.
 - ⬜ **Adres z `/` w części lokalnej zostaje w dzienniku mimo potwierdzenia usunięcia.**
   `wp_json_encode` bez flag zapisuje ukośnik jako `\/`, a anonimizacja szuka SUROWEJ postaci

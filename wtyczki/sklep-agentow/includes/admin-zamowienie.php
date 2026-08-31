@@ -519,7 +519,7 @@ function sklepag_admin_zamowienie() {
 			: '<div class="notice notice-error"><p>Ponowna wysyłka NIE powiodła się — sprawdź konfigurację poczty serwera.</p></div>';
 	}
 	if ( isset( $_GET['sklepag_anonimizacja'] ) ) {
-		echo '<div class="notice notice-success is-dismissible"><p>Kupujący zanonimizowany: adres usunięty, token pobrania unieważniony; kwoty i czasy pozostały w statystykach.</p></div>';
+		echo '<div class="notice notice-success is-dismissible"><p>Kupujący zanonimizowany: adres, dane do faktury i treść maila usunięte, token pobrania unieważniony; kwoty i czasy pozostały w statystykach.</p></div>';
 	}
 	// phpcs:enable
 
@@ -549,9 +549,13 @@ function sklepag_admin_zamowienie() {
 	// Treść maila + akcje TUŻ OBOK (wzorzec Stripe „Resend receipt").
 	echo '<div class="postbox sklepag-box"><div class="inside">';
 	echo '<h2 class="sklepag-box-tytul">Treść wysłanego maila <span class="sklepag-szary">(podgląd treści — nie kopia z Twojej skrzynki)</span></h2>';
+	// Trzy stany, nie dwa: anonimizacja ustawia mail_tresc=NULL przy zamówieniu DOMKNIĘTYM —
+	// zdanie o „niedomkniętym" byłoby wtedy nieprawdą obok statusu „mail wysłany" (wzorzec wiersza „Dane do faktury").
 	echo $zam->mail_tresc
 		? '<pre class="sklepag-mail-tresc">' . esc_html( $zam->mail_tresc ) . '</pre>'
-		: '<p class="description">Treść maila jeszcze nie powstała (zamówienie niedomknięte).</p>';
+		: ( $zanonimizowane
+			? '<p class="description">Treść maila usunięta przy anonimizacji (RODO) — niosła dane kupującego, w tym dane do faktury.</p>'
+			: '<p class="description">Treść maila jeszcze nie powstała (zamówienie niedomknięte).</p>' );
 	// Przycisk tylko w stanach, w których akcja go przyjmie (mail_wyslany, mail_blad) — wcześniej pokazywał się
 	// też na zamówieniu zwróconym/spornym, a kliknięcie kończyło się odmową o „domykaniu automatycznym”.
 	if ( ! $zanonimizowane && '' !== (string) $zam->email_kupujacego && in_array( $zam->status, array( 'mail_wyslany', 'mail_blad' ), true ) ) {
@@ -563,10 +567,10 @@ function sklepag_admin_zamowienie() {
 	echo '<div class="postbox sklepag-box"><div class="inside">';
 	echo '<h2 class="sklepag-box-tytul">Dane osobowe (RODO)</h2>';
 	if ( $zanonimizowane ) {
-		echo '<p>Kupujący zanonimizowany ' . esc_html( $zam->usunieto_dnia ) . ' — adres usunięty, kwoty i czasy pozostały w statystykach.</p>';
+		echo '<p>Kupujący zanonimizowany ' . esc_html( $zam->usunieto_dnia ) . ' — adres, dane do faktury i treść maila usunięte; kwoty i czasy pozostały w statystykach.</p>';
 	} else {
-		echo '<p class="description">Na żądanie kupującego: usuwa adres e-mail i unieważnia link pobrania; kwoty i czasy zostają (statystyki sprzedaży). Operacja NIEODWRACALNA.</p>';
-		echo '<p><a href="' . esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=sklepag_anonimizuj&zamowienie=' . (int) $zam->id ), 'sklepag_anonimizuj' ) ) . '" class="button sklepag-button-uwaga" onclick="return confirm(\'Anonimizacja jest NIEODWRACALNA: adres e-mail zniknie, link pobrania przestanie działać. Kontynuować?\');">Anonimizuj kupującego</a></p>';
+		echo '<p class="description">Na żądanie kupującego: usuwa adres e-mail, dane do faktury i zapisaną treść maila (razem ze śladem doręczonej wysyłki), unieważnia link pobrania; kwoty i czasy zostają (statystyki sprzedaży). Operacja NIEODWRACALNA.</p>';
+		echo '<p><a href="' . esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=sklepag_anonimizuj&zamowienie=' . (int) $zam->id ), 'sklepag_anonimizuj' ) ) . '" class="button sklepag-button-uwaga" onclick="return confirm(\'Anonimizacja jest NIEODWRACALNA: adres e-mail, dane do faktury i treść maila znikną, link pobrania przestanie działać. Kontynuować?\');">Anonimizuj kupującego</a></p>';
 	}
 	echo '</div></div>';
 

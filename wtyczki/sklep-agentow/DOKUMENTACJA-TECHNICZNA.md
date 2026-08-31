@@ -77,7 +77,7 @@ ma pole-pułapkę i limity żądań; twarde sufity długości: imię 100 · tytu
 późniejsza edycja produktu nie zmieniła historii · `status` (`oczekuje` → `oplacone`
 → `mail_wyslany`) · `token_pobrania`, `link_wygasa`, `pobrania_limit`,
 `pobrania_uzyte` — brama pobrań · `zgoda_tresc`, `zgoda_czas` — dowód zgody
-(RODO) · `mail_tresc` — wysłana treść · `dor_token_pobrania`, `dor_link_wygasa`,
+(RODO) · `mail_tresc` — wysłana treść (czyszczona przy anonimizacji) · `dor_token_pobrania`, `dor_link_wygasa`,
 `dor_mail_tresc`, `dor_opinia_hash` — ślad ostatniej DORĘCZONEJ wysyłki (0.9.28, schemat 9):
 zapisywany w tym samym zapytaniu co status `mail_wyslany`, a kompensacja nieudanej rotacji
 linku (cron i „Wyślij ponownie") przywraca właśnie ten stan, nie zastany; czyszczony przy

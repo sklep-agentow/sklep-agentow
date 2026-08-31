@@ -77,6 +77,11 @@ printf '%s\n' "$WY_A" | sed 's/^/    | /'
 ID_A=$(pole "$WY_A" ID)
 [ -n "$ID_A" ] || { echo "PRZYRZAD: krok A nie oddal ID zamowienia"; exit 2; }
 
+# ⛔ WAZNA 1 #234 r6: render panelu PRZED krokiem stanu (tamten sprzata zamowienie).
+WY_R=$($WP eval-file - "$ID_A" < testy/kroki-rodo/rodo-anonimizacja-krok-render.php 2>&1)
+printf '%s\n' "$WY_R" | sed 's/^/    | /'
+case "$WY_R" in *"RENDER_PRZYRZAD=OK"*) : ;; *) echo "PRZYRZAD: render panelu nie doszedl do skutku"; $WP eval-file - "$ID_A" < testy/kroki-rodo/rodo-anonimizacja-krok-stan.php >/dev/null 2>&1; exit 2 ;; esac
+
 STAN_A=$($WP eval-file - "$ID_A" < testy/kroki-rodo/rodo-anonimizacja-krok-stan.php 2>&1)
 printf '%s\n' "$STAN_A" | sed 's/^/    | /'
 
@@ -90,6 +95,10 @@ case "$WY_A" in *"REDIRECT="*"sklepag_anonimizacja=ok"*) ok "A: wlasciciel dosta
 case "$WY_A" in *"MAIL_TRESC_PRZED=ZAWIERA-FAKTURE"*) ok "A: warunek wstepny — tresc maila zawiera dane faktury (jest co czyscic)" ;; *) zle "A: zasiew BEZ danych faktury w tresci maila — przypadek nic nie mierzy" ;; esac
 [ "$(pole "$STAN_A" MAIL_TRESC)" = "PUSTY" ] && ok "A: tresc maila (kopia danych faktury: NIP, adres) zniknela" || zle "A: tresc maila ZOSTALA — dane do faktury do odczytania po anonimizacji"
 [ "$(pole "$STAN_A" DANE_FAKTURY)" = "PUSTY" ] && ok "A: dane_faktury puste" || zle "A: dane_faktury ZOSTALY"
+# ⛔ WAZNA 1 #234 r6: panel zanonimizowanego zamowienia nie moze pisac „zamowienie niedomkniete"
+#   obok statusu mail_wyslany — ma mowic wprost, ze tresc usunieto przy anonimizacji.
+[ "$(pole "$WY_R" RENDER_FRAZA_NIEDOMKNIETE)" = "0" ] && ok "A: panel NIE pisze o niedomknietym zamowieniu po anonimizacji" || zle "A: panel KLAMIE — po anonimizacji pisze o zamowieniu niedomknietym przy statusie mail_wyslany"
+[ "$(pole "$WY_R" RENDER_FRAZA_USUNIETA)" = "1" ] && ok "A: panel mowi wprost o usunieciu tresci przy anonimizacji" || zle "A: panel nie tlumaczy pustej tresci maila anonimizacja"
 [ "$(pole "$STAN_A" ZDARZENIE_ANONIMIZACJA)" = "JEST" ] && ok "A: zdarzenie anonimizacja zapisane" || zle "A: brak zdarzenia anonimizacja"
 [ "$(pole "$STAN_A" ZDARZENIE_ANONIMIZACJA_BLAD)" = "BRAK" ] && ok "A: brak falszywego zdarzenia bledu" || zle "A: zapisano anonimizacja_blad mimo powodzenia"
 
