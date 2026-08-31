@@ -360,6 +360,11 @@ wersji ich nie przeniósł — dowód recenzji r1: `grep -nE '263|czytanie JEST 
 
 ## KLASY DOPISANE 2026-08-31 — z rund 1–4 PR #232 (sweep ksywki→role przed oddaniem)
 
+⛔ **ŁADUNEK LEKCJI — ksywka w TEJ sekcji (wpisy 69–70 i nawrót do 33) jest elementem dowodu,
+nie tekstem do sweepu ksywek** (kategoria „lekcje/dowody strażnika" z #232 — jak lekcja G5
+w `04-goldeny-botow.md`; bez pary „Dzidek"/„Dzidka" lekcja przestaje pokazywać zjawisko).
+Reszta tego pliku pozostaje ŻYWA (sweep #232 podmienił w nim klasę 44 — to było poprawne).
+
 | # | Klasa | Dowód | Czym obstawione |
 |---|---|---|---|
 | 69 | **SWEEP TEKSTOWY ROZBRAJA ŁADUNEK TESTU STRAŻNIKA** — hurtowa podmiana objęła argument-podkładkę `slad_probuj` w `narzedzia-qa/bramki-proba-kontrolna.sh:156`; po podmianie przypadek nie miał czego łapać (pusta zieleń), a przy przelocie: FAIL całej próby kontrolnej. Ładunek testu MUSI zawierać to, czego strażnik szuka — jest ELEMENTEM DOWODU, nie tekstem do sprzątnięcia | #232 r1 KRYTYCZNA 1; kalibracja recenzenta `printf\|grep` → 1 vs 0; po przywrocie z `origin/main` `bash narzedzia-qa/bramki-proba-kontrolna.sh` → „wszystkie podlozone awarie zlapane", EXIT=0 | próba kontrolna łapie (EXIT=1 przy rozbrojeniu) — ale PO fakcie; reguła: pliki-ładunki testów wyłączone ze sweepów JAWNIE w opisie PR (kategoria „dowody strażnika" w #232) |
