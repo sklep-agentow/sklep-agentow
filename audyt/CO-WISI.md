@@ -873,3 +873,33 @@ Przelot na `a2f9dc2`: „TEST SLEPY NA 1 PODLOZONYCH BLEDOW” — mutant „wie
 
 ## 🟡 DŁUG: kompensacja crona zamyka egzemplarz, nie klasę — snapshot z „tego, co zastałem", nie z ostatniej DORĘCZONEJ wysyłki (#228 r5 u1)
 `zakup.php` — gdy proces A zrotował token i padł W TRAKCIE `wp_mail` (dokładnie przypadek stale-claim z ok. linii 920), proces B odbiera claim po 5 min i robi snapshot STANU A (`$przed_rotacja`, ok. linii 948) — czyli skrótu, którego nie niósł żaden doręczony mail. Gdy wysyłka B też pada, kompensacja B „przywraca" stan A: w bazie znów skrót niedoręczonego maila, panel pokazuje treść, której nikt nie dostał, link opinii z ostatniego DORĘCZONEGO maila martwy. Zmierzone sondą recenzenta r5 (krok A: wada; krok B: kontrola bez wady przechodzi). Ten PR tego NIE psuje (przedtem zostawał skrót B, równie niedoręczony) — to niedomknięta klasa. Naprawa właściwa: przechowywać stan ostatniej UDANEJ wysyłki (osobna kolumna/ślad z rotacji, która się doręczyła) i przywracać JEGO + krok strażnika skalibrowany jak CZĘŚĆ 5 (rola: A padł, B pada — dziś nie pilnuje jej nic). Nie jednolinijkowa — 0.9.28, razem z długiem u5 r4 (`mail_blad` bez CAS-a własności, sąsiednia linia tej samej gałęzi). readme/CHANGELOG 0.9.27 mówią o wyjątku jawnie (ratunek: przycisk „Wyślij ponownie").
+
+## ✅ K11 (31.08, ~01:15–02:10): kroki 1–8 ZGODNE · ROZJAZDY=2 (oba PROCES, żaden w produkcie)
+Raport: `/root/praca/zlecenia/audyt-k11-0927/AUDYT-K11-RAPORT.md`. Paczka=repo=release co do znaku
+(digest), E2E zakupu domknięty (mail, link 200, sha pliku = baza), 404 GET/HEAD, axe 0, rubryka 6/5/1.
+⭐ Dług „statystyki ślepa na mutanta 3" SKREŚLONY w części „wada kodu strażnika": u K11 test widzi
+WSZYSTKIE 4 mutanty (EXIT=0 czysty). Zastrzeżenie audytora: stanowisko czyste, ale STOS wspólny —
+przyczyna chwiejności NIEwyizolowana; pełna izolacja = przebieg na świeżo zaseedowanym stosie (0.9.28).
+
+## 🟡 DŁUG (K11 R-1, klasa PROCESU): log przelotu z gałęzi + squash = dowód z commitu spoza historii
+`PROBY-KONTROLNE.log` niósł `COMMIT: 44d32db` — po squash nie istnieje w historii main; kontrola 6
+`k7-koniec` pada z powodu FORMALNEGO (inny niż opisany w rubryce #12), a weryfikator z zewnątrz dostaje
+log o nieznanym rodowodzie. Domknięte dla 0.9.27: przelot powtórzony NA MAIN po scaleniu, log w repo
+z commitu z historii. NA STAŁE (od 0.9.28): po każdym squash-merge przelot na main przed wydaniem —
+krok do procedury wydania (kandydat na wpis w DZIEN-ZERO/k7).
+
+## 🟡 DŁUG (K11 R-2): `testy/dokumentacja-zgodnosc.sh:382-385` (ChatBot) liczy POMINIĘTE jak rozjazd
+Bez chromium gałąź POMINIETE podbija licznik BLEDY i komunikat brzmi „NIEZGODNE: 1 pozycji rozjechanych
+z kodem" — czytelnik szuka kłamstwa w instrukcji, a brakuje mu przeglądarki. Zamknięcie bramki słuszne,
+kłamie komunikat. Naprawa: osobny licznik POMINIETE + komunikat „NIE ZMIERZONO (brak przyrządu)". 0.9.28.
+
+## 🔴 RYZYKO PROCESU (K11 O-4): nic nie wiąże pliku SPRZEDAWANEGO z wersją WYDANIA
+E2E audytora pobrał z bramy plik demo K3 (25 354 B, pliki z 18–19.08), bo taki siedzi w bazie stosu —
+mechanizm OK (sha zgodne z bazą), ale klasa „sprzedaliśmy stary ZIP" nie ma strażnika. Kandydat 0.9.28:
+kontrola wydania porównująca `plik_sha256` produktów z sumami paczek wydania + ostrzeżenie w panelu.
+
+## 📌 BACKLOG od K11 (§4 raportu, skróty): baner „TRYB TESTOWY" na produkcji (wpis 🔴 już wisi) ·
+deinstalacja/symetria (rubryka 🐞 #9) · nonce+uprawnienia: próba `nonce` ChatBota pada zawsze = rodzina
+niepilnowana · RODO w ruchu (retencja/anonimizacja/eksport WP) · dostarczalność poczty na hostingu
+(SPF/DKIM; dowód stoi na łapaczu) · aktualizacja w miejscu 0.9.13→0.9.27 na żywej bazie · O-2 komunikat
+bramek „10 z 10" przy braku vendor · O-3 nagłówek rubryki v0.9.23 (świadome, osobny PR wg DECYZJE).
