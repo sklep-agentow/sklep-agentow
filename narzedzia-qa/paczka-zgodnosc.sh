@@ -6,13 +6,13 @@
 # i obie sprawdza się źle. Pierwsza: czy zip zawiera to, co repo — a spojrzenie
 # na listę plików NIE MÓWI NIC o ich treści, bo plik o tej samej nazwie może być
 # starą wersją sprzed trzech PR-ów. Druga: czy wersja się zgadza — a wersja
-# mieszka w SZEŚCIU miejscach i wystarczy, że jedno zostanie w tyle, żeby kupujący
+# mieszka w SZEŚCIU miejscach (sklep-agentow: SIEDMIU — dochodzi odznaka wydania w README repo) i wystarczy, że jedno zostanie w tyle, żeby kupujący
 # dostał paczkę podpisaną cudzym numerem. (Szóste — nagłówek DOKUMENTACJA-TECHNICZNA.md —
 # dopisane po recenzji PR #168: bramka mówiła „WERSJA SPÓJNA", a dokument JADĄCY W PACZCE
 # niósł stary numer.)
 #
 # Dlatego: KAŻDY plik porównywany sumą kontrolną SHA-256, w obie strony,
-# a wersja czytana ze wszystkich sześciu miejsc naraz.
+# a wersja czytana ze wszystkich sześciu (sklep: siedmiu) miejsc naraz.
 #
 # DWIE RZECZY, KTÓRYCH ZGODNY NUMER NIE ŁAPIE (dopisane przy zamrażaniu 1.5.7):
 # (C) Numer w CHANGELOG-u zgadza się także wtedy, gdy pod nagłówkiem wydania

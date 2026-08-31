@@ -111,7 +111,7 @@ Było 52 gałęzi zdalnych. Kasowanie **po stanie PR-a** (`gh pr list --state me
 - 45 gałęzi ze scalonym PR-em — skasowane (treść jest w `main`, historię PR trzyma GitHub w `refs/pull/N`).
 - 4 gałęzie bez PR-a (`awaria/revert-recenzent`, `cele-k7-l1-11-ci-01-02`, `koord/przelot-czlowieka`,
   `kosc-k1`) — najpierw tagi `archiwum/<nazwa>` wypchnięte na origin, potem skasowane.
-- Zostały: `main` · `audyt/mutanty-sklep` (bank mutantów — czyta go `k7-koniec`, kasować NIE wolno) ·
+- Zostały: `main`; bank mutantów przeniesiony na TAG `bank/mutanty-sklep` (31.08, #238 — czyta go `k7-koniec`, kasować NIE wolno) ·
   gałęzie otwartych PR-ów. Wynik: `git push origin --delete` × 49, 0 błędów; `git branch -r` → 4 pozycje.
 
 ## 9. SKILL DO STEROWANIA GITHUBEM — PO ODDANIU, nie teraz

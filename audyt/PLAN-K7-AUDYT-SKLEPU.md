@@ -192,7 +192,7 @@ Licznik mówi o POKRYCIU, nie o jakości: 95/95 = o każdy cel ktoś zapytał z 
 
 **8b. `narzedzia-qa/k7-koniec.sh` — spec (budowany w kroku 1, z próbą kontrolną, EXIT 0 tylko gdy WSZYSTKO):**
 1) `06-mapa-polowania.md`: ⬜ = 0, LICZNIK w pliku == policzony (`mapa-licznik.sh --tylko-licz`, nieznany znacznik = FAIL) i liczba
-celów == zapisana po zamrożeniu; 2) `ROZLICZENIE-MUTANTOW-SKLEP.md` z gałęzi `audyt/mutanty-sklep` (lokalnej albo `origin/`): każda
+celów == zapisana po zamrożeniu; 2) `ROZLICZENIE-MUTANTOW-SKLEP.md` z tagu `bank/mutanty-sklep` (od 31.08, #238; wcześniej z gałęzi `audyt/mutanty-sklep` (lokalnej albo `origin/`): każda
 kalibrowana soczewka PASS, `proby ≤ 2` (`\|` w komórkach osłonięte); 3) rejestr: 0 wierszy KRYTYCZNE/DUŻE ze statusem ≠
 ZAMKNIETE/OBALONE/POZA K7, 0 `DO WERYFIKACJI`, `naprawa_proby ≤ 2`, każdy ZAMKNIETE ma `straznik` (plik istnieje) i
 `straznik_padl_na_starym` (sha); 4) anomalie: CAŁA sekcja `## Anomalie`, każdy wiersz z ID `AN-NNN`, 0 `OTWARTA`;

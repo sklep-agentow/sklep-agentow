@@ -203,7 +203,7 @@ nagłówków bezpieczeństwa w HTTP — nie ruszałem i nie zgłaszam; klucze St
   że strażniki istnieją).
 - **Sitemapa / `blog_public`** — nie przestawiałem ustawienia stosu, bo nie było takiego kroku.
   Werdykt o SEO-sitemapie: **NIE SPRAWDZIŁEM**.
-- **Kalibracja audytu / bank mutantów sklepu** — leży na gałęzi `audyt/mutanty-sklep`, której klon nie ma.
+- **Kalibracja audytu / bank mutantów sklepu** — leży na gałęzi `audyt/mutanty-sklep`, której klon nie ma. (dziś: bank przeniesiony na TAG `bank/mutanty-sklep`, 31.08 #238)
   Kontrola 2 `k7-koniec` pada; przyczyny nie weryfikowałem u źródła.
 - **Tryb AI botów z żywym kluczem** — brak klucza, tak samo jak przy L1-11 #10.
 - **Ręczne kliknięcie strony przez człowieka** (przelot człowieka, 27 punktów) — jestem maszyną, czytałem

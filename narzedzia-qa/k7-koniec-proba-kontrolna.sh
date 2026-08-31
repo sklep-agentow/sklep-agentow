@@ -76,7 +76,7 @@ psuj_straznik()  { rm -f "$1/testy/straznik-test.php"; }
 psuj_anomalia()  { sed -i 's/| WYJAŚNIONA |/| OTWARTA |/' "$1/audyt/sklep/REJESTR-ZNALEZISK-SKLEP.md"; }
 tylko_remote()       { ( cd "$1" && git update-ref refs/remotes/origin/audyt/mutanty-sklep audyt/mutanty-sklep && git branch -q -D audyt/mutanty-sklep ); }
 psuj_galaz_brak()    { ( cd "$1" && git branch -q -D audyt/mutanty-sklep ); }
-bank_jako_tag()      { ( cd "$1" && git tag bank/mutanty-sklep audyt/mutanty-sklep && git branch -q -D audyt/mutanty-sklep ); }  # docelowy stan po #237: bank = TAG, galaz skasowana
+bank_jako_tag()      { ( cd "$1" && git tag -a bank/mutanty-sklep -m bank audyt/mutanty-sklep && git branch -q -D audyt/mutanty-sklep ); }  # docelowy stan po #237: bank = TAG, galaz skasowana
 psuj_przelot_licz()  { sed -i 's/^CELE: 27 · ✅ 27/CELE: 26 · ✅ 26/' "$1/audyt/sklep/PRZELOT-CZLOWIEKA-SKLEP.md"; }
 psuj_raport_enum()   { sed -i 's/"werdykt":"BRAK"/"werdykt":"NIE DA SIĘ ORZEC"/' "$1/audyt/sklep/raporty/A/L2.json"; }
 psuj_raport_skutek() { sed -i 's/"rodzaj_skutku":"zaobserwowany"/"rodzaj_skutku":"wywnioskowany"/' "$1/audyt/sklep/raporty/A/L2.json"; }
