@@ -106,8 +106,8 @@ klienta**; pominięte są wyłącznie długi narzędzi warsztatu (skanery, prób
 ## 5. Gdzie leżą dowody
 
 `audyt/sklep/PROBY-KONTROLNE.log` (przelot maszynowy; od 0.9.26 log w repo niesie bieżący przelot — stan z `a1b2495` odtworzysz przez `git log -- audyt/sklep/PROBY-KONTROLNE.log`) · `audyt/sklep/raporty/` ·
-`audyt/sklep/REJESTR-ZNALEZISK-SKLEP.md` · `audyt/SCIAGA-EGZAMINATORA.md` (66 klas błędów z dowodami — licznik rośnie, rozstrzyga `grep -cE "^\| [0-9]+ \|" audyt/SCIAGA-EGZAMINATORA.md`) ·
-`audyt/PLUGIN-CHECK-30-08.md` · `audyt/CO-WISI.md` · `DECYZJE.md` (32 decyzje z uzasadnieniem) ·
+`audyt/sklep/REJESTR-ZNALEZISK-SKLEP.md` · `audyt/SCIAGA-EGZAMINATORA.md` (68 klas błędów z dowodami — licznik rośnie, rozstrzyga `grep -cE "^\| [0-9]+ \|" audyt/SCIAGA-EGZAMINATORA.md`) ·
+`audyt/PLUGIN-CHECK-30-08.md` · `audyt/CO-WISI.md` · `DECYZJE.md` (wpisy D1–D37; liczbÄ wierszy rozstrzyga `grep -cE '^\| *D[0-9]+' DECYZJE.md`) ·
 `MAPA-SPEC.md` (wymagania S-01…S-20 ze statusem) · opisy PR `#213` i `#214` (każda runda recenzji z tabelą
 uwaga → naprawa → wynik uruchomienia).
 
