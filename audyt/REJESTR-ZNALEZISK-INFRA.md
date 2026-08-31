@@ -4,15 +4,15 @@
 > ale **11 błędów (3 duże / 4 średnie / 4 małe), „większość infrastruktury”**. Kolega podał jeden
 > przykład i **zostawił sobie jeden błąd w tajemnicy** jako próbę kontrolną naszego szukania.
 > Nasze polowanie (4 przebiegi, plan i raport: `audyt/PLAN-POLOWANIA-INFRA.md`,
-> `audyt/POLOWANIE-INFRA-RAPORT.md`) dało **20 znalezisk**. Klasy destylowane: ściąga 73–78.
+> `audyt/POLOWANIE-INFRA-RAPORT.md`) dało **22 znaleziska** (20 z przebiegów plikowych + 2 z warstwy GitHub-UI). Klasy destylowane: ściąga 73–78.
 >
 > ⛔ Format celowo taki sam jak `audyt/REJESTR-ZNALEZISK.md`, żeby dała się na niego wycelować
 > `narzedzia-qa/bramka-znaleziska.sh` (dziś bramka czyta TYLKO tamten plik — patrz DŁUG poniżej).
 > ⛔ Znaleziska produktu NIE wchodzą tutaj; tu wyłącznie infrastruktura, CI, wydanie i dokumenty.
 
-## Liczba znalezisk OTWARTYCH: 12
+## Liczba znalezisk OTWARTYCH: 14
 
-## Znalezisk BEZ strażnika: 16
+## Znalezisk BEZ strażnika: 18
 <!-- Wszystkie 20 są dziś bez strażnika: to znaleziska w NARZĘDZIACH i CI, a nasze bramki
      pilnują produktu, nie samych siebie. Każda naprawa ma dopisać próbę kontrolną
      i obniżyć tę liczbę ŚWIADOMIE, jednym ruchem z naprawą. -->
@@ -46,6 +46,8 @@ Waga: **KRYT** (bezpieczeństwo/pieniądze/klient) · **DUZE** (mylące zielone)
 | `I-10` | **MALE** · `k7-stare-wersje.sh:20` pisze domyślnie do ścieżki absolutnej POZA repo i nadpisuje bez pytania | BRAK — do dopisania; dowód: mój przebieg testowy nadpisał 3 zipy w `/root/praca/zlecenia/wymiana/k7-stare-wersje/` | OTWARTE |
 | `I-11` | **MALE** · niespójna konwencja braku argumentów: `stos.sh` i `test-php.sh` dają pomoc z rc=0, reszta rodziny rc=2 — „zapomniany argument” raz jest błędem, raz cichym sukcesem | BRAK — do dopisania; dowód: przelot 41 skryptów spoza repo, tabela kodów wyjścia w raporcie | OTWARTE |
 | `D-1` | **DUZE** · `SECURITY.md:3-5` mówi „wydane 0.9.25; 0.9.26 w przygotowaniu” i „wersje wspierane: najnowsze wydanie”, a kod stoi na 0.9.28 (tagi v0.9.26/27/28 istnieją) — dokument kontaktowy dla zgłaszającego lukę wskazuje wydanie sprzed trzech releasów | BRAK — do dopisania; dowód: `head -4 SECURITY.md` vs `grep Version wtyczki/sklep-agentow/sklep-agentow.php` vs `git tag` | OTWARTE |
+| `B-8` | **DUZE** · warstwa GitHub-UI: zewnetrzne Akcje przypiete do RUCHOMYCH tagow (`actions/checkout@v4`, `shivammathur/setup-php@v2`, `anthropics/claude-code-action@v1`, `actions/upload-artifact@v4`), repo pozwala na `allowed_actions: all` bez `sha_pinning_required` — przejety tag Akcji = kod napastnika jako root na self-hosted runnerze | BRAK — do dopisania; dowod: `grep uses: .github/workflows/*.yml` (0 przypiec do SHA); `gh api .../actions/permissions` → `allowed_actions: all, sha_pinning_required: false` | OTWARTE |
+| `B-9` | **MALE** · warstwa GitHub-UI: `allow_forking: true` na repo PRYWATNYM — fork wymaga i tak dostepu do repo, wiec ryzyko male, ale niepotrzebnie poszerza powierzchnie; do rozwazenia wylaczenie | BRAK — do dopisania; dowod: `gh api repos/…` → `allow_forking: true` | OTWARTE |
 | `D-2` | **SRED** · `CONTRIBUTING.md:46` nazywa `testy/dokumentacja-zgodnosc*.sh` „Bramką”, a twardej bramki w CI nie ma (jest tylko allowlista recenzenta) — słowo obiecuje twardość, której świadomie nie zbudowano | BRAK — do dopisania; dowód: brak wpisu w `BRAMKI=()`; jedyny automat to `recenzent.yml:157` | OTWARTE |
 
 ## Raporty objęte tym rejestrem
