@@ -135,7 +135,7 @@ nigdy nie trafiła na mapę i dlatego przeszła.
 
 `PLAN-AUDYTU-BOTOW.md` wymaga w kroku 1 „mapa polowania (cele ⬜)", a warunek końca
 nr 1 brzmi **„zero celów ⬜ na mapie polowania (policzone)"**. Takiego pliku w repo
-nie ma: `grep -rl "⬜"` po repo daje `DO-PLANU-V2.md` (1 trafienie), `MAPA-SPEC.md`
+nie ma: `grep -rl "⬜"` po repo daje `archiwum-procesu/DO-PLANU-V2.md` (1 trafienie), `MAPA-SPEC.md`
 (16 — to mapa specyfikacji sklepu, nie botów) i `audyt/REJESTR-WERYFIKACJI.md` (3).
 **Warunek końca jest dziś niepoliczalny**, więc audyt może się „skończyć" bez
 pokrycia czegokolwiek. To dziura nad wszystkimi pozostałymi.

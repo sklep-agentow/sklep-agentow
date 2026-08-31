@@ -448,8 +448,8 @@ prawdziwym wdrożeniu.
   W TEŚCIE produkty-test.js (9/9, z próbą kontrolną „edycja zaszła") · ścieżka
   zrzutu przez env. Recenzent potwierdził wszystko 2× + własny grep sweepu.
 - **K5 plan wyglądu:** zwiad motywu (paleta/typografia/detale zmierzone) + zwiad
-  wzorców stron produktowych (subagent, źródła w PLAN-WYGLADU-K5.md §5) →
-  `PLAN-WYGLADU-K5.md` CZEKA NA KLEPNIĘCIE Dzidka przed budową.
+  wzorców stron produktowych (subagent, źródła w archiwum-procesu/PLAN-WYGLADU-K5.md §5) →
+  `archiwum-procesu/PLAN-WYGLADU-K5.md` CZEKA NA KLEPNIĘCIE Dzidka przed budową.
 
 ## ✅ ZAMKNIĘTE 18.08 (dzień)
 - Model AI botów haiku-4-5 (Dzidek) · timeout AI #37 · **oba boty scalone z haiku**

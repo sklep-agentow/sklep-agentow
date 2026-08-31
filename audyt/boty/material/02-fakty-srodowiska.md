@@ -78,7 +78,7 @@ nie wklejaj do plików w repo, nie zapisuj w znaleziskach.
    rozstrzygania: kolejność na liście).
 5. **Tryb testowy Stripe w sklepie** — sklep nie jest przedmiotem tego audytu.
 6. **Adres witryny ustawiony na tunel** — stan poligonu, opisany wyżej.
-7. **`SPRZATANIE-RAPORT.md` w katalogu repo (nieśledzony)** — znany dług, czeka na decyzję.
+7. **`archiwum-procesu/SPRZATANIE-RAPORT.md` w katalogu repo (nieśledzony)** — znany dług, czeka na decyzję.
 8. **Rozbieżność wersji paczka↔kod W TRAKCIE etapu napraw** — po każdej paczce napraw
    idzie bump, więc zbudowany wcześniej zip bywa o wersję za kodem; to znane i zaplanowane
    (aktualne numery: nagłówki wtyczek + `CHANGELOG.md`, nie ten dokument).
