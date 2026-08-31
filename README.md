@@ -1,7 +1,7 @@
 # Sklep Agentów
 
 [![Kontrole jakości](https://github.com/szydlowskikonrad95-art/sklep-agentow/actions/workflows/quality.yml/badge.svg?branch=main)](https://github.com/szydlowskikonrad95-art/sklep-agentow/actions/workflows/quality.yml)
-[![Wydanie](https://img.shields.io/github/v/release/szydlowskikonrad95-art/sklep-agentow?label=wydanie)](https://github.com/szydlowskikonrad95-art/sklep-agentow/releases/latest)
+[Wydania — paczki i sumy SHA-256](https://github.com/szydlowskikonrad95-art/sklep-agentow/releases/latest)
 [![Licencja](https://img.shields.io/badge/licencja-GPL--2.0-blue)](LICENSE)
 [![WordPress](https://img.shields.io/badge/WordPress-6.7%2B-blue)](#wymagania)
 [![PHP](https://img.shields.io/badge/PHP-8.1%2B-blue)](#wymagania)
