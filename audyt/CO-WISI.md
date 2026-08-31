@@ -650,7 +650,7 @@ rejestr dostanie czwarty stan dla znalezisk typu „brak pomiaru”, których ni
   r1 #235): kompensacja licznika pobrań po nieudanej wysyłce przywraca `pobrania_uzyte`
   ze ZDJĘCIA `$zam` z wejścia (`:142`, `$zrodlo_uzyte`), nie ze stanu bazy — pobranie
   wykonane w oknie między odczytem a zapisem ginie z licznika.
-  ⛔ To ta sama klasa, którą ten PR naprawił w anonimizacji — czyli klasa 8 briefingu (naprawa
+  ⛔ To ta sama klasa, którą `#234` naprawił w anonimizacji — czyli klasa 8 briefingu (naprawa
   egzemplarza zamiast klasy). Nazwana w kodzie, przy funkcji.
   **CO ZAMYKA:** przenieść wzorzec z anonimizacji — pomiar STANU po zapisie zamiast kodu powrotu —
   wraz z testem podkładającym awarię każdego z pięciu zapisów osobno, ORAZ odczyt
@@ -905,7 +905,14 @@ przyczyna chwiejności NIEwyizolowana; pełna izolacja = przebieg na świeżo za
 `k7-koniec` pada z powodu FORMALNEGO (inny niż opisany w rubryce #12), a weryfikator z zewnątrz dostaje
 log o nieznanym rodowodzie. Domknięte dla 0.9.27: przelot powtórzony NA MAIN po scaleniu, log w repo
 z commitu z historii. NA STAŁE (od 0.9.28): po każdym squash-merge przelot na main przed wydaniem —
-krok DO DOPISANIA w procedurze wydania/`k7-koniec` (0.9.28) â dziÅ pilnuje tego kontrola 6 k7 (to ona wykryÅa); szablon dnia-zero w warsztacie juÅ¼ go niesie.
+krok DO DOPISANIA w procedurze wydania/`k7-koniec` (0.9.28) — dziś pilnuje tego kontrola 6 k7 (to ona wykryła); szablon dnia-zero w warsztacie już go niesie.
+- ⬜ **Przelot 33 prób kontrolnych (`proby-kontrolne-przelot.sh`) na commicie main po 0.9.28** —
+  log `audyt/sklep/PROBY-KONTROLNE.log` niesie `COMMIT: 6a7922c` (linia 0.9.27, sprzed #234/#235),
+  więc kontrola 6 k7 pada z powodu przeterminowania dowodu (klasa 67; r1 #236 W1). Przelot bramek
+  i strażników na main 0.9.28 (`78e53cf`) WYKONANY — brakuje pełnego przelotu prób z podmianą logu.
+  **CO ZAMYKA:** `bash narzedzia-qa/proby-kontrolne-przelot.sh` na `0433fc6` (lub nowszym main),
+  log do repo, oczekiwane pasmo EXIT≠0: 5–6 znanych (§7); nagłówek AUDYT-RAPORT aktualizuje powód
+  kontroli 6 po podmianie.
 
 ## 🟡 DŁUG (K11 R-2 + bliźniaki, runda 1 #229): bramki dokumentacyjne kłamią przy POMINIĘTE — jedna fałszywie-CZERWONA, trzy fałszywie-ZIELONE
 Bez chromium gałąź POMINIETE podbija licznik BLEDY i komunikat brzmi „NIEZGODNE: 1 pozycji rozjechanych
