@@ -88,13 +88,19 @@ jobs:
       # Pelna historia, nie plytki klon: recenzent dwa razy sam zglaszal, ze nie
       # moze zweryfikowac historii (fetch-depth: 1 daje jeden commit, wiec
       # `git log`/`git diff` wzgledem bazy PR-a nie maja z czym pracowac).
-      - uses: actions/checkout@v4
+      # ⛔ PRZYPIETE DO SUMY COMMITA, nie do ruchomego taga. Dokumentacja GitHuba:
+      # „Pinning an action to a full-length commit SHA is currently the only way
+      # to use an action as an immutable release" (security-hardening-for-github-actions).
+      # Ruchomy tag moze zostac przestawiony przez autora albo napastnika, ktory
+      # przejmie repozytorium Akcji — a ten kod wykonuje sie na NASZYM wykonawcy.
+      # Podnoszenie wersji: Dependabot (.github/dependabot.yml), nie recznie.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0
 
       # PHP + vendor/ PRZED recenzja: recenzent ma URUCHAMIAC bramki (phpcs,
       # phpstan, skrypty zgodnosci), a nie czytac je i zgadywac wynik.
-      - uses: shivammathur/setup-php@v2
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
         with:
           php-version: '8.4'
           coverage: none
@@ -110,7 +116,7 @@ jobs:
 
       - name: Recenzja PR
         id: recenzja
-        uses: anthropics/claude-code-action@v1
+        uses: anthropics/claude-code-action@a874e9ecd7bb36efdad65429c6b35815f5a08f10 # v1.0.210
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           track_progress: true
@@ -160,7 +166,7 @@ jobs:
       # gdzie ląduje treść błędu przy „niemym zgonie" (log pokazuje tylko is_error).
       - name: Zachowaj pełny wynik CLI (artefakt)
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: claude-execution-output
           # Dwie ścieżki: log naszego runa mówi RUNNER_TEMP, docs base-action /tmp —

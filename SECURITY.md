@@ -1,8 +1,17 @@
 # SECURITY.md — Sklep Agentów
 
-> Stan na 2026-08-30. Trzy wtyczki WordPressa: `sklep-agentow` (wydane 0.9.25; 0.9.26 w przygotowaniu),
+> Stan na 2026-08-31. Trzy wtyczki WordPressa: `sklep-agentow` (0.9.28),
 > `chatbot-live` (1.5.13), `segregator-maila` (1.3.6). Wersje wspierane: **najnowsze wydanie każdej
 > wtyczki** z zakładki Releases — starsze nie dostają poprawek, tylko podniesienie wersji.
+>
+> <!-- ⛔ Te numery pilnuje `narzedzia-qa/security-wersje.sh`, wpięty w bramkę wydania.
+>      Powód (znalezisko D-1, 31.08): plik mówił „wydane 0.9.25; 0.9.26 w przygotowaniu",
+>      gdy kod stał na 0.9.28 i istniały tagi v0.9.26/27/28 — czyli dokument, do którego
+>      trafia osoba zgłaszająca lukę, wskazywał wydanie sprzed trzech releasów. Nie
+>      pilnowało go NIC (zero trafień „SECURITY.md" w narzedzia-qa/ i .github/).
+>      Podnosisz wersję wtyczki? Ten wiersz podnosi się razem z nią.
+>      Strażnik czyta numery z PROZY WYŻEJ, nie z osobnego znacznika — znacznik
+>      byłby drugim miejscem z tymi samymi liczbami, czyli nowym źródłem rozjazdu. -->
 
 ## 1. Jak zgłosić lukę
 
