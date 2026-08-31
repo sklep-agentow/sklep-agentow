@@ -28,7 +28,7 @@ W poprzednim projekcie ok. 30 pozycji. Wytknięte DWA razy w tym samym miejscu:
 
 ## G5 — „Nie ma X" trzeba sprawdzić własnoręcznie
 Grep zwracający zero wygląda identycznie, gdy czegoś nie ma i gdy źle szukałeś.
-Polskie odmiany („właściciel" vs „właściciela") potrafią rozłożyć wyszukiwanie.
+Polskie odmiany („Dzidek" vs „Dzidka") potrafią rozłożyć wyszukiwanie.
 → Zero trafień = **obowiązkowa próba kontrolna** (poszukaj czegoś, co NA PEWNO tam jest).
 
 ## G6 — Twoje narzędzie pomiarowe też bywa zepsute

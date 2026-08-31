@@ -31,7 +31,7 @@ sięgnąć po paczkę.
 w `audyt/boty/material/06-mapa-polowania.md:286`.
 
 Dlaczego nie zrobione od razu: `.github/manifest-bramek.txt` ma własną zasadę wpisaną w nagłówku —
-*„każda zmiana = osobny PR, który właściciel czyta w całości"* oraz *„agent NIE dotyka tego pliku
+*„każda zmiana = osobny PR, który Dzidek czyta w całości"* oraz *„agent NIE dotyka tego pliku
 w PR-ach z kodem"*. A `sprawdz-manifest.sh` ma kontrolę odwrotną: bramka w `BRAMKI=()`, której nie
 ma w manifeście, świeci na czerwono. Więc dopisanie jej w PR #208 złamałoby zasadę domu.
 
