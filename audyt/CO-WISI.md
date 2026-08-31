@@ -621,7 +621,7 @@ rejestr dostanie czwarty stan dla znalezisk typu „brak pomiaru”, których ni
   rozstrzygnięte w OBIE strony naraz: pole wypadło z SELECT-a na wejściu (`admin-zamowienie.php:264`)
   ORAZ zostało objęte anonimizacją (`mail_tresc=NULL` w UPDATE :374 + człon w pomiarze skutku).
   Teza „dziś nieszkodliwe" obalona w r5 #234: treść niosła pełną kopię danych do faktury
-  (nazwa firmy, NIP, adres). Dowód: commit `22fe4a4` + strażnik
+  (nazwa firmy, NIP, adres). Dowód: #234 r5 (naprawa w squashu `78e53cf` na main) + strażnik
   `testy/rodo-anonimizacja-pomiar-skutku-test.sh` (przypadek z fakturą w treści maila,
   kalibrowany na kodzie sprzed naprawy: FAIL dokładnie na nowej asercji).
 - ⬜ **Strażnik renderu panelu (r6 #234) mierzy tylko przypadek Z wadą** — obie asercje wiszą
