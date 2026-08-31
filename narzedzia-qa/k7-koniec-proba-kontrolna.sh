@@ -76,6 +76,7 @@ psuj_straznik()  { rm -f "$1/testy/straznik-test.php"; }
 psuj_anomalia()  { sed -i 's/| WYJAŚNIONA |/| OTWARTA |/' "$1/audyt/sklep/REJESTR-ZNALEZISK-SKLEP.md"; }
 tylko_remote()       { ( cd "$1" && git update-ref refs/remotes/origin/audyt/mutanty-sklep audyt/mutanty-sklep && git branch -q -D audyt/mutanty-sklep ); }
 psuj_galaz_brak()    { ( cd "$1" && git branch -q -D audyt/mutanty-sklep ); }
+bank_jako_tag()      { ( cd "$1" && git tag bank/mutanty-sklep audyt/mutanty-sklep && git branch -q -D audyt/mutanty-sklep ); }  # docelowy stan po #237: bank = TAG, galaz skasowana
 psuj_przelot_licz()  { sed -i 's/^CELE: 27 · ✅ 27/CELE: 26 · ✅ 26/' "$1/audyt/sklep/PRZELOT-CZLOWIEKA-SKLEP.md"; }
 psuj_raport_enum()   { sed -i 's/"werdykt":"BRAK"/"werdykt":"NIE DA SIĘ ORZEC"/' "$1/audyt/sklep/raporty/A/L2.json"; }
 psuj_raport_skutek() { sed -i 's/"rodzaj_skutku":"zaobserwowany"/"rodzaj_skutku":"wywnioskowany"/' "$1/audyt/sklep/raporty/A/L2.json"; }
@@ -109,7 +110,8 @@ sprawdz "1a nieznany znacznik ❓ na mapie (D7)"           1 psuj_znacznik    "1
 sprawdz "1a LICZNIK w pliku nieaktualny"                  1 psuj_licznik     "1a mapa: LICZNIK w pliku nieaktualny"
 sprawdz "1b cel dopisany po zamrozeniu"                   1 psuj_zamroz      "1b mapa"
 sprawdz "2 gałąź mutantów TYLKO jako origin/ → nadal GO (W1)"  0 tylko_remote      "2 kalibracja (origin/audyt/mutanty-sklep)"
-sprawdz "2 brak gałęzi mutantów w ogóle"                  1 psuj_galaz_brak    "brak gałęzi audyt/mutanty-sklep"
+sprawdz "2 bank mutantów TYLKO jako TAG (gałęzie skasowane) → GO" 0 bank_jako_tag "K7: GO"
+sprawdz "2 brak banku w ogóle (bez gałęzi i bez tagu)"     1 psuj_galaz_brak    "brak banku mutantów"
 sprawdz "5 LICZNIK przelotu nieaktualny (D2)"             1 psuj_przelot_licz  "5 przelot człowieka: LICZNIK"
 sprawdz "8 werdykt spoza słownika schematu (W4)"          1 psuj_raport_enum   "SPOZA słownika"
 sprawdz "8 rodzaj_skutku spoza słownika (W4)"             1 psuj_raport_skutek "rodzaj_skutku SPOZA"

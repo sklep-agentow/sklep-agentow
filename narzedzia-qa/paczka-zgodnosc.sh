@@ -76,6 +76,14 @@ W_CHANGELOG="$(grep -m1 '^## \[[0-9]' "$ZRODLO/CHANGELOG.md" 2> /dev/null | sed 
 W_README_CH="$(grep -m1 '^= [0-9]' "$ZRODLO/readme.txt" 2> /dev/null | sed 's/^= \([0-9]\+\(\.[0-9]\+\)*\) =.*/\1/')"
 # Szóste miejsce: nagłówek dokumentacji technicznej (jedzie w paczce do klienta).
 W_DOKTECH="$(grep -m1 -oE 'Wersja wtyczki:[* ]*[0-9]+(\.[0-9]+)*' "$ZRODLO/DOKUMENTACJA-TECHNICZNA.md" 2> /dev/null | grep -oE '[0-9]+(\.[0-9]+)*' | head -1)"
+# Siódme miejsce (TYLKO sklep-agentow): statyczna odznaka wydania w README repo.
+# Klasa 10 + ściąga:18 (catsnboard: badge wersji zapomniany 3×). Odznaka DYNAMICZNA
+# shields jest ślepa na repo prywatne („no releases or repo not found" przy istniejącym
+# Latest — zmierzone 31.08), więc trzymamy STATYCZNĄ, a świeżość wymusza ta bramka.
+W_BADGE=""
+if [ "$WTYCZKA" = "sklep-agentow" ]; then
+	W_BADGE="$(grep -m1 -oE 'badge/wydanie-v[0-9]+(\.[0-9]+)*-' README.md 2> /dev/null | grep -oE '[0-9]+(\.[0-9]+)*' | head -1)"
+fi
 
 printf '  nagłówek wtyczki:      %s\n' "${W_NAGLOWEK:-BRAK}"
 printf '  stała w kodzie:        %s\n' "${W_STALA:-BRAK}"
@@ -83,6 +91,7 @@ printf '  Stable tag (readme):   %s\n' "${W_README:-BRAK}"
 printf '  CHANGELOG.md:          %s\n' "${W_CHANGELOG:-BRAK}"
 printf '  Changelog w readme:    %s\n' "${W_README_CH:-BRAK}"
 printf '  DOKUMENTACJA-TECHN.:   %s\n' "${W_DOKTECH:-BRAK}"
+[ "$WTYCZKA" = "sklep-agentow" ] && printf '  odznaka README (repo): %s\n' "${W_BADGE:-BRAK}"
 echo
 
 for para in "nagłówek wtyczki:$W_NAGLOWEK" "stała w kodzie:$W_STALA" \
@@ -96,7 +105,16 @@ for para in "nagłówek wtyczki:$W_NAGLOWEK" "stała w kodzie:$W_STALA" \
 		zglos "$gdzie mówi $ile, a nagłówek wtyczki $W_NAGLOWEK"
 	fi
 done
-[ "$BLEDY" -eq 0 ] && potwierdz "sześć miejsc zgodnych: $W_NAGLOWEK"
+MIEJSC="sześć"
+if [ "$WTYCZKA" = "sklep-agentow" ]; then
+	MIEJSC="siedem"
+	if [ -z "$W_BADGE" ]; then
+		zglos "odznaka wydania w README repo — nie umiem odczytać wersji"
+	elif [ "$W_BADGE" != "$W_NAGLOWEK" ]; then
+		zglos "odznaka wydania w README repo mówi $W_BADGE, a nagłówek wtyczki $W_NAGLOWEK"
+	fi
+fi
+[ "$BLEDY" -eq 0 ] && potwierdz "$MIEJSC miejsc zgodnych: $W_NAGLOWEK"
 
 # Numer, który nie wygląda jak numer, przeszedłby przez porównanie „wszystkie
 # mówią to samo", bo wszystkie mówiłyby to samo źle. Nagłówek jest wzorcem dla
