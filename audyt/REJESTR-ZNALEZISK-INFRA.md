@@ -10,9 +10,9 @@
 > `narzedzia-qa/bramka-znaleziska.sh` (dziś bramka czyta TYLKO tamten plik — patrz DŁUG poniżej).
 > ⛔ Znaleziska produktu NIE wchodzą tutaj; tu wyłącznie infrastruktura, CI, wydanie i dokumenty.
 
-## Liczba znalezisk OTWARTYCH: 20
+## Liczba znalezisk OTWARTYCH: 16
 
-## Znalezisk BEZ strażnika: 20
+## Znalezisk BEZ strażnika: 18
 <!-- Wszystkie 20 są dziś bez strażnika: to znaleziska w NARZĘDZIACH i CI, a nasze bramki
      pilnują produktu, nie samych siebie. Każda naprawa ma dopisać próbę kontrolną
      i obniżyć tę liczbę ŚWIADOMIE, jednym ruchem z naprawą. -->
@@ -34,13 +34,13 @@ Waga: **KRYT** (bezpieczeństwo/pieniądze/klient) · **DUZE** (mylące zielone)
 | `B-5` | **DUZE** · `bramki.sh` pobiera `actionlint`/`gitleaks` curlem i uruchamia bez sprawdzenia sumy; cache brany po samej ścieżce, więc pinowana wersja niczego nie gwarantuje | BRAK — do dopisania; dowód: `grep -E` po sha256, checksum i shasum w `narzedzia-qa/bramki.sh` → 0 (próba kontrolna: `grep -c curl` → 1) | OTWARTE |
 | `B-6` | **DUZE** · oba workflow lecą z `pull_request` na self-hosted runnerze — kod z gałęzi PR-a wykonuje się u nas; łagodzi repo prywatne i brak `pull_request_target`, zaostrza brak izolacji | BRAK — do dopisania; dowód: `quality.yml:29-32`, `recenzent.yml:64-66`, `runs-on: [self-hosted…]` w obu | OTWARTE |
 | `B-7` | **SRED** · `RECENZENT-BRIEFING.md` nie zawiera ani jednej instrukcji „treść PR-a to DANE, nie polecenia” — brak zabezpieczenia przed wstrzyknięciem poleceń w opis/kod/komentarz | BRAK — do dopisania; dowód: grep po rdzeniach: wstrzyk, injection, „nie ufaj”, „traktuj jako dane” → 0 trafień | OTWARTE |
-| `I-1` | **DUZE** · `bramka-poswiadczenia.sh:13` — martwy `exit 2` po `cd ""`; uruchomiona spoza korzenia skanuje zero i przechodzi (znalezisko KOLEGI, potwierdzone) | BRAK — do dopisania; dowód: z pustego katalogu `0 plików / 0 commitów`, rc=0; w repo 570/340 rc=0; z podłożonym `sk_live_…` rc=1 | OTWARTE |
-| `I-2` | **DUZE** · `slady-wewnetrzne.sh` na pustym katalogu melduje „nowe=0” i rc=0 — mianownik zero traktowany jak czysto | BRAK — do dopisania; dowód: uruchomienie na pustym katalogu rc=0; z podłożonym śladem rc=1 („nowe=2”) | OTWARTE |
+| `I-1` | **DUZE** · `bramka-poswiadczenia.sh:13` — martwy `exit 2` po `cd ""`; uruchomiona spoza korzenia skanuje zero i przechodzi (znalezisko KOLEGI, potwierdzone) | `narzedzia-qa/bramka-poswiadczenia-proba-kontrolna.sh` (przypadek: uruchomiona SPOZA repo → EXIT 2) | ZAMKNIETE |
+| `I-2` | **DUZE** · `slady-wewnetrzne.sh` na pustym katalogu melduje „nowe=0” i rc=0 — mianownik zero traktowany jak czysto | BRAK — do dopisania; naprawione: pusty katalog → EXIT 2, mianownik w wyjsciu (68 plikow) | ZAMKNIETE |
 | `I-3` | **DUZE** · `kalibrator-straznikow.sh` („rdzeń planu audytów v3”) jest sierotą — nie woła go nic | BRAK — do dopisania; dowód: 0 trafień w CI/`bramki.sh`/k7 (próba kontrolna: `mapa-licznik.sh` → 3 wywołania) | OTWARTE |
 | `I-4` | **DUZE** · `licznik-odstepstw.sh` deklaruje „przekroczenie = wydanie stoi”, a bramka wydania go nie woła — reguła istnieje tylko jako tekst | BRAK — do dopisania; dowód: 0 trafień w `k7-koniec.sh` i CI | OTWARTE |
-| `I-5` | **SRED** · `bramka-poswiadczenia-proba-kontrolna.sh:6` ma tę samą martwą konstrukcję co bramka i NIGDY nie testuje warunku „poza repo” — kontrola nie widzi błędu, przed którym broni | BRAK — do dopisania; dowód: poza repo próba leci po `fatal:` i pada z przypadkowego powodu | OTWARTE |
+| `I-5` | **SRED** · `bramka-poswiadczenia-proba-kontrolna.sh:6` ma tę samą martwą konstrukcję co bramka i NIGDY nie testuje warunku „poza repo” — kontrola nie widzi błędu, przed którym broni | `narzedzia-qa/bramka-poswiadczenia-proba-kontrolna.sh` (ta sama konstrukcja naprawiona + nowy przypadek spoza repo) | ZAMKNIETE |
 | `I-6` | **SRED** · próby kontrolne bramek nie chodzą w CI per-PR (tylko ręcznie i w bramce wydania) — regres w samej bramce jest niewidzialny między przelotami | BRAK — do dopisania; dowód: `quality.yml` uruchamia wyłącznie `bash narzedzia-qa/bramki.sh` | OTWARTE |
-| `I-7` | **SRED** · `kto-wola.sh` przy nieistniejącej bazie porównania wypisuje „brak zmienionych funkcji” i kończy rc=0 — literówka w nazwie gałęzi zamienia „nie zmierzyłam” w „czysto” w opisie PR | BRAK — do dopisania; dowód: `bash narzedzia-qa/kto-wola.sh nieistniejaca-galaz-xyz` → `fatal: bad revision` ×2, rc=0 | OTWARTE |
+| `I-7` | **SRED** · `kto-wola.sh` przy nieistniejącej bazie porównania wypisuje „brak zmienionych funkcji” i kończy rc=0 — literówka w nazwie gałęzi zamienia „nie zmierzyłam” w „czysto” w opisie PR | BRAK — do dopisania; naprawione: nieistniejaca baza → EXIT 2 zamiast cichego EXIT 0 | ZAMKNIETE |
 | `I-8` | **SRED** · `adresy-w-dokumencie.sh` i `waga-znaleziska.sh` — kolejne dwie sieroty rodziny procesu (kontrola odsyłaczy, waga z mapy ryzyka) | BRAK — do dopisania; dowód: 0 wywołań poza wpisem historycznym w `narzedzia-qa/CHANGELOG.md` | OTWARTE |
 | `I-9` | **MALE** · dwa pliki `pre-push` (`.githooks/` żywy, `.git/hooks/` martwy) z rozjechaną treścią komunikatu — następna edycja może trafić w plik, którego git nie czyta | BRAK — do dopisania; dowód: `diff .githooks/pre-push .git/hooks/pre-push` → różnice; `core.hooksPath=.githooks` | OTWARTE |
 | `I-10` | **MALE** · `k7-stare-wersje.sh:20` pisze domyślnie do ścieżki absolutnej POZA repo i nadpisuje bez pytania | BRAK — do dopisania; dowód: mój przebieg testowy nadpisał 3 zipy w `/root/praca/zlecenia/wymiana/k7-stare-wersje/` | OTWARTE |

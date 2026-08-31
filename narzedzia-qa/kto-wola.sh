@@ -20,7 +20,19 @@
 #    za dużo niż za mało — to lista do ODHACZENIA, nie wyrok).
 set -u
 BAZA="${1:-origin/main}"
-KORZEN=$(git rev-parse --show-toplevel 2>/dev/null) || { echo "kto-wola: nie jestem w repozytorium git" >&2; exit 2; }
+KORZEN=$(git rev-parse --show-toplevel 2>/dev/null)
+[ -n "$KORZEN" ] || { echo "kto-wola: nie jestem w repozytorium git" >&2; exit 2; }
+
+# BAZA MUSI ISTNIEC. Przy literowce w nazwie galezi `git diff` wypisywal
+# "fatal: bad revision" na stderr i ZWRACAL PUSTY wynik, a skrypt melduje wtedy
+# "nie ma zmienionych funkcji" i konczy EXIT 0 — czyli "nie zmierzylam" wygladalo
+# dokladnie jak "sprawdzone, czysto", i tak trafialo do opisu PR.
+# Znalezisko 31.08 (rejestr infra I-7). EXIT 2 = nie zmierzylam.
+if ! git rev-parse --verify --quiet "$BAZA" >/dev/null 2>&1; then
+	echo "kto-wola: baza porownania [$BAZA] NIE ISTNIEJE w tym repo — nie mam wzgledem czego liczyc. EXIT 2" >&2
+	echo "         (literowka w nazwie galezi? sprawdz: git branch -a | grep -i <fragment>)" >&2
+	exit 2
+fi
 cd "$KORZEN" || exit 2
 
 ZAKRES=( 'wtyczki/*.php' 'wtyczki/*.js' )

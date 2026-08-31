@@ -10,7 +10,16 @@
 # `whsec_` od 6 znaków (prawdziwe sekrety Stripe mają 32+; prefiks generatora `whsec_TEST_` w testach ma 5 → nie łapie).
 # EXIT 0 = zero trafień w drzewie I w historii · 1 = trafienia (plik:linia albo commit:plik:linia) · 2 = poza repozytorium git.
 set -u
-cd "$(git rev-parse --show-toplevel 2>/dev/null)" || { echo "bramka-poswiadczenia: nie w repo git" >&2; exit 2; }
+# NIE `cd "$(...)" || exit` — poza repo `git rev-parse` wypisuje PUSTKE, a `cd ""`
+# w bashu NIC nie robi i melduje SUKCES, wiec `exit 2` byl kodem MARTWYM: bramka
+# leciala dalej w katalogu wywolania, skanowala zero plikow i zero commitow i dawala
+# EXIT 0. Znalezisko kolegi 31.08 (rejestr infra I-1, klasa 73 sciagi). Sprawdzamy WYNIK.
+KORZEN="$(git rev-parse --show-toplevel 2>/dev/null)"
+if [ -z "$KORZEN" ]; then
+	echo "bramka-poswiadczenia: nie w repo git — nie mam czego skanowac. EXIT 2" >&2
+	exit 2
+fi
+cd "$KORZEN" || { echo "bramka-poswiadczenia: nie wchodze do $KORZEN" >&2; exit 2; }
 WZORCE='wordpress_logged_in_[0-9a-f]{32}|wordpress_sec_[0-9a-f]{32}|^#HttpOnly_|^# Netscape HTTP Cookie File|whsec_[A-Za-z0-9_]{6,}|(sk|rk)_(test|live)_[A-Za-z0-9]{16,}|name="_wpnonce" value="[0-9a-f]{10}"|_wpnonce=[0-9a-f]{10}|"nonce":"[0-9a-f]{10}"'
 WYJATKI=':!narzedzia-qa/bramka-poswiadczenia.sh :!narzedzia-qa/bramka-poswiadczenia-proba-kontrolna.sh'
 
@@ -38,4 +47,12 @@ if [ -n "$HIST" ]; then
 	echo "POSWIADCZENIA: $(printf '%s\n' "$HIST" | wc -l) trafień w historii → EXIT 1"
 	exit 1
 fi
-echo "POSWIADCZENIA: 0 trafień (drzewo: $(git ls-files --cached --others --exclude-standard | wc -l) plików; historia od HEAD: $(git rev-list HEAD | wc -l) commitów)"
+PLIKOW=$(git ls-files --cached --others --exclude-standard | wc -l)
+COMMITOW=$(git rev-list HEAD 2>/dev/null | wc -l)
+# MIANOWNIK. Zero trafien przy zerze przeskanowanych rzeczy to nie jest czysto,
+# tylko: nic nie zmierzylam — a te dwie rzeczy wygladaja na wyjsciu identycznie.
+if [ "$PLIKOW" -eq 0 ] || [ "$COMMITOW" -eq 0 ]; then
+	echo "POSWIADCZENIA: NIC NIE ZESKANOWANE (drzewo: $PLIKOW plikow; historia od HEAD: $COMMITOW commitow) → EXIT 2" >&2
+	exit 2
+fi
+echo "POSWIADCZENIA: 0 trafień (drzewo: $PLIKOW plików; historia od HEAD: $COMMITOW commitów)"
