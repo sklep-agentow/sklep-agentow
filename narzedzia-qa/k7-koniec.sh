@@ -14,7 +14,7 @@
 # Pliki, które czyta (wszystkie względem korzenia repo):
 #   audyt/sklep/material/06-mapa-polowania.md · audyt/sklep/REJESTR-ZNALEZISK-SKLEP.md
 #   audyt/sklep/PRZELOT-CZLOWIEKA-SKLEP.md · audyt/sklep/ZAMROZENIE.md · audyt/sklep/raporty/**/*.json
-#   audyt/sklep/PROBY-KONTROLNE.log · gałąź audyt/mutanty-sklep:audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP.md
+#   audyt/sklep/PROBY-KONTROLNE.log · tag bank/mutanty-sklep (do 31.08 #238: gałąź audyt/mutanty-sklep):audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP.md
 set -u
 KORZEN="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WYMAGAJ_ZAMROZENIA_MAPY=1
@@ -75,7 +75,7 @@ fi
 GALAZ_MUT=""
 for ref in audyt/mutanty-sklep origin/audyt/mutanty-sklep bank/mutanty-sklep; do git rev-parse --verify --quiet "$ref^{commit}" >/dev/null && { GALAZ_MUT="$ref"; break; }; done
 if [ -z "$GALAZ_MUT" ]; then
-	fail "2 kalibracja: brak banku mutantów — ani gałąź audyt/mutanty-sklep (lokalna/origin/), ani tag bank/mutanty-sklep"
+	fail "2 kalibracja: brak banku mutantów — ani tag bank/mutanty-sklep, ani gałąź audyt/mutanty-sklep (lokalna/origin/)"
 elif ! ROZL_SUROWE=$(git show "$GALAZ_MUT:audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP.md" 2>/dev/null) || [ -z "$ROZL_SUROWE" ]; then
 	fail "2 kalibracja: gałąź $GALAZ_MUT jest, ale brak na niej audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP.md"
 else
