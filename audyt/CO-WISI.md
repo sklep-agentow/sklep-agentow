@@ -624,6 +624,11 @@ rejestr dostanie czwarty stan dla znalezisk typu „brak pomiaru”, których ni
   (nazwa firmy, NIP, adres). Dowód: commit `22fe4a4` + strażnik
   `testy/rodo-anonimizacja-pomiar-skutku-test.sh` (przypadek z fakturą w treści maila,
   kalibrowany na kodzie sprzed naprawy: FAIL dokładnie na nowej asercji).
+- ⬜ **Strażnik renderu panelu (r6 #234) mierzy tylko przypadek Z wadą** — obie asercje wiszą
+  na renderze zamówienia ZANONIMIZOWANEGO; wykreślenie gałęzi „niedomknięte" dla wszystkich
+  zamówień zostawiłoby strażnika zielonym (zasada „test sprawdza też przypadek BEZ wady",
+  r7 #234 DROBNA 2). **CO ZAMYKA:** drugi render w kroku — zamówienie NIEzanonimizowane
+  z pustym `mail_tresc` oczekuje frazy o rdzeniu „niedomkni".
 - ⬜ **Siódmy migoczący strażnik chatbota: `testy/statystyki-proba-kontrolna.sh`.** Kończy `EXIT=1`
   z komunikatem „TEST SLEPY NA 1 PODLOZONYCH BLEDOW” — nie łapie wady „wiersze bez znacznika wliczone
   do skuteczności” w raporcie skuteczności chatbota. ⛔ Zmierzone 28.08 dowodem przez wykluczenie:
@@ -635,14 +640,22 @@ rejestr dostanie czwarty stan dla znalezisk typu „brak pomiaru”, których ni
 - ⬜ **BLIŹNIAK klasy „zapisujemy skutek, nie sprawdziwszy, czy operacja się udała" —
   ścieżka ponownej wysyłki maila** (`wtyczki/sklep-agentow/includes/admin-zamowienie.php`,
   `sklepag_obsluz_resend()`). Zmierzone 28.08 (recenzja `#207`, runda 3) jako sześć wywołań;
-  po 0.9.28 (#234) zostało **pięć** `$wpdb->query()` bez sprawdzenia wyniku (zgodnie
-  z komentarzem nagłówkowym pliku, :28) — zapisy tokenu, `link_wygasa`, `mail_tresc` i tokenu
-  opinii; status `mail_blad` idzie już pod CAS własności, a kompensacja jest mierzona przez
-  `$przywrocono` — częściowa spłata, nie całość klasy.
+  po 0.9.28 (#234, wyliczenie skorygowane w r7) zostało **pięć** `$wpdb->query()` bez
+  przechwyconego WYNIKU zapisu — linie 104, 130, 179, 194, 196: rotacja tokenu przed
+  wysyłką (:104), status po sukcesie ze śladem `dor_*` (:130), status `mail_blad`
+  (:179 — CAS własności siedzi w klauzuli WHERE, co NIE jest sprawdzeniem wyniku zapisu),
+  przywrót treści maila (:194) i skrótu opinii (:196). Spłacona część: kompensacja
+  mierzona przez `$przywrocono`.
+  DRUGI CZŁON tego samego długu (kod przypisuje go wprost: `admin-zamowienie.php:33-36`;
+  r1 #235): kompensacja licznika pobrań po nieudanej wysyłce przywraca `pobrania_uzyte`
+  ze ZDJĘCIA `$zam` z wejścia (`:142`, `$zrodlo_uzyte`), nie ze stanu bazy — pobranie
+  wykonane w oknie między odczytem a zapisem ginie z licznika.
   ⛔ To ta sama klasa, którą ten PR naprawił w anonimizacji — czyli klasa 8 briefingu (naprawa
   egzemplarza zamiast klasy). Nazwana w kodzie, przy funkcji.
   **CO ZAMYKA:** przenieść wzorzec z anonimizacji — pomiar STANU po zapisie zamiast kodu powrotu —
-  wraz z testem podkładającym awarię każdego z pięciu zapisów osobno. Osobna robota, bo to inna
+  wraz z testem podkładającym awarię każdego z pięciu zapisów osobno, ORAZ odczyt
+  `pobrania_uzyte` ze stanu bazy w chwili kompensacji (nie ze zdjęcia wejścia) z własnym
+  przypadkiem testowym „pobranie w oknie kompensacji". Osobna robota, bo to inna
   ścieżka: ponowna wysyłka i kompensacja po nieudanym mailu mają własne przypadki brzegowe.
 - ⬜ **Adres z `/` w części lokalnej zostaje w dzienniku mimo potwierdzenia usunięcia.**
   `wp_json_encode` bez flag zapisuje ukośnik jako `\/`, a anonimizacja szuka SUROWEJ postaci
