@@ -650,7 +650,7 @@ rejestr dostanie czwarty stan dla znalezisk typu „brak pomiaru”, których ni
   r1 #235): kompensacja licznika pobrań po nieudanej wysyłce przywraca `pobrania_uzyte`
   ze ZDJĘCIA `$zam` z wejścia (`:142`, `$zrodlo_uzyte`), nie ze stanu bazy — pobranie
   wykonane w oknie między odczytem a zapisem ginie z licznika.
-  ⛔ To ta sama klasa, którą ten PR naprawił w anonimizacji — czyli klasa 8 briefingu (naprawa
+  ⛔ To ta sama klasa, którą `#234` naprawił w anonimizacji — czyli klasa 8 briefingu (naprawa
   egzemplarza zamiast klasy). Nazwana w kodzie, przy funkcji.
   **CO ZAMYKA:** przenieść wzorzec z anonimizacji — pomiar STANU po zapisie zamiast kodu powrotu —
   wraz z testem podkładającym awarię każdego z pięciu zapisów osobno, ORAZ odczyt
