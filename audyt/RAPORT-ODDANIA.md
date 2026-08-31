@@ -194,7 +194,7 @@ jako historia; dowody K7–K10 na nim nie giną).
 
 ## 8. Dopisek — wydanie `v0.9.26` (2026-08-30 noc; zbudowane z `main` `a3d9568`)
 
-**Skąd ta delta:** Dzidek zapytał, czy produkt jest sprawdzony pod TEMATY z lekcji z kolegą (nie tylko pod nasz rejestr błędów).
+**Skąd ta delta:** właściciel zapytał, czy produkt jest sprawdzony pod TEMATY z lekcji z kolegą (nie tylko pod nasz rejestr błędów).
 Lista tematów odnaleziona w warsztacie (notatnik z telefonu, 9 zrzutów) → tabela `audyt/TEMATY-LEKCJI-vs-PRODUKT.md`
 (17 wierszy: dowód / brak / poza zakresem). Z tabeli wyszły dwie rzeczy do zrobienia od razu: **canonical** i **SECURITY/CONTRIBUTING**.
 

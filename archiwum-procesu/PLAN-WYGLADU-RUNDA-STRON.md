@@ -143,7 +143,7 @@ desktop + telefon obejrzane w całości · `bash narzedzia-qa/bramki.sh` EXIT 0 
 
 ## 6. GIGANT-PROMPT STRONY PRODUKTU — PR 2a: `/sklep/produkt/chatbot-live/` (25.08, po scaleniu PR 1)
 
-Kolejność (Dzidek 25.08): NAJPIERW ChatBot, Segregator osobnym PR-em tą samą metodą. Gałąź
+Kolejność (właściciel 25.08): NAJPIERW ChatBot, Segregator osobnym PR-em tą samą metodą. Gałąź
 `wyglad/produkt-chatbot`. Wzorzec ruchu = GOSPODARZ (`recon-automatic-ai-RUCH.json`, lekcja działu),
 system z PR 1 przeniesiony 1:1: tło blueprint + pingi, etykiety `[ 01 · … ]`, kaskada/kierunki,
 sekcje pełnej szerokości, hover łańcuchowy, cache-busting. Funkcje i treści sprzedażowe BEZ ZMIAN
@@ -197,14 +197,14 @@ checkout, lightbox, sticky, czat-bąbelek, `noscript`/`reduced-motion` = wszystk
   sprawdzone klatkami 3 s i 16 s) + nowy plakat 4,7 KB · rząd fazy 01 wyższy (26 rem), dwa równe kafle.
 - ŚWIADOMIE NIE: ilustracja w pierwszym ekranie telefonu (P3 — hero na telefonie ma tekst+cenę+CTA
   wyżej, jak na liście: panel POD tekstem) · wyrównanie wagi 3 faz do „wszystkie pół-szerokości"
-  (P4 — kadry panelu na pół szerokości wracają do nieczytelności, którą Dzidek zgłosił) · oryginał
+  (P4 — kadry panelu na pół szerokości wracają do nieczytelności, którą właściciel zgłosił) · oryginał
   `chatbot-demo.webm` zostaje w assets (418 KB, nieużywany na stronie) — do decyzji przy PR 3 media.
-- **Sędzia r2: 81/100, BLISKO, zero P1** (hierarchia 85, kolor 87, motion 76, mobile 77). Dzidek na
+- **Sędzia r2: 81/100, BLISKO, zero P1** (hierarchia 85, kolor 87, motion 76, mobile 77). właściciel na
   tunelu (25.08 ~08:03): pigułka sticky wisiała na końcu strony — MÓJ błąd z tej rundy (reguła
   `.sklepag-produkt > *` nadpisała `position: fixed`, a kaskada zabrała centrowanie) → wykluczenie
   z reguły + własna reguła wejścia; szelki dostały kontrolę pigułki (fixed, 14 px od dołu, środek).
   Podpis duetu na stronie produktu = TEN produkt (`sklepag_duet_maskotek( $podpis )`).
-  Dzidek ~08:07 (Segregator): „czemu Kup teraz jest tu i górny też tu przekierowuje?" → kotwice
+  właściciel ~08:07 (Segregator): „czemu Kup teraz jest tu i górny też tu przekierowuje?" → kotwice
   celują w sekcję `#sklepag-zakup` (scroll-margin pod nagłówkiem, cena w kadrze), formularz jako
   ramka z błyskiem `:target`. Szare smugi w tle = `fw-canvas` gospodarza, nie nasze.
 - Runda 3 (uwagi sędziego r2): poświata za ilustracją hero (0.14, oddech 7 s) · kadry panelu
@@ -216,14 +216,14 @@ checkout, lightbox, sticky, czat-bąbelek, `noscript`/`reduced-motion` = wszystk
   wadę (desktop i telefon). Jego P1 słuszne: kadry panelu 1:1 na telefonie cięły słowa. Runda 4:
   kadr 4:3 + gasnąca prawa krawędź (widać ciąg dalszy) · pigułka zwarta na telefonie. ŚWIADOMIE NIE:
   usunięcie/przesuwanie pigułki (sticky CTA = standard Baymard, koszyk A z #174) · faza 03 w dwóch
-  kolumnach (nieczytelność kadrów, patrz r1). Sufit sonneta przy tych decyzjach ≈ 80 — Dzidek: „kręć
+  kolumnach (nieczytelność kadrów, patrz r1). Sufit sonneta przy tych decyzjach ≈ 80 — właściciel: „kręć
   rundy do 90" → po r4 meldunek z tą granicą i wybór właściciela (pigułka zostaje / znika na telefonie).
 - **Sędzia r4: 84, BLISKO, zero P1** (media 90, telefon 88, odstępy 87, hierarchia 87). Runda 5 na
   jego drobiazgi: akcent w H1 (ostatnie słowo WIELKIMI, „LIVE", limonką — `sklepag_tytul_z_akcentem`)
   · fazy numerowane `04.1/04.2/04.3` (przypięte do sekcji, odróżnialne od kroków 01/02/03) · numery
   faz i kroków przygaszone do 72 % limonki (CTA ma wygrywać) · kolumna „Z botem" w porównaniu
   z tłem i lewym akcentem. NIE: ujednolicenie 3 faz do jednego szablonu (decyzja, patrz r1).
-- Dzidek na tunelu (~08:27–08:28): (a) faza 03 — 650 px pustki pod tekstem obok dwóch kadrów → faza
+- właściciel na tunelu (~08:27–08:28): (a) faza 03 — 650 px pustki pod tekstem obok dwóch kadrów → faza
   `--panel` ma narrację NAD kadrami (numer | tytuł+opis) i kadry na pełną szerokość; (b) „hero
   i obrazy w hero produktów za słabe" → **hero = PANEL NA ŻYWO tego bota** (sygnatura listy: okno
   z pętlą czatu, awatar-maskotka, tilt/paralaksa, adnotacje, + wiersz „baza pytań" z chipami
@@ -274,7 +274,7 @@ próbki 1100×2726 w całości do kafla (513 KB), reguły (192 KB), ustawienia (
   Na telefonie (sędzia r1: „litery rzędu kilku pikseli") nagranie też 4:3 od lewej-góry (przycisk
   przebiegu + pierwsze kolumny raportu) z gaśnięciem prawej krawędzi — jak kadry panelu; nagranie
   nie ma lightboxa (to ruch, nie treść do czytania — treść jest w kadrach obok i w pełnych ekranach).
-- **04.2 `panel`** (narracja nad kadrami, pełna szerokość — kadry na pół szerokości Dzidek odrzucił
+- **04.2 `panel`** (narracja nad kadrami, pełna szerokość — kadry na pół szerokości właściciel odrzucił
   w §6): reguły `crop=1078:500:0:280` (pole kategorii, przyciski i CAŁA lista 8 reguł z kolumnami
   Pasuje/Zgarnia; koniec przed sekcją „Przeprowadzka"; szerokość 1078 = proporcja okna 1078/500 —
   sędzia r1 złapał, że kadr 1100 px w trybie cover tracił po 11 px z boków i strzałkę „→ kategoria")

@@ -94,12 +94,12 @@ mu krzywdę samym testowaniem. Do checklisty środowiska-kopii i do wrogiej sesj
    U nas: A–D obowiązkowe; **E (migracja ze starej wersji) = N/D w v1** — sklep nie ma poprzedniej
    wersji; wraca przy pierwszej aktualizacji paczki u właścicieli. Zapisane, nie zgubione.
 3. ⭐ **BRAMKA LUDZKA przy wydaniu: automat robi 5–6 zrzutów krytycznych ścieżek** (sklep · Stripe
-   testowy · mail z linkiem · panel-dashboard · dziennik logowań · dowód odpięcia), **Dzidek ogląda
+   testowy · mail z linkiem · panel-dashboard · dziennik logowań · dowód odpięcia), **właściciel ogląda
    i odblokowuje wydanie RĘCZNIE.** To jedyne prawdziwe wyjście z zamkniętej pętli „agent sam
    projektuje testy i sam je zdaje". Nie więcej niż 6 obrazków (bramka obchodzona z braku czasu
    jest gorsza niż żadna).
 4. **Warunek zakończenia — lista, nie zegar (wszystkie 4):** zero celów ⬜ policzonych maszynowo ·
-   mutanty złapane · zero anomalii bez wyjaśnienia („nie umiem powtórzyć" = zły test) · Dzidek
+   mutanty złapane · zero anomalii bez wyjaśnienia („nie umiem powtórzyć" = zły test) · właściciel
    obejrzał zrzuty i odblokował.
 5. **Naprawa klasą >5 plików = porcje po ≤5 z osobnym zielonym CI**; trzecia porcja z regresją =
    STOP, zły model przyczyny.
@@ -120,7 +120,7 @@ mu krzywdę samym testowaniem. Do checklisty środowiska-kopii i do wrogiej sesj
 
 ## G. STANDARDY WŁAŚCICIELA Z MP (T1–T7 + WCAG-lite) — przełożone na sklep (17.08 ~02:55)
 
-Źródło: `zlecenia/test-kolegi-serwis-wp/ZROZUMIENIE.md` (linie 14–18, 46, 54). Dzidek NIE musi
+Źródło: `zlecenia/test-kolegi-serwis-wp/ZROZUMIENIE.md` (linie 14–18, 46, 54). właściciel NIE musi
 dyktować od nowa — to jest jego stały standard jakości, obowiązuje też tutaj:
 
 1. **Jakość kodu („syntax")**: spójny styl + lint w CI od pierwszego kodu (dla JS: eslint/prettier

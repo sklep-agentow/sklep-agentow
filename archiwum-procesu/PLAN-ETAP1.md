@@ -7,10 +7,10 @@ Stan na 17.08 ~00:15. Legenda: ✅ zrobione · ⏳ teraz · 🔜 czeka.
 
 ## GODZINA 0 — SKREŚLONA (decyzja właściciela 17.08 ~00:20)
 **ZERO pytań do kolegi — to część egzaminu.** Wszystkie otwarte sprawy rozstrzygamy SAMI.
-Zamiennik: **REJESTR DECYZJI WŁASNYCH** — każda niejasność dostaje: naszą decyzję + uzasadnienie (źródło: notatka / wzorce rynku / zdrowy rozsądek nazwany po imieniu) + koszt zmiany, gdyby kolega chciał inaczej. Decyzje „drogo cofnąć" klepie Dzidek.
+Zamiennik: **REJESTR DECYZJI WŁASNYCH** — każda niejasność dostaje: naszą decyzję + uzasadnienie (źródło: notatka / wzorce rynku / zdrowy rozsądek nazwany po imieniu) + koszt zmiany, gdyby kolega chciał inaczej. Decyzje „drogo cofnąć" klepie właściciel.
 Rozstrzygnięcia od ręki:
 - mail po zakupie = potwierdzenie + instrukcje + wygasający link do plików (wzorzec zipsell + notatka „potwierdzenie, instrukcje"),
-- opisy i ceny 2 agentów = MY piszemy (Dzidek: „coś wymyślimy"; wzorce opisów z godofprompt/agenciai),
+- opisy i ceny 2 agentów = MY piszemy (właściciel: „coś wymyślimy"; wzorce opisów z godofprompt/agenciai),
 - panel admina = podgląd sprzedaży + PEŁNA edycja produktów (notatka wprost: „dodawanie, usuwanie, modyfikowanie"),
 - rubryka GOTOWE = ze scenariuszy KUPUJĄCEGO i notatki kolegi (nie z architektury).
 

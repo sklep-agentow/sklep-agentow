@@ -67,7 +67,7 @@ pół dnia z K3 bez ruszania próby 27.08.
 dały „zero znalezisk" i były bezwartościowe (zmierzone 4.08); kalibracja kosztuje ~30 min
 i jest jedynym pomiarem, czy audyt w ogóle widzi. Zostaje.
 **D15. Zależność od właściciela.** → **ODRZUCONA:** bramka ludzka to ŚWIADOMA zasada procesu
-(jedyne wyjście z pętli „agent sam siebie sprawdza"); Dzidek jest stroną projektu, nie
+(jedyne wyjście z pętli „agent sam siebie sprawdza"); właściciel jest stroną projektu, nie
 ryzykiem zewnętrznym.
 **D16. Range nieobsłużony jawnie.** → PRZYJĘTA: serwujemy bez Accept-Ranges (jawnie).
 

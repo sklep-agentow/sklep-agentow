@@ -85,7 +85,7 @@ udokumentowane w `audyt/LINIA-BAZOWA-TESTOW.md`, kandydaci do samowystarczalnoś
 ### ⛔ CZEGO ŚWIADOMIE NIE ZROBIŁAM — czeka na decyzję właściciela
 
 1. **Wpis do `.github/manifest-bramek.txt`.** Manifest ma własną zasadę, zapisaną w nim
-   samym: *„każda zmiana = osobny PR, który Dzidek czyta w całości; agent NIE dotyka tego
+   samym: *„każda zmiana = osobny PR, który właściciel czyta w całości; agent NIE dotyka tego
    pliku w PR-ach z kodem"*. Dopóki bramki tam nie ma, działa i zatrzymuje pull requesty,
    ale **nie jest minimum** — da się ją usunąć bez alarmu. Ta sama droga, którą przeszła
    bramka `slady`: najpierw działała, potem wpis uczynił ją nieusuwalną.
@@ -130,6 +130,6 @@ Mapa polowania: `audyt/boty/material/06-mapa-polowania.md` — **36 celów**, od
 1. ✅ Rozstrzygnięte: każde znalezisko ZAMKNIĘTE ze strażnikiem (rejestr: OTWARTE=0, dług=0).
 2. 🔄 **Jedno zbiorcze podbicie: ChatBot 1.5.9, Segregator 1.3.2** + przebudowa obu paczek
    + `paczka-zgodnosc.sh` EXIT=0 + dowody NA PACZKACH — w tym PR, jedną operacją.
-3. Sklep — Dzidek ma własną listę poprawek (`wymiana/SKLEP-LISTA-PO-BOTACH.md`), wracamy po botach.
+3. Sklep — właściciel ma własną listę poprawek (`wymiana/SKLEP-LISTA-PO-BOTACH.md`), wracamy po botach.
 4. Dokumentacja projektu botów: przegląd istniejących instrukcji/diagramów/architektury przeciw
    kodowi po naprawach, poprawki tam, gdzie naprawy unieważniły treść.

@@ -115,7 +115,7 @@ Było 52 gałęzi zdalnych. Kasowanie **po stanie PR-a** (`gh pr list --state me
   gałęzie otwartych PR-ów. Wynik: `git push origin --delete` × 49, 0 błędów; `git branch -r` → 4 pozycje.
 
 ## 9. SKILL DO STEROWANIA GITHUBEM — PO ODDANIU, nie teraz
-Dzidek 29.08: wiedza o prowadzeniu repo jest rozsypana, przydałby się **jeden** skill
+właściciel 29.08: wiedza o prowadzeniu repo jest rozsypana, przydałby się **jeden** skill
 z najważniejszymi informacjami. ⭐ Zgoda co do kierunku — i to jest robota **warsztatowa**,
 nie zlecenia. Materiał już mamy: `github-wydania-klienta` (istnieje), klasy 20/22 ze ściągi
 (squash i przenoszenie gałęzi), pamięć o bramkach lokalnych przed pushem, o odświeżaniu opisu

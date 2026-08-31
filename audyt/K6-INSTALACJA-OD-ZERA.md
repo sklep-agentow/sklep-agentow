@@ -1,7 +1,7 @@
 # K6 — instalacja od zera przez NIE-autora (19.08, przyciągnięte z planu 24.08)
 
 ## Metodologia (zmiana wykonania klepnięta przez właściciela 19.08)
-Dzidek: „ja się nie znam — ty musisz to testować albo jakiś tester niezależny przez
+właściciel: „ja się nie znam — ty musisz to testować albo jakiś tester niezależny przez
 tmux jak buildery". NIE-autorem została **świeża, niezależna sesja Claude (Sonnet)**
 w osobnym oknie tmux — **bez dostępu do kodu i warsztatu (deny w uprawnieniach
 projektu testera, wymuszone technicznie)**. Tester dostał WYŁĄCZNIE: czysty

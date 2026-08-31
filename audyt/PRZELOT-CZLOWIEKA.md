@@ -4,7 +4,7 @@
 > dowodem, jaki mamy o własnych ślepych plamach: **17 znalezisk złapał wyłącznie człowiek
 > klikający, automaty zero.** Zrzut ekranu nie klika. Agent nie poczuje, że coś jest upierdliwe.
 >
-> Kto: Dzidek albo koordynatorka. **Nie autor wtyczki** — on wie, gdzie kliknąć, żeby zadziałało.
+> Kto: właściciel albo koordynatorka. **Nie autor wtyczki** — on wie, gdzie kliknąć, żeby zadziałało.
 > Gdzie: `http://localhost:8890`, poczta na `:8025`.
 
 ## Jak wypełniać
@@ -140,7 +140,7 @@ Dowody z późniejszych przelotów są trwałe: `/root/praca/k7-dowody-27-08/` (
   WP-owe update'y środowiska). Czysto.
 - ✅* Redaktor bez dostępu: wszystkie handlery za `manage_options`/nonce — audyt A1 (celująco)
   + `segregator-skrzynka-test-uprawnienia.php` zielony; panele wiszą pod `manage_options`.
-- ⬜→Dzidek: „przejdź instrukcję krok po kroku Z ZEGAREM jak kupujący" — jedyny punkt, który
+- ⬜→właściciel: „przejdź instrukcję krok po kroku Z ZEGAREM jak kupujący" — jedyny punkt, który
   zostawiam człowiekowi nie znającemu produktu (ja go znam za dobrze). Instalację od zera na
   czystym WP mierzy `dowod-z-paczki.sh` (EXIT=0), ale minuty z instrukcji niech zweryfikuje
   świeże oko przy odbiorze.

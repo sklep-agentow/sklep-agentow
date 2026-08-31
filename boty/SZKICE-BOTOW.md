@@ -41,7 +41,7 @@ pytania bez udziału człowieka + leady zbierane poza godzinami; instrukcja poka
 jak wpisać własne Q&A w kilkanaście minut (czas MIERZONY przez nie-autora we
 wrogiej sesji 23.08 — obietnica z pokryciem, nie z sufitu).
 
-**TRYB AI (hybryda — Dzidek 18.08):** w ustawieniach pole „klucz API" (klucz
+**TRYB AI (hybryda — właściciel 18.08):** w ustawieniach pole „klucz API" (klucz
 WŁAŚCICIELA — nigdy w paczce/kodzie/repo). Z kluczem odpowiedzi generuje prawdziwy
 model z instrukcją systemową: „jesteś asystentem firmy X; oto informacje o firmie
 [tekst z ustawień]; odpowiadasz TYLKO na ich podstawie, po polsku, krótko; nie
@@ -98,7 +98,7 @@ rozdziela maile do kategorii wg reguł i pokazuje raport, ile roboty zrobił za 
 automat rozdzieli sam; instrukcja: jak ułożyć reguły pod własną firmę w ~20 minut
 (czas mierzony jak w ChatBocie — wroga sesja 23.08).
 
-**TRYB AI (hybryda — Dzidek 18.08):** z kluczem właściciela klasyfikację robi
+**TRYB AI (hybryda — właściciel 18.08):** z kluczem właściciela klasyfikację robi
 model („przypisz mail do JEDNEJ z kategorii [lista]; niepewny → Reszta") — tryb
 przebiegu do wyboru: reguły / AI / **porównaj oba** (raport pokazuje różnice —
 mocny argument sprzedażowy: widać, co AI łapie ponad reguły). Ten sam stop-loss
@@ -138,7 +138,7 @@ Prawdziwe granice, jakie zostały:
 
 ## CO SPRAWDZI RECENZJA WŁAŚCICIELA (pytania do Ciebie)
 
-1. ~~Czy taki zakres pasuje?~~ ✅ CZĘŚCIOWO ROZSTRZYGNIĘTE 18.08: Dzidek wybrał
+1. ~~Czy taki zakres pasuje?~~ ✅ CZĘŚCIOWO ROZSTRZYGNIĘTE 18.08: właściciel wybrał
    HYBRYDĘ (prawdziwe AI + tryb regułowy bez klucza) z warunkiem zwiadu wzorców.
 2. ChatBot: czy „LIVE = zbieranie kontaktu dla właściciela" czyta się dobrze,
    czy wolisz inny akcent (np. mocniejsze parcie na zostawienie numeru telefonu)?

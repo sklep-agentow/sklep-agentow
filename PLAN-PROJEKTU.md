@@ -4,7 +4,7 @@ Wersja 3.0 — 2026-08-18, po piwocie na WordPressa (DECYZJE D16). Zastępuje v2
 (architektura Cloudflare — w historii gita; przeniesione z niej: wymagania, MUST NOT,
 prawo, wzorce Stripe/idempotencji, kadencja, kryteria GOTOWE — wymienione: architektura
 i harmonogram). Dokument bez adresów i sekretów.
-**Termin egzaminu: 1.09.2026 (zmiana z 30.08 — Dzidek 20.08) · 3 próby oddania, po każdej TYLKO LICZBA błędów (Dzidek 25.08) · próba 1 ~31.08 po audycie K7 (PLAN-K7 §8c).**
+**Termin egzaminu: 1.09.2026 (zmiana z 30.08 — właściciel 20.08) · 3 próby oddania, po każdej TYLKO LICZBA błędów (właściciel 25.08) · próba 1 ~31.08 po audycie K7 (PLAN-K7 §8c).**
 
 ## 1. CO BUDUJEMY I PO CO
 
@@ -14,7 +14,7 @@ Checkout, TRYB TESTOWY) kupujący dostaje mail z potwierdzeniem, instrukcją i l
 do pobrania paczki (zip wtyczki bota + instrukcja). Zaplecze CAŁE w WordPressie:
 własne tabele w bazie WP, panel w wp-admin, maile z serwera WP (S-19).
 
-Strona-gospodarz: JEDNA WSPÓLNA strona (Dzidek + 3 kolegów; 4 konta adminów przy
+Strona-gospodarz: JEDNA WSPÓLNA strona (właściciel + 3 kolegów; 4 konta adminów przy
 wdrożeniu — ustalenie 17/18.08, aktualizacja S-15). Konwersja strony na WP = ZROBIONA
 (nasza robota poboczna, PR #86 scalony); sklep budujemy i testujemy na jej pełnej
 kopii w warsztacie (WP 7.0.4, PHP 8.4). Egzamin: ocenia kolega, ZERO pytań do niego,
@@ -304,7 +304,7 @@ bez aggregateRating) · WCAG-lite (EAA) · przed oddaniem: bramka
   Przegląd i scalanie PR-ów buildera = moja STAŁA godzina zamykająca dzień
   (uwzględniona w obłożeniu dni K1-K5, nie „poza czasem").
 - **K6 · 24.08 — POWTARZALNOŚĆ:** świeży czysty WordPress (drugi stack) → instalacja
-  3 wtyczek WG INSTRUKCJI przez NIE-autora (Dzidek; mierzone, cel ≤30 min) → pełny
+  3 wtyczek WG INSTRUKCJI przez NIE-autora (właściciel; mierzone, cel ≤30 min) → pełny
   zakup end-to-end → deinstalacja: diff bazy/plików przed-po czysty.
   ⛔ Konsekwencja terminowa (krytyka 8): **instrukcja instalacji MUSI istnieć PRZED
   K6** — powstaje przyrostowo do 23.08 (K8 ją tylko finalizuje: zrzuty, diagram,
@@ -332,7 +332,7 @@ bez aggregateRating) · WCAG-lite (EAA) · przed oddaniem: bramka
   robione maszynowo; diagram architektury dla informatyka; rozdział „test vs
   produkcja" §13) → do paczki
   `PONAD-SPECYFIKACJE.md` (jawna lista wszystkiego ponad literę notatki — ściąga
-  kl. 6) → **bramka ludzka: Dzidek ogląda zrzuty krytycznych ścieżek
+  kl. 6) → **bramka ludzka: właściciel ogląda zrzuty krytycznych ścieżek
   i odblokowuje** → oddanie (próba 1) → **runbook: OTWORZYĆ stronę Releases
   i potwierdzić oczami, że „Latest" = oddawana wersja** (fakt „kolega widzi
   1.1.0" — ściąga kl. 4).
@@ -366,7 +366,7 @@ Dwie próby naprawy, potem reset i inne podejście.
   gotowa na podpięcie dostawcy.
 - Z4. Sklep testujemy na kopii strony-gospodarza w warsztacie; wdrożenie na żywą
   stronę = po egzaminie, za zgodą czwórki (przełączka + świeży re-import treści).
-- Z5. „Jedna wspólna strona, 4 konta adminów" (Dzidek 17/18.08) — wtyczka mimo to
+- Z5. „Jedna wspólna strona, 4 konta adminów" (właściciel 17/18.08) — wtyczka mimo to
   konfigurowalna przez Ustawienia (przenośność tania teraz, potrzebna później);
   test przenośności = K6 na czystym WP.
 - Z6. Wolumen: pojedyncze zakupy dziennie (przy zmianie przeliczyć limity/retencję).

@@ -31,7 +31,7 @@ sięgnąć po paczkę.
 w `audyt/boty/material/06-mapa-polowania.md:286`.
 
 Dlaczego nie zrobione od razu: `.github/manifest-bramek.txt` ma własną zasadę wpisaną w nagłówku —
-*„każda zmiana = osobny PR, który Dzidek czyta w całości"* oraz *„agent NIE dotyka tego pliku
+*„każda zmiana = osobny PR, który właściciel czyta w całości"* oraz *„agent NIE dotyka tego pliku
 w PR-ach z kodem"*. A `sprawdz-manifest.sh` ma kontrolę odwrotną: bramka w `BRAMKI=()`, której nie
 ma w manifeście, świeci na czerwono. Więc dopisanie jej w PR #208 złamałoby zasadę domu.
 
@@ -311,7 +311,7 @@ prawdziwym wdrożeniu.
   (zamek wydanych zipów botów). Dług z #176 zamknięty.
 
 ## 🔄 W TOKU 20.08 (noc) — RUNDA BOTÓW, DWA BUILDERY
-⏰ **TERMIN: do 1.09** (Dzidek 20.08 — zmiana z 30.08).
+⏰ **TERMIN: do 1.09** (właściciel 20.08 — zmiana z 30.08).
 - **builder1** (tmux praca:builder1, drzewo główne, gałąź `boty/runda-finalna`): TYLKO chatbot
   + klasa AI w obu botach. Zrobione: Z1 (fałszywy sukces zapisu, oba boty), **Z0 (tryb AI —
   był MARTWY)**, Z2 (zgoda RODO w formularzu). Dalej: PLAN-NAPRAW-CHATBOT v2, P1 i P2.
@@ -452,7 +452,7 @@ prawdziwym wdrożeniu.
   `archiwum-procesu/PLAN-WYGLADU-K5.md` CZEKA NA KLEPNIĘCIE właściciela przed budową.
 
 ## ✅ ZAMKNIĘTE 18.08 (dzień)
-- Model AI botów haiku-4-5 (Dzidek) · timeout AI #37 · **oba boty scalone z haiku**
+- Model AI botów haiku-4-5 (właściciel) · timeout AI #37 · **oba boty scalone z haiku**
   (#36 chatbot, #37 segregator) · recenzent zna WP+ściągę+Handbook (#38) · hardening
   uninstall wg Handbook (#39) · chatbot atomowy rate-limit (#40) · **paczki 1.2.0
   zweryfikowane (haiku + finalny kod w zipie)** (#35). ZERO otwartych PR.
@@ -579,7 +579,7 @@ prawdziwym wdrożeniu.
   `k7-koniec.sh` warunek 2 jest OSTRZEJSZY: żąda, żeby KAŻDA soczewka miała PASS. Bramka i rubryka
   mierzą więc dwie różne rzeczy, a bramka jest surowsza od tego, co obiecaliśmy.
 
-  **DECYZJA (Dzidek, 28.08): oddajemy z jawnym zapisem.** Odrzucone świadomie:
+  **DECYZJA (właściciel, 28.08): oddajemy z jawnym zapisem.** Odrzucone świadomie:
   – trzecia próba dla `L1`/`L5` → łamie własną regułę, psuje sens kalibracji;
   – poluzowanie warunku 2 w `k7-koniec.sh` do „≥ 2/3” → obrona robiona na narzędziu w dniu oddania,
     czyli dokładnie wtedy, kiedy najłatwiej sobie coś przyklepać.
@@ -826,7 +826,7 @@ Raport (oryginał): `/root/praca/k7-dowody-30-08/k10-tester-0.9.24/RAPORT-TESTER
 końca ramek: panel bez błędu, e-mail + karta 4242 wypełnione w ramkach Stripe, „Zapłać” aktywne i kliknięte — po czym Stripe
 wystawia niewidzialną hCaptcha (ramka `hcaptcha-invisible`, `POST api.hcaptcha.com/getcaptcha`) i `confirm()` czeka;
 sesja zostaje `open/unpaid`. To zabezpieczenie Stripe dla zautomatyzowanej przeglądarki, nie wada sklepu (kod wyjścia 3).
-**Dowód końcowy = człowiek w przeglądarce** (Dzidek/kolega przez tunel albo na hostingu). Do rozważenia: Stripe Radar
+**Dowód końcowy = człowiek w przeglądarce** (właściciel/kolega przez tunel albo na hostingu). Do rozważenia: Stripe Radar
 → reguły testowe, albo Playwright w trybie z nagłówkiem — nie sprawdzałam. Ścieżka zapasowa (hostowana) przetestowana
 maszynowo do końca (zam #9901178 z danymi faktury).
 

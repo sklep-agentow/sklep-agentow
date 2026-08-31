@@ -82,7 +82,7 @@ była w klepniętych szkicach (`boty/SZKICE-BOTOW.md`) albo wynika z ich zasad
    decyzja regułami, przeniesienie do folderów na serwerze poczty, historia
    przebiegów, cofnięcie ostatniego przebiegu, zadanie cykliczne. **Powód:** szkice
    odkładały to „po egzaminie", ale po podniesieniu progu na produkt do sprzedaży
-   (Dzidek 20.08) bot bez dostępu do skrzynki jest analizatorem plików, a nie
+   (właściciel 20.08) bot bez dostępu do skrzynki jest analizatorem plików, a nie
    automatem, który komuś oszczędza czas. **Bezpiecznik:** tryb NA SUCHO jest
    domyślny i otwiera folder przez `EXAMINE` (RFC 3501 6.3.2), czyli read-only na
    poziomie protokołu; realne przenoszenie wymaga przełączenia trybu ORAZ osobnego

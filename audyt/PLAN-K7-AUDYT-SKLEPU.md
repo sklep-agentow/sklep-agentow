@@ -80,7 +80,7 @@ komendy albo rozjazd dwóch pomiarów. Dostaje ID `AN-nnn` w rejestrze i status:
 | **Builder napraw** | ja, po `/clear` ról (1 builder przy wspólnych plikach) | rejestr + klasy | egzemplarz zamiast klasy; trzecia próba |
 | **Re-audytor wąski** | świeży subagent, kto NIE naprawiał | ten sam komplet materiału + rejestr | okrojony materiał |
 | **Recenzent CI** | claude-code-action (doradca) | PR | trzecia runda |
-| **Właściciel** | Dzidek: przelot ~40 min (kupujący + właściciel, lista ~25 pkt z 3 krokami klawiaturowymi) przez tunel po moim „bezpiecznie"; czyta wynik `k7-koniec.sh` | lista + 3 liczby | spory techniczne |
+| **Właściciel** | właściciel: przelot ~40 min (kupujący + właściciel, lista ~25 pkt z 3 krokami klawiaturowymi) przez tunel po moim „bezpiecznie"; czyta wynik `k7-koniec.sh` | lista + 3 liczby | spory techniczne |
 
 Kto klika, kto czyta (Z5): L2, L3, L4, Ł = WYKONANIE na stosie; L1, L5 = czytanie + cytaty; L6 = przyrządy + człowiek.
 
@@ -187,8 +187,8 @@ Licznik mówi o POKRYCIU, nie o jakości: 95/95 = o każdy cel ktoś zapytał z 
 | **4** | rozliczenie kalibracji (limit 1 powtórka) → RUNDA B (rama obalająca, egzaminator-symulant, katalog bez raportów A) | 7 × sonnet | 27.08 popołudnie |
 | **5** | WERYFIKACJA (kroki reprodukcji) → `REJESTR-ZNALEZISK-SKLEP.md` (`SK-L2-003`, waga, klasa, status, SHA, `naprawa_proby`, `straznik`, `straznik_padl_na_starym`) + anomalie `AN-nnn`; **mapa ZAMROŻONA** | 1–3 × sonnet + ja | 28.08 rano |
 | **6** | NAPRAWY KLASAMI: 1 klasa = 1 PR (recenzent max 2 rundy) + STRAŻNIK z dowodem padania na starym kodzie + sweep „co przestało być prawdą" | ja | 28.08 popołudnie – 29.08 |
-| **7** | RE-AUDYT WĄSKI (kto inny) + klamra wartości + przyrządy L6 + **PRZELOT CZŁOWIEKA** | 2–4 × sonnet + Dzidek | 30.08 |
-| **8** | `k7-koniec.sh` = GO → bump → CHANGELOG → paczki ×3 → `paczka-zgodnosc` ×3 → K8 (instrukcja, nagłówki HTTP, regulamin, release, „Latest" oczami, POBRANIE) | ja + Dzidek | 31.08; bufor 1.09 |
+| **7** | RE-AUDYT WĄSKI (kto inny) + klamra wartości + przyrządy L6 + **PRZELOT CZŁOWIEKA** | 2–4 × sonnet + właściciel | 30.08 |
+| **8** | `k7-koniec.sh` = GO → bump → CHANGELOG → paczki ×3 → `paczka-zgodnosc` ×3 → K8 (instrukcja, nagłówki HTTP, regulamin, release, „Latest" oczami, POBRANIE) | ja + właściciel | 31.08; bufor 1.09 |
 
 **8b. `narzedzia-qa/k7-koniec.sh` — spec (budowany w kroku 1, z próbą kontrolną, EXIT 0 tylko gdy WSZYSTKO):**
 1) `06-mapa-polowania.md`: ⬜ = 0, LICZNIK w pliku == policzony (`mapa-licznik.sh --tylko-licz`, nieznany znacznik = FAIL) i liczba
@@ -232,7 +232,7 @@ K7 = 3–4 takie dni. Limit dziś **61 %** → decyzja nr 1. Dryf > 1 dnia → t
 
 ## 10. DECYZJE WŁAŚCICIELA (biznesowe; techniczne rozstrzygam sama i melduję)
 
-**ROZSTRZYGNIĘTE 25.08 ~22:00** — Dzidek: „3 tak, 4 tak, reszta sama myśl; kredyty jeszcze mamy, reset w niedzielę;
+**ROZSTRZYGNIĘTE 25.08 ~22:00** — właściciel: „3 tak, 4 tak, reszta sama myśl; kredyty jeszcze mamy, reset w niedzielę;
 do 1.09 trzy próby oddania u Manika, po każdej tylko LICZBA błędów, nie jakie":
 1. Limit: reset w niedzielę 30.08, zostało ~38 % → **wariant PRZED/PO RESECIE** (moja decyzja): przed niedzielą kroki 0–3
    + weryfikacja rundy A + naprawy KRYTYCZNYCH; po niedzieli runda B (co najmniej L2/L3/L4, reszta jeśli starczy),
@@ -242,7 +242,7 @@ do 1.09 trzy próby oddania u Manika, po każdej tylko LICZBA błędów, nie jak
 2. PR-0 — klepnięte („reszta sama myśl"); cykl PR prowadzę sama. 3. Sprzątanie — TAK. 4. Eksporter/eraser RODO WP — TAK,
    w rundzie napraw. 5. Zwroty — moja decyzja PO L3: jeśli dziś nic się nie dzieje → status „zwrócone" ustawiany z widoku
    zamówienia (gasi link, odejmuje z KPI) + zdanie w instrukcji; webhook zwrotu tylko, jeśli koszt < 2 h. 6. Przelot
-   człowieka: niedziela 30.08 wieczór albo poniedziałek 31.08 rano — Dzidek wybiera godzinę. 7. Tunel: localhost; nowy na przelot.
+   człowieka: niedziela 30.08 wieczór albo poniedziałek 31.08 rano — właściciel wybiera godzinę. 7. Tunel: localhost; nowy na przelot.
 
 *(Pierwotna lista pytań — dla historii:)*
 

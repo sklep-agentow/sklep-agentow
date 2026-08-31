@@ -1,6 +1,6 @@
 # K10 — instalacja od zera z paczki Release `v0.9.24` przez NIEZALEŻNEGO testera (30.08, po wydaniu)
 
-**Cel (Dzidek przy /koniec 30.08):** „instalację od zera jak klient niech zrobi ktoś z was — osobna sesja tmux”.
+**Cel (właściciel przy /koniec 30.08):** „instalację od zera jak klient niech zrobi ktoś z was — osobna sesja tmux”.
 Różnica wobec K9: tester = **odrębna sesja Claude (Sonnet) w tmux z twardym deny** na kod i warsztat
 (`/root/praca/zlecenia/k10-tester-stanowisko/.claude/settings.json`; próba kontrolna deny przed startem:
 `Read` kodu → ZABLOKOWANE, `Read` karty startowej → DOZWOLONE), nie subagent. Metodologia K6 §Metodologia.

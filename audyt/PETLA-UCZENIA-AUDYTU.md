@@ -1,6 +1,6 @@
 # PĘTLA UCZENIA AUDYTU — jak sprawić, żeby ta sama klasa błędu nie wróciła
 
-**Po co ten plik:** Dzidek, 21.08: „musimy w końcu się nauczyć robić audyt, co znajduje wszystko".
+**Po co ten plik:** właściciel, 21.08: „musimy w końcu się nauczyć robić audyt, co znajduje wszystko".
 
 ## ⛔ Najpierw uczciwie: audyt, który znajduje WSZYSTKO, nie istnieje
 

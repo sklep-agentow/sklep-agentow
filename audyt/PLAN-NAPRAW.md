@@ -3,7 +3,7 @@
 > Wejście (zmierzone 23.08): `main`=766b4c9, CI zielone, 0 PR, stos = `main` (diff pusty).
 > **Rejestr kłamie:** `test-awaria-zapisu.php` na `main` → PADA 3/6 EXIT=1 → A2-F1/F2/F3 NIE naprawione
 > (#136 = inny problem). Prawdziwy stan: **23 OTWARTE + 1 W NAPRAWIE** (LS-F2, 3/4 punktów żywe).
-> Dzidek 23.08: „naprawy jak najszybciej, nie kosztem efektu · bez przerostu: naprawić + lekko zabezpieczyć ·
+> właściciel 23.08: „naprawy jak najszybciej, nie kosztem efektu · bez przerostu: naprawić + lekko zabezpieczyć ·
 > nie marnować kredytów · plan zatwierdza krytyk". Krytyka r1 złapała obie przynęty → ważna. Druga runda: NIE.
 
 ## 0. CEL I KONIEC ETAPU (mierzalny)
@@ -32,7 +32,7 @@ Dowody zachowania (`dowod-zachowania-*.sh`, na paczce zip, własny stos próbny)
 ## 2. ROLE, RAM, STANOWISKA
 - **Koordynatorka:** K0, rejestr/TABLICA, linia bazowa, scalanie, sweep wersji na końcu. Kod wtyczek — nie. Narzędzia QA (`linia-bazowa.sh`, `kto-wola.sh`) — tak.
 - **builder1:** okno tmux `builder1`, worktree `/root/praca/zlecenia/sklep-agentow-b1`, teren `wtyczki/chatbot-live/` + `testy/chatbot-*`. **builder2:** okno `builder2`, `/root/praca/zlecenia/sklep-agentow-b2`, `wtyczki/segregator-maila/` + `testy/segregator-*`.
-- **RAM: maks. 3 sesje naraz** (skill: dwie komfort, trzy granica; zmierzone 23.08: 3 sesje = 3×~550 MB RSS, `available` 1,75 GB, swap 1,1 GB). Próg = kolumna **`available` ≥ 1 GB**. Czat techniczny właściciela = 4. sesja → gdy Dzidek wraca do pracy w swoim czacie, **wstrzymuję jednego buildera** (Dzidek daje znać). Playwright tylko pod `flock`, Lighthouse nigdy.
+- **RAM: maks. 3 sesje naraz** (skill: dwie komfort, trzy granica; zmierzone 23.08: 3 sesje = 3×~550 MB RSS, `available` 1,75 GB, swap 1,1 GB). Próg = kolumna **`available` ≥ 1 GB**. Czat techniczny właściciela = 4. sesja → gdy właściciel wraca do pracy w swoim czacie, **wstrzymuję jednego buildera** (właściciel daje znać). Playwright tylko pod `flock`, Lighthouse nigdy.
 - **Weryfikator = builder po `/clear` z zamianą ról, RAZ na końcu** (wąski re-audyt tylko plików z `git diff --name-only 766b4c9..main -- wtyczki/`), nie po każdej paczce.
 - Strażnik w tle: `steruj-builderami/scripts/straznik-builderow.sh`. Briefing: `audyt/BRIEFING-NAPRAWY.md` (w repo).
 
@@ -120,7 +120,7 @@ gałąź ze świeżego `main` → karta paczki + raport → `docker cp` swojej w
 
 ## 5. PO PACZKACH
 1. Wąski re-audyt: 2 weryfikatorzy po zamianie ról (buildery po `/clear`), tylko pliki z diffu od 766b4c9, materiał po K1, kalibracja jednym mutantem (`/root/praca/warsztat/.claude/skills/sprawdzanie-zlecenia/kalibruj.sh`).
-2. Sweep dokumentacji (`dokumentacja-zgodnosc*.sh`, `instrukcja-liczby-segregator.sh`) · `PRZELOT-CZLOWIEKA.md` 16 punktów (Dzidek/agent — jego decyzja).
+2. Sweep dokumentacji (`dokumentacja-zgodnosc*.sh`, `instrukcja-liczby-segregator.sh`) · `PRZELOT-CZLOWIEKA.md` 16 punktów (właściciel/agent — jego decyzja).
 3. Bump zbiorczy 1.5.9 / 1.3.2 (4 miejsca + CHANGELOG) → `buduj-paczki.sh` → `paczka-zgodnosc.sh` EXIT=0 → `dowod-z-paczki.sh` + `dowod-zachowania-*.sh` EXIT=0 → `linia-bazowa.sh koniec` bez regresji.
 4. Sklep (lista właściciela).
 

@@ -88,7 +88,7 @@ to osobna paczka: `INSTRUKCJA-INSTALACJI.md`, rozdział „Test a produkcja”.
 | Katalog / plik | Co trzyma |
 |---|---|
 | `wtyczki/` | kod trzech wtyczek, każda z własną dokumentacją, instrukcją, zrzutami i licencją |
-| `boty/` | zaplecze wydań wtyczek: `paczki/` (wydane zipy — każda wersja zostaje), `buduj-paczki.sh` (budowa z allowlistą plików i zamkiem wydanych wersji), specyfikacje ponadpodstawowe botów |
+| `boty/` | zaplecze botów: `paczki/` (wydane zipy — każda wersja zostaje), `buduj-paczki.sh` (allowlista + zamek wydanych wersji), a obok plany napraw, szkice, krytyki i briefingi z czasu budowy botów |
 | `dokumentacja/` | instrukcja instalacji, diagramy PNG i skrypt, który je renderuje ze źródeł SVG |
 | `dla-klienta/` | `PRZECZYTAJ-MNIE.txt` — pierwszy plik wydania |
 | `testy/` | testy na żywym stosie WordPressa: przeloty E2E, sondy strażników, zrzuty, zgodność dokumentacji z kodem |
