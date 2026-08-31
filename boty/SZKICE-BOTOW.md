@@ -1,8 +1,8 @@
-# SZKICE BOTÓW — do recenzji Dzidka PRZED budową (bramka z planu v3 §9)
+# SZKICE BOTÓW — do recenzji właściciela PRZED budową (bramka z planu v3 §9)
 
-Status: SZKIC 18.08, **zaktualizowany po decyzji Dzidka (18.08): HYBRYDA** — każdy
+Status: SZKIC 18.08, **zaktualizowany po decyzji właściciela (18.08): HYBRYDA** — każdy
 bot ma DWA silniki: regułowy (działa bez klucza, zawsze) + PRAWDZIWE AI przez API
-(klucz właściciela). Warunek Dzidka: **przed budową ZWIAD WZORCÓW mocnych projektów**
+(klucz właściciela). Warunek właściciela: **przed budową ZWIAD WZORCÓW mocnych projektów**
 (wyniki → `boty/WZORCE-BOTOW.md` + brief buildera). Prawdziwa skrzynka (IMAP) dalej
 po egzaminie. Z klepniętych szkiców powstaje treść sprzedażowa stron produktów (K5).
 
@@ -136,7 +136,7 @@ Prawdziwe granice, jakie zostały:
   uninstall czysty) — kryterium GOTOWE #10; W TYM pomiar czasu konfiguracji przez
   nie-autora (pokrycie obietnic czasowych z instrukcji i stron produktów).
 
-## CO SPRAWDZI RECENZJA DZIDKA (pytania do Ciebie)
+## CO SPRAWDZI RECENZJA WŁAŚCICIELA (pytania do Ciebie)
 
 1. ~~Czy taki zakres pasuje?~~ ✅ CZĘŚCIOWO ROZSTRZYGNIĘTE 18.08: Dzidek wybrał
    HYBRYDĘ (prawdziwe AI + tryb regułowy bez klucza) z warunkiem zwiadu wzorców.

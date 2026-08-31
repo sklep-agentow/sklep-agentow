@@ -5,7 +5,7 @@
 > C1–C6: #155 #158 #162 #164 #166 #167, S1–S5: #156 #159 #161 #163 #165, recenzent #160, stos #157).
 > Rejestr: **0 OTWARTYCH, dług strażników 0** — wszystkie 24 znaleziska ZAMKNIĘTE po pomiarze.
 > Linia bazowa po naprawach: **regresje=0** (`audyt/LINIA-BAZOWA-TESTOW.md` [etap3-final]).
-> W toku: bump ChatBot **1.5.9** / Segregator **1.3.2** + paczki z dowodami (ten PR). Potem: sklep (lista Dzidka).
+> W toku: bump ChatBot **1.5.9** / Segregator **1.3.2** + paczki z dowodami (ten PR). Potem: sklep (lista właściciela).
 
 ## 👥 KTO CO BIERZE TERAZ (etap 3 — naprawy po audycie)
 
@@ -82,7 +82,7 @@ Pozostałe czerwone linii bazowej (3×env: `panel-statystyki`, `stronicowanie-pa
 dane/konfiguracja stosu, czerwone już w [baza-766b4c9]; `a4-widget-konsola-kontrast` EXIT=2 = przyrząd) —
 udokumentowane w `audyt/LINIA-BAZOWA-TESTOW.md`, kandydaci do samowystarczalności testów po oddaniu.
 
-### ⛔ CZEGO ŚWIADOMIE NIE ZROBIŁAM — czeka na decyzję Dzidka
+### ⛔ CZEGO ŚWIADOMIE NIE ZROBIŁAM — czeka na decyzję właściciela
 
 1. **Wpis do `.github/manifest-bramek.txt`.** Manifest ma własną zasadę, zapisaną w nim
    samym: *„każda zmiana = osobny PR, który Dzidek czyta w całości; agent NIE dotyka tego
@@ -117,7 +117,7 @@ Mapa polowania: `audyt/boty/material/06-mapa-polowania.md` — **36 celów**, od
 
 ## 🐞 ZNALEZISKA CZEKAJĄCE NA DECYZJĘ (stan 24.08)
 
-1. **L8 — czy AI wchodzi na skrzynkę Segregatora** — JEDYNA otwarta decyzja, należy do Dzidka.
+1. **L8 — czy AI wchodzi na skrzynkę Segregatora** — JEDYNA otwarta decyzja, należy do właściciela.
    Fakt (S5 #165): dziś na przebiegu skrzynki pracują SAME REGUŁY, deklaracja i panel mówią to wprost.
    **Rekomendacja: zostaje napis „same reguły"** (zero danych osób trzecich do AI, zero ryzyka RODO).
 2. **Zasięg paska błędu bazy** (Segregator globalnie, ChatBot na swoich stronach) — nie weszło do

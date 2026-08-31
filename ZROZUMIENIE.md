@@ -1,10 +1,10 @@
 # ZROZUMIENIE — sklep z agentami (EGZAMIN nr 2 od kolegi) — od 17.08: WTYCZKI WORDPRESSA
 
-**Start zegara: 2026-08-16 22:11** (treść od Dzidka w czacie).
+**Start zegara: 2026-08-16 22:11** (treść od właściciela w czacie).
 
 ## 🔄 PIWOT 17.08 WIECZÓR — WORDPRESS (unieważnia część niżej; czytaj NAJPIERW)
 
-**Surowe zdania Dzidka (czat 17.08 ~22:30-23:00, verbatim):**
+**Surowe zdania właściciela (czat 17.08 ~22:30-23:00, verbatim):**
 > „pedzie zmiana planów jak cos ta strona na którą robimy zlecenie bedzie wgrywana na worpresa słuchaj teraz uwaznie"
 > „ok wiec tak narazie zmien wszytsko w zlecenie u w planie itp zebyśmy wiedzieli ze to bedą jednak pluginy do worpresa te wtyczki ok ?"
 > „tak całą ta strona bedzie przekonwertowana na worpresa czaisz ? wiec te nasze zlecenie ten sklep i 3 pluginy bedą wyczkami do worpresa ogarniasz ?"
@@ -30,7 +30,7 @@ rozstrzygnięcie K1: kursy = egzamin drugiego zdającego) · **nie ma wiersza �
 **FAKTY PIWOTU (PW = piwot; numeracja osobna od pytań P1-P8 w HISTORII niżej):**
 - **PW-1.** Strona-gospodarz będzie PRZEKONWERTOWANA na WordPressa — **KONWERSJĘ ROBIMY MY**
   (Dzidek 17.08 ~23:40: „i tak my mamy przekonwertowac to na worpresa tę cłą strona zaraz
-  to obgadamy i zmieniamy w naszym planie"). Wg podziału Dzidka: EGZAMIN = sklep + 2 boty;
+  to obgadamy i zmieniamy w naszym planie"). Wg podziału właściciela: EGZAMIN = sklep + 2 boty;
   konwersja = nasza OSOBNA robota (szczegóły, kolejność i termin — do obgadania, NIE
   zaplanowane jeszcze). **✅ WYKONANE nocą 17/18.08:** konwersja 1:1 ODDANA (PR #86
   scalony do repo strony za zgodą; szczegóły, audyt i podgląd — repo `strona-wp`);
@@ -43,14 +43,14 @@ rozstrzygnięcie K1: kursy = egzamin drugiego zdającego) · **nie ma wiersza �
   [INTERPRETACJA rozliczona notatką — żaden „trzeci produkt" nie istnieje].
   Postać produktu: było „paczka plików", jest „wtyczka WP" (bot testowy).
 - **PW-4.** Termin i zasady egzaminu: przyjmuję BEZ ZMIAN (30.08, 3 próby, próba 1 ~27.08) — Dzidek nie odwołał.
-- **PW-5.** Zapowiedziana KOLEJNA ważna wiadomość Dzidka („ułatwi trochę wszystko") — dokumenty układane tak, żeby łatwo przyjąć następną zmianę.
+- **PW-5.** Zapowiedziana KOLEJNA ważna wiadomość właściciela („ułatwi trochę wszystko") — dokumenty układane tak, żeby łatwo przyjąć następną zmianę.
 - **PW-6.** REPO STRONY KOLEGI: dodani jako WSPÓŁPRACOWNICY z prawem ZAPISU (potwierdzone
   `gh` 17.08 ~23:45). Nazwa zmieniana: `matthewplugins.github.io` → `matthewplugins.pl` →
   **AKTUALNIE `MatthewPlugins/automatic-ai`** (repo PRYWATNE, branch `main`; stare adresy
   przekierowują). ⛔ **ZASADA (Dzidek, dosłownie: „nic narazie tam nie ruszamy … zeby
   przepadkiem nic tam nie popchac"):** na razie ZERO działań w tym repo; przyszła praca
   tam = ostrożna, wyłącznie uzgodniona; przy PIERWSZYM klonowaniu od razu
-  `git remote set-url --push origin BLOKADA-USTAL-Z-DZIDKIEM` (push fizycznie niemożliwy
+  `git remote set-url --push origin BLOKADA-USTAL-Z-WŁAŚCICIELEM` (push fizycznie niemożliwy
   do czasu świadomej decyzji). Klona na serwerze DZIŚ NIE MA (sprawdzone).
 
 **CO PIWOT UNIEWAŻNIA (stare fragmenty niżej i w planie — NIE budować wg nich):**
@@ -63,7 +63,7 @@ rozstrzygnięcie K1: kursy = egzamin drugiego zdającego) · **nie ma wiersza �
 **OTWARTE PO PIWOCIE — STAN 18.08: WSZYSTKO ZAMKNIĘTE:** ~~trzeci produkt~~ ✅ (PW-3: produkty = 2 boty; „3" = łącznie ze sklepem) · ~~głębokość botów~~ ✅ rozstrzygnięta w planie v3 (§14 wycena + D19): DZIAŁAJĄCY RDZEŃ DEMO + instrukcja, pełne AI/IMAP jawnie po egzaminie — klepnięcie razem z planem · ~~kto/kiedy konwertuje~~ ✅ MY, WYKONANE nocą 17/18.08 (PR #86, patrz PW-1) · ~~na czym testujemy~~ ✅ stack warsztatowy (WP 7.0.4/PHP 8.4, pełna kopia strony po konwersji) + drugi CZYSTY WP do testu instalacji od zera (K6) · ~~granica „NIE dotykamy reszty strony"~~ ✅ zdefiniowana w planie v3 §3: żyjemy we własnych tabelach/opcjach/stronach/shortcode'ach, motyw i cudze wtyczki nietykalne, odpięcie = deinstalacja z czystym uninstall (symetria zapis↔sprzątanie) · ~~czy „wiadomość, co ułatwi" padła~~ ✅ Dzidek 18.08: nic nowszego nie ma, planujemy na stanie 17.08 — ułatwiaczem była notatka-wersja-aktualna ~23:20 + info o 2 botach. **Dodatkowo 18.08: S-04/S-07/S-09 KLEPNIĘTE** („robimy jak dobre sklepy" — wytyczna wiążąca, D12/MAPA-SPEC).
 
 ---
-**Status (HISTORIA sprzed piwotu): PLAN KLEPNIĘTY w wersji egzaminowej (16.08 ~23:45)** — architektura z `archiwum-procesu/ARCHITEKTURA-PROPOZYCJA.md` zaakceptowana kierunkowo przez Dzidka z twardym zakresem:
+**Status (HISTORIA sprzed piwotu): PLAN KLEPNIĘTY w wersji egzaminowej (16.08 ~23:45)** — architektura z `archiwum-procesu/ARCHITEKTURA-PROPOZYCJA.md` zaakceptowana kierunkowo przez właściciela z twardym zakresem:
 
 ## ⭐ ZASADA EGZAMINU (Dzidek 17.08 ~00:20): ZERO PYTAŃ DO KOLEGI
 Wszystkie niejasności rozstrzygamy SAMI i dokumentujemy w rejestrze decyzji (archiwum-procesu/PLAN-ETAP1.md).
@@ -78,7 +78,7 @@ plamy, próby 2–3 (1.09) = hotfixy mini-cyklem. Limit tygodniowy Claude odnawi
 niedzielą: materiał, kalibracja, runda A, naprawy krytycznych; po niedzieli: runda B, re-audyt, przelot człowieka.
 (Historia: pierwotny plan „próba 1 z zapasem ~26–27.08" — nieaktualny po rundzie stron 24–25.08 i K7.)
 
-## ⭐ CEL I ZAKRES (decyzja Dzidka 16.08 ~23:45)
+## ⭐ CEL I ZAKRES (decyzja właściciela 16.08 ~23:45)
 **CEL NR 1 = ZDAĆ EGZAMIN u kolegi. Budujemy WSZYSTKO w trybie testowym płatności — zero prawdziwych pieniędzy, zero prawdziwych kont właścicieli.**
 Odłożone NA PÓŹNIEJ (po egzaminie, osobna robota): aktywacja prawdziwych kont Stripe u 4 właścicieli · domeny i maile produkcyjne · wdrożenia na 4 żywe strony. Projekt ZOSTAJE multi-site-ready (config per strona), bo to tanie teraz, a wymagane później.
 
@@ -96,7 +96,7 @@ Treść zlecenia (notatki z rozmowy z kolegą):
 > BAZY DANYCH - KTO KIESY SIE LOGOWAL NA KONTO ADMINA DATY CZAS KONKRETY
 > 1. Telefon jako kolo ratunkowe [ do wyk9rzystania kazdy po 1 razie ]
 
-Odpowiedzi Dzidka (czat, 16.08 ~22:20):
+Odpowiedzi właściciela (czat, 16.08 ~22:20):
 > kursy to nie my my agnetów ai 3 najlpeij chyba to co umiemy instrukcjie agenta bota diagramy itp ale nwm cos wymyslimy 4 to dalej bedzie zleceine testowe jak cos egzamin od kolegi to jest drugi czaisz tyle ze to wdrązymy do mojej i kolgi i 2 innych osób strony czaisz taki test jak prawdziwe zlecenie ale kiedys tego uzyjemy na naszej stronie rozumiesz nwm co z pąłtnosciamy trzba zrobic jakies najpopularniejsze ale nwm jak i czy to ma jakis zobowiązania ? 5 my chyba sie nie zajmmujemy tym kontamy na sałą strone bedzie jedno konto kiedys
 
 Z wcześniejszej rozmowy (czat 16.08 wieczór): podstrona `/sklep` na istniejącej stronie · strona NIE na WordPressie, „zwykły HTML" · będzie dostęp do repo i do strony · oddanie JAK MP: paczka + instrukcja dla klienta, wpinane/odpinane · „ma normalnie sprzedawać" · „sprzedaż cyfrowa" · „zlecenie małe, ale trzeba myśleć, żeby głupot nie strzelić".
@@ -104,7 +104,7 @@ Z wcześniejszej rozmowy (czat 16.08 wieczór): podstrona `/sklep` na istniejąc
 ## FAKTY (mój odczyt — Dzidek potwierdza/prostuje w czacie)
 
 1. **Charakter zlecenia: EGZAMIN nr 2 od kolegi** (pierwszy = MP). Test jak prawdziwe zlecenie, ocenia kolega.
-2. **Wdrożenie na 4 strony**: Dzidka, kolegi i 2 innych osób. Kiedyś także nasza przyszła strona. → paczka musi być KONFIGUROWALNA per strona (nazwa, produkty, klucze płatności), nie szyta pod jedną.
+2. **Wdrożenie na 4 strony**: właściciela, kolegi i 2 innych osób. Kiedyś także nasza przyszła strona. → paczka musi być KONFIGUROWALNA per strona (nazwa, produkty, klucze płatności), nie szyta pod jedną.
 3. Podstrona-sklep na istniejącej stronie (statyczny HTML, nie WordPress).
 4. **2 produkty-agenty**: ChatBot LIVE, Segregator maila. Każdy: cena + opis sprzedażowy (co robi, jak działa, ile czasu oszczędza w firmie).
 5. **Produkt po zakupie = paczka cyfrowa**: „to co umiemy — instrukcje agenta, bota, diagramy itp." Treść dokładna TBD („coś wymyślimy") — dla mechanizmu sklepu wystarcza: produkt to PLIKI do wydania po płatności.
@@ -151,7 +151,7 @@ Tekst mały, ale funkcje = mała **aplikacja z zapleczem**: baza + panel z logow
 
 - ~~P1 DOSTĘPY~~ ✅ 16.08 ~23:00: `matthewplugins.github.io` + repo `MatthewPlugins/matthewplugins.github.io` (TYLKO ODCZYT). Zwiad zrobiony sama — wynik i propozycja: `archiwum-procesu/ARCHITEKTURA-PROPOZYCJA.md`. Hosting docelowy: darmowy GitHub Pages (Dzidek: kolega może KIEDYŚ przenieść na płatny — projektujemy przenośnie). ⚠️ ZDEZAKTUALIZOWANE 17.08: repo przemianowane na `automatic-ai`, dostęp podniesiony do ZAPISU, hosting docelowy = WordPress — patrz §PIWOT PW-1/PW-6.
 - ~~P7. KOLEGA = MatthewPlugins?~~ ✅ 17.08: potwierdzone pośrednio — kolega dodał NAS do SWOJEGO repo strony (`MatthewPlugins/automatic-ai`), czyli egzaminator = właściciel strony.
-- **P8. ARCHITEKTURA** — czeka na klepnięcie Dzidka (`archiwum-procesu/ARCHITEKTURA-PROPOZYCJA.md`). [OTWARTE]
+- **P8. ARCHITEKTURA** — czeka na klepnięcie właściciela (`archiwum-procesu/ARCHITEKTURA-PROPOZYCJA.md`). [OTWARTE]
 - **K1. KURSY W BAZIE** — potwierdzić odczyt godzący. [OTWARTE]
 - ~~P2 KLIENT/KURSY~~ ✅ egzamin nr 2 od kolegi, 4 strony. ~~P3 POSTAĆ PRODUKTU~~ ✅ paczka cyfrowa (pliki). ~~P5 KONTA~~ ✅ nie robimy, jedno konto admina. ~~P6 TELEFON~~ ✅ zasada egzaminu (FAKT 11), nie funkcja.
 
@@ -168,12 +168,12 @@ Tekst mały, ale funkcje = mała **aplikacja z zapleczem**: baza + panel z logow
 **Niepotwierdzone nigdzie wprost:** czy P24 przyjmie osobę bez firmy · okresy wypowiedzenia u wszystkich · automatyczne wydawanie PLIKÓW po płatności (żaden operator nie deklaruje tego wprost — wydawanie pliku robi NASZE zaplecze po webhooku płatności).
 
 **REKOMENDACJA: Stripe** — zero kosztów wejścia i abonamentu, BLIK, gotowa strona płatności (Payment Links) = nasza statyczna strona NIE dotyka danych kart (mniejsze RODO/PCI). Rezerwa gdy komuś onboarding Stripe nie przejdzie: Autopay (oficjalnie dla nierejestrowanych, ale 199 zł wejścia; prowizja niższa: 1,19% + 0,34 zł).
-**Konsekwencja praktyczna:** każda z 4 osób zakłada WŁASNE konto operatora (kasa idzie na jej rachunek; KYC per osoba — wniosek logiczny, nieznaleziony wprost w FAQ). Status osób (firma / bez firmy) → pytanie do Dzidka.
-**Zobowiązania — odpowiedź dla Dzidka:** przy Stripe/P24 brak abonamentu i opłat stałych; płacisz tylko prowizję od udanej sprzedaży. Jedyne realne „zobowiązanie" = przejście weryfikacji tożsamości u operatora + rachunek bankowy na siebie.
-**TRYB TESTOWY (pytanie Dzidka 16.08 ~22:40):** budujemy CAŁOŚĆ na kluczach testowych Stripe (karty testowe, zero prawdziwych pieniędzy, bez aktywacji konta/KYC) — pełny przepływ zakupu, webhook, mail, wydanie pliku działa identycznie jak na żywo. Egzamin u kolegi zdajemy na trybie testowym. Przejście na prawdziwe płatności = właściciel strony aktywuje swoje konto Stripe i podmienia klucze w pliku konfiguracyjnym paczki — zero przebudowy. [Szczegół do potwierdzenia przy budowie: symulacja BLIK w trybie testowym.]
+**Konsekwencja praktyczna:** każda z 4 osób zakłada WŁASNE konto operatora (kasa idzie na jej rachunek; KYC per osoba — wniosek logiczny, nieznaleziony wprost w FAQ). Status osób (firma / bez firmy) → pytanie do właściciela.
+**Zobowiązania — odpowiedź dla właściciela:** przy Stripe/P24 brak abonamentu i opłat stałych; płacisz tylko prowizję od udanej sprzedaży. Jedyne realne „zobowiązanie" = przejście weryfikacji tożsamości u operatora + rachunek bankowy na siebie.
+**TRYB TESTOWY (pytanie właściciela 16.08 ~22:40):** budujemy CAŁOŚĆ na kluczach testowych Stripe (karty testowe, zero prawdziwych pieniędzy, bez aktywacji konta/KYC) — pełny przepływ zakupu, webhook, mail, wydanie pliku działa identycznie jak na żywo. Egzamin u kolegi zdajemy na trybie testowym. Przejście na prawdziwe płatności = właściciel strony aktywuje swoje konto Stripe i podmienia klucze w pliku konfiguracyjnym paczki — zero przebudowy. [Szczegół do potwierdzenia przy budowie: symulacja BLIK w trybie testowym.]
 
 ## NASTĘPNY RUCH
 
-1. P1 od Dzidka → zwiad repo/hostingu (sama).
-2. Wynik researchu płatności → rekomendacja z cenami i zobowiązaniami dla Dzidka.
-3. Potem: brief-tabela + decyzja architektury zaplecza (opcje z ceną) → klepnięcie Dzidka → bramki A–E z `PROCES-PROJEKTU.md` → `rozruch-projektu.sh`.
+1. P1 od właściciela → zwiad repo/hostingu (sama).
+2. Wynik researchu płatności → rekomendacja z cenami i zobowiązaniami dla właściciela.
+3. Potem: brief-tabela + decyzja architektury zaplecza (opcje z ceną) → klepnięcie właściciela → bramki A–E z `PROCES-PROJEKTU.md` → `rozruch-projektu.sh`.

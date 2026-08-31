@@ -1,8 +1,8 @@
 # PLAN WYGLĄDU K5 — witryna sklepu
 
-Status: ✅ KLEPNIĘTY przez Dzidka 19.08 (D27) + wyżarzony ZIMNYM KRYTYKIEM
+Status: ✅ KLEPNIĘTY przez właściciela 19.08 (D27) + wyżarzony ZIMNYM KRYTYKIEM
 (2 przynęty rozbrojone: fejk-opinie i CDN → krytyk wiarygodny; 7 uwag przyjętych
-i naniesionych niżej; 1 obalona dowodem — patrz §4 art. 38). Wytyczna Dzidka 18.08: „cała strona kolegi i moja
+i naniesionych niżej; 1 obalona dowodem — patrz §4 art. 38). Wytyczna właściciela 18.08: „cała strona kolegi i moja
 jest ładnie zrobiona i ma swój klimat" → sklep MUSI wyglądać jak część Automatic AI.
 Źródła: pomiar motywu na stacku (computed styles + zrzuty) · zwiad wzorców stron
 produktowych (wp-rocket.me, advancedcustomfields.com, gravityforms.com, codecanyon,
@@ -133,7 +133,7 @@ akcentem — najbliższy naszemu klimatowi, potwierdza kierunek.
 1 PR: fundament CSS (tokeny, mono-etykiety, pille, baner) + lista sklepu →
 2 PR: strona produktu (szablon + treść ChatBot + Segregator ze szkiców) →
 3 PR: dziękujemy + szlif RWD/WCAG → sędzia wyglądu 0-100 (kryteria dziedziny,
-przynęty) → poprawki → ZRZUTY dla Dzidka.
+przynęty) → poprawki → ZRZUTY dla właściciela.
 ⚠️ STAN PRZEJŚCIOWY (uwaga recenzji #51, dok=kod): PR 1 tymczasowo ZACHOWUJE
 formularz zakupu na kartach listy (stan z K1) — „Zobacz szczegóły" z §2A wchodzi
 dopiero w PR 2 razem ze stroną produktu, żeby między PR-ami sklep zawsze DZIAŁAŁ.

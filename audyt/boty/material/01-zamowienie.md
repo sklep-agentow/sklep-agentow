@@ -6,7 +6,7 @@
 > (rozszerzenie musi być tam jawnie zadeklarowane, inaczej to klasa #6 ściągi egzaminatora).
 
 ## Kontekst zamówienia
-Praca egzaminacyjna (egzamin nr 2). Zamawiający = kolega Dzidka, który ocenia wynik.
+Praca egzaminacyjna (egzamin nr 2). Zamawiający = kolega właściciela, który ocenia wynik.
 Dwie wtyczki WordPressa sprzedawane jako produkty we własnym sklepie (trzecia wtyczka).
 Nazwy produktów **dosłownie z notatki zamawiającego**: „ChatBot LIVE", „Segregator maila".
 ⛔ Nazw nie zmieniamy — zmiana nazwy = odejście od zamówienia.

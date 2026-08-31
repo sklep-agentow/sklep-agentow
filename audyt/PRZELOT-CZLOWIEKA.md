@@ -146,5 +146,5 @@ Dowody z późniejszych przelotów są trwałe: `/root/praca/k7-dowody-27-08/` (
   świeże oko przy odbiorze.
 - ✅ Wszystkie odnośniki w panelach obu wtyczek (10 stron): ZERO martwych (status <400 każdy).
 
-## Bilans: ✅ 24 · 😖 1 (CZ-1 → rejestr) · 🐞 0 · ⬜ 1 (punkt z zegarem — dla Dzidka przy odbiorze)
+## Bilans: ✅ 24 · 😖 1 (CZ-1 → rejestr) · 🐞 0 · ⬜ 1 (punkt z zegarem — dla właściciela przy odbiorze)
 Punkty z ✅* mają werdykt oparty o wskazany strażnik/dowód mierzący dokładnie ten scenariusz — jawnie, nie w domyśle.

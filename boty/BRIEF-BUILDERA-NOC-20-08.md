@@ -1,7 +1,7 @@
 # BRIEF BUILDERA — noc 20.08, naprawy botów przed audytem
 
 Jesteś builderem. Pracujesz TYLKO w `/root/praca/zlecenia/sklep-agentow`, gałąź `boty/runda-finalna`.
-Koordynator (Gosia) siedzi w innym czacie i pilnuje całości — melduj się przez commity i PR.
+Koordynator (koordynatorka) siedzi w innym czacie i pilnuje całości — melduj się przez commity i PR.
 
 ## ⛔ ZASADY (łamiesz → robota do wyrzucenia)
 1. **Nie zgadujesz.** Nie wiesz → sprawdź w kodzie/dokumentacji, nie wymyślaj.

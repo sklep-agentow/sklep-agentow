@@ -153,7 +153,7 @@ slad_probuj "sciaga egzaminatora w komentarzu"       "// klasa #1 sciagi egzamin
 # IMIE Z ZESPOLU: mianownik I odmiana osobno. Wzorzec `Dzidek` gubil odmiany, poprawka
 # na `Dzidk` gubila mianownik — bez tych DWOCH przypadkow regresja wzorca przeszla po cichu.
 slad_probuj "imie z zespolu w mianowniku"            "// feedback Dzidek 19.08: karty za ciasne" "nasz obieg pracy"
-slad_probuj "imie z zespolu w odmianie"              "// uwaga od Dzidka 19.08: karty za ciasne" "nasz obieg pracy"
+slad_probuj "imie z zespolu w odmianie"              "// uwaga od właściciela 19.08: karty za ciasne" "nasz obieg pracy"
 
 # ⭐ TO JEST TEN PRZYPADEK, O KTORY CHODZI W MANIFESCIE: nie „skaner widzi slad",
 # tylko „CI STOI NA CZERWONO". Mutacja idzie do PRAWDZIWEGO pliku wtyczki, uruchamiane

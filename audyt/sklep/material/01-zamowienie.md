@@ -13,7 +13,7 @@
 
 Źródło: `ZROZUMIENIE.md`.
 
-### a.1 Notatka kolegi + odpowiedzi Dzidka + zdania z wcześniejszej rozmowy
+### a.1 Notatka kolegi + odpowiedzi właściciela + zdania z wcześniejszej rozmowy
 (`ZROZUMIENIE.md`, sekcja „## SUROWE ZDANIA", linie 85–102)
 
 Treść zlecenia (notatki z rozmowy z kolegą):
@@ -28,7 +28,7 @@ Treść zlecenia (notatki z rozmowy z kolegą):
 > BAZY DANYCH - KTO KIESY SIE LOGOWAL NA KONTO ADMINA DATY CZAS KONKRETY
 > 1. Telefon jako kolo ratunkowe [ do wyk9rzystania kazdy po 1 razie ]
 
-Odpowiedzi Dzidka (czat, 16.08 ~22:20):
+Odpowiedzi właściciela (czat, 16.08 ~22:20):
 > kursy to nie my my agnetów ai 3 najlpeij chyba to co umiemy instrukcjie agenta bota diagramy itp ale nwm cos wymyslimy 4 to dalej bedzie zleceine testowe jak cos egzamin od kolegi to jest drugi czaisz tyle ze to wdrązymy do mojej i kolgi i 2 innych osób strony czaisz taki test jak prawdziwe zlecenie ale kiedys tego uzyjemy na naszej stronie rozumiesz nwm co z pąłtnosciamy trzba zrobic jakies najpopularniejsze ale nwm jak i czy to ma jakis zobowiązania ? 5 my chyba sie nie zajmmujemy tym kontamy na sałą strone bedzie jedno konto kiedys
 
 Z wcześniejszej rozmowy (czat 16.08 wieczór): podstrona `/sklep` na istniejącej stronie ·
@@ -41,7 +41,7 @@ MP: paczka + instrukcja dla klienta, wpinane/odpinane · „ma normalnie sprzeda
 komentarze/analizy: opis faktów PW-1…PW-6 poza samymi cytatami w nich zagnieżdżonymi,
 „CO PIWOT UNIEWAŻNIA", „CO ZOSTAJE BEZ ZMIAN", „OTWARTE PO PIWOCIE")
 
-Surowe zdania Dzidka (czat 17.08 ~22:30-23:00, verbatim):
+Surowe zdania właściciela (czat 17.08 ~22:30-23:00, verbatim):
 > „pedzie zmiana planów jak cos ta strona na którą robimy zlecenie bedzie wgrywana na worpresa słuchaj teraz uwaznie"
 > „ok wiec tak narazie zmien wszytsko w zlecenie u w planie itp zebyśmy wiedzieli ze to bedą jednak pluginy do worpresa te wtyczki ok ?"
 > „tak całą ta strona bedzie przekonwertowana na worpresa czaisz ? wiec te nasze zlecenie ten sklep i 3 pluginy bedą wyczkami do worpresa ogarniasz ?"
@@ -61,7 +61,7 @@ Notatka zlecenia — wersja aktualna (Dzidek, czat 17.08 ~23:20, verbatim; polec
 > BAZY DANYCH 2. ZAPIS AGENTOW DO BAZY DANYCH NAWET PRZY DODAWANIU NOWYCH I USUWANIU I MODYFIKOWANIU
 > BAZY DANYCH - KTO KIESY SIE LOGOWAL NA KONTO ADMINA DATY CZAS KONKRETY
 
-Dodatkowe zdania Dzidka wyjęte z opisu faktów piwotu (PW-1 i PW-6 — jedyne miejsca w
+Dodatkowe zdania właściciela wyjęte z opisu faktów piwotu (PW-1 i PW-6 — jedyne miejsca w
 sekcji PW-1…PW-6, gdzie w środku naszego opisu jest CUDZY cytat w cudzysłowie; reszta
 faktów PW to nasza analiza i jest pominięta):
 > „i tak my mamy przekonwertowac to na worpresa tę cłą strona zaraz to obgadamy i zmieniamy w naszym planie" (17.08 ~23:40)
@@ -70,7 +70,7 @@ faktów PW to nasza analiza i jest pominięta):
 ## (b) MAPA-SPEC.md — notatka ↔ nasze rozumienie (CAŁA tabela, obie części)
 
 Źródło: `MAPA-SPEC.md`. Legenda statusów ze źródła (linie 4–7): DOSŁOWNE (litera źródła) ·
-INTERPRETACJA (nasza decyzja — wymaga klepnięcia Dzidka) · INTERPRETACJA (rozliczona
+INTERPRETACJA (nasza decyzja — wymaga klepnięcia właściciela) · INTERPRETACJA (rozliczona
 źródłem) — odczyt nasz, ale POTWIERDZONY późniejszym zdaniem źródła · ODSTĘPSTWO
 PRZYJĘTE (świadome, z datą i powodem) · NIE-FUNKCJA (nie jest wymaganiem produktu).
 Kolumna „Dowód" wypełniana w trakcie budowy (plik:linia / test) — w źródle w większości
@@ -87,7 +87,7 @@ nadal pusta (⬜).
 | S-07 | „BAZY DANYCH 1. Dane uzytkownikow / platnksci" | INTERPRETACJA — KLEPNIĘTA (Dzidek 18.08) | dane KUPUJĄCYCH (email) + dane transakcji (kwota, waluta, czas, id sesji, status); kont użytkowników BRAK — Dzidek 16.08: „my się nie zajmujemy kontami, na całą stronę jedno konto" | ⬜ |
 | S-08 | „ZAPIS AGENTOW I KURSOW DO BAZY DANYCH NAWET PRZY DODAWANIU NOWYCH I USUWANIU I MODYFIKOWANIU" | ODSTĘPSTWO PRZYJĘTE (17.08) | produkty (agenci) w bazie z pełnym CRUD; KURSY = egzamin DRUGIEGO zdającego (Dzidek 17.08 ~00:00), u nas ich nie ma; „usuwanie" = deaktywacja przy istniejących zamówieniach (integralność — wzorzec kartki MP: nie usuwa się rzeczy powiązanej z aktywną sprawą) | ⬜ |
 | S-09 | „KTO KIESY SIE LOGOWAL NA KONTO ADMINA DATY CZAS KONKRETY" | INTERPRETACJA — KLEPNIĘTA (Dzidek 18.08) | dziennik logowań: login_wpisany („kto" przy jednym koncie; nieudane próby też), czas, wynik, IP, przeglądarka („konkrety"); ROZSZERZENIE ponad literę: log AKCJI admina (jawnie dopisane) | ⬜ |
-| S-10 | „Telefon jako kolo ratunkowe [do wykorzystania kazdy po 1 razie]" | NIE-FUNKCJA | zasada EGZAMINU: 1 telefon do egzaminatora. POTWIERDZONE 2× przez Dzidka (17.08 ~00:00 oraz ~06:15, PO diffie reconstruction testu: „na pewno dla mnie był jeden telefon, nic do projektu"). W produkcie NIC nie budujemy | — |
+| S-10 | „Telefon jako kolo ratunkowe [do wykorzystania kazdy po 1 razie]" | NIE-FUNKCJA | zasada EGZAMINU: 1 telefon do egzaminatora. POTWIERDZONE 2× przez właściciela (17.08 ~00:00 oraz ~06:15, PO diffie reconstruction testu: „na pewno dla mnie był jeden telefon, nic do projektu"). W produkcie NIC nie budujemy | — |
 | S-11 | (czat) podstrona `/sklep` na istniejącej stronie | DOSŁOWNE | katalog sklep/ wpinany w stronę | ⬜ |
 | S-12 | (czat) „nie na wordpressie, zwykły HTML… na githubie hostowane" | DOSŁOWNE | statyczny hosting; zaplecze osobno | ⬜ |
 | S-13 | (czat) „jak te pluginy: przypinamy, odpinamy i nie ma" | DOSŁOWNE | paczka + 1 punkt zaczepienia; odpięcie = czysty diff źródła + wyłączone zaplecze | ⬜ |
@@ -110,7 +110,7 @@ realizacja = instalacja/deinstalacja wtyczki z czystym uninstall). S-01/S-05/S-0
 produktów BEZ ZMIAN = **2** (ChatBot LIVE, Segregator maila — potwierdzone notatką 17.08),
 zmienia się POSTAĆ: paczka plików → testowy bot jako wtyczka WP.
 
-✅ **Wiersze INTERPRETACJA S-04, S-07, S-09: KLEPNIĘTE przez Dzidka 18.08** („wszystkie
+✅ **Wiersze INTERPRETACJA S-04, S-07, S-09: KLEPNIĘTE przez właściciela 18.08** („wszystkie
 trzy robimy tak jak się robi i jak robią dobre sklepy") — treść bez zmian mimo piwotu,
 plus WYTYCZNA WIĄŻĄCA: dashboard, dziennik i strony sklepu wg WZORCÓW DZIEDZINY
 e-commerce zbieranych PRZED budową (rejestr D12). **Audytor zgodności dostaje TEN plik +
@@ -188,7 +188,7 @@ działa, jak skraca czas pracy) · panel admina: kiedy/za ile kupili/w jakim cza
 (dashboard) · baza: dane kupujących/płatności · produkty z pełnym CRUD (zapis przy
 dodawaniu/usuwaniu/modyfikowaniu) · dziennik logowań na konto admina (kto, kiedy,
 konkrety).
-**Interpretacje S-04/S-07/S-09: KLEPNIĘTE przez Dzidka 18.08** z wiążącą wytyczną:
+**Interpretacje S-04/S-07/S-09: KLEPNIĘTE przez właściciela 18.08** z wiążącą wytyczną:
 **„tak jak się robi i jak robią dobre sklepy"** → dashboard, dziennik i strony sklepu
 projektujemy WG WZORCÓW DZIEDZINY e-commerce (przed budową K3/K5 zbieramy wzorce: jak to
 robią dojrzałe sklepy), nie po najmniejszej literze.

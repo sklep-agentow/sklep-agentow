@@ -1,6 +1,6 @@
 # CO ZOSTAŁO DO ODDANIA — stan 2026-08-30 (WYDANE `v0.9.23`)
 
-> Spisane na prośbę Dzidka. **Każda pozycja ma źródło** (bramka, plan, recenzja) — nic tu nie
+> Spisane na prośbę właściciela. **Każda pozycja ma źródło** (bramka, plan, recenzja) — nic tu nie
 > jest z pamięci. Termin: **1.09.2026**, próba 1 z 3, ocenia kolega.
 
 ## GDZIE JESTEŚMY W PROCESIE
@@ -70,7 +70,7 @@ Niesie jawnie: NO-GO 2 z 13 z powodami i zdaniem z CO-WISI o soczewkach L1/L5 ·
 audytora (agent przez przeglądarkę, nie osoba postronna — K1 ✅ z tym zastrzeżeniem, jak w L1-11) · 11 długów z CO-WISI dotykających produktu/danych · Plugin Check
 416/1 · minimum WP 6.7 / PHP 8.1 testowane w K7 (`ZAMROZENIE.md:8`), `phpstan.neon.dist` `phpVersion: 80100`.
 Rubryka GOTOWE (12 kryteriów §12, werdykty 1:1 z L1-11: **6 ✅ · 5 🐞 z zastrzeżeniem · 1 ⛔** — #12 drugi człon
-niespełniony, oddanie decyzją Dzidka 28.08) i `AUDYT-RAPORT.md` z licznikami i `K7: NO-GO · EXIT=1` — `#216`.
+niespełniony, oddanie decyzją właściciela 28.08) i `AUDYT-RAPORT.md` z licznikami i `K7: NO-GO · EXIT=1` — `#216`.
 
 ## 7. WYDANIE — ✅ ZROBIONE 30.08
 - [x] tag `v0.9.23` na `a3dd051` + Release z 4 zipami i sumami. Trzy liczby bramki liczone na `a1b2495`
@@ -84,7 +84,7 @@ niespełniony, oddanie decyzją Dzidka 28.08) i `AUDYT-RAPORT.md` z licznikami i
 
 | # | Kontrola | Stan | Co to znaczy |
 |---|---|---|---|
-| 2 | kalibracja | **FAIL** | soczewki L1/L5 bez PASS. ⭐ Kryterium klienta #12 (≥2/3) **SPEŁNIONE**: 7 mutantów, 5 złapanych = 71%. Bramka jest OSTRZEJSZA od rubryki. **Decyzja Dzidka 28.08: oddajemy z jawnym zapisem.** |
+| 2 | kalibracja | **FAIL** | soczewki L1/L5 bez PASS. ⭐ Kryterium klienta #12 (≥2/3) **SPEŁNIONE**: 7 mutantów, 5 złapanych = 71%. Bramka jest OSTRZEJSZA od rubryki. **Decyzja właściciela 28.08: oddajemy z jawnym zapisem.** |
 | 6 | próby kontrolne | **FAIL** | przelot POWTÓRZONY na `89ba47a` (`#210`): 6 z 30 ma EXIT≠0. To sześć długów narzędziowych (pięć pada tak samo na czystym `main`, szósty ma zaszytą wersję 1.5.0) — patrz pozycja 2 wyżej. Nie wada produktu; naprawa narzędzi po oddaniu. |
 
 Pozostałe **11 na zielono**: mapa, rejestr (4 kontrole), anomalie, przelot, paczka, tag, raporty.
@@ -93,7 +93,7 @@ Pozostałe **11 na zielono**: mapa, rejestr (4 kontrole), anomalie, przelot, pac
 
 ---
 
-## DECYZJE CZEKAJĄCE NA DZIDKA (nie moje)
+## DECYZJE CZEKAJĄCE NA WŁAŚCICIELA (nie moje)
 - ⬜ **Przelot na paczce** — pozycja 4 wyżej, z moją rekomendacją
 - ⬜ **Sprzątanie ~49 MB:** `wymiana/k7-mutanty/` (3,9 MB, nieśledzony) + `boty/paczki/`
       (23 commitowane zipy, 45 MB, przez nie `.git/` waży 140 MB). ⛔ Nic nie kasuję bez zgody —
@@ -103,7 +103,7 @@ Pozostałe **11 na zielono**: mapa, rejestr (4 kontrole), anomalie, przelot, pac
 
 ---
 
-## 8. PORZĄDEK W REPO PRZED ODDANIEM — ✅ ZROBIONE 30.08 (decyzja Dzidka)
+## 8. PORZĄDEK W REPO PRZED ODDANIEM — ✅ ZROBIONE 30.08 (decyzja właściciela)
 
 Było 52 gałęzi zdalnych. Kasowanie **po stanie PR-a** (`gh pr list --state merged`), nie po
 `git branch --merged` — po squashu ta komenda pokazywała 0 scalonych. Przed kasowaniem sprawdzone,

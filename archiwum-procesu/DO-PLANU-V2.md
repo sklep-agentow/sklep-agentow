@@ -1,7 +1,7 @@
 # DO PLANU v2 — dziedzictwo MP + SEO + zabezpieczenia (17.08 ~01:45)
 
 Źródła: `docs/BRAMKI-ANTY-POWTORKA-bledy-kolegi.md` (warsztat; 22 błędy z 4 rund recenzji kolegi
-+ 9 przyczyn-matek + druga opinia 2 modeli) · pytanie Dzidka o SEO · „pamiętać o zabezpieczeniach".
++ 9 przyczyn-matek + druga opinia 2 modeli) · pytanie właściciela o SEO · „pamiętać o zabezpieczeniach".
 Wchodzi do PLANU v2 razem z triage krytyki 1 i krytykami obcych modeli.
 
 ## A. DZIEDZICTWO MP → SKLEP (przełożone na ten stack, nie kopiowane w ciemno)
@@ -44,7 +44,7 @@ w swoim przyroście, nie „po audycie". Wiedza nie blokuje wydania — blokuje 
 11. **Uwaga kolegi #14 (sposób pracy):** uwaga recenzenta = domyślnie może mieć rację; najpierw
     sprawdzam w docs z nastawieniem „może faktycznie lepiej", odpowiadam raz, z dowodem.
 
-## B. SEO — DECYZJA (pytanie Dzidka)
+## B. SEO — DECYZJA (pytanie właściciela)
 
 **Robimy SEO-MINIMUM produktowe (tanie, wygląda pro, ma sens):** unikalny `<title>` + meta
 description per strona sklepu · OpenGraph (ładny podgląd przy udostępnianiu linku) · dane
@@ -87,7 +87,7 @@ mu krzywdę samym testowaniem. Do checklisty środowiska-kopii i do wrogiej sesj
 
 1. **ZASADA DRUGA przepisu: gdy bramka nie przechodzi — nie wolno ruszać BRAMKI.** Zakaz zmiany
    progu, osłabienia testu, „odświeżenia raportu". Wolno: naprawić produkt ALBO świadoma decyzja
-   z podpisem Dzidka. (Blizna 1.3.13: zmieniliśmy miarę, nie produkt.)
+   z podpisem właściciela. (Blizna 1.3.13: zmieniliśmy miarę, nie produkt.)
 2. **Audyt pierwszego przelotu = SZEŚĆ sesji po pytaniu, nie cztery** (A czy działa · B co gdy
    padnie · B2 wrogie wejście i wyścig · C co zostaje · ⭐D czy to jest TO, co zamówił klient —
    każde kryterium z notatki → gdzie w kodzie; każda stała → skąd wzięta · E stara wersja).
@@ -118,7 +118,7 @@ mu krzywdę samym testowaniem. Do checklisty środowiska-kopii i do wrogiej sesj
 - Test na przytakiwanie (podłóż CZYSTY kod: kto „znajdzie" nieistniejący błąd, odpada jako sędzia)
   — użyć przy kalibracji sesji audytowych sklepu.
 
-## G. STANDARDY DZIDKA Z MP (T1–T7 + WCAG-lite) — przełożone na sklep (17.08 ~02:55)
+## G. STANDARDY WŁAŚCICIELA Z MP (T1–T7 + WCAG-lite) — przełożone na sklep (17.08 ~02:55)
 
 Źródło: `zlecenia/test-kolegi-serwis-wp/ZROZUMIENIE.md` (linie 14–18, 46, 54). Dzidek NIE musi
 dyktować od nowa — to jest jego stały standard jakości, obowiązuje też tutaj:
@@ -157,16 +157,16 @@ Z jego zasad integralności wynikają dla sklepu TRZY rzeczy, których plan v1 n
 2. **Nieusuwalna historia zdarzeń zamówienia** (kartka: „każda zmiana tworzy nieusuwalny wpis
    w osi czasu") — log zdarzeń append-only: opłacone → mail wysłany/błąd → ponowienie → pobrania.
    Spina się z maszyną stanów (triage #10) — kolega wyraźnie LUBI oś czasu.
-3. **Higiena repo przed oddaniem (tematy Dzidka: gitignore, .bak):** sweep jak przy MP —
+3. **Higiena repo przed oddaniem (tematy właściciela: gitignore, .bak):** sweep jak przy MP —
    zero `*.bak/*.orig/*_backup/*.log/*.swp/~` w repo i w PACZCE (lista wzorców ze
    SPRZATANIE-RAPORT.md) + `.gitignore` od pierwszego commita · **zakaz `debugger`/gołych
    `console.log` w kodzie produkcyjnym** (reguła lintera, nie pamięć).
 
-Uwaga do rozważenia dla Dzidka: repo MP było PUBLICZNE (dlatego działała twarda branch
+Uwaga do rozważenia dla właściciela: repo MP było PUBLICZNE (dlatego działała twarda branch
 protection). Nasze jest prywatne (ochrona = hook lokalny). Jak zechcesz publicznie jak przy MP —
 włączę twardą ochronę w minutę; koszt: kod sklepu widoczny dla świata.
 
-## I. Z NOTATEK DZIDKA (telefon: „tematy" 9.07 + „Lekcje" 1–24; zrzuty 17.08 ~03:15)
+## I. Z NOTATEK WŁAŚCICIELA (telefon: „tematy" 9.07 + „Lekcje" 1–24; zrzuty 17.08 ~03:15)
 
 Pokryte już w planie (gdzie): gitignore→H.3 · WCAG/unijne→G.4 · supabase→rozważone i odrzucone
 (ARCHITEKTURA) · security headers/CSP→triage #5 · polityka prywatności→sekcja 6 · testy
@@ -174,7 +174,7 @@ branchowe/claudowe/ręczne/segmentowe→CI+recenzent+bramka ludzka+E2E · sub-ag
 metoda warsztatu · f12/testy na żywo→klikacz · rekordy odrzucone przez audyt→rejestr znalezisk.
 
 **NOWE z notatek — dopisane do planu v2:**
-1. ⭐ **„.bak" po Dzidkowemu** (Lekcja 12 — jego własna definicja, nie plik!): błąd wykryty
+1. ⭐ **„.bak" po jego myśli** (Lekcja 12 — jego własna definicja, nie plik!): błąd wykryty
    w commicie 12, a wprowadzony w 5 → COFNIJ SIĘ do commita-źródła (git log -S / bisect),
    zrozum, i spisz instrukcję anty-powtórkową. PROCEDURA przy każdej naprawie w sklepie:
    naprawa = (a) fix, (b) commit-źródło znaleziony, (c) lekcja do banku mutantów/bramek.
@@ -192,7 +192,7 @@ metoda warsztatu · f12/testy na żywo→klikacz · rekordy odrzucone przez audy
    — funkcjonalne (co robi) · niefunkcjonalne (szybkość, dostępność, bezpieczeństwo, RWD) ·
    schemat danych. Ta sama siatka, którą zapisałeś 9.07.
 
-## C. ZABEZPIECZENIA — przypomnienie Dzidka, stan po krytyce 1
+## C. ZABEZPIECZENIA — przypomnienie właściciela, stan po krytyce 1
 
 Plan sekcja 6 + rubryka dostaje punkty bezpieczeństwa (triage #3) + z MP dochodzą: matka H,
 testy równoległe (race), sekrety w runtime, security-review całości przed oddaniem (skill

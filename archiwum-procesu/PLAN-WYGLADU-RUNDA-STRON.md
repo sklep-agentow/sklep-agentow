@@ -1,6 +1,6 @@
 # PLAN WYGLĄDU — RUNDA DZIAŁU STRON (25.08.2026) · gigant-prompt
 
-Status: klepnięty przez Dzidka 25.08 („robisz wygląd na gotowo"; kolejność: NAJPIERW `/sklep/`,
+Status: klepnięty przez właściciela 25.08 („robisz wygląd na gotowo"; kolejność: NAJPIERW `/sklep/`,
 pokaz, potem strony produktów tą samą metodą). Brief-amunicja: `zlecenia/wymiana/BRIEF-DZIAL-STRON-SKLEP.md`.
 Poprzednik: `PLAN-WYGLADU-K5.md` (tokeny D27 — nadal obowiązują). Nietykalne: nagłówek, stopka
 i wszystko od motywu gospodarza. Funkcje i treści sprzedażowe — bez zmian (tylko FORMA).
@@ -30,7 +30,7 @@ i wszystko od motywu gospodarza. Funkcje i treści sprzedażowe — bez zmian (t
   na `@property` bez JS, hover jako reakcja łańcuchowa (3 zmiany naraz), `prefers-reduced-motion`
   wpisany obok animacji, mantra „pixel-perfect / buttery-smooth 60 fps".
 
-## 1b. KOREKTA PO OKU DZIDKA (25.08, na tunelu, wersja r2 = 80/100)
+## 1b. KOREKTA PO OKU WŁAŚCICIELA (25.08, na tunelu, wersja r2 = 80/100)
 „Lipa — nie żółte plamy, tylko coś interaktywnego, gwiazdy/droga mleczna; brak głębi; animacje na
 innych podstronach są lepsze — zobacz, jak tam to działa." → **wzorcem pierwszym jest GOSPODARZ**,
 Linear/Supabase tylko strukturą. Rozebrany `volt.js` (hero strony głównej): canvas z dyskiem cząstek
@@ -137,7 +137,7 @@ biały zrzut bez ramy okna · zero-JS-fallback, który chowa treść · testowa�
 zrzutem (reveal nie odpala — klatki po WOLNYM scrollu).
 
 ## 4. KRYTERIA ODBIORU PR 1
-Sędzia ≥ 85/100 i zero priority-1 (max 2 rundy sędziego, potem decyzja Gosi) · zrzuty
+Sędzia ≥ 85/100 i zero priority-1 (max 2 rundy sędziego, potem decyzja koordynatorki) · zrzuty
 desktop + telefon obejrzane w całości · `bash narzedzia-qa/bramki.sh` EXIT 0 · waga `/sklep/`
 < 0,5 MB · zero regresji (baner testowy = ten sam napis; linki produktów; reveal bez JS).
 
@@ -183,7 +183,7 @@ kierunki: etykieta −24, tytuł −36, akapity −28, wizual +36. Tło blueprin
 ~3× dłuższa niż lista). Wersja 0.9.10 → 0.9.11.
 
 ### KRYTERIA ODBIORU PR 2a
-Sędzia ≥ 85 i zero P1 (max 2 rundy, potem oko Dzidka na tunelu) · zrzuty desktop+telefon po WOLNYM
+Sędzia ≥ 85 i zero P1 (max 2 rundy, potem oko właściciela na tunelu) · zrzuty desktop+telefon po WOLNYM
 scrollu obejrzane w całości · bramki 8/8 EXIT 0 · waga strony < 1,5 MB (cel < 1 MB) · zero regresji:
 checkout, lightbox, sticky, czat-bąbelek, `noscript`/`reduced-motion` = wszystko widoczne.
 
@@ -217,7 +217,7 @@ checkout, lightbox, sticky, czat-bąbelek, `noscript`/`reduced-motion` = wszystk
   kadr 4:3 + gasnąca prawa krawędź (widać ciąg dalszy) · pigułka zwarta na telefonie. ŚWIADOMIE NIE:
   usunięcie/przesuwanie pigułki (sticky CTA = standard Baymard, koszyk A z #174) · faza 03 w dwóch
   kolumnach (nieczytelność kadrów, patrz r1). Sufit sonneta przy tych decyzjach ≈ 80 — Dzidek: „kręć
-  rundy do 90" → po r4 meldunek z tą granicą i wybór Dzidka (pigułka zostaje / znika na telefonie).
+  rundy do 90" → po r4 meldunek z tą granicą i wybór właściciela (pigułka zostaje / znika na telefonie).
 - **Sędzia r4: 84, BLISKO, zero P1** (media 90, telefon 88, odstępy 87, hierarchia 87). Runda 5 na
   jego drobiazgi: akcent w H1 (ostatnie słowo WIELKIMI, „LIVE", limonką — `sklepag_tytul_z_akcentem`)
   · fazy numerowane `04.1/04.2/04.3` (przypięte do sekcji, odróżnialne od kroków 01/02/03) · numery
@@ -230,19 +230,19 @@ checkout, lightbox, sticky, czat-bąbelek, `noscript`/`reduced-motion` = wszystk
   podświetlanymi po kolei); panel wydzielony do `sklepag_panel_nocnej_zmiany( $tryb )` — lista
   woła 'oba' (markup identyczny bajt w bajt, sprawdzone md5), produkt swój slug; ilustracja
   brandowa zostaje na karcie listy (D28b bez zmian dla listy). Sędzia r5 POMINIĘTY (zrzuty
-  nieaktualne po zmianach Dzidka) → sędzia r6 na stanie końcowym.
+  nieaktualne po zmianach właściciela) → sędzia r6 na stanie końcowym.
 - **Sędzia końcowy: 81, BLISKO, zero P1** (hero 88 — panel na żywo zadziałał; kolor 87; hierarchia 86).
   Cztery werdykty 77 → 81 → 84 → 81: sonnet skacze ±5 zależnie od tego, na co spojrzy, a przy
   świadomych decyzjach (sticky CTA, kadry panelu na pełną szerokość, bąbelek produktu) jego sufit to
   ≈ 85 — pętla ZATRZYMANA (każda runda ≈ 5 $ i 3 % kontekstu bez wzrostu). Z ostatniej listy wzięte:
   oddech pod panelem hero na telefonie, pigułka dosunięta do lewej (prawy róg = bąbelek). Po
-  przeglądzie Dzidka (~08:35): kolumna „Z botem" bez podbarwki (brudno-oliwkowa przez mgłę
+  przeglądzie właściciela (~08:35): kolumna „Z botem" bez podbarwki (brudno-oliwkowa przez mgłę
   gospodarza), ramki 09/11 na pełną szerokość („krzywo"); ~08:40 „animacja pigułki gówniana, nie wiem
   czy jest" → klasa stanu zamiast `hidden`, wjazd z dołu z odbiciem i zjazd z wygaszeniem, zmierzone
   klatkami (opacity 0→1 w ~300 ms, translate 18→0 z przestrzałem −1 px); ~08:52 „nagranie gówniane,
   podobne do zrzutu obok" → para 04.1 = miniatura całej strony z bąbelkiem (świeży zrzut Playwright)
   + nagranie rozmowy z bliska; zrzut okna czatu (dubel) wypadł; strażnik odtwarzania (przycisk
-  „Odtwórz", gdy przeglądarka blokuje autoplay), `preload=auto`. Arbiter = oko Dzidka → klepnięcie → commit.
+  „Odtwórz", gdy przeglądarka blokuje autoplay), `preload=auto`. Arbiter = oko właściciela → klepnięcie → commit.
 
 ## 5. PLAN MEDIÓW NA PR 2–3 (strony produktów) — do wykonania po pokazie `/sklep/`
 Galeria w 3 FAZACH z równymi rzędami · ciemne ramy okien wokół białych zrzutów · kadry +
@@ -298,7 +298,7 @@ Pułapka fokusu lightboxa (Tab / Shift+Tab krążą po dialogu) · szelki obu st
 (`testy/e2e/szelki-strona-produktu.js`, 10 kontroli, slug jako argument) · sonda pigułki z PR 2a.
 
 ### KRYTERIA ODBIORU PR 2b
-Jak §6: sędzia ≥ 85 i zero P1 (max 2 rundy, potem oko Dzidka na tunelu) · zrzuty desktop+telefon po
+Jak §6: sędzia ≥ 85 i zero P1 (max 2 rundy, potem oko właściciela na tunelu) · zrzuty desktop+telefon po
 WOLNYM scrollu · bramki 8/8 EXIT 0 · waga strony < 1,5 MB (cel < 1 MB; media faz = 640 KB) · szelki
 10/10 dla OBU slugów · lista `/sklep/` i ChatBot bez regresji.
 

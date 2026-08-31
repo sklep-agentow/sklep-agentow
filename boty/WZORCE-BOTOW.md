@@ -1,4 +1,4 @@
-# WZORCE BOTÓW — zwiad mocnych projektów (warunek Dzidka, 18.08)
+# WZORCE BOTÓW — zwiad mocnych projektów (warunek właściciela, 18.08)
 
 Zwiad: subagent, 12 wyszukiwań, wyłącznie nazwy ZWERYFIKOWANE w wynikach (zasada:
 model nie zmyśla narzędzi). Cel: budować jak najlepsi, nie z głowy.

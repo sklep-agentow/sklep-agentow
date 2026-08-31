@@ -23,7 +23,7 @@ strony, bez Messengera/WhatsAppa. Bot działa w 100% bez klucza AI.
 
 | # | Co | Skąd |
 |---|---|---|
-| **P1.1** | **Formularz kontaktu bez wyjścia** — `widget.js:122-126` zdejmuje klasę tylko z okna czatu; formularz zamyka się WYŁĄCZNIE po udanej wysyłce (linia ~100) i wraca otwarty po ponownym otwarciu czatu. Dodaj przycisk zamknięcia + Escape + reset. | znalezisko Dzidka z klikania, potwierdzone w kodzie |
+| **P1.1** | **Formularz kontaktu bez wyjścia** — `widget.js:122-126` zdejmuje klasę tylko z okna czatu; formularz zamyka się WYŁĄCZNIE po udanej wysyłce (linia ~100) i wraca otwarty po ponownym otwarciu czatu. Dodaj przycisk zamknięcia + Escape + reset. | znalezisko właściciela z klikania, potwierdzone w kodzie |
 | **P1.2** | **WERYFIKACJA DEKLARACJI — wykonaj i zapisz surowe wyjście.** Trzy krytyki niezależnie: „deklarujecie rzeczy, których nikt nie sprawdził". Do udowodnienia: czysta deinstalacja (diff tabel/opcji/cronów przed-po), kasowanie historii po 90 dniach (podłóż wpis sprzed 91 dni, odpal cron, policz przed/po), zjazd do reguł przy złym kluczu, blokada po przekroczeniu limitu dziennego. | 3/4 krytyków |
 | **P1.3** | **Test bota w panelu** — pole „wpisz pytanie" pokazujące odpowiedź ORAZ która para zadziałała. Dwie krytyki nazwały to najlepszą pozycją planu: pokazuje egzaminatorowi, że algorytm nie jest czarną skrzynką. | 3/4 krytyków |
 | **P1.4** | **Limit AI mierzy zły wymiar.** `front.php:13` — wspólny kubeł 10/min per IP dla pytań i zgłoszeń; dzienny limit AI (`chatbot-live.php:79`, 100) jest GLOBALNY. Jeden gość pytający 10×/min przez 10 minut wypala budżet AI wszystkich. Dodaj osobny, niższy limit wywołań AI per IP na dobę. | nasz krytyk |

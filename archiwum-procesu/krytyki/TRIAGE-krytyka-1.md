@@ -22,7 +22,7 @@ Zasada: nie bronię tezy; każdą uwagę sprawdziłam względem planu. Werdykt +
 17. **PRZYJĘTE.** Upload pliku produktu przez presigned URL prosto do R2 (omija pułap rozmiaru żądania Workera); limit pliku 200 MB na start.
 
 ## Białe plamy — co z nimi
-- **Termin egzaminu**: jedyne pytanie, które wolno zadać — DZIDKOWI (nie koledze): czy egzamin ma termin?
+- **Termin egzaminu**: jedyne pytanie, które wolno zadać — WŁAŚCICIELOWI (nie koledze): czy egzamin ma termin?
 - Wroga sesja: ręczna + skrypty tam, gdzie się da (powtarzalne przypadki → testy automatyczne od razu).
 - Makiety UX: powstaną przy przyroście „witryna", z wzorców z ZWIAD-WZORCE.md + sędzia 0-100 przed pokazaniem.
 - Instrukcja wdrożenia: szkic powstanie razem z paczką; kryterium ≤30 min mierzone na CZYSTEJ kopii.

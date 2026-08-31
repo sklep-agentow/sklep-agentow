@@ -303,7 +303,7 @@ prawdziwym wdrożeniu.
   „#170" w dokumencie klienta, tabela §2 bez `opinie.php`; `REJESTR-WERYFIKACJI.md` martwe wpisy Cloudflare/Vercel;
   zakup gościa wymaga nonce (`zakup.php:66`) → page-cache; brak eksportera/erasera RODO WP (D: dopisać w naprawach);
   zwroty Stripe bez obsługi (decyzja po L3); WP-Cron bez ruchu nie w instrukcji.
-- 3 martwe pliki mediów w paczce (1,06 MB) — kasowanie ZGODA Dzidka 25.08, wykonać w rundzie napraw (bump).
+- 3 martwe pliki mediów w paczce (1,06 MB) — kasowanie ZGODA właściciela 25.08, wykonać w rundzie napraw (bump).
 
 ## ✅ ZAMKNIĘTE 25.08 (wieczór) — SKLEP: readme.txt + CHANGELOG.md + paczka 0.9.13 (PR-0 K7)
 - `paczka-zgodnosc.sh sklep-agentow` EXIT 0 (6 miejsc wersji, zip == repo 59 plików, treść wydania, 0 śladów),
@@ -326,10 +326,10 @@ prawdziwym wdrożeniu.
   w CONTEXT-SERWER.md).
 
 
-## ⚠️ WISZĄCE OD 19.08 (sesja Gosia-3) — TUNEL PUBLICZNY na czas oglądania Dzidka
+## ⚠️ WISZĄCE OD 19.08 (sesja koordynatorka-3) — TUNEL PUBLICZNY na czas oglądania właściciela
 - ~~Tunel cloudflared AKTYWNY~~ **NIEAKTUALNE (sprawdzone 30.08: proces `cloudflared` nie żyje, `siteurl`=`http://localhost:8890`)** — wpis zostawiony jako ślad procedury: `https://linda-refrigerator-potato-objective.trycloudflare.com`
   → :8890 (proces w tle sesji; log `/tmp/cf-sklep-8890.log`). **siteurl+home stacka
-  PRZESTAWIONE na adres tunelu** — po seansie Dzidka PRZYWRÓCIĆ:
+  PRZESTAWIONE na adres tunelu** — po seansie właściciela PRZYWRÓCIĆ:
   `docker exec strona_wp_wordpress wp --allow-root --path=/var/www/html option update siteurl "http://localhost:8890" && docker exec strona_wp_wordpress wp --allow-root --path=/var/www/html option update home "http://localhost:8890"`
   + ubić tunel (`pkill -f "cloudflared tunnel --url http://127.0.0.1:8890"`).
   ⛔ Do tego czasu testy automatyczne po localhost NIE są miarodajne (canonical
@@ -352,10 +352,10 @@ prawdziwym wdrożeniu.
 
 ## ✅ ZAMKNIĘTE 19.08 (wieczór) — ⭐ K5b2 ILUSTRACJE SVG KART (PR #60 MERGED, D28b)
 - Karty listy: WŁASNE ilustracje SVG w brandzie (roboty-bliźniaki, 880×560,
-  ~4 KB) — feedback Dzidka „fajne obrazy jak profesjonaliści"; zrzuty żywych
+  ~4 KB) — feedback właściciela „fajne obrazy jak profesjonaliści"; zrzuty żywych
   botów zostały na stronach produktów (podział: lista=marketing, produkt=dowód).
   Generyczny stock/AI-obrazy ODRZUCONE (D28b). Opinie/gwiazdki NIE (D6/Omnibus
-  — powiedziane Dzidkowi wprost).
+  — powiedziane właścicielowi wprost).
 - Recenzent złapał REALNEGO BUGA (modyfikator klasy CSS doklejany do złego
   członu przy dwuczłonowym $klasa) → naprawiony, dowód surowym renderem klas;
   D28b dopisane do rejestru (kod cytował decyzję bez wpisu — klasa #3).
@@ -363,7 +363,7 @@ prawdziwym wdrożeniu.
   deklaracje. E2E po każdej porcji: mail_wyslany (łącznie 4× dziś).
 
 ## ✅ ZAMKNIĘTE 19.08 (popołudnie) — ⭐ K5b WIZUALIA (PR #59 MERGED, sklep 0.9.0, D28)
-- **Feedback Dzidka obsłużony**: link „Sklep" w nav (desktop+mobile) · zrzuty
+- **Feedback właściciela obsłużony**: link „Sklep" w nav (desktop+mobile) · zrzuty
   ŻYWYCH botów na kartach i w sekcji „JAK TO WYGLĄDA" (rama „okna aplikacji") ·
   lista: pasek konkretów + OD ZAKUPU DO DZIAŁANIA + DLA KOGO (jedno źródło
   treści) + PYTANIA (liczby ze stałych = dok=kod). Wideo ODRZUCONE (D28).
@@ -381,7 +381,7 @@ prawdziwym wdrożeniu.
 
 ## ✅ ZAMKNIĘTE 19.08 (noc) — ⭐ K6 INSTALACJA OD ZERA (przyciągnięte z 24.08), sklep 0.8.2
 - **NIE-autor = niezależna sesja-tester** (Sonnet, tmux, deny na kod/warsztat —
-  decyzja Dzidka: „tester niezależny przez tmux jak buildery"). Pełna ścieżka
+  decyzja właściciela: „tester niezależny przez tmux jak buildery"). Pełna ścieżka
   ZALICZONA: instalacja→Stripe→produkty→zakup→boty→deinstalacja; czas 26:58
   brutto / 15-20 min netto (kryterium #1 ≤30 min ✓). Raporty:
   audyt/K6-INSTALACJA-OD-ZERA.md + K6-RAPORT-TESTERA.md (verbatim).
@@ -449,7 +449,7 @@ prawdziwym wdrożeniu.
   zrzutu przez env. Recenzent potwierdził wszystko 2× + własny grep sweepu.
 - **K5 plan wyglądu:** zwiad motywu (paleta/typografia/detale zmierzone) + zwiad
   wzorców stron produktowych (subagent, źródła w archiwum-procesu/PLAN-WYGLADU-K5.md §5) →
-  `archiwum-procesu/PLAN-WYGLADU-K5.md` CZEKA NA KLEPNIĘCIE Dzidka przed budową.
+  `archiwum-procesu/PLAN-WYGLADU-K5.md` CZEKA NA KLEPNIĘCIE właściciela przed budową.
 
 ## ✅ ZAMKNIĘTE 18.08 (dzień)
 - Model AI botów haiku-4-5 (Dzidek) · timeout AI #37 · **oba boty scalone z haiku**
@@ -477,7 +477,7 @@ prawdziwym wdrożeniu.
 
 ## Blokuje wydanie
 - (nic pilnego) — Live-smoke AI na żywym api.anthropic.com w ODWODZIE (~5$ za zgodą
-  Dzidka), gdyby próba 1 chciała żywe AI; egzamin trybem regułowym 0 zł.
+  właściciela), gdyby próba 1 chciała żywe AI; egzamin trybem regułowym 0 zł.
 
 ## Nie zaczęte (kolejność planu)
 - **Nazwany dług (recenzja #49, drobna):** przy podmianie zipa na produkcie BEZ
@@ -808,7 +808,7 @@ z tą samą listą wzorców co skaner — po oddaniu, jeśli zrzutów przybędzi
   (dziś: §9 FAQ).
 
 ## 🟡 K10 (30.08, tester niezależny, instalacja z Release 0.9.24 na czystym WP 6.9.4 + motyw kolegi) — co wyszło
-Raport (oryginał): `/root/praca/k7-dowody-30-08/k10-tester-0.9.24/RAPORT-TESTERA.md` (kopia dla Dzidka: `/root/do-panelu/K10-0.9.24-tester/`).
+Raport (oryginał): `/root/praca/k7-dowody-30-08/k10-tester-0.9.24/RAPORT-TESTERA.md` (kopia dla właściciela: `/root/do-panelu/K10-0.9.24-tester/`).
 26 min zegara (≈15 min czystej pracy z instrukcją — w limicie 30), 22 ✅ · 11 🐞 · 6 😖 · 6 ⬜.
 - **NAPRAWIONE w 0.9.25** (#222): „Dociągnij zaległe” milczało o pominiętych (młodszych niż 2 min) + starwacja przez
   porzucone koszyki; instrukcje o WP-Cron/pętli zwrotnej.
@@ -855,8 +855,8 @@ maszynowo do końca (zam #9901178 z danymi faktury).
   stron; sklep pokaże się tylko tam, gdzie sam wstawisz skrót”. Nie weszło do 0.9.26: paczka była już na `origin/main`
   (zamek klasy 10 → podbicie wersji), a zdanie nie szkodzi. Wchodzi z 0.9.27 razem z HEAD-200 i próbą kontrolną podpisu.
 
-## ✅ ROZLICZENIE DŁUGÓW w 0.9.27 (30.08 późny wieczór, decyzja Dzidka „mamy czas do rana”)
-ZROBIONE: kompensacja tokenu w cronie (decyzja Dzidka 30.08 ~22:15 „wszystko co jest błędem naprawiamy”; CZĘŚĆ 4 strażnika resend — na 0.9.26 pada: token_przywrocony=NIE) · HEAD-200 na 404 (template_redirect + `testy/produkt-404-proba-kontrolna.sh`) · próba kontrolna podpisu webhooka
+## ✅ ROZLICZENIE DŁUGÓW w 0.9.27 (30.08 późny wieczór, decyzja właściciela „mamy czas do rana”)
+ZROBIONE: kompensacja tokenu w cronie (decyzja właściciela 30.08 ~22:15 „wszystko co jest błędem naprawiamy”; CZĘŚĆ 4 strażnika resend — na 0.9.26 pada: token_przywrocony=NIE) · HEAD-200 na 404 (template_redirect + `testy/produkt-404-proba-kontrolna.sh`) · próba kontrolna podpisu webhooka
 (`testy/webhook-podpis-test.php` + mutanty hash_equals/tolerancja) · wyjątek Yoast/RankMath (krok H strażnika SEO) ·
 `false !== has_action` · zdanie o skrócie w readme · A3/licznik klas/§8a-b/odsyłacz a1b2495 z recenzji #227 r3.
 ZAMKNIĘTE UZASADNIENIEM: honeypot opinii (formularz tylko z jednorazowego tokenu z maila — bot bez zakupu go nie widzi).

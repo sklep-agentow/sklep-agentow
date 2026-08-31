@@ -1,6 +1,6 @@
 # PRZELOT CZŁOWIEKA — SKLEP (K7, trzeci przebieg INNĄ METODĄ: klikanie, nie czytanie)
 
-Kto: **przeszedł to agent-audytor** (świeża sesja, nie autor kodu) — ustalenie z Dzidkiem: tę listę odklikujemy ZA NIEGO. Wynik przepisany tu z jego raportu
+Kto: **przeszedł to agent-audytor** (świeża sesja, nie autor kodu) — ustalenie z właścicielem: tę listę odklikujemy ZA NIEGO. Wynik przepisany tu z jego raportu
 (`/root/praca/k7-audytor-stanowisko/dowody/RAPORT-AUDYTORA.md`, 27.08, ZADANIE 2). Punkty, które wtedy wypadły źle, zostały PONOWNIE zmierzone 28.08 na kodzie po naprawach
 (surowe wyjście W REPO: `audyt/sklep/testy-audytora/przelot-recheck/wyniki/wynik-28-08-na-0.9.19.txt`;
 zrzuty PNG zostają poza repo w `/root/praca/k7-dowody-28-08/` — świadomie, bo mierzą to samo

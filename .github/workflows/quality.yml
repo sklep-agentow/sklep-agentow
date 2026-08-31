@@ -10,7 +10,7 @@
 #    dopiero po JEDNORAZOWEJ aktywacji w każdym klonie:
 #        git config core.hooksPath .githooks
 #    (świeży klon bez tej komendy NIE ma ochrony; świadome obejście: --no-verify).
-#    Twarda bramka wróci, gdy repo będzie publiczne albo konto Pro (decyzja Dzidka).
+#    Twarda bramka wróci, gdy repo będzie publiczne albo konto Pro (decyzja właściciela).
 #
 # 2026-08-20: SZEŚĆ ZADAŃ ZBITE W JEDNO. Powód policzalny: GitHub nalicza każde
 # zadanie osobno i zaokrągla w górę do pełnej minuty, więc sześć zadań po ~7 s

@@ -4,7 +4,7 @@ Data: 2026-08-30 · Zakres: audyt końcowy K7 (6 soczewek, 104 cele) + naprawy K
 delty 0.9.25 (płatność osadzona, dane do faktury, reconciliation po K10 — PR `#222`, 4 rundy) + test instalacji od zera
 przez niezależnego testera (K10) + audyt delty 0.9.26 (canonical stron sklepu, klasa `is_page( 0 )` — PR `#225`, 4 rundy;
 dokumenty SECURITY/CONTRIBUTING — PR `#226`, 3 rundy; delta 0.9.27: HEAD-404, podpis webhooka jako strażnik przelotu ręcznego, Yoast/RankMath,
-has_action prio 0, zdanie o skrócie — długi z CO-WISI decyzją Dzidka 30.08 ~22:15) + bramka końcowa i przelot prób kontrolnych
+has_action prio 0, zdanie o skrócie — długi z CO-WISI decyzją właściciela 30.08 ~22:15) + bramka końcowa i przelot prób kontrolnych
 na commicie FINALNYM tej gałęzi (log w repo — sekcja delty 0.9.27 niżej niesie sha i liczby) · KRYTYCZNE: 0 · DUZE: 0 · kontroli FAIL: 2 (z 13) · **K7: NO-GO · EXIT=1** (kontrole 2 i 6 — te same co przy 0.9.23 i 0.9.24: decyzja właściciela 28.08; liczby i sha przelotu rozstrzyga nagłówek `audyt/sklep/PROBY-KONTROLNE.log` — sekcja delty 0.9.27 niżej; powody w raporcie)
 
 Ten plik jest **wskaźnikiem maszynowym** dla bramki oddania (hook `oddanie-guard` czyta liczniki

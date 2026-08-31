@@ -1,7 +1,7 @@
 # NA OSTATNI GUZIK — lista domknięcia obu botów (20.08)
 
 Powód powstania: kryterium „GOTOWE" #10 z `PLAN-PROJEKTU.md:404` pisaliśmy pod
-egzamin („rdzenie działają"). Po zwrocie Dzidka z 20.08 („boty normalne DO
+egzamin („rdzenie działają"). Po zwrocie właściciela z 20.08 („boty normalne DO
 SPRZEDAŻY, porządne") ten próg jest za niski. Poniżej próg właściwy.
 ⛔ Każda pozycja BINARNA: albo jest dowód, albo pozycja jest otwarta. Zero „chyba".
 
@@ -12,7 +12,7 @@ SPRZEDAŻY, porządne") ten próg jest za niski. Poniżej próg właściwy.
 - [ ] ChatBot: wpięcie w narzędzia RODO WordPressa (eksporter + kasownik),
       import bazy Q&A z pliku, stronicowanie list w panelu.
 - [ ] Segregator: reszta jego kolejki + uwaga DROBNA o zapytaniach N razy zamiast raz.
-- [ ] Decyzja Dzidka: czy tryb AI wchodzi do przebiegu na skrzynce (L8), czy piszemy
+- [ ] Decyzja właściciela: czy tryb AI wchodzi do przebiegu na skrzynce (L8), czy piszemy
       WPROST na stronie produktu, że na skrzynce pracują same reguły.
 
 ## B. ZAMROŻENIE — dopiero po A, i dopiero potem audyt
@@ -61,7 +61,7 @@ SPRZEDAŻY, porządne") ten próg jest za niski. Poniżej próg właściwy.
 Koniec, gdy: zero pozycji otwartych wyżej · mutanty złapane · zero anomalii bez
 wyjaśnienia · każdy błąd ma strażnika.
 
-## G. PO BOTACH — recenzent jako NASZ GOTOWIEC (decyzja Dzidka 20.08)
+## G. PO BOTACH — recenzent jako NASZ GOTOWIEC (decyzja właściciela 20.08)
 - [ ] Briefing recenzenta wyjęty z pliku CI do `.github/RECENZENT-BRIEFING.md`
       (poprawki recenzenta przestają wywracać gałęzie builderów).
 - [ ] Recenzent ma zależności i pełną historię — URUCHAMIA bramki, nie czyta ich.

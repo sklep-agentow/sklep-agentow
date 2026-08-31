@@ -23,7 +23,7 @@ i ~10–11 min obchodzenia wad STANOWISKA. **22 ✅ · 11 🐞 · 6 😖 · 6 �
 ### Wada PRODUKTU (naprawiona w 0.9.25, PR #222)
 - Zakup opłacony (Stripe API: `payment_status: paid`, 199,00 PLN), webhook odrzucany (`webhook_zly_podpis` ×10 — sekret
   nie był ustawiony, patrz stanowisko), tester kliknął **„Dociągnij zaległe teraz” 71 s po zapłacie → nic**, strona
-  „Dziękujemy” wisiała na „Przetwarzamy…” >20 min, Pulpit 0 zamówień. Diagnoza (Gosia, na żywym `k10_wp`): reconciliation
+  „Dziękujemy” wisiała na „Przetwarzamy…” >20 min, Pulpit 0 zamówień. Diagnoza (koordynatorka, na żywym `k10_wp`): reconciliation
   pomija sesje młodsze niż 120 s **bez komunikatu**; WP-Cron na stosie nie ruszył (zepsuta pętla zwrotna — to samo
   pokazał edytor motywu: „Unable to communicate back with site”); ręczna reconciliation o 14:50:45 domknęła zamówienie
   #1 → `mail_wyslany`, mail w łapaczu. Do tego `ORDER BY utworzono LIMIT 20` = 20 porzuconych koszyków blokowało nowszą

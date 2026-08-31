@@ -53,7 +53,7 @@ ZALEGLOSCI="${SLADY_ZALEGLOSCI:-$KORZEN_NARZEDZIA/slady-zaleglosci.txt}"
 # niej wzorzec łapie „diakrytyków".
 #
 # 1.1.1 — imię z zespołu szukane po RDZENIU (`[Dd]zid`), nie po jednej formie słowa.
-# Powód z życia: wzorzec `Dzidek` widział tylko mianownik i przepuścił „Dzidka";
+# Powód z życia: wzorzec `Dzidek` widział tylko mianownik i przepuścił „właściciela";
 # poprawka na `Dzidk` złapała odmiany, ale PRZESTAŁA widzieć mianownik (między
 # `d` a `k` stoi `e`) — dziura przesunięta, nie zamknięta. Próba kontrolna nie
 # miała wtedy żadnego przypadku z imieniem, więc nie krzyknęła; teraz ma dwa

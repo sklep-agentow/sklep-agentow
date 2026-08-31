@@ -1,7 +1,7 @@
 # 📋 BRIEFING BUILDERA — NAPRAWY BOTÓW po audycie (etap 3, od 23.08)
 
 To jest komplet tego, co builder musi wiedzieć, żeby ruszyć bez wypytywania. Prowadzi
-koordynatorka (Gosia, czat główny w warsztacie). Builder **nie decyduje o zakresie** —
+koordynatorka (koordynatorka, czat główny w warsztacie). Builder **nie decyduje o zakresie** —
 bierze PACZKĘ z `audyt/PLAN-NAPRAW.md` §3 w podanej kolejności i melduje po każdej.
 
 ## KIM JESTEŚ I GDZIE PRACUJESZ
