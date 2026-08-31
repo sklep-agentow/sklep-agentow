@@ -68,6 +68,11 @@ $atrapa                  = function ( $pre, $args, $url ) use ( $pf ) {
 add_filter( 'pre_http_request', $atrapa, 10, 3 );
 
 $sprzatanie = function () use ( $wpdb, $ps, $pz, $pf ) {
+	// Zdarzenia PRZED zamówieniami — po skasowaniu zamówień nie ma już id, po których
+	// je znaleźć. Bez tego każdy przebieg zostawiał wiersz `mail_wyslany do: rw-test@…`
+	// w dzienniku wspólnego stosu i po 13 przebiegach położył strażnika RODO
+	// (asercja C liczy ślady po markerze @example.test w CAŁEJ tabeli zdarzeń).
+	$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}sklepag_zdarzenia WHERE zamowienie_id IN (SELECT id FROM {$pz} WHERE stripe_session_id LIKE %s)", $wpdb->esc_like( $pf ) . '%' ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
 	$wpdb->query( $wpdb->prepare( "DELETE FROM {$ps} WHERE stripe_session_id LIKE %s", $wpdb->esc_like( $pf ) . '%' ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
 	$wpdb->query( $wpdb->prepare( "DELETE FROM {$pz} WHERE stripe_session_id LIKE %s", $wpdb->esc_like( $pf ) . '%' ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
 	foreach ( $wpdb->get_col( $wpdb->prepare( "SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE %s", '_transient_sklepag_recon_%' ) ) as $o ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery

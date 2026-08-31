@@ -83,6 +83,10 @@ function sklepag_obsluz_resend() {
 	$opinia_hash_przed = (string) $wpdb->get_var( $wpdb->prepare( "SELECT token_hash FROM {$wpdb->prefix}sklepag_opinie WHERE zamowienie_id=%d", (int) $zam->id ) );
 	$token_op          = sklepag_opinia_zalazek( (int) $zam->id, (int) $zam->produkt_id );
 	$link_op           = '' !== $token_op ? admin_url( 'admin-post.php' ) . '?action=sklepag_ocen&z=' . (int) $zam->id . '&t=' . $token_op : '';
+	// Skrót opinii PO rotacji zalążka — przy DORĘCZENIU wejdzie do śladu dor_* (schemat v9),
+	// dokładnie jak w wysyłce automatycznej (zakup.php).
+	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
+	$opinia_hash_po = (string) $wpdb->get_var( $wpdb->prepare( "SELECT token_hash FROM {$wpdb->prefix}sklepag_opinie WHERE zamowienie_id=%d AND status='zalazek'", (int) $zam->id ) );
 
 	$produkt_snapshot        = new stdClass();
 	$produkt_snapshot->nazwa = $zam->produkt_nazwa_kupiona;
@@ -118,58 +122,80 @@ function sklepag_obsluz_resend() {
 		// odmawia im ponownej wysyłki (wp_die 409), mail dla nich NIE wychodzi. Warunek NOT IN zostaje
 		// jako druga warstwa: gdyby bramka kiedyś zniknęła, jedno kliknięcie „Wyślij ponownie" na
 		// zamówieniu zwróconym kasowałoby znacznik zwrotu i wracało je do liczby sprzedaży na Pulpicie.
+		// DORĘCZONE — ślad dor_* (schemat v9) zapisany razem ze statusem, jak w zakup.php:
+		// kompensacja przyszłej nieudanej rotacji przywraca stan z maila, który DOSZEDŁ.
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- SKLEPAG_STATUSY_ZAMKNIETE to stała wtyczki, nie wejście użytkownika (jak SKLEPAG_STATUSY_OPLACONE w admin-dashboard.php).
-		$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET status='mail_wyslany', zmieniono=%s WHERE id=%d AND status NOT IN (" . SKLEPAG_STATUSY_ZAMKNIETE . ')', $teraz, (int) $zam->id ) );
+		$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET status='mail_wyslany', dor_token_pobrania=token_pobrania, dor_link_wygasa=link_wygasa, dor_mail_tresc=mail_tresc, dor_opinia_hash=%s, zmieniono=%s WHERE id=%d AND status NOT IN (" . SKLEPAG_STATUSY_ZAMKNIETE . ')', $opinia_hash_po, $teraz, (int) $zam->id ) );
 		sklepag_zdarzenie( (int) $zam->id, 'mail_resend', 'ręczna ponowna wysyłka do: ' . $zam->email_kupujacego . ' (świeży link)' );
 	} else {
 		// KOMPENSACJA: nowy token wszedł do bazy PRZED wysyłką, więc nieudany mail zostawiłby
 		// kupującego bez niczego — stary link daje 403, a nowy nigdy nie dotarł. Przywracamy
-		// poprzedni token, termin i licznik pobrań (stary link wraca ze SWOIM stanem — bez
-		// ekstra pobrań), żeby „Wyślij ponownie" nigdy nie ODBIERAŁO dostępu.
-		if ( null === $zam->link_wygasa ) {
-			// Kolumna `link_wygasa` jest DATETIME NULL — prepare() z %s zrobiłby z NULL-a pusty
-			// string (data zerowa albo błąd w trybie ścisłym), więc NULL zapisujemy dosłownie.
-			$wpdb->query(
-				$wpdb->prepare(
-					"UPDATE {$pz} SET token_pobrania=%s, link_wygasa=NULL, pobrania_uzyte=%d, zmieniono=%s WHERE id=%d",
-					(string) $zam->token_pobrania,
-					(int) $zam->pobrania_uzyte,
-					$teraz,
-					(int) $zam->id
-				)
-			);
-		} else {
-			$wpdb->query(
-				$wpdb->prepare(
-					"UPDATE {$pz} SET token_pobrania=%s, link_wygasa=%s, pobrania_uzyte=%d, zmieniono=%s WHERE id=%d",
-					(string) $zam->token_pobrania,
-					(string) $zam->link_wygasa,
-					(int) $zam->pobrania_uzyte,
-					$teraz,
-					(int) $zam->id
-				)
-			);
+		// stan ostatniej DORĘCZONEJ wysyłki (ślad dor_* z v9); zapas dla zamówień sprzed v9:
+		// zdjęcie z wejścia handlera (jak dotąd). ⛔ CAS na WŁASNY świeży skrót: gdyby między
+		// naszą rotacją a kompensacją token przejął cron (stale-claim), jego stanu nie ruszamy
+		// — ta sama zasada własności co w zakup.php (#228 r4 u5).
+		$token_wlasnosci = hash( 'sha256', $token );
+		$ma_dor          = isset( $zam->dor_token_pobrania ) && '' !== (string) $zam->dor_token_pobrania;
+		$zrodlo_token    = $ma_dor ? (string) $zam->dor_token_pobrania : (string) $zam->token_pobrania;
+		$zrodlo_uzyte    = ( (string) $zam->token_pobrania === $zrodlo_token ) ? (int) $zam->pobrania_uzyte : 0;
+		$zrodlo_termin   = $ma_dor ? $zam->dor_link_wygasa : $zam->link_wygasa;
+		$przywrocono     = 0;
+		if ( '' !== $zrodlo_token ) {
+			if ( null === $zrodlo_termin ) {
+				// Kolumna `link_wygasa` jest DATETIME NULL — prepare() z %s zrobiłby z NULL-a pusty
+				// string (data zerowa albo błąd w trybie ścisłym), więc NULL zapisujemy dosłownie.
+				$przywrocono = (int) $wpdb->query(
+					$wpdb->prepare(
+						"UPDATE {$pz} SET token_pobrania=%s, link_wygasa=NULL, pobrania_uzyte=%d, zmieniono=%s WHERE id=%d AND token_pobrania=%s",
+						$zrodlo_token,
+						$zrodlo_uzyte,
+						$teraz,
+						(int) $zam->id,
+						hash( 'sha256', $token )
+					)
+				);
+			} else {
+				$przywrocono = (int) $wpdb->query(
+					$wpdb->prepare(
+						"UPDATE {$pz} SET token_pobrania=%s, link_wygasa=%s, pobrania_uzyte=%d, zmieniono=%s WHERE id=%d AND token_pobrania=%s",
+						$zrodlo_token,
+						(string) $zrodlo_termin,
+						$zrodlo_uzyte,
+						$teraz,
+						(int) $zam->id,
+						hash( 'sha256', $token )
+					)
+				);
+			}
 		}
-		// Stan i licznik prób osobno od kompensacji tokenu: token i termin MUSZĄ wrócić zawsze
-		// (inaczej „Wyślij ponownie" odbierałoby dostęp), a status wolno ruszyć tylko wtedy,
-		// gdy zamówienie nie jest zamknięte finansowo (druga warstwa — zamknięte odpadają już na bramce 409 wyżej).
+		if ( $przywrocono > 0 ) {
+			$token_wlasnosci = $zrodlo_token;
+		}
+		// Stan i licznik prób osobno od kompensacji tokenu — status wolno ruszyć tylko na
+		// zamówieniu nie-zamkniętym finansowo (druga warstwa po bramce 409) i tylko pod
+		// dowodem własności tokenu (nie przestawiamy statusu cudzej, doręczonej wysyłki).
 		$wpdb->query(
 			$wpdb->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- SKLEPAG_STATUSY_ZAMKNIETE to stała wtyczki, nie wejście użytkownika (jak SKLEPAG_STATUSY_OPLACONE w admin-dashboard.php).
-				"UPDATE {$pz} SET status='mail_blad', mail_proby=mail_proby+1, zmieniono=%s WHERE id=%d AND status NOT IN (" . SKLEPAG_STATUSY_ZAMKNIETE . ')',
+				"UPDATE {$pz} SET status='mail_blad', mail_proby=mail_proby+1, zmieniono=%s WHERE id=%d AND status NOT IN (" . SKLEPAG_STATUSY_ZAMKNIETE . ') AND token_pobrania=%s',
 				$teraz,
-				(int) $zam->id
+				(int) $zam->id,
+				$token_wlasnosci
 			)
 		);
-		// Treść maila też wraca: panel pokazuje „treść wysłanego maila" i po nieudanej próbie
-		// wyświetlałby link, który już nie działa, a ten działający nie byłby widoczny nigdzie.
+		// Treść maila i skrót opinii też wracają — ale wyłącznie gdy kompensacja tokenu przeszła
+		// (własność potwierdzona): panel ma pokazywać treść maila, który DOSZEDŁ.
 		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
-		$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET mail_tresc=%s WHERE id=%d", (string) $zam->mail_tresc, (int) $zam->id ) );
-		if ( '' !== $opinia_hash_przed ) {
-			$wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->prefix}sklepag_opinie SET token_hash=%s WHERE zamowienie_id=%d AND status='zalazek'", $opinia_hash_przed, (int) $zam->id ) );
+		if ( $przywrocono > 0 ) {
+			$zrodlo_tresc  = $ma_dor ? (string) $zam->dor_mail_tresc : (string) $zam->mail_tresc;
+			$zrodlo_opinia = $ma_dor ? (string) $zam->dor_opinia_hash : $opinia_hash_przed;
+			$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET mail_tresc=%s WHERE id=%d", $zrodlo_tresc, (int) $zam->id ) );
+			if ( '' !== $zrodlo_opinia ) {
+				$wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->prefix}sklepag_opinie SET token_hash=%s WHERE zamowienie_id=%d AND status='zalazek'", $zrodlo_opinia, (int) $zam->id ) );
+			}
 		}
 		// phpcs:enable
-		sklepag_zdarzenie( (int) $zam->id, 'mail_blad', 'ręczna ponowna wysyłka nieudana (wp_mail zwrócił false) — poprzedni link pobrania, treść maila i link do opinii przywrócone' );
+		sklepag_zdarzenie( (int) $zam->id, 'mail_blad', 'ręczna ponowna wysyłka nieudana (wp_mail zwrócił false) — przywrócony stan ostatniej doręczonej wysyłki (link pobrania, treść maila, link do opinii)' );
 	}
 	// phpcs:enable
 
@@ -334,7 +360,7 @@ function sklepag_obsluz_anonimizacje() {
 
 	$ok_zam = $wpdb->query(
 		$wpdb->prepare(
-			"UPDATE {$pz} SET email_kupujacego='', dane_faktury='', usunieto_dnia=%s, token_pobrania='', link_wygasa=NULL, zmieniono=%s WHERE id=%d",
+			"UPDATE {$pz} SET email_kupujacego='', dane_faktury='', usunieto_dnia=%s, token_pobrania='', link_wygasa=NULL, dor_token_pobrania='', dor_link_wygasa=NULL, dor_mail_tresc=NULL, dor_opinia_hash='', zmieniono=%s WHERE id=%d",
 			$teraz,
 			$teraz,
 			(int) $zam->id
@@ -357,7 +383,7 @@ function sklepag_obsluz_anonimizacje() {
 	 * Rozstrzyga STAN PO ZAPISIE: e-mail ma byc pusty, `usunieto_dnia` ustawione.
 	 */
 	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- nazwy tabel z prefiksu; akcja admina.
-	$po = $wpdb->get_row( $wpdb->prepare( "SELECT email_kupujacego, usunieto_dnia FROM {$pz} WHERE id = %d", (int) $zam->id ) );
+	$po = $wpdb->get_row( $wpdb->prepare( "SELECT email_kupujacego, usunieto_dnia, token_pobrania, dor_token_pobrania, dor_mail_tresc, dor_opinia_hash FROM {$pz} WHERE id = %d", (int) $zam->id ) );
 
 	/*
 	 * ⛔ SKUTEK LICZY SIE WE WSZYSTKICH TRZECH MIEJSCACH, w ktorych siedzial adres
@@ -398,9 +424,15 @@ function sklepag_obsluz_anonimizacje() {
 	);
 	// phpcs:enable
 
+	/* Pomiar TAK SZEROKI jak czyszczenie (v9): tokeny i ślad dor_* też muszą zniknąć —
+		dor_mail_tresc to KOPIA treści maila (NULL po czyszczeniu; (string) NULL = ''). */
 	$skutek_ok = $po
 		&& '' === (string) $po->email_kupujacego
 		&& ! empty( $po->usunieto_dnia )
+		&& '' === (string) $po->token_pobrania
+		&& '' === (string) $po->dor_token_pobrania
+		&& '' === (string) $po->dor_mail_tresc
+		&& '' === (string) $po->dor_opinia_hash
 		&& 0 === $slady_dziennik
 		&& 0 === $slady_opinia;
 

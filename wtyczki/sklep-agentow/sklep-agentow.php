@@ -16,8 +16,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SKLEPAG_WERSJA', '0.9.27' );
-define( 'SKLEPAG_WERSJA_SCHEMATU', 8 ); // v8: zamowienia.dane_faktury (firma + NIP podane przez kupującego przy zakupie, 0.9.25); v7: status_przed_sporem (punkt powrotu po zdarzeniu finansowym — sporze LUB zwrocie — bez zmyślania stanu wysyłki); v6: kolumny zwrotu (payment_intent_id, zwrocono_grosze, zwrot_czas); v5: tabela opinii; v4: kolumna zamowienia.usunieto_dnia (anonimizacja RODO); v3: indeks para_logowania.
+define( 'SKLEPAG_WERSJA', '0.9.28' );
+define( 'SKLEPAG_WERSJA_SCHEMATU', 9 ); // v9: zamowienia.dor_* — ślad ostatniej DORĘCZONEJ wysyłki (token, termin, treść maila, skrót opinii); kompensacja po nieudanej wysyłce przywraca stan doręczony, nie zastany (0.9.28); v8: zamowienia.dane_faktury (firma + NIP podane przez kupującego przy zakupie, 0.9.25); v7: status_przed_sporem (punkt powrotu po zdarzeniu finansowym — sporze LUB zwrocie — bez zmyślania stanu wysyłki); v6: kolumny zwrotu (payment_intent_id, zwrocono_grosze, zwrot_czas); v5: tabela opinii; v4: kolumna zamowienia.usunieto_dnia (anonimizacja RODO); v3: indeks para_logowania.
 
 /* Komunikaty blokady pol wymaganych — po POLSKU.
 	Bez nich rysuje je przegladarka wlasnym tekstem (po angielsku, zaleznie od jej

@@ -137,7 +137,10 @@
 	display: grid;
 	/* Górny limit traku: pojedynczy produkt nie rozciąga się na całą szerokość. */
 	grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 34rem));
-	justify-content: start;
+	/* 0.9.28: luz kontenera (72rem − 2×34rem − gap) idzie W ODSTĘP między kafle, nie na prawą
+	   krawędź — przy 2 produktach oba kafle liczą się z krawędziami strony (zgłoszenie: prawy
+	   kafel 40 px od prawej). Przy 1 produkcie space-between = start, cap 34rem zostaje. */
+	justify-content: space-between;
 	gap: 1.5rem;
 	list-style: none;
 	margin: 0;
