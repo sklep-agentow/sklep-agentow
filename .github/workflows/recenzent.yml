@@ -83,7 +83,20 @@ jobs:
       contents: read
       pull-requests: write
       actions: read
-      id-token: write
+      # ⛔ `id-token: write` USUNIETE 31.08 (znalezisko B-12). Bylo nadmiarowe.
+      # Dowod ze zrodla — `action.yml` akcji w przypietej wersji v1.0.210, opis wejscia
+      # `anthropic_workload_identity_federation_rule_id`:
+      #   „When set with anthropic_organization_id, the action authenticates to the Claude
+      #    API by exchanging the workflow's GitHub OIDC token instead of using a static
+      #    API key. Requires `id-token: write` permission."
+      # My uwierzytelniamy sie `claude_code_oauth_token`, czyli STATYCZNYM tokenem —
+      # federacji tozsamosci nie uzywamy, tak samo jak Bedrock/Vertex/Foundry.
+      # Dlaczego to nie kosmetyka: `id-token: write` pozwala przebiegowi wygenerowac
+      # PODPISANY token z tozsamoscia tego repozytorium, ktory uwierzytelnia w kazdej
+      # usludze ufajacej GitHub OIDC. Na tym samym wykonawcy wykonuje sie kod z galezi
+      # pull requesta (`composer install`, testy), a wykonawca jest self-hosted.
+      # ⛔ Gdyby kiedys wlaczac federacje tozsamosci albo Bedrock/Vertex — to uprawnienie
+      # trzeba TU przywrocic, inaczej uwierzytelnienie padnie.
     steps:
       # Pelna historia, nie plytki klon: recenzent dwa razy sam zglaszal, ze nie
       # moze zweryfikowac historii (fetch-depth: 1 daje jeden commit, wiec
