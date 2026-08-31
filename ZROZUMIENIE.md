@@ -17,7 +17,7 @@
 > 1. Po zakupie, klienta na maila potwierxze, instrukcje,
 > 2. Dwa rozne, ceny, co robi - na zachete klienta, jak dziala jak funkcjonuje, jak skraca czas pracy w firmie
 > 3. Admin panel - widok kiedy za ile kupili w jakim czasie/ dashboard
-> właściciel - 1. ChatBot LIVE
+> Dzidek - 1. ChatBot LIVE
 > Dzidem - 2. Segregator maila
 > BAZY DANYCH 1. Dane uzytkownikow / platnksci /
 > BAZY DANYCH 2. ZAPIS AGENTOW DO BAZY DANYCH NAWET PRZY DODAWANIU NOWYCH I USUWANIU I MODYFIKOWANIU
@@ -85,11 +85,11 @@ Odłożone NA PÓŹNIEJ (po egzaminie, osobna robota): aktywacja prawdziwych kon
 ## SUROWE ZDANIA (verbatim, pisownia oryginalna — to jest źródło, nie moje streszczenie)
 
 Treść zlecenia (notatki z rozmowy z kolegą):
-> 1. Sklep z agentami (2x)  właściciel - sklep - szczegoly:
+> 1. Sklep z agentami (2x)  Dzidek - sklep - szczegoly:
 > 1. Po zakupie, klienta na maila potwierxze, instrukcje,
 > 2. Dwa rozne, ceny, co robi - na zachete klienta, jak dziala jak funkcjonuje, jak skraca czas pracy w firmie
 > 3. Admin panel - widok kiedy za ile kupili w jakim czasie/ dashboard
-> właściciel - 1. ChatBot LIVE
+> Dzidek - 1. ChatBot LIVE
 > Dzidem - 2. Segregator maila
 > BAZY DANYCH 1. Dane uzytkownikow / platnksci /
 > BAZY DANYCH 2. ZAPIS AGENTOW I KURSOW DO BAZY DANYCH NAWET PRZY DODAWANIU NOWYCH I USUWANIU I MODYFIKOWANIU

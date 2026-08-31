@@ -17,11 +17,11 @@
 (`ZROZUMIENIE.md`, sekcja „## SUROWE ZDANIA", linie 85–102)
 
 Treść zlecenia (notatki z rozmowy z kolegą):
-> 1. Sklep z agentami (2x)  właściciel - sklep - szczegoly:
+> 1. Sklep z agentami (2x)  Dzidek - sklep - szczegoly:
 > 1. Po zakupie, klienta na maila potwierxze, instrukcje,
 > 2. Dwa rozne, ceny, co robi - na zachete klienta, jak dziala jak funkcjonuje, jak skraca czas pracy w firmie
 > 3. Admin panel - widok kiedy za ile kupili w jakim czasie/ dashboard
-> właściciel - 1. ChatBot LIVE
+> Dzidek - 1. ChatBot LIVE
 > Dzidem - 2. Segregator maila
 > BAZY DANYCH 1. Dane uzytkownikow / platnksci /
 > BAZY DANYCH 2. ZAPIS AGENTOW I KURSOW DO BAZY DANYCH NAWET PRZY DODAWANIU NOWYCH I USUWANIU I MODYFIKOWANIU
@@ -55,7 +55,7 @@ Notatka zlecenia — wersja aktualna (właściciel, czat 17.08 ~23:20, verbatim;
 > 1. Po zakupie, klienta na maila potwierxze, instrukcje,
 > 2. Dwa rozne, ceny, co robi - na zachete klienta, jak dziala jak funkcjonuje, jak skraca czas pracy w firmie
 > 3. Admin panel - widok kiedy za ile kupili w jakim czasie/ dashboard
-> właściciel - 1. ChatBot LIVE
+> Dzidek - 1. ChatBot LIVE
 > Dzidem - 2. Segregator maila
 > BAZY DANYCH 1. Dane uzytkownikow / platnksci /
 > BAZY DANYCH 2. ZAPIS AGENTOW DO BAZY DANYCH NAWET PRZY DODAWANIU NOWYCH I USUWANIU I MODYFIKOWANIU
@@ -110,7 +110,7 @@ realizacja = instalacja/deinstalacja wtyczki z czystym uninstall). S-01/S-05/S-0
 produktów BEZ ZMIAN = **2** (ChatBot LIVE, Segregator maila — potwierdzone notatką 17.08),
 zmienia się POSTAĆ: paczka plików → testowy bot jako wtyczka WP.
 
-✅ **Wiersze INTERPRETACJA S-04, S-07, S-09: KLEPNIĘTE przez właściciela 18.08** („wszystkie
+✅ **Wiersze INTERPRETACJA S-04, S-07, S-09: KLEPNIĘTE przez Dzidka 18.08** („wszystkie
 trzy robimy tak jak się robi i jak robią dobre sklepy") — treść bez zmian mimo piwotu,
 plus WYTYCZNA WIĄŻĄCA: dashboard, dziennik i strony sklepu wg WZORCÓW DZIEDZINY
 e-commerce zbieranych PRZED budową (rejestr D12). **Audytor zgodności dostaje TEN plik +
@@ -188,7 +188,7 @@ działa, jak skraca czas pracy) · panel admina: kiedy/za ile kupili/w jakim cza
 (dashboard) · baza: dane kupujących/płatności · produkty z pełnym CRUD (zapis przy
 dodawaniu/usuwaniu/modyfikowaniu) · dziennik logowań na konto admina (kto, kiedy,
 konkrety).
-**Interpretacje S-04/S-07/S-09: KLEPNIĘTE przez właściciela 18.08** z wiążącą wytyczną:
+**Interpretacje S-04/S-07/S-09: KLEPNIĘTE przez Dzidka 18.08** z wiążącą wytyczną:
 **„tak jak się robi i jak robią dobre sklepy"** → dashboard, dziennik i strony sklepu
 projektujemy WG WZORCÓW DZIEDZINY e-commerce (przed budową K3/K5 zbieramy wzorce: jak to
 robią dojrzałe sklepy), nie po najmniejszej literze.
