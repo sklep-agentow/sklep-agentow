@@ -866,7 +866,7 @@ ZOSTAJE: front.css 83 kB (kandydat, nie wada) · `perf` na hostingu klienta · k
 `.github/workflows/recenzent.yml` wymienia próby po nazwie — dwie nowe wymagają PR-a ruszającego workflow (bez recenzji automatycznej, czyta koordynator). Zrobić jako pierwszy PR po 0.9.27.
 
 ## 🟡 DŁUG: `statystyki-proba-kontrolna.sh` (ChatBot) ślepa na mutanta 3 na tym stosie (30.08 ~23:15)
-Przelot na `a2f9dc2`: „TEST SLEPY NA 1 PODLOZONYCH BLEDOW” — mutant „wiersze bez znacznika wliczone do skuteczności” przechodzi na zielono. ChatBot nietknięty PR-em #228 (diff pusty), więc to nie regresja kodu — kandydat: dane wspólnego stosu maskują wadę (klasa z pamięci: test na wspólnym stosie bez własnych warunków wstępnych). Diagnoza na czystym stanowisku przy K11/0.9.28. AKTUALIZACJA 31.08: przelot na `9b86106` — próba PRZESZŁA (mutant 3 widoczny); ślepota CHWIEJNA, zależna od aktualnych danych stosu, co wzmacnia diagnozę — dług zostaje.
+Przelot na `a2f9dc2`: „TEST SLEPY NA 1 PODLOZONYCH BLEDOW” — mutant „wiersze bez znacznika wliczone do skuteczności” przechodzi na zielono. ChatBot nietknięty PR-em #228 (diff pusty), więc to nie regresja kodu — kandydat: dane wspólnego stosu maskują wadę (klasa z pamięci: test na wspólnym stosie bez własnych warunków wstępnych). Diagnoza na czystym stanowisku przy K11/0.9.28. AKTUALIZACJA 31.08: przelot na `9b86106` — próba PRZESZŁA (mutant 3 widoczny); ślepota CHWIEJNA, zależna od aktualnych danych stosu, co wzmacnia diagnozę — dług zostaje. AKTUALIZACJA K11 (31.08): część „wada kodu strażnika” SKREŚLONA (u audytora PASS 4/4 mutanty) — patrz sekcja ✅ K11 na końcu pliku; zostaje izolacja przyczyny chwiejności na świeżym stosie.
 
 ## 🟡 DŁUG: zapis `status='mail_blad'` bez CAS-a własności claimu (#228 r4 u5, wada sprzed PR)
 `zakup.php` — gałąź porażki `sklepag_domknij_zakup`: UPDATE na `mail_blad` warunkuje tylko `status='mail_w_toku'`, bez `AND token_pobrania=<własny skrót>` (jak mają trzy sąsiednie zapisy kompensacji po #228). Kolejność A(claim, wp_mail wisi) → B(odbiera claim po 5 min, wysyła) → A(pad, przestawia status) → B(sukces nie trafia, statusu już nie ma) zostawia zamówienie z DORĘCZONYM mailem opisane w panelu jako `mail_blad` z podbitym `mail_proby`. Skutek kosmetyczny (link kupującego żyje, mail doszedł — tylko panel kłamie); recenzent r4 świadomie dał DROBNĄ, wady nie wnosi #228. Naprawa = `AND token_pobrania=%s` albo zapis pod `$przywrocono > 0` + krok strażnika skalibrowany jak CZĘŚĆ 5. Zrobić w 0.9.28 razem z diagnozą `statystyki-proba-kontrolna`.
@@ -875,7 +875,7 @@ Przelot na `a2f9dc2`: „TEST SLEPY NA 1 PODLOZONYCH BLEDOW” — mutant „wie
 `zakup.php` — gdy proces A zrotował token i padł W TRAKCIE `wp_mail` (dokładnie przypadek stale-claim z ok. linii 920), proces B odbiera claim po 5 min i robi snapshot STANU A (`$przed_rotacja`, ok. linii 948) — czyli skrótu, którego nie niósł żaden doręczony mail. Gdy wysyłka B też pada, kompensacja B „przywraca" stan A: w bazie znów skrót niedoręczonego maila, panel pokazuje treść, której nikt nie dostał, link opinii z ostatniego DORĘCZONEGO maila martwy. Zmierzone sondą recenzenta r5 (krok A: wada; krok B: kontrola bez wady przechodzi). Ten PR tego NIE psuje (przedtem zostawał skrót B, równie niedoręczony) — to niedomknięta klasa. Naprawa właściwa: przechowywać stan ostatniej UDANEJ wysyłki (osobna kolumna/ślad z rotacji, która się doręczyła) i przywracać JEGO + krok strażnika skalibrowany jak CZĘŚĆ 5 (rola: A padł, B pada — dziś nie pilnuje jej nic). Nie jednolinijkowa — 0.9.28, razem z długiem u5 r4 (`mail_blad` bez CAS-a własności, sąsiednia linia tej samej gałęzi). readme/CHANGELOG 0.9.27 mówią o wyjątku jawnie (ratunek: przycisk „Wyślij ponownie").
 
 ## ✅ K11 (31.08, ~01:15–02:10): kroki 1–8 ZGODNE · ROZJAZDY=2 (oba PROCES, żaden w produkcie)
-Raport: `/root/praca/zlecenia/audyt-k11-0927/AUDYT-K11-RAPORT.md`. Paczka=repo=release co do znaku
+Raport W REPO: `audyt/K11-RAPORT-0.9.27.md` (wciÄgniÄty jak K2/K6/K9/K10; oryginaÅ z maszyny audytora). Paczka=repo=release co do znaku
 (digest), E2E zakupu domknięty (mail, link 200, sha pliku = baza), 404 GET/HEAD, axe 0, rubryka 6/5/1.
 ⭐ Dług „statystyki ślepa na mutanta 3" SKREŚLONY w części „wada kodu strażnika": u K11 test widzi
 WSZYSTKIE 4 mutanty (EXIT=0 czysty). Zastrzeżenie audytora: stanowisko czyste, ale STOS wspólny —
@@ -886,12 +886,12 @@ przyczyna chwiejności NIEwyizolowana; pełna izolacja = przebieg na świeżo za
 `k7-koniec` pada z powodu FORMALNEGO (inny niż opisany w rubryce #12), a weryfikator z zewnątrz dostaje
 log o nieznanym rodowodzie. Domknięte dla 0.9.27: przelot powtórzony NA MAIN po scaleniu, log w repo
 z commitu z historii. NA STAŁE (od 0.9.28): po każdym squash-merge przelot na main przed wydaniem —
-krok do procedury wydania (kandydat na wpis w DZIEN-ZERO/k7).
+krok DO DOPISANIA w procedurze wydania/`k7-koniec` (0.9.28) â dziÅ pilnuje tego kontrola 6 k7 (to ona wykryÅa); szablon dnia-zero w warsztacie juÅ¼ go niesie.
 
-## 🟡 DŁUG (K11 R-2): `testy/dokumentacja-zgodnosc.sh:382-385` (ChatBot) liczy POMINIĘTE jak rozjazd
+## 🟡 DŁUG (K11 R-2 + bliźniaki, runda 1 #229): bramki dokumentacyjne kłamią przy POMINIĘTE — jedna fałszywie-CZERWONA, trzy fałszywie-ZIELONE
 Bez chromium gałąź POMINIETE podbija licznik BLEDY i komunikat brzmi „NIEZGODNE: 1 pozycji rozjechanych
 z kodem" — czytelnik szuka kłamstwa w instrukcji, a brakuje mu przeglądarki. Zamknięcie bramki słuszne,
-kłamie komunikat. Naprawa: osobny licznik POMINIETE + komunikat „NIE ZMIERZONO (brak przyrządu)". 0.9.28.
+kłamie komunikat. KLASA, nie egzemplarz: trzy bliźniaki ODWRÓCONE pomijają CICHO bez licznika — `dokumentacja-zgodnosc.sh` („Tested up to”), `-segregator.sh` („Tested up to”), `-sklep.sh` („stos nie odpowiada”) — podsumowanie mówi „0 rozjazdów” mimo NIEZMIERZONEJ kontroli (fałszywy zielony PRZEPUSZCZA, czerwony tylko straszy). Naprawa wszystkich czterech gałęzi: osobny licznik POMINIETE + komunikat „NIE ZMIERZONO (brak przyrządu)”. 0.9.28.
 
 ## 🔴 RYZYKO PROCESU (K11 O-4): nic nie wiąże pliku SPRZEDAWANEGO z wersją WYDANIA
 E2E audytora pobrał z bramy plik demo K3 (25 354 B, pliki z 18–19.08), bo taki siedzi w bazie stosu —
@@ -902,4 +902,5 @@ kontrola wydania porównująca `plik_sha256` produktów z sumami paczek wydania 
 deinstalacja/symetria (rubryka 🐞 #9) · nonce+uprawnienia: próba `nonce` ChatBota pada zawsze = rodzina
 niepilnowana · RODO w ruchu (retencja/anonimizacja/eksport WP) · dostarczalność poczty na hostingu
 (SPF/DKIM; dowód stoi na łapaczu) · aktualizacja w miejscu 0.9.13→0.9.27 na żywej bazie · O-2 komunikat
-bramek „10 z 10" przy braku vendor · O-3 nagłówek rubryki v0.9.23 (świadome, osobny PR wg DECYZJE).
+bramek „10 z 10” przy braku vendor · O-3 nagłówek rubryki v0.9.23 (świadome, osobny PR wg DECYZJE) ·
+DECYZJE.md: duplikat D28 i luka D29–30 (porządek numeracji, 0.9.28).
