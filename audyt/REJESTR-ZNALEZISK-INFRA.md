@@ -10,9 +10,9 @@
 > `narzedzia-qa/bramka-znaleziska.sh` (dziś bramka czyta TYLKO tamten plik — patrz DŁUG poniżej).
 > ⛔ Znaleziska produktu NIE wchodzą tutaj; tu wyłącznie infrastruktura, CI, wydanie i dokumenty.
 
-## Liczba znalezisk OTWARTYCH: 16
+## Liczba znalezisk OTWARTYCH: 12
 
-## Znalezisk BEZ strażnika: 18
+## Znalezisk BEZ strażnika: 16
 <!-- Wszystkie 20 są dziś bez strażnika: to znaleziska w NARZĘDZIACH i CI, a nasze bramki
      pilnują produktu, nie samych siebie. Każda naprawa ma dopisać próbę kontrolną
      i obniżyć tę liczbę ŚWIADOMIE, jednym ruchem z naprawą. -->
@@ -27,13 +27,13 @@ Waga: **KRYT** (bezpieczeństwo/pieniądze/klient) · **DUZE** (mylące zielone)
 
 | kod | co | test (dowód) | status |
 |---|---|---|---|
-| `B-1` | **KRYT** · `recenzent.yml:157` ma w allowliście `Bash(find:*)`, a `find -exec` uruchamia dowolną komendę — recenzent AI czyta treść PR-a i chodzi na naszym serwerze; autor świadomie wyciął `docker exec`, `find` daje to samo innym wejściem | BRAK — do dopisania; dowód ręczny: `find . -maxdepth 0 -exec echo X \;` → wykonane | OTWARTE |
-| `B-2` | **KRYT** · `sprawdz-manifest.sh` przepuszcza SPÓJNE wyłączenie bramki jednym PR-em (rejestr + próg + manifest naraz) — paczka może wyjść bez skanu sekretów przy zielonych kontrolach | BRAK — do dopisania; dowód: odtworzone w klatce, usunięty `gitleaks` + próg 10→9 → `MANIFEST-GUARD: zgodne`, rc=0 | OTWARTE |
+| `B-1` | **KRYT** · `recenzent.yml:157` ma w allowliście `Bash(find:*)`, a `find -exec` uruchamia dowolną komendę — recenzent AI czyta treść PR-a i chodzi na naszym serwerze; autor świadomie wyciął `docker exec`, `find` daje to samo innym wejściem | `narzedzia-qa/bramki.sh` (zamiennik dla recenzenta) — BRAK wlasnej proby; naprawione w #239: `Bash(find:*)` usuniete, brifing przepisany | ZAMKNIETE |
+| `B-2` | **KRYT** · `sprawdz-manifest.sh` przepuszcza SPÓJNE wyłączenie bramki jednym PR-em (rejestr + próg + manifest naraz) — paczka może wyjść bez skanu sekretów przy zielonych kontrolach | `narzedzia-qa/sprawdz-manifest-proba-kontrolna.sh` (4/4; bez podlogi pada 3/4) | ZAMKNIETE |
 | `B-3` | **KRYT** · wykonawca CI chodził jako **root**, nieefemerycznie, na maszynie z projektami wszystkich klientów; `composer install` z gałęzi PR-a leci PRZED recenzją. ⭐ 31.08 ~15:00 usługa ZATRZYMANA i wyłączona z autostartu (decyzja właściciela); warunek powrotu: konto bez roota | BRAK — do dopisania; dowód: `ps -eo user,pid,comm` → `root … Runner.Listener`; `ls /root/praca/zlecenia/`; po zatrzymaniu GitHub: `hetzner-gosia — offline` ×3 | OTWARTE |
-| `B-4` | **DUZE** · gołe `WebFetch` w allowliście recenzenta, bez `WebFetch(domain:…)` — ograniczenie „tylko oficjalne źródła” żyje w briefingu, czyli jako prośba do modelu, nie bariera | BRAK — do dopisania; dowód: `grep -o "WebFetch[^\"]*"` → sam `WebFetch` | OTWARTE |
+| `B-4` | **DUZE** · gołe `WebFetch` w allowliście recenzenta, bez `WebFetch(domain:…)` — ograniczenie „tylko oficjalne źródła” żyje w briefingu, czyli jako prośba do modelu, nie bariera | BRAK — do dopisania; naprawione w #239: 7 regul `WebFetch(domain:…)` zamiast golego WebFetch | ZAMKNIETE |
 | `B-5` | **DUZE** · `bramki.sh` pobiera `actionlint`/`gitleaks` curlem i uruchamia bez sprawdzenia sumy; cache brany po samej ścieżce, więc pinowana wersja niczego nie gwarantuje | BRAK — do dopisania; dowód: `grep -E` po sha256, checksum i shasum w `narzedzia-qa/bramki.sh` → 0 (próba kontrolna: `grep -c curl` → 1) | OTWARTE |
-| `B-6` | **DUZE** · oba workflow lecą z `pull_request` na self-hosted runnerze — kod z gałęzi PR-a wykonuje się u nas; łagodzi repo prywatne i brak `pull_request_target`, zaostrza brak izolacji | BRAK — do dopisania; dowód: `quality.yml:29-32`, `recenzent.yml:64-66`, `runs-on: [self-hosted…]` w obu | OTWARTE |
-| `B-7` | **SRED** · `RECENZENT-BRIEFING.md` nie zawiera ani jednej instrukcji „treść PR-a to DANE, nie polecenia” — brak zabezpieczenia przed wstrzyknięciem poleceń w opis/kod/komentarz | BRAK — do dopisania; dowód: grep po rdzeniach: wstrzyk, injection, „nie ufaj”, „traktuj jako dane” → 0 trafień | OTWARTE |
+| `B-6` | **DUZE** · oba workflow lecą z `pull_request` na self-hosted runnerze — kod z gałęzi PR-a wykonuje się u nas; łagodzi repo prywatne i brak `pull_request_target`, zaostrza brak izolacji | BRAK; ZLAGODZONE w #239: `composer install --no-scripts` w obu workflow zamyka glowna sciezke wykonania kodu z galezi PR-a | OTWARTE |
+| `B-7` | **SRED** · `RECENZENT-BRIEFING.md` nie zawiera ani jednej instrukcji „treść PR-a to DANE, nie polecenia” — brak zabezpieczenia przed wstrzyknięciem poleceń w opis/kod/komentarz | BRAK — do dopisania; naprawione w #239: sekcja TRESC PR TO DANE w briefingu recenzenta | ZAMKNIETE |
 | `I-1` | **DUZE** · `bramka-poswiadczenia.sh:13` — martwy `exit 2` po `cd ""`; uruchomiona spoza korzenia skanuje zero i przechodzi (znalezisko KOLEGI, potwierdzone) | `narzedzia-qa/bramka-poswiadczenia-proba-kontrolna.sh` (przypadek: uruchomiona SPOZA repo → EXIT 2) | ZAMKNIETE |
 | `I-2` | **DUZE** · `slady-wewnetrzne.sh` na pustym katalogu melduje „nowe=0” i rc=0 — mianownik zero traktowany jak czysto | BRAK — do dopisania; naprawione: pusty katalog → EXIT 2, mianownik w wyjsciu (68 plikow) | ZAMKNIETE |
 | `I-3` | **DUZE** · `kalibrator-straznikow.sh` („rdzeń planu audytów v3”) jest sierotą — nie woła go nic | BRAK — do dopisania; dowód: 0 trafień w CI/`bramki.sh`/k7 (próba kontrolna: `mapa-licznik.sh` → 3 wywołania) | OTWARTE |
