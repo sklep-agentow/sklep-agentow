@@ -113,7 +113,7 @@ robota i produkt stoi znacznie wyżej, niż napisałam.
 `segm_ai` w tym pliku daje zero. Tryb AI żyje tylko w przebiegu po próbce CSV.
 Czyli klient, który kupuje bota dla trybu AI, dostaje AI wyłącznie w laboratorium,
 a na jego skrzynce pracują same reguły.
-**Do decyzji Dzidka (⛔ nie zaczynać bez jego słowa):** albo (a) wpiąć tryb AI
+**Do decyzji właściciela (⛔ nie zaczynać bez jego słowa):** albo (a) wpiąć tryb AI
 w przebieg na skrzynce z twardym limitem liczby wiadomości na przebieg i widocznym
 kosztem, albo (b) zostawić i napisać to WPROST na stronie produktu i w instrukcji,
 żeby nikt nie kupił AI, którego na skrzynce nie ma.

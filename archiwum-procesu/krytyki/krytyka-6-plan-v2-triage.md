@@ -1,6 +1,6 @@
 # KRYTYKA 6 — świeży model na PLAN v2 (17.08 ~04:40) + mój triage
 
-Zapis: 16 uwag (2 KRYT / 10 WAŻ / 4 DROB) + białe plamy. Pełny tekst w wiadomości Dzidka
+Zapis: 16 uwag (2 KRYT / 10 WAŻ / 4 DROB) + białe plamy. Pełny tekst w wiadomości właściciela
 (z pominięciem wycieku brudnopisu modelu). Poniżej każda uwaga + werdykt.
 
 ## KRYTYCZNE
@@ -26,7 +26,7 @@ zaakceptowane (lepszy podwójny mail potwierdzenia niż żaden); test pokrywa OB
 przerwania (przed i po wysyłce).
 
 **W4. Produkty-treść bez wczesnej bramki.** → **PRZYJĘTA.** Kamień: szkic obu paczek do
-19.08, recenzja treści przez Dzidka PRZED K5 (witryną).
+19.08, recenzja treści przez właściciela PRZED K5 (witryną).
 
 **W5. Plan nie-samodzielny (odwołania C7/B11...).** → **CZĘŚCIOWO.** To dokument roboczy
 warsztatu — odwołania zostają (mapa jest w repo obok). Dokumentacja DLA EGZAMINATORA (K8)
@@ -66,8 +66,8 @@ pół dnia z K3 bez ruszania próby 27.08.
 **D14. Bank mutantów = przerost.** → **ODRZUCONA z dowodem:** przy MP audyty bez kalibracji
 dały „zero znalezisk" i były bezwartościowe (zmierzone 4.08); kalibracja kosztuje ~30 min
 i jest jedynym pomiarem, czy audyt w ogóle widzi. Zostaje.
-**D15. Zależność od Dzidka.** → **ODRZUCONA:** bramka ludzka to ŚWIADOMA zasada procesu
-(jedyne wyjście z pętli „agent sam siebie sprawdza"); Dzidek jest stroną projektu, nie
+**D15. Zależność od właściciela.** → **ODRZUCONA:** bramka ludzka to ŚWIADOMA zasada procesu
+(jedyne wyjście z pętli „agent sam siebie sprawdza"); właściciel jest stroną projektu, nie
 ryzykiem zewnętrznym.
 **D16. Range nieobsłużony jawnie.** → PRZYJĘTA: serwujemy bez Accept-Ranges (jawnie).
 

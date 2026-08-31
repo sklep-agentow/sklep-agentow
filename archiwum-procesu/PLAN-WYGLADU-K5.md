@@ -1,8 +1,8 @@
 # PLAN WYGLĄDU K5 — witryna sklepu
 
-Status: ✅ KLEPNIĘTY przez Dzidka 19.08 (D27) + wyżarzony ZIMNYM KRYTYKIEM
+Status: ✅ KLEPNIĘTY przez właściciela 19.08 (D27) + wyżarzony ZIMNYM KRYTYKIEM
 (2 przynęty rozbrojone: fejk-opinie i CDN → krytyk wiarygodny; 7 uwag przyjętych
-i naniesionych niżej; 1 obalona dowodem — patrz §4 art. 38). Wytyczna Dzidka 18.08: „cała strona kolegi i moja
+i naniesionych niżej; 1 obalona dowodem — patrz §4 art. 38). Wytyczna właściciela 18.08: „cała strona kolegi i moja
 jest ładnie zrobiona i ma swój klimat" → sklep MUSI wyglądać jak część Automatic AI.
 Źródła: pomiar motywu na stacku (computed styles + zrzuty) · zwiad wzorców stron
 produktowych (wp-rocket.me, advancedcustomfields.com, gravityforms.com, codecanyon,
@@ -133,12 +133,12 @@ akcentem — najbliższy naszemu klimatowi, potwierdza kierunek.
 1 PR: fundament CSS (tokeny, mono-etykiety, pille, baner) + lista sklepu →
 2 PR: strona produktu (szablon + treść ChatBot + Segregator ze szkiców) →
 3 PR: dziękujemy + szlif RWD/WCAG → sędzia wyglądu 0-100 (kryteria dziedziny,
-przynęty) → poprawki → ZRZUTY dla Dzidka.
+przynęty) → poprawki → ZRZUTY dla właściciela.
 ⚠️ STAN PRZEJŚCIOWY (uwaga recenzji #51, dok=kod): PR 1 tymczasowo ZACHOWUJE
 formularz zakupu na kartach listy (stan z K1) — „Zobacz szczegóły" z §2A wchodzi
 dopiero w PR 2 razem ze stroną produktu, żeby między PR-ami sklep zawsze DZIAŁAŁ.
 
-## 7. SEO PODSTAWOWE — DOBRE (Dzidek 19.08: „musi być dobre podstawowe, nie
+## 7. SEO PODSTAWOWE — DOBRE (właściciel 19.08: „musi być dobre podstawowe, nie
 minimum"; ROZSZERZENIE ponad literę notatki → wpis do DECYZJE + PONAD-SPECYFIKACJE)
 
 WP renderuje serwerowo (Google widzi treść od razu). Zakres (~1 dzień w PR-ach K5;
@@ -173,7 +173,7 @@ poprawki po krytyku #4-#7 naniesione):
 NIE na egzamin (osobna robota PO wdrożeniu na domenę): keyword research, treści
 blogowe, linki, Search Console, analityka.
 
-## ✅ KLEPNIĘTE (Dzidek 19.08, D27): klimat 1:1 · signature pasek statusu ·
+## ✅ KLEPNIĘTE (właściciel 19.08, D27): klimat 1:1 · signature pasek statusu ·
 CTA „Kup teraz (płatność testowa)" · 3 PR-y · SEO podstawowe-dobre.
 Treść sprzedażowa: `boty/TRESC-STRON-PRODUKTOW.md` (liczby z pokryciem,
 PLACEHOLDER-POMIAR uzupełniane po wrogiej sesji 23.08 — sweep przed K8).

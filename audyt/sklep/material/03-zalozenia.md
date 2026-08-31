@@ -28,7 +28,7 @@ powodu NIE zgłaszać jako błędu.
 | D9 | „Repo prywatne na koncie klienckim; blokada main = lokalny hook" (nie GitHub branch protection) | Nie zgłaszaj braku natywnej ochrony gałęzi GitHub na prywatnym repo — świadomie zastąpiona lokalnym hookiem (GitHub Free nie daje branch protection na prywatnym repo) |
 | D10 | „SEO-minimum świadomie ograniczone: produkty renderowane z API, meta ogólne, JSON-LD skryptem" (NIE pre-render) | Nie zgłaszaj braku pre-renderowania/SSG produktów — świadomy wybór, bo pre-render łamałby wymóg „nowy produkt bez zmian kodu" |
 | D11 | „Anonimizacja: email→NULL + usunieto_dnia; retencja logów 90 dni; DPA u dostawców w instrukcji" | Nie zgłaszaj braku hashowania e-maila zamiast zerowania (hash uznano dalej za daną osobową) ani braku twardego kasowania wierszy zamówień |
-| D12 | „Interpretacje litery notatki: S-04… S-07… S-09…" — ✅ KLEPNIĘTE przez Dzidka 18.08 z wytyczną „rób jak dobre sklepy" | Nie zgłaszaj rozbieżności między literą notatki a wykonaniem S-04/S-07/S-09 jako błędu — to zaakceptowana interpretacja, patrz `MAPA-SPEC.md` (i `material/01-zamowienie.md` część b) |
+| D12 | „Interpretacje litery notatki: S-04… S-07… S-09…" — ✅ KLEPNIĘTE przez właściciela 18.08 z wytyczną „rób jak dobre sklepy" | Nie zgłaszaj rozbieżności między literą notatki a wykonaniem S-04/S-07/S-09 jako błędu — to zaakceptowana interpretacja, patrz `MAPA-SPEC.md` (i `material/01-zamowienie.md` część b) |
 | D13 | Wariant A wpięcia (link w źródle) preferowany, B (skrypt) fallback — **ARCHIWALNE**: dotyczyło statycznego HTML, unieważnione przez D16 | Nie zgłaszaj — nieaktualne po piwocie; dziś nie ma mechanizmu „wpięcia" skryptem do obcego DOM |
 | D14 | „Bank mutantów + kalibracja audytu ZOSTAJE mimo uwagi «przerost»" | Nie zgłaszaj braku uproszczenia procesu audytu — kalibracja świadomie utrzymana (lekcja z MP: audyt bez kalibracji dał zero znalezisk i był bezwartościowy) |
 | D15 | Mechanizm wpięcia: katalog `sklep/` + `wtyczka.js` + script defer — **ARCHIWALNE**, źródło wprost: „UNIEWAŻNIONE przez D16" | Nie zgłaszaj braku tego mechanizmu — to historia sprzed WordPressa; dowody spike'a zostają w `audyt/REJESTR-WERYFIKACJI.md` jako zapis procesu, nie jako stan dzisiejszy |
@@ -75,17 +75,17 @@ DOSŁOWNIE:
 
 Źródło: `ZROZUMIENIE.md`.
 
-### ⭐ ZASADA EGZAMINU (Dzidek 17.08 ~00:20): ZERO PYTAŃ DO KOLEGI
+### ⭐ ZASADA EGZAMINU (właściciel 17.08 ~00:20): ZERO PYTAŃ DO KOLEGI
 
 > Wszystkie niejasności rozstrzygamy SAMI i dokumentujemy w rejestrze decyzji
 > (archiwum-procesu/PLAN-ETAP1.md). „Kursy" = egzamin DRUGIEGO zdającego, nie nasz temat. Koło ratunkowe
 > (1 telefon) = na prawdziwy zator.
 
-### ⏰ TERMIN I ZASADY OCENY (Dzidek 17.08 ~02:20; AKTUALIZACJE 20.08 i 25.08)
+### ⏰ TERMIN I ZASADY OCENY (właściciel 17.08 ~02:20; AKTUALIZACJE 20.08 i 25.08)
 
-> **Termin: 1.09.2026 (zmiana z 30.08 — Dzidek 20.08) · 3 próby oddania · ocenia kolega
+> **Termin: 1.09.2026 (zmiana z 30.08 — właściciel 20.08) · 3 próby oddania · ocenia kolega
 > (Manik), zasady jak przy MP.**
-> 25.08 (Dzidek): po KAŻDEJ próbie dostajemy TYLKO LICZBĘ błędów, nie listę. Konsekwencje:
+> 25.08 (właściciel): po KAŻDEJ próbie dostajemy TYLKO LICZBĘ błędów, nie listę. Konsekwencje:
 > konkrety musi znaleźć NASZ audyt (K7), a liczba od kolegi po próbie 1 jest odważnikiem
 > audytu (jego N kontra nasza lista — N > 0 przy naszej pustej liście = ślepa plama
 > audytu, nie pech). 3 próby to zasób: próba 1 (~31.08) mierzy ślepe plamy, próby 2–3
@@ -97,7 +97,7 @@ DOSŁOWNIE:
 ⚠️ **Rozbieżność między dokumentami źródłowymi (zgłaszam, nie rozstrzygam):**
 `PLAN-PROJEKTU.md` (nagłówek, linia 7) podaje „Termin egzaminu: 30.08 · 3 próby oddania
 · próba 1 planowana 27.08", a `ZROZUMIENIE.md` (aktualizacja 20.08, cytat wyżej) podaje
-„1.09.2026". ROZSTRZYGNIĘTE 25.08 przez koordynatorkę: obowiązuje **1.09.2026** (Dzidek 20.08 i 25.08; nagłówek PLAN-PROJEKTU poprawiony) — wcześniej pytanie do koordynatorki/
+„1.09.2026". ROZSTRZYGNIĘTE 25.08 przez koordynatorkę: obowiązuje **1.09.2026** (właściciel 20.08 i 25.08; nagłówek PLAN-PROJEKTU poprawiony) — wcześniej pytanie do koordynatorki/
 zamawiającego, nie znalezisko w kodzie wtyczki.
 
 ---

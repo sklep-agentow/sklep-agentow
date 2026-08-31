@@ -1,8 +1,8 @@
-# SZKICE BOTÓW — do recenzji Dzidka PRZED budową (bramka z planu v3 §9)
+# SZKICE BOTÓW — do recenzji właściciela PRZED budową (bramka z planu v3 §9)
 
-Status: SZKIC 18.08, **zaktualizowany po decyzji Dzidka (18.08): HYBRYDA** — każdy
+Status: SZKIC 18.08, **zaktualizowany po decyzji właściciela (18.08): HYBRYDA** — każdy
 bot ma DWA silniki: regułowy (działa bez klucza, zawsze) + PRAWDZIWE AI przez API
-(klucz właściciela). Warunek Dzidka: **przed budową ZWIAD WZORCÓW mocnych projektów**
+(klucz właściciela). Warunek właściciela: **przed budową ZWIAD WZORCÓW mocnych projektów**
 (wyniki → `boty/WZORCE-BOTOW.md` + brief buildera). Prawdziwa skrzynka (IMAP) dalej
 po egzaminie. Z klepniętych szkiców powstaje treść sprzedażowa stron produktów (K5).
 
@@ -41,7 +41,7 @@ pytania bez udziału człowieka + leady zbierane poza godzinami; instrukcja poka
 jak wpisać własne Q&A w kilkanaście minut (czas MIERZONY przez nie-autora we
 wrogiej sesji 23.08 — obietnica z pokryciem, nie z sufitu).
 
-**TRYB AI (hybryda — Dzidek 18.08):** w ustawieniach pole „klucz API" (klucz
+**TRYB AI (hybryda — właściciel 18.08):** w ustawieniach pole „klucz API" (klucz
 WŁAŚCICIELA — nigdy w paczce/kodzie/repo). Z kluczem odpowiedzi generuje prawdziwy
 model z instrukcją systemową: „jesteś asystentem firmy X; oto informacje o firmie
 [tekst z ustawień]; odpowiadasz TYLKO na ich podstawie, po polsku, krótko; nie
@@ -98,7 +98,7 @@ rozdziela maile do kategorii wg reguł i pokazuje raport, ile roboty zrobił za 
 automat rozdzieli sam; instrukcja: jak ułożyć reguły pod własną firmę w ~20 minut
 (czas mierzony jak w ChatBocie — wroga sesja 23.08).
 
-**TRYB AI (hybryda — Dzidek 18.08):** z kluczem właściciela klasyfikację robi
+**TRYB AI (hybryda — właściciel 18.08):** z kluczem właściciela klasyfikację robi
 model („przypisz mail do JEDNEJ z kategorii [lista]; niepewny → Reszta") — tryb
 przebiegu do wyboru: reguły / AI / **porównaj oba** (raport pokazuje różnice —
 mocny argument sprzedażowy: widać, co AI łapie ponad reguły). Ten sam stop-loss
@@ -136,9 +136,9 @@ Prawdziwe granice, jakie zostały:
   uninstall czysty) — kryterium GOTOWE #10; W TYM pomiar czasu konfiguracji przez
   nie-autora (pokrycie obietnic czasowych z instrukcji i stron produktów).
 
-## CO SPRAWDZI RECENZJA DZIDKA (pytania do Ciebie)
+## CO SPRAWDZI RECENZJA WŁAŚCICIELA (pytania do Ciebie)
 
-1. ~~Czy taki zakres pasuje?~~ ✅ CZĘŚCIOWO ROZSTRZYGNIĘTE 18.08: Dzidek wybrał
+1. ~~Czy taki zakres pasuje?~~ ✅ CZĘŚCIOWO ROZSTRZYGNIĘTE 18.08: właściciel wybrał
    HYBRYDĘ (prawdziwe AI + tryb regułowy bez klucza) z warunkiem zwiadu wzorców.
 2. ChatBot: czy „LIVE = zbieranie kontaktu dla właściciela" czyta się dobrze,
    czy wolisz inny akcent (np. mocniejsze parcie na zostawienie numeru telefonu)?

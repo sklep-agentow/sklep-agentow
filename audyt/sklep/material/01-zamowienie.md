@@ -13,7 +13,7 @@
 
 Źródło: `ZROZUMIENIE.md`.
 
-### a.1 Notatka kolegi + odpowiedzi Dzidka + zdania z wcześniejszej rozmowy
+### a.1 Notatka kolegi + odpowiedzi właściciela + zdania z wcześniejszej rozmowy
 (`ZROZUMIENIE.md`, sekcja „## SUROWE ZDANIA", linie 85–102)
 
 Treść zlecenia (notatki z rozmowy z kolegą):
@@ -28,7 +28,7 @@ Treść zlecenia (notatki z rozmowy z kolegą):
 > BAZY DANYCH - KTO KIESY SIE LOGOWAL NA KONTO ADMINA DATY CZAS KONKRETY
 > 1. Telefon jako kolo ratunkowe [ do wyk9rzystania kazdy po 1 razie ]
 
-Odpowiedzi Dzidka (czat, 16.08 ~22:20):
+Odpowiedzi właściciela (czat, 16.08 ~22:20):
 > kursy to nie my my agnetów ai 3 najlpeij chyba to co umiemy instrukcjie agenta bota diagramy itp ale nwm cos wymyslimy 4 to dalej bedzie zleceine testowe jak cos egzamin od kolegi to jest drugi czaisz tyle ze to wdrązymy do mojej i kolgi i 2 innych osób strony czaisz taki test jak prawdziwe zlecenie ale kiedys tego uzyjemy na naszej stronie rozumiesz nwm co z pąłtnosciamy trzba zrobic jakies najpopularniejsze ale nwm jak i czy to ma jakis zobowiązania ? 5 my chyba sie nie zajmmujemy tym kontamy na sałą strone bedzie jedno konto kiedys
 
 Z wcześniejszej rozmowy (czat 16.08 wieczór): podstrona `/sklep` na istniejącej stronie ·
@@ -41,7 +41,7 @@ MP: paczka + instrukcja dla klienta, wpinane/odpinane · „ma normalnie sprzeda
 komentarze/analizy: opis faktów PW-1…PW-6 poza samymi cytatami w nich zagnieżdżonymi,
 „CO PIWOT UNIEWAŻNIA", „CO ZOSTAJE BEZ ZMIAN", „OTWARTE PO PIWOCIE")
 
-Surowe zdania Dzidka (czat 17.08 ~22:30-23:00, verbatim):
+Surowe zdania właściciela (czat 17.08 ~22:30-23:00, verbatim):
 > „pedzie zmiana planów jak cos ta strona na którą robimy zlecenie bedzie wgrywana na worpresa słuchaj teraz uwaznie"
 > „ok wiec tak narazie zmien wszytsko w zlecenie u w planie itp zebyśmy wiedzieli ze to bedą jednak pluginy do worpresa te wtyczki ok ?"
 > „tak całą ta strona bedzie przekonwertowana na worpresa czaisz ? wiec te nasze zlecenie ten sklep i 3 pluginy bedą wyczkami do worpresa ogarniasz ?"
@@ -49,7 +49,7 @@ Surowe zdania Dzidka (czat 17.08 ~22:30-23:00, verbatim):
 > „poukładaj wszytsko ładnie zaraz bedzie jesze inna wiadomośc tez wazna dosyc i nam ułatwi jak cos troche wszytsko"
 > „do zlecenia jesze 2 testowe boty są do wystawienie jako produty na tym skielepi"
 
-Notatka zlecenia — wersja aktualna (Dzidek, czat 17.08 ~23:20, verbatim; polecenie:
+Notatka zlecenia — wersja aktualna (właściciel, czat 17.08 ~23:20, verbatim; polecenie:
 „zapisz to gdzies ładnie to zlecenie i ze to wtyczki do worpresa"):
 > sklep - szczegoly:
 > 1. Po zakupie, klienta na maila potwierxze, instrukcje,
@@ -61,7 +61,7 @@ Notatka zlecenia — wersja aktualna (Dzidek, czat 17.08 ~23:20, verbatim; polec
 > BAZY DANYCH 2. ZAPIS AGENTOW DO BAZY DANYCH NAWET PRZY DODAWANIU NOWYCH I USUWANIU I MODYFIKOWANIU
 > BAZY DANYCH - KTO KIESY SIE LOGOWAL NA KONTO ADMINA DATY CZAS KONKRETY
 
-Dodatkowe zdania Dzidka wyjęte z opisu faktów piwotu (PW-1 i PW-6 — jedyne miejsca w
+Dodatkowe zdania właściciela wyjęte z opisu faktów piwotu (PW-1 i PW-6 — jedyne miejsca w
 sekcji PW-1…PW-6, gdzie w środku naszego opisu jest CUDZY cytat w cudzysłowie; reszta
 faktów PW to nasza analiza i jest pominięta):
 > „i tak my mamy przekonwertowac to na worpresa tę cłą strona zaraz to obgadamy i zmieniamy w naszym planie" (17.08 ~23:40)
@@ -70,7 +70,7 @@ faktów PW to nasza analiza i jest pominięta):
 ## (b) MAPA-SPEC.md — notatka ↔ nasze rozumienie (CAŁA tabela, obie części)
 
 Źródło: `MAPA-SPEC.md`. Legenda statusów ze źródła (linie 4–7): DOSŁOWNE (litera źródła) ·
-INTERPRETACJA (nasza decyzja — wymaga klepnięcia Dzidka) · INTERPRETACJA (rozliczona
+INTERPRETACJA (nasza decyzja — wymaga klepnięcia właściciela) · INTERPRETACJA (rozliczona
 źródłem) — odczyt nasz, ale POTWIERDZONY późniejszym zdaniem źródła · ODSTĘPSTWO
 PRZYJĘTE (świadome, z datą i powodem) · NIE-FUNKCJA (nie jest wymaganiem produktu).
 Kolumna „Dowód" wypełniana w trakcie budowy (plik:linia / test) — w źródle w większości
@@ -81,21 +81,21 @@ nadal pusta (⬜).
 | S-01 | „Sklep z agentami (2x)" | DOSŁOWNE | 2 produkty-agenci w sklepie | ⬜ |
 | S-02 | „Po zakupie, klienta na maila potwierdze, instrukcje" | DOSŁOWNE | mail po webhooku: potwierdzenie + instrukcje + link | ⬜ |
 | S-03 | „Dwa rozne, ceny, co robi - na zachete klienta, jak dziala jak funkcjonuje, jak skraca czas pracy w firmie" | DOSŁOWNE | strony produktów z opisem sprzedażowym; „ile czasu oszczędza" poparte TREŚCIĄ paczki | ⬜ |
-| S-04 | „Admin panel - widok kiedy za ile kupili w jakim czasie/ dashboard" | INTERPRETACJA — KLEPNIĘTA (Dzidek 18.08) | „w jakim czasie" = rozkład zakupów w czasie (lista + sumy w okresach); „czas zakupu" = czas webhooka | ⬜ |
+| S-04 | „Admin panel - widok kiedy za ile kupili w jakim czasie/ dashboard" | INTERPRETACJA — KLEPNIĘTA (właściciel 18.08) | „w jakim czasie" = rozkład zakupów w czasie (lista + sumy w okresach); „czas zakupu" = czas webhooka | ⬜ |
 | S-05 | „1. ChatBot LIVE" | DOSŁOWNE | produkt 1 | ⬜ |
 | S-06 | „2. Segregator maila" | DOSŁOWNE | produkt 2 | ⬜ |
-| S-07 | „BAZY DANYCH 1. Dane uzytkownikow / platnksci" | INTERPRETACJA — KLEPNIĘTA (Dzidek 18.08) | dane KUPUJĄCYCH (email) + dane transakcji (kwota, waluta, czas, id sesji, status); kont użytkowników BRAK — Dzidek 16.08: „my się nie zajmujemy kontami, na całą stronę jedno konto" | ⬜ |
-| S-08 | „ZAPIS AGENTOW I KURSOW DO BAZY DANYCH NAWET PRZY DODAWANIU NOWYCH I USUWANIU I MODYFIKOWANIU" | ODSTĘPSTWO PRZYJĘTE (17.08) | produkty (agenci) w bazie z pełnym CRUD; KURSY = egzamin DRUGIEGO zdającego (Dzidek 17.08 ~00:00), u nas ich nie ma; „usuwanie" = deaktywacja przy istniejących zamówieniach (integralność — wzorzec kartki MP: nie usuwa się rzeczy powiązanej z aktywną sprawą) | ⬜ |
-| S-09 | „KTO KIESY SIE LOGOWAL NA KONTO ADMINA DATY CZAS KONKRETY" | INTERPRETACJA — KLEPNIĘTA (Dzidek 18.08) | dziennik logowań: login_wpisany („kto" przy jednym koncie; nieudane próby też), czas, wynik, IP, przeglądarka („konkrety"); ROZSZERZENIE ponad literę: log AKCJI admina (jawnie dopisane) | ⬜ |
-| S-10 | „Telefon jako kolo ratunkowe [do wykorzystania kazdy po 1 razie]" | NIE-FUNKCJA | zasada EGZAMINU: 1 telefon do egzaminatora. POTWIERDZONE 2× przez Dzidka (17.08 ~00:00 oraz ~06:15, PO diffie reconstruction testu: „na pewno dla mnie był jeden telefon, nic do projektu"). W produkcie NIC nie budujemy | — |
+| S-07 | „BAZY DANYCH 1. Dane uzytkownikow / platnksci" | INTERPRETACJA — KLEPNIĘTA (właściciel 18.08) | dane KUPUJĄCYCH (email) + dane transakcji (kwota, waluta, czas, id sesji, status); kont użytkowników BRAK — właściciel 16.08: „my się nie zajmujemy kontami, na całą stronę jedno konto" | ⬜ |
+| S-08 | „ZAPIS AGENTOW I KURSOW DO BAZY DANYCH NAWET PRZY DODAWANIU NOWYCH I USUWANIU I MODYFIKOWANIU" | ODSTĘPSTWO PRZYJĘTE (17.08) | produkty (agenci) w bazie z pełnym CRUD; KURSY = egzamin DRUGIEGO zdającego (właściciel 17.08 ~00:00), u nas ich nie ma; „usuwanie" = deaktywacja przy istniejących zamówieniach (integralność — wzorzec kartki MP: nie usuwa się rzeczy powiązanej z aktywną sprawą) | ⬜ |
+| S-09 | „KTO KIESY SIE LOGOWAL NA KONTO ADMINA DATY CZAS KONKRETY" | INTERPRETACJA — KLEPNIĘTA (właściciel 18.08) | dziennik logowań: login_wpisany („kto" przy jednym koncie; nieudane próby też), czas, wynik, IP, przeglądarka („konkrety"); ROZSZERZENIE ponad literę: log AKCJI admina (jawnie dopisane) | ⬜ |
+| S-10 | „Telefon jako kolo ratunkowe [do wykorzystania kazdy po 1 razie]" | NIE-FUNKCJA | zasada EGZAMINU: 1 telefon do egzaminatora. POTWIERDZONE 2× przez właściciela (17.08 ~00:00 oraz ~06:15, PO diffie reconstruction testu: „na pewno dla mnie był jeden telefon, nic do projektu"). W produkcie NIC nie budujemy | — |
 | S-11 | (czat) podstrona `/sklep` na istniejącej stronie | DOSŁOWNE | katalog sklep/ wpinany w stronę | ⬜ |
 | S-12 | (czat) „nie na wordpressie, zwykły HTML… na githubie hostowane" | DOSŁOWNE | statyczny hosting; zaplecze osobno | ⬜ |
 | S-13 | (czat) „jak te pluginy: przypinamy, odpinamy i nie ma" | DOSŁOWNE | paczka + 1 punkt zaczepienia; odpięcie = czysty diff źródła + wyłączone zaplecze | ⬜ |
 | S-14 | (czat) „najważniejsze zdać egzamin; na razie nie robimy na gotowo z prawdziwymi płatnościami" | DOSŁOWNE | całość w trybie testowym; produkcja = jawny rozdział różnic | ⬜ |
-| S-15 | (czat) „wdrożymy do mojej i kolegi i 2 innych osób strony" | DOSŁOWNE — DOPRECYZOWANE 17/18.08 | ZMIANA (Dzidek, noc 17/18.08): strona = JEDNA WSPÓLNA dla całej czwórki (4 konta adminów przy wdrożeniu), NIE 4 osobne instalacje; wtyczka mimo to konfigurowalna w Ustawieniach (przenośność), test na czystym WP w K6 | ⬜ |
+| S-15 | (czat) „wdrożymy do mojej i kolegi i 2 innych osób strony" | DOSŁOWNE — DOPRECYZOWANE 17/18.08 | ZMIANA (właściciel, noc 17/18.08): strona = JEDNA WSPÓLNA dla całej czwórki (4 konta adminów przy wdrożeniu), NIE 4 osobne instalacje; wtyczka mimo to konfigurowalna w Ustawieniach (przenośność), test na czystym WP w K6 | ⬜ |
 | S-16 | (czat) „termin do 30-tego i 3 próby oddania" | DOSŁOWNE | harmonogram z próbą 1 dnia 27.08 | — |
 
-### 🔄 PIWOT 17.08 WIECZÓR (druga część tabeli — źródło: Dzidek, czat, verbatim w ZROZUMIENIE.md §PIWOT)
+### 🔄 PIWOT 17.08 WIECZÓR (druga część tabeli — źródło: właściciel, czat, verbatim w ZROZUMIENIE.md §PIWOT)
 
 | ID | Cytat ze źródła | Status | Nasze wykonanie | Dowód |
 |----|-----------------|--------|-----------------|-------|

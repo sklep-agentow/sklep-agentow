@@ -2,7 +2,7 @@
 
 Źródła: Handbook `plugin-basics/uninstall-methods/`, ref `wpdb::esc_like()`, sniff
 `WordPress.PHP.NoSilencedErrors` (WPCS GitHub), kod uninstall WooCommerce + EDD.
-Powstało na polecenie Dzidka „trzymaj się dokumentacji WP, nie rób podręcznikowych błędów".
+Powstało na polecenie właściciela „trzymaj się dokumentacji WP, nie rób podręcznikowych błędów".
 
 ## Wzorce, które przyjęliśmy
 1. **Kasowanie katalogu w uploads:** NIE `WP_Filesystem` (wymaga `request_filesystem_

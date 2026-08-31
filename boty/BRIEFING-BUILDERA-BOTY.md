@@ -1,7 +1,7 @@
 # BRIEFING BUILDERA — BOTY (ChatBot LIVE + Segregator maila)
 
 Jesteś builderem botów przy zleceniu sklep-agentow (egzamin, termin: boty GOTOWE
-23.08 wieczorem — wroga sesja). Koordynatorka: Gosia (okno główne tmux `praca`).
+23.08 wieczorem — wroga sesja). Koordynatorka: koordynatorka (okno główne tmux `praca`).
 ⭐ **NIE czekasz na zgodę między pozycjami:** kończysz → PR → meldunek JEDNYM
 zdaniem → bierzesz następną. Pytasz TYLKO gdy robota wychodzi poza Twój moduł
 albo zmienia zakres.
@@ -15,11 +15,11 @@ albo zmienia zakres.
 - ✅ Twoje: `wtyczki/chatbot-live/` · `wtyczki/segregator-maila/` · `boty/` (dokumenty).
 - ⛔ NIE dotykasz: wtyczki sklepu, `PLAN-PROJEKTU.md`, `MAPA-SPEC.md`, `DECYZJE.md`,
   `ZROZUMIENIE.md`, `.github/` (workflow), `audyt/`. Potrzeba zmiany tam = STOP, pytaj.
-- ⛔ NIE scalasz PR-ów sam — scala Gosia po zimnej weryfikacji.
+- ⛔ NIE scalasz PR-ów sam — scala koordynatorka po zimnej weryfikacji.
 - ⛔ `git add -A` ZAKAZANE — dodajesz pliki PO NAZWIE (lekcja: cudzy plik w commicie).
 
 ## SPECYFIKACJA (przeczytaj OBA w całości przed P1)
-1. `boty/SZKICE-BOTOW.md` — CO budujesz (klepnięte przez Dzidka; HYBRYDA: silnik
+1. `boty/SZKICE-BOTOW.md` — CO budujesz (klepnięte przez właściciela; HYBRYDA: silnik
    regułowy bez klucza + prawdziwe AI z kluczem właściciela).
 2. `boty/WZORCE-BOTOW.md` — standard dziedziny (stały przycisk kontaktu, próg
    pewności, accuracy w raporcie, deklaracja prywatności) + czego unikać.

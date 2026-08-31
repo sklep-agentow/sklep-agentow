@@ -29,5 +29,5 @@
       ✅(17.08: recenzja żywa na PR #18, Issue #9 zamknięte) · branch protection ⚠️NIEDOSTĘPNA
       (repo private+free, API 403) — zastępuje ją dyscyplina cyklu + hook `.githooks/pre-push`
       (per klon: `git config core.hooksPath .githooks` — nagłówek quality.yml);
-      twarda wersja = decyzja Dzidka (public/Pro)
+      twarda wersja = decyzja właściciela (public/Pro)
 - [ ] POMIAR: audyt/POMIAR-CZASU.md prowadzony od godziny 0

@@ -196,7 +196,7 @@ zakupu przed publikacją + nota przy sekcji; bez aggregateRating) · WCAG-lite (
   RWD, JSON-LD, baner trybu testowego, regulamin/polityka z szablonów; sędzia wyglądu 0-100
   wg kryteriów dziedziny PRZED pokazaniem.
 - **K6 · 25.08 — POWTARZALNOŚĆ (pewniak #7/B51):** DRUGA instalacja od zera na czystej kopii
-  innej strony wg instrukcji — wykonuje NIE-autor (Dzidek): „zestawienie zaplecza" (mierzone
+  innej strony wg instrukcji — wykonuje NIE-autor (właściciel): „zestawienie zaplecza" (mierzone
   osobno, z listą kont) + „wpięcie witryny" ≤30 min; test „ta strona→ten backend→ten Stripe".
 - **K7 · 26.08 — AUDYT KOŃCOWY:** 4 kontrole równolegle (zgodność z MAPA-SPEC · klikanie+
   wygląd+axe · paczka i repo (gitleaks, instalacja od zera, sweep śmieci .bak/.orig/lorem) ·
@@ -208,7 +208,7 @@ zakupu przed publikacją + nota przy sekcji; bez aggregateRating) · WCAG-lite (
 - **K8 · 27.08 — PACZKA + PRÓBA ODDANIA nr 1:** zamrożenie → docs Z KODU (dwupoziomowe:
   klient prostym językiem + zrzuty; informatyk: diagram architektury) → JEDNO wydanie (tag,
   suma kontrolna, opis PL) → bramka ludzka: automat robi 5-6 zrzutów krytycznych ścieżek,
-  **Dzidek ogląda i odblokowuje** → runbook oddania (link działa z zewnątrz, dane demo,
+  **właściciel ogląda i odblokowuje** → runbook oddania (link działa z zewnątrz, dane demo,
   collaborator ZAPROSZONY przed linkiem) → oddanie.
 - **28-30.08 — BUFOR na zwroty (próby 2-3).** Zmiana po zamrożeniu = ścieżka hotfix.
 

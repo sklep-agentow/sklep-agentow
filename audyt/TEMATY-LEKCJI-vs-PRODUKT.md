@@ -1,7 +1,7 @@
-# Tematy z lekcji (notatnik Dzidka) vs produkt v0.9.25–0.9.27 — stan 2026-08-30 (wieczór)
+# Tematy z lekcji (notatnik właściciela) vs produkt v0.9.25–0.9.27 — stan 2026-08-30 (wieczór)
 
-**Źródło listy:** notatki z telefonu Dzidka (9 zrzutów, 16.08 i 19.08), przepisane w warsztacie
-(`zlecenia/audyt-reaudyt/NOTATKI-TELEFON-DZIDKA-zrzuty.md`). Tu tylko tematy, które dotyczą
+**Źródło listy:** notatki z telefonu właściciela (9 zrzutów, 16.08 i 19.08), przepisane w warsztacie
+(`zlecenia/audyt-reaudyt/NOTATKI-TELEFON-WŁAŚCICIELA-zrzuty.md`). Tu tylko tematy, które dotyczą
 **PRODUKTU oddawanego klientowi** — tematy o metodzie pracy (goldeny, sektory, .bak, draw.io jako
 narzędzie) zostają w warsztacie. Każdy wiersz: dowód z dzisiejszego pomiaru albo z dokumentu w repo.
 Werdykty: ✅ jest z dowodem · 🟡 jest częściowo / z zastrzeżeniem · ⛔ brak · ⬜ poza zakresem zlecenia.

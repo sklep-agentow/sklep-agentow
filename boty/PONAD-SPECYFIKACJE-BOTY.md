@@ -6,7 +6,7 @@ była w klepniętych szkicach (`boty/SZKICE-BOTOW.md`) albo wynika z ich zasad
 (standard dziedziny, bezpieczeństwo, decyzja HYBRYDA z 18.08).
 
 ## ChatBot LIVE
-1. **Tryb AI (hybryda)** — decyzja Dzidka 18.08 (szkice §BOT 1 TRYB AI).
+1. **Tryb AI (hybryda)** — decyzja właściciela 18.08 (szkice §BOT 1 TRYB AI).
 2. **Historia rozmów w adminie, retencja 90 dni** — delta zwiadu wzorców
    (standard Chatwoot); retencja jak w sklepie.
 3. **Stały przycisk „zostaw wiadomość"** — delta zwiadu (wzorzec Crisp).
@@ -67,7 +67,7 @@ była w klepniętych szkicach (`boty/SZKICE-BOTOW.md`) albo wynika z ich zasad
    jest zaproszeniem do mail-bomby na skrzynkę właściciela.
 
 ## Segregator maila
-1. **Tryb AI + „porównaj reguły vs AI"** — decyzja Dzidka 18.08 (szkice §BOT 2).
+1. **Tryb AI + „porównaj reguły vs AI"** — decyzja właściciela 18.08 (szkice §BOT 2).
 2. **ACCURACY + lista pomyłek** przy próbce z etykietami — delta zwiadu
    (konwencja raportów klasyfikacji).
 3. **Kubeł domyślny „Reszta"** dla maili bez reguły — wzorzec Gmail
@@ -82,7 +82,7 @@ była w klepniętych szkicach (`boty/SZKICE-BOTOW.md`) albo wynika z ich zasad
    decyzja regułami, przeniesienie do folderów na serwerze poczty, historia
    przebiegów, cofnięcie ostatniego przebiegu, zadanie cykliczne. **Powód:** szkice
    odkładały to „po egzaminie", ale po podniesieniu progu na produkt do sprzedaży
-   (Dzidek 20.08) bot bez dostępu do skrzynki jest analizatorem plików, a nie
+   (właściciel 20.08) bot bez dostępu do skrzynki jest analizatorem plików, a nie
    automatem, który komuś oszczędza czas. **Bezpiecznik:** tryb NA SUCHO jest
    domyślny i otwiera folder przez `EXAMINE` (RFC 3501 6.3.2), czyli read-only na
    poziomie protokołu; realne przenoszenie wymaga przełączenia trybu ORAZ osobnego
@@ -107,7 +107,7 @@ była w klepniętych szkicach (`boty/SZKICE-BOTOW.md`) albo wynika z ich zasad
 - Oba: automatyczny stemming polskich odmian = droga rozbudowy (recenzja
   PR #27: bez cichego poszerzania wyceny).
 
-## Propozycje po etapie napraw (23.08) — ŚWIADOMIE nierobione teraz, decyzja Dzidka po oddaniu
+## Propozycje po etapie napraw (23.08) — ŚWIADOMIE nierobione teraz, decyzja właściciela po oddaniu
 Pochodzą z dziennika kupującego (`audyt/WCIELENIE-KUPUJACY.md`) i z krytyki planu napraw. Każda to
 ROZSZERZENIE zakresu albo sprawa środowiska, nie wada produktu — dlatego nie są w rejestrze znalezisk.
 - ChatBot: obsługa zdań nie-pytań w silniku (powitanie, podziękowanie) — zamówienie §FRONT każe
@@ -118,5 +118,5 @@ ROZSZERZENIE zakresu albo sprawa środowiska, nie wada produktu — dlatego nie 
   PRZEGLĄDARKI gościa (stanowisko testowe było en-US, stąd „Please fill out this field").
 - Segregator: polityka „jeden komunikat naraz" w panelu (powitanie nie obok błędu) — UX, nie wada.
 - Segregator: minimalizacja danych wysyłanych do dostawcy AI (domena nadawcy zamiast pełnego adresu).
-- Segregator: AI na przebiegu skrzynki (dziś: same reguły) — decyzja L8 Dzidka: funkcja czy napis wprost.
+- Segregator: AI na przebiegu skrzynki (dziś: same reguły) — decyzja L8 właściciela: funkcja czy napis wprost.
 - ChatBot: ostrzeżenie o `DISABLE_WP_CRON` w panelu (Segregator je ma).

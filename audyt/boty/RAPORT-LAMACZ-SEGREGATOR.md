@@ -278,7 +278,7 @@ sprawdziłem tam, gdzie każe zasada — w `01-zamowienie.md` (który też mówi
 prawdziwej skrzynki (IMAP/OAuth)" jako GRANICĘ) — i dalej w `boty/PONAD-SPECYFIKACJE-BOTY.md`:
 ```
 80: 7. ⭐ **Przebieg na PRAWDZIWEJ skrzynce (IMAP)** — własny klient IMAP4rev1 w czystym PHP
-85:    (Dzidek 20.08) bot bez dostępu do skrzynki jest analizatorem plików, a nie...
+85:    (właściciel 20.08) bot bez dostępu do skrzynki jest analizatorem plików, a nie...
 103: - Segregator: ⛔ **nieaktualne od 2026-08-20** — podpięcie żywej skrzynki (IMAP)
 ```
 **Rozszerzenie jest jawnie zadeklarowane i zaakceptowane przez zamawiającego, więc G8 jest

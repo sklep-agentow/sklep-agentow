@@ -17,7 +17,7 @@ Cel: wzorce dziedziny PRZED budową (zasada: nie zgaduje się budowania). To NIE
 ### CZEGO NIE bierzemy
 - Ich silnika (WordPress+WooCommerce) — nasze strony docelowe to statyczny HTML, wymóg paczki wpinane/odpinane. WooCommerce się nie wpina w statyczny HTML.
 
-## 2. GOTOWE PROJEKTY — polowanie 16.08 ~23:30 (drabina: gotowce przed planowaniem; na życzenie Dzidka)
+## 2. GOTOWE PROJEKTY — polowanie 16.08 ~23:30 (drabina: gotowce przed planowaniem; na życzenie właściciela)
 
 **WERDYKT: gotowca 1:1 („wpinany sklep w statyczną stronę + własny panel + własna baza za 0 zł") NIE MA. Ale składanka potwierdzona z trzech stron:**
 
@@ -34,7 +34,7 @@ Cel: wzorce dziedziny PRZED budową (zasada: nie zgaduje się budowania). To NIE
 
 ## 4. WZORZEC DOSTARCZENIA (synteza z 3 źródeł)
 
-Mail po zakupie z **wygasającym podpisanym linkiem + limitem pobrań** (wzór zipsell) = najlepiej pasuje do naszej spec („po zakupie mail: potwierdzenie + instrukcje"). Alternatywy widziane na rynku: dostęp do platformy (agenciai), dostęp do Notion (godofprompt) — odnotowane, nie wybieramy bez Dzidka.
+Mail po zakupie z **wygasającym podpisanym linkiem + limitem pobrań** (wzór zipsell) = najlepiej pasuje do naszej spec („po zakupie mail: potwierdzenie + instrukcje"). Alternatywy widziane na rynku: dostęp do platformy (agenciai), dostęp do Notion (godofprompt) — odnotowane, nie wybieramy bez właściciela.
 
 ## TODO zwiadu (przed projektowaniem WIDOKU sklepu)
 - Kryteria sędziego 0-100 dla strony sprzedażowej — z zebranych wzorców (godofprompt + agenciai + zasady Omnibus).

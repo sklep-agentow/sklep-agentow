@@ -28,7 +28,7 @@ Przycisk **„Export"/„Download"** zawsze w **prawym górnym rogu** ekranu lis
 - **Dashicons**, nie własny zestaw ikon — spójność wizualna z rdzeniem.
 - Layout na natywnych klasach wp-admin: `.wrap`, `.postbox`, `.widefat`, `.button-primary` — tańsze w budowie i od razu znajome dla admina, który zna WordPressa.
 
-## 7. Kryteria oceny 0-100 (sędzia PRZED pokazem Dzidkowi)
+## 7. Kryteria oceny 0-100 (sędzia PRZED pokazem właścicielowi)
 | # | Kryterium | Waga |
 |---|---|---|
 | 1 | Czytelność metryk (duża, kontrastowa liczba, jasna jednostka/waluta) | 15 |

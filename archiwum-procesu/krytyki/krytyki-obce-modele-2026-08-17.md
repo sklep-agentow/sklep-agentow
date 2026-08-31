@@ -1,9 +1,9 @@
-# KRYTYKI OBCYCH MODELI — plan v1 (wklejone przez Dzidka 17.08 ~03:30)
+# KRYTYKI OBCYCH MODELI — plan v1 (wklejone przez właściciela 17.08 ~03:30)
 
 Cztery niezależne przebiegi (A, B, C, D wg kolejności wklejenia). Zapis wierny uwag;
 pominięto wyłącznie: wyciek angielskiego brudnopisu rozumowania jednego z modeli,
 stopki „odpowiedź generowana przez AI" i komunikat o zmianie modelu (Kimi K2.6).
-Pełny surowy tekst = wiadomość Dzidka w czacie 17.08 ~03:30.
+Pełny surowy tekst = wiadomość właściciela w czacie 17.08 ~03:30.
 
 ---
 

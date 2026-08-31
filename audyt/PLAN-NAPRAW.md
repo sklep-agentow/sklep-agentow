@@ -3,7 +3,7 @@
 > Wejście (zmierzone 23.08): `main`=766b4c9, CI zielone, 0 PR, stos = `main` (diff pusty).
 > **Rejestr kłamie:** `test-awaria-zapisu.php` na `main` → PADA 3/6 EXIT=1 → A2-F1/F2/F3 NIE naprawione
 > (#136 = inny problem). Prawdziwy stan: **23 OTWARTE + 1 W NAPRAWIE** (LS-F2, 3/4 punktów żywe).
-> Dzidek 23.08: „naprawy jak najszybciej, nie kosztem efektu · bez przerostu: naprawić + lekko zabezpieczyć ·
+> właściciel 23.08: „naprawy jak najszybciej, nie kosztem efektu · bez przerostu: naprawić + lekko zabezpieczyć ·
 > nie marnować kredytów · plan zatwierdza krytyk". Krytyka r1 złapała obie przynęty → ważna. Druga runda: NIE.
 
 ## 0. CEL I KONIEC ETAPU (mierzalny)
@@ -32,7 +32,7 @@ Dowody zachowania (`dowod-zachowania-*.sh`, na paczce zip, własny stos próbny)
 ## 2. ROLE, RAM, STANOWISKA
 - **Koordynatorka:** K0, rejestr/TABLICA, linia bazowa, scalanie, sweep wersji na końcu. Kod wtyczek — nie. Narzędzia QA (`linia-bazowa.sh`, `kto-wola.sh`) — tak.
 - **builder1:** okno tmux `builder1`, worktree `/root/praca/zlecenia/sklep-agentow-b1`, teren `wtyczki/chatbot-live/` + `testy/chatbot-*`. **builder2:** okno `builder2`, `/root/praca/zlecenia/sklep-agentow-b2`, `wtyczki/segregator-maila/` + `testy/segregator-*`.
-- **RAM: maks. 3 sesje naraz** (skill: dwie komfort, trzy granica; zmierzone 23.08: 3 sesje = 3×~550 MB RSS, `available` 1,75 GB, swap 1,1 GB). Próg = kolumna **`available` ≥ 1 GB**. Czat techniczny Dzidka = 4. sesja → gdy Dzidek wraca do pracy w swoim czacie, **wstrzymuję jednego buildera** (Dzidek daje znać). Playwright tylko pod `flock`, Lighthouse nigdy.
+- **RAM: maks. 3 sesje naraz** (skill: dwie komfort, trzy granica; zmierzone 23.08: 3 sesje = 3×~550 MB RSS, `available` 1,75 GB, swap 1,1 GB). Próg = kolumna **`available` ≥ 1 GB**. Czat techniczny właściciela = 4. sesja → gdy właściciel wraca do pracy w swoim czacie, **wstrzymuję jednego buildera** (właściciel daje znać). Playwright tylko pod `flock`, Lighthouse nigdy.
 - **Weryfikator = builder po `/clear` z zamianą ról, RAZ na końcu** (wąski re-audyt tylko plików z `git diff --name-only 766b4c9..main -- wtyczki/`), nie po każdej paczce.
 - Strażnik w tle: `steruj-builderami/scripts/straznik-builderow.sh`. Briefing: `audyt/BRIEFING-NAPRAWY.md` (w repo).
 
@@ -65,7 +65,7 @@ Legenda dowodu: **[T]** = test zamrożony ma przejść · **[P]** = test zamroż
 - `A4-F4` → **naprawa = `aria-expanded="true|false"`; `aria-label="Otwórz czat" ZOSTAJE** (selektor 4 testów: `pulapka-widget.js`, `a4-*.js`). **[D]** + asercja w istniejącym `testy/pulapka-widget.js`.
 - `WK-1` formularz kontaktowy nakłada się na powitanie / krzyżyk formularza zamyka CAŁY czat (3 objawy kupującego, 1 przyczyna układu) → krzyżyk formularza zamyka formularz, wpisana treść nie ginie; przypadek bez wady: zamknięcie czatu bąbelkiem/Escape dalej działa, formularz po porażce bota dalej się pokazuje. Najpierw odtworzyć (Playwright pod `flock`), dowód zrzutem. **[D]**.
 - `WK-8` „dzień dobry" → „nie znam odpowiedzi": zamówienie (`01-zamowienie.md` §FRONT) każe „nie znam odpowiedzi" i zakazuje poszerzania dopasowania → **NIE silnik**; tylko wpis powitalny w danych startowych (`seed-demo.sh`/instalator) + zdanie w instrukcji „dodaj pytanie powitalne". 2 linie. **[D]**.
-- WYCIĘTE (rozszerzenia zakresu / nie produkt): `<noscript>` z e-mailem (wyciek adresu), WK-9 (polityka jednego komunikatu), WK-11/WK-18 (dymek HTML5 jest w języku PRZEGLĄDARKI — stanowisko en-US; u klienta po polsku). → lista „propozycje do Dzidka" w `PONAD-SPECYFIKACJE-BOTY.md`.
+- WYCIĘTE (rozszerzenia zakresu / nie produkt): `<noscript>` z e-mailem (wyciek adresu), WK-9 (polityka jednego komunikatu), WK-11/WK-18 (dymek HTML5 jest w języku PRZEGLĄDARKI — stanowisko en-US; u klienta po polsku). → lista „propozycje do właściciela" w `PONAD-SPECYFIKACJE-BOTY.md`.
 
 **C5 — Panel ChatBota: diagnostyka i RODO mówią prawdę**
 - `P2-Z1` „Przetestuj klucz" pyta `CHATL_AI_MODEL` zamiast `chatl_ai_model()` i na 200 kasuje `chatl_blad_ai` → ten sam model co bot; diagnostyka nie gasi alarmu (gasi dopiero udana odpowiedź gościowi). Sonda `audyt/boty/proba-model.php` → **[N]** `testy/chatbot-test-klucza-test.php`. Przypadek bez wady: „Przetestuj klucz" z poprawnym kluczem i domyślnym modelem dalej mówi „działa".
@@ -102,12 +102,12 @@ Legenda dowodu: **[T]** = test zamrożony ma przejść · **[P]** = test zamroż
 
 **S5 — RODO Segregatora: co wychodzi do AI**
 - Fakt (krytyk, zweryfikowany): AI **nie działa na skrzynce** (przebieg = same reguły); `segm_ai_zapytaj()` woła `silnik.php` (tryb AI na próbce/klasyfikacji). `A3-3` → (a) deklaracja w `INSTRUKCJA.md`, `readme.txt`, `DOKUMENTACJA-TECHNICZNA.md` mówi WPROST: co i kiedy wychodzi do dostawcy (nadawca, temat, treść?) w trybie AI, a na skrzynce nic nie wychodzi; (c) **[N]** `testy/segregator-deklaracja-vs-ladunek-ai.php` (wzór: `testy/a6-deklaracja-vs-ladunek-ai.php`).
-- (b) **L8 = decyzja Dzidka** (zakres): „AI na skrzynce" to NOWA funkcja → rekomendacja: NIE robimy, piszemy wprost na stronie produktu i w instrukcji „na skrzynce pracują reguły". Czeka na jego słowo; nie blokuje S5(a)(c).
+- (b) **L8 = decyzja właściciela** (zakres): „AI na skrzynce" to NOWA funkcja → rekomendacja: NIE robimy, piszemy wprost na stronie produktu i w instrukcji „na skrzynce pracują reguły". Czeka na jego słowo; nie blokuje S5(a)(c).
 - Minimalizacja danych (domena zamiast adresu) → propozycje po oddaniu.
 
 ### koordynatorka
 **K0 (przed startem builderów, JEDEN PR `chore: etap 3 — prawda w rejestrze, przyrząd, briefing`):**
-1. Rejestr: A2-F1/F2/F3 → OTWARTE (licznik 20→23 świadomie, dowód EXIT=1 w opisie); A4-F1/F2/LS-F1/LS-F2 kolumna test → „BRAK — do dopisania (sonda…)”, bo `a4-*.js` i `repro/*.php` to SONDY z EXIT zawsze 0 (dług 9→11 świadomie); nowa sekcja **„DO ODTWORZENIA (poza licznikiem)"**: WK-1,3,4,5,8,13,15,17 (ze zdaniem dziennika) + T-1,T-3,T-4 + A3-3; sekcja „PROPOZYCJE DO DZIDKA" → `PONAD-SPECYFIKACJE-BOTY.md` (noscript, WK-9, WK-11/18, minimalizacja danych, L8).
+1. Rejestr: A2-F1/F2/F3 → OTWARTE (licznik 20→23 świadomie, dowód EXIT=1 w opisie); A4-F1/F2/LS-F1/LS-F2 kolumna test → „BRAK — do dopisania (sonda…)”, bo `a4-*.js` i `repro/*.php` to SONDY z EXIT zawsze 0 (dług 9→11 świadomie); nowa sekcja **„DO ODTWORZENIA (poza licznikiem)"**: WK-1,3,4,5,8,13,15,17 (ze zdaniem dziennika) + T-1,T-3,T-4 + A3-3; sekcja „PROPOZYCJE DO WŁAŚCICIELA" → `PONAD-SPECYFIKACJE-BOTY.md` (noscript, WK-9, WK-11/18, minimalizacja danych, L8).
 2. `audyt/PLAN-NAPRAW.md` (ten plik), `audyt/BRIEFING-NAPRAWY.md`, `narzedzia-qa/kto-wola.sh`, `narzedzia-qa/linia-bazowa.sh` (z mariadb-dump przez `strona_wp_db`), scalenie gałęzi `koord/przelot-czlowieka` (`PRZELOT-CZLOWIEKA.md` nie jest na main — F4).
 3. Hasło `admin_roboczy` odświeżone (testy panelu). **Linia bazowa PRZED** (`linia-bazowa.sh baza-<sha>`), dowody zachowania PRZED na paczkach 1.5.8/1.3.1 (EXIT do `LINIA-BAZOWA-TESTOW.md`).
 4. Worktree b1/b2 ze świeżego `main` po scaleniu K0, okna tmux `builder1`/`builder2` (krytyk → `/clear` → builder1), strażnik w tle, TABLICA.
@@ -120,11 +120,11 @@ gałąź ze świeżego `main` → karta paczki + raport → `docker cp` swojej w
 
 ## 5. PO PACZKACH
 1. Wąski re-audyt: 2 weryfikatorzy po zamianie ról (buildery po `/clear`), tylko pliki z diffu od 766b4c9, materiał po K1, kalibracja jednym mutantem (`/root/praca/warsztat/.claude/skills/sprawdzanie-zlecenia/kalibruj.sh`).
-2. Sweep dokumentacji (`dokumentacja-zgodnosc*.sh`, `instrukcja-liczby-segregator.sh`) · `PRZELOT-CZLOWIEKA.md` 16 punktów (Dzidek/agent — jego decyzja).
+2. Sweep dokumentacji (`dokumentacja-zgodnosc*.sh`, `instrukcja-liczby-segregator.sh`) · `PRZELOT-CZLOWIEKA.md` 16 punktów (właściciel/agent — jego decyzja).
 3. Bump zbiorczy 1.5.9 / 1.3.2 (4 miejsca + CHANGELOG) → `buduj-paczki.sh` → `paczka-zgodnosc.sh` EXIT=0 → `dowod-z-paczki.sh` + `dowod-zachowania-*.sh` EXIT=0 → `linia-bazowa.sh koniec` bez regresji.
-4. Sklep (lista Dzidka).
+4. Sklep (lista właściciela).
 
-## 6. DO DZIDKA (tylko jego działka, zbiorczo, gdy wróci)
+## 6. DO WŁAŚCICIELA (tylko jego działka, zbiorczo, gdy wróci)
 - **L8**: AI na skrzynce (nowa funkcja) czy napis „na skrzynce same reguły" (rekomendacja: napis).
 - **Ręczny przelot 16 punktów** — Ty czy agent z hasłem roboczym.
 - **RAM**: gdy pracujesz w czacie technicznym, daj znać — wstrzymam jednego buildera.

@@ -4,7 +4,7 @@ Wersja 3.0 — 2026-08-18, po piwocie na WordPressa (DECYZJE D16). Zastępuje v2
 (architektura Cloudflare — w historii gita; przeniesione z niej: wymagania, MUST NOT,
 prawo, wzorce Stripe/idempotencji, kadencja, kryteria GOTOWE — wymienione: architektura
 i harmonogram). Dokument bez adresów i sekretów.
-**Termin egzaminu: 1.09.2026 (zmiana z 30.08 — Dzidek 20.08) · 3 próby oddania, po każdej TYLKO LICZBA błędów (Dzidek 25.08) · próba 1 ~31.08 po audycie K7 (PLAN-K7 §8c).**
+**Termin egzaminu: 1.09.2026 (zmiana z 30.08 — właściciel 20.08) · 3 próby oddania, po każdej TYLKO LICZBA błędów (właściciel 25.08) · próba 1 ~31.08 po audycie K7 (PLAN-K7 §8c).**
 
 ## 1. CO BUDUJEMY I PO CO
 
@@ -14,7 +14,7 @@ Checkout, TRYB TESTOWY) kupujący dostaje mail z potwierdzeniem, instrukcją i l
 do pobrania paczki (zip wtyczki bota + instrukcja). Zaplecze CAŁE w WordPressie:
 własne tabele w bazie WP, panel w wp-admin, maile z serwera WP (S-19).
 
-Strona-gospodarz: JEDNA WSPÓLNA strona (Dzidek + 3 kolegów; 4 konta adminów przy
+Strona-gospodarz: JEDNA WSPÓLNA strona (właściciel + 3 kolegów; 4 konta adminów przy
 wdrożeniu — ustalenie 17/18.08, aktualizacja S-15). Konwersja strony na WP = ZROBIONA
 (nasza robota poboczna, PR #86 scalony); sklep budujemy i testujemy na jej pełnej
 kopii w warsztacie (WP 7.0.4, PHP 8.4). Egzamin: ocenia kolega, ZERO pytań do niego,
@@ -28,7 +28,7 @@ działa, jak skraca czas pracy) · panel admina: kiedy/za ile kupili/w jakim cza
 (dashboard) · baza: dane kupujących/płatności · produkty z pełnym CRUD (zapis przy
 dodawaniu/usuwaniu/modyfikowaniu) · dziennik logowań na konto admina (kto, kiedy,
 konkrety).
-**Interpretacje S-04/S-07/S-09: KLEPNIĘTE przez Dzidka 18.08** z wiążącą wytyczną:
+**Interpretacje S-04/S-07/S-09: KLEPNIĘTE przez właściciela 18.08** z wiążącą wytyczną:
 **„tak jak się robi i jak robią dobre sklepy"** → dashboard, dziennik i strony sklepu
 projektujemy WG WZORCÓW DZIEDZINY e-commerce (przed budową K3/K5 zbieramy wzorce:
 jak to robią dojrzałe sklepy), nie po najmniejszej literze.
@@ -153,7 +153,7 @@ kod adminowy za `is_admin()`.
   rdzeń: baza par pytanie-odpowiedź (CRUD w adminie) + dopasowanie słów kluczowych +
   odpowiedź awaryjna „zostaw maila, odezwiemy się" (zapis wiadomości do tabeli —
   pokrywa też odczyt „LIVE = kontakt na żywo"); seed demo po polsku; **HYBRYDA
-  (D19 zmienione przez Dzidka 18.08):** DRUGI silnik = prawdziwe AI przez API —
+  (D19 zmienione przez właściciela 18.08):** DRUGI silnik = prawdziwe AI przez API —
   klucz WŁAŚCICIELA w ustawieniach (nigdy w paczce), stop-loss (dzienny limit +
   licznik + zjazd do reguł przy błędzie); bez klucza pełnoprawny tryb regułowy.
   Szczegóły: boty/SZKICE-BOTOW.md. [Opcja do ZBADANIA: klient AI rdzenia WP 7.0.]
@@ -279,7 +279,7 @@ bez aggregateRating) · WCAG-lite (EAA) · przed oddaniem: bramka
   o podobnej nazwie (ściąga egzaminatora, klasa 2). Wroga sesja idzie na stacku z REALNYM motywem strony po
   konwersji — kolizje z ich frontem łapiemy CIĄGLE, nie dopiero w K6.
 - **K3 · 20-21.08 — PANEL wp-admin:** NAJPIERW wzorce dziedziny (dashboardy dojrzałych
-  sklepów — wytyczna Dzidka „jak robią dobre sklepy"), POTEM budowa: dashboard + CSV,
+  sklepów — wytyczna właściciela „jak robią dobre sklepy"), POTEM budowa: dashboard + CSV,
   zamówienie + treść maila + resend, dziennik logowań (hooki), log akcji, ustawienia.
 - **K4 · 21-22.08 — CRUD produktów:** upload do katalogu chronionego + walidacje
   (typ/rozmiar/cena>0/niepusta nazwa) + deaktywacja zamiast usuwania + test:
@@ -287,15 +287,15 @@ bez aggregateRating) · WCAG-lite (EAA) · przed oddaniem: bramka
 - **K5 · 22-23.08 — WITRYNA SKLEPU:** najpierw wzorce stron produktowych dobrych
   sklepów, potem strony na treści botów. **Rozprzęgnięcie od zipów (uwaga recenzji
   PR #26):** treść sprzedażowa („ile czasu oszczędza") powstaje ze SZKICÓW botów
-  klepniętych przez Dzidka (~19-20.08) — NIE czeka na gotowe zipy; finalne zipy
+  klepniętych przez właściciela (~19-20.08) — NIE czeka na gotowe zipy; finalne zipy
   wpinamy do wydawania, gdy przejdą wrogą sesję (23.08), a pokrycie opisów w
   FAKTYCZNEJ treści paczek sprawdza kryterium #10 na końcu. WCAG-lite, RWD, baner
   testowy, regulamin/polityka z szablonów; **sędzia wyglądu 0-100 wg kryteriów
-  dziedziny PRZED pokazaniem Dzidkowi.**
+  dziedziny PRZED pokazaniem właścicielowi.**
 - **RÓWNOLEGLE K1→K5 (builder1, tmux, worktree) — BOTY:** 18-19.08 SZKICE obu botów
-  (spis funkcji rdzenia + koncepcja ekranów) → **RECENZJA DZIDKA szkiców PRZED
+  (spis funkcji rdzenia + koncepcja ekranów) → **RECENZJA WŁAŚCICIELA szkiców PRZED
   budową witryny (bramka)**; z klepniętych szkiców OD RAZU powstaje treść
-  sprzedażowa dla K5 → **19.08 ZWIAD WZORCÓW botów (warunek Dzidka 18.08):** mocne
+  sprzedażowa dla K5 → **19.08 ZWIAD WZORCÓW botów (warunek właściciela 18.08):** mocne
   projekty dobrych firm (drabina: gotowce → GitHub z gwiazdkami → oficjalne docs)
   → `boty/WZORCE-BOTOW.md` + brief buildera (przed integracją AI builder czyta
   skill `claude-api`) → **20-23.08 budowa builderem (HYBRYDA: silnik regułowy +
@@ -304,7 +304,7 @@ bez aggregateRating) · WCAG-lite (EAA) · przed oddaniem: bramka
   Przegląd i scalanie PR-ów buildera = moja STAŁA godzina zamykająca dzień
   (uwzględniona w obłożeniu dni K1-K5, nie „poza czasem").
 - **K6 · 24.08 — POWTARZALNOŚĆ:** świeży czysty WordPress (drugi stack) → instalacja
-  3 wtyczek WG INSTRUKCJI przez NIE-autora (Dzidek; mierzone, cel ≤30 min) → pełny
+  3 wtyczek WG INSTRUKCJI przez NIE-autora (właściciel; mierzone, cel ≤30 min) → pełny
   zakup end-to-end → deinstalacja: diff bazy/plików przed-po czysty.
   ⛔ Konsekwencja terminowa (krytyka 8): **instrukcja instalacji MUSI istnieć PRZED
   K6** — powstaje przyrostowo do 23.08 (K8 ją tylko finalizuje: zrzuty, diagram,
@@ -332,7 +332,7 @@ bez aggregateRating) · WCAG-lite (EAA) · przed oddaniem: bramka
   robione maszynowo; diagram architektury dla informatyka; rozdział „test vs
   produkcja" §13) → do paczki
   `PONAD-SPECYFIKACJE.md` (jawna lista wszystkiego ponad literę notatki — ściąga
-  kl. 6) → **bramka ludzka: Dzidek ogląda zrzuty krytycznych ścieżek
+  kl. 6) → **bramka ludzka: właściciel ogląda zrzuty krytycznych ścieżek
   i odblokowuje** → oddanie (próba 1) → **runbook: OTWORZYĆ stronę Releases
   i potwierdzić oczami, że „Latest" = oddawana wersja** (fakt „kolega widzi
   1.1.0" — ściąga kl. 4).
@@ -366,7 +366,7 @@ Dwie próby naprawy, potem reset i inne podejście.
   gotowa na podpięcie dostawcy.
 - Z4. Sklep testujemy na kopii strony-gospodarza w warsztacie; wdrożenie na żywą
   stronę = po egzaminie, za zgodą czwórki (przełączka + świeży re-import treści).
-- Z5. „Jedna wspólna strona, 4 konta adminów" (Dzidek 17/18.08) — wtyczka mimo to
+- Z5. „Jedna wspólna strona, 4 konta adminów" (właściciel 17/18.08) — wtyczka mimo to
   konfigurowalna przez Ustawienia (przenośność tania teraz, potrzebna później);
   test przenośności = K6 na czystym WP.
 - Z6. Wolumen: pojedyncze zakupy dziennie (przy zmianie przeliczyć limity/retencję).
@@ -436,7 +436,7 @@ rubryka może gonić rzeczywistość, ale nigdy po cichu.
 
 Aktywacja kont Stripe właścicieli (KYC, rachunek) · webhook produkcyjny z nowym
 sekretem · wysyłka maili na hostingu (SMTP/dostawca — bez tego mail NIE wychodzi) ·
-hosting z PHP/MySQL dla WP (zestawienie opcji z cenami = OBIECANE Dzidkowi, osobny
+hosting z PHP/MySQL dla WP (zestawienie opcji z cenami = OBIECANE właścicielowi, osobny
 dokument po egzaminie) · przełączka strony głównej na wersję WP (decyzja czwórki;
 przy przełączce świeży re-import treści) · 4 konta adminów zakładane przy wdrożeniu ·
 regulamin/polityka wypełnione danymi sprzedawcy · usunięcie banera testowego ·
@@ -466,12 +466,12 @@ każdej zmianie JS/CSS · lock przez INSERT, nie add_option.
 ## 14. WYCENA CZASU (rozstrzygnięcie głębokości botów — podstawa D19)
 
 - SKLEP (K1-K8 z audytem i paczką): **~6 dni roboczych** — mieści się do 27.08.
-- BOTY HYBRYDA (D19 po zmianie Dzidka 18.08; równolegle, builder1): silnik
+- BOTY HYBRYDA (D19 po zmianie właściciela 18.08; równolegle, builder1): silnik
   regułowy + prawdziwe AI przez API ze stop-lossem — **~3 dni** budowy (20-23.08)
   + wroga sesja; niesie builder, sklepu nie rusza.
 - BOTY „pełny agent produkcyjny" (prawdziwy IMAP/OAuth, pamięć rozmów, operator
   na żywo): **+3-4 dni** i nowe ryzyka → termin 27.08 pada — **ODRZUCONE na
   egzamin**; instrukcja jawnie opisuje drogę rozbudowy.
-Głębokość KLEPNIĘTA przez Dzidka 18.08 (hybryda — D19). Egzamin bez kosztów API
+Głębokość KLEPNIĘTA przez właściciela 18.08 (hybryda — D19). Egzamin bez kosztów API
 (tryb regułowy działa bez klucza); ewentualne ~5$ na klucz do demo z żywym AI =
-wyłącznie za osobną zgodą Dzidka.
+wyłącznie za osobną zgodą właściciela.

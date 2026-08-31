@@ -1,6 +1,6 @@
 # RAPORT ODDANIA — Sklep Agentów, próba 1 (2026-08-30, wydanie `v0.9.23`; §6 = dopisek `v0.9.24`; §7 = dopisek `v0.9.25` + K10)
 
-> Dla Dzidka i dla oceniającego. Każda liczba ma komendę, którą ją policzono, i commit, na którym
+> Dla właściciela i dla oceniającego. Każda liczba ma komendę, którą ją policzono, i commit, na którym
 > ją policzono: **`a1b2495`** (`main` po scaleniu `#213` i `#214`). Każda zmiana w repo po tym
 > commicie unieważnia sekcję 2 — wtedy przelot i bramkę końcową trzeba puścić od nowa.
 
@@ -31,7 +31,7 @@ kodzie; 0 anomalii; przelot człowieka 27/27; paczka zamrożenia sha zgodny; tag
 Dwa FAIL-e są **decyzją, nie wadą** — obie zapisane w `audyt/CO-WISI.md` i w `DECYZJE.md`:
 - **Kontrola 2 — kalibracja audytorów.** `soczewek=6, bez PASS=2` (L1, L5 nie osiągnęły PASS przy progu
   bramki). Kryterium klienta #12 (≥ 2/3 mutantów złapanych) jest SPEŁNIONE: 7 mutantów, 5 złapanych = 71 %.
-  Bramka jest ostrzejsza od rubryki. Decyzja Dzidka 28.08: oddajemy z jawnym zapisem.
+  Bramka jest ostrzejsza od rubryki. Decyzja właściciela 28.08: oddajemy z jawnym zapisem.
   **Co to znaczy dla klienta, po ludzku:** pięć soczewek udowodniło na podłożonych błędach, że naprawdę widzą
   wady. Dwie tego nie udowodniły — więc **to, czego nie znalazły w obszarze dziennika logowań (L1) i zgodności
   dokumentacji z zachowaniem (L5), nie jest dowodem, że tam nic nie ma.** Ich „czysto” waży mniej niż pozostałych.
@@ -84,7 +84,7 @@ klienta**; pominięte są wyłącznie długi narzędzi warsztatu (skanery, prób
    poprzedni link tylko do następnej automatycznej próby; przy trwałej awarii poczty poprzedni link przepada,
    droga ratunku = „Wyślij ponownie” po naprawie poczty. Instrukcja mówi to wprost. Zachowanie sprzed `#213`.
 3. **Strażnik paczek nie strzela sam** — wymaga PR-a manifestowego (decyzja: manifest bramek zmieniany tylko
-   osobnym PR-em czytanym przez Dzidka). To samo dotyczy nowej bramki odsyłaczy strony tytułowej (41 celów,
+   osobnym PR-em czytanym przez właściciela). To samo dotyczy nowej bramki odsyłaczy strony tytułowej (41 celów,
    uruchamiana ręcznie, bez próby kontrolnej).
 4. **Skaner śladów wewnętrznych** nie zna trzech rodzin odsyłaczy, mija wzorzec przez wielkość litery i nie
    czyta obrazów (pięć PNG w paczce sklepu sprawdzone oczami) — dziś paczki są czyste, jutro nic ich nie broni automatem.
@@ -154,7 +154,7 @@ Release przez niezależnego testera robi K10 (osobny raport).
 
 ## 7. Dopisek — wydanie `v0.9.25` (2026-08-30 wieczór; zbudowane z `main` `2992247`) + K10
 
-**Co się zmieniło (decyzja Dzidka 30.08, oddanie 31.08 rano):** płatność **osadzona na stronie produktu** (Stripe Checkout
+**Co się zmieniło (decyzja właściciela 30.08, oddanie 31.08 rano):** płatność **osadzona na stronie produktu** (Stripe Checkout
 Session `ui_mode=elements` + Payment Element, Appearance API w brandzie strony, Stripe.js po polsku; ten sam obiekt sesji,
 webhook i reconciliation; hostowana strona Stripe zostaje zapasem bez klucza publikowalnego/JS) — DECYZJE `D35`; **dane do
 faktury przy zakupie** (nazwa+NIP+adres, komplet albo nic; zwiad prawny: art. 106e VAT, art. 38a upk, NIP JDG = dana osobowa)
@@ -194,7 +194,7 @@ jako historia; dowody K7–K10 na nim nie giną).
 
 ## 8. Dopisek — wydanie `v0.9.26` (2026-08-30 noc; zbudowane z `main` `a3d9568`)
 
-**Skąd ta delta:** Dzidek zapytał, czy produkt jest sprawdzony pod TEMATY z lekcji z kolegą (nie tylko pod nasz rejestr błędów).
+**Skąd ta delta:** właściciel zapytał, czy produkt jest sprawdzony pod TEMATY z lekcji z kolegą (nie tylko pod nasz rejestr błędów).
 Lista tematów odnaleziona w warsztacie (notatnik z telefonu, 9 zrzutów) → tabela `audyt/TEMATY-LEKCJI-vs-PRODUKT.md`
 (17 wierszy: dowód / brak / poza zakresem). Z tabeli wyszły dwie rzeczy do zrobienia od razu: **canonical** i **SECURITY/CONTRIBUTING**.
 

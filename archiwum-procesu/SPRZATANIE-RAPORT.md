@@ -13,7 +13,7 @@
   segregator-maila 1.3.0→1.3.6, sklep-agentow 0.9.13→0.9.22. Bo są w historii gita, `.git/`
   waży 140 MB (na 284 MB całego katalogu). Jeśli do wydania potrzebna tylko najnowsza paczka
   per bot — reszta z working tree to ~40 MB do odzyskania; wyczyszczenie z HISTORII gita to
-  osobna, nieodwracalna operacja (rewrite historii) — wymaga zgody Dzidka.
+  osobna, nieodwracalna operacja (rewrite historii) — wymaga zgody właściciela.
 
 ## ZOSTAWIĆ (wygląda na śmieć, ale jest potrzebne)
 - `node_modules/` (14 MB) — w `.gitignore`, standardowa zależność dev, nie kasować ręcznie.

@@ -1,6 +1,6 @@
 # K9 — instalacja z paczki Release `v0.9.23` na motywie kolegi, „jak klient” (30.08, po wydaniu)
 
-**Po co (pytanie Dzidka po wydaniu):** „czy wpinaliśmy wtyczkę w stronę kolegi lokalnie — strona bez zakładki
+**Po co (pytanie właściciela po wydaniu):** „czy wpinaliśmy wtyczkę w stronę kolegi lokalnie — strona bez zakładki
 Sklep — i wszystko wskoczyło w dobre miejsce?” oraz „co jeszcze da się sprawdzić”. Dotychczasowe dowody były
 starsze niż wydany artefakt: K6 (instalacja od zera) na paczce 0.9.18, Plugin Check na 0.9.22, `/security-review`
 na diffie do `98e4363`. Ten przebieg mierzy **to, co kolega pobierze**.
