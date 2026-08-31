@@ -3,7 +3,7 @@
  * Plugin Name: Sklep Agentów
  * Plugin URI: https://automaticai.pl/sklep/
  * Description: Sprzedawaj wtyczki-boty AI bezpośrednio ze swojej strony: płatność kartą, automatyczny mail z linkiem do pobrania, panel zamówień ze statystykami i dziennikiem logowań. Zamówienia, produkty i pliki zostają w Twojej bazie i na Twoim serwerze — bez abonamentu. Płatność obsługuje Stripe.
- * Version: 0.9.27
+ * Version: 0.9.28
  * Requires at least: 6.7
  * Requires PHP: 8.1
  * Author: Automatic AI

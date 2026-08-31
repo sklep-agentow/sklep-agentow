@@ -20,6 +20,35 @@ Nic jeszcze.
 
 ---
 
+## [0.9.28] — 2026-08-31 · schemat bazy 9 (zamowienia.dor_*)
+
+### Naprawione
+- **Kompensacja po nieudanej wysyłce przywraca stan ostatniej DORĘCZONEJ wysyłki**, nie „zastany".
+  Przy każdym doręczeniu maila wtyczka zapisuje ślad (token pobrania, termin, treść maila, skrót
+  linku opinii — kolumny `dor_*`, schemat 9); gdy kolejna rotacja linku zawiedzie (cron ALBO przycisk
+  „Wyślij ponownie"), wraca dokładnie ten stan, który kupujący ma w skrzynce. To zamyka znany
+  wyjątek opisany przy 0.9.27: pad serwera w pół wysyłki + nieudane ponowienie mogły zostawić
+  w bazie link, którego nie niósł żaden doręczony mail. Dla zamówień sprzed migracji (bez śladu)
+  działa dotychczasowy zapas: stan sprzed rotacji. Pilnują tego nowe kroki strażnika regresji
+  wysyłki, kalibrowane na kodzie sprzed naprawy (musiały na nim paść, zanim przeszły na nowym).
+- **Status „błąd maila" zapisuje wyłącznie proces, który faktycznie władał wysyłką** (dowód
+  własności tokenem w warunku zapisu). Dotąd pad procesu, któremu odebrano wysyłkę po 5 minutach,
+  potrafił oznaczyć DORĘCZONY mail drugiego procesu jako `mail_blad` i podbić mu licznik prób —
+  panel kłamał, choć kupujący dostał maila. Część 5 strażnika oczekuje teraz statusu `mail_w_toku`
+  po padzie procesu-przegranego (właściciel wysyłki sam domknie).
+- **Anonimizacja (RODO) czyści także ślad `dor_*`** — kopię treści maila i tokenu; pomiar skutku
+  anonimizacji poszerzony o tokeny i ślad (pomiar tak szeroki jak czyszczenie).
+
+### Zmienione
+- **Sekcja CENA strony produktu:** panel „W PACZCE" po prawej stronie formularza (zip + instrukcja
+  + ważność linku z ustawień wtyczki, nie z ręki); dotąd prawa połowa sekcji była pusta.
+- **Kafle listy produktów wyrównane do obu krawędzi** treści (`justify-content: space-between`) —
+  prawy kafel nie wisi już 40 px od prawej krawędzi.
+- **Wyłączony pływający „testing assistant" Stripe** (widoczny tylko na kluczu testowym) —
+  nachodził na bąbelek ChatBota; na kluczu produkcyjnym i tak nie występuje.
+
+---
+
 ## [0.9.27] — 2026-08-30 · schemat bazy 8 (bez zmian)
 
 ### Naprawione
@@ -123,7 +152,8 @@ Nic jeszcze.
   o prawach konsumenta art. 21 ust. 2 → art. 12 ust. 1). Pulpit ostrzega, gdy nazwa albo adres
   są puste.
 - **Numer zamówienia w mailu** (`#id`, ten sam co w panelu) i **dopisek o fakturze**.
-- Strażnik treści maila rozszerzony o wersję HTML i nowe elementy tekstu (25 sprawdzeń; próba
+- Strażnik treści maila rozszerzony o wersję HTML i nowe elementy tekstu (27 sprawdzeń — liczba
+  policzona komendą przy 0.9.28; pierwotny wpis zaniżał: „25"; próba
   kontrolna z dwiema podłożonymi wadami pada dokładnie w tych dwóch).
 
 ### Zmienione

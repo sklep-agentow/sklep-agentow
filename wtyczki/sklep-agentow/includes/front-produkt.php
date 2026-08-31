@@ -957,6 +957,11 @@ function sklepag_render_produkt( $slug ) {
 	// Kotwice „Kup teraz" (hero, finał, pigułka) celują w SEKCJĘ (id), nie w formularz: po skoku cena
 	// zostaje w kadrze pod sticky nagłówkiem gospodarza, a ramka formularza błyska (CSS :target).
 	$html .= '<section class="sklepag-sekcja sklepag-sekcja-zakup" id="sklepag-zakup">' . $etykieta( 'CENA' );
+	// 0.9.28: układ dwukolumnowy — pudło zakupu po lewej BEZ ZMIAN (kotwica, formularz,
+	// selektory platnosc.js nietknięte), po prawej panel „W PACZCE" zamiast pustki
+	// (zgłoszenie właściciela 31.08). Liczby panelu idą ze STAŁYCH wtyczki — dokument
+	// zawsze równy kodowi (ta sama zasada co sekcja PYTANIA na liście).
+	$html .= '<div class="sklepag-zakup-uklad"><div class="sklepag-zakup-glowna">';
 	$html .= $cena;
 	if ( $t && ! empty( $t['gwarancja'] ) ) {
 		$html .= '<p class="sklepag-trigger">✔ 14 dni gwarancji satysfakcji — zwrot bez pytań</p>';
@@ -964,7 +969,16 @@ function sklepag_render_produkt( $slug ) {
 	if ( $t && ! empty( $t['zgodnosc'] ) ) {
 		$html .= '<p class="sklepag-przypis">' . esc_html( implode( ' · ', $t['zgodnosc'] ) ) . '</p>';
 	}
-	$html .= sklepag_formularz_zakupu( $p ) . '</section>';
+	$html .= sklepag_formularz_zakupu( $p );
+	$html .= '</div><aside class="sklepag-zakup-aside" aria-label="Co jest w paczce">';
+	$html .= '<p class="sklepag-mono-etykieta">[ W PACZCE ]</p><ul class="sklepag-zakup-aside-lista">';
+	$html .= '<li>zip wtyczki — instalujesz jak każdą wtyczkę WordPressa</li>';
+	$html .= '<li>instrukcja po polsku: instalacja i konfiguracja w kwadrans</li>';
+	$html .= '<li>mail po zakupie z linkiem pobrania — ważny ' . (int) SKLEPAG_LINK_GODZIN . ' h, do ' . (int) SKLEPAG_LIMIT_POBRAN . ' pobrań</li>';
+	if ( $t && ! empty( $t['gwarancja'] ) ) {
+		$html .= '<li>14 dni gwarancji satysfakcji — zwrot bez pytań</li>';
+	}
+	$html .= '</ul></aside></div></section>';
 
 	// GWARANCJA — obietnica zwrotu = zobowiązanie finansowe; treść ustala właściciel sklepu.
 	if ( $t && ! empty( $t['gwarancja'] ) ) {

@@ -1007,7 +1007,7 @@ function sklepag_domknij_zakup( $sesja ) {
 	// stan ostatniej DORĘCZONEJ wysyłki (ślad dor_* ze schematu v9). Gdy śladu nie ma
 	// (zamówienie sprzed v9 albo nic jeszcze nie doręczono), zapas: stan sprzed rotacji.
 	// ⛔ NIE „stan zastany": gdy A zrotował i padł W TRAKCIE wp_mail, B po stale-claimie
-	// zastawał token A, którego nie niósł żaden mail — i przywracał martwy link (#228 r5 u1).
+	// zastawał token A, którego nie niósł żaden mail — i przywracał martwy link.
 	// Ta sama zasada co przy ręcznym „Wyślij ponownie” (admin-zamowienie.php).
 	$token_wlasnosci = hash( 'sha256', $token ); // dowód własności claimu do zapisu mail_blad niżej
 	$ma_dor          = isset( $zam->dor_token_pobrania ) && '' !== (string) $zam->dor_token_pobrania;
@@ -1051,7 +1051,7 @@ function sklepag_domknij_zakup( $sesja ) {
 	}
 	// Zapis mail_blad TYLKO pod dowodem własności (AND token_pobrania=%s): gdy stale-claim
 	// odebrał nam wysyłkę i tamten proces doręczył, nasz pad nie może przestawić statusu
-	// jego DORĘCZONEGO maila na mail_blad (#228 r4 u5 — panel kłamał, mail_proby rosło).
+	// jego DORĘCZONEGO maila na mail_blad (panel kłamałby, mail_proby rosłoby cudzej wysyłce).
 	$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET status='mail_blad', mail_proby=mail_proby+1, zmieniono=%s WHERE stripe_session_id=%s AND status='mail_w_toku' AND token_pobrania=%s", $teraz, $sid, $token_wlasnosci ) );
 	sklepag_zdarzenie( (int) $zam->id, 'mail_blad', '' === $email ? 'brak adresu email w sesji' : 'wp_mail zwrocil false' );
 	return false;

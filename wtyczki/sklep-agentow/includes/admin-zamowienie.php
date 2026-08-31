@@ -133,7 +133,7 @@ function sklepag_obsluz_resend() {
 		// stan ostatniej DORĘCZONEJ wysyłki (ślad dor_* z v9); zapas dla zamówień sprzed v9:
 		// zdjęcie z wejścia handlera (jak dotąd). ⛔ CAS na WŁASNY świeży skrót: gdyby między
 		// naszą rotacją a kompensacją token przejął cron (stale-claim), jego stanu nie ruszamy
-		// — ta sama zasada własności co w zakup.php (#228 r4 u5).
+		// — ta sama zasada własności co w zakup.php.
 		$token_wlasnosci = hash( 'sha256', $token );
 		$ma_dor          = isset( $zam->dor_token_pobrania ) && '' !== (string) $zam->dor_token_pobrania;
 		$zrodlo_token    = $ma_dor ? (string) $zam->dor_token_pobrania : (string) $zam->token_pobrania;
