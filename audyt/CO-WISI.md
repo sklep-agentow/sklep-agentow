@@ -617,11 +617,13 @@ rejestr dostanie czwarty stan dla znalezisk typu „brak pomiaru”, których ni
 - ⬜ **`#207` WAŻNA 4, druga połowa** — asercja zgodności kodu ze stosem stoi w teście RODO,
   ale POZOSTAŁE testy na żywym stosie jej nie mają. Do przeglądu przy następnej rundzie QA:
   każdy test mierzący stos powinien najpierw dowieść, że mierzy TEN kod, który jest w repo.
-- ⬜ **`#207` DROBNA 5** — `sklepag_obsluz_anonimizacje()` wciąga `mail_tresc` do pamięci
-  (`SELECT id, email_kupujacego, mail_tresc`) i nigdy go nie używa ani nie czyści. Dziś nieszkodliwe:
-  treść maila nie niesie adresu w innej postaci niż ta czyszczona. Do przeglądu przy następnej
-  rundzie QA: albo pole wypada z zapytania, albo zostaje objęte anonimizacją — obecny stan jest
-  niejednoznaczny dla czytającego (docblock mówi o tym wprost, żeby nie było wątpliwości).
+- ✅ ZAMKNIĘTE 31.08 (0.9.28, #234 r5): **`#207` DROBNA 5** — `mail_tresc` w anonimizacji
+  rozstrzygnięte w OBIE strony naraz: pole wypadło z SELECT-a na wejściu (`admin-zamowienie.php:264`)
+  ORAZ zostało objęte anonimizacją (`mail_tresc=NULL` w UPDATE :374 + człon w pomiarze skutku).
+  Teza „dziś nieszkodliwe" obalona w r5 #234: treść niosła pełną kopię danych do faktury
+  (nazwa firmy, NIP, adres). Dowód: commit `22fe4a4` + strażnik
+  `testy/rodo-anonimizacja-pomiar-skutku-test.sh` (przypadek z fakturą w treści maila,
+  kalibrowany na kodzie sprzed naprawy: FAIL dokładnie na nowej asercji).
 - ⬜ **Siódmy migoczący strażnik chatbota: `testy/statystyki-proba-kontrolna.sh`.** Kończy `EXIT=1`
   z komunikatem „TEST SLEPY NA 1 PODLOZONYCH BLEDOW” — nie łapie wady „wiersze bez znacznika wliczone
   do skuteczności” w raporcie skuteczności chatbota. ⛔ Zmierzone 28.08 dowodem przez wykluczenie:
@@ -632,13 +634,15 @@ rejestr dostanie czwarty stan dla znalezisk typu „brak pomiaru”, których ni
   — to jeden teren, jedna robota, nie sześć osobnych.
 - ⬜ **BLIŹNIAK klasy „zapisujemy skutek, nie sprawdziwszy, czy operacja się udała" —
   ścieżka ponownej wysyłki maila** (`wtyczki/sklep-agentow/includes/admin-zamowienie.php`,
-  `sklepag_obsluz_resend()`). Zmierzone 28.08 (recenzja `#207`, runda 3): **sześć** wywołań
-  `$wpdb->query()` bez sprawdzenia wyniku — zapisy tokenu, `link_wygasa`, `mail_tresc`, statusu
-  `mail_blad` i licznika prób oraz tokenu opinii. Skutek zapisywany niezależnie od powodzenia.
+  `sklepag_obsluz_resend()`). Zmierzone 28.08 (recenzja `#207`, runda 3) jako sześć wywołań;
+  po 0.9.28 (#234) zostało **pięć** `$wpdb->query()` bez sprawdzenia wyniku (zgodnie
+  z komentarzem nagłówkowym pliku, :28) — zapisy tokenu, `link_wygasa`, `mail_tresc` i tokenu
+  opinii; status `mail_blad` idzie już pod CAS własności, a kompensacja jest mierzona przez
+  `$przywrocono` — częściowa spłata, nie całość klasy.
   ⛔ To ta sama klasa, którą ten PR naprawił w anonimizacji — czyli klasa 8 briefingu (naprawa
   egzemplarza zamiast klasy). Nazwana w kodzie, przy funkcji.
   **CO ZAMYKA:** przenieść wzorzec z anonimizacji — pomiar STANU po zapisie zamiast kodu powrotu —
-  wraz z testem podkładającym awarię każdego z sześciu zapisów osobno. Osobna robota, bo to inna
+  wraz z testem podkładającym awarię każdego z pięciu zapisów osobno. Osobna robota, bo to inna
   ścieżka: ponowna wysyłka i kompensacja po nieudanym mailu mają własne przypadki brzegowe.
 - ⬜ **Adres z `/` w części lokalnej zostaje w dzienniku mimo potwierdzenia usunięcia.**
   `wp_json_encode` bez flag zapisuje ukośnik jako `\/`, a anonimizacja szuka SUROWEJ postaci
@@ -733,16 +737,7 @@ przelot znajduje je po nazwie) — kalibracja „pada 5/36 bez #213” zniknęł
 (`render-diagramy.js`) i nic nie sprawdza zgodności ze źródłem SVG (klasa 10); liczba kontroli w komunikacie
 `pakuj-dla-klienta.sh` wpisana ręcznie, nie policzona. Wszystko po oddaniu — narzędzia, nie produkt.
 
-## 🟡 PONOWIENIE PRZEZ CRON NIE MA KOMPENSACJI TOKENU (30.08, recenzja PR instrukcji r6, WAŻNA 1)
-
-`admin-zamowienie.php` po nieudanym resendzie przywraca stary token/termin/licznik, ale zostawia `mail_blad`,
-więc po ~2 min `sklepag_domknij_zakup()` (cron) rotuje token; gdy TA wysyłka też pada, gałąź porażki
-(`zakup.php`, `status='mail_blad', mail_proby+1`) niczego nie przywraca — kupujący z działającym linkiem
-traci go na stałe przy trwałej awarii poczty. Zachowanie sprzed PR-a `#213`. **Decyzja:** w `#213` naprawiony
-TEKST (instrukcja i PONAD mówią, że przywrócenie trwa do następnej próby automatycznej, a droga ratunku to
-„Wyślij ponownie” po naprawie poczty). **Dług:** kompensacja w cronie (zdjęcie tokenu/terminu/licznika przed
-krokiem 4, przywrócenie w gałęzi porażki) + część 4 strażnika `resend-odnawia-limit-pobran-test.php`
-(cron z `pre_wp_mail=false` → stary token żyje). Własny PR po oddaniu — zmiana zachowania silnika wysyłki.
+## ✅ ZAMKNIĘTE: kompensacja tokenu w cronie (30.08 r6 W1 → #228: kompensacja + CZĘŚĆ 4; 0.9.28: klasa domknięta śladem `dor_*`, CZĘŚĆ 6)
 
 ## 🟡 SEKCJA F MIERZY PIĘĆ Z DZIEWIĘCIU LICZB INSTRUKCJI + ZRZUTY Z OBCYM MENU (30.08, recenzja PR instrukcji r2, WAŻNA 3 + DROBNA 5)
 
@@ -868,11 +863,22 @@ ZOSTAJE: front.css 83 kB (kandydat, nie wada) · `perf` na hostingu klienta · k
 ## 🟡 DŁUG: `statystyki-proba-kontrolna.sh` (ChatBot) ślepa na mutanta 3 na tym stosie (30.08 ~23:15)
 Przelot na `a2f9dc2`: „TEST SLEPY NA 1 PODLOZONYCH BLEDOW” — mutant „wiersze bez znacznika wliczone do skuteczności” przechodzi na zielono. ChatBot nietknięty PR-em #228 (diff pusty), więc to nie regresja kodu — kandydat: dane wspólnego stosu maskują wadę (klasa z pamięci: test na wspólnym stosie bez własnych warunków wstępnych). Diagnoza na czystym stanowisku przy K11/0.9.28. AKTUALIZACJA 31.08: przelot na `9b86106` — próba PRZESZŁA (mutant 3 widoczny); ślepota CHWIEJNA, zależna od aktualnych danych stosu, co wzmacnia diagnozę — dług zostaje. AKTUALIZACJA K11 (31.08): część „wada kodu strażnika” SKREŚLONA (u audytora PASS 4/4 mutanty) — patrz sekcja ✅ K11 na końcu pliku; zostaje izolacja przyczyny chwiejności na świeżym stosie.
 
-## 🟡 DŁUG: zapis `status='mail_blad'` bez CAS-a własności claimu (#228 r4 u5, wada sprzed PR)
-`zakup.php` — gałąź porażki `sklepag_domknij_zakup`: UPDATE na `mail_blad` warunkuje tylko `status='mail_w_toku'`, bez `AND token_pobrania=<własny skrót>` (jak mają trzy sąsiednie zapisy kompensacji po #228). Kolejność A(claim, wp_mail wisi) → B(odbiera claim po 5 min, wysyła) → A(pad, przestawia status) → B(sukces nie trafia, statusu już nie ma) zostawia zamówienie z DORĘCZONYM mailem opisane w panelu jako `mail_blad` z podbitym `mail_proby`. Skutek kosmetyczny (link kupującego żyje, mail doszedł — tylko panel kłamie); recenzent r4 świadomie dał DROBNĄ, wady nie wnosi #228. Naprawa = `AND token_pobrania=%s` albo zapis pod `$przywrocono > 0` + krok strażnika skalibrowany jak CZĘŚĆ 5. Zrobić w 0.9.28 razem z diagnozą `statystyki-proba-kontrolna`.
+## ✅ ZAMKNIĘTE 31.08 (0.9.28): zapis `mail_blad` pod dowodem własności tokenu (#228 r4 u5)
+Naprawa w OBU ścieżkach (`zakup.php` cron + bliźniak `admin-zamowienie.php` resend): `AND token_pobrania=%s`
+(świeży skrót albo przywrócony przy udanej kompensacji). Strażnik: CZĘŚĆ 5 `resend-odnawia-limit-pobran-test.php`
+oczekuje teraz `mail_w_toku` po padzie procesu-przegranego; kalibracja na kodzie z main → FAIL na CAS-B.
 
-## 🟡 DŁUG: kompensacja crona zamyka egzemplarz, nie klasę — snapshot z „tego, co zastałem", nie z ostatniej DORĘCZONEJ wysyłki (#228 r5 u1)
-`zakup.php` — gdy proces A zrotował token i padł W TRAKCIE `wp_mail` (dokładnie przypadek stale-claim z ok. linii 920), proces B odbiera claim po 5 min i robi snapshot STANU A (`$przed_rotacja`, ok. linii 948) — czyli skrótu, którego nie niósł żaden doręczony mail. Gdy wysyłka B też pada, kompensacja B „przywraca" stan A: w bazie znów skrót niedoręczonego maila, panel pokazuje treść, której nikt nie dostał, link opinii z ostatniego DORĘCZONEGO maila martwy. Zmierzone sondą recenzenta r5 (krok A: wada; krok B: kontrola bez wady przechodzi). Ten PR tego NIE psuje (przedtem zostawał skrót B, równie niedoręczony) — to niedomknięta klasa. Naprawa właściwa: przechowywać stan ostatniej UDANEJ wysyłki (osobna kolumna/ślad z rotacji, która się doręczyła) i przywracać JEGO + krok strażnika skalibrowany jak CZĘŚĆ 5 (rola: A padł, B pada — dziś nie pilnuje jej nic). Nie jednolinijkowa — 0.9.28, razem z długiem u5 r4 (`mail_blad` bez CAS-a własności, sąsiednia linia tej samej gałęzi). readme/CHANGELOG 0.9.27 mówią o wyjątku jawnie (ratunek: przycisk „Wyślij ponownie").
+## ✅ ZAMKNIĘTE 31.08 (0.9.28): kompensacja przywraca stan ostatniej DORĘCZONEJ wysyłki (#228 r5 u1)
+Schemat v9: ślad `dor_*` (token/termin/treść/skrót opinii) zapisywany w tym samym CAS-ie co
+`mail_wyslany`; kompensacja crona I resendu przywraca ze śladu (zapas dla zamówień sprzed v9: stan
+sprzed rotacji). Strażnik: CZĘŚĆ 6 (cron: A padł w trakcie, B pada → wraca stan DORĘCZONY) + CZĘŚĆ 2b
+(resend ze śladu); kalibracja na kodzie z main → FAIL dokładnie na DOR i RESEND-DOR. RODO: anonimizacja
+czyści też `dor_*`, pomiar skutku poszerzony. readme/CHANGELOG 0.9.28 mówią jawnie: wyjątek z 0.9.27 zamknięty.
+
+## 🟡 ŚWIADOMIE NIE W 0.9.28 — komunikaty POMINIĘTE trzech bramek dokumentacyjnych (klasa 68)
+Trzy bliźniaki odwrócone z K11 R-2 (fałszywie-ZIELONE gałęzie POMINIETE w `dokumentacja-zgodnosc.sh`,
+`-segregator.sh`, `-sklep.sh`) czekają dalej: PR 0.9.28 i tak niesie schemat+2 naprawy+wygląd, a to
+narzędzia, nie produkt — osobny mały PR narzędziowy po wydaniu. Rejestr: ściąga klasa 68.
 
 ## ✅ K11 (31.08, ~01:15–02:10): kroki 1–8 ZGODNE · ROZJAZDY=2 (oba PROCES, żaden w produkcie)
 Raport W REPO: `audyt/K11-RAPORT-0.9.27.md` (wciÄgniÄty jak K2/K6/K9/K10; oryginaÅ z maszyny audytora). Paczka=repo=release co do znaku

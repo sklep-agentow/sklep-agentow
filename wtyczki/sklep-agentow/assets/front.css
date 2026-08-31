@@ -137,7 +137,10 @@
 	display: grid;
 	/* Górny limit traku: pojedynczy produkt nie rozciąga się na całą szerokość. */
 	grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 34rem));
-	justify-content: start;
+	/* 0.9.28: luz kontenera (72rem − 2×34rem − gap) idzie W ODSTĘP między kafle, nie na prawą
+	   krawędź — przy 2 produktach oba kafle liczą się z krawędziami strony (zgłoszenie: prawy
+	   kafel 40 px od prawej). Przy 1 produkcie space-between = start, cap 34rem zostaje. */
+	justify-content: space-between;
 	gap: 1.5rem;
 	list-style: none;
 	margin: 0;
@@ -625,6 +628,58 @@ a.sklepag-kup {
 /* Sekcja zakupu + finalny CTA. */
 .sklepag-sekcja-zakup .sklepag-zakup {
 	max-width: 34rem;
+}
+
+/* 0.9.28: dwukolumnowy układ sekcji CENA — pudło zakupu po lewej (bez zmian w środku),
+   panel „PO ZAKUPIE" wypełnia dotychczasową pustkę po prawej (zgłoszenie właściciela 31.08).
+   Poniżej 64rem panel schodzi POD formularz — na telefonie nic się nie ściska. */
+.sklepag-zakup-uklad {
+	display: grid;
+	grid-template-columns: minmax(0, 34rem) minmax(14rem, 22rem);
+	justify-content: space-between;
+	align-items: start;
+	gap: 2rem;
+}
+
+.sklepag-zakup-aside {
+	border: 1px solid var(--sklepag-linia);
+	border-radius: 16px;
+	padding: 1.4rem 1.5rem;
+	position: sticky;
+	top: 6rem;
+}
+
+.sklepag-zakup-aside-lista {
+	list-style: none;
+	margin: 1rem 0 0;
+	padding: 0;
+	display: grid;
+	gap: 0.75rem;
+	color: var(--sklepag-mgla, inherit);
+}
+
+.sklepag-zakup-aside-lista li {
+	padding-left: 1.2rem;
+	position: relative;
+}
+
+.sklepag-zakup-aside-lista li::before {
+	content: '→';
+	position: absolute;
+	left: 0;
+	color: var(--sklepag-limonka);
+}
+
+@media (max-width: 64rem) {
+	.sklepag-zakup-uklad {
+		grid-template-columns: minmax(0, 34rem);
+		justify-content: start;
+	}
+
+	.sklepag-zakup-aside {
+		position: static;
+		max-width: 34rem;
+	}
 }
 
 .sklepag-zakup-notka {

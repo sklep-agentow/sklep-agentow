@@ -81,8 +81,11 @@
   }
 
   function zamontuj(clientSecret) {
-    /* Polskie etykiety w ramkach Stripe („Karta”, „Numer karty”, „Data ważności”) — reszta sklepu jest po polsku. */
-    var stripe = window.Stripe(cfg.pk, { locale: 'pl' });
+    /* Polskie etykiety w ramkach Stripe („Karta”, „Numer karty”, „Data ważności”) — reszta sklepu jest po polsku.
+       developerTools: pływający „testing assistant” Stripe’a (guzik w prawym dolnym rogu, tylko na kluczu
+       testowym) wyłączony — nachodził na bąbelek ChatBota i mylił oglądających; na kluczu live i tak go nie ma
+       (docs.stripe.com/sdks/stripejs-testing-assistant, sekcja „Hide the testing assistant”). */
+    var stripe = window.Stripe(cfg.pk, { locale: 'pl', developerTools: { assistant: { enabled: false } } });
     checkout = stripe.initCheckoutElementsSdk({
       clientSecret: Promise.resolve(clientSecret),
       elementsOptions: { appearance: appearance() }

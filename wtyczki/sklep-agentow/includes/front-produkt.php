@@ -957,6 +957,11 @@ function sklepag_render_produkt( $slug ) {
 	// Kotwice „Kup teraz" (hero, finał, pigułka) celują w SEKCJĘ (id), nie w formularz: po skoku cena
 	// zostaje w kadrze pod sticky nagłówkiem gospodarza, a ramka formularza błyska (CSS :target).
 	$html .= '<section class="sklepag-sekcja sklepag-sekcja-zakup" id="sklepag-zakup">' . $etykieta( 'CENA' );
+	// 0.9.28: układ dwukolumnowy — pudło zakupu po lewej BEZ ZMIAN (kotwica, formularz,
+	// selektory platnosc.js nietknięte), po prawej panel „PO ZAKUPIE" zamiast pustki
+	// (zgłoszenie właściciela 31.08). Liczby panelu idą ze STAŁYCH wtyczki — dokument
+	// zawsze równy kodowi (ta sama zasada co sekcja PYTANIA na liście).
+	$html .= '<div class="sklepag-zakup-uklad"><div class="sklepag-zakup-glowna">';
 	$html .= $cena;
 	if ( $t && ! empty( $t['gwarancja'] ) ) {
 		$html .= '<p class="sklepag-trigger">✔ 14 dni gwarancji satysfakcji — zwrot bez pytań</p>';
@@ -964,7 +969,19 @@ function sklepag_render_produkt( $slug ) {
 	if ( $t && ! empty( $t['zgodnosc'] ) ) {
 		$html .= '<p class="sklepag-przypis">' . esc_html( implode( ' · ', $t['zgodnosc'] ) ) . '</p>';
 	}
-	$html .= sklepag_formularz_zakupu( $p ) . '</section>';
+	$html .= sklepag_formularz_zakupu( $p );
+	// Panel niesie WYŁĄCZNIE to, czego nie ma nigdzie indziej w kadrze ani w sekcji
+	// „W PACZCE" wyżej (runda 2: panel powtarzał jej nazwę i dwa punkty) — przebieg
+	// zakupu i prawa kupionej kopii, liczby ze stałych wtyczki.
+	$html .= '</div><aside class="sklepag-zakup-aside" aria-label="Co się dzieje po zakupie">';
+	$html .= '<p class="sklepag-mono-etykieta">[ PO ZAKUPIE ]</p><ul class="sklepag-zakup-aside-lista">';
+	$html .= '<li>płacisz kartą przez Stripe — bez zakładania konta</li>';
+	$html .= '<li>mail z linkiem pobrania zaraz po płatności — link ważny ' . (int) SKLEPAG_LINK_GODZIN . ' h, do ' . (int) SKLEPAG_LIMIT_POBRAN . ' pobrań</li>';
+	if ( $t && ! empty( $t['gwarancja'] ) ) {
+		// NIE powtarzamy zdania o 14 dniach — stoi 30 cm w lewo (p.sklepag-trigger).
+		$html .= '<li>aktualizacje i wsparcie dla kupionej kopii</li>';
+	}
+	$html .= '</ul></aside></div></section>';
 
 	// GWARANCJA — obietnica zwrotu = zobowiązanie finansowe; treść ustala właściciel sklepu.
 	if ( $t && ! empty( $t['gwarancja'] ) ) {

@@ -194,7 +194,7 @@ jeśli kupujący wystawił opinię — jego **imię, tytuł i treść opinii** (
 na stronie produktu, za zgodą z formularza). Dane karty obsługuje wyłącznie Stripe — na Twoim serwerze ich nie ma.
 
 **Anonimizacja na żądanie kupującego:** Szczegóły zamówienia → **Dane osobowe (RODO)** →
-przycisk anonimizacji. Sklep usuwa adres e-mail (i dane do faktury, jeśli były) z zamówienia i z dziennika zdarzeń; przy opinii
+przycisk anonimizacji. Sklep usuwa adres e-mail (i dane do faktury, jeśli były) z zamówienia i z dziennika zdarzeń — razem z zapisaną treścią maila, która niosła kopię tych danych; przy opinii
 tego zamówienia kasuje **imię** i zdejmuje opinię ze strony produktu (trafia do Odrzuconych, bez
 możliwości przywrócenia — treść i ocena zostają w bazie, już bez autora); unieważnia link do pobrania (zanonimizowany kupujący nie ma już dokąd dostać
 świeżego linku) i zapisuje datę anonimizacji. **Kwoty i czasy zostają** — statystyki sprzedaży

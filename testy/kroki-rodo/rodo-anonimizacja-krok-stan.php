@@ -17,7 +17,7 @@ if ( ! $id ) {
 }
 
 $pz  = $wpdb->prefix . 'sklepag_zamowienia';
-$zam = $wpdb->get_row( $wpdb->prepare( "SELECT email_kupujacego, usunieto_dnia, token_pobrania FROM {$pz} WHERE id = %d", $id ) ); // phpcs:ignore
+$zam = $wpdb->get_row( $wpdb->prepare( "SELECT email_kupujacego, usunieto_dnia, token_pobrania, mail_tresc, dane_faktury FROM {$pz} WHERE id = %d", $id ) ); // phpcs:ignore
 if ( ! $zam ) {
 	echo "PRZYRZAD=BRAK-ZAMOWIENIA\n";
 	exit( 2 );
@@ -26,6 +26,9 @@ if ( ! $zam ) {
 echo 'MAIL_PO=' . ( '' === (string) $zam->email_kupujacego ? 'PUSTY' : 'ZOSTAL' ) . "\n";
 echo 'USUNIETO_DNIA=' . ( empty( $zam->usunieto_dnia ) ? 'BRAK' : 'JEST' ) . "\n";
 echo 'TOKEN_POBRANIA=' . ( '' === (string) $zam->token_pobrania ? 'PUSTY' : 'ZOSTAL' ) . "\n";
+/* WAZNA 1 #234 r5: oryginal tresci maila niesie kopie danych faktury — (string) NULL = ''. */
+echo 'MAIL_TRESC=' . ( '' === (string) $zam->mail_tresc ? 'PUSTY' : 'ZOSTAL' ) . "\n";
+echo 'DANE_FAKTURY=' . ( '' === (string) $zam->dane_faktury ? 'PUSTY' : 'ZOSTAL' ) . "\n";
 
 $tz    = $wpdb->prefix . 'sklepag_zdarzenia';
 $rodz  = $wpdb->get_col( $wpdb->prepare( "SELECT typ FROM {$tz} WHERE zamowienie_id = %d", $id ) ); // phpcs:ignore

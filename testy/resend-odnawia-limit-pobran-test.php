@@ -16,6 +16,14 @@
  *   (stary link zachowuje swój stan; kupujący nie dostaje ekstra pobrań na starym linku).
  * CZĘŚĆ 3 (klasa): automatyczne ponowienie przez cron (sklepag_domknij_zakup przy mail_blad)
  *   też rotuje token — i też musi zerować licznik. Runda 5: naprawa objęła egzemplarz, nie klasę.
+ * CZĘŚĆ 4/5: kompensacja i CAS własności na ścieżce ZAPASOWEJ (dor_* wyzerowane w setupie —
+ *   tak wygląda zamówienie sprzed schematu v9).
+ * CZĘŚĆ 5 (zmiana 0.9.28): pad procesu A po przejęciu wysyłki przez B NIE przestawia statusu
+ *   — mail_blad wolno zapisać tylko pod dowodem własności tokenu (#228 r4 u5); wcześniej
+ *   zamówienie z DORĘCZONYM mailem B lądowało w panelu jako mail_blad.
+ * CZĘŚĆ 6 (0.9.28, #228 r5 u1): kompensacja przywraca stan ostatniej DORĘCZONEJ wysyłki
+ *   (ślad dor_*), nie „zastany": A zrotował i padł W TRAKCIE wp_mail, B po stale-claimie
+ *   też pada — przed naprawą wracał token A, którego nie niósł żaden doręczony mail.
  */
 
 global $wpdb;
@@ -89,8 +97,10 @@ $pass1 = ( 0 === (int) $po1->pobrania_uzyte && (int) $po1->pobrania_uzyte < (int
 echo 'STRAZNIK: WYNIK=' . ( $pass1 ? 'PASS' : 'FAIL - swiezy link nadal ma wyczerpany limit (410)' ) . "\n";
 remove_filter( 'pre_wp_mail', '__return_true', 99 );
 
-// ---- CZĘŚĆ 2 (kompensacja): nieudany resend przywraca licznik ----
-$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET status='mail_wyslany', token_pobrania=%s, link_wygasa=%s, pobrania_uzyte=%d WHERE id=%d", $stary_token, $stary_termin, 7, $id ) );
+// ---- CZĘŚĆ 2 (kompensacja, ścieżka ZAPASOWA): nieudany resend przywraca licznik ----
+// dor_* wyzerowane: zamówienie sprzed v9 — kompensacja resendu ze zdjęcia z wejścia handlera.
+// (CZĘŚĆ 1 zapisała ślad dor_* swoim doręczeniem; bez zerowania stan live≠dor byłby sztuczny.)
+$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET status='mail_wyslany', token_pobrania=%s, link_wygasa=%s, pobrania_uzyte=%d, dor_token_pobrania='', dor_link_wygasa=NULL, dor_mail_tresc=NULL, dor_opinia_hash='' WHERE id=%d", $stary_token, $stary_termin, 7, $id ) );
 add_filter( 'pre_wp_mail', '__return_false', 99 );
 $_GET['_wpnonce']     = wp_create_nonce( 'sklepag_resend' );
 $_REQUEST['_wpnonce'] = $_GET['_wpnonce'];
@@ -107,6 +117,34 @@ echo 'KONTROLA: token_przywrocony=' . ( $po2->token_pobrania === $stary_token ? 
 $pass2 = ( 7 === (int) $po2->pobrania_uzyte && $po2->token_pobrania === $stary_token && 'mail_blad' === $po2->status );
 echo 'KONTROLA: WYNIK=' . ( $pass2 ? 'PASS' : 'FAIL - nieudany resend zmienil licznik pobran starego linku' ) . "\n";
 remove_filter( 'pre_wp_mail', '__return_false', 99 );
+
+// ---- CZĘŚĆ 2b (kompensacja resendu, ścieżka ŚLADU dor_*): nieudany resend przywraca stan DORĘCZONY ----
+// Bliźniak CZĘŚCI 6 dla ręcznego resendu: ślad dor_* wskazuje inną (doręczoną) wysyłkę niż stan żywy.
+$dor2b_token  = hash( 'sha256', 'TOKEN-DORECZONY-2B' );
+$dor2b_termin = gmdate( 'Y-m-d H:i:s', time() + 55 * HOUR_IN_SECONDS );
+$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET status='mail_wyslany', token_pobrania=%s, link_wygasa=%s, pobrania_uzyte=7, mail_tresc='TRESC-ZYWA-2B', dor_token_pobrania=%s, dor_link_wygasa=%s, dor_mail_tresc='TRESC-DORECZONA-2B', dor_opinia_hash='HASH-OP-DOR-2B' WHERE id=%d", $stary_token, $stary_termin, $dor2b_token, $dor2b_termin, $id ) );
+$op_jest2b = (string) $wpdb->get_var( $wpdb->prepare( "SELECT token_hash FROM {$wpdb->prefix}sklepag_opinie WHERE zamowienie_id=%d AND status='zalazek'", $id ) );
+add_filter( 'pre_wp_mail', '__return_false', 99 );
+$_GET['_wpnonce']     = wp_create_nonce( 'sklepag_resend' );
+$_REQUEST['_wpnonce'] = $_GET['_wpnonce'];
+$przek2b = '';
+try {
+	sklepag_obsluz_resend();
+} catch ( Exception $e ) {
+	$przek2b = $e->getMessage();
+}
+remove_filter( 'pre_wp_mail', '__return_false', 99 );
+$po2b    = $wpdb->get_row( $wpdb->prepare( "SELECT token_pobrania, link_wygasa, pobrania_uzyte, mail_tresc, status FROM {$pz} WHERE id=%d", $id ) );
+$op_po2b = (string) $wpdb->get_var( $wpdb->prepare( "SELECT token_hash FROM {$wpdb->prefix}sklepag_opinie WHERE zamowienie_id=%d AND status='zalazek'", $id ) );
+echo 'RESEND-DOR: przekierowanie=' . ( false !== strpos( $przek2b, 'sklepag_resend=blad' ) ? 'blad (OK)' : $przek2b ) . "\n";
+echo 'RESEND-DOR: token_doreczony_przywrocony=' . ( $po2b->token_pobrania === $dor2b_token ? 'TAK' : 'NIE' ) . " (OCZEKIWANE: TAK)\n";
+echo 'RESEND-DOR: termin_doreczony=' . ( $po2b->link_wygasa === $dor2b_termin ? 'TAK' : 'NIE' ) . " (OCZEKIWANE: TAK)\n";
+echo 'RESEND-DOR: pobrania_uzyte=' . (int) $po2b->pobrania_uzyte . " (OCZEKIWANE: 0 — zywy token != slad, prawdziwe zuzycie doreczonego nieznane)\n";
+echo 'RESEND-DOR: mail_tresc_doreczona=' . ( 'TRESC-DORECZONA-2B' === $po2b->mail_tresc ? 'TAK' : 'NIE' ) . " (OCZEKIWANE: TAK)\n";
+echo 'RESEND-DOR: opinia_hash_doreczony=' . ( '' === $op_jest2b || 'HASH-OP-DOR-2B' === $op_po2b ? 'TAK' : 'NIE' ) . " (OCZEKIWANE: TAK)\n";
+echo 'RESEND-DOR: status_po=' . $po2b->status . " (OCZEKIWANE: mail_blad)\n";
+$pass2b = ( false !== strpos( $przek2b, 'sklepag_resend=blad' ) && $po2b->token_pobrania === $dor2b_token && $po2b->link_wygasa === $dor2b_termin && 0 === (int) $po2b->pobrania_uzyte && 'TRESC-DORECZONA-2B' === $po2b->mail_tresc && ( '' === $op_jest2b || 'HASH-OP-DOR-2B' === $op_po2b ) && 'mail_blad' === $po2b->status );
+echo 'RESEND-DOR: WYNIK=' . ( $pass2b ? 'PASS' : 'FAIL - kompensacja resendu nie przywrocila stanu doreczonego ze sladu dor_*' ) . "\n";
 
 // ---- CZĘŚĆ 3 (klasa, nie egzemplarz): AUTOMATYCZNE ponowienie przez cron też wydaje świeży link ----
 // Nieudany resend zostawia mail_blad z wyczerpanym licznikiem; cron bierze go przez
@@ -130,7 +168,8 @@ echo 'CRON: WYNIK=' . ( $pass3 ? 'PASS' : 'FAIL - link z automatycznego ponowien
 // Stan: mail_blad, stary token DZIAŁA (3 z 10 pobrań zużyte). Cron rotuje token, wp_mail pada
 // (pre_wp_mail=false) — stary token/termin/licznik mają WRÓCIĆ (do 0.9.27: w bazie zostawał
 // skrót, którego nie niósł żaden doręczony mail → kupujący tracił link na stałe).
-$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET status='mail_blad', mail_proby=1, token_pobrania=%s, link_wygasa=%s, pobrania_uzyte=3, mail_tresc='TRESC-DORECZONEGO-MAILA-K4' WHERE id=%d", $stary_token, $stary_termin, $id ) );
+// dor_* wyzerowane: CZĘŚĆ 4 testuje ścieżkę ZAPASOWĄ (zamówienie sprzed v9 — kompensacja ze stanu sprzed rotacji).
+$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET status='mail_blad', mail_proby=1, token_pobrania=%s, link_wygasa=%s, pobrania_uzyte=3, mail_tresc='TRESC-DORECZONEGO-MAILA-K4', dor_token_pobrania='', dor_link_wygasa=NULL, dor_mail_tresc=NULL, dor_opinia_hash='' WHERE id=%d", $stary_token, $stary_termin, $id ) );
 $op_przed = (string) $wpdb->get_var( $wpdb->prepare( "SELECT token_hash FROM {$wpdb->prefix}sklepag_opinie WHERE zamowienie_id=%d AND status='zalazek'", $id ) );
 add_filter( 'pre_wp_mail', '__return_false', 99 );
 $wynik4 = sklepag_domknij_zakup( array( 'id' => $sid, 'payment_status' => 'paid' ) );
@@ -148,18 +187,21 @@ echo 'CRON-PAD: opinia_hash_przywrocony=' . ( '' === $op_przed || $op_po === $op
 $pass4 = ( ! $wynik4 && 'mail_blad' === $po4->status && $po4->token_pobrania === $stary_token && 3 === (int) $po4->pobrania_uzyte && $po4->link_wygasa === $stary_termin && 'TRESC-DORECZONEGO-MAILA-K4' === $tresc4 && ( '' === $op_przed || $op_po === $op_przed ) );
 echo 'CRON-PAD: WYNIK=' . ( $pass4 ? 'PASS' : 'FAIL - pad poczty w cronie zabil dzialajacy stary link' ) . "\n";
 
-// ---- CZĘŚĆ 5 (CAS własności): proces B przejmuje wysyłkę stale-claimem — kompensacja A NIE nadpisuje stanu B ----
+// ---- CZĘŚĆ 5 (CAS własności): proces B przejmuje wysyłkę stale-claimem — kompensacja ANI STATUS A NIE nadpisują stanu B ----
 // Filtr pre_wp_mail symuluje proces B: W TRAKCIE wysyłki A podmienia w bazie token,
 // mail_tresc i skrót opinii (jakby B odebrał claim po 5 min i sam rotował), po czym
 // zwraca false (mail A pada). Kompensacja A ma NIE wejść: CAS `AND token_pobrania=<skrót A>`
-// nie trafia (w bazie leży skrót B), więc `if ( $przywrocono > 0 )` (zakup.php) pomija
-// wszystkie trzy zapisy. Na kodzie sprzed a2f9dc2 (mail_tresc i skrót opinii przywracane
-// BEZ warunku) ten krok PADA na mail_tresc/opinii — kalibracja w opisie PR.
+// nie trafia (w bazie leży skrót B), więc zapisy tresci/opinii są pominięte.
+// 0.9.28 (#228 r4 u5): także zapis `mail_blad` stoi pod tym samym dowodem własności —
+// status zostaje `mail_w_toku` (claim B żyje, B dokończy i sam postawi mail_wyslany).
+// Przed naprawą A przestawiał status i zamówienie z DORĘCZONYM mailem B świeciło mail_blad.
 $token_b_hash = hash( 'sha256', 'TOKEN-PROCESU-B-CZESC5' );
 $termin_b     = gmdate( 'Y-m-d H:i:s', time() + 72 * HOUR_IN_SECONDS );
-$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET status='mail_blad', mail_proby=1, token_pobrania=%s, link_wygasa=%s, pobrania_uzyte=3, mail_tresc='TRESC-A-SPRZED' WHERE id=%d", $stary_token, $stary_termin, $id ) );
+// dor_* wyzerowane: CZĘŚĆ 5 też mierzy ścieżkę ZAPASOWĄ (sprzed v9).
+$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET status='mail_blad', mail_proby=1, token_pobrania=%s, link_wygasa=%s, pobrania_uzyte=3, mail_tresc='TRESC-A-SPRZED', dor_token_pobrania='', dor_link_wygasa=NULL, dor_mail_tresc=NULL, dor_opinia_hash='' WHERE id=%d", $stary_token, $stary_termin, $id ) );
 $wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->prefix}sklepag_opinie SET token_hash='HASH-OPINII-A-PRZED' WHERE zamowienie_id=%d AND status='zalazek'", $id ) );
 $op_jest5    = (string) $wpdb->get_var( $wpdb->prepare( "SELECT token_hash FROM {$wpdb->prefix}sklepag_opinie WHERE zamowienie_id=%d AND status='zalazek'", $id ) );
+$zdb5_przed  = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}sklepag_zdarzenia WHERE zamowienie_id=%d AND typ='mail_blad'", $id ) );
 $symulacja_b = static function ( $pre ) use ( $wpdb, $pz, $sid, $id, $token_b_hash, $termin_b ) {
 	// Proces B: rotacja + doręczenie — jego stan jest od teraz jedyny prawdziwy.
 	$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET token_pobrania=%s, link_wygasa=%s, pobrania_uzyte=0, mail_tresc='TRESC-B-DORECZONA' WHERE stripe_session_id=%s", $token_b_hash, $termin_b, $sid ) );
@@ -175,15 +217,44 @@ echo 'CAS-B: domkniecie=' . ( $wynik5 ? 'true' : 'false' ) . " (OCZEKIWANE: fals
 echo 'CAS-B: token_nalezy_do_B=' . ( $po5->token_pobrania === $token_b_hash ? 'TAK' : 'NIE' ) . " (OCZEKIWANE: TAK)\n";
 echo 'CAS-B: mail_tresc_B_zachowana=' . ( 'TRESC-B-DORECZONA' === $po5->mail_tresc ? 'TAK' : 'NIE' ) . " (OCZEKIWANE: TAK)\n";
 echo 'CAS-B: opinia_hash_B_zachowany=' . ( '' === $op_jest5 || 'HASH-OPINII-B' === $op_po5 ? 'TAK' : 'NIE' ) . " (OCZEKIWANE: TAK)\n";
-echo 'CAS-B: status_po=' . $po5->status . " (OCZEKIWANE: mail_blad)\n";
-$pass5 = ( ! $wynik5 && $po5->token_pobrania === $token_b_hash && 'TRESC-B-DORECZONA' === $po5->mail_tresc && ( '' === $op_jest5 || 'HASH-OPINII-B' === $op_po5 ) && 'mail_blad' === $po5->status );
-echo 'CAS-B: WYNIK=' . ( $pass5 ? 'PASS' : 'FAIL - kompensacja stale-claima nadpisala stan procesu, ktory przejal wysylke' ) . "\n";
+echo 'CAS-B: status_po=' . $po5->status . " (OCZEKIWANE: mail_w_toku — status należy do B; przed 0.9.28 A błędnie stawiał mail_blad)\n";
+$zdb5_po = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}sklepag_zdarzenia WHERE zamowienie_id=%d AND typ='mail_blad'", $id ) );
+echo 'CAS-B: wpis_mail_blad_w_dzienniku=' . ( $zdb5_po - $zdb5_przed ) . " (OCZEKIWANE: 0 — dziennik pod tym samym warunkiem co status; przegrany melduje mail_przejety)\n";
+$pass5 = ( ! $wynik5 && $po5->token_pobrania === $token_b_hash && 'TRESC-B-DORECZONA' === $po5->mail_tresc && ( '' === $op_jest5 || 'HASH-OPINII-B' === $op_po5 ) && 'mail_w_toku' === $po5->status && 0 === ( $zdb5_po - $zdb5_przed ) );
+echo 'CAS-B: WYNIK=' . ( $pass5 ? 'PASS' : 'FAIL - kompensacja/status stale-claima nadpisaly stan procesu, ktory przejal wysylke' ) . "\n";
+
+// ---- CZĘŚĆ 6 (0.9.28): kompensacja przywraca stan DORĘCZONY (dor_*), nie zastany ----
+// Scenariusz #228 r5 u1: doręczono mail (dor_* = ślad). Potem A zrotował token i padł
+// W TRAKCIE wp_mail — w bazie został token A (niedoręczony), claim zwietrzał (>5 min).
+// B odbiera claim, snapshotuje STAN A, rotuje, wysyłka B też pada. Przed naprawą
+// kompensacja B przywracała token A (martwy link); po naprawie wraca stan DORĘCZONY.
+$dor_token  = hash( 'sha256', 'TOKEN-DORECZONY-K6' );
+$dor_termin = gmdate( 'Y-m-d H:i:s', time() + 60 * HOUR_IN_SECONDS );
+$token_a6   = hash( 'sha256', 'TOKEN-A-NIEDORECZONY-K6' );
+$termin_a6  = gmdate( 'Y-m-d H:i:s', time() + 71 * HOUR_IN_SECONDS );
+$stale6     = gmdate( 'Y-m-d H:i:s', strtotime( current_time( 'mysql' ) ) - 360 ); // claim starszy niż 5 min
+$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET status='mail_w_toku', mail_proby=1, token_pobrania=%s, link_wygasa=%s, pobrania_uzyte=0, mail_tresc='TRESC-A-NIEDORECZONA-K6', dor_token_pobrania=%s, dor_link_wygasa=%s, dor_mail_tresc='TRESC-DORECZONA-K6', dor_opinia_hash='HASH-OP-DORECZONY-K6', zmieniono=%s WHERE id=%d", $token_a6, $termin_a6, $dor_token, $dor_termin, $stale6, $id ) );
+$wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->prefix}sklepag_opinie SET token_hash='HASH-OP-A-K6' WHERE zamowienie_id=%d AND status='zalazek'", $id ) );
+$op_jest6 = (string) $wpdb->get_var( $wpdb->prepare( "SELECT token_hash FROM {$wpdb->prefix}sklepag_opinie WHERE zamowienie_id=%d AND status='zalazek'", $id ) );
+add_filter( 'pre_wp_mail', '__return_false', 99 );
+$wynik6 = sklepag_domknij_zakup( array( 'id' => $sid, 'payment_status' => 'paid' ) );
+remove_filter( 'pre_wp_mail', '__return_false', 99 );
+$po6    = $wpdb->get_row( $wpdb->prepare( "SELECT token_pobrania, link_wygasa, pobrania_uzyte, mail_tresc, status FROM {$pz} WHERE id=%d", $id ) );
+$op_po6 = (string) $wpdb->get_var( $wpdb->prepare( "SELECT token_hash FROM {$wpdb->prefix}sklepag_opinie WHERE zamowienie_id=%d AND status='zalazek'", $id ) );
+echo 'DOR: domkniecie=' . ( $wynik6 ? 'true' : 'false' ) . " (OCZEKIWANE: false)\n";
+echo 'DOR: token_doreczony_przywrocony=' . ( $po6->token_pobrania === $dor_token ? 'TAK' : 'NIE' ) . " (OCZEKIWANE: TAK — nie token A, ktorego nikt nie dostal)\n";
+echo 'DOR: termin_doreczony=' . ( $po6->link_wygasa === $dor_termin ? 'TAK' : 'NIE' ) . " (OCZEKIWANE: TAK)\n";
+echo 'DOR: mail_tresc_doreczona=' . ( 'TRESC-DORECZONA-K6' === $po6->mail_tresc ? 'TAK' : 'NIE' ) . " (OCZEKIWANE: TAK)\n";
+echo 'DOR: opinia_hash_doreczony=' . ( '' === $op_jest6 || 'HASH-OP-DORECZONY-K6' === $op_po6 ? 'TAK' : 'NIE' ) . " (OCZEKIWANE: TAK)\n";
+echo 'DOR: status_po=' . $po6->status . " (OCZEKIWANE: mail_blad — wlasnosc potwierdzona przywroconym tokenem)\n";
+$pass6 = ( ! $wynik6 && $po6->token_pobrania === $dor_token && $po6->link_wygasa === $dor_termin && 'TRESC-DORECZONA-K6' === $po6->mail_tresc && ( '' === $op_jest6 || 'HASH-OP-DORECZONY-K6' === $op_po6 ) && 'mail_blad' === $po6->status );
+echo 'DOR: WYNIK=' . ( $pass6 ? 'PASS' : 'FAIL - kompensacja przywrocila stan zastany (niedoreczony) zamiast sladu dor_*' ) . "\n";
 
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$ps} WHERE stripe_session_id=%s", $sid ) );
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$pz} WHERE stripe_session_id=%s", $sid ) );
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}sklepag_opinie WHERE zamowienie_id=%d", $id ) );
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}sklepag_zdarzenia WHERE zamowienie_id=%d", $id ) );
 
-$ok = ( $pass1 && $pass2 && $pass3 && $pass4 && $pass5 );
+$ok = ( $pass1 && $pass2 && $pass2b && $pass3 && $pass4 && $pass5 && $pass6 );
 echo 'RAZEM: WYNIK=' . ( $ok ? 'PASS' : 'FAIL' ) . "\n";
 exit( $ok ? 0 : 1 );

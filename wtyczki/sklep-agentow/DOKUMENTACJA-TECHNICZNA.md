@@ -1,6 +1,6 @@
 # Sklep Agentów — dokumentacja techniczna
 
-**Wersja wtyczki: 0.9.27 · wersja schematu bazy: 8 · WordPress 6.7+ · PHP 8.1+**
+**Wersja wtyczki: 0.9.28 · wersja schematu bazy: 9 · WordPress 6.7+ · PHP 8.1+**
 
 > **Po co ten dokument.** To jest **mapa systemu dla audytora i programisty**, nie ulotka.
 > Każda liczba i nazwa tutaj jest wzięta z kodu, nie z pamięci — jeśli coś się rozjedzie,
@@ -77,7 +77,11 @@ ma pole-pułapkę i limity żądań; twarde sufity długości: imię 100 · tytu
 późniejsza edycja produktu nie zmieniła historii · `status` (`oczekuje` → `oplacone`
 → `mail_wyslany`) · `token_pobrania`, `link_wygasa`, `pobrania_limit`,
 `pobrania_uzyte` — brama pobrań · `zgoda_tresc`, `zgoda_czas` — dowód zgody
-(RODO) · `mail_tresc` — wysłana treść · `usunieto_dnia` — znacznik anonimizacji ·
+(RODO) · `mail_tresc` — wysłana treść (czyszczona przy anonimizacji) · `dor_token_pobrania`, `dor_link_wygasa`,
+`dor_mail_tresc`, `dor_opinia_hash` — ślad ostatniej DORĘCZONEJ wysyłki (0.9.28, schemat 9):
+zapisywany w tym samym zapytaniu co status `mail_wyslany`, a kompensacja nieudanej rotacji
+linku (cron i „Wyślij ponownie") przywraca właśnie ten stan, nie zastany; czyszczony przy
+anonimizacji · `usunieto_dnia` — znacznik anonimizacji ·
 `dane_faktury` — nazwa firmy, NIP i adres podane przez kupującego (0.9.25; czyszczone przy anonimizacji) ·
 `payment_intent_id` — identyfikator płatności Stripe, jedyne powiązanie zdarzeń o zwrocie
 z zamówieniem · `zwrocono_grosze`, `zwrot_czas` — księgowanie zwrotów i obciążeń zwrotnych ·
@@ -87,7 +91,9 @@ i czyszczą OBIE ścieżki: obciążenie zwrotne (spór) oraz zwykły zwrot pien
 ustala pierwsze z tych zdarzeń — kolejne go nie nadpisuje.
 
 **Statusy zamówienia:** `oczekuje` → `oplacone` → `mail_w_toku` → `mail_wyslany`;
-`mail_blad` przy nieudanej wysyłce (cron ponawia do trzech prób); `zwrocone` po zwrocie
+`mail_blad` przy nieudanej wysyłce (cron ponawia do trzech prób; od 0.9.28 zapis `mail_blad`
+wymaga dowodu własności tokenu w warunku — pad procesu, któremu wysyłkę odebrano po 5 minutach,
+nie nadpisuje statusu doręczonej wysyłki drugiego procesu); `zwrocone` po zwrocie
 pełnej kwoty; `sporne` po otwarciu obciążenia zwrotnego. Dwa ostatnie **nie liczą się
 do przychodu** na Pulpicie; zwrot częściowy zostawia status bez zmian, a jego kwota schodzi
 z sum przez odjęcie `zwrocono_grosze`. Spór wygrany przywraca zamówienie do przychodu.
@@ -194,8 +200,8 @@ po stronie serwera. To jest świadome ograniczenie, nie przeoczenie.
 
 | Stała | Wartość | Znaczenie |
 |---|---|---|
-| `SKLEPAG_WERSJA` | 0.9.27 | wersja wtyczki (assety, cache) |
-| `SKLEPAG_WERSJA_SCHEMATU` | 8 | wersja schematu bazy (migracje) |
+| `SKLEPAG_WERSJA` | 0.9.28 | wersja wtyczki (assety, cache) |
+| `SKLEPAG_WERSJA_SCHEMATU` | 9 | wersja schematu bazy (migracje) |
 | `SKLEPAG_LIMIT_POBRAN` | 10 | ile razy można pobrać plik z jednego wydanego linku (zerowane przy świeżym linku) |
 | `SKLEPAG_LINK_GODZIN` | 72 | ważność linku pobrania |
 | `SKLEPAG_OPINIA_DNI` | 30 | ważność jednorazowego linku „oceń bota" |

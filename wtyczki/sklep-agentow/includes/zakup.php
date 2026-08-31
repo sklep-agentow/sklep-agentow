@@ -967,6 +967,9 @@ function sklepag_domknij_zakup( $sesja ) {
 	$opinia_hash_przed = (string) $wpdb->get_var( $wpdb->prepare( "SELECT token_hash FROM {$wpdb->prefix}sklepag_opinie WHERE zamowienie_id=%d AND status='zalazek'", (int) $zam->id ) );
 	$token_op          = sklepag_opinia_zalazek( (int) $zam->id, (int) $produkt->id );
 	$link_op           = '' !== $token_op ? admin_url( 'admin-post.php' ) . '?action=sklepag_ocen&z=' . (int) $zam->id . '&t=' . $token_op : '';
+	// Skrót opinii PO rotacji zalążka — przy DORĘCZENIU wejdzie do śladu dor_* (schemat v9):
+	// kompensacja przyszłej nieudanej rotacji ma przywracać skrót z maila, który DOSZEDŁ.
+	$opinia_hash_po = (string) $wpdb->get_var( $wpdb->prepare( "SELECT token_hash FROM {$wpdb->prefix}sklepag_opinie WHERE zamowienie_id=%d AND status='zalazek'", (int) $zam->id ) );
 
 	// 5) Mail: zapis treści PRZED pomiarem skutku (podgląd w panelu niezależnie od wyniku).
 	$link  = admin_url( 'admin-post.php' ) . '?action=sklepag_pobierz&z=' . (int) $zam->id . '&t=' . $token;
@@ -991,43 +994,73 @@ function sklepag_domknij_zakup( $sesja ) {
 
 	// 6) Stan PO POMIARZE skutku (CAS z mail_w_toku).
 	if ( $wyslano ) {
-		$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET status='mail_wyslany', zmieniono=%s WHERE stripe_session_id=%s AND status='mail_w_toku'", $teraz, $sid ) );
+		// DORĘCZONE — w tym samym CAS-ie zapisujemy ślad dor_* (schemat v9): token/termin/treść
+		// z bieżącego wiersza (dokładnie to poszło w mailu) + skrót opinii po rotacji zalążka.
+		// Kompensacja każdej PRZYSZŁEJ nieudanej rotacji przywraca TEN stan, nie „zastany"
+		// (wada #228 r5 u1: snapshot zastanego przywracał token, którego nie niósł żaden mail).
+		$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET status='mail_wyslany', dor_token_pobrania=token_pobrania, dor_link_wygasa=link_wygasa, dor_mail_tresc=mail_tresc, dor_opinia_hash=%s, zmieniono=%s WHERE stripe_session_id=%s AND status='mail_w_toku'", $opinia_hash_po, $teraz, $sid ) );
 		sklepag_zdarzenie( (int) $zam->id, 'mail_wyslany', 'do: ' . $email );
 		return true;
 	}
 
 	// Kompensacja: mail NIE wyszedł, więc świeży token nie dotarł do nikogo — przywracamy
-	// stan linku sprzed rotacji (jeśli był; pierwsze domknięcie nie ma czego przywracać).
+	// stan ostatniej DORĘCZONEJ wysyłki (ślad dor_* ze schematu v9). Gdy śladu nie ma
+	// (zamówienie sprzed v9 albo nic jeszcze nie doręczono), zapas: stan sprzed rotacji.
+	// ⛔ NIE „stan zastany": gdy A zrotował i padł W TRAKCIE wp_mail, B po stale-claimie
+	// zastawał token A, którego nie niósł żaden mail — i przywracał martwy link.
 	// Ta sama zasada co przy ręcznym „Wyślij ponownie” (admin-zamowienie.php).
-	if ( $przed_rotacja && '' !== (string) $przed_rotacja->token_pobrania ) {
+	$token_wlasnosci = hash( 'sha256', $token ); // dowód własności claimu do zapisu mail_blad niżej
+	$ma_dor          = isset( $zam->dor_token_pobrania ) && '' !== (string) $zam->dor_token_pobrania;
+	$zrodlo_token    = $ma_dor ? (string) $zam->dor_token_pobrania : ( $przed_rotacja ? (string) $przed_rotacja->token_pobrania : '' );
+	if ( '' !== $zrodlo_token ) {
 		// CAS na WŁASNY świeży skrót: proces, którego claim odebrano po 5 min (stale-claim),
 		// nie może nadpisać tokenu procesu, który przejął wysyłkę — przywracamy tylko wtedy,
 		// gdy w bazie nadal leży skrót Z NASZEJ rotacji. `link_wygasa` przy niepustym tokenie
 		// jest zawsze ustawiony (nadawane razem), więc %s nie dostanie NULL-a.
-		$przywrocono = (int) $wpdb->query(
+		$zrodlo_termin = $ma_dor ? (string) $zam->dor_link_wygasa : (string) $przed_rotacja->link_wygasa;
+		// Licznik pobrań: bieżące zużycie doręczonego linku niesie snapshot sprzed rotacji,
+		// o ile to TEN SAM token co przywracany. Po podwójnym padzie (snapshot = token, którego
+		// nikt nie dostał) prawdziwe zużycie przepadło z zerowaniem pierwszej rotacji — wraca 0:
+		// ograniczone limitem pobrań, na korzyść kupującego, odnotowane w zdarzeniu.
+		$zrodlo_uzyte = ( $przed_rotacja && (string) $przed_rotacja->token_pobrania === $zrodlo_token ) ? (int) $przed_rotacja->pobrania_uzyte : 0;
+		$przywrocono  = (int) $wpdb->query(
 			$wpdb->prepare(
 				"UPDATE {$pz} SET token_pobrania=%s, link_wygasa=%s, pobrania_uzyte=%d WHERE stripe_session_id=%s AND status='mail_w_toku' AND token_pobrania=%s",
-				$przed_rotacja->token_pobrania,
-				$przed_rotacja->link_wygasa,
-				(int) $przed_rotacja->pobrania_uzyte,
+				$zrodlo_token,
+				$zrodlo_termin,
+				$zrodlo_uzyte,
 				$sid,
 				hash( 'sha256', $token )
 			)
 		);
 		// Pozostale dwa zapisy TYLKO gdy CAS przeszedl (>=1 wiersz): jesli w bazie nie ma juz
 		// NASZEGO skrotu, wysylke przejal inny proces (stale-claim) i jego mail_tresc oraz
-		// skrot opinii sa aktualne - nie wolno ich nadpisac stanem sprzed naszej rotacji.
+		// skrot opinii sa aktualne - nie wolno ich nadpisac.
 		if ( $przywrocono > 0 ) {
+			// Po przywrocie w bazie leży skrót źródła — nim dowodzimy własności przy mail_blad.
+			$token_wlasnosci = $zrodlo_token;
+			$zrodlo_tresc    = $ma_dor ? (string) $zam->dor_mail_tresc : (string) $przed_rotacja->mail_tresc;
+			$zrodlo_opinia   = $ma_dor ? (string) $zam->dor_opinia_hash : $opinia_hash_przed;
 			// Tresc maila tez wraca (jak w blizniaku admin-zamowienie.php): panel pokazuje
 			// tresc wyslanego maila - po padzie pokazywalby link, ktorego nikt nie dostal.
-			$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET mail_tresc=%s WHERE id=%d", (string) $przed_rotacja->mail_tresc, (int) $zam->id ) );
-			if ( '' !== $opinia_hash_przed ) {
-				$wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->prefix}sklepag_opinie SET token_hash=%s WHERE zamowienie_id=%d AND status='zalazek'", $opinia_hash_przed, (int) $zam->id ) );
+			$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET mail_tresc=%s WHERE id=%d", $zrodlo_tresc, (int) $zam->id ) );
+			if ( '' !== $zrodlo_opinia ) {
+				$wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->prefix}sklepag_opinie SET token_hash=%s WHERE zamowienie_id=%d AND status='zalazek'", $zrodlo_opinia, (int) $zam->id ) );
 			}
 		}
 	}
-	$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET status='mail_blad', mail_proby=mail_proby+1, zmieniono=%s WHERE stripe_session_id=%s AND status='mail_w_toku'", $teraz, $sid ) );
-	sklepag_zdarzenie( (int) $zam->id, 'mail_blad', '' === $email ? 'brak adresu email w sesji' : 'wp_mail zwrocil false' );
+	// Zapis mail_blad TYLKO pod dowodem własności (AND token_pobrania=%s): gdy stale-claim
+	// odebrał nam wysyłkę i tamten proces doręczył, nasz pad nie może przestawić statusu
+	// jego DORĘCZONEGO maila na mail_blad (panel kłamałby, mail_proby rosłoby cudzej wysyłce).
+	$blad_zapisany = (int) $wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET status='mail_blad', mail_proby=mail_proby+1, zmieniono=%s WHERE stripe_session_id=%s AND status='mail_w_toku' AND token_pobrania=%s", $teraz, $sid, $token_wlasnosci ) );
+	// Dziennik pod TYM SAMYM warunkiem co status (pomiar skutku, nie wywołania — ta sama
+	// zasada co przy anonimizacji): 0 wierszy = wysyłkę przejął inny proces i jego stan
+	// jest aktualny, więc wpis „mail_blad" kłamałby właścicielowi w panelu.
+	if ( $blad_zapisany > 0 ) {
+		sklepag_zdarzenie( (int) $zam->id, 'mail_blad', '' === $email ? 'brak adresu email w sesji' : 'wp_mail zwrocil false' );
+	} else {
+		sklepag_zdarzenie( (int) $zam->id, 'mail_przejety', 'nieudana wysyłka przegranego procesu — wysyłkę przejął inny proces, statusu nie ruszamy' );
+	}
 	return false;
 	// phpcs:enable
 }
