@@ -49,7 +49,7 @@ Dwa FAIL-e są **decyzją, nie wadą** — obie zapisane w `audyt/CO-WISI.md` i 
 
 - Audyt końcowy K7 na **czystym stosie z deklarowanym minimum** `wordpress:6.7-php8.1-apache`
   (`audyt/sklep/ZAMROZENIE.md`), świeże sesje audytorów, jedna soczewka na agenta, kalibracja bankiem
-  mutantów (gałąź `audyt/mutanty-sklep`). Naprawy po audycie: 23 cele 🐞, każde zamknięcie ze strażnikiem.
+  mutantów (gałąź `audyt/mutanty-sklep`). Naprawy po audycie: 23 cele 🐞, każde zamknięcie ze strażnikiem. (dziś: bank przeniesiony na TAG `bank/mutanty-sklep`, 31.08 #238)
 - Przelot człowieka po sklepie **27/27 punktów** (`audyt/sklep/PRZELOT-CZLOWIEKA-SKLEP.md`) na stosie
   warsztatowym WP 7.1 / PHP 8.4; rdzeń zakupu (zakup → webhook → mail → pobranie, sumy zgodne) powtórzony
   NA PACZCE, na świeżej instalacji (`audyt/K6-INSTALACJA-OD-ZERA.md`).

@@ -89,7 +89,7 @@ NAPRAWACH"), nie tylko §1 — inaczej bierzesz stan SPRZED naprawy za stan dzis
   której „soczewki" audytora (kod sklepu = 8842 linie). **Audytor: te cztery pliki też
   czytaj** — ta mapa (07) o nich nie mówiła w chwili pisania, bo jeszcze nie istniały.
 - **Bank mutantów sklepu NIE leży w `audyt/sklep/material/` ani nigdzie w repo
-  głównym.** Wg `DECYZJE.md` D33 mechanika banku to osobna gałąź `audyt/mutanty-sklep`
+  głównym.** Wg `DECYZJE.md` D33 mechanika banku to osobna gałąź `audyt/mutanty-sklep` (dziś: bank przeniesiony na TAG `bank/mutanty-sklep`, 31.08 #238)
   (tabela rozliczenia COMMITOWANA na tej gałęzi, nie w luźnym pliku) — **audytor NIE
   dostaje tej gałęzi**.
 - **Lista przelotu człowieka DLA SKLEPU ISTNIEJE: `audyt/sklep/PRZELOT-CZLOWIEKA-SKLEP.md` (27 punktów, statusy

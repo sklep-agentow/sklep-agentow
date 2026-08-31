@@ -12,8 +12,8 @@ osobnym PR z wpisem w `DECYZJE.md` (§12 planu).
 
 Notacja dowodów: `Lx-yy` = cel mapy polowania (z raportem audytora w `audyt/sklep/raporty/` i sha
 paczki); `A7`/`B6`/`C1` = punkt przelotu człowieka; `SK-…` = wpis rejestru
-`audyt/sklep/REJESTR-ZNALEZISK-SKLEP.md`; rozliczenie mutantów leży na gałęzi — otwierasz je tak:
-`git show origin/audyt/mutanty-sklep:audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP.md`.
+`audyt/sklep/REJESTR-ZNALEZISK-SKLEP.md`; rozliczenie mutantów leży na TAGU (od 31.08, #238; wcześniej gałąź) — otwierasz je tak:
+`git show bank/mutanty-sklep:audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP.md`.
 
 | # | Kryterium (§12) | Werdykt | Dowód (plik, cel, wynik) |
 |---|---|---|---|

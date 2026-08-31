@@ -48,6 +48,7 @@ przygotuj_kopie() {
 	# więc kopia drzewa musi go dostać — inaczej bramka słusznie melduje, że nie ma
 	# czym sprawdzić, i próba bada brak narzędzia zamiast tego, co miała badać.
 	cp "$KORZEN/narzedzia-qa/slady-wewnetrzne.sh" "$cel/narzedzia-qa/"
+	cp "$KORZEN/README.md" "$cel/"  # 7. miejsce sklepu: odznaka wydania czyta README repo
 }
 
 # Wersja z nagłówka kopii — do składania nazwy zipa.
@@ -323,9 +324,19 @@ sprawdz "numer PR-a i recenzent w paczce"                    1 psuj_obieg_pracy 
 sprawdz "goly numer zgloszenia (— #170) bez slowa PR"        1 psuj_numer_goly            "nasz obieg pracy"
 
 echo
+echo
+echo "=== ODZNAKA WERSJI W README (sklep-agentow, 7. miejsce) — dolozona 31.08 ==="
+WTYCZKA=sklep-agentow
+psuj_badge() { sed -i 's|badge/wydanie-v[0-9.]*-|badge/wydanie-v9.9.9-|' "$1/README.md"; }
+sprawdz "odznaka README rozjechana z naglowkiem"       1 psuj_badge   "odznaka wydania w README"
+psuj_badge_brak() { sed -i "/badge\/wydanie-v/d" "$1/README.md"; }  # druga sciezka odrzucenia (r1 #238 D5)
+sprawdz "odznaki wydania w README w ogole NIE MA"      1 psuj_badge_brak "odznaka wydania w README repo — nie umiem odczytać wersji"
+sprawdz "sklep czysty: SIEDEM miejsc + zip + opis"     0 nic_nie_psuj "siedem miejsc zgodnych"
+
 echo "=== KONTROLA ODWROTNA: czysty stan ma PRZECHODZIC ==="
 # Bez tego „naprawa" mogłaby odrzucać WSZYSTKO i świecić na zielono.
-sprawdz "czysta paczka: wersja, sumy, opis wydania, zero sladow" 0 nic_nie_psuj
+WTYCZKA=chatbot-live  # przywrocenie po bloku sklepu (r1 #238 W2): kontrola odwrotna MA pokrywac sciezke BEZ odznaki
+sprawdz "czysta paczka (chatbot, SZESC miejsc): wersja, sumy, opis, zero sladow" 0 nic_nie_psuj "sześć miejsc zgodnych"
 
 echo
 if [ "$BLEDY" -eq 0 ]; then

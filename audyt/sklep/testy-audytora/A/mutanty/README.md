@@ -1,5 +1,5 @@
 # Testy audytorów rundy A, które trafiły PODŁOŻONE błędy (bank mutantów, paczka `425a3124`) — NIE wady 0.9.13
-Runda A biegła na paczce z gałęzi `audyt/mutanty-sklep` (7 mutantów M1–M7 + 4 pułapki). Te pliki audytorzy napisali
+Runda A biegła na paczce z gałęzi `audyt/mutanty-sklep` (7 mutantów M1–M7 + 4 pułapki). Te pliki audytorzy napisali (dziś: bank przeniesiony na TAG `bank/mutanty-sklep`, 31.08 #238)
 jako „padające na obecnym kodzie" — i padały, ale na MUTANCIE. Na zamrożonej 0.9.13 (`5d3dcf9`, sha `7e0cf726…`)
 przechodzą, bo czysty kod tej wady nie ma (recenzja #190 W2: karencja 5 min JEST w `zakup.php:308`, HEAD kończy `exit`
 PRZED inkrementem w `pobieranie.php`, pętla 1 reconciliation LOGUJE `reconciliation_blad`, opcji `sag_pulpit_*` nie ma).

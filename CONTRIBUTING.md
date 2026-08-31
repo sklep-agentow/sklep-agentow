@@ -89,3 +89,9 @@ Pełna lista z dowodami: `audyt/SCIAGA-EGZAMINATORA.md`. Najczęstsze: uninstall
 i klucz API · `LIKE` bez `esc_like()` · dokumentacja z liczbą, której nie ma w kodzie · wersja
 rozjechana między nagłówkiem, stałą i `readme.txt` · test, który przechodzi zawsze (nie jest
 dowodem) · `$?` czytany po potoku (mierzy `tail`, nie test).
+- **Tag `bank/mutanty-sklep` to SEJF, nie wydanie** — bank ładunków kalibracyjnych K7
+  (7 prawdziwych mutantów + 4 pułapki, tabela rozliczenia na pokładzie). NIE mergować
+  i nie kasować: commity to celowe sabotaże do kalibracji audytorów, a `k7-koniec.sh`
+  czyta z tego tagu tabelę rozliczenia. Ochrona gałęzi po stronie GitHuba jest na darmowym
+  planie niedostępna dla repo prywatnego (403), więc zasadę „na `main` wyłącznie PR-em”
+  trzyma hook pre-push z `.githooks/` i dyscyplina zespołu.
