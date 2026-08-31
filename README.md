@@ -94,6 +94,7 @@ to osobna paczka: `INSTRUKCJA-INSTALACJI.md`, rozdział „Test a produkcja”.
 | `testy/` | testy na żywym stosie WordPressa: przeloty E2E, sondy strażników, zrzuty, zgodność dokumentacji z kodem |
 | `narzedzia-qa/` | bramki jakości (`bramki.sh`), zgodność paczki z repo, bramka końcowa `k7-koniec.sh`, pakowanie wydania |
 | `audyt/` | rejestry znalezisk, raporty audytów, rejestr klas błędów, stan wiszących spraw |
+| `archiwum-procesu/` | robocze dokumenty z czasu budowy (plany etapów, zwiady, tablica koordynacji) — kontekst decyzji, nie produkt; patrz `O-TYM-KATALOGU.md` w środku |
 | `PLAN-PROJEKTU.md`, `DECYZJE.md`, `MAPA-SPEC.md`, `ZROZUMIENIE.md` | plan, rejestr decyzji, mapa wymagań, treść zlecenia |
 
 ## Jakość — maszyny, nie obietnice
