@@ -44,6 +44,12 @@ $wpdb->insert(
 		'email_kupujacego'      => $mail,
 		'status'                => 'mail_wyslany',
 		'token_pobrania'        => str_repeat( 'a', 64 ),
+		/* ⛔ WAZNA 1 recenzji #234 r5: tresc maila niesie PELNA kopie danych do faktury
+		   (zakup.php sklada blok „DANE DO FAKTURY" z $zam->dane_faktury i zapisuje calosc
+		   do mail_tresc). Zasiew odtwarza ten uklad — anonimizacja musi wyczyscic OBA
+		   miejsca, nie tylko kolumne dane_faktury. */
+		'dane_faktury'          => "Firma Probna Sp. z o.o.\nNIP: 5260250274\nul. Probna 1, 00-001 Warszawa",
+		'mail_tresc'            => "Dziekujemy za zakup!\n\nDANE DO FAKTURY (podane przy zakupie):\nFirma Probna Sp. z o.o.\nNIP: 5260250274\nul. Probna 1, 00-001 Warszawa\nFakture wystawimy w ustawowym terminie.",
 		'utworzono'             => $teraz,
 		'zmieniono'             => $teraz,
 	)
@@ -55,6 +61,12 @@ if ( ! $id ) {
 }
 echo 'ID=' . $id . "\n";
 echo 'MAIL_PRZED=' . $mail . "\n";
+
+/* Warunek wstepny WLASNEGO przyrzadu: kontrola musi UMIEC zobaczyc blad, ktorego sie boi.
+   Czytamy z BAZY (nie z tablicy zasiewu), zeby dowiesc, ze dane faktury naprawde leza
+   w tresci maila przed operacja — inaczej „PUSTY po" niczego by nie mierzylo. */
+$zasiew = $wpdb->get_row( $wpdb->prepare( "SELECT mail_tresc, dane_faktury FROM {$pz} WHERE id = %d", $id ) ); // phpcs:ignore
+echo 'MAIL_TRESC_PRZED=' . ( ( $zasiew && false !== strpos( (string) $zasiew->mail_tresc, 'NIP: 5260250274' ) ) ? 'ZAWIERA-FAKTURE' : 'BEZ-FAKTURY' ) . "\n";
 
 $admini = get_users( array( 'role' => 'administrator', 'number' => 1 ) );
 if ( empty( $admini ) ) {

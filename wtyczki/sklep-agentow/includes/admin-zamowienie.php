@@ -243,9 +243,12 @@ add_action( 'admin_post_sklepag_anonimizuj', 'sklepag_obsluz_anonimizacje' );
  * z nazwaniem, które miejsce nie zostało domknięte, oraz `wp_die` z ostrzeżeniem, żeby
  * NIE potwierdzać usunięcia osobie składającej żądanie.
  *
- * ⛔ `mail_tresc` jest w zapytaniu, bo pole bywa potrzebne przy diagnozie zamówienia,
- * ale ta funkcja go NIE zmienia — treść maila nie zawiera adresu w postaci innej niż
- * ta czyszczona wyżej.
+ * ⛔ `mail_tresc` (oryginalna treść wysłanego maila) jest CZYSZCZONA razem ze śladem
+ * `dor_*`: treść niesie pełną kopię danych do faktury (nazwa firmy, NIP, adres — blok
+ * „DANE DO FAKTURY" składany przy wysyłce), więc zostawienie jej unieważniałoby
+ * skasowanie kolumny `dane_faktury` obok, a panel wypisywałby te dane po anonimizacji.
+ * Diagnoza zamówienia po anonimizacji obywa się bez treści maila — relacja z kupującym
+ * jest zakończona (resend i tak odmawia bez adresu).
  */
 function sklepag_obsluz_anonimizacje() {
 	if ( ! current_user_can( 'manage_options' ) ) {
@@ -258,7 +261,7 @@ function sklepag_obsluz_anonimizacje() {
 	global $wpdb;
 	$pz = $wpdb->prefix . 'sklepag_zamowienia';
 	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery -- nazwa tabeli z prefiksu; akcja admina.
-	$zam = $wpdb->get_row( $wpdb->prepare( "SELECT id, email_kupujacego, mail_tresc FROM {$pz} WHERE id = %d", $id ) );
+	$zam = $wpdb->get_row( $wpdb->prepare( "SELECT id, email_kupujacego FROM {$pz} WHERE id = %d", $id ) );
 	if ( ! $zam ) {
 		wp_die( 'Zamówienie nie istnieje.', 'Sklep Agentów', 404 );
 	}
@@ -368,7 +371,7 @@ function sklepag_obsluz_anonimizacje() {
 
 	$ok_zam = $wpdb->query(
 		$wpdb->prepare(
-			"UPDATE {$pz} SET email_kupujacego='', dane_faktury='', usunieto_dnia=%s, token_pobrania='', link_wygasa=NULL, dor_token_pobrania='', dor_link_wygasa=NULL, dor_mail_tresc=NULL, dor_opinia_hash='', zmieniono=%s WHERE id=%d",
+			"UPDATE {$pz} SET email_kupujacego='', dane_faktury='', mail_tresc=NULL, usunieto_dnia=%s, token_pobrania='', link_wygasa=NULL, dor_token_pobrania='', dor_link_wygasa=NULL, dor_mail_tresc=NULL, dor_opinia_hash='', zmieniono=%s WHERE id=%d",
 			$teraz,
 			$teraz,
 			(int) $zam->id
@@ -391,7 +394,7 @@ function sklepag_obsluz_anonimizacje() {
 	 * Rozstrzyga STAN PO ZAPISIE: e-mail ma byc pusty, `usunieto_dnia` ustawione.
 	 */
 	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- nazwy tabel z prefiksu; akcja admina.
-	$po = $wpdb->get_row( $wpdb->prepare( "SELECT email_kupujacego, usunieto_dnia, token_pobrania, dor_token_pobrania, dor_mail_tresc, dor_opinia_hash FROM {$pz} WHERE id = %d", (int) $zam->id ) );
+	$po = $wpdb->get_row( $wpdb->prepare( "SELECT email_kupujacego, usunieto_dnia, token_pobrania, mail_tresc, dor_token_pobrania, dor_mail_tresc, dor_opinia_hash FROM {$pz} WHERE id = %d", (int) $zam->id ) );
 
 	/*
 	 * ⛔ SKUTEK LICZY SIE WE WSZYSTKICH TRZECH MIEJSCACH, w ktorych siedzial adres
@@ -432,12 +435,14 @@ function sklepag_obsluz_anonimizacje() {
 	);
 	// phpcs:enable
 
-	/* Pomiar TAK SZEROKI jak czyszczenie (v9): tokeny i ślad dor_* też muszą zniknąć —
-		dor_mail_tresc to KOPIA treści maila (NULL po czyszczeniu; (string) NULL = ''). */
+	/* Pomiar TAK SZEROKI jak czyszczenie (v9): tokeny, ORYGINAŁ treści maila i ślad dor_*
+		też muszą zniknąć — mail_tresc niesie kopię danych do faktury, dor_mail_tresc to
+		KOPIA treści maila (NULL po czyszczeniu; (string) NULL = ''). */
 	$skutek_ok = $po
 		&& '' === (string) $po->email_kupujacego
 		&& ! empty( $po->usunieto_dnia )
 		&& '' === (string) $po->token_pobrania
+		&& '' === (string) $po->mail_tresc
 		&& '' === (string) $po->dor_token_pobrania
 		&& '' === (string) $po->dor_mail_tresc
 		&& '' === (string) $po->dor_opinia_hash
@@ -453,6 +458,7 @@ function sklepag_obsluz_anonimizacje() {
 			'anonimizacja_blad',
 			'anonimizacja NIE doszła do skutku — '
 			. 'adres w zamówieniu: ' . ( ( $po && '' === (string) $po->email_kupujacego ) ? 'usunięty' : 'ZOSTAŁ' )
+			. ', treść maila: ' . ( ( $po && '' === (string) $po->mail_tresc ) ? 'usunięta' : 'ZOSTAŁA' )
 			. ', ślady w dzienniku: ' . (int) $slady_dziennik
 			. ', dane opinii: ' . (int) $slady_opinia
 		);

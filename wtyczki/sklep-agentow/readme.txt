@@ -152,7 +152,7 @@ link do pobrania w mailu, jednorazowy link do opinii.
 = 0.9.28 =
 * Naprawione: po nieudanej ponownej wysyłce maila (awaria poczty) wraca dokładnie ten link, który kupujący ma w skrzynce — wtyczka zapamiętuje stan każdego doręczonego maila i przywraca właśnie jego. Znany wyjątek z 0.9.27 (pad serwera w pół wysyłki + nieudane ponowienie mogły zgasić działający link) jest zamknięty.
 * Naprawione: gdy dwa procesy domykały ten sam zakup, panel mógł oznaczyć doręczonego maila jako „błąd maila" — teraz status zapisuje tylko proces, który faktycznie wysyłał.
-* Naprawione: anonimizacja kupującego (RODO) usuwa także zapamiętany ślad doręczonego maila (kopię treści i tokenu).
+* Naprawione: anonimizacja kupującego (RODO) usuwa także zapisaną treść maila i zapamiętany ślad doręczonego maila — treść niosła dane do faktury (nazwa firmy, NIP, adres), jeśli kupujący je podał.
 * Zmienione: sekcja ceny na stronie produktu ma panel „Po zakupie" (płatność bez konta, kiedy przyjdzie mail z linkiem i na jak długo, aktualizacje i wsparcie); kafle listy produktów wyrównane do krawędzi; schowany testowy przycisk Stripe, który zasłaniał okno czatu.
 
 = 0.9.27 =

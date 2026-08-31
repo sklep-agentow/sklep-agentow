@@ -36,8 +36,10 @@ Nic jeszcze.
   potrafił oznaczyć DORĘCZONY mail drugiego procesu jako `mail_blad` i podbić mu licznik prób —
   panel kłamał, choć kupujący dostał maila. Część 5 strażnika oczekuje teraz statusu `mail_w_toku`
   po padzie procesu-przegranego (właściciel wysyłki sam domknie).
-- **Anonimizacja (RODO) czyści także ślad `dor_*`** — kopię treści maila i tokenu; pomiar skutku
-  anonimizacji poszerzony o tokeny i ślad (pomiar tak szeroki jak czyszczenie).
+- **Anonimizacja (RODO) czyści także zapisaną treść maila i ślad `dor_*`** — oryginał treści
+  niósł pełną kopię danych do faktury (nazwa firmy, NIP, adres) i zostawał w bazie mimo
+  skasowania kolumny z tymi danymi; pomiar skutku anonimizacji poszerzony o treść maila,
+  tokeny i ślad (pomiar tak szeroki jak czyszczenie).
 
 ### Zmienione
 - **Sekcja CENA strony produktu:** panel „PO ZAKUPIE" po prawej stronie formularza — płatność

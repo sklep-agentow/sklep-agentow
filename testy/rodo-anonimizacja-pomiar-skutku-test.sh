@@ -15,6 +15,8 @@
 #
 # Sprawdza:
 #   A. ścieżka szczęśliwa — e-mail znika, `usunieto_dnia` jest, token pobrania pusty,
+#      treść maila i `dane_faktury` puste (treść niosła pełną kopię danych do faktury:
+#      nazwa firmy, NIP, adres — WAŻNA 1 recenzji #234 r5),
 #      zdarzenie `anonimizacja` zapisane, brak `anonimizacja_blad`;
 #   B. PODŁOŻONA AWARIA zapisu (filtr `query` psuje dokładnie to jedno zapytanie) —
 #      handler NIE potwierdza usunięcia: `wp_die` zamiast przekierowania,
@@ -82,6 +84,12 @@ case "$WY_A" in *"REDIRECT="*"sklepag_anonimizacja=ok"*) ok "A: wlasciciel dosta
 [ "$(pole "$STAN_A" MAIL_PO)" = "PUSTY" ] && ok "A: e-mail kupujacego zniknal" || zle "A: e-mail ZOSTAL w bazie"
 [ "$(pole "$STAN_A" USUNIETO_DNIA)" = "JEST" ] && ok "A: usunieto_dnia ustawione" || zle "A: brak usunieto_dnia"
 [ "$(pole "$STAN_A" TOKEN_POBRANIA)" = "PUSTY" ] && ok "A: token pobrania uniewazniony" || zle "A: token pobrania ZOSTAL"
+# ⛔ WAZNA 1 recenzji #234 r5: tresc maila w zamowieniu niesie PELNA kopie danych do faktury
+#   (nazwa firmy, NIP, adres). Anonimizacja kasowala kolumne dane_faktury i KOPIE dor_mail_tresc,
+#   a ORYGINAL mail_tresc zostawal — panel wypisywal go po anonimizacji, pomiar meldowal sukces.
+case "$WY_A" in *"MAIL_TRESC_PRZED=ZAWIERA-FAKTURE"*) ok "A: warunek wstepny — tresc maila zawiera dane faktury (jest co czyscic)" ;; *) zle "A: zasiew BEZ danych faktury w tresci maila — przypadek nic nie mierzy" ;; esac
+[ "$(pole "$STAN_A" MAIL_TRESC)" = "PUSTY" ] && ok "A: tresc maila (kopia danych faktury: NIP, adres) zniknela" || zle "A: tresc maila ZOSTALA — dane do faktury do odczytania po anonimizacji"
+[ "$(pole "$STAN_A" DANE_FAKTURY)" = "PUSTY" ] && ok "A: dane_faktury puste" || zle "A: dane_faktury ZOSTALY"
 [ "$(pole "$STAN_A" ZDARZENIE_ANONIMIZACJA)" = "JEST" ] && ok "A: zdarzenie anonimizacja zapisane" || zle "A: brak zdarzenia anonimizacja"
 [ "$(pole "$STAN_A" ZDARZENIE_ANONIMIZACJA_BLAD)" = "BRAK" ] && ok "A: brak falszywego zdarzenia bledu" || zle "A: zapisano anonimizacja_blad mimo powodzenia"
 
