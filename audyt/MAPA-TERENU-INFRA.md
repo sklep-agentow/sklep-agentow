@@ -29,7 +29,8 @@
 | A1 | `sklep-agentow` — logika PHP | 🟡 | audyt K7 (sierpień, nasza siatka) + recenzja kolegi 31.08 (JEGO siatka) | kolega: **9/10**; nasze znaleziska w `REJESTR-ZNALEZISK.md` |
 | A2 | `chatbot-live` | 🟡 | wroga sesja K2, przeloty botów | osobny rejestr |
 | A3 | `segregator-maila` | 🟡 | dowód zachowania + próba kontrolna | — |
-| A4 | Front (JS/CSS wtyczek) | ⬜ | — | **nikt nie patrzył naszą siatką** |
+| A4 | Front — ŁADOWANIE zasobów | ✅ | **1.09** | **CZYSTO**: 5 plików (128 KB), wszystkie przez `wp_enqueue_*` z wersją z `sklepag_wersja_assetu` (bez tego klient po aktualizacji widziałby stare z cache). Style frontu ładowane WARUNKOWO — tylko strona sklepu i „dziękujemy", nie cała witryna. Stripe.js z `js.stripe.com/dahlia/stripe.js`: HTTP 200, 1,08 MB, kontrola dodatnia — zmyślona wersja daje 403 |
+| A4b | Front — WYGLĄD i DZIAŁANIE w przeglądarce | ⬜ | — | **NIETKNIĘTE**: sprawdzono wyłącznie, JAK zasoby są ładowane, nie CO robią. Zero zrzutów, zero przejścia ścieżki zakupu okiem. Do tego trzeba żywego stosu i przeglądarki |
 | A5 | `uninstall.php` — symetria zapis/sprzątanie | 🟡 | punkt szablonu PR, sprawdzany per-PR | brak przeglądu CAŁOŚCI naraz |
 | A6 | Schemat bazy i migracje | ⬜ | — | **NIETKNIĘTE** |
 | A7 | Kod produktu NASZĄ siatką po recenzji kolegi | ⬜ | — | kolega dał 9/10, ale to JEGO siatka — nasza nie przeszła po jego uwagach |
