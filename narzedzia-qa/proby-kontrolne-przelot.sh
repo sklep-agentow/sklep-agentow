@@ -12,8 +12,15 @@
 # go z HEAD i odmawia zaliczenia dowodu z innego stanu kodu — dowód bez daty ważności to
 # dowód o nieznanym wieku.
 #
-# Wywołanie: bash narzedzia-qa/proby-kontrolne-przelot.sh [plik-logu]
-#            (domyślnie: audyt/sklep/PROBY-KONTROLNE.log)
+# Wywołanie: bash narzedzia-qa/proby-kontrolne-przelot.sh [plik-logu] [katalog]
+#            (domyślnie: audyt/sklep/PROBY-KONTROLNE.log, katalog `.` = całe repo)
+#
+# ⛔ DRUGI ARGUMENT — ZAKRES, dodany 31.08. Powód zmierzony: przelot po CAŁYM repo bierze
+# 38 prób, z czego 11 to testy PRODUKTU wymagające żywego stosu WordPressa. W CI stosu
+# nie ma i manifest bramek mówi o tym wprost („w CI nie ma WP+Stripe"), więc wołanie
+# całości w kroku per-PR kończyłoby się jedenastoma porażkami, które nie są wadami kodu.
+# Bramka wydania (k7-koniec.sh) woła NADAL bez zakresu i to jest właściwe — tam stos stoi.
+# Zakres zawęża TYLKO to, co przelatujemy; nie zmienia progu ani sposobu liczenia.
 # Kody wyjścia: 0 = przelot wykonany i WSZYSTKIE próby dały zero ·
 #               1 = przelot wykonany, ale któraś próba nie przeszła (log i tak zapisany) ·
 #               2 = nie ma czego uruchamiać / drzewo brudne.
@@ -36,8 +43,12 @@ if [ -n "$(git status --porcelain -uno 2>/dev/null)" ]; then
 	exit 2
 fi
 
-mapfile -t PROBY < <(find . -name '*proba-kontrolna*.sh' -not -path './.git/*' | sed 's|^\./||' | sort)
-[ "${#PROBY[@]}" -ge 1 ] || { echo "PRZELOT: nie znalazłem żadnej próby kontrolnej." >&2; exit 2; }
+ZAKRES="${2:-.}"
+[ -d "$ZAKRES" ] || { echo "PRZELOT: katalog zakresu [$ZAKRES] nie istnieje." >&2; exit 2; }
+mapfile -t PROBY < <(find "$ZAKRES" -name '*proba-kontrolna*.sh' -not -path './.git/*' | sed 's|^\./||' | sort)
+# ⛔ Zero prób to ODMOWA, nie sukces: zawężony zakres, który nic nie łapie, wyglądałby
+# dokładnie jak przelot bez uwag. Ta sama klasa co mianownik zero w I-2.
+[ "${#PROBY[@]}" -ge 1 ] || { echo "PRZELOT: nie znalazłem żadnej próby kontrolnej w [$ZAKRES]." >&2; exit 2; }
 
 COMMIT=$(git rev-parse --short=7 HEAD)
 GALAZ=$(git rev-parse --abbrev-ref HEAD)

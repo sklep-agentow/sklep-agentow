@@ -94,24 +94,19 @@ jobs:
       # ⛔ Kod 2 znaczy „nie zmierzone" (brak warunkow wstepnych, np. paczki
       # albo stosu WP), a nie „zdane". Takie przypadki sa POLICZONE i WYPISANE
       # z nazwy — cicha rezygnacja z kontroli wyglada dokladnie jak kontrola zdana.
+      # ⛔ Wolamy ISTNIEJACE narzedzie, nie wlasna petle. Pierwsza wersja tego kroku
+      # (31.08) przepisywala od zera to, co `proby-kontrolne-przelot.sh` robi od
+      # PR #198 — i robila GORZEJ: bez listy prob swiadomie pomijanych z powodem
+      # (jedna z nich DEINSTALUJE wtyczke ze stosu) i bez logu ze znacznikiem commita.
+      # Klasa: „sprawdz, jak zrobiono to samo obok, ZANIM napiszesz swoje".
+      #
+      # Log idzie do katalogu tymczasowego, zeby krok nie brudzil drzewa roboczego —
+      # przelot sam odmawia pracy na brudnym drzewie i mialby prawo odmowic sobie.
+      #
+      # ⛔ ZAKRES `narzedzia-qa` JEST CELOWY I ZMIERZONY. Przelot po całym repo bierze
+      # 38 prób, z czego 11 to testy PRODUKTU wymagające żywego stosu WordPressa —
+      # a manifest bramek mówi wprost, że w CI nie ma WP+Stripe. Bez zawężenia ten krok
+      # padałby zawsze, na jedenastu porażkach, które nie są wadami kodu. Próby produktu
+      # chodzą w bramce WYDANIA (k7-koniec.sh woła przelot bez zakresu — tam stos stoi).
       - name: Proby kontrolne bramek
-        run: |
-          set -uo pipefail
-          zdane=0; pominiete=0; oblane=0
-          pominiete_nazwy=""
-          for p in narzedzia-qa/*-proba-kontrolna.sh; do
-            [ -f "$p" ] || { echo "BLAD: brak jakichkolwiek prob kontrolnych"; exit 1; }
-            bash "$p" > /tmp/proba-wyjscie.txt 2>&1
-            rc=$?
-            case "$rc" in
-              0) zdane=$((zdane+1)); echo "OK        $p" ;;
-              2) pominiete=$((pominiete+1)); pominiete_nazwy="$pominiete_nazwy $p"
-                 echo "POMINIETE $p (kod 2 — brak warunkow wstepnych)"
-                 tail -3 /tmp/proba-wyjscie.txt ;;
-              *) oblane=$((oblane+1)); echo "PADLA     $p (kod $rc)"; cat /tmp/proba-wyjscie.txt ;;
-            esac
-          done
-          echo "=== PROBY KONTROLNE: zdane $zdane, pominiete $pominiete, oblane $oblane ==="
-          [ -n "$pominiete_nazwy" ] && echo "Pominiete (dlug w audyt/CO-WISI.md):$pominiete_nazwy"
-          [ "$zdane" -gt 0 ] || { echo "BLAD: ani jedna proba nie przeszla — cos nie wystartowalo"; exit 1; }
-          [ "$oblane" -eq 0 ]
+        run: bash narzedzia-qa/proby-kontrolne-przelot.sh "${RUNNER_TEMP}/PROBY-KONTROLNE.log" narzedzia-qa
