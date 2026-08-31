@@ -64,7 +64,7 @@ Sprawdzone nagłówkami/treścią (nie zgaduję z samego tytułu pliku):
   sklepu: aktywacja CZYSTA"…) opisują już weryfikacje na stosie WordPress i **SĄ
   aktualne**.
 
-(`archiwum-procesu/DLA-OBCYCH-MODELI.md`, `archiwum-procesu/DLA-OBCYCH-MODELI-v2.md`, `archiwum-procesu/ZWIAD-WZORCE.md` w katalogu głównym
+(`DLA-OBCYCH-MODELI.md`, `DLA-OBCYCH-MODELI-v2.md`, `ZWIAD-WZORCE.md` — wtedy w katalogu głównym, dziś: `archiwum-procesu/`;
 nie były w zleceniu tego materiału do sprawdzenia — nie orzekam o ich statusie tutaj.)
 
 ## 📅 RAPORTY Z DATĄ — osobna kategoria (zdjęcie stanu, nie dokument żywy)

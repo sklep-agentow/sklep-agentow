@@ -222,7 +222,7 @@ webhooka” — nie istnieje, RODO tylko dla sklepu — boty trzymają zgłoszen
 dostawcy modelu). Każde zdanie poprawione z plikiem i linią. Wniosek → klasa 62 rejestru: SECURITY.md dostaje bramkę „tekst = kod”.
 
 **Trzy liczby na `a3d9568`** (`k7-koniec.sh`): KRYTYCZNE 0 · DUŻE 0 · kontroli FAIL **2 (z 13)** — kontrole 2 i 6 jak w §2, §6, §7.
-Przelot prób kontrolnych na czystym `e95de75` (docs nad `a3d9568`; drzewo z cudzym `archiwum-procesu/SPRZATANIE-RAPORT.md` schowane w `git stash -u`
+Przelot prób kontrolnych na czystym `e95de75` (docs nad `a3d9568`; drzewo z cudzym `SPRZATANIE-RAPORT.md` — dziś: `archiwum-procesu/` — schowane w `git stash -u`
 na czas przelotu i przywrócone 1:1; log `audyt/sklep/PROBY-KONTROLNE.log` W REPO): 31 uruchomionych, 5 z EXIT≠0 — podzbiór
 zestawu 6 z logu 0.9.25 (`przejecie` chwiejna: raz pada, raz przechodzi), delta nie dołożyła żadnej nowej.
 
