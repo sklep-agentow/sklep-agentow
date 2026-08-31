@@ -330,7 +330,7 @@ WTYCZKA=sklep-agentow
 psuj_badge() { sed -i 's|badge/wydanie-v[0-9.]*-|badge/wydanie-v9.9.9-|' "$1/README.md"; }
 sprawdz "odznaka README rozjechana z naglowkiem"       1 psuj_badge   "odznaka wydania w README"
 psuj_badge_brak() { sed -i "/badge\/wydanie-v/d" "$1/README.md"; }  # druga sciezka odrzucenia (r1 #238 D5)
-sprawdz "odznaki wydania w README w ogole NIE MA"      1 psuj_badge_brak "nie umiem odczytać wersji"
+sprawdz "odznaki wydania w README w ogole NIE MA"      1 psuj_badge_brak "odznaka wydania w README repo — nie umiem odczytać wersji"
 sprawdz "sklep czysty: SIEDEM miejsc + zip + opis"     0 nic_nie_psuj "siedem miejsc zgodnych"
 
 echo "=== KONTROLA ODWROTNA: czysty stan ma PRZECHODZIC ==="
