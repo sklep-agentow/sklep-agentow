@@ -42,7 +42,7 @@ Nic jeszcze.
 ### Zmienione
 - **Sekcja CENA strony produktu:** panel „PO ZAKUPIE" po prawej stronie formularza — płatność
   kartą bez zakładania konta, mail z linkiem zaraz po płatności (ważność i limit pobrań
-  z ustawień wtyczki, nie z ręki), aktualizacje i wsparcie kupionej kopii; dotąd prawa
+  ze stałych wtyczki, nie z ręki), aktualizacje i wsparcie kupionej kopii; dotąd prawa
   połowa sekcji była pusta.
 - **Kafle listy produktów wyrównane do obu krawędzi** treści (`justify-content: space-between`) —
   prawy kafel nie wisi już 40 px od prawej krawędzi.
