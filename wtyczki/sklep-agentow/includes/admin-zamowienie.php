@@ -25,10 +25,12 @@ add_action( 'admin_post_sklepag_resend', 'sklepag_obsluz_resend' );
  * mail niesie martwy link — naprawialne kolejnym resendem, akceptowalne dla akcji ręcznej.
  */
 /*
- * ⛔ DŁUG NAZWANY, NIE UKRYTY: ta ścieżka ma SZEŚĆ zapisów `$wpdb->query()`, których wynik
- * nie jest sprawdzany, i zapisuje skutek (status, token, treść maila) niezależnie od tego,
- * czy zapis się udał. To ta sama klasa co naprawiona niżej w anonimizacji — tam mierzymy
- * STAN po zapisie, tu jeszcze nie. Do tego samego długu należy kompensacja licznika pobrań po
+ * ⛔ DŁUG NAZWANY, NIE UKRYTY: ta ścieżka ma PIĘĆ zapisów `$wpdb->query()`, których wynik
+ * nie jest sprawdzany (rotacja tokenu przed wysyłką, status po sukcesie, status mail_blad,
+ * przywrót treści maila, przywrót skrótu opinii). Zapis KOMPENSACJI tokenu jest od 0.9.28
+ * mierzony (`$przywrocono` steruje statusem, treścią wpisu dziennika i przywrotami) —
+ * pozostałe wciąż zapisują skutek bez pomiaru; ta sama klasa co naprawiona niżej
+ * w anonimizacji, spłacona częściowo. Do tego samego długu należy kompensacja licznika pobrań po
  * nieudanej wysyłce: przywraca wartość ze zdjęcia `$zam` z wejścia, nie ze stanu bazy — pobranie,
  * które trafi w okno między odczytem a zapisem (stary link jeszcze żyje), ginie z licznika
  * (kupujący dostaje jedno pobranie ponad limit). Okno wąskie, skutek mały, klasa ta sama.

@@ -970,14 +970,15 @@ function sklepag_render_produkt( $slug ) {
 		$html .= '<p class="sklepag-przypis">' . esc_html( implode( ' · ', $t['zgodnosc'] ) ) . '</p>';
 	}
 	$html .= sklepag_formularz_zakupu( $p );
-	$html .= '</div><aside class="sklepag-zakup-aside" aria-label="Co jest w paczce">';
-	$html .= '<p class="sklepag-mono-etykieta">[ W PACZCE ]</p><ul class="sklepag-zakup-aside-lista">';
-	$html .= '<li>zip wtyczki — instalujesz jak każdą wtyczkę WordPressa</li>';
-	$html .= '<li>instrukcja po polsku: instalacja i konfiguracja w kwadrans</li>';
-	$html .= '<li>mail po zakupie z linkiem pobrania — ważny ' . (int) SKLEPAG_LINK_GODZIN . ' h, do ' . (int) SKLEPAG_LIMIT_POBRAN . ' pobrań</li>';
+	// Panel niesie WYŁĄCZNIE to, czego nie ma nigdzie indziej w kadrze ani w sekcji
+	// „W PACZCE" wyżej (runda 2: panel powtarzał jej nazwę i dwa punkty) — przebieg
+	// zakupu i prawa kupionej kopii, liczby ze stałych wtyczki.
+	$html .= '</div><aside class="sklepag-zakup-aside" aria-label="Co się dzieje po zakupie">';
+	$html .= '<p class="sklepag-mono-etykieta">[ PO ZAKUPIE ]</p><ul class="sklepag-zakup-aside-lista">';
+	$html .= '<li>płacisz kartą przez Stripe — bez zakładania konta</li>';
+	$html .= '<li>mail z linkiem pobrania zaraz po płatności — link ważny ' . (int) SKLEPAG_LINK_GODZIN . ' h, do ' . (int) SKLEPAG_LIMIT_POBRAN . ' pobrań</li>';
 	if ( $t && ! empty( $t['gwarancja'] ) ) {
 		// NIE powtarzamy zdania o 14 dniach — stoi 30 cm w lewo (p.sklepag-trigger).
-		// Panel niesie to, czego w kadrze nie ma: co obejmuje kupiona kopia.
 		$html .= '<li>aktualizacje i wsparcie dla kupionej kopii</li>';
 	}
 	$html .= '</ul></aside></div></section>';
