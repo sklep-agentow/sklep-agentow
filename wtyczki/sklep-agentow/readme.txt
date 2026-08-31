@@ -153,7 +153,7 @@ link do pobrania w mailu, jednorazowy link do opinii.
 * Naprawione: po nieudanej ponownej wysyłce maila (awaria poczty) wraca dokładnie ten link, który kupujący ma w skrzynce — wtyczka zapamiętuje stan każdego doręczonego maila i przywraca właśnie jego. Znany wyjątek z 0.9.27 (pad serwera w pół wysyłki + nieudane ponowienie mogły zgasić działający link) jest zamknięty.
 * Naprawione: gdy dwa procesy domykały ten sam zakup, panel mógł oznaczyć doręczonego maila jako „błąd maila" — teraz status zapisuje tylko proces, który faktycznie wysyłał.
 * Naprawione: anonimizacja kupującego (RODO) usuwa także zapamiętany ślad doręczonego maila (kopię treści i tokenu).
-* Zmienione: sekcja ceny na stronie produktu ma panel „W paczce" (co dokładnie kupujesz); kafle listy produktów wyrównane do krawędzi; schowany testowy przycisk Stripe, który zasłaniał okno czatu.
+* Zmienione: sekcja ceny na stronie produktu ma panel „Po zakupie" (płatność bez konta, kiedy przyjdzie mail z linkiem i na jak długo, aktualizacje i wsparcie); kafle listy produktów wyrównane do krawędzi; schowany testowy przycisk Stripe, który zasłaniał okno czatu.
 
 = 0.9.27 =
 * Naprawione: gdy poczta ma awarię przy automatycznym ponowieniu maila, wcześniej wysłany link do pobrania dalej działa (dotąd mógł zgasnąć na stałe). Znany wyjątek: gdy wysyłka urwie się w pół (np. pad serwera w jej trakcie) i ponowienie po niej też zawiedzie, link może przestać działać — ratunkiem jest przycisk „Wyślij ponownie" przy zamówieniu w panelu.

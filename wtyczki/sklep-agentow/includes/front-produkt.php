@@ -958,7 +958,7 @@ function sklepag_render_produkt( $slug ) {
 	// zostaje w kadrze pod sticky nagłówkiem gospodarza, a ramka formularza błyska (CSS :target).
 	$html .= '<section class="sklepag-sekcja sklepag-sekcja-zakup" id="sklepag-zakup">' . $etykieta( 'CENA' );
 	// 0.9.28: układ dwukolumnowy — pudło zakupu po lewej BEZ ZMIAN (kotwica, formularz,
-	// selektory platnosc.js nietknięte), po prawej panel „W PACZCE" zamiast pustki
+	// selektory platnosc.js nietknięte), po prawej panel „PO ZAKUPIE" zamiast pustki
 	// (zgłoszenie właściciela 31.08). Liczby panelu idą ze STAŁYCH wtyczki — dokument
 	// zawsze równy kodowi (ta sama zasada co sekcja PYTANIA na liście).
 	$html .= '<div class="sklepag-zakup-uklad"><div class="sklepag-zakup-glowna">';

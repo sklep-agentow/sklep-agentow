@@ -40,8 +40,10 @@ Nic jeszcze.
   anonimizacji poszerzony o tokeny i ślad (pomiar tak szeroki jak czyszczenie).
 
 ### Zmienione
-- **Sekcja CENA strony produktu:** panel „W PACZCE" po prawej stronie formularza (zip + instrukcja
-  + ważność linku z ustawień wtyczki, nie z ręki); dotąd prawa połowa sekcji była pusta.
+- **Sekcja CENA strony produktu:** panel „PO ZAKUPIE" po prawej stronie formularza — płatność
+  kartą bez zakładania konta, mail z linkiem zaraz po płatności (ważność i limit pobrań
+  z ustawień wtyczki, nie z ręki), aktualizacje i wsparcie kupionej kopii; dotąd prawa
+  połowa sekcji była pusta.
 - **Kafle listy produktów wyrównane do obu krawędzi** treści (`justify-content: space-between`) —
   prawy kafel nie wisi już 40 px od prawej krawędzi.
 - **Wyłączony pływający „testing assistant" Stripe** (widoczny tylko na kluczu testowym) —

@@ -631,7 +631,7 @@ a.sklepag-kup {
 }
 
 /* 0.9.28: dwukolumnowy układ sekcji CENA — pudło zakupu po lewej (bez zmian w środku),
-   panel „W PACZCE" wypełnia dotychczasową pustkę po prawej (zgłoszenie właściciela 31.08).
+   panel „PO ZAKUPIE" wypełnia dotychczasową pustkę po prawej (zgłoszenie właściciela 31.08).
    Poniżej 64rem panel schodzi POD formularz — na telefonie nic się nie ściska. */
 .sklepag-zakup-uklad {
 	display: grid;
