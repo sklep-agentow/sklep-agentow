@@ -74,7 +74,7 @@ jobs:
 
       # Było w dwóch starych zadaniach (phpcs, phpstan) — tu raz.
       - name: Zaleznosci QA
-        run: composer install --no-interaction --no-progress
+        run: composer install --no-interaction --no-progress --no-scripts
 
       # ⛔ BEZ `if:` na tym kroku i bez `continue-on-error` — bramka, która może
       # nie wystartować albo nie zablokować, nie jest bramką. Pomijanie bramek
