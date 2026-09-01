@@ -41,10 +41,14 @@ w żadnym rejestrze — koordynatorka chciała ją dopisać.
 
 ## 2. Rzeczy oddane właścicielowi — ⛔ NIE ruszać bez jego decyzji
 
-- **Podwójne kliknięcie „Kup teraz" tworzy dwie płatności.**
-  `testy/idem-nie-oddaje-oplaconej-sesji-test.php`, przypadek **B**, pada **także na czystym
-  `main`** (sprawdzone wgraniem kodu z `main` na ten sam stos). Okno idempotencji stoi na
-  transiencie `md5(IP|produkt_id|tryb)` i nie dotyka tabeli sesji.
+- ~~**Podwójne kliknięcie „Kup teraz" tworzy dwie płatności.**~~ ⛔ **ODWOŁANE 1.09 — moja
+  błędna diagnoza.** Przypadek **B** strażnika padał (także na czystym `main`), ale **z powodu
+  przyrządu, nie produktu**: strażnik składał klucz okna u siebie i od 0.9.25 rozjechał się
+  z produkcją (doszedł trzeci człon — tryb płatności). Podkładał okno pod adresem, którego
+  handler nigdy nie czytał. Po naprawie klucza (**#262**) B przechodzi na dzisiejszym kodzie
+  **i** na kodzie sprzed 0.9.18 — ochrona przed podwójnym klikiem działa i działała.
+  ⭐ Lekcja: „test pada także na `main`" dowodzi tylko tego, że **nie jest to skutek mojej
+  zmiany** — NIE tego, że wada jest w produkcie. Zanim obwinisz produkt, sprawdź przyrząd.
 - **`aktywny = 0` a zakup już opłacony.** `#258` świadomie **nie** blokuje doręczenia zakupu
   opłaconego. Gdyby właściciel chciał inaczej, trzeba najpierw rozstrzygnąć, co się dzieje
   z pieniędzmi (zwrot automatyczny? kolejka dla właściciela?) — to zmiana reguły handlowej.
