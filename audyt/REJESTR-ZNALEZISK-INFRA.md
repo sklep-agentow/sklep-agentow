@@ -26,7 +26,7 @@
 > `narzedzia-qa/bramka-znaleziska.sh` (dziś bramka czyta TYLKO tamten plik — patrz DŁUG poniżej).
 > ⛔ Znaleziska produktu NIE wchodzą tutaj; tu wyłącznie infrastruktura, CI, wydanie i dokumenty.
 
-## Liczba znalezisk OTWARTYCH: 34
+## Liczba znalezisk OTWARTYCH: 35
 <!-- ⛔ LICZ KOMENDĄ, NIGDY Z GŁOWY — patrz I-23. Stan 1.09 rano, piąta runda:
      62 wiersze tabeli, 61 unikalnych kodów (B-12 dwa razy: w starej tabeli i jako odwrócone),
      29 otwartych, 28 zamkniętych, 1 zamknięte warunkowo, 2 w naprawie, 1 wycofane, 1 zaparkowane.
@@ -34,9 +34,14 @@
      liczenie słów statusu z tekstu opisowego. Komendy w sekcji CZWARTA RUNDA. -->
 <!-- ⛔ Ten licznik NIE MA STRAŻNIKA: bramka-znaleziska.sh czyta wyłącznie
      audyt/REJESTR-ZNALEZISK.md. Dlatego rozjechał się o sześć pozycji (I-23). -->
+<!-- 1.09 wieczór, audytor: dopisując I-24 PODNIOSŁEM oba liczniki o jeden, a NIE przeliczyłem
+     pliku od nowa. Powód: moja komenda liczy 54 wiersze i 53 unikalne kody, a komentarz wyżej
+     mówi 62 i 61 — mierzymy DWIE RÓŻNE RZECZY (moja nie widzi wierszy tabel o innym układzie
+     kolumn). Przeliczenie własną komendą nadpisałoby liczbę koordynatorki cudzym pomiarem,
+     a to jest dokładnie I-23 — zostawiam do uzgodnienia, nie rozstrzygam sam. -->
 
 
-## Znalezisk BEZ strażnika: 13
+## Znalezisk BEZ strażnika: 14
 <!-- Wszystkie 20 są dziś bez strażnika: to znaleziska w NARZĘDZIACH i CI, a nasze bramki
      pilnują produktu, nie samych siebie. Każda naprawa ma dopisać próbę kontrolną
      i obniżyć tę liczbę ŚWIADOMIE, jednym ruchem z naprawą. -->
@@ -86,6 +91,7 @@ Waga: **KRYT** (bezpieczeństwo/pieniądze/klient) · **DUZE** (mylące zielone)
 | `B-13` | **DUZE** · **recenzent zewnętrzny ma prawo ZAPISU do repozytorium KLIENTA.** `Man1exter` figuruje jako współpracownik z uprawnieniami `pull, push, triage` — do wykonania recenzji wystarcza sam odczyt. To nie zarzut wobec osoby, tylko wobec procesu: dostęp do repo zlecenia rozdajemy szerzej, niż wymaga zadanie | Zmierzone 31.08: `gh api repos/…/collaborators` → `Man1exter: pull,push,triage`; drugi wpis to właściciel z `admin`. Kluczy wdrożeniowych 0, webhooków 0, sekretów 1 (`CLAUDE_CODE_OAUTH_TOKEN`) — reszta dostępów czysta. ⛔ NIE naprawiam sama: dostępy i kontakt z ludźmi to decyzja właściciela, nie techniczna. Zgłoszone z dowodem, czeka na jego słowo | OTWARTE |
 
 | `I-16` | **DUZE** · **mamy DWA rejestry długu i jeden nie widzi drugiego.** `audyt/CO-WISI.md` (932 linie, **29 pozycji oznaczonych jako dług**) zbiera rzeczy świadomie niedomknięte, ale nic nie przenosi ich do rejestru znalezisk ani nie pyta przed wydaniem, które z nich JADĄ DO KLIENTA. Skutek zmierzony na żywym przykładzie: `CO-WISI.md:304` mówi wprost „brak eksportera/erasera RODO WP (D: dopisać w naprawach)” — dług dotyczący **danych osobowych kupujących**, zapisany, nieprzeniesiony i **wydany klientowi**. Znaleziony 1.09 dopiero przy przeglądzie białych plam, nie przez żadną bramkę | Zmierzone: `grep -cE "⬜\|DO ZROBIENIA\|dopisać w naprawach\|dług" audyt/CO-WISI.md` → **29**; kontrola dodatnia: plik ma 932 linie. W produkcie potwierdzone osobno: `wp_privacy_personal_data_exporters`, `wp_privacy_personal_data_erasers`, `wp_add_privacy_policy_content` → **0 wystąpień**, przy kontroli dodatniej `add_action` → 33. Wtyczka MA własną anonimizację (`sklepag_obsluz_anonimizacje`), więc RODO nie jest zignorowane — brakuje wpięcia w mechanizm WordPressa | OTWARTE |
+| `I-24` | **DUZE** · **GOLDEN pilnujący błędu WŁAŚCICIELA nie jest wołany przez żadną bramkę ani CI — cofnięcie naprawy migawki produktu NIE zapali się na czerwono.** `testy/golden-kupujacy-dostaje-to-co-kupil-test.php` (PR #258) jest jedynym strażnikiem naprawy „kupujący dostaje DOKŁADNIE to, co kupił” — czyli tego błędu, którego właściciel nie zdradzał i którego nie znalazło osiem naszych pytań (LEKCJA 1 z 1.09: *co może zmienić inna osoba, gdy operacja trwa*). Łapie go wzorcem `for t in testy/*.php` **wyłącznie** `narzedzia-qa/linia-bazowa.sh:125`, a ta nie ma wołającego. Skutek: przyszły refaktor `sklepag_domknij_zakup()` może cofnąć migawkę i **wszystkie kontrole zostaną zielone** — a kupujący znów zapłaci za jedno, a dostanie drugie. To pieniądze kupującego, nie sam dług narzędziowy. ⛔ **PUŁAPKA DO ROZSTRZYGNIĘCIA PRZED WPIĘCIEM, NIE W TRAKCIE:** golden do pełnego przebiegu potrzebuje kodu z gałęzi **wgranego do kontenera** — czyli dokładnie tej operacji, która przy próbie kontrolnej okazała się niebezpieczna dla WSPÓLNEGO stanowiska: `testy/golden-migawka-proba-kontrolna.sh` podmienia wtyczkę na stosie i jej **nie przywraca** (zmierzone: przed `Version: 0.9.32`, suma `a9ce0f70…`; po `0.9.31`, suma `704b0ab7…` — cofnięta czyjaś robota w toku). Wpięcie bez rozwiązania tego cofa builderom kod pod stopami przy KAŻDYM biegu bramek | ⛔ **BRAK STRAŻNIKA — to jest samo znalezisko.** Zmierzone 1.09, raport `audyt/plamy/GOLDEN-258-WERYFIKACJA.md`: sam golden na `main` **EXIT=0** (14 asercji), jego próba kontrolna **EXIT=0** (4 mutanty, każdy wywala właściwą asercję) — narzędzie jest dobre, **brakuje spustu**. Dowód braku wpięcia z KONTROLĄ DODATNIĄ (ten sam grep, ten sam zestaw katalogów `.github/ .githooks/ narzedzia-qa/ testy/`): `narzedzia-qa/bramki.sh` → **21** wywołań, `narzedzia-qa/proby-kontrolne-przelot.sh` → **7**, `narzedzia-qa/linia-bazowa.sh` → **0**. Do tego `grep -c linia-bazowa narzedzia-qa/bramki.sh` → 0 i to samo w `audyt/BRIEFING-NAPRAWY.md` → 0. Zero przy trzecim wierszu jest FAKTEM, nie „źle szukałem” | OTWARTE |
 
 ## Raporty objęte tym rejestrem
 `audyt/POLOWANIE-INFRA-RAPORT.md` (4 przebiegi, 31.08) · `audyt/PLAN-POLOWANIA-INFRA.md`
