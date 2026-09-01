@@ -513,3 +513,102 @@ z automatu.
   obiektów mogłaby przeżyć do wygaśnięcia. Nie mam takiej instalacji, żeby to zmierzyć —
   **wskazuję jako pytanie otwarte**, nie jako znalezisko.
 - **Tabel własnych** (7 + 7 + 7) — to teren `A6`, zamknięty osobno 1.09.
+
+---
+
+# B6 — CZY BRAMKA MIERZY TO, CO DEKLARUJE
+
+**Stan wejściowy z mapy:** 🟡, „część ma próby kontrolne · `I-3`, `I-4`, `I-8` sieroty — OTWARTE".
+**Wynik: 2 × `SRED`/`MALE`, cztery tereny czysto.**
+
+## Gdzie kończył się pomiar
+
+Soczewka „nazwa kontra pomiar" **istnieje** i jest dobra: `audyt/sklep/BRAMKI-NAZWA-VS-POMIAR.md`,
+przebieg **28.08**, commit `98133e3`, dziesięć bramek. Granica jest w dacie: od tamtej pory
+zestaw urósł do **dwunastu**, a dwie nowe nigdy przez tę soczewkę nie przeszły:
+```
+BRAMKI dziś (12): actionlint gitleaks manifest paczka phpcs php-lint phpstan
+                  poswiadczenia slady status-bez-warunku zdarzenia-webhooka znaleziska
+zmierzone 28.08 (10): bez `paczka` i bez `zdarzenia-webhooka`
+```
+Druga granica jest ostrzejsza: tamten przegląd pytał, **co bramka mierzy**. Nie pytał,
+**czy ktokolwiek ją odpala** — a to jest dziś ta sama klasa, w której siedzi `I-24`.
+
+## 1. ZNALEZISKA
+
+### 🟠 `B6-F1` — **SRED** · sieroty to nie trzy egzemplarze, tylko **klasa**: 32 z 54 testów PHP ma jedyną automatyczną drogę uruchomienia przez skrypt, którego nikt nie woła
+
+**ZNALEZISKO.** `I-3`, `I-4`, `I-8` (wszystkie **OTWARTE**) opisują pojedyncze sieroty:
+`kalibrator-straznikow.sh`, `licznik-odstepstw.sh`, `adresy-w-dokumencie.sh`,
+`waga-znaleziska.sh`. Dziś dołożyłem `I-24` (golden z #258). Policzyłem całą rodzinę:
+
+| pomiar | wynik |
+|---|---|
+| skrypty `.sh` w `narzedzia-qa/` i `testy/` bez ani jednego wołającego | **7 z 89** |
+| testy `.php` w `testy/` bez wołającego **innego niż `linia-bazowa.sh`** | ⛔ **32 z 54** |
+| a `linia-bazowa.sh` — jedyny, który bierze je wzorcem `testy/*.php` — ma wołających | **0** |
+
+W tych 32 są m.in. **`idem-nie-oddaje-oplaconej-sesji-test.php`** (ten, który dziś okazał się
+kłamiący od siedmiu wydań — nikt go nie odpalał, więc nikt tego nie widział)
+i **`golden-kupujacy-dostaje-to-co-kupil-test.php`** (strażnik błędu właściciela, `I-24`).
+**To jest jeden mechanizm, nie pięć osobnych pozycji:** narzędzie powstaje razem z naprawą,
+zostaje opisane w PR i **nie dostaje spustu**, bo spust jest osobną robotą, o którą nikt nie pyta
+w szablonie PR-a.
+
+**DOWÓD.** Sonda liczy wołania nazwy pliku w `.github/ .githooks/ narzedzia-qa/ testy/ boty/`
+z pominięciem samego pliku i linii komentarza. **Kontrola dodatnia jest wbudowana w wynik:**
+ta sama komenda znajduje wołających dla **22 z 54** testów PHP i dla 82 z 89 skryptów — więc
+zero przy pozostałych jest faktem, nie ślepotą narzędzia.
+
+**⚠️ MÓJ WŁASNY FAŁSZYWY ALARM, złapany przed zgłoszeniem.** Pierwsza wersja sondy dała
+**17 sierot**, w tym dziesięć plików `*proba-kontrolna*.sh`. Nieprawda:
+`narzedzia-qa/proby-kontrolne-przelot.sh:78` bierze je **wzorcem**
+(`find … -name '*proba-kontrolna*.sh'`), a sam ma 7 wołających. Po odjęciu tej rodziny
+zostaje **7** prawdziwych sierot `.sh`. ⛔ Wniosek na przyszłość: liczenie wołań po NAZWIE
+pliku daje fałszywy alarm wszędzie tam, gdzie wołający używa globu — trzeba sprawdzić także
+wzorce, a nie tylko nazwy.
+
+**SKUTEK dla człowieka.** Zielone CI mówi „12 bramek zielonych" i to jest prawda — ale
+**nie mówi**, że 32 testy produktu nie zostały w tym przebiegu uruchomione ani razu.
+Regresja w każdym z nich jest niewidzialna do chwili, w której ktoś ręcznie wpisze komendę.
+
+---
+
+### 🟡 `B6-F2` — **MALE** · rozjazd zasięgu `php-lint`/`phpcs` z 28.08 nie tylko trwa — **rośnie**, i obejmuje dziś wszystkie nowe strażniki
+
+**ZNALEZISKO.** `uruchom_php_lint()` w `narzedzia-qa/bramki.sh` robi
+`find wtyczki -name '*.php'`, a `phpcs.xml.dist` wskazuje trzy katalogi wtyczek. Zmierzone dziś:
+
+| | 28.08 (`BRAMKI-NAZWA-VS-POMIAR.md`) | 1.09 (dziś) |
+|---|---|---|
+| pliki `.php` sprawdzane przez `php-lint` | 52 | **54** |
+| śledzone pliki `.php` **poza** `wtyczki/` | 65 | ⛔ **80** |
+
+Luka urosła o piętnaście plików, bo cały przyrost narzędzi i testów ląduje poza `wtyczki/`.
+W tych 80 są **wszystkie** dzisiejsze strażniki, łącznie z `testy/golden-…-test.php`
+i `testy/idem-…-test.php`. Nic w bramkach nie sprawdza nawet ich **składni**.
+
+**Dlaczego `MALE`, a nie wyżej.** Błąd składni w teście ujawnia się głośno przy pierwszym
+uruchomieniu — problem jest dopiero **w złożeniu z `B6-F1`**: tych plików się nie uruchamia,
+więc głośna awaria nie ma kiedy zabrzmieć. Sam w sobie ten rozjazd nie psuje produktu klienta,
+dlatego nie podnoszę.
+
+## 2. TERENY SPRAWDZONE — WYNIK CZYSTO
+
+| # | Co sprawdzone | Jak zmierzone | Wynik |
+|---|---|---|---|
+| 1 | **`zdarzenia-webhooka` — nowa bramka, nigdy nieoglądana tą soczewką** | odczyt skryptu + uruchomienie próby | **CZYSTO**: nazwa obiecuje „lista zdarzeń w instrukcji = lista w kodzie" i dokładnie to mierzy. Źródło prawdy `wtyczki/sklep-agentow/includes/zakup.php` — **sprawdziłem, że to jedyny plik** z nazwami zdarzeń Stripe w całym `wtyczki/` (10 nazw). Wykluczenia (`CHANGELOG.md`, `archiwum-procesu/`, `audyt/`) są **zadeklarowane z powodem** w nagłówku. Pusty wynik daje kod 2, nie zielone |
+| 2 | **`paczka` — druga nowa bramka** | j.w. | **CZYSTO co do pomiaru**: woła `BUDUJ_TYLKO_SPRAWDZ=1 boty/buduj-paczki.sh`, czyli PRAWDZIWY skrypt pakujący, zamiast pisać drugi parser allowlisty; katalogi wtyczek bierze z dysku, nie z listy trzech nazw. ⚠️ Zastrzeżenie do **nazwy**, nie do pomiaru: etykieta `paczka` brzmi szerzej niż „każdy plik wtyczki jest na allowliście" — to ta sama klasa co rozjazdy nazw z 28.08. (⛔ Brak `paczka-zgodnosc.sh` w zestawie bramek to osobna, **zaparkowana** decyzja — nie zgłaszam jej) |
+| 3 | **Kalibracja obu nowych bramek** — czy próby naprawdę mierzą | uruchomienie, kody bez potoku | **CZYSTO**: `narzedzia-qa/zdarzenia-webhooka-proba-kontrolna.sh` → **`EXIT=0`**, 10 przypadków, w tym „prawdziwe repo tego projektu jest zgodne". `narzedzia-qa/paczka-obejmuje-kazdy-plik-wtyczki-proba-kontrolna.sh` → **`EXIT=0`**, 6 podłożonych przypadków rozpoznanych + czysta kopia przepuszczona + przypadek „awaria przyrządu ma dać 2, nie 1" |
+| 4 | **Czy `slady` ma kalibrację** (moja pierwsza lista mówiła „BRAK PRÓBY") | odczyt `bramki-proba-kontrolna.sh` | **CZYSTO — miałem złą listę.** Bramka `slady` jest kalibrowana wewnątrz `narzedzia-qa/bramki-proba-kontrolna.sh:152` („nowy ślad w pliku wtyczki MA być złapany") razem z kontrolą odwrotną („czysty stan ma przechodzić", `:232`) i przypadkiem kurczącego się zestawu (`:75`). Mój pierwszy pomiar szukał pliku o nazwie bramki i tego nie widział — druga sytuacja tego samego dnia, w której **dopasowanie po nazwie pliku kłamie** |
+
+## 3. CZEGO W `B6` NIE ZDĄŻYŁEM
+
+- **Kalibracji `actionlint`, `phpcs`, `phpstan`, `znaleziska`** — nie mają własnej próby
+  kontrolnej i nie sprawdzałem, czy któraś jest kalibrowana gdzie indziej. Po dzisiejszych
+  dwóch pomyłkach z dopasowaniem po nazwie **nie zgłaszam tego jako braku** — to `NIE SPRAWDZIŁEM`.
+- **Uruchomienia `proby-kontrolne-przelot.sh` w całości** (43 próby, część wymaga Dockera
+  i jedna deinstaluje wtyczkę ze stosu) — nie odpalałem na wspólnym stanowisku.
+- **Czy 32 testy bez wołającego przechodzą** — census mierzy WPIĘCIE, nie wynik. Ile z nich
+  jest dziś zielonych, nie wiadomo; dwa sprawdzone dziś ręcznie dały `EXIT=1` (`idem-…`,
+  kłamiący) i `EXIT=0` (`golden-…`).
