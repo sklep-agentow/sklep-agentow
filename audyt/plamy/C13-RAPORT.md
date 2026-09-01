@@ -109,7 +109,7 @@ na jednego wykonawcę**.
 | Deklaracja w kodzie | Pomiar | Werdykt |
 |---|---|---|
 | `quality.yml`: „nowy commit anuluje poprzedni przebieg" | `concurrency` + `cancel-in-progress: true` obecne (M5) | ✅ prawda |
-| `recenzent.yml`: „jedna recenzja to **~2,5 minuty**" | zmierzone przebiegi `Recenzent` z wynikiem: **6m04, 6m08, 6m45, 5m37, 16m44, 24m54** | ⛔ **liczba nieaktualna** — patrz `C13-F1` |
+| `recenzent.yml`: „jedna recenzja to **~2,5 minuty**" | zmierzone przebiegi `Recenzent` z wynikiem — pełna ósemka: **0m10, 5m37, 6m04, 6m08, 6m45, 7m34, 16m44, 24m54** (ten `0m10` nie zdążył recenzować, patrz `C13-F1`) | ⛔ **liczba nieaktualna** — patrz `C13-F1` |
 
 ---
 
