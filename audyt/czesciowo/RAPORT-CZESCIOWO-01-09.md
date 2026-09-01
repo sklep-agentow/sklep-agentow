@@ -204,7 +204,7 @@ kanale zwrotnym milczy, choć to jedna gałąź w tym samym warunku.
 # E6 — INSTRUKCJA DLA KLIENTA W PACZCE
 
 **Stan wejściowy z mapy:** 🟡, „`pakuj-dla-klienta.sh` sprawdza obecność — treść nieoceniana".
-**Wynik: 1 × `MALE` (o dwóch egzemplarzach), siedem terenów czysto.**
+**Wynik: 1 × `MALE` (o dwóch egzemplarzach), dziesięć terenów czysto** (policzone z tabeli w §2).
 
 ## Gdzie kończył się pomiar — i to jest ciekawsze niż samo znalezisko
 
@@ -226,7 +226,7 @@ bez bramki liczb — niesie ich **dwadzieścia kilka**.
 
 ### 🟡 `E6-F1` — **MALE** · instrukcja właściciela opisuje **mechanikę ratowania zawieszonego zakupu** niezgodnie z kodem — w dwóch miejscach, przy czym trzecie miejsce w tym samym pliku opisuje ją poprawnie
 
-**Egzemplarz A — rozdział 3, tabela statusów, wiersz „oczekuje" (`INSTRUKCJA.md:79`):**
+**Egzemplarz A — rozdział 3, tabela statusów, wiersz „oczekuje" (`INSTRUKCJA.md:82`):**
 > „jeśli wisi dłużej niż kilka minut, to błąd zapisu w bazie: sprawdź oś czasu i napisz do
 > wykonawcy (**„Dociągnij zaległe" tego statusu nie rusza**)"
 
@@ -249,7 +249,7 @@ i **nie klika jedynej rzeczy, która to odblokowuje** — a na hostingu bez dzia
 (przypadek, przed którym ta sama instrukcja ostrzega dwa akapity niżej) ten przycisk jest jedyną
 drogą domknięcia.
 
-**Egzemplarz B — rozdział 4 (`INSTRUKCJA.md:169`):**
+**Egzemplarz B — rozdział 4 (`INSTRUKCJA.md:158-159`):**
 > „sklep ponawia sam **po ok. 2 minutach**, do trzech razy"
 
 Ponowienie wysyłki nie ma własnego zegara. Siedzi w środku `sklepag_dociagnij_zalegle()`
@@ -259,7 +259,7 @@ jest **minimalnym wiekiem** wiersza, nie odstępem ponowień. Prawdziwe zdanie b
 najbliższym biegu co 10 minut, nie wcześniej niż 2 minuty po ostatniej próbie — i tylko jeśli
 WP-Cron działa".
 
-**Trzecie miejsce w tym samym pliku mówi to poprawnie** (rozdział 9, „Zakup «wisi»…"):
+**Trzecie miejsce w tym samym pliku mówi to poprawnie** (rozdział 9, `INSTRUKCJA.md:296-300`):
 > „Sklep i tak domknie zakup w ciągu ok. 10 minut (**jeśli WP-Cron działa** — rozdział 3),
 > a od ręki zrobi to „Dociągnij zaległe teraz" — odczekaj 2 minuty od zapłaty"
 
@@ -304,6 +304,6 @@ BEZ znaków cudzysłowu we wzorcu.
 - **`PRZECZYTAJ-MNIE.txt`** ze zbiorczej paczki — nie oglądałem treści.
 - **Zrzuty ekranu w instrukcjach** — sprawdzone, że istnieją i jadą w paczce; **nie** sprawdzone,
   czy pokazują dzisiejszy panel (zrzuty są z 31.08, a panel od tego czasu dostał sekcję prywatności).
-- ⭐ **Odsyłacz do `E7-F1`:** `INSTRUKCJA-INSTALACJI.md`, Krok 5 pkt 3, obiecuje kupującemu
+- ⭐ **Odsyłacz do `E7-F1`:** `INSTRUKCJA-INSTALACJI.md:148`, Krok 5 pkt 3, obiecuje kupującemu
   „strona sama odświeża status **aż do** «Mail wysłany»". To jest dokładnie to zdanie, które
   `E7-F1` obala pomiarem — instrukcja powtarza obietnicę strony, nie jej zachowanie.
