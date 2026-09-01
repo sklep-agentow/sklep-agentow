@@ -139,7 +139,8 @@ Po opłaceniu kupujący dostaje **jeden** mail (sklep pilnuje, żeby nie wysła�
 - numer zamówienia (ten sam, który widzisz w panelu), datę i kwotę,
 - stopkę z Twoimi danymi sprzedawcy z Ustawień (nazwa, adres, NIP, mail do reklamacji),
 - **dane do faktury**, jeśli kupujący podał je przy zakupie (nazwa firmy, NIP, adres) — z informacją, że fakturę
-  wystawisz i prześlesz osobno; gdy ich nie podał — zdanie „chcesz fakturę? odpisz w ciągu 3 miesięcy”.
+  wystawia sprzedawca **poza sklepem** i prześle ją osobno, oraz gdzie kupujący ma się upomnieć, jeśli nie dotrze;
+  gdy ich nie podał — zdanie „chcesz fakturę? odpisz w ciągu 3 miesięcy”.
 
 **Faktura to Twoja robota, nie sklepu.** Sklep faktur nie wystawia — zbiera dane i pokazuje je w mailu
 i w szczegółach zamówienia. Firmie fakturę musisz wystawić (ustawa o VAT: do 15. dnia następnego miesiąca),

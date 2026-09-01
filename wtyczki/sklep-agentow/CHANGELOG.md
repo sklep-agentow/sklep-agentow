@@ -20,6 +20,22 @@ Nic jeszcze.
 
 ---
 
+## [0.9.32] — 2026-09-01 · schemat bazy bez zmian (10)
+
+### Naprawione
+- **Sklep przestaje obiecywać kupującemu firmowemu fakturę, której nie wystawia.** Formularz
+  zakupu pisał „fakturę prześlemy osobno mailem", a mail po zakupie — „Fakturę wystawimy na te
+  dane i prześlemy osobno na ten adres e-mail". Sklep faktur **nie wystawia**: nie tworzy
+  dokumentu, nie nadaje numeru, nie wysyła go i nie pilnuje terminu (mówi o tym wprost
+  `INSTRUKCJA.md`: „Faktura to Twoja robota, nie sklepu"). Była to obietnica majątkowa wobec
+  przedsiębiorcy, niepokryta ani jedną linią kodu. Teksty mówią teraz, co się z danymi dzieje
+  naprawdę — sklep je zapisuje i pokazuje w potwierdzeniu, a fakturę **wystawia sprzedawca
+  poza sklepem** — oraz gdzie kupujący ma się upomnieć, jeśli faktura nie dotrze.
+  ⭐ Funkcja zostaje bez zmian: pola faktury, walidacja NIP-u i zaproszenie „chcesz fakturę?"
+  dla kupujących, którzy danych nie podali (z terminem 3 miesięcy), działają jak dotąd.
+
+---
+
 ## [0.9.31] — 2026-09-01 · schemat bazy 10 (`sesje_checkout.produkt_*`)
 
 ### Naprawione

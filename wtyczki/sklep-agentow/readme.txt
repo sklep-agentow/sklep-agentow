@@ -4,7 +4,7 @@ Tags: sklep, stripe, pliki cyfrowe, sprzedaz wtyczek, pobieranie
 Requires at least: 6.7
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.9.31
+Stable tag: 0.9.32
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -160,6 +160,9 @@ Nie. Zakup jest bez konta: adres e-mail podany na stronie płatności Stripe,
 link do pobrania w mailu, jednorazowy link do opinii.
 
 == Changelog ==
+
+= 0.9.32 =
+* Naprawione: sklep nie obiecuje już, że wystawi i wyśle fakturę — bo tego nie robi. Formularz zakupu i mail po zakupie mówią teraz, co się naprawdę dzieje z danymi do faktury (sklep je zapisuje i pokazuje w potwierdzeniu, fakturę wystawia sprzedawca poza sklepem) i gdzie kupujący ma się upomnieć, jeśli faktura nie dotrze. Pola faktury, sprawdzanie NIP-u i zaproszenie „chcesz fakturę?" działają bez zmian.
 
 = 0.9.31 =
 * Naprawione: kupujący dostaje dokładnie to, co kupił, także gdy produkt zmienił się w trakcie płatności. Dotąd sklep zapisywał do zamówienia nazwę, cenę i plik odczytane w chwili DOMKNIĘCIA płatności, a nie zakupu — po podmianie pliku kupujący pobierał co innego, niż kupił, a po zmianie ceny w jednym zamówieniu leżały dwie różne kwoty. Dane produktu są teraz zamrażane w chwili rozpoczęcia płatności.

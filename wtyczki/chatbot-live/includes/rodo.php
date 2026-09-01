@@ -364,6 +364,7 @@ function chatl_rodo_kasownik( $email, $strona = 1 ) { // phpcs:ignore Generic.Co
 	}
 
 	$ile_r = 0;
+	$ile_s = 0;
 	if ( $podzial['wlasne'] ) {
 		$tr      = $wpdb->prefix . 'chatl_rozmowy';
 		$miejsca = implode( ', ', array_fill( 0, count( $podzial['wlasne'] ), '%s' ) );
@@ -387,12 +388,42 @@ function chatl_rodo_kasownik( $email, $strona = 1 ) { // phpcs:ignore Generic.Co
 		 * do drugiej osoby.
 		 */
 		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQLPlaceholders
-		$ts    = $wpdb->prefix . 'chatl_sesje';
-		$ile_s = $wpdb->query( $wpdb->prepare( "DELETE FROM {$ts} WHERE sesja IN ({$miejsca})", $podzial['wlasne'] ) );
+		$ts  = $wpdb->prefix . 'chatl_sesje';
+		$wyn = $wpdb->query( $wpdb->prepare( "DELETE FROM {$ts} WHERE sesja IN ({$miejsca})", $podzial['wlasne'] ) );
 		// phpcs:enable
-		if ( false === $ile_s ) {
+
+		/*
+		 * ⛔ AWARIA NA TEJ TABELI ZATRZYMUJE I OSTRZEGA — tak samo jak awaria zapisu śladu
+		 * trzydzieści linii wyżej. Wcześniej wynik szedł WYŁĄCZNIE do dziennika błędów:
+		 * nie liczył się do liczby usuniętych i nie wchodził do komunikatu, który właściciel
+		 * przekazuje osobie składającej wniosek. Skutek był dokładnie tą klasą, którą ten plik
+		 * już raz zamknął przy komunikacie bezwarunkowym: kreator prywatności WordPressa
+		 * meldował usunięcie, a wiersz sesji — sam w sobie ślad osoby (kiedy pisała, czy
+		 * przejął ją człowiek; mówi o tym komentarz wyżej) — zostawał w bazie na zawsze.
+		 *
+		 * Nie twierdzimy przy tym, że „nic nie usunięto": wiadomości rozmowy już zniknęły.
+		 * Komunikat nazywa STAN FAKTYCZNY — co zniknęło, co zostało i czego jeszcze nie
+		 * tknęliśmy — bo zgłoszenia kasowane są dopiero niżej i przy tym przerwaniu zostają.
+		 */
+		if ( false === $wyn ) {
 			chatl_log_bledu_bazy( 'chatl_rodo_kasownik', 'kasowanie wierszy sesji wnioskodawcy' );
+			return array(
+				'items_removed'  => $ile_r > 0,
+				'items_retained' => true,
+				'messages'       => array(
+					sprintf(
+						'ChatBot LIVE: usunięto %d wiadomość/wiadomości z rozmów, ale baza ODRZUCIŁA skasowanie '
+							. 'śladu sesji — a wiersz sesji sam w sobie mówi, kiedy ta osoba pisała. Zgłoszeń z tym '
+							. 'adresem jeszcze NIE ruszyliśmy. ⛔ NIE potwierdzaj usunięcia danych osobie, która '
+							. 'złożyła wniosek. Sprawdź stan bazy (pasek ostrzeżenia w panelu ChatBota) i uruchom '
+							. 'usuwanie ponownie — powtórzenie domknie resztę.',
+						(int) $ile_r
+					),
+				),
+				'done'           => true,
+			);
 		}
+		$ile_s = max( 0, (int) $wyn );
 	}
 
 	$tz = $wpdb->prefix . 'chatl_zgloszenia';
@@ -401,7 +432,9 @@ function chatl_rodo_kasownik( $email, $strona = 1 ) { // phpcs:ignore Generic.Co
 	// phpcs:enable
 	$ile_z = max( 0, (int) $ile_z );
 
-	$usuniete = $ile_r + $ile_z;
+	/* Ślad sesji jest daną osoby tak samo jak wiadomość i zgłoszenie — liczy się do sumy,
+		inaczej „usunięto 0" mówiłoby nieprawdę przy skasowanym wierszu sesji. */
+	$usuniete = $ile_r + $ile_z + $ile_s;
 
 	/*
 	 * ⛔ KOMUNIKAT MUSI MÓWIĆ TO, CO SIĘ NAPRAWDĘ STAŁO — z LICZBAMI, nie w trybie
@@ -414,9 +447,10 @@ function chatl_rodo_kasownik( $email, $strona = 1 ) { // phpcs:ignore Generic.Co
 		$komunikaty[] = 'Nie znaleziono w ChatBocie żadnych danych powiązanych z tym adresem — nic nie zostało usunięte.';
 	} else {
 		$komunikaty[] = sprintf(
-			'ChatBot LIVE: usunięto %d zgłoszenie/zgłoszenia z tym adresem oraz %d wiadomość/wiadomości z powiązanych rozmów.',
+			'ChatBot LIVE: usunięto %d zgłoszenie/zgłoszenia z tym adresem, %d wiadomość/wiadomości z powiązanych rozmów oraz %d ślad/ślady sesji przeglądarki.',
 			(int) $ile_z,
-			(int) $ile_r
+			(int) $ile_r,
+			(int) $ile_s
 		);
 	}
 
