@@ -1,0 +1,62 @@
+{
+  "baza": "http://localhost:8890",
+  "kiedy": "2026-09-01T00:21:12.319Z",
+  "kroki": [
+    {
+      "widok": "desktop",
+      "zdarzenia": [],
+      "bledy": [
+        "WYJATEK TypeError: actions.confirm is not a function"
+      ],
+      "bezZgody": {
+        "panelWidoczny": false,
+        "komunikatPrzegladarki": "Zaznacz zgodę, żeby przejść do płatności.",
+        "widocznyKomunikat": ""
+      },
+      "panelPlatnosci": true,
+      "bladPanelu": null,
+      "pola": {
+        "email": true,
+        "number": true,
+        "expiry": true,
+        "cvc": true,
+        "name": true,
+        "postal": false
+      },
+      "zaplacWlaczony": true,
+      "powrotNaDziekujemy": false,
+      "captchaStripe": true,
+      "urlPoZaplac": "http://localhost:8890/sklep/produkt/chatbot-live/",
+      "bladPoZaplac": "",
+      "dziekujemyTekst": "TRYB TESTOWY — płatności nie są pobierane. Przetestujesz cały zakup kartą testową, nic nie płacąc.Gotowe! Mail z potwierdzeniem i linkiem do pobrania został wysłany. Sprawdź skrzynkę (także spam)."
+    },
+    {
+      "widok": "telefon",
+      "zdarzenia": [],
+      "bledy": [
+        "WYJATEK TypeError: actions.confirm is not a function"
+      ],
+      "bezZgody": {
+        "panelWidoczny": false,
+        "komunikatPrzegladarki": "Zaznacz zgodę, żeby przejść do płatności.",
+        "widocznyKomunikat": ""
+      },
+      "panelPlatnosci": true,
+      "bladPanelu": null,
+      "pola": {
+        "email": true,
+        "number": true,
+        "expiry": true,
+        "cvc": true,
+        "name": true,
+        "postal": false
+      },
+      "zaplacWlaczony": true,
+      "powrotNaDziekujemy": false,
+      "captchaStripe": true,
+      "urlPoZaplac": "http://localhost:8890/sklep/produkt/chatbot-live/",
+      "bladPoZaplac": "",
+      "dziekujemyTekst": "TRYB TESTOWY — płatności nie są pobierane. Przetestujesz cały zakup kartą testową, nic nie płacąc.Gotowe! Mail z potwierdzeniem i linkiem do pobrania został wysłany. Sprawdź skrzynkę (także spam)."
+    }
+  ]
+}

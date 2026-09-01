@@ -1,0 +1,17 @@
+POLA: {"email":true,"number":true,"expiry":true,"cvc":true,"name":true,"postal":false}
+PO KLIKNIĘCIU „ZAPŁAĆ” (kod z repo): {
+ "napisNaPrzycisku": "Przetwarzam…",
+ "przyciskZablokowany": true,
+ "trescBledu": "",
+ "bladSchowany": true,
+ "url": "http://localhost:8890/sklep/produkt/chatbot-live/"
+}
+WYJĄTKI: [
+ {
+  "tekst": "TypeError: actions.confirm is not a function",
+  "stos": "TypeError: actions.confirm is not a function |     at HTMLButtonElement.<anonymous> (http://localhost:8890/wp-content/plugins/sklep-agentow/assets/platnosc.js?ver=0.9.28.1788184360:150:13)"
+ }
+]
+CONFIRM NA WŁAŚCIWYM OBIEKCIE: {"start":"PRZEKIEROWANIE — kontekst zniszczony nawigacją (confirm ruszył)"}
+WYNIK B: doszłoNaDziękujemy=true  url=http://localhost:8890/dziekujemy-za-zakup/  ramkaCaptcha=false
+DZIĘKUJEMY: TRYB TESTOWY — płatności nie są pobierane. Przetestujesz cały zakup kartą testową, nic nie płacąc.Gotowe! Mail z potwierdzeniem i linkiem do pobrania został wysłany. Sprawdź skrzynkę (także spam).

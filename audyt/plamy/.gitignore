@@ -1,0 +1,9 @@
+# Komplet 97 zrzutów z przelotu P1 (19 MB) NIE wchodzi do repo — `.git` ma już 324 MB
+# (MAPA-TERENU-INFRA.md, wiersz G4). Cytowane zrzuty leżą w `A4b-zrzuty-dowod/`,
+# a komplet odtwarza `node audyt/plamy/A4b-przelot-frontu.js`.
+A4b-zrzuty/
+
+# ...ale LOGI DOWODOWE tak: dowód poza origin nie istnieje. Korzeniowy `.gitignore`
+# ignoruje `*.log` — tu robimy jawny wyjątek, tak samo jak dla
+# `audyt/sklep/PROBY-KONTROLNE.log`.
+!*.log
