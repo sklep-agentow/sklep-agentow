@@ -106,6 +106,62 @@ i `CONTRIBUTING.md`) · `paczka-zgodnosc.sh` poza `BRAMKI=()` (CO-WISI) · znane
 TRYB TESTOWY · jednostronny strażnik RODO (klasa 72) · E2E poza CI (manifest: w CI nie ma
 WP+Stripe) · `setup-php` zmienia systemowe PHP na serwerze (opisane w `quality.yml`).
 
+## ⭐ CZWARTA RUNDA — 1.09, noc (tryb koordynatorki: audytor + builder)
+
+**STAN CAŁEGO REJESTRU PO TEJ RUNDZIE: 43 znaleziska · 13 otwartych · 26 zamkniętych
+(w tym 1 warunkowo) · 2 w naprawie · 1 WYCOFANE jako błędne · 1 zaparkowane.**
+⛔ Policzone komendą, nie z pamięci, i z próbą kontrolną:
+```
+grep -E "^\| \`[A-Z]" audyt/REJESTR-ZNALEZISK-INFRA.md | grep -oE "ZAMKNIETE warunkowo|ZAMKNIETE|OTWARTE|W NAPRAWIE|ZAPARKOWANE|WYCOFANE" | sort | uniq -c
+grep -cE "^\| \`[A-Z]" audyt/REJESTR-ZNALEZISK-INFRA.md      # suma statusów MUSI się zgadzać
+grep -E "^\| \`[A-Z]" … | grep -cvE "ZAMKNIETE|OTWARTE|W NAPRAWIE|ZAPARKOWANE|WYCOFANE"   # 0
+```
+⚠️ Pierwszy pomiar **kłamał**: liczenie po całym pliku dało 46 przy 43 pozycjach, bo łapało
+słowa statusów z tekstu opisowego. Kontrola „suma = liczba wierszy" to wyłapała.
+
+**Kolumna „skąd" jest nowa i istotna** — pierwszy raz większość pozycji nie pochodzi ode mnie:
+prowadziłam dwie równoległe sesje (audytor szuka, builder naprawia), a wnoszę je ja, po
+weryfikacji na zimno.
+
+⛔ **Wspólny mianownik `I-17` … `I-19`:** wszystkie trzy to **skutki uboczne naszej własnej
+naprawy `B-3`**. Sprawdzenie z 31.08 — *„żaden workflow nie uruchamia Dockera, 0 kroków
+`run:`/`uses:`"* — było prawdą **o pliku YAML**, a nie o tym, co te kroki WYWOŁUJĄ.
+Brak słowa w konfiguracji nie jest brakiem zachowania. **Od 31.08 11:00 do 1.09 ~03:00 ani
+jeden przebieg CI się nie udał.**
+
+| kod | co | test (dowód) | status | skąd |
+|---|---|---|---|---|
+| `I-17` | **KRYT** · `setup-php` woła `sudo`, dostaje odmowę i **ponawia bez końca** — krok stoi 40 min przy zerowym procesorze, przebieg nie kończy się nigdy i blokuje jedynego wykonawcę | `sudo: a password is required` dwie linie/s przez 40 min; ten sam krok w ostatnim udanym przebiegu trwał **2 s** | **ZAMKNIETE** (#243) — krok usunięty, w jego miejsce bramka wersji PHP; kalibracja: atrapa 8.3 → EXIT=1, realne 8.4.24 → EXIT=0 | koordynatorka |
+| `I-18` | **SRED** · cache `phpstan` we wspólnym `/tmp/phpstan` należał do roota (755) — `ciuser` bez prawa zapisu, bramka padała na `Unable to create file … .lock`. **Wyglądało jak błąd kodu, było uprawnieniami** | `ls -ld /tmp/phpstan` → `root root`; po rozdzieleniu katalogu phpstan EXIT=0 „No errors" na tym samym kodzie | **ZAMKNIETE** (#243) — katalog per użytkownik. Zmierzone: z cache 2 s, bez cache 26 s | koordynatorka |
+| `I-19` | **SRED** · cztery próby kontrolne (`dowod-aktualizacji`, `dowod-z-paczki`, `stos`, `test-php`) stawiają stos w Dockerze, którego `ciuser` nie widzi i **widzieć nie może** (grupa `docker` = równoważnik roota) | `sudo -u ciuser docker ps` → `permission denied … docker.sock`; wystąpień „docker": 2, 2, 8, 12 | **ZAMKNIETE warunkowo** (#243) — pomijane tylko przy braku Dockera + **sufit pominięć 5**. ⛔ DŁUG: przelot ręczny przed wydaniem. ⚠️ NIESPRAWDZONE: czy przechodzą na koncie Z Dockerem | koordynatorka |
+| `I-20` | **SRED** · `kto-wola.sh` meldował **zero funkcji i EXIT=0 dla każdego NOWEGO pliku** — wzorzec `^[-+][^-+].*\bfunction` zjadał pierwszy znak treści linii diffa. Przyrząd nie mierzył, a wyglądał jak pomiar bez trafień | kalibracja na PRAWDZIWYM diffie #244: stary wzorzec **0**, nowy **7** z nazwami. Builder potwierdził po naprawie: widzi wszystkie 9 funkcji | **ZAMKNIETE** (#243) | **builder** (zgłosił) · koordynatorka (naprawa) |
+| `I-21` | **SRED** · `bramki-proba-kontrolna.sh` **zatruwała cache PHPStana** — podkłada błędy i przywraca pliki w tej samej sekundzie, a PHPStan rozpoznaje zmianę po mtime z rozdzielczością sekundy | przed: bramki PO próbie → phpstan EXIT=1; po: EXIT=0. ⛔ **Pierwsza wersja naprawy NIE zadziałała** — `uruchom_phpstan` miało twarde `/tmp/…` i nadpisywało TMPDIR próby; złapała to dopiero kalibracja „przed · próba · po" | **ZAMKNIETE** (#243) | koordynatorka |
+| `B-12` | ⛔⛔ **ZNALEZISKO ODWRÓCONE — BYŁO BŁĘDNE.** 31.08 usunęłam `id-token: write` jako „nadmiarowe", z cytatem z `action.yml`. Recenzent bez niego **nie startuje wcale** | przebieg 33454879018: `Could not fetch an OIDC token … failed after 3 attempts`, padnięcie po 50 s | **WYCOFANE** (#243) — przywrócone. **Klasa: dowód z dokumentacji zamiast dowodu z uruchomienia** | koordynatorka |
+| `A4b-F1` | ⛔ **KRYT · SKLEP NIE SPRZEDAWAŁ.** Przycisk „Zapłać" nigdy nie potwierdzał płatności: napis zmieniał się na „Przetwarzam…", gasł i tak zostawał. Zero komunikatu, zero zamówienia, zero maila | `platnosc.js:110` przypisuje do `actions` CAŁĄ odpowiedź zamiast pola `.actions`, więc `:150` woła nieistniejącą metodę → `TypeError`. Kształt obiektu **zmierzony w przeglądarce** (`A4b-sonda-actions-chatbot.log`) | **ZAMKNIETE** (#250) | **audytor** (znalazł) · **builder** (naprawa) |
+| `A4b-F2` | **DUŻE · gorsze niż sama wada** · jedyny strażnik tej ścieżki meldował **„nie wada sklepu"** (EXIT=3) — rozpoznawał captchę po **samej obecności ramki**, nie po tym, czy zablokowała `confirm()`, i nie nasłuchiwał `pageerror`. Wada pojechała do klienta pod etykietą z naszego testu | kalibracja: NOWY strażnik na STARYM, niezmienionym kodzie → EXIT=1; stary → EXIT=3 | **ZAMKNIETE** (#250) | **audytor** |
+| `P-1` | **SRED** · nowy plik wtyczki poza allowlistą paczki, a wtyczka robi jego `require_once` bezwarunkowo. ⛔ **Żadna z 10 bramek tego nie łapie** | builder skorygował własną ocenę skutku: `buduj-paczki.sh:200-205` twardo odmawia budowy, więc to nie błąd u klienta — ale klasa otwarta dla każdego następnego pliku | **W NAPRAWIE** (#244) | **builder** |
+| `P-2` | **SRED** · panel potwierdza usunięcie danych, których **nie mierzy**: `$skutek_ok` nie sprawdza `dane_faktury` — administrator dostaje potwierdzenie wypełnienia obowiązku RODO, choć dane mogły zostać | strażnik z podłożoną awarią na tej jednej kolumnie | **ZAMKNIETE** (#244) | **builder** |
+| `A6-F1` | **SRED** · obie ścieżki wołają `dbDelta()` i **bezwarunkowo podnoszą znacznik wersji** — nieudana migracja **nie powtórzy się nigdy**, bo brama `if ( wersja === STAŁA ) return;` zamyka się na zawsze | `audyt/plamy/A6-RAPORT.md`; przyczyna-matka H ze ściągi | **OTWARTE** | **audytor** |
+| `F5-*` | **KRYT** · **Regulamin i Polityka prywatności to SZKICE** (`post_status=draft`, id 120/121), a strona produktu obiecuje „14 dni zwrotu bez pytań" **obok** zgody na utratę prawa odstąpienia | `audyt/plamy/F5-RAPORT.md` — przepisy cytowane słowo w słowo z ISAP (t.j. Dz.U. 2024 poz. 1796) i EUR-Lex przez `pdftotext`. Audytor złapał też, że art. 38a jest **uchylony** (obowiązuje art. 7aa) | **OTWARTE** | **audytor** |
+| `F4-F4` | **SRED** · „Anonimizuj kupującego" kasuje `dane_faktury` **bez pytania, czy faktura została wystawiona**, a polityka deklaruje dla nich „obowiązek prawny z ustawy o VAT" | `audyt/plamy/F4-podstawa-prawna-retencji.md`. ⭐ Sklep **faktur nie wystawia** (`INSTRUKCJA.md:143`), więc kolumna to kopia z formularza, nie dokument z art. 112 — kasowanie PO wystawieniu legalne, PRZED niszczy jedyny ślad | **OTWARTE** — naprawa: ostrzeżenie w `confirm()`; ⛔ **nie** zatrzymywanie danych na 5 lat | **audytor** |
+| `F4-*` | **SRED** · automatyczne czyszczenie starych danych obejmuje **2 tabele z 7** | `audyt/plamy/F4-RAPORT.md` | **OTWARTE** | **audytor** |
+| `C12` | **SRED** · `CODEOWNERS` nie istnieje i nie miałby czym wymuszać | `audyt/plamy/` (C12+E5) | **OTWARTE** | **audytor** |
+| `E5` | **SRED** · `DECYZJE.md` niesie **4 decyzje sprzed piwotu** | jw. | **OTWARTE** | **audytor** |
+| `C13` | **MALE** · przebiegi CI **nie są wolne, one CZEKAJĄ** — jeden wykonawca, kolejka | zmierzone, zestawienie czasów w raporcie | **ZAMKNIETE** (pomiar) | **audytor** |
+
+⭐ **Kontekst od właściciela, którego nie ma w kodzie** (1.09): dane do faktury szły kiedyś
+**mailem**, pole na NIP dodano na stronę **później**. `zakup.php:1225-1227` obsługuje obie drogi
+poprawnie — ale dla NOWEJ drogi mail wysyła obietnicę „Fakturę wystawimy na te dane", więc
+anonimizacja przed wystawieniem łamie obietnicę, którą sklep już wysłał. Wagi `F4-F4` **nie
+podniosłam samodzielnie** — do decyzji przy naprawie.
+
+⛔⛔ **WŁAŚCICIEL 1.09 ~05:35, PO PRZECZYTANIU TEJ LISTY: „tego dużego błędu, o którym wiem,
+JESZCZE NIE ZNALEŹLIŚCIE".** Czyli nieujawniony błąd kolegi **NIE JEST** żadną z pozycji
+powyżej — ani `A4b-F1` (sklep nie sprzedawał), ani `F5` (regulamin jako szkic). To zawęża pole
+do trzech miejsc: **`A7` kod produktu naszą siatką** (NIETKNIĘTE) · **`H4` maszyna warsztatu**
+(NIETKNIĘTE) · **20 obszarów oznaczonych „częściowo"** w mapie terenu. ⭐ Ta odpowiedź jest
+warta więcej niż potwierdzenie — mówi, gdzie NIE kopać.
+
 ## Czego ten rejestr NIE obejmuje — granica, świadomie
 Kodu produktu (`wtyczki/`) — audyt kolegi ocenił go 9/10 i był poza zakresem polowania ·
 12 skryptów wymagających stosu WP (zmierzone tylko warunki wejścia — 3,8 GB RAM) ·
