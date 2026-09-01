@@ -612,3 +612,49 @@ dlatego nie podnoszę.
 - **Czy 32 testy bez wołającego przechodzą** — census mierzy WPIĘCIE, nie wynik. Ile z nich
   jest dziś zielonych, nie wiadomo; dwa sprawdzone dziś ręcznie dały `EXIT=1` (`idem-…`,
   kłamiący) i `EXIT=0` (`golden-…`).
+
+---
+
+# B5 — HOOKI REPOZYTORIUM (`.githooks/`)
+
+**Stan wejściowy z mapy:** 🟡, „31.08 przy naprawie hooków maszyny · `I-9` dwa `pre-push` — OTWARTE".
+**Wynik: 0 nowych znalezisk. `I-9` potwierdzone jako nadal aktualne (z jednym doprecyzowaniem,
+które zmienia jego opis). Cztery tereny czysto — po raz pierwszy zmierzone URUCHOMIENIEM.**
+
+## Gdzie kończył się pomiar
+
+Poprzedni przelot (31.08) zmierzył **mechanizm**: który plik git czyta, co zasłania co.
+Nie zmierzył **skutku**: czy blokada naprawdę zatrzymuje push. To jest różnica między
+„`core.hooksPath` wskazuje na `.githooks`" a „spróbowałem i mnie nie puściło" — i tylko
+to drugie jest dowodem, że kompensacja braku ochrony gałęzi (`C11`) działa.
+
+## 1. TERENY SPRAWDZONE — WYNIK CZYSTO
+
+| # | Co sprawdzone | Jak zmierzone | Wynik |
+|---|---|---|---|
+| 1 | **Czy blokada bezpośredniego pusha na `main` DZIAŁA** | `git push --dry-run origin HEAD:main` — próba nic nie wysyła, a hook i tak biegnie | **CZYSTO**: `EXIT=1`, komunikat `⛔ pre-push: bezpośredni push na main zablokowany. Rób branch → PR → merge.` Kompensacja `C11` (brak ochrony gałęzi na darmowym planie) jest **realna**, nie deklarowana |
+| 2 | **KTÓRY z dwóch plików `pre-push` naprawdę wystrzelił** | rozstrzygnięte treścią komunikatu | **CZYSTO**: zadziałał `.githooks/pre-push` (polskie znaki: „bezpo**ś**redni", „Ś**wiadomy** wyjątek"), a nie `.git/hooks/pre-push` (bez diakrytyków: „bezposredni", inna druga linia). Rozstrzygnięcie **bez zgadywania** — dwa pliki mają rozjechany tekst, więc tekst jest znacznikiem |
+| 3 | **Czy ŚWIEŻY klon też jest chroniony** (P1 z planu polowania: „świeży klon bez ręcznej konfiguracji NIE ma ochrony") | odczyt `git config --global --get core.hooksPath` → `/root/.claude/git-hooki`, potem **uruchomienie łańcucha** | **CZYSTO — i to jest zmiana wobec 31.08.** Hook maszynowy nie zasłania już hooka repo: `lib-oddaj-repo.sh` (`oddaj_hookowi_repo`) po własnej kontroli oddaje sterowanie kandydatom `"$korzen/.githooks/$nazwa"`, potem `"$korzen/.git/hooks/$nazwa"`. Zmierzone uruchomieniem łańcucha ze stdin udającym push: `printf 'refs/heads/audyt 0000 refs/heads/main 0000' \| /root/.claude/git-hooki/pre-push origin <url>` → **`EXIT=1`** z komunikatem hooka REPO |
+| 4 | **Kontrola dodatnia łańcucha** — czy on w ogóle kiedykolwiek przepuszcza | ta sama komenda, ale `remote_ref` = zwykła gałąź | **CZYSTO**: **`EXIT=0`**. Hook nie jest „zawsze na nie" — blokuje wyłącznie `refs/heads/main` |
+
+## 2. `I-9` — NADAL AKTUALNE, ale opis wymaga jednej poprawki
+
+Stan zmierzony dziś: `.githooks/pre-push` **512 B** (żywy) i
+`/root/praca/zlecenia/sklep-agentow/.git/hooks/pre-push` **412 B**; `diff` → **różne**.
+Wpis `I-9` mówi o pliku „martwym" — ⛔ **to już nie jest ścisłe**: od naprawy z 31.08
+(`lib-oddaj-repo.sh`) plik w `.git/hooks/` jest **drugim kandydatem** w łańcuchu delegacji,
+więc w repozytorium bez katalogu `.githooks/` **wystrzeli**. Ryzyko z `I-9` (następna edycja
+trafia w plik, którego git nie czyta) zostaje, ale słowo „martwy" trzeba zamienić na
+„drugi w kolejności — dziś nieużywany, bo pierwszy kandydat istnieje".
+
+**Wagi nie podnoszę** (`MALE` zostaje): oba pliki mówią to samo co do skutku (blokada `main`),
+różnią się tylko brzmieniem komunikatu, a łańcuch i tak wybiera właściwy.
+
+## 3. CZEGO W `B5` NIE ZMIERZYŁEM
+
+- **Hooka `pre-commit`** z katalogu maszynowego (`/root/.claude/git-hooki/pre-commit`) —
+  istnieje, nie sprawdzałem, co robi ani czy deleguje tak samo jak `pre-push`.
+- **Zachowania po `--no-verify`** — hook sam wypisuje ten wyjątek jako świadomy; klasa 92
+  ze ściągi („obejście własnej bramki") proponuje blokadę, ale to teren warsztatu, nie repo.
+- **Innych typów hooków, których NIE MA** (`pre-receive`, `commit-msg`) — nie sprawdzałem,
+  czy któryś jest gdzieś obiecany.
