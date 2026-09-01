@@ -202,6 +202,20 @@ nie tracą historii. Operacja jest nieodwracalna. Adresów internetowych przy po
 **nie** usuwa — znikają razem z całą osią czasu po 90 dniach (rozdział 7); odpowiadając kupującemu
 na pytanie, co sklep o nim ma, wymień też je.
 
+**Wniosek przez narzędzia WordPressa (Narzędzia → Eksportuj / Usuń dane osobowe):** to ta sama
+droga, którą obsługujesz wnioski wobec całej strony, i sklep jest w nią wpięty. Wpisujesz adres
+e-mail, WordPress wysyła prośbę o potwierdzenie i po potwierdzeniu składa raport.
+- **Eksport** oddaje zamówienia kupującego (numer, data, produkt, kwota, status, dane do faktury),
+  jego opinie i sesje płatności. Duża historia zakupów schodzi partiami — WordPress woła sklep
+  tyle razy, ile trzeba, i składa jedną paczkę ZIP.
+- **Usunięcie** anonimizuje wszystkie zamówienia tego adresu — dokładnie tak, jak przycisk
+  z panelu, z jedną różnicą: **dane do faktury zostają**. Wymaga tego prawo podatkowe (ustawa
+  o VAT każe trzymać adres nabywcy z faktury), więc raport WordPressa mówi wprost, że część
+  danych zachowano i dlaczego. Przeczytaj ten raport, zanim odpiszesz kupującemu — jest w nim
+  także ostrzeżenie, gdyby któregoś zamówienia nie udało się zanonimizować.
+- Przycisk z panelu zostaje bez zmian i czyści **wszystko**, razem z danymi do faktury. Używaj
+  go świadomie: to Twoja decyzja, nie wniosek RODO.
+
 Jeśli usunięcie nie uda się w całości (np. błąd zapisu), sklep **nie udaje**, że się udało:
 pokazuje błąd, nie potwierdza usunięcia (dane mogą nadal być w bazie — nie potwierdzaj ich
 usunięcia osobie, która o to prosiła), w osi czasu pojawia się zdarzenie błędu, a Ty powtarzasz

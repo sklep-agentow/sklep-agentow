@@ -52,3 +52,11 @@ znaleziska
 # (spór w rundzie 2, zwrot w rundzie 4, „Wyślij ponownie" w rundzie 5), za każdym razem
 # znalezione przez recenzenta po jednym. Bramka pyta o klasę, nie o egzemplarz.
 status-bez-warunku
+
+# ROZSZERZENIE 2026-09-01 (PR #244): bramka `paczka` — czy KAŻDY plik wtyczki jedzie
+# w paczce klienta. Powód: `includes/prywatnosc.php` wszedł do wtyczki i był ładowany
+# przez `require_once` bezwarunkowo, a na allowliście `boty/buduj-paczki.sh` go nie było;
+# kontrola istniała, ale chodziła dopiero przy budowie paczki, czyli przy wydaniu.
+# Bramka nie pisze drugiego porównania — woła kroki 1-2 prawdziwego skryptu pakującego
+# (BUDUJ_TYLKO_SPRAWDZ=1), więc nie da się jej rozjechać z oryginałem.
+paczka

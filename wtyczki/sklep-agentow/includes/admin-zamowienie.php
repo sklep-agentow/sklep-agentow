@@ -216,39 +216,20 @@ function sklepag_obsluz_resend() {
 add_action( 'admin_post_sklepag_anonimizuj', 'sklepag_obsluz_anonimizacje' );
 
 /**
- * Anonimizacja kupującego na żądanie (RODO).
+ * Panelowy przycisk „Anonimizuj kupującego" — CIENKA SKORUPA nad `sklepag_anonimizuj_zamowienie()`.
  *
- * Kolejność jest kontraktem, nie stylem: najpierw ślady WTÓRNE (adres w opisach zdarzeń,
- * imię i token przy opinii), na końcu ŹRÓDŁO (adres w zamówieniu). Źródło jest kluczem
- * do znalezienia śladów, więc ginie ostatnie — inaczej powtórzenie po awarii nie miałoby
- * czego szukać. Gdy czyszczenie śladów zawiedzie, funkcja przerywa NIE TKNĄWSZY źródła.
+ * ⛔ Sama anonimizacja mieszka w `includes/prywatnosc.php` i tam trzeba czytać jej kontrakt
+ * (kolejność: ślady wtórne przed źródłem, pomiar skutku zamiast pomiaru wywołania, znana
+ * granica przy adresie z `/` w części lokalnej). Tutaj zostaje wyłącznie to, co należy do
+ * ŻĄDANIA HTTP: uprawnienia, nonce, odczyt `$_GET`, `wp_die` i przekierowanie.
  *
- * Adres → pusty + `usunieto_dnia`; token pobrania unieważniany (zanonimizowany klient =
- * koniec relacji). Kwoty i czasy ZOSTAJĄ — dashboard żyje.
+ * Powód rozdzielenia: dopóki logika siedziała w środku tej funkcji, kasownik RODO
+ * WordPressa nie miał czego zawołać — kreator „Usuń dane osobowe" nie ruszał sklepu ani
+ * o wiersz, a właściciel dostawał raport wyglądający na komplet.
  *
- * Ślady adresu w dzienniku zdarzeń czyszczone są po TREŚCI, w całej tabeli — także w wierszach
- * niezwiązanych z tym zamówieniem (np. wpis o eksporcie CSV zapisujący frazę wyszukiwania,
- * która bywa adresem). Żądanie dotyczy adresu człowieka, nie pojedynczego wiersza.
- * ⛔ Dopasowanie jest ZAKOTWICZONE na granicy znaków adresu: adres jednego kupującego bywa
- * końcówką adresu innego, więc niezakotwiczona podmiana przepisywałaby cudze wpisy.
- *
- * ⚠️ ZNANA GRANICA TEJ FUNKCJI: adres zawierający `/` w części lokalnej (RFC dopuszcza,
- * w praktyce spotykany wyjątkowo) trafia do dziennika przez `wp_json_encode` jako `\/`
- * i NIE zostanie tu znaleziony — wyszukiwanie idzie po surowej postaci adresu. Taki ślad
- * zostanie w dzienniku, mimo potwierdzenia usunięcia. Nazwane świadomie, nie przeoczone:
- * domknięcie wymaga szukania obu postaci naraz i własnego przypadku testowego.
- *
- * Potwierdzenie usunięcia idzie WYŁĄCZNIE za zmierzonym stanem po zapisie, i to we
- * wszystkich trzech miejscach naraz. Przy niepowodzeniu: zdarzenie `anonimizacja_blad`
- * z nazwaniem, które miejsce nie zostało domknięte, oraz `wp_die` z ostrzeżeniem, żeby
- * NIE potwierdzać usunięcia osobie składającej żądanie.
- *
- * ⛔ `mail_tresc` (oryginalna treść wysłanego maila) jest CZYSZCZONA razem ze śladem
- * `dor_*`: treść niesie pełną kopię danych do faktury (nazwa firmy, NIP, adres — blok
- * „DANE DO FAKTURY" składany przy wysyłce), więc zostawienie jej unieważniałoby
- * skasowanie kolumny `dane_faktury` obok, a panel wypisywałby te dane po anonimizacji.
- * Diagnoza zamówienia po anonimizacji obywa się bez treści maila — relacja z kupującym
- * jest zakończona (resend i tak odmawia bez adresu).
+ * ⛔ Panel czyści WSZYSTKO, razem z danymi do faktury — właściciel klika ten przycisk
+ * świadomie i na własną odpowiedzialność. Kasownik RODO zachowuje się inaczej (zostawia
+ * fakturę, bo wymaga tego prawo podatkowe) i mówi o tym wprost we wniosku.
  */
 function sklepag_obsluz_anonimizacje() {
 	if ( ! current_user_can( 'manage_options' ) ) {
@@ -258,106 +239,16 @@ function sklepag_obsluz_anonimizacje() {
 
 	$id = isset( $_GET['zamowienie'] ) ? absint( $_GET['zamowienie'] ) : 0;
 
-	global $wpdb;
-	$pz = $wpdb->prefix . 'sklepag_zamowienia';
-	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery -- nazwa tabeli z prefiksu; akcja admina.
-	$zam = $wpdb->get_row( $wpdb->prepare( "SELECT id, email_kupujacego FROM {$pz} WHERE id = %d", $id ) );
-	if ( ! $zam ) {
+	$wynik = sklepag_anonimizuj_zamowienie( $id );
+
+	if ( 'brak_zamowienia' === $wynik['etap'] ) {
 		wp_die( 'Zamówienie nie istnieje.', 'Sklep Agentów', 404 );
 	}
 
-	$email = (string) $zam->email_kupujacego;
-	$teraz = current_time( 'mysql' );
-
-	/*
-	 * ⛔ KOLEJNOSC JEST CZESCIA NAPRAWY, nie stylem.
-	 *
-	 * Najpierw slady WTORNE (dziennik zdarzen, opinia), na koncu ZRODLO (adres
-	 * w zamowieniu). Powod: adresu w dzienniku szukamy PO TRESCI, wiec potrzebny
-	 * jest do tego sam adres — a on znika razem ze zrodlem.
-	 *
-	 * Przy odwrotnej kolejnosci powtorzenie operacji po awarii dziennika bylo
-	 * NIEMOZLIWE: zrodlo bylo juz czyste, `$email` wracalo puste, warunek pomijal
-	 * czyszczenie dziennika w calosci, a pomiar skutku patrzyl tylko na zamowienie
-	 * i meldowal sukces. Adres kupujacego zostawal w `opis` wierszy zdarzen NA STALE,
-	 * z potwierdzeniem usuniecia dla wlasciciela.
-	 *
-	 * Teraz kazda porazka zostawia zrodlo nietkniete, wiec powtorzenie ma z czego
-	 * odtworzyc caly zakres pracy.
-	 */
-	$ok_zdarzenia = true;
-	if ( '' !== $email ) {
-		/*
-		 * ⛔ SZUKAMY PO TRESCI ADRESU, NIE PO PRZYPISANIU DO ZAMOWIENIA.
-		 *
-		 * Zadanie usuniecia dotyczy ADRESU CZLOWIEKA, a nie jednego wiersza. Adres trafia
-		 * do dziennika takze w wierszach BEZ `zamowienie_id` — np. wpis o eksporcie CSV
-		 * zapisuje uzyte filtry, a wsrod nich fraze wyszukiwania, ktora bywa e-mailem
-		 * (wyszukiwarka zamowien nazywa sie wprost „Szukaj po e-mailu”). Czyszczenie
-		 * ograniczone do `zamowienie_id = %d` zostawialoby taki slad, a wtyczka i tak
-		 * meldowalaby usuniecie.
-		 *
-		 * `esc_like()` obowiazkowy: `_` i `%` sa dzikimi kartami SQL, a adres moze je zawierac.
-		 */
-		/*
-		 * ⛔ DOPASOWANIE MUSI BYC ZAKOTWICZONE. `REPLACE` w SQL zamienia KAZDY podciag,
-		 * a adres jednego kupujacego bywa koncowka adresu innego (`ala@x.pl` siedzi
-		 * w `bala@x.pl`). Czyszczenie jednej osoby przepisywaloby wtedy wpis dotyczacy
-		 * DRUGIEJ — czyli naprawiajac wyciek, psulibysmy cudze dane.
-		 *
-		 * Dlatego dopasowanie liczone jest w PHP, z granica na znakach dozwolonych
-		 * w adresie: podmieniamy tylko wystapienia, przed ktorymi i za ktorymi NIE MA
-		 * kolejnego znaku adresu. SQL sluzy wylacznie do ZAWEZENIA kandydatow.
-		 */
-		$znacznik  = '[usunięto — RODO]';
-		$kandydaci = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT id, opis FROM {$wpdb->prefix}sklepag_zdarzenia WHERE opis LIKE %s",
-				'%' . $wpdb->esc_like( $email ) . '%'
-			)
-		);
-		/*
-		 * ⛔ KOTWICA MUSI POKRYWAC PELNY ZBIOR ZNAKOW ADRESU, nie wygodny podzbior.
-		 * RFC 5322 dopuszcza w czesci lokalnej takze `!#$%&'*+-/=?^_`{|}~`, wiec kotwica
-		 * z samych liter, cyfr i `._%+-` przepuszczalaby adresy typu `!x@a.pl` — i wracalaby
-		 * ta sama korupcja cudzych wpisow, ktora ta naprawa zamyka.
-		 * ⛔ JEDNA definicja, dwa uzycia: czyszczenie i pomiar MUSZA dopasowywac identycznie.
-		 */
-		$wzor = '/(?<!' . SKLEPAG_GRANICA_ADRESU . ')' . preg_quote( $email, '/' ) . '(?!' . SKLEPAG_GRANICA_ADRESU . ')/';
-		foreach ( (array) $kandydaci as $k ) {
-			$nowy = preg_replace( $wzor, $znacznik, (string) $k->opis );
-			if ( null === $nowy ) {
-				/* ⛔ `null` to AWARIA silnika wyrazen, nie „brak dopasowania”. Ciche
-					potraktowanie jej jak braku adresu zostawiloby dane i zameldowalo sukces. */
-				$ok_zdarzenia = false;
-				continue;
-			}
-			if ( $nowy === (string) $k->opis ) {
-				/* Brak zakotwiczonego wystapienia = to NIE jest adres tego kupujacego.
-					Wiersz zostaje nietkniety — celowo. */
-				continue;
-			}
-			if ( false === $wpdb->update( $wpdb->prefix . 'sklepag_zdarzenia', array( 'opis' => $nowy ), array( 'id' => (int) $k->id ) ) ) {
-				$ok_zdarzenia = false;
-			}
-		}
-	}
-
-	/*
-	 * ⛔ PRZERWANIE PRZED ZRODLEM, gdy slad wtorny nie zostal usuniety.
-	 *
-	 * Sama kolejnosc nie wystarcza: gdyby kod poleciał dalej i wyczyscil adres
-	 * w zamowieniu mimo nieudanego czyszczenia dziennika, powtorzenie operacji
-	 * NIE mialoby juz czego szukac — `$email` wracaloby puste, warunek pominalby
-	 * dziennik, licznik sladow nie mialby wzorca, a skutek wyszedlby „ok".
-	 * Adres kupujacego zostalby w dzienniku NA STALE. To ta sama wada, ktora
-	 * naprawiamy, tylko przesunieta o jeden krok — dlatego stoi tu twarde wyjscie.
-	 *
-	 * Zrodlo jest KLUCZEM do sladow wtornych, wiec ginie ostatnie i tylko wtedy,
-	 * gdy slady wtorne juz zniknely.
-	 */
-	if ( false === $ok_zdarzenia ) {
-		sklepag_zdarzenie( (int) $zam->id, 'anonimizacja_blad', 'nie udało się usunąć adresu z dziennika zdarzeń — adres w zamówieniu NIETKNIĘTY, żeby powtórzenie miało z czego odtworzyć zakres' );
+	/* ⛔ Komunikat MUSI odwodzić od potwierdzenia usunięcia: właściciel odpowiada nim
+		człowiekowi, który złożył żądanie. Zdarzenie `anonimizacja_blad` z powodem jest już
+		zapisane przez funkcję anonimizującą. */
+	if ( 'dziennik' === $wynik['etap'] ) {
 		wp_die(
 			'Anonimizacja NIE doszła do skutku: nie udało się usunąć adresu z dziennika zdarzeń. Adres w zamówieniu jest NIETKNIĘTY, więc powtórzenie operacji domknie całość — ale część śladów w dzienniku mogła już zostać usunięta. Nie potwierdzaj usunięcia osobie, która złożyła żądanie, dopóki nie powtórzysz operacji i nie zobaczysz potwierdzenia.',
 			'Sklep Agentów',
@@ -365,103 +256,7 @@ function sklepag_obsluz_anonimizacje() {
 		);
 	}
 
-	/* Symetria RODO dla mechanizmu opinii — TAKZE przed zrodlem. Wynik nie rozstrzyga
-		(false znaczy tu rowniez „zamowienie nie ma opinii"), rozstrzyga pomiar nizej. */
-	sklepag_anonimizuj_opinie( (int) $zam->id );
-
-	$ok_zam = $wpdb->query(
-		$wpdb->prepare(
-			"UPDATE {$pz} SET email_kupujacego='', dane_faktury='', mail_tresc=NULL, usunieto_dnia=%s, token_pobrania='', link_wygasa=NULL, dor_token_pobrania='', dor_link_wygasa=NULL, dor_mail_tresc=NULL, dor_opinia_hash='', zmieniono=%s WHERE id=%d",
-			$teraz,
-			$teraz,
-			(int) $zam->id
-		)
-	);
-	// phpcs:enable
-
-	/*
-	 * ⛔ POMIAR SKUTKU, NIE WYWOLANIA. Wczesniej ta funkcja zapisywala do dziennika
-	 * „kupujacy zanonimizowany" i meldowala wlascicielowi „ok" BEZ sprawdzenia, czy
-	 * ktorykolwiek z zapisow sie udal. Przy porazce zapisu wlasciciel odpowiadal
-	 * czlowiekowi, ze jego dane usunieto, a e-mail zostawal w bazie — czyli
-	 * NIEZREALIZOWANE ZADANIE RODO z falszywym dowodem, ze zostalo zrealizowane.
-	 *
-	 * Dlaczego odczyt, a nie sam kod powrotu: `$wpdb->query()` zwraca 0 (nie false),
-	 * gdy nic sie nie zmienilo — a tak wyglada POWTORNA anonimizacja tego samego
-	 * zamowienia. Traktowanie zera jak awarii dawaloby falszywy alarm. Podobnie
-	 * `sklepag_anonimizuj_opinie()` zwraca false takze wtedy, gdy zamowienie po
-	 * prostu NIE MA opinii — to normalny przypadek, wiec jej wynik nie rozstrzyga.
-	 * Rozstrzyga STAN PO ZAPISIE: e-mail ma byc pusty, `usunieto_dnia` ustawione.
-	 */
-	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- nazwy tabel z prefiksu; akcja admina.
-	$po = $wpdb->get_row( $wpdb->prepare( "SELECT email_kupujacego, usunieto_dnia, token_pobrania, mail_tresc, dor_token_pobrania, dor_mail_tresc, dor_opinia_hash FROM {$pz} WHERE id = %d", (int) $zam->id ) );
-
-	/*
-	 * ⛔ SKUTEK LICZY SIE WE WSZYSTKICH TRZECH MIEJSCACH, w ktorych siedzial adres
-	 * albo dane kupujacego. Pomiar tylko w tabeli
-	 * zamowien meldowal sukces, gdy adres zostawal w dzienniku zdarzen.
-	 *
-	 * `esc_like()` przy LIKE jest OBOWIAZKOWY — `_` i `%` sa dzikimi kartami SQL,
-	 * a adres e-mail moze je zawierac.
-	 */
-	$slady_dziennik = 0;
-	if ( '' !== $email ) {
-		/* Pomiar MUSI byc dokladnie tak szeroki jak czyszczenie — inaczej nazwa kontroli
-			(„brak sladow adresu”) obiecuje wiecej, niz kontrola sprawdza. */
-		/* Pomiar zakotwiczony DOKLADNIE tak samo jak czyszczenie — inaczej liczylby
-			cudze adresy jako nasze slady i nigdy nie zszedlby do zera. */
-		$do_sprawdzenia = $wpdb->get_col(
-			$wpdb->prepare(
-				"SELECT opis FROM {$wpdb->prefix}sklepag_zdarzenia WHERE opis LIKE %s",
-				'%' . $wpdb->esc_like( $email ) . '%'
-			)
-		);
-		/* Ta sama granica co przy czyszczeniu — inaczej pomiar mierzylby co innego niz naprawa. */
-		/* TA SAMA definicja co przy czyszczeniu — stala wtyczki, zeby nie dalo sie rozjechac. */
-		$wzor_pomiar = '/(?<!' . SKLEPAG_GRANICA_ADRESU . ')' . preg_quote( $email, '/' ) . '(?!' . SKLEPAG_GRANICA_ADRESU . ')/';
-		foreach ( (array) $do_sprawdzenia as $tresc ) {
-			$trafienie = preg_match( $wzor_pomiar, (string) $tresc );
-			if ( false === $trafienie || 1 === $trafienie ) {
-				/* Awaria silnika liczy sie JAK SLAD: nie wolno jej czytac jako „czysto”. */
-				++$slady_dziennik;
-			}
-		}
-	}
-	$slady_opinia = (int) $wpdb->get_var(
-		$wpdb->prepare(
-			"SELECT COUNT(*) FROM {$wpdb->prefix}sklepag_opinie WHERE zamowienie_id = %d AND ( imie <> '' OR token_hash <> '' )",
-			(int) $zam->id
-		)
-	);
-	// phpcs:enable
-
-	/* Pomiar TAK SZEROKI jak czyszczenie (v9): tokeny, ORYGINAŁ treści maila i ślad dor_*
-		też muszą zniknąć — mail_tresc niesie kopię danych do faktury, dor_mail_tresc to
-		KOPIA treści maila (NULL po czyszczeniu; (string) NULL = ''). */
-	$skutek_ok = $po
-		&& '' === (string) $po->email_kupujacego
-		&& ! empty( $po->usunieto_dnia )
-		&& '' === (string) $po->token_pobrania
-		&& '' === (string) $po->mail_tresc
-		&& '' === (string) $po->dor_token_pobrania
-		&& '' === (string) $po->dor_mail_tresc
-		&& '' === (string) $po->dor_opinia_hash
-		&& 0 === $slady_dziennik
-		&& 0 === $slady_opinia;
-
-	/* `$ok_zdarzenia` nie jest tu juz sprawdzane: jego porazka konczy sciezke WYZEJ,
-		zanim cokolwiek tkniemy w zamowieniu. Powtorzenie warunku byloby martwym kodem
-		(phpstan: identical.alwaysFalse) i sugerowaloby ochrone, ktorej to miejsce nie daje. */
-	if ( false === $ok_zam || ! $skutek_ok ) {
-		sklepag_zdarzenie(
-			(int) $zam->id,
-			'anonimizacja_blad',
-			'anonimizacja NIE doszła do skutku — '
-			. 'adres w zamówieniu: ' . ( ( $po && '' === (string) $po->email_kupujacego ) ? 'usunięty' : 'ZOSTAŁ' )
-			. ', treść maila: ' . ( ( $po && '' === (string) $po->mail_tresc ) ? 'usunięta' : 'ZOSTAŁA' )
-			. ', ślady w dzienniku: ' . (int) $slady_dziennik
-			. ', dane opinii: ' . (int) $slady_opinia
-		);
+	if ( empty( $wynik['ok'] ) ) {
 		wp_die(
 			'Anonimizacja NIE doszła do skutku — dane kupującego mogą nadal być w bazie. Nie potwierdzaj usunięcia osobie, która złożyła żądanie, dopóki nie powtórzysz operacji.',
 			'Sklep Agentów',
@@ -469,9 +264,7 @@ function sklepag_obsluz_anonimizacje() {
 		);
 	}
 
-	sklepag_zdarzenie( (int) $zam->id, 'anonimizacja', 'kupujący zanonimizowany na żądanie (RODO); token pobrania i opinia unieważnione' );
-
-	wp_safe_redirect( add_query_arg( 'sklepag_anonimizacja', 'ok', sklepag_url_zamowienia( (int) $zam->id ) ) );
+	wp_safe_redirect( add_query_arg( 'sklepag_anonimizacja', 'ok', sklepag_url_zamowienia( $id ) ) );
 	exit;
 }
 

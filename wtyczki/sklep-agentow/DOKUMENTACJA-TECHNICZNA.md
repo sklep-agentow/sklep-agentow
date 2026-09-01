@@ -35,6 +35,7 @@ produktu i tylko z kluczem publikowalnym (od 0.9.25 — formularz karty musi by�
 | `includes/logowania.php` | dziennik logowań administratorów, opóźnienie i limit prób |
 | `includes/admin*.php` | panel: pulpit, produkty, zamówienia, opinie, ustawienia, dziennik |
 | `includes/opinie.php` | opinie kupujących: zalążek i token przy mailu, formularz, moderacja |
+| `includes/prywatnosc.php` | RODO: czysta anonimizacja zamówienia (wołana z panelu i z kreatora), eksporter i kasownik `wp_privacy_personal_data_*`, podpowiedź do polityki prywatności |
 | `includes/class-sklepag-lista-{zamowien,produktow,logowan,zdarzen}.php` | tabele list w panelu (na `WP_List_Table` z rdzenia): sortowanie, stronicowanie, filtry |
 | `includes/class-sklepag-sitemap-produkty.php` | dostawca stron produktów do mapy witryny WordPressa |
 
@@ -253,6 +254,60 @@ z ruchu na stronie i trzeba mieć wpis w systemowym harmonogramie, np. co 5 minu
 `wget -q -O - https://TWOJA-DOMENA/wp-cron.php?doing_wp_cron >/dev/null 2>&1`.
 Bez tego zamówienia opłacone w chwili, gdy powiadomienie od Stripe nie dotarło, poczekają
 na mail do najbliższego wejścia do panelu.
+
+---
+
+## 8a. Mechanizm prywatności WordPressa (RODO)
+
+Sklep trzyma dane osobowe kupujących, więc jest wpięty w narzędzia wbudowane —
+**Narzędzia → Eksportuj / Usuń dane osobowe** oraz **Ustawienia → Prywatność**.
+Wcześniej miał wyłącznie własny przycisk anonimizacji w panelu: kreator WordPressa
+składał raport **bez danych ze sklepu**, a obsługa uznawała żądanie za wypełnione.
+
+| Zaczep | Funkcja | Co robi |
+|---|---|---|
+| `wp_privacy_personal_data_exporters` | `sklepag_rodo_eksporter()` | wydaje zamówienia, opinie i sesje płatności powiązane z adresem; **stronicuje** (`SKLEPAG_RODO_PORCJA` = 100 pozycji na stronę) |
+| `wp_privacy_personal_data_erasers` | `sklepag_rodo_kasownik()` | anonimizuje wszystkie zamówienia adresu; `items_retained` + powód, gdy zostają dane do faktury |
+| `wp_add_privacy_policy_content()` | `sklepag_polityka_prywatnosci()` | gotowy akapit do polityki prywatności |
+
+**Jedna anonimizacja, dwa wejścia.** `sklepag_anonimizuj_zamowienie( int $id, bool $zachowaj_dane_faktury )`
+jest czystą funkcją: zwraca wynik zamiast kończyć proces. Woła ją panelowa skorupa
+`sklepag_obsluz_anonimizacje()` (uprawnienia, nonce, `$_GET`, `wp_die`) oraz kasownik kreatora.
+Kolejność operacji jest kontraktem: najpierw ślady **wtórne** (dziennik zdarzeń, opinia),
+na końcu **źródło** (adres w zamówieniu) — źródło jest kluczem do znalezienia śladów, więc
+ginie ostatnie, a każda porażka zostawia je nietknięte, żeby powtórzenie miało z czego
+odtworzyć zakres. Potwierdzenie usunięcia idzie wyłącznie za **zmierzonym stanem po zapisie**,
+a pomiar jest **tak szeroki jak zapis i zależny od trybu**: obejmuje wszystkie kolumny niosące
+dane osobowe (adres, treść maila, ślad `dor_*`, tokeny, dane do faktury) — przy czym
+`dane_faktury` mierzona jest na pusto tylko w trybie panelu; w trybie kasownika ta kolumna ma
+zostać, więc twardy pomiar na pusto zamieniłby wymóg podatkowy w meldunek o nieudanym zapisie.
+Kolumny `link_wygasa`, `dor_link_wygasa` i `zmieniono` są poza pomiarem świadomie: to znaczniki
+czasu bez danych osobowych, bezużyteczne bez tokenu, który mierzony jest.
+
+**Dane do faktury zostają po wniosku RODO** (nazwa, NIP, adres) — obowiązek prawny:
+art. 6 ust. 1 lit. c RODO w związku z ustawą o VAT (art. 106e ust. 1 pkt 3 wymaga adresu
+nabywcy). Kasownik zwraca je w `items_retained` z powodem, a nie po cichu. Przycisk w panelu
+działa jak dotąd i czyści **wszystko** — to świadoma decyzja właściciela, nie wniosek.
+
+**Co ZOSTAJE po wniosku o usunięcie — i jest zgłaszane w `items_retained` z powodem:**
+1. **Dane do faktury** (nazwa, NIP, adres) — obowiązek prawny, jak wyżej.
+2. **Identyfikatory u operatora płatności**: `zamowienia.stripe_session_id`,
+   `zamowienia.payment_intent_id` i cały wiersz w `sesje_checkout`. Nie jest to wygoda, tylko
+   warunek poprawności obsługi pieniędzy: `zakup.php` odnajduje zamówienie po
+   `payment_intent_id` przy zwrocie i przy obciążeniu zwrotnym, a `stripe_session_id` niesie
+   idempotencję domknięcia zakupu (powtórzony webhook trafia w istniejące zamówienie zamiast
+   tworzyć drugie). Wyczyszczenie ich sprawiłoby, że zwrot zgłoszony PO wniosku RODO nie miałby
+   czego znaleźć. Eksporter je **wydaje**, kasownik je **zgłasza** — jedno i drugie, nigdy
+   milczenie o jednym z nich.
+
+**Czego eksporter i kasownik NIE obejmują w ogóle:** `logowania` i `rate_limit` (klucz to adres
+IP albo login administratora — nie da się ich powiązać z adresem e-mail kupującego) oraz adresów
+IP w `zdarzenia`. Wszystkie trzy czyści retencja `SKLEPAG_RETENCJA_DNI` (90) dni. Nie obejmują
+też retencji czasowej zamówień — to osobna decyzja właściciela.
+
+⛔ **Reguła, z której to wynika:** cokolwiek eksporter wydaje jako dane osobowe, kasownik musi
+albo usunąć, albo zgłosić w `items_retained` z powodem. Milczenie o zachowanej danej jest gorsze
+niż jej zachowanie: właściciel odpowiada komunikatem kasownika osobie składającej wniosek.
 
 ---
 

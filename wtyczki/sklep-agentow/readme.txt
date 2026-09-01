@@ -76,6 +76,12 @@ Zgoda kupującego (treść i czas) jest zapisywana przy zamówieniu i potwierdza
 w mailu. Dane kupującego można zanonimizować z panelu; historia zamówień
 zostaje w Twojej bazie. Dane karty obsługuje wyłącznie Stripe.
 
+Sklep jest wpięty w narzędzia prywatności WordPressa: Narzędzia → Eksportuj dane
+osobowe wydaje zamówienia, opinie i sesje płatności kupującego, a Narzędzia →
+Usuń dane osobowe anonimizuje je. Dane do faktury (nazwa, NIP, adres) zostają
+także po takim wniosku — wymaga tego ustawa o VAT — a narzędzie mówi o tym
+wprost w raporcie. Wtyczka dokłada też gotowy akapit do Ustawienia → Prywatność.
+
 Sprawdzone na WordPressie 7.1 i PHP 8.4; deklarowane minimum to WordPress 6.7
 i PHP 8.1.
 
