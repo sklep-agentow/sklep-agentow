@@ -859,3 +859,97 @@ ale z trzema zastrzeżeniami do przyrządu, bo cały dowód pocztowy zlecenia st
   bez zmiany konfiguracji łapacza, czyli zmiany wspólnego stanowiska.
 - **Nagłówków `List-Unsubscribe`, `Message-ID`, `Date`** i tego, jak mail wygląda w filtrach
   antyspamowych — poza zasięgiem łapacza.
+
+---
+
+# A1 — `sklep-agentow`, LOGIKA PHP
+
+**Stan wejściowy z mapy:** 🟡, „audyt K7 (nasza siatka) + recenzja kolegi 31.08 (JEGO siatka),
+kolega: 9/10". **Wynik: 1 × `SRED` — i ono koryguje mój własny wynik z terenu `A5`.**
+
+## Pytanie, którym wszedłem — bo po terenie już wchodzono i wyszło zero
+
+⛔ `LEKCJA 3` z 1.09 mówi wprost: `A1` przejechane **po terenie** dało **ZERO**. Nie powtarzam
+tego. Wziąłem soczewkę z `LEKCJI 1` — tej, która opisuje błąd właściciela — i **rozciągnąłem ją
+o jeden krok**:
+
+> Lekcja pyta: *co może zmienić INNA OSOBA, gdy operacja trwa.*
+> Moje pytanie: **co się dzieje, gdy zmieni się to, NA CO WSKAZUJE zapisana ścieżka** —
+> czyli gdy operacja jest już dawno skończona, a świat pod jej wynikiem się przesunął.
+
+Sklep trzyma w bazie **ścieżki bezwzględne**: `sklepag_katalog_chroniony` (opcja),
+`produkty.plik_sciezka`, `zamowienia.produkt_plik_kupiony` (42 wiersze). Link pobrania żyje 72 h,
+a plik produktu — bezterminowo.
+
+## 1. ZNALEZISKO
+
+### 🟠 `A1-F1` — **SRED** · katalogów chronionych może być KILKA, a `uninstall.php` zna tylko ten ostatni — pliki produktów (w tym sprzedane paczki) **przeżywają „pełne czyszczenie"**
+
+**ZNALEZISKO.** `sklepag_utworz_katalog_chroniony()` (`includes/aktywacja.php:231-235`) tworzy
+**nowy** katalog z losową nazwą, gdy zapisany w opcji **nie istnieje**:
+```
+232:	$istniejacy = get_option( 'sklepag_katalog_chroniony', '' );
+233:	if ( $istniejacy && is_dir( $istniejacy ) ) { return; }
+238:	$sciezka = … 'sklepag-chronione-' . wp_generate_password( 16, false, false );
+```
+Nowa ścieżka **nadpisuje opcję**, a stary katalog — z plikami produktów, na które wskazują
+wiersze zamówień — zostaje na dysku i **nikt go już nie zna**. `uninstall.php:44-63` kasuje
+dokładnie jeden katalog: ten z opcji.
+
+**DOWÓD — stan żywego stanowiska, nie hipoteza:**
+```
+opcja sklepag_katalog_chroniony  → sklepag-chronione-56dR4cvfac3etSkZ   (2 pliki: .htaccess + index.php)
+pliki OBU produktów leżą w       → sklepag-chronione-eksx2R9XMHNK0AqE   (9 plików, 184 KB)
+42 zamówienia wskazują na        → sklepag-chronione-eksx2R9XMHNK0AqE
+trzeci katalog, niczyj           → sklepag-chronione-1aEJajvPekntwaZP   (2 pliki)
+```
+Czyli **na tym stanowisku katalogi są trzy**, a opcja wskazuje ten, w którym **nie ma ani
+jednego pliku produktu**. Gdyby dziś ktoś zrobił „Pełne czyszczenie" i odinstalował wtyczkę,
+zniknąłby katalog pusty, a **184 KB plików produktów — w tym paczki, które kupili ludzie —
+zostałoby w `uploads/`** wraz z ich `.htaccess`. Instrukcja obiecuje co innego:
+*„znikają tabele, opcje, strony sklepu i pliki chronione"* (`INSTRUKCJA-INSTALACJI.md`,
+rozdz. „Odinstalowanie").
+
+**MECHANIZM — kiedy powstaje drugi katalog.** Warunek `is_dir()` jest sprawdzany przy KAŻDEJ
+aktywacji. Wystarczy, że w chwili aktywacji katalog z opcji jest niewidoczny: odtworzenie bazy
+z kopii zrobionej przy innym katalogu, migracja `wp-content/uploads` na inny hosting,
+sprzątanie `uploads/` przez administratora, przeniesienie strony. Wtedy powstaje nowy katalog,
+a produkty **nadal wskazują na stary** — i to jest stan, w którym sklep dziś stoi.
+
+**SKUTEK dla człowieka.** Właściciel, który odinstalował wtyczkę „z pełnym czyszczeniem",
+jest przekonany, że pliki zniknęły — a leżą dalej w `uploads/`, chronione wyłącznie
+`.htaccess` (na nginx **ignorowanym**, co ta sama dokumentacja przyznaje). Przy sprzedaży
+plików cyfrowych to są **cudze paczki po zakończonej działalności sklepu**.
+
+**Dlaczego `SRED`, a nie wyżej:** nic nie ginie i nikt nie traci pieniędzy; wada dotyczy
+**sprzątania**, nie sprzedaży, a katalogi-sieroty nie są publicznie listowane. Podniósłbym,
+gdyby stary katalog tracił `.htaccess` (nie traci — sprawdzone: wszystkie trzy mają
+`.htaccess` i `index.php`).
+
+## 2. ⛔ KOREKTA MOJEGO WŁASNEGO WYNIKU Z `A5`
+
+W terenie `A5` policzyłem **64 zapisy poza własnymi tabelami, 62 sprzątane**, a pozycję 32
+(„katalog chroniony w `uploads` + `.htaccess`, `index.php` i wgrane paczki ZIP") oznaczyłem
+✅ z uwagą, że uninstall „kasuje **tylko** ścieżkę pasującą do wzorca". Opis był prawdziwy,
+**wniosek nie**: sprawdziłem, co kod kasuje, a nie **ile katalogów kod potrafi stworzyć**.
+Poprawny rachunek: **64 zapisy · 61 sprzątanych · 3 nietykane** (dwa poprzednie: reguła
+przepisywania adresów i transient aktywacyjny ChatBota — oba opisane jako niegroźne — plus
+ten katalog, który groźny jest). To jest dokładnie klasa, na którą sam się powołuję w raporcie
+`A5`: **listę sprzątania sprawdza się wobec listy zapisów, a nie wobec jednego egzemplarza zapisu.**
+
+## 3. TERENY SPRAWDZONE — WYNIK CZYSTO
+
+| # | Co sprawdzone | Wynik |
+|---|---|---|
+| 1 | **Czy ponowna aktywacja gubi katalog** (najprostszy scenariusz „ktoś coś zmienił") | **CZYSTO**: `if ( $istniejacy && is_dir( $istniejacy ) ) return;` — deaktywacja i aktywacja **nie tworzy** nowego katalogu i nie zrywa linków |
+| 2 | **Czy migawka pliku w zamówieniu naprawdę trzyma** | **CZYSTO**: 42 zamówienia ze ścieżką bezwzględną, **0** z nich wskazuje na plik, którego nie ma. Kupujący sprzed miesięcy nadal pobiera to, co kupił |
+| 3 | **Czy plik produktu da się pobrać z pominięciem bramy** | **ZMIERZONE: `HTTP 403`** na plik i na listing katalogu. ⛔ **Kontrola dodatnia NIEROZSTRZYGAJĄCA i tak to zapisuję**: korzeń `uploads/` też oddaje 403, a w `uploads/` nie ma ani jednego pliku spoza katalogów chronionych, więc **nie umiem oddzielić zasługi `.htaccess` od ogólnej konfiguracji serwera**. „403" jest faktem, „`.htaccess` działa" — **nie jest** dowiedzione tym pomiarem |
+
+## 4. CZEGO W `A1` NIE ZDĄŻYŁEM
+
+- **Reszty logiki PHP sklepu** — wszedłem JEDNĄ soczewką (ścieżki i to, co się pod nimi
+  przesuwa), bo przejazd po terenie już raz dał zero. Pozostałe pytania z `LEKCJI 1`
+  (koszyk, zaproszenie, rezerwacja) w tym produkcie nie mają odpowiedników.
+- **Równoległego „Wyślij ponownie"** — dwa kliknięcia naraz rotują token dwa razy; kod nie ma
+  tu CAS-a takiego jak przy domknięciu. Zauważone, **nie zmierzone** — kandydat na osobny pomiar.
+- **Zachowania na nginx** (gdzie `.htaccess` jest ignorowany) — poza tym stanowiskiem.
