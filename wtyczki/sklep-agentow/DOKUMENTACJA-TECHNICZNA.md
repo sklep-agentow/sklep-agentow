@@ -267,7 +267,13 @@ jest czystą funkcją: zwraca wynik zamiast kończyć proces. Woła ją panelowa
 Kolejność operacji jest kontraktem: najpierw ślady **wtórne** (dziennik zdarzeń, opinia),
 na końcu **źródło** (adres w zamówieniu) — źródło jest kluczem do znalezienia śladów, więc
 ginie ostatnie, a każda porażka zostawia je nietknięte, żeby powtórzenie miało z czego
-odtworzyć zakres. Potwierdzenie usunięcia idzie wyłącznie za **zmierzonym stanem po zapisie**.
+odtworzyć zakres. Potwierdzenie usunięcia idzie wyłącznie za **zmierzonym stanem po zapisie**,
+a pomiar jest **tak szeroki jak zapis i zależny od trybu**: obejmuje wszystkie kolumny niosące
+dane osobowe (adres, treść maila, ślad `dor_*`, tokeny, dane do faktury) — przy czym
+`dane_faktury` mierzona jest na pusto tylko w trybie panelu; w trybie kasownika ta kolumna ma
+zostać, więc twardy pomiar na pusto zamieniłby wymóg podatkowy w meldunek o nieudanym zapisie.
+Kolumny `link_wygasa`, `dor_link_wygasa` i `zmieniono` są poza pomiarem świadomie: to znaczniki
+czasu bez danych osobowych, bezużyteczne bez tokenu, który mierzony jest.
 
 **Dane do faktury zostają po wniosku RODO** (nazwa, NIP, adres) — obowiązek prawny:
 art. 6 ust. 1 lit. c RODO w związku z ustawą o VAT (art. 106e ust. 1 pkt 3 wymaga adresu

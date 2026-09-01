@@ -198,7 +198,7 @@ function sklepag_anonimizuj_zamowienie( $id, $zachowaj_dane_faktury = false ) {
 	 * zamowienia. Podobnie `sklepag_anonimizuj_opinie()` zwraca false takze wtedy,
 	 * gdy zamowienie po prostu NIE MA opinii. Rozstrzyga STAN PO ZAPISIE.
 	 */
-	$po = $wpdb->get_row( $wpdb->prepare( "SELECT email_kupujacego, usunieto_dnia, token_pobrania, mail_tresc, dor_token_pobrania, dor_mail_tresc, dor_opinia_hash FROM {$pz} WHERE id = %d", $id ) );
+	$po = $wpdb->get_row( $wpdb->prepare( "SELECT email_kupujacego, usunieto_dnia, token_pobrania, mail_tresc, dane_faktury, dor_token_pobrania, dor_mail_tresc, dor_opinia_hash FROM {$pz} WHERE id = %d", $id ) );
 
 	/*
 	 * ⛔ SKUTEK LICZY SIE WE WSZYSTKICH TRZECH MIEJSCACH, w ktorych siedzial adres
@@ -234,11 +234,29 @@ function sklepag_anonimizuj_zamowienie( $id, $zachowaj_dane_faktury = false ) {
 	/* Pomiar TAK SZEROKI jak czyszczenie (v9): tokeny, ORYGINAŁ treści maila i ślad dor_*
 		też muszą zniknąć — mail_tresc niesie kopię danych kupującego, dor_mail_tresc to
 		KOPIA treści maila (NULL po czyszczeniu; (string) NULL = ''). */
+
+	/*
+	 * ⛔ POMIAR MUSI PASOWAĆ DO TRYBU, a nie do jednego z dwóch.
+	 *
+	 * `dane_faktury` długo była czyszczona i NIE MIERZONA — jedyna pozostała kolumna
+	 * z danymi osobowymi (nazwa firmy, NIP, adres) poza pomiarem skutku. Gdyby jej
+	 * czyszczenie nie doszło, funkcja meldowała sukces, panel pisał „Kupujący
+	 * zanonimizowany", a właściciel potwierdzał człowiekowi usunięcie danych, które
+	 * nadal leżą w bazie. To ta sama klasa co potwierdzenie bez pomiaru, o kolumnę dalej.
+	 *
+	 * ⛔ Warunek NIE MOŻE brzmieć „kolumna ma być pusta" bezwarunkowo: w trybie kasownika
+	 * RODO ta kolumna ma ZOSTAĆ (obowiązek podatkowy). Twardy pomiar na pusto zamieniłby
+	 * wymóg prawa w meldunek o nieudanym zapisie i kasownik nie domknąłby ani jednego
+	 * wniosku. Mierzymy więc to, co ten tryb miał ZROBIĆ.
+	 */
+	$faktura_ok = $zachowaj_dane_faktury || ( $po && '' === (string) $po->dane_faktury );
+
 	$skutek_ok = $po
 		&& '' === (string) $po->email_kupujacego
 		&& ! empty( $po->usunieto_dnia )
 		&& '' === (string) $po->token_pobrania
 		&& '' === (string) $po->mail_tresc
+		&& $faktura_ok
 		&& '' === (string) $po->dor_token_pobrania
 		&& '' === (string) $po->dor_mail_tresc
 		&& '' === (string) $po->dor_opinia_hash
@@ -252,6 +270,9 @@ function sklepag_anonimizuj_zamowienie( $id, $zachowaj_dane_faktury = false ) {
 			'anonimizacja NIE doszła do skutku — '
 			. 'adres w zamówieniu: ' . ( ( $po && '' === (string) $po->email_kupujacego ) ? 'usunięty' : 'ZOSTAŁ' )
 			. ', treść maila: ' . ( ( $po && '' === (string) $po->mail_tresc ) ? 'usunięta' : 'ZOSTAŁA' )
+			/* W trybie kasownika faktura ma ZOSTAĆ, więc nie ma o czym meldować — inaczej
+				dziennik nazywałby wymóg podatkowy niedomkniętym miejscem. */
+			. ( $zachowaj_dane_faktury ? '' : ', dane do faktury: ' . ( $faktura_ok ? 'usunięte' : 'ZOSTAŁY' ) )
 			. ', ślady w dzienniku: ' . (int) $slady_dziennik
 			. ', dane opinii: ' . (int) $slady_opinia
 		);
