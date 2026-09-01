@@ -1,6 +1,6 @@
 # Sklep Agentów — dokumentacja techniczna
 
-**Wersja wtyczki: 0.9.28 · wersja schematu bazy: 9 · WordPress 6.7+ · PHP 8.1+**
+**Wersja wtyczki: 0.9.29 · wersja schematu bazy: 9 · WordPress 6.7+ · PHP 8.1+**
 
 > **Po co ten dokument.** To jest **mapa systemu dla audytora i programisty**, nie ulotka.
 > Każda liczba i nazwa tutaj jest wzięta z kodu, nie z pamięci — jeśli coś się rozjedzie,
@@ -209,7 +209,7 @@ po stronie serwera. To jest świadome ograniczenie, nie przeoczenie.
 
 | Stała | Wartość | Znaczenie |
 |---|---|---|
-| `SKLEPAG_WERSJA` | 0.9.28 | wersja wtyczki (assety, cache) |
+| `SKLEPAG_WERSJA` | 0.9.29 | wersja wtyczki (assety, cache) |
 | `SKLEPAG_WERSJA_SCHEMATU` | 9 | wersja schematu bazy (migracje) |
 | `SKLEPAG_LIMIT_POBRAN` | 10 | ile razy można pobrać plik z jednego wydanego linku (zerowane przy świeżym linku) |
 | `SKLEPAG_LINK_GODZIN` | 72 | ważność linku pobrania |
@@ -219,6 +219,34 @@ po stronie serwera. To jest świadome ograniczenie, nie przeoczenie.
 ⛔ **Każda z tych liczb pojawia się w treściach dla klienta** (mail, FAQ, strona
 produktu) **generowana ze stałej**, nie wpisana ręcznie — dokumentacja nie może
 rozjechać się z kodem.
+
+### Tryb testowy — jedno źródło prawdy
+
+`sklepag_tryb_testowy()` (`sklep-agentow.php`) orzeka tryb z **prefiksu klucza
+sekretnego Stripe** w opcji `sklepag_stripe_klucz_sekretny`. Osobnej opcji trybu
+**nie ma i nie ma jej przybyć**: przełącznik, który trzeba pamiętać przestawić,
+jest tą samą miną co napis wpisany na sztywno, tylko z dodatkowym krokiem.
+
+| Wartość opcji | Orzeczenie |
+|---|---|
+| `sk_test_…` | tryb testowy — wolno pisać, że płatność nie jest pobierana |
+| `sk_live_…` | sprzedaż na serio — żadnych napisów o trybie testowym |
+| pusta / nierozpoznany prefiks | **jak produkcyjny** (fail-closed) |
+
+⛔ **Fail-closed, nie fail-open.** Zdanie „płatności nie są pobierane" to obietnica
+wobec kupującego, nie ostrzeżenie: wolno ją wypowiedzieć tylko wtedy, gdy da się
+ją udowodnić. Brak klucza właściciel i tak widzi osobno — Pulpit zgłasza wtedy
+„Sklep nie przyjmie płatności".
+
+Pytają o to **wszystkie** miejsca, nigdy o obecność napisu: baner
+(`sklepag_baner_testowy()`, strona sklepu / produktu / „Dziękujemy"), etykiety CTA
+i notka z kartą testową (`includes/front-produkt.php`), obie wersje maila
+(`includes/mail-html.php`, `includes/zakup.php`), Pulpit i szczegóły zamówienia,
+sekcja Stripe w Ustawieniach.
+
+⛔ `assets/platnosc.js` **nadpisuje etykiety przycisków po renderze** („Otwieram
+płatność…", „Przetwarzam…") i odtwarza je z wartości **zapamiętanej z DOM-u przy
+starcie** — własny literał w tym pliku cofałby naprawę PHP w przeglądarce.
 
 ---
 

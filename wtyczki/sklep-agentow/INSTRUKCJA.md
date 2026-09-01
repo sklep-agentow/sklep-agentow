@@ -27,8 +27,9 @@ Szczegóły pojedynczego zamówienia otwierasz z listy na Pulpicie przyciskiem *
 
 ![Pulpit sklepu — wskaźniki sprzedaży](zrzuty/dashboard-wskazniki.png)
 
-Na górze Pulpitu jest oznaczenie **TRYB TESTOWY** — w tej wersji wpisane na stałe, niezależnie od
-tego, jakie klucze Stripe wpiszesz (rozdział 8).
+Na górze Pulpitu bywa oznaczenie **TRYB TESTOWY**. Pojawia się wtedy i tylko wtedy, gdy klucz
+sekretny Stripe w Ustawieniach zaczyna się od `sk_test_` (rozdział 8). Po wpisaniu klucza
+produkcyjnego `sk_live_…` znika samo — razem z wszystkimi oznaczeniami widzianymi przez kupującego.
 
 ---
 
@@ -258,12 +259,14 @@ same (sprzątanie co 10 minut). Zamówienia, kwoty i statusy zostają.
   odinstalowaniu tabele, ustawienia, strony sklepu i pliki chronione. Klucze Stripe
   i zaplanowane zadanie sklep usuwa zawsze.
 
-**Tryb testowy a sprzedaż naprawdę.** Dopóki w Ustawieniach są klucze testowe (`sk_test_…`),
-płatności nie są pobierane. Oznaczenia trybu testowego — na Pulpicie, na liście sklepu, na stronie
-produktu, na stronie po zapłacie i w mailu — są w tej wersji **wpisane na stałe** i nie znikną po
-samej zmianie kluczy. Przejście na prawdziwe płatności to osobna decyzja i osobna paczka: pełną
-listę kroków i tego, co **nie** znika samo, znajdziesz w `INSTRUKCJA-INSTALACJI.md`, rozdział
-„Test a produkcja”. Zaczyna się od jednego kroku: napisz do nas.
+**Tryb testowy a sprzedaż naprawdę.** Dopóki w Ustawieniach jest klucz sekretny testowy
+(`sk_test_…`), płatności nie są pobierane. **Tryb bierze się z prefiksu tego klucza — nie ma
+osobnego przełącznika do zapomnienia.** Oznaczenia trybu testowego (na Pulpicie, na liście sklepu,
+na stronie produktu, na stronie po zapłacie, w panelu zamówienia i w obu wersjach maila) pojawiają
+się i znikają razem z nim: po wpisaniu klucza `sk_live_…` sklep przestaje pisać, że nie pobiera
+pieniędzy. ⛔ Klucz sekretny to jednak nie wszystko, co trzeba zmienić przed prawdziwą sprzedażą —
+webhook produkcyjny, wysyłka maili i dokumenty sprzedawcy to osobne kroki. Pełną listę znajdziesz
+w `INSTRUKCJA-INSTALACJI.md`, rozdział „Test a produkcja”.
 
 ---
 

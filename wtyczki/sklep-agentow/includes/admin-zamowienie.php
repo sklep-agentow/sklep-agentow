@@ -538,7 +538,9 @@ function sklepag_admin_zamowienie() {
 	echo '<tr><td>Produkt (snapshot z chwili zakupu)</td><td>' . esc_html( $zam->produkt_nazwa_kupiona ) . '</td></tr>';
 	// Dane do faktury podane przez kupującego (0.9.25) — anonimizacja RODO czyści je razem z e-mailem.
 	echo '<tr><td>Dane do faktury</td><td>' . ( $zanonimizowane ? '<em>zanonimizowane</em>' : ( '' !== (string) ( $zam->dane_faktury ?? '' ) ? esc_html( $zam->dane_faktury ) : '<span class="sklepag-szary">nie podano (zakup prywatny)</span>' ) ) . '</td></tr>';
-	echo '<tr><td>Kwota</td><td>' . esc_html( number_format( $zam->kwota_grosze / 100, 2, ',', ' ' ) . ' ' . $zam->waluta ) . ' <span class="sklepag-szary">(tryb testowy)</span></td></tr>';
+	// Dopisek o trybie z tego samego źródła co front i mail — panel nie ma prawa nazywać
+	// prawdziwej wpłaty testową (ani odwrotnie).
+	echo '<tr><td>Kwota</td><td>' . esc_html( number_format( $zam->kwota_grosze / 100, 2, ',', ' ' ) . ' ' . $zam->waluta ) . ( sklepag_tryb_testowy() ? ' <span class="sklepag-szary">(tryb testowy)</span>' : '' ) . '</td></tr>';
 	echo '<tr><td>Sesja Stripe</td><td><code>' . esc_html( $zam->stripe_session_id ) . '</code></td></tr>';
 	echo '<tr><td>Pobrania</td><td>' . esc_html( (int) $zam->pobrania_uzyte . ' / ' . (int) $zam->pobrania_limit ) . ( $zam->link_wygasa ? ' · link ważny do ' . esc_html( $zam->link_wygasa ) : ' · link unieważniony' ) . '</td></tr>';
 	// Kolumna zgoda_czas jest w GMT — panel pokazuje czas lokalny strony, ten sam, który dostaje kupujący w mailu.

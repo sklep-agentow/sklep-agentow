@@ -20,6 +20,38 @@ Nic jeszcze.
 
 ---
 
+## [0.9.29] — 2026-09-01 · schemat bazy bez zmian (9)
+
+### Naprawione
+- **Sklep przestaje zapewniać kupującego, że nie pobiera pieniędzy, gdy je pobiera.** Napis
+  „TRYB TESTOWY — płatności nie są pobierane" i jego rodzeństwo były wpisane w kod bez jednego
+  warunku: po wymianie kluczy Stripe na produkcyjne stały dalej — na stronie sklepu, na stronie
+  produktu, na ekranie „Dziękujemy" oglądanym PO ZAPŁACENIU i w obu wersjach maila po zakupie.
+  Tryb orzeka teraz **jedna funkcja** (`sklepag_tryb_testowy()`) z **prefiksu klucza sekretnego
+  Stripe**: `sk_test_…` = tryb testowy, `sk_live_…`, nierozpoznany prefiks albo brak klucza =
+  sklep milczy o trybie testowym (fail-closed — zdanie o niepobranej płatności to obietnica,
+  wolno je powiedzieć tylko wtedy, gdy da się je udowodnić). Osobnej opcji do klikania świadomie
+  **nie ma**: przełącznik, który trzeba pamiętać przestawić, byłby tą samą miną z dodatkowym krokiem.
+- **Etykiety przycisków nie wracają do wersji testowej w przeglądarce.** `assets/platnosc.js`
+  nadpisuje napisy na przyciskach zakupu i odtwarzał je z własnych literałów — poprawka po stronie
+  serwera była tam cofana w locie (kupujący z kluczem produkcyjnym po nieudanej próbie płatności
+  znów widział „Kup teraz (płatność testowa)"). Skrypt zapamiętuje teraz etykietę z DOM-u przy
+  starcie; jedynym źródłem tekstu jest PHP.
+- **Ekrany właściciela mówią to samo co front:** znacznik przy tytule Pulpitu, dopisek „(tryb
+  testowy)" przy kwocie w szczegółach zamówienia i tytuł sekcji Stripe w Ustawieniach pytają
+  o ten sam tryb. Opis pola kluczy mówi wprost, że prefiks decyduje o trybie sklepu.
+- **Sekcja FAQ na liście sklepu** zamienia pytanie „Co znaczy tryb testowy?" na pytanie
+  o bezpieczeństwo płatności, gdy sklep sprzedaje naprawdę (kafel nie znika — siatka jest
+  dwukolumnowa).
+
+### Dokumentacja
+- `INSTRUKCJA.md`, `dokumentacja/INSTRUKCJA-INSTALACJI.md` (rozdział „Test a produkcja"),
+  `README.md` i `PONAD-SPECYFIKACJE.md` mówiły, że oznaczenia trybu są wpisane na stałe
+  i **nie znikają same** — po tej zmianie znikają razem z podmianą klucza. Instrukcja instalacji
+  nadal ostrzega, że sama podmiana klucza nie wystarczy do sprzedaży (webhook, poczta, dokumenty).
+
+---
+
 ## [0.9.28] — 2026-08-31 · schemat bazy 9 (zamowienia.dor_*)
 
 ### Naprawione

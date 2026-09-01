@@ -79,9 +79,10 @@ w paczce sklepu dodatkowo `PONAD-SPECYFIKACJE.md`.
 ## Czego ten system NIE robi (świadome granice)
 
 Nie zakłada kont kupującym, nie obsługuje płatności cyklicznych, kuponów ani przecen, nie dotyka motywu
-ani innych wtyczek, nie wysyła danych nigdzie poza Stripe. **Całość pracuje w trybie testowym Stripe** —
-płatności nie są pobierane, kupujący widzi oznaczenia trybu testowego. Przejście na prawdziwe płatności
-to osobna paczka: `INSTRUKCJA-INSTALACJI.md`, rozdział „Test a produkcja”.
+ani innych wtyczek, nie wysyła danych nigdzie poza Stripe. **Sklep jest oddawany z kluczami testowymi
+Stripe** — płatności nie są pobierane, kupujący widzi oznaczenia trybu testowego. Tryb wynika z prefiksu
+klucza sekretnego (`sk_test_…` kontra `sk_live_…`), więc podmiana klucza zdejmuje te oznaczenia sama;
+pozostałe kroki przejścia na produkcję opisuje `INSTRUKCJA-INSTALACJI.md`, rozdział „Test a produkcja”.
 
 ## Struktura repo
 

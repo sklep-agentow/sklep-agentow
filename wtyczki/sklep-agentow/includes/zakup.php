@@ -1215,7 +1215,10 @@ function sklepag_zbuduj_mail( $produkt, $zam, $link, $link_opinii = '' ) {
 		. ( '' !== $numer ? 'Numer zamówienia: ' . $numer . "\n" : '' )
 		. 'Produkt: ' . $produkt->nazwa . "\n"
 		. ( '' !== $kupiono ? 'Data zakupu: ' . $kupiono . "\n" : '' )
-		. 'Kwota: ' . number_format( $zam->kwota_grosze / 100, 2, ',', ' ' ) . ' ' . $zam->waluta . " (TRYB TESTOWY — płatność nie została pobrana)\n\n"
+		. 'Kwota: ' . number_format( $zam->kwota_grosze / 100, 2, ',', ' ' ) . ' ' . $zam->waluta
+		/* ⛔ Ten sam warunek co w wersji HTML (mail-html.php) — dwie wersje tego samego maila
+			nie mają prawa mówić o pieniądzach czegoś innego. */
+		. ( sklepag_tryb_testowy() ? ' (TRYB TESTOWY — płatność nie została pobrana)' : '' ) . "\n\n"
 		. $zgoda
 		. "POBIERZ SWÓJ PRODUKT:\n" . $link . "\n"
 		. 'Link jest ważny ' . $dni . ' dni i pozwala na ' . SKLEPAG_LIMIT_POBRAN . " pobrań.\n\n"
