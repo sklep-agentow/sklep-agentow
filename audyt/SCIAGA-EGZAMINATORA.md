@@ -450,3 +450,39 @@ czy oba przebiegi w ogole mierzyly to samo.
 to ta sama rodzina co `I-14`: klasa OPISANA, nie OBSTAWIONA. Dokladnie to, co kolega nazwal
 „do konca nie zostala zrobiona". **Regula wyjscia: opis PR musi niesc tryb, w ktorym bramki
 poszly, i liczbe wykonanych bramek — samo „bramki zielone" nie jest dowodem.**
+
+## KLASY DOPISANE 2026-09-01 (wieczór) — z dnia, w którym właściciel ujawnił swój błąd
+
+Kontekst: właściciel znał jeden duży błąd i trzymał go w tajemnicy przez cały dzień jako próbę
+kontrolną naszej metody. **Ośmiu agentów z ośmioma różnymi pytaniami go nie znalazło.** Klasa 94
+jest tym błędem, 95 wyszła przy pisaniu do niego testu, 96 przy przelocie po pytaniu.
+
+| # | Klasa | Dowód | Czym obstawione |
+|---|---|---|---|
+| 94 | ⛔ **DANE, NA KTÓRYCH OPERACJA OPRZE SIĘ PRZY KOŃCU, MUSZĄ BYĆ ZAMROŻONE NA STARCIE.** Produkt mógł się zmienić między utworzeniem płatności a jej domknięciem — kupujący płacił za jedno, dostawał drugie. Do tabeli sesji szedł sam identyfikator, a przy domknięciu kod czytał produkt z bazy **ponownie** | `zakup.php:211` (do sesji trafia sam `produkt_id`, zero danych produktu) wobec `:827` (ponowny odczyt) i `:845-852` (zapis nazwy, ceny i pliku z tego świeżego odczytu). ⛔ **Sygnał ostrzegawczy: kolumny nazywały się `produkt_*_kupiona`** — nazwa obiecywała zamrożenie z chwili zakupu, a kod zamrażał stan z chwili domknięcia. Nikt nie sprawdzał nazw kolumn pod tym kątem | ✅ naprawione w #258 (migawka w chwili płatności, schemat 9→10) + **golden**, który musiał paść na kodzie sprzed naprawy. Reguła szersza: przy każdej operacji rozciągniętej w czasie (płatność, rezerwacja, koszyk, zaproszenie, link z terminem) pytaj, **co zapisano w chwili startu, a co dociągnięto przy końcu** |
+| 95 | ⛔ **TEST KOŃCZY SIĘ SUKCESEM BEZ ANI JEDNEJ ASERCJI, BO FUNKCJA KOŃCZY PROCES.** Pierwsza wersja goldena do klasy 94 dawała kod 0, nie wykonawszy żadnego sprawdzenia — poza kontekstem AJAX funkcja kończąca odpowiedź kończy proces gołym `die`, bez uchwytu do podmiany. Wyglądała dokładnie jak test, który przeszedł | builder złapał to **sam, przed oddaniem**, i dołożył pięć warunków wstępnych — w tym sprawdzenie, że **podmiana naprawdę weszła do tabeli**, zanim test cokolwiek orzeknie. ⛔ **Siódmy przypadek rodziny „narzędzie melduje nieprawdę”** w tym projekcie (poprzednie: strażnik ścieżki osadzonej, test e2e z odbijanym checkboxem, próba zatruwająca cache, przelot bez nazw padających prób) | ✅ warunki wstępne K1–K5 w samym teście. Reguła: **sukces bez zliczonych asercji jest podejrzany z definicji** — każdy nowy test musi mieć warunki wstępne sprawdzające, że w ogóle miał co mierzyć, i musi PAŚĆ na kodzie sprzed naprawy |
+| 96 | **BRAMKA Z WŁASNYM WZORCEM ZAMIAST KANONICZNEGO ŹRÓDŁA PRZEPUSZCZA TO, CO ONO ŁAPIE.** `pakuj-dla-klienta.sh:60` sprawdza ślady wewnętrzne w dwóch plikach najwyższego poziomu paczki ręcznie wpisanym wzorcem (8 klas), zamiast wołać `slady-wewnetrzne.sh`, który zna 10 — w tym imię właściciela, numer PR-a, słowa „recenzent” i „koordynator” | **próba kontrolna, nie sam odczyt kodu:** plik z imieniem właściciela, numerem PR-a i słowem „koordynator” → wzorzec z linii 60 daje **zero trafień i raport czysto**; ten sam plik przez kanoniczny skaner → **cztery trafienia i kod 1**. ⛔ Te dwa pliki nie są objęte żadną inną ścieżką: bramka `slady` skanuje tylko `wtyczki/*/`, `paczka-zgodnosc.sh` tylko wnętrze archiwów. Sam `slady-wewnetrzne.sh` ostrzega w nagłówku przed tą duplikacją | ⬜ do zrobienia (`Q-3` w rejestrze). Kandydat: kontrola, że żaden skrypt w `narzedzia-qa/` nie ma własnego wzorca śladów — jedyne dozwolone miejsce to kanoniczny skaner |
+
+### ⛔ Czwarty nawrót rodziny „potwierdzamy skutek, którego nie zmierzyliśmy” — to już nie klasa, to potrzeba bramki
+
+`Q-1`: mail i strona obiecują kupującemu firmowemu, że **wystawimy fakturę** na podane dane —
+a sklep faktur nie wystawia. `Q-2`: kasownik RODO chatbota potwierdza usunięcie, **nie licząc
+jednej z trzech tabel**. Wcześniej: `I-16` (dług RODO pojechał do klienta), `P-2` (panel
+potwierdzał usunięcie danych, których nie mierzył), `P-4` (anonimizacja nie usuwała adresu
+z ukośnikiem, a i tak potwierdzała).
+
+⭐ **Rodzina wraca po raz czwarty w jednym projekcie. Opis jej nie zatrzymał — potrzebna bramka.**
+Kandydat: kontrola, że każdy komunikat sukcesu kierowany do człowieka ma w tej samej funkcji
+pomiar, na którym stoi.
+
+### 🎓 Który skill pozwolił na klasę 94 — zmierzone, nie zgadnięte
+
+**Etap BUDOWY → `wp-plugin-development`.** `grep -ric "migawk|zamroz|snapshot|w chwili zakupu"`
+po całym skillu → **0 trafień**, przy kontroli dodatniej `nonce` → **11**, czyli szukanie działa.
+Skill **nie mówi o zamrażaniu danych transakcji ani słowem**.
+
+**Etap AUDYTU → `jak-audytowac`.** Skill regułę **miał** (algorytm punkt 1: przeczytaj zamówienie
+i wypisz wymagania; punkt 6: dla każdego ustal, gdzie ma być realizowane). Nie została wykonana
+ani razu przez trzy tygodnie — **16 z 20 wymagań klienta miało puste kwadraty**. Klasa nie z braku
+wiedzy, tylko z braku BRAMKI. Lekcja i kandydat na bramkę (wymagania bez werdyktu > 0 = wydanie
+stoi) dopisane do `jak-audytowac/references/lekcje.md`.
