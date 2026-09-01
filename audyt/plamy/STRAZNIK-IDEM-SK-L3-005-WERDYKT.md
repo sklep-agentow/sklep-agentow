@@ -110,8 +110,8 @@ z rubryki nie da się odczytać, który z nich przeszedł i kiedy.
    nie zdanie), naprawiony strażnik jest **nieskalibrowany** — czyli dokładnie tym samym,
    czym jest dziś: testem, który przechodzi zawsze.
 3. **Nagłówek testu kłamie o adresie**: mówi „w CLI `sklepag_ip()` zwraca stale `0.0.0.0`"
-   (`testy/idem-nie-oddaje-oplaconej-sesji-test.php:29` i powtórzone w komentarzu przy
-   limiterze) — **zmierzone: `127.0.0.1`** (sonda kluczy, `EXIT=0`). Wniosku to nie zmienia,
+   (`testy/idem-nie-oddaje-oplaconej-sesji-test.php:103`, w komentarzu przy limiterze — sprawdzone
+   grepem na HEAD gałęzi: `grep -n '0\.0\.0\.0'` daje dokładnie **jedno** trafienie) — **zmierzone: `127.0.0.1`** (sonda kluczy, `EXIT=0`). Wniosku to nie zmienia,
    bo adres i tak jest stały i licznik dzielą wszystkie przebiegi, ale to wartość wpisana
    w dokumentację niezgodna z pomiarem — poprawić przy okazji naprawy klucza.
 4. **Rejestr**: `audyt/sklep/REJESTR-ZNALEZISK-SKLEP.md`, wiersz `SK-L3-005` ma w kolumnie

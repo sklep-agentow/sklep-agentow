@@ -40,7 +40,7 @@ piwotem") — raportuję je jako ZNANE, zgodnie z instrukcją w §(b) źródła.
 **WERDYKT: SPEŁNIONE.**
 
 **DOWÓD.** Silnik sklepu jest ogólny (produkty w tabeli `sklepag_produkty`,
-`includes/aktywacja.php:21-36`), a treść sprzedażowa **obu agentów** siedzi w kodzie pod
+`includes/aktywacja.php:21-43`), a treść sprzedażowa **obu agentów** siedzi w kodzie pod
 kluczami slugów: `includes/front-produkt.php:176` (`'chatbot-live'`) i `:357`
 (`'segregator-maila'`) — jedna tablica `$tresci`, zwracana w `:520`.
 Na żywym stosie oba produkty istnieją i są w sprzedaży (odczyt bazy, nie deklaracja):
@@ -50,7 +50,7 @@ Na żywym stosie oba produkty istnieją i są w sprzedaży (odczyt bazy, nie dek
 ```
 
 **JAK CZŁOWIEK TEGO UŻYWA.** Kupujący: strona **`/sklep/`** (strona WP „Sklep" ze skrótem
-`[sklepag_sklep]`, zakładana przy aktywacji — `includes/aktywacja.php:189`), na niej kafle obu
+`[sklepag_sklep]`, zakładana przy aktywacji — `includes/aktywacja.php:200`), na niej kafle obu
 produktów i przycisk **„Zobacz szczegóły"**. Właściciel: **Kokpit → Sklep Agentów → Produkty**.
 
 **UWAGA (nie zmienia werdyktu).** Wtyczka **nie zakłada** tych dwóch produktów sama — w
@@ -63,11 +63,11 @@ produktów i przycisk **„Zobacz szczegóły"**. Właściciel: **Kokpit → Skl
 
 **WERDYKT: SPEŁNIONE.**
 
-**DOWÓD.** Mail składany w `includes/zakup.php:1184` (`sklepag_zbuduj_mail`) i wysyłany
+**DOWÓD.** Mail składany w `includes/zakup.php:1232` (`sklepag_zbuduj_mail`) i wysyłany
 w `:987` przez `sklepag_wyslij_mail_sklepu` (`:1100`), po domknięciu zakupu z webhooka.
 Wersja graficzna: `includes/mail-html.php:38`. Zawiera **potwierdzenie** (numer, produkt, data,
-kwota, potwierdzenie zgody z chwilą — `zakup.php:1213-1220`), **instrukcję** („INSTRUKCJA
-W SKRÓCIE", trzy kroki — `zakup.php:1223`) i **link do pobrania** (`zakup.php:1221`).
+kwota, potwierdzenie zgody z chwilą — `zakup.php:1240-1247`), **instrukcję** („INSTRUKCJA
+W SKRÓCIE", trzy kroki — `zakup.php:1273`) i **link do pobrania** (`zakup.php:1271`).
 
 **JAK CZŁOWIEK TEGO UŻYWA.** Kupujący: skrzynka pocztowa, temat „Twój zakup: … —
 potwierdzenie i pobranie", przycisk **„Pobierz …"** w mailu. Właściciel: **Pulpit → Szczegóły
@@ -170,7 +170,7 @@ sprzedażowa `includes/front-produkt.php:357-505` (gwarancja `:505`). Wtyczka bo
 
 **WERDYKT: SPEŁNIONE.**
 
-**DOWÓD.** `includes/aktywacja.php:50-85` — tabela `sklepag_zamowienia` trzyma **dane
+**DOWÓD.** `includes/aktywacja.php:61-96` — tabela `sklepag_zamowienia` trzyma **dane
 kupującego** (`email_kupujacego`, `dane_faktury`) i **dane płatności**: `stripe_session_id`,
 `payment_intent_id`, `kwota_grosze`, `waluta`, `status`, `zwrocono_grosze`, `zwrot_czas`,
 `status_przed_sporem`, `utworzono`, `zmieniono`. Osobno `sklepag_sesje_checkout` (`:39-48`) —
@@ -178,7 +178,7 @@ sesje płatności. Zgodnie z `S-07` **kont kupujących nie ma** — w schemacie 
 tabela ani kolumna z hasłem/loginem kupującego.
 
 **JAK CZŁOWIEK TEGO UŻYWA.** **Pulpit → wiersz zamówienia → „Szczegóły"**
-(`includes/admin-zamowienie.php:328-336`: data zakupu, kupujący, produkt ze snapshotu, dane do
+(`includes/admin-zamowienie.php:329-338`: data zakupu, kupujący, produkt ze snapshotu, dane do
 faktury, kwota, sesja Stripe, pobrania) oraz **Eksport CSV** na Pulpicie.
 
 ---
@@ -209,13 +209,13 @@ produkt"**, przy wierszu **„Edytuj"** i przełącznik sprzedaży (**„W sprze
 
 **WERDYKT: SPEŁNIONE.**
 
-**DOWÓD.** Tabela `sklepag_logowania` — `includes/aktywacja.php:100-110`: `czas`,
+**DOWÓD.** Tabela `sklepag_logowania` — `includes/aktywacja.php:111-121`: `czas`,
 `login_wpisany` („kto", także przy nieudanej próbie), `wynik`, `ip`, `user_agent`
-(„konkrety"). Zapis: `includes/logowania.php:20-21` (haki `wp_login` i `wp_login_failed`) → `:30`
+(„konkrety"). Zapis: `includes/logowania.php:20-22` (haki `wp_login` i `wp_login_failed`) → `:30`
 (`sklepag_zapisz_logowanie`); opóźnienie kolejnych prób `:22` (hak `wp_authenticate`).
 Rozszerzenie ponad literę, zapowiedziane w `S-09` — **log akcji admina**: tabela
-`sklepag_zdarzenia` (`aktywacja.php:88-97`) z kolumną `uzytkownik` wypełnianą loginem
-zalogowanego (`includes/zakup.php:292-304`); piszą do niej m.in. CRUD produktu
+`sklepag_zdarzenia` (`aktywacja.php:99-108`) z kolumną `uzytkownik` wypełnianą loginem
+zalogowanego (`includes/zakup.php:312-323`); piszą do niej m.in. CRUD produktu
 (`admin-produkty.php:446`), ponowna wysyłka (`admin-zamowienie.php:131`) i eksport CSV
 (`admin-dashboard.php:258`).
 
@@ -232,7 +232,7 @@ zalogowanego (`includes/zakup.php:292-304`); piszą do niej m.in. CRUD produktu
 
 **DOWÓD.** Zamiast katalogu `sklep/` wpinanego w stronę statyczną wtyczka zakłada **stronę
 WordPressa „Sklep"** ze skrótem `[sklepag_sklep]`, opublikowaną —
-`includes/aktywacja.php:189`; skrót rejestrowany w `sklep-agentow.php:110`. Adres pozostaje
+`includes/aktywacja.php:200`; skrót rejestrowany w `sklep-agentow.php:110`. Adres pozostaje
 tym, o co prosił klient: na stosie `http://localhost:8890/sklep/`.
 
 **JAK CZŁOWIEK TEGO UŻYWA.** Gość: link **„Sklep"** w menu strony (dopisanie go do motywu
@@ -246,7 +246,7 @@ opisuje `dokumentacja/INSTRUKCJA-INSTALACJI.md`, rozdział „Ustawienia produkc
 z 17.08 („całą ta strona bedzie przekonwertowana na worpresa").
 
 **DOWÓD.** Produkt jest wtyczką WordPressa: `wtyczki/sklep-agentow/sklep-agentow.php`
-(nagłówek wtyczki, `Version: 0.9.28`, `Requires at least: 6.7`), zaplecze we własnych tabelach
+(nagłówek wtyczki, `Version: 0.9.31`, `Requires at least: 6.7`), zaplecze we własnych tabelach
 (`includes/aktywacja.php:21-135`). Żadnego hostingu statycznego ani warstwy pośredniej:
 `grep -rni 'cloudflare|vercel|next\.js'` po całej wtyczce → **0 trafień**.
 
@@ -281,11 +281,11 @@ stos `probny`). Werdykt dotyczy symetrii w kodzie, nie zmierzonego diffu.
 **WERDYKT: SPEŁNIONE.**
 
 **DOWÓD.** Tryb testowy jest wymuszony i widoczny: baner `sklepag_baner_testowy()`
-(`sklep-agentow.php:206`) na liście sklepu (`:324`), na stronie produktu
-(`includes/front-produkt.php:830`) i na „Dziękujemy" (`sklep-agentow.php:431`); notka przy
-przycisku zakupu (`front-produkt.php:621`); FAQ „Co znaczy „tryb testowy”?"
-(`sklep-agentow.php:403`); zdanie w mailu (`includes/zakup.php:1218`); oznaczenie w panelu
-(`includes/admin-dashboard.php:354`). **Jawny rozdział różnic** wobec produkcji:
+(`sklep-agentow.php:234`) na liście sklepu (`:324`), na stronie produktu
+(`includes/front-produkt.php:837`) i na „Dziękujemy" (`sklep-agentow.php:431`); notka przy
+przycisku zakupu (`front-produkt.php:625`); FAQ „Co znaczy „tryb testowy”?"
+(`sklep-agentow.php:438`); zdanie w mailu (`includes/zakup.php:1269`); oznaczenie w panelu
+(`includes/admin-dashboard.php:358`). **Jawny rozdział różnic** wobec produkcji:
 `dokumentacja/INSTRUKCJA-INSTALACJI.md`, rozdział „Test a produkcja — co trzeba zmienić,
 żeby sprzedawać naprawdę" (9 punktów, w tym lista oznaczeń, które nie znikają same).
 
@@ -293,8 +293,10 @@ przycisku zakupu (`front-produkt.php:621`); FAQ „Co znaczy „tryb testowy”?
 pobierane"** na `/sklep/` i na stronie produktu (potwierdzone w rendrze żywej strony);
 właściciel — etykietę **TRYB TESTOWY** przy tytule Pulpitu.
 
-**Powiązanie:** brak wyłącznika tych oznaczeń jest osobną, znaną pozycją `P-3` (w naprawie) —
-nie dubluję jej tutaj.
+**Powiązanie:** brak wyłącznika tych oznaczeń był osobną pozycją `P-3`. ⭐ Aktualizacja: po
+scaleniu `main` w trakcie tego przelotu `P-3` jest **naprawione** i obecne na tej gałęzi
+(`wtyczki/sklep-agentow/sklep-agentow.php:234`) — nie dubluję jej tutaj i nie opisuję już
+jako otwartej.
 
 ---
 
@@ -312,9 +314,9 @@ widać.
 przenośna").** Wtyczka nie przywiązuje się do żadnego konkretnego konta ani adresu:
 uprawnienia idą przez `manage_options` (`includes/admin.php:41-61` — wszystkie ekrany),
 a nie przez identyfikator użytkownika; wszystkie dane właściciela są w Ustawieniach
-(`includes/admin-ustawienia.php:130-171`: klucze Stripe, nadawca, mail kontaktowy, dane
+(`includes/admin-ustawienia.php:138-179`: klucze Stripe, nadawca, mail kontaktowy, dane
 sprzedawcy, waluta); adresy budowane z `home_url()`/`admin_url()`, nie wpisane na stałe.
-Dziennik logowań zapisuje **każdy** login (`login_wpisany`, `aktywacja.php:100-110`), więc
+Dziennik logowań zapisuje **każdy** login (`login_wpisany`, `aktywacja.php:111-121`), więc
 czterech adminów rozróżni.
 
 **JAK CZŁOWIEK TEGO UŻYWA.** **Kokpit → Sklep Agentów → Ustawienia**; konta adminów zakłada
@@ -327,7 +329,7 @@ się standardowo w **Kokpit → Użytkownicy → Dodaj** (rdzeń WP, nie nasza w
 **WERDYKT: SPEŁNIONE.**
 
 **DOWÓD.** Trzy wtyczki WordPressa z poprawnymi nagłówkami:
-`wtyczki/sklep-agentow/sklep-agentow.php` (`Version: 0.9.28`, `Requires at least: 6.7`,
+`wtyczki/sklep-agentow/sklep-agentow.php` (`Version: 0.9.31`, `Requires at least: 6.7`,
 `Requires PHP: 8.1`), `wtyczki/chatbot-live/chatbot-live.php` (`1.5.13`, `6.0`, `8.1`),
 `wtyczki/segregator-maila/segregator-maila.php` (`1.3.6`, `6.0`, `8.1`).
 Oba boty są jednocześnie **towarem** sklepu — patrz `S-05`, `S-06` (wiersze w

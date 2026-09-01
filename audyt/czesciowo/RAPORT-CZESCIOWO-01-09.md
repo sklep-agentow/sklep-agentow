@@ -65,7 +65,7 @@ odpytań ROŚNIE (3 → 15 → 30), więc sonda umie zobaczyć odpytywanie; dopi
 Przyrząd nie jest taki, któremu „zawsze wychodzi".
 
 **MECHANIZM — kiedy to boli.** Stan `oczekuje` po powrocie ze Stripe nie jest teorią: zamówienie
-powstaje w bazie dopiero przy domknięciu, a `sklepag_status_zamowienia()` (`zakup.php:1245`)
+powstaje w bazie dopiero przy domknięciu, a `sklepag_status_zamowienia()` (`zakup.php:1285`)
 na nieznaną sesję **z założenia** oddaje `oczekuje` (zmierzone:
 `curl 'localhost:8890/wp-json/sklepag/v1/status?sesja=cs_test_calkiem_zmyslona_123'` → `{"status":"oczekuje"}`).
 Ten projekt ma już zapisany przypadek, w którym ten stan trwał **20 minut**: K10 (30.08) —
@@ -81,11 +81,11 @@ w oknie, w którym on właśnie zapłacił i nie wie, czy coś poszło nie tak.
 
 ### 🟡 `E7-F2` — **MALE** · panel pokazuje właścicielowi **godzinę wygaśnięcia linku w GMT, podpisaną jak czas lokalny** — na tym samym ekranie, dwa wiersze niżej, ta sama klasa jest już naprawiona
 
-**ZNALEZISKO.** `admin-zamowienie.php:336` drukuje kolumnę `link_wygasa` surową:
+**ZNALEZISKO.** `admin-zamowienie.php:338` drukuje kolumnę `link_wygasa` surową:
 ```php
 echo '<tr><td>Pobrania</td><td>' . … . ( $zam->link_wygasa ? ' · link ważny do ' . esc_html( $zam->link_wygasa ) : … );
 ```
-Kolumna jest zapisywana `gmdate()` (`zakup.php:951`), czyli **w GMT**. Sąsiednie czasy na tym
+Kolumna jest zapisywana `gmdate()` (`zakup.php:1002`), czyli **w GMT**. Sąsiednie czasy na tym
 samym ekranie są w czasie witryny (`utworzono` ← `current_time('mysql')`), a **następny wiersz
 tabeli** robi dokładnie to, czego brakuje wierszowi wyżej — i ma o tym komentarz:
 ```php
@@ -131,16 +131,16 @@ właściciel przekazuje tę godzinę kupującemu.
 gwarancja („Aby z niej skorzystać, odpisz na tego maila"), faktura („Odpisz na tego maila
 w ciągu 3 miesięcy…") i pytania („Masz pytanie? Odpisz na tego maila."). Adres zwrotny
 (`Reply-To`) jest zakładany **tylko wtedy**, gdy wypełniona jest opcja `sklepag_email_kontaktowy`
-(`zakup.php:1102-1106`). Pusta opcja = brak `Reply-To` **i** zniknięcie wiersza
-„Reklamacje i faktury" ze stopki sprzedawcy (`zakup.php:1176-1179`). Odpowiedź kupującego idzie
+(`zakup.php:1148-1153`). Pusta opcja = brak `Reply-To` **i** zniknięcie wiersza
+„Reklamacje i faktury" ze stopki sprzedawcy (`zakup.php:1216-1229`). Odpowiedź kupującego idzie
 wtedy na adres NADAWCY — czyli na `sklepag_nadawca_email`, a gdy i ta jest pusta,
 na domyślny adres WordPressa (`wordpress@domena`), który zwykle nie jest skrzynką.
 
-**Pulpit ostrzega o danych sprzedawcy — o tym nie ostrzega.** `admin-dashboard.php:386`
+**Pulpit ostrzega o danych sprzedawcy — o tym nie ostrzega.** `admin-dashboard.php:392`
 sprawdza wyłącznie `sklepag_sprzedawca()['kompletne']`, a to jest `firma_nazwa && firma_adres`
 (`zakup.php:1161`). Mail kontaktowy nie wchodzi do tego warunku, a opis pola w panelu mówi
 **mniej, niż pole robi**: „Pokazywany kupującym przy problemie z pobraniem (link wygasł / limit
-wyczerpany)" (`admin-ustawienia.php:366`) — ani słowa o tym, że to jedyny adres zwrotny maila
+wyczerpany)" (`admin-ustawienia.php:374`) — ani słowa o tym, że to jedyny adres zwrotny maila
 po zakupie i jedyny kontakt reklamacyjny w stopce. (Instrukcja klienta mówi to uczciwie —
 `INSTRUKCJA.md:259` — ale panel, w którym właściciel podejmuje decyzję, nie.)
 
@@ -185,7 +185,7 @@ kanale zwrotnym milczy, choć to jedna gałąź w tym samym warunku.
 
 | # | Co sprawdzone | Jak zmierzone | Wynik |
 |---|---|---|---|
-| 1 | **Zgodność wersji tekstowej i HTML maila** — czy klient poczty czytający HTML dostaje mniej | porównanie obu składaczy (`zakup.php:1184`, `mail-html.php:38`) + zliczenie w sondzie | **CZYSTO** — obie wersje niosą ten sam komplet: numer, produkt, data zakupu, kwota, potwierdzenie zgody z chwilą, link i jego ważność, instrukcja 3 kroki, gwarancja, opinia, faktura, stopka sprzedawcy. HTML dokłada tylko adres strony i zdanie „to jest potwierdzenie umowy — zachowaj go" |
+| 1 | **Zgodność wersji tekstowej i HTML maila** — czy klient poczty czytający HTML dostaje mniej | porównanie obu składaczy (`zakup.php:1232`, `mail-html.php:38`) + zliczenie w sondzie | **CZYSTO** — obie wersje niosą ten sam komplet: numer, produkt, data zakupu, kwota, potwierdzenie zgody z chwilą, link i jego ważność, instrukcja 3 kroki, gwarancja, opinia, faktura, stopka sprzedawcy. HTML dokłada tylko adres strony i zdanie „to jest potwierdzenie umowy — zachowaj go" |
 | 2 | **Słownik statusów strony „Dziękujemy"** — czy jest status, przy którym strona kłamie | zestawienie statusów pisanych do `zamowienia.status` w kodzie z tablicą `opisy` w `dziekujemy.js` | **CZYSTO** — 7 statusów zamówienia (`oczekuje, oplacone, mail_w_toku, mail_wyslany, mail_blad, zwrocone, sporne`) ma po zdaniu, plus `brak` i zdanie zapasowe `nieznany`, które celowo nie twierdzi nic o pieniądzach. Statusy `zalazek/oczekuje/przyjeta/odrzucona` należą do opinii, nie do zamówień |
 | 3 | **Liczby w mailu wobec kodu** — „ważny 3 dni", „10 pobrań", „opinia 30 dni" | liczone ze stałych w chwili składania maila (`round(SKLEPAG_LINK_GODZIN/24)`, `SKLEPAG_LIMIT_POBRAN`, `SKLEPAG_OPINIA_DNI`) | **CZYSTO** — żadnej liczby nie da się rozjechać z kodem, bo żadna nie jest wpisana ręcznie |
 | 4 | **Obietnica „link do opinii jest jednorazowy i ważny 30 dni"** | `opinie.php:85-90` (termin + porównanie stałoczasowe) i `:132` (`token_hash=''` przy zapisie) + żywy strzał na zły token | **CZYSTO** — obie części obietnicy egzekwowane; zły/zużyty link daje HTTP 200 ze zdaniem „opinia mogła już zostać wysłana albo link wygasł (30 dni od zakupu)" |
@@ -197,7 +197,10 @@ kanale zwrotnym milczy, choć to jedna gałąź w tym samym warunku.
   nie render. Do tego trzeba konta pocztowego, nie łapacza.
 - **Teksty panelu poza ekranem zamówienia** (Produkty, Opinie, Dziennik, Ustawienia) — przejrzane
   pobieżnie przy okazji `E7-F3`, bez własnego przelotu. To zostaje jako reszta terenu `E7`.
-- **Baner „TRYB TESTOWY"** — świadomie pominięty, siedzi w `P-3` (w naprawie).
+- **Baner „TRYB TESTOWY"** — świadomie pominięty jako osobna pozycja `P-3`. ⭐ Aktualizacja po
+  scaleniu `main` (1.09): `P-3` jest już **naprawione** i na tej gałęzi obecne
+  (`sklep-agentow.php:234`, `sklepag_baner_testowy()` czyta tryb z klucza) — zdanie „w naprawie"
+  przestało być prawdziwe w trakcie tego przelotu.
 
 ---
 
@@ -226,7 +229,7 @@ bez bramki liczb — niesie ich **dwadzieścia kilka**.
 
 ### 🟡 `E6-F1` — **MALE** · instrukcja właściciela opisuje **mechanikę ratowania zawieszonego zakupu** niezgodnie z kodem — w dwóch miejscach, przy czym trzecie miejsce w tym samym pliku opisuje ją poprawnie
 
-**Egzemplarz A — rozdział 3, tabela statusów, wiersz „oczekuje" (`INSTRUKCJA.md:82`):**
+**Egzemplarz A — rozdział 3, tabela statusów, wiersz „oczekuje" (`INSTRUKCJA.md:83`):**
 > „jeśli wisi dłużej niż kilka minut, to błąd zapisu w bazie: sprawdź oś czasu i napisz do
 > wykonawcy (**„Dociągnij zaległe" tego statusu nie rusza**)"
 
@@ -249,17 +252,17 @@ i **nie klika jedynej rzeczy, która to odblokowuje** — a na hostingu bez dzia
 (przypadek, przed którym ta sama instrukcja ostrzega dwa akapity niżej) ten przycisk jest jedyną
 drogą domknięcia.
 
-**Egzemplarz B — rozdział 4 (`INSTRUKCJA.md:158-159`):**
+**Egzemplarz B — rozdział 4 (`INSTRUKCJA.md:159-160`):**
 > „sklep ponawia sam **po ok. 2 minutach**, do trzech razy"
 
 Ponowienie wysyłki nie ma własnego zegara. Siedzi w środku `sklepag_dociagnij_zalegle()`
-(`zakup.php:1337-1342`), czyli w zadaniu, które chodzi **co 10 minut**
+(`zakup.php:1387-1393`), czyli w zadaniu, które chodzi **co 10 minut**
 (`sklep-agentow.php:77` `'interval' => 600`), a warunek `zmieniono < %s` z granicą `teraz − 120 s`
 jest **minimalnym wiekiem** wiersza, nie odstępem ponowień. Prawdziwe zdanie brzmi: „przy
 najbliższym biegu co 10 minut, nie wcześniej niż 2 minuty po ostatniej próbie — i tylko jeśli
 WP-Cron działa".
 
-**Trzecie miejsce w tym samym pliku mówi to poprawnie** (rozdział 9, `INSTRUKCJA.md:296-300`):
+**Trzecie miejsce w tym samym pliku mówi to poprawnie** (rozdział 9, `INSTRUKCJA.md:299-303`):
 > „Sklep i tak domknie zakup w ciągu ok. 10 minut (**jeśli WP-Cron działa** — rozdział 3),
 > a od ręki zrobi to „Dociągnij zaległe teraz" — odczekaj 2 minuty od zapłaty"
 
@@ -278,11 +281,11 @@ bo rozdział 9 tego samego dokumentu kieruje do przycisku.
 |---|---|---|---|
 | 1 | **Wymagania instalacji**: „WordPress 6.7+ · PHP 8.1+" | nagłówki trzech wtyczek | **CZYSTO** — sklep `6.7`/`8.1`, oba boty `6.0`/`8.1`; instrukcja podaje wymaganie NAJOSTRZEJSZEJ z trzech, czyli poprawnie |
 | 2 | **„Paczka sklepu waży około 4 MB, limit wysyłki co najmniej 8 MB"** | `find -printf %s` na paczkach | **CZYSTO** — `sklep-agentow-0.9.28.zip` = 4 719 003 B (4,5 MB); rada „podnieś do 32 MB" z zapasem |
-| 3 | **„sklep co 10 minut SAM dopytuje Stripe"** + **„odczekaj 2 minuty"** | `sklep-agentow.php:77` `'interval' => 600`, `zakup.php:1284` granica `− 120 s` | **CZYSTO** — obie liczby zgodne z kodem |
+| 3 | **„sklep co 10 minut SAM dopytuje Stripe"** + **„odczekaj 2 minuty"** | `sklep-agentow.php:77` `'interval' => 600`, `zakup.php:1335` granica `− 120 s` | **CZYSTO** — obie liczby zgodne z kodem |
 | 4 | **Adres webhooka `…/wp-json/sklepag/v1/webhook`** | `register_rest_route( 'sklepag/v1', '/webhook' )` | **CZYSTO** |
 | 5 | **„Jeśli zapomnisz o odnośnikach — wtyczka pokaże czerwone ostrzeżenie z linkiem"** | `admin.php:33-37` (`notice-error` + link do `options-permalink.php`, warunek `'' !== permalink_structure`) | **CZYSTO** |
 | 6 | **„Klucze Stripe i zadanie cykliczne znikają ZAWSZE"** (sklep) oraz **„Klucz API każdego bota usuwany ZAWSZE"** | trzy pliki `uninstall.php` | **CZYSTO** — sklep kasuje oba sekrety i `wp_clear_scheduled_hook` **przed** wczesnym `return`; ChatBot kasuje `chatl_klucz_api` przed `return`; Segregator kasuje `segm_klucz_api` **i `segm_imap_haslo`** przed `return`. To jest klasa nr 1 ze `SCIAGA-EGZAMINATORA.md` i tu jest zamknięta |
-| 7 | **Lista sześciu miejsc, w których kupujący widzi „tryb testowy"** (`INSTRUKCJA-INSTALACJI.md:259-266`) | render żywych stron + kod | **CZYSTO — 6/6 istnieje**: baner na `/sklep/` i na stronie produktu (`sklepag_baner_testowy`), baner na „Dziękujemy", notka „STRIPE · TRYB TESTOWY · KARTA 4242…" przy przycisku, FAQ „Co znaczy „tryb testowy”?" (`sklep-agentow.php:403`, widoczne w rendrze `/sklep/`), zdanie w mailu. Instrukcja dodatkowo **sama zastrzega**, że lista może nie być kompletna |
+| 7 | **Lista sześciu miejsc, w których kupujący widzi „tryb testowy"** (`INSTRUKCJA-INSTALACJI.md:283-290`) | render żywych stron + kod | **CZYSTO — 6/6 istnieje**: baner na `/sklep/` i na stronie produktu (`sklepag_baner_testowy`), baner na „Dziękujemy", notka „STRIPE · TRYB TESTOWY · KARTA 4242…" przy przycisku, FAQ „Co znaczy „tryb testowy”?" (`sklep-agentow.php:438`, widoczne w rendrze `/sklep/`), zdanie w mailu. Instrukcja dodatkowo **sama zastrzega**, że lista może nie być kompletna |
 | 8 | **Wszystkie liczby instrukcji ChatBota** — dokumentu BEZ bramki liczb | ręczne zestawienie ze stałymi `CHATL_*` i domyślnymi ustawieniami | **CZYSTO — 0 rozjazdów** na 16 sprawdzonych: 10 par Q&A seeda (`instalator.php`, policzone), 2000 wierszy / 2 MB / 15 min importu, próg WCAG 4,5, retencja 90 dni, listy 200/100/25, pamięć 6 wymian, 500 i 2000 znaków, 10 wiadomości/min, 20 wywołań AI/IP/dobę, cisza przejęcia 5 min (`300 s`), pułapka 2 s, stop-loss 100 wywołań i 200 000 tokenów (`chatbot-live.php:258,274`) |
 | 9 | **Bramki dokumentów, które MOGĄ paść** — czy w ogóle są zielone dziś | uruchomienie, kod wyjścia bez potoku | **CZYSTO**: `testy/instrukcja-liczby-segregator.sh` **EXIT=0** („każda liczba ma pokrycie"), `testy/dokumentacja-zgodnosc-sklep.sh` **EXIT=0** (63 × OK, 0 rozjazdów) |
 | 10 | **Instrukcje i zrzuty naprawdę jadą do klienta** | `unzip -l` na wydanej paczce 0.9.28 | **CZYSTO** — `sklep-agentow/INSTRUKCJA.md` + 5 zrzutów w archiwum; różnica wobec repo to wyłącznie rozdział o narzędziach prywatności WP dopisany po wydaniu 0.9.28 (`I-16`), czyli normalny dryf wersji, nie rozjazd |
@@ -304,7 +307,7 @@ BEZ znaków cudzysłowu we wzorcu.
 - **`PRZECZYTAJ-MNIE.txt`** ze zbiorczej paczki — nie oglądałem treści.
 - **Zrzuty ekranu w instrukcjach** — sprawdzone, że istnieją i jadą w paczce; **nie** sprawdzone,
   czy pokazują dzisiejszy panel (zrzuty są z 31.08, a panel od tego czasu dostał sekcję prywatności).
-- ⭐ **Odsyłacz do `E7-F1`:** `INSTRUKCJA-INSTALACJI.md:148`, Krok 5 pkt 3, obiecuje kupującemu
+- ⭐ **Odsyłacz do `E7-F1`:** `INSTRUKCJA-INSTALACJI.md:172`, Krok 5 pkt 3, obiecuje kupującemu
   „strona sama odświeża status **aż do** «Mail wysłany»". To jest dokładnie to zdanie, które
   `E7-F1` obala pomiarem — instrukcja powtarza obietnicę strony, nie jej zachowanie.
 
@@ -328,7 +331,7 @@ nigdy nie zobaczy.
 
 ### 🟡 `F2-F1` — **MALE** · wtyczka zakłada „Regulamin sklepu" i „Politykę prywatności sklepu", a potem **nigdzie ich nie linkuje** — nawet po opublikowaniu kupujący nie ma jak do nich trafić
 
-**ZNALEZISKO.** Przy aktywacji powstają cztery strony (`includes/aktywacja.php:187-215`), w tym
+**ZNALEZISKO.** Przy aktywacji powstają cztery strony (`includes/aktywacja.php:198-226`), w tym
 dwie prawne jako **szkice** do wypełnienia. Opcje z ich identyfikatorami występują w całej
 wtyczce w dokładnie **dwóch** miejscach — i oba to sprzątanie po sobie, nie użycie:
 ```
@@ -381,7 +384,7 @@ czytany.
 | 2 | **Czy treść zgody jest zapisywana per zamówienie** (a nie tylko wyświetlana) | odczyt kodu + **odczyt bazy stosu** | **CZYSTO** — stała `SKLEPAG_ZGODA_TRESC` (`zakup.php:11`) wchodzi do kolumny `zgoda_tresc` w `INSERT` zamówienia (`:907`). Migawka, nie odsyłacz: zmiana tekstu w przyszłej wersji wtyczki **nie przepisze** zgód już udzielonych |
 | 3 | **Czy któreś zamówienie powstało bez zgody** | `SELECT COUNT(*)` na żywej bazie | **CZYSTO — 42 z 44**. Dwa wiersze bez zgody to **atrapy testowe wstawiane wprost do bazy**, nie zakupy: `#9900012` (`cs_test_opinie_mec…`, 1,00 zł) i `#9901177` (`cs_test_rodo_…`, 0,00 zł), oba z pustą treścią maila; ich identyfikatory pochodzą z `testy/opinie-mechanizm-test.php` i `testy/kroki-rodo/*`. Żadne zamówienie z drogi zakupowej nie jest bez zgody, a **wszystkie 44 mają dokładnie jedną, tę samą treść** (`COUNT(DISTINCT zgoda_tresc) = 1`) |
 | 4 | **Czy zgoda jest wcześniejsza niż umowa** (art. 38 pkt 13 wymaga zgody PRZED spełnieniem świadczenia) | porównanie znaczników czasu ostatniego zamówienia | **CZYSTO** — `zgoda_czas = 2026-09-01 02:56:41` GMT, `utworzono = 04:57:00` czasu witryny (= 02:57:00 GMT): zgoda **19 sekund przed** powstaniem zamówienia. Czas zgody bierze się z chwili tworzenia sesji płatności (`zakup.php:196-197`), jedzie do Stripe w metadanych i wraca przy domknięciu (`:910`) — nie jest ustawiany „na teraz" przy zapisie |
-| 5 | **Trwały nośnik** (art. 21 ust. 1 UPK / art. 8 ust. 7 dyrektywy) | zdjęty z łapacza prawdziwy mail (patrz `E7`) + panel | **CZYSTO** — mail niesie dosłowną treść zgody i jej chwilę w obu wersjach (`zakup.php:1240-1244` tekst, `mail-html.php` blok „Potwierdzenie Twojej zgody"); panel pokazuje to samo, przeliczone na czas lokalny i **opisane** jako lokalny (`admin-zamowienie.php:337`) |
+| 5 | **Trwały nośnik** (art. 21 ust. 1 UPK / art. 8 ust. 7 dyrektywy) | zdjęty z łapacza prawdziwy mail (patrz `E7`) + panel | **CZYSTO** — mail niesie dosłowną treść zgody i jej chwilę w obu wersjach (`zakup.php:1240-1247` tekst, `mail-html.php` blok „Potwierdzenie Twojej zgody"); panel pokazuje to samo, przeliczone na czas lokalny i **opisane** jako lokalny (`admin-zamowienie.php:340`) |
 
 ## 3. CZEGO W `F2` NIE ZMIERZYŁEM
 
@@ -401,7 +404,8 @@ czytany.
 
 **Stan wejściowy z mapy:** 🟡, „punkt szablonu PR, sprawdzany per-PR · **brak przeglądu
 CAŁOŚCI naraz**". **Wynik: ZERO znalezisk. 64 zapisy poza własnymi tabelami, 62 sprzątane
-przez `uninstall.php`, 2 nietykane — obie opisane niżej razem z powodem, dla którego
+przez `uninstall.php`, 2 nietykane — ⛔ **rachunek POPRAWIONY w sekcji `A1` tego samego raportu**
+(„KOREKTA MOJEGO WŁASNEGO WYNIKU Z `A5`"): poprawnie **61 sprzątanych i 3 nietykane** — obie opisane niżej razem z powodem, dla którego
 NIE podnoszę ich do znaleziska.**
 
 ## Metoda — trzy niezależne źródła listy, nie jedno
@@ -433,7 +437,7 @@ Trzy pliki `uninstall.php` przeczytałem **linia po linii**, nie grepem.
 | `sklep-agentow` | 20 | 5 | 1 | 1 | 4 | 1 katalog | 1 (`rewrite_rules`) | **33** | **32** |
 | `chatbot-live` | 8 | 3 | 1 | 1 | — | — | — | **13** | **12** |
 | `segregator-maila` | 11 | 2 | 3 | 2 | — | — | — | **18** | **18** |
-| **RAZEM** | **39** | **10** | **5** | **4** | **4** | **1** | **1** | **64** | **62** |
+| **RAZEM** | **39** | **10** | **5** | **4** | **4** | **1** | **1** | **64** | **62** ⛔ → **61**, patrz korekta w sekcji `A1` |
 
 ⭐ **Dwie rzeczy, które ten rachunek pokazuje, a przegląd per-PR pokazać nie mógł:**
 sklep sprząta opcje **wzorcem** (`option_name LIKE 'sklepag_%'` z `esc_like()`), więc każda
@@ -450,12 +454,12 @@ w którym ta symetria kiedyś pęknie. Dziś nie jest pęknięta.
 | 1-2 | `sklepag_stripe_klucz_sekretny`, `sklepag_stripe_webhook_sekret` | `admin-ustawienia.php` (`register_setting`) | ✅ **ZAWSZE**, przed wczesnym `return` (`:16-17`) |
 | 3-11 | 9 pozostałych opcji z `register_setting`: `stripe_klucz_publikowalny`, `nadawca_nazwa`, `nadawca_email`, `email_kontaktowy`, `firma_nazwa`, `firma_adres`, `firma_nip`, `waluta_domyslna`, `usun_dane_przy_odinstalowaniu` | zapisuje RDZEŃ przez `options.php` | ✅ wzorzec `sklepag_%` (`:70`) |
 | 12-16 | `katalog_chroniony`, `katalog_chroniony_blad`, `wersja_schematu`, `reconciliation_ostatnia`, `rewrite_podpis` | `aktywacja.php`, `admin-dashboard.php`, `front-produkt.php` | ✅ wzorzec `sklepag_%` |
-| 17-20 | `strona_sklep`, `strona_dziekujemy`, `strona_regulamin`, `strona_polityka` | `aktywacja.php:187-215` | ✅ wzorzec + `wp_delete_post` (`:36-41`) |
+| 17-20 | `strona_sklep`, `strona_dziekujemy`, `strona_regulamin`, `strona_polityka` | `aktywacja.php:198-226` | ✅ wzorzec + `wp_delete_post` (`:36-41`) |
 | 21-25 | transienty: `sklepag_idem_*` (okno idempotencji zakupu), `sklepag_niepowiazana_*`, `sklepag_recon_*`, `sklepag_szkic_opinii_*`, `sklepag_szkic_produktu_*` | `zakup.php:177,238,490,1378`, `opinie.php`, `admin-produkty.php` | ✅ dwa wzorce: `_transient_sklepag_%` **i** `_transient_timeout_sklepag_%` (`:77-79`) + `wp_cache_flush()` przy zewnętrznym cache (`:84`) |
 | 26 | user meta `sklepag_zamowien_na_strone` (Screen Options) | `admin.php:77-85` | ✅ `delete_metadata( 'user', 0, …, true )` (`:89`) |
 | 27 | cron `sklepag_dociagnij_zalegle` | `sklep-agentow.php:91` | ✅ **ZAWSZE** (`:22`) |
 | 28-31 | 4 strony WP (wpisy w `wp_posts`) | `aktywacja.php` | ✅ `wp_delete_post(…, true)` (`:39`) |
-| 32 | katalog chroniony w `uploads` + `.htaccess`, `index.php` i wgrane paczki ZIP | `aktywacja.php:240-259`, `admin-produkty.php:386` | ✅ (`:45-63`) — kasuje **tylko** ścieżkę pasującą do wzorca `sklepag-chronione-`, `rmdir` dopiero gdy pusto |
+| 32 | katalog chroniony w `uploads` + `.htaccess`, `index.php` i wgrane paczki ZIP ⛔ **pozycja PRZEKWALIFIKOWANA — patrz „KOREKTA MOJEGO WŁASNEGO WYNIKU Z `A5`" w sekcji `A1`: katalogów bywa kilka, uninstall zna jeden** | `aktywacja.php:240-259`, `admin-produkty.php:386` | ✅ (`:45-63`) — kasuje **tylko** ścieżkę pasującą do wzorca `sklepag-chronione-`, `rmdir` dopiero gdy pusto |
 | 33 | reguła przepisywania adresów w opcji RDZENIA `rewrite_rules` | `front-produkt.php:45-56` | ⚠️ **nie w `uninstall.php`** — czyści ją `sklepag_deaktywacja()` (`aktywacja.php:176`) |
 
 ### `chatbot-live` — 13 pozycji
@@ -782,7 +786,7 @@ niezgodności kończy kodem 2 zamiast meldować wynik.
 
 Wada podłożona **bez tykania plików produktu**: filtr `query` WordPressa przechwytuje dokładnie
 ten jeden `UPDATE` i zdejmuje z niego warunek statusu — czyli mutuje CAS przejęcia wysyłki
-(`zakup.php:936`) w locie:
+(`zakup.php:953`) w locie:
 ```
 przed:  UPDATE … SET status='mail_w_toku' … WHERE stripe_session_id=%s AND status IN ('oplacone','mail_blad') AND mail_proby < 3
 mutant: UPDATE … SET status='mail_w_toku' … WHERE stripe_session_id=%s                                       AND mail_proby < 3

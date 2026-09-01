@@ -59,7 +59,7 @@ jeżeli WP-Cron nie chodzi **i** właściciel nie otworzy Pulpitu, zamówienie n
 strona „Dziękujemy", która po dwóch minutach zamiera na zdaniu „strona odświeża status sama"
 (`E7-F1`). Wtedy nie działa też sam sklep (strona produktu bez odnośników), więc okno na taki
 zakup jest wąskie — ale nie zerowe, bo produkt ma zapas `?sklepag_produkt=slug`
-(`includes/front-produkt.php:86-87`).
+(`includes/front-produkt.php:87`).
 
 ## 3. CZY NAPRAWIONE NA `main`, CZY TYLKO OPISANE — pomiar
 
@@ -90,7 +90,7 @@ go ręcznie. Nic go nie uruchomi samo.
 
 **(b) Nowa pozycja — licznik ostrzeżeń NIE widzi ciszy webhooka** (uzasadnienie w §5):
 > **DROBNA/ŚREDNIA (do decyzji koordynatorki)** · Pulpit ostrzega o **awariach rozmowy** ze
-> Stripe (`admin-dashboard.php:408-417`, typy `checkout_blad`, `reconciliation_blad`,
+> Stripe (`admin-dashboard.php:411-420`, typy `checkout_blad`, `reconciliation_blad`,
 > `webhook_zly_podpis`, próg ≥3/dobę) — ale **nie ma sygnału o CISZY**: gdy webhook nie
 > dociera (SK-L-005, zła ścieżka, WAF, blokada POST), nie powstaje ŻADNE zdarzenie, więc
 > licznik pokazuje zero i to zero jest prawdziwe. Klasa: „brak zdarzenia to też zdarzenie".
@@ -108,7 +108,7 @@ go ręcznie. Nic go nie uruchomi samo.
 w `SK-L3-002` (`REJESTR-ZNALEZISK-SKLEP.md:24`), w kolumnie źródeł:
 *„**B:** B/L.json zn.2 Ł-02 (`reconciliation_blad` ×24 bez flagi; niezależnie)"*. Status
 **ZAMKNIETE**. Sprawdziłem naprawę na `main`: licznik `awarie_stripe`
-(`admin-dashboard.php:408-417`) liczy m.in. **`reconciliation_blad`** z ostatniej doby i przy
+(`admin-dashboard.php:411-420`) liczy m.in. **`reconciliation_blad`** z ostatniej doby i przy
 **≥3** wyświetla ostrzeżenie z linkiem do dziennika. Czyli tamte 24 awarie **dziś by się
 zapaliły**. To pytanie jest zamknięte poprawnie.
 

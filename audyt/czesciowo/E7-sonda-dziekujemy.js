@@ -1,7 +1,7 @@
 /* SONDA E7 — strona "Dziekujemy" obiecuje "(strona odswieza status sama)".
    Mierzy: ile razy naprawde odpytuje status i co stoi na ekranie PO tym, jak przestanie. */
 const { chromium } = require('playwright-core');
-const { wymagajChromium } = require('/root/praca/zlecenia/sklep-agentow/testy/lib/chromium');
+const { wymagajChromium } = require('../../testy/lib/chromium');
 const BAZA = process.env.SKLEPAG_BAZA || 'http://localhost:8890';
 const SESJA = 'cs_test_sonda_audytu_' + Date.now();
 
