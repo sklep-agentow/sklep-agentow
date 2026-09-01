@@ -20,6 +20,25 @@ Nic jeszcze.
 
 ---
 
+## [0.9.30] — 2026-09-01 · schemat bazy bez zmian (9)
+
+### Naprawione (RODO)
+- **Anonimizacja usuwa adres e-mail z dziennika zdarzeń także wtedy, gdy leży tam w postaci
+  zakodowanej.** Wpis o eksporcie CSV zapisuje użyte filtry przez `wp_json_encode()` bez flag,
+  a ten eskejpuje ukośnik: adres z `/` w części lokalnej (RFC 5321 dopuszcza) leżał w bazie
+  jako `a\/b@x.pl`. Wyszukiwanie znało wyłącznie postać surową, więc ślad zostawał — a wtyczka
+  **potwierdzała usunięcie**: niezrealizowane żądanie RODO z fałszywym dowodem wykonania.
+  Adres szukany jest teraz w każdej postaci, w jakiej może w dzienniku leżeć; postać zakodowana
+  bierze się z tej samej funkcji, która ją tworzy, więc nie ma jak rozjechać się z PHP.
+  Zamyka znaną granicę opisaną przy 0.9.19.
+- **Pomiar skutku przestał dzielić ślepotę z czyszczeniem.** Licznik śladów miał własne,
+  równie wąskie zapytanie — z definicji nie mógł zobaczyć tego, co czyszczenie pomijało.
+  Postacie, kotwice i wybór kandydatów mają jedno źródło, z którego korzystają oba.
+  Zakotwiczenie działa tak samo na obu postaciach: wpis innego kupującego, którego adres
+  zawiera nasz jako końcówkę, zostaje nietknięty również w postaci zakodowanej.
+
+---
+
 ## [0.9.29] — 2026-09-01 · schemat bazy bez zmian (9)
 
 ### Naprawione
