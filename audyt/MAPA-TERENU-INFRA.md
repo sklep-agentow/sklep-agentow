@@ -30,10 +30,10 @@
 | A2 | `chatbot-live` | 🟡 | wroga sesja K2, przeloty botów | osobny rejestr |
 | A3 | `segregator-maila` | 🟡 | dowód zachowania + próba kontrolna | — |
 | A4 | Front — ŁADOWANIE zasobów | ✅ | **1.09** | **CZYSTO**: 5 plików (128 KB), wszystkie przez `wp_enqueue_*` z wersją z `sklepag_wersja_assetu` (bez tego klient po aktualizacji widziałby stare z cache). Style frontu ładowane WARUNKOWO — tylko strona sklepu i „dziękujemy", nie cała witryna. Stripe.js z `js.stripe.com/dahlia/stripe.js`: HTTP 200, 1,08 MB, kontrola dodatnia — zmyślona wersja daje 403 |
-| A4b | Front — WYGLĄD i DZIAŁANIE w przeglądarce | ⬜ | — | **NIETKNIĘTE**: sprawdzono wyłącznie, JAK zasoby są ładowane, nie CO robią. Zero zrzutów, zero przejścia ścieżki zakupu okiem. Do tego trzeba żywego stosu i przeglądarki |
+| A4b | Front — WYGLĄD i DZIAŁANIE w przeglądarce | 🟡 | **1.09**, `audyt/plamy/A4b-RAPORT.md`, chromium 1440×900 i 390×844, ścieżka zakupu przeklikana + sonda JS | ⛔ **4 znaleziska.** KRYT `A4b-F1`: „Zapłać" w płatności osadzonej rzuca `TypeError` i nie potwierdza płatności — sklep z kluczem publikowalnym NIE SPRZEDAJE (kontrola dodatnia dowozi zamówienie do `mail_wyslany`). Dalej `A4b-F2` (DUZE, test e2e nie widzi tego błędu — rozpoznaje captchę po samej obecności ramki), `A4b-F3`, `A4b-F4` (oba MALE). 🟡 nie sprawdzone: BLIK, 3-D Secure, Firefox/Edge, tablet, axe na „Dziękujemy" i na panelu płatności |
 | A5 | `uninstall.php` — symetria zapis/sprzątanie | 🟡 | punkt szablonu PR, sprawdzany per-PR | brak przeglądu CAŁOŚCI naraz |
-| A6 | Schemat bazy i migracje | ⬜ | — | **NIETKNIĘTE** |
-| A7 | Kod produktu NASZĄ siatką po recenzji kolegi | ⬜ | — | kolega dał 9/10, ale to JEGO siatka — nasza nie przeszła po jego uwagach |
+| A6 | Schemat bazy i migracje | 🟡 | **1.09**, `audyt/plamy/A6-RAPORT.md`, porównanie definicji `dbDelta` z żywą bazą (kolumny/indeksy/wersja) | Większość CZYSTO: 7 tabel `dbDelta`=`uninstall.php`, kolumny/indeksy kod↔baza bez rozjazdu, wersja schematu zgodna, `esc_like()` wszędzie, transienty i cron sprzątane obiema drogami. ⛔ Znalezisko `A6-F1` (SRED, OTWARTE): `dbDelta` wołany bez sprawdzenia wyniku, wersja podnoszona BEZWARUNKOWO w obu ścieżkach — nieudana migracja (np. brak prawa `ALTER` na hostingu) nigdy się nie powtórzy. 🟡 nie sprawdzone: typy i długości kolumn (porównane tylko nazwy), faktyczna deinstalacja na żywo, kolumny historycznie usunięte |
+| A7 | Kod produktu NASZĄ siatką po recenzji kolegi | 🟡 | **1.09**, trzy przeloty na gałęzi `audyt/a7-kod-produktu`: `A7-RAPORT.md` (statyka+phpstan), `A7b-RAPORT.md` (sonda klienta IMAP na atrapie), `A7c-RAPORT.md` (sonda dekodowania MIME na atrapie) | ⛔ **3 poważne znaleziska + 3 drobne.** KRYT `A7-F1`: instrukcja instalacji każe zaznaczyć 2 z 11 zdarzeń webhooka Stripe — zwroty i obciążenia zwrotne NIGDY nie docierają do sklepu, Pulpit liczy je dalej jako przychód. SRED `A7b-F1`: klient IMAP bez żadnego sufitu pamięci — jedna spreparowana linia serwera zabija proces PHP (zmierzone na atrapie, kontrola dodatnia zdana). DUZE `A7c-F1`: dekodowanie MIME gubi treść maila na 4 niezależnych drogach — reguły segregatora „treść zawiera" nie widzą treści zwykłego maila wieloczęściowego (czyli KAŻDEGO z Gmaila/Outlooka). Plus `A7-F2`, `A7-F3` (MALE), `A7b-F2` (MALE). 🟡 nie sprawdzone: STARTTLS klienta IMAP (na wyraźne polecenie odłożone), wydajność przy większych danych (zero pomiarów w całym etapie), zachowanie w przeglądarce, import CSV do segregatora, kilka całych plików nietkniętych żadną soczewką (`statystyki.php`, `import.php`, `przejecie.php`, `admin.php`, `filtry.php`, `assets/`) |
 
 ## B. NARZĘDZIA I BRAMKI (`narzedzia-qa/`, `.githooks/`)
 
@@ -63,8 +63,8 @@
 | C9 | **Dostępy ludzi do repo klienta** | ✅ | **31.08 wieczór** | ⛔ `B-13`: recenzent zewnętrzny ma `push` |
 | C10 | Wykonawca CI (runner) | ✅ | 31.08 | `B-3` chodził jako root — naprawione (`ciuser`) |
 | C11 | Ochrona gałęzi | 🔒 | — | niedostępna na darmowym planie; kompensacja hookiem |
-| C12 | `CODEOWNERS` | ⬜ | — | **pliku NIE MA** — nikt nie decydował, czy ma być |
-| C13 | Kolejkowanie i wydajność CI | ⬜ | — | **NIETKNIĘTE** (1 wykonawca, zadania szeregowo) |
+| C12 | `CODEOWNERS` | ✅ | **1.09**, `audyt/plamy/C12-RAPORT.md`, kryterium z docs.github.com + `gh api` | **CZYSTO co do faktu, znalezisko co do stanu.** Pliku NIE MA w żadnej z 3 dozwolonych lokalizacji i nigdy nie było (`git log --all --diff-filter=A` → 0, próba kontrolna `.github/` = 5 pozycji). I tak by nie działał: wymuszenie przeglądu wymaga ochrony gałęzi/ruleset, a to HTTP 403 na darmowym planie. Znalezisko `C12-F1` (MALE, OTWARTE): brak nie jest zapisany jako świadoma decyzja w `DECYZJE.md`, mimo że sąsiedni brak (`C11`) jest tak zapisany |
+| C13 | Kolejkowanie i wydajność CI | ✅ | **1.09**, `audyt/plamy/C13-RAPORT.md`, wyłącznie odczyt przez `gh` — zero zmian w `.github/` | **ZMIERZONE.** 1 wykonawca self-hosted potwierdzony API. Udział czekania w kolejce 82-94% czasu przebiegu; bez tłoku 3 s kolejki + 6m04 wykonania. Wewnątrz wykonania 88% to krok „Próby kontrolne bramek" (same bramki 0m33). `concurrency: cancel-in-progress` działa poprawnie, bez dublowania zadań. Znalezisko `C13-F1` (MALE, OTWARTE): komentarz w `recenzent.yml` obiecuje „~2,5 minuty", zmierzone realnie 5m37-24m54 |
 
 ## D. WYDANIA, TAGI, PACZKI
 
@@ -87,7 +87,7 @@
 | E2 | `CONTRIBUTING.md` | 🟡 | 31.08 | `D-2` obiecuje bramkę, której nie ma — OTWARTE |
 | E3 | `README.md` | 🟡 | rundy #234/#237 | odznaki i licencja poprawione |
 | E4 | `LICENSE` — zgodność z zależnościami | ✅ | **1.09** | patrz `D8`. Zależności to wyłącznie narzędzia dev (phpcs, phpstan, wpcs) — nie są dystrybuowane z wtyczką, więc nie mieszają się z GPL produktu |
-| E5 | `DECYZJE.md` — czy aktualne | ⬜ | — | **NIETKNIĘTE** |
+| E5 | `DECYZJE.md` — czy aktualne | 🟡 | **1.09**, `audyt/plamy/E5-RAPORT.md`, przegląd wpisów wobec historii i mechanizmu unieważnień, który plik sam ma | ⛔ **2 znaleziska.** `E5-F1` (SRED, OTWARTE): `D1`, `D3`, `D4`, `D13` opisują architekturę sprzed piwotu (Cloudflare Worker) BEZ znacznika nieaktualności, choć plik mechanizm ma i go używa gdzie indziej; `D3` jest wręcz ODWRÓCONY — odrzucił wspólny origin z gospodarzem, a dziś panel tam stoi, bez zapisanego uzasadnienia zmiany. `E5-F2` (MALE): `D29`/`D30` nie istnieją w numeracji rejestru. 🟡 nie sprawdzone: ~30 z 36 wierszy jeden po drugim, historia zniknięcia `D29`/`D30`, kolumna „odrzucone alternatywy" |
 | E6 | Instrukcja dla klienta w paczce | 🟡 | `pakuj-dla-klienta.sh` sprawdza obecność | treść nieoceniana |
 | E7 | Teksty widziane przez klienta (panel, maile) | 🟡 | audyt sklepu | osobny rejestr |
 
@@ -98,8 +98,8 @@
 | F1 | RODO — dane osobowe w bazie i logach | 🟡 | strażnik RODO (jednostronny, klasa 72) | dług |
 | F2 | Prawo konsumenckie — zgoda art. 16(m) | 🟡 | zapisane w pamięci warsztatu | czy w mailu — sprawdzone w audycie sklepu |
 | F3 | Wpięcie w mechanizm prywatności WordPressa | ✅ | **1.09** | ⛔ `I-16`: **ZERO** eksporterów/erasersów/`wp_add_privacy_policy_content` (kontrola dodatnia: 33× `add_action`). Wtyczka MA własną anonimizację, ale wbudowane narzędzie WP „Eksportuj/Usuń dane osobowe” **nie widzi danych sklepu** — administrator uzna obowiązek za wypełniony, a dane zostaną. Dług był ZAPISANY w `CO-WISI.md:304` i pojechał do klienta |
-| F4 | Retencja danych kupujących | ⬜ | — | **NIETKNIĘTE** |
-| F5 | Regulamin sklepu (osobny dokument) | ⬜ | — | **NIETKNIĘTE** — sklep sprzedaje konsumentom |
+| F4 | Retencja danych kupujących | 🟡 | **1.09**, `audyt/plamy/F4-RAPORT.md`, przepisy RODO cytowane ze źródła (EUR-Lex 32016R0679), stan bazy i harmonogramu crona zmierzony na stanowisku | ⛔ **3 znaleziska.** `F4-F1` (DUZE, OTWARTE): retencja 90 dni obejmuje WYŁĄCZNIE `zdarzenia` i `logowania` — `zamowienia` (41 z 43 wierszy z mailem i treścią), `opinie`, `sesje_checkout` bez żadnej retencji, polityka nie podaje dla nich ani okresu, ani kryteriów. `F4-F2` (SRED): instrukcja obiecuje bezwarunkowe sprzątanie, cron bywa martwy (zmierzone opóźnienie 2h31min), żaden z 6 komunikatów Pulpitu tego nie pilnuje. `F4-F3` (MALE): `sesje_checkout` bez żadnego kasowania. ✅ mechanizm istnieje i jest wołany, nie jest martwą gałęzią. 🟡 nie sprawdzone: samo kasowanie po 90 dniach na żywo, retencja w tabelach botów, retencja po stronie Stripe |
+| F5 | Regulamin sklepu (osobny dokument) | 🟡 | **1.09**, `audyt/plamy/F5-RAPORT.md`, przepisy cytowane ze źródła w `audyt/plamy/F5-teksty/zrodla-prawne.md` | ⛔ **5 znalezisk.** `F5-F1`/`F5-F2` (oba DUZE, OTWARTE): Regulamin i Polityka to szkice (`draft`, bez sluga), nielinkowane znikąd (rdzeń „regulamin" = 0/0/0 wystąpień na stronach sklepu), szablon regulaminu (5 linii) bez procedury reklamacyjnej, odpowiedzialności za zgodność świadczenia i bez treści gwarancji obiecywanej 4× na stronie produktu. `F5-F3` (SRED): dane sprzedawcy istnieją tylko w stopce maila PO zakupie, brak ich PRZED zawarciem umowy (wymóg art. 12 ust. 1). `F5-F4` (SRED): Polityka nie nadążyła za 3 kolejnymi wersjami wtyczki (opinie, IP, dane do faktury). `F5-F5` (MALE): powołanie na uchylony art. 38a. ✅ CZYSTO: mail potwierdza zgodę na utratę prawa odstąpienia z datą. 🟡 nie sprawdzone: strony motywu gospodarza, kwalifikacja prawna sformułowań, strona Segregatora |
 
 ## G. REPOZYTORIUM I HISTORIA
 
@@ -130,9 +130,21 @@ siedziało `B-3` (runner jako root), `B-8` (ruchome tagi Akcji), `B-11` (wyłąc
 powiedział „większość to błędy infrastruktury” — i mapa pokazuje, dlaczego: infrastruktura
 to głównie rzeczy, których NIE WIDAĆ w plikach repozytorium.
 
-**Po drugie:** pozycji `⬜ NIETKNIĘTE` jest **osiem** (stan 1.09, po domknięciu D5, D7, D8,
-E4, F3 i G3). To nie znaczy, że tam są błędy — znaczy, że nie mamy prawa powiedzieć, że ich
-nie ma.
+**Po drugie:** ⭐ **pozycji `⬜ NIETKNIĘTE` jest ZERO** (stan 1.09 przed południem). Pierwszy raz
+w historii tego projektu każdy obszar mapy ma za sobą co najmniej jeden przelot z dowodem.
+Zamknięte tego dnia: `D5`, `D7`, `D8`, `E4`, `F3`, `G3` rano, a potem `A4b`, `A6`, `C12`, `C13`,
+`E5`, `F4`, `F5` raportami audytora i `A7` trzema osobnymi przelotami.
+
+⛔ **To NIE znaczy, że teren jest sprawdzony.** Liczba `🟡 częściowo` **urosła z 20 do 26**
+— i tak ma być. Obszar domknięty raportem prawie zawsze zostawia sekcję „czego nie sprawdziłem",
+a my wpisujemy go wtedy jako częściowy, zamiast odhaczyć na zielono. Ta liczba rośnie dlatego,
+że przestaliśmy udawać, a nie dlatego, że robimy krok w tył.
+
+⛔ **Najgroźniejsze miejsce projektu przeniosło się z białych plam na obszary „częściowo".**
+Dowód, nie teoria: `A4` był oznaczony jako **zmierzony z dowodem**, bo ktoś sprawdził, JAK
+ładują się pliki frontu — i nikt nie sprawdził, CO one robią. W tym samym obszarze siedziało
+`A4b-F1`: sklep nie sprzedawał, i pojechało to do klienta. Pytanie do każdej pozycji `🟡` brzmi
+więc: **co tu zostało naprawdę zmierzone, a co tylko wygląda na zmierzone.**
 
 ⛔ **Liczby w tym pliku licz komendą, nie z pamięci.** Pierwsza wersja deklarowała
 „34 pozycje”, bo autorka wpisała liczbę z głowy; faktyczny pomiar dał **57**.
@@ -147,6 +159,16 @@ z dzisiejszych — `I-16`: dług dotyczący **danych osobowych kupujących** by�
 w `CO-WISI.md` i mimo to **pojechał do klienta**, bo nikt nie przenosi długów z tamtego
 dokumentu do rejestru znalezisk ani nie pyta przed wydaniem, które z nich jadą.
 
-**Co zostało nietknięte:** front wtyczek (A4), schemat bazy (A6), kod produktu naszą siatką
-po recenzji kolegi (A7), `CODEOWNERS` (C12), wydajność CI (C13), aktualność `DECYZJE.md` (E5),
-retencja danych kupujących (F4) i regulamin sklepu (F5).
+**Co zostało nietknięte: NIC.** Stan zmierzony komendą 1.09 przed południem — 58 pozycji:
+**31 zmierzonych z dowodem · 26 częściowo · 1 poza zasięgiem · 0 nietkniętych.**
+
+**Gdzie teraz szukać** — trzy miejsca, w tej kolejności:
+1. **26 obszarów `🟡`**, a w każdym pytanie „co tu naprawdę zmierzono". Najgorętsze te, które
+   widzi klient albo jego kupujący: `E7` teksty w panelu i mailach, `E6` instrukcja w paczce,
+   `F2` zgoda konsumencka, `A5` symetria zapisu i sprzątania.
+2. **Sekcje „czego nie sprawdziłem" w raportach** — one są listą zadań, nie przypisem.
+   Największe dziś: STARTTLS klienta poczty, wydajność przy większych danych (zero pomiarów
+   w całym etapie), oraz sześć plików produktu, których nie tknęła żadna soczewka.
+3. **Warstwa spoza repozytorium** — `H4` maszyna warsztatu. Tam już są trzy wyniki
+   (`W-1`, `W-2`, `W-3`), a teren okazał się szerszy niż ten wiersz mapy: narzędzia stoją
+   w dwóch miejscach, nie w jednym.
