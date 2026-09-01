@@ -1,5 +1,43 @@
 # CO-WISI — rzeczy oddane komuś / bez strażnika (zasada: oddajesz ⇒ wiersz, wraca ⇒ kasujesz)
 
+## 🟡 DWIE UWAGI WAŻNE Z RECENZJI `#259` (runda 2) ŚWIADOMIE NIENAPRAWIONE — dług, nie przeoczenie (1.09)
+
+Decyzja koordynatorki: cztery uwagi rundy 1 domknięte (krytyczna jako KLASA, nie egzemplarz),
+te dwie idą tutaj jako nazwany dług. ⛔ Obie dotyczą **tekstów o kodzie**, nie zachowania
+produktu — ale obie są tą samą klasą 3. („dokumentacja/komentarz kłamie względem kodu"),
+której te strażniki mają pilnować. To najgorsze możliwe miejsce na taki dług.
+
+**1. Nieprawdziwe zdanie o kodzie przeżyło w CZWARTYM miejscu — w docbloku strażnika, który
+ten PR tworzy.** `testy/chatbot-kasownik-slad-sesji-test.php:5-6` mówi: „`chatl_rodo_kasownik()`
+sprawdzało wynik kasowania śladu współdzielonego i zgłoszeń, ale wynik kasowania wiersza
+`chatl_sesje` szedł WYŁĄCZNIE do dziennika błędów". **Dwa błędy w jednym zdaniu:** ślad
+współdzielony jest **zapisywany**, nie kasowany, a wynik kasowania **zgłoszeń** wcale nie był
+sprawdzany — `git show origin/main:wtyczki/chatbot-live/includes/rodo.php` linie 400-402 to
+`$ile_z = $wpdb->query( … DELETE FROM {$tz} … ); $ile_z = max( 0, (int) $ile_z );`, bez żadnego
+`false ===`. Poprawną wersję tego zdania niesie już `wtyczki/chatbot-live/CHANGELOG.md`, wpis
+`[1.5.14]`. Do tego opis zakresu w `:13-16` wymienia sekcje **A** i **B**, a plik ma **A-E** —
+opis został z poprzedniej rundy.
+**Kształt roboty:** przepisać zdanie z `CHANGELOG.md [1.5.14]` do docbloku i doprowadzić listę
+sekcji do A-E. ⭐ Szersza reguła do rozważenia: **zdanie „co groziło" w strażniku ma być
+CYTATEM z wpisu w CHANGELOG-u, nie jego parafrazą** — parafraza rozjeżdża się przy każdej
+korekcie, a to już czwarte miejsce, w którym rozjechała się ta sama.
+
+**2. Deklaracja zakresu bramki jest SZERSZA niż to, co bramka mierzy (klasa 11).**
+`testy/faktura-obietnica-zgodna-z-kodem-test.php:19-23` ogłasza: „strona produktu · mail po
+zakupie w OBU wersjach · SZABLON polityki prywatności zakładany przy aktywacji. **To wszystkie
+miejsca**, w których sklep pisze kupującemu o fakturze", a wyjątek robi tylko dla ekranów panelu.
+Jest **piąty** tekst i nie jest ekranem panelu: `wtyczki/sklep-agentow/includes/prywatnosc.php:807-816`
+(`sklepag_polityka_prywatnosci()`) wstrzykuje przez `wp_add_privacy_policy_content()` drugi tekst
+polityki, mówiący kupującemu o danych do faktury i o tym, że **zostają po wniosku o usunięcie**.
+Sąsiadujący docblock sam nazywa te dwa teksty parą.
+**Kształt roboty:** albo objąć pomiarem `sklepag_polityka_prywatnosci()`, albo zwęzić deklarację
+tak, żeby nie mówiła „to wszystkie miejsca". ⛔ Zwężenie deklaracji jest tańsze, ale zostawia
+piąty tekst bez strażnika — wtedy należy dopisać go do listy „znalezisk BEZ strażnika".
+
+⛔ Oba wpisy są **nazwanym długiem, nie zamkniętą sprawą**. Wracają przy najbliższym dotknięciu
+któregokolwiek z tych dwóch strażników.
+
+
 ## 🟡 TRZY UWAGI Z RECENZJI `#260` ŚWIADOMIE NIENAPRAWIONE — dług, nie przeoczenie (1.09)
 
 PR `#260` (książka klas 94-96) nie dotyka kodu produktu, więc idzie **jedną rundą**: naprawione
