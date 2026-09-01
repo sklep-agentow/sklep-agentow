@@ -23,7 +23,8 @@ cd "$(dirname "$0")/.." || { echo "PRZYRZAD: nie umiem wejsc do korzenia repo" >
 # shellcheck source=narzedzia-qa/lib-stos-probny.sh
 . narzedzia-qa/lib-stos-probny.sh || { echo "PRZYRZAD: brak lib-stos-probny.sh" >&2; exit 2; }
 
-STARY_REF="${STARY_REF:-origin/main}"   # kod SPRZED naprawy
+STARY_REF="${STARY_REF:-origin/main}"   # kod SPRZED naprawy (brak komunikatu w ogole)
+RUNDA1_REF="${RUNDA1_REF:-d1dc673}"     # runda 1 PR #263: komunikat JEST, ale bez progu uprawnien
 CEL_WTYCZKI=/var/www/html/wp-content/plugins/sklep-agentow
 ROBOCZY="$(mktemp -d -t limit-kalibracja-XXXXXX)"
 trap 'rm -rf "$ROBOCZY"; zwin_stos' EXIT INT TERM
@@ -51,12 +52,23 @@ wdroz() { # $1 = katalog ze wtyczką
 
 odpal_straznika() {
 	ADRES="$ADRES" KONTENER="$KONTENER" WP_ADMIN_USER=probny WP_ADMIN_PASS=probne-haslo-QA \
+		WP_SUB_USER=probny-sub WP_SUB_PASS=probne-haslo-SUB \
 		bash testy/limit-uploadu-mowi-prawde.sh 2>&1
 }
 
-postaw_stos
+# ⛔ Konto BEZ uprawnienia `upload_files` — kierunek E strażnika mierzy, czy konfiguracja
+# serwera nie wycieka do zwykłego zalogowanego. Subskrybent `upload_files` nie ma.
+zaloz_subskrybenta() {
+	wp user create probny-sub probny-sub@example.com --role=subscriber \
+		--user_pass=probne-haslo-SUB > /dev/null 2>&1
+	wp user get probny-sub --field=roles 2>/dev/null | grep -q subscriber \
+		|| padnij "nie umiem założyć konta subskrybenta na stosie próbnym"
+}
 
-naglowek "KOD SPRZED NAPRAWY ($STARY_REF) — strażnik MA PADAĆ"
+postaw_stos
+zaloz_subskrybenta
+
+naglowek "KOD SPRZED NAPRAWY ($STARY_REF) — strażnik MA PADAĆ NA A"
 mkdir -p "$ROBOCZY/stary"
 git archive "$STARY_REF" wtyczki/sklep-agentow 2>/dev/null | tar -x -C "$ROBOCZY/stary" \
 	|| padnij "nie umiem wyciągnąć wtyczki z $STARY_REF"
@@ -75,13 +87,43 @@ elif [ "$KOD1" -eq 1 ] \
 	&& printf '%s' "$WY1" | grep -q '⛔ NIE WYSZLO  A: odpowiedź PUSTA' \
 	&& printf '%s' "$WY1" | grep -q '✅ WYSZLO      B:' \
 	&& printf '%s' "$WY1" | grep -q '✅ WYSZLO      C:' \
-	&& printf '%s' "$WY1" | grep -q '✅ WYSZLO      D:'; then
+	&& printf '%s' "$WY1" | grep -q '✅ WYSZLO      D:' \
+	&& printf '%s' "$WY1" | grep -q '✅ WYSZLO      E:' \
+	&& printf '%s' "$WY1" | grep -q '✅ WYSZLO      F:'; then
 	# ⛔ Nie wystarczy „coś padło". Wymagamy DOKŁADNIE tego kształtu: pada A (pusta biała
-	# strona), a B, C i D przechodzą — czyli strażnik pokazuje TĘ wadę, a nie ogólne
-	# zepsucie ścieżki zapisu produktu.
-	potwierdz "strażnik PADŁ na kodzie sprzed naprawy (EXIT=1): pada wyłącznie A (pusta odpowiedź), B/C/D przechodzą"
+	# strona), a B, C, D i E przechodzą — czyli strażnik pokazuje TĘ wadę, a nie ogólne
+	# zepsucie ścieżki zapisu produktu. (E przechodzi tu z braku zaczepienia, nie z zasługi —
+	# dowodzi tego dopiero etap „runda 1" niżej.)
+	potwierdz "strażnik PADŁ na kodzie sprzed naprawy (EXIT=1): pada wyłącznie A (pusta odpowiedź), B/C/D/E przechodzą"
 else
 	zglos "strażnik nie padł w oczekiwanym kształcie (EXIT=$KOD1) — nie mierzy tej wady"
+fi
+
+naglowek "RUNDA 1 PR #263 ($RUNDA1_REF) — strażnik MA PADAĆ NA E i F"
+# ⛔ DRUGA KALIBRACJA, OSOBNA. Kierunek E (wyciek konfiguracji do subskrybenta) na
+# `origin/main` przechodzi, bo tam ogólnego zaczepienia w ogóle NIE MA — czyli tamten
+# przebieg NIE JEST dowodem, że E cokolwiek mierzy. Dowodem jest dopiero kod rundy 1,
+# w którym zaczepienie już jest, a progu uprawnień jeszcze nie ma (uwaga 2. recenzji).
+# Bez tego etapu kierunek E byłby napisem, nie pomiarem.
+mkdir -p "$ROBOCZY/runda1"
+git archive "$RUNDA1_REF" wtyczki/sklep-agentow 2>/dev/null | tar -x -C "$ROBOCZY/runda1" \
+	|| padnij "nie umiem wyciągnąć wtyczki z $RUNDA1_REF"
+RUNDA1="$ROBOCZY/runda1/wtyczki/sklep-agentow"
+if grep -q "current_user_can( 'upload_files' )" "$RUNDA1/includes/admin-produkty.php"; then
+	padnij "$RUNDA1_REF ma już próg uprawnień — to nie jest kod rundy 1, kalibracja E nic by nie zmierzyła"
+fi
+wdroz "$RUNDA1" || padnij "nie udało się wdrożyć wtyczki z $RUNDA1_REF"
+WY15="$(odpal_straznika)"; KOD15=$?
+printf '%s\n' "$WY15" | sed 's/^/    | /'
+if [ "$KOD15" -eq 2 ]; then
+	zglos "strażnik oddał 2 (przyrząd/środowisko) na rundzie 1 — kalibracja E nic nie zmierzyła"
+elif [ "$KOD15" -eq 1 ] \
+	&& printf '%s' "$WY15" | grep -q '⛔ NIE WYSZLO  E: subskrybent DOSTAŁ konfigurację serwera' \
+	&& printf '%s' "$WY15" | grep -q '⛔ NIE WYSZLO  F: żądanie, którego PHP NIE uciął' \
+	&& printf '%s' "$WY15" | grep -q '✅ WYSZLO      A:'; then
+	potwierdz "strażnik PADŁ na rundzie 1 (EXIT=1): padają E (wyciek do subskrybenta) i F (zmyślona diagnoza), A już przechodzi"
+else
+	zglos "strażnik nie padł na rundzie 1 w oczekiwanym kształcie (EXIT=$KOD15) — kierunki E/F nie mierzą uwag 2. i 4. recenzji"
 fi
 
 naglowek "KOD Z DRZEWA — strażnik MA PRZEJŚĆ"
@@ -96,7 +138,7 @@ fi
 
 naglowek "WYNIK KALIBRACJI"
 if [ "$BLEDY" -eq 0 ]; then
-	echo "KALIBRACJA: OK — straznik pada przed naprawa (EXIT=1) i przechodzi po niej (EXIT=0)"
+	echo "KALIBRACJA: OK — straznik pada na A przed naprawa (EXIT=1), pada na E na rundzie 1 (EXIT=1) i przechodzi na drzewie (EXIT=0)"
 	exit 0
 fi
 echo "KALIBRACJA: NIE WYSZLA — $BLEDY potkniec"

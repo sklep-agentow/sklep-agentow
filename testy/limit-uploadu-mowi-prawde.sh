@@ -10,7 +10,7 @@
 # komunikat cytujący limit wtyczki (20 MB) przy odrzucie serwera na 2 MB — została
 # naprawiona w 0.9.31; kierunek B pilnuje, żeby nie wróciła.
 #
-# CZTERY KIERUNKI, bo „naprawa", która zaczyna przechwytywać wszystko albo przestaje
+# PIĘĆ KIERUNKÓW, bo „naprawa", która zaczyna przechwytywać wszystko albo przestaje
 # przyjmować pliki, też usunęłaby objaw:
 #   A) ciało PONAD post_max_size          => prawda o przyczynie + REALNY limit serwera,
 #                                            nigdy pusta odpowiedź  (PADA przed naprawą)
@@ -21,6 +21,23 @@
 #                                            omija sprawdzenia nonce'a)
 #   D) POPRAWNY mały ZIP                  => produkt zapisany i plik POTWIERDZONY
 #                                            (naprawa nie odebrała wgrywania nikomu)
+#   E) SUBSKRYBENT z ciałem ponad limit    => NIE dostaje konfiguracji serwera
+#                                            (PADA na rundzie 1 PR #263)
+#   F) MAŁY POST `application/json`        => ŻADNEJ diagnozy o ucięciu — PHP niczego
+#                                            nie uciął  (PADA na rundzie 1 PR #263)
+#
+# ⛔ SKĄD KIERUNEK F. `$_POST` wypełnia się WYŁĄCZNIE dla typów formularzowych — przy
+# `application/json` jest puste ZAWSZE, bo tak działa PHP, a ciało leży całe w `php://input`.
+# Runda 1 brała za dowód ucięcia samo „puste $_POST + niepuste ciało" i takiemu żądaniu
+# wypisywała zmyśloną diagnozę „Serwer odrzucił CAŁE zgłoszenie" (uwaga 4. recenzji).
+# Komunikat w tej gałęzi ma jedno zadanie — mówić prawdę o przyczynie.
+#
+# ⛔ SKĄD KIERUNEK E. Ogólne zaczepienie `admin_post` odpala się dla KAŻDEGO zalogowanego
+# użytkownika — dokumentacja WordPressa nazywa je „authenticated admin post request", bez
+# progu uprawnień. Runda 1 tego PR-a nie miała tam `current_user_can()` i wypisywała
+# `post_max_size`, `upload_max_filesize` oraz rozmiar ciała dowolnemu subskrybentowi
+# (uwaga 2. recenzji). Kierunki A-D tego nie widziały, bo mierzą wyłącznie sesję
+# właściciela — dziura była poza ich zasięgiem.
 #
 # Mierzy PRODUKT przez HTTP: adres wysyłki bierze z atrybutu `action` PRAWDZIWEGO
 # formularza, nie składa go u siebie — inaczej nie zauważyłby, że formularz stracił
@@ -30,9 +47,14 @@
 #   set -a; . /root/.claude/sklep-admin-roboczy.env; set +a
 #   bash testy/limit-uploadu-mowi-prawde.sh
 #   ADRES=http://localhost:8891 KONTENER=probny_wp WP_ADMIN_USER=probny \
-#     WP_ADMIN_PASS=probne-haslo-QA bash testy/limit-uploadu-mowi-prawde.sh
+#     WP_ADMIN_PASS=probne-haslo-QA WP_SUB_USER=… WP_SUB_PASS=… \
+#     bash testy/limit-uploadu-mowi-prawde.sh
 #
-# Kody wyjścia: 0 = wszystkie cztery kierunki zgodne · 1 = REGRESJA · 2 = środowisko/przyrząd
+# ⛔ WP_SUB_USER/WP_SUB_PASS (konto BEZ uprawnienia `upload_files`, np. subskrybent) są
+# WYMAGANE. Brak danych kończy się kodem 2, nie cichym pominięciem kierunku E: strażnik,
+# który przy braku danych świeci na zielono, mierzy własną wygodę, nie produkt.
+#
+# Kody wyjścia: 0 = wszystkie sześć kierunków zgodne · 1 = REGRESJA · 2 = środowisko/przyrząd
 #
 # ⛔ Licznik błędów poza podpowłoką (podpowłoka zjada zarówno licznik, jak i komunikat).
 set -u
@@ -42,8 +64,26 @@ KONTENER="${KONTENER:-strona_wp_wordpress}"
 BLEDY=0
 ROBOCZY="$(mktemp -d -t limit-uploadu-XXXXXX)"
 CIASTKA="$ROBOCZY/ciastka.txt"
+CIASTKA_SUB="$ROBOCZY/ciastka-sub.txt"
 ZNACZNIK="STRAZNIK LIMITU $$-$(date +%s)"
-trap 'rm -rf "$ROBOCZY"' EXIT INT TERM
+# ⛔ SPRZĄTANIE TAKŻE PRZY PRZERWANIU. Bez tego Ctrl-C między kierunkiem D a blokiem
+# sprzątania zostawiał produkt „STRAZNIK LIMITU…" w bazie stosu — a domyślnym celem jest
+# stos WARSZTATOWY, wspólny z resztą zespołu.
+trap 'posprzataj 2>/dev/null; rm -rf "$ROBOCZY"' EXIT INT TERM
+posprzataj() {
+	wp eval "
+	\$w = \$GLOBALS['wpdb'];
+	foreach ( \$w->get_results( \$w->prepare( \"SELECT id, plik_sciezka FROM {\$w->prefix}sklepag_produkty WHERE nazwa LIKE %s\", \$w->esc_like( '$ZNACZNIK' ) . '%' ) ) as \$p ) {
+		if ( '' !== \$p->plik_sciezka && file_exists( \$p->plik_sciezka ) ) { wp_delete_file( \$p->plik_sciezka ); }
+		\$w->delete( \$w->prefix . 'sklepag_produkty', array( 'id' => (int) \$p->id ), array( '%d' ) );
+	}
+	\$w->query( \$w->prepare( \"DELETE FROM {\$w->prefix}sklepag_zdarzenia WHERE typ = 'upload_produktu_blad' AND id > %d\", ${ID_PRZED:-0} ) );
+	\$u = get_user_by( 'login', '$WP_ADMIN_USER' );
+	if ( \$u ) { delete_transient( 'sklepag_szkic_produktu_' . (int) \$u->ID ); }
+	echo 'posprzatane';
+	" > /dev/null 2>&1
+}
+
 
 padnij()    { printf 'PRZYRZAD: %s\n' "$1" >&2; exit 2; }
 zglos()     { printf '  ⛔ NIE WYSZLO  %s\n' "$1"; BLEDY=$(( BLEDY + 1 )); }
@@ -53,6 +93,8 @@ command -v curl > /dev/null || padnij "brak curl"
 command -v docker > /dev/null || padnij "brak docker"
 [ -n "${WP_ADMIN_USER:-}" ] && [ -n "${WP_ADMIN_PASS:-}" ] \
 	|| padnij "brak WP_ADMIN_USER/WP_ADMIN_PASS w środowisku"
+[ -n "${WP_SUB_USER:-}" ] && [ -n "${WP_SUB_PASS:-}" ] \
+	|| padnij "brak WP_SUB_USER/WP_SUB_PASS (konto bez uprawnienia upload_files) — kierunku E nie da się zmierzyć, a milczące pominięcie byłoby fałszywą zielenią"
 docker ps --filter "name=^${KONTENER}$" --filter status=running -q | grep -q . \
 	|| padnij "kontener $KONTENER nie chodzi"
 
@@ -206,22 +248,67 @@ case "$POTW" in
 	               zglos "D: poprawny ZIP NIE przeszedł ($POTW, http=$HTTP_D) — naprawa zabrała funkcję wszystkim" ;;
 esac
 
+# ==== E) SUBSKRYBENT — konfiguracja serwera NIE MA do niego wyciekać ============
+echo "== E) ucięte żądanie od konta BEZ uprawnienia upload_files ($WP_SUB_USER) — MA zostać bez odpowiedzi =="
+curl -s -c "$CIASTKA_SUB" -b "$CIASTKA_SUB" -o /dev/null \
+	--data-urlencode "log=$WP_SUB_USER" --data-urlencode "pwd=$WP_SUB_PASS" \
+	-d 'wp-submit=Zaloguj&testcookie=1' "$ADRES/wp-login.php" \
+	|| padnij "nie umiem zalogować konta $WP_SUB_USER"
+# ⛔ Sprawdzamy, że sesja NAPRAWDĘ powstała. Niezalogowany curl trafiłby na `admin_post_nopriv`,
+# gdzie odpowiedzi i tak nie ma — i kierunek E świeciłby na zielono, nie mierząc niczego.
+KIM="$(curl -s -b "$CIASTKA_SUB" "$ADRES/wp-admin/profile.php" | grep -c 'wp-admin-bar-my-account\|profile-page')"
+[ "$KIM" -gt 0 ] || padnij "konto $WP_SUB_USER nie zalogowało się — kierunek E nie zmierzyłby niczego"
+# ⛔ Wysyłamy na GOŁE `admin-post.php`, bez `action` — to jest DOKŁADNIE ta droga, którą
+# obsługuje ogólne zaczepienie `admin_post`. Adres z `action` trafiłby do handlera produktu,
+# który ma własne sprawdzenie uprawnień i odpowiedziałby 403 z innego powodu.
+WYNIK_E="$(curl -s -b "$CIASTKA_SUB" -c "$CIASTKA_SUB" -o "$ROBOCZY/odp.html" -D "$ROBOCZY/nag.txt" \
+	-w '%{http_code} %{size_download}' \
+	-F 'produkt_id=0' -F 'nazwa=nieistotne' \
+	-F "plik=@$ROBOCZY/ponad-post.zip;type=application/zip" \
+	"$ADRES/wp-admin/admin-post.php")"
+HTTP_E="${WYNIK_E%% *}"
+WIDZI_E="$(tresc_widziana)"
+printf '    | http=%s\n' "$HTTP_E"
+if printf '%s' "$WIDZI_E" | grep -qF 'post_max_size'; then
+	zglos "E: subskrybent DOSTAŁ konfigurację serwera (post_max_size/upload_max_filesize) — wyciek ustawień do konta bez uprawnień do wgrywania"
+elif printf '%s' "$WIDZI_E" | grep -qF "$NAPIS_POST"; then
+	zglos "E: subskrybent zobaczył limit serwera ($NAPIS_POST) — konfiguracja wycieka niżej, niż deklaruje dokumentacja"
+else
+	potwierdz "E: konto bez upload_files nie dostaje żadnej informacji o konfiguracji serwera (http=$HTTP_E)"
+fi
+echo
+
+# ==== F) mały POST application/json — PHP NICZEGO nie uciął ====================
+echo "== F) mały POST 'application/json' na gołe admin-post.php — NIE MA prawa dostać diagnozy o ucięciu =="
+WYNIK_F="$(curl -s -b "$CIASTKA" -c "$CIASTKA" -o "$ROBOCZY/odp.html" -D "$ROBOCZY/nag.txt" \
+	-w '%{http_code} %{size_download}' \
+	-H 'Content-Type: application/json' --data-binary '{"cokolwiek":"male ciało, ktore dojechalo w calosci"}' \
+	"$ADRES/wp-admin/admin-post.php")"
+HTTP_F="${WYNIK_F%% *}"
+WIDZI_F="$(tresc_widziana)"
+printf '    | http=%s\n' "$HTTP_F"
+# ⛔ JEDEN warunek i JEDEN komunikat porażki. Dwa warianty („ogłosił ucięcie" / „wykład
+# o post_max_size") opisywały tę samą wadę, a próba kontrolna musiała zgadywać, który
+# padnie — i raz się pomyliła. Wystarczy ślad konfiguracji serwera w odpowiedzi.
+if printf '%s' "$WIDZI_F" | grep -qF 'post_max_size'; then
+	zglos "F: żądanie, którego PHP NIE uciął, dostało diagnozę o ucięciu i konfigurację serwera — ciało dojechało w całości i leży w php://input (zmyślona przyczyna)"
+else
+	potwierdz "F: nieucięte żądanie nie dostaje zmyślonej diagnozy (http=$HTTP_F)"
+fi
+echo
+
 # --- sprzątanie po sobie: wiersze, plik i przechowalnia szkicu ------------------
-wp eval "
-\$w = \$GLOBALS['wpdb'];
-foreach ( \$w->get_results( \$w->prepare( \"SELECT id, plik_sciezka FROM {\$w->prefix}sklepag_produkty WHERE nazwa LIKE %s\", \$w->esc_like( '$ZNACZNIK' ) . '%' ) ) as \$p ) {
-	if ( '' !== \$p->plik_sciezka && file_exists( \$p->plik_sciezka ) ) { wp_delete_file( \$p->plik_sciezka ); }
-	\$w->delete( \$w->prefix . 'sklepag_produkty', array( 'id' => (int) \$p->id ), array( '%d' ) );
-}
-\$w->query( \$w->prepare( \"DELETE FROM {\$w->prefix}sklepag_zdarzenia WHERE typ = 'upload_produktu_blad' AND id > %d\", $ID_PRZED ) );
-delete_transient( 'sklepag_szkic_produktu_' . get_current_user_id() );
-echo 'posprzatane';
-" > /dev/null 2>&1
+# ⛔ SZKIC KASUJEMY POD IDENTYFIKATOREM WŁAŚCICIELA, NIE POD ZEREM. `wp eval` chodzi tu bez
+# `--user`, więc `get_current_user_id()` zwraca 0, a przechowalnię zakłada handler w żądaniu
+# HTTP zalogowanego właściciela — pod JEGO numerem. Runda 1 kasowała klucz
+# `sklepag_szkic_produktu_0`, czyli nie kasowała niczego, a szkic „STRAZNIK LIMITU…" dożywał
+# 5 minut i nakładał się właścicielowi na formularz (uwaga 5. recenzji).
+posprzataj
 
 echo
 if [ "$BLEDY" -eq 0 ]; then
-	echo "STRAZNIK: WYNIK=OK — A, B, C i D zgodne z oczekiwaniem"
+	echo "STRAZNIK: WYNIK=OK — A, B, C, D, E i F zgodne z oczekiwaniem"
 	exit 0
 fi
-echo "STRAZNIK: WYNIK=FAIL — $BLEDY z 4 kierunkow nie wyszlo (REGRESJA)"
+echo "STRAZNIK: WYNIK=FAIL — $BLEDY z 6 kierunkow nie wyszlo (REGRESJA)"
 exit 1

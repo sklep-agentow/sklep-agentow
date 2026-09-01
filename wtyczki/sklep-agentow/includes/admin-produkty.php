@@ -65,7 +65,27 @@ function sklepag_zadanie_ucieto_przez_php() {
 	$dlugosc = isset( $_SERVER['CONTENT_LENGTH'] ) ? (int) $_SERVER['CONTENT_LENGTH'] : 0;
 	$typ     = isset( $_SERVER['CONTENT_TYPE'] ) ? strtolower( sanitize_text_field( wp_unslash( $_SERVER['CONTENT_TYPE'] ) ) ) : '';
 	// phpcs:enable
-	return $dlugosc > 0 || 0 === strpos( $typ, 'multipart/form-data' );
+
+	// ⛔ SAMO „PUSTE $_POST" TO ZA MAŁO NA OSKARŻENIE PHP. Podręcznik PHP mówi, że `$_POST`
+	// wypełnia się WYŁĄCZNIE dla `application/x-www-form-urlencoded` i `multipart/form-data`
+	// — przy `application/json` czy `text/plain` jest puste ZAWSZE, bo tak działa, a ciało
+	// leży całe w `php://input`. Warunek „puste $_POST przy niepustym ciele" uznałby takie
+	// żądanie za ucięte i wypisał zmyśloną diagnozę „Serwer odrzucił CAŁE zgłoszenie".
+	// Komunikat w tej gałęzi ma JEDNO zadanie — mówić prawdę o przyczynie — więc warunek
+	// jest koniunkcją: typ formularzowy ORAZ ciało większe, niż serwer w ogóle przyjmuje.
+	$formularzowy = 0 === strpos( $typ, 'multipart/form-data' ) || 0 === strpos( $typ, 'application/x-www-form-urlencoded' );
+	if ( ! $formularzowy || $dlugosc <= 0 ) {
+		return false;
+	}
+	$post_max = (int) wp_convert_hr_to_bytes( (string) ini_get( 'post_max_size' ) );
+
+	// `post_max_size = 0` znaczy w PHP „bez limitu" — wtedy ucięcia z tego powodu nie ma.
+	// Nieodczytany limit (wartość ujemna/pusta) traktujemy jak nieznany i zostajemy przy
+	// samym fakcie pustych tablic przy niepustym ciele formularzowym.
+	if ( 0 === $post_max ) {
+		return false;
+	}
+	return $post_max < 0 || $dlugosc > $post_max;
 }
 
 /**
@@ -75,21 +95,39 @@ function sklepag_zadanie_ucieto_przez_php() {
  * udziału — walidacja wtyczki w ogóle się nie uruchomiła. Podanie go jako przyczyny
  * byłoby dokładnie tym kłamstwem, przez które właściciel szukał usterki nie tam.
  *
+ * ⛔ DWA WARIANTY, I TO NIE Z UPRZEJMOŚCI. Wariant sklepowy wolno złożyć WYŁĄCZNIE tam,
+ * gdzie wiemy, że żądanie przyszło z formularza produktu (adres niesie nasze `action`).
+ * Ogólne zaczepienie `admin_post` łapie też ucięte zgłoszenia z formularzy INNYCH wtyczek
+ * — tamtemu użytkownikowi zdanie „limit wtyczki (20 MB) nie ma z tym nic wspólnego"
+ * mówi o wtyczce, której nie używa, a odesłanie do naszej INSTRUKCJA.md prowadzi do
+ * dokumentu, którego nie ma. Deklaracja neutralności bez DWÓCH wariantów tekstu jest
+ * pusta — jeden komunikat nie może być jednocześnie sklepowy i neutralny.
+ *
+ * @param bool $nasz_formularz Czy na pewno nasz formularz produktu (wtedy wolno nazwać sklep).
  * @return string Tekst bez znaczników; escapuje wywołujący.
  */
-function sklepag_komunikat_ucietego_zadania() {
+function sklepag_komunikat_ucietego_zadania( $nasz_formularz = true ) {
 	$post_max = (int) wp_convert_hr_to_bytes( (string) ini_get( 'post_max_size' ) );
 	$plik_max = (int) wp_convert_hr_to_bytes( (string) ini_get( 'upload_max_filesize' ) );
 	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- jak wyżej: sam nagłówek długości, bez zapisu.
 	$wyslano    = isset( $_SERVER['CONTENT_LENGTH'] ) ? (int) $_SERVER['CONTENT_LENGTH'] : 0;
-	$komunikat  = 'Serwer odrzucił CAŁE zgłoszenie, zanim sklep je zobaczył';
+	$komunikat  = $nasz_formularz
+		? 'Serwer odrzucił CAŁE zgłoszenie, zanim sklep je zobaczył'
+		: 'Serwer odrzucił CAŁE wysłane zgłoszenie, zanim WordPress je zobaczył';
 	$komunikat .= $wyslano > 0 ? ' — wysłane dane miały ' . size_format( $wyslano ) . '.' : '.';
 	$komunikat .= ' Ten serwer przyjmuje najwyżej ' . ( $post_max > 0 ? size_format( $post_max ) : 'nieznaną ilość' ) .
 		' danych w jednym formularzu (ustawienie PHP post_max_size)';
 	$komunikat .= $plik_max > 0 ? ' i najwyżej ' . size_format( $plik_max ) . ' w pojedynczym pliku (upload_max_filesize).' : '.';
-	$komunikat .= ' Limit wtyczki (' . size_format( SKLEPAG_UPLOAD_LIMIT_B ) . ') nie ma z tym nic wspólnego — walidacja sklepu się nie uruchomiła.';
-	$komunikat .= ' Nic nie zostało zapisane, a wpisana treść formularza przepadła razem z żądaniem (PHP wyrzucił ją, zanim WordPress wystartował) — to jedyna sytuacja, w której sklep nie umie odtworzyć wpisanych pól.';
-	$komunikat .= ' Jak podnieść te limity — INSTRUKCJA.md, rozdział „Produkty", akapit „Serwer nie przyjmuje pliku — jak podnieść limit".';
+	if ( $nasz_formularz ) {
+		$komunikat .= ' Limit wtyczki (' . size_format( SKLEPAG_UPLOAD_LIMIT_B ) . ') nie ma z tym nic wspólnego — walidacja sklepu się nie uruchomiła.';
+	}
+	$komunikat .= ' Nic nie zostało zapisane, a wpisana treść formularza przepadła razem z żądaniem — PHP wyrzucił ją, zanim WordPress wystartował.';
+	if ( $nasz_formularz ) {
+		$komunikat .= ' To jedyna sytuacja, w której sklep nie umie odtworzyć wpisanych pól.';
+		$komunikat .= ' Jak podnieść te limity — INSTRUKCJA.md, rozdział „Produkty", akapit „Serwer nie przyjmuje pliku — jak podnieść limit".';
+	} else {
+		$komunikat .= ' Oba limity podnosi się w ustawieniach PHP serwera (php.ini) albo w panelu hostingu.';
+	}
 	return $komunikat;
 }
 
@@ -102,16 +140,28 @@ function sklepag_komunikat_ucietego_zadania() {
  * nadal wysyła `action` wyłącznie w ciele, które PHP właśnie wyrzucił. Bez tego
  * zaczepienia taki właściciel dalej oglądałby pustą stronę.
  *
- * Komunikat jest CELOWO neutralny (nie nazywa formularza), bo w tym stanie nie da
- * się ustalić, z którego formularza żądanie przyszło — nazwanie sklepu byłoby
- * zgadywaniem. Nic tu nie zapisuje, więc brak nonce'a nie otwiera żadnej mutacji.
+ * Komunikat jest naprawdę neutralny (nie nazywa sklepu, nie cytuje limitu wtyczki i nie
+ * odsyła do naszej instrukcji), bo w tym stanie NIE DA SIĘ ustalić, z którego formularza
+ * żądanie przyszło. Nic tu nie zapisuje, więc brak nonce'a nie otwiera żadnej mutacji.
+ *
+ * ⛔ PRÓG UPRAWNIEŃ, NIE SAMO ZALOGOWANIE. `admin_post` odpala się dla KAŻDEGO
+ * zalogowanego użytkownika — także subskrybenta i klienta — bo dokumentacja WordPressa
+ * opisuje je jako „authenticated admin post request", bez żadnego progu. Bez własnego
+ * sprawdzenia uprawnień ta gałąź wypisałaby konfigurację serwera (post_max_size,
+ * upload_max_filesize, rozmiar ciała) DOWOLNEMU zalogowanemu — subskrybentowi też.
+ * Próg to `upload_files` — najniższa rola, dla której ten komunikat w ogóle ma sens,
+ * bo tylko ona wysyła pliki. Kto go nie ma, dostaje to, co dostawał przed tym PR-em:
+ * dotychczasową pustą odpowiedź. Nie ODBIERAMY nikomu niczego, czego wcześniej nie miał.
  */
 function sklepag_zglos_uciete_zadanie() {
+	if ( ! current_user_can( 'upload_files' ) ) {
+		return;
+	}
 	if ( ! sklepag_zadanie_ucieto_przez_php() ) {
 		return;
 	}
 	wp_die(
-		esc_html( sklepag_komunikat_ucietego_zadania() ),
+		esc_html( sklepag_komunikat_ucietego_zadania( false ) ),
 		'Zgłoszenie odrzucone przez serwer',
 		array(
 			'response'  => 413,

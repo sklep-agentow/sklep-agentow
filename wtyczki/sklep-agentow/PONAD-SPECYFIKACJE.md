@@ -92,8 +92,13 @@ to jest w paczce, bo bez tego sklep nie nadawałby się do sprzedaży, a nie dla
     Gdy wysłany formularz przekroczy `post_max_size`, PHP kasuje jego treść, zanim WordPress
     wystartuje; panel oddawał wtedy pustą białą stronę. Sklep odpowiada w takim przypadku
     komunikatem z realnymi limitami serwera. ⚠️ Zaczepienie siedzi na ogólnym wejściu
-    `admin-post.php`, więc ucięte zgłoszenie z formularza **innej wtyczki** też dostanie tę
-    odpowiedź (celowo bez nazywania sklepu — w tym stanie nie da się ustalić, skąd przyszło).
+    `admin-post.php`, więc ucięte zgłoszenie z formularza **innej wtyczki** też dostanie
+    odpowiedź. Poza formularzem produktu jest ona **naprawdę neutralna**: podaje wyłącznie
+    limity serwera (`post_max_size`, `upload_max_filesize`) i rozmiar wysłanych danych,
+    a NIE nazywa sklepu, nie cytuje jego limitu 20 MB i nie odsyła do `INSTRUKCJA.md` —
+    bo w tym stanie nie da się ustalić, skąd żądanie przyszło. Odpowiedź dostają tylko
+    użytkownicy z uprawnieniem `upload_files` (autor i wyżej); niżej zostaje dotychczasowa
+    pusta odpowiedź, żeby konfiguracja serwera nie wyciekała każdemu zalogowanemu.
     Powód: przy uciętym zgłoszeniu ginie pole rozpoznające formularz, więc wąskiego
     zaczepienia po prostu NIE MA; wybór jest między tą odpowiedzią a pustą stroną.
 
