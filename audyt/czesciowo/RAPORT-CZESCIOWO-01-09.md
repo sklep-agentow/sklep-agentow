@@ -394,3 +394,122 @@ czytany.
   do prawnika**, nie jako znalezisko.
 - **Zwrot a wygaśnięcie zgody** — co się dzieje z zapisaną zgodą przy zwrocie/sporze;
   sprawdzone tylko tyle, że statusy `zwrocone`/`sporne` nie ruszają kolumn zgody.
+
+---
+
+# A5 — SYMETRIA ZAPIS ↔ SPRZĄTANIE (`uninstall.php`), TRZY WTYCZKI NARAZ
+
+**Stan wejściowy z mapy:** 🟡, „punkt szablonu PR, sprawdzany per-PR · **brak przeglądu
+CAŁOŚCI naraz**". **Wynik: ZERO znalezisk. 64 zapisy poza własnymi tabelami, 62 sprzątane
+przez `uninstall.php`, 2 nietykane — obie opisane niżej razem z powodem, dla którego
+NIE podnoszę ich do znaleziska.**
+
+## Metoda — trzy niezależne źródła listy, nie jedno
+
+Sam grep by nie wystarczył (zapisy idą też przez opakowania `chatl_zapisz_opcje` /
+`segm_zapisz_opcje`, przez `register_setting` — gdzie zapisuje RDZEŃ, nie wtyczka — i przez
+`set_screen_option`). Dlatego lista powstała z trzech źródeł i dopiero ich suma jest wejściem:
+
+1. **Kod** — wszystkie wywołania piszące (`update_option`/`add_option`, `set_transient`,
+   `update_user_meta`/`update_metadata`, `wp_schedule_event`, `wp_insert_post`,
+   `wp_mkdir_p`/`file_put_contents`/`move_uploaded_file`), złapane wzorcem **wieloliniowym**
+   (pierwsza próba, jednoliniowa, zgubiła `chatl_blad_bazy` i `segm_blad_bazy`, bo nazwa
+   opcji stoi w nich w drugiej linii wywołania).
+2. **Rejestracje** — `register_setting` (11 opcji sklepu; ⛔ pierwszy odczyt policzył
+   `sklepag_ustawienia` jako opcję — to **nazwa grupy**, nie opcja) i wywołania opakowań
+   zapisujących w botach.
+3. **Żywa baza stosu** — `SELECT option_name FROM wp_options WHERE option_name LIKE …`
+   dla trzech prefiksów plus transienty, `wp_usermeta` i `_get_cron_array()`.
+   To źródło **wyłapało obcych**: `chatl_test_a`, `chatl_test_b`, `chatl_blad_bazy_MUTANT` —
+   sprawdzone grepem, **nie ma ich w kodzie produktu**; to osad po testach i mutantach na
+   stosie warsztatowym, więc nie wchodzą do rachunku.
+
+Trzy pliki `uninstall.php` przeczytałem **linia po linii**, nie grepem.
+
+## 1. RACHUNEK — ile zapisów, ile sprzątanych
+
+| wtyczka | opcje | transienty (rodziny) | user meta | crony | strony WP | pliki | opcja RDZENIA | **razem** | **sprzątane** |
+|---|---|---|---|---|---|---|---|---|---|
+| `sklep-agentow` | 20 | 5 | 1 | 1 | 4 | 1 katalog | 1 (`rewrite_rules`) | **33** | **32** |
+| `chatbot-live` | 8 | 3 | 1 | 1 | — | — | — | **13** | **12** |
+| `segregator-maila` | 11 | 2 | 3 | 2 | — | — | — | **18** | **18** |
+| **RAZEM** | **39** | **10** | **5** | **4** | **4** | **1** | **1** | **64** | **62** |
+
+⭐ **Dwie rzeczy, które ten rachunek pokazuje, a przegląd per-PR pokazać nie mógł:**
+sklep sprząta opcje **wzorcem** (`option_name LIKE 'sklepag_%'` z `esc_like()`), więc każda
+przyszła opcja z tym prefiksem jest sprzątnięta z automatu; **oba boty sprzątają listą nazw
+wypisanych ręcznie** — tam każda nowa opcja to nowy wiersz do dopisania, i to jest miejsce,
+w którym ta symetria kiedyś pęknie. Dziś nie jest pęknięta.
+
+## 2. POZYCJA PO POZYCJI
+
+### `sklep-agentow` — 33 pozycje
+
+| # | co zapisuje | gdzie | sprząta `uninstall.php` |
+|---|---|---|---|
+| 1-2 | `sklepag_stripe_klucz_sekretny`, `sklepag_stripe_webhook_sekret` | `admin-ustawienia.php` (`register_setting`) | ✅ **ZAWSZE**, przed wczesnym `return` (`:16-17`) |
+| 3-11 | 9 pozostałych opcji z `register_setting`: `stripe_klucz_publikowalny`, `nadawca_nazwa`, `nadawca_email`, `email_kontaktowy`, `firma_nazwa`, `firma_adres`, `firma_nip`, `waluta_domyslna`, `usun_dane_przy_odinstalowaniu` | zapisuje RDZEŃ przez `options.php` | ✅ wzorzec `sklepag_%` (`:70`) |
+| 12-16 | `katalog_chroniony`, `katalog_chroniony_blad`, `wersja_schematu`, `reconciliation_ostatnia`, `rewrite_podpis` | `aktywacja.php`, `admin-dashboard.php`, `front-produkt.php` | ✅ wzorzec `sklepag_%` |
+| 17-20 | `strona_sklep`, `strona_dziekujemy`, `strona_regulamin`, `strona_polityka` | `aktywacja.php:187-215` | ✅ wzorzec + `wp_delete_post` (`:36-41`) |
+| 21-25 | transienty: `sklepag_idem_*` (okno idempotencji zakupu), `sklepag_niepowiazana_*`, `sklepag_recon_*`, `sklepag_szkic_opinii_*`, `sklepag_szkic_produktu_*` | `zakup.php:177,238,490,1378`, `opinie.php`, `admin-produkty.php` | ✅ dwa wzorce: `_transient_sklepag_%` **i** `_transient_timeout_sklepag_%` (`:77-79`) + `wp_cache_flush()` przy zewnętrznym cache (`:84`) |
+| 26 | user meta `sklepag_zamowien_na_strone` (Screen Options) | `admin.php:77-85` | ✅ `delete_metadata( 'user', 0, …, true )` (`:89`) |
+| 27 | cron `sklepag_dociagnij_zalegle` | `sklep-agentow.php:91` | ✅ **ZAWSZE** (`:22`) |
+| 28-31 | 4 strony WP (wpisy w `wp_posts`) | `aktywacja.php` | ✅ `wp_delete_post(…, true)` (`:39`) |
+| 32 | katalog chroniony w `uploads` + `.htaccess`, `index.php` i wgrane paczki ZIP | `aktywacja.php:240-259`, `admin-produkty.php:386` | ✅ (`:45-63`) — kasuje **tylko** ścieżkę pasującą do wzorca `sklepag-chronione-`, `rmdir` dopiero gdy pusto |
+| 33 | reguła przepisywania adresów w opcji RDZENIA `rewrite_rules` | `front-produkt.php:45-56` | ⚠️ **nie w `uninstall.php`** — czyści ją `sklepag_deaktywacja()` (`aktywacja.php:176`) |
+
+### `chatbot-live` — 13 pozycji
+
+| # | co zapisuje | sprząta `uninstall.php` |
+|---|---|---|
+| 1 | `chatl_klucz_api` | ✅ **ZAWSZE** (`:27`) |
+| 2-8 | `chatl_ustawienia`, `chatl_wersja_schematu`, `chatl_blad_ai`, `chatl_blad_maila`, `chatl_blad_bazy`, `chatl_pulapka`, `chatl_rodo_sesje_wspolne` | ✅ (`:42-58`) — plus **defensywnie** `chatl_blad_nonce`, nazwa ze schematu ≤7, której dzisiejszy kod już nie zapisuje |
+| 9-10 | transienty `chatl_import_*` (podgląd importu CSV — **niosą treść klienta**), `chatl_rl_*` (rate-limit ≤1.1.x) | ✅ oba wzorcem `LIKE` z `esc_like()`, razem z wierszami `_transient_timeout_` |
+| 11 | transient `chatl_po_aktywacji` (TTL **60 s**) | ⚠️ **nie** |
+| 12 | user meta `chatl_powitanie_zamkniete` (stała `CHATL_META_POWITANIE`) | ✅ `delete_metadata(…, true)` — **nazwa sprawdzona ze stałą**, zgadza się |
+| 13 | cron `chatl_czyszczenie_historii` | ✅ **ZAWSZE**, przed gałęzią „dane zostają" |
+
+### `segregator-maila` — 18 pozycji, wszystkie sprzątane
+
+| # | co zapisuje | sprząta `uninstall.php` |
+|---|---|---|
+| 1-2 | `segm_klucz_api`, **`segm_imap_haslo`** (hasło do CUDZEJ skrzynki) | ✅ **ZAWSZE**, bezwarunkowo (`:57`, `:65`) |
+| 3-4 | `segm_zgoda_przenoszenie`, `segm_zgoda_ai` | ✅ **ZAWSZE** — po ponownej instalacji wtyczka wraca do trybu na sucho i pyta od nowa |
+| 5-8 | `segm_operacja_w_toku` (zamek operacji, pisany wprost do `wp_options`), `segm_powitanie_gotowe`, `segm_blad_ai`, `segm_blad_bazy` | ✅ **ZAWSZE** |
+| 9-11 | `segm_ustawienia`, `segm_skrzynka`, `segm_wersja_schematu` | ✅ przy pełnym czyszczeniu |
+| 12-13 | transienty `segm_komunikat_<ID>`, `segm_liczenie_<ID>` (**niosą nazwy folderów cudzej skrzynki**) | ✅ **ZAWSZE**, wzorcem, razem z `_transient_timeout_` |
+| 14-16 | user meta `segm_powitanie_widziane`, `segm_baner_ukryty`, `segm_blad_bazy_ukryty` | ✅ `delete_metadata(…, true)` — **wszystkie trzy nazwy sprawdzone ze stałymi** (`SEGM_POWITANIE_META`, `SEGM_BLAD_BAZY_UKRYTY_META`), zgadzają się |
+| 17-18 | crony `segm_czyszczenie_probki`, `segm_skrzynka_cron` | ✅ **ZAWSZE**, oba |
+
+## 3. DWIE POZYCJE, KTÓRYCH `uninstall.php` NIE DOTYKA — i dlaczego NIE podnoszę ich do znaleziska
+
+**(a) Reguła przepisywania adresów sklepu w opcji rdzenia `rewrite_rules`.** Wtyczka dokłada
+własną regułę (`front-produkt.php:45`) i wymusza przebudowę, gdy zmieni się podpis (`:54-56`).
+Sprząta to `sklepag_deaktywacja()` — a WordPress przy usuwaniu wtyczki z panelu **zawsze**
+najpierw ją wyłącza. Zostaje wyłącznie ścieżka nietypowa (skasowanie katalogu i „usuń"
+z listy), czyli **dokładnie ta, dla której obie wtyczki-boty postawiły `wp_clear_scheduled_hook`
+w `uninstall.php` i wprost to w komentarzu uzasadniły**. Symetria obrony jest więc
+niepełna: cron sprzątany dwiema drogami, reguła jedną. **Nie podnoszę**, bo pozostałość jest
+**martwa i bezdanowa** — wpis kieruje do zmiennej zapytania, której po usunięciu wtyczki nikt
+nie czyta, a pierwszy zapis „Bezpośrednich odnośników" go usuwa. Podniósłbym, gdyby zostawała
+po niej treść albo błąd widoczny dla odwiedzającego; nie zostaje.
+
+**(b) Transient `chatl_po_aktywacji`.** Zapisywany na **60 sekund** (`instalator.php:171`),
+niesie wartość `1` — znacznik „pokaż ekran powitalny". Kod kasuje go sam po pokazaniu ekranu
+(`powitanie.php:69,76`). Żeby przeżył deinstalację, trzeba by usunąć wtyczkę w tym samym
+oknie 60 sekund, w którym ją aktywowano, i nigdy nie wejść na jej ekran. **Nie podnoszę**,
+bo nie niesie żadnych danych i wygasa sam. ⛔ Odnotowuję jako **warunek zmiany werdyktu**:
+gdyby ten transient kiedykolwiek dostał dłuższy czas życia albo zaczął nieść treść, staje się
+znaleziskiem — a lista sprzątania w tej wtyczce jest ręczna, więc nikt tego nie złapie
+z automatu.
+
+## 4. CZEGO W `A5` NIE ZMIERZYŁEM
+
+- **Faktycznej deinstalacji na żywo** — to przegląd zgodności listy zapisów z listą sprzątania
+  w kodzie, nie pomiar pustego diffu przed-po (kryterium GOTOWE #9). Przyrząd do tego istnieje
+  i nie był tu uruchamiany: `narzedzia-qa/dowod-z-paczki.sh` na stosie `probny`.
+- **Instalacji z zewnętrznym cache obiektów** (Redis/Memcached) — sklep woła `wp_cache_flush()`,
+  boty nie; przy transientach botów kasowanych przez `DELETE` z `wp_options` kopia w cache
+  obiektów mogłaby przeżyć do wygaśnięcia. Nie mam takiej instalacji, żeby to zmierzyć —
+  **wskazuję jako pytanie otwarte**, nie jako znalezisko.
+- **Tabel własnych** (7 + 7 + 7) — to teren `A6`, zamknięty osobno 1.09.
