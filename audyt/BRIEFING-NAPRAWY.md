@@ -101,3 +101,25 @@ w żadnym rejestrze — koordynatorka chciała ją dopisać.
   „obietnica zgodna z kodem" mierzył obecność słowa `napisz`. Poprawione na pomiar OBU stanów
   opcji `sklepag_email_kontaktowy`, z kontrolą dodatnią na stopce.
 - **Klasa 94 (etap budowy)** — otwierać `wp-plugin-development` **z nazwy**, nie z pamięci.
+
+---
+
+## 6. ⚠️ Obserwacja z boku — SZABLON polityki prywatności nie aktualizuje się po wgraniu nowej wersji
+
+Zmierzone 1.09 na stosie warsztatowym przy pisaniu strażnika Q-1. Strona „Polityka prywatności
+sklepu (SZABLON)" (opcja `sklepag_strona_polityka`, id 121) niesie **352 znaki** i kończy się na
+„dziennik zdarzeń (90 dni)", podczas gdy szablon w `includes/aktywacja.php` ma dziś także akapit
+o **danych do faktury (cel + podstawa z ustawy o VAT), adresie IP przy pobraniu i opiniach**.
+
+**Powód:** strony sklepu powstają **raz, przy aktywacji** i nic ich potem nie odświeża. Klient,
+który zainstalował starszą wersję, ma opublikowaną politykę **milczącą o kategoriach danych,
+które sklep dziś przetwarza** — a to jest dokument RODO, nie tekst sprzedażowy.
+
+⛔ **To NIE jest skutek żadnego z moich PR-ów** i nie ruszałem tego. Nie ma tej pozycji w żadnym
+rejestrze. Do rozstrzygnięcia przez koordynatorkę: czy szablon ma być odświeżany przy migracji
+schematu (ryzyko: nadpisanie tekstu, który właściciel już wypełnił), czy wystarczy ostrzeżenie
+na Pulpicie „polityka pochodzi z wersji X, sprawdź ją".
+
+⭐ Dlatego strażnik `faktura-obietnica-zgodna-z-kodem-test.php` mierzy **źródło szablonu**
+(`includes/aktywacja.php`), a nie stronę w bazie: pomiar instancji mówiłby o wieku instalacji,
+a nie o tym, co sklep daje kupującemu dziś.

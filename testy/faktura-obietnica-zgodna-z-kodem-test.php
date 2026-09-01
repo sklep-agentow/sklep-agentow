@@ -16,6 +16,12 @@
  * (dane do faktury nadal widoczne, zaproszenie dla kupującego bez danych nadal działa).
  * Sama nieobecność zdania byłaby zielona także wtedy, gdyby ktoś wyciął cały blok faktury.
  *
+ * ⭐ ZAKRES, ktory ta bramka MIERZY (nazwa nie ma prawa obiecywac wiecej — klasa 11):
+ *   strona produktu · mail po zakupie w OBU wersjach · SZABLON polityki prywatnosci zakladany
+ *   przy aktywacji. To wszystkie miejsca, w ktorych sklep pisze kupujacemu o fakturze.
+ *   Ekrany PANELU (Ustawienia, szczegoly zamowienia) czyta wlasciciel, nie kupujacy — sa poza
+ *   zakresem swiadomie i nie niosa obietnicy wobec kupujacego.
+ *
  * Uruchomienie:
  *   docker cp testy/faktura-obietnica-zgodna-z-kodem-test.php strona_wp_wordpress:/tmp/fa.php
  *   docker exec -u www-data strona_wp_wordpress wp eval-file /tmp/fa.php
@@ -76,7 +82,20 @@ $zam_fv->dane_faktury = $DANE;
 $zam_bez              = clone $zam;
 $zam_bez->dane_faktury = '';
 
+/* ⛔ SZABLON POLITYKI to tez tekst dla kupujacego — mowi, PO CO sklep zbiera dane do faktury.
+   Mierzymy ZRODLO szablonu (`includes/aktywacja.php`), nie strone w bazie: strona powstaje RAZ,
+   przy aktywacji, i nigdy sie nie aktualizuje — na tym stosie lezy wersja sprzed dolozenia
+   akapitu o fakturze. Pomiar instancji mowilby o wieku instalacji, a nie o tym, co sklep daje
+   kupujacemu DZIS. Pusty odczyt = blad przyrzadu, nie czysty stan. */
+$plik_aktywacji = WP_PLUGIN_DIR . '/sklep-agentow/includes/aktywacja.php';
+$szablony       = is_readable( $plik_aktywacji ) ? (string) file_get_contents( $plik_aktywacji ) : '';
+if ( '' === $szablony ) {
+	echo "  PRZYRZAD: nie umiem odczytac szablonow aktywacji — nie mam czego zmierzyc\n";
+	exit( 2 );
+}
+
 $ekrany = array(
+	'polityka'        => $szablony,
 	'produkt'         => sklepag_render_produkt( 'chatbot-live' ),
 	'mail-tekst-z-fv' => sklepag_zbuduj_mail( $produkt, $zam_fv, $link, '' ),
 	'mail-html-z-fv'  => sklepag_zbuduj_mail_html( $produkt, $zam_fv, $link, '' ),
@@ -135,7 +154,10 @@ sprawdz( 'B10 opcja PUSTA: mail dalej mowi, gdzie sie upomniec (odpisz na tego m
    inaczej „nie odsyla" znaczyloby tylko tyle, ze zmienil sie tekst, a nie ze problem znikl. */
 sprawdz( 'B11 kontrola dodatnia: przy pustej opcji stopka nie ma linii „Reklamacje i faktury"', false === strpos( $bez_kontaktu['tekst'], 'Reklamacje i faktury' ) && false === strpos( $bez_kontaktu['html'], 'Reklamacje i faktury' ) );
 /* Strona produktu nie ma stopki maila, wiec nie wolno jej na nia odsylac w zadnym stanie opcji. */
-sprawdz( 'B12 strona produktu NIE odsyla na stopke maila, tylko na odpowiedz na potwierdzenie', false === strpos( $ekrany['produkt'], 'adres kontaktowy ze stopki' ) && false !== strpos( $ekrany['produkt'], 'odpisz na maila z potwierdzeniem zakupu' ) );
+/* Kontrola dodatnia dla szablonu polityki: ma dalej NAZYWAC cel i podstawe zbierania danych —
+   „brak obietnicy" bylby zielony takze wtedy, gdyby ktos wyciac z niej caly akapit o fakturze. */
+sprawdz( 'B12 szablon polityki nadal nazywa cel i podstawe zbierania danych do faktury', false !== strpos( $ekrany['polityka'], 'dane do faktury' ) && false !== strpos( $ekrany['polityka'], 'ustawy o VAT' ) );
+sprawdz( 'B13 strona produktu NIE odsyla na stopke maila, tylko na odpowiedz na potwierdzenie', false === strpos( $ekrany['produkt'], 'adres kontaktowy ze stopki' ) && false !== strpos( $ekrany['produkt'], 'odpisz na maila z potwierdzeniem zakupu' ) );
 $przywroc_kontakt();
 
 echo "\n== C. Wariant BEZ danych do faktury — funkcja nietknieta ==\n";
