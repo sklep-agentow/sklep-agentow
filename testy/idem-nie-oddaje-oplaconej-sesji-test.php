@@ -2,7 +2,7 @@
 /**
  * STRAŻNIK REGRESJI — SK-L3-005 (okno idempotencji oddawało JUŻ OPŁACONĄ sesję Stripe).
  *
- * Wada: sklepag_obsluz_kup() trzyma przez 60 s transient `sklepag_idem_<md5(IP|produkt)>`
+ * Wada: sklepag_obsluz_kup() trzyma przez 60 s transient `sklepag_idem_<md5(IP|produkt|tryb)>`
  * z adresem checkoutu i przy każdej kolejnej próbie zakupu przekierowuje na ZAPAMIĘTANY
  * adres — bez sprawdzenia, czy tamta sesja nie została w międzyczasie opłacona. Kto zapłacił
  * i w ciągu minuty klika przycisk zakupu jeszcze raz, trafia na opłacony checkout (ekran
@@ -47,7 +47,15 @@ $stary_sid = 'cs_test_STARA_SESJA_STRAZNIK';
 $stary_url = 'https://checkout.stripe.com/c/pay/' . $stary_sid;
 $nowy_sid  = 'cs_test_NOWA_SESJA_STRAZNIK';
 $nowy_url  = 'https://checkout.stripe.com/c/pay/' . $nowy_sid;
-$okno      = 'sklepag_idem_' . md5( sklepag_ip() . '|' . (int) $produkt->id );
+/* ⛔ KLUCZ BIERZEMY Z PRODUKCJI, nie skladamy go u siebie. Druga kopia rozjechala sie
+   z oryginalem przy 0.9.25 (doszedl trzeci czlon: tryb platnosci) i straznik przez szesc
+   wydan podkladal okno pod adresem, ktorego handler nigdy nie czytal — nie mierzyl NICZEGO
+   i nie mowil o tym ani slowem. `false` = sciezka hostowana, bo tak wola go ten test. */
+if ( ! function_exists( 'sklepag_klucz_idem' ) ) {
+	echo "STRAZNIK: WYNIK=BLAD-SRODOWISKA (brak sklepag_klucz_idem — wtyczka sprzed 0.9.33?)\n";
+	exit( 2 );
+}
+$okno      = sklepag_klucz_idem( (int) $produkt->id, false );
 // Prog czytamy z produktu; gdy stalej nie ma, to znaczy, ze badamy kod SPRZED naprawy —
 // wtedy bierzemy wartosc kalibracyjna, zeby straznik dal sie w ogole uruchomic i PADL.
 $prog_okna = defined( 'SKLEPAG_IDEM_OKNO_S' ) ? SKLEPAG_IDEM_OKNO_S : 5;
@@ -100,7 +108,8 @@ $probuj_kup = static function () use ( $produkt ) {
 	} catch ( Throwable $e ) {
 		$tresc = $e->getMessage();
 		// Handler zaczyna od limitera (10 prob na IP i minute), a w CLI sklepag_ip() zwraca
-		// stale 0.0.0.0 — wiec licznik jest WSPOLNY dla wszystkich przebiegow. Straznik wola
+		// stale 127.0.0.1 (zmierzone; REMOTE_ADDR ustawia WP-CLI) — wiec licznik jest WSPOLNY
+		// dla wszystkich przebiegow. Straznik wola
 		// handler 3 razy na przebieg, wiec limiter dobija na 11. WYWOLANIU w obrebie minuty.
 		// Konczylo sie to kodem 1, czyli slowem REGRESJA, choc zaden kod sie nie zmienil.
 		// To awaria srodowiska: kod 2, zgodnie z naglowkiem pliku.

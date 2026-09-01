@@ -20,7 +20,7 @@ Nic jeszcze.
 
 ---
 
-## [0.9.32] — 2026-09-01 · schemat bazy bez zmian (10)
+## [0.9.34] — 2026-09-01 · schemat bazy bez zmian (10)
 
 ### Naprawione
 - **Sklep przestaje obiecywać kupującemu firmowemu fakturę, której nie wystawia.** Formularz
@@ -33,6 +33,20 @@ Nic jeszcze.
   poza sklepem** — oraz gdzie kupujący ma się upomnieć, jeśli faktura nie dotrze.
   ⭐ Funkcja zostaje bez zmian: pola faktury, walidacja NIP-u i zaproszenie „chcesz fakturę?"
   dla kupujących, którzy danych nie podali (z terminem 3 miesięcy), działają jak dotąd.
+## [0.9.33] — 2026-09-01 · schemat bazy bez zmian (10)
+
+### Zmienione
+- **Klucz okna idempotencji ma jedno źródło** (`sklepag_klucz_idem()`). Był składany w miejscu
+  użycia, a strażnik regresji składał go u siebie drugi raz — gdy 0.9.25 dołożyło do klucza
+  trzeci człon (tryb płatności: osadzona kontra hostowana), strażnik zaczął podkładać okno pod
+  adresem, którego handler nigdy nie czytał. **Zachowanie sklepu bez zmian** — zmienia się to,
+  że klucza nie da się już rozjechać między produkcją a kontrolą.
+
+### Naprawione (kontrola jakości, nie produkt)
+- **Kontrola regresji ochrony przed podwójnym kliknięciem znowu mierzy produkt.** Od 0.9.25
+  nie pilnowała niczego, bo sprawdzała mechanizm pod innym kluczem niż ten, którego używa sklep.
+  Dowód jej skuteczności wykonany **od zera** na kodzie sprzed 0.9.18 i zapisany tak, żeby dało
+  się go powtórzyć. Opis samej kontroli poprawiony tam, gdzie rozjechał się ze stanem kodu.
 
 ---
 
