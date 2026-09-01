@@ -41,8 +41,8 @@ piwotem") — raportuję je jako ZNANE, zgodnie z instrukcją w §(b) źródła.
 
 **DOWÓD.** Silnik sklepu jest ogólny (produkty w tabeli `sklepag_produkty`,
 `includes/aktywacja.php:21-36`), a treść sprzedażowa **obu agentów** siedzi w kodzie pod
-kluczami slugów: `includes/front-produkt.php:176` (`'chatbot-live'`) i `:~500`
-(`'segregator-maila'`, ten sam blok tablicy `$tresci`, koniec w `:520`).
+kluczami slugów: `includes/front-produkt.php:176` (`'chatbot-live'`) i `:357`
+(`'segregator-maila'`) — jedna tablica `$tresci`, zwracana w `:520`.
 Na żywym stosie oba produkty istnieją i są w sprzedaży (odczyt bazy, nie deklaracja):
 ```
 #1 ChatBot LIVE [chatbot-live] 14900 PLN aktywny=1
@@ -159,7 +159,7 @@ szczegóły" → **„Kup teraz (płatność testowa)"**.
 **WERDYKT: SPEŁNIONE.**
 
 **DOWÓD.** Baza stosu: `#5 Segregator maila [segregator-maila] 19900 PLN aktywny=1`; treść
-sprzedażowa `includes/front-produkt.php:~380-505` (FAQ `:505` z gwarancją). Wtyczka bota:
+sprzedażowa `includes/front-produkt.php:357-505` (gwarancja `:505`). Wtyczka bota:
 `wtyczki/segregator-maila/segregator-maila.php` (`Version: 1.3.6`).
 
 **JAK CZŁOWIEK TEGO UŻYWA.** Jak `S-05`, kafel **Segregator maila**.
@@ -211,7 +211,8 @@ produkt"**, przy wierszu **„Edytuj"** i przełącznik sprzedaży (**„W sprze
 
 **DOWÓD.** Tabela `sklepag_logowania` — `includes/aktywacja.php:100-110`: `czas`,
 `login_wpisany` („kto", także przy nieudanej próbie), `wynik`, `ip`, `user_agent`
-(„konkrety"). Zapis: `includes/logowania.php:22-40` (hak `wp_authenticate` i zapis próby).
+(„konkrety"). Zapis: `includes/logowania.php:20-21` (haki `wp_login` i `wp_login_failed`) → `:30`
+(`sklepag_zapisz_logowanie`); opóźnienie kolejnych prób `:22` (hak `wp_authenticate`).
 Rozszerzenie ponad literę, zapowiedziane w `S-09` — **log akcji admina**: tabela
 `sklepag_zdarzenia` (`aktywacja.php:88-97`) z kolumną `uzytkownik` wypełnianą loginem
 zalogowanego (`includes/zakup.php:292-304`); piszą do niej m.in. CRUD produktu
@@ -259,15 +260,15 @@ z 17.08 („całą ta strona bedzie przekonwertowana na worpresa").
 (deklarowane w źródle: „realizacja = instalacja/deinstalacja wtyczki z czystym uninstall").
 
 **DOWÓD — „przypinamy".** Aktywacja tworzy komplet: 7 tabel (`includes/aktywacja.php:21-135`),
-4 strony (`:186-215`), katalog chroniony, zadanie cykliczne (`sklep-agentow.php:91-92`).
+4 strony (`:187-215`), katalog chroniony, zadanie cykliczne (`sklep-agentow.php:91-92`).
 **„odpinamy i nie ma".** `wtyczki/sklep-agentow/uninstall.php`: sekrety Stripe i cron out
 **zawsze** (`:16-23`, przed wczesnym `return`), a przy włączonym „Pełnym czyszczeniu" —
-7 tabel (`:32`), 4 strony (`:37`), katalog z plikami (`:44`), wszystkie opcje `sklepag_%`
-z `esc_like` (`:71`), transienty (`:80`), `user_meta` (`:92`).
+7 tabel (`:32`), 4 strony (`:39`), katalog z plikami (`:45`), wszystkie opcje `sklepag_%`
+z `esc_like` (`:70`), transienty (`:77-79`), `user_meta` (`:89`).
 
 **JAK CZŁOWIEK TEGO UŻYWA.** **Wtyczki → Sklep Agentów → Wyłącz → Usuń**; wcześniej
 **Sklep Agentów → Ustawienia → „Dane przy odinstalowaniu" → „Pełne czyszczenie"**
-(`includes/admin-ustawienia.php:384`).
+(`includes/admin-ustawienia.php:388`).
 
 **Czego NIE zmierzyłem:** kryterium GOTOWE #9 żąda **pustego diffu przed-po** na czystej
 instalacji. Tego nie uruchamiałem (przyrząd istnieje: `narzedzia-qa/dowod-z-paczki.sh`,
@@ -283,7 +284,7 @@ stos `probny`). Werdykt dotyczy symetrii w kodzie, nie zmierzonego diffu.
 (`sklep-agentow.php:206`) na liście sklepu (`:324`), na stronie produktu
 (`includes/front-produkt.php:830`) i na „Dziękujemy" (`sklep-agentow.php:431`); notka przy
 przycisku zakupu (`front-produkt.php:621`); FAQ „Co znaczy „tryb testowy”?"
-(`sklep-agentow.php:403`); zdanie w mailu (`includes/zakup.php:1219`); oznaczenie w panelu
+(`sklep-agentow.php:403`); zdanie w mailu (`includes/zakup.php:1218`); oznaczenie w panelu
 (`includes/admin-dashboard.php:354`). **Jawny rozdział różnic** wobec produkcji:
 `dokumentacja/INSTRUKCJA-INSTALACJI.md`, rozdział „Test a produkcja — co trzeba zmienić,
 żeby sprzedawać naprawdę" (9 punktów, w tym lista oznaczeń, które nie znikają same).
