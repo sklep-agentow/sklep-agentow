@@ -1,7 +1,7 @@
 # Sklep Agentów
 
 [![Kontrole jakości](https://github.com/szydlowskikonrad95-art/sklep-agentow/actions/workflows/quality.yml/badge.svg?branch=main)](https://github.com/szydlowskikonrad95-art/sklep-agentow/actions/workflows/quality.yml)
-[![Wydanie](https://img.shields.io/badge/wydanie-v0.9.28-blue)](https://github.com/szydlowskikonrad95-art/sklep-agentow/releases/latest)
+[![Wydanie](https://img.shields.io/badge/wydanie-v0.9.29-blue)](https://github.com/szydlowskikonrad95-art/sklep-agentow/releases/latest)
 [![Licencja](https://img.shields.io/badge/licencja-GPL--2.0--or--later-blue)](LICENSE)
 [![WordPress](https://img.shields.io/badge/WordPress-6.7%2B-blue)](#wymagania)
 [![PHP](https://img.shields.io/badge/PHP-8.1%2B-blue)](#wymagania)
@@ -79,9 +79,10 @@ w paczce sklepu dodatkowo `PONAD-SPECYFIKACJE.md`.
 ## Czego ten system NIE robi (świadome granice)
 
 Nie zakłada kont kupującym, nie obsługuje płatności cyklicznych, kuponów ani przecen, nie dotyka motywu
-ani innych wtyczek, nie wysyła danych nigdzie poza Stripe. **Całość pracuje w trybie testowym Stripe** —
-płatności nie są pobierane, kupujący widzi oznaczenia trybu testowego. Przejście na prawdziwe płatności
-to osobna paczka: `INSTRUKCJA-INSTALACJI.md`, rozdział „Test a produkcja”.
+ani innych wtyczek, nie wysyła danych nigdzie poza Stripe. **Sklep jest oddawany z kluczami testowymi
+Stripe** — płatności nie są pobierane, kupujący widzi oznaczenia trybu testowego. Tryb wynika z prefiksu
+klucza sekretnego (`sk_test_…` kontra `sk_live_…`), więc podmiana klucza zdejmuje te oznaczenia sama;
+pozostałe kroki przejścia na produkcję opisuje `INSTRUKCJA-INSTALACJI.md`, rozdział „Test a produkcja”.
 
 ## Struktura repo
 

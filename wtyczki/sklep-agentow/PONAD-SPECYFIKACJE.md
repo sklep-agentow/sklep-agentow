@@ -101,5 +101,7 @@ to jest w paczce, bo bez tego sklep nie nadawałby się do sprzedaży, a nie dla
 ## Czego świadomie NIE ma
 
 Kont kupujących, kuponów i przecen, płatności cyklicznych, integracji z motywem i innymi wtyczkami,
-wysyłania danych gdziekolwiek poza Stripe. Prawdziwych płatności — całość pracuje w trybie testowym
-Stripe, a przejście na produkcję opisuje `INSTRUKCJA-INSTALACJI.md` (rozdział „Test a produkcja”).
+wysyłania danych gdziekolwiek poza Stripe. Prawdziwych płatności — sklep jest oddawany z kluczami
+testowymi Stripe; tryb wynika z prefiksu klucza sekretnego (`sk_test_…`), więc podmiana klucza na
+produkcyjny zdejmuje napisy o płatności testowej sama. Pozostałe kroki przejścia na produkcję
+opisuje `INSTRUKCJA-INSTALACJI.md` (rozdział „Test a produkcja”).

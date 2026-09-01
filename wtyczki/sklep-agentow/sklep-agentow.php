@@ -3,7 +3,7 @@
  * Plugin Name: Sklep Agentów
  * Plugin URI: https://automaticai.pl/sklep/
  * Description: Sprzedawaj wtyczki-boty AI bezpośrednio ze swojej strony: płatność kartą, automatyczny mail z linkiem do pobrania, panel zamówień ze statystykami i dziennikiem logowań. Zamówienia, produkty i pliki zostają w Twojej bazie i na Twoim serwerze — bez abonamentu. Płatność obsługuje Stripe.
- * Version: 0.9.28
+ * Version: 0.9.29
  * Requires at least: 6.7
  * Requires PHP: 8.1
  * Author: Automatic AI
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SKLEPAG_WERSJA', '0.9.28' );
+define( 'SKLEPAG_WERSJA', '0.9.29' );
 define( 'SKLEPAG_WERSJA_SCHEMATU', 9 ); // v9: zamowienia.dor_* — ślad ostatniej DORĘCZONEJ wysyłki (token, termin, treść maila, skrót opinii); kompensacja po nieudanej wysyłce przywraca stan doręczony, nie zastany (0.9.28); v8: zamowienia.dane_faktury (firma + NIP podane przez kupującego przy zakupie, 0.9.25); v7: status_przed_sporem (punkt powrotu po zdarzeniu finansowym — sporze LUB zwrocie — bez zmyślania stanu wysyłki); v6: kolumny zwrotu (payment_intent_id, zwrocono_grosze, zwrot_czas); v5: tabela opinii; v4: kolumna zamowienia.usunieto_dnia (anonimizacja RODO); v3: indeks para_logowania.
 
 /* Komunikaty blokady pol wymaganych — po POLSKU.
@@ -200,10 +200,41 @@ function sklepag_assety_frontu() {
 }
 
 /**
- * Baner trybu testowego — jedna treść na wszystkich stronach sklepu (
- * napis bez zmian — testy na nim polegają).
+ * Czy sklep pracuje w TRYBIE TESTOWYM Stripe — JEDNO ŹRÓDŁO PRAWDY dla całej wtyczki.
+ *
+ * ⛔ Rozpoznanie idzie z PREFIKSU KLUCZA SEKRETNEGO, nie z osobnej opcji do klikania.
+ * Powód: opcji trybu w bazie NIE MA (zmierzone: wśród opcji wtyczki ani jednej takiej),
+ * a dołożenie nowej znaczyłoby, że o prawdziwości komunikatu decyduje pamięć właściciela.
+ * Klucz i tak trzeba wymienić przy przejściu na produkcję, więc jest jedynym sygnałem,
+ * którego nie da się zapomnieć przestawić.
+ *
+ * ⛔ FAIL-CLOSED: trybem testowym jest WYŁĄCZNIE klucz o prefiksie `sk_test_`. Brak klucza,
+ * prefiks nierozpoznany, `sk_live_` — wszystko to znaczy „NIE deklaruj, że pieniędzy nie
+ * pobieramy". Zdanie „płatności nie są pobierane" jest OBIETNICĄ wobec kupującego, nie
+ * ostrzeżeniem: wolno je wypowiedzieć tylko wtedy, gdy da się je udowodnić. Domyślne
+ * otwarcie („nie wiem, więc mówię, że nie pobieram") byłoby tą samą wadą, którą to naprawia.
+ * Właściciel nie zostaje przy tym bez informacji: brak klucza Pulpit i tak zgłasza osobno
+ * („Sklep nie przyjmie płatności", admin-dashboard.php).
+ *
+ * @return bool
+ */
+function sklepag_tryb_testowy() {
+	$klucz = (string) get_option( 'sklepag_stripe_klucz_sekretny', '' );
+	return 0 === strpos( $klucz, 'sk_test_' );
+}
+
+/**
+ * Baner trybu testowego — jedna treść na wszystkich stronach sklepu.
+ *
+ * ⛔ Do 0.9.28 ta funkcja zwracała napis BEZWARUNKOWO. Po przejściu na klucze produkcyjne
+ * sklep dalej pisałby kupującemu, że „płatności nie są pobierane" — pobierając je naprawdę.
+ * Pusty napis przy kluczu produkcyjnym jest tu poprawnym wynikiem: wołające miejsca sklejają
+ * go z resztą HTML-a, więc nie muszą nic wiedzieć o trybie.
  */
 function sklepag_baner_testowy() {
+	if ( ! sklepag_tryb_testowy() ) {
+		return '';
+	}
 	return '<p class="sklepag-baner-testowy"><span class="sklepag-baner-testowy-tytul">TRYB TESTOWY</span> — płatności nie są pobierane. Przetestujesz cały zakup kartą testową, nic nie płacąc.</p>';
 }
 
@@ -372,7 +403,7 @@ function sklepag_shortcode_sklep() {
 	// Trzy równe karty w rzędzie — numer z hairline'em jak u gospodarza.
 	$html .= '<section class="sklepag-sekcja sklepag-sekcja--pelna"><p class="sklepag-mono-etykieta">[ <span class="sklepag-akcent">01</span> · OD ZAKUPU DO DZIAŁANIA ]</p>';
 	$html .= '<ol class="sklepag-kroki sklepag-kroki--siatka">';
-	$html .= '<li><span class="sklepag-krok-tekst">Kupujesz — płatność testowa Stripe, bez zakładania konta.</span></li>';
+	$html .= '<li><span class="sklepag-krok-tekst">Kupujesz — ' . ( sklepag_tryb_testowy() ? 'płatność testowa Stripe' : 'płatność kartą przez Stripe' ) . ', bez zakładania konta.</span></li>';
 	$html .= '<li><span class="sklepag-krok-tekst">Dostajesz maila: potwierdzenie, instrukcja i link do paczki (zip wtyczki).</span></li>';
 	$html .= '<li><span class="sklepag-krok-tekst">Instalujesz jak każdą wtyczkę WordPressa — bot działa od razu, na start z danymi demo.</span></li>';
 	$html .= '</ol></section>';
@@ -400,7 +431,12 @@ function sklepag_shortcode_sklep() {
 	$html .= '<section class="sklepag-sekcja sklepag-sekcja--pelna"><p class="sklepag-mono-etykieta">[ <span class="sklepag-akcent">03</span> · PYTANIA ]</p><dl class="sklepag-faq sklepag-faq--siatka">';
 	$html .= '<div class="sklepag-faq-blok"><dt>Co dokładnie dostaję po zakupie?</dt><dd>' . esc_html( sprintf( 'Maila z potwierdzeniem, instrukcją i linkiem do pobrania paczki: zip wtyczki bota z instrukcją po polsku. Link jest ważny %d godziny (limit %d pobrań).', SKLEPAG_LINK_GODZIN, SKLEPAG_LIMIT_POBRAN ) ) . '</dd></div>';
 	$html .= '<div class="sklepag-faq-blok"><dt>Czy muszę zakładać konto?</dt><dd>Nie. Podajesz tylko adres e-mail przy płatności — na niego przychodzi paczka.</dd></div>';
-	$html .= '<div class="sklepag-faq-blok"><dt>Co znaczy „tryb testowy”?</dt><dd>Sklep działa na testowych płatnościach Stripe — żadne prawdziwe pieniądze nie są pobierane. Do testów służy karta 4242 4242 4242 4242.</dd></div>';
+	/* ⛔ Pytanie „co znaczy tryb testowy" na kluczu produkcyjnym byłoby odpowiedzią, że sklep nie
+		pobiera pieniędzy — pobierając je. Kafel nie znika, tylko zmienia pytanie na to, które kupujący
+		naprawdę ma przy prawdziwej płatności (siatka FAQ jest dwukolumnowa: trzy kafle zostawiłyby dziurę). */
+	$html .= sklepag_tryb_testowy()
+		? '<div class="sklepag-faq-blok"><dt>Co znaczy „tryb testowy”?</dt><dd>Sklep działa na testowych płatnościach Stripe — żadne prawdziwe pieniądze nie są pobierane. Do testów służy karta 4242 4242 4242 4242.</dd></div>'
+		: '<div class="sklepag-faq-blok"><dt>Czy płatność jest bezpieczna?</dt><dd>Płatność obsługuje Stripe. Dane karty wpisujesz w jego ramce i trafiają prosto do niego — sklep ich nie widzi i nie przechowuje.</dd></div>';
 	$html .= '<div class="sklepag-faq-blok"><dt>Czy boty wymagają klucza AI albo opłat?</dt><dd>Nie — oba w pełni działają w trybie regułowym, bez klucza i bez abonamentu. Tryb AI to opcja na Twój własny klucz.</dd></div>';
 	$html .= '</dl></section>';
 

@@ -14,6 +14,14 @@
 
   var btnZaplac = document.getElementById('sklepag-platnosc-zaplac');
   var btnWroc = document.getElementById('sklepag-platnosc-wroc');
+  /* ⛔ ETYKIETY BIERZEMY Z DOM-u, NIE Z KODU. Skrypt nadpisuje napisy na przyciskach („Otwieram
+     płatność…", „Przetwarzam…") i musi je potem ODTWORZYĆ. Dopóki odtwarzał je z własnych literałów,
+     niósł drugą kopię tekstu: serwer mógł przysłać „Kup teraz", a przeglądarka i tak wpisywała
+     „Kup teraz (płatność testowa)". Poprawka po stronie PHP była tam cofana w locie — klasa A4b-F2.
+     Zapamiętane raz, przy starcie, zanim cokolwiek je zmieni. */
+  var przyciskKup = form.querySelector('.sklepag-kup');
+  var etykietaKup = przyciskKup ? przyciskKup.textContent : '';
+  var etykietaZaplac = btnZaplac ? btnZaplac.textContent : '';
   var blad = document.getElementById('sklepag-platnosc-blad');
   var checkout = null;
   var actions = null;
@@ -146,7 +154,7 @@
       })
       .catch(function (err) {
         wToku = false;
-        if (przycisk) { przycisk.disabled = false; przycisk.textContent = 'Kup teraz (płatność testowa)'; }
+        if (przycisk) { przycisk.disabled = false; przycisk.textContent = etykietaKup; }
         /* Błąd naszego serwera (np. zły NIP) pokazujemy przy formularzu; błąd Stripe.js — też, ale
            z zapasem: kupujący może kliknąć jeszcze raz, a bez JS trafi na stronę hostowaną. */
         var gdzie = form.querySelector('.sklepag-zakup-notka');
@@ -169,7 +177,7 @@
     var odblokuj = function () {
       wToku = false;
       btnZaplac.disabled = false;
-      btnZaplac.textContent = 'Zapłać (płatność testowa)';
+      btnZaplac.textContent = etykietaZaplac;
     };
     /* ⛔ `confirm()` potrafi rzucić SYNCHRONICZNIE — zanim powstanie jakakolwiek obietnica.
        Taki wyjątek NIE przechodzi przez `.catch()` niżej: `odblokuj()` nie biegło, przycisk
@@ -200,7 +208,7 @@
     panel.hidden = true;
     form.hidden = false;
     var przycisk = form.querySelector('.sklepag-kup');
-    if (przycisk) { przycisk.disabled = false; przycisk.textContent = 'Kup teraz (płatność testowa)'; }
+    if (przycisk) { przycisk.disabled = false; przycisk.textContent = etykietaKup; }
     form.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
 })();

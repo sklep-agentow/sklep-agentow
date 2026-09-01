@@ -263,39 +263,46 @@ Włącz. Dalej prowadzą instrukcje W paczkach botów (konfiguracja w kwadrans).
 
 ## Test a produkcja — co trzeba zmienić, żeby sprzedawać naprawdę
 
-Obecnie WSZYSTKO działa w trybie testowym Stripe (baner na stronach sklepu
+Po instalacji sklep pracuje w trybie testowym Stripe (baner na stronach sklepu
 o tym przypomina). Przejście na prawdziwe płatności to osobna decyzja.
-Poniżej najważniejsze kroki. ⛔ **Nie zaczynaj ich sam** — punkt 6 wyjaśnia,
-dlaczego przejście na produkcję wymaga kontaktu z nami:
+Poniżej najważniejsze kroki — punkt 2 przełącza sam napisy o trybie, ale
+pozostałe kroki trzeba zrobić osobno, inaczej sklep przyjmie pieniądze
+i nie doręczy zakupu:
 
 1. **Aktywacja konta Stripe** — weryfikacja tożsamości i rachunek bankowy,
    po stronie Stripe.
 2. **Klucze produkcyjne** `sk_live_…` w Ustawieniach sklepu, w miejsce
-   testowych `sk_test_…`.
+   testowych `sk_test_…`. ⭐ To jednocześnie **jedyny przełącznik trybu**:
+   z prefiksu tego klucza sklep sam orzeka, czy pisać o płatności testowej
+   (patrz punkt 6).
 3. **Nowy webhook produkcyjny** z własnym sekretem `whsec_…` — sekret z trybu
    testowego NIE działa na produkcji (to osobne środowiska Stripe).
 4. **Wysyłka maili przez hosting lub SMTP** — bez tego mail po zakupie NIE
    wyjdzie, a kupujący nie dostanie linku do pobrania.
 5. **Regulamin i Polityka prywatności** wypełnione Twoimi danymi sprzedawcy
    i opublikowane (przy instalacji powstały jako szkice).
-6. **Oznaczenia trybu testowego** — ⛔ **żadne z nich nie znika samo.**
-   Sklep mówi o trybie testowym w wielu miejscach naraz, wszystkie wpisane na
-   stałe w kod. Kupujący widzi je m.in.:
-   - w banerze na liście produktów i na stronie produktu,
-   - ⛔ **w banerze na stronie „Dziękujemy za zakup", czyli na ekranie oglądanym
-     PO ZAPŁACENIU** — ktoś, kto właśnie zapłacił prawdziwie, przeczytałby tam,
-     że płatności nie są pobierane,
-   - w notce przy przycisku zakupu (numer karty testowej),
-   - w pytaniu „Co znaczy tryb testowy?" w sekcji FAQ,
-   - ⛔ **w treści e-maila wysyłanego po zakupie.**
+6. **Oznaczenia trybu testowego** — znikają **same**, razem z podmianą klucza
+   z punktu 2. Sklep nie ma osobnego przełącznika trybu: pyta o prefiks klucza
+   sekretnego. `sk_test_…` = tryb testowy, cokolwiek innego (w tym `sk_live_…`,
+   a także brak klucza) = sklep **nie** zapewnia, że pieniędzy nie pobiera.
 
-   Do tego panel administratora ma własne oznaczenia trybu testowego — te widzisz
-   tylko Ty, nie kupujący.
+   Zdejmowane są wszystkie naraz — kupujący nie zobaczy słowa „testowa”:
+   - baner na liście produktów, na stronie produktu i na stronie „Dziękujemy
+     za zakup" (ekran oglądany PO ZAPŁACENIU),
+   - dopisek „(płatność testowa)" na przyciskach „Kup teraz" i „Zapłać”
+     (także po nieudanej próbie płatności, gdy napis odtwarza przeglądarka),
+   - notka z numerem karty testowej przy formularzu zakupu,
+   - pytanie „Co znaczy tryb testowy?" w sekcji FAQ (ustępuje miejsca pytaniu
+     o bezpieczeństwo płatności),
+   - dopisek o niepobranej płatności w **obu wersjach** e-maila po zakupie.
 
-   ⛔ **Nie traktuj powyższej listy jako kompletnej** — dlatego przejście na
-   prawdziwe płatności zaczyna się od jednego kroku: **napisz do nas**.
-   Przejrzenie całego sklepu i usunięcie wszystkich oznaczeń to nasza robota
-   i nowa paczka. Sam z panelu tego nie wyłączysz.
+   Twoje własne ekrany też: znacznik przy tytule Pulpitu, dopisek przy kwocie
+   w szczegółach zamówienia i tytuł sekcji Stripe w Ustawieniach.
+
+   ⛔ Zmiana klucza zdejmuje **napisy**, nie całą resztę tej listy: bez kroków
+   3–5 sklep przyjmie prawdziwe pieniądze i nie doręczy zakupu. Jeśli cokolwiek
+   z tej listy budzi Twoją wątpliwość — **napisz do nas** przed pierwszą
+   prawdziwą sprzedażą.
 7. **Wtyczka bezpieczeństwa lub WAF** (jeśli działa na stronie) — dopuść
    publiczny POST na `…/wp-json/sklepag/v1/webhook`; autoryzacją jest podpis
    Stripe, nie logowanie.
