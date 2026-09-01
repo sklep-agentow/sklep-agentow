@@ -20,6 +20,28 @@ Nic jeszcze.
 
 ---
 
+## [0.9.31] — 2026-09-01 · schemat bazy 10 (`sesje_checkout.produkt_*`)
+
+### Naprawione
+- **Kupujący dostaje dokładnie to, co kupił — także wtedy, gdy produkt zmienił się w trakcie
+  płatności.** Domknięcie zakupu czytało tabelę produktów **ponownie** i z tego świeżego odczytu
+  zapisywało do zamówienia nazwę, cenę i ścieżkę pliku. Kolumny „kupiona" zamrażały więc stan
+  z chwili **domknięcia**, nie zakupu, a produkt wolno zmienić między jednym a drugim. Skutki
+  były trzy, każdy osobno: (1) właściciel podmieniał plik i kupujący pobierał **co innego, niż
+  kupił**; (2) właściciel zmieniał cenę, a Stripe pobrał starą — w jednym wierszu zamówienia
+  leżały dwie różne kwoty z dwóch źródeł; (3) odczyt przy domknięciu nie pytał o `aktywny`,
+  choć checkout pyta. Dane produktu są teraz **zamrażane w chwili tworzenia płatności**
+  (`sesje_checkout.produkt_*`, schemat 10), a domknięcie bierze je wyłącznie z tej migawki.
+- **Skasowanie produktu między zapłatą a webhookiem nie gubi już zakupu.** Wcześniej kończyło się
+  wpisem `domkniecie_brak_produktu` i zamówienie nie powstawało w ogóle — pieniądze pobrane,
+  kupujący bez niczego. Migawka wystarcza do wydania zakupu bez tabeli produktów.
+
+### Bezpieczeństwo obrotu
+- Wycofanie produktu ze sprzedaży (`aktywny = 0`) blokuje **nowe** zakupy, a **nie** doręczenie
+  zakupu już opłaconego. To rozróżnienie jest teraz w kodzie, nie w przypadku.
+
+---
+
 ## [0.9.30] — 2026-09-01 · schemat bazy bez zmian (9)
 
 ### Naprawione (RODO)
