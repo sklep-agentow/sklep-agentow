@@ -257,6 +257,57 @@ function sklepag_obsluz_dociagnij() {
 
 /* ---------- Eksport CSV (z wpisem w dzienniku akcji) ---------- */
 
+/**
+ * Znaki, od których arkusz kalkulacyjny zaczyna czytać KOMÓRKĘ JAKO FORMUŁĘ.
+ * Excel i LibreOffice: `=` i `@` wprost, `+` i `-` jako początek wyrażenia;
+ * tabulator i powrót karetki dlatego, że arkusz je zjada i odsłania znak za nimi.
+ */
+const SKLEPAG_CSV_ZNAKI_FORMULY = array( '=', '+', '-', '@', "\t", "\r" );
+
+/**
+ * Neutralizacja wstrzyknięcia formuły do arkusza (CSV injection / formula injection).
+ *
+ * ⛔ CZEMU TO W OGÓLE JEST POTRZEBNE. Pola tekstowe zamówienia trafiają do CSV tak, jak
+ * leżą w bazie. Kupujący, który poda adres `=1+1@example.com`, i właściciel, który nazwie
+ * produkt `=HYPERLINK(...)`, wpisują treść, którą Excel wykona NA KOMPUTERZE WŁAŚCICIELA
+ * przy otwarciu pliku. `sanitize_email()` i `is_email()` takiego adresu NIE odrzucają.
+ *
+ * ⛔ OBRONA WARSTWOWA, NIE ZAKŁAD O CUDZE ZACHOWANIE. Neutralizujemy KAŻDE pole tekstowe
+ * niezależnie od źródła — także te ustawiane przez właściciela. Oparcie naprawy na tym, że
+ * Stripe odrzuci dziwny adres, byłoby zakładem o zachowanie cudzego systemu, który może się
+ * zmienić bez uprzedzenia i bez powiadomienia nas; a nazwy produktu Stripe nie widzi wcale.
+ *
+ * FORMA: apostrof z przodu (zalecenie OWASP dla tej klasy). Wybrany, bo jako JEDYNY
+ * z rozważanych jest ODWRACALNY i nie zmienia samej wartości: odczyt maszynowy odzyskuje
+ * oryginał zdjęciem dokładnie jednego wiodącego apostrofu. Odrzucone: spacja z przodu
+ * (zmienia wartość, psuje dopasowanie adresu), `="…"` (samo jest formułą), tabulator
+ * z przodu (niewidoczny, zanieczyszcza wartość przy ponownym imporcie).
+ *
+ * ⛔ WYJĄTEK NA LICZBY, I TO NIE Z WYGODY. Kolumna „Kwota" to liczba (`-10,00` przy
+ * ewentualnej korekcie zaczyna się od minusa). Poprzedzenie jej apostrofem zamieniłoby ją
+ * w tekst i zepsuło sumowanie w arkuszu — naprawa nie ma prawa tworzyć nowej wady.
+ * Dlatego czyste literały liczbowe zostają nietknięte; `-1+1@example.com` literałem nie
+ * jest, więc neutralizacji podlega.
+ *
+ * @param mixed $wartosc Komórka do wypisania.
+ * @return mixed Wartość bezpieczna dla arkusza (nieteksty i liczby bez zmian).
+ */
+function sklepag_csv_neutralizuj( $wartosc ) {
+	if ( ! is_string( $wartosc ) || '' === $wartosc ) {
+		return $wartosc;
+	}
+	// Literał liczbowy (także ujemny, także z przecinkiem dziesiętnym) zostaje liczbą.
+	if ( preg_match( '/^-?\d+(?:[.,]\d+)?$/', $wartosc ) ) {
+		return $wartosc;
+	}
+	if ( ! in_array( $wartosc[0], SKLEPAG_CSV_ZNAKI_FORMULY, true ) ) {
+		return $wartosc;
+	}
+	return "'" . $wartosc;
+}
+
+
+
 add_action( 'admin_post_sklepag_eksport_csv', 'sklepag_obsluz_eksport_csv' );
 
 /**
@@ -289,18 +340,25 @@ function sklepag_obsluz_eksport_csv() {
 	fwrite( $out, "\xEF\xBB\xBF" ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- BOM UTF-8 dla Excela.
 	fputcsv( $out, array( 'Nr', 'Data', 'Kupujący', 'Produkt', 'Kwota', 'Waluta', 'Status', 'Pobrania użyte', 'Limit pobrań' ), ';', '"', '\\' );
 	foreach ( $wiersze as $w ) {
+		// ⛔ NEUTRALIZACJA CAŁEGO WIERSZA, NIE WYBRANYCH KOLUMN. Wskazanie „tych dwóch pól,
+		// o których wiemy" jest naprawą EGZEMPLARZA: pierwsza nowa kolumna z tekstem wróciłaby
+		// z tą samą wadą, a nikt by tego nie zauważył. `sklepag_csv_neutralizuj()` sam zostawia
+		// liczby i nieteksty w spokoju, więc objęcie nim wszystkiego niczego nie psuje.
 		fputcsv(
 			$out,
-			array(
-				$w['id'],
-				$w['utworzono'],
-				$w['email_kupujacego'],
-				$w['produkt_nazwa_kupiona'],
-				number_format( $w['kwota_grosze'] / 100, 2, ',', '' ),
-				$w['waluta'],
-				isset( Sklepag_Lista_Zamowien::STATUSY[ $w['status'] ] ) ? Sklepag_Lista_Zamowien::STATUSY[ $w['status'] ][0] : $w['status'],
-				$w['pobrania_uzyte'],
-				$w['pobrania_limit'],
+			array_map(
+				'sklepag_csv_neutralizuj',
+				array(
+					$w['id'],
+					$w['utworzono'],
+					$w['email_kupujacego'],
+					$w['produkt_nazwa_kupiona'],
+					number_format( $w['kwota_grosze'] / 100, 2, ',', '' ),
+					$w['waluta'],
+					isset( Sklepag_Lista_Zamowien::STATUSY[ $w['status'] ] ) ? Sklepag_Lista_Zamowien::STATUSY[ $w['status'] ][0] : $w['status'],
+					$w['pobrania_uzyte'],
+					$w['pobrania_limit'],
+				)
 			),
 			';',
 			'"',
