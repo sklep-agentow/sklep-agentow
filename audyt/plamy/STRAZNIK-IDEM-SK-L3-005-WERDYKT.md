@@ -101,12 +101,19 @@ z rubryki nie da się odczytać, który z nich przeszedł i kiedy.
    domyślny tryb, test znów rozjedzie się po cichu. Sensowniej **wyliczyć klucz tą samą
    funkcją co produkt** (dziś jej nie ma — klucz jest składany w miejscu użycia,
    `zakup.php:177`), czyli naprawić **klasę**: jedno źródło klucza dla kodu i dla testu.
-2. **Kalibracja po naprawie**: strażnik ma paść na kodzie sprzed 0.9.18 (brak kontroli stanu
-   sesji) — dziś, przy nieczytanym kluczu, **nie padnie**, więc dowód kalibracji trzeba
-   powtórzyć, a nie przepisać z PR #199.
-3. **Drobiazg z nagłówka testu**: nagłówek mówi „w CLI `sklepag_ip()` zwraca stale `0.0.0.0`" —
-   zmierzone: zwraca **`127.0.0.1`**. Nie zmienia wniosku (adres i tak jest stały), ale to
-   liczba w dokumentacji niezgodna z pomiarem.
+2. ⛔ **KALIBRACJĘ TRZEBA POWTÓRZYĆ, NIE PRZEPISAĆ Z PR #199.** To nie jest formalność
+   i nie wolno tu iść na skróty. Dowód kalibracji z PR #199 mówi: „strażnik pada na kodzie
+   sprzed naprawy `SK-L3-005`" — i był prawdziwy w 0.9.18, gdy klucz się zgadzał. **Dziś jest
+   nieprawdziwy**: przy kluczu, którego handler nie czyta, kierunek A przechodzi pusto,
+   więc na kodzie sprzed 0.9.18 ten strażnik **skończyłby się zerem**. Dopóki po naprawie
+   klucza nikt nie pokaże ŚWIEŻEGO przebiegu padającego na kodzie sprzed naprawy (kod wyjścia,
+   nie zdanie), naprawiony strażnik jest **nieskalibrowany** — czyli dokładnie tym samym,
+   czym jest dziś: testem, który przechodzi zawsze.
+3. **Nagłówek testu kłamie o adresie**: mówi „w CLI `sklepag_ip()` zwraca stale `0.0.0.0`"
+   (`testy/idem-nie-oddaje-oplaconej-sesji-test.php:29` i powtórzone w komentarzu przy
+   limiterze) — **zmierzone: `127.0.0.1`** (sonda kluczy, `EXIT=0`). Wniosku to nie zmienia,
+   bo adres i tak jest stały i licznik dzielą wszystkie przebiegi, ale to wartość wpisana
+   w dokumentację niezgodna z pomiarem — poprawić przy okazji naprawy klucza.
 4. **Rejestr**: `audyt/sklep/REJESTR-ZNALEZISK-SKLEP.md`, wiersz `SK-L3-005` ma w kolumnie
    strażnika ten plik. Dopóki klucz jest rozjechany, wiersz „ZAMKNIETE + strażnik" jest
    **prawdziwy co do naprawy i nieprawdziwy co do strażnika**.
