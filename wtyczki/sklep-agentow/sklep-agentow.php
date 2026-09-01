@@ -58,6 +58,7 @@ require_once SKLEPAG_KATALOG . 'includes/logowania.php'; // ZAWSZE, nie za is_ad
 require_once SKLEPAG_KATALOG . 'includes/front-produkt.php'; // widok produktu + rewrite (init) — poza is_admin().
 require_once SKLEPAG_KATALOG . 'includes/front-seo.php';     // title/meta/JSON-LD/sitemap.
 require_once SKLEPAG_KATALOG . 'includes/opinie.php';        // opinie: zalążek+token przy mailu, formularz admin-post (poza is_admin!), render z bazy.
+require_once SKLEPAG_KATALOG . 'includes/prywatnosc.php';   // RODO: eksporter/kasownik kreatora WordPressa + czysta anonimizacja. ZAWSZE, nie za is_admin() — kreator woła nas także przez admin-ajax i cron.
 
 register_activation_hook( __FILE__, 'sklepag_aktywacja' );
 register_deactivation_hook( __FILE__, 'sklepag_deaktywacja' );
