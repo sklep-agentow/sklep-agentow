@@ -220,3 +220,105 @@ Odruch „sprawdź własne narzędzie, zanim oskarżysz cudze" zadziałał trzec
 | `mb_convert_encoding()` da się zmusić do eksplozji pamięci egzotycznym zestawem | nie potwierdzone: żaden scenariusz nie przekroczył progu czasu ani nie ruszył pamięci; wpis o `charset` dotyczy **przekłamania treści**, nie zasobów |
 | dekoder nagłówków oddaje `false` dalej do bazy | nieprawda, wynik jest sprawdzany — `skrzynka.php:400-405` |
 | licznik reguły w panelu liczy inaczej niż silnik | nieprawda, jedna funkcja dla obu — `silnik.php:62` |
+
+---
+
+# ⛔ CZEGO NIE ZDĄŻYŁEM — DOMKNIĘCIE CAŁEGO ETAPU A7
+
+**Dopisane na koniec etapu, na polecenie koordynatorki.** Ta sekcja zbiera **wszystko nietknięte
+z trzech raportów** (`A7`, `A7b`, `A7c`), żeby następna sesja nie musiała ich czytać po kolei.
+To jest **lista zadań, nie przypis** — dokładnie w tym znaczeniu, w jakim zostawiła ją poprzednia
+sesja białych plam. ⛔ „Nie zdążyłem" **nie jest dyspensą**: każda pozycja niżej ma prawo nie
+wrócić tylko po świadomej decyzji, że tego nie zamykamy.
+
+## ⭐ Dwie pozycje wskazane wprost przez koordynatorkę
+
+### 1. `STARTTLS` — jedyna nieprzebadana część klienta IMAP
+`class-segm-imap.php:267`, `private function starttls( $host )`. `A7b` przeszedł literały,
+linie i limity czasu — **tej metody nie tknął ani jednym pytaniem**, a jest to moment, w którym
+połączenie przechodzi z jawnego w szyfrowane, czyli najczulszy punkt całego klienta.
+
+**Pytania, które trzeba tam zadać** (kolejność od najgroźniejszego):
+1. **Czy odmowa serwera kończy rozmowę, czy tylko ją odnotowuje?** Serwer odpowiadający na
+   `STARTTLS` statusem `NO`/`BAD` musi oznaczać ZERWANIE, nie „lecimy dalej jawnym tekstem" —
+   inaczej hasło aplikacji właściciela wychodzi w postaci jawnej. To jest klasa „funkcja
+   autoryzująca nie ma prawa mieć domyślnego otwarcia", tylko o warstwę niżej.
+2. **Czy po podniesieniu szyfrowania klient odświeża `CAPABILITY`?** RFC 3501 6.2.1 wymaga tego
+   wprost: możliwości sprzed TLS pochodzą z kanału, którego nikt nie uwierzytelnił, i napastnik
+   mógł je podmienić (klasyczne „STARTTLS stripping").
+3. **Czy `ufaj_bez_cert` dotyczy TAKŻE tej ścieżki?** Kontekst gniazda budowany jest w `polacz()`;
+   trzeba sprawdzić, czy `stream_socket_enable_crypto()` w `starttls()` dziedziczy te same
+   ustawienia weryfikacji, czy własne.
+
+**Jak to zrobić — przyrząd JUŻ JEST i wystarczy dołożyć scenariusze.**
+`audyt/plamy/A7b-sonda-imap-atrapa.php` to zwykły serwer TCP; nowe przypadki to kilka linii:
+serwer ogłaszający `STARTTLS` i odmawiający go, serwer ogłaszający i milczący, serwer
+**nieogłaszający** `STARTTLS` przy ustawieniu wymagającym szyfrowania.
+⛔ **Warunek ważności pomiaru:** sonda musi umieć pokazać, że hasło **NIE wyszło** — czyli atrapa
+ma zapisywać wszystko, co dostała, a asercja ma szukać w tym zapisie hasła. Sam brak fatala nie
+jest tu dowodem niczego.
+
+### 2. Wydajność przy danych — **zero pomiarów na objętości w całym etapie A7**
+Nie zadałem tego pytania **ani razu, w żadnej z trzech wtyczek**. Nie wiem, czy jest tam co
+znaleźć — i to jest właśnie definicja białej plamy, nie wynik „czysto".
+
+**Gdzie szukać w pierwszej kolejności** (miejsca, które przy okazji innych pomiarów wyglądały na
+podatne, ale ich NIE zmierzyłem):
+- `sklepag_dociagnij_zalegle()` — pętla po sesjach z zapytaniem do Stripe **na sesję**; budżet
+  czasu jest, ale nie wiem, jak zachowuje się przy kilkuset sesjach porzuconych koszyków.
+- `segm_skrzynka_przebieg()` — `naglowki()` + `tresc()` to **dwa okrążenia po sieci na każdą
+  wiadomość**; limit `SEGM_SKRZ_LIMIT_CZASU` = 20 s jest, ale ile wiadomości mieści się w tych
+  20 s przy realnym opóźnieniu do Gmaila — nie zmierzone.
+- `chatl_statystyki` (`statystyki.php`, 820 linii) — najwięcej zapytań agregujących w produkcie,
+  nietknięte żadną soczewką tego etapu.
+- Listy `WP_List_Table` — `COUNT(*)` + `SELECT` na każde odświeżenie, bez cache.
+⚠️ Skill `wp-performance` jest podpięty, a `grep -rl wp-performance --include=*.md .` daje jedno trafienie: ten raport. Nikt go w tym zleceniu nie użył.
+
+## Pozostałe pozycje, wg pochodzenia
+
+### Z `A7` (kod produktu naszą siatką)
+- **Zachowanie w przeglądarce.** Cała siatka `A7` była statyczna — nie kliknąłem ani razu. To teren
+  `A4b` i osobnej sesji, ale zapisuję: trzy z czterech znalezisk `A4b` siedziały w STANIE ekranu,
+  a mój przebieg takiej wady **nie mógł zobaczyć z konstrukcji**.
+- **Treść tekstów sprzedażowych wobec prawa i wobec produktu.** Mierzyłem LICZBY i NAZWY ZDARZEŃ,
+  nie sens zdań. Kwalifikacja prawna sformułowań to zadanie dla prawnika — zapisać jako takie,
+  nie jako „sprawdzone".
+- **`A7-F3` czeka na decyzję, nie na naprawę.** Trzy funkcje bez wywołania
+  (`chatl_ai_uzycie_dzis`, `chatl_ai_tokeny_dzis`, `segm_skrzynka_srodowisko_pada`).
+  Pytanie nie brzmi „usunąć czy zostawić", tylko: **czy `segm_skrzynka_srodowisko_pada()` nie
+  miała być gdzieś wołana** — nazwa mówi „czy diagnostyka wykryła coś, co uniemożliwia
+  połączenie", a takiego sprawdzenia przed połączeniem nie ma.
+
+### Z `A7b` (klient IMAP)
+- **Progi pamięci przy prawdziwym limicie hostingu.** Mierzyłem na `memory_limit=64M`, świadomie,
+  żeby nie ruszać pamięci maszyny. Dla literału wynik będzie ten sam przy każdym limicie
+  (alokacja 900 MB), ale progi dla scenariuszy `linia-ogromna` i `bez-znacznika` **przesuną się
+  w górę i nie wiem gdzie**. Do powtórzenia na 128M i 256M, jednym przebiegiem sondy.
+- **Samotny `CR` w wartości nagłówka.** `T11` obalił wstrzyknięcie polecenia przez `CRLF`, ale
+  samotny `CR` w ŚRODKU wartości przechodzi przez `trim()` i przez `tekst()`. Czy cokolwiek z tym
+  zrobi serwer, zależy od tego, jak dzieli strumień na linie — **niezmierzone**. To trop, nie
+  znalezisko, i tak go zostawiam.
+- **Trzecia zmiana stanu: przejście na klucze produkcyjne.** ⛔ Nietknięte **na polecenie**,
+  nie z braku czasu — siedzi tam builder z naprawą `P-3`.
+
+### Z `A7c` (MIME)
+- **Załączniki.** Wtyczka świadomie ich nie pobiera (napisane w nagłówku klasy IMAP). Ale znaczy
+  to, że reguła „treść zawiera" **nigdy nie zajrzy do PDF-a z fakturą**, a właściciel może się
+  tego spodziewać. **To jest pytanie do zamawiającego, nie usterka** — i nikt go dotąd nie zadał.
+- **Droga z pliku, nie ze skrzynki.** Sprawdziłem dekodowanie treści przychodzącej z IMAP-a;
+  **import CSV do `segm_maile` (`csv.php`) nie był tknięty ani razu** — a to druga droga, którą
+  cudzy tekst wchodzi do tej samej tabeli i do tego samego silnika reguł.
+
+### Obszary kodu, których w ogóle nie objęła żadna z trzech soczewek
+Wypisuję je, bo „nie zgłosiłem stamtąd nic" i „nie patrzyłem tam" wyglądają w raporcie identycznie:
+`chatbot-live/includes/statystyki.php` (820) · `chatbot-live/includes/import.php` (745) ·
+`chatbot-live/includes/przejecie.php` (623, poza punktami wejścia) ·
+`segregator-maila/includes/admin.php` (1504, poza bramą wejść) ·
+`segregator-maila/includes/filtry.php` (588, eksport do Gmaila/Outlooka) ·
+wszystkie arkusze stylów i skrypty przeglądarki (`assets/`, **5163 linie** — policzone, nie oszacowane).
+
+## ⭐ Co z tego etapu warto ponieść dalej — jedno zdanie metody
+Dwa najlepiej udowodnione znaleziska (`A7b-F1`, `A7c-F1`) wyszły z **uruchomienia produktu przeciw
+atrapie**, nie z czytania kodu, i **oba mają po kilka dróg o różnych przyczynach**. Trzy fałszywe
+alarmy w tym etapie pochodziły z **mojego przyrządu**, nie z produktu, i wszystkie trzy złapał ten
+sam odruch: *sprawdź własne narzędzie, zanim oskarżysz cudze.*
