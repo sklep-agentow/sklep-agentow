@@ -98,13 +98,37 @@ powstaje zamówienie i mail. Skąd wziąć sekret webhooka:
 **A. Strona na hostingu z publicznym adresem (docelowo):**
 1. Dashboard Stripe (Test mode) → Developers → Webhooks → Add endpoint.
 2. Adres endpointu: `https://TWOJA-DOMENA/wp-json/sklepag/v1/webhook`
-3. Zdarzenia do nasłuchu — zaznacz **OBA**:
-   - `checkout.session.completed` — zwykła płatność kartą,
-   - `checkout.session.async_payment_succeeded` — płatności, które potwierdzają
-     się z opóźnieniem (m.in. **BLIK**, przelewy).
+3. Zdarzenia do nasłuchu — zaznacz **wszystkie jedenaście**. To nie jest lista
+   „na wyrost": każdej pozycji odpowiada osobna gałąź w kodzie sklepu, a brak
+   którejkolwiek oznacza cichą stratę pieniędzy albo zamówienie, które nigdy się
+   nie domknie.
 
-   ⚠️ Podpięcie tylko pierwszego nie psuje zakupu, ale przy BLIK-u kupujący czeka
+   **Sprzedaż** — bez nich nie powstaje ani zamówienie, ani mail z linkiem:
+   - `checkout.session.completed` — zwykła płatność kartą,
+   - `checkout.session.async_payment_succeeded` — płatności potwierdzające się
+     z opóźnieniem (m.in. **BLIK**, przelewy).
+
+   **Płatność, która nie doszła do skutku** — porządkuje listę rozpoczętych zakupów:
+   - `checkout.session.async_payment_failed`
+   - `checkout.session.expired`
+
+   **Zwrot pieniędzy** — ⛔ bez nich zwrócone pieniądze zostają w przychodzie:
+   - `refund.created`
+   - `refund.updated`
+   - `charge.refunded`
+
+   **Obciążenie zwrotne** (kupujący reklamuje płatność w swoim banku) — ⛔ bank zabiera
+   pieniądze z Twojego konta od razu, a sklep bez tych zdarzeń dalej liczy je jako sprzedaż:
+   - `charge.dispute.created`
+   - `charge.dispute.funds_withdrawn`
+   - `charge.dispute.funds_reinstated`
+   - `charge.dispute.closed`
+
+   ⚠️ Podpięcie samej sprzedaży nie psuje zakupu, ale przy BLIK-u kupujący czeka
    na mail do najbliższego dociągania (do 10 minut) zamiast dostać go od razu.
+   ⛔ Pominięcie dwóch ostatnich grup **nie daje żadnego ostrzeżenia**: Pulpit po prostu
+   pokazuje przychód wyższy, niż masz naprawdę na koncie — bo liczy go jako kwotę zakupów
+   pomniejszoną o zwroty, o których nikt mu nie powiedział.
 4. Po utworzeniu skopiuj **Signing secret** (`whsec_…`) → wklej w
    Ustawieniach sklepu.
 
