@@ -58,21 +58,36 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Było w trzech starych zadaniach (php-lint, phpcs, phpstan) — tu raz.
+      # ⛔ `setup-php` USUNIĘTY 1.09 — ta akcja ZAWIESZAŁA CAŁE CI.
       #
-      # ⚠️ ZMIERZONE 20.08 NA WŁASNYM WYKONAWCY — koszt jednorazowy, nie stały.
-      #    PIERWSZY przebieg: 44 s, DOINSTALOWAŁ 167 PAKIETÓW SYSTEMOWYCH
-      #    (autoconf, firebird-dev, freetds-dev, krb5-multidev, imagemagick —
-      #    zależności do budowania rozszerzeń PHP) i przestawił systemowe `php`
-      #    z 8.3 na 8.4 (/etc/alternatives/php). To zmiana na SERWERZE, nie
-      #    w piaskownicy — własny wykonawca nie sprząta po sobie.
-      #    DRUGI i kolejne: 1 s, całe zadanie 29 s. Krok zostaje: kosztuje
-      #    sekundę, a gwarantuje, że bramki liczą na 8.4 nawet gdyby ktoś
-      #    przestawił systemowe PHP z powrotem.
-      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
-        with:
-          php-version: '8.4'
-          coverage: none
+      #    Działała, dopóki wykonawca chodził jako administrator: przy pierwszym
+      #    przebiegu (20.08) doinstalowała 167 pakietów systemowych i przestawiła
+      #    systemowe `php` z 8.3 na 8.4, więc kolejne przebiegi trwały sekundę.
+      #    Po przeniesieniu wykonawcy na konto `ciuser` (znalezisko B-3, 31.08)
+      #    nie może zrobić ani jednego, ani drugiego: woła `sudo`, dostaje
+      #    odmowę i PONAWIA BEZ KOŃCA. Zmierzone 1.09: krok stał 40 minut przy
+      #    zerowym procesorze, wypisując dwie linie na sekundę
+      #    („sudo: a password is required"), przebieg nie kończył się nigdy
+      #    i blokował jedynego wykonawcę. Od 31.08 do 1.09 ŻADEN przebieg
+      #    nie zakończył się sukcesem.
+      #
+      #    Krok był i tak zbędny: PHP 8.4.24 i Composer 2.10.3 stoją systemowo
+      #    i są widoczne dla `ciuser` (zmierzone). Zamiast instalatora zostaje
+      #    BRAMKA, która pada, gdy wersja nie jest tą, na której liczymy —
+      #    to ta sama gwarancja co wcześniej, bez uprawnień administratora.
+      #    ⛔ Nie przywracać `setup-php` bez nadania `ciuser` praw sudo, a tego
+      #    robić nie wolno: to unieważnia całą naprawę B-3.
+      - name: Kontrola srodowiska PHP (zamiast setup-php)
+        run: |
+          php -v | head -1
+          WERSJA=$(php -r 'echo PHP_MAJOR_VERSION . "." . PHP_MINOR_VERSION;')
+          echo "wykryta wersja PHP: $WERSJA"
+          if [ "$WERSJA" != "8.4" ]; then
+            echo "BLAD: bramki wymagaja PHP 8.4, a systemowe to $WERSJA" >&2
+            exit 1
+          fi
+          command -v composer >/dev/null || { echo "BLAD: brak composera w PATH" >&2; exit 1; }
+          composer --version
 
       # Było w dwóch starych zadaniach (phpcs, phpstan) — tu raz.
       - name: Zaleznosci QA

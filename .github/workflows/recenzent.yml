@@ -113,10 +113,24 @@ jobs:
 
       # PHP + vendor/ PRZED recenzja: recenzent ma URUCHAMIAC bramki (phpcs,
       # phpstan, skrypty zgodnosci), a nie czytac je i zgadywac wynik.
-      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
-        with:
-          php-version: '8.4'
-          coverage: none
+      #
+      # ⛔ `setup-php` USUNIĘTY 1.09 z tego samego powodu co w quality.yml:
+      #    po przeniesieniu wykonawcy na konto `ciuser` (B-3) akcja wpada
+      #    w nieskonczona petle `sudo: a password is required` i przebieg
+      #    nie konczy sie nigdy (zmierzone: 40 minut, zero procesora).
+      #    PHP 8.4.24 i Composer stoja systemowo — pelne uzasadnienie
+      #    i zakaz przywracania: komentarz w .github/workflows/quality.yml.
+      - name: Kontrola srodowiska PHP (zamiast setup-php)
+        run: |
+          php -v | head -1
+          WERSJA=$(php -r 'echo PHP_MAJOR_VERSION . "." . PHP_MINOR_VERSION;')
+          echo "wykryta wersja PHP: $WERSJA"
+          if [ "$WERSJA" != "8.4" ]; then
+            echo "BLAD: bramki wymagaja PHP 8.4, a systemowe to $WERSJA" >&2
+            exit 1
+          fi
+          command -v composer >/dev/null || { echo "BLAD: brak composera w PATH" >&2; exit 1; }
+          composer --version
 
       - name: Zaleznosci QA (composer)
         run: composer install --no-interaction --no-progress --no-scripts

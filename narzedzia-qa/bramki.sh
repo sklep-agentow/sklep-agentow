@@ -243,10 +243,21 @@ uruchom_phpcs() {
 
 uruchom_phpstan() {
 	[ -x vendor/bin/phpstan ] || { echo "BRAK vendor/bin/phpstan — czy composer install przeszedl?" >&2; return 1; }
+	# ⛔ WLASNY KATALOG CACHE NA UZYTKOWNIKA (1.09). PHPStan trzyma cache
+	# w `sys_get_temp_dir()/phpstan`, czyli w JEDNYM `/tmp/phpstan` wspolnym dla
+	# wszystkich kont na maszynie. Po przeniesieniu wykonawcy CI z konta
+	# administratora na `ciuser` (znalezisko B-3) katalog nalezal do roota
+	# z prawami 755, wiec bramka padala na „Unable to create file ... .lock".
+	# Wygladalo to jak blad w kodzie, a bylo uprawnieniami — i zaslanialo fakt,
+	# ze analiza jest czysta (po rozdzieleniu: EXIT=0, „No errors").
+	# ⭐ Cache ZOSTAJE, bo nie jest darmowy: zmierzone 1.09 na tym repo —
+	# z cache 2 s, bez cache 26 s.
+	local KATALOG_TMP="/tmp/phpstan-$(id -un)"
+	mkdir -p "$KATALOG_TMP" || { echo "BRAK dostepu do $KATALOG_TMP" >&2; return 1; }
 	# 1536M + 1 proces (phpstan.neon.dist): przy 1G worker padal deterministycznie
 	# po dojsciu plikow mechanizmu opinii (D32), a 2 workery po 1,5G na maszynie
 	# 3,8 GB RAM to ryzyko OOM, ktory ubija sesje (zmierzone na tym serwerze).
-	vendor/bin/phpstan analyse --memory-limit=1536M --no-progress
+	TMPDIR="$KATALOG_TMP" vendor/bin/phpstan analyse --memory-limit=1536M --no-progress
 }
 
 # Ślady wewnętrzne w plikach wtyczek — czyli w tym, co trafia do paczki klienta.
