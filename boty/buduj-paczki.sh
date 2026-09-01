@@ -11,6 +11,10 @@
 #
 # Użycie: bash boty/buduj-paczki.sh                 # komplet — ale zamek (niżej) ZATRZYMA bieg na pierwszej paczce, która już leży na origin/main; w praktyce podawaj wtyczkę:
 #         bash boty/buduj-paczki.sh sklep-agentow   # tylko wskazane (jedna lub więcej)
+#         BUDUJ_TYLKO_SPRAWDZ=1 bash boty/buduj-paczki.sh sklep-agentow
+#                                                   # SAMA kontrola allowlisty (kroki 1-2), nic nie buduje,
+#                                                   # nie rusza zamka wydanych paczek. Używa jej bramka
+#                                                   # testy/paczka-obejmuje-kazdy-plik-wtyczki-test.sh.
 # Wybór argumentem doszedł razem z paczką sklepu: zamek wydanych paczek (niżej)
 # ODMAWIA przebudowy zipa, który już leży na origin/main — bez wyboru budowa
 # sklepu padałaby na zamku CUDZEJ, dawno wydanej paczki bota.
@@ -203,6 +207,20 @@ zbuduj() {
 		echo "BLAD: w katalogu $WTYCZKA sa pliki SPOZA allowlisty — dopisz je swiadomie do boty/buduj-paczki.sh albo usun:" >&2
 		echo "$INTRUZI" >&2
 		exit 1
+	fi
+
+	# ⛔ TRYB TYLKO-SPRAWDZ (BUDUJ_TYLKO_SPRAWDZ=1) — dla bramki per-PR.
+	# Kroki 1 i 2 wyzej to CALA kontrola „allowlista pokrywa katalog wtyczki co do pliku”.
+	# Do tej pory chodzila WYLACZNIE przy budowie paczki, czyli przy wydaniu: nowy plik
+	# wtyczki (albo martwy wpis na liscie) siedzial w repo tygodniami i wychodzil dopiero
+	# wtedy, gdy budowa odmawiala. Ten wczesny powrot pozwala bramce testowej uruchomic
+	# TE SAME dwa kroki, bez pisania drugiego, rozjezdzajacego sie porownania obok.
+	# Konczymy PRZED krokiem 3 swiadomie: slady wewnetrzne ma juz bramka `slady`,
+	# a nazwa tej kontroli obiecuje pokrycie allowlisty, nie dwie rzeczy naraz.
+	# ⛔ Nic nie buduje i nie dotyka zamka wydanych paczek — to ma byc tanie i bezpieczne.
+	if [ "${BUDUJ_TYLKO_SPRAWDZ:-0}" = "1" ]; then
+		echo "SPRAWDZONE: $WTYCZKA — allowlista pokrywa katalog wtyczki co do pliku (plikow: ${#ALLOWLIST[@]})"
+		return 0
 	fi
 
 	# 3) Sweep treści plików z listy (ślady wewnętrzne: TODO/notatki QA/adresy dev).
