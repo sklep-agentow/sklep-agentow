@@ -136,6 +136,7 @@ ALLOWLIST_SKLEP=(
 	"sklep-agentow/includes/front-produkt.php"
 	"sklep-agentow/includes/front-seo.php"
 	"sklep-agentow/includes/opinie.php"
+	"sklep-agentow/includes/prywatnosc.php"
 	"sklep-agentow/includes/admin.php"
 	"sklep-agentow/includes/admin-dashboard.php"
 	"sklep-agentow/includes/admin-produkty.php"
