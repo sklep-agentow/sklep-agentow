@@ -36,10 +36,10 @@ set -u
 # ⛔ Rejestr bramek. Nazwy MUSZĄ zgadzać się z .github/manifest-bramek.txt —
 # pilnuje tego narzedzia-qa/sprawdz-manifest.sh. Kolejność jak w quality.yml
 # sprzed zbicia zadań: najpierw tanie i statyczne, na końcu skan historii.
-BRAMKI=(actionlint manifest slady znaleziska status-bez-warunku php-lint phpcs phpstan gitleaks poswiadczenia)
+BRAMKI=(actionlint manifest slady znaleziska status-bez-warunku paczka php-lint phpcs phpstan gitleaks poswiadczenia)
 # Bramki dotykające WYŁĄCZNIE kodu PHP — pomijane, gdy zmiana jest tekstowa.
 BRAMKI_PHP=(php-lint phpcs phpstan)
-PROG_PELNY=10
+PROG_PELNY=11
 PROG_TEKSTOWY=6
 
 # Wersje narzędzi pobieranych, gdy nie ma ich w PATH. Pinowane świadomie:
@@ -231,6 +231,16 @@ uruchom_status_bez_warunku() {
 	php narzedzia-qa/bramka-status-bez-warunku.php
 }
 
+# ⛔ POKRYCIE PACZKI KLIENTA. `boty/buduj-paczki.sh` ma jawną allowlistę i twardo odmawia
+#    budowy, gdy w katalogu wtyczki leży plik spoza listy albo gdy lista obiecuje plik,
+#    którego nie ma — ale robi to dopiero PRZY BUDOWIE, czyli przy wydaniu. Zmierzone 1.09
+#    na PR #244: `includes/prywatnosc.php` wszedł do wtyczki, `sklep-agentow.php` ładuje go
+#    przez `require_once` bezwarunkowo, a na allowliście go nie było — i żadna z dziesięciu
+#    ówczesnych bramek tego nie widziała. Ta bramka przesuwa tę samą kontrolę na pull request.
+uruchom_paczka() {
+	bash testy/paczka-obejmuje-kazdy-plik-wtyczki-test.sh
+}
+
 uruchom_php_lint() {
 	find wtyczki -name '*.php' -print0 | xargs -0 -n1 php -l > /dev/null || return 1
 	echo "Skladnia czysta."
@@ -354,6 +364,7 @@ bramka manifest   uruchom_manifest
 bramka slady      uruchom_slady
 bramka znaleziska uruchom_znaleziska
 bramka status-bez-warunku uruchom_status_bez_warunku
+bramka paczka     uruchom_paczka
 bramka php-lint   uruchom_php_lint
 bramka phpcs      uruchom_phpcs
 bramka phpstan    uruchom_phpstan

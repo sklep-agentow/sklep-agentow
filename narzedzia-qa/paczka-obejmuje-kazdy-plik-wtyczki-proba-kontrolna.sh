@@ -10,7 +10,12 @@
 #    Przypadek „znika tryb tylko-sprawdz” musi dac 2, a nie 1: pomiar sie nie odbyl, wiec
 #    zameldowanie wady byloby zmysleniem diagnozy.
 #
-# Uzycie: bash testy/paczka-obejmuje-kazdy-plik-wtyczki-proba-kontrolna.sh
+# ⛔ MIESZKA W narzedzia-qa/, NIE W testy/ — i to nie jest kwestia porzadku.
+#    `narzedzia-qa/proby-kontrolne-przelot.sh` zbiera proby wzorcem `find "$ZAKRES" -name
+#    '*proba-kontrolna*.sh'`, a krok CI wola go z zakresem `narzedzia-qa`. Proba lezaca
+#    w testy/ nie byla wiec uruchamiana przez NIC — dokladnie klasa I-3/I-4/I-8 (narzedzie-sierota).
+#
+# Uzycie: bash narzedzia-qa/paczka-obejmuje-kazdy-plik-wtyczki-proba-kontrolna.sh
 # Kody:   0 = bramka rozpoznaje kazdy podlozony przypadek · 1 = nie rozpoznaje
 set -u
 
