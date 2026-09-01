@@ -20,7 +20,7 @@ Nic jeszcze.
 
 ---
 
-## [0.9.34] — 2026-09-01 · schemat bazy bez zmian (10)
+## [0.9.35] — 2026-09-01 · schemat bazy bez zmian (10)
 
 ### Naprawione
 - **Za duża paczka produktu nie kończy się już pustą białą stroną.** Gdy całe wysłane

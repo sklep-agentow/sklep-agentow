@@ -4,7 +4,7 @@ Tags: sklep, stripe, pliki cyfrowe, sprzedaz wtyczek, pobieranie
 Requires at least: 6.7
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.9.34
+Stable tag: 0.9.35
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -161,7 +161,7 @@ link do pobrania w mailu, jednorazowy link do opinii.
 
 == Changelog ==
 
-= 0.9.34 =
+= 0.9.35 =
 * Naprawione: wgranie za dużej paczki produktu nie kończy się pustą białą stroną. Gdy całe zgłoszenie przekraczało `post_max_size`, PHP kasowało formularz razem z plikiem i właściciel nie dostawał ŻADNEGO komunikatu. Sklep rozpoznaje teraz ten stan i podaje realne limity serwera (`post_max_size`, `upload_max_filesize`) oraz ilość wysłanych danych, zaznaczając, że limit wtyczki (20 MB) nie brał w tym udziału.
 * Dodane: instrukcja właściciela opisuje, jak podnieść oba limity PHP i jak sprawdzić, że zmiana weszła w życie (rozdział „Produkty", akapit „Serwer nie przyjmuje pliku — jak podnieść limit").
 
