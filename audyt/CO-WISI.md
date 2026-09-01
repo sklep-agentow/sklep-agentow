@@ -657,14 +657,21 @@ rejestr dostanie czwarty stan dla znalezisk typu „brak pomiaru”, których ni
   `pobrania_uzyte` ze stanu bazy w chwili kompensacji (nie ze zdjęcia wejścia) z własnym
   przypadkiem testowym „pobranie w oknie kompensacji". Osobna robota, bo to inna
   ścieżka: ponowna wysyłka i kompensacja po nieudanym mailu mają własne przypadki brzegowe.
-- ⬜ **Adres z `/` w części lokalnej zostaje w dzienniku mimo potwierdzenia usunięcia.**
-  `wp_json_encode` bez flag zapisuje ukośnik jako `\/`, a anonimizacja szuka SUROWEJ postaci
-  adresu (`opis LIKE %adres%`). Adres taki jak `a/b@x.pl` (RFC dopuszcza, w praktyce spotykany
-  wyjątkowo) nie zostanie znaleziony — ślad zostanie, a wtyczka potwierdzi usunięcie.
-  ⛔ Nazwane świadomie, nie przeoczone (recenzja `#207`, runda 7; recenzent zgodził się na
-  nazwanie zamiast naprawy). Granica opisana także w docblocku funkcji.
-  **CO ZAMYKA:** szukać obu postaci naraz (surowej i po `wp_json_encode`) oraz dołożyć przypadek
-  testowy z adresem zawierającym `/` — z kalibracją, że na dzisiejszym kodzie ślad zostaje.
+- ✅ **ZAMKNIĘTE 1.09 (P-4).** ~~Adres z `/` w części lokalnej zostaje w dzienniku mimo
+  potwierdzenia usunięcia.~~ `wp_json_encode` bez flag zapisuje ukośnik jako `\/`, a anonimizacja
+  szukała SUROWEJ postaci adresu (`opis LIKE %adres%`), więc ślad zostawał, a wtyczka
+  potwierdzała usunięcie. Nazwane świadomie w recenzji `#207` r7.
+  **JAK ZAMKNIĘTE:** `sklepag_postacie_w_dzienniku()` oddaje wszystkie postacie danej (surową
+  i tę z `wp_json_encode`, braną Z TEJ SAMEJ funkcji, która ją tworzy); `sklepag_wzorce_w_dzienniku()`
+  i `sklepag_kandydaci_z_dziennika()` są JEDNYM źródłem dla czyszczenia **i** pomiaru — dotąd
+  pomiar miał własne, równie ślepe zapytanie i z definicji nie mógł tego zobaczyć.
+  Kalibracja: wada odtworzona na stosie prawdziwym zamówieniem (wiersz `eksport_csv` przeżywał
+  anonimizację przy `ok=TRUE`), zasiew strażnika składa opis TĄ SAMĄ funkcją co produkcja
+  (dotąd podstawiał adres surowy w ręcznie sklejony JSON i dlatego różnicy nie widział),
+  próba kontrolna `testy/rodo-anonimizacja-postacie-proba-kontrolna.sh` — trzy mutanty.
+  ⚠️ **Czego to NIE zamyka (zmierzone przy okazji):** w dzienniku zostają adresy IP
+  (`pobranie`, `webhook_zly_podpis`) — anonimizacja ich nie szuka, ogranicza je wyłącznie
+  retencja dziennika. Osobna pozycja, jeśli właściciel uzna ją za potrzebną.
 
 ---
 

@@ -4,7 +4,7 @@ Tags: sklep, stripe, pliki cyfrowe, sprzedaz wtyczek, pobieranie
 Requires at least: 6.7
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.9.28
+Stable tag: 0.9.30
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -154,6 +154,10 @@ Nie. Zakup jest bez konta: adres e-mail podany na stronie płatności Stripe,
 link do pobrania w mailu, jednorazowy link do opinii.
 
 == Changelog ==
+
+= 0.9.30 =
+* Naprawione (RODO): anonimizacja kupującego usuwa jego adres e-mail z dziennika zdarzeń także wtedy, gdy zapisał się tam w postaci zakodowanej. Adres z ukośnikiem przed „@" (dopuszczalny, spotykany wyjątkowo) zostawał w dzienniku, a wtyczka i tak potwierdzała usunięcie — żądanie RODO nie było zrealizowane, choć właściciel miał dowód wykonania. Zamyka znaną granicę opisaną przy 0.9.19.
+* Naprawione (RODO): sprawdzenie skutku pyta dokładnie o to, co czyszczenie — dotąd miało własne, równie wąskie zapytanie i nie mogło zobaczyć pominiętego śladu. Wpisy INNYCH kupujących, których adres zawiera nasz jako końcówkę, pozostają nietknięte również w postaci zakodowanej.
 
 = 0.9.28 =
 * Naprawione: po nieudanej ponownej wysyłce maila (awaria poczty) wraca dokładnie ten link, który kupujący ma w skrzynce — wtyczka zapamiętuje stan każdego doręczonego maila i przywraca właśnie jego. Znany wyjątek z 0.9.27 (pad serwera w pół wysyłki + nieudane ponowienie mogły zgasić działający link) jest zamknięty.

@@ -42,7 +42,7 @@ echo 'ZDARZENIE_ANONIMIZACJA_BLAD=' . ( in_array( 'anonimizacja_blad', $rodz, tr
 /* ⛔ Wpis OBCEGO kupujacego jest WYKLUCZONY z licznika: jego adres tez konczy sie markerem
    testowym, ale MA zostac — to inny czlowiek. Liczenie go jako naszego sladu sprawialoby,
    ze licznik nigdy nie zejdzie do zera, niezaleznie od tego, czy naprawa dziala. */
-$slady = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$tz} WHERE typ NOT IN ('proba_obcy','proba_obcy_rfc') AND opis LIKE %s", '%' . $wpdb->esc_like( '@example.test' ) . '%' ) ); // phpcs:ignore
+$slady = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$tz} WHERE typ NOT IN ('proba_obcy','proba_obcy_rfc','proba_obcy_json') AND opis LIKE %s", '%' . $wpdb->esc_like( '@example.test' ) . '%' ) ); // phpcs:ignore
 echo 'SLADY_W_DZIENNIKU=' . $slady . "\n";
 
 /* ⛔ Wpis OBCEGO kupujacego (adres zawierajacy nasz jako koncowke) MUSI przezyc nietkniety. */
@@ -50,6 +50,9 @@ $obcy = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$tz} WHERE 
 echo 'WPIS_OBCEGO_CALY=' . $obcy . "\n";
 $obcy_rfc = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$tz} WHERE typ = 'proba_obcy_rfc' AND opis LIKE %s", '%' . $wpdb->esc_like( '@example.test' ) . '%' ) ); // phpcs:ignore
 echo 'WPIS_OBCEGO_RFC_CALY=' . $obcy_rfc . "\n";
+/* ⛔ Wpis obcego w postaci ZAKODOWANEJ — naprawa szukajaca obu postaci nie ma prawa go ruszyc. */
+$obcy_json = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$tz} WHERE typ = 'proba_obcy_json' AND opis LIKE %s", '%' . $wpdb->esc_like( '@example.test' ) . '%' ) ); // phpcs:ignore
+echo 'WPIS_OBCEGO_JSON_CALY=' . $obcy_json . "\n";
 
 /* Sprzatanie: test stawia WLASNE warunki wstepne i po sobie zmywa — stos jest wspolny. */
 $wpdb->delete( $tz, array( 'zamowienie_id' => $id ) );
@@ -58,7 +61,7 @@ $wpdb->delete( $tz, array( 'zamowienie_id' => $id ) );
 /* ⛔ Sprzatamy po TYPIE, nie po markerze w tresci: udana anonimizacja PODMIENIA adres na
    znacznik, wiec wiersz przestaje zawierac marker i sprzatanie po tresci przestaje go widziec.
    Kazdy UDANY przebieg zostawialby wtedy wiersz na wspolnym stosie. */
-$wpdb->query( "DELETE FROM {$tz} WHERE zamowienie_id IS NULL AND typ IN ('eksport_csv','proba_obcy','proba_obcy_rfc','proba_rodo')" ); // phpcs:ignore
+$wpdb->query( "DELETE FROM {$tz} WHERE zamowienie_id IS NULL AND typ IN ('eksport_csv','proba_obcy','proba_obcy_rfc','proba_obcy_json','proba_rodo')" ); // phpcs:ignore
 $wpdb->delete( $wpdb->prefix . 'sklepag_opinie', array( 'zamowienie_id' => $id ) );
 $wpdb->delete( $pz, array( 'id' => $id ) );
 echo "SPRZATNIETE=TAK\n";
