@@ -294,7 +294,12 @@ z „Wyślij ponownie”. Jeśli wysyłki padają regularnie — SMTP (rozdział
 (odświeżenie reguł adresów). Struktura odnośników musi być inna niż „Zwykłe”.
 
 **Kupujący chce zwrotu.** Zwrot robisz w panelu Stripe; sklep sam odnotuje go w zamówieniu
-(status „zwrócone”, kwota w osi czasu) i odejmie od statystyk sprzedaży.
+(status „zwrócone”, kwota w osi czasu) i odejmie od statystyk sprzedaży. Jeśli kupujący ma
+jeszcze otwartą stronę „Dziękujemy” (albo wróci na nią ze starego odnośnika), przeczyta tam
+**„Płatność za to zamówienie została zwrócona — nie jest już opłacone”**, a przy sporze —
+**„Ta płatność jest reklamowana w banku i czeka na rozstrzygnięcie”**. Strona przestaje wtedy
+odświeżać status. Żadne z tych zdań **nie mówi**, że link do pobrania przestał działać, bo nie
+przestaje (patrz ostrzeżenie w rozdziale 3).
 
 **Czy pliki są bezpieczne na serwerze nginx?** Katalog plików chroni `.htaccess`, który
 działa na Apache, a na nginx jest ignorowany. Prawdziwą ochroną jest brama w sklepie (token,

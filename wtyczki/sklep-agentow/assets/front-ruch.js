@@ -289,21 +289,30 @@
 			otworzLightbox(link);
 		}
 	});
-	// Sticky CTA: pokazuje się po minięciu hero, znika przy widocznym formularzu zakupu.
+	// Sticky CTA: pokazuje się po minięciu hero, znika przy widocznym MIEJSCU ZAKUPU.
 	var pasek = document.querySelector('.sklepag-sticky');
 	var hero = document.querySelector('.sklepag-hero');
-	var formularz = document.getElementById('sklepag-kup-formularz');
+	/* ⛔ OBSERWUJEMY SEKCJE ZAKUPU, NIE SAM FORMULARZ.
+	   Formularz jest tylko PIERWSZYM z dwóch ekranów tego samego miejsca: `platnosc.js`
+	   przy przejściu do płatności robi `form.hidden = true` i odsłania panel karty obok.
+	   Dopóki obserwowany był formularz, obserwator meldował wtedy „niewidoczny", warunek
+	   `!heroWidoczne && !formularzWidoczny` stawał się prawdą i pigułka „Kup teraz"
+	   wjeżdżała kupującemu na ekran DOKŁADNIE w chwili płatności — zapraszając go do
+	   kupienia jeszcze raz tego, za co właśnie płaci.
+	   Sekcja `#sklepag-zakup` zawiera OBA ekrany, więc nie znika przy przełączeniu.
+	   Formularz zostaje jako zapas, gdyby sekcji kiedyś zabrakło. */
+	var strefaZakupu = document.getElementById('sklepag-zakup') || document.getElementById('sklepag-kup-formularz');
 	if (pasek && hero && 'IntersectionObserver' in window) {
 		// `hidden` schodzi raz (bez JS pigułki nie ma wcale); dalej steruje KLASA stanu, żeby CSS mógł
 		// zrobić wjazd z dołu i zjazd z wygaszeniem zamiast przeskoku display.
 		pasek.removeAttribute('hidden');
-		var heroWidoczne = true, formularzWidoczny = false;
+		var heroWidoczne = true, zakupWidoczny = false;
 		var przelacz = function () {
-			pasek.classList.toggle('sklepag-sticky--widoczna', !heroWidoczne && !formularzWidoczny);
+			pasek.classList.toggle('sklepag-sticky--widoczna', !heroWidoczne && !zakupWidoczny);
 		};
 		new IntersectionObserver(function (w) { heroWidoczne = w[0].isIntersecting; przelacz(); }).observe(hero);
-		if (formularz) {
-			new IntersectionObserver(function (w) { formularzWidoczny = w[0].isIntersecting; przelacz(); }).observe(formularz);
+		if (strefaZakupu) {
+			new IntersectionObserver(function (w) { zakupWidoczny = w[0].isIntersecting; przelacz(); }).observe(strefaZakupu);
 		}
 	}
 	/* Pola wymagane mówią do kupującego PO POLSKU.
