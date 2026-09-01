@@ -658,3 +658,110 @@ różnią się tylko brzmieniem komunikatu, a łańcuch i tak wybiera właściwy
   ze ściągi („obejście własnej bramki") proponuje blokadę, ale to teren warsztatu, nie repo.
 - **Innych typów hooków, których NIE MA** (`pre-receive`, `commit-msg`) — nie sprawdzałem,
   czy któryś jest gdzieś obiecany.
+
+---
+
+# H1 — STOS WORDPRESS (DOCKER)
+
+**Stan wejściowy z mapy:** 🟡, „testy produktu · 12 skryptów wymaga stosu — poza CI".
+**Wynik: 1 × `SRED`, cztery tereny czysto.** Cały przelot **wyłącznie odczytowy** — na stosie
+pracuje builder, więc niczego nie zmieniałem.
+
+## Gdzie kończył się pomiar
+
+Stos był dotąd traktowany jako **przyrząd**: „12 skryptów go wymaga". Nikt nie zapytał,
+**czy ten przyrząd jest wykalibrowany** — czy chodzi na tym, na czym ma chodzić produkt,
+czy jego zegar (cron) w ogóle tyka i co w nim zostało po poprzednich pomiarach. A na tym
+stosie stoją dowody dla całego zlecenia.
+
+## 1. ZNALEZISKO
+
+### 🟠 `H1-F1` — **SRED** · **WP-Cron na stosie warsztatowym NIE CHODZI** — 12 z 15 zadań zaległych, najstarsze od 19 godzin — więc żaden dowód „domyka się co 10 minut" nie został na nim nigdy wykonany
+
+**DOWÓD** (`wp eval`, odczyt `_get_cron_array()`, czas GMT `2026-09-01 17:46:32`):
+```
+zadan w kolejce: 15 · ZALEGLYCH: 12
+najstarsze zalegle: sklepag_dociagnij_zalegle (2026-08-31 23:09:57) — zalega 19 hours
+ALTERNATE_WP_CRON: nie · DISABLE_WP_CRON: (niezdefiniowany)
+sklepag_reconciliation_ostatnia = 11 godzin temu
+```
+WP-Cron rusza **ruchem na stronie**, a ta strona ma `blog_public = 0` i nikt na nią nie wchodzi —
+więc zegar stoi. Ostatni zapis `sklepag_reconciliation_ostatnia` (11 h temu) pochodzi
+najpewniej z **wejścia na Pulpit** (self-heal), nie z crona.
+
+**Co to psuje w naszych dowodach — i to jest właściwa treść tego znaleziska:**
+- **`SK-L-005`** uzasadnia wagę ŚREDNIA zdaniem „reconciliation co 10 min → opóźnienie ≤10 min".
+  Na stosie, na którym to mierzymy, **ta noga nie działa**. Werdykt się broni (patrz
+  `audyt/plamy/SK-L-005-WERDYKT.md` — dźwiga go self-heal na Pulpicie), ale zdanie o cronie
+  nigdy nie było tu sprawdzone.
+- **`E7-F1`** (strona „Dziękujemy" zamiera po 2 min) i **K10** („zakup wisiał 20 minut") to
+  **ten sam stan**: zakup domknie dopiero człowiek wchodzący na Pulpit.
+- Każdy przyszły test „poczekaj, cron domknie" na tym stosie **zawiesi się albo skłamie**.
+
+**Dlaczego `SRED`, a nie wyżej:** to wada **przyrządu**, nie produktu — produkt na hostingu
+z ruchem będzie miał WP-Cron żywy. Nie podnoszę, ale zapisuję, bo bez tego zdania kolejny
+audytor zmierzy czas domknięcia i dostanie liczbę, która nie mówi nic o produkcie.
+
+## 2. TERENY SPRAWDZONE — WYNIK CZYSTO
+
+| # | Co sprawdzone | Wynik |
+|---|---|---|
+| 1 | **Wersje: czy stos to środowisko docelowe** | **CZYSTO**: WordPress **7.1**, PHP **8.4.21**, MariaDB **11.8.8**. `CLAUDE.md` deklaruje „WP 7.0 / PHP 8.4" — stos jest **nie starszy** niż deklaracja, a wtyczki wymagają `6.7`/`8.1`, więc chodzą na wersjach wyższych niż minimum. Zgodne |
+| 2 | **`WP_DEBUG`** — kryterium GOTOWE #1 żąda pomiaru z włączonym | **CZYSTO**: `WP_DEBUG` **WŁĄCZONY**, `WP_DEBUG_LOG` włączony, `WP_DEBUG_DISPLAY` wyłączony (błędy idą do pliku, nie na ekran) |
+| 3 | **Czy stos zapisuje błędy i czy ktoś je czyta** | **ZMIERZONE, bez oskarżenia**: `wp-content/debug.log` ma **2,0 MB** i **6376** wpisów PHP: 6010 Warning, **276 Fatal**, 66 Deprecated, 5 Notice. Fatale rozkładają się na 24-31.08 (najwięcej 28.08: 82) i **żaden nie jest z dzisiaj poza dwoma moimi** (`sklepag_badge_statusu` z sondy `E7`, 06:40 — sonda wołała ekran panelu bez wcześniejszego załadowania `admin-dashboard.php`). Najliczniejsze źródło: `chatbot-live/includes/import.php` (55) — **wskazuję jako trop dla `A2`, nie rozstrzygam** |
+| 4 | **Konfiguracja PHP wobec drogi instalacji z instrukcji** | **CZYSTO co do faktu, warte zapisania**: `upload_max_filesize = 2M`, `post_max_size = 8M`. Paczka sklepu waży **4,5 MB**, więc **na tym stosie nie da się jej wgrać przez wp-admin** — dokładnie przypadek, przed którym ostrzega `INSTRUKCJA-INSTALACJI.md` (i którego zrzut pokazuje „do 2 MB"). Droga instalacyjna klienta jest tu **niemierzalna** i mierzy się ją osobno (K6/K9/K10, czyste instalacje) |
+
+⛔ **PUŁAPKA PRZYRZĄDU, którą złapałem na sobie i którą trzeba zapisać:** `wp eval` melduje
+`memory_limit = -1`, bo WP-CLI **podnosi go sobie sam**. Prawdziwa wartość, z którą chodzi
+produkt, to **128M** (`php -r` w tym samym kontenerze). ⛔ Każdy pomiar limitów pamięci zrobiony
+przez `wp eval` mierzy WP-CLI, nie produkt — mój pomiar `A7b` był na szczęście robiony
+`php -d memory_limit=64M`, poza WP-CLI.
+
+## 3. CZEGO W `H1` NIE ZMIERZYŁEM
+
+- **Czy stos = kod z `main`** — zmierzone osobno tego samego dnia i **nie jest**: kontener wiózł
+  `sklep-agentow` **0.9.32**, gałąź główna **0.9.31** (`audyt/plamy/GOLDEN-258-WERYFIKACJA.md` §1).
+  Nie dubluję tego tutaj, ale to jest własność stosu, nie goldena.
+- **Drugiego stosu `k10_wp` na `:8892`** — chodzi 41 godzin, nie tykałem go w ogóle.
+- **Czy `wp-cron.php` w ogóle da się wywołać** (pętla zwrotna) — sprawdzenie wymaga żądania HTTP,
+  które **uruchomiłoby zaległe zadania**, w tym reconciliation i wysyłkę maili. To zmiana stanu
+  wspólnego stosu, więc nie zrobiłem tego bez zgody.
+
+---
+
+# H2 — STRIPE: KONFIGURACJA I WEBHOOKI (część pierwsza, odczytowa)
+
+**Stan wejściowy z mapy:** 🟡, „audyt sklepu · `stripe listen` żywy na maszynie".
+**Ta część: zero znalezisk, trzy tereny czysto + odpowiedź częściowa na pytanie o replay.**
+
+| # | Co sprawdzone | Wynik |
+|---|---|---|
+| 1 | **Komplet kluczy na stosie i ich rodzaj** | **CZYSTO**: wszystkie trzy ustawione i wszystkie **testowe** — `sk_test_…` (107 znaków), `whsec_c0…` (70), `pk_test_…` (107). Zero kluczy produkcyjnych na stanowisku. Wartości nie wyszły poza kontener: mierzyłem długość i prefiks, nie treść |
+| 2 | **Autoryzacja endpointu webhooka** | **CZYSTO**: `permission_callback => '__return_true'` z **jawnym powodem w komentarzu** („Publiczny endpoint — autoryzacją JEST podpis Stripe"), a pierwsza instrukcja po wejściu to weryfikacja podpisu na **surowym** body (`$zadanie->get_body()`, bez modyfikacji przed podpisem). Zły podpis → zdarzenie `webhook_zly_podpis` + **HTTP 400** |
+| 3 | **Odpowiedzi HTTP wobec ponowień Stripe** | **CZYSTO co do zamysłu**: `checkout.session.completed` przy nieudanym domknięciu oddaje **500**, żeby Stripe ponowił; `payment_status=unpaid` (BLIK w toku) oddaje **200** i zapisuje `webhook_unpaid` — czyli „przyjęte, jeszcze nie moje" |
+
+## Pytanie o REPLAY — odpowiedź, którą da się dać BEZ zmiany stanu stosu
+
+**Pytanie:** czy replay TEGO SAMEGO podpisanego webhooka na sesji **już domkniętej** tworzy
+drugi mail z ważnym linkiem?
+
+**Ścieżka w kodzie** (`sklepag_domknij_zakup`): `INSERT IGNORE` (nic nie wstawia — wiersz jest),
+CAS `oczekuje → oplacone` (nie łapie — status jest wyższy), znacznik sesji `oplacona`
+(już taki jest), a potem **CAS przejęcia wysyłki**:
+```
+936:  UPDATE … SET status='mail_w_toku' … WHERE stripe_session_id=%s
+        AND status IN ('oplacone','mail_blad') AND mail_proby < 3
+```
+Gdy `$przejete` jest puste, kod czyta stan i dla `mail_wyslany` robi `return true` („ktoś już
+domknął") — **bez rotacji tokenu i bez wysyłki**.
+
+**POMIAR ODCZYTOWY — dokładnie ten warunek CAS-a, wykonany jako `SELECT COUNT(*)` na żywej bazie:**
+```
+zamowienie DOMKNIETE #9902289 (status=mail_wyslany) → CAS zlapalby  0 wierszy
+KONTROLA DODATNIA #23        (status=oplacone)      → CAS zlapalby  1 wiersz
+rozklad statusow na stosie: mail_wyslany=33 · oplacone=4 · mail_blad=4 · mail_w_toku=3
+```
+⛔ **To jest dowód arytmetyki warunku, NIE uruchomienie ścieżki.** Kontrola dodatnia pokazuje,
+że zapytanie umie zwrócić wiersz, więc zero przy domkniętym zamówieniu jest faktem — ale
+`sklepag_domknij_zakup()` **nie zostało wywołane**. Pełny pomiar wymaga uruchomienia i zmiany
+stanu bazy; opis eksperymentu i jego skutków leży w meldunku do koordynatorki.
