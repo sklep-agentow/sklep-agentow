@@ -198,3 +198,112 @@ kanale zwrotnym milczy, choć to jedna gałąź w tym samym warunku.
 - **Teksty panelu poza ekranem zamówienia** (Produkty, Opinie, Dziennik, Ustawienia) — przejrzane
   pobieżnie przy okazji `E7-F3`, bez własnego przelotu. To zostaje jako reszta terenu `E7`.
 - **Baner „TRYB TESTOWY"** — świadomie pominięty, siedzi w `P-3` (w naprawie).
+
+---
+
+# E6 — INSTRUKCJA DLA KLIENTA W PACZCE
+
+**Stan wejściowy z mapy:** 🟡, „`pakuj-dla-klienta.sh` sprawdza obecność — treść nieoceniana".
+**Wynik: 1 × `MALE` (o dwóch egzemplarzach), siedem terenów czysto.**
+
+## Gdzie kończył się pomiar — i to jest ciekawsze niż samo znalezisko
+
+Mapa mówiła „sprawdzana jest obecność pliku". To **nieprawda w drugą stronę**: pomiaru jest
+znacznie więcej, niż mapa deklaruje, tylko rozłożony bardzo nierówno. Policzone, nie z pamięci:
+
+| dokument dla klienta | co go pilnuje | co NIE jest pilnowane |
+|---|---|---|
+| `wtyczki/segregator-maila/INSTRUKCJA.md` | **własna bramka** `testy/instrukcja-liczby-segregator.sh` — każda liczba z kodu | treść zdań |
+| `wtyczki/sklep-agentow/INSTRUKCJA.md` | `testy/dokumentacja-zgodnosc-sklep.sh` sekcja F — **5 liczb** (72 h, 10, 30 dni, 20 MB, 10 min), etykieta „Dane sprzedawcy", odsyłacze do zrzutów i ich obecność w paczce | treść zdań — bramka **sama to pisze** w swoim nagłówku sekcji |
+| `wtyczki/chatbot-live/INSTRUKCJA.md` | `testy/dokumentacja-zgodnosc.sh:424` — **wyłącznie istnienie plików zrzutów** | **wszystkie liczby i wszystkie zdania** |
+| `dokumentacja/INSTRUKCJA-INSTALACJI.md` | `pakuj-dla-klienta.sh:35,54,60` — istnienie + brak śladów wewnętrznych | **wszystkie liczby i wszystkie zdania** — a to właśnie tu siedziało `A7-F1` |
+
+⭐ Czyli: dokument, w którym **już raz znaleziono kłamstwo** (`A7-F1`, powiadomienia Stripe),
+jest jednocześnie tym, którego treści nie pilnuje nic. A instrukcja ChatBota — jedyna z trzech
+bez bramki liczb — niesie ich **dwadzieścia kilka**.
+
+## 1. ZNALEZISKO
+
+### 🟡 `E6-F1` — **MALE** · instrukcja właściciela opisuje **mechanikę ratowania zawieszonego zakupu** niezgodnie z kodem — w dwóch miejscach, przy czym trzecie miejsce w tym samym pliku opisuje ją poprawnie
+
+**Egzemplarz A — rozdział 3, tabela statusów, wiersz „oczekuje" (`INSTRUKCJA.md:79`):**
+> „jeśli wisi dłużej niż kilka minut, to błąd zapisu w bazie: sprawdź oś czasu i napisz do
+> wykonawcy (**„Dociągnij zaległe" tego statusu nie rusza**)"
+
+W kodzie jest odwrotnie. Zamówienie może stać w `oczekuje` **wyłącznie** wtedy, gdy jego sesja
+ma nadal stan `utworzona`: znacznik `oplacona` zakłada `sklepag_oznacz_sesje( $sid, 'oplacona' )`
+w `zakup.php:900`, czyli **po** CAS-ie `oczekuje → oplacone` (`:871`) i po sprawdzeniu, że wiersz
+zamówienia istnieje (`:878`). To jedyne miejsce w kodzie, które nadaje ten stan
+(`grep sklepag_oznacz_sesje` → 3 wywołania: `wygasla`, `oplacona`, `wygasla`).
+A „Dociągnij zaległe" bierze dokładnie takie sesje:
+```
+1293:  SELECT stripe_session_id FROM {$ps} WHERE stan='utworzona' AND utworzono < %s ORDER BY utworzono DESC LIMIT 100
+1320:  if ( sklepag_domknij_zakup( $sesja ) ) {   // TEN SAM silnik co webhook
+```
+i puszcza na nich **ten sam silnik**, którego pierwszy krok to `INSERT IGNORE` (nie zdubluje
+wiersza), a drugi to CAS `… SET status='oplacone' … AND status='oczekuje'` — czyli **celuje
+dokładnie w ten wiersz, o którym instrukcja mówi, że przycisk go nie rusza**.
+
+Kierunek pomyłki jest ten kosztowny: właściciel czyta „przycisk nie pomoże, napisz do wykonawcy"
+i **nie klika jedynej rzeczy, która to odblokowuje** — a na hostingu bez działającego WP-Cron
+(przypadek, przed którym ta sama instrukcja ostrzega dwa akapity niżej) ten przycisk jest jedyną
+drogą domknięcia.
+
+**Egzemplarz B — rozdział 4 (`INSTRUKCJA.md:169`):**
+> „sklep ponawia sam **po ok. 2 minutach**, do trzech razy"
+
+Ponowienie wysyłki nie ma własnego zegara. Siedzi w środku `sklepag_dociagnij_zalegle()`
+(`zakup.php:1337-1342`), czyli w zadaniu, które chodzi **co 10 minut**
+(`sklep-agentow.php:77` `'interval' => 600`), a warunek `zmieniono < %s` z granicą `teraz − 120 s`
+jest **minimalnym wiekiem** wiersza, nie odstępem ponowień. Prawdziwe zdanie brzmi: „przy
+najbliższym biegu co 10 minut, nie wcześniej niż 2 minuty po ostatniej próbie — i tylko jeśli
+WP-Cron działa".
+
+**Trzecie miejsce w tym samym pliku mówi to poprawnie** (rozdział 9, „Zakup «wisi»…"):
+> „Sklep i tak domknie zakup w ciągu ok. 10 minut (**jeśli WP-Cron działa** — rozdział 3),
+> a od ręki zrobi to „Dociągnij zaległe teraz" — odczekaj 2 minuty od zapłaty"
+
+Czyli autor **wie**, jak to działa; rozjechały się dwa wcześniejsze akapity. To ta sama klasa
+co `A7-F1`: instrukcja opisuje przebieg, którego nikt nie porównał z kodem, bo bramka mierzy
+w tym pliku **pięć liczb**, a nie zdania.
+
+**Dlaczego `MALE`, a nie wyżej — nie podnoszę:** nic się nie psuje samo, zakup domyka się mimo
+wszystko (cron albo webhook), a szkoda to zmarnowany telefon do wykonawcy i kilka–kilkanaście
+minut zwłoki. Podniósłbym, gdyby zdanie A blokowało jedyną drogę na stałe — nie blokuje,
+bo rozdział 9 tego samego dokumentu kieruje do przycisku.
+
+## 2. TERENY SPRAWDZONE — WYNIK CZYSTO
+
+| # | Obietnica z dokumentu dla klienta | Jak zmierzone | Wynik |
+|---|---|---|---|
+| 1 | **Wymagania instalacji**: „WordPress 6.7+ · PHP 8.1+" | nagłówki trzech wtyczek | **CZYSTO** — sklep `6.7`/`8.1`, oba boty `6.0`/`8.1`; instrukcja podaje wymaganie NAJOSTRZEJSZEJ z trzech, czyli poprawnie |
+| 2 | **„Paczka sklepu waży około 4 MB, limit wysyłki co najmniej 8 MB"** | `find -printf %s` na paczkach | **CZYSTO** — `sklep-agentow-0.9.28.zip` = 4 719 003 B (4,5 MB); rada „podnieś do 32 MB" z zapasem |
+| 3 | **„sklep co 10 minut SAM dopytuje Stripe"** + **„odczekaj 2 minuty"** | `sklep-agentow.php:77` `'interval' => 600`, `zakup.php:1284` granica `− 120 s` | **CZYSTO** — obie liczby zgodne z kodem |
+| 4 | **Adres webhooka `…/wp-json/sklepag/v1/webhook`** | `register_rest_route( 'sklepag/v1', '/webhook' )` | **CZYSTO** |
+| 5 | **„Jeśli zapomnisz o odnośnikach — wtyczka pokaże czerwone ostrzeżenie z linkiem"** | `admin.php:33-37` (`notice-error` + link do `options-permalink.php`, warunek `'' !== permalink_structure`) | **CZYSTO** |
+| 6 | **„Klucze Stripe i zadanie cykliczne znikają ZAWSZE"** (sklep) oraz **„Klucz API każdego bota usuwany ZAWSZE"** | trzy pliki `uninstall.php` | **CZYSTO** — sklep kasuje oba sekrety i `wp_clear_scheduled_hook` **przed** wczesnym `return`; ChatBot kasuje `chatl_klucz_api` przed `return`; Segregator kasuje `segm_klucz_api` **i `segm_imap_haslo`** przed `return`. To jest klasa nr 1 ze `SCIAGA-EGZAMINATORA.md` i tu jest zamknięta |
+| 7 | **Lista sześciu miejsc, w których kupujący widzi „tryb testowy"** (`INSTRUKCJA-INSTALACJI.md:259-266`) | render żywych stron + kod | **CZYSTO — 6/6 istnieje**: baner na `/sklep/` i na stronie produktu (`sklepag_baner_testowy`), baner na „Dziękujemy", notka „STRIPE · TRYB TESTOWY · KARTA 4242…" przy przycisku, FAQ „Co znaczy „tryb testowy”?" (`sklep-agentow.php:403`, widoczne w rendrze `/sklep/`), zdanie w mailu. Instrukcja dodatkowo **sama zastrzega**, że lista może nie być kompletna |
+| 8 | **Wszystkie liczby instrukcji ChatBota** — dokumentu BEZ bramki liczb | ręczne zestawienie ze stałymi `CHATL_*` i domyślnymi ustawieniami | **CZYSTO — 0 rozjazdów** na 16 sprawdzonych: 10 par Q&A seeda (`instalator.php`, policzone), 2000 wierszy / 2 MB / 15 min importu, próg WCAG 4,5, retencja 90 dni, listy 200/100/25, pamięć 6 wymian, 500 i 2000 znaków, 10 wiadomości/min, 20 wywołań AI/IP/dobę, cisza przejęcia 5 min (`300 s`), pułapka 2 s, stop-loss 100 wywołań i 200 000 tokenów (`chatbot-live.php:258,274`) |
+| 9 | **Bramki dokumentów, które MOGĄ paść** — czy w ogóle są zielone dziś | uruchomienie, kod wyjścia bez potoku | **CZYSTO**: `testy/instrukcja-liczby-segregator.sh` **EXIT=0** („każda liczba ma pokrycie"), `testy/dokumentacja-zgodnosc-sklep.sh` **EXIT=0** (63 × OK, 0 rozjazdów) |
+| 10 | **Instrukcje i zrzuty naprawdę jadą do klienta** | `unzip -l` na wydanej paczce 0.9.28 | **CZYSTO** — `sklep-agentow/INSTRUKCJA.md` + 5 zrzutów w archiwum; różnica wobec repo to wyłącznie rozdział o narzędziach prywatności WP dopisany po wydaniu 0.9.28 (`I-16`), czyli normalny dryf wersji, nie rozjazd |
+
+## 3. PRZYRZĄD, KTÓRY SKŁAMAŁ MNIE SAMEMU (wypisuję, bo tak ma zostać)
+
+Szukając FAQ „Co znaczy tryb testowy?" (pozycja 7 wyżej) dostałem **zero trafień** i przez chwilę
+miałem gotowe znalezisko „instrukcja wymienia miejsce, którego nie ma". Dwie wady mojego grepa naraz:
+szukałem w `includes/front-produkt.php` (a FAQ listy sklepu żyje w `sklep-agentow.php`) i pisałem
+wzorzec z prostym cudzysłowem, gdy w kodzie stoi `„tryb testowy”` w cudzysłowach drukarskich.
+Rozstrzygnął **render żywej strony** `/sklep/`, w którym zdanie stoi jak byk. ⛔ Wniosek na resztę
+przelotu: „nie ma tego w kodzie" zgłaszam dopiero po strzale w żywy render albo po grepie
+BEZ znaków cudzysłowu we wzorcu.
+
+## 4. CO Z E6 ZOSTAJE
+
+- **Treść zdań instrukcji ChatBota i Segregatora** — przeczytane wyrywkowo pod kątem liczb,
+  nie zdanie po zdaniu (dla sklepu przeczytałem cały plik).
+- **`PRZECZYTAJ-MNIE.txt`** ze zbiorczej paczki — nie oglądałem treści.
+- **Zrzuty ekranu w instrukcjach** — sprawdzone, że istnieją i jadą w paczce; **nie** sprawdzone,
+  czy pokazują dzisiejszy panel (zrzuty są z 31.08, a panel od tego czasu dostał sekcję prywatności).
+- ⭐ **Odsyłacz do `E7-F1`:** `INSTRUKCJA-INSTALACJI.md`, Krok 5 pkt 3, obiecuje kupującemu
+  „strona sama odświeża status **aż do** «Mail wysłany»". To jest dokładnie to zdanie, które
+  `E7-F1` obala pomiarem — instrukcja powtarza obietnicę strony, nie jej zachowanie.
