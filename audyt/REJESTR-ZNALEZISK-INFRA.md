@@ -26,7 +26,15 @@
 > `narzedzia-qa/bramka-znaleziska.sh` (dziś bramka czyta TYLKO tamten plik — patrz DŁUG poniżej).
 > ⛔ Znaleziska produktu NIE wchodzą tutaj; tu wyłącznie infrastruktura, CI, wydanie i dokumenty.
 
-## Liczba znalezisk OTWARTYCH: 10
+## Liczba znalezisk OTWARTYCH: 18
+<!-- ⛔ LICZ KOMENDĄ, NIGDY Z GŁOWY — patrz I-23. Stan 1.09 rano, piąta runda:
+     51 wierszy tabeli, 50 unikalnych kodów (B-12 dwa razy: w starej tabeli i jako odwrócone),
+     18 otwartych, 28 zamkniętych, 1 zamknięte warunkowo, 2 w naprawie, 1 wycofane, 1 zaparkowane.
+     Suma statusów MUSI równać się liczbie wierszy — to jedyna kontrola, która łapie
+     liczenie słów statusu z tekstu opisowego. Komendy w sekcji CZWARTA RUNDA. -->
+<!-- ⛔ Ten licznik NIE MA STRAŻNIKA: bramka-znaleziska.sh czyta wyłącznie
+     audyt/REJESTR-ZNALEZISK.md. Dlatego rozjechał się o sześć pozycji (I-23). -->
+
 
 ## Znalezisk BEZ strażnika: 13
 <!-- Wszystkie 20 są dziś bez strażnika: to znaleziska w NARZĘDZIACH i CI, a nasze bramki
@@ -148,6 +156,14 @@ jeden przebieg CI się nie udał.**
 | `C12` | **SRED** · `CODEOWNERS` nie istnieje i nie miałby czym wymuszać | `audyt/plamy/` (C12+E5) | **OTWARTE** | **audytor** |
 | `E5` | **SRED** · `DECYZJE.md` niesie **4 decyzje sprzed piwotu** | jw. | **OTWARTE** | **audytor** |
 | `C13` | **MALE** · przebiegi CI **nie są wolne, one CZEKAJĄ** — jeden wykonawca, kolejka | zmierzone, zestawienie czasów w raporcie | **ZAMKNIETE** (pomiar) | **audytor** |
+
+## ⭐ PIĄTA RUNDA — 1.09, rano (koordynatorka, przy przeglądzie list)
+
+| kod | co | test (dowód) | status | skąd |
+|---|---|---|---|---|
+| `I-22` | **SRED** · **nasz własny test produkuje fałszywy przychód w panelu klienta.** Strażnik ścieżki osadzonej zostawia na stosie PRAWDZIWE zamówienie z każdego przebiegu — leży ich sześć po 149,00 PLN ze statusem `mail_wyslany`, więc liczą się do przychodu na Pulpicie. Ta sama rodzina co „test nie sprząta po sobie", tylko skutek jest widoczny dla właściciela sklepu, nie dla nas | zgłoszone przez buildera przy naprawie `A4b-F1`; sześć zamówień, z tego jedno jego, dwa audytora, trzy starsze. Znane wcześniej dwa: 9901519 i 9901622 | **OTWARTE** | **builder** (zgłosił) |
+| `I-23` | **DUZE** · **ten rejestr sam siebie źle liczy, i nic go nie pilnuje.** Nagłówek deklaruje „OTWARTYCH: 10", sekcja czwartej rundy „43 znaleziska, 13 otwartych" — pomiar daje **47 unikalnych kodów i 16 otwartych**. Rozjazd o sześć pozycji. To dokładnie klasa 90: dwa rejestry, jeden nie widzi drugiego — tylko tym razem drugim rejestrem jest **licznik tego samego pliku** | zmierzone komendą z sekcji czwartej rundy: szesnaście pozycji otwartych wobec dziesięciu deklarowanych, dwadzieścia osiem zamkniętych, jedna warunkowo, jedna w naprawie, jedna wycofana, jedna zaparkowana; wierszy 48, unikalnych kodów 47 (`B-12` figuruje dwa razy — w starej tabeli i jako odwrócone). ⛔ Sam ten wpis złapał mnie na klasie, którą opisuje: pierwsza wersja komórki miała **wypisane słowa statusów**, więc licznik policzył je jako statusy i suma przestała się zgadzać z liczbą wierszy. Nazwy statusów w treści opisu piszemy małymi literami. Przyczyna braku strażnika: `narzedzia-qa/bramka-znaleziska.sh` czyta **wyłącznie** `audyt/REJESTR-ZNALEZISK.md` — zero trafień na ten plik w `narzedzia-qa/`, `.github/` i `testy/` | **OTWARTE** — liczniki poprawione tym commitem, bramka do wpięcia | koordynatorka |
+| `B-14` | **DUZE** · **artefakty audytu wiozły żywe poświadczenia do repozytorium klienta.** Trzy zrzuty stron w `audyt/plamy/F5-teksty/` niosą nonce WordPressa i adres `admin-ajax` naszego stanowiska. Zapisaliśmy WYNIK oglądania strony zamiast sposobu jego uzyskania | bramka `poswiadczenia` w przebiegu 33466248858: **4 trafienia** (`dziekujemy.html:51`, `produkt-chatbot.html:59` i `:66`, `sklep.html:60`), `BRAMKA poswiadczenia: EXIT=1`. ⛔ Lokalnie u audytora te same bramki dały kod 0, bo poszły trybem tekstowym **7 z 10** — bramka poświadczeń w ogóle nie ruszyła. To nie była różnica środowiska, tylko inny ZESTAW bramek (nawrót klasy 63) | **W NAPRAWIE** (#251) — maskowanie wartości, treść zostaje jako dowód | koordynatorka |
 
 ⭐ **Kontekst od właściciela, którego nie ma w kodzie** (1.09): dane do faktury szły kiedyś
 **mailem**, pole na NIP dodano na stronę **później**. `zakup.php:1225-1227` obsługuje obie drogi
