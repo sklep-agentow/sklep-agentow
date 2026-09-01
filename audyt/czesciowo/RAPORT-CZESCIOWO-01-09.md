@@ -765,3 +765,97 @@ rozklad statusow na stosie: mail_wyslany=33 · oplacone=4 · mail_blad=4 · mail
 że zapytanie umie zwrócić wiersz, więc zero przy domkniętym zamówieniu jest faktem — ale
 `sklepag_domknij_zakup()` **nie zostało wywołane**. Pełny pomiar wymaga uruchomienia i zmiany
 stanu bazy; opis eksperymentu i jego skutków leży w meldunku do koordynatorki.
+
+## H2 część druga — REPLAY podpisanego webhooka na sesji JUŻ DOMKNIĘTEJ: **ochrona działa, zmierzone uruchomieniem**
+
+**Zgoda koordynatorki na dotknięcie bazy: udzielona, z warunkiem kalibracji.** Przyrząd:
+`audyt/czesciowo/H2-sonda-replay.php` (uruchamiany `wp eval-file`, tryb mutanta zmienną
+`SONDA_TRYB=mutant`).
+
+**Jak sonda nie zmienia stanu:** cały przebieg w `START TRANSACTION … ROLLBACK` (wszystkie
+tabele `sklepag_*` i `wp_options` są **InnoDB** — sprawdzone w `information_schema`), wysyłka
+przechwycona filtrem `pre_wp_mail` (liczy próby, **nic nie wychodzi**), zero ruchu do Stripe
+(ładunek podstawiony ręcznie). Sonda **sama sprawdza, czy rollback zadziałał** i przy
+niezgodności kończy kodem 2 zamiast meldować wynik.
+
+### Kalibracja — najpierw dowód, że sonda UMIE zwrócić 1
+
+Wada podłożona **bez tykania plików produktu**: filtr `query` WordPressa przechwytuje dokładnie
+ten jeden `UPDATE` i zdejmuje z niego warunek statusu — czyli mutuje CAS przejęcia wysyłki
+(`zakup.php:936`) w locie:
+```
+przed:  UPDATE … SET status='mail_w_toku' … WHERE stripe_session_id=%s AND status IN ('oplacone','mail_blad') AND mail_proby < 3
+mutant: UPDATE … SET status='mail_w_toku' … WHERE stripe_session_id=%s                                       AND mail_proby < 3
+```
+
+| przebieg | PRÓB WYSYŁKI | token zrotowany | wynik | **kod wyjścia** |
+|---|---|---|---|---|
+| **mutant** (warunek statusu zdjęty) | **1** | **TAK** (`f58e6aa8ec…` → `e9c0c5a62a…`) | „ochrona NIE działa" | **`EXIT=1`** |
+| **prawdziwy kod z `main`** | **0** | nie | „ochrona działa" | **`EXIT=0`** |
+
+W obu przebiegach: `mutacja CAS-a weszla: TAK` (tryb mutanta), `PO ROLLBACKU wiersz identyczny
+jak przed: TAK`, `domknij_zakup zwrocil: true` (czyli replay dostaje HTTP 200 — Stripe nie ponawia,
+i tak ma być).
+
+**Kontrola stanu po obu przebiegach:** `produkty 2 · sesje_checkout 52 · zamowienia 44 ·
+zdarzenia 2698 · opinie 33` — **identycznie jak przed**; wiersz `#9902289` bez zmian;
+łapacz poczty **98 wiadomości przed i po**.
+
+⭐ **Dlaczego to jest odpowiedź na pytanie, którego raport `L2-05` nie zadał:** tamten test
+mierzył replay na sesji **nieistniejącej**, czyli na ścieżce, która kończy się na
+`webhook_nieznana_sesja` i nic nie tworzy — więc CAS z `:936` nigdy nie był w tym pomiarze
+uruchomiony. Tutaj jest uruchomiony na sesji domkniętej i **trzyma**.
+
+⛔ **Czego ten pomiar NIE obejmuje:** warstwy podpisu (ładunek podstawiam za weryfikacją, więc
+mierzę zachowanie **po** przyjęciu zdarzenia, nie samą weryfikację); replayu **równoległego**
+(dwa żądania naraz — CAS jest atomowy, ale tego nie mierzyłem); replayu na sesji w stanie
+`mail_blad` z `mail_proby < 3`, gdzie ponowna wysyłka jest **zamierzona**.
+
+## Instrument, który skłamał — i jak to wyszło
+
+Pierwsza wersja sondy czytała tryb z `$argv[1]`. Pod `wp eval-file` **tego tam nie ma**, więc
+przebieg oznaczony jako „kalibracja" po cichu poszedł trybem `prawdziwy` i wypisał `EXIT=0`.
+Gdybym nie drukował nagłówka `TRYB:` w każdym przebiegu, zameldowałbym „kalibracja zdana"
+mając w ręku dwa identyczne przebiegi prawdziwego kodu. Poprawione na `$args[0]` + zmienną
+środowiskową, z komentarzem w pliku sondy. ⛔ Reguła: **sonda z trybami musi drukować, w którym
+trybie naprawdę poszła** — inaczej „kalibracja" jest deklaracją, nie pomiarem.
+
+---
+
+# H3 — POCZTA (MAILPIT)
+
+**Stan wejściowy z mapy:** 🟡, „audyt maili". **Wynik: 0 znalezisk, cztery tereny czysto —
+ale z trzema zastrzeżeniami do przyrządu, bo cały dowód pocztowy zlecenia stoi na tym łapaczu.**
+
+| # | Co sprawdzone | Wynik |
+|---|---|---|
+| 1 | **Którędy poczta naprawdę wychodzi** | **CZYSTO, zmierzone**: `wp-content/mu-plugins/mailpit-smtp.php` przestawia PHPMailera na SMTP `gethostbyname('sklep_mailpit')`:`1025`, `SMTPAuth=false`. `sendmail_path` w PHP zostaje domyślny, ale nie jest używany. Żadnej wtyczki SMTP w `plugins/` nie ma |
+| 2 | **Czy łapacz zmienia nadawcę produktu** | **CZYSTO**: mu-plugin ustawia `wp_mail_from` na `wordpress@example.com` **bez priorytetu** (10), a filtr produktu `sklepag_filtr_nadawca_email` jest dokładany **później** przy tym samym priorytecie — więc przy wypełnionej opcji `sklepag_nadawca_email` **wygrywa produkt**, a łapacz daje tylko wartość domyślną. To ważne dla `E7-F3`: obserwowane `From: wordpress@example.com` to **skutek pustej opcji**, nie nadpisania przez warsztat |
+| 3 | **Czy ścieżka AWARII wysyłki była kiedykolwiek ćwiczona** | **CZYSTO**: w bazie stoją zamówienia `mail_blad` z `mail_proby = 3` (`#10`, `#11`, `#19`, `#20`) — czyli budżet trzech prób i „panel-czerwone" mają pokrycie w danych. ⚠️ Wszystkie są z **lipca i sierpnia**; od tamtej pory nikt tej ścieżki nie ruszał |
+| 4 | **Czy moje dzisiejsze sondy czegoś nie wysłały** | **CZYSTO**: łapacz ma **98 wiadomości przed i po** wszystkich dzisiejszych przebiegach (`E7`, golden, replay). Filtry `pre_wp_mail` zadziałały |
+
+## Trzy zastrzeżenia do przyrządu — to jest treść „częściowo" w tym terenie
+
+1. ⛔ **Łapacz przyjmuje wszystko.** SMTP bez uwierzytelniania, bez TLS, bez SPF/DKIM/greylistingu.
+   „Mail wyszedł" na tym stosie znaczy wyłącznie **„PHP oddał wiadomość do SMTP"** — i nic
+   o dostarczalności u klienta. Dług jest zapisany (`CO-WISI`: „dostarczalność poczty na
+   hostingu (SPF/DKIM; dowód stoi na łapaczu)"), ale warto go czytać razem z tym, że **każdy
+   nasz dowód pocztowy ma tę granicę**.
+2. ⛔ **`wp_mail` nie ma tu jak zwrócić `false`.** Skoro łapacz przyjmuje wszystko, gałąź awarii
+   (`mail_blad`, ponowienia, kompensacja tokenu) **nie odpali się sama** — musi być wstrzyknięta.
+   Zielony przelot E2E nie jest więc dowodem, że tamta gałąź działa; dowodem są osobne testy
+   z podstawioną awarią.
+3. ⛔ **Dowód pocztowy jest ULOTNY.** Baza łapacza to `/tmp/mailpit-1787681659435740998.db`
+   **wewnątrz kontenera** (700 KB, 98 wiadomości, `MessagesDeleted: 0`, uptime ~7 dni).
+   `docker restart` albo odtworzenie kontenera kasuje **cały materiał dowodowy o mailach**,
+   po cichu i bez śladu. Jeśli któryś dowód w raportach powołuje się na „wiadomość w łapaczu",
+   ma dziś wartość dopóty, dopóki ten kontener stoi.
+
+## Czego w `H3` nie zmierzyłem
+
+- **Treści maili innych niż zakupowe** — E7 zmierzył mail po zakupie; nie sprawdzałem, czy
+  boty (ChatBot, Segregator) też wysyłają cokolwiek do klienta i czy ich nadawca jest spójny.
+- **Zachowania przy odrzuceniu przez serwer SMTP** (kod 5xx z łapacza) — nie da się wywołać
+  bez zmiany konfiguracji łapacza, czyli zmiany wspólnego stanowiska.
+- **Nagłówków `List-Unsubscribe`, `Message-ID`, `Date`** i tego, jak mail wygląda w filtrach
+  antyspamowych — poza zasięgiem łapacza.
