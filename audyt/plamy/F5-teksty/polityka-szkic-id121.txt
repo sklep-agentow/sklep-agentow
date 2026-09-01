@@ -1,0 +1,6 @@
+SZABLON — wypełnij danymi sprzedawcy przed publikacją.
+
+Administrator danych: [NAZWA, KONTAKT]
+Zakres: adres e-mail kupującego, dane transakcji, dziennik zdarzeń (90 dni).
+Podmioty przetwarzające: operator płatności Stripe; mechanizm poczty serwera.
+Boty w trybie AI wysyłają treść zapytań do dostawcy API — [UZUPEŁNIJ po włączeniu].

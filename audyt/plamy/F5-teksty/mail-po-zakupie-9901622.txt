@@ -1,0 +1,37 @@
+DLUGOSC=1630
+Dziękujemy za zakup w sklepie!
+
+Numer zamówienia: #9901622
+Produkt: ChatBot LIVE
+Data zakupu: 01.09.2026 02:29
+Kwota: 149,00 PLN (TRYB TESTOWY — płatność nie została pobrana)
+
+POTWIERDZENIE TWOJEJ ZGODY:
+Wyrażam zgodę na natychmiastowe dostarczenie treści cyfrowej i przyjmuję do wiadomości utratę prawa odstąpienia od umowy (art. 38 ustawy o prawach konsumenta).
+Zgoda zaznaczona przy zakupie 01.09.2026 02:28.
+
+POBIERZ SWÓJ PRODUKT:
+http://localhost:8890/wp-admin/admin-post.php?action=sklepag_pobierz&z=9901622&t=[TOKEN-USUNIETY-PRZEZ-AUDYTORA]
+Link jest ważny 3 dni i pozwala na 10 pobrań.
+
+INSTRUKCJA W SKRÓCIE:
+1. Pobierz paczkę ZIP z linku powyżej.
+2. W kokpicie WordPressa: Wtyczki → Dodaj → Wyślij wtyczkę na serwer → wybierz ZIP.
+3. Aktywuj i działaj — pełna instrukcja jest w paczce.
+
+GWARANCJA:
+14 dni gwarancji satysfakcji: jeśli bot nie spełni Twoich oczekiwań, napisz do nas — zwracamy pieniądze bez pytań. Zwrot oznacza wygaśnięcie prawa do aktualizacji i wsparcia dla kupionej kopii.
+Aby z niej skorzystać, odpisz na tego maila.
+
+OCEŃ SWÓJ ZAKUP:
+Gdy przetestujesz bota, zostaw opinię — to 2 minuty:
+http://localhost:8890/wp-admin/admin-post.php?action=sklepag_ocen&z=9901622&t=[TOKEN-USUNIETY-PRZEZ-AUDYTORA]
+Link do opinii jest jednorazowy i ważny 30 dni. Opinię publikujemy po potwierdzeniu zakupu i akceptacji.
+
+FAKTURA:
+Chcesz fakturę? Odpisz na tego maila w ciągu 3 miesięcy od zakupu i podaj dane firmy (nazwa, adres, NIP).
+
+Masz pytanie? Odpisz na tego maila.
+
+SPRZEDAWCA:
+Automatic AI

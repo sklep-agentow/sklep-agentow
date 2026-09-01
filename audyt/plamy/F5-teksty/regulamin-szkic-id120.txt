@@ -1,0 +1,6 @@
+SZABLON — wypełnij danymi sprzedawcy przed publikacją.
+
+Sprzedawca: [NAZWA, ADRES, KONTAKT]
+Produkty: treści cyfrowe (wtyczki WordPressa) dostarczane natychmiast po opłaceniu.
+Zgoda na natychmiastowe dostarczenie: kupujący wyraża ją przy zakupie i przyjmuje utratę prawa odstąpienia (art. 38 ust. o prawach konsumenta).
+Reklamacje: [MAIL WŁAŚCICIELA].
