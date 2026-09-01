@@ -438,3 +438,6 @@ Pełny komplet **97 zrzutów (19 MB)** z przelotu P1 zostaje w drzewie roboczym
 (`MAPA-TERENU-INFRA.md`, wiersz `G4` — „nikt nie badał czemu”), a 19 MB PNG-ów pogorszyłoby
 to bez potrzeby. Komplet odtwarza się jedną komendą:
 `flock /root/praca/zlecenia/wymiana/stos.lock node audyt/plamy/A4b-przelot-frontu.js`.
+
+---
+⭐ **Lista zadań dla następnej sesji** — to, czego przy tej plamie NIE zdążyłem sprawdzić, jest zebrane razem z pozostałymi w `audyt/plamy/PRZEKAZANIE-NASTEPNEJ-SESJI.md`. Sekcja „Czego NIE sprawdziłem" wyżej jest źródłem tamtej listy, nie jej zamiennikiem.

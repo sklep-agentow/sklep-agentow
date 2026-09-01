@@ -231,3 +231,6 @@ albo usunąć liczbę i zostawić samo uzasadnienie mechanizmu — zgodnie z nas
 ```
 | `C13-F1` | **MALE** · komentarz przy `concurrency` w `.github/workflows/recenzent.yml` uzasadnia mechanizm liczbą „jedna recenzja to ~2,5 minuty”, a wszystkie zmierzone zakończone przebiegi `Recenzent` trwały 5m37-24m54 (klasa 3: liczba w dokumentacji niesprawdzona po zmianie) | `gh run list --limit 25` — siedem czasów kontra jedna deklaracja; ⚠️ czasy zawierają kolejkę, a rozdzielenia kolejka/wykonanie dla `Recenzent` NIE zrobiłem — stąd waga drobna. ⛔ Naprawy nie proponuję do wykonania: zakaz zmian w `.github/` (otwarty PR koordynatorki) — BRAK strażnika | OTWARTE |
 ```
+
+---
+⭐ **Lista zadań dla następnej sesji** — to, czego przy tej plamie NIE zdążyłem sprawdzić, jest zebrane razem z pozostałymi w `audyt/plamy/PRZEKAZANIE-NASTEPNEJ-SESJI.md`. Sekcja „Czego NIE sprawdziłem" wyżej jest źródłem tamtej listy, nie jej zamiennikiem.

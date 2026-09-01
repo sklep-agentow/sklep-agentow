@@ -189,3 +189,6 @@ po numerze — numery się przesuwają").
 | `E5-F1` | **SRED** · `DECYZJE.md:7,9,10,19` (`D1`, `D3`, `D4`, `D13`) opisują architekturę Cloudflare Worker, której projekt nie ma od piwotu `D16`, i nie mają znacznika nieaktualności — choć plik go używa przy `D15` (`:21`, „UNIEWAŻNIONE D16”) i `D10`↔`D37`. `D3` jest ODWRÓCONY: odrzuca wspólny origin z gospodarzem jako ryzyko kradzieży sesji, a panel sklepu stoi w `wp-admin` tej samej witryny bez zapisanego uzasadnienia zmiany | wzorzec znacznika zaświecił przy `D15`, zgasł przy czterech pozostałych (próba kontrolna w tej samej komendzie) — BRAK strażnika | OTWARTE |
 | `E5-F2` | **MALE** · dziura w numeracji rejestru: `D29` i `D30` nie istnieją ani w `DECYZJE.md`, ani w `PLAN-PROJEKTU.md`; czytelnik nie wie, czy decyzje zgubiono, czy numery przeskoczono | `grep -cE '\| D29 \|'` → 0 i `\| D30 \|` → 0, próba kontrolna `\| D28b \|` → 1, `\| D37 \|` → 1 — BRAK strażnika | OTWARTE |
 ```
+
+---
+⭐ **Lista zadań dla następnej sesji** — to, czego przy tej plamie NIE zdążyłem sprawdzić, jest zebrane razem z pozostałymi w `audyt/plamy/PRZEKAZANIE-NASTEPNEJ-SESJI.md`. Sekcja „Czego NIE sprawdziłem" wyżej jest źródłem tamtej listy, nie jej zamiennikiem.

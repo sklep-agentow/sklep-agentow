@@ -472,3 +472,6 @@ się na nieistniejącą podstawę. **Waga: DROBNA.** **RODZAJ SKUTKU:** `zaobser
 werdykt ✅ dla członu „Regulamin i Polityka jako szablony bez cudzych danych" jest **prawdziwy
 co do litery** (cudzych danych tam nie ma) i **mylący co do wagi**: kryterium pytało o brak cudzych
 danych, nie o to, czy dokument jest regulaminem. Proponuję dopisać przy #11 odsyłacz do `F5-F1`/`F5-F2`.
+
+---
+⭐ **Lista zadań dla następnej sesji** — to, czego przy tej plamie NIE zdążyłem sprawdzić, jest zebrane razem z pozostałymi w `audyt/plamy/PRZEKAZANIE-NASTEPNEJ-SESJI.md`. Sekcja „Czego NIE sprawdziłem" wyżej jest źródłem tamtej listy, nie jej zamiennikiem.

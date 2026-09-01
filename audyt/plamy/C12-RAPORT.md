@@ -128,3 +128,6 @@ w tej kolejności (klasa 85 ściągi: wymóg włączony przed kodem wywraca gał
 ```
 | `C12-F1` | **MALE** · brak `CODEOWNERS` w 3 dozwolonych lokalizacjach i brak wiersza o nim w `DECYZJE.md`, przy istniejącej regule „nikt nie scala własnego PR-a” (`CLAUDE.md`) i przy zapisanej decyzji-bliźniaku `D9` o kompensacji ochrony gałęzi hookiem — brak wygląda jak przeoczenie, nie jak decyzja | `git log --all --diff-filter=A -- '*CODEOWNERS'` → 0 (próba kontrolna: `.github/` = 5 pozycji, `D9` w rejestrze = 1 trafienie); `gh api …/branches/main/protection` → 403 — BRAK strażnika | OTWARTE |
 ```
+
+---
+⭐ **Lista zadań dla następnej sesji** — to, czego przy tej plamie NIE zdążyłem sprawdzić, jest zebrane razem z pozostałymi w `audyt/plamy/PRZEKAZANIE-NASTEPNEJ-SESJI.md`. Sekcja „Czego NIE sprawdziłem" wyżej jest źródłem tamtej listy, nie jej zamiennikiem.

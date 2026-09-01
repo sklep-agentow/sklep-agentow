@@ -203,3 +203,6 @@ znacznik tylko wtedy, gdy sprawdzenie przeszło**. Gdy nie przeszło: zostawić 
 ```
 | `A6-F1` | **SRED** · `aktywacja.php:141-146` (aktywacja) i `:172-181` (podniesienie) wołają `dbDelta()` i BEZWARUNKOWO robią `update_option( 'sklepag_wersja_schematu', 9 )`; wynik `dbDelta` odrzucany, `$wpdb->last_error` niesprawdzany. Przy nieudanej migracji (brak `ALTER`, błąd MySQL) w bazie zostaje stary schemat, a brama `if ( wersja === STALA ) return;` zamyka się NA ZAWSZE. Przyczyna-matka H ściągi (klasy 23, 26) | `grep -rn "SHOW COLUMNS\|SHOW TABLES\|last_error"` po wtyczce → 1 trafienie i to w `zakup.php:880` (próba kontrolna: wzorzec działa). Na stanowisku NIEODTWORZONE — schemat kompletny — BRAK strażnika | OTWARTE |
 ```
+
+---
+⭐ **Lista zadań dla następnej sesji** — to, czego przy tej plamie NIE zdążyłem sprawdzić, jest zebrane razem z pozostałymi w `audyt/plamy/PRZEKAZANIE-NASTEPNEJ-SESJI.md`. Sekcja „Czego NIE sprawdziłem" wyżej jest źródłem tamtej listy, nie jej zamiennikiem.

@@ -276,3 +276,6 @@ starsze niż okno reklamacyjne, w tym samym kroku 4.
 | `F4-F2` | **SRED** · `INSTRUKCJA.md:229-230` i szablon Polityki obiecują BEZWARUNKOWO „znikają same (sprzątanie co 10 minut)”, choć ta sama instrukcja przy domykaniu zakupów (`:120-121`) zastrzega, że WP-Cron bywa martwy; Pulpit ma 6 komunikatów (`admin-dashboard.php:360,365,378,387,411,419`) i **żaden nie pilnuje zadań w tle ani retencji** | zmierzone na stanowisku: zdarzenie spóźnione o 2 h 31 min przy 10-min harmonogramie, `wp cron test` → cURL 7, `rate_limit` 17/17 przeterminowanych (najnowsze okno 56 min wcześniej), `sklepag_reconciliation_ostatnia` sprzed 2500 min — BRAK strażnika | OTWARTE |
 | `F4-F3` | **MALE** · `sesje_checkout` (49 wierszy, najstarszy 2026-08-18) nie jest objęta żadnym kasowaniem — trzyma `stripe_session_id` prowadzący do danych kupującego u Stripe, także dla porzuconych koszyków | `grep -rnE "DELETE FROM.*(sesje_checkout\|zamowienia\|opinie)"` → 0, próba kontrolna 3 — BRAK strażnika | OTWARTE |
 ```
+
+---
+⭐ **Lista zadań dla następnej sesji** — to, czego przy tej plamie NIE zdążyłem sprawdzić, jest zebrane razem z pozostałymi w `audyt/plamy/PRZEKAZANIE-NASTEPNEJ-SESJI.md`. Sekcja „Czego NIE sprawdziłem" wyżej jest źródłem tamtej listy, nie jej zamiennikiem.
