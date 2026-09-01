@@ -107,7 +107,25 @@
     var karta = checkout.createPaymentElement();
     karta.on('loaderror', naBladLadowania);
     karta.mount('#sklepag-platnosc-karta');
-    return checkout.loadActions().then(function (a) { actions = a; });
+    /* ⛔ `loadActions()` NIE oddaje obiektu akcji — oddaje KOPERTĘ `{ type, actions }`.
+       Przypisanie tu całej odpowiedzi zostawiało `actions` bez metody `confirm()`, więc klik
+       w „Zapłać" leciał `TypeError: actions.confirm is not a function`. Skutek dla kupującego:
+       napis zmieniał się na „Przetwarzam…", przycisk gasł I TAK ZOSTAWAŁ, żaden komunikat się
+       nie pokazywał, zamówienie nie powstawało, mail nie szedł. Sklep NIE SPRZEDAWAŁ.
+       (Zmierzony kształt: `{ type: 'success', actions: { confirm, getSession, … } }`.) */
+    return checkout.loadActions().then( function ( odpowiedz ) {
+      var akcje = odpowiedz && odpowiedz.actions;
+      if ( ! akcje || typeof akcje.confirm !== 'function' ) {
+        /* ⛔ KONTRAKT SPRAWDZAMY PRZY MONTOWANIU, nie przy kliknięciu. Kupujący dowiaduje się
+           o awarii, ZANIM wpisze numer karty, a nie po. Gdyby Stripe kiedyś zmienił kształt
+           odpowiedzi, będzie to widoczny błąd z drogą wyjścia, a nie martwy przycisk. */
+        var powod = odpowiedz && odpowiedz.error && odpowiedz.error.message
+          ? odpowiedz.error.message
+          : 'nieoczekiwany kształt odpowiedzi Stripe';
+        throw new Error( 'Nie udało się przygotować płatności (' + powod + '). Odśwież stronę i spróbuj ponownie; jeśli to się powtarza, napisz do właściciela sklepu.' );
+      }
+      actions = akcje;
+    } );
   }
 
   form.addEventListener('submit', function (e) {
@@ -137,7 +155,13 @@
   });
 
   btnZaplac.addEventListener('click', function () {
-    if (!actions || wToku) { return; }
+    if (wToku) { return; }
+    /* ⛔ Brak `actions` kończył się CICHYM `return`: klik nie robił nic i nie mówił nic.
+       Kupujący klikał „Zapłać" w kółko i nie miał jak się dowiedzieć, że nie ma czym zapłacić. */
+    if (!actions) {
+      pokazBlad('Płatność nie jest gotowa — formularz Stripe nie wstał. Kliknij „Wróć", odśwież stronę i spróbuj ponownie.');
+      return;
+    }
     wToku = true;
     btnZaplac.disabled = true;
     btnZaplac.textContent = 'Przetwarzam…';
@@ -147,6 +171,12 @@
       btnZaplac.disabled = false;
       btnZaplac.textContent = 'Zapłać (płatność testowa)';
     };
+    /* ⛔ `confirm()` potrafi rzucić SYNCHRONICZNIE — zanim powstanie jakakolwiek obietnica.
+       Taki wyjątek NIE przechodzi przez `.catch()` niżej: `odblokuj()` nie biegło, przycisk
+       zostawał martwy na „Przetwarzam…", a kupujący nie dostawał ani słowa. Dokładnie tak
+       wyglądała wada „sklep nie sprzedaje". Ta osłona zamyka KLASĘ: jakikolwiek przyszły
+       wyjątek na tej ścieżce kończy się komunikatem i odblokowanym przyciskiem, nie ciszą. */
+    try {
     actions.confirm().then(function (wynik) {
       /* Tu trafiamy TYLKO przy natychmiastowym błędzie (np. karta odrzucona). Przy sukcesie Stripe
          przekierowuje na return_url (strona „Dziękujemy”), a 3-D Secure obsługuje w swojej ramce. */
@@ -160,6 +190,10 @@
       pokazBlad(err && err.message ? err.message : 'Płatność przerwana. Spróbuj ponownie.');
       odblokuj();
     });
+    } catch (err) {
+      pokazBlad(err && err.message ? err.message : 'Płatność nie ruszyła. Odśwież stronę i spróbuj ponownie.');
+      odblokuj();
+    }
   });
 
   btnWroc.addEventListener('click', function () {
