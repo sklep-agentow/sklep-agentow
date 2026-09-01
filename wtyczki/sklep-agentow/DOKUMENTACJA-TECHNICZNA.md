@@ -1,6 +1,6 @@
 # Sklep Agentów — dokumentacja techniczna
 
-**Wersja wtyczki: 0.9.28 · wersja schematu bazy: 9 · WordPress 6.7+ · PHP 8.1+**
+**Wersja wtyczki: 0.9.31 · wersja schematu bazy: 10 · WordPress 6.7+ · PHP 8.1+**
 
 > **Po co ten dokument.** To jest **mapa systemu dla audytora i programisty**, nie ulotka.
 > Każda liczba i nazwa tutaj jest wzięta z kodu, nie z pamięci — jeśli coś się rozjedzie,
@@ -49,7 +49,7 @@ wyłącznie ustawienia i klucze — nigdy liczniki ani stan zamówień.
 | Tabela | Po co jest | Kto zapisuje |
 |---|---|---|
 | `produkty` | katalog: nazwa, adres, opis, cena, plik, aktywność | panel (CRUD) |
-| `sesje_checkout` | ślad rozpoczętych płatności; kolumna `stan` **współrozstrzyga**, czy powtórne kliknięcie zakupu dostaje zapamiętany adres checkoutu, czy nowy | rozpoczęcie zakupu |
+| `sesje_checkout` | ślad rozpoczętych płatności; kolumna `stan` **współrozstrzyga**, czy powtórne kliknięcie zakupu dostaje zapamiętany adres checkoutu, czy nowy; kolumny `produkt_*` niosą **migawkę produktu z chwili zapłaty** (patrz niżej) | rozpoczęcie zakupu |
 | `zamowienia` | ⭐ **jedyne źródło prawdy o stanie zakupu** | webhook + reconciliation |
 | `zdarzenia` | dziennik zdarzeń zamówienia (audyt ścieżki); retencja 90 dni — kasuje krok 4 crona `sklepag_dociagnij_zalegle` (`zakup.php`) | wszystkie moduły zakupu |
 | `logowania` | kto i kiedy logował się do panelu, z jakim skutkiem; retencja 90 dni (ten sam cron) | zaczepy logowania WP |
@@ -180,6 +180,28 @@ RÓWNOLEGLE, dwa niezależne silniki domykania — TU powstaje wiersz zamówieni
 jeden `UPDATE` z warunkiem na poprzedni stan — silnik, który przegra wyścig, wycofuje
 się **bez wysyłania drugiego maila**. Źródłem prawdy o ZAMÓWIENIU jest wyłącznie `zamowienia.status`.
 
+### Migawka produktu w `sesje_checkout` (schemat 10)
+
+Produkt wolno zmienić **między utworzeniem płatności a jej domknięciem**: właściciel podmienia
+plik, zmienia cenę albo wycofuje produkt ze sprzedaży. Do 0.9.30 domknięcie czytało tabelę
+produktów **ponownie** i z tego świeżego odczytu zapisywało do zamówienia `produkt_nazwa_kupiona`,
+`produkt_cena_kupiona` i `produkt_plik_kupiony` — czyli kolumny „kupiona" zamrażały stan
+z chwili **domknięcia**, nie zakupu. Kupujący płacił za jedno, a dostawał drugie.
+
+Od 0.9.31 checkout zapisuje razem z sesją `produkt_nazwa`, `produkt_slug`, `produkt_cena_grosze`,
+`produkt_waluta` i `produkt_plik`, a domknięcie bierze produkt **wyłącznie stamtąd**. Ścieżka
+pliku wystarczy, bo każde wgranie w panelu dostaje własną, losową nazwę (`produkt-<20 znaków>`) —
+podmiana pliku nie nadpisuje starej ścieżki.
+
+⭐ Skutek uboczny, który jest **poprawny**: domknięcie przestaje zależeć od tego, czy produkt
+nadal jest `aktywny` i czy w ogóle jeszcze istnieje. `aktywny = 0` blokuje **nowe** zakupy
+(checkout pyta o nie), a nie doręczenie zakupu już opłaconego; wcześniej skasowanie produktu
+między zapłatą a webhookiem kończyło się `domkniecie_brak_produktu` — pieniądze pobrane,
+zamówienie nie powstawało wcale.
+
+⚠️ Sesje utworzone **przed** migracją mają migawkę pustą; dla nich domknięcie sięga po produkt
+jak dawniej — zakupy wiszące w locie w chwili aktualizacji nie mogą zostać bez obsługi.
+
 ⚠️ `sesje_checkout` nie jest już wyłącznie śladem informacyjnym: od 0.9.18 jej kolumna `stan`
 bierze udział w decyzji, czy powtórne kliknięcie przycisku zakupu w oknie idempotencji dostanie
 zapamiętany adres checkoutu, czy nowy (`sklepag_sesja_czeka_na_platnosc()`). Warunkiem
@@ -210,8 +232,8 @@ po stronie serwera. To jest świadome ograniczenie, nie przeoczenie.
 
 | Stała | Wartość | Znaczenie |
 |---|---|---|
-| `SKLEPAG_WERSJA` | 0.9.28 | wersja wtyczki (assety, cache) |
-| `SKLEPAG_WERSJA_SCHEMATU` | 9 | wersja schematu bazy (migracje) |
+| `SKLEPAG_WERSJA` | 0.9.31 | wersja wtyczki (assety, cache) |
+| `SKLEPAG_WERSJA_SCHEMATU` | 10 | wersja schematu bazy (migracje) |
 | `SKLEPAG_LIMIT_POBRAN` | 10 | ile razy można pobrać plik z jednego wydanego linku (zerowane przy świeżym linku) |
 | `SKLEPAG_LINK_GODZIN` | 72 | ważność linku pobrania |
 | `SKLEPAG_OPINIA_DNI` | 30 | ważność jednorazowego linku „oceń bota" |
@@ -220,6 +242,34 @@ po stronie serwera. To jest świadome ograniczenie, nie przeoczenie.
 ⛔ **Każda z tych liczb pojawia się w treściach dla klienta** (mail, FAQ, strona
 produktu) **generowana ze stałej**, nie wpisana ręcznie — dokumentacja nie może
 rozjechać się z kodem.
+
+### Tryb testowy — jedno źródło prawdy
+
+`sklepag_tryb_testowy()` (`sklep-agentow.php`) orzeka tryb z **prefiksu klucza
+sekretnego Stripe** w opcji `sklepag_stripe_klucz_sekretny`. Osobnej opcji trybu
+**nie ma i nie ma jej przybyć**: przełącznik, który trzeba pamiętać przestawić,
+jest tą samą miną co napis wpisany na sztywno, tylko z dodatkowym krokiem.
+
+| Wartość opcji | Orzeczenie |
+|---|---|
+| `sk_test_…` | tryb testowy — wolno pisać, że płatność nie jest pobierana |
+| `sk_live_…` | sprzedaż na serio — żadnych napisów o trybie testowym |
+| pusta / nierozpoznany prefiks | **jak produkcyjny** (fail-closed) |
+
+⛔ **Fail-closed, nie fail-open.** Zdanie „płatności nie są pobierane" to obietnica
+wobec kupującego, nie ostrzeżenie: wolno ją wypowiedzieć tylko wtedy, gdy da się
+ją udowodnić. Brak klucza właściciel i tak widzi osobno — Pulpit zgłasza wtedy
+„Sklep nie przyjmie płatności".
+
+Pytają o to **wszystkie** miejsca, nigdy o obecność napisu: baner
+(`sklepag_baner_testowy()`, strona sklepu / produktu / „Dziękujemy"), etykiety CTA
+i notka z kartą testową (`includes/front-produkt.php`), obie wersje maila
+(`includes/mail-html.php`, `includes/zakup.php`), Pulpit i szczegóły zamówienia,
+sekcja Stripe w Ustawieniach.
+
+⛔ `assets/platnosc.js` **nadpisuje etykiety przycisków po renderze** („Otwieram
+płatność…", „Przetwarzam…") i odtwarza je z wartości **zapamiętanej z DOM-u przy
+starcie** — własny literał w tym pliku cofałby naprawę PHP w przeglądarce.
 
 ---
 

@@ -98,13 +98,37 @@ powstaje zamówienie i mail. Skąd wziąć sekret webhooka:
 **A. Strona na hostingu z publicznym adresem (docelowo):**
 1. Dashboard Stripe (Test mode) → Developers → Webhooks → Add endpoint.
 2. Adres endpointu: `https://TWOJA-DOMENA/wp-json/sklepag/v1/webhook`
-3. Zdarzenia do nasłuchu — zaznacz **OBA**:
-   - `checkout.session.completed` — zwykła płatność kartą,
-   - `checkout.session.async_payment_succeeded` — płatności, które potwierdzają
-     się z opóźnieniem (m.in. **BLIK**, przelewy).
+3. Zdarzenia do nasłuchu — zaznacz **wszystkie jedenaście**. To nie jest lista
+   „na wyrost": każdej pozycji odpowiada osobna gałąź w kodzie sklepu, a brak
+   którejkolwiek oznacza cichą stratę pieniędzy albo zamówienie, które nigdy się
+   nie domknie.
 
-   ⚠️ Podpięcie tylko pierwszego nie psuje zakupu, ale przy BLIK-u kupujący czeka
+   **Sprzedaż** — bez nich nie powstaje ani zamówienie, ani mail z linkiem:
+   - `checkout.session.completed` — zwykła płatność kartą,
+   - `checkout.session.async_payment_succeeded` — płatności potwierdzające się
+     z opóźnieniem (m.in. **BLIK**, przelewy).
+
+   **Płatność, która nie doszła do skutku** — porządkuje listę rozpoczętych zakupów:
+   - `checkout.session.async_payment_failed`
+   - `checkout.session.expired`
+
+   **Zwrot pieniędzy** — ⛔ bez nich zwrócone pieniądze zostają w przychodzie:
+   - `refund.created`
+   - `refund.updated`
+   - `charge.refunded`
+
+   **Obciążenie zwrotne** (kupujący reklamuje płatność w swoim banku) — ⛔ bank zabiera
+   pieniądze z Twojego konta od razu, a sklep bez tych zdarzeń dalej liczy je jako sprzedaż:
+   - `charge.dispute.created`
+   - `charge.dispute.funds_withdrawn`
+   - `charge.dispute.funds_reinstated`
+   - `charge.dispute.closed`
+
+   ⚠️ Podpięcie samej sprzedaży nie psuje zakupu, ale przy BLIK-u kupujący czeka
    na mail do najbliższego dociągania (do 10 minut) zamiast dostać go od razu.
+   ⛔ Pominięcie dwóch ostatnich grup **nie daje żadnego ostrzeżenia**: Pulpit po prostu
+   pokazuje przychód wyższy, niż masz naprawdę na koncie — bo liczy go jako kwotę zakupów
+   pomniejszoną o zwroty, o których nikt mu nie powiedział.
 4. Po utworzeniu skopiuj **Signing secret** (`whsec_…`) → wklej w
    Ustawieniach sklepu.
 
@@ -239,39 +263,46 @@ Włącz. Dalej prowadzą instrukcje W paczkach botów (konfiguracja w kwadrans).
 
 ## Test a produkcja — co trzeba zmienić, żeby sprzedawać naprawdę
 
-Obecnie WSZYSTKO działa w trybie testowym Stripe (baner na stronach sklepu
+Po instalacji sklep pracuje w trybie testowym Stripe (baner na stronach sklepu
 o tym przypomina). Przejście na prawdziwe płatności to osobna decyzja.
-Poniżej najważniejsze kroki. ⛔ **Nie zaczynaj ich sam** — punkt 6 wyjaśnia,
-dlaczego przejście na produkcję wymaga kontaktu z nami:
+Poniżej najważniejsze kroki — punkt 2 przełącza sam napisy o trybie, ale
+pozostałe kroki trzeba zrobić osobno, inaczej sklep przyjmie pieniądze
+i nie doręczy zakupu:
 
 1. **Aktywacja konta Stripe** — weryfikacja tożsamości i rachunek bankowy,
    po stronie Stripe.
 2. **Klucze produkcyjne** `sk_live_…` w Ustawieniach sklepu, w miejsce
-   testowych `sk_test_…`.
+   testowych `sk_test_…`. ⭐ To jednocześnie **jedyny przełącznik trybu**:
+   z prefiksu tego klucza sklep sam orzeka, czy pisać o płatności testowej
+   (patrz punkt 6).
 3. **Nowy webhook produkcyjny** z własnym sekretem `whsec_…` — sekret z trybu
    testowego NIE działa na produkcji (to osobne środowiska Stripe).
 4. **Wysyłka maili przez hosting lub SMTP** — bez tego mail po zakupie NIE
    wyjdzie, a kupujący nie dostanie linku do pobrania.
 5. **Regulamin i Polityka prywatności** wypełnione Twoimi danymi sprzedawcy
    i opublikowane (przy instalacji powstały jako szkice).
-6. **Oznaczenia trybu testowego** — ⛔ **żadne z nich nie znika samo.**
-   Sklep mówi o trybie testowym w wielu miejscach naraz, wszystkie wpisane na
-   stałe w kod. Kupujący widzi je m.in.:
-   - w banerze na liście produktów i na stronie produktu,
-   - ⛔ **w banerze na stronie „Dziękujemy za zakup", czyli na ekranie oglądanym
-     PO ZAPŁACENIU** — ktoś, kto właśnie zapłacił prawdziwie, przeczytałby tam,
-     że płatności nie są pobierane,
-   - w notce przy przycisku zakupu (numer karty testowej),
-   - w pytaniu „Co znaczy tryb testowy?" w sekcji FAQ,
-   - ⛔ **w treści e-maila wysyłanego po zakupie.**
+6. **Oznaczenia trybu testowego** — znikają **same**, razem z podmianą klucza
+   z punktu 2. Sklep nie ma osobnego przełącznika trybu: pyta o prefiks klucza
+   sekretnego. `sk_test_…` = tryb testowy, cokolwiek innego (w tym `sk_live_…`,
+   a także brak klucza) = sklep **nie** zapewnia, że pieniędzy nie pobiera.
 
-   Do tego panel administratora ma własne oznaczenia trybu testowego — te widzisz
-   tylko Ty, nie kupujący.
+   Zdejmowane są wszystkie naraz — kupujący nie zobaczy słowa „testowa”:
+   - baner na liście produktów, na stronie produktu i na stronie „Dziękujemy
+     za zakup" (ekran oglądany PO ZAPŁACENIU),
+   - dopisek „(płatność testowa)" na przyciskach „Kup teraz" i „Zapłać”
+     (także po nieudanej próbie płatności, gdy napis odtwarza przeglądarka),
+   - notka z numerem karty testowej przy formularzu zakupu,
+   - pytanie „Co znaczy tryb testowy?" w sekcji FAQ (ustępuje miejsca pytaniu
+     o bezpieczeństwo płatności),
+   - dopisek o niepobranej płatności w **obu wersjach** e-maila po zakupie.
 
-   ⛔ **Nie traktuj powyższej listy jako kompletnej** — dlatego przejście na
-   prawdziwe płatności zaczyna się od jednego kroku: **napisz do nas**.
-   Przejrzenie całego sklepu i usunięcie wszystkich oznaczeń to nasza robota
-   i nowa paczka. Sam z panelu tego nie wyłączysz.
+   Twoje własne ekrany też: znacznik przy tytule Pulpitu, dopisek przy kwocie
+   w szczegółach zamówienia i tytuł sekcji Stripe w Ustawieniach.
+
+   ⛔ Zmiana klucza zdejmuje **napisy**, nie całą resztę tej listy: bez kroków
+   3–5 sklep przyjmie prawdziwe pieniądze i nie doręczy zakupu. Jeśli cokolwiek
+   z tej listy budzi Twoją wątpliwość — **napisz do nas** przed pierwszą
+   prawdziwą sprzedażą.
 7. **Wtyczka bezpieczeństwa lub WAF** (jeśli działa na stronie) — dopuść
    publiczny POST na `…/wp-json/sklepag/v1/webhook`; autoryzacją jest podpis
    Stripe, nie logowanie.

@@ -60,3 +60,13 @@ status-bez-warunku
 # Bramka nie pisze drugiego porównania — woła kroki 1-2 prawdziwego skryptu pakującego
 # (BUDUJ_TYLKO_SPRAWDZ=1), więc nie da się jej rozjechać z oryginałem.
 paczka
+
+# ROZSZERZENIE 2026-09-01 (znalezisko A7-F1): bramka `zdarzenia-webhooka` — lista zdarzeń
+# Stripe w instrukcji dla klienta musi być RÓWNA liście obsługiwanej w `zakup.php`.
+# Powód z życia i o pieniądzach: instrukcja kazała zaznaczyć DWA zdarzenia, kod obsługiwał
+# JEDENAŚCIE. Klient wykonujący ją dosłownie nie dowiadywał się o zwrocie ani o obciążeniu
+# zwrotnym, a Pulpit liczy przychód jako kwotę pomniejszoną o zwroty — oddane pieniądze
+# zostawały w statystyce sprzedaży na zawsze, bez jednego ostrzeżenia. Sama poprawka tekstu
+# zamyka egzemplarz; bramka zamyka klasę, bo każde nowe zdarzenie w kodzie wymusza teraz
+# ruszenie dokumentu.
+zdarzenia-webhooka

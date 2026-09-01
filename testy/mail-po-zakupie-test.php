@@ -144,7 +144,18 @@ sprawdz( 'C7 html: numer zamówienia, stopka sprzedawcy i NIP', false !== strpos
 sprawdz( 'C8 html: gwarancja z danych produktu', false !== strpos( $html, esc_html( $t_prod['gwarancja'] ) ) );
 sprawdz( 'C9 html: link do opinii, gdy podany', false !== strpos( $html, esc_url( $link_op ) ) );
 sprawdz( 'C10 html: bez <style> w <head> (Gmail wycina) i poniżej 60 KB (Gmail obcina od 102 KB)', false === stripos( $html, '<style' ) && strlen( $html ) < 60000, strlen( $html ) . ' B' );
-sprawdz( 'C11 html: tryb testowy oznaczony tym samym zdaniem co w tekście', false !== strpos( $html, 'TRYB TESTOWY — płatność nie została pobrana' ) );
+/* ⛔ Do 0.9.28 ten warunek asertował napis BEZWARUNKOWO — a napis był w kodzie na sztywno.
+   Po wpięciu trybu (P-3) taki test zieleniałby na kłamstwie: przy kluczu produkcyjnym mail
+   NIE ma prawa mówić o niepobranej płatności. Pytamy więc o TRYB, nie o obecność tekstu,
+   i sprawdzamy OBIE strony warunku — pełny pomiar wszystkich ścieżek robi
+   `testy/tryb-testowy-z-klucza-test.php`. */
+$zdanie_trybu = 'TRYB TESTOWY — płatność nie została pobrana';
+sprawdz(
+	'C11 html: zdanie o trybie testowym dokładnie wtedy, gdy sklep jest w trybie testowym',
+	sklepag_tryb_testowy() === ( false !== strpos( $html, $zdanie_trybu ) ),
+	sklepag_tryb_testowy() ? 'stos w trybie testowym — zdanie ma być' : 'stos na kluczu produkcyjnym — zdania ma nie być'
+);
+sprawdz( 'C11b html i tekst mówią o trybie TO SAMO (dwie wersje maila nie mają prawa się różnić o pieniądze)', ( false !== strpos( $html, $zdanie_trybu ) ) === ( false !== strpos( $tekst, $zdanie_trybu ) ) );
 $html2 = sklepag_zbuduj_mail_html( $bez_slugu, $stare, $link, '' );
 sprawdz( 'C12 html: bez zgody/gwarancji/opinii mail dalej się buduje z linkiem', false !== strpos( $html2, esc_url( $link ) ) && false === strpos( $html2, 'Potwierdzenie Twojej zgody' ) && false === strpos( $html2, 'Gwarancja</p>' ) && false === strpos( $html2, 'Oceń swój zakup' ) );
 

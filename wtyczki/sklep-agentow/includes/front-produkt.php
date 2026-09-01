@@ -617,8 +617,15 @@ function sklepag_formularz_zakupu( $p ) {
 		. '<label class="sklepag-faktura-adres"><span>Adres firmy</span><textarea name="faktura_adres" rows="2" maxlength="200" autocomplete="street-address" placeholder="ul. Przykładowa 1, 00-001 Warszawa"></textarea></label>'
 		. '<p class="sklepag-faktura-notka">Pola nieobowiązkowe — wypełnij wszystkie trzy, jeśli chcesz fakturę na firmę. Dane trafią do potwierdzenia zakupu i posłużą wyłącznie do wystawienia faktury; fakturę prześlemy osobno mailem. Podanie NIP-u nie zmienia Twoich praw kupującego.</p>'
 		. '</div></details>';
-	$html .= '<button type="submit" class="sklepag-kup">Kup teraz (płatność testowa)</button>';
-	$html .= '<p class="sklepag-mono-etykieta sklepag-zakup-notka">STRIPE · TRYB TESTOWY · KARTA 4242 4242 4242 4242</p>';
+	/* ⛔ „(płatność testowa)" i notka z kartą testową to OBIETNICA wobec kupującego, nie ozdoba.
+		Na kluczu produkcyjnym przycisk mówi po prostu „Kup teraz", a notka znika — inaczej sklep
+		zapewniałby, że nie pobiera pieniędzy, pobierając je. Tryb pyta jedno źródło. */
+	$html .= '<button type="submit" class="sklepag-kup">' . ( sklepag_tryb_testowy() ? 'Kup teraz (płatność testowa)' : 'Kup teraz' ) . '</button>';
+	if ( sklepag_tryb_testowy() ) {
+		$html .= '<p class="sklepag-mono-etykieta sklepag-zakup-notka">STRIPE · TRYB TESTOWY · KARTA 4242 4242 4242 4242</p>';
+	} else {
+		$html .= '<p class="sklepag-mono-etykieta sklepag-zakup-notka">PŁATNOŚĆ OBSŁUGUJE STRIPE</p>';
+	}
 	$html .= '</form>';
 	// Panel płatności osadzonej (0.9.25): `platnosc.js` odsłania go po utworzeniu sesji i montuje w nim
 	// elementy Stripe (e-mail, karta) — formularz karty jest w ramce Stripe (PCI), my dajemy tylko ramy i kolory.
@@ -628,7 +635,7 @@ function sklepag_formularz_zakupu( $p ) {
 		. '<div id="sklepag-platnosc-kontakt"></div>'
 		. '<div id="sklepag-platnosc-karta"></div>'
 		. '<p class="sklepag-platnosc-blad" id="sklepag-platnosc-blad" role="alert" hidden></p>'
-		. '<button type="button" class="sklepag-kup" id="sklepag-platnosc-zaplac" disabled>Zapłać (płatność testowa)</button>'
+		. '<button type="button" class="sklepag-kup" id="sklepag-platnosc-zaplac" disabled>' . ( sklepag_tryb_testowy() ? 'Zapłać (płatność testowa)' : 'Zapłać' ) . '</button>'
 		. '<button type="button" class="sklepag-platnosc-wroc" id="sklepag-platnosc-wroc">Wróć</button>'
 		. '<p class="sklepag-platnosc-notka">Dane karty trafiają bezpośrednio do Stripe (ramka Stripe na tej stronie). Po zapłacie wrócisz na stronę potwierdzenia, a link do pobrania przyjdzie mailem.</p>'
 		. '</section>';
@@ -813,7 +820,7 @@ function sklepag_render_produkt( $slug ) {
 		$html .= '<p class="sklepag-pasek-statusu"><span class="sklepag-kropka" aria-hidden="true"></span>[ <span class="sklepag-akcent">' . esc_html( $glowa[0] ) . '</span> · ' . esc_html( isset( $glowa[1] ) ? $glowa[1] : '' ) . ' ] ' . esc_html( $t['pasek'] . $t['pasek_zywy'] ) . '</p>';
 	}
 	$html .= $cena;
-	$html .= '<p><a class="sklepag-kup sklepag-kup-kotwica" href="#sklepag-zakup">Kup teraz (płatność testowa)</a></p>';
+	$html .= '<p><a class="sklepag-kup sklepag-kup-kotwica" href="#sklepag-zakup">' . ( sklepag_tryb_testowy() ? 'Kup teraz (płatność testowa)' : 'Kup teraz' ) . '</a></p>';
 	if ( $t && ! empty( $t['gwarancja'] ) ) {
 		$html .= '<p class="sklepag-trigger">✔ 14 dni na zwrot — bez pytań</p>';
 	}
@@ -1002,7 +1009,7 @@ function sklepag_render_produkt( $slug ) {
 	$html .= '<section class="sklepag-sekcja sklepag-sekcja--pelna sklepag-final sklepag-final--baner">';
 	$html .= '<div class="sklepag-final-tresc">';
 	$html .= '<h2 class="sklepag-sekcja-tytul">' . esc_html( $t ? $t['final'] : 'Gotowy na start?' ) . '</h2>';
-	$html .= '<p class="sklepag-final-przyciski"><a class="sklepag-kup sklepag-kup-kotwica" href="#sklepag-zakup">Kup teraz (płatność testowa)</a></p>';
+	$html .= '<p class="sklepag-final-przyciski"><a class="sklepag-kup sklepag-kup-kotwica" href="#sklepag-zakup">' . ( sklepag_tryb_testowy() ? 'Kup teraz (płatność testowa)' : 'Kup teraz' ) . '</a></p>';
 	// Podpis duetu = TEN produkt (na stronie ChatBota podpis listy z nazwą Segregatora mylił).
 	$podpis_duetu = '<p class="sklepag-mono-etykieta sklepag-final-duet-podpis">[ <span class="sklepag-akcent">' . esc_html( $p->nazwa ) . '</span>' . ( $t && ! empty( $t['gwarancja'] ) ? ' · 14 dni na zwrot' : '' ) . ' ]</p>';
 	$html        .= '</div>' . sklepag_duet_maskotek( $podpis_duetu ) . '</section>';

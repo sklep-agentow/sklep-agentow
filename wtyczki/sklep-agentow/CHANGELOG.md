@@ -20,6 +20,79 @@ Nic jeszcze.
 
 ---
 
+## [0.9.31] — 2026-09-01 · schemat bazy 10 (`sesje_checkout.produkt_*`)
+
+### Naprawione
+- **Kupujący dostaje dokładnie to, co kupił — także wtedy, gdy produkt zmienił się w trakcie
+  płatności.** Domknięcie zakupu czytało tabelę produktów **ponownie** i z tego świeżego odczytu
+  zapisywało do zamówienia nazwę, cenę i ścieżkę pliku. Kolumny „kupiona" zamrażały więc stan
+  z chwili **domknięcia**, nie zakupu, a produkt wolno zmienić między jednym a drugim. Skutki
+  były trzy, każdy osobno: (1) właściciel podmieniał plik i kupujący pobierał **co innego, niż
+  kupił**; (2) właściciel zmieniał cenę, a Stripe pobrał starą — w jednym wierszu zamówienia
+  leżały dwie różne kwoty z dwóch źródeł; (3) odczyt przy domknięciu nie pytał o `aktywny`,
+  choć checkout pyta. Dane produktu są teraz **zamrażane w chwili tworzenia płatności**
+  (`sesje_checkout.produkt_*`, schemat 10), a domknięcie bierze je wyłącznie z tej migawki.
+- **Skasowanie produktu między zapłatą a webhookiem nie gubi już zakupu.** Wcześniej kończyło się
+  wpisem `domkniecie_brak_produktu` i zamówienie nie powstawało w ogóle — pieniądze pobrane,
+  kupujący bez niczego. Migawka wystarcza do wydania zakupu bez tabeli produktów.
+
+### Bezpieczeństwo obrotu
+- Wycofanie produktu ze sprzedaży (`aktywny = 0`) blokuje **nowe** zakupy, a **nie** doręczenie
+  zakupu już opłaconego. To rozróżnienie jest teraz w kodzie, nie w przypadku.
+
+---
+
+## [0.9.30] — 2026-09-01 · schemat bazy bez zmian (9)
+
+### Naprawione (RODO)
+- **Anonimizacja usuwa adres e-mail z dziennika zdarzeń także wtedy, gdy leży tam w postaci
+  zakodowanej.** Wpis o eksporcie CSV zapisuje użyte filtry przez `wp_json_encode()` bez flag,
+  a ten eskejpuje ukośnik: adres z `/` w części lokalnej (RFC 5321 dopuszcza) leżał w bazie
+  jako `a\/b@x.pl`. Wyszukiwanie znało wyłącznie postać surową, więc ślad zostawał — a wtyczka
+  **potwierdzała usunięcie**: niezrealizowane żądanie RODO z fałszywym dowodem wykonania.
+  Adres szukany jest teraz w każdej postaci, w jakiej może w dzienniku leżeć; postać zakodowana
+  bierze się z tej samej funkcji, która ją tworzy, więc nie ma jak rozjechać się z PHP.
+  Zamyka znaną granicę opisaną przy 0.9.19.
+- **Pomiar skutku przestał dzielić ślepotę z czyszczeniem.** Licznik śladów miał własne,
+  równie wąskie zapytanie — z definicji nie mógł zobaczyć tego, co czyszczenie pomijało.
+  Postacie, kotwice i wybór kandydatów mają jedno źródło, z którego korzystają oba.
+  Zakotwiczenie działa tak samo na obu postaciach: wpis innego kupującego, którego adres
+  zawiera nasz jako końcówkę, zostaje nietknięty również w postaci zakodowanej.
+
+---
+
+## [0.9.29] — 2026-09-01 · schemat bazy bez zmian (9)
+
+### Naprawione
+- **Sklep przestaje zapewniać kupującego, że nie pobiera pieniędzy, gdy je pobiera.** Napis
+  „TRYB TESTOWY — płatności nie są pobierane" i jego rodzeństwo były wpisane w kod bez jednego
+  warunku: po wymianie kluczy Stripe na produkcyjne stały dalej — na stronie sklepu, na stronie
+  produktu, na ekranie „Dziękujemy" oglądanym PO ZAPŁACENIU i w obu wersjach maila po zakupie.
+  Tryb orzeka teraz **jedna funkcja** (`sklepag_tryb_testowy()`) z **prefiksu klucza sekretnego
+  Stripe**: `sk_test_…` = tryb testowy, `sk_live_…`, nierozpoznany prefiks albo brak klucza =
+  sklep milczy o trybie testowym (fail-closed — zdanie o niepobranej płatności to obietnica,
+  wolno je powiedzieć tylko wtedy, gdy da się je udowodnić). Osobnej opcji do klikania świadomie
+  **nie ma**: przełącznik, który trzeba pamiętać przestawić, byłby tą samą miną z dodatkowym krokiem.
+- **Etykiety przycisków nie wracają do wersji testowej w przeglądarce.** `assets/platnosc.js`
+  nadpisuje napisy na przyciskach zakupu i odtwarzał je z własnych literałów — poprawka po stronie
+  serwera była tam cofana w locie (kupujący z kluczem produkcyjnym po nieudanej próbie płatności
+  znów widział „Kup teraz (płatność testowa)"). Skrypt zapamiętuje teraz etykietę z DOM-u przy
+  starcie; jedynym źródłem tekstu jest PHP.
+- **Ekrany właściciela mówią to samo co front:** znacznik przy tytule Pulpitu, dopisek „(tryb
+  testowy)" przy kwocie w szczegółach zamówienia i tytuł sekcji Stripe w Ustawieniach pytają
+  o ten sam tryb. Opis pola kluczy mówi wprost, że prefiks decyduje o trybie sklepu.
+- **Sekcja FAQ na liście sklepu** zamienia pytanie „Co znaczy tryb testowy?" na pytanie
+  o bezpieczeństwo płatności, gdy sklep sprzedaje naprawdę (kafel nie znika — siatka jest
+  dwukolumnowa).
+
+### Dokumentacja
+- `INSTRUKCJA.md`, `dokumentacja/INSTRUKCJA-INSTALACJI.md` (rozdział „Test a produkcja"),
+  `README.md` i `PONAD-SPECYFIKACJE.md` mówiły, że oznaczenia trybu są wpisane na stałe
+  i **nie znikają same** — po tej zmianie znikają razem z podmianą klucza. Instrukcja instalacji
+  nadal ostrzega, że sama podmiana klucza nie wystarczy do sprzedaży (webhook, poczta, dokumenty).
+
+---
+
 ## [0.9.28] — 2026-08-31 · schemat bazy 9 (zamowienia.dor_*)
 
 ### Naprawione

@@ -31,6 +31,80 @@ const SKLEPAG_RODO_PORCJA = 100;
  * ========================================================================= */
 
 /**
+ * Postacie, w jakich WARTOSĆ może leżeć w opisie zdarzenia.
+ *
+ * ⛔ POWÓD ISTNIENIA TEJ FUNKCJI. Dziennik nie trzyma jednej postaci danej. Eksport CSV
+ * zapisuje użyte filtry przez `wp_json_encode()` BEZ flag (`admin-dashboard.php`), a ten
+ * eskejpuje ukośnik na `\/`, cudzysłów na `\"`, odwrotny ukośnik na `\\` i znaki spoza
+ * ASCII na `\uXXXX`. Adres `a/b@x.pl` (RFC 5321 dopuszcza `/` w części lokalnej) leży
+ * więc w bazie jako `a\/b@x.pl` — i wyszukiwanie po postaci SUROWEJ go nie widziało.
+ * Ślad zostawał, a wtyczka potwierdzała usunięcie: RODO niezrealizowane z dowodem wykonania.
+ *
+ * ⛔ Postać zakodowaną bierzemy Z TEJ SAMEJ FUNKCJI, która ją tworzy, zamiast wyliczać
+ * listę znaków do podmiany. Wyliczanka rozjechałaby się z PHP przy pierwszej zmianie
+ * reguł eskejpowania; `wp_json_encode()` z definicji nie może się rozjechać sam ze sobą.
+ *
+ * @param string $wartosc Dana szukana w dzienniku (adres e-mail).
+ * @return string[] Postacie bez powtórzeń i bez pustych.
+ */
+function sklepag_postacie_w_dzienniku( $wartosc ) {
+	$postacie = array( (string) $wartosc );
+	$json     = wp_json_encode( (string) $wartosc );
+	if ( is_string( $json ) && strlen( $json ) >= 2 ) {
+		// Zdejmujemy same cudzysłowy pakujące — w środku zostaje dokładnie to, co trafia do opisu.
+		$postacie[] = substr( $json, 1, -1 );
+	}
+	return array_values( array_unique( array_filter( $postacie, static fn( $p ) => '' !== $p ) ) );
+}
+
+/**
+ * Zakotwiczone wzorce dla wszystkich postaci — JEDNA definicja granicy dla czyszczenia i pomiaru.
+ *
+ * ⛔ Kotwica obowiązuje TAK SAMO na postaci zakodowanej. Adres jednego kupującego bywa
+ * końcówką adresu innego (`ala@x.pl` siedzi w `bala@x.pl`) i dotyczy to obu postaci naraz —
+ * niezakotwiczona druga postać przepisywałaby cudze wpisy dokładnie tak, jak kiedyś pierwsza.
+ *
+ * @param string[] $postacie Wynik `sklepag_postacie_w_dzienniku()`.
+ * @return string[] Wyrażenia regularne.
+ */
+function sklepag_wzorce_w_dzienniku( $postacie ) {
+	$wzory = array();
+	foreach ( (array) $postacie as $p ) {
+		$wzory[] = '/(?<!' . SKLEPAG_GRANICA_ADRESU . ')' . preg_quote( (string) $p, '/' ) . '(?!' . SKLEPAG_GRANICA_ADRESU . ')/';
+	}
+	return $wzory;
+}
+
+/**
+ * Wiersze dziennika, które MOGĄ nieść którąkolwiek z postaci.
+ *
+ * SQL służy wyłącznie do ZAWĘŻENIA kandydatów — rozstrzyga zakotwiczone dopasowanie w PHP.
+ * `esc_like()` obowiązkowy: `_` i `%` są dzikimi kartami SQL, a adres może je zawierać.
+ *
+ * ⛔ Czyszczenie i pomiar pytają TĄ SAMĄ funkcją. Gdy pomiar miał własne zapytanie, dzielił
+ * z czyszczeniem tę samą ślepotę i nie miał jak jej zobaczyć — mierzył to, co naprawa
+ * i tak pomijała.
+ *
+ * @param string[] $postacie Wynik `sklepag_postacie_w_dzienniku()`.
+ * @return array Wiersze (id, opis).
+ */
+function sklepag_kandydaci_z_dziennika( $postacie ) {
+	global $wpdb;
+	$postacie = (array) $postacie;
+	if ( ! $postacie ) {
+		return array();
+	}
+	$warunki = implode( ' OR ', array_fill( 0, count( $postacie ), 'opis LIKE %s' ) );
+	$args    = array();
+	foreach ( $postacie as $p ) {
+		$args[] = '%' . $wpdb->esc_like( (string) $p ) . '%';
+	}
+	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare,WordPress.DB.DirectDatabaseQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- warunek złożony WYŁĄCZNIE z `opis LIKE %s` (po jednym na postać, liczba z count()), wartości idą przez prepare(); sniff nie widzi placeholderów schowanych w interpolowanym {$warunki}.
+	return (array) $wpdb->get_results( $wpdb->prepare( "SELECT id, opis FROM {$wpdb->prefix}sklepag_zdarzenia WHERE {$warunki}", $args ) );
+	// phpcs:enable
+}
+
+/**
  * Anonimizacja kupującego przy JEDNYM zamówieniu (RODO).
  *
  * Kolejność jest kontraktem, nie stylem: najpierw ślady WTÓRNE (adres w opisach zdarzeń,
@@ -47,11 +121,13 @@ const SKLEPAG_RODO_PORCJA = 100;
  * ⛔ Dopasowanie jest ZAKOTWICZONE na granicy znaków adresu: adres jednego kupującego bywa
  * końcówką adresu innego, więc niezakotwiczona podmiana przepisywałaby cudze wpisy.
  *
- * ⚠️ ZNANA GRANICA TEJ FUNKCJI: adres zawierający `/` w części lokalnej (RFC dopuszcza,
- * w praktyce spotykany wyjątkowo) trafia do dziennika przez `wp_json_encode` jako `\/`
- * i NIE zostanie tu znaleziony — wyszukiwanie idzie po surowej postaci adresu. Taki ślad
- * zostanie w dzienniku, mimo potwierdzenia usunięcia. Nazwane świadomie, nie przeoczone:
- * domknięcie wymaga szukania obu postaci naraz i własnego przypadku testowego.
+ * ⛔ ADRES SZUKANY JEST W KAŻDEJ POSTACI, w jakiej może leżeć w dzienniku — surowej ORAZ
+ * zakodowanej przez `wp_json_encode()` (eksport CSV zapisuje tak użyte filtry, więc adres
+ * z `/` w części lokalnej leży jako `a\/b@x.pl`). Do 0.9.29 wyszukiwanie znało wyłącznie
+ * postać surową: ślad zostawał, a wtyczka potwierdzała usunięcie. Postacie, kotwice
+ * i wybór kandydatów mają JEDNO źródło (`sklepag_postacie_w_dzienniku()`), z którego
+ * korzysta i czyszczenie, i pomiar — pomiar z własnym zapytaniem dziedziczył ślepotę
+ * czyszczenia i nie miał jak jej zobaczyć.
  *
  * Potwierdzenie usunięcia idzie WYŁĄCZNIE za zmierzonym stanem po zapisie, i to we
  * wszystkich trzech miejscach naraz. Przy niepowodzeniu: zdarzenie `anonimizacja_blad`
@@ -117,31 +193,36 @@ function sklepag_anonimizuj_zamowienie( $id, $zachowaj_dane_faktury = false ) {
 		 * do dziennika takze w wierszach BEZ `zamowienie_id` — np. wpis o eksporcie CSV
 		 * zapisuje uzyte filtry, a wsrod nich fraze wyszukiwania, ktora bywa e-mailem.
 		 *
-		 * `esc_like()` obowiazkowy: `_` i `%` sa dzikimi kartami SQL, a adres moze je zawierac.
-		 *
-		 * ⛔ DOPASOWANIE MUSI BYC ZAKOTWICZONE. `REPLACE` w SQL zamienia KAZDY podciag,
-		 * a adres jednego kupujacego bywa koncowka adresu innego (`ala@x.pl` siedzi
-		 * w `bala@x.pl`). SQL sluzy wylacznie do ZAWEZENIA kandydatow, dopasowanie liczy PHP.
+		 * ⛔ I W KAZDEJ POSTACI, W JAKIEJ MOZE TAM LEZEC. Ten sam wpis o eksporcie sklada
+		 * opis przez `wp_json_encode()`, wiec adres z ukosnikiem w czesci lokalnej lezy jako
+		 * `a\/b@x.pl`. Wyszukiwanie po samej postaci surowej zostawialo taki slad, a wtyczka
+		 * i tak potwierdzala usuniecie. Postacie i kotwice pochodza z JEDNEGO zrodla
+		 * (`sklepag_postacie_w_dzienniku()` / `sklepag_wzorce_w_dzienniku()`), tego samego,
+		 * ktorego uzywa pomiar nizej — inaczej pomiar odziedziczylby slepote czyszczenia.
 		 */
 		$znacznik  = '[usunięto — RODO]';
-		$kandydaci = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT id, opis FROM {$wpdb->prefix}sklepag_zdarzenia WHERE opis LIKE %s",
-				'%' . $wpdb->esc_like( $email ) . '%'
-			)
-		);
-		/* ⛔ JEDNA definicja granicy, dwa uzycia: czyszczenie i pomiar MUSZA dopasowywac identycznie. */
-		$wzor = '/(?<!' . SKLEPAG_GRANICA_ADRESU . ')' . preg_quote( $email, '/' ) . '(?!' . SKLEPAG_GRANICA_ADRESU . ')/';
+		$postacie  = sklepag_postacie_w_dzienniku( $email );
+		$wzory     = sklepag_wzorce_w_dzienniku( $postacie );
+		$kandydaci = sklepag_kandydaci_z_dziennika( $postacie );
 		foreach ( (array) $kandydaci as $k ) {
-			$nowy = preg_replace( $wzor, $znacznik, (string) $k->opis );
-			if ( null === $nowy ) {
-				/* ⛔ `null` to AWARIA silnika wyrazen, nie „brak dopasowania”. Ciche
-					potraktowanie jej jak braku adresu zostawiloby dane i zameldowalo sukces. */
+			$nowy   = (string) $k->opis;
+			$awaria = false;
+			foreach ( $wzory as $wzor ) {
+				$wynik = preg_replace( $wzor, $znacznik, $nowy );
+				if ( null === $wynik ) {
+					/* ⛔ `null` to AWARIA silnika wyrazen, nie „brak dopasowania”. Ciche
+						potraktowanie jej jak braku adresu zostawiloby dane i zameldowalo sukces. */
+					$awaria = true;
+					break;
+				}
+				$nowy = $wynik;
+			}
+			if ( $awaria ) {
 				$ok_zdarzenia = false;
 				continue;
 			}
 			if ( $nowy === (string) $k->opis ) {
-				/* Brak zakotwiczonego wystapienia = to NIE jest adres tego kupujacego. */
+				/* Brak zakotwiczonego wystapienia zadnej z postaci = to NIE jest adres tego kupujacego. */
 				continue;
 			}
 			if ( false === $wpdb->update( $wpdb->prefix . 'sklepag_zdarzenia', array( 'opis' => $nowy ), array( 'id' => (int) $k->id ) ) ) {
@@ -208,18 +289,20 @@ function sklepag_anonimizuj_zamowienie( $id, $zachowaj_dane_faktury = false ) {
 	 */
 	$slady_dziennik = 0;
 	if ( '' !== $email ) {
-		$do_sprawdzenia = $wpdb->get_col(
-			$wpdb->prepare(
-				"SELECT opis FROM {$wpdb->prefix}sklepag_zdarzenia WHERE opis LIKE %s",
-				'%' . $wpdb->esc_like( $email ) . '%'
-			)
-		);
-		$wzor_pomiar    = '/(?<!' . SKLEPAG_GRANICA_ADRESU . ')' . preg_quote( $email, '/' ) . '(?!' . SKLEPAG_GRANICA_ADRESU . ')/';
-		foreach ( (array) $do_sprawdzenia as $tresc ) {
-			$trafienie = preg_match( $wzor_pomiar, (string) $tresc );
-			if ( false === $trafienie || 1 === $trafienie ) {
-				/* Awaria silnika liczy sie JAK SLAD: nie wolno jej czytac jako „czysto”. */
-				++$slady_dziennik;
+		/* ⛔ POMIAR PYTA DOKLADNIE O TO, CO CZYSCILISMY — te same postacie, te same kotwice,
+			ta sama funkcja wybierajaca kandydatow. Pomiar z wlasnym, wezszym zapytaniem
+			dzielil z czyszczeniem te sama slepote i z definicji nie mial jak jej zobaczyc:
+			slad w postaci zakodowanej zostawal, a licznik pokazywal zero. */
+		$postacie_pomiar = sklepag_postacie_w_dzienniku( $email );
+		$wzory_pomiar    = sklepag_wzorce_w_dzienniku( $postacie_pomiar );
+		foreach ( sklepag_kandydaci_z_dziennika( $postacie_pomiar ) as $k ) {
+			foreach ( $wzory_pomiar as $wzor_pomiar ) {
+				$trafienie = preg_match( $wzor_pomiar, (string) $k->opis );
+				if ( false === $trafienie || 1 === $trafienie ) {
+					/* Awaria silnika liczy sie JAK SLAD: nie wolno jej czytac jako „czysto”. */
+					++$slady_dziennik;
+					break;
+				}
 			}
 		}
 	}

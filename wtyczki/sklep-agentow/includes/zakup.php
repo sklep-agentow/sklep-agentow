@@ -205,12 +205,32 @@ function sklepag_obsluz_kup() {
 		wp_die( 'Nie udało się rozpocząć płatności. Spróbuj ponownie za chwilę.', 'Sklep Agentów', 502 );
 	}
 
+	/*
+	 * ⛔ MIGAWKA PRODUKTU IDZIE RAZEM Z SESJA, nie po fakcie.
+	 *
+	 * Kupujacy placi za produkt, ktory widzi TERAZ. Miedzy ta chwila a domknieciem platnosci
+	 * wlasciciel moze podmienic plik, zmienic cene albo wycofac produkt ze sprzedazy — i do
+	 * 0.9.31 domkniecie zapisywalo do zamowienia stan Z CHWILI DOMKNIECIA, bo czytalo tabele
+	 * produktow ponownie. Kupujacy dostawal wtedy co innego, niz kupil.
+	 *
+	 * Zamrazamy WSZYSTKO, czego potrzebuje domkniecie i mail: nazwe, slug (okladka i tresc
+	 * sprzedazowa maila), cene, walute i SCIEZKE PLIKU. Sciezka wystarczy, bo kazde wgranie
+	 * pliku w panelu dostaje wlasna, losowa nazwe (`produkt-<20 znakow>`) — podmiana pliku
+	 * nie nadpisuje starej sciezki, tylko tworzy nowa.
+	 */
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery
 	$wpdb->query(
 		$wpdb->prepare(
-			"INSERT IGNORE INTO {$wpdb->prefix}sklepag_sesje_checkout (stripe_session_id, produkt_id, stan, utworzono) VALUES (%s, %d, 'utworzona', %s)", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			"INSERT IGNORE INTO {$wpdb->prefix}sklepag_sesje_checkout
+			 (stripe_session_id, produkt_id, produkt_nazwa, produkt_slug, produkt_cena_grosze, produkt_waluta, produkt_plik, stan, utworzono)
+			 VALUES (%s, %d, %s, %s, %d, %s, %s, 'utworzona', %s)", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$sesja['id'],
 			$produkt->id,
+			(string) $produkt->nazwa,
+			(string) $produkt->slug,
+			(int) $produkt->cena_grosze,
+			(string) $produkt->waluta,
+			(string) $produkt->plik_sciezka,
 			current_time( 'mysql' )
 		)
 	);
@@ -824,10 +844,38 @@ function sklepag_domknij_zakup( $sesja ) {
 		return true;
 	}
 
-	$produkt = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$pp} WHERE id = %d", (int) $nasza->produkt_id ) );
-	if ( ! $produkt ) {
-		sklepag_zdarzenie( null, 'domkniecie_brak_produktu', $sid );
-		return true;
+	/*
+	 * ⛔ PRODUKT BIERZEMY Z MIGAWKI ZAPISANEJ PRZY TWORZENIU PLATNOSCI, nie z tabeli produktow.
+	 *
+	 * To jest cala naprawa klasy „kupujacy placi za jedno, a dostaje drugie". Ponowny odczyt
+	 * tabeli oddawal stan Z CHWILI DOMKNIECIA: podmieniony plik, nowa cene obok kwoty
+	 * faktycznie pobranej przez Stripe, inna nazwe w mailu. Migawka oddaje jedyny stan,
+	 * za ktory kupujacy zaplacil.
+	 *
+	 * ⭐ SKUTEK UBOCZNY, KTORY JEST POPRAWNY, NIE PRZEOCZENIEM: domkniecie przestaje zalezec
+	 * od tego, czy produkt nadal jest `aktywny` i czy w ogole jeszcze istnieje. Wycofanie
+	 * ze sprzedazy ma blokowac NOWE zakupy (i blokuje — checkout pyta o `aktywny = 1`),
+	 * a nie doreczenie zakupu JUZ OPLACONEGO. Wczesniej skasowanie produktu miedzy zaplata
+	 * a webhookiem konczylo sie `domkniecie_brak_produktu`: pieniadze pobrane, zamowienie
+	 * nie powstawalo wcale.
+	 *
+	 * Zapas dla sesji SPRZED migracji (schemat < 10, migawka pusta): stary odczyt z tabeli.
+	 * Zakupy w locie w chwili aktualizacji nie moga zostac bez obslugi.
+	 */
+	if ( '' !== (string) $nasza->produkt_nazwa ) {
+		$produkt               = new stdClass();
+		$produkt->id           = (int) $nasza->produkt_id;
+		$produkt->nazwa        = (string) $nasza->produkt_nazwa;
+		$produkt->slug         = (string) $nasza->produkt_slug;
+		$produkt->cena_grosze  = (int) $nasza->produkt_cena_grosze;
+		$produkt->waluta       = (string) $nasza->produkt_waluta;
+		$produkt->plik_sciezka = (string) $nasza->produkt_plik;
+	} else {
+		$produkt = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$pp} WHERE id = %d", (int) $nasza->produkt_id ) );
+		if ( ! $produkt ) {
+			sklepag_zdarzenie( null, 'domkniecie_brak_produktu', $sid . ' (sesja sprzed migawki, schemat < 10)' );
+			return true;
+		}
 	}
 
 	$email = '';
@@ -1215,7 +1263,10 @@ function sklepag_zbuduj_mail( $produkt, $zam, $link, $link_opinii = '' ) {
 		. ( '' !== $numer ? 'Numer zamówienia: ' . $numer . "\n" : '' )
 		. 'Produkt: ' . $produkt->nazwa . "\n"
 		. ( '' !== $kupiono ? 'Data zakupu: ' . $kupiono . "\n" : '' )
-		. 'Kwota: ' . number_format( $zam->kwota_grosze / 100, 2, ',', ' ' ) . ' ' . $zam->waluta . " (TRYB TESTOWY — płatność nie została pobrana)\n\n"
+		. 'Kwota: ' . number_format( $zam->kwota_grosze / 100, 2, ',', ' ' ) . ' ' . $zam->waluta
+		/* ⛔ Ten sam warunek co w wersji HTML (mail-html.php) — dwie wersje tego samego maila
+			nie mają prawa mówić o pieniądzach czegoś innego. */
+		. ( sklepag_tryb_testowy() ? ' (TRYB TESTOWY — płatność nie została pobrana)' : '' ) . "\n\n"
 		. $zgoda
 		. "POBIERZ SWÓJ PRODUKT:\n" . $link . "\n"
 		. 'Link jest ważny ' . $dni . ' dni i pozwala na ' . SKLEPAG_LIMIT_POBRAN . " pobrań.\n\n"
