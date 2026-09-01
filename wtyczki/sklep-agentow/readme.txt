@@ -96,7 +96,13 @@ i PHP 8.1.
 3. Sklep Agentów → Ustawienia: wklej klucz sekretny Stripe i sekret webhooka,
    uzupełnij nadawcę maili, mail kontaktowy właściciela i walutę.
 4. W Stripe dodaj webhook na adres `https://TWOJA-DOMENA/wp-json/sklepag/v1/webhook`
-   dla zdarzenia `checkout.session.completed`.
+   i zaznacz WSZYSTKIE jedenaście zdarzeń: `checkout.session.completed`,
+   `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed`,
+   `checkout.session.expired`, `refund.created`, `refund.updated`, `charge.refunded`,
+   `charge.dispute.created`, `charge.dispute.funds_withdrawn`,
+   `charge.dispute.funds_reinstated`, `charge.dispute.closed`. Bez dwóch ostatnich grup
+   sklep nie dowie się o zwrocie ani o reklamacji płatności w banku, a Pulpit będzie
+   liczył oddane pieniądze jako przychód.
 5. Sklep Agentów → Produkty → Dodaj produkt: nazwa, opisy, cena, waluta, plik
    ZIP; zaznacz „Produkt widoczny i kupowalny w sklepie".
 6. Zrób zakup testowy kartą testową Stripe i sprawdź zamówienie na Pulpicie.

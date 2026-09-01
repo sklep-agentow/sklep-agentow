@@ -14,6 +14,22 @@ wstecz nie dopisuję, bo nie umiałbym jej odtworzyć uczciwie. Ich zmiany od te
 pory lądują tutaj.
 
 ## [Niewydane]
+- **`zdarzenia-webhooka.sh` 1.0.0 (NOWE) + `bramki.sh` (12 bramek, `PROG_PELNY` 12,
+  `PROG_TEKSTOWY` 7; wpis do manifestu w TYM SAMYM PR, bo bez niego strażnik manifestu
+  słusznie świeci na czerwono — kontrola 1a) — lista zdarzeń Stripe w instrukcji == lista
+  obsługiwana w kodzie.** Powód z życia i o pieniądzach (znalezisko A7-F1, 1.09): instrukcja
+  instalacji kazała zaznaczyć w Dashboardzie **dwa** zdarzenia, a `zakup.php` obsługiwał
+  **jedenaście** w czterech rodzinach (sprzedaż, sesja niedoszła, zwrot, obciążenie zwrotne).
+  Klient wykonujący instrukcję dosłownie nie dostawał powiadomienia ani o zwrocie, ani
+  o reklamacji płatności w banku — a Pulpit liczy przychód jako `kwota - zwrocono`, więc
+  oddane pieniądze zostawały w statystyce sprzedaży na zawsze, bez jednego ostrzeżenia.
+  Bramka porównuje zbiory w OBIE strony (dokument gubi nazwę / dokument każe zaznaczyć coś,
+  czego kod nie obsługuje), zapis `rodzina.*` liczy jako komplet rodziny, a `CHANGELOG.md`,
+  `archiwum-procesu/` i `audyt/` wyklucza świadomie — opisują przeszłość, nie dzisiejszy
+  kontrakt. Dwie kontrole dodatnie w środku: rodzina obsługiwana prefiksem bez ani jednej
+  nazwy w kodzie ORAZ zero dokumentów z listą kończą się kodem **2**, nie zielonym zerem.
+  Próba kontrolna `zdarzenia-webhooka-proba-kontrolna.sh` — dziesięć przypadków, w tym ten,
+  dla którego bramka powstała: nowe zdarzenie w kodzie przy niezmienionym dokumencie.
 - **`bramki.sh`** (naprawy B-5 i B-10 z polowania na infrastrukturę, 31.08): pobierane
   `actionlint`/`gitleaks` weryfikowane sumą SHA256 na każdej z trzech dróg (PATH, cache,
   świeże pobranie) — wcześniej `curl` szedł prosto do `chmod +x`, a cache w `/tmp` był brany
