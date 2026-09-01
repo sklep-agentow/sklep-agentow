@@ -3,7 +3,8 @@
  * CRUD produktów (ekran „Produkty"):
  * lista → formularz dodaj/edytuj → zapis z walidacjami → upload zipa do
  * katalogu chronionego (losowa nazwa BEZ rozszerzenia, MIME z TREŚCI,
- * limit 20 MB, weryfikacja PO zapisie: obecność+rozmiar+sha256).
+ * limit MNIEJSZY z wtyczkowego 20 MB i limitu serwera, weryfikacja PO zapisie:
+ * obecność+rozmiar+sha256; żądanie ucięte przez PHP rozpoznane osobno).
  * Zasady: bez twardego usuwania (deaktywacja); nowy plik = NOWA
  * ścieżka (stare zamówienia trzymają swój snapshot); aktywacja
  * wymaga POTWIERDZONEGO pliku; każda mutacja nonce+caps parą.
@@ -29,6 +30,96 @@ function sklepag_limit_uploadu_b() {
 	$serwer = (int) wp_max_upload_size();
 	return ( $serwer > 0 && $serwer < SKLEPAG_UPLOAD_LIMIT_B ) ? $serwer : SKLEPAG_UPLOAD_LIMIT_B;
 }
+
+/**
+ * Czy PHP wyrzuciło CAŁE zgłoszenie, zanim WordPress je zobaczył?
+ *
+ * ⛔ TO NIE JEST TO SAMO CO `UPLOAD_ERR_INI_SIZE`. Gdy za duży jest POJEDYNCZY plik
+ * (ponad `upload_max_filesize`), PHP zostawia `$_POST` i wpisuje kod błędu do
+ * `$_FILES` — obsługuje to `sklepag_przyjmij_zip()` niżej. Gdy jednak CAŁE ciało
+ * żądania przekroczy `post_max_size`, PHP kasuje `$_POST` **i** `$_FILES` do pustych
+ * tablic. Razem z nimi znika pole `action` i nonce, więc `admin-post.php` nie ma
+ * czego wywołać: leci `do_action( 'admin_post' )`, którego nikt nie obsługiwał —
+ * właściciel dostawał HTTP 200 o ZEROWEJ długości, czyli PUSTĄ BIAŁĄ STRONĘ.
+ * Zmierzone na stosie warsztatowym (upload_max_filesize 2M, post_max_size 8M):
+ * plik 9 MB → `http=200 rozmiar_odpowiedzi=0`, bez nagłówka `Location`, bez wpisu
+ * w dzienniku. Żaden komunikat nie kłamał — nie było ŻADNEGO komunikatu.
+ *
+ * Rozpoznajemy ten stan po zestawie: metoda POST + obie tablice puste + ciało,
+ * które przeglądarka zapowiedziała (`CONTENT_LENGTH`) albo które i tak musiało być
+ * niepuste, bo to formularz wieloczęściowy (`CONTENT_TYPE`). Sam „pusty POST" bez
+ * żadnej z tych przesłanek zostawiamy w spokoju — nie zgadujemy limitu tam, gdzie
+ * nic nie przyszło.
+ *
+ * @return bool
+ */
+function sklepag_zadanie_ucieto_przez_php() {
+	// phpcs:disable WordPress.Security.NonceVerification.Missing -- nonce'a NIE MA CZYM sprawdzić: PHP skasował ciało żądania razem z nim. Funkcja niczego nie zapisuje, wyłącznie rozpoznaje stan nagłówków.
+	$metoda = isset( $_SERVER['REQUEST_METHOD'] ) ? strtoupper( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) ) : '';
+	if ( 'POST' !== $metoda ) {
+		return false;
+	}
+	if ( ! empty( $_POST ) || ! empty( $_FILES ) ) {
+		return false;
+	}
+	$dlugosc = isset( $_SERVER['CONTENT_LENGTH'] ) ? (int) $_SERVER['CONTENT_LENGTH'] : 0;
+	$typ     = isset( $_SERVER['CONTENT_TYPE'] ) ? strtolower( sanitize_text_field( wp_unslash( $_SERVER['CONTENT_TYPE'] ) ) ) : '';
+	// phpcs:enable
+	return $dlugosc > 0 || 0 === strpos( $typ, 'multipart/form-data' );
+}
+
+/**
+ * Prawda o ucięciu żądania: ile PHP naprawdę przyjmuje i skąd ta liczba.
+ *
+ * ⛔ CYTUJEMY LIMITY SERWERA, NIE LIMIT WTYCZKI. Limit wtyczki (20 MB) nie brał tu
+ * udziału — walidacja wtyczki w ogóle się nie uruchomiła. Podanie go jako przyczyny
+ * byłoby dokładnie tym kłamstwem, przez które właściciel szukał usterki nie tam.
+ *
+ * @return string Tekst bez znaczników; escapuje wywołujący.
+ */
+function sklepag_komunikat_ucietego_zadania() {
+	$post_max = (int) wp_convert_hr_to_bytes( (string) ini_get( 'post_max_size' ) );
+	$plik_max = (int) wp_convert_hr_to_bytes( (string) ini_get( 'upload_max_filesize' ) );
+	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- jak wyżej: sam nagłówek długości, bez zapisu.
+	$wyslano    = isset( $_SERVER['CONTENT_LENGTH'] ) ? (int) $_SERVER['CONTENT_LENGTH'] : 0;
+	$komunikat  = 'Serwer odrzucił CAŁE zgłoszenie, zanim sklep je zobaczył';
+	$komunikat .= $wyslano > 0 ? ' — wysłane dane miały ' . size_format( $wyslano ) . '.' : '.';
+	$komunikat .= ' Ten serwer przyjmuje najwyżej ' . ( $post_max > 0 ? size_format( $post_max ) : 'nieznaną ilość' ) .
+		' danych w jednym formularzu (ustawienie PHP post_max_size)';
+	$komunikat .= $plik_max > 0 ? ' i najwyżej ' . size_format( $plik_max ) . ' w pojedynczym pliku (upload_max_filesize).' : '.';
+	$komunikat .= ' Limit wtyczki (' . size_format( SKLEPAG_UPLOAD_LIMIT_B ) . ') nie ma z tym nic wspólnego — walidacja sklepu się nie uruchomiła.';
+	$komunikat .= ' Nic nie zostało zapisane, a wpisana treść formularza przepadła razem z żądaniem (PHP wyrzucił ją, zanim WordPress wystartował) — to jedyna sytuacja, w której sklep nie umie odtworzyć wpisanych pól.';
+	$komunikat .= ' Jak podnieść te limity — INSTRUKCJA.md, rozdział „Produkty", akapit „Serwer nie przyjmuje pliku — jak podnieść limit".';
+	return $komunikat;
+}
+
+/**
+ * Ucięte żądanie do `admin-post.php`, które straciło też pole `action`.
+ *
+ * Formularz produktu niesie `action` OD TERAZ także w adresie (patrz
+ * `sklepag_produkty_formularz()`), więc trafia do własnego handlera. Ale strona
+ * formularza wyrenderowana przed aktualizacją — albo podana z pamięci podręcznej —
+ * nadal wysyła `action` wyłącznie w ciele, które PHP właśnie wyrzucił. Bez tego
+ * zaczepienia taki właściciel dalej oglądałby pustą stronę.
+ *
+ * Komunikat jest CELOWO neutralny (nie nazywa formularza), bo w tym stanie nie da
+ * się ustalić, z którego formularza żądanie przyszło — nazwanie sklepu byłoby
+ * zgadywaniem. Nic tu nie zapisuje, więc brak nonce'a nie otwiera żadnej mutacji.
+ */
+function sklepag_zglos_uciete_zadanie() {
+	if ( ! sklepag_zadanie_ucieto_przez_php() ) {
+		return;
+	}
+	wp_die(
+		esc_html( sklepag_komunikat_ucietego_zadania() ),
+		'Zgłoszenie odrzucone przez serwer',
+		array(
+			'response'  => 413,
+			'back_link' => true,
+		)
+	);
+}
+add_action( 'admin_post', 'sklepag_zglos_uciete_zadanie' );
 
 /**
  * Adres formularza produktu (0 = nowy).
@@ -149,7 +240,13 @@ function sklepag_produkty_formularz( $id ) {
 		}
 	}
 
-	echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" enctype="multipart/form-data">';
+	// ⛔ `action` JEDZIE W ADRESIE, nie tylko w ciele. Gdy plik przekroczy post_max_size,
+	// PHP kasuje CAŁE `$_POST` — razem z ukrytym polem `action`. `admin-post.php` nie miał
+	// wtedy czego wywołać i oddawał pustą stronę (zmierzone: HTTP 200, 0 bajtów). Adres
+	// przeżywa, bo query string parsuje się niezależnie od ciała, więc handler niżej
+	// dostaje szansę powiedzieć, co się stało. Ukryte pole ZOSTAJE: zwykła ścieżka ma
+	// działać dokładnie tak jak dotąd, także gdyby ktoś odciął query string.
+	echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php?action=sklepag_produkt_zapisz' ) ) . '" enctype="multipart/form-data">';
 	echo '<input type="hidden" name="action" value="sklepag_produkt_zapisz">';
 	echo '<input type="hidden" name="produkt_id" value="' . (int) $id . '">';
 	wp_nonce_field( 'sklepag_produkt_zapisz' );
@@ -194,6 +291,24 @@ function sklepag_obsluz_zapis_produktu() {
 	if ( ! current_user_can( 'manage_options' ) ) {
 		wp_die( 'Brak uprawnień.', 'Sklep Agentów', 403 );
 	}
+
+	// ⛔ PRZED NONCE'M I TO CELOWO. Gdy PHP wyrzuciło ciało żądania (ponad post_max_size),
+	// nonce'a NIE MA CZYM sprawdzić — `check_admin_referer()` pokazałby wtedy „Link wygasł",
+	// czyli komunikat o CZYMŚ INNYM niż prawdziwa przyczyna. Ta gałąź niczego nie zapisuje
+	// (żadnej mutacji, żadnego wpisu do dziennika), więc jej wyprzedzenie nonce'a nie
+	// otwiera CSRF: jedynym skutkiem jest wyświetlony tekst. Uprawnienia sprawdziliśmy
+	// wyżej i zostają — obcy dostanie 403, nie wykład o php.ini.
+	if ( sklepag_zadanie_ucieto_przez_php() ) {
+		wp_die(
+			esc_html( sklepag_komunikat_ucietego_zadania() ),
+			'Plik za duży dla serwera',
+			array(
+				'response'  => 413,
+				'back_link' => true,
+			)
+		);
+	}
+
 	check_admin_referer( 'sklepag_produkt_zapisz' );
 
 	global $wpdb;

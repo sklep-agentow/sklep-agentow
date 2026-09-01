@@ -20,6 +20,32 @@ Nic jeszcze.
 
 ---
 
+## [0.9.32] — 2026-09-01 · schemat bazy bez zmian (10)
+
+### Naprawione
+- **Za duża paczka produktu nie kończy się już pustą białą stroną.** Gdy całe wysłane
+  zgłoszenie przekraczało `post_max_size`, PHP kasowało `$_POST` i `$_FILES` razem
+  z ukrytym polem `action` — `admin-post.php` nie miał czego wywołać i oddawał odpowiedź
+  o ZEROWEJ długości. Właściciel nie dostawał ani komunikatu, ani wpisu w dzienniku:
+  klikał „Dodaj produkt" i nie działo się nic. Sklep rozpoznaje teraz ten stan i podaje
+  **realne limity serwera** (`post_max_size` i `upload_max_filesize`) wraz z ilością
+  wysłanych danych, mówi wprost, że limit wtyczki (20 MB) nie brał w tym udziału,
+  i uprzedza, że wpisanej treści formularza nie da się odtworzyć — PHP wyrzuciło ją,
+  zanim WordPress wystartował. Formularz produktu niesie `action` także w adresie, żeby
+  ucięte żądanie w ogóle trafiło do wtyczki; strona wyrenderowana przed aktualizacją
+  (albo podana z pamięci podręcznej) dostaje ten sam komunikat przez `admin_post`.
+
+### Dodane
+- **Instrukcja właściciela mówi, jak podnieść limit wgrania** — akapit „Serwer nie
+  przyjmuje pliku — jak podnieść limit" w rozdziale „Produkty": oba ustawienia PHP,
+  ich typowe wartości, trzy miejsca zmiany (panel hostingu, `php.ini`, `.htaccess`)
+  i sposób sprawdzenia, czy zmiana weszła w życie. Plus pozycja w „Najczęstszych pytaniach".
+- **Strażnik regresji dla obu limitów** — mierzy przez HTTP cztery kierunki: ciało ponad
+  `post_max_size`, pojedynczy plik ponad `upload_max_filesize`, zwykłe żądanie ze złym
+  nonce'em i poprawne wgranie ZIP-a. Skalibrowany: pada na kodzie sprzed tej naprawy.
+
+---
+
 ## [0.9.31] — 2026-09-01 · schemat bazy 10 (`sesje_checkout.produkt_*`)
 
 ### Naprawione

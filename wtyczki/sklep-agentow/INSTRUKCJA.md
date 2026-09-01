@@ -55,6 +55,41 @@ produkcyjnego `sk_live_…` znika samo — razem z wszystkimi oznaczeniami widzi
    ⛔ **Nie da się włączyć sprzedaży bez potwierdzonego pliku** — sklep nie sprzeda czegoś,
    czego nie ma czym wydać. Zapis wróci z komunikatem, dopóki nie wgrasz ZIP-a.
 
+**Serwer nie przyjmuje pliku — jak podnieść limit**
+
+Wgranie może odrzucić **PHP na Twoim serwerze**, zanim sklep w ogóle zobaczy plik. Rządzą tym
+dwa ustawienia i oba muszą być większe od paczki, którą wgrywasz:
+
+| Ustawienie | Co ogranicza | Typowa wartość u hostingów |
+|---|---|---|
+| `upload_max_filesize` | największy POJEDYNCZY wgrywany plik | 2 MB |
+| `post_max_size` | całe wysłane zgłoszenie (plik **plus** pola formularza) | 8 MB |
+
+Ustaw `post_max_size` **większe** niż `upload_max_filesize` (np. 32 MB i 25 MB) — inaczej plik
+mieszczący się w pierwszym limicie odbije się od drugiego.
+
+Sklep rozpoznaje **obie** sytuacje i mówi, która zaszła:
+
+- plik przekracza `upload_max_filesize` → *„Wgranie pliku nie powiodło się (kod 1). Plik odrzucił
+  serwer, zanim wtyczka go zobaczyła — obowiązuje limit 2 MB…"* — wpisana treść formularza
+  **zostaje**, poprawiasz sam plik;
+- całe zgłoszenie przekracza `post_max_size` → *„Serwer odrzucił CAŁE zgłoszenie…"* z podaniem
+  obu limitów. Tu PHP wyrzuca formularz razem z plikiem, **zanim** WordPress wystartuje, więc
+  wpisanej treści nie da się odtworzyć — to jedyny przypadek, w którym sklep jej nie uratuje.
+
+Gdzie to zmienić — zależnie od hostingu, w kolejności od najczęstszego:
+
+1. **panel hostingu** (cPanel/DirectAdmin: „Wybór wersji PHP" → „Options", albo zgłoszenie do
+   pomocy technicznej) — jedyna droga na hostingu współdzielonym;
+2. **`php.ini`** — `upload_max_filesize = 25M` i `post_max_size = 32M`;
+3. **`.htaccess`** na Apache — `php_value upload_max_filesize 25M` i `php_value post_max_size 32M`
+   (część hostingów tego zabrania i strona zwróci wtedy błąd 500 — wycofaj wpis).
+
+Po zmianie odśwież formularz produktu: napis pod polem pliku (**„Tylko ZIP, do …"**) pokazuje
+limit, który **naprawdę** obowiązuje — mniejszy z limitu serwera i limitu wtyczki (20 MB).
+Jeśli nadal widnieje stara liczba, zmiana nie weszła w życie (najczęściej: nie przeładowano
+PHP-FPM albo hosting ignoruje `.htaccess`).
+
 **Co warto wiedzieć o edycji:**
 
 - Każde zamówienie trzyma **kopię danych produktu z chwili zakupu** (nazwa, cena, plik).
@@ -306,6 +341,12 @@ przycisk pomija (i mówi, ile pominął).
 z „Wyślij ponownie”. Jeśli wysyłki padają regularnie — SMTP (rozdział 4).
 
 **Nie mogę włączyć sprzedaży produktu.** Brak potwierdzonego pliku ZIP (rozdział 2).
+
+**Wgrywam ZIP i dostaję „Serwer odrzucił CAŁE zgłoszenie" albo pustą stronę.** Paczka przekracza
+`post_max_size` Twojego serwera — limit sklepu (20 MB) nie ma z tym nic wspólnego, bo walidacja
+sklepu w ogóle się nie uruchamia. Jak podnieść oba limity PHP: rozdział „Produkty", akapit
+„Serwer nie przyjmuje pliku — jak podnieść limit". (Pustą stronę pokazywały wydania do 0.9.33;
+od 0.9.34 sklep mówi, ile serwer przyjmuje i które ustawienie o tym decyduje.)
 
 **Strona produktu pokazuje 404.** Ustawienia → Bezpośrednie odnośniki → Zapisz zmiany
 (odświeżenie reguł adresów). Struktura odnośników musi być inna niż „Zwykłe”.
