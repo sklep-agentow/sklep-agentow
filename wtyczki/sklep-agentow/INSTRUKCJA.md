@@ -345,8 +345,8 @@ z „Wyślij ponownie”. Jeśli wysyłki padają regularnie — SMTP (rozdział
 **Wgrywam ZIP i dostaję „Serwer odrzucił CAŁE zgłoszenie" albo pustą stronę.** Paczka przekracza
 `post_max_size` Twojego serwera — limit sklepu (20 MB) nie ma z tym nic wspólnego, bo walidacja
 sklepu w ogóle się nie uruchamia. Jak podnieść oba limity PHP: rozdział „Produkty", akapit
-„Serwer nie przyjmuje pliku — jak podnieść limit". (Pustą stronę pokazywały wydania do 0.9.31;
-od 0.9.32 sklep mówi, ile serwer przyjmuje i które ustawienie o tym decyduje.)
+„Serwer nie przyjmuje pliku — jak podnieść limit". (Pustą stronę pokazywały wydania do 0.9.33;
+od 0.9.34 sklep mówi, ile serwer przyjmuje i które ustawienie o tym decyduje.)
 
 **Strona produktu pokazuje 404.** Ustawienia → Bezpośrednie odnośniki → Zapisz zmiany
 (odświeżenie reguł adresów). Struktura odnośników musi być inna niż „Zwykłe”.

@@ -14,6 +14,26 @@ const SKLEPAG_ZGODA_TRESC = 'Wyrażam zgodę na natychmiastowe dostarczenie tre�
 	webhook JAWNIE poza limiterem) ---------- */
 
 /**
+ * Klucz okna idempotencji — JEDNO ŹRÓDŁO dla produkcji i dla strażnika regresji.
+ *
+ * ⛔ POWÓD ISTNIENIA TEJ FUNKCJI. Klucz był składany W MIEJSCU UŻYCIA, a strażnik regresji
+ * składał go u siebie drugi raz. Gdy 0.9.25 dołożyło do klucza trzeci człon (płatność osadzona
+ * kontra hostowana), produkcja zaczęła czytać spod innego adresu niż ten, pod którym strażnik
+ * podkładał okno — i przestał mierzyć cokolwiek, nie mówiąc o tym ani słowem. Dwa miejsca
+ * składające ten sam klucz to rozjazd czekający na okazję; jedno miejsce go nie ma jak zrobić.
+ *
+ * Człony: adres kupującego (okno działa per adres), produkt (osobne okno na produkt) oraz tryb
+ * płatności — osadzona i hostowana kończą się INNĄ sesją Stripe, więc nie wolno im dzielić okna.
+ *
+ * @param int  $produkt_id Id produktu.
+ * @param bool $osadzona   Czy płatność osadzona (formularz karty na naszej stronie).
+ * @return string Nazwa transientu.
+ */
+function sklepag_klucz_idem( $produkt_id, $osadzona ) {
+	return 'sklepag_idem_' . md5( sklepag_ip() . '|' . (int) $produkt_id . '|' . ( $osadzona ? 'o' : 'h' ) );
+}
+
+/**
  * Ile sekund okno idempotencji wolno oddawać zapamiętany adres checkoutu.
  * Podwójny klik mieści się poniżej sekundy; wpisanie karty u Stripe trwa dziesiątki sekund,
  * więc ten próg rozdziela oba zdarzenia BEZ pytania Stripe o stan — awaria łączności ze Stripe
@@ -174,7 +194,7 @@ function sklepag_obsluz_kup() {
 	// związanego z sesją przeglądarki i jest znanym, świadomie otwartym ograniczeniem tego okna.
 	// Okno kluczowane też TRYBEM: sesja hostowana ma `url`, osadzona ma `client_secret` — pomieszanie
 	// oddałoby JS-owi adres do przekierowania albo formularzowi sekret bez strony.
-	$okno = 'sklepag_idem_' . md5( sklepag_ip() . '|' . $produkt_id . '|' . ( $osadzona ? 'o' : 'h' ) );
+	$okno = sklepag_klucz_idem( $produkt_id, $osadzona );
 	$juz  = get_transient( $okno );
 	if ( is_array( $juz ) && ( ! empty( $juz['url'] ) || ! empty( $juz['client_secret'] ) ) ) {
 		$wiek_ok = ! empty( $juz['czas'] ) && ( time() - (int) $juz['czas'] ) <= SKLEPAG_IDEM_OKNO_S;
