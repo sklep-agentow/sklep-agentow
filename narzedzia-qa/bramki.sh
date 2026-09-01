@@ -46,6 +46,18 @@ PROG_TEKSTOWY=6
 # „najnowsza" w bramce oznacza, że CI potrafi zmienić zdanie bez naszej zmiany.
 WERSJA_ACTIONLINT=1.7.7
 WERSJA_GITLEAKS=8.24.3
+# ⛔ SUMY SHA256 SAMYCH BINAREK (nie archiwow) dla wersji pinowanych wyzej.
+# POWOD (znalezisko B-5, 31.08): skrypt pobieral narzedzie curlem i od razu robil
+# `chmod +x`, bez jednego sprawdzenia. Do tego cache lezy w /tmp — katalogu
+# zapisywalnym dla KAZDEGO uzytkownika maszyny — a plik brany byl po samej nazwie.
+# Kto mogl zapisac do /tmp, ten wykonywal swoj kod jako wykonawca CI. Suma binarki,
+# a nie archiwum, bo ten sam warunek musi dzialac i przy swiezym pobraniu, i przy
+# trafieniu z cache; archiwum po rozpakowaniu juz nie istnieje.
+# Jak wyznaczone: archiwum potwierdzone oficjalnym plikiem `*_checksums.txt`
+# z wydania, dopiero z niego policzona suma wypakowanej binarki.
+# Przy podnoszeniu WERSJA_* trzeba podniesc TE sumy — inaczej bramka padnie.
+SUMA_ACTIONLINT=9f7dedb4e23f89f2922073d1a6720405b7b520d4f5832ebb96f0d55a2958886c
+SUMA_GITLEAKS=e18325d568268b6efb6cd0cc721f8bea5667f4cd1c8d03618ab61987f41269ad
 CACHE="${TMPDIR:-/tmp}/bramki-narzedzia"
 
 TRYB=auto
@@ -68,14 +80,34 @@ declare -A WYNIKI=()
 
 # Pobiera narzędzie do cache, gdy nie ma go w PATH. Nieudane pobranie NIE jest
 # pominięciem bramki — bramka zostanie policzona jako porażka.
+# Zwraca 0, gdy plik ma DOKLADNIE oczekiwana sume SHA256. Kazda inna sytuacja —
+# brak pliku, brak sha256sum, suma inna — to porazka. Cisza nie jest zgoda.
+suma_zgodna() {
+	local plik="$1" oczekiwana="$2" faktyczna=""
+	[ -f "$plik" ] || return 1
+	command -v sha256sum > /dev/null 2>&1 || return 1
+	faktyczna="$(sha256sum "$plik" 2> /dev/null | cut -d' ' -f1)"
+	[ -n "$faktyczna" ] && [ "$faktyczna" = "$oczekiwana" ]
+}
+
 zapewnij_narzedzie() {
-	local nazwa="$1" url="$2" plik_w_archiwum="$3"
+	local nazwa="$1" url="$2" plik_w_archiwum="$3" suma="$4"
+	local w_path=""
+	# ⛔ Suma decyduje na KAZDEJ z trzech drog (PATH, cache, swieze pobranie).
+	# Wersja sprzed 31.08 nie sprawdzala zadnej — patrz komentarz przy SUMA_*.
 	if command -v "$nazwa" > /dev/null 2>&1; then
-		command -v "$nazwa"
-		return 0
+		w_path="$(command -v "$nazwa")"
+		if suma_zgodna "$w_path" "$suma"; then
+			echo "$w_path"
+			return 0
+		fi
+		# W PATH stoi INNA wersja niz pinowana. Nie uzywamy jej po cichu: pinowanie
+		# wersji i branie dowolnej z PATH wykluczaly sie nawzajem. Idziemy dalej,
+		# po wlasny, zweryfikowany egzemplarz.
+		echo "UWAGA: $nazwa w PATH ($w_path) ma inna sume niz pinowana $suma — pobieram wlasny" >&2
 	fi
-	if [ -x "$CACHE/$nazwa" ]; then
-		echo "$CACHE/$nazwa"
+	if suma_zgodna "$CACHE/$plik_w_archiwum" "$suma" && [ -x "$CACHE/$plik_w_archiwum" ]; then
+		echo "$CACHE/$plik_w_archiwum"
 		return 0
 	fi
 	mkdir -p "$CACHE" || return 1
@@ -83,6 +115,11 @@ zapewnij_narzedzie() {
 		return 1
 	fi
 	if ! tar xzf "$CACHE/paczka.tgz" -C "$CACHE" "$plik_w_archiwum" 2> /dev/null; then
+		return 1
+	fi
+	if ! suma_zgodna "$CACHE/$plik_w_archiwum" "$suma"; then
+		echo "BLAD: pobrany $nazwa ma niezgodna sume SHA256 (oczekiwano $suma) — NIE uruchamiam" >&2
+		rm -f "$CACHE/$plik_w_archiwum"
 		return 1
 	fi
 	chmod +x "$CACHE/$plik_w_archiwum"
@@ -171,7 +208,7 @@ uruchom_actionlint() {
 	local bin
 	bin="$(zapewnij_narzedzie actionlint \
 		"https://github.com/rhysd/actionlint/releases/download/v${WERSJA_ACTIONLINT}/actionlint_${WERSJA_ACTIONLINT}_linux_amd64.tar.gz" \
-		actionlint)" || { echo "BRAK actionlinta i nie udalo sie go pobrac" >&2; return 1; }
+		actionlint "$SUMA_ACTIONLINT")" || { echo "BRAK actionlinta albo niezgodna suma — bramka pada" >&2; return 1; }
 	"$bin" .github/workflows/*.yml
 }
 
@@ -206,10 +243,25 @@ uruchom_phpcs() {
 
 uruchom_phpstan() {
 	[ -x vendor/bin/phpstan ] || { echo "BRAK vendor/bin/phpstan — czy composer install przeszedl?" >&2; return 1; }
+	# ⛔ WLASNY KATALOG CACHE NA UZYTKOWNIKA (1.09). PHPStan trzyma cache
+	# w `sys_get_temp_dir()/phpstan`, czyli w JEDNYM `/tmp/phpstan` wspolnym dla
+	# wszystkich kont na maszynie. Po przeniesieniu wykonawcy CI z konta
+	# administratora na `ciuser` (znalezisko B-3) katalog nalezal do roota
+	# z prawami 755, wiec bramka padala na „Unable to create file ... .lock".
+	# Wygladalo to jak blad w kodzie, a bylo uprawnieniami — i zaslanialo fakt,
+	# ze analiza jest czysta (po rozdzieleniu: EXIT=0, „No errors").
+	# ⭐ Cache ZOSTAJE, bo nie jest darmowy: zmierzone 1.09 na tym repo —
+	# z cache 2 s, bez cache 26 s.
+	# ⛔ `${TMPDIR:-/tmp}`, nie twarde `/tmp` — inaczej ta linia NADPISUJE katalog
+	# narzucony z zewnątrz i psuje izolację wołającego. Zmierzone 1.09: przy twardym
+	# `/tmp` `bramki-proba-kontrolna.sh` nie mogła się odciąć własnym TMPDIR-em
+	# i dalej zatruwała trwały cache (phpstan EXIT=1 po przelocie próby).
+	local KATALOG_TMP="${TMPDIR:-/tmp}/phpstan-$(id -un)"
+	mkdir -p "$KATALOG_TMP" || { echo "BRAK dostepu do $KATALOG_TMP" >&2; return 1; }
 	# 1536M + 1 proces (phpstan.neon.dist): przy 1G worker padal deterministycznie
 	# po dojsciu plikow mechanizmu opinii (D32), a 2 workery po 1,5G na maszynie
 	# 3,8 GB RAM to ryzyko OOM, ktory ubija sesje (zmierzone na tym serwerze).
-	vendor/bin/phpstan analyse --memory-limit=1536M --no-progress
+	TMPDIR="$KATALOG_TMP" vendor/bin/phpstan analyse --memory-limit=1536M --no-progress
 }
 
 # Ślady wewnętrzne w plikach wtyczek — czyli w tym, co trafia do paczki klienta.
@@ -234,12 +286,64 @@ uruchom_gitleaks() {
 	local bin
 	bin="$(zapewnij_narzedzie gitleaks \
 		"https://github.com/gitleaks/gitleaks/releases/download/v${WERSJA_GITLEAKS}/gitleaks_${WERSJA_GITLEAKS}_linux_x64.tar.gz" \
-		gitleaks)" || { echo "BRAK gitleaksa i nie udalo sie go pobrac" >&2; return 1; }
+		gitleaks "$SUMA_GITLEAKS")" || { echo "BRAK gitleaksa albo niezgodna suma — bramka pada" >&2; return 1; }
 	# Historia od HEAD, nie --all: klon recenzenta/runnera widzi refs/pull/N/* ZAMKNIĘTYCH PR-ów (niezmienialne),
 	# więc zatruty commit ze skasowanej gałęzi paliłby bramkę na zawsze (recenzja #195 W1; ta sama lekcja
 	# co bramka-poswiadczenia 1.1.1). Próba kontrolna: narzedzia-qa/gitleaks-proba-kontrolna.sh
-	"$bin" git --no-banner --redact --log-opts=HEAD .
+	"$bin" git --no-banner --redact --log-opts=HEAD . || return 1
+	skan_archiwow "$bin"
 }
+
+# ⛔ DRUGI PRZELOT TEJ SAMEJ OCHRONY — ZAWARTOSC SLEDZONYCH ARCHIWOW.
+# Znalezisko B-10 (31.08). Skan historii gita widzi `.zip` jako JEDEN binarny blob
+# i nie zaglada do srodka. ZMIERZONE proba kontrolna: plik z trzema falszywymi
+# kluczami lezacy luzem → gitleaks znajduje 2; ten SAM plik spakowany do zipa →
+# znajduje 0. W repozytorium jest 29 sledzonych archiwow z paczkami botow, wiec bez
+# tego przelotu klucz w paczce przechodzi przy wszystkich bramkach na zielono.
+# ⛔ To NIE jest osobna bramka w manifescie: to ta sama ochrona „szukaj sekretow",
+# ktora przestaje miec martwe pole. Osobny wpis sugerowalby, ze da sie ja wylaczyc
+# niezaleznie od skanu historii — a nie da, bo razem stanowia jedna odpowiedz.
+skan_archiwow() {
+	local bin="$1" archiwa katalog rc=0 licznik=0 plikow=0 z=""
+	archiwa="$(git ls-files '*.zip' 2> /dev/null)"
+	if [ -z "$archiwa" ]; then
+		echo "Archiwa: brak sledzonych plikow .zip — nie ma czego rozpakowac"
+		return 0
+	fi
+	if ! command -v unzip > /dev/null 2>&1; then
+		echo "BLAD: brak unzipa, a w repo sa sledzone archiwa — NIE moge ich sprawdzic" >&2
+		return 1
+	fi
+	katalog="$(mktemp -d)" || return 1
+	while IFS= read -r z; do
+		[ -n "$z" ] || continue
+		licznik=$((licznik + 1))
+		unzip -qo "$z" -d "$katalog/$licznik" > /dev/null 2>&1 || true
+	done <<< "$archiwa"
+	plikow="$(find "$katalog" -type f 2> /dev/null | wc -l)"
+	echo "Archiwa: $licznik sledzonych, rozpakowanych plikow: $plikow"
+	# ⛔ PODLOGA. Zero plikow przy niezerowej liczbie archiwow znaczy, ze
+	# rozpakowanie padlo — a wtedy „brak sekretow" jest zdaniem o PUSTYM katalogu,
+	# nie o paczkach. Ta sama klasa co I-2 (mianownik zero brany za czysto).
+	if [ "$plikow" -eq 0 ]; then
+		echo "BLAD: $licznik archiwow, ale rozpakowano 0 plikow — skan nie mial czego czytac" >&2
+		rm -rf "$katalog"
+		return 1
+	fi
+	"$bin" detect --no-git --source "$katalog" --no-banner --redact || rc=$?
+	rm -rf "$katalog"
+	return $rc
+}
+
+# ⛔ Furtka WYLACZNIE dla proby kontrolnej: `source` z ustawionym
+# BRAMKI_TYLKO_FUNKCJE=1 daje SAME definicje, bez odpalania bramek. Powod: test ma
+# wolac PRAWDZIWA funkcje z tego pliku, a nie jej przepisana kopie — kopia mierzy
+# sama siebie i przechodzi nawet wtedy, gdy produkt jest zepsuty.
+# To NIE jest sposob na pominiecie bramek w CI: quality.yml wola `bash bramki.sh`
+# bez tej zmiennej, wiec sciezka produkcyjna jej nie widzi.
+if [ -n "${BRAMKI_TYLKO_FUNKCJE:-}" ]; then
+	return 0 2> /dev/null || exit 0
+fi
 
 # --- przebieg -----------------------------------------------------------------
 

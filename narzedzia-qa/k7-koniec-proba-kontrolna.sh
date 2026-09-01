@@ -17,8 +17,17 @@ BLEDY=0
 
 zbuduj_czysty() {
 	local r="$1"; rm -rf "$r"; mkdir -p "$r/narzedzia-qa" "$r/audyt/sklep/material" "$r/audyt/sklep/raporty/A" "$r/boty/paczki" "$r/testy"
-	cp "$KORZEN/narzedzia-qa/k7-koniec.sh" "$KORZEN/narzedzia-qa/mapa-licznik.sh" "$r/narzedzia-qa/"
+	cp "$KORZEN/narzedzia-qa/k7-koniec.sh" "$KORZEN/narzedzia-qa/mapa-licznik.sh" \
+		"$KORZEN/narzedzia-qa/security-wersje.sh" "$r/narzedzia-qa/"
 	mkdir -p "$r/audyt/sklep/prompty"; cp "$KORZEN/audyt/sklep/prompty/SCHEMAT-RAPORTU.json" "$r/audyt/sklep/prompty/"
+	# Warunek 9 (SECURITY.md kontra wersje wtyczek, znalezisko D-1 z 31.08) potrzebuje
+	# w atrapie tego samego RODZAJU plikow co produkcja: naglowka wtyczki z „Version:"
+	# oraz dokumentu wymieniajacego te wersje. Bez nich k7 melduje „nie zmierzone"
+	# i CALA proba kontrolna pada na warunku, ktorego wcale nie testuje.
+	mkdir -p "$r/wtyczki/sklep-agentow"
+	printf '<?php\n/**\n * Plugin Name: sklep-agentow\n * Version: 9.9.9\n */\n' \
+		> "$r/wtyczki/sklep-agentow/sklep-agentow.php"
+	printf '# SECURITY\n\n> Wtyczka `sklep-agentow` (9.9.9).\n' > "$r/SECURITY.md"
 	# paczka + sha
 	printf 'atrapa' > "$r/boty/paczki/plik.txt"; ( cd "$r/boty/paczki" && zip -q sklep-agentow-9.9.9.zip plik.txt )
 	# repo git z tagiem i gałęzią mutantów
@@ -63,6 +72,11 @@ psuj_dwa_cele()  { printf 'CELE: 0 · ✅ 0 · 🐞 0 · ⚠️ 0 · ⛔ 0 · �
 psuj_tresc()     { sed -i 's/^- ✅ L1-01 · cel ·/- ✅ L1-01 · INNY cel ·/' "$1/audyt/sklep/material/06-mapa-polowania.md"; }
 psuj_mapa()      { sed -i 's/^- ✅ L1-01/- ⬜ L1-01/' "$1/audyt/sklep/material/06-mapa-polowania.md"; }
 psuj_zamroz()    { printf -- '- ⬜ L9-99 · dopisany po zamrożeniu ·\n' >> "$1/audyt/sklep/material/06-mapa-polowania.md"; sed -i 's/^- ⬜ L9-99/- ✅ L9-99/' "$1/audyt/sklep/material/06-mapa-polowania.md"; }
+# Warunek 9 (D-1). Psuja DOKLADNIE JEDEN warunek kazda: pierwsza rozjezdza numer
+# w dokumencie, druga zabiera dokument. Bez nich mielibysmy dowod, ze straznik
+# dziala SAM, ale zaden, ze jest naprawde WPIETY w bramke wydania.
+psuj_security_rozjazd() { sed -i 's/(9\.9\.9)/(9.9.8)/' "$1/SECURITY.md"; }
+psuj_security_brak()    { rm -f "$1/SECURITY.md"; }
 psuj_kal_dubel()  { ( cd "$1" && git checkout -q audyt/mutanty-sklep && sed -i 's/| L5 | M6 |/| L3 | M6 |/' audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP.md && git commit -qam dubel && git checkout -q - ); }  # 6 wierszy, 5 soczewek (#189 W3)
 psuj_kalibracja(){ ( cd "$1" && git checkout -q audyt/mutanty-sklep && sed -i 's/| L3 | M3 | tak | nie | PASS | 2 |/| L3 | M3 | nie | nie | FAIL | 2 |/' audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP.md && git commit -qam zle && git checkout -q - ); }
 psuj_kal_potok() { ( cd "$1" && git checkout -q audyt/mutanty-sklep && sed -i 's/| L3 | M3 | tak | nie | PASS | 2 |/| L3 | M3 \\| M3b | tak | nie | PASS | 3 |/' audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP.md && git commit -qam zle && git checkout -q - ); }
@@ -115,6 +129,8 @@ sprawdz "2 brak banku w ogóle (bez gałęzi i bez tagu)"     1 psuj_galaz_brak 
 sprawdz "5 LICZNIK przelotu nieaktualny (D2)"             1 psuj_przelot_licz  "5 przelot człowieka: LICZNIK"
 sprawdz "8 werdykt spoza słownika schematu (W4)"          1 psuj_raport_enum   "SPOZA słownika"
 sprawdz "8 rodzaj_skutku spoza słownika (W4)"             1 psuj_raport_skutek "rodzaj_skutku SPOZA"
+sprawdz "9 SECURITY.md rozjechany z wersją wtyczki (D-1)" 1 psuj_security_rozjazd "9 SECURITY.md"
+sprawdz "9 brak SECURITY.md = NIE ZMIERZONE, nie cisza"   1 psuj_security_brak    "9 SECURITY.md: NIE ZMIERZONE"
 sprawdz "2 proby=3 w wierszu z \\| w komórce (W2 #186)"      1 psuj_kal_potok     "proby>2=1"
 sprawdz "5 przelot z nieznanym znacznikiem ❓"             1 psuj_przelot_znak  "5 przelot człowieka: nieznany znacznik"
 sprawdz "2 soczewka FAIL (proby=2 — tylko werdykt)"       1 psuj_kalibracja  "2 kalibracja"

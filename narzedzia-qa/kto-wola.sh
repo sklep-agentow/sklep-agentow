@@ -37,8 +37,24 @@ cd "$KORZEN" || exit 2
 
 ZAKRES=( 'wtyczki/*.php' 'wtyczki/*.js' )
 # 1) funkcje, których nagłówek dodano/usunięto/zmieniono
+#
+# ⛔ POPRAWKA 1.09 — TO NARZĘDZIE PRZEZ CAŁY CZAS MELDOWAŁO „ZERO" DLA NOWYCH PLIKÓW.
+# Stary wzorzec `^[-+][^-+].*\bfunction` zjadał PIERWSZY ZNAK TREŚCI linii diffa:
+# po znaku `+` konsumował jeden znak (`f` ze słowa `function`), więc `\bfunction`
+# szukało już tylko w „unction …" i nie trafiało. Skutkiem była cisza udająca pomiar:
+# funkcja zapisana od PIERWSZEJ KOLUMNY była niewidzialna, a w nowym pliku wtyczki
+# od pierwszej kolumny są wszystkie. Narzędzie wypisywało pustą listę i kod 0 —
+# czyli wyglądało dokładnie jak „sprawdziłem, nic nie woła".
+# ⛔ To jest nasza klasa błędu: przyrząd, który nie mierzy, wygląda jak przyrząd,
+# który zmierzył i nie znalazł. Zgłosił to builder przy PR #244 — jego nowy plik
+# `prywatnosc.php` dostał „0 funkcji, EXIT=0".
+#
+# Nagłówki plików (`+++`, `---`) odsiewamy OSOBNYM sitem, zamiast wplatać je we wzorzec.
+# Próba kontrolna (diff z dwiema funkcjami: jedną od pierwszej kolumny, jedną z wcięciem):
+#   stary wzorzec → 1 trafienie · ten → 2 trafienia.
 Z_NAGLOWKOW=$(git diff "$BAZA" -U0 -- "${ZAKRES[@]}" \
-	| grep -E '^[-+][^-+].*\bfunction[[:space:]]+[A-Za-z_][A-Za-z0-9_]*[[:space:]]*\(' \
+	| grep -vE '^(\+\+\+|---)' \
+	| grep -E '^[-+].*\bfunction[[:space:]]+[A-Za-z_][A-Za-z0-9_]*[[:space:]]*\(' \
 	| sed -E 's/.*function[[:space:]]+([A-Za-z_][A-Za-z0-9_]*).*/\1/')
 # 2) funkcje, w których CIELE coś się zmieniło (git wpisuje nazwę w nagłówku hunka @@ … @@)
 Z_HUNKOW=$(git diff "$BAZA" -- "${ZAKRES[@]}" \
