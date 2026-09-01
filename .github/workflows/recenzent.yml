@@ -83,20 +83,31 @@ jobs:
       contents: read
       pull-requests: write
       actions: read
-      # ⛔ `id-token: write` USUNIETE 31.08 (znalezisko B-12). Bylo nadmiarowe.
-      # Dowod ze zrodla — `action.yml` akcji w przypietej wersji v1.0.210, opis wejscia
-      # `anthropic_workload_identity_federation_rule_id`:
-      #   „When set with anthropic_organization_id, the action authenticates to the Claude
-      #    API by exchanging the workflow's GitHub OIDC token instead of using a static
-      #    API key. Requires `id-token: write` permission."
-      # My uwierzytelniamy sie `claude_code_oauth_token`, czyli STATYCZNYM tokenem —
-      # federacji tozsamosci nie uzywamy, tak samo jak Bedrock/Vertex/Foundry.
-      # Dlaczego to nie kosmetyka: `id-token: write` pozwala przebiegowi wygenerowac
-      # PODPISANY token z tozsamoscia tego repozytorium, ktory uwierzytelnia w kazdej
-      # usludze ufajacej GitHub OIDC. Na tym samym wykonawcy wykonuje sie kod z galezi
-      # pull requesta (`composer install`, testy), a wykonawca jest self-hosted.
-      # ⛔ Gdyby kiedys wlaczac federacje tozsamosci albo Bedrock/Vertex — to uprawnienie
-      # trzeba TU przywrocic, inaczej uwierzytelnienie padnie.
+      # ⛔⛔ `id-token: write` PRZYWROCONE 1.09 — ZNALEZISKO B-12 BYLO BLEDNE.
+      #
+      # 31.08 usunelam to uprawnienie jako „nadmiarowe", z cytatem ze zrodla:
+      # `action.yml` w wersji v1.0.210 wiaze `id-token` z wejsciem
+      # `anthropic_workload_identity_federation_rule_id`, ktorego nie uzywamy
+      # (uwierzytelniamy sie statycznym `claude_code_oauth_token`).
+      # Rozumowanie bylo spojne i FALSZYWE. Akcja siega po token OIDC tak czy tak.
+      #
+      # DOWOD Z URUCHOMIENIA (przebieg 33454879018, 1.09, PR #243) — akcja padla
+      # po 50 sekundach, trzy proby, komunikat wprost:
+      #   „Attempt 3 failed: Could not fetch an OIDC token. Did you remember to add
+      #    `id-token: write` to your workflow permissions?"
+      #   „Operation failed after 3 attempts"
+      #
+      # ⭐ LEKCJA, nie kosmetyka: opis wejscia w `action.yml` mowi, KIEDY token jest
+      # potrzebny do FEDERACJI — nie mowi, czy akcja siega po niego przy starcie.
+      # Dowod z dokumentacji nie zastepuje dowodu z uruchomienia. Usuniecie
+      # uprawnienia „bo nieuzywane" wymaga przebiegu, ktory to pokaze, a nie cytatu.
+      #
+      # ⚠️ Koszt, ktory swiadomie placimy (analiza z 31.08 byla trafna): `id-token: write`
+      # pozwala przebiegowi wygenerowac PODPISANY token z tozsamoscia tego repozytorium,
+      # uwierzytelniajacy w kazdej usludze ufajacej GitHub OIDC. Na tym samym wykonawcy
+      # (self-hosted) wykonuje sie kod z galezi pull requesta. Uprawnienie zostaje TYLKO
+      # w tym jednym zadaniu i tylko dlatego, ze bez niego recenzent nie startuje wcale.
+      id-token: write
     steps:
       # Pelna historia, nie plytki klon: recenzent dwa razy sam zglaszal, ze nie
       # moze zweryfikowac historii (fetch-depth: 1 daje jeden commit, wiec
