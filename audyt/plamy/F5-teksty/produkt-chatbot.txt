@@ -1,0 +1,271 @@
+ChatBot LIVE – Automatic AI
+Przejdź do treści
+Automatic
+AI
+Usługi
+Realizacje
+Portfolio
+Proces
+Blog
+O nas
+FAQ
+Sklep
+Porozmawiajmy
+01
+AI Automation
+Automatyzujemy powtarzalne procesy i eliminujemy ręczną pracę — od przenoszenia danych po generowanie dokumentów i raportów.
+02
+AI Agents
+Tworzymy agentów AI, którzy analizują informacje, podejmują działania i wykonują określone zadania w Twoich narzędziach.
+03
+AI Software
+Budujemy dedykowane aplikacje, narzędzia i systemy wykorzystujące AI — od MVP po rozwiązania produkcyjne.
+04
+Integracje & Workflows
+Łączymy istniejące narzędzia i systemy w jeden spójny, zautomatyzowany workflow.
+[ 01 · AI Automation ]
+Procesy, które pracują same.
+Obieg dokumentów
+Raporty na żądanie
+Triage skrzynki e-mail
+Zobacz usługę
+Wszystkie usługi i ekosystem
+AI · Automatyzacja · Software · Integracje
+01
+Usługi
+01
+AI Automation
+02
+AI Agents
+03
+AI Software
+04
+Integracje & Workflows
+02
+Realizacje
+03
+Portfolio
+04
+Proces
+05
+Blog
+06
+O nas
+07
+FAQ
+08
+Sklep
+Porozmawiajmy
+Sklep
+/
+ChatBot LIVE
+[
+BOT
+· CZAT NA STRONĘ ]
+ChatBot
+LIVE
+Nie trać klientów piszących po godzinach: bot odpowiada 24/7, zbiera kontakty, a trudne rozmowy oddaje Tobie.
+[
+BOT
+· ONLINE ] ODPOWIADA 24/7 — PRZETESTUJ: BĄBELEK W ROGU
+149,00
+PLN
+Kup teraz (płatność testowa)
+✔ 14 dni na zwrot — bez pytań
+▶ Porozmawiaj z botem TERAZ — to ten sam bot: kliknij zielony bąbelek w rogu strony i zadaj pytanie.
+TRYB TESTOWY
+— płatności nie są pobierane. Przetestujesz cały zakup kartą testową, nic nie płacąc.
+Twoja strona
+Twoja baza pytań
+[ ChatBot LIVE ·
+online
+]
+Ile kosztuje strzyżenie?
+Strzyżenie damskie od 80 zł, męskie od 50 zł. Pełny cennik: automatic.ai/cennik
+Baza pytań
+[ Cennik ]
+[ Godziny ]
+[ Kontakt ]
+[
+01
+· PROBLEM ]
+Te same pytania. Codziennie.
+Cennik? Godziny? Dojazd? Każde z nich to przerwana robota — albo klient, który pisał po godzinach i nie doczekał się odpowiedzi.
+[
+02
+· CO DOSTAJESZ ]
+Baza pytań i odpowiedzi
+Wpisujesz własne pary z wariantami słów („cena, ceny, cennik") — bot odpowiada z TWOJEJ bazy, zero konfabulacji.
+Zbieranie kontaktów
+Bot nie zna odpowiedzi → prosi o maila i zapisuje zgłoszenie. Stały przycisk „zostaw wiadomość" od początku rozmowy.
+Historia rozmów
+Zapis wymian w wp-admin (retencja 90 dni) + lista zgłoszeń do odpisania.
+Start od pierwszej minuty
+10 gotowych par pytań po polsku w zestawie — działa zaraz po instalacji.
+Tryb AI (opcjonalny)
+Twój klucz API, odpowiedzi tylko z informacji o Twojej firmie, dzienny limit kosztów i automatyczny powrót do reguł przy błędzie.
+Ile kosztuje strzyżenie?
+Strzyżenie damskie od 80 zł, męskie od 50 zł. Pełny cennik: automatic.ai/cennik
+A w soboty pracujecie?
+[
+03
+· JAK DZIAŁA ]
+Zainstaluj wtyczkę i włącz bąbelek.
+Wpisz swoje pytania i odpowiedzi.
+Bot odpowiada, Ty dostajesz kontakty do klientów.
+[
+04
+· CO JEST W ŚRODKU ]
+04.1
+Na Twojej stronie
+Bąbelek w rogu Twojej strony: gość pyta o cennik czy godziny, bot odpowiada z Twojej bazy pytań i odpowiedzi — także po godzinach.
+TAK TO WYGLĄDA NA TWOJEJ STRONIE — BĄBELEK W ROGU, ZANIM GOŚĆ KLIKNIE
+▶
+Odtwórz nagranie
+NAGRANIE Z TEJ STRONY — PYTANIA O CENĘ I GWARANCJĘ, ODPOWIEDZI Z BAZY
+04.2
+Gdy bot nie zna odpowiedzi
+Bot prosi o maila i zapisuje zgłoszenie — kontakt nie przepada. Przycisk „zostaw wiadomość" jest w oknie od początku rozmowy.
+GDY BOT NIE ZNA ODPOWIEDZI — ZBIERA KONTAKT
+01
+Gość pyta o coś, czego nie ma w Twojej bazie.
+02
+Bot prosi o adres e-mail i treść wiadomości.
+03
+Zgłoszenie zapisuje się w wp-admin — na życzenie z mailem do Ciebie.
+04
+Odpisujesz, kiedy masz chwilę. Kontakt nie przepada.
+TOK ZGŁOSZENIA — KONTAKT NIE PRZEPADA
+04.3
+Twój panel
+Ustawienia po polsku: włącznik bąbelka, teksty powitania, tryb AI z limitem dziennym. Statystyki pokazują, o co pytają goście i czego brakuje w bazie.
+PANEL USTAWIEŃ — WSZYSTKO PO POLSKU
+STATYSTYKI I LUKI W BAZIE — WIDZISZ, O CO PYTAJĄ
+[
+05
+· W PACZCE ]
+Plik ZIP wtyczki — instalujesz jak każdą wtyczkę WordPressa, w kilka minut.
+Instrukcja krok po kroku z 6 zrzutami ekranu.
+10 gotowych par pytań i odpowiedzi po polsku — zestaw startowy.
+Dokumentacja techniczna z diagramem przepływu (dla Twojego informatyka).
+Historia zmian i licencja w paczce.
+[
+06
+· ILE CZASU ODZYSKUJESZ ]
+24/7
+bot nie ma godzin pracy — odpowiada też wtedy, gdy Ty śpisz
+10 par Q&A
+zestaw startowy po polsku, policzalny w paczce
+100% rozmów u Ciebie
+tryb regułowy: treść nie opuszcza Twojego WordPressa
+Policz po swojemu: 10 pytań dziennie × 3 minuty = około 5 godzin miesięcznie z głowy. Podstaw własne liczby — matematyka jest jawna.
+[
+07
+· RĘCZNIE KONTRA BOT ]
+Telefon i skrzynka kontra bot
+Robione ręcznie
+Z botem
+Odpowiadasz w godzinach pracy.
+Bot odpowiada 24/7 — także w święta i po 22.
+Urlop albo chorobowe = cisza na stronie.
+Bąbelek wisi na stronie zawsze.
+Każde „ile kosztuje?" przerywa robotę.
+Powtarzalne pytania zdejmuje baza Q&A.
+Kontakt z telefonu łatwo zgubić.
+Każde zgłoszenie zapisane, z mailem gościa.
+Bot nie zastępuje człowieka w trudnych sprawach — dlatego rozmowę możesz w każdej chwili przejąć i dokończyć osobiście.
+[
+08
+· DLA KOGO ]
+Usługi lokalne — fryzjer, warsztat, gabinet
+Sklepy i firmy z powtarzalnymi pytaniami
+Każdy, kto traci klientów piszących po godzinach
+[
+09
+· CO DOKŁADNIE DOSTAJESZ — I CZEGO NIE MA ]
+Bot NIE zmyśla
+— odpowiada wyłącznie z Twojej bazy pytań i odpowiedzi. Nie zna odpowiedzi? Zbiera kontakt, Ty odpisujesz później.
+„LIVE" znaczy: w każdej chwili możesz PRZEJĄĆ rozmowę i pisać do gościa osobiście — bot milknie, a gość widzi wprost, że rozmawia z człowiekiem; po pięciu minutach Twojej ciszy rozmowa wraca do bota.
+Pełnoprawny silnik regułowy działa od razu — bez kluczy i opłat. Tryb AI włączasz WŁASNYM kluczem; przy limicie dziennym lub błędzie bot sam wraca do reguł.
+Prywatność: w trybie regułowym treść rozmów nie opuszcza Twojego serwera; w trybie AI pytanie gościa idzie do dostawcy API (gotowa wzmianka do Twojej polityki prywatności jest w instrukcji).
+[
+10
+· CENA ]
+149,00
+PLN
+✔ 14 dni gwarancji satysfakcji — zwrot bez pytań
+Wyrażam zgodę na natychmiastowe dostarczenie treści cyfrowej i przyjmuję do wiadomości utratę prawa odstąpienia od umowy (art. 38 ustawy o prawach konsumenta).
+[ KUPUJESZ NA FIRMĘ? DANE DO FAKTURY ]
+Nazwa firmy
+NIP
+Adres firmy
+Pola nieobowiązkowe — wypełnij wszystkie trzy, jeśli chcesz fakturę na firmę. Dane trafią do potwierdzenia zakupu i posłużą wyłącznie do wystawienia faktury; fakturę prześlemy osobno mailem. Podanie NIP-u nie zmienia Twoich praw kupującego.
+Kup teraz (płatność testowa)
+STRIPE · TRYB TESTOWY · KARTA 4242 4242 4242 4242
+[ PŁATNOŚĆ · ChatBot LIVE · 149,00 PLN ]
+Zapłać (płatność testowa)
+Wróć
+Dane karty trafiają bezpośrednio do Stripe (ramka Stripe na tej stronie). Po zapłacie wrócisz na stronę potwierdzenia, a link do pobrania przyjdzie mailem.
+[ PO ZAKUPIE ]
+płacisz kartą przez Stripe — bez zakładania konta
+mail z linkiem pobrania zaraz po płatności — link ważny 72 h, do 10 pobrań
+aktualizacje i wsparcie dla kupionej kopii
+[
+11
+· GWARANCJA ]
+14 dni gwarancji satysfakcji: jeśli bot nie spełni Twoich oczekiwań, napisz do nas — zwracamy pieniądze bez pytań. Zwrot oznacza wygaśnięcie prawa do aktualizacji i wsparcia dla kupionej kopii.
+[
+12
+· FAQ ]
+Czy potrzebuję klucza AI?
+Nie — bot w pełni działa bez niego, na Twojej bazie pytań i odpowiedzi.
+Jakie są wymagania techniczne?
+WordPress 6.0 lub nowszy i PHP 8.1 lub nowszy — standard na dzisiejszych hostingach. Bez dodatkowych usług; tryb AI wymaga tylko Twojego klucza API.
+Co się dzieje, gdy bot nie zna odpowiedzi?
+Prosi o maila, zapisuje zgłoszenie i może powiadomić Cię mailem — kontakt nie przepada.
+Czy bot sam się uczy?
+Nie — odpowiada wyłącznie z Twojej bazy. To zaleta: zero zmyślonych odpowiedzi o Twojej firmie.
+Jak wstawię bota na stronę?
+Instalujesz wtyczkę — bąbelek pojawia się sam; włącznik i teksty w ustawieniach.
+Co z RODO?
+Zgłoszenia gości zostają w Twojej bazie. W trybie AI treść pytań idzie do dostawcy API — gotowa wzmianka do Twojej polityki prywatności jest w instrukcji.
+Zacznij odpowiadać w nocy. Bez nocek.
+Kup teraz (płatność testowa)
+[
+ChatBot LIVE
+· 14 dni na zwrot ]
+149 PLN
+Kup teraz
+[ Status · Online ]
+System działa 24/7
+[ AI · Automatyzacja · Software ]
+Tu kończy się strona.
+System pracuje dalej.
+AI, automatyzacja i rozwiązania cyfrowe dla nowoczesnego biznesu.
+Porozmawiajmy
+hello@automaticai.pl
+Nawigacja
+Usługi
+Realizacje
+Portfolio
+Proces
+Blog
+O nas
+FAQ
+Sklep
+Social
+LinkedIn
+(otwiera się w nowej karcie)
+Instagram
+(otwiera się w nowej karcie)
+X
+(otwiera się w nowej karcie)
+©
+2026
+Automatic AI — wszystkie prawa zastrzeżone
+Polityka prywatności
+Polityka cookies
+Automatic AI
+hello@automaticai.pl
+·
+automaticai.pl

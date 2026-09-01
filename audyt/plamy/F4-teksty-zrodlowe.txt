@@ -1,0 +1,22 @@
+     Art. 112. Podatnicy są obowiązani przechowywać ewidencje prowadzone dla celów rozliczania podatku oraz wszyst-
+kie dokumenty, w szczególności faktury, związane z tym rozliczaniem do czasu upływu terminu przedawnienia zobowiązania
+podatkowego, z zastrzeżeniem art. 109b ust. 7, art. 130d ust. 3, art. 134 ust. 3, art. 138h ust. 3 i art. 138i ust. 8.
+--- art. 106e ust. 1 pkt 1-5 ---
+     Art. 106e. 1. Faktura powinna zawierać:
+1)   datę wystawienia;
+2)   kolejny numer nadany w ramach jednej lub więcej serii, który w sposób jednoznaczny identyfikuje fakturę;
+3)   imiona i nazwiska lub nazwy podatnika i nabywcy towarów lub usług oraz ich adresy;
+4)   numer, za pomocą którego podatnik jest zidentyfikowany na potrzeby podatku, z zastrzeżeniem pkt 24 lit. a;
+5)   numer, za pomocą którego nabywca towarów lub usług jest zidentyfikowany na potrzeby podatku lub podatku od
+     wartości dodanej, pod którym otrzymał on towary lub usługi, z zastrzeżeniem pkt 24 lit. b;
+--- Ordynacja art. 70 par. 1 ---
+     Art. 70. § 1. Zobowiązanie podatkowe przedawnia się z upływem 5 lat, licząc od końca roku kalendarzowego, w którym
+upłynął termin płatności podatku.
+--- RODO art. 17 ust. 3 (wstep + lit. b) ---
+     3.    Ust. 1 i 2 nie mają zastosowania, w zakresie w jakim przetwarzanie jest niezbędne:
+
+     a) do korzystania z prawa do wolności wypowiedzi i informacji;
+
+     b) do wywiązania się z prawnego obowiązku wymagającego przetwarzania na mocy prawa Unii lub prawa państwa
+        członkowskiego, któremu podlega administrator, lub do wykonania zadania realizowanego w interesie publicznym
+        lub w ramach sprawowania władzy publicznej powierzonej administratorowi;
