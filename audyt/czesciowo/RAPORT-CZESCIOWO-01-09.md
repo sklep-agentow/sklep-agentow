@@ -307,3 +307,90 @@ BEZ znaków cudzysłowu we wzorcu.
 - ⭐ **Odsyłacz do `E7-F1`:** `INSTRUKCJA-INSTALACJI.md:148`, Krok 5 pkt 3, obiecuje kupującemu
   „strona sama odświeża status **aż do** «Mail wysłany»". To jest dokładnie to zdanie, które
   `E7-F1` obala pomiarem — instrukcja powtarza obietnicę strony, nie jej zachowanie.
+
+---
+
+# F2 — PRAWO KONSUMENCKIE: ZGODA NA UTRATĘ PRAWA ODSTĄPIENIA
+
+**Stan wejściowy z mapy:** 🟡, „zapisane w pamięci warsztatu · czy w mailu — sprawdzone
+w audycie sklepu". **Wynik: 1 × `MALE`, pięć terenów czysto.**
+Gałąź po scaleniu `origin/main` (`60587b3`) — czytam kod po sześciu PR-ach, nie sprzed nich.
+
+## Gdzie kończył się pomiar
+
+Zmierzone było **jedno ogniwo**: czy zgoda jest w mailu. Cały łańcuch — od momentu, w którym
+kupujący ją zaznacza, przez to, czy serwer w ogóle jej pilnuje, po to, co zostaje w bazie
+po latach — nie był mierzony jako całość. Sprawdziłem go ogniwo po ogniwie; **trzyma się**.
+Dziura jest gdzie indziej: w dokumentach, które wtyczka sama zakłada, a których kupujący
+nigdy nie zobaczy.
+
+## 1. ZNALEZISKO
+
+### 🟡 `F2-F1` — **MALE** · wtyczka zakłada „Regulamin sklepu" i „Politykę prywatności sklepu", a potem **nigdzie ich nie linkuje** — nawet po opublikowaniu kupujący nie ma jak do nich trafić
+
+**ZNALEZISKO.** Przy aktywacji powstają cztery strony (`includes/aktywacja.php:187-215`), w tym
+dwie prawne jako **szkice** do wypełnienia. Opcje z ich identyfikatorami występują w całej
+wtyczce w dokładnie **dwóch** miejscach — i oba to sprzątanie po sobie, nie użycie:
+```
+includes/aktywacja.php   → utworzenie stron i zapis opcji
+uninstall.php            → skasowanie stron przy pełnym czyszczeniu
+```
+`grep -rn 'sklepag_strona_regulamin\|sklepag_strona_polityka' wtyczki/sklep-agentow --include='*.php'`
+nie pokazuje **ani jednego** miejsca, które by te opcje odczytało po to, żeby zbudować odsyłacz.
+Dla porównania `sklepag_strona_sklep` i `sklepag_strona_dziekujemy` są czytane wielokrotnie
+(warunkowe ładowanie assetów, adres produktu, okruszki, powrót do sklepu, stopka maila).
+
+Skutek: właściciel, który zrobi dokładnie to, co każe instrukcja („wypełnij je swoimi danymi
+i opublikuj" — `INSTRUKCJA.md` rozdz. 6, `INSTRUKCJA-INSTALACJI.md` Krok 1 pkt 2 i „Test
+a produkcja" pkt 5), **nadal nie ma regulaminu nigdzie na ścieżce zakupu**. Żeby kupujący go
+zobaczył, trzeba ręcznie dopisać pozycję do menu motywu — czego instrukcja wymaga tylko dla
+strony „Sklep", nie dla dokumentów prawnych.
+
+**DOWÓD — render żywych stron, nie odczyt kodu.** Trzy strony ścieżki zakupu, wszystkie linki
+do dokumentów prawnych:
+
+| strona | znalezione odsyłacze | czyje |
+|---|---|---|
+| `/sklep/` | `Polityka prywatności`, `Polityka cookies` | **stopka motywu strony**, nie wtyczka |
+| `/sklep/produkt/chatbot-live/` | te same dwa | j.w. |
+| `/dziekujemy-za-zakup/` | te same dwa | j.w. |
+
+**Regulaminu nie ma na żadnej z nich.** Stan stron zakładanych przez wtyczkę na stosie
+(odczyt bazy):
+```
+sklepag_strona_regulamin  id=120  status=draft   „Regulamin sklepu (SZABLON)"
+sklepag_strona_polityka   id=121  status=draft   „Polityka prywatności sklepu (SZABLON)"
+sklepag_strona_sklep      id=118  status=publish
+sklepag_strona_dziekujemy id=119  status=publish
+```
+
+**Dlaczego `MALE`, a nie wyżej — świadomie nie podnoszę.** Kluczowa informacja z art. 38
+pkt 13 ustawy o prawach konsumenta (i art. 16 lit. m dyrektywy) **jest** podana w chwili,
+w której musi być podana — stoi w treści checkboxa nad przyciskiem zakupu i wraca w mailu.
+To jest przedmiot tego terenu i on jest spełniony. Brak odsyłacza do regulaminu to warstwa
+obok (obowiązek informacyjny z art. 12), a sam **regulamin jako dokument** ma w mapie własny,
+nietknięty teren `F5` — nie zabieram mu tematu i nie liczę tego drugi raz. Zgłaszam wyłącznie
+tę część, która jest wadą **kodu wtyczki**: dokument jest tworzony i kasowany, ale nigdy
+czytany.
+
+## 2. TERENY SPRAWDZONE — WYNIK CZYSTO
+
+| # | Ogniwo łańcucha zgody | Jak zmierzone | Wynik |
+|---|---|---|---|
+| 1 | **Czy bez zgody da się kupić** | **żywy POST** na `admin-post.php` z ważnym nonce'em i bez pola `zgoda` | **CZYSTO** — `HTTP=400`, treść: „Zakup wymaga zgody na natychmiastowe dostarczenie treści cyfrowej." Egzekwowanie jest po stronie serwera (`includes/zakup.php:111-115`), nie na atrybucie `required` w HTML. Sprawdzenie stoi **przed** rozgałęzieniem na płatność osadzoną i hostowaną (`:121`), więc obie drogi zakupu przechodzą przez ten sam warunek |
+| 2 | **Czy treść zgody jest zapisywana per zamówienie** (a nie tylko wyświetlana) | odczyt kodu + **odczyt bazy stosu** | **CZYSTO** — stała `SKLEPAG_ZGODA_TRESC` (`zakup.php:11`) wchodzi do kolumny `zgoda_tresc` w `INSERT` zamówienia (`:907`). Migawka, nie odsyłacz: zmiana tekstu w przyszłej wersji wtyczki **nie przepisze** zgód już udzielonych |
+| 3 | **Czy któreś zamówienie powstało bez zgody** | `SELECT COUNT(*)` na żywej bazie | **CZYSTO — 42 z 44**. Dwa wiersze bez zgody to **atrapy testowe wstawiane wprost do bazy**, nie zakupy: `#9900012` (`cs_test_opinie_mec…`, 1,00 zł) i `#9901177` (`cs_test_rodo_…`, 0,00 zł), oba z pustą treścią maila; ich identyfikatory pochodzą z `testy/opinie-mechanizm-test.php` i `testy/kroki-rodo/*`. Żadne zamówienie z drogi zakupowej nie jest bez zgody, a **wszystkie 44 mają dokładnie jedną, tę samą treść** (`COUNT(DISTINCT zgoda_tresc) = 1`) |
+| 4 | **Czy zgoda jest wcześniejsza niż umowa** (art. 38 pkt 13 wymaga zgody PRZED spełnieniem świadczenia) | porównanie znaczników czasu ostatniego zamówienia | **CZYSTO** — `zgoda_czas = 2026-09-01 02:56:41` GMT, `utworzono = 04:57:00` czasu witryny (= 02:57:00 GMT): zgoda **19 sekund przed** powstaniem zamówienia. Czas zgody bierze się z chwili tworzenia sesji płatności (`zakup.php:196-197`), jedzie do Stripe w metadanych i wraca przy domknięciu (`:910`) — nie jest ustawiany „na teraz" przy zapisie |
+| 5 | **Trwały nośnik** (art. 21 ust. 1 UPK / art. 8 ust. 7 dyrektywy) | zdjęty z łapacza prawdziwy mail (patrz `E7`) + panel | **CZYSTO** — mail niesie dosłowną treść zgody i jej chwilę w obu wersjach (`zakup.php:1240-1244` tekst, `mail-html.php` blok „Potwierdzenie Twojej zgody"); panel pokazuje to samo, przeliczone na czas lokalny i **opisane** jako lokalny (`admin-zamowienie.php:337`) |
+
+## 3. CZEGO W `F2` NIE ZMIERZYŁEM
+
+- **Obowiązek informacyjny z art. 12** poza samą zgodą (dane sprzedawcy, tryb reklamacji,
+  koszty) na stronie produktu — patrzyłem wyłącznie na ogniwa zgody; całość informacji
+  przedumownej to teren `F5` (nietknięty).
+- **Nazwa przycisku zakupu wobec art. 17 ust. 3 UPK** („zamówienie z obowiązkiem zapłaty"
+  albo równoważne). Przyciski brzmią „Kup teraz (płatność testowa)" i „Zapłać (płatność
+  testowa)". Nie stawiam werdyktu — to ocena prawna, nie pomiar; **odnotowuję jako pytanie
+  do prawnika**, nie jako znalezisko.
+- **Zwrot a wygaśnięcie zgody** — co się dzieje z zapisaną zgodą przy zwrocie/sporze;
+  sprawdzone tylko tyle, że statusy `zwrocone`/`sporne` nie ruszają kolumn zgody.
