@@ -461,7 +461,7 @@ jest tym błędem, 95 wyszła przy pisaniu do niego testu, 96 przy przelocie po 
 |---|---|---|---|
 | 94 | ⛔ **DANE, NA KTÓRYCH OPERACJA OPRZE SIĘ PRZY KOŃCU, MUSZĄ BYĆ ZAMROŻONE NA STARCIE.** Produkt mógł się zmienić między utworzeniem płatności a jej domknięciem — kupujący płacił za jedno, dostawał drugie. Do tabeli sesji szedł sam identyfikator, a przy domknięciu kod czytał produkt z bazy **ponownie** | `zakup.php:211` (do sesji trafia sam `produkt_id`, zero danych produktu) wobec `:827` (ponowny odczyt) i `:845-852` (zapis nazwy, ceny i pliku z tego świeżego odczytu). ⛔ **Sygnał ostrzegawczy: kolumny nazywały się `produkt_*_kupiona`** — nazwa obiecywała zamrożenie z chwili zakupu, a kod zamrażał stan z chwili domknięcia. Nikt nie sprawdzał nazw kolumn pod tym kątem | ✅ naprawione w #258 (migawka w chwili płatności, schemat 9→10) + **golden**, który musiał paść na kodzie sprzed naprawy. Reguła szersza: przy każdej operacji rozciągniętej w czasie (płatność, rezerwacja, koszyk, zaproszenie, link z terminem) pytaj, **co zapisano w chwili startu, a co dociągnięto przy końcu** |
 | 95 | ⛔ **TEST KOŃCZY SIĘ SUKCESEM BEZ ANI JEDNEJ ASERCJI, BO FUNKCJA KOŃCZY PROCES.** Pierwsza wersja goldena do klasy 94 dawała kod 0, nie wykonawszy żadnego sprawdzenia — poza kontekstem AJAX funkcja kończąca odpowiedź kończy proces gołym `die`, bez uchwytu do podmiany. Wyglądała dokładnie jak test, który przeszedł | builder złapał to **sam, przed oddaniem**, i dołożył pięć warunków wstępnych — w tym sprawdzenie, że **podmiana naprawdę weszła do tabeli**, zanim test cokolwiek orzeknie. ⛔ **Siódmy przypadek rodziny „narzędzie melduje nieprawdę”** w tym projekcie (poprzednie: strażnik ścieżki osadzonej, test e2e z odbijanym checkboxem, próba zatruwająca cache, przelot bez nazw padających prób) | ✅ warunki wstępne K1–K5 w samym teście. Reguła: **sukces bez zliczonych asercji jest podejrzany z definicji** — każdy nowy test musi mieć warunki wstępne sprawdzające, że w ogóle miał co mierzyć, i musi PAŚĆ na kodzie sprzed naprawy |
-| 96 | **BRAMKA Z WŁASNYM WZORCEM ZAMIAST KANONICZNEGO ŹRÓDŁA PRZEPUSZCZA TO, CO ONO ŁAPIE.** `pakuj-dla-klienta.sh:60` sprawdza ślady wewnętrzne w dwóch plikach najwyższego poziomu paczki ręcznie wpisanym wzorcem (8 klas), zamiast wołać `slady-wewnetrzne.sh`, który zna 10 — w tym imię właściciela, numer PR-a, słowa „recenzent” i „koordynator” | **próba kontrolna, nie sam odczyt kodu:** plik z imieniem właściciela, numerem PR-a i słowem „koordynator” → wzorzec z linii 60 daje **zero trafień i raport czysto**; ten sam plik przez kanoniczny skaner → **cztery trafienia i kod 1**. ⛔ Te dwa pliki nie są objęte żadną inną ścieżką: bramka `slady` skanuje tylko `wtyczki/*/`, `paczka-zgodnosc.sh` tylko wnętrze archiwów. Sam `slady-wewnetrzne.sh` ostrzega w nagłówku przed tą duplikacją | ⬜ do zrobienia (`Q-3` w rejestrze). Kandydat: kontrola, że żaden skrypt w `narzedzia-qa/` nie ma własnego wzorca śladów — jedyne dozwolone miejsce to kanoniczny skaner |
+| 96 | **BRAMKA Z WŁASNYM WZORCEM ZAMIAST KANONICZNEGO ŹRÓDŁA PRZEPUSZCZA TO, CO ONO ŁAPIE.** `pakuj-dla-klienta.sh:60` sprawdza ślady wewnętrzne w dwóch plikach najwyższego poziomu paczki ręcznie wpisanym wzorcem (**9 alternatyw, zero nazwanych klas**), zamiast wołać `slady-wewnetrzne.sh`, który ma **5 klas śladów i 52 alternatywy** — w tym imię właściciela, numer PR-a, słowa „recenzent” i „koordynator” | **próba kontrolna, nie sam odczyt kodu:** plik z imieniem właściciela, numerem PR-a i słowem „koordynator” → wzorzec z linii 60 daje **zero trafień i raport czysto**; ten sam plik przez kanoniczny skaner → **cztery trafienia i kod 1**. ⛔ Te dwa pliki nie są objęte żadną inną ścieżką: bramka `slady` skanuje tylko `wtyczki/*/`, `paczka-zgodnosc.sh` tylko wnętrze archiwów. Sam `slady-wewnetrzne.sh` ostrzega w nagłówku przed tą duplikacją. ⛔ **Liczby są POLICZONE, nie oszacowane** — `sed -n '60p' narzedzia-qa/pakuj-dla-klienta.sh` oraz `grep -h '^\t\"' narzedzia-qa/slady-wewnetrzne.sh` bez wiersza `printf`; alternatywy liczone jako pola po nazwie klasy. Pierwsza wersja tego wpisu mówiła „8 klas" i „zna 10" — obie liczby zmyślone, złapane w recenzji `#260`. Wszystkie cztery rzeczy, których wzorzec z linii 60 nie łapie (imię właściciela, numer PR-a, „recenzent", „koordynator"), siedzą w JEDNEJ klasie: `nasz obieg pracy` | ⬜ do zrobienia (`Q-3` w rejestrze). Kandydat: kontrola, że żaden skrypt w `narzedzia-qa/` nie ma własnego wzorca śladów — jedyne dozwolone miejsce to kanoniczny skaner |
 
 ### ⛔ Czwarty nawrót rodziny „potwierdzamy skutek, którego nie zmierzyliśmy” — to już nie klasa, to potrzeba bramki
 
@@ -477,9 +477,25 @@ pomiar, na którym stoi.
 
 ### 🎓 Który skill pozwolił na klasę 94 — zmierzone, nie zgadnięte
 
-**Etap BUDOWY → `wp-plugin-development`.** `grep -ric "migawk|zamroz|snapshot|w chwili zakupu"`
-po całym skillu → **0 trafień**, przy kontroli dodatniej `nonce` → **11**, czyli szukanie działa.
-Skill **nie mówi o zamrażaniu danych transakcji ani słowem**.
+**Etap BUDOWY → `wp-plugin-development`.** Wniosek się broni, ale **pierwszy pomiar był wart zera**:
+szedł przez `grep -ric "migawk|zamroz|…"` **bez `-E`**, gdzie `|` jest znakiem dosłownym — taka
+komenda szuka jednego ciągu z kreskami i zwraca 0 **na dowolnym wejściu**. Kontrola dodatnia na
+`nonce` tego nie łapała, bo jeden termin bez alternatywy mierzy tylko to, że grep w ogóle czyta pliki.
+⛔ To jest **klasa 95 popełniona w akapicie pod tytułem „zmierzone, nie zgadnięte"**.
+
+Pomiar powtórzony tak, żeby **mógł PAŚĆ** — werdyktem jest KOD WYJŚCIA, nie liczba w zdaniu
+(`grep` = ugrep 7.8.4; kody wyjścia zdejmowane **bez potoku**, bo `| head` podmienia je na swój):
+
+| Co mierzę | Komenda (skrót `S=~/.claude/skills/wp-plugin-development`) | Wynik |
+|---|---|---|
+| pytanie o zamrażanie | `grep -rEilc 'migawk\|zamroz\|snapshot\|w chwili zakupu' "$S"` | **EXIT=1**, 0 trafień — skill milczy |
+| kontrola dodatnia **z alternatywą** | `grep -rEilc 'nonce\|sanitiz\|capabilit' "$S"` | **EXIT=0**, 30 trafień — alternatywa działa |
+| skill zniknął (ta sama komenda) | `grep -rEilc 'nonce\|sanitiz\|capabilit' ~/.claude/skills/nie-ma-takiego-skilla` | **EXIT=2** — pomiar PADA |
+
+⭐ Trzeci wiersz jest tu najważniejszy: odróżnia **„skill nic o tym nie mówi" (EXIT=1)** od **„nie ma
+czego czytać" (EXIT=2)**. Stara komenda meldowała oba te stany identycznie — jako zero trafień, czyli
+bramka, która nie mogła paść. Skill **nie mówi o zamrażaniu danych transakcji ani słowem**, i to jest
+teraz zmierzone, a nie zgadnięte.
 
 **Etap AUDYTU → `jak-audytowac`.** Skill regułę **miał** (algorytm punkt 1: przeczytaj zamówienie
 i wypisz wymagania; punkt 6: dla każdego ustal, gdzie ma być realizowane). Nie została wykonana
