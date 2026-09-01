@@ -34,6 +34,7 @@ w katalogu roboczym sesji; każdy pomiar niżej ma wklejone wyjście albo komend
 | T7 | retencja i strefy czasu | czy klasa `KR6` rozlała się na sklep | ✅ czysto |
 | T8 | statyka pod właściwą wersję PHP | czy mierzymy tę wersję, na której produkt chodzi | ⚠️ `A7-F2` |
 | T9 | **konfiguracja zewnętrzna, której kod nie widzi** | co produkt bierze ze Stripe'a, a instrukcja o tym milczy | 🔴 **`A7-F1`** |
+| T10 | 420 instrukcji `echo`/`print` ze zmienną | czy cokolwiek niezescapowanego dochodzi do wyjścia | ✅ czysto (domknięte po korekcie przyrządu) |
 
 ⭐ Teren T9 wyszedł z pytania, które przy infrastrukturze dało trzy znaleziska w jeden wieczór:
 **„czego nasza ochrona NIE MOŻE zobaczyć, nawet gdy działa poprawnie"**. Przeniesione na produkt
@@ -300,6 +301,26 @@ Nieprawda — `sklepag_domknij_zakup()` bierze `amount_total` i `currency` **z s
 (`zakup.php:839-840`), a do ceny z bazy schodzi dopiero, gdy sesja ich nie ma. Instrukcja
 poświęca temu dwa ostrzeżenia z miejscem w Dashboardzie (`INSTRUKCJA-INSTALACJI.md:154-170`).
 
+### T10 · escapowanie wyjścia — ✅ czysto (domknięte PO korekcie własnego przyrządu)
+⛔ **Ten teren najpierw oznaczyłem jako `NIE SPRAWDZIŁEM` i to była prawda o pierwszej wersji
+przyrządu**, nie o kodzie: skrypt zdejmował samą NAZWĘ funkcji escapującej, zostawiał jej argument
+i meldował **371 trafień na 371 linii** — czyli mianownik równy licznikowi, klasyczne „narzędzie
+o zakresie szerszym niż jego rozdzielczość". Poprawiony przyrząd usuwa **zbalansowane** wywołania
+funkcji bezpiecznych wraz z argumentami, odcina WARUNEK ternariusza (tam zmienna nie trafia
+na wyjście) i czyta instrukcję `echo` **w całości do średnika**, a nie linię po linii.
+
+**Pomiar:** 420 instrukcji `echo`/`print` ze zmienną → **31 kandydatów** → **31 obejrzanych,
+0 realnych**. Wszystkie 31 mają escape w gałęzi ternariusza albo w zagnieżdżonym wywołaniu
+(np. `admin-zamowienie.php:347` = `esc_html( $zam->mail_tresc )` w gałęzi, `:327` =
+`sklepag_badge_statusu()`, która escapuje wszystkie trzy pola u siebie), albo są pobieranym
+plikiem, nie HTML-em, z jawnym `phpcs:ignore` i powodem (`filtry.php:579,585` — XML/tekst dla
+Gmaila i Outlooka; `konfiguracja.php:105` — JSON konfiguracji).
+
+**KALIBRACJA przyrządu — bo „31 fałszywych alarmów" i „skrypt ślepy" wyglądają identycznie.**
+Na podłożonej atrapie z dwiema wadami (goła zmienna w treści `<td>`, goła zmienna w atrybucie
+`href`) i dwiema liniami czystymi (escape + ternariusz z literałami) przyrząd zgłosił
+**2 z 2 mutantów i 0 fałszywych**. Dopiero po tym pomiarze mówię „czysto".
+
 ### T4b · uninstall i symetria zapis↔sprzątanie — ✅ czysto w zakresie, który sprawdziłem
 Trzy pliki `uninstall.php` kasują tabele i opcje; usuwanie opcji idzie przez
 `esc_like()` + `prepare()` (klasa nr 1 i nr 2 kolegi — klucz API i cudze transienty).
@@ -316,10 +337,10 @@ Sekcja obowiązkowa: lista znanych klas kotwiczy, więc muszę nazwać, o co moj
    i zestawienia. Nie kliknąłem ani razu. Trzy z czterech znalezisk `A4b` poprzedniej sesji
    siedziały w STANIE ekranu, nie w adresie — mój przebieg takiej wady nie mógł zobaczyć
    **z konstrukcji**, nie z niedopatrzenia.
-2. **Escapowanie wyjścia.** Napisałem przyrząd, dostałem 371 trafień na 371 linii — czyli
-   przyrząd był bezużyteczny (zdejmował nazwę funkcji, zostawiał zmienną w środku). Nie
-   poprawiałem go, bo ten teren pokrywa `phpcs` w bramkach. ⛔ **Ale to znaczy, że mojego
-   NIEZALEŻNEGO pomiaru tam nie ma** — werdykt: `NIE SPRAWDZIŁEM`, nie „czysto".
+2. ~~**Escapowanie wyjścia** — `NIE SPRAWDZIŁEM`.~~ ✅ **DOMKNIĘTE po napisaniu tej sekcji**,
+   patrz teren T10 wyżej. Zostawiam skreślenie, a nie kasuję zdania: pierwsza wersja mojego
+   przyrządu meldowała 371 trafień na 371 linii i uczciwym werdyktem było wtedy „nie sprawdziłem",
+   nie „czysto". Poprawiony przyrząd + kalibracja na podłożonej wadzie dały wynik czysty.
 3. **Wnętrze klienta IMAP** (`class-segm-imap.php`, 1123 linie) — parsowanie odpowiedzi serwera
    z sieci to najbardziej surowe wejście w całym produkcie i nie tknąłem go ani jednym pytaniem.
 4. **Treść tekstów sprzedażowych** wobec prawa i wobec produktu — mierzyłem LICZBY i NAZWY
