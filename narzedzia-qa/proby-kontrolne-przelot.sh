@@ -37,6 +37,36 @@ declare -A POMIJANE=(
 	[dowod-zachowania-segregator-proba-kontrolna.sh]="deinstaluje wtyczkę ze stosu — do przelotu ręcznego przed wydaniem"
 )
 
+# ⛔ PRÓBY WYMAGAJĄCE DOCKERA (1.09). Te cztery stawiają stos próbny albo wołają
+# PHP w kontenerze. Wykonawca CI od 31.08 chodzi jako `ciuser` (naprawa B-3) i NIE
+# widzi `docker.sock` — zmierzone: `permission denied while trying to connect to
+# the docker API at unix:///var/run/docker.sock`. Dostępu dać NIE MOŻNA: grupa
+# `docker` jest równoważnikiem roota i unieważniłaby całą tamtą naprawę.
+#
+# ⭐ Dlaczego nie na sztywno w POMIJANE: bo lokalnie (i na każdym koncie z Dockerem)
+# te próby DZIAŁAJĄ i mają biec. Pomijamy je wyłącznie tam, gdzie Dockera faktycznie
+# nie ma — inaczej sami sobie zabralibyśmy pokrycie na maszynach, gdzie jest.
+#
+# ⚠️ Dlaczego to nie jest zamiecenie pod dywan: pominięcie ląduje w logu z powodem,
+# jest policzone, a niżej stoi SUFIT — lista pominięć, która rośnie, wywala przelot.
+# ⛔ DŁUG: te próby MUSZĄ przejść ręcznie przed wydaniem. CI ich nie sprawdzi.
+WYMAGA_DOCKERA=(
+	dowod-aktualizacji-proba-kontrolna.sh
+	dowod-z-paczki-proba-kontrolna.sh
+	stos-proba-kontrolna.sh
+	test-php-proba-kontrolna.sh
+)
+if ! docker ps >/dev/null 2>&1; then
+	for N in "${WYMAGA_DOCKERA[@]}"; do
+		POMIJANE[$N]="wymaga Dockera, a to konto go nie widzi (wykonawca CI bez roota, B-3) — przelot ręczny przed wydaniem"
+	done
+fi
+
+# ⛔ SUFIT POMINIĘĆ. Bez niego lista pominięć rośnie po cichu i przelot świeci
+# zielono, sprawdzając coraz mniej — dokładnie ta klasa błędu, dla której ten
+# skrypt w ogóle powstał. Podniesienie sufitu ma być świadomą decyzją w commicie.
+MAX_POMINIETYCH=5
+
 if [ -n "$(git status --porcelain -uno 2>/dev/null)" ]; then
 	echo "PRZELOT: drzewo robocze BRUDNE — dowód powstałby na kodzie, którego nie ma w historii." >&2
 	echo "         Zacommituj zmiany i powtórz (log niesie COMMIT i jest po nim sprawdzany)." >&2
@@ -93,4 +123,12 @@ mkdir -p "$(dirname "$LOG")"
 
 printf '\nPRZELOT: uruchomionych %s, z EXIT≠0: %s, pominiętych %s — zapisane w %s\n' "$ILE" "$ZLE" "$POMINIETO" "$LOG"
 [ "$ZLE" -eq 0 ] || printf 'PRZELOT: %s prób nie przeszło — log niesie stan faktyczny, nie wycinamy pozycji.\n' "$ZLE"
+
+# ⛔ SUFIT POMINIĘĆ — zestaw, który się kurczy, wygląda dokładnie jak zdany.
+if [ "$POMINIETO" -gt "$MAX_POMINIETYCH" ]; then
+	printf 'PRZELOT: pominiętych %s przy suficie %s — lista pominięć ROŚNIE.\n' "$POMINIETO" "$MAX_POMINIETYCH" >&2
+	printf '         To awaria pokrycia, nie sukces. Podnieś sufit ŚWIADOMIE w commicie albo napraw próbę.\n' >&2
+	exit 1
+fi
+
 exit $([ "$ZLE" -eq 0 ] && echo 0 || echo 1)

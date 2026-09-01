@@ -252,7 +252,11 @@ uruchom_phpstan() {
 	# ze analiza jest czysta (po rozdzieleniu: EXIT=0, „No errors").
 	# ⭐ Cache ZOSTAJE, bo nie jest darmowy: zmierzone 1.09 na tym repo —
 	# z cache 2 s, bez cache 26 s.
-	local KATALOG_TMP="/tmp/phpstan-$(id -un)"
+	# ⛔ `${TMPDIR:-/tmp}`, nie twarde `/tmp` — inaczej ta linia NADPISUJE katalog
+	# narzucony z zewnątrz i psuje izolację wołającego. Zmierzone 1.09: przy twardym
+	# `/tmp` `bramki-proba-kontrolna.sh` nie mogła się odciąć własnym TMPDIR-em
+	# i dalej zatruwała trwały cache (phpstan EXIT=1 po przelocie próby).
+	local KATALOG_TMP="${TMPDIR:-/tmp}/phpstan-$(id -un)"
 	mkdir -p "$KATALOG_TMP" || { echo "BRAK dostepu do $KATALOG_TMP" >&2; return 1; }
 	# 1536M + 1 proces (phpstan.neon.dist): przy 1G worker padal deterministycznie
 	# po dojsciu plikow mechanizmu opinii (D32), a 2 workery po 1,5G na maszynie
