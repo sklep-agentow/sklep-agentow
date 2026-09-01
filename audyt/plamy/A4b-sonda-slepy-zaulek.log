@@ -1,0 +1,7 @@
+1. panel otwarty          : {"formularzSchowany":true,"panelSchowany":false,"napisZaplac":"Zapłać (płatność testowa)","zaplacZablokowany":true,"napisKup":"Otwieram płatność…","kupZablokowany":true,"komunikatBledu":"(pusty) [SCHOWANY]"}
+1b. karta wypełniona      : {"formularzSchowany":true,"panelSchowany":false,"napisZaplac":"Zapłać (płatność testowa)","zaplacZablokowany":false,"napisKup":"Otwieram płatność…","kupZablokowany":true,"komunikatBledu":"(pusty) [SCHOWANY]"}
+2. po kliknięciu ZAPŁAĆ   : {"formularzSchowany":true,"panelSchowany":false,"napisZaplac":"Przetwarzam…","zaplacZablokowany":true,"napisKup":"Otwieram płatność…","kupZablokowany":true,"komunikatBledu":"(pusty) [SCHOWANY]"}
+3. po kliknięciu WRÓĆ     : {"formularzSchowany":false,"panelSchowany":true,"napisZaplac":"Przetwarzam…","zaplacZablokowany":true,"napisKup":"Kup teraz (płatność testowa)","kupZablokowany":false,"komunikatBledu":"(pusty) [SCHOWANY]"}
+4. po ponownym KUP TERAZ  : {"formularzSchowany":false,"panelSchowany":true,"napisZaplac":"Przetwarzam…","zaplacZablokowany":true,"napisKup":"Kup teraz (płatność testowa)","kupZablokowany":false,"komunikatBledu":"(pusty) [SCHOWANY]"}
+   URL: http://localhost:8890/sklep/produkt/chatbot-live/
+   WYJĄTKI: ["TypeError: actions.confirm is not a function"]

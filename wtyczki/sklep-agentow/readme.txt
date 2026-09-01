@@ -159,6 +159,11 @@ link do pobrania w mailu, jednorazowy link do opinii.
 * Naprawione (RODO): anonimizacja kupującego usuwa jego adres e-mail z dziennika zdarzeń także wtedy, gdy zapisał się tam w postaci zakodowanej. Adres z ukośnikiem przed „@" (dopuszczalny, spotykany wyjątkowo) zostawał w dzienniku, a wtyczka i tak potwierdzała usunięcie — żądanie RODO nie było zrealizowane, choć właściciel miał dowód wykonania. Zamyka znaną granicę opisaną przy 0.9.19.
 * Naprawione (RODO): sprawdzenie skutku pyta dokładnie o to, co czyszczenie — dotąd miało własne, równie wąskie zapytanie i nie mogło zobaczyć pominiętego śladu. Wpisy INNYCH kupujących, których adres zawiera nasz jako końcówkę, pozostają nietknięte również w postaci zakodowanej.
 
+= 0.9.29 =
+* Naprawione: napisy „tryb testowy — płatności nie są pobierane" znikają same po wpisaniu produkcyjnych kluczy Stripe. Dotąd były wpisane na stałe i sklep zapewniałby kupującego, że nie pobiera pieniędzy — pobierając je (także na ekranie po zapłacie i w mailu po zakupie). Tryb wynika teraz z prefiksu klucza sekretnego: `sk_test_…` = tryb testowy, `sk_live_…` = sprzedaż na serio. Brak klucza albo nieznany prefiks traktowany jest jak sprzedaż na serio (sklep woli nie obiecać niż obiecać nieprawdę).
+* Naprawione: dopisek „(płatność testowa)" nie wraca na przycisk zakupu po nieudanej próbie płatności — etykietę odtwarza teraz przeglądarka z tego, co przysłał serwer, a nie z własnej kopii napisu.
+* Zmienione: Pulpit, szczegóły zamówienia i sekcja Stripe w Ustawieniach pokazują ten sam tryb co strony kupującego; opis pola kluczy mówi wprost, że prefiks klucza decyduje o trybie sklepu.
+
 = 0.9.28 =
 * Naprawione: po nieudanej ponownej wysyłce maila (awaria poczty) wraca dokładnie ten link, który kupujący ma w skrzynce — wtyczka zapamiętuje stan każdego doręczonego maila i przywraca właśnie jego. Znany wyjątek z 0.9.27 (pad serwera w pół wysyłki + nieudane ponowienie mogły zgasić działający link) jest zamknięty.
 * Naprawione: gdy dwa procesy domykały ten sam zakup, panel mógł oznaczyć doręczonego maila jako „błąd maila" — teraz status zapisuje tylko proces, który faktycznie wysyłał.

@@ -1,0 +1,15 @@
+PANEL: bez bledu
+RAMKA: action | produkt_id | _wpnonce | _wp_http_referer | zgoda | faktura_nazwa | faktura_nip | chatl_pole_dodatkowe | Twój e-mail | Zadaj pytanie…
+RAMKA: email
+KAFELEK KARTA: klikniety
+OK   pole ~email
+OK   pole ~number
+OK   pole ~expiry
+OK   pole ~cvc
+OK   pole ~name
+BRAK pole ~postal
+ZAPLAC wlaczony: true
+POWROT: BRAK (http://localhost:8890/sklep/produkt/chatbot-live/)
+BLAD PANELU: -
+CAPTCHA STRIPE: tak — automat zatrzymany na hCaptcha (nie wada sklepu); dowód ręczny w przeglądarce
+EXIT=3

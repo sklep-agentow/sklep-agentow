@@ -149,8 +149,10 @@ function sklepag_ustawienia_rejestracja() {
 		)
 	);
 
-	add_settings_section( 'sklepag_sekcja_stripe', 'Stripe (tryb testowy)', 'sklepag_sekcja_stripe_opis', 'sklepag-ustawienia' );
-	add_settings_field( 'sklepag_stripe_klucz_sekretny', 'Klucz sekretny (sk_test_…)', 'sklepag_pole_klucz_stripe', 'sklepag-ustawienia', 'sklepag_sekcja_stripe', array( 'label_for' => 'sklepag_stripe_klucz_sekretny' ) );
+	// Tytuł sekcji mówi, w jakim trybie sklep JEST — a to wynika z wpisanego tu klucza, nie z osobnego
+	// przełącznika. Etykieta pola wymienia oba prefiksy, żeby nie sugerować, że produkcyjny jest błędem.
+	add_settings_section( 'sklepag_sekcja_stripe', sklepag_tryb_testowy() ? 'Stripe (tryb testowy)' : 'Stripe (tryb produkcyjny)', 'sklepag_sekcja_stripe_opis', 'sklepag-ustawienia' );
+	add_settings_field( 'sklepag_stripe_klucz_sekretny', 'Klucz sekretny (sk_test_… lub sk_live_…)', 'sklepag_pole_klucz_stripe', 'sklepag-ustawienia', 'sklepag_sekcja_stripe', array( 'label_for' => 'sklepag_stripe_klucz_sekretny' ) );
 	add_settings_field( 'sklepag_stripe_webhook_sekret', 'Sekret webhooka (whsec_…)', 'sklepag_pole_sekret_webhooka', 'sklepag-ustawienia', 'sklepag_sekcja_stripe', array( 'label_for' => 'sklepag_stripe_webhook_sekret' ) );
 	add_settings_field( 'sklepag_stripe_klucz_publikowalny', 'Klucz publikowalny (pk_test_…)', 'sklepag_pole_klucz_publikowalny', 'sklepag-ustawienia', 'sklepag_sekcja_stripe', array( 'label_for' => 'sklepag_stripe_klucz_publikowalny' ) );
 
@@ -293,7 +295,13 @@ function sklepag_sekcja_sprzedawca_opis() {
 }
 
 function sklepag_sekcja_stripe_opis() {
-	echo '<p>Klucze z panelu Stripe (tryb TESTOWY: <code>sk_test_…</code>). Sekret webhooka: z Dashboardu (endpoint na hostingu) albo z <code>stripe listen --print-secret</code> (lokalnie). Wartości są przechowywane bez podglądu i nie wracają do formularza.</p>';
+	/* ⛔ To JEDYNY przełącznik trybu, jaki ma ten sklep: prefiks klucza. Opis mówi o tym wprost,
+		bo od niego zależą napisy widziane przez kupującego („płatności nie są pobierane"). */
+	echo '<p>Klucze z panelu Stripe. <strong>Prefiks klucza sekretnego decyduje o trybie sklepu:</strong> '
+		. '<code>sk_test_…</code> = tryb testowy (na stronie i w mailu stoi ostrzeżenie, że płatność nie jest pobierana), '
+		. '<code>sk_live_…</code> = sprzedaż na serio (ostrzeżenia znikają). Sekret webhooka: z Dashboardu '
+		. '(endpoint na hostingu) albo z <code>stripe listen --print-secret</code> (lokalnie). '
+		. 'Wartości są przechowywane bez podglądu i nie wracają do formularza.</p>';
 }
 
 function sklepag_sekcja_maile_opis() {

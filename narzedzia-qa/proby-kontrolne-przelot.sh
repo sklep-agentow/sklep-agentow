@@ -86,7 +86,7 @@ START=$(date '+%Y-%m-%d %H:%M')
 
 TMP="$(mktemp)"
 trap 'rm -f "$TMP"' EXIT
-ZLE=0; ILE=0; POMINIETO=0
+ZLE=0; ILE=0; POMINIETO=0; ZLE_NAZWY=()
 
 for SCIEZKA in "${PROBY[@]}"; do
 	NAZWA="${SCIEZKA##*/}"
@@ -103,7 +103,11 @@ for SCIEZKA in "${PROBY[@]}"; do
 	CZAS=$((SECONDS - T0))
 	printf '%s EXIT=%s %ss\n' "$NAZWA" "$KOD" "$CZAS" >> "$TMP"
 	ILE=$((ILE + 1))
-	[ "$KOD" -eq 0 ] || ZLE=$((ZLE + 1))
+	# ⛔ NAZWA PADAJACEJ PROBY NA STDOUT, nie tylko do logu. Log ladowal w katalogu
+	# tymczasowym wykonawcy, wiec w CI widac bylo wylacznie „z EXIT≠0: 2" — bez ani jednej
+	# nazwy. Kazda porazka wymagala wtedy recznego dochodzenia u siebie, a odtworzenie
+	# zestawu CI nie jest darmowe (konto z Dockerem uruchamia INNY zestaw prob).
+	[ "$KOD" -eq 0 ] || { ZLE=$((ZLE + 1)); ZLE_NAZWY+=( "$NAZWA (EXIT=$KOD)" ); printf '  PADLA       %s (EXIT=%s)\n' "$NAZWA" "$KOD"; }
 done
 
 mkdir -p "$(dirname "$LOG")"
@@ -123,6 +127,11 @@ mkdir -p "$(dirname "$LOG")"
 
 printf '\nPRZELOT: uruchomionych %s, z EXIT≠0: %s, pominiętych %s — zapisane w %s\n' "$ILE" "$ZLE" "$POMINIETO" "$LOG"
 [ "$ZLE" -eq 0 ] || printf 'PRZELOT: %s prób nie przeszło — log niesie stan faktyczny, nie wycinamy pozycji.\n' "$ZLE"
+# Nazwy jeszcze raz, na koncu — kto czyta sam ogon dlugiego logu CI, tez ma je zobaczyc.
+# Po jednej w linii: przecinkami sklejona lista dwudziestu nazw jest nieczytelna dokladnie tam,
+# gdzie ma pomoc.
+[ "$ZLE" -eq 0 ] || printf 'PRZELOT: nie przeszly:\n'
+[ "$ZLE" -eq 0 ] || printf '         %s\n' "${ZLE_NAZWY[@]}"
 
 # ⛔ SUFIT POMINIĘĆ — zestaw, który się kurczy, wygląda dokładnie jak zdany.
 if [ "$POMINIETO" -gt "$MAX_POMINIETYCH" ]; then
