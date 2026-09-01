@@ -1,5 +1,39 @@
 # CO-WISI — rzeczy oddane komuś / bez strażnika (zasada: oddajesz ⇒ wiersz, wraca ⇒ kasujesz)
 
+## 🟡 TRZY UWAGI Z RECENZJI `#260` ŚWIADOMIE NIENAPRAWIONE — dług, nie przeoczenie (1.09)
+
+PR `#260` (książka klas 94-96) nie dotyka kodu produktu, więc idzie **jedną rundą**: naprawione
+zostały uwagi **1** (dwie fałszywe liczby w dwóch plikach — klasa 8, więc obie linie) i **2**
+(pomiar skilla stał na komendzie, która nie mogła dać trafienia). Trzy pozostałe zapisuję tutaj.
+
+**1. Numery linii w klasie 94 są z rewizji sprzed `#258`, a nie z `HEAD`** (recenzja `#260`, uwaga 3).
+Wpis cytuje `zakup.php:211`, `:827`, `:845-852` — dziś pod tymi numerami stoi komentarz o naprawie,
+bo migawka przesunęła plik. Mechanizm zgadza się co do linii w `80aac64^`. Sam wpis nie mówi,
+której rewizji dotyczy, a opis PR-a twierdził, że „ze stanu na dziś".
+**Kształt roboty:** dopisać przy cytatach `(stan sprzed #258, 80aac64^)`. Szersza reguła do rozważenia:
+**każdy cytat `plik:linia` w rejestrze klas ma nieść rewizję**, bo numery przesuwają się przy każdym
+scaleniu — to ta sama zasada, którą `CLAUDE.md` stosuje do sekcji dokumentacji („odsyłaj po tytule,
+nie po numerze”).
+
+**2. Klasa 95 ma ✅, choć obstawiony jest jeden test, nie klasa** (uwaga 4). Reguła we wpisie mówi
+„każdy nowy test musi mieć warunki wstępne”, a mają je **7 plików ze 119** w `testy/`
+(`grep -rln "warunek wstepny\|warunek wstępny" testy/`). Do tego werdykt goldena stoi na liczniku
+BŁĘDÓW, a nie na **liczniku wykonanych asercji** — mimo że zdanie „sukces bez zliczonych asercji”
+obiecuje właśnie ten drugi; przerwanie w połowie z zerem przeszłoby.
+**Kształt roboty:** albo zejść z ✅ na ⬜, albo dołożyć licznik asercji do wzorca testu i bramkę,
+która pilnuje, że każdy `testy/*-test.php` kończy się porównaniem `wykonane > 0`.
+
+**3. „Siódmy przypadek rodziny” bez możliwości odtworzenia liczby** (uwaga 5). Nawias wymienia
+cztery przypadki, a mówi „siódmy”; `grep -n "melduje nieprawd" audyt/SCIAGA-EGZAMINATORA.md` daje
+jedno trafienie — tę samą linię. Rodziny nie da się policzyć z rejestru pod tą nazwą.
+**Kształt roboty:** albo dopisać brakujące dwa do nawiasu, albo podać numery klas, albo nadać
+rodzinie własny znacznik i liczyć ją komendą.
+
+⛔ Wszystkie trzy dotyczą **rejestru, nie produktu**. Zapisane świadomie, żeby PR bez kodu nie
+wchodził w drugą rundę — ale to jest dług tej samej klasy, którą ten rejestr tropi
+(„dokumentacja kłamie względem kodu”), więc nie ma prawa leżeć tu długo.
+
+
 ## 🟡 Kontrola „każde wydanie z readme ma wpis w CHANGELOG” istnieje TYLKO u Segregatora (29.08, z recenzji #208 r5)
 
 Wzorzec dodany w `#208` żyje w `testy/dokumentacja-zgodnosc-segregator.sh`. ChatBot i Sklep go
