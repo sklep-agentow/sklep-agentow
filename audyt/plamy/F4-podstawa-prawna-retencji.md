@@ -204,3 +204,56 @@ oddaję ją prawnikowi, nie rozstrzygam.**
   bo polityka podaje okres wyłącznie dla dziennika zdarzeń (`F4-F1` w raporcie głównym).
 - **Zachowania przy zwrocie i korekcie faktury** — korekta też ma obowiązkowe elementy i też
   wymaga danych nabywcy; nie badałem tej ścieżki.
+
+---
+
+## 8. UŚCIŚLENIE `F4-F4` — mail już wysłał obietnicę w imieniu właściciela
+
+**Skąd ten kontekst:** od **właściciela**, przekazany przez koordynatorkę 1.09 po pierwszej
+wersji tego raportu. Treść: **dane do faktury szły kiedyś MAILEM, a pole na NIP i dane firmy
+dodano na stronę PÓŹNIEJ.** To jest wiedza o historii produktu, której nie da się odczytać
+z kodu — i dlatego zapisuję źródło, a nie udaję, że sam na to wpadłem.
+*(Potwierdzenie w historii repo: `dane_faktury` weszło w 0.9.25, commit `2992247` — M11 raportu głównego.)*
+
+**Zdanie o kodzie sprawdziłem sam, zanim je tu wpisałem** (zasada „nie przytakuj — sprawdź").
+`wtyczki/sklep-agentow/includes/zakup.php:1225-1227`, gałąź po `! empty( $zam->dane_faktury )`:
+
+```php
+. ( ! empty( $zam->dane_faktury )
+    ? "DANE DO FAKTURY (podane przy zakupie):\n" . $zam->dane_faktury
+      . "\nFakturę wystawimy na te dane i prześlemy osobno na ten adres e-mail.\n\n"
+    : "FAKTURA:\nChcesz fakturę? Odpisz na tego maila w ciągu 3 miesięcy od zakupu"
+      . " i podaj dane firmy (nazwa, adres, NIP).\n\n" )
+```
+
+**Potwierdzam: mail ma dwie wersje i obsługuje obie drogi poprawnie.** Rozgałęzienie jest
+czyste, bez trzeciego stanu.
+
+### Co to zmienia w treści znaleziska
+
+| Droga | Co mail mówi kupującemu | Czy anonimizacja przed wystawieniem łamie obietnicę |
+|---|---|---|
+| **STARA** (dane do faktury przychodzą mailem, pole na stronie jeszcze nie istnieje) | „Chcesz fakturę? **Odpisz na tego maila w ciągu 3 miesięcy** od zakupu i podaj dane firmy" — sklep **zaprasza do zgłoszenia**, niczego nie obiecuje z góry | **NIE.** Sklep nie ma danych, więc nie ma czego skasować; kupujący zgłasza się sam, a właściciel prosi o dane ponownie |
+| **NOWA** (od 0.9.25, kupujący wpisał NIP i dane firmy w formularzu zakupu) | „**Fakturę wystawimy na te dane i prześlemy osobno na ten adres e-mail.**" — zdanie **oznajmujące, bezwarunkowe**, wysłane w imieniu właściciela | **TAK.** Anonimizacja kasuje `dane_faktury` **oraz** `email_kupujacego` (`admin-zamowienie.php:374`), więc znika **jedno i drugie**: dane, na które faktura miała być wystawiona, i adres, na który miała być przesłana |
+
+⭐ **To jest ostrzejsze, niż brzmiało w pytaniu.** Obietnica ma dwa człony — „na te dane"
+i „na ten adres e-mail" — a jedno kliknięcie unieważnia **oba naraz**. Do tego kasowane jest
+`mail_tresc`, czyli **zapis tego, co sklep obiecał** — właściciel traci nawet dowód treści
+własnego zobowiązania. Różnica wobec pierwotnego brzmienia `F4-F4`: to już nie tylko „brak danych
+do wykonania obowiązku podatkowego", ale **niewykonanie obietnicy, którą sklep wysłał kupującemu
+automatycznie, bez wiedzy właściciela o tym, że ją składa**.
+
+⛔ **Wagi `F4-F4` NIE podnoszę samodzielnie.** Zostaje **SRED**, tak jak było. Powody, dla których
+nie decyduję sam: (1) zasięg zależy od tego, ilu kupujących w ogóle wypełnia pola faktury —
+na stanowisku **1 zamówienie z 43** ma niepuste `dane_faktury`, więc nie mam podstaw twierdzić,
+że droga „nowa" jest częsta; (2) waga wpływa na kolejność napraw, a to decyzja koordynatorki
+przy planowaniu, nie audytora przy opisie. **Podnoszę fakty, nie stopień.**
+
+**Wpływ na propozycję naprawy — jedno zdanie w `confirm()` już nie wystarcza.** Skoro sklep
+złożył obietnicę oznajmującą, samo ostrzeżenie właściciela („wystaw fakturę przed anonimizacją")
+jest minimum. Mocniejsza droga: przy zamówieniu z niepustym `dane_faktury` **wymagać jawnego
+potwierdzenia, że faktura została już wystawiona**, i dopiero wtedy odblokować przycisk.
+⚠️ Uwaga na pułapkę, którą sam bym w to wpuścił: takie pole „faktura wystawiona: tak/nie"
+to **nowy stan w bazie**, którego dzisiejsze renderery nie znają — nasza klasa 72 ściągi
+(„naprawa zmieniająca inwariant kolumny otwiera stan, którego renderery nie znają").
+Jeśli builder pójdzie tą drogą, ma przejść **wszystkie** miejsca pokazujące status zamówienia.
