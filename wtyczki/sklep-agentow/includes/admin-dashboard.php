@@ -351,7 +351,13 @@ function sklepag_admin_dashboard() {
 
 	// Baner testowy jako cienka linijka PRZY tytule, nie pełny pas — Przychód ma
 	// być pierwszą rzeczą na ekranie (hierarchia widoku: najkrótsza droga do liczby).
-	echo '<div class="wrap sklepag-dashboard"><h1>Sklep Agentów <span class="sklepag-tryb-testowy" title="Płatności Stripe testowe — zero prawdziwych pieniędzy">TRYB TESTOWY</span></h1>';
+	/* ⛔ Także dla WŁAŚCICIELA, nie tylko dla kupującego: znacznik „TRYB TESTOWY" wiszący przy
+		tytule na kluczu produkcyjnym mówiłby mu, że zero prawdziwych pieniędzy — przy prawdziwych
+		pieniądzach na koncie. To ten sam napis i to samo źródło prawdy. */
+	$znacznik_trybu = sklepag_tryb_testowy()
+		? ' <span class="sklepag-tryb-testowy" title="Płatności Stripe testowe — zero prawdziwych pieniędzy">TRYB TESTOWY</span>'
+		: '';
+	echo '<div class="wrap sklepag-dashboard"><h1>Sklep Agentów' . wp_kses_post( $znacznik_trybu ) . '</h1>';
 
 	// Diagnostyka katalogu chronionego (przejęta ze szkieletu kości) — bez niego wydawanie plików nie działa.
 	$katalog      = (string) get_option( 'sklepag_katalog_chroniony', '' );

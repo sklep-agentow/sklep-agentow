@@ -119,8 +119,13 @@ function sklepag_zbuduj_mail_html( $produkt, $zam, $link, $link_opinii = '' ) {
 	if ( '' !== $kupiono ) {
 		$h[] = $wiersz( 'Data zakupu', esc_html( $kupiono ) );
 	}
-	$h[] = $wiersz( 'Kwota', esc_html( $kwota ) . '<br><span style="' . $f . 'font-weight:400;font-size:12px;color:#8a5a00;">TRYB TESTOWY — płatność nie została pobrana</span>', true );
-	$h[] = '</table></td></tr></table>';
+	/* ⛔ Zdanie o niepobranej płatności idzie do kupującego na trwałym nośniku — na kluczu
+		produkcyjnym byłoby po prostu nieprawdą. Ten sam warunek co w wersji tekstowej maila. */
+	$dopisek_trybu = sklepag_tryb_testowy()
+		? '<br><span style="' . $f . 'font-weight:400;font-size:12px;color:#8a5a00;">TRYB TESTOWY — płatność nie została pobrana</span>'
+		: '';
+	$h[]           = $wiersz( 'Kwota', esc_html( $kwota ) . $dopisek_trybu, true );
+	$h[]           = '</table></td></tr></table>';
 
 	// Potwierdzenie zgody (trwały nośnik — dyrektywa 2011/83/UE art. 8 ust. 7 lit. b).
 	if ( ! empty( $zam->zgoda_tresc ) ) {
