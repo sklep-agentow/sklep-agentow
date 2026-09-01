@@ -87,10 +87,11 @@ Ten strażnik **nie jest w bramkach ani w CI**: `grep '^BRAMKI=' narzedzia-qa/br
 `actionlint manifest slady znaleziska status-bez-warunku paczka zdarzenia-webhooka php-lint
 phpcs phpstan gitleaks poswiadczenia` — nie ma go tam, `grep -rn 'idem-nie-oddaje' narzedzia-qa/ .github/`
 → **zero trafień**. Wymaga żywego stosu, więc chodzi wyłącznie ręcznie. Ostatni zapisany
-przebieg zielony to `rubryka-GOTOWE.md:23` — **„EXIT=0, 30.08"**, czyli sprzed… nie, po 0.9.25:
-ten wpis jest zbiorczy dla trzech strażników i nie rozdziela ich kodów wyjścia. To jest osobna
-lekcja: **jeden wiersz rubryki na trzy strażniki gubi informację, który z nich naprawdę
-przeszedł.**
+przebieg zielony to `rubryka-GOTOWE.md:23` — **„EXIT=0, 30.08"** — i on **nie jest sprzeczny**
+z tym werdyktem: klucz rozjechał się commitem `2992247` z **30.08 o 17:46**, więc przebieg
+z tamtego dnia mógł być wcześniejszy i wtedy naprawdę zielony. Zostaje osobna lekcja:
+ten wpis jest **zbiorczy dla trzech strażników** i nie rozdziela ich kodów wyjścia, więc
+z rubryki nie da się odczytać, który z nich przeszedł i kiedy.
 
 ## CO ODDAJĘ BUILDEROWI (nie robię tego sam)
 
