@@ -1,0 +1,45 @@
+# Dependabot — podnoszenie PRZYPIETYCH wersji.
+#
+# ⛔ PO CO TO ISTNIEJE. Od 31.08 wszystkie zewnetrzne Akcje sa przypiete do sumy
+# commita (`uses: … @<sha> # <wersja>`), bo dokumentacja GitHuba mowi wprost:
+# „Pinning an action to a full-length commit SHA is currently the only way to use
+# an action as an immutable release". Przypiecie zamyka dziure (przejety tag Akcji
+# nie wjedzie nam na wykonawce), ale otwiera druga: przypieta wersja NIE dostaje
+# poprawek bezpieczenstwa sama z siebie. Ten plik jest druga polowa tej naprawy —
+# bez niego przypiecia po kilku miesiacach staja sie starym, dziurawym kodem.
+#
+# ⛔ CZEGO TEN PLIK NIE ROBI. To NIE sa alerty o lukach (Dependabot alerts) —
+# te wlacza sie w ustawieniach repozytorium, nie tutaj. Ten plik tylko otwiera
+# pull requesty z podniesieniem wersji.
+#
+# Rytm tygodniowy, nie dzienny, i twardy limit otwartych PR-ow: kazdy PR odpala
+# u nas bramki i recenzenta AI na WLASNYM wykonawcy, wiec czestszy rytm kosztuje
+# nas czas maszyny, nie minuty GitHuba.
+version: 2
+updates:
+  # Akcje w .github/workflows/ — katalog ZAWSZE "/" (Dependabot sam szuka
+  # workflowow w .github/workflows, nie podaje sie im sciezki).
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "chore(akcje)"
+    labels:
+      - "zaleznosci"
+
+  # Zaleznosci QA (phpcs, phpstan) z composer.json. Nie jada do klienta w paczce
+  # wtyczki, ale to one licza nasze bramki — dziurawy analizator to bramka,
+  # ktora widzi mniej, niz mysli.
+  - package-ecosystem: "composer"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "chore(zaleznosci)"
+    labels:
+      - "zaleznosci"

@@ -13,14 +13,43 @@ KORZEN="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$KORZEN" || exit 2
 BRAMKI=narzedzia-qa/bramki.sh
 WORKFLOW=.github/workflows/quality.yml
+
+# ⛔ WLASNE WARUNKI WSTEPNE (znalezisko I-12, 31.08). Ta proba uruchamia KOMPLET bramek,
+# w tym phpcs i phpstan — a te potrzebuja `vendor/`. W swiezym klonie albo w oderwanym
+# drzewie roboczym bez `composer install` obie padaja i proba meldowala wtedy
+# „PRZEOCZONYCH AWARII: 1", czyli OSKARZALA PRODUKT o wade, ktorej nie ma.
+# Zmierzone tego samego dnia: to samo repo, dwa katalogi — z `vendor/` kod 0 i 10 bramek
+# zielonych, bez `vendor/` kod 1 i falszywy alarm. Brak warunkow wstepnych to „nie
+# zmierzylam" (kod 2), nigdy „znalazlam wade" (kod 1).
+for N in phpstan phpcs; do
+	if [ ! -x "vendor/bin/$N" ]; then
+		echo "PROBA-BRAMKI: brak vendor/bin/$N — komplet bramek nie ma czym liczyc." >&2
+		echo "              To NIE jest wada bramek. Uruchom: composer install --no-scripts" >&2
+		exit 2
+	fi
+done
+
 KOPIA_B=$(mktemp)
 KOPIA_W=$(mktemp)
 BLEDY=0
 
+# ⛔ WŁASNY, JEDNORAZOWY KATALOG TYMCZASOWY NA CZAS PRÓBY (1.09).
+# Ta próba PODKŁADA błędy do plików i zaraz je PRZYWRACA. PHPStan rozpoznaje
+# zmianę pliku po czasie modyfikacji z rozdzielczością SEKUNDY — podłożenie
+# i przywrócenie mieszczą się w tej samej sekundzie, więc do trwałego cache
+# wpada wynik policzony na ZEPSUTYM kodzie i zostaje tam po próbie.
+# Zmierzone 1.09: po przelocie tej próby `bramki.sh` dawało phpstan EXIT=1,
+# a po odsunięciu cache — EXIT=0 („No errors") na tym samym kodzie.
+# ⚠️ To nie jest wada PHPStana ani bramki, tylko skutek uboczny próby, która
+# celowo psuje pliki. Izolujemy ją: własny TMPDIR, kasowany razem z próbą,
+# więc trwały cache (2 s zamiast 26 s) zostaje nietknięty.
+TMPDIR_PROBY=$(mktemp -d)
+export TMPDIR="$TMPDIR_PROBY"
+
 cp "$BRAMKI" "$KOPIA_B"
 cp "$WORKFLOW" "$KOPIA_W"
 przywroc() { cp "$KOPIA_B" "$BRAMKI"; cp "$KOPIA_W" "$WORKFLOW"; }
-trap 'przywroc; rm -f "$KOPIA_B" "$KOPIA_W"' EXIT
+trap 'przywroc; rm -f "$KOPIA_B" "$KOPIA_W"; rm -rf "$TMPDIR_PROBY"' EXIT
 
 # $1 opis, $2 mutacja, $3 komenda straznika, $4 fraza, ktora ma paść
 probuj() {
