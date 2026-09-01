@@ -83,21 +83,65 @@ jobs:
       contents: read
       pull-requests: write
       actions: read
+      # ⛔⛔ `id-token: write` PRZYWROCONE 1.09 — ZNALEZISKO B-12 BYLO BLEDNE.
+      #
+      # 31.08 usunelam to uprawnienie jako „nadmiarowe", z cytatem ze zrodla:
+      # `action.yml` w wersji v1.0.210 wiaze `id-token` z wejsciem
+      # `anthropic_workload_identity_federation_rule_id`, ktorego nie uzywamy
+      # (uwierzytelniamy sie statycznym `claude_code_oauth_token`).
+      # Rozumowanie bylo spojne i FALSZYWE. Akcja siega po token OIDC tak czy tak.
+      #
+      # DOWOD Z URUCHOMIENIA (przebieg 33454879018, 1.09, PR #243) — akcja padla
+      # po 50 sekundach, trzy proby, komunikat wprost:
+      #   „Attempt 3 failed: Could not fetch an OIDC token. Did you remember to add
+      #    `id-token: write` to your workflow permissions?"
+      #   „Operation failed after 3 attempts"
+      #
+      # ⭐ LEKCJA, nie kosmetyka: opis wejscia w `action.yml` mowi, KIEDY token jest
+      # potrzebny do FEDERACJI — nie mowi, czy akcja siega po niego przy starcie.
+      # Dowod z dokumentacji nie zastepuje dowodu z uruchomienia. Usuniecie
+      # uprawnienia „bo nieuzywane" wymaga przebiegu, ktory to pokaze, a nie cytatu.
+      #
+      # ⚠️ Koszt, ktory swiadomie placimy (analiza z 31.08 byla trafna): `id-token: write`
+      # pozwala przebiegowi wygenerowac PODPISANY token z tozsamoscia tego repozytorium,
+      # uwierzytelniajacy w kazdej usludze ufajacej GitHub OIDC. Na tym samym wykonawcy
+      # (self-hosted) wykonuje sie kod z galezi pull requesta. Uprawnienie zostaje TYLKO
+      # w tym jednym zadaniu i tylko dlatego, ze bez niego recenzent nie startuje wcale.
       id-token: write
     steps:
       # Pelna historia, nie plytki klon: recenzent dwa razy sam zglaszal, ze nie
       # moze zweryfikowac historii (fetch-depth: 1 daje jeden commit, wiec
       # `git log`/`git diff` wzgledem bazy PR-a nie maja z czym pracowac).
-      - uses: actions/checkout@v4
+      # ⛔ PRZYPIETE DO SUMY COMMITA, nie do ruchomego taga. Dokumentacja GitHuba:
+      # „Pinning an action to a full-length commit SHA is currently the only way
+      # to use an action as an immutable release" (security-hardening-for-github-actions).
+      # Ruchomy tag moze zostac przestawiony przez autora albo napastnika, ktory
+      # przejmie repozytorium Akcji — a ten kod wykonuje sie na NASZYM wykonawcy.
+      # Podnoszenie wersji: Dependabot (.github/dependabot.yml), nie recznie.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0
 
       # PHP + vendor/ PRZED recenzja: recenzent ma URUCHAMIAC bramki (phpcs,
       # phpstan, skrypty zgodnosci), a nie czytac je i zgadywac wynik.
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.4'
-          coverage: none
+      #
+      # ⛔ `setup-php` USUNIĘTY 1.09 z tego samego powodu co w quality.yml:
+      #    po przeniesieniu wykonawcy na konto `ciuser` (B-3) akcja wpada
+      #    w nieskonczona petle `sudo: a password is required` i przebieg
+      #    nie konczy sie nigdy (zmierzone: 40 minut, zero procesora).
+      #    PHP 8.4.24 i Composer stoja systemowo — pelne uzasadnienie
+      #    i zakaz przywracania: komentarz w .github/workflows/quality.yml.
+      - name: Kontrola srodowiska PHP (zamiast setup-php)
+        run: |
+          php -v | head -1
+          WERSJA=$(php -r 'echo PHP_MAJOR_VERSION . "." . PHP_MINOR_VERSION;')
+          echo "wykryta wersja PHP: $WERSJA"
+          if [ "$WERSJA" != "8.4" ]; then
+            echo "BLAD: bramki wymagaja PHP 8.4, a systemowe to $WERSJA" >&2
+            exit 1
+          fi
+          command -v composer >/dev/null || { echo "BLAD: brak composera w PATH" >&2; exit 1; }
+          composer --version
 
       - name: Zaleznosci QA (composer)
         run: composer install --no-interaction --no-progress --no-scripts
@@ -110,7 +154,7 @@ jobs:
 
       - name: Recenzja PR
         id: recenzja
-        uses: anthropics/claude-code-action@v1
+        uses: anthropics/claude-code-action@a874e9ecd7bb36efdad65429c6b35815f5a08f10 # v1.0.210
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           track_progress: true
@@ -160,7 +204,7 @@ jobs:
       # gdzie ląduje treść błędu przy „niemym zgonie" (log pokazuje tylko is_error).
       - name: Zachowaj pełny wynik CLI (artefakt)
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: claude-execution-output
           # Dwie ścieżki: log naszego runa mówi RUNNER_TEMP, docs base-action /tmp —

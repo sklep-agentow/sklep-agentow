@@ -14,6 +14,29 @@ wstecz nie dopisuję, bo nie umiałbym jej odtworzyć uczciwie. Ich zmiany od te
 pory lądują tutaj.
 
 ## [Niewydane]
+- **`bramki.sh`** (naprawy B-5 i B-10 z polowania na infrastrukturę, 31.08): pobierane
+  `actionlint`/`gitleaks` weryfikowane sumą SHA256 na każdej z trzech dróg (PATH, cache,
+  świeże pobranie) — wcześniej `curl` szedł prosto do `chmod +x`, a cache w `/tmp` był brany
+  po samej nazwie pliku, więc kto mógł tam zapisać, ten wykonywał swój kod jako wykonawca CI.
+  Bramka `gitleaks` dostała drugi przelot `skan_archiwow()` po zawartości śledzonych archiwów
+  — skan historii widzi zip jako jeden blob i nie zaglądał do środka (zmierzone: klucz luzem
+  wykrywany, ten sam klucz w zipie niewidoczny). Podłoga na mianownik zero: zero rozpakowanych
+  plików przy niezerowej liczbie archiwów pada, zamiast meldować „czysto”.
+  Dodana furtka `BRAMKI_TYLKO_FUNKCJE=1` wyłącznie dla próby kontrolnej (ścieżka CI jej nie widzi).
+- **`bramki-narzedzia-proba-kontrolna.sh` 1.0.0 (NOWE)** — 8 przypadków do dwóch napraw wyżej,
+  w tym podłożona binarka w cache i archiwum nie do rozpakowania. Woła PRAWDZIWE funkcje
+  z `bramki.sh`, nie ich kopie.
+- **`security-wersje.sh` 1.0.0 (NOWE)** — czy `SECURITY.md` mówi prawdę o wersjach wtyczek
+  (znalezisko D-1: dokument mówił „wydane 0.9.25”, kod stał na 0.9.28, i nie pilnowało go nic).
+  Czyta numery z prozy dokumentu; uruchomiony spoza korzenia odmawia kodem 2.
+- **`security-wersje-proba-kontrolna.sh` 1.0.0 (NOWE)** — 7 przypadków (rozjazd, brak wpisu,
+  brak dokumentu, brak nagłówków `Version`, uruchomienie spoza repo, prawdziwy plik repo).
+- **`k7-koniec.sh`** — dziewiąty warunek zamknięcia: zgodność `SECURITY.md` z wersjami wtyczek.
+  Kod 2 („nie zmierzone”) liczy się jako FAIL, nie jako cisza. Poprawione oba napisy o liczbie
+  warunków — dodanie warunku unieważniało własny opis skryptu.
+- **`k7-koniec-proba-kontrolna.sh`** — atrapa uzupełniona o wtyczkę z nagłówkiem `Version`
+  i `SECURITY.md` (bez nich nowy warunek wywracał 5 przypadków, których nie dotyczy) oraz
+  2 nowe przypadki dowodzące, że warunek 9 jest naprawdę WPIĘTY, a nie tylko istnieje.
 - **`pakuj-dla-klienta.sh` 1.1.0** (recenzja PR o README, D3–D5): samokontrola otwiera zipy wtyczek (`unzip -t`, nagłówek Version == wersja z nazwy, INSTRUKCJA.md w każdym, PONAD-SPECYFIKACJE.md w sklepie), kontrola śladów wymaga istnienia plików, oba katalogi tymczasowe sprzątane trapem także przy porażce.
 - **`testy/odsylacze-strony-tytulowej.sh` 1.0.0 (NOWE)** — README.md i PRZECZYTAJ-MNIE.txt odsyłają tylko do plików, które istnieją (obrazki, odsyłacze, ścieżki repo, obietnice zawartości paczek). Recenzja PR o README, KRYTYCZNA+WAŻNA.
 - **`pakuj-dla-klienta.sh` 1.0.0 (NOWE)** — zbiorcza paczka wydania jednym poleceniem: 3 zipy wtyczek (wersje z naglowkow, zipy musza istniec w boty/paczki/) + PRZECZYTAJ-MNIE.txt + INSTRUKCJA-INSTALACJI.md + diagramy PNG + SHA256SUMS.txt; SAMOKONTROLA na rozpakowanej paczce (komplet, sumy, kazdy plik w sumach, brak sladow wewnetrznych w dokumentach). Wynik do wydanie/ (poza repo).
