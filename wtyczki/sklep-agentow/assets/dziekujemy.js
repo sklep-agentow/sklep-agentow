@@ -11,14 +11,31 @@
 	}
 
 	var proby = 0;
+	/* ⛔ TA TABLICA MUSI ZNAC KAZDY STATUS, KTORY POTRAFI ODDAC `sklepag/v1/status`.
+	   Endpoint oddaje kolumne `zamowienia.status` WPROST, a kod pisze do niej takze
+	   `zwrocone` i `sporne` (obsluga zwrotu i obciazenia zwrotnego w zakup.php).
+	   Tych dwoch kluczy tu nie bylo, wiec kupujacy PO ZWROCIE PIENIEDZY czytal
+	   „Przetwarzamy Twoja platnosc…" — i czytal to dalej, bo warunek konca odpytywania
+	   tez ich nie znal. */
 	var opisy = {
 		oczekuje: 'Przetwarzamy Twoją płatność… (strona odświeża status sama)',
 		oplacone: 'Płatność potwierdzona — przygotowujemy maila z linkiem do pobrania…',
 		mail_w_toku: 'Płatność potwierdzona — wysyłamy maila z linkiem do pobrania…',
 		mail_wyslany: 'Gotowe! Mail z potwierdzeniem i linkiem do pobrania został wysłany. Sprawdź skrzynkę (także spam).',
 		mail_blad: 'Płatność potwierdzona, ale mail nie wyszedł. Właściciel sklepu widzi to w panelu i wyśle go ręcznie.',
-		brak: 'Nie znaleziono zamówienia dla tego adresu.'
+		/* ⛔ Zadne z tych dwoch zdan NIE MOWI, ze link do pobrania przestal dzialac —
+		   `pobieranie.php` nie patrzy na status zamowienia, wiec byloby to nieprawda. */
+		zwrocone: 'Płatność za to zamówienie została zwrócona — nie jest już opłacone. Jeśli to pomyłka, odpisz na maila z potwierdzeniem zakupu.',
+		sporne: 'Ta płatność jest reklamowana w banku i czeka na rozstrzygnięcie. Jeśli to pomyłka, odpisz na maila z potwierdzeniem zakupu.',
+		brak: 'Nie znaleziono zamówienia dla tego adresu.',
+		/* ⛔ Wczesniej NIEZNANY status dostawal zdanie `oczekuje` — czyli kazdy status
+		   dopisany w przyszlosci wracalby z ta sama wada. Zdanie zapasowe ma NIE TWIERDZIC
+		   niczego o pieniadzach. */
+		nieznany: 'Status tego zamówienia jest nietypowy. Sprawdź maila z potwierdzeniem zakupu albo odpisz na niego — właściciel sklepu widzi to zamówienie w panelu.'
 	};
+	/* Statusy KONCOWE: dalsze odpytywanie niczego nie zmieni, a strona odswiezajaca sie
+	   przez dwie minuty po zwrocie wyglada, jakby cos jeszcze trwalo. */
+	var koncowe = ['mail_wyslany', 'mail_blad', 'zwrocone', 'sporne'];
 
 	function sprawdz() {
 		proby += 1;
@@ -26,8 +43,8 @@
 			.then(function (r) { return r.json(); })
 			.then(function (d) {
 				var s = d && d.status ? d.status : 'oczekuje';
-				pole.textContent = opisy[s] || opisy.oczekuje;
-				if (s === 'mail_wyslany' || s === 'mail_blad' || proby >= 30) { return; }
+				pole.textContent = opisy[s] || opisy.nieznany;
+				if (koncowe.indexOf(s) !== -1 || proby >= 30) { return; }
 				setTimeout(sprawdz, 4000);
 			})
 			.catch(function () {

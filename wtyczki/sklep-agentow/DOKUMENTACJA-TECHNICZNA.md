@@ -120,6 +120,15 @@ właściciela" (gdy ustawiony). Treść i nagłówki pilnuje osobny test-strażn
 | `POST /wp-json/sklepag/v1/webhook` | powiadomienie od Stripe | **podpis webhooka Stripe** |
 | `GET /wp-json/sklepag/v1/status` | status zamówienia dla strony „Dziękujemy" | identyfikator sesji |
 
+⛔ **Endpoint oddaje kolumnę `zamowienia.status` WPROST**, więc `assets/dziekujemy.js` musi znać
+**każdy** status, jaki kod potrafi tam zapisać: `oczekuje`, `oplacone`, `mail_w_toku`,
+`mail_wyslany`, `mail_blad`, `zwrocone`, `sporne` (plus syntetyczne `brak` z endpointu).
+Dwóch ostatnich długo nie znał i kupujący **po zwrocie pieniędzy** czytał „Przetwarzamy Twoją
+płatność…". Statusy `mail_wyslany`, `mail_blad`, `zwrocone` i `sporne` są **końcowe** — strona
+przestaje wtedy odpytywać. Status spoza listy dostaje neutralne zdanie zapasowe, które
+**nie twierdzi niczego o pieniądzach**: nowy status dopisany w przyszłości nie ma prawa wrócić
+z tą samą wadą.
+
 **Obsługiwane zdarzenia Stripe.** Sprzedaż: `checkout.session.completed` i
 `checkout.session.async_payment_succeeded` (domknięcie zakupu; bramka na `payment_status`,
 bo przy metodach asynchronicznych, np. BLIK, pierwsze powiadomienie przychodzi jako
