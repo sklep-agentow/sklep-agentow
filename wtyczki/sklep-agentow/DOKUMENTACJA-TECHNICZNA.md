@@ -280,10 +280,25 @@ art. 6 ust. 1 lit. c RODO w związku z ustawą o VAT (art. 106e ust. 1 pkt 3 wym
 nabywcy). Kasownik zwraca je w `items_retained` z powodem, a nie po cichu. Przycisk w panelu
 działa jak dotąd i czyści **wszystko** — to świadoma decyzja właściciela, nie wniosek.
 
-**Czego eksporter i kasownik NIE obejmują:** `logowania` i `rate_limit` (klucz to adres IP
-albo login administratora — nie da się ich powiązać z adresem e-mail kupującego) oraz adresów
-IP w `zdarzenia`. Wszystkie trzy czyści retencja 90 dni. Nie obejmują też retencji czasowej
-zamówień — to osobna decyzja właściciela.
+**Co ZOSTAJE po wniosku o usunięcie — i jest zgłaszane w `items_retained` z powodem:**
+1. **Dane do faktury** (nazwa, NIP, adres) — obowiązek prawny, jak wyżej.
+2. **Identyfikatory u operatora płatności**: `zamowienia.stripe_session_id`,
+   `zamowienia.payment_intent_id` i cały wiersz w `sesje_checkout`. Nie jest to wygoda, tylko
+   warunek poprawności obsługi pieniędzy: `zakup.php` odnajduje zamówienie po
+   `payment_intent_id` przy zwrocie i przy obciążeniu zwrotnym, a `stripe_session_id` niesie
+   idempotencję domknięcia zakupu (powtórzony webhook trafia w istniejące zamówienie zamiast
+   tworzyć drugie). Wyczyszczenie ich sprawiłoby, że zwrot zgłoszony PO wniosku RODO nie miałby
+   czego znaleźć. Eksporter je **wydaje**, kasownik je **zgłasza** — jedno i drugie, nigdy
+   milczenie o jednym z nich.
+
+**Czego eksporter i kasownik NIE obejmują w ogóle:** `logowania` i `rate_limit` (klucz to adres
+IP albo login administratora — nie da się ich powiązać z adresem e-mail kupującego) oraz adresów
+IP w `zdarzenia`. Wszystkie trzy czyści retencja `SKLEPAG_RETENCJA_DNI` (90) dni. Nie obejmują
+też retencji czasowej zamówień — to osobna decyzja właściciela.
+
+⛔ **Reguła, z której to wynika:** cokolwiek eksporter wydaje jako dane osobowe, kasownik musi
+albo usunąć, albo zgłosić w `items_retained` z powodem. Milczenie o zachowanej danej jest gorsze
+niż jej zachowanie: właściciel odpowiada komunikatem kasownika osobie składającej wniosek.
 
 ---
 

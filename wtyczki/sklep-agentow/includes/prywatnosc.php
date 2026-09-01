@@ -373,7 +373,7 @@ function sklepag_rodo_eksporter( $email, $strona = 1 ) {
 	if ( null !== $w ) {
 		$zamowienia = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT id, stripe_session_id, produkt_nazwa_kupiona, kwota_grosze, waluta, status, dane_faktury, usunieto_dnia, utworzono FROM {$pz} WHERE email_kupujacego = %s ORDER BY id ASC LIMIT %d OFFSET %d",
+				"SELECT id, stripe_session_id, payment_intent_id, produkt_nazwa_kupiona, kwota_grosze, waluta, status, dane_faktury, utworzono FROM {$pz} WHERE email_kupujacego = %s ORDER BY id ASC LIMIT %d OFFSET %d",
 				$email,
 				$w[0],
 				$w[1]
@@ -411,6 +411,24 @@ function sklepag_rodo_eksporter( $email, $strona = 1 ) {
 				$pola[] = array(
 					'name'  => 'Dane do faktury',
 					'value' => (string) $z['dane_faktury'],
+				);
+			}
+			/*
+			 * ⛔ IDENTYFIKATORY U OPERATORA PŁATNOŚCI WYDAJEMY, bo je TRZYMAMY.
+			 *
+			 * Wcześniej `stripe_session_id` stał w zapytaniu i nie trafiał do ani jednego pola —
+			 * odczyt bez odbiorcy, sugerujący, że coś jest eksportowane, choć nie było.
+			 * Po nich Stripe odtwarza tożsamość kupującego, więc pominięcie ich w paczce
+			 * czyniło ją niepełną, a zamówienie zostaje z nimi także po anonimizacji.
+			 */
+			$pola[] = array(
+				'name'  => 'Identyfikator sesji płatności u operatora (Stripe)',
+				'value' => (string) $z['stripe_session_id'],
+			);
+			if ( '' !== (string) $z['payment_intent_id'] ) {
+				$pola[] = array(
+					'name'  => 'Identyfikator płatności u operatora (Stripe)',
+					'value' => (string) $z['payment_intent_id'],
 				);
 			}
 			$dane[] = array(
@@ -625,10 +643,29 @@ function sklepag_rodo_kasownik( $email, $strona = 1 ) {
 			$zachowane
 		);
 	}
+	/*
+	 * ⛔ IDENTYFIKATORY U OPERATORA PŁATNOŚCI ZOSTAJĄ — i wnioskodawca ma się o tym dowiedzieć.
+	 *
+	 * Wcześniej ten komunikat brzmiał „zamówienie zostaje w statystykach BEZ DANYCH OSOBOWYCH
+	 * (kwota, data, nazwa produktu)" i było to NIEPRAWDĄ: zamówienie zostaje także ze
+	 * `stripe_session_id` i `payment_intent_id`, a wiersz w `sesje_checkout` zostaje w całości.
+	 * Eksporter wydaje te identyfikatory jako dane osobowe — więc kasownik nie ma prawa milczeć
+	 * o tym, że ich nie usuwa. To była sprzeczność wewnątrz jednego pliku.
+	 *
+	 * Dlaczego ZOSTAJĄ, a nie giną: nie jest to wygoda, tylko warunek poprawności obsługi
+	 * pieniędzy. `zakup.php` odnajduje zamówienie po `payment_intent_id` przy ZWROCIE
+	 * i przy obciążeniu zwrotnym, a `stripe_session_id` niesie idempotencję domknięcia zakupu
+	 * (powtórzony webhook Stripe trafia w istniejące zamówienie zamiast tworzyć drugie).
+	 * Wyczyszczenie ich sprawiłoby, że zwrot zgłoszony PO wniosku RODO nie miałby czego
+	 * znaleźć — pieniądze wyszłyby poza ewidencją sklepu.
+	 */
+	$komunikaty[] = 'ZACHOWANO także identyfikatory płatności u operatora (Stripe): numer sesji przy zamówieniu i w rejestrze płatności oraz numer płatności. '
+		. 'Powód: po nich sklep rozpoznaje zwrot i reklamację bankową zgłoszone PO tym wniosku — bez nich zwrot pieniędzy nie miałby czego znaleźć. '
+		. 'Same w sobie nie zawierają imienia, adresu ani e-maila; dane po stronie operatora płatności usuwa się wnioskiem złożonym u niego.';
 	$komunikaty[] = sprintf(
-		'Samo zamówienie zostaje w statystykach bez danych osobowych (kwota, data, nazwa produktu). Adresy IP w dzienniku zdarzeń i w dzienniku logowań nie są powiązane z adresem e-mail — '
+		'Poza tym zamówienie zostaje w statystykach bez danych osobowych (kwota, data, nazwa produktu). Adresy IP w dzienniku zdarzeń i w dzienniku logowań nie są powiązane z adresem e-mail — '
 		. 'usuwa je retencja po %d dniach.',
-		90
+		SKLEPAG_RETENCJA_DNI
 	);
 	if ( $nieudane ) {
 		$komunikaty[] = sprintf(
@@ -642,9 +679,15 @@ function sklepag_rodo_kasownik( $email, $strona = 1 ) {
 		nie udało się NIC, zostawia te same wiersze i kreator wołałby nas w kółko. */
 	$done = ( 0 === $zostalo ) || ( 0 === $usuniete );
 
+	/*
+	 * ⛔ `items_retained` jest PRAWDĄ przy każdej udanej anonimizacji, nie tylko przy fakturze:
+	 * identyfikatory płatności zostają ZAWSZE. Wcześniej zamówienie bez danych do faktury
+	 * wracało z `items_retained = false`, czyli kreator WordPressa meldował właścicielowi
+	 * „nie zachowano niczego" — a zostawały dwa identyfikatory prowadzące do kupującego.
+	 */
 	return array(
 		'items_removed'  => $usuniete > 0,
-		'items_retained' => ( $zachowane > 0 ) || ! empty( $nieudane ),
+		'items_retained' => ( $usuniete > 0 ) || ( $zachowane > 0 ) || ! empty( $nieudane ),
 		'messages'       => $komunikaty,
 		'done'           => $done,
 	);
@@ -684,7 +727,7 @@ function sklepag_polityka_prywatnosci() {
 	}
 	$tresc  = '<p>' . esc_html( 'Sklep zapisuje adres e-mail kupującego, dane zamówienia (produkt, kwota, data, status płatności) oraz — jeśli zostały podane dobrowolnie — dane do faktury: nazwę, NIP i adres. Płatność obsługuje Stripe jako osobny podmiot przetwarzający; sklep przechowuje identyfikator sesji płatności.' ) . '</p>';
 	$tresc .= '<p>' . esc_html( 'Przy dobrowolnej opinii zapisywany jest podpis (imię) i treść opinii — publikowane na stronie produktu wyłącznie za zgodą wyrażoną w formularzu.' ) . '</p>';
-	$tresc .= '<p>' . esc_html( sprintf( 'Dziennik zdarzeń i dziennik logowań (w tym adresy IP przy pobraniu pliku) są usuwane automatycznie po %d dniach.', 90 ) ) . '</p>';
+	$tresc .= '<p>' . esc_html( sprintf( 'Dziennik zdarzeń i dziennik logowań (w tym adresy IP przy pobraniu pliku) są usuwane automatycznie po %d dniach.', SKLEPAG_RETENCJA_DNI ) ) . '</p>';
 	$tresc .= '<p>' . esc_html( 'Podstawy: wykonanie umowy sprzedaży (art. 6 ust. 1 lit. b RODO) oraz obowiązek prawny (art. 6 ust. 1 lit. c RODO) — ustawa o VAT wymaga zachowania danych nabywcy z faktury, więc te dane pozostają także po wniosku o usunięcie.' ) . '</p>';
 	$tresc .= '<p>' . esc_html( 'Można poprosić o kopię swoich danych albo o ich usunięcie — administrator obsłuży wniosek wbudowanymi narzędziami WordPressa (Narzędzia → Eksportuj / Usuń dane osobowe).' ) . '</p>';
 	wp_add_privacy_policy_content( 'Sklep Agentów', $tresc );

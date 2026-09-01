@@ -71,7 +71,10 @@ spr "link ważny N godzin (SKLEPAG_LINK_GODZIN)" "$(stala SKLEPAG_LINK_GODZIN)" 
 spr "do N pobrań (SKLEPAG_LIMIT_POBRAN)"       "$(stala SKLEPAG_LIMIT_POBRAN)" "grep -oE 'do [0-9]+ pobrań' $W/readme.txt | grep -oE '[0-9]+'"
 spr "link opinii N dni (SKLEPAG_OPINIA_DNI)"    "$(stala SKLEPAG_OPINIA_DNI)"  "grep -oE 'ważnego [0-9]+ dni' $W/readme.txt | grep -oE '[0-9]+'"
 spr "cron co N minut == interval/60"            "$(( $(grep -oE "'interval' *=> *[0-9]+" $W/sklep-agentow.php | grep -oE '[0-9]+$') / 60 ))" "grep -oE 'co [0-9]+ minut' $W/readme.txt | head -1 | grep -oE '[0-9]+'"
-spr "retencja dziennika N dni == kod"           "$(grep -oE '[0-9]+ \* DAY_IN_SECONDS' $W/includes/zakup.php | grep -oE '^[0-9]+' | head -1)" "grep -oE 'starsze niż [0-9]+ dni' $W/readme.txt | grep -oE '[0-9]+'"
+spr "retencja dziennika N dni == SKLEPAG_RETENCJA_DNI" "$(stala SKLEPAG_RETENCJA_DNI)" "grep -oE 'starsze niż [0-9]+ dni' $W/readme.txt | grep -oE '[0-9]+'"
+# Retencja ma JEDNO zrodlo. Literal `NN * DAY_IN_SECONDS` w zakup.php znaczy, ze stala
+# zostala obejsciona — a wtedy readme moze zgadzac sie ze stala i rozjezdzac z kodem.
+spr "retencja w kodzie idzie ze stalej, nie z literalu" "0" "grep -cE '[0-9]+ \* DAY_IN_SECONDS' $W/includes/zakup.php"
 
 echo "=== C. Etykiety menu: admin.php ⇄ readme, W OBIE STRONY i z licznikiem (recenzja #182 r2 W3) ==="
 # Etykiety bierzemy z KODU (4. argument add_submenu_page), nie z zaszytej listy — nowa pozycja menu bez opisu

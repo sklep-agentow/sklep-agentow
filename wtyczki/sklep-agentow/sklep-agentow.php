@@ -43,6 +43,11 @@ define( 'SKLEPAG_BLAD_OPINIA_ZGODA', 'Zaznacz zgodę na publikację, żeby wysł
 // fatal error przy każdym „Wyślij ponownie" (zmierzone strażnikiem, EXIT=255).
 define( 'SKLEPAG_STATUSY_ZAMKNIETE', "'zwrocone','sporne'" );
 define( 'SKLEPAG_LIMIT_POBRAN', 10 ); // Jedno źródło: INSERT zamówienia + treść maila.
+/* Retencja dziennika zdarzeń i dziennika logowań. JEDNO źródło dla trzech miejsc:
+	sprzątanie w `zakup.php`, podpowiedź do polityki prywatności i komunikat kasownika RODO.
+	Ta liczba trafia do dokumentu, którym właściciel odpowiada organowi — nie ma prawa mieć
+	trzech niezależnych literałów. Bramka dokumentacji pilnuje, że w kodzie nie wraca literał. */
+define( 'SKLEPAG_RETENCJA_DNI', 90 );
 define( 'SKLEPAG_LINK_GODZIN', 72 );  // Ważność linku pobrania — jw.
 define( 'SKLEPAG_OPINIA_DNI', 30 );   // Ważność linku „oceń bota" — kupujący najpierw testuje produkt.
 define( 'SKLEPAG_OPINIA_ZGODA_TRESC', 'Zgadzam się na publikację mojej opinii wraz z podanym imieniem na stronie produktu.' );

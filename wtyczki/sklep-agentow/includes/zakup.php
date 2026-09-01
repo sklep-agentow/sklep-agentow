@@ -1367,7 +1367,7 @@ function sklepag_dociagnij_zalegle( $budzet_s = 0, $wymus = false ) {
 	// 4) Retencja 90 dni (polityka deklaruje „dziennik zdarzeń (90 dni)"):
 	// logowania i zdarzenia starsze wypadają. Historia SPRZEDAŻY żyje w `zamowienia`
 	// (status, kwoty, mail_tresc) — jej retencja to osobna decyzja właściciela, nie ten krok.
-	$retencja = gmdate( 'Y-m-d H:i:s', strtotime( current_time( 'mysql' ) ) - 90 * DAY_IN_SECONDS );
+	$retencja = gmdate( 'Y-m-d H:i:s', strtotime( current_time( 'mysql' ) ) - SKLEPAG_RETENCJA_DNI * DAY_IN_SECONDS );
 	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
 	$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}sklepag_logowania WHERE czas < %s", $retencja ) );
 	$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}sklepag_zdarzenia WHERE czas < %s", $retencja ) );

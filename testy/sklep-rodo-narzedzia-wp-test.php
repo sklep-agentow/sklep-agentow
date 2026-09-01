@@ -224,6 +224,41 @@ $kom_a = implode( ' ', (array) $k_a['messages'] );
 sklepag_t_sprawdz( 'komunikat nazywa, CO zostalo', false !== stripos( $kom_a, 'faktur' ), $kom_a );
 sklepag_t_sprawdz( 'i podaje POWOD (podstawe prawna)', false !== stripos( $kom_a, 'VAT' ), $kom_a );
 
+echo "\n=== G2. Identyfikatory platnosci ZOSTAJA i kasownik NIE MILCZY o tym ===\n";
+/*
+ * Znalezisko recenzenta #244: eksporter wydawal `stripe_session_id` i wiersz sesji jako dane
+ * osobowe, kasownik ich nie tykal, a komunikat mowil „zamowienie zostaje BEZ danych osobowych".
+ * Sprzecznosc wewnatrz jednego pliku. Identyfikatory maja ZOSTAC (zakup.php odnajduje po nich
+ * zwrot i spor), ale kasownik ma to POWIEDZIEC.
+ */
+// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+$sid_po = (string) $wpdb->get_var( $wpdb->prepare( "SELECT stripe_session_id FROM {$tzam} WHERE id = %d", $id_a ) );
+$ses_po = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$tses} WHERE stripe_session_id = %s", 'rodoSklepA1' ) );
+// phpcs:enable
+sklepag_t_rowne( 'identyfikator sesji przy zamowieniu ZOSTAJE (zwrot musi go znalezc)', 'rodoSklepA1', $sid_po );
+sklepag_t_rowne( 'wiersz sesji platnosci tez ZOSTAJE', 1, $ses_po );
+sklepag_t_sprawdz( 'komunikat MOWI, ze identyfikatory platnosci zachowano', false !== stripos( $kom_a, 'identyfikator' ), $kom_a );
+sklepag_t_sprawdz( 'i podaje POWOD (zwrot / reklamacja po wniosku)', false !== stripos( $kom_a, 'zwrot' ), $kom_a );
+sklepag_t_sprawdz( '⛔ komunikat NIE twierdzi juz, ze zamowienie zostaje BEZ danych osobowych',
+	false === stripos( $kom_a, 'zostaje w statystykach bez danych osobowych' )
+	|| false !== stripos( $kom_a, 'Poza tym zamówienie zostaje' ), $kom_a );
+
+echo "\n=== G3. Eksport WYDAJE to, co kasownik zachowuje (symetria) ===\n";
+/*
+ * Sedno reguly: cokolwiek eksporter wydaje jako dana osobowa, kasownik musi albo usunac,
+ * albo zglosic. Sprawdzamy druga strone — czy identyfikatory w ogole sa w paczce.
+ */
+$id_g = sklepag_t_zamowienie( 'rodoSklepG1', 'rodo-sklep-g@example.test', 'ZAM-G-BOT', '' );
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+$wpdb->query( $wpdb->prepare( "UPDATE {$tzam} SET payment_intent_id = %s WHERE id = %d", 'pi_rodoSklepG1', $id_g ) );
+$w_g   = call_user_func( $eksport, 'rodo-sklep-g@example.test', 1 );
+$tre_g = sklepag_t_tresc( $w_g );
+sklepag_t_sprawdz( 'eksport wydaje identyfikator sesji platnosci', false !== strpos( $tre_g, 'rodoSklepG1' ), $tre_g );
+sklepag_t_sprawdz( 'eksport wydaje identyfikator platnosci', false !== strpos( $tre_g, 'pi_rodoSklepG1' ), $tre_g );
+
+$k_g = call_user_func( $kasuj, 'rodo-sklep-g@example.test', 1 );
+sklepag_t_rowne( 'zamowienie BEZ faktury tez melduje items_retained (identyfikatory zostaja)', true, $k_g['items_retained'] );
+
 echo "\n=== H. Kasowanie osoby A NIE tyka osoby B ===\n";
 // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
 $po_b = $wpdb->get_row( $wpdb->prepare( "SELECT email_kupujacego, usunieto_dnia FROM {$tzam} WHERE id = %d", $id_b ) );
