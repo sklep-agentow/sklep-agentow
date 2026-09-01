@@ -100,8 +100,43 @@ sprawdz( 'B4 mail HTML z danymi: dane pokazane i nazwane', false !== strpos( $ek
 sprawdz( 'B5 mail tekstowy z danymi mowi, ze fakture wystawia sprzedawca poza sklepem', false !== strpos( $ekrany['mail-tekst-z-fv'], 'poza sklepem' ) );
 sprawdz( 'B6 mail HTML z danymi mowi to samo', false !== strpos( $ekrany['mail-html-z-fv'], 'poza sklepem' ) );
 /* Kupujacy MUSI wiedziec, gdzie sie upomniec, skoro sklep sam faktury nie wysle. */
-sprawdz( 'B7 mail tekstowy z danymi mowi, gdzie sie upomniec', false !== strpos( $ekrany['mail-tekst-z-fv'], 'napisz' ) );
-sprawdz( 'B8 mail HTML z danymi mowi, gdzie sie upomniec', false !== strpos( $ekrany['mail-html-z-fv'], 'napisz' ) );
+/* ⛔ ZAKRES POPRAWIONY PO RECENZJI #259 (klasa 11 — nazwa bramki szersza niz pomiar).
+   Poprzednia wersja pytala tylko o obecnosc slowa „napisz". Odeslanie „na adres kontaktowy
+   ze stopki" jest prawdziwe WYLACZNIE wtedy, gdy opcja `sklepag_email_kontaktowy` jest
+   ustawiona i poprawna — a jest nieobowiazkowa i domyslnie PUSTA. Mierzymy OBA stany opcji,
+   bo tylko wtedy bramka pilnuje tej obietnicy, a nie jednego slowa. */
+$poprzedni_kontakt = get_option( 'sklepag_email_kontaktowy', false );
+$przywroc_kontakt  = static function () use ( $poprzedni_kontakt ) {
+	if ( false === $poprzedni_kontakt ) {
+		delete_option( 'sklepag_email_kontaktowy' );
+	} else {
+		update_option( 'sklepag_email_kontaktowy', $poprzedni_kontakt );
+	}
+};
+register_shutdown_function( $przywroc_kontakt );
+
+function maile_z_faktura( $produkt, $zam_fv, $link ) {
+	return array(
+		'tekst' => sklepag_zbuduj_mail( $produkt, $zam_fv, $link, '' ),
+		'html'  => sklepag_zbuduj_mail_html( $produkt, $zam_fv, $link, '' ),
+	);
+}
+
+update_option( 'sklepag_email_kontaktowy', 'wlasciciel@example.test' );
+$z_kontaktem = maile_z_faktura( $produkt, $zam_fv, $link );
+sprawdz( 'B7 opcja USTAWIONA: mail tekstowy odsyla na adres kontaktowy, a stopka go NAPRAWDE podaje', false !== strpos( $z_kontaktem['tekst'], 'napisz na adres kontaktowy ze stopki' ) && false !== strpos( $z_kontaktem['tekst'], 'wlasciciel@example.test' ) );
+sprawdz( 'B8 opcja USTAWIONA: mail HTML tak samo', false !== strpos( $z_kontaktem['html'], 'napisz na adres kontaktowy ze stopki' ) && false !== strpos( $z_kontaktem['html'], 'wlasciciel@example.test' ) );
+
+update_option( 'sklepag_email_kontaktowy', '' );
+$bez_kontaktu = maile_z_faktura( $produkt, $zam_fv, $link );
+sprawdz( 'B9 opcja PUSTA: mail NIE odsyla na adres, ktorego w stopce nie ma', false === strpos( $bez_kontaktu['tekst'], 'adres kontaktowy ze stopki' ) && false === strpos( $bez_kontaktu['html'], 'adres kontaktowy ze stopki' ) );
+sprawdz( 'B10 opcja PUSTA: mail dalej mowi, gdzie sie upomniec (odpisz na tego maila)', false !== strpos( $bez_kontaktu['tekst'], 'odpisz na tego maila' ) && false !== strpos( $bez_kontaktu['html'], 'odpisz na tego maila' ) );
+/* Kontrola dodatnia do B9: przy pustej opcji stopka NAPRAWDE nie niesie linii kontaktowej —
+   inaczej „nie odsyla" znaczyloby tylko tyle, ze zmienil sie tekst, a nie ze problem znikl. */
+sprawdz( 'B11 kontrola dodatnia: przy pustej opcji stopka nie ma linii „Reklamacje i faktury"', false === strpos( $bez_kontaktu['tekst'], 'Reklamacje i faktury' ) && false === strpos( $bez_kontaktu['html'], 'Reklamacje i faktury' ) );
+/* Strona produktu nie ma stopki maila, wiec nie wolno jej na nia odsylac w zadnym stanie opcji. */
+sprawdz( 'B12 strona produktu NIE odsyla na stopke maila, tylko na odpowiedz na potwierdzenie', false === strpos( $ekrany['produkt'], 'adres kontaktowy ze stopki' ) && false !== strpos( $ekrany['produkt'], 'odpisz na maila z potwierdzeniem zakupu' ) );
+$przywroc_kontakt();
 
 echo "\n== C. Wariant BEZ danych do faktury — funkcja nietknieta ==\n";
 sprawdz( 'C1 mail tekstowy bez danych nadal zaprasza i podaje termin 3 miesiecy', false !== strpos( $ekrany['mail-tekst-bez'], 'Chcesz fakturę?' ) && false !== strpos( $ekrany['mail-tekst-bez'], '3 miesięcy' ) );

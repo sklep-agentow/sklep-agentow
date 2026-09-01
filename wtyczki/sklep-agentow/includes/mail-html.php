@@ -169,7 +169,7 @@ function sklepag_zbuduj_mail_html( $produkt, $zam, $link, $link_opinii = '' ) {
 
 	// Faktura i pytania.
 	if ( ! empty( $zam->dane_faktury ) ) {
-		$h[] = '<p style="margin:0 0 6px 0;' . $f . 'color:' . $tusz . ';font-size:14px;line-height:1.55;"><strong>Dane do faktury (podane przy zakupie):</strong> ' . esc_html( $zam->dane_faktury ) . '<br><span style="color:' . $stal . ';font-size:12px;">Fakturę wystawia sprzedawca poza sklepem i prześle ją osobno na ten adres e-mail. Jeśli nie dotrze w ustawowym terminie, napisz na adres kontaktowy ze stopki.</span></p>';
+		$h[] = '<p style="margin:0 0 6px 0;' . $f . 'color:' . $tusz . ';font-size:14px;line-height:1.55;"><strong>Dane do faktury (podane przy zakupie):</strong> ' . esc_html( $zam->dane_faktury ) . '<br><span style="color:' . $stal . ';font-size:12px;">Fakturę wystawia sprzedawca poza sklepem i prześle ją osobno na ten adres e-mail. Jeśli nie dotrze w ustawowym terminie, ' . esc_html( sklepag_gdzie_sie_upomniec() ) . '.</span></p>';
 	} else {
 		$h[] = '<p style="margin:0 0 6px 0;' . $f . 'color:' . $tusz . ';font-size:14px;line-height:1.55;"><strong>Chcesz fakturę?</strong> Odpisz na tego maila w ciągu 3 miesięcy od zakupu i podaj dane firmy (nazwa, adres, NIP).</p>';
 	}

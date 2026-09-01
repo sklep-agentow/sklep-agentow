@@ -319,6 +319,87 @@ function chatl_rodo_eksporter( $email, $strona = 1 ) {
 }
 
 /**
+ * Notatka o rozmowach współdzielonych — JEDNA definicja dla ścieżki udanej i awaryjnej.
+ *
+ * ⛔ Do 1.5.14 to zdanie powstawało wyłącznie na końcu funkcji, więc awaryjny `return`
+ * je gubił: właściciel dostawał `items_retained = true` i nie miał jak odróżnić
+ * „zostało, bo awaria" od „zostało, bo to cudze dane". Dwie kopie tego samego tekstu
+ * rozjechałyby się przy pierwszej poprawce — stąd funkcja, nie wklejka.
+ *
+ * @param array $wspoldzielone Sesje współdzielone.
+ * @return string Pusty napis, gdy nie ma czego zgłaszać.
+ */
+function chatl_rodo_nota_wspoldzielone( $wspoldzielone ) {
+	if ( ! $wspoldzielone ) {
+		return '';
+	}
+	return sprintf(
+		'Zachowano %d rozmowę/rozmowy: w tej samej sesji przeglądarki zgłoszenie zostawiła także inna osoba '
+			. '(wspólny komputer albo drugi adres tego samego gościa). Skasowanie zabrałoby dane tej drugiej osoby, '
+			. 'a wiersze rozmowy nie mają znacznika autora, więc nie da się ich rozdzielić automatycznie.',
+		count( $wspoldzielone )
+	);
+}
+
+/**
+ * Zdanie o retencji rozmów bez adresu — jak wyżej, jedno źródło dla obu ścieżek.
+ *
+ * @return string
+ */
+function chatl_rodo_nota_retencji() {
+	return 'Rozmowy gości, którzy nigdy nie podali adresu e-mail, nie są powiązane z żadnym adresem w bazie — '
+		. 'kasuje je automatycznie retencja po ' . (int) CHATL_RETENCJA_DNI . ' dniach.';
+}
+
+/**
+ * Zwrot kasownika przy AWARII BAZY — jeden kształt dla WSZYSTKICH trzech kasowań.
+ *
+ * ⛔ KLASA, NIE EGZEMPLARZ. `chatl_rodo_kasownik()` kasuje z trzech tabel (`chatl_rozmowy`,
+ * `chatl_sesje`, `chatl_zgloszenia`) i każde z tych zapytań może oddać `false`. Dopóki
+ * sprawdzane było jedno, pozostałe zamieniały `false` na zero przez `max( 0, (int) … )`:
+ * bez wpisu w dzienniku (więc pasek ostrzeżenia w panelu się NIE zapalał) i bez przerwania,
+ * a kreator prywatności WordPressa dostawał `items_removed = true` z komunikatem
+ * „usunięto 0 zgłoszeń" — czyli potwierdzenie usunięcia danych, które zostały w bazie.
+ *
+ * Komunikat NIE twierdzi, że „nic nie usunięto" — część tabel bywa już wyczyszczona.
+ * Nazywa stan faktyczny: co zniknęło, co zostało i czego jeszcze nie tknęliśmy.
+ *
+ * @param string $etap          Nazwa kasowania do dziennika błędów.
+ * @param string $co_zostalo    Zdanie o tym, co zostało w bazie i czego nie ruszyliśmy.
+ * @param int    $ile_r         Skasowane wiadomości rozmów.
+ * @param int    $ile_s         Skasowane ślady sesji.
+ * @param array  $wspoldzielone Sesje współdzielone (notatka musi dojść także tędy).
+ * @return array Kształt wymagany przez kreator prywatności WordPressa.
+ */
+function chatl_rodo_awaria_kasowania( $etap, $co_zostalo, $ile_r, $ile_s, $wspoldzielone ) {
+	chatl_log_bledu_bazy( 'chatl_rodo_kasownik', $etap );
+
+	$komunikaty = array(
+		sprintf(
+			'ChatBot LIVE: usunięto %d wiadomość/wiadomości z rozmów i %d ślad/ślady sesji, ale baza ODRZUCIŁA '
+				. 'kolejne kasowanie. %s ⛔ NIE potwierdzaj usunięcia danych osobie, która złożyła wniosek. '
+				. 'Sprawdź stan bazy (pasek ostrzeżenia w panelu ChatBota) i uruchom usuwanie ponownie — '
+				. 'powtórzenie domknie resztę.',
+			(int) $ile_r,
+			(int) $ile_s,
+			$co_zostalo
+		),
+	);
+	$nota       = chatl_rodo_nota_wspoldzielone( $wspoldzielone );
+	if ( '' !== $nota ) {
+		$komunikaty[] = $nota;
+	}
+	$komunikaty[] = chatl_rodo_nota_retencji();
+
+	return array(
+		'items_removed'  => ( (int) $ile_r + (int) $ile_s ) > 0,
+		'items_retained' => true,
+		'messages'       => $komunikaty,
+		'done'           => true,
+	);
+}
+
+/**
  * Kasownik: usuwa zgłoszenia i powiązane rozmowy.
  *
  * Kolejność ma znaczenie: NAJPIERW rozmowy, POTEM zgłoszenia. Zgłoszenie jest
@@ -377,6 +458,15 @@ function chatl_rodo_kasownik( $email, $strona = 1 ) { // phpcs:ignore Generic.Co
 		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQLPlaceholders
 		$ile = $wpdb->query( $wpdb->prepare( "DELETE FROM {$tr} WHERE sesja IN ({$miejsca})", $podzial['wlasne'] ) );
 		// phpcs:enable
+		if ( false === $ile ) {
+			return chatl_rodo_awaria_kasowania(
+				'kasowanie wiadomości rozmów wnioskodawcy',
+				'Wiadomości rozmów, ślad sesji i zgłoszenia z tym adresem ZOSTAŁY w bazie — nie ruszyliśmy niczego.',
+				0,
+				0,
+				$podzial['wspoldzielone']
+			);
+		}
 		$ile_r = max( 0, (int) $ile );
 
 		/*
@@ -406,21 +496,12 @@ function chatl_rodo_kasownik( $email, $strona = 1 ) { // phpcs:ignore Generic.Co
 		 * tknęliśmy — bo zgłoszenia kasowane są dopiero niżej i przy tym przerwaniu zostają.
 		 */
 		if ( false === $wyn ) {
-			chatl_log_bledu_bazy( 'chatl_rodo_kasownik', 'kasowanie wierszy sesji wnioskodawcy' );
-			return array(
-				'items_removed'  => $ile_r > 0,
-				'items_retained' => true,
-				'messages'       => array(
-					sprintf(
-						'ChatBot LIVE: usunięto %d wiadomość/wiadomości z rozmów, ale baza ODRZUCIŁA skasowanie '
-							. 'śladu sesji — a wiersz sesji sam w sobie mówi, kiedy ta osoba pisała. Zgłoszeń z tym '
-							. 'adresem jeszcze NIE ruszyliśmy. ⛔ NIE potwierdzaj usunięcia danych osobie, która '
-							. 'złożyła wniosek. Sprawdź stan bazy (pasek ostrzeżenia w panelu ChatBota) i uruchom '
-							. 'usuwanie ponownie — powtórzenie domknie resztę.',
-						(int) $ile_r
-					),
-				),
-				'done'           => true,
+			return chatl_rodo_awaria_kasowania(
+				'kasowanie wierszy sesji wnioskodawcy',
+				'Ślad sesji ZOSTAŁ w bazie — a wiersz sesji sam w sobie mówi, kiedy ta osoba pisała; zgłoszeń z tym adresem jeszcze NIE ruszyliśmy.',
+				$ile_r,
+				0,
+				$podzial['wspoldzielone']
 			);
 		}
 		$ile_s = max( 0, (int) $wyn );
@@ -430,6 +511,15 @@ function chatl_rodo_kasownik( $email, $strona = 1 ) { // phpcs:ignore Generic.Co
 	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
 	$ile_z = $wpdb->query( $wpdb->prepare( "DELETE FROM {$tz} WHERE email = %s", $email ) );
 	// phpcs:enable
+	if ( false === $ile_z ) {
+		return chatl_rodo_awaria_kasowania(
+			'kasowanie zgłoszeń z adresem wnioskodawcy',
+			'Zgłoszenia z tym adresem ZOSTAŁY w bazie — a to one niosą sam adres e-mail.',
+			$ile_r,
+			$ile_s,
+			$podzial['wspoldzielone']
+		);
+	}
 	$ile_z = max( 0, (int) $ile_z );
 
 	/* Ślad sesji jest daną osoby tak samo jak wiadomość i zgłoszenie — liczy się do sumy,
@@ -460,21 +550,16 @@ function chatl_rodo_kasownik( $email, $strona = 1 ) { // phpcs:ignore Generic.Co
 	 * Właściciel musi o tym wiedzieć, bo to jedyny przypadek, w którym coś zostaje
 	 * i w którym może być potrzebna jego decyzja.
 	 */
-	if ( $podzial['wspoldzielone'] ) {
-		$komunikaty[] = sprintf(
-			'Zachowano %d rozmowę/rozmowy: w tej samej sesji przeglądarki zgłoszenie zostawiła także inna osoba '
-				. '(wspólny komputer albo drugi adres tego samego gościa). Skasowanie zabrałoby dane tej drugiej osoby, '
-				. 'a wiersze rozmowy nie mają znacznika autora, więc nie da się ich rozdzielić automatycznie.',
-			count( $podzial['wspoldzielone'] )
-		);
+	$nota_wsp = chatl_rodo_nota_wspoldzielone( $podzial['wspoldzielone'] );
+	if ( '' !== $nota_wsp ) {
+		$komunikaty[] = $nota_wsp;
 	}
 
 	/*
 	 * Uczciwość wobec właściciela: rozmowa gościa, który nigdy nie zostawił maila,
 	 * nie jest „zachowana" — nie ma jej jak powiązać z żadnym adresem w bazie.
 	 */
-	$komunikaty[] = 'Rozmowy gości, którzy nigdy nie podali adresu e-mail, nie są powiązane z żadnym adresem w bazie — '
-		. 'kasuje je automatycznie retencja po ' . (int) CHATL_RETENCJA_DNI . ' dniach.';
+	$komunikaty[] = chatl_rodo_nota_retencji();
 
 	return array(
 		'items_removed'  => $usuniete > 0,

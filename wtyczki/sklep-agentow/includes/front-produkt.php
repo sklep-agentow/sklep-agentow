@@ -621,7 +621,7 @@ function sklepag_formularz_zakupu( $p ) {
 			Zdanie „fakture przeslemy" bylo obietnica majatkowa wobec przedsiebiorcy, ktorej
 			nie pokrywala ani jedna linia kodu. Mowimy wiec, co sie z danymi dzieje naprawde,
 			i gdzie kupujacy ma sie upomniec, skoro sklep sam faktury nie wysle. */
-		. '<p class="sklepag-faktura-notka">Pola nieobowiązkowe — wypełnij wszystkie trzy, jeśli chcesz fakturę na firmę. Sklep zapisuje te dane przy zamówieniu i pokazuje je w potwierdzeniu zakupu; <strong>fakturę wystawia sprzedawca poza sklepem</strong> i przesyła ją osobno. Jeśli nie dotrze, napisz na adres kontaktowy ze stopki maila po zakupie. Podanie NIP-u nie zmienia Twoich praw kupującego.</p>'
+		. '<p class="sklepag-faktura-notka">Pola nieobowiązkowe — wypełnij wszystkie trzy, jeśli chcesz fakturę na firmę. Sklep zapisuje te dane przy zamówieniu i pokazuje je w potwierdzeniu zakupu; <strong>fakturę wystawia sprzedawca poza sklepem</strong> i przesyła ją osobno. Jeśli nie dotrze, odpisz na maila z potwierdzeniem zakupu. Podanie NIP-u nie zmienia Twoich praw kupującego.</p>'
 		. '</div></details>';
 	/* ⛔ „(płatność testowa)" i notka z kartą testową to OBIETNICA wobec kupującego, nie ozdoba.
 		Na kluczu produkcyjnym przycisk mówi po prostu „Kup teraz", a notka znika — inaczej sklep

@@ -1211,6 +1211,27 @@ function sklepag_sprzedawca() {
 }
 
 /**
+ * Gdzie kupujący ma się upomnieć — JEDNA definicja dla obu wersji maila.
+ *
+ * ⛔ POWÓD: odsyłanie „na adres kontaktowy ze stopki" było BEZWARUNKOWE,
+ * a stopka podaje ten adres tylko wtedy, gdy opcja `sklepag_email_kontaktowy` jest ustawiona
+ * i poprawna — a jest nieobowiązkowa i domyślnie pusta. Na świeżej instalacji kupujący
+ * firmowy czytał odesłanie pod adres, którego w stopce nie ma. To ta sama klasa, którą ten
+ * plik właśnie naprawia (tekst obiecuje coś, czego kod nie gwarantuje), o krok dalej.
+ *
+ * „Odpisz na tego maila" działa ZAWSZE: przy ustawionym kontakcie mail ma `Reply-To`,
+ * a bez niego odpowiedź idzie na adres nadawcy sklepu.
+ *
+ * @return string Końcówka zdania, bez kropki.
+ */
+function sklepag_gdzie_sie_upomniec() {
+	$kontakt = (string) get_option( 'sklepag_email_kontaktowy', '' );
+	return ( '' !== $kontakt && is_email( $kontakt ) )
+		? 'napisz na adres kontaktowy ze stopki'
+		: 'odpisz na tego maila';
+}
+
+/**
  * Stopka sprzedawcy w wersji tekstowej maila.
  */
 function sklepag_stopka_sprzedawcy_tekst() {
@@ -1276,7 +1297,7 @@ function sklepag_zbuduj_mail( $produkt, $zam, $link, $link_opinii = '' ) {
 		. ( ! empty( $zam->dane_faktury )
 			/* ⛔ Ten sam warunek prawdziwosci co w wersji HTML i w formularzu zakupu: sklep
 				faktur nie wystawia, wiec nie ma prawa obiecywac, ze je wysle. */
-			? "DANE DO FAKTURY (podane przy zakupie):\n" . $zam->dane_faktury . "\nFakturę wystawia sprzedawca poza sklepem i prześle ją osobno na ten adres e-mail.\nJeśli nie dotrze w ustawowym terminie, napisz na adres kontaktowy ze stopki.\n\n"
+			? "DANE DO FAKTURY (podane przy zakupie):\n" . $zam->dane_faktury . "\nFakturę wystawia sprzedawca poza sklepem i prześle ją osobno na ten adres e-mail.\nJeśli nie dotrze w ustawowym terminie, " . sklepag_gdzie_sie_upomniec() . ".\n\n"
 			: "FAKTURA:\nChcesz fakturę? Odpisz na tego maila w ciągu 3 miesięcy od zakupu i podaj dane firmy (nazwa, adres, NIP).\n\n" )
 		. "Masz pytanie? Odpisz na tego maila.\n\n"
 		. sklepag_stopka_sprzedawcy_tekst();
