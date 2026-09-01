@@ -957,3 +957,58 @@ ten katalog, który groźny jest). To jest dokładnie klasa, na którą sam się
 - **Równoległego „Wyślij ponownie"** — dwa kliknięcia naraz rotują token dwa razy; kod nie ma
   tu CAS-a takiego jak przy domknięciu. Zauważone, **nie zmierzone** — kandydat na osobny pomiar.
 - **Zachowania na nginx** (gdzie `.htaccess` jest ignorowany) — poza tym stanowiskiem.
+
+---
+
+# A2 i A3 — CHATBOT LIVE i SEGREGATOR MAILA
+
+**Stan wejściowy z mapy:** oba 🟡 („wroga sesja K2, przeloty botów" · „dowód zachowania
++ próba kontrolna"). **Wynik: 0 nowych znalezisk, jedna klasa potwierdzona jako ZAMKNIĘTA
+na obu bliźniakach, jeden trop wygaszony uczciwie.**
+
+## Soczewka: **czytam, co się NAPRAWDĘ wywaliło, a nie czego się spodziewam**
+
+⛔ `LEKCJA 3` mówi, że przejazd po terenie dał w tych obszarach **ZERO** — nie powtarzam go.
+Wziąłem jedyne źródło, którego w tym projekcie nikt nie otwierał, a które zapisuje **skutki,
+nie intencje**: `wp-content/debug.log` na stanowisku. **2,0 MB, 6376 wpisów, 276 fatali,
+6010 ostrzeżeń** z okresu 20.08-1.09. Pytanie brzmiało: *które z tych awarii są DZIŚ jeszcze
+możliwe na `HEAD` gałęzi?* — więc każdą klasę sprawdzałem potem w kodzie.
+
+## 1. WYNIKI — klasa po klasie
+
+| # | co się wywalało (liczba) | wtyczka | stan na `HEAD` |
+|---|---|---|---|
+| 1 | `Uncaught ValueError: mb_convert_encoding(): … invalid encoding "Windows-1250"` — **53×**, 20-31.08 | ChatBot, `includes/import.php` | ⭐ **ZAMKNIĘTE**: konwersja idzie dziś przez `iconv( 'CP1250', 'UTF-8//IGNORE', … )` (`import.php:114`), a **komentarz nad nią zapisuje POWÓD** (`:87-90`): „mbstring **nie zna CP1250** … `mb_convert_encoding( …, 'Windows-1250' )` kończy się rzuconym ValueError". Czyli naprawa niesie ze sobą dowód, dlaczego nie wolno wrócić do `mb_*` |
+| 2 | ta sama klasa, **1×**, 20.08 | Segregator, `includes/csv.php` | ⭐ **ZAMKNIĘTE U BLIŹNIAKA TEŻ** — `csv.php:85` `iconv( $kodowanie, 'UTF-8//IGNORE', $tekst )`, z tym samym komentarzem o PHP 8.4 (`:68-74`). **To jest wynik warty osobnego zdania:** projekt ma nazwaną klasę „naprawiasz egzemplarz, bliźniak zostaje" i **tutaj się nie powtórzyła** |
+| 3 | `Allowed memory size … exhausted` — **15×** | rdzeń WP (`class-wpdb.php`, `class-wp-object-cache.php`) | **NIE ŻYWE**: wszystkie z **jednego dnia, 21.08**, w oknie, w którym w logu stoją obok wpisy `chatl_ai_odpowiedz(): … (błąd połączenia: **przechwycone przez audyt**)` — czyli podczas przelotu z wstrzykniętą awarią. Limit 128 MB |
+| 4 | `Call to undefined function chatl_zdarzenia_stan() / chatl_przejmij() / sklepag_obsluz_anonimizacje()` — **10×** | — | **NIE PRODUKT**: wszystkie z `phar:///usr/local/bin/wp/…eval-command`, czyli z cudzych (i moich) sond wołających funkcję bez załadowania jej pliku. Dwa z 1.09 są **moje** (sonda `E7`) |
+| 5 | `Trying to access array offset on null` w `segregator-maila/includes/skrzynka-przebieg.php:274-275` — **184×**, 26-31.08 | Segregator | **NIE ODTWARZA SIĘ NA `HEAD`**: dziś w tych liniach stoi `$kategoria = $decyzja['kategoria'];` i `$dopasowal = null !== $decyzja['regula_id'];`, a `segm_klasyfikuj_mail()` (`includes/silnik.php:22`) ma **dwa wyjścia i oba zwracają tablicę** (`:34`, `:41`) — `null` nie ma którędy wrócić. ⛔ **Czego NIE sprawdziłem:** co stało w tych liniach w chwili tamtych ostrzeżeń (wymaga archeologii `git log -p`), więc nie twierdzę, że to była TA sama linia — twierdzę tylko, że **dzisiejszy kształt tej awarii nie produkuje** |
+| 6 | `chatl_ai_odpowiedz(): wywołanie API nie powiodło się, bot odpowiada z reguł` — **3968×** (ostrzeżenia, nie fatale) | ChatBot | **ZACHOWANIE ZAMIERZONE**, nie awaria: to zjazd do reguł przy błędzie API (HTTP 429, brak połączenia). Najgłośniejsza ścieżka w całym logu i **ma swój trwały znacznik** — patrz niżej |
+
+## 2. TEREN SPRAWDZONY PRZY OKAZJI — KANAŁ CICHEJ AWARII
+
+Oba boty mają wspólny problem projektowy: `wp_trigger_error()` **milczy przy `WP_DEBUG=false`**,
+czyli na każdej normalnej instalacji klienta (rdzeń WP kończy je natychmiast). Sprawdziłem,
+czy kompensacja istnieje **wszędzie**, a nie tylko w jednym miejscu:
+
+| | ChatBot | Segregator | sklep |
+|---|---|---|---|
+| wywołań `wp_trigger_error` | **7** | **7** | 0 |
+| trwałe znaczniki (opcja + pasek w panelu) | `chatl_blad_ai`, `chatl_blad_bazy`, `chatl_blad_maila`, `chatl_pulapka` | `segm_blad_ai`, `segm_blad_bazy` | — (sklep ma własny dziennik zdarzeń) |
+| gołe `error_log()` w kodzie | **0** | **0** | 0 |
+
+⚠️ **Instrument, który skłamał mi po drodze:** `grep -c "error_log("` dał **1** w każdym bocie
+i przez chwilę wyglądało to na złamanie zakazu z `phpcs.xml.dist`. Oba trafienia są
+**w komentarzach** (`chatbot-live.php:29`, `segregator-maila.php:34`) — w zdaniu tłumaczącym,
+że kod tego **nie** używa. ⛔ Liczenie wywołań po nazwie funkcji liczy też komentarze; to trzecia
+dziś sytuacja z tej rodziny (po dopasowaniu prób kontrolnych po nazwie pliku i po `slady`).
+
+## 3. CZEGO W `A2` I `A3` NIE ZDĄŻYŁEM — i to jest większość tych obszarów
+
+- **Logiki obu botów** poza tym, co zostawiło ślad w logu. Ta soczewka widzi wyłącznie awarie,
+  które **wystąpiły na tym stanowisku** — nie widzi ścieżek nigdy nieuruchomionych, a właśnie
+  takie są najciekawsze (`A7c-F1` z dekodowania MIME wyszło z atrapy, nie z logu).
+- **Plików, których nie tknęła żadna soczewka** — z raportu `A7` zostaje lista:
+  `statystyki.php`, `import.php`, `przejecie.php`, `admin.php`, `filtry.php`, `assets/`.
+- **STARTTLS klienta IMAP i wydajności przy większych danych** — zaparkowane wcześniejszą decyzją.
+- **Archeologii `skrzynka-przebieg.php`** — patrz wiersz 5 tabeli.
