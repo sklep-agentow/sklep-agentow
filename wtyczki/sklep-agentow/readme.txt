@@ -4,7 +4,7 @@ Tags: sklep, stripe, pliki cyfrowe, sprzedaz wtyczek, pobieranie
 Requires at least: 6.7
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.9.30
+Stable tag: 0.9.31
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -160,6 +160,10 @@ Nie. Zakup jest bez konta: adres e-mail podany na stronie płatności Stripe,
 link do pobrania w mailu, jednorazowy link do opinii.
 
 == Changelog ==
+
+= 0.9.31 =
+* Naprawione: kupujący dostaje dokładnie to, co kupił, także gdy produkt zmienił się w trakcie płatności. Dotąd sklep zapisywał do zamówienia nazwę, cenę i plik odczytane w chwili DOMKNIĘCIA płatności, a nie zakupu — po podmianie pliku kupujący pobierał co innego, niż kupił, a po zmianie ceny w jednym zamówieniu leżały dwie różne kwoty. Dane produktu są teraz zamrażane w chwili rozpoczęcia płatności.
+* Naprawione: skasowanie albo wycofanie produktu między zapłatą a potwierdzeniem ze Stripe nie gubi już zakupu — zamówienie powstaje i mail z linkiem wychodzi. Wycofanie produktu blokuje NOWE zakupy, nie doręczenie już opłaconych.
 
 = 0.9.30 =
 * Naprawione (RODO): anonimizacja kupującego usuwa jego adres e-mail z dziennika zdarzeń także wtedy, gdy zapisał się tam w postaci zakodowanej. Adres z ukośnikiem przed „@" (dopuszczalny, spotykany wyjątkowo) zostawał w dzienniku, a wtyczka i tak potwierdzała usunięcie — żądanie RODO nie było zrealizowane, choć właściciel miał dowód wykonania. Zamyka znaną granicę opisaną przy 0.9.19.
