@@ -199,8 +199,9 @@ ok. 2 minutach, do trzech razy): każda próba wydaje nowy link, a nieudana go n
 awarii poczty poprzedni link więc przepada; gdy poczta znów działa, kliknij „Wyślij ponownie” —
 kupujący dostanie świeży link z pełnym limitem.
 Przycisk jest dostępny tylko dla zamówień w stanie „mail wysłany” albo „błąd maila”: dla zwróconych,
-spornych i jeszcze niedomkniętych sklep odmawia — link, który kupujący już ma, działa do końca
-swojej ważności.
+spornych i jeszcze niedomkniętych sklep odmawia. Uwaga na różnicę: przy zamówieniu **jeszcze
+niedomkniętym** link, który kupujący już ma, działa do końca swojej ważności — ale przy **zwróconym
+i spornym** nie działa, bo od 0.9.37 brama pobrań odmawia dla tych dwóch statusów.
 
 Gdy link wygaśnie albo limit się wyczerpie, kupujący widzi na stronie pobierania Twój
 **mail kontaktowy** z Ustawień — żeby napisał do Ciebie, a Ty użyjesz „Wyślij ponownie”.

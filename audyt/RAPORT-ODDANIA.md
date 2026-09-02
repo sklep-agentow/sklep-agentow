@@ -92,8 +92,10 @@ klienta**; pominięte są wyłącznie długi narzędzi warsztatu (skanery, prób
    Tej samej klasy: kompensacja licznika pobrań po nieudanym resendzie bierze wartość ze zdjęcia, nie z bazy.
 6. **Kontrola „wydanie z readme ma wpis w CHANGELOG”** istnieje tylko u Segregatora. Bramka sekcji F mierzy
    5 z 9 liczb instrukcji (niemierzone wypisane w jej nagłówku).
-7. **Zwrot ani spór nie odcinają wcześniej wysłanego linku** do pobrania (działa do końca 72 h / 10 pobrań) —
-   zapisane wprost w instrukcji właściciela; zmiana na życzenie.
+7. ~~**Zwrot ani spór nie odcinają wcześniej wysłanego linku** do pobrania (działa do końca 72 h / 10 pobrań).~~
+   **ZAMKNIĘTE w 0.9.37 (PR #268, znalezisko `Q-4`):** zwrot całości kwoty i obciążenie zwrotne odcinają link
+   natychmiast — brama pobrań odmawia (410) dla statusów `zwrocone` i `sporne`, przed etapem pliku
+   (`wtyczki/sklep-agentow/includes/pobieranie.php:58`). Zwrot częściowy linku NIE odcina (świadome).
 8. **Szkice Regulaminu i Polityki prywatności powstają tylko przy pierwszej aktywacji** — sklep zainstalowany
    przed 0.9.23 ma szkic Polityki bez adresu IP przy pobraniu; instrukcja (rozdz. 6) i CHANGELOG mówią, co dopisać.
 9. **Anonimizacja może potwierdzić usunięcie, którego nie wykonała w całości**: adres e-mail z `/` w części

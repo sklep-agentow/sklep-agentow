@@ -61,7 +61,7 @@ function sklepag_obsluz_pobranie() {
 		}
 		wp_die(
 			( 'sporne' === $zam->status
-				? 'Płatność za to zamówienie jest w sporze — pobieranie wstrzymane do jego zamknięcia. '
+				? 'Płatność za to zamówienie jest w sporze — pobieranie jest wstrzymane. Dostęp wróci tylko wtedy, gdy spór rozstrzygnie się na korzyść sklepu. '
 				: 'Pieniądze za to zamówienie zostały zwrócone — link pobrania przestał działać. ' )
 			. esc_html( $kontakt ),
 			'Sklep Agentów',
