@@ -14,6 +14,26 @@ const SKLEPAG_ZGODA_TRESC = 'Wyrażam zgodę na natychmiastowe dostarczenie tre�
 	webhook JAWNIE poza limiterem) ---------- */
 
 /**
+ * Klucz okna idempotencji — JEDNO ŹRÓDŁO dla produkcji i dla strażnika regresji.
+ *
+ * ⛔ POWÓD ISTNIENIA TEJ FUNKCJI. Klucz był składany W MIEJSCU UŻYCIA, a strażnik regresji
+ * składał go u siebie drugi raz. Gdy 0.9.25 dołożyło do klucza trzeci człon (płatność osadzona
+ * kontra hostowana), produkcja zaczęła czytać spod innego adresu niż ten, pod którym strażnik
+ * podkładał okno — i przestał mierzyć cokolwiek, nie mówiąc o tym ani słowem. Dwa miejsca
+ * składające ten sam klucz to rozjazd czekający na okazję; jedno miejsce go nie ma jak zrobić.
+ *
+ * Człony: adres kupującego (okno działa per adres), produkt (osobne okno na produkt) oraz tryb
+ * płatności — osadzona i hostowana kończą się INNĄ sesją Stripe, więc nie wolno im dzielić okna.
+ *
+ * @param int  $produkt_id Id produktu.
+ * @param bool $osadzona   Czy płatność osadzona (formularz karty na naszej stronie).
+ * @return string Nazwa transientu.
+ */
+function sklepag_klucz_idem( $produkt_id, $osadzona ) {
+	return 'sklepag_idem_' . md5( sklepag_ip() . '|' . (int) $produkt_id . '|' . ( $osadzona ? 'o' : 'h' ) );
+}
+
+/**
  * Ile sekund okno idempotencji wolno oddawać zapamiętany adres checkoutu.
  * Podwójny klik mieści się poniżej sekundy; wpisanie karty u Stripe trwa dziesiątki sekund,
  * więc ten próg rozdziela oba zdarzenia BEZ pytania Stripe o stan — awaria łączności ze Stripe
@@ -174,7 +194,7 @@ function sklepag_obsluz_kup() {
 	// związanego z sesją przeglądarki i jest znanym, świadomie otwartym ograniczeniem tego okna.
 	// Okno kluczowane też TRYBEM: sesja hostowana ma `url`, osadzona ma `client_secret` — pomieszanie
 	// oddałoby JS-owi adres do przekierowania albo formularzowi sekret bez strony.
-	$okno = 'sklepag_idem_' . md5( sklepag_ip() . '|' . $produkt_id . '|' . ( $osadzona ? 'o' : 'h' ) );
+	$okno = sklepag_klucz_idem( $produkt_id, $osadzona );
 	$juz  = get_transient( $okno );
 	if ( is_array( $juz ) && ( ! empty( $juz['url'] ) || ! empty( $juz['client_secret'] ) ) ) {
 		$wiek_ok = ! empty( $juz['czas'] ) && ( time() - (int) $juz['czas'] ) <= SKLEPAG_IDEM_OKNO_S;
@@ -205,12 +225,32 @@ function sklepag_obsluz_kup() {
 		wp_die( 'Nie udało się rozpocząć płatności. Spróbuj ponownie za chwilę.', 'Sklep Agentów', 502 );
 	}
 
+	/*
+	 * ⛔ MIGAWKA PRODUKTU IDZIE RAZEM Z SESJA, nie po fakcie.
+	 *
+	 * Kupujacy placi za produkt, ktory widzi TERAZ. Miedzy ta chwila a domknieciem platnosci
+	 * wlasciciel moze podmienic plik, zmienic cene albo wycofac produkt ze sprzedazy — i do
+	 * 0.9.31 domkniecie zapisywalo do zamowienia stan Z CHWILI DOMKNIECIA, bo czytalo tabele
+	 * produktow ponownie. Kupujacy dostawal wtedy co innego, niz kupil.
+	 *
+	 * Zamrazamy WSZYSTKO, czego potrzebuje domkniecie i mail: nazwe, slug (okladka i tresc
+	 * sprzedazowa maila), cene, walute i SCIEZKE PLIKU. Sciezka wystarczy, bo kazde wgranie
+	 * pliku w panelu dostaje wlasna, losowa nazwe (`produkt-<20 znakow>`) — podmiana pliku
+	 * nie nadpisuje starej sciezki, tylko tworzy nowa.
+	 */
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery
 	$wpdb->query(
 		$wpdb->prepare(
-			"INSERT IGNORE INTO {$wpdb->prefix}sklepag_sesje_checkout (stripe_session_id, produkt_id, stan, utworzono) VALUES (%s, %d, 'utworzona', %s)", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			"INSERT IGNORE INTO {$wpdb->prefix}sklepag_sesje_checkout
+			 (stripe_session_id, produkt_id, produkt_nazwa, produkt_slug, produkt_cena_grosze, produkt_waluta, produkt_plik, stan, utworzono)
+			 VALUES (%s, %d, %s, %s, %d, %s, %s, 'utworzona', %s)", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$sesja['id'],
 			$produkt->id,
+			(string) $produkt->nazwa,
+			(string) $produkt->slug,
+			(int) $produkt->cena_grosze,
+			(string) $produkt->waluta,
+			(string) $produkt->plik_sciezka,
 			current_time( 'mysql' )
 		)
 	);
@@ -824,10 +864,38 @@ function sklepag_domknij_zakup( $sesja ) {
 		return true;
 	}
 
-	$produkt = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$pp} WHERE id = %d", (int) $nasza->produkt_id ) );
-	if ( ! $produkt ) {
-		sklepag_zdarzenie( null, 'domkniecie_brak_produktu', $sid );
-		return true;
+	/*
+	 * ⛔ PRODUKT BIERZEMY Z MIGAWKI ZAPISANEJ PRZY TWORZENIU PLATNOSCI, nie z tabeli produktow.
+	 *
+	 * To jest cala naprawa klasy „kupujacy placi za jedno, a dostaje drugie". Ponowny odczyt
+	 * tabeli oddawal stan Z CHWILI DOMKNIECIA: podmieniony plik, nowa cene obok kwoty
+	 * faktycznie pobranej przez Stripe, inna nazwe w mailu. Migawka oddaje jedyny stan,
+	 * za ktory kupujacy zaplacil.
+	 *
+	 * ⭐ SKUTEK UBOCZNY, KTORY JEST POPRAWNY, NIE PRZEOCZENIEM: domkniecie przestaje zalezec
+	 * od tego, czy produkt nadal jest `aktywny` i czy w ogole jeszcze istnieje. Wycofanie
+	 * ze sprzedazy ma blokowac NOWE zakupy (i blokuje — checkout pyta o `aktywny = 1`),
+	 * a nie doreczenie zakupu JUZ OPLACONEGO. Wczesniej skasowanie produktu miedzy zaplata
+	 * a webhookiem konczylo sie `domkniecie_brak_produktu`: pieniadze pobrane, zamowienie
+	 * nie powstawalo wcale.
+	 *
+	 * Zapas dla sesji SPRZED migracji (schemat < 10, migawka pusta): stary odczyt z tabeli.
+	 * Zakupy w locie w chwili aktualizacji nie moga zostac bez obslugi.
+	 */
+	if ( '' !== (string) $nasza->produkt_nazwa ) {
+		$produkt               = new stdClass();
+		$produkt->id           = (int) $nasza->produkt_id;
+		$produkt->nazwa        = (string) $nasza->produkt_nazwa;
+		$produkt->slug         = (string) $nasza->produkt_slug;
+		$produkt->cena_grosze  = (int) $nasza->produkt_cena_grosze;
+		$produkt->waluta       = (string) $nasza->produkt_waluta;
+		$produkt->plik_sciezka = (string) $nasza->produkt_plik;
+	} else {
+		$produkt = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$pp} WHERE id = %d", (int) $nasza->produkt_id ) );
+		if ( ! $produkt ) {
+			sklepag_zdarzenie( null, 'domkniecie_brak_produktu', $sid . ' (sesja sprzed migawki, schemat < 10)' );
+			return true;
+		}
 	}
 
 	$email = '';
@@ -1163,6 +1231,27 @@ function sklepag_sprzedawca() {
 }
 
 /**
+ * Gdzie kupujący ma się upomnieć — JEDNA definicja dla obu wersji maila.
+ *
+ * ⛔ POWÓD: odsyłanie „na adres kontaktowy ze stopki" było BEZWARUNKOWE,
+ * a stopka podaje ten adres tylko wtedy, gdy opcja `sklepag_email_kontaktowy` jest ustawiona
+ * i poprawna — a jest nieobowiązkowa i domyślnie pusta. Na świeżej instalacji kupujący
+ * firmowy czytał odesłanie pod adres, którego w stopce nie ma. To ta sama klasa, którą ten
+ * plik właśnie naprawia (tekst obiecuje coś, czego kod nie gwarantuje), o krok dalej.
+ *
+ * „Odpisz na tego maila" działa ZAWSZE: przy ustawionym kontakcie mail ma `Reply-To`,
+ * a bez niego odpowiedź idzie na adres nadawcy sklepu.
+ *
+ * @return string Końcówka zdania, bez kropki.
+ */
+function sklepag_gdzie_sie_upomniec() {
+	$kontakt = (string) get_option( 'sklepag_email_kontaktowy', '' );
+	return ( '' !== $kontakt && is_email( $kontakt ) )
+		? 'napisz na adres kontaktowy ze stopki'
+		: 'odpisz na tego maila';
+}
+
+/**
  * Stopka sprzedawcy w wersji tekstowej maila.
  */
 function sklepag_stopka_sprzedawcy_tekst() {
@@ -1215,7 +1304,10 @@ function sklepag_zbuduj_mail( $produkt, $zam, $link, $link_opinii = '' ) {
 		. ( '' !== $numer ? 'Numer zamówienia: ' . $numer . "\n" : '' )
 		. 'Produkt: ' . $produkt->nazwa . "\n"
 		. ( '' !== $kupiono ? 'Data zakupu: ' . $kupiono . "\n" : '' )
-		. 'Kwota: ' . number_format( $zam->kwota_grosze / 100, 2, ',', ' ' ) . ' ' . $zam->waluta . " (TRYB TESTOWY — płatność nie została pobrana)\n\n"
+		. 'Kwota: ' . number_format( $zam->kwota_grosze / 100, 2, ',', ' ' ) . ' ' . $zam->waluta
+		/* ⛔ Ten sam warunek co w wersji HTML (mail-html.php) — dwie wersje tego samego maila
+			nie mają prawa mówić o pieniądzach czegoś innego. */
+		. ( sklepag_tryb_testowy() ? ' (TRYB TESTOWY — płatność nie została pobrana)' : '' ) . "\n\n"
 		. $zgoda
 		. "POBIERZ SWÓJ PRODUKT:\n" . $link . "\n"
 		. 'Link jest ważny ' . $dni . ' dni i pozwala na ' . SKLEPAG_LIMIT_POBRAN . " pobrań.\n\n"
@@ -1223,7 +1315,9 @@ function sklepag_zbuduj_mail( $produkt, $zam, $link, $link_opinii = '' ) {
 		. $gwarancja
 		. $ocena
 		. ( ! empty( $zam->dane_faktury )
-			? "DANE DO FAKTURY (podane przy zakupie):\n" . $zam->dane_faktury . "\nFakturę wystawimy na te dane i prześlemy osobno na ten adres e-mail.\n\n"
+			/* ⛔ Ten sam warunek prawdziwosci co w wersji HTML i w formularzu zakupu: sklep
+				faktur nie wystawia, wiec nie ma prawa obiecywac, ze je wysle. */
+			? "DANE DO FAKTURY (podane przy zakupie):\n" . $zam->dane_faktury . "\nFakturę wystawia sprzedawca poza sklepem i prześle ją osobno na ten adres e-mail.\nJeśli nie dotrze w ustawowym terminie, " . sklepag_gdzie_sie_upomniec() . ".\n\n"
 			: "FAKTURA:\nChcesz fakturę? Odpisz na tego maila w ciągu 3 miesięcy od zakupu i podaj dane firmy (nazwa, adres, NIP).\n\n" )
 		. "Masz pytanie? Odpisz na tego maila.\n\n"
 		. sklepag_stopka_sprzedawcy_tekst();

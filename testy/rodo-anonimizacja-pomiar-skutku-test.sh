@@ -154,6 +154,7 @@ case "$WY_C" in *"PROBA2_REDIRECT="*"sklepag_anonimizacja=ok"*) ok "C: druga pro
 [ "$(pole "$STAN_C" MAIL_PO)" = "PUSTY" ] && ok "C: adres zniknal ze zrodla" || zle "C: adres ZOSTAL w zrodle po powtorce"
 [ "$(pole "$STAN_C" WPIS_OBCEGO_RFC_CALY)" = "1" ] && ok "C: wpis obcego z prefiksem RFC (!) NIETKNIETY — kotwica pokrywa pelny zbior znakow adresu" || zle "C: przepisano wpis obcego z prefiksem RFC — kotwica stoi na za waskim zbiorze znakow"
 [ "$(pole "$STAN_C" WPIS_OBCEGO_CALY)" = "1" ] && ok "C: wpis INNEGO kupujacego (adres z naszym jako koncowka) NIETKNIETY" || zle "C: przepisano wpis INNEGO kupujacego — niezakotwiczone dopasowanie psuje cudze dane"
+[ "$(pole "$STAN_C" WPIS_OBCEGO_JSON_CALY)" = "1" ] && ok "C: wpis obcego w postaci ZAKODOWANEJ NIETKNIETY — kotwica trzyma na obu postaciach" || zle "C: przepisano cudzy wpis w postaci zakodowanej — druga postac szuka bez kotwicy"
 [ "$(pole "$STAN_C" SLADY_W_DZIENNIKU)" = "0" ] && ok "C: adres zniknal TAKZE z dziennika zdarzen" || zle "C: adres ZOSTAL w dzienniku — to jest wada z WAZNEJ 2 recenzji #207"
 
 echo

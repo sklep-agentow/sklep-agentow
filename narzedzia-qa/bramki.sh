@@ -36,11 +36,11 @@ set -u
 # ⛔ Rejestr bramek. Nazwy MUSZĄ zgadzać się z .github/manifest-bramek.txt —
 # pilnuje tego narzedzia-qa/sprawdz-manifest.sh. Kolejność jak w quality.yml
 # sprzed zbicia zadań: najpierw tanie i statyczne, na końcu skan historii.
-BRAMKI=(actionlint manifest slady znaleziska status-bez-warunku paczka php-lint phpcs phpstan gitleaks poswiadczenia)
+BRAMKI=(actionlint manifest slady znaleziska status-bez-warunku paczka zdarzenia-webhooka php-lint phpcs phpstan gitleaks poswiadczenia)
 # Bramki dotykające WYŁĄCZNIE kodu PHP — pomijane, gdy zmiana jest tekstowa.
 BRAMKI_PHP=(php-lint phpcs phpstan)
-PROG_PELNY=11
-PROG_TEKSTOWY=6
+PROG_PELNY=12
+PROG_TEKSTOWY=7
 
 # Wersje narzędzi pobieranych, gdy nie ma ich w PATH. Pinowane świadomie:
 # „najnowsza" w bramce oznacza, że CI potrafi zmienić zdanie bez naszej zmiany.
@@ -241,6 +241,17 @@ uruchom_paczka() {
 	bash testy/paczka-obejmuje-kazdy-plik-wtyczki-test.sh
 }
 
+# ZDARZENIA WEBHOOKA — lista w instrukcji == lista obslugiwana w kodzie.
+#    POWOD (znalezisko A7-F1, 1.09): instrukcja instalacji kazala zaznaczyc w Stripe DWA
+#    zdarzenia, a `zakup.php` obslugiwal JEDENASCIE w czterech rodzinach. Klient wykonujacy
+#    instrukcje doslownie nie dowiadywal sie ANI o zwrocie, ANI o obciazeniu zwrotnym,
+#    a Pulpit liczy przychod jako `kwota - zwrocono` — oddane pieniadze zostawaly
+#    w statystyce sprzedazy na zawsze. Sama poprawka tekstu zamyka egzemplarz; klasa
+#    wraca przy kazdym nowym zdarzeniu, bo nic nie zmusza autora, zeby ruszyl dokument.
+uruchom_zdarzenia_webhooka() {
+	bash narzedzia-qa/zdarzenia-webhooka.sh
+}
+
 uruchom_php_lint() {
 	find wtyczki -name '*.php' -print0 | xargs -0 -n1 php -l > /dev/null || return 1
 	echo "Skladnia czysta."
@@ -365,6 +376,7 @@ bramka slady      uruchom_slady
 bramka znaleziska uruchom_znaleziska
 bramka status-bez-warunku uruchom_status_bez_warunku
 bramka paczka     uruchom_paczka
+bramka zdarzenia-webhooka uruchom_zdarzenia_webhooka
 bramka php-lint   uruchom_php_lint
 bramka phpcs      uruchom_phpcs
 bramka phpstan    uruchom_phpstan

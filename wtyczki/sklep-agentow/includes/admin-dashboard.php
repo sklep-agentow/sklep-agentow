@@ -257,6 +257,69 @@ function sklepag_obsluz_dociagnij() {
 
 /* ---------- Eksport CSV (z wpisem w dzienniku akcji) ---------- */
 
+/**
+ * Znaki, od których arkusz kalkulacyjny zaczyna czytać KOMÓRKĘ JAKO FORMUŁĘ.
+ * Excel i LibreOffice: `=` i `@` wprost, `+` i `-` jako początek wyrażenia;
+ * tabulator i powrót karetki dlatego, że arkusz je zjada i odsłania znak za nimi.
+ * Apostrof NIE jest znakiem formuły — jest na liście po to, żeby neutralizacja była
+ * odwracalna dla KAŻDEJ wartości: `'Bot roku` bez tego wyszedłby do pliku nietknięty
+ * i nie dałoby się go odróżnić od zneutralizowanego `=…`; z drugim apostrofem zdjęcie
+ * jednego zawsze oddaje oryginał.
+ */
+const SKLEPAG_CSV_ZNAKI_FORMULY = array( '=', '+', '-', '@', "\t", "\r", "'" );
+
+/**
+ * Neutralizacja wstrzyknięcia formuły do arkusza (CSV injection / formula injection).
+ *
+ * ⛔ CZEMU TO W OGÓLE JEST POTRZEBNE. Pola tekstowe zamówienia trafiają do CSV tak, jak
+ * leżą w bazie. Kupujący, który poda adres `=1+1@example.com`, i właściciel, który nazwie
+ * produkt `=HYPERLINK(...)`, wpisują treść, którą Excel wykona NA KOMPUTERZE WŁAŚCICIELA
+ * przy otwarciu pliku. `sanitize_email()` i `is_email()` takiego adresu NIE odrzucają.
+ *
+ * ⛔ OBRONA WARSTWOWA, NIE ZAKŁAD O CUDZE ZACHOWANIE. Neutralizujemy KAŻDE pole tekstowe
+ * niezależnie od źródła — także te ustawiane przez właściciela. Oparcie naprawy na tym, że
+ * Stripe odrzuci dziwny adres, byłoby zakładem o zachowanie cudzego systemu, który może się
+ * zmienić bez uprzedzenia i bez powiadomienia nas; a nazwy produktu Stripe nie widzi wcale.
+ *
+ * FORMA: apostrof z przodu (zalecenie OWASP dla tej klasy). Wybrany, bo jako JEDYNY
+ * z rozważanych jest ODWRACALNY i nie zmienia samej wartości: odczyt maszynowy odzyskuje
+ * oryginał zdjęciem dokładnie jednego wiodącego apostrofu — także wtedy, gdy wartość SAMA
+ * zaczyna się od apostrofu (dostaje drugi; patrz komentarz przy stałej). Odrzucone: spacja z przodu
+ * (zmienia wartość, psuje dopasowanie adresu), `="…"` (samo jest formułą), tabulator
+ * z przodu (niewidoczny, zanieczyszcza wartość przy ponownym imporcie).
+ *
+ * NAZWA wg wzorca bliźniaczek w pozostałych wtyczkach (`chatl_csv_komorka()`,
+ * `segm_csv_komorka()`) — trzy kopie są uzasadnione (wtyczki instalują się osobno), trzecia
+ * nazwa nie: jeden ciąg `_csv_komorka` wystarcza, żeby wygrepować całą klasę przy audycie.
+ *
+ * RÓŻNICE wobec bliźniaczek — dwie, obie świadome: (1) apostrof na liście (odwracalność,
+ * wyżej), (2) wyjątek na literały liczbowe, poniżej. Bliźniaczki nie mają żadnej z nich.
+ *
+ * ⛔ WYJĄTEK NA LICZBY. Czysty literał liczbowy (`149,00`, także `-10,00`) NIE jest formułą — arkusz
+ * czyta go jako liczbę, a apostrof z przodu zamieniłby go w tekst i zepsuł sumowanie kolumny
+ * „Kwota". ⚠️ Prawda o danych: `kwota_grosze` jest `int unsigned` (`aktywacja.php`), zwroty idą przez
+ * `zwrocono_grosze`, więc UJEMNA kwota z tego eksportu dziś nie wychodzi; wyjątek broni kolumny
+ * dodatniej (której `in_array` i tak by nie tknął) oraz każdej przyszłej kolumny ze znakiem — i jest
+ * mierzony przez strażnika na literale `-10,00` podanym jako TEKST (kierunek D).
+ * `-1+1@example.com` literałem nie jest, więc neutralizacji podlega.
+ *
+ * @param mixed $wartosc Komórka do wypisania.
+ * @return mixed Wartość bezpieczna dla arkusza (nieteksty i liczby bez zmian).
+ */
+function sklepag_csv_komorka( $wartosc ) {
+	if ( ! is_string( $wartosc ) || '' === $wartosc ) {
+		return $wartosc;
+	}
+	// Literał liczbowy (także ujemny, także z przecinkiem dziesiętnym) zostaje liczbą.
+	if ( preg_match( '/^-?\d+(?:[.,]\d+)?$/', $wartosc ) ) {
+		return $wartosc;
+	}
+	if ( ! in_array( $wartosc[0], SKLEPAG_CSV_ZNAKI_FORMULY, true ) ) {
+		return $wartosc;
+	}
+	return "'" . $wartosc;
+}
+
 add_action( 'admin_post_sklepag_eksport_csv', 'sklepag_obsluz_eksport_csv' );
 
 /**
@@ -289,18 +352,25 @@ function sklepag_obsluz_eksport_csv() {
 	fwrite( $out, "\xEF\xBB\xBF" ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- BOM UTF-8 dla Excela.
 	fputcsv( $out, array( 'Nr', 'Data', 'Kupujący', 'Produkt', 'Kwota', 'Waluta', 'Status', 'Pobrania użyte', 'Limit pobrań' ), ';', '"', '\\' );
 	foreach ( $wiersze as $w ) {
+		// ⛔ NEUTRALIZACJA CAŁEGO WIERSZA, NIE WYBRANYCH KOLUMN. Wskazanie „tych dwóch pól,
+		// o których wiemy" jest naprawą EGZEMPLARZA: pierwsza nowa kolumna z tekstem wróciłaby
+		// z tą samą wadą, a nikt by tego nie zauważył. `sklepag_csv_komorka()` sam zostawia
+		// liczby i nieteksty w spokoju, więc objęcie nim wszystkiego niczego nie psuje.
 		fputcsv(
 			$out,
-			array(
-				$w['id'],
-				$w['utworzono'],
-				$w['email_kupujacego'],
-				$w['produkt_nazwa_kupiona'],
-				number_format( $w['kwota_grosze'] / 100, 2, ',', '' ),
-				$w['waluta'],
-				isset( Sklepag_Lista_Zamowien::STATUSY[ $w['status'] ] ) ? Sklepag_Lista_Zamowien::STATUSY[ $w['status'] ][0] : $w['status'],
-				$w['pobrania_uzyte'],
-				$w['pobrania_limit'],
+			array_map(
+				'sklepag_csv_komorka',
+				array(
+					$w['id'],
+					$w['utworzono'],
+					$w['email_kupujacego'],
+					$w['produkt_nazwa_kupiona'],
+					number_format( $w['kwota_grosze'] / 100, 2, ',', '' ),
+					$w['waluta'],
+					isset( Sklepag_Lista_Zamowien::STATUSY[ $w['status'] ] ) ? Sklepag_Lista_Zamowien::STATUSY[ $w['status'] ][0] : $w['status'],
+					$w['pobrania_uzyte'],
+					$w['pobrania_limit'],
+				)
 			),
 			';',
 			'"',
@@ -351,7 +421,13 @@ function sklepag_admin_dashboard() {
 
 	// Baner testowy jako cienka linijka PRZY tytule, nie pełny pas — Przychód ma
 	// być pierwszą rzeczą na ekranie (hierarchia widoku: najkrótsza droga do liczby).
-	echo '<div class="wrap sklepag-dashboard"><h1>Sklep Agentów <span class="sklepag-tryb-testowy" title="Płatności Stripe testowe — zero prawdziwych pieniędzy">TRYB TESTOWY</span></h1>';
+	/* ⛔ Także dla WŁAŚCICIELA, nie tylko dla kupującego: znacznik „TRYB TESTOWY" wiszący przy
+		tytule na kluczu produkcyjnym mówiłby mu, że zero prawdziwych pieniędzy — przy prawdziwych
+		pieniądzach na koncie. To ten sam napis i to samo źródło prawdy. */
+	$znacznik_trybu = sklepag_tryb_testowy()
+		? ' <span class="sklepag-tryb-testowy" title="Płatności Stripe testowe — zero prawdziwych pieniędzy">TRYB TESTOWY</span>'
+		: '';
+	echo '<div class="wrap sklepag-dashboard"><h1>Sklep Agentów' . wp_kses_post( $znacznik_trybu ) . '</h1>';
 
 	// Diagnostyka katalogu chronionego (przejęta ze szkieletu kości) — bez niego wydawanie plików nie działa.
 	$katalog      = (string) get_option( 'sklepag_katalog_chroniony', '' );

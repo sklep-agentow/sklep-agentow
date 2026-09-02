@@ -1,0 +1,44 @@
+desktop | pigułka przed otwarciem widoczna=false
+{
+ "widoczna": true,
+ "prostokat": {
+  "g": 817,
+  "d": 886,
+  "l": 601,
+  "p": 839
+ },
+ "formularzSchowany": true,
+ "celKotwicy": "#sklepag-zakup",
+ "napisKotwicy": "Kup teraz",
+ "celIstnieje": true,
+ "zaslanianeSztuk": 1,
+ "zaslaniane": [
+  {
+   "tag": "p",
+   "id": "",
+   "klasa": "sklepag-platnosc-notka"
+  }
+ ]
+}
+telefon | pigułka przed otwarciem widoczna=false
+{
+ "widoczna": true,
+ "prostokat": {
+  "g": 779,
+  "d": 834,
+  "l": 12,
+  "p": 201
+ },
+ "formularzSchowany": true,
+ "celKotwicy": "#sklepag-zakup",
+ "napisKotwicy": "Kup teraz",
+ "celIstnieje": true,
+ "zaslanianeSztuk": 1,
+ "zaslaniane": [
+  {
+   "tag": "p",
+   "id": "",
+   "klasa": "sklepag-platnosc-notka"
+  }
+ ]
+}

@@ -20,6 +20,164 @@ Nic jeszcze.
 
 ---
 
+## [0.9.36] — 2026-09-01 · schemat bazy bez zmian (10)
+
+### Naprawione
+- **Za duża paczka produktu nie kończy się już pustą białą stroną.** Gdy całe wysłane
+  zgłoszenie przekraczało `post_max_size`, PHP kasowało `$_POST` i `$_FILES` razem
+  z ukrytym polem `action` — `admin-post.php` nie miał czego wywołać i oddawał odpowiedź
+  o ZEROWEJ długości. Właściciel nie dostawał ani komunikatu, ani wpisu w dzienniku:
+  klikał „Dodaj produkt" i nie działo się nic. Sklep rozpoznaje teraz ten stan i podaje
+  **realne limity serwera** (`post_max_size` i `upload_max_filesize`) wraz z ilością
+  wysłanych danych, mówi wprost, że limit wtyczki (20 MB) nie brał w tym udziału,
+  i uprzedza, że wpisanej treści formularza nie da się odtworzyć — PHP wyrzuciło ją,
+  zanim WordPress wystartował. Formularz produktu niesie `action` także w adresie, żeby
+  ucięte żądanie w ogóle trafiło do wtyczki. Ucięte zgłoszenie **bez** tego adresu (strona
+  wyrenderowana przed aktualizacją, podana z pamięci podręcznej albo formularz innej wtyczki)
+  dostaje przez ogólne zaczepienie `admin_post` **wariant neutralny**: tylko limity serwera
+  i rozmiar wysłanych danych, bez limitu wtyczki (20 MB) i bez odesłania do instrukcji, bo
+  przy uciętym żądaniu nie da się poznać, z którego formularza przyszło. Progi uprawnień są
+  dwa: wariant sklepowy pokazuje handler produktu, czyli za `manage_options` (poniżej: odmowa
+  403 „Brak uprawnień", jak dotąd); wariant neutralny pokazuje ogólne zaczepienie za
+  `upload_files` (poniżej: dotychczasowa pusta odpowiedź), żeby ustawienia serwera nie
+  wyciekały do kont bez prawa wgrywania.
+
+### Dodane
+- **Instrukcja właściciela mówi, jak podnieść limit wgrania** — akapit „Serwer nie
+  przyjmuje pliku — jak podnieść limit" w rozdziale „Produkty": oba ustawienia PHP,
+  ich typowe wartości, trzy miejsca zmiany (panel hostingu, `php.ini`, `.htaccess`)
+  i sposób sprawdzenia, czy zmiana weszła w życie. Plus pozycja w „Najczęstszych pytaniach".
+- **Strażnik regresji dla obu limitów** — mierzy przez HTTP siedem kierunków: ciało ponad
+  `post_max_size`, pojedynczy plik ponad `upload_max_filesize`, zwykłe żądanie ze złym
+  nonce'em, poprawne wgranie ZIP-a, konto bez `upload_files` (nie dostaje konfiguracji
+  serwera), małe żądanie JSON (nie dostaje zmyślonej diagnozy) i duże żądanie JSON ponad
+  `post_max_size` (nie jest formularzem, więc też jej nie dostaje). Skalibrowany w trzech
+  etapach: pada na kodzie sprzed naprawy i na kodzie bez progu uprawnień.
+
+---
+
+## [0.9.35] — 2026-09-01 · schemat bazy bez zmian (10)
+
+### Naprawione (bezpieczeństwo)
+- **Eksport CSV zamówień nie wynosi już formuły na komputer właściciela** (CSV injection,
+  inaczej formula injection). Pola tekstowe szły do pliku tak, jak leżą w bazie, więc
+  kupujący, który poda adres `=1+1@example.com`, wpisywał w praktyce **formułę arkusza** —
+  WordPress takiego adresu nie odrzuca. Właściciel otwierał eksport w Excelu lub LibreOffice
+  i formuła wykonywała się na jego komputerze. Tą samą drogą szła nazwa produktu, którą
+  ustawia sam właściciel. Każda komórka zaczynająca się od `=`, `+`, `-`, `@`, tabulatora,
+  powrotu karetki albo apostrofu dostaje teraz z przodu apostrof; zabezpieczenie obejmuje **cały
+  wiersz**, nie dwa znane pola. Kolumna „Kwota" zostaje liczbą, więc arkusz nadal sumuje
+  sprzedaż, a odczyt maszynowy odzyskuje oryginał zdjęciem jednego apostrofu — także dla
+  wartości, która sama zaczyna się od apostrofu (dostaje drugi).
+
+---
+
+## [0.9.34] — 2026-09-01 · schemat bazy bez zmian (10)
+
+### Naprawione
+- **Sklep przestaje obiecywać kupującemu firmowemu fakturę, której nie wystawia.** Formularz
+  zakupu pisał „fakturę prześlemy osobno mailem", a mail po zakupie — „Fakturę wystawimy na te
+  dane i prześlemy osobno na ten adres e-mail". Sklep faktur **nie wystawia**: nie tworzy
+  dokumentu, nie nadaje numeru, nie wysyła go i nie pilnuje terminu (mówi o tym wprost
+  `INSTRUKCJA.md`: „Faktura to Twoja robota, nie sklepu"). Była to obietnica majątkowa wobec
+  przedsiębiorcy, niepokryta ani jedną linią kodu. Teksty mówią teraz, co się z danymi dzieje
+  naprawdę — sklep je zapisuje i pokazuje w potwierdzeniu, a fakturę **wystawia sprzedawca
+  poza sklepem** — oraz gdzie kupujący ma się upomnieć, jeśli faktura nie dotrze.
+  ⭐ Funkcja zostaje bez zmian: pola faktury, walidacja NIP-u i zaproszenie „chcesz fakturę?"
+  dla kupujących, którzy danych nie podali (z terminem 3 miesięcy), działają jak dotąd.
+
+---
+
+## [0.9.33] — 2026-09-01 · schemat bazy bez zmian (10)
+
+### Zmienione
+- **Klucz okna idempotencji ma jedno źródło** (`sklepag_klucz_idem()`). Był składany w miejscu
+  użycia, a strażnik regresji składał go u siebie drugi raz — gdy 0.9.25 dołożyło do klucza
+  trzeci człon (tryb płatności: osadzona kontra hostowana), strażnik zaczął podkładać okno pod
+  adresem, którego handler nigdy nie czytał. **Zachowanie sklepu bez zmian** — zmienia się to,
+  że klucza nie da się już rozjechać między produkcją a kontrolą.
+
+### Naprawione (kontrola jakości, nie produkt)
+- **Kontrola regresji ochrony przed podwójnym kliknięciem znowu mierzy produkt.** Od 0.9.25
+  nie pilnowała niczego, bo sprawdzała mechanizm pod innym kluczem niż ten, którego używa sklep.
+  Dowód jej skuteczności wykonany **od zera** na kodzie sprzed 0.9.18 i zapisany tak, żeby dało
+  się go powtórzyć. Opis samej kontroli poprawiony tam, gdzie rozjechał się ze stanem kodu.
+
+---
+
+## [0.9.31] — 2026-09-01 · schemat bazy 10 (`sesje_checkout.produkt_*`)
+
+### Naprawione
+- **Kupujący dostaje dokładnie to, co kupił — także wtedy, gdy produkt zmienił się w trakcie
+  płatności.** Domknięcie zakupu czytało tabelę produktów **ponownie** i z tego świeżego odczytu
+  zapisywało do zamówienia nazwę, cenę i ścieżkę pliku. Kolumny „kupiona" zamrażały więc stan
+  z chwili **domknięcia**, nie zakupu, a produkt wolno zmienić między jednym a drugim. Skutki
+  były trzy, każdy osobno: (1) właściciel podmieniał plik i kupujący pobierał **co innego, niż
+  kupił**; (2) właściciel zmieniał cenę, a Stripe pobrał starą — w jednym wierszu zamówienia
+  leżały dwie różne kwoty z dwóch źródeł; (3) odczyt przy domknięciu nie pytał o `aktywny`,
+  choć checkout pyta. Dane produktu są teraz **zamrażane w chwili tworzenia płatności**
+  (`sesje_checkout.produkt_*`, schemat 10), a domknięcie bierze je wyłącznie z tej migawki.
+- **Skasowanie produktu między zapłatą a webhookiem nie gubi już zakupu.** Wcześniej kończyło się
+  wpisem `domkniecie_brak_produktu` i zamówienie nie powstawało w ogóle — pieniądze pobrane,
+  kupujący bez niczego. Migawka wystarcza do wydania zakupu bez tabeli produktów.
+
+### Bezpieczeństwo obrotu
+- Wycofanie produktu ze sprzedaży (`aktywny = 0`) blokuje **nowe** zakupy, a **nie** doręczenie
+  zakupu już opłaconego. To rozróżnienie jest teraz w kodzie, nie w przypadku.
+
+---
+
+## [0.9.30] — 2026-09-01 · schemat bazy bez zmian (9)
+
+### Naprawione (RODO)
+- **Anonimizacja usuwa adres e-mail z dziennika zdarzeń także wtedy, gdy leży tam w postaci
+  zakodowanej.** Wpis o eksporcie CSV zapisuje użyte filtry przez `wp_json_encode()` bez flag,
+  a ten eskejpuje ukośnik: adres z `/` w części lokalnej (RFC 5321 dopuszcza) leżał w bazie
+  jako `a\/b@x.pl`. Wyszukiwanie znało wyłącznie postać surową, więc ślad zostawał — a wtyczka
+  **potwierdzała usunięcie**: niezrealizowane żądanie RODO z fałszywym dowodem wykonania.
+  Adres szukany jest teraz w każdej postaci, w jakiej może w dzienniku leżeć; postać zakodowana
+  bierze się z tej samej funkcji, która ją tworzy, więc nie ma jak rozjechać się z PHP.
+  Zamyka znaną granicę opisaną przy 0.9.19.
+- **Pomiar skutku przestał dzielić ślepotę z czyszczeniem.** Licznik śladów miał własne,
+  równie wąskie zapytanie — z definicji nie mógł zobaczyć tego, co czyszczenie pomijało.
+  Postacie, kotwice i wybór kandydatów mają jedno źródło, z którego korzystają oba.
+  Zakotwiczenie działa tak samo na obu postaciach: wpis innego kupującego, którego adres
+  zawiera nasz jako końcówkę, zostaje nietknięty również w postaci zakodowanej.
+
+---
+
+## [0.9.29] — 2026-09-01 · schemat bazy bez zmian (9)
+
+### Naprawione
+- **Sklep przestaje zapewniać kupującego, że nie pobiera pieniędzy, gdy je pobiera.** Napis
+  „TRYB TESTOWY — płatności nie są pobierane" i jego rodzeństwo były wpisane w kod bez jednego
+  warunku: po wymianie kluczy Stripe na produkcyjne stały dalej — na stronie sklepu, na stronie
+  produktu, na ekranie „Dziękujemy" oglądanym PO ZAPŁACENIU i w obu wersjach maila po zakupie.
+  Tryb orzeka teraz **jedna funkcja** (`sklepag_tryb_testowy()`) z **prefiksu klucza sekretnego
+  Stripe**: `sk_test_…` = tryb testowy, `sk_live_…`, nierozpoznany prefiks albo brak klucza =
+  sklep milczy o trybie testowym (fail-closed — zdanie o niepobranej płatności to obietnica,
+  wolno je powiedzieć tylko wtedy, gdy da się je udowodnić). Osobnej opcji do klikania świadomie
+  **nie ma**: przełącznik, który trzeba pamiętać przestawić, byłby tą samą miną z dodatkowym krokiem.
+- **Etykiety przycisków nie wracają do wersji testowej w przeglądarce.** `assets/platnosc.js`
+  nadpisuje napisy na przyciskach zakupu i odtwarzał je z własnych literałów — poprawka po stronie
+  serwera była tam cofana w locie (kupujący z kluczem produkcyjnym po nieudanej próbie płatności
+  znów widział „Kup teraz (płatność testowa)"). Skrypt zapamiętuje teraz etykietę z DOM-u przy
+  starcie; jedynym źródłem tekstu jest PHP.
+- **Ekrany właściciela mówią to samo co front:** znacznik przy tytule Pulpitu, dopisek „(tryb
+  testowy)" przy kwocie w szczegółach zamówienia i tytuł sekcji Stripe w Ustawieniach pytają
+  o ten sam tryb. Opis pola kluczy mówi wprost, że prefiks decyduje o trybie sklepu.
+- **Sekcja FAQ na liście sklepu** zamienia pytanie „Co znaczy tryb testowy?" na pytanie
+  o bezpieczeństwo płatności, gdy sklep sprzedaje naprawdę (kafel nie znika — siatka jest
+  dwukolumnowa).
+
+### Dokumentacja
+- `INSTRUKCJA.md`, `dokumentacja/INSTRUKCJA-INSTALACJI.md` (rozdział „Test a produkcja"),
+  `README.md` i `PONAD-SPECYFIKACJE.md` mówiły, że oznaczenia trybu są wpisane na stałe
+  i **nie znikają same** — po tej zmianie znikają razem z podmianą klucza. Instrukcja instalacji
+  nadal ostrzega, że sama podmiana klucza nie wystarczy do sprzedaży (webhook, poczta, dokumenty).
+
+---
+
 ## [0.9.28] — 2026-08-31 · schemat bazy 9 (zamowienia.dor_*)
 
 ### Naprawione

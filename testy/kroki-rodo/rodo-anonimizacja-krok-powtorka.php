@@ -38,12 +38,16 @@ if ( ! function_exists( 'sklepag_obsluz_anonimizacje' ) ) {
  * zamieniony w SLEPOTE. Przebieg przerwany w polowie (np. przy kalibracji) zostawia takie
  * wiersze, wiec to nie jest teoria.
  */
-$wpdb->query( "DELETE FROM {$wpdb->prefix}sklepag_zdarzenia WHERE zamowienie_id IS NULL AND typ IN ('eksport_csv','proba_obcy','proba_obcy_rfc','proba_rodo')" ); // phpcs:ignore
+$wpdb->query( "DELETE FROM {$wpdb->prefix}sklepag_zdarzenia WHERE zamowienie_id IS NULL AND typ IN ('eksport_csv','proba_obcy','proba_obcy_rfc','proba_obcy_json','proba_rodo')" ); // phpcs:ignore
 
 $pz    = $wpdb->prefix . 'sklepag_zamowienia';
 $tz    = $wpdb->prefix . 'sklepag_zdarzenia';
 $teraz = current_time( 'mysql' );
-$mail  = 'proba-rodo-powtorka-' . wp_generate_password( 8, false ) . '@example.test';
+/* ⛔ UKOSNIK W CZESCI LOKALNEJ jest czescia przypadku, nie ozdoba (RFC 5321 go dopuszcza,
+   `is_email()` przepuszcza). `wp_json_encode` BEZ FLAG zapisuje go jako `\/`, wiec adres lezy
+   w dzienniku w DWOCH postaciach naraz. Dopoki zasiew podstawial tu adres bez ukosnika,
+   ten test nie mial jak zobaczyc roznicy miedzy postacia surowa a zakodowana. */
+$mail  = 'proba-rodo-powtorka-' . wp_generate_password( 8, false ) . '/uk@example.test';
 
 $wpdb->insert(
 	$pz,
@@ -78,13 +82,18 @@ $wpdb->insert(
 );
 /* ⛔ SLAD BEZ `zamowienie_id` — dokladnie taki zapisuje eksport CSV z filtrem
    „szukaj po e-mailu”. Anonimizacja ograniczona do wierszy zamowienia zostawialaby go,
-   a wtyczka i tak meldowalaby usuniecie. */
+   a wtyczka i tak meldowalaby usuniecie.
+
+   ⛔ OPIS SKLADANY TA SAMA FUNKCJA CO W PRODUKCJI (`wp_json_encode`, admin-dashboard.php),
+   nie recznie sklejonym napisem wygladajacym na JSON. Stary zasiew wpisywal adres SUROWY
+   w cudzyslowy i przez to nie odtwarzal eskejpowania — kontrola omijala wlasnie te roznice,
+   ktorej mial pilnowac. Zasiew ma powstawac tak jak dane w produkcji, nie „podobnie". */
 $wpdb->insert(
 	$tz,
 	array(
 		'zamowienie_id' => null,
 		'typ'           => 'eksport_csv',
-		'opis'          => '3 wierszy; filtry: {"szukaj":"' . $mail . '"}',
+		'opis'          => '3 wierszy; filtry: ' . wp_json_encode( array( 'szukaj' => $mail ) ),
 		'uzytkownik'    => 'test',
 		'czas'          => $teraz,
 	)
@@ -121,7 +130,33 @@ $wpdb->insert(
 );
 echo 'MAIL_OBCY_RFC=' . $mail_obcy_rfc . "\n";
 
-$luzem = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$tz} WHERE zamowienie_id IS NULL AND opis LIKE %s", '%' . $wpdb->esc_like( $mail ) . '%' ) ); // phpcs:ignore
+/* ⛔ TRZECI wpis obcego, tym razem w postaci ZAKODOWANEJ — bo naprawa dokladajaca druga
+   postac do wyszukiwania mogla by razem z nia zabrac cudzy wpis. Kotwica musi trzymac
+   tak samo mocno na obu postaciach. Ten wiersz TEZ musi przezyc nietkniety. */
+$wpdb->insert(
+	$tz,
+	array(
+		'zamowienie_id' => null,
+		'typ'           => 'proba_obcy_json',
+		'opis'          => '3 wierszy; filtry: ' . wp_json_encode( array( 'szukaj' => $mail_obcy ) ),
+		'uzytkownik'    => 'test',
+		'czas'          => $teraz,
+	)
+);
+
+/* ⛔ WARUNEK WSTEPNY LICZONY NIEZALEZNIE OD POSTACI. Gdyby ten licznik pytal — jak dotad —
+   tylko o postac SUROWA, po dolozeniu ukosnika przestalby widziec wiersz eksportu i sam
+   zamienilby sie w slepote: „warunek wstepny spelniony" znaczyloby o jeden slad mniej,
+   niz naprawde lezy w bazie. */
+$mail_json = trim( (string) wp_json_encode( $mail ), '"' );
+$luzem     = (int) $wpdb->get_var(
+	$wpdb->prepare(
+		"SELECT COUNT(*) FROM {$tz} WHERE zamowienie_id IS NULL AND typ NOT IN ('proba_obcy','proba_obcy_rfc','proba_obcy_json') AND ( opis LIKE %s OR opis LIKE %s )",
+		'%' . $wpdb->esc_like( $mail ) . '%',
+		'%' . $wpdb->esc_like( $mail_json ) . '%'
+	)
+); // phpcs:ignore
+echo 'MAIL_JSON=' . $mail_json . "\n";
 echo 'ADRES_LUZEM_PRZED=' . $luzem . "\n";
 
 $w_dzienniku = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$tz} WHERE zamowienie_id = %d AND opis LIKE %s", $id, '%' . $wpdb->esc_like( $mail ) . '%' ) ); // phpcs:ignore

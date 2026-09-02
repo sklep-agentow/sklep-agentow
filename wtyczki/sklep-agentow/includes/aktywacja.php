@@ -36,10 +36,21 @@ function sklepag_tabele_sql() {
 			UNIQUE KEY slug (slug)
 		) {$c};",
 
+		/* ⛔ MIGAWKA PRODUKTU (schemat 10). Produkt wolno zmienić MIĘDZY utworzeniem płatności
+			a jej domknięciem — a domknięcie zapisuje do zamówienia to, co ma pod ręką. Dopóki
+			czytało tabelę produktów PONOWNIE, kupujący płacił za jedno, a dostawał drugie:
+			podmieniony plik, inną cenę obok kwoty faktycznie pobranej przez Stripe, nazwę
+			z chwili domknięcia. Te kolumny zamrażają stan Z CHWILI ZAKUPU — jedyny, za który
+			kupujący zapłacił. Puste = sesja sprzed migracji; domknięcie ma wtedy zapas. */
 		"CREATE TABLE {$p}sesje_checkout (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			stripe_session_id varchar(255) NOT NULL,
 			produkt_id bigint(20) unsigned NOT NULL,
+			produkt_nazwa varchar(200) NOT NULL DEFAULT '',
+			produkt_slug varchar(200) NOT NULL DEFAULT '',
+			produkt_cena_grosze bigint(20) unsigned NOT NULL DEFAULT 0,
+			produkt_waluta varchar(10) NOT NULL DEFAULT '',
+			produkt_plik text NULL,
 			stan varchar(20) NOT NULL DEFAULT 'utworzona',
 			utworzono datetime NOT NULL,
 			PRIMARY KEY  (id),

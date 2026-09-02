@@ -88,6 +88,19 @@ to jest w paczce, bo bez tego sklep nie nadawałby się do sprzedaży, a nie dla
 18. **Ostrzeżenie w kokpicie**, gdy struktura bezpośrednich odnośników jest ustawiona na „Zwykłe”.
     Powód: bez tego strona sklepu pokazuje bloga, a Stripe nie dociera do webhooka — i nikt nie wie,
     dlaczego.
+18a. **Odpowiedź na zgłoszenie ucięte przez PHP — także spoza formularzy sklepu** (0.9.36).
+    Gdy wysłany formularz przekroczy `post_max_size`, PHP kasuje jego treść, zanim WordPress
+    wystartuje; panel oddawał wtedy pustą białą stronę. Sklep odpowiada w takim przypadku
+    komunikatem z realnymi limitami serwera. ⚠️ Zaczepienie siedzi na ogólnym wejściu
+    `admin-post.php`, więc ucięte zgłoszenie z formularza **innej wtyczki** też dostanie
+    odpowiedź. Poza formularzem produktu jest ona **naprawdę neutralna**: podaje wyłącznie
+    limity serwera (`post_max_size`, `upload_max_filesize`) i rozmiar wysłanych danych,
+    a NIE nazywa sklepu, nie cytuje jego limitu 20 MB i nie odsyła do `INSTRUKCJA.md` —
+    bo w tym stanie nie da się ustalić, skąd żądanie przyszło. Odpowiedź dostają tylko
+    użytkownicy z uprawnieniem `upload_files` (autor i wyżej); niżej zostaje dotychczasowa
+    pusta odpowiedź, żeby konfiguracja serwera nie wyciekała każdemu zalogowanemu.
+    Powód: przy uciętym zgłoszeniu ginie pole rozpoznające formularz, więc wąskiego
+    zaczepienia po prostu NIE MA; wybór jest między tą odpowiedzią a pustą stroną.
 
 ## Strony sklepu
 
@@ -101,5 +114,7 @@ to jest w paczce, bo bez tego sklep nie nadawałby się do sprzedaży, a nie dla
 ## Czego świadomie NIE ma
 
 Kont kupujących, kuponów i przecen, płatności cyklicznych, integracji z motywem i innymi wtyczkami,
-wysyłania danych gdziekolwiek poza Stripe. Prawdziwych płatności — całość pracuje w trybie testowym
-Stripe, a przejście na produkcję opisuje `INSTRUKCJA-INSTALACJI.md` (rozdział „Test a produkcja”).
+wysyłania danych gdziekolwiek poza Stripe. Prawdziwych płatności — sklep jest oddawany z kluczami
+testowymi Stripe; tryb wynika z prefiksu klucza sekretnego (`sk_test_…`), więc podmiana klucza na
+produkcyjny zdejmuje napisy o płatności testowej sama. Pozostałe kroki przejścia na produkcję
+opisuje `INSTRUKCJA-INSTALACJI.md` (rozdział „Test a produkcja”).

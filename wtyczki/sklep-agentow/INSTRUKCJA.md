@@ -27,8 +27,9 @@ Szczegóły pojedynczego zamówienia otwierasz z listy na Pulpicie przyciskiem *
 
 ![Pulpit sklepu — wskaźniki sprzedaży](zrzuty/dashboard-wskazniki.png)
 
-Na górze Pulpitu jest oznaczenie **TRYB TESTOWY** — w tej wersji wpisane na stałe, niezależnie od
-tego, jakie klucze Stripe wpiszesz (rozdział 8).
+Na górze Pulpitu bywa oznaczenie **TRYB TESTOWY**. Pojawia się wtedy i tylko wtedy, gdy klucz
+sekretny Stripe w Ustawieniach zaczyna się od `sk_test_` (rozdział 8). Po wpisaniu klucza
+produkcyjnego `sk_live_…` znika samo — razem z wszystkimi oznaczeniami widzianymi przez kupującego.
 
 ---
 
@@ -53,6 +54,41 @@ tego, jakie klucze Stripe wpiszesz (rozdział 8).
 6. **W sprzedaży** — zaznacz „Produkt widoczny i kupowalny w sklepie”.
    ⛔ **Nie da się włączyć sprzedaży bez potwierdzonego pliku** — sklep nie sprzeda czegoś,
    czego nie ma czym wydać. Zapis wróci z komunikatem, dopóki nie wgrasz ZIP-a.
+
+**Serwer nie przyjmuje pliku — jak podnieść limit**
+
+Wgranie może odrzucić **PHP na Twoim serwerze**, zanim sklep w ogóle zobaczy plik. Rządzą tym
+dwa ustawienia i oba muszą być większe od paczki, którą wgrywasz:
+
+| Ustawienie | Co ogranicza | Typowa wartość u hostingów |
+|---|---|---|
+| `upload_max_filesize` | największy POJEDYNCZY wgrywany plik | 2 MB |
+| `post_max_size` | całe wysłane zgłoszenie (plik **plus** pola formularza) | 8 MB |
+
+Ustaw `post_max_size` **większe** niż `upload_max_filesize` (np. 32 MB i 25 MB) — inaczej plik
+mieszczący się w pierwszym limicie odbije się od drugiego.
+
+Sklep rozpoznaje **obie** sytuacje i mówi, która zaszła:
+
+- plik przekracza `upload_max_filesize` → *„Wgranie pliku nie powiodło się (kod 1). Plik odrzucił
+  serwer, zanim wtyczka go zobaczyła — obowiązuje limit 2 MB…"* — wpisana treść formularza
+  **zostaje**, poprawiasz sam plik;
+- całe zgłoszenie przekracza `post_max_size` → *„Serwer odrzucił CAŁE zgłoszenie…"* z podaniem
+  obu limitów. Tu PHP wyrzuca formularz razem z plikiem, **zanim** WordPress wystartuje, więc
+  wpisanej treści nie da się odtworzyć — to jedyny przypadek, w którym sklep jej nie uratuje.
+
+Gdzie to zmienić — zależnie od hostingu, w kolejności od najczęstszego:
+
+1. **panel hostingu** (cPanel/DirectAdmin: „Wybór wersji PHP" → „Options", albo zgłoszenie do
+   pomocy technicznej) — jedyna droga na hostingu współdzielonym;
+2. **`php.ini`** — `upload_max_filesize = 25M` i `post_max_size = 32M`;
+3. **`.htaccess`** na Apache — `php_value upload_max_filesize 25M` i `php_value post_max_size 32M`
+   (część hostingów tego zabrania i strona zwróci wtedy błąd 500 — wycofaj wpis).
+
+Po zmianie odśwież formularz produktu: napis pod polem pliku (**„Tylko ZIP, do …"**) pokazuje
+limit, który **naprawdę** obowiązuje — mniejszy z limitu serwera i limitu wtyczki (20 MB).
+Jeśli nadal widnieje stara liczba, zmiana nie weszła w życie (najczęściej: nie przeładowano
+PHP-FPM albo hosting ignoruje `.htaccess`).
 
 **Co warto wiedzieć o edycji:**
 
@@ -138,7 +174,8 @@ Po opłaceniu kupujący dostaje **jeden** mail (sklep pilnuje, żeby nie wysła�
 - numer zamówienia (ten sam, który widzisz w panelu), datę i kwotę,
 - stopkę z Twoimi danymi sprzedawcy z Ustawień (nazwa, adres, NIP, mail do reklamacji),
 - **dane do faktury**, jeśli kupujący podał je przy zakupie (nazwa firmy, NIP, adres) — z informacją, że fakturę
-  wystawisz i prześlesz osobno; gdy ich nie podał — zdanie „chcesz fakturę? odpisz w ciągu 3 miesięcy”.
+  wystawia sprzedawca **poza sklepem** i prześle ją osobno, oraz gdzie kupujący ma się upomnieć, jeśli nie dotrze;
+  gdy ich nie podał — zdanie „chcesz fakturę? odpisz w ciągu 3 miesięcy”.
 
 **Faktura to Twoja robota, nie sklepu.** Sklep faktur nie wystawia — zbiera dane i pokazuje je w mailu
 i w szczegółach zamówienia. Firmie fakturę musisz wystawić (ustawa o VAT: do 15. dnia następnego miesiąca),
@@ -272,12 +309,14 @@ same (sprzątanie co 10 minut). Zamówienia, kwoty i statusy zostają.
   odinstalowaniu tabele, ustawienia, strony sklepu i pliki chronione. Klucze Stripe
   i zaplanowane zadanie sklep usuwa zawsze.
 
-**Tryb testowy a sprzedaż naprawdę.** Dopóki w Ustawieniach są klucze testowe (`sk_test_…`),
-płatności nie są pobierane. Oznaczenia trybu testowego — na Pulpicie, na liście sklepu, na stronie
-produktu, na stronie po zapłacie i w mailu — są w tej wersji **wpisane na stałe** i nie znikną po
-samej zmianie kluczy. Przejście na prawdziwe płatności to osobna decyzja i osobna paczka: pełną
-listę kroków i tego, co **nie** znika samo, znajdziesz w `INSTRUKCJA-INSTALACJI.md`, rozdział
-„Test a produkcja”. Zaczyna się od jednego kroku: napisz do nas.
+**Tryb testowy a sprzedaż naprawdę.** Dopóki w Ustawieniach jest klucz sekretny testowy
+(`sk_test_…`), płatności nie są pobierane. **Tryb bierze się z prefiksu tego klucza — nie ma
+osobnego przełącznika do zapomnienia.** Oznaczenia trybu testowego (na Pulpicie, na liście sklepu,
+na stronie produktu, na stronie po zapłacie, w panelu zamówienia i w obu wersjach maila) pojawiają
+się i znikają razem z nim: po wpisaniu klucza `sk_live_…` sklep przestaje pisać, że nie pobiera
+pieniędzy. ⛔ Klucz sekretny to jednak nie wszystko, co trzeba zmienić przed prawdziwą sprzedażą —
+webhook produkcyjny, wysyłka maili i dokumenty sprzedawcy to osobne kroki. Pełną listę znajdziesz
+w `INSTRUKCJA-INSTALACJI.md`, rozdział „Test a produkcja”.
 
 ---
 
@@ -303,6 +342,12 @@ przycisk pomija (i mówi, ile pominął).
 z „Wyślij ponownie”. Jeśli wysyłki padają regularnie — SMTP (rozdział 4).
 
 **Nie mogę włączyć sprzedaży produktu.** Brak potwierdzonego pliku ZIP (rozdział 2).
+
+**Wgrywam ZIP i dostaję „Serwer odrzucił CAŁE zgłoszenie" albo pustą stronę.** Paczka przekracza
+`post_max_size` Twojego serwera — limit sklepu (20 MB) nie ma z tym nic wspólnego, bo walidacja
+sklepu w ogóle się nie uruchamia. Jak podnieść oba limity PHP: rozdział „Produkty", akapit
+„Serwer nie przyjmuje pliku — jak podnieść limit". (Pustą stronę pokazywały wydania do 0.9.35;
+od 0.9.36 sklep mówi, ile serwer przyjmuje i które ustawienie o tym decyduje.)
 
 **Strona produktu pokazuje 404.** Ustawienia → Bezpośrednie odnośniki → Zapisz zmiany
 (odświeżenie reguł adresów). Struktura odnośników musi być inna niż „Zwykłe”.

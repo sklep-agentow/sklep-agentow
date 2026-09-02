@@ -4,7 +4,7 @@ Tags: sklep, stripe, pliki cyfrowe, sprzedaz wtyczek, pobieranie
 Requires at least: 6.7
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.9.28
+Stable tag: 0.9.36
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -96,7 +96,13 @@ i PHP 8.1.
 3. Sklep Agentów → Ustawienia: wklej klucz sekretny Stripe i sekret webhooka,
    uzupełnij nadawcę maili, mail kontaktowy właściciela i walutę.
 4. W Stripe dodaj webhook na adres `https://TWOJA-DOMENA/wp-json/sklepag/v1/webhook`
-   dla zdarzenia `checkout.session.completed`.
+   i zaznacz WSZYSTKIE jedenaście zdarzeń: `checkout.session.completed`,
+   `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed`,
+   `checkout.session.expired`, `refund.created`, `refund.updated`, `charge.refunded`,
+   `charge.dispute.created`, `charge.dispute.funds_withdrawn`,
+   `charge.dispute.funds_reinstated`, `charge.dispute.closed`. Bez dwóch ostatnich grup
+   sklep nie dowie się o zwrocie ani o reklamacji płatności w banku, a Pulpit będzie
+   liczył oddane pieniądze jako przychód.
 5. Sklep Agentów → Produkty → Dodaj produkt: nazwa, opisy, cena, waluta, plik
    ZIP; zaznacz „Produkt widoczny i kupowalny w sklepie".
 6. Zrób zakup testowy kartą testową Stripe i sprawdź zamówienie na Pulpicie.
@@ -154,6 +160,31 @@ Nie. Zakup jest bez konta: adres e-mail podany na stronie płatności Stripe,
 link do pobrania w mailu, jednorazowy link do opinii.
 
 == Changelog ==
+
+= 0.9.36 =
+* Naprawione: wgranie za dużej paczki produktu nie kończy się pustą białą stroną. Gdy całe zgłoszenie przekraczało `post_max_size`, PHP kasowało formularz razem z plikiem i właściciel nie dostawał ŻADNEGO komunikatu. Sklep rozpoznaje teraz ten stan i podaje realne limity serwera (`post_max_size`, `upload_max_filesize`) oraz ilość wysłanych danych, zaznaczając, że limit wtyczki (20 MB) nie brał w tym udziału. Pełny komunikat widzi właściciel w formularzu produktu (uprawnienie `manage_options`); ucięte zgłoszenie, które nie niesie adresu formularza produktu (`action` w adresie) — czyli formularz innej wtyczki albo strona produktu wyrenderowana przed aktualizacją lub podana z pamięci podręcznej — dostaje wersję neutralną, tylko z limitami serwera, i to wyłącznie konta z uprawnieniem do wgrywania plików (`upload_files`); pozostałe nie dostają nic.
+* Dodane: instrukcja właściciela opisuje, jak podnieść oba limity PHP i jak sprawdzić, że zmiana weszła w życie (rozdział „Produkty", akapit „Serwer nie przyjmuje pliku — jak podnieść limit").
+
+= 0.9.35 =
+* Naprawione (bezpieczeństwo): eksport CSV zamówień nie wynosi już formuły na Twój komputer. Adres kupującego zaczynający się od `=`, `+`, `-` lub `@` (WordPress takich nie odrzuca) trafiał do pliku bez zmian i wykonywał się jako formuła po otwarciu eksportu w Excelu albo LibreOffice; tą samą drogą szła nazwa produktu. Każda komórka zaczynająca się od `=`, `+`, `-`, `@`, tabulatora, powrotu karetki albo apostrofu dostaje teraz z przodu apostrof (wartość od apostrofu dostaje drugi — dzięki temu odczyt maszynowy zawsze odzyska oryginał zdjęciem jednego znaku), a kolumna „Kwota" zostaje liczbą, więc arkusz nadal sumuje sprzedaż.
+
+= 0.9.34 =
+* Naprawione: sklep nie obiecuje już, że wystawi i wyśle fakturę — bo tego nie robi. Formularz zakupu i mail po zakupie mówią teraz, co się naprawdę dzieje z danymi do faktury (sklep je zapisuje i pokazuje w potwierdzeniu, fakturę wystawia sprzedawca poza sklepem) i gdzie kupujący ma się upomnieć, jeśli faktura nie dotrze. Pola faktury, sprawdzanie NIP-u i zaproszenie „chcesz fakturę?" działają bez zmian.
+= 0.9.33 =
+* Zmienione: wewnętrzny klucz ochrony przed podwójnym kliknięciem „Kup teraz" ma jedno źródło w kodzie. Działanie sklepu bez zmian — poprawka dotyczy kontroli jakości, która od 0.9.25 nie pilnowała tego mechanizmu.
+
+= 0.9.31 =
+* Naprawione: kupujący dostaje dokładnie to, co kupił, także gdy produkt zmienił się w trakcie płatności. Dotąd sklep zapisywał do zamówienia nazwę, cenę i plik odczytane w chwili DOMKNIĘCIA płatności, a nie zakupu — po podmianie pliku kupujący pobierał co innego, niż kupił, a po zmianie ceny w jednym zamówieniu leżały dwie różne kwoty. Dane produktu są teraz zamrażane w chwili rozpoczęcia płatności.
+* Naprawione: skasowanie albo wycofanie produktu między zapłatą a potwierdzeniem ze Stripe nie gubi już zakupu — zamówienie powstaje i mail z linkiem wychodzi. Wycofanie produktu blokuje NOWE zakupy, nie doręczenie już opłaconych.
+
+= 0.9.30 =
+* Naprawione (RODO): anonimizacja kupującego usuwa jego adres e-mail z dziennika zdarzeń także wtedy, gdy zapisał się tam w postaci zakodowanej. Adres z ukośnikiem przed „@" (dopuszczalny, spotykany wyjątkowo) zostawał w dzienniku, a wtyczka i tak potwierdzała usunięcie — żądanie RODO nie było zrealizowane, choć właściciel miał dowód wykonania. Zamyka znaną granicę opisaną przy 0.9.19.
+* Naprawione (RODO): sprawdzenie skutku pyta dokładnie o to, co czyszczenie — dotąd miało własne, równie wąskie zapytanie i nie mogło zobaczyć pominiętego śladu. Wpisy INNYCH kupujących, których adres zawiera nasz jako końcówkę, pozostają nietknięte również w postaci zakodowanej.
+
+= 0.9.29 =
+* Naprawione: napisy „tryb testowy — płatności nie są pobierane" znikają same po wpisaniu produkcyjnych kluczy Stripe. Dotąd były wpisane na stałe i sklep zapewniałby kupującego, że nie pobiera pieniędzy — pobierając je (także na ekranie po zapłacie i w mailu po zakupie). Tryb wynika teraz z prefiksu klucza sekretnego: `sk_test_…` = tryb testowy, `sk_live_…` = sprzedaż na serio. Brak klucza albo nieznany prefiks traktowany jest jak sprzedaż na serio (sklep woli nie obiecać niż obiecać nieprawdę).
+* Naprawione: dopisek „(płatność testowa)" nie wraca na przycisk zakupu po nieudanej próbie płatności — etykietę odtwarza teraz przeglądarka z tego, co przysłał serwer, a nie z własnej kopii napisu.
+* Zmienione: Pulpit, szczegóły zamówienia i sekcja Stripe w Ustawieniach pokazują ten sam tryb co strony kupującego; opis pola kluczy mówi wprost, że prefiks klucza decyduje o trybie sklepu.
 
 = 0.9.28 =
 * Naprawione: po nieudanej ponownej wysyłce maila (awaria poczty) wraca dokładnie ten link, który kupujący ma w skrzynce — wtyczka zapamiętuje stan każdego doręczonego maila i przywraca właśnie jego. Znany wyjątek z 0.9.27 (pad serwera w pół wysyłki + nieudane ponowienie mogły zgasić działający link) jest zamknięty.

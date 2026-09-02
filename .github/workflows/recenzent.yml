@@ -79,6 +79,7 @@ jobs:
     # Własny wykonawca na naszym serwerze (20.08). Recenzent zostaje na KAŻDYM
     # pchnięciu — to najlepsza kontrola, jaką mamy, a teraz jest za darmo.
     runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 40   # 2.09: padnieta recenzja Dependabota #248 wisiala 1 h 27 min; udane trwaja 6-11 min (pomiar artefaktow)
     permissions:
       contents: read
       pull-requests: write
@@ -118,7 +119,7 @@ jobs:
       # Ruchomy tag moze zostac przestawiony przez autora albo napastnika, ktory
       # przejmie repozytorium Akcji — a ten kod wykonuje sie na NASZYM wykonawcy.
       # Podnoszenie wersji: Dependabot (.github/dependabot.yml), nie recznie.
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
@@ -196,15 +197,18 @@ jobs:
           #    dluzej niz cala recenzja. To kalibracja przed oddaniem, nie
           #    narzedzie recenzenta.
           # 23.08 (Dzidek): recenzent chodzi na Opus 5 — Fable 5 zostaje tylko dla koordynatorki (limit tygodniowy).
+          # --max-turns 120 (2.09): udane recenzje = 49 i 62 tury (num_turns z artefaktow przebiegow 33563272186, 33562678172),
+          # 2x zapas; bez limitu recenzja Dependabota #248 wisiala 1 h 27 min. Komentarz TU, nie w bloku |, bo blok idzie do CLI.
           claude_args: |
             --model claude-opus-5
+            --max-turns 120
             --allowedTools "Read,Glob,Grep,LS,mcp__github_comment__update_claude_comment,mcp__github_ci__get_ci_status,mcp__github_ci__get_workflow_run_details,mcp__github_ci__download_job_log,Bash(composer install --no-interaction --no-progress --no-scripts),Bash(vendor/bin/phpcs),Bash(vendor/bin/phpcs:*),Bash(vendor/bin/phpstan:*),Bash(php -l:*),Bash(ln -s /root/praca/zlecenia/sklep-agentow/node_modules node_modules),Bash(bash testy/dokumentacja-zgodnosc.sh),Bash(bash testy/dokumentacja-zgodnosc-segregator.sh),Bash(bash testy/dokumentacja-zgodnosc-sklep.sh),Bash(bash testy/dokumentacja-zgodnosc-sklep-proba-kontrolna.sh),Bash(bash narzedzia-qa/k7-koniec.sh),Bash(bash narzedzia-qa/k7-koniec.sh:*),Bash(bash narzedzia-qa/k7-koniec-proba-kontrolna.sh),Bash(bash narzedzia-qa/mapa-licznik.sh audyt/sklep/material/06-mapa-polowania.md --tylko-licz),Bash(bash narzedzia-qa/mapa-licznik.sh audyt/sklep/material/06-mapa-polowania.md --sprawdz-zamrozenie),Bash(bash narzedzia-qa/sprawdz-manifest.sh),Bash(bash testy/blad-klucza-proba-kontrolna.sh),Bash(bash testy/ip-za-proxy-proba-kontrolna.sh),Bash(bash testy/kalibracja-mutantem.sh),Bash(bash testy/licznik-trafien-proba-kontrolna.sh),Bash(bash testy/nonce-proba-kontrolna.sh),Bash(bash testy/nota-zapisu-proba-kontrolna.sh),Bash(bash testy/pamiec-rozmowy-proba-kontrolna.sh),Bash(bash testy/przejecie-proba-kontrolna.sh),Bash(bash testy/pulapka-proba-kontrolna.sh),Bash(bash testy/rodo-proba-kontrolna.sh),Bash(bash testy/statystyki-proba-kontrolna.sh),Bash(bash testy/stronicowanie-proba-kontrolna.sh),Bash(bash testy/svg-proba-kontrolna.sh),Bash(bash testy/tokeny-koszt-proba-kontrolna.sh),Bash(bash testy/wskaznik-pisania-proba-kontrolna.sh),Bash(bash testy/wybor-modelu-proba-kontrolna.sh),Bash(bash testy/zgodnosc-proba-kontrolna.sh),Bash(bash narzedzia-qa/bramka-recenzji-proba-kontrolna.sh),Bash(bash narzedzia-qa/bramki-proba-kontrolna.sh),Bash(bash narzedzia-qa/bramka-poswiadczenia.sh),Bash(bash narzedzia-qa/bramka-poswiadczenia-proba-kontrolna.sh),Bash(bash narzedzia-qa/gitleaks-proba-kontrolna.sh),Bash(bash narzedzia-qa/paczka-zgodnosc-proba-kontrolna.sh),Bash(bash narzedzia-qa/stos-proba-kontrolna.sh),Bash(bash narzedzia-qa/test-php-proba-kontrolna.sh),Bash(bash narzedzia-qa/test-php.sh:*),Bash(bash narzedzia-qa/bramki.sh),Bash(bash narzedzia-qa/bramki.sh:*),Bash(bash narzedzia-qa/stos.sh:*),Bash(bash narzedzia-qa/paczka-zgodnosc.sh:*),Bash(bash testy/instrukcja-liczby-segregator.sh),Bash(git log:*),Bash(git diff:*),Bash(git show:*),Bash(git rev-list:*),WebFetch(domain:developer.wordpress.org),WebFetch(domain:wordpress.org),WebFetch(domain:php.net),WebFetch(domain:rfc-editor.org),WebFetch(domain:datatracker.ietf.org),WebFetch(domain:docs.anthropic.com),WebFetch(domain:docs.claude.com)"
 
       # Sonda błędu: pełny zapis wykonania CLI (stream NDJSON) — jedyne miejsce,
       # gdzie ląduje treść błędu przy „niemym zgonie" (log pokazuje tylko is_error).
       - name: Zachowaj pełny wynik CLI (artefakt)
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: claude-execution-output
           # Dwie ścieżki: log naszego runa mówi RUNNER_TEMP, docs base-action /tmp —

@@ -1,5 +1,116 @@
 # CO-WISI — rzeczy oddane komuś / bez strażnika (zasada: oddajesz ⇒ wiersz, wraca ⇒ kasujesz)
 
+## 🟡 SPRZĄTANIE STRAŻNIKA LIMITU UPLOADU KASUJE WSZYSTKO, CO POWSTAŁO W TRAKCIE PRZEBIEGU (2.09, recenzja `#263` r3, DROBNA 4) — dług
+
+`testy/limit-uploadu-mowi-prawde.sh`: `DELETE … WHERE typ = 'upload_produktu_blad' AND id > ID_PRZED` kasuje po sobie
+wpisy dziennika młodsze niż stan sprzed przebiegu — czyli także CUDZY wpis tego typu założony na wspólnym stosie
+w oknie przebiegu (kilkadziesiąt sekund). Komentarz mówi „WYŁĄCZNIE po sobie", warunek realizuje „wszystko z okna".
+Wpisy zakłada produkt, nie strażnik, więc nie ma jak ich oznaczyć znacznikiem. **Kształt roboty:** zawęzić po treści
+wpisu (nazwa produktu strażnika `STRAZNIK LIMITU …` jest w komunikacie? sprawdzić kolumny `sklepag_zdarzenia`) albo
+uruchamiać strażnika WYŁĄCZNIE na stosie próbnym (`probny_wp`), gdzie cudzych wpisów nie ma — wtedy komentarz zmienić
+na „stos próbny albo pełna świadomość okna". **Jedzie do klienta:** NIE — narzędzie testowe, poza paczką.
+
+
+## 🟡 ASYMETRIA NEUTRALIZACJI CSV MIĘDZY TRZEMA WTYCZKAMI (2.09, recenzja `#264` r1 i r3) — dług nazwany, nie naprawiony
+
+Trzy wtyczki mają po kopii tej samej obrony (`*_csv_komorka()`, trzy kopie są uzasadnione — instalują
+się osobno), ale **listy znaków różnią się** i żaden grep po nazwie funkcji tego nie pokaże:
+
+| wtyczka | funkcja | lista znaków poprzedzanych apostrofem |
+|---|---|---|
+| sklep | `wtyczki/sklep-agentow/includes/admin-dashboard.php:269` `SKLEPAG_CSV_ZNAKI_FORMULY` | `= + - @ \t \r '` |
+| Segregator | `wtyczki/segregator-maila/includes/csv.php:310` `segm_csv_komorka()` | `= + - @ \t \r` |
+| ChatBot | `wtyczki/chatbot-live/includes/csv.php:29` `chatl_csv_komorka()` | `= + - @` |
+
+Dwie różnice, obie zapisane, żadna nie jest naprawiana w `#264` (teren builderów 1 i 2, kod wtyczek
+botów tam nietknięty):
+1. **`\t` i `\r` brakują w ChatBocie.** Opisane w `audyt/boty/RAPORT-A1-BEZPIECZENSTWO.md:188` jako asymetria
+   bez drogi dojścia (sanityzacja wejścia gościa zdejmuje wiodący tabulator — pomiar tamże). Zostaje długiem,
+   nie znaleziskiem.
+2. **Apostrof jest TYLKO w sklepie** (wniesiony rundą 2 `#264` dla pełnej odwracalności: wartość zaczynająca się
+   od apostrofu dostaje drugi, więc zdjęcie jednego zawsze oddaje oryginał). W ChatBocie i Segregatorze wartość
+   od apostrofu wychodzi nietknięta i jest nieodróżnialna od zneutralizowanej. Bezpieczeństwa nie dotyka,
+   dotyka obietnicy odczytu maszynowego — a tej obietnicy boty w dokumentacji **nie składają** (sprawdzić przed
+   wyrównaniem: jeśli składają, to znalezisko klasy 3, nie dług).
+
+**Kształt roboty (osobny PR na terenie botów, jedna runda):** wyrównać obie listy do siedmiu znaków sklepu
+i dopisać kierunek do strażników botów; dowód = `grep -rn "csv_komorka" --include=*.php wtyczki/` z trzema
+identycznymi listami. **Jedzie do klienta z długiem:** TAK, świadomie — odwracalność eksportu botów nie jest
+obiecana klientowi, a `\t`/`\r` nie mają drogi dojścia.
+
+
+## 🟡 DWIE UWAGI WAŻNE Z RECENZJI `#259` (runda 2) ŚWIADOMIE NIENAPRAWIONE — dług, nie przeoczenie (1.09)
+
+Decyzja koordynatorki: cztery uwagi rundy 1 domknięte (krytyczna jako KLASA, nie egzemplarz),
+te dwie idą tutaj jako nazwany dług. ⛔ Obie dotyczą **tekstów o kodzie**, nie zachowania
+produktu — ale obie są tą samą klasą 3. („dokumentacja/komentarz kłamie względem kodu"),
+której te strażniki mają pilnować. To najgorsze możliwe miejsce na taki dług.
+
+**1. Nieprawdziwe zdanie o kodzie przeżyło w CZWARTYM miejscu — w docbloku strażnika, który
+ten PR tworzy.** `testy/chatbot-kasownik-slad-sesji-test.php:5-6` mówi: „`chatl_rodo_kasownik()`
+sprawdzało wynik kasowania śladu współdzielonego i zgłoszeń, ale wynik kasowania wiersza
+`chatl_sesje` szedł WYŁĄCZNIE do dziennika błędów". **Dwa błędy w jednym zdaniu:** ślad
+współdzielony jest **zapisywany**, nie kasowany, a wynik kasowania **zgłoszeń** wcale nie był
+sprawdzany — `git show origin/main:wtyczki/chatbot-live/includes/rodo.php` linie 400-402 to
+`$ile_z = $wpdb->query( … DELETE FROM {$tz} … ); $ile_z = max( 0, (int) $ile_z );`, bez żadnego
+`false ===`. Poprawną wersję tego zdania niesie już `wtyczki/chatbot-live/CHANGELOG.md`, wpis
+`[1.5.14]`. Do tego opis zakresu w `:13-16` wymienia sekcje **A** i **B**, a plik ma **A-E** —
+opis został z poprzedniej rundy.
+**Kształt roboty:** przepisać zdanie z `CHANGELOG.md [1.5.14]` do docbloku i doprowadzić listę
+sekcji do A-E. ⭐ Szersza reguła do rozważenia: **zdanie „co groziło" w strażniku ma być
+CYTATEM z wpisu w CHANGELOG-u, nie jego parafrazą** — parafraza rozjeżdża się przy każdej
+korekcie, a to już czwarte miejsce, w którym rozjechała się ta sama.
+
+**2. Deklaracja zakresu bramki jest SZERSZA niż to, co bramka mierzy (klasa 11).**
+`testy/faktura-obietnica-zgodna-z-kodem-test.php:19-23` ogłasza: „strona produktu · mail po
+zakupie w OBU wersjach · SZABLON polityki prywatności zakładany przy aktywacji. **To wszystkie
+miejsca**, w których sklep pisze kupującemu o fakturze", a wyjątek robi tylko dla ekranów panelu.
+Jest **piąty** tekst i nie jest ekranem panelu: `wtyczki/sklep-agentow/includes/prywatnosc.php:807-816`
+(`sklepag_polityka_prywatnosci()`) wstrzykuje przez `wp_add_privacy_policy_content()` drugi tekst
+polityki, mówiący kupującemu o danych do faktury i o tym, że **zostają po wniosku o usunięcie**.
+Sąsiadujący docblock sam nazywa te dwa teksty parą.
+**Kształt roboty:** albo objąć pomiarem `sklepag_polityka_prywatnosci()`, albo zwęzić deklarację
+tak, żeby nie mówiła „to wszystkie miejsca". ⛔ Zwężenie deklaracji jest tańsze, ale zostawia
+piąty tekst bez strażnika — wtedy należy dopisać go do listy „znalezisk BEZ strażnika".
+
+⛔ Oba wpisy są **nazwanym długiem, nie zamkniętą sprawą**. Wracają przy najbliższym dotknięciu
+któregokolwiek z tych dwóch strażników.
+
+
+## 🟡 TRZY UWAGI Z RECENZJI `#260` ŚWIADOMIE NIENAPRAWIONE — dług, nie przeoczenie (1.09)
+
+PR `#260` (książka klas 94-96) nie dotyka kodu produktu, więc idzie **jedną rundą**: naprawione
+zostały uwagi **1** (dwie fałszywe liczby w dwóch plikach — klasa 8, więc obie linie) i **2**
+(pomiar skilla stał na komendzie, która nie mogła dać trafienia). Trzy pozostałe zapisuję tutaj.
+
+**1. Numery linii w klasie 94 są z rewizji sprzed `#258`, a nie z `HEAD`** (recenzja `#260`, uwaga 3).
+Wpis cytuje `zakup.php:211`, `:827`, `:845-852` — dziś pod tymi numerami stoi komentarz o naprawie,
+bo migawka przesunęła plik. Mechanizm zgadza się co do linii w `80aac64^`. Sam wpis nie mówi,
+której rewizji dotyczy, a opis PR-a twierdził, że „ze stanu na dziś".
+**Kształt roboty:** dopisać przy cytatach `(stan sprzed #258, 80aac64^)`. Szersza reguła do rozważenia:
+**każdy cytat `plik:linia` w rejestrze klas ma nieść rewizję**, bo numery przesuwają się przy każdym
+scaleniu — to ta sama zasada, którą `CLAUDE.md` stosuje do sekcji dokumentacji („odsyłaj po tytule,
+nie po numerze”).
+
+**2. Klasa 95 ma ✅, choć obstawiony jest jeden test, nie klasa** (uwaga 4). Reguła we wpisie mówi
+„każdy nowy test musi mieć warunki wstępne”, a mają je **7 plików ze 119** w `testy/`
+(`grep -rln "warunek wstepny\|warunek wstępny" testy/`). Do tego werdykt goldena stoi na liczniku
+BŁĘDÓW, a nie na **liczniku wykonanych asercji** — mimo że zdanie „sukces bez zliczonych asercji”
+obiecuje właśnie ten drugi; przerwanie w połowie z zerem przeszłoby.
+**Kształt roboty:** albo zejść z ✅ na ⬜, albo dołożyć licznik asercji do wzorca testu i bramkę,
+która pilnuje, że każdy `testy/*-test.php` kończy się porównaniem `wykonane > 0`.
+
+**3. „Siódmy przypadek rodziny” bez możliwości odtworzenia liczby** (uwaga 5). Nawias wymienia
+cztery przypadki, a mówi „siódmy”; `grep -n "melduje nieprawd" audyt/SCIAGA-EGZAMINATORA.md` daje
+jedno trafienie — tę samą linię. Rodziny nie da się policzyć z rejestru pod tą nazwą.
+**Kształt roboty:** albo dopisać brakujące dwa do nawiasu, albo podać numery klas, albo nadać
+rodzinie własny znacznik i liczyć ją komendą.
+
+⛔ Wszystkie trzy dotyczą **rejestru, nie produktu**. Zapisane świadomie, żeby PR bez kodu nie
+wchodził w drugą rundę — ale to jest dług tej samej klasy, którą ten rejestr tropi
+(„dokumentacja kłamie względem kodu”), więc nie ma prawa leżeć tu długo.
+
+
 ## 🟡 Kontrola „każde wydanie z readme ma wpis w CHANGELOG” istnieje TYLKO u Segregatora (29.08, z recenzji #208 r5)
 
 Wzorzec dodany w `#208` żyje w `testy/dokumentacja-zgodnosc-segregator.sh`. ChatBot i Sklep go
@@ -657,14 +768,21 @@ rejestr dostanie czwarty stan dla znalezisk typu „brak pomiaru”, których ni
   `pobrania_uzyte` ze stanu bazy w chwili kompensacji (nie ze zdjęcia wejścia) z własnym
   przypadkiem testowym „pobranie w oknie kompensacji". Osobna robota, bo to inna
   ścieżka: ponowna wysyłka i kompensacja po nieudanym mailu mają własne przypadki brzegowe.
-- ⬜ **Adres z `/` w części lokalnej zostaje w dzienniku mimo potwierdzenia usunięcia.**
-  `wp_json_encode` bez flag zapisuje ukośnik jako `\/`, a anonimizacja szuka SUROWEJ postaci
-  adresu (`opis LIKE %adres%`). Adres taki jak `a/b@x.pl` (RFC dopuszcza, w praktyce spotykany
-  wyjątkowo) nie zostanie znaleziony — ślad zostanie, a wtyczka potwierdzi usunięcie.
-  ⛔ Nazwane świadomie, nie przeoczone (recenzja `#207`, runda 7; recenzent zgodził się na
-  nazwanie zamiast naprawy). Granica opisana także w docblocku funkcji.
-  **CO ZAMYKA:** szukać obu postaci naraz (surowej i po `wp_json_encode`) oraz dołożyć przypadek
-  testowy z adresem zawierającym `/` — z kalibracją, że na dzisiejszym kodzie ślad zostaje.
+- ✅ **ZAMKNIĘTE 1.09 (P-4).** ~~Adres z `/` w części lokalnej zostaje w dzienniku mimo
+  potwierdzenia usunięcia.~~ `wp_json_encode` bez flag zapisuje ukośnik jako `\/`, a anonimizacja
+  szukała SUROWEJ postaci adresu (`opis LIKE %adres%`), więc ślad zostawał, a wtyczka
+  potwierdzała usunięcie. Nazwane świadomie w recenzji `#207` r7.
+  **JAK ZAMKNIĘTE:** `sklepag_postacie_w_dzienniku()` oddaje wszystkie postacie danej (surową
+  i tę z `wp_json_encode`, braną Z TEJ SAMEJ funkcji, która ją tworzy); `sklepag_wzorce_w_dzienniku()`
+  i `sklepag_kandydaci_z_dziennika()` są JEDNYM źródłem dla czyszczenia **i** pomiaru — dotąd
+  pomiar miał własne, równie ślepe zapytanie i z definicji nie mógł tego zobaczyć.
+  Kalibracja: wada odtworzona na stosie prawdziwym zamówieniem (wiersz `eksport_csv` przeżywał
+  anonimizację przy `ok=TRUE`), zasiew strażnika składa opis TĄ SAMĄ funkcją co produkcja
+  (dotąd podstawiał adres surowy w ręcznie sklejony JSON i dlatego różnicy nie widział),
+  próba kontrolna `testy/rodo-anonimizacja-postacie-proba-kontrolna.sh` — trzy mutanty.
+  ⚠️ **Czego to NIE zamyka (zmierzone przy okazji):** w dzienniku zostają adresy IP
+  (`pobranie`, `webhook_zly_podpis`) — anonimizacja ich nie szuka, ogranicza je wyłącznie
+  retencja dziennika. Osobna pozycja, jeśli właściciel uzna ją za potrzebną.
 
 ---
 
@@ -930,3 +1048,17 @@ niepilnowana · RODO w ruchu (retencja/anonimizacja/eksport WP) · dostarczalno�
 (SPF/DKIM; dowód stoi na łapaczu) · aktualizacja w miejscu 0.9.13→0.9.27 na żywej bazie · O-2 komunikat
 bramek „10 z 10” przy braku vendor · O-3 nagłówek rubryki v0.9.23 (świadome, osobny PR wg DECYZJE) ·
 DECYZJE.md: duplikat D28 i luka D29–30 (porządek numeracji, 0.9.28).
+
+## 🔴 DŁUG (audytor, 1.09 wieczór — pozycja `I-24` w `REJESTR-ZNALEZISK-INFRA.md`): GOLDEN pilnujący błędu WŁAŚCICIELA nie ma spustu
+`testy/golden-kupujacy-dostaje-to-co-kupil-test.php` z PR #258 jest **jedynym** strażnikiem naprawy „kupujący
+dostaje dokładnie to, co kupił" — a więc tego błędu, którego właściciel nie zdradzał przez cały dzień polowania.
+Sam test jest dobry: na `main` **EXIT=0** (14 asercji), jego próba kontrolna **EXIT=0** (4 mutanty, każdy wywala
+właściwą asercję). **Brakuje wyłącznie spustu:** łapie go wzorcem `testy/*.php` tylko `narzedzia-qa/linia-bazowa.sh:125`,
+a ta nie jest wołana z niczego — zmierzone z kontrolą dodatnią: `bramki.sh` → **21** wywołań,
+`proby-kontrolne-przelot.sh` → **7**, `linia-bazowa.sh` → **0**. Skutek: cofnięcie migawki produktu przy przyszłym
+refaktorze `sklepag_domknij_zakup()` **nie zapali się na czerwono** i kupujący znów zapłaci za jedno, a dostanie drugie.
+⛔ **Pułapka do rozstrzygnięcia PRZED wpięciem, nie w trakcie:** golden do pełnego przebiegu wymaga wgrania kodu
+z gałęzi **do kontenera**, czyli tej samej operacji, która w `testy/golden-migawka-proba-kontrolna.sh` okazała się
+niebezpieczna dla WSPÓLNEGO stosu — podmienia wtyczkę i jej nie przywraca (zmierzone: przed `0.9.32`/`a9ce0f70…`,
+po `0.9.31`/`704b0ab7…`, czyli cofnięta czyjaś robota w toku). Wpięcie bez rozwiązania tego cofa builderom kod pod
+stopami przy każdym biegu bramek. Dowody: `audyt/plamy/GOLDEN-258-WERYFIKACJA.md`.

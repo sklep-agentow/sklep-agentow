@@ -1,0 +1,563 @@
+{
+  "baza": "http://localhost:8890",
+  "kiedy": "2026-09-01T00:16:37.433Z",
+  "strony": [
+    {
+      "strona": "sklep",
+      "widok": "desktop",
+      "url": "http://localhost:8890/sklep/",
+      "status": 200,
+      "uklad": {
+        "szerokoscOkna": 1440,
+        "szerokoscDokumentu": 1440,
+        "przewijaSieWPoziomie": false,
+        "wystajace": [
+          {
+            "tag": "div",
+            "klasa": "sklepag-tlo sklepag-widoczne",
+            "lewa": -24,
+            "prawa": 1464,
+            "tekst": ""
+          },
+          {
+            "tag": "div",
+            "klasa": "sklepag-pingi sklepag-widoczne",
+            "lewa": -24,
+            "prawa": 1464,
+            "tekst": ""
+          }
+        ],
+        "liczbaWystajacych": 2,
+        "tytul": "Sklep – Automatic AI"
+      },
+      "bledyKonsoli": [],
+      "wyjatki": [],
+      "zleZadania": [],
+      "zrzuty": [
+        "sklep-desktop-00.png",
+        "sklep-desktop-01.png",
+        "sklep-desktop-02.png",
+        "sklep-desktop-03.png",
+        "sklep-desktop-04.png",
+        "sklep-desktop-05.png"
+      ]
+    },
+    {
+      "strona": "produkt-chatbot",
+      "widok": "desktop",
+      "url": "http://localhost:8890/sklep/produkt/chatbot-live/",
+      "status": 200,
+      "uklad": {
+        "szerokoscOkna": 1440,
+        "szerokoscDokumentu": 1440,
+        "przewijaSieWPoziomie": false,
+        "wystajace": [
+          {
+            "tag": "div",
+            "klasa": "sklepag-tlo sklepag-widoczne",
+            "lewa": -24,
+            "prawa": 1464,
+            "tekst": ""
+          },
+          {
+            "tag": "div",
+            "klasa": "sklepag-pingi sklepag-pingi--produkt sklepag-widoczne",
+            "lewa": -24,
+            "prawa": 1464,
+            "tekst": ""
+          }
+        ],
+        "liczbaWystajacych": 2,
+        "tytul": "ChatBot LIVE – Automatic AI"
+      },
+      "bledyKonsoli": [],
+      "wyjatki": [],
+      "zleZadania": [],
+      "zrzuty": [
+        "produkt-chatbot-desktop-00.png",
+        "produkt-chatbot-desktop-01.png",
+        "produkt-chatbot-desktop-02.png",
+        "produkt-chatbot-desktop-03.png",
+        "produkt-chatbot-desktop-04.png",
+        "produkt-chatbot-desktop-05.png",
+        "produkt-chatbot-desktop-06.png",
+        "produkt-chatbot-desktop-07.png",
+        "produkt-chatbot-desktop-08.png",
+        "produkt-chatbot-desktop-09.png",
+        "produkt-chatbot-desktop-10.png",
+        "produkt-chatbot-desktop-11.png",
+        "produkt-chatbot-desktop-12.png",
+        "produkt-chatbot-desktop-13.png"
+      ]
+    },
+    {
+      "strona": "produkt-segregator",
+      "widok": "desktop",
+      "url": "http://localhost:8890/sklep/produkt/segregator-maila/",
+      "status": 200,
+      "uklad": {
+        "szerokoscOkna": 1440,
+        "szerokoscDokumentu": 1440,
+        "przewijaSieWPoziomie": false,
+        "wystajace": [
+          {
+            "tag": "div",
+            "klasa": "sklepag-tlo sklepag-widoczne",
+            "lewa": -24,
+            "prawa": 1464,
+            "tekst": ""
+          },
+          {
+            "tag": "div",
+            "klasa": "sklepag-pingi sklepag-pingi--produkt sklepag-widoczne",
+            "lewa": -24,
+            "prawa": 1464,
+            "tekst": ""
+          }
+        ],
+        "liczbaWystajacych": 2,
+        "tytul": "Segregator maila – Automatic AI"
+      },
+      "bledyKonsoli": [],
+      "wyjatki": [],
+      "zleZadania": [],
+      "zrzuty": [
+        "produkt-segregator-desktop-00.png",
+        "produkt-segregator-desktop-01.png",
+        "produkt-segregator-desktop-02.png",
+        "produkt-segregator-desktop-03.png",
+        "produkt-segregator-desktop-04.png",
+        "produkt-segregator-desktop-05.png",
+        "produkt-segregator-desktop-06.png",
+        "produkt-segregator-desktop-07.png",
+        "produkt-segregator-desktop-08.png",
+        "produkt-segregator-desktop-09.png",
+        "produkt-segregator-desktop-10.png",
+        "produkt-segregator-desktop-11.png",
+        "produkt-segregator-desktop-12.png",
+        "produkt-segregator-desktop-13.png",
+        "produkt-segregator-desktop-14.png",
+        "produkt-segregator-desktop-15.png"
+      ]
+    },
+    {
+      "strona": "dziekujemy-bez-sesji",
+      "widok": "desktop",
+      "url": "http://localhost:8890/dziekujemy-za-zakup/",
+      "status": 200,
+      "uklad": {
+        "szerokoscOkna": 1440,
+        "szerokoscDokumentu": 1440,
+        "przewijaSieWPoziomie": false,
+        "wystajace": [],
+        "liczbaWystajacych": 0,
+        "tytul": "Dziękujemy za zakup – Automatic AI"
+      },
+      "bledyKonsoli": [],
+      "wyjatki": [],
+      "zleZadania": [],
+      "zrzuty": [
+        "dziekujemy-bez-sesji-desktop-00.png",
+        "dziekujemy-bez-sesji-desktop-01.png"
+      ]
+    },
+    {
+      "strona": "sklep",
+      "widok": "telefon",
+      "url": "http://localhost:8890/sklep/",
+      "status": 200,
+      "uklad": {
+        "szerokoscOkna": 390,
+        "szerokoscDokumentu": 390,
+        "przewijaSieWPoziomie": false,
+        "wystajace": [
+          {
+            "tag": "div",
+            "klasa": "sklepag-tlo sklepag-widoczne",
+            "lewa": -48,
+            "prawa": 438,
+            "tekst": ""
+          },
+          {
+            "tag": "p",
+            "klasa": "sklepag-mono-etykieta",
+            "lewa": -8,
+            "prawa": 350,
+            "tekst": "[ 01 · OD ZAKUPU DO DZIAŁANIA ]"
+          },
+          {
+            "tag": "p",
+            "klasa": "sklepag-mono-etykieta",
+            "lewa": -8,
+            "prawa": 350,
+            "tekst": "[ 02 · DLA KOGO ]"
+          },
+          {
+            "tag": "p",
+            "klasa": "sklepag-mono-etykieta",
+            "lewa": -8,
+            "prawa": 350,
+            "tekst": "[ 03 · PYTANIA ]"
+          },
+          {
+            "tag": "div",
+            "klasa": "sklepag-faq-blok",
+            "lewa": -12,
+            "prawa": 346,
+            "tekst": "Co dokładnie dostaję po zakupie?Maila z potwierdzeniem, inst"
+          },
+          {
+            "tag": "dt",
+            "klasa": "",
+            "lewa": -12,
+            "prawa": 346,
+            "tekst": "Co dokładnie dostaję po zakupie?"
+          },
+          {
+            "tag": "dd",
+            "klasa": "",
+            "lewa": -12,
+            "prawa": 346,
+            "tekst": "Maila z potwierdzeniem, instrukcją i linkiem do pobrania pac"
+          },
+          {
+            "tag": "div",
+            "klasa": "sklepag-faq-blok",
+            "lewa": 44,
+            "prawa": 402,
+            "tekst": "Czy muszę zakładać konto?Nie. Podajesz tylko adres e-mail pr"
+          },
+          {
+            "tag": "dt",
+            "klasa": "",
+            "lewa": 44,
+            "prawa": 402,
+            "tekst": "Czy muszę zakładać konto?"
+          },
+          {
+            "tag": "dd",
+            "klasa": "",
+            "lewa": 44,
+            "prawa": 402,
+            "tekst": "Nie. Podajesz tylko adres e-mail przy płatności — na niego p"
+          },
+          {
+            "tag": "div",
+            "klasa": "sklepag-faq-blok",
+            "lewa": -12,
+            "prawa": 346,
+            "tekst": "Co znaczy „tryb testowy”?Sklep działa na testowych płatności"
+          },
+          {
+            "tag": "dt",
+            "klasa": "",
+            "lewa": -12,
+            "prawa": 346,
+            "tekst": "Co znaczy „tryb testowy”?"
+          }
+        ],
+        "liczbaWystajacych": 17,
+        "tytul": "Sklep – Automatic AI"
+      },
+      "bledyKonsoli": [],
+      "wyjatki": [],
+      "zleZadania": [],
+      "zrzuty": [
+        "sklep-telefon-00.png",
+        "sklep-telefon-01.png",
+        "sklep-telefon-02.png",
+        "sklep-telefon-03.png",
+        "sklep-telefon-04.png",
+        "sklep-telefon-05.png",
+        "sklep-telefon-06.png",
+        "sklep-telefon-07.png",
+        "sklep-telefon-08.png",
+        "sklep-telefon-09.png"
+      ]
+    },
+    {
+      "strona": "produkt-chatbot",
+      "widok": "telefon",
+      "url": "http://localhost:8890/sklep/produkt/chatbot-live/",
+      "status": 200,
+      "uklad": {
+        "szerokoscOkna": 390,
+        "szerokoscDokumentu": 390,
+        "przewijaSieWPoziomie": false,
+        "wystajace": [
+          {
+            "tag": "div",
+            "klasa": "sklepag-tlo",
+            "lewa": -48,
+            "prawa": 438,
+            "tekst": ""
+          },
+          {
+            "tag": "p",
+            "klasa": "sklepag-mono-etykieta",
+            "lewa": -8,
+            "prawa": 350,
+            "tekst": "[ 02 · CO DOSTAJESZ ]"
+          },
+          {
+            "tag": "div",
+            "klasa": "sklepag-mockup",
+            "lewa": 52,
+            "prawa": 410,
+            "tekst": "Ile kosztuje strzyżenie?Strzyżenie damskie od 80 zł, męskie "
+          },
+          {
+            "tag": "div",
+            "klasa": "sklepag-mockup-pasek",
+            "lewa": 53,
+            "prawa": 409,
+            "tekst": ""
+          },
+          {
+            "tag": "div",
+            "klasa": "sklepag-mockup-tresc",
+            "lewa": 53,
+            "prawa": 409,
+            "tekst": "Ile kosztuje strzyżenie?Strzyżenie damskie od 80 zł, męskie "
+          },
+          {
+            "tag": "p",
+            "klasa": "sklepag-mono-etykieta",
+            "lewa": -8,
+            "prawa": 350,
+            "tekst": "[ 03 · JAK DZIAŁA ]"
+          },
+          {
+            "tag": "p",
+            "klasa": "sklepag-mono-etykieta",
+            "lewa": -8,
+            "prawa": 350,
+            "tekst": "[ 04 · CO JEST W ŚRODKU ]"
+          },
+          {
+            "tag": "div",
+            "klasa": "sklepag-faza-glowa",
+            "lewa": -12,
+            "prawa": 346,
+            "tekst": "04.1Na Twojej stronieBąbelek w rogu Twojej strony: gość pyta"
+          },
+          {
+            "tag": "p",
+            "klasa": "sklepag-faza-numer",
+            "lewa": -12,
+            "prawa": 70,
+            "tekst": "04.1"
+          },
+          {
+            "tag": "p",
+            "klasa": "sklepag-faza-opis",
+            "lewa": -12,
+            "prawa": 346,
+            "tekst": "Bąbelek w rogu Twojej strony: gość pyta o cennik czy godziny"
+          },
+          {
+            "tag": "figure",
+            "klasa": "sklepag-kafel sklepag-kafel--contain",
+            "lewa": 44,
+            "prawa": 402,
+            "tekst": "TAK TO WYGLĄDA NA TWOJEJ STRONIE — BĄBELEK W ROGU, ZANIM GOŚ"
+          },
+          {
+            "tag": "span",
+            "klasa": "sklepag-okno-pasek",
+            "lewa": 45,
+            "prawa": 401,
+            "tekst": ""
+          }
+        ],
+        "liczbaWystajacych": 87,
+        "tytul": "ChatBot LIVE – Automatic AI"
+      },
+      "bledyKonsoli": [],
+      "wyjatki": [],
+      "zleZadania": [],
+      "zrzuty": [
+        "produkt-chatbot-telefon-00.png",
+        "produkt-chatbot-telefon-01.png",
+        "produkt-chatbot-telefon-02.png",
+        "produkt-chatbot-telefon-03.png",
+        "produkt-chatbot-telefon-04.png",
+        "produkt-chatbot-telefon-05.png",
+        "produkt-chatbot-telefon-06.png",
+        "produkt-chatbot-telefon-07.png",
+        "produkt-chatbot-telefon-08.png",
+        "produkt-chatbot-telefon-09.png",
+        "produkt-chatbot-telefon-10.png",
+        "produkt-chatbot-telefon-11.png",
+        "produkt-chatbot-telefon-12.png",
+        "produkt-chatbot-telefon-13.png",
+        "produkt-chatbot-telefon-14.png",
+        "produkt-chatbot-telefon-15.png",
+        "produkt-chatbot-telefon-16.png",
+        "produkt-chatbot-telefon-17.png",
+        "produkt-chatbot-telefon-18.png",
+        "produkt-chatbot-telefon-19.png",
+        "produkt-chatbot-telefon-20.png",
+        "produkt-chatbot-telefon-21.png",
+        "produkt-chatbot-telefon-22.png"
+      ]
+    },
+    {
+      "strona": "produkt-segregator",
+      "widok": "telefon",
+      "url": "http://localhost:8890/sklep/produkt/segregator-maila/",
+      "status": 200,
+      "uklad": {
+        "szerokoscOkna": 390,
+        "szerokoscDokumentu": 390,
+        "przewijaSieWPoziomie": false,
+        "wystajace": [
+          {
+            "tag": "div",
+            "klasa": "sklepag-tlo",
+            "lewa": -48,
+            "prawa": 438,
+            "tekst": ""
+          },
+          {
+            "tag": "p",
+            "klasa": "sklepag-mono-etykieta",
+            "lewa": -8,
+            "prawa": 350,
+            "tekst": "[ 02 · CO DOSTAJESZ ]"
+          },
+          {
+            "tag": "p",
+            "klasa": "sklepag-mono-etykieta",
+            "lewa": -8,
+            "prawa": 350,
+            "tekst": "[ 03 · JAK DZIAŁA ]"
+          },
+          {
+            "tag": "p",
+            "klasa": "sklepag-mono-etykieta",
+            "lewa": -8,
+            "prawa": 350,
+            "tekst": "[ 04 · CO JEST W ŚRODKU ]"
+          },
+          {
+            "tag": "div",
+            "klasa": "sklepag-faza-glowa",
+            "lewa": -12,
+            "prawa": 346,
+            "tekst": "04.1Testujesz od razuWbudowane 30 maili demo po polsku: pusz"
+          },
+          {
+            "tag": "p",
+            "klasa": "sklepag-faza-numer",
+            "lewa": -12,
+            "prawa": 70,
+            "tekst": "04.1"
+          },
+          {
+            "tag": "p",
+            "klasa": "sklepag-faza-opis",
+            "lewa": -12,
+            "prawa": 346,
+            "tekst": "Wbudowane 30 maili demo po polsku: puszczasz przebieg bez po"
+          },
+          {
+            "tag": "figure",
+            "klasa": "sklepag-kafel sklepag-kafel--wideo",
+            "lewa": 44,
+            "prawa": 402,
+            "tekst": "▶ Odtwórz nagranieNAGRANIE Z PANELU — PRZEBIEG PRÓBKI I RAPO"
+          },
+          {
+            "tag": "span",
+            "klasa": "sklepag-okno-pasek",
+            "lewa": 45,
+            "prawa": 401,
+            "tekst": ""
+          },
+          {
+            "tag": "div",
+            "klasa": "sklepag-kafel-kadr",
+            "lewa": 45,
+            "prawa": 401,
+            "tekst": "▶ Odtwórz nagranie"
+          },
+          {
+            "tag": "video",
+            "klasa": "",
+            "lewa": 45,
+            "prawa": 401,
+            "tekst": ""
+          },
+          {
+            "tag": "img",
+            "klasa": "sklepag-kafel-plakat",
+            "lewa": 45,
+            "prawa": 401,
+            "tekst": ""
+          }
+        ],
+        "liczbaWystajacych": 96,
+        "tytul": "Segregator maila – Automatic AI"
+      },
+      "bledyKonsoli": [],
+      "wyjatki": [],
+      "zleZadania": [],
+      "zrzuty": [
+        "produkt-segregator-telefon-00.png",
+        "produkt-segregator-telefon-01.png",
+        "produkt-segregator-telefon-02.png",
+        "produkt-segregator-telefon-03.png",
+        "produkt-segregator-telefon-04.png",
+        "produkt-segregator-telefon-05.png",
+        "produkt-segregator-telefon-06.png",
+        "produkt-segregator-telefon-07.png",
+        "produkt-segregator-telefon-08.png",
+        "produkt-segregator-telefon-09.png",
+        "produkt-segregator-telefon-10.png",
+        "produkt-segregator-telefon-11.png",
+        "produkt-segregator-telefon-12.png",
+        "produkt-segregator-telefon-13.png",
+        "produkt-segregator-telefon-14.png",
+        "produkt-segregator-telefon-15.png",
+        "produkt-segregator-telefon-16.png",
+        "produkt-segregator-telefon-17.png",
+        "produkt-segregator-telefon-18.png",
+        "produkt-segregator-telefon-19.png",
+        "produkt-segregator-telefon-20.png",
+        "produkt-segregator-telefon-21.png",
+        "produkt-segregator-telefon-22.png",
+        "produkt-segregator-telefon-23.png"
+      ]
+    },
+    {
+      "strona": "dziekujemy-bez-sesji",
+      "widok": "telefon",
+      "url": "http://localhost:8890/dziekujemy-za-zakup/",
+      "status": 200,
+      "uklad": {
+        "szerokoscOkna": 390,
+        "szerokoscDokumentu": 390,
+        "przewijaSieWPoziomie": false,
+        "wystajace": [
+          {
+            "tag": "canvas",
+            "klasa": "fw-canvas pointer-events-none absolute inset-0",
+            "lewa": 0,
+            "prawa": 585,
+            "tekst": ""
+          }
+        ],
+        "liczbaWystajacych": 1,
+        "tytul": "Dziękujemy za zakup – Automatic AI"
+      },
+      "bledyKonsoli": [],
+      "wyjatki": [],
+      "zleZadania": [],
+      "zrzuty": [
+        "dziekujemy-bez-sesji-telefon-00.png",
+        "dziekujemy-bez-sesji-telefon-01.png"
+      ]
+    }
+  ]
+}
