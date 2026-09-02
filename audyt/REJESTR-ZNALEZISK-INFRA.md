@@ -67,7 +67,12 @@
 
 
 ## Znalezisk BEZ strażnika: 17
-<!-- 2.09 po I-24 (spust goldena): 18 → 17, ta sama komenda. -->
+<!-- 2.09 po I-24 (spust goldena): 18 → 17. ⛔ SPROSTOWANIE (runda 3 #272, DROBNA 5):
+     „ta sama komenda” było nieprawdą i tworzyło sprzeczność z komentarzem niżej, który dla
+     TEJ SAMEJ komendy podaje na origin/main wynik 13. Jedna komenda nie może dać naraz 18 i 13.
+     Liczba 17 jest prawdziwa i potwierdzona niezależnym pomiarem recenzenta; „18” pochodziło
+     z WCZEŚNIEJSZEGO, innego klucza liczenia, którego nikt nie zapisał. Ujednolicenie klucza
+     dla tego licznika to osobna pozycja (kandydat I-2x), nie ten PR. -->
 <!-- ⛔ 2.09, runda 2 #272: ta liczba mierzy „czy strażnik ISTNIEJE”, a NIE „czy biegnie w CI”.
      I-24 ma strażnika (bramka `golden`), ale na wykonawcy CI bez Dockera jest on POMIJANY —
      dlatego status I-24 to ZAMKNIETE warunkowo z wypisanym warunkiem, a nie ZAMKNIETE. -->

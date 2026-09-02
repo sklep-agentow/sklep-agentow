@@ -49,8 +49,13 @@ sprawdz_pominiety testy/golden-migawka-proba-kontrolna.sh   # *-proba-kontrolna.
 echo
 echo "=== KONTROLA DODATNIA: prawdziwe testy .sh NIE MOGĄ zniknąć z linii bazowej ==="
 ILE=0
+# ⛔ ŻADNYCH WZORCÓW Z PAMIĘCI TAKŻE TUTAJ. Lista uruchamianych powstaje jako RÓŻNICA
+# zbiorów: wszystkie testy/*.sh minus te, które pętla z pliku uznała za pomijane.
+# Poprzednia wersja PRZEPISYWAŁA wzorce w tym miejscu, czyli łamała własny nagłówek
+# (recenzja #272, runda 3, DROBNA 4) — i gdyby ktoś dopisał wzorzec do linia-bazowa.sh,
+# ta kontrola dalej mierzyłaby STARY zestaw, nie zauważając zmiany.
 for t in testy/*.sh; do
-	case "$t" in *-proba-kontrolna.sh|*kalibracja-mutantem.sh|*seed-demo.sh|*golden-stos-probny.sh|*lib-golden-stos.sh) continue;; esac
+	case " $POMINIETE_LISTA " in *" $t "*) continue;; esac
 	sprawdz_uruchamiany "$t"; ILE=$((ILE+1))
 done
 [ "$ILE" -ge 1 ] || { echo "  ⛔ ZERO testów do uruchomienia — kontrola dodatnia pusta, pomiar nic nie znaczy"; BLEDY=$((BLEDY+1)); }

@@ -8,7 +8,7 @@
 # na własnej blokadzie aż do `timeout 300` (EXIT=124, fałszywe czerwone w linii bazowej).
 #
 # CO MIERZY: woła PRAWDZIWĄ funkcję `wez_zamek_probny` z narzedzia-qa/lib-stos-probny.sh
-# (nie jej kopię) i sprawdza sześć zachowań, w tym próbę kontrolną samej próby.
+# (nie jej kopię) i sprawdza DZIEWIĘĆ punktów (A–I), w tym próbę kontrolną samej próby.
 # ⛔ Zamki idą do katalogu TYMCZASOWEGO, nie do `/root/praca/zlecenia/wymiana/` — inaczej
 #    ten test padałby na koncie CI, które tamtej ścieżki nie ma, i świecił fałszywym czerwonym.
 #    Że PRODUKCYJNE ścieżki to dwa RÓŻNE pliki, sprawdza osobno punkt F — czytając je z plików.
@@ -92,6 +92,41 @@ for f in $(grep -rlE '^[[:space:]]*\.[[:space:]]+.*lib-(stos-probny|golden-stos)
 	fi
 done
 [ "$BEZ" -eq 0 ] || BLEDY=$((BLEDY+1))
+
+echo "=== H. BIEG ODPRAWIONY PRZEZ ZAMEK NIE ZWIJA CUDZEGO STOSU ==="
+# ⛔ Pulapka EXIT stoi w skryptach PRZED `postaw_stos`, wiec `zwin_stos` odpala sie takze
+# wtedy, gdy zamek ten proces ODPRAWIL. Bez znacznika wlasnosci kasowal wtedy kontener
+# i dropowal baze biegowi, KTORY ZAMEK TRZYMA (recenzja #272, runda 3).
+# Mierzymy sciezke kodu, nie docker-a: podstawiamy funkcje `docker` i `sql_bazy`,
+# ktore tylko MELDUJA wywolanie. Funkcja przeslania komende zewnetrzna.
+SLAD="$ROBOCZY/zwijanie.log"
+: > "$SLAD"
+WY=$(
+	. narzedzia-qa/lib-stos-probny.sh
+	docker()   { echo "docker $*"   >> "$SLAD"; }
+	sql_bazy() { echo "sql_bazy $*" >> "$SLAD"; }
+	zwin_stos            # ten proces NIGDY nie wolal postaw_stos
+	echo GOTOWE
+)
+LICZ_BEZ=$(wc -l < "$SLAD")
+sprawdz "zwin_stos bez postaw_stos nie rusza niczego (0 wywolan)" "0" "$LICZ_BEZ"
+
+echo "=== I. KONTROLA DODATNIA punktu H: WLASCICIEL stosu MUSI go zwinac ==="
+: > "$SLAD"
+WY=$(
+	. narzedzia-qa/lib-stos-probny.sh
+	docker()   { echo "docker $*"   >> "$SLAD"; }
+	sql_bazy() { echo "sql_bazy $*" >> "$SLAD"; }
+	STOS_PROBNY_POSTAWILEM=tak     # udajemy proces, ktory stos POSTAWIL
+	zwin_stos
+	echo GOTOWE
+)
+LICZ_Z=$(wc -l < "$SLAD")
+if [ "$LICZ_Z" -ge 1 ]; then
+	printf '  OK   wlasciciel stosu zwija (wywolan: %s)\n' "$LICZ_Z"
+else
+	echo "  ZLE  wlasciciel NIE zwina stosu — znacznik blokuje za duzo, stos zostaje na dysku"; BLEDY=$((BLEDY+1))
+fi
 
 echo
 [ "$BLEDY" -eq 0 ] && { echo "ZAMEK STOSU PROBNEGO: WSZYSTKO OK (EXIT=0)"; exit 0; }

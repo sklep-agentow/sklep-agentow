@@ -1,5 +1,5 @@
 #!/bin/bash
-# lib-stos-probny.sh — wspólny warsztat dla dowodów na CZYSTEJ instalacji.  WERSJA 1.0.2
+# lib-stos-probny.sh — wspólny warsztat dla dowodów na CZYSTEJ instalacji.  WERSJA 1.0.3
 #
 # Nie uruchamia się sama. Dołączają ją `dowod-z-paczki.sh` (dowód z paczki na
 # czystej instalacji) i `dowod-aktualizacji.sh` (dowód aktualizacji w miejscu).
@@ -93,6 +93,14 @@ sql_bazy() {
 
 postaw_stos() {
 	wez_zamek_probny   # ⛔ PRZED `docker rm -f -v` niżej — inaczej kasujemy kontener spod cudzego biegu
+	# ⛔ ZNACZNIK WŁASNOŚCI STOSU. Od tej chwili stos próbny należy do TEGO procesu i tylko
+	# ten proces ma prawo go zwinąć. Bez znacznika bieg, któremu zamek ODMÓWIŁ dostępu,
+	# wychodził przez `padnij` (exit 2), odpalał własną pułapkę EXIT → `zwin_stos` → i kasował
+	# kontener ORAZ dropował bazę temu biegowi, KTÓRY ZAMEK TRZYMA. Zamek chronił ścieżkę
+	# udaną, a rozbrajał się na ścieżce przewidzianej (recenzja #272, runda 3).
+	# ⛔ NIE eksportujemy: zwija ten proces, który NAPRAWDĘ stawiał, a nie ten, który
+	# odziedziczył zamek po przodku.
+	STOS_PROBNY_POSTAWILEM=tak
 	naglowek "STOS PROBNY — czysta instalacja od zera"
 	local haslo_root i=0
 	haslo_root="$(docker exec "$KONTENER_DB" printenv MARIADB_ROOT_PASSWORD 2> /dev/null \
@@ -136,6 +144,11 @@ postaw_stos() {
 }
 
 zwin_stos() {
+	# ⛔ NIE ZWIJAMY CUDZEGO STOSU. Pułapka EXIT stoi w skryptach PRZED `postaw_stos`, więc
+	# `zwin_stos` odpala się także wtedy, gdy ten proces stosu w ogóle nie postawił —
+	# np. gdy zamek go odprawił. Wtedy kasowanie kontenera i baza dropnięta byłyby
+	# szkodą wyrządzoną biegowi, który zamek trzyma.
+	[ "${STOS_PROBNY_POSTAWILEM:-nie}" = tak ] || return 0
 	if [ "$ZOSTAW" = tak ]; then
 		printf '\nStos próbny ZOSTAJE (--zostaw): %s — panel: %s/wp-admin (probny / probne-haslo-QA)\n' "$KONTENER" "$ADRES"
 		return
