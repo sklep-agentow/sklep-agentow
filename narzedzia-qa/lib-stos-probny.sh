@@ -1,5 +1,5 @@
 #!/bin/bash
-# lib-stos-probny.sh — wspólny warsztat dla dowodów na CZYSTEJ instalacji.  WERSJA 1.0.0
+# lib-stos-probny.sh — wspólny warsztat dla dowodów na CZYSTEJ instalacji.  WERSJA 1.0.1
 #
 # Nie uruchamia się sama. Dołączają ją `dowod-z-paczki.sh` (dowód z paczki na
 # czystej instalacji) i `dowod-aktualizacji.sh` (dowód aktualizacji w miejscu).
@@ -71,7 +71,7 @@ postaw_stos() {
 		|| docker exec "$KONTENER_DB" printenv MYSQL_ROOT_PASSWORD 2> /dev/null)"
 	[ -n "$haslo_root" ] || padnij "nie umiem odczytać hasła root bazy z kontenera $KONTENER_DB"
 
-	docker rm -f "$KONTENER" > /dev/null 2>&1 || true
+	docker rm -f -v "$KONTENER" > /dev/null 2>&1 || true   # -v: patrz zwin_stos
 	docker exec -e MYSQL_PWD="$haslo_root" "$KONTENER_DB" \
 		mariadb -uroot -e "DROP DATABASE IF EXISTS \`$BAZA\`; CREATE DATABASE \`$BAZA\`;" \
 		|| padnij "nie umiem założyć bazy $BAZA"
@@ -112,7 +112,10 @@ zwin_stos() {
 		printf '\nStos próbny ZOSTAJE (--zostaw): %s — panel: %s/wp-admin (probny / probne-haslo-QA)\n' "$KONTENER" "$ADRES"
 		return
 	fi
-	docker rm -f "$KONTENER" > /dev/null 2>&1 || true
+	# ⛔ `-v`: obraz WordPressa deklaruje VOLUME /var/www/html, więc każde `docker run` zakłada ANONIMOWY
+	# wolumen (~83 MB rdzenia WP), a `docker rm -f` bez `-v` go ZOSTAWIA. Zmierzone 2.09: 83 wiszące
+	# wolumeny z trzech dni (39 z jednego dnia), 6,5 GB, dysk 100 % i stanięty runner CI.
+	docker rm -f -v "$KONTENER" > /dev/null 2>&1 || true
 	sql_bazy "DROP DATABASE IF EXISTS \`$BAZA\`;" > /dev/null 2>&1 || true
 }
 
