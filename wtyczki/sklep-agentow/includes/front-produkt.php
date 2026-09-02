@@ -606,8 +606,11 @@ function sklepag_formularz_zakupu( $p ) {
 	$html     = '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="sklepag-zakup" id="sklepag-kup-formularz">';
 	$html    .= '<input type="hidden" name="action" value="sklepag_kup">';
 	$html    .= '<input type="hidden" name="produkt_id" value="' . (int) $p->id . '">';
-	$html    .= wp_nonce_field( 'sklepag_kup', '_wpnonce', true, false );
-	$html    .= '<label class="sklepag-zgoda" for="' . esc_attr( $id_zgody ) . '"><input type="checkbox" id="' . esc_attr( $id_zgody ) . '" name="zgoda" value="1" required data-sklepag-blad="' . esc_attr( SKLEPAG_BLAD_ZGODA_ZAKUP ) . '"> <span>' . esc_html( SKLEPAG_ZGODA_TRESC ) . '</span></label>';
+	// Znacznik okna idempotencji (0.9.38): losowy przy KAŻDYM renderze (strona produktu idzie z nocache_headers()).
+	// Podwójny klik wysyła ten sam formularz = ten sam znacznik; druga osoba za tym samym adresem ma własny.
+	$html .= '<input type="hidden" name="okno" value="' . esc_attr( wp_generate_password( 24, false, false ) ) . '">';
+	$html .= wp_nonce_field( 'sklepag_kup', '_wpnonce', true, false );
+	$html .= '<label class="sklepag-zgoda" for="' . esc_attr( $id_zgody ) . '"><input type="checkbox" id="' . esc_attr( $id_zgody ) . '" name="zgoda" value="1" required data-sklepag-blad="' . esc_attr( SKLEPAG_BLAD_ZGODA_ZAKUP ) . '"> <span>' . esc_html( SKLEPAG_ZGODA_TRESC ) . '</span></label>';
 	// Dane do faktury — nieobowiązkowe, nasze pola (0.9.25). Zwinięte pod <details>, żeby osoba prywatna
 	// nie widziała pól firmowych; NIP sprawdzany po stronie serwera (suma kontrolna), tu tylko podpowiedź.
 	$html .= '<details class="sklepag-faktura"><summary class="sklepag-mono-etykieta">[ KUPUJESZ NA FIRMĘ? DANE DO FAKTURY ]</summary>'

@@ -207,7 +207,10 @@ bierze udział w decyzji, czy powtórne kliknięcie przycisku zakupu w oknie ide
 zapamiętany adres checkoutu, czy nowy (`sklepag_sesja_czeka_na_platnosc()`). Warunkiem
 NADRZĘDNYM jest tam wiek okna (`SKLEPAG_IDEM_OKNO_S`), bo `stan` przestawia dopiero webhook —
 zanim dotrze, sesja opłacona leży w bazie jako `utworzona` i jest nieodróżnialna od czekającej.
-Na stan zamówienia ta tabela nadal nie wpływa.
+Na stan zamówienia ta tabela nadal nie wpływa. Klucz okna (`sklepag_klucz_idem()`) = adres IP
++ **znacznik formularza** (od 0.9.38: losowe pole `okno` z renderu strony produktu — podwójny klik
+wysyła ten sam formularz, druga osoba za tym samym adresem ma własny) + produkt + tryb płatności;
+POST bez znacznika dostaje okno per adres jak do 0.9.37.
 
 ## 6. Brama pobrań
 
