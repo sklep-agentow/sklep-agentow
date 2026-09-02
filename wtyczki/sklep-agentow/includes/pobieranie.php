@@ -41,6 +41,27 @@ function sklepag_obsluz_pobranie() {
 	if ( ! $zam->link_wygasa || strtotime( $zam->link_wygasa ) < time() ) {
 		wp_die( 'Link pobrania wygasł. ' . esc_html( $kontakt ), 'Sklep Agentów', 410 );
 	}
+	/*
+	 * ⛔ PIENIĄDZE WRÓCIŁY DO KUPUJĄCEGO — PRODUKT NIE MOŻE DALEJ SCHODZIĆ. Do 0.9.36 brama patrzyła
+	 * wyłącznie na token i termin, więc po pełnym zwrocie (albo w trakcie sporu, gdy bank zamroził
+	 * pieniądze) link z maila działał do końca 72 h i limitu 10. Status ustawia `sklepag_zapisz_zwrot()`
+	 * (`zwrocone` = zwrot całości, `sporne` = otwarty spór); zwrot CZĘŚCIOWY zostawia status bez zmian
+	 * i pobieranie dalej działa — to świadoma granica, właściciel oddaje część kwoty jako gest, nie jako
+	 * cofnięcie sprzedaży. Sprawdzamy PRZED plikiem i licznikiem, żeby odmowa nie zużywała slotu
+	 * i nie zdradzała, czy plik istnieje. Zdarzenie zostaje w dzienniku — właściciel widzi, że ktoś
+	 * próbował pobrać po zwrocie (to bywa sygnał sporu, który dopiero nadejdzie).
+	 */
+	if ( in_array( (string) $zam->status, array( 'zwrocone', 'sporne' ), true ) ) {
+		sklepag_zdarzenie( (int) $zam->id, 'pobranie_odmowa_zwrot', 'status ' . $zam->status . ', ip ' . sklepag_ip() );
+		wp_die(
+			( 'sporne' === $zam->status
+				? 'Płatność za to zamówienie jest w sporze — pobieranie wstrzymane do jego zamknięcia. '
+				: 'Pieniądze za to zamówienie zostały zwrócone — link pobrania przestał działać. ' )
+			. esc_html( $kontakt ),
+			'Sklep Agentów',
+			410
+		);
+	}
 
 	$plik = (string) $zam->produkt_plik_kupiony; // Snapshot z chwili zakupu.
 	if ( '' === $plik || ! file_exists( $plik ) ) {

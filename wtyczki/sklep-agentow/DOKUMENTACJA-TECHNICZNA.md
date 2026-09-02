@@ -1,6 +1,6 @@
 # Sklep Agentów — dokumentacja techniczna
 
-**Wersja wtyczki: 0.9.36 · wersja schematu bazy: 10 · WordPress 6.7+ · PHP 8.1+**
+**Wersja wtyczki: 0.9.37 · wersja schematu bazy: 10 · WordPress 6.7+ · PHP 8.1+**
 
 > **Po co ten dokument.** To jest **mapa systemu dla audytora i programisty**, nie ulotka.
 > Każda liczba i nazwa tutaj jest wzięta z kodu, nie z pamięci — jeśli coś się rozjedzie,
@@ -115,7 +115,7 @@ właściciela" (gdy ustawiony). Treść i nagłówki pilnuje osobny test-strażn
 | Punkt | Co robi | Zabezpieczenie |
 |---|---|---|
 | `admin_post_nopriv_sklepag_kup` | rozpoczyna zakup | nonce + zgoda + limit żądań na adres IP |
-| `admin_post_nopriv_sklepag_pobierz` | wydaje kupiony plik | token 64 znaki + limit pobrań + termin ważności |
+| `admin_post_nopriv_sklepag_pobierz` | wydaje kupiony plik | token 64 znaki + status nie zwrocone/sporne + limit pobrań + termin ważności |
 | `admin_post_nopriv_sklepag_ocen` (GET) | formularz opinii z linku w mailu | token 64 znaki (sha256 w bazie, stałoczasowe) + termin ważności + limit żądań |
 | `admin_post_nopriv_sklepag_ocen_zapisz` (POST) | zapis opinii (zalążek → oczekuje) | ten sam token jednorazowy + zgoda + pole-pułapka + limit żądań + sufity długości |
 | `POST /wp-json/sklepag/v1/webhook` | powiadomienie od Stripe | **podpis webhooka Stripe** |
@@ -211,8 +211,10 @@ Na stan zamówienia ta tabela nadal nie wpływa.
 
 ## 6. Brama pobrań
 
-Link z maila zawiera token (64 znaki). Przy każdym pobraniu sprawdzane są **trzy
+Link z maila zawiera token (64 znaki). Przy każdym pobraniu sprawdzane są **cztery
 warunki naraz**: token istnieje, nie minął termin (`SKLEPAG_LINK_GODZIN` = **72 h**),
+zamówienie nie jest `zwrocone` ani `sporne` (od 0.9.37 — odmowa 410 przed etapem pliku i licznika,
+zdarzenie `pobranie_odmowa_zwrot` w dzienniku; zwrot częściowy nie zmienia statusu, więc nie odcina),
 licznik nie przekroczył limitu (`SKLEPAG_LIMIT_POBRAN` = **10**; licznik jest zerowany przy każdym
 wydaniu świeżego linku — resend z panelu i ponowienie przez cron — więc limit jest na link, nie na zakup). Plik wydawany jest strumieniem
 przez PHP (`readfile()` z nagłówkami `Content-Disposition` i `X-Robots-Tag: noindex`)
@@ -232,7 +234,7 @@ po stronie serwera. To jest świadome ograniczenie, nie przeoczenie.
 
 | Stała | Wartość | Znaczenie |
 |---|---|---|
-| `SKLEPAG_WERSJA` | 0.9.36 | wersja wtyczki (assety, cache) |
+| `SKLEPAG_WERSJA` | 0.9.37 | wersja wtyczki (assety, cache) |
 | `SKLEPAG_WERSJA_SCHEMATU` | 10 | wersja schematu bazy (migracje) |
 | `SKLEPAG_LIMIT_POBRAN` | 10 | ile razy można pobrać plik z jednego wydanego linku (zerowane przy świeżym linku) |
 | `SKLEPAG_LINK_GODZIN` | 72 | ważność linku pobrania |

@@ -123,9 +123,10 @@ przefiltrowane.
 | **zwrócone** | Stripe zwrócił kupującemu **całą** kwotę | nic — sklep odnotował zwrot z powiadomienia Stripe i odjął go od statystyk. Zwrot **częściowy** nie zmienia statusu: kwota schodzi ze statystyk, a zwrot widać w osi czasu zamówienia |
 | **obciążenie zwrotne** (spór) | kupujący zakwestionował płatność w banku (chargeback) — kwota zdjęta z Twojego konta do rozstrzygnięcia | odpowiadasz w panelu Stripe; spór wygrany albo wycofany → sklep wraca do poprzedniego statusu; spór przegrany → zamówienie zostaje jako obciążenie zwrotne |
 
-⚠️ Zwrot ani spór **nie odcinają** wcześniej wysłanego linku do pobrania — działa do końca
-swojej ważności (72 godziny, 10 pobrań). Jeśli chcesz, żeby zwrot odcinał dostęp od razu,
-napisz do nas — to zmiana w sklepie, nie ustawienie.
+Od 0.9.37 zwrot **całości** kwoty i otwarty spór **odcinają** link do pobrania od razu: kupujący
+zobaczy komunikat, że pieniądze wróciły (albo że płatność jest w sporze) i kontakt do Ciebie, a próba
+zostanie zapisana w osi czasu zamówienia. Zwrot **częściowy** nie odcina dostępu (status się nie zmienia).
+Spór wygrany albo wycofany przywraca poprzedni status — link znów działa do końca swojej ważności.
 
 Pulpit pokazuje na górze czerwony pasek, gdy są zamówienia z nieudaną wysyłką — z linkiem
 prosto do nich.
