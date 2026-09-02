@@ -99,7 +99,7 @@ else
 	zglos "strażnik nie padł w oczekiwanym kształcie (EXIT=$KOD1) — nie mierzy tej wady"
 fi
 
-naglowek "RUNDA 1 PR #263 ($RUNDA1_REF) — strażnik MA PADAĆ NA E i F"
+naglowek "RUNDA 1 PR #263 ($RUNDA1_REF) — strażnik MA PADAĆ NA E, F i G"
 # ⛔ DRUGA KALIBRACJA, OSOBNA. Kierunek E (wyciek konfiguracji do subskrybenta) na
 # `origin/main` przechodzi, bo tam ogólnego zaczepienia w ogóle NIE MA — czyli tamten
 # przebieg NIE JEST dowodem, że E cokolwiek mierzy. Dowodem jest dopiero kod rundy 1,
@@ -120,10 +120,11 @@ if [ "$KOD15" -eq 2 ]; then
 elif [ "$KOD15" -eq 1 ] \
 	&& printf '%s' "$WY15" | grep -q '⛔ NIE WYSZLO  E: subskrybent DOSTAŁ konfigurację serwera' \
 	&& printf '%s' "$WY15" | grep -q '⛔ NIE WYSZLO  F: żądanie, którego PHP NIE uciął' \
+	&& printf '%s' "$WY15" | grep -q '⛔ NIE WYSZLO  G: żądanie NIEFORMULARZOWE ponad post_max_size' \
 	&& printf '%s' "$WY15" | grep -q '✅ WYSZLO      A:'; then
-	potwierdz "strażnik PADŁ na rundzie 1 (EXIT=1): padają E (wyciek do subskrybenta) i F (zmyślona diagnoza), A już przechodzi"
+	potwierdz "strażnik PADŁ na rundzie 1 (EXIT=1): padają E (wyciek do subskrybenta), F (zmyślona diagnoza) i G (klauzula typu treści), A już przechodzi"
 else
-	zglos "strażnik nie padł na rundzie 1 w oczekiwanym kształcie (EXIT=$KOD15) — kierunki E/F nie mierzą uwag 2. i 4. recenzji"
+	zglos "strażnik nie padł na rundzie 1 w oczekiwanym kształcie (EXIT=$KOD15) — kierunki E/F/G nie mierzą uwag 2. i 4. recenzji"
 fi
 
 naglowek "KOD Z DRZEWA — strażnik MA PRZEJŚĆ"

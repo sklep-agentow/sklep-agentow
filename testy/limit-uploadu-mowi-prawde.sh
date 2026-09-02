@@ -10,7 +10,7 @@
 # komunikat cytujący limit wtyczki (20 MB) przy odrzucie serwera na 2 MB — została
 # naprawiona w 0.9.31; kierunek B pilnuje, żeby nie wróciła.
 #
-# PIĘĆ KIERUNKÓW, bo „naprawa", która zaczyna przechwytywać wszystko albo przestaje
+# SIEDEM KIERUNKÓW, bo „naprawa", która zaczyna przechwytywać wszystko albo przestaje
 # przyjmować pliki, też usunęłaby objaw:
 #   A) ciało PONAD post_max_size          => prawda o przyczynie + REALNY limit serwera,
 #                                            nigdy pusta odpowiedź  (PADA przed naprawą)
@@ -25,12 +25,20 @@
 #                                            (PADA na rundzie 1 PR #263)
 #   F) MAŁY POST `application/json`        => ŻADNEJ diagnozy o ucięciu — PHP niczego
 #                                            nie uciął  (PADA na rundzie 1 PR #263)
+#   G) DUŻY POST `application/json`, PONAD post_max_size
+#                                         => ŻADNEJ diagnozy — to nie jest formularz, więc
+#                                            klauzula typu treści MUSI go odrzucić
+#                                            (PADA na rundzie 1 PR #263)
 #
 # ⛔ SKĄD KIERUNEK F. `$_POST` wypełnia się WYŁĄCZNIE dla typów formularzowych — przy
 # `application/json` jest puste ZAWSZE, bo tak działa PHP, a ciało leży całe w `php://input`.
 # Runda 1 brała za dowód ucięcia samo „puste $_POST + niepuste ciało" i takiemu żądaniu
 # wypisywała zmyśloną diagnozę „Serwer odrzucił CAŁE zgłoszenie" (uwaga 4. recenzji).
 # Komunikat w tej gałęzi ma jedno zadanie — mówić prawdę o przyczynie.
+# ⛔ F SAM NIE STRZEŻE KLAUZULI TYPU TREŚCI (uwaga 4. recenzji rundy 2): jego ciało ma ~50 B,
+# więc odrzuca je także drugi człon warunku (`dlugosc > post_max_size`) i skreślenie
+# `! $formularzowy` zostawiłoby F zielonym. Klauzulę typu treści strzeże G: JSON PONAD
+# post_max_size — PHP go nie czyta, ale to nie formularz, więc diagnozy nie ma prawa być.
 #
 # ⛔ SKĄD KIERUNEK E. Ogólne zaczepienie `admin_post` odpala się dla KAŻDEGO zalogowanego
 # użytkownika — dokumentacja WordPressa nazywa je „authenticated admin post request", bez
@@ -54,7 +62,7 @@
 # WYMAGANE. Brak danych kończy się kodem 2, nie cichym pominięciem kierunku E: strażnik,
 # który przy braku danych świeci na zielono, mierzy własną wygodę, nie produkt.
 #
-# Kody wyjścia: 0 = wszystkie sześć kierunków zgodne · 1 = REGRESJA · 2 = środowisko/przyrząd
+# Kody wyjścia: 0 = wszystkie siedem kierunków zgodne · 1 = REGRESJA · 2 = środowisko/przyrząd
 #
 # ⛔ Licznik błędów poza podpowłoką (podpowłoka zjada zarówno licznik, jak i komunikat).
 set -u
@@ -69,15 +77,22 @@ ZNACZNIK="STRAZNIK LIMITU $$-$(date +%s)"
 # ⛔ SPRZĄTANIE TAKŻE PRZY PRZERWANIU. Bez tego Ctrl-C między kierunkiem D a blokiem
 # sprzątania zostawiał produkt „STRAZNIK LIMITU…" w bazie stosu — a domyślnym celem jest
 # stos WARSZTATOWY, wspólny z resztą zespołu.
+# ⛔ ALE SPRZĄTAĆ WOLNO TYLKO TO, CO STRAŻNIK ZDĄŻYŁ ZROBIĆ. Trap stoi PRZED odczytem
+# ID_PRZED; każde wcześniejsze `padnij` (brak curl, brak konta, brak formularza…) też go
+# odpala. Runda 2 miała tu `${ID_PRZED:-0}`, czyli `DELETE … AND id > 0` — wszystkie CUDZE
+# wpisy dziennika na wspólnym stosie (uwaga 1. recenzji rundy 2). Dlatego ID_PRZED startuje
+# puste, a posprzataj wraca natychmiast, dopóki nie jest liczbą.
+ID_PRZED=""
 trap 'posprzataj 2>/dev/null; rm -rf "$ROBOCZY"' EXIT INT TERM
 posprzataj() {
+	case "${ID_PRZED:-}" in ''|*[!0-9]*) return 0;; esac
 	wp eval "
 	\$w = \$GLOBALS['wpdb'];
 	foreach ( \$w->get_results( \$w->prepare( \"SELECT id, plik_sciezka FROM {\$w->prefix}sklepag_produkty WHERE nazwa LIKE %s\", \$w->esc_like( '$ZNACZNIK' ) . '%' ) ) as \$p ) {
 		if ( '' !== \$p->plik_sciezka && file_exists( \$p->plik_sciezka ) ) { wp_delete_file( \$p->plik_sciezka ); }
 		\$w->delete( \$w->prefix . 'sklepag_produkty', array( 'id' => (int) \$p->id ), array( '%d' ) );
 	}
-	\$w->query( \$w->prepare( \"DELETE FROM {\$w->prefix}sklepag_zdarzenia WHERE typ = 'upload_produktu_blad' AND id > %d\", ${ID_PRZED:-0} ) );
+	\$w->query( \$w->prepare( \"DELETE FROM {\$w->prefix}sklepag_zdarzenia WHERE typ = 'upload_produktu_blad' AND id > %d\", $ID_PRZED ) );
 	\$u = get_user_by( 'login', '$WP_ADMIN_USER' );
 	if ( \$u ) { delete_transient( 'sklepag_szkic_produktu_' . (int) \$u->ID ); }
 	echo 'posprzatane';
@@ -297,6 +312,23 @@ else
 fi
 echo
 
+# ==== G) DUŻY POST application/json PONAD post_max_size — klauzula typu treści ======
+echo "== G) POST 'application/json' ponad post_max_size ($NAPIS_POST) na gołe admin-post.php — to NIE formularz, diagnozy NIE MA prawa być =="
+{ printf '{"cokolwiek":"'; head -c "$(( POST_MAX + 1024 * 1024 ))" /dev/zero | tr '\0' 'a'; printf '"}'; } > "$ROBOCZY/duzy.json"
+WYNIK_G="$(curl -s -b "$CIASTKA" -c "$CIASTKA" -o "$ROBOCZY/odp.html" -D "$ROBOCZY/nag.txt" \
+	-w '%{http_code} %{size_download}' \
+	-H 'Content-Type: application/json' --data-binary "@$ROBOCZY/duzy.json" \
+	"$ADRES/wp-admin/admin-post.php")"
+HTTP_G="${WYNIK_G%% *}"
+WIDZI_G="$(tresc_widziana)"
+printf '    | http=%s\n' "$HTTP_G"
+if printf '%s' "$WIDZI_G" | grep -qF 'post_max_size'; then
+	zglos "G: żądanie NIEFORMULARZOWE ponad post_max_size dostało diagnozę o ucięciu — klauzula typu treści nie działa (drugi człon warunku sam ją przepuścił)"
+else
+	potwierdz "G: żądanie nieformularzowe ponad post_max_size nie dostaje diagnozy (http=$HTTP_G) — klauzula typu treści strzeże"
+fi
+echo
+
 # --- sprzątanie po sobie: wiersze, plik i przechowalnia szkicu ------------------
 # ⛔ SZKIC KASUJEMY POD IDENTYFIKATOREM WŁAŚCICIELA, NIE POD ZEREM. `wp eval` chodzi tu bez
 # `--user`, więc `get_current_user_id()` zwraca 0, a przechowalnię zakłada handler w żądaniu
@@ -307,8 +339,8 @@ posprzataj
 
 echo
 if [ "$BLEDY" -eq 0 ]; then
-	echo "STRAZNIK: WYNIK=OK — A, B, C, D, E i F zgodne z oczekiwaniem"
+	echo "STRAZNIK: WYNIK=OK — A, B, C, D, E, F i G zgodne z oczekiwaniem"
 	exit 0
 fi
-echo "STRAZNIK: WYNIK=FAIL — $BLEDY z 6 kierunkow nie wyszlo (REGRESJA)"
+echo "STRAZNIK: WYNIK=FAIL — $BLEDY z 7 kierunkow nie wyszlo (REGRESJA)"
 exit 1
