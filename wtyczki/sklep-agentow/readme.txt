@@ -4,7 +4,7 @@ Tags: sklep, stripe, pliki cyfrowe, sprzedaz wtyczek, pobieranie
 Requires at least: 6.7
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.9.34
+Stable tag: 0.9.35
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -160,6 +160,9 @@ Nie. Zakup jest bez konta: adres e-mail podany na stronie płatności Stripe,
 link do pobrania w mailu, jednorazowy link do opinii.
 
 == Changelog ==
+
+= 0.9.35 =
+* Naprawione (bezpieczeństwo): eksport CSV zamówień nie wynosi już formuły na Twój komputer. Adres kupującego zaczynający się od `=`, `+`, `-` lub `@` (WordPress takich nie odrzuca) trafiał do pliku bez zmian i wykonywał się jako formuła po otwarciu eksportu w Excelu albo LibreOffice; tą samą drogą szła nazwa produktu. Każda komórka zaczynająca się od `=`, `+`, `-`, `@`, tabulatora, powrotu karetki albo apostrofu dostaje teraz z przodu apostrof (wartość od apostrofu dostaje drugi — dzięki temu odczyt maszynowy zawsze odzyska oryginał zdjęciem jednego znaku), a kolumna „Kwota" zostaje liczbą, więc arkusz nadal sumuje sprzedaż.
 
 = 0.9.34 =
 * Naprawione: sklep nie obiecuje już, że wystawi i wyśle fakturę — bo tego nie robi. Formularz zakupu i mail po zakupie mówią teraz, co się naprawdę dzieje z danymi do faktury (sklep je zapisuje i pokazuje w potwierdzeniu, fakturę wystawia sprzedawca poza sklepem) i gdzie kupujący ma się upomnieć, jeśli faktura nie dotrze. Pola faktury, sprawdzanie NIP-u i zaproszenie „chcesz fakturę?" działają bez zmian.

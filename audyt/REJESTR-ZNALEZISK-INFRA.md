@@ -27,13 +27,16 @@
 > ⛔ Znaleziska produktu NIE wchodzą tutaj; tu wyłącznie infrastruktura, CI, wydanie i dokumenty.
 
 ## Liczba znalezisk OTWARTYCH: 36
-<!-- ⛔ LICZ KOMENDĄ, NIGDY Z GŁOWY — patrz I-23. Stan 2.09 rano, PO wciągnięciu origin/main
-     (#259, #262, #260) do gałęzi #261 — liczby PRZELICZONE od nowa wobec scalonego drzewa:
-     71 wierszy tabeli, 70 unikalnych kodów (B-12 dwa razy: w starej tabeli i jako odwrócone),
-     36 otwarte, 30 zamkniętych, 1 zamknięte warunkowo, 2 w naprawie, 1 wycofane, 1 zaparkowane.
-     Suma statusów: 36+30+1+2+1+1 = 71 = liczba wierszy. Doszły z #261: I-24, I-25, I-26, I-27 (OTWARTE). ✔ Ta równość MUSI zachodzić — to
+<!-- ⛔ LICZ KOMENDĄ, NIGDY Z GŁOWY — patrz I-23. Stan 2.09 (runda 6), PO drugim wciągnięciu origin/main
+     (#264 CSV injection) do gałęzi #261 — liczby PRZELICZONE od nowa komendami z sekcji CZWARTA RUNDA:
+     72 wiersze tabeli, 71 unikalnych kodów (B-12 dwa razy: w starej tabeli i jako odwrócone),
+     36 otwarte, 31 zamkniętych, 1 zamknięte warunkowo, 2 w naprawie, 1 wycofane, 1 zaparkowane.
+     Suma statusów: 36+31+1+2+1+1 = 72 = liczba wierszy. Doszły z #261: I-24, I-25, I-26, I-27 (OTWARTE);
+     z maina (#264): `Q-6` (CSV injection) od razu jako ZAMKNIETE, licznik OTWARTYCH bez zmian. ✔ Ta równość MUSI zachodzić — to
      jedyna kontrola, która łapie liczenie słów statusu z tekstu opisowego. Q-1 i Q-2 są
      ZAMKNIETE w #259; Q-3 wzięte ze strony maina (ma policzone liczby po recenzji #260).
+     ⚠️ Nagłówek pliku mówi „znaleziska produktu NIE wchodzą tutaj", a Q-4…Q-6 są znaleziskami
+     produktu — sprzeczność sprzed #264, do wyprostowania całym blokiem Q-*, nie pojedynczo.
      Komendy w sekcji CZWARTA RUNDA. -->
 <!-- ⛔ Ten licznik NIE MA STRAŻNIKA: bramka-znaleziska.sh czyta wyłącznie
      audyt/REJESTR-ZNALEZISK.md. Dlatego rozjechał się o sześć pozycji (I-23). -->
@@ -196,6 +199,7 @@ jeden przebieg CI się nie udał.**
 | `Q-3` | **DUZE** · **bramka pakowania sprawdza ślady WŁASNYM wzorcem zamiast kanonicznego skanera — i przepuszcza to, co on łapie.** `narzedzia-qa/pakuj-dla-klienta.sh:60` ma ręcznie wpisany grep (**9 alternatyw, zero nazwanych klas**) na `PRZECZYTAJ-MNIE.txt` i `INSTRUKCJA-INSTALACJI.md`, gdy `slady-wewnetrzne.sh` ma **5 klas i 52 alternatywy** — imię właściciela, numer PR-a, „recenzent” i „koordynator” siedzą w jednej z nich (`nasz obieg pracy`). ⛔ Liczby POLICZONE; recenzja `#260` złapała tu wcześniejsze „8 klas / zna 10” jako zmyślone | ⭐ **próba kontrolna, nie sam odczyt:** plik z treścią zawierającą imię właściciela, numer PR-a i słowo „koordynator” → wzorzec z linii 60 **zero trafień, raport czysto**; ten sam plik przez `slady-wewnetrzne.sh` → **4 trafienia i kod 1**. ⛔ Te dwa pliki najwyższego poziomu paczki **nie są objęte żadną inną ścieżką ochrony**: bramka `slady` skanuje tylko `wtyczki/*/`, a `paczka-zgodnosc.sh` tylko wnętrze archiwów. Sam `slady-wewnetrzne.sh` ostrzega w nagłówku przed tą duplikacją | **OTWARTE** | workflow `P1` |
 | `Q-4` | **SRED** · **kupujący po zwrocie pieniędzy nadal pobiera produkt.** `pobieranie.php:28-41` wpuszcza wyłącznie na token i termin ważności, **nie czyta kolumny statusu** — więc zamówienie zwrócone albo sporne otwiera plik tak samo jak opłacone, aż do naturalnego wygaśnięcia linku | obie strony mechanizmu sprawdzone na kodzie: obsługa zwrotu i sporu (`zakup.php:648-756`) zmienia status i kwotę zwrotu, ale **nigdy nie unieważnia tokenu ani terminu**. Potwierdza to komentarz w `assets/dziekujemy.js:26-27`. ⚠️ `DECYZJE.md` D31 akceptuje ryzyko „kupi, skopiuje, zwróci” **ogólnie** — nie odnosi się do bramy pobrań po naprawie księgowania statusu | **OTWARTE** | workflow `P3` |
 | `Q-5` | **SRED** · **okno idempotencji zakupu kluczowane samym adresem IP** (`zakup.php:177`) — dwie osoby za tym samym adresem (biuro, sieć komórkowa, uczelnia) dzielą jedno okno, więc zakup jednej może odbić się drugiej | `md5( sklepag_ip() … )` bez udziału tożsamości kupującego ani identyfikatora sesji przeglądarki | **OTWARTE** | workflow `P3` |
+| `Q-6` | ⛔ **DUZE · EKSPORT CSV ZAMOWIEN WYNOSI FORMULE NA KOMPUTER WLASCICIELA (CSV injection).** `sklepag_obsluz_eksport_csv()` wypychalo przez `fputcsv` pola tekstowe tak, jak leza w bazie — kupujacy podaje adres `=1+1@example.com`, wlasciciel klika „Eksport CSV" i otwiera plik w Excelu albo LibreOffice, a formula wykonuje sie na JEGO komputerze. Wektor z zewnatrz (kupujacy przeciw wlascicielowi) oraz drugi, wewnetrzny, przez nazwe produktu | **pomiar koordynatorki (1.09)**: `includes/admin-dashboard.php:292-308` wypycha wprost `email_kupujacego` (:297) i `produkt_nazwa_kupiona` (:298) bez prefiksowania znakow formuly; `wp eval` na naszym stosie: `sanitize_email()` i `is_email()` PRZEPUSZCZAJA adres zaczynajacy sie od `=` (wejscie `=1+1@example.com` wychodzi nietkniete, `is_email()` = TAK), tak samo dla `+` i `-`. ⛔ Czy Stripe przepusci taki adres przy checkoucie — **NIEROZSTRZYGNIETE i swiadomie niebadane**: naprawa nie ma prawa zalezec od walidacji cudzego systemu, a `produkt_nazwa_kupiona` ustawia wlasciciel i Stripe jej nie widzi wcale | **ZAMKNIETE** — naprawione w #264: `sklepag_csv_komorka()` poprzedza apostrofem kazda komorke zaczynajaca sie od `=` `+` `-` `@` TAB CR (i od apostrofu — zeby zdjecie jednego zawsze oddawalo oryginal), zastosowane przez `array_map` do CALEGO wiersza (klasa, nie dwa znane pola); literaly liczbowe zostaja liczbami, zeby kolumna „Kwota" dalej sie sumowala. Straznik: `testy/csv-bez-formuly-test.php` (5 kierunkow; na kodzie sprzed naprawy EXIT=1 — padaja A i B, czyli OBA zrodla) | pomiar koordynatorki |
 
 ⭐ **Kontekst od właściciela, którego nie ma w kodzie** (1.09): dane do faktury szły kiedyś
 **mailem**, pole na NIP dodano na stronę **później**. `zakup.php:1225-1227` obsługuje obie drogi

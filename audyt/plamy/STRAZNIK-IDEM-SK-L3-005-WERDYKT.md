@@ -8,6 +8,11 @@ w katalogu roboczym sesji. Naprawę bierze builder.
 
 ## PLIK I LINIA — jedno zdanie
 
+> ⛔ **STAN PO `#259` (dopisane 2.09, runda 6 PR #261):** poniższy werdykt opisuje kod **sprzed** naprawy z PR #259, która wjechała
+> na tę gałąź mergem `6e791fb`. Na HEAD: `testy/idem-nie-oddaje-oplaconej-sesji-test.php:50` to komentarz o tej naprawie, a klucz test liczy
+> produkcyjną funkcją `sklepag_klucz_idem()` (`zakup.php:32`); `zakup.php:177` to dziś pusty komentarz. Cytaty niżej zostawiam jako zapis
+> pomiaru z 1.09 — numery linii NIE trafiają na HEAD i nie mają trafiać. Co z listy dla buildera jest zrobione, a co nie — w tej sekcji niżej.
+
 **`testy/idem-nie-oddaje-oplaconej-sesji-test.php:50`** buduje klucz okna z **dwóch** członów,
 a **`wtyczki/sklep-agentow/includes/zakup.php:177`** czyta klucz z **trzech**:
 
@@ -95,13 +100,14 @@ z rubryki nie da się odczytać, który z nich przeszedł i kiedy.
 
 ## CO ODDAJĘ BUILDEROWI (nie robię tego sam)
 
-1. **`testy/idem-nie-oddaje-oplaconej-sesji-test.php:50`** — klucz musi mieć trzeci człon.
+1. ✅ **ZAMKNIĘTE PRZEZ `#259`** (0.9.33; sprawdzone na HEAD 2.09: `grep -n 'function sklepag_klucz_idem' wtyczki/sklep-agentow/includes/zakup.php` → `32`, test woła ją w `:58`). Treść zadania z 1.09:
+   **`testy/idem-nie-oddaje-oplaconej-sesji-test.php:50`** — klucz musi mieć trzeci człon.
    ⛔ Nie wystarczy dopisać `'|h'` na sztywno: strażnik woła `sklepag_obsluz_kup()` bez
    `$_POST['osadzona']`, więc handler idzie ścieżką hostowaną — ale gdy jutro zmieni się
    domyślny tryb, test znów rozjedzie się po cichu. Sensowniej **wyliczyć klucz tą samą
-   funkcją co produkt** (dziś jej nie ma — klucz jest składany w miejscu użycia,
-   `zakup.php:177`), czyli naprawić **klasę**: jedno źródło klucza dla kodu i dla testu.
-2. ⛔ **KALIBRACJĘ TRZEBA POWTÓRZYĆ, NIE PRZEPISAĆ Z PR #199.** To nie jest formalność
+   funkcją co produkt** (1.09 jej nie było — klucz był składany w miejscu użycia,
+   ówczesne `zakup.php:177`; od `#259` jest: `sklepag_klucz_idem()`), czyli naprawić **klasę**: jedno źródło klucza dla kodu i dla testu.
+2. ⬜ **NADAL OTWARTE** — ⛔ **KALIBRACJĘ TRZEBA POWTÓRZYĆ, NIE PRZEPISAĆ Z PR #199.** To nie jest formalność
    i nie wolno tu iść na skróty. Dowód kalibracji z PR #199 mówi: „strażnik pada na kodzie
    sprzed naprawy `SK-L3-005`" — i był prawdziwy w 0.9.18, gdy klucz się zgadzał. **Dziś jest
    nieprawdziwy**: przy kluczu, którego handler nie czyta, kierunek A przechodzi pusto,
@@ -110,8 +116,8 @@ z rubryki nie da się odczytać, który z nich przeszedł i kiedy.
    nie zdanie), naprawiony strażnik jest **nieskalibrowany** — czyli dokładnie tym samym,
    czym jest dziś: testem, który przechodzi zawsze.
 3. **Nagłówek testu kłamie o adresie**: mówi „w CLI `sklepag_ip()` zwraca stale `0.0.0.0`"
-   (`testy/idem-nie-oddaje-oplaconej-sesji-test.php:103`, w komentarzu przy limiterze — sprawdzone
-   grepem na HEAD gałęzi: `grep -n '0\.0\.0\.0'` daje dokładnie **jedno** trafienie) — **zmierzone: `127.0.0.1`** (sonda kluczy, `EXIT=0`). Wniosku to nie zmienia,
+   (`testy/idem-nie-oddaje-oplaconej-sesji-test.php:103`, w komentarzu przy limiterze — 1.09 sprawdzone
+   grepem na ówczesnym HEAD: jedno trafienie; ⛔ po `#259` `grep -n '0\.0\.0\.0'` daje **ZERO** trafień, a pod `:103` stoi `add_filter( 'wp_die_handler', … )` — zdanie z nagłówka testu zniknęło razem z naprawą) — **zmierzone: `127.0.0.1`** (sonda kluczy, `EXIT=0`). Wniosku to nie zmienia,
    bo adres i tak jest stały i licznik dzielą wszystkie przebiegi, ale to wartość wpisana
    w dokumentację niezgodna z pomiarem — poprawić przy okazji naprawy klucza.
 4. **Rejestr**: `audyt/sklep/REJESTR-ZNALEZISK-SKLEP.md`, wiersz `SK-L3-005` ma w kolumnie

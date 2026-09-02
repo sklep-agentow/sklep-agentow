@@ -72,7 +72,7 @@ W SKRÓCIE", trzy kroki — `zakup.php:1314`) i **link do pobrania** (`zakup.php
 **JAK CZŁOWIEK TEGO UŻYWA.** Kupujący: skrzynka pocztowa, temat „Twój zakup: … —
 potwierdzenie i pobranie", przycisk **„Pobierz …"** w mailu. Właściciel: **Pulpit → Szczegóły
 zamówienia → „Treść wysłanego maila"** + przycisk **„Wyślij ponownie (świeży link)"**
-(`includes/admin-zamowienie.php:355`).
+(podgląd treści i przycisk ponownej wysyłki: `includes/admin-zamowienie.php:346-357`).
 
 **POMIAR (ponad odczyt kodu).** Prawdziwy mail zdjęty dziś z łapacza `sklep_mailpit`: niesie
 komplet — numer `#9902289`, produkt, datę, kwotę, potwierdzenie zgody z 01.09.2026 04:56,
@@ -215,7 +215,7 @@ produkt"**, przy wierszu **„Edytuj"** i przełącznik sprzedaży (**„W sprze
 (`sklepag_zapisz_logowanie`); opóźnienie kolejnych prób `:22` (hak `wp_authenticate`).
 Rozszerzenie ponad literę, zapowiedziane w `S-09` — **log akcji admina**: tabela
 `sklepag_zdarzenia` (`aktywacja.php:99-108`) z kolumną `uzytkownik` wypełnianą loginem
-zalogowanego (`includes/zakup.php:312-323`); piszą do niej m.in. CRUD produktu
+zalogowanego (`includes/zakup.php:332-342`, `sklepag_zdarzenie`); piszą do niej m.in. CRUD produktu
 (`admin-produkty.php:446`), ponowna wysyłka (`admin-zamowienie.php:131`) i eksport CSV
 (`admin-dashboard.php:258`).
 

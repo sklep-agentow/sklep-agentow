@@ -185,7 +185,7 @@ kanale zwrotnym milczy, choć to jedna gałąź w tym samym warunku.
 
 | # | Co sprawdzone | Jak zmierzone | Wynik |
 |---|---|---|---|
-| 1 | **Zgodność wersji tekstowej i HTML maila** — czy klient poczty czytający HTML dostaje mniej | porównanie obu składaczy (`zakup.php:1232`, `mail-html.php:38`) + zliczenie w sondzie | **CZYSTO** — obie wersje niosą ten sam komplet: numer, produkt, data zakupu, kwota, potwierdzenie zgody z chwilą, link i jego ważność, instrukcja 3 kroki, gwarancja, opinia, faktura, stopka sprzedawcy. HTML dokłada tylko adres strony i zdanie „to jest potwierdzenie umowy — zachowaj go" |
+| 1 | **Zgodność wersji tekstowej i HTML maila** — czy klient poczty czytający HTML dostaje mniej | porównanie obu składaczy (`zakup.php:1273`, `mail-html.php:38`) + zliczenie w sondzie | **CZYSTO** — obie wersje niosą ten sam komplet: numer, produkt, data zakupu, kwota, potwierdzenie zgody z chwilą, link i jego ważność, instrukcja 3 kroki, gwarancja, opinia, faktura, stopka sprzedawcy. HTML dokłada tylko adres strony i zdanie „to jest potwierdzenie umowy — zachowaj go" |
 | 2 | **Słownik statusów strony „Dziękujemy"** — czy jest status, przy którym strona kłamie | zestawienie statusów pisanych do `zamowienia.status` w kodzie z tablicą `opisy` w `dziekujemy.js` | **CZYSTO** — 7 statusów zamówienia (`oczekuje, oplacone, mail_w_toku, mail_wyslany, mail_blad, zwrocone, sporne`) ma po zdaniu, plus `brak` i zdanie zapasowe `nieznany`, które celowo nie twierdzi nic o pieniądzach. Statusy `zalazek/oczekuje/przyjeta/odrzucona` należą do opinii, nie do zamówień |
 | 3 | **Liczby w mailu wobec kodu** — „ważny 3 dni", „10 pobrań", „opinia 30 dni" | liczone ze stałych w chwili składania maila (`round(SKLEPAG_LINK_GODZIN/24)`, `SKLEPAG_LIMIT_POBRAN`, `SKLEPAG_OPINIA_DNI`) | **CZYSTO** — żadnej liczby nie da się rozjechać z kodem, bo żadna nie jest wpisana ręcznie |
 | 4 | **Obietnica „link do opinii jest jednorazowy i ważny 30 dni"** | `opinie.php:85-90` (termin + porównanie stałoczasowe) i `:132` (`token_hash=''` przy zapisie) + żywy strzał na zły token | **CZYSTO** — obie części obietnicy egzekwowane; zły/zużyty link daje HTTP 200 ze zdaniem „opinia mogła już zostać wysłana albo link wygasł (30 dni od zakupu)" |
@@ -281,7 +281,7 @@ bo rozdział 9 tego samego dokumentu kieruje do przycisku.
 |---|---|---|---|
 | 1 | **Wymagania instalacji**: „WordPress 6.7+ · PHP 8.1+" | nagłówki trzech wtyczek | **CZYSTO** — sklep `6.7`/`8.1`, oba boty `6.0`/`8.1`; instrukcja podaje wymaganie NAJOSTRZEJSZEJ z trzech, czyli poprawnie |
 | 2 | **„Paczka sklepu waży około 4 MB, limit wysyłki co najmniej 8 MB"** | `find -printf %s` na paczkach | **CZYSTO** — `sklep-agentow-0.9.28.zip` = 4 719 003 B (4,5 MB); rada „podnieś do 32 MB" z zapasem |
-| 3 | **„sklep co 10 minut SAM dopytuje Stripe"** + **„odczekaj 2 minuty"** | `sklep-agentow.php:77` `'interval' => 600`, `zakup.php:1335` granica `− 120 s` | **CZYSTO** — obie liczby zgodne z kodem |
+| 3 | **„sklep co 10 minut SAM dopytuje Stripe"** + **„odczekaj 2 minuty"** | `sklep-agentow.php:77` `'interval' => 600`, `zakup.php:1378` granica `− 120 s` | **CZYSTO** — obie liczby zgodne z kodem |
 | 4 | **Adres webhooka `…/wp-json/sklepag/v1/webhook`** | `register_rest_route( 'sklepag/v1', '/webhook' )` | **CZYSTO** |
 | 5 | **„Jeśli zapomnisz o odnośnikach — wtyczka pokaże czerwone ostrzeżenie z linkiem"** | `admin.php:33-37` (`notice-error` + link do `options-permalink.php`, warunek `'' !== permalink_structure`) | **CZYSTO** |
 | 6 | **„Klucze Stripe i zadanie cykliczne znikają ZAWSZE"** (sklep) oraz **„Klucz API każdego bota usuwany ZAWSZE"** | trzy pliki `uninstall.php` | **CZYSTO** — sklep kasuje oba sekrety i `wp_clear_scheduled_hook` **przed** wczesnym `return`; ChatBot kasuje `chatl_klucz_api` przed `return`; Segregator kasuje `segm_klucz_api` **i `segm_imap_haslo`** przed `return`. To jest klasa nr 1 ze `SCIAGA-EGZAMINATORA.md` i tu jest zamknięta |
@@ -460,7 +460,7 @@ w którym ta symetria kiedyś pęknie. Dziś nie jest pęknięta.
 | 27 | cron `sklepag_dociagnij_zalegle` | `sklep-agentow.php:91` | ✅ **ZAWSZE** (`:22`) |
 | 28-31 | 4 strony WP (wpisy w `wp_posts`) | `aktywacja.php` | ✅ `wp_delete_post(…, true)` (`:39`) |
 | 32 | katalog chroniony w `uploads` + `.htaccess`, `index.php` i wgrane paczki ZIP ⛔ **pozycja PRZEKWALIFIKOWANA — patrz „KOREKTA MOJEGO WŁASNEGO WYNIKU Z `A5`" w sekcji `A1`: katalogów bywa kilka, uninstall zna jeden** | `aktywacja.php:240-259`, `admin-produkty.php:386` | ✅ (`:45-63`) — kasuje **tylko** ścieżkę pasującą do wzorca `sklepag-chronione-`, `rmdir` dopiero gdy pusto |
-| 33 | reguła przepisywania adresów w opcji RDZENIA `rewrite_rules` | `front-produkt.php:45-56` | ⚠️ **nie w `uninstall.php`** — czyści ją `sklepag_deaktywacja()` (`aktywacja.php:176`) |
+| 33 | reguła przepisywania adresów w opcji RDZENIA `rewrite_rules` | `front-produkt.php:45-56` | ⚠️ **nie w `uninstall.php`** — czyści ją `sklepag_deaktywacja()` (`aktywacja.php:177`) |
 
 ### `chatbot-live` — 13 pozycji
 
@@ -540,7 +540,7 @@ Druga granica jest ostrzejsza: tamten przegląd pytał, **co bramka mierzy**. Ni
 
 ## 1. ZNALEZISKA
 
-### 🟠 `B6-F1` — **SRED** · sieroty to nie trzy egzemplarze, tylko **klasa**: 32 z 54 testów PHP ma jedyną automatyczną drogę uruchomienia przez skrypt, którego nikt nie woła
+### 🟠 `B6-F1` — **SRED** · sieroty to nie trzy egzemplarze, tylko **klasa**: 36 z 57 testów PHP ma jedyną automatyczną drogę uruchomienia przez skrypt, którego nikt nie woła
 
 **ZNALEZISKO.** `I-3`, `I-4`, `I-8` (wszystkie **OTWARTE**) opisują pojedyncze sieroty:
 `kalibrator-straznikow.sh`, `licznik-odstepstw.sh`, `adresy-w-dokumencie.sh`,
@@ -549,19 +549,20 @@ Druga granica jest ostrzejsza: tamten przegląd pytał, **co bramka mierzy**. Ni
 | pomiar | wynik |
 |---|---|
 | skrypty `.sh` w `narzedzia-qa/` i `testy/` bez ani jednego wołającego | **7 z 89** |
-| testy `.php` w `testy/` bez wołającego **innego niż `linia-bazowa.sh`** | ⛔ **32 z 54** |
+| testy `.php` w `testy/` bez wołającego **innego niż `linia-bazowa.sh`** | ⛔ **36 z 57** (sonda: `bash audyt/czesciowo/B6-sonda-sieroty.sh`, stan po #264) |
 | a `linia-bazowa.sh` — jedyny, który bierze je wzorcem `testy/*.php` — ma wołających | **0** |
 
-W tych 32 są m.in. **`idem-nie-oddaje-oplaconej-sesji-test.php`** (ten, który dziś okazał się
+W tych 36 są m.in. **`idem-nie-oddaje-oplaconej-sesji-test.php`** (ten, który dziś okazał się
 kłamiący od siedmiu wydań — nikt go nie odpalał, więc nikt tego nie widział)
 i **`golden-kupujacy-dostaje-to-co-kupil-test.php`** (strażnik błędu właściciela, `I-24`).
 **To jest jeden mechanizm, nie pięć osobnych pozycji:** narzędzie powstaje razem z naprawą,
 zostaje opisane w PR i **nie dostaje spustu**, bo spust jest osobną robotą, o którą nikt nie pyta
 w szablonie PR-a.
 
-**DOWÓD.** Sonda liczy wołania nazwy pliku w `.github/ .githooks/ narzedzia-qa/ testy/ boty/`
-z pominięciem samego pliku i linii komentarza. **Kontrola dodatnia jest wbudowana w wynik:**
-ta sama komenda znajduje wołających dla **22 z 54** testów PHP i dla 82 z 89 skryptów — więc
+**DOWÓD.** Sonda `audyt/czesciowo/B6-sonda-sieroty.sh` liczy wołania nazwy pliku w `.github/ .githooks/ narzedzia-qa/ testy/ boty/`
+z pominięciem samego pliku, linii komentarza i plików `.md` (wzmianka w dokumencie to nie spust). ⛔ Liczby z rundy 5 (32 z 54, 22 z 54) były policzone
+na drzewie sprzed mergów #259/#264 sondą ad hoc; od rundy 6 liczy plik w repo, żeby każdy dostał ten sam wynik tą samą komendą. **Kontrola dodatnia jest wbudowana w wynik:**
+ta sama komenda znajduje wołających dla **21 z 57** testów PHP i dla 82 z 89 skryptów — więc
 zero przy pozostałych jest faktem, nie ślepotą narzędzia.
 
 **⚠️ MÓJ WŁASNY FAŁSZYWY ALARM, złapany przed zgłoszeniem.** Pierwsza wersja sondy dała
@@ -586,10 +587,10 @@ Regresja w każdym z nich jest niewidzialna do chwili, w której ktoś ręcznie 
 | | 28.08 (`BRAMKI-NAZWA-VS-POMIAR.md`) | 1.09 (dziś) |
 |---|---|---|
 | pliki `.php` sprawdzane przez `php-lint` | 52 | **54** |
-| śledzone pliki `.php` **poza** `wtyczki/` | 65 | ⛔ **80** |
+| śledzone pliki `.php` **poza** `wtyczki/` | 65 | ⛔ **84** (`git ls-files '*.php' \| grep -vc '^wtyczki/'`, stan po #264; `php-lint` liczy `find wtyczki` = 54 bez zmian) |
 
-Luka urosła o piętnaście plików, bo cały przyrost narzędzi i testów ląduje poza `wtyczki/`.
-W tych 80 są **wszystkie** dzisiejsze strażniki, łącznie z `testy/golden-…-test.php`
+Luka urosła o dziewiętnaście plików, bo cały przyrost narzędzi i testów ląduje poza `wtyczki/`.
+W tych 84 są **wszystkie** dzisiejsze strażniki, łącznie z `testy/golden-…-test.php`
 i `testy/idem-…-test.php`. Nic w bramkach nie sprawdza nawet ich **składni**.
 
 **Dlaczego `MALE`, a nie wyżej.** Błąd składni w teście ujawnia się głośno przy pierwszym

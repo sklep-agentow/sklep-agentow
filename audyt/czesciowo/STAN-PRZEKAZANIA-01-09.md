@@ -17,7 +17,7 @@ produktu i zero testów. Zawartość:
 | `audyt/plamy/SK-L-005-WERDYKT.md` | waga ŚREDNIA zostaje, uzasadnienie w rejestrze do poprawy (gotowe teksty w §4) |
 | `audyt/plamy/GOLDEN-258-WERYFIKACJA.md` | golden `EXIT=0`, kalibracja `EXIT=0`, **stos NIE zostaje czysty** |
 | `audyt/czesciowo/H2-sonda-replay.php` · `E7-sonda-*.js/.php` | przyrządy pomiarowe (nie strażniki, nie wchodzą do bramek) |
-| `audyt/REJESTR-ZNALEZISK-INFRA.md` | dopisane `I-24`…`I-27`, licznik 34 → 38 otwartych, 13 → 17 bez strażnika; poprawiony opis `I-9` |
+| `audyt/REJESTR-ZNALEZISK-INFRA.md` | dopisane `I-24`…`I-27`, licznik 34 → 36 otwartych (po przeliczeniu komendą na scalonym drzewie, 72 wiersze), 13 → 17 bez strażnika; poprawiony opis `I-9` |
 | `audyt/CO-WISI.md` | wpis 🔴 o goldenie bez spustu |
 | `audyt/SCIAGA-EGZAMINATORA.md` | **klasa 97** (cytat `plik:linia` bierze się z HEAD, nie ze stosu) |
 
@@ -25,7 +25,7 @@ produktu i zero testów. Zawartość:
 
 **Runda 2 (recenzent):** 2 × WAŻNE, 3 × DROBNE, 0 × KRYTYCZNYCH; bramki 12/12 `EXIT=0`.
 **Cztery z pięciu uwag domknięte commitem `95b8195`** (punkty 1, 3, 4, 5 niżej); punkt 2 to edycja opisu PR-a na GitHubie, nie commit w repo — `eef4a0f` w tym miejscu nie istnieje w historii (`git cat-file -e` pada), a żaden z sesyjnych commitów po `95b8195` (`739405e`, `a426c3b`, `e59e2b4`, `f4dc0b7`) nie dotyka plików z punktów 2–5 niżej.
-1. cytaty `plik:linia` przeliczone **na HEAD** (42 wzorce w pięciu plikach) — sprawdzone
+1. cytaty `plik:linia` przeliczone **na HEAD** (42 wzorce w pięciu plikach; ⚠️ runda 5 wykazała, że sweep po wzorcu `plik:linia` pominął LICZBY i bliźniaczy plik `STRAZNIK-IDEM-SK-L3-005-WERDYKT.md` — domknięte w rundzie 6) — sprawdzone
    skryptem drukującym faktyczną treść cytowanej linii;
 2. opis PR-a przepisany: tabela wszystkich znalezisk z wagami, dziesięć obszarów, oba kody
    sondy replay, jawnie **obowiązująca liczba `A5` = 61 sprzątanych**;
@@ -68,7 +68,7 @@ Do tego, poza rejestrem:
 
 ## 4. Co zostaje otwarte dla następnego
 
-- **Recenzje rund 3 i 4 PR #261 opublikowane i domykane 2.09** — runda 4 wniosła 2 × WAŻNE (dziesięć cytatów `plik:linia` przesuniętych mergem #259, numer klasy 94→97 w ściądze po zderzeniu z klasami 94-96 z maina) i 2 × DROBNE (etykieta „wywołań” w A2/A3, licznik `REJESTR-ZNALEZISK-INFRA.md`); ta sesja je domyka.
+- **Recenzje rund 3 i 4 PR #261 opublikowane i domykane 2.09** — runda 4 wniosła 2 × WAŻNE (dziesięć cytatów `plik:linia` przesuniętych mergem #259 wraz z numerem klasy 94→97; **ten dokument** — commit-widmo `eef4a0f` i zdania o stanie recenzji) i 2 × DROBNE (etykieta „wywołań” w A2/A3, opis PR-a bez ostatnich commitów); ta sesja je domyka.
 - **Trzy pozycje `SRED` do naprawy przez buildera**: `A1-F1` (katalogi chronione przeżywają
   „pełne czyszczenie"), `B6-F1` (32 z 54 testów PHP bez spustu), `H1-F1`/`I-25` (martwy cron).
 - **Do rejestru sklepu, teksty gotowe do wklejenia** w `audyt/plamy/SK-L-005-WERDYKT.md` §4:
