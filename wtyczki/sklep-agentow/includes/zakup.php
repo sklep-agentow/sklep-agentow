@@ -22,10 +22,10 @@ const SKLEPAG_ZGODA_TRESC = 'Wyrażam zgodę na natychmiastowe dostarczenie tre�
  * podkładał okno — i przestał mierzyć cokolwiek, nie mówiąc o tym ani słowem. Dwa miejsca
  * składające ten sam klucz to rozjazd czekający na okazję; jedno miejsce go nie ma jak zrobić.
  *
- * ⛔ NUMERU WYDANIA W KOMENTARZU NIE PISZEMY. Nadaje go koordynatorka PRZY SCALANIU,
- * bo kolejnosc scalania otwartych PR-ow potrafi sie zmienic — rezerwacja numeru w kodzie
- * jej nie przezywa i produkt zaczyna twierdzic cos o wydaniu, ktorego nie ma (klasa 98).
- * Numer zyje wylacznie w naglowku sekcji CHANGELOG-a.
+ * ⛔ W KOMENTARZACH NIE PODAJEMY NUMERU WYDANIA. Numer wydania zyje w JEDNYM miejscu —
+ * w naglowku sekcji CHANGELOG.md. Numer wpisany do komentarza starzeje sie natychmiast,
+ * gdy zmiana trafi do innego wydania, niz zakladal autor, i wtedy kod twierdzi cos
+ * o wydaniu, ktorego nie ma. Pisz „od tego wydania” / „w poprzednich wydaniach”.
  * Człony: adres kupującego (okno działa per adres), ZNACZNIK FORMULARZA (od tego wydania — losowy token
  * wpisany w formularz przy renderze strony produktu: podwójny klik wysyła TEN SAM formularz, więc ten
  * sam token; druga osoba za tym samym adresem ma własny render i własny token), produkt (osobne okno
