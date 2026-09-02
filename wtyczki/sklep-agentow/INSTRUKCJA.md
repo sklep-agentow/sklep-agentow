@@ -360,8 +360,9 @@ od 0.9.36 sklep mówi, ile serwer przyjmuje i które ustawienie o tym decyduje.)
 jeszcze otwartą stronę „Dziękujemy” (albo wróci na nią ze starego odnośnika), przeczyta tam
 **„Płatność za to zamówienie została zwrócona — nie jest już opłacone”**, a przy sporze —
 **„Ta płatność jest reklamowana w banku i czeka na rozstrzygnięcie”**. Strona przestaje wtedy
-odświeżać status. Żadne z tych zdań **nie mówi**, że link do pobrania przestał działać, bo nie
-przestaje (patrz ostrzeżenie w rozdziale 3).
+odświeżać status. Od 0.9.37 **oba te zdania mówią wprost, że link do pobrania przestał działać** —
+bo faktycznie przestaje (brama pobrań odmawia dla statusów „zwrócone” i „sporne”, patrz
+ostrzeżenie w rozdziale 3).
 
 **Czy pliki są bezpieczne na serwerze nginx?** Katalog plików chroni `.htaccess`, który
 działa na Apache, a na nginx jest ignorowany. Prawdziwą ochroną jest brama w sklepie (token,

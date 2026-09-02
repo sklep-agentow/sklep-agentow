@@ -28,7 +28,7 @@
 		   i dopiero tam czytac, ze przestal dzialac. Do 0.9.36 brama statusu nie sprawdzala i zdania
 		   celowo o linku milczaly. */
 		zwrocone: 'Płatność za to zamówienie została zwrócona — nie jest już opłacone, a link do pobrania z maila przestał działać. Jeśli to pomyłka, odpisz na maila z potwierdzeniem zakupu.',
-		sporne: 'Ta płatność jest reklamowana w banku i czeka na rozstrzygnięcie — do tego czasu link do pobrania nie działa. Jeśli to pomyłka, odpisz na maila z potwierdzeniem zakupu.',
+		sporne: 'Ta płatność jest reklamowana w banku i czeka na rozstrzygnięcie — link do pobrania nie działa. Wróci tylko wtedy, gdy spór rozstrzygnie się na korzyść sklepu. Jeśli to pomyłka, odpisz na maila z potwierdzeniem zakupu.',
 		brak: 'Nie znaleziono zamówienia dla tego adresu.',
 		/* ⛔ Wczesniej NIEZNANY status dostawal zdanie `oczekuje` — czyli kazdy status
 		   dopisany w przyszlosci wracalby z ta sama wada. Zdanie zapasowe ma NIE TWIERDZIC

@@ -81,10 +81,10 @@ add_filter(
 	},
 	PHP_INT_MAX
 );
-$odpal = static function ( $id ) use ( $token ) {
+$odpal = static function ( $id, $metoda = 'GET' ) use ( $token ) {
 	$_GET['z']                 = $id;
 	$_GET['t']                 = $token;
-	$_SERVER['REQUEST_METHOD'] = 'GET';
+	$_SERVER['REQUEST_METHOD'] = $metoda;
 	$_SERVER['REMOTE_ADDR']    = isset( $_SERVER['REMOTE_ADDR'] ) ? $_SERVER['REMOTE_ADDR'] : '127.0.0.1';
 	try {
 		sklepag_obsluz_pobranie();
@@ -141,8 +141,23 @@ echo 'CZESCIOWY: zdarzen_odmowy=' . $s4['odmowy'] . " (OCZEKIWANE: 0)\n";
 $pass4 = ( 0 === strpos( $r4, 'ODMOWA 503' ) && 0 === $s4['odmowy'] );
 echo 'CZESCIOWY: WYNIK=' . ( $pass4 ? 'PASS' : 'FAIL - zwrot czesciowy odcina dostep wbrew obietnicy z instrukcji' ) . "\n";
 
+/* ---------- 5) HEAD na ZWROCONYM: odmowa TAK SAMO, ale BEZ wpisu w dzienniku ----------
+ * Granica dodana w rundzie 3 i do rundy 4 niepilnowana: skaner poczty w kliencie kupującego
+ * odpytuje link metodą HEAD, więc wpis „pobranie_odmowa_zwrot” z takiego żądania byłby
+ * nieodróżnialny od realnej próby człowieka. `pobieranie.php:57-61` liczy `$metoda_head`
+ * i pomija `sklepag_zdarzenie()`. Skasowanie tego warunku nie zmienia NICZEGO w odmowie —
+ * dlatego przypadki 1-4 przechodzą po nim tak samo i granica przeżyła bez strażnika. */
+$id5 = $zaloz( 'zwrocone', $kwota );
+$r5  = $odpal( $id5, 'HEAD' );
+$s5  = $stan( $id5 );
+echo 'HEAD: werdykt=' . $r5 . " (OCZEKIWANE: ODMOWA 410 — HEAD nie omija bramy)\n";
+echo 'HEAD: pobrania_uzyte=' . $s5['uzyte'] . " (OCZEKIWANE: 0)\n";
+echo 'HEAD: zdarzen_odmowy=' . $s5['odmowy'] . " (OCZEKIWANE: 0 — skaner poczty NIE zasmieca dziennika)\n";
+$pass5 = ( 0 === strpos( $r5, 'ODMOWA 410' ) && 0 === $s5['uzyte'] && 0 === $s5['odmowy'] );
+echo 'HEAD: WYNIK=' . ( $pass5 ? 'PASS' : 'FAIL - HEAD albo omija brame, albo zapisuje zdarzenie nieodroznialne od proby czlowieka' ) . "\n";
+
 $posprzataj();
 unset( $_GET['z'], $_GET['t'] );
-$straznik_ok = ( $pass1 && $pass2 && $pass3 && $pass4 );
+$straznik_ok = ( $pass1 && $pass2 && $pass3 && $pass4 && $pass5 );
 echo 'RAZEM: WYNIK=' . ( $straznik_ok ? 'PASS' : 'FAIL' ) . "\n";
 exit( $straznik_ok ? 0 : 1 );
