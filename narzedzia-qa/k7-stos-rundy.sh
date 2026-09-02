@@ -4,8 +4,13 @@
 # Stawia `probny_wp` (:8891, baza `wp_probny` na wspólnym MariaDB) z `lib-stos-probny.sh`, wgrywa PODANY zip
 # (runda A = paczka z mutantami, runda B = zamrożona 0.9.13), ustawia permalinki, zakłada konta audytorów
 # z haseł w /root/.claude/sekrety-audyt-{admin,sub}.txt i DOWODZI, że w kontenerze jest ta paczka (sha256
-# zipa + odcisk podanego wzorca w kodzie). Stos ZOSTAJE (nie zwija) — zwija `zwin_stos` z lib albo
-# `docker rm -f probny_wp`.
+# zipa + odcisk podanego wzorca w kodzie). Stos ZOSTAJE (nie zwija).
+# ⛔ SPRZATANIE: `zwin_stos` z lib dziala WYLACZNIE w procesie, ktory stos postawil
+#    (`lib-stos-probny.sh:151` wychodzi wczesniej, gdy STOS_PROBNY_POSTAWILEM != tak),
+#    a ten skrypt konczy sie z ZOSTAW=tak — wiec z innego procesu nie zrobi nic.
+#    Recznie: `docker rm -f -v probny_wp`. ⛔ Flaga `-v` jest OBOWIAZKOWA: obraz WordPressa
+#    deklaruje VOLUME /var/www/html, wiec `docker rm -f` bez niej zostawia wolumen
+#    (zmierzone 2.09: 83 wiszace wolumeny, 6,5 GB, dysk 100 %).
 # Użycie: bash narzedzia-qa/k7-stos-rundy.sh <zip> [wzorzec-w-kodzie-do-potwierdzenia]
 #   EXIT 0 = stos stoi, wtyczka aktywna w podanej wersji, wzorzec (jeśli podany) w kodzie kontenera, oba konta z OCZEKIWANĄ rolą
 #            i DZIAŁAJĄCYM hasłem (`wp user check-password`), strona główna HTTP 200, debug.log pusty PO instalacji, aktywacji

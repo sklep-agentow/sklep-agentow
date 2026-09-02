@@ -35,10 +35,6 @@ sprawdz_pominiety() {
 	case " $POMINIETE_LISTA " in *" $1 "*) echo "  ✅ POMIJANY: $1" ;;
 	*) echo "  ⛔ NIE JEST POMIJANY, a musi być: $1"; BLEDY=$((BLEDY+1)) ;; esac
 }
-sprawdz_uruchamiany() {
-	case " $POMINIETE_LISTA " in *" $1 "*) echo "  ⛔ POMIJANY, a MUSI być uruchamiany: $1"; BLEDY=$((BLEDY+1)) ;;
-	*) echo "  ✅ URUCHAMIANY: $1" ;; esac
-}
 
 echo
 echo "=== MUSZĄ być pomijane (spust bramki i biblioteka) ==="
@@ -51,15 +47,22 @@ echo "=== KONTROLA DODATNIA: prawdziwe testy .sh NIE MOGĄ zniknąć z linii baz
 ILE=0
 # ⛔ ŻADNYCH WZORCÓW Z PAMIĘCI TAKŻE TUTAJ. Lista uruchamianych powstaje jako RÓŻNICA
 # zbiorów: wszystkie testy/*.sh minus te, które pętla z pliku uznała za pomijane.
-# Poprzednia wersja PRZEPISYWAŁA wzorce w tym miejscu, czyli łamała własny nagłówek
-# (recenzja #272, runda 3, DROBNA 4) — i gdyby ktoś dopisał wzorzec do linia-bazowa.sh,
-# ta kontrola dalej mierzyłaby STARY zestaw, nie zauważając zmiany.
+# ⛔ Wypis niżej jest TYLKO wypisem. Element z $POMINIETE_LISTA nie ma jak tu trafić,
+#    bo ta sama pętla go odsiewa tym samym warunkiem — więc orzekanie o wadzie W ŚRODKU
+#    pętli było gałęzią MARTWĄ i próba nie umiała paść (recenzja #272 r4, WAŻNA 1).
+#    Asercją jest PRÓG PONIŻEJ, nie ten wypis.
 for t in testy/*.sh; do
 	case " $POMINIETE_LISTA " in *" $t "*) continue;; esac
-	sprawdz_uruchamiany "$t"; ILE=$((ILE+1))
+	echo "  ✅ URUCHAMIANY: $t"; ILE=$((ILE+1))
 done
+# ⛔ PRÓG URUCHAMIANYCH — to jest jedyne miejsce, w którym ta próba może zaświecić na czerwono
+# z powodu zmiany w linia-bazowa.sh. Dopisanie tam wzorca pomijania wyrzuca prawdziwe bramki
+# z linii bazowej i ta liczba SPADA. Obniżenie progu ma być świadomą decyzją w commicie —
+# wzorem MAX_POMINIETYCH w narzedzia-qa/proby-kontrolne-przelot.sh:69.
+MIN_URUCHAMIANYCH=15   # 2.09 (#272 r5): stan po dolaczeniu golden-migawka-proba-kontrolna.sh do pomijanych
+[ "$ILE" -ge "$MIN_URUCHAMIANYCH" ] || { echo "  ⛔ URUCHAMIANYCH $ILE, prog $MIN_URUCHAMIANYCH — z linii bazowej UBYLY testy"; BLEDY=$((BLEDY+1)); }
 [ "$ILE" -ge 1 ] || { echo "  ⛔ ZERO testów do uruchomienia — kontrola dodatnia pusta, pomiar nic nie znaczy"; BLEDY=$((BLEDY+1)); }
-echo "  (uruchamianych testów .sh: $ILE)"
+echo "  (uruchamianych testów .sh: $ILE, próg: $MIN_URUCHAMIANYCH)"
 
 echo
 [ "$BLEDY" -eq 0 ] && { echo "LISTA POMIJANYCH: OK (EXIT=0)"; exit 0; }

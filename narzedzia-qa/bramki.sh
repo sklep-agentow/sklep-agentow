@@ -174,11 +174,28 @@ esac
 # kod z drzewa; wykonawca CI (`ciuser`, B-3) Dockera nie widzi i widziec nie moze. Bez Dockera
 # bramka jest POMINIETA JAWNIE (w logu i w podsumowaniu), a prog pelnego trybu schodzi o JEDEN,
 # nie „o ile trzeba”. Lokalnie i na kazdym koncie z Dockerem golden BIEGNIE (~15 s).
+# ⛔ WARUNEK MUSI BYC TEN SAM, CO W `wymagaj_narzedzi` (narzedzia-qa/lib-stos-probny.sh).
+# Wezsze pytanie „czy widac demona Dockera” dawalo rozjazd: brak kontenera bazy albo brak
+# `unzip` konczyl golden przez `padnij` (exit 2), czyli CZERWONA bramka ze srodowiska, podczas
+# gdy o jeden poziom wyzej ten sam brak srodowiska byl zaprojektowany jako POMINIECIE JAWNE
+# (recenzja #272 r4, DROBNA 6). Nazwe kontenera bazy CZYTAM Z PLIKU, nie przepisuje z pamieci.
+KONTENER_DB_GOLDEN=$(sed -n 's/^KONTENER_DB=//p' narzedzia-qa/lib-stos-probny.sh | head -1)
 DOCKER_WIDOCZNY=nie
-docker ps > /dev/null 2>&1 && DOCKER_WIDOCZNY=tak
+POWOD_BEZ_GOLDENA=""
+if ! docker ps > /dev/null 2>&1; then
+	POWOD_BEZ_GOLDENA="to konto nie widzi Dockera"
+elif ! command -v unzip > /dev/null 2>&1; then
+	POWOD_BEZ_GOLDENA="brak unzip"
+elif [ -z "$KONTENER_DB_GOLDEN" ]; then
+	POWOD_BEZ_GOLDENA="nie odczytalam KONTENER_DB z lib-stos-probny.sh"
+elif ! docker ps --filter "name=^${KONTENER_DB_GOLDEN}$" --filter status=running -q | grep -q .; then
+	POWOD_BEZ_GOLDENA="kontener bazy $KONTENER_DB_GOLDEN nie chodzi"
+else
+	DOCKER_WIDOCZNY=tak
+fi
 if [ "$DOCKER_WIDOCZNY" = nie ] && [ "$TRYB" = pelny ]; then
 	PROG=$((PROG - 1))
-	echo "UWAGA: to konto nie widzi Dockera — bramka golden bedzie POMINIETA, prog pelny $PROG_PELNY -> $PROG" >&2
+	echo "UWAGA: $POWOD_BEZ_GOLDENA — bramka golden bedzie POMINIETA, prog pelny $PROG_PELNY -> $PROG" >&2
 fi
 
 # --- pojedyncza bramka --------------------------------------------------------
@@ -202,7 +219,7 @@ bramka() {
 	fi
 	if [ "$nazwa" = golden ] && [ "$DOCKER_WIDOCZNY" = nie ]; then
 		POMINIETE+=("$nazwa")
-		printf '\n--- BRAMKA %s: POMINIETA (wymaga Dockera, konto go nie widzi — przelot reczny przed wydaniem: bash testy/golden-stos-probny.sh) ---\n' "$nazwa"
+		printf '\n--- BRAMKA %s: POMINIETA (%s — przelot reczny przed wydaniem: bash testy/golden-stos-probny.sh) ---\n' "$nazwa" "$POWOD_BEZ_GOLDENA"
 		return 0
 	fi
 	printf '\n--- BRAMKA %s ---\n' "$nazwa"
@@ -423,7 +440,7 @@ for nazwa in "${BRAMKI[@]}"; do
 		# „POMINIETA (wymaga Dockera)” w podsumowaniu tego samego przebiegu.
 		printf '  %-12s POMINIETA (tryb tekstowy — zmiana nie dotyka PHP)\n' "$nazwa"
 	elif [ "$nazwa" = golden ] && [ "$DOCKER_WIDOCZNY" = nie ]; then
-		printf '  %-12s POMINIETA (wymaga Dockera — konto go nie widzi)\n' "$nazwa"
+		printf '  %-12s POMINIETA (%s)\n' "$nazwa" "$POWOD_BEZ_GOLDENA"
 	else
 		printf '  %-12s POMINIETA (tryb %s)\n' "$nazwa" "$TRYB"
 	fi

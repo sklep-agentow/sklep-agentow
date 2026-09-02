@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Próba kontrolna ZAMKA STOSU PRÓBNEGO (uwagi 1 i 2 z recenzji #272).   WERSJA 1.0.0
+# Próba kontrolna ZAMKA STOSU PRÓBNEGO (uwagi 1 i 2 z recenzji #272).   WERSJA 1.1.0
 #
 # PO CO: do 2.09 `probny_wp` miał OŚMIU użytkowników, a zamek brało dwóch — i to zamek
 # stosu WARSZTATOWEGO (`wymiana/stos.lock`), czyli ten sam plik, który `linia-bazowa.sh`
@@ -83,15 +83,31 @@ BEZ=0
 # ⛔ Szukamy plikow, ktore biblioteke NAPRAWDE DOLACZAJA (wiersz `. sciezka`), a nie takich,
 # ktore ja tylko WSPOMINAJA w komentarzu albo w grepie — inaczej ta petla oskarza wlasny
 # komentarz i test pada bez wady (zlapane 2.09 na linia-bazowa.sh).
+UZYTKOWNIKOW=0
 for f in $(grep -rlE '^[[:space:]]*\.[[:space:]]+.*lib-(stos-probny|golden-stos)\.sh' narzedzia-qa/*.sh testy/*.sh 2> /dev/null); do
-	case "$f" in */lib-stos-probny.sh|*/lib-golden-stos.sh) continue;; esac
-	if grep -q 'postaw_stos\|golden_przygotuj_stos' "$f"; then
+	# ⛔ Biblioteki NIE sa uzytkownikami. Ten plik TEZ nie: dolacza biblioteke wylacznie
+	#    w podpowlokach punktow H/I, zeby ja ZMIERZYC, i nigdy nie stawia stosu. Bez tego
+	#    wykluczenia petla liczy SAMA SIEBIE (recenzja #272 r4, DROBNA 2: wychodzilo 10 przy
+	#    dziewieciu w dokumentach) i przechodzi warunek nizej na WZMIANCE w komentarzu.
+	case "$f" in */lib-stos-probny.sh|*/lib-golden-stos.sh|*/zamek-stosu-probnego-proba-kontrolna.sh) continue;; esac
+	UZYTKOWNIKOW=$((UZYTKOWNIKOW+1))
+	# ⛔ Komentarze i wzorce grepa NIE licza sie jako wywolanie — odsiewam wiersze komentarza.
+	if grep -vE '^[[:space:]]*#' "$f" | grep -q 'postaw_stos\|golden_przygotuj_stos'; then
 		printf '  OK   %s\n' "$f"
 	else
 		printf '  ZLE  %s dolacza biblioteke, ale nie wola postaw_stos — stoi poza zamkiem\n' "$f"; BEZ=$((BEZ+1))
 	fi
 done
 [ "$BEZ" -eq 0 ] || BLEDY=$((BLEDY+1))
+# ⛔ ASERCJA NA LICZBIE. Bez niej rozjazd miedzy ta komenda a liczba w CHANGELOG-u i w
+# lib-golden-stos.sh:27 przechodzi bez sladu — dokladnie tak powstala DROBNA 2 rundy 4.
+OCZEKIWANI_UZYTKOWNICY=9   # 2.09 (#272 r5): dziewieciu, zgodnie z lib-golden-stos.sh:27 i CHANGELOG-iem
+if [ "$UZYTKOWNIKOW" -ne "$OCZEKIWANI_UZYTKOWNICY" ]; then
+	printf '  ZLE  uzytkownikow stosu probnego: %s, a dokumenty mowia %s — rozjazd\n' "$UZYTKOWNIKOW" "$OCZEKIWANI_UZYTKOWNICY"
+	BLEDY=$((BLEDY+1))
+else
+	printf '  OK   uzytkownikow stosu probnego: %s (zgodnie z dokumentami)\n' "$UZYTKOWNIKOW"
+fi
 
 echo "=== H. BIEG ODPRAWIONY PRZEZ ZAMEK NIE ZWIJA CUDZEGO STOSU ==="
 # ⛔ Pulapka EXIT stoi w skryptach PRZED `postaw_stos`, wiec `zwin_stos` odpala sie takze
