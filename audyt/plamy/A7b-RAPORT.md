@@ -1,5 +1,11 @@
 # A7b — DALSZY CIĄG A7: klient IMAP i dwie zmiany stanu
 
+> ⚠️ **Kotwica cytatów (dopisane 2.09 przy scalaniu z `main`):** numery `plik:linia` w tym raporcie pochodzą ze stanu kodu na commicie
+> `b39f576` (1.09, gałąź `audyt/a7-kod-produktu`). Po scaleniach #259, #263 i #264 część numerów na `main` jest przesunięta — sonda 2.09
+> (69 cytatów jednoznacznych, 21 z nazwą pliku występującą w kilku wtyczkach) potwierdziła przesunięcia w `zakup.php` (+~90 linii) i `aktywacja.php` (+11),
+> `stripe.php` bez zmian; te trzy poprawione na HEAD, reszty NIE przeliczano. Pewny odczyt: `git show b39f576:<ścieżka>` (klasa 97 ze ściągi).
+
+
 **Kto:** audytor A7, sesja 2026-09-01, druga pozycja. **Gałąź:** `audyt/a7-kod-produktu`.
 **Zlecenie koordynatorki:** priorytet 1 — wnętrze klienta IMAP; priorytet 2 — drugi zakup tego
 samego produktu i wygaśnięcie linku. ⛔ **Przejścia na klucze produkcyjne NIE ruszałem** —
@@ -167,7 +173,7 @@ nazwy folderów przez `do_utf7()` + `tekst()`.
 
 ### T12 · drugi zakup tego samego produktu przez tego samego kupującego — ✅ czysto
 Szukałem miejsc, które zakładają **jedno** zamówienie na parę kupujący+produkt. Nie ma ich:
-klucze unikalne stoją na `stripe_session_id` (`aktywacja.php:82`) i na `opinie.zamowienie_id`
+klucze unikalne stoją na `stripe_session_id` (`aktywacja.php:93` na HEAD 2.09; `:82` na `b39f576`) i na `opinie.zamowienie_id`
 (`:135`), czyli **na transakcji, nie na osobie** — dwa zakupy dają dwa niezależne zamówienia,
 dwa tokeny pobrania i dwa zalążki opinii. Zapytania kluczujące po `email_kupujacego` to eksporter
 RODO, kasownik RODO i wyszukiwarka panelu — wszystkie **iterują po wszystkich wierszach**

@@ -1,5 +1,11 @@
 # A7c — MIME i dekodowanie treści maila
 
+> ⚠️ **Kotwica cytatów (dopisane 2.09 przy scalaniu z `main`):** numery `plik:linia` w tym raporcie pochodzą ze stanu kodu na commicie
+> `b39f576` (1.09, gałąź `audyt/a7-kod-produktu`). Po scaleniach #259, #263 i #264 część numerów na `main` jest przesunięta — sonda 2.09
+> (69 cytatów jednoznacznych, 21 z nazwą pliku występującą w kilku wtyczkach) potwierdziła przesunięcia w `zakup.php` (+~90 linii) i `aktywacja.php` (+11),
+> `stripe.php` bez zmian; te trzy poprawione na HEAD, reszty NIE przeliczano. Pewny odczyt: `git show b39f576:<ścieżka>` (klasa 97 ze ściągi).
+
+
 **Kto:** audytor A7, sesja 2026-09-01, trzecia pozycja. **Gałąź:** `audyt/a7-kod-produktu`.
 **Zlecenie koordynatorki:** drugie miejsce, w którym do produktu wchodzi tekst obcego człowieka —
 tą samą metodą co `A7b`: **atrapa i uruchomienie, nie czytanie.**

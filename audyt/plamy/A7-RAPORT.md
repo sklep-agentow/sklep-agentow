@@ -1,5 +1,11 @@
 # A7 — KOD PRODUKTU NASZĄ SIATKĄ
 
+> ⚠️ **Kotwica cytatów (dopisane 2.09 przy scalaniu z `main`):** numery `plik:linia` w tym raporcie pochodzą ze stanu kodu na commicie
+> `b39f576` (1.09, gałąź `audyt/a7-kod-produktu`). Po scaleniach #259, #263 i #264 część numerów na `main` jest przesunięta — sonda 2.09
+> (69 cytatów jednoznacznych, 21 z nazwą pliku występującą w kilku wtyczkach) potwierdziła przesunięcia w `zakup.php` (+~90 linii) i `aktywacja.php` (+11),
+> `stripe.php` bez zmian; te trzy poprawione na HEAD, reszty NIE przeliczano. Pewny odczyt: `git show b39f576:<ścieżka>` (klasa 97 ze ściągi).
+
+
 **Kto:** audytor A7, sesja 2026-09-01. **Gałąź:** `audyt/a7-kod-produktu`, odbita ze świeżego
 `main` = `d8ed544`. **Zakres:** `wtyczki/` (3 wtyczki, 54 pliki PHP, 28 729 linii kodu i stylów).
 **Czego NIE tykałem:** kodu produktu — ani jednej linii. Naprawia builder w osobnej sesji.
@@ -107,7 +113,7 @@ zakup.php:714:function sklepag_zaksieguj_spor( $typ, $obiekt ) {
 ```
 
 ② **Siatka bezpieczeństwa NIE łapie tego przypadku.** `sklepag_dociagnij_zalegle()` odpytuje
-Stripe tylko o dwie rzeczy: sesje w stanie `utworzona` (`zakup.php:1291-1296`) i zamówienia bez
+Stripe tylko o dwie rzeczy: sesje w stanie `utworzona` (`zakup.php:1379-1387` na HEAD 2.09; `1291-1296` na `b39f576`) i zamówienia bez
 maila (`zakup.php:1338-1344`). Nie ma w produkcie ani jednego wywołania pytającego Stripe o zwrot
 — cała lista wyjść do API to `/v1/checkout/sessions` (utworzenie, odczyt po id, odczyt po
 `payment_intent`), `stripe.php:112,116,129`. Instrukcja obiecuje siatkę w zdaniu, które samo ją
