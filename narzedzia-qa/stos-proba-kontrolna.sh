@@ -79,7 +79,12 @@ else
 fi
 # Jedyne wywołania dockera wolno mieć trzem funkcjom. Każde inne to obejście
 # całej białej listy i musi zostać zauważone przy czytaniu diffu.
-ILE_DOCKER="$(grep -c 'docker ' "$STOS")"
+# ⛔ LICZYMY WYWOŁANIA, NIE WZMIANKI. Do 2.09 stało tu `grep -c 'docker '`, więc do
+# licznika wchodziły KOMENTARZE i treści komunikatów mówiące o `docker ps` — dopisanie
+# akapitu wyjaśniającego podbijało liczbę i strażnik oskarżał opis zamiast kodu.
+# Odrzucamy linie komentarza oraz te, w których `docker` stoi wyłącznie w cudzysłowie
+# odwrotnym (cytat w tekście). To ta sama klasa co bramka „liczba tabel” w #274.
+ILE_DOCKER="$(grep -vE '^[[:space:]]*#' "$STOS" | grep -vE '`docker' | grep -c 'docker ')"
 if [ "$ILE_DOCKER" -gt 6 ]; then
 	printf '  BLAD wywolan dockera w stos.sh jest %s — przybylo obejscie?\n' "$ILE_DOCKER"
 	BLEDY=$(( BLEDY + 1 ))
@@ -158,6 +163,49 @@ fi
 odczyt "licznik maili z lapacza"   "wiadomości:"       maile
 odczyt "ostatni mail"              "Subject"           ostatni-mail
 odczyt "wersja rdzenia"            "7."                wersja-wp
+
+# ------------------------------------------------------------------------
+# ⛔ „NIE WIEM, CZY STOS STOI” MUSI WYGLADAC INACZEJ NIZ „STOS NIE STOI”.
+# Do 2.09 `kontener_zyje()` mialo `docker ps … 2> /dev/null`, wiec brak dostepu do
+# `docker.sock` (tak chodzi wykonawca CI po naprawie B-3) dawal DOKLADNIE ten sam
+# komunikat co zatrzymany kontener — i twierdzil „sprawdzone przez docker ps”.
+# Skutek zmierzony: przez cztery rundy recenzji #268 obie strony pisaly „stos nie stoi”,
+# choc kontener chodzil, wiec NIKT nie uruchomil straznika.
+# Podkladamy atrape `docker` na PATH: raz padajaca, raz odpowiadajaca pustka.
+# ------------------------------------------------------------------------
+echo
+echo "--- rozroznianie: brak dostepu do Dockera vs zatrzymany kontener ---"
+ATRAPY="$(mktemp -d -t stos-atrapa-XXXXXX)"
+trap 'rm -rf "$ATRAPY"' EXIT INT TERM
+
+printf '#!/bin/sh\necho "permission denied while trying to connect to the docker API at unix:///var/run/docker.sock" >&2\nexit 1\n' > "$ATRAPY/docker"
+chmod +x "$ATRAPY/docker"
+WY_BRAK="$( PATH="$ATRAPY:$PATH" bash "$STOS" stan 2>&1 )"
+
+printf '#!/bin/sh\nexit 0\n' > "$ATRAPY/docker"
+chmod +x "$ATRAPY/docker"
+WY_STOP="$( PATH="$ATRAPY:$PATH" bash "$STOS" stan 2>&1 )"
+
+case "$WY_BRAK" in
+	*"NIE WIEM"*) printf '  OK   %-56s\n' "brak dostepu do Dockera melduje NIE WIEM" ;;
+	*)            printf '  BLAD %-56s\n' "brak dostepu do Dockera NIE melduje NIE WIEM"
+	              printf '%s\n' "$WY_BRAK" | head -3 | sed 's/^/         /'
+	              BLEDY=$(( BLEDY + 1 )) ;;
+esac
+case "$WY_STOP" in
+	*"nie jest uruchomiony"*) printf '  OK   %-56s\n' "zatrzymany kontener melduje NIE JEST URUCHOMIONY" ;;
+	*)                        printf '  BLAD %-56s\n' "zatrzymany kontener meldowany inaczej niz oczekiwano"
+	                          printf '%s\n' "$WY_STOP" | head -3 | sed 's/^/         /'
+	                          BLEDY=$(( BLEDY + 1 )) ;;
+esac
+# ⛔ KONTROLA, KTORA LAPIE WSPOLNY KOMUNIKAT: gdyby oba przypadki mowily to samo,
+# powyzsze dwa `case` moglyby OBA przejsc na jednym, wspolnym zdaniu.
+if [ "$WY_BRAK" = "$WY_STOP" ]; then
+	printf '  BLAD %-56s\n' "oba przypadki daja IDENTYCZNE wyjscie — nic nie odrozniamy"
+	BLEDY=$(( BLEDY + 1 ))
+else
+	printf '  OK   %-56s\n' "oba przypadki daja ROZNE wyjscie"
+fi
 
 echo
 if [ "$BLEDY" -eq 0 ]; then

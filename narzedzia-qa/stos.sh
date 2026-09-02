@@ -134,9 +134,21 @@ sprawdz_tabele() {
 
 kontener_zyje() {
 	wymagaj_narzedzia docker
-	docker ps --filter "name=^${KONTENER_WP}$" --filter status=running --format '{{.Names}}' 2> /dev/null \
-		| grep -qx "$KONTENER_WP" \
-		|| brak_stosu "kontener $KONTENER_WP nie jest uruchomiony (sprawdzone przez docker ps)"
+	# ⛔ „NIE WIEM” TO NIE TO SAMO CO „NIE STOI”. Do 2.09 stało tu `docker ps … 2> /dev/null`,
+	# więc `permission denied while trying to connect to the docker API` (konto bez dostępu do
+	# `docker.sock` — tak chodzi wykonawca CI po naprawie B-3) dawało DOKŁADNIE ten sam komunikat
+	# co zatrzymany kontener, a komunikat twierdził wprost „sprawdzone przez docker ps”.
+	# Skutek zmierzony: przez cztery rundy recenzji #268 obie strony pisały „stos nie stoi”,
+	# choć kontener chodził — nikt nie uruchomił strażnika, bo przyrząd kłamał o przyczynie.
+	# Rozdzielamy: najpierw pytamy, CZY `docker ps` w ogóle się udało.
+	local wyjscie kod
+	wyjscie="$( docker ps --filter "name=^${KONTENER_WP}$" --filter status=running --format '{{.Names}}' 2>&1 )"
+	kod=$?
+	if [ "$kod" -ne 0 ]; then
+		brak_stosu "NIE WIEM, czy stos stoi — samo \`docker ps\` padło (kod $kod). To NIE jest informacja o kontenerze, tylko o dostępie do Dockera na tym koncie. Wyjście: ${wyjscie}"
+	fi
+	printf '%s\n' "$wyjscie" | grep -qx "$KONTENER_WP" \
+		|| brak_stosu "kontener $KONTENER_WP nie jest uruchomiony — \`docker ps\` odpowiedziało i go NIE wymieniło"
 }
 
 # Jedyne wywołanie `wp` w całym pliku. Podpolecenie przychodzi ze stałych
