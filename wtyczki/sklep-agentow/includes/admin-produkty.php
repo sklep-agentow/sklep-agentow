@@ -79,9 +79,13 @@ function sklepag_zadanie_ucieto_przez_php() {
 	}
 	$post_max = (int) wp_convert_hr_to_bytes( (string) ini_get( 'post_max_size' ) );
 
-	// `post_max_size = 0` znaczy w PHP „bez limitu" — wtedy ucięcia z tego powodu nie ma.
-	// Nieodczytany limit (wartość ujemna/pusta) traktujemy jak nieznany i zostajemy przy
-	// samym fakcie pustych tablic przy niepustym ciele formularzowym.
+	// `post_max_size = 0` znaczy w PHP „bez limitu" — wtedy ucięcia z tego powodu NIE orzekamy.
+	// Pusta wartość też daje tu 0 (`wp_convert_hr_to_bytes( '' )` → 0), więc wpada do tego
+	// samego worka. ⚠️ Świadomy wąski wyjątek: dla `application/x-www-form-urlencoded` PHP od
+	// 5.3.4 NIE wyłącza limitu przy 0 (php.net, ini.core: post_max_size) — takie ucięcie zostaje
+	// tu niezdiagnozowane i użytkownik widzi dotychczasową pustą odpowiedź. Formularz produktu
+	// jest `multipart`, więc ścieżka sklepu tego nie dotyka. Wartość ujemna = limit nieodczytany
+	// → zostajemy przy samym fakcie pustych tablic przy niepustym ciele formularzowym.
 	if ( 0 === $post_max ) {
 		return false;
 	}

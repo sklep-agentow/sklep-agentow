@@ -89,12 +89,13 @@ elif [ "$KOD1" -eq 1 ] \
 	&& printf '%s' "$WY1" | grep -q '✅ WYSZLO      C:' \
 	&& printf '%s' "$WY1" | grep -q '✅ WYSZLO      D:' \
 	&& printf '%s' "$WY1" | grep -q '✅ WYSZLO      E:' \
-	&& printf '%s' "$WY1" | grep -q '✅ WYSZLO      F:'; then
+	&& printf '%s' "$WY1" | grep -q '✅ WYSZLO      F:' \
+	&& printf '%s' "$WY1" | grep -q '✅ WYSZLO      G:'; then
 	# ⛔ Nie wystarczy „coś padło". Wymagamy DOKŁADNIE tego kształtu: pada A (pusta biała
-	# strona), a B, C, D i E przechodzą — czyli strażnik pokazuje TĘ wadę, a nie ogólne
-	# zepsucie ścieżki zapisu produktu. (E przechodzi tu z braku zaczepienia, nie z zasługi —
-	# dowodzi tego dopiero etap „runda 1" niżej.)
-	potwierdz "strażnik PADŁ na kodzie sprzed naprawy (EXIT=1): pada wyłącznie A (pusta odpowiedź), B/C/D/E przechodzą"
+	# strona), a B, C, D, E, F i G przechodzą — czyli strażnik pokazuje TĘ wadę, a nie ogólne
+	# zepsucie ścieżki zapisu produktu. (E, F i G przechodzą tu z braku zaczepienia, nie
+	# z zasługi — dowodzi tego dopiero etap „runda 1" niżej.)
+	potwierdz "strażnik PADŁ na kodzie sprzed naprawy (EXIT=1): pada wyłącznie A (pusta odpowiedź), B/C/D/E/F/G przechodzą"
 else
 	zglos "strażnik nie padł w oczekiwanym kształcie (EXIT=$KOD1) — nie mierzy tej wady"
 fi

@@ -1,5 +1,16 @@
 # CO-WISI — rzeczy oddane komuś / bez strażnika (zasada: oddajesz ⇒ wiersz, wraca ⇒ kasujesz)
 
+## 🟡 SPRZĄTANIE STRAŻNIKA LIMITU UPLOADU KASUJE WSZYSTKO, CO POWSTAŁO W TRAKCIE PRZEBIEGU (2.09, recenzja `#263` r3, DROBNA 4) — dług
+
+`testy/limit-uploadu-mowi-prawde.sh`: `DELETE … WHERE typ = 'upload_produktu_blad' AND id > ID_PRZED` kasuje po sobie
+wpisy dziennika młodsze niż stan sprzed przebiegu — czyli także CUDZY wpis tego typu założony na wspólnym stosie
+w oknie przebiegu (kilkadziesiąt sekund). Komentarz mówi „WYŁĄCZNIE po sobie", warunek realizuje „wszystko z okna".
+Wpisy zakłada produkt, nie strażnik, więc nie ma jak ich oznaczyć znacznikiem. **Kształt roboty:** zawęzić po treści
+wpisu (nazwa produktu strażnika `STRAZNIK LIMITU …` jest w komunikacie? sprawdzić kolumny `sklepag_zdarzenia`) albo
+uruchamiać strażnika WYŁĄCZNIE na stosie próbnym (`probny_wp`), gdzie cudzych wpisów nie ma — wtedy komentarz zmienić
+na „stos próbny albo pełna świadomość okna". **Jedzie do klienta:** NIE — narzędzie testowe, poza paczką.
+
+
 ## 🟡 DWIE UWAGI WAŻNE Z RECENZJI `#259` (runda 2) ŚWIADOMIE NIENAPRAWIONE — dług, nie przeoczenie (1.09)
 
 Decyzja koordynatorki: cztery uwagi rundy 1 domknięte (krytyczna jako KLASA, nie egzemplarz),

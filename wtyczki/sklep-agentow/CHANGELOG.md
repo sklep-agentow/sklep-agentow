@@ -36,9 +36,11 @@ Nic jeszcze.
   wyrenderowana przed aktualizacją, podana z pamięci podręcznej albo formularz innej wtyczki)
   dostaje przez ogólne zaczepienie `admin_post` **wariant neutralny**: tylko limity serwera
   i rozmiar wysłanych danych, bez limitu wtyczki (20 MB) i bez odesłania do instrukcji, bo
-  przy uciętym żądaniu nie da się poznać, z którego formularza przyszło. Oba warianty widzą
-  wyłącznie konta z uprawnieniem `upload_files`; poniżej tego progu zostaje dotychczasowa
-  pusta odpowiedź, żeby ustawienia serwera nie wyciekały do kont bez prawa wgrywania.
+  przy uciętym żądaniu nie da się poznać, z którego formularza przyszło. Progi uprawnień są
+  dwa: wariant sklepowy pokazuje handler produktu, czyli za `manage_options` (poniżej: odmowa
+  403 „Brak uprawnień", jak dotąd); wariant neutralny pokazuje ogólne zaczepienie za
+  `upload_files` (poniżej: dotychczasowa pusta odpowiedź), żeby ustawienia serwera nie
+  wyciekały do kont bez prawa wgrywania.
 
 ### Dodane
 - **Instrukcja właściciela mówi, jak podnieść limit wgrania** — akapit „Serwer nie
