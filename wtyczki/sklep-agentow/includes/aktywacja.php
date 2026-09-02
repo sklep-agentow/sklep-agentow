@@ -225,12 +225,19 @@ function sklepag_zbuduj_schemat() {
 	// tabela — przy siedmiu tabelach komunikat był prawie zawsze pusty, choć dokumentacja
 	// obiecywała właścicielowi „ostatni błąd bazy”. Czytamy po KAŻDYM `dbDelta` i zbieramy
 	// wszystkie RÓŻNE komunikaty.
+	// ⛔ `last_error` KASUJE KAŻDE KOLEJNE ZAPYTANIE (`wpdb::query()` zaczyna od `flush()`),
+	// więc jeden odczyt PO całej pętli pokazywał błąd wyłącznie wtedy, gdy zawiodła OSTATNIA
+	// tabela — przy siedmiu tabelach komunikat był prawie zawsze pusty, choć dokumentacja
+	// obiecywała właścicielowi „ostatni błąd bazy”. Czytamy po KAŻDYM `dbDelta`.
+	// ⛔ NIE zerujemy `last_error` przed `dbDelta`: robi to za nas pierwsze zapytanie, które
+	// `dbDelta` i tak wykonuje (`DESCRIBE`), a jawne przypisanie pustki mylnie zawężało typ
+	// dla analizy statycznej — porównanie wychodziło „zawsze fałszywe”.
 	$bledy_bazy = array();
 	foreach ( sklepag_tabele_sql() as $sql ) {
-		$wpdb->last_error = '';
 		dbDelta( $sql );
-		if ( '' !== (string) $wpdb->last_error ) {
-			$bledy_bazy[] = (string) $wpdb->last_error;
+		$blad = (string) $wpdb->last_error;
+		if ( '' !== $blad ) {
+			$bledy_bazy[] = $blad;
 		}
 	}
 	$blad_bazy = implode( ' | ', array_unique( $bledy_bazy ) );
