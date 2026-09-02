@@ -1048,3 +1048,17 @@ niepilnowana · RODO w ruchu (retencja/anonimizacja/eksport WP) · dostarczalno�
 (SPF/DKIM; dowód stoi na łapaczu) · aktualizacja w miejscu 0.9.13→0.9.27 na żywej bazie · O-2 komunikat
 bramek „10 z 10” przy braku vendor · O-3 nagłówek rubryki v0.9.23 (świadome, osobny PR wg DECYZJE) ·
 DECYZJE.md: duplikat D28 i luka D29–30 (porządek numeracji, 0.9.28).
+
+## 🔴 DŁUG (audytor, 1.09 wieczór — pozycja `I-24` w `REJESTR-ZNALEZISK-INFRA.md`): GOLDEN pilnujący błędu WŁAŚCICIELA nie ma spustu
+`testy/golden-kupujacy-dostaje-to-co-kupil-test.php` z PR #258 jest **jedynym** strażnikiem naprawy „kupujący
+dostaje dokładnie to, co kupił" — a więc tego błędu, którego właściciel nie zdradzał przez cały dzień polowania.
+Sam test jest dobry: na `main` **EXIT=0** (14 asercji), jego próba kontrolna **EXIT=0** (4 mutanty, każdy wywala
+właściwą asercję). **Brakuje wyłącznie spustu:** łapie go wzorcem `testy/*.php` tylko `narzedzia-qa/linia-bazowa.sh:125`,
+a ta nie jest wołana z niczego — zmierzone z kontrolą dodatnią: `bramki.sh` → **21** wywołań,
+`proby-kontrolne-przelot.sh` → **7**, `linia-bazowa.sh` → **0**. Skutek: cofnięcie migawki produktu przy przyszłym
+refaktorze `sklepag_domknij_zakup()` **nie zapali się na czerwono** i kupujący znów zapłaci za jedno, a dostanie drugie.
+⛔ **Pułapka do rozstrzygnięcia PRZED wpięciem, nie w trakcie:** golden do pełnego przebiegu wymaga wgrania kodu
+z gałęzi **do kontenera**, czyli tej samej operacji, która w `testy/golden-migawka-proba-kontrolna.sh` okazała się
+niebezpieczna dla WSPÓLNEGO stosu — podmienia wtyczkę i jej nie przywraca (zmierzone: przed `0.9.32`/`a9ce0f70…`,
+po `0.9.31`/`704b0ab7…`, czyli cofnięta czyjaś robota w toku). Wpięcie bez rozwiązania tego cofa builderom kod pod
+stopami przy każdym biegu bramek. Dowody: `audyt/plamy/GOLDEN-258-WERYFIKACJA.md`.
