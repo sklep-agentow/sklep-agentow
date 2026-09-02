@@ -227,9 +227,10 @@ add_action( 'admin_post_sklepag_anonimizuj', 'sklepag_obsluz_anonimizacje' );
  * WordPressa nie miał czego zawołać — kreator „Usuń dane osobowe" nie ruszał sklepu ani
  * o wiersz, a właściciel dostawał raport wyglądający na komplet.
  *
- * ⛔ Panel czyści WSZYSTKO, razem z danymi do faktury — właściciel klika ten przycisk
- * świadomie i na własną odpowiedzialność. Kasownik RODO zachowuje się inaczej (zostawia
- * fakturę, bo wymaga tego prawo podatkowe) i mówi o tym wprost we wniosku.
+ * ⛔ Panel ZACHOWUJE dane do faktury (od 0.9.37) — tak samo jak kasownik RODO WordPressa: nazwa,
+ * NIP i adres nabywcy z faktury podlegają obowiązkowi podatkowemu (ustawa o VAT, art. 106e ust. 1
+ * pkt 3) i polityka prywatności sklepu deklaruje ich retencję. Do 0.9.36 panel czyścił wszystko,
+ * a kasownik zostawiał fakturę — dwie zasady dla jednego obowiązku; jedna została.
  */
 function sklepag_obsluz_anonimizacje() {
 	if ( ! current_user_can( 'manage_options' ) ) {
@@ -239,7 +240,7 @@ function sklepag_obsluz_anonimizacje() {
 
 	$id = isset( $_GET['zamowienie'] ) ? absint( $_GET['zamowienie'] ) : 0;
 
-	$wynik = sklepag_anonimizuj_zamowienie( $id );
+	$wynik = sklepag_anonimizuj_zamowienie( $id, true ); // jawnie: faktura ZOSTAJE (obowiązek podatkowy), jak w kasowniku WP
 
 	if ( 'brak_zamowienia' === $wynik['etap'] ) {
 		wp_die( 'Zamówienie nie istnieje.', 'Sklep Agentów', 404 );
@@ -362,10 +363,10 @@ function sklepag_admin_zamowienie() {
 	echo '<div class="postbox sklepag-box"><div class="inside">';
 	echo '<h2 class="sklepag-box-tytul">Dane osobowe (RODO)</h2>';
 	if ( $zanonimizowane ) {
-		echo '<p>Kupujący zanonimizowany ' . esc_html( $zam->usunieto_dnia ) . ' — adres, dane do faktury i treść maila usunięte; kwoty i czasy pozostały w statystykach.</p>';
+		echo '<p>Kupujący zanonimizowany ' . esc_html( $zam->usunieto_dnia ) . ' — adres i treść maila usunięte; kwoty, czasy i dane do faktury (obowiązek podatkowy) pozostały.</p>';
 	} else {
-		echo '<p class="description">Na żądanie kupującego: usuwa adres e-mail, dane do faktury i zapisaną treść maila (razem ze śladem doręczonej wysyłki), unieważnia link pobrania; kwoty i czasy zostają (statystyki sprzedaży). Operacja NIEODWRACALNA.</p>';
-		echo '<p><a href="' . esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=sklepag_anonimizuj&zamowienie=' . (int) $zam->id ), 'sklepag_anonimizuj' ) ) . '" class="button sklepag-button-uwaga" onclick="return confirm(\'Anonimizacja jest NIEODWRACALNA: adres e-mail, dane do faktury i treść maila znikną, link pobrania przestanie działać. Kontynuować?\');">Anonimizuj kupującego</a></p>';
+		echo '<p class="description">Na żądanie kupującego: usuwa adres e-mail i zapisaną treść maila (razem ze śladem doręczonej wysyłki), unieważnia link pobrania; kwoty, czasy i dane do faktury zostają (statystyki sprzedaży; dane nabywcy z faktury — obowiązek podatkowy). Operacja NIEODWRACALNA.</p>';
+		echo '<p><a href="' . esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=sklepag_anonimizuj&zamowienie=' . (int) $zam->id ), 'sklepag_anonimizuj' ) ) . '" class="button sklepag-button-uwaga" onclick="return confirm(\'Anonimizacja jest NIEODWRACALNA: adres e-mail i treść maila znikną, link pobrania przestanie działać. Dane do faktury (nazwa, NIP, adres) ZOSTAJĄ — obowiązek podatkowy. Kontynuować?\');">Anonimizuj kupującego</a></p>';
 	}
 	echo '</div></div>';
 

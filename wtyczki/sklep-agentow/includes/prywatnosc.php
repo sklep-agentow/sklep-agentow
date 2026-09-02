@@ -143,14 +143,18 @@ function sklepag_kandydaci_z_dziennika( $postacie ) {
  * ⛔ `$zachowaj_dane_faktury` NIE jest wygodą. Kasownik RODO musi zostawić nazwę, NIP
  * i adres z faktury: to obowiązek prawny (art. 6 ust. 1 lit. c RODO — ustawa o VAT,
  * art. 106e ust. 1 pkt 3 wymaga adresu nabywcy na fakturze).
- * Przycisk w panelu działa jak dotąd i czyści WSZYSTKO — właściciel klika go świadomie,
- * na własną odpowiedzialność, i tego zachowania ta zmiana nie rusza.
+ * ⛔ OD 0.9.37 OBIE DROGI ZACHOWUJĄ DANE FAKTURY — panel i kasownik WordPressa. Do 0.9.36 panel
+ * czyścił wszystko („właściciel klika świadomie”), a kasownik zostawiał fakturę: dwie zasady dla
+ * jednego obowiązku prawnego, z których jedna łamała politykę prywatności sklepu (deklaruje
+ * retencję danych faktur przez okres podatkowy). Domyślna wartość parametru jest więc `true`;
+ * `false` zostaje dla pomiaru (strażnik podkłada wadę w zapytaniu czyszczącym) — w produkcie nikt
+ * już nie woła czyszczenia faktury.
  *
  * @param int  $id                    Id zamówienia.
  * @param bool $zachowaj_dane_faktury Czy zostawić kolumnę `dane_faktury` (wymóg podatkowy).
  * @return array{ok:bool,etap:string,powod:string,zachowana_faktura:bool,slady_dziennik:int,slady_opinia:int}
  */
-function sklepag_anonimizuj_zamowienie( $id, $zachowaj_dane_faktury = false ) {
+function sklepag_anonimizuj_zamowienie( $id, $zachowaj_dane_faktury = true ) {
 	global $wpdb;
 	$id = (int) $id;
 	$pz = $wpdb->prefix . 'sklepag_zamowienia';

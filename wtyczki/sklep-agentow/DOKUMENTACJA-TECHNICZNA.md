@@ -331,8 +331,9 @@ ginie ostatnie, a każda porażka zostawia je nietknięte, żeby powtórzenie mi
 odtworzyć zakres. Potwierdzenie usunięcia idzie wyłącznie za **zmierzonym stanem po zapisie**,
 a pomiar jest **tak szeroki jak zapis i zależny od trybu**: obejmuje wszystkie kolumny niosące
 dane osobowe (adres, treść maila, ślad `dor_*`, tokeny, dane do faktury) — przy czym
-`dane_faktury` mierzona jest na pusto tylko w trybie panelu; w trybie kasownika ta kolumna ma
-zostać, więc twardy pomiar na pusto zamieniłby wymóg podatkowy w meldunek o nieudanym zapisie.
+`dane_faktury` od 0.9.37 ZOSTAJE w obu trybach (panel i kasownik WordPressa — jeden obowiązek podatkowy,
+jedna zasada; do 0.9.36 panel ją czyścił), więc nie jest mierzona na pusto; pomiar na pusto istnieje tylko
+dla jawnego `zachowaj_dane_faktury = false`, którego w produkcie nikt nie woła (zostaje dla strażnika).
 Kolumny `link_wygasa`, `dor_link_wygasa` i `zmieniono` są poza pomiarem świadomie: to znaczniki
 czasu bez danych osobowych, bezużyteczne bez tokenu, który mierzony jest.
 
