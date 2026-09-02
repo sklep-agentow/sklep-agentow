@@ -1069,7 +1069,7 @@ Każda pozycja = tania poprawka tekstowa do wzięcia przy najbliższym PR-ze w t
 
 ### #269 (raporty A7, scalone 2.09 --merge)
 - WAŻNA 1: opis PR „realnych rozjazdów” — liczba do sprostowania (recenzent: liczba w opisie ≠ liczba w raporcie).
-- WAŻNA 2: nagłówek `audyt/czesciowo/A7-RAPORT.md` — jedno zdanie, że `A7-F1` domknięte przez #256.
+- WAŻNA 2: nagłówek `audyt/plamy/A7-RAPORT.md` (⛔ było `audyt/czesciowo/` — ten katalog istnieje, więc zła ścieżka wyglądała wiarygodnie; sprawdzone `find`) — jedno zdanie, że `A7-F1` domknięte przez #256.
 - DROBNA 3: `A7b-RAPORT.md:176` dwa układy odniesienia w jednym zdaniu (drugi numer prowadzi na HEAD w inny wiersz).
 - DROBNA 4: `A7b-RAPORT.md` dwie różne liczby zdarzeń dla tej samej rzeczy.
 - DROBNA 5: cytaty samą nazwą pliku tam, gdzie nazwa istnieje w trzech wtyczkach.
@@ -1077,13 +1077,14 @@ Każda pozycja = tania poprawka tekstowa do wzięcia przy najbliższym PR-ze w t
 
 ### #271 (ściąga klasy 99–104)
 - DROBNA 1: wpis klasy cytuje `REJESTR-ZNALEZISK-INFRA.md:171` (A6-F1) — po #267 linia 171 to `P-1`; kotwica zamiast numeru (wiersz `A6-F1`), źródło: #267 odnotował kolizję kodu A6-F1.
+  ⛔ **Dlaczego parkujemy, zamiast poprawić od razu** (odpowiedź na DROBNĄ 4 z recenzji #276): `audyt/REJESTR-ZNALEZISK-INFRA.md` jest w tej chwili edytowany przez **pięć** otwartych PR-ów — #268, #270, #272, #273, #274 (sprawdzone `gh pr view N --json files`, 2.09 ~11:40). Jednolinijkowa poprawka kotwicy wywołałaby konflikt w każdym z nich, a konflikt = zero przebiegów CI i cisza. Do zrobienia jednym commitem PO opróżnieniu kolejki, razem z DROBNĄ 2 z tej samej sekcji.
 - DROBNA 2: klasa 103 unieważnia przepis z klasy 98 („siedem miejsc” bez `SECURITY.md`) — dopisać do 98 odsyłacz „patrz 103: osiem miejsc”.
 
 ### Klasa do ściągi PO #271 (numer 105)
 - „STRAŻNIK BEZ SPUSTU”: narzędzie/test istnieje, nic go nie woła (I-24 golden; I-3 kalibrator; I-4 licznik-odstepstw; I-8 adresy-w-dokumencie/waga-znaleziska). Kontrola: nowy test/bramka w TYM SAMYM PR ma wołającego — `grep -rn <nazwa> narzedzia-qa/bramki.sh .github/workflows/ narzedzia-qa/proby-kontrolne-przelot.sh` ≥ 1.
-- Kandydat: przelot `testy/` bez Dockera → ~20 prób EXIT=1, bo `WYMAGA_DOCKERA` zna 5 nazw; CI nie biegnie po `testy/` (stan sprzed #272).
+- Kandydat: przelot `testy/` bez Dockera → ~20 prób EXIT=1, bo `WYMAGA_DOCKERA` zna 4 nazwy (`MAX_POMINIETYCH=5` to osobna wielkość — sufit pominięć, nie liczba nazw); CI nie biegnie po `testy/` (stan sprzed #272).
 
 ### #270 r3 (F4-F4) — 3 DROBNE, scalać po #268 (0 KRYT, 0 WAŻNA)
 - DROBNA 1: krok render sam podaje `faktura=1` — asercja mierzy własne wejście; poprawka: brać parametr z prawdziwego REDIRECT z WY_A.
 - DROBNA 2: opis w sekcji RODO PRZED kliknięciem obiecuje zachowanie faktury także przy zakupie prywatnym (pusta kolumna) — warunek `$ma_fakture` także w tekście przed operacją.
-- DROBNA 3 (klasa 11): `testy/anonimizacja-zachowuje-fakture-proba-kontrolna.sh` — komunikat obiecuje rozróżnienie, którego warunek nie robi; bliźniak w bazie robi poprawnie.
+- DROBNA 3 (klasa 11): `testy/anonimizacja-zachowuje-fakture-proba-kontrolna.sh` (⚠️ plik istnieje TYLKO na gałęzi PR #270, nie na `main`) — komunikat obiecuje rozróżnienie, którego warunek nie robi; bliźniak w bazie robi poprawnie.
