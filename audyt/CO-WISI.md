@@ -1062,3 +1062,28 @@ z gałęzi **do kontenera**, czyli tej samej operacji, która w `testy/golden-mi
 niebezpieczna dla WSPÓLNEGO stosu — podmienia wtyczkę i jej nie przywraca (zmierzone: przed `0.9.32`/`a9ce0f70…`,
 po `0.9.31`/`704b0ab7…`, czyli cofnięta czyjaś robota w toku). Wpięcie bez rozwiązania tego cofa builderom kod pod
 stopami przy każdym biegu bramek. Dowody: `audyt/plamy/GOLDEN-258-WERYFIKACJA.md`.
+
+## 🟡 UWAGI Z RECENZJI 2.09 PRZENIESIONE PO REGULE JEDNEJ RUNDY (dokumenty: #269, #271; kod: #270 r3 — same DROBNE)
+
+Każda pozycja = tania poprawka tekstowa do wzięcia przy najbliższym PR-ze w tym pliku; nic z tego nie jest wadą produktu u klienta.
+
+### #269 (raporty A7, scalone 2.09 --merge)
+- WAŻNA 1: opis PR „realnych rozjazdów” — liczba do sprostowania (recenzent: liczba w opisie ≠ liczba w raporcie).
+- WAŻNA 2: nagłówek `audyt/czesciowo/A7-RAPORT.md` — jedno zdanie, że `A7-F1` domknięte przez #256.
+- DROBNA 3: `A7b-RAPORT.md:176` dwa układy odniesienia w jednym zdaniu (drugi numer prowadzi na HEAD w inny wiersz).
+- DROBNA 4: `A7b-RAPORT.md` dwie różne liczby zdarzeń dla tej samej rzeczy.
+- DROBNA 5: cytaty samą nazwą pliku tam, gdzie nazwa istnieje w trzech wtyczkach.
+- DROBNA 6: „kandydat na klasę” z opisu PR-a jest już klasą 12 ściągi.
+
+### #271 (ściąga klasy 99–104)
+- DROBNA 1: wpis klasy cytuje `REJESTR-ZNALEZISK-INFRA.md:171` (A6-F1) — po #267 linia 171 to `P-1`; kotwica zamiast numeru (wiersz `A6-F1`), źródło: #267 odnotował kolizję kodu A6-F1.
+- DROBNA 2: klasa 103 unieważnia przepis z klasy 98 („siedem miejsc” bez `SECURITY.md`) — dopisać do 98 odsyłacz „patrz 103: osiem miejsc”.
+
+### Klasa do ściągi PO #271 (numer 105)
+- „STRAŻNIK BEZ SPUSTU”: narzędzie/test istnieje, nic go nie woła (I-24 golden; I-3 kalibrator; I-4 licznik-odstepstw; I-8 adresy-w-dokumencie/waga-znaleziska). Kontrola: nowy test/bramka w TYM SAMYM PR ma wołającego — `grep -rn <nazwa> narzedzia-qa/bramki.sh .github/workflows/ narzedzia-qa/proby-kontrolne-przelot.sh` ≥ 1.
+- Kandydat: przelot `testy/` bez Dockera → ~20 prób EXIT=1, bo `WYMAGA_DOCKERA` zna 5 nazw; CI nie biegnie po `testy/` (stan sprzed #272).
+
+### #270 r3 (F4-F4) — 3 DROBNE, scalać po #268 (0 KRYT, 0 WAŻNA)
+- DROBNA 1: krok render sam podaje `faktura=1` — asercja mierzy własne wejście; poprawka: brać parametr z prawdziwego REDIRECT z WY_A.
+- DROBNA 2: opis w sekcji RODO PRZED kliknięciem obiecuje zachowanie faktury także przy zakupie prywatnym (pusta kolumna) — warunek `$ma_fakture` także w tekście przed operacją.
+- DROBNA 3 (klasa 11): `testy/anonimizacja-zachowuje-fakture-proba-kontrolna.sh` — komunikat obiecuje rozróżnienie, którego warunek nie robi; bliźniak w bazie robi poprawnie.
