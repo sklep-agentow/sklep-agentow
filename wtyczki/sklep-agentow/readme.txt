@@ -162,7 +162,7 @@ link do pobrania w mailu, jednorazowy link do opinii.
 == Changelog ==
 
 = 0.9.37 =
-* Naprawione: anonimizacja kupującego z panelu zachowuje dane do faktury (nazwa, NIP, adres) — tak jak kasownik danych osobowych WordPressa; okno potwierdzenia i instrukcja mówią to wprost.
+* Naprawione: anonimizacja kupującego z panelu zachowuje dane do faktury (nazwa, NIP, adres) — tak jak kasownik danych osobowych WordPressa; okno potwierdzenia, komunikat po anonimizacji, szczegóły zamówienia (faktura dalej widoczna) i instrukcja mówią to wprost.
 * Naprawione: po zwrocie całej kwoty albo w trakcie sporu link do pobrania przestaje działać (dotąd działał do końca 72 h i limitu 10 pobrań). Kupujący widzi powód i kontakt do sprzedawcy, próba trafia do osi czasu zamówienia; zwrot częściowy nie odcina dostępu.
 
 = 0.9.36 =

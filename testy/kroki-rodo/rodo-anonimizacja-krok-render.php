@@ -45,6 +45,10 @@ if ( empty( $admini ) ) {
 wp_set_current_user( $admini[0]->ID );
 
 $_GET['zamowienie'] = $id;
+/* Render z parametrami powrotu z admin-post — tak widzi stronę właściciel sekundę po anonimizacji
+   (komunikat u góry). #270 r1 KRYTYCZNA 1: komunikat meldował usunięcie faktury, której nie usunął. */
+$_GET['sklepag_anonimizacja'] = 'ok';
+$_GET['faktura']              = '1';
 ob_start();
 sklepag_admin_zamowienie();
 $html = (string) ob_get_clean();
@@ -59,3 +63,7 @@ echo "RENDER_PRZYRZAD=OK\n";
 /* Szukamy po RDZENIU „niedomkni" (odmiana polska), frazy naprawy po pełnym brzmieniu. */
 echo 'RENDER_FRAZA_NIEDOMKNIETE=' . ( false !== strpos( $html, 'niedomkni' ) ? '1' : '0' ) . "\n";
 echo 'RENDER_FRAZA_USUNIETA=' . ( false !== strpos( $html, 'usunięta przy anonimizacji' ) ? '1' : '0' ) . "\n";
+/* #270 r1: komunikat po powrocie i wiersz „Dane do faktury” — faktura ZOSTAJE i ma być widoczna (NIP z zasiewu). */
+echo 'RENDER_KOMUNIKAT_FAKTURA_USUNIETA=' . ( false !== strpos( $html, 'dane do faktury i treść maila usunięte' ) ? '1' : '0' ) . "\n";
+echo 'RENDER_KOMUNIKAT_FAKTURA_ZOSTALA=' . ( false !== strpos( $html, 'dane do faktury (nazwa, NIP, adres) ZOSTAŁY' ) ? '1' : '0' ) . "\n";
+echo 'RENDER_FAKTURA_WIDOCZNA=' . ( false !== strpos( $html, '5260250274' ) ? '1' : '0' ) . "\n";

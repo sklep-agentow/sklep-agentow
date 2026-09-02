@@ -259,8 +259,9 @@ function sklepag_anonimizuj_zamowienie( $id, $zachowaj_dane_faktury = true ) {
 		(false znaczy tu rowniez „zamowienie nie ma opinii"), rozstrzyga pomiar nizej. */
 	sklepag_anonimizuj_opinie( $id );
 
-	/* ⛔ Jedyna roznica miedzy trybem panelu a trybem kasownika RODO: kolumna faktury.
-		Reszta zapisu jest IDENTYCZNA — inaczej byloby to drugie, rozjezdzajace sie
+	/* ⛔ Jedyna roznica, jaka ten parametr robi w zapisie: kolumna faktury. Od 0.9.37 OBIE drogi
+		produkcyjne (panel i kasownik RODO) przekazuja `true` — `false` zostaje wylacznie dla straznika
+		szerokosci zapisu. Reszta zapisu jest IDENTYCZNA — inaczej byloby to drugie, rozjezdzajace sie
 		czyszczenie zamiast jednego, sprawdzonego. */
 	$czysc_fakture = $zachowaj_dane_faktury ? '' : "dane_faktury='', ";
 
