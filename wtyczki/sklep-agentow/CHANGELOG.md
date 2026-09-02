@@ -20,7 +20,7 @@ Nic jeszcze.
 
 ---
 
-## [0.9.35] — 2026-09-01 · schemat bazy bez zmian (10)
+## [0.9.36] — 2026-09-01 · schemat bazy bez zmian (10)
 
 ### Naprawione
 - **Za duża paczka produktu nie kończy się już pustą białą stroną.** Gdy całe wysłane
@@ -32,17 +32,44 @@ Nic jeszcze.
   wysłanych danych, mówi wprost, że limit wtyczki (20 MB) nie brał w tym udziału,
   i uprzedza, że wpisanej treści formularza nie da się odtworzyć — PHP wyrzuciło ją,
   zanim WordPress wystartował. Formularz produktu niesie `action` także w adresie, żeby
-  ucięte żądanie w ogóle trafiło do wtyczki; strona wyrenderowana przed aktualizacją
-  (albo podana z pamięci podręcznej) dostaje ten sam komunikat przez `admin_post`.
+  ucięte żądanie w ogóle trafiło do wtyczki. Ucięte zgłoszenie **bez** tego adresu (strona
+  wyrenderowana przed aktualizacją, podana z pamięci podręcznej albo formularz innej wtyczki)
+  dostaje przez ogólne zaczepienie `admin_post` **wariant neutralny**: tylko limity serwera
+  i rozmiar wysłanych danych, bez limitu wtyczki (20 MB) i bez odesłania do instrukcji, bo
+  przy uciętym żądaniu nie da się poznać, z którego formularza przyszło. Oba warianty widzą
+  wyłącznie konta z uprawnieniem `upload_files`; poniżej tego progu zostaje dotychczasowa
+  pusta odpowiedź, żeby ustawienia serwera nie wyciekały do kont bez prawa wgrywania.
 
 ### Dodane
 - **Instrukcja właściciela mówi, jak podnieść limit wgrania** — akapit „Serwer nie
   przyjmuje pliku — jak podnieść limit" w rozdziale „Produkty": oba ustawienia PHP,
   ich typowe wartości, trzy miejsca zmiany (panel hostingu, `php.ini`, `.htaccess`)
   i sposób sprawdzenia, czy zmiana weszła w życie. Plus pozycja w „Najczęstszych pytaniach".
-- **Strażnik regresji dla obu limitów** — mierzy przez HTTP cztery kierunki: ciało ponad
+- **Strażnik regresji dla obu limitów** — mierzy przez HTTP siedem kierunków: ciało ponad
   `post_max_size`, pojedynczy plik ponad `upload_max_filesize`, zwykłe żądanie ze złym
-  nonce'em i poprawne wgranie ZIP-a. Skalibrowany: pada na kodzie sprzed tej naprawy.
+  nonce'em, poprawne wgranie ZIP-a, konto bez `upload_files` (nie dostaje konfiguracji
+  serwera), małe żądanie JSON (nie dostaje zmyślonej diagnozy) i duże żądanie JSON ponad
+  `post_max_size` (nie jest formularzem, więc też jej nie dostaje). Skalibrowany w trzech
+  etapach: pada na kodzie sprzed naprawy i na kodzie bez progu uprawnień.
+
+---
+
+## [0.9.34] — 2026-09-01 · schemat bazy bez zmian (10)
+
+### Naprawione
+- **Sklep przestaje obiecywać kupującemu firmowemu fakturę, której nie wystawia.** Formularz
+  zakupu pisał „fakturę prześlemy osobno mailem", a mail po zakupie — „Fakturę wystawimy na te
+  dane i prześlemy osobno na ten adres e-mail". Sklep faktur **nie wystawia**: nie tworzy
+  dokumentu, nie nadaje numeru, nie wysyła go i nie pilnuje terminu (mówi o tym wprost
+  `INSTRUKCJA.md`: „Faktura to Twoja robota, nie sklepu"). Była to obietnica majątkowa wobec
+  przedsiębiorcy, niepokryta ani jedną linią kodu. Teksty mówią teraz, co się z danymi dzieje
+  naprawdę — sklep je zapisuje i pokazuje w potwierdzeniu, a fakturę **wystawia sprzedawca
+  poza sklepem** — oraz gdzie kupujący ma się upomnieć, jeśli faktura nie dotrze.
+  ⭐ Funkcja zostaje bez zmian: pola faktury, walidacja NIP-u i zaproszenie „chcesz fakturę?"
+  dla kupujących, którzy danych nie podali (z terminem 3 miesięcy), działają jak dotąd.
+
+---
+
 ## [0.9.33] — 2026-09-01 · schemat bazy bez zmian (10)
 
 ### Zmienione

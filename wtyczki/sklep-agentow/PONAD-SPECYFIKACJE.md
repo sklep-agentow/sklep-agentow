@@ -88,7 +88,7 @@ to jest w paczce, bo bez tego sklep nie nadawałby się do sprzedaży, a nie dla
 18. **Ostrzeżenie w kokpicie**, gdy struktura bezpośrednich odnośników jest ustawiona na „Zwykłe”.
     Powód: bez tego strona sklepu pokazuje bloga, a Stripe nie dociera do webhooka — i nikt nie wie,
     dlaczego.
-18a. **Odpowiedź na zgłoszenie ucięte przez PHP — także spoza formularzy sklepu** (0.9.35).
+18a. **Odpowiedź na zgłoszenie ucięte przez PHP — także spoza formularzy sklepu** (0.9.36).
     Gdy wysłany formularz przekroczy `post_max_size`, PHP kasuje jego treść, zanim WordPress
     wystartuje; panel oddawał wtedy pustą białą stronę. Sklep odpowiada w takim przypadku
     komunikatem z realnymi limitami serwera. ⚠️ Zaczepienie siedzi na ogólnym wejściu
