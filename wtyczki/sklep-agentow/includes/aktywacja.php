@@ -149,12 +149,98 @@ function sklepag_tabele_sql() {
 	);
 }
 
-function sklepag_aktywacja() {
+/**
+ * Tabele i kolumny, których wymaga schemat — WYCZYTANE z tych samych definicji, które dostaje
+ * `dbDelta()`. Jedno źródło: nowa kolumna w definicji jest sprawdzana bez dopisywania jej gdziekolwiek.
+ *
+ * @return array<string, string[]> nazwa tabeli (z prefiksem) => lista kolumn.
+ */
+function sklepag_schemat_oczekiwany() {
+	$oczekiwane = array();
+	foreach ( sklepag_tabele_sql() as $sql ) {
+		if ( ! preg_match( '/CREATE TABLE\s+(\S+)\s*\(/i', $sql, $m ) ) {
+			continue;
+		}
+		$tabela  = $m[1];
+		$kolumny = array();
+		foreach ( preg_split( '/\r?\n/', $sql ) as $linia ) {
+			$linia = trim( $linia );
+			// Kolumna = identyfikator + typ; klucze (PRIMARY/UNIQUE/KEY) i nawiasy zamykające pomijamy.
+			if ( preg_match( '/^([a-z_][a-z0-9_]*)\s+(bigint|int|smallint|tinyint|varchar|char|text|longtext|mediumtext|datetime|date|timestamp|decimal)\b/i', $linia, $k ) ) {
+				$kolumny[] = strtolower( $k[1] );
+			}
+		}
+		$oczekiwane[ $tabela ] = $kolumny;
+	}
+	return $oczekiwane;
+}
+
+/**
+ * Co w bazie NAPRAWDĘ brakuje względem definicji — pomiar PO operacji, nie założenie.
+ *
+ * @return string[] Braki jako „tabela” albo „tabela.kolumna”; pusta tablica = schemat kompletny.
+ */
+function sklepag_schemat_braki() {
+	global $wpdb;
+	$braki = array();
+	foreach ( sklepag_schemat_oczekiwany() as $tabela => $kolumny ) {
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- nazwy z własnych definicji, odczyt schematu.
+		$jest = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $tabela ) );
+		if ( $jest !== $tabela ) {
+			$braki[] = $tabela;
+			continue;
+		}
+		$w_bazie = array_map( 'strtolower', (array) $wpdb->get_col( "SHOW COLUMNS FROM `{$tabela}`", 0 ) );
+		// phpcs:enable
+		foreach ( $kolumny as $kolumna ) {
+			if ( ! in_array( $kolumna, $w_bazie, true ) ) {
+				$braki[] = $tabela . '.' . $kolumna;
+			}
+		}
+	}
+	return $braki;
+}
+
+/**
+ * JEDNO miejsce budowy schematu dla aktywacji i migracji (do 0.9.37 były dwie kopie pętli).
+ *
+ * ⛔ Znacznik wersji idzie w górę TYLKO po zmierzeniu skutku: `dbDelta()` może nie zdążyć, trafić
+ *    na brak prawa ALTER albo na cudzą tabelę o tej samej nazwie — a brama „wersja == stała” zamykała
+ *    się wtedy na zawsze i nieudana migracja nie powtarzała się już nigdy (A6-F1). Teraz przy brakach
+ *    wersja zostaje stara (następne żądanie spróbuje znowu), a właściciel dostaje na Pulpicie listę
+ *    braków i ostatni błąd bazy. Przyczyna-matka H: nie zapisuj skutku, którego nie zmierzyłeś.
+ *
+ * @return bool true = schemat kompletny (wersja zapisana), false = braki (wersja NIE zapisana).
+ */
+function sklepag_zbuduj_schemat() {
+	global $wpdb;
 	require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+	$wpdb->last_error = '';
 	foreach ( sklepag_tabele_sql() as $sql ) {
 		dbDelta( $sql );
 	}
-	update_option( 'sklepag_wersja_schematu', SKLEPAG_WERSJA_SCHEMATU, false );
+	$blad_bazy = (string) $wpdb->last_error;
+	$braki     = sklepag_schemat_braki();
+	if ( empty( $braki ) ) {
+		update_option( 'sklepag_wersja_schematu', SKLEPAG_WERSJA_SCHEMATU, false );
+		delete_option( 'sklepag_schemat_blad' );
+		return true;
+	}
+	update_option(
+		'sklepag_schemat_blad',
+		array(
+			'braki'      => $braki,
+			'blad_bazy'  => $blad_bazy,
+			'oczekiwana' => SKLEPAG_WERSJA_SCHEMATU,
+			'czas'       => current_time( 'mysql' ),
+		),
+		false
+	);
+	return false;
+}
+
+function sklepag_aktywacja() {
+	sklepag_zbuduj_schemat();
 
 	sklepag_utworz_strony();
 	sklepag_utworz_katalog_chroniony();
@@ -178,17 +264,14 @@ function sklepag_deaktywacja() {
 }
 
 /**
- * Migracja przy podbiciu SKLEPAG_WERSJA_SCHEMATU (dbDelta jest idempotentne).
+ * Migracja przy podbiciu SKLEPAG_WERSJA_SCHEMATU (dbDelta jest idempotentne). Gdy poprzednia
+ * próba zostawiła braki, wersja jest stara, więc brama przepuszcza i próbujemy znowu.
  */
 function sklepag_migruj_schemat_jesli_trzeba() {
 	if ( (int) get_option( 'sklepag_wersja_schematu', 0 ) === SKLEPAG_WERSJA_SCHEMATU ) {
 		return;
 	}
-	require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-	foreach ( sklepag_tabele_sql() as $sql ) {
-		dbDelta( $sql );
-	}
-	update_option( 'sklepag_wersja_schematu', SKLEPAG_WERSJA_SCHEMATU, false );
+	sklepag_zbuduj_schemat();
 }
 
 /**

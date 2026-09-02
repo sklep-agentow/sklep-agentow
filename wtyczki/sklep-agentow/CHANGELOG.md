@@ -16,7 +16,8 @@ wydany osobno (podbicie pośrednie wewnątrz jednej zmiany).
 
 ## [Niewydane]
 
-Nic jeszcze.
+### Naprawione
+- **Nieudana migracja bazy nie znika już po cichu.** Do 0.9.37 aktywacja i aktualizacja podnosiły wersję schematu od razu po `dbDelta`, bez sprawdzenia, czy tabele i kolumny naprawdę powstały (np. użytkownik bazy bez prawa ALTER) — brama „wersja aktualna” zamykała się na zawsze, a sklep nie przyjmował zamówień bez jednego słowa dlaczego. Teraz wersja rośnie dopiero po pomiarze schematu w bazie; przy brakach zostaje stara, sklep próbuje przy następnym żądaniu, a Pulpit pokazuje, czego brakuje i jaki był błąd bazy.
 
 ---
 
