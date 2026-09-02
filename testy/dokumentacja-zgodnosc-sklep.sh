@@ -97,7 +97,11 @@ spr "CHANGELOG: [Niewydane] puste"        "0" "awk '/^## \[Niewydane\]/{f=1;next
 spr "DOK-TECH: Wersja wtyczki == $WER"    "$WER" "grep -oE 'Wersja wtyczki:[* ]*[0-9.]+' $W/DOKUMENTACJA-TECHNICZNA.md | grep -oE '[0-9.]+$'"
 spr "DOK-TECH: tabela stalych — SKLEPAG_WERSJA == $WER" "$WER" "grep -oE '^\\| .SKLEPAG_WERSJA. \\| [0-9.]+' $W/DOKUMENTACJA-TECHNICZNA.md | grep -oE '[0-9.]+$'"
 spr "DOK-TECH: schemat == SKLEPAG_WERSJA_SCHEMATU" "$(stala SKLEPAG_WERSJA_SCHEMATU)" "grep -oE 'wersja schematu bazy: [0-9]+' $W/DOKUMENTACJA-TECHNICZNA.md | grep -oE '[0-9]+$'"
-spr "DOK-TECH: liczba tabel == CREATE TABLE w aktywacji" "$(grep -c 'CREATE TABLE' $W/includes/aktywacja.php)" "grep -oE 'Schemat bazy — [0-9]+ tabel' $W/DOKUMENTACJA-TECHNICZNA.md | grep -oE '[0-9]+'"
+# ⛔ LICZYMY INSTRUKCJE, NIE WZMIANKI. Do 0.9.39 wzorzec 'CREATE TABLE' lapal takze
+# WYRAZENIE REGULARNE, ktore parsuje te instrukcje (aktywacja.php:161
+# preg_match('/CREATE TABLE\s+(\S+)\s*\(/i')) — bramka liczyla wtedy 8 przy 7 tabelach
+# i oskarzala POPRAWNA dokumentacje. Cudzyslow na poczatku zawezenia do literalu SQL.
+spr "DOK-TECH: liczba tabel == CREATE TABLE w aktywacji" "$(grep -c '"CREATE TABLE' $W/includes/aktywacja.php)" "grep -oE 'Schemat bazy — [0-9]+ tabel' $W/DOKUMENTACJA-TECHNICZNA.md | grep -oE '[0-9]+'"
 
 echo "=== E. readme odsyła do plików, które istnieją (w paczce albo obok niej) ==="
 # readme mówi wprost: CHANGELOG.md i DOKUMENTACJA-TECHNICZNA.md „w paczce", INSTRUKCJA-INSTALACJI.md „obok paczek"

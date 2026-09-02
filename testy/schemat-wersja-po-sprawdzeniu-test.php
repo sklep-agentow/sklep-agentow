@@ -40,7 +40,7 @@ $wynik = array();
 
 /* ---------- A) PODŁOŻONA AWARIA: CREATE opinii nie wykonuje się ---------- */
 $wpdb->query( "DROP TABLE IF EXISTS `{$tab_opinie}`" ); // phpcs:ignore
-if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $tab_opinie ) ) === $tab_opinie ) {
+if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $tab_opinie ) ) ) === $tab_opinie ) {
 	a6_przyrzad( 'nie udalo sie zrzucic tabeli opinii' );
 }
 update_option( 'sklepag_wersja_schematu', $STARA, false );
@@ -58,7 +58,7 @@ remove_filter( 'query', $blokuj, 1 );
 
 $wersja_a = (int) get_option( 'sklepag_wersja_schematu', 0 );
 $blad_a   = get_option( 'sklepag_schemat_blad', array() );
-$tab_a    = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $tab_opinie ) ) === $tab_opinie;
+$tab_a    = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $tab_opinie ) ) ) === $tab_opinie;
 echo 'A. tabela opinii po migracji: ' . ( $tab_a ? 'JEST (podlozenie nie weszlo?)' : 'BRAK (jak zalozono)' ) . "\n";
 echo 'A. wersja schematu: ' . $wersja_a . ' (OCZEKIWANE: ' . $STARA . " — STARA, bo schemat niekompletny)\n";
 echo 'A. sklepag_schemat_blad: ' . ( is_array( $blad_a ) && ! empty( $blad_a['braki'] ) ? implode( ',', (array) $blad_a['braki'] ) : 'BRAK' ) . " (OCZEKIWANE: zawiera opinie)\n";
@@ -86,7 +86,7 @@ $wynik[] = $a_ok;
 sklepag_migruj_schemat_jesli_trzeba();
 $wersja_b = (int) get_option( 'sklepag_wersja_schematu', 0 );
 $blad_b   = get_option( 'sklepag_schemat_blad', array() );
-$tab_b    = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $tab_opinie ) ) === $tab_opinie;
+$tab_b    = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $tab_opinie ) ) ) === $tab_opinie;
 echo 'B. tabela opinii: ' . ( $tab_b ? 'JEST' : 'BRAK' ) . " (OCZEKIWANE: JEST)\n";
 echo 'B. wersja schematu: ' . $wersja_b . ' (OCZEKIWANE: ' . $STALA . ")\n";
 echo 'B. sklepag_schemat_blad: ' . ( empty( $blad_b ) ? 'BRAK' : 'JEST' ) . " (OCZEKIWANE: BRAK)\n";

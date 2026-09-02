@@ -185,7 +185,12 @@ function sklepag_schemat_braki() {
 	$braki = array();
 	foreach ( sklepag_schemat_oczekiwany() as $tabela => $kolumny ) {
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- nazwy z własnych definicji, odczyt schematu.
-		$jest = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $tabela ) );
+		// ⛔ esc_like() OBOWIĄZKOWY przy LIKE: `_` jest dziką kartą SQL, a nazwy naszych tabel
+		// niosą po dwa (`wp_sklepag_produkty`), więc wzorzec bez escapowania pasuje do KAŻDEJ
+		// tabeli tej samej długości z dowolnym znakiem na tych pozycjach — cudza tabela mogłaby
+		// zostać uznana za naszą i schemat wyglądałby na kompletny. Konwencja tej wtyczki stoi
+		// obok: uninstall.php:69-71 i includes/prywatnosc.php:82.
+		$jest = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $tabela ) ) );
 		if ( $jest !== $tabela ) {
 			$braki[] = $tabela;
 			continue;
@@ -215,11 +220,20 @@ function sklepag_schemat_braki() {
 function sklepag_zbuduj_schemat() {
 	global $wpdb;
 	require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-	$wpdb->last_error = '';
+	// ⛔ `last_error` KASUJE KAŻDE KOLEJNE ZAPYTANIE (`wpdb::query()` zaczyna od `flush()`),
+	// więc jeden odczyt PO całej pętli pokazywał błąd wyłącznie wtedy, gdy zawiodła OSTATNIA
+	// tabela — przy siedmiu tabelach komunikat był prawie zawsze pusty, choć dokumentacja
+	// obiecywała właścicielowi „ostatni błąd bazy”. Czytamy po KAŻDYM `dbDelta` i zbieramy
+	// wszystkie RÓŻNE komunikaty.
+	$bledy_bazy = array();
 	foreach ( sklepag_tabele_sql() as $sql ) {
+		$wpdb->last_error = '';
 		dbDelta( $sql );
+		if ( '' !== (string) $wpdb->last_error ) {
+			$bledy_bazy[] = (string) $wpdb->last_error;
+		}
 	}
-	$blad_bazy = (string) $wpdb->last_error;
+	$blad_bazy = implode( ' | ', array_unique( $bledy_bazy ) );
 	$braki     = sklepag_schemat_braki();
 	if ( empty( $braki ) ) {
 		update_option( 'sklepag_wersja_schematu', SKLEPAG_WERSJA_SCHEMATU, false );
@@ -240,6 +254,10 @@ function sklepag_zbuduj_schemat() {
 }
 
 function sklepag_aktywacja() {
+	// ⛔ Kasujemy znacznik odstępu, żeby aktywacja próbowała ZAWSZE od razu — to jest
+	// dokładnie ta droga, którą komunikat na Pulpicie podaje właścicielowi po naprawie
+	// uprawnień („deaktywuj i aktywuj wtyczkę”). Bez tego musiałby czekać do 5 minut.
+	delete_transient( 'sklepag_schemat_ponowienie' );
 	sklepag_zbuduj_schemat();
 
 	sklepag_utworz_strony();
@@ -271,7 +289,20 @@ function sklepag_migruj_schemat_jesli_trzeba() {
 	if ( (int) get_option( 'sklepag_wersja_schematu', 0 ) === SKLEPAG_WERSJA_SCHEMATU ) {
 		return;
 	}
-	sklepag_zbuduj_schemat();
+	// ⛔ ODSTĘP MIĘDZY PRÓBAMI. Przy brakach wersja CELOWO zostaje stara, żeby próba się
+	// powtórzyła — ale bez odstępu powtarza się przy KAŻDYM żądaniu, także anonimowym
+	// frontowym, i każde takie żądanie płaci 7 × `dbDelta` (z `DESCRIBE` i ponawianym
+	// `CREATE`) plus 14 zapytań pomiarowych. Na instalacji bez prawa ALTER/CREATE ten stan
+	// jest TRWAŁY, więc sklep zwalniałby każdemu odwiedzającemu, dopóki właściciel nie
+	// zajrzy do panelu. Ponawiamy co 5 minut; aktywacja wtyczki kasuje znacznik, więc
+	// „deaktywuj i aktywuj” z komunikatu na Pulpicie działa NATYCHMIAST, bez czekania.
+	if ( false !== get_transient( 'sklepag_schemat_ponowienie' ) ) {
+		return;
+	}
+	set_transient( 'sklepag_schemat_ponowienie', 1, 5 * MINUTE_IN_SECONDS );
+	if ( sklepag_zbuduj_schemat() ) {
+		delete_transient( 'sklepag_schemat_ponowienie' );
+	}
 }
 
 /**

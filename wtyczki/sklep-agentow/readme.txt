@@ -4,7 +4,7 @@ Tags: sklep, stripe, pliki cyfrowe, sprzedaz wtyczek, pobieranie
 Requires at least: 6.7
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.9.36
+Stable tag: 0.9.39
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -160,6 +160,12 @@ Nie. Zakup jest bez konta: adres e-mail podany na stronie płatności Stripe,
 link do pobrania w mailu, jednorazowy link do opinii.
 
 == Changelog ==
+
+= 0.9.39 =
+* Nieudana migracja bazy nie znika po cichu: wersja schematu rosnie tylko po zmierzonym, kompletnym schemacie.
+* Sprawdzenie schematu nie powtarza sie przy kazdym zadaniu — ponawianie co 5 minut, aktywacja natychmiast.
+* Komunikat "Ostatni blad bazy" pokazuje prawdziwy blad (odczyt po kazdej tabeli, nie raz na koncu).
+* SHOW TABLES LIKE z esc_like() — podkreslnik w nazwie tabeli nie jest juz dzika karta.
 
 = 0.9.36 =
 * Naprawione: wgranie za dużej paczki produktu nie kończy się pustą białą stroną. Gdy całe zgłoszenie przekraczało `post_max_size`, PHP kasowało formularz razem z plikiem i właściciel nie dostawał ŻADNEGO komunikatu. Sklep rozpoznaje teraz ten stan i podaje realne limity serwera (`post_max_size`, `upload_max_filesize`) oraz ilość wysłanych danych, zaznaczając, że limit wtyczki (20 MB) nie brał w tym udziału. Pełny komunikat widzi właściciel w formularzu produktu (uprawnienie `manage_options`); ucięte zgłoszenie, które nie niesie adresu formularza produktu (`action` w adresie) — czyli formularz innej wtyczki albo strona produktu wyrenderowana przed aktualizacją lub podana z pamięci podręcznej — dostaje wersję neutralną, tylko z limitami serwera, i to wyłącznie konta z uprawnieniem do wgrywania plików (`upload_files`); pozostałe nie dostają nic.

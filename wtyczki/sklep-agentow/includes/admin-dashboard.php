@@ -384,9 +384,6 @@ function sklepag_obsluz_eksport_csv() {
 /* ---------- Render dashboardu ---------- */
 
 /**
- * Strona główna panelu = dashboard (zastępuje szkielet-liczniki z kości).
- */
-/**
  * Komunikat o NIEKOMPLETNYM schemacie bazy (A6-F1): aktywacja/migracja zmierzyła braki po `dbDelta`,
  * wersja nie została podniesiona, sklep spróbuje znowu przy następnym żądaniu — ale przyczyna
  * (np. brak prawa ALTER/CREATE) wymaga właściciela. Wypisuje notice albo nic.
@@ -402,7 +399,7 @@ function sklepag_notice_schematu() {
 		. esc_html( implode( ', ', array_map( 'strval', (array) $schemat_blad['braki'] ) ) )
 		. ' (wersja schematu ' . (int) get_option( 'sklepag_wersja_schematu', 0 ) . ', oczekiwana ' . (int) ( $schemat_blad['oczekiwana'] ?? SKLEPAG_WERSJA_SCHEMATU ) . ').'
 		. ( ! empty( $schemat_blad['blad_bazy'] ) ? ' Ostatni błąd bazy: ' . esc_html( (string) $schemat_blad['blad_bazy'] ) : '' )
-		. ' Najczęstsza przyczyna: użytkownik bazy bez prawa ALTER/CREATE. Po naprawie uprawnień deaktywuj i aktywuj wtyczkę.</p></div>';
+		. ' Najczęstsza przyczyna: użytkownik bazy bez prawa ALTER/CREATE. Po naprawie uprawnień deaktywuj i aktywuj wtyczkę (sklep ponawia próbę sam co 5 minut, a aktywacja robi to natychmiast).</p></div>';
 	return true;
 }
 
