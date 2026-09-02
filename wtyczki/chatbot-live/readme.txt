@@ -103,7 +103,7 @@ otwiera dodawanie pary z już wpisanym pytaniem.
 = Czy gość może zalać mnie wiadomościami? =
 
 Nie. Limit to 10 wiadomości na minutę z jednego adresu IP, wspólny dla pytań
-i zgłoszeń. Pytanie ma maksymalnie 500 znaków, wiadomość zgłoszenia 2000.
+i zgłoszeń. Pytanie ma maksymalnie 500 znaków (dłuższe dostaje komunikat, nie jest ucinane po cichu), wiadomość zgłoszenia 2000.
 
 = Czy muszę mieć klucz API, żeby bot działał? =
 

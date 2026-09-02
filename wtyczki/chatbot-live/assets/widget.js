@@ -388,6 +388,36 @@
 		formPytania.appendChild(wyslijBtn);
 
 		/*
+		 * LIMIT 500 ZNAKOW JAWNY (CZ-1). `maxLength` ucina wklejony tekst PO CICHU — gosc nie wie,
+		 * ze bot dostal pol pytania. Licznik pokazuje sie od 400 znakow, a wklejka ponad limit
+		 * dostaje zdanie wprost. Serwer i tak odmawia (kod `za_dlugie`), a wtedy tresc WRACA do pola.
+		 */
+		var LIMIT_PYTANIA = 500;
+		var licznik = el('div', 'chatl-licznik');
+		licznik.setAttribute('aria-live', 'polite');
+		function odswiezLicznik(komunikat) {
+			var n = polePytania.value.length;
+			if (komunikat) {
+				licznik.textContent = komunikat;
+				licznik.classList.add('chatl-licznik-limit');
+				return;
+			}
+			licznik.textContent = n >= LIMIT_PYTANIA - 100 ? n + ' / ' + LIMIT_PYTANIA : '';
+			licznik.classList.toggle('chatl-licznik-limit', n >= LIMIT_PYTANIA);
+		}
+		polePytania.addEventListener('input', function () { odswiezLicznik(); });
+		polePytania.addEventListener('paste', function (zd) {
+			var schowek = zd.clipboardData || window.clipboardData;
+			var wklejane = schowek ? String(schowek.getData('text') || '') : '';
+			var razem = polePytania.value.length - (polePytania.selectionEnd - polePytania.selectionStart) + wklejane.length;
+			if (razem > LIMIT_PYTANIA) {
+				setTimeout(function () {
+					odswiezLicznik('Wklejony tekst skrócono do ' + LIMIT_PYTANIA + ' znaków — sprawdź, czy pytanie jest całe.');
+				}, 0);
+			}
+		});
+
+		/*
 		 * PRZEJECIE ROZMOWY PRZEZ CZLOWIEKA
 		 *
 		 * Rytm odpytywania podaje SERWER w kazdej odpowiedzi (pole `interwal`),
@@ -486,6 +516,11 @@
 						}
 					} else {
 						dodajWiadomosc('bot', (odp.data && odp.data.komunikat) || 'Coś poszło nie tak. Spróbuj ponownie.');
+						if (odp.data && 'za_dlugie' === odp.data.kod) {
+							/* Tresc wraca do pola: gosc skraca, nie przepisuje od zera. */
+							polePytania.value = pytanie;
+							odswiezLicznik();
+						}
 					}
 				})
 				.catch(function () {
@@ -501,6 +536,7 @@
 				});
 		});
 		okno.appendChild(formPytania);
+		okno.appendChild(licznik);
 
 		/* Nota o zapisie rozmowy — PRZED powitaniem, zeby gosc przeczytal ja
 		   zanim cokolwiek napisze. Nie jest dymkiem bota: to informacja

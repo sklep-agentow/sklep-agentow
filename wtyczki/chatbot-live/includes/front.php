@@ -501,8 +501,23 @@ function chatl_ajax_pytanie() {
 			403
 		);
 	}
-	if ( mb_strlen( $pytanie ) > CHATL_MAX_PYTANIE ) {
-		$pytanie = mb_substr( $pytanie, 0, CHATL_MAX_PYTANIE );
+	/*
+	 * Za długie pytanie = ODMOWA z liczbą, nie ciche cięcie. Do 1.5.14 nadmiar znikał w `mb_substr`
+	 * i gość nie wiedział, że bot dostał urwany tekst — odpowiadał na pół pytania. Widget trzyma
+	 * `maxLength`, więc tu trafia tylko wklejka spoza pola albo obcy klient; kod `za_dlugie`
+	 * pozwala widgetowi oddać treść do pola zamiast ją zgubić.
+	 */
+	$dlugosc = mb_strlen( $pytanie );
+	if ( $dlugosc > CHATL_MAX_PYTANIE ) {
+		wp_send_json_error(
+			array(
+				'komunikat' => sprintf( 'Pytanie ma %d znaków, a limit to %d — skróć je i wyślij ponownie.', $dlugosc, CHATL_MAX_PYTANIE ),
+				'kod'       => 'za_dlugie',
+				'limit'     => CHATL_MAX_PYTANIE,
+				'dlugosc'   => $dlugosc,
+			),
+			413
+		);
 	}
 
 	// Id pytania trzymamy, bo wynik dopasowania znamy dopiero niżej —
