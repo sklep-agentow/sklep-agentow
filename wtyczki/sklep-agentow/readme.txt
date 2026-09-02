@@ -4,7 +4,7 @@ Tags: sklep, stripe, pliki cyfrowe, sprzedaz wtyczek, pobieranie
 Requires at least: 6.7
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.9.35
+Stable tag: 0.9.36
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -160,6 +160,10 @@ Nie. Zakup jest bez konta: adres e-mail podany na stronie płatności Stripe,
 link do pobrania w mailu, jednorazowy link do opinii.
 
 == Changelog ==
+
+= 0.9.36 =
+* Naprawione: wgranie za dużej paczki produktu nie kończy się pustą białą stroną. Gdy całe zgłoszenie przekraczało `post_max_size`, PHP kasowało formularz razem z plikiem i właściciel nie dostawał ŻADNEGO komunikatu. Sklep rozpoznaje teraz ten stan i podaje realne limity serwera (`post_max_size`, `upload_max_filesize`) oraz ilość wysłanych danych, zaznaczając, że limit wtyczki (20 MB) nie brał w tym udziału. Pełny komunikat widzi właściciel w formularzu produktu (uprawnienie `manage_options`); ucięte zgłoszenie, które nie niesie adresu formularza produktu (`action` w adresie) — czyli formularz innej wtyczki albo strona produktu wyrenderowana przed aktualizacją lub podana z pamięci podręcznej — dostaje wersję neutralną, tylko z limitami serwera, i to wyłącznie konta z uprawnieniem do wgrywania plików (`upload_files`); pozostałe nie dostają nic.
+* Dodane: instrukcja właściciela opisuje, jak podnieść oba limity PHP i jak sprawdzić, że zmiana weszła w życie (rozdział „Produkty", akapit „Serwer nie przyjmuje pliku — jak podnieść limit").
 
 = 0.9.35 =
 * Naprawione (bezpieczeństwo): eksport CSV zamówień nie wynosi już formuły na Twój komputer. Adres kupującego zaczynający się od `=`, `+`, `-` lub `@` (WordPress takich nie odrzuca) trafiał do pliku bez zmian i wykonywał się jako formuła po otwarciu eksportu w Excelu albo LibreOffice; tą samą drogą szła nazwa produktu. Każda komórka zaczynająca się od `=`, `+`, `-`, `@`, tabulatora, powrotu karetki albo apostrofu dostaje teraz z przodu apostrof (wartość od apostrofu dostaje drugi — dzięki temu odczyt maszynowy zawsze odzyska oryginał zdjęciem jednego znaku), a kolumna „Kwota" zostaje liczbą, więc arkusz nadal sumuje sprzedaż.
