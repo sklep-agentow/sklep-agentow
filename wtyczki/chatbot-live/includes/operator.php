@@ -233,7 +233,7 @@ function chatl_ekran_jednej_rozmowy( $sesja ) {
 				<input type="hidden" name="sesja" value="<?php echo esc_attr( $sesja ); ?>">
 				<?php
 				/* Szkic po odmowie — odczyt JEDNORAZOWY: po wstawieniu do pola kasujemy przechowalnię,
-				   żeby ta sama treść nie wracała przy każdym kolejnym wejściu na rozmowę. */
+					żeby ta sama treść nie wracała przy każdym kolejnym wejściu na rozmowę. */
 				$chatl_szkic = (string) get_transient( chatl_klucz_szkicu_operatora( $sesja ) );
 				if ( '' !== $chatl_szkic ) {
 					delete_transient( chatl_klucz_szkicu_operatora( $sesja ) );
@@ -397,9 +397,9 @@ function chatl_post_operator_wyslij() {
 		// więc formularz rysuje się od nowa z pustym `textarea` — bez przechowalni operator
 		// traciłby wszystko, co napisał, a komunikat kazałby mu „skrócić” coś, czego już nie ma.
 		// To ta sama klasa, którą sklep zamknął jako CZ-2 (formularz produktu) i CZ-3 (opinia
-		// kupującego) — wzorzec przechowalni per użytkownik na 5 minut stoi w
-		// `wtyczki/sklep-agentow/includes/admin-produkty.php:384`. Ten sam PR argumentuje tak
-		// dla GOŚCIA (`assets/widget.js:520`), więc operator nie może mieć gorzej.
+		// kupującego). Wzorzec: przechowalnia per użytkownik i per rozmowa na 5 minut, odczytana
+		// przy renderze JEDEN raz. Widżet gościa robi to samo (`assets/widget.js` — treść wraca
+		// do pola, gość skraca zamiast pisać od zera), więc operator nie może mieć gorzej.
 		chatl_odloz_szkic_operatora( $sesja, $tresc );
 		chatl_przekieruj_blad(
 			'chatl-rozmowy&sesja=' . rawurlencode( $sesja ),

@@ -8,7 +8,7 @@
  *
  * ⛔ To jest TRZECI egzemplarz klasy zamkniętej w sklepie jako `CZ-2` (formularz produktu)
  *    i `CZ-3` (opinia kupującego). Wzorzec naprawy — przechowalnia per użytkownik na 5 minut —
- *    stoi w `wtyczki/sklep-agentow/includes/admin-produkty.php:384`.
+ *    to przechowalnia per użytkownik na 5 minut, czytana przy renderze jeden raz.
  *
  * Co ten strażnik mierzy (i czego NIE mierzy):
  *   A. szkic odłożony przez `chatl_odloz_szkic_operatora()` da się odczytać w całości,
