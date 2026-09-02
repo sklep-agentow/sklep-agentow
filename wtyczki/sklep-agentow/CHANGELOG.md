@@ -28,8 +28,8 @@ Nic jeszcze.
   kupujący, który poda adres `=1+1@example.com`, wpisywał w praktyce **formułę arkusza** —
   WordPress takiego adresu nie odrzuca. Właściciel otwierał eksport w Excelu lub LibreOffice
   i formuła wykonywała się na jego komputerze. Tą samą drogą szła nazwa produktu, którą
-  ustawia sam właściciel. Każda komórka zaczynająca się od `=`, `+`, `-`, `@`, tabulatora
-  lub powrotu karetki dostaje teraz z przodu apostrof; zabezpieczenie obejmuje **cały
+  ustawia sam właściciel. Każda komórka zaczynająca się od `=`, `+`, `-`, `@`, tabulatora,
+  powrotu karetki albo apostrofu dostaje teraz z przodu apostrof; zabezpieczenie obejmuje **cały
   wiersz**, nie dwa znane pola. Kolumna „Kwota" zostaje liczbą, więc arkusz nadal sumuje
   sprzedaż, a odczyt maszynowy odzyskuje oryginał zdjęciem jednego apostrofu — także dla
   wartości, która sama zaczyna się od apostrofu (dostaje drugi).

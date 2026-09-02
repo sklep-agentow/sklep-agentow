@@ -88,7 +88,12 @@ foreach ( array(
 	++$nr;
 	$wiersz['stripe_session_id'] = 'cs_test_' . $znacznik . '_' . $nr;
 	if ( false === $wpdb->insert( $tz, array_merge( $wspolne, $wiersz ), array( '%s', '%d', '%s', '%s', '%d', '%d', '%s', '%s', '%s' ) ) ) {
-		echo "STRAZNIK: WYNIK=BLAD-SRODOWISKA (nie umiem wstawić zamówienia próbnego)\n";
+		// ⛔ Sprzątanie po sobie TAKŻE przy padnięciu w połowie: funkcja zamknięcia jest rejestrowana
+		// dopiero niżej, więc bez tej pętli wiersze 1…n-1 zostałyby na wspólnym stosie.
+		foreach ( $wstawione as $id ) {
+			$wpdb->delete( $tz, array( 'id' => $id ), array( '%d' ) );
+		}
+		echo "STRAZNIK: WYNIK=BLAD-SRODOWISKA (nie umiem wstawić zamówienia próbnego; wstawione wcześniej wiersze skasowane)\n";
 		exit( 2 );
 	}
 	$wstawione[] = (int) $wpdb->insert_id;
@@ -99,13 +104,18 @@ $posprzataj = static function () use ( $wpdb, $tz, $wstawione ) {
 		$wpdb->delete( $tz, array( 'id' => $id ), array( '%d' ) );
 	}
 	// Handler dokłada wpis do dziennika przy KAŻDYM eksporcie — kasujemy wyłącznie swój.
-	$wpdb->query(
-		$wpdb->prepare(
-			"DELETE FROM {$wpdb->prefix}sklepag_zdarzenia WHERE typ = 'eksport_csv' AND id > %d",
-			(int) get_option( 'sklepag_straznik_csv_id_przed', 0 )
-		)
-	);
-	delete_option( 'sklepag_straznik_csv_id_przed' );
+	// ⛔ BEZ DOMYŚLNEGO OTWARCIA: brak znacznika = NIE kasujemy nic (domyślne 0 zabrałoby CAŁY typ
+	// `eksport_csv` z dziennika wspólnego stosu — klasa 31 ze ściągi).
+	$przed = get_option( 'sklepag_straznik_csv_id_przed', false );
+	if ( false !== $przed && '' !== $przed ) {
+		$wpdb->query(
+			$wpdb->prepare(
+				"DELETE FROM {$wpdb->prefix}sklepag_zdarzenia WHERE typ = 'eksport_csv' AND id > %d",
+				(int) $przed
+			)
+		);
+		delete_option( 'sklepag_straznik_csv_id_przed' );
+	}
 };
 update_option(
 	'sklepag_straznik_csv_id_przed',
