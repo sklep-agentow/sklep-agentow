@@ -19,6 +19,7 @@ Nic jeszcze.
 ## [1.5.15] — 2026-09-02
 
 ### Naprawione
+- **Odmowa „za długa wiadomość” u operatora nie kasuje już tego, co napisał.** Handler kończy odrzut przekierowaniem, więc formularz rysował się od nowa z pustym polem — przepadało do 2000 znaków, a komunikat kazał operatorowi skrócić coś, czego już nie miał. Treść wraca teraz do pola z przechowalni (5 minut, osobno dla każdego operatora i każdej rozmowy, odczyt jednorazowy). To ten sam wzorzec, którym sklep zamknął znaleziska `CZ-2` i `CZ-3`.
 - **Za długie pytanie nie jest już ucinane po cichu.** Do 1.5.14 pytanie ponad 500 znaków
   trafiało do bota urwane, a gość nie wiedział, że odpowiedź dotyczy połowy tekstu. Teraz
   okno czatu nie pozwala przekroczyć limitu: pokazuje licznik od 400 znaków i ostrzega przy

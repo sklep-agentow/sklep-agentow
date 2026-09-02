@@ -231,7 +231,15 @@ function chatl_ekran_jednej_rozmowy( $sesja ) {
 				<?php wp_nonce_field( 'chatl_przejecie' ); ?>
 				<input type="hidden" name="action" value="chatl_operator_wyslij">
 				<input type="hidden" name="sesja" value="<?php echo esc_attr( $sesja ); ?>">
-				<textarea name="tresc" rows="3" class="large-text" placeholder="Napisz do gościa…" required></textarea>
+				<?php
+				/* Szkic po odmowie — odczyt JEDNORAZOWY: po wstawieniu do pola kasujemy przechowalnię,
+				   żeby ta sama treść nie wracała przy każdym kolejnym wejściu na rozmowę. */
+				$chatl_szkic = (string) get_transient( chatl_klucz_szkicu_operatora( $sesja ) );
+				if ( '' !== $chatl_szkic ) {
+					delete_transient( chatl_klucz_szkicu_operatora( $sesja ) );
+				}
+				?>
+				<textarea name="tresc" rows="3" class="large-text" placeholder="Napisz do gościa…" required><?php echo esc_textarea( $chatl_szkic ); ?></textarea>
 				<?php submit_button( 'Wyślij do gościa', 'primary', 'submit', false ); ?>
 			</form>
 		<?php else : ?>
@@ -343,6 +351,30 @@ add_action( 'admin_post_chatl_zakoncz', 'chatl_post_zakoncz' );
  *
  * @return void
  */
+/**
+ * Przechowalnia szkicu operatora na czas przekierowania po odmowie (5 minut, per użytkownik
+ * i per rozmowa). Wzorzec przeniesiony ze sklepu (`admin-produkty.php:384`, znaleziska CZ-2/CZ-3):
+ * odrzut walidacji nie ma prawa kasować tego, co człowiek napisał.
+ *
+ * @param string $sesja Identyfikator rozmowy.
+ * @param string $tresc Treść wpisana przez operatora.
+ * @return void
+ */
+function chatl_odloz_szkic_operatora( $sesja, $tresc ) {
+	set_transient( chatl_klucz_szkicu_operatora( $sesja ), (string) $tresc, 5 * MINUTE_IN_SECONDS );
+}
+
+/**
+ * Klucz przechowalni szkicu. Per użytkownik ORAZ per rozmowa — inaczej szkic z jednej rozmowy
+ * wskoczyłby do drugiej, a operator wysłałby gościowi nie to zdanie i nie temu człowiekowi.
+ *
+ * @param string $sesja Identyfikator rozmowy.
+ * @return string
+ */
+function chatl_klucz_szkicu_operatora( $sesja ) {
+	return 'chatl_szkic_op_' . get_current_user_id() . '_' . md5( (string) $sesja );
+}
+
 function chatl_post_operator_wyslij() {
 	if ( ! current_user_can( 'manage_options' ) ) {
 		wp_die( 'Brak uprawnień.' );
@@ -361,9 +393,17 @@ function chatl_post_operator_wyslij() {
 	// liczbę i limit — dokładnie jak gościowi w `front.php`.
 	$dlugosc = mb_strlen( $tresc );
 	if ( $dlugosc > CHATL_MAX_WIADOMOSC ) {
+		// ⛔ TREŚĆ WRACA DO POLA. Handler stoi za `admin-post` i kończy błąd przekierowaniem,
+		// więc formularz rysuje się od nowa z pustym `textarea` — bez przechowalni operator
+		// traciłby wszystko, co napisał, a komunikat kazałby mu „skrócić” coś, czego już nie ma.
+		// To ta sama klasa, którą sklep zamknął jako CZ-2 (formularz produktu) i CZ-3 (opinia
+		// kupującego) — wzorzec przechowalni per użytkownik na 5 minut stoi w
+		// `wtyczki/sklep-agentow/includes/admin-produkty.php:384`. Ten sam PR argumentuje tak
+		// dla GOŚCIA (`assets/widget.js:520`), więc operator nie może mieć gorzej.
+		chatl_odloz_szkic_operatora( $sesja, $tresc );
 		chatl_przekieruj_blad(
 			'chatl-rozmowy&sesja=' . rawurlencode( $sesja ),
-			sprintf( 'Wiadomość ma %d znaków, a limit to %d — skróć ją i wyślij ponownie. Nic nie zostało wysłane.', $dlugosc, CHATL_MAX_WIADOMOSC )
+			sprintf( 'Wiadomość ma %d znaków, a limit to %d — skróć ją i wyślij ponownie. Nic nie zostało wysłane, treść czeka w polu.', $dlugosc, CHATL_MAX_WIADOMOSC )
 		);
 	}
 	// Pisanie do rozmowy, której się nie przejęło, dałoby gościowi dwa głosy naraz.
