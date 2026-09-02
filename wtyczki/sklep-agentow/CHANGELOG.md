@@ -20,6 +20,22 @@ Nic jeszcze.
 
 ---
 
+## [0.9.35] — 2026-09-01 · schemat bazy bez zmian (10)
+
+### Naprawione (bezpieczeństwo)
+- **Eksport CSV zamówień nie wynosi już formuły na komputer właściciela** (CSV injection,
+  inaczej formula injection). Pola tekstowe szły do pliku tak, jak leżą w bazie, więc
+  kupujący, który poda adres `=1+1@example.com`, wpisywał w praktyce **formułę arkusza** —
+  WordPress takiego adresu nie odrzuca. Właściciel otwierał eksport w Excelu lub LibreOffice
+  i formuła wykonywała się na jego komputerze. Tą samą drogą szła nazwa produktu, którą
+  ustawia sam właściciel. Każda komórka zaczynająca się od `=`, `+`, `-`, `@`, tabulatora,
+  powrotu karetki albo apostrofu dostaje teraz z przodu apostrof; zabezpieczenie obejmuje **cały
+  wiersz**, nie dwa znane pola. Kolumna „Kwota" zostaje liczbą, więc arkusz nadal sumuje
+  sprzedaż, a odczyt maszynowy odzyskuje oryginał zdjęciem jednego apostrofu — także dla
+  wartości, która sama zaczyna się od apostrofu (dostaje drugi).
+
+---
+
 ## [0.9.34] — 2026-09-01 · schemat bazy bez zmian (10)
 
 ### Naprawione
