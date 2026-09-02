@@ -12,8 +12,22 @@ migracja odpala się sama przy pierwszym wejściu do panelu po aktualizacji
 
 ## [Niewydane]
 
+Nic jeszcze.
+
+---
+
+## [1.5.15] — 2026-09-02
+
 ### Naprawione
-- **Za długie pytanie nie jest już ucinane po cichu.** Do 1.5.14 pytanie ponad 500 znaków (wklejone) trafiało do bota urwane, a gość nie wiedział, że odpowiedź dotyczy połowy tekstu. Teraz serwer odmawia z liczbą znaków i limitem, treść wraca do pola do skrócenia, widget pokazuje licznik od 400 znaków i ostrzega przy wklejeniu ponad limit. To samo dla wiadomości zgłoszenia (limit 2000): odmowa z liczbą zamiast urwanego zgłoszenia u właściciela.
+- **Za długie pytanie nie jest już ucinane po cichu.** Do 1.5.14 pytanie ponad 500 znaków
+  trafiało do bota urwane, a gość nie wiedział, że odpowiedź dotyczy połowy tekstu. Teraz
+  okno czatu nie pozwala przekroczyć limitu: pokazuje licznik od 400 znaków i ostrzega przy
+  wklejeniu dłuższego tekstu. Gdyby żądanie przyszło z pominięciem okna (własny skrypt,
+  stara wersja w pamięci przeglądarki), serwer odmawia, podając liczbę znaków i limit —
+  zamiast przyjąć i uciąć. To samo dla wiadomości zgłoszenia (limit 2000).
+- **Wiadomość operatora dłuższa niż 2000 znaków też nie jest ucinana po cichu.** Operator
+  dostaje odmowę z liczbą znaków i limitem; wcześniej wysyłka wyglądała na udaną, a gość
+  dostawał urwane zdanie.
 
 ---
 

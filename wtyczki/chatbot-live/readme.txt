@@ -4,7 +4,7 @@ Tags: chat, chatbot, faq, kontakt, wsparcie
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.5.14
+Stable tag: 1.5.15
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -152,6 +152,10 @@ w ustawieniach. Klucz API jest kasowany zawsze, niezależnie od tego przełączn
 
 Pełna historia zmian, z opisem każdej pozycji, jest w pliku `CHANGELOG.md`
 w paczce. Poniżej skrót.
+
+= 1.5.15 =
+* Za dlugie pytanie i za dluga wiadomosc zgloszenia nie sa juz ucinane po cichu — okno czatu pilnuje limitu licznikiem i ostrzezeniem, a serwer odmawia z liczba znakow.
+* Wiadomosc operatora ponad limit tez dostaje odmowe zamiast cichego ciecia.
 
 = 1.5.14 =
 * Naprawione (RODO): gdy baza odrzuci skasowanie śladu sesji, ChatBot przerywa usuwanie i mówi o tym wprost, zamiast zameldować wykonanie żądania. Wcześniej taka awaria trafiała tylko do dziennika błędów, a osoba składająca wniosek dostawała potwierdzenie usunięcia danych, które zostały w bazie.

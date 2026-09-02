@@ -411,6 +411,9 @@
 	text-align: right;
 	opacity: 0.7;
 	background: var(--chatl-naglowek);
+	/* Para background+color jak w kazdym innym tekscie tego pliku: bez wlasnego `color`
+	   licznik dziedziczylby kolor tekstu STRONY GOSPODARZA, ktorego nie znamy. */
+	color: var(--chatl-naglowek-tekst);
 	min-height: 0;
 }
 .chatl-licznik:empty {

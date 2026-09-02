@@ -356,8 +356,15 @@ function chatl_post_operator_wyslij() {
 	if ( '' === $sesja || '' === trim( $tresc ) ) {
 		chatl_przekieruj_blad( 'chatl-rozmowy', 'Pusta wiadomość albo nieprawidłowa rozmowa.' );
 	}
-	if ( mb_strlen( $tresc ) > CHATL_MAX_WIADOMOSC ) {
-		$tresc = mb_substr( $tresc, 0, CHATL_MAX_WIADOMOSC );
+	// Trzeci egzemplarz tej samej klasy co CZ-1: ciche `mb_substr` wyglądało dla operatora
+	// jak sukces (przekierowanie bez błędu), a gość dostawał urwane zdanie. Odmowa mówi
+	// liczbę i limit — dokładnie jak gościowi w `front.php`.
+	$dlugosc = mb_strlen( $tresc );
+	if ( $dlugosc > CHATL_MAX_WIADOMOSC ) {
+		chatl_przekieruj_blad(
+			'chatl-rozmowy&sesja=' . rawurlencode( $sesja ),
+			sprintf( 'Wiadomość ma %d znaków, a limit to %d — skróć ją i wyślij ponownie. Nic nie zostało wysłane.', $dlugosc, CHATL_MAX_WIADOMOSC )
+		);
 	}
 	// Pisanie do rozmowy, której się nie przejęło, dałoby gościowi dwa głosy naraz.
 	if ( 'czlowiek' !== chatl_stan_rozmowy( $sesja ) ) {

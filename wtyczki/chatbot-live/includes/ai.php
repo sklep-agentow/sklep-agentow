@@ -47,8 +47,9 @@ const CHATL_AI_BRAK       = 'BRAK_ODPOWIEDZI';
 const CHATL_AI_PAMIEC_WYMIAN = 6;
 
 /*
- * Górny limit dlugosci JEDNEJ wiadomosci z historii. Pytanie goscia jest juz
- * przyciete do CHATL_MAX_PYTANIE, ale odpowiedz bota moze byc dluga — bez tego
+ * Górny limit dlugosci JEDNEJ wiadomosci z historii. Pytanie goscia od 1.5.15 nie jest
+ * przycinane, tylko ODRZUCANE ponad CHATL_MAX_PYTANIE (front.php:511), wiec do historii
+ * trafia zawsze w calosci; ale odpowiedz bota moze byc dluga — bez tego
  * jedna rozwlekla odpowiedz z przeszlosci potrafilaby zdominowac zadanie.
  */
 const CHATL_AI_PAMIEC_ZNAKOW = 600;

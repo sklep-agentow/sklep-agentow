@@ -61,10 +61,27 @@ function cz1_zadanie( $post ) {
 	return json_decode( $wyjscie, true );
 }
 
-$sprzataj = static function () use ( $wpdb, $ts, $tr, $sesja ) {
+// ⛔ WŁASNY adres, nie cudzy kubeł. Poprzednia wersja kasowała `chat|%`, czyli kubły
+// limitu WSZYSTKICH adresów na wspólnym stosie warsztatowym — test sprzątał po innych.
+// 203.0.113.0/24 to pula zarezerwowana na dokumentację (RFC 5737), więc nie zderzy się
+// z niczyim realnym adresem.
+$ip_testu                = '203.0.113.' . wp_rand( 2, 254 );
+$_SERVER['REMOTE_ADDR']  = $ip_testu;
+$klucz_testu             = 'chat|' . $ip_testu;
+
+// Opcję zapisujemy, więc trzeba ją ODDAĆ w stanie zastanym — inaczej test trwale
+// przestawia ustawienie na stosie, z którego korzystają inni.
+$ust_przed = get_option( 'chatl_ustawienia', null );
+
+$sprzataj = static function () use ( $wpdb, $ts, $tr, $sesja, $klucz_testu, $ust_przed ) {
 	$wpdb->delete( $ts, array( 'sesja' => $sesja ) );
 	$wpdb->delete( $tr, array( 'sesja' => $sesja ) );
-	$wpdb->query( "DELETE FROM {$wpdb->prefix}chatl_rate_limit WHERE klucz LIKE 'chat|%'" ); // phpcs:ignore
+	$wpdb->delete( $wpdb->prefix . 'chatl_rate_limit', array( 'klucz' => $klucz_testu ) );
+	if ( null === $ust_przed ) {
+		delete_option( 'chatl_ustawienia' );
+	} else {
+		update_option( 'chatl_ustawienia', $ust_przed, false );
+	}
 };
 register_shutdown_function( $sprzataj );
 
@@ -103,7 +120,7 @@ $kod_a  = is_array( $odp_a ) ? (string) ( $odp_a['data']['kod'] ?? '' ) : '';
 $kom_a  = is_array( $odp_a ) ? (string) ( $odp_a['data']['komunikat'] ?? '' ) : '';
 $ile_a  = $ile_pytan();
 echo 'A. odpowiedz: success=' . ( ! empty( $odp_a['success'] ) ? '1' : '0' ) . ' kod=' . ( '' !== $kod_a ? $kod_a : '(brak)' ) . ' komunikat=' . ( '' !== $kom_a ? $kom_a : '(brak)' ) . "\n";
-echo 'A. wierszy pytania gosciа w rozmowie: ' . $ile_a . " (OCZEKIWANE: 0 — urwany tekst nie idzie do bota)\n";
+echo 'A. wierszy pytania goscia w rozmowie: ' . $ile_a . " (OCZEKIWANE: 0 — urwany tekst nie idzie do bota)\n";
 $a_ok = is_array( $odp_a ) && empty( $odp_a['success'] ) && 'za_dlugie' === $kod_a
 	&& false !== strpos( $kom_a, (string) ( $LIMIT + 1 ) ) && false !== strpos( $kom_a, (string) $LIMIT ) && 0 === $ile_a;
 echo 'A: WYNIK=' . ( $a_ok ? 'PASS' : 'FAIL - za dlugie pytanie przyjete po cichu (przyciete) albo bez liczby znakow' ) . "\n";
