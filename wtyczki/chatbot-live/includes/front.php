@@ -674,8 +674,19 @@ function chatl_ajax_zgloszenie() {
 			400
 		);
 	}
-	if ( mb_strlen( $wiadomosc ) > CHATL_MAX_WIADOMOSC ) {
-		$wiadomosc = mb_substr( $wiadomosc, 0, CHATL_MAX_WIADOMOSC );
+	// Bliźniak limitu pytania (CZ-1): za długa wiadomość = ODMOWA z liczbą, nie ciche cięcie —
+	// właściciel dostawałby urwane zgłoszenie i nie wiedziałby, że gość napisał więcej.
+	$dlugosc_w = mb_strlen( $wiadomosc );
+	if ( $dlugosc_w > CHATL_MAX_WIADOMOSC ) {
+		wp_send_json_error(
+			array(
+				'komunikat' => sprintf( 'Wiadomość ma %d znaków, a limit to %d — skróć ją i wyślij ponownie.', $dlugosc_w, CHATL_MAX_WIADOMOSC ),
+				'kod'       => 'za_dlugie',
+				'limit'     => CHATL_MAX_WIADOMOSC,
+				'dlugosc'   => $dlugosc_w,
+			),
+			413
+		);
 	}
 
 	global $wpdb;

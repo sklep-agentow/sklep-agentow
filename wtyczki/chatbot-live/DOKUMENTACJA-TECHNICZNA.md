@@ -99,7 +99,7 @@ Serce trybu regułowego. Właściciel wypełnia ją w panelu; przy pierwszej akt
 |---|---|---|
 | `id` | `bigint(20) unsigned`, PK, auto | Identyfikator zgłoszenia; wchodzi do adresów akcji „oznacz obsłużone" i „usuń". |
 | `email` | `varchar(190)` | Adres gościa. 190 znaków, bo to bezpieczna długość dla indeksu przy `utf8mb4`. Walidowany `is_email()` przed zapisem. |
-| `wiadomosc` | `text` | Treść od gościa. Przycinana do 2000 znaków (`CHATL_MAX_WIADOMOSC`). |
+| `wiadomosc` | `text` | Treść od gościa, do 2000 znaków (`CHATL_MAX_WIADOMOSC`); dłuższa jest odrzucana z komunikatem (od 1.5.15), nie przycinana. |
 | `sesja` | `varchar(64)`, domyślnie `''` | Identyfikator sesji czatu — pozwala zestawić zgłoszenie z rozmową, która je poprzedziła. |
 | `podejrzane` | `tinyint(1)` | `0` = zgłoszenie normalne, `1` = złapane przez pułapkę na boty; lista w panelu domyślnie pokazuje tylko `0` |
 | `status` | `varchar(20)`, domyślnie `'nowe'` | `nowe` albo `obsluzone` — jedyne dwie wartości przyjmowane przez handler zmiany statusu. Ma własny indeks `KEY status`. |
@@ -213,7 +213,7 @@ Wszystkie liczby, którymi wtyczka się rządzi, są stałymi — nie ma ich roz
 | `CHATL_WERSJA_SCHEMATU` | `8` | `chatbot-live.php` | wyzwalacz migracji schematu |
 | `CHATL_KATALOG`, `CHATL_URL` | ścieżka i adres wtyczki | `chatbot-live.php` | `require` i adresy assetów |
 | `CHATL_MAX_PYTANIE` | `500` | `includes/front.php` | maksymalna długość pytania gościa (nadmiar jest **odrzucany** z komunikatem i kodem `za_dlugie`, HTTP 413; do 1.5.14 był przycinany po cichu) |
-| `CHATL_MAX_WIADOMOSC` | `2000` | `includes/front.php` | maksymalna długość treści zgłoszenia (jw.) |
+| `CHATL_MAX_WIADOMOSC` | `2000` | `includes/front.php` | maksymalna długość treści zgłoszenia (nadmiar odrzucany z kodem `za_dlugie`, jak pytanie) |
 | `CHATL_LIMIT_NA_MIN` | `10` | `includes/front.php` | wspólny kubeł: żądań na minutę z jednego IP, łącznie dla pytań i zgłoszeń |
 | `CHATL_RETENCJA_DNI` | `90` | `includes/front.php` | okres retencji historii rozmów — **jedno źródło** dla crona, tekstu w widgecie, panelu i eksportu |
 | `CHATL_AI_LIMIT_IP_NA_DOBE` | `20` | `includes/front.php` | osobny, twardszy limit wywołań AI z jednego IP na dobę |

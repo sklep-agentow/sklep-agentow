@@ -8,7 +8,8 @@
  * Dwa kierunki (naprawa „odrzuć wszystko” zabrałaby czat):
  *   A) 501 znaków → odpowiedź `success=false`, kod `za_dlugie`, komunikat z liczbą i limitem,
  *      ŻADEN wiersz pytania nie zapisany w rozmowie (urwany tekst nie idzie do bota);
- *   B) dokładnie 500 znaków → NIE `za_dlugie`, wiersz pytania zapisany w całości (500 znaków).
+ *   B) dokładnie 500 znaków → NIE `za_dlugie`, wiersz pytania zapisany w całości (500 znaków);
+ *   C/D) BLIŹNIAK — wiadomość zgłoszenia: 2001 znaków = odmowa `za_dlugie`, 0 zapisów · 2000 = zapis w całości.
  *
  * Sieć podstawiona (`pre_http_request` zwraca WP_Error) — bot nie woła AI; wiersz pytania powstaje
  * PRZED odpowiedzią, więc B mierzy zapis, nie jakość odpowiedzi.
@@ -118,6 +119,57 @@ echo 'B. odpowiedz: kod=' . ( '' !== $kod_b ? $kod_b : '(brak)' ) . ' · wierszy
 $b_ok = ( 'za_dlugie' !== $kod_b ) && 1 === $ile_b && $LIMIT === $dl_b;
 echo 'B: WYNIK=' . ( $b_ok ? 'PASS' : 'FAIL - pytanie na limicie odrzucone albo zapisane niepelne' ) . "\n";
 $wynik[] = $b_ok;
+
+/* ---------- C/D) BLIŹNIAK: wiadomość zgłoszenia (limit CHATL_MAX_WIADOMOSC) ---------- */
+$LIMIT_W = defined( 'CHATL_MAX_WIADOMOSC' ) ? (int) CHATL_MAX_WIADOMOSC : 2000;
+$tz      = $wpdb->prefix . 'chatl_zgloszenia';
+$mail_t  = 'cz1-limit-' . substr( $sesja, -6 ) . '@example.test';
+add_filter( 'pre_wp_mail', '__return_true' );
+$zgl = static function ( $wiadomosc ) use ( $sesja, $mail_t ) {
+	$_POST = $_REQUEST = array( 'nonce' => wp_create_nonce( 'chatl_front' ), 'sesja' => $sesja, 'email' => $mail_t, 'wiadomosc' => $wiadomosc, 'zgoda' => '1' );
+	add_filter( 'wp_doing_ajax', '__return_true' );
+	add_filter( 'wp_die_ajax_handler', 'cz1_uchwyt' );
+	add_filter( 'wp_die_handler', 'cz1_uchwyt' );
+	ob_start();
+	try {
+		chatl_ajax_zgloszenie();
+	} catch ( Cz1_Wyjscie $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement
+		// wp_send_json_* zawsze kończy żądanie.
+	}
+	$w = ob_get_clean();
+	remove_filter( 'wp_doing_ajax', '__return_true' );
+	remove_filter( 'wp_die_ajax_handler', 'cz1_uchwyt' );
+	remove_filter( 'wp_die_handler', 'cz1_uchwyt' );
+	return json_decode( $w, true );
+};
+$ile_zgl = static function () use ( $wpdb, $tz, $mail_t ) {
+	return (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$tz} WHERE email = %s", $mail_t ) ); // phpcs:ignore
+};
+$dl_zgl = static function () use ( $wpdb, $tz, $mail_t ) {
+	return (int) $wpdb->get_var( $wpdb->prepare( "SELECT CHAR_LENGTH(wiadomosc) FROM {$tz} WHERE email = %s ORDER BY id DESC LIMIT 1", $mail_t ) ); // phpcs:ignore
+};
+register_shutdown_function( static function () use ( $wpdb, $tz, $mail_t ) { $wpdb->delete( $tz, array( 'email' => $mail_t ) ); } );
+if ( ! function_exists( 'chatl_ajax_zgloszenie' ) ) {
+	echo "C/D: pominiete — brak chatl_ajax_zgloszenie\n";
+} else {
+	$odp_c = $zgl( str_repeat( 'c', $LIMIT_W + 1 ) );
+	$kod_c = is_array( $odp_c ) ? (string) ( $odp_c['data']['kod'] ?? '' ) : '';
+	$kom_c = is_array( $odp_c ) ? (string) ( $odp_c['data']['komunikat'] ?? '' ) : '';
+	$ile_c = $ile_zgl();
+	echo 'C. zgloszenie ' . ( $LIMIT_W + 1 ) . ' znakow: success=' . ( ! empty( $odp_c['success'] ) ? '1' : '0' ) . ' kod=' . ( '' !== $kod_c ? $kod_c : '(brak)' ) . ' · zapisanych zgloszen: ' . $ile_c . " (OCZEKIWANE: za_dlugie, 0)\n";
+	$c_ok = is_array( $odp_c ) && empty( $odp_c['success'] ) && 'za_dlugie' === $kod_c && false !== strpos( $kom_c, (string) ( $LIMIT_W + 1 ) ) && 0 === $ile_c;
+	echo 'C: WYNIK=' . ( $c_ok ? 'PASS' : 'FAIL - za dluga wiadomosc zgloszenia przyjeta po cichu (urwana u wlasciciela)' ) . "\n";
+	$wynik[] = $c_ok;
+	$odp_d = $zgl( str_repeat( 'd', $LIMIT_W ) );
+	$kod_d = is_array( $odp_d ) ? (string) ( $odp_d['data']['kod'] ?? '' ) : '';
+	$ile_d = $ile_zgl();
+	$dl_d  = $dl_zgl();
+	echo 'D. zgloszenie ' . $LIMIT_W . ' znakow: kod=' . ( '' !== $kod_d ? $kod_d : '(brak)' ) . ' · zapisanych: ' . $ile_d . ' · dlugosc: ' . $dl_d . ' (OCZEKIWANE: nie za_dlugie, 1, ' . $LIMIT_W . ")\n";
+	$d_ok = ( 'za_dlugie' !== $kod_d ) && 1 === $ile_d && $LIMIT_W === $dl_d;
+	echo 'D: WYNIK=' . ( $d_ok ? 'PASS' : 'FAIL - wiadomosc na limicie odrzucona albo zapisana niepelna' ) . "\n";
+	$wynik[] = $d_ok;
+}
+remove_filter( 'pre_wp_mail', '__return_true' );
 
 remove_filter( 'pre_http_request', $bez_sieci, 10 );
 $ok = ! in_array( false, $wynik, true );

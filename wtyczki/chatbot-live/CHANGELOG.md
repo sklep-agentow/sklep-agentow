@@ -13,7 +13,7 @@ migracja odpala się sama przy pierwszym wejściu do panelu po aktualizacji
 ## [Niewydane]
 
 ### Naprawione
-- **Za długie pytanie nie jest już ucinane po cichu.** Do 1.5.14 pytanie ponad 500 znaków (wklejone) trafiało do bota urwane, a gość nie wiedział, że odpowiedź dotyczy połowy tekstu. Teraz serwer odmawia z liczbą znaków i limitem, treść wraca do pola do skrócenia, widget pokazuje licznik od 400 znaków i ostrzega przy wklejeniu ponad limit.
+- **Za długie pytanie nie jest już ucinane po cichu.** Do 1.5.14 pytanie ponad 500 znaków (wklejone) trafiało do bota urwane, a gość nie wiedział, że odpowiedź dotyczy połowy tekstu. Teraz serwer odmawia z liczbą znaków i limitem, treść wraca do pola do skrócenia, widget pokazuje licznik od 400 znaków i ostrzega przy wklejeniu ponad limit. To samo dla wiadomości zgłoszenia (limit 2000): odmowa z liczbą zamiast urwanego zgłoszenia u właściciela.
 
 ---
 
