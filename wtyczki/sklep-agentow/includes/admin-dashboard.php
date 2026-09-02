@@ -292,12 +292,16 @@ const SKLEPAG_CSV_ZNAKI_FORMULY = array( '=', '+', '-', '@', "\t", "\r", "'" );
  * `segm_csv_komorka()`) — trzy kopie są uzasadnione (wtyczki instalują się osobno), trzecia
  * nazwa nie: jeden ciąg `_csv_komorka` wystarcza, żeby wygrepować całą klasę przy audycie.
  *
- * ⛔ WYJĄTEK NA LICZBY, I TO NIE Z WYGODY — i JEDYNA RÓŻNICA wobec bliźniaczek, które tego
- * wyjątku nie mają. Kolumna „Kwota" to liczba (`-10,00` przy
- * ewentualnej korekcie zaczyna się od minusa). Poprzedzenie jej apostrofem zamieniłoby ją
- * w tekst i zepsuło sumowanie w arkuszu — naprawa nie ma prawa tworzyć nowej wady.
- * Dlatego czyste literały liczbowe zostają nietknięte; `-1+1@example.com` literałem nie
- * jest, więc neutralizacji podlega.
+ * RÓŻNICE wobec bliźniaczek — dwie, obie świadome: (1) apostrof na liście (odwracalność,
+ * wyżej), (2) wyjątek na literały liczbowe, poniżej. Bliźniaczki nie mają żadnej z nich.
+ *
+ * ⛔ WYJĄTEK NA LICZBY. Czysty literał liczbowy (`149,00`, także `-10,00`) NIE jest formułą — arkusz
+ * czyta go jako liczbę, a apostrof z przodu zamieniłby go w tekst i zepsuł sumowanie kolumny
+ * „Kwota". ⚠️ Prawda o danych: `kwota_grosze` jest `int unsigned` (`aktywacja.php`), zwroty idą przez
+ * `zwrocono_grosze`, więc UJEMNA kwota z tego eksportu dziś nie wychodzi; wyjątek broni kolumny
+ * dodatniej (której `in_array` i tak by nie tknął) oraz każdej przyszłej kolumny ze znakiem — i jest
+ * mierzony przez strażnika na literale `-10,00` podanym jako TEKST (kierunek D).
+ * `-1+1@example.com` literałem nie jest, więc neutralizacji podlega.
  *
  * @param mixed $wartosc Komórka do wypisania.
  * @return mixed Wartość bezpieczna dla arkusza (nieteksty i liczby bez zmian).

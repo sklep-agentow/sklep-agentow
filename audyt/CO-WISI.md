@@ -1,5 +1,33 @@
 # CO-WISI — rzeczy oddane komuś / bez strażnika (zasada: oddajesz ⇒ wiersz, wraca ⇒ kasujesz)
 
+## 🟡 ASYMETRIA NEUTRALIZACJI CSV MIĘDZY TRZEMA WTYCZKAMI (2.09, recenzja `#264` r1 i r3) — dług nazwany, nie naprawiony
+
+Trzy wtyczki mają po kopii tej samej obrony (`*_csv_komorka()`, trzy kopie są uzasadnione — instalują
+się osobno), ale **listy znaków różnią się** i żaden grep po nazwie funkcji tego nie pokaże:
+
+| wtyczka | funkcja | lista znaków poprzedzanych apostrofem |
+|---|---|---|
+| sklep | `wtyczki/sklep-agentow/includes/admin-dashboard.php:269` `SKLEPAG_CSV_ZNAKI_FORMULY` | `= + - @ \t \r '` |
+| Segregator | `wtyczki/segregator-maila/includes/csv.php:310` `segm_csv_komorka()` | `= + - @ \t \r` |
+| ChatBot | `wtyczki/chatbot-live/includes/csv.php:29` `chatl_csv_komorka()` | `= + - @` |
+
+Dwie różnice, obie zapisane, żadna nie jest naprawiana w `#264` (teren builderów 1 i 2, kod wtyczek
+botów tam nietknięty):
+1. **`\t` i `\r` brakują w ChatBocie.** Opisane w `audyt/boty/RAPORT-A1-BEZPIECZENSTWO.md:188` jako asymetria
+   bez drogi dojścia (sanityzacja wejścia gościa zdejmuje wiodący tabulator — pomiar tamże). Zostaje długiem,
+   nie znaleziskiem.
+2. **Apostrof jest TYLKO w sklepie** (wniesiony rundą 2 `#264` dla pełnej odwracalności: wartość zaczynająca się
+   od apostrofu dostaje drugi, więc zdjęcie jednego zawsze oddaje oryginał). W ChatBocie i Segregatorze wartość
+   od apostrofu wychodzi nietknięta i jest nieodróżnialna od zneutralizowanej. Bezpieczeństwa nie dotyka,
+   dotyka obietnicy odczytu maszynowego — a tej obietnicy boty w dokumentacji **nie składają** (sprawdzić przed
+   wyrównaniem: jeśli składają, to znalezisko klasy 3, nie dług).
+
+**Kształt roboty (osobny PR na terenie botów, jedna runda):** wyrównać obie listy do siedmiu znaków sklepu
+i dopisać kierunek do strażników botów; dowód = `grep -rn "csv_komorka" --include=*.php wtyczki/` z trzema
+identycznymi listami. **Jedzie do klienta z długiem:** TAK, świadomie — odwracalność eksportu botów nie jest
+obiecana klientowi, a `\t`/`\r` nie mają drogi dojścia.
+
+
 ## 🟡 DWIE UWAGI WAŻNE Z RECENZJI `#259` (runda 2) ŚWIADOMIE NIENAPRAWIONE — dług, nie przeoczenie (1.09)
 
 Decyzja koordynatorki: cztery uwagi rundy 1 domknięte (krytyczna jako KLASA, nie egzemplarz),

@@ -57,6 +57,7 @@ $zla_nazwa  = '=HYPERLINK("http://zly.example","klik")';
 $ok_email   = 'zwykly-' . strtolower( $znacznik ) . '@example.com';
 $ok_nazwa   = 'Bot ChatBot LIVE ' . $znacznik;
 $apo_nazwa  = "'Bot roku " . $znacznik; // zaczyna się od apostrofu — kierunek E: musi dostać DRUGI
+$num_nazwa  = '-10,00'; // literał liczbowy ze znakiem — kierunek D: wyjątek na liczby MUSI go zostawić (kwota_grosze jest unsigned, więc ujemna KWOTA z eksportu nie wychodzi; wyjątek mierzymy na tekście)
 
 // ⛔ Wiersze wkładamy PROSTO DO TABELI. Przejście przez checkout wymagałoby Stripe, a wada
 // siedzi na drodze baza → CSV, nie na drodze zakupu. Adres w bazie jest DOKŁADNIE tym, co
@@ -81,8 +82,9 @@ foreach ( array(
 	array( 'email_kupujacego' => $ok_email,  'produkt_nazwa_kupiona' => $zla_nazwa ),
 	array( 'email_kupujacego' => $ok_email,  'produkt_nazwa_kupiona' => $ok_nazwa ),
 	array( 'email_kupujacego' => $ok_email,  'produkt_nazwa_kupiona' => $apo_nazwa ),
+	array( 'email_kupujacego' => $ok_email,  'produkt_nazwa_kupiona' => $num_nazwa ),
 ) as $wiersz ) {
-	// `stripe_session_id` ma indeks UNIQUE — pusty w czterech wierszach zderzyłby się ze sobą.
+	// `stripe_session_id` ma indeks UNIQUE — pusty w pięciu wierszach zderzyłby się ze sobą.
 	++$nr;
 	$wiersz['stripe_session_id'] = 'cs_test_' . $znacznik . '_' . $nr;
 	if ( false === $wpdb->insert( $tz, array_merge( $wspolne, $wiersz ), array( '%s', '%d', '%s', '%s', '%d', '%d', '%s', '%s', '%s' ) ) ) {
@@ -138,7 +140,7 @@ $potwierdz = static function ( $co ) {
 // PHP uruchamia po nim funkcje zamknięcia i to w nich jest jedyne miejsce, gdzie mamy
 // JEDNOCZEŚNIE wyjście handlera i możliwość ustawienia kodu wyjścia.
 register_shutdown_function(
-	static function () use ( $rozbierz, $zglos, $potwierdz, $posprzataj, &$bledy, $zly_email, $zla_nazwa, $ok_email, $ok_nazwa, $apo_nazwa ) {
+	static function () use ( $rozbierz, $zglos, $potwierdz, $posprzataj, &$bledy, $zly_email, $zla_nazwa, $ok_email, $ok_nazwa, $apo_nazwa, $num_nazwa ) {
 		// ⛔ CZYTAMY Z PRZECHWYTYWACZA, NIE Z `ob_get_clean()`. WP-CLI opróżnia bufor ZANIM
 		// uruchomi funkcje zamknięcia, więc `ob_get_clean()` zastawał tu pustkę, a CSV szedł
 		// na stdout — strażnik meldował „eksport nie wypisał nic", chociaż eksport wypisał
@@ -197,7 +199,7 @@ register_shutdown_function(
 		} elseif ( $c[2] !== $ok_email || $c[3] !== $ok_nazwa ) {
 			$zglos( "C: zwykły wiersz ZMIENIONY — adres [{$c[2]}] zamiast [{$ok_email}], nazwa [{$c[3]}] zamiast [{$ok_nazwa}]" );
 		} else {
-			$potwierdz( 'C: zwykły wiersz nietknięty, co do bajtu' );
+			$potwierdz( 'C: zwykły wiersz nietknięty w kolumnach adres i nazwa' );
 		}
 
 		// D) kolumna Kwota nadal LICZBĄ
@@ -208,6 +210,17 @@ register_shutdown_function(
 			$zglos( "D: kolumna Kwota przestała być liczbą: [{$d[4]}] — arkusz nie zsumuje sprzedaży" );
 		} else {
 			$potwierdz( "D: kolumna Kwota nadal liczbą: [{$d[4]}]" );
+		}
+		// D, druga połowa) WYJĄTEK NA LICZBY zmierzony wprost: literał ze znakiem podany jako tekst
+		// (nazwa produktu `-10,00`) MUSI wyjść bez apostrofu — zaczyna się od `-`, więc bez wyjątku
+		// dostałby apostrof i przestał być liczbą. Kwota z bazy tego nie zmierzy: kolumna jest unsigned.
+		$dn = $szukaj( $wiersze, 3, $num_nazwa );
+		if ( null === $dn ) {
+			$zglos( 'D: brak wiersza z literałem liczbowym ze znakiem — wyjątek na liczby niezmierzony' );
+		} elseif ( $dn[3] !== $num_nazwa ) {
+			$zglos( "D: literał liczbowy ze znakiem ZMIENIONY: [{$dn[3]}] zamiast [{$num_nazwa}] — wyjątek na liczby nie działa, arkusz nie zsumuje kolumny ze znakiem" );
+		} else {
+			$potwierdz( "D: literał liczbowy ze znakiem zostaje liczbą: [{$dn[3]}] — wyjątek na liczby działa" );
 		}
 
 		// E) odwracalność — odczyt maszynowy odzyskuje oryginał
@@ -233,7 +246,7 @@ register_shutdown_function(
 			echo "STRAZNIK: WYNIK=OK - A, B, C, D i E zgodne z oczekiwaniem\n";
 			exit( 0 );
 		}
-		echo "STRAZNIK: WYNIK=FAIL - {$bledy} sprawdzen nie wyszlo w 5 kierunkach, E ma dwie polowy (REGRESJA)\n";
+		echo "STRAZNIK: WYNIK=FAIL - {$bledy} sprawdzen nie wyszlo w 5 kierunkach, D i E maja po dwie polowy (REGRESJA)\n";
 		exit( 1 );
 	}
 );

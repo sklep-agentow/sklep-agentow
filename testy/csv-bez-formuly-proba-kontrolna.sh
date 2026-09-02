@@ -6,6 +6,7 @@
 # `narzedzia-qa/lib-stos-probny.sh` i tylko jego kasuje.
 #
 # Użycie: bash testy/csv-bez-formuly-proba-kontrolna.sh      (ZOSTAW=tak = nie zwijaj stosu)
+# Trzy etapy: origin/main (padają A i B) → MUTANT bez `-?` (pada druga połowa D) → drzewo (OK).
 # Kody wyjścia: 0 = kalibracja przeszła · 1 = strażnik ślepy · 2 = przyrząd/środowisko
 set -u
 
@@ -64,6 +65,36 @@ else
 	zglos "strażnik nie padł w oczekiwanym kształcie (EXIT=$KOD1) — nie mierzy tej wady"
 fi
 
+naglowek "MUTANT — wzorzec literału liczbowego bez \`-?\` — strażnik MA PADAĆ na drugiej połowie D"
+# ⛔ DRUGA KALIBRACJA, OSOBNA (uwaga 4. recenzji rundy 2). Wyjątek na literały liczbowe broni
+# wartości ze znakiem (`-10,00`); na origin/main nie ma go w ogóle, więc tamten etap nie dowodzi,
+# że druga połowa kierunku D cokolwiek mierzy. Dowodem jest mutant: TEN SAM kod z drzewa, tylko
+# `-?` skreślone ze wzorca — strażnik musi to złapać, inaczej D jest napisem, nie pomiarem.
+mkdir -p "$ROBOCZY/mutant"
+cp -r wtyczki/sklep-agentow/. "$ROBOCZY/mutant/"
+MUT="$ROBOCZY/mutant/includes/admin-dashboard.php"
+WZORZEC="preg_match( '/^-?\\d+(?:[.,]\\d+)?\$/', \$wartosc )"
+[ "$(grep -cF "$WZORZEC" "$MUT")" -eq 1 ] || padnij "nie znajduję dokładnie jednego wzorca literału do zmutowania w admin-dashboard.php"
+python3 - "$MUT" <<'PY' || padnij "nie umiem podłożyć mutanta"
+import sys
+p=sys.argv[1]; t=open(p,encoding='utf-8').read()
+s="preg_match( '/^-?\\d+(?:[.,]\\d+)?$/', $wartosc )"
+assert t.count(s)==1
+open(p,'w',encoding='utf-8').write(t.replace(s, s.replace('^-?','^')))
+PY
+grep -q "preg_match( '/^\\\\d+(?:\[.,\]\\\\d+)?\$/', \$wartosc )" "$MUT" || padnij "mutant nie został podłożony (wzorzec bez -? nieobecny)"
+wdroz "$ROBOCZY/mutant" || padnij "nie udało się wdrożyć mutanta"
+WYM="$(odpal_straznika)"; KODM=$?
+printf '%s\n' "$WYM" | sed 's/^/    | /'
+if [ "$KODM" -eq 1 ] \
+	&& printf '%s' "$WYM" | grep -q 'NIE WYSZLO  D: literał liczbowy ze znakiem ZMIENIONY' \
+	&& printf '%s' "$WYM" | grep -q 'WYSZLO      A:' \
+	&& printf '%s' "$WYM" | grep -q 'WYSZLO      B:'; then
+	potwierdz "strażnik ZŁAPAŁ mutanta (EXIT=1): pada druga połowa D, A i B przechodzą"
+else
+	zglos "strażnik nie złapał mutanta w oczekiwanym kształcie (EXIT=$KODM) — druga połowa D nie mierzy wyjątku na liczby"
+fi
+
 naglowek "KOD Z DRZEWA — strażnik MA PRZEJŚĆ"
 wdroz wtyczki/sklep-agentow || padnij "nie udało się wdrożyć wtyczki z drzewa"
 WY2="$(odpal_straznika)"; KOD2=$?
@@ -76,7 +107,7 @@ fi
 
 naglowek "WYNIK KALIBRACJI"
 if [ "$BLEDY" -eq 0 ]; then
-	echo "KALIBRACJA: OK — straznik pada przed naprawa (EXIT=1) i przechodzi po niej (EXIT=0)"
+	echo "KALIBRACJA: OK — straznik pada przed naprawa (EXIT=1), lapie mutanta wyjatku na liczby (EXIT=1) i przechodzi po naprawie (EXIT=0)"
 	exit 0
 fi
 echo "KALIBRACJA: NIE WYSZLA — $BLEDY potkniec"
