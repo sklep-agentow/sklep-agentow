@@ -20,7 +20,8 @@
  *   B) nazwa produktu od właściciela z `=HYPERLINK` => zneutralizowana (drugie źródło, ta sama klasa)
  *   C) zwykły wiersz bez znaków formuły             => BEZ ZMIAN, co do bajtu
  *   D) kolumna „Kwota"                              => nadal LICZBA, bez apostrofu
- *   E) odwracalność                                 => zdjęcie jednego apostrofu daje oryginał
+ *   E) odwracalność                                 => zdjęcie jednego apostrofu daje oryginał,
+ *                                                       także gdy wartość SAMA zaczyna się od apostrofu
  *
  * Uruchomienie:
  *   docker cp testy/csv-bez-formuly-test.php <kontener>:/tmp/t.php
@@ -55,6 +56,7 @@ $zly_email  = '=1+1@example.com';
 $zla_nazwa  = '=HYPERLINK("http://zly.example","klik")';
 $ok_email   = 'zwykly-' . strtolower( $znacznik ) . '@example.com';
 $ok_nazwa   = 'Bot ChatBot LIVE ' . $znacznik;
+$apo_nazwa  = "'Bot roku " . $znacznik; // zaczyna się od apostrofu — kierunek E: musi dostać DRUGI
 
 // ⛔ Wiersze wkładamy PROSTO DO TABELI. Przejście przez checkout wymagałoby Stripe, a wada
 // siedzi na drodze baza → CSV, nie na drodze zakupu. Adres w bazie jest DOKŁADNIE tym, co
@@ -78,8 +80,9 @@ foreach ( array(
 	array( 'email_kupujacego' => $zly_email, 'produkt_nazwa_kupiona' => $ok_nazwa ),
 	array( 'email_kupujacego' => $ok_email,  'produkt_nazwa_kupiona' => $zla_nazwa ),
 	array( 'email_kupujacego' => $ok_email,  'produkt_nazwa_kupiona' => $ok_nazwa ),
+	array( 'email_kupujacego' => $ok_email,  'produkt_nazwa_kupiona' => $apo_nazwa ),
 ) as $wiersz ) {
-	// `stripe_session_id` ma indeks UNIQUE — pusty w trzech wierszach zderzyłby się ze sobą.
+	// `stripe_session_id` ma indeks UNIQUE — pusty w czterech wierszach zderzyłby się ze sobą.
 	++$nr;
 	$wiersz['stripe_session_id'] = 'cs_test_' . $znacznik . '_' . $nr;
 	if ( false === $wpdb->insert( $tz, array_merge( $wspolne, $wiersz ), array( '%s', '%d', '%s', '%s', '%d', '%d', '%s', '%s', '%s' ) ) ) {
@@ -135,7 +138,7 @@ $potwierdz = static function ( $co ) {
 // PHP uruchamia po nim funkcje zamknięcia i to w nich jest jedyne miejsce, gdzie mamy
 // JEDNOCZEŚNIE wyjście handlera i możliwość ustawienia kodu wyjścia.
 register_shutdown_function(
-	static function () use ( $rozbierz, $zglos, $potwierdz, $posprzataj, &$bledy, $zly_email, $zla_nazwa, $ok_email, $ok_nazwa ) {
+	static function () use ( $rozbierz, $zglos, $potwierdz, $posprzataj, &$bledy, $zly_email, $zla_nazwa, $ok_email, $ok_nazwa, $apo_nazwa ) {
 		// ⛔ CZYTAMY Z PRZECHWYTYWACZA, NIE Z `ob_get_clean()`. WP-CLI opróżnia bufor ZANIM
 		// uruchomi funkcje zamknięcia, więc `ob_get_clean()` zastawał tu pustkę, a CSV szedł
 		// na stdout — strażnik meldował „eksport nie wypisał nic", chociaż eksport wypisał
@@ -215,12 +218,22 @@ register_shutdown_function(
 		} else {
 			$potwierdz( 'E: zdjęcie jednego apostrofu oddaje oryginał — neutralizacja odwracalna' );
 		}
+		// E, druga połowa) wartość, która SAMA zaczyna się od apostrofu, musi dostać drugi —
+		// inaczej jest nieodróżnialna od zneutralizowanej i zdjęcie jednego apostrofu gubi znak.
+		$e = $szukaj( $wiersze, 3, $apo_nazwa );
+		if ( null === $e ) {
+			$zglos( 'E: brak wiersza z nazwą od apostrofu — odwracalność niezmierzona do końca' );
+		} elseif ( preg_replace( '/^\'/', '', (string) $e[3] ) !== $apo_nazwa ) {
+			$zglos( "E: nazwa od apostrofu po zdjęciu jednego apostrofu NIE oddaje oryginału: [{$e[3]}] — nieodróżnialna od zneutralizowanej" );
+		} else {
+			$potwierdz( "E: nazwa od apostrofu dostała drugi i wraca co do znaku: [{$e[3]}]" );
+		}
 
 		if ( 0 === $bledy ) {
 			echo "STRAZNIK: WYNIK=OK - A, B, C, D i E zgodne z oczekiwaniem\n";
 			exit( 0 );
 		}
-		echo "STRAZNIK: WYNIK=FAIL - {$bledy} z 5 kierunkow nie wyszlo (REGRESJA)\n";
+		echo "STRAZNIK: WYNIK=FAIL - {$bledy} sprawdzen nie wyszlo w 5 kierunkach, E ma dwie polowy (REGRESJA)\n";
 		exit( 1 );
 	}
 );

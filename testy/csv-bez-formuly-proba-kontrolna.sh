@@ -44,7 +44,7 @@ git archive "$STARY_REF" wtyczki/sklep-agentow 2>/dev/null | tar -x -C "$ROBOCZY
 STARA="$ROBOCZY/stary/wtyczki/sklep-agentow"
 # ⛔ Bez tego sprawdzenia kalibracja uruchomiona na JUŻ naprawionym mainie meldowałaby
 # „strażnik ślepy" zamiast prawdy o tym, co bada.
-if grep -q 'sklepag_csv_neutralizuj' "$STARA/includes/admin-dashboard.php"; then
+if grep -q 'sklepag_csv_komorka' "$STARA/includes/admin-dashboard.php"; then
 	padnij "$STARY_REF ZAWIERA już naprawę — to nie jest kod sprzed niej"
 fi
 wdroz "$STARA" || padnij "nie udało się wdrożyć wtyczki z $STARY_REF"

@@ -261,8 +261,12 @@ function sklepag_obsluz_dociagnij() {
  * Znaki, od których arkusz kalkulacyjny zaczyna czytać KOMÓRKĘ JAKO FORMUŁĘ.
  * Excel i LibreOffice: `=` i `@` wprost, `+` i `-` jako początek wyrażenia;
  * tabulator i powrót karetki dlatego, że arkusz je zjada i odsłania znak za nimi.
+ * Apostrof NIE jest znakiem formuły — jest na liście po to, żeby neutralizacja była
+ * odwracalna dla KAŻDEJ wartości: `'Bot roku` bez tego wyszedłby do pliku nietknięty
+ * i nie dałoby się go odróżnić od zneutralizowanego `=…`; z drugim apostrofem zdjęcie
+ * jednego zawsze oddaje oryginał.
  */
-const SKLEPAG_CSV_ZNAKI_FORMULY = array( '=', '+', '-', '@', "\t", "\r" );
+const SKLEPAG_CSV_ZNAKI_FORMULY = array( '=', '+', '-', '@', "\t", "\r", "'" );
 
 /**
  * Neutralizacja wstrzyknięcia formuły do arkusza (CSV injection / formula injection).
@@ -279,11 +283,17 @@ const SKLEPAG_CSV_ZNAKI_FORMULY = array( '=', '+', '-', '@', "\t", "\r" );
  *
  * FORMA: apostrof z przodu (zalecenie OWASP dla tej klasy). Wybrany, bo jako JEDYNY
  * z rozważanych jest ODWRACALNY i nie zmienia samej wartości: odczyt maszynowy odzyskuje
- * oryginał zdjęciem dokładnie jednego wiodącego apostrofu. Odrzucone: spacja z przodu
+ * oryginał zdjęciem dokładnie jednego wiodącego apostrofu — także wtedy, gdy wartość SAMA
+ * zaczyna się od apostrofu (dostaje drugi; patrz komentarz przy stałej). Odrzucone: spacja z przodu
  * (zmienia wartość, psuje dopasowanie adresu), `="…"` (samo jest formułą), tabulator
  * z przodu (niewidoczny, zanieczyszcza wartość przy ponownym imporcie).
  *
- * ⛔ WYJĄTEK NA LICZBY, I TO NIE Z WYGODY. Kolumna „Kwota" to liczba (`-10,00` przy
+ * NAZWA wg wzorca bliźniaczek w pozostałych wtyczkach (`chatl_csv_komorka()`,
+ * `segm_csv_komorka()`) — trzy kopie są uzasadnione (wtyczki instalują się osobno), trzecia
+ * nazwa nie: jeden ciąg `_csv_komorka` wystarcza, żeby wygrepować całą klasę przy audycie.
+ *
+ * ⛔ WYJĄTEK NA LICZBY, I TO NIE Z WYGODY — i JEDYNA RÓŻNICA wobec bliźniaczek, które tego
+ * wyjątku nie mają. Kolumna „Kwota" to liczba (`-10,00` przy
  * ewentualnej korekcie zaczyna się od minusa). Poprzedzenie jej apostrofem zamieniłoby ją
  * w tekst i zepsuło sumowanie w arkuszu — naprawa nie ma prawa tworzyć nowej wady.
  * Dlatego czyste literały liczbowe zostają nietknięte; `-1+1@example.com` literałem nie
@@ -292,7 +302,7 @@ const SKLEPAG_CSV_ZNAKI_FORMULY = array( '=', '+', '-', '@', "\t", "\r" );
  * @param mixed $wartosc Komórka do wypisania.
  * @return mixed Wartość bezpieczna dla arkusza (nieteksty i liczby bez zmian).
  */
-function sklepag_csv_neutralizuj( $wartosc ) {
+function sklepag_csv_komorka( $wartosc ) {
 	if ( ! is_string( $wartosc ) || '' === $wartosc ) {
 		return $wartosc;
 	}
@@ -305,8 +315,6 @@ function sklepag_csv_neutralizuj( $wartosc ) {
 	}
 	return "'" . $wartosc;
 }
-
-
 
 add_action( 'admin_post_sklepag_eksport_csv', 'sklepag_obsluz_eksport_csv' );
 
@@ -342,12 +350,12 @@ function sklepag_obsluz_eksport_csv() {
 	foreach ( $wiersze as $w ) {
 		// ⛔ NEUTRALIZACJA CAŁEGO WIERSZA, NIE WYBRANYCH KOLUMN. Wskazanie „tych dwóch pól,
 		// o których wiemy" jest naprawą EGZEMPLARZA: pierwsza nowa kolumna z tekstem wróciłaby
-		// z tą samą wadą, a nikt by tego nie zauważył. `sklepag_csv_neutralizuj()` sam zostawia
+		// z tą samą wadą, a nikt by tego nie zauważył. `sklepag_csv_komorka()` sam zostawia
 		// liczby i nieteksty w spokoju, więc objęcie nim wszystkiego niczego nie psuje.
 		fputcsv(
 			$out,
 			array_map(
-				'sklepag_csv_neutralizuj',
+				'sklepag_csv_komorka',
 				array(
 					$w['id'],
 					$w['utworzono'],
