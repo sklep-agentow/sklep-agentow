@@ -2,7 +2,7 @@
 /**
  * STRAŻNIK — Q-5: okno idempotencji zakupu rozdziela KUPUJĄCYCH za jednym adresem.
  *
- * Wada (do 0.9.37): klucz okna = md5( IP | produkt | tryb ). Dwie osoby za tym samym adresem
+ * Wada (w wydaniach przed tym): klucz okna = md5( IP | produkt | tryb ). Dwie osoby za tym samym adresem
  * (biuro za NAT, CGNAT operatora, uczelnia) dzieliły JEDNO okno: gdy pierwsza kliknęła „Kup”,
  * druga w ciągu SKLEPAG_IDEM_OKNO_S sekund dostawała ADRES CHECKOUTU PIERWSZEJ — cudzą sesję
  * Stripe, z cudzym zamówieniem po drugiej stronie.
@@ -14,7 +14,7 @@
  * Trzy kierunki, bo naprawa „wyłącz okno” też usunęłaby objaw A i zabrała ochronę B:
  *   A) dwa POST-y, ten sam adres, RÓŻNE znaczniki  => DWIE sesje (drugi NIE dostaje adresu pierwszego),
  *   B) dwa POST-y, ten sam znacznik                 => JEDNA sesja (podwójny klik nie płaci dwa razy),
- *   C) dwa POST-y BEZ znacznika (POST spoza formularza) => JEDNA sesja, jak do 0.9.37 (zapas, nie regresja).
+ *   C) dwa POST-y BEZ znacznika (POST spoza formularza) => JEDNA sesja, jak w poprzednich wydaniach (zapas, nie regresja).
  *
  * Odpowiedź Stripe podstawiona filtrem rdzenia `pre_http_request` (każde utworzenie sesji
  * dostaje NOWY identyfikator) — test nie rusza sieci ani plików wtyczki, mierzy PRODUKT.
@@ -87,7 +87,12 @@ $sprzataj = static function () use ( $wpdb, $pp, $ps, $produkt_id, $plik, $token
 	foreach ( $tokeny as $t ) {
 		delete_transient( sklepag_klucz_idem( $produkt_id, false, $t ) );
 	}
-	$wpdb->query( $wpdb->prepare( "DELETE FROM {$ps} WHERE stripe_session_id LIKE %s", 'cs_test_Q5' . str_replace( '-', '', $znacznik_p ) . '%' ) ); // phpcs:ignore
+	// ⛔ esc_like() JEST TU OBOWIĄZKOWE (klasa 2): literał `cs_test_Q5` niesie DWA `_`,
+	// a w `LIKE` `_` pasuje do DOWOLNEGO jednego znaku — wzorzec byłby szerszy niż zamierzony,
+	// a to jest DELETE na wspólnej bazie stanowiska. esc_like() escapuje `_` i `%` w stałej;
+	// `%` doklejamy PO escapowaniu, bo to jedyny wieloznacznik, którego tu chcemy.
+	$wzor_q5 = $wpdb->esc_like( 'cs_test_Q5' . str_replace( '-', '', $znacznik_p ) ) . '%';
+	$wpdb->query( $wpdb->prepare( "DELETE FROM {$ps} WHERE stripe_session_id LIKE %s", $wzor_q5 ) );
 	$wpdb->delete( $pp, array( 'id' => $produkt_id ) );
 	if ( file_exists( $plik ) ) {
 		unlink( $plik );
@@ -159,9 +164,23 @@ $c1 = $probuj_kup( '' );
 $c2 = $probuj_kup( '' );
 $c_ok = ( 0 === strpos( $c1, $czek ) ) && ( $c1 === $c2 );
 echo "C. dwa POST-y BEZ znacznika -> 1: {$c1}\n                               2: {$c2}\n";
-echo "   OCZEKIWANE: ten sam adres (brak znacznika = okno per adres, jak do 0.9.37)\n";
+echo "   OCZEKIWANE: ten sam adres (brak znacznika = okno per adres, jak w poprzednich wydaniach)\n";
 echo '   WYNIK=' . ( $c_ok ? 'PASS' : 'FAIL - bez znacznika okno przestalo dzialac' ) . "\n";
 $wynik[] = $c_ok;
+
+// D. KSZTALT WEJSCIA: `okno[]=x` daje tablice. Bez `is_string` rzutowanie oddaje literal
+// `Array`, ktory przechodzi przez wyrazenie [A-Za-z0-9] jako PRAWIDLOWY znacznik — wtedy
+// KAZDY wysylajacy tablice trafia do JEDNEGO wspolnego okna. Ten przypadek to obstawia.
+$_POST['okno'] = array( 'x' );
+$d_pusty = sklepag_znacznik_okna_z_post();
+$_POST['okno'] = 'abc123';
+$d_zwykly = sklepag_znacznik_okna_z_post();
+unset( $_POST['okno'] );
+$d_ok = ( '' === $d_pusty && 'abc123' === $d_zwykly );
+echo "D. znacznik z POST-a: okno[]=x -> '" . $d_pusty . "'   okno=abc123 -> '" . $d_zwykly . "'\n";
+echo "   OCZEKIWANE: tablica = BRAK znacznika (pusty), lancuch = przepuszczony bez zmian\n";
+echo '   WYNIK=' . ( $d_ok ? 'PASS' : 'FAIL - tablica w POST udaje prawidlowy znacznik (literal Array)' ) . "\n";
+$wynik[] = $d_ok;
 
 remove_filter( 'pre_http_request', $atrapa, 10 );
 echo "SESJI U STRIPE (atrapa): {$licznik} (oczekiwane 4: A=2, B=1, C=1)\n";

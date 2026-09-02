@@ -16,11 +16,16 @@ wydany osobno (podbicie pośrednie wewnątrz jednej zmiany).
 
 ## [Niewydane]
 
-### Naprawione
-- **Dwie osoby za jednym adresem internetowym nie dzielą już okna ochrony przed podwójnym kliknięciem.** Do 0.9.37 okno było kluczowane samym adresem IP, więc w biurze za NAT-em albo w sieci komórkowej operatora druga osoba, która kliknęła „Kup” w ciągu 5 s po pierwszej, dostawała CUDZY checkout Stripe. Formularz zakupu niesie teraz losowy znacznik z renderu strony produktu; podwójny klik wysyła ten sam znacznik (ochrona zostaje), inna przeglądarka ma własny. Formularz sprzed aktualizacji (bez znacznika) działa jak dotąd.
+Nic jeszcze.
 
 ---
 
+## [0.9.38] — 2026-09-02 · schemat bazy bez zmian (10)
+
+### Naprawione
+- **Dwie osoby za jednym adresem internetowym nie dzielą już okna ochrony przed podwójnym kliknięciem.** Do tego wydania okno było kluczowane samym adresem IP, więc w biurze za NAT-em albo w sieci komórkowej operatora druga osoba, która kliknęła „Kup” w ciągu 5 s po pierwszej, dostawała CUDZY checkout Stripe. Formularz zakupu niesie teraz losowy znacznik z renderu strony produktu; podwójny klik wysyła ten sam znacznik (ochrona zostaje), inna przeglądarka ma własny. Formularz sprzed aktualizacji (bez znacznika) działa jak dotąd.
+
+---
 ## [0.9.36] — 2026-09-01 · schemat bazy bez zmian (10)
 
 ### Naprawione

@@ -606,7 +606,7 @@ function sklepag_formularz_zakupu( $p ) {
 	$html     = '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="sklepag-zakup" id="sklepag-kup-formularz">';
 	$html    .= '<input type="hidden" name="action" value="sklepag_kup">';
 	$html    .= '<input type="hidden" name="produkt_id" value="' . (int) $p->id . '">';
-	// Znacznik okna idempotencji (0.9.38): losowy przy KAŻDYM renderze (strona produktu idzie z nocache_headers()).
+	// Znacznik okna idempotencji (od tego wydania): losowy przy KAŻDYM renderze (strona produktu idzie z nocache_headers()).
 	// Podwójny klik wysyła ten sam formularz = ten sam znacznik; druga osoba za tym samym adresem ma własny.
 	$html .= '<input type="hidden" name="okno" value="' . esc_attr( wp_generate_password( 24, false, false ) ) . '">';
 	$html .= wp_nonce_field( 'sklepag_kup', '_wpnonce', true, false );

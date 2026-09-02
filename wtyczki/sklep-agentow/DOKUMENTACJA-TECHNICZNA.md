@@ -1,6 +1,6 @@
 # Sklep Agentów — dokumentacja techniczna
 
-**Wersja wtyczki: 0.9.36 · wersja schematu bazy: 10 · WordPress 6.7+ · PHP 8.1+**
+**Wersja wtyczki: 0.9.38 · wersja schematu bazy: 10 · WordPress 6.7+ · PHP 8.1+**
 
 > **Po co ten dokument.** To jest **mapa systemu dla audytora i programisty**, nie ulotka.
 > Każda liczba i nazwa tutaj jest wzięta z kodu, nie z pamięci — jeśli coś się rozjedzie,
@@ -208,9 +208,9 @@ zapamiętany adres checkoutu, czy nowy (`sklepag_sesja_czeka_na_platnosc()`). Wa
 NADRZĘDNYM jest tam wiek okna (`SKLEPAG_IDEM_OKNO_S`), bo `stan` przestawia dopiero webhook —
 zanim dotrze, sesja opłacona leży w bazie jako `utworzona` i jest nieodróżnialna od czekającej.
 Na stan zamówienia ta tabela nadal nie wpływa. Klucz okna (`sklepag_klucz_idem()`) = adres IP
-+ **znacznik formularza** (od 0.9.38: losowe pole `okno` z renderu strony produktu — podwójny klik
++ **znacznik formularza** (od tego wydania: losowe pole `okno` z renderu strony produktu — podwójny klik
 wysyła ten sam formularz, druga osoba za tym samym adresem ma własny) + produkt + tryb płatności;
-POST bez znacznika dostaje okno per adres jak do 0.9.37.
+POST bez znacznika dostaje okno per adres jak w poprzednich wydaniach.
 
 ## 6. Brama pobrań
 
@@ -235,7 +235,7 @@ po stronie serwera. To jest świadome ograniczenie, nie przeoczenie.
 
 | Stała | Wartość | Znaczenie |
 |---|---|---|
-| `SKLEPAG_WERSJA` | 0.9.36 | wersja wtyczki (assety, cache) |
+| `SKLEPAG_WERSJA` | 0.9.38 | wersja wtyczki (assety, cache) |
 | `SKLEPAG_WERSJA_SCHEMATU` | 10 | wersja schematu bazy (migracje) |
 | `SKLEPAG_LIMIT_POBRAN` | 10 | ile razy można pobrać plik z jednego wydanego linku (zerowane przy świeżym linku) |
 | `SKLEPAG_LINK_GODZIN` | 72 | ważność linku pobrania |

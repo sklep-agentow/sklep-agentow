@@ -22,11 +22,15 @@ const SKLEPAG_ZGODA_TRESC = 'Wyrażam zgodę na natychmiastowe dostarczenie tre�
  * podkładał okno — i przestał mierzyć cokolwiek, nie mówiąc o tym ani słowem. Dwa miejsca
  * składające ten sam klucz to rozjazd czekający na okazję; jedno miejsce go nie ma jak zrobić.
  *
- * Człony: adres kupującego (okno działa per adres), ZNACZNIK FORMULARZA (od 0.9.38 — losowy token
+ * ⛔ NUMERU WYDANIA W KOMENTARZU NIE PISZEMY. Nadaje go koordynatorka PRZY SCALANIU,
+ * bo kolejnosc scalania otwartych PR-ow potrafi sie zmienic — rezerwacja numeru w kodzie
+ * jej nie przezywa i produkt zaczyna twierdzic cos o wydaniu, ktorego nie ma (klasa 98).
+ * Numer zyje wylacznie w naglowku sekcji CHANGELOG-a.
+ * Człony: adres kupującego (okno działa per adres), ZNACZNIK FORMULARZA (od tego wydania — losowy token
  * wpisany w formularz przy renderze strony produktu: podwójny klik wysyła TEN SAM formularz, więc ten
  * sam token; druga osoba za tym samym adresem ma własny render i własny token), produkt (osobne okno
  * na produkt) oraz tryb płatności — osadzona i hostowana kończą się INNĄ sesją Stripe, więc nie wolno
- * im dzielić okna. Brak tokenu (POST spoza naszego formularza) = pusty człon: okno działa jak do 0.9.37,
+ * im dzielić okna. Brak tokenu (POST spoza naszego formularza) = pusty człon: okno działa jak w poprzednich wydaniach,
  * per adres — gorzej nie jest, lepiej nie ma z czego.
  *
  * @param int    $produkt_id Id produktu.
@@ -43,7 +47,11 @@ function sklepag_klucz_idem( $produkt_id, $osadzona, $znacznik = '' ) {
  * Nie jest sekretem ani dowodem tożsamości — jedynie rozdziela okna dwóch przeglądarek za jednym adresem.
  */
 function sklepag_znacznik_okna_z_post() {
-	if ( ! isset( $_POST['okno'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce sprawdza wołający handler.
+	// ⛔ `is_string` JEST TU KONIECZNE, nie ozdobne: `okno[]=x` w POST daje TABLICĘ, a rzutowanie
+	// tablicy na łańcuch zwraca literał `Array` (podręcznik PHP, „Converting Arrays to Strings”).
+	// Bez tego sprawdzenia wyrażenie niżej przepuściłoby `Array` jako PRAWIDŁOWY znacznik — czyli
+	// wszyscy wysyłający tablicę dzieliliby JEDNO wspólne okno idempotencji.
+	if ( ! isset( $_POST['okno'] ) || ! is_string( $_POST['okno'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce sprawdza wołający handler.
 		return '';
 	}
 	$z = preg_replace( '/[^A-Za-z0-9]/', '', (string) wp_unslash( $_POST['okno'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- czyszczone wyrażeniem do [A-Za-z0-9].
@@ -206,7 +214,7 @@ function sklepag_obsluz_kup() {
 	//    wygaszona) albo wiersza sesji w ogóle nie ma — brak danych to odmowa, nie domysł.
 	//
 	// Okno jest kluczowane adresem IP (`sklepag_ip()` czyta goły REMOTE_ADDR) ORAZ znacznikiem
-	// formularza (od 0.9.38): za wspólnym adresem (CGNAT operatora, biuro za NAT) dwie osoby mają
+	// formularza (od tego wydania): za wspólnym adresem (CGNAT operatora, biuro za NAT) dwie osoby mają
 	// dwa rendery strony produktu, więc dwa znaczniki i dwa okna — zakup jednej nie odbija się drugiej.
 	// Podwójny klik wysyła ten sam formularz, więc ten sam znacznik: ochrona zostaje.
 	// Okno kluczowane też TRYBEM: sesja hostowana ma `url`, osadzona ma `client_secret` — pomieszanie
