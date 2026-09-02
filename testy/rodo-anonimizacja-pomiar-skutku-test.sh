@@ -80,6 +80,13 @@ ID_A=$(pole "$WY_A" ID)
 [ -n "$ID_A" ] || { echo "PRZYRZAD: krok A nie oddal ID zamowienia"; exit 2; }
 
 # ⛔ WAZNA 1 #234 r6: render panelu PRZED krokiem stanu (tamten sprzata zamowienie).
+# ⛔ Adres przekierowania bierzemy z WYJSCIA KROKU A, gdzie powstal w `wp_redirect` kodu
+# produkcji — krok renderu NIE ma prawa wpisywac go sobie sam (mierzylby wlasne wejscie).
+RODO_REDIRECT=$(printf '%s\n' "$WY_A" | sed -n 's/^REDIRECT=//p' | tail -1)
+if [ -z "$RODO_REDIRECT" ]; then
+	zle "A: krok szczesliwej sciezki nie oddal adresu przekierowania — nie mam czym renderowac"
+fi
+export RODO_REDIRECT
 WY_R=$($WP eval-file - "$ID_A" < testy/kroki-rodo/rodo-anonimizacja-krok-render.php 2>&1)
 printf '%s\n' "$WY_R" | sed 's/^/    | /'
 case "$WY_R" in *"RENDER_PRZYRZAD=OK"*) : ;; *) echo "PRZYRZAD: render panelu nie doszedl do skutku"; $WP eval-file - "$ID_A" < testy/kroki-rodo/rodo-anonimizacja-krok-stan.php >/dev/null 2>&1; exit 2 ;; esac

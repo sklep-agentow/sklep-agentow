@@ -387,8 +387,8 @@ function sklepag_admin_zamowienie() {
 	if ( $zanonimizowane ) {
 		echo '<p>Kupujący zanonimizowany ' . esc_html( $zam->usunieto_dnia ) . ' — adres i treść maila usunięte; kwoty i czasy pozostały' . ( $ma_fakture ? ', dane do faktury zachowane (obowiązek podatkowy)' : '' ) . '.</p>';
 	} else {
-		echo '<p class="description">Na żądanie kupującego: usuwa adres e-mail i zapisaną treść maila (razem ze śladem doręczonej wysyłki), unieważnia link pobrania; kwoty, czasy i dane do faktury zostają (statystyki sprzedaży; dane nabywcy z faktury — obowiązek podatkowy). Operacja NIEODWRACALNA.</p>';
-		echo '<p><a href="' . esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=sklepag_anonimizuj&zamowienie=' . (int) $zam->id ), 'sklepag_anonimizuj' ) ) . '" class="button sklepag-button-uwaga" onclick="return confirm(\'Anonimizacja jest NIEODWRACALNA: adres e-mail i treść maila znikną, link pobrania przestanie działać. Dane do faktury (nazwa, NIP, adres) ZOSTAJĄ — obowiązek podatkowy. Kontynuować?\');">Anonimizuj kupującego</a></p>';
+		echo '<p class="description">Na żądanie kupującego: usuwa adres e-mail i zapisaną treść maila (razem ze śladem doręczonej wysyłki), unieważnia link pobrania; kwoty i czasy zostają (statystyki sprzedaży)' . ( $ma_fakture ? ', a dane do faktury — obowiązek podatkowy — zostają nienaruszone' : '; to zamówienie nie ma zapisanych danych do faktury' ) . '. Operacja NIEODWRACALNA.</p>';
+		echo '<p><a href="' . esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=sklepag_anonimizuj&zamowienie=' . (int) $zam->id ), 'sklepag_anonimizuj' ) ) . '" class="button sklepag-button-uwaga" onclick="return confirm(\'Anonimizacja jest NIEODWRACALNA: adres e-mail i treść maila znikną, link pobrania przestanie działać. ' . ( $ma_fakture ? 'Dane do faktury (nazwa, NIP, adres) ZOSTAJĄ — obowiązek podatkowy.' : 'To zamówienie nie ma zapisanych danych do faktury.' ) . ' Kontynuować?\');">Anonimizuj kupującego</a></p>';
 	}
 	echo '</div></div>';
 
