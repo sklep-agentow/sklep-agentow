@@ -91,7 +91,8 @@ swojej. Zestawienie pozycja-w-pozycję **po ujawnieniu** to jedyny uczciwy pomia
 **Gdzie NIE szukać (z jego pochwał):** bramka płatnicza Stripe i sam audyt produktu dostały
 najwyższe noty. To nie znaczy, że tam nie ma błędów — znaczy, że jego jedenastka raczej nie stamtąd.
 
-**Zawężenie błędu WŁAŚCICIELA — rozumowanie, nie zgadywanie (1.09):**
+**Zawężenie błędu KOLEGI — rozumowanie, nie zgadywanie (zapisane 1.09, gdy nazywaliśmy go
+„błędem właściciela”; sprostowanie w tabeli wyżej — właściciel nie trzyma osobnego błędu):**
 Właściciel ten błąd zna, a **nie czyta kodu**. Więc musi być widoczny bez otwierania plików:
 w działaniu sklepu, w tekście, w tym co dostaje klient, albo w czymś, co mu ktoś pokazał.
 To wyklucza schemat bazy, kolejkowanie CI i `CODEOWNERS`. Zostają najgorętsi kandydaci:

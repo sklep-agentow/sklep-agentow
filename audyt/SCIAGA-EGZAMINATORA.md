@@ -451,10 +451,12 @@ to ta sama rodzina co `I-14`: klasa OPISANA, nie OBSTAWIONA. Dokladnie to, co ko
 „do konca nie zostala zrobiona". **Regula wyjscia: opis PR musi niesc tryb, w ktorym bramki
 poszly, i liczbe wykonanych bramek — samo „bramki zielone" nie jest dowodem.**
 
-## KLASY DOPISANE 2026-09-01 (wieczór) — z dnia, w którym właściciel ujawnił swój błąd
+## KLASY DOPISANE 2026-09-01 (wieczór) — z dnia, w którym ujawniono drugi błąd KOLEGI
 
-Kontekst: właściciel znał jeden duży błąd i trzymał go w tajemnicy przez cały dzień jako próbę
-kontrolną naszej metody. **Ośmiu agentów z ośmioma różnymi pytaniami go nie znalazło.** Klasa 94
+Kontekst: jeden duży błąd był trzymany w tajemnicy przez cały dzień jako próba kontrolna naszej
+metody. ⚠️ **SPROSTOWANIE 2.09 (słowa właściciela):** to był błąd **kolegi** (drugi z jego
+jedenastki), nie osobny błąd właściciela — właściciel takiego nie trzyma. Źródło:
+`audyt/WERDYKT-KOLEGI-SLOWO-W-SLOWO.md`. **Ośmiu agentów z ośmioma różnymi pytaniami go nie znalazło.** Klasa 94
 jest tym błędem, 95 wyszła przy pisaniu do niego testu, 96 przy przelocie po pytaniu.
 
 | # | Klasa | Dowód | Czym obstawione |

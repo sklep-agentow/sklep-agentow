@@ -137,6 +137,13 @@ for t in testy/*.js; do
 done
 echo "--- testy/ (bash: bramki dokumentacji) ---"
 for t in testy/*.sh; do
+	# ⛔ golden-stos-probny.sh to SPUST bramki `golden` (woła go narzedzia-qa/bramki.sh),
+	#    a lib-golden-stos.sh to BIBLIOTEKA. Uruchomione przez tę pętlę: pierwszy stawia
+	#    stos próbny od zera (dłużej niż LIMIT_S=300 ⇒ EXIT=124, fałszywe czerwone),
+	#    drugi tylko sourc'uje bibliotekę i kończy zerem, czyli dopisuje wiersz
+	#    „przechodzi”, który NICZEGO nie mierzy. Precedens: zrzuty-panelu.js wyżej.
+	case "$t" in *golden-stos-probny.sh) echo "POMINIĘTE (spust bramki golden — uruchamia go narzedzia-qa/bramki.sh): $t"; printf '%s\tPOMINIETE\t0\n' "$t" >> "$TSV"; continue;; esac
+	case "$t" in *lib-golden-stos.sh) echo "POMINIĘTE (biblioteka, nie test): $t"; printf '%s\tPOMINIETE\t0\n' "$t" >> "$TSV"; continue;; esac
 	case "$t" in *-proba-kontrolna.sh|*kalibracja-mutantem.sh|*seed-demo.sh) echo "POMINIĘTE (kalibrator/narzędzie — podmienia kod): $t"; printf '%s\tPOMINIETE\t0\n' "$t" >> "$TSV"; continue;; esac
 	uruchom "$t" sh nie
 done

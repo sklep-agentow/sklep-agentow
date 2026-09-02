@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# lib-golden-stos.sh — GOLDEN „kupujący dostaje to, co kupił” na STOSIE PRÓBNYM.   WERSJA 1.0.0
+# lib-golden-stos.sh — GOLDEN „kupujący dostaje to, co kupił” na STOSIE PRÓBNYM.   WERSJA 1.0.1
 #
 # PO CO (znalezisko I-24, 1.09): golden był jedynym strażnikiem naprawy migawki produktu
 # (PR #258) i NIC go nie wołało. Wpięcie w bramki było zablokowane pułapką: jedyny sposób
@@ -22,7 +22,12 @@ cd "$KORZEN_GOLDEN" || exit 2
 
 GOLDEN_TEST=testy/golden-kupujacy-dostaje-to-co-kupil-test.php
 GOLDEN_CEL=/var/www/html/wp-content/plugins/sklep-agentow
-GOLDEN_BLOKADA=/root/praca/zlecenia/wymiana/stos.lock   # ten sam zamek co linia-bazowa.sh: dwa biegi naraz = jeden kontener probny_wp
+# ⛔ ZAMKA NIE BIERZEMY TUTAJ. Bierze go `postaw_stos` z narzedzia-qa/lib-stos-probny.sh
+# (zamek `wymiana/stos-probny.lock`, WŁASNY dla `probny_wp`) — dzięki temu chroni WSZYSTKICH
+# ośmiu użytkowników stosu próbnego, a nie tylko goldena. Do 2.09 golden brał tu
+# `wymiana/stos.lock`, czyli zamek stosu WARSZTATOWEGO, który `linia-bazowa.sh` trzyma
+# już nad każdym `testy/*.sh` — drugie wzięcie tego samego pliku zakleszczało bieg
+# na własnej blokadzie aż do `timeout 300` (EXIT=124, fałszywe czerwone w linii bazowej).
 
 golden_przygotuj_stos() {
 	wymagaj_narzedzi
@@ -38,7 +43,7 @@ golden_wdroz() {
 	docker exec "$KONTENER" rm -rf "$GOLDEN_CEL" > /dev/null 2>&1
 	docker exec "$KONTENER" mkdir -p "$GOLDEN_CEL" > /dev/null 2>&1 || return 1
 	docker cp "$1/." "$KONTENER:$GOLDEN_CEL/" > /dev/null || return 1
-	docker exec "$KONTENER" chown -R www-data:www-data "$GOLDEN_CEL"
+	docker exec "$KONTENER" chown -R www-data:www-data "$GOLDEN_CEL" > /dev/null 2>&1 || return 1
 	wp plugin activate sklep-agentow > /dev/null 2>&1 || return 1
 	sleep 3   # opcache w obrazie odświeża się co 2 s
 }

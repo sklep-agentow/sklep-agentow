@@ -12,8 +12,8 @@ set -u
 WTYCZKA="${1:-wtyczki/sklep-agentow}"
 [ -f "$WTYCZKA/sklep-agentow.php" ] || padnij "w [$WTYCZKA] nie ma sklep-agentow.php"
 
-exec 9> "$GOLDEN_BLOKADA" || padnij "nie mogę otworzyć zamka $GOLDEN_BLOKADA"
-flock -w 900 9 || padnij "stos próbny zajęty przez inny bieg dłużej niż 15 min"
+# Zamek stosu próbnego bierze `postaw_stos` (w golden_przygotuj_stos niżej) — patrz
+# narzedzia-qa/lib-stos-probny.sh: `wez_zamek_probny`. Tutaj go NIE dublujemy.
 trap 'zwin_stos' EXIT INT TERM
 
 golden_przygotuj_stos

@@ -37,7 +37,7 @@ declare -A POMIJANE=(
 	[dowod-zachowania-segregator-proba-kontrolna.sh]="deinstaluje wtyczkę ze stosu — do przelotu ręcznego przed wydaniem"
 )
 
-# ⛔ PRÓBY WYMAGAJĄCE DOCKERA (1.09). Te cztery stawiają stos próbny albo wołają
+# ⛔ PRÓBY WYMAGAJĄCE DOCKERA (1.09; od 2.09 jest ich PIĘĆ). Te próby stawiają stos próbny albo wołają
 # PHP w kontenerze. Wykonawca CI od 31.08 chodzi jako `ciuser` (naprawa B-3) i NIE
 # widzi `docker.sock` — zmierzone: `permission denied while trying to connect to
 # the docker API at unix:///var/run/docker.sock`. Dostępu dać NIE MOŻNA: grupa

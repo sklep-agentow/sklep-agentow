@@ -416,6 +416,12 @@ echo "=== PODSUMOWANIE ==="
 for nazwa in "${BRAMKI[@]}"; do
 	if [ -n "${WYNIKI[$nazwa]:-}" ]; then
 		printf '  %-12s EXIT=%s\n' "$nazwa" "${WYNIKI[$nazwa]}"
+	elif pomijana "$nazwa"; then
+		# ⛔ TA GAŁĄŹ MUSI STAĆ PRZED dockerową — dokładnie jak w bramka() wyżej.
+		# Odwrotna kolejność dawała DWA różne powody dla jednej bramki w jednym logu:
+		# „POMINIETA (tryb tekstowy — zmiana nie dotyka PHP)” przy biegu i
+		# „POMINIETA (wymaga Dockera)” w podsumowaniu tego samego przebiegu.
+		printf '  %-12s POMINIETA (tryb tekstowy — zmiana nie dotyka PHP)\n' "$nazwa"
 	elif [ "$nazwa" = golden ] && [ "$DOCKER_WIDOCZNY" = nie ]; then
 		printf '  %-12s POMINIETA (wymaga Dockera — konto go nie widzi)\n' "$nazwa"
 	else

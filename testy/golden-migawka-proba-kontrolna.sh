@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Próba kontrolna GOLDEN-a „kupujący dostaje to, co kupił” (zasada D14) — WERSJA 2.0.0
+# Próba kontrolna GOLDEN-a „kupujący dostaje to, co kupił” (zasada D14) — WERSJA 2.0.1
 #
 # GOLDEN pada na kodzie sprzed naprawy — to już wiemy. Ten skrypt sprawdza coś więcej:
 # czy pada na KAŻDEJ z warstw naprawy z osobna. Naprawa ma trzy części (zapis migawki przy
@@ -21,10 +21,13 @@ set -u
 
 ZRODLO=wtyczki/sklep-agentow
 PLIK_W_ZRODLE=includes/zakup.php
+# ⛔ PUŁAPKA ZANIM KATALOG POWSTANIE — inaczej wyjście przez `padnij` na ścieżce
+# PRZEWIDZIANEJ (zajęty stos próbny) zostawia katalog `golden-mutant-*` na dysku.
+# Zamek bierze `postaw_stos` w `golden_przygotuj_stos` niżej.
+ROBOCZY=""
+sprzatnij() { [ -n "${ROBOCZY:-}" ] && rm -rf "$ROBOCZY"; zwin_stos; }
+trap 'sprzatnij' EXIT INT TERM
 ROBOCZY="$(mktemp -d -t golden-mutant-XXXXXX)"
-exec 9> "$GOLDEN_BLOKADA" || padnij "nie mogę otworzyć zamka $GOLDEN_BLOKADA"
-flock -w 900 9 || padnij "stos próbny zajęty przez inny bieg dłużej niż 15 min"
-trap 'rm -rf "$ROBOCZY"; zwin_stos' EXIT INT TERM
 
 golden_przygotuj_stos
 
