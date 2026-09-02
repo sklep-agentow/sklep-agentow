@@ -371,7 +371,11 @@ function sklepag_pole_nadawca_email() {
 
 function sklepag_pole_email_kontaktowy() {
 	echo '<input type="email" id="sklepag_email_kontaktowy" name="sklepag_email_kontaktowy" value="' . esc_attr( (string) get_option( 'sklepag_email_kontaktowy', '' ) ) . '" class="regular-text" placeholder="kontakt@twoja-domena.pl">';
-	echo '<p class="description">Pokazywany kupującym przy problemie z pobraniem (link wygasł / limit wyczerpany).</p>';
+	// ⛔ Wyliczenie MUSI zgadzać się z liczbą miejsc w pobieranie.php, które wstawiają
+	// $kontakt do wp_die(): :38 zły link (403), :42 link wygasł (410), :66 zwrot albo spór (410),
+	// :75 plik chwilowo niedostępny (503), :101 limit wyczerpany (410) — PIĘĆ. Do 0.9.37 opis
+	// wymieniał dwa, więc właściciel nie wiedział, gdzie jeszcze zobaczą go kupujący.
+	echo '<p class="description">Pokazywany kupującym przy każdym problemie z pobraniem: zły link, wygasły link, zwrot lub spór, plik chwilowo niedostępny, wyczerpany limit.</p>';
 }
 
 function sklepag_pole_firma_nazwa() {

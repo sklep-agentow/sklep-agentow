@@ -28,7 +28,14 @@
 		   i dopiero tam czytac, ze przestal dzialac. Do 0.9.36 brama statusu nie sprawdzala i zdania
 		   celowo o linku milczaly. */
 		zwrocone: 'Płatność za to zamówienie została zwrócona — nie jest już opłacone, a link do pobrania z maila przestał działać. Jeśli to pomyłka, odpisz na maila z potwierdzeniem zakupu.',
-		sporne: 'Ta płatność jest reklamowana w banku i czeka na rozstrzygnięcie — link do pobrania nie działa. Wróci tylko wtedy, gdy spór rozstrzygnie się na korzyść sklepu. Jeśli to pomyłka, odpisz na maila z potwierdzeniem zakupu.',
+		/* ⛔ ZDANIE MUSI BYC PRAWDZIWE TAKZE DLA SPORU PRZEGRANEGO. Do 0.9.37 mowilo
+		   „czeka na rozstrzygniecie", a `charge.dispute.closed` z wynikiem `lost`
+		   (zakup.php:778-780, :823) zostawia status `sporne` NA STALE — sprawa jest
+		   wtedy rozstrzygnieta, tylko przegrana. Kod NIE odroznia sporu otwartego od
+		   przegranego (oba maja ten sam status), wiec naprawa to ZDJECIE twierdzenia,
+		   nie nowa galaz. Wzorzec zdania prawdziwego w obu przypadkach stoi w bramie
+		   pobrania: pobieranie.php:64 („jest w sporze — pobieranie jest wstrzymane"). */
+		sporne: 'Ta płatność jest w sporze (reklamacja w banku) — link do pobrania nie działa. Dostęp wróci tylko wtedy, gdy spór rozstrzygnie się na korzyść sklepu. Jeśli to pomyłka, odpisz na maila z potwierdzeniem zakupu.',
 		brak: 'Nie znaleziono zamówienia dla tego adresu.',
 		/* ⛔ Wczesniej NIEZNANY status dostawal zdanie `oczekuje` — czyli kazdy status
 		   dopisany w przyszlosci wracalby z ta sama wada. Zdanie zapasowe ma NIE TWIERDZIC

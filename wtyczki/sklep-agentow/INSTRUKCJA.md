@@ -296,7 +296,8 @@ same (sprzątanie co 10 minut). Zamówienia, kwoty i statusy zostają.
   = bez zmian; kasujesz przez „Usuń zapisany sekret”.
 - **Nazwa i adres nadawcy** — tylko dla maili sklepu; reszta poczty WordPressa zostaje bez zmian.
   Adres musi być dopuszczony przez Twój hosting (SPF/DKIM), inaczej maile lądują w spamie.
-- **Mail kontaktowy właściciela** — pokazywany kupującemu, gdy link wygasł albo limit się wyczerpał;
+- **Mail kontaktowy właściciela** — pokazywany kupującemu przy **każdym** problemie z pobraniem:
+  zły link, link wygasł, zwrot lub spór, plik chwilowo niedostępny, wyczerpany limit (pięć miejsc);
   w mailu po zakupie stoi jako adres do reklamacji i faktur.
 - **Klucz publikowalny (pk_test_…)** — z tego samego miejsca w Stripe co klucz sekretny. **Z kluczem** formularz
   karty pokazuje się na stronie produktu, w kolorach strony (kupujący nie opuszcza Twojej strony; dane karty
@@ -358,11 +359,11 @@ od 0.9.36 sklep mówi, ile serwer przyjmuje i które ustawienie o tym decyduje.)
 **Kupujący chce zwrotu.** Zwrot robisz w panelu Stripe; sklep sam odnotuje go w zamówieniu
 (status „zwrócone”, kwota w osi czasu) i odejmie od statystyk sprzedaży. Jeśli kupujący ma
 jeszcze otwartą stronę „Dziękujemy” (albo wróci na nią ze starego odnośnika), przeczyta tam
-**„Płatność za to zamówienie została zwrócona — nie jest już opłacone”**, a przy sporze —
-**„Ta płatność jest reklamowana w banku i czeka na rozstrzygnięcie”**. Strona przestaje wtedy
-odświeżać status. Od 0.9.37 **oba te zdania mówią wprost, że link do pobrania przestał działać** —
-bo faktycznie przestaje (brama pobrań odmawia dla statusów „zwrócone” i „sporne”, patrz
-ostrzeżenie w rozdziale 3).
+**„Płatność za to zamówienie została zwrócona — nie jest już opłacone, a link do pobrania z maila
+przestał działać”**, a przy sporze — **„Ta płatność jest w sporze (reklamacja w banku) — link do
+pobrania nie działa. Dostęp wróci tylko wtedy, gdy spór rozstrzygnie się na korzyść sklepu”**.
+Strona przestaje wtedy odświeżać status. Oba zdania mówią o linku wprost, bo brama pobrań
+faktycznie odmawia dla statusów „zwrócone” i „sporne” (patrz ostrzeżenie w rozdziale 3).
 
 **Czy pliki są bezpieczne na serwerze nginx?** Katalog plików chroni `.htaccess`, który
 działa na Apache, a na nginx jest ignorowany. Prawdziwą ochroną jest brama w sklepie (token,
