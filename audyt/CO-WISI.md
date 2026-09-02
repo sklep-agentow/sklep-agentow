@@ -1077,10 +1077,12 @@ Każda pozycja = tania poprawka tekstowa do wzięcia przy najbliższym PR-ze w t
 
 ### #271 (ściąga klasy 99–104)
 - DROBNA 1: wpis klasy cytuje `REJESTR-ZNALEZISK-INFRA.md:171` (A6-F1) — po #267 linia 171 to `P-1`; kotwica zamiast numeru (wiersz `A6-F1`), źródło: #267 odnotował kolizję kodu A6-F1.
-  ⛔ **Dlaczego parkujemy, zamiast poprawić od razu** (odpowiedź na DROBNĄ 4 z recenzji #276): `audyt/REJESTR-ZNALEZISK-INFRA.md` jest w tej chwili edytowany przez **pięć** otwartych PR-ów — #268, #270, #272, #273, #274 (sprawdzone `gh pr view N --json files`, 2.09 ~11:40). Jednolinijkowa poprawka kotwicy wywołałaby konflikt w każdym z nich, a konflikt = zero przebiegów CI i cisza. Do zrobienia jednym commitem PO opróżnieniu kolejki, razem z DROBNĄ 2 z tej samej sekcji.
+  ⛔ **SPROSTOWANIE 2.09, runda 4 #276 (DROBNA 5 recenzji — recenzent ma rację):** uzasadnienie parkowania, które tu stało, było FAŁSZYWE. Mówiło, że poprawka wywoła konflikt w pięciu PR-ach edytujących `audyt/REJESTR-ZNALEZISK-INFRA.md` — ale **obie** parkowane poprawki (kotwica `A6-F1` i odsyłacz 98→103) są zmianami w `audyt/SCIAGA-EGZAMINATORA.md`, czyli w pliku, który ten PR i tak otwiera. Argument o konflikcie dotyczył innego pliku niż naprawa. To ta sama rodzina co klasa 3: zdanie brzmiało wiarygodnie i nikt nie sprawdził, czy mówi o właściwym pliku.
+  ✅ **Zrobione w rundzie 4 #276:** obie poprawki wchodzą w tym PR-ze, więc ta pozycja jest zamknięta, a nie przełożona po raz drugi.
 - DROBNA 2: klasa 103 unieważnia przepis z klasy 98 („siedem miejsc” bez `SECURITY.md`) — dopisać do 98 odsyłacz „patrz 103: osiem miejsc”.
 
-### Klasa do ściągi PO #271 (numer 105)
+### ~~Klasa do ściągi PO #271 (numer 105)~~ — ✅ ZAMKNIĘTE 2.09 (#276)
+⛔ **Reguła z nagłówka tego pliku: „oddajesz ⇒ wiersz, wraca ⇒ kasujesz”.** Klasa 105 WRÓCIŁA — jest w `audyt/SCIAGA-EGZAMINATORA.md` jako pełny wiersz (dowód: `2.09, #272`). Trzymanie jej tutaj jako „do zrobienia” po scaleniu dałoby DWA źródła prawdy naraz na `main` — dokładnie ten stan, przed którym klasa 105 ostrzega. Treść niżej zostaje wyłącznie jako ślad, skąd klasa się wzięła; ⛔ **nie jest już zadaniem** (DROBNA 4 recenzji #276, runda 3).
 - „STRAŻNIK BEZ SPUSTU”: narzędzie/test istnieje, nic go nie woła (I-24 golden; I-3 kalibrator; I-4 licznik-odstepstw; I-8 adresy-w-dokumencie/waga-znaleziska). Kontrola: nowy test/bramka w TYM SAMYM PR ma wołającego — `grep -rn <nazwa> narzedzia-qa/bramki.sh .github/workflows/ narzedzia-qa/proby-kontrolne-przelot.sh` ≥ 1.
 - Kandydat: przelot `testy/` bez Dockera → ~20 prób EXIT=1, bo `WYMAGA_DOCKERA` zna 4 nazwy (`MAX_POMINIETYCH=5` to osobna wielkość — sufit pominięć, nie liczba nazw); CI nie biegnie po `testy/` (stan sprzed #272).
 
