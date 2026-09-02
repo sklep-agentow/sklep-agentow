@@ -55,6 +55,7 @@ WYMAGA_DOCKERA=(
 	dowod-z-paczki-proba-kontrolna.sh
 	stos-proba-kontrolna.sh
 	test-php-proba-kontrolna.sh
+	golden-migawka-proba-kontrolna.sh
 )
 if ! docker ps >/dev/null 2>&1; then
 	for N in "${WYMAGA_DOCKERA[@]}"; do
@@ -65,7 +66,7 @@ fi
 # ⛔ SUFIT POMINIĘĆ. Bez niego lista pominięć rośnie po cichu i przelot świeci
 # zielono, sprawdzając coraz mniej — dokładnie ta klasa błędu, dla której ten
 # skrypt w ogóle powstał. Podniesienie sufitu ma być świadomą decyzją w commicie.
-MAX_POMINIETYCH=5
+MAX_POMINIETYCH=6   # 2.09 (I-24): +1 = golden-migawka-proba-kontrolna.sh dolaczyla do WYMAGA_DOCKERA (stos probny)
 
 if [ -n "$(git status --porcelain -uno 2>/dev/null)" ]; then
 	echo "PRZELOT: drzewo robocze BRUDNE — dowód powstałby na kodzie, którego nie ma w historii." >&2

@@ -36,10 +36,10 @@ set -u
 # ⛔ Rejestr bramek. Nazwy MUSZĄ zgadzać się z .github/manifest-bramek.txt —
 # pilnuje tego narzedzia-qa/sprawdz-manifest.sh. Kolejność jak w quality.yml
 # sprzed zbicia zadań: najpierw tanie i statyczne, na końcu skan historii.
-BRAMKI=(actionlint manifest slady znaleziska status-bez-warunku paczka zdarzenia-webhooka php-lint phpcs phpstan gitleaks poswiadczenia)
+BRAMKI=(actionlint manifest slady znaleziska status-bez-warunku paczka zdarzenia-webhooka php-lint phpcs phpstan gitleaks poswiadczenia golden)
 # Bramki dotykające WYŁĄCZNIE kodu PHP — pomijane, gdy zmiana jest tekstowa.
-BRAMKI_PHP=(php-lint phpcs phpstan)
-PROG_PELNY=12
+BRAMKI_PHP=(php-lint phpcs phpstan golden)
+PROG_PELNY=13
 PROG_TEKSTOWY=7
 
 # Wersje narzędzi pobieranych, gdy nie ma ich w PATH. Pinowane świadomie:
@@ -170,6 +170,17 @@ case "$TRYB" in
 	*) echo "Nieznany tryb: $TRYB (dozwolone: pelny, tekstowy, auto)" >&2; exit 2 ;;
 esac
 
+# ⛔ BRAMKA `golden` WYMAGA DOCKERA (I-24, 2.09). Stawia stos probny `probny_wp` i wgrywa tam
+# kod z drzewa; wykonawca CI (`ciuser`, B-3) Dockera nie widzi i widziec nie moze. Bez Dockera
+# bramka jest POMINIETA JAWNIE (w logu i w podsumowaniu), a prog pelnego trybu schodzi o JEDEN,
+# nie „o ile trzeba”. Lokalnie i na kazdym koncie z Dockerem golden BIEGNIE (~15 s).
+DOCKER_WIDOCZNY=nie
+docker ps > /dev/null 2>&1 && DOCKER_WIDOCZNY=tak
+if [ "$DOCKER_WIDOCZNY" = nie ] && [ "$TRYB" = pelny ]; then
+	PROG=$((PROG - 1))
+	echo "UWAGA: to konto nie widzi Dockera — bramka golden bedzie POMINIETA, prog pelny $PROG_PELNY -> $PROG" >&2
+fi
+
 # --- pojedyncza bramka --------------------------------------------------------
 
 pomijana() {
@@ -187,6 +198,11 @@ bramka() {
 	if pomijana "$nazwa"; then
 		POMINIETE+=("$nazwa")
 		printf '\n--- BRAMKA %s: POMINIETA (tryb tekstowy — zmiana nie dotyka PHP) ---\n' "$nazwa"
+		return 0
+	fi
+	if [ "$nazwa" = golden ] && [ "$DOCKER_WIDOCZNY" = nie ]; then
+		POMINIETE+=("$nazwa")
+		printf '\n--- BRAMKA %s: POMINIETA (wymaga Dockera, konto go nie widzi — przelot reczny przed wydaniem: bash testy/golden-stos-probny.sh) ---\n' "$nazwa"
 		return 0
 	fi
 	printf '\n--- BRAMKA %s ---\n' "$nazwa"
@@ -250,6 +266,15 @@ uruchom_paczka() {
 #    wraca przy kazdym nowym zdarzeniu, bo nic nie zmusza autora, zeby ruszyl dokument.
 uruchom_zdarzenia_webhooka() {
 	bash narzedzia-qa/zdarzenia-webhooka.sh
+}
+
+# ⛔ GOLDEN „kupujacy dostaje to, co kupil” (I-24, 2.09) — jedyny straznik naprawy migawki
+#    produktu (PR #258; blad wskazany przez recenzenta zewnetrznego), przez dobe BEZ SPUSTU:
+#    lapala go tylko sierota linia-bazowa.sh. Biegnie na STOSIE PROBNYM od zera (nigdy na
+#    wspolnym `strona_wp_wordpress`), ~15 s. Kalibracja czterema mutantami:
+#    testy/golden-migawka-proba-kontrolna.sh (kazdy mutant wywala wlasciwa asercje).
+uruchom_golden() {
+	bash testy/golden-stos-probny.sh
 }
 
 uruchom_php_lint() {
@@ -382,6 +407,7 @@ bramka phpcs      uruchom_phpcs
 bramka phpstan    uruchom_phpstan
 bramka gitleaks   uruchom_gitleaks
 bramka poswiadczenia uruchom_poswiadczenia
+bramka golden     uruchom_golden
 
 # --- podsumowanie i strażnik liczby -------------------------------------------
 
@@ -390,6 +416,8 @@ echo "=== PODSUMOWANIE ==="
 for nazwa in "${BRAMKI[@]}"; do
 	if [ -n "${WYNIKI[$nazwa]:-}" ]; then
 		printf '  %-12s EXIT=%s\n' "$nazwa" "${WYNIKI[$nazwa]}"
+	elif [ "$nazwa" = golden ] && [ "$DOCKER_WIDOCZNY" = nie ]; then
+		printf '  %-12s POMINIETA (wymaga Dockera — konto go nie widzi)\n' "$nazwa"
 	else
 		printf '  %-12s POMINIETA (tryb %s)\n' "$nazwa" "$TRYB"
 	fi

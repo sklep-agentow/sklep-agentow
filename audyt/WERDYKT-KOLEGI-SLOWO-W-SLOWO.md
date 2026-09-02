@@ -71,8 +71,8 @@ I na koniec, o błędzie, który zna właściciel:
 
 | Kto | Ile zna | Status |
 |---|---|---|
-| Kolega (Man1exter) | **11** | podał **1** (`I-1`), **10 trzyma dla siebie** |
-| Właściciel (Dzidek) | **1 duży** | zna go, **celowo nie zdradza** — to sprawdzian naszej metody |
+| Kolega (Man1exter) | **11** | podał **2**: `I-1` (bramka poświadczeń spoza repo) i **migawka produktu** („podmiana pliku przy zakupie”, naprawa PR #258 + spust `I-24`), **9 trzyma dla siebie** |
+| Właściciel (Dzidek) | — | ⚠️ **SPROSTOWANIE 2.09 (słowa właściciela):** „błąd właściciela” z 1.09 to był błąd **wskazany przez kolegę** (podmiana pliku/produktu między płatnością a domknięciem). Właściciel nie trzyma osobnego błędu. |
 | My | 31 znalezisk własnych | z tego 1 pokrywa się z przykładem kolegi |
 
 ⛔ **POTWIERDZONE 1.09 przez właściciela:** przeczytał naszą listę 31 znalezisk

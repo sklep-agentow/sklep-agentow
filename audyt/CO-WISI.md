@@ -1049,7 +1049,11 @@ niepilnowana · RODO w ruchu (retencja/anonimizacja/eksport WP) · dostarczalno�
 bramek „10 z 10” przy braku vendor · O-3 nagłówek rubryki v0.9.23 (świadome, osobny PR wg DECYZJE) ·
 DECYZJE.md: duplikat D28 i luka D29–30 (porządek numeracji, 0.9.28).
 
-## 🔴 DŁUG (audytor, 1.09 wieczór — pozycja `I-24` w `REJESTR-ZNALEZISK-INFRA.md`): GOLDEN pilnujący błędu WŁAŚCICIELA nie ma spustu
+## ✅ DOMKNIĘTE 2.09 (dawniej 🔴 DŁUG, audytor 1.09 wieczór — `I-24`): GOLDEN pilnujący błędu kolegi (do 2.09 zapisany jako „właściciela”) MA spust
+**Rozwiązanie pułapki:** golden biegnie na STOSIE PRÓBNYM od zera (`testy/lib-golden-stos.sh` na `narzedzia-qa/lib-stos-probny.sh`), nie na wspólnym — bramka `golden` w `bramki.sh` (tryb pełny; bez Dockera pominięta JAWNIE, próg 13→12), próba kontrolna 2.0.0 mutuje KOPIĘ wtyczki w katalogu tymczasowym. Dowody uruchomienia w PR. ⛔ Klasa do ściągi PO scaleniu #271 (kolizja numeracji): **„strażnik bez spustu”** — ten sam wzorzec co `I-3`, `I-4`, `I-8` (narzędzie istnieje, nic go nie woła); kontrola: każdy nowy test/bramka w TYM SAMYM PR ma wołającego (grep nazwy w `bramki.sh`/CI/przelocie ≥ 1).
+
+<details><summary>Treść długu z 1.09 (historia)</summary>
+
 `testy/golden-kupujacy-dostaje-to-co-kupil-test.php` z PR #258 jest **jedynym** strażnikiem naprawy „kupujący
 dostaje dokładnie to, co kupił" — a więc tego błędu, którego właściciel nie zdradzał przez cały dzień polowania.
 Sam test jest dobry: na `main` **EXIT=0** (14 asercji), jego próba kontrolna **EXIT=0** (4 mutanty, każdy wywala
@@ -1062,3 +1066,5 @@ z gałęzi **do kontenera**, czyli tej samej operacji, która w `testy/golden-mi
 niebezpieczna dla WSPÓLNEGO stosu — podmienia wtyczkę i jej nie przywraca (zmierzone: przed `0.9.32`/`a9ce0f70…`,
 po `0.9.31`/`704b0ab7…`, czyli cofnięta czyjaś robota w toku). Wpięcie bez rozwiązania tego cofa builderom kod pod
 stopami przy każdym biegu bramek. Dowody: `audyt/plamy/GOLDEN-258-WERYFIKACJA.md`.
+
+</details>

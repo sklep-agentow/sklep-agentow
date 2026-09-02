@@ -1,90 +1,87 @@
-#!/bin/bash
-# Proba kontrolna GOLDEN-a „kupujacy dostaje to, co kupil" (zasada D14).
+#!/usr/bin/env bash
+# Próba kontrolna GOLDEN-a „kupujący dostaje to, co kupił” (zasada D14) — WERSJA 2.0.0
 #
-# GOLDEN pada na kodzie sprzed naprawy — to juz wiemy. Ten skrypt sprawdza czegos wiecej:
-# czy pada na KAZDEJ z warstw naprawy z osobna. Naprawa ma trzy czesci (zapis migawki przy
-# sesji, odczyt z migawki przy domknieciu, zapas dla sesji sprzed migracji) i kazda z nich
-# moze zostac cofnieta osobno przy przyszlym refaktorze.
+# GOLDEN pada na kodzie sprzed naprawy — to już wiemy. Ten skrypt sprawdza coś więcej:
+# czy pada na KAŻDEJ z warstw naprawy z osobna. Naprawa ma trzy części (zapis migawki przy
+# sesji, odczyt z migawki przy domknięciu, zapas dla sesji sprzed migracji) i każda z nich
+# może zostać cofnięta osobno przy przyszłym refaktorze.
 #
-# ⛔ Mutant idzie do pliku W REPO i jest wdrazany, a plik wraca z kopii (`trap` oddaje go
-# takze przy przerwaniu). Zadnej operacji gita, ktora cofa stan.
-# ⛔ Licznik bledow NIE MOZE mieszkac w podpowloce `$( … )`.
+# 2.0.0 (I-24): mutant idzie do KOPII wtyczki w katalogu tymczasowym, nigdy do pliku w repo,
+# i jest wdrażany na STOS PRÓBNY (probny_wp), nie na wspólny stos warsztatu. Wersja 1.x
+# wgrywała kod gałęzi na `strona_wp_wordpress` i zostawiała go tam (cofnięta cudza robota,
+# zmierzone 1.09) — dlatego nie wolno jej było wpiąć w bramki.
+# ⛔ Licznik błędów NIE MOŻE mieszkać w podpowłoce `$( … )`.
 #
-# Uzycie: bash testy/golden-migawka-proba-kontrolna.sh   (na koncu wdraza czysty kod)
+# Użycie: bash testy/golden-migawka-proba-kontrolna.sh
+# Kody wyjścia: 0 = golden widzi każdą warstwę i przepuszcza czysty kod · 1 = któryś mutant przeszedł
+# niezauważony albo czysty kod padł · 2 = przyrząd/środowisko.
 set -u
-KONTENER=strona_wp_wordpress
-CEL=/var/www/html/wp-content/plugins/sklep-agentow
-PLIK=wtyczki/sklep-agentow/includes/zakup.php
-KOPIA=$(mktemp -t zakup-golden-XXXXXX.php)
-BLEDY=0
+# shellcheck source=testy/lib-golden-stos.sh
+. "$(dirname "$0")/lib-golden-stos.sh" || exit 2
 
-cp "$PLIK" "$KOPIA"
-przywroc() { cp "$KOPIA" "$PLIK"; }
-trap 'przywroc; rm -f "$KOPIA"' EXIT INT TERM
+ZRODLO=wtyczki/sklep-agentow
+PLIK_W_ZRODLE=includes/zakup.php
+ROBOCZY="$(mktemp -d -t golden-mutant-XXXXXX)"
+exec 9> "$GOLDEN_BLOKADA" || padnij "nie mogę otworzyć zamka $GOLDEN_BLOKADA"
+flock -w 900 9 || padnij "stos próbny zajęty przez inny bieg dłużej niż 15 min"
+trap 'rm -rf "$ROBOCZY"; zwin_stos' EXIT INT TERM
 
-wdroz() {
-  docker cp wtyczki/sklep-agentow/. "$KONTENER:$CEL/" >/dev/null
-  docker exec "$KONTENER" chown -R www-data:www-data "$CEL"
-  docker cp testy/golden-kupujacy-dostaje-to-co-kupil-test.php "$KONTENER:/tmp/gold.php" >/dev/null
-}
-odpal() { docker exec -u www-data "$KONTENER" wp eval-file /tmp/gold.php 2>&1; }
+golden_przygotuj_stos
 
-# $1 = opis, $2 = mutacja (sed na pliku w repo), $3 = fragment asercji, ktora MA paść.
+# $1 = opis, $2 = mutacja (sed na $PLIK w kopii), $3 = fragment asercji, która MA paść.
 probuj() {
-  local opis="$1" mutacja="$2" asercja="$3" przed po wyjscie kod
-  przywroc
-  przed=$(md5sum "$PLIK" | cut -d' ' -f1)
-  eval "$mutacja"
-  po=$(md5sum "$PLIK" | cut -d' ' -f1)
-  if [ "$przed" = "$po" ]; then
-    printf '  BLAD mutacja NIE weszla: %s\n' "$opis"; BLEDY=$((BLEDY+1)); return
-  fi
-  if ! php -l "$PLIK" >/dev/null 2>&1; then
-    printf '  BLAD mutacja rozwalila skladnie: %s\n' "$opis"; BLEDY=$((BLEDY+1)); return
-  fi
-  wdroz
-  wyjscie=$(odpal); kod=$?
-  if [ "$kod" -eq 1 ] && printf '%s' "$wyjscie" | grep -q "BLAD .*$asercja"; then
-    printf '  OK   GOLDEN PADL na: %s (EXIT=%d, asercja %s)\n' "$opis" "$kod" "$asercja"
-  else
-    printf '  BLAD GOLDEN NIE ZLAPAL: %s (EXIT=%d)\n' "$opis" "$kod"
-    printf '%s\n' "$wyjscie" | grep -E '^  (BLAD|PRZYRZAD)' | sed 's/^/       /'
-    BLEDY=$((BLEDY+1))
-  fi
+	local opis="$1" mutacja="$2" asercja="$3" kopia="$ROBOCZY/mutant" PLIK przed po wyjscie kod
+	rm -rf "$kopia"; mkdir -p "$kopia"; cp -a "$ZRODLO/." "$kopia/"
+	PLIK="$kopia/$PLIK_W_ZRODLE"
+	przed=$(md5sum "$PLIK" | cut -d' ' -f1)
+	eval "$mutacja"
+	po=$(md5sum "$PLIK" | cut -d' ' -f1)
+	if [ "$przed" = "$po" ]; then
+		zglos "mutacja NIE weszła: $opis"; return
+	fi
+	if ! php -l "$PLIK" > /dev/null 2>&1; then
+		zglos "mutacja rozwaliła składnię: $opis"; return
+	fi
+	golden_wdroz "$kopia" || { zglos "nie udało się wdrożyć mutanta: $opis"; return; }
+	wyjscie=$(golden_odpal); kod=$?
+	if [ "$kod" -eq 1 ] && printf '%s' "$wyjscie" | grep -q "BLAD .*$asercja"; then
+		potwierdz "GOLDEN PADŁ na: $opis (EXIT=$kod, asercja $asercja)"
+	else
+		zglos "GOLDEN NIE ZŁAPAŁ: $opis (EXIT=$kod)"
+		printf '%s\n' "$wyjscie" | grep -E '^  (BLAD|PRZYRZAD)' | sed 's/^/       /'
+	fi
 }
 
-echo "== M1: domkniecie znowu czyta TABELE PRODUKTOW (doslownie stan sprzed naprawy) =="
-probuj "warunek migawki zawsze falszywy" \
-  "sed -i \"s/if ( '' !== (string) \\\$nasza->produkt_nazwa ) {/if ( false ) {/\" \"\$PLIK\"" \
-  "G1 nazwa w zamowieniu"
+naglowek "M1: domknięcie znowu czyta TABELĘ PRODUKTÓW (dosłownie stan sprzed naprawy)"
+probuj "warunek migawki zawsze fałszywy" \
+	"sed -i \"s/if ( '' !== (string) \\\$nasza->produkt_nazwa ) {/if ( false ) {/\" \"\$PLIK\"" \
+	"G1 nazwa w zamowieniu"
 
-echo "== M2: migawka NIE ZAPISUJE nazwy przy tworzeniu sesji =="
+naglowek "M2: migawka NIE ZAPISUJE nazwy przy tworzeniu sesji"
 probuj "przy INSERT sesji nazwa produktu pusta" \
-  "sed -i \"s/^\\t\\t\\t(string) \\\$produkt->nazwa,$/\\t\\t\\t'',/\" \"\$PLIK\"" \
-  "G1 nazwa w zamowieniu"
+	"sed -i \"s/^\\t\\t\\t(string) \\\$produkt->nazwa,$/\\t\\t\\t'',/\" \"\$PLIK\"" \
+	"G1 nazwa w zamowieniu"
 
-echo "== M3: migawka zapisuje BIEZACY plik zamiast kupionego =="
-probuj "sciezka pliku w migawce podmieniona na pusta" \
-  "sed -i \"s/^\\t\\t\\t(string) \\\$produkt->plik_sciezka,$/\\t\\t\\t'',/\" \"\$PLIK\"" \
-  "G3 PLIK w zamowieniu"
+naglowek "M3: migawka zapisuje BIEŻĄCY plik zamiast kupionego"
+probuj "ścieżka pliku w migawce podmieniona na pustą" \
+	"sed -i \"s/^\\t\\t\\t(string) \\\$produkt->plik_sciezka,$/\\t\\t\\t'',/\" \"\$PLIK\"" \
+	"G3 PLIK w zamowieniu"
 
-echo "== M4: zapas dla sesji sprzed migracji usuniety =="
-probuj "brak odczytu z tabeli produktow dla starej sesji" \
-  "sed -i \"s|\\\$produkt = \\\$wpdb->get_row( \\\$wpdb->prepare( \\\"SELECT \\* FROM {\\\$pp} WHERE id = %d\\\", (int) \\\$nasza->produkt_id ) );|\\\$produkt = null;|\" \"\$PLIK\"" \
-  "F1 zamowienie z sesji bez migawki"
+naglowek "M4: zapas dla sesji sprzed migracji usunięty"
+probuj "brak odczytu z tabeli produktów dla starej sesji" \
+	"sed -i \"s|\\\$produkt = \\\$wpdb->get_row( \\\$wpdb->prepare( \\\"SELECT \\* FROM {\\\$pp} WHERE id = %d\\\", (int) \\\$nasza->produkt_id ) );|\\\$produkt = null;|\" \"\$PLIK\"" \
+	"F1 zamowienie z sesji bez migawki"
 
-echo "== Czysty kod =="
-przywroc
-wdroz
-wyjscie=$(odpal); kod=$?
+naglowek "Czysty kod z drzewa — golden MA PRZEJŚĆ"
+golden_wdroz "$ZRODLO" || padnij "nie udało się wdrożyć czystego kodu"
+wyjscie=$(golden_odpal); kod=$?
 if [ "$kod" -eq 0 ]; then
-  echo "  OK   czysty kod EXIT=0"
+	potwierdz "czysty kod EXIT=0"
 else
-  echo "  BLAD czysty kod EXIT=$kod"
-  printf '%s\n' "$wyjscie" | grep -E '^  (BLAD|PRZYRZAD)' | sed 's/^/       /'
-  BLEDY=$((BLEDY+1))
+	zglos "czysty kod EXIT=$kod"
+	printf '%s\n' "$wyjscie" | grep -E '^  (BLAD|PRZYRZAD)' | sed 's/^/       /'
 fi
 
-echo
-echo "BLEDY PROBY KONTROLNEJ: $BLEDY"
+naglowek "PODSUMOWANIE"
+echo "KALIBRACJA GOLDEN: sprawdzonych mutantów 4, czysty kod 1, BŁĘDY PRÓBY: $BLEDY"
 exit $((BLEDY > 0 ? 1 : 0))

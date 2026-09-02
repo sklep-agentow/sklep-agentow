@@ -14,6 +14,7 @@ wstecz nie dopisuję, bo nie umiałbym jej odtworzyć uczciwie. Ich zmiany od te
 pory lądują tutaj.
 
 ## [Niewydane]
+- **`bramki.sh` — 13. bramka `golden` (`PROG_PELNY` 13; bez Dockera bramka POMINIĘTA jawnie i próg 12) + `proby-kontrolne-przelot.sh` (`golden-migawka-proba-kontrolna.sh` w `WYMAGA_DOCKERA`, sufit pominięć 5→6).** Znalezisko `I-24` (1.09): golden „kupujący dostaje to, co kupił” (PR #258, błąd wskazany przez recenzenta zewnętrznego) był jedynym strażnikiem naprawy migawki produktu i nic go nie wołało, a jedyny sposób uruchomienia wgrywał kod gałęzi na WSPÓLNY stos i go tam zostawiał. Spust `testy/golden-stos-probny.sh` biegnie na stosie próbnym od zera (~15 s), kalibracja `testy/golden-migawka-proba-kontrolna.sh` 2.0.0 mutuje kopię wtyczki w katalogu tymczasowym (4/4 mutanty złapane, czysty kod EXIT=0).
 - **`zdarzenia-webhooka.sh` 1.0.0 (NOWE) + `bramki.sh` (12 bramek, `PROG_PELNY` 12,
   `PROG_TEKSTOWY` 7; wpis do manifestu w TYM SAMYM PR, bo bez niego strażnik manifestu
   słusznie świeci na czerwono — kontrola 1a) — lista zdarzeń Stripe w instrukcji == lista

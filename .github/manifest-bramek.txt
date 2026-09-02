@@ -70,3 +70,12 @@ paczka
 # zamyka egzemplarz; bramka zamyka klasę, bo każde nowe zdarzenie w kodzie wymusza teraz
 # ruszenie dokumentu.
 zdarzenia-webhooka
+
+# ROZSZERZENIE 2026-09-02 (znalezisko I-24): bramka `golden` — „kupujący dostaje DOKŁADNIE
+# to, co kupił” (migawka produktu z chwili płatności, naprawa PR #258; błąd wskazany przez
+# recenzenta zewnętrznego). Test istniał od 1.09, ale NIC go nie wołało — cofnięcie naprawy
+# nie zapaliłoby czerwonego. Bramka biegnie na STOSIE PRÓBNYM od zera (nigdy na wspólnym
+# stosie warsztatu), ~15 s. Wykonawca CI nie widzi Dockera, więc tam jest POMINIĘTA JAWNIE,
+# a próg pełnego trybu schodzi z 13 na 12 — bramka MUSI biec lokalnie przed każdym PR-em
+# z kodem i w przelocie ręcznym przed wydaniem. Kalibracja: testy/golden-migawka-proba-kontrolna.sh.
+golden
