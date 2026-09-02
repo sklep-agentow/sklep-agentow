@@ -16,6 +16,30 @@ Nic jeszcze.
 
 ---
 
+## [1.5.14] — 2026-09-01
+
+### Naprawione (RODO)
+- **Awaria kasowania śladu sesji zatrzymuje usuwanie i ostrzega, zamiast iść dalej w ciszy.**
+  `chatl_rodo_kasownik()` sprawdzało wynik **zapisu** śladu współdzielonego, ale wyniki wszystkich
+  trzech kasowań (`chatl_rozmowy`, `chatl_sesje`, `chatl_zgloszenia`) połykało: wynik kasowania
+  wiersza `chatl_sesje` szedł **wyłącznie do dziennika błędów** — nie liczył się ani do
+  liczby usuniętych, ani do komunikatu, którym kreator prywatności WordPressa melduje wykonanie
+  żądania. Komentarz w samym kodzie mówi, że wiersz sesji też jest śladem osoby (kiedy pisała,
+  czy przejął ją człowiek), a mimo to jego awaria kończyła się **potwierdzeniem usunięcia**.
+  Teraz zachowanie jest takie samo jak przy awarii zapisu śladu współdzielonego: kasownik
+  przerywa, oddaje `items_retained`, nazywa stan faktyczny (co zniknęło, co zostało, czego
+  jeszcze nie tknął) i wprost zabrania potwierdzania usunięcia wnioskodawcy. **Tak samo dla
+  wszystkich trzech tabel** — jeden kształt przerwania (`chatl_rodo_awaria_kasowania()`),
+  a nie trzy kopie, które rozjechałyby się przy pierwszej poprawce.
+- **Awaryjne przerwanie nie gubi już notatki o rozmowach współdzielonych ani zdania o retencji.**
+  Oba komunikaty powstawały wyłącznie na ścieżce powodzenia, więc przy awarii właściciel dostawał
+  `items_retained = true` i nie miał jak odróżnić „zostało, bo awaria" od „zostało, bo cudze dane".
+- **Ślad sesji liczy się do podsumowania.** Komunikat wymienia teraz także liczbę skasowanych
+  śladów sesji przeglądarki — wcześniej mówił wyłącznie o zgłoszeniach i wiadomościach, więc
+  skasowanie samego wiersza sesji potrafiło zameldować „nic nie zostało usunięte".
+
+---
+
 ## [1.5.13] — 2026-08-29
 
 ### Zmienione

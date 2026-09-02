@@ -14,6 +14,26 @@ const SKLEPAG_ZGODA_TRESC = 'Wyrażam zgodę na natychmiastowe dostarczenie tre�
 	webhook JAWNIE poza limiterem) ---------- */
 
 /**
+ * Klucz okna idempotencji — JEDNO ŹRÓDŁO dla produkcji i dla strażnika regresji.
+ *
+ * ⛔ POWÓD ISTNIENIA TEJ FUNKCJI. Klucz był składany W MIEJSCU UŻYCIA, a strażnik regresji
+ * składał go u siebie drugi raz. Gdy 0.9.25 dołożyło do klucza trzeci człon (płatność osadzona
+ * kontra hostowana), produkcja zaczęła czytać spod innego adresu niż ten, pod którym strażnik
+ * podkładał okno — i przestał mierzyć cokolwiek, nie mówiąc o tym ani słowem. Dwa miejsca
+ * składające ten sam klucz to rozjazd czekający na okazję; jedno miejsce go nie ma jak zrobić.
+ *
+ * Człony: adres kupującego (okno działa per adres), produkt (osobne okno na produkt) oraz tryb
+ * płatności — osadzona i hostowana kończą się INNĄ sesją Stripe, więc nie wolno im dzielić okna.
+ *
+ * @param int  $produkt_id Id produktu.
+ * @param bool $osadzona   Czy płatność osadzona (formularz karty na naszej stronie).
+ * @return string Nazwa transientu.
+ */
+function sklepag_klucz_idem( $produkt_id, $osadzona ) {
+	return 'sklepag_idem_' . md5( sklepag_ip() . '|' . (int) $produkt_id . '|' . ( $osadzona ? 'o' : 'h' ) );
+}
+
+/**
  * Ile sekund okno idempotencji wolno oddawać zapamiętany adres checkoutu.
  * Podwójny klik mieści się poniżej sekundy; wpisanie karty u Stripe trwa dziesiątki sekund,
  * więc ten próg rozdziela oba zdarzenia BEZ pytania Stripe o stan — awaria łączności ze Stripe
@@ -174,7 +194,7 @@ function sklepag_obsluz_kup() {
 	// związanego z sesją przeglądarki i jest znanym, świadomie otwartym ograniczeniem tego okna.
 	// Okno kluczowane też TRYBEM: sesja hostowana ma `url`, osadzona ma `client_secret` — pomieszanie
 	// oddałoby JS-owi adres do przekierowania albo formularzowi sekret bez strony.
-	$okno = 'sklepag_idem_' . md5( sklepag_ip() . '|' . $produkt_id . '|' . ( $osadzona ? 'o' : 'h' ) );
+	$okno = sklepag_klucz_idem( $produkt_id, $osadzona );
 	$juz  = get_transient( $okno );
 	if ( is_array( $juz ) && ( ! empty( $juz['url'] ) || ! empty( $juz['client_secret'] ) ) ) {
 		$wiek_ok = ! empty( $juz['czas'] ) && ( time() - (int) $juz['czas'] ) <= SKLEPAG_IDEM_OKNO_S;
@@ -1211,6 +1231,27 @@ function sklepag_sprzedawca() {
 }
 
 /**
+ * Gdzie kupujący ma się upomnieć — JEDNA definicja dla obu wersji maila.
+ *
+ * ⛔ POWÓD: odsyłanie „na adres kontaktowy ze stopki" było BEZWARUNKOWE,
+ * a stopka podaje ten adres tylko wtedy, gdy opcja `sklepag_email_kontaktowy` jest ustawiona
+ * i poprawna — a jest nieobowiązkowa i domyślnie pusta. Na świeżej instalacji kupujący
+ * firmowy czytał odesłanie pod adres, którego w stopce nie ma. To ta sama klasa, którą ten
+ * plik właśnie naprawia (tekst obiecuje coś, czego kod nie gwarantuje), o krok dalej.
+ *
+ * „Odpisz na tego maila" działa ZAWSZE: przy ustawionym kontakcie mail ma `Reply-To`,
+ * a bez niego odpowiedź idzie na adres nadawcy sklepu.
+ *
+ * @return string Końcówka zdania, bez kropki.
+ */
+function sklepag_gdzie_sie_upomniec() {
+	$kontakt = (string) get_option( 'sklepag_email_kontaktowy', '' );
+	return ( '' !== $kontakt && is_email( $kontakt ) )
+		? 'napisz na adres kontaktowy ze stopki'
+		: 'odpisz na tego maila';
+}
+
+/**
  * Stopka sprzedawcy w wersji tekstowej maila.
  */
 function sklepag_stopka_sprzedawcy_tekst() {
@@ -1274,7 +1315,9 @@ function sklepag_zbuduj_mail( $produkt, $zam, $link, $link_opinii = '' ) {
 		. $gwarancja
 		. $ocena
 		. ( ! empty( $zam->dane_faktury )
-			? "DANE DO FAKTURY (podane przy zakupie):\n" . $zam->dane_faktury . "\nFakturę wystawimy na te dane i prześlemy osobno na ten adres e-mail.\n\n"
+			/* ⛔ Ten sam warunek prawdziwosci co w wersji HTML i w formularzu zakupu: sklep
+				faktur nie wystawia, wiec nie ma prawa obiecywac, ze je wysle. */
+			? "DANE DO FAKTURY (podane przy zakupie):\n" . $zam->dane_faktury . "\nFakturę wystawia sprzedawca poza sklepem i prześle ją osobno na ten adres e-mail.\nJeśli nie dotrze w ustawowym terminie, " . sklepag_gdzie_sie_upomniec() . ".\n\n"
 			: "FAKTURA:\nChcesz fakturę? Odpisz na tego maila w ciągu 3 miesięcy od zakupu i podaj dane firmy (nazwa, adres, NIP).\n\n" )
 		. "Masz pytanie? Odpisz na tego maila.\n\n"
 		. sklepag_stopka_sprzedawcy_tekst();

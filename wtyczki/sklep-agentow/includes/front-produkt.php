@@ -615,7 +615,13 @@ function sklepag_formularz_zakupu( $p ) {
 		. '<label><span>Nazwa firmy</span><input type="text" name="faktura_nazwa" maxlength="200" autocomplete="organization" placeholder="np. Firma Sp. z o.o."></label>'
 		. '<label><span>NIP</span><input type="text" name="faktura_nip" inputmode="numeric" maxlength="13" autocomplete="off" placeholder="10 cyfr"></label>'
 		. '<label class="sklepag-faktura-adres"><span>Adres firmy</span><textarea name="faktura_adres" rows="2" maxlength="200" autocomplete="street-address" placeholder="ul. Przykładowa 1, 00-001 Warszawa"></textarea></label>'
-		. '<p class="sklepag-faktura-notka">Pola nieobowiązkowe — wypełnij wszystkie trzy, jeśli chcesz fakturę na firmę. Dane trafią do potwierdzenia zakupu i posłużą wyłącznie do wystawienia faktury; fakturę prześlemy osobno mailem. Podanie NIP-u nie zmienia Twoich praw kupującego.</p>'
+		/* ⛔ TEKST MUSI POKRYWAC SIE Z KODEM. Sklep faktur NIE WYSTAWIA — nie tworzy dokumentu,
+			nie nadaje numeru, nie wysyla go i nie pilnuje terminu; zapisuje dane i pokazuje je
+			sprzedawcy (tak mowi tez INSTRUKCJA.md: „Faktura to Twoja robota, nie sklepu").
+			Zdanie „fakture przeslemy" bylo obietnica majatkowa wobec przedsiebiorcy, ktorej
+			nie pokrywala ani jedna linia kodu. Mowimy wiec, co sie z danymi dzieje naprawde,
+			i gdzie kupujacy ma sie upomniec, skoro sklep sam faktury nie wysle. */
+		. '<p class="sklepag-faktura-notka">Pola nieobowiązkowe — wypełnij wszystkie trzy, jeśli chcesz fakturę na firmę. Sklep zapisuje te dane przy zamówieniu i pokazuje je w potwierdzeniu zakupu; <strong>fakturę wystawia sprzedawca poza sklepem</strong> i przesyła ją osobno. Jeśli nie dotrze, odpisz na maila z potwierdzeniem zakupu. Podanie NIP-u nie zmienia Twoich praw kupującego.</p>'
 		. '</div></details>';
 	/* ⛔ „(płatność testowa)" i notka z kartą testową to OBIETNICA wobec kupującego, nie ozdoba.
 		Na kluczu produkcyjnym przycisk mówi po prostu „Kup teraz", a notka znika — inaczej sklep

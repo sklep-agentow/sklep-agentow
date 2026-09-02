@@ -65,12 +65,12 @@ odpytań ROŚNIE (3 → 15 → 30), więc sonda umie zobaczyć odpytywanie; dopi
 Przyrząd nie jest taki, któremu „zawsze wychodzi".
 
 **MECHANIZM — kiedy to boli.** Stan `oczekuje` po powrocie ze Stripe nie jest teorią: zamówienie
-powstaje w bazie dopiero przy domknięciu, a `sklepag_status_zamowienia()` (`zakup.php:1285`)
+powstaje w bazie dopiero przy domknięciu, a `sklepag_status_zamowienia()` (`zakup.php:1328`)
 na nieznaną sesję **z założenia** oddaje `oczekuje` (zmierzone:
 `curl 'localhost:8890/wp-json/sklepag/v1/status?sesja=cs_test_calkiem_zmyslona_123'` → `{"status":"oczekuje"}`).
 Ten projekt ma już zapisany przypadek, w którym ten stan trwał **20 minut**: K10 (30.08) —
 webhook nie doszedł, cron na hostingu nie chodził, opłacony zakup wisiał (komentarz w
-`zakup.php:1270` opisuje to zdarzenie). Przez 18 z tych 20 minut kupujący czytał zdanie,
+`zakup.php:1366` opisuje to zdarzenie). Przez 18 z tych 20 minut kupujący czytał zdanie,
 które przestało być prawdą, i nie dostał żadnej wskazówki, co zrobić.
 
 **Dlaczego `SRED`, a nie wyżej:** pieniądze są pobrane poprawnie, mail w normalnym biegu
@@ -85,7 +85,7 @@ w oknie, w którym on właśnie zapłacił i nie wie, czy coś poszło nie tak.
 ```php
 echo '<tr><td>Pobrania</td><td>' . … . ( $zam->link_wygasa ? ' · link ważny do ' . esc_html( $zam->link_wygasa ) : … );
 ```
-Kolumna jest zapisywana `gmdate()` (`zakup.php:1002`), czyli **w GMT**. Sąsiednie czasy na tym
+Kolumna jest zapisywana `gmdate()` (`zakup.php:1022`), czyli **w GMT**. Sąsiednie czasy na tym
 samym ekranie są w czasie witryny (`utworzono` ← `current_time('mysql')`), a **następny wiersz
 tabeli** robi dokładnie to, czego brakuje wierszowi wyżej — i ma o tym komentarz:
 ```php
@@ -131,14 +131,14 @@ właściciel przekazuje tę godzinę kupującemu.
 gwarancja („Aby z niej skorzystać, odpisz na tego maila"), faktura („Odpisz na tego maila
 w ciągu 3 miesięcy…") i pytania („Masz pytanie? Odpisz na tego maila."). Adres zwrotny
 (`Reply-To`) jest zakładany **tylko wtedy**, gdy wypełniona jest opcja `sklepag_email_kontaktowy`
-(`zakup.php:1148-1153`). Pusta opcja = brak `Reply-To` **i** zniknięcie wiersza
-„Reklamacje i faktury" ze stopki sprzedawcy (`zakup.php:1216-1229`). Odpowiedź kupującego idzie
+(`zakup.php:1168-1173`). Pusta opcja = brak `Reply-To` **i** zniknięcie wiersza
+„Reklamacje i faktury" ze stopki sprzedawcy (`zakup.php:1257-1270`). Odpowiedź kupującego idzie
 wtedy na adres NADAWCY — czyli na `sklepag_nadawca_email`, a gdy i ta jest pusta,
 na domyślny adres WordPressa (`wordpress@domena`), który zwykle nie jest skrzynką.
 
 **Pulpit ostrzega o danych sprzedawcy — o tym nie ostrzega.** `admin-dashboard.php:392`
 sprawdza wyłącznie `sklepag_sprzedawca()['kompletne']`, a to jest `firma_nazwa && firma_adres`
-(`zakup.php:1161`). Mail kontaktowy nie wchodzi do tego warunku, a opis pola w panelu mówi
+(`zakup.php:1229`). Mail kontaktowy nie wchodzi do tego warunku, a opis pola w panelu mówi
 **mniej, niż pole robi**: „Pokazywany kupującym przy problemie z pobraniem (link wygasł / limit
 wyczerpany)" (`admin-ustawienia.php:374`) — ani słowa o tym, że to jedyny adres zwrotny maila
 po zakupie i jedyny kontakt reklamacyjny w stopce. (Instrukcja klienta mówi to uczciwie —
@@ -235,13 +235,13 @@ bez bramki liczb — niesie ich **dwadzieścia kilka**.
 
 W kodzie jest odwrotnie. Zamówienie może stać w `oczekuje` **wyłącznie** wtedy, gdy jego sesja
 ma nadal stan `utworzona`: znacznik `oplacona` zakłada `sklepag_oznacz_sesje( $sid, 'oplacona' )`
-w `zakup.php:900`, czyli **po** CAS-ie `oczekuje → oplacone` (`:871`) i po sprawdzeniu, że wiersz
-zamówienia istnieje (`:878`). To jedyne miejsce w kodzie, które nadaje ten stan
+w `zakup.php:968`, czyli **po** CAS-ie `oczekuje → oplacone` (`:938`) i po sprawdzeniu, że wiersz
+zamówienia istnieje (`:946`). To jedyne miejsce w kodzie, które nadaje ten stan
 (`grep sklepag_oznacz_sesje` → 3 wywołania: `wygasla`, `oplacona`, `wygasla`).
 A „Dociągnij zaległe" bierze dokładnie takie sesje:
 ```
-1293:  SELECT stripe_session_id FROM {$ps} WHERE stan='utworzona' AND utworzono < %s ORDER BY utworzono DESC LIMIT 100
-1320:  if ( sklepag_domknij_zakup( $sesja ) ) {   // TEN SAM silnik co webhook
+1387:  SELECT stripe_session_id FROM {$ps} WHERE stan='utworzona' AND utworzono < %s ORDER BY utworzono DESC LIMIT 100
+1414:  if ( sklepag_domknij_zakup( $sesja ) ) {   // TEN SAM silnik co webhook
 ```
 i puszcza na nich **ten sam silnik**, którego pierwszy krok to `INSERT IGNORE` (nie zdubluje
 wiersza), a drugi to CAS `… SET status='oplacone' … AND status='oczekuje'` — czyli **celuje
@@ -380,11 +380,11 @@ czytany.
 
 | # | Ogniwo łańcucha zgody | Jak zmierzone | Wynik |
 |---|---|---|---|
-| 1 | **Czy bez zgody da się kupić** | **żywy POST** na `admin-post.php` z ważnym nonce'em i bez pola `zgoda` | **CZYSTO** — `HTTP=400`, treść: „Zakup wymaga zgody na natychmiastowe dostarczenie treści cyfrowej." Egzekwowanie jest po stronie serwera (`includes/zakup.php:111-115`), nie na atrybucie `required` w HTML. Sprawdzenie stoi **przed** rozgałęzieniem na płatność osadzoną i hostowaną (`:121`), więc obie drogi zakupu przechodzą przez ten sam warunek |
-| 2 | **Czy treść zgody jest zapisywana per zamówienie** (a nie tylko wyświetlana) | odczyt kodu + **odczyt bazy stosu** | **CZYSTO** — stała `SKLEPAG_ZGODA_TRESC` (`zakup.php:11`) wchodzi do kolumny `zgoda_tresc` w `INSERT` zamówienia (`:907`). Migawka, nie odsyłacz: zmiana tekstu w przyszłej wersji wtyczki **nie przepisze** zgód już udzielonych |
+| 1 | **Czy bez zgody da się kupić** | **żywy POST** na `admin-post.php` z ważnym nonce'em i bez pola `zgoda` | **CZYSTO** — `HTTP=400`, treść: „Zakup wymaga zgody na natychmiastowe dostarczenie treści cyfrowej." Egzekwowanie jest po stronie serwera (`includes/zakup.php:131-135`), nie na atrybucie `required` w HTML. Sprawdzenie stoi **przed** rozgałęzieniem na płatność osadzoną i hostowaną (`:142`), więc obie drogi zakupu przechodzą przez ten sam warunek |
+| 2 | **Czy treść zgody jest zapisywana per zamówienie** (a nie tylko wyświetlana) | odczyt kodu + **odczyt bazy stosu** | **CZYSTO** — stała `SKLEPAG_ZGODA_TRESC` (`zakup.php:11`) wchodzi do kolumny `zgoda_tresc` w `INSERT` zamówienia (`:927`). Migawka, nie odsyłacz: zmiana tekstu w przyszłej wersji wtyczki **nie przepisze** zgód już udzielonych |
 | 3 | **Czy któreś zamówienie powstało bez zgody** | `SELECT COUNT(*)` na żywej bazie | **CZYSTO — 42 z 44**. Dwa wiersze bez zgody to **atrapy testowe wstawiane wprost do bazy**, nie zakupy: `#9900012` (`cs_test_opinie_mec…`, 1,00 zł) i `#9901177` (`cs_test_rodo_…`, 0,00 zł), oba z pustą treścią maila; ich identyfikatory pochodzą z `testy/opinie-mechanizm-test.php` i `testy/kroki-rodo/*`. Żadne zamówienie z drogi zakupowej nie jest bez zgody, a **wszystkie 44 mają dokładnie jedną, tę samą treść** (`COUNT(DISTINCT zgoda_tresc) = 1`) |
-| 4 | **Czy zgoda jest wcześniejsza niż umowa** (art. 38 pkt 13 wymaga zgody PRZED spełnieniem świadczenia) | porównanie znaczników czasu ostatniego zamówienia | **CZYSTO** — `zgoda_czas = 2026-09-01 02:56:41` GMT, `utworzono = 04:57:00` czasu witryny (= 02:57:00 GMT): zgoda **19 sekund przed** powstaniem zamówienia. Czas zgody bierze się z chwili tworzenia sesji płatności (`zakup.php:196-197`), jedzie do Stripe w metadanych i wraca przy domknięciu (`:910`) — nie jest ustawiany „na teraz" przy zapisie |
-| 5 | **Trwały nośnik** (art. 21 ust. 1 UPK / art. 8 ust. 7 dyrektywy) | zdjęty z łapacza prawdziwy mail (patrz `E7`) + panel | **CZYSTO** — mail niesie dosłowną treść zgody i jej chwilę w obu wersjach (`zakup.php:1240-1247` tekst, `mail-html.php` blok „Potwierdzenie Twojej zgody"); panel pokazuje to samo, przeliczone na czas lokalny i **opisane** jako lokalny (`admin-zamowienie.php:340`) |
+| 4 | **Czy zgoda jest wcześniejsza niż umowa** (art. 38 pkt 13 wymaga zgody PRZED spełnieniem świadczenia) | porównanie znaczników czasu ostatniego zamówienia | **CZYSTO** — `zgoda_czas = 2026-09-01 02:56:41` GMT, `utworzono = 04:57:00` czasu witryny (= 02:57:00 GMT): zgoda **19 sekund przed** powstaniem zamówienia. Czas zgody bierze się z chwili tworzenia sesji płatności (`zakup.php:216-217`), jedzie do Stripe w metadanych i wraca przy domknięciu (`:930`) — nie jest ustawiany „na teraz" przy zapisie |
+| 5 | **Trwały nośnik** (art. 21 ust. 1 UPK / art. 8 ust. 7 dyrektywy) | zdjęty z łapacza prawdziwy mail (patrz `E7`) + panel | **CZYSTO** — mail niesie dosłowną treść zgody i jej chwilę w obu wersjach (`zakup.php:1281-1288` tekst, `mail-html.php` blok „Potwierdzenie Twojej zgody"); panel pokazuje to samo, przeliczone na czas lokalny i **opisane** jako lokalny (`admin-zamowienie.php:340`) |
 
 ## 3. CZEGO W `F2` NIE ZMIERZYŁEM
 
@@ -455,7 +455,7 @@ w którym ta symetria kiedyś pęknie. Dziś nie jest pęknięta.
 | 3-11 | 9 pozostałych opcji z `register_setting`: `stripe_klucz_publikowalny`, `nadawca_nazwa`, `nadawca_email`, `email_kontaktowy`, `firma_nazwa`, `firma_adres`, `firma_nip`, `waluta_domyslna`, `usun_dane_przy_odinstalowaniu` | zapisuje RDZEŃ przez `options.php` | ✅ wzorzec `sklepag_%` (`:70`) |
 | 12-16 | `katalog_chroniony`, `katalog_chroniony_blad`, `wersja_schematu`, `reconciliation_ostatnia`, `rewrite_podpis` | `aktywacja.php`, `admin-dashboard.php`, `front-produkt.php` | ✅ wzorzec `sklepag_%` |
 | 17-20 | `strona_sklep`, `strona_dziekujemy`, `strona_regulamin`, `strona_polityka` | `aktywacja.php:198-226` | ✅ wzorzec + `wp_delete_post` (`:36-41`) |
-| 21-25 | transienty: `sklepag_idem_*` (okno idempotencji zakupu), `sklepag_niepowiazana_*`, `sklepag_recon_*`, `sklepag_szkic_opinii_*`, `sklepag_szkic_produktu_*` | `zakup.php:177,238,490,1378`, `opinie.php`, `admin-produkty.php` | ✅ dwa wzorce: `_transient_sklepag_%` **i** `_transient_timeout_sklepag_%` (`:77-79`) + `wp_cache_flush()` przy zewnętrznym cache (`:84`) |
+| 21-25 | transienty: `sklepag_idem_*` (okno idempotencji zakupu), `sklepag_niepowiazana_*`, `sklepag_recon_*`, `sklepag_szkic_opinii_*`, `sklepag_szkic_produktu_*` | `zakup.php:33+197 (idem, przeniesione do funkcji sklepag_klucz_idem),258,510,1421`, `opinie.php`, `admin-produkty.php` | ✅ dwa wzorce: `_transient_sklepag_%` **i** `_transient_timeout_sklepag_%` (`:77-79`) + `wp_cache_flush()` przy zewnętrznym cache (`:84`) |
 | 26 | user meta `sklepag_zamowien_na_strone` (Screen Options) | `admin.php:77-85` | ✅ `delete_metadata( 'user', 0, …, true )` (`:89`) |
 | 27 | cron `sklepag_dociagnij_zalegle` | `sklep-agentow.php:91` | ✅ **ZAWSZE** (`:22`) |
 | 28-31 | 4 strony WP (wpisy w `wp_posts`) | `aktywacja.php` | ✅ `wp_delete_post(…, true)` (`:39`) |
@@ -753,7 +753,7 @@ drugi mail z ważnym linkiem?
 CAS `oczekuje → oplacone` (nie łapie — status jest wyższy), znacznik sesji `oplacona`
 (już taki jest), a potem **CAS przejęcia wysyłki**:
 ```
-936:  UPDATE … SET status='mail_w_toku' … WHERE stripe_session_id=%s
+973:  UPDATE … SET status='mail_w_toku' … WHERE stripe_session_id=%s
         AND status IN ('oplacone','mail_blad') AND mail_proby < 3
 ```
 Gdy `$przejete` jest puste, kod czyta stan i dla `mail_wyslany` robi `return true` („ktoś już
@@ -786,7 +786,7 @@ niezgodności kończy kodem 2 zamiast meldować wynik.
 
 Wada podłożona **bez tykania plików produktu**: filtr `query` WordPressa przechwytuje dokładnie
 ten jeden `UPDATE` i zdejmuje z niego warunek statusu — czyli mutuje CAS przejęcia wysyłki
-(`zakup.php:953`) w locie:
+(`zakup.php:973`) w locie:
 ```
 przed:  UPDATE … SET status='mail_w_toku' … WHERE stripe_session_id=%s AND status IN ('oplacone','mail_blad') AND mail_proby < 3
 mutant: UPDATE … SET status='mail_w_toku' … WHERE stripe_session_id=%s                                       AND mail_proby < 3
@@ -807,7 +807,7 @@ zdarzenia 2698 · opinie 33` — **identycznie jak przed**; wiersz `#9902289` be
 
 ⭐ **Dlaczego to jest odpowiedź na pytanie, którego raport `L2-05` nie zadał:** tamten test
 mierzył replay na sesji **nieistniejącej**, czyli na ścieżce, która kończy się na
-`webhook_nieznana_sesja` i nic nie tworzy — więc CAS z `:936` nigdy nie był w tym pomiarze
+`webhook_nieznana_sesja` i nic nie tworzy — więc CAS z `:973` nigdy nie był w tym pomiarze
 uruchomiony. Tutaj jest uruchomiony na sesji domkniętej i **trzyma**.
 
 ⛔ **Czego ten pomiar NIE obejmuje:** warstwy podpisu (ładunek podstawiam za weryfikacją, więc
@@ -993,7 +993,7 @@ czy kompensacja istnieje **wszędzie**, a nie tylko w jednym miejscu:
 
 | | ChatBot | Segregator | sklep |
 |---|---|---|---|
-| wywołań `wp_trigger_error` | **7** | **7** | 0 |
+| wierszy z nazwą `wp_trigger_error` (grep po nazwie, nie potwierdzone wywołania) | **7** | **7** | 0 |
 | trwałe znaczniki (opcja + pasek w panelu) | `chatl_blad_ai`, `chatl_blad_bazy`, `chatl_blad_maila`, `chatl_pulapka` | `segm_blad_ai`, `segm_blad_bazy` | — (sklep ma własny dziennik zdarzeń) |
 | gołe `error_log()` w kodzie | **0** | **0** | 0 |
 

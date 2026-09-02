@@ -63,11 +63,11 @@ produktów i przycisk **„Zobacz szczegóły"**. Właściciel: **Kokpit → Skl
 
 **WERDYKT: SPEŁNIONE.**
 
-**DOWÓD.** Mail składany w `includes/zakup.php:1232` (`sklepag_zbuduj_mail`) i wysyłany
-w `:987` przez `sklepag_wyslij_mail_sklepu` (`:1100`), po domknięciu zakupu z webhooka.
+**DOWÓD.** Mail składany w `includes/zakup.php:1273` (`sklepag_zbuduj_mail`) i wysyłany
+w `:1055` przez `sklepag_wyslij_mail_sklepu` (`:1167`), po domknięciu zakupu z webhooka.
 Wersja graficzna: `includes/mail-html.php:38`. Zawiera **potwierdzenie** (numer, produkt, data,
-kwota, potwierdzenie zgody z chwilą — `zakup.php:1240-1247`), **instrukcję** („INSTRUKCJA
-W SKRÓCIE", trzy kroki — `zakup.php:1273`) i **link do pobrania** (`zakup.php:1271`).
+kwota, potwierdzenie zgody z chwilą — `zakup.php:1281-1288`), **instrukcję** („INSTRUKCJA
+W SKRÓCIE", trzy kroki — `zakup.php:1314`) i **link do pobrania** (`zakup.php:1312`).
 
 **JAK CZŁOWIEK TEGO UŻYWA.** Kupujący: skrzynka pocztowa, temat „Twój zakup: … —
 potwierdzenie i pobranie", przycisk **„Pobierz …"** w mailu. Właściciel: **Pulpit → Szczegóły
@@ -85,9 +85,9 @@ link, instrukcję w 3 krokach, gwarancję, link do opinii, stopkę sprzedawcy.
 **WERDYKT: SPEŁNIONE INACZEJ.** ⭐ **To jedyny nowy rozjazd z tego przeglądu.**
 
 **DOWÓD, że treść JEST.** Strona produktu składa dokładnie te sekcje, których żąda punkt —
-`includes/front-produkt.php`: `:845` **PROBLEM**, `:850` **CO DOSTAJESZ** („co robi"),
-`:864` **JAK DZIAŁA**, `:886` **ILE CZASU ODZYSKUJESZ** („jak skraca czas pracy"),
-`:906` RĘCZNIE KONTRA BOT, `:917` DLA KOGO, `:959` **CENA**, `:994` FAQ.
+`includes/front-produkt.php`: `:858` **PROBLEM**, `:863` **CO DOSTAJESZ** („co robi"),
+`:877` **JAK DZIAŁA**, `:899` **ILE CZASU ODZYSKUJESZ** („jak skraca czas pracy"),
+`:919` RĘCZNIE KONTRA BOT, `:930` DLA KOGO, `:972` **CENA**, `:1007` FAQ.
 
 **DOWÓD, dlaczego „INACZEJ".** Cała ta treść jest przypięta **do napisu**, nie do produktu:
 ```
@@ -96,8 +96,8 @@ link, instrukcję w 3 krokach, gwarancję, link do opinii, stopkę sprzedawcy.
 520:   return isset( $tresci[ $slug ] ) ? $tresci[ $slug ] : null;
 ```
 a `slug` powstaje z **nazwy produktu wpisanej przez właściciela** w panelu. Każde miejsce,
-które buduje te sekcje, jest osłonięte warunkiem `if ( $t && … )` (np. `:817`, `:966`, `:980`,
-`:987`) — więc gdy slug nie trafi w jeden z dwóch napisów, strona produktu **po cichu** schodzi
+które buduje te sekcje, jest osłonięte warunkiem `if ( $t && … )` (np. `:830`, `:979`, `:993`,
+`:1000`) — więc gdy slug nie trafi w jeden z dwóch napisów, strona produktu **po cichu** schodzi
 do samego `opis_pelny` z formularza: bez „jak działa", bez „ile czasu odzyskujesz", bez FAQ
 i bez gwarancji. Nie ma ostrzeżenia ani w panelu, ani na stronie.
 
@@ -281,10 +281,10 @@ stos `probny`). Werdykt dotyczy symetrii w kodzie, nie zmierzonego diffu.
 **WERDYKT: SPEŁNIONE.**
 
 **DOWÓD.** Tryb testowy jest wymuszony i widoczny: baner `sklepag_baner_testowy()`
-(`sklep-agentow.php:234`) na liście sklepu (`:324`), na stronie produktu
-(`includes/front-produkt.php:837`) i na „Dziękujemy" (`sklep-agentow.php:431`); notka przy
-przycisku zakupu (`front-produkt.php:625`); FAQ „Co znaczy „tryb testowy”?"
-(`sklep-agentow.php:438`); zdanie w mailu (`includes/zakup.php:1269`); oznaczenie w panelu
+(`sklep-agentow.php:234`) na liście sklepu (`:355`), na stronie produktu
+(`includes/front-produkt.php:843`) i na „Dziękujemy" (`sklep-agentow.php:467`); notka przy
+przycisku zakupu (`front-produkt.php:631`); FAQ „Co znaczy „tryb testowy”?"
+(`sklep-agentow.php:438`); zdanie w mailu (`includes/zakup.php:1310`); oznaczenie w panelu
 (`includes/admin-dashboard.php:358`). **Jawny rozdział różnic** wobec produkcji:
 `dokumentacja/INSTRUKCJA-INSTALACJI.md`, rozdział „Test a produkcja — co trzeba zmienić,
 żeby sprzedawać naprawdę" (9 punktów, w tym lista oznaczeń, które nie znikają same).
@@ -350,8 +350,8 @@ z trzech paczek ZIP (`dokumentacja/INSTRUKCJA-INSTALACJI.md`, Krok 1 i Krok 6).
 2. **Panel w wp-admin:** menu i pięć podstron (`includes/admin.php:41-61`).
 3. **Stripe z serwera WP, bez SDK:** `includes/stripe.php:12` (`https://api.stripe.com`)
    i `:46` `wp_remote_post` — czyli warstwa HTTP WordPressa.
-4. **Maile z serwera WP:** `includes/zakup.php:1118` `wp_mail`, z filtrami nadawcy
-   zakładanymi i zdejmowanymi wyłącznie wokół własnej wysyłki (`:1112-1123`).
+4. **Maile z serwera WP:** `includes/zakup.php:1186` `wp_mail`, z filtrami nadawcy
+   zakładanymi i zdejmowanymi wyłącznie wokół własnej wysyłki (`:1180-1193`).
 **„Zero Cloudflare"** — `grep -rni 'cloudflare|vercel|next\.js'` po całej wtyczce: 0 trafień.
 
 **JAK CZŁOWIEK TEGO UŻYWA.** Wszystko z jednego miejsca: **Kokpit → Sklep Agentów**
