@@ -26,7 +26,7 @@ const CHATL_CSV_PORCJA = 500;
  */
 function chatl_csv_komorka( $wartosc ) {
 	$wartosc = (string) $wartosc;
-	if ( '' !== $wartosc && in_array( $wartosc[0], array( '=', '+', '-', '@' ), true ) ) {
+	if ( '' !== $wartosc && in_array( $wartosc[0], array( '=', '+', '-', '@', "\t", "\r" ), true ) ) {
 		$wartosc = "'" . $wartosc;
 	}
 	return $wartosc;

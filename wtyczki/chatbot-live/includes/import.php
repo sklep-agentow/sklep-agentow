@@ -145,7 +145,7 @@ function chatl_import_separator( $naglowek ) {
  */
 function chatl_import_odapostrofuj( $wartosc ) {
 	$wartosc = (string) $wartosc;
-	if ( 2 <= strlen( $wartosc ) && "'" === $wartosc[0] && in_array( $wartosc[1], array( '=', '+', '-', '@' ), true ) ) {
+	if ( 2 <= strlen( $wartosc ) && "'" === $wartosc[0] && in_array( $wartosc[1], array( '=', '+', '-', '@', "\t", "\r" ), true ) ) {
 		return substr( $wartosc, 1 );
 	}
 	return $wartosc;
