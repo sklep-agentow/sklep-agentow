@@ -20,7 +20,7 @@ Nic jeszcze.
 
 ---
 
-## [0.9.36] — 2026-09-01 · schemat bazy bez zmian (10)
+## [0.9.35] — 2026-09-01 · schemat bazy bez zmian (10)
 
 ### Naprawione (bezpieczeństwo)
 - **Eksport CSV zamówień nie wynosi już formuły na komputer właściciela** (CSV injection,
@@ -31,10 +31,24 @@ Nic jeszcze.
   ustawia sam właściciel. Każda komórka zaczynająca się od `=`, `+`, `-`, `@`, tabulatora
   lub powrotu karetki dostaje teraz z przodu apostrof; zabezpieczenie obejmuje **cały
   wiersz**, nie dwa znane pola. Kolumna „Kwota" zostaje liczbą, więc arkusz nadal sumuje
-  sprzedaż, a odczyt maszynowy odzyskuje oryginał zdjęciem jednego apostrofu.
+  sprzedaż, a odczyt maszynowy odzyskuje oryginał zdjęciem jednego apostrofu — także dla
+  wartości, która sama zaczyna się od apostrofu (dostaje drugi).
 
 ---
 
+## [0.9.34] — 2026-09-01 · schemat bazy bez zmian (10)
+
+### Naprawione
+- **Sklep przestaje obiecywać kupującemu firmowemu fakturę, której nie wystawia.** Formularz
+  zakupu pisał „fakturę prześlemy osobno mailem", a mail po zakupie — „Fakturę wystawimy na te
+  dane i prześlemy osobno na ten adres e-mail". Sklep faktur **nie wystawia**: nie tworzy
+  dokumentu, nie nadaje numeru, nie wysyła go i nie pilnuje terminu (mówi o tym wprost
+  `INSTRUKCJA.md`: „Faktura to Twoja robota, nie sklepu"). Była to obietnica majątkowa wobec
+  przedsiębiorcy, niepokryta ani jedną linią kodu. Teksty mówią teraz, co się z danymi dzieje
+  naprawdę — sklep je zapisuje i pokazuje w potwierdzeniu, a fakturę **wystawia sprzedawca
+  poza sklepem** — oraz gdzie kupujący ma się upomnieć, jeśli faktura nie dotrze.
+  ⭐ Funkcja zostaje bez zmian: pola faktury, walidacja NIP-u i zaproszenie „chcesz fakturę?"
+  dla kupujących, którzy danych nie podali (z terminem 3 miesięcy), działają jak dotąd.
 ## [0.9.33] — 2026-09-01 · schemat bazy bez zmian (10)
 
 ### Zmienione
