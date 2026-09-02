@@ -95,7 +95,7 @@ pozostałe kroki przejścia na produkcję opisuje `INSTRUKCJA-INSTALACJI.md`, ro
 | `testy/` | testy na żywym stosie WordPressa: przeloty E2E, sondy strażników, zrzuty, zgodność dokumentacji z kodem |
 | `narzedzia-qa/` | bramki jakości (`bramki.sh`), zgodność paczki z repo, bramka końcowa `k7-koniec.sh`, pakowanie wydania |
 | `audyt/` | rejestry znalezisk, raporty audytów, rejestr klas błędów, stan wiszących spraw |
-| `archiwum-procesu/` | robocze dokumenty z czasu budowy (plany etapów, zwiady, tablica koordynacji) — kontekst decyzji, nie produkt; patrz `O-TYM-KATALOGU.md` w środku |
+| `archiwum-procesu/` | do 2.09.2026 leżały tu robocze dokumenty z czasu budowy (plany etapów, zwiady, tablica koordynacji); wyniesione poza repo — został tylko `PRZENIESIONE.md` z przepisem, jak odzyskać je z historii gita |
 | `PLAN-PROJEKTU.md`, `DECYZJE.md`, `MAPA-SPEC.md`, `ZROZUMIENIE.md` | plan, rejestr decyzji, mapa wymagań, treść zlecenia |
 
 ## Jakość — maszyny, nie obietnice
