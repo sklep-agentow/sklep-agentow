@@ -23,7 +23,7 @@ Nic jeszcze.
 ## [0.9.37] — 2026-09-02 · schemat bazy bez zmian (10)
 
 ### Naprawione
-- **Link do pobrania przestaje działać po zwrocie całej kwoty i w trakcie sporu.** Do 0.9.36 brama pobrań sprawdzała tylko token i termin ważności, więc kupujący, któremu Stripe oddał pieniądze, mógł pobierać produkt do końca 72 godzin i limitu 10 pobrań. Teraz zamówienie ze statusem `zwrocone` albo `sporne` dostaje odmowę (410) z powodem i kontaktem do sprzedawcy — zanim sklep dotknie pliku i licznika, więc odmowa nie zużywa pobrania — a próba trafia do osi czasu zamówienia jako `pobranie_odmowa_zwrot`. Zwrot częściowy nie zmienia statusu i nie odcina dostępu (świadoma granica). Spór wygrany albo wycofany przywraca poprzedni status i link znów działa.
+- **Link do pobrania przestaje działać po zwrocie całej kwoty i przy obciążeniu zwrotnym (spór, w którym bank zdjął pieniądze).** Do 0.9.36 brama pobrań sprawdzała tylko token i termin ważności, więc kupujący, któremu Stripe oddał pieniądze, mógł pobierać produkt do końca 72 godzin i limitu 10 pobrań. Teraz zamówienie ze statusem `zwrocone` albo `sporne` dostaje odmowę (410) z powodem i kontaktem do sprzedawcy — zanim sklep dotknie pliku i licznika, więc odmowa nie zużywa pobrania — a próba trafia do osi czasu zamówienia jako `pobranie_odmowa_zwrot`. Zwrot częściowy nie zmienia statusu i nie odcina dostępu (świadoma granica). Spór wygrany albo wycofany przywraca poprzedni status i link znów działa.
 
 ---
 

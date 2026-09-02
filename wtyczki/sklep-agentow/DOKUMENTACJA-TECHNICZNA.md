@@ -29,7 +29,7 @@ produktu i tylko z kluczem publikowalnym (od 0.9.25 — formularz karty musi by�
 | `includes/stripe.php` | komunikacja z API Stripe |
 | `includes/zakup.php` | rozpoczęcie zakupu, webhook, status, domykanie zamówień, treść tekstowa maila i wysyłka |
 | `includes/mail-html.php` | wersja HTML maila po zakupie (wysyłana razem z tekstem jako multipart) |
-| `includes/pobieranie.php` | brama pobrań: token, limit, wygaśnięcie, wydanie pliku |
+| `includes/pobieranie.php` | brama pobrań: status zamówienia (zwrot całości / obciążenie zwrotne = 410, od 0.9.37), token, limit, wygaśnięcie, wydanie pliku |
 | `includes/front-produkt.php` | strony produktów, przepisywanie adresów, treści sprzedażowe |
 | `includes/front-seo.php` | tytuły, opisy, canonical (własny, gdy motyw wyłączył `rel_canonical` WP), dane strukturalne, mapa witryny |
 | `includes/logowania.php` | dziennik logowań administratorów, opóźnienie i limit prób |
