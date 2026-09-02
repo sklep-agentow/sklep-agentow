@@ -2,7 +2,7 @@
 # PRÓBA KONTROLNA strażnika `pobranie-po-zwrocie-odmawia-test.php` (Q-4) — KALIBRACJA NA KODZIE SPRZED NAPRAWY.
 # Strażnik, który nigdy nie widział wady, nie wiadomo, czy ją widzi. Ten skrypt:
 #   1) wdraża na stos próbny wtyczkę z $STARY_REF (domyślnie origin/main, kod BEZ naprawy) → strażnik MUSI PAŚĆ
-#      dokładnie na przypadkach ZWROCONE i SPORNE (dostają 503 z etapu pliku zamiast 410), a KONTROLA musi przejść;
+#      dokładnie na przypadkach ZWROCONE i SPORNE (dostają 503 z etapu pliku zamiast 410), a KONTROLA i ZWROT CZĘŚCIOWY muszą przejść;
 #   2) wdraża wtyczkę z bieżącego drzewa → strażnik MUSI PRZEJŚĆ.
 # Stos próbny stawia i zwija `narzedzia-qa/lib-stos-probny.sh` i tylko jego kasuje.
 # Kody wyjścia: 0 = kalibracja udana · 1 = któryś etap nie zachował się jak trzeba · 2 = przyrząd/środowisko.
@@ -50,7 +50,8 @@ if [ "$KOD1" -eq 2 ]; then
 elif [ "$KOD1" -eq 1 ] \
 	&& printf '%s' "$WY1" | grep -q 'ZWROCONE: WYNIK=FAIL' \
 	&& printf '%s' "$WY1" | grep -q 'SPORNE: WYNIK=FAIL' \
-	&& printf '%s' "$WY1" | grep -q 'ZWYKLE: WYNIK=PASS'; then
+	&& printf '%s' "$WY1" | grep -q 'ZWYKLE: WYNIK=PASS' \
+	&& printf '%s' "$WY1" | grep -q 'CZESCIOWY: WYNIK=PASS'; then
 	potwierdz "strażnik PADŁ na kodzie sprzed naprawy dokładnie tam, gdzie wada (EXIT=$KOD1; kontrola PASS)"
 else
 	zglos "strażnik na kodzie sprzed naprawy oddał EXIT=$KOD1 albo padł nie tam, gdzie wada"

@@ -45,14 +45,20 @@ function sklepag_obsluz_pobranie() {
 	 * ⛔ PIENIĄDZE WRÓCIŁY DO KUPUJĄCEGO — PRODUKT NIE MOŻE DALEJ SCHODZIĆ. Do 0.9.36 brama patrzyła
 	 * wyłącznie na token i termin, więc po pełnym zwrocie (albo w trakcie sporu, gdy bank zamroził
 	 * pieniądze) link z maila działał do końca 72 h i limitu 10. Status ustawia `sklepag_zapisz_zwrot()`
-	 * (`zwrocone` = zwrot całości, `sporne` = otwarty spór); zwrot CZĘŚCIOWY zostawia status bez zmian
+	 * (`zwrocone` = zwrot całości, `sporne` = obciążenie zwrotne, czyli bank ZDJĄŁ pieniądze — samo zapytanie
+	 * z banku statusu nie zmienia); zwrot CZĘŚCIOWY zostawia status bez zmian
 	 * i pobieranie dalej działa — to świadoma granica, właściciel oddaje część kwoty jako gest, nie jako
 	 * cofnięcie sprzedaży. Sprawdzamy PRZED plikiem i licznikiem, żeby odmowa nie zużywała slotu
 	 * i nie zdradzała, czy plik istnieje. Zdarzenie zostaje w dzienniku — właściciel widzi, że ktoś
-	 * próbował pobrać po zwrocie (to bywa sygnał sporu, który dopiero nadejdzie).
+	 * próbował pobrać po zwrocie (to bywa sygnał sporu, który dopiero nadejdzie) — ale NIE dla żądań
+	 * HEAD: skanery poczty dotykają linku tą metodą (do 30/min z adresu) i każde dotknięcie wyglądałoby
+	 * jak próba kupującego. HEAD dostaje tę samą odmowę 410, tylko bez wpisu.
 	 */
+	$metoda_head = isset( $_SERVER['REQUEST_METHOD'] ) && 'HEAD' === $_SERVER['REQUEST_METHOD'];
 	if ( in_array( (string) $zam->status, array( 'zwrocone', 'sporne' ), true ) ) {
-		sklepag_zdarzenie( (int) $zam->id, 'pobranie_odmowa_zwrot', 'status ' . $zam->status . ', ip ' . sklepag_ip() );
+		if ( ! $metoda_head ) {
+			sklepag_zdarzenie( (int) $zam->id, 'pobranie_odmowa_zwrot', 'status ' . $zam->status . ', ip ' . sklepag_ip() );
+		}
 		wp_die(
 			( 'sporne' === $zam->status
 				? 'Płatność za to zamówienie jest w sporze — pobieranie wstrzymane do jego zamknięcia. '
@@ -73,7 +79,7 @@ function sklepag_obsluz_pobranie() {
 	$nazwa   = sanitize_file_name( $zam->produkt_nazwa_kupiona ) . '.zip';
 
 	// HEAD: nagłówki bez zużywania limitu (skanery poczty dotykają linków).
-	if ( isset( $_SERVER['REQUEST_METHOD'] ) && 'HEAD' === $_SERVER['REQUEST_METHOD'] ) {
+	if ( $metoda_head ) {
 		nocache_headers();
 		header( 'Content-Type: application/zip' );
 		header( 'Content-Length: ' . $rozmiar );

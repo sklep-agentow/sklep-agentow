@@ -130,8 +130,19 @@ echo 'ZWYKLE: zdarzen_odmowy=' . $s3['odmowy'] . " (OCZEKIWANE: 0)\n";
 $pass3 = ( 0 === strpos( $r3, 'ODMOWA 503' ) && 0 === $s3['odmowy'] );
 echo 'ZWYKLE: WYNIK=' . ( $pass3 ? 'PASS' : 'FAIL - naprawa zablokowala normalne pobranie' ) . "\n";
 
+/* ---------- 4) ZWROT CZĘŚCIOWY: status bez zmian, zwrocono_grosze > 0 — dostęp ZOSTAJE (obietnica z INSTRUKCJA/CHANGELOG) ---------- */
+// Granica „zwrot częściowy nadal pobiera” była obiecana w trzech dokumentach i niemierzona:
+// kolejna zmiana bramy z warunkiem `zwrocono_grosze > 0` zabrałaby dostęp po geście właściciela — tu ma paść.
+$id4 = $zaloz( 'mail_wyslany', (int) floor( $kwota / 2 ) );
+$r4  = $odpal( $id4 );
+$s4  = $stan( $id4 );
+echo 'CZESCIOWY: werdykt=' . $r4 . " (OCZEKIWANE: ODMOWA 503 — etap pliku, czyli zwrot częściowy NIE odcina)\n";
+echo 'CZESCIOWY: zdarzen_odmowy=' . $s4['odmowy'] . " (OCZEKIWANE: 0)\n";
+$pass4 = ( 0 === strpos( $r4, 'ODMOWA 503' ) && 0 === $s4['odmowy'] );
+echo 'CZESCIOWY: WYNIK=' . ( $pass4 ? 'PASS' : 'FAIL - zwrot czesciowy odcina dostep wbrew obietnicy z instrukcji' ) . "\n";
+
 $posprzataj();
 unset( $_GET['z'], $_GET['t'] );
-$straznik_ok = ( $pass1 && $pass2 && $pass3 );
+$straznik_ok = ( $pass1 && $pass2 && $pass3 && $pass4 );
 echo 'RAZEM: WYNIK=' . ( $straznik_ok ? 'PASS' : 'FAIL' ) . "\n";
 exit( $straznik_ok ? 0 : 1 );
