@@ -14,6 +14,17 @@ wydany osobno (podbicie pośrednie wewnątrz jednej zmiany).
 
 ---
 
+## [0.9.40] — 2026-09-03
+
+### Naprawione
+- **Panel mówi właścicielowi, że Regulamin i Polityka prywatności sklepu czekają na uzupełnienie.**
+  Aktywacja zakłada obie strony jako SZABLONY w wersji roboczej (świadomie — treści prawnej nie da się
+  napisać za właściciela), ale do tej wersji **nic o nich nie mówiło**: opcje `sklepag_strona_regulamin`
+  i `sklepag_strona_polityka` były czytane wyłącznie w `uninstall.php`, żeby je skasować. Właściciel mógł
+  sprzedawać treści cyfrowe, nie wiedząc, że dokumenty dla kupujących leżą nieopublikowane.
+  Ostrzeżenie jest trwałe, wskazuje obie strony z odnośnikiem do edycji i znika dopiero, gdy obie są
+  opublikowane i nie mają już zaślepki „SZABLON". Brak strony (właściciel ją skasował) nie jest pouczany.
+
 ## [Niewydane]
 
 Nic jeszcze.

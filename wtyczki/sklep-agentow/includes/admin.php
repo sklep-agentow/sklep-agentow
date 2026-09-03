@@ -19,6 +19,7 @@ require_once SKLEPAG_KATALOG . 'includes/admin-opinie.php';
 add_action( 'admin_menu', 'sklepag_admin_menu' );
 add_action( 'admin_enqueue_scripts', 'sklepag_admin_assety' );
 add_action( 'admin_notices', 'sklepag_ostrzez_permalinki' );
+add_action( 'admin_notices', 'sklepag_ostrzez_strony_prawne' );
 
 /**
  * Świeży WordPress ma bezpośrednie odnośniki „Zwykłe" — wtedy /sklep/ po cichu
@@ -35,6 +36,58 @@ function sklepag_ostrzez_permalinki() {
 		return;
 	}
 	echo '<div class="notice notice-error"><p><strong>Sklep Agentów:</strong> bezpośrednie odnośniki są ustawione na „Zwykłe" — strona sklepu i webhook płatności NIE DZIAŁAJĄ, dopóki tego nie zmienisz. Wejdź w <a href="' . esc_url( admin_url( 'options-permalink.php' ) ) . '">Ustawienia → Bezpośrednie odnośniki</a>, wybierz dowolną strukturę inną niż „Zwykłe" (np. „Nazwa wpisu") i zapisz.</p></div>';
+}
+
+/**
+ * Aktywacja zakłada „Regulamin sklepu (SZABLON)" i „Politykę prywatności sklepu (SZABLON)"
+ * jako WERSJE ROBOCZE z miejscami na dane sprzedawcy (`aktywacja.php:202-203`). Szablon w wersji
+ * roboczej jest świadomy — treści prawnej nie da się napisać za właściciela, a opublikowanie
+ * dokumentu z „[NAZWA, ADRES, KONTAKT]" byłoby gorsze niż jego brak.
+ *
+ * ⛔ Do 0.9.40 na tym się kończyło i to był błąd: obie strony leżały w wersji roboczej, a NIC ich
+ * nie wołało — opcje `sklepag_strona_regulamin` i `sklepag_strona_polityka` były czytane wyłącznie
+ * w `uninstall.php`, żeby je skasować (zmierzone: 1 odczyt w całej wtyczce, przy 7 plikach
+ * czytających bliźniaczą `sklepag_strona_sklep`). Właściciel nie miał skąd wiedzieć, że one
+ * istnieją i czekają na uzupełnienie — a sklep w tym czasie sprzedawał treści cyfrowe.
+ * To jest ryzyko prawne właściciela (obowiązek informacyjny sprzedawcy, administrator danych),
+ * nie kosmetyka, dlatego komunikat jest trwały i nie da się go zamknąć.
+ *
+ * Warunek jest SZERSZY niż „wersja robocza", bo opublikowanie nie znaczy „gotowe": strona
+ * z „SZABLON" w tytule albo z niewypełnioną zaślepką w treści jest tak samo niegotowa.
+ * Brak strony (opcja pusta lub wpis skasowany) NIE jest ostrzegany — właściciel mógł ją skasować
+ * świadomie, bo ma własny regulamin gdzie indziej, i nie naszą rzeczą jest to podważać.
+ */
+function sklepag_ostrzez_strony_prawne() {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		return;
+	}
+	$do_uzupelnienia = array();
+	$strony          = array(
+		'sklepag_strona_regulamin' => 'Regulamin sklepu',
+		'sklepag_strona_polityka'  => 'Polityka prywatności sklepu',
+	);
+	foreach ( $strony as $opcja => $nazwa ) {
+		$id = (int) get_option( $opcja, 0 );
+		if ( $id <= 0 ) {
+			continue;
+		}
+		$wpis = get_post( $id );
+		if ( ! $wpis || 'trash' === $wpis->post_status ) {
+			continue;
+		}
+		$niegotowa = 'publish' !== $wpis->post_status
+			|| false !== strpos( $wpis->post_title, 'SZABLON' )
+			|| false !== strpos( $wpis->post_content, 'SZABLON' );
+		if ( $niegotowa ) {
+			$do_uzupelnienia[] = '<a href="' . esc_url( get_edit_post_link( $id ) ) . '">' . esc_html( $nazwa ) . '</a>';
+		}
+	}
+	if ( ! $do_uzupelnienia ) {
+		return;
+	}
+	echo '<div class="notice notice-error"><p><strong>Sklep Agentów:</strong> sklep może przyjmować płatności, a dokumenty dla kupujących nie są gotowe: '
+		. wp_kses( implode( ' oraz ', $do_uzupelnienia ), array( 'a' => array( 'href' => array() ) ) )
+		. ' — to nadal SZABLON w wersji roboczej. Uzupełnij dane sprzedawcy (nazwa, adres, kontakt, adres do reklamacji) i <strong>opublikuj obie strony, zanim zaczniesz sprzedawać</strong>. Sprzedaż treści cyfrowych bez regulaminu i informacji o administratorze danych jest ryzykiem prawnym po Twojej stronie.</p></div>';
 }
 
 function sklepag_admin_menu() {
