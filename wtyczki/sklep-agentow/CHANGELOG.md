@@ -21,6 +21,15 @@ Nic jeszcze.
 ## [0.9.40] — 2026-09-03
 
 ### Naprawione
+- **Gwarancja satysfakcji przestaje wyglądać na sprzeczność z warunkami zakupu.** Strona produktu
+  obiecywała „14 dni na zwrot — bez pytań", a zgoda przy zakupie mówi o **utracie prawa odstąpienia**
+  (art. 38 ustawy o prawach konsumenta, bo treść cyfrowa jest dostarczana natychmiast). Prawnie to nie
+  była sprzeczność — gwarancja satysfakcji to **dobrowolne zobowiązanie sprzedawcy PONAD ustawę** —
+  ale nigdzie nie było napisane, że to dwie różne rzeczy, więc kupujący czytał dwa zdania, które sobie
+  przeczą. Tekst gwarancji nazywa teraz swoją podstawę; obietnica 14 dni **nie zmienia się**.
+  Ten sam tekst jedzie do maila po zakupie (`mail-html.php` czyta go z tego samego źródła), więc
+  poprawka wchodzi na stronę i do maila naraz. Szablon Regulaminu dostał osobny punkt o gwarancji —
+  strona produktu ją obiecuje, więc regulamin musi ją potwierdzać, a właściciel wypełnia tylko liczbę dni.
 - **Panel mówi właścicielowi, że Regulamin i Polityka prywatności sklepu czekają na uzupełnienie.**
   Aktywacja zakłada obie strony jako SZABLONY w wersji roboczej (świadomie — treści prawnej nie da się
   napisać za właściciela), ale do tej wersji **nic o nich nie mówiło**: opcje `sklepag_strona_regulamin`

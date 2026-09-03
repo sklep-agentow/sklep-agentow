@@ -342,7 +342,7 @@ function sklepag_tresc_produktu( $slug ) {
 			 * ⛔ GWARANCJA: obietnica zwrotu pieniędzy = zobowiązanie WŁAŚCICIELA.
 			 * Treść i włączenie to decyzja WŁAŚCICIELA SKLEPU; puste = sekcja się nie renderuje.
 			 */
-			'gwarancja'    => '14 dni gwarancji satysfakcji: jeśli bot nie spełni Twoich oczekiwań, napisz do nas — zwracamy pieniądze bez pytań. Zwrot oznacza wygaśnięcie prawa do aktualizacji i wsparcia dla kupionej kopii.',
+			'gwarancja'    => '14 dni gwarancji satysfakcji: jeśli bot nie spełni Twoich oczekiwań, napisz do nas — zwracamy pieniądze bez pytań. To dobrowolna gwarancja sprzedawcy, ponad przepisy: ustawowe prawo odstąpienia od umowy wygasa przy zakupie, bo treść cyfrowa jest dostarczana natychmiast (art. 38 ustawy o prawach konsumenta) — gwarancja satysfakcji obowiązuje niezależnie od tego. Zwrot oznacza wygaśnięcie prawa do aktualizacji i wsparcia dla kupionej kopii.',
 			'kalkulacja'   => 'Policz po swojemu: 10 pytań dziennie × 3 minuty = około 5 godzin miesięcznie z głowy. Podstaw własne liczby — matematyka jest jawna.',
 			'faq'          => array(
 				array( 'Czy potrzebuję klucza AI?', 'Nie — bot w pełni działa bez niego, na Twojej bazie pytań i odpowiedzi.' ),
@@ -502,7 +502,7 @@ function sklepag_tresc_produktu( $slug ) {
 			),
 			/* ⛔ OPINIE i GWARANCJA: te same zasady co przy chatbot-live (komentarz wyżej). */
 			'opinie'         => array(),
-			'gwarancja'      => '14 dni gwarancji satysfakcji: jeśli bot nie spełni Twoich oczekiwań, napisz do nas — zwracamy pieniądze bez pytań. Zwrot oznacza wygaśnięcie prawa do aktualizacji i wsparcia dla kupionej kopii.',
+			'gwarancja'      => '14 dni gwarancji satysfakcji: jeśli bot nie spełni Twoich oczekiwań, napisz do nas — zwracamy pieniądze bez pytań. To dobrowolna gwarancja sprzedawcy, ponad przepisy: ustawowe prawo odstąpienia od umowy wygasa przy zakupie, bo treść cyfrowa jest dostarczana natychmiast (art. 38 ustawy o prawach konsumenta) — gwarancja satysfakcji obowiązuje niezależnie od tego. Zwrot oznacza wygaśnięcie prawa do aktualizacji i wsparcia dla kupionej kopii.',
 			'dowody_przypis' => 'Liczby z próbki 30 maili demo — Twoją trafność pokaże raport na TWOICH regułach i TWOJEJ poczcie.',
 			'faq'            => array(
 				array( 'Czy muszę podpinać skrzynkę?', 'Nie musisz — możesz pracować wyłącznie na próbkach CSV. Ale możesz: wtyczka obsługuje prawdziwą skrzynkę i przenosi w niej pocztę do folderów.' ),
