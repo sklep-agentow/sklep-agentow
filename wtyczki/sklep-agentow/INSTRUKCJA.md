@@ -266,7 +266,10 @@ Przy instalacji powstały dwa szkice stron: **Regulamin sklepu** i **Polityka pr
 sklepu**. Uzupełnij je swoimi danymi sprzedawcy i opublikuj, zanim zaczniesz sprzedawać naprawdę.
 Szkice powstają tylko raz, przy pierwszej instalacji — jeśli opublikowałeś Politykę z wersji
 wcześniejszej niż 0.9.23, dopisz do niej sam: „dziennik zdarzeń (90 dni, w tym adres IP przy
-każdym pobraniu pliku)”.
+każdym pobraniu pliku)”. Tak samo z **Regulaminem**: jeśli opublikowałeś go z wersji
+wcześniejszej niż 0.9.40, dopisz do niego sam punkt o gwarancji satysfakcji — że jest to
+**dobrowolne zobowiązanie sprzedawcy PONAD ustawę**, niezależne od utraty prawa odstąpienia
+z art. 38 — bo strona produktu tę gwarancję obiecuje, więc regulamin musi ją potwierdzać.
 
 ---
 

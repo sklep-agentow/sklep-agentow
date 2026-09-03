@@ -30,6 +30,9 @@ Nic jeszcze.
   Ten sam tekst jedzie do maila po zakupie (`mail-html.php` czyta go z tego samego źródła), więc
   poprawka wchodzi na stronę i do maila naraz. Szablon Regulaminu dostał osobny punkt o gwarancji —
   strona produktu ją obiecuje, więc regulamin musi ją potwierdzać, a właściciel wypełnia tylko liczbę dni.
+  ⚠️ Szkice stron powstają **tylko przy pierwszej instalacji** — sklep zainstalowany wcześniej niż
+  0.9.40 ma w Regulaminie starą treść i punkt o gwarancji trzeba dopisać ręcznie; instrukcja mówi to
+  wprost, tym samym wzorem co przy Polityce sprzed 0.9.23.
 - **Panel mówi właścicielowi, że Regulamin i Polityka prywatności sklepu czekają na uzupełnienie.**
   Aktywacja zakłada obie strony jako SZABLONY w wersji roboczej (świadomie — treści prawnej nie da się
   napisać za właściciela), ale do tej wersji **nic o nich nie mówiło**: opcje `sklepag_strona_regulamin`
