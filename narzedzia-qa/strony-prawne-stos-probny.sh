@@ -7,8 +7,11 @@
 # ⛔ DLACZEGO STOS PRÓBNY, A NIE WSPÓLNY: żeby zmierzyć strażnika, trzeba mieć na stosie kod
 #    Z GAŁĘZI. Wgranie go na wspólne stanowisko cofa robotę innym biegom (zmierzone 1.09:
 #    stos cofnięty z 0.9.32 na 0.9.31). Tu stawiamy własny kontener i kasujemy go po sobie.
-# ⛔ `postaw_stos` z tej rewizji `lib-stos-probny.sh` kasuje kontener BEZ `-v`, więc zostawia
-#    anonimowy wolumen (~83 MB) — sprzątamy go jawnie na końcu, aż poprawka biblioteki wejdzie.
+# ⛔ Do 3.09 `lib-stos-probny.sh` kasował kontener BEZ `-v` w OBU miejscach (`postaw_stos`
+#    i `zwin_stos`), więc każdy bieg zostawiał anonimowy wolumen ~88 MB. Poprawka biblioteki
+#    weszła — oba wywołania mają teraz `-v`. Zmierzone, co to kosztowało: 38 wolumenów Dockera
+#    na maszynie warsztatu, z tego 35 nieprzypisanych do żadnego kontenera, razem 2,7 GB
+#    przy dysku na 92 %.
 set -u
 
 cd "$(dirname "$0")/.." || exit 2
@@ -43,8 +46,13 @@ NOTICE="$(docker exec "$KONTENER" sh -c 'cat /var/www/html/debug.log 2>/dev/null
 printf '  wpisow PHP w debug.log: %s\n' "$NOTICE"
 [ "$NOTICE" = 0 ] || { printf '  ⛔ log NIE jest pusty:\n'; docker exec "$KONTENER" sh -c 'tail -5 /var/www/html/debug.log'; KOD=1; }
 
+# ⛔ `zwin_stos` kasuje teraz kontener z `-v`, więc wolumen znika razem z nim. Zostawiam tę
+#    linię jako pas bezpieczeństwa na wypadek `--zostaw` albo wcześniejszego wyjścia — ale bez
+#    udawania, że to ONA sprząta: po `zwin_stos` kontenera już nie ma, więc nie ma tu czego
+#    usunąć, a `|| true` to przykrywa. Właśnie na tym polegała DROBNA 2 z rundy 3: nagłówek
+#    obiecywał sprzątanie, którego ta kolejność wywołań nie mogła wykonać.
 zwin_stos
-docker rm -f -v "$KONTENER" > /dev/null 2>&1 || true   # patrz nagłówek: brak -v w tej rewizji biblioteki
+docker rm -f -v "$KONTENER" > /dev/null 2>&1 || true
 
 printf '\nSPUST STRON PRAWNYCH: EXIT=%s\n' "$KOD"
 exit "$KOD"
