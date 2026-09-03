@@ -146,6 +146,16 @@ spr "plik $W/PONAD-SPECYFIKACJE.md"                         "1" "test -f $W/PONA
 #    cache'em, a do 0.9.38 nie pilnowal go zaden test ani bramka (recenzja #273, runda 5, DROBNA 2).
 #    Programista, ktory uzna go za ozdobe i usunie, cofa sklep do stanu, w ktorym druga osoba za
 #    jednym adresem dostaje CUDZY checkout Stripe — i nic by tego nie zglosilo.
+#    ⛔ GDZIE TA BRAMKA NAPRAWDE BIEGNIE (sprostowanie zdania z commita 0ecb232, ktore mowilo
+#    „bramka dok=kod chodzi w kazdym przebiegu” — to NIEPRAWDA, zmierzone):
+#      - NIE MA jej w `BRAMKI=` w narzedzia-qa/bramki.sh,
+#      - NIE MA jej w .github/workflows/quality.yml,
+#      - JEST w allowliscie recenzenta (recenzent.yml) — czyli recenzent MOZE ja uruchomic,
+#        ale nic jej nie uruchamia automatycznie przy kazdym PR,
+#      - JEJ PROBA KONTROLNA biegnie w `proby-kontrolne-przelot.sh` wolanym BEZ zakresu,
+#        czyli w bramce konca wydania `k7-koniec.sh` — i to jest realna ochrona PRZED ODDANIEM.
+#    Wpiecie tej bramki do zestawu (`BRAMKI=` + manifest + prog) to osobna zmiana; rusza te same
+#    pliki co PR #272, wiec nie wchodzi tutaj. Pozycja na liscie w audyt/CO-WISI.md.
 #    Trzy asercje, bo ochrona ma trzy czesci i kazda mozna usunac osobno: pole w formularzu ·
 #    skrypt, ktory je nadpisuje · zrodlo losowosci. Trzecia liczy WYWOLANIE w kodzie JS
 #    (`c.getRandomValues(a)`), nie samo slowo — to samo slowo stoi takze w komentarzu obok

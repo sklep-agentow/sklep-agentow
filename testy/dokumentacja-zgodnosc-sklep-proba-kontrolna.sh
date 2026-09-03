@@ -23,7 +23,12 @@ zbuduj_czysty() {
 	# Reguła: kopia musi zawierać KAŻDY plik, który bramka otwiera; nowa asercja w bramce = nowy plik tutaj.
 	cp "$KORZEN/$W/INSTRUKCJA.md" "$KORZEN/$W/PONAD-SPECYFIKACJE.md" "$r/$W/"
 	cp "$KORZEN/$W/zrzuty/"*.png "$r/$W/zrzuty/"
-	cp "$KORZEN/$W/includes/admin.php" "$KORZEN/$W/includes/zakup.php" "$KORZEN/$W/includes/aktywacja.php" "$KORZEN/$W/includes/admin-produkty.php" "$r/$W/includes/"
+	# ⛔ `front-produkt.php` doszedl 3.09 razem z trzema asercjami znacznika okna. Bez niego
+	#    grep w piaskownicy pada, wynik jest PUSTY i kazdy z 21 przypadkow dostaje trzy stale
+	#    rozjazdy nadmiarowe — proba spadla wtedy do 0/21, razem z kontrola odwrotna.
+	#    Regula z komentarza wyzej dziala tylko wtedy, gdy sie ja WYKONA: dodajesz asercje
+	#    czytajaca nowy plik -> dopisujesz ten plik TUTAJ, w tym samym commicie.
+	cp "$KORZEN/$W/includes/admin.php" "$KORZEN/$W/includes/zakup.php" "$KORZEN/$W/includes/aktywacja.php" "$KORZEN/$W/includes/admin-produkty.php" "$KORZEN/$W/includes/front-produkt.php" "$r/$W/includes/"
 	cp "$KORZEN/dokumentacja/INSTRUKCJA-INSTALACJI.md" "$r/dokumentacja/"
 	cp "$KORZEN/boty/buduj-paczki.sh" "$r/boty/"
 }
