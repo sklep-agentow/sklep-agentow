@@ -213,7 +213,7 @@ Wszystkie liczby, którymi wtyczka się rządzi, są stałymi — nie ma ich roz
 | `CHATL_WERSJA_SCHEMATU` | `8` | `chatbot-live.php` | wyzwalacz migracji schematu |
 | `CHATL_KATALOG`, `CHATL_URL` | ścieżka i adres wtyczki | `chatbot-live.php` | `require` i adresy assetów |
 | `CHATL_MAX_PYTANIE` | `500` | `includes/front.php` | maksymalna długość pytania gościa (nadmiar jest **odrzucany** z komunikatem i kodem `za_dlugie`, HTTP 413; we wcześniejszych wydaniach był przycinany po cichu) |
-| `CHATL_MAX_WIADOMOSC` | `2000` | `includes/front.php` | maksymalna długość treści zgłoszenia (nadmiar odrzucany z kodem `za_dlugie`, jak pytanie). ⛔ Ta sama stała rządzi TAKŻE wiadomością operatora — `includes/operator.php:395` | maksymalna długość treści zgłoszenia (nadmiar odrzucany z kodem `za_dlugie`, jak pytanie) |
+| `CHATL_MAX_WIADOMOSC` | `2000` | `includes/front.php` | maksymalna długość treści zgłoszenia (nadmiar odrzucany z kodem `za_dlugie`, jak pytanie). ⛔ Ta sama stała rządzi TAKŻE wiadomością operatora — `includes/operator.php:400` |
 | `CHATL_LIMIT_NA_MIN` | `10` | `includes/front.php` | wspólny kubeł: żądań na minutę z jednego IP, łącznie dla pytań i zgłoszeń |
 | `CHATL_RETENCJA_DNI` | `90` | `includes/front.php` | okres retencji historii rozmów — **jedno źródło** dla crona, tekstu w widgecie, panelu i eksportu |
 | `CHATL_AI_LIMIT_IP_NA_DOBE` | `20` | `includes/front.php` | osobny, twardszy limit wywołań AI z jednego IP na dobę |
@@ -351,8 +351,9 @@ Plik odpala się tylko przy prawdziwym odinstalowaniu (`WP_UNINSTALL_PLUGIN`), n
    zamiast w tabeli), `chatl_import_*` (stan importu) oraz `chatl_szkic_op_*` — szkice
    odpowiedzi operatora, przechowalnia dodana w 1.5.15 (klucz `chatl_szkic_op_<id
    użytkownika>_<md5 sesji>`, TTL 5 minut). ⛔ Do 1.5.15 ta wyliczanka wymieniała **jeden**
-   przedrostek, a `uninstall.php` kasował **trzy** — dokument obiecywał mniej sprzątania,
-   niż kod robi, czyli w drugą stronę niż zwykle, ale tak samo nieprawdziwie.
+   przedrostek, a `uninstall.php` kasował **dwa** (`chatl_rl_`, `chatl_import_`) — dokument
+   obiecywał mniej sprzątania, niż kod robi, czyli w drugą stronę niż zwykle, ale tak samo
+   nieprawdziwie. 1.5.15 dokłada trzeci przedrostek (`chatl_szkic_op_`) i prostuje wyliczankę.
    Każde zapytanie używa `esc_like()` — podkreślnik jest symbolem wieloznacznym w `LIKE`,
    więc bez eskejpowania mogłoby złapać cudze wpisy.
 

@@ -504,8 +504,8 @@ function chatl_ajax_pytanie() {
 	/*
 	 * Za długie pytanie = ODMOWA z liczbą, nie ciche cięcie. Do 1.5.14 nadmiar znikał w `mb_substr`
 	 * i gość nie wiedział, że bot dostał urwany tekst — odpowiadał na pół pytania. Widget trzyma
-	 * `maxLength`, więc tu trafia tylko wklejka spoza pola albo obcy klient; kod `za_dlugie`
-	 * pozwala widgetowi oddać treść do pola zamiast ją zgubić.
+	 * `maxLength` i skraca wklejkę z ostrzeżeniem, więc tu trafia tylko obcy klient albo rozjazd
+	 * limitów; kod `za_dlugie` pozwala klientowi zostawić treść w polu zamiast ją zgubić.
 	 */
 	$dlugosc = mb_strlen( $pytanie );
 	if ( $dlugosc > CHATL_MAX_PYTANIE ) {

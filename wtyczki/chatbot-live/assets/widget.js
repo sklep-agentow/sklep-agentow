@@ -390,7 +390,8 @@
 		/*
 		 * LIMIT 500 ZNAKOW JAWNY (CZ-1). `maxLength` ucina wklejony tekst PO CICHU — gosc nie wie,
 		 * ze bot dostal pol pytania. Licznik pokazuje sie od 400 znakow, a wklejka ponad limit
-		 * dostaje zdanie wprost. Serwer i tak odmawia (kod `za_dlugie`), a wtedy tresc WRACA do pola.
+		 * dostaje zdanie wprost. Przez to pole nigdy nie wysle ponad 500 znakow; odmowa serwera (kod `za_dlugie`)
+		 * to zabezpieczenie na obcy klient albo zmiane limitu po stronie serwera — wtedy tresc zostaje w polu.
 		 */
 		var LIMIT_PYTANIA = 500;
 		var licznik = el('div', 'chatl-licznik');
@@ -517,7 +518,8 @@
 					} else {
 						dodajWiadomosc('bot', (odp.data && odp.data.komunikat) || 'Coś poszło nie tak. Spróbuj ponownie.');
 						if (odp.data && 'za_dlugie' === odp.data.kod) {
-							/* Tresc wraca do pola: gosc skraca, nie przepisuje od zera. */
+							/* Zabezpieczenie: z tego widgetu (maxLength 500) ta galaz jest nieosiagalna — trafia tu tylko
+							   rozjazd limitu z serwerem. Wtedy tresc zostaje w polu, gosc skraca zamiast pisac od zera. */
 							polePytania.value = pytanie;
 							odswiezLicznik();
 						}

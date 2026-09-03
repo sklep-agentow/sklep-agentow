@@ -154,7 +154,7 @@ Pełna historia zmian, z opisem każdej pozycji, jest w pliku `CHANGELOG.md`
 w paczce. Poniżej skrót.
 
 = 1.5.15 =
-* Niewysłana odpowiedź operatora wraca do pola po odmowie „za długa wiadomość”. Żeby to było możliwe, wtyczka odkłada ją na serwerze najwyżej na 5 minut, osobno dla każdego operatora i każdej rozmowy; szkic znika po pierwszym odczycie, a deinstalacja kasuje wszystkie takie wpisy.
+* Niewysłana odpowiedź operatora wraca do pola po odmowie „za długa wiadomość”. Żeby to było możliwe, wtyczka odkłada ją na serwerze najwyżej na 5 minut, osobno dla każdego operatora i każdej rozmowy; szkic znika po pierwszym odczycie; deinstalacja kasuje wszystkie takie wpisy tylko przy włączonym przełączniku „usuń wszystkie dane” (domyślnie wyłączony — jak reszta danych wtyczki).
 * Za dlugie pytanie i za dluga wiadomosc zgloszenia nie sa juz ucinane po cichu — okno czatu pilnuje limitu licznikiem i ostrzezeniem, a serwer odmawia z liczba znakow.
 * Wiadomosc operatora ponad limit tez dostaje odmowe zamiast cichego ciecia.
 

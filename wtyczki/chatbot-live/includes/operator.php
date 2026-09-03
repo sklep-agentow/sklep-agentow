@@ -347,16 +347,6 @@ function chatl_post_zakoncz() {
 add_action( 'admin_post_chatl_zakoncz', 'chatl_post_zakoncz' );
 
 /**
- * Handler wysyłki wiadomości operatora do gościa (admin-post).
- *
- * Waliduje uprawnienia, nonce i długość treści. Przy odrzucie z powodu limitu ODKŁADA
- * treść przez chatl_odloz_szkic_operatora(), żeby przekierowanie nie skasowało tego,
- * co człowiek napisał (znaleziska CZ-2/CZ-3). Render rozmowy odczytuje szkic JEDEN raz
- * i od razu kasuje przechowalnię.
- *
- * @return void
- */
-/**
  * Przechowalnia szkicu operatora na czas przekierowania po odmowie (5 minut, per użytkownik
  * i per rozmowa). Wzorzec przeniesiony ze sklepu (`admin-produkty.php:384`, znaleziska CZ-2/CZ-3):
  * odrzut walidacji nie ma prawa kasować tego, co człowiek napisał.
@@ -380,6 +370,16 @@ function chatl_klucz_szkicu_operatora( $sesja ) {
 	return 'chatl_szkic_op_' . get_current_user_id() . '_' . md5( (string) $sesja );
 }
 
+/**
+ * Handler wysyłki wiadomości operatora do gościa (admin-post).
+ *
+ * Waliduje uprawnienia, nonce i długość treści. Przy odrzucie z powodu limitu ODKŁADA
+ * treść przez chatl_odloz_szkic_operatora(), żeby przekierowanie nie skasowało tego,
+ * co człowiek napisał (znaleziska CZ-2/CZ-3). Render rozmowy odczytuje szkic JEDEN raz
+ * i od razu kasuje przechowalnię.
+ *
+ * @return void
+ */
 function chatl_post_operator_wyslij() {
 	if ( ! current_user_can( 'manage_options' ) ) {
 		wp_die( 'Brak uprawnień.' );
@@ -403,8 +403,9 @@ function chatl_post_operator_wyslij() {
 		// traciłby wszystko, co napisał, a komunikat kazałby mu „skrócić” coś, czego już nie ma.
 		// To ta sama klasa, którą sklep zamknął jako CZ-2 (formularz produktu) i CZ-3 (opinia
 		// kupującego). Wzorzec: przechowalnia per użytkownik i per rozmowa na 5 minut, odczytana
-		// przy renderze JEDEN raz. Widżet gościa robi to samo (`assets/widget.js` — treść wraca
-		// do pola, gość skraca zamiast pisać od zera), więc operator nie może mieć gorzej.
+		// przy renderze JEDEN raz. Widżet gościa nie traci treści (`assets/widget.js` — pole
+		// z `maxLength` skraca wklejkę z ostrzeżeniem, a przy odmowie serwera treść zostaje w polu),
+		// więc operator nie może mieć gorzej.
 		chatl_odloz_szkic_operatora( $sesja, $tresc );
 		chatl_przekieruj_blad(
 			'chatl-rozmowy&sesja=' . rawurlencode( $sesja ),
