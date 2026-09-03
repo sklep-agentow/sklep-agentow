@@ -39,7 +39,18 @@
      ZAMKNIETE w #259; Q-3 wzięte ze strony maina (ma policzone liczby po recenzji #260).
      ⚠️ Nagłówek pliku mówi „znaleziska produktu NIE wchodzą tutaj", a Q-4…Q-6 są znaleziskami
      produktu — sprzeczność sprzed #264, do wyprostowania całym blokiem Q-*, nie pojedynczo.
-     Komendy w sekcji CZWARTA RUNDA. -->
+     Komendy w sekcji CZWARTA RUNDA.
+
+     ⭐ PRZELICZONE 3.09 (ten PR, runda 2) — recenzent slusznie zauwazyl, ze licznik poszedl 32 -> 48,
+     a ten komentarz opisywal stan sprzed PR-a. Pomiar KOMENDA, nie z glowy:
+       kody na main:   git show origin/main:<ten plik> | grep -oE '^\| `[^`]+`' | sort -u | wc -l   -> 72
+       kody na galezi: grep -oE '^\| `[^`]+`' <ten plik> | sort -u | wc -l                          -> 88
+       roznica (comm -13): 16 NOWYCH kodow, wszystkie ze statusem OTWARTE:
+         A4b-F3 A4b-F4 A7-F2 A7-F3 C12-F1 C13-F1 E5-F1 E5-F2 F4-F1 F4-F2 F4-F3 F5-F1 F5-F2 F5-F3 F5-F4 F5-F5
+       32 (main) + 16 (nowe, wszystkie otwarte) = 48. ✔ Licznik zgadza sie z tabela.
+     ⛔ Kontrola sumy statusow (32+36+2+1+1+1=73) NIE DA SIE dzis powtorzyc prostym grepem: czesc wierszy
+     niesie slowo statusu takze w TEKSCIE opisu, a wiersze maja rozna liczbe kolumn. Dlatego pomiar wyzej
+     idzie po RÓŻNICY kodow miedzy main a galezia — to jest wielkosc, ktora ten PR faktycznie zmienia. -->
 <!-- ⛔ Ten licznik NIE MA STRAŻNIKA: bramka-znaleziska.sh czyta wyłącznie
      audyt/REJESTR-ZNALEZISK.md. Dlatego rozjechał się o sześć pozycji (I-23). -->
 <!-- 1.09 wieczór, audytor: dopisując I-24 PODNIOSŁEM oba liczniki o jeden, a NIE przeliczyłem

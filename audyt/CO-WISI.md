@@ -14,7 +14,6 @@ plików paczki, nie przez nazwę katalogu.
 
 | co | gdzie w kodzie | dlaczego jedzie | status |
 |---|---|---|---|
-| **baner „TRYB TESTOWY" zaszyty na sztywno** | `sklep-agentow.php:234-238,355,467` · `front-produkt.php:631,843` · `zakup.php:959` · `mail-html.php` | `sklepag_baner_testowy()` ma bezwarunkowy `return`; po wgraniu klucza `sk_live_` kupujący płaci prawdziwe pieniądze i czyta na stronie „Dziękujemy", że płatności nie są pobierane | **D38: naprawa PO odbiorze** — na kluczach testowych baner mówi prawdę |
 | pola `required` bez polskiego komunikatu | `admin-produkty.php:319,322` · `admin-ustawienia.php` | właściciel zobaczy przy pierwszym pustym zapisie produktu | otwarte, tanie |
 | asymetria list znaków w eksporcie CSV | `admin-dashboard.php:269` · `segregator/csv.php:310` · `chatbot/csv.php:29` | sklep chroni 7 znaków, segregator 6 (bez apostrofu), chatbot 4 — ciche uszkodzenie danych, nie awaria | otwarte |
 | status „zamknięty" w trzech składniach | `sklep-agentow.php:44` · `admin-zamowienie.php` (5 miejsc) | dziś śpi; obudzi się przy dodaniu nowego statusu — np. „Wyślij ponownie" po obciążeniu zwrotnym | otwarte |
@@ -26,7 +25,7 @@ plików paczki, nie przez nazwę katalogu.
 
 | co | gdzie w kodzie | dlaczego jedzie | status |
 |---|---|---|---|
-| **surowe kody zdarzeń w dzienniku, w tym jedyne angielskie słowo w polskim panelu** | `class-sklepag-lista-zdarzen.php:116-118` — `case 'typ': return esc_html( $item->$column_name );`, zero mapowania na etykietę | właściciel widzi `reconciliation_blad`, `reconciliation_wynik`, `webhook_unpaid`, `checkout_blad` — 28 kodów, bez legendy. Ten sam mechanizm ma na pulpicie ludzką etykietę („Dociągnij zaległe teraz", `admin-dashboard.php:529`), więc rozjazd jest w jednym ekranie | **świadomie ODŁOŻONE 3.09** |
+| **surowe kody zdarzeń w dzienniku, w tym jedyne angielskie słowo w polskim panelu** | `class-sklepag-lista-zdarzen.php:119-121` — `case 'typ': return esc_html( $item->$column_name );`, zero mapowania na etykietę | właściciel widzi `reconciliation_blad`, `reconciliation_wynik`, `webhook_unpaid`, `checkout_blad` — 28 kodów, bez legendy. Ten sam mechanizm ma na pulpicie ludzką etykietę („Dociągnij zaległe teraz", `admin-dashboard.php:529`), więc rozjazd jest w jednym ekranie | **świadomie ODŁOŻONE 3.09** |
 
 ⛔ **Dlaczego odłożone, a nie naprawione od ręki:** jeden z typów jest **sklejany dynamicznie**
 (`opinie.php:205`: `'opinia_' . $nowy`), więc uczciwa mapa wymaga najpierw rozstrzygnięcia zbioru
@@ -329,7 +328,16 @@ działanie wzorca** — bo dokładnie ta różnica kosztowała trzy rundy.
 
 ---
 
-## 🔴 BANER „TRYB TESTOWY" JEST ZASZYTY W KODZIE — na produkcji skłamie kupującemu (29.08, recenzja #209 r6)
+## ✅ ROZLICZONE — baner „TRYB TESTOWY” ma warunek od 0.9.29 (wpis z 29.08, recenzja #209 r6)
+
+⛔ **Ten wpis był otwarty o dwa dni za długo i zdążył zrodzić fałszywą decyzję D38** (wycofaną 3.09).
+Zmierzone na `origin/main`, każde miejsce osobno: `sklep-agentow.php:222-223` czyta prefiks klucza,
+`:235-237` zwraca **pusty napis** przy `sk_live_`, a `:355`, `:467`, `front-produkt.php:629`, `:843`,
+`zakup.php:1310` i `mail-html.php:125` idą przez `sklepag_tryb_testowy()`. Wydanie: `CHANGELOG.md:149-156`
+(`[0.9.29]`, 1.09). **Nauka:** rozliczaj wpis W TEJ SAMEJ rundzie, w której naprawiasz — wpis żyjący po
+naprawie jest groźniejszy niż brak wpisu, bo czytelnik nie sprawdza kodu, tylko wierzy rejestrowi.
+
+<details><summary>Treść wpisu z 29.08 (historia — opisuje stan SPRZED 0.9.29)</summary>
 
 `sklepag_baner_testowy()` (`wtyczki/sklep-agentow/sklep-agentow.php:168`) zwraca **stały HTML,
 bez jednego warunku**, a **wszystkie TRZY wywołania są bezwarunkowe**: `sklep-agentow.php:286` (lista),
@@ -384,6 +392,8 @@ TESTOWYCH baner jest poprawny i egzaminu nie psuje — problem pojawia się dopi
 prawdziwym wdrożeniu.
 
 ---
+
+</details>
 
 ## 🟡 ODDANE DO K8 — odbior WYDAJNOSCI (perf) na docelowym hostingu · AN-022
 - `perf` z Lighthouse NIE zostal odebrany w K7 i to jest decyzja, nie przeoczenie: na tym stosie
@@ -663,7 +673,8 @@ prawdziwym wdrożeniu.
   zamkiem — poprawka wchodzi z NASTĘPNYM wydaniem bota, nie osobno.
   ✅ **ZAMKNIĘTE (potwierdzone 3.09 na `origin/main`):** `wtyczki/segregator-maila/readme.txt:85-86` mówi
   o `stream_socket_client` i rozszerzeniu OpenSSL, z ostrzeżeniem o najtańszych hostingach i wskazaniem
-  wbudowanej diagnostyki; `CHANGELOG.md:153` potwierdza wejście poprawki. Wpis wisiał otwarty po naprawie.
+  wbudowanej diagnostyki; `wtyczki/segregator-maila/CHANGELOG.md:32-33` potwierdza wejście poprawki (⛔ do rundy 2 stało tu
+  `CHANGELOG.md:153`, czyli plik SKLEPU — a tam ta linia mówi o banerze trybu testowego). Wpis wisiał otwarty po naprawie.
 - **Bramka na LICZBY strony sprzedażowej** (`front-produkt.php`: „6 zrzutów", „10 par",
   „30 maili demo") — dziś prawdziwe (zmierzone w r1 #172), ale bez strażnika zgniją po cichu
   jak każda liczba; wzór: `dokumentacja-zgodnosc*.sh`.
