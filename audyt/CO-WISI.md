@@ -1063,6 +1063,25 @@ niebezpieczna dla WSPÓLNEGO stosu — podmienia wtyczkę i jej nie przywraca (z
 po `0.9.31`/`704b0ab7…`, czyli cofnięta czyjaś robota w toku). Wpięcie bez rozwiązania tego cofa builderom kod pod
 stopami przy każdym biegu bramek. Dowody: `audyt/plamy/GOLDEN-258-WERYFIKACJA.md`.
 
+## 🟡 CZTERY DROBNE Z RECENZJI #276 r7 — ODŁOŻONE ŚWIADOMIE, NIE PRZEOCZONE (3.09, r9)
+
+Recenzent słusznie zauważył, że w rundach 8 i 9 zadeklarowałam te cztery jako „zostają" —
+i nie dostały wiersza **nigdzie**, czyli zniknęły z widoku. Zasada tego pliku brzmi
+„oddajesz ⇒ wiersz", więc oto one. Wszystkie dotyczą `audyt/SCIAGA-EGZAMINATORA.md`,
+żadna nie zmienia zachowania produktu ani żadnej bramki.
+
+| # | co | dlaczego odłożone |
+|---|---|---|
+| D1 | liczba w wierszu klasy podana **bez przyrządu**, którym ją zmierzono | ten sam wzorzec naprawiłam w klasie 113 w rundzie 9; pozostałe wiersze to praca przekrojowa przez cały rejestr, nie jedna poprawka |
+| D2 | **znacznik za szeroki** — obejmuje więcej tekstu, niż powinien wyróżniać | kosmetyka składu, zero wpływu na treść klasy |
+| D3 | **zdublowany nawias** w klasie 105 | literówka |
+| D4 | **zbłąkany dwukropek** | literówka |
+
+⛔ **Dlaczego nie od ręki, skoro to drobiazgi:** ten pull request jest ósmy w kolejce jednego
+wykonawcy CI, a każda runda to komplet bramek plus recenzja dla wszystkich czekających.
+D1 wymaga przejścia całego rejestru klas, a nie jednego wiersza — i jako jedyna z czwórki ma
+wartość merytoryczną. **Do zrobienia razem z najbliższą pracą, która i tak otwiera ten plik.**
+
 ## 🟡 UWAGI Z RECENZJI 2.09 PRZENIESIONE PO REGULE JEDNEJ RUNDY (dokumenty: #269, #271; kod: #270 r3 — same DROBNE)
 
 Każda pozycja = tania poprawka tekstowa do wzięcia przy najbliższym PR-ze w tym pliku; nic z tego nie jest wadą produktu u klienta.
