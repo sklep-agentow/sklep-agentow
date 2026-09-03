@@ -127,5 +127,34 @@ printf '# Historia zmian\n\n## [0.9.28] — 2026-09-02 · atrapa\n' > "$G/wtyczk
 (cd "$G" && bash "$STRAZNIK" SECURITY.md wtyczki > /dev/null 2>&1)
 sprawdz "9. dokument bez daty stanu = kod 2" 2 $?
 
+# --- 10. data mierzona wobec NAJNOWSZEGO wydania ZE WSZYSTKICH wtyczek ---------
+# Recenzja #274, runda 8, WAZNA 2: pierwsza wersja kontroli daty porownywala date stanu
+# z CHANGELOG-iem SAMEGO sklepu, a `SECURITY.md` opisuje TRZY wtyczki naraz i ChatBot ma
+# osobny rytm wydan. Wydanie ChatBota nowsze niz ostatnie wydanie sklepu przechodzilo wiec
+# niezauwazone — przy bramce meldujacej „sprawdzonych wtyczek 3".
+# Tu: sklep wydany 2026-09-01, ChatBot 2026-09-05, dokument deklaruje stan na 2026-09-02.
+# Wobec sklepu data JEST swiezsza (przeszloby), wobec ChatBota jest STARSZA (ma paść).
+H="$PIASKOWNICA/h"
+mkdir -p "$H"
+zbuduj_wtyczke "$H" sklep-agentow 0.9.28
+zbuduj_wtyczke "$H" chatbot-live 1.5.15
+zbuduj_dokument "$H" '`sklep-agentow` (0.9.28), `chatbot-live` (1.5.15).' 2026-09-02 2026-09-01
+mkdir -p "$H/wtyczki/chatbot-live"
+printf '# Historia zmian\n\n## [1.5.15] — 2026-09-05 · atrapa\n' > "$H/wtyczki/chatbot-live/CHANGELOG.md"
+(cd "$H" && bash "$STRAZNIK" SECURITY.md wtyczki > /dev/null 2>&1)
+sprawdz "10. data starsza niz wydanie INNEJ wtyczki zlapana" 1 $?
+
+# --- 11. kontrola dodatnia do 10: ta sama para dat, dokument swiezszy od OBU -----
+# Bez tego przypadek 10 nie odrozniałby dzialajacej kontroli od kontroli, ktora pada zawsze.
+I="$PIASKOWNICA/i"
+mkdir -p "$I"
+zbuduj_wtyczke "$I" sklep-agentow 0.9.28
+zbuduj_wtyczke "$I" chatbot-live 1.5.15
+zbuduj_dokument "$I" '`sklep-agentow` (0.9.28), `chatbot-live` (1.5.15).' 2026-09-06 2026-09-01
+mkdir -p "$I/wtyczki/chatbot-live"
+printf '# Historia zmian\n\n## [1.5.15] — 2026-09-05 · atrapa\n' > "$I/wtyczki/chatbot-live/CHANGELOG.md"
+(cd "$I" && bash "$STRAZNIK" SECURITY.md wtyczki > /dev/null 2>&1)
+sprawdz "11. dokument swiezszy od obu wtyczek przechodzi" 0 $?
+
 echo "=== WYNIK: zdane $ZDANE, oblane $OBLANE ==="
 [ "$OBLANE" -eq 0 ]

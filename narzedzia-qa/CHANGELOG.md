@@ -14,6 +14,37 @@ wstecz nie dopisuję, bo nie umiałbym jej odtworzyć uczciwie. Ich zmiany od te
 pory lądują tutaj.
 
 ## [Niewydane]
+- **`security-wersje.sh` — pilnuje też DATY STANU, i to wobec WSZYSTKICH wtyczek.** Dokument
+  bezpieczeństwa deklarował stan starszy niż wydanie, które opisuje: scalenia rozstrzygały konflikt
+  w `SECURITY.md` regułą „wygrywa wyższy numer” i przeciągały **cały wiersz**, więc razem z numerem
+  wjeżdżała cudza data. Zdarzyło się to dwa razy w jednej kolejce PR-ów (#275 — numer ChatBota
+  cofnięty, czerwone CI; #274 — data cofnięta o dwa dni), a strażnik milczał, bo pilnował wyłącznie
+  numerów (`grep 'Stan na|data|date'` → 0 trafień). Reguła: data stanu nie może być starsza niż
+  data **najnowszego wydania spośród wszystkich** `wtyczki/*/CHANGELOG.md`.
+  ⛔ Pierwsza wersja porównywała datę wyłącznie z CHANGELOG-iem sklepu, choć pętla numerów chodzi
+  po trzech wtyczkach, a wypis melduje „sprawdzonych wtyczek 3” — ChatBot ma osobny rytm wydań,
+  więc jego wydanie nowsze od sklepowego przeszłoby niezauważone (recenzja #274, runda 8, WAŻNA 2).
+  Komunikat podaje teraz nazwę wtyczki, która wyznaczyła datę. Brak wiersza `Stan na` albo brak
+  jakiegokolwiek datowanego wydania = kod 2 (nie zmierzone), nie „czysto”.
+- **`security-wersje-proba-kontrolna.sh` — z 7 przypadków do 11.** Doszły: data starsza niż wydanie
+  (kod 1), dokument bez daty stanu (kod 2, podłoga), data starsza niż wydanie **innej** wtyczki
+  (kod 1) i kontrola dodatnia do tej pary (dokument świeższy od obu → kod 0).
+  ⛔ Nowa kontrola odsłoniła brak w MATERIALE próby: atrapy dokumentów nie miały ani daty stanu,
+  ani CHANGELOG-u, więc trzy istniejące przypadki zaczęły padać na kod 2 „nie mam z czym porównać”
+  — wyglądało to jak regresja strażnika, a było atrapą NIE TEGO RODZAJU CO PRODUKCJA. Atrapy buduje
+  teraz `zbuduj_dokument`.
+- **`k7-koniec-proba-kontrolna.sh` — atrapa niesie datę stanu i CHANGELOG.** Nowa kontrola daty
+  wywaliła próbę kontrolną **cudzej** bramki: jej piaskownica budowała `SECURITY.md` bez wiersza
+  `Stan na`, więc warunek 9 dostawał FAIL i cała próba padała na warunku, którego nie testuje
+  (`K7-KONIEC POMYLIL SIE 5 RAZY`, EXIT=1 → po naprawie EXIT=0). To ten sam brak, który ten plik
+  opisał już raz we własnym komentarzu: „potrzebuje w atrapie tego samego RODZAJU plików co produkcja”.
+  ⭐ Klasa, nie wpadka: **nowe wymaganie w narzędziu psuje każdą cudzą piaskownicę, która go nie zna** —
+  przy zmianie bramki najpierw `grep -rl "<nazwa>" narzedzia-qa/ testy/`, kto jeszcze ją woła.
+- **`linia-bazowa.sh` — strażnik A6-F1 nie wchodzi już na wspólny stos.** Pętla `testy/*.php` brała
+  `schemat-wersja-po-sprawdzeniu-test.php`, który robi `DROP TABLE` na tabeli opinii i woła
+  `sklepag_aktywacja()` (strony, katalog, zadanie cykliczne, przebudowa reguł adresów) — na kontenerze
+  `strona_wp_wordpress` i bez przywracania bazy między testami, wbrew własnemu nagłówkowi pliku.
+  Dopisany wzorzec pomijania z powodem; spust ma własną drogę przez próbę kontrolną na stosie próbnym.
 - **`zdarzenia-webhooka.sh` 1.0.0 (NOWE) + `bramki.sh` (12 bramek, `PROG_PELNY` 12,
   `PROG_TEKSTOWY` 7; wpis do manifestu w TYM SAMYM PR, bo bez niego strażnik manifestu
   słusznie świeci na czerwono — kontrola 1a) — lista zdarzeń Stripe w instrukcji == lista
@@ -45,8 +76,12 @@ pory lądują tutaj.
 - **`security-wersje.sh` 1.0.0 (NOWE)** — czy `SECURITY.md` mówi prawdę o wersjach wtyczek
   (znalezisko D-1: dokument mówił „wydane 0.9.25”, kod stał na 0.9.28, i nie pilnowało go nic).
   Czyta numery z prozy dokumentu; uruchomiony spoza korzenia odmawia kodem 2.
-- **`security-wersje-proba-kontrolna.sh` 1.0.0 (NOWE)** — 7 przypadków (rozjazd, brak wpisu,
-  brak dokumentu, brak nagłówków `Version`, uruchomienie spoza repo, prawdziwy plik repo).
+  **Od 3.09 sprawdza także DATĘ STANU** — patrz wpis w `[Niewydane]`.
+- **`security-wersje-proba-kontrolna.sh` 1.0.0 (NOWE)** — przypadki: rozjazd, brak wpisu,
+  brak dokumentu, brak nagłówków `Version`, uruchomienie spoza repo, prawdziwy plik repo.
+  ⚠️ Liczby przypadków ten wiersz **celowo nie podaje** — była tu „7”, a plik ma dziś 11
+  (recenzja #274, runda 8: wiersz kłamał liczbą, choć opis PR-a sam mówił o wzroście).
+  Liczbę rozstrzyga wykonanie: `grep -c '^sprawdz ' narzedzia-qa/security-wersje-proba-kontrolna.sh`.
 - **`k7-koniec.sh`** — dziewiąty warunek zamknięcia: zgodność `SECURITY.md` z wersjami wtyczek.
   Kod 2 („nie zmierzone”) liczy się jako FAIL, nie jako cisza. Poprawione oba napisy o liczbie
   warunków — dodanie warunku unieważniało własny opis skryptu.

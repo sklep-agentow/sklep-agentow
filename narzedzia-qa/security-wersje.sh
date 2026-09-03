@@ -76,21 +76,37 @@ fi
 # tym starszy niz to, co stalo na mainie. Ten straznik pilnowal wylacznie numerow, wiec milczal.
 # Regula: data stanu NIE MOZE byc starsza niz data najnowszego wydania w CHANGELOG-u sklepu.
 DATA_DOK="$(grep -m1 -oE 'Stan na [0-9]{4}-[0-9]{2}-[0-9]{2}' "$DOKUMENT" 2> /dev/null | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}')"
-CHANGELOG_SKLEPU="$KATALOG_WTYCZEK/sklep-agentow/CHANGELOG.md"
-DATA_WYDANIA="$(grep -m1 -oE '^## \[[0-9]+\.[0-9]+\.[0-9]+\] — [0-9]{4}-[0-9]{2}-[0-9]{2}' "$CHANGELOG_SKLEPU" 2> /dev/null | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}')"
+# ⛔ DATA MIERZONA WOBEC WSZYSTKICH WTYCZEK, NIE TYLKO SKLEPU. Pierwsza wersja tej kontroli
+# porownywala date stanu z CHANGELOG-iem SAMEGO sklepu, a petla wyzej sprawdza numery WSZYSTKICH
+# trzech i wypis melduje "sprawdzonych wtyczek 3". Skutek: wydanie ChatBota albo segregatora
+# nowsze niz ostatnie wydanie sklepu dawaloby dokument deklarujacy stan starszy niz tresc,
+# ktora niesie — czyli DOKLADNIE te wade, przed ktora ta kontrola stoi — przy bramce swiecacej
+# "zgodne". ChatBot ma osobny rytm wydan, wiec to nie jest przypadek teoretyczny.
+DATA_WYDANIA=""
+WTYCZKA_WYDANIA=""
+for _cl in "$KATALOG_WTYCZEK"/*/CHANGELOG.md; do
+	[ -f "$_cl" ] || continue
+	_d="$(grep -m1 -oE '^## \[[0-9]+\.[0-9]+\.[0-9]+\] — [0-9]{4}-[0-9]{2}-[0-9]{2}' "$_cl" 2> /dev/null | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}')"
+	[ -n "$_d" ] || continue
+	if [ -z "$DATA_WYDANIA" ] || [ "$_d" \> "$DATA_WYDANIA" ]; then
+		DATA_WYDANIA="$_d"
+		WTYCZKA_WYDANIA="$(basename "$(dirname "$_cl")")"
+	fi
+done
 if [ -z "$DATA_DOK" ]; then
 	echo "SECURITY-WERSJE: w $DOKUMENT nie ma wiersza 'Stan na RRRR-MM-DD' — nie wiem, na kiedy opisuje stan" >&2
 	exit 2
 fi
 if [ -z "$DATA_WYDANIA" ]; then
-	echo "SECURITY-WERSJE: w $CHANGELOG_SKLEPU nie ma datowanego naglowka wydania — nie mam z czym porownac daty" >&2
+	echo "SECURITY-WERSJE: w ZADNYM $KATALOG_WTYCZEK/*/CHANGELOG.md nie ma datowanego naglowka wydania" >&2
+	echo "                 — nie mam z czym porownac daty stanu" >&2
 	exit 2
 fi
 if [ "$DATA_DOK" \< "$DATA_WYDANIA" ]; then
-	echo "ROZJAZD: $DOKUMENT deklaruje stan na $DATA_DOK, a opisuje wydanie z $DATA_WYDANIA (data starsza niz tresc)" >&2
+	echo "ROZJAZD: $DOKUMENT deklaruje stan na $DATA_DOK, a opisuje wydanie $WTYCZKA_WYDANIA z $DATA_WYDANIA (data starsza niz tresc)" >&2
 	ROZJAZDY=$((ROZJAZDY + 1))
 else
-	echo "  zgodne: data stanu $DATA_DOK nie jest starsza niz wydanie $DATA_WYDANIA"
+	echo "  zgodne: data stanu $DATA_DOK nie jest starsza niz najnowsze wydanie ($WTYCZKA_WYDANIA, $DATA_WYDANIA)"
 fi
 
 RAZEM=$((ROZJAZDY + BRAK_WPISU))
