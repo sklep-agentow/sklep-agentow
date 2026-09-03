@@ -7,14 +7,21 @@
  * druga w ciągu SKLEPAG_IDEM_OKNO_S sekund dostawała ADRES CHECKOUTU PIERWSZEJ — cudzą sesję
  * Stripe, z cudzym zamówieniem po drugiej stronie.
  *
- * Naprawa: formularz zakupu niesie losowy znacznik `okno` z renderu strony produktu, a klucz
- * ma czwarty człon. Podwójny klik wysyła TEN SAM formularz (ten sam znacznik), więc ochrona
- * przed podwójną płatnością zostaje; druga osoba ma własny render i własny znacznik.
+ * Naprawa: formularz zakupu niesie losowy znacznik `okno`, a klucz ma czwarty człon. Znacznik
+ * losuje skrypt pod formularzem (`crypto.getRandomValues`), bo strona produktu nie wysyła
+ * `nocache_headers()` i pod pełnostronicowym cache'em render byłby dla wszystkich ten sam.
+ * Podwójny klik wysyła TEN SAM formularz (ten sam znacznik), więc ochrona przed podwójną
+ * płatnością zostaje; druga osoba ma własny znacznik.
  *
- * Trzy kierunki, bo naprawa „wyłącz okno” też usunęłaby objaw A i zabrała ochronę B:
+ * ⛔ Ten strażnik mierzy STRONĘ SERWERA — podstawia znaczniki sam, jak zrobiłaby to przeglądarka.
+ * Tego, że skrypt naprawdę nadpisuje pole, dowodzi osobny pomiar w przeglądarce (opis PR-a).
+ *
+ * Cztery kierunki i licznik sesji, bo naprawa „wyłącz okno” też usunęłaby objaw A i zabrała ochronę B:
  *   A) dwa POST-y, ten sam adres, RÓŻNE znaczniki  => DWIE sesje (drugi NIE dostaje adresu pierwszego),
  *   B) dwa POST-y, ten sam znacznik                 => JEDNA sesja (podwójny klik nie płaci dwa razy),
  *   C) dwa POST-y BEZ znacznika (POST spoza formularza) => JEDNA sesja, jak w poprzednich wydaniach (zapas, nie regresja).
+ *   D) `okno[]=x` (KSZTAŁT WEJŚCIA: tablica zamiast łańcucha) => traktowane jak BRAK znacznika, nie jak literał `Array`.
+ *   + licznik sesji u atrapy Stripe: dokładnie 4 (A=2, B=1, C=1) — piąta asercja, żeby zgadzał się rachunek.
  *
  * Odpowiedź Stripe podstawiona filtrem rdzenia `pre_http_request` (każde utworzenie sesji
  * dostaje NOWY identyfikator) — test nie rusza sieci ani plików wtyczki, mierzy PRODUKT.
@@ -25,7 +32,7 @@
  * Uruchomienie:
  *   docker cp testy/idem-okno-per-kupujacy-test.php <kontener>:/tmp/q5.php
  *   docker exec -u www-data <kontener> wp --path=/var/www/html eval-file /tmp/q5.php
- * EXIT 0 = A, B i C zgodne · 1 = któryś nie (WADA / REGRESJA) · 2 = przyrząd/środowisko
+ * EXIT 0 = A, B, C, D i licznik sesji zgodne · 1 = któryś nie (WADA / REGRESJA) · 2 = przyrząd/środowisko
  *      (m.in. limiter zakupu: 10 prób na adres i minutę; ten strażnik woła handler 6 razy).
  */
 
