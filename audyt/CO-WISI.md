@@ -1,5 +1,32 @@
 # CO-WISI — rzeczy oddane komuś / bez strażnika (zasada: oddajesz ⇒ wiersz, wraca ⇒ kasujesz)
 
+
+## ⭐⛔ CO Z TEGO DŁUGU JEDZIE DO KLIENTA — lista do przejrzenia PRZED KAŻDYM WYDANIEM (3.09)
+
+**Po co ta sekcja:** ten plik ma kilkadziesiąt pozycji i **nic nie pytało, które z nich wchodzą do paczki**.
+To klasa `I-16` w najgorszym wydaniu — raz już tak wyszedł do klienta brak eksportera i erasera RODO.
+⛔ To **nie jest** rejestr znalezisk: `audyt/REJESTR-ZNALEZISK.md` wymaga strażnika przy każdym wpisie
+(`bramka-znaleziska.sh`: „znalezisko bez testu zatrzymuje bramkę"), a te pozycje są w większości świadomym
+długiem, nie robotą do zrobienia w tym wydaniu. Tu stoją po to, żeby **nikt ich nie wydał, nie wiedząc**.
+
+**Sprawdzone 3.09 przez `narzedzia-qa/pakuj-dla-klienta.sh` i allowlistę `boty/buduj-paczki.sh`** — przez listę
+plików paczki, nie przez nazwę katalogu.
+
+| co | gdzie w kodzie | dlaczego jedzie | status |
+|---|---|---|---|
+| **baner „TRYB TESTOWY" zaszyty na sztywno** | `sklep-agentow.php:234-238,355,467` · `front-produkt.php:631,843` · `zakup.php:959` · `mail-html.php` | `sklepag_baner_testowy()` ma bezwarunkowy `return`; po wgraniu klucza `sk_live_` kupujący płaci prawdziwe pieniądze i czyta na stronie „Dziękujemy", że płatności nie są pobierane | **D38: naprawa PO odbiorze** — na kluczach testowych baner mówi prawdę |
+| pola `required` bez polskiego komunikatu | `admin-produkty.php:319,322` · `admin-ustawienia.php` | właściciel zobaczy przy pierwszym pustym zapisie produktu | otwarte, tanie |
+| asymetria list znaków w eksporcie CSV | `admin-dashboard.php:269` · `segregator/csv.php:310` · `chatbot/csv.php:29` | sklep chroni 7 znaków, segregator 6 (bez apostrofu), chatbot 4 — ciche uszkodzenie danych, nie awaria | otwarte |
+| status „zamknięty" w trzech składniach | `sklep-agentow.php:44` · `admin-zamowienie.php` (5 miejsc) | dziś śpi; obudzi się przy dodaniu nowego statusu — np. „Wyślij ponownie" po obciążeniu zwrotnym | otwarte |
+| pięć zapisów w ponownej wysyłce bez sprawdzonego wyniku | `admin-zamowienie.php:104,130,179,194,196` | ta sama klasa, którą naprawialiśmy w anonimizacji | ⭐ **dług NAZWANY** — `admin-zamowienie.php:28` niesie nasze własne przyznanie się |
+| luki w instrukcji instalacji | `dokumentacja/INSTRUKCJA-INSTALACJI.md` | **zero obrazów** (kontrola wzorca: instrukcje wtyczek mają 6/5/6), myląca numeracja menu, ewidencja kasy fiskalnej, retencja faktur, zachowanie przy złym NIP-ie | otwarte, tekst |
+| pięć obrazów w paczce sklepu | `wtyczki/sklep-agentow/zrzuty/*.png` | pokazują menu z ChatBot LIVE i Segregatorem; klient bez tych wtyczek zobaczy ekran, którego u siebie nie ma | otwarte, drobne |
+
+⛔ **Czego ta lista NIE obejmuje** (uczciwie, żeby nie udawała kompletnej): pozycje czysto narzędziowe
+zakwalifikowano po katalogu (`testy/`, `narzedzia-qa/`, `audyt/` są poza allowlistą), **bez osobnego uruchomienia**;
+zawartość pięciu obrazów sprawdzono co do liczby plików, nie co do treści; numerów linii w wierszu „asymetria CSV"
+nie odświeżano wobec dzisiejszego `HEAD`.
+
 ## 🟡 SPRZĄTANIE STRAŻNIKA LIMITU UPLOADU KASUJE WSZYSTKO, CO POWSTAŁO W TRAKCIE PRZEBIEGU (2.09, recenzja `#263` r3, DROBNA 4) — dług
 
 `testy/limit-uploadu-mowi-prawde.sh`: `DELETE … WHERE typ = 'upload_produktu_blad' AND id > ID_PRZED` kasuje po sobie
