@@ -17,7 +17,9 @@
 # co strażnik ma pilnować: czy dokument nadąża za kodem.
 #
 # KODY: 0 = tryb zwykły przeszedł albo kalibracja padła zgodnie z oczekiwaniem,
-#       1 = odwrotnie (test kłamie), 2 = brak stosu / dockera / gałęzi porównania.
+#       1 = odwrotnie (test kłamie),
+#       2 = jedno z dwóch, skrypt mówi które: NIE WIEM (to konto nie widzi Dockera — komunikat zaczyna się od „NIE WIEM”)
+#           ALBO Docker odpowiedział i stosu / gałęzi porównania nie ma.
 set -u
 KONTENER=strona_wp_wordpress
 WTYCZKA=wtyczki/segregator-maila
