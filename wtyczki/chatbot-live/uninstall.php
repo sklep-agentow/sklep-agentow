@@ -69,3 +69,11 @@ $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LI
 // w wp_options pytania i odpowiedzi klienta — czyli DANE, po pełnym czyszczeniu.
 // Ten sam wzorzec esc_like() + prepare co wyżej.
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s", $wpdb->esc_like( '_transient_chatl_import_' ) . '%', $wpdb->esc_like( '_transient_timeout_chatl_import_' ) . '%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+
+// Szkice odpowiedzi OPERATORA (chatl_szkic_op_<id uzytkownika>_<md5 sesji>, TTL 5 minut,
+// zapisywane przez chatl_odloz_szkic_operatora() w includes/operator.php przy odrzuconej
+// wiadomosci). Wygasaja same, ale deinstalacja tuz po odrzucie zostawilaby w wp_options
+// TRESC pisana przez operatora do goscia — czyli dane, po pelnym czyszczeniu.
+// Symetria zapis<->sprzatanie: co wtyczka zapisuje, to musi umiec skasowac.
+// Ten sam wzorzec esc_like() + prepare co wyzej.
+$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s", $wpdb->esc_like( '_transient_chatl_szkic_op_' ) . '%', $wpdb->esc_like( '_transient_timeout_chatl_szkic_op_' ) . '%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery

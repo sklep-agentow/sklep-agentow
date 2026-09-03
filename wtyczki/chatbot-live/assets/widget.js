@@ -13,6 +13,16 @@
 	var dane = window.chatlDane;
 
 	/*
+	 * Licznik MUSI liczyc tak samo jak serwer. `String.length` liczy jednostki UTF-16, wiec para
+	 * zastepcza (emoji) liczyla sie podwojnie: zmierzone dla rodziny + "ab" — JS 10, PHP mb_strlen 7.
+	 * Gosc widzial wiec inna liczbe niz ta, ktora rozstrzyga na serwerze. Array.from tnie po punktach
+	 * kodowych i zgadza sie z mb_strlen.
+	 */
+	function dlugoscZnakow(s) {
+		return Array.from(String(s)).length;
+	}
+
+	/*
 	 * Identyfikator sesji wydaje SERWER. Wczesniej wymyslala go przegladarka, ze
 	 * sciezka zapasowa 'chatl-' + Date.now() + Math.random() — a Math.random() nie
 	 * jest generatorem kryptograficznym i nigdy nie mial nim byc. crypto.randomUUID()
@@ -265,10 +275,42 @@
 		var tresc = el('textarea', 'chatl-pole');
 		tresc.required = true;
 		tresc.placeholder = 'W czym możemy pomóc?';
-		tresc.maxLength = 2000;
+		var LIMIT_WIADOMOSCI = parseInt(dane.limitWiadomosci, 10) || 2000;
+		tresc.maxLength = LIMIT_WIADOMOSCI;
 		tresc.rows = 3;
 		tresc.setAttribute('aria-label', 'Treść wiadomości');
 		f.appendChild(tresc);
+
+		/*
+		 * ZGLOSZENIE dostaje ten sam licznik i to samo ostrzezenie co pytanie (CZ-1, klasa 8).
+		 * Do 1.5.15 pole mialo SAM `maxLength`, wiec wklejka 3000 znakow byla ucinana PO CICHU —
+		 * dokladnie wada, ktora CZ-1 nazwal przy pytaniu, tylko w polu obok. Wlasciciel dostawal
+		 * urwane zgloszenie i nie wiedzial, ze czegos brakuje.
+		 */
+		var licznikTresci = el('div', 'chatl-licznik');
+		licznikTresci.setAttribute('aria-live', 'polite');
+		function odswiezLicznikTresci(komunikat) {
+			var n = dlugoscZnakow(tresc.value);
+			if (komunikat) {
+				licznikTresci.textContent = komunikat;
+				licznikTresci.classList.add('chatl-licznik-limit');
+				return;
+			}
+			licznikTresci.textContent = n >= LIMIT_WIADOMOSCI - 200 ? n + ' / ' + LIMIT_WIADOMOSCI : '';
+			licznikTresci.classList.toggle('chatl-licznik-limit', n >= LIMIT_WIADOMOSCI);
+		}
+		tresc.addEventListener('input', function () { odswiezLicznikTresci(); });
+		tresc.addEventListener('paste', function (zd) {
+			var schowek = zd.clipboardData || window.clipboardData;
+			var wklejane = schowek ? String(schowek.getData('text') || '') : '';
+			var razem = dlugoscZnakow(tresc.value) - (tresc.selectionEnd - tresc.selectionStart) + dlugoscZnakow(wklejane);
+			if (razem > LIMIT_WIADOMOSCI) {
+				setTimeout(function () {
+					odswiezLicznikTresci('Wklejony tekst skrócono do ' + LIMIT_WIADOMOSCI + ' znaków — sprawdź, czy wiadomość jest cała.');
+				}, 0);
+			}
+		});
+		f.appendChild(licznikTresci);
 
 		/*
 		 * Informacja o przetwarzaniu danych PRZED polem zgody: co zbieramy,
@@ -306,6 +348,10 @@
 			f.classList.remove('chatl-otwarty');
 			email.value = '';
 			tresc.value = '';
+			/* Pole czysci KOD, nie gosc — zdarzenie `input` NIE leci, wiec licznik trzeba
+			   odswiezyc recznie. Bez tego pod pustym polem zostaje czerwone ostrzezenie
+			   o skroconej wklejce, na elemencie z `aria-live="polite"` (czyta je czytnik). */
+			odswiezLicznikTresci();
 			zgoda.checked = false;
 			f.querySelector('.chatl-form-tytul').textContent = TYTUL_FORMULARZA;
 		};
@@ -378,7 +424,7 @@
 		var polePytania = el('input', 'chatl-pole-pytania');
 		polePytania.type = 'text';
 		polePytania.placeholder = 'Zadaj pytanie…';
-		polePytania.maxLength = 500;
+		polePytania.maxLength = parseInt(dane.limitPytania, 10) || 500;
 		polePytania.autocomplete = 'off';
 		polePytania.setAttribute('aria-label', 'Twoje pytanie');
 		formPytania.appendChild(polePytania);
@@ -386,6 +432,39 @@
 		wyslijBtn.type = 'submit';
 		wyslijBtn.setAttribute('aria-label', 'Wyślij pytanie');
 		formPytania.appendChild(wyslijBtn);
+
+		/*
+		 * LIMIT 500 ZNAKOW JAWNY (CZ-1). `maxLength` ucina wklejony tekst PO CICHU — gosc nie wie,
+		 * ze bot dostal pol pytania. Licznik pokazuje sie od 400 znakow, a wklejka ponad limit
+		 * dostaje zdanie wprost. Przez to pole nigdy nie wysle ponad 500 znakow; odmowa serwera (kod `za_dlugie`)
+		 * to zabezpieczenie na obcy klient albo zmiane limitu po stronie serwera — wtedy tresc zostaje w polu.
+		 */
+		// Limit z PHP (chatlDane) — jedno zrodlo prawdy. Wartosc awaryjna tylko na wypadek
+		// starego HTML-a w cache przegladarki; serwer i tak odmawia wlasna stala.
+		var LIMIT_PYTANIA = parseInt(dane.limitPytania, 10) || 500;
+		var licznik = el('div', 'chatl-licznik');
+		licznik.setAttribute('aria-live', 'polite');
+		function odswiezLicznik(komunikat) {
+			var n = dlugoscZnakow(polePytania.value);
+			if (komunikat) {
+				licznik.textContent = komunikat;
+				licznik.classList.add('chatl-licznik-limit');
+				return;
+			}
+			licznik.textContent = n >= LIMIT_PYTANIA - 100 ? n + ' / ' + LIMIT_PYTANIA : '';
+			licznik.classList.toggle('chatl-licznik-limit', n >= LIMIT_PYTANIA);
+		}
+		polePytania.addEventListener('input', function () { odswiezLicznik(); });
+		polePytania.addEventListener('paste', function (zd) {
+			var schowek = zd.clipboardData || window.clipboardData;
+			var wklejane = schowek ? String(schowek.getData('text') || '') : '';
+			var razem = dlugoscZnakow(polePytania.value) - (polePytania.selectionEnd - polePytania.selectionStart) + dlugoscZnakow(wklejane);
+			if (razem > LIMIT_PYTANIA) {
+				setTimeout(function () {
+					odswiezLicznik('Wklejony tekst skrócono do ' + LIMIT_PYTANIA + ' znaków — sprawdź, czy pytanie jest całe.');
+				}, 0);
+			}
+		});
 
 		/*
 		 * PRZEJECIE ROZMOWY PRZEZ CZLOWIEKA
@@ -469,6 +548,10 @@
 			   trwa poprzednie pytanie, drugie nie ma jak wyjsc. */
 			if (!pytanie || wyslijBtn.disabled) { return; }
 			polePytania.value = '';
+			/* To samo co przy zamknieciu formularza: czysci KOD, wiec `input` nie leci.
+			   Bez tego po wyslaniu pytania pod pustym polem zostawaloby ostrzezenie
+			   o skroconej wklejce (linia z `odswiezLicznik(komunikat)` wyzej). */
+			odswiezLicznik();
 			dodajWiadomosc('gosc', pytanie);
 			polePytania.disabled = true;
 			wyslijBtn.disabled = true;
@@ -486,6 +569,12 @@
 						}
 					} else {
 						dodajWiadomosc('bot', (odp.data && odp.data.komunikat) || 'Coś poszło nie tak. Spróbuj ponownie.');
+						if (odp.data && 'za_dlugie' === odp.data.kod) {
+							/* Zabezpieczenie: z tego widgetu (maxLength 500) ta galaz jest nieosiagalna — trafia tu tylko
+							   rozjazd limitu z serwerem. Wtedy tresc zostaje w polu, gosc skraca zamiast pisac od zera. */
+							polePytania.value = pytanie;
+							odswiezLicznik();
+						}
 					}
 				})
 				.catch(function () {
@@ -501,6 +590,7 @@
 				});
 		});
 		okno.appendChild(formPytania);
+		okno.appendChild(licznik);
 
 		/* Nota o zapisie rozmowy — PRZED powitaniem, zeby gosc przeczytal ja
 		   zanim cokolwiek napisze. Nie jest dymkiem bota: to informacja

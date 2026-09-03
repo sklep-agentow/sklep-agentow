@@ -1,6 +1,6 @@
 # ChatBot LIVE — dokumentacja techniczna
 
-Wersja wtyczki: **1.5.14** · schemat bazy: **8** · licencja: **GPL-2.0-or-later**
+Wersja wtyczki: **1.5.15** · schemat bazy: **8** · licencja: **GPL-2.0-or-later**
 
 Dokument opisuje **kod, który jest**, nie plan. Każda liczba i nazwa poniżej ma pokrycie
 w źródle — przy każdej podano plik i symbol, żeby dało się to sprawdzić `grep`-em, a nie
@@ -99,7 +99,7 @@ Serce trybu regułowego. Właściciel wypełnia ją w panelu; przy pierwszej akt
 |---|---|---|
 | `id` | `bigint(20) unsigned`, PK, auto | Identyfikator zgłoszenia; wchodzi do adresów akcji „oznacz obsłużone" i „usuń". |
 | `email` | `varchar(190)` | Adres gościa. 190 znaków, bo to bezpieczna długość dla indeksu przy `utf8mb4`. Walidowany `is_email()` przed zapisem. |
-| `wiadomosc` | `text` | Treść od gościa. Przycinana do 2000 znaków (`CHATL_MAX_WIADOMOSC`). |
+| `wiadomosc` | `text` | Treść od gościa, do 2000 znaków (`CHATL_MAX_WIADOMOSC`); dłuższa jest odrzucana z komunikatem, nie przycinana. |
 | `sesja` | `varchar(64)`, domyślnie `''` | Identyfikator sesji czatu — pozwala zestawić zgłoszenie z rozmową, która je poprzedziła. |
 | `podejrzane` | `tinyint(1)` | `0` = zgłoszenie normalne, `1` = złapane przez pułapkę na boty; lista w panelu domyślnie pokazuje tylko `0` |
 | `status` | `varchar(20)`, domyślnie `'nowe'` | `nowe` albo `obsluzone` — jedyne dwie wartości przyjmowane przez handler zmiany statusu. Ma własny indeks `KEY status`. |
@@ -209,11 +209,11 @@ Wszystkie liczby, którymi wtyczka się rządzi, są stałymi — nie ma ich roz
 
 | Stała | Wartość | Plik | Do czego |
 |---|---|---|---|
-| `CHATL_WERSJA` | `1.5.14` | `chatbot-live.php` | wersja wtyczki; służy też jako `?ver=` assetów (przeglądarka nie poda starego pliku po aktualizacji) |
+| `CHATL_WERSJA` | `1.5.15` | `chatbot-live.php` | wersja wtyczki; służy też jako `?ver=` assetów (przeglądarka nie poda starego pliku po aktualizacji) |
 | `CHATL_WERSJA_SCHEMATU` | `8` | `chatbot-live.php` | wyzwalacz migracji schematu |
 | `CHATL_KATALOG`, `CHATL_URL` | ścieżka i adres wtyczki | `chatbot-live.php` | `require` i adresy assetów |
-| `CHATL_MAX_PYTANIE` | `500` | `includes/front.php` | maksymalna długość pytania gościa (nadmiar jest **przycinany**, nie odrzucany) |
-| `CHATL_MAX_WIADOMOSC` | `2000` | `includes/front.php` | maksymalna długość treści zgłoszenia (jw.) |
+| `CHATL_MAX_PYTANIE` | `500` | `includes/front.php` | maksymalna długość pytania gościa (nadmiar jest **odrzucany** z komunikatem i kodem `za_dlugie`, HTTP 413; we wcześniejszych wydaniach był przycinany po cichu). **Jedno źródło** — do widgetu idzie przez `wp_localize_script` (`chatlDane.limitPytania`), tak jak `CHATL_RETENCJA_DNI` |
+| `CHATL_MAX_WIADOMOSC` | `2000` | `includes/front.php` | maksymalna długość treści zgłoszenia (nadmiar odrzucany z kodem `za_dlugie`, jak pytanie). ⛔ Ta sama stała rządzi TAKŻE wiadomością operatora — `includes/operator.php:400` |
 | `CHATL_LIMIT_NA_MIN` | `10` | `includes/front.php` | wspólny kubeł: żądań na minutę z jednego IP, łącznie dla pytań i zgłoszeń |
 | `CHATL_RETENCJA_DNI` | `90` | `includes/front.php` | okres retencji historii rozmów — **jedno źródło** dla crona, tekstu w widgecie, panelu i eksportu |
 | `CHATL_AI_LIMIT_IP_NA_DOBE` | `20` | `includes/front.php` | osobny, twardszy limit wywołań AI z jednego IP na dobę |
@@ -346,9 +346,16 @@ Plik odpala się tylko przy prawdziwym odinstalowaniu (`WP_UNINSTALL_PLUGIN`), n
    `chatl_blad_maila`, `chatl_blad_ai`, `chatl_blad_bazy`, `chatl_rodo_sesje_wspolne`
    oraz dwóch liczników ze schematu ≤ 7 (`chatl_blad_nonce`, `chatl_pulapka`) — na
    wypadek instalacji, która nigdy nie weszła do panelu po aktualizacji.
-4. Sprzątanie transientów `chatl_rl_*` ze **starszych wersji wtyczki** (≤ 1.1.x, gdy licznik
-   limitów żył w opcjach zamiast w tabeli). Zapytanie używa `esc_like()` — podkreślnik jest
-   symbolem wieloznacznym w `LIKE`, więc bez eskejpowania mogłoby złapać cudze wpisy.
+4. Sprzątanie transientów w **trzech** rodzinach, każda osobnym zapytaniem:
+   `chatl_rl_*` ze starszych wersji wtyczki (≤ 1.1.x, gdy licznik limitów żył w opcjach
+   zamiast w tabeli), `chatl_import_*` (stan importu) oraz `chatl_szkic_op_*` — szkice
+   odpowiedzi operatora, przechowalnia dodana w 1.5.15 (klucz `chatl_szkic_op_<id
+   użytkownika>_<md5 sesji>`, TTL 5 minut). ⛔ Do 1.5.15 ta wyliczanka wymieniała **jeden**
+   przedrostek, a `uninstall.php` kasował **dwa** (`chatl_rl_`, `chatl_import_`) — dokument
+   obiecywał mniej sprzątania, niż kod robi, czyli w drugą stronę niż zwykle, ale tak samo
+   nieprawdziwie. 1.5.15 dokłada trzeci przedrostek (`chatl_szkic_op_`) i prostuje wyliczankę.
+   Każde zapytanie używa `esc_like()` — podkreślnik jest symbolem wieloznacznym w `LIKE`,
+   więc bez eskejpowania mogłoby złapać cudze wpisy.
 
 Zdarzenie cron `chatl_czyszczenie_historii` zdejmuje **każda** ścieżka odinstalowania,
 zanim jeszcze sprawdzimy opcję „usuń dane": zwykle robi to deaktywacja, ale wtyczkę da
