@@ -30,6 +30,10 @@ Nic jeszcze.
 - **`SHOW TABLES LIKE` z `esc_like()` w czterech miejscach.** Nazwy tabel niosą po dwa `_`, a w `LIKE` `_` jest dziką kartą — bez escapowania wzorzec pasował do każdej tabeli tej samej długości z dowolnym znakiem na tych pozycjach, więc cudza tabela mogła zostać uznana za naszą i schemat wyglądałby na kompletny.
 
 ---
+## [0.9.38] — 2026-09-02 · schemat bazy bez zmian (10)
+
+### Naprawione
+- **Dwie osoby za jednym adresem internetowym nie dzielą już okna ochrony przed podwójnym kliknięciem.** Do tego wydania okno było kluczowane samym adresem IP, więc w biurze za NAT-em albo w sieci komórkowej operatora druga osoba, która kliknęła „Kup” w ciągu 5 s po pierwszej, dostawała CUDZY checkout Stripe. Formularz zakupu niesie teraz losowy znacznik, który przeglądarka losuje przy otwarciu strony produktu; podwójny klik wysyła ten sam znacznik (ochrona zostaje), inna przeglądarka ma własny — także wtedy, gdy sklep stoi za pełnostronicowym cache'em, bo znacznik nie pochodzi z zapamiętanego renderu. Przeglądarka bez JavaScriptu i formularz sprzed aktualizacji (bez znacznika) działają jak dotąd.
 
 ## [0.9.37] — 2026-09-02 · schemat bazy bez zmian (10)
 
