@@ -138,7 +138,16 @@ for t in testy/*.php; do
 	#    po `strona_wp_wordpress` i NIE przywraca bazy między testami — więc kolejne testy
 	#    dostawałyby zrzuconą tabelę. Spust ma własną drogę: `testy/schemat-wersja-po-sprawdzeniu-proba-kontrolna.sh`
 	#    stawia stos próbny i wywołuje go tam.
-	case "$t" in *schemat-wersja-po-sprawdzeniu-test.php) echo "POMINIĘTE (niszczy stan — biegnie na stosie próbnym przez własną próbę kontrolną): $t"; printf '%s\tPOMINIETE\t0\n' "$t" >> "$TSV"; continue;; esac
+	# ⛔ GDZIE TEN STRAZNIK NAPRAWDE BIEGNIE — zmierzone, nie zalozone:
+	#      - `quality.yml:127` wola przelot Z ZAKRESEM `narzedzia-qa`, wiec proby z `testy/`
+	#        (w tym proba tego straznika) w CI PR-owym NIE BIEGNA ANI RAZU;
+	#      - biegnie w przelocie wolanym BEZ zakresu, czyli w bramce konca wydania `k7-koniec.sh`
+	#        — to jest ochrona PRZED ODDANIEM, nie przy kazdym PR-ze;
+	#      - i recznie: `bash testy/schemat-wersja-po-sprawdzeniu-proba-kontrolna.sh`, ktora
+	#        stawia wlasny stos PROBNY (nie ten wspolny) i wola straznika tam.
+	#    Poprzednia wersja tego komentarza mowila samo „biegnie przez wlasna probe kontrolna",
+	#    co czytalo sie jak „ma spust w CI" — a nie ma (recenzja #274, runda 11, WAZNA 1).
+	case "$t" in *schemat-wersja-po-sprawdzeniu-test.php) echo "POMINIĘTE (niszczy stan — spust: przelot bez zakresu w k7-koniec albo uruchomienie ręczne; w CI PR-owym NIE biegnie): $t"; printf '%s\tPOMINIETE\t0\n' "$t" >> "$TSV"; continue;; esac
 	uruchom "$t" php nie
 done
 echo "--- testy/ (JS, przeglądarka) ---"
