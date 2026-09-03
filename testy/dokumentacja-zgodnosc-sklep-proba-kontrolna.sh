@@ -86,13 +86,21 @@ psuj_okno_crypto()    { sed -i 's/c\.getRandomValues(a)/Math.random()/' "$1/$W/i
 #    znajduje pole i dalej losuje bajty — tylko nic z nimi nie robi. Ochrona martwa, selektor
 #    na miejscu. Do rundy 8 bramka tego nie widziala.
 psuj_okno_nadpisanie(){ sed -i 's/p\.value=s;//' "$1/$W/includes/front-produkt.php"; }
+# OGNIWO 3 (recenzja #273 r9, WAZNA 1): wycina SAMA PETLE skladajaca wartosc. Skrypt dalej
+#    znajduje pole, dalej losuje 12 bajtow i dalej wykonuje `p.value=s;` — tylko `s` zostaje
+#    pusty, wiec KAZDY kupujacy wysyla `okno=` i klucz wraca do postaci sprzed naprawy Q-5.
+#    Do rundy 9 oba narzedzia dawaly na to EXIT=0 — zywa i martwa ochrona nie do odroznienia.
+psuj_okno_zlozenie()  { sed -i 's/for(var i=0;i<a\.length;i++){s+=(a\[i\]<16?"0":"")+a\[i\]\.toString(16);}//' "$1/$W/includes/front-produkt.php"; }
 
 echo "=== KONTROLA ODWROTNA: czysta kopia = 0 rozjazdow ==="
 sprawdz_ "czysta kopia repo → EXIT 0"                         0 nic               "0 rozjazdów"
 echo; echo "=== KAZDY ROZJAZD PODLOZONY OSOBNO → EXIT 1, nazwa pozycji, DOKLADNIE 1 rozjazd ==="
 sprawdz_ "A: Stable tag ≠ Version"                            1 psuj_stable_tag   "Stable tag == Version"
 sprawdz_ "Q5: pole 'okno' znika z formularza zakupu"          1 psuj_okno_pole    "pole 'okno' w formularzu zakupu"
-sprawdz_ "Q5: skrypt losujacy znacznik usuniety (3 asercje)"  1 psuj_okno_skrypt  "skrypt ZNAJDUJE pole|skrypt NADPISUJE wartosc|losowosc z crypto" 3
+# ⛔ Caly skrypt stoi w JEDNEJ linii front-produkt.php:652, wiec usuniecie tej linii zabija
+#    WSZYSTKIE cztery asercje skryptowe. Liczba 3 -> 4 przy dolozeniu asercji ZLOZENIA.
+sprawdz_ "Q5: skrypt losujacy znacznik usuniety (4 asercje)"  1 psuj_okno_skrypt  "skrypt ZNAJDUJE pole|ZLOZENIE wartosci|skrypt NADPISUJE wartosc|losowosc z crypto" 4
+sprawdz_ "Q5: sama petla skladajaca wycieta (pusty znacznik u wszystkich)" 1 psuj_okno_zlozenie "ZLOZENIE wartosci z wylosowanych bajtow"
 sprawdz_ "Q5: crypto podmienione na Math.random"              1 psuj_okno_crypto  "losowosc z crypto, nie z Math.random"
 sprawdz_ "Q5: samo przypisanie p.value=s wyciete (ochrona martwa)" 1 psuj_okno_nadpisanie "skrypt NADPISUJE wartosc pola"
 sprawdz_ "A: licencja w readme nie GPLv2"                     1 psuj_licencja     "License (forma readme WP)"

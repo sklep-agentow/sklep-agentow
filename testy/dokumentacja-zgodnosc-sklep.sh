@@ -163,10 +163,21 @@ spr "plik $W/PONAD-SPECYFIKACJE.md"                         "1" "test -f $W/PONA
 #    WAZNA 2). Stan faktyczny: wpiecie tej bramki do zestawu to zadanie DO ZAPISANIA
 #    w `audyt/CO-WISI.md` przy scalaniu #277, ktory jako jedyny z kolejki rusza rejestry.
 #    Dopoki tam nie trafi, jedynym miejscem, gdzie o tym zadaniu wiadomo, jest ten komentarz.
-#    Trzy asercje, bo ochrona ma trzy czesci i kazda mozna usunac osobno: pole w formularzu ·
-#    skrypt, ktory je nadpisuje · zrodlo losowosci. Trzecia liczy WYWOLANIE w kodzie JS
+#    CZTERY asercje, bo ochrona ma CZTERY ogniwa i kazde mozna usunac osobno: pole w formularzu ·
+#    skrypt, ktory je ZNAJDUJE · ZLOZENIE wartosci z wylosowanych bajtow · NADPISANIE pola ·
+#    zrodlo losowosci. ⛔ Komentarz mowil wczesniej „trzy czesci” i to nie byla nieszkodliwa
+#    niescislosc: ogniwo ZLOZENIA nie mialo asercji, wiec wyciecie samej petli skladajacej
+#    zostawialo `s` pustym — kazdy kupujacy wysylal `okno=`, klucz wracal do postaci sprzed
+#    naprawy, a OBA narzedzia dawaly EXIT=0 (recenzja #273 r9, WAZNA 1: pomiar dwukierunkowy,
+#    identyczny wynik przy zywej i przy martwej ochronie). Zmierzone, nie przypuszczone.
+#    Asercja losowosci liczy WYWOLANIE w kodzie JS
 #    (`c.getRandomValues(a)`), nie samo slowo — to samo slowo stoi takze w komentarzu obok
 #    i asercja na nie oczekiwalaby liczby, ktora zmienia sie przy kazdej poprawce komentarza.
+echo
+echo "=== G. ZNACZNIK OKNA IDEMPOTENCJI (Q-5) — PIEC asercji: pole w formularzu + CZTERY ogniwa skryptu ==="
+# ⛔ Wlasna sekcja od rundy 10. Do rundy 9 te asercje drukowaly sie pod naglowkiem F
+#    (INSTRUKCJA.md, liczby i odsylacze), z ktorym nie maja nic wspolnego — czytajacy log
+#    widzial je jako czesc innego pomiaru (recenzja #273, DROBNA zglaszana w r6, r7, r8, r9).
 spr "znacznik okna: pole 'okno' w formularzu zakupu"        "1" "grep -c \"name=.okno.\" $W/includes/front-produkt.php"
 # ⛔ Ta asercja MUSI mierzyc PRZYPISANIE, nie sam selektor. Pierwsza wersja liczyla wystapienie
 #    `sklepag-kup-formularz input[name=okno]`, czyli to, ze skrypt POLE ZNAJDUJE — a wyciecie
@@ -174,8 +185,14 @@ spr "znacznik okna: pole 'okno' w formularzu zakupu"        "1" "grep -c \"name=
 #    (recenzja #273, runda 8, WAZNA 1: nazwa obiecywala „NADPISUJE", pomiar mowil „widzi").
 spr "znacznik okna: skrypt ZNAJDUJE pole w przegladarce"    "1" "grep -c 'sklepag-kup-formularz input\[name=okno\]' $W/includes/front-produkt.php"
 spr "znacznik okna: skrypt NADPISUJE wartosc pola"          "1" "grep -c 'p[.]value=s;' $W/includes/front-produkt.php"
+# ⛔ OGNIWO 3 — ZLOZENIE. Bez tej asercji wyciecie samej petli zostawia `s` pustym: skrypt
+#    nadal ZNAJDUJE pole, nadal LOSUJE 12 bajtow i nadal wykonuje `p.value=s;`, tylko wysyla
+#    PUSTY znacznik — czyli dokladnie stan sprzed naprawy Q-5, przy zielonych bramkach.
+#    Wzorzec mierzy SKLADANIE (`s+=` z bajtem), nie samo `toString(16)`, ktore przezylo by
+#    wyciecie petli, gdyby stalo gdziekolwiek indziej.
+spr "znacznik okna: ZLOZENIE wartosci z wylosowanych bajtow" "1" "grep -c 's+=(a\[i\]<16' $W/includes/front-produkt.php"
 spr "znacznik okna: losowosc z crypto, nie z Math.random"   "1" "grep -c 'c[.]getRandomValues(a)' $W/includes/front-produkt.php"
 
 echo
-if [ "$ZLE" -eq 0 ]; then echo "PIEC LICZB (72h/10/30d/20MB/10min), ETYKIETY I ODSYLACZE DOKUMENTACJI SKLEPU ZGODNE Z KODEM — 0 rozjazdów (90 dni, 7 prob, 3 proby, 1 min, 5 stron i tresc zdan: czytanie w calosci)"; exit 0; fi
+if [ "$ZLE" -eq 0 ]; then echo "PIEC LICZB (72h/10/30d/20MB/10min), ETYKIETY, ODSYLACZE I PIEC ASERCJI ZNACZNIKA OKNA (Q-5: pole + cztery ogniwa skryptu) ZGODNE Z KODEM — 0 rozjazdów (90 dni, 7 prob, 3 proby, 1 min, 5 stron i tresc zdan: czytanie w calosci)"; exit 0; fi
 echo "NIEZGODNE: $ZLE pozycji"; exit 1
