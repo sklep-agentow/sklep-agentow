@@ -358,7 +358,25 @@ spr "pole Tags"                      "1" "grep -c '^Tags: ' $W/readme.txt"
 spr "Requires at least == naglowek wtyczki" "1" "test \"\$(grep -oP '(?<=^Requires at least: ).*' $W/readme.txt)\" = \"\$(grep -oP '(?<=^ \\* Requires at least: ).*' $W/segregator-maila.php)\" && echo 1 || echo 0"
 spr "Requires PHP == naglowek wtyczki"      "1" "test \"\$(grep -oP '(?<=^Requires PHP: ).*' $W/readme.txt)\" = \"\$(grep -oP '(?<=^ \\* Requires PHP: ).*' $W/segregator-maila.php)\" && echo 1 || echo 0"
 spr "Stable tag == wersja wtyczki"          "1" "test \"\$(grep -oP '(?<=^Stable tag: ).*' $W/readme.txt)\" = \"\$(grep -oP '(?<=^ \\* Version: ).*' $W/segregator-maila.php)\" && echo 1 || echo 0"
-WP_STACK=$(docker exec strona_wp_wordpress wp --allow-root --path=/var/www/html core version 2>/dev/null | grep -oE '^[0-9]+\.[0-9]+')
+# ⛔ Powod POMINIECIA musi byc ZMIERZONY, nie zgadniety: `2>/dev/null` zjadalo tak samo brak polecenia
+#    `docker`, `permission denied` i zatrzymany kontener, a `else` orzekalo jedno („stos nie odpowiada”).
+#    Recenzent #268 r12 dostal to zdanie na maszynie, na ktorej dockera NIE MA WCALE.
+if ! command -v docker > /dev/null 2>&1; then
+	POWOD_BRAKU_STOSU="NIE WIEM — nie ma polecenia 'docker' na tej maszynie"
+	WP_STACK=""
+else
+	BLAD_WP=$(docker exec strona_wp_wordpress wp --allow-root --path=/var/www/html core version 2>&1 >/dev/null)
+	WP_STACK=$(docker exec strona_wp_wordpress wp --allow-root --path=/var/www/html core version 2>/dev/null | grep -oE '^[0-9]+\.[0-9]+')
+	case "$BLAD_WP" in
+		# ⛔ KOLEJNOSC MA ZNACZENIE: „Error response from daemon: No such container” zawiera slowo
+		#    „daemon”, wiec przy odwrotnej kolejnosci brak kontenera dostawal etykiete „nie widzimy
+		#    Dockera”. Zlapane wlasna proba kontrolna 3.09 — najpierw wzorce KONKRETNE, potem ogolne.
+		*"No such container"*|*"is not running"*|*"No such object"*) POWOD_BRAKU_STOSU="kontener strona_wp_wordpress nie chodzi: $BLAD_WP" ;;
+		*"permission denied"*|*"Cannot connect"*|*"daemon"*)         POWOD_BRAKU_STOSU="NIE WIEM — to konto nie widzi Dockera: $BLAD_WP" ;;
+		"")                                                    POWOD_BRAKU_STOSU="" ;;
+		*)                                                     POWOD_BRAKU_STOSU="stos nie odpowiedzial: $BLAD_WP" ;;
+	esac
+fi
 if [ -n "$WP_STACK" ]; then
   spr "Tested up to = wersja WP ze stacku ($WP_STACK)" "$WP_STACK" "grep -oP '(?<=^Tested up to: ).*' $W/readme.txt | grep -oE '^[0-9]+\\.[0-9]+'"
 else

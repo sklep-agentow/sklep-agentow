@@ -176,7 +176,6 @@ odczyt "wersja rdzenia"            "7."                wersja-wp
 echo
 echo "--- rozroznianie: brak dostepu do Dockera vs zatrzymany kontener ---"
 ATRAPY="$(mktemp -d -t stos-atrapa-XXXXXX)"
-trap 'rm -rf "$ATRAPY"' EXIT INT TERM
 
 printf '#!/bin/sh\necho "permission denied while trying to connect to the docker API at unix:///var/run/docker.sock" >&2\nexit 1\n' > "$ATRAPY/docker"
 chmod +x "$ATRAPY/docker"
@@ -206,6 +205,51 @@ if [ "$WY_BRAK" = "$WY_STOP" ]; then
 else
 	printf '  OK   %-56s\n' "oba przypadki daja ROZNE wyjscie"
 fi
+
+echo
+echo "--- rozroznianie: brak POLECENIA docker vs martwy WordPress (recenzja #268 r12) ---"
+# ⛔ Dwie wady z rundy 12, obie tej samej klasy: skrypt ORZEKAL przyczyne, ktorej nie zmierzyl.
+#    (1) `wymagaj_narzedzia` szla galezia "STOS NIE ODPOWIADA" i KAZALA recenzentowi napisac
+#        w recenzji, ze stos nie odpowiada — na maszynie, na ktorej dockera nie ma WCALE.
+#    (2) `$kod` z curla przy braku polaczenia mial wartosc `000000` (curl wypisuje `000` I konczy
+#        sie niezerowo, wiec `|| echo 000` doklejalo drugie), wiec warunek `= "000"` NIE trafial
+#        i skrypt szedl dalej, meldujac np. "wersja rdzenia → 7.1" przy martwym WordPressie.
+# Kazdy przypadek psuje DOKLADNIE JEDEN warunek: pierwszy zabiera polecenie, drugi adres uslugi.
+
+# (1) PATH bez `docker` — same podstawowe narzedzia, zeby skrypt w ogole ruszyl
+GOLY="$(mktemp -d -t stos-goly-XXXXXX)"
+trap 'rm -rf "$ATRAPY" "$GOLY" "$KOPIA"' EXIT INT TERM
+for _b in bash sh grep sed awk curl printf cut tr head tail sort uniq wc env test cat; do
+	_p="$(command -v "$_b" 2> /dev/null)" && ln -sf "$_p" "$GOLY/$_b"
+done
+WY_GOLY="$( PATH="$GOLY" bash "$STOS" stan 2>&1 )"
+case "$WY_GOLY" in
+	*"NIE WIEM"*) printf '  OK   %-56s\n' "brak POLECENIA docker melduje NIE WIEM" ;;
+	*)            printf '  BLAD %-56s\n' "brak POLECENIA docker NIE melduje NIE WIEM"
+	              printf '%s\n' "$WY_GOLY" | head -3 | sed 's/^/         /'
+	              BLEDY=$(( BLEDY + 1 )) ;;
+esac
+
+# (2) martwy adres uslugi: kopia skryptu z portem, na ktorym nikt nie sluchа
+KOPIA="$(mktemp -t stos-martwy-XXXXXX.sh)"
+sed 's#ADRES_WP=http://localhost:8890#ADRES_WP=http://127.0.0.1:59999#' "$STOS" > "$KOPIA"
+WY_MARTWY="$( bash "$KOPIA" stan 2>&1 )"
+case "$WY_MARTWY" in
+	*"WordPress pod http://127.0.0.1:59999 nie odpowiada"*)
+		printf '  OK   %-56s\n' "martwy WordPress meldowany JAKO WordPress" ;;
+	*)
+		printf '  BLAD %-56s\n' "martwy WordPress przemilczany albo nazwany inaczej"
+		printf '%s\n' "$WY_MARTWY" | head -4 | sed 's/^/         /'
+		BLEDY=$(( BLEDY + 1 )) ;;
+esac
+# ⛔ KONTROLA, ZE PRZYPADEK (2) NIE PRZECHODZI DALEJ: przed naprawa skrypt po `HTTP 000000`
+#    szedl do konca i wypisywal wersje rdzenia, czyli twierdzil cos o dzialajacym stosie.
+case "$WY_MARTWY" in
+	*"wersja rdzenia"*)
+		printf '  BLAD %-56s\n' "po martwym WordPressie skrypt SZEDL DALEJ (wersja rdzenia)"
+		BLEDY=$(( BLEDY + 1 )) ;;
+	*) printf '  OK   %-56s\n' "po martwym WordPressie skrypt PRZERYWA" ;;
+esac
 
 echo
 if [ "$BLEDY" -eq 0 ]; then

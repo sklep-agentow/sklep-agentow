@@ -92,11 +92,15 @@ odmow() {
 #    się fałszywe: WordPress odpowiadał HTTP 200, a padał wyłącznie dostęp do Dockera.
 #    Powód zaczynający się od „NIE WIEM” dostaje teraz nagłówek NIE WIEM.
 brak_stosu() {
+	# ⛔ Wzorzec obejmuje TAKZE powody o TEJ maszynie (brak polecenia) — z „nie ma `docker` u mnie” NIE WYNIKA
+	#    nic o cudzym kontenerze. r12 naprawila prefiks „NIE WIEM”, a `wymagaj_narzedzia` wchodzila drugim
+	#    wejsciem i dostawala naglowek „STOS NIE ODPOWIADA” + polecenie wpisania tego do recenzji (klasa 8).
 	case "$1" in
-		"NIE WIEM"*)
+		"NIE WIEM"*|"nie ma polecenia"*)
 			# ⛔ Naglowek NIE powiela tresci powodu — inaczej wychodzi "NIE WIEM, CZY STOS
 			#    STOI — NIE WIEM, czy stos stoi — ..." (zlapane wlasna proba kontrolna 3.09).
-			printf 'NIE WIEM — %s\n' "${1#NIE WIEM, }" >&2
+			powod="${1#NIE WIEM, }"
+			printf 'NIE WIEM — %s\n' "$powod" >&2
 			printf 'To jest informacja o PRZYRZĄDZIE, nie o kontenerze: nie zdołałam zapytać.\n' >&2
 			printf 'W recenzji napisz „nie dało się sprawdzić”, a NIE „stos nie stoi”.\n' >&2
 			;;
@@ -275,9 +279,12 @@ op_stan() {
 	local kod ile
 	wymagaj_narzedzia curl
 	printf '=== STAN STOSU WARSZTATOWEGO ===\n'
+	# ⛔ `|| echo 000` DOKLEJALO drugie 000: curl przy braku polaczenia wypisuje `000` przez -w I KONCZY SIE
+	#    niezerowo, wiec $kod miala wartosc `000000`, warunek nizej NIE trafial, a wykonanie szlo dalej
+	#    i orzekalo o zupelnie innej przyczynie (recenzja #268 r12). Dopasowanie wzorcem lapie oba ksztalty.
 	kod="$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "$ADRES_WP/" 2> /dev/null || echo 000)"
 	printf '  WordPress %s  → HTTP %s\n' "$ADRES_WP" "$kod"
-	[ "$kod" = "000" ] && brak_stosu "WordPress pod $ADRES_WP nie odpowiada"
+	case "$kod" in 000*) brak_stosu "WordPress pod $ADRES_WP nie odpowiada (curl: $kod)" ;; esac
 	kontener_zyje
 	printf '  kontener %s  → uruchomiony\n' "$KONTENER_WP"
 	printf '  wersja rdzenia            → %s\n' "$(wp_odczyt core version | tr -d '\r')"
