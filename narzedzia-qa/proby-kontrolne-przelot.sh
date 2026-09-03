@@ -80,17 +80,27 @@ fi
 WYMAGA_ZIP=(
 	k7-koniec-proba-kontrolna.sh
 	paczka-zgodnosc-proba-kontrolna.sh
+	# 4.09 (recenzja #272 r13, WAZNA 3): te dwie tez koncza sie kodem 2 bez `zip`,
+	# a byly WYLACZNIE w WYMAGA_DOCKERA — czyli na wykonawcy Z Dockerem i BEZ zip
+	# ruszaly i lądowaly w liczniku PORAZEK. Ta sama niedeterministyczna czerwien,
+	# ktora ten commit naprawia, tylko z innego wiersza logu. Naprawiam KLASE.
+	dowod-z-paczki-proba-kontrolna.sh
+	dowod-aktualizacji-proba-kontrolna.sh
 )
 if ! command -v zip > /dev/null 2>&1; then
 	for N in "${WYMAGA_ZIP[@]}"; do
-		POMIJANE[$N]="wymaga `zip`, a ten wykonawca go nie ma (runnery nie są identyczne) — przelot ręczny przed wydaniem"
+		POMIJANE[$N]="wymaga 'zip', a ten wykonawca go nie ma (runnery nie są identyczne) — przelot ręczny przed wydaniem"
 	done
 fi
 
 # ⛔ SUFIT POMINIĘĆ. Bez niego lista pominięć rośnie po cichu i przelot świeci
 # zielono, sprawdzając coraz mniej — dokładnie ta klasa błędu, dla której ten
 # skrypt w ogóle powstał. Podniesienie sufitu ma być świadomą decyzją w commicie.
-MAX_POMINIETYCH=7   # 3.09: +1 wobec 6. Powod: WYMAGA_ZIP (2 proby) minus jedna, ktora i tak
+MAX_POMINIETYCH=7   # 4.09: BEZ ZMIANY mimo rozszerzenia WYMAGA_ZIP z 2 na 4 proby — policzone,
+                    # nie przyjete: dowod-z-paczki i dowod-aktualizacji SA JUZ w piatce dockerowej,
+                    # wiec unia sie nie zmienia. Brak Dockera i brak zip: 5 u {k7,paczka} = 7.
+                    # Docker JEST, brak zip: {k7,paczka,dowod-z-paczki,dowod-aktualizacji} = 4.
+                    # 3.09: +1 wobec 6. Powod: WYMAGA_ZIP (2 proby) minus jedna, ktora i tak
                     # byla juz liczona — na koncie CI bez Dockera i bez `zip` pominiec jest 7
                     # (5 dockerowych + 2 zipowe). Bez tej zmiany moja wlasna naprawa wywalilaby
                     # przelot na suficie — czyli mechanizm zadzialal tak, jak mial: wymusil
