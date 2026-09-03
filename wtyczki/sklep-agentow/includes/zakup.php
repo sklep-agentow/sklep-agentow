@@ -22,15 +22,43 @@ const SKLEPAG_ZGODA_TRESC = 'Wyrażam zgodę na natychmiastowe dostarczenie tre�
  * podkładał okno — i przestał mierzyć cokolwiek, nie mówiąc o tym ani słowem. Dwa miejsca
  * składające ten sam klucz to rozjazd czekający na okazję; jedno miejsce go nie ma jak zrobić.
  *
- * Człony: adres kupującego (okno działa per adres), produkt (osobne okno na produkt) oraz tryb
- * płatności — osadzona i hostowana kończą się INNĄ sesją Stripe, więc nie wolno im dzielić okna.
+ * ⛔ W KOMENTARZACH NIE PODAJEMY NUMERU WYDANIA. Numer wydania żyje w JEDNYM miejscu —
+ * w nagłówku sekcji CHANGELOG.md. Numer wpisany do komentarza starzeje się natychmiast,
+ * gdy zmiana trafi do innego wydania, niż zakładał autor, i wtedy kod twierdzi coś
+ * o wydaniu, którego nie ma. Pisz „od tego wydania” / „w poprzednich wydaniach”.
+ * Człony: adres kupującego (okno działa per adres), ZNACZNIK FORMULARZA (od tego wydania — losowy token
+ * w polu `okno`: render daje wartość startową, a skrypt tuż pod formularzem NADPISUJE ją losową
+ * z `crypto.getRandomValues`, więc token NIE pochodzi z renderu. To nie jest ozdoba: strona produktu
+ * nie wysyła `nocache_headers()`, więc pod pełnostronicowym cache'em wszystkie przeglądarki dostałyby
+ * ten sam zapamiętany render — i ten sam token. Podwójny klik wysyła TEN SAM formularz, więc ten
+ * sam token; druga osoba za tym samym adresem ma własny token), produkt (osobne okno
+ * na produkt) oraz tryb płatności — osadzona i hostowana kończą się INNĄ sesją Stripe, więc nie wolno
+ * im dzielić okna. Brak tokenu (POST spoza naszego formularza) = pusty człon: okno działa jak w poprzednich wydaniach,
+ * per adres — gorzej nie jest, lepiej nie ma z czego.
  *
- * @param int  $produkt_id Id produktu.
- * @param bool $osadzona   Czy płatność osadzona (formularz karty na naszej stronie).
+ * @param int    $produkt_id Id produktu.
+ * @param bool   $osadzona   Czy płatność osadzona (formularz karty na naszej stronie).
+ * @param string $znacznik   Token formularza (`okno`), już oczyszczony; '' gdy go nie ma.
  * @return string Nazwa transientu.
  */
-function sklepag_klucz_idem( $produkt_id, $osadzona ) {
-	return 'sklepag_idem_' . md5( sklepag_ip() . '|' . (int) $produkt_id . '|' . ( $osadzona ? 'o' : 'h' ) );
+function sklepag_klucz_idem( $produkt_id, $osadzona, $znacznik = '' ) {
+	return 'sklepag_idem_' . md5( sklepag_ip() . '|' . (string) $znacznik . '|' . (int) $produkt_id . '|' . ( $osadzona ? 'o' : 'h' ) );
+}
+
+/**
+ * Znacznik formularza z POST-a: tylko [A-Za-z0-9], do 40 znaków. Wszystko inne = brak znacznika.
+ * Nie jest sekretem ani dowodem tożsamości — jedynie rozdziela okna dwóch przeglądarek za jednym adresem.
+ */
+function sklepag_znacznik_okna_z_post() {
+	// ⛔ `is_string` JEST TU KONIECZNE, nie ozdobne: `okno[]=x` w POST daje TABLICĘ, a rzutowanie
+	// tablicy na łańcuch zwraca literał `Array` (podręcznik PHP, „Converting Arrays to Strings”).
+	// Bez tego sprawdzenia wyrażenie niżej przepuściłoby `Array` jako PRAWIDŁOWY znacznik — czyli
+	// wszyscy wysyłający tablicę dzieliliby JEDNO wspólne okno idempotencji.
+	if ( ! isset( $_POST['okno'] ) || ! is_string( $_POST['okno'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce sprawdza wołający handler.
+		return '';
+	}
+	$z = preg_replace( '/[^A-Za-z0-9]/', '', (string) wp_unslash( $_POST['okno'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- czyszczone wyrażeniem do [A-Za-z0-9].
+	return substr( (string) $z, 0, 40 );
 }
 
 /**
@@ -188,13 +216,14 @@ function sklepag_obsluz_kup() {
 	// 2. STAN SESJI. Łapie przypadki, w których webhook JUŻ wrócił (sesja opłacona,
 	//    wygaszona) albo wiersza sesji w ogóle nie ma — brak danych to odmowa, nie domysł.
 	//
-	// Okno jest kluczowane adresem IP (`sklepag_ip()` czyta goły REMOTE_ADDR), więc za
-	// wspólnym adresem (CGNAT operatora, biuro za NAT) trafia też w DRUGĄ osobę. Krótkie
-	// okno ogranicza to do kilku sekund; pełne rozdzielenie kupujących wymagałoby klucza
-	// związanego z sesją przeglądarki i jest znanym, świadomie otwartym ograniczeniem tego okna.
+	// Okno jest kluczowane adresem IP (`sklepag_ip()` czyta goły REMOTE_ADDR) ORAZ znacznikiem
+	// formularza (od tego wydania): za wspólnym adresem (CGNAT operatora, biuro za NAT) dwie przeglądarki
+	// losują dwa RÓŻNE znaczniki — niezależnie od tego, czy dostały ten sam zapamiętany render — więc
+	// dwa okna, i zakup jednej osoby nie odbija się drugiej.
+	// Podwójny klik wysyła ten sam formularz, więc ten sam znacznik: ochrona zostaje.
 	// Okno kluczowane też TRYBEM: sesja hostowana ma `url`, osadzona ma `client_secret` — pomieszanie
 	// oddałoby JS-owi adres do przekierowania albo formularzowi sekret bez strony.
-	$okno = sklepag_klucz_idem( $produkt_id, $osadzona );
+	$okno = sklepag_klucz_idem( $produkt_id, $osadzona, sklepag_znacznik_okna_z_post() );
 	$juz  = get_transient( $okno );
 	if ( is_array( $juz ) && ( ! empty( $juz['url'] ) || ! empty( $juz['client_secret'] ) ) ) {
 		$wiek_ok = ! empty( $juz['czas'] ) && ( time() - (int) $juz['czas'] ) <= SKLEPAG_IDEM_OKNO_S;

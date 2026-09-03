@@ -1,6 +1,6 @@
 # Sklep Agentów — dokumentacja techniczna
 
-**Wersja wtyczki: 0.9.37 · wersja schematu bazy: 10 · WordPress 6.7+ · PHP 8.1+**
+**Wersja wtyczki: 0.9.38 · wersja schematu bazy: 10 · WordPress 6.7+ · PHP 8.1+**
 
 > **Po co ten dokument.** To jest **mapa systemu dla audytora i programisty**, nie ulotka.
 > Każda liczba i nazwa tutaj jest wzięta z kodu, nie z pamięci — jeśli coś się rozjedzie,
@@ -207,7 +207,15 @@ bierze udział w decyzji, czy powtórne kliknięcie przycisku zakupu w oknie ide
 zapamiętany adres checkoutu, czy nowy (`sklepag_sesja_czeka_na_platnosc()`). Warunkiem
 NADRZĘDNYM jest tam wiek okna (`SKLEPAG_IDEM_OKNO_S`), bo `stan` przestawia dopiero webhook —
 zanim dotrze, sesja opłacona leży w bazie jako `utworzona` i jest nieodróżnialna od czekającej.
-Na stan zamówienia ta tabela nadal nie wpływa.
+Na stan zamówienia ta tabela nadal nie wpływa. Klucz okna (`sklepag_klucz_idem()`) składa się
+z czterech członów: adres IP, **znacznik formularza**, produkt i tryb płatności. Znacznik to pole
+`okno` formularza zakupu (od tego wydania): render wstawia wartość startową, a skrypt tuż pod
+formularzem nadpisuje ją losową z `crypto.getRandomValues`. Nadpisanie jest konieczne, bo strona
+produktu **nie** wysyła `nocache_headers()` (jedyne wywołanie siedzi w gałęzi 404), więc pod
+pełnostronicowym cache'em wszyscy kupujący dostaliby ten sam render i ten sam znacznik. Podwójny
+klik wysyła ten sam formularz, czyli ten sam znacznik — ochrona przed dwiema płatnościami zostaje;
+druga osoba za tym samym adresem ma własny znacznik. Przeglądarka bez JavaScriptu zostaje przy
+wartości z renderu, a POST bez znacznika dostaje okno per adres jak w poprzednich wydaniach.
 
 ## 6. Brama pobrań
 
@@ -234,7 +242,7 @@ po stronie serwera. To jest świadome ograniczenie, nie przeoczenie.
 
 | Stała | Wartość | Znaczenie |
 |---|---|---|
-| `SKLEPAG_WERSJA` | 0.9.37 | wersja wtyczki (assety, cache) |
+| `SKLEPAG_WERSJA` | 0.9.38 | wersja wtyczki (assety, cache) |
 | `SKLEPAG_WERSJA_SCHEMATU` | 10 | wersja schematu bazy (migracje) |
 | `SKLEPAG_LIMIT_POBRAN` | 10 | ile razy można pobrać plik z jednego wydanego linku (zerowane przy świeżym linku) |
 | `SKLEPAG_LINK_GODZIN` | 72 | ważność linku pobrania |

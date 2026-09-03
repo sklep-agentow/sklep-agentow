@@ -4,7 +4,7 @@ Tags: sklep, stripe, pliki cyfrowe, sprzedaz wtyczek, pobieranie
 Requires at least: 6.7
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.9.37
+Stable tag: 0.9.38
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -161,6 +161,8 @@ link do pobrania w mailu, jednorazowy link do opinii.
 
 == Changelog ==
 
+= 0.9.38 =
+* Dwie osoby kupujące z tej samej sieci (biuro, sieć komórkowa) nie dzielą już okna ochrony przed podwójnym kliknięciem — wcześniej druga osoba, która kliknęła „Kup” w ciągu 5 sekund po pierwszej, mogła dostać cudzy checkout Stripe. Formularz zakupu niesie teraz własny losowy znacznik, losowany przez przeglądarkę przy otwarciu strony — działa także wtedy, gdy sklep stoi za pełnostronicowym cache'em; podwójne kliknięcie dalej jest wyłapywane.
 = 0.9.37 =
 * Naprawione: anonimizacja kupującego z panelu zachowuje dane do faktury (nazwa, NIP, adres) — tak jak kasownik danych osobowych WordPressa; okno potwierdzenia, komunikat po anonimizacji, szczegóły zamówienia (faktura dalej widoczna) i instrukcja mówią to wprost.
 * Naprawione: po zwrocie całej kwoty albo przy obciążeniu zwrotnym (spór, w którym bank zdjął pieniądze) link do pobrania przestaje działać (dotąd działał do końca 72 h i limitu 10 pobrań). Kupujący widzi powód i kontakt do sprzedawcy, próba trafia do osi czasu zamówienia; zwrot częściowy nie odcina dostępu.
