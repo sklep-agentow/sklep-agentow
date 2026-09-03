@@ -63,10 +63,39 @@ if ! docker ps >/dev/null 2>&1; then
 	done
 fi
 
+# ⛔ PRÓBY WYMAGAJĄCE `zip` (3.09). Powód zmierzony, nie przewidziany z góry: mamy DWA runnery
+# (`hetzner-gosia`, `oracle-micro`) i one NIE SĄ IDENTYCZNE. Porównanie narzędzie po narzędziu:
+#   zip     hetzner TAK · micro NIE      <- to
+#   docker  hetzner TAK · micro NIE      <- to było przewidziane wyżej
+#   unzip, jq, git, curl, php, composer, node — na obu tak samo
+# Skutek, zanim to dopisano: ten sam commit #272 miał bramki ZIELONE (11 min, Hetzner)
+# i CZERWONE (50 min, Oracle) — bo `k7-koniec-proba-kontrolna.sh:118` i
+# `paczka-zgodnosc-proba-kontrolna.sh:293` odmawiają wtedy pomiaru kodem 2, a przelot
+# liczył każdy niezerowy kod jako PORAŻKĘ. CI było więc NIEDETERMINISTYCZNE: wynik zależał
+# od tego, który wykonawca złapał zadanie.
+#
+# ⭐ Ta sama zasada co przy Dockerze: nie na sztywno, tylko tam, gdzie `zip` faktycznie
+# nie istnieje; pominięcie ląduje w logu z powodem, jest policzone i podlega SUFITOWI.
+# ⛔ DŁUG: te dwie próby MUSZĄ przejść ręcznie przed wydaniem — na maszynie, która ma `zip`.
+WYMAGA_ZIP=(
+	k7-koniec-proba-kontrolna.sh
+	paczka-zgodnosc-proba-kontrolna.sh
+)
+if ! command -v zip > /dev/null 2>&1; then
+	for N in "${WYMAGA_ZIP[@]}"; do
+		POMIJANE[$N]="wymaga `zip`, a ten wykonawca go nie ma (runnery nie są identyczne) — przelot ręczny przed wydaniem"
+	done
+fi
+
 # ⛔ SUFIT POMINIĘĆ. Bez niego lista pominięć rośnie po cichu i przelot świeci
 # zielono, sprawdzając coraz mniej — dokładnie ta klasa błędu, dla której ten
 # skrypt w ogóle powstał. Podniesienie sufitu ma być świadomą decyzją w commicie.
-MAX_POMINIETYCH=6   # 2.09 (I-24): +1 = golden-migawka-proba-kontrolna.sh dolaczyla do WYMAGA_DOCKERA (stos probny)
+MAX_POMINIETYCH=7   # 3.09: +1 wobec 6. Powod: WYMAGA_ZIP (2 proby) minus jedna, ktora i tak
+                    # byla juz liczona — na koncie CI bez Dockera i bez `zip` pominiec jest 7
+                    # (5 dockerowych + 2 zipowe). Bez tej zmiany moja wlasna naprawa wywalilaby
+                    # przelot na suficie — czyli mechanizm zadzialal tak, jak mial: wymusil
+                    # JAWNA decyzje w commicie zamiast cichego rozrostu listy pominiec.
+                    # 2.09 (I-24): 6 = +1 golden-migawka-proba-kontrolna.sh (stos probny).
 
 if [ -n "$(git status --porcelain -uno 2>/dev/null)" ]; then
 	echo "PRZELOT: drzewo robocze BRUDNE — dowód powstałby na kodzie, którego nie ma w historii." >&2
