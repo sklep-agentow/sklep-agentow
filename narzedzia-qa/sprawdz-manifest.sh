@@ -105,6 +105,38 @@ elif [ "$PROG" -lt "$LICZBA_MANIFESTU" ]; then
   BLAD=1
 fi
 
+# 1b2) Sufit NIEZMIERZONYCH: musi być LITERAŁEM równym zeru, nie odczytem ze środowiska.
+#      Powód zmierzony (recenzja #272, runda 11): zapis `MAX_NIEZMIERZONYCH="${MAX_NIEZMIERZONYCH:-0}"`
+#      pozwalał podnieść sufit prefiksem przed komendą — `MAX_NIEZMIERZONYCH=2 bash narzedzia-qa/bramki.sh`
+#      kończyło się „WSZYSTKIE WYKONANE BRAMKI ZIELONE" przy dwóch bramkach, które nic nie zmierzyły,
+#      i nie zostawiało po sobie ani jednego bajtu w repozytorium. Precedens, na który powoływał się
+#      komentarz — `MAX_POMINIETYCH` w proby-kontrolne-przelot.sh:69 — jest literałem właśnie dlatego.
+#      ⛔ Tę kontrolę dodano, bo sufit był JEDYNYM progiem w bramki.sh bez własnego strażnika:
+#      PROG_PELNY pilnuje 1b, a sufitu nie pilnowało NIC (grep po całym repo: same wystąpienia
+#      w bramki.sh i jedno zdanie w CHANGELOG-u).
+SUFIT_LINIA=$(grep -nE '^MAX_NIEZMIERZONYCH=' "$BRAMKI" | head -1)
+if [ -z "$SUFIT_LINIA" ]; then
+  echo "MANIFEST-GUARD: nie znalazłem MAX_NIEZMIERZONYCH w bramki.sh — sufit niezmierzonych zniknął." >&2
+  BLAD=1
+elif printf '%s' "$SUFIT_LINIA" | grep -q '\${'; then
+  echo "MANIFEST-GUARD: MAX_NIEZMIERZONYCH czyta ze ŚRODOWISKA ($SUFIT_LINIA) — sufit da się podnieść" >&2
+  echo "                prefiksem przed komendą, bez commita i bez śladu w diffie. Ma być literałem." >&2
+  BLAD=1
+else
+  SUFIT=$(printf '%s' "$SUFIT_LINIA" | grep -oE '[0-9]+$')
+  # ⛔ TWARDE ZERO, bez furtki „wystarczy wspomnieć w CHANGELOG-u”. Pierwsza wersja tej kontroli
+  #    przepuszczała podniesiony sufit, jeśli nazwa `MAX_NIEZMIERZONYCH` padała gdziekolwiek
+  #    w CHANGELOG-u — a padała, bo dopisał ją commit wprowadzający sam sufit. Raz wpisane słowo
+  #    otwierałoby drogę na zawsze. Złapane własną kalibracją: mutant „sufit=3” przeszedł na zielono.
+  #    Podniesienie sufitu jest możliwe, ale wymaga zmiany DWÓCH miejsc — literału w bramki.sh
+  #    ORAZ tej kontroli — i oba są widoczne w diffie.
+  if [ -z "$SUFIT" ] || [ "$SUFIT" -ne 0 ]; then
+    echo "MANIFEST-GUARD: MAX_NIEZMIERZONYCH=$SUFIT — sufit podniesiony ponad zero." >&2
+    echo "                Bramka, która nic nie zmierzyła, nie może uchodzić za zieloną." >&2
+    BLAD=1
+  fi
+fi
+
 # 1c) quality.yml musi faktycznie WOŁAĆ skrypt z bramkami — w kroku `run:`,
 #     nie we wzmiance w komentarzu. Pierwsza wersja tej kontroli łapała własny
 #     komentarz nagłówka i przepuszczała workflow, który skryptu nie uruchamiał

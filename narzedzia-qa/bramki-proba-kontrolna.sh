@@ -326,6 +326,56 @@ probuj "bramka odmawia pomiaru (kod 2) — caly zestaw MUSI byc czerwony" \
 	"bash $BRAMKI --tryb tekstowy" \
 	"NIE ZMIERZONO"
 
+echo
+echo "--- TRYB PELNY: kod 2 ma dac NIE ZMIERZONO, a nie 'ktora wypadla' (runda 12) ---"
+# ⛔ Przypadek w trybie tekstowym (wyzej) NIE POKRYWA goldena: golden jest w BRAMKI_PHP,
+#    wiec w trybie tekstowym jest POMIJANY — a to jedyna bramka, ktora kod 2 deklaruje wprost
+#    (testy/golden-stos-probny.sh:7). Recenzja rundy 11 nazwala to klasa 11: pokrycie obiecane
+#    szersze niz faktyczne. Do rundy 12 sufit stal PO progu i w trybie pelnym byl MARTWY, bo
+#    PROG rowna sie tam liczbie bramek uruchomionych, a kod 2 nie podbija WYKONANE — wiec kazde
+#    NIEZMIERZONE > 0 znaczylo WYKONANE < PROG i wygrywala galaz progu z komunikatem
+#    "sprawdz, ktora WYPADLA" o bramce, ktora NIE wypadla.
+#    Mierzymy SAM OGON z zywego pliku (nie kopie) na scenariuszu trybu pelnego, bez czekania
+#    na dziewieciominutowy przebieg. Kontrola wyciecia nizej pilnuje, ze ogon nie jest pusty.
+OGON="$(sed -n '/^MAX_NIEZMIERZONYCH=/,$p' "$BRAMKI")"
+if ! printf '%s' "$OGON" | grep -q 'NIE WSZYSTKO ZMIERZONE'; then
+	echo "  BLAD wyciecie ogona z $BRAMKI jest puste albo niepelne — pomiar NIE ISTNIEJE" >&2
+	BLEDY=$((BLEDY+1))
+else
+	# scenariusz: tryb pelny, 13 bramek, golden skonczyl kodem 2 -> 12 wykonanych, 1 niezmierzona
+	_wy=$(
+		{
+			printf 'NIEZMIERZONE=(golden)\nWYKONANE=12\nPORAZKI=0\nPROG=13\nTRYB=pelny\n'
+			printf '%s\n' "$OGON"
+		} | bash 2>&1
+		echo "KOD=$?"
+	)
+	_kod=$(printf '%s' "$_wy" | grep -oE 'KOD=[0-9]+' | tail -1 | cut -d= -f2)
+	if printf '%s' "$_wy" | grep -q 'NIE WSZYSTKO ZMIERZONE' && [ "${_kod:-0}" -ne 0 ]; then
+		printf '  OK   tryb pelny, golden EXIT=2 -> NIE WSZYSTKO ZMIERZONE (EXIT=%s)\n' "$_kod"
+		printf '%s' "$_wy" | grep -m1 'STOP: NIE ZMIERZONO' | sed 's/^/         /'
+	else
+		printf '  BLAD tryb pelny, golden EXIT=2 -> brak zdania NIE WSZYSTKO ZMIERZONE (EXIT=%s)\n' "$_kod"
+		printf '%s' "$_wy" | head -3 | sed 's/^/         /'
+		BLEDY=$((BLEDY+1))
+	fi
+	# kontrola ODWROTNA: zero niezmierzonych i komplet wykonanych ma przejsc na zielono
+	_wy2=$(
+		{
+			printf 'NIEZMIERZONE=()\nWYKONANE=13\nPORAZKI=0\nPROG=13\nTRYB=pelny\n'
+			printf '%s\n' "$OGON"
+		} | bash 2>&1
+		echo "KOD=$?"
+	)
+	_kod2=$(printf '%s' "$_wy2" | grep -oE 'KOD=[0-9]+' | tail -1 | cut -d= -f2)
+	if [ "${_kod2:-1}" -eq 0 ] && printf '%s' "$_wy2" | grep -q 'WSZYSTKIE WYKONANE BRAMKI ZIELONE'; then
+		printf '  OK   tryb pelny, komplet zmierzony -> zielone (EXIT=%s)\n' "$_kod2"
+	else
+		printf '  BLAD tryb pelny, komplet zmierzony NIE daje zielonego (EXIT=%s)\n' "$_kod2"
+		BLEDY=$((BLEDY+1))
+	fi
+fi
+
 echo "--- kod wyjscia 2 to NIE ZMIERZONE, nie PORAZKA (I-12) ---"
 # ⛔ Bramka `golden` deklaruje kod 2 wprost (testy/golden-stos-probny.sh:7), a `bramka()` do rundy 10
 #    raportowala KAZDY niezerowy kod jako PORAZKA. Brak Dockera na koncie wykonawcy CI wygladal wiec

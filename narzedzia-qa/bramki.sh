@@ -24,8 +24,12 @@
 #
 # Kody wyjścia: 0 = wszystkie wykonane bramki zielone, jest ich tyle, ile ma być, i ŻADNA
 #                   nie odmówiła pomiaru
-#               1 = któraś bramka czerwona ALBO wykonano ich za mało ALBO któraś skończyła
-#                   kodem 2 (NIE ZMIERZONE) ponad sufit MAX_NIEZMIERZONYCH (domyślnie 0)
+#               1 = któraś skończyła kodem 2 (NIE ZMIERZONE) ponad sufit MAX_NIEZMIERZONYCH
+#                   (literał 0 — podniesienie tylko zmianą w pliku) ALBO zestaw się skurczył
+#                   (ruszyło mniej bramek, niż wymaga tryb) ALBO któraś bramka jest czerwona.
+#                   ⛔ Ta kolejność jest istotna: sufit sprawdzany PRZED progiem, bo inaczej
+#                   w trybie pełnym próg pochłania każdy przypadek „nie zmierzono" i komunikat
+#                   mówi „wypadła" o bramce, która ruszyła i odmówiła werdyktu.
 # ⛔ Kod 2 nie jest wadą ani sukcesem — jest BRAKIEM WERDYKTU. Nie liczy się do WYKONANE,
 #    bo bramka została uruchomiona, a nie wykonana.
 set -u
@@ -475,27 +479,42 @@ if [ ${#NIEZMIERZONE[@]} -gt 0 ]; then
 	echo "  ⛔ Werdyktu tych bramek NIE MA. Nie pisz o nich w recenzji ani 'przeszlo', ani 'padlo'."
 fi
 
-if [ "$WYKONANE" -lt "$PROG" ]; then
-	echo "STOP: wykonano $WYKONANE bramek, a tryb $TRYB wymaga co najmniej $PROG." >&2
+# ⛔ SUFIT NIEZMIERZONYCH STOI PRZED PROGIEM — I TO JEST ISTOTA, NIE KOSMETYKA (runda 12).
+#    Runda 11 postawila go PO progu i tym samym uczynila go w trybie pelnym MARTWYM: tam
+#    PROG rowna sie liczbie bramek uruchomionych (PROG_PELNY=13 przy 13 bramkach; pominiecie
+#    goldena obniza prog o dokladnie jeden), a kod 2 nie podbija WYKONANE — wiec kazde
+#    NIEZMIERZONE > 0 znaczy WYKONANE < PROG i galaz progu wygrywala ZAWSZE. Operator dostawal
+#    wtedy komunikat "sprawdz, ktora WYPADLA" o bramce, ktora NIE wypadla: ruszyla i odmowila
+#    werdyktu. Zdanie "NIE WSZYSTKO ZMIERZONE" nie moglo paść w jedynym trybie, w ktorym
+#    `golden` w ogole biegnie.
+#    ⛔ SUFIT JEST LITERALEM, nie `${…:-}`. Wzorem MAX_POMINIETYCH z proby-kontrolne-przelot.sh:69,
+#    ktory tez jest literalem. Runda 11 czytala go ze SRODOWISKA, wiec `MAX_NIEZMIERZONYCH=2 bash
+#    narzedzia-qa/bramki.sh` przywracalo ciche zielone bez ruszenia jednego bajtu w repozytorium —
+#    czyli dokladnie stan, ktory ten PR likwiduje. Podniesienie MUSI byc zmiana w pliku, widoczna
+#    w diffie; pilnuje tego `narzedzia-qa/sprawdz-manifest.sh` (kontrola 1c).
+MAX_NIEZMIERZONYCH=0
+if [ ${#NIEZMIERZONE[@]} -gt "$MAX_NIEZMIERZONYCH" ]; then
+	echo "STOP: NIE ZMIERZONO ${#NIEZMIERZONE[@]} bramek (sufit: $MAX_NIEZMIERZONYCH): ${NIEZMIERZONE[*]}" >&2
+	echo "      To NIE sa wady produktu — to BRAK POMIARU. Zestaw nie moze konczyc sie zielono," >&2
+	echo "      bo zielone znaczyloby 'sprawdzone', a te bramki nie sprawdzily niczego." >&2
+	echo "NIE WSZYSTKO ZMIERZONE." >&2
+	exit 1
+fi
+
+# ⛔ PROG MIERZY, CZY ZESTAW SIE SKURCZYL — wiec liczy bramki, ktore RUSZYLY, a nie te, ktore
+#    zdazyly wydac werdykt. Inaczej jeden komunikat opisywalby dwie rozne rzeczy: zniknieciе
+#    bramki z rejestru i odmowe pomiaru. Niezmierzone sa juz zalatwione wyzej, wiec tutaj
+#    dochodza do sumy — dzieki temu zdanie "sprawdz, ktora wypadla" jest prawdziwe zawsze,
+#    gdy padnie.
+RUSZYLO=$(( WYKONANE + ${#NIEZMIERZONE[@]} ))
+if [ "$RUSZYLO" -lt "$PROG" ]; then
+	echo "STOP: ruszylo $RUSZYLO bramek, a tryb $TRYB wymaga co najmniej $PROG." >&2
 	echo "      Kurczacy sie zestaw bramek NIE JEST sukcesem — sprawdz, ktora wypadla." >&2
 	exit 1
 fi
 
 if [ "$PORAZKI" -gt 0 ]; then
 	echo "NIEZALICZONE BRAMKI: $PORAZKI" >&2
-	exit 1
-fi
-
-# ⛔ SUFIT NIEZMIERZONYCH — wzorem MAX_POMINIETYCH z proby-kontrolne-przelot.sh. Bez niego lista
-#    NIEZMIERZONE moglaby urosnac do wszystkich bramek, a zestaw i tak skonczylby sie zerem:
-#    "nie wiem" przepuszcza ciszej niz "wada", wiec jest grozniejsze. Podniesienie sufitu jest
-#    mozliwe, ale MUSI byc jawna decyzja w commicie (MAX_NIEZMIERZONYCH=n), nie skutkiem ubocznym.
-MAX_NIEZMIERZONYCH="${MAX_NIEZMIERZONYCH:-0}"
-if [ ${#NIEZMIERZONE[@]} -gt "$MAX_NIEZMIERZONYCH" ]; then
-	echo "STOP: NIE ZMIERZONO ${#NIEZMIERZONE[@]} bramek (sufit: $MAX_NIEZMIERZONYCH): ${NIEZMIERZONE[*]}" >&2
-	echo "      To NIE sa wady produktu — to BRAK POMIARU. Zestaw nie moze konczyc sie zielono," >&2
-	echo "      bo zielone znaczyloby 'sprawdzone', a te bramki nie sprawdzily niczego." >&2
-	echo "NIE WSZYSTKO ZMIERZONE." >&2
 	exit 1
 fi
 
