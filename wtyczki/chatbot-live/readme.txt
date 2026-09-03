@@ -4,7 +4,7 @@ Tags: chat, chatbot, faq, kontakt, wsparcie
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.5.14
+Stable tag: 1.5.15
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -103,7 +103,7 @@ otwiera dodawanie pary z już wpisanym pytaniem.
 = Czy gość może zalać mnie wiadomościami? =
 
 Nie. Limit to 10 wiadomości na minutę z jednego adresu IP, wspólny dla pytań
-i zgłoszeń. Pytanie ma maksymalnie 500 znaków, wiadomość zgłoszenia 2000.
+i zgłoszeń. Pytanie ma maksymalnie 500 znaków (dłuższe dostaje komunikat, nie jest ucinane po cichu), wiadomość zgłoszenia 2000 (za długa dostaje komunikat, nie jest ucinana).
 
 = Czy muszę mieć klucz API, żeby bot działał? =
 
@@ -152,6 +152,11 @@ w ustawieniach. Klucz API jest kasowany zawsze, niezależnie od tego przełączn
 
 Pełna historia zmian, z opisem każdej pozycji, jest w pliku `CHANGELOG.md`
 w paczce. Poniżej skrót.
+
+= 1.5.15 =
+* Niewysłana odpowiedź operatora wraca do pola po odmowie „za długa wiadomość”. Żeby to było możliwe, wtyczka odkłada ją na serwerze najwyżej na 5 minut, osobno dla każdego operatora i każdej rozmowy; szkic znika po pierwszym odczycie; deinstalacja kasuje wszystkie takie wpisy tylko przy włączonym przełączniku „usuń wszystkie dane” (domyślnie wyłączony — jak reszta danych wtyczki).
+* Za dlugie pytanie i za dluga wiadomosc zgloszenia nie sa juz ucinane po cichu — OBA pola w oknie czatu maja wlasny licznik i ostrzegaja przy wklejeniu dluzszego tekstu, a serwer odmawia z liczba znakow. Licznik liczy tak samo jak serwer (emoji = jeden znak).
+* Wiadomosc operatora ponad limit tez dostaje odmowe zamiast cichego ciecia.
 
 = 1.5.14 =
 * Naprawione (RODO): gdy baza odrzuci skasowanie śladu sesji, ChatBot przerywa usuwanie i mówi o tym wprost, zamiast zameldować wykonanie żądania. Wcześniej taka awaria trafiała tylko do dziennika błędów, a osoba składająca wniosek dostawała potwierdzenie usunięcia danych, które zostały w bazie.
