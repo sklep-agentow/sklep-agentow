@@ -27,8 +27,11 @@ const SKLEPAG_ZGODA_TRESC = 'Wyrażam zgodę na natychmiastowe dostarczenie tre�
  * gdy zmiana trafi do innego wydania, niż zakładał autor, i wtedy kod twierdzi coś
  * o wydaniu, którego nie ma. Pisz „od tego wydania” / „w poprzednich wydaniach”.
  * Człony: adres kupującego (okno działa per adres), ZNACZNIK FORMULARZA (od tego wydania — losowy token
- * wpisany w formularz przy renderze strony produktu: podwójny klik wysyła TEN SAM formularz, więc ten
- * sam token; druga osoba za tym samym adresem ma własny render i własny token), produkt (osobne okno
+ * w polu `okno`: render daje wartość startową, a skrypt tuż pod formularzem NADPISUJE ją losową
+ * z `crypto.getRandomValues`, więc token NIE pochodzi z renderu. To nie jest ozdoba: strona produktu
+ * nie wysyła `nocache_headers()`, więc pod pełnostronicowym cache'em wszystkie przeglądarki dostałyby
+ * ten sam zapamiętany render — i ten sam token. Podwójny klik wysyła TEN SAM formularz, więc ten
+ * sam token; druga osoba za tym samym adresem ma własny token), produkt (osobne okno
  * na produkt) oraz tryb płatności — osadzona i hostowana kończą się INNĄ sesją Stripe, więc nie wolno
  * im dzielić okna. Brak tokenu (POST spoza naszego formularza) = pusty człon: okno działa jak w poprzednich wydaniach,
  * per adres — gorzej nie jest, lepiej nie ma z czego.
@@ -214,8 +217,9 @@ function sklepag_obsluz_kup() {
 	//    wygaszona) albo wiersza sesji w ogóle nie ma — brak danych to odmowa, nie domysł.
 	//
 	// Okno jest kluczowane adresem IP (`sklepag_ip()` czyta goły REMOTE_ADDR) ORAZ znacznikiem
-	// formularza (od tego wydania): za wspólnym adresem (CGNAT operatora, biuro za NAT) dwie osoby mają
-	// dwa rendery strony produktu, więc dwa znaczniki i dwa okna — zakup jednej nie odbija się drugiej.
+	// formularza (od tego wydania): za wspólnym adresem (CGNAT operatora, biuro za NAT) dwie przeglądarki
+	// losują dwa RÓŻNE znaczniki — niezależnie od tego, czy dostały ten sam zapamiętany render — więc
+	// dwa okna, i zakup jednej osoby nie odbija się drugiej.
 	// Podwójny klik wysyła ten sam formularz, więc ten sam znacznik: ochrona zostaje.
 	// Okno kluczowane też TRYBEM: sesja hostowana ma `url`, osadzona ma `client_secret` — pomieszanie
 	// oddałoby JS-owi adres do przekierowania albo formularzowi sekret bez strony.

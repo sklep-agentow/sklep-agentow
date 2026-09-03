@@ -142,6 +142,18 @@ spr "readme: 'INSTRUKCJA.md' w paczce"                      "1" "grep -c 'w \`IN
 spr "readme: 'PONAD-SPECYFIKACJE.md' w paczce"              "1" "grep -c '\`PONAD-SPECYFIKACJE.md\` w paczce' $W/readme.txt"
 spr "plik $W/PONAD-SPECYFIKACJE.md"                         "1" "test -f $W/PONAD-SPECYFIKACJE.md && echo 1 || echo 0"
 
+# ⛔ ZNACZNIK OKNA IDEMPOTENCJI — na tym skrypcie stoi CALA ochrona przed Q-5 pod pelnostronicowym
+#    cache'em, a do 0.9.38 nie pilnowal go zaden test ani bramka (recenzja #273, runda 5, DROBNA 2).
+#    Programista, ktory uzna go za ozdobe i usunie, cofa sklep do stanu, w ktorym druga osoba za
+#    jednym adresem dostaje CUDZY checkout Stripe — i nic by tego nie zglosilo.
+#    Trzy asercje, bo ochrona ma trzy czesci i kazda mozna usunac osobno: pole w formularzu ·
+#    skrypt, ktory je nadpisuje · zrodlo losowosci. Trzecia liczy WYWOLANIE w kodzie JS
+#    (`c.getRandomValues(a)`), nie samo slowo — to samo slowo stoi takze w komentarzu obok
+#    i asercja na nie oczekiwalaby liczby, ktora zmienia sie przy kazdej poprawce komentarza.
+spr "znacznik okna: pole 'okno' w formularzu zakupu"        "1" "grep -c \"name=.okno.\" $W/includes/front-produkt.php"
+spr "znacznik okna: skrypt NADPISUJE pole w przegladarce"   "1" "grep -c 'sklepag-kup-formularz input\[name=okno\]' $W/includes/front-produkt.php"
+spr "znacznik okna: losowosc z crypto, nie z Math.random"   "1" "grep -c 'c[.]getRandomValues(a)' $W/includes/front-produkt.php"
+
 echo
 if [ "$ZLE" -eq 0 ]; then echo "PIEC LICZB (72h/10/30d/20MB/10min), ETYKIETY I ODSYLACZE DOKUMENTACJI SKLEPU ZGODNE Z KODEM — 0 rozjazdów (90 dni, 7 prob, 3 proby, 1 min, 5 stron i tresc zdan: czytanie w calosci)"; exit 0; fi
 echo "NIEZGODNE: $ZLE pozycji"; exit 1
