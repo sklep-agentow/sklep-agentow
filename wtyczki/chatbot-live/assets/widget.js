@@ -13,6 +13,16 @@
 	var dane = window.chatlDane;
 
 	/*
+	 * Licznik MUSI liczyc tak samo jak serwer. `String.length` liczy jednostki UTF-16, wiec para
+	 * zastepcza (emoji) liczyla sie podwojnie: zmierzone dla rodziny + "ab" — JS 10, PHP mb_strlen 7.
+	 * Gosc widzial wiec inna liczbe niz ta, ktora rozstrzyga na serwerze. Array.from tnie po punktach
+	 * kodowych i zgadza sie z mb_strlen.
+	 */
+	function dlugoscZnakow(s) {
+		return Array.from(String(s)).length;
+	}
+
+	/*
 	 * Identyfikator sesji wydaje SERWER. Wczesniej wymyslala go przegladarka, ze
 	 * sciezka zapasowa 'chatl-' + Date.now() + Math.random() — a Math.random() nie
 	 * jest generatorem kryptograficznym i nigdy nie mial nim byc. crypto.randomUUID()
@@ -265,10 +275,42 @@
 		var tresc = el('textarea', 'chatl-pole');
 		tresc.required = true;
 		tresc.placeholder = 'W czym możemy pomóc?';
-		tresc.maxLength = 2000;
+		var LIMIT_WIADOMOSCI = parseInt(dane.limitWiadomosci, 10) || 2000;
+		tresc.maxLength = LIMIT_WIADOMOSCI;
 		tresc.rows = 3;
 		tresc.setAttribute('aria-label', 'Treść wiadomości');
 		f.appendChild(tresc);
+
+		/*
+		 * ZGLOSZENIE dostaje ten sam licznik i to samo ostrzezenie co pytanie (CZ-1, klasa 8).
+		 * Do 1.5.15 pole mialo SAM `maxLength`, wiec wklejka 3000 znakow byla ucinana PO CICHU —
+		 * dokladnie wada, ktora CZ-1 nazwal przy pytaniu, tylko w polu obok. Wlasciciel dostawal
+		 * urwane zgloszenie i nie wiedzial, ze czegos brakuje.
+		 */
+		var licznikTresci = el('div', 'chatl-licznik');
+		licznikTresci.setAttribute('aria-live', 'polite');
+		function odswiezLicznikTresci(komunikat) {
+			var n = dlugoscZnakow(tresc.value);
+			if (komunikat) {
+				licznikTresci.textContent = komunikat;
+				licznikTresci.classList.add('chatl-licznik-limit');
+				return;
+			}
+			licznikTresci.textContent = n >= LIMIT_WIADOMOSCI - 200 ? n + ' / ' + LIMIT_WIADOMOSCI : '';
+			licznikTresci.classList.toggle('chatl-licznik-limit', n >= LIMIT_WIADOMOSCI);
+		}
+		tresc.addEventListener('input', function () { odswiezLicznikTresci(); });
+		tresc.addEventListener('paste', function (zd) {
+			var schowek = zd.clipboardData || window.clipboardData;
+			var wklejane = schowek ? String(schowek.getData('text') || '') : '';
+			var razem = dlugoscZnakow(tresc.value) - (tresc.selectionEnd - tresc.selectionStart) + dlugoscZnakow(wklejane);
+			if (razem > LIMIT_WIADOMOSCI) {
+				setTimeout(function () {
+					odswiezLicznikTresci('Wklejony tekst skrócono do ' + LIMIT_WIADOMOSCI + ' znaków — sprawdź, czy wiadomość jest cała.');
+				}, 0);
+			}
+		});
+		f.appendChild(licznikTresci);
 
 		/*
 		 * Informacja o przetwarzaniu danych PRZED polem zgody: co zbieramy,
@@ -378,7 +420,7 @@
 		var polePytania = el('input', 'chatl-pole-pytania');
 		polePytania.type = 'text';
 		polePytania.placeholder = 'Zadaj pytanie…';
-		polePytania.maxLength = 500;
+		polePytania.maxLength = parseInt(dane.limitPytania, 10) || 500;
 		polePytania.autocomplete = 'off';
 		polePytania.setAttribute('aria-label', 'Twoje pytanie');
 		formPytania.appendChild(polePytania);
@@ -393,11 +435,13 @@
 		 * dostaje zdanie wprost. Przez to pole nigdy nie wysle ponad 500 znakow; odmowa serwera (kod `za_dlugie`)
 		 * to zabezpieczenie na obcy klient albo zmiane limitu po stronie serwera — wtedy tresc zostaje w polu.
 		 */
-		var LIMIT_PYTANIA = 500;
+		// Limit z PHP (chatlDane) — jedno zrodlo prawdy. Wartosc awaryjna tylko na wypadek
+		// starego HTML-a w cache przegladarki; serwer i tak odmawia wlasna stala.
+		var LIMIT_PYTANIA = parseInt(dane.limitPytania, 10) || 500;
 		var licznik = el('div', 'chatl-licznik');
 		licznik.setAttribute('aria-live', 'polite');
 		function odswiezLicznik(komunikat) {
-			var n = polePytania.value.length;
+			var n = dlugoscZnakow(polePytania.value);
 			if (komunikat) {
 				licznik.textContent = komunikat;
 				licznik.classList.add('chatl-licznik-limit');
@@ -410,7 +454,7 @@
 		polePytania.addEventListener('paste', function (zd) {
 			var schowek = zd.clipboardData || window.clipboardData;
 			var wklejane = schowek ? String(schowek.getData('text') || '') : '';
-			var razem = polePytania.value.length - (polePytania.selectionEnd - polePytania.selectionStart) + wklejane.length;
+			var razem = dlugoscZnakow(polePytania.value) - (polePytania.selectionEnd - polePytania.selectionStart) + dlugoscZnakow(wklejane);
 			if (razem > LIMIT_PYTANIA) {
 				setTimeout(function () {
 					odswiezLicznik('Wklejony tekst skrócono do ' + LIMIT_PYTANIA + ' znaków — sprawdź, czy pytanie jest całe.');

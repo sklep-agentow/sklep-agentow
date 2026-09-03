@@ -380,16 +380,23 @@ function chatl_assety() {
 		'chatl-widget',
 		'chatlDane',
 		array(
-			'ajaxUrl'     => admin_url( 'admin-ajax.php' ),
-			'nonce'       => wp_create_nonce( 'chatl_front' ),
-			'powitanie'   => $ust['powitanie'],
+			'ajaxUrl'         => admin_url( 'admin-ajax.php' ),
+			/*
+			 * Limity JEDNYM zrodlem prawdy: do 1.5.15 liczby 500 i 2000 byly wpisane takze
+			 * w widget.js, wiec zmiana stalej w PHP cicho rozjezdzala sie z tym, co widzi gosc.
+			 * Ten sam kanal, ktorym od dawna idzie CHATL_RETENCJA_DNI (nizej).
+			 */
+			'limitPytania'    => CHATL_MAX_PYTANIE,
+			'limitWiadomosci' => CHATL_MAX_WIADOMOSC,
+			'nonce'           => wp_create_nonce( 'chatl_front' ),
+			'powitanie'       => $ust['powitanie'],
 			// Informacja o przetwarzaniu danych przy formularzu kontaktu:
 			// co zbieramy, po co, jak długo. Adres polityki pusty => bez linku.
-			'prywatnosc'  => sprintf(
+			'prywatnosc'      => sprintf(
 				'Zbieramy Twój adres e-mail i treść wiadomości wyłącznie po to, żeby odpowiedzieć na Twoje pytanie. Przechowujemy je przez %d dni, potem są kasowane.',
 				CHATL_RETENCJA_DNI
 			),
-			'polityka'    => esc_url( $ust['adres_polityki'] ),
+			'polityka'        => esc_url( $ust['adres_polityki'] ),
 			/*
 			 * Nota na STARCIE rozmowy, nie dopiero przy formularzu kontaktu.
 			 * Samo pisanie na czacie już ląduje w chatl_rozmowy — gość dowiadywał
@@ -397,22 +404,22 @@ function chatl_assety() {
 			 * zapisana od kilku minut. Sprzedajemy wielu firmom i każda staje się
 			 * administratorem danych, więc informacja ma być PRZED pierwszym słowem.
 			 */
-			'notaZapisu'  => sprintf(
+			'notaZapisu'      => sprintf(
 				'Rozmowa jest zapisywana przez %d dni, żebyśmy mogli wrócić z odpowiedzią.',
 				CHATL_RETENCJA_DNI
 			),
-			'notaLink'    => 'Polityka prywatności',
-			'zgodaTekst'  => 'Zapoznałem się z informacją o przetwarzaniu danych',
-			'pozycja'     => chatl_wyglad_ustawienia( $ust )['pozycja'],
+			'notaLink'        => 'Polityka prywatności',
+			'zgodaTekst'      => 'Zapoznałem się z informacją o przetwarzaniu danych',
+			'pozycja'         => chatl_wyglad_ustawienia( $ust )['pozycja'],
 			// Punkt odpytywania: co nowego w MOJEJ rozmowie (przejęcie przez człowieka).
-			'restUrl'     => esc_url_raw( rest_url( 'chatl/v1/rozmowa' ) ),
+			'restUrl'         => esc_url_raw( rest_url( 'chatl/v1/rozmowa' ) ),
 			/*
 			 * Komunikaty o zmianie rozmówcy. Gość ma wiedzieć, KOMU pisze, ZANIM
 			 * napisze coś, czego nie powiedziałby maszynie — dlatego to jest pasek
 			 * w oknie rozmowy, a nie zmiana awatara, którą łatwo przeoczyć.
 			 */
-			'ludzkiPasek' => 'Rozmawiasz z człowiekiem — do rozmowy dołączył konsultant.',
-			'botPasek'    => 'Rozmawiasz z botem.',
+			'ludzkiPasek'     => 'Rozmawiasz z człowiekiem — do rozmowy dołączył konsultant.',
+			'botPasek'        => 'Rozmawiasz z botem.',
 		)
 	);
 }

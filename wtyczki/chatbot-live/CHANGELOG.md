@@ -31,7 +31,9 @@ Nic jeszcze.
   okno czatu nie pozwala przekroczyć limitu: pokazuje licznik od 400 znaków i ostrzega przy
   wklejeniu dłuższego tekstu. Gdyby żądanie przyszło z pominięciem okna (własny skrypt,
   stara wersja w pamięci przeglądarki), serwer odmawia, podając liczbę znaków i limit —
-  zamiast przyjąć i uciąć. To samo dla wiadomości zgłoszenia (limit 2000).
+  zamiast przyjąć i uciąć. **To samo dla wiadomości zgłoszenia** (limit 2000): własny licznik
+  (pokazuje się na 200 znaków przed limitem) i to samo ostrzeżenie przy wklejeniu dłuższego tekstu. Licznik liczy znaki tak
+  samo jak serwer — emoji liczy się jako jeden znak, nie dwa.
 - **Wiadomość operatora dłuższa niż 2000 znaków też nie jest ucinana po cichu.** Operator
   dostaje odmowę z liczbą znaków i limitem; wcześniej wysyłka wyglądała na udaną, a gość
   dostawał urwane zdanie.

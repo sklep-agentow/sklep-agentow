@@ -281,6 +281,23 @@ spr "regex sesji"                 "1"  "grep -c \"a-zA-Z0-9-]{8,64}\" $W/include
 spr "znaki neutralizowane w CSV"  "1"  "grep -c \"array( '=', '+', '-', '@' )\" $W/includes/csv.php"
 spr "BOM UTF-8 w eksporcie"       "1"  "grep -c 'xEF.xBB.xBF' $W/includes/csv.php"
 spr "widget bez uzycia innerHTML"  "0"  "grep -c '\\.innerHTML' $W/assets/widget.js"
+# ⛔ DOKUMENT KLIENTA OBIECUJE LICZNIK I OSTRZEZENIE DLA **OBU** POL (readme.txt sekcja 1.5.15:
+#    "za dluga wiadomosc zgloszenia ... okno czatu pilnuje limitu licznikiem i ostrzezeniem").
+#    Do 1.5.15 pole zgloszenia mialo SAM `maxLength`, wiec wklejka byla ucinana PO CICHU — czyli
+#    dokladnie wada CZ-1, tylko w polu obok (klasa 8). Te trzy asercje pilnuja, zeby zdanie
+#    w dokumencie nie przezylo usuniecia kodu, ktory je czyni prawda.
+spr "licznik dla OBU pol widgetu"  "2"  "grep -c \"chatl-licznik'\" $W/assets/widget.js"
+spr "ostrzezenie przy wklejce w OBU polach" "2" "grep -c \"addEventListener('paste'\" $W/assets/widget.js"
+spr "zgloszenie ma wlasny licznik"  "1"  "grep -c 'odswiezLicznikTresci' $W/assets/widget.js | awk '{print (\$1>0)?1:0}'"
+# ⛔ JEDNO ZRODLO LIMITOW: liczby 500 i 2000 nie moga byc wpisane w JS — ida z PHP przez chatlDane
+#    (tym samym kanalem co CHATL_RETENCJA_DNI). Kontrola dodatnia: `dane.limitPytania` MUSI byc.
+spr "limity ida z PHP do widgetu"  "2"  "grep -c 'limitPytania\|limitWiadomosci' $W/includes/front.php"
+spr "widget czyta limit pytania z chatlDane" "1" "grep -c 'dane.limitPytania' $W/assets/widget.js | awk '{print (\$1>0)?1:0}'"
+# ⛔ LICZNIK MUSI LICZYC TAK SAMO JAK SERWER: `String.length` liczy jednostki UTF-16, wiec emoji
+#    liczylo sie podwojnie (zmierzone: JS 10 vs PHP mb_strlen 7). Zero uzyc `.value.length`.
+spr "licznik liczy punkty kodowe, nie UTF-16" "0" "grep -c 'value.length' $W/assets/widget.js"
+
+
 spr "zgoda sprawdzana na serwerze" "1" "grep -c \"empty( \\\$_POST\\['zgoda'\\] )\" $W/includes/front.php"
 spr "wp_trigger_error pod straza" "2"  "grep -rc \"function_exists( 'wp_trigger_error' )\" $W/chatbot-live.php $W/includes/ai.php | awk -F: '{s+=\$2} END {print s}'"
 
