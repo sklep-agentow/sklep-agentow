@@ -69,6 +69,30 @@ if [ "$SPRAWDZONE" -eq 0 ]; then
 	exit 2
 fi
 
+# ⛔ DATA STANU, NIE TYLKO NUMERY. Znalezione dwa razy w tej samej kolejce PR-ow: scalenie
+# rozstrzyga konflikt w SECURITY.md regula "wygrywa WYZSZY numer wersji" — i razem z numerem
+# przeciaga CALY wiersz, w tym date. Skutek: dokument publiczny deklarowal stan STARSZY niz
+# wydanie, ktore opisuje (#274: "Stan na 2026-09-01" przy wydaniu 0.9.39 z 2026-09-02), a przy
+# tym starszy niz to, co stalo na mainie. Ten straznik pilnowal wylacznie numerow, wiec milczal.
+# Regula: data stanu NIE MOZE byc starsza niz data najnowszego wydania w CHANGELOG-u sklepu.
+DATA_DOK="$(grep -m1 -oE 'Stan na [0-9]{4}-[0-9]{2}-[0-9]{2}' "$DOKUMENT" 2> /dev/null | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}')"
+CHANGELOG_SKLEPU="$KATALOG_WTYCZEK/sklep-agentow/CHANGELOG.md"
+DATA_WYDANIA="$(grep -m1 -oE '^## \[[0-9]+\.[0-9]+\.[0-9]+\] — [0-9]{4}-[0-9]{2}-[0-9]{2}' "$CHANGELOG_SKLEPU" 2> /dev/null | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}')"
+if [ -z "$DATA_DOK" ]; then
+	echo "SECURITY-WERSJE: w $DOKUMENT nie ma wiersza 'Stan na RRRR-MM-DD' — nie wiem, na kiedy opisuje stan" >&2
+	exit 2
+fi
+if [ -z "$DATA_WYDANIA" ]; then
+	echo "SECURITY-WERSJE: w $CHANGELOG_SKLEPU nie ma datowanego naglowka wydania — nie mam z czym porownac daty" >&2
+	exit 2
+fi
+if [ "$DATA_DOK" \< "$DATA_WYDANIA" ]; then
+	echo "ROZJAZD: $DOKUMENT deklaruje stan na $DATA_DOK, a opisuje wydanie z $DATA_WYDANIA (data starsza niz tresc)" >&2
+	ROZJAZDY=$((ROZJAZDY + 1))
+else
+	echo "  zgodne: data stanu $DATA_DOK nie jest starsza niz wydanie $DATA_WYDANIA"
+fi
+
 RAZEM=$((ROZJAZDY + BRAK_WPISU))
 echo "SECURITY-WERSJE: sprawdzonych wtyczek $SPRAWDZONE, rozjazdow $ROZJAZDY, bez wpisu $BRAK_WPISU"
 [ "$RAZEM" -eq 0 ]

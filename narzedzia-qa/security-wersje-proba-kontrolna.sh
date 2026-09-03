@@ -37,6 +37,17 @@ zbuduj_wtyczke() {
 	} > "$katalog/$2.php"
 }
 
+# ⛔ ATRAPA DOKUMENTU TEZ MA BYC TEGO SAMEGO RODZAJU CO PRODUKCJA. Do 3.09 atrapy niosly
+# sam wiersz z wersjami — bez daty stanu i bez CHANGELOG-u, ktory ta date rozstrzyga. Gdy
+# straznik dostal kontrole daty, trzy przypadki zaczely padac na kod 2 („nie mam z czym
+# porownac") i wygladalo to jak regresja straznika, a bylo brakiem w MATERIALE proby.
+# $1 katalog, $2 tresc wiersza wersji, $3 data stanu dokumentu, $4 data wydania w CHANGELOG-u
+zbuduj_dokument() {
+	printf '# SECURITY.md — atrapa\n\n> Stan na %s. %s\n' "$3" "$2" > "$1/SECURITY.md"
+	mkdir -p "$1/wtyczki/sklep-agentow"
+	printf '# Historia zmian\n\n## [%s] — %s · atrapa\n' "0.9.28" "$4" > "$1/wtyczki/sklep-agentow/CHANGELOG.md"
+}
+
 echo "=== PROBA KONTROLNA: security-wersje.sh ==="
 
 # --- 1. stan ZGODNY (kontrola dodatnia) --------------------------------------
@@ -44,7 +55,7 @@ A="$PIASKOWNICA/a"
 mkdir -p "$A"
 zbuduj_wtyczke "$A" sklep-agentow 0.9.28
 zbuduj_wtyczke "$A" chatbot-live 1.5.13
-printf '> Trzy wtyczki: `sklep-agentow` (0.9.28), `chatbot-live` (1.5.13).\n' > "$A/SECURITY.md"
+zbuduj_dokument "$A" 'Trzy wtyczki: `sklep-agentow` (0.9.28), `chatbot-live` (1.5.13).' 2026-09-03 2026-09-02
 (cd "$A" && bash "$STRAZNIK" SECURITY.md wtyczki > /dev/null 2>&1)
 sprawdz "1. stan zgodny przechodzi" 0 $?
 
@@ -52,7 +63,7 @@ sprawdz "1. stan zgodny przechodzi" 0 $?
 B="$PIASKOWNICA/b"
 mkdir -p "$B"
 zbuduj_wtyczke "$B" sklep-agentow 0.9.28
-printf '> `sklep-agentow` (0.9.25) — tak bylo naprawde 31.08.\n' > "$B/SECURITY.md"
+zbuduj_dokument "$B" '`sklep-agentow` (0.9.25) — tak bylo naprawde 31.08.' 2026-09-03 2026-09-02
 (cd "$B" && bash "$STRAZNIK" SECURITY.md wtyczki > /dev/null 2>&1)
 sprawdz "2. rozjazd numeru zlapany" 1 $?
 
@@ -61,7 +72,7 @@ C="$PIASKOWNICA/c"
 mkdir -p "$C"
 zbuduj_wtyczke "$C" sklep-agentow 0.9.28
 zbuduj_wtyczke "$C" segregator-maila 1.3.6
-printf '> `sklep-agentow` (0.9.28) i nic o segregatorze.\n' > "$C/SECURITY.md"
+zbuduj_dokument "$C" '`sklep-agentow` (0.9.28) i nic o segregatorze.' 2026-09-03 2026-09-02
 (cd "$C" && bash "$STRAZNIK" SECURITY.md wtyczki > /dev/null 2>&1)
 sprawdz "3. wtyczka bez wpisu zlapana" 1 $?
 
@@ -93,6 +104,28 @@ sprawdz "6. prawdziwy SECURITY.md tego repo jest zgodny" 0 $?
 # Ta sama regula co bramka-poswiadczenia.sh: brak plikow to odmowa, nie „czysto".
 (cd "$PIASKOWNICA" && bash "$STRAZNIK" > /dev/null 2>&1)
 sprawdz "7. uruchomiony spoza repo odmawia (kod 2)" 2 $?
+
+# --- 8. DATA STANU STARSZA NIZ WYDANIE, ktore dokument opisuje ----------------
+# Znalezione dwa razy w kolejce PR-ow (#274): scalenie rozstrzyga konflikt w SECURITY.md
+# regula „wygrywa WYZSZY numer" i przeciaga CALY wiersz — razem z data starsza niz to,
+# co plik opisuje. Numery sie wtedy zgadzaja, wiec straznik pilnujacy samych numerow milczy.
+F="$PIASKOWNICA/f"
+mkdir -p "$F"
+zbuduj_wtyczke "$F" sklep-agentow 0.9.28
+zbuduj_dokument "$F" '`sklep-agentow` (0.9.28).' 2026-09-01 2026-09-02
+(cd "$F" && bash "$STRAZNIK" SECURITY.md wtyczki > /dev/null 2>&1)
+sprawdz "8. data stanu starsza niz wydanie zlapana" 1 $?
+
+# --- 9. dokument BEZ wiersza „Stan na" = NIE ZMIERZONE, nie sukces -------------
+# Ta sama regula co podloga w przypadku 5: brak materialu to odmowa werdyktu, nie „czysto".
+G="$PIASKOWNICA/g"
+mkdir -p "$G"
+zbuduj_wtyczke "$G" sklep-agentow 0.9.28
+printf '> `sklep-agentow` (0.9.28) bez wiersza o stanie.\n' > "$G/SECURITY.md"
+mkdir -p "$G/wtyczki/sklep-agentow"
+printf '# Historia zmian\n\n## [0.9.28] — 2026-09-02 · atrapa\n' > "$G/wtyczki/sklep-agentow/CHANGELOG.md"
+(cd "$G" && bash "$STRAZNIK" SECURITY.md wtyczki > /dev/null 2>&1)
+sprawdz "9. dokument bez daty stanu = kod 2" 2 $?
 
 echo "=== WYNIK: zdane $ZDANE, oblane $OBLANE ==="
 [ "$OBLANE" -eq 0 ]

@@ -174,6 +174,40 @@ $d_ok = $znacznik_po_a && ! $znacznik_po_b && $znacznik_przed_akt && ! $znacznik
 echo '   WYNIK=' . ( $d_ok ? 'PASS' : 'FAIL - dlawik nie trzyma po awarii, nie zwalnia po sukcesie albo aktywacja go NIE kasuje' ) . "\n";
 $wynik[] = $d_ok;
 
+/*
+ * E: SAM DLAWIK (`aktywacja.php:303-305`) — linia, ktora daje CALA oszczednosc.
+ *
+ * Recenzja #274 rundy 6 i 7, WAZNA 4: zadna z asercji A-D nie mierzyla wczesnego `return`.
+ * Kazde z trzech wolan migracji jest poprzedzone KASOWANIEM znacznika (celowo — inaczej
+ * przypadki mierzylyby wlasny dlawik zamiast produkcji), a D3 stawia znacznik i od razu
+ * wola `sklepag_aktywacja()`, ktora kasuje go w `:264`, ZANIM `:303` cokolwiek przeczyta.
+ * Skutek: usuniecie `:303-305` zostawialo wszystkie cztery przypadki na PASS.
+ *
+ * Ten przypadek pyta wprost: przy POSTAWIONYM znaczniku migracja ma NIE ZROBIC NIC.
+ * Mierzymy to po skutku, ktory bez dlawika musialby nastapic — cofamy wersje schematu
+ * do zera i sprawdzamy, ze po wywolaniu migracji dalej jest zerem. Bez `:303-305`
+ * migracja podniosla by ja do STALEJ i przypadek pada.
+ */
+delete_transient( 'sklepag_schemat_ponowienie' );
+update_option( 'sklepag_wersja_schematu', 0 );
+set_transient( 'sklepag_schemat_ponowienie', 1, 5 * MINUTE_IN_SECONDS );
+$wersja_przed_e = (int) get_option( 'sklepag_wersja_schematu', 0 );
+sklepag_migruj_schemat_jesli_trzeba();
+$wersja_po_e = (int) get_option( 'sklepag_wersja_schematu', 0 );
+/* Sprzatanie: bez tego stos zostaje z wersja 0 i nastepny bieg (albo inny test) zaczyna
+   od stanu, ktorego nie zaklada. Kasujemy znacznik i pozwalamy migracji dojsc do skutku. */
+delete_transient( 'sklepag_schemat_ponowienie' );
+sklepag_migruj_schemat_jesli_trzeba();
+$wersja_po_sprzataniu = (int) get_option( 'sklepag_wersja_schematu', 0 );
+
+echo 'E. wersja schematu przed migracja z POSTAWIONYM znacznikiem: ' . $wersja_przed_e
+	. ' (OCZEKIWANE: 0 — cofnieta celowo), po migracji: ' . $wersja_po_e
+	. ' (OCZEKIWANE: 0 — dlawik ma zatrzymac PRZED praca), po posprzataniu: '
+	. $wersja_po_sprzataniu . ' (OCZEKIWANE: ' . $STALA . " — stos wraca do stanu wyjsciowego)\n";
+$e_ok = ( 0 === $wersja_przed_e ) && ( 0 === $wersja_po_e ) && ( $wersja_po_sprzataniu === $STALA );
+echo '   WYNIK=' . ( $e_ok ? 'PASS' : 'FAIL - dlawik NIE zatrzymuje migracji przy postawionym znaczniku albo sprzatanie nie wrocilo do stalej' ) . "\n";
+$wynik[] = $e_ok;
+
 $ok = ! in_array( false, $wynik, true );
 echo 'RAZEM: WYNIK=' . ( $ok ? 'PASS' : 'FAIL' ) . "\n";
 exit( $ok ? 0 : 1 );

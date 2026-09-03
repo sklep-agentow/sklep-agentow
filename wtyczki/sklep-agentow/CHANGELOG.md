@@ -29,6 +29,8 @@ Nic jeszcze.
 - **Komunikat „Ostatni błąd bazy” pokazuje wreszcie prawdziwy błąd.** `last_error` kasuje każde kolejne zapytanie, a odczyt był jeden — po całej pętli — więc błąd był widoczny tylko wtedy, gdy zawiodła ostatnia z siedmiu tabel. Teraz odczyt po każdym `dbDelta`, wszystkie różne komunikaty w jednym zdaniu.
 - **`SHOW TABLES LIKE` z `esc_like()` w czterech miejscach.** Nazwy tabel niosą po dwa `_`, a w `LIKE` `_` jest dziką kartą — bez escapowania wzorzec pasował do każdej tabeli tej samej długości z dowolnym znakiem na tych pozycjach, więc cudza tabela mogła zostać uznana za naszą i schemat wyglądałby na kompletny.
 
+---
+
 ## [0.9.37] — 2026-09-02 · schemat bazy bez zmian (10)
 
 ### Naprawione
