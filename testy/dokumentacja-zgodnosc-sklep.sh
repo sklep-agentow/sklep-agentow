@@ -168,7 +168,12 @@ spr "plik $W/PONAD-SPECYFIKACJE.md"                         "1" "test -f $W/PONA
 #    (`c.getRandomValues(a)`), nie samo slowo — to samo slowo stoi takze w komentarzu obok
 #    i asercja na nie oczekiwalaby liczby, ktora zmienia sie przy kazdej poprawce komentarza.
 spr "znacznik okna: pole 'okno' w formularzu zakupu"        "1" "grep -c \"name=.okno.\" $W/includes/front-produkt.php"
-spr "znacznik okna: skrypt NADPISUJE pole w przegladarce"   "1" "grep -c 'sklepag-kup-formularz input\[name=okno\]' $W/includes/front-produkt.php"
+# ⛔ Ta asercja MUSI mierzyc PRZYPISANIE, nie sam selektor. Pierwsza wersja liczyla wystapienie
+#    `sklepag-kup-formularz input[name=okno]`, czyli to, ze skrypt POLE ZNAJDUJE — a wyciecie
+#    samego `p.value=s;` zostawialo selektor nietkniety i zabijalo ochrone bez sladu w bramce
+#    (recenzja #273, runda 8, WAZNA 1: nazwa obiecywala „NADPISUJE", pomiar mowil „widzi").
+spr "znacznik okna: skrypt ZNAJDUJE pole w przegladarce"    "1" "grep -c 'sklepag-kup-formularz input\[name=okno\]' $W/includes/front-produkt.php"
+spr "znacznik okna: skrypt NADPISUJE wartosc pola"          "1" "grep -c 'p[.]value=s;' $W/includes/front-produkt.php"
 spr "znacznik okna: losowosc z crypto, nie z Math.random"   "1" "grep -c 'c[.]getRandomValues(a)' $W/includes/front-produkt.php"
 
 echo

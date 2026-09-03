@@ -82,14 +82,19 @@ psuj_ponad_brak()     { rm -f "$1/$W/PONAD-SPECYFIKACJE.md"; }
 psuj_okno_pole()      { sed -i 's/<input type="hidden" name="okno"[^>]*>//' "$1/$W/includes/front-produkt.php"; }
 psuj_okno_skrypt()    { sed -i "/sklepag-kup-formularz input\[name=okno\]/d" "$1/$W/includes/front-produkt.php"; }
 psuj_okno_crypto()    { sed -i 's/c\.getRandomValues(a)/Math.random()/' "$1/$W/includes/front-produkt.php"; }
+# ⛔ Mutant, ktory ODSLONIL wade nazwy: wycina SAMO przypisanie `p.value=s;`. Skrypt dalej
+#    znajduje pole i dalej losuje bajty — tylko nic z nimi nie robi. Ochrona martwa, selektor
+#    na miejscu. Do rundy 8 bramka tego nie widziala.
+psuj_okno_nadpisanie(){ sed -i 's/p\.value=s;//' "$1/$W/includes/front-produkt.php"; }
 
 echo "=== KONTROLA ODWROTNA: czysta kopia = 0 rozjazdow ==="
 sprawdz_ "czysta kopia repo → EXIT 0"                         0 nic               "0 rozjazdów"
 echo; echo "=== KAZDY ROZJAZD PODLOZONY OSOBNO → EXIT 1, nazwa pozycji, DOKLADNIE 1 rozjazd ==="
 sprawdz_ "A: Stable tag ≠ Version"                            1 psuj_stable_tag   "Stable tag == Version"
 sprawdz_ "Q5: pole 'okno' znika z formularza zakupu"          1 psuj_okno_pole    "pole 'okno' w formularzu zakupu"
-sprawdz_ "Q5: skrypt losujacy znacznik usuniety (2 asercje)"  1 psuj_okno_skrypt  "skrypt NADPISUJE pole|losowosc z crypto" 2
+sprawdz_ "Q5: skrypt losujacy znacznik usuniety (3 asercje)"  1 psuj_okno_skrypt  "skrypt ZNAJDUJE pole|skrypt NADPISUJE wartosc|losowosc z crypto" 3
 sprawdz_ "Q5: crypto podmienione na Math.random"              1 psuj_okno_crypto  "losowosc z crypto, nie z Math.random"
+sprawdz_ "Q5: samo przypisanie p.value=s wyciete (ochrona martwa)" 1 psuj_okno_nadpisanie "skrypt NADPISUJE wartosc pola"
 sprawdz_ "A: licencja w readme nie GPLv2"                     1 psuj_licencja     "License (forma readme WP)"
 sprawdz_ "B: readme mówi 48 godzin, stała mówi 72"            1 psuj_godziny      "link ważny N godzin"
 sprawdz_ "C: etykieta menu w readme przemianowana"            1 psuj_etykieta_rdm "menu 'Opinie'|readme 'Recenzje'" 2
