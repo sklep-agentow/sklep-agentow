@@ -28,8 +28,14 @@
 # nie piszę.
 #
 # Kody wyjścia: 0 = operacja wykonana, odpowiedź wypisana
-#               2 = stos nie odpowiada, brak narzędzia, nieznana operacja
-#                   albo argument odrzucony przez sprawdzenie wzorca
+#               2 = jedno z CZTERECH — i skrypt zawsze mówi KTÓRE:
+#                   (a) NIE WIEM — to konto nie widzi Dockera (brak dostępu do demona,
+#                       NIE brak kontenera; komunikat zaczyna się od „NIE WIEM"),
+#                   (b) Docker odpowiedział i kontenera NIE MA / nie chodzi,
+#                   (c) brak narzędzia albo nieznana operacja,
+#                   (d) argument odrzucony przez sprawdzenie wzorca.
+#                   ⛔ (a) i (b) to RÓŻNE rzeczy: pierwsza mówi o naszym dostępie,
+#                   druga o cudzym stanowisku. Mylenie ich kosztowało cztery rundy recenzji #268.
 set -u
 
 WERSJA=1.3.1

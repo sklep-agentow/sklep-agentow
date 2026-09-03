@@ -20,7 +20,9 @@
 #     STOS_PROBNY_OBRAZ=wordpress:6.9.4-php8.4-apache bash narzedzia-qa/k7-stos-rundy.sh <pierwszy-zip>
 #   Zapisuje surowe wyniki do audyt/plugin-check/<slug>.txt (nadpisuje) i drukuje podsumowanie.
 #   EXIT 0 = wszystkie raporty zapisane · 1 = któraś paczka nie została zainstalowana w podanej wersji albo
-#            Plugin Check nie zwrócił wyniku (raport tej paczki NIE jest zapisywany) · 2 = zła komenda / brak zipa / nie stoi probny_wp
+#            Plugin Check nie zwrócił wyniku (raport tej paczki NIE jest zapisywany) · 2 = jedno z CZTERECH,
+#            nazwane w komunikacie: NIE WIEM (to konto nie widzi Dockera — o dostępie, nie o kontenerze) ·
+#            Docker odpowiedział i probny_wp na liście NIE MA · zła komenda · brak zipa
 set -u
 KORZEN="$(cd "$(dirname "$0")/.." && pwd)"
 KONTENER=probny_wp

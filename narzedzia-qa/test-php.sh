@@ -31,7 +31,10 @@
 #    on jest — ale nie mylmy tego z czytaniem stanu.
 #
 # Kody wyjścia: kod testu (0 = przeszedł, 1 = nie przeszedł)
-#               2 = odmowa wzorca, brak testu, brak dockera, stos nie stoi
+#               2 = jedno z CZTERECH, zawsze nazwane w komunikacie: (a) NIE WIEM — to konto
+#                   nie widzi Dockera (o dostępie, nie o kontenerze), (b) Docker odpowiedział
+#                   i kontener nie jest uruchomiony, (c) brak testu albo brak narzędzia,
+#                   (d) odmowa wzorca nazwy. ⛔ (a) i (b) to RÓŻNE rzeczy.
 set -u
 
 WERSJA=1.0.0

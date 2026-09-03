@@ -32,6 +32,9 @@ BLEDY=0
 
 zglos()     { printf '  ⛔ NIE WYSZLO  %s\n' "$1"; BLEDY=$(( BLEDY + 1 )); }
 potwierdz() { printf '  ✅ WYSZLO      %s\n' "$1"; }
+# ⛔ `padnij` konczy sie ZAWSZE kodem 2, a kod 2 ma tu CZTERY znaczenia: NIE WIEM (to konto nie
+# widzi Dockera — o DOSTEPIE, nie o kontenerze) · Docker odpowiedzial i kontenera NIE MA · brak
+# narzedzia · brak warunku wstepnego. Komunikat MUSI nazywac, ktore z nich zaszlo.
 padnij()    { printf 'STOS PROBNY: %s\n' "$1" >&2; exit 2; }
 naglowek()  { printf '\n=== %s ===\n' "$1"; }
 

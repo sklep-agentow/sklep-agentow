@@ -22,7 +22,9 @@
 # WYMAGA: docker, node (testy JS), `/root/.claude/sklep-admin-roboczy.env` (WP_ADMIN_USER/PASS).
 # KODY:  0 = przebieg zrobiony (także gdy testy padały — to linia bazowa, nie bramka)
 #        1 = tryb --porownaj: są REGRESJE (0→1)
-#        2 = brak narzędzia / stos nie stoi / złe użycie
+#        2 = jedno z CZTERECH, nazwane w komunikacie: NIE WIEM (to konto nie widzi Dockera —
+#            o dostępie, nie o kontenerze) · Docker odpowiedział i stosu NIE MA · brak narzędzia ·
+#            złe użycie. ⛔ Pierwsze dwa to RÓŻNE rzeczy i nie wolno ich zlewać w jedno zdanie.
 #
 # ⛔ POMIJA ŚWIADOMIE: `*-proba-kontrolna.sh` i `kalibracja-mutantem.sh` (to kalibratory —
 #    PODMIENIAJĄ kod wtyczki w kontenerze, mierzą przyrząd, nie produkt), `seed-demo.sh`,
