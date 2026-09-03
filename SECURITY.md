@@ -1,6 +1,6 @@
 # SECURITY.md — Sklep Agentów
 
-> Stan na 2026-09-01. Trzy wtyczki WordPressa: `sklep-agentow` (0.9.38),
+> Stan na 2026-09-03. Trzy wtyczki WordPressa: `sklep-agentow` (0.9.38),
 > `chatbot-live` (1.5.14), `segregator-maila` (1.3.6). Wersje wspierane: **najnowsze wydanie każdej
 > wtyczki** z zakładki Releases — starsze nie dostają poprawek, tylko podniesienie wersji.
 >

@@ -20,6 +20,9 @@ Nic jeszcze.
 
 ---
 
+> **Numeracja przeskakuje 0.9.37 celowo, nie przez przeoczenie.** To wydanie jest przygotowywane
+> równolegle i zostanie opisane w tym pliku, nad wpisem 0.9.38, gdy tylko będzie gotowe.
+
 ## [0.9.38] — 2026-09-02 · schemat bazy bez zmian (10)
 
 ### Naprawione

@@ -162,9 +162,8 @@ link do pobrania w mailu, jednorazowy link do opinii.
 == Changelog ==
 
 = 0.9.38 =
-* Dwie osoby za jednym adresem internetowym nie dziela juz okna ochrony przed podwojnym klknieciem: klucz okna dostal znacznik formularza z renderu strony produktu.
-* Znacznik z POST-a musi byc lancuchem — tablica (`okno[]=x`) daje literal `Array`, ktory wczesniej przechodzil jako prawidlowy znacznik.
-* Teksty w kodzie i dokumentacji nie podaja juz numeru wydania, ktorego jeszcze nie ma.
+* Dwie osoby kupujące z tej samej sieci (biuro, sieć komórkowa) nie dzielą już okna ochrony przed podwójnym kliknięciem — wcześniej zakup jednej osoby mógł zablokować na chwilę zakup drugiej.
+* Ochrona przed podwójnym kliknięciem odrzuca teraz spreparowane żądania, które próbowały ją obejść.
 
 = 0.9.36 =
 * Naprawione: wgranie za dużej paczki produktu nie kończy się pustą białą stroną. Gdy całe zgłoszenie przekraczało `post_max_size`, PHP kasowało formularz razem z plikiem i właściciel nie dostawał ŻADNEGO komunikatu. Sklep rozpoznaje teraz ten stan i podaje realne limity serwera (`post_max_size`, `upload_max_filesize`) oraz ilość wysłanych danych, zaznaczając, że limit wtyczki (20 MB) nie brał w tym udziału. Pełny komunikat widzi właściciel w formularzu produktu (uprawnienie `manage_options`); ucięte zgłoszenie, które nie niesie adresu formularza produktu (`action` w adresie) — czyli formularz innej wtyczki albo strona produktu wyrenderowana przed aktualizacją lub podana z pamięci podręcznej — dostaje wersję neutralną, tylko z limitami serwera, i to wyłącznie konta z uprawnieniem do wgrywania plików (`upload_files`); pozostałe nie dostają nic.
