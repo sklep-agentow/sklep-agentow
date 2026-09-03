@@ -347,7 +347,12 @@ function chatl_post_zakoncz() {
 add_action( 'admin_post_chatl_zakoncz', 'chatl_post_zakoncz' );
 
 /**
- * Wiadomość operatora do gościa.
+ * Handler wysyłki wiadomości operatora do gościa (admin-post).
+ *
+ * Waliduje uprawnienia, nonce i długość treści. Przy odrzucie z powodu limitu ODKŁADA
+ * treść przez chatl_odloz_szkic_operatora(), żeby przekierowanie nie skasowało tego,
+ * co człowiek napisał (znaleziska CZ-2/CZ-3). Render rozmowy odczytuje szkic JEDEN raz
+ * i od razu kasuje przechowalnię.
  *
  * @return void
  */

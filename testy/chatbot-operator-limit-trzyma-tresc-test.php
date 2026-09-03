@@ -128,6 +128,43 @@ chops( 'D. po skasowaniu przechowalni szkic NIE wraca', '' === (string) get_tran
 
 // sprzątanie
 delete_transient( chatl_klucz_szkicu_operatora( $sesja_b ) );
+
+/*
+ * PUNKT D — straznik musi dotykac PRODUKCYJNYCH
+ * miejsc uzycia, nie tylko wlasnych wywolan biblioteki. Bez tego skasowanie wywolania
+ * w handlerze albo w renderze zostawia ten test na EXIT=0, czyli straznik pilnuje
+ * wylacznie samego siebie.
+ *
+ * ⛔ UCZCIWIE: to jest kontrola KSZTALTU KODU (czytanie pliku), nie wykonania handlera —
+ * uruchomienie admin-post wymaga stosu, ktorego to konto nie ma. Kontrola dodatnia nizej
+ * dowodzi, ze asercja UMIE PASC: szukam takze wzorca, ktorego w pliku NA PEWNO nie ma.
+ */
+$chatl_zrodlo_operatora = (string) file_get_contents( WP_PLUGIN_DIR . '/chatbot-live/includes/operator.php' );
+
+$chatl_punkty_d = array(
+	'handler odklada szkic przy odrzucie'      => 'chatl_odloz_szkic_operatora( $sesja, $tresc );',
+	'render czyta szkic przez klucz per sesja' => 'chatl_klucz_szkicu_operatora( $sesja )',
+	'render wypisuje szkic bezpiecznie'        => 'esc_textarea( $chatl_szkic )',
+	'render kasuje szkic po odczycie'          => 'delete_transient( chatl_klucz_szkicu_operatora( $sesja ) );',
+);
+foreach ( $chatl_punkty_d as $chatl_opis => $chatl_wzor ) {
+	if ( false !== strpos( $chatl_zrodlo_operatora, $chatl_wzor ) ) {
+		echo "  OK   D: {$chatl_opis}\n";
+	} else {
+		echo "  ZLE  D: {$chatl_opis} — nie znalazlem w includes/operator.php: {$chatl_wzor}\n";
+		++$GLOBALS['chatl_test_bledy'];
+	}
+}
+
+// KONTROLA DODATNIA punktu D: wzorzec, ktorego w pliku NA PEWNO nie ma, MUSI dac ZLE.
+// Bez tego nie wiadomo, czy powyzsze cztery OK to pomiar, czy zawsze-zielone.
+if ( false === strpos( $chatl_zrodlo_operatora, 'chatl_wzorzec_ktorego_nie_ma_' . 'kontrola_dodatnia' ) ) {
+	echo "  OK   D-kontrola: nieistniejacy wzorzec NIE zostal znaleziony (asercja umie PASC)\n";
+} else {
+	echo "  ZLE  D-kontrola: znalazlem wzorzec, ktorego nie ma — porownanie nic nie mierzy\n";
+	++$GLOBALS['chatl_test_bledy'];
+}
+
 if ( 0 !== $sprzataj_uzytkownika ) {
 	require_once ABSPATH . 'wp-admin/includes/user.php';
 	wp_delete_user( $sprzataj_uzytkownika );

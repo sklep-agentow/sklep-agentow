@@ -206,7 +206,7 @@ echo "=== F. Deinstalacja: obie sciezki ==="
 spr "DROP TABLE (7 tabel)"        "7"  "grep -c 'DROP TABLE IF EXISTS' $W/uninstall.php"
 spr "klucz API kasowany zawsze"   "1"  "sed -n '1,/usun_dane/p' $W/uninstall.php | grep -c \"delete_option( 'chatl_klucz_api' )\""
 spr "delete_option w sciezce B"   "8"  "sed -n '/usun_dane/,\$p' $W/uninstall.php | grep -c 'delete_option('"
-spr "wywolan esc_like (bez komentarzy)"  "4" "grep -o 'wpdb->esc_like(' $W/uninstall.php | wc -l"
+spr "wywolan esc_like (bez komentarzy)"  "6" "grep -o 'wpdb->esc_like(' $W/uninstall.php | wc -l"
 
 echo
 echo "=== G. Ustawienia: klucze i wartosci domyslne ==="
