@@ -40,7 +40,10 @@ ROBOCZY="$(mktemp -d)" || { echo "PROBA: nie moge zrobic katalogu zakresu" >&2; 
 # to jako sukces. Klucz: `git status --porcelain -uno` IGNORUJE pliki niesledzone
 # (zmierzone), wiec mutant obok oryginalu NIE brudzi drzewa i przelot nie odmawia.
 MUTANT="$KORZEN/narzedzia-qa/.przelot-mutant-proby.tmp.sh"
-trap 'rm -rf "$ATRAPA" "$ROBOCZY"; rm -f "$MUTANT"' EXIT
+# ⛔ EXIT INT TERM, nie samo EXIT (recenzja #272 r15, „nieodtworzone przypuszczenia").
+# Od tej rundy mutant lezy WEWNATRZ repozytorium, wiec przerwanie z klawiatury zostawiloby
+# smiec w drzewie roboczym — a przelot odmawia pracy na brudnym drzewie.
+trap 'rm -rf "$ATRAPA" "$ROBOCZY"; rm -f "$MUTANT"' EXIT INT TERM
 
 for N in bash sh git sed awk grep find sort mktemp date printf cat rm cp mv \
          mkdir chmod head tail cut tr wc dirname basename docker php jq unzip; do

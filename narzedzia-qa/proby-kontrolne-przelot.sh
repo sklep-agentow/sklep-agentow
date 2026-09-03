@@ -100,6 +100,13 @@ if ! command -v zip > /dev/null 2>&1; then
 	done
 fi
 
+# ⛔ SUFIT NIEZMIERZONYCH. Kod 2 („nie mam warunkow wstepnych") NIE jest porazka —
+# ale gdyby rosl bez sufitu, zestaw kurczylby sie po cichu, a przelot dalej swiecilby
+# zielono. To ta sama klasa co sufit ponizej i ten sam mechanizm, co `MAX_NIEZMIERZONYCH`
+# w `bramki.sh` (klasa 128) — siostrzane narzedzia maja mowic jednym glosem.
+MAX_NIEZMIERZONYCH=0   # 4.09: TWARDE ZERO. Podniesienie = swiadoma decyzja w commicie,
+                       # z nazwa proby i powodem, dla ktorego nie da sie jej zmierzyc.
+
 # ⛔ SUFIT POMINIĘĆ. Bez niego lista pominięć rośnie po cichu i przelot świeci
 # zielono, sprawdzając coraz mniej — dokładnie ta klasa błędu, dla której ten
 # skrypt w ogóle powstał. Podniesienie sufitu ma być świadomą decyzją w commicie.
@@ -141,7 +148,7 @@ START=$(date '+%Y-%m-%d %H:%M')
 
 TMP="$(mktemp)"
 trap 'rm -f "$TMP"' EXIT
-ZLE=0; ILE=0; POMINIETO=0; ZLE_NAZWY=()
+ZLE=0; ILE=0; POMINIETO=0; NIEZMIERZONE=0; ZLE_NAZWY=(); NIEZMIERZONE_NAZWY=()
 
 for SCIEZKA in "${PROBY[@]}"; do
 	NAZWA="${SCIEZKA##*/}"
@@ -162,7 +169,20 @@ for SCIEZKA in "${PROBY[@]}"; do
 	# tymczasowym wykonawcy, wiec w CI widac bylo wylacznie „z EXIT≠0: 2" — bez ani jednej
 	# nazwy. Kazda porazka wymagala wtedy recznego dochodzenia u siebie, a odtworzenie
 	# zestawu CI nie jest darmowe (konto z Dockerem uruchamia INNY zestaw prob).
-	[ "$KOD" -eq 0 ] || { ZLE=$((ZLE + 1)); ZLE_NAZWY+=( "$NAZWA (EXIT=$KOD)" ); printf '  PADLA       %s (EXIT=%s)\n' "$NAZWA" "$KOD"; }
+	# ⛔ KOD 2 TO NIE PORAZKA (recenzja #272 r15, WAZNA 1). Proba, ktora ODMAWIA pomiaru
+	# („nie mam warunkow wstepnych"), nie jest wada produktu — a do tej rundy kazdy
+	# niezerowy kod ladowal w liczniku PADLA. To ta sama klasa (I-12), ktora ten PR
+	# naprawia w `bramki.sh`: przyrzad orzekal o produkcie, nie ustaliwszy niczego.
+	# ⭐ Niezmierzone SA LICZONE i maja wlasny sufit — inaczej zestaw kurczylby sie po cichu.
+	if [ "$KOD" -eq 0 ]; then
+		:
+	elif [ "$KOD" -eq 2 ]; then
+		NIEZMIERZONE=$((NIEZMIERZONE + 1)); NIEZMIERZONE_NAZWY+=( "$NAZWA" )
+		printf '  NIE ZMIERZONO %s (EXIT=2 — brak warunkow wstepnych, NIE wada)\n' "$NAZWA"
+	else
+		ZLE=$((ZLE + 1)); ZLE_NAZWY+=( "$NAZWA (EXIT=$KOD)" )
+		printf '  PADLA       %s (EXIT=%s)\n' "$NAZWA" "$KOD"
+	fi
 done
 
 mkdir -p "$(dirname "$LOG")"
@@ -175,7 +195,8 @@ mkdir -p "$(dirname "$LOG")"
 	printf '%s\n' "$ZNACZNIK"
 	printf 'COMMIT: %s\n' "$COMMIT"
 	printf 'GALAZ: %s\n' "$GALAZ"
-	printf 'PODSUMOWANIE: uruchomionych %s, z EXIT≠0: %s, pominiętych: %s\n' "$ILE" "$ZLE" "$POMINIETO"
+	printf 'PODSUMOWANIE: uruchomionych %s, PADŁO: %s, NIE ZMIERZONO (EXIT=2): %s, pominiętych: %s\n' "$ILE" "$ZLE" "$NIEZMIERZONE" "$POMINIETO"
+	[ "$NIEZMIERZONE" -gt 0 ] && printf 'NIE ZMIERZONO: %s\n' "${NIEZMIERZONE_NAZWY[*]}"
 	printf '#\n'
 	cat "$TMP"
 } > "$LOG"
@@ -187,6 +208,17 @@ printf '\nPRZELOT: uruchomionych %s, z EXIT≠0: %s, pominiętych %s — zapisan
 # gdzie ma pomoc.
 [ "$ZLE" -eq 0 ] || printf 'PRZELOT: nie przeszly:\n'
 [ "$ZLE" -eq 0 ] || printf '         %s\n' "${ZLE_NAZWY[@]}"
+
+# ⛔ SUFIT NIEZMIERZONYCH — sprawdzany PRZED sufitem pominiec, bo „nie zmierzylam" jest
+# stanem gorszym niz „pominelam z powodem": pominiecie ma nazwany powod w liscie, a kod 2
+# przychodzi z proby i nikt go z gory nie zaplanowal.
+if [ "$NIEZMIERZONE" -gt "$MAX_NIEZMIERZONYCH" ]; then
+	printf 'PRZELOT: NIE ZMIERZONO %s prob przy suficie %s — zestaw kurczy sie po cichu.\n' \
+		"$NIEZMIERZONE" "$MAX_NIEZMIERZONYCH" >&2
+	printf '         %s\n' "${NIEZMIERZONE_NAZWY[*]}" >&2
+	printf '         Kod 2 NIE jest wada produktu, ale te proby NICZEGO NIE SPRAWDZILY.\n' >&2
+	exit 1
+fi
 
 # ⛔ SUFIT POMINIĘĆ — zestaw, który się kurczy, wygląda dokładnie jak zdany.
 if [ "$POMINIETO" -gt "$MAX_POMINIETYCH" ]; then
