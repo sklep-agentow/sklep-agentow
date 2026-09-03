@@ -380,7 +380,7 @@ fi
 if [ -n "$WP_STACK" ]; then
   spr "Tested up to = wersja WP ze stacku ($WP_STACK)" "$WP_STACK" "grep -oP '(?<=^Tested up to: ).*' $W/readme.txt | grep -oE '^[0-9]+\\.[0-9]+'"
 else
-  echo "  POMINIETE Tested up to = wersja WP ze stacku (stack nie odpowiada)"
+  echo "  POMINIETE Tested up to = wersja WP ze stacku (${POWOD_BRAKU_STOSU:-stos nie odpowiada})"
 fi
 spr "License"                        "GPLv2 or later" "grep -oP '(?<=^License: ).*' $W/readme.txt"
 spr "License URI == naglowek wtyczki" "1" "test \"\$(grep -oP '(?<=^License URI: ).*' $W/readme.txt)\" = \"\$(grep -oP '(?<=^ \\* License URI: ).*' $W/segregator-maila.php)\" && echo 1 || echo 0"

@@ -222,8 +222,20 @@ trap 'rm -rf "$ATRAPY" "$GOLY" "$KOPIA"' EXIT INT TERM
 for _b in bash sh grep sed awk curl printf cut tr head tail sort uniq wc env test cat; do
 	_p="$(command -v "$_b" 2> /dev/null)" && ln -sf "$_p" "$GOLY/$_b"
 done
-WY_GOLY="$( PATH="$GOLY" bash "$STOS" stan 2>&1 )"
+# ⛔ Przypadek psuje DOKLADNIE JEDEN warunek, wiec adres uslugi MUSI byc zywy — inaczej
+#    asercja mierzy KONIUNKCJE (brak polecenia ORAZ dzialajacy WordPress) i przy zgaszonym
+#    stosie oskarzalaby `stos.sh` o wade, ktorej nie ma. Podkladamy wlasny, zawsze zywy adres.
+ZYWY="$(mktemp -t stos-zywy-XXXXXX.sh)"
+PORT_ZYWY=$(python3 -c "import socket;s=socket.socket();s.bind(('127.0.0.1',0));print(s.getsockname()[1]);s.close()" 2> /dev/null || echo 8890)
+( python3 -m http.server "$PORT_ZYWY" --bind 127.0.0.1 > /dev/null 2>&1 & echo $! > "$GOLY/.pid" ) 2> /dev/null
+sleep 1
+sed "s#ADRES_WP=http://localhost:8890#ADRES_WP=http://127.0.0.1:$PORT_ZYWY#" "$STOS" > "$ZYWY"
+WY_GOLY="$( PATH="$GOLY" bash "$ZYWY" stan 2>&1 )"
+[ -f "$GOLY/.pid" ] && kill "$(cat "$GOLY/.pid")" 2> /dev/null
+rm -f "$ZYWY"
 case "$WY_GOLY" in
+	*"nie odpowiada"*) printf '  BLAD %-56s\n' "przypadek (1): adres uslugi NIE ZYJE — pomiar nic nie znaczy"
+	              BLEDY=$(( BLEDY + 1 )) ;;
 	*"NIE WIEM"*) printf '  OK   %-56s\n' "brak POLECENIA docker melduje NIE WIEM" ;;
 	*)            printf '  BLAD %-56s\n' "brak POLECENIA docker NIE melduje NIE WIEM"
 	              printf '%s\n' "$WY_GOLY" | head -3 | sed 's/^/         /'

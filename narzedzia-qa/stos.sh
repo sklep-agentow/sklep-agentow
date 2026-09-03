@@ -29,10 +29,12 @@
 #
 # Kody wyjścia: 0 = operacja wykonana, odpowiedź wypisana
 #               2 = jedno z PIĘCIU — i skrypt zawsze mówi KTÓRE:
-#                   (a) NIE WIEM — to konto nie widzi Dockera (brak dostępu do demona,
-#                       NIE brak kontenera; komunikat zaczyna się od „NIE WIEM"),
+#                   (a) NIE WIEM — nie zdołaliśmy zapytać: to konto nie widzi Dockera ALBO
+#                       nie ma na tej maszynie potrzebnego POLECENIA. Obie mówią o NASZYM
+#                       przyrządzie, nie o cudzym kontenerze — dlatego mają wspólny nagłówek
+#                       „NIE WIEM” (patrz `brak_stosu`: wzorce „NIE WIEM"* i „nie ma polecenia"*),
 #                   (b) Docker odpowiedział i kontenera NIE MA / nie chodzi,
-#                   (c) brak narzędzia albo nieznana operacja,
+#                   (c) nieznana operacja (nazwa, której skrypt nie zna),
 #                   (d) argument odrzucony przez sprawdzenie wzorca,
 #                   (e) kontener stoi, ale usługa nie odpowiada (WordPress pod adresem,
 #                       łapacz maili, `wp`, liczenie w bazie) — ścieżki przez `brak_stosu`.
