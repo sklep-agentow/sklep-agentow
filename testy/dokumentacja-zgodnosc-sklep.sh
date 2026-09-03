@@ -178,7 +178,9 @@ spr "plik $W/PONAD-SPECYFIKACJE.md"                         "1" "test -f $W/PONA
 #    ZACHOWANIA — zaladowanie strony produktu i sprawdzenie, ze dwa renderowania daja
 #    ROZNE znaczniki, a bez skryptu identyczne (taki pomiar zrobiono RECZNIE w rundzie 5;
 #    nie jest zautomatyzowany). DLUG nazwany wprost, zeby nikt nie czytal zieleni tej
-#    bramki jako dowodu, ze ochrona DZIALA — ona dowodzi, ze ochrona JEST NAPISANA. ⛔ Komentarz mowil wczesniej „trzy czesci” i to nie byla nieszkodliwa
+#    bramki jako dowodu, ze ochrona DZIALA — ona dowodzi, ze ochrona JEST NAPISANA.
+#
+#    ⛔ Komentarz mowil wczesniej „trzy czesci” i to nie byla nieszkodliwa
 #    niescislosc: ogniwo ZLOZENIA nie mialo asercji, wiec wyciecie samej petli skladajacej
 #    zostawialo `s` pustym — kazdy kupujacy wysylal `okno=`, klucz wracal do postaci sprzed
 #    naprawy, a OBA narzedzia dawaly EXIT=0 (recenzja #273 r9, WAZNA 1: pomiar dwukierunkowy,
@@ -188,6 +190,8 @@ spr "plik $W/PONAD-SPECYFIKACJE.md"                         "1" "test -f $W/PONA
 #    i asercja na nie oczekiwalaby liczby, ktora zmienia sie przy kazdej poprawce komentarza.
 echo
 echo "=== G. ZNACZNIK OKNA IDEMPOTENCJI (Q-5) — PIEC asercji: pole w formularzu + CZTERY ogniwa skryptu ==="
+echo "    (mierza OBECNOSC ogniw w kodzie, NIE ich skutek: zmiana wartosci wewnatrz ogniwa,"
+echo "     np. Uint8Array(12) -> (0), zostawia znacznik pusty i przechodzi tu na zielono)"
 # ⛔ Wlasna sekcja od rundy 10. Do rundy 9 te asercje drukowaly sie pod naglowkiem F
 #    (INSTRUKCJA.md, liczby i odsylacze), z ktorym nie maja nic wspolnego — czytajacy log
 #    widzial je jako czesc innego pomiaru (recenzja #273, DROBNA zglaszana w r6, r7, r8, r9).
@@ -207,5 +211,5 @@ spr "znacznik okna: ZLOZENIE wartosci z wylosowanych bajtow" "1" "grep -c 's+=(a
 spr "znacznik okna: losowosc z crypto, nie z Math.random"   "1" "grep -c 'c[.]getRandomValues(a)' $W/includes/front-produkt.php"
 
 echo
-if [ "$ZLE" -eq 0 ]; then echo "PIEC LICZB (72h/10/30d/20MB/10min), ETYKIETY, ODSYLACZE I PIEC ASERCJI ZNACZNIKA OKNA (Q-5: pole + cztery ogniwa skryptu) ZGODNE Z KODEM — 0 rozjazdów (90 dni, 7 prob, 3 proby, 1 min, 5 stron i tresc zdan: czytanie w calosci)"; exit 0; fi
+if [ "$ZLE" -eq 0 ]; then echo "PIEC LICZB (72h/10/30d/20MB/10min), ETYKIETY I ODSYLACZE ZGODNE Z KODEM — 0 rozjazdów; ZNACZNIK OKNA (Q-5): piec ogniw OBECNYCH w kodzie — ta bramka NIE mierzy, czy dzialaja ""(zmiana wartosci w ogniwie przechodzi na zielono; pomiar zachowania: patrz komentarz przy sekcji G). (90 dni, 7 prob, 3 proby, 1 min, 5 stron i tresc zdan: czytanie w calosci)"; exit 0; fi
 echo "NIEZGODNE: $ZLE pozycji"; exit 1
