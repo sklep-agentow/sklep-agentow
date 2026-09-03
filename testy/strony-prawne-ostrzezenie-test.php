@@ -140,6 +140,28 @@ $sprawdz( 'i nie kaze publikowac czegos, co juz jest opublikowane', false === st
 	'komunikat kaze opublikowac strone, ktora sam nazywa opublikowana: ' . substr( wp_strip_all_tags( $wyj ), 0, 140 ) );
 $sprawdz( 'i mowi, ze zmiana zadziala od razu', false !== strpos( $wyj, 'już opublikowana' ) || false !== strpos( $wyj, 'już opublikowane' ) );
 
+echo "=== C2. STAN MIESZANY: jedna ROBOCZA, druga OPUBLIKOWANA z zaslepka ===\n";
+// ⛔ To NIE jest droga egzotyczna, tylko najbardziej prawdopodobna: `aktywacja.php:202-203`
+//    zaklada obie strony jako `draft` z „(SZABLON)” w TYTULE, wiec wlasciciel idzie strona po
+//    stronie i miedzy jedna a druga JEST dokladnie w tym stanie.
+//    Do rundy 6 przelacznikiem zdania koncowego byla ALTERNATYWA po calej liscie (`in_array`),
+//    wiec obecnosc JEDNEJ strony roboczej kazala „opublikowac te strony” takze o tej, ktora
+//    nawias obok nazywal „opublikowana”. Sprzecznosc w jednym akapicie (recenzja #278, WAZNA 1).
+wp_update_post( array( 'ID' => $id_reg, 'post_status' => 'publish', 'post_title' => 'Regulamin sklepu (SZABLON)', 'post_content' => 'Sprzedawca: Firma sp. z o.o.' ) );
+wp_update_post( array( 'ID' => $id_pol, 'post_status' => 'draft', 'post_title' => 'Polityka prywatnosci sklepu', 'post_content' => 'Administrator danych: Firma sp. z o.o.' ) );
+clean_post_cache( $id_reg );
+clean_post_cache( $id_pol );
+$wyj = sklepag_test_zlap();
+$sprawdz( 'MIESZANY: obie strony sa na liscie', false !== strpos( $wyj, 'Regulamin sklepu' ) && false !== strpos( $wyj, 'Polityka prywatności sklepu' ),
+	'stan mieszany gubi jedna ze stron' );
+$sprawdz( 'MIESZANY: oba powody sa nazwane osobno', false !== strpos( $wyj, 'zaślepką' ) && false !== strpos( $wyj, 'nieopublikowana' ),
+	'stan mieszany opisuje obie strony jednym powodem' );
+$sprawdz( 'MIESZANY: polecenie publikacji dotyczy TYLKO strony roboczej', false !== strpos( $wyj, 'jeszcze robocza' ),
+	'komunikat kaze opublikowac takze strone, ktora sam nazywa opublikowana — sprzecznosc w jednym akapicie: '
+		. substr( wp_strip_all_tags( $wyj ), 0, 200 ) );
+$sprawdz( 'MIESZANY: nie mowi o wszystkich stronach naraz', false === strpos( $wyj, 'opublikuj te strony, zanim' ),
+	'zdanie koncowe wrocilo do formy obejmujacej strone juz opublikowana' );
+
 echo "=== D. opcji nie ma (wlasciciel skasowal strone) — nie pouczamy ===\n";
 $ustaw_opcje( 0, 0 );
 $wyj = sklepag_test_zlap();

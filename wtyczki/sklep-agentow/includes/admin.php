@@ -99,14 +99,27 @@ function sklepag_ostrzez_strony_prawne() {
 	//    kazalo OPUBLIKOWAC strone, ktora nawias obok nazywal juz opublikowana — sprzecznosc wewnatrz
 	//    jednego komunikatu, czyli ta sama klasa, ktora ten PR naprawia. Liczba mnoga tez byla stala,
 	//    wiec przy jednej stronie komunikat mowil o "stronach".
-	$ile         = count( $do_uzupelnienia );
-	$sa_robocze  = in_array( 'nieopublikowana', $powody, true );
-	$sa_zaslepki = in_array( 'opublikowana, ale wciąż z zaślepką SZABLON', $powody, true );
-	$co_zrobic   = 'Uzupełnij dane sprzedawcy (nazwa, adres, kontakt, adres do reklamacji)';
-	if ( $sa_zaslepki ) {
+	// ⛔ PRZELACZNIK LICZY POWODY, NIE PYTA „CZY ISTNIEJE JAKIS”. Runda 5 rozdzielila zdanie
+	//    koncowe na dwie galezie, ale przelacznikiem byla ALTERNATYWA po calej liscie
+	//    (`in_array`). W stanie MIESZANYM — jedna strona robocza, druga opublikowana z zaslepka —
+	//    `$sa_robocze` bylo prawda, wiec komunikat mowil „opublikuj te strony” takze o stronie,
+	//    ktora nawias obok nazywal „opublikowana”. Sprzecznosc w JEDNYM akapicie, czyli ta sama
+	//    klasa, ktora ten PR mial zamknac. Stan mieszany nie jest egzotyczny: `aktywacja.php:202-203`
+	//    zaklada obie strony jako `draft` z „(SZABLON)” w TYTULE, wiec wlasciciel idzie strona po
+	//    stronie i miedzy jedna a druga JEST w tym stanie.
+	//    Teraz zdanie koncowe mowi osobno o kazdej grupie i tylko wtedy, gdy ta grupa istnieje.
+	$ile          = count( $do_uzupelnienia );
+	$ile_roboczych = count( array_keys( $powody, 'nieopublikowana', true ) );
+	$ile_zaslepek  = count( array_keys( $powody, 'opublikowana, ale wciąż z zaślepką SZABLON', true ) );
+	$co_zrobic    = 'Uzupełnij dane sprzedawcy (nazwa, adres, kontakt, adres do reklamacji)';
+	if ( $ile_zaslepek > 0 ) {
 		$co_zrobic .= ', usuń zaślepki SZABLON';
 	}
-	if ( $sa_robocze ) {
+	if ( $ile_roboczych > 0 && $ile_zaslepek > 0 ) {
+		// Stan MIESZANY: polecenie „opublikuj” dotyczy WYLACZNIE stron roboczych, i tak jest nazwane.
+		$co_zrobic .= ' i <strong>' . ( 1 === $ile_roboczych ? 'opublikuj tę stronę, która jest jeszcze robocza' : 'opublikuj te strony, które są jeszcze robocze' )
+			. ', zanim zaczniesz sprzedawać</strong>';
+	} elseif ( $ile_roboczych > 0 ) {
 		$co_zrobic .= ' i <strong>' . ( 1 === $ile ? 'opublikuj tę stronę' : 'opublikuj te strony' ) . ', zanim zaczniesz sprzedawać</strong>';
 	} else {
 		$co_zrobic .= ' — <strong>' . ( 1 === $ile ? 'ta strona jest już opublikowana' : 'te strony są już opublikowane' ) . ', więc zmiana zadziała od razu</strong>';

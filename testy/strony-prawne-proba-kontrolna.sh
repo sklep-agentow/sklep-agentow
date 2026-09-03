@@ -83,6 +83,13 @@ sed "s|\. '</a> ('  *\. esc_html( \$powod ) \. ')'|. '</a>'|" "$PANEL" > "$TMP/m
 [ "$(cmp -s "$PANEL" "$TMP/m6.php"; echo $?)" -ne 0 ] || padnij "mutant 6 nie zmienil pliku — wzorzec nie trafil"
 zmierz "M6: komunikat bez ZMIERZONEGO powodu przy stronie" 1 "$TMP/m6.php"
 
+# 7. zdanie koncowe WRACA do przelacznika po CALEJ liscie: obecnosc jednej strony roboczej
+#    kaze „opublikowac te strony” takze o stronie opublikowanej z zaslepka (recenzja #278, WAZNA 1
+#    rundy 5 — galaz mieszana nie miala ani przypadku, ani mutanta).
+sed "s/if ( \$ile_roboczych > 0 \&\& \$ile_zaslepek > 0 ) {/if ( false ) {/" "$PANEL" > "$TMP/m7.php"
+[ "$(cmp -s "$PANEL" "$TMP/m7.php"; echo $?)" -ne 0 ] || padnij "mutant 7 nie zmienil pliku — wzorzec nie trafil"
+zmierz "M7: stan mieszany znowu kaze publikowac strone opublikowana" 1 "$TMP/m7.php"
+
 naglowek "POWROT DO CZYSTEGO KODU — zielone musi wrocic"
 zmierz "czysty kod po mutantach" 0 "$TMP/czysty.php"
 
