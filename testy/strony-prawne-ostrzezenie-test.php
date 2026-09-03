@@ -2,8 +2,10 @@
 /**
  * Strażnik: właściciel MUSI zobaczyć, że regulamin i polityka są niegotowe.
  *
- * Uruchomienie: docker exec <kontener> wp --allow-root --path=/var/www/html eval-file \
- *               wp-content/plugins/sklep-agentow-testy/strony-prawne-ostrzezenie-test.php
+ * Uruchomienie: przez spust `narzedzia-qa/strony-prawne-stos-probny.sh`, ktory wgrywa ten plik
+ *               do kontenera probnego i wola go przez `wp eval-file`. Sciezki w kontenerze nie
+ *               wpisujemy tu na sztywno — katalog `sklep-agentow-testy` NIE ISTNIEJE w repo
+ *               (klasa 3: dokument mowi o sciezce, ktorej nie ma).
  * EXIT 0 = wszystkie przypadki wyszły · 1 = strażnik nie widzi którejś sytuacji · 2 = brak warunków.
  *
  * ⛔ WŁASNE WARUNKI WSTĘPNE, bo stos bywa WSPÓLNY z innymi biegami: test zakłada DWIE własne strony,
@@ -104,6 +106,13 @@ $sprawdz( 'wymienia Regulamin', false !== strpos( $wyj, 'Regulamin sklepu' ) );
 $sprawdz( 'wymienia Polityke', false !== strpos( $wyj, 'Polityka prywatności sklepu' ) );
 $sprawdz( 'jest bledem, nie zolta podpowiedzia', false !== strpos( $wyj, 'notice-error' ) );
 $sprawdz( 'nie da sie go zamknac (brak is-dismissible)', false === strpos( $wyj, 'is-dismissible' ) );
+// KOMUNIKAT MUSI NIESC POWOD ZMIERZONY DLA KAZDEJ STRONY OSOBNO.
+// Warunek w admin.php jest ALTERNATYWA trzech przeslanek (nieopublikowana ALBO zaslepka w tytule
+// ALBO w tresci). Do rundy 2 komunikat mowil jednym zdaniem o wersji roboczej takze o stronie
+// OPUBLIKOWANEJ i kazal ja opublikowac — opis stanu, w ktorym ona nie jest (klasa 3).
+$sprawdz( 'przy stronie roboczej powod brzmi NIEOPUBLIKOWANA', false !== strpos( $wyj, 'nieopublikowana' ),
+	'brak zmierzonego powodu przy stronie w wersji roboczej' );
+$sprawdz( 'i NIE mowi o zaslepce, ktorej tu nie bylo', false === strpos( $wyj, 'zaślepką' ) );
 
 echo "=== B. obie gotowe: opublikowane, bez slowa SZABLON — ostrzezenia NIE MA ===\n";
 wp_update_post( array( 'ID' => $id_reg, 'post_status' => 'publish', 'post_title' => 'Regulamin sklepu', 'post_content' => 'Sprzedawca: Firma sp. z o.o., ul. Prawdziwa 1.' ) );
@@ -120,6 +129,11 @@ $wyj = sklepag_test_zlap();
 $sprawdz( 'lapie zaslepke w tresci opublikowanej strony', false !== strpos( $wyj, 'Regulamin sklepu' ),
 	'opublikowanie z niewypelnionym szablonem uchodzi za gotowe' );
 $sprawdz( 'i NIE oskarza drugiej, ktora jest gotowa', false === strpos( $wyj, 'Polityka prywatności sklepu' ) );
+$sprawdz( 'powod mowi o ZASLEPCE, nie o braku publikacji', false !== strpos( $wyj, 'zaślepką' ),
+	'strona OPUBLIKOWANA dostaje powod, ktorego nie ma: ' . substr( wp_strip_all_tags( $wyj ), 0, 120 ) );
+$sprawdz( 'i NIE nazywa opublikowanej strony nieopublikowana', false === strpos( $wyj, 'nieopublikowana' ),
+	'komunikat opisuje stan, w ktorym strona NIE JEST — wlasciciel przestaje wierzyc ostrzezeniu' );
+$sprawdz( 'i nie kaze publikowac czegos, co juz jest opublikowane', false === strpos( $wyj, 'opublikuj obie strony' ) );
 
 echo "=== D. opcji nie ma (wlasciciel skasowal strone) — nie pouczamy ===\n";
 $ustaw_opcje( 0, 0 );

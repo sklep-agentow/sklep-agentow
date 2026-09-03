@@ -14,6 +14,10 @@ wydany osobno (podbicie pośrednie wewnątrz jednej zmiany).
 
 ---
 
+## [Niewydane]
+
+Nic jeszcze.
+
 ## [0.9.40] — 2026-09-03
 
 ### Naprawione
@@ -24,10 +28,6 @@ wydany osobno (podbicie pośrednie wewnątrz jednej zmiany).
   sprzedawać treści cyfrowe, nie wiedząc, że dokumenty dla kupujących leżą nieopublikowane.
   Ostrzeżenie jest trwałe, wskazuje obie strony z odnośnikiem do edycji i znika dopiero, gdy obie są
   opublikowane i nie mają już zaślepki „SZABLON". Brak strony (właściciel ją skasował) nie jest pouczany.
-
-## [Niewydane]
-
-Nic jeszcze.
 
 ---
 

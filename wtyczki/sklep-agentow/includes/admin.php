@@ -75,11 +75,19 @@ function sklepag_ostrzez_strony_prawne() {
 		if ( ! $wpis || 'trash' === $wpis->post_status ) {
 			continue;
 		}
-		$niegotowa = 'publish' !== $wpis->post_status
-			|| false !== strpos( $wpis->post_title, 'SZABLON' )
-			|| false !== strpos( $wpis->post_content, 'SZABLON' );
-		if ( $niegotowa ) {
-			$do_uzupelnienia[] = '<a href="' . esc_url( get_edit_post_link( $id ) ) . '">' . esc_html( $nazwa ) . '</a>';
+		// ⛔ Warunek jest ALTERNATYWA trzech przeslanek, wiec komunikat NIE MOZE mowic jednego
+		//    zdania o wszystkich. Strona opublikowana z zaslepka w tresci dostawala zdanie „nadal
+		//    SZABLON w wersji roboczej” i polecenie „opublikuj” — czyli opis stanu, w ktorym nie jest.
+		//    Wlasciciel otwieral ja, widzial opublikowana i przestawal wierzyc ostrzeżeniu.
+		$powod = '';
+		if ( 'publish' !== $wpis->post_status ) {
+			$powod = 'nieopublikowana';
+		} elseif ( false !== strpos( $wpis->post_title, 'SZABLON' ) || false !== strpos( $wpis->post_content, 'SZABLON' ) ) {
+			$powod = 'opublikowana, ale wciąż z zaślepką SZABLON';
+		}
+		if ( '' !== $powod ) {
+			$do_uzupelnienia[] = '<a href="' . esc_url( get_edit_post_link( $id ) ) . '">' . esc_html( $nazwa )
+				. '</a> (' . esc_html( $powod ) . ')';
 		}
 	}
 	if ( ! $do_uzupelnienia ) {
@@ -87,7 +95,7 @@ function sklepag_ostrzez_strony_prawne() {
 	}
 	echo '<div class="notice notice-error"><p><strong>Sklep Agentów:</strong> sklep może przyjmować płatności, a dokumenty dla kupujących nie są gotowe: '
 		. wp_kses( implode( ' oraz ', $do_uzupelnienia ), array( 'a' => array( 'href' => array() ) ) )
-		. ' — to nadal SZABLON w wersji roboczej. Uzupełnij dane sprzedawcy (nazwa, adres, kontakt, adres do reklamacji) i <strong>opublikuj obie strony, zanim zaczniesz sprzedawać</strong>. Sprzedaż treści cyfrowych bez regulaminu i informacji o administratorze danych jest ryzykiem prawnym po Twojej stronie.</p></div>';
+		. ' — przy każdej stoi, czego jej brakuje. Uzupełnij dane sprzedawcy (nazwa, adres, kontakt, adres do reklamacji), usuń zaślepki SZABLON i <strong>opublikuj te strony, zanim zaczniesz sprzedawać</strong>. Sprzedaż treści cyfrowych bez regulaminu i informacji o administratorze danych jest ryzykiem prawnym po Twojej stronie.</p></div>';
 }
 
 function sklepag_admin_menu() {

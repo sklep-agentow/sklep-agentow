@@ -58,7 +58,7 @@ sed "s/^add_action( 'admin_notices', 'sklepag_ostrzez_strony_prawne' );$//" "$PA
 zmierz "M1: funkcja istnieje, ale nikt jej nie wola" 1 "$TMP/m1.php"
 
 # 2. nie patrzy na tresc — opublikowany, niewypelniony szablon uchodzi za gotowy
-sed "s/|| false !== strpos( \$wpis->post_content, 'SZABLON' );/;/" "$PANEL" > "$TMP/m2.php"
+sed "s/|| false !== strpos( \$wpis->post_content, 'SZABLON' ) ) {/) {/" "$PANEL" > "$TMP/m2.php"
 [ "$(cmp -s "$PANEL" "$TMP/m2.php"; echo $?)" -ne 0 ] || padnij "mutant 2 nie zmienil pliku — wzorzec nie trafil"
 zmierz "M2: slepy na zaslepke w tresci opublikowanej strony" 1 "$TMP/m2.php"
 
@@ -73,16 +73,25 @@ sed "s/if ( ! \$wpis || 'trash' === \$wpis->post_status ) {/if ( ! \$wpis ) {/" 
 zmierz "M4: poucza o stronie wyrzuconej do kosza" 1 "$TMP/m4.php"
 
 # 5. krzyczy zawsze — takze na dokumenty gotowe
-sed "s/^		\$niegotowa = 'publish' !== \$wpis->post_status$/		\$niegotowa = true;\n		\$nieuzywane = 'publish' !== \$wpis->post_status/" "$PANEL" > "$TMP/m5.php"
+sed "s/^		\$powod = '';$/		\$powod = 'nieopublikowana';/" "$PANEL" > "$TMP/m5.php"
 [ "$(cmp -s "$PANEL" "$TMP/m5.php"; echo $?)" -ne 0 ] || padnij "mutant 5 nie zmienil pliku — wzorzec nie trafil"
 zmierz "M5: krzyczy takze na gotowe dokumenty" 1 "$TMP/m5.php"
+
+# 6. komunikat WRACA do stanu sprzed rundy 2: jedno zdanie o wersji roboczej dla KAZDEGO powodu
+#    (recenzja #278 WAZNA 1 — opis stanu, w ktorym strona nie jest). Powod przestaje byc mierzony.
+sed "s|\. '</a> ('  *\. esc_html( \$powod ) \. ')'|. '</a>'|" "$PANEL" > "$TMP/m6.php"
+[ "$(cmp -s "$PANEL" "$TMP/m6.php"; echo $?)" -ne 0 ] || padnij "mutant 6 nie zmienil pliku — wzorzec nie trafil"
+zmierz "M6: komunikat bez ZMIERZONEGO powodu przy stronie" 1 "$TMP/m6.php"
 
 naglowek "POWROT DO CZYSTEGO KODU — zielone musi wrocic"
 zmierz "czysty kod po mutantach" 0 "$TMP/czysty.php"
 
 printf '\n'
 if [ "$BLEDY" -eq 0 ]; then
-	printf 'KALIBRACJA STRAZNIKA STRON PRAWNYCH: 5/5 mutantow zlapanych, czysty kod 2x zielony (EXIT=0)\n'
+	# ⛔ Liczba NIE na sztywno: '5/5' zostalo po dolozeniu M6 i klamalo o wlasnym przebiegu
+	#    (dokladnie ta klasa bledu, ktora ta kalibracja tropi). Zrodlo: wywolania `zmierz "M...`.
+	MUTANTOW=$(grep -c '^zmierz "M' "$0")
+	printf 'KALIBRACJA STRAZNIKA STRON PRAWNYCH: %s/%s mutantow zlapanych, czysty kod 2x zielony (EXIT=0)\n' "$MUTANTOW" "$MUTANTOW"
 	exit 0
 fi
 printf 'KALIBRACJA: %s NIE WYSZLO (EXIT=1)\n' "$BLEDY"

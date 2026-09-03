@@ -1,7 +1,7 @@
 #!/bin/bash
 # Spust strażnika stron prawnych na STOSIE PRÓBNYM od zera (nigdy na wspólnym stanowisku).
 #
-# Użycie: bash testy/strony-prawne-stos-probny.sh
+# Użycie: bash narzedzia-qa/strony-prawne-stos-probny.sh
 #   EXIT 0 = strażnik widzi wszystkie sytuacje · 1 = któraś nie wyszła · 2 = brak warunków.
 #
 # ⛔ DLACZEGO STOS PRÓBNY, A NIE WSPÓLNY: żeby zmierzyć strażnika, trzeba mieć na stosie kod
