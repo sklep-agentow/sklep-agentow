@@ -22,6 +22,19 @@ plików paczki, nie przez nazwę katalogu.
 | luki w instrukcji instalacji | `dokumentacja/INSTRUKCJA-INSTALACJI.md` | **zero obrazów** (kontrola wzorca: instrukcje wtyczek mają 6/5/6), myląca numeracja menu, ewidencja kasy fiskalnej, retencja faktur, zachowanie przy złym NIP-ie | otwarte, tekst |
 | pięć obrazów w paczce sklepu | `wtyczki/sklep-agentow/zrzuty/*.png` | pokazują menu z ChatBot LIVE i Segregatorem; klient bez tych wtyczek zobaczy ekran, którego u siebie nie ma | otwarte, drobne |
 
+**Dopisane 3.09 po przelocie egzaminatora panelu (świeże oczy, nie moja rama):**
+
+| co | gdzie w kodzie | dlaczego jedzie | status |
+|---|---|---|---|
+| **surowe kody zdarzeń w dzienniku, w tym jedyne angielskie słowo w polskim panelu** | `class-sklepag-lista-zdarzen.php:116-118` — `case 'typ': return esc_html( $item->$column_name );`, zero mapowania na etykietę | właściciel widzi `reconciliation_blad`, `reconciliation_wynik`, `webhook_unpaid`, `checkout_blad` — 28 kodów, bez legendy. Ten sam mechanizm ma na pulpicie ludzką etykietę („Dociągnij zaległe teraz", `admin-dashboard.php:529`), więc rozjazd jest w jednym ekranie | **świadomie ODŁOŻONE 3.09** |
+
+⛔ **Dlaczego odłożone, a nie naprawione od ręki:** jeden z typów jest **sklejany dynamicznie**
+(`opinie.php:205`: `'opinia_' . $nowy`), więc uczciwa mapa wymaga najpierw rozstrzygnięcia zbioru
+wartości, a mapa niepełna bez pilnowanego fallbacku jest gorsza niż surowy kod. Naprawa warta
+zrobienia **razem z testem, który pilnuje, że każdy typ użyty w kodzie ma etykietę** — inaczej
+kompletność jest obietnicą, nie bramką. Widoczne dopiero po wejściu w podstronę Dziennik, więc
+nie blokuje wydania.
+
 ⛔ **Czego ta lista NIE obejmuje** (uczciwie, żeby nie udawała kompletnej): pozycje czysto narzędziowe
 zakwalifikowano po katalogu (`testy/`, `narzedzia-qa/`, `audyt/` są poza allowlistą), **bez osobnego uruchomienia**;
 zawartość pięciu obrazów sprawdzono co do liczby plików, nie co do treści; numerów linii w wierszu „asymetria CSV"
