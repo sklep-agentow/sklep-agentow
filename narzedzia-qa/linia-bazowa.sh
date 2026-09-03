@@ -136,18 +136,22 @@ for t in testy/*.php; do
 	#    (tworzy strony, katalog, zadanie cykliczne, przebudowuje reguły adresów). Jego własny
 	#    nagłówek mówi „uruchamiać na STOSIE PRÓBNYM, nie na stosie z danymi”, a ta pętla jedzie
 	#    po `strona_wp_wordpress` i NIE przywraca bazy między testami — więc kolejne testy
-	#    dostawałyby zrzuconą tabelę. Spust ma własną drogę: `testy/schemat-wersja-po-sprawdzeniu-proba-kontrolna.sh`
-	#    stawia stos próbny i wywołuje go tam.
+	#    dostawałyby zrzuconą tabelę.
 	# ⛔ GDZIE TEN STRAZNIK NAPRAWDE BIEGNIE — zmierzone, nie zalozone:
 	#      - `quality.yml:127` wola przelot Z ZAKRESEM `narzedzia-qa`, wiec proby z `testy/`
 	#        (w tym proba tego straznika) w CI PR-owym NIE BIEGNA ANI RAZU;
-	#      - biegnie w przelocie wolanym BEZ zakresu, czyli w bramce konca wydania `k7-koniec.sh`
-	#        — to jest ochrona PRZED ODDANIEM, nie przy kazdym PR-ze;
+	#      - SPUST JEST RECZNY: ktos musi uruchomic przelot BEZ zakresu przed wydaniem.
+	#        `k7-koniec.sh` przelotu NIE URUCHAMIA — czyta `audyt/sklep/PROBY-KONTROLNE.log` (:35),
+	#        sprawdza jego znacznik (:137) i swiezosc (:153), a przy braku KAZE go uruchomic
+	#        (`fail 6 proby kontrolne ... uruchom: bash narzedzia-qa/proby-kontrolne-przelot.sh`).
+	#        Zmierzone biegiem tej bramki: EXIT=1 i wlasnie ten komunikat. Poprzednia wersja
+	#        tego wiersza obiecywala automat, ktorego nie ma — biegnie w k7-koniec
+	#        (recenzja #274, runda 12, WAZNA 1: CZWARTA runda tej samej klasy);
 	#      - i recznie: `bash testy/schemat-wersja-po-sprawdzeniu-proba-kontrolna.sh`, ktora
 	#        stawia wlasny stos PROBNY (nie ten wspolny) i wola straznika tam.
 	#    Poprzednia wersja tego komentarza mowila samo „biegnie przez wlasna probe kontrolna",
 	#    co czytalo sie jak „ma spust w CI" — a nie ma (recenzja #274, runda 11, WAZNA 1).
-	case "$t" in *schemat-wersja-po-sprawdzeniu-test.php) echo "POMINIĘTE (niszczy stan — spust: przelot bez zakresu w k7-koniec albo uruchomienie ręczne; w CI PR-owym NIE biegnie): $t"; printf '%s\tPOMINIETE\t0\n' "$t" >> "$TSV"; continue;; esac
+	case "$t" in *schemat-wersja-po-sprawdzeniu-test.php) echo "POMINIĘTE (niszczy stan — spust RĘCZNY przed wydaniem: przelot bez zakresu albo własna próba; k7-koniec tylko SPRAWDZA świeżość logu, NIE uruchamia; w CI PR-owym NIE biegnie): $t"; printf '%s\tPOMINIETE\t0\n' "$t" >> "$TSV"; continue;; esac
 	uruchom "$t" php nie
 done
 echo "--- testy/ (JS, przeglądarka) ---"

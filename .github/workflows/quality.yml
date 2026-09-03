@@ -122,6 +122,10 @@ jobs:
       # 38 prób, z czego 11 to testy PRODUKTU wymagające żywego stosu WordPressa —
       # a manifest bramek mówi wprost, że w CI nie ma WP+Stripe. Bez zawężenia ten krok
       # padałby zawsze, na jedenastu porażkach, które nie są wadami kodu. Próby produktu
-      # chodzą w bramce WYDANIA (k7-koniec.sh woła przelot bez zakresu — tam stos stoi).
+      # chodzą w przelocie BEZ zakresu, uruchamianym RĘCZNIE przed wydaniem — tam stos stoi.
+      # ⛔ `k7-koniec.sh` tego przelotu NIE URUCHAMIA: czyta jego log, sprawdza znacznik
+      # (:137) i świeżość (:153), a przy braku KAŻE go uruchomić. Poprzednie zdanie mówiło
+      # „k7-koniec woła przelot” i obiecywało automat, którego nie ma (recenzja #274 r12,
+      # WAŻNA 1 — ta sama nieprawda stała też w narzedzia-qa/linia-bazowa.sh:144).
       - name: Proby kontrolne bramek
         run: bash narzedzia-qa/proby-kontrolne-przelot.sh "${RUNNER_TEMP}/PROBY-KONTROLNE.log" narzedzia-qa
