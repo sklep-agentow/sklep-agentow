@@ -383,7 +383,7 @@ ograniczył ruch do adresów Cloudflare, albo zostaw przełącznik wyłączony.
 
 **Czy gość może zalać mnie wiadomościami?**
 Nie — limit to 10 wiadomości na minutę z jednego adresu IP (dotyczy pytań
-i zgłoszeń łącznie). Pytanie ma maks. 500 znaków, wiadomość zgłoszenia 2000.
+i zgłoszeń łącznie). Pytanie ma maks. 500 znaków. Pole w widżecie **nie przyjmie więcej niż 500 znaków przy pisaniu** (atrybut `maxLength` przeglądarki), a przy WKLEJENIU dłuższego tekstu widżet skraca go i mówi o tym wprost: „Wklejony tekst skrócono do 500 znaków — sprawdź, czy pytanie jest całe”. Gdyby mimo to dłuższa treść doszła do serwera (np. z innego programu niż widżet), serwer odpowiada komunikatem z liczbą znaków — **serwer nic nie ucina po cichu**. Wiadomość zgłoszenia ma maks. 2000 znaków — za długa też dostaje komunikat z liczbą, nie jest ucinana.
 
 **Nie przychodzą maile o zgłoszeniach.**
 Zgłoszenia i tak zapisują się w panelu. Mail wymaga działającej wysyłki
