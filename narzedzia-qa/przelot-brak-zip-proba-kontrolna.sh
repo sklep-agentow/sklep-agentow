@@ -9,11 +9,11 @@
 # gubił dokładnie to słowo, dla którego powstał, i dokładał `zip: command not found` do
 # stderr. Żaden przebieg CI tego nie zobaczył, bo oba runnery `zip` mają.
 #
-# CO MIERZY — trzy rzeczy, każda osobno, na PRAWDZIWYM skrypcie (nie na jego kopii):
+# CO MIERZY — trzy rzeczy, każda osobno, na PRAWDZIWYM skrypcie:
 #   1. komunikat pominięcia NAZYWA brakujące narzędzie (zawiera słowo `zip`),
 #   2. stderr NIE zawiera `command not found`,
 #   3. próby z WYMAGA_ZIP są POMIJANE, a nie liczone jako PORAŻKA.
-# Plus kontrola odwrotna: z podłożonymi odwrotnymi apostrofami asercja 1 i 2 MUSZĄ PAŚĆ.
+# Plus kontrola odwrotna: z podłożonymi odwrotnymi apostrofami asercje 1 i 2 MUSZĄ PAŚĆ.
 #
 # Użycie: bash narzedzia-qa/przelot-brak-zip-proba-kontrolna.sh
 # Kody:   0 = strażnik widzi podłożony błąd · 1 = ślepy · 2 = nie zmierzyłam (brak warunków)
@@ -29,10 +29,18 @@ NIETRAFIONE=0
 # --- atrapa PATH: wszystko poza `zip` -----------------------------------------
 # Nie usuwamy `zip` z systemu — budujemy katalog z dowiązaniami do narzędzi, których
 # przelot potrzebuje, i pomijamy w nim `zip`. To jedyny sposób, żeby wejść w gałąź
-# `:84` na wykonawcy, który `zip` ma.
+# `brak zip` na wykonawcy, który `zip` ma.
 ATRAPA="$(mktemp -d)" || { echo "PROBA: nie moge zrobic katalogu atrapy" >&2; exit 2; }
 ROBOCZY="$(mktemp -d)" || { echo "PROBA: nie moge zrobic katalogu zakresu" >&2; exit 2; }
-trap 'rm -rf "$ATRAPA" "$ROBOCZY"' EXIT
+
+# ⛔ MUTANT MUSI STAC W TYM SAMYM KORZENIU CO ORYGINAL (recenzja #272 r14, WAZNA 2).
+# `proby-kontrolne-przelot.sh` liczy swoj KORZEN ze sciezki wlasnego pliku
+# (`dirname "${BASH_SOURCE[0]}"/..`), wiec kopia w /tmp mierzylaby INNE repozytorium —
+# padalaby z zupelnie innego powodu niz podlozony blad, a kontrola odwrotna liczylaby
+# to jako sukces. Klucz: `git status --porcelain -uno` IGNORUJE pliki niesledzone
+# (zmierzone), wiec mutant obok oryginalu NIE brudzi drzewa i przelot nie odmawia.
+MUTANT="$KORZEN/narzedzia-qa/.przelot-mutant-proby.tmp.sh"
+trap 'rm -rf "$ATRAPA" "$ROBOCZY"; rm -f "$MUTANT"' EXIT
 
 for N in bash sh git sed awk grep find sort mktemp date printf cat rm cp mv \
          mkdir chmod head tail cut tr wc dirname basename docker php jq unzip; do
@@ -61,7 +69,7 @@ uruchom() { # uruchom <plik_logu> [skrypt] -> wypelnia WY_OUT, WY_ERR, WY_KOD
 	WY_ERR="$(cat "$ROBOCZY/err.txt")"
 }
 
-sprawdz() { # sprawdz "opis" "warunek-spelniony(0/1)"
+sprawdz() { # sprawdz "opis" <0=spelniony|1=nie>
 	if [ "$2" -eq 0 ]; then
 		printf '  OK   %s\n' "$1"
 	else
@@ -73,12 +81,27 @@ sprawdz() { # sprawdz "opis" "warunek-spelniony(0/1)"
 echo "=== PROBA KONTROLNA: galaz 'brak zip' w przelocie ==="
 echo
 
-# --- 1. CZYSTY KOD: komunikat ma nazwac narzedzie -----------------------------
+# --- 1. CZYSTY KOD ------------------------------------------------------------
 uruchom "$ROBOCZY/czysty.log"
+CZYSTY_KOD=$WY_KOD
 WSZYSTKO="$WY_OUT
 $(cat "$ROBOCZY/czysty.log" 2> /dev/null)"
 
-echo "--- czysty kod (EXIT=$WY_KOD) ---"
+# ⛔ WARUNEK WSTEPNY, NIE ASERCJA (recenzja #272 r14, WAZNA 1). Przelot konczy sie kodem 2,
+# gdy nie ma czego mierzyc — najczesciej przy BRUDNYM DRZEWIE, a ta probe uruchamia sie
+# recznie, czyli zwykle przy niezacommitowanej pracy. Bez tego warunku obie asercje
+# pozytywne padaly (bo `POMINIETO` w ogole nie powstaje) i skrypt konczyl sie kodem 1
+# z werdyktem `STRAZNIK SLEPY` — czyli oskarzal przelot o slepote, niczego nie zmierzywszy.
+# To dokladnie ta klasa bledu, ktora ten PR naprawia o poziom wyzej.
+if [ "$CZYSTY_KOD" -eq 2 ]; then
+	echo "⛔ NIE ZMIERZONO: przelot odmowil pracy (EXIT=2) — brak warunkow wstepnych."
+	echo "   Najczestsza przyczyna: BRUDNE DRZEWO ROBOCZE. Zacommituj albo odloz zmiany."
+	echo "   Komunikat przelotu:"
+	echo "$WY_ERR" | head -3 | sed 's/^/     /'
+	exit 2
+fi
+
+echo "--- czysty kod (EXIT=$CZYSTY_KOD) ---"
 echo "$WSZYSTKO" | grep -i 'pomijam\|POMINIETO' | head -2 | sed 's/^/      /'
 
 if echo "$WSZYSTKO" | grep -q 'POMINIETO'; then
@@ -100,14 +123,9 @@ else
 	sprawdz "stderr BEZ 'command not found'" 0
 fi
 
-# --- 2. KONTROLA ODWROTNA: podkladamy z powrotem odwrotne apostrofy -----------
+# --- 2. KONTROLA ODWROTNA -----------------------------------------------------
 echo
 echo "--- kontrola odwrotna: podkladam odwrotne apostrofy (stan sprzed naprawy) ---"
-# ⛔ MUTUJEMY KOPIE, NIE ORYGINAL. Powod nie jest kosmetyczny: te probe uruchamia
-# rowniez `proby-kontrolne-przelot.sh` (znajduje ja przez `find`), a bash czyta skrypt
-# PRZYROSTOWO — podmiana pliku wykonywanego w tej chwili przez proces nadrzedny potrafi
-# go rozsypac w polowie. Asercje POZYTYWNE wyzej mierza prawdziwy plik; mutanta niesie kopia.
-MUTANT="$ROBOCZY/przelot-mutant.sh"
 cp "$PRZELOT" "$MUTANT"
 PRZED="$(cksum < "$MUTANT")"
 sed -i "s|wymaga 'zip', a ten wykonawca|wymaga \`zip\`, a ten wykonawca|" "$MUTANT"
@@ -118,31 +136,47 @@ if [ "$PRZED" = "$PO" ]; then
 	NIETRAFIONE=$((NIETRAFIONE + 1))
 else
 	uruchom "$ROBOCZY/mutant.log" "$MUTANT"
+	M_KOD=$WY_KOD
+	M_ERR="$WY_ERR"
 	M_WSZYSTKO="$WY_OUT
 $(cat "$ROBOCZY/mutant.log" 2> /dev/null)"
-	ZLAPANE=0
-	if echo "$M_WSZYSTKO" | grep 'POMINIETO' | grep -q 'zip'; then
-		echo "  BLAD straznik NIE zlapal: komunikat NADAL nazywa narzedzie"
-		BLEDY=$((BLEDY + 1))
+
+	# ⛔ NIEOBECNOSC LINII TO NIE DOWOD (recenzja #272 r14, WAZNA 2). Zanim uznam, ze
+	# straznik zlapal wade, musze wiedziec, ze mutant W OGOLE DOSZEDL do miejsca, w ktorym
+	# ta linia powstaje. Inaczej „brak `zip` w komunikacie" znaczylby to samo co „przelot
+	# padl piec linii wczesniej" — a to drugie nie jest zadnym pomiarem.
+	if [ "$M_KOD" -eq 2 ]; then
+		echo "  ⛔ NIE ZMIERZONO: mutant odmowil pracy (EXIT=2), nie doszedl do pominiec."
+		NIETRAFIONE=$((NIETRAFIONE + 1))
+	elif ! echo "$M_WSZYSTKO" | grep -q 'POMINIETO'; then
+		echo "  ⛔ NIE ZMIERZONO: mutant nie wyprodukowal ANI JEDNEJ linii POMINIETO —"
+		echo "     nie doszedl do galezi, ktora mierze. To nie jest 'straznik zlapal'."
+		NIETRAFIONE=$((NIETRAFIONE + 1))
 	else
-		echo "  OK   straznik PADL na: komunikat gubi slowo 'zip'"
-		ZLAPANE=$((ZLAPANE + 1))
+		ZLAPANE=0
+		if echo "$M_WSZYSTKO" | grep 'POMINIETO' | grep -q 'zip'; then
+			echo "  BLAD straznik NIE zlapal: komunikat NADAL nazywa narzedzie"
+			BLEDY=$((BLEDY + 1))
+		else
+			echo "  OK   straznik PADL na: komunikat gubi slowo 'zip' (linia POMINIETO JEST)"
+			ZLAPANE=$((ZLAPANE + 1))
+		fi
+		if echo "$M_ERR" | grep -q 'command not found'; then
+			echo "  OK   straznik PADL na: 'command not found' w stderr"
+			ZLAPANE=$((ZLAPANE + 1))
+		else
+			echo "  BLAD straznik NIE zlapal: stderr bez 'command not found'"
+			BLEDY=$((BLEDY + 1))
+		fi
+		[ "$ZLAPANE" -ge 1 ] || BLEDY=$((BLEDY + 1))
 	fi
-	if echo "$WY_ERR" | grep -q 'command not found'; then
-		echo "  OK   straznik PADL na: 'command not found' w stderr"
-		ZLAPANE=$((ZLAPANE + 1))
-	else
-		echo "  BLAD straznik NIE zlapal: stderr bez 'command not found'"
-		BLEDY=$((BLEDY + 1))
-	fi
-	[ "$ZLAPANE" -ge 1 ] || BLEDY=$((BLEDY + 1))
 fi
-echo "  (oryginal NIETKNIETY — mutacja szla na kopii $MUTANT)"
+echo "  (oryginal NIETKNIETY — mutant to osobny plik, kasowany przy wyjsciu)"
 
 echo
 if [ "$NIETRAFIONE" -gt 0 ]; then
-	echo "⛔ NIE ZMIERZONO: $NIETRAFIONE podmian nie trafilo w kod — wzorzec tej proby sie zestarzal."
-	echo "   To wada TEJ PROBY, nie przelotu. Popraw wzorzec i uruchom ponownie."
+	echo "⛔ NIE ZMIERZONO ($NIETRAFIONE) — wzorzec sie zestarzal albo mutant nie doszedl do celu."
+	echo "   To wada TEJ PROBY, nie przelotu. Popraw i uruchom ponownie."
 	exit 2
 fi
 if [ "$BLEDY" -eq 0 ]; then

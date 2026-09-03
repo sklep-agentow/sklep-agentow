@@ -89,17 +89,32 @@ WYMAGA_ZIP=(
 )
 if ! command -v zip > /dev/null 2>&1; then
 	for N in "${WYMAGA_ZIP[@]}"; do
-		POMIJANE[$N]="wymaga 'zip', a ten wykonawca go nie ma (runnery nie są identyczne) — przelot ręczny przed wydaniem"
+		# ⛔ SCALAMY POWODY, NIE NADPISUJEMY (recenzja #272 r14, DROBNA 6). Dwie nazwy
+		# stoja w OBU tablicach, a POMIJANE to mapa — ta petla biegnie DRUGA, wiec proste
+		# przypisanie kasowalo powod dockerowy i log mowil o jednym braku z dwoch.
+		if [ -n "${POMIJANE[$N]:-}" ]; then
+			POMIJANE[$N]="${POMIJANE[$N]} ORAZ wymaga 'zip', ktorego ten wykonawca tez nie ma"
+		else
+			POMIJANE[$N]="wymaga 'zip', a ten wykonawca go nie ma (runnery nie są identyczne) — przelot ręczny przed wydaniem"
+		fi
 	done
 fi
 
 # ⛔ SUFIT POMINIĘĆ. Bez niego lista pominięć rośnie po cichu i przelot świeci
 # zielono, sprawdzając coraz mniej — dokładnie ta klasa błędu, dla której ten
 # skrypt w ogóle powstał. Podniesienie sufitu ma być świadomą decyzją w commicie.
-MAX_POMINIETYCH=7   # 4.09: BEZ ZMIANY mimo rozszerzenia WYMAGA_ZIP z 2 na 4 proby — policzone,
-                    # nie przyjete: dowod-z-paczki i dowod-aktualizacji SA JUZ w piatce dockerowej,
-                    # wiec unia sie nie zmienia. Brak Dockera i brak zip: 5 u {k7,paczka} = 7.
-                    # Docker JEST, brak zip: {k7,paczka,dowod-z-paczki,dowod-aktualizacji} = 4.
+MAX_POMINIETYCH=8   # 4.09 (recenzja #272 r14, DROBNA 5): 7 -> 8, bo poprzedni rachunek
+                    # TRAFIAL W LICZBE Z DWOCH BLEDOW ZNOSZACYCH SIE — pomijal bezwarunkowa
+                    # `dowod-zachowania-segregator` i liczyl `golden-migawka`, ktora lezy
+                    # w `testy/`, wiec CI (zakres `narzedzia-qa`) nigdy jej nie widzi.
+                    # ⛔ Rachunek na OBU zakresach, bo sufit obowiazuje oba:
+                    #   zakres `narzedzia-qa` (CI, quality.yml:127), brak Dockera i brak zip:
+                    #       1 bezwarunkowa + 4 dockerowe (bez golden-migawka) + {k7, paczka} = 7
+                    #   BEZ zakresu (tak wola k7-koniec przed wydaniem), ten sam przypadek:
+                    #       1 bezwarunkowa + 5 dockerowych + {k7, paczka}            = 8
+                    # Osiem jest maksimum, wiec sufit 8. Przy 7 przelot bez zakresu wywalilby
+                    # sie na WLASNEJ poprawce na kazdym wykonawcy bez Dockera i bez zip.
+                    # Docker JEST, brak zip: {k7, paczka, dowod-z-paczki, dowod-aktualizacji} = 4.
                     # 3.09: +1 wobec 6. Powod: WYMAGA_ZIP (2 proby) minus jedna, ktora i tak
                     # byla juz liczona — na koncie CI bez Dockera i bez `zip` pominiec jest 7
                     # (5 dockerowych + 2 zipowe). Bez tej zmiany moja wlasna naprawa wywalilaby
