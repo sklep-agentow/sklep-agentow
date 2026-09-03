@@ -84,7 +84,7 @@ fi
 # akapitu wyjaśniającego podbijało liczbę i strażnik oskarżał opis zamiast kodu.
 # Odrzucamy linie komentarza oraz te, w których `docker` stoi wyłącznie w cudzysłowie
 # odwrotnym (cytat w tekście). To ta sama klasa co bramka „liczba tabel” w #274.
-ILE_DOCKER="$(grep -vE '^[[:space:]]*#' "$STOS" | grep -vE '`docker' | grep -c 'docker ')"
+ILE_DOCKER="$(grep -vE '^[[:space:]]*#' "$STOS" | grep -vE '\\`docker' | grep -c 'docker ')"
 if [ "$ILE_DOCKER" -gt 6 ]; then
 	printf '  BLAD wywolan dockera w stos.sh jest %s — przybylo obejscie?\n' "$ILE_DOCKER"
 	BLEDY=$(( BLEDY + 1 ))

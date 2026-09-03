@@ -38,8 +38,11 @@ naglowek()  { printf '\n=== %s ===\n' "$1"; }
 wymagaj_narzedzi() {
 	command -v docker > /dev/null || padnij "brak dockera"
 	command -v unzip  > /dev/null || padnij "brak unzip"
+	# ⛔ „NIE WIEM" TO NIE TO SAMO CO „NIE MA" — patrz `narzedzia-qa/stos.sh:153`. Pytamy NAJPIERW,
+	# czy Docker w ogole odpowiada; dopiero potem wolno orzekac o kontenerze.
+	docker ps > /dev/null 2>&1 || padnij "NIE WIEM, czy kontener bazy $KONTENER_DB stoi — to konto nie widzi Dockera (brak dostepu do demona, nie brak kontenera)"
 	docker ps --filter "name=^${KONTENER_DB}$" --filter status=running -q | grep -q . \
-		|| padnij "kontener bazy $KONTENER_DB nie chodzi — nie mam gdzie postawić stosu próbnego"
+		|| padnij "Docker odpowiedzial: kontenera bazy $KONTENER_DB na liscie NIE MA — nie mam gdzie postawic stosu probnego"
 }
 
 wp() { docker exec "$KONTENER" wp --allow-root --path=/var/www/html "$@" 2>&1; }

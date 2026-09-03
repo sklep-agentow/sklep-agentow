@@ -114,7 +114,12 @@ fi
 # probę na czerwono FAŁSZYWYM oskarżeniem „przybyło obejście" — czyli poprawa czytelności
 # komunikatów była karana jak obejście zabezpieczenia. Odsiewamy wzmianki w odwrotnych
 # apostrofach, tak samo jak blizniak; sam wzorzec i limit zostają bez zmian.
-ILE_DOCKER="$(printf '%s\n' "$KOD_SKRYPTU" | grep -vE '`docker' | grep -c 'docker ')"
+# ⛔ ODSIEWAMY WYLACZNIE APOSTROF ESCAPOWANY, czyli wzmianke w tresci komunikatu. Runda 9
+# odsiewala KAZDY odwrotny apostrof przed slowem docker — a to lapie takze STARE PODSTAWIENIE
+# POLECENIA, czyli PRAWDZIWE wywolanie. Dzis takiego zapisu w mierzonych plikach nie ma
+# (sprawdzone), ale licznik przestalby je widziec w dniu, w ktorym ktos go uzyje — mialby dziure
+# dokladnie tam, gdzie ma pilnowac (recenzja #268 r9, WAZNA 1).
+ILE_DOCKER="$(printf '%s\n' "$KOD_SKRYPTU" | grep -vE '\\`docker' | grep -c 'docker ')"
 if [ "$ILE_DOCKER" -gt 5 ]; then
 	printf '  BLAD wywolan dockera w test-php.sh jest %s — przybylo obejscie?\n' "$ILE_DOCKER"
 	BLEDY=$(( BLEDY + 1 ))

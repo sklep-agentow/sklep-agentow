@@ -67,7 +67,9 @@ wp() { docker exec "$KONTENER" wp --allow-root --path=/var/www/html "$@"; }
 ETYKIETA="${1:-}"
 [ -n "$ETYKIETA" ] || { echo "użycie: linia-bazowa.sh <etykieta> | --porownaj A B" >&2; exit 2; }
 command -v docker >/dev/null || { echo "brak dockera" >&2; exit 2; }
-docker ps --filter "name=^${KONTENER}$" --filter status=running -q | grep -q . || { echo "stos $KONTENER nie chodzi" >&2; exit 2; }
+# ⛔ „NIE WIEM" TO NIE TO SAMO CO „NIE CHODZI" — patrz `narzedzia-qa/stos.sh:153`.
+docker ps > /dev/null 2>&1 || { echo "NIE WIEM, czy stos $KONTENER chodzi — to konto nie widzi Dockera (brak dostepu do demona, nie brak kontenera)" >&2; exit 2; }
+docker ps --filter "name=^${KONTENER}$" --filter status=running -q | grep -q . || { echo "Docker odpowiedzial: stosu $KONTENER na liscie NIE MA" >&2; exit 2; }
 [ -f "$ENV_ADMIN" ] && { set -a; . "$ENV_ADMIN"; set +a; }
 
 SHA=$(git rev-parse --short HEAD)
