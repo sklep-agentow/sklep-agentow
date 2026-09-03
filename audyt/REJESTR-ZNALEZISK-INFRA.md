@@ -46,15 +46,20 @@
      main klamie (`## Liczba znalezisk OTWARTYCH: 32`, a policzone: **30**). Liczba oparta na cudzej
      liczbie nie jest pomiarem, tylko przepisaniem.
 
-     POMIAR BEZPOSREDNI, z KONTROLA SUMY (narzedzia warsztatu: `grep -cE '^\\| \\`[^\\`]+\\` \\|.*OTWARTE' audyt/REJESTR-ZNALEZISK-INFRA.md` (wcześniej stało tu `policz-otwarte.py` — skryptu, którego w repo NIE MA: `git ls-files | grep -c 'policz-otwarte'` → 0, więc następny nie miał czego uruchomić), bierze status
+     POMIAR BEZPOSREDNI, z KONTROLA SUMY (narzedzia warsztatu: `grep -cE '^\| `[^`]+` \|.*OTWARTE' audyt/REJESTR-ZNALEZISK-INFRA.md` (wcześniej stało tu `policz-otwarte.py` — skryptu, którego w repo NIE MA: `git ls-files | grep -c 'policz-otwarte'` → 0, więc następny nie miał czego uruchomić), bierze status
      z KOLUMNY od konca, nie grepem po slowie — slowa statusu wystepuja takze w tekscie opisu):
        origin/main  73 wiersze:  ZAMKNIETE 38 · OTWARTE 30 · W NAPRAWIE 3 · ZAPARKOWANE 1 · WYCOFANE 1
                                  suma 73 = 73 wierszy  ✔
        ta galaz     89 wierszy:  OTWARTE 48 · ZAMKNIETE 38 · ZAPARKOWANE 1 · WYCOFANE 1 · W NAPRAWIE 1
                                  suma 89 = 89 wierszy  ✔
      ⇒ **48 OTWARTYCH to liczba POLICZONA w tym pliku**, nie wyprowadzona z cudzego naglowka.
-     Sklada sie na nia: 30 otwartych z main + 16 nowych kodow tego PR-a + 2 przeniesione z W NAPRAWIE
-     (main ma 3, ta galaz 1 — dwie naprawy zostaly rozliczone).
+     ⛔ ROZKLAD USUNIETY (recenzja #277 r5, WAZNA 3). Mowil: „2 przeniesione z W NAPRAWIE
+     — dwie naprawy zostaly rozliczone". To NIEPRAWDA: `F4-F4` i `Q-4` maja na `main`
+     status W NAPRAWIE, a na tej galezi stoja jako OTWARTE WYLACZNIE dlatego, ze galaz
+     jest sprzed scalen #268 i #270. Nic nie zostalo rozliczone — to artefakt starej bazy
+     zapisany jako pomiar, czyli klasa I-23, ktora ten sam plik opisuje.
+     ⛔ LICZBA PONIZEJ BEDZIE PRAWDZIWA DOPIERO PO `git merge origin/main` i przeliczeniu
+     jej NA SCALONEJ TRESCI. Do tego czasu traktuj ja jako stan galezi, nie stan projektu.
      ⛔ Kontrola sumy jest OBOWIAZKOWA przy kazdej zmianie tego licznika: bez niej grep po slowie
      statusu daje 64 przy 73 wierszach i nikt tego nie zauwaza. -->
 <!-- ⛔ Ten licznik NIE MA STRAŻNIKA: bramka-znaleziska.sh czyta wyłącznie
