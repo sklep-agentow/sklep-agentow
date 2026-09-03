@@ -41,16 +41,22 @@
      produktu — sprzeczność sprzed #264, do wyprostowania całym blokiem Q-*, nie pojedynczo.
      Komendy w sekcji CZWARTA RUNDA.
 
-     ⭐ PRZELICZONE 3.09 (ten PR, runda 2) — recenzent slusznie zauwazyl, ze licznik poszedl 32 -> 48,
-     a ten komentarz opisywal stan sprzed PR-a. Pomiar KOMENDA, nie z glowy:
-       kody na main:   git show origin/main:<ten plik> | grep -oE '^\| `[^`]+`' | sort -u | wc -l   -> 72
-       kody na galezi: grep -oE '^\| `[^`]+`' <ten plik> | sort -u | wc -l                          -> 88
-       roznica (comm -13): 16 NOWYCH kodow, wszystkie ze statusem OTWARTE:
-         A4b-F3 A4b-F4 A7-F2 A7-F3 C12-F1 C13-F1 E5-F1 E5-F2 F4-F1 F4-F2 F4-F3 F5-F1 F5-F2 F5-F3 F5-F4 F5-F5
-       32 (main) + 16 (nowe, wszystkie otwarte) = 48. ✔ Licznik zgadza sie z tabela.
-     ⛔ Kontrola sumy statusow (32+36+2+1+1+1=73) NIE DA SIE dzis powtorzyc prostym grepem: czesc wierszy
-     niesie slowo statusu takze w TEKSCIE opisu, a wiersze maja rozna liczbe kolumn. Dlatego pomiar wyzej
-     idzie po RÓŻNICY kodow miedzy main a galezia — to jest wielkosc, ktora ten PR faktycznie zmienia. -->
+     ⭐ PRZELICZONE 3.09 (runda 3). ⛔ W rundzie 2 liczba 48 byla PRAWDZIWA, ale DOWOD na nia
+     FALSZYWY: skladnik "32" wzielam z NAGLOWKA main zamiast policzyc. Recenzent to zlapal — naglowek
+     main klamie (`## Liczba znalezisk OTWARTYCH: 32`, a policzone: **30**). Liczba oparta na cudzej
+     liczbie nie jest pomiarem, tylko przepisaniem.
+
+     POMIAR BEZPOSREDNI, z KONTROLA SUMY (narzedzia warsztatu: `policz-otwarte.py`, bierze status
+     z KOLUMNY od konca, nie grepem po slowie — slowa statusu wystepuja takze w tekscie opisu):
+       origin/main  73 wiersze:  ZAMKNIETE 38 · OTWARTE 30 · W NAPRAWIE 3 · ZAPARKOWANE 1 · WYCOFANE 1
+                                 suma 73 = 73 wierszy  ✔
+       ta galaz     89 wierszy:  OTWARTE 48 · ZAMKNIETE 38 · ZAPARKOWANE 1 · WYCOFANE 1 · W NAPRAWIE 1
+                                 suma 89 = 89 wierszy  ✔
+     ⇒ **48 OTWARTYCH to liczba POLICZONA w tym pliku**, nie wyprowadzona z cudzego naglowka.
+     Sklada sie na nia: 30 otwartych z main + 16 nowych kodow tego PR-a + 2 przeniesione z W NAPRAWIE
+     (main ma 3, ta galaz 1 — dwie naprawy zostaly rozliczone).
+     ⛔ Kontrola sumy jest OBOWIAZKOWA przy kazdej zmianie tego licznika: bez niej grep po slowie
+     statusu daje 64 przy 73 wierszach i nikt tego nie zauwaza. -->
 <!-- ⛔ Ten licznik NIE MA STRAŻNIKA: bramka-znaleziska.sh czyta wyłącznie
      audyt/REJESTR-ZNALEZISK.md. Dlatego rozjechał się o sześć pozycji (I-23). -->
 <!-- 1.09 wieczór, audytor: dopisując I-24 PODNIOSŁEM oba liczniki o jeden, a NIE przeliczyłem
