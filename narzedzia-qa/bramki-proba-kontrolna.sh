@@ -263,8 +263,16 @@ for _d in /usr/local/sbin /usr/local/bin /usr/sbin /usr/bin /sbin /bin; do
 done
 printf '#!/bin/sh\nexit 1\n' > "$ATRAPA_D/docker"; chmod +x "$ATRAPA_D/docker"
 
+# ⛔ WARUNEK BAZOWY NAJPIERW. Ten przypadek porownuje trzy srodowiska, a jedno z nich to
+# „konto, ktore Dockera WIDZI". Wykonawca CI chodzi jako `ciuser` bez dostepu do `docker.sock`
+# (B-3) — dla niego KAZDE srodowisko jest „bez Dockera", wiec porownanie nie ma sensu i wychodzi
+# odwrotnie. Zlapane na zywo: przebieg CI po rundzie 7 zaswiecil czerwono na TYM przypadku,
+# choc kod byl poprawny. Brak warunkow ma dawac POMINIECIE, nie falszywa czerwien.
+if ! docker ps > /dev/null 2>&1; then
+	echo "  POMINIETE: to konto nie widzi Dockera — nie ma jak odroznic 'brak Dockera' od 'brak unzip'"
+	echo "             (przelot reczny przed wydaniem: bash narzedzia-qa/bramki-proba-kontrolna.sh)"
 # ⛔ KONTROLA SAMYCH SRODOWISK PROBY. Bez niej mierzylabym wlasna atrape, nie kod.
-if PATH="$BEZ_UNZIP" command -v unzip > /dev/null 2>&1; then
+elif PATH="$BEZ_UNZIP" command -v unzip > /dev/null 2>&1; then
 	echo "  BLAD srodowisko 'bez unzip' MA unzip — proba nic nie mierzy"; BLEDY=$((BLEDY+1))
 elif ! PATH="$BEZ_UNZIP" command -v docker > /dev/null 2>&1; then
 	echo "  POMINIETE: srodowisko 'bez unzip' nie ma dockera — nie ma jak rozdzielic powodow"
