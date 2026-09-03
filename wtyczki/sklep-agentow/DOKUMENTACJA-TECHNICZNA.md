@@ -29,7 +29,7 @@ produktu i tylko z kluczem publikowalnym (od 0.9.25 — formularz karty musi by�
 | `includes/stripe.php` | komunikacja z API Stripe |
 | `includes/zakup.php` | rozpoczęcie zakupu, webhook, status, domykanie zamówień, treść tekstowa maila i wysyłka |
 | `includes/mail-html.php` | wersja HTML maila po zakupie (wysyłana razem z tekstem jako multipart) |
-| `includes/pobieranie.php` | brama pobrań: token, limit, wygaśnięcie, wydanie pliku |
+| `includes/pobieranie.php` | brama pobrań: status zamówienia (zwrot całości / obciążenie zwrotne = 410, od 0.9.37), token, limit, wygaśnięcie, wydanie pliku |
 | `includes/front-produkt.php` | strony produktów, przepisywanie adresów, treści sprzedażowe |
 | `includes/front-seo.php` | tytuły, opisy, canonical (własny, gdy motyw wyłączył `rel_canonical` WP), dane strukturalne, mapa witryny |
 | `includes/logowania.php` | dziennik logowań administratorów, opóźnienie i limit prób |
@@ -83,7 +83,7 @@ późniejsza edycja produktu nie zmieniła historii · `status` (`oczekuje` → 
 zapisywany w tym samym zapytaniu co status `mail_wyslany`, a kompensacja nieudanej rotacji
 linku (cron i „Wyślij ponownie") przywraca właśnie ten stan, nie zastany; czyszczony przy
 anonimizacji · `usunieto_dnia` — znacznik anonimizacji ·
-`dane_faktury` — nazwa firmy, NIP i adres podane przez kupującego (0.9.25; czyszczone przy anonimizacji) ·
+`dane_faktury` — nazwa firmy, NIP i adres podane przez kupującego (0.9.25; od 0.9.37 ZOSTAJE przy anonimizacji w obu trybach — obowiązek podatkowy; do 0.9.36 panel ją czyścił) ·
 `payment_intent_id` — identyfikator płatności Stripe, jedyne powiązanie zdarzeń o zwrocie
 z zamówieniem · `zwrocono_grosze`, `zwrot_czas` — księgowanie zwrotów i obciążeń zwrotnych ·
 `status_przed_sporem` — stan sprzed zdarzenia finansowego, żeby powrót nie zmyślał historii
@@ -115,7 +115,7 @@ właściciela" (gdy ustawiony). Treść i nagłówki pilnuje osobny test-strażn
 | Punkt | Co robi | Zabezpieczenie |
 |---|---|---|
 | `admin_post_nopriv_sklepag_kup` | rozpoczyna zakup | nonce + zgoda + limit żądań na adres IP |
-| `admin_post_nopriv_sklepag_pobierz` | wydaje kupiony plik | token 64 znaki + limit pobrań + termin ważności |
+| `admin_post_nopriv_sklepag_pobierz` | wydaje kupiony plik | token 64 znaki + status nie zwrocone/sporne + limit pobrań + termin ważności |
 | `admin_post_nopriv_sklepag_ocen` (GET) | formularz opinii z linku w mailu | token 64 znaki (sha256 w bazie, stałoczasowe) + termin ważności + limit żądań |
 | `admin_post_nopriv_sklepag_ocen_zapisz` (POST) | zapis opinii (zalążek → oczekuje) | ten sam token jednorazowy + zgoda + pole-pułapka + limit żądań + sufity długości |
 | `POST /wp-json/sklepag/v1/webhook` | powiadomienie od Stripe | **podpis webhooka Stripe** |
@@ -211,8 +211,10 @@ Na stan zamówienia ta tabela nadal nie wpływa.
 
 ## 6. Brama pobrań
 
-Link z maila zawiera token (64 znaki). Przy każdym pobraniu sprawdzane są **trzy
+Link z maila zawiera token (64 znaki). Przy każdym pobraniu sprawdzane są **cztery
 warunki naraz**: token istnieje, nie minął termin (`SKLEPAG_LINK_GODZIN` = **72 h**),
+zamówienie nie jest `zwrocone` ani `sporne` (od 0.9.37 — odmowa 410 przed etapem pliku i licznika,
+zdarzenie `pobranie_odmowa_zwrot` w dzienniku; zwrot częściowy nie zmienia statusu, więc nie odcina),
 licznik nie przekroczył limitu (`SKLEPAG_LIMIT_POBRAN` = **10**; licznik jest zerowany przy każdym
 wydaniu świeżego linku — resend z panelu i ponowienie przez cron — więc limit jest na link, nie na zakup). Plik wydawany jest strumieniem
 przez PHP (`readfile()` z nagłówkami `Content-Disposition` i `X-Robots-Tag: noindex`)
@@ -329,15 +331,18 @@ ginie ostatnie, a każda porażka zostawia je nietknięte, żeby powtórzenie mi
 odtworzyć zakres. Potwierdzenie usunięcia idzie wyłącznie za **zmierzonym stanem po zapisie**,
 a pomiar jest **tak szeroki jak zapis i zależny od trybu**: obejmuje wszystkie kolumny niosące
 dane osobowe (adres, treść maila, ślad `dor_*`, tokeny, dane do faktury) — przy czym
-`dane_faktury` mierzona jest na pusto tylko w trybie panelu; w trybie kasownika ta kolumna ma
-zostać, więc twardy pomiar na pusto zamieniłby wymóg podatkowy w meldunek o nieudanym zapisie.
+`dane_faktury` od 0.9.37 ZOSTAJE w obu trybach (panel i kasownik WordPressa — jeden obowiązek podatkowy,
+jedna zasada; do 0.9.36 panel ją czyścił), więc nie jest mierzona na pusto; pomiar na pusto istnieje tylko
+dla jawnego `zachowaj_dane_faktury = false`, którego w produkcie nikt nie woła (zostaje dla strażnika).
 Kolumny `link_wygasa`, `dor_link_wygasa` i `zmieniono` są poza pomiarem świadomie: to znaczniki
 czasu bez danych osobowych, bezużyteczne bez tokenu, który mierzony jest.
 
 **Dane do faktury zostają po wniosku RODO** (nazwa, NIP, adres) — obowiązek prawny:
 art. 6 ust. 1 lit. c RODO w związku z ustawą o VAT (art. 106e ust. 1 pkt 3 wymaga adresu
-nabywcy). Kasownik zwraca je w `items_retained` z powodem, a nie po cichu. Przycisk w panelu
-działa jak dotąd i czyści **wszystko** — to świadoma decyzja właściciela, nie wniosek.
+nabywcy). Kasownik zwraca je w `items_retained` z powodem, a nie po cichu. Przycisk w panelu od 0.9.37
+robi **to samo** (woła anonimizację z `zachowaj_dane_faktury = true`, komunikat po powrocie
+niesie zmierzony wynik `zachowana_faktura`, a panel dalej pokazuje zachowaną fakturę) — jeden
+obowiązek, jedna zasada; do 0.9.36 przycisk czyścił wszystko.
 
 **Co ZOSTAJE po wniosku o usunięcie — i jest zgłaszane w `items_retained` z powodem:**
 1. **Dane do faktury** (nazwa, NIP, adres) — obowiązek prawny, jak wyżej.

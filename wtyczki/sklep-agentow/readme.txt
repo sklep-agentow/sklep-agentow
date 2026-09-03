@@ -37,7 +37,7 @@ karty musi być ramką Stripe, nie naszym kodem.
   (webhook z podpisem) oraz zadanie cykliczne co 10 minut, które dopytuje Stripe
   o opłacone sesje. Każde przejście stanu zamówienia jest atomowe — kupujący
   dostaje dokładnie jeden mail.
-* Mail po zakupie: link do pobrania ważny 72 godziny, do 10 pobrań;
+* Mail po zakupie: link do pobrania ważny 72 godziny, do 10 pobrań; po zwrocie całości albo przy obciążeniu zwrotnym (bank zdjął pieniądze) link przestaje działać;
   potwierdzenie zgody na dostarczenie treści cyfrowej (dosłowna treść i data);
   krótka instrukcja; informacja o gwarancji, gdy produkt ją ma; jednorazowy
   link do wystawienia opinii.
@@ -163,6 +163,10 @@ link do pobrania w mailu, jednorazowy link do opinii.
 
 = 0.9.40 =
 * Naprawione: panel mówi wprost, że Regulamin i Polityka prywatności sklepu czekają na uzupełnienie i publikację. Wtyczka zakładała obie strony jako szablony w wersji roboczej i nigdzie o nich nie przypominała — można było sprzedawać, nie wiedząc, że dokumenty dla kupujących nie są opublikowane.
+
+= 0.9.37 =
+* Naprawione: anonimizacja kupującego z panelu zachowuje dane do faktury (nazwa, NIP, adres) — tak jak kasownik danych osobowych WordPressa; okno potwierdzenia, komunikat po anonimizacji, szczegóły zamówienia (faktura dalej widoczna) i instrukcja mówią to wprost.
+* Naprawione: po zwrocie całej kwoty albo przy obciążeniu zwrotnym (spór, w którym bank zdjął pieniądze) link do pobrania przestaje działać (dotąd działał do końca 72 h i limitu 10 pobrań). Kupujący widzi powód i kontakt do sprzedawcy, próba trafia do osi czasu zamówienia; zwrot częściowy nie odcina dostępu.
 
 = 0.9.36 =
 * Naprawione: wgranie za dużej paczki produktu nie kończy się pustą białą stroną. Gdy całe zgłoszenie przekraczało `post_max_size`, PHP kasowało formularz razem z plikiem i właściciel nie dostawał ŻADNEGO komunikatu. Sklep rozpoznaje teraz ten stan i podaje realne limity serwera (`post_max_size`, `upload_max_filesize`) oraz ilość wysłanych danych, zaznaczając, że limit wtyczki (20 MB) nie brał w tym udziału. Pełny komunikat widzi właściciel w formularzu produktu (uprawnienie `manage_options`); ucięte zgłoszenie, które nie niesie adresu formularza produktu (`action` w adresie) — czyli formularz innej wtyczki albo strona produktu wyrenderowana przed aktualizacją lub podana z pamięci podręcznej — dostaje wersję neutralną, tylko z limitami serwera, i to wyłącznie konta z uprawnieniem do wgrywania plików (`upload_files`); pozostałe nie dostają nic.

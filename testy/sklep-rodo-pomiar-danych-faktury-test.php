@@ -16,7 +16,8 @@
  *    faktury" od „cokolwiek padło".
  *
  * Przypadki (każdy psuje najwyżej jeden warunek):
- *   A. BEZ WADY — tryb panelu: faktura wyczyszczona, funkcja melduje sukces.
+ *   A. BEZ WADY — domyślne wywołanie (panel, od 0.9.37): faktura ZOSTAJE, funkcja melduje sukces
+ *                 (do 0.9.36 panel czyścił fakturę; od 0.9.37 obie drogi ją zachowują — jeden obowiązek podatkowy).
  *   B. WADA     — podłożone pominięcie kolumny: funkcja MUSI odmówić (`ok=false`),
  *                 zapisać `anonimizacja_blad` i NIE zapisać `anonimizacja`.
  *   C. BEZ WADY — tryb kasownika RODO: faktura ZOSTAJE i to nie jest awaria. Bez tego
@@ -118,12 +119,13 @@ if ( ! function_exists( 'sklepag_anonimizuj_zamowienie' ) ) {
 
 $faktura = 'Firma PF sp. z o.o., NIP 1234563218, ul. Probna 7, Gdansk';
 
-echo "=== A. BEZ WADY — tryb panelu czysci fakture i melduje sukces ===\n";
+echo "=== A. BEZ WADY — domyslne wywolanie (panel od 0.9.37): faktura ZOSTAJE, sukces ===\n";
 $id_a = sklepag_pf_zamowienie( 'A', 'pomiar-faktury-a@example.test', $faktura );
 $w_a  = sklepag_anonimizuj_zamowienie( $id_a );
 sklepag_pf_rowne( 'anonimizacja panelu konczy sie sukcesem', true, $w_a['ok'] );
 sklepag_pf_rowne( 'etap: gotowe', 'gotowe', $w_a['etap'] );
-sklepag_pf_rowne( 'dane do faktury wyczyszczone', '', sklepag_pf_kolumna( $id_a, 'dane_faktury' ) );
+sklepag_pf_sprawdz( 'dane do faktury ZOSTAJA (obowiazek podatkowy, jak w kasowniku)', $faktura === sklepag_pf_kolumna( $id_a, 'dane_faktury' ), sklepag_pf_kolumna( $id_a, 'dane_faktury' ) );
+sklepag_pf_rowne( 'i funkcja melduje zachowana fakture', true, $w_a['zachowana_faktura'] );
 sklepag_pf_rowne( 'adres e-mail wyczyszczony', '', sklepag_pf_kolumna( $id_a, 'email_kupujacego' ) );
 sklepag_pf_rowne( 'zapisane zdarzenie anonimizacji', 1, sklepag_pf_zdarzen( $id_a, 'anonimizacja' ) );
 sklepag_pf_rowne( 'i ani jednego zdarzenia bledu', 0, sklepag_pf_zdarzen( $id_a, 'anonimizacja_blad' ) );
@@ -143,7 +145,7 @@ $psuj     = static function ( $zapytanie ) use ( &$trafione ) {
 	return $zapytanie;
 };
 add_filter( 'query', $psuj, 99 );
-$w_b = sklepag_anonimizuj_zamowienie( $id_b );
+$w_b = sklepag_anonimizuj_zamowienie( $id_b, false ); // jawne czyszczenie faktury: tylko po to, zeby podlozyc wade w zapytaniu
 remove_filter( 'query', $psuj, 99 );
 
 sklepag_pf_rowne( 'podlozenie trafilo w zapytanie — jest co mierzyc', 1, $trafione );
