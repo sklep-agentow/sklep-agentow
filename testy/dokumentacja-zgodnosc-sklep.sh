@@ -163,9 +163,22 @@ spr "plik $W/PONAD-SPECYFIKACJE.md"                         "1" "test -f $W/PONA
 #    WAZNA 2). Stan faktyczny: wpiecie tej bramki do zestawu to zadanie DO ZAPISANIA
 #    w `audyt/CO-WISI.md` przy scalaniu #277, ktory jako jedyny z kolejki rusza rejestry.
 #    Dopoki tam nie trafi, jedynym miejscem, gdzie o tym zadaniu wiadomo, jest ten komentarz.
-#    CZTERY asercje, bo ochrona ma CZTERY ogniwa i kazde mozna usunac osobno: pole w formularzu ·
-#    skrypt, ktory je ZNAJDUJE · ZLOZENIE wartosci z wylosowanych bajtow · NADPISANIE pola ·
-#    zrodlo losowosci. ⛔ Komentarz mowil wczesniej „trzy czesci” i to nie byla nieszkodliwa
+#    PIEC asercji: pole w formularzu + CZTERY ogniwa skryptu, kazde usuwalne osobno —
+#    ZNAJDZ pole · ZLOZ wartosc z wylosowanych bajtow · NADPISZ pole · zrodlo losowosci.
+#    ⛔ Runda 10 pisala tu „CZTERY asercje" i wyliczala piec pozycji: naglowek sekcji
+#    poprawilam, a to zdanie zostalo. Ta sama pomylka wymiaru dwa razy w jednym pliku.
+#
+#    ⛔⛔ CO TEN ZESTAW MIERZY, A CZEGO NIE — czytaj, zanim uznasz ochrone za pilnowana.
+#    Piec asercji to piec WZORCOW TEKSTOWYCH nad jedna linia kodu. Lapia USUNIECIE ogniwa
+#    i tylko to. NIE lapia ZMIANY WARTOSCI wewnatrz ogniwa: `new Uint8Array(12)` -> `(0)`
+#    to jeden znak, ktory zostawia `s` pustym — kazdy kupujacy wysyla `okno=`, klucz wraca
+#    do postaci sprzed naprawy Q-5, a ten plik i jego proba kontrolna mowia `EXIT=0`
+#    i „ZGODNE Z KODEM" (zmierzone w obie strony, recenzja #273 r10, WAZNA 1).
+#    ⛔ Szosty wzorzec zamknalby szosta mutacje, nie klase. Klase zamyka dopiero pomiar
+#    ZACHOWANIA — zaladowanie strony produktu i sprawdzenie, ze dwa renderowania daja
+#    ROZNE znaczniki, a bez skryptu identyczne (taki pomiar zrobiono RECZNIE w rundzie 5;
+#    nie jest zautomatyzowany). DLUG nazwany wprost, zeby nikt nie czytal zieleni tej
+#    bramki jako dowodu, ze ochrona DZIALA — ona dowodzi, ze ochrona JEST NAPISANA. ⛔ Komentarz mowil wczesniej „trzy czesci” i to nie byla nieszkodliwa
 #    niescislosc: ogniwo ZLOZENIA nie mialo asercji, wiec wyciecie samej petli skladajacej
 #    zostawialo `s` pustym — kazdy kupujacy wysylal `okno=`, klucz wracal do postaci sprzed
 #    naprawy, a OBA narzedzia dawaly EXIT=0 (recenzja #273 r9, WAZNA 1: pomiar dwukierunkowy,
