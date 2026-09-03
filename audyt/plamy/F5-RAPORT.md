@@ -412,6 +412,9 @@ się na nieistniejącą podstawę. **Waga: DROBNA.** **RODZAJ SKUTKU:** `zaobser
    `pobrania_uzyte`=1, `link_wygasa`=1 jako próbie kontrolnej). Instrukcja `:90-91`: „⚠️ Zwrot ani
    spór **nie odcinają** wcześniej wysłanego linku do pobrania — działa do końca swojej ważności
    (72 godziny, 10 pobrań)". Kod i tekst dla klienta zgodne. **Szukałem tu rozjazdu i go nie ma.**
+   ⛔ **NIEAKTUALNE OD 0.9.37 (PR #268, `Q-4`):** zachowanie ZMIENIONO — zwrot całości i obciążenie
+   zwrotne odcinają link natychmiast (`pobieranie.php:58`, odmowa 410). Wpis zostaje jako zapis stanu
+   z dnia audytu; nie czytaj go jako opisu dzisiejszego kodu.
 
 ---
 

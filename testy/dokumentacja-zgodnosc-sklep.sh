@@ -24,8 +24,26 @@ spr "Requires at least == nagłówek"  "$(grep -oP '(?<=^ \* Requires at least: 
 spr "Requires PHP == nagłówek"       "$(grep -oP '(?<=^ \* Requires PHP: ).*' $W/sklep-agentow.php)" "grep -oP '(?<=^Requires PHP: ).*' $W/readme.txt"
 spr "License (forma readme WP)"      "GPLv2 or later" "grep -oP '(?<=^License: ).*' $W/readme.txt"
 spr "License URI == nagłówek"        "$(grep -oP '(?<=^ \* License URI: ).*' $W/sklep-agentow.php)" "grep -oP '(?<=^License URI: ).*' $W/readme.txt"
-WP_STACK=$(docker exec strona_wp_wordpress wp --allow-root --path=/var/www/html core version 2>/dev/null | grep -oE '^[0-9]+\.[0-9]+')
-if [ -n "$WP_STACK" ]; then spr "Tested up to == WP stosu ($WP_STACK)" "$WP_STACK" "grep -oP '(?<=^Tested up to: ).*' $W/readme.txt | grep -oE '^[0-9]+\.[0-9]+'"; else echo "  POMINIETE Tested up to (stos nie odpowiada)"; fi
+# ⛔ Powod POMINIECIA musi byc ZMIERZONY, nie zgadniety: `2>/dev/null` zjadalo tak samo brak polecenia
+#    `docker`, `permission denied` i zatrzymany kontener, a `else` orzekalo jedno („stos nie odpowiada”).
+#    Recenzent #268 r12 dostal to zdanie na maszynie, na ktorej dockera NIE MA WCALE.
+if ! command -v docker > /dev/null 2>&1; then
+	POWOD_BRAKU_STOSU="NIE WIEM — nie ma polecenia 'docker' na tej maszynie"
+	WP_STACK=""
+else
+	BLAD_WP=$(docker exec strona_wp_wordpress wp --allow-root --path=/var/www/html core version 2>&1 >/dev/null)
+	WP_STACK=$(docker exec strona_wp_wordpress wp --allow-root --path=/var/www/html core version 2>/dev/null | grep -oE '^[0-9]+\.[0-9]+')
+	case "$BLAD_WP" in
+		# ⛔ KOLEJNOSC MA ZNACZENIE: „Error response from daemon: No such container” zawiera slowo
+		#    „daemon”, wiec przy odwrotnej kolejnosci brak kontenera dostawal etykiete „nie widzimy
+		#    Dockera”. Zlapane wlasna proba kontrolna 3.09 — najpierw wzorce KONKRETNE, potem ogolne.
+		*"No such container"*|*"is not running"*|*"No such object"*) POWOD_BRAKU_STOSU="kontener strona_wp_wordpress nie chodzi: $BLAD_WP" ;;
+		*"permission denied"*|*"Cannot connect"*|*"daemon"*)         POWOD_BRAKU_STOSU="NIE WIEM — to konto nie widzi Dockera: $BLAD_WP" ;;
+		"")                                                    POWOD_BRAKU_STOSU="" ;;
+		*)                                                     POWOD_BRAKU_STOSU="stos nie odpowiedzial: $BLAD_WP" ;;
+	esac
+fi
+if [ -n "$WP_STACK" ]; then spr "Tested up to == WP stosu ($WP_STACK)" "$WP_STACK" "grep -oP '(?<=^Tested up to: ).*' $W/readme.txt | grep -oE '^[0-9]+\.[0-9]+'"; else echo "  POMINIETE Tested up to (${POWOD_BRAKU_STOSU:-stos nie odpowiada})"; fi
 for sek in Description Installation "Frequently Asked Questions" Changelog; do spr "sekcja == $sek ==" "1" "grep -c '^== $sek ==$' $W/readme.txt"; done
 spr "krótki opis <= 150 znaków"      "1" "test \$(sed -n '11p' $W/readme.txt | wc -m) -le 150 && echo 1 || echo 0"
 spr "changelog readme: sekcja = $WER =" "1" "grep -c '^= $WER =$' $W/readme.txt"

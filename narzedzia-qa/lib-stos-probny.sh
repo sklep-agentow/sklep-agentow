@@ -32,14 +32,20 @@ BLEDY=0
 
 zglos()     { printf '  ⛔ NIE WYSZLO  %s\n' "$1"; BLEDY=$(( BLEDY + 1 )); }
 potwierdz() { printf '  ✅ WYSZLO      %s\n' "$1"; }
+# ⛔ `padnij` konczy sie ZAWSZE kodem 2, a kod 2 ma tu CZTERY znaczenia: NIE WIEM (to konto nie
+# widzi Dockera — o DOSTEPIE, nie o kontenerze) · Docker odpowiedzial i kontenera NIE MA · brak
+# narzedzia · brak warunku wstepnego. Komunikat MUSI nazywac, ktore z nich zaszlo.
 padnij()    { printf 'STOS PROBNY: %s\n' "$1" >&2; exit 2; }
 naglowek()  { printf '\n=== %s ===\n' "$1"; }
 
 wymagaj_narzedzi() {
 	command -v docker > /dev/null || padnij "brak dockera"
 	command -v unzip  > /dev/null || padnij "brak unzip"
+	# ⛔ „NIE WIEM" TO NIE TO SAMO CO „NIE MA" — patrz `narzedzia-qa/stos.sh:153`. Pytamy NAJPIERW,
+	# czy Docker w ogole odpowiada; dopiero potem wolno orzekac o kontenerze.
+	docker ps > /dev/null 2>&1 || padnij "NIE WIEM, czy kontener bazy $KONTENER_DB stoi — to konto nie widzi Dockera (brak dostepu do demona, nie brak kontenera)"
 	docker ps --filter "name=^${KONTENER_DB}$" --filter status=running -q | grep -q . \
-		|| padnij "kontener bazy $KONTENER_DB nie chodzi — nie mam gdzie postawić stosu próbnego"
+		|| padnij "Docker odpowiedzial: kontenera bazy $KONTENER_DB na liscie NIE MA — nie mam gdzie postawic stosu probnego"
 }
 
 wp() { docker exec "$KONTENER" wp --allow-root --path=/var/www/html "$@" 2>&1; }

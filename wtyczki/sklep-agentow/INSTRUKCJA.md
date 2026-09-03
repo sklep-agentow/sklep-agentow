@@ -123,9 +123,11 @@ przefiltrowane.
 | **zwrócone** | Stripe zwrócił kupującemu **całą** kwotę | nic — sklep odnotował zwrot z powiadomienia Stripe i odjął go od statystyk. Zwrot **częściowy** nie zmienia statusu: kwota schodzi ze statystyk, a zwrot widać w osi czasu zamówienia |
 | **obciążenie zwrotne** (spór) | kupujący zakwestionował płatność w banku (chargeback) — kwota zdjęta z Twojego konta do rozstrzygnięcia | odpowiadasz w panelu Stripe; spór wygrany albo wycofany → sklep wraca do poprzedniego statusu; spór przegrany → zamówienie zostaje jako obciążenie zwrotne |
 
-⚠️ Zwrot ani spór **nie odcinają** wcześniej wysłanego linku do pobrania — działa do końca
-swojej ważności (72 godziny, 10 pobrań). Jeśli chcesz, żeby zwrot odcinał dostęp od razu,
-napisz do nas — to zmiana w sklepie, nie ustawienie.
+Od 0.9.37 zwrot **całości** kwoty i **obciążenie zwrotne** (spór, w którym bank zdjął pieniądze z Twojego
+konta; samo zapytanie z banku bez zdjęcia kwoty nie zmienia statusu) **odcinają** link do pobrania od razu: kupujący
+zobaczy komunikat, że pieniądze wróciły (albo że płatność jest w sporze) i kontakt do Ciebie, a próba
+zostanie zapisana w osi czasu zamówienia. Zwrot **częściowy** nie odcina dostępu (status się nie zmienia).
+Spór wygrany albo wycofany przywraca poprzedni status — link znów działa do końca swojej ważności.
 
 Pulpit pokazuje na górze czerwony pasek, gdy są zamówienia z nieudaną wysyłką — z linkiem
 prosto do nich.
@@ -197,8 +199,9 @@ ok. 2 minutach, do trzech razy): każda próba wydaje nowy link, a nieudana go n
 awarii poczty poprzedni link więc przepada; gdy poczta znów działa, kliknij „Wyślij ponownie” —
 kupujący dostanie świeży link z pełnym limitem.
 Przycisk jest dostępny tylko dla zamówień w stanie „mail wysłany” albo „błąd maila”: dla zwróconych,
-spornych i jeszcze niedomkniętych sklep odmawia — link, który kupujący już ma, działa do końca
-swojej ważności.
+spornych i jeszcze niedomkniętych sklep odmawia. Uwaga na różnicę: przy zamówieniu **jeszcze
+niedomkniętym** link, który kupujący już ma, działa do końca swojej ważności — ale przy **zwróconym
+i spornym** nie działa, bo od 0.9.37 brama pobrań odmawia dla tych dwóch statusów.
 
 Gdy link wygaśnie albo limit się wyczerpie, kupujący widzi na stronie pobierania Twój
 **mail kontaktowy** z Ustawień — żeby napisał do Ciebie, a Ty użyjesz „Wyślij ponownie”.
@@ -231,7 +234,7 @@ jeśli kupujący wystawił opinię — jego **imię, tytuł i treść opinii** (
 na stronie produktu, za zgodą z formularza). Dane karty obsługuje wyłącznie Stripe — na Twoim serwerze ich nie ma.
 
 **Anonimizacja na żądanie kupującego:** Szczegóły zamówienia → **Dane osobowe (RODO)** →
-przycisk anonimizacji. Sklep usuwa adres e-mail (i dane do faktury, jeśli były) z zamówienia i z dziennika zdarzeń — razem z zapisaną treścią maila, która niosła kopię tych danych; przy opinii
+przycisk anonimizacji. Sklep usuwa adres e-mail z zamówienia i z dziennika zdarzeń (**dane do faktury zostają** — nazwa, NIP i adres nabywcy podlegają obowiązkowi podatkowemu i tak samo traktuje je kasownik RODO WordPressa; od 0.9.37, wcześniej panel je kasował) — razem z zapisaną treścią maila, która niosła kopię tych danych; przy opinii
 tego zamówienia kasuje **imię** i zdejmuje opinię ze strony produktu (trafia do Odrzuconych, bez
 możliwości przywrócenia — treść i ocena zostają w bazie, już bez autora); unieważnia link do pobrania (zanonimizowany kupujący nie ma już dokąd dostać
 świeżego linku) i zapisuje datę anonimizacji. **Kwoty i czasy zostają** — statystyki sprzedaży
@@ -246,12 +249,13 @@ e-mail, WordPress wysyła prośbę o potwierdzenie i po potwierdzeniu składa ra
   jego opinie i sesje płatności. Duża historia zakupów schodzi partiami — WordPress woła sklep
   tyle razy, ile trzeba, i składa jedną paczkę ZIP.
 - **Usunięcie** anonimizuje wszystkie zamówienia tego adresu — dokładnie tak, jak przycisk
-  z panelu, z jedną różnicą: **dane do faktury zostają**. Wymaga tego prawo podatkowe (ustawa
-  o VAT każe trzymać adres nabywcy z faktury), więc raport WordPressa mówi wprost, że część
-  danych zachowano i dlaczego. Przeczytaj ten raport, zanim odpiszesz kupującemu — jest w nim
+  z panelu: **dane do faktury zostają** w obu drogach (od 0.9.37; do 0.9.36 przycisk z panelu
+  czyścił je). Wymaga tego prawo podatkowe (ustawa o VAT każe trzymać adres nabywcy z faktury),
+  więc raport WordPressa mówi wprost, że część danych zachowano i dlaczego. Przeczytaj ten raport, zanim odpiszesz kupującemu — jest w nim
   także ostrzeżenie, gdyby któregoś zamówienia nie udało się zanonimizować.
-- Przycisk z panelu zostaje bez zmian i czyści **wszystko**, razem z danymi do faktury. Używaj
-  go świadomie: to Twoja decyzja, nie wniosek RODO.
+- Przycisk z panelu robi **to samo** co wniosek, tylko dla jednego zamówienia i bez raportu:
+  usuwa adres i treść maila, **dane do faktury zostawia**. Różnica jest w drodze, nie w skutku:
+  przycisk to Twoja decyzja przy jednym zamówieniu, wniosek obejmuje wszystkie zamówienia adresu.
 
 Jeśli usunięcie nie uda się w całości (np. błąd zapisu), sklep **nie udaje**, że się udało:
 pokazuje błąd, nie potwierdza usunięcia (dane mogą nadal być w bazie — nie potwierdzaj ich
@@ -293,7 +297,8 @@ same (sprzątanie co 10 minut). Zamówienia, kwoty i statusy zostają.
   = bez zmian; kasujesz przez „Usuń zapisany sekret”.
 - **Nazwa i adres nadawcy** — tylko dla maili sklepu; reszta poczty WordPressa zostaje bez zmian.
   Adres musi być dopuszczony przez Twój hosting (SPF/DKIM), inaczej maile lądują w spamie.
-- **Mail kontaktowy właściciela** — pokazywany kupującemu, gdy link wygasł albo limit się wyczerpał;
+- **Mail kontaktowy właściciela** — pokazywany kupującemu przy **każdym** problemie z pobraniem:
+  zły link, link wygasł, zwrot lub spór, plik chwilowo niedostępny, wyczerpany limit (pięć miejsc);
   w mailu po zakupie stoi jako adres do reklamacji i faktur.
 - **Klucz publikowalny (pk_test_…)** — z tego samego miejsca w Stripe co klucz sekretny. **Z kluczem** formularz
   karty pokazuje się na stronie produktu, w kolorach strony (kupujący nie opuszcza Twojej strony; dane karty
@@ -329,8 +334,8 @@ kończą się tą samą stroną „Dziękujemy” i tym samym mailem.
 
 **Kupujący podał NIP — co robię?** Dane są w mailu i w szczegółach zamówienia (wiersz „Dane do faktury”).
 Wystawiasz fakturę w swoim programie księgowym i wysyłasz na jego e-mail; sklep nic tu nie automatyzuje.
-Anonimizacja (rozdział 6) czyści te dane razem z e-mailem — fakturę masz już w księgowości, sklep jej kopii
-nie potrzebuje.
+Anonimizacja (rozdział 6) usuwa e-mail i treść maila, ale **dane do faktury zostawia** (od 0.9.37; ustawa
+o VAT każe je trzymać) — wiersz „Dane do faktury” w szczegółach zamówienia dalej je pokazuje.
 
 **Zakup „wisi” na stronie Dziękujemy.** Powiadomienie od Stripe nie dociera — najczęściej
 przez zły sekret webhooka (sekret z panelu Stripe i z narzędzia Stripe CLI to dwa różne
@@ -355,10 +360,11 @@ od 0.9.36 sklep mówi, ile serwer przyjmuje i które ustawienie o tym decyduje.)
 **Kupujący chce zwrotu.** Zwrot robisz w panelu Stripe; sklep sam odnotuje go w zamówieniu
 (status „zwrócone”, kwota w osi czasu) i odejmie od statystyk sprzedaży. Jeśli kupujący ma
 jeszcze otwartą stronę „Dziękujemy” (albo wróci na nią ze starego odnośnika), przeczyta tam
-**„Płatność za to zamówienie została zwrócona — nie jest już opłacone”**, a przy sporze —
-**„Ta płatność jest reklamowana w banku i czeka na rozstrzygnięcie”**. Strona przestaje wtedy
-odświeżać status. Żadne z tych zdań **nie mówi**, że link do pobrania przestał działać, bo nie
-przestaje (patrz ostrzeżenie w rozdziale 3).
+**„Płatność za to zamówienie została zwrócona — nie jest już opłacone, a link do pobrania z maila
+przestał działać”**, a przy sporze — **„Ta płatność jest w sporze (reklamacja w banku) — link do
+pobrania nie działa. Dostęp wróci tylko wtedy, gdy spór rozstrzygnie się na korzyść sklepu”**.
+Strona przestaje wtedy odświeżać status. Oba zdania mówią o linku wprost, bo brama pobrań
+faktycznie odmawia dla statusów „zwrócone” i „sporne” (patrz ostrzeżenie w rozdziale 3).
 
 **Czy pliki są bezpieczne na serwerze nginx?** Katalog plików chroni `.htaccess`, który
 działa na Apache, a na nginx jest ignorowany. Prawdziwą ochroną jest brama w sklepie (token,

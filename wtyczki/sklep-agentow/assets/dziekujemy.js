@@ -23,10 +23,19 @@
 		mail_w_toku: 'Płatność potwierdzona — wysyłamy maila z linkiem do pobrania…',
 		mail_wyslany: 'Gotowe! Mail z potwierdzeniem i linkiem do pobrania został wysłany. Sprawdź skrzynkę (także spam).',
 		mail_blad: 'Płatność potwierdzona, ale mail nie wyszedł. Właściciel sklepu widzi to w panelu i wyśle go ręcznie.',
-		/* ⛔ Zadne z tych dwoch zdan NIE MOWI, ze link do pobrania przestal dzialac —
-		   `pobieranie.php` nie patrzy na status zamowienia, wiec byloby to nieprawda. */
-		zwrocone: 'Płatność za to zamówienie została zwrócona — nie jest już opłacone. Jeśli to pomyłka, odpisz na maila z potwierdzeniem zakupu.',
-		sporne: 'Ta płatność jest reklamowana w banku i czeka na rozstrzygnięcie. Jeśli to pomyłka, odpisz na maila z potwierdzeniem zakupu.',
+		/* Od 0.9.37 brama pobran (`pobieranie.php`) ODMAWIA przy statusach `zwrocone` i `sporne`
+		   (410), wiec oba zdania mowia o martwym linku wprost — kupujacy nie ma klikac w link z maila
+		   i dopiero tam czytac, ze przestal dzialac. Do 0.9.36 brama statusu nie sprawdzala i zdania
+		   celowo o linku milczaly. */
+		zwrocone: 'Płatność za to zamówienie została zwrócona — nie jest już opłacone, a link do pobrania z maila przestał działać. Jeśli to pomyłka, odpisz na maila z potwierdzeniem zakupu.',
+		/* ⛔ ZDANIE MUSI BYC PRAWDZIWE TAKZE DLA SPORU PRZEGRANEGO. Do 0.9.37 mowilo
+		   „czeka na rozstrzygniecie", a `charge.dispute.closed` z wynikiem `lost`
+		   (zakup.php:778-780, :823) zostawia status `sporne` NA STALE — sprawa jest
+		   wtedy rozstrzygnieta, tylko przegrana. Kod NIE odroznia sporu otwartego od
+		   przegranego (oba maja ten sam status), wiec naprawa to ZDJECIE twierdzenia,
+		   nie nowa galaz. Wzorzec zdania prawdziwego w obu przypadkach stoi w bramie
+		   pobrania: pobieranie.php:64 („jest w sporze — pobieranie jest wstrzymane"). */
+		sporne: 'Ta płatność jest w sporze (reklamacja w banku) — link do pobrania nie działa. Dostęp wróci tylko wtedy, gdy spór rozstrzygnie się na korzyść sklepu. Jeśli to pomyłka, odpisz na maila z potwierdzeniem zakupu.',
 		brak: 'Nie znaleziono zamówienia dla tego adresu.',
 		/* ⛔ Wczesniej NIEZNANY status dostawal zdanie `oczekuje` — czyli kazdy status
 		   dopisany w przyszlosci wracalby z ta sama wada. Zdanie zapasowe ma NIE TWIERDZIC
