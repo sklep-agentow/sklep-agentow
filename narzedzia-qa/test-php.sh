@@ -101,8 +101,18 @@ if [ ! -f "$PLIK" ]; then
 fi
 
 command -v docker >/dev/null 2>&1 || odmow "nie ma polecenia docker — nie zgaduje wyniku testu"
-docker inspect -f '{{.State.Running}}' "$KONTENER_WP" 2>/dev/null | grep -qx true \
-	|| odmow "kontener $KONTENER_WP nie jest uruchomiony — stos warsztatowy nie stoi"
+# ⛔ „NIE WIEM” TO NIE TO SAMO CO „NIE STOI” — ten sam rozdział, co w narzedzia-qa/stos.sh.
+#    `2>/dev/null` połykało `permission denied while trying to connect to the docker API`,
+#    więc konto bez dostępu do `docker.sock` dostawało zdanie „stos warsztatowy nie stoi”.
+#    To JEDYNA droga uruchomienia strażników PHP, więc tu kłamstwo o przyczynie kosztuje
+#    najwięcej: recenzent przepisuje je do recenzji jako fakt (recenzja #268 r7).
+DOCKER_WY="$( docker inspect -f '{{.State.Running}}' "$KONTENER_WP" 2>&1 )"
+DOCKER_KOD=$?
+if [ "$DOCKER_KOD" -ne 0 ]; then
+	odmow "NIE WIEM, czy kontener $KONTENER_WP stoi — samo \`docker inspect\` padło (kod $DOCKER_KOD). To informacja o dostępie do Dockera na tym koncie, NIE o stosie. Wyjście: $DOCKER_WY"
+fi
+printf '%s\n' "$DOCKER_WY" | grep -qx true \
+	|| odmow "kontener $KONTENER_WP nie jest uruchomiony — \`docker inspect\` odpowiedziało i podało: $DOCKER_WY"
 
 W_KONTENERZE="/tmp/test-php-$NAZWA.php"
 docker cp "$PLIK" "$KONTENER_WP:$W_KONTENERZE" >/dev/null \

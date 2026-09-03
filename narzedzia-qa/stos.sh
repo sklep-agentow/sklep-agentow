@@ -78,10 +78,26 @@ odmow() {
 	exit 2
 }
 
+# ⛔ NAGŁÓWEK MUSI ODPOWIADAĆ POWODOWI. Do 3.09 każdy powód — także uczciwe
+#    „NIE WIEM, bo docker ps padło” — dostawał nagłówek „STOS NIE ODPOWIADA”, czyli
+#    twierdzenie o KONTENERZE. Recenzent przepisywał to zdanie do recenzji i okazywało
+#    się fałszywe: WordPress odpowiadał HTTP 200, a padał wyłącznie dostęp do Dockera.
+#    Powód zaczynający się od „NIE WIEM” dostaje teraz nagłówek NIE WIEM.
 brak_stosu() {
-	printf 'STOS NIE ODPOWIADA — %s\n' "$1" >&2
-	printf 'Nie zgaduję i nie udaję, że sprawdziłem. Napisz w recenzji, że stos\n' >&2
-	printf 'warsztatowy nie odpowiadał, i podaj tę linię jako dowód.\n' >&2
+	case "$1" in
+		"NIE WIEM"*)
+			# ⛔ Naglowek NIE powiela tresci powodu — inaczej wychodzi "NIE WIEM, CZY STOS
+			#    STOI — NIE WIEM, czy stos stoi — ..." (zlapane wlasna proba kontrolna 3.09).
+			printf 'NIE WIEM — %s\n' "${1#NIE WIEM, }" >&2
+			printf 'To jest informacja o PRZYRZĄDZIE, nie o kontenerze: nie zdołałam zapytać.\n' >&2
+			printf 'W recenzji napisz „nie dało się sprawdzić”, a NIE „stos nie stoi”.\n' >&2
+			;;
+		*)
+			printf 'STOS NIE ODPOWIADA — %s\n' "$1" >&2
+			printf 'Nie zgaduję i nie udaję, że sprawdziłem. Napisz w recenzji, że stos\n' >&2
+			printf 'warsztatowy nie odpowiadał, i podaj tę linię jako dowód.\n' >&2
+			;;
+	esac
 	exit 2
 }
 
@@ -183,8 +199,17 @@ wp_odczyt_lub_padnij() {
 licz_sql() {
 	local sql="$1" baza uzyt haslo wynik status
 	kontener_zyje
-	docker ps --filter "name=^${KONTENER_DB}$" --filter status=running --format '{{.Names}}' 2> /dev/null \
-		| grep -qx "$KONTENER_DB" || brak_stosu "kontener bazy $KONTENER_DB nie jest uruchomiony"
+	# ⛔ TEN SAM ROZDZIAŁ CO W `kontener_zyje` — bliźniak, złapany w recenzji #268 r7.
+	#    `2> /dev/null` połykało `permission denied` i „nie mam dostępu do Dockera”
+	#    wyglądało identycznie jak „kontener bazy stoi zgaszony”.
+	local wy_db kod_db
+	wy_db="$( docker ps --filter "name=^${KONTENER_DB}$" --filter status=running --format '{{.Names}}' 2>&1 )"
+	kod_db=$?
+	if [ "$kod_db" -ne 0 ]; then
+		brak_stosu "NIE WIEM, czy kontener bazy stoi — samo \`docker ps\` padło (kod $kod_db). To informacja o dostępie do Dockera, nie o bazie. Wyjście: $wy_db"
+	fi
+	printf '%s\n' "$wy_db" | grep -qx "$KONTENER_DB" \
+		|| brak_stosu "kontener bazy $KONTENER_DB nie jest uruchomiony — \`docker ps\` odpowiedziało i go NIE wymieniło"
 	baza="$(wp_odczyt_lub_padnij config get DB_NAME | tr -d '\r')"
 	uzyt="$(wp_odczyt_lub_padnij config get DB_USER | tr -d '\r')"
 	haslo="$(wp_odczyt_lub_padnij config get DB_PASSWORD | tr -d '\r')"
