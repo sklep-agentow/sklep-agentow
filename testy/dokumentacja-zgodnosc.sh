@@ -296,6 +296,19 @@ spr "widget czyta limit pytania z chatlDane" "1" "grep -c 'dane.limitPytania' $W
 # ⛔ LICZNIK MUSI LICZYC TAK SAMO JAK SERWER: `String.length` liczy jednostki UTF-16, wiec emoji
 #    liczylo sie podwojnie (zmierzone: JS 10 vs PHP mb_strlen 7). Zero uzyc `.value.length`.
 spr "licznik liczy punkty kodowe, nie UTF-16" "0" "grep -c 'value.length' $W/assets/widget.js"
+# ⛔ ASERCJE PONIZEJ POWSTALY, BO POPRZEDNIE NIE UMIALY PASC (runda 8, klasa 11). Zmierzone przez
+#    recenzenta DWIEMA mutacjami: podmiana `Array.from(String(s)).length` na `String(s).length`
+#    i twarde `2000` zamiast `parseInt(dane.limitWiadomosci, 10)` NIE zmienialy wyjscia bramki
+#    CO DO ZNAKU. Asercja „zero uzyc value.length” pilnuje BRAKU zlego zapisu, a nie OBECNOSCI
+#    dobrego — wiec wada, ktora nie wprowadza `value.length`, przechodzila obok niej.
+spr "widget liczy znaki przez Array.from (punkty kodowe)" "1" "grep -c 'return Array.from(String(s)).length' $W/assets/widget.js"
+spr "widget czyta limit zgloszenia z chatlDane" "1" "grep -c 'dane.limitWiadomosci' $W/assets/widget.js | awk '{print (\$1>0)?1:0}'"
+# ⛔ Pole czyszczone KODEM nie wysyla zdarzenia `input`, wiec licznik trzeba odswiezyc recznie —
+#    inaczej pod pustym polem zostaje czerwone ostrzezenie o skroconej wklejce (runda 8, klasa 8).
+#    Liczby: pytanie 3 (handler `input`, wysylka, galaz `za_dlugie`), zgloszenie 2 (handler `input`,
+#    zamkniecie formularza). Wywolania Z KOMUNIKATEM maja argument, wiec tu sie nie licza.
+spr "licznik pytania odswiezany takze po czyszczeniu kodem" "3" "grep -c 'odswiezLicznik();' $W/assets/widget.js"
+spr "licznik zgloszenia odswiezany takze po czyszczeniu kodem" "2" "grep -c 'odswiezLicznikTresci();' $W/assets/widget.js"
 
 
 spr "zgoda sprawdzana na serwerze" "1" "grep -c \"empty( \\\$_POST\\['zgoda'\\] )\" $W/includes/front.php"

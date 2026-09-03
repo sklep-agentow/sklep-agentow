@@ -348,6 +348,10 @@
 			f.classList.remove('chatl-otwarty');
 			email.value = '';
 			tresc.value = '';
+			/* Pole czysci KOD, nie gosc — zdarzenie `input` NIE leci, wiec licznik trzeba
+			   odswiezyc recznie. Bez tego pod pustym polem zostaje czerwone ostrzezenie
+			   o skroconej wklejce, na elemencie z `aria-live="polite"` (czyta je czytnik). */
+			odswiezLicznikTresci();
 			zgoda.checked = false;
 			f.querySelector('.chatl-form-tytul').textContent = TYTUL_FORMULARZA;
 		};
@@ -544,6 +548,10 @@
 			   trwa poprzednie pytanie, drugie nie ma jak wyjsc. */
 			if (!pytanie || wyslijBtn.disabled) { return; }
 			polePytania.value = '';
+			/* To samo co przy zamknieciu formularza: czysci KOD, wiec `input` nie leci.
+			   Bez tego po wyslaniu pytania pod pustym polem zostawaloby ostrzezenie
+			   o skroconej wklejce (linia z `odswiezLicznik(komunikat)` wyzej). */
+			odswiezLicznik();
 			dodajWiadomosc('gosc', pytanie);
 			polePytania.disabled = true;
 			wyslijBtn.disabled = true;
