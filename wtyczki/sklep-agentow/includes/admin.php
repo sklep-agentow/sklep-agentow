@@ -62,6 +62,7 @@ function sklepag_ostrzez_strony_prawne() {
 		return;
 	}
 	$do_uzupelnienia = array();
+	$powody          = array();
 	$strony          = array(
 		'sklepag_strona_regulamin' => 'Regulamin sklepu',
 		'sklepag_strona_polityka'  => 'Polityka prywatności sklepu',
@@ -86,6 +87,7 @@ function sklepag_ostrzez_strony_prawne() {
 			$powod = 'opublikowana, ale wciąż z zaślepką SZABLON';
 		}
 		if ( '' !== $powod ) {
+			$powody[]          = $powod;
 			$do_uzupelnienia[] = '<a href="' . esc_url( get_edit_post_link( $id ) ) . '">' . esc_html( $nazwa )
 				. '</a> (' . esc_html( $powod ) . ')';
 		}
@@ -93,9 +95,25 @@ function sklepag_ostrzez_strony_prawne() {
 	if ( ! $do_uzupelnienia ) {
 		return;
 	}
+	// ⛔ Zdanie koncowe MUSI pasowac do tego, co naprawde brakuje. Jedno zdanie na wszystkie przypadki
+	//    kazalo OPUBLIKOWAC strone, ktora nawias obok nazywal juz opublikowana — sprzecznosc wewnatrz
+	//    jednego komunikatu, czyli ta sama klasa, ktora ten PR naprawia. Liczba mnoga tez byla stala,
+	//    wiec przy jednej stronie komunikat mowil o "stronach".
+	$ile         = count( $do_uzupelnienia );
+	$sa_robocze  = in_array( 'nieopublikowana', $powody, true );
+	$sa_zaslepki = in_array( 'opublikowana, ale wciąż z zaślepką SZABLON', $powody, true );
+	$co_zrobic   = 'Uzupełnij dane sprzedawcy (nazwa, adres, kontakt, adres do reklamacji)';
+	if ( $sa_zaslepki ) {
+		$co_zrobic .= ', usuń zaślepki SZABLON';
+	}
+	if ( $sa_robocze ) {
+		$co_zrobic .= ' i <strong>' . ( 1 === $ile ? 'opublikuj tę stronę' : 'opublikuj te strony' ) . ', zanim zaczniesz sprzedawać</strong>';
+	} else {
+		$co_zrobic .= ' — <strong>' . ( 1 === $ile ? 'ta strona jest już opublikowana' : 'te strony są już opublikowane' ) . ', więc zmiana zadziała od razu</strong>';
+	}
 	echo '<div class="notice notice-error"><p><strong>Sklep Agentów:</strong> sklep może przyjmować płatności, a dokumenty dla kupujących nie są gotowe: '
 		. wp_kses( implode( ' oraz ', $do_uzupelnienia ), array( 'a' => array( 'href' => array() ) ) )
-		. ' — przy każdej stoi, czego jej brakuje. Uzupełnij dane sprzedawcy (nazwa, adres, kontakt, adres do reklamacji), usuń zaślepki SZABLON i <strong>opublikuj te strony, zanim zaczniesz sprzedawać</strong>. Sprzedaż treści cyfrowych bez regulaminu i informacji o administratorze danych jest ryzykiem prawnym po Twojej stronie.</p></div>';
+		. ' — przy każdej stoi, czego jej brakuje. ' . wp_kses( $co_zrobic, array( 'strong' => array() ) ) . '. Sprzedaż treści cyfrowych bez regulaminu i informacji o administratorze danych jest ryzykiem prawnym po Twojej stronie.</p></div>';
 }
 
 function sklepag_admin_menu() {

@@ -133,7 +133,12 @@ $sprawdz( 'powod mowi o ZASLEPCE, nie o braku publikacji', false !== strpos( $wy
 	'strona OPUBLIKOWANA dostaje powod, ktorego nie ma: ' . substr( wp_strip_all_tags( $wyj ), 0, 120 ) );
 $sprawdz( 'i NIE nazywa opublikowanej strony nieopublikowana', false === strpos( $wyj, 'nieopublikowana' ),
 	'komunikat opisuje stan, w ktorym strona NIE JEST — wlasciciel przestaje wierzyc ostrzezeniu' );
-$sprawdz( 'i nie kaze publikowac czegos, co juz jest opublikowane', false === strpos( $wyj, 'opublikuj obie strony' ) );
+// ⛔ Do rundy 3 ta asercja szukala frazy `opublikuj obie strony`, ktorej kod juz NIE MA (runda 2
+// przepisala ja na `opublikuj te strony`) — wiec warunek byl zawsze prawdziwy i NIE MOGL PASC.
+// Teraz mierzy to, co ma mierzyc: gdy WSZYSTKIE strony sa opublikowane, komunikat nie moze kazac ich publikowac.
+$sprawdz( 'i nie kaze publikowac czegos, co juz jest opublikowane', false === strpos( $wyj, 'opublikuj t' ),
+	'komunikat kaze opublikowac strone, ktora sam nazywa opublikowana: ' . substr( wp_strip_all_tags( $wyj ), 0, 140 ) );
+$sprawdz( 'i mowi, ze zmiana zadziala od razu', false !== strpos( $wyj, 'już opublikowana' ) || false !== strpos( $wyj, 'już opublikowane' ) );
 
 echo "=== D. opcji nie ma (wlasciciel skasowal strone) — nie pouczamy ===\n";
 $ustaw_opcje( 0, 0 );
