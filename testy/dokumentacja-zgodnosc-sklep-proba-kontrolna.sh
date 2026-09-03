@@ -75,11 +75,21 @@ psuj_instr_zrzut()    { rm -f "$1/$W/zrzuty/ustawienia.png"; }
 psuj_instr_allow()    { sed -i '/sklep-agentow\/zrzuty\/ustawienia.png/d' "$1/boty/buduj-paczki.sh"; }
 psuj_instr_brak()     { rm -f "$1/$W/INSTRUKCJA.md"; }
 psuj_ponad_brak()     { rm -f "$1/$W/PONAD-SPECYFIKACJE.md"; }
+# ⛔ ZNACZNIK OKNA — trzy asercje dodane 3.09 nie mialy ANI JEDNEGO przypadku, wiec dalo sie
+#    usunac wszystkie trzy i proba dalej mowila `21/21 OK` (recenzja #273, runda 7, WAZNA 1).
+#    To ta sama klasa co wada, ktora ta runda naprawia: asercja bez wlasnego przypadku jest
+#    obietnica, nie pomiarem. Kazda z trzech czesci ochrony psuta OSOBNO.
+psuj_okno_pole()      { sed -i 's/<input type="hidden" name="okno"[^>]*>//' "$1/$W/includes/front-produkt.php"; }
+psuj_okno_skrypt()    { sed -i "/sklepag-kup-formularz input\[name=okno\]/d" "$1/$W/includes/front-produkt.php"; }
+psuj_okno_crypto()    { sed -i 's/c\.getRandomValues(a)/Math.random()/' "$1/$W/includes/front-produkt.php"; }
 
 echo "=== KONTROLA ODWROTNA: czysta kopia = 0 rozjazdow ==="
 sprawdz_ "czysta kopia repo → EXIT 0"                         0 nic               "0 rozjazdów"
 echo; echo "=== KAZDY ROZJAZD PODLOZONY OSOBNO → EXIT 1, nazwa pozycji, DOKLADNIE 1 rozjazd ==="
 sprawdz_ "A: Stable tag ≠ Version"                            1 psuj_stable_tag   "Stable tag == Version"
+sprawdz_ "Q5: pole 'okno' znika z formularza zakupu"          1 psuj_okno_pole    "pole 'okno' w formularzu zakupu"
+sprawdz_ "Q5: skrypt losujacy znacznik usuniety (2 asercje)"  1 psuj_okno_skrypt  "skrypt NADPISUJE pole|losowosc z crypto" 2
+sprawdz_ "Q5: crypto podmienione na Math.random"              1 psuj_okno_crypto  "losowosc z crypto, nie z Math.random"
 sprawdz_ "A: licencja w readme nie GPLv2"                     1 psuj_licencja     "License (forma readme WP)"
 sprawdz_ "B: readme mówi 48 godzin, stała mówi 72"            1 psuj_godziny      "link ważny N godzin"
 sprawdz_ "C: etykieta menu w readme przemianowana"            1 psuj_etykieta_rdm "menu 'Opinie'|readme 'Recenzje'" 2

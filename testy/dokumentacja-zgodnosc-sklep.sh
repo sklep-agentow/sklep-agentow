@@ -155,7 +155,14 @@ spr "plik $W/PONAD-SPECYFIKACJE.md"                         "1" "test -f $W/PONA
 #      - JEJ PROBA KONTROLNA biegnie w `proby-kontrolne-przelot.sh` wolanym BEZ zakresu,
 #        czyli w bramce konca wydania `k7-koniec.sh` — i to jest realna ochrona PRZED ODDANIEM.
 #    Wpiecie tej bramki do zestawu (`BRAMKI=` + manifest + prog) to osobna zmiana; rusza te same
-#    pliki co PR #272, wiec nie wchodzi tutaj. Pozycja na liscie w audyt/CO-WISI.md.
+#    pliki co PR #272, wiec nie wchodzi tutaj.
+#    ⛔ Zdanie „pozycja na liscie w audyt/CO-WISI.md" bylo NIEPRAWDZIWE, gdy je pisalam:
+#    ten PR nie dotyka `audyt/CO-WISI.md` i wiersza tam NIE MA. Opis PR-a mowil o tym
+#    w czasie przyszlym („pozycja idzie na liste"), a komentarz w kodzie w terazniejszym,
+#    jako o fakcie — czyli ten sam PR twierdzil dwie rozne rzeczy (recenzja #273, runda 7,
+#    WAZNA 2). Stan faktyczny: wpiecie tej bramki do zestawu to zadanie DO ZAPISANIA
+#    w `audyt/CO-WISI.md` przy scalaniu #277, ktory jako jedyny z kolejki rusza rejestry.
+#    Dopoki tam nie trafi, jedynym miejscem, gdzie o tym zadaniu wiadomo, jest ten komentarz.
 #    Trzy asercje, bo ochrona ma trzy czesci i kazda mozna usunac osobno: pole w formularzu ·
 #    skrypt, ktory je nadpisuje · zrodlo losowosci. Trzecia liczy WYWOLANIE w kodzie JS
 #    (`c.getRandomValues(a)`), nie samo slowo — to samo slowo stoi takze w komentarzu obok
