@@ -44,7 +44,9 @@ pory lądują tutaj.
   `schemat-wersja-po-sprawdzeniu-test.php`, który robi `DROP TABLE` na tabeli opinii i woła
   `sklepag_aktywacja()` (strony, katalog, zadanie cykliczne, przebudowa reguł adresów) — na kontenerze
   `strona_wp_wordpress` i bez przywracania bazy między testami, wbrew własnemu nagłówkowi pliku.
-  Dopisany wzorzec pomijania z powodem; spust ma własną drogę przez próbę kontrolną na stosie próbnym.
+  Dopisany wzorzec pomijania z powodem. Spust jest RĘCZNY: ktoś musi uruchomić przelot
+  bez zakresu przed wydaniem albo samą próbę kontrolną na stosie próbnym. `k7-koniec.sh`
+  przelotu NIE uruchamia — czyta jego log i przy braku każe go uruchomić.
 - **`zdarzenia-webhooka.sh` 1.0.0 (NOWE) + `bramki.sh` (12 bramek, `PROG_PELNY` 12,
   `PROG_TEKSTOWY` 7; wpis do manifestu w TYM SAMYM PR, bo bez niego strażnik manifestu
   słusznie świeci na czerwono — kontrola 1a) — lista zdarzeń Stripe w instrukcji == lista

@@ -138,7 +138,11 @@ for t in testy/*.php; do
 	#    po `strona_wp_wordpress` i NIE przywraca bazy między testami — więc kolejne testy
 	#    dostawałyby zrzuconą tabelę.
 	# ⛔ GDZIE TEN STRAZNIK NAPRAWDE BIEGNIE — zmierzone, nie zalozone:
-	#      - `quality.yml:127` wola przelot Z ZAKRESEM `narzedzia-qa`, wiec proby z `testy/`
+	#      - krok `Proby kontrolne bramek` w `.github/workflows/quality.yml` wola przelot
+	#        Z ZAKRESEM `narzedzia-qa`, wiec proby z `testy/`
+	#        ⛔ Odsylam po NAZWIE KROKU, nie po numerze linii: poprzednia wersja mowila
+	#        `quality.yml:127`, a wywolanie stoi dzis w `:131` — przesunal je TEN SAM
+	#        commit, ktory ten odsylacz pisal (recenzja #274 r13, WAZNA 1).
 	#        (w tym proba tego straznika) w CI PR-owym NIE BIEGNA ANI RAZU;
 	#      - SPUST JEST RECZNY: ktos musi uruchomic przelot BEZ zakresu przed wydaniem.
 	#        `k7-koniec.sh` przelotu NIE URUCHAMIA — czyta `audyt/sklep/PROBY-KONTROLNE.log` (:35),
