@@ -174,24 +174,23 @@ esac
 # kod z drzewa; wykonawca CI (`ciuser`, B-3) Dockera nie widzi i widziec nie moze. Bez Dockera
 # bramka jest POMINIETA JAWNIE (w logu i w podsumowaniu), a prog pelnego trybu schodzi o JEDEN,
 # nie „o ile trzeba”. Lokalnie i na kazdym koncie z Dockerem golden BIEGNIE (~15 s).
-# ⛔ WARUNEK MUSI BYC TEN SAM, CO W `wymagaj_narzedzi` (narzedzia-qa/lib-stos-probny.sh).
-# Wezsze pytanie „czy widac demona Dockera” dawalo rozjazd: brak kontenera bazy albo brak
-# `unzip` konczyl golden przez `padnij` (exit 2), czyli CZERWONA bramka ze srodowiska, podczas
-# gdy o jeden poziom wyzej ten sam brak srodowiska byl zaprojektowany jako POMINIECIE JAWNE
-# (recenzja #272 r4, DROBNA 6). Nazwe kontenera bazy CZYTAM Z PLIKU, nie przepisuje z pamieci.
-KONTENER_DB_GOLDEN=$(sed -n 's/^KONTENER_DB=//p' narzedzia-qa/lib-stos-probny.sh | head -1)
-DOCKER_WIDOCZNY=nie
+# ⛔ POMINIECIE MA POKRYWAC DOKLADNIE JEDEN POWOD: konto nie widzi Dockera (wykonawca CI
+# `ciuser`, B-3 — dostepu dac NIE MOZNA, grupa `docker` jest rownowaznikiem roota). Kazdy INNY
+# brak — brak `unzip`, nieodczytany `KONTENER_DB`, niechodzacy kontener bazy — to WADA STANOWISKA
+# na koncie, ktore Dockera WIDZI, i ma swiecic CZERWONO przez `wymagaj_narzedzi`
+# (narzedzia-qa/lib-stos-probny.sh:65), a nie znikac jako pominiecie.
+# ⛔ DLACZEGO WARUNEK JEST CELOWO WEZSZY NIZ `wymagaj_narzedzi`: runda 4 zrownala te cztery
+# powody „dla zgodnosci warunkow" i tym samym poszerzyla ciche pominiecie z jednego powodu na
+# cztery. Trzy z nich do r4 konczyly sie `padnij` (exit 2) — czyli PORAZKA — a po r4 dawaly
+# `WSZYSTKIE WYKONANE BRAMKI ZIELONE` i EXIT=0 (recenzja #272 r5, uwaga WAZNA). Jedno zrodlo
+# prawdy o brakach zostaje w `wymagaj_narzedzi`; tutaj pytamy WYLACZNIE o to, czy golden ma
+# gdzie w ogole wystartowac. Dzieki temu trzy dokumenty PR-a (manifest, rejestr, CHANGELOG),
+# ktore mowia „bez Dockera POMINIETA", opisuja to, co kod naprawde robi.
+DOCKER_WIDOCZNY=tak
 POWOD_BEZ_GOLDENA=""
 if ! docker ps > /dev/null 2>&1; then
+	DOCKER_WIDOCZNY=nie
 	POWOD_BEZ_GOLDENA="to konto nie widzi Dockera"
-elif ! command -v unzip > /dev/null 2>&1; then
-	POWOD_BEZ_GOLDENA="brak unzip"
-elif [ -z "$KONTENER_DB_GOLDEN" ]; then
-	POWOD_BEZ_GOLDENA="nie odczytalam KONTENER_DB z lib-stos-probny.sh"
-elif ! docker ps --filter "name=^${KONTENER_DB_GOLDEN}$" --filter status=running -q | grep -q .; then
-	POWOD_BEZ_GOLDENA="kontener bazy $KONTENER_DB_GOLDEN nie chodzi"
-else
-	DOCKER_WIDOCZNY=tak
 fi
 if [ "$DOCKER_WIDOCZNY" = nie ] && [ "$TRYB" = pelny ]; then
 	PROG=$((PROG - 1))

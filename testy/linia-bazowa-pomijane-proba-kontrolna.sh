@@ -55,14 +55,27 @@ for t in testy/*.sh; do
 	case " $POMINIETE_LISTA " in *" $t "*) continue;; esac
 	echo "  ✅ URUCHAMIANY: $t"; ILE=$((ILE+1))
 done
-# ⛔ PRÓG URUCHAMIANYCH — to jest jedyne miejsce, w którym ta próba może zaświecić na czerwono
-# z powodu zmiany w linia-bazowa.sh. Dopisanie tam wzorca pomijania wyrzuca prawdziwe bramki
-# z linii bazowej i ta liczba SPADA. Obniżenie progu ma być świadomą decyzją w commicie —
-# wzorem MAX_POMINIETYCH w narzedzia-qa/proby-kontrolne-przelot.sh:69.
-MIN_URUCHAMIANYCH=15   # 2.09 (#272 r5): stan po dolaczeniu golden-migawka-proba-kontrolna.sh do pomijanych
+# ⛔ DWIE ASERCJE, BO JEDNA NIE WYSTARCZA. Dopisanie wzorca pomijania do linia-bazowa.sh wyrzuca
+# prawdziwe bramki z linii bazowej — ale prog `-ge` na SAMYCH URUCHAMIANYCH tego nie zlapie,
+# gdy jeden commit dokłada wzorzec pomijania I nowy test naraz: liczba uruchamianych stoi w
+# miejscu albo rosnie, a pokrycie realnie spada (recenzja #272 r5, DROBNA 3). Dlatego mierzone
+# sa OBIE strony podzialu: uruchamiane nie moga spasc PONIZEJ progu, a pomijane nie moga
+# przekroczyc sufitu. Kazde przesuniecie ktorejkolwiek liczby ma byc swiadoma decyzja w
+# commicie — wzorem MAX_POMINIETYCH w narzedzia-qa/proby-kontrolne-przelot.sh:69.
+# ⛔ SKAD LICZBY: policzone tym samym biegiem 3.09 (#272 r6) — `testy/*.sh` = 49 plikow,
+# z tego 15 uruchamianych i 34 pomijane. ⚠️ Poprzedni komentarz uzasadnial 15 „stanem po
+# dolaczeniu golden-migawka-proba-kontrolna.sh do pomijanych" i BYL NIEPRAWDZIWY: ten plik
+# nie zostal nigdzie dolaczony, tylko podpada pod istniejacy od dawna wzorzec
+# `*-proba-kontrolna.sh` (linia-bazowa.sh:27). Nic go do listy nie dopisywalo.
+MIN_URUCHAMIANYCH=15
+MAX_POMIJANYCH=34
 [ "$ILE" -ge "$MIN_URUCHAMIANYCH" ] || { echo "  ⛔ URUCHAMIANYCH $ILE, prog $MIN_URUCHAMIANYCH — z linii bazowej UBYLY testy"; BLEDY=$((BLEDY+1)); }
 [ "$ILE" -ge 1 ] || { echo "  ⛔ ZERO testów do uruchomienia — kontrola dodatnia pusta, pomiar nic nie znaczy"; BLEDY=$((BLEDY+1)); }
-echo "  (uruchamianych testów .sh: $ILE, próg: $MIN_URUCHAMIANYCH)"
+# ⛔ SUFIT POMIJANYCH — druga strona tego samego podzialu (patrz komentarz wyzej).
+ILE_POMIJANYCH=0
+for _p in $POMINIETE_LISTA; do ILE_POMIJANYCH=$((ILE_POMIJANYCH+1)); done
+[ "$ILE_POMIJANYCH" -le "$MAX_POMIJANYCH" ] || { echo "  ⛔ POMIJANYCH $ILE_POMIJANYCH, sufit $MAX_POMIJANYCH — do linia-bazowa.sh DOSZEDL wzorzec pomijania"; BLEDY=$((BLEDY+1)); }
+echo "  (uruchamianych testów .sh: $ILE, próg: $MIN_URUCHAMIANYCH · pomijanych: $ILE_POMIJANYCH, sufit: $MAX_POMIJANYCH)"
 
 echo
 [ "$BLEDY" -eq 0 ] && { echo "LISTA POMIJANYCH: OK (EXIT=0)"; exit 0; }

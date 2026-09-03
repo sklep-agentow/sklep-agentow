@@ -8,9 +8,16 @@
 # ⛔ SPRZATANIE: `zwin_stos` z lib dziala WYLACZNIE w procesie, ktory stos postawil
 #    (`lib-stos-probny.sh:151` wychodzi wczesniej, gdy STOS_PROBNY_POSTAWILEM != tak),
 #    a ten skrypt konczy sie z ZOSTAW=tak — wiec z innego procesu nie zrobi nic.
-#    Recznie: `docker rm -f -v probny_wp`. ⛔ Flaga `-v` jest OBOWIAZKOWA: obraz WordPressa
-#    deklaruje VOLUME /var/www/html, wiec `docker rm -f` bez niej zostawia wolumen
-#    (zmierzone 2.09: 83 wiszace wolumeny, 6,5 GB, dysk 100 %).
+#    Recznie potrzebne sa DWIE komendy, bo `zwin_stos` robi dwie rzeczy
+#    (`lib-stos-probny.sh:159-160`), a sam `docker rm` zostawia baze:
+#      docker rm -f -v probny_wp
+#      docker exec <kontener-bazy> mysql -uroot -p<haslo> -e "DROP DATABASE IF EXISTS \`wp_probny\`;"
+#    (nazwe kontenera bazy i haslo czytaj z `narzedzia-qa/lib-stos-probny.sh` — nie przepisuj
+#    z pamieci; ta sciezka to jedyne zrodlo prawdy). ⛔ Do 3.09 stala tu SAMA pierwsza komenda
+#    i podpis „sprzatanie", co bylo nieprawda: baza `wp_probny` zostawala (recenzja #272 r5,
+#    DROBNA 5). ⛔ Flaga `-v` jest OBOWIAZKOWA: obraz WordPressa deklaruje VOLUME
+#    /var/www/html, wiec `docker rm -f` bez niej zostawia wolumen (zmierzone 2.09: 83 wiszace
+#    wolumeny, 6,5 GB, dysk 100 %).
 # Użycie: bash narzedzia-qa/k7-stos-rundy.sh <zip> [wzorzec-w-kodzie-do-potwierdzenia]
 #   EXIT 0 = stos stoi, wtyczka aktywna w podanej wersji, wzorzec (jeśli podany) w kodzie kontenera, oba konta z OCZEKIWANĄ rolą
 #            i DZIAŁAJĄCYM hasłem (`wp user check-password`), strona główna HTTP 200, debug.log pusty PO instalacji, aktywacji

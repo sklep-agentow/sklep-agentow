@@ -101,7 +101,33 @@ done
 [ "$BEZ" -eq 0 ] || BLEDY=$((BLEDY+1))
 # ⛔ ASERCJA NA LICZBIE. Bez niej rozjazd miedzy ta komenda a liczba w CHANGELOG-u i w
 # lib-golden-stos.sh:27 przechodzi bez sladu — dokladnie tak powstala DROBNA 2 rundy 4.
-OCZEKIWANI_UZYTKOWNICY=9   # 2.09 (#272 r5): dziewieciu, zgodnie z lib-golden-stos.sh:27 i CHANGELOG-iem
+# ⛔ SAM LITERAL NICZEGO NIE LACZY Z DOKUMENTAMI (recenzja #272 r5, DROBNA 4): do r6 ten wiersz
+# porownywal policzona liczbe z WLASNYM literalem, a komentarz obok obiecywal porownanie
+# „z liczba w CHANGELOG-u i lib-golden-stos.sh:27". Dokumenty niosa te liczbe SLOWNIE, wiec
+# ponizej sprawdzam takze, czy oba naprawde mowia to samo slowo. Zmiana liczby wymaga wtedy
+# ruszenia WSZYSTKICH trzech miejsc — inaczej ta proba pada.
+OCZEKIWANI_UZYTKOWNICY=9
+case "$OCZEKIWANI_UZYTKOWNICY" in
+	7) SLOWO_UZYTKOWNIKOW=siedmiu ;;
+	8) SLOWO_UZYTKOWNIKOW=osmiu ;;
+	9) SLOWO_UZYTKOWNIKOW=dziewięciu ;;
+	10) SLOWO_UZYTKOWNIKOW=dziesięciu ;;
+	11) SLOWO_UZYTKOWNIKOW=jedenastu ;;
+	*) SLOWO_UZYTKOWNIKOW="" ;;
+esac
+if [ -z "$SLOWO_UZYTKOWNIKOW" ]; then
+	printf "  ZLE  nie znam slownej postaci liczby %s — dopisz ja do case, inaczej dokumenty nie sa sprawdzane\n" "$OCZEKIWANI_UZYTKOWNICY"
+	BLEDY=$((BLEDY+1))
+else
+	for _d in testy/lib-golden-stos.sh narzedzia-qa/CHANGELOG.md; do
+		if grep -q "$SLOWO_UZYTKOWNIKOW" "$_d"; then
+			printf "  OK   %s mowi '%s' — zgodnie z licznikiem\n" "$_d" "$SLOWO_UZYTKOWNIKOW"
+		else
+			printf "  ZLE  %s NIE mowi '%s' — rozjazd miedzy pomiarem a dokumentem\n" "$_d" "$SLOWO_UZYTKOWNIKOW"
+			BLEDY=$((BLEDY+1))
+		fi
+	done
+fi
 if [ "$UZYTKOWNIKOW" -ne "$OCZEKIWANI_UZYTKOWNICY" ]; then
 	printf '  ZLE  uzytkownikow stosu probnego: %s, a dokumenty mowia %s — rozjazd\n' "$UZYTKOWNIKOW" "$OCZEKIWANI_UZYTKOWNICY"
 	BLEDY=$((BLEDY+1))
