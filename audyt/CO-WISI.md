@@ -1062,3 +1062,50 @@ z gałęzi **do kontenera**, czyli tej samej operacji, która w `testy/golden-mi
 niebezpieczna dla WSPÓLNEGO stosu — podmienia wtyczkę i jej nie przywraca (zmierzone: przed `0.9.32`/`a9ce0f70…`,
 po `0.9.31`/`704b0ab7…`, czyli cofnięta czyjaś robota w toku). Wpięcie bez rozwiązania tego cofa builderom kod pod
 stopami przy każdym biegu bramek. Dowody: `audyt/plamy/GOLDEN-258-WERYFIKACJA.md`.
+
+## 🟡 CZTERY DROBNE Z RECENZJI #276 r7 — ODŁOŻONE ŚWIADOMIE, NIE PRZEOCZONE (3.09, r9)
+
+Recenzent słusznie zauważył, że w rundach 8 i 9 zadeklarowałam te cztery jako „zostają" —
+i nie dostały wiersza **nigdzie**, czyli zniknęły z widoku. Zasada tego pliku brzmi
+„oddajesz ⇒ wiersz", więc oto one. Wszystkie dotyczą `audyt/SCIAGA-EGZAMINATORA.md`,
+żadna nie zmienia zachowania produktu ani żadnej bramki.
+
+| # | co | dlaczego odłożone |
+|---|---|---|
+| D1 | liczba w wierszu klasy podana **bez przyrządu**, którym ją zmierzono | ten sam wzorzec naprawiłam w klasie 113 w rundzie 9; pozostałe wiersze to praca przekrojowa przez cały rejestr, nie jedna poprawka |
+| D2 | **znacznik za szeroki** — obejmuje więcej tekstu, niż powinien wyróżniać | kosmetyka składu, zero wpływu na treść klasy |
+| D3 | **zdublowany nawias** w klasie 105 | literówka |
+| D4 | **zbłąkany dwukropek** | literówka |
+
+⛔ **Dlaczego nie od ręki, skoro to drobiazgi:** ten pull request jest ósmy w kolejce jednego
+wykonawcy CI, a każda runda to komplet bramek plus recenzja dla wszystkich czekających.
+D1 wymaga przejścia całego rejestru klas, a nie jednego wiersza — i jako jedyna z czwórki ma
+wartość merytoryczną. **Do zrobienia razem z najbliższą pracą, która i tak otwiera ten plik.**
+
+## 🟡 UWAGI Z RECENZJI 2.09 PRZENIESIONE PO REGULE JEDNEJ RUNDY (dokumenty: #269, #271; kod: #270 r3 — same DROBNE)
+
+Każda pozycja = tania poprawka tekstowa do wzięcia przy najbliższym PR-ze w tym pliku; nic z tego nie jest wadą produktu u klienta.
+
+### #269 (raporty A7, scalone 2.09 --merge)
+- WAŻNA 1: opis PR „realnych rozjazdów” — liczba do sprostowania (recenzent: liczba w opisie ≠ liczba w raporcie).
+- WAŻNA 2: nagłówek `audyt/plamy/A7-RAPORT.md` (⛔ było `audyt/czesciowo/` — ten katalog istnieje, więc zła ścieżka wyglądała wiarygodnie; sprawdzone `find`) — jedno zdanie, że `A7-F1` domknięte przez #256.
+- DROBNA 3: `A7b-RAPORT.md:176` dwa układy odniesienia w jednym zdaniu (drugi numer prowadzi na HEAD w inny wiersz).
+- DROBNA 4: `A7b-RAPORT.md` dwie różne liczby zdarzeń dla tej samej rzeczy.
+- DROBNA 5: cytaty samą nazwą pliku tam, gdzie nazwa istnieje w trzech wtyczkach.
+- DROBNA 6: „kandydat na klasę” z opisu PR-a jest już klasą 12 ściągi.
+
+### #271 (ściąga klasy 99–104)
+- DROBNA 1: wpis klasy cytuje `REJESTR-ZNALEZISK-INFRA.md:171` (A6-F1) — po #267 linia 171 to `P-1`; kotwica zamiast numeru (wiersz `A6-F1`), źródło: #267 odnotował kolizję kodu A6-F1.
+  ⛔ **SPROSTOWANIE 2.09, runda 4 #276 (DROBNA 5 recenzji — recenzent ma rację):** uzasadnienie parkowania, które tu stało, było FAŁSZYWE. Mówiło, że poprawka wywoła konflikt w pięciu PR-ach edytujących `audyt/REJESTR-ZNALEZISK-INFRA.md` — ale **obie** parkowane poprawki (kotwica `A6-F1` i odsyłacz 98→103) są zmianami w `audyt/SCIAGA-EGZAMINATORA.md`, czyli w pliku, który ten PR i tak otwiera. Argument o konflikcie dotyczył innego pliku niż naprawa. To ta sama rodzina co klasa 3: zdanie brzmiało wiarygodnie i nikt nie sprawdził, czy mówi o właściwym pliku.
+  ✅ **Zrobione w rundzie 4 #276:** obie poprawki wchodzą w tym PR-ze, więc ta pozycja jest zamknięta, a nie przełożona po raz drugi.
+- ~~DROBNA 2: klasa 103 unieważnia przepis z klasy 98 („siedem miejsc” bez `SECURITY.md`) — dopisać do 98 odsyłacz „patrz 103: osiem miejsc”.~~ ✅ **ZROBIONE w #276 (runda 4/5):** odsyłacz stoi w kolumnie „Klasa”, a od rundy 5 także w kolumnie „Bramka” tego samego wiersza — czyli tam, skąd czyta się CZYNNOŚĆ przy bumpie wersji. ⛔ Zostawione przekreśleniem, nie skasowane: reguła nagłówka („wraca ⇒ kasujesz”) dotyczy pozycji długu, a to jest ślad, że dług został spłacony właśnie tutaj.
+
+### ~~Klasa do ściągi PO #271 (numer 105)~~ — ✅ ZAMKNIĘTE 2.09 (#276)
+⛔ **Reguła z nagłówka tego pliku: „oddajesz ⇒ wiersz, wraca ⇒ kasujesz”.** Klasa 105 WRÓCIŁA — jest w `audyt/SCIAGA-EGZAMINATORA.md` jako pełny wiersz (dowód: `2.09, #272`). Trzymanie jej tutaj jako „do zrobienia” po scaleniu dałoby DWA źródła prawdy naraz na `main` — dokładnie ten stan, przed którym klasa 105 ostrzega. Treść niżej zostaje wyłącznie jako ślad, skąd klasa się wzięła; ⛔ **nie jest już zadaniem** (DROBNA 4 recenzji #276, runda 3).
+- „STRAŻNIK BEZ SPUSTU”: narzędzie/test istnieje, nic go nie woła (I-24 golden; I-3 kalibrator; I-4 licznik-odstepstw; I-8 adresy-w-dokumencie/waga-znaleziska). Kontrola: nowy test/bramka w TYM SAMYM PR ma wołającego — `grep -rn <nazwa> narzedzia-qa/bramki.sh .github/workflows/ narzedzia-qa/proby-kontrolne-przelot.sh` ≥ 1.
+- Kandydat: przelot `testy/` bez Dockera → ~20 prób EXIT=1, bo `WYMAGA_DOCKERA` zna 4 nazwy (`MAX_POMINIETYCH=5` to osobna wielkość — sufit pominięć, nie liczba nazw); CI nie biegnie po `testy/` (stan sprzed #272).
+
+### #270 r3 (F4-F4) — 3 DROBNE, scalać po #268 (0 KRYT, 0 WAŻNA)
+- DROBNA 1: krok render sam podaje `faktura=1` — asercja mierzy własne wejście; poprawka: brać parametr z prawdziwego REDIRECT z WY_A.
+- DROBNA 2: opis w sekcji RODO PRZED kliknięciem obiecuje zachowanie faktury także przy zakupie prywatnym (pusta kolumna) — warunek `$ma_fakture` także w tekście przed operacją.
+- DROBNA 3 (klasa 11): `testy/anonimizacja-zachowuje-fakture-proba-kontrolna.sh` (⚠️ plik istnieje TYLKO na gałęzi PR #270, nie na `main`) — komunikat obiecuje rozróżnienie, którego warunek nie robi; bliźniak w bazie robi poprawnie.
