@@ -31,7 +31,8 @@
 #
 # Kody wyjścia: 0 = wszystkie pięć dowodów wyszło
 #               1 = choć jeden NIE wyszedł (wypisane, który)
-#               2 = nie ma czego sprawdzać (brak paczki, brak dockera, stos nie wstaje)
+#               2 = nie ma czego sprawdzać (brak paczki, stos nie wstaje) ALBO NIE WIEM (to konto nie widzi Dockera — komunikat zaczyna się od „NIE WIEM”)
+#                   — `wymagaj_narzedzi` z lib-stos-probny.sh rozróżnia te dwa przypadki w komunikacie
 set -u
 
 WERSJA=1.0.0

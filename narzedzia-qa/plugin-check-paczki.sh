@@ -20,13 +20,23 @@
 #     STOS_PROBNY_OBRAZ=wordpress:6.9.4-php8.4-apache bash narzedzia-qa/k7-stos-rundy.sh <pierwszy-zip>
 #   Zapisuje surowe wyniki do audyt/plugin-check/<slug>.txt (nadpisuje) i drukuje podsumowanie.
 #   EXIT 0 = wszystkie raporty zapisane · 1 = któraś paczka nie została zainstalowana w podanej wersji albo
-#            Plugin Check nie zwrócił wyniku (raport tej paczki NIE jest zapisywany) · 2 = zła komenda / brak zipa / nie stoi probny_wp
+#            Plugin Check nie zwrócił wyniku (raport tej paczki NIE jest zapisywany) · 2 = jedno z CZTERECH,
+#            nazwane w komunikacie: NIE WIEM (to konto nie widzi Dockera — o dostępie, nie o kontenerze) ·
+#            Docker odpowiedział i probny_wp na liście NIE MA · zła komenda · brak zipa
 set -u
 KORZEN="$(cd "$(dirname "$0")/.." && pwd)"
 KONTENER=probny_wp
 WYJ="$KORZEN/audyt/plugin-check"
 [ $# -ge 1 ] || { echo "użycie: $0 <zip> [<zip> ...]" >&2; exit 2; }
-docker ps --format '{{.Names}}' | grep -qx "$KONTENER" || { echo "PLUGIN CHECK: nie stoi $KONTENER — najpierw: STOS_PROBNY_OBRAZ=wordpress:6.9.4-php8.4-apache bash narzedzia-qa/k7-stos-rundy.sh <zip>" >&2; exit 2; }
+# ⛔ „NIE WIEM" TO NIE TO SAMO CO „NIE STOI". `docker ps` konczy sie niezerowo takze wtedy,
+# gdy to KONTO nie widzi demona Dockera (wykonawca CI chodzi jako `ciuser` bez `docker.sock`).
+# Zdanie „nie stoi probny_wp" bylo wtedy twierdzeniem o cudzym stanowisku, ktorego ten skrypt
+# nie ma jak sprawdzic — i wysylalo czytajacego stawiac stos, ktory moze juz stac.
+if ! docker ps > /dev/null 2>&1; then
+	echo "PLUGIN CHECK: NIE WIEM, czy $KONTENER stoi — to konto nie widzi Dockera (brak dostepu do demona, nie brak kontenera). Uruchom na koncie z Dockerem." >&2
+	exit 2
+fi
+docker ps --format '{{.Names}}' | grep -qx "$KONTENER" || { echo "PLUGIN CHECK: Docker odpowiedzial i $KONTENER na liscie NIE MA — najpierw: STOS_PROBNY_OBRAZ=wordpress:6.9.4-php8.4-apache bash narzedzia-qa/k7-stos-rundy.sh <zip>" >&2; exit 2; }
 mkdir -p "$WYJ"
 
 wp() { docker exec "$KONTENER" wp --allow-root --path=/var/www/html "$@" 2>&1; }

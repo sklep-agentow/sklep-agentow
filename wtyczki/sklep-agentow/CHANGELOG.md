@@ -25,10 +25,16 @@ Nic jeszcze.
 ### Naprawione
 - **Dwie osoby za jednym adresem internetowym nie dzielą już okna ochrony przed podwójnym kliknięciem.** Do tego wydania okno było kluczowane samym adresem IP, więc w biurze za NAT-em albo w sieci komórkowej operatora druga osoba, która kliknęła „Kup” w ciągu 5 s po pierwszej, dostawała CUDZY checkout Stripe. Formularz zakupu niesie teraz losowy znacznik z renderu strony produktu; podwójny klik wysyła ten sam znacznik (ochrona zostaje), inna przeglądarka ma własny. Formularz sprzed aktualizacji (bez znacznika) działa jak dotąd.
 
+## [0.9.37] — 2026-09-02 · schemat bazy bez zmian (10)
+
+### Naprawione
+- **Anonimizacja z panelu zachowuje dane do faktury** — tak samo jak kasownik danych osobowych WordPressa. Komunikat po anonimizacji i szczegóły zamówienia mówią to, co się naprawdę stało: faktura została (nazwa, NIP, adres dalej widoczne w panelu — właściciel musi je odczytać, żeby spełnić obowiązek podatkowy), a nie „usunięta”. Do 0.9.36 przycisk „Anonimizuj kupującego” w panelu kasował także nazwę, NIP i adres nabywcy z faktury, choć polityka prywatności sklepu deklaruje ich przechowywanie przez okres wymagany prawem podatkowym, a kasownik WordPressa je zostawiał — dwie zasady dla jednego obowiązku. Teraz obie drogi usuwają adres e-mail i treść maila, a dane faktury zostają; okno potwierdzenia, opis w panelu i instrukcja mówią to wprost.
+- **Link do pobrania przestaje działać po zwrocie całej kwoty i przy obciążeniu zwrotnym (spór, w którym bank zdjął pieniądze).** Do 0.9.36 brama pobrań sprawdzała tylko token i termin ważności, więc kupujący, któremu Stripe oddał pieniądze, mógł pobierać produkt do końca 72 godzin i limitu 10 pobrań. Teraz zamówienie ze statusem `zwrocone` albo `sporne` dostaje odmowę (410) z powodem i kontaktem do sprzedawcy — zanim sklep dotknie pliku i licznika, więc odmowa nie zużywa pobrania — a próba trafia do osi czasu zamówienia jako `pobranie_odmowa_zwrot`. Zwrot częściowy nie zmienia statusu i nie odcina dostępu (świadoma granica). Spór wygrany albo wycofany przywraca poprzedni status i link znów działa.
+- **Strona „Dziękujemy" nie twierdzi już, że przegrany spór „czeka na rozstrzygnięcie".** Obciążenie zwrotne zamknięte na niekorzyść sklepu (`charge.dispute.closed` z wynikiem `lost`) zostawia status `sporne` na stałe, a kod nie odróżnia sporu otwartego od przegranego — oba mają ten sam status. Zdanie na stronie zostało więc pozbawione twierdzenia o toczącej się sprawie i brzmi tak samo jak brama pobrań: „Ta płatność jest w sporze (reklamacja w banku) — link do pobrania nie działa". Zdanie jest prawdziwe w obu przypadkach.
+- **Opis maila kontaktowego w panelu i w instrukcji wymieniał dwie z pięciu sytuacji, w których sklep go pokazuje kupującemu.** Zmierzone w `pobieranie.php`: zły link (403), link wygasł (410), zwrot albo spór (410), plik chwilowo niedostępny (503), wyczerpany limit (410) — pięć miejsc. Właściciel czytał o dwóch, więc nie wiedział, gdzie jeszcze ten adres zobaczą kupujący.
+- **FAQ instrukcji cytowało oba komunikaty strony „Dziękujemy" w wersji sprzed tej naprawy** — cudzysłowy zamykały się przed dopiskiem o martwym linku, a zdanie tuż pod nimi twierdziło, że oba mówią o linku wprost. Cytaty dociągnięte do treści, którą strona naprawdę pokazuje.
+
 ---
-> **Numeracja przeskakuje 0.9.37 celowo, nie przez przeoczenie.** To wydanie jest przygotowywane
-> równolegle i zostanie opisane w tym miejscu — między 0.9.38 a 0.9.36, bo plik idzie od najnowszej
-> wersji w dół. Po dopisaniu wpisu tę notę usunąć.
 
 ## [0.9.36] — 2026-09-01 · schemat bazy bez zmian (10)
 
