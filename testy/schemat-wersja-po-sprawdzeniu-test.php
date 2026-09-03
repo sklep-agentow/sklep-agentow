@@ -8,7 +8,7 @@
  * (brak prawa ALTER/CREATE, cudza tabela) zamykała bramę „wersja == stała” na zawsze —
  * sklep nie przyjmował zamówień i nikt nie wiedział dlaczego. Przyczyna-matka H.
  *
- * Trzy kierunki:
+ * Cztery kierunki (A-C to schemat, D to sam dlawik ponowienia):
  *   A) PODŁOŻONA AWARIA: tabela `opinie` zrzucona, a filtr `query` zamienia jej CREATE na SELECT 1
  *      (jak brak prawa CREATE) → po migracji wersja MUSI zostać STARA, opcja `sklepag_schemat_blad`
  *      MUSI wymienić brakującą tabelę, Pulpit MUSI pokazać notice;
@@ -147,15 +147,31 @@ $wynik[] = $c_ok;
  *
  * Właściwe pytanie ma dwa kierunki i oba są tu mierzone:
  *   D1 — po migracji NIEUDANEJ (przypadek A) znacznik MUSI zostać, inaczej pętla ponowień wraca;
- *   D2 — po migracji UDANEJ (przypadek B) znacznik MUSI zniknąć, inaczej „deaktywuj i aktywuj"
- *        z komunikatu na Pulpicie nie zadziała natychmiast i właściciel czeka bez powodu.
+ *   D2 — po migracji UDANEJ (przypadek B) znacznik MUSI zniknąć.
  * Oba stany zapisałam w A i B, tuż po tamtejszych wołaniach migracji.
+ *
+ * ⛔ D3 MIERZY INNĄ FUNKCJĘ NIŻ D1 i D2, i to jest sedno uwagi WAŻNEJ 2 z rundy 5.
+ * Komunikat na Pulpicie obiecuje właścicielowi konkretną drogę: „deaktywuj i aktywuj wtyczkę,
+ * a zadziała natychmiast". Tę drogę realizuje `sklepag_aktywacja()` (`aktywacja.php:264`), a NIE
+ * `sklepag_migruj_schemat_jesli_trzeba()` (`:303-308`), którą mierzą D1 i D2. Do rundy 6 ŻADEN
+ * strażnik nie wołał `sklepag_aktywacja()` — czyli obietnica z Pulpitu nie była mierzona nigdzie,
+ * a dowód D2 opisywał ją słowami, których nie sprawdzał.
  */
+// D3: droga, ktora Pulpit PODAJE wlascicielowi — „deaktywuj i aktywuj". Wolamy PRAWDZIWA
+// funkcje aktywacji, nie migracje, i sprawdzamy, czy znacznik po niej znika.
+set_transient( 'sklepag_schemat_ponowienie', 1, 5 * MINUTE_IN_SECONDS );
+$znacznik_przed_akt = ( false !== get_transient( 'sklepag_schemat_ponowienie' ) );
+sklepag_aktywacja();
+$znacznik_po_akt = ( false !== get_transient( 'sklepag_schemat_ponowienie' ) );
+
 echo 'D. znacznik ponowienia: po NIEUDANEJ migracji ' . ( $znacznik_po_a ? 'JEST' : 'BRAK' )
 	. ' (OCZEKIWANE: JEST — inaczej ponowienia wracaja w petli), po UDANEJ '
-	. ( $znacznik_po_b ? 'JEST' : 'BRAK' ) . " (OCZEKIWANE: BRAK — inaczej reaktywacja nie dziala od razu)\n";
-$d_ok = $znacznik_po_a && ! $znacznik_po_b;
-echo '   WYNIK=' . ( $d_ok ? 'PASS' : 'FAIL - dlawik ponowienia nie trzyma po awarii albo nie zwalnia po sukcesie' ) . "\n";
+	. ( $znacznik_po_b ? 'JEST' : 'BRAK' ) . ' (OCZEKIWANE: BRAK), przed aktywacja '
+	. ( $znacznik_przed_akt ? 'JEST' : 'BRAK' ) . ' (OCZEKIWANE: JEST — inaczej nie ma czego kasowac), '
+	. 'po sklepag_aktywacja() ' . ( $znacznik_po_akt ? 'JEST' : 'BRAK' )
+	. " (OCZEKIWANE: BRAK — to droga, ktora Pulpit podaje wlascicielowi)\n";
+$d_ok = $znacznik_po_a && ! $znacznik_po_b && $znacznik_przed_akt && ! $znacznik_po_akt;
+echo '   WYNIK=' . ( $d_ok ? 'PASS' : 'FAIL - dlawik nie trzyma po awarii, nie zwalnia po sukcesie albo aktywacja go NIE kasuje' ) . "\n";
 $wynik[] = $d_ok;
 
 $ok = ! in_array( false, $wynik, true );
