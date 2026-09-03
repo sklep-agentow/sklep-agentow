@@ -414,7 +414,25 @@ echo
 
 echo "=== Y. readme.txt w standardzie WordPressa (ten sam zakres, co sekcja N u Segregatora) ==="
 WER_KOD=$(grep -oP '(?<=^ \* Version: ).*' $W/chatbot-live.php)   # wersja Z KODU, nie na sztywno (klasa 11)
-WP_STACK=$(docker exec strona_wp_wordpress wp --allow-root --path=/var/www/html core version 2>/dev/null | grep -oE '^[0-9]+\.[0-9]+')
+# ⛔ Powod POMINIECIA musi byc ZMIERZONY, nie zgadniety: `2>/dev/null` zjadalo tak samo brak polecenia
+#    `docker`, `permission denied` i zatrzymany kontener, a `else` orzekalo jedno („stos nie odpowiada”).
+#    Recenzent #268 r12 dostal to zdanie na maszynie, na ktorej dockera NIE MA WCALE.
+if ! command -v docker > /dev/null 2>&1; then
+	POWOD_BRAKU_STOSU="NIE WIEM — nie ma polecenia 'docker' na tej maszynie"
+	WP_STACK=""
+else
+	BLAD_WP=$(docker exec strona_wp_wordpress wp --allow-root --path=/var/www/html core version 2>&1 >/dev/null)
+	WP_STACK=$(docker exec strona_wp_wordpress wp --allow-root --path=/var/www/html core version 2>/dev/null | grep -oE '^[0-9]+\.[0-9]+')
+	case "$BLAD_WP" in
+		# ⛔ KOLEJNOSC MA ZNACZENIE: „Error response from daemon: No such container” zawiera slowo
+		#    „daemon”, wiec przy odwrotnej kolejnosci brak kontenera dostawal etykiete „nie widzimy
+		#    Dockera”. Zlapane wlasna proba kontrolna 3.09 — najpierw wzorce KONKRETNE, potem ogolne.
+		*"No such container"*|*"is not running"*|*"No such object"*) POWOD_BRAKU_STOSU="kontener strona_wp_wordpress nie chodzi: $BLAD_WP" ;;
+		*"permission denied"*|*"Cannot connect"*|*"daemon"*)         POWOD_BRAKU_STOSU="NIE WIEM — to konto nie widzi Dockera: $BLAD_WP" ;;
+		"")                                                    POWOD_BRAKU_STOSU="" ;;
+		*)                                                     POWOD_BRAKU_STOSU="stos nie odpowiedzial: $BLAD_WP" ;;
+	esac
+fi
 spr "readme.txt istnieje"            "1" "test -f $W/readme.txt && echo 1 || echo 0"
 spr "naglowek === Nazwa ==="         "1" "head -1 $W/readme.txt | grep -c '^=== ChatBot LIVE ===$'"
 spr "pole Contributors"              "1" "grep -c '^Contributors: ' $W/readme.txt"
@@ -425,7 +443,7 @@ spr "Stable tag == wersja wtyczki"          "1" "test \"\$(grep -oP '(?<=^Stable
 if [ -n "$WP_STACK" ]; then
   spr "Tested up to = wersja WP ze stacku ($WP_STACK)" "$WP_STACK" "grep -oP '(?<=^Tested up to: ).*' $W/readme.txt | grep -oE '^[0-9]+\\.[0-9]+'"
 else
-  echo "  POMINIETE Tested up to = wersja WP ze stacku (stack nie odpowiada)"
+  echo "  POMINIETE Tested up to = wersja WP ze stacku (${POWOD_BRAKU_STOSU:-stos nie odpowiada})"
 fi
 spr "License == naglowek wtyczki"           "1" "test \"\$(grep -oP '(?<=^License: ).*' $W/readme.txt)\" = \"\$(grep -oP '(?<=^ \\* License: ).*' $W/chatbot-live.php)\" && echo 1 || echo 0"
 spr "License URI == naglowek wtyczki"       "1" "test \"\$(grep -oP '(?<=^License URI: ).*' $W/readme.txt)\" = \"\$(grep -oP '(?<=^ \\* License URI: ).*' $W/chatbot-live.php)\" && echo 1 || echo 0"

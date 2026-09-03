@@ -64,7 +64,7 @@ function sklepag_obsluz_resend() {
 	// (stale-claim po 5 min) i przestawia status — wtedy resend się odblokuje.
 	if ( in_array( $zam->status, array( 'zwrocone', 'sporne' ), true ) ) {
 		// Zamknięte finansowo: ponowna wysyłka niedostępna — nie „domykanie automatyczne”, tylko decyzja.
-		wp_die( 'Zamówienie zwrócone albo sporne — ponowna wysyłka linku nie jest dostępna. Link, który kupujący już ma, działa do końca swojej ważności.', 'Sklep Agentów', 409 );
+		wp_die( 'Zamówienie zwrócone albo sporne — ponowna wysyłka linku nie jest dostępna. Link, który kupujący już ma, też nie działa: od 0.9.37 brama pobrań odmawia dla tych dwóch statusów.', 'Sklep Agentów', 409 );
 	}
 	if ( ! in_array( $zam->status, array( 'mail_wyslany', 'mail_blad' ), true ) ) {
 		wp_die( 'Zamówienie jest właśnie domykane automatycznie (status: ' . esc_html( $zam->status ) . ') — ponowna wysyłka dostępna, gdy silnik skończy.', 'Sklep Agentów', 409 );
@@ -227,9 +227,10 @@ add_action( 'admin_post_sklepag_anonimizuj', 'sklepag_obsluz_anonimizacje' );
  * WordPressa nie miał czego zawołać — kreator „Usuń dane osobowe" nie ruszał sklepu ani
  * o wiersz, a właściciel dostawał raport wyglądający na komplet.
  *
- * ⛔ Panel czyści WSZYSTKO, razem z danymi do faktury — właściciel klika ten przycisk
- * świadomie i na własną odpowiedzialność. Kasownik RODO zachowuje się inaczej (zostawia
- * fakturę, bo wymaga tego prawo podatkowe) i mówi o tym wprost we wniosku.
+ * ⛔ Panel ZACHOWUJE dane do faktury (od 0.9.37) — tak samo jak kasownik RODO WordPressa: nazwa,
+ * NIP i adres nabywcy z faktury podlegają obowiązkowi podatkowemu (ustawa o VAT, art. 106e ust. 1
+ * pkt 3) i polityka prywatności sklepu deklaruje ich retencję. Do 0.9.36 panel czyścił wszystko,
+ * a kasownik zostawiał fakturę — dwie zasady dla jednego obowiązku; jedna została.
  */
 function sklepag_obsluz_anonimizacje() {
 	if ( ! current_user_can( 'manage_options' ) ) {
@@ -239,7 +240,7 @@ function sklepag_obsluz_anonimizacje() {
 
 	$id = isset( $_GET['zamowienie'] ) ? absint( $_GET['zamowienie'] ) : 0;
 
-	$wynik = sklepag_anonimizuj_zamowienie( $id );
+	$wynik = sklepag_anonimizuj_zamowienie( $id, true ); // jawnie: faktura ZOSTAJE (obowiązek podatkowy), jak w kasowniku WP
 
 	if ( 'brak_zamowienia' === $wynik['etap'] ) {
 		wp_die( 'Zamówienie nie istnieje.', 'Sklep Agentów', 404 );
@@ -264,7 +265,18 @@ function sklepag_obsluz_anonimizacje() {
 		);
 	}
 
-	wp_safe_redirect( add_query_arg( 'sklepag_anonimizacja', 'ok', sklepag_url_zamowienia( $id ) ) );
+	/* Komunikat po powrocie mówi to, co funkcja ZMIERZYŁA (`zachowana_faktura`), nie to, co panel
+		zakłada — do 0.9.36 zdanie „dane do faktury usunięte” szło do właściciela, a ten odpowiadał nim
+		osobie z żądaniem RODO: fałszywe potwierdzenie usunięcia danych, których nikt nie usunął. */
+	wp_safe_redirect(
+		add_query_arg(
+			array(
+				'sklepag_anonimizacja' => 'ok',
+				'faktura'              => empty( $wynik['zachowana_faktura'] ) ? '0' : '1',
+			),
+			sklepag_url_zamowienia( $id )
+		)
+	);
 	exit;
 }
 
@@ -312,11 +324,19 @@ function sklepag_admin_zamowienie() {
 			: '<div class="notice notice-error"><p>Ponowna wysyłka NIE powiodła się — sprawdź konfigurację poczty serwera.</p></div>';
 	}
 	if ( isset( $_GET['sklepag_anonimizacja'] ) ) {
-		echo '<div class="notice notice-success is-dismissible"><p>Kupujący zanonimizowany: adres, dane do faktury i treść maila usunięte, token pobrania unieważniony; kwoty i czasy pozostały w statystykach.</p></div>';
+		$faktura_zostala = isset( $_GET['faktura'] ) && '1' === $_GET['faktura'];
+		echo '<div class="notice notice-success is-dismissible"><p>Kupujący zanonimizowany: adres e-mail i treść maila usunięte, token pobrania unieważniony; kwoty i czasy pozostały w statystykach'
+			. ( $faktura_zostala
+				? '; <strong>dane do faktury (nazwa, NIP, adres) ZOSTAŁY</strong> — obowiązek podatkowy (ustawa o VAT), tak samo jak przy wniosku przez narzędzia WordPressa.'
+				: '; danych do faktury nie było (zakup prywatny).' )
+			. '</p></div>';
 	}
 	// phpcs:enable
 
 	$zanonimizowane = ! empty( $zam->usunieto_dnia );
+	// Faktura idzie za STANEM kolumny, nie za znacznikiem anonimizacji: od 0.9.37 anonimizacja ją
+	// zostawia (obowiązek podatkowy), a właściciel musi ją w panelu ODCZYTAĆ, żeby ten obowiązek spełnić.
+	$ma_fakture = '' !== (string) ( $zam->dane_faktury ?? '' );
 
 	echo '<div class="sklepag-zamowienie-kolumny">';
 
@@ -329,8 +349,11 @@ function sklepag_admin_zamowienie() {
 	echo '<tr><td>Data zakupu (czas webhooka)</td><td>' . esc_html( $zam->utworzono ) . '</td></tr>';
 	echo '<tr><td>Kupujący</td><td>' . ( $zanonimizowane ? '<em>zanonimizowany (' . esc_html( $zam->usunieto_dnia ) . ')</em>' : esc_html( $zam->email_kupujacego ) ) . '</td></tr>';
 	echo '<tr><td>Produkt (snapshot z chwili zakupu)</td><td>' . esc_html( $zam->produkt_nazwa_kupiona ) . '</td></tr>';
-	// Dane do faktury podane przez kupującego (0.9.25) — anonimizacja RODO czyści je razem z e-mailem.
-	echo '<tr><td>Dane do faktury</td><td>' . ( $zanonimizowane ? '<em>zanonimizowane</em>' : ( '' !== (string) ( $zam->dane_faktury ?? '' ) ? esc_html( $zam->dane_faktury ) : '<span class="sklepag-szary">nie podano (zakup prywatny)</span>' ) ) . '</td></tr>';
+	// Dane do faktury podane przez kupującego (0.9.25). Od 0.9.37 anonimizacja ich NIE czyści —
+	// pokazujemy je, dopóki są w kolumnie (do 0.9.36 panel je kasował, stąd dwa powody pustki).
+	echo '<tr><td>Dane do faktury</td><td>' . ( $ma_fakture
+		? esc_html( $zam->dane_faktury ) . ( $zanonimizowane ? ' <em>(zachowane po anonimizacji — obowiązek podatkowy)</em>' : '' )
+		: '<span class="sklepag-szary">' . ( $zanonimizowane ? 'brak — zakup prywatny albo anonimizacja sprzed 0.9.37 (panel wtedy czyścił także fakturę)' : 'nie podano (zakup prywatny)' ) . '</span>' ) . '</td></tr>';
 	// Dopisek o trybie z tego samego źródła co front i mail — panel nie ma prawa nazywać
 	// prawdziwej wpłaty testową (ani odwrotnie).
 	echo '<tr><td>Kwota</td><td>' . esc_html( number_format( $zam->kwota_grosze / 100, 2, ',', ' ' ) . ' ' . $zam->waluta ) . ( sklepag_tryb_testowy() ? ' <span class="sklepag-szary">(tryb testowy)</span>' : '' ) . '</td></tr>';
@@ -362,10 +385,10 @@ function sklepag_admin_zamowienie() {
 	echo '<div class="postbox sklepag-box"><div class="inside">';
 	echo '<h2 class="sklepag-box-tytul">Dane osobowe (RODO)</h2>';
 	if ( $zanonimizowane ) {
-		echo '<p>Kupujący zanonimizowany ' . esc_html( $zam->usunieto_dnia ) . ' — adres, dane do faktury i treść maila usunięte; kwoty i czasy pozostały w statystykach.</p>';
+		echo '<p>Kupujący zanonimizowany ' . esc_html( $zam->usunieto_dnia ) . ' — adres i treść maila usunięte; kwoty i czasy pozostały' . ( $ma_fakture ? ', dane do faktury zachowane (obowiązek podatkowy)' : '' ) . '.</p>';
 	} else {
-		echo '<p class="description">Na żądanie kupującego: usuwa adres e-mail, dane do faktury i zapisaną treść maila (razem ze śladem doręczonej wysyłki), unieważnia link pobrania; kwoty i czasy zostają (statystyki sprzedaży). Operacja NIEODWRACALNA.</p>';
-		echo '<p><a href="' . esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=sklepag_anonimizuj&zamowienie=' . (int) $zam->id ), 'sklepag_anonimizuj' ) ) . '" class="button sklepag-button-uwaga" onclick="return confirm(\'Anonimizacja jest NIEODWRACALNA: adres e-mail, dane do faktury i treść maila znikną, link pobrania przestanie działać. Kontynuować?\');">Anonimizuj kupującego</a></p>';
+		echo '<p class="description">Na żądanie kupującego: usuwa adres e-mail i zapisaną treść maila (razem ze śladem doręczonej wysyłki), unieważnia link pobrania; kwoty i czasy zostają (statystyki sprzedaży)' . ( $ma_fakture ? ', a dane do faktury — obowiązek podatkowy — zostają nienaruszone' : '; to zamówienie nie ma zapisanych danych do faktury' ) . '. Operacja NIEODWRACALNA.</p>';
+		echo '<p><a href="' . esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=sklepag_anonimizuj&zamowienie=' . (int) $zam->id ), 'sklepag_anonimizuj' ) ) . '" class="button sklepag-button-uwaga" onclick="return confirm(\'Anonimizacja jest NIEODWRACALNA: adres e-mail i treść maila znikną, link pobrania przestanie działać. ' . ( $ma_fakture ? 'Dane do faktury (nazwa, NIP, adres) ZOSTAJĄ — obowiązek podatkowy.' : 'To zamówienie nie ma zapisanych danych do faktury.' ) . ' Kontynuować?\');">Anonimizuj kupującego</a></p>';
 	}
 	echo '</div></div>';
 

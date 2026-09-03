@@ -28,8 +28,18 @@
 # nie piszę.
 #
 # Kody wyjścia: 0 = operacja wykonana, odpowiedź wypisana
-#               2 = stos nie odpowiada, brak narzędzia, nieznana operacja
-#                   albo argument odrzucony przez sprawdzenie wzorca
+#               2 = jedno z PIĘCIU — i skrypt zawsze mówi KTÓRE:
+#                   (a) NIE WIEM — nie zdołaliśmy zapytać: to konto nie widzi Dockera ALBO
+#                       nie ma na tej maszynie potrzebnego POLECENIA. Obie mówią o NASZYM
+#                       przyrządzie, nie o cudzym kontenerze — dlatego mają wspólny nagłówek
+#                       „NIE WIEM” (patrz `brak_stosu`: wzorce „NIE WIEM"* i „nie ma polecenia"*),
+#                   (b) Docker odpowiedział i kontenera NIE MA / nie chodzi,
+#                   (c) nieznana operacja (nazwa, której skrypt nie zna),
+#                   (d) argument odrzucony przez sprawdzenie wzorca,
+#                   (e) kontener stoi, ale usługa nie odpowiada (WordPress pod adresem,
+#                       łapacz maili, `wp`, liczenie w bazie) — ścieżki przez `brak_stosu`.
+#                   ⛔ (a) i (b) to RÓŻNE rzeczy: pierwsza mówi o naszym dostępie,
+#                   druga o cudzym stanowisku. Mylenie ich kosztowało cztery rundy recenzji #268.
 set -u
 
 WERSJA=1.3.1
@@ -78,10 +88,30 @@ odmow() {
 	exit 2
 }
 
+# ⛔ NAGŁÓWEK MUSI ODPOWIADAĆ POWODOWI. Do 3.09 każdy powód — także uczciwe
+#    „NIE WIEM, bo docker ps padło” — dostawał nagłówek „STOS NIE ODPOWIADA”, czyli
+#    twierdzenie o KONTENERZE. Recenzent przepisywał to zdanie do recenzji i okazywało
+#    się fałszywe: WordPress odpowiadał HTTP 200, a padał wyłącznie dostęp do Dockera.
+#    Powód zaczynający się od „NIE WIEM” dostaje teraz nagłówek NIE WIEM.
 brak_stosu() {
-	printf 'STOS NIE ODPOWIADA — %s\n' "$1" >&2
-	printf 'Nie zgaduję i nie udaję, że sprawdziłem. Napisz w recenzji, że stos\n' >&2
-	printf 'warsztatowy nie odpowiadał, i podaj tę linię jako dowód.\n' >&2
+	# ⛔ Wzorzec obejmuje TAKZE powody o TEJ maszynie (brak polecenia) — z „nie ma `docker` u mnie” NIE WYNIKA
+	#    nic o cudzym kontenerze. r12 naprawila prefiks „NIE WIEM”, a `wymagaj_narzedzia` wchodzila drugim
+	#    wejsciem i dostawala naglowek „STOS NIE ODPOWIADA” + polecenie wpisania tego do recenzji (klasa 8).
+	case "$1" in
+		"NIE WIEM"*|"nie ma polecenia"*)
+			# ⛔ Naglowek NIE powiela tresci powodu — inaczej wychodzi "NIE WIEM, CZY STOS
+			#    STOI — NIE WIEM, czy stos stoi — ..." (zlapane wlasna proba kontrolna 3.09).
+			powod="${1#NIE WIEM, }"
+			printf 'NIE WIEM — %s\n' "$powod" >&2
+			printf 'To jest informacja o PRZYRZĄDZIE, nie o kontenerze: nie zdołałam zapytać.\n' >&2
+			printf 'W recenzji napisz „nie dało się sprawdzić”, a NIE „stos nie stoi”.\n' >&2
+			;;
+		*)
+			printf 'STOS NIE ODPOWIADA — %s\n' "$1" >&2
+			printf 'Nie zgaduję i nie udaję, że sprawdziłem. Napisz w recenzji, że stos\n' >&2
+			printf 'warsztatowy nie odpowiadał, i podaj tę linię jako dowód.\n' >&2
+			;;
+	esac
 	exit 2
 }
 
@@ -134,9 +164,21 @@ sprawdz_tabele() {
 
 kontener_zyje() {
 	wymagaj_narzedzia docker
-	docker ps --filter "name=^${KONTENER_WP}$" --filter status=running --format '{{.Names}}' 2> /dev/null \
-		| grep -qx "$KONTENER_WP" \
-		|| brak_stosu "kontener $KONTENER_WP nie jest uruchomiony (sprawdzone przez docker ps)"
+	# ⛔ „NIE WIEM” TO NIE TO SAMO CO „NIE STOI”. Do 2.09 stało tu `docker ps … 2> /dev/null`,
+	# więc `permission denied while trying to connect to the docker API` (konto bez dostępu do
+	# `docker.sock` — tak chodzi wykonawca CI po naprawie B-3) dawało DOKŁADNIE ten sam komunikat
+	# co zatrzymany kontener, a komunikat twierdził wprost „sprawdzone przez docker ps”.
+	# Skutek zmierzony: przez cztery rundy recenzji #268 obie strony pisały „stos nie stoi”,
+	# choć kontener chodził — nikt nie uruchomił strażnika, bo przyrząd kłamał o przyczynie.
+	# Rozdzielamy: najpierw pytamy, CZY `docker ps` w ogóle się udało.
+	local wyjscie kod
+	wyjscie="$( docker ps --filter "name=^${KONTENER_WP}$" --filter status=running --format '{{.Names}}' 2>&1 )"
+	kod=$?
+	if [ "$kod" -ne 0 ]; then
+		brak_stosu "NIE WIEM, czy stos stoi — samo \`docker ps\` padło (kod $kod). To NIE jest informacja o kontenerze, tylko o dostępie do Dockera na tym koncie. Wyjście: ${wyjscie}"
+	fi
+	printf '%s\n' "$wyjscie" | grep -qx "$KONTENER_WP" \
+		|| brak_stosu "kontener $KONTENER_WP nie jest uruchomiony — \`docker ps\` odpowiedziało i go NIE wymieniło"
 }
 
 # Jedyne wywołanie `wp` w całym pliku. Podpolecenie przychodzi ze stałych
@@ -171,8 +213,17 @@ wp_odczyt_lub_padnij() {
 licz_sql() {
 	local sql="$1" baza uzyt haslo wynik status
 	kontener_zyje
-	docker ps --filter "name=^${KONTENER_DB}$" --filter status=running --format '{{.Names}}' 2> /dev/null \
-		| grep -qx "$KONTENER_DB" || brak_stosu "kontener bazy $KONTENER_DB nie jest uruchomiony"
+	# ⛔ TEN SAM ROZDZIAŁ CO W `kontener_zyje` — bliźniak, złapany w recenzji #268 r7.
+	#    `2> /dev/null` połykało `permission denied` i „nie mam dostępu do Dockera”
+	#    wyglądało identycznie jak „kontener bazy stoi zgaszony”.
+	local wy_db kod_db
+	wy_db="$( docker ps --filter "name=^${KONTENER_DB}$" --filter status=running --format '{{.Names}}' 2>&1 )"
+	kod_db=$?
+	if [ "$kod_db" -ne 0 ]; then
+		brak_stosu "NIE WIEM, czy kontener bazy stoi — samo \`docker ps\` padło (kod $kod_db). To informacja o dostępie do Dockera, nie o bazie. Wyjście: $wy_db"
+	fi
+	printf '%s\n' "$wy_db" | grep -qx "$KONTENER_DB" \
+		|| brak_stosu "kontener bazy $KONTENER_DB nie jest uruchomiony — \`docker ps\` odpowiedziało i go NIE wymieniło"
 	baza="$(wp_odczyt_lub_padnij config get DB_NAME | tr -d '\r')"
 	uzyt="$(wp_odczyt_lub_padnij config get DB_USER | tr -d '\r')"
 	haslo="$(wp_odczyt_lub_padnij config get DB_PASSWORD | tr -d '\r')"
@@ -230,9 +281,12 @@ op_stan() {
 	local kod ile
 	wymagaj_narzedzia curl
 	printf '=== STAN STOSU WARSZTATOWEGO ===\n'
+	# ⛔ `|| echo 000` DOKLEJALO drugie 000: curl przy braku polaczenia wypisuje `000` przez -w I KONCZY SIE
+	#    niezerowo, wiec $kod miala wartosc `000000`, warunek nizej NIE trafial, a wykonanie szlo dalej
+	#    i orzekalo o zupelnie innej przyczynie (recenzja #268 r12). Dopasowanie wzorcem lapie oba ksztalty.
 	kod="$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "$ADRES_WP/" 2> /dev/null || echo 000)"
 	printf '  WordPress %s  → HTTP %s\n' "$ADRES_WP" "$kod"
-	[ "$kod" = "000" ] && brak_stosu "WordPress pod $ADRES_WP nie odpowiada"
+	case "$kod" in 000*) brak_stosu "WordPress pod $ADRES_WP nie odpowiada (curl: $kod)" ;; esac
 	kontener_zyje
 	printf '  kontener %s  → uruchomiony\n' "$KONTENER_WP"
 	printf '  wersja rdzenia            → %s\n' "$(wp_odczyt core version | tr -d '\r')"
