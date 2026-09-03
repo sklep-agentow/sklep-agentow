@@ -22,8 +22,12 @@
 #   bash narzedzia-qa/bramki.sh --tryb tekstowy
 #   ZMIENIONE_PLIKI="a.md b.md" bash narzedzia-qa/bramki.sh
 #
-# Kody wyjścia: 0 = wszystkie wykonane bramki zielone i jest ich tyle, ile ma być
-#               1 = któraś bramka czerwona ALBO wykonano ich za mało
+# Kody wyjścia: 0 = wszystkie wykonane bramki zielone, jest ich tyle, ile ma być, i ŻADNA
+#                   nie odmówiła pomiaru
+#               1 = któraś bramka czerwona ALBO wykonano ich za mało ALBO któraś skończyła
+#                   kodem 2 (NIE ZMIERZONE) ponad sufit MAX_NIEZMIERZONYCH (domyślnie 0)
+# ⛔ Kod 2 nie jest wadą ani sukcesem — jest BRAKIEM WERDYKTU. Nie liczy się do WYKONANE,
+#    bo bramka została uruchomiona, a nie wykonana.
 set -u
 
 # Bramka `slady` (dołożona 21.08 przy zamrażaniu ChatBota 1.5.7): pilnuje, żeby do
@@ -225,19 +229,26 @@ bramka() {
 	printf '\n--- BRAMKA %s ---\n' "$nazwa"
 	local kod=0
 	"$@" || kod=$?
-	WYKONANE=$((WYKONANE + 1))
 	WYNIKI[$nazwa]=$kod
 	# ⛔ KOD 2 TO "NIE ZMIERZYLAM", NIE "ZNALAZLAM WADE" — regula repo (I-12,
 	#    narzedzia-qa/bramki-proba-kontrolna.sh:22-23): "Brak warunkow wstepnych to «nie zmierzylam»
 	#    (kod 2), NIGDY «znalazlam wade» (kod 1)". Do tej zmiany kazdy niezerowy kod szedl jako PORAZKA,
 	#    wiec brak Dockera na koncie wykonawcy CI wygladal identycznie jak prawdziwa regresja produktu —
 	#    a bramka `golden` deklaruje kod 2 wprost (testy/golden-stos-probny.sh:7).
+	# ⛔ WYKONANE ROSNIE TYLKO TAM, GDZIE JEST WERDYKT (zielony albo czerwony). Kod 2 znaczy
+	#    "bramka RUSZYLA, ale nie zmierzyla" — uruchomiona, NIE wykonana. Do rundy 10 inkrement
+	#    stal PRZED rozgalezieniem, wiec bramka bez pomiaru liczyla sie do progu, prog przechodzil,
+	#    PORAZKI zostawalo zerem i caly zestaw konczyl sie "WSZYSTKIE WYKONANE BRAMKI ZIELONE"
+	#    z EXIT=0 — czyli dokladnie tym, przed czym ostrzega komentarz przy podsumowaniu:
+	#    milczenie o "nie wiem" robi z niego ciche "zielone".
 	if [ "$kod" -eq 0 ]; then
+		WYKONANE=$((WYKONANE + 1))
 		printf 'BRAMKA %s: EXIT=0\n' "$nazwa"
 	elif [ "$kod" -eq 2 ]; then
 		printf 'BRAMKA %s: EXIT=2 — NIE ZMIERZONE (brak warunkow wstepnych, NIE wada)\n' "$nazwa"
 		NIEZMIERZONE+=("$nazwa")
 	else
+		WYKONANE=$((WYKONANE + 1))
 		printf 'BRAMKA %s: EXIT=%d — PORAZKA\n' "$nazwa" "$kod"
 		PORAZKI=$((PORAZKI + 1))
 	fi
@@ -472,6 +483,19 @@ fi
 
 if [ "$PORAZKI" -gt 0 ]; then
 	echo "NIEZALICZONE BRAMKI: $PORAZKI" >&2
+	exit 1
+fi
+
+# ⛔ SUFIT NIEZMIERZONYCH — wzorem MAX_POMINIETYCH z proby-kontrolne-przelot.sh. Bez niego lista
+#    NIEZMIERZONE moglaby urosnac do wszystkich bramek, a zestaw i tak skonczylby sie zerem:
+#    "nie wiem" przepuszcza ciszej niz "wada", wiec jest grozniejsze. Podniesienie sufitu jest
+#    mozliwe, ale MUSI byc jawna decyzja w commicie (MAX_NIEZMIERZONYCH=n), nie skutkiem ubocznym.
+MAX_NIEZMIERZONYCH="${MAX_NIEZMIERZONYCH:-0}"
+if [ ${#NIEZMIERZONE[@]} -gt "$MAX_NIEZMIERZONYCH" ]; then
+	echo "STOP: NIE ZMIERZONO ${#NIEZMIERZONE[@]} bramek (sufit: $MAX_NIEZMIERZONYCH): ${NIEZMIERZONE[*]}" >&2
+	echo "      To NIE sa wady produktu — to BRAK POMIARU. Zestaw nie moze konczyc sie zielono," >&2
+	echo "      bo zielone znaczyloby 'sprawdzone', a te bramki nie sprawdzily niczego." >&2
+	echo "NIE WSZYSTKO ZMIERZONE." >&2
 	exit 1
 fi
 

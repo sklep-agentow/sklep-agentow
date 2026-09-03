@@ -317,6 +317,15 @@ PYMUT
 fi
 
 echo
+# ⛔ PRZYPADEK NA CALY SKRYPT, NIE NA SAMA FUNKCJE (runda 11). Powyzsze przypadki mierza
+#    `bramka()` w izolacji; ten pyta o to, co naprawde trafia do opisu PR-a: KOD WYJSCIA
+#    calego `bramki.sh`. Wada z rundy 10 zylaby dalej, gdyby ktos naprawil licznik, a zapomnial
+#    o ogonie — albo odwrotnie. Bramka `slady` jest w trybie tekstowym, wiec przypadek jest tani.
+probuj "bramka odmawia pomiaru (kod 2) — caly zestaw MUSI byc czerwony" \
+	"sed -i 's|^bramka slady      uruchom_slady|bramka slady      bash -c \"exit 2\"|' $BRAMKI" \
+	"bash $BRAMKI --tryb tekstowy" \
+	"NIE ZMIERZONO"
+
 echo "--- kod wyjscia 2 to NIE ZMIERZONE, nie PORAZKA (I-12) ---"
 # ⛔ Bramka `golden` deklaruje kod 2 wprost (testy/golden-stos-probny.sh:7), a `bramka()` do rundy 10
 #    raportowala KAZDY niezerowy kod jako PORAZKA. Brak Dockera na koncie wykonawcy CI wygladal wiec
@@ -337,19 +346,26 @@ if ! printf '%s' "$WYCIETA" | grep -q 'PORAZKI='; then
 	echo "  BLAD wyciecie bramka() z $BRAMKI jest puste albo niepelne — pomiar kodow wyjscia NIE ISTNIEJE" >&2
 	BLEDY=$((BLEDY+1))
 fi
-for _para in "0:0" "1:1" "2:0"; do
-	_kod="${_para%%:*}"; _ocz="${_para##*:}"
+# ⛔ MIERZYMY DWIE WIELKOSCI, NIE JEDNA (runda 11). Do rundy 10 ta petla czytala sam licznik
+#    PORAZKI — i dlatego przepuscila wade, ktora recenzent nazwal w rundzie 10: kod 2 slusznie
+#    przestal byc porazka, ale DALEJ podbijal licznik WYKONANE, wiec prog przechodzil, PORAZKI
+#    zostawalo zerem i caly zestaw konczyl sie "WSZYSTKIE WYKONANE BRAMKI ZIELONE" z EXIT=0
+#    przy bramce, ktora nic nie zmierzyla. Asercja mierzaca JEDNA wielkosc nie widzi wady
+#    siedzacej w DRUGIEJ. Format: kod:PORAZKI:WYKONANE.
+for _para in "0:0:1" "1:1:1" "2:0:0"; do
+	_kod="${_para%%:*}"; _reszta="${_para#*:}"
+	_ocz_p="${_reszta%%:*}"; _ocz_w="${_reszta##*:}"
 	_wynik=$(
 		{
-			printf 'POMINIETE=()\nNIEZMIERZONE=()\nWYKONANE=0\nPORAZKI=0\ndeclare -A WYNIKI\nTRYB=x\nBEZ_GOLDENA=nie\nPOWOD_BEZ_GOLDENA=x\n'
+			printf 'POMINIETE=()\nNIEZMIERZONE=()\nWYKONANE=0\nPORAZKI=0\ndeclare -A WYNIKI\nTRYB=x\nDOCKER_WIDOCZNY=tak\nPOWOD_BEZ_GOLDENA=x\n'
 			printf '%s\n' "$WYCIETA"
-			printf 'bramka "atrapa" %s > /dev/null 2>&1\necho "$PORAZKI"\n' "$KATALOG_ATRAP/kod$_kod.sh"
+			printf 'bramka "atrapa" %s > /dev/null 2>&1\necho "$PORAZKI:$WYKONANE"\n' "$KATALOG_ATRAP/kod$_kod.sh"
 		} | bash
 	)
-	if [ "$_wynik" = "$_ocz" ]; then
-		printf '  OK   %-52s PORAZKI=%s\n' "kod wyjscia $_kod -> porazek $_ocz" "$_wynik"
+	if [ "$_wynik" = "$_ocz_p:$_ocz_w" ]; then
+		printf '  OK   %-52s PORAZKI:WYKONANE=%s\n' "kod wyjscia $_kod -> $_ocz_p:$_ocz_w" "$_wynik"
 	else
-		printf '  BLAD %-52s PORAZKI=%s, oczekiwano %s\n' "kod wyjscia $_kod" "$_wynik" "$_ocz"
+		printf '  BLAD %-52s PORAZKI:WYKONANE=%s, oczekiwano %s\n' "kod wyjscia $_kod" "$_wynik" "$_ocz_p:$_ocz_w"
 		BLEDY=$((BLEDY+1))
 	fi
 done
