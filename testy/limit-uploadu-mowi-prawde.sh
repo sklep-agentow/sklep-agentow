@@ -110,8 +110,10 @@ command -v docker > /dev/null || padnij "brak docker"
 	|| padnij "brak WP_ADMIN_USER/WP_ADMIN_PASS w środowisku"
 [ -n "${WP_SUB_USER:-}" ] && [ -n "${WP_SUB_PASS:-}" ] \
 	|| padnij "brak WP_SUB_USER/WP_SUB_PASS (konto bez uprawnienia upload_files) — kierunku E nie da się zmierzyć, a milczące pominięcie byłoby fałszywą zielenią"
+# ⛔ „NIE WIEM" TO NIE TO SAMO CO „NIE CHODZI" — patrz `narzedzia-qa/stos.sh:153`.
+docker ps > /dev/null 2>&1 || { echo "NIE WIEM, czy stos $KONTENER chodzi — to konto nie widzi Dockera (brak dostepu do demona, nie brak kontenera)" >&2; exit 2; }
 docker ps --filter "name=^${KONTENER}$" --filter status=running -q | grep -q . \
-	|| padnij "kontener $KONTENER nie chodzi"
+	|| padnij "Docker odpowiedzial: kontenera $KONTENER na liscie NIE MA"
 
 wp() { docker exec -u www-data "$KONTENER" wp --path=/var/www/html "$@" 2>&1; }
 

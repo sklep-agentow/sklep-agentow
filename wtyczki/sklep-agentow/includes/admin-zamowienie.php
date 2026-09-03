@@ -64,7 +64,7 @@ function sklepag_obsluz_resend() {
 	// (stale-claim po 5 min) i przestawia status — wtedy resend się odblokuje.
 	if ( in_array( $zam->status, array( 'zwrocone', 'sporne' ), true ) ) {
 		// Zamknięte finansowo: ponowna wysyłka niedostępna — nie „domykanie automatyczne”, tylko decyzja.
-		wp_die( 'Zamówienie zwrócone albo sporne — ponowna wysyłka linku nie jest dostępna. Link, który kupujący już ma, działa do końca swojej ważności.', 'Sklep Agentów', 409 );
+		wp_die( 'Zamówienie zwrócone albo sporne — ponowna wysyłka linku nie jest dostępna. Link, który kupujący już ma, też nie działa: od 0.9.37 brama pobrań odmawia dla tych dwóch statusów.', 'Sklep Agentów', 409 );
 	}
 	if ( ! in_array( $zam->status, array( 'mail_wyslany', 'mail_blad' ), true ) ) {
 		wp_die( 'Zamówienie jest właśnie domykane automatycznie (status: ' . esc_html( $zam->status ) . ') — ponowna wysyłka dostępna, gdy silnik skończy.', 'Sklep Agentów', 409 );
