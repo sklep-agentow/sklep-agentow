@@ -19,6 +19,11 @@ Nic jeszcze.
 ## [1.5.15] — 2026-09-02
 
 ### Naprawione
+- **Niewysłana odpowiedź operatora czeka w przechowalni najwyżej 5 minut i tylko dla niego.**
+  Żeby odrzucona treść wróciła do pola, wtyczka odkłada ją na chwilę po stronie serwera
+  (transient `chatl_szkic_op_<id użytkownika>_<md5 rozmowy>`, TTL 5 minut). Szkic jest **osobny
+  dla każdego operatora i każdej rozmowy**, znika po pierwszym odczycie i po TTL, a deinstalacja
+  wtyczki kasuje wszystkie takie wpisy. Nie trafia do bazy rozmów ani do żadnego dziennika.
 - **Odmowa „za długa wiadomość” u operatora nie kasuje już tego, co napisał.** Handler kończy odrzut przekierowaniem, więc formularz rysował się od nowa z pustym polem — przepadało do 2000 znaków, a komunikat kazał operatorowi skrócić coś, czego już nie miał. Treść wraca teraz do pola z przechowalni (5 minut, osobno dla każdego operatora i każdej rozmowy, odczyt jednorazowy). To ten sam wzorzec, którym sklep zamknął znaleziska `CZ-2` i `CZ-3`.
 - **Za długie pytanie nie jest już ucinane po cichu.** Do 1.5.14 pytanie ponad 500 znaków
   trafiało do bota urwane, a gość nie wiedział, że odpowiedź dotyczy połowy tekstu. Teraz

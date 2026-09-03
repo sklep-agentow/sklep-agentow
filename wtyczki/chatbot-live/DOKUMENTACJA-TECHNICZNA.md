@@ -346,9 +346,15 @@ Plik odpala się tylko przy prawdziwym odinstalowaniu (`WP_UNINSTALL_PLUGIN`), n
    `chatl_blad_maila`, `chatl_blad_ai`, `chatl_blad_bazy`, `chatl_rodo_sesje_wspolne`
    oraz dwóch liczników ze schematu ≤ 7 (`chatl_blad_nonce`, `chatl_pulapka`) — na
    wypadek instalacji, która nigdy nie weszła do panelu po aktualizacji.
-4. Sprzątanie transientów `chatl_rl_*` ze **starszych wersji wtyczki** (≤ 1.1.x, gdy licznik
-   limitów żył w opcjach zamiast w tabeli). Zapytanie używa `esc_like()` — podkreślnik jest
-   symbolem wieloznacznym w `LIKE`, więc bez eskejpowania mogłoby złapać cudze wpisy.
+4. Sprzątanie transientów w **trzech** rodzinach, każda osobnym zapytaniem:
+   `chatl_rl_*` ze starszych wersji wtyczki (≤ 1.1.x, gdy licznik limitów żył w opcjach
+   zamiast w tabeli), `chatl_import_*` (stan importu) oraz `chatl_szkic_op_*` — szkice
+   odpowiedzi operatora, przechowalnia dodana w 1.5.15 (klucz `chatl_szkic_op_<id
+   użytkownika>_<md5 sesji>`, TTL 5 minut). ⛔ Do 1.5.15 ta wyliczanka wymieniała **jeden**
+   przedrostek, a `uninstall.php` kasował **trzy** — dokument obiecywał mniej sprzątania,
+   niż kod robi, czyli w drugą stronę niż zwykle, ale tak samo nieprawdziwie.
+   Każde zapytanie używa `esc_like()` — podkreślnik jest symbolem wieloznacznym w `LIKE`,
+   więc bez eskejpowania mogłoby złapać cudze wpisy.
 
 Zdarzenie cron `chatl_czyszczenie_historii` zdejmuje **każda** ścieżka odinstalowania,
 zanim jeszcze sprawdzimy opcję „usuń dane": zwykle robi to deaktywacja, ale wtyczkę da

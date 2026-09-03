@@ -143,7 +143,12 @@ $chatl_zrodlo_operatora = (string) file_get_contents( WP_PLUGIN_DIR . '/chatbot-
 
 $chatl_punkty_d = array(
 	'handler odklada szkic przy odrzucie'      => 'chatl_odloz_szkic_operatora( $sesja, $tresc );',
-	'render czyta szkic przez klucz per sesja' => 'chatl_klucz_szkicu_operatora( $sesja )',
+	// ⛔ WZORZEC MUSI TRAFIAC W WYWOLANIE, NIE W DEFINICJE. Do rundy 5 stalo tu golo
+	// `chatl_klucz_szkicu_operatora( $sesja )`, co trafia takze w wiersz `function
+	// chatl_klucz_szkicu_operatora( $sesja ) {` (operator.php:379) — wiec asercja przechodzila
+	// NAWET po skasowaniu jedynego odczytu szkicu w renderze (:237). Asercja, ktora nie umie
+	// pasc, nie jest asercja (recenzja #275 r4, WAZNA 1). Teraz wzorzec niesie CZASOWNIK.
+	'render czyta szkic przez klucz per sesja' => 'get_transient( chatl_klucz_szkicu_operatora( $sesja ) )',
 	'render wypisuje szkic bezpiecznie'        => 'esc_textarea( $chatl_szkic )',
 	'render kasuje szkic po odczycie'          => 'delete_transient( chatl_klucz_szkicu_operatora( $sesja ) );',
 );
