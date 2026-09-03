@@ -317,6 +317,45 @@ PYMUT
 fi
 
 echo
+echo "--- kod wyjscia 2 to NIE ZMIERZONE, nie PORAZKA (I-12) ---"
+# ⛔ Bramka `golden` deklaruje kod 2 wprost (testy/golden-stos-probny.sh:7), a `bramka()` do rundy 10
+#    raportowala KAZDY niezerowy kod jako PORAZKA. Brak Dockera na koncie wykonawcy CI wygladal wiec
+#    identycznie jak prawdziwa regresja produktu — czyli przyrzad mowil "znalazlam wade", nie ustaliwszy
+#    niczego. Trzy kierunki, bo naprawa w jedna strone (kod 2 przestaje byc porazka) moze ZASLEPIC
+#    bramke na kod 1; ten przypadek pilnuje, ze prawdziwa wada DALEJ jest porazka.
+KATALOG_ATRAP="$(mktemp -d -t bramki-kody-XXXXXX)"
+for _k in 0 1 2; do
+	printf '#!/bin/sh\nexit %s\n' "$_k" > "$KATALOG_ATRAP/kod$_k.sh"
+	chmod +x "$KATALOG_ATRAP/kod$_k.sh"
+done
+# funkcje bramka() wycinamy z zywego pliku — pomiar ma dotyczyc TEGO kodu, nie kopii
+WYCIETA="$(sed -n '/^bramka() {/,/^}/p' "$BRAMKI")"
+# ⛔ KONTROLA WYCIECIA: pusta funkcja = wszystkie trzy przypadki nizej daja PORAZKI=0 i wygladaja
+#    na zielone. Zlapane 3.09: uzylam nieistniejacej zmiennej $KATALOG, sed czytal pusty plik,
+#    a dwa z trzech przypadkow "przeszly". Bez tej kontroli pomiar milczaco nie istnieje.
+if ! printf '%s' "$WYCIETA" | grep -q 'PORAZKI='; then
+	echo "  BLAD wyciecie bramka() z $BRAMKI jest puste albo niepelne — pomiar kodow wyjscia NIE ISTNIEJE" >&2
+	BLEDY=$((BLEDY+1))
+fi
+for _para in "0:0" "1:1" "2:0"; do
+	_kod="${_para%%:*}"; _ocz="${_para##*:}"
+	_wynik=$(
+		{
+			printf 'POMINIETE=()\nNIEZMIERZONE=()\nWYKONANE=0\nPORAZKI=0\ndeclare -A WYNIKI\nTRYB=x\nBEZ_GOLDENA=nie\nPOWOD_BEZ_GOLDENA=x\n'
+			printf '%s\n' "$WYCIETA"
+			printf 'bramka "atrapa" %s > /dev/null 2>&1\necho "$PORAZKI"\n' "$KATALOG_ATRAP/kod$_kod.sh"
+		} | bash
+	)
+	if [ "$_wynik" = "$_ocz" ]; then
+		printf '  OK   %-52s PORAZKI=%s\n' "kod wyjscia $_kod -> porazek $_ocz" "$_wynik"
+	else
+		printf '  BLAD %-52s PORAZKI=%s, oczekiwano %s\n' "kod wyjscia $_kod" "$_wynik" "$_ocz"
+		BLEDY=$((BLEDY+1))
+	fi
+done
+rm -rf "$KATALOG_ATRAP"
+
+echo
 if [ "$BLEDY" -eq 0 ]; then
 	echo "KURCZACY SIE ZESTAW BRAMEK ZOSTANIE ZAUWAZONY — wszystkie podlozone awarie zlapane"
 	exit 0

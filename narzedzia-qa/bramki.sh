@@ -74,6 +74,7 @@ cd "$KORZEN" || exit 2
 WYKONANE=0
 PORAZKI=0
 POMINIETE=()
+NIEZMIERZONE=()   # bramki, ktore ODMOWILY pomiaru (kod 2) — to NIE sa porazki
 declare -A WYNIKI=()
 
 # --- narzędzia zewnętrzne -----------------------------------------------------
@@ -226,8 +227,16 @@ bramka() {
 	"$@" || kod=$?
 	WYKONANE=$((WYKONANE + 1))
 	WYNIKI[$nazwa]=$kod
+	# ⛔ KOD 2 TO "NIE ZMIERZYLAM", NIE "ZNALAZLAM WADE" — regula repo (I-12,
+	#    narzedzia-qa/bramki-proba-kontrolna.sh:22-23): "Brak warunkow wstepnych to «nie zmierzylam»
+	#    (kod 2), NIGDY «znalazlam wade» (kod 1)". Do tej zmiany kazdy niezerowy kod szedl jako PORAZKA,
+	#    wiec brak Dockera na koncie wykonawcy CI wygladal identycznie jak prawdziwa regresja produktu —
+	#    a bramka `golden` deklaruje kod 2 wprost (testy/golden-stos-probny.sh:7).
 	if [ "$kod" -eq 0 ]; then
 		printf 'BRAMKA %s: EXIT=0\n' "$nazwa"
+	elif [ "$kod" -eq 2 ]; then
+		printf 'BRAMKA %s: EXIT=2 — NIE ZMIERZONE (brak warunkow wstepnych, NIE wada)\n' "$nazwa"
+		NIEZMIERZONE+=("$nazwa")
 	else
 		printf 'BRAMKA %s: EXIT=%d — PORAZKA\n' "$nazwa" "$kod"
 		PORAZKI=$((PORAZKI + 1))
@@ -448,6 +457,12 @@ done
 echo
 echo "WYKONANE BRAMKI: $WYKONANE z ${#BRAMKI[@]} (tryb: $TRYB, wymagane minimum: $PROG)"
 [ ${#POMINIETE[@]} -eq 0 ] || echo "POMINIETE SWIADOMIE: ${POMINIETE[*]}"
+# ⛔ NIE ZMIERZONE to osobna kategoria od PORAZEK i od POMINIETYCH SWIADOMIE: bramka RUSZYLA,
+#    ale odmowila werdyktu z braku warunkow. Milczenie o tym robi z "nie wiem" ciche "zielone".
+if [ ${#NIEZMIERZONE[@]} -gt 0 ]; then
+	echo "NIE ZMIERZONE (kod 2, brak warunkow wstepnych — NIE sa to wady): ${NIEZMIERZONE[*]}"
+	echo "  ⛔ Werdyktu tych bramek NIE MA. Nie pisz o nich w recenzji ani 'przeszlo', ani 'padlo'."
+fi
 
 if [ "$WYKONANE" -lt "$PROG" ]; then
 	echo "STOP: wykonano $WYKONANE bramek, a tryb $TRYB wymaga co najmniej $PROG." >&2
