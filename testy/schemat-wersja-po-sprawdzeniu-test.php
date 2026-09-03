@@ -2,7 +2,8 @@
 /**
  * STRAŻNIK — A6-F1: wersja schematu rośnie TYLKO po zmierzonym, kompletnym schemacie.
  *
- * Wada (do 0.9.39): aktywacja i migracja podnosiły `sklepag_wersja_schematu` od razu po pętli
+ * Wada (do 0.9.38 włącznie; naprawiona w 0.9.39, czyli w wydaniu, którego ten strażnik pilnuje):
+ * aktywacja i migracja podnosiły `sklepag_wersja_schematu` od razu po pętli
  * `dbDelta()`, nie sprawdzając, czy tabele i kolumny naprawdę powstały. Nieudana migracja
  * (brak prawa ALTER/CREATE, cudza tabela) zamykała bramę „wersja == stała” na zawsze —
  * sklep nie przyjmował zamówień i nikt nie wiedział dlaczego. Przyczyna-matka H.
@@ -63,6 +64,7 @@ delete_transient( 'sklepag_schemat_ponowienie' );
 sklepag_migruj_schemat_jesli_trzeba();
 remove_filter( 'query', $blokuj, 1 );
 
+$znacznik_po_a = ( false !== get_transient( 'sklepag_schemat_ponowienie' ) );  // D: po NIEUDANEJ migracji ma ZOSTAC
 $wersja_a = (int) get_option( 'sklepag_wersja_schematu', 0 );
 $blad_a   = get_option( 'sklepag_schemat_blad', array() );
 $tab_a    = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $tab_opinie ) ) ) === $tab_opinie;
@@ -102,6 +104,7 @@ $wynik[] = $a_ok;
  */
 delete_transient( 'sklepag_schemat_ponowienie' );
 sklepag_migruj_schemat_jesli_trzeba();
+$znacznik_po_b = ( false !== get_transient( 'sklepag_schemat_ponowienie' ) );  // D: po UDANEJ migracji ma ZNIKNAC
 $wersja_b = (int) get_option( 'sklepag_wersja_schematu', 0 );
 $blad_b   = get_option( 'sklepag_schemat_blad', array() );
 $tab_b    = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $tab_opinie ) ) ) === $tab_opinie;
@@ -130,6 +133,30 @@ echo 'C. CREATE TABLE przy aktualnej wersji: ' . $licznik . " (OCZEKIWANE: 0 —
 $c_ok = ( 0 === $licznik ) && ( (int) get_option( 'sklepag_wersja_schematu', 0 ) === $STALA );
 echo '   WYNIK=' . ( $c_ok ? 'PASS' : 'FAIL - brama wersji przestala dzialac' ) . "\n";
 $wynik[] = $c_ok;
+
+/* ---------- D) SAM DŁAWIK: kasowany w A–C trzy razy, a ANI RAZU nie mierzony ----------
+ * Przypadki A–C kasują `sklepag_schemat_ponowienie` przed każdym wołaniem migracji, żeby dostać
+ * realną próbę. To poprawne — ale znaczyło, że gdyby dławik zniknął albo przestał działać, TEN test
+ * nie zauważyłby tego ani razu (recenzja #274 r4, WAŻNA 1).
+ *
+ * ⛔ MIERZYMY TO, CO KOD NAPRAWDĘ ROBI, a nie to, co brzmi sensownie. Dwie wcześniejsze wersje tego
+ * przypadku sprawdzały, czy „drugie wołanie pod rząd" zostanie zatrzymane — i padały na KAŻDYM
+ * kodzie, także tam, gdzie dławik działa bez zarzutu. Powód: `aktywacja.php:302-308` kasuje znacznik
+ * PO UDANEJ migracji, więc po sukcesie kolejne wołanie MA prawo pracować. Dławik istnieje po to, by
+ * nie ponawiać w kółko migracji, która PADA. Test scenariusza, którego kod nie ma, to nie strażnik.
+ *
+ * Właściwe pytanie ma dwa kierunki i oba są tu mierzone:
+ *   D1 — po migracji NIEUDANEJ (przypadek A) znacznik MUSI zostać, inaczej pętla ponowień wraca;
+ *   D2 — po migracji UDANEJ (przypadek B) znacznik MUSI zniknąć, inaczej „deaktywuj i aktywuj"
+ *        z komunikatu na Pulpicie nie zadziała natychmiast i właściciel czeka bez powodu.
+ * Oba stany zapisałam w A i B, tuż po tamtejszych wołaniach migracji.
+ */
+echo 'D. znacznik ponowienia: po NIEUDANEJ migracji ' . ( $znacznik_po_a ? 'JEST' : 'BRAK' )
+	. ' (OCZEKIWANE: JEST — inaczej ponowienia wracaja w petli), po UDANEJ '
+	. ( $znacznik_po_b ? 'JEST' : 'BRAK' ) . " (OCZEKIWANE: BRAK — inaczej reaktywacja nie dziala od razu)\n";
+$d_ok = $znacznik_po_a && ! $znacznik_po_b;
+echo '   WYNIK=' . ( $d_ok ? 'PASS' : 'FAIL - dlawik ponowienia nie trzyma po awarii albo nie zwalnia po sukcesie' ) . "\n";
+$wynik[] = $d_ok;
 
 $ok = ! in_array( false, $wynik, true );
 echo 'RAZEM: WYNIK=' . ( $ok ? 'PASS' : 'FAIL' ) . "\n";

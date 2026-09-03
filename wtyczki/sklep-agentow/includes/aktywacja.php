@@ -207,7 +207,8 @@ function sklepag_schemat_braki() {
 }
 
 /**
- * JEDNO miejsce budowy schematu dla aktywacji i migracji (do 0.9.39 były dwie kopie pętli).
+ * JEDNO miejsce budowy schematu dla aktywacji i migracji (do 0.9.38 włącznie były dwie kopie pętli;
+ * scala je właśnie to wydanie, 0.9.39).
  *
  * ⛔ Znacznik wersji idzie w górę TYLKO po zmierzeniu skutku: `dbDelta()` może nie zdążyć, trafić
  *    na brak prawa ALTER albo na cudzą tabelę o tej samej nazwie — a brama „wersja == stała” zamykała

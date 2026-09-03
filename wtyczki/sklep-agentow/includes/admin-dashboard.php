@@ -385,7 +385,9 @@ function sklepag_obsluz_eksport_csv() {
 
 /**
  * Komunikat o NIEKOMPLETNYM schemacie bazy (A6-F1): aktywacja/migracja zmierzyła braki po `dbDelta`,
- * wersja nie została podniesiona, sklep spróbuje znowu przy następnym żądaniu — ale przyczyna
+ * wersja nie została podniesiona, sklep ponowi próbę sam — nie przy każdym żądaniu, tylko
+ * najwyżej raz na 5 minut (dławik `sklepag_schemat_ponowienie`, `aktywacja.php:302-308`); aktywacja
+ * wtyczki kasuje znacznik, więc „deaktywuj i aktywuj" działa natychmiast. Przyczyna
  * (np. brak prawa ALTER/CREATE) wymaga właściciela. Wypisuje notice albo nic.
  *
  * @return bool Czy komunikat został wypisany.
