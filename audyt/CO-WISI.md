@@ -415,6 +415,15 @@ prawdziwym wdrożeniu.
   zakup gościa wymaga nonce (`zakup.php:66`) → page-cache; brak eksportera/erasera RODO WP (D: dopisać w naprawach);
   zwroty Stripe bez obsługi (decyzja po L3); WP-Cron bez ruchu nie w instrukcji.
 - 3 martwe pliki mediów w paczce (1,06 MB) — kasowanie ZGODA właściciela 25.08, wykonać w rundzie napraw (bump).
+- ✅ **ROZLICZENIE TRZECH ZALEGŁOŚCI Z TEJ LISTY (3.09, pomiar na `origin/main`, kod otwarty ręcznie):**
+  **DOK-TECH „7 tabel" vs „6"** — dziś dwa wystąpienia „7 tabel", zero „6 tabel" ⇒ rozjazdu NIE MA ·
+  **brak eksportera/erasera RODO WP** — `includes/prywatnosc.php:637` i `:792` rejestrują `wp_privacy_personal_data_exporters`
+  i `…_erasers`, bliźniaki w `chatbot-live/includes/rodo.php:585,600`; oba pliki dołączane BEZWARUNKOWO
+  (`sklep-agentow.php:66`, `chatbot-live.php:129`), nie za `is_admin()`, bo kreator woła też przez `admin-ajax` i cron ·
+  **zwroty Stripe bez obsługi** — `includes/zakup.php:409` nasłuchuje `refund.created`, `refund.updated`
+  ORAZ `charge.refunded` i rozstrzyga po kwocie już zapisanej w bazie.
+  ⛔ Reszta wiersza wyżej (`#170` w dokumencie klienta, tabela §2 bez `opinie.php`, martwe wpisy Cloudflare/Vercel,
+  nonce zakupu gościa, WP-Cron w instrukcji) **NIE była w tym pomiarze** — zostaje otwarta.
 
 ## ✅ ZAMKNIĘTE 25.08 (wieczór) — SKLEP: readme.txt + CHANGELOG.md + paczka 0.9.13 (PR-0 K7)
 - `paczka-zgodnosc.sh sklep-agentow` EXIT 0 (6 miejsc wersji, zip == repo 59 plików, treść wydania, 0 śladów),
@@ -612,6 +621,9 @@ prawdziwym wdrożeniu.
 - **readme.txt Segregatora, wiersz „Wymagania"** — dopisać `stream_socket_client` + OpenSSL
   (dla prawdziwej skrzynki IMAP; FAQ sklepu już to mówi). Paczka 1.3.3 jest WYDANA i pod
   zamkiem — poprawka wchodzi z NASTĘPNYM wydaniem bota, nie osobno.
+  ✅ **ZAMKNIĘTE (potwierdzone 3.09 na `origin/main`):** `wtyczki/segregator-maila/readme.txt:85-86` mówi
+  o `stream_socket_client` i rozszerzeniu OpenSSL, z ostrzeżeniem o najtańszych hostingach i wskazaniem
+  wbudowanej diagnostyki; `CHANGELOG.md:153` potwierdza wejście poprawki. Wpis wisiał otwarty po naprawie.
 - **Bramka na LICZBY strony sprzedażowej** (`front-produkt.php`: „6 zrzutów", „10 par",
   „30 maili demo") — dziś prawdziwe (zmierzone w r1 #172), ale bez strażnika zgniją po cichu
   jak każda liczba; wzór: `dokumentacja-zgodnosc*.sh`.
