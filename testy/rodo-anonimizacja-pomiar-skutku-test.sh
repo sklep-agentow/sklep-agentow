@@ -36,6 +36,12 @@ cd "$(dirname "$0")/.." || { echo "PRZYRZAD: nie umiem wejsc do korzenia repo" >
 
 KONTENER="${1:-strona_wp_wordpress}"
 WP="docker exec -i -u www-data $KONTENER wp --path=/var/www/html --skip-themes"
+# ⛔ `export` na HOSCIE nie dociera do procesu w kontenerze — `docker exec` przekazuje
+#    wylacznie to, co dostanie przez `-e`. Bez tego krok renderu widzi puste getenv(),
+#    wypisuje PRZYRZAD=BRAK-RODO-REDIRECT i konczy exit(2), czyli CALY straznik pada
+#    kodem 2 przy zielonych bramkach. Blizniak, ktory robi to poprawnie: testy/seed-demo.sh:11.
+#    Ta wersja jest uzywana WYLACZNIE tam, gdzie krok czyta zmienna srodowiskowa.
+WP_ENV="docker exec -i -u www-data -e RODO_REDIRECT $KONTENER wp --path=/var/www/html --skip-themes"
 
 BLEDY=0
 ok()  { printf '  OK   %s\n' "$1"; }
@@ -87,7 +93,7 @@ if [ -z "$RODO_REDIRECT" ]; then
 	zle "A: krok szczesliwej sciezki nie oddal adresu przekierowania — nie mam czym renderowac"
 fi
 export RODO_REDIRECT
-WY_R=$($WP eval-file - "$ID_A" < testy/kroki-rodo/rodo-anonimizacja-krok-render.php 2>&1)
+WY_R=$($WP_ENV eval-file - "$ID_A" < testy/kroki-rodo/rodo-anonimizacja-krok-render.php 2>&1)
 printf '%s\n' "$WY_R" | sed 's/^/    | /'
 case "$WY_R" in *"RENDER_PRZYRZAD=OK"*) : ;; *) echo "PRZYRZAD: render panelu nie doszedl do skutku"; $WP eval-file - "$ID_A" < testy/kroki-rodo/rodo-anonimizacja-krok-stan.php >/dev/null 2>&1; exit 2 ;; esac
 

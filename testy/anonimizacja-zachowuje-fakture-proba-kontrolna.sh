@@ -36,10 +36,18 @@ grep -q 'zachowaj_dane_faktury = false' "$ROB/stary/wtyczki/sklep-agentow/includ
 wdroz "$ROB/stary/wtyczki/sklep-agentow" || padnij "nie udało się wdrożyć wtyczki z $STARY_REF"
 W="$(test_na testy/sklep-rodo-pomiar-danych-faktury-test.php)"; K=$?
 printf '%s\n' "$W" | grep -E 'WYNIK|BLAD|ZOSTAJA' | sed 's/^/    | /'
-if [ "$K" -eq 1 ] && printf '%s' "$W" | grep -q 'BLAD.*dane do faktury ZOSTAJA'; then
-	potwierdz "strażnik PADŁ na kodzie sprzed zmiany dokładnie na przypadku A (EXIT=$K)"
+# ⛔ „PADŁ” to za mało. Kontrola kalibracji ma dowieść, że stara wada trafia w DOKŁADNIE
+#    JEDEN przypadek — inaczej równie dobrze mógłby paść strażnik zepsuty na wylot i wynik
+#    wyglądałby tak samo. Dlatego sprawdzam OBIE strony: że A padło ORAZ że przypadki
+#    bez wady (C — kasownik RODO, D — zakup prywatny bez danych do faktury) PRZESZŁY.
+A_PADLO=nie;  printf '%s' "$W" | grep -q 'BLAD.*dane do faktury ZOSTAJA' && A_PADLO=tak
+C_PRZESZLO=nie; printf '%s' "$W" | grep -qE '^[[:space:]]*OK[[:space:]].*(kasownik|RODO)' && C_PRZESZLO=tak
+D_PRZESZLO=nie; printf '%s' "$W" | grep -qE '^[[:space:]]*OK[[:space:]].*pusta kolumna to nie brak skutku' && D_PRZESZLO=tak
+
+if [ "$K" -eq 1 ] && [ "$A_PADLO" = tak ] && [ "$C_PRZESZLO" = tak ] && [ "$D_PRZESZLO" = tak ]; then
+	potwierdz "strażnik PADŁ na kodzie sprzed zmiany DOKŁADNIE na przypadku A; C i D przeszły (EXIT=$K)"
 else
-	zglos "strażnik na kodzie sprzed zmiany oddał EXIT=$K albo padł nie tam, gdzie zmiana"
+	zglos "kalibracja nie wyszła: EXIT=$K · A_PADLO=$A_PADLO · C_PRZESZLO=$C_PRZESZLO · D_PRZESZLO=$D_PRZESZLO — stara wada ma trafiać w JEDEN przypadek, nie we wszystkie"
 fi
 naglowek "PODSUMOWANIE"
 if [ "$BLEDY" -eq 0 ]; then echo "KALIBRACJA F4-F4: OK — strażnik widzi stare zachowanie, przepuszcza nowe"; exit 0; fi
