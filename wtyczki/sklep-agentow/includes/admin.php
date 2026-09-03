@@ -108,10 +108,10 @@ function sklepag_ostrzez_strony_prawne() {
 	//    zaklada obie strony jako `draft` z „(SZABLON)” w TYTULE, wiec wlasciciel idzie strona po
 	//    stronie i miedzy jedna a druga JEST w tym stanie.
 	//    Teraz zdanie koncowe mowi osobno o kazdej grupie i tylko wtedy, gdy ta grupa istnieje.
-	$ile          = count( $do_uzupelnienia );
+	$ile           = count( $do_uzupelnienia );
 	$ile_roboczych = count( array_keys( $powody, 'nieopublikowana', true ) );
 	$ile_zaslepek  = count( array_keys( $powody, 'opublikowana, ale wciąż z zaślepką SZABLON', true ) );
-	$co_zrobic    = 'Uzupełnij dane sprzedawcy (nazwa, adres, kontakt, adres do reklamacji)';
+	$co_zrobic     = 'Uzupełnij dane sprzedawcy (nazwa, adres, kontakt, adres do reklamacji)';
 	if ( $ile_zaslepek > 0 ) {
 		$co_zrobic .= ', usuń zaślepki SZABLON';
 	}
