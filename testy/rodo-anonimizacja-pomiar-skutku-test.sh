@@ -15,8 +15,10 @@
 #
 # Sprawdza:
 #   A. ścieżka szczęśliwa — e-mail znika, `usunieto_dnia` jest, token pobrania pusty,
-#      treść maila i `dane_faktury` puste (treść niosła pełną kopię danych do faktury:
-#      nazwa firmy, NIP, adres — WAŻNA 1 recenzji #234 r5),
+#      treść maila pusta (niosła pełną kopię danych do faktury: nazwa firmy, NIP, adres —
+#      WAŻNA 1 recenzji #234 r5), a `dane_faktury` ZOSTAJE (od 0.9.37 panel jak kasownik WP:
+#      obowiązek podatkowy; do 0.9.36 panel ją czyścił — recenzja #270 r1 KRYTYCZNA 2),
+#      komunikat po powrocie mówi, że faktura została (nie „usunięta”), panel ją POKAZUJE,
 #      zdarzenie `anonimizacja` zapisane, brak `anonimizacja_blad`;
 #   B. PODŁOŻONA AWARIA zapisu (filtr `query` psuje dokładnie to jedno zapytanie) —
 #      handler NIE potwierdza usunięcia: `wp_die` zamiast przekierowania,
@@ -34,6 +36,12 @@ cd "$(dirname "$0")/.." || { echo "PRZYRZAD: nie umiem wejsc do korzenia repo" >
 
 KONTENER="${1:-strona_wp_wordpress}"
 WP="docker exec -i -u www-data $KONTENER wp --path=/var/www/html --skip-themes"
+# ⛔ `export` na HOSCIE nie dociera do procesu w kontenerze — `docker exec` przekazuje
+#    wylacznie to, co dostanie przez `-e`. Bez tego krok renderu widzi puste getenv(),
+#    wypisuje PRZYRZAD=BRAK-RODO-REDIRECT i konczy exit(2), czyli CALY straznik pada
+#    kodem 2 przy zielonych bramkach. Blizniak, ktory robi to poprawnie: testy/seed-demo.sh:11.
+#    Ta wersja jest uzywana WYLACZNIE tam, gdzie krok czyta zmienna srodowiskowa.
+WP_ENV="docker exec -i -u www-data -e RODO_REDIRECT $KONTENER wp --path=/var/www/html --skip-themes"
 
 BLEDY=0
 ok()  { printf '  OK   %s\n' "$1"; }
@@ -78,7 +86,14 @@ ID_A=$(pole "$WY_A" ID)
 [ -n "$ID_A" ] || { echo "PRZYRZAD: krok A nie oddal ID zamowienia"; exit 2; }
 
 # ⛔ WAZNA 1 #234 r6: render panelu PRZED krokiem stanu (tamten sprzata zamowienie).
-WY_R=$($WP eval-file - "$ID_A" < testy/kroki-rodo/rodo-anonimizacja-krok-render.php 2>&1)
+# ⛔ Adres przekierowania bierzemy z WYJSCIA KROKU A, gdzie powstal w `wp_redirect` kodu
+# produkcji — krok renderu NIE ma prawa wpisywac go sobie sam (mierzylby wlasne wejscie).
+RODO_REDIRECT=$(printf '%s\n' "$WY_A" | sed -n 's/^REDIRECT=//p' | tail -1)
+if [ -z "$RODO_REDIRECT" ]; then
+	zle "A: krok szczesliwej sciezki nie oddal adresu przekierowania — nie mam czym renderowac"
+fi
+export RODO_REDIRECT
+WY_R=$($WP_ENV eval-file - "$ID_A" < testy/kroki-rodo/rodo-anonimizacja-krok-render.php 2>&1)
 printf '%s\n' "$WY_R" | sed 's/^/    | /'
 case "$WY_R" in *"RENDER_PRZYRZAD=OK"*) : ;; *) echo "PRZYRZAD: render panelu nie doszedl do skutku"; $WP eval-file - "$ID_A" < testy/kroki-rodo/rodo-anonimizacja-krok-stan.php >/dev/null 2>&1; exit 2 ;; esac
 
@@ -94,7 +109,14 @@ case "$WY_A" in *"REDIRECT="*"sklepag_anonimizacja=ok"*) ok "A: wlasciciel dosta
 #   a ORYGINAL mail_tresc zostawal — panel wypisywal go po anonimizacji, pomiar meldowal sukces.
 case "$WY_A" in *"MAIL_TRESC_PRZED=ZAWIERA-FAKTURE"*) ok "A: warunek wstepny — tresc maila zawiera dane faktury (jest co czyscic)" ;; *) zle "A: zasiew BEZ danych faktury w tresci maila — przypadek nic nie mierzy" ;; esac
 [ "$(pole "$STAN_A" MAIL_TRESC)" = "PUSTY" ] && ok "A: tresc maila (kopia danych faktury: NIP, adres) zniknela" || zle "A: tresc maila ZOSTALA — dane do faktury do odczytania po anonimizacji"
-[ "$(pole "$STAN_A" DANE_FAKTURY)" = "PUSTY" ] && ok "A: dane_faktury puste" || zle "A: dane_faktury ZOSTALY"
+# 0.9.37 (F4-F4, #270): panel przekazuje `true` jak kasownik WP — faktura MA zostać; pusta = regresja do 0.9.36.
+[ "$(pole "$STAN_A" DANE_FAKTURY)" = "ZOSTAL" ] && ok "A: dane_faktury ZOSTALY (obowiazek podatkowy, jedna zasada z kasownikiem WP)" || zle "A: dane_faktury PUSTE — panel znow kasuje fakture (regresja do 0.9.36)"
+case "$WY_A" in *"faktura=1"*) ok "A: przekierowanie niesie wynik pomiaru faktury (faktura=1)" ;; *) zle "A: przekierowanie BEZ wyniku faktury — komunikat nie ma skad wiedziec, co zostalo" ;; esac
+# KRYTYCZNA 1 #270 r1: komunikat po powrocie nie moze meldowac usuniecia faktury, ktorej nie usunal.
+[ "$(pole "$WY_R" RENDER_KOMUNIKAT_FAKTURA_USUNIETA)" = "0" ] && ok "A: komunikat NIE melduje usuniecia danych faktury" || zle "A: komunikat KLAMIE — melduje usuniecie danych faktury, ktore zostaly"
+[ "$(pole "$WY_R" RENDER_KOMUNIKAT_FAKTURA_ZOSTALA)" = "1" ] && ok "A: komunikat mowi wprost, ze faktura zostala (obowiazek podatkowy)" || zle "A: komunikat nie mowi, ze faktura zostala"
+# WAZNA 3 #270 r1: wlasciciel trzyma fakture dla urzedu, wiec musi ja w panelu ODCZYTAC — nie „zanonimizowane”.
+[ "$(pole "$WY_R" RENDER_FAKTURA_WIDOCZNA)" = "1" ] && ok "A: panel POKAZUJE zachowane dane faktury (NIP widoczny)" || zle "A: panel UKRYWA dane faktury, ktore wlasnie zachowal"
 # ⛔ WAZNA 1 #234 r6: panel zanonimizowanego zamowienia nie moze pisac „zamowienie niedomkniete"
 #   obok statusu mail_wyslany — ma mowic wprost, ze tresc usunieto przy anonimizacji.
 [ "$(pole "$WY_R" RENDER_FRAZA_NIEDOMKNIETE)" = "0" ] && ok "A: panel NIE pisze o niedomknietym zamowieniu po anonimizacji" || zle "A: panel KLAMIE — po anonimizacji pisze o zamowieniu niedomknietym przy statusie mail_wyslany"
