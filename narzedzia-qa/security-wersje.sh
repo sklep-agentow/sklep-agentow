@@ -74,7 +74,11 @@ fi
 # przeciaga CALY wiersz, w tym date. Skutek: dokument publiczny deklarowal stan STARSZY niz
 # wydanie, ktore opisuje (#274: "Stan na 2026-09-01" przy wydaniu 0.9.39 z 2026-09-02), a przy
 # tym starszy niz to, co stalo na mainie. Ten straznik pilnowal wylacznie numerow, wiec milczal.
-# Regula: data stanu NIE MOZE byc starsza niz data najnowszego wydania w CHANGELOG-u sklepu.
+# Regula: data stanu NIE MOZE byc starsza niz data NAJNOWSZEGO WYDANIA sposrod WSZYSTKICH
+# `wtyczki/*/CHANGELOG.md` — bo `SECURITY.md` opisuje stan TRZECH wtyczek naraz, a kazda ma
+# wlasny rytm wydan. Zdanie mowiace o „CHANGELOG-u sklepu” opisywalo PIERWSZA wersje tej
+# kontroli i przestalo byc prawda w tej samej rundzie, w ktorej kod pod nim to zmienil
+# (recenzja #274, runda 9, WAZNA 1 — klasa 3: dokument opisuje stan, ktorego kod juz nie ma).
 DATA_DOK="$(grep -m1 -oE 'Stan na [0-9]{4}-[0-9]{2}-[0-9]{2}' "$DOKUMENT" 2> /dev/null | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}')"
 # ⛔ DATA MIERZONA WOBEC WSZYSTKICH WTYCZEK, NIE TYLKO SKLEPU. Pierwsza wersja tej kontroli
 # porownywala date stanu z CHANGELOG-iem SAMEGO sklepu, a petla wyzej sprawdza numery WSZYSTKICH
