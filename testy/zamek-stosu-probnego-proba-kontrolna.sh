@@ -109,7 +109,7 @@ done
 OCZEKIWANI_UZYTKOWNICY=9
 case "$OCZEKIWANI_UZYTKOWNICY" in
 	7) SLOWO_UZYTKOWNIKOW=siedmiu ;;
-	8) SLOWO_UZYTKOWNIKOW=osmiu ;;
+	8) SLOWO_UZYTKOWNIKOW=śmiu ;;   # ⛔ CZĄSTKA bez pierwszej litery: dokumenty piszą „ośmiu”, a wielkość pierwszej litery bywa różna
 	9) SLOWO_UZYTKOWNIKOW=dziewięciu ;;
 	10) SLOWO_UZYTKOWNIKOW=dziesięciu ;;
 	11) SLOWO_UZYTKOWNIKOW=jedenastu ;;

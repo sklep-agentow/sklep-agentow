@@ -243,6 +243,72 @@ else
 fi
 
 echo
+echo "=== POMINIECIE BRAMKI golden MA MIEC DOKLADNIE JEDEN POWOD ==="
+# ⛔ POWOD ISTNIENIA TEGO PRZYPADKU. To jedyne miejsce, ktore w tym PR-ze REGRESOWALO: runda 4
+# zrownala warunek pominiecia z `wymagaj_narzedzi` „dla zgodnosci" i poszerzyla ciche pominiecie
+# z jednego powodu na cztery — trzy z nich do tamtej rundy konczyly sie `padnij` (exit 2), a po
+# niej dawaly „WSZYSTKIE WYKONANE BRAMKI ZIELONE" i EXIT=0. Naprawa w rundzie 6 byla mierzona
+# skryptem JEDNORAZOWYM, wiec nikt nie mogl jej odtworzyc (recenzja r6, WAZNA 1). Teraz mierzy ja
+# ten plik, przy kazdym przelocie prob kontrolnych.
+BEZ_UNZIP="$TMPDIR_PROBY/bin-bez-unzip"
+ATRAPA_D="$TMPDIR_PROBY/bin-atrapa-docker"
+mkdir -p "$BEZ_UNZIP" "$ATRAPA_D"
+for _d in /usr/local/sbin /usr/local/bin /usr/sbin /usr/bin /sbin /bin; do
+	[ -d "$_d" ] || continue
+	for _f in "$_d"/*; do
+		_n=$(basename "$_f")
+		[ "$_n" = unzip ] && continue
+		[ -e "$BEZ_UNZIP/$_n" ] || ln -s "$_f" "$BEZ_UNZIP/$_n" 2> /dev/null
+	done
+done
+printf '#!/bin/sh\nexit 1\n' > "$ATRAPA_D/docker"; chmod +x "$ATRAPA_D/docker"
+
+# ⛔ KONTROLA SAMYCH SRODOWISK PROBY. Bez niej mierzylabym wlasna atrape, nie kod.
+if PATH="$BEZ_UNZIP" command -v unzip > /dev/null 2>&1; then
+	echo "  BLAD srodowisko 'bez unzip' MA unzip — proba nic nie mierzy"; BLEDY=$((BLEDY+1))
+elif ! PATH="$BEZ_UNZIP" command -v docker > /dev/null 2>&1; then
+	echo "  POMINIETE: srodowisko 'bez unzip' nie ma dockera — nie ma jak rozdzielic powodow"
+elif PATH="$ATRAPA_D:$PATH" docker ps > /dev/null 2>&1; then
+	echo "  BLAD atrapa dockera nie udaje slepego konta — proba nic nie mierzy"; BLEDY=$((BLEDY+1))
+else
+	ile_pominiec() { env "$@" BRAMKI_TYLKO_FUNKCJE=1 bash "$BRAMKI" 2>&1 | grep -c "bramka golden bedzie POMINIETA"; }
+
+	_a=$(ile_pominiec PATH="$PATH")
+	_b=$(ile_pominiec PATH="$ATRAPA_D:$PATH")
+	_c=$(ile_pominiec PATH="$BEZ_UNZIP")
+	if [ "$_a" = 0 ] && [ "$_b" = 1 ] && [ "$_c" = 0 ]; then
+		echo "  OK   pominiecie tylko przy braku Dockera (docker+unzip: $_a, bez dockera: $_b, docker bez unzip: $_c)"
+	else
+		printf '  BLAD zle powody pominiecia: docker+unzip=%s (ma byc 0), bez dockera=%s (ma byc 1), docker bez unzip=%s (ma byc 0)\n' "$_a" "$_b" "$_c"
+		BLEDY=$((BLEDY+1))
+	fi
+
+	# ⛔ PROBA KONTROLNA TEGO PRZYPADKU: przywracamy REGRESJE z rundy 4 i sprawdzamy, czy ja widac.
+	przywroc
+	python3 - "$BRAMKI" <<'PYMUT'
+import io, sys
+P = sys.argv[1]
+s = io.open(P, encoding='utf-8').read()
+kot = 'if ! docker ps > /dev/null 2>&1; then\n\tDOCKER_WIDOCZNY=nie\n\tPOWOD_BEZ_GOLDENA="to konto nie widzi Dockera"\nfi'
+if kot in s:
+    mut = ('if ! docker ps > /dev/null 2>&1; then\n\tDOCKER_WIDOCZNY=nie\n\tPOWOD_BEZ_GOLDENA="to konto nie widzi Dockera"\n'
+           'elif ! command -v unzip > /dev/null 2>&1; then\n\tDOCKER_WIDOCZNY=nie\n\tPOWOD_BEZ_GOLDENA="brak unzip"\nfi')
+    io.open(P, 'w', encoding='utf-8').write(s.replace(kot, mut, 1))
+    print('MUTACJA_OK')
+else:
+    print('MUTACJA_NIEUDANA')
+PYMUT
+	_c2=$(ile_pominiec PATH="$BEZ_UNZIP")
+	if [ "$_c2" = 1 ]; then
+		echo "  OK   zlapane: powrot regresji z rundy 4 (brak unzip znowu POMIJA goldena zamiast go wywalic)"
+	else
+		echo "  BLAD PRZESZLO NIEZAUWAZONE: poszerzony warunek pominiecia (docker bez unzip: $_c2, mialo byc 1)"
+		BLEDY=$((BLEDY+1))
+	fi
+	przywroc
+fi
+
+echo
 if [ "$BLEDY" -eq 0 ]; then
 	echo "KURCZACY SIE ZESTAW BRAMEK ZOSTANIE ZAUWAZONY — wszystkie podlozone awarie zlapane"
 	exit 0
