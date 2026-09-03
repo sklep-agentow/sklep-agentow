@@ -207,12 +207,12 @@ function sklepag_schemat_braki() {
 }
 
 /**
- * JEDNO miejsce budowy schematu dla aktywacji i migracji (do 0.9.37 były dwie kopie pętli).
+ * JEDNO miejsce budowy schematu dla aktywacji i migracji (do 0.9.39 były dwie kopie pętli).
  *
  * ⛔ Znacznik wersji idzie w górę TYLKO po zmierzeniu skutku: `dbDelta()` może nie zdążyć, trafić
  *    na brak prawa ALTER albo na cudzą tabelę o tej samej nazwie — a brama „wersja == stała” zamykała
  *    się wtedy na zawsze i nieudana migracja nie powtarzała się już nigdy (A6-F1). Teraz przy brakach
- *    wersja zostaje stara (następne żądanie spróbuje znowu), a właściciel dostaje na Pulpicie listę
+ *    wersja zostaje stara (ponowienie po odstępie 5 minut, znacznik `sklepag_schemat_ponowienie`; aktywacja wtyczki kasuje znacznik), a właściciel dostaje na Pulpicie listę
  *    braków i ostatni błąd bazy. Przyczyna-matka H: nie zapisuj skutku, którego nie zmierzyłeś.
  *
  * @return bool true = schemat kompletny (wersja zapisana), false = braki (wersja NIE zapisana).
@@ -225,10 +225,6 @@ function sklepag_zbuduj_schemat() {
 	// tabela — przy siedmiu tabelach komunikat był prawie zawsze pusty, choć dokumentacja
 	// obiecywała właścicielowi „ostatni błąd bazy”. Czytamy po KAŻDYM `dbDelta` i zbieramy
 	// wszystkie RÓŻNE komunikaty.
-	// ⛔ `last_error` KASUJE KAŻDE KOLEJNE ZAPYTANIE (`wpdb::query()` zaczyna od `flush()`),
-	// więc jeden odczyt PO całej pętli pokazywał błąd wyłącznie wtedy, gdy zawiodła OSTATNIA
-	// tabela — przy siedmiu tabelach komunikat był prawie zawsze pusty, choć dokumentacja
-	// obiecywała właścicielowi „ostatni błąd bazy”. Czytamy po KAŻDYM `dbDelta`.
 	// ⛔ NIE zerujemy `last_error` przed `dbDelta`: robi to za nas pierwsze zapytanie, które
 	// `dbDelta` i tak wykonuje (`DESCRIBE`), a jawne przypisanie pustki mylnie zawężało typ
 	// dla analizy statycznej — porównanie wychodziło „zawsze fałszywe”.

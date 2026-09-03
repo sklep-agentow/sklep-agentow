@@ -277,8 +277,7 @@ starcie** — własny literał w tym pliku cofałby naprawę PHP w przeglądarce
 
 **Przy aktywacji:** utworzenie 7 tabel przez `dbDelta` (`sklepag_zbuduj_schemat()` — to samo
 miejsce co migracja), **pomiar skutku** (`SHOW TABLES` / `SHOW COLUMNS` względem tych samych definicji)
-i zapis wersji schematu **tylko gdy braków nie ma**; przy brakach wersja zostaje stara (kolejne żądanie
-próbuje znowu), a Pulpit pokazuje listę braków i ostatni błąd bazy (`sklepag_schemat_blad`),
+i zapis wersji schematu **tylko gdy braków nie ma**; przy brakach wersja zostaje stara (ponowienie po odstępie 5 minut — znacznik `sklepag_schemat_ponowienie`; aktywacja wtyczki kasuje znacznik, więc „deaktywuj i aktywuj” działa natychmiast), a Pulpit pokazuje listę braków i ostatni błąd bazy (`sklepag_schemat_blad`),
 założenie stron „Sklep" i „Dziękujemy", zaplanowanie zadania cyklicznego.
 
 **Przy deaktywacji:** odplanowanie zadania cyklicznego. Dane zostają.

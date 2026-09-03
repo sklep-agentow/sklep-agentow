@@ -2,7 +2,7 @@
 /**
  * STRAŻNIK — A6-F1: wersja schematu rośnie TYLKO po zmierzonym, kompletnym schemacie.
  *
- * Wada (do 0.9.37): aktywacja i migracja podnosiły `sklepag_wersja_schematu` od razu po pętli
+ * Wada (do 0.9.39): aktywacja i migracja podnosiły `sklepag_wersja_schematu` od razu po pętli
  * `dbDelta()`, nie sprawdzając, czy tabele i kolumny naprawdę powstały. Nieudana migracja
  * (brak prawa ALTER/CREATE, cudza tabela) zamykała bramę „wersja == stała” na zawsze —
  * sklep nie przyjmował zamówień i nikt nie wiedział dlaczego. Przyczyna-matka H.
@@ -53,6 +53,13 @@ $blokuj = static function ( $query ) use ( $tab_opinie ) {
 	return $query;
 };
 add_filter( 'query', $blokuj, 1 );
+/* ⛔ Takze PRZED przypadkiem A. Poprzedni BIEG tego straznika (albo dowolne zadanie
+ * do sklepu w ostatnich 5 minutach) zostawia znacznik `sklepag_schemat_ponowienie`,
+ * wiec A dostawalby wczesny `return` i caly straznik konczyl EXIT=1 przy zdrowym kodzie.
+ * Zlapane wlasna proba kontrolna: po biegu z cofnietym kasowaniem NASTEPNY bieg,
+ * juz z naprawa, dalej dawal EXIT=1 — test nie byl powtarzalny.
+ */
+delete_transient( 'sklepag_schemat_ponowienie' );
 sklepag_migruj_schemat_jesli_trzeba();
 remove_filter( 'query', $blokuj, 1 );
 
@@ -83,6 +90,17 @@ echo '   WYNIK=' . ( $a_ok ? 'PASS' : 'FAIL - wersja podniesiona mimo braku tabe
 $wynik[] = $a_ok;
 
 /* ---------- B) ŚRODOWISKO NAPRAWIONE: migracja ponawia się i domyka ---------- */
+/*
+ * ⛔ WLASNE WARUNKI WSTEPNE PRZED KAZDYM PRZYPADKIEM.
+ * Produkcja dlawi ponowienie migracji transientem `sklepag_schemat_ponowienie` na 5 minut
+ * (aktywacja.php) — sensownie, bo bez odstepu kazde zadanie placiloby 7 x dbDelta.
+ * Ale ten straznik wola migracje TRZY RAZY w JEDNYM procesie: po przypadku A znacznik
+ * zostaje ustawiony (naprawa w A z zalozenia sie nie udaje), wiec B i C dostawaly wczesny
+ * `return` zamiast realnej proby i OBA padaly. Straznik mierzyl wtedy WLASNY dlawik,
+ * nie zachowanie produkcji. Kasujemy znacznik przed kazdym kolejnym przypadkiem —
+ * to odpowiednik „deaktywuj i aktywuj”, ktory produkcja jawnie dopuszcza.
+ */
+delete_transient( 'sklepag_schemat_ponowienie' );
 sklepag_migruj_schemat_jesli_trzeba();
 $wersja_b = (int) get_option( 'sklepag_wersja_schematu', 0 );
 $blad_b   = get_option( 'sklepag_schemat_blad', array() );
@@ -96,6 +114,9 @@ $wynik[] = $b_ok;
 
 /* ---------- C) KONTROLA: kompletny schemat, wersja stała — brama zamknięta ---------- */
 $licznik = 0;
+// Ten sam dlawik co przed B — przypadek C tez wola migracje i tez musi
+// dostac realna probe, nie wczesny `return` po znaczniku z poprzedniego kroku.
+delete_transient( 'sklepag_schemat_ponowienie' );
 $licz    = static function ( $query ) use ( &$licznik ) {
 	if ( 0 === stripos( ltrim( (string) $query ), 'CREATE TABLE' ) ) {
 		++$licznik;
