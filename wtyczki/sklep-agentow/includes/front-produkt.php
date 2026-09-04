@@ -648,7 +648,7 @@ function sklepag_formularz_zakupu( $p ) {
 		(`wp_generate_password( 24, false, false )`), a `sklepag_znacznik_okna_z_post()` przepuszcza
 		[A-Za-z0-9] do 40 znaków, więc nic nie jest obcinane. Bez `crypto.getRandomValues` albo bez
 		JavaScriptu skrypt nie robi NIC i zostaje wartość z renderu. Znacznik nie jest sekretem ani
-		dowodem tożsamości — rozdziela okna dwóch przeglądarek za jednym adresem (zakup.php:47-48). */
+		dowodem tożsamości — rozdziela okna dwóch przeglądarek za jednym adresem (`sklepag_znacznik_okna_z_post()` w zakup.php). */
 	$html .= '<script>(function(){try{var c=window.crypto;if(!c||!c.getRandomValues){return;}var p=document.querySelector("#sklepag-kup-formularz input[name=okno]");if(!p){return;}var a=new Uint8Array(12);c.getRandomValues(a);var s="";for(var i=0;i<a.length;i++){s+=(a[i]<16?"0":"")+a[i].toString(16);}p.value=s;}catch(e){}})();</script>';
 	// Panel płatności osadzonej (0.9.25): `platnosc.js` odsłania go po utworzeniu sesji i montuje w nim
 	// elementy Stripe (e-mail, karta) — formularz karty jest w ramce Stripe (PCI), my dajemy tylko ramy i kolory.

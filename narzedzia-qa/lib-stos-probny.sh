@@ -41,7 +41,7 @@ naglowek()  { printf '\n=== %s ===\n' "$1"; }
 wymagaj_narzedzi() {
 	command -v docker > /dev/null || padnij "brak dockera"
 	command -v unzip  > /dev/null || padnij "brak unzip"
-	# ⛔ „NIE WIEM" TO NIE TO SAMO CO „NIE MA" — patrz `narzedzia-qa/stos.sh:153`. Pytamy NAJPIERW,
+	# ⛔ „NIE WIEM" TO NIE TO SAMO CO „NIE MA" — patrz funkcja `brak_stosu` w `narzedzia-qa/stos.sh`. Pytamy NAJPIERW,
 	# czy Docker w ogole odpowiada; dopiero potem wolno orzekac o kontenerze.
 	docker ps > /dev/null 2>&1 || padnij "NIE WIEM, czy kontener bazy $KONTENER_DB stoi — to konto nie widzi Dockera (brak dostepu do demona, nie brak kontenera)"
 	docker ps --filter "name=^${KONTENER_DB}$" --filter status=running -q | grep -q . \
@@ -128,7 +128,7 @@ zwin_stos() {
 	#    Zmierzone 3.09 na maszynie warsztatu: 38 wolumenow Dockera, z tego 35 nieprzypisanych
 	#    do zadnego kontenera (takze zatrzymanego), razem 2,7 GB przy dysku na 92 %.
 	#    35 x 88 MB zgadza sie co do rzedu — to sa te sieroty.
-	#    `strony-prawne-stos-probny.sh:46` probowal to lapac wlasnym `docker rm -f -v` PO wywolaniu
+	#    linia `docker rm -f -v` w `strony-prawne-stos-probny.sh` probowala to lapac wlasnym `docker rm -f -v` PO wywolaniu
 	#    `zwin_stos`, ale wtedy kontenera juz nie ma, wiec ta linia nie miala czego usunac,
 	#    a `|| true` to przykrywalo (recenzja #278, DROBNA 2, otwarta od rundy 3).
 	docker rm -f -v "$KONTENER" > /dev/null 2>&1 || true

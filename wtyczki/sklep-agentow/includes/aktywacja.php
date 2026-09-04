@@ -189,7 +189,7 @@ function sklepag_schemat_braki() {
 		// niosą po dwa (`wp_sklepag_produkty`), więc wzorzec bez escapowania pasuje do KAŻDEJ
 		// tabeli tej samej długości z dowolnym znakiem na tych pozycjach — cudza tabela mogłaby
 		// zostać uznana za naszą i schemat wyglądałby na kompletny. Konwencja tej wtyczki stoi
-		// obok: uninstall.php:69-71 i includes/prywatnosc.php:82.
+		// obok: komentarz o `esc_like()` w uninstall.php i w includes/prywatnosc.php.
 		$jest = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $tabela ) ) );
 		if ( $jest !== $tabela ) {
 			$braki[] = $tabela;

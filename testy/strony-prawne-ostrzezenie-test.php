@@ -21,7 +21,7 @@ if ( ! function_exists( 'wp_insert_post' ) ) {
 	exit( 2 );
 }
 /**
- * ⛔ `includes/admin.php` jest wczytywany WYŁĄCZNIE za `is_admin()` (`sklep-agentow.php:114`),
+ * ⛔ `includes/admin.php` jest wczytywany WYŁĄCZNIE za `is_admin()` (warunek `is_admin()` w `sklep-agentow.php`),
  * a `wp eval-file` biegnie z wiersza poleceń, więc panel się nie ładuje i funkcji nie ma.
  * Dociągam plik jawnie — ale przez to sam odczyt „funkcja istnieje" przestaje dowodzić, że jest
  * WPIĘTA. Dlatego zaraz niżej stoi OSOBNA asercja na `has_action`, a `require_once` wykonuje
@@ -141,7 +141,7 @@ $sprawdz( 'i nie kaze publikowac czegos, co juz jest opublikowane', false === st
 $sprawdz( 'i mowi, ze zmiana zadziala od razu', false !== strpos( $wyj, 'już opublikowana' ) || false !== strpos( $wyj, 'już opublikowane' ) );
 
 echo "=== C2. STAN MIESZANY: jedna ROBOCZA, druga OPUBLIKOWANA z zaslepka ===\n";
-// ⛔ To NIE jest droga egzotyczna, tylko najbardziej prawdopodobna: `aktywacja.php:202-203`
+// ⛔ To NIE jest droga egzotyczna, tylko najbardziej prawdopodobna: `sklepag_utworz_strony()` w `aktywacja.php`
 //    zaklada obie strony jako `draft` z „(SZABLON)” w TYTULE, wiec wlasciciel idzie strona po
 //    stronie i miedzy jedna a druga JEST dokladnie w tym stanie.
 //    Do rundy 6 przelacznikiem zdania koncowego byla ALTERNATYWA po calej liscie (`in_array`),

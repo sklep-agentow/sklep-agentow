@@ -79,7 +79,7 @@ panel mówi mu wprost, przy każdym wejściu, komunikatem, którego nie da się 
 |---|---|---|---|
 | `logowania` | kto i kiedy logował się do panelu, IP | ✅ retencja 90 dni | w porządku |
 | `zdarzenia` | dziennik zdarzeń sklepu | ✅ retencja 90 dni | w porządku |
-| `rate_limit` | licznik zapytań, wiersz żyje ~2 min | ✅ **kasowany po oknie** (`zakup.php:1459`) | w porządku — **zarzut go nie policzył** |
+| `rate_limit` | licznik zapytań, wiersz żyje ~2 min | ✅ **kasowany po oknie** (kasownik w `sklepag_rate_limit()`, `zakup.php`) | w porządku — **zarzut go nie policzył** |
 | `zamowienia` | e-mail kupującego, kwoty, dane do faktury | ❌ świadomie NIE | ⛔ **kasowanie byłoby BŁĘDEM** — to dokument księgowy, obowiązek podatkowy trwa lata, nie 90 dni |
 | `opinie` | imię i treść opinii, zgoda | ❌ NIE | treść **publikowana celowo** na stronie produktu; skasowanie po 90 dniach usunęłoby klientowi opinie. Usuwanie na żądanie działa (eksporter i kasownik RODO) |
 | `produkty` | nazwa, cena, plik | ❌ NIE | **brak danych osobowych** — retencja bezprzedmiotowa |
@@ -89,7 +89,7 @@ panel mówi mu wprost, przy każdym wejściu, komunikatem, którego nie da się 
 
 **Dlaczego tej jednej nie naprawiamy przed oddaniem — powód, nie wygoda:** `sesje_checkout` jest
 czytana przez **dociąganie zaległych płatności** (`sklepag_dociagnij_zalegle`) i przez **obsługę
-wniosków RODO** (`prywatnosc.php:445` liczy sesje powiązane z adresem kupującego). Kasowanie
+wniosków RODO** (`sklepag_rodo_eksporter()` w `prywatnosc.php` liczy sesje powiązane z adresem kupującego). Kasowanie
 z niej wymaga wcześniejszego ustalenia dwóch okien: po jakim czasie sesja nie może już zostać
 domknięta przez reconciliation i jak długo musi być widoczna dla wniosku o dostęp do danych.
 Zmiana w tabeli obsługującej płatności, wprowadzona bez tych ustaleń, ryzykuje **zepsucie

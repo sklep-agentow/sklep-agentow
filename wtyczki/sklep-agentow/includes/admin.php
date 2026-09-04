@@ -40,7 +40,7 @@ function sklepag_ostrzez_permalinki() {
 
 /**
  * Aktywacja zakłada „Regulamin sklepu (SZABLON)" i „Politykę prywatności sklepu (SZABLON)"
- * jako WERSJE ROBOCZE z miejscami na dane sprzedawcy (`aktywacja.php:202-203`). Szablon w wersji
+ * jako WERSJE ROBOCZE z miejscami na dane sprzedawcy (`sklepag_utworz_strony()` w `aktywacja.php`). Szablon w wersji
  * roboczej jest świadomy — treści prawnej nie da się napisać za właściciela, a opublikowanie
  * dokumentu z „[NAZWA, ADRES, KONTAKT]" byłoby gorsze niż jego brak.
  *
@@ -104,7 +104,7 @@ function sklepag_ostrzez_strony_prawne() {
 	//    (`in_array`). W stanie MIESZANYM — jedna strona robocza, druga opublikowana z zaslepka —
 	//    `$sa_robocze` bylo prawda, wiec komunikat mowil „opublikuj te strony” takze o stronie,
 	//    ktora nawias obok nazywal „opublikowana”. Sprzecznosc w JEDNYM akapicie, czyli ta sama
-	//    klasa, ktora ten PR mial zamknac. Stan mieszany nie jest egzotyczny: `aktywacja.php:202-203`
+	//    klasa, ktora ten PR mial zamknac. Stan mieszany nie jest egzotyczny: `sklepag_utworz_strony()` w `aktywacja.php`
 	//    zaklada obie strony jako `draft` z „(SZABLON)” w TYTULE, wiec wlasciciel idzie strona po
 	//    stronie i miedzy jedna a druga JEST w tym stanie.
 	//    Teraz zdanie koncowe mowi osobno o kazdej grupie i tylko wtedy, gdy ta grupa istnieje.
