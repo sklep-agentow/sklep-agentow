@@ -172,9 +172,9 @@ Ręczny przycisk „dociągnij zaległe" jest na dashboardzie sklepu.
 
 ## Krok 5 — pierwszy testowy zakup (5 min)
 
-![Strona sklepu widziana przez kupującego: lista produktów z cenami](zrzuty/sklep-front.png)
+![Strona sklepu widziana przez kupującego: góra strony z nagłówkiem i kaflami produktów](zrzuty/sklep-front.png)
 
-*Tak stronę sklepu widzi kupujący.*
+*Tak stronę sklepu widzi kupujący (górna część — niżej są kolejne produkty).*
 
 1. Wejdź na stronę **Sklep** → wybierz produkt → „Zobacz szczegóły" →
    zaznacz zgodę → **Kup teraz (płatność testowa)**.
@@ -213,16 +213,18 @@ testowym bez poczty treść maila ZAWSZE widać w panelu przy zamówieniu.
 
 ## Co zobaczysz po pierwszym zakupie
 
-![Pulpit sklepu: ostrzeżenia u góry, kafle przychodu i zamówień, wykres zakupów](zrzuty/dashboard-wskazniki.png)
+![Pulpit sklepu: ostrzeżenia u góry, kafle przychodu i zamówień, pasek statusów](zrzuty/dashboard-wskazniki.png)
 
 *Pulpit (Kokpit → Sklep Agentów). Na górze stoją ostrzeżenia — to normalne na świeżej
 instalacji i znikają, gdy uzupełnisz dane sprzedawcy oraz opublikujesz regulamin
-i politykę prywatności. Niżej kafle za wybrany okres i wykres zakupów.*
+i politykę prywatności. Niżej kafle za wybrany okres i pasek statusów zamówień;
+jeszcze niżej, poza kadrem, wykres zakupów w czasie i lista zamówień.*
 
-![Szczegóły zamówienia: status, data zakupu, kupujący, produkt, kwota](zrzuty/zamowienie-naglowek.png)
+![Szczegóły zamówienia: status, data zakupu, kupujący, produkt, dane do faktury](zrzuty/zamowienie-naglowek.png)
 
-*Szczegóły pojedynczego zamówienia. Stąd wysyłasz maila ponownie, gdy pierwsza próba
-nie doszła, i stąd widzisz, ile pobrań kupujący już wykorzystał.*
+*Górna część szczegółów zamówienia (Kokpit → Sklep Agentów → Zamówienia → Szczegóły).
+Niżej, poza kadrem, znajdziesz kwotę, licznik pobrań, przycisk ponownej wysyłki maila
+oraz oś czasu zdarzeń tego zamówienia.*
 
 ## Krok 6 — instalacja botów jako wtyczek Twojej strony (opcjonalnie)
 

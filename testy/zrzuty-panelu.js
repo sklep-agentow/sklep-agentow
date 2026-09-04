@@ -21,7 +21,13 @@ const EKRANY = [
   ['ustawienia', '/wp-admin/admin.php?page=sklepag-ustawienia', { kadr: '#wpbody-content' }],
   ['zamowienie', '/wp-admin/admin.php?page=sklepag-zamowienie&zamowienie=1'],
   // tylko lewa karta zamówienia — oś czasu po prawej niesie nazwy kont i adresy sieci stosu
-  ['zamowienie-naglowek', '/wp-admin/admin.php?page=sklepag-zamowienie&zamowienie=1', { fullPage: false, clip: { x: 160, y: 0, width: 1280, height: 400 } }],
+  // ⛔⛔ SZEROKOSC 840, NIE 1280 (recenzja #283 KRYTYCZNA 1). Komentarz linijke wyzej mowi,
+  //    czego w kadrze byc NIE MOZE — a poszerzenie do pelnej szerokosci wciagnelo dokladnie to:
+  //    karte „Os czasu" z nazwa konta `admin_roboczy` i adresem sieci dockerowej `172.21.0.1`.
+  //    Obszar 160-1000 konczy sie PRZED prawa kolumna. Zdjecie jedzie do klienta DWIEMA drogami
+  //    (zip wtyczki i paczka zbiorcza), a zaden skaner sladow tego nie zlapie: skanery czytaja
+  //    TEKST, nie OBRAZY. To ta sama klasa 139, ktora ten sam PR wnosi do rejestru.
+  ['zamowienie-naglowek', '/wp-admin/admin.php?page=sklepag-zamowienie&zamowienie=1', { fullPage: false, clip: { x: 160, y: 0, width: 840, height: 400 } }],
   ['produkty', '/wp-admin/admin.php?page=sklepag-produkty'],
   // Formularz NOWEGO produktu (pusty): zrzut jedzie do instrukcji klienta, więc bez danych testowych stosu.
   ['produkt-formularz', '/wp-admin/admin.php?page=sklepag-produkty&widok=formularz', { kadr: '#wpbody-content' }],
@@ -61,6 +67,32 @@ const EKRANY = [
        wtyczkami, ktorych kupujacy SAM SKLEP u siebie nie ma). `clip` liczony od x=0 zawsze
        lapie menu; kadr do elementu `#wpbody-content` bierze wylacznie tresc strony.
        Wzorzec wziety z testy/zrzuty-instrukcje.js, gdzie stoi od poczatku. */
+    /* ⛔ POLA Z NASZYMI IDENTYFIKATORAMI podmieniam na wzorcowe PRZED strzalem (recenzja #283
+       DROBNA 3): `ustawienia.png` niosl do klienta klucz publikowalny NASZEGO konta Stripe
+       (`pk_test_51U5Fhg…`). To nie jest sekret — klucz publikowalny z definicji trafia do
+       przegladarki i `gitleaks` daje EXIT=0 — ale to identyfikator naszego konta w paczce
+       SPRZEDAWANEJ klientowi, ktorego zaden skaner nie zobaczy, bo skanery czytaja tekst,
+       nie obrazy. Podmiana jest TYLKO w DOM na czas zrzutu: nic nie zapisuje sie do bazy. */
+    if (!front) {
+      await s.evaluate(() => {
+        /* TYLKO klucz publikowalny: pola sekretne (klucz tajny, podpis webhooka) NIGDY nie
+           pokazuja wartosci — stoi w nich informacja, ze sekret jest ustawiony i zeby zostawic
+           puste. Wzorce dla nich byly wiec martwe, a przy okazji zapalaly bramke poswiadczen
+           (wzorzec whsec_ + 6 znakow), bo same wygladaly jak zywy sekret. Zmierzone:
+           bramka-poswiadczenia.sh dawala EXIT=1 na MOIM wzorcu, nie na prawdziwym sekrecie. */
+        const wzory = { 'pk_test_': 'pk_test_TWOJ_KLUCZ_PUBLIKOWALNY' };
+        for (const pole of document.querySelectorAll('input[type=text], input[type=password], input[type=url]')) {
+          for (const [pre, wzor] of Object.entries(wzory)) {
+            if (typeof pole.value === 'string' && pole.value.startsWith(pre)) pole.value = wzor;
+          }
+        }
+        /* Zrzut ma uczyc stanu DOMYSLNEGO (recenzja #283 DROBNA 3). Na stosie roboczym
+           pelne czyszczenie bywa wlaczone, a opis pola obok mowi, ze domyslnie dane
+           sprzedazy ZOSTAJA — obrazek uczylby wtedy ustawienia niedomyslnego. */
+        const czyszczenie = document.querySelector('#sklepag_usun_dane_przy_odinstalowaniu');
+        if (czyszczenie) czyszczenie.checked = false;
+      });
+    }
     if (opcje && opcje.kadr) {
       const el = s.locator(opcje.kadr).first();
       await el.waitFor({ state: 'visible', timeout: 30000 });
