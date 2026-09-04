@@ -1,5 +1,44 @@
 # CO-WISI — rzeczy oddane komuś / bez strażnika (zasada: oddajesz ⇒ wiersz, wraca ⇒ kasujesz)
 
+
+## ⭐⛔ CO Z TEGO DŁUGU JEDZIE DO KLIENTA — lista do przejrzenia PRZED KAŻDYM WYDANIEM (3.09)
+
+**Po co ta sekcja:** ten plik ma kilkadziesiąt pozycji i **nic nie pytało, które z nich wchodzą do paczki**.
+To klasa `I-16` w najgorszym wydaniu — raz już tak wyszedł do klienta brak eksportera i erasera RODO.
+⛔ To **nie jest** rejestr znalezisk: `audyt/REJESTR-ZNALEZISK.md` wymaga strażnika przy każdym wpisie
+(`bramka-znaleziska.sh`: „znalezisko bez testu zatrzymuje bramkę"), a te pozycje są w większości świadomym
+długiem, nie robotą do zrobienia w tym wydaniu. Tu stoją po to, żeby **nikt ich nie wydał, nie wiedząc**.
+
+**Sprawdzone 3.09 przez `narzedzia-qa/pakuj-dla-klienta.sh` i allowlistę `boty/buduj-paczki.sh`** — przez listę
+plików paczki, nie przez nazwę katalogu.
+
+| co | gdzie w kodzie | dlaczego jedzie | status |
+|---|---|---|---|
+| pola `required` bez polskiego komunikatu | `admin-produkty.php:319,322` · `admin-ustawienia.php` | właściciel zobaczy przy pierwszym pustym zapisie produktu | otwarte, tanie |
+| asymetria list znaków w eksporcie CSV | `admin-dashboard.php:269` · `segregator/csv.php:310` · `chatbot/csv.php:29` | sklep chroni 7 znaków, segregator 6 (bez apostrofu), chatbot 4 — ciche uszkodzenie danych, nie awaria | otwarte |
+| status „zamknięty" w trzech składniach | `sklep-agentow.php:44` · `admin-zamowienie.php` (5 miejsc) | dziś śpi; obudzi się przy dodaniu nowego statusu — np. „Wyślij ponownie" po obciążeniu zwrotnym | otwarte |
+| pięć zapisów w ponownej wysyłce bez sprawdzonego wyniku | `admin-zamowienie.php:104,130,179,194,196` | ta sama klasa, którą naprawialiśmy w anonimizacji | ⭐ **dług NAZWANY** — `admin-zamowienie.php:28` niesie nasze własne przyznanie się |
+| luki w instrukcji instalacji | `dokumentacja/INSTRUKCJA-INSTALACJI.md` | **zero obrazów** (kontrola wzorca: instrukcje wtyczek mają 6/5/6), myląca numeracja menu, ewidencja kasy fiskalnej, retencja faktur, zachowanie przy złym NIP-ie | otwarte, tekst |
+| pięć obrazów w paczce sklepu | `wtyczki/sklep-agentow/zrzuty/*.png` | pokazują menu z ChatBot LIVE i Segregatorem; klient bez tych wtyczek zobaczy ekran, którego u siebie nie ma | otwarte, drobne |
+
+**Dopisane 3.09 po przelocie egzaminatora panelu (świeże oczy, nie moja rama):**
+
+| co | gdzie w kodzie | dlaczego jedzie | status |
+|---|---|---|---|
+| **surowe kody zdarzeń w dzienniku, w tym jedyne angielskie słowo w polskim panelu** | `class-sklepag-lista-zdarzen.php`, `column_default()` — gałąź `case 'typ'` zwraca `esc_html( $item->$column_name )`, zero mapowania na etykietę | właściciel widzi `reconciliation_blad`, `reconciliation_wynik`, `webhook_unpaid`, `checkout_blad` — 28 kodów, bez legendy. Ten sam mechanizm ma na pulpicie ludzką etykietę (przycisk „Dociągnij zaległe teraz” w `admin-dashboard.php`), więc rozjazd jest w jednym ekranie | **świadomie ODŁOŻONE 3.09** |
+
+⛔ **Dlaczego odłożone, a nie naprawione od ręki:** jeden z typów jest **sklejany dynamicznie**
+(`opinie.php:205`: `'opinia_' . $nowy`), więc uczciwa mapa wymaga najpierw rozstrzygnięcia zbioru
+wartości, a mapa niepełna bez pilnowanego fallbacku jest gorsza niż surowy kod. Naprawa warta
+zrobienia **razem z testem, który pilnuje, że każdy typ użyty w kodzie ma etykietę** — inaczej
+kompletność jest obietnicą, nie bramką. Widoczne dopiero po wejściu w podstronę Dziennik, więc
+nie blokuje wydania.
+
+⛔ **Czego ta lista NIE obejmuje** (uczciwie, żeby nie udawała kompletnej): pozycje czysto narzędziowe
+zakwalifikowano po katalogu (`testy/`, `narzedzia-qa/`, `audyt/` są poza allowlistą), **bez osobnego uruchomienia**;
+zawartość pięciu obrazów sprawdzono co do liczby plików, nie co do treści; numerów linii w wierszu „asymetria CSV"
+nie odświeżano wobec dzisiejszego `HEAD`.
+
 ## 🟡 SPRZĄTANIE STRAŻNIKA LIMITU UPLOADU KASUJE WSZYSTKO, CO POWSTAŁO W TRAKCIE PRZEBIEGU (2.09, recenzja `#263` r3, DROBNA 4) — dług
 
 `testy/limit-uploadu-mowi-prawde.sh`: `DELETE … WHERE typ = 'upload_produktu_blad' AND id > ID_PRZED` kasuje po sobie
@@ -289,7 +328,16 @@ działanie wzorca** — bo dokładnie ta różnica kosztowała trzy rundy.
 
 ---
 
-## 🔴 BANER „TRYB TESTOWY" JEST ZASZYTY W KODZIE — na produkcji skłamie kupującemu (29.08, recenzja #209 r6)
+## ✅ ROZLICZONE — baner „TRYB TESTOWY” ma warunek od 0.9.29 (wpis z 29.08, recenzja #209 r6)
+
+⛔ **Ten wpis był otwarty o dwa dni za długo i zdążył zrodzić fałszywą decyzję D38** (wycofaną 3.09).
+Zmierzone na `origin/main`, każde miejsce osobno: `sklepag_tryb_testowy()` czyta prefiks klucza,
+`sklepag_baner_testowy()` zwraca **pusty napis** przy `sk_live_`, a pozostałe miejsca w `sklep-agentow.php`,
+`front-produkt.php`, `zakup.php` (treść maila „TRYB TESTOWY”) i `mail-html.php` idą przez `sklepag_tryb_testowy()`. Wydanie: sekcja `## [0.9.29]`
+w `CHANGELOG.md` (1.09). **Nauka:** rozliczaj wpis W TEJ SAMEJ rundzie, w której naprawiasz — wpis żyjący po
+naprawie jest groźniejszy niż brak wpisu, bo czytelnik nie sprawdza kodu, tylko wierzy rejestrowi.
+
+<details><summary>Treść wpisu z 29.08 (historia — opisuje stan SPRZED 0.9.29)</summary>
 
 `sklepag_baner_testowy()` (`wtyczki/sklep-agentow/sklep-agentow.php:168`) zwraca **stały HTML,
 bez jednego warunku**, a **wszystkie TRZY wywołania są bezwarunkowe**: `sklep-agentow.php:286` (lista),
@@ -344,6 +392,8 @@ TESTOWYCH baner jest poprawny i egzaminu nie psuje — problem pojawia się dopi
 prawdziwym wdrożeniu.
 
 ---
+
+</details>
 
 ## 🟡 ODDANE DO K8 — odbior WYDAJNOSCI (perf) na docelowym hostingu · AN-022
 - `perf` z Lighthouse NIE zostal odebrany w K7 i to jest decyzja, nie przeoczenie: na tym stosie
@@ -415,6 +465,15 @@ prawdziwym wdrożeniu.
   zakup gościa wymaga nonce (`zakup.php:66`) → page-cache; brak eksportera/erasera RODO WP (D: dopisać w naprawach);
   zwroty Stripe bez obsługi (decyzja po L3); WP-Cron bez ruchu nie w instrukcji.
 - 3 martwe pliki mediów w paczce (1,06 MB) — kasowanie ZGODA właściciela 25.08, wykonać w rundzie napraw (bump).
+- ✅ **ROZLICZENIE TRZECH ZALEGŁOŚCI Z TEJ LISTY (3.09, pomiar na `origin/main`, kod otwarty ręcznie):**
+  **DOK-TECH „7 tabel" vs „6"** — dziś dwa wystąpienia „7 tabel", zero „6 tabel" ⇒ rozjazdu NIE MA ·
+  **brak eksportera/erasera RODO WP** — `includes/prywatnosc.php` rejestruje przez `add_filter` `wp_privacy_personal_data_exporters`
+  i `…_erasers`, bliźniaki w `chatbot-live/includes/rodo.php`; oba pliki dołączane BEZWARUNKOWO
+  (w plikach glownych obu wtyczek), nie za `is_admin()`, bo kreator woła też przez `admin-ajax` i cron ·
+  **zwroty Stripe bez obsługi** — `includes/zakup.php` w obsłudze webhooka nasłuchuje `refund.created`, `refund.updated`
+  ORAZ `charge.refunded` i rozstrzyga po kwocie już zapisanej w bazie.
+  ⛔ Reszta wiersza wyżej (`#170` w dokumencie klienta, tabela §2 bez `opinie.php`, martwe wpisy Cloudflare/Vercel,
+  nonce zakupu gościa, WP-Cron w instrukcji) **NIE była w tym pomiarze** — zostaje otwarta.
 
 ## ✅ ZAMKNIĘTE 25.08 (wieczór) — SKLEP: readme.txt + CHANGELOG.md + paczka 0.9.13 (PR-0 K7)
 - `paczka-zgodnosc.sh sklep-agentow` EXIT 0 (6 miejsc wersji, zip == repo 59 plików, treść wydania, 0 śladów),
@@ -612,6 +671,11 @@ prawdziwym wdrożeniu.
 - **readme.txt Segregatora, wiersz „Wymagania"** — dopisać `stream_socket_client` + OpenSSL
   (dla prawdziwej skrzynki IMAP; FAQ sklepu już to mówi). Paczka 1.3.3 jest WYDANA i pod
   zamkiem — poprawka wchodzi z NASTĘPNYM wydaniem bota, nie osobno.
+  ✅ **ZAMKNIĘTE (potwierdzone 3.09 na `origin/main`):** `wtyczki/segregator-maila/readme.txt:85-86` mówi
+  o `stream_socket_client` i rozszerzeniu OpenSSL, z ostrzeżeniem o najtańszych hostingach i wskazaniem
+  wbudowanej diagnostyki; `wtyczki/segregator-maila/CHANGELOG.md:32-33` potwierdza wejście poprawki (⛔ do rundy 2 stał tu odsyłacz do `CHANGELOG.md` SKLEPU zamiast Segregatora; wskazywał wtedy
+  sekcję „[0.9.29]” z wpisem o banerze trybu testowego. ⛔ Numer podaję w czasie PRZESZŁYM, bo
+  scalenie `d253789` przesunęło tamten plik i dziś pod tym numerem stoi zupełnie inny wpis). Wpis wisiał otwarty po naprawie.
 - **Bramka na LICZBY strony sprzedażowej** (`front-produkt.php`: „6 zrzutów", „10 par",
   „30 maili demo") — dziś prawdziwe (zmierzone w r1 #172), ale bez strażnika zgniją po cichu
   jak każda liczba; wzór: `dokumentacja-zgodnosc*.sh`.

@@ -328,10 +328,10 @@ spr "ZERO sztywnych LIMIT-ow w listach" "0" "grep -c 'ORDER BY id DESC LIMIT 50\
 spr "lista przebiegow stronicowana"  "1" "awk '/function segm_strona_przebiegi/,/^}/' $W/includes/admin.php | grep -c 'segm_pasek_stron('"
 spr "lista probki stronicowana"      "1" "awk '/function segm_strona_probka/,/^}/' $W/includes/admin.php | grep -c 'segm_pasek_stron('"
 spr "historia skrzynki stronicowana" "1" "awk '/function segm_skrzynka_tabela_przebiegow/,/^}/' $W/includes/admin-skrzynka.php | grep -c 'segm_pasek_stron('"
-spr "wszystkie trzy listy z OFFSET"  "3" "grep -c 'LIMIT %d OFFSET %d' $W/includes/admin.php $W/includes/admin-skrzynka.php | grep -oP '(?<=:)\d+' | paste -sd+ | bc"
+spr "wszystkie trzy listy z OFFSET"  "3" "grep -c 'LIMIT %d OFFSET %d' $W/includes/admin.php $W/includes/admin-skrzynka.php | grep -oP '(?<=:)\d+' | awk '{s+=\$1} END{print s+0}'"
 spr "pasek podaje zakres i sume"     "1" "awk '/function segm_pasek_stron/,/^}/' $W/includes/admin.php | grep -c 'displaying-num'"
-spr "odnosniki w listach niosa numer strony" "3" "grep -c \"segm_strona=' . (int) \\\$strona_nr\" $W/includes/admin.php $W/includes/admin-skrzynka.php | grep -oP '(?<=:)\\d+' | paste -sd+ | bc"
-spr "powrot wraca na te sama strone" "3" "grep -c 'segm_param_strony() )' $W/includes/admin.php $W/includes/admin-skrzynka.php $W/includes/admin-probka.php | grep -oP '(?<=:)\\d+' | paste -sd+ | bc"
+spr "odnosniki w listach niosa numer strony" "3" "grep -c \"segm_strona=' . (int) \\\$strona_nr\" $W/includes/admin.php $W/includes/admin-skrzynka.php | grep -oP '(?<=:)\\d+' | awk '{s+=\$1} END{print s+0}'"
+spr "powrot wraca na te sama strone" "3" "grep -c 'segm_param_strony() )' $W/includes/admin.php $W/includes/admin-skrzynka.php $W/includes/admin-probka.php | grep -oP '(?<=:)\\d+' | awk '{s+=\$1} END{print s+0}'"
 spr "dokumentacja opisuje stronicowanie" "1" "grep -c '8.3. Stronicowanie list' $DOK"
 
 echo "=== Y. Licznik trafien: dane pobierane RAZ na cala liste ==="
