@@ -38,6 +38,12 @@ for f in dla-klienta/PRZECZYTAJ-MNIE.txt dokumentacja/INSTRUKCJA-INSTALACJI.md; 
 done
 if ! ls dokumentacja/diagramy/*.png > /dev/null 2>&1; then echo "PAKUJ: brak dokumentacja/diagramy/*.png — najpierw: node dokumentacja/render-diagramy.js" >&2; exit 2; fi
 cp dokumentacja/diagramy/*.png "$ROB/paczka/diagramy/"; echo "  + dokumentacja/diagramy/ ($(ls dokumentacja/diagramy/*.png | wc -l) PNG)"
+# ⛔ ZRZUTY EKRANU DO INSTRUKCJI (recenzja #280: instrukcja instalacji nie miala ANI JEDNEGO
+#    obrazka, przy wzorcu rynkowym 5-6 dla wtyczek). Instrukcja odwoluje sie do nich sciezka
+#    `zrzuty/...`, wiec katalog MUSI trafic do paczki obok INSTRUKCJA-INSTALACJI.md.
+if ! ls dokumentacja/zrzuty/*.png > /dev/null 2>&1; then echo "PAKUJ: brak dokumentacja/zrzuty/*.png — najpierw: node testy/zrzuty-panelu.js" >&2; exit 2; fi
+mkdir -p "$ROB/paczka/zrzuty"
+cp dokumentacja/zrzuty/*.png "$ROB/paczka/zrzuty/"; echo "  + dokumentacja/zrzuty/ ($(ls dokumentacja/zrzuty/*.png | wc -l) PNG)"
 
 WER="$(wersja_z_naglowka sklep-agentow)"
 NAZWA="sklep-agentow-KLIENT-$WER"
@@ -53,6 +59,10 @@ spr() { if eval "$2" > /dev/null 2>&1; then echo "  OK   $1"; else echo "  ⛔ N
 spr "3 zipy wtyczek w paczce"                      "[ \$(ls *.zip | wc -l) -eq 3 ]"
 spr "PRZECZYTAJ-MNIE.txt i INSTRUKCJA-INSTALACJI.md" "[ -f PRZECZYTAJ-MNIE.txt ] && [ -f INSTRUKCJA-INSTALACJI.md ]"
 spr "diagramy: 3 PNG"                              "[ \$(ls diagramy/*.png | wc -l) -eq 3 ]"
+spr "zrzuty do instrukcji: 5 PNG"                  "[ \$(ls zrzuty/*.png | wc -l) -eq 5 ]"
+# ⛔ Kontrola NA TRESCI, nie na istnieniu: kazdy obrazek, do ktorego instrukcja sie odwoluje,
+#    musi w paczce ISTNIEC. Inaczej klient dostaje polamane odnosniki, a plik i tak sie zgadza.
+spr "kazdy obrazek z instrukcji istnieje w paczce" "! grep -oE '\\]\\((zrzuty|diagramy)/[^)]+\\)' INSTRUKCJA-INSTALACJI.md | tr -d ')' | sed 's/^](//' | while read -r o; do [ -f \"\$o\" ] || echo BRAK; done | grep -q BRAK"
 spr "SHA256SUMS.txt zgadza się po rozpakowaniu"    "sha256sum -c --quiet SHA256SUMS.txt"
 spr "sumy obejmują KAŻDY plik paczki"              "[ \$(find . -type f ! -name SHA256SUMS.txt | wc -l) -eq \$(wc -l < SHA256SUMS.txt) ]"
 spr "wersja sklepu w nazwie paczki == nagłówek"    "[ -f sklep-agentow-$WER.zip ]"
@@ -66,5 +76,5 @@ for z in *.zip; do
 	spr "$z: INSTRUKCJA.md w środku"                     "unzip -l '$z' | grep -q ' $w/INSTRUKCJA.md\$'"
 done
 spr "sklep: PONAD-SPECYFIKACJE.md w zipie sklepu"        "unzip -l sklep-agentow-$WER.zip | grep -q ' sklep-agentow/PONAD-SPECYFIKACJE.md\$'"
-if [ "$ZLE" -eq 0 ]; then echo "PAKUJ: SAMOKONTROLA PRZESZŁA ($(( 7 + 3 * 3 + 1 )) kontroli) — wydanie/$NAZWA.zip gotowe do Releases"; exit 0; fi
+if [ "$ZLE" -eq 0 ]; then echo "PAKUJ: SAMOKONTROLA PRZESZŁA ($(( 9 + 3 * 3 + 1 )) kontroli) — wydanie/$NAZWA.zip gotowe do Releases"; exit 0; fi
 echo "PAKUJ: SAMOKONTROLA PADŁA ($ZLE) — paczki NIE wydawać"; exit 1

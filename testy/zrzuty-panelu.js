@@ -11,18 +11,20 @@ const fs = require('fs');
 
 const EKRANY = [
   ['dashboard-7dni', '/wp-admin/admin.php?page=sklepag&okres=7dni'],
-  ['dashboard-wskazniki', '/wp-admin/admin.php?page=sklepag&okres=7dni', { fullPage: false, clip: { x: 0, y: 0, width: 1440, height: 640 } }],
+  // ⛔ x:160 = szerokosc menu wp-admin. Kadr MUSI konczyc sie nad lista zamowien: nizej sa
+  //    adresy e-mail ze stosu testowego, ktore NIE MOGA pojsc do klienta w paczce.
+  ['dashboard-wskazniki', '/wp-admin/admin.php?page=sklepag&okres=7dni', { fullPage: false, clip: { x: 160, y: 0, width: 1280, height: 640 } }],
   ['dashboard-30dni', '/wp-admin/admin.php?page=sklepag&okres=30dni'],
   ['dashboard-filtr-blad', '/wp-admin/admin.php?page=sklepag&status=mail_blad'],
   ['dziennik-logowania', '/wp-admin/admin.php?page=sklepag-dziennik&zakladka=logowania'],
   ['dziennik-zdarzenia', '/wp-admin/admin.php?page=sklepag-dziennik&zakladka=zdarzenia'],
-  ['ustawienia', '/wp-admin/admin.php?page=sklepag-ustawienia'],
+  ['ustawienia', '/wp-admin/admin.php?page=sklepag-ustawienia', { kadr: '#wpbody-content' }],
   ['zamowienie', '/wp-admin/admin.php?page=sklepag-zamowienie&zamowienie=1'],
   // tylko lewa karta zamówienia — oś czasu po prawej niesie nazwy kont i adresy sieci stosu
-  ['zamowienie-naglowek', '/wp-admin/admin.php?page=sklepag-zamowienie&zamowienie=1', { fullPage: false, clip: { x: 0, y: 0, width: 1000, height: 440 } }],
+  ['zamowienie-naglowek', '/wp-admin/admin.php?page=sklepag-zamowienie&zamowienie=1', { fullPage: false, clip: { x: 160, y: 0, width: 1280, height: 400 } }],
   ['produkty', '/wp-admin/admin.php?page=sklepag-produkty'],
   // Formularz NOWEGO produktu (pusty): zrzut jedzie do instrukcji klienta, więc bez danych testowych stosu.
-  ['produkt-formularz', '/wp-admin/admin.php?page=sklepag-produkty&widok=formularz'],
+  ['produkt-formularz', '/wp-admin/admin.php?page=sklepag-produkty&widok=formularz', { kadr: '#wpbody-content' }],
   ['opinie', '/wp-admin/admin.php?page=sklepag-opinie'],
   // Lista sklepu: tylko góra strony (hero + kafle) — pełna strona ma sekcje odsłaniane dopiero przy przewijaniu.
   ['sklep-front', '/sklep/', { fullPage: false, clip: { x: 0, y: 0, width: 1440, height: 1460 } }],
@@ -54,7 +56,18 @@ const EKRANY = [
     await s.goto(BAZA + sciezka, { waitUntil: 'load' });
     await s.waitForTimeout(400);
     if (!front) await bezSladow(s);
-    await s.screenshot({ path: `${GDZIE}/${nazwa}.png`, fullPage: true, ...(opcje || {}) });
+    /* ⛔ KADR DO TRESCI dla zrzutow jadacych DO KLIENTA (recenzja #280: pieć zdjec w paczce
+       sklepu pokazywalo lewe menu wp-admin z pozycjami "ChatBot LIVE" i "Segregator maila" —
+       wtyczkami, ktorych kupujacy SAM SKLEP u siebie nie ma). `clip` liczony od x=0 zawsze
+       lapie menu; kadr do elementu `#wpbody-content` bierze wylacznie tresc strony.
+       Wzorzec wziety z testy/zrzuty-instrukcje.js, gdzie stoi od poczatku. */
+    if (opcje && opcje.kadr) {
+      const el = s.locator(opcje.kadr).first();
+      await el.waitFor({ state: 'visible', timeout: 30000 });
+      await el.screenshot({ path: `${GDZIE}/${nazwa}.png` });
+    } else {
+      await s.screenshot({ path: `${GDZIE}/${nazwa}.png`, fullPage: true, ...(opcje || {}) });
+    }
     if (front) await s.close();
     console.log('ZRZUT:', nazwa);
   }

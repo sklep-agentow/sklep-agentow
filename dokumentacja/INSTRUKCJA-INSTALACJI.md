@@ -78,6 +78,11 @@ nie da się przejść.
 2. Dashboard → Developers → API keys → skopiuj **Secret key**
    (zaczyna się od `sk_test_…`).
 3. Kokpit → Sklep Agentów → Ustawienia → sekcja „Stripe (tryb testowy)":
+
+![Ekran Ustawień sklepu: sekcje kluczy Stripe, danych sprzedawcy i limitów](zrzuty/ustawienia.png)
+
+*Tak wygląda ekran Ustawień. Klucze wklejasz w sekcji Stripe; pola niżej (dane sprzedawcy) uzupełnisz przed sprzedażą na serio.*
+
    - **Klucz sekretny (sk_test_…)** — wklej klucz z punktu 2.
    - **Sekret webhooka (whsec_…)** — patrz Krok 3 (zależy od tego, gdzie
      stoi strona).
@@ -147,6 +152,11 @@ Ręczny przycisk „dociągnij zaległe" jest na dashboardzie sklepu.
 ## Krok 4 — produkty (10 min)
 
 1. Kokpit → Sklep Agentów → Produkty → **Dodaj produkt**.
+
+![Formularz nowego produktu: nazwa, opis krótki, opis pełny, cena, plik ZIP, przełącznik sprzedaży](zrzuty/produkt-formularz.png)
+
+*Pusty formularz produktu. Zaznaczenie „Produkt widoczny i kupowalny" wymaga wcześniejszego wgrania pliku ZIP — bez niego zapis wróci z błędem.*
+
 2. Wypełnij: nazwa (np. „ChatBot LIVE"), opis krótki (na listę sklepu),
    opis pełny, cena, waluta.
 3. **Plik paczki (ZIP)** — wgraj zip bota (np. `chatbot-live.zip`).
@@ -161,6 +171,10 @@ Ręczny przycisk „dociągnij zaległe" jest na dashboardzie sklepu.
 5. Powtórz dla drugiego bota.
 
 ## Krok 5 — pierwszy testowy zakup (5 min)
+
+![Strona sklepu widziana przez kupującego: lista produktów z cenami](zrzuty/sklep-front.png)
+
+*Tak stronę sklepu widzi kupujący.*
 
 1. Wejdź na stronę **Sklep** → wybierz produkt → „Zobacz szczegóły" →
    zaznacz zgodę → **Kup teraz (płatność testowa)**.
@@ -196,6 +210,19 @@ Kupujący widzi wtedy kwotę, której nie ma na Twojej stronie, i łatwo to prze
 wysyłką rządzi hosting — jeśli maile nie wychodzą, skontaktuj się z pomocą
 hostingu albo skonfiguruj SMTP (dowolną wtyczką SMTP). W środowisku
 testowym bez poczty treść maila ZAWSZE widać w panelu przy zamówieniu.
+
+## Co zobaczysz po pierwszym zakupie
+
+![Pulpit sklepu: ostrzeżenia u góry, kafle przychodu i zamówień, wykres zakupów](zrzuty/dashboard-wskazniki.png)
+
+*Pulpit (Kokpit → Sklep Agentów). Na górze stoją ostrzeżenia — to normalne na świeżej
+instalacji i znikają, gdy uzupełnisz dane sprzedawcy oraz opublikujesz regulamin
+i politykę prywatności. Niżej kafle za wybrany okres i wykres zakupów.*
+
+![Szczegóły zamówienia: status, data zakupu, kupujący, produkt, kwota](zrzuty/zamowienie-naglowek.png)
+
+*Szczegóły pojedynczego zamówienia. Stąd wysyłasz maila ponownie, gdy pierwsza próba
+nie doszła, i stąd widzisz, ile pobrań kupujący już wykorzystał.*
 
 ## Krok 6 — instalacja botów jako wtyczek Twojej strony (opcjonalnie)
 
