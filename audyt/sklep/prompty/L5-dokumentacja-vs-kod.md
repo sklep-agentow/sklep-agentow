@@ -24,7 +24,10 @@ przez koordynatorkę + repo jako źródło grepów. Inwentarz punktów wejścia:
    go uruchomić, ale jego zielony wynik cytujesz tylko przy obietnicach LICZBOWYCH — nigdy jako dowód behawioralny.
    ⭐⭐ **ZESTAWIENIE OBIETNIC BEHAWIORALNYCH IDZIE DO RAPORTU**, w polu `obietnice_behawioralne` — nie zostaje
    w Twoim brudnopisie. KAŻDA wypisana obietnica dostaje własny werdykt; pozycja pominięta bez werdyktu jest
-   niedopuszczalna, a raport bez tego pola zostaje odrzucony bez czytania. **Co najmniej 10 pozycji musi mieć
+   niedopuszczalna. ⛔ Egzekwuje to SCHEMAT (`obietnice_behawioralne` wymagane dla L5 w rundach
+   `weryfikacja` i `re-audyt`, `contains`+`minContains: 10` na werdyktach ZGODNE/ROZJAZD) — a nie to
+   zdanie. Do czasu, aż raporty będą walidowane schematem automatycznie, sprawdza to koordynatorka
+   przy odbiorze; nie pisz więc, że raport „zostanie odrzucony bez czytania”, bo dziś nikt tego nie robi. **Co najmniej 10 pozycji musi mieć
    werdykt `ZGODNE` albo `ROZJAZD`**, czyli być ZMIERZONA wykonaniem na stosie (komenda + surowe wyjście PRZED
    i PO); reszta może mieć `NIE SPRAWDZIŁEM` / `NIE DA SIĘ SPRAWDZIĆ` **z powodem**.
    ⛔ Powód tej zasady, zmierzony: raport oddany z 19 z 30 dostępnych wywołań i ZEREM pomiarów behawioralnych

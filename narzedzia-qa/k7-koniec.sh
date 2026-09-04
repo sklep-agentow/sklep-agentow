@@ -1,5 +1,5 @@
 #!/bin/bash
-# k7-koniec.sh — KONIEC AUDYTU K7 OGŁASZA SKRYPT, NIE UCZUCIE.                       WERSJA 1.3.6
+# k7-koniec.sh — KONIEC AUDYTU K7 OGŁASZA SKRYPT, NIE UCZUCIE.                       WERSJA 1.4.0
 #
 # PO CO: plan K7 v1 mówił „GO/NO-GO = trzy liczby liczone skryptem”, a skryptu nie było
 # (krytyka r1: nasz krytyk K1, C2 #15, C3 #11). Bez maszyny koniec rozstrzyga pamięć
@@ -73,7 +73,11 @@ fi
 #    Referencja z FALLBACKIEM (recenzja #184 r2 W1): w świeżym klonie (CI, recenzent) gałąź istnieje TYLKO jako
 #    origin/audyt/mutanty-sklep — goły `git show audyt/mutanty-sklep:…` dawał fałszywy FAIL (klasa jak W8).
 GALAZ_MUT=""
-for ref in audyt/mutanty-sklep origin/audyt/mutanty-sklep bank/mutanty-sklep; do git rev-parse --verify --quiet "$ref^{commit}" >/dev/null && { GALAZ_MUT="$ref"; break; }; done
+# Kolejnosc od NAJSWIEZSZEGO: galaz (lokalna, potem origin), potem tag rundy weryfikacji,
+# a dopiero na koncu tag rundy A. ⛔ Powod, znalezisko recenzji #279 W2: tag `bank/mutanty-sklep`
+# zamrozil rozliczenie z 26.08 (L1 i L5 NIEKALIBROWANE), wiec bez tej kolejnosci bramka dawala
+# DWA SPRZECZNE wyniki zaleznie od tego, ktory ref istnial w klonie. Starych tagow nie ruszamy.
+for ref in audyt/mutanty-sklep origin/audyt/mutanty-sklep bank/mutanty-sklep-r2 bank/mutanty-sklep; do git rev-parse --verify --quiet "$ref^{commit}" >/dev/null && { GALAZ_MUT="$ref"; break; }; done
 if [ -z "$GALAZ_MUT" ]; then
 	fail "2 kalibracja: brak banku mutantów — ani tag bank/mutanty-sklep, ani gałąź audyt/mutanty-sklep (lokalna/origin/)"
 elif ! ROZL_SUROWE=$(git show "$GALAZ_MUT:audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP.md" 2>/dev/null) || [ -z "$ROZL_SUROWE" ]; then
@@ -93,7 +97,10 @@ else
 	PROBY_ZLE=$(printf '%s\n' "$ROZL" | grep -E '^\| (L[1-5]|L) \|' | awk -F'|' '{
 		p=$7; gsub(/[ \t]/,"",p);
 		pow=$8; gsub(/^[ \t]+|[ \t]+$/,"",pow);
-		if (p+0>4) n++; else if (p+0>2 && pow=="") n++;
+		# ZASLEPKA to nie powod: samo "-", "—", "?" albo napis krotszy niz 20 znakow nie tlumaczy niczego
+		# (recenzja #279 D8: proba kontrolna mierzyla pusto vs niepusto, wiec myslnik przechodzil).
+		zaslepka = (pow=="" || pow=="-" || pow=="—" || pow=="?" || pow=="." || length(pow)<20);
+		if (p+0>4) n++; else if (p+0>2 && zaslepka) n++;
 	} END{print n+0}')
 	if [ "$ILE" -ge 6 ] && [ "$ZLE" -eq 0 ] && [ "$PROBY_ZLE" -eq 0 ]; then pass "2 kalibracja ($GALAZ_MUT): $ILE soczewek PASS, proby ≤ 2 albo uzasadnione (≤ 4)"; else fail "2 kalibracja: soczewek=$ILE, bez PASS=$ZLE, proby bez powodu lub >4=$PROBY_ZLE"; fi
 fi

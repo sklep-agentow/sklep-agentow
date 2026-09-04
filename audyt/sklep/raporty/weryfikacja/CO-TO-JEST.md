@@ -1,0 +1,47 @@
+# Runda WERYFIKACJA — 4.09.2026, kalibracja soczewek L1 i L5
+
+Trzy raporty audytorów z przebiegu, który zamknął `FAIL 2` bramki wydania. Leżą TUTAJ, a nie
+w katalogu roboczym koordynatorki, bo **dowód poza repozytorium nie istnieje** — cały PASS dla
+`L1` i `L5` stoi na tych plikach i recenzent musi mieć czym go sprawdzić.
+
+| plik | soczewka | mutant | wynik |
+|---|---|---|---|
+| `L1.json` | L1 | M1 (dziennik nie loguje NIEISTNIEJĄCYCH loginów) | **PASS**, próba 3 |
+| `L5-proba3.json` | L5 | M6 (HEAD zużywa slot pobrania) | **FAIL**, próba 3 |
+| `L5-proba4.json` | L5 | M6 | **PASS**, próba 4 |
+
+## Warunki przebiegu (odtwarzalne)
+
+- Paczka zbudowana z tagu `bank/mutanty-sklep` (`412d9b3`, wtyczka 0.9.13),
+  sha256 `8d0792390497e56bfeb1c8c19bc9b901f8ef0b34cf882b7ffbad2875967fa56f`.
+  ⛔ **Inny niż `425a3124…` z rundy A** — zip nie jest odtwarzalny bit w bit (znaczniki czasu).
+  Rozstrzyga ZAWARTOŚĆ: sześć z siedmiu kotwic po jednym trafieniu; siódma (`M3`) daje zero
+  **poprawnie**, bo ten mutant usuwa własną kotwicę.
+- Próba kontrolna paczki, dwukierunkowa: `username_exists` i `HEAD: same nag` obecne w paczce,
+  **0 trafień** na czystym `main`.
+- Stos: `probny_wp` `:8891`, WordPress 6.7.2 / PHP 8.1, wzorzec mutanta potwierdzony w kontenerze.
+- Audytorzy: świeże subagenty `model:"sonnet"`, **zwykły prompt, bez wiedzy o kalibracji**
+  (`STOPKA.md`: audytor, który wie o podłożonym błędzie, zmyśli, byle go znaleźć).
+- `commit_head` w raportach to `412d9b38…` (HEAD gałęzi mutantów). ⛔ Różni się od SHA
+  w `ZAMROZENIE.md` (`5d3dcf9`) i **tak ma być**: zamrożenie opisuje czystą 0.9.13, a gałąź
+  mutantów niesie commity mutantów na wierzchu. Audytor L5 sam to zgłosił jako anomalię,
+  nie zgadując — słusznie.
+
+## ⛔ Czego te raporty NIE spełniają — mówię wprost
+
+`L5-proba4.json` ma **9 pozycji zmierzonych w `obietnice_behawioralne`, nie 10**, czyli nie
+spełnia progu, który ten sam PR wprowadza. Audytor zgłosił to SAM i poprosił o przeliczenie;
+przeliczyłam — jest 9. Powód, dla którego raport mimo to jest tu i mimo to daje `PASS`:
+
+- `PASS` w kalibracji mierzy **CZUŁOŚĆ** (100 % mutantów własnego zakresu, 0 alarmów na
+  pułapkach `F1–F4`, poprawna kwalifikacja) — te trzy warunki są spełnione;
+- próg 10 to **inny wymiar** i w chwili tego przebiegu **nie był egzekwowalny** — siedział
+  w opisie pola, a `minItems` liczy pozycje, nie werdykty. Od tego PR-a egzekwuje go
+  `contains` + `minContains`, sprawdzone na TYM pliku:
+  `Too few items match the given schema (expected at least 10 but only 9 matched)`.
+
+⇒ Ten raport **nie przeszedłby dzisiejszego schematu** i to jest zamierzone: jest dowodem
+historycznym, nie wzorcem do naśladowania. Następny raport L5 musi mieć 10 zmierzonych.
+
+⛔ Raportów **nie wolno edytować po fakcie** — to są dowody. Jeśli któryś łamie schemat,
+opisuje się to tutaj, a nie poprawia plik.
