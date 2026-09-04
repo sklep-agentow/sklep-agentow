@@ -79,7 +79,7 @@ panel mówi mu wprost, przy każdym wejściu, komunikatem, którego nie da się 
 |---|---|---|---|
 | `logowania` | kto i kiedy logował się do panelu, IP | ✅ retencja 90 dni | w porządku |
 | `zdarzenia` | dziennik zdarzeń sklepu | ✅ retencja 90 dni | w porządku |
-| `rate_limit` | licznik zapytań, wiersz żyje ~2 min | ✅ **kasowany po oknie** (kasownik w `sklepag_rate_limit()`, `zakup.php`) | w porządku — **zarzut go nie policzył** |
+| `rate_limit` | licznik zapytań, wiersz żyje ~2 min | ✅ **kasowany po oknie** (kasownik w `sklepag_dociagnij_zalegle()`, krok 3 crona w `zakup.php`) | w porządku — **zarzut go nie policzył** |
 | `zamowienia` | e-mail kupującego, kwoty, dane do faktury | ❌ świadomie NIE | ⛔ **kasowanie byłoby BŁĘDEM** — to dokument księgowy, obowiązek podatkowy trwa lata, nie 90 dni |
 | `opinie` | imię i treść opinii, zgoda | ❌ NIE | treść **publikowana celowo** na stronie produktu; skasowanie po 90 dniach usunęłoby klientowi opinie. Usuwanie na żądanie działa (eksporter i kasownik RODO) |
 | `produkty` | nazwa, cena, plik | ❌ NIE | **brak danych osobowych** — retencja bezprzedmiotowa |
