@@ -336,7 +336,13 @@ sprawdz( 'pole jest poza zasiegiem tabulatora', false !== strpos( $js, 'polePula
 sprawdz( 'i pomijane przez czytnik ekranu', false !== strpos( $js, "polePulapki.setAttribute('aria-hidden', 'true')" ) );
 sprawdz( 'autouzupelnianie wylaczone (menedzer hasel nie wypelni)', false !== strpos( $js, "polePulapki.autocomplete = 'off'" ) );
 sprawdz( 'CSS wynosi pole poza kadr, a NIE display:none', false !== strpos( $css, 'left: -9999px !important' ) );
-sprawdz( 'i nie chowa go przez display:none', false === strpos( $css, '.chatl-pole-dodatkowe {' ) || false === strpos( substr( $css, strpos( $css, '.chatl-pole-dodatkowe {' ) ), 'display: none' ) );
+// ⛔ NAPRAWA 4.09: poprzednia wersja brala substr OD selektora DO KONCA PLIKU, wiec lapala
+// `display: none` z INNEJ reguly kilkanascie linii dalej i asercja padala na POPRAWNYM kodzie.
+// Kontrola odwrotna calej proby swiecila wtedy „czysty kod NIE przechodzi", czyli test nie mierzyl nic.
+// Teraz patrzymy WYLACZNIE na wlasny blok: od `{` do pierwszego `}`.
+$poz_pd  = strpos( $css, '.chatl-pole-dodatkowe {' );
+$blok_pd = false === $poz_pd ? '' : substr( $css, $poz_pd, strpos( $css, '}', $poz_pd ) - $poz_pd );
+sprawdz( 'i nie chowa go przez display:none', false === $poz_pd || false === strpos( $blok_pd, 'display: none' ) );
 
 echo "\n=== H. Sprzatanie ===\n";
 chatl_test_sprzataj();

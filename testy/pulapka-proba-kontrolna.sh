@@ -76,14 +76,14 @@ probuj "flaga podejrzane nie jest stawiana" "$PLIK_F" \
 # 5. Licznik przestaje liczyc — pulapka staje sie niesprawdzalna z panelu,
 #    a FALSZYWY ALARM przestaje byc widoczny dla wlasciciela.
 probuj "licznik pulapki przestaje liczyc" "$PLIK_F" \
-  "s|'ile'      => 1 + (int) ( \$stan\['ile'\] ?? 0 ),|'ile'      => 0,|" \
+  "s|'ile'      => \$ile,|'ile'      => 0,|" \
   "licznik zlicza kazde zadzialanie"
 
 # 6. Sufit na zapisy zlapanych zdjety — pulapka sama staje sie droga do
 #    zalania tabeli zgloszen, bo zlapane LADUJA w bazie.
 probuj "sufit na zapisy zlapanych zdjety" "$PLIK_F" \
   "s|chatl_rate_limit( 'pulapka', CHATL_LIMIT_PULAPKA )|true|" \
-  "sufit na ZAPISY zlapanych"
+  "sufit na zlapane chroni tabele"
 
 # 7. Widget przestaje wysylac pole — serwer nigdy go nie zobaczy, wiec ukryte
 #    pole w DOM jest ozdoba. Klasa "funkcja jest, ale nie jest podlaczona".
