@@ -12,6 +12,7 @@ KONTENER=strona_wp_wordpress
 CEL=/var/www/html/wp-content/plugins/chatbot-live
 PLIK_F=$CEL/includes/front.php
 BLEDY=0
+KOTWICE=0
 
 wdroz_czysty() {
   docker cp wtyczki/chatbot-live/. "$KONTENER:$CEL/" >/dev/null
@@ -30,8 +31,8 @@ probuj() {
   eval "$mutacja"
   po=$(docker exec "$KONTENER" md5sum "$PLIK_F" | cut -d' ' -f1)
   if [ "$przed" = "$po" ]; then
-    printf '  BLAD mutacja NIE weszla do pliku: %-38s\n' "$opis"
-    BLEDY=$((BLEDY+1)); return
+    printf '  BLAD mutacja NIE weszla do pliku (ZGNILA KOTWICA sed): %-38s\n' "$opis"
+    KOTWICE=$((KOTWICE+1)); return
   fi
   local wyjscie kod
   wyjscie=$(odpal); kod=$?
@@ -48,7 +49,7 @@ echo "=== PROBA KONTROLNA: czy straznik L2 widzi podlozone bledy ==="
 
 # 1. STAN SPRZED NAPRAWY: limit znowu mierzy adres proxy.
 probuj "limit liczony z REMOTE_ADDR (stan sprzed naprawy)" \
-  "docker exec $KONTENER sed -i 's|\$ip = chatl_ip_goscia();|\$ip = isset( \$_SERVER[\"REMOTE_ADDR\"] ) ? sanitize_text_field( wp_unslash( \$_SERVER[\"REMOTE_ADDR\"] ) ) : \"\";|' $PLIK_F" \
+  "docker exec $KONTENER sed -i 's|: chatl_ip_goscia();|: ( isset( \$_SERVER[\"REMOTE_ADDR\"] ) ? sanitize_text_field( wp_unslash( \$_SERVER[\"REMOTE_ADDR\"] ) ) : \"\" );|' $PLIK_F" \
   "gość B zza tego samego proxy NIE jest ukarany"
 
 # 2. Naglowkom ufamy ZAWSZE — na stronie bez proxy kazdy obchodzi limit,
@@ -80,9 +81,13 @@ else
 fi
 
 echo
-if [ "$BLEDY" -eq 0 ]; then
+if [ "$KOTWICE" -gt 0 ]; then
+  echo "PROBA NIC NIE ZMIERZYLA W $KOTWICE PRZYPADKACH — kotwica sed zgnila po refaktorze."
+  echo "  To wada PRZYRZADU, nie straznika: zanim oskarzysz produkt, uruchom straznika BEZPOSREDNIO."
+fi
+if [ "$BLEDY" -eq 0 ] && [ "$KOTWICE" -eq 0 ]; then
   echo "STRAZNIK WIDZI WSZYSTKIE CZTERY PODLOZONE BLEDY"
-else
+elif [ "$BLEDY" -gt 0 ]; then
   echo "STRAZNIK SLEPY NA $BLEDY PODLOZONYCH BLEDOW"
 fi
-exit $((BLEDY > 0))
+exit $(( BLEDY + KOTWICE > 0 ))
