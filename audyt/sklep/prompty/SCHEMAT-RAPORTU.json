@@ -1,62 +1,374 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Raport audytora K7 (sklep-agentow) — jedyny dopuszczalny format wyjścia",
-  "type": "object",
-  "required": ["soczewka", "runda", "commit_head", "werdykty", "znaleziska", "anomalie", "czego_nie_bylo_na_mojej_liscie", "czego_nie_obejrzalem"],
-  "properties": {
-    "soczewka": { "type": "string", "enum": ["L1", "L2", "L3", "L4", "L5", "L6", "L", "E"] },
-    "runda": { "type": "string", "enum": ["A", "B", "weryfikacja", "re-audyt"] },
-    "commit_head": { "type": "string", "description": "SHA z audyt/sklep/ZAMROZENIE.md; raport z innym SHA jest nieważny" },
-    "werdykty": {
-      "type": "array",
-      "description": "jeden wpis na cel mapy (ID z 06-mapa-polowania.md) albo na wymaganie",
-      "items": {
-        "type": "object",
-        "required": ["cel", "werdykt"],
-        "properties": {
-          "cel": { "type": "string", "description": "np. L2-13 albo S-02 albo #3" },
-          "werdykt": { "type": "string", "enum": ["SPEŁNIONE", "SPEŁNIONE INACZEJ", "BRAK", "NIE SPRAWDZIŁEM", "NIE DA SIĘ SPRAWDZIĆ", "ZGODNE", "ROZJAZD", "ODPORNE", "AWARIA CICHA", "AWARIA GŁOŚNA"] },
-          "plik": { "type": "string" },
-          "linia": { "type": "integer" },
-          "jak_czlowiek_tego_uzywa": { "type": "string", "description": "obowiązkowe przy SPEŁNIONE dla funkcji dla człowieka; „NIE ZNALAZŁEM ŚCIEŻKI” zamienia werdykt na SPEŁNIONE INACZEJ" },
-          "proba_kontrolna": { "type": "string", "description": "obowiązkowe przy BRAK: czym i gdzie szukałeś + surowe wyjście komendy" },
-          "dowod": { "type": "string", "description": "surowe wyjście komendy / cytat plik:linia" }
-        },
-        "allOf": [
-          { "if": { "properties": { "werdykt": { "enum": ["SPEŁNIONE", "SPEŁNIONE INACZEJ", "ZGODNE"] } } }, "then": { "required": ["plik", "linia"] } },
-          { "if": { "properties": { "werdykt": { "const": "BRAK" } } }, "then": { "required": ["proba_kontrolna"] } }
-        ]
-      }
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "title": "Raport audytora K7 (sklep-agentow) — jedyny dopuszczalny format wyjścia",
+ "type": "object",
+ "required": [
+  "soczewka",
+  "runda",
+  "commit_head",
+  "werdykty",
+  "znaleziska",
+  "anomalie",
+  "czego_nie_bylo_na_mojej_liscie",
+  "czego_nie_obejrzalem"
+ ],
+ "properties": {
+  "soczewka": {
+   "type": "string",
+   "enum": [
+    "L1",
+    "L2",
+    "L3",
+    "L4",
+    "L5",
+    "L6",
+    "L",
+    "E"
+   ]
+  },
+  "runda": {
+   "type": "string",
+   "enum": [
+    "A",
+    "B",
+    "weryfikacja",
+    "re-audyt"
+   ]
+  },
+  "commit_head": {
+   "type": "string",
+   "description": "SHA z audyt/sklep/ZAMROZENIE.md; raport z innym SHA jest nieważny"
+  },
+  "werdykty": {
+   "type": "array",
+   "description": "jeden wpis na cel mapy (ID z 06-mapa-polowania.md) albo na wymaganie",
+   "items": {
+    "type": "object",
+    "required": [
+     "cel",
+     "werdykt"
+    ],
+    "properties": {
+     "cel": {
+      "type": "string",
+      "description": "np. L2-13 albo S-02 albo #3"
+     },
+     "werdykt": {
+      "type": "string",
+      "enum": [
+       "SPEŁNIONE",
+       "SPEŁNIONE INACZEJ",
+       "BRAK",
+       "NIE SPRAWDZIŁEM",
+       "NIE DA SIĘ SPRAWDZIĆ",
+       "ZGODNE",
+       "ROZJAZD",
+       "ODPORNE",
+       "AWARIA CICHA",
+       "AWARIA GŁOŚNA"
+      ]
+     },
+     "plik": {
+      "type": "string"
+     },
+     "linia": {
+      "type": "integer"
+     },
+     "jak_czlowiek_tego_uzywa": {
+      "type": "string",
+      "description": "obowiązkowe przy SPEŁNIONE dla funkcji dla człowieka; „NIE ZNALAZŁEM ŚCIEŻKI” zamienia werdykt na SPEŁNIONE INACZEJ"
+     },
+     "proba_kontrolna": {
+      "type": "string",
+      "description": "obowiązkowe przy BRAK: czym i gdzie szukałeś + surowe wyjście komendy"
+     },
+     "dowod": {
+      "type": "string",
+      "description": "surowe wyjście komendy / cytat plik:linia"
+     }
     },
-    "znaleziska": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "required": ["teza", "waga", "typ", "dowody", "mechanizm", "skutek", "rodzaj_skutku", "kroki_reprodukcji", "test_padajacy"],
-        "properties": {
-          "teza": { "type": "string", "description": "jedno zdanie Z NAZWĄ mechanizmu (plik, funkcja, pole, kolumna, zaczep)" },
-          "waga": { "type": "string", "enum": ["KRYTYCZNA", "DUŻA", "ŚREDNIA", "DROBNA"] },
-          "typ": { "type": "string", "enum": ["USTERKA", "BRAK"] },
-          "klasa": { "type": "string", "description": "klasa ze ściągi / SLEPE-PLAMY / PETLA-UCZENIA albo NOWA" },
-          "dowody": { "type": "array", "minItems": 1, "items": { "type": "object", "required": ["plik", "linia", "cytat"], "properties": { "plik": { "type": "string" }, "linia": { "type": "integer" }, "cytat": { "type": "string" } } } },
-          "mechanizm": { "type": "string", "description": "łańcuch przyczynowy" },
-          "skutek": { "type": "string", "description": "co traci człowiek używający produktu" },
-          "rodzaj_skutku": { "type": "string", "enum": ["zaobserwowany", "wyliczony", "przypuszczalny"] },
-          "kroki_reprodukcji": { "type": "array", "minItems": 1, "items": { "type": "string" }, "description": "komendy/kliknięcia, którymi weryfikator odtworzy BEZ Ciebie" },
-          "test_padajacy": { "type": "string", "description": "ścieżka pliku testu + surowe wyjście jego uruchomienia (pada NA OBECNYM kodzie); „NIE DA SIĘ” tylko z powodem" },
-          "wyjscie_wykonania": { "type": "string", "description": "surowe wyjście komend z reprodukcji" }
+    "allOf": [
+     {
+      "if": {
+       "properties": {
+        "werdykt": {
+         "enum": [
+          "SPEŁNIONE",
+          "SPEŁNIONE INACZEJ",
+          "ZGODNE"
+         ]
         }
+       }
+      },
+      "then": {
+       "required": [
+        "plik",
+        "linia"
+       ]
       }
-    },
-    "anomalie": {
+     },
+     {
+      "if": {
+       "properties": {
+        "werdykt": {
+         "const": "BRAK"
+        }
+       }
+      },
+      "then": {
+       "required": [
+        "proba_kontrolna"
+       ]
+      }
+     }
+    ]
+   }
+  },
+  "znaleziska": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": [
+     "teza",
+     "waga",
+     "typ",
+     "dowody",
+     "mechanizm",
+     "skutek",
+     "rodzaj_skutku",
+     "kroki_reprodukcji",
+     "test_padajacy"
+    ],
+    "properties": {
+     "teza": {
+      "type": "string",
+      "description": "jedno zdanie Z NAZWĄ mechanizmu (plik, funkcja, pole, kolumna, zaczep)"
+     },
+     "waga": {
+      "type": "string",
+      "enum": [
+       "KRYTYCZNA",
+       "DUŻA",
+       "ŚREDNIA",
+       "DROBNA"
+      ]
+     },
+     "typ": {
+      "type": "string",
+      "enum": [
+       "USTERKA",
+       "BRAK"
+      ]
+     },
+     "klasa": {
+      "type": "string",
+      "description": "klasa ze ściągi / SLEPE-PLAMY / PETLA-UCZENIA albo NOWA"
+     },
+     "dowody": {
       "type": "array",
-      "description": "każde NIE SPRAWDZIŁEM / NIE DA SIĘ / nieoczekiwane wyjście / rozjazd dwóch pomiarów — z powodem",
-      "items": { "type": "object", "required": ["opis", "powod"], "properties": { "opis": { "type": "string" }, "powod": { "type": "string" }, "cel": { "type": "string" } } }
+      "minItems": 1,
+      "items": {
+       "type": "object",
+       "required": [
+        "plik",
+        "linia",
+        "cytat"
+       ],
+       "properties": {
+        "plik": {
+         "type": "string"
+        },
+        "linia": {
+         "type": "integer"
+        },
+        "cytat": {
+         "type": "string"
+        }
+       }
+      }
+     },
+     "mechanizm": {
+      "type": "string",
+      "description": "łańcuch przyczynowy"
+     },
+     "skutek": {
+      "type": "string",
+      "description": "co traci człowiek używający produktu"
+     },
+     "rodzaj_skutku": {
+      "type": "string",
+      "enum": [
+       "zaobserwowany",
+       "wyliczony",
+       "przypuszczalny"
+      ]
+     },
+     "kroki_reprodukcji": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+       "type": "string"
+      },
+      "description": "komendy/kliknięcia, którymi weryfikator odtworzy BEZ Ciebie"
+     },
+     "test_padajacy": {
+      "type": "string",
+      "description": "ścieżka pliku testu + surowe wyjście jego uruchomienia (pada NA OBECNYM kodzie); „NIE DA SIĘ” tylko z powodem"
+     },
+     "wyjscie_wykonania": {
+      "type": "string",
+      "description": "surowe wyjście komend z reprodukcji"
+     }
+    }
+   }
+  },
+  "anomalie": {
+   "type": "array",
+   "description": "każde NIE SPRAWDZIŁEM / NIE DA SIĘ / nieoczekiwane wyjście / rozjazd dwóch pomiarów — z powodem",
+   "items": {
+    "type": "object",
+    "required": [
+     "opis",
+     "powod"
+    ],
+    "properties": {
+     "opis": {
+      "type": "string"
+     },
+     "powod": {
+      "type": "string"
+     },
+     "cel": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "pytania_do_zamawiajacego": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  },
+  "odrzucone_wlasne": {
+   "type": "array",
+   "description": "wpisy, których nie zwracasz, z jednym zdaniem powodu (pusto = „brak”)",
+   "items": {
+    "type": "string"
+   }
+  },
+  "czego_nie_bylo_na_mojej_liscie": {
+   "type": "array",
+   "minItems": 1,
+   "items": {
+    "type": "string"
+   },
+   "description": "kategorie, o które to pytanie NIE pytało, a wyglądają na istotne; brak = napisz, że pytanie Cię ograniczyło"
+  },
+  "czego_nie_obejrzalem": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   },
+   "description": "pliki/obszary świadomie pominięte w budżecie"
+  },
+  "wywolania_narzedzi": {
+   "type": "integer"
+  },
+  "obietnice_behawioralne": {
+   "type": "array",
+   "description": "WYMAGANE dla soczewki L5. Każda obietnica BEHAWIORALNA z dokumentów wtyczki i z 01-zamowienie.md (zdania o tym, co kod ROBI W RUCHU: „nie zużywa”, „odmawia”, „wysyła ponownie”, „kasuje”, „nigdy”, „tylko”) wypisana i ROZLICZONA. Pozycja bez werdyktu jest niedopuszczalna — pominięcie ma zostawiać ślad. Co najmniej 10 pozycji musi mieć werdykt ZGODNE albo ROZJAZD, czyli pomiar wykonaniem.",
+   "minItems": 10,
+   "items": {
+    "type": "object",
+    "required": [
+     "obietnica",
+     "zrodlo",
+     "werdykt"
+    ],
+    "properties": {
+     "obietnica": {
+      "type": "string",
+      "description": "cytat zdania obiecującego zachowanie"
+     },
+     "zrodlo": {
+      "type": "string",
+      "description": "plik dokumentu (readme.txt / DOKUMENTACJA-TECHNICZNA.md / 01-zamowienie.md …) + miejsce"
+     },
+     "werdykt": {
+      "type": "string",
+      "enum": [
+       "ZGODNE",
+       "ROZJAZD",
+       "NIE SPRAWDZIŁEM",
+       "NIE DA SIĘ SPRAWDZIĆ"
+      ]
+     },
+     "pomiar": {
+      "type": "string",
+      "description": "OBOWIĄZKOWY przy ZGODNE i ROZJAZD: komenda + surowe wyjście PRZED i PO. Zgodność liczby w kodzie NIE jest pomiarem zachowania."
+     },
+     "powod": {
+      "type": "string",
+      "description": "OBOWIĄZKOWY przy NIE SPRAWDZIŁEM i NIE DA SIĘ SPRAWDZIĆ"
+     }
     },
-    "pytania_do_zamawiajacego": { "type": "array", "items": { "type": "string" } },
-    "odrzucone_wlasne": { "type": "array", "description": "wpisy, których nie zwracasz, z jednym zdaniem powodu (pusto = „brak”)", "items": { "type": "string" } },
-    "czego_nie_bylo_na_mojej_liscie": { "type": "array", "minItems": 1, "items": { "type": "string" }, "description": "kategorie, o które to pytanie NIE pytało, a wyglądają na istotne; brak = napisz, że pytanie Cię ograniczyło" },
-    "czego_nie_obejrzalem": { "type": "array", "items": { "type": "string" }, "description": "pliki/obszary świadomie pominięte w budżecie" },
-    "wywolania_narzedzi": { "type": "integer" }
+    "allOf": [
+     {
+      "if": {
+       "properties": {
+        "werdykt": {
+         "enum": [
+          "ZGODNE",
+          "ROZJAZD"
+         ]
+        }
+       }
+      },
+      "then": {
+       "required": [
+        "pomiar"
+       ]
+      }
+     },
+     {
+      "if": {
+       "properties": {
+        "werdykt": {
+         "enum": [
+          "NIE SPRAWDZIŁEM",
+          "NIE DA SIĘ SPRAWDZIĆ"
+         ]
+        }
+       }
+      },
+      "then": {
+       "required": [
+        "powod"
+       ]
+      }
+     }
+    ]
+   }
   }
+ },
+ "allOf": [
+  {
+   "if": {
+    "properties": {
+     "soczewka": {
+      "const": "L5"
+     }
+    },
+    "required": [
+     "soczewka"
+    ]
+   },
+   "then": {
+    "required": [
+     "obietnice_behawioralne"
+    ]
+   }
+  }
+ ]
 }

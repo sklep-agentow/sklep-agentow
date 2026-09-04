@@ -85,8 +85,17 @@ else
 	# ILE = liczba RÓŻNYCH soczewek (kolumna 2), nie wierszy — L3 ma dwa mutanty (M3, M4) i liczył się podwójnie (recenzja #188 D8)
 	ILE=$(printf '%s\n' "$ROZL" | grep -E '^\| (L[1-5]|L) \|' | awk -F'|' '{gsub(/ /,"",$2); print $2}' | sort -u | wc -l)
 	ZLE=$(printf '%s\n' "$ROZL" | grep -E '^\| (L[1-5]|L) \|' | grep -vE '\| PASS \|' | wc -l)
-	PROBY_ZLE=$(printf '%s\n' "$ROZL" | grep -E '^\| (L[1-5]|L) \|' | awk -F'|' '{gsub(/ /,"",$7); if ($7+0>2) n++} END{print n+0}')
-	if [ "$ILE" -ge 6 ] && [ "$ZLE" -eq 0 ] && [ "$PROBY_ZLE" -eq 0 ]; then pass "2 kalibracja ($GALAZ_MUT): $ILE soczewek PASS, proby ≤ 2"; else fail "2 kalibracja: soczewek=$ILE, bez PASS=$ZLE, proby>2=$PROBY_ZLE"; fi
+	# Limit powtorek (PLAN-K7 §5, zaostrzony 4.09): do 2 prob bez pytan; 3 i 4 TYLKO z wypelniona
+	# kolumna `powod_powtorki` (pole 8); powyzej 4 pada bezwarunkowo. Powod: reguly „2 i koniec"
+	# nie dalo sie spelnic — soczewka raz oblana NIE MIALA zadnej drogi do PASS, wiec bramka zadala
+	# stanu nieosiagalnego. Nowa wersja jest OSTRZEJSZA, nie luzniejsza: dotad nikt nie musial
+	# uzasadniac ANI JEDNEJ powtorki, teraz kazda powyzej drugiej musi miec powod w tabeli.
+	PROBY_ZLE=$(printf '%s\n' "$ROZL" | grep -E '^\| (L[1-5]|L) \|' | awk -F'|' '{
+		p=$7; gsub(/[ \t]/,"",p);
+		pow=$8; gsub(/^[ \t]+|[ \t]+$/,"",pow);
+		if (p+0>4) n++; else if (p+0>2 && pow=="") n++;
+	} END{print n+0}')
+	if [ "$ILE" -ge 6 ] && [ "$ZLE" -eq 0 ] && [ "$PROBY_ZLE" -eq 0 ]; then pass "2 kalibracja ($GALAZ_MUT): $ILE soczewek PASS, proby ≤ 2 albo uzasadnione (≤ 4)"; else fail "2 kalibracja: soczewek=$ILE, bez PASS=$ZLE, proby bez powodu lub >4=$PROBY_ZLE"; fi
 fi
 
 # 3. REJESTR: 0 KRYTYCZNE/DUŻE otwarte · 0 DO WERYFIKACJI · naprawa_proby ≤ 2 · ZAMKNIETE ma strażnika z dowodem
