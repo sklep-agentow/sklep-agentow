@@ -277,7 +277,7 @@
   },
   "obietnice_behawioralne": {
    "type": "array",
-   "description": "WYMAGANE dla soczewki L5. Każda obietnica BEHAWIORALNA z dokumentów wtyczki i z 01-zamowienie.md (zdania o tym, co kod ROBI W RUCHU: „nie zużywa”, „odmawia”, „wysyła ponownie”, „kasuje”, „nigdy”, „tylko”) wypisana i ROZLICZONA. Pozycja bez werdyktu jest niedopuszczalna — pominięcie ma zostawiać ślad. Co najmniej 10 pozycji musi mieć werdykt ZGODNE albo ROZJAZD, czyli pomiar wykonaniem.",
+   "description": "WYMAGANE dla soczewki L5. Każda obietnica BEHAWIORALNA z dokumentów wtyczki i z 01-zamowienie.md (zdania o tym, co kod ROBI W RUCHU: „nie zużywa”, „odmawia”, „wysyła ponownie”, „kasuje”, „nigdy”, „tylko”) wypisana i ROZLICZONA. Pozycja bez werdyktu jest niedopuszczalna — pominięcie ma zostawiać ślad. ⛔ Próg „co najmniej 10 ZMIERZONYCH” egzekwuje `contains` + `minContains`, NIE to zdanie: opis niczego nie wymusza, a `minItems` liczy pozycje, nie werdykty. Zmierzone 4.09: audytor oddał 12 pozycji z 9 zmierzonymi i przeszedł, bo próg siedział w opisie — ta sama klasa, którą to pole naprawia.",
    "minItems": 10,
    "items": {
     "type": "object",
@@ -349,7 +349,22 @@
       }
      }
     ]
-   }
+   },
+   "contains": {
+    "type": "object",
+    "properties": {
+     "werdykt": {
+      "enum": [
+       "ZGODNE",
+       "ROZJAZD"
+      ]
+     }
+    },
+    "required": [
+     "werdykt"
+    ]
+   },
+   "minContains": 10
   }
  },
  "allOf": [
@@ -358,17 +373,25 @@
     "properties": {
      "soczewka": {
       "const": "L5"
+     },
+     "runda": {
+      "enum": [
+       "weryfikacja",
+       "re-audyt"
+      ]
      }
     },
     "required": [
-     "soczewka"
+     "soczewka",
+     "runda"
     ]
    },
    "then": {
     "required": [
      "obietnice_behawioralne"
     ]
-   }
+   },
+   "$comment": "Wymog obowiazuje od rundy 'weryfikacja' (4.09). Raporty rund A i B powstaly pod stara regula i sa DOWODAMI — nie wolno ich edytowac po fakcie, wiec warunek ich nie obejmuje. To swiadome zawezenie, nie przeoczenie."
   }
  ]
 }
