@@ -31,13 +31,20 @@ set -u
 # Bez galezi else pominiecie jest CICHE: na wykonawcy CI (ciuser od 31.08, naprawa B-3)
 # plik jest NIECZYTELNY, warunek zawsze falszywy, a proby nonce i blad-klucza znowu
 # raportuja BRAK LOGOWANIA jako wade produktu. Pominiecie MUSI zostawiac slad.
-ENV_ADMIN=/root/.claude/sklep-admin-roboczy.env
+# ⛔ ZADNEGO ZEWNETRZNEGO POLECENIA W TEJ GALEZI. Proba `przelot-brak-zip-proba-kontrolna.sh`
+#    uruchamia ten skrypt z OKROJONYM PATH (atrapa bez `zip`) i asertuje, ze stderr NIE zawiera
+#    `command not found`. Pierwsza wersja wolala tu `$(whoami)` — polecenia nie ma w atrapie,
+#    wiec CI padalo, a lokalnie u roota galaz `else` nie wykonywala sie ANI RAZU. Uzywamy
+#    wylacznie tego, co daje sama powloka: $USER i $EUID.
+# Sciezke da sie nadpisac z zewnatrz WYLACZNIE po to, zeby proba kontrolna mogla zmierzyc
+# obie galezie — domyslna wartosc jest ta sama co zawsze.
+ENV_ADMIN="${ENV_ADMIN:-/root/.claude/sklep-admin-roboczy.env}"
 if [ -r "$ENV_ADMIN" ]; then
 	set -a; . "$ENV_ADMIN"; set +a
 	printf 'DANE LOGOWANIA: wczytane z %s\n' "$ENV_ADMIN" >&2
 else
 	printf 'UWAGA DANE LOGOWANIA NIEWCZYTANE (%s nieczytelny dla %s) — proby wymagajace\n' \
-		"$ENV_ADMIN" "$(whoami)" >&2
+		"$ENV_ADMIN" "${USER:-UID $EUID}" >&2
 	printf '      panelu zaraportuja BRAK LOGOWANIA; to wada SRODOWISKA, nie produktu.\n' >&2
 fi
 
