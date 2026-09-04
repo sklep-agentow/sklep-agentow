@@ -120,15 +120,16 @@ jobs:
       #
       # ⛔ ZAKRES `narzedzia-qa` JEST CELOWY I ZMIERZONY. Przelot po całym repo bierze
       # WSZYSTKIE próby kontrolne repozytorium — liczby NIE podaję, bo starzeje się szybciej
-      # niż jedna kolejka PR-ów (dwie rundy z rzędu: `50 = 18 + 32` stało się `51 = 18 + 33`
-      # po scaleniu jednej gałęzi). Policz komendą niżej. Spora część tych z `testy/` wymaga
+      # niż jedna kolejka PR-ów — w dwóch rundach z rzędu liczba zmieniała się po scaleniu
+      # jednej gałęzi. Policz komendą niżej. Spora część tych z `testy/` wymaga
       # żywego stosu WordPressa, a manifest bramek mówi wprost, że w CI nie ma WP+Stripe.
       # Bez zawężenia ten krok padałby zawsze, na porażkach, które nie są wadami kodu. Próby produktu
       # chodzą w przelocie BEZ zakresu, uruchamianym RĘCZNIE przed wydaniem — tam stos stoi.
       # ⛔ LICZ KOMENDĄ, NIE Z PAMIĘCI — te liczby starzeją się przy każdej nowej próbie:
       #     find . -name '*proba-kontrolna*.sh' -not -path './.git/*' | wc -l
       #     find narzedzia-qa -name '*proba-kontrolna*.sh' | wc -l
-      # Poprzednia wersja mówiła `38` — fałszywe o 12 (recenzja #274 r13, WAŻNA 3).
+      # Poprzednia wersja mówiła `38` — policz komendą wyżej, ile jest dziś (recenzja #274
+      # r13 WAŻNA 3; r17 WAŻNA 1 — człon różnicy skreślony, bo starzał się razem z liczbą).
       # Ile z nich to testy PRODUKTU — liczby NIE podaję ANI CYFRĄ, ANI SŁOWNIE: nie mam
       # definicji, po której da się to policzyć bez uruchomienia przelotu na żywym stosie.
       # Zmyślona liczba w uzasadnieniu decyzji jest gorsza niż jej brak (recenzja #274 r15,
