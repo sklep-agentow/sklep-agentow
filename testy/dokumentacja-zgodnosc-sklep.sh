@@ -173,7 +173,8 @@ spr "plik $W/PONAD-SPECYFIKACJE.md"                         "1" "test -f $W/PONA
 #    poprawilam, a to zdanie zostalo. Ta sama pomylka wymiaru dwa razy w jednym pliku.
 #
 #    ⛔⛔ CO TEN ZESTAW MIERZY, A CZEGO NIE — czytaj, zanim uznasz ochrone za pilnowana.
-#    Piec asercji to piec WZORCOW TEKSTOWYCH nad jedna linia kodu. Lapia USUNIECIE ogniwa
+#    Piec asercji to piec WZORCOW TEKSTOWYCH: CZTERY nad jedna linia JS + JEDNA nad polem
+#    formularza HTML (name="okno") — to NIE jest piec ogniw skryptu. Lapia USUNIECIE ogniwa
 #    i tylko to. NIE lapia ZMIANY WARTOSCI wewnatrz ogniwa: `new Uint8Array(12)` -> `(0)`
 #    to jeden znak, ktory zostawia `s` pustym — kazdy kupujacy wysyla `okno=`, klucz wraca
 #    do postaci sprzed naprawy Q-5, a ten plik i jego proba kontrolna mowia `EXIT=0`
@@ -215,5 +216,5 @@ spr "znacznik okna: ZLOZENIE wartosci z wylosowanych bajtow" "1" "grep -c 's+=(a
 spr "znacznik okna: losowosc z crypto, nie z Math.random"   "1" "grep -c 'c[.]getRandomValues(a)' $W/includes/front-produkt.php"
 
 echo
-if [ "$ZLE" -eq 0 ]; then echo "PIEC LICZB (72h/10/30d/20MB/10min), ETYKIETY I ODSYLACZE ZGODNE Z KODEM — 0 rozjazdów; ZNACZNIK OKNA (Q-5): piec ogniw OBECNYCH w kodzie — ta bramka NIE mierzy, czy dzialaja ""(zmiana wartosci w ogniwie przechodzi na zielono; pomiar zachowania: patrz komentarz przy sekcji G). (90 dni, 7 prob, 3 proby, 1 min, 5 stron i tresc zdan: czytanie w calosci)"; exit 0; fi
+if [ "$ZLE" -eq 0 ]; then echo "PIEC LICZB (72h/10/30d/20MB/10min), ETYKIETY I ODSYLACZE ZGODNE Z KODEM — 0 rozjazdów; ZNACZNIK OKNA (Q-5): CZTERY ogniwa skryptu + pole formularza OBECNE w kodzie — ta bramka NIE mierzy, czy dzialaja ""(zmiana wartosci w ogniwie przechodzi na zielono; pomiar zachowania: patrz komentarz przy sekcji G). (90 dni, 7 prob, 3 proby, 1 min, 5 stron i tresc zdan: czytanie w calosci)"; exit 0; fi
 echo "NIEZGODNE: $ZLE pozycji"; exit 1

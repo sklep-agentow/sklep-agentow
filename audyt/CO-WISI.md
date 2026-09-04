@@ -25,7 +25,7 @@ plików paczki, nie przez nazwę katalogu.
 
 | co | gdzie w kodzie | dlaczego jedzie | status |
 |---|---|---|---|
-| **surowe kody zdarzeń w dzienniku, w tym jedyne angielskie słowo w polskim panelu** | `class-sklepag-lista-zdarzen.php:119-121` — `case 'typ': return esc_html( $item->$column_name );`, zero mapowania na etykietę | właściciel widzi `reconciliation_blad`, `reconciliation_wynik`, `webhook_unpaid`, `checkout_blad` — 28 kodów, bez legendy. Ten sam mechanizm ma na pulpicie ludzką etykietę („Dociągnij zaległe teraz", `admin-dashboard.php:529`), więc rozjazd jest w jednym ekranie | **świadomie ODŁOŻONE 3.09** |
+| **surowe kody zdarzeń w dzienniku, w tym jedyne angielskie słowo w polskim panelu** | `class-sklepag-lista-zdarzen.php:119-121` — `case 'typ': return esc_html( $item->$column_name );`, zero mapowania na etykietę | właściciel widzi `reconciliation_blad`, `reconciliation_wynik`, `webhook_unpaid`, `checkout_blad` — 28 kodów, bez legendy. Ten sam mechanizm ma na pulpicie ludzką etykietę (przycisk „Dociągnij zaległe teraz” w `admin-dashboard.php`), więc rozjazd jest w jednym ekranie | **świadomie ODŁOŻONE 3.09** |
 
 ⛔ **Dlaczego odłożone, a nie naprawione od ręki:** jeden z typów jest **sklejany dynamicznie**
 (`opinie.php:205`: `'opinia_' . $nowy`), więc uczciwa mapa wymaga najpierw rozstrzygnięcia zbioru
