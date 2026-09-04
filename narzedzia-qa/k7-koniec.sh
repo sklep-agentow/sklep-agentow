@@ -160,7 +160,11 @@ else
 	P_COMMIT=$(sed -n 's/^COMMIT: *//p' "$PROBY" | head -1)
 	HEAD_KR=$(git rev-parse --short=7 HEAD 2>/dev/null)
 	ILE_P=$(grep -cE '^[A-Za-z0-9_.-]+\.sh EXIT=' "$PROBY")
-	ZLE_P=$(grep -E '^[A-Za-z0-9_.-]+\.sh EXIT=' "$PROBY" | grep -vc 'EXIT=0')
+	# ⛔ EXIT=2 to SWIADOME POMINIECIE ("nie zmierzylam"), nie wada — liczone OSOBNO.
+	# Do 4.09 `grep -vc EXIT=0` wrzucal je do porazek: przelot z 4 realnymi padnieciami
+	# raportowal 12, czyli bramka mowila o produkcie rzecz, ktorej nie zmierzyla (klasa I-12).
+	ZLE_P=$(grep -E '^[A-Za-z0-9_.-]+\.sh EXIT=' "$PROBY" | grep -vcE 'EXIT=(0|2)')
+	NIEZM_P=$(grep -cE '^[A-Za-z0-9_.-]+\.sh EXIT=2' "$PROBY")
 	POM_P=$(grep -cE '^POMINIETO ' "$PROBY")
 	# DATA WAŻNOŚCI: nie „ten sam commit" (commit zapisujący log sam przesuwa HEAD, więc taki
 	# warunek nie dałby się spełnić nigdy), tylko „od przelotu nie zmieniło się nic, czego ten
@@ -174,9 +178,9 @@ else
 	elif [ "$ILE_P" -lt 26 ]; then
 		fail "6 próby kontrolne: uruchomionych tylko $ILE_P (wymagane ≥26) — zakres zawężony, pominiętych $POM_P"
 	elif [ "$ZLE_P" -ne 0 ]; then
-		fail "6 próby kontrolne: $ZLE_P z $ILE_P ma EXIT≠0 (przelot na $P_COMMIT)"
+		fail "6 próby kontrolne: $ZLE_P z $ILE_P PADŁO (EXIT=1); nie zmierzono: $NIEZM_P (EXIT=2, świadome); przelot na $P_COMMIT"
 	else
-		pass "6 próby kontrolne: $ILE_P/$ILE_P EXIT=0 na commicie $P_COMMIT (pominiętych: $POM_P)"
+		pass "6 próby kontrolne: 0 padnięć z $ILE_P na commicie $P_COMMIT (nie zmierzono: $NIEZM_P, pominiętych: $POM_P)"
 	fi
 fi
 

@@ -26,6 +26,11 @@
 #               2 = nie ma czego uruchamiać / drzewo brudne.
 set -u
 
+# ⛔ Bez danych logowania do panelu proby `nonce` i `blad-klucza` padaja na BRAKU LOGOWANIA,
+# a raportuja to jako wade produktu. Wzorzec wziety z `narzedzia-qa/linia-bazowa.sh`.
+ENV_ADMIN=/root/.claude/sklep-admin-roboczy.env
+[ -f "$ENV_ADMIN" ] && { set -a; . "$ENV_ADMIN"; set +a; }
+
 KORZEN="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$KORZEN" || exit 2
 LOG="${1:-audyt/sklep/PROBY-KONTROLNE.log}"
