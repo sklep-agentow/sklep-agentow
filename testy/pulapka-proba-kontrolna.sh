@@ -15,6 +15,7 @@ PLIK_F=$CEL/includes/front.php
 PLIK_JS=$CEL/assets/widget.js
 PLIK_CSS=$CEL/assets/widget.css
 BLEDY=0
+KOTWICE=0
 
 wdroz_czysty() {
   docker cp wtyczki/chatbot-live/. "$KONTENER:$CEL/" >/dev/null
@@ -37,7 +38,7 @@ probuj() {
     # ⛔ Warunek, ktory ratuje probe po refaktorze: kotwica sed potrafi zgnic
     #    przy zmianie nazwy zmiennej i wtedy proba swieci na zielono, NIC nie
     #    sprawdzajac. Zdarzylo sie to juz dwa razy w tym repo.
-    printf '  BLAD mutacja NIE weszla do pliku: %-40s\n' "$opis"; BLEDY=$((BLEDY+1)); return
+    printf '  BLAD mutacja NIE weszla do pliku (ZGNILA KOTWICA sed): %-40s\n' "$opis"; KOTWICE=$((KOTWICE+1)); return
   fi
   wyjscie=$(odpal); kod=$?
   if [ "$kod" -ne 0 ] && echo "$wyjscie" | grep -q "BLAD.*$krok"; then
@@ -116,9 +117,13 @@ else
 fi
 
 echo
-if [ "$BLEDY" -eq 0 ]; then
+if [ "$KOTWICE" -gt 0 ]; then
+  echo "PROBA NIC NIE ZMIERZYLA W $KOTWICE PRZYPADKACH — kotwica sed zgnila po refaktorze."
+  echo "  To wada PRZYRZADU, nie straznika: zanim oskarzysz produkt, uruchom straznika BEZPOSREDNIO."
+fi
+if [ "$BLEDY" -eq 0 ] && [ "$KOTWICE" -eq 0 ]; then
   echo "STRAZNIK WIDZI WSZYSTKIE 9 PODLOZONYCH BLEDOW"
-else
+elif [ "$BLEDY" -gt 0 ]; then
   echo "STRAZNIK SLEPY NA $BLEDY PODLOZONYCH BLEDOW"
 fi
-exit $((BLEDY > 0))
+exit $(( BLEDY + KOTWICE > 0 ))
