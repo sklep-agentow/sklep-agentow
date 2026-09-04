@@ -149,12 +149,120 @@ function sklepag_tabele_sql() {
 	);
 }
 
-function sklepag_aktywacja() {
+/**
+ * Tabele i kolumny, których wymaga schemat — WYCZYTANE z tych samych definicji, które dostaje
+ * `dbDelta()`. Jedno źródło: nowa kolumna w definicji jest sprawdzana bez dopisywania jej gdziekolwiek.
+ *
+ * @return array<string, string[]> nazwa tabeli (z prefiksem) => lista kolumn.
+ */
+function sklepag_schemat_oczekiwany() {
+	$oczekiwane = array();
+	foreach ( sklepag_tabele_sql() as $sql ) {
+		if ( ! preg_match( '/CREATE TABLE\s+(\S+)\s*\(/i', $sql, $m ) ) {
+			continue;
+		}
+		$tabela  = $m[1];
+		$kolumny = array();
+		foreach ( preg_split( '/\r?\n/', $sql ) as $linia ) {
+			$linia = trim( $linia );
+			// Kolumna = identyfikator + typ; klucze (PRIMARY/UNIQUE/KEY) i nawiasy zamykające pomijamy.
+			if ( preg_match( '/^([a-z_][a-z0-9_]*)\s+(bigint|int|smallint|tinyint|varchar|char|text|longtext|mediumtext|datetime|date|timestamp|decimal)\b/i', $linia, $k ) ) {
+				$kolumny[] = strtolower( $k[1] );
+			}
+		}
+		$oczekiwane[ $tabela ] = $kolumny;
+	}
+	return $oczekiwane;
+}
+
+/**
+ * Co w bazie NAPRAWDĘ brakuje względem definicji — pomiar PO operacji, nie założenie.
+ *
+ * @return string[] Braki jako „tabela” albo „tabela.kolumna”; pusta tablica = schemat kompletny.
+ */
+function sklepag_schemat_braki() {
+	global $wpdb;
+	$braki = array();
+	foreach ( sklepag_schemat_oczekiwany() as $tabela => $kolumny ) {
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- nazwy z własnych definicji, odczyt schematu.
+		// ⛔ esc_like() OBOWIĄZKOWY przy LIKE: `_` jest dziką kartą SQL, a nazwy naszych tabel
+		// niosą po dwa (`wp_sklepag_produkty`), więc wzorzec bez escapowania pasuje do KAŻDEJ
+		// tabeli tej samej długości z dowolnym znakiem na tych pozycjach — cudza tabela mogłaby
+		// zostać uznana za naszą i schemat wyglądałby na kompletny. Konwencja tej wtyczki stoi
+		// obok: komentarz o `esc_like()` w uninstall.php i w includes/prywatnosc.php.
+		$jest = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $tabela ) ) );
+		if ( $jest !== $tabela ) {
+			$braki[] = $tabela;
+			continue;
+		}
+		$w_bazie = array_map( 'strtolower', (array) $wpdb->get_col( "SHOW COLUMNS FROM `{$tabela}`", 0 ) );
+		// phpcs:enable
+		foreach ( $kolumny as $kolumna ) {
+			if ( ! in_array( $kolumna, $w_bazie, true ) ) {
+				$braki[] = $tabela . '.' . $kolumna;
+			}
+		}
+	}
+	return $braki;
+}
+
+/**
+ * JEDNO miejsce budowy schematu dla aktywacji i migracji (do 0.9.38 włącznie były dwie kopie pętli;
+ * scala je właśnie to wydanie, 0.9.39).
+ *
+ * ⛔ Znacznik wersji idzie w górę TYLKO po zmierzeniu skutku: `dbDelta()` może nie zdążyć, trafić
+ *    na brak prawa ALTER albo na cudzą tabelę o tej samej nazwie — a brama „wersja == stała” zamykała
+ *    się wtedy na zawsze i nieudana migracja nie powtarzała się już nigdy (A6-F1). Teraz przy brakach
+ *    wersja zostaje stara (ponowienie po odstępie 5 minut, znacznik `sklepag_schemat_ponowienie`; aktywacja wtyczki kasuje znacznik), a właściciel dostaje na Pulpicie listę
+ *    braków i ostatni błąd bazy. Przyczyna-matka H: nie zapisuj skutku, którego nie zmierzyłeś.
+ *
+ * @return bool true = schemat kompletny (wersja zapisana), false = braki (wersja NIE zapisana).
+ */
+function sklepag_zbuduj_schemat() {
+	global $wpdb;
 	require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+	// ⛔ `last_error` KASUJE KAŻDE KOLEJNE ZAPYTANIE (`wpdb::query()` zaczyna od `flush()`),
+	// więc jeden odczyt PO całej pętli pokazywał błąd wyłącznie wtedy, gdy zawiodła OSTATNIA
+	// tabela — przy siedmiu tabelach komunikat był prawie zawsze pusty, choć dokumentacja
+	// obiecywała właścicielowi „ostatni błąd bazy”. Czytamy po KAŻDYM `dbDelta` i zbieramy
+	// wszystkie RÓŻNE komunikaty.
+	// ⛔ NIE zerujemy `last_error` przed `dbDelta`: robi to za nas pierwsze zapytanie, które
+	// `dbDelta` i tak wykonuje (`DESCRIBE`), a jawne przypisanie pustki mylnie zawężało typ
+	// dla analizy statycznej — porównanie wychodziło „zawsze fałszywe”.
+	$bledy_bazy = array();
 	foreach ( sklepag_tabele_sql() as $sql ) {
 		dbDelta( $sql );
+		$blad = (string) $wpdb->last_error;
+		if ( '' !== $blad ) {
+			$bledy_bazy[] = $blad;
+		}
 	}
-	update_option( 'sklepag_wersja_schematu', SKLEPAG_WERSJA_SCHEMATU, false );
+	$blad_bazy = implode( ' | ', array_unique( $bledy_bazy ) );
+	$braki     = sklepag_schemat_braki();
+	if ( empty( $braki ) ) {
+		update_option( 'sklepag_wersja_schematu', SKLEPAG_WERSJA_SCHEMATU, false );
+		delete_option( 'sklepag_schemat_blad' );
+		return true;
+	}
+	update_option(
+		'sklepag_schemat_blad',
+		array(
+			'braki'      => $braki,
+			'blad_bazy'  => $blad_bazy,
+			'oczekiwana' => SKLEPAG_WERSJA_SCHEMATU,
+			'czas'       => current_time( 'mysql' ),
+		),
+		false
+	);
+	return false;
+}
+
+function sklepag_aktywacja() {
+	// ⛔ Kasujemy znacznik odstępu, żeby aktywacja próbowała ZAWSZE od razu — to jest
+	// dokładnie ta droga, którą komunikat na Pulpicie podaje właścicielowi po naprawie
+	// uprawnień („deaktywuj i aktywuj wtyczkę”). Bez tego musiałby czekać do 5 minut.
+	delete_transient( 'sklepag_schemat_ponowienie' );
+	sklepag_zbuduj_schemat();
 
 	sklepag_utworz_strony();
 	sklepag_utworz_katalog_chroniony();
@@ -178,17 +286,27 @@ function sklepag_deaktywacja() {
 }
 
 /**
- * Migracja przy podbiciu SKLEPAG_WERSJA_SCHEMATU (dbDelta jest idempotentne).
+ * Migracja przy podbiciu SKLEPAG_WERSJA_SCHEMATU (dbDelta jest idempotentne). Gdy poprzednia
+ * próba zostawiła braki, wersja jest stara, więc brama przepuszcza i próbujemy znowu.
  */
 function sklepag_migruj_schemat_jesli_trzeba() {
 	if ( (int) get_option( 'sklepag_wersja_schematu', 0 ) === SKLEPAG_WERSJA_SCHEMATU ) {
 		return;
 	}
-	require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-	foreach ( sklepag_tabele_sql() as $sql ) {
-		dbDelta( $sql );
+	// ⛔ ODSTĘP MIĘDZY PRÓBAMI. Przy brakach wersja CELOWO zostaje stara, żeby próba się
+	// powtórzyła — ale bez odstępu powtarza się przy KAŻDYM żądaniu, także anonimowym
+	// frontowym, i każde takie żądanie płaci 7 × `dbDelta` (z `DESCRIBE` i ponawianym
+	// `CREATE`) plus 14 zapytań pomiarowych. Na instalacji bez prawa ALTER/CREATE ten stan
+	// jest TRWAŁY, więc sklep zwalniałby każdemu odwiedzającemu, dopóki właściciel nie
+	// zajrzy do panelu. Ponawiamy co 5 minut; aktywacja wtyczki kasuje znacznik, więc
+	// „deaktywuj i aktywuj” z komunikatu na Pulpicie działa NATYCHMIAST, bez czekania.
+	if ( false !== get_transient( 'sklepag_schemat_ponowienie' ) ) {
+		return;
 	}
-	update_option( 'sklepag_wersja_schematu', SKLEPAG_WERSJA_SCHEMATU, false );
+	set_transient( 'sklepag_schemat_ponowienie', 1, 5 * MINUTE_IN_SECONDS );
+	if ( sklepag_zbuduj_schemat() ) {
+		delete_transient( 'sklepag_schemat_ponowienie' );
+	}
 }
 
 /**
@@ -199,7 +317,7 @@ function sklepag_utworz_strony() {
 	$strony = array(
 		'sklepag_strona_sklep'      => array( 'Sklep', '[sklepag_sklep]', 'publish' ),
 		'sklepag_strona_dziekujemy' => array( 'Dziękujemy za zakup', '[sklepag_dziekujemy]', 'publish' ),
-		'sklepag_strona_regulamin'  => array( 'Regulamin sklepu (SZABLON)', "SZABLON — wypełnij danymi sprzedawcy przed publikacją.\n\nSprzedawca: [NAZWA, ADRES, KONTAKT]\nProdukty: treści cyfrowe (wtyczki WordPressa) dostarczane natychmiast po opłaceniu.\nZgoda na natychmiastowe dostarczenie: kupujący wyraża ją przy zakupie i przyjmuje utratę prawa odstąpienia (art. 38 ust. o prawach konsumenta).\nReklamacje: [MAIL WŁAŚCICIELA].", 'draft' ),
+		'sklepag_strona_regulamin'  => array( 'Regulamin sklepu (SZABLON)', "SZABLON — wypełnij danymi sprzedawcy przed publikacją.\n\nSprzedawca: [NAZWA, ADRES, KONTAKT]\nProdukty: treści cyfrowe (wtyczki WordPressa) dostarczane natychmiast po opłaceniu.\nZgoda na natychmiastowe dostarczenie: kupujący wyraża ją przy zakupie i przyjmuje utratę prawa odstąpienia (art. 38 ust. o prawach konsumenta).\nGwarancja satysfakcji [ILE DNI — domyślnie 14]: NIEZALEŻNIE od powyższego sprzedawca zobowiązuje się dobrowolnie zwrócić pieniądze na wniosek kupującego złożony w tym terminie. To zobowiązanie PONAD ustawę, nie ustawowe prawo odstąpienia — strona produktu je obiecuje, więc regulamin musi je potwierdzać. Zwrot oznacza wygaśnięcie prawa do aktualizacji i wsparcia dla kupionej kopii.\nReklamacje: [MAIL WŁAŚCICIELA].", 'draft' ),
 		'sklepag_strona_polityka'   => array( 'Polityka prywatności sklepu (SZABLON)', "SZABLON — wypełnij danymi sprzedawcy przed publikacją.\n\nAdministrator danych: [NAZWA, KONTAKT]\nZakres: adres e-mail kupującego, dane transakcji, dziennik zdarzeń (90 dni, w tym adres IP przy każdym pobraniu pliku); dobrowolnie podane dane do faktury (nazwa firmy, NIP, adres — cel: wystawienie faktury, podstawa: obowiązek prawny z ustawy o VAT); przy dobrowolnej opinii — imię i treść opinii, publikowane na stronie produktu wyłącznie za wyrażoną w formularzu zgodą (usunięcie/anonimizację można wykonać na żądanie).\nPodmioty przetwarzające: operator płatności Stripe; mechanizm poczty serwera.\nBoty w trybie AI wysyłają treść zapytań do dostawcy API — [UZUPEŁNIJ po włączeniu].", 'draft' ),
 	);
 

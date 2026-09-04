@@ -380,16 +380,23 @@ function chatl_assety() {
 		'chatl-widget',
 		'chatlDane',
 		array(
-			'ajaxUrl'     => admin_url( 'admin-ajax.php' ),
-			'nonce'       => wp_create_nonce( 'chatl_front' ),
-			'powitanie'   => $ust['powitanie'],
+			'ajaxUrl'         => admin_url( 'admin-ajax.php' ),
+			/*
+			 * Limity JEDNYM zrodlem prawdy: do 1.5.15 liczby 500 i 2000 byly wpisane takze
+			 * w widget.js, wiec zmiana stalej w PHP cicho rozjezdzala sie z tym, co widzi gosc.
+			 * Ten sam kanal, ktorym od dawna idzie CHATL_RETENCJA_DNI (nizej).
+			 */
+			'limitPytania'    => CHATL_MAX_PYTANIE,
+			'limitWiadomosci' => CHATL_MAX_WIADOMOSC,
+			'nonce'           => wp_create_nonce( 'chatl_front' ),
+			'powitanie'       => $ust['powitanie'],
 			// Informacja o przetwarzaniu danych przy formularzu kontaktu:
 			// co zbieramy, po co, jak długo. Adres polityki pusty => bez linku.
-			'prywatnosc'  => sprintf(
+			'prywatnosc'      => sprintf(
 				'Zbieramy Twój adres e-mail i treść wiadomości wyłącznie po to, żeby odpowiedzieć na Twoje pytanie. Przechowujemy je przez %d dni, potem są kasowane.',
 				CHATL_RETENCJA_DNI
 			),
-			'polityka'    => esc_url( $ust['adres_polityki'] ),
+			'polityka'        => esc_url( $ust['adres_polityki'] ),
 			/*
 			 * Nota na STARCIE rozmowy, nie dopiero przy formularzu kontaktu.
 			 * Samo pisanie na czacie już ląduje w chatl_rozmowy — gość dowiadywał
@@ -397,22 +404,22 @@ function chatl_assety() {
 			 * zapisana od kilku minut. Sprzedajemy wielu firmom i każda staje się
 			 * administratorem danych, więc informacja ma być PRZED pierwszym słowem.
 			 */
-			'notaZapisu'  => sprintf(
+			'notaZapisu'      => sprintf(
 				'Rozmowa jest zapisywana przez %d dni, żebyśmy mogli wrócić z odpowiedzią.',
 				CHATL_RETENCJA_DNI
 			),
-			'notaLink'    => 'Polityka prywatności',
-			'zgodaTekst'  => 'Zapoznałem się z informacją o przetwarzaniu danych',
-			'pozycja'     => chatl_wyglad_ustawienia( $ust )['pozycja'],
+			'notaLink'        => 'Polityka prywatności',
+			'zgodaTekst'      => 'Zapoznałem się z informacją o przetwarzaniu danych',
+			'pozycja'         => chatl_wyglad_ustawienia( $ust )['pozycja'],
 			// Punkt odpytywania: co nowego w MOJEJ rozmowie (przejęcie przez człowieka).
-			'restUrl'     => esc_url_raw( rest_url( 'chatl/v1/rozmowa' ) ),
+			'restUrl'         => esc_url_raw( rest_url( 'chatl/v1/rozmowa' ) ),
 			/*
 			 * Komunikaty o zmianie rozmówcy. Gość ma wiedzieć, KOMU pisze, ZANIM
 			 * napisze coś, czego nie powiedziałby maszynie — dlatego to jest pasek
 			 * w oknie rozmowy, a nie zmiana awatara, którą łatwo przeoczyć.
 			 */
-			'ludzkiPasek' => 'Rozmawiasz z człowiekiem — do rozmowy dołączył konsultant.',
-			'botPasek'    => 'Rozmawiasz z botem.',
+			'ludzkiPasek'     => 'Rozmawiasz z człowiekiem — do rozmowy dołączył konsultant.',
+			'botPasek'        => 'Rozmawiasz z botem.',
 		)
 	);
 }
@@ -501,8 +508,23 @@ function chatl_ajax_pytanie() {
 			403
 		);
 	}
-	if ( mb_strlen( $pytanie ) > CHATL_MAX_PYTANIE ) {
-		$pytanie = mb_substr( $pytanie, 0, CHATL_MAX_PYTANIE );
+	/*
+	 * Za długie pytanie = ODMOWA z liczbą, nie ciche cięcie. Do 1.5.14 nadmiar znikał w `mb_substr`
+	 * i gość nie wiedział, że bot dostał urwany tekst — odpowiadał na pół pytania. Widget trzyma
+	 * `maxLength` i skraca wklejkę z ostrzeżeniem, więc tu trafia tylko obcy klient albo rozjazd
+	 * limitów; kod `za_dlugie` pozwala klientowi zostawić treść w polu zamiast ją zgubić.
+	 */
+	$dlugosc = mb_strlen( $pytanie );
+	if ( $dlugosc > CHATL_MAX_PYTANIE ) {
+		wp_send_json_error(
+			array(
+				'komunikat' => sprintf( 'Pytanie ma %d znaków, a limit to %d — skróć je i wyślij ponownie.', $dlugosc, CHATL_MAX_PYTANIE ),
+				'kod'       => 'za_dlugie',
+				'limit'     => CHATL_MAX_PYTANIE,
+				'dlugosc'   => $dlugosc,
+			),
+			413
+		);
 	}
 
 	// Id pytania trzymamy, bo wynik dopasowania znamy dopiero niżej —
@@ -659,8 +681,19 @@ function chatl_ajax_zgloszenie() {
 			400
 		);
 	}
-	if ( mb_strlen( $wiadomosc ) > CHATL_MAX_WIADOMOSC ) {
-		$wiadomosc = mb_substr( $wiadomosc, 0, CHATL_MAX_WIADOMOSC );
+	// Bliźniak limitu pytania (CZ-1): za długa wiadomość = ODMOWA z liczbą, nie ciche cięcie —
+	// właściciel dostawałby urwane zgłoszenie i nie wiedziałby, że gość napisał więcej.
+	$dlugosc_w = mb_strlen( $wiadomosc );
+	if ( $dlugosc_w > CHATL_MAX_WIADOMOSC ) {
+		wp_send_json_error(
+			array(
+				'komunikat' => sprintf( 'Wiadomość ma %d znaków, a limit to %d — skróć ją i wyślij ponownie.', $dlugosc_w, CHATL_MAX_WIADOMOSC ),
+				'kod'       => 'za_dlugie',
+				'limit'     => CHATL_MAX_WIADOMOSC,
+				'dlugosc'   => $dlugosc_w,
+			),
+			413
+		);
 	}
 
 	global $wpdb;

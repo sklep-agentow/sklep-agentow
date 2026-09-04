@@ -23,6 +23,7 @@
 #            i DZIAŁAJĄCYM hasłem (`wp user check-password`), strona główna HTTP 200, debug.log pusty PO instalacji, aktywacji
 #            i renderze strony · 1 = coś nie wyszło · 2 = zła komenda / brak pliku zip / brak sekretu `/root/.claude/sekrety-audyt-*.txt`
 #            / brak narzędzia z `wymagaj_narzedzi` (docker, unzip; brak `curl` = EXIT 1 przy teście HTTP)
+#            / NIE WIEM (to konto nie widzi Dockera — komunikat zaczyna się od „NIE WIEM”) — to nie jest „stos nie stoi”
 set -u
 KORZEN="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ZIP="${1:-}"; WZORZEC="${2:-}"

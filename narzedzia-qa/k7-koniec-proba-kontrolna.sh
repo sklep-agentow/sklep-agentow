@@ -27,7 +27,12 @@ zbuduj_czysty() {
 	mkdir -p "$r/wtyczki/sklep-agentow"
 	printf '<?php\n/**\n * Plugin Name: sklep-agentow\n * Version: 9.9.9\n */\n' \
 		> "$r/wtyczki/sklep-agentow/sklep-agentow.php"
-	printf '# SECURITY\n\n> Wtyczka `sklep-agentow` (9.9.9).\n' > "$r/SECURITY.md"
+	# ⛔ Od 3.09 `security-wersje.sh` sprawdza TAKZE date stanu (dokument nie moze deklarowac stanu
+	# starszego niz najnowsze wydanie w CHANGELOG-u — dwa razy w kolejce PR-ow scalenie cofnelo ten
+	# wiersz). Atrapa musi wiec niesc DATE i CHANGELOG, inaczej k7 melduje „nie zmierzone" i cala
+	# proba pada na warunku, ktorego nie testuje. To ten sam powod, co w komentarzu wyzej.
+	printf '# SECURITY\n\n> Stan na 2026-09-03. Wtyczka `sklep-agentow` (9.9.9).\n' > "$r/SECURITY.md"
+	printf '# Historia zmian\n\n## [9.9.9] — 2026-09-02 · atrapa\n' > "$r/wtyczki/sklep-agentow/CHANGELOG.md"
 	# paczka + sha
 	printf 'atrapa' > "$r/boty/paczki/plik.txt"; ( cd "$r/boty/paczki" && zip -q sklep-agentow-9.9.9.zip plik.txt )
 	# repo git z tagiem i gałęzią mutantów

@@ -46,6 +46,9 @@ BLEDY=0
 
 zglos()     { printf '  ⛔ NIE WYSZLO  %s\n' "$1"; BLEDY=$(( BLEDY + 1 )); }
 potwierdz() { printf '  ✅ WYSZLO      %s\n' "$1"; }
+# ⛔ `padnij` konczy sie ZAWSZE kodem 2, a kod 2 ma tu CZTERY znaczenia: NIE WIEM (to konto nie
+# widzi Dockera — o DOSTEPIE, nie o kontenerze) · Docker odpowiedzial i kontenera NIE MA · brak
+# narzedzia · brak warunku wstepnego. Komunikat MUSI nazywac, ktore z nich zaszlo.
 padnij()    { printf 'STOS PROBNY: %s\n' "$1" >&2; exit 2; }
 naglowek()  { printf '\n=== %s ===\n' "$1"; }
 
@@ -65,8 +68,11 @@ wez_zamek_probny() {
 wymagaj_narzedzi() {
 	command -v docker > /dev/null || padnij "brak dockera"
 	command -v unzip  > /dev/null || padnij "brak unzip"
+	# ⛔ „NIE WIEM" TO NIE TO SAMO CO „NIE MA" — patrz funkcja `brak_stosu` w `narzedzia-qa/stos.sh`. Pytamy NAJPIERW,
+	# czy Docker w ogole odpowiada; dopiero potem wolno orzekac o kontenerze.
+	docker ps > /dev/null 2>&1 || padnij "NIE WIEM, czy kontener bazy $KONTENER_DB stoi — to konto nie widzi Dockera (brak dostepu do demona, nie brak kontenera)"
 	docker ps --filter "name=^${KONTENER_DB}$" --filter status=running -q | grep -q . \
-		|| padnij "kontener bazy $KONTENER_DB nie chodzi — nie mam gdzie postawić stosu próbnego"
+		|| padnij "Docker odpowiedzial: kontenera bazy $KONTENER_DB na liscie NIE MA — nie mam gdzie postawic stosu probnego"
 }
 
 wp() { docker exec "$KONTENER" wp --allow-root --path=/var/www/html "$@" 2>&1; }
@@ -107,7 +113,12 @@ postaw_stos() {
 		|| docker exec "$KONTENER_DB" printenv MYSQL_ROOT_PASSWORD 2> /dev/null)"
 	[ -n "$haslo_root" ] || padnij "nie umiem odczytać hasła root bazy z kontenera $KONTENER_DB"
 
-	docker rm -f -v "$KONTENER" > /dev/null 2>&1 || true   # -v: patrz zwin_stos
+	# ⛔ `-v` TAKZE TUTAJ. To drugie z dwoch miejsc, w ktorych kasujemy ten kontener —
+	#    `postaw_stos` zdejmuje POPRZEDNI stos przed postawieniem nowego. Bez `-v` zostawialo
+	#    to sierote tak samo jak `zwin_stos`, tylko ciszej: bieg przerwany w polowie (zamek,
+	#    Ctrl-C, timeout) nie dochodzi do zwijania, wiec sprzatal go dopiero NASTEPNY bieg —
+	#    i wlasnie tu gubil wolumen.
+	docker rm -f -v "$KONTENER" > /dev/null 2>&1 || true
 	docker exec -e MYSQL_PWD="$haslo_root" "$KONTENER_DB" \
 		mariadb -uroot -e "DROP DATABASE IF EXISTS \`$BAZA\`; CREATE DATABASE \`$BAZA\`;" \
 		|| padnij "nie umiem założyć bazy $BAZA"
@@ -153,9 +164,14 @@ zwin_stos() {
 		printf '\nStos próbny ZOSTAJE (--zostaw): %s — panel: %s/wp-admin (probny / probne-haslo-QA)\n' "$KONTENER" "$ADRES"
 		return
 	fi
-	# ⛔ `-v`: obraz WordPressa deklaruje VOLUME /var/www/html, więc każde `docker run` zakłada ANONIMOWY
-	# wolumen (~83 MB rdzenia WP), a `docker rm -f` bez `-v` go ZOSTAWIA. Zmierzone 2.09: 83 wiszące
-	# wolumeny z trzech dni (39 z jednego dnia), 6,5 GB, dysk 100 % i stanięty runner CI.
+	# ⛔ `-v` KASUJE ANONIMOWY WOLUMEN. Bez niego kazdy bieg stosu probnego zostawial
+	#    sierote ~88 MB, a stos stawia sie od zera przy KAZDYM uzyciu — dziewieciu wolajacych.
+	#    Zmierzone 3.09 na maszynie warsztatu: 38 wolumenow Dockera, z tego 35 nieprzypisanych
+	#    do zadnego kontenera (takze zatrzymanego), razem 2,7 GB przy dysku na 92 %.
+	#    35 x 88 MB zgadza sie co do rzedu — to sa te sieroty.
+	#    linia `docker rm -f -v` w `strony-prawne-stos-probny.sh` probowala to lapac PO wywolaniu
+	#    `zwin_stos`, ale wtedy kontenera juz nie ma, wiec ta linia nie miala czego usunac,
+	#    a `|| true` to przykrywalo (recenzja #278, DROBNA 2, otwarta od rundy 3).
 	docker rm -f -v "$KONTENER" > /dev/null 2>&1 || true
 	sql_bazy "DROP DATABASE IF EXISTS \`$BAZA\`;" > /dev/null 2>&1 || true
 }

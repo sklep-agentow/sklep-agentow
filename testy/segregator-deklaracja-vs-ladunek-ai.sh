@@ -17,13 +17,22 @@
 # co strażnik ma pilnować: czy dokument nadąża za kodem.
 #
 # KODY: 0 = tryb zwykły przeszedł albo kalibracja padła zgodnie z oczekiwaniem,
-#       1 = odwrotnie (test kłamie), 2 = brak stosu / dockera / gałęzi porównania.
+#       1 = odwrotnie (test kłamie),
+#       2 = jedno z dwóch, skrypt mówi które: NIE WIEM (to konto nie widzi Dockera — komunikat zaczyna się od „NIE WIEM”)
+#           ALBO Docker odpowiedział i stosu / gałęzi porównania nie ma.
 set -u
 KONTENER=strona_wp_wordpress
 WTYCZKA=wtyczki/segregator-maila
 KORZEN=$(git rev-parse --show-toplevel 2>/dev/null) || { echo "nie jestem w repozytorium git" >&2; exit 2; }
 cd "$KORZEN" || exit 2
-docker inspect "$KONTENER" >/dev/null 2>&1 || { echo "stos $KONTENER nie stoi" >&2; exit 2; }
+# ⛔ „NIE WIEM" TO NIE TO SAMO CO „NIE STOI" — patrz `narzedzia-qa/test-php.sh`. Samo
+# `docker inspect` konczy sie niezerowo zarowno gdy kontenera NIE MA, jak i gdy to konto
+# nie widzi demona Dockera. Rozstrzyga osobne pytanie, czy Docker w ogole odpowiada.
+if ! docker ps > /dev/null 2>&1; then
+	echo "NIE WIEM, czy stos $KONTENER stoi — to konto nie widzi Dockera (brak dostepu do demona, nie brak kontenera)" >&2
+	exit 2
+fi
+docker inspect "$KONTENER" > /dev/null 2>&1 || { echo "Docker odpowiedzial: stosu $KONTENER NIE MA" >&2; exit 2; }
 
 KALIBRACJA=0
 [ "${1:-}" = "--kalibracja" ] && KALIBRACJA=1

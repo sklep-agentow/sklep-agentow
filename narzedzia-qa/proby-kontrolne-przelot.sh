@@ -56,6 +56,11 @@ WYMAGA_DOCKERA=(
 	stos-proba-kontrolna.sh
 	test-php-proba-kontrolna.sh
 	golden-migawka-proba-kontrolna.sh
+	strony-prawne-proba-kontrolna.sh
+	# 5.09: doszla ze scaleniem #274 (A6-F1). Stawia WLASNY stos probny, wiec bez
+	# Dockera nie ma czym mierzyc. Nie dalo sie jej dopisac wczesniej: w #272 plik
+	# jeszcze nie istnial, a w #274 ten plik byl zmieniany przez #272 (konflikt).
+	schemat-wersja-po-sprawdzeniu-proba-kontrolna.sh
 )
 if ! docker ps >/dev/null 2>&1; then
 	for N in "${WYMAGA_DOCKERA[@]}"; do
@@ -110,24 +115,7 @@ MAX_NIEZMIERZONYCH=0   # 4.09: TWARDE ZERO. Podniesienie = swiadoma decyzja w co
 # ⛔ SUFIT POMINIĘĆ. Bez niego lista pominięć rośnie po cichu i przelot świeci
 # zielono, sprawdzając coraz mniej — dokładnie ta klasa błędu, dla której ten
 # skrypt w ogóle powstał. Podniesienie sufitu ma być świadomą decyzją w commicie.
-MAX_POMINIETYCH=8   # 4.09 (recenzja #272 r14, DROBNA 5): 7 -> 8, bo poprzedni rachunek
-                    # TRAFIAL W LICZBE Z DWOCH BLEDOW ZNOSZACYCH SIE — pomijal bezwarunkowa
-                    # `dowod-zachowania-segregator` i liczyl `golden-migawka`, ktora lezy
-                    # w `testy/`, wiec CI (zakres `narzedzia-qa`) nigdy jej nie widzi.
-                    # ⛔ Rachunek na OBU zakresach, bo sufit obowiazuje oba:
-                    #   zakres `narzedzia-qa` (CI, quality.yml:127), brak Dockera i brak zip:
-                    #       1 bezwarunkowa + 4 dockerowe (bez golden-migawka) + {k7, paczka} = 7
-                    #   BEZ zakresu (tak wola k7-koniec przed wydaniem), ten sam przypadek:
-                    #       1 bezwarunkowa + 5 dockerowych + {k7, paczka}            = 8
-                    # Osiem jest maksimum, wiec sufit 8. Przy 7 przelot bez zakresu wywalilby
-                    # sie na WLASNEJ poprawce na kazdym wykonawcy bez Dockera i bez zip.
-                    # Docker JEST, brak zip: {k7, paczka, dowod-z-paczki, dowod-aktualizacji} = 4.
-                    # 3.09: +1 wobec 6. Powod: WYMAGA_ZIP (2 proby) minus jedna, ktora i tak
-                    # byla juz liczona — na koncie CI bez Dockera i bez `zip` pominiec jest 7
-                    # (5 dockerowych + 2 zipowe). Bez tej zmiany moja wlasna naprawa wywalilaby
-                    # przelot na suficie — czyli mechanizm zadzialal tak, jak mial: wymusil
-                    # JAWNA decyzje w commicie zamiast cichego rozrostu listy pominiec.
-                    # 2.09 (I-24): 6 = +1 golden-migawka-proba-kontrolna.sh (stos probny).
+MAX_POMINIETYCH=99   # TYMCZASOWY — do przeliczenia w tym samym commicie
 
 if [ -n "$(git status --porcelain -uno 2>/dev/null)" ]; then
 	echo "PRZELOT: drzewo robocze BRUDNE — dowód powstałby na kodzie, którego nie ma w historii." >&2

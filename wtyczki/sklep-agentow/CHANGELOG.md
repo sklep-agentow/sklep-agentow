@@ -18,6 +18,55 @@ wydany osobno (podbicie pośrednie wewnątrz jednej zmiany).
 
 Nic jeszcze.
 
+## [0.9.40] — 2026-09-03
+
+### Naprawione
+- **Gwarancja satysfakcji przestaje wyglądać na sprzeczność z warunkami zakupu.** Strona produktu
+  obiecywała „14 dni na zwrot — bez pytań", a zgoda przy zakupie mówi o **utracie prawa odstąpienia**
+  (art. 38 ustawy o prawach konsumenta, bo treść cyfrowa jest dostarczana natychmiast). Prawnie to nie
+  była sprzeczność — gwarancja satysfakcji to **dobrowolne zobowiązanie sprzedawcy PONAD ustawę** —
+  ale nigdzie nie było napisane, że to dwie różne rzeczy, więc kupujący czytał dwa zdania, które sobie
+  przeczą. Tekst gwarancji nazywa teraz swoją podstawę; obietnica 14 dni **nie zmienia się**.
+  Ten sam tekst jedzie do maila po zakupie (`mail-html.php` czyta go z tego samego źródła), więc
+  poprawka wchodzi na stronę i do maila naraz. Szablon Regulaminu dostał osobny punkt o gwarancji —
+  strona produktu ją obiecuje, więc regulamin musi ją potwierdzać, a właściciel wypełnia tylko liczbę dni.
+  ⚠️ Szkice stron powstają **tylko przy pierwszej instalacji** — sklep zainstalowany wcześniej niż
+  0.9.40 ma w Regulaminie starą treść i punkt o gwarancji trzeba dopisać ręcznie; instrukcja mówi to
+  wprost, tym samym wzorem co przy Polityce sprzed 0.9.23.
+- **Panel mówi właścicielowi, że Regulamin i Polityka prywatności sklepu czekają na uzupełnienie.**
+  Aktywacja zakłada obie strony jako SZABLONY w wersji roboczej (świadomie — treści prawnej nie da się
+  napisać za właściciela), ale do tej wersji **nic o nich nie mówiło**: opcje `sklepag_strona_regulamin`
+  i `sklepag_strona_polityka` były czytane wyłącznie w `uninstall.php`, żeby je skasować. Właściciel mógł
+  sprzedawać treści cyfrowe, nie wiedząc, że dokumenty dla kupujących leżą nieopublikowane.
+  Ostrzeżenie jest trwałe, wskazuje obie strony z odnośnikiem do edycji i znika dopiero, gdy obie są
+  opublikowane i nie mają już zaślepki „SZABLON". Brak strony (właściciel ją skasował) nie jest pouczany.
+
+---
+
+## [0.9.39] — 2026-09-02 · schemat bazy bez zmian (10)
+
+### Naprawione
+- **Nieudana migracja bazy nie znika już po cichu.** Do tego wydania aktywacja i aktualizacja podnosiły wersję schematu od razu po `dbDelta`, bez sprawdzenia, czy tabele i kolumny naprawdę powstały (np. użytkownik bazy bez prawa ALTER) — brama „wersja aktualna” zamykała się na zawsze, a sklep nie przyjmował zamówień bez jednego słowa dlaczego. Teraz wersja rośnie dopiero po pomiarze schematu w bazie; przy brakach zostaje stara, sklep **ponawia próbę sam, najwyżej raz na 5 minut** (dławik opisany w punkcie niżej; aktywacja wtyczki kasuje odstęp, więc „deaktywuj i aktywuj” działa natychmiast), a Pulpit pokazuje, czego brakuje i jaki był błąd bazy.
+
+- **Sprawdzenie schematu nie powtarza się już przy KAŻDYM żądaniu.** Gdy baza jest niekompletna, wersja schematu celowo zostaje stara, żeby próba się powtórzyła — ale bez odstępu powtarzała się przy każdym żądaniu, także anonimowym frontowym, i każde z nich płaciło siedem `dbDelta` plus czternaście zapytań pomiarowych. Na instalacji bez prawa ALTER/CREATE ten stan jest trwały, więc sklep zwalniał każdemu odwiedzającemu. Teraz ponawianie co 5 minut; aktywacja wtyczki kasuje odstęp, więc „deaktywuj i aktywuj” z komunikatu działa natychmiast.
+- **Komunikat „Ostatni błąd bazy” pokazuje wreszcie prawdziwy błąd.** `last_error` kasuje każde kolejne zapytanie, a odczyt był jeden — po całej pętli — więc błąd był widoczny tylko wtedy, gdy zawiodła ostatnia z siedmiu tabel. Teraz odczyt po każdym `dbDelta`, wszystkie różne komunikaty w jednym zdaniu.
+- **`SHOW TABLES LIKE` z `esc_like()` w czterech miejscach.** Nazwy tabel niosą po dwa `_`, a w `LIKE` `_` jest dziką kartą — bez escapowania wzorzec pasował do każdej tabeli tej samej długości z dowolnym znakiem na tych pozycjach, więc cudza tabela mogła zostać uznana za naszą i schemat wyglądałby na kompletny.
+
+---
+## [0.9.38] — 2026-09-02 · schemat bazy bez zmian (10)
+
+### Naprawione
+- **Dwie osoby za jednym adresem internetowym nie dzielą już okna ochrony przed podwójnym kliknięciem.** Do tego wydania okno było kluczowane samym adresem IP, więc w biurze za NAT-em albo w sieci komórkowej operatora druga osoba, która kliknęła „Kup” w ciągu 5 s po pierwszej, dostawała CUDZY checkout Stripe. Formularz zakupu niesie teraz losowy znacznik, który przeglądarka losuje przy otwarciu strony produktu; podwójny klik wysyła ten sam znacznik (ochrona zostaje), inna przeglądarka ma własny — także wtedy, gdy sklep stoi za pełnostronicowym cache'em, bo znacznik nie pochodzi z zapamiętanego renderu. Przeglądarka bez JavaScriptu i formularz sprzed aktualizacji (bez znacznika) działają jak dotąd.
+
+## [0.9.37] — 2026-09-02 · schemat bazy bez zmian (10)
+
+### Naprawione
+- **Anonimizacja z panelu zachowuje dane do faktury** — tak samo jak kasownik danych osobowych WordPressa. Komunikat po anonimizacji i szczegóły zamówienia mówią to, co się naprawdę stało: faktura została (nazwa, NIP, adres dalej widoczne w panelu — właściciel musi je odczytać, żeby spełnić obowiązek podatkowy), a nie „usunięta”. Do 0.9.36 przycisk „Anonimizuj kupującego” w panelu kasował także nazwę, NIP i adres nabywcy z faktury, choć polityka prywatności sklepu deklaruje ich przechowywanie przez okres wymagany prawem podatkowym, a kasownik WordPressa je zostawiał — dwie zasady dla jednego obowiązku. Teraz obie drogi usuwają adres e-mail i treść maila, a dane faktury zostają; okno potwierdzenia, opis w panelu i instrukcja mówią to wprost.
+- **Link do pobrania przestaje działać po zwrocie całej kwoty i przy obciążeniu zwrotnym (spór, w którym bank zdjął pieniądze).** Do 0.9.36 brama pobrań sprawdzała tylko token i termin ważności, więc kupujący, któremu Stripe oddał pieniądze, mógł pobierać produkt do końca 72 godzin i limitu 10 pobrań. Teraz zamówienie ze statusem `zwrocone` albo `sporne` dostaje odmowę (410) z powodem i kontaktem do sprzedawcy — zanim sklep dotknie pliku i licznika, więc odmowa nie zużywa pobrania — a próba trafia do osi czasu zamówienia jako `pobranie_odmowa_zwrot`. Zwrot częściowy nie zmienia statusu i nie odcina dostępu (świadoma granica). Spór wygrany albo wycofany przywraca poprzedni status i link znów działa.
+- **Strona „Dziękujemy" nie twierdzi już, że przegrany spór „czeka na rozstrzygnięcie".** Obciążenie zwrotne zamknięte na niekorzyść sklepu (`charge.dispute.closed` z wynikiem `lost`) zostawia status `sporne` na stałe, a kod nie odróżnia sporu otwartego od przegranego — oba mają ten sam status. Zdanie na stronie zostało więc pozbawione twierdzenia o toczącej się sprawie i brzmi tak samo jak brama pobrań: „Ta płatność jest w sporze (reklamacja w banku) — link do pobrania nie działa". Zdanie jest prawdziwe w obu przypadkach.
+- **Opis maila kontaktowego w panelu i w instrukcji wymieniał dwie z pięciu sytuacji, w których sklep go pokazuje kupującemu.** Zmierzone w `pobieranie.php`: zły link (403), link wygasł (410), zwrot albo spór (410), plik chwilowo niedostępny (503), wyczerpany limit (410) — pięć miejsc. Właściciel czytał o dwóch, więc nie wiedział, gdzie jeszcze ten adres zobaczą kupujący.
+- **FAQ instrukcji cytowało oba komunikaty strony „Dziękujemy" w wersji sprzed tej naprawy** — cudzysłowy zamykały się przed dopiskiem o martwym linku, a zdanie tuż pod nimi twierdziło, że oba mówią o linku wprost. Cytaty dociągnięte do treści, którą strona naprawdę pokazuje.
+
 ---
 
 ## [0.9.36] — 2026-09-01 · schemat bazy bez zmian (10)
