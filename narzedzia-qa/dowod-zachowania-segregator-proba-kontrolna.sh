@@ -85,7 +85,17 @@ sprawdz() {
 	if [ "$kod" -ne "$oczekiwany" ]; then
 		printf '  BLAD %-58s (EXIT=%s, oczekiwano %s)\n' "$opis" "$kod" "$oczekiwany"
 		printf '%s\n' "$wyjscie" | grep -E 'NIE WYSZLO|WYSZLO|WYNIK' | sed 's/^/         /'
-		BLEDY=$(( BLEDY + 1 ))
+		# ⛔ KTORY LICZNIK (klasa 138, recenzja #280 r4 W1). `oczekiwany == 0` to KONTROLA
+		#    ODWROTNA — czysta paczka miala przejsc i nie przeszla, wiec straznik pada ZAWSZE
+		#    i cala proba NIC nie znaczy (EXIT=2). Do rundy 4 szlo to do BLEDY i konczylo
+		#    zdaniem „DOWOD ZACHOWANIA POMYLIL SIE N RAZ(Y)", czyli orzeczeniem o PRODUKCIE
+		#    na podstawie pomiaru, ktory sie nie odbyl. Licznik ODWROTNA byl MARTWY:
+		#    zadeklarowany i sprawdzany, nigdy nie podnoszony.
+		if [ "$oczekiwany" -eq 0 ]; then
+			ODWROTNA=$(( ODWROTNA + 1 ))
+		else
+			BLEDY=$(( BLEDY + 1 ))
+		fi
 		return
 	fi
 	if [ -n "$fraza" ] && ! printf '%s' "$wyjscie" | grep -qF "$fraza"; then
