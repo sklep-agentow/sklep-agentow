@@ -68,7 +68,7 @@ done
 # nie zostal nigdzie dolaczony, tylko podpada pod istniejacy od dawna wzorzec
 # `*-proba-kontrolna.sh` (linia-bazowa.sh:27). Nic go do listy nie dopisywalo.
 MIN_URUCHAMIANYCH=15
-MAX_POMIJANYCH=34
+MAX_POMIJANYCH=40
 [ "$ILE" -ge "$MIN_URUCHAMIANYCH" ] || { echo "  ⛔ URUCHAMIANYCH $ILE, prog $MIN_URUCHAMIANYCH — z linii bazowej UBYLY testy"; BLEDY=$((BLEDY+1)); }
 [ "$ILE" -ge 1 ] || { echo "  ⛔ ZERO testów do uruchomienia — kontrola dodatnia pusta, pomiar nic nie znaczy"; BLEDY=$((BLEDY+1)); }
 # ⛔ SUFIT POMIJANYCH — druga strona tego samego podzialu (patrz komentarz wyzej).

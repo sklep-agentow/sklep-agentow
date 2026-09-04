@@ -115,7 +115,12 @@ MAX_NIEZMIERZONYCH=0   # 4.09: TWARDE ZERO. Podniesienie = swiadoma decyzja w co
 # ⛔ SUFIT POMINIĘĆ. Bez niego lista pominięć rośnie po cichu i przelot świeci
 # zielono, sprawdzając coraz mniej — dokładnie ta klasa błędu, dla której ten
 # skrypt w ogóle powstał. Podniesienie sufitu ma być świadomą decyzją w commicie.
-MAX_POMINIETYCH=10  # 5.09: POLICZONE na scalonej tresci (#272 + #274 + #278), nie przepisane.
+# ⛔ SUFIT POMINIEC JEST PER ZAKRES — jedna liczba dla obu sciezek NIE dziala.
+#    Recenzja #272 r17 WAZNA 2: sufit 10 (maksimum z obu) w CI nie zapali sie NIGDY,
+#    bo CI wola przelot Z ZAKRESEM `narzedzia-qa`, gdzie wiecej niz 7 pominiec jest
+#    NIEMOZLIWE. Przy jednej liczbie mozna dopisac TRZY nazwy do POMIJANE i przejdzie
+#    bez sladu — dokladnie ta klasa, dla ktorej ten sufit powstal.
+MAX_POMINIETYCH_ZAKRES=7   # 5.09: POLICZONE na scalonej tresci (#272 + #274 + #278), nie przepisane.
                     # ⛔ Rachunek na OBU zakresach, bo sufit obowiazuje oba, a CI liczy inaczej
                     #    niz wydanie. Scenariusz, ktorego sufit dotyczy: wykonawca BEZ Dockera
                     #    I BEZ `zip` (na maszynie z obydwoma pominiecie jest tylko 1 — dlatego
@@ -130,6 +135,7 @@ MAX_POMINIETYCH=10  # 5.09: POLICZONE na scalonej tresci (#272 + #274 + #278), n
                     #    ktorego zada bramka wydania — wywalilby sie na WLASNEJ poprawce.
                     # ⛔ NIE przepisuj tej liczby przy nastepnym scaleniu: kazda nowa proba
                     #    dockerowa albo zipowa ja przesuwa. Policz komenda na scalonym drzewie.
+MAX_POMINIETYCH_PELNY=10   # ta sama arytmetyka, sciezka BEZ zakresu (tak wola `k7-koniec`)
 
 if [ -n "$(git status --porcelain -uno 2>/dev/null)" ]; then
 	echo "PRZELOT: drzewo robocze BRUDNE — dowód powstałby na kodzie, którego nie ma w historii." >&2
@@ -138,6 +144,8 @@ if [ -n "$(git status --porcelain -uno 2>/dev/null)" ]; then
 fi
 
 ZAKRES="${2:-.}"
+# ⛔ Sufit dobierany do ZAKRESU, nie maksimum z obu — patrz komentarz przy stalych.
+if [ "$ZAKRES" = "." ]; then MAX_POMINIETYCH="$MAX_POMINIETYCH_PELNY"; else MAX_POMINIETYCH="$MAX_POMINIETYCH_ZAKRES"; fi
 [ -d "$ZAKRES" ] || { echo "PRZELOT: katalog zakresu [$ZAKRES] nie istnieje." >&2; exit 2; }
 mapfile -t PROBY < <(find "$ZAKRES" -name '*proba-kontrolna*.sh' -not -path './.git/*' | sed 's|^\./||' | sort)
 # ⛔ Zero prób to ODMOWA, nie sukces: zawężony zakres, który nic nie łapie, wyglądałby

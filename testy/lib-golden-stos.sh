@@ -24,7 +24,7 @@ GOLDEN_TEST=testy/golden-kupujacy-dostaje-to-co-kupil-test.php
 GOLDEN_CEL=/var/www/html/wp-content/plugins/sklep-agentow
 # ⛔ ZAMKA NIE BIERZEMY TUTAJ. Bierze go `postaw_stos` z narzedzia-qa/lib-stos-probny.sh
 # (zamek `wymiana/stos-probny.lock`, WŁASNY dla `probny_wp`) — dzięki temu chroni WSZYSTKICH
-# dziewięciu użytkowników stosu próbnego, a nie tylko goldena. Do 2.09 golden brał tu
+# szesnastu użytkowników stosu próbnego, a nie tylko goldena. Do 2.09 golden brał tu
 # `wymiana/stos.lock`, czyli zamek stosu WARSZTATOWEGO, który `linia-bazowa.sh` trzyma
 # już nad każdym `testy/*.sh` — drugie wzięcie tego samego pliku zakleszczało bieg
 # na własnej blokadzie aż do `timeout 300` (EXIT=124, fałszywe czerwone w linii bazowej).
