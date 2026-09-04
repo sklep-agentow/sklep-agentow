@@ -94,8 +94,14 @@ trzy warunki są spełnione. Próg 10 to inny wymiar i w chwili tego przebiegu *
 siedział w opisie pola. Po poprawce egzekwuje go `contains` + `minContains` — sprawdzone na TYM raporcie:
 `expected at least 10 but only 9 matched`.
 
-⛔ **Znalezisko przy okazji, do rejestru infry, NIE do tej tabeli:** `SCHEMAT-RAPORTU.json` nie jest
-przez nic uruchamiany — `k7-koniec.sh` sprawdza wyłącznie, czy plik ISTNIEJE. Skutek zmierzony:
-`B/L.json` i `B/L4.json` łamią obowiązkowe pola schematu (`plik` przy werdykcie ZGODNE) **od rundy B**
-i nikt tego nie zauważył. Ta sama klasa trzy razy w jednym łańcuchu: prośba w prompcie → opis w schemacie
-→ schemat bez walidatora.
+⚠️ **SPROSTOWANIE (4.09, po recenzji #279 WAŻNA 3) — moje wcześniejsze zdanie w tym miejscu było
+FAŁSZYWE i zostało obalone słusznie.** Pisałam, że `SCHEMAT-RAPORTU.json` „nie jest przez nic
+uruchamiany”. Nieprawda: `k7-koniec.sh` czyta zeń DWA słowniki (`werdykt`, `rodzaj_skutku`)
+i ma na to dwa przypadki w próbie kontrolnej. Pisałam też, że `B/L.json` i `B/L4.json` łamią
+schemat i „nikt tego nie zauważył” — też nieprawda: cele `Ł-00` i `L4-14` stoją w
+`audyt/sklep/raporty/WYJATKI-WARUNEK-8.txt` z powodem `AN-021`, więc warunek 8 je WYKRYWA,
+a koordynatorka zwolniła je ŚWIADOMIE. ⭐ Klasa mojego błędu: **zmierzyłam OCHRONĘ zamiast WADY**.
+⇒ **Prawda w węższej, sprawdzonej postaci:** schemat jest egzekwowany CZĘŚCIOWO — poza tymi dwoma
+słownikami nikt nie sprawdza `required`, `minItems`, `minContains`, `minLength` (w repozytorium
+nie ma wywołania walidatora JSON Schema), więc próg `minContains: 10` działa dopiero wtedy, gdy
+ktoś uruchomi walidator ręcznie. ⛔ Do rejestru infry wnosić TĘ wersję, nie poprzednią.
