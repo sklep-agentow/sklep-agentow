@@ -60,7 +60,7 @@
     "wywolania_narzedzi": { "type": "integer" },
     "obietnice_behawioralne": {
       "type": "array",
-      "description": "WYMAGANE dla soczewki L5 od rundy weryfikacja. Kazda obietnica BEHAWIORALNA z dokumentow wtyczki i z 01-zamowienie.md (zdania o tym, co kod ROBI W RUCHU: nie zuzywa / odmawia / wysyla ponownie / kasuje / nigdy / tylko) wypisana i ROZLICZONA. Pozycja bez werdyktu jest niedopuszczalna — pominiecie ma zostawiac SLAD. Prog 10 ZMIERZONYCH egzekwuje contains + minContains, NIE opis: opis niczego nie wymusza, a minItems liczy pozycje, nie werdykty (zmierzone 4.09: raport z 12 pozycjami i 9 zmierzonymi przeszedl, bo prog siedzial w opisie).",
+      "description": "WYMAGANE dla soczewki L5 od rundy weryfikacja. Kazda obietnica BEHAWIORALNA z dokumentow wtyczki i z 01-zamowienie.md (zdania o tym, co kod ROBI W RUCHU: nie zuzywa / odmawia / wysyla ponownie / kasuje / nigdy / tylko) wypisana i ROZLICZONA. Pozycja bez werdyktu jest niedopuszczalna — pominiecie ma zostawiac SLAD. Prog 10 ZMIERZONYCH egzekwuje contains + minContains, NIE opis: opis niczego nie wymusza, a minItems liczy pozycje, nie werdykty (zmierzone 4.09: raport z 13 pozycjami i 9 zmierzonymi przeszedl, bo prog siedzial w opisie).",
       "minItems": 10,
       "contains": { "type": "object", "required": ["werdykt"], "properties": { "werdykt": { "enum": ["ZGODNE", "ROZJAZD"] } } },
       "minContains": 10,

@@ -1,5 +1,5 @@
 #!/bin/bash
-# k7-koniec-proba-kontrolna.sh — dowód, że k7-koniec.sh nie jest ozdobą.                 WERSJA 1.3.3
+# k7-koniec-proba-kontrolna.sh — dowód, że k7-koniec.sh nie jest ozdobą.                 WERSJA 1.4.0
 #
 # Buduje w /tmp PEŁNĄ, ZIELONĄ atrapę stanu końca K7 (mapa, rejestr, przelot, log prób,
 # paczka + sha, repo git z tagiem i gałęzią mutantów, raport JSON) i sprawdza, że skrypt

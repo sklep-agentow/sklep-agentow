@@ -14,7 +14,7 @@
 # Pliki, które czyta (wszystkie względem korzenia repo):
 #   audyt/sklep/material/06-mapa-polowania.md · audyt/sklep/REJESTR-ZNALEZISK-SKLEP.md
 #   audyt/sklep/PRZELOT-CZLOWIEKA-SKLEP.md · audyt/sklep/ZAMROZENIE.md · audyt/sklep/raporty/**/*.json
-#   audyt/sklep/PROBY-KONTROLNE.log · tag bank/mutanty-sklep (do 31.08 #238: gałąź audyt/mutanty-sklep):audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP.md
+#   audyt/sklep/PROBY-KONTROLNE.log · tag bank/mutanty-sklep-r2 albo gałąź audyt/mutanty-sklep (stary tag bank/mutanty-sklep = stan rundy A, ostatni w kolejności):audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP.md
 set -u
 KORZEN="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WYMAGAJ_ZAMROZENIA_MAPY=1
@@ -84,7 +84,8 @@ elif ! ROZL_SUROWE=$(git show "$GALAZ_MUT:audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP
 	fail "2 kalibracja: gałąź $GALAZ_MUT jest, ale brak na niej audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP.md"
 else
 	ROZL=$(printf '%s\n' "$ROZL_SUROWE" | sed 's/\\|/\x01/g')  # osobno od git show: bez pipefail kod potoku = kod seda (recenzja #186 D3)
-	# wiersze werdyktów: | audytor | mutant | znalazl | falszywy | werdykt | proby |  → po split '|' proby = pole 7
+	# wiersze werdyktów: | audytor | mutant | znalazl | falszywy | werdykt | proby | powod_powtorki |
+	# → po split '|' proby = pole 7, powod_powtorki = pole 8 (kolumna dodana 4.09 wpisem D39)
 	# (recenzja #182 r2 W2: $NF czytał PUSTĄ kolumnę za końcowym „|" — warunek był martwy)
 	# ILE = liczba RÓŻNYCH soczewek (kolumna 2), nie wierszy — L3 ma dwa mutanty (M3, M4) i liczył się podwójnie (recenzja #188 D8)
 	ILE=$(printf '%s\n' "$ROZL" | grep -E '^\| (L[1-5]|L) \|' | awk -F'|' '{gsub(/ /,"",$2); print $2}' | sort -u | wc -l)

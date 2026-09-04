@@ -124,7 +124,7 @@ sprawdzany jako wadliwy (czy w ogóle wykrywalny tym pytaniem). Tabela rozliczen
 ⛔ Audytor nie wie o kalibracji. Mutant trafiony przez CUDZĄ soczewkę = znalezisko tej soczewki (unia), nie zmienia
 kalibracji soczewki przypisanej.
 
-**Mechanika** (od 31.08 #238 bank żyje jako TAG `bank/mutanty-sklep`; niżej historyczny opis budowy): gałąź `audyt/mutanty-sklep` z `k7-zamrozenie`; `podloz-mutanty-sklep.sh` (wzór z `audyt/mutanty-kalibracja`:
+**Mechanika** (od 31.08 #238 bank żyje jako TAG; ⭐ od 4.09 aktualne rozliczenie niesie `bank/mutanty-sklep-r2` oraz gałąź `origin/audyt/mutanty-sklep` (oba → `34515c1`), a `bank/mutanty-sklep` (`412d9b3`) jest ZAMROŻONYM stanem rundy A i stoi ostatni w kolejności refów; niżej historyczny opis budowy): gałąź `audyt/mutanty-sklep` z `k7-zamrozenie`; `podloz-mutanty-sklep.sh` (wzór z `audyt/mutanty-kalibracja`:
 kotwica = WZORZEC, jeden commit na mutanta); `ROZLICZENIE-MUTANTOW-SKLEP.md` COMMITOWANA NA GAŁĘZI (bank botów „poza
 repo" zniknął). Runda A na paczce Z GAŁĘZI MUTANTÓW (znaleziska poza liniami mutantów są prawdziwe), runda B na czystej.
 
