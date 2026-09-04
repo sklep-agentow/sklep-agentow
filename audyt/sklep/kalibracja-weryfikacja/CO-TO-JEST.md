@@ -63,3 +63,32 @@ być sprawdzane tym samym przyrządem. Ta sama zasada, co przy zawężeniu wymog
 ⛔ `L5-proba3.json` ma dodatkowo 5 werdyktów spoza słownika schematu (`ŚREDNIA`, `DROBNA`
 w miejscach, gdzie słownik ich nie przewiduje). **Nie poprawiam tego** — to raport-dowód
 z nieudanej próby i ma zostać taki, jaki oddał audytor.
+
+## ⛔ SPROSTOWANIE — moje wcześniejsze zdanie o schemacie było ZA MOCNE
+
+W opisie PR #279 i w komunikacie commita `d7388c8` napisałam, że `SCHEMAT-RAPORTU.json`
+**„nie jest przez nic uruchamiany”**. To NIEPRAWDA i recenzent słusznie to obalił.
+Zmierzone (`grep` po `narzedzia-qa/k7-koniec.sh`):
+
+```
+$s[0].properties.werdykty.items.properties.werdykt.enum
+$s[0].properties.znaleziska.items.properties.rodzaj_skutku.enum
+```
+Warunek 8 **czyta schemat** i egzekwuje go jako słownik **dwóch list dopuszczalnych wartości**;
+`k7-koniec-proba-kontrolna.sh` ma na to dwa przypadki (werdykt i `rodzaj_skutku` spoza słownika).
+
+**Co zostaje prawdą, w węższej i sprawdzonej postaci:** schemat jest egzekwowany CZĘŚCIOWO.
+Poza tymi dwoma enumami nikt nie sprawdza `required`, `minItems`, `minContains` ani `minLength` —
+w repozytorium nie ma żadnego wywołania walidatora JSON Schema (`grep -rn "jsonschema\|minContains"`
+po `*.sh` i `*.yml` → brak). ⇒ **próg `minContains: 10`, który ten PR wprowadza, działa dopiero
+wtedy, gdy ktoś uruchomi walidator — dziś robi to koordynatorka ręcznie.**
+
+⛔ **Drugie moje zdanie też było fałszywe:** twierdziłam, że `raporty/B/L.json` i `B/L4.json`
+łamią schemat i „nikt tego nie zauważył, bo nikt nie walidował”. Zmierzone: te dwa cele
+(`Ł-00`, `L4-14`) stoją na jawnej liście `audyt/sklep/raporty/WYJATKI-WARUNEK-8.txt`
+z wpisanym powodem (`AN-021`: dowód jest KOMENDĄ, nie miejscem w pliku). Czyli warunek 8
+je **wykrywa**, a koordynatorka **świadomie** je zwolniła — mechanizm zadziałał.
+
+⭐ To jest klasa „zmierzyłam OCHRONĘ zamiast WADY”: mój walidator pokazał naruszenia, a ja nie
+sprawdziłam, czy repozytorium już je zna i celowo dopuściło. Zapisuję to tutaj, bo o mały włos
+wniosłabym fałszywe znalezisko do rejestru infry.
