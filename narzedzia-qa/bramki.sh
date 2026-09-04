@@ -22,8 +22,16 @@
 #   bash narzedzia-qa/bramki.sh --tryb tekstowy
 #   ZMIENIONE_PLIKI="a.md b.md" bash narzedzia-qa/bramki.sh
 #
-# Kody wyjścia: 0 = wszystkie wykonane bramki zielone i jest ich tyle, ile ma być
-#               1 = któraś bramka czerwona ALBO wykonano ich za mało
+# Kody wyjścia: 0 = wszystkie wykonane bramki zielone, jest ich tyle, ile ma być, i ŻADNA
+#                   nie odmówiła pomiaru
+#               1 = któraś skończyła kodem 2 (NIE ZMIERZONE) ponad sufit MAX_NIEZMIERZONYCH
+#                   (literał 0 — podniesienie tylko zmianą w pliku) ALBO zestaw się skurczył
+#                   (ruszyło mniej bramek, niż wymaga tryb) ALBO któraś bramka jest czerwona.
+#                   ⛔ Ta kolejność jest istotna: sufit sprawdzany PRZED progiem, bo inaczej
+#                   w trybie pełnym próg pochłania każdy przypadek „nie zmierzono" i komunikat
+#                   mówi „wypadła" o bramce, która ruszyła i odmówiła werdyktu.
+# ⛔ Kod 2 nie jest wadą ani sukcesem — jest BRAKIEM WERDYKTU. Nie liczy się do WYKONANE,
+#    bo bramka została uruchomiona, a nie wykonana.
 set -u
 
 # Bramka `slady` (dołożona 21.08 przy zamrażaniu ChatBota 1.5.7): pilnuje, żeby do
@@ -36,10 +44,10 @@ set -u
 # ⛔ Rejestr bramek. Nazwy MUSZĄ zgadzać się z .github/manifest-bramek.txt —
 # pilnuje tego narzedzia-qa/sprawdz-manifest.sh. Kolejność jak w quality.yml
 # sprzed zbicia zadań: najpierw tanie i statyczne, na końcu skan historii.
-BRAMKI=(actionlint manifest slady znaleziska status-bez-warunku paczka zdarzenia-webhooka php-lint phpcs phpstan gitleaks poswiadczenia)
+BRAMKI=(actionlint manifest slady znaleziska status-bez-warunku paczka zdarzenia-webhooka php-lint phpcs phpstan gitleaks poswiadczenia golden)
 # Bramki dotykające WYŁĄCZNIE kodu PHP — pomijane, gdy zmiana jest tekstowa.
-BRAMKI_PHP=(php-lint phpcs phpstan)
-PROG_PELNY=12
+BRAMKI_PHP=(php-lint phpcs phpstan golden)
+PROG_PELNY=13
 PROG_TEKSTOWY=7
 
 # Wersje narzędzi pobieranych, gdy nie ma ich w PATH. Pinowane świadomie:
@@ -74,6 +82,7 @@ cd "$KORZEN" || exit 2
 WYKONANE=0
 PORAZKI=0
 POMINIETE=()
+NIEZMIERZONE=()   # bramki, ktore ODMOWILY pomiaru (kod 2) — to NIE sa porazki
 declare -A WYNIKI=()
 
 # --- narzędzia zewnętrzne -----------------------------------------------------
@@ -170,6 +179,33 @@ case "$TRYB" in
 	*) echo "Nieznany tryb: $TRYB (dozwolone: pelny, tekstowy, auto)" >&2; exit 2 ;;
 esac
 
+# ⛔ BRAMKA `golden` WYMAGA DOCKERA (I-24, 2.09). Stawia stos probny `probny_wp` i wgrywa tam
+# kod z drzewa; wykonawca CI (`ciuser`, B-3) Dockera nie widzi i widziec nie moze. Bez Dockera
+# bramka jest POMINIETA JAWNIE (w logu i w podsumowaniu), a prog pelnego trybu schodzi o JEDEN,
+# nie „o ile trzeba”. Lokalnie i na kazdym koncie z Dockerem golden BIEGNIE (~15 s).
+# ⛔ POMINIECIE MA POKRYWAC DOKLADNIE JEDEN POWOD: konto nie widzi Dockera (wykonawca CI
+# `ciuser`, B-3 — dostepu dac NIE MOZNA, grupa `docker` jest rownowaznikiem roota). Kazdy INNY
+# brak — brak `unzip`, nieodczytany `KONTENER_DB`, niechodzacy kontener bazy — to WADA STANOWISKA
+# na koncie, ktore Dockera WIDZI, i ma swiecic CZERWONO przez `wymagaj_narzedzi`
+# (narzedzia-qa/lib-stos-probny.sh:65), a nie znikac jako pominiecie.
+# ⛔ DLACZEGO WARUNEK JEST CELOWO WEZSZY NIZ `wymagaj_narzedzi`: runda 4 zrownala te cztery
+# powody „dla zgodnosci warunkow" i tym samym poszerzyla ciche pominiecie z jednego powodu na
+# cztery. Trzy z nich do r4 konczyly sie `padnij` (exit 2) — czyli PORAZKA — a po r4 dawaly
+# `WSZYSTKIE WYKONANE BRAMKI ZIELONE` i EXIT=0 (recenzja #272 r5, uwaga WAZNA). Jedno zrodlo
+# prawdy o brakach zostaje w `wymagaj_narzedzi`; tutaj pytamy WYLACZNIE o to, czy golden ma
+# gdzie w ogole wystartowac. Dzieki temu trzy dokumenty PR-a (manifest, rejestr, CHANGELOG),
+# ktore mowia „bez Dockera POMINIETA", opisuja to, co kod naprawde robi.
+DOCKER_WIDOCZNY=tak
+POWOD_BEZ_GOLDENA=""
+if ! docker ps > /dev/null 2>&1; then
+	DOCKER_WIDOCZNY=nie
+	POWOD_BEZ_GOLDENA="to konto nie widzi Dockera"
+fi
+if [ "$DOCKER_WIDOCZNY" = nie ] && [ "$TRYB" = pelny ]; then
+	PROG=$((PROG - 1))
+	echo "UWAGA: $POWOD_BEZ_GOLDENA — bramka golden bedzie POMINIETA, prog pelny $PROG_PELNY -> $PROG" >&2
+fi
+
 # --- pojedyncza bramka --------------------------------------------------------
 
 pomijana() {
@@ -189,14 +225,34 @@ bramka() {
 		printf '\n--- BRAMKA %s: POMINIETA (tryb tekstowy — zmiana nie dotyka PHP) ---\n' "$nazwa"
 		return 0
 	fi
+	if [ "$nazwa" = golden ] && [ "$DOCKER_WIDOCZNY" = nie ]; then
+		POMINIETE+=("$nazwa")
+		printf '\n--- BRAMKA %s: POMINIETA (%s — przelot reczny przed wydaniem: bash testy/golden-stos-probny.sh) ---\n' "$nazwa" "$POWOD_BEZ_GOLDENA"
+		return 0
+	fi
 	printf '\n--- BRAMKA %s ---\n' "$nazwa"
 	local kod=0
 	"$@" || kod=$?
-	WYKONANE=$((WYKONANE + 1))
 	WYNIKI[$nazwa]=$kod
+	# ⛔ KOD 2 TO "NIE ZMIERZYLAM", NIE "ZNALAZLAM WADE" — regula repo (I-12,
+	#    narzedzia-qa/bramki-proba-kontrolna.sh:22-23): "Brak warunkow wstepnych to «nie zmierzylam»
+	#    (kod 2), NIGDY «znalazlam wade» (kod 1)". Do tej zmiany kazdy niezerowy kod szedl jako PORAZKA,
+	#    wiec brak Dockera na koncie wykonawcy CI wygladal identycznie jak prawdziwa regresja produktu —
+	#    a bramka `golden` deklaruje kod 2 wprost (testy/golden-stos-probny.sh:7).
+	# ⛔ WYKONANE ROSNIE TYLKO TAM, GDZIE JEST WERDYKT (zielony albo czerwony). Kod 2 znaczy
+	#    "bramka RUSZYLA, ale nie zmierzyla" — uruchomiona, NIE wykonana. Do rundy 10 inkrement
+	#    stal PRZED rozgalezieniem, wiec bramka bez pomiaru liczyla sie do progu, prog przechodzil,
+	#    PORAZKI zostawalo zerem i caly zestaw konczyl sie "WSZYSTKIE WYKONANE BRAMKI ZIELONE"
+	#    z EXIT=0 — czyli dokladnie tym, przed czym ostrzega komentarz przy podsumowaniu:
+	#    milczenie o "nie wiem" robi z niego ciche "zielone".
 	if [ "$kod" -eq 0 ]; then
+		WYKONANE=$((WYKONANE + 1))
 		printf 'BRAMKA %s: EXIT=0\n' "$nazwa"
+	elif [ "$kod" -eq 2 ]; then
+		printf 'BRAMKA %s: EXIT=2 — NIE ZMIERZONE (brak warunkow wstepnych, NIE wada)\n' "$nazwa"
+		NIEZMIERZONE+=("$nazwa")
 	else
+		WYKONANE=$((WYKONANE + 1))
 		printf 'BRAMKA %s: EXIT=%d — PORAZKA\n' "$nazwa" "$kod"
 		PORAZKI=$((PORAZKI + 1))
 	fi
@@ -250,6 +306,15 @@ uruchom_paczka() {
 #    wraca przy kazdym nowym zdarzeniu, bo nic nie zmusza autora, zeby ruszyl dokument.
 uruchom_zdarzenia_webhooka() {
 	bash narzedzia-qa/zdarzenia-webhooka.sh
+}
+
+# ⛔ GOLDEN „kupujacy dostaje to, co kupil” (I-24, 2.09) — jedyny straznik naprawy migawki
+#    produktu (PR #258; blad wskazany przez recenzenta zewnetrznego), przez dobe BEZ SPUSTU:
+#    lapala go tylko sierota linia-bazowa.sh. Biegnie na STOSIE PROBNYM od zera (nigdy na
+#    wspolnym `strona_wp_wordpress`), ~15 s. Kalibracja czterema mutantami:
+#    testy/golden-migawka-proba-kontrolna.sh (kazdy mutant wywala wlasciwa asercje).
+uruchom_golden() {
+	bash testy/golden-stos-probny.sh
 }
 
 uruchom_php_lint() {
@@ -382,6 +447,7 @@ bramka phpcs      uruchom_phpcs
 bramka phpstan    uruchom_phpstan
 bramka gitleaks   uruchom_gitleaks
 bramka poswiadczenia uruchom_poswiadczenia
+bramka golden     uruchom_golden
 
 # --- podsumowanie i strażnik liczby -------------------------------------------
 
@@ -390,6 +456,14 @@ echo "=== PODSUMOWANIE ==="
 for nazwa in "${BRAMKI[@]}"; do
 	if [ -n "${WYNIKI[$nazwa]:-}" ]; then
 		printf '  %-12s EXIT=%s\n' "$nazwa" "${WYNIKI[$nazwa]}"
+	elif pomijana "$nazwa"; then
+		# ⛔ TA GAŁĄŹ MUSI STAĆ PRZED dockerową — dokładnie jak w bramka() wyżej.
+		# Odwrotna kolejność dawała DWA różne powody dla jednej bramki w jednym logu:
+		# „POMINIETA (tryb tekstowy — zmiana nie dotyka PHP)” przy biegu i
+		# „POMINIETA (wymaga Dockera)” w podsumowaniu tego samego przebiegu.
+		printf '  %-12s POMINIETA (tryb tekstowy — zmiana nie dotyka PHP)\n' "$nazwa"
+	elif [ "$nazwa" = golden ] && [ "$DOCKER_WIDOCZNY" = nie ]; then
+		printf '  %-12s POMINIETA (%s)\n' "$nazwa" "$POWOD_BEZ_GOLDENA"
 	else
 		printf '  %-12s POMINIETA (tryb %s)\n' "$nazwa" "$TRYB"
 	fi
@@ -398,9 +472,43 @@ done
 echo
 echo "WYKONANE BRAMKI: $WYKONANE z ${#BRAMKI[@]} (tryb: $TRYB, wymagane minimum: $PROG)"
 [ ${#POMINIETE[@]} -eq 0 ] || echo "POMINIETE SWIADOMIE: ${POMINIETE[*]}"
+# ⛔ NIE ZMIERZONE to osobna kategoria od PORAZEK i od POMINIETYCH SWIADOMIE: bramka RUSZYLA,
+#    ale odmowila werdyktu z braku warunkow. Milczenie o tym robi z "nie wiem" ciche "zielone".
+if [ ${#NIEZMIERZONE[@]} -gt 0 ]; then
+	echo "NIE ZMIERZONE (kod 2, brak warunkow wstepnych — NIE sa to wady): ${NIEZMIERZONE[*]}"
+	echo "  ⛔ Werdyktu tych bramek NIE MA. Nie pisz o nich w recenzji ani 'przeszlo', ani 'padlo'."
+fi
 
-if [ "$WYKONANE" -lt "$PROG" ]; then
-	echo "STOP: wykonano $WYKONANE bramek, a tryb $TRYB wymaga co najmniej $PROG." >&2
+# ⛔ SUFIT NIEZMIERZONYCH STOI PRZED PROGIEM — I TO JEST ISTOTA, NIE KOSMETYKA (runda 12).
+#    Runda 11 postawila go PO progu i tym samym uczynila go w trybie pelnym MARTWYM: tam
+#    PROG rowna sie liczbie bramek uruchomionych (PROG_PELNY=13 przy 13 bramkach; pominiecie
+#    goldena obniza prog o dokladnie jeden), a kod 2 nie podbija WYKONANE — wiec kazde
+#    NIEZMIERZONE > 0 znaczy WYKONANE < PROG i galaz progu wygrywala ZAWSZE. Operator dostawal
+#    wtedy komunikat "sprawdz, ktora WYPADLA" o bramce, ktora NIE wypadla: ruszyla i odmowila
+#    werdyktu. Zdanie "NIE WSZYSTKO ZMIERZONE" nie moglo paść w jedynym trybie, w ktorym
+#    `golden` w ogole biegnie.
+#    ⛔ SUFIT JEST LITERALEM, nie `${…:-}`. Wzorem MAX_POMINIETYCH z proby-kontrolne-przelot.sh:69,
+#    ktory tez jest literalem. Runda 11 czytala go ze SRODOWISKA, wiec `MAX_NIEZMIERZONYCH=2 bash
+#    narzedzia-qa/bramki.sh` przywracalo ciche zielone bez ruszenia jednego bajtu w repozytorium —
+#    czyli dokladnie stan, ktory ten PR likwiduje. Podniesienie MUSI byc zmiana w pliku, widoczna
+#    w diffie; pilnuje tego `narzedzia-qa/sprawdz-manifest.sh` (kontrola 1c).
+MAX_NIEZMIERZONYCH=0
+if [ ${#NIEZMIERZONE[@]} -gt "$MAX_NIEZMIERZONYCH" ]; then
+	echo "STOP: NIE ZMIERZONO ${#NIEZMIERZONE[@]} bramek (sufit: $MAX_NIEZMIERZONYCH): ${NIEZMIERZONE[*]}" >&2
+	echo "      To NIE sa wady produktu — to BRAK POMIARU. Zestaw nie moze konczyc sie zielono," >&2
+	echo "      bo zielone znaczyloby 'sprawdzone', a te bramki nie sprawdzily niczego." >&2
+	echo "NIE WSZYSTKO ZMIERZONE." >&2
+	exit 1
+fi
+
+# ⛔ PROG MIERZY, CZY ZESTAW SIE SKURCZYL — wiec liczy bramki, ktore RUSZYLY, a nie te, ktore
+#    zdazyly wydac werdykt. Inaczej jeden komunikat opisywalby dwie rozne rzeczy: zniknieciе
+#    bramki z rejestru i odmowe pomiaru. Niezmierzone sa juz zalatwione wyzej, wiec tutaj
+#    dochodza do sumy — dzieki temu zdanie "sprawdz, ktora wypadla" jest prawdziwe zawsze,
+#    gdy padnie.
+RUSZYLO=$(( WYKONANE + ${#NIEZMIERZONE[@]} ))
+if [ "$RUSZYLO" -lt "$PROG" ]; then
+	echo "STOP: ruszylo $RUSZYLO bramek, a tryb $TRYB wymaga co najmniej $PROG." >&2
 	echo "      Kurczacy sie zestaw bramek NIE JEST sukcesem — sprawdz, ktora wypadla." >&2
 	exit 1
 fi

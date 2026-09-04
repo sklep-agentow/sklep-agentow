@@ -1,5 +1,5 @@
 #!/bin/bash
-# lib-stos-probny.sh — wspólny warsztat dla dowodów na CZYSTEJ instalacji.  WERSJA 1.0.0
+# lib-stos-probny.sh — wspólny warsztat dla dowodów na CZYSTEJ instalacji.  WERSJA 1.0.3
 #
 # Nie uruchamia się sama. Dołączają ją `dowod-z-paczki.sh` (dowód z paczki na
 # czystej instalacji) i `dowod-aktualizacji.sh` (dowód aktualizacji w miejscu).
@@ -27,6 +27,20 @@ OBRAZ="${STOS_PROBNY_OBRAZ:-wordpress:6.9.4-php8.4-apache}"  # K7: STOS_PROBNY_O
 PORT=8891
 ADRES="http://localhost:$PORT"
 
+# ⛔ ZAMEK STOSU PRÓBNEGO — WŁASNY PLIK, nie `stos.lock` warsztatu.
+# `probny_wp` i `strona_wp_wordpress` to DWA różne zasoby. Do 2.09 golden brał
+# `wymiana/stos.lock` (zamek stosu WARSZTATOWEGO), co dawało dwie wady naraz:
+#   (a) siedmiu pozostałych użytkowników `probny_wp` (dowod-z-paczki, dowod-aktualizacji,
+#       dowod-zachowania-chatbot, dowod-zachowania-segregator, k7-stos-rundy i dwie próby
+#       kontrolne z testy/) nie brało zamka wcale — `postaw_stos` zaczyna od
+#       `docker rm -f -v probny_wp`, więc jeden bieg kasował kontener spod drugiego;
+#   (b) `linia-bazowa.sh` uruchamia każdy `testy/*.sh` POD `flock wymiana/stos.lock`,
+#       a golden brał ten sam plik drugi raz (nowy opis otwartego pliku) — zakleszczenie
+#       do `timeout 300`. Odtworzone 2.09: ten sam plik ⇒ zakleszczenie, inny ⇒ zamek wzięty.
+# Zamek bierze `postaw_stos` — czyli KAŻDY użytkownik stosu próbnego, bez wyjątku.
+ZAMEK_PROBNY="${ZAMEK_PROBNY:-/root/praca/zlecenia/wymiana/stos-probny.lock}"
+ZAMEK_PROBNY_CZEKANIE_S="${ZAMEK_PROBNY_CZEKANIE_S:-900}"
+
 ZOSTAW="${ZOSTAW:-nie}"
 BLEDY=0
 
@@ -37,6 +51,19 @@ potwierdz() { printf '  ✅ WYSZLO      %s\n' "$1"; }
 # narzedzia · brak warunku wstepnego. Komunikat MUSI nazywac, ktore z nich zaszlo.
 padnij()    { printf 'STOS PROBNY: %s\n' "$1" >&2; exit 2; }
 naglowek()  { printf '\n=== %s ===\n' "$1"; }
+
+# Bierze zamek stosu próbnego na CAŁY czas życia procesu (fd 8 zostaje otwarty aż do
+# wyjścia — zamek zwalnia się sam). Znacznik jest EKSPORTOWANY: proces potomny, który
+# też dołącza tę bibliotekę, dziedziczy fd i NIE bierze zamka drugi raz (drugie wzięcie
+# tego samego pliku z nowego opisu otwartego pliku = zakleszczenie na własnej blokadzie).
+wez_zamek_probny() {
+	[ "${STOS_PROBNY_ZAMEK_WZIETY:-nie}" = tak ] && return 0
+	exec 8> "$ZAMEK_PROBNY" || padnij "nie mogę otworzyć zamka stosu próbnego $ZAMEK_PROBNY"
+	if ! flock -w "$ZAMEK_PROBNY_CZEKANIE_S" 8; then
+		padnij "stos próbny ($KONTENER) zajęty przez inny bieg dłużej niż ${ZAMEK_PROBNY_CZEKANIE_S}s — zamek $ZAMEK_PROBNY"
+	fi
+	export STOS_PROBNY_ZAMEK_WZIETY=tak
+}
 
 wymagaj_narzedzi() {
 	command -v docker > /dev/null || padnij "brak dockera"
@@ -71,6 +98,15 @@ sql_bazy() {
 # --- stos próbny: postaw od zera ----------------------------------------------
 
 postaw_stos() {
+	wez_zamek_probny   # ⛔ PRZED `docker rm -f -v` niżej — inaczej kasujemy kontener spod cudzego biegu
+	# ⛔ ZNACZNIK WŁASNOŚCI STOSU. Od tej chwili stos próbny należy do TEGO procesu i tylko
+	# ten proces ma prawo go zwinąć. Bez znacznika bieg, któremu zamek ODMÓWIŁ dostępu,
+	# wychodził przez `padnij` (exit 2), odpalał własną pułapkę EXIT → `zwin_stos` → i kasował
+	# kontener ORAZ dropował bazę temu biegowi, KTÓRY ZAMEK TRZYMA. Zamek chronił ścieżkę
+	# udaną, a rozbrajał się na ścieżce przewidzianej (recenzja #272, runda 3).
+	# ⛔ NIE eksportujemy: zwija ten proces, który NAPRAWDĘ stawiał, a nie ten, który
+	# odziedziczył zamek po przodku.
+	STOS_PROBNY_POSTAWILEM=tak
 	naglowek "STOS PROBNY — czysta instalacja od zera"
 	local haslo_root i=0
 	haslo_root="$(docker exec "$KONTENER_DB" printenv MARIADB_ROOT_PASSWORD 2> /dev/null \
@@ -119,16 +155,21 @@ postaw_stos() {
 }
 
 zwin_stos() {
+	# ⛔ NIE ZWIJAMY CUDZEGO STOSU. Pułapka EXIT stoi w skryptach PRZED `postaw_stos`, więc
+	# `zwin_stos` odpala się także wtedy, gdy ten proces stosu w ogóle nie postawił —
+	# np. gdy zamek go odprawił. Wtedy kasowanie kontenera i baza dropnięta byłyby
+	# szkodą wyrządzoną biegowi, który zamek trzyma.
+	[ "${STOS_PROBNY_POSTAWILEM:-nie}" = tak ] || return 0
 	if [ "$ZOSTAW" = tak ]; then
 		printf '\nStos próbny ZOSTAJE (--zostaw): %s — panel: %s/wp-admin (probny / probne-haslo-QA)\n' "$KONTENER" "$ADRES"
 		return
 	fi
 	# ⛔ `-v` KASUJE ANONIMOWY WOLUMEN. Bez niego kazdy bieg stosu probnego zostawial
-	#    sierote ~88 MB, a stos stawia sie od zera przy KAZDYM uzyciu — dziewieciu wolajacych.
+	#    sierote ~88 MB, a stos stawia sie od zera przy KAZDYM uzyciu — szesnastu wolajacych.
 	#    Zmierzone 3.09 na maszynie warsztatu: 38 wolumenow Dockera, z tego 35 nieprzypisanych
 	#    do zadnego kontenera (takze zatrzymanego), razem 2,7 GB przy dysku na 92 %.
 	#    35 x 88 MB zgadza sie co do rzedu — to sa te sieroty.
-	#    linia `docker rm -f -v` w `strony-prawne-stos-probny.sh` probowala to lapac wlasnym `docker rm -f -v` PO wywolaniu
+	#    linia `docker rm -f -v` w `strony-prawne-stos-probny.sh` probowala to lapac PO wywolaniu
 	#    `zwin_stos`, ale wtedy kontenera juz nie ma, wiec ta linia nie miala czego usunac,
 	#    a `|| true` to przykrywalo (recenzja #278, DROBNA 2, otwarta od rundy 3).
 	docker rm -f -v "$KONTENER" > /dev/null 2>&1 || true

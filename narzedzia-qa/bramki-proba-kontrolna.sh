@@ -243,6 +243,185 @@ else
 fi
 
 echo
+echo "=== POMINIECIE BRAMKI golden MA MIEC DOKLADNIE JEDEN POWOD ==="
+# ⛔ POWOD ISTNIENIA TEGO PRZYPADKU. To jedyne miejsce, ktore w tym PR-ze REGRESOWALO: runda 4
+# zrownala warunek pominiecia z `wymagaj_narzedzi` „dla zgodnosci" i poszerzyla ciche pominiecie
+# z jednego powodu na cztery — trzy z nich do tamtej rundy konczyly sie `padnij` (exit 2), a po
+# niej dawaly „WSZYSTKIE WYKONANE BRAMKI ZIELONE" i EXIT=0. Naprawa w rundzie 6 byla mierzona
+# skryptem JEDNORAZOWYM, wiec nikt nie mogl jej odtworzyc (recenzja r6, WAZNA 1). Teraz mierzy ja
+# ten plik, przy kazdym przelocie prob kontrolnych.
+BEZ_UNZIP="$TMPDIR_PROBY/bin-bez-unzip"
+ATRAPA_D="$TMPDIR_PROBY/bin-atrapa-docker"
+mkdir -p "$BEZ_UNZIP" "$ATRAPA_D"
+for _d in /usr/local/sbin /usr/local/bin /usr/sbin /usr/bin /sbin /bin; do
+	[ -d "$_d" ] || continue
+	for _f in "$_d"/*; do
+		_n=$(basename "$_f")
+		[ "$_n" = unzip ] && continue
+		[ -e "$BEZ_UNZIP/$_n" ] || ln -s "$_f" "$BEZ_UNZIP/$_n" 2> /dev/null
+	done
+done
+printf '#!/bin/sh\nexit 1\n' > "$ATRAPA_D/docker"; chmod +x "$ATRAPA_D/docker"
+
+# ⛔ WARUNEK BAZOWY NAJPIERW. Ten przypadek porownuje trzy srodowiska, a jedno z nich to
+# „konto, ktore Dockera WIDZI". Wykonawca CI chodzi jako `ciuser` bez dostepu do `docker.sock`
+# (B-3) — dla niego KAZDE srodowisko jest „bez Dockera", wiec porownanie nie ma sensu i wychodzi
+# odwrotnie. Zlapane na zywo: przebieg CI po rundzie 7 zaswiecil czerwono na TYM przypadku,
+# choc kod byl poprawny. Brak warunkow ma dawac POMINIECIE, nie falszywa czerwien.
+if ! docker ps > /dev/null 2>&1; then
+	echo "  POMINIETE: to konto nie widzi Dockera — nie ma jak odroznic 'brak Dockera' od 'brak unzip'"
+	echo "             (przelot reczny przed wydaniem: bash narzedzia-qa/bramki-proba-kontrolna.sh)"
+# ⛔ KONTROLA SAMYCH SRODOWISK PROBY. Bez niej mierzylabym wlasna atrape, nie kod.
+elif PATH="$BEZ_UNZIP" command -v unzip > /dev/null 2>&1; then
+	echo "  BLAD srodowisko 'bez unzip' MA unzip — proba nic nie mierzy"; BLEDY=$((BLEDY+1))
+elif ! PATH="$BEZ_UNZIP" command -v docker > /dev/null 2>&1; then
+	echo "  POMINIETE: srodowisko 'bez unzip' nie ma dockera — nie ma jak rozdzielic powodow"
+elif PATH="$ATRAPA_D:$PATH" docker ps > /dev/null 2>&1; then
+	echo "  BLAD atrapa dockera nie udaje slepego konta — proba nic nie mierzy"; BLEDY=$((BLEDY+1))
+else
+	ile_pominiec() { env "$@" BRAMKI_TYLKO_FUNKCJE=1 bash "$BRAMKI" 2>&1 | grep -c "bramka golden bedzie POMINIETA"; }
+
+	_a=$(ile_pominiec PATH="$PATH")
+	_b=$(ile_pominiec PATH="$ATRAPA_D:$PATH")
+	_c=$(ile_pominiec PATH="$BEZ_UNZIP")
+	if [ "$_a" = 0 ] && [ "$_b" = 1 ] && [ "$_c" = 0 ]; then
+		echo "  OK   pominiecie tylko przy braku Dockera (docker+unzip: $_a, bez dockera: $_b, docker bez unzip: $_c)"
+	else
+		printf '  BLAD zle powody pominiecia: docker+unzip=%s (ma byc 0), bez dockera=%s (ma byc 1), docker bez unzip=%s (ma byc 0)\n' "$_a" "$_b" "$_c"
+		BLEDY=$((BLEDY+1))
+	fi
+
+	# ⛔ PROBA KONTROLNA TEGO PRZYPADKU: przywracamy REGRESJE z rundy 4 i sprawdzamy, czy ja widac.
+	przywroc
+	python3 - "$BRAMKI" <<'PYMUT'
+import io, sys
+P = sys.argv[1]
+s = io.open(P, encoding='utf-8').read()
+kot = 'if ! docker ps > /dev/null 2>&1; then\n\tDOCKER_WIDOCZNY=nie\n\tPOWOD_BEZ_GOLDENA="to konto nie widzi Dockera"\nfi'
+if kot in s:
+    mut = ('if ! docker ps > /dev/null 2>&1; then\n\tDOCKER_WIDOCZNY=nie\n\tPOWOD_BEZ_GOLDENA="to konto nie widzi Dockera"\n'
+           'elif ! command -v unzip > /dev/null 2>&1; then\n\tDOCKER_WIDOCZNY=nie\n\tPOWOD_BEZ_GOLDENA="brak unzip"\nfi')
+    io.open(P, 'w', encoding='utf-8').write(s.replace(kot, mut, 1))
+    print('MUTACJA_OK')
+else:
+    print('MUTACJA_NIEUDANA')
+PYMUT
+	_c2=$(ile_pominiec PATH="$BEZ_UNZIP")
+	if [ "$_c2" = 1 ]; then
+		echo "  OK   zlapane: powrot regresji z rundy 4 (brak unzip znowu POMIJA goldena zamiast go wywalic)"
+	else
+		echo "  BLAD PRZESZLO NIEZAUWAZONE: poszerzony warunek pominiecia (docker bez unzip: $_c2, mialo byc 1)"
+		BLEDY=$((BLEDY+1))
+	fi
+	przywroc
+fi
+
+echo
+# ⛔ PRZYPADEK NA CALY SKRYPT, NIE NA SAMA FUNKCJE (runda 11). Powyzsze przypadki mierza
+#    `bramka()` w izolacji; ten pyta o to, co naprawde trafia do opisu PR-a: KOD WYJSCIA
+#    calego `bramki.sh`. Wada z rundy 10 zylaby dalej, gdyby ktos naprawil licznik, a zapomnial
+#    o ogonie — albo odwrotnie. Bramka `slady` jest w trybie tekstowym, wiec przypadek jest tani.
+probuj "bramka odmawia pomiaru (kod 2) — caly zestaw MUSI byc czerwony" \
+	"sed -i 's|^bramka slady      uruchom_slady|bramka slady      bash -c \"exit 2\"|' $BRAMKI" \
+	"bash $BRAMKI --tryb tekstowy" \
+	"NIE ZMIERZONO"
+
+echo
+echo "--- TRYB PELNY: kod 2 ma dac NIE ZMIERZONO, a nie 'ktora wypadla' (runda 12) ---"
+# ⛔ Przypadek w trybie tekstowym (wyzej) NIE POKRYWA goldena: golden jest w BRAMKI_PHP,
+#    wiec w trybie tekstowym jest POMIJANY — a to jedyna bramka, ktora kod 2 deklaruje wprost
+#    (testy/golden-stos-probny.sh:7). Recenzja rundy 11 nazwala to klasa 11: pokrycie obiecane
+#    szersze niz faktyczne. Do rundy 12 sufit stal PO progu i w trybie pelnym byl MARTWY, bo
+#    PROG rowna sie tam liczbie bramek uruchomionych, a kod 2 nie podbija WYKONANE — wiec kazde
+#    NIEZMIERZONE > 0 znaczylo WYKONANE < PROG i wygrywala galaz progu z komunikatem
+#    "sprawdz, ktora WYPADLA" o bramce, ktora NIE wypadla.
+#    Mierzymy SAM OGON z zywego pliku (nie kopie) na scenariuszu trybu pelnego, bez czekania
+#    na dziewieciominutowy przebieg. Kontrola wyciecia nizej pilnuje, ze ogon nie jest pusty.
+OGON="$(sed -n '/^MAX_NIEZMIERZONYCH=/,$p' "$BRAMKI")"
+if ! printf '%s' "$OGON" | grep -q 'NIE WSZYSTKO ZMIERZONE'; then
+	echo "  BLAD wyciecie ogona z $BRAMKI jest puste albo niepelne — pomiar NIE ISTNIEJE" >&2
+	BLEDY=$((BLEDY+1))
+else
+	# scenariusz: tryb pelny, 13 bramek, golden skonczyl kodem 2 -> 12 wykonanych, 1 niezmierzona
+	_wy=$(
+		{
+			printf 'NIEZMIERZONE=(golden)\nWYKONANE=12\nPORAZKI=0\nPROG=13\nTRYB=pelny\n'
+			printf '%s\n' "$OGON"
+		} | bash 2>&1
+		echo "KOD=$?"
+	)
+	_kod=$(printf '%s' "$_wy" | grep -oE 'KOD=[0-9]+' | tail -1 | cut -d= -f2)
+	if printf '%s' "$_wy" | grep -q 'NIE WSZYSTKO ZMIERZONE' && [ "${_kod:-0}" -ne 0 ]; then
+		printf '  OK   tryb pelny, golden EXIT=2 -> NIE WSZYSTKO ZMIERZONE (EXIT=%s)\n' "$_kod"
+		printf '%s' "$_wy" | grep -m1 'STOP: NIE ZMIERZONO' | sed 's/^/         /'
+	else
+		printf '  BLAD tryb pelny, golden EXIT=2 -> brak zdania NIE WSZYSTKO ZMIERZONE (EXIT=%s)\n' "$_kod"
+		printf '%s' "$_wy" | head -3 | sed 's/^/         /'
+		BLEDY=$((BLEDY+1))
+	fi
+	# kontrola ODWROTNA: zero niezmierzonych i komplet wykonanych ma przejsc na zielono
+	_wy2=$(
+		{
+			printf 'NIEZMIERZONE=()\nWYKONANE=13\nPORAZKI=0\nPROG=13\nTRYB=pelny\n'
+			printf '%s\n' "$OGON"
+		} | bash 2>&1
+		echo "KOD=$?"
+	)
+	_kod2=$(printf '%s' "$_wy2" | grep -oE 'KOD=[0-9]+' | tail -1 | cut -d= -f2)
+	if [ "${_kod2:-1}" -eq 0 ] && printf '%s' "$_wy2" | grep -q 'WSZYSTKIE WYKONANE BRAMKI ZIELONE'; then
+		printf '  OK   tryb pelny, komplet zmierzony -> zielone (EXIT=%s)\n' "$_kod2"
+	else
+		printf '  BLAD tryb pelny, komplet zmierzony NIE daje zielonego (EXIT=%s)\n' "$_kod2"
+		BLEDY=$((BLEDY+1))
+	fi
+fi
+
+echo "--- kod wyjscia 2 to NIE ZMIERZONE, nie PORAZKA (I-12) ---"
+# ⛔ Bramka `golden` deklaruje kod 2 wprost (testy/golden-stos-probny.sh:7), a `bramka()` do rundy 10
+#    raportowala KAZDY niezerowy kod jako PORAZKA. Brak Dockera na koncie wykonawcy CI wygladal wiec
+#    identycznie jak prawdziwa regresja produktu — czyli przyrzad mowil "znalazlam wade", nie ustaliwszy
+#    niczego. Trzy kierunki, bo naprawa w jedna strone (kod 2 przestaje byc porazka) moze ZASLEPIC
+#    bramke na kod 1; ten przypadek pilnuje, ze prawdziwa wada DALEJ jest porazka.
+KATALOG_ATRAP="$(mktemp -d -t bramki-kody-XXXXXX)"
+for _k in 0 1 2; do
+	printf '#!/bin/sh\nexit %s\n' "$_k" > "$KATALOG_ATRAP/kod$_k.sh"
+	chmod +x "$KATALOG_ATRAP/kod$_k.sh"
+done
+# funkcje bramka() wycinamy z zywego pliku — pomiar ma dotyczyc TEGO kodu, nie kopii
+WYCIETA="$(sed -n '/^bramka() {/,/^}/p' "$BRAMKI")"
+# ⛔ KONTROLA WYCIECIA: pusta funkcja = wszystkie trzy przypadki nizej daja PORAZKI=0 i wygladaja
+#    na zielone. Zlapane 3.09: uzylam nieistniejacej zmiennej $KATALOG, sed czytal pusty plik,
+#    a dwa z trzech przypadkow "przeszly". Bez tej kontroli pomiar milczaco nie istnieje.
+if ! printf '%s' "$WYCIETA" | grep -q 'PORAZKI='; then
+	echo "  BLAD wyciecie bramka() z $BRAMKI jest puste albo niepelne — pomiar kodow wyjscia NIE ISTNIEJE" >&2
+	BLEDY=$((BLEDY+1))
+fi
+# ⛔ MIERZYMY DWIE WIELKOSCI, NIE JEDNA (runda 11). Do rundy 10 ta petla czytala sam licznik
+#    PORAZKI — i dlatego przepuscila wade, ktora recenzent nazwal w rundzie 10: kod 2 slusznie
+#    przestal byc porazka, ale DALEJ podbijal licznik WYKONANE, wiec prog przechodzil, PORAZKI
+#    zostawalo zerem i caly zestaw konczyl sie "WSZYSTKIE WYKONANE BRAMKI ZIELONE" z EXIT=0
+#    przy bramce, ktora nic nie zmierzyla. Asercja mierzaca JEDNA wielkosc nie widzi wady
+#    siedzacej w DRUGIEJ. Format: kod:PORAZKI:WYKONANE.
+for _para in "0:0:1" "1:1:1" "2:0:0"; do
+	_kod="${_para%%:*}"; _reszta="${_para#*:}"
+	_ocz_p="${_reszta%%:*}"; _ocz_w="${_reszta##*:}"
+	_wynik=$(
+		{
+			printf 'POMINIETE=()\nNIEZMIERZONE=()\nWYKONANE=0\nPORAZKI=0\ndeclare -A WYNIKI\nTRYB=x\nDOCKER_WIDOCZNY=tak\nPOWOD_BEZ_GOLDENA=x\n'
+			printf '%s\n' "$WYCIETA"
+			printf 'bramka "atrapa" %s > /dev/null 2>&1\necho "$PORAZKI:$WYKONANE"\n' "$KATALOG_ATRAP/kod$_kod.sh"
+		} | bash
+	)
+	if [ "$_wynik" = "$_ocz_p:$_ocz_w" ]; then
+		printf '  OK   %-52s PORAZKI:WYKONANE=%s\n' "kod wyjscia $_kod -> $_ocz_p:$_ocz_w" "$_wynik"
+	else
+		printf '  BLAD %-52s PORAZKI:WYKONANE=%s, oczekiwano %s\n' "kod wyjscia $_kod" "$_wynik" "$_ocz_p:$_ocz_w"
+		BLEDY=$((BLEDY+1))
+	fi
+done
+rm -rf "$KATALOG_ATRAP"
+
+echo
 if [ "$BLEDY" -eq 0 ]; then
 	echo "KURCZACY SIE ZESTAW BRAMEK ZOSTANIE ZAUWAZONY — wszystkie podlozone awarie zlapane"
 	exit 0
