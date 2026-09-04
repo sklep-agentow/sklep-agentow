@@ -45,3 +45,21 @@ historycznym, nie wzorcem do naśladowania. Następny raport L5 musi mieć 10 zm
 
 ⛔ Raportów **nie wolno edytować po fakcie** — to są dowody. Jeśli któryś łamie schemat,
 opisuje się to tutaj, a nie poprawia plik.
+
+## ⛔ Dlaczego te raporty NIE leżą w `audyt/sklep/raporty/`
+
+Bo `k7-koniec.sh` warunek 8 waliduje tamten katalog przy założeniu, że **każdy raport powstał
+na paczce ZAMROŻONEJ** — wymaga `commit_head` równego SHA z `ZAMROZENIE.md` (`5d3dcf9`).
+Raporty kalibracyjne są z definicji robione na **paczce Z PODŁOŻONYMI BŁĘDAMI**, więc niosą
+`commit_head` gałęzi mutantów (`412d9b38`). Zmierzone: po wrzuceniu ich do `raporty/`
+warunek 8 dawał `FAIL 8 raporty: 4 naruszeń w 18 plikach`; po przeniesieniu tutaj wraca
+`PASS 8 raporty: 15 plików, 0 odrzuconych werdyktów`.
+
+⭐ To nie jest obejście bramki, tylko **rozróżnienie dwóch różnych rzeczy**: raport z rundy
+audytu (zamrożony kod) i raport z kalibracji (kod z mutantem) mierzą co innego i nie powinny
+być sprawdzane tym samym przyrządem. Ta sama zasada, co przy zawężeniu wymogu
+`obietnice_behawioralne` do rund `weryfikacja`/`re-audyt`.
+
+⛔ `L5-proba3.json` ma dodatkowo 5 werdyktów spoza słownika schematu (`ŚREDNIA`, `DROBNA`
+w miejscach, gdzie słownik ich nie przewiduje). **Nie poprawiam tego** — to raport-dowód
+z nieudanej próby i ma zostać taki, jaki oddał audytor.

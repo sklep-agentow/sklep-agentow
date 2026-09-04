@@ -737,11 +737,24 @@ prawdziwym wdrożeniu.
   Na froncie to bez znaczenia — cztery objęte pola mogą naruszyć wyłącznie `valueMissing`.
   Zgłoszone przez recenzenta w #203 r2 jako DROBNA 2, przyjęte jako dług z nazwą.
 
-- ⛔⭐ **KONTROLA 2 `k7-koniec.sh` ZOSTAJE CZERWONA ŚWIADOMIE — decyzja właściciela 28.08, nie przeoczenie.**
+- ✅⭐ **KONTROLA 2 `k7-koniec.sh` ZAMKNIĘTA 4.09 — obie soczewki mają dowód czułości z uruchomienia.**
+  ⛔ **Zapis decyzji z 28.08 zostaje niżej w całości — NIE kasuję go, zmieniam werdykt i dopisuję powód.**
+  Co się zmieniło: obawa, która stała za tamtą decyzją („powtarzanie kalibracji do skutku = uczenie
+  audytora pod mutanta”), została ZMIERZONA i się nie ziściła. Poprawka, na której zdał `L1`, weszła
+  26.08 (`d314d7c`) z wniosków rundy A — przed rundą B i bez wzmianki o tym mutancie; przy `L5`
+  naprawiono MECHANIZM raportu, a nie dołożono wzorca pod `HEAD`. Kontrola odwrotna zamknięta:
+  na CZYSTYM kodzie obie soczewki milczą. Wyniki: `L1`/M1 **PASS** (próba 3), `L5`/M6 **PASS** (próba 4),
+  0 fałszywych alarmów na `F1–F4`. Raporty: `audyt/sklep/raporty/weryfikacja/`.
+  ⭐ Limit powtórek zmieniony wpisem **`D39`** (2 → 4, każda powyżej drugiej z obowiązkowym POWODEM;
+  zaślepka = brak powodu; powyżej 4 bramka pada bezwarunkowo) — **decyzja właściciela 4.09**, po
+  przedstawieniu pomiaru i obu dróg z ceną. Reguła jest OSTRZEJSZA niż `D33` w jednym wymiarze:
+  dotąd nikt nie musiał uzasadnić ANI JEDNEJ powtórki.
+
+- 📜 **ZAPIS HISTORYCZNY — stan i decyzja z 28.08, nieaktualne od 4.09 (patrz wyżej i `D39`):**
   Dwie soczewki, `L1` i `L5`, mają w `ROZLICZENIE-MUTANTOW-SKLEP.md` werdykt **FAIL — NIEKALIBROWANA**,
   każda po **dwóch** próbach. `L1` nie złapał M1 (nieudane logowanie na NIEISTNIEJĄCY login nie trafia
   do dziennika), `L5` nie złapał M6 (`HEAD` zużywa slot pobrania, wbrew zamówieniu i readme).
-  ⛔ **Trzeciej próby NIE MA i nie będzie** — zasada zapisana w tej samej tabeli brzmi: „jedna poprawka
+  ⛔ **Trzeciej próby NIE MA i nie będzie** [stan na 28.08 — zmienione 4.09 wpisem `D39`] — zasada zapisana w tej samej tabeli brzmi: „jedna poprawka
   promptu/materiału i jeden ponowny przebieg (`proby` ≤ 2); drugi FAIL = soczewka NIEKALIBROWANA”.
   Bramka osobno sprawdza `proby ≤ 2`, więc trzecie podejście i tak by ją zapaliło. Reguła dwóch prób
   istnieje po to, żeby nie kręcić promptem aż audytor trafi przypadkiem — wtedy kalibracja przestaje
@@ -754,7 +767,9 @@ prawdziwym wdrożeniu.
   `k7-koniec.sh` warunek 2 jest OSTRZEJSZY: żąda, żeby KAŻDA soczewka miała PASS. Bramka i rubryka
   mierzą więc dwie różne rzeczy, a bramka jest surowsza od tego, co obiecaliśmy.
 
-  **DECYZJA (właściciel, 28.08): oddajemy z jawnym zapisem.** Odrzucone świadomie:
+  **DECYZJA (właściciel, 28.08): oddajemy z jawnym zapisem.** Odrzucone świadomie wtedy
+  (⛔ **pierwsze z tych dwóch cofnięte 4.09 wpisem `D39`, drugie NADAL obowiązuje** — warunku 2
+  nie poluzowano do „≥ 2/3”, przeciwnie: doszedł wymóg powodu przy każdej powtórce):
   – trzecia próba dla `L1`/`L5` → łamie własną regułę, psuje sens kalibracji;
   – poluzowanie warunku 2 w `k7-koniec.sh` do „≥ 2/3” → obrona robiona na narzędziu w dniu oddania,
     czyli dokładnie wtedy, kiedy najłatwiej sobie coś przyklepać.
