@@ -120,20 +120,23 @@ jobs:
       #
       # ⛔ ZAKRES `narzedzia-qa` JEST CELOWY I ZMIERZONY. Przelot po całym repo bierze
       # 50 prób (`narzedzia-qa` 18 + `testy` 32), a spora część tych z `testy/` wymaga
-      # żywego stosu WordPressa —
+      # żywego stosu WordPressa, a manifest bramek mówi wprost, że w CI nie ma WP+Stripe.
+      # Bez zawężenia ten krok padałby zawsze, na porażkach, które nie są wadami kodu. Próby produktu
+      # chodzą w przelocie BEZ zakresu, uruchamianym RĘCZNIE przed wydaniem — tam stos stoi.
       # ⛔ LICZ KOMENDĄ, NIE Z PAMIĘCI — te liczby starzeją się przy każdej nowej próbie:
       #     find . -name '*proba-kontrolna*.sh' -not -path './.git/*' | wc -l
       #     find narzedzia-qa -name '*proba-kontrolna*.sh' | wc -l
       # Poprzednia wersja mówiła `38` — fałszywe o 12 (recenzja #274 r13, WAŻNA 3).
-      # Liczby „ile z nich to testy PRODUKTU” NIE podaję: nie mam definicji, po której
-      # da się to policzyć bez uruchomienia przelotu na żywym stosie. Zmyślona liczba
-      # w uzasadnieniu decyzji jest gorsza niż jej brak.
-      # a manifest bramek mówi wprost, że w CI nie ma WP+Stripe. Bez zawężenia ten krok
-      # padałby zawsze, na jedenastu porażkach, które nie są wadami kodu. Próby produktu
-      # chodzą w przelocie BEZ zakresu, uruchamianym RĘCZNIE przed wydaniem — tam stos stoi.
+      # Ile z nich to testy PRODUKTU — liczby NIE podaję ANI CYFRĄ, ANI SŁOWNIE: nie mam
+      # definicji, po której da się to policzyć bez uruchomienia przelotu na żywym stosie.
+      # Zmyślona liczba w uzasadnieniu decyzji jest gorsza niż jej brak (recenzja #274 r15,
+      # WAŻNA 2 — poprzednia wersja odmawiała podania liczby i dwie linie niżej podawała
+      # ją słownie; sweep objął wtedy ZAPIS cyfrą, nie POJĘCIE).
       # ⛔ `k7-koniec.sh` tego przelotu NIE URUCHAMIA: czyta jego log, sprawdza znacznik
       # (:137) i świeżość (:153), a przy braku KAŻE go uruchomić. Poprzednie zdanie mówiło
       # „k7-koniec woła przelot” i obiecywało automat, którego nie ma (recenzja #274 r12,
-      # WAŻNA 1 — ta sama nieprawda stała też w narzedzia-qa/linia-bazowa.sh:144).
+      # WAŻNA 1 — ta sama nieprawda stała też w narzedzia-qa/linia-bazowa.sh, w komentarzu
+      # „GDZIE TEN STRAZNIK NAPRAWDE BIEGNIE”, w członie o ręcznym spuście; odsyłam po
+      # TREŚCI, bo numer linii przesuwa się przy każdej poprawce — recenzja #274 r15, WAŻNA 3).
       - name: Proby kontrolne bramek
         run: bash narzedzia-qa/proby-kontrolne-przelot.sh "${RUNNER_TEMP}/PROBY-KONTROLNE.log" narzedzia-qa
