@@ -26,7 +26,8 @@ uwaga KRYTYCZNA, niezależnie od jakości kodu.
 
 Czytaj zmiany na tle dokumentów repo: PLAN-PROJEKTU.md (sekcja 7 —
 bezpieczeństwo; sekcja 12 — kryteria GOTOWE), ZROZUMIENIE.md i DECYZJE.md
-(MUST NOT + decyzje D1-D33 — rzeczy ŚWIADOMIE nierobione; nie żądaj ich),
+(MUST NOT + decyzje D1-D38 — rzeczy ŚWIADOMIE nierobione; nie żądaj ich; ⛔ zakres LICZ z pliku:
+`grep -oE '^\| D[0-9]+ \|' DECYZJE.md | grep -oE 'D[0-9]+' | sort -t D -k2 -n | tail -1`, nie z pamięci — 3.09 stało tu D1-D33 przy 36 decyzjach),
 ORAZ **audyt/SCIAGA-EGZAMINATORA.md** — 7 klas błędów, które oceniający
 (kolega) wytykał w poprzednich projektach. PILNUJ tych klas w każdym PR:
   1. Uninstall NIEKOMPLETNY — zostają opcje/tabele/pliki/cron, a zwłaszcza
