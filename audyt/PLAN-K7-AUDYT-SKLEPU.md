@@ -110,7 +110,15 @@ na 2 prawdziwe. **PASS = 100 % mutantów WŁASNEGO zakresu + zero alarmów na pu
 Wobec rubryki §12 („≥2/3"): 100 % zawiera się w „≥2/3", ale zmiana reguły idzie zgodnie z §12 ostatni akapit —
 **wpis D33 w `DECYZJE.md` w PR kroku 0**: „K7: kalibracja 100 % własnego zakresu (ostrzej niż §12), mechanika gałęzi
 mutantów zamiast `kalibruj.sh` (skrypt liczy stare 2/3 — dług warsztatu, nieużywany w K7)".
-**Limit powtórek:** audytor, który nie trafił → JEDNA poprawka promptu/materiału i jeden ponowny przebieg. Drugi FAIL →
+**Limit powtórek** (⭐ zmieniony 4.09 wpisem `D39` w `DECYZJE.md`; niżej brzmienie pierwotne, bo reguła
+zmienia się jawnym wpisem, nie po cichu): **do 2 prób bez pytań; próby 3 i 4 WYŁĄCZNIE z wypełnioną
+kolumną `powod_powtorki` w tabeli rozliczenia (zaślepka „-”, „?” albo napis krótszy niż 20 znaków = brak
+powodu); powyżej 4 bramka pada bezwarunkowo.** Powód zmiany: reguła „2 i koniec” w parze z warunkiem 2
+`k7-koniec.sh` (każdy wiersz `PASS` ORAZ `proby ≤ 2`) żądała stanu NIEOSIĄGALNEGO — soczewka raz oblana
+nie miała żadnej drogi do `PASS` poza wpisaniem nieprawdy. ⛔ ZAKAZ uczenia audytora pod mutanta
+obowiązuje bez zmian.
+
+**Brzmienie pierwotne (do 4.09):** audytor, który nie trafił → JEDNA poprawka promptu/materiału i jeden ponowny przebieg. Drugi FAIL →
 soczewka oznaczona `NIEKALIBROWANA` (jej „czysto" nie liczy się do GO; jej znaleziska liczą się normalnie), mutant
 sprawdzany jako wadliwy (czy w ogóle wykrywalny tym pytaniem). Tabela rozliczenia ma pole `proby`; skrypt FAIL przy `> 2`.
 ⛔ Audytor nie wie o kalibracji. Mutant trafiony przez CUDZĄ soczewkę = znalezisko tej soczewki (unia), nie zmienia

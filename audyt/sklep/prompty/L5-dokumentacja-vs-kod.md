@@ -22,6 +22,17 @@ przez koordynatorkę + repo jako źródło grepów. Inwentarz punktów wejścia:
    przed → `curl -I` → licznik po; „ponowna wysyłka”: `wp_mail` zwraca false → status i zdarzenie w bazie). Liczba
    zgodna w kodzie NIE dowodzi zachowania. ⛔ `testy/dokumentacja-zgodnosc-sklep.sh` to strażnik STAŁYCH (BS4): możesz
    go uruchomić, ale jego zielony wynik cytujesz tylko przy obietnicach LICZBOWYCH — nigdy jako dowód behawioralny.
+   ⭐⭐ **ZESTAWIENIE OBIETNIC BEHAWIORALNYCH IDZIE DO RAPORTU**, w polu `obietnice_behawioralne` — nie zostaje
+   w Twoim brudnopisie. KAŻDA wypisana obietnica dostaje własny werdykt; pozycja pominięta bez werdyktu jest
+   niedopuszczalna. ⛔ Egzekwuje to SCHEMAT (`obietnice_behawioralne` wymagane dla L5 w rundach
+   `weryfikacja` i `re-audyt`, `contains`+`minContains: 10` na werdyktach ZGODNE/ROZJAZD) — a nie to
+   zdanie. Do czasu, aż raporty będą walidowane schematem automatycznie, sprawdza to koordynatorka
+   przy odbiorze; nie pisz więc, że raport „zostanie odrzucony bez czytania”, bo dziś nikt tego nie robi. **Co najmniej 10 pozycji musi mieć
+   werdykt `ZGODNE` albo `ROZJAZD`**, czyli być ZMIERZONA wykonaniem na stosie (komenda + surowe wyjście PRZED
+   i PO); reszta może mieć `NIE SPRAWDZIŁEM` / `NIE DA SIĘ SPRAWDZIĆ` **z powodem**.
+   ⛔ Powód tej zasady, zmierzony: raport oddany z 19 z 30 dostępnych wywołań i ZEREM pomiarów behawioralnych
+   przechodził, bo „minimum 10” było prośbą w prompcie, a nie warunkiem raportu. Pominięcie nie zostawiało śladu,
+   więc nikt nie mógł zauważyć, czego zabrakło. Teraz zostawia.
 2. Dla każdej pozycji: miejsce w kodzie (plik:linia) i werdykt: `ZGODNE` / `ROZJAZD` (z obiema stronami cytowanymi) /
    `NIE SPRAWDZIŁEM` / `NIE DA SIĘ SPRAWDZIĆ` (słownik ze schematu; wtedy WYKONAJ: komenda + wyjście).
 3. KIERUNEK ODWROTNY: weź inwentarz punktów wejścia z `02-fakty` i listę pozycji menu → dla każdego: gdzie w dokumentacji

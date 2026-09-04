@@ -1,0 +1,135 @@
+{
+ "soczewka": "L5",
+ "runda": "weryfikacja",
+ "commit_head": "412d9b38be73e3273c13d138720c09568cd8cdd3",
+ "werdykty": [
+  {"cel": "L5-HEAD-limit", "werdykt": "ROZJAZD", "plik": "includes/pobieranie.php", "linia": 4,
+   "jak_czlowiek_tego_uzywa": "Kupujący/skaner poczty odwiedza link pobrania z maila; przeglądarki/skanery czasem robią HEAD przed GET",
+   "dowod": "PRZED: pobrania_uzyte=0. curl -I na link pobrania -> HTTP 200. PO: pobrania_uzyte=1 (zamiast pozostać 0)."},
+  {"cel": "L5-limit-wyczerpany", "werdykt": "ZGODNE", "plik": "includes/pobieranie.php", "linia": 71,
+   "dowod": "pobrania_uzyte=10=limit -> GET -> HTTP=410"},
+  {"cel": "L5-link-wygasly-72h", "werdykt": "ZGODNE", "plik": "includes/pobieranie.php", "linia": 37,
+   "dowod": "link_wygasa w przeszłości -> GET -> HTTP=410"},
+  {"cel": "L5-zly-token", "werdykt": "ZGODNE", "plik": "includes/pobieranie.php", "linia": 33,
+   "dowod": "token losowy -> GET -> HTTP=403"},
+  {"cel": "L5-webhook-zly-podpis", "werdykt": "ZGODNE", "plik": "includes/zakup.php", "linia": 146,
+   "dowod": "POST /wp-json/sklepag/v1/webhook z Stripe-Signature: t=1,v1=deadbeef -> HTTP=400"},
+  {"cel": "L5-login-lockout-wykladniczy", "werdykt": "ZGODNE", "plik": "includes/logowania.php", "linia": 132,
+   "dowod": "4 kolejne błędne logowania: 0.05s, 2.06s, 4.06s, 8.05s (wzorzec 2^n z sufitem)"},
+  {"cel": "L5-retencja-90-dni", "werdykt": "ZGODNE", "plik": "includes/zakup.php", "linia": 534,
+   "dowod": "wiersz logowania z czas=-91 dni i wiersz z czas=teraz -> do_action('sklepag_dociagnij_zalegle') -> PO: tylko świeży wiersz zostaje"},
+  {"cel": "L5-2-pobrania-ostatni-slot", "werdykt": "ZGODNE", "plik": "includes/pobieranie.php", "linia": 63,
+   "dowod": "pobrania_uzyte=9/10, 2 żądania równoległe -> jedno 200, jedno 410; PO: pobrania_uzyte=10 (nie 11)"},
+  {"cel": "L5-rate-limit-pobierz", "werdykt": "ZGODNE", "plik": "includes/pobieranie.php", "linia": 16,
+   "dowod": "22 żądania pod rząd na 'pobierz' -> pierwsze ~18 dają 403 (zły token), kolejne 429 (limiter zadziałał)"},
+  {"cel": "L5-produkt-nieaktywny-odmowa", "werdykt": "ZGODNE", "plik": "includes/zakup.php", "linia": 82,
+   "dowod": "produkt aktywny=0, POST admin-post.php?action=sklepag_kup z ważnym noncem -> HTTP=404 'Produkt niedostępny'"}
+ ],
+ "znaleziska": [
+  {
+   "teza": "Docblock i komentarz kryterium GOTOWE obiecują 'HEAD nie zużywa limitu', ale `sklepag_obsluz_pobranie()` w includes/pobieranie.php świadomie inkrementuje pobrania_uzyte także dla żądań HEAD.",
+   "waga": "DUŻA",
+   "typ": "USTERKA",
+   "klasa": "klasa 3 (SCIAGA-EGZAMINATORA): dokumentacja/komentarz kłamie względem kodu — tu w wariancie ostrzejszym: DEKLARACJA WŁASNEGO PLIKU sprzeczna z JEGO WŁASNYM KODEM trzy linijki niżej",
+   "dowody": [
+    {"plik": "includes/pobieranie.php", "linia": 4, "cytat": "* termin 72 h, limit 10, licznik ATOMOWY przy starcie GET, bez Accept-Ranges,\n * HEAD nie zużywa limitu."},
+    {"plik": "includes/pobieranie.php", "linia": 53, "cytat": "// HEAD: same nagłówki. Slot zużywamy jak przy pobraniu — skaner, który dotyka linku,\n\t// to też „użycie” i inaczej limit 10 nie chroni pliku przed botami.\n\tif ( isset( $_SERVER['REQUEST_METHOD'] ) && 'HEAD' === $_SERVER['REQUEST_METHOD'] ) {\n\t\t$wpdb->query( $wpdb->prepare( \"UPDATE {$pz} SET pobrania_uzyte = pobrania_uzyte + 1, ...\" ) );"}
+   ],
+   "mechanizm": "Dokument nadrzędny (01-zamowienie.md, 12 KRYTERIÓW GOTOWE v3, pkt 3: 'HEAD nie zużywa limitu') i docblock samego pliku obiecują, że HEAD jest bezpłatnym sprawdzeniem linku. Kod robi coś przeciwnego z premedytacją — jest to udokumentowana W KODZIE decyzja projektowa (komentarz uzasadnia to ochroną przed skanerami), ale ZMIENIA obietnicę widoczną dla klienta i nie została odzwierciedlona ani w docblocku tego samego pliku, ani w readme.txt, ani w DOKUMENTACJA-TECHNICZNA.md (zero wzmianek o HEAD — sprawdzone grepem, z próbą kontrolną na frazie istniejącej w tym samym pliku).",
+   "skutek": "Kupujący (lub jego skaner poczty/klient pocztowy z podglądem linków), który dotknie linku pobrania metodą HEAD zanim faktycznie pobierze plik, zużywa jeden z 10 dostępnych pobrań bez świadomości - sprzeczne z tym, co obiecuje zarówno dokument zamówienia (kryterium GOTOWE #3), jak i nagłówek własnego pliku źródłowego wtyczki.",
+   "rodzaj_skutku": "zaobserwowany",
+   "kroki_reprodukcji": [
+    "Utworzyć opłacone zamówienie z tokenem pobrania i pobrania_uzyte=0 (SQL INSERT do wp_sklepag_zamowienia)",
+    "Zanotować pobrania_uzyte=0",
+    "curl -I 'http://HOST/wp-admin/admin-post.php?action=sklepag_pobierz&z=<id>&t=<token>'",
+    "Odczytać pobrania_uzyte z bazy ponownie — wynosi 1"
+   ],
+   "test_padajacy": "NIE NAPISANY (poza zakresem STOPKI dla audytora L5 w tym przebiegu — patrz zasada 'nie poprawiaj kodu'); reprodukcja WYKONANA i udokumentowana wyżej z surowym pomiarem PRZED=0/PO=1 (curl -I, EXIT=0, HTTP 200), co jest równoważne dowodowi z testu automatycznego",
+   "wyjscie_wykonania": "PRZED: id=1 pobrania_uzyte=0 pobrania_limit=10\nHTTP/1.1 200 OK ... Content-Length: 12 ... Accept-Ranges: none\nPO: id=1 pobrania_uzyte=1 pobrania_limit=10"
+  },
+  {
+   "teza": "DOKUMENTACJA-TECHNICZNA.md jest wewnętrznie sprzeczna co do liczby tabel: nagłówek §3 mówi '7 tabel', a opis aktywacji w §8 mówi 'utworzenie 6 tabel przez dbDelta' — stan rzeczywisty (SHOW TABLES na stosie) to 7 tabel.",
+   "waga": "ŚREDNIA",
+   "typ": "USTERKA",
+   "klasa": "klasa 3 (SCIAGA-EGZAMINATORA): dokumentacja kłamie względem kodu; ten sam wzorzec co znane SK-L5-002 z poprzednich rund — PERSYSTUJE w tej paczce",
+   "dowody": [
+    {"plik": "DOKUMENTACJA-TECHNICZNA.md", "linia": 38, "cytat": "## 3. Schemat bazy — 7 tabel, prefiks `wp_sklepag_`"},
+    {"plik": "DOKUMENTACJA-TECHNICZNA.md", "linia": 166, "cytat": "**Przy aktywacji:** utworzenie 6 tabel przez `dbDelta`, zapis wersji schematu,"}
+   ],
+   "mechanizm": "Dwa miejsca w tym samym pliku podają różne liczby tabel; SHOW TABLES LIKE 'wp_sklepag_%' na żywym stosie po aktywacji zwraca 7 wierszy (logowania, opinie, produkty, rate_limit, sesje_checkout, zamowienia, zdarzenia) — zgodne z §3, nie z §8.",
+   "skutek": "Deweloper wdrażający lub audytor czytający wyłącznie §8 (opis aktywacji) dostaje błędną liczbę tabel do zweryfikowania po instalacji.",
+   "rodzaj_skutku": "zaobserwowany",
+   "kroki_reprodukcji": [
+    "grep -n 'tabel' DOKUMENTACJA-TECHNICZNA.md",
+    "docker exec strona_wp_db mariadb wp_probny -e \"SHOW TABLES LIKE 'wp_sklepag_%'\" -> 7 wierszy"
+   ],
+   "test_padajacy": "NIE NAPISANY — znalezisko tekstowe (dokumentacja), nie zachowanie kodu wykonywalnego; weryfikacja przez grep + SHOW TABLES wystarcza jako dowód rozjazdu tekstu",
+   "wyjscie_wykonania": "grep: linia 38 '7 tabel', linia 166 '6 tabel'. SHOW TABLES: 7 wierszy wp_sklepag_*"
+  },
+  {
+   "teza": "Tabela plików w DOKUMENTACJA-TECHNICZNA.md §2 (mapa modułów) nie wymienia includes/opinie.php (obsługa publicznych żądań GET/POST formularza opinii) jako osobnej pozycji — funkcjonalność opinii jest opisana gdzie indziej (§3, §4), ale mapa plików pomija ten plik.",
+   "waga": "DROBNA",
+   "typ": "BRAK",
+   "klasa": "SK-L5-003/004 (persystujące, znane z poprzednich rund audytu K7)",
+   "dowody": [
+    {"plik": "DOKUMENTACJA-TECHNICZNA.md", "linia": 25, "cytat": "| `sklep-agentow.php` | ładowanie, stałe, skróty, assety frontu, lista produktów, cron |\n| `includes/aktywacja.php` | schemat bazy (dbDelta), migracje, zakładanie stron |\n...(includes/opinie.php nieobecne w tej tabeli)"}
+   ],
+   "mechanizm": "Tabela §2 wylicza 9 plików modułowych, ale pomija includes/opinie.php mimo że ten plik obsługuje DWA publiczne punkty wejścia bez logowania (admin_post_nopriv_sklepag_ocen, ...ocen_zapisz) — istotny fragment powierzchni ataku pominięty w mapie orientacyjnej, choć sama funkcja opinii jest opisana szczegółowo gdzie indziej w tym samym dokumencie.",
+   "skutek": "Osoba orientująca się w architekturze wyłącznie po tabeli §2 (a nie po całym dokumencie) może przeoczyć istnienie osobnego pliku obsługującego wejście publiczne dla opinii.",
+   "rodzaj_skutku": "przypuszczalny",
+   "kroki_reprodukcji": ["grep -n opini DOKUMENTACJA-TECHNICZNA.md -> obecne w §3/§4/§5, nieobecne w tabeli §2 (linie 25-33)"],
+   "test_padajacy": "NIE DA SIĘ — brak w tekście dokumentacji, nie zachowanie kodu",
+   "wyjscie_wykonania": "grep potwierdza brak wiersza z 'opinie.php' w tabeli plików §2; obecność opisu funkcji opinii w innych sekcjach tego samego dokumentu"
+  }
+ ],
+ "anomalie": [
+  {
+   "opis": "commit_head z ZAMROZENIE.md (5d3dcf9f0d99dedc1fe201c3e318f46d6f35ba5d) różni się od HEAD repozytorium wt-mutanty przekazanego audytorowi (412d9b38be73e3273c13d138720c09568cd8cdd3) — SHA256 paczki (7e0cf726...) nie zweryfikowany osobno wobec rozpakowanej paczki z powodu budżetu.",
+   "powod": "Koordynatorka podała inne repo do grepów niż to, na którym zamrożono SHA w ZAMROZENIE.md; nie sprawdzałam, czy to świadoma decyzja kalibracji czy dryf",
+   "cel": "commit_head"
+  },
+  {
+   "opis": "Test rate limit 'pobierz' 20/min: próg zadziałał po ok. 18 żądaniach w oknie, nie dokładnie po 20 — prawdopodobnie efekt wcześniejszych żądań w tej samej sesji/oknie (HEAD, expired-link, bad-token, 2x concurrent = ok. 6 wcześniejszych trafień na ten sam IP/akcję w tym samym oknie czasowym)",
+   "powod": "Nie wyizolowałam czystego okna limitera przed testem progu — mechanizm sam w sobie potwierdzony (429 się pojawia), ale dokładna liczba progu nie została zmierzona w izolacji",
+   "cel": "L5-rate-limit-pobierz"
+  },
+  {
+   "opis": "Nie przetestowałam behawioralnie 'cena/produkt z żądania ignorowana (cena z bazy)' — kod (zakup.php:82) czyta tylko produkt_id z $_POST i pobiera cenę z bazy (grep potwierdza brak odczytu $_POST['cena'] czy podobnego), ale nie przeprowadziłam pełnego zakupu z podstawionym parametrem ceny przez brak skonfigurowanego klucza Stripe na stosie probny_wp (fakt znany z 02-fakty-srodowiska: klucze puste na :8890; na :8891/probny_wp nie sprawdzałam osobno, ale brak produktów w bazie i ograniczony budżet nie pozwoliły dokończyć)",
+   "powod": "budżet + brak skonfigurowanego Stripe na stosie testowym",
+   "cel": "L5-cena-z-bazy"
+  }
+ ],
+ "pytania_do_zamawiajacego": [
+  "Czy zmiana zachowania HEAD (konsumuje slot pobrania) jest świadomą, zaakceptowaną decyzją nadpisującą kryterium GOTOWE #3 z 01-zamowienie.md? Jeśli tak — brakuje jej w rejestrze DECYZJE.md i w tekstach klienta (readme/DOK-TECH); jeśli nie — to defekt do naprawy."
+ ],
+ "odrzucone_wlasne": [],
+ "czego_nie_bylo_na_mojej_liscie": [
+  "Pełny przelot zakupu end-to-end przez Stripe CLI (webhook + reconciliation + mail) — prompt L5 kieruje na dokumentację vs kod, nie na pełny happy-path pieniędzy (to zakres L3); nie odtwarzałam tego z powodu budżetu i braku skonfigurowanego Stripe na stosie testowym.",
+  "Treść maila zakupowego wobec obietnic (S-02, 'potwierdzenie zgody, instrukcje, link do opinii') — nie sprawdzone wykonaniem w tym przebiegu (brak zamówienia domkniętego przez webhook); DOKUMENTACJA-TECHNICZNA i readme.txt opisują to spójnie ze sobą (sprawdzone lekturą), ale nie z realnie wysłanym mailem w Mailpit.",
+  "Plugin Check (oficjalny WP.org) na paczce — wymagany przez prompt (krok 5) ale pominięty w tym przebiegu z powodu budżetu; w poprzednich rundach K7 (L5-12) wynik był już odebrany na tej samej wersji 0.9.13 — nie powtórzone tu.",
+  "gitleaks na pełnej historii repo — pominięte (budżet); wynik z poprzednich rund K7 (L5-13) był zielony.",
+  "narzedzia-qa/slady-wewnetrzne.sh na rozpakowanej paczce — nie uruchomiony w tym przebiegu."
+ ],
+ "czego_nie_obejrzalem": [
+  "includes/admin*.php (panel CRUD produktów/zamówień/ustawień) — nie przeglądany linia po linii wobec dokumentacji w tym przebiegu",
+  "includes/front-produkt.php, front-seo.php — treści stron produktów wobec S-03/instrukcji nie porównane w tym przebiegu",
+  "uninstall.php wobec obietnicy 'domyślnie dane zostają / z opcją czyszczenia zero śladów' — nie testowane wykonaniem (destrukcyjne, wymagałoby osobnej instalacji)",
+  "CHANGELOG.md wpis [Niewydane] i wersja 0.9.13 — nie zweryfikowane w tym przebiegu"
+ ],
+ "wywolania_narzedzi": 27,
+ "obietnice_behawioralne": [
+  {"obietnica": "HEAD nie zużywa limitu (pobrania)", "zrodlo": "includes/pobieranie.php:4 (docblock) + 01-zamowienie.md kryterium GOTOWE #3", "werdykt": "ROZJAZD", "pomiar": "PRZED: pobrania_uzyte=0. curl -I na link pobrania -> HTTP/1.1 200, Content-Length: 12. PO: pobrania_uzyte=1 (wzrost o 1, mimo HEAD)."},
+  {"obietnica": "Po terminie/limicie odmowa pobrania", "zrodlo": "01-zamowienie.md kryterium GOTOWE #3", "werdykt": "ZGODNE", "pomiar": "pobrania_uzyte=10=limit -> GET -> HTTP=410. link_wygasa w przeszłości -> GET -> HTTP=410."},
+  {"obietnica": "Nieprawidłowy token pobrania = odmowa", "zrodlo": "DOKUMENTACJA-TECHNICZNA.md §4 (token 64 znaki)", "werdykt": "ZGODNE", "pomiar": "token losowy 68 znaków -> GET -> HTTP=403 'Nieprawidłowy link pobrania'"},
+  {"obietnica": "2 równoległe pobrania przy ostatnim slocie → przechodzi dokładnie 1", "zrodlo": "01-zamowienie.md kryterium GOTOWE #3", "werdykt": "ZGODNE", "pomiar": "pobrania_uzyte=9/10, 2 curl równolegle -> jeden 200, jeden 410; PO: pobrania_uzyte=10 (nie 11)"},
+  {"obietnica": "Zły/brak podpisu webhooka = odrzut z błędem", "zrodlo": "01-zamowienie.md kryterium GOTOWE #4", "werdykt": "ZGODNE", "pomiar": "POST /wp-json/sklepag/v1/webhook z Stripe-Signature sfałszowanym -> HTTP=400"},
+  {"obietnica": "Po kolejnych nieudanych próbach logowania następna próba jest wykładniczo opóźniona", "zrodlo": "readme.txt (sekcja opisu) + 01-zamowienie.md kryterium GOTOWE #8", "werdykt": "ZGODNE", "pomiar": "4 kolejne błędne logowania na audytor-admin: 0.05s, 2.06s, 4.06s, 8.05s (wzorzec 2^n)"},
+  {"obietnica": "Wpisy dziennika (logowania/zdarzenia) starsze niż 90 dni usuwane automatycznie", "zrodlo": "readme.txt linia 57", "werdykt": "ZGODNE", "pomiar": "wiersz logowania z czas=-91 dni + wiersz z czas=teraz; do_action('sklepag_dociagnij_zalegle'); PO: tylko świeży wiersz pozostał"},
+  {"obietnica": "Limit żądań (rate limit) na bramie pobrań chroni przed nadużyciem", "zrodlo": "includes/pobieranie.php:16 (20/min)", "werdykt": "ZGODNE", "pomiar": "22 żądania pod rząd -> od pewnego momentu (ok. #19) HTTP zmienia się z 403 na 429"},
+  {"obietnica": "Zakup produktu nieaktywnego/bez pliku = odmowa", "zrodlo": "01-zamowienie.md kryterium GOTOWE #7, mapa L3-13", "werdykt": "ZGODNE", "pomiar": "produkt z aktywny=0, POST sklepag_kup z ważnym _wpnonce i zgoda=1 -> HTTP=404 'Produkt niedostępny'"},
+  {"obietnica": "Cena/produkt w żądaniu zakupu podmieniona = zignorowane (cena z bazy)", "zrodlo": "01-zamowienie.md kryterium GOTOWE #5", "werdykt": "NIE SPRAWDZIŁEM", "powod": "Kod (zakup.php:82) strukturalnie czyta tylko produkt_id z $_POST i cenę z bazy (grep potwierdza brak $_POST['cena']), ale nie wykonałam pełnego zakupu z podstawionym polem ceny — brak skonfigurowanego Stripe na stosie testowym i budżet wywołań"},
+  {"obietnica": "Mail po zakupie zawiera potwierdzenie zgody na dostarczenie treści cyfrowej, instrukcje i jednorazowy link do opinii", "zrodlo": "readme.txt linia 36-39, S-02", "werdykt": "NIE SPRAWDZIŁEM", "powod": "Wymaga domkniętego zamówienia przez webhook/Stripe; brak skonfigurowanych kluczy Stripe i produktów na stosie probny_wp w tym przebiegu, budżet wywołań wyczerpujący się"},
+  {"obietnica": "Uninstall z włączoną opcją czyszczenia usuwa zero naszych tabel/opcji/stron/plików/cronów", "zrodlo": "01-zamowienie.md kryterium GOTOWE #9", "werdykt": "NIE SPRAWDZIŁEM", "powod": "Operacja destrukcyjna wymagająca osobnej instalacji jednorazowej; poza budżetem tego przebiegu"},
+  {"obietnica": "Anonimizacja z panelu obejmuje zamówienia + opinie + zdarzenia + dziennik (IP)", "zrodlo": "L2-16 mapa polowania, DOKUMENTACJA-TECHNICZNA §RODO", "werdykt": "NIE SPRAWDZIŁEM", "powod": "Wymaga zalogowanego admina z nonce panelu i istniejącego zamówienia; poza budżetem tego przebiegu (soczewka L2 pokrywała to w poprzednich rundach)"}
+ ]
+}

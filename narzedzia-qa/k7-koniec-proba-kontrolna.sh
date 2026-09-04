@@ -37,7 +37,7 @@ zbuduj_czysty() {
 	printf 'atrapa' > "$r/boty/paczki/plik.txt"; ( cd "$r/boty/paczki" && zip -q sklep-agentow-9.9.9.zip plik.txt )
 	# repo git z tagiem i gałęzią mutantów
 	( cd "$r" && git init -q && git config user.email a@b.c && git config user.name a && git add -A >/dev/null && git commit -qm baza && git tag -a k7-zamrozenie -m zamrozenie \
-	  && git checkout -qb audyt/mutanty-sklep && printf '# rozliczenie\n| audytor | mutant | znalazl | falszywy | werdykt | proby |\n|---|---|---|---|---|---|\n| L1 | M1 | tak | nie | PASS | 1 |\n| L2 | M2 | tak | nie | PASS | 1 |\n| L3 | M3 | tak | nie | PASS | 2 |\n| L4 | M5 | tak | nie | PASS | 1 |\n| L5 | M6 | tak | nie | PASS | 1 |\n| L | M7 | tak | nie | PASS | 1 |\n' > audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP.md \
+	  && git checkout -qb audyt/mutanty-sklep && printf '# rozliczenie\n| audytor | mutant | znalazl | falszywy | werdykt | proby | powod_powtorki |\n|---|---|---|---|---|---|---|\n| L1 | M1 | tak | nie | PASS | 1 |\n| L2 | M2 | tak | nie | PASS | 1 |\n| L3 | M3 | tak | nie | PASS | 2 |\n| L4 | M5 | tak | nie | PASS | 1 |\n| L5 | M6 | tak | nie | PASS | 1 |\n| L | M7 | tak | nie | PASS | 1 |\n' > audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP.md \
 	  && git add -A >/dev/null && git commit -qm mutanty && git checkout -q - )
 	local sha; sha=$(git -C "$r" rev-parse --short=7 'k7-zamrozenie^{commit}')
 	printf 'PACZKA: boty/paczki/sklep-agentow-9.9.9.zip\nSHA256: %s\nCOMMIT: %s\n' "$(sha256sum "$r/boty/paczki/sklep-agentow-9.9.9.zip" | cut -d' ' -f1)" "$sha" > "$r/audyt/sklep/ZAMROZENIE.md"
@@ -86,6 +86,13 @@ psuj_kal_dubel()  { ( cd "$1" && git checkout -q audyt/mutanty-sklep && sed -i '
 psuj_kalibracja(){ ( cd "$1" && git checkout -q audyt/mutanty-sklep && sed -i 's/| L3 | M3 | tak | nie | PASS | 2 |/| L3 | M3 | nie | nie | FAIL | 2 |/' audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP.md && git commit -qam zle && git checkout -q - ); }
 psuj_kal_potok() { ( cd "$1" && git checkout -q audyt/mutanty-sklep && sed -i 's/| L3 | M3 | tak | nie | PASS | 2 |/| L3 | M3 \\| M3b | tak | nie | PASS | 3 |/' audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP.md && git commit -qam zle && git checkout -q - ); }
 psuj_przelot_znak() { sed -i 's/^- ✅ B1/- ❓ B1/' "$1/audyt/sklep/PRZELOT-CZLOWIEKA-SKLEP.md"; }
+# proby=3 Z WYPELNIONYM powodem — dozwolone od 4.09 (limit: 3 i 4 tylko z powodem, powyzej 4 nigdy).
+# To jest kierunek POZYTYWNY tej proby: bez niego zmiana limitu nie bylaby niczym udowodniona.
+psuj_kal_proby_powod() { ( cd "$1" && git checkout -q audyt/mutanty-sklep && sed -i 's/| L3 | M3 | tak | nie | PASS | 2 |/| L3 | M3 | tak | nie | PASS | 3 | poprawka mechanizmu raportu, nie wzorca pod mutanta |/' audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP.md && git commit -qam powod && git checkout -q - ); }
+# proby=5 MIMO powodu — sufit twardy, powod nie ratuje.
+# proby=3 z ZASLEPKA zamiast powodu — myslnik nie tlumaczy niczego (recenzja #279 D8).
+psuj_kal_proby_zaslepka() { ( cd "$1" && git checkout -q audyt/mutanty-sklep && sed -i 's/| L3 | M3 | tak | nie | PASS | 2 |/| L3 | M3 | tak | nie | PASS | 3 | - |/' audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP.md && git commit -qam zaslepka && git checkout -q - ); }
+psuj_kal_proby_sufit() { ( cd "$1" && git checkout -q audyt/mutanty-sklep && sed -i 's/| L3 | M3 | tak | nie | PASS | 2 |/| L3 | M3 | tak | nie | PASS | 5 | powod jest, ale sufit przekroczony |/' audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP.md && git commit -qam sufit && git checkout -q - ); }
 psuj_kal_proby() { ( cd "$1" && git checkout -q audyt/mutanty-sklep && sed -i 's/| L3 | M3 | tak | nie | PASS | 2 |/| L3 | M3 | tak | nie | PASS | 3 |/' audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP.md && git commit -qam zle && git checkout -q - ); }
 psuj_znacznik()  { sed -i 's/^- ✅ L1-01/- ❓ L1-01/' "$1/audyt/sklep/material/06-mapa-polowania.md"; }
 psuj_licznik()   { sed -i 's/^CELE: .*/CELE: 0 · ✅ 0 · 🐞 0 · ⚠️ 0 · ⛔ 0 · ⬜ 0/' "$1/audyt/sklep/material/06-mapa-polowania.md"; }
@@ -136,11 +143,14 @@ sprawdz "8 werdykt spoza słownika schematu (W4)"          1 psuj_raport_enum   
 sprawdz "8 rodzaj_skutku spoza słownika (W4)"             1 psuj_raport_skutek "rodzaj_skutku SPOZA"
 sprawdz "9 SECURITY.md rozjechany z wersją wtyczki (D-1)" 1 psuj_security_rozjazd "9 SECURITY.md"
 sprawdz "9 brak SECURITY.md = NIE ZMIERZONE, nie cisza"   1 psuj_security_brak    "9 SECURITY.md: NIE ZMIERZONE"
-sprawdz "2 proby=3 w wierszu z \\| w komórce (W2 #186)"      1 psuj_kal_potok     "proby>2=1"
+sprawdz "2 proby=3 w wierszu z \\| w komórce (W2 #186)"      1 psuj_kal_potok     "proby bez powodu lub >4=1"
 sprawdz "5 przelot z nieznanym znacznikiem ❓"             1 psuj_przelot_znak  "5 przelot człowieka: nieznany znacznik"
 sprawdz "2 soczewka FAIL (proby=2 — tylko werdykt)"       1 psuj_kalibracja  "2 kalibracja"
-sprawdz "2 proby=3 przy PASS (W2 — tylko licznik prob)"   1 psuj_kal_proby   "proby>2=1"
+sprawdz "2 proby=3 przy PASS (W2 — tylko licznik prob)"   1 psuj_kal_proby   "proby bez powodu lub >4=1"
 sprawdz "2 dubel soczewki: 6 wierszy, 5 soczewek (#189 W3)" 1 psuj_kal_dubel   "soczewek=5"
+sprawdz "2 proby=3 Z POWODEM -> nadal GO (limit 4.09)"      0 psuj_kal_proby_powod ""
+sprawdz "2 proby=5 mimo powodu -> NO-GO (sufit twardy)"     1 psuj_kal_proby_sufit "proby bez powodu lub >4=1"
+sprawdz "2 proby=3 z ZASLEPKA zamiast powodu -> NO-GO"      1 psuj_kal_proby_zaslepka "proby bez powodu lub >4=1"
 sprawdz "3b znalezisko DO WERYFIKACJI"                    1 psuj_rejestr     "3b rejestr"
 sprawdz "3c naprawa_proby = 3"                            1 psuj_proby       "3c rejestr"
 sprawdz "3d ZAMKNIETE bez pliku straznika"                1 psuj_straznik    "3d rejestr"

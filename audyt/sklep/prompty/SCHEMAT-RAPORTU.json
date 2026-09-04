@@ -57,6 +57,33 @@
     "odrzucone_wlasne": { "type": "array", "description": "wpisy, których nie zwracasz, z jednym zdaniem powodu (pusto = „brak”)", "items": { "type": "string" } },
     "czego_nie_bylo_na_mojej_liscie": { "type": "array", "minItems": 1, "items": { "type": "string" }, "description": "kategorie, o które to pytanie NIE pytało, a wyglądają na istotne; brak = napisz, że pytanie Cię ograniczyło" },
     "czego_nie_obejrzalem": { "type": "array", "items": { "type": "string" }, "description": "pliki/obszary świadomie pominięte w budżecie" },
-    "wywolania_narzedzi": { "type": "integer" }
-  }
+    "wywolania_narzedzi": { "type": "integer" },
+    "obietnice_behawioralne": {
+      "type": "array",
+      "description": "WYMAGANE dla soczewki L5 od rundy weryfikacja. Kazda obietnica BEHAWIORALNA z dokumentow wtyczki i z 01-zamowienie.md (zdania o tym, co kod ROBI W RUCHU: nie zuzywa / odmawia / wysyla ponownie / kasuje / nigdy / tylko) wypisana i ROZLICZONA. Pozycja bez werdyktu jest niedopuszczalna — pominiecie ma zostawiac SLAD. Prog 10 ZMIERZONYCH egzekwuje contains + minContains, NIE opis: opis niczego nie wymusza, a minItems liczy pozycje, nie werdykty (zmierzone 4.09: raport z 12 pozycjami i 9 zmierzonymi przeszedl, bo prog siedzial w opisie).",
+      "minItems": 10,
+      "contains": { "type": "object", "required": ["werdykt"], "properties": { "werdykt": { "enum": ["ZGODNE", "ROZJAZD"] } } },
+      "minContains": 10,
+      "items": {
+        "type": "object",
+        "required": ["obietnica", "zrodlo", "werdykt"],
+        "properties": {
+          "obietnica": { "type": "string", "description": "cytat zdania obiecujacego zachowanie" },
+          "zrodlo": { "type": "string", "description": "plik dokumentu + miejsce" },
+          "werdykt": { "type": "string", "enum": ["ZGODNE", "ROZJAZD", "NIE SPRAWDZIŁEM", "NIE DA SIĘ SPRAWDZIĆ"] },
+          "pomiar": { "type": "string", "minLength": 20, "description": "OBOWIĄZKOWY przy ZGODNE i ROZJAZD: komenda + surowe wyjście PRZED i PO; zgodność liczby w kodzie NIE jest pomiarem zachowania. minLength, bo pusty napis spełniałby `required` i wliczał się do minContains" },
+          "powod": { "type": "string", "minLength": 20, "description": "OBOWIĄZKOWY przy NIE SPRAWDZIŁEM i NIE DA SIĘ SPRAWDZIĆ" }
+        },
+        "allOf": [
+          { "if": { "properties": { "werdykt": { "enum": ["ZGODNE", "ROZJAZD"] } } }, "then": { "required": ["pomiar"] } },
+          { "if": { "properties": { "werdykt": { "enum": ["NIE SPRAWDZIŁEM", "NIE DA SIĘ SPRAWDZIĆ"] } } }, "then": { "required": ["powod"] } }
+        ]
+      }
+    }
+  },
+  "allOf": [
+    { "$comment": "Wymog obowiazuje od rundy weryfikacja (4.09). Raporty rund A i B powstaly pod stara regula i sa DOWODAMI — nie wolno ich edytowac po fakcie, wiec warunek ich nie obejmuje. Swiadome zawezenie, nie przeoczenie.",
+      "if": { "required": ["soczewka", "runda"], "properties": { "soczewka": { "const": "L5" }, "runda": { "enum": ["weryfikacja", "re-audyt"] } } },
+      "then": { "required": ["obietnice_behawioralne"] } }
+  ]
 }

@@ -1,0 +1,191 @@
+{
+  "soczewka": "L5",
+  "runda": "weryfikacja",
+  "commit_head": "412d9b38be73e3273c13d138720c09568cd8cdd3",
+  "werdykty": [
+    {
+      "cel": "L5-01",
+      "werdykt": "ROZJAZD",
+      "plik": "DOKUMENTACJA-TECHNICZNA.md",
+      "linia": 38,
+      "dowod": "§3 nagłówek „Schemat bazy — 7 tabel” (linia 38) vs §8 „Przy aktywacji: utworzenie 6 tabel przez dbDelta” (linia 166); kod tworzy 7 tabel (aktywacja.php: produkty, sesje_checkout, zamowienia, zdarzenia, logowania, rate_limit, opinie), potwierdzone SQL na żywym stosie (SHOW TABLES LIKE 'wp_sklepag%' -> 7 wierszy)."
+    },
+    {
+      "cel": "L5-02",
+      "werdykt": "ZGODNE",
+      "plik": "DOKUMENTACJA-TECHNICZNA.md",
+      "linia": 1,
+      "dowod": "grep '170' w DOKUMENTACJA-TECHNICZNA.md -> 0 trafien; wewnetrzny numer #170 z poprzedniej rundy usuniety."
+    },
+    {
+      "cel": "L5-03/04",
+      "werdykt": "ROZJAZD",
+      "plik": "DOKUMENTACJA-TECHNICZNA.md",
+      "linia": 14,
+      "dowod": "Tabela §2 „Architektura” (9 wierszy) nie wymienia includes/opinie.php ani pięciu klas includes/class-sklepag-*.php (lista-logowan, lista-produktow, lista-zamowien, lista-zdarzen, sitemap-produkty); wiersz „admin*.php” pokrywa admin.php/admin-*.php, ale nie te sześć plików. Zmierzone testem test-l5-mapa-plikow.sh (niżej)."
+    },
+    {
+      "cel": "L5-05",
+      "werdykt": "SPELNIONE",
+      "plik": "includes/admin.php",
+      "linia": 30,
+      "jak_czlowiek_tego_uzywa": "administrator widzi czerwony notice w kokpicie gdy Bezpośrednie odnośniki = „Zwykłe”, z linkiem do options-permalink.php — dokładnie jak opisuje Krok 0 INSTRUKCJA-INSTALACJI.md",
+      "dowod": "curl -b ciasteczko admina do /wp-admin/index.php po ustawieniu permalink_structure='' zwrócił frazę „bezpośrednie odnośniki są ustawione na «Zwykłe»” (2 trafienia); po przywróceniu '/%postname%/' i rewrite flush notice znika."
+    },
+    {
+      "cel": "L5-08",
+      "werdykt": "ZGODNE",
+      "plik": "DOKUMENTACJA-TECHNICZNA.md",
+      "linia": 82,
+      "dowod": "sekcja §4 „Punkty wejścia” wymienia WSZYSTKIE pozycje z inwentarza 02-fakty (kup, pobierz, ocen GET/POST, webhook, status, 7 akcji panelu, cron) — kierunek odwrotny bez luk."
+    },
+    {
+      "cel": "L5-09",
+      "werdykt": "SPELNIONE",
+      "plik": "includes/zakup.php",
+      "linia": 405,
+      "jak_czlowiek_tego_uzywa": "tresc maila po zakupie widoczna w panelu Zamowienie i wysylana kupujacemu",
+      "dowod": "wp eval wywolal PRAWDZIWA sklepag_zbuduj_mail(): zawiera potwierdzenie zgody z data, link+72h/10 pobran (jako '3 dni'), 3 kroki instrukcji, akapit gwarancji 14 dni, link do opinii (30 dni) - zgodne z 05-reguly-branzy i readme.txt."
+    },
+    {
+      "cel": "L5-16",
+      "werdykt": "ROZJAZD",
+      "plik": "includes/admin-produkty.php",
+      "linia": 134,
+      "dowod": "curl do /wp-admin/admin.php?page=sklepag-produkty&widok=formularz (zalogowana sesja audytor-admin) zwrócił dosłowny tekst „kryterium #7” i „plan §7” w opisach pól formularza (linie 122 i 134 kodu) — wewnętrzna numeracja projektu widoczna administratorowi sklepu."
+    },
+    {
+      "cel": "L5-11",
+      "werdykt": "SPELNIONE",
+      "plik": "narzedzia-qa/slady-wewnetrzne.sh",
+      "linia": 62,
+      "dowod": "SLADY_ZALEGLOSCI=/dev/null bash narzedzia-qa/slady-wewnetrzne.sh sklep-agentow <rozpak-mut> -> „SLADY 1.2.0 [sklep-agentow]: nowe=0, dlug z listy=0, martwe wpisy=0”, EXIT=0. UWAGA: ta bramka NIE ma wzorca na „kryterium #”/„plan §” (grep tylko TODO/FIXME/@todo/HACK/XXX/notatka QA), wiec L5-16 jej nie przechodzi przez sito - patrz anomalia."
+    },
+    {
+      "cel": "L5-12",
+      "werdykt": "NIE DA SIE SPRAWDZIC",
+      "dowod": "docker exec -u www-data probny_wp wp plugin check sklep-agentow --format=table -> \"Error: 'check' is not a registered subcommand of 'plugin'.\" - narzedzie Plugin Check nie jest dostepne na tym stosie (WP-CLI nie ma zarejestrowanej komendy), inaczej niz deklaruje 02-fakty-srodowiska ('plugin-check' jako wtyczka obok na stosie warsztatowym :8890, nie na :8891)."
+    },
+    {
+      "cel": "L5-13",
+      "werdykt": "NIE DA SIE SPRAWDZIC",
+      "dowod": "`which gitleaks` -> brak w PATH na tej maszynie; polecenie z prompta (gitleaks detect --log-opts=--all) nie moglo zostac uruchomione."
+    }
+  ],
+  "znaleziska": [
+    {
+      "teza": "DOKUMENTACJA-TECHNICZNA.md podaje sprzeczną liczbę tabel bazy: §3 mówi „7 tabel”, §8 mówi „utworzenie 6 tabel” — kod tworzy 7.",
+      "waga": "DUZA",
+      "typ": "USTERKA",
+      "klasa": "3 (SCIAGA-EGZAMINATORA: dokumentacja/komentarz KLAMIE wzgledem kodu) - powrot znanego SK-L5-002",
+      "dowody": [
+        {
+          "plik": "DOKUMENTACJA-TECHNICZNA.md",
+          "linia": 38,
+          "cytat": "## 3. Schemat bazy - 7 tabel, prefiks `wp_sklepag_`"
+        },
+        {
+          "plik": "DOKUMENTACJA-TECHNICZNA.md",
+          "linia": 166,
+          "cytat": "**Przy aktywacji:** utworzenie 6 tabel przez `dbDelta`, zapis wersji schematu,"
+        },
+        {
+          "plik": "includes/aktywacja.php",
+          "linia": 21,
+          "cytat": "\"CREATE TABLE {$p}produkty (\" ... (7 wystapien CREATE TABLE: produkty, sesje_checkout, zamowienia, zdarzenia, logowania, rate_limit, opinie)"
+        }
+      ],
+      "mechanizm": "§3 zliczył tabele poprawnie (7, licząc dodaną w schemacie v5 tabelę `opinie` — D32), ale §8 („Instalacja i deinstalacja”) nie został zaktualizowany po dopisaniu mechanizmu opinii i wciąż mówi o stanie sprzed v5 (6 tabel).",
+      "skutek": "Technik/audytor czytający TYLKO §8 (sekcja o instalacji/deinstalacji, naturalne miejsce do sprawdzenia „co się tworzy/kasuje”) dostaje błędną liczbę i przy weryfikacji uninstall może nie doliczyć się jednej tabeli.",
+      "rodzaj_skutku": "zaobserwowany",
+      "kroki_reprodukcji": [
+        "grep -n 'tabel' DOKUMENTACJA-TECHNICZNA.md | grep -E '6 tabel|7 tabel'",
+        "docker exec -u www-data probny_wp wp --path=/var/www/html eval 'global $wpdb; var_dump(count($wpdb->get_results(\"SHOW TABLES LIKE \\\"wp_sklepag%\\\"\")));' -> 7"
+      ],
+      "test_padajacy": "/tmp/test-l5-tabele.sh DOKUMENTACJA-TECHNICZNA.md — PADA na obecnym pliku: „SS3=7 SS8=6 / PADA: rozjazd liczby tabel między §3 (7) a §8 (6)”, exit=1. Po ujednoliceniu treści §8 na „7 tabel” test przejdzie (exit=0).",
+      "wyjscie_wykonania": "SS3=7 SS8=6\nPADA: rozjazd liczby tabel miedzy S3 (7) a S8 (6)\nEXIT=1"
+    },
+    {
+      "teza": "Tabela architektury §2 DOKUMENTACJA-TECHNICZNA.md pomija includes/opinie.php (publiczny mechanizm opinii D32) i pięć klas includes/class-sklepag-*.php.",
+      "waga": "SREDNIA",
+      "typ": "BRAK",
+      "klasa": "3 (dokumentacja milczy o funkcji) - rozszerzenie znanego SK-L5-003/004",
+      "dowody": [
+        {
+          "plik": "DOKUMENTACJA-TECHNICZNA.md",
+          "linia": 14,
+          "cytat": "| `includes/admin*.php` | panel: pulpit, produkty, zamowienia, ustawienia, dziennik | (ostatni wiersz tabeli S2; brak wierszy dla opinie.php i class-sklepag-*.php)"
+        },
+        {
+          "plik": "includes/opinie.php",
+          "linia": 3,
+          "cytat": "* Mechanizm opinii (D32): zalazek przy mailu zakupowym -> formularz z jednorazowego"
+        }
+      ],
+      "mechanizm": "Tabela §2 wymienia 9 plików według grup funkcjonalnych, ale nie została uzupełniona o pliki dodane w kolejnych iteracjach (mechanizm opinii D32, klasy WP_List_Table dla czterech ekranów panelu, provider mapy witryny).",
+      "skutek": "Osoba orientująca się w kodzie po §2 (jako mapie architektury) nie dowie się, gdzie leży logika formularza opinii ani skąd biorą się tabele w panelu — musi szukać po całym katalogu includes/.",
+      "rodzaj_skutku": "zaobserwowany",
+      "kroki_reprodukcji": [
+        "bash /tmp/test-l5-mapa-plikow.sh <katalog-rozpakowanej-paczki>"
+      ],
+      "test_padajacy": "/tmp/test-l5-mapa-plikow.sh <paczka> — PADA na obecnym stanie: wypisuje 6 plików brakujących w tabeli §2 (opinie.php + 5x class-sklepag-*.php), exit=1.",
+      "wyjscie_wykonania": "BRAK w tabeli architektury: includes/class-sklepag-lista-logowan.php\nBRAK w tabeli architektury: includes/class-sklepag-lista-produktow.php\nBRAK w tabeli architektury: includes/class-sklepag-lista-zamowien.php\nBRAK w tabeli architektury: includes/class-sklepag-lista-zdarzen.php\nBRAK w tabeli architektury: includes/class-sklepag-sitemap-produkty.php\nBRAK w tabeli architektury: includes/opinie.php\nPADA\nEXIT=1"
+    },
+    {
+      "teza": "Wewnętrzna numeracja projektu („kryterium #7”, „plan §7”) jest widoczna administratorowi wprost w formularzu wp-admin Produkty -> Nowy/Edytuj produkt.",
+      "waga": "SREDNIA",
+      "typ": "USTERKA",
+      "klasa": "6 (kod/tekst niesie slad wewnetrznego procesu, nie tylko funkcje) - nowy egzemplarz klasy L5-16/SK-L5-001",
+      "dowody": [
+        {
+          "plik": "includes/admin-produkty.php",
+          "linia": 134,
+          "cytat": "<p class=\"description\">Aktywacja wymaga POTWIERDZONEGO pliku paczki — bez pliku zapis wróci z błędem (kryterium #7).</p>"
+        },
+        {
+          "plik": "includes/admin-produkty.php",
+          "linia": 122,
+          "cytat": "<p class=\"description\">Renderowany zawsze jako tekst (XSS: opisy nie niosą HTML — plan §7).</p>"
+        }
+      ],
+      "mechanizm": "Deweloperski komentarz uzasadniający decyzję („to spełnia kryterium #7 z naszego planu”) trafił dosłownie do stringa ECHOWANEGO na ekranie, zamiast zostać w komentarzu PHP.",
+      "skutek": "Właściciel sklepu (lub jeden z 4 administratorów wg S-15) widzi w formularzu produktu żargón audytu projektu („kryterium #7”, „plan §7”), niezrozumiały i niezwiązany z jego pracą — obniża wrażenie profesjonalnego produktu, dokładnie klasa 6 ze ściągi egzaminatora (kod/tekst niesie ślad procesu budowy).",
+      "rodzaj_skutku": "zaobserwowany",
+      "kroki_reprodukcji": [
+        "zaloguj sie jako administrator (audytor-admin)",
+        "curl -b ciasteczko-sesji 'http://localhost:8891/wp-admin/admin.php?page=sklepag-produkty&widok=formularz' | grep -o 'kryterium #7\\|plan §7'"
+      ],
+      "test_padajacy": "/tmp/test-l5-zargon-ui.sh includes/admin-produkty.php — PADA na obecnym kodzie: wypisuje obie linie 122 i 134 jako trafienia „echo ... (kryterium #|plan §)”, exit=1.",
+      "wyjscie_wykonania": "PADA — zargon wewnetrzny w UI:\n122:\t...plan §7...\n134:\t...kryterium #7...\nEXIT=1\n\nDowod z zywego stosu: curl zwrocil „kryterium #7” i „plan §7” z /wp-admin/admin.php?page=sklepag-produkty&widok=formularz."
+    }
+  ],
+  "anomalie": [
+    {
+      "opis": "narzedzia-qa/slady-wewnetrzne.sh swieci zielono (nowe=0) mimo realnego znaleziska L5-16 w UI.",
+      "powod": "bramka skanuje WYLĄCZNIE wzorzec TODO/FIXME/@todo/HACK/XXX/NOTATKA QA/DO USUNIECIA PRZED — nie ma wzorca na wewnętrzną numerację projektu (kryterium #, plan §, S-0x, D-nn) w tekstach ECHOWANYCH do UI. Narzędzie robi dokładnie to, co deklaruje, ale nazwa „ślady wewnętrzne” sugeruje szerszy zasięg niż realny.",
+      "cel": "L5-11"
+    },
+    {
+      "opis": "Plugin Check (WP-CLI) i gitleaks nie sa dostepne na stosie audytora tego zadania.",
+      "powod": "`wp plugin check` zwraca błąd nierozpoznanej podkomendy; `gitleaks` nie ma go w PATH — oba narzędzia z kroku 5 prompta L5 nie mogły zostać uruchomione, w przeciwieństwie do 02-fakty, który wymienia „plugin-check” jako wtyczkę obok na stosie warsztatowym (:8890), nie na :8891.",
+      "cel": "L5-12/L5-13"
+    }
+  ],
+  "pytania_do_zamawiajacego": [],
+  "odrzucone_wlasne": [
+    "Mail podaje ważność linku jako „3 dni” zamiast „72 godziny” (readme.txt) — matematycznie identyczne (72/24=3, bez zaokrąglenia), nie mylące, odrzucone jako nie-błąd."
+  ],
+  "czego_nie_bylo_na_mojej_liscie": [
+    "Zgodność treści CHANGELOG.md 0.9.13 z realnym diffem commitów (czy każdy wpis „Naprawione” faktycznie odpowiada zmianie w kodzie tej wersji) — sprawdziłam istnienie wpisu, nie prześledziłam każdego zdania do konkretnego commita.",
+    "Kompletność DOKUMENTACJA-TECHNICZNA.md §5 (przepływ zakupu) i §6 (brama pobrań) wobec realnego kodu — przeczytałam tylko §2, §3, §4, §8; te dwie sekcje nie zostały porównane linia po linii z zakup.php/pobieranie.php.",
+    "Historia commitów pod kątem prywatnych adresów e-mail (K2 ze ściągi) — nie uruchomiłam `git log --format=%ae` na repo wt-mutanty w tej rundzie.",
+    "Tresc CHANGELOG.md dla wersji przed 0.9.10 (skrotowe wpisy) - nie zweryfikowana wobec kodu, bo poza zakresem obecnej wersji.",
+    "Zgodność opisów produktów (ChatBot LIVE, Segregator maila) na stronach produktowych z realną treścią paczek botów — to zakres audytu botów (audyt/boty/), świadomie pominięty."
+  ],
+  "czego_nie_obejrzalem": [
+    "includes/front-seo.php, includes/stripe.php, includes/logowania.php - nie porownane zdanie po zdaniu z dokumentacja.",
+    "assets/ (JS/CSS) - nie sprawdzalam pod katem sladow wewnetrznych ani niespojnosci z dokumentacja.",
+    "DIAGRAM-PRZEPLYWU.svg - nie zweryfikowany wobec realnego przeplywu w zakup.php."
+  ],
+  "wywolania_narzedzi": 19
+}
