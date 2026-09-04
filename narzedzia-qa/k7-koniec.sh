@@ -162,7 +162,9 @@ else
 	P_COMMIT=$(sed -n 's/^COMMIT: *//p' "$PROBY" | head -1)
 	HEAD_KR=$(git rev-parse --short=7 HEAD 2>/dev/null)
 	ILE_P=$(grep -cE '^[A-Za-z0-9_.-]+\.sh EXIT=' "$PROBY")
-	# ⛔ EXIT=2 to SWIADOME POMINIECIE ("nie zmierzylam"), nie wada — liczone OSOBNO.
+	# ⛔ EXIT=2 to "NIE ZMIERZYLAM" — liczone OSOBNO od padniec (EXIT=1), ale od 4.09
+	#    RÓWNIEŻ ZATRZYMUJE WYDANIE: sufit MAX_NIEZM_P=0 nizej. Rozroznienie dotyczy
+	#    KOMUNIKATU (co powiedziec czytelnikowi), nie tego, czy puszczamy.
 	# Do 4.09 `grep -vc EXIT=0` wrzucal je do porazek: przelot z 4 realnymi padnieciami
 	# raportowal 12, czyli bramka mowila o produkcie rzecz, ktorej nie zmierzyla (klasa I-12).
 	# KOTWICA ZE SPACJA. Log ma postac: nazwa.sh EXIT=<kod> <czas>s
@@ -194,7 +196,10 @@ else
 	elif [ "$NIEZM_P" -gt "$MAX_NIEZM_P" ]; then
 		fail "6 próby kontrolne: $NIEZM_P z $ILE_P NIC NIE ZMIERZYŁO (EXIT=2, sufit: $MAX_NIEZM_P) — zestaw kurczy się po cichu; przelot na $P_COMMIT (uruchom: bash narzedzia-qa/proby-kontrolne-przelot.sh)"
 	elif [ "$ZLE_P" -ne 0 ]; then
-		fail "6 próby kontrolne: $ZLE_P z $ILE_P PADŁO (EXIT=1); nie zmierzono: $NIEZM_P (EXIT=2, świadome); przelot na $P_COMMIT"
+		# Do tej galezi wchodzimy dopiero po sprawdzeniu sufitu NIEZM_P wyzej, wiec
+		# "nie zmierzono" jest tu ZAWSZE zerem — zostaje w komunikacie jako jawne 0,
+		# zeby czytelnik widzial OBIE liczby i nie zgadywal, ktora zatrzymala bramke.
+		fail "6 próby kontrolne: $ZLE_P z $ILE_P PADŁO (EXIT=1); nie zmierzono: $NIEZM_P; przelot na $P_COMMIT"
 	else
 		pass "6 próby kontrolne: 0 padnięć z $ILE_P na commicie $P_COMMIT (nie zmierzono: $NIEZM_P, pominiętych: $POM_P)"
 	fi
