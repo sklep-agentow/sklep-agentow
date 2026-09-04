@@ -165,7 +165,7 @@ zwin_stos() {
 		return
 	fi
 	# ⛔ `-v` KASUJE ANONIMOWY WOLUMEN. Bez niego kazdy bieg stosu probnego zostawial
-	#    sierote ~88 MB, a stos stawia sie od zera przy KAZDYM uzyciu — dziewieciu wolajacych.
+	#    sierote ~88 MB, a stos stawia sie od zera przy KAZDYM uzyciu — szesnastu wolajacych.
 	#    Zmierzone 3.09 na maszynie warsztatu: 38 wolumenow Dockera, z tego 35 nieprzypisanych
 	#    do zadnego kontenera (takze zatrzymanego), razem 2,7 GB przy dysku na 92 %.
 	#    35 x 88 MB zgadza sie co do rzedu — to sa te sieroty.
