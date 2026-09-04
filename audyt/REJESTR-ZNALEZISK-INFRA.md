@@ -30,7 +30,7 @@
 > `narzedzia-qa/bramka-znaleziska.sh` (dziś bramka czyta TYLKO tamten plik — patrz DŁUG poniżej).
 > ⛔ Znaleziska produktu NIE wchodzą tutaj; tu wyłącznie infrastruktura, CI, wydanie i dokumenty.
 
-## Liczba znalezisk OTWARTYCH: 48
+## Liczba znalezisk OTWARTYCH: 43
 <!-- ⛔ LICZ KOMENDĄ, NIGDY Z GŁOWY — patrz I-23. Stan 2.09 po UZGODNIENIU rejestru ze stanem main (ten PR):
      P-3 (#254), P-4 (#255), A7-F1 (#256), B-14 (#253), D-3 (#259/#264/#263) miały scalone PR-y naprawcze z dowodem, a rejestr
      trzymał je jako OTWARTE/W NAPRAWIE przez dobę — klasa I-23 w nowej postaci (rejestr nie wie o merge'u). I-16 → ZAMKNIETE warunkowo (#244).
@@ -67,16 +67,19 @@
      z KOLUMNY od konca, nie grepem po slowie — slowa statusu wystepuja takze w tekscie opisu):
        origin/main  73 wiersze:  ZAMKNIETE 38 · OTWARTE 30 · W NAPRAWIE 3 · ZAPARKOWANE 1 · WYCOFANE 1
                                  suma 73 = 73 wierszy  ✔
-       ta galaz     89 wierszy:  OTWARTE 48 · ZAMKNIETE 38 · ZAPARKOWANE 1 · WYCOFANE 1 · W NAPRAWIE 1
+       PO SCALENIU  89 wierszy:  OTWARTE 43 · ZAMKNIETE 42 · W NAPRAWIE 2 · ZAPARKOWANE 1 · WYCOFANE 1
                                  suma 89 = 89 wierszy  ✔
-     ⇒ **48 OTWARTYCH to liczba POLICZONA w tym pliku**, nie wyprowadzona z cudzego naglowka.
+     ⇒ **43 OTWARTE to liczba POLICZONA NA SCALONEJ TRESCI** (5.09, po wejsciu #268, #270, #273,
+     #274, #278, #272), nie wyprowadzona z cudzego naglowka i nie przepisana z zadnej strony.
+     ⭐ Zadna z liczb z konfliktu scalenia nie byla prawdziwa: galaz mowila 48, `main` mowil 31,
+     pomiar dal 43. Dlatego ten licznik przelicza sie KOMENDA, a nie rozstrzyga wyborem strony.
      ⛔ ROZKLAD USUNIETY (recenzja #277 r5, WAZNA 3). Mowil: „2 przeniesione z W NAPRAWIE
      — dwie naprawy zostaly rozliczone". To NIEPRAWDA: `F4-F4` i `Q-4` maja na `main`
      status W NAPRAWIE, a na tej galezi stoja jako OTWARTE WYLACZNIE dlatego, ze galaz
      jest sprzed scalen #268 i #270. Nic nie zostalo rozliczone — to artefakt starej bazy
      zapisany jako pomiar, czyli klasa I-23, ktora ten sam plik opisuje.
-     ⛔ LICZBA PONIZEJ BEDZIE PRAWDZIWA DOPIERO PO `git merge origin/main` i przeliczeniu
-     jej NA SCALONEJ TRESCI. Do tego czasu traktuj ja jako stan galezi, nie stan projektu.
+     ✅ SCALENIE WYKONANE 5.09 i licznik przeliczony na scalonej tresci — liczba wyzej jest
+     stanem PROJEKTU, nie stanem galezi.
      ⛔ Kontrola sumy jest OBOWIAZKOWA przy kazdej zmianie tego licznika: bez niej grep po slowie
      statusu daje 64 przy 73 wierszach i nikt tego nie zauwaza. -->
 <!-- ⛔ Ten licznik NIE MA STRAŻNIKA: bramka-znaleziska.sh czyta wyłącznie
