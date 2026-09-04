@@ -384,8 +384,27 @@ function sklepag_obsluz_eksport_csv() {
 /* ---------- Render dashboardu ---------- */
 
 /**
- * Strona główna panelu = dashboard (zastępuje szkielet-liczniki z kości).
+ * Komunikat o NIEKOMPLETNYM schemacie bazy (A6-F1): aktywacja/migracja zmierzyła braki po `dbDelta`,
+ * wersja nie została podniesiona, sklep ponowi próbę sam — nie przy każdym żądaniu, tylko
+ * najwyżej raz na 5 minut (dławik `sklepag_schemat_ponowienie`, `aktywacja.php:302-308`); aktywacja
+ * wtyczki kasuje znacznik, więc „deaktywuj i aktywuj" działa natychmiast. Przyczyna
+ * (np. brak prawa ALTER/CREATE) wymaga właściciela. Wypisuje notice albo nic.
+ *
+ * @return bool Czy komunikat został wypisany.
  */
+function sklepag_notice_schematu() {
+	$schemat_blad = get_option( 'sklepag_schemat_blad', array() );
+	if ( ! is_array( $schemat_blad ) || empty( $schemat_blad['braki'] ) ) {
+		return false;
+	}
+	echo '<div class="notice notice-error"><p><strong>Baza sklepu jest niekompletna — sklep może nie przyjmować zamówień.</strong> Brakuje: '
+		. esc_html( implode( ', ', array_map( 'strval', (array) $schemat_blad['braki'] ) ) )
+		. ' (wersja schematu ' . (int) get_option( 'sklepag_wersja_schematu', 0 ) . ', oczekiwana ' . (int) ( $schemat_blad['oczekiwana'] ?? SKLEPAG_WERSJA_SCHEMATU ) . ').'
+		. ( ! empty( $schemat_blad['blad_bazy'] ) ? ' Ostatni błąd bazy: ' . esc_html( (string) $schemat_blad['blad_bazy'] ) : '' )
+		. ' Najczęstsza przyczyna: użytkownik bazy bez prawa ALTER/CREATE. Po naprawie uprawnień deaktywuj i aktywuj wtyczkę (sklep ponawia próbę sam co 5 minut, a aktywacja robi to natychmiast).</p></div>';
+	return true;
+}
+
 function sklepag_admin_dashboard() {
 	if ( ! current_user_can( 'manage_options' ) ) {
 		wp_die( 'Brak uprawnień.', 'Sklep Agentów', 403 );
@@ -436,6 +455,8 @@ function sklepag_admin_dashboard() {
 		echo '<div class="notice notice-error"><p><strong>Katalog chroniony na pliki produktów: problem.</strong> '
 			. esc_html( '' !== $katalog_blad ? $katalog_blad : 'Katalog nie istnieje — deaktywuj i aktywuj wtyczkę, sprawdź uprawnienia uploads.' ) . '</p></div>';
 	}
+
+	sklepag_notice_schematu();
 
 	if ( '' !== $kpi_blad ) {
 		echo '<div class="notice notice-error"><p><strong>Wskaźniki poniżej są niewiarygodne.</strong> '

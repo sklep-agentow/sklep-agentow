@@ -207,7 +207,15 @@ bierze udział w decyzji, czy powtórne kliknięcie przycisku zakupu w oknie ide
 zapamiętany adres checkoutu, czy nowy (`sklepag_sesja_czeka_na_platnosc()`). Warunkiem
 NADRZĘDNYM jest tam wiek okna (`SKLEPAG_IDEM_OKNO_S`), bo `stan` przestawia dopiero webhook —
 zanim dotrze, sesja opłacona leży w bazie jako `utworzona` i jest nieodróżnialna od czekającej.
-Na stan zamówienia ta tabela nadal nie wpływa.
+Na stan zamówienia ta tabela nadal nie wpływa. Klucz okna (`sklepag_klucz_idem()`) składa się
+z czterech członów: adres IP, **znacznik formularza**, produkt i tryb płatności. Znacznik to pole
+`okno` formularza zakupu (od tego wydania): render wstawia wartość startową, a skrypt tuż pod
+formularzem nadpisuje ją losową z `crypto.getRandomValues`. Nadpisanie jest konieczne, bo strona
+produktu **nie** wysyła `nocache_headers()` (jedyne wywołanie siedzi w gałęzi 404), więc pod
+pełnostronicowym cache'em wszyscy kupujący dostaliby ten sam render i ten sam znacznik. Podwójny
+klik wysyła ten sam formularz, czyli ten sam znacznik — ochrona przed dwiema płatnościami zostaje;
+druga osoba za tym samym adresem ma własny znacznik. Przeglądarka bez JavaScriptu zostaje przy
+wartości z renderu, a POST bez znacznika dostaje okno per adres jak w poprzednich wydaniach.
 
 ## 6. Brama pobrań
 
@@ -277,7 +285,9 @@ starcie** — własny literał w tym pliku cofałby naprawę PHP w przeglądarce
 
 ## 8. Instalacja i deinstalacja
 
-**Przy aktywacji:** utworzenie 7 tabel przez `dbDelta`, zapis wersji schematu,
+**Przy aktywacji:** utworzenie 7 tabel przez `dbDelta` (`sklepag_zbuduj_schemat()` — to samo
+miejsce co migracja), **pomiar skutku** (`SHOW TABLES` / `SHOW COLUMNS` względem tych samych definicji)
+i zapis wersji schematu **tylko gdy braków nie ma**; przy brakach wersja zostaje stara (ponowienie po odstępie 5 minut — znacznik `sklepag_schemat_ponowienie`; aktywacja wtyczki kasuje znacznik, więc „deaktywuj i aktywuj” działa natychmiast), a Pulpit pokazuje listę braków i ostatni błąd bazy (`sklepag_schemat_blad`),
 założenie stron „Sklep" i „Dziękujemy", zaplanowanie zadania cyklicznego.
 
 **Przy deaktywacji:** odplanowanie zadania cyklicznego. Dane zostają.

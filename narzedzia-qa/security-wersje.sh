@@ -69,6 +69,50 @@ if [ "$SPRAWDZONE" -eq 0 ]; then
 	exit 2
 fi
 
+# ⛔ DATA STANU, NIE TYLKO NUMERY. Znalezione dwa razy w tej samej kolejce PR-ow: scalenie
+# rozstrzyga konflikt w SECURITY.md regula "wygrywa WYZSZY numer wersji" — i razem z numerem
+# przeciaga CALY wiersz, w tym date. Skutek: dokument publiczny deklarowal stan STARSZY niz
+# wydanie, ktore opisuje (#274: "Stan na 2026-09-01" przy wydaniu 0.9.39 z 2026-09-02), a przy
+# tym starszy niz to, co stalo na mainie. Ten straznik pilnowal wylacznie numerow, wiec milczal.
+# Regula: data stanu NIE MOZE byc starsza niz data NAJNOWSZEGO WYDANIA sposrod WSZYSTKICH
+# `wtyczki/*/CHANGELOG.md` — bo `SECURITY.md` opisuje stan TRZECH wtyczek naraz, a kazda ma
+# wlasny rytm wydan. Zdanie mowiace o „CHANGELOG-u sklepu” opisywalo PIERWSZA wersje tej
+# kontroli i przestalo byc prawda w tej samej rundzie, w ktorej kod pod nim to zmienil
+# (recenzja #274, runda 9, WAZNA 1 — klasa 3: dokument opisuje stan, ktorego kod juz nie ma).
+DATA_DOK="$(grep -m1 -oE 'Stan na [0-9]{4}-[0-9]{2}-[0-9]{2}' "$DOKUMENT" 2> /dev/null | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}')"
+# ⛔ DATA MIERZONA WOBEC WSZYSTKICH WTYCZEK, NIE TYLKO SKLEPU. Pierwsza wersja tej kontroli
+# porownywala date stanu z CHANGELOG-iem SAMEGO sklepu, a petla wyzej sprawdza numery WSZYSTKICH
+# trzech i wypis melduje "sprawdzonych wtyczek 3". Skutek: wydanie ChatBota albo segregatora
+# nowsze niz ostatnie wydanie sklepu dawaloby dokument deklarujacy stan starszy niz tresc,
+# ktora niesie — czyli DOKLADNIE te wade, przed ktora ta kontrola stoi — przy bramce swiecacej
+# "zgodne". ChatBot ma osobny rytm wydan, wiec to nie jest przypadek teoretyczny.
+DATA_WYDANIA=""
+WTYCZKA_WYDANIA=""
+for _cl in "$KATALOG_WTYCZEK"/*/CHANGELOG.md; do
+	[ -f "$_cl" ] || continue
+	_d="$(grep -m1 -oE '^## \[[0-9]+\.[0-9]+\.[0-9]+\] — [0-9]{4}-[0-9]{2}-[0-9]{2}' "$_cl" 2> /dev/null | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}')"
+	[ -n "$_d" ] || continue
+	if [ -z "$DATA_WYDANIA" ] || [ "$_d" \> "$DATA_WYDANIA" ]; then
+		DATA_WYDANIA="$_d"
+		WTYCZKA_WYDANIA="$(basename "$(dirname "$_cl")")"
+	fi
+done
+if [ -z "$DATA_DOK" ]; then
+	echo "SECURITY-WERSJE: w $DOKUMENT nie ma wiersza 'Stan na RRRR-MM-DD' — nie wiem, na kiedy opisuje stan" >&2
+	exit 2
+fi
+if [ -z "$DATA_WYDANIA" ]; then
+	echo "SECURITY-WERSJE: w ZADNYM $KATALOG_WTYCZEK/*/CHANGELOG.md nie ma datowanego naglowka wydania" >&2
+	echo "                 — nie mam z czym porownac daty stanu" >&2
+	exit 2
+fi
+if [ "$DATA_DOK" \< "$DATA_WYDANIA" ]; then
+	echo "ROZJAZD: $DOKUMENT deklaruje stan na $DATA_DOK, a opisuje wydanie $WTYCZKA_WYDANIA z $DATA_WYDANIA (data starsza niz tresc)" >&2
+	ROZJAZDY=$((ROZJAZDY + 1))
+else
+	echo "  zgodne: data stanu $DATA_DOK nie jest starsza niz najnowsze wydanie ($WTYCZKA_WYDANIA, $DATA_WYDANIA)"
+fi
+
 RAZEM=$((ROZJAZDY + BRAK_WPISU))
 echo "SECURITY-WERSJE: sprawdzonych wtyczek $SPRAWDZONE, rozjazdow $ROZJAZDY, bez wpisu $BRAK_WPISU"
 [ "$RAZEM" -eq 0 ]

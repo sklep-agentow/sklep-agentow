@@ -606,8 +606,17 @@ function sklepag_formularz_zakupu( $p ) {
 	$html     = '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="sklepag-zakup" id="sklepag-kup-formularz">';
 	$html    .= '<input type="hidden" name="action" value="sklepag_kup">';
 	$html    .= '<input type="hidden" name="produkt_id" value="' . (int) $p->id . '">';
-	$html    .= wp_nonce_field( 'sklepag_kup', '_wpnonce', true, false );
-	$html    .= '<label class="sklepag-zgoda" for="' . esc_attr( $id_zgody ) . '"><input type="checkbox" id="' . esc_attr( $id_zgody ) . '" name="zgoda" value="1" required data-sklepag-blad="' . esc_attr( SKLEPAG_BLAD_ZGODA_ZAKUP ) . '"> <span>' . esc_html( SKLEPAG_ZGODA_TRESC ) . '</span></label>';
+	// Znacznik okna idempotencji (od tego wydania). Render daje wartość startową, a skrypt tuż pod
+	// formularzem NADPISUJE ją losową z `crypto.getRandomValues`. Powód zmierzony na żywym stosie:
+	// strona produktu NIE wysyła `nocache_headers()` — jedyne wywołanie w tym pliku siedzi w gałęzi
+	// 404 (`sklepag_status_404_wczesnie()`, odpala się TYLKO gdy produktu nie ma), więc pod
+	// pełnostronicowym cache'em wszystkie przeglądarki dostałyby TEN SAM render i TEN SAM znacznik,
+	// czyli wróciłby dokładnie błąd Q-5: druga osoba za jednym adresem dostaje cudzy checkout Stripe.
+	// Podwójny klik wysyła ten sam formularz = ten sam znacznik; druga osoba ma własny.
+	// Bez JavaScriptu zostaje wartość z renderu — jak przed tym wydaniem, ani lepiej, ani gorzej.
+	$html .= '<input type="hidden" name="okno" value="' . esc_attr( wp_generate_password( 24, false, false ) ) . '">';
+	$html .= wp_nonce_field( 'sklepag_kup', '_wpnonce', true, false );
+	$html .= '<label class="sklepag-zgoda" for="' . esc_attr( $id_zgody ) . '"><input type="checkbox" id="' . esc_attr( $id_zgody ) . '" name="zgoda" value="1" required data-sklepag-blad="' . esc_attr( SKLEPAG_BLAD_ZGODA_ZAKUP ) . '"> <span>' . esc_html( SKLEPAG_ZGODA_TRESC ) . '</span></label>';
 	// Dane do faktury — nieobowiązkowe, nasze pola (0.9.25). Zwinięte pod <details>, żeby osoba prywatna
 	// nie widziała pól firmowych; NIP sprawdzany po stronie serwera (suma kontrolna), tu tylko podpowiedź.
 	$html .= '<details class="sklepag-faktura"><summary class="sklepag-mono-etykieta">[ KUPUJESZ NA FIRMĘ? DANE DO FAKTURY ]</summary>'
@@ -633,6 +642,14 @@ function sklepag_formularz_zakupu( $p ) {
 		$html .= '<p class="sklepag-mono-etykieta sklepag-zakup-notka">PŁATNOŚĆ OBSŁUGUJE STRIPE</p>';
 	}
 	$html .= '</form>';
+	/* Znacznik okna losowany W PRZEGLĄDARCE (powód: komentarz przy polu `okno` wyżej). Skrypt stoi
+		PO formularzu, żeby pole na pewno było już w DOM. 12 losowych bajtów zapisanych szesnastkowo
+		= 24 znaki [0-9a-f], czyli ten sam kształt i ta sama długość co wartość z renderu
+		(`wp_generate_password( 24, false, false )`), a `sklepag_znacznik_okna_z_post()` przepuszcza
+		[A-Za-z0-9] do 40 znaków, więc nic nie jest obcinane. Bez `crypto.getRandomValues` albo bez
+		JavaScriptu skrypt nie robi NIC i zostaje wartość z renderu. Znacznik nie jest sekretem ani
+		dowodem tożsamości — rozdziela okna dwóch przeglądarek za jednym adresem (zakup.php:47-48). */
+	$html .= '<script>(function(){try{var c=window.crypto;if(!c||!c.getRandomValues){return;}var p=document.querySelector("#sklepag-kup-formularz input[name=okno]");if(!p){return;}var a=new Uint8Array(12);c.getRandomValues(a);var s="";for(var i=0;i<a.length;i++){s+=(a[i]<16?"0":"")+a[i].toString(16);}p.value=s;}catch(e){}})();</script>';
 	// Panel płatności osadzonej (0.9.25): `platnosc.js` odsłania go po utworzeniu sesji i montuje w nim
 	// elementy Stripe (e-mail, karta) — formularz karty jest w ramce Stripe (PCI), my dajemy tylko ramy i kolory.
 	// Bez JS/klucza publikowalnego panel zostaje ukryty, a formularz wyżej idzie na stronę hostowaną.

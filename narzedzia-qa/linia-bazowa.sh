@@ -69,7 +69,8 @@ wp() { docker exec "$KONTENER" wp --allow-root --path=/var/www/html "$@"; }
 ETYKIETA="${1:-}"
 [ -n "$ETYKIETA" ] || { echo "użycie: linia-bazowa.sh <etykieta> | --porownaj A B" >&2; exit 2; }
 command -v docker >/dev/null || { echo "brak dockera" >&2; exit 2; }
-# ⛔ „NIE WIEM" TO NIE TO SAMO CO „NIE CHODZI" — patrz `narzedzia-qa/stos.sh:153`.
+# ⛔ „NIE WIEM" TO NIE TO SAMO CO „NIE CHODZI" — patrz funkcja `brak_stosu` w `narzedzia-qa/stos.sh` (odsylam po NAZWIE: numer, ktory tu stal,
+# wskazywal juz srodek zupelnie innej funkcji).
 docker ps > /dev/null 2>&1 || { echo "NIE WIEM, czy stos $KONTENER chodzi — to konto nie widzi Dockera (brak dostepu do demona, nie brak kontenera)" >&2; exit 2; }
 docker ps --filter "name=^${KONTENER}$" --filter status=running -q | grep -q . || { echo "Docker odpowiedzial: stosu $KONTENER na liscie NIE MA" >&2; exit 2; }
 [ -f "$ENV_ADMIN" ] && { set -a; . "$ENV_ADMIN"; set +a; }
@@ -132,6 +133,33 @@ for t in testy/*.php; do
 	# Z REPO do kontenera); wołany wprost sam odmawia biegu (EXIT=1), bo
 	# kopia wtyczki na stosie nie jest źródłem prawdy — to nie jest wada.
 	case "$t" in *segregator-deklaracja-vs-ladunek-ai.php) echo "POMINIĘTE (silnik strażnika A3-3 — uruchamia go wrapper .sh): $t"; printf '%s\tPOMINIETE\t0\n' "$t" >> "$TSV"; continue;; esac
+	# ⛔ Strażnik A6-F1 NISZCZY STAN: `DROP TABLE` na tabeli opinii i `sklepag_aktywacja()`
+	#    (tworzy strony, katalog, zadanie cykliczne, przebudowuje reguły adresów). Jego własny
+	#    nagłówek mówi „uruchamiać na STOSIE PRÓBNYM, nie na stosie z danymi”, a ta pętla jedzie
+	#    po `strona_wp_wordpress` i NIE przywraca bazy między testami — więc kolejne testy
+	#    dostawałyby zrzuconą tabelę.
+	# ⛔ GDZIE TEN STRAZNIK NAPRAWDE BIEGNIE — zmierzone, nie zalozone:
+	#      - krok `Proby kontrolne bramek` w `.github/workflows/quality.yml` wola przelot
+	#        Z ZAKRESEM `narzedzia-qa`, wiec proby z `testy/` (w tym proba tego straznika)
+	#        w CI PR-owym NIE BIEGNA ANI RAZU;
+	#        ⛔ Odsylam po NAZWIE KROKU, nie po numerze linii — i dlatego numeru tu NIE MA
+	#        ZADNEGO: poprzednie wersje tego zdania podawaly numer wywolania DWA RAZY i za
+	#        kazdym razem uniewaznil go commit tej samej galezi, ktory ten odsylacz pisal
+	#        (recenzja #274 r13 WAZNA 1, r16 WAZNA 1 — trzecie wystapienie w jednym zdaniu).
+	#        Szukaj po nazwie kroku: `grep -n 'Proby kontrolne bramek' .github/workflows/quality.yml`;
+	#      - SPUST JEST RECZNY: ktos musi uruchomic przelot BEZ zakresu przed wydaniem.
+	#        `k7-koniec.sh` przelotu NIE URUCHAMIA — czyta log przelotu (stala `PROBY=`),
+	#        sprawdza jego znacznik `WYGENEROWANE-PRZEZ:` i swiezosc wzgledem commitu,
+	#        a przy braku KAZE go uruchomic
+	#        (`fail 6 proby kontrolne ... uruchom: bash narzedzia-qa/proby-kontrolne-przelot.sh`).
+	#        Zmierzone biegiem tej bramki: EXIT=1 i wlasnie ten komunikat. Poprzednia wersja
+	#        tego wiersza obiecywala automat, ktorego nie ma — biegnie w k7-koniec
+	#        (recenzja #274, runda 12, WAZNA 1: CZWARTA runda tej samej klasy);
+	#      - i recznie: `bash testy/schemat-wersja-po-sprawdzeniu-proba-kontrolna.sh`, ktora
+	#        stawia wlasny stos PROBNY (nie ten wspolny) i wola straznika tam.
+	#    Poprzednia wersja tego komentarza mowila samo „biegnie przez wlasna probe kontrolna",
+	#    co czytalo sie jak „ma spust w CI" — a nie ma (recenzja #274, runda 11, WAZNA 1).
+	case "$t" in *schemat-wersja-po-sprawdzeniu-test.php) echo "POMINIĘTE (niszczy stan — spust RĘCZNY przed wydaniem: przelot bez zakresu albo własna próba; k7-koniec tylko SPRAWDZA świeżość logu, NIE uruchamia; w CI PR-owym NIE biegnie): $t"; printf '%s\tPOMINIETE\t0\n' "$t" >> "$TSV"; continue;; esac
 	uruchom "$t" php nie
 done
 echo "--- testy/ (JS, przeglądarka) ---"
