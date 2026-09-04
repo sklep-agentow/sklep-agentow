@@ -28,8 +28,18 @@ set -u
 
 # ⛔ Bez danych logowania do panelu proby `nonce` i `blad-klucza` padaja na BRAKU LOGOWANIA,
 # a raportuja to jako wade produktu. Wzorzec wziety z `narzedzia-qa/linia-bazowa.sh`.
+# Bez galezi else pominiecie jest CICHE: na wykonawcy CI (ciuser od 31.08, naprawa B-3)
+# plik jest NIECZYTELNY, warunek zawsze falszywy, a proby nonce i blad-klucza znowu
+# raportuja BRAK LOGOWANIA jako wade produktu. Pominiecie MUSI zostawiac slad.
 ENV_ADMIN=/root/.claude/sklep-admin-roboczy.env
-[ -f "$ENV_ADMIN" ] && { set -a; . "$ENV_ADMIN"; set +a; }
+if [ -r "$ENV_ADMIN" ]; then
+	set -a; . "$ENV_ADMIN"; set +a
+	printf 'DANE LOGOWANIA: wczytane z %s\n' "$ENV_ADMIN" >&2
+else
+	printf 'UWAGA DANE LOGOWANIA NIEWCZYTANE (%s nieczytelny dla %s) — proby wymagajace\n' \
+		"$ENV_ADMIN" "$(whoami)" >&2
+	printf '      panelu zaraportuja BRAK LOGOWANIA; to wada SRODOWISKA, nie produktu.\n' >&2
+fi
 
 KORZEN="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$KORZEN" || exit 2

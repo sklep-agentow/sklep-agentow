@@ -116,6 +116,10 @@ psuj_przelot()   { sed -i 's/^- ✅ B1/- ⬜ B1/; s/^CELE: 27 · ✅ 27 · 😖 
 # Kierunek POZYTYWNY warunku 6: bramka ma to policzyc OSOBNO i przepuscic.
 psuj_proby_log_niezm() { sed -i 's/proba-07.sh EXIT=0/proba-07.sh EXIT=2/' "$1/audyt/sklep/PROBY-KONTROLNE.log"; }
 psuj_proby_log() { sed -i 's/proba-07.sh EXIT=0/proba-07.sh EXIT=1/' "$1/audyt/sklep/PROBY-KONTROLNE.log"; }
+# Kod DWUCYFROWY zaczynajacy sie od 2 (realne padniecie, np. 21). Bez spacji w kotwicy
+# wzorzec EXIT=2 lapal takze EXIT=21 i padniecie szlo do puli „nie zmierzono, swiadome”,
+# czyli bramka ZLAGODNIALA. Ta atrapa psuje DOKLADNIE jeden warunek: sam kod wyjscia.
+psuj_proby_log_21() { sed -i 's/proba-07.sh EXIT=0/proba-07.sh EXIT=21/' "$1/audyt/sklep/PROBY-KONTROLNE.log"; }
 # Dwa psucia dla DATY WAŻNOŚCI dowodu (recenzja #198 runda 3, W3). Każde psuje DOKŁADNIE
 # jeden warunek: pierwsze odbiera logowi znacznik maszynowy, drugie zostawia znacznik,
 # a przesuwa commit — inaczej nie wiadomo, który warunek bramkę zatrzymał.
@@ -166,6 +170,7 @@ sprawdz "1a wcięty punkt mapy (D1)"                        1 psuj_wcieta       
 sprawdz "3 potok \\| w kolumnie dowodu → nadal GO (W6)"     0 potok_w_dowodzie   "K7: GO"
 sprawdz "6 proba kontrolna EXIT=1 w logu"                 1 psuj_proby_log   "PADŁO"
 sprawdz "6 EXIT=2 (nie zmierzono) to NIE porazka -> GO"   0 psuj_proby_log_niezm ""
+sprawdz "6 EXIT=21 to PADNIECIE, nie \"nie zmierzono\" (#280 D6)" 1 psuj_proby_log_21 "PADŁO"
 sprawdz "6 log BEZ znacznika przelotu (pisany recznie)"   1 psuj_proby_znacznik "bez znacznika przelotu"
 sprawdz "6 log z commitu spoza historii HEAD"              1 psuj_proby_commit   "dowód z innej linii"
 sprawdz "6 narzedzie zmienione PO przelocie"               1 psuj_proby_po      "przeterminowany"

@@ -1,182 +1,124 @@
 {
- "soczewka": "L1",
- "runda": "weryfikacja",
- "commit_head": "412d9b38be73e3273c13d138720c09568cd8cdd3",
- "werdykty": [
-  {
-   "cel": "kryterium GOTOWE #3 (HEAD nie zużywa limitu pobrań)",
-   "werdykt": "ROZJAZD",
-   "plik": "includes/pobieranie.php",
-   "linia": 58,
-   "dowod": "SQL UPDATE pobrania_uzyte=pobrania_uzyte+1 wewnątrz bloku 'HEAD'===REQUEST_METHOD; wykonanie na stosie probny_wp: pobrania_uzyte 0→1 po jednym curl -I."
-  },
-  {
-   "cel": "S-09 / kryterium GOTOWE #8 (dziennik: logowania nieudane, konkrety)",
-   "werdykt": "ROZJAZD",
-   "plik": "includes/logowania.php",
-   "linia": 71,
-   "dowod": "curl POST wp-login.php z log=nie-ma-takiego-<random> i złym hasłem → SELECT COUNT(*) FROM wp_sklepag_logowania = 0 przed i po. Próba kontrolna: to samo z login=audytor-admin (istniejące konto) → wiersz zapisany (wynik='blad')."
-  },
-  {
-   "cel": "kryterium GOTOWE #4 (webhook‖reconciliation równolegle = 1 mail, 1 ważny token)",
-   "werdykt": "ROZJAZD",
-   "plik": "includes/zakup.php",
-   "linia": 308,
-   "dowod": "SQL bezpośrednio: UPDATE ...WHERE status='mail_w_toku' AND zmieniono<NOW() 1 s po ustawieniu claimu → ROW_COUNT=1 (przejęcie). Kontrola z oryginalnym warunkiem 'zmieniono < NOW()-300s' w tych samych warunkach → ROW_COUNT=0."
-  },
-  {
-   "cel": "S-01",
-   "werdykt": "NIE SPRAWDZIŁEM",
-   "dowod": "Brak diffu wobec k7-zamrozenie w plikach odpowiedzialnych (sklep-agentow.php); budżet wykonania zużyty na trzy potwierdzone ścieżki wyżej — nie kliknęłam listy produktów w tej sesji."
-  },
-  {
-   "cel": "S-02",
-   "werdykt": "NIE SPRAWDZIŁEM",
-   "dowod": "Treść maila (sklepag_zbuduj_mail) niezmieniona wobec zamrożenia; nie sprawdziłam WYKONANIEM w tej sesji (Mailpit) — patrz czego_nie_obejrzalem."
-  },
-  {
-   "cel": "S-03",
-   "werdykt": "NIE SPRAWDZIŁEM",
-   "dowod": "front-produkt.php bez diffu wobec zamrożenia; nie otwierałam stron produktów w tej sesji."
-  },
-  {
-   "cel": "S-04",
-   "werdykt": "NIE SPRAWDZIŁEM",
-   "dowod": "admin-dashboard.php ma diff (guard function_exists + nowa opcja sag_pulpit_ostatnie_wejscie), ale nie dotyczy jądra S-04 (widok kiedy/za ile/w jakim czasie); nie klikałam pulpitu w tej sesji."
-  },
-  {
-   "cel": "S-07",
-   "werdykt": "NIE SPRAWDZIŁEM",
-   "dowod": "Bez diffu wobec zamrożenia w plikach L1; nie sprawdzone wykonaniem w tej sesji."
-  },
-  {
-   "cel": "S-08",
-   "werdykt": "NIE SPRAWDZIŁEM",
-   "dowod": "admin-produkty.php bez diffu wobec zamrożenia; nie klikałam CRUD w tej sesji."
-  },
-  {
-   "cel": "S-09",
-   "werdykt": "ROZJAZD",
-   "plik": "includes/logowania.php",
-   "linia": 71,
-   "dowod": "patrz znalezisko SK-NOWA-1 — nieudane logowanie na login, który nie istnieje w WP, NIE trafia do dziennika; łamie dosłowne 'DATY CZAS KONKRETY' i wymaganą w tym promptcie próbę (c)."
-  },
-  {
-   "cel": "S-14",
-   "werdykt": "NIE SPRAWDZIŁEM",
-   "dowod": "Baner testowy bez diffu; nie sprawdzone wykonaniem w tej sesji."
-  },
-  {
-   "cel": "S-15",
-   "werdykt": "NIE SPRAWDZIŁEM",
-   "dowod": "admin-ustawienia.php bez diffu wobec zamrożenia; nie sprawdzone wykonaniem."
-  },
-  {
-   "cel": "S-18/S-19",
-   "werdykt": "NIE SPRAWDZIŁEM",
-   "dowod": "aktywacja.php bez diffu wobec zamrożenia; nie sprawdzone wykonaniem."
-  }
- ],
- "znaleziska": [
-  {
-   "teza": "sklepag_obsluz_pobranie() w includes/pobieranie.php:58 zużywa slot limitu pobrań przy żądaniu HEAD, wbrew kryterium GOTOWE #3 ('HEAD nie zużywa limitu') i wbrew własnemu komentarzowi w nagłówku pliku (linia 5: 'HEAD nie zużywa limitu')",
-   "waga": "KRYTYCZNA",
-   "typ": "USTERKA",
-   "klasa": "NOWA: HEAD-zużywa-limit (odwrotność D4/kryterium#3)",
-   "dowody": [
+  "soczewka": "L1",
+  "runda": "A",
+  "commit_head": "412d9b38be73e3273c13d138720c09568cd8cdd3",
+  "werdykty": [
     {
-     "plik": "includes/pobieranie.php",
-     "linia": 58,
-     "cytat": "$wpdb->query( $wpdb->prepare( \"UPDATE {$pz} SET pobrania_uzyte = pobrania_uzyte + 1, zmieniono = %s WHERE id = %d AND pobrania_uzyte < pobrania_limit\", current_time( 'mysql' ), (int) $zam->id ) );"
-    }
-   ],
-   "mechanizm": "Blok obsługujący HEAD (linie 57-64) wykonuje dokładnie ten sam atomowy UPDATE zwiększający pobrania_uzyte co ścieżka GET (linie 67-73), zanim wypisze same nagłówki i zakończy. Skaner poczty / bot, który wykonuje HEAD (typowe zachowanie), zjada realny slot z limitu 10.",
-   "skutek": "Kupujący, którego mail przeleci przez skaner antyspamowy robiący HEAD (2-3 dotknięcia, jak opisuje komentarz w kodzie), traci 2-3 z 10 dostępnych pobrań, zanim sam kliknie link ani razu. Przy kilku skanerach limit może się wyczerpać, zanim kupujący pobierze plik.",
-   "rodzaj_skutku": "zaobserwowany",
-   "kroki_reprodukcji": [
-    "Utworzyć wiersz w wp_sklepag_zamowienia ze statusem mail_wyslany, poprawnym token_pobrania (SHA-256 losowego 64-znakowego tokenu), link_wygasa w przyszłości, pobrania_uzyte=0.",
-    "curl -I 'http://<host>/wp-admin/admin-post.php?action=sklepag_pobierz&z=<id>&t=<surowy token>'",
-    "SELECT pobrania_uzyte FROM wp_sklepag_zamowienia WHERE id=<id> — wartość wzrosła z 0 do 1 mimo że to było żądanie HEAD, nie GET."
-   ],
-   "test_padajacy": "NIE DA SIĘ — brak PHPUnit/Pest w paczce L1 (STOPKA: pisz test wg tego, co jest w repo; repo sklepu nie ma frameworku testów jednostkowych dla tego pliku, tylko testy powłokowe w testy/e2e). Reprodukcja wykonana bezpośrednio na stosie probny_wp, wyjście niżej.",
-   "wyjscie_wykonania": "before: id=1 pobrania_uzyte=0 | curl -I => HTTP/1.1 200 OK, Content-Type: application/zip, Content-Length: 20 | after: id=1 pobrania_uzyte=1"
-  },
-  {
-   "teza": "sklepag_loguj_nieudane() w includes/logowania.php:71-73 pomija zapis do dziennika (wp_sklepag_logowania), gdy podany login NIE istnieje w WP — łamiąc S-09 ('KTO KIESY SIE LOGOWAL NA KONTO ADMINA DATY CZAS KONKRETY') i kryterium GOTOWE #8 ('logowania wszystkich adminów (udane i nieudane...)')",
-   "waga": "KRYTYCZNA",
-   "typ": "USTERKA",
-   "klasa": "NOWA: dziennik-logowań-pomija-login-nieistniejący",
-   "dowody": [
-    {
-     "plik": "includes/logowania.php",
-     "linia": 71,
-     "cytat": "if ( ! username_exists( $username ) ) {\n\treturn;\n}"
-    }
-   ],
-   "mechanizm": "Hook wp_login_failed woła sklepag_loguj_nieudane(); od linii 71 funkcja sprawdza username_exists() i przy braku konta wychodzi PRZED wywołaniem sklepag_zapisz_logowanie() (linia 75) — żaden wiersz nie trafia do wp_sklepag_logowania.",
-   "skutek": "Atak słownikowy/rozpoznawczy na panel admina (próby z losowymi/cudzymi loginami) jest NIEWIDOCZNY w dzienniku właściciela — dokładnie ten ślad, którego zamówienie żąda wprost ('KTO KIESY SIE LOGOWAL...KONKRETY'), znika dla każdej próby na login spoza czterech kont adminów. Prompt L1 wymaga wprost próby (c): złe hasło na NIEISTNIEJĄCY login — ta ścieżka jest tą, którą zamówienie i STOPKA każą sprawdzić, i ona nie zostawia śladu.",
-   "rodzaj_skutku": "zaobserwowany",
-   "kroki_reprodukcji": [
-    "curl -d 'log=nie-ma-takiego-<random>&pwd=złehasło&wp-submit=Log+In&testcookie=1' http://<host>/wp-login.php",
-    "SELECT COUNT(*) FROM wp_sklepag_logowania — 0 wierszy z tym loginem, przed i po.",
-    "Kontrola: to samo z log=<istniejący login admina> i złym hasłem → wiersz z wynik='blad' POWSTAJE (mechanizm zapisu działa, tylko gałąź username_exists() go blokuje dla nieistniejących kont)."
-   ],
-   "test_padajacy": "NIE DA SIĘ — brak frameworku testów jednostkowych w paczce L1 dla logowania (testy/e2e są dla frontu/sklepu). Reprodukcja wykonana bezpośrednio na stosie probny_wp, wyjście niżej.",
-   "wyjscie_wykonania": "login=nie-ma-takiego-290329003: przed=0, po=0 (http_status=200). Kontrola login=audytor-admin (złe hasło): po=2 wiersze, w tym id=2 login_wpisany='audytor-admin' wynik='blad' ip=[ZREDAGOWANE]."
-  },
-  {
-   "teza": "sklepag_domknij_zakup() w includes/zakup.php:308 zdejmuje 5-minutowe okno 'stale-claim' (comment linia 299: 'claim starszy niż 5 min wolno odebrać') i porównuje zmieniono z bieżącym $teraz zamiast z $teraz-300s, przez co RÓWNOLEGŁY webhook/reconciliation może przejąć claim 'mail_w_toku' niemal natychmiast po jego założeniu przez inny proces — łamiąc kryterium GOTOWE #4 ('webhook i reconciliation odpalone RÓWNOLEGLE na tym samym zamówieniu = jeden mail i jeden WAŻNY token')",
-   "waga": "KRYTYCZNA",
-   "typ": "USTERKA",
-   "klasa": "NOWA: okno-stale-claim-wyzerowane (wariant klasy 13 ściągi — naprawa/zmiana zwęża się do zera zamiast chronić)",
-   "dowody": [
-    {
-     "plik": "includes/zakup.php",
-     "linia": 305,
-     "cytat": "\"UPDATE {$pz} SET zmieniono=%s WHERE stripe_session_id=%s AND status='mail_w_toku' AND zmieniono < %s\","
+      "cel": "kryterium GOTOWE #3 (HEAD nie zużywa limitu pobrań)",
+      "werdykt": "ROZJAZD",
+      "plik": "includes/pobieranie.php",
+      "linia": 58,
+      "dowod": "SQL UPDATE pobrania_uzyte=pobrania_uzyte+1 wewnątrz bloku 'HEAD'===REQUEST_METHOD; wykonanie na stosie probny_wp: pobrania_uzyte 0→1 po jednym curl -I."
     },
     {
-     "plik": "includes/zakup.php",
-     "linia": 308,
-     "cytat": "gmdate( 'Y-m-d H:i:s', strtotime( $teraz ) )"
+      "cel": "S-09 / kryterium GOTOWE #8 (dziennik: logowania nieudane, konkrety)",
+      "werdykt": "ROZJAZD",
+      "plik": "includes/logowania.php",
+      "linia": 71,
+      "dowod": "curl POST wp-login.php z log=nie-ma-takiego-<random> i złym hasłem → SELECT COUNT(*) FROM wp_sklepag_logowania = 0 przed i po. Próba kontrolna: to samo z login=audytor-admin (istniejące konto) → wiersz zapisany (wynik='blad')."
+    },
+    {
+      "cel": "kryterium GOTOWE #4 (webhook‖reconciliation równolegle = 1 mail, 1 ważny token)",
+      "werdykt": "ROZJAZD",
+      "plik": "includes/zakup.php",
+      "linia": 308,
+      "dowod": "SQL bezpośrednio: UPDATE ...WHERE status='mail_w_toku' AND zmieniono<NOW() 1 s po ustawieniu claimu → ROW_COUNT=1 (przejęcie). Kontrola z oryginalnym warunkiem 'zmieniono < NOW()-300s' w tych samych warunkach → ROW_COUNT=0."
+    },
+    { "cel": "S-01", "werdykt": "NIE SPRAWDZIŁEM", "dowod": "Brak diffu wobec k7-zamrozenie w plikach odpowiedzialnych (sklep-agentow.php); budżet wykonania zużyty na trzy potwierdzone ścieżki wyżej — nie kliknęłam listy produktów w tej sesji." },
+    { "cel": "S-02", "werdykt": "NIE SPRAWDZIŁEM", "dowod": "Treść maila (sklepag_zbuduj_mail) niezmieniona wobec zamrożenia; nie sprawdziłam WYKONANIEM w tej sesji (Mailpit) — patrz czego_nie_obejrzalem." },
+    { "cel": "S-03", "werdykt": "NIE SPRAWDZIŁEM", "dowod": "front-produkt.php bez diffu wobec zamrożenia; nie otwierałam stron produktów w tej sesji." },
+    { "cel": "S-04", "werdykt": "NIE SPRAWDZIŁEM", "dowod": "admin-dashboard.php ma diff (guard function_exists + nowa opcja sag_pulpit_ostatnie_wejscie), ale nie dotyczy jądra S-04 (widok kiedy/za ile/w jakim czasie); nie klikałam pulpitu w tej sesji." },
+    { "cel": "S-07", "werdykt": "NIE SPRAWDZIŁEM", "dowod": "Bez diffu wobec zamrożenia w plikach L1; nie sprawdzone wykonaniem w tej sesji." },
+    { "cel": "S-08", "werdykt": "NIE SPRAWDZIŁEM", "dowod": "admin-produkty.php bez diffu wobec zamrożenia; nie klikałam CRUD w tej sesji." },
+    { "cel": "S-09", "werdykt": "ROZJAZD", "plik": "includes/logowania.php", "linia": 71, "dowod": "patrz znalezisko SK-NOWA-1 — nieudane logowanie na login, który nie istnieje w WP, NIE trafia do dziennika; łamie dosłowne 'DATY CZAS KONKRETY' i wymaganą w tym promptcie próbę (c)." },
+    { "cel": "S-14", "werdykt": "NIE SPRAWDZIŁEM", "dowod": "Baner testowy bez diffu; nie sprawdzone wykonaniem w tej sesji." },
+    { "cel": "S-15", "werdykt": "NIE SPRAWDZIŁEM", "dowod": "admin-ustawienia.php bez diffu wobec zamrożenia; nie sprawdzone wykonaniem." },
+    { "cel": "S-18/S-19", "werdykt": "NIE SPRAWDZIŁEM", "dowod": "aktywacja.php bez diffu wobec zamrożenia; nie sprawdzone wykonaniem." }
+  ],
+  "znaleziska": [
+    {
+      "teza": "sklepag_obsluz_pobranie() w includes/pobieranie.php:58 zużywa slot limitu pobrań przy żądaniu HEAD, wbrew kryterium GOTOWE #3 ('HEAD nie zużywa limitu') i wbrew własnemu komentarzowi w nagłówku pliku (linia 5: 'HEAD nie zużywa limitu')",
+      "waga": "KRYTYCZNA",
+      "typ": "USTERKA",
+      "klasa": "NOWA: HEAD-zużywa-limit (odwrotność D4/kryterium#3)",
+      "dowody": [
+        { "plik": "includes/pobieranie.php", "linia": 58, "cytat": "$wpdb->query( $wpdb->prepare( \"UPDATE {$pz} SET pobrania_uzyte = pobrania_uzyte + 1, zmieniono = %s WHERE id = %d AND pobrania_uzyte < pobrania_limit\", current_time( 'mysql' ), (int) $zam->id ) );" }
+      ],
+      "mechanizm": "Blok obsługujący HEAD (linie 57-64) wykonuje dokładnie ten sam atomowy UPDATE zwiększający pobrania_uzyte co ścieżka GET (linie 67-73), zanim wypisze same nagłówki i zakończy. Skaner poczty / bot, który wykonuje HEAD (typowe zachowanie), zjada realny slot z limitu 10.",
+      "skutek": "Kupujący, którego mail przeleci przez skaner antyspamowy robiący HEAD (2-3 dotknięcia, jak opisuje komentarz w kodzie), traci 2-3 z 10 dostępnych pobrań, zanim sam kliknie link ani razu. Przy kilku skanerach limit może się wyczerpać, zanim kupujący pobierze plik.",
+      "rodzaj_skutku": "zaobserwowany",
+      "kroki_reprodukcji": [
+        "Utworzyć wiersz w wp_sklepag_zamowienia ze statusem mail_wyslany, poprawnym token_pobrania (SHA-256 losowego 64-znakowego tokenu), link_wygasa w przyszłości, pobrania_uzyte=0.",
+        "curl -I 'http://<host>/wp-admin/admin-post.php?action=sklepag_pobierz&z=<id>&t=<surowy token>'",
+        "SELECT pobrania_uzyte FROM wp_sklepag_zamowienia WHERE id=<id> — wartość wzrosła z 0 do 1 mimo że to było żądanie HEAD, nie GET."
+      ],
+      "test_padajacy": "NIE DA SIĘ — brak PHPUnit/Pest w paczce L1 (STOPKA: pisz test wg tego, co jest w repo; repo sklepu nie ma frameworku testów jednostkowych dla tego pliku, tylko testy powłokowe w testy/e2e). Reprodukcja wykonana bezpośrednio na stosie probny_wp, wyjście niżej.",
+      "wyjscie_wykonania": "before: id=1 pobrania_uzyte=0 | curl -I => HTTP/1.1 200 OK, Content-Type: application/zip, Content-Length: 20 | after: id=1 pobrania_uzyte=1"
+    },
+    {
+      "teza": "sklepag_loguj_nieudane() w includes/logowania.php:71-73 pomija zapis do dziennika (wp_sklepag_logowania), gdy podany login NIE istnieje w WP — łamiąc S-09 ('KTO KIESY SIE LOGOWAL NA KONTO ADMINA DATY CZAS KONKRETY') i kryterium GOTOWE #8 ('logowania wszystkich adminów (udane i nieudane...)')",
+      "waga": "KRYTYCZNA",
+      "typ": "USTERKA",
+      "klasa": "NOWA: dziennik-logowań-pomija-login-nieistniejący",
+      "dowody": [
+        { "plik": "includes/logowania.php", "linia": 71, "cytat": "if ( ! username_exists( $username ) ) {\n\treturn;\n}" }
+      ],
+      "mechanizm": "Hook wp_login_failed woła sklepag_loguj_nieudane(); od linii 71 funkcja sprawdza username_exists() i przy braku konta wychodzi PRZED wywołaniem sklepag_zapisz_logowanie() (linia 75) — żaden wiersz nie trafia do wp_sklepag_logowania.",
+      "skutek": "Atak słownikowy/rozpoznawczy na panel admina (próby z losowymi/cudzymi loginami) jest NIEWIDOCZNY w dzienniku właściciela — dokładnie ten ślad, którego zamówienie żąda wprost ('KTO KIESY SIE LOGOWAL...KONKRETY'), znika dla każdej próby na login spoza czterech kont adminów. Prompt L1 wymaga wprost próby (c): złe hasło na NIEISTNIEJĄCY login — ta ścieżka jest tą, którą zamówienie i STOPKA każą sprawdzić, i ona nie zostawia śladu.",
+      "rodzaj_skutku": "zaobserwowany",
+      "kroki_reprodukcji": [
+        "curl -d 'log=nie-ma-takiego-<random>&pwd=złehasło&wp-submit=Log+In&testcookie=1' http://<host>/wp-login.php",
+        "SELECT COUNT(*) FROM wp_sklepag_logowania — 0 wierszy z tym loginem, przed i po.",
+        "Kontrola: to samo z log=<istniejący login admina> i złym hasłem → wiersz z wynik='blad' POWSTAJE (mechanizm zapisu działa, tylko gałąź username_exists() go blokuje dla nieistniejących kont)."
+      ],
+      "test_padajacy": "NIE DA SIĘ — brak frameworku testów jednostkowych w paczce L1 dla logowania (testy/e2e są dla frontu/sklepu). Reprodukcja wykonana bezpośrednio na stosie probny_wp, wyjście niżej.",
+      "wyjscie_wykonania": "login=nie-ma-takiego-290329003: przed=0, po=0 (http_status=200). Kontrola login=audytor-admin (złe hasło): po=2 wiersze, w tym id=2 login_wpisany='audytor-admin' wynik='blad' ip=[ZREDAGOWANE]."
+    },
+    {
+      "teza": "sklepag_domknij_zakup() w includes/zakup.php:308 zdejmuje 5-minutowe okno 'stale-claim' (comment linia 299: 'claim starszy niż 5 min wolno odebrać') i porównuje zmieniono z bieżącym $teraz zamiast z $teraz-300s, przez co RÓWNOLEGŁY webhook/reconciliation może przejąć claim 'mail_w_toku' niemal natychmiast po jego założeniu przez inny proces — łamiąc kryterium GOTOWE #4 ('webhook i reconciliation odpalone RÓWNOLEGLE na tym samym zamówieniu = jeden mail i jeden WAŻNY token')",
+      "waga": "KRYTYCZNA",
+      "typ": "USTERKA",
+      "klasa": "NOWA: okno-stale-claim-wyzerowane (wariant klasy 13 ściągi — naprawa/zmiana zwęża się do zera zamiast chronić)",
+      "dowody": [
+        { "plik": "includes/zakup.php", "linia": 305, "cytat": "\"UPDATE {$pz} SET zmieniono=%s WHERE stripe_session_id=%s AND status='mail_w_toku' AND zmieniono < %s\"," },
+        { "plik": "includes/zakup.php", "linia": 308, "cytat": "gmdate( 'Y-m-d H:i:s', strtotime( $teraz ) )" }
+      ],
+      "mechanizm": "Parametr trzeci warunku 'zmieniono < %s' powinien być $teraz pomniejszone o 300 s (komentarz w kodzie nad tym blokiem to potwierdza: 'claim starszy niż 5 min wolno odebrać'). W obecnym kodzie gmdate() liczy strotime($teraz) BEZ odjęcia 300 — czyli warunek to praktycznie 'zmieniono < teraz', spełniony przez niemal każdy wiersz w stanie mail_w_toku ustawiony choćby sekundę wcześniej.",
+      "skutek": "Gdy webhook i reconciliation trafią na to samo zamówienie niemal jednocześnie (dokładnie scenariusz z kryterium #4), drugi proces przejmuje claim pierwszego, zanim ten zdąży wysłać maila i zapisać token — otwiera to drogę do wysłania DWÓCH maili z DWOMA różnymi tokenami pobrania zamiast jednego ważnego, albo do nadpisania tokenu w trakcie wysyłki.",
+      "rodzaj_skutku": "wyliczony",
+      "kroki_reprodukcji": [
+        "SQL: ustawić wiersz zamówienia na status='mail_w_toku', zmieniono=NOW().",
+        "SELECT SLEEP(1).",
+        "Uruchomić dokładnie zapytanie z linii 303-310 (z parametrem = NOW(), bez odjęcia 300s) → ROW_COUNT=1 (przejęcie się udaje po 1 sekundzie).",
+        "Kontrola: to samo zapytanie z warunkiem 'zmieniono < DATE_SUB(NOW(), INTERVAL 300 SECOND)' (kod SPRZED mutacji) w tych samych warunkach czasowych → ROW_COUNT=0 (przejęcie odrzucone, okno chroni)."
+      ],
+      "test_padajacy": "NIE DA SIĘ w pełnym przelocie E2E w budżecie tej sesji (wymaga Stripe CLI + dwóch równoległych procesów PHP) — sprawdzone bezpośrednio na warstwie SQL, która JEST dokładnym mechanizmem CAS z kodu (linie 303-310); wyjście niżej.",
+      "wyjscie_wykonania": "mutant: UPDATE ... AND zmieniono<NOW() 1s po ustawieniu claimu → ROW_COUNT=1. kod oryginalny (kontrola): UPDATE ... AND zmieniono<NOW()-300s w tych samych warunkach → ROW_COUNT=0."
     }
-   ],
-   "mechanizm": "Parametr trzeci warunku 'zmieniono < %s' powinien być $teraz pomniejszone o 300 s (komentarz w kodzie nad tym blokiem to potwierdza: 'claim starszy niż 5 min wolno odebrać'). W obecnym kodzie gmdate() liczy strotime($teraz) BEZ odjęcia 300 — czyli warunek to praktycznie 'zmieniono < teraz', spełniony przez niemal każdy wiersz w stanie mail_w_toku ustawiony choćby sekundę wcześniej.",
-   "skutek": "Gdy webhook i reconciliation trafią na to samo zamówienie niemal jednocześnie (dokładnie scenariusz z kryterium #4), drugi proces przejmuje claim pierwszego, zanim ten zdąży wysłać maila i zapisać token — otwiera to drogę do wysłania DWÓCH maili z DWOMA różnymi tokenami pobrania zamiast jednego ważnego, albo do nadpisania tokenu w trakcie wysyłki.",
-   "rodzaj_skutku": "wyliczony",
-   "kroki_reprodukcji": [
-    "SQL: ustawić wiersz zamówienia na status='mail_w_toku', zmieniono=NOW().",
-    "SELECT SLEEP(1).",
-    "Uruchomić dokładnie zapytanie z linii 303-310 (z parametrem = NOW(), bez odjęcia 300s) → ROW_COUNT=1 (przejęcie się udaje po 1 sekundzie).",
-    "Kontrola: to samo zapytanie z warunkiem 'zmieniono < DATE_SUB(NOW(), INTERVAL 300 SECOND)' (kod SPRZED mutacji) w tych samych warunkach czasowych → ROW_COUNT=0 (przejęcie odrzucone, okno chroni)."
-   ],
-   "test_padajacy": "NIE DA SIĘ w pełnym przelocie E2E w budżecie tej sesji (wymaga Stripe CLI + dwóch równoległych procesów PHP) — sprawdzone bezpośrednio na warstwie SQL, która JEST dokładnym mechanizmem CAS z kodu (linie 303-310); wyjście niżej.",
-   "wyjscie_wykonania": "mutant: UPDATE ... AND zmieniono<NOW() 1s po ustawieniu claimu → ROW_COUNT=1. kod oryginalny (kontrola): UPDATE ... AND zmieniono<NOW()-300s w tych samych warunkach → ROW_COUNT=0."
-  }
- ],
- "anomalie": [
-  {
-   "opis": "includes/admin-dashboard.php:201 dodaje nową opcję wp_options 'sag_pulpit_ostatnie_wejscie' (poza prefiksem sklepag_, zapisuje ID admina odwiedzającego pulpit) przy każdym self-healu pulpitu.",
-   "powod": "Poza zakresem L1 (zgodność z zamówieniem) — to nie łamie S-04 ani żadnego S-xx wprost; wygląda na funkcję ponad literę zamówienia bez wpisu w PONAD-SPECYFIKACJE, i na niespójność nazewnictwa z goldenem #11/#14 (nowa opcja = trzy miejsca naraz: dbDelta/uninstall/schemat) — to należy do L4 (dane/uninstall), zgłaszam jako anomalię, nie znalezisko L1.",
-   "cel": "S-04 (poboczne)"
-  },
-  {
-   "opis": "includes/admin-zamowienie.php:32-35 dodaje DRUGIE sprawdzenie current_user_can('manage_options') w sklepag_obsluz_resend() — redundantne wobec istniejącego na początku funkcji.",
-   "powod": "To nie jest usterka (ochrona nie osłabła, jest podwojona) — nie zgłaszam jako znalezisko, odnotowuję dla przejrzystości diffu wobec zamrożenia."
-  }
- ],
- "pytania_do_zamawiajacego": [],
- "odrzucone_wlasne": [
-  "Zmiana progu rate-limit pobrań z 30 na 20 (pobieranie.php:17) — zamówienie nie fiksuje konkretnej wartości limitu; to decyzja techniczna, nie niezgodność z S-xx."
- ],
- "czego_nie_bylo_na_mojej_liscie": [
-  "Nie sprawdziłam S-02 (treść maila w Mailpit) WYKONANIEM w tej sesji — budżet poszedł na trzy potwierdzone, poważniejsze ścieżki (HEAD/limit, dziennik logowań, wyścig mail_w_toku); to zwykły przelot zakupowy wart osobnego sprawdzenia, bo dotyka realnego pieniądza klienta.",
-  "Nie sprawdziłam ŚCIEŻKI UŻYCIA (JAK CZŁOWIEK TEGO UŻYWA) dla żadnego z trzech znalezisk z perspektywy panelu/frontu — wszystkie trzy są niewidoczne dla właściciela z poziomu UI (nie ma komunikatu, że limit padł od HEAD, nie ma sygnału o brakującym wpisie w dzienniku, nie ma ostrzeżenia o race); to typowe usterki 'ciche', gorsze niż widoczny błąd.",
-  "Pytanie o S-04/dashboard: czy nowa opcja 'sag_pulpit_ostatnie_wejscie' (poza L1, patrz anomalie) jest świadomym rozszerzeniem, czy przypadkowym śladem — nie ma wpisu w DECYZJE.md/PONAD-SPECYFIKACJE, jakie widziałam."
- ],
- "czego_nie_obejrzalem": [
-  "front-produkt.php, admin-produkty.php, admin-ustawienia.php, aktywacja.php, admin-dziennik.php, sklep-agentow.php — bez diffu wobec commitu k7-zamrozenie, nie klikałam ich WYKONANIEM w tej sesji (poleganie na braku zmiany kodu, nie na świeżym teście).",
-  "Mailpit (treść maila S-02), panel dashboardu na żywo (S-04), CRUD produktów (S-08), eksport CSV — nie odwiedzone w tej sesji."
- ],
- "wywolania_narzedzi": 21
+  ],
+  "anomalie": [
+    {
+      "opis": "includes/admin-dashboard.php:201 dodaje nową opcję wp_options 'sag_pulpit_ostatnie_wejscie' (poza prefiksem sklepag_, zapisuje ID admina odwiedzającego pulpit) przy każdym self-healu pulpitu.",
+      "powod": "Poza zakresem L1 (zgodność z zamówieniem) — to nie łamie S-04 ani żadnego S-xx wprost; wygląda na funkcję ponad literę zamówienia bez wpisu w PONAD-SPECYFIKACJE, i na niespójność nazewnictwa z goldenem #11/#14 (nowa opcja = trzy miejsca naraz: dbDelta/uninstall/schemat) — to należy do L4 (dane/uninstall), zgłaszam jako anomalię, nie znalezisko L1.",
+      "cel": "S-04 (poboczne)"
+    },
+    {
+      "opis": "includes/admin-zamowienie.php:32-35 dodaje DRUGIE sprawdzenie current_user_can('manage_options') w sklepag_obsluz_resend() — redundantne wobec istniejącego na początku funkcji.",
+      "powod": "To nie jest usterka (ochrona nie osłabła, jest podwojona) — nie zgłaszam jako znalezisko, odnotowuję dla przejrzystości diffu wobec zamrożenia."
+    }
+  ],
+  "pytania_do_zamawiajacego": [],
+  "odrzucone_wlasne": [
+    "Zmiana progu rate-limit pobrań z 30 na 20 (pobieranie.php:17) — zamówienie nie fiksuje konkretnej wartości limitu; to decyzja techniczna, nie niezgodność z S-xx."
+  ],
+  "czego_nie_bylo_na_mojej_liscie": [
+    "Nie sprawdziłam S-02 (treść maila w Mailpit) WYKONANIEM w tej sesji — budżet poszedł na trzy potwierdzone, poważniejsze ścieżki (HEAD/limit, dziennik logowań, wyścig mail_w_toku); to zwykły przelot zakupowy wart osobnego sprawdzenia, bo dotyka realnego pieniądza klienta.",
+    "Nie sprawdziłam ŚCIEŻKI UŻYCIA (JAK CZŁOWIEK TEGO UŻYWA) dla żadnego z trzech znalezisk z perspektywy panelu/frontu — wszystkie trzy są niewidoczne dla właściciela z poziomu UI (nie ma komunikatu, że limit padł od HEAD, nie ma sygnału o brakującym wpisie w dzienniku, nie ma ostrzeżenia o race); to typowe usterki 'ciche', gorsze niż widoczny błąd.",
+    "Pytanie o S-04/dashboard: czy nowa opcja 'sag_pulpit_ostatnie_wejscie' (poza L1, patrz anomalie) jest świadomym rozszerzeniem, czy przypadkowym śladem — nie ma wpisu w DECYZJE.md/PONAD-SPECYFIKACJE, jakie widziałam."
+  ],
+  "czego_nie_obejrzalem": [
+    "front-produkt.php, admin-produkty.php, admin-ustawienia.php, aktywacja.php, admin-dziennik.php, sklep-agentow.php — bez diffu wobec commitu k7-zamrozenie, nie klikałam ich WYKONANIEM w tej sesji (poleganie na braku zmiany kodu, nie na świeżym teście).",
+    "Mailpit (treść maila S-02), panel dashboardu na żywo (S-04), CRUD produktów (S-08), eksport CSV — nie odwiedzone w tej sesji."
+  ],
+  "wywolania_narzedzi": 21
 }

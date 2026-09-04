@@ -88,7 +88,9 @@ elif ! ROZL_SUROWE=$(git show "$GALAZ_MUT:audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP
 else
 	ROZL=$(printf '%s\n' "$ROZL_SUROWE" | sed 's/\\|/\x01/g')  # osobno od git show: bez pipefail kod potoku = kod seda (recenzja #186 D3)
 	# wiersze werdyktów: | audytor | mutant | znalazl | falszywy | werdykt | proby | powod_powtorki |
-	# → po split '|' proby = pole 7, powod_powtorki = pole 8 (kolumna dodana 4.09 wpisem D39)
+	# → po split '|' proby = pole 7, powod_powtorki = pole 8 (kolumna dodana 4.09 decyzja
+	#    ZMIANA D33 - limit powtorek kalibracji: 2 -> 4; w DECYZJE.md numer D39 wystepuje DWA razy,
+	#    wiec odsylam po TYTULE sekcji, nie po numerze)
 	# (recenzja #182 r2 W2: $NF czytał PUSTĄ kolumnę za końcowym „|" — warunek był martwy)
 	# ILE = liczba RÓŻNYCH soczewek (kolumna 2), nie wierszy — L3 ma dwa mutanty (M3, M4) i liczył się podwójnie (recenzja #188 D8)
 	ILE=$(printf '%s\n' "$ROZL" | grep -E '^\| (L[1-5]|L) \|' | awk -F'|' '{gsub(/ /,"",$2); print $2}' | sort -u | wc -l)
@@ -163,8 +165,11 @@ else
 	# ⛔ EXIT=2 to SWIADOME POMINIECIE ("nie zmierzylam"), nie wada — liczone OSOBNO.
 	# Do 4.09 `grep -vc EXIT=0` wrzucal je do porazek: przelot z 4 realnymi padnieciami
 	# raportowal 12, czyli bramka mowila o produkcie rzecz, ktorej nie zmierzyla (klasa I-12).
-	ZLE_P=$(grep -E '^[A-Za-z0-9_.-]+\.sh EXIT=' "$PROBY" | grep -vcE 'EXIT=(0|2)')
-	NIEZM_P=$(grep -cE '^[A-Za-z0-9_.-]+\.sh EXIT=2' "$PROBY")
+	# KOTWICA ZE SPACJA. Log ma postac: nazwa.sh EXIT=<kod> <czas>s
+	# Bez spacji wzorzec EXIT=2 lapie takze EXIT=21, wiec realne padniecie wyladowaloby
+	# po stronie „nie zmierzono, swiadome” — blad w strone ZLAGODZENIA bramki wydania.
+	ZLE_P=$(grep -E '^[A-Za-z0-9_.-]+\.sh EXIT=' "$PROBY" | grep -vcE 'EXIT=(0|2) ')
+	NIEZM_P=$(grep -cE '^[A-Za-z0-9_.-]+\.sh EXIT=2 ' "$PROBY")
 	POM_P=$(grep -cE '^POMINIETO ' "$PROBY")
 	# DATA WAŻNOŚCI: nie „ten sam commit" (commit zapisujący log sam przesuwa HEAD, więc taki
 	# warunek nie dałby się spełnić nigdy), tylko „od przelotu nie zmieniło się nic, czego ten

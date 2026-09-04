@@ -13,6 +13,39 @@ set -u
 KONTENER=strona_wp_wordpress
 CEL=/var/www/html/wp-content/plugins/chatbot-live
 BLEDY=0
+KOTWICE=0
+ODWROTNA=0
+# ⛔ KLASA 138: TRZY rozne rzeczy = TRZY liczniki. Wspolny licznik kaze skryptowi
+#    oglosic "STRAZNIK SLEPY", czyli orzec o PRODUKCIE rzecz, ktorej NIE ZMIERZYL.
+#      BLEDY    straznik nie zlapal mutanta  -> EXIT=1, wada produktu
+#      KOTWICE  kotwica sed zgnila           -> EXIT=2, proba nic nie zmierzyla
+#      ODWROTNA czysty kod nie przechodzi    -> EXIT=2, proba nic nie znaczy
+#    EXIT=2 to konwencja przelotu: "nie zmierzylam" (NIE porazka produktu).
+podsumowanie_proby() {           # $1 = komunikat, gdy wszystko zmierzone i zielone
+  # ⛔ KOLEJNOSC MA ZNACZENIE. Padnieta kontrola odwrotna UNIEWAZNIA caly przebieg:
+  #    straznik pada wtedy ZAWSZE, wiec „nie zlapal mutanta" nic nie znaczy i licznik
+  #    BLEDY jest smieciem. Ogloszenie „STRAZNIK SLEPY NA N" byloby wtedy orzeczeniem
+  #    o PRODUKCIE na podstawie pomiaru, ktory sie nie odbyl. Najczestsza przyczyna to
+  #    BRAK WARUNKU WSTEPNEGO srodowiska (np. swiezy worktree bez `vendor/` albo
+  #    `node_modules/`), a to wada SRODOWISKA, nie kodu klienta.
+  if [ "$ODWROTNA" -gt 0 ]; then
+    echo "KONTROLA ODWROTNA PADLA ($ODWROTNA) — czysty kod NIE przechodzi, wiec proba NIC nie znaczy."
+    echo "  Licznik BLEDY=$BLEDY jest NIEWIARYGODNY i NIE jest werdyktem o produkcie."
+    echo "  Sprawdz warunki wstepne (zaleznosci, stos, dane logowania), potem powtorz."
+    exit 2
+  fi
+  if [ "$KOTWICE" -gt 0 ]; then
+    echo "PROBA NIC NIE ZMIERZYLA W $KOTWICE PRZYPADKACH — kotwica sed zgnila po refaktorze."
+    echo "  To wada PRZYRZADU, nie straznika: zanim oskarzysz produkt, uruchom straznika BEZPOSREDNIO."
+    exit 2
+  fi
+  if [ "$BLEDY" -gt 0 ]; then
+    echo "STRAZNIK SLEPY NA $BLEDY PODLOZONYCH BLEDOW"
+    exit 1
+  fi
+  echo "$1"
+  exit 0
+}
 
 wdroz_czysty() {
   docker cp wtyczki/chatbot-live/. "$KONTENER:$CEL/" >/dev/null
@@ -33,8 +66,8 @@ probuj() {
   eval "$mutacja"
   po=$(docker exec "$KONTENER" md5sum "$plik" | cut -d' ' -f1)
   if [ "$przed" = "$po" ]; then
-    printf '  BLAD mutacja NIE weszla do pliku: %-36s\n' "$opis"
-    BLEDY=$((BLEDY+1)); return
+    printf '  BLAD mutacja NIE weszla do pliku (ZGNILA KOTWICA sed): %-36s\n' "$opis"
+    KOTWICE=$((KOTWICE+1)); return
   fi
   local wyjscie kod
   if [ "$ktory" = "php" ]; then wyjscie=$(odpal_php); kod=$?; else wyjscie=$(odpal_panel); kod=$?; fi
@@ -89,13 +122,8 @@ if odpal_php > /dev/null 2>&1 && odpal_panel > /dev/null 2>&1; then
   echo "  OK   oba strazniki przechodza na czystym kodzie (EXIT=0)"
 else
   echo "  BLAD czysty kod NIE przechodzi — straznik pada zawsze, wiec nic nie znaczy"
-  BLEDY=$((BLEDY+1))
+  ODWROTNA=$((ODWROTNA+1))
 fi
 
 echo
-if [ "$BLEDY" -eq 0 ]; then
-  echo "STRAZNIKI WIDZA WSZYSTKIE SZESC PODLOZONYCH BLEDOW"
-else
-  echo "STRAZNIKI SLEPE NA $BLEDY PODLOZONYCH BLEDOW"
-fi
-exit $((BLEDY > 0))
+podsumowanie_proby "STRAZNIKI WIDZA WSZYSTKIE SZESC PODLOZONYCH BLEDOW"
