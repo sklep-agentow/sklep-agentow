@@ -1196,3 +1196,24 @@ Każda pozycja = tania poprawka tekstowa do wzięcia przy najbliższym PR-ze w t
 - DROBNA 1: krok render sam podaje `faktura=1` — asercja mierzy własne wejście; poprawka: brać parametr z prawdziwego REDIRECT z WY_A.
 - DROBNA 2: opis w sekcji RODO PRZED kliknięciem obiecuje zachowanie faktury także przy zakupie prywatnym (pusta kolumna) — warunek `$ma_fakture` także w tekście przed operacją.
 - DROBNA 3 (klasa 11): `testy/anonimizacja-zachowuje-fakture-proba-kontrolna.sh` (⚠️ plik istnieje TYLKO na gałęzi PR #270, nie na `main`) — komunikat obiecuje rozróżnienie, którego warunek nie robi; bliźniak w bazie robi poprawnie.
+
+
+### #282 r1 (strażnik liczników) — 2 WAŻNE, 5 DROBNYCH · ⛔ ŚWIADOMIE ODŁOŻONE 5.09
+⛔ **Decyzja i jej powód:** to była **siódma runda poprawek NARZĘDZIA testowego**, przy nietkniętym
+kodzie produktu i czekającym przelocie oraz wydaniu. Strażnik **działa** — próba dwukierunkowa zdana
+(`EXIT=0` czysto, `EXIT=1` z podłożonym martwym licznikiem, wskazuje właściwy plik). Dalsze
+doskonalenie go ustępuje pierwszeństwa wydaniu. Recenzja: PR #282, komentarz `claude[bot]`.
+
+- **WAŻNA 1 — werdykt kierunku negatywnego nie jest zakotwiczony w PODŁOŻONEJ wadzie**
+  (`liczniki-zywe-proba-kontrolna.sh:142`). Warunek `KOD -eq 1 && grep -qF "$OFIARA"` przechodzi także
+  wtedy, gdy strażnik wypisał `OFIARA` z INNEGO powodu niż podłożona atrapa — np. gdy ten sam plik ma
+  już prawdziwy martwy licznik. Wtedy kierunek negatywny „przechodzi na pusto”.
+  ⇒ Poprawka: asercja na KONKRETNY licznik z atrapy (`ODWROTNA`), nie na samą nazwę pliku.
+- **WAŻNA 2 — kontrola wycięcia (`:135-139`) nie odróżnia „wycięto sekcję” od „wycięto sekcję i CAŁĄ
+  resztę pliku”.** `sed` z zakresem od znacznika do znacznika przy braku znacznika końca tnie do końca
+  pliku; `grep -qF 'KIERUNEK NEGATYWNY'` wykryje brak sekcji w obu przypadkach jednakowo.
+  ⇒ Poprawka: porównać liczbę linii kopii przed/po wycięciu z oczekiwanym zakresem.
+- 5 DROBNYCH: w komentarzu recenzenta na PR #282 (nie przepisuję — czytać u źródła).
+
+⚠️ Recenzent NIE URUCHOMIŁ tego skryptu (`This command requires approval` — brak w `--allowedTools`,
+`recenzent.yml:205`), więc obie uwagi stoją na cytatach kodu i `grep`, nie na przebiegu.
