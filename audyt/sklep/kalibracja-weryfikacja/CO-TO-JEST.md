@@ -92,3 +92,15 @@ je **wykrywa**, a koordynatorka **świadomie** je zwolniła — mechanizm zadzia
 ⭐ To jest klasa „zmierzyłam OCHRONĘ zamiast WADY”: mój walidator pokazał naruszenia, a ja nie
 sprawdziłam, czy repozytorium już je zna i celowo dopuściło. Zapisuję to tutaj, bo o mały włos
 wniosłabym fałszywe znalezisko do rejestru infry.
+
+## ⛔ Znane naruszenia schematu — jawna lista, nie cisza
+
+Dwa z trzech raportów łamią regułę schematu wprowadzanego tym samym PR-em. ⛔ **Nie poprawiam
+plików** — to dowody. Zamiast tego stoi obok jawna lista `WYJATKI-SCHEMATU.txt`, w tej samej
+konwencji co `audyt/sklep/raporty/WYJATKI-WARUNEK-8.txt`: plik, czego dotyczy, powód.
+
+⭐ **Jedna edycja METADANEJ, odnotowana jawnie:** `L1.json` deklarował `runda: "A"`, choć pochodzi
+z rundy WERYFIKACJA. To nie literówka bez skutku — nowe zawężenie schematu kluczuje wymóg właśnie
+po tym polu, więc raport z błędną rundą **cicho wypadał spod wymogu**, czyli tą samą klasą
+(„pominięcie nie zostawia śladu”), którą ten PR zamyka. Poprawione na `weryfikacja`.
+⛔ Zmieniona została WYŁĄCZNIE ta metadana — werdykty, dowody i wyjścia komend są nietknięte.

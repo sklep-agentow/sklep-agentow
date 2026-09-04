@@ -14,7 +14,7 @@
 # Pliki, które czyta (wszystkie względem korzenia repo):
 #   audyt/sklep/material/06-mapa-polowania.md · audyt/sklep/REJESTR-ZNALEZISK-SKLEP.md
 #   audyt/sklep/PRZELOT-CZLOWIEKA-SKLEP.md · audyt/sklep/ZAMROZENIE.md · audyt/sklep/raporty/**/*.json
-#   audyt/sklep/PROBY-KONTROLNE.log · tag bank/mutanty-sklep-r2 albo gałąź audyt/mutanty-sklep (stary tag bank/mutanty-sklep = stan rundy A, ostatni w kolejności):audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP.md
+#   audyt/sklep/PROBY-KONTROLNE.log · gałąź audyt/mutanty-sklep = ŹRÓDŁO (tagi bank/mutanty-sklep* to zamrożone MIGAWKI, nie źródło):audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP.md
 set -u
 KORZEN="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WYMAGAJ_ZAMROZENIA_MAPY=1
@@ -73,8 +73,11 @@ fi
 #    Referencja z FALLBACKIEM (recenzja #184 r2 W1): w świeżym klonie (CI, recenzent) gałąź istnieje TYLKO jako
 #    origin/audyt/mutanty-sklep — goły `git show audyt/mutanty-sklep:…` dawał fałszywy FAIL (klasa jak W8).
 GALAZ_MUT=""
-# Kolejnosc od NAJSWIEZSZEGO: galaz (lokalna, potem origin), potem tag rundy weryfikacji,
-# a dopiero na koncu tag rundy A. ⛔ Powod, znalezisko recenzji #279 W2: tag `bank/mutanty-sklep`
+# ⭐ ZRODLEM rozliczenia jest GALAZ `audyt/mutanty-sklep` — tagi `bank/mutanty-sklep*` to zamrozone
+# MIGAWKI (rundy A i weryfikacji) i sluza wylacznie za awaryjny fallback w klonie bez galezi.
+# ⛔ NIE robimy nowego tagu przy kazdym commicie rozliczenia: to wlasnie rodzi rozjazd, ktory
+# ta kolejnosc ma usuwac. Kolejnosc od NAJSWIEZSZEGO: galaz (lokalna, potem origin), potem tag
+# rundy weryfikacji, a dopiero na koncu tag rundy A. ⛔ Powod, znalezisko recenzji #279 W2: tag `bank/mutanty-sklep`
 # zamrozil rozliczenie z 26.08 (L1 i L5 NIEKALIBROWANE), wiec bez tej kolejnosci bramka dawala
 # DWA SPRZECZNE wyniki zaleznie od tego, ktory ref istnial w klonie. Starych tagow nie ruszamy.
 for ref in audyt/mutanty-sklep origin/audyt/mutanty-sklep bank/mutanty-sklep-r2 bank/mutanty-sklep; do git rev-parse --verify --quiet "$ref^{commit}" >/dev/null && { GALAZ_MUT="$ref"; break; }; done
