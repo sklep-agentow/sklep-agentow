@@ -25,7 +25,7 @@ plików paczki, nie przez nazwę katalogu.
 
 | co | gdzie w kodzie | dlaczego jedzie | status |
 |---|---|---|---|
-| **surowe kody zdarzeń w dzienniku, w tym jedyne angielskie słowo w polskim panelu** | `class-sklepag-lista-zdarzen.php:119-121` — `case 'typ': return esc_html( $item->$column_name );`, zero mapowania na etykietę | właściciel widzi `reconciliation_blad`, `reconciliation_wynik`, `webhook_unpaid`, `checkout_blad` — 28 kodów, bez legendy. Ten sam mechanizm ma na pulpicie ludzką etykietę (przycisk „Dociągnij zaległe teraz” w `admin-dashboard.php`), więc rozjazd jest w jednym ekranie | **świadomie ODŁOŻONE 3.09** |
+| **surowe kody zdarzeń w dzienniku, w tym jedyne angielskie słowo w polskim panelu** | `class-sklepag-lista-zdarzen.php`, `column_default()` — gałąź `case 'typ'` zwraca `esc_html( $item->$column_name )`, zero mapowania na etykietę | właściciel widzi `reconciliation_blad`, `reconciliation_wynik`, `webhook_unpaid`, `checkout_blad` — 28 kodów, bez legendy. Ten sam mechanizm ma na pulpicie ludzką etykietę (przycisk „Dociągnij zaległe teraz” w `admin-dashboard.php`), więc rozjazd jest w jednym ekranie | **świadomie ODŁOŻONE 3.09** |
 
 ⛔ **Dlaczego odłożone, a nie naprawione od ręki:** jeden z typów jest **sklejany dynamicznie**
 (`opinie.php:205`: `'opinia_' . $nowy`), więc uczciwa mapa wymaga najpierw rozstrzygnięcia zbioru
@@ -673,8 +673,9 @@ prawdziwym wdrożeniu.
   zamkiem — poprawka wchodzi z NASTĘPNYM wydaniem bota, nie osobno.
   ✅ **ZAMKNIĘTE (potwierdzone 3.09 na `origin/main`):** `wtyczki/segregator-maila/readme.txt:85-86` mówi
   o `stream_socket_client` i rozszerzeniu OpenSSL, z ostrzeżeniem o najtańszych hostingach i wskazaniem
-  wbudowanej diagnostyki; `wtyczki/segregator-maila/CHANGELOG.md:32-33` potwierdza wejście poprawki (⛔ do rundy 2 stało tu
-  `CHANGELOG.md:153`, czyli plik SKLEPU — a tam ta linia mówi o banerze trybu testowego). Wpis wisiał otwarty po naprawie.
+  wbudowanej diagnostyki; `wtyczki/segregator-maila/CHANGELOG.md:32-33` potwierdza wejście poprawki (⛔ do rundy 2 stał tu odsyłacz do `CHANGELOG.md` SKLEPU zamiast Segregatora; wskazywał wtedy
+  sekcję „[0.9.29]” z wpisem o banerze trybu testowego. ⛔ Numer podaję w czasie PRZESZŁYM, bo
+  scalenie `d253789` przesunęło tamten plik i dziś pod tym numerem stoi zupełnie inny wpis). Wpis wisiał otwarty po naprawie.
 - **Bramka na LICZBY strony sprzedażowej** (`front-produkt.php`: „6 zrzutów", „10 par",
   „30 maili demo") — dziś prawdziwe (zmierzone w r1 #172), ale bez strażnika zgniją po cichu
   jak każda liczba; wzór: `dokumentacja-zgodnosc*.sh`.
