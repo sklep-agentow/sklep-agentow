@@ -34,15 +34,15 @@ PASS = 100 % mutantów WŁASNEGO zakresu + 0 alarmów na F1–F4 + poprawna kwal
 Limit: JEDNA poprawka promptu/materiału i jeden ponowny przebieg (`proby` ≤ 2); drugi FAIL = soczewka NIEKALIBROWANA.
 Mutant trafiony przez CUDZĄ soczewkę = znalezisko tej soczewki, nie zmienia kalibracji przypisanej. L6 = niekalibrowana (jawnie).
 
-| audytor | mutant | znalazl | falszywy | werdykt | proby |
-|---|---|---|---|---|---|
-| L1 | M1 | NIE | 0 | FAIL — NIEKALIBROWANA | 2 |
-| L2 | M2 | TAK (DUŻA — kwalifikacja poprawna) | 0 | PASS | 1 |
-| L3 | M3 | TAK (test padający) | 0 | PASS | 1 |
-| L3 | M4 | TAK (test padający) | 0 | PASS | 1 |
-| L4 | M5 | TAK (diff uninstall) | 0 | PASS | 1 |
-| L5 | M6 | NIE (trafiony przez L3 jako unia — nie liczy się do kalibracji L5) | 0 | FAIL — NIEKALIBROWANA | 2 |
-| L | M7 | TAK (próba 2, test padający) | 0 | PASS | 2 |
+| audytor | mutant | znalazl | falszywy | werdykt | proby | powod_powtorki |
+|---|---|---|---|---|---|---|
+| L1 | M1 | TAK (KRYTYCZNA — wiersz zamówienia S-09 niespełniony; dowód wykonaniem: nieistniejący login → 0 wierszy, konto istniejące → wiersz powstaje) | 0 | PASS | 3 | próba 3 (4.09) na poprawce promptu z 26.08 („ścieżka WROGA, nie szczęśliwa”), która weszła po rundzie A i NIE MIAŁA własnego przebiegu kalibracyjnego — poprawka nie powstała pod tego mutanta |
+| L2 | M2 | TAK (DUŻA — kwalifikacja poprawna) | 0 | PASS | 1 |  |
+| L3 | M3 | TAK (test padający) | 0 | PASS | 1 |  |
+| L3 | M4 | TAK (test padający) | 0 | PASS | 1 |  |
+| L4 | M5 | TAK (diff uninstall) | 0 | PASS | 1 |  |
+| L5 | M6 | TAK (DUŻA — kwalifikacja poprawna; dowód wykonaniem: `pobrania_uzyte` 0 → `curl -I` → 1) | 0 | PASS | 4 | próba 3 (4.09) FAIL — audytor oddał raport zużywszy 19 z 30 wywołań i ZERO pomiarów behawioralnych; próba 4 po naprawie MECHANIZMU (obietnice behawioralne idą do raportu jako pole z werdyktem każdej), nie po dołożeniu wzorca pod mutanta |
+| L | M7 | TAK (próba 2, test padający) | 0 | PASS | 2 |  |
 
 ### Runda A — przebieg (26.08.2026 01:10–02:40, koordynatorka Gosia-17)
 - Oba stosy z paczką MUTANTY (`425a3124…`): :8891 ze skryptu `k7-stos-rundy.sh`, :8890 podłożona po migawce i przywrócona po rundzie (diff kodu = 0).
@@ -53,3 +53,49 @@ Mutant trafiony przez CUDZĄ soczewkę = znalezisko tej soczewki, nie zmienia ka
 - L3 na Opusie (zgoda Dzidka): M3 + M4 + M6 (unia) w jednym przebiegu.
 - Kalibracja mierzy CZUŁOŚĆ na podłożony błąd, nie jakość: L2 zdał, a pokrył 8/22 celów — pokrycie rozlicza mapa polowania, nie ta tabela.
 
+### Runda WERYFIKACJA — 4.09.2026, koordynatorka Gosia-45 (L1 próba 3, L5 próby 3 i 4)
+
+⛔ **Limit powtórek z `PLAN-K7 §5` („2 i koniec”) został przekroczony ŚWIADOMIE i tak to nazywam** —
+nie przedefiniowuję reguły, żeby wynik do niej pasował. Powód: reguła w parze z bramką `k7-koniec.sh`
+warunek 2 (każdy wiersz PASS **oraz** `proby ≤ 2`) **żądała stanu nieosiągalnego** — soczewka raz
+oblana nie miała ŻADNEJ drogi do PASS poza wpisaniem nieprawdy. Bramka została przestawiona 4.09 na
+regułę OSTRZEJSZĄ, nie luźniejszą: próby 3 i 4 przechodzą tylko z wypełnioną kolumną `powod_powtorki`,
+powyżej 4 pada bezwarunkowo (próba kontrolna dwukierunkowa w `k7-koniec-proba-kontrolna.sh`).
+
+**Warunki przebiegu:** paczka zbudowana z tagu `bank/mutanty-sklep` (`412d9b3`, wtyczka 0.9.13),
+sha256 `8d079239…fa56f` — ⛔ INNY niż `425a3124…` z rundy A, bo zip nie jest odtwarzalny bit w bit
+(znaczniki czasu). Rozstrzyga ZAWARTOŚĆ: sześć z siedmiu kotwic po jednym trafieniu, siódma (M3)
+daje zero **poprawnie**, bo ten mutant usuwa swoją kotwicę. Próba kontrolna dwukierunkowa paczki:
+`username_exists` i `HEAD: same nag` obecne w paczce, **0 trafień** na czystym `main`.
+Stos: `probny_wp` :8891, WP 6.7.2 / PHP 8.1, wzorzec mutanta potwierdzony w kontenerze.
+Audytorzy: świeże subagenty `model:"sonnet"`, zwykły prompt, **bez wiedzy o kalibracji**.
+
+**L1 / M1 — PASS.** Poprawka promptu, na której zdał, weszła **26.08 commitem `d314d7c`**, czyli
+przed rundą B i z wniosków rundy A — nie pod tego mutanta. Kontrolę odwrotną mam z rundy B na
+CZYSTYM kodzie: tam ten sam poprawiony prompt wykonał trzecią próbę (`nie-ma-takiego-14610`),
+zrobił `SELECT` i **znalazł wpis** — czyli nie zgłasza fałszywego alarmu, gdy dziennik działa.
+Dwukierunkowość zamknięta: **czysty kod → cisza, mutant → znalezisko KRYTYCZNE.**
+⭐ Przy okazji złapał dwa CUDZE mutanty (M6, M3) — unia, nie zmienia kalibracji tamtych soczewek.
+
+**L5 / M6 — PASS w próbie 4, po FAIL w próbie 3.** Diagnoza próby 3 jest ważniejsza niż sam wynik:
+audytor **nie był ślepy i nie zabrakło mu budżetu** — zużył 19 z 30 wywołań i skończył, nie mierząc
+ANI JEDNEJ obietnicy behawioralnej, choć prompt żąda „minimum 10”. Wcześniejsza diagnoza z mózgu
+(„soczewka ślepa na kwantyfikator zapisany słowem”) była **FAŁSZYWA** i tu ją odwołuję: prompt podaje
+HEAD jako wzorcowy przykład pomiaru. Zawiodło egzekwowanie — zestawienie obietnic prompt kazał robić
+jako „materiał, nie znalezisko”, więc zostawało w brudnopisie i pominięcie **nie zostawiało śladu**.
+Naprawa dotknęła MECHANIZMU: pole `obietnice_behawioralne` w raporcie, werdykt przy każdej pozycji,
+`pomiar` obowiązkowy przy ZGODNE/ROZJAZD. W próbie 4 audytor wypisał 12 obietnic i **znalazł M6
+pomiarem** (`pobrania_uzyte` 0 → `curl -I` → 1).
+
+⛔ **Czego ten PASS NIE obejmuje — mówię wprost:** raport z próby 4 ma **9 pozycji zmierzonych, nie 10**,
+czyli nie spełnia własnego progu. Audytor zgłosił to SAM i poprosił o przeliczenie; przeliczyłam — jest 9.
+PASS dotyczy CZUŁOŚCI (100 % mutantów własnego zakresu, 0 alarmów na F1–F4, poprawna kwalifikacja) i te
+trzy warunki są spełnione. Próg 10 to inny wymiar i w chwili tego przebiegu **nie był egzekwowalny**:
+siedział w opisie pola. Po poprawce egzekwuje go `contains` + `minContains` — sprawdzone na TYM raporcie:
+`expected at least 10 but only 9 matched`.
+
+⛔ **Znalezisko przy okazji, do rejestru infry, NIE do tej tabeli:** `SCHEMAT-RAPORTU.json` nie jest
+przez nic uruchamiany — `k7-koniec.sh` sprawdza wyłącznie, czy plik ISTNIEJE. Skutek zmierzony:
+`B/L.json` i `B/L4.json` łamią obowiązkowe pola schematu (`plik` przy werdykcie ZGODNE) **od rundy B**
+i nikt tego nie zauważył. Ta sama klasa trzy razy w jednym łańcuchu: prośba w prompcie → opis w schemacie
+→ schemat bez walidatora.
