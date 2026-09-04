@@ -115,7 +115,21 @@ MAX_NIEZMIERZONYCH=0   # 4.09: TWARDE ZERO. Podniesienie = swiadoma decyzja w co
 # ⛔ SUFIT POMINIĘĆ. Bez niego lista pominięć rośnie po cichu i przelot świeci
 # zielono, sprawdzając coraz mniej — dokładnie ta klasa błędu, dla której ten
 # skrypt w ogóle powstał. Podniesienie sufitu ma być świadomą decyzją w commicie.
-MAX_POMINIETYCH=99   # TYMCZASOWY — do przeliczenia w tym samym commicie
+MAX_POMINIETYCH=10  # 5.09: POLICZONE na scalonej tresci (#272 + #274 + #278), nie przepisane.
+                    # ⛔ Rachunek na OBU zakresach, bo sufit obowiazuje oba, a CI liczy inaczej
+                    #    niz wydanie. Scenariusz, ktorego sufit dotyczy: wykonawca BEZ Dockera
+                    #    I BEZ `zip` (na maszynie z obydwoma pominiecie jest tylko 1 — dlatego
+                    #    sam przelot tutaj NIE mierzy tego, przed czym sufit chroni):
+                    #      WYMAGA_DOCKERA 7 + WYMAGA_ZIP 4, wspolne 2  ⇒ unia 9
+                    #        z tego w `narzedzia-qa/` 6, w `testy/` 3
+                    #      + 1 pomijana BEZWARUNKOWO (`dowod-zachowania-segregator`,
+                    #        deinstaluje wtyczke ze stosu; lezy w `narzedzia-qa/`)
+                    #      zakres `narzedzia-qa` (tak wola CI):     6 + 1 =  7
+                    #      BEZ zakresu (tak wola `k7-koniec`):      9 + 1 = 10
+                    #    Sufit = maksimum z obu = 10. Przy 9 przelot bez zakresu — czyli ten,
+                    #    ktorego zada bramka wydania — wywalilby sie na WLASNEJ poprawce.
+                    # ⛔ NIE przepisuj tej liczby przy nastepnym scaleniu: kazda nowa proba
+                    #    dockerowa albo zipowa ja przesuwa. Policz komenda na scalonym drzewie.
 
 if [ -n "$(git status --porcelain -uno 2>/dev/null)" ]; then
 	echo "PRZELOT: drzewo robocze BRUDNE — dowód powstałby na kodzie, którego nie ma w historii." >&2
