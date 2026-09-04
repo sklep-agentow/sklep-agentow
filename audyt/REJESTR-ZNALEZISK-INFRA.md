@@ -69,7 +69,7 @@
                                  suma 73 = 73 wierszy  ✔
        PO SCALENIU  89 wierszy:  OTWARTE 43 · ZAMKNIETE 42 · W NAPRAWIE 2 · ZAPARKOWANE 1 · WYCOFANE 1
                                  suma 89 = 89 wierszy  ✔
-     ⇒ **43 OTWARTE to liczba POLICZONA NA SCALONEJ TRESCI** (5.09, po wejsciu #268, #270, #273,
+     ⇒ **43 OTWARTE to liczba POLICZONA NA SCALONEJ TRESCI** (4.09, po wejsciu #268, #270, #273,
      #274, #278, #272), nie wyprowadzona z cudzego naglowka i nie przepisana z zadnej strony.
      ⭐ Zadna z liczb z konfliktu scalenia nie byla prawdziwa: galaz mowila 48, `main` mowil 31,
      pomiar dal 43. Dlatego ten licznik przelicza sie KOMENDA, a nie rozstrzyga wyborem strony.
@@ -78,7 +78,7 @@
      status W NAPRAWIE, a na tej galezi stoja jako OTWARTE WYLACZNIE dlatego, ze galaz
      jest sprzed scalen #268 i #270. Nic nie zostalo rozliczone — to artefakt starej bazy
      zapisany jako pomiar, czyli klasa I-23, ktora ten sam plik opisuje.
-     ✅ SCALENIE WYKONANE 5.09 i licznik przeliczony na scalonej tresci — liczba wyzej jest
+     ✅ SCALENIE WYKONANE 4.09 i licznik przeliczony na scalonej tresci — liczba wyzej jest
      stanem PROJEKTU, nie stanem galezi.
      ⛔ Kontrola sumy jest OBOWIAZKOWA przy kazdej zmianie tego licznika: bez niej grep po slowie
      statusu daje 64 przy 73 wierszach i nikt tego nie zauwaza. -->

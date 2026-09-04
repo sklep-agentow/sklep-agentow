@@ -331,10 +331,10 @@ działanie wzorca** — bo dokładnie ta różnica kosztowała trzy rundy.
 ## ✅ ROZLICZONE — baner „TRYB TESTOWY” ma warunek od 0.9.29 (wpis z 29.08, recenzja #209 r6)
 
 ⛔ **Ten wpis był otwarty o dwa dni za długo i zdążył zrodzić fałszywą decyzję D38** (wycofaną 3.09).
-Zmierzone na `origin/main`, każde miejsce osobno: `sklep-agentow.php:222-223` czyta prefiks klucza,
-`:235-237` zwraca **pusty napis** przy `sk_live_`, a `:355`, `:467`, `front-produkt.php:629`, `:843`,
-`zakup.php:1310` i `mail-html.php:125` idą przez `sklepag_tryb_testowy()`. Wydanie: `CHANGELOG.md:149-156`
-(`[0.9.29]`, 1.09). **Nauka:** rozliczaj wpis W TEJ SAMEJ rundzie, w której naprawiasz — wpis żyjący po
+Zmierzone na `origin/main`, każde miejsce osobno: `sklepag_tryb_testowy()` czyta prefiks klucza,
+`sklepag_baner_testowy()` zwraca **pusty napis** przy `sk_live_`, a pozostałe miejsca w `sklep-agentow.php`,
+`front-produkt.php`, `zakup.php` (treść maila „TRYB TESTOWY”) i `mail-html.php` idą przez `sklepag_tryb_testowy()`. Wydanie: sekcja `## [0.9.29]`
+w `CHANGELOG.md` (1.09). **Nauka:** rozliczaj wpis W TEJ SAMEJ rundzie, w której naprawiasz — wpis żyjący po
 naprawie jest groźniejszy niż brak wpisu, bo czytelnik nie sprawdza kodu, tylko wierzy rejestrowi.
 
 <details><summary>Treść wpisu z 29.08 (historia — opisuje stan SPRZED 0.9.29)</summary>
@@ -467,10 +467,10 @@ prawdziwym wdrożeniu.
 - 3 martwe pliki mediów w paczce (1,06 MB) — kasowanie ZGODA właściciela 25.08, wykonać w rundzie napraw (bump).
 - ✅ **ROZLICZENIE TRZECH ZALEGŁOŚCI Z TEJ LISTY (3.09, pomiar na `origin/main`, kod otwarty ręcznie):**
   **DOK-TECH „7 tabel" vs „6"** — dziś dwa wystąpienia „7 tabel", zero „6 tabel" ⇒ rozjazdu NIE MA ·
-  **brak eksportera/erasera RODO WP** — `includes/prywatnosc.php:637` i `:792` rejestrują `wp_privacy_personal_data_exporters`
-  i `…_erasers`, bliźniaki w `chatbot-live/includes/rodo.php:585,600`; oba pliki dołączane BEZWARUNKOWO
-  (`sklep-agentow.php:66`, `chatbot-live.php:129`), nie za `is_admin()`, bo kreator woła też przez `admin-ajax` i cron ·
-  **zwroty Stripe bez obsługi** — `includes/zakup.php:409` nasłuchuje `refund.created`, `refund.updated`
+  **brak eksportera/erasera RODO WP** — `includes/prywatnosc.php` rejestruje przez `add_filter` `wp_privacy_personal_data_exporters`
+  i `…_erasers`, bliźniaki w `chatbot-live/includes/rodo.php`; oba pliki dołączane BEZWARUNKOWO
+  (w plikach glownych obu wtyczek), nie za `is_admin()`, bo kreator woła też przez `admin-ajax` i cron ·
+  **zwroty Stripe bez obsługi** — `includes/zakup.php` w obsłudze webhooka nasłuchuje `refund.created`, `refund.updated`
   ORAZ `charge.refunded` i rozstrzyga po kwocie już zapisanej w bazie.
   ⛔ Reszta wiersza wyżej (`#170` w dokumencie klienta, tabela §2 bez `opinie.php`, martwe wpisy Cloudflare/Vercel,
   nonce zakupu gościa, WP-Cron w instrukcji) **NIE była w tym pomiarze** — zostaje otwarta.
