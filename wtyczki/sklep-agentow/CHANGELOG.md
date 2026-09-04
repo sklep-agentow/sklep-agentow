@@ -20,6 +20,16 @@ Nic jeszcze.
 
 ---
 
+## [0.9.39] — 2026-09-02 · schemat bazy bez zmian (10)
+
+### Naprawione
+- **Nieudana migracja bazy nie znika już po cichu.** Do tego wydania aktywacja i aktualizacja podnosiły wersję schematu od razu po `dbDelta`, bez sprawdzenia, czy tabele i kolumny naprawdę powstały (np. użytkownik bazy bez prawa ALTER) — brama „wersja aktualna” zamykała się na zawsze, a sklep nie przyjmował zamówień bez jednego słowa dlaczego. Teraz wersja rośnie dopiero po pomiarze schematu w bazie; przy brakach zostaje stara, sklep **ponawia próbę sam, najwyżej raz na 5 minut** (dławik opisany w punkcie niżej; aktywacja wtyczki kasuje odstęp, więc „deaktywuj i aktywuj” działa natychmiast), a Pulpit pokazuje, czego brakuje i jaki był błąd bazy.
+
+- **Sprawdzenie schematu nie powtarza się już przy KAŻDYM żądaniu.** Gdy baza jest niekompletna, wersja schematu celowo zostaje stara, żeby próba się powtórzyła — ale bez odstępu powtarzała się przy każdym żądaniu, także anonimowym frontowym, i każde z nich płaciło siedem `dbDelta` plus czternaście zapytań pomiarowych. Na instalacji bez prawa ALTER/CREATE ten stan jest trwały, więc sklep zwalniał każdemu odwiedzającemu. Teraz ponawianie co 5 minut; aktywacja wtyczki kasuje odstęp, więc „deaktywuj i aktywuj” z komunikatu działa natychmiast.
+- **Komunikat „Ostatni błąd bazy” pokazuje wreszcie prawdziwy błąd.** `last_error` kasuje każde kolejne zapytanie, a odczyt był jeden — po całej pętli — więc błąd był widoczny tylko wtedy, gdy zawiodła ostatnia z siedmiu tabel. Teraz odczyt po każdym `dbDelta`, wszystkie różne komunikaty w jednym zdaniu.
+- **`SHOW TABLES LIKE` z `esc_like()` w czterech miejscach.** Nazwy tabel niosą po dwa `_`, a w `LIKE` `_` jest dziką kartą — bez escapowania wzorzec pasował do każdej tabeli tej samej długości z dowolnym znakiem na tych pozycjach, więc cudza tabela mogła zostać uznana za naszą i schemat wyglądałby na kompletny.
+
+---
 ## [0.9.38] — 2026-09-02 · schemat bazy bez zmian (10)
 
 ### Naprawione

@@ -1,6 +1,6 @@
 # Sklep Agentów — dokumentacja techniczna
 
-**Wersja wtyczki: 0.9.38 · wersja schematu bazy: 10 · WordPress 6.7+ · PHP 8.1+**
+**Wersja wtyczki: 0.9.39 · wersja schematu bazy: 10 · WordPress 6.7+ · PHP 8.1+**
 
 > **Po co ten dokument.** To jest **mapa systemu dla audytora i programisty**, nie ulotka.
 > Każda liczba i nazwa tutaj jest wzięta z kodu, nie z pamięci — jeśli coś się rozjedzie,
@@ -242,7 +242,7 @@ po stronie serwera. To jest świadome ograniczenie, nie przeoczenie.
 
 | Stała | Wartość | Znaczenie |
 |---|---|---|
-| `SKLEPAG_WERSJA` | 0.9.38 | wersja wtyczki (assety, cache) |
+| `SKLEPAG_WERSJA` | 0.9.39 | wersja wtyczki (assety, cache) |
 | `SKLEPAG_WERSJA_SCHEMATU` | 10 | wersja schematu bazy (migracje) |
 | `SKLEPAG_LIMIT_POBRAN` | 10 | ile razy można pobrać plik z jednego wydanego linku (zerowane przy świeżym linku) |
 | `SKLEPAG_LINK_GODZIN` | 72 | ważność linku pobrania |
@@ -285,7 +285,9 @@ starcie** — własny literał w tym pliku cofałby naprawę PHP w przeglądarce
 
 ## 8. Instalacja i deinstalacja
 
-**Przy aktywacji:** utworzenie 7 tabel przez `dbDelta`, zapis wersji schematu,
+**Przy aktywacji:** utworzenie 7 tabel przez `dbDelta` (`sklepag_zbuduj_schemat()` — to samo
+miejsce co migracja), **pomiar skutku** (`SHOW TABLES` / `SHOW COLUMNS` względem tych samych definicji)
+i zapis wersji schematu **tylko gdy braków nie ma**; przy brakach wersja zostaje stara (ponowienie po odstępie 5 minut — znacznik `sklepag_schemat_ponowienie`; aktywacja wtyczki kasuje znacznik, więc „deaktywuj i aktywuj” działa natychmiast), a Pulpit pokazuje listę braków i ostatni błąd bazy (`sklepag_schemat_blad`),
 założenie stron „Sklep" i „Dziękujemy", zaplanowanie zadania cyklicznego.
 
 **Przy deaktywacji:** odplanowanie zadania cyklicznego. Dane zostają.

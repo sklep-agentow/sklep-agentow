@@ -4,7 +4,7 @@ Tags: sklep, stripe, pliki cyfrowe, sprzedaz wtyczek, pobieranie
 Requires at least: 6.7
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.9.38
+Stable tag: 0.9.39
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -160,6 +160,12 @@ Nie. Zakup jest bez konta: adres e-mail podany na stronie płatności Stripe,
 link do pobrania w mailu, jednorazowy link do opinii.
 
 == Changelog ==
+
+= 0.9.39 =
+* Nieudana migracja bazy nie znika po cichu: wersja schematu rosnie tylko po zmierzonym, kompletnym schemacie.
+* Sprawdzenie schematu nie powtarza sie przy kazdym zadaniu — ponawianie co 5 minut, aktywacja natychmiast.
+* Komunikat "Ostatni blad bazy" pokazuje prawdziwy blad (odczyt po kazdej tabeli, nie raz na koncu).
+* SHOW TABLES LIKE z esc_like() — podkreslnik w nazwie tabeli nie jest juz dzika karta.
 
 = 0.9.38 =
 * Dwie osoby kupujące z tej samej sieci (biuro, sieć komórkowa) nie dzielą już okna ochrony przed podwójnym kliknięciem — wcześniej druga osoba, która kliknęła „Kup” w ciągu 5 sekund po pierwszej, mogła dostać cudzy checkout Stripe. Formularz zakupu niesie teraz własny losowy znacznik, losowany przez przeglądarkę przy otwarciu strony — działa także wtedy, gdy sklep stoi za pełnostronicowym cache'em; podwójne kliknięcie dalej jest wyłapywane.
