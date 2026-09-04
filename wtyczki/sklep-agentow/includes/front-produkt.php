@@ -342,7 +342,7 @@ function sklepag_tresc_produktu( $slug ) {
 			 * ⛔ GWARANCJA: obietnica zwrotu pieniędzy = zobowiązanie WŁAŚCICIELA.
 			 * Treść i włączenie to decyzja WŁAŚCICIELA SKLEPU; puste = sekcja się nie renderuje.
 			 */
-			'gwarancja'    => '14 dni gwarancji satysfakcji: jeśli bot nie spełni Twoich oczekiwań, napisz do nas — zwracamy pieniądze bez pytań. Zwrot oznacza wygaśnięcie prawa do aktualizacji i wsparcia dla kupionej kopii.',
+			'gwarancja'    => '14 dni gwarancji satysfakcji: jeśli bot nie spełni Twoich oczekiwań, napisz do nas — zwracamy pieniądze bez pytań. To dobrowolna gwarancja sprzedawcy, ponad przepisy: ustawowe prawo odstąpienia od umowy wygasa przy zakupie, bo treść cyfrowa jest dostarczana natychmiast (art. 38 ustawy o prawach konsumenta) — gwarancja satysfakcji obowiązuje niezależnie od tego. Zwrot oznacza wygaśnięcie prawa do aktualizacji i wsparcia dla kupionej kopii.',
 			'kalkulacja'   => 'Policz po swojemu: 10 pytań dziennie × 3 minuty = około 5 godzin miesięcznie z głowy. Podstaw własne liczby — matematyka jest jawna.',
 			'faq'          => array(
 				array( 'Czy potrzebuję klucza AI?', 'Nie — bot w pełni działa bez niego, na Twojej bazie pytań i odpowiedzi.' ),
@@ -502,7 +502,7 @@ function sklepag_tresc_produktu( $slug ) {
 			),
 			/* ⛔ OPINIE i GWARANCJA: te same zasady co przy chatbot-live (komentarz wyżej). */
 			'opinie'         => array(),
-			'gwarancja'      => '14 dni gwarancji satysfakcji: jeśli bot nie spełni Twoich oczekiwań, napisz do nas — zwracamy pieniądze bez pytań. Zwrot oznacza wygaśnięcie prawa do aktualizacji i wsparcia dla kupionej kopii.',
+			'gwarancja'      => '14 dni gwarancji satysfakcji: jeśli bot nie spełni Twoich oczekiwań, napisz do nas — zwracamy pieniądze bez pytań. To dobrowolna gwarancja sprzedawcy, ponad przepisy: ustawowe prawo odstąpienia od umowy wygasa przy zakupie, bo treść cyfrowa jest dostarczana natychmiast (art. 38 ustawy o prawach konsumenta) — gwarancja satysfakcji obowiązuje niezależnie od tego. Zwrot oznacza wygaśnięcie prawa do aktualizacji i wsparcia dla kupionej kopii.',
 			'dowody_przypis' => 'Liczby z próbki 30 maili demo — Twoją trafność pokaże raport na TWOICH regułach i TWOJEJ poczcie.',
 			'faq'            => array(
 				array( 'Czy muszę podpinać skrzynkę?', 'Nie musisz — możesz pracować wyłącznie na próbkach CSV. Ale możesz: wtyczka obsługuje prawdziwą skrzynkę i przenosi w niej pocztę do folderów.' ),
@@ -648,7 +648,7 @@ function sklepag_formularz_zakupu( $p ) {
 		(`wp_generate_password( 24, false, false )`), a `sklepag_znacznik_okna_z_post()` przepuszcza
 		[A-Za-z0-9] do 40 znaków, więc nic nie jest obcinane. Bez `crypto.getRandomValues` albo bez
 		JavaScriptu skrypt nie robi NIC i zostaje wartość z renderu. Znacznik nie jest sekretem ani
-		dowodem tożsamości — rozdziela okna dwóch przeglądarek za jednym adresem (zakup.php:47-48). */
+		dowodem tożsamości — rozdziela okna dwóch przeglądarek za jednym adresem (`sklepag_znacznik_okna_z_post()` w zakup.php). */
 	$html .= '<script>(function(){try{var c=window.crypto;if(!c||!c.getRandomValues){return;}var p=document.querySelector("#sklepag-kup-formularz input[name=okno]");if(!p){return;}var a=new Uint8Array(12);c.getRandomValues(a);var s="";for(var i=0;i<a.length;i++){s+=(a[i]<16?"0":"")+a[i].toString(16);}p.value=s;}catch(e){}})();</script>';
 	// Panel płatności osadzonej (0.9.25): `platnosc.js` odsłania go po utworzeniu sesji i montuje w nim
 	// elementy Stripe (e-mail, karta) — formularz karty jest w ramce Stripe (PCI), my dajemy tylko ramy i kolory.

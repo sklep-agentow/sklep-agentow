@@ -41,3 +41,56 @@ Zamiennik pytań do zlecającego (egzamin ich zakazuje). Decyzje „drogo cofną
 | D36 | DANE DO FAKTURY PRZY ZAKUPIE (0.9.25): własne, nieobowiązkowe pola nazwa+NIP+ADRES (komplet albo nic), NIP z sumą kontrolną, w metadanych sesji → `zamowienia.dane_faktury` (schemat 8) → mail + panel; anonimizacja czyści; Polityka prywatności (szkic) wymienia cel i podstawę (art. 6 ust. 1 lit. c RODO — obowiązek z ustawy o VAT). ⛔ Sklep NIE różnicuje praw kupującego po NIP-ie i faktur nie wystawia | właściciel 30.08: „NIP dodać, jeśli da się w trybie testowym bez kont — i dobrze zbadaj prawo”; zwiad prawny 30.08: art. 106b ust. 1 (firma: faktura obowiązkowa, art. 106i do 15. dnia), 106b ust. 3 (konsument: 3 miesiące), 106e ust. 1 pkt 3 (ADRES nabywcy wymagany → sam NIP to fałszywy komplet), art. 38a upk (NIP nie odbiera ochrony), NIP JDG = dana osobowa (doktryna/UODO); paragon z NIP (106b ust. 5) nie dotyczy — sklep bez kasy | zbieranie NIP przez Stripe (`tax_id_collection`: zależność od konta Stripe); tylko NIP bez adresu; automatyczne faktury (Stripe Invoicing płatne / integracja z Fakturownią — osobne zlecenie) | właściciel 30.08 (zakres), koordynatorka (wykonanie) |
 | D37 | SEO stron sklepu (0.9.26): **D10 opisuje stan z 17.08 i jest PRZESTARZAŁE** — od K5 strony produktów są renderowane po stronie serwera (PHP, bez JS), mają tytuł i opis per produkt, canonical (od 0.9.26 także na motywie bez `rel_canonical`), OpenGraph/Twitter, JSON-LD Product+BreadcrumbList+FAQPage i własną mapę witryny (`Sklepag_Sitemap_Produkty`). Nadal ŚWIADOMIE nie ma: pre-renderu do plików statycznych (łamałby „nowy produkt bez zmian kodu”) i pomiaru `perf` Lighthouse na tym serwerze (mierzy obciążenie maszyny — AN-022; pomiar na hostingu klienta wg `audyt/CO-WISI.md`). Źródło reguł: Google Search Central (dane strukturalne Product, canonical). | zmierzone 30.08 na stosie: strona produktu bez canonicala mimo filtra w kodzie | zostawić D10 bez korekty (mylił: „meta ogólne”, „z API”) | koordynatorka 30.08 |
 
+## D39 — Regulamin i Polityka jako SZABLONY w wersji roboczej, plus ostrzeżenie w panelu (3.09)
+
+**Decyzja:** wtyczka zakłada obie strony przy aktywacji, ale **jako `draft`, z miejscami na dane
+sprzedawcy**, i **nie publikuje ich za właściciela**. Od 0.9.40 dokłada do tego **trwałe ostrzeżenie
+w panelu**: „sklep może przyjmować płatności, a dokumenty dla kupujących nie są gotowe".
+
+**Dlaczego nie publikujemy za właściciela:** dokument prawny wymaga nazwy, adresu i kontaktu
+sprzedawcy oraz adresu do reklamacji. Opublikowanie strony z napisem `[NAZWA, ADRES, KONTAKT]`
+byłoby **gorsze niż jej brak** — wyglądałoby na gotowy regulamin, a nie byłoby nim.
+
+**To jest standard rynku, nie nasze odstępstwo — sprawdzone w kodzie, nie w opinii:**
+
+| kto | co robi | dowód |
+|---|---|---|
+| **rdzeń WordPressa** | tworzy stronę „Privacy Policy" jako `'post_status' => 'draft'`, do ręcznego wskazania w Ustawieniach → Prywatność | `wp-admin/options-privacy.php` (WordPress/WordPress, `master`) |
+| **WooCommerce** | tworzy „Refund and Returns Policy" jako `'post_status' => 'draft'` | `includes/class-wc-install.php`, `create_pages()`, gałąź `trunk` |
+| **WooCommerce** | strony „Terms and Conditions" **w ogóle nie tworzy**; dokumentacja: *„The Terms and Conditions page is not required but is highly recommended"* | `woocommerce.com/document/woocommerce-pages/` |
+| **katalog WordPress.org** | wytyczna 9 **zakazuje** sugerowania, że wtyczka „może zapewnić, zautomatyzować lub zagwarantować zgodność z prawem" | `developer.wordpress.org/plugins/wordpress-org/detailed-plugin-guidelines/` |
+
+⇒ Publikowanie gotowego regulaminu za właściciela byłoby **sprzeczne z wytyczną 9**. Nasze
+ostrzeżenie w panelu wykracza **ponad** minimum, które robią WordPress i WooCommerce.
+
+⛔ **Czego ta decyzja NIE załatwia:** treści prawnej nadal nie ma i wtyczka jej nie dostarczy.
+Sklep uruchomiony na kluczach produkcyjnych bez uzupełnienia tych stron **działa niezgodnie
+z obowiązkiem informacyjnym sprzedawcy** — i to jest odpowiedzialność właściciela, o czym
+panel mówi mu wprost, przy każdym wejściu, komunikatem, którego nie da się zamknąć.
+
+---
+
+## D40 — Retencja: rozliczenie zarzutu „obejmuje 2 tabele z 7" (3.09)
+
+**Zarzut (F4-F1, waga DUŻE):** retencja 90 dni obejmuje dwie tabele z siedmiu.
+**Sprawdziłam wszystkie siedem. Liczba jest prawdziwa, ale wniosek z niej — nie.**
+
+| tabela | co trzyma | czy sprzątana | werdykt |
+|---|---|---|---|
+| `logowania` | kto i kiedy logował się do panelu, IP | ✅ retencja 90 dni | w porządku |
+| `zdarzenia` | dziennik zdarzeń sklepu | ✅ retencja 90 dni | w porządku |
+| `rate_limit` | licznik zapytań, wiersz żyje ~2 min | ✅ **kasowany po oknie** (kasownik w `sklepag_dociagnij_zalegle()`, krok 3 crona w `zakup.php`) | w porządku — **zarzut go nie policzył** |
+| `zamowienia` | e-mail kupującego, kwoty, dane do faktury | ❌ świadomie NIE | ⛔ **kasowanie byłoby BŁĘDEM** — to dokument księgowy, obowiązek podatkowy trwa lata, nie 90 dni |
+| `opinie` | imię i treść opinii, zgoda | ❌ NIE | treść **publikowana celowo** na stronie produktu; skasowanie po 90 dniach usunęłoby klientowi opinie. Usuwanie na żądanie działa (eksporter i kasownik RODO) |
+| `produkty` | nazwa, cena, plik | ❌ NIE | **brak danych osobowych** — retencja bezprzedmiotowa |
+| `sesje_checkout` | `stripe_session_id`, produkt, czas | ❌ NIE | ⭐ **jedyna realna luka** |
+
+⇒ **Z siedmiu tabel trzy są sprzątane, trzy sprzątane być NIE POWINNY, zostaje jedna.**
+
+**Dlaczego tej jednej nie naprawiamy przed oddaniem — powód, nie wygoda:** `sesje_checkout` jest
+czytana przez **dociąganie zaległych płatności** (`sklepag_dociagnij_zalegle`) i przez **obsługę
+wniosków RODO** (`sklepag_rodo_eksporter()` w `prywatnosc.php` liczy sesje powiązane z adresem kupującego). Kasowanie
+z niej wymaga wcześniejszego ustalenia dwóch okien: po jakim czasie sesja nie może już zostać
+domknięta przez reconciliation i jak długo musi być widoczna dla wniosku o dostęp do danych.
+Zmiana w tabeli obsługującej płatności, wprowadzona bez tych ustaleń, ryzykuje **zepsucie
+mechanizmu, który w audycie dostał najwyższą ocenę**. Świadomie odkładamy — z zapisanym powodem.

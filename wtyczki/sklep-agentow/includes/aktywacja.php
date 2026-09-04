@@ -189,7 +189,7 @@ function sklepag_schemat_braki() {
 		// niosą po dwa (`wp_sklepag_produkty`), więc wzorzec bez escapowania pasuje do KAŻDEJ
 		// tabeli tej samej długości z dowolnym znakiem na tych pozycjach — cudza tabela mogłaby
 		// zostać uznana za naszą i schemat wyglądałby na kompletny. Konwencja tej wtyczki stoi
-		// obok: uninstall.php:69-71 i includes/prywatnosc.php:82.
+		// obok: komentarz o `esc_like()` w uninstall.php i w includes/prywatnosc.php.
 		$jest = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $tabela ) ) );
 		if ( $jest !== $tabela ) {
 			$braki[] = $tabela;
@@ -317,7 +317,7 @@ function sklepag_utworz_strony() {
 	$strony = array(
 		'sklepag_strona_sklep'      => array( 'Sklep', '[sklepag_sklep]', 'publish' ),
 		'sklepag_strona_dziekujemy' => array( 'Dziękujemy za zakup', '[sklepag_dziekujemy]', 'publish' ),
-		'sklepag_strona_regulamin'  => array( 'Regulamin sklepu (SZABLON)', "SZABLON — wypełnij danymi sprzedawcy przed publikacją.\n\nSprzedawca: [NAZWA, ADRES, KONTAKT]\nProdukty: treści cyfrowe (wtyczki WordPressa) dostarczane natychmiast po opłaceniu.\nZgoda na natychmiastowe dostarczenie: kupujący wyraża ją przy zakupie i przyjmuje utratę prawa odstąpienia (art. 38 ust. o prawach konsumenta).\nReklamacje: [MAIL WŁAŚCICIELA].", 'draft' ),
+		'sklepag_strona_regulamin'  => array( 'Regulamin sklepu (SZABLON)', "SZABLON — wypełnij danymi sprzedawcy przed publikacją.\n\nSprzedawca: [NAZWA, ADRES, KONTAKT]\nProdukty: treści cyfrowe (wtyczki WordPressa) dostarczane natychmiast po opłaceniu.\nZgoda na natychmiastowe dostarczenie: kupujący wyraża ją przy zakupie i przyjmuje utratę prawa odstąpienia (art. 38 ust. o prawach konsumenta).\nGwarancja satysfakcji [ILE DNI — domyślnie 14]: NIEZALEŻNIE od powyższego sprzedawca zobowiązuje się dobrowolnie zwrócić pieniądze na wniosek kupującego złożony w tym terminie. To zobowiązanie PONAD ustawę, nie ustawowe prawo odstąpienia — strona produktu je obiecuje, więc regulamin musi je potwierdzać. Zwrot oznacza wygaśnięcie prawa do aktualizacji i wsparcia dla kupionej kopii.\nReklamacje: [MAIL WŁAŚCICIELA].", 'draft' ),
 		'sklepag_strona_polityka'   => array( 'Polityka prywatności sklepu (SZABLON)', "SZABLON — wypełnij danymi sprzedawcy przed publikacją.\n\nAdministrator danych: [NAZWA, KONTAKT]\nZakres: adres e-mail kupującego, dane transakcji, dziennik zdarzeń (90 dni, w tym adres IP przy każdym pobraniu pliku); dobrowolnie podane dane do faktury (nazwa firmy, NIP, adres — cel: wystawienie faktury, podstawa: obowiązek prawny z ustawy o VAT); przy dobrowolnej opinii — imię i treść opinii, publikowane na stronie produktu wyłącznie za wyrażoną w formularzu zgodą (usunięcie/anonimizację można wykonać na żądanie).\nPodmioty przetwarzające: operator płatności Stripe; mechanizm poczty serwera.\nBoty w trybie AI wysyłają treść zapytań do dostawcy API — [UZUPEŁNIJ po włączeniu].", 'draft' ),
 	);
 
