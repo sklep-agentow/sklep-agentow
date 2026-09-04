@@ -69,7 +69,8 @@ wp() { docker exec "$KONTENER" wp --allow-root --path=/var/www/html "$@"; }
 ETYKIETA="${1:-}"
 [ -n "$ETYKIETA" ] || { echo "użycie: linia-bazowa.sh <etykieta> | --porownaj A B" >&2; exit 2; }
 command -v docker >/dev/null || { echo "brak dockera" >&2; exit 2; }
-# ⛔ „NIE WIEM" TO NIE TO SAMO CO „NIE CHODZI" — patrz `narzedzia-qa/stos.sh:153`.
+# ⛔ „NIE WIEM" TO NIE TO SAMO CO „NIE CHODZI" — patrz funkcja `brak_stosu` w `narzedzia-qa/stos.sh` (odsylam po NAZWIE: numer, ktory tu stal,
+# wskazywal juz srodek zupelnie innej funkcji).
 docker ps > /dev/null 2>&1 || { echo "NIE WIEM, czy stos $KONTENER chodzi — to konto nie widzi Dockera (brak dostepu do demona, nie brak kontenera)" >&2; exit 2; }
 docker ps --filter "name=^${KONTENER}$" --filter status=running -q | grep -q . || { echo "Docker odpowiedzial: stosu $KONTENER na liscie NIE MA" >&2; exit 2; }
 [ -f "$ENV_ADMIN" ] && { set -a; . "$ENV_ADMIN"; set +a; }
@@ -139,14 +140,17 @@ for t in testy/*.php; do
 	#    dostawałyby zrzuconą tabelę.
 	# ⛔ GDZIE TEN STRAZNIK NAPRAWDE BIEGNIE — zmierzone, nie zalozone:
 	#      - krok `Proby kontrolne bramek` w `.github/workflows/quality.yml` wola przelot
-	#        Z ZAKRESEM `narzedzia-qa`, wiec proby z `testy/`
-	#        ⛔ Odsylam po NAZWIE KROKU, nie po numerze linii: poprzednia wersja mowila
-	#        `quality.yml:127`, a wywolanie stoi dzis w `:131` — przesunal je TEN SAM
-	#        commit, ktory ten odsylacz pisal (recenzja #274 r13, WAZNA 1).
-	#        (w tym proba tego straznika) w CI PR-owym NIE BIEGNA ANI RAZU;
+	#        Z ZAKRESEM `narzedzia-qa`, wiec proby z `testy/` (w tym proba tego straznika)
+	#        w CI PR-owym NIE BIEGNA ANI RAZU;
+	#        ⛔ Odsylam po NAZWIE KROKU, nie po numerze linii — i dlatego numeru tu NIE MA
+	#        ZADNEGO: poprzednie wersje tego zdania podawaly numer wywolania DWA RAZY i za
+	#        kazdym razem uniewaznil go commit tej samej galezi, ktory ten odsylacz pisal
+	#        (recenzja #274 r13 WAZNA 1, r16 WAZNA 1 — trzecie wystapienie w jednym zdaniu).
+	#        Szukaj po nazwie kroku: `grep -n 'Proby kontrolne bramek' .github/workflows/quality.yml`;
 	#      - SPUST JEST RECZNY: ktos musi uruchomic przelot BEZ zakresu przed wydaniem.
-	#        `k7-koniec.sh` przelotu NIE URUCHAMIA — czyta `audyt/sklep/PROBY-KONTROLNE.log` (:35),
-	#        sprawdza jego znacznik (:137) i swiezosc (:153), a przy braku KAZE go uruchomic
+	#        `k7-koniec.sh` przelotu NIE URUCHAMIA — czyta log przelotu (stala `PROBY=`),
+	#        sprawdza jego znacznik `WYGENEROWANE-PRZEZ:` i swiezosc wzgledem commitu,
+	#        a przy braku KAZE go uruchomic
 	#        (`fail 6 proby kontrolne ... uruchom: bash narzedzia-qa/proby-kontrolne-przelot.sh`).
 	#        Zmierzone biegiem tej bramki: EXIT=1 i wlasnie ten komunikat. Poprzednia wersja
 	#        tego wiersza obiecywala automat, ktorego nie ma — biegnie w k7-koniec

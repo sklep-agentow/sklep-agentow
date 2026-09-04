@@ -119,7 +119,9 @@ jobs:
       # przelot sam odmawia pracy na brudnym drzewie i mialby prawo odmowic sobie.
       #
       # ⛔ ZAKRES `narzedzia-qa` JEST CELOWY I ZMIERZONY. Przelot po całym repo bierze
-      # 50 prób (`narzedzia-qa` 18 + `testy` 32), a spora część tych z `testy/` wymaga
+      # WSZYSTKIE próby kontrolne repozytorium — liczby NIE podaję, bo starzeje się szybciej
+      # niż jedna kolejka PR-ów (dwie rundy z rzędu: `50 = 18 + 32` stało się `51 = 18 + 33`
+      # po scaleniu jednej gałęzi). Policz komendą niżej. Spora część tych z `testy/` wymaga
       # żywego stosu WordPressa, a manifest bramek mówi wprost, że w CI nie ma WP+Stripe.
       # Bez zawężenia ten krok padałby zawsze, na porażkach, które nie są wadami kodu. Próby produktu
       # chodzą w przelocie BEZ zakresu, uruchamianym RĘCZNIE przed wydaniem — tam stos stoi.
@@ -133,7 +135,9 @@ jobs:
       # WAŻNA 2 — poprzednia wersja odmawiała podania liczby i dwie linie niżej podawała
       # ją słownie; sweep objął wtedy ZAPIS cyfrą, nie POJĘCIE).
       # ⛔ `k7-koniec.sh` tego przelotu NIE URUCHAMIA: czyta jego log, sprawdza znacznik
-      # (:137) i świeżość (:153), a przy braku KAŻE go uruchomić. Poprzednie zdanie mówiło
+      # `WYGENEROWANE-PRZEZ:` i świeżość względem commitu, a przy braku KAŻE go uruchomić.
+      # (Odsyłam po TREŚCI, nie po numerze linii — numery, które tu stały, ruszały się już
+      # trzykrotnie, za każdym razem przez commit tej samej gałęzi.) Poprzednie zdanie mówiło
       # „k7-koniec woła przelot” i obiecywało automat, którego nie ma (recenzja #274 r12,
       # WAŻNA 1 — ta sama nieprawda stała też w narzedzia-qa/linia-bazowa.sh, w komentarzu
       # „GDZIE TEN STRAZNIK NAPRAWDE BIEGNIE”, w członie o ręcznym spuście; odsyłam po
