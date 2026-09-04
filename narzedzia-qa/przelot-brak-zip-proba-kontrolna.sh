@@ -43,7 +43,7 @@ MUTANT="$KORZEN/narzedzia-qa/.przelot-mutant-proby.tmp.sh"
 # ⛔ EXIT INT TERM, nie samo EXIT (recenzja #272 r15, „nieodtworzone przypuszczenia").
 # Od tej rundy mutant lezy WEWNATRZ repozytorium, wiec przerwanie z klawiatury zostawiloby
 # smiec w drzewie roboczym — a przelot odmawia pracy na brudnym drzewie.
-trap 'rm -rf "$ATRAPA" "$ROBOCZY"; rm -f "$MUTANT"' EXIT INT TERM
+trap 'rm -rf "$ATRAPA" "$ROBOCZY"; rm -f "$MUTANT" "$KORZEN/narzedzia-qa/.przelot-whoami.tmp.sh"' EXIT INT TERM
 
 for N in bash sh git sed awk grep find sort mktemp date printf cat rm cp mv \
          mkdir chmod head tail cut tr wc dirname basename docker php jq unzip; do
@@ -186,7 +186,7 @@ echo "  (oryginal NIETKNIETY — mutant to osobny plik, kasowany przy wyjsciu)"
 # ⭐ Dlatego mierzymy ja WPROST, wskazujac ENV_ADMIN na plik, ktorego nie ma.
 echo
 echo "--- galaz BRAK DANYCH LOGOWANIA (mierzona wprost, nie przez przypadek) ---"
-WY_OUT="$(cd "$KORZEN" && ENV_ADMIN="$ROBOCZY/nie-ma-takiego-pliku.env" PATH="$ATRAPA" \
+WY_OUT="$(cd "$KORZEN" && ENV_ADMIN_PROBA="$ROBOCZY/nie-ma-takiego-pliku.env" PATH="$ATRAPA" \
 	bash "$PRZELOT" "$ROBOCZY/bezlog.log" "$ROBOCZY" 2> "$ROBOCZY/err-bezlog.txt")"
 B_KOD=$?
 B_ERR="$(cat "$ROBOCZY/err-bezlog.txt")"
@@ -210,7 +210,9 @@ fi
 
 # ⛔ ASERCJA BEZ MUTANTA JEST MARTWA. Podkladam stan sprzed naprawy — wywolanie `whoami`
 #    w tej samej galezi — i zadam, zeby asercja wyzej PADLA. Inaczej „OK" nic nie znaczy.
-MUT_LOG="$ROBOCZY/przelot-whoami.sh"
+# ⛔ MUTANT W TYM SAMYM KORZENIU CO ORYGINAL (regula 140 linii wyzej, recenzja #280 r3 D5):
+#    przelot liczy KORZEN ze sciezki wlasnego pliku, wiec kopia w /tmp mierzylaby INNE repo.
+MUT_LOG="$KORZEN/narzedzia-qa/.przelot-whoami.tmp.sh"
 cp "$PRZELOT" "$MUT_LOG"
 M_PRZED="$(cksum < "$MUT_LOG")"
 sed -i 's|"${USER:-UID $EUID}"|"$(whoami)"|' "$MUT_LOG"
@@ -219,14 +221,17 @@ if [ "$M_PRZED" = "$M_PO" ]; then
 	echo "  BLAD mutacja NIE weszla do pliku (ZGNILA KOTWICA sed): whoami w galezi bez logowania"
 	NIETRAFIONE=$((NIETRAFIONE + 1))
 else
-	WY_OUT="$(cd "$KORZEN" && ENV_ADMIN="$ROBOCZY/nie-ma-takiego-pliku.env" PATH="$ATRAPA" \
+	WY_OUT="$(cd "$KORZEN" && ENV_ADMIN_PROBA="$ROBOCZY/nie-ma-takiego-pliku.env" PATH="$ATRAPA" \
 		bash "$MUT_LOG" "$ROBOCZY/bezlog-mut.log" "$ROBOCZY" 2> "$ROBOCZY/err-bezlog-mut.txt")"
 	MB_ERR="$(cat "$ROBOCZY/err-bezlog-mut.txt")"
 	if echo "$MB_ERR" | grep -q 'command not found'; then
 		echo "  OK   straznik PADL na: whoami spoza atrapy PATH (stan sprzed naprawy)"
 	else
+		# ⛔ MARTWA ASERCJA to wada PRZYRZADU, nie slepota straznika — idzie do NIETRAFIONE
+		#    (EXIT=2), zgodnie z konwencja, ktora ten PR ustanowil w 17 probach. Do rundy 3
+		#    szla do BLEDY i konczyla zdaniem „STRAZNIK SLEPY" o czyms, czego nie zmierzono.
 		echo "  BLAD straznik NIE zlapal: whoami spoza atrapy PATH — asercja jest MARTWA"
-		BLEDY=$((BLEDY + 1))
+		NIETRAFIONE=$((NIETRAFIONE + 1))
 	fi
 fi
 

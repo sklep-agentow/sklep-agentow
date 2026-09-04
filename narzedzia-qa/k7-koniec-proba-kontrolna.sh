@@ -120,6 +120,11 @@ psuj_proby_log() { sed -i 's/proba-07.sh EXIT=0/proba-07.sh EXIT=1/' "$1/audyt/s
 # wzorzec EXIT=2 lapal takze EXIT=21 i padniecie szlo do puli „nie zmierzono, swiadome”,
 # czyli bramka ZLAGODNIALA. Ta atrapa psuje DOKLADNIE jeden warunek: sam kod wyjscia.
 psuj_proby_log_21() { sed -i 's/proba-07.sh EXIT=0/proba-07.sh EXIT=21/' "$1/audyt/sklep/PROBY-KONTROLNE.log"; }
+# SUFIT NA „NIC NIE ZMIERZYLAM" (#280 r3 W1). Log, w ktorym KAZDA proba ma EXIT=2, przechodzil
+# warunek liczby wierszy, mial ZLE_P=0 i dawal GO — bramka mowila „0 padniec z 26", nie
+# zmierzywszy niczego. Ta atrapa psuje DOKLADNIE jeden warunek: zamienia kody 0 na 2,
+# nie ruszajac ani liczby wierszy, ani znacznika, ani commitu.
+psuj_proby_niezmierzone() { sed -i 's/\.sh EXIT=0 /.sh EXIT=2 /' "$1/audyt/sklep/PROBY-KONTROLNE.log"; }
 # Dwa psucia dla DATY WAŻNOŚCI dowodu (recenzja #198 runda 3, W3). Każde psuje DOKŁADNIE
 # jeden warunek: pierwsze odbiera logowi znacznik maszynowy, drugie zostawia znacznik,
 # a przesuwa commit — inaczej nie wiadomo, który warunek bramkę zatrzymał.
@@ -169,8 +174,14 @@ sprawdz "4 anomalia OTWARTA z ID bez AN- (W5)"             1 psuj_anomalia_id   
 sprawdz "1a wcięty punkt mapy (D1)"                        1 psuj_wcieta        "1a mapa: nieznany znacznik"
 sprawdz "3 potok \\| w kolumnie dowodu → nadal GO (W6)"     0 potok_w_dowodzie   "K7: GO"
 sprawdz "6 proba kontrolna EXIT=1 w logu"                 1 psuj_proby_log   "PADŁO"
-sprawdz "6 EXIT=2 (nie zmierzono) to NIE porazka -> GO"   0 psuj_proby_log_niezm ""
+# ⛔ ZMIANA DECYZJI, NIE NAGINANIE TESTU (#280 r3 W1). Do rundy 3 ten przypadek zadal, zeby
+# EXIT=2 dawal GO — czyli kanonizowal, ze wydanie wychodzi, choc proba NICZEGO nie zmierzyla.
+# Oba siostrzane narzedzia maja tu TWARDE ZERO (proby-kontrolne-przelot.sh:134, bramki.sh:495);
+# bramka wydania byla jedyna bez sufitu. Rozroznienie EXIT=1 / EXIT=2 ZOSTAJE i jest mierzone
+# osobno: oba daja NO-GO, ale KOMUNIKAT jest inny — „PADŁO" kontra „NIC NIE ZMIERZYŁO".
+sprawdz "6 EXIT=2 daje NO-GO, ale mowi NIC NIE ZMIERZYLO (nie PADLO)" 1 psuj_proby_log_niezm "NIC NIE ZMIERZYŁO"
 sprawdz "6 EXIT=21 to PADNIECIE, nie \"nie zmierzono\" (#280 D6)" 1 psuj_proby_log_21 "PADŁO"
+sprawdz "6 WSZYSTKIE proby EXIT=2 -> NO-GO, nie GO (#280 r3 W1)" 1 psuj_proby_niezmierzone "NIC NIE ZMIERZYŁO"
 sprawdz "6 log BEZ znacznika przelotu (pisany recznie)"   1 psuj_proby_znacznik "bez znacznika przelotu"
 sprawdz "6 log z commitu spoza historii HEAD"              1 psuj_proby_commit   "dowód z innej linii"
 sprawdz "6 narzedzie zmienione PO przelocie"               1 psuj_proby_po      "przeterminowany"

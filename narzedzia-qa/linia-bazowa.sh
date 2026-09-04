@@ -73,7 +73,19 @@ command -v docker >/dev/null || { echo "brak dockera" >&2; exit 2; }
 # wskazywal juz srodek zupelnie innej funkcji).
 docker ps > /dev/null 2>&1 || { echo "NIE WIEM, czy stos $KONTENER chodzi — to konto nie widzi Dockera (brak dostepu do demona, nie brak kontenera)" >&2; exit 2; }
 docker ps --filter "name=^${KONTENER}$" --filter status=running -q | grep -q . || { echo "Docker odpowiedzial: stosu $KONTENER na liscie NIE MA" >&2; exit 2; }
-[ -f "$ENV_ADMIN" ] && { set -a; . "$ENV_ADMIN"; set +a; }
+# ⛔ `-r`, NIE `-f`, ORAZ galaz `else` (recenzja #280 r1 W5, r3 W2 — to jest ZRODLO wzorca,
+#    ktory naprawiono najpierw w kopii). Na wykonawcy CI (`ciuser` od 31.08, naprawa B-3) plik
+#    jest NIEWIDOCZNY: `-f` daje falsz, pominiecie bylo CICHE, a proby wymagajace panelu
+#    raportowaly BRAK LOGOWANIA jako wade produktu. Zadnego zewnetrznego polecenia w galezi
+#    `else` — skrypt bywa uruchamiany z okrojonym PATH ($USER i $EUID daje sama powloka).
+if [ -r "$ENV_ADMIN" ]; then
+	set -a; . "$ENV_ADMIN"; set +a
+	printf 'DANE LOGOWANIA: wczytane z %s\n' "$ENV_ADMIN" >&2
+else
+	printf 'UWAGA DANE LOGOWANIA NIEWCZYTANE (%s nieczytelny dla %s) — kroki wymagajace\n' \
+		"$ENV_ADMIN" "${USER:-UID $EUID}" >&2
+	printf '      panelu zaraportuja BRAK LOGOWANIA; to wada SRODOWISKA, nie produktu.\n' >&2
+fi
 
 SHA=$(git rev-parse --short HEAD)
 KIEDY=$(date '+%Y-%m-%d %H:%M')

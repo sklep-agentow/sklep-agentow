@@ -171,6 +171,15 @@ else
 	ZLE_P=$(grep -E '^[A-Za-z0-9_.-]+\.sh EXIT=' "$PROBY" | grep -vcE 'EXIT=(0|2) ')
 	NIEZM_P=$(grep -cE '^[A-Za-z0-9_.-]+\.sh EXIT=2 ' "$PROBY")
 	POM_P=$(grep -cE '^POMINIETO ' "$PROBY")
+	# ⛔ SUFIT NA "NIC NIE ZMIERZYLAM" (recenzja #280 r2 W1, r3 W1). Do tej rundy NIEZM_P byl
+	#    wylacznie DRUKOWANY, nigdy porownywany: log, w ktorym WSZYSTKIE 26 prob ma EXIT=2,
+	#    przechodzil warunek ILE_P >= 26 (liczy WIERSZE, nie pomiary), mial ZLE_P = 0 i dawal
+	#    GO. Bramka wydania mowila „0 padniec z 26", nie zmierzywszy niczego.
+	#    Siostrzane narzedzia maja ten sufit od 4.09: proby-kontrolne-przelot.sh:134 oraz
+	#    bramki.sh:495 — obydwa jako TWARDE ZERO.
+	# ⛔ LITERAL, nie ${...:-} — wzorem bramki.sh:490: sufit czytany ze SRODOWISKA pozwala
+	#    przywrocic ciche zielone bez ruszenia jednego bajtu w repozytorium.
+	MAX_NIEZM_P=0
 	# DATA WAŻNOŚCI: nie „ten sam commit" (commit zapisujący log sam przesuwa HEAD, więc taki
 	# warunek nie dałby się spełnić nigdy), tylko „od przelotu nie zmieniło się nic, czego ten
 	# przelot dowodzi". Zmiana w narzędziach, testach albo kodzie wtyczki unieważnia dowód;
@@ -182,6 +191,8 @@ else
 		fail "6 próby kontrolne: po przelocie ($P_COMMIT) zmieniło się to, czego on dowodzi — $POTEM… — dowód przeterminowany (uruchom: bash narzedzia-qa/proby-kontrolne-przelot.sh)"
 	elif [ "$ILE_P" -lt 26 ]; then
 		fail "6 próby kontrolne: uruchomionych tylko $ILE_P (wymagane ≥26) — zakres zawężony, pominiętych $POM_P"
+	elif [ "$NIEZM_P" -gt "$MAX_NIEZM_P" ]; then
+		fail "6 próby kontrolne: $NIEZM_P z $ILE_P NIC NIE ZMIERZYŁO (EXIT=2, sufit: $MAX_NIEZM_P) — zestaw kurczy się po cichu; przelot na $P_COMMIT (uruchom: bash narzedzia-qa/proby-kontrolne-przelot.sh)"
 	elif [ "$ZLE_P" -ne 0 ]; then
 		fail "6 próby kontrolne: $ZLE_P z $ILE_P PADŁO (EXIT=1); nie zmierzono: $NIEZM_P (EXIT=2, świadome); przelot na $P_COMMIT"
 	else

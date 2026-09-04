@@ -26,6 +26,34 @@ PACZKA="${1:-boty/paczki/segregator-maila-1.3.0.zip}"
 command -v unzip > /dev/null && command -v zip > /dev/null || { echo "PROBA: brak zip/unzip" >&2; exit 2; }
 
 BLEDY=0
+KOTWICE=0
+ODWROTNA=0
+# ⛔ KLASA 138: TRZY rozne rzeczy = TRZY liczniki. Wspolny licznik kaze skryptowi orzec
+#    o PRODUKCIE rzecz, ktorej NIE ZMIERZYL.
+#      BLEDY    straznik nie zlapal mutanta  -> EXIT=1, wada produktu
+#      KOTWICE  kotwica sed zgnila           -> EXIT=2, proba nic nie zmierzyla
+#      ODWROTNA czysty kod nie przechodzi    -> EXIT=2, proba nic nie znaczy
+podsumowanie_proby() {           # $1 = komunikat, gdy wszystko zmierzone i zielone
+  # ⛔ KOLEJNOSC: padnieta kontrola odwrotna UNIEWAZNIA przebieg (straznik pada zawsze),
+  #    wiec sprawdzana jest PIERWSZA, a licznik BLEDY nie jest wtedy werdyktem.
+  if [ "$ODWROTNA" -gt 0 ]; then
+    echo "KONTROLA ODWROTNA PADLA ($ODWROTNA) — czysty kod NIE przechodzi, wiec proba NIC nie znaczy."
+    echo "  Licznik BLEDY=$BLEDY jest NIEWIARYGODNY i NIE jest werdyktem o produkcie."
+    echo "  Sprawdz warunki wstepne (zaleznosci, stos, dane logowania), potem powtorz."
+    exit 2
+  fi
+  if [ "$KOTWICE" -gt 0 ]; then
+    echo "PROBA NIC NIE ZMIERZYLA W $KOTWICE PRZYPADKACH — kotwica sed zgnila po refaktorze."
+    echo "  To wada PRZYRZADU, nie straznika: zanim oskarzysz produkt, uruchom straznika BEZPOSREDNIO."
+    exit 2
+  fi
+  if [ "$BLEDY" -gt 0 ]; then
+    echo "$2"
+    exit 1
+  fi
+  echo "$1"
+  exit 0
+}
 BAZA="$(mktemp -d)"
 trap 'rm -rf "$BAZA"' EXIT
 
@@ -76,7 +104,7 @@ mutuj_i_sprawdz() {
 	local nazwa="$1" plik="$2" polecenie="$3" wzorzec="$4" opis="$5" fraza="$6" zip
 	if ! zip="$(zmutuj "$nazwa" "$plik" "$polecenie" "$wzorzec")"; then
 		printf '  BLAD %-58s (mutacja NIE weszla — kotwica zgnila)\n' "$opis"
-		BLEDY=$(( BLEDY + 1 ))
+		KOTWICE=$((KOTWICE+1))
 		return
 	fi
 	sprawdz "$opis" "$zip" 1 "$fraza"
@@ -130,9 +158,5 @@ echo "=== KONTROLA ODWROTNA — czysta paczka MA PRZEJSC ==="
 sprawdz "paczka z repozytorium, bez zmian" "$KORZEN/$PACZKA" 0
 
 echo
-if [ "$BLEDY" -eq 0 ]; then
-	echo "DOWOD ZACHOWANIA ODRZUCA KAZDA PODLOZONA WADE — i przepuszcza czysta paczke"
-	exit 0
-fi
-echo "DOWOD ZACHOWANIA POMYLIL SIE $BLEDY RAZ(Y) — nie oddawaj go w tym stanie"
-exit 1
+podsumowanie_proby "DOWOD ZACHOWANIA ODRZUCA KAZDA PODLOZONA WADE — i przepuszcza czysta paczke" \
+	"DOWOD ZACHOWANIA POMYLIL SIE $BLEDY RAZ(Y) — nie oddawaj go w tym stanie"

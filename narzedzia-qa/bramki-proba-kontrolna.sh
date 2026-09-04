@@ -32,6 +32,34 @@ done
 KOPIA_B=$(mktemp)
 KOPIA_W=$(mktemp)
 BLEDY=0
+KOTWICE=0
+ODWROTNA=0
+# ⛔ KLASA 138: TRZY rozne rzeczy = TRZY liczniki. Wspolny licznik kaze skryptowi orzec
+#    o PRODUKCIE rzecz, ktorej NIE ZMIERZYL.
+#      BLEDY    straznik nie zlapal mutanta  -> EXIT=1, wada produktu
+#      KOTWICE  kotwica sed zgnila           -> EXIT=2, proba nic nie zmierzyla
+#      ODWROTNA czysty kod nie przechodzi    -> EXIT=2, proba nic nie znaczy
+podsumowanie_proby() {           # $1 = komunikat, gdy wszystko zmierzone i zielone
+  # ⛔ KOLEJNOSC: padnieta kontrola odwrotna UNIEWAZNIA przebieg (straznik pada zawsze),
+  #    wiec sprawdzana jest PIERWSZA, a licznik BLEDY nie jest wtedy werdyktem.
+  if [ "$ODWROTNA" -gt 0 ]; then
+    echo "KONTROLA ODWROTNA PADLA ($ODWROTNA) — czysty kod NIE przechodzi, wiec proba NIC nie znaczy."
+    echo "  Licznik BLEDY=$BLEDY jest NIEWIARYGODNY i NIE jest werdyktem o produkcie."
+    echo "  Sprawdz warunki wstepne (zaleznosci, stos, dane logowania), potem powtorz."
+    exit 2
+  fi
+  if [ "$KOTWICE" -gt 0 ]; then
+    echo "PROBA NIC NIE ZMIERZYLA W $KOTWICE PRZYPADKACH — kotwica sed zgnila po refaktorze."
+    echo "  To wada PRZYRZADU, nie straznika: zanim oskarzysz produkt, uruchom straznika BEZPOSREDNIO."
+    exit 2
+  fi
+  if [ "$BLEDY" -gt 0 ]; then
+    echo "$2"
+    exit 1
+  fi
+  echo "$1"
+  exit 0
+}
 
 # ⛔ WŁASNY, JEDNORAZOWY KATALOG TYMCZASOWY NA CZAS PRÓBY (1.09).
 # Ta próba PODKŁADA błędy do plików i zaraz je PRZYWRACA. PHPStan rozpoznaje
@@ -60,7 +88,7 @@ probuj() {
 	eval "$mutacja"
 	po=$(md5sum "$BRAMKI" "$WORKFLOW" | md5sum)
 	if [ "$przed" = "$po" ]; then
-		printf '  BLAD mutacja NIE weszla: %-52s\n' "$opis"; BLEDY=$((BLEDY+1)); return
+		printf '  BLAD mutacja NIE weszla: %-52s\n' "$opis"; KOTWICE=$((KOTWICE+1)); return
 	fi
 	local wyjscie kod
 	wyjscie=$(eval "$straznik" 2>&1); kod=$?
@@ -161,7 +189,7 @@ slad_probuj() {
 	cp -r wtyczki/chatbot-live/. "$KOPIA_WTYCZKI/"
 	printf '%s\n' "$tresc" >> "$KOPIA_WTYCZKI/includes/silnik.php"
 	if ! grep -qF "$tresc" "$KOPIA_WTYCZKI/includes/silnik.php"; then
-		printf '  BLAD mutacja NIE weszla: %-52s\n' "$opis"; BLEDY=$((BLEDY+1)); return
+		printf '  BLAD mutacja NIE weszla: %-52s\n' "$opis"; KOTWICE=$((KOTWICE+1)); return
 	fi
 	wyjscie=$(SLADY_ZALEGLOSCI=/dev/null bash "$SKANER" chatbot-live "$KOPIA_WTYCZKI" 2>&1) || kod=$?
 	if [ "$kod" -ne 0 ] && printf '%s' "$wyjscie" | grep -qF "$fraza"; then
@@ -202,7 +230,7 @@ if grep -qF "zdjac przed oddaniem" "$PLIK_WTYCZKI"; then
 		printf '  BLAD PRZESZLO NIEZAUWAZONE: %-42s (EXIT=%d)\n' "podlozony slad w bramki.sh" "$KOD_CI"; BLEDY=$((BLEDY+1))
 	fi
 else
-	printf '  BLAD mutacja NIE weszla: %-52s\n' "slad w prawdziwym pliku wtyczki"; BLEDY=$((BLEDY+1))
+	printf '  BLAD mutacja NIE weszla: %-52s\n' "slad w prawdziwym pliku wtyczki"; KOTWICE=$((KOTWICE+1))
 fi
 cp "$KOPIA_PLIKU" "$PLIK_WTYCZKI"
 
@@ -224,7 +252,7 @@ cp -r wtyczki/chatbot-live/. "$KOPIA_WTYCZKI/"
 if SLADY_ZALEGLOSCI=/dev/null bash "$SKANER" chatbot-live "$KOPIA_WTYCZKI" > /dev/null 2>&1; then
 	echo "  OK   czysta wtyczka przechodzi skan sladow (EXIT=0)"
 else
-	echo "  BLAD czysta wtyczka NIE przechodzi skanu sladow"; BLEDY=$((BLEDY+1))
+	echo "  BLAD czysta wtyczka NIE przechodzi skanu sladow"; ODWROTNA=$((ODWROTNA+1))
 fi
 rm -rf "$PIASKOWNICA"
 
@@ -234,12 +262,12 @@ przywroc
 if bash $BRAMKI --tryb pelny > /dev/null 2>&1; then
 	echo "  OK   komplet bramek na czystym drzewie (EXIT=0)"
 else
-	echo "  BLAD komplet bramek NIE przechodzi na czystym drzewie"; BLEDY=$((BLEDY+1))
+	echo "  BLAD komplet bramek NIE przechodzi na czystym drzewie"; ODWROTNA=$((ODWROTNA+1))
 fi
 if bash narzedzia-qa/sprawdz-manifest.sh > /dev/null 2>&1; then
 	echo "  OK   straznik manifestu na czystym drzewie (EXIT=0)"
 else
-	echo "  BLAD straznik manifestu NIE przechodzi na czystym drzewie"; BLEDY=$((BLEDY+1))
+	echo "  BLAD straznik manifestu NIE przechodzi na czystym drzewie"; ODWROTNA=$((ODWROTNA+1))
 fi
 
 echo
@@ -422,9 +450,5 @@ done
 rm -rf "$KATALOG_ATRAP"
 
 echo
-if [ "$BLEDY" -eq 0 ]; then
-	echo "KURCZACY SIE ZESTAW BRAMEK ZOSTANIE ZAUWAZONY — wszystkie podlozone awarie zlapane"
-	exit 0
-fi
-echo "PRZEOCZONYCH AWARII: $BLEDY"
-exit 1
+podsumowanie_proby "KURCZACY SIE ZESTAW BRAMEK ZOSTANIE ZAUWAZONY — wszystkie podlozone awarie zlapane" \
+	"PRZEOCZONYCH AWARII: $BLEDY"
