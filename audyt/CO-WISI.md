@@ -906,11 +906,13 @@ zrzutów (wgranie wtyczki, aktywacja, Ustawienia sklepu, webhook) — po oddaniu
    „(WP_DEBUG włączony)”, czego nie mierzą. Naprawa klasy: `log_bledow()` ma PADAĆ (exit 2), gdy `debug.log` nie istnieje lub
    `WP_DEBUG_LOG` nie jest zdefiniowany, a `postaw_stos` ma kończyć się podłożonym notice’em i `grep -c` = 1.
 
-## 🟡 LISTA STATUSÓW ZAMKNIĘTYCH W TRZECH SKŁADNIACH (30.08, `/code-review ultra` na `#213` — jedyne znalezisko, waga „nit”)
+## 🟡 LISTA STATUSÓW ZAMKNIĘTYCH W CZTERECH SKŁADNIACH (30.08, `/code-review ultra` na `#213` — jedyne znalezisko, waga „nit”; 2.09 recenzja #268 r2: czwarta kopia)
+
+⚠️ **2.09 (#268, Q-4):** czwarta kopia `array( 'zwrocone', 'sporne' )` w **bramie pobrań** (`includes/pobieranie.php`, warunek odmowy 410). Tu rozjazd kosztuje pieniądze wprost: nowy status zamknięty dopisany do stałej SQL, a zapomniany w bramie = wydanie pliku po zwrocie, czyli `Q-4` z powrotem. Dług bez zmian (jedna tablica jako źródło + strażnik porównujący), waga po tej kopii: nie „nit”, tylko do zrobienia PRZED wydaniem 1.0.
 
 `'zwrocone','sporne'` żyje jako fragment SQL `SKLEPAG_STATUSY_ZAMKNIETE` (`wtyczki/sklep-agentow/sklep-agentow.php:44`), tablica PHP
-w bramce 409 (`wtyczki/sklep-agentow/includes/admin-zamowienie.php:63`) i konkatenacja `NOT IN` (`:117`, `:154`); `'mail_wyslany','mail_blad'` — bramka 409 (`:67`)
-i widoczność przycisku (`:504`). Scenariusz: nowy status zamknięty dopisany do stałej SQL, zapomniany w tablicy → „Wyślij
+w bramce 409 (`wtyczki/sklep-agentow/includes/admin-zamowienie.php:65`) i konkatenacja `NOT IN` (`:130`, `:182`); `'mail_wyslany','mail_blad'` — bramka 409 (`:69`)
+i widoczność przycisku (`:356`). ⛔ Numery sprawdzone wykonaniem 2.09 (`grep -n`), poprzednie (63/117/154/67/504) wskazywały nieistniejące miejsca. Scenariusz: nowy status zamknięty dopisany do stałej SQL, zapomniany w tablicy → „Wyślij
 ponownie” przechodzi mimo chargebacku. **Dług:** jedna tablica PHP jako źródło, fragment SQL budowany z niej (`implode`),
 strażnik porównujący oba. Po oddaniu, przy 0.9.25. Zero blokerów w tej recenzji.
 
@@ -1112,7 +1114,11 @@ niepilnowana · RODO w ruchu (retencja/anonimizacja/eksport WP) · dostarczalno�
 bramek „10 z 10” przy braku vendor · O-3 nagłówek rubryki v0.9.23 (świadome, osobny PR wg DECYZJE) ·
 DECYZJE.md: duplikat D28 i luka D29–30 (porządek numeracji, 0.9.28).
 
-## 🔴 DŁUG (audytor, 1.09 wieczór — pozycja `I-24` w `REJESTR-ZNALEZISK-INFRA.md`): GOLDEN pilnujący błędu WŁAŚCICIELA nie ma spustu
+## ✅ DOMKNIĘTE 2.09 (dawniej 🔴 DŁUG, audytor 1.09 wieczór — `I-24`): GOLDEN pilnujący błędu kolegi (do 2.09 zapisany jako „właściciela”) MA spust
+**Rozwiązanie pułapki:** golden biegnie na STOSIE PRÓBNYM od zera (`testy/lib-golden-stos.sh` na `narzedzia-qa/lib-stos-probny.sh`), nie na wspólnym — bramka `golden` w `bramki.sh` (tryb pełny; bez Dockera pominięta JAWNIE, próg 13→12), próba kontrolna 2.0.0 mutuje KOPIĘ wtyczki w katalogu tymczasowym. Dowody uruchomienia w PR. ⛔ Klasa do ściągi PO scaleniu #271 (kolizja numeracji): **„strażnik bez spustu”** — ten sam wzorzec co `I-3`, `I-4`, `I-8` (narzędzie istnieje, nic go nie woła); kontrola: każdy nowy test/bramka w TYM SAMYM PR ma wołającego (grep nazwy w `bramki.sh`/CI/przelocie ≥ 1).
+
+<details><summary>Treść długu z 1.09 (historia)</summary>
+
 `testy/golden-kupujacy-dostaje-to-co-kupil-test.php` z PR #258 jest **jedynym** strażnikiem naprawy „kupujący
 dostaje dokładnie to, co kupił" — a więc tego błędu, którego właściciel nie zdradzał przez cały dzień polowania.
 Sam test jest dobry: na `main` **EXIT=0** (14 asercji), jego próba kontrolna **EXIT=0** (4 mutanty, każdy wywala
@@ -1125,6 +1131,8 @@ z gałęzi **do kontenera**, czyli tej samej operacji, która w `testy/golden-mi
 niebezpieczna dla WSPÓLNEGO stosu — podmienia wtyczkę i jej nie przywraca (zmierzone: przed `0.9.32`/`a9ce0f70…`,
 po `0.9.31`/`704b0ab7…`, czyli cofnięta czyjaś robota w toku). Wpięcie bez rozwiązania tego cofa builderom kod pod
 stopami przy każdym biegu bramek. Dowody: `audyt/plamy/GOLDEN-258-WERYFIKACJA.md`.
+
+</details>
 
 ## 🟡 CZTERY DROBNE Z RECENZJI #276 r7 — ODŁOŻONE ŚWIADOMIE, NIE PRZEOCZONE (3.09, r9)
 

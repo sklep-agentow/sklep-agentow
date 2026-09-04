@@ -79,7 +79,12 @@ else
 fi
 # Jedyne wywołania dockera wolno mieć trzem funkcjom. Każde inne to obejście
 # całej białej listy i musi zostać zauważone przy czytaniu diffu.
-ILE_DOCKER="$(grep -c 'docker ' "$STOS")"
+# ⛔ LICZYMY WYWOŁANIA, NIE WZMIANKI. Do 2.09 stało tu `grep -c 'docker '`, więc do
+# licznika wchodziły KOMENTARZE i treści komunikatów mówiące o `docker ps` — dopisanie
+# akapitu wyjaśniającego podbijało liczbę i strażnik oskarżał opis zamiast kodu.
+# Odrzucamy linie komentarza oraz te, w których `docker` stoi wyłącznie w cudzysłowie
+# odwrotnym (cytat w tekście). To ta sama klasa co bramka „liczba tabel” w #274.
+ILE_DOCKER="$(grep -vE '^[[:space:]]*#' "$STOS" | grep -vE '\\`docker' | grep -c 'docker ')"
 if [ "$ILE_DOCKER" -gt 6 ]; then
 	printf '  BLAD wywolan dockera w stos.sh jest %s — przybylo obejscie?\n' "$ILE_DOCKER"
 	BLEDY=$(( BLEDY + 1 ))
@@ -158,6 +163,105 @@ fi
 odczyt "licznik maili z lapacza"   "wiadomości:"       maile
 odczyt "ostatni mail"              "Subject"           ostatni-mail
 odczyt "wersja rdzenia"            "7."                wersja-wp
+
+# ------------------------------------------------------------------------
+# ⛔ „NIE WIEM, CZY STOS STOI” MUSI WYGLADAC INACZEJ NIZ „STOS NIE STOI”.
+# Do 2.09 `kontener_zyje()` mialo `docker ps … 2> /dev/null`, wiec brak dostepu do
+# `docker.sock` (tak chodzi wykonawca CI po naprawie B-3) dawal DOKLADNIE ten sam
+# komunikat co zatrzymany kontener — i twierdzil „sprawdzone przez docker ps”.
+# Skutek zmierzony: przez cztery rundy recenzji #268 obie strony pisaly „stos nie stoi”,
+# choc kontener chodzil, wiec NIKT nie uruchomil straznika.
+# Podkladamy atrape `docker` na PATH: raz padajaca, raz odpowiadajaca pustka.
+# ------------------------------------------------------------------------
+echo
+echo "--- rozroznianie: brak dostepu do Dockera vs zatrzymany kontener ---"
+ATRAPY="$(mktemp -d -t stos-atrapa-XXXXXX)"
+
+printf '#!/bin/sh\necho "permission denied while trying to connect to the docker API at unix:///var/run/docker.sock" >&2\nexit 1\n' > "$ATRAPY/docker"
+chmod +x "$ATRAPY/docker"
+WY_BRAK="$( PATH="$ATRAPY:$PATH" bash "$STOS" stan 2>&1 )"
+
+printf '#!/bin/sh\nexit 0\n' > "$ATRAPY/docker"
+chmod +x "$ATRAPY/docker"
+WY_STOP="$( PATH="$ATRAPY:$PATH" bash "$STOS" stan 2>&1 )"
+
+case "$WY_BRAK" in
+	*"NIE WIEM"*) printf '  OK   %-56s\n' "brak dostepu do Dockera melduje NIE WIEM" ;;
+	*)            printf '  BLAD %-56s\n' "brak dostepu do Dockera NIE melduje NIE WIEM"
+	              printf '%s\n' "$WY_BRAK" | head -3 | sed 's/^/         /'
+	              BLEDY=$(( BLEDY + 1 )) ;;
+esac
+case "$WY_STOP" in
+	*"nie jest uruchomiony"*) printf '  OK   %-56s\n' "zatrzymany kontener melduje NIE JEST URUCHOMIONY" ;;
+	*)                        printf '  BLAD %-56s\n' "zatrzymany kontener meldowany inaczej niz oczekiwano"
+	                          printf '%s\n' "$WY_STOP" | head -3 | sed 's/^/         /'
+	                          BLEDY=$(( BLEDY + 1 )) ;;
+esac
+# ⛔ KONTROLA, KTORA LAPIE WSPOLNY KOMUNIKAT: gdyby oba przypadki mowily to samo,
+# powyzsze dwa `case` moglyby OBA przejsc na jednym, wspolnym zdaniu.
+if [ "$WY_BRAK" = "$WY_STOP" ]; then
+	printf '  BLAD %-56s\n' "oba przypadki daja IDENTYCZNE wyjscie — nic nie odrozniamy"
+	BLEDY=$(( BLEDY + 1 ))
+else
+	printf '  OK   %-56s\n' "oba przypadki daja ROZNE wyjscie"
+fi
+
+echo
+echo "--- rozroznianie: brak POLECENIA docker vs martwy WordPress (recenzja #268 r12) ---"
+# ⛔ Dwie wady z rundy 12, obie tej samej klasy: skrypt ORZEKAL przyczyne, ktorej nie zmierzyl.
+#    (1) `wymagaj_narzedzia` szla galezia "STOS NIE ODPOWIADA" i KAZALA recenzentowi napisac
+#        w recenzji, ze stos nie odpowiada — na maszynie, na ktorej dockera nie ma WCALE.
+#    (2) `$kod` z curla przy braku polaczenia mial wartosc `000000` (curl wypisuje `000` I konczy
+#        sie niezerowo, wiec `|| echo 000` doklejalo drugie), wiec warunek `= "000"` NIE trafial
+#        i skrypt szedl dalej, meldujac np. "wersja rdzenia → 7.1" przy martwym WordPressie.
+# Kazdy przypadek psuje DOKLADNIE JEDEN warunek: pierwszy zabiera polecenie, drugi adres uslugi.
+
+# (1) PATH bez `docker` — same podstawowe narzedzia, zeby skrypt w ogole ruszyl
+GOLY="$(mktemp -d -t stos-goly-XXXXXX)"
+trap 'rm -rf "$ATRAPY" "$GOLY" "$KOPIA"' EXIT INT TERM
+for _b in bash sh grep sed awk curl printf cut tr head tail sort uniq wc env test cat; do
+	_p="$(command -v "$_b" 2> /dev/null)" && ln -sf "$_p" "$GOLY/$_b"
+done
+# ⛔ Przypadek psuje DOKLADNIE JEDEN warunek, wiec adres uslugi MUSI byc zywy — inaczej
+#    asercja mierzy KONIUNKCJE (brak polecenia ORAZ dzialajacy WordPress) i przy zgaszonym
+#    stosie oskarzalaby `stos.sh` o wade, ktorej nie ma. Podkladamy wlasny, zawsze zywy adres.
+ZYWY="$(mktemp -t stos-zywy-XXXXXX.sh)"
+PORT_ZYWY=$(python3 -c "import socket;s=socket.socket();s.bind(('127.0.0.1',0));print(s.getsockname()[1]);s.close()" 2> /dev/null || echo 8890)
+( python3 -m http.server "$PORT_ZYWY" --bind 127.0.0.1 > /dev/null 2>&1 & echo $! > "$GOLY/.pid" ) 2> /dev/null
+sleep 1
+sed "s#ADRES_WP=http://localhost:8890#ADRES_WP=http://127.0.0.1:$PORT_ZYWY#" "$STOS" > "$ZYWY"
+WY_GOLY="$( PATH="$GOLY" bash "$ZYWY" stan 2>&1 )"
+[ -f "$GOLY/.pid" ] && kill "$(cat "$GOLY/.pid")" 2> /dev/null
+rm -f "$ZYWY"
+case "$WY_GOLY" in
+	*"nie odpowiada"*) printf '  BLAD %-56s\n' "przypadek (1): adres uslugi NIE ZYJE — pomiar nic nie znaczy"
+	              BLEDY=$(( BLEDY + 1 )) ;;
+	*"NIE WIEM"*) printf '  OK   %-56s\n' "brak POLECENIA docker melduje NIE WIEM" ;;
+	*)            printf '  BLAD %-56s\n' "brak POLECENIA docker NIE melduje NIE WIEM"
+	              printf '%s\n' "$WY_GOLY" | head -3 | sed 's/^/         /'
+	              BLEDY=$(( BLEDY + 1 )) ;;
+esac
+
+# (2) martwy adres uslugi: kopia skryptu z portem, na ktorym nikt nie sluchа
+KOPIA="$(mktemp -t stos-martwy-XXXXXX.sh)"
+sed 's#ADRES_WP=http://localhost:8890#ADRES_WP=http://127.0.0.1:59999#' "$STOS" > "$KOPIA"
+WY_MARTWY="$( bash "$KOPIA" stan 2>&1 )"
+case "$WY_MARTWY" in
+	*"WordPress pod http://127.0.0.1:59999 nie odpowiada"*)
+		printf '  OK   %-56s\n' "martwy WordPress meldowany JAKO WordPress" ;;
+	*)
+		printf '  BLAD %-56s\n' "martwy WordPress przemilczany albo nazwany inaczej"
+		printf '%s\n' "$WY_MARTWY" | head -4 | sed 's/^/         /'
+		BLEDY=$(( BLEDY + 1 )) ;;
+esac
+# ⛔ KONTROLA, ZE PRZYPADEK (2) NIE PRZECHODZI DALEJ: przed naprawa skrypt po `HTTP 000000`
+#    szedl do konca i wypisywal wersje rdzenia, czyli twierdzil cos o dzialajacym stosie.
+case "$WY_MARTWY" in
+	*"wersja rdzenia"*)
+		printf '  BLAD %-56s\n' "po martwym WordPressie skrypt SZEDL DALEJ (wersja rdzenia)"
+		BLEDY=$(( BLEDY + 1 )) ;;
+	*) printf '  OK   %-56s\n' "po martwym WordPressie skrypt PRZERYWA" ;;
+esac
 
 echo
 if [ "$BLEDY" -eq 0 ]; then

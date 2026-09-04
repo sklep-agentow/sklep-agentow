@@ -107,7 +107,19 @@ else
 	echo "  BLAD katalog testow w test-php.sh nie jest juz stala"
 	BLEDY=$(( BLEDY + 1 ))
 fi
-ILE_DOCKER="$(printf '%s\n' "$KOD_SKRYPTU" | grep -c 'docker ')"
+# ⛔ LICZYMY WYWOŁANIA, NIE WZMIANKI — dokładnie tak, jak blizniaczy `stos-proba-kontrolna.sh:87`.
+# Do rundy 9 stało tu samo `grep -c 'docker '`, więc do licznika wchodziły TREŚCI KOMUNIKATÓW
+# mówiące o `docker inspect` (dwa takie zdania powstały w rundzie 8, gdy „NIE WIEM" przestało
+# udawać „NIE STOI"). Skutek: licznik pokazywał 7 przy 5 prawdziwych wywołaniach i zapalał tę
+# probę na czerwono FAŁSZYWYM oskarżeniem „przybyło obejście" — czyli poprawa czytelności
+# komunikatów była karana jak obejście zabezpieczenia. Odsiewamy wzmianki w odwrotnych
+# apostrofach, tak samo jak blizniak; sam wzorzec i limit zostają bez zmian.
+# ⛔ ODSIEWAMY WYLACZNIE APOSTROF ESCAPOWANY, czyli wzmianke w tresci komunikatu. Runda 9
+# odsiewala KAZDY odwrotny apostrof przed slowem docker — a to lapie takze STARE PODSTAWIENIE
+# POLECENIA, czyli PRAWDZIWE wywolanie. Dzis takiego zapisu w mierzonych plikach nie ma
+# (sprawdzone), ale licznik przestalby je widziec w dniu, w ktorym ktos go uzyje — mialby dziure
+# dokladnie tam, gdzie ma pilnowac (recenzja #268 r9, WAZNA 1).
+ILE_DOCKER="$(printf '%s\n' "$KOD_SKRYPTU" | grep -vE '\\`docker' | grep -c 'docker ')"
 if [ "$ILE_DOCKER" -gt 5 ]; then
 	printf '  BLAD wywolan dockera w test-php.sh jest %s — przybylo obejscie?\n' "$ILE_DOCKER"
 	BLEDY=$(( BLEDY + 1 ))

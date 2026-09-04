@@ -37,7 +37,7 @@ declare -A POMIJANE=(
 	[dowod-zachowania-segregator-proba-kontrolna.sh]="deinstaluje wtyczkę ze stosu — do przelotu ręcznego przed wydaniem"
 )
 
-# ⛔ PRÓBY WYMAGAJĄCE DOCKERA (1.09). Te cztery stawiają stos próbny albo wołają
+# ⛔ PRÓBY WYMAGAJĄCE DOCKERA (1.09; od 2.09 jest ich PIĘĆ). Te próby stawiają stos próbny albo wołają
 # PHP w kontenerze. Wykonawca CI od 31.08 chodzi jako `ciuser` (naprawa B-3) i NIE
 # widzi `docker.sock` — zmierzone: `permission denied while trying to connect to
 # the docker API at unix:///var/run/docker.sock`. Dostępu dać NIE MOŻNA: grupa
@@ -55,6 +55,12 @@ WYMAGA_DOCKERA=(
 	dowod-z-paczki-proba-kontrolna.sh
 	stos-proba-kontrolna.sh
 	test-php-proba-kontrolna.sh
+	golden-migawka-proba-kontrolna.sh
+	strony-prawne-proba-kontrolna.sh
+	# 5.09: doszla ze scaleniem #274 (A6-F1). Stawia WLASNY stos probny, wiec bez
+	# Dockera nie ma czym mierzyc. Nie dalo sie jej dopisac wczesniej: w #272 plik
+	# jeszcze nie istnial, a w #274 ten plik byl zmieniany przez #272 (konflikt).
+	schemat-wersja-po-sprawdzeniu-proba-kontrolna.sh
 )
 if ! docker ps >/dev/null 2>&1; then
 	for N in "${WYMAGA_DOCKERA[@]}"; do
@@ -62,10 +68,74 @@ if ! docker ps >/dev/null 2>&1; then
 	done
 fi
 
+# ⛔ PRÓBY WYMAGAJĄCE `zip` (3.09). Powód zmierzony, nie przewidziany z góry: mamy DWA runnery
+# (`hetzner-gosia`, `oracle-micro`) i one NIE SĄ IDENTYCZNE. Porównanie narzędzie po narzędziu:
+#   zip     hetzner TAK · micro NIE      <- to
+#   docker  hetzner TAK · micro NIE      <- to było przewidziane wyżej
+#   unzip, jq, git, curl, php, composer, node — na obu tak samo
+# Skutek, zanim to dopisano: ten sam commit #272 miał bramki ZIELONE (11 min, Hetzner)
+# i CZERWONE (50 min, Oracle) — bo `k7-koniec-proba-kontrolna.sh:118` i
+# `paczka-zgodnosc-proba-kontrolna.sh:293` odmawiają wtedy pomiaru kodem 2, a przelot
+# liczył każdy niezerowy kod jako PORAŻKĘ. CI było więc NIEDETERMINISTYCZNE: wynik zależał
+# od tego, który wykonawca złapał zadanie.
+#
+# ⭐ Ta sama zasada co przy Dockerze: nie na sztywno, tylko tam, gdzie `zip` faktycznie
+# nie istnieje; pominięcie ląduje w logu z powodem, jest policzone i podlega SUFITOWI.
+# ⛔ DŁUG: te dwie próby MUSZĄ przejść ręcznie przed wydaniem — na maszynie, która ma `zip`.
+WYMAGA_ZIP=(
+	k7-koniec-proba-kontrolna.sh
+	paczka-zgodnosc-proba-kontrolna.sh
+	# 4.09 (recenzja #272 r13, WAZNA 3): te dwie tez koncza sie kodem 2 bez `zip`,
+	# a byly WYLACZNIE w WYMAGA_DOCKERA — czyli na wykonawcy Z Dockerem i BEZ zip
+	# ruszaly i lądowaly w liczniku PORAZEK. Ta sama niedeterministyczna czerwien,
+	# ktora ten commit naprawia, tylko z innego wiersza logu. Naprawiam KLASE.
+	dowod-z-paczki-proba-kontrolna.sh
+	dowod-aktualizacji-proba-kontrolna.sh
+)
+if ! command -v zip > /dev/null 2>&1; then
+	for N in "${WYMAGA_ZIP[@]}"; do
+		# ⛔ SCALAMY POWODY, NIE NADPISUJEMY (recenzja #272 r14, DROBNA 6). Dwie nazwy
+		# stoja w OBU tablicach, a POMIJANE to mapa — ta petla biegnie DRUGA, wiec proste
+		# przypisanie kasowalo powod dockerowy i log mowil o jednym braku z dwoch.
+		if [ -n "${POMIJANE[$N]:-}" ]; then
+			POMIJANE[$N]="${POMIJANE[$N]} ORAZ wymaga 'zip', ktorego ten wykonawca tez nie ma"
+		else
+			POMIJANE[$N]="wymaga 'zip', a ten wykonawca go nie ma (runnery nie są identyczne) — przelot ręczny przed wydaniem"
+		fi
+	done
+fi
+
+# ⛔ SUFIT NIEZMIERZONYCH. Kod 2 („nie mam warunkow wstepnych") NIE jest porazka —
+# ale gdyby rosl bez sufitu, zestaw kurczylby sie po cichu, a przelot dalej swiecilby
+# zielono. To ta sama klasa co sufit ponizej i ten sam mechanizm, co `MAX_NIEZMIERZONYCH`
+# w `bramki.sh` (klasa 128) — siostrzane narzedzia maja mowic jednym glosem.
+MAX_NIEZMIERZONYCH=0   # 4.09: TWARDE ZERO. Podniesienie = swiadoma decyzja w commicie,
+                       # z nazwa proby i powodem, dla ktorego nie da sie jej zmierzyc.
+
 # ⛔ SUFIT POMINIĘĆ. Bez niego lista pominięć rośnie po cichu i przelot świeci
 # zielono, sprawdzając coraz mniej — dokładnie ta klasa błędu, dla której ten
 # skrypt w ogóle powstał. Podniesienie sufitu ma być świadomą decyzją w commicie.
-MAX_POMINIETYCH=5
+# ⛔ SUFIT POMINIEC JEST PER ZAKRES — jedna liczba dla obu sciezek NIE dziala.
+#    Recenzja #272 r17 WAZNA 2: sufit 10 (maksimum z obu) w CI nie zapali sie NIGDY,
+#    bo CI wola przelot Z ZAKRESEM `narzedzia-qa`, gdzie wiecej niz 7 pominiec jest
+#    NIEMOZLIWE. Przy jednej liczbie mozna dopisac TRZY nazwy do POMIJANE i przejdzie
+#    bez sladu — dokladnie ta klasa, dla ktorej ten sufit powstal.
+MAX_POMINIETYCH_ZAKRES=7   # 5.09: POLICZONE na scalonej tresci (#272 + #274 + #278), nie przepisane.
+                    # ⛔ Rachunek na OBU zakresach, bo sufit obowiazuje oba, a CI liczy inaczej
+                    #    niz wydanie. Scenariusz, ktorego sufit dotyczy: wykonawca BEZ Dockera
+                    #    I BEZ `zip` (na maszynie z obydwoma pominiecie jest tylko 1 — dlatego
+                    #    sam przelot tutaj NIE mierzy tego, przed czym sufit chroni):
+                    #      WYMAGA_DOCKERA 7 + WYMAGA_ZIP 4, wspolne 2  ⇒ unia 9
+                    #        z tego w `narzedzia-qa/` 6, w `testy/` 3
+                    #      + 1 pomijana BEZWARUNKOWO (`dowod-zachowania-segregator`,
+                    #        deinstaluje wtyczke ze stosu; lezy w `narzedzia-qa/`)
+                    #      zakres `narzedzia-qa` (tak wola CI):     6 + 1 =  7
+                    #      BEZ zakresu (tak wola `k7-koniec`):      9 + 1 = 10
+                    #    Sufit = maksimum z obu = 10. Przy 9 przelot bez zakresu — czyli ten,
+                    #    ktorego zada bramka wydania — wywalilby sie na WLASNEJ poprawce.
+                    # ⛔ NIE przepisuj tej liczby przy nastepnym scaleniu: kazda nowa proba
+                    #    dockerowa albo zipowa ja przesuwa. Policz komenda na scalonym drzewie.
+MAX_POMINIETYCH_PELNY=10   # ta sama arytmetyka, sciezka BEZ zakresu (tak wola `k7-koniec`)
 
 if [ -n "$(git status --porcelain -uno 2>/dev/null)" ]; then
 	echo "PRZELOT: drzewo robocze BRUDNE — dowód powstałby na kodzie, którego nie ma w historii." >&2
@@ -74,6 +144,8 @@ if [ -n "$(git status --porcelain -uno 2>/dev/null)" ]; then
 fi
 
 ZAKRES="${2:-.}"
+# ⛔ Sufit dobierany do ZAKRESU, nie maksimum z obu — patrz komentarz przy stalych.
+if [ "$ZAKRES" = "." ]; then MAX_POMINIETYCH="$MAX_POMINIETYCH_PELNY"; else MAX_POMINIETYCH="$MAX_POMINIETYCH_ZAKRES"; fi
 [ -d "$ZAKRES" ] || { echo "PRZELOT: katalog zakresu [$ZAKRES] nie istnieje." >&2; exit 2; }
 mapfile -t PROBY < <(find "$ZAKRES" -name '*proba-kontrolna*.sh' -not -path './.git/*' | sed 's|^\./||' | sort)
 # ⛔ Zero prób to ODMOWA, nie sukces: zawężony zakres, który nic nie łapie, wyglądałby
@@ -86,7 +158,7 @@ START=$(date '+%Y-%m-%d %H:%M')
 
 TMP="$(mktemp)"
 trap 'rm -f "$TMP"' EXIT
-ZLE=0; ILE=0; POMINIETO=0; ZLE_NAZWY=()
+ZLE=0; ILE=0; POMINIETO=0; NIEZMIERZONE=0; ZLE_NAZWY=(); NIEZMIERZONE_NAZWY=()
 
 for SCIEZKA in "${PROBY[@]}"; do
 	NAZWA="${SCIEZKA##*/}"
@@ -107,7 +179,20 @@ for SCIEZKA in "${PROBY[@]}"; do
 	# tymczasowym wykonawcy, wiec w CI widac bylo wylacznie „z EXIT≠0: 2" — bez ani jednej
 	# nazwy. Kazda porazka wymagala wtedy recznego dochodzenia u siebie, a odtworzenie
 	# zestawu CI nie jest darmowe (konto z Dockerem uruchamia INNY zestaw prob).
-	[ "$KOD" -eq 0 ] || { ZLE=$((ZLE + 1)); ZLE_NAZWY+=( "$NAZWA (EXIT=$KOD)" ); printf '  PADLA       %s (EXIT=%s)\n' "$NAZWA" "$KOD"; }
+	# ⛔ KOD 2 TO NIE PORAZKA (recenzja #272 r15, WAZNA 1). Proba, ktora ODMAWIA pomiaru
+	# („nie mam warunkow wstepnych"), nie jest wada produktu — a do tej rundy kazdy
+	# niezerowy kod ladowal w liczniku PADLA. To ta sama klasa (I-12), ktora ten PR
+	# naprawia w `bramki.sh`: przyrzad orzekal o produkcie, nie ustaliwszy niczego.
+	# ⭐ Niezmierzone SA LICZONE i maja wlasny sufit — inaczej zestaw kurczylby sie po cichu.
+	if [ "$KOD" -eq 0 ]; then
+		:
+	elif [ "$KOD" -eq 2 ]; then
+		NIEZMIERZONE=$((NIEZMIERZONE + 1)); NIEZMIERZONE_NAZWY+=( "$NAZWA" )
+		printf '  NIE ZMIERZONO %s (EXIT=2 — brak warunkow wstepnych, NIE wada)\n' "$NAZWA"
+	else
+		ZLE=$((ZLE + 1)); ZLE_NAZWY+=( "$NAZWA (EXIT=$KOD)" )
+		printf '  PADLA       %s (EXIT=%s)\n' "$NAZWA" "$KOD"
+	fi
 done
 
 mkdir -p "$(dirname "$LOG")"
@@ -120,7 +205,8 @@ mkdir -p "$(dirname "$LOG")"
 	printf '%s\n' "$ZNACZNIK"
 	printf 'COMMIT: %s\n' "$COMMIT"
 	printf 'GALAZ: %s\n' "$GALAZ"
-	printf 'PODSUMOWANIE: uruchomionych %s, z EXIT≠0: %s, pominiętych: %s\n' "$ILE" "$ZLE" "$POMINIETO"
+	printf 'PODSUMOWANIE: uruchomionych %s, PADŁO: %s, NIE ZMIERZONO (EXIT=2): %s, pominiętych: %s\n' "$ILE" "$ZLE" "$NIEZMIERZONE" "$POMINIETO"
+	[ "$NIEZMIERZONE" -gt 0 ] && printf 'NIE ZMIERZONO: %s\n' "${NIEZMIERZONE_NAZWY[*]}"
 	printf '#\n'
 	cat "$TMP"
 } > "$LOG"
@@ -132,6 +218,17 @@ printf '\nPRZELOT: uruchomionych %s, z EXIT≠0: %s, pominiętych %s — zapisan
 # gdzie ma pomoc.
 [ "$ZLE" -eq 0 ] || printf 'PRZELOT: nie przeszly:\n'
 [ "$ZLE" -eq 0 ] || printf '         %s\n' "${ZLE_NAZWY[@]}"
+
+# ⛔ SUFIT NIEZMIERZONYCH — sprawdzany PRZED sufitem pominiec, bo „nie zmierzylam" jest
+# stanem gorszym niz „pominelam z powodem": pominiecie ma nazwany powod w liscie, a kod 2
+# przychodzi z proby i nikt go z gory nie zaplanowal.
+if [ "$NIEZMIERZONE" -gt "$MAX_NIEZMIERZONYCH" ]; then
+	printf 'PRZELOT: NIE ZMIERZONO %s prob przy suficie %s — zestaw kurczy sie po cichu.\n' \
+		"$NIEZMIERZONE" "$MAX_NIEZMIERZONYCH" >&2
+	printf '         %s\n' "${NIEZMIERZONE_NAZWY[*]}" >&2
+	printf '         Kod 2 NIE jest wada produktu, ale te proby NICZEGO NIE SPRAWDZILY.\n' >&2
+	exit 1
+fi
 
 # ⛔ SUFIT POMINIĘĆ — zestaw, który się kurczy, wygląda dokładnie jak zdany.
 if [ "$POMINIETO" -gt "$MAX_POMINIETYCH" ]; then

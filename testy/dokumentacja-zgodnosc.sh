@@ -206,7 +206,7 @@ echo "=== F. Deinstalacja: obie sciezki ==="
 spr "DROP TABLE (7 tabel)"        "7"  "grep -c 'DROP TABLE IF EXISTS' $W/uninstall.php"
 spr "klucz API kasowany zawsze"   "1"  "sed -n '1,/usun_dane/p' $W/uninstall.php | grep -c \"delete_option( 'chatl_klucz_api' )\""
 spr "delete_option w sciezce B"   "8"  "sed -n '/usun_dane/,\$p' $W/uninstall.php | grep -c 'delete_option('"
-spr "wywolan esc_like (bez komentarzy)"  "4" "grep -o 'wpdb->esc_like(' $W/uninstall.php | wc -l"
+spr "wywolan esc_like (bez komentarzy)"  "6" "grep -o 'wpdb->esc_like(' $W/uninstall.php | wc -l"
 
 echo
 echo "=== G. Ustawienia: klucze i wartosci domyslne ==="
@@ -281,6 +281,36 @@ spr "regex sesji"                 "1"  "grep -c \"a-zA-Z0-9-]{8,64}\" $W/include
 spr "znaki neutralizowane w CSV"  "1"  "grep -c \"array( '=', '+', '-', '@' )\" $W/includes/csv.php"
 spr "BOM UTF-8 w eksporcie"       "1"  "grep -c 'xEF.xBB.xBF' $W/includes/csv.php"
 spr "widget bez uzycia innerHTML"  "0"  "grep -c '\\.innerHTML' $W/assets/widget.js"
+# ⛔ DOKUMENT KLIENTA OBIECUJE LICZNIK I OSTRZEZENIE DLA **OBU** POL (readme.txt sekcja 1.5.15:
+#    "za dluga wiadomosc zgloszenia ... okno czatu pilnuje limitu licznikiem i ostrzezeniem").
+#    Do 1.5.15 pole zgloszenia mialo SAM `maxLength`, wiec wklejka byla ucinana PO CICHU — czyli
+#    dokladnie wada CZ-1, tylko w polu obok (klasa 8). Te trzy asercje pilnuja, zeby zdanie
+#    w dokumencie nie przezylo usuniecia kodu, ktory je czyni prawda.
+spr "licznik dla OBU pol widgetu"  "2"  "grep -c \"chatl-licznik'\" $W/assets/widget.js"
+spr "ostrzezenie przy wklejce w OBU polach" "2" "grep -c \"addEventListener('paste'\" $W/assets/widget.js"
+spr "zgloszenie ma wlasny licznik"  "1"  "grep -c 'odswiezLicznikTresci' $W/assets/widget.js | awk '{print (\$1>0)?1:0}'"
+# ⛔ JEDNO ZRODLO LIMITOW: liczby 500 i 2000 nie moga byc wpisane w JS — ida z PHP przez chatlDane
+#    (tym samym kanalem co CHATL_RETENCJA_DNI). Kontrola dodatnia: `dane.limitPytania` MUSI byc.
+spr "limity ida z PHP do widgetu"  "2"  "grep -c 'limitPytania\|limitWiadomosci' $W/includes/front.php"
+spr "widget czyta limit pytania z chatlDane" "1" "grep -c 'dane.limitPytania' $W/assets/widget.js | awk '{print (\$1>0)?1:0}'"
+# ⛔ LICZNIK MUSI LICZYC TAK SAMO JAK SERWER: `String.length` liczy jednostki UTF-16, wiec emoji
+#    liczylo sie podwojnie (zmierzone: JS 10 vs PHP mb_strlen 7). Zero uzyc `.value.length`.
+spr "licznik liczy punkty kodowe, nie UTF-16" "0" "grep -c 'value.length' $W/assets/widget.js"
+# ⛔ ASERCJE PONIZEJ POWSTALY, BO POPRZEDNIE NIE UMIALY PASC (runda 8, klasa 11). Zmierzone przez
+#    recenzenta DWIEMA mutacjami: podmiana `Array.from(String(s)).length` na `String(s).length`
+#    i twarde `2000` zamiast `parseInt(dane.limitWiadomosci, 10)` NIE zmienialy wyjscia bramki
+#    CO DO ZNAKU. Asercja „zero uzyc value.length” pilnuje BRAKU zlego zapisu, a nie OBECNOSCI
+#    dobrego — wiec wada, ktora nie wprowadza `value.length`, przechodzila obok niej.
+spr "widget liczy znaki przez Array.from (punkty kodowe)" "1" "grep -c 'return Array.from(String(s)).length' $W/assets/widget.js"
+spr "widget czyta limit zgloszenia z chatlDane" "1" "grep -c 'dane.limitWiadomosci' $W/assets/widget.js | awk '{print (\$1>0)?1:0}'"
+# ⛔ Pole czyszczone KODEM nie wysyla zdarzenia `input`, wiec licznik trzeba odswiezyc recznie —
+#    inaczej pod pustym polem zostaje czerwone ostrzezenie o skroconej wklejce (runda 8, klasa 8).
+#    Liczby: pytanie 3 (handler `input`, wysylka, galaz `za_dlugie`), zgloszenie 2 (handler `input`,
+#    zamkniecie formularza). Wywolania Z KOMUNIKATEM maja argument, wiec tu sie nie licza.
+spr "licznik pytania odswiezany takze po czyszczeniu kodem" "3" "grep -c 'odswiezLicznik();' $W/assets/widget.js"
+spr "licznik zgloszenia odswiezany takze po czyszczeniu kodem" "2" "grep -c 'odswiezLicznikTresci();' $W/assets/widget.js"
+
+
 spr "zgoda sprawdzana na serwerze" "1" "grep -c \"empty( \\\$_POST\\['zgoda'\\] )\" $W/includes/front.php"
 spr "wp_trigger_error pod straza" "2"  "grep -rc \"function_exists( 'wp_trigger_error' )\" $W/chatbot-live.php $W/includes/ai.php | awk -F: '{s+=\$2} END {print s}'"
 
@@ -397,7 +427,25 @@ echo
 
 echo "=== Y. readme.txt w standardzie WordPressa (ten sam zakres, co sekcja N u Segregatora) ==="
 WER_KOD=$(grep -oP '(?<=^ \* Version: ).*' $W/chatbot-live.php)   # wersja Z KODU, nie na sztywno (klasa 11)
-WP_STACK=$(docker exec strona_wp_wordpress wp --allow-root --path=/var/www/html core version 2>/dev/null | grep -oE '^[0-9]+\.[0-9]+')
+# ⛔ Powod POMINIECIA musi byc ZMIERZONY, nie zgadniety: `2>/dev/null` zjadalo tak samo brak polecenia
+#    `docker`, `permission denied` i zatrzymany kontener, a `else` orzekalo jedno („stos nie odpowiada”).
+#    Recenzent #268 r12 dostal to zdanie na maszynie, na ktorej dockera NIE MA WCALE.
+if ! command -v docker > /dev/null 2>&1; then
+	POWOD_BRAKU_STOSU="NIE WIEM — nie ma polecenia 'docker' na tej maszynie"
+	WP_STACK=""
+else
+	BLAD_WP=$(docker exec strona_wp_wordpress wp --allow-root --path=/var/www/html core version 2>&1 >/dev/null)
+	WP_STACK=$(docker exec strona_wp_wordpress wp --allow-root --path=/var/www/html core version 2>/dev/null | grep -oE '^[0-9]+\.[0-9]+')
+	case "$BLAD_WP" in
+		# ⛔ KOLEJNOSC MA ZNACZENIE: „Error response from daemon: No such container” zawiera slowo
+		#    „daemon”, wiec przy odwrotnej kolejnosci brak kontenera dostawal etykiete „nie widzimy
+		#    Dockera”. Zlapane wlasna proba kontrolna 3.09 — najpierw wzorce KONKRETNE, potem ogolne.
+		*"No such container"*|*"is not running"*|*"No such object"*) POWOD_BRAKU_STOSU="kontener strona_wp_wordpress nie chodzi: $BLAD_WP" ;;
+		*"permission denied"*|*"Cannot connect"*|*"daemon"*)         POWOD_BRAKU_STOSU="NIE WIEM — to konto nie widzi Dockera: $BLAD_WP" ;;
+		"")                                                    POWOD_BRAKU_STOSU="" ;;
+		*)                                                     POWOD_BRAKU_STOSU="stos nie odpowiedzial: $BLAD_WP" ;;
+	esac
+fi
 spr "readme.txt istnieje"            "1" "test -f $W/readme.txt && echo 1 || echo 0"
 spr "naglowek === Nazwa ==="         "1" "head -1 $W/readme.txt | grep -c '^=== ChatBot LIVE ===$'"
 spr "pole Contributors"              "1" "grep -c '^Contributors: ' $W/readme.txt"
@@ -408,7 +456,7 @@ spr "Stable tag == wersja wtyczki"          "1" "test \"\$(grep -oP '(?<=^Stable
 if [ -n "$WP_STACK" ]; then
   spr "Tested up to = wersja WP ze stacku ($WP_STACK)" "$WP_STACK" "grep -oP '(?<=^Tested up to: ).*' $W/readme.txt | grep -oE '^[0-9]+\\.[0-9]+'"
 else
-  echo "  POMINIETE Tested up to = wersja WP ze stacku (stack nie odpowiada)"
+  echo "  POMINIETE Tested up to = wersja WP ze stacku (${POWOD_BRAKU_STOSU:-stos nie odpowiada})"
 fi
 spr "License == naglowek wtyczki"           "1" "test \"\$(grep -oP '(?<=^License: ).*' $W/readme.txt)\" = \"\$(grep -oP '(?<=^ \\* License: ).*' $W/chatbot-live.php)\" && echo 1 || echo 0"
 spr "License URI == naglowek wtyczki"       "1" "test \"\$(grep -oP '(?<=^License URI: ).*' $W/readme.txt)\" = \"\$(grep -oP '(?<=^ \\* License URI: ).*' $W/chatbot-live.php)\" && echo 1 || echo 0"

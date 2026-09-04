@@ -24,8 +24,26 @@ spr "Requires at least == nagłówek"  "$(grep -oP '(?<=^ \* Requires at least: 
 spr "Requires PHP == nagłówek"       "$(grep -oP '(?<=^ \* Requires PHP: ).*' $W/sklep-agentow.php)" "grep -oP '(?<=^Requires PHP: ).*' $W/readme.txt"
 spr "License (forma readme WP)"      "GPLv2 or later" "grep -oP '(?<=^License: ).*' $W/readme.txt"
 spr "License URI == nagłówek"        "$(grep -oP '(?<=^ \* License URI: ).*' $W/sklep-agentow.php)" "grep -oP '(?<=^License URI: ).*' $W/readme.txt"
-WP_STACK=$(docker exec strona_wp_wordpress wp --allow-root --path=/var/www/html core version 2>/dev/null | grep -oE '^[0-9]+\.[0-9]+')
-if [ -n "$WP_STACK" ]; then spr "Tested up to == WP stosu ($WP_STACK)" "$WP_STACK" "grep -oP '(?<=^Tested up to: ).*' $W/readme.txt | grep -oE '^[0-9]+\.[0-9]+'"; else echo "  POMINIETE Tested up to (stos nie odpowiada)"; fi
+# ⛔ Powod POMINIECIA musi byc ZMIERZONY, nie zgadniety: `2>/dev/null` zjadalo tak samo brak polecenia
+#    `docker`, `permission denied` i zatrzymany kontener, a `else` orzekalo jedno („stos nie odpowiada”).
+#    Recenzent #268 r12 dostal to zdanie na maszynie, na ktorej dockera NIE MA WCALE.
+if ! command -v docker > /dev/null 2>&1; then
+	POWOD_BRAKU_STOSU="NIE WIEM — nie ma polecenia 'docker' na tej maszynie"
+	WP_STACK=""
+else
+	BLAD_WP=$(docker exec strona_wp_wordpress wp --allow-root --path=/var/www/html core version 2>&1 >/dev/null)
+	WP_STACK=$(docker exec strona_wp_wordpress wp --allow-root --path=/var/www/html core version 2>/dev/null | grep -oE '^[0-9]+\.[0-9]+')
+	case "$BLAD_WP" in
+		# ⛔ KOLEJNOSC MA ZNACZENIE: „Error response from daemon: No such container” zawiera slowo
+		#    „daemon”, wiec przy odwrotnej kolejnosci brak kontenera dostawal etykiete „nie widzimy
+		#    Dockera”. Zlapane wlasna proba kontrolna 3.09 — najpierw wzorce KONKRETNE, potem ogolne.
+		*"No such container"*|*"is not running"*|*"No such object"*) POWOD_BRAKU_STOSU="kontener strona_wp_wordpress nie chodzi: $BLAD_WP" ;;
+		*"permission denied"*|*"Cannot connect"*|*"daemon"*)         POWOD_BRAKU_STOSU="NIE WIEM — to konto nie widzi Dockera: $BLAD_WP" ;;
+		"")                                                    POWOD_BRAKU_STOSU="" ;;
+		*)                                                     POWOD_BRAKU_STOSU="stos nie odpowiedzial: $BLAD_WP" ;;
+	esac
+fi
+if [ -n "$WP_STACK" ]; then spr "Tested up to == WP stosu ($WP_STACK)" "$WP_STACK" "grep -oP '(?<=^Tested up to: ).*' $W/readme.txt | grep -oE '^[0-9]+\.[0-9]+'"; else echo "  POMINIETE Tested up to (${POWOD_BRAKU_STOSU:-stos nie odpowiada})"; fi
 for sek in Description Installation "Frequently Asked Questions" Changelog; do spr "sekcja == $sek ==" "1" "grep -c '^== $sek ==$' $W/readme.txt"; done
 spr "krótki opis <= 150 znaków"      "1" "test \$(sed -n '11p' $W/readme.txt | wc -m) -le 150 && echo 1 || echo 0"
 spr "changelog readme: sekcja = $WER =" "1" "grep -c '^= $WER =$' $W/readme.txt"
@@ -97,7 +115,11 @@ spr "CHANGELOG: [Niewydane] puste"        "0" "awk '/^## \[Niewydane\]/{f=1;next
 spr "DOK-TECH: Wersja wtyczki == $WER"    "$WER" "grep -oE 'Wersja wtyczki:[* ]*[0-9.]+' $W/DOKUMENTACJA-TECHNICZNA.md | grep -oE '[0-9.]+$'"
 spr "DOK-TECH: tabela stalych — SKLEPAG_WERSJA == $WER" "$WER" "grep -oE '^\\| .SKLEPAG_WERSJA. \\| [0-9.]+' $W/DOKUMENTACJA-TECHNICZNA.md | grep -oE '[0-9.]+$'"
 spr "DOK-TECH: schemat == SKLEPAG_WERSJA_SCHEMATU" "$(stala SKLEPAG_WERSJA_SCHEMATU)" "grep -oE 'wersja schematu bazy: [0-9]+' $W/DOKUMENTACJA-TECHNICZNA.md | grep -oE '[0-9]+$'"
-spr "DOK-TECH: liczba tabel == CREATE TABLE w aktywacji" "$(grep -c 'CREATE TABLE' $W/includes/aktywacja.php)" "grep -oE 'Schemat bazy — [0-9]+ tabel' $W/DOKUMENTACJA-TECHNICZNA.md | grep -oE '[0-9]+'"
+# ⛔ LICZYMY INSTRUKCJE, NIE WZMIANKI. Do 0.9.39 wzorzec 'CREATE TABLE' lapal takze
+# WYRAZENIE REGULARNE, ktore parsuje te instrukcje (aktywacja.php:161
+# preg_match('/CREATE TABLE\s+(\S+)\s*\(/i')) — bramka liczyla wtedy 8 przy 7 tabelach
+# i oskarzala POPRAWNA dokumentacje. Cudzyslow na poczatku zawezenia do literalu SQL.
+spr "DOK-TECH: liczba tabel == CREATE TABLE w aktywacji" "$(grep -c '"CREATE TABLE' $W/includes/aktywacja.php)" "grep -oE 'Schemat bazy — [0-9]+ tabel' $W/DOKUMENTACJA-TECHNICZNA.md | grep -oE '[0-9]+'"
 
 echo "=== E. readme odsyła do plików, które istnieją (w paczce albo obok niej) ==="
 # readme mówi wprost: CHANGELOG.md i DOKUMENTACJA-TECHNICZNA.md „w paczce", INSTRUKCJA-INSTALACJI.md „obok paczek"
@@ -124,6 +146,74 @@ spr "readme: 'INSTRUKCJA.md' w paczce"                      "1" "grep -c 'w \`IN
 spr "readme: 'PONAD-SPECYFIKACJE.md' w paczce"              "1" "grep -c '\`PONAD-SPECYFIKACJE.md\` w paczce' $W/readme.txt"
 spr "plik $W/PONAD-SPECYFIKACJE.md"                         "1" "test -f $W/PONAD-SPECYFIKACJE.md && echo 1 || echo 0"
 
+# ⛔ ZNACZNIK OKNA IDEMPOTENCJI — na tym skrypcie stoi CALA ochrona przed Q-5 pod pelnostronicowym
+#    cache'em, a do 0.9.38 nie pilnowal go zaden test ani bramka (recenzja #273, runda 5, DROBNA 2).
+#    Programista, ktory uzna go za ozdobe i usunie, cofa sklep do stanu, w ktorym druga osoba za
+#    jednym adresem dostaje CUDZY checkout Stripe — i nic by tego nie zglosilo.
+#    ⛔ GDZIE TA BRAMKA NAPRAWDE BIEGNIE (sprostowanie zdania z commita 0ecb232, ktore mowilo
+#    „bramka dok=kod chodzi w kazdym przebiegu” — to NIEPRAWDA, zmierzone):
+#      - NIE MA jej w `BRAMKI=` w narzedzia-qa/bramki.sh,
+#      - NIE MA jej w .github/workflows/quality.yml,
+#      - JEST w allowliscie recenzenta (recenzent.yml) — czyli recenzent MOZE ja uruchomic,
+#        ale nic jej nie uruchamia automatycznie przy kazdym PR,
+#      - JEJ PROBA KONTROLNA biegnie w `proby-kontrolne-przelot.sh` wolanym BEZ zakresu,
+#        czyli w bramce konca wydania `k7-koniec.sh` — i to jest realna ochrona PRZED ODDANIEM.
+#    Wpiecie tej bramki do zestawu (`BRAMKI=` + manifest + prog) to osobna zmiana; rusza te same
+#    pliki co PR #272, wiec nie wchodzi tutaj.
+#    ⛔ Zdanie „pozycja na liscie w audyt/CO-WISI.md" bylo NIEPRAWDZIWE, gdy je pisalam:
+#    ten PR nie dotyka `audyt/CO-WISI.md` i wiersza tam NIE MA. Opis PR-a mowil o tym
+#    w czasie przyszlym („pozycja idzie na liste"), a komentarz w kodzie w terazniejszym,
+#    jako o fakcie — czyli ten sam PR twierdzil dwie rozne rzeczy (recenzja #273, runda 7,
+#    WAZNA 2). Stan faktyczny: wpiecie tej bramki do zestawu to zadanie DO ZAPISANIA
+#    w `audyt/CO-WISI.md` przy scalaniu #277, ktory jako jedyny z kolejki rusza rejestry.
+#    Dopoki tam nie trafi, jedynym miejscem, gdzie o tym zadaniu wiadomo, jest ten komentarz.
+#    PIEC asercji: pole w formularzu + CZTERY ogniwa skryptu, kazde usuwalne osobno —
+#    ZNAJDZ pole · ZLOZ wartosc z wylosowanych bajtow · NADPISZ pole · zrodlo losowosci.
+#    ⛔ Runda 10 pisala tu „CZTERY asercje" i wyliczala piec pozycji: naglowek sekcji
+#    poprawilam, a to zdanie zostalo. Ta sama pomylka wymiaru dwa razy w jednym pliku.
+#
+#    ⛔⛔ CO TEN ZESTAW MIERZY, A CZEGO NIE — czytaj, zanim uznasz ochrone za pilnowana.
+#    Piec asercji to piec WZORCOW TEKSTOWYCH nad jedna linia kodu. Lapia USUNIECIE ogniwa
+#    i tylko to. NIE lapia ZMIANY WARTOSCI wewnatrz ogniwa: `new Uint8Array(12)` -> `(0)`
+#    to jeden znak, ktory zostawia `s` pustym — kazdy kupujacy wysyla `okno=`, klucz wraca
+#    do postaci sprzed naprawy Q-5, a ten plik i jego proba kontrolna mowia `EXIT=0`
+#    i „ZGODNE Z KODEM" (zmierzone w obie strony, recenzja #273 r10, WAZNA 1).
+#    ⛔ Szosty wzorzec zamknalby szosta mutacje, nie klase. Klase zamyka dopiero pomiar
+#    ZACHOWANIA — zaladowanie strony produktu i sprawdzenie, ze dwa renderowania daja
+#    ROZNE znaczniki, a bez skryptu identyczne (taki pomiar zrobiono RECZNIE w rundzie 5;
+#    nie jest zautomatyzowany). DLUG nazwany wprost, zeby nikt nie czytal zieleni tej
+#    bramki jako dowodu, ze ochrona DZIALA — ona dowodzi, ze ochrona JEST NAPISANA.
+#
+#    ⛔ Komentarz mowil wczesniej „trzy czesci” i to nie byla nieszkodliwa
+#    niescislosc: ogniwo ZLOZENIA nie mialo asercji, wiec wyciecie samej petli skladajacej
+#    zostawialo `s` pustym — kazdy kupujacy wysylal `okno=`, klucz wracal do postaci sprzed
+#    naprawy, a OBA narzedzia dawaly EXIT=0 (recenzja #273 r9, WAZNA 1: pomiar dwukierunkowy,
+#    identyczny wynik przy zywej i przy martwej ochronie). Zmierzone, nie przypuszczone.
+#    Asercja losowosci liczy WYWOLANIE w kodzie JS
+#    (`c.getRandomValues(a)`), nie samo slowo — to samo slowo stoi takze w komentarzu obok
+#    i asercja na nie oczekiwalaby liczby, ktora zmienia sie przy kazdej poprawce komentarza.
 echo
-if [ "$ZLE" -eq 0 ]; then echo "PIEC LICZB (72h/10/30d/20MB/10min), ETYKIETY I ODSYLACZE DOKUMENTACJI SKLEPU ZGODNE Z KODEM — 0 rozjazdów (90 dni, 7 prob, 3 proby, 1 min, 5 stron i tresc zdan: czytanie w calosci)"; exit 0; fi
+echo "=== G. ZNACZNIK OKNA IDEMPOTENCJI (Q-5) — PIEC asercji: pole w formularzu + CZTERY ogniwa skryptu ==="
+echo "    (mierza OBECNOSC ogniw w kodzie, NIE ich skutek: zmiana wartosci wewnatrz ogniwa,"
+echo "     np. Uint8Array(12) -> (0), zostawia znacznik pusty i przechodzi tu na zielono)"
+# ⛔ Wlasna sekcja od rundy 10. Do rundy 9 te asercje drukowaly sie pod naglowkiem F
+#    (INSTRUKCJA.md, liczby i odsylacze), z ktorym nie maja nic wspolnego — czytajacy log
+#    widzial je jako czesc innego pomiaru (recenzja #273, DROBNA zglaszana w r6, r7, r8, r9).
+spr "znacznik okna: pole 'okno' w formularzu zakupu"        "1" "grep -c \"name=.okno.\" $W/includes/front-produkt.php"
+# ⛔ Ta asercja MUSI mierzyc PRZYPISANIE, nie sam selektor. Pierwsza wersja liczyla wystapienie
+#    `sklepag-kup-formularz input[name=okno]`, czyli to, ze skrypt POLE ZNAJDUJE — a wyciecie
+#    samego `p.value=s;` zostawialo selektor nietkniety i zabijalo ochrone bez sladu w bramce
+#    (recenzja #273, runda 8, WAZNA 1: nazwa obiecywala „NADPISUJE", pomiar mowil „widzi").
+spr "znacznik okna: skrypt ZNAJDUJE pole w przegladarce"    "1" "grep -c 'sklepag-kup-formularz input\[name=okno\]' $W/includes/front-produkt.php"
+spr "znacznik okna: skrypt NADPISUJE wartosc pola"          "1" "grep -c 'p[.]value=s;' $W/includes/front-produkt.php"
+# ⛔ OGNIWO 3 — ZLOZENIE. Bez tej asercji wyciecie samej petli zostawia `s` pustym: skrypt
+#    nadal ZNAJDUJE pole, nadal LOSUJE 12 bajtow i nadal wykonuje `p.value=s;`, tylko wysyla
+#    PUSTY znacznik — czyli dokladnie stan sprzed naprawy Q-5, przy zielonych bramkach.
+#    Wzorzec mierzy SKLADANIE (`s+=` z bajtem), nie samo `toString(16)`, ktore przezylo by
+#    wyciecie petli, gdyby stalo gdziekolwiek indziej.
+spr "znacznik okna: ZLOZENIE wartosci z wylosowanych bajtow" "1" "grep -c 's+=(a\[i\]<16' $W/includes/front-produkt.php"
+spr "znacznik okna: losowosc z crypto, nie z Math.random"   "1" "grep -c 'c[.]getRandomValues(a)' $W/includes/front-produkt.php"
+
+echo
+if [ "$ZLE" -eq 0 ]; then echo "PIEC LICZB (72h/10/30d/20MB/10min), ETYKIETY I ODSYLACZE ZGODNE Z KODEM — 0 rozjazdów; ZNACZNIK OKNA (Q-5): piec ogniw OBECNYCH w kodzie — ta bramka NIE mierzy, czy dzialaja ""(zmiana wartosci w ogniwie przechodzi na zielono; pomiar zachowania: patrz komentarz przy sekcji G). (90 dni, 7 prob, 3 proby, 1 min, 5 stron i tresc zdan: czytanie w calosci)"; exit 0; fi
 echo "NIEZGODNE: $ZLE pozycji"; exit 1
