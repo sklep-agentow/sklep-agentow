@@ -54,13 +54,6 @@ if ! grep -qF 'KOTWICE=$((KOTWICE+1))' "$PROBNY" || \
 	exit 2
 fi
 
-# Gdy biegnę na KOPII drzewa (kierunek negatywny wyżej), pomijam własny przypadek —
-# inaczej wpadłabym w rekurencję bez końca.
-if [ -n "${LICZNIKI_BEZ_KIERUNKU_UJEMNEGO:-}" ]; then
-	BEZ_UJEMNEGO=1
-else
-	BEZ_UJEMNEGO=0
-fi
 MARTWE=0
 ILE=0
 printf '=== LICZNIKI KOTWICE i ODWROTNA: czy któryś jest MARTWY — %s prób z podsumowanie_proby() ===\n' \
@@ -87,19 +80,33 @@ done
 #    zrobić się czerwony. Zieleń, której nikt nie umie wywrócić, nie jest dowodem — to
 #    ta sama reguła, którą ten strażnik egzekwuje wobec cudzych liczników.
 # Mierzę na KOPII w katalogu tymczasowym: oryginalne drzewo zostaje nietknięte.
-if [ "$BEZ_UJEMNEGO" -eq 1 ]; then
-	echo
-	echo "(kierunek negatywny pominięty — biegnę jako podprzebieg własnej próby)"
-	if [ "$MARTWE" -eq 0 ]; then exit 0; fi
-	exit 1
-fi
 KOPIA=$(mktemp -d) || exit 2
 trap 'rm -f "$PROBNY"; rm -rf "$KOPIA"' EXIT INT TERM
 # ⛔ SKRYPT LICZY KORZEŃ ZE ŚCIEŻKI WŁASNEGO PLIKU, więc uruchomiony „z kopii", ale
 #    z oryginalnej lokalizacji, mierzyłby ORYGINAŁ — pierwsze podejście dało przez to
 #    fałszywe „strażnik nie zareagował". Kopiuję więc CAŁE mierzone drzewo RAZEM ze
 #    skryptem i uruchamiam KOPIĘ skryptu, żeby jej korzeniem była kopia.
-OFIARA=$(printf '%s\n' "$PLIKI" | head -1)
+# ⛔ OFIARA PRZEZ WARUNEK, NIE PRZEZ POZYCJĘ (recenzja #281 W1). `head -1` brał PIERWSZY
+#    z mierzonych plików — a gdyby akurat w nim `ODWROTNA` był naprawdę martwy, `sed` nie
+#    miałby czego skasować, warunek PRZED=PO kończyłby skrypt kodem 2 i PRAWDZIWE ZNALEZISKO
+#    zostałoby zaraportowane jako awaria przyrządu. Biorę pierwszy plik, w którym licznik
+#    FAKTYCZNIE ŻYJE (ten sam predykat co pętla pomiarowa niżej).
+OFIARA=""
+for f in $PLIKI; do
+	if grep -qF 'ODWROTNA=$((ODWROTNA+1))' "$f" || grep -qF 'ODWROTNA=$(( ODWROTNA + 1 ))' "$f"; then
+		OFIARA="$f"
+		break
+	fi
+done
+if [ -z "$OFIARA" ]; then
+	# To NIE jest awaria przyrządu — to znaczy, że nie ma na czym podłożyć atrapy,
+	# bo żaden plik nie ma żywego ODWROTNA. Pętla pomiarowa wyżej już to zgłosiła.
+	echo
+	echo "  ⛔ KIERUNEK NEGATYWNY POMINIĘTY: żaden z $ILE plików nie ma ŻYWEGO licznika ODWROTNA," >&2
+	echo "     więc nie ma na czym podłożyć atrapy. To wynik POMIARU, nie awaria przyrządu." >&2
+	if [ "$MARTWE" -eq 0 ]; then exit 0; fi
+	exit 1
+fi
 for f in $PLIKI "$JA"; do
 	mkdir -p "$KOPIA/$(dirname "$f")"
 	cp "$f" "$KOPIA/$f"
@@ -120,7 +127,17 @@ if [ "$PRZED" = "$PO" ]; then
 	echo "  ⛔ NIE ZMIERZONO: sed nie zmienił kopii — kotwica zgniła, kierunek negatywny NIC nie mierzy." >&2
 	exit 2
 fi
-WY=$( cd "$KOPIA" && LICZNIKI_BEZ_KIERUNKU_UJEMNEGO=1 bash "$KOPIA/$JA" 2>&1 )
+# ⛔ ŻADNEJ FURTKI W ŚRODOWISKU (recenzja #281 W2). Poprzednia wersja wyłączała kierunek
+#    negatywny zmienną `LICZNIKI_BEZ_KIERUNKU_UJEMNEGO=1` — czyli dokładnie tym, czego ten
+#    sam plik zakazuje przy sufitach i ścieżkach: stanem podanym z zewnątrz. Zamiast tego
+#    KOPIA skryptu ma kierunek negatywny WYCIĘTY, więc rekurencja jest niemożliwa
+#    konstrukcyjnie, a nie na zasadzie honorowania zmiennej.
+sed -i '/^# --- KIERUNEK NEGATYWNY/,/^# --- KONIEC KIERUNKU NEGATYWNEGO/d' "$KOPIA/$JA"
+if grep -qF 'KIERUNEK NEGATYWNY' "$KOPIA/$JA"; then
+	echo "  ⛔ NIE ZMIERZONO: nie udało się wyciąć kierunku negatywnego z kopii — groziłaby rekurencja." >&2
+	exit 2
+fi
+WY=$( cd "$KOPIA" && bash "$KOPIA/$JA" 2>&1 )
 KOD=$?
 if [ "$KOD" -eq 1 ] && printf '%s' "$WY" | grep -qF "$OFIARA"; then
 	echo "  OK   strażnik PADŁ na podłożonym martwym liczniku (EXIT=1) i wskazał właściwy plik"
@@ -129,6 +146,8 @@ else
 	printf '%s\n' "$WY" | head -4 | sed 's/^/         /' >&2
 	exit 1
 fi
+
+# --- KONIEC KIERUNKU NEGATYWNEGO ---------------------------------------------
 
 echo
 if [ "$MARTWE" -eq 0 ]; then
