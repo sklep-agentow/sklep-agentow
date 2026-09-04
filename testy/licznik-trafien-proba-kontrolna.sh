@@ -14,6 +14,39 @@ PLIK_P=$CEL/includes/admin-probka.php
 LOKALNY_A=wtyczki/segregator-maila/includes/admin.php
 KOPIA=$(mktemp)
 BLEDY=0
+KOTWICE=0
+ODWROTNA=0
+# ⛔ KLASA 138: TRZY rozne rzeczy = TRZY liczniki. Wspolny licznik kaze skryptowi
+#    oglosic "STRAZNIK SLEPY", czyli orzec o PRODUKCIE rzecz, ktorej NIE ZMIERZYL.
+#      BLEDY    straznik nie zlapal mutanta  -> EXIT=1, wada produktu
+#      KOTWICE  kotwica sed zgnila           -> EXIT=2, proba nic nie zmierzyla
+#      ODWROTNA czysty kod nie przechodzi    -> EXIT=2, proba nic nie znaczy
+#    EXIT=2 to konwencja przelotu: "nie zmierzylam" (NIE porazka produktu).
+podsumowanie_proby() {           # $1 = komunikat, gdy wszystko zmierzone i zielone
+  # ⛔ KOLEJNOSC MA ZNACZENIE. Padnieta kontrola odwrotna UNIEWAZNIA caly przebieg:
+  #    straznik pada wtedy ZAWSZE, wiec „nie zlapal mutanta" nic nie znaczy i licznik
+  #    BLEDY jest smieciem. Ogloszenie „STRAZNIK SLEPY NA N" byloby wtedy orzeczeniem
+  #    o PRODUKCIE na podstawie pomiaru, ktory sie nie odbyl. Najczestsza przyczyna to
+  #    BRAK WARUNKU WSTEPNEGO srodowiska (np. swiezy worktree bez `vendor/` albo
+  #    `node_modules/`), a to wada SRODOWISKA, nie kodu klienta.
+  if [ "$ODWROTNA" -gt 0 ]; then
+    echo "KONTROLA ODWROTNA PADLA ($ODWROTNA) — czysty kod NIE przechodzi, wiec proba NIC nie znaczy."
+    echo "  Licznik BLEDY=$BLEDY jest NIEWIARYGODNY i NIE jest werdyktem o produkcie."
+    echo "  Sprawdz warunki wstepne (zaleznosci, stos, dane logowania), potem powtorz."
+    exit 2
+  fi
+  if [ "$KOTWICE" -gt 0 ]; then
+    echo "PROBA NIC NIE ZMIERZYLA W $KOTWICE PRZYPADKACH — kotwica sed zgnila po refaktorze."
+    echo "  To wada PRZYRZADU, nie straznika: zanim oskarzysz produkt, uruchom straznika BEZPOSREDNIO."
+    exit 2
+  fi
+  if [ "$BLEDY" -gt 0 ]; then
+    echo "STRAZNIK SLEPY NA $BLEDY PODLOZONYCH BLEDOW"
+    exit 1
+  fi
+  echo "$1"
+  exit 0
+}
 
 sprzataj() { [ -f "$KOPIA" ] && cp "$KOPIA" "$LOKALNY_A" && rm -f "$KOPIA"; }
 trap sprzataj EXIT
@@ -36,7 +69,7 @@ probuj_dzialanie() {
   eval "$mutacja"
   po=$(docker exec "$KONTENER" md5sum "$PLIK_P" | cut -d' ' -f1)
   if [ "$przed" = "$po" ]; then
-    printf '  BLAD mutacja NIE weszla do pliku: %-45s\n' "$opis"; BLEDY=$((BLEDY+1)); return
+    printf '  BLAD mutacja NIE weszla do pliku (ZGNILA KOTWICA sed): %-45s\n' "$opis"; KOTWICE=$((KOTWICE+1)); return
   fi
   local wyjscie kod
   wyjscie=$(odpal); kod=$?
@@ -57,7 +90,7 @@ probuj_zgodnosc() {
   eval "$mutacja"
   po=$(md5sum "$LOKALNY_A" | cut -d' ' -f1)
   if [ "$przed" = "$po" ]; then
-    printf '  BLAD mutacja NIE weszla do pliku: %-45s\n' "$opis"; BLEDY=$((BLEDY+1)); cp "$KOPIA" "$LOKALNY_A"; return
+    printf '  BLAD mutacja NIE weszla do pliku (ZGNILA KOTWICA sed): %-45s\n' "$opis"; KOTWICE=$((KOTWICE+1)); cp "$KOPIA" "$LOKALNY_A"; return
   fi
   local wyjscie kod
   wyjscie=$(bash testy/dokumentacja-zgodnosc-segregator.sh 2>&1); kod=$?
@@ -95,13 +128,12 @@ wdroz_czysty
 if odpal > /dev/null 2>&1; then
   echo "  OK   test dzialania przechodzi na czystym kodzie (EXIT=0)"
 else
-  echo "  BLAD test dzialania NIE przechodzi — straznik pada zawsze, wiec nic nie znaczy"; BLEDY=$((BLEDY+1))
+  echo "  BLAD test dzialania NIE przechodzi — straznik pada zawsze, wiec nic nie znaczy"; ODWROTNA=$((ODWROTNA+1))
 fi
 if bash testy/dokumentacja-zgodnosc-segregator.sh > /dev/null 2>&1; then
   echo "  OK   skrypt zgodnosci przechodzi na czystym drzewie (EXIT=0)"
 else
-  echo "  BLAD skrypt zgodnosci NIE przechodzi na czystym drzewie"; BLEDY=$((BLEDY+1))
+  echo "  BLAD skrypt zgodnosci NIE przechodzi na czystym drzewie"; ODWROTNA=$((ODWROTNA+1))
 fi
 echo
-if [ "$BLEDY" -eq 0 ]; then echo "STRAZNICY WIDZA WSZYSTKIE TRZY PODLOZONE BLEDY"; else echo "STRAZNICY SLEPI NA $BLEDY PODLOZONYCH BLEDOW"; fi
-exit $((BLEDY > 0))
+podsumowanie_proby "STRAZNICY WIDZA WSZYSTKIE TRZY PODLOZONE BLEDY"

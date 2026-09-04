@@ -22,6 +22,39 @@ CEL=/var/www/html/wp-content/plugins/sklep-agentow
 PLIK=wtyczki/sklep-agentow/includes/prywatnosc.php
 KOPIA=$(mktemp -t prywatnosc-proba-XXXXXX.php)
 BLEDY=0
+KOTWICE=0
+ODWROTNA=0
+# ⛔ KLASA 138: TRZY rozne rzeczy = TRZY liczniki. Wspolny licznik kaze skryptowi
+#    oglosic "STRAZNIK SLEPY", czyli orzec o PRODUKCIE rzecz, ktorej NIE ZMIERZYL.
+#      BLEDY    straznik nie zlapal mutanta  -> EXIT=1, wada produktu
+#      KOTWICE  kotwica sed zgnila           -> EXIT=2, proba nic nie zmierzyla
+#      ODWROTNA czysty kod nie przechodzi    -> EXIT=2, proba nic nie znaczy
+#    EXIT=2 to konwencja przelotu: "nie zmierzylam" (NIE porazka produktu).
+podsumowanie_proby() {           # $1 = komunikat, gdy wszystko zmierzone i zielone
+  # ⛔ KOLEJNOSC MA ZNACZENIE. Padnieta kontrola odwrotna UNIEWAZNIA caly przebieg:
+  #    straznik pada wtedy ZAWSZE, wiec „nie zlapal mutanta" nic nie znaczy i licznik
+  #    BLEDY jest smieciem. Ogloszenie „STRAZNIK SLEPY NA N" byloby wtedy orzeczeniem
+  #    o PRODUKCIE na podstawie pomiaru, ktory sie nie odbyl. Najczestsza przyczyna to
+  #    BRAK WARUNKU WSTEPNEGO srodowiska (np. swiezy worktree bez `vendor/` albo
+  #    `node_modules/`), a to wada SRODOWISKA, nie kodu klienta.
+  if [ "$ODWROTNA" -gt 0 ]; then
+    echo "KONTROLA ODWROTNA PADLA ($ODWROTNA) — czysty kod NIE przechodzi, wiec proba NIC nie znaczy."
+    echo "  Licznik BLEDY=$BLEDY jest NIEWIARYGODNY i NIE jest werdyktem o produkcie."
+    echo "  Sprawdz warunki wstepne (zaleznosci, stos, dane logowania), potem powtorz."
+    exit 2
+  fi
+  if [ "$KOTWICE" -gt 0 ]; then
+    echo "PROBA NIC NIE ZMIERZYLA W $KOTWICE PRZYPADKACH — kotwica sed zgnila po refaktorze."
+    echo "  To wada PRZYRZADU, nie straznika: zanim oskarzysz produkt, uruchom straznika BEZPOSREDNIO."
+    exit 2
+  fi
+  if [ "$BLEDY" -gt 0 ]; then
+    echo "STRAZNIK SLEPY NA $BLEDY PODLOZONYCH BLEDOW"
+    exit 1
+  fi
+  echo "$1"
+  exit 0
+}
 
 cp "$PLIK" "$KOPIA"
 przywroc_zrodlo() {
@@ -48,8 +81,8 @@ probuj() {
   eval "$mutacja"
   po=$(md5sum "$PLIK" | cut -d' ' -f1)
   if [ "$przed" = "$po" ]; then
-    printf '  BLAD mutacja NIE weszla (straznik nie zostal wystawiony na probe): %s\n' "$opis"
-    BLEDY=$((BLEDY+1)); return
+    printf '  BLAD mutacja NIE weszla (ZGNILA KOTWICA sed) (straznik nie zostal wystawiony na probe): %s\n' "$opis"
+    KOTWICE=$((KOTWICE+1)); return
   fi
   if ! php -l "$PLIK" >/dev/null 2>&1; then
     printf '  BLAD mutacja rozwalila skladnie: %s\n' "$opis"
@@ -91,9 +124,7 @@ if [ "$kod" -eq 0 ]; then
 else
   echo "  BLAD czysty kod EXIT=$kod"
   printf '%s\n' "$wyjscie" | grep -E '^  BLAD|^PRZYRZAD' | sed 's/^/       /'
-  BLEDY=$((BLEDY+1))
+  ODWROTNA=$((ODWROTNA+1))
 fi
 
-echo
-echo "BLEDY PROBY KONTROLNEJ: $BLEDY"
-exit $((BLEDY > 0 ? 1 : 0))
+podsumowanie_proby "PROBA KONTROLNA ZALICZONA — kazdy podlozony blad zlapany"

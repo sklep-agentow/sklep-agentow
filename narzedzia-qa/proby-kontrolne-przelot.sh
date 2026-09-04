@@ -26,6 +26,36 @@
 #               2 = nie ma czego uruchamiać / drzewo brudne.
 set -u
 
+# ⛔ Bez danych logowania do panelu proby `nonce` i `blad-klucza` padaja na BRAKU LOGOWANIA,
+# a raportuja to jako wade produktu. Wzorzec wziety z `narzedzia-qa/linia-bazowa.sh`.
+# Bez galezi else pominiecie jest CICHE: na wykonawcy CI (ciuser od 31.08, naprawa B-3)
+# plik jest NIECZYTELNY, warunek zawsze falszywy, a proby nonce i blad-klucza znowu
+# raportuja BRAK LOGOWANIA jako wade produktu. Pominiecie MUSI zostawiac slad.
+# ⛔ ZADNEGO ZEWNETRZNEGO POLECENIA W TEJ GALEZI. Proba `przelot-brak-zip-proba-kontrolna.sh`
+#    uruchamia ten skrypt z OKROJONYM PATH (atrapa bez `zip`) i asertuje, ze stderr NIE zawiera
+#    `command not found`. Pierwsza wersja wolala tu `$(whoami)` — polecenia nie ma w atrapie,
+#    wiec CI padalo, a lokalnie u roota galaz `else` nie wykonywala sie ANI RAZU. Uzywamy
+#    wylacznie tego, co daje sama powloka: $USER i $EUID.
+# ⛔ SCIEZKA JEST LITERALEM (recenzja #280 r3 W3). Poprzednia runda czytala ja ze SRODOWISKA
+#    jako `${ENV_ADMIN:-...}` — a wartosc jest potem SOURCOWANA, wiec `ENV_ADMIN=/dev/null`
+#    przelaczalo wykonanie na galaz „wczytane" i CISZYLO ostrzezenie dodane w W5, nie ruszajac
+#    jednego bajtu w repozytorium. Ta sama pulapka co sufit czytany ze srodowiska (bramki.sh:490).
+# Proba kontrolna potrzebuje wejscia w galaz `else`, a NIE prawa podstawienia pliku do
+# zesourcowania — dlatego osobna zmienna, honorowana WYLACZNIE gdy wskazuje sciezke, ktorej
+# NIE DA SIE odczytac. Plik czytelny podany tedy jest ignorowany.
+ENV_ADMIN=/root/.claude/sklep-admin-roboczy.env
+if [ -n "${ENV_ADMIN_PROBA:-}" ] && [ ! -r "${ENV_ADMIN_PROBA}" ]; then
+	ENV_ADMIN="$ENV_ADMIN_PROBA"
+fi
+if [ -r "$ENV_ADMIN" ]; then
+	set -a; . "$ENV_ADMIN"; set +a
+	printf 'DANE LOGOWANIA: wczytane z %s\n' "$ENV_ADMIN" >&2
+else
+	printf 'UWAGA DANE LOGOWANIA NIEWCZYTANE (%s nieczytelny dla %s) — proby wymagajace\n' \
+		"$ENV_ADMIN" "${USER:-UID $EUID}" >&2
+	printf '      panelu zaraportuja BRAK LOGOWANIA; to wada SRODOWISKA, nie produktu.\n' >&2
+fi
+
 KORZEN="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$KORZEN" || exit 2
 LOG="${1:-audyt/sklep/PROBY-KONTROLNE.log}"

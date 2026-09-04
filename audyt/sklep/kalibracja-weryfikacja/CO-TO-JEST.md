@@ -92,3 +92,26 @@ je **wykrywa**, a koordynatorka **świadomie** je zwolniła — mechanizm zadzia
 ⭐ To jest klasa „zmierzyłam OCHRONĘ zamiast WADY”: mój walidator pokazał naruszenia, a ja nie
 sprawdziłam, czy repozytorium już je zna i celowo dopuściło. Zapisuję to tutaj, bo o mały włos
 wniosłabym fałszywe znalezisko do rejestru infry.
+
+## ⛔ Znane naruszenia schematu — jawna lista, nie cisza
+
+Dwa z trzech raportów łamią regułę schematu wprowadzanego tym samym PR-em. ⛔ **Nie poprawiam
+plików** — to dowody. Zamiast tego stoi obok jawna lista `WYJATKI-SCHEMATU.txt`, w tej samej
+konwencji co `audyt/sklep/raporty/WYJATKI-WARUNEK-8.txt`: plik, czego dotyczy, powód.
+
+⛔ **SPROSTOWANIE (recenzja #280, WAŻNA 4).** We wcześniejszej wersji tego dokumentu stało, że
+`L1.json` został poprawiony z `runda: "A"` na `weryfikacja`, bo raport z błędną rundą „cicho
+wypadał spod wymogu”. **To było nieprawdą i edycja została cofnięta.** Warunek w
+`SCHEMAT-RAPORTU.json` jest KONIUNKCJą: `soczewka == "L5"` ORAZ `runda in [weryfikacja, re-audyt]`.
+`L1.json` ma `soczewka: "L1"`, więc wymóg `obietnice_behawioralne` nie obowiązywał go
+**niezależnie** od wartości `runda`. Nic spod niczego nie wypadało.
+
+⛔ Rozbieżność metadanej jest realna — plik leży w `kalibracja-weryfikacja/`, a deklaruje rundę `A`.
+Ale jest to **porządkowanie metadanej, nie zamykanie luki**, a raport pozostaje DOWODEM: mechanizmem
+przewidzianym w tym samym PR-ze jest wpis w `WYJATKI-SCHEMATU.txt`, nie edycja pliku. Plik został
+przywrócony bajt w bajt do postaci oddanej przez audytora (`git checkout origin/main`), a rozbieżność
+opisana na liście wyjątków.
+
+⭐ Klasa do zapamiętania: **regułę, którą sam wprowadzasz w tym samym PR-ze, najtrudniej zauważyć,
+gdy to TY ją łamiesz** — a uzasadnienie brzmiało technicznie i dlatego przeszło bez sprawdzenia
+warunku w schemacie.

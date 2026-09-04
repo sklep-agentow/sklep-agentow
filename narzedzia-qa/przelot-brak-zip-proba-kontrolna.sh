@@ -43,7 +43,7 @@ MUTANT="$KORZEN/narzedzia-qa/.przelot-mutant-proby.tmp.sh"
 # ⛔ EXIT INT TERM, nie samo EXIT (recenzja #272 r15, „nieodtworzone przypuszczenia").
 # Od tej rundy mutant lezy WEWNATRZ repozytorium, wiec przerwanie z klawiatury zostawiloby
 # smiec w drzewie roboczym — a przelot odmawia pracy na brudnym drzewie.
-trap 'rm -rf "$ATRAPA" "$ROBOCZY"; rm -f "$MUTANT"' EXIT INT TERM
+trap 'rm -rf "$ATRAPA" "$ROBOCZY"; rm -f "$MUTANT" "$KORZEN/narzedzia-qa/.przelot-whoami.tmp.sh"' EXIT INT TERM
 
 for N in bash sh git sed awk grep find sort mktemp date printf cat rm cp mv \
          mkdir chmod head tail cut tr wc dirname basename docker php jq unzip; do
@@ -175,6 +175,65 @@ $(cat "$ROBOCZY/mutant.log" 2> /dev/null)"
 	fi
 fi
 echo "  (oryginal NIETKNIETY — mutant to osobny plik, kasowany przy wyjsciu)"
+
+# --- 3. GALAZ „BRAK DANYCH LOGOWANIA" -----------------------------------------
+# ⛔ POWOD ISTNIENIA TEJ SEKCJI (recenzja #280, runda 1). Przelot wczytuje dane logowania
+#    i melduje na stderr, gdy ich NIE MA. Ta druga galaz na maszynie roboczej (root, plik
+#    czytelny) NIE WYKONUJE SIE ANI RAZU — a na wykonawcy CI (`ciuser`) wykonuje sie ZAWSZE.
+#    Pierwsza wersja komunikatu wolala tam `$(whoami)`, polecenia nie ma w atrapie PATH,
+#    wiec stderr dostawal `command not found` i TA PROBA padala — dopiero w CI, po pushu.
+#    Lokalne „13 z 13 zielone" nic o tej galezi nie mowilo, bo jej nie odwiedzalo.
+# ⭐ Dlatego mierzymy ja WPROST, wskazujac ENV_ADMIN na plik, ktorego nie ma.
+echo
+echo "--- galaz BRAK DANYCH LOGOWANIA (mierzona wprost, nie przez przypadek) ---"
+WY_OUT="$(cd "$KORZEN" && ENV_ADMIN_PROBA="$ROBOCZY/nie-ma-takiego-pliku.env" PATH="$ATRAPA" \
+	bash "$PRZELOT" "$ROBOCZY/bezlog.log" "$ROBOCZY" 2> "$ROBOCZY/err-bezlog.txt")"
+B_KOD=$?
+B_ERR="$(cat "$ROBOCZY/err-bezlog.txt")"
+
+if [ "$B_KOD" -eq 2 ] && ! echo "$B_ERR" | grep -q 'NIEWCZYTANE'; then
+	echo "  ⛔ NIE ZMIERZONO: przelot odmowil pracy (EXIT=2) przed dojsciem do tej galezi."
+	NIETRAFIONE=$((NIETRAFIONE + 1))
+else
+	if echo "$B_ERR" | grep -q 'NIEWCZYTANE'; then
+		sprawdz "brak danych logowania ZOSTAWIA SLAD na stderr" 0
+	else
+		sprawdz "brak danych logowania ZOSTAWIA SLAD na stderr" 1
+	fi
+	if echo "$B_ERR" | grep -q 'command not found'; then
+		sprawdz "komunikat o braku logowania NIE wola polecen spoza atrapy PATH" 1
+		echo "$B_ERR" | grep 'command not found' | head -2 | sed 's/^/         /'
+	else
+		sprawdz "komunikat o braku logowania NIE wola polecen spoza atrapy PATH" 0
+	fi
+fi
+
+# ⛔ ASERCJA BEZ MUTANTA JEST MARTWA. Podkladam stan sprzed naprawy — wywolanie `whoami`
+#    w tej samej galezi — i zadam, zeby asercja wyzej PADLA. Inaczej „OK" nic nie znaczy.
+# ⛔ MUTANT W TYM SAMYM KORZENIU CO ORYGINAL (regula 140 linii wyzej, recenzja #280 r3 D5):
+#    przelot liczy KORZEN ze sciezki wlasnego pliku, wiec kopia w /tmp mierzylaby INNE repo.
+MUT_LOG="$KORZEN/narzedzia-qa/.przelot-whoami.tmp.sh"
+cp "$PRZELOT" "$MUT_LOG"
+M_PRZED="$(cksum < "$MUT_LOG")"
+sed -i 's|"${USER:-UID $EUID}"|"$(whoami)"|' "$MUT_LOG"
+M_PO="$(cksum < "$MUT_LOG")"
+if [ "$M_PRZED" = "$M_PO" ]; then
+	echo "  BLAD mutacja NIE weszla do pliku (ZGNILA KOTWICA sed): whoami w galezi bez logowania"
+	NIETRAFIONE=$((NIETRAFIONE + 1))
+else
+	WY_OUT="$(cd "$KORZEN" && ENV_ADMIN_PROBA="$ROBOCZY/nie-ma-takiego-pliku.env" PATH="$ATRAPA" \
+		bash "$MUT_LOG" "$ROBOCZY/bezlog-mut.log" "$ROBOCZY" 2> "$ROBOCZY/err-bezlog-mut.txt")"
+	MB_ERR="$(cat "$ROBOCZY/err-bezlog-mut.txt")"
+	if echo "$MB_ERR" | grep -q 'command not found'; then
+		echo "  OK   straznik PADL na: whoami spoza atrapy PATH (stan sprzed naprawy)"
+	else
+		# ⛔ MARTWA ASERCJA to wada PRZYRZADU, nie slepota straznika — idzie do NIETRAFIONE
+		#    (EXIT=2), zgodnie z konwencja, ktora ten PR ustanowil w 17 probach. Do rundy 3
+		#    szla do BLEDY i konczyla zdaniem „STRAZNIK SLEPY" o czyms, czego nie zmierzono.
+		echo "  BLAD straznik NIE zlapal: whoami spoza atrapy PATH — asercja jest MARTWA"
+		NIETRAFIONE=$((NIETRAFIONE + 1))
+	fi
+fi
 
 echo
 if [ "$NIETRAFIONE" -gt 0 ]; then

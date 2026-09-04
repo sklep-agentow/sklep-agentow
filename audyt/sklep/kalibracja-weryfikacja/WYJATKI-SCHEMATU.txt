@@ -1,0 +1,19 @@
+# WYJĄTKI OD SCHEMATU — raporty-dowody rundy WERYFIKACJA (4.09.2026)
+#
+# Format (ta sama konwencja co audyt/sklep/raporty/WYJATKI-WARUNEK-8.txt):
+#   <plik>|<czego dotyczy>|<powód>
+#
+# ⛔ PO CO TO JEST. Raporty audytorów są DOWODAMI i nie wolno ich edytować po fakcie.
+# Gdy taki raport łamie regułę schematu, poprawia się NIE plik, tylko wpisuje się jawny wyjątek
+# tutaj — inaczej albo fałszujemy dowód, albo zostawiamy naruszenie bez śladu.
+# Recenzja #279 DROBNA 9 słusznie wytknęła, że dwa pliki naruszają schemat wprowadzany tym samym
+# PR-em, a mechanizmu wyjątku dla nich nie było.
+#
+# ⛔ Ta lista NIE jest dziś przez nic egzekwowana — w repozytorium nie ma wywołania walidatora
+# JSON Schema (schemat czyta tylko `k7-koniec.sh`, i tylko jako dwa słowniki: `werdykt`
+# i `rodzaj_skutku`). Gdy powstanie bramka walidująca raporty, ma czytać ten plik.
+
+L5-proba3.json|obietnice_behawioralne (brak pola)|Raport z próby 3, czyli z przebiegu PRZED wprowadzeniem tego pola. Wymóg powstał 4.09 właśnie dlatego, że ten przebieg pokazał lukę: audytor zużył 19 z 30 wywołań i nie zmierzył ani jednej obietnicy behawioralnej. Dopisanie pola do raportu wstecz zatarłoby dowód luki.
+L5-proba3.json|werdykty spoza słownika (5 pozycji)|Audytor użył wag ŚREDNIA/DROBNA w miejscach, gdzie słownik ich nie przewiduje. Raport oddany w tej postaci i w tej postaci zostaje — poprawka zmieniłaby treść cudzego werdyktu.
+L5-proba4.json|minContains: 10 (jest 9 zmierzonych)|Raport z próby 4 ma 13 pozycji, z tego 9 z werdyktem ZGODNE/ROZJAZD. Próg 10 w chwili tego przebiegu NIE BYŁ egzekwowalny (siedział w opisie pola, a minItems liczy pozycje, nie werdykty). Audytor zgłosił brak SAM i poprosił o przeliczenie. PASS kalibracji dotyczy CZUŁOŚCI (100 % mutantów własnego zakresu, 0 alarmów na pułapkach, poprawna kwalifikacja), nie tego progu. Następny raport L5 musi mieć 10.
+L1.json|runda: "A" przy pliku z rundy WERYFIKACJA|Raport oddany przez audytora z tą metadaną i w tej postaci zostaje. Wymóg `obietnice_behawioralne` go NIE dotyczył — warunek schematu jest koniunkcją `soczewka == "L5"` ORAZ `runda in [weryfikacja, re-audyt]`, a tu soczewka to L1. Wcześniejsza edycja pola (PR #280) opierała się na błędnym odczycie tego warunku i została cofnięta; rozbieżność zostaje tutaj jako jawny wyjątek. Recenzja #280, WAŻNA 4.

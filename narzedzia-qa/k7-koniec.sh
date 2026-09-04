@@ -14,7 +14,7 @@
 # Pliki, które czyta (wszystkie względem korzenia repo):
 #   audyt/sklep/material/06-mapa-polowania.md · audyt/sklep/REJESTR-ZNALEZISK-SKLEP.md
 #   audyt/sklep/PRZELOT-CZLOWIEKA-SKLEP.md · audyt/sklep/ZAMROZENIE.md · audyt/sklep/raporty/**/*.json
-#   audyt/sklep/PROBY-KONTROLNE.log · tag bank/mutanty-sklep (do 31.08 #238: gałąź audyt/mutanty-sklep):audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP.md
+#   audyt/sklep/PROBY-KONTROLNE.log · gałąź audyt/mutanty-sklep = ŹRÓDŁO (tagi bank/mutanty-sklep* to zamrożone MIGAWKI, nie źródło):audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP.md
 set -u
 KORZEN="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WYMAGAJ_ZAMROZENIA_MAPY=1
@@ -73,8 +73,11 @@ fi
 #    Referencja z FALLBACKIEM (recenzja #184 r2 W1): w świeżym klonie (CI, recenzent) gałąź istnieje TYLKO jako
 #    origin/audyt/mutanty-sklep — goły `git show audyt/mutanty-sklep:…` dawał fałszywy FAIL (klasa jak W8).
 GALAZ_MUT=""
-# Kolejnosc od NAJSWIEZSZEGO: galaz (lokalna, potem origin), potem tag rundy weryfikacji,
-# a dopiero na koncu tag rundy A. ⛔ Powod, znalezisko recenzji #279 W2: tag `bank/mutanty-sklep`
+# ⭐ ZRODLEM rozliczenia jest GALAZ `audyt/mutanty-sklep` — tagi `bank/mutanty-sklep*` to zamrozone
+# MIGAWKI (rundy A i weryfikacji) i sluza wylacznie za awaryjny fallback w klonie bez galezi.
+# ⛔ NIE robimy nowego tagu przy kazdym commicie rozliczenia: to wlasnie rodzi rozjazd, ktory
+# ta kolejnosc ma usuwac. Kolejnosc od NAJSWIEZSZEGO: galaz (lokalna, potem origin), potem tag
+# rundy weryfikacji, a dopiero na koncu tag rundy A. ⛔ Powod, znalezisko recenzji #279 W2: tag `bank/mutanty-sklep`
 # zamrozil rozliczenie z 26.08 (L1 i L5 NIEKALIBROWANE), wiec bez tej kolejnosci bramka dawala
 # DWA SPRZECZNE wyniki zaleznie od tego, ktory ref istnial w klonie. Starych tagow nie ruszamy.
 for ref in audyt/mutanty-sklep origin/audyt/mutanty-sklep bank/mutanty-sklep-r2 bank/mutanty-sklep; do git rev-parse --verify --quiet "$ref^{commit}" >/dev/null && { GALAZ_MUT="$ref"; break; }; done
@@ -84,7 +87,10 @@ elif ! ROZL_SUROWE=$(git show "$GALAZ_MUT:audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP
 	fail "2 kalibracja: gałąź $GALAZ_MUT jest, ale brak na niej audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP.md"
 else
 	ROZL=$(printf '%s\n' "$ROZL_SUROWE" | sed 's/\\|/\x01/g')  # osobno od git show: bez pipefail kod potoku = kod seda (recenzja #186 D3)
-	# wiersze werdyktów: | audytor | mutant | znalazl | falszywy | werdykt | proby |  → po split '|' proby = pole 7
+	# wiersze werdyktów: | audytor | mutant | znalazl | falszywy | werdykt | proby | powod_powtorki |
+	# → po split '|' proby = pole 7, powod_powtorki = pole 8 (kolumna dodana 4.09 decyzja
+	#    ZMIANA D33 - limit powtorek kalibracji: 2 -> 4; w DECYZJE.md numer D39 wystepuje DWA razy,
+	#    wiec odsylam po TYTULE sekcji, nie po numerze)
 	# (recenzja #182 r2 W2: $NF czytał PUSTĄ kolumnę za końcowym „|" — warunek był martwy)
 	# ILE = liczba RÓŻNYCH soczewek (kolumna 2), nie wierszy — L3 ma dwa mutanty (M3, M4) i liczył się podwójnie (recenzja #188 D8)
 	ILE=$(printf '%s\n' "$ROZL" | grep -E '^\| (L[1-5]|L) \|' | awk -F'|' '{gsub(/ /,"",$2); print $2}' | sort -u | wc -l)
@@ -156,8 +162,24 @@ else
 	P_COMMIT=$(sed -n 's/^COMMIT: *//p' "$PROBY" | head -1)
 	HEAD_KR=$(git rev-parse --short=7 HEAD 2>/dev/null)
 	ILE_P=$(grep -cE '^[A-Za-z0-9_.-]+\.sh EXIT=' "$PROBY")
-	ZLE_P=$(grep -E '^[A-Za-z0-9_.-]+\.sh EXIT=' "$PROBY" | grep -vc 'EXIT=0')
+	# ⛔ EXIT=2 to SWIADOME POMINIECIE ("nie zmierzylam"), nie wada — liczone OSOBNO.
+	# Do 4.09 `grep -vc EXIT=0` wrzucal je do porazek: przelot z 4 realnymi padnieciami
+	# raportowal 12, czyli bramka mowila o produkcie rzecz, ktorej nie zmierzyla (klasa I-12).
+	# KOTWICA ZE SPACJA. Log ma postac: nazwa.sh EXIT=<kod> <czas>s
+	# Bez spacji wzorzec EXIT=2 lapie takze EXIT=21, wiec realne padniecie wyladowaloby
+	# po stronie „nie zmierzono, swiadome” — blad w strone ZLAGODZENIA bramki wydania.
+	ZLE_P=$(grep -E '^[A-Za-z0-9_.-]+\.sh EXIT=' "$PROBY" | grep -vcE 'EXIT=(0|2) ')
+	NIEZM_P=$(grep -cE '^[A-Za-z0-9_.-]+\.sh EXIT=2 ' "$PROBY")
 	POM_P=$(grep -cE '^POMINIETO ' "$PROBY")
+	# ⛔ SUFIT NA "NIC NIE ZMIERZYLAM" (recenzja #280 r2 W1, r3 W1). Do tej rundy NIEZM_P byl
+	#    wylacznie DRUKOWANY, nigdy porownywany: log, w ktorym WSZYSTKIE 26 prob ma EXIT=2,
+	#    przechodzil warunek ILE_P >= 26 (liczy WIERSZE, nie pomiary), mial ZLE_P = 0 i dawal
+	#    GO. Bramka wydania mowila „0 padniec z 26", nie zmierzywszy niczego.
+	#    Siostrzane narzedzia maja ten sufit od 4.09: proby-kontrolne-przelot.sh:134 oraz
+	#    bramki.sh:495 — obydwa jako TWARDE ZERO.
+	# ⛔ LITERAL, nie ${...:-} — wzorem bramki.sh:490: sufit czytany ze SRODOWISKA pozwala
+	#    przywrocic ciche zielone bez ruszenia jednego bajtu w repozytorium.
+	MAX_NIEZM_P=0
 	# DATA WAŻNOŚCI: nie „ten sam commit" (commit zapisujący log sam przesuwa HEAD, więc taki
 	# warunek nie dałby się spełnić nigdy), tylko „od przelotu nie zmieniło się nic, czego ten
 	# przelot dowodzi". Zmiana w narzędziach, testach albo kodzie wtyczki unieważnia dowód;
@@ -169,10 +191,12 @@ else
 		fail "6 próby kontrolne: po przelocie ($P_COMMIT) zmieniło się to, czego on dowodzi — $POTEM… — dowód przeterminowany (uruchom: bash narzedzia-qa/proby-kontrolne-przelot.sh)"
 	elif [ "$ILE_P" -lt 26 ]; then
 		fail "6 próby kontrolne: uruchomionych tylko $ILE_P (wymagane ≥26) — zakres zawężony, pominiętych $POM_P"
+	elif [ "$NIEZM_P" -gt "$MAX_NIEZM_P" ]; then
+		fail "6 próby kontrolne: $NIEZM_P z $ILE_P NIC NIE ZMIERZYŁO (EXIT=2, sufit: $MAX_NIEZM_P) — zestaw kurczy się po cichu; przelot na $P_COMMIT (uruchom: bash narzedzia-qa/proby-kontrolne-przelot.sh)"
 	elif [ "$ZLE_P" -ne 0 ]; then
-		fail "6 próby kontrolne: $ZLE_P z $ILE_P ma EXIT≠0 (przelot na $P_COMMIT)"
+		fail "6 próby kontrolne: $ZLE_P z $ILE_P PADŁO (EXIT=1); nie zmierzono: $NIEZM_P (EXIT=2, świadome); przelot na $P_COMMIT"
 	else
-		pass "6 próby kontrolne: $ILE_P/$ILE_P EXIT=0 na commicie $P_COMMIT (pominiętych: $POM_P)"
+		pass "6 próby kontrolne: 0 padnięć z $ILE_P na commicie $P_COMMIT (nie zmierzono: $NIEZM_P, pominiętych: $POM_P)"
 	fi
 fi
 
