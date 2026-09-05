@@ -1,13 +1,14 @@
-# AUDYT-RAPORT — Sklep Agentów, wydanie `v0.9.28` (delta nad `v0.9.27`)
+# AUDYT-RAPORT — Sklep Agentów, wydanie `v0.9.42` (delta nad `v0.9.28`; ChatBot LIVE 1.5.17, Segregator maila 1.3.7)
 
-Data: 2026-08-31 · Zakres: audyt końcowy K7 (6 soczewek, 104 cele) + naprawy K7b + audyt delty 0.9.24 (mail HTML) + audyt
-delty 0.9.25 (płatność osadzona, dane do faktury, reconciliation po K10 — PR `#222`, 4 rundy) + test instalacji od zera
-przez niezależnego testera (K10) + audyt delty 0.9.26 (canonical stron sklepu, klasa `is_page( 0 )` — PR `#225`, 4 rundy;
-dokumenty SECURITY/CONTRIBUTING — PR `#226`, 3 rundy; delta 0.9.27: HEAD-404, podpis webhooka jako strażnik przelotu ręcznego, Yoast/RankMath,
-has_action prio 0, zdanie o skrócie — długi z CO-WISI decyzją właściciela 30.08 ~22:15) + bramka końcowa i przelot prób kontrolnych
-na commicie FINALNYM tej gałęzi (log w repo — sekcja delty 0.9.27 niżej niesie sha i liczby) + audyt delty 0.9.28 (kompensacja
-poczty ze śladu `dor_*` schemat 9, `mail_blad` pod własnością tokenu, anonimizacja RODO czyści `mail_tresc`, wygląd CENA/kafle —
-PR `#234`, 7 rund do 0 KRYT/0 WAŻ; zamrożenie paczki i rejestr długów — PR `#235`, 2 rundy; sekcja delty 0.9.28 na końcu) · KRYTYCZNE: 0 · DUZE: 0 · kontroli FAIL: 2 (z 13) · **K7: NO-GO · EXIT=1** (kontrola 2 — ta sama co przy 0.9.23 i 0.9.24: decyzja właściciela 28.08; kontrola 6 — dowód przelotu prób PRZETERMINOWANY po squashach 0.9.28: log `audyt/sklep/PROBY-KONTROLNE.log` niesie COMMIT `6a7922c` z linii 0.9.27, sprzed `#234`/`#235` — klasa 67; świeży przelot 33 prób na `0433fc6` = nazwany dług w CO-WISI, przelot bramek i strażników na main 0.9.28 WYKONANY — sekcja delty 0.9.28 na końcu; powody w raporcie)
+Data: 2026-09-05 · Zakres: DRUGA RUNDA AUDYTU po egzaminie z 31.08 (próba 1 niezaliczona) — 69 PR-ów scalonych od tagu `v0.9.28`
+(`#229`–`#298` + ten), w tym: obszary audytu A (paczka i front, `#291`, 7 rund), B (rejestry, `#288`/`#293`), C (prawne i retencja, `#294`,
+7 rund + `#299` domykający W1 r7), D (stanowisko: WP-Cron, limity uploadu, łapacz maili — `#289`), S (Segregator MIME, `#297`), E (CI na wykonawcach GitHuba, `#285`/`#287`/`#290`);
+naprawy produktu z przelotów po pytaniu (`#249`, `#250` przycisk Zapłać — sklep NIE SPRZEDAWAŁ, `#254`, `#255`, `#256`, `#258` migawka produktu + golden,
+`#259`, `#263`, `#264`, `#268`, `#270`, `#273`, `#274`, `#275`, `#278`, `#283`, `#298`); łańcuch dostaw (`#239`, `#243`); kalibracja L1/L5 zamykająca
+FAIL 2 bramki wydania (`#279`); rejestr INFRA uzgodniony ze stanem (`#241`, `#267`, `#277`, `#288`) ·
+KRYTYCZNE: 0 · DUZE: 0 (w kodzie wtyczek; w rejestrze INFRA 5 DUŻE otwarte = narzędzia `I-3`/`I-4`, proces `W-1`/`W-2`, decyzja `F4-F1` — lista w delcie niżej) ·
+kontroli FAIL: — (`k7-koniec.sh` w tej próbie NIE ORZEKA: wymaga przelotu na commicie, po którym kod się nie zmienił, a `#299` wszedł po przelocie) · **K7: DO ORZECZENIA PRZED PRÓBĄ 3** (przelot na `main` `e502128` = po `#298`, 5.09 12:22 — liczby w delcie niżej).
+
 
 Ten plik jest **wskaźnikiem maszynowym** dla bramki oddania (hook `oddanie-guard` czyta liczniki
 w nagłówku). Treść audytu — liczby z komendami, decyzje z powodami, długi i miejsca dowodów —
@@ -69,3 +70,32 @@ r6 — panel pisał „zamówienie niedomknięte" przy zanonimizowanym doręczon
 `sha256sum` zipa z klonu = `23a5273773e3946ef5883f2f13a58f6dee59edacba7ed3f823f6090a6f10c7fb` = digest assetu Release
 (4 assety, digesty 4/4 zgodne z lokalnymi sumami; Release oznaczony Latest) · `dokumentacja-zgodnosc-sklep.sh` 0 rozjazdów
 EXIT=0 · `paczka-zgodnosc.sh` „można zamrażać" EXIT=0. WSZYSTKO ZGODNE — bez rozjazdów.
+
+## Delta 0.9.29 → 0.9.42 (5.09.2026) — druga runda audytu po egzaminie
+
+**Co się stało między wydaniami.** Egzamin z 31.08 (próba 1) niezaliczony; od 1.09 przelot terenu po PYTANIU (nie po obszarze) i naprawy w rundach
+recenzenta CI (0 KRYT = warunek scalenia; WAŻNE/DROBNE o narzędziach → dług nazwany w `audyt/CO-WISI.md`). Najważniejsze wady PRODUKTU
+znalezione i zamknięte w tym oknie (każda z testem/strażnikiem w tym samym PR-ze):
+- `#250` **przycisk „Zapłać” nie potwierdzał płatności** (A4b-F1/F2) — sklep nie sprzedawał; przelot A4 przez przeglądarkę.
+- `#258` **migawka produktu w chwili płatności** — kupujący dostaje to, co kupił, także po edycji produktu; golden ze spustem (`#272`).
+- `#264` **wstrzyknięcie formuły w eksporcie CSV** (sklep) → `#298` ChatBot: jedna stała 7 znaków po obu stronach, strażnik bliźniaków z podłogą i próbą.
+- `#268` **pobranie po zwrocie całości / w sporze** — brama pobrań odmawia. `#273` okno idempotencji per kupujący (Q-5). `#274` wersja schematu rośnie tylko po kompletnej migracji.
+- `#270`/`#291` **RODO**: anonimizacja zachowuje dane do faktury (obowiązek podatkowy), czyści IP w dzienniku (P-5) — próba kontrolna na stosie jednorazowym.
+- `#294` **obowiązki informacyjne PRZED zakupem** (art. 12 u.p.k.), regulamin/polityka jako szablony z kompensacją dla instalacji aktualizowanych w miejscu, polityka mówi prawdę o sprzątaniu; art. 38a → 7aa.
+- `#297` Segregator: reguły widzą tekst człowieka, nie surowe MIME (cztery drogi A7c-F1). `#275` ChatBot: za długie pytanie = odmowa z liczbą, nie ciche cięcie.
+- `#263` za duża paczka nie kończy się pustą stroną (limit z serwera); `#278` panel mówi, że Regulamin/Polityka czekają na uzupełnienie; `#283` zrzuty bez cudzego menu.
+
+**Kalibracja i bramki.** `#279` zamyka FAIL 2 bramki wydania (kalibracja L1 i L5 pomiarem). `#240` cztery bramki meldujące czysto bez pomiaru — naprawione.
+`#262` martwy strażnik idempotencji znowu mierzy produkt. `#272` golden ze spustem na stosie próbnym od zera. `#296` próba liczników rejestru (rejestr liczy sam siebie,
+4 mutanty). Klasy błędów w ściądze: 67 → 144.
+
+**Przelot na `main` po `#298`** (commit `e502128`, 5.09 12:19–12:54, tryb PEŁNY na żywym stosie, log `audyt/sklep/PROBY-KONTROLNE.log` z tego biegu): `bramki.sh --tryb pelny` 12 z 13 ZIELONE (golden pominięta jawnie na hoście bez stosu bazy; w CI biegnie) · `proby-kontrolne-przelot.sh`: **uruchomionych 67, przeszło 58, PADŁY 2, NIE ZMIERZONO 7 (EXIT=2), pominięta jawnie 1 → EXIT=1**. Uczciwie, co znaczą te liczby:
+- PADŁA `zamek-stosu-probnego-proba-kontrolna.sh` — jeden punkt: dokumenty mówią „szesnastu” użytkowników stosu próbnego, pomiar daje 19 (obszary C i D dołożyły trzy próby na stosie) — rozjazd LICZBY w dokumencie (klasa 3/142), nie zamka; punkty A–I zamka przechodzą. Naprawa: ten PR (licznik i słowo z pomiaru).
+- PADŁA `przejecie-proba-kontrolna.sh` — **kontrola odwrotna** (czysty kod na stanowisku: „bot odpowiedział na pytanie” po przejęciu) — próba orzeka sama: „NIC nie znaczy, sprawdź warunki wstępne”. NIE orzekam o produkcie ani w jedną, ani w drugą stronę: to albo stan stanowiska (kontener ChatBota, klucz API, stara rozmowa), albo regresja; diagnoza PRZED próbą 3 jako pierwszy punkt. Do tego czasu przejęcie rozmowy = NIEZMIERZONE w tym przelocie.
+- NIE ZMIERZONO 7 prób (`anonimizacja-zachowuje-fakture`, `chatbot-pytanie-limit`, `csv-bez-formuly`, `idem-okno-per-kupujacy`, `limit-uploadu`, `pobranie-po-zwrocie`, `schemat-wersja-po-sprawdzeniu`): każda kalibruje strażnika na „kodzie sprzed naprawy = `origin/main`” i po scaleniu naprawy do `main` kończy `EXIT=2` („origin/main ZAWIERA już naprawę”). To wygaśnięcie PRZYRZĄDU z konstrukcji (klasa: próba zależna od stanu `main`), nie wada produktu — strażniki, które te próby kalibrują, biegną dalej i przechodzą. Naprawa (mutant w KOPII zamiast `origin/main` jako bazy) = dług narzędziowy nazwany w CO-WISI; do tego czasu sufit `MAX_NIEZMIERZONYCH` 0 w przelocie pełnym jest przekroczony i `k7-koniec` nie orzeknie GO.
+· `paczka-zgodnosc.sh` chatbot-live 1.5.17 (przebudowany po #298 r2 — klasa 10, 3. wystąpienie, złapane przez recenzenta) i segregator-maila 1.3.7 (przebudowany w tym PR-ze po komentarzach z #298) → „można zamrażać” EXIT=0; sklep-agentow 0.9.42: zgodny z repo na tej gałęzi (EXIT=0, 5.09 12:25); kod sklepu zmienia jeszcze `#299`, który przebudowuje zip w TYM SAMYM PR-ze (klasa 10) ·
+`k7-koniec.sh`: nie uruchomiony w tej próbie (patrz nagłówek) · rejestr INFRA (`grep -cE` z nagłówka pliku): OTWARTE 16 / ZAMKNIĘTE 69 / W NAPRAWIE+WYCOFANE 4 = razem 89, przecięcia 0 (próba `rejestr-liczniki-proba-kontrolna.sh` EXIT=0, 4 mutanty) · I-26 droga instalacyjna 7 kroków PRZEZ PANEL na `probny_wp`: NIEZMIERZONA w tej próbie (stos próbny zajęty przelotem; zostaje W NAPRAWIE, pomiar przed próbą 3).
+
+**Świadomy dług na to wydanie (DUŻE w rejestrze INFRA, żadne nie jest wadą kodu wtyczek):** `I-3`, `I-4` — sieroty narzędzi audytu (kalibrator, licznik odstępstw; wymagają decyzji, nie linii);
+`W-1` — pokrycie własnych hooków warsztatu próbami (proces, nie produkt); `W-2` — blokada `push --force` nie obejmuje repo klienta (nadrabiane izolacją runnera, D9/D42);
+`F4-F1` — brak retencji danych zamówień = dokument księgowy (decyzja właściciela, w notatkach wydania jako znane ograniczenie). Pełna lista OTWARTYCH: `audyt/CO-WISI.md`, sekcja „ŚWIADOMY DŁUG NA WYDANIE 0.9.42”.

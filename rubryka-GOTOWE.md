@@ -35,3 +35,14 @@ człon; oddanie decyzją właściciela, nie werdyktem rubryki). Zgodne z podsumo
 Bramka maszynowa: `KRYTYCZNE otwarte: 0 · DUŻE otwarte: 0 · kontroli FAIL: 2 (z 13) · K7: NO-GO · EXIT=1`.
 ⛔ Czego rubryka NIE dowodzi (za L1-11): kryteria każą mierzyć NA PACZCE na świeżej instalacji — na tej drodze
 przeszło #1 i rdzeń zakupu; reszta stoi na dowodach ze stosu warsztatowego i przelotu (to samo zachowanie, inna droga).
+
+## Delta dla wydania `v0.9.42` (5.09.2026) — korekta po zamrożeniu, osobnym PR-em wg §12 planu (DECYZJE D43)
+
+Rubryka wyżej opisuje `v0.9.23`; od tamtej pory 69 PR-ów. Zmiany werdyktów (tylko tam, gdzie jest NOWY dowód; reszta bez zmian):
+| # | Było (0.9.23) | Jest (0.9.42) | Dowód |
+|---|---|---|---|
+| 1 | ✅ | ✅ (bez nowego dowodu) | Werdykt z K10 (tester zewnętrzny 30.08) stoi; `I-26` (droga 7 kroków PRZEZ PANEL, limity 64M z `#289`) w tej próbie NIEZMIERZONA — zostaje W NAPRAWIE w rejestrze, pomiar na `probny_wp` przed próbą 3; do tej pory paczka instalowana `wp plugin install` (K6/K9/K10) |
+| 2 | 🐞 | 🐞 (zastrzeżenie węższe) | `#250` przycisk Zapłać potwierdza płatność (A4b-F1/F2: sklep 1.09 NIE SPRZEDAWAŁ — złapane przelotem po pytaniu, naprawione z przelotem A4 przez przeglądarkę w opisie PR); `#256` jedenaście zdarzeń webhooka w instrukcji z bramką zgodności; zastrzeżenie, które zostaje: pomiar ≤ 60 s skryptem tylko na stanowisku (L1-11 #2) |
+| 5 | 🐞 | 🐞 (zastrzeżenie węższe) | `#273` okno idempotencji rozdziela kupujących za jednym adresem (Q-5, test), `#264`/`#298` eksport CSV bez formuły (7 znaków, strażnik bliźniaków z próbą), `#268` brama pobrań odmawia po zwrocie/w sporze; zostaje: rate limit ZMIERZONY tylko na stanowisku (L1-11 #5), nie na paczce u klienta |
+| 12 | ⛔ drugi człon | ⛔ → do orzeczenia `k7-koniec.sh` po przelocie na FINALNYM main | `#279` zamyka kalibrację L1/L5 pomiarem (FAIL 2 bramki wydania); `k7-koniec.sh` wymaga `audyt/sklep/PROBY-KONTROLNE.log` z przelotu na commicie, po którym nie zmienił się kod — w tej próbie przelot biegł na `e502128` (przed `#299`), więc K7 orzeka dopiero próba 3; rozliczenie mutantów: `git show audyt/mutanty-sklep:audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP.md` |
+**Wynik 0.9.42 (próba 2, 5.09):** ✅ 6 (#1, #3, #4, #6, #8, #11) · 🐞 5 (#2, #5, #7, #9, #10 — zastrzeżenia #2 i #5 węższe niż przy 0.9.23) · ⛔ 1 (#12 do orzeczenia przez `k7-koniec.sh` przed próbą 3). Bramka maszynowa: `KRYTYCZNE otwarte: 0 · DUŻE otwarte (kod wtyczek): 0` — z nagłówka `AUDYT-RAPORT.md`.

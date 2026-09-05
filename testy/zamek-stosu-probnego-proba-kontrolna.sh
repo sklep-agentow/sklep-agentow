@@ -106,7 +106,7 @@ done
 # „z liczba w CHANGELOG-u i lib-golden-stos.sh:27". Dokumenty niosa te liczbe SLOWNIE, wiec
 # ponizej sprawdzam takze, czy oba naprawde mowia to samo slowo. Zmiana liczby wymaga wtedy
 # ruszenia WSZYSTKICH trzech miejsc — inaczej ta proba pada.
-OCZEKIWANI_UZYTKOWNICY=16
+OCZEKIWANI_UZYTKOWNICY=19   # 5.09 po #294/#298: +3 uzytkownikow z obszarow C i D — POLICZONE punktem G tej proby (19), slowo w obu dokumentach z tej samej liczby
 case "$OCZEKIWANI_UZYTKOWNICY" in
 	7) SLOWO_UZYTKOWNIKOW=siedmiu ;;
 	8) SLOWO_UZYTKOWNIKOW=śmiu ;;   # ⛔ CZĄSTKA bez pierwszej litery: dokumenty piszą „ośmiu”, a wielkość pierwszej litery bywa różna
@@ -114,6 +114,7 @@ case "$OCZEKIWANI_UZYTKOWNICY" in
 	10) SLOWO_UZYTKOWNIKOW=dziesięciu ;;
 	11) SLOWO_UZYTKOWNIKOW=jedenastu ;;
 	16) SLOWO_UZYTKOWNIKOW=szesnastu ;;
+	19) SLOWO_UZYTKOWNIKOW=dziewiętnastu ;;
 	*) SLOWO_UZYTKOWNIKOW="" ;;
 esac
 if [ -z "$SLOWO_UZYTKOWNIKOW" ]; then
