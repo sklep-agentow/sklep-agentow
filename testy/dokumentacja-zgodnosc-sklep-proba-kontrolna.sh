@@ -1,4 +1,6 @@
 #!/bin/bash
+# ⛔ SLOWO „bramka” W TYM PLIKU = skrypt, ktory ma PASC przy podlozonej wadzie (rola w tej probie) — to NIE jest bramka CI:
+#    quality.yml go nie wola (D-2, CONTRIBUTING.md); biegnie u recenzenta i w przelocie recznym przed wydaniem.
 # dokumentacja-zgodnosc-sklep-proba-kontrolna.sh — dowód, że bramka dok=kod SKLEPU potrafi PAŚĆ.   WERSJA 1.1.0
 #
 # Recenzja #182 r2 W4: nowa bramka weszła bez dowodu, że rozpoznaje rozjazd (zasada dowodu CLAUDE.md / D14).
