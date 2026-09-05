@@ -70,8 +70,8 @@ leży w pliku `LICENSE` w katalogu wtyczki i wchodzi do paczki produktowej.
 | `includes/admin.php` | 1504 | panel: przebiegi i raporty, reguły, kategorie, próbka, ustawienia, baner powitalny, paski błędu AI i błędu bazy |
 | `includes/konfiguracja.php` | 360 | eksport i import własnej konfiguracji (kategorie + reguły) w JSON-ie |
 | `includes/filtry.php` | 588 | eksport reguł do filtrów Gmaila (XML) i reguł Outlooka |
-| `includes/class-segm-imap.php` | 1202 | **klient IMAP4rev1 w czystym PHP** — gniazdo, TLS, protokół |
-| `includes/skrzynka.php` | 849 | konfiguracja skrzynki, hasło, diagnostyka, „Sprawdź połączenie", rozbiór nagłówków i treści |
+| `includes/class-segm-imap.php` | 1207 | **klient IMAP4rev1 w czystym PHP** — gniazdo, TLS, protokół |
+| `includes/skrzynka.php` | 860 | konfiguracja skrzynki, hasło, diagnostyka, „Sprawdź połączenie", rozbiór nagłówków i treści |
 | `includes/skrzynka-przebieg.php` | 741 | przebieg na żywej skrzynce, historia, cofanie, harmonogramy WP-Cron |
 | `includes/admin-skrzynka.php` | 766 | panel zakładki *Skrzynka (IMAP)* i obsługa jej formularzy |
 | `includes/admin-powitanie.php` | 143 | ekran powitalny pokazywany raz po aktywacji |
@@ -123,7 +123,7 @@ pobierana do pamięci na czas dopasowania reguł i nigdzie nie jest zapisywana.
 
 `plan` (tryb na sucho: tak by zrobił) · `w_toku` (zamiar zapisany, `UID MOVE` jeszcze
 niepotwierdzony — wiersz w tym stanie po zakończonym przebiegu znaczy, że proces urwał się
-między przeniesieniem a potwierdzeniem; cofanie szuka takiej wiadomości po `Message-ID`) ·
+między przeniesieniem a potwierdzeniem; cofanie szuka takiej wiadomości po `Message-ID` — poza wpisami osoby, która złożyła wniosek „usuń moje dane”: kasownik RODO czyści im także `Message-ID`, zostaje tylko droga po UID) ·
 `przeniesiony` · `pominiety` (żadna reguła nie pasuje albo folder docelowy = źródłowy) ·
 `blad` · `cofniety`.
 
@@ -208,7 +208,7 @@ więc deinstalacja kasuje go zapytaniem `LIKE` po `wp_options` (razem z wierszam
 | `SEGM_SKRZ_LIMIT_CZASU` | `20` | `skrzynka.php` | twardy limit czasu jednego przebiegu na skrzynce (s) |
 | `SEGM_SKRZ_LIMIT_GNIAZDA` | `15` | `skrzynka.php` | limit czasu pojedynczej operacji sieciowej (s) |
 | `SEGM_SKRZ_GLEBOKOSC_MIME` | `5` | `skrzynka.php` | do ilu poziomów zagnieżdżenia rozbieramy wiadomość wieloczęściową (spreparowany mail nie zapętli rozbioru) |
-| `Segm_Imap::MAX_LINIA_BAJTOW` | `65536` (64 KB) | `class-segm-imap.php` | sufit jednej linii odpowiedzi serwera IMAP (bez niego linia bez końca rosła w pamięci do fatala) |
+| `Segm_Imap::MAX_LINIA_BAJTOW` | `4194304` (4 MB) | `class-segm-imap.php` | sufit jednej linii odpowiedzi serwera IMAP (bez niego linia bez końca rosła w pamięci do fatala); 4 MB, bo `* SEARCH` oddaje WSZYSTKIE UID-y w jednej linii (~240 KB przy 40 000 maili) |
 | `Segm_Imap::MAX_LITERAL_BAJTOW` | `1048576` (1 MB) | `class-segm-imap.php` | sufit jednego literału `{n}` — rozmiar podaje serwer, więc bez sufitu jedna linia `{943718400}` kończyła proces |
 | `Segm_Imap::MAX_LINII_ODPOWIEDZI` | `20000` | `class-segm-imap.php` | sufit linii nietagowanych na jedno polecenie |
 | `Segm_Imap::MAX_ODPOWIEDZ_BAJTOW` | `8388608` (8 MB) | `class-segm-imap.php` | sufit łącznej odpowiedzi na jedno polecenie; przekroczenie = zamknięcie gniazda i komunikat po polsku |

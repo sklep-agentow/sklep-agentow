@@ -122,7 +122,10 @@ csa( 0 === chatl_ai_uzycie_dzis(), 'brak wiersza na dziś = 0 wywołań (to nie 
 csa( true === chatl_ai_dostepny(), 'poniżej limitu → tryb AI dostępny' );
 csa( '' === csa_slad(), 'brak wiersza NIE zostawia śladu błędu bazy', csa_slad() );
 
+// Od 1.5.18 licznik wywołań podbija REZERWACJA slotu przed płatnym wywołaniem (chatl_ai_zarezerwuj),
+// a chatl_ai_zuzyj() dopisuje tylko tokeny — test odtwarza tę samą drogę, co front.php.
 for ( $i = 0; $i < 5; $i++ ) {
+	csa( true === chatl_ai_zarezerwuj(), 'rezerwacja slotu ' . ( $i + 1 ) . '/5 przechodzi' );
 	chatl_ai_zuzyj( array( 'tokeny_wejscia' => 10, 'tokeny_wyjscia' => 5 ) );
 }
 csa( 5 === chatl_ai_uzycie_dzis(), 'po 5 wywołaniach licznik = 5', (string) chatl_ai_uzycie_dzis() );

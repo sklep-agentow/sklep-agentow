@@ -145,7 +145,7 @@ Pełna historia zmian jest w pliku `CHANGELOG.md` w katalogu wtyczki.
 
 = 1.3.8 =
 * Dodane: eksporter i kasownik danych osobowych dla narzedzi prywatnosci WordPressa (Narzedzia -> Eksport / Usun dane osobowe); klucz osoby = adres nadawcy; obejmuje probke, dziennik ruchow (takze Message-ID) i raporty przebiegow. Podpowiedz do Polityki prywatnosci.
-* Naprawione: klient poczty ma sufity na rozmiar odpowiedzi serwera (linia 64 KB, dane 1 MB, odpowiedz 8 MB) - zbyt duza odpowiedz konczy sie komunikatem, nie bledem pamieci PHP.
+* Naprawione: klient poczty ma sufity na rozmiar odpowiedzi serwera (linia 4 MB, dane 1 MB, odpowiedz 8 MB) - zbyt duza odpowiedz konczy sie komunikatem, nie bledem pamieci PHP; hosting z zablokowanymi polaczeniami PHP dostaje zdanie, co zrobic; import konfiguracji dziala na hostingu bez trybu direct; po wniosku RODO cofanie przebiegu dla tej osoby nie szuka juz po Message-ID (droga po identyfikatorze serwera zostaje).
 
 = 1.3.7 =
 * Naprawione: reguły „treść zawiera” działają na zwykłej poczcie — wiadomość wieloczęściowa (Gmail, Outlook, Thunderbird) jest rozbierana na części, do reguły idzie tekst rozkodowany kodowaniem tej części, a granice i nagłówki części nie trafiają do dopasowania.

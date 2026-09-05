@@ -417,7 +417,7 @@ function sklepag_zdarzenie( $zamowienie_id, $typ, $opis ) {
 	global $wpdb;
 	$uzytkownik = is_user_logged_in() ? wp_get_current_user()->user_login : '';
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery
-	$wpdb->insert(
+	$wynik = $wpdb->insert(
 		$wpdb->prefix . 'sklepag_zdarzenia',
 		array(
 			'zamowienie_id' => $zamowienie_id,
@@ -428,6 +428,15 @@ function sklepag_zdarzenie( $zamowienie_id, $typ, $opis ) {
 		),
 		array( '%d', '%s', '%s', '%s', '%s' )
 	);
+	// Dziennik z dziurą, gdy baza leży, jest gorszy niż brak dziennika: właściciel szuka śladu
+	// zdarzenia, którego „nie było”. Zapis mierzymy po skutku; przy błędzie zostaje ślad w logu
+	// PHP (jedyne miejsce poza bazą) i wynik dla wołającego (0 = nie zapisano).
+	if ( false === $wynik ) {
+		// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- baza odrzuciła zapis dziennika; log PHP to jedyne miejsce, gdzie ślad może zostać.
+		error_log( 'sklep-agentow: zapis zdarzenia „' . $typ . '” dla zamówienia #' . (int) $zamowienie_id . ' padł: ' . (string) $wpdb->last_error );
+		return 0;
+	}
+	return (int) $wpdb->insert_id;
 }
 
 /**

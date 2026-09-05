@@ -49,12 +49,14 @@ class Segm_Imap {
 	/**
 	 * Sufity na to, ile przyjmujemy OD SERWERA. Bez nich rozmiar odpowiedzi dyktuje
 	 * serwer: jedna linia „{943718400}” kończyła proces PHP fatalem (brak pamięci)
-	 * z pominięciem całego aparatu komunikatów po polsku. Wtyczka pobiera tylko
-	 * nagłówki i pierwsze SEGM_SKRZ_TRESC_BAJTOW treści, więc sufity są szczodre
-	 * wobec prawdziwej poczty (nagłówki rzadko przekraczają 64 KB), a i tak
-	 * o rzędy wielkości poniżej limitu pamięci PHP.
+	 * z pominięciem całego aparatu komunikatów po polsku. Najdłuższa POPRAWNA linia
+	 * protokołu, o którą wtyczka sama prosi, to `* SEARCH` z listą WSZYSTKICH UID-ów
+	 * (`UID SEARCH ALL` przed obcięciem do limitu): przy 40 000 wiadomości ok. 240 KB,
+	 * przy 500 000 ok. 3,5 MB — stąd 4 MB na linię (sufit 64 KB odcinał skrzynki od
+	 * ok. 11 000 maili). Nagłówki i pierwsze SEGM_SKRZ_TRESC_BAJTOW
+	 * treści mieszczą się w literale 1 MB; całość i tak o rząd poniżej limitu pamięci PHP.
 	 */
-	const MAX_LINIA_BAJTOW     = 65536;    // jedna linia odpowiedzi (64 KB)
+	const MAX_LINIA_BAJTOW     = 4194304;  // jedna linia odpowiedzi (4 MB; `* SEARCH` na dużej skrzynce)
 	const MAX_LITERAL_BAJTOW   = 1048576;  // jeden literał {n} (1 MB)
 	const MAX_LINII_ODPOWIEDZI = 20000;    // linii nietagowanych na jedno polecenie
 	const MAX_ODPOWIEDZ_BAJTOW = 8388608;  // łącznie na jedno polecenie (8 MB)
@@ -991,7 +993,7 @@ class Segm_Imap {
 			return null;
 		}
 		if ( strlen( $tekst ) >= self::MAX_LINIA_BAJTOW && "\n" !== substr( $tekst, -1 ) ) {
-			$this->przerwij_za_rozmiar( 'przysłał linię dłuższą niż ' . ( self::MAX_LINIA_BAJTOW / 1024 ) . ' KB (limit bezpieczeństwa wtyczki)' );
+			$this->przerwij_za_rozmiar( 'przysłał linię dłuższą niż ' . ( self::MAX_LINIA_BAJTOW / 1048576 ) . ' MB (limit bezpieczeństwa wtyczki)' );
 			return null;
 		}
 		return $tekst;
@@ -1142,7 +1144,10 @@ class Segm_Imap {
 	 * @return string
 	 */
 	private function tekst( $wartosc ) {
-		return '"' . str_replace( array( '\\', '"' ), array( '\\\\', '\\"' ), (string) $wartosc ) . '"';
+		// Koniec linii w cytowanym łańcuchu (RFC 3501 4.3 zabrania CR/LF w quoted) = serwer czytałby
+		// resztę jako NOWE polecenie. Wartości pochodzą z panelu admina, ale i tak je odcinamy.
+		$wartosc = str_replace( array( "\r", "\n" ), '', (string) $wartosc );
+		return '"' . str_replace( array( '\\', '"' ), array( '\\\\', '\\"' ), $wartosc ) . '"';
 	}
 
 	/**

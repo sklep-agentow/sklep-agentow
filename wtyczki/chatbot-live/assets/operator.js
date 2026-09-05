@@ -62,6 +62,17 @@
 		fetch(window.chatlPanel.ajaxUrl, { method: 'POST', body: body, credentials: 'same-origin' })
 			.then(function (o) { return o.json(); })
 			.then(function (o) {
+				/* Nonce panelu zyje 12-24 h i NIE odnawia sie sam: po tym czasie WP odpowiada `-1`
+				   (403) i panel gluchl po cichu — operator widzial stara rozmowe i nic nowego.
+				   Odswiezenie strony daje swiezy nonce; komunikat mowi, dlaczego. */
+				if (-1 === o || (o && false === o.success)) {
+					var uwaga = document.createElement('div');
+					uwaga.className = 'notice notice-warning';
+					uwaga.textContent = 'Sesja panelu wygasła — odświeżam stronę, żeby dalej odbierać wiadomości.';
+					korzen.parentNode.insertBefore(uwaga, korzen);
+					window.setTimeout(function () { window.location.reload(); }, 2000);
+					return;
+				}
 				if (o && o.success && o.data) {
 					(o.data.nowe || []).forEach(function (w) {
 						ostatnieId = Math.max(ostatnieId, w.id);

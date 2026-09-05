@@ -212,10 +212,10 @@ function segm_post_konfig_import() {
 		segm_przekieruj_blad( 'segm-reguly', sprintf( 'Plik ma %s, a limit to %s. Konfiguracja kategorii i reguł nigdy tyle nie waży — to nie ten plik.', size_format( $rozmiar ), size_format( SEGM_KONFIG_MAX_BAJTOW ) ) );
 	}
 
-	global $wp_filesystem;
-	require_once ABSPATH . 'wp-admin/includes/file.php';
-	WP_Filesystem();
-	$tresc = $wp_filesystem ? $wp_filesystem->get_contents( $tmp ) : false;
+	// Plik tymczasowy z $_FILES czytamy wprost, jak import CSV (`segm_importuj_csv`): `WP_Filesystem()`
+	// na hostingu bez trybu `direct` (FTP/SSH) zwraca false i import padał z „nie udało się odczytać”.
+	// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- plik tymczasowy z $_FILES (is_uploaded_file wyżej), nie zasób zdalny.
+	$tresc = file_get_contents( $tmp );
 	if ( false === $tresc || '' === $tresc ) {
 		segm_przekieruj_blad( 'segm-reguly', 'Nie udało się odczytać wgranego pliku.' );
 	}

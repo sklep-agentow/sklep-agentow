@@ -286,6 +286,17 @@ function segm_skrzynka_polacz() {
 		);
 	}
 
+	// Diagnostyka (Ustawienia → Skrzynka) wiedziała, że hosting blokuje `stream_socket_client`,
+	// ale nikt jej przed połączeniem nie pytał — właściciel dostawał techniczny błąd gniazda
+	// zamiast zdania, co zrobić. Sprawdzenie jest tanie (function_exists), więc pytamy zawsze.
+	if ( segm_skrzynka_srodowisko_pada() ) {
+		return array(
+			'klient'   => null,
+			'blad'     => 'Ten hosting blokuje połączenia sieciowe z PHP (funkcja stream_socket_client jest wyłączona) — bez niej wtyczka nie połączy się z żadną skrzynką. Szczegóły: Ustawienia → Skrzynka → Diagnostyka; poproś hostingodawcę o odblokowanie.',
+			'dziennik' => array(),
+		);
+	}
+
 	$klient = new Segm_Imap( SEGM_SKRZ_LIMIT_GNIAZDA );
 	if ( ! $klient->polacz( (string) $ust['host'], (int) $ust['port'], (string) $ust['szyfrowanie'], ! empty( $ust['ufaj_bez_cert'] ) ) ) {
 		return array(

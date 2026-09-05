@@ -19,6 +19,11 @@ wydany osobno (podbicie pośrednie wewnątrz jednej zmiany).
 ## [0.9.43] — 2026-09-05 · schemat bazy bez zmian (10)
 
 ### Naprawione
+- **Błąd serwera w trakcie rozpoczynania płatności ma zdanie po polsku.** Gdy hosting odpowiedział stroną błędu (502, 503,
+  limit czasu — HTML zamiast JSON), kupujący widział surowe „SyntaxError: Unexpected token <”. Teraz widzi „Serwer sklepu
+  odpowiedział błędem (HTTP N). Odczekaj chwilę i spróbuj ponownie”, a przycisk wraca do „Kup teraz”.
+- **Dziennik zdarzeń zamówienia mierzy własny zapis.** Padnięty zapis wpisu zostawia ślad w logu PHP i wynik 0 dla
+  wołającego, zamiast cicho znikać (dziennik z dziurą wyglądał jak dziennik bez zdarzenia).
 - **Zapis do bazy bez sprawdzenia wyniku na ścieżce pieniędzy** (klasa „moduł melduje ok mimo błędu zapisu”):
   - migawka sesji checkout: gdy zapis padnie, sklep NIE wydaje linku do płatności (dotąd kupujący mógł zapłacić,
     a webhook uznałby sesję za obcą i zamówienie nigdy by nie powstało);

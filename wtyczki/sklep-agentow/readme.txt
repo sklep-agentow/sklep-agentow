@@ -162,6 +162,7 @@ link do pobrania w mailu, jednorazowy link do opinii.
 == Changelog ==
 
 = 0.9.43 =
+* Naprawione: blad serwera przy rozpoczynaniu platnosci (strona bledu hostingu zamiast JSON) pokazuje zdanie po polsku z kodem HTTP, nie surowy SyntaxError; dziennik zdarzen zamowienia mierzy wlasny zapis.
 * Naprawione: zapisy do bazy na sciezce platnosci sa sprawdzane po skutku - brak zapisu migawki sesji = link do platnosci nie jest wydawany, brak zapisu nowego linku = mail nie idzie (poprzedni link zostaje), brak zapisu zwrotu/sporu = Stripe ponawia powiadomienie zamiast dostac puste "ok".
 * Dodane: mail do wlasciciela sklepu przy awarii, po ktorej kupujacy czeka na czlowieka (Stripe nie odpowiada, mail z linkiem nie wyszedl, plik produktu nie istnieje, zapis po oplaceniu padl, ksiegowanie nie przeszlo) - najwyzej raz na godzine dla danego rodzaju.
 * Naprawione: adres goscia za Cloudflare/proxy - przelacznik "Strona za Cloudflare / proxy" (Ustawienia -> Bezpieczenstwo): bez niego za proxy wszyscy goscie byli jednym adresem, limity obejmowaly cala witryne, a boty probujace hasel mogly zablokowac logowanie wlasciciela. Do tego wylacznik limitu prob logowania.

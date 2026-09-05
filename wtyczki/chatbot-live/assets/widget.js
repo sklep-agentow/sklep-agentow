@@ -502,7 +502,13 @@
 			})
 				.then(function (o) { return o.json(); })
 				.then(function (o) {
-					if (!o || !o.stan) { return; }
+					if (!o || !o.stan) {
+						/* Odpowiedz bez stanu (429 limit, 403 blokada REST, komunikat bledu WP) konczyla
+						   odpytywanie NA ZAWSZE — okno czatu glucho czekalo na operatora. Probujemy dalej,
+						   rzadziej, tak jak przy bledzie sieci. */
+						zaplanujOdpytanie(30);
+						return;
+					}
 					ustawPasek(o.stan);
 					(o.nowe || []).forEach(function (w) {
 						ostatnieId = Math.max(ostatnieId, w.id);

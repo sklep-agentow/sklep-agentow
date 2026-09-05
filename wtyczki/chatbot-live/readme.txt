@@ -156,6 +156,7 @@ w paczce. Poniżej skrót.
 = 1.5.18 =
 * Naprawione: dobowy limit wywolan AI rezerwuje slot atomowo PRZED platnym wywolaniem - kilku gosci naraz przy ostatnim slocie nie przekracza limitu wlasciciela.
 * Naprawione: operator piszacy odpowiedz dluzej niz 5 minut nie traci tekstu - wysylka liczy sie jako aktywnosc, a przy odmowie tresc czeka w polu.
+* Naprawione: panel operatora po wygasnieciu sesji (12-24 h) pokazuje komunikat i odswieza strone zamiast cicho gluchnac; okno czatu po odpowiedzi bez stanu (429, blokada REST) odpytuje dalej co 30 s; nieprawidlowa sesja ma wlasny komunikat.
 * Zmienione: podpowiedz do Polityki prywatnosci mowi, dokad trafiaja pytania w trybie AI (Anthropic PBC, serwery w USA, tryb do wylaczenia) i ze okno czatu trzyma identyfikator rozmowy w sessionStorage na czas otwartej karty.
 
 = 1.5.17 =

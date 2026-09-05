@@ -22,9 +22,19 @@ Nic jeszcze.
 - Podpowiedź do Polityki prywatności (co przetwarzamy, dokąd idzie w trybie AI, jak złożyć wniosek).
 
 ### Naprawione
-- **Klient poczty ma sufity na to, ile przyjmie od serwera** (linia 64 KB, literał 1 MB, odpowiedź 20 000 linii / 8 MB).
+- **Klient poczty ma sufity na to, ile przyjmie od serwera** (linia 4 MB — tyle, ile potrzebuje lista wszystkich
+  identyfikatorów dużej skrzynki w jednej linii odpowiedzi na wyszukiwanie; literał 1 MB; odpowiedź 20 000 linii / 8 MB).
   Dotąd rozmiar dyktował serwer: jedna linia zapowiadająca 900 MB danych kończyła proces PHP błędem pamięci zamiast
   komunikatem po polsku. Teraz przekroczenie sufitu przerywa połączenie z jasnym powodem w dzienniku i w panelu.
+- **Hosting z zablokowanymi połączeniami sieciowymi PHP dostaje zdanie, co zrobić**, zanim wtyczka spróbuje się łączyć
+  (diagnostyka to wiedziała, ale nikt jej przed połączeniem nie pytał).
+- Import konfiguracji czyta wgrany plik wprost, jak import CSV — na hostingu bez trybu `direct` w `WP_Filesystem` import
+  kończył się „nie udało się odczytać wgranego pliku”.
+- Nazwy folderów i inne wartości cytowane w poleceniach do serwera nie mogą nieść końca linii (drugie polecenie
+  doklejone do pierwszego).
+- Po wniosku „usuń moje dane” wpisy tej osoby w dzienniku ruchów tracą także `Message-ID`, więc dla tych pozycji
+  **cofnięcie przebiegu** nie ma już drogi zapasowej po tym nagłówku (działa tylko po identyfikatorze nadanym przez
+  serwer). Wniosek RODO ma pierwszeństwo — to skutek świadomy, opisany w instrukcji.
 
 ---
 

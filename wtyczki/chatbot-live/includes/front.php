@@ -489,7 +489,12 @@ function chatl_ajax_pytanie() {
 	$pytanie = isset( $_POST['pytanie'] ) ? sanitize_textarea_field( wp_unslash( $_POST['pytanie'] ) ) : '';
 	$sesja   = isset( $_POST['sesja'] ) ? chatl_waliduj_sesje( wp_unslash( $_POST['sesja'] ) ) : '';
 
-	if ( '' === $pytanie || '' === $sesja ) {
+	// Dwa różne powody, dwa różne zdania: dotąd zła sesja też kończyła się „Puste pytanie.”,
+	// a gość z wpisanym pytaniem nie rozumiał, co ma poprawić.
+	if ( '' === $sesja ) {
+		wp_send_json_error( array( 'komunikat' => 'Sesja czatu jest nieprawidłowa — odśwież stronę i napisz jeszcze raz.' ), 400 );
+	}
+	if ( '' === $pytanie ) {
 		wp_send_json_error( array( 'komunikat' => 'Puste pytanie.' ), 400 );
 	}
 
