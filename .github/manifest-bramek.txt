@@ -75,7 +75,9 @@ zdarzenia-webhooka
 # to, co kupił” (migawka produktu z chwili płatności, naprawa PR #258; błąd wskazany przez
 # recenzenta zewnętrznego). Test istniał od 1.09, ale NIC go nie wołało — cofnięcie naprawy
 # nie zapaliłoby czerwonego. Bramka biegnie na STOSIE PRÓBNYM od zera (nigdy na wspólnym
-# stosie warsztatu), ~15 s. Wykonawca CI nie widzi Dockera, więc tam jest POMINIĘTA JAWNIE,
+# stosie warsztatu), ~15 s. Wykonawca CI nie ma stosu WP (do 5.09: konto bez Dockera; od D41:
+# obraz GitHuba z Dockerem, ale bez kontenera bazy — deklaracja `BEZ_STOSU_WP=1` w workflow),
+# więc tam jest POMINIĘTA JAWNIE,
 # a próg pełnego trybu schodzi z 13 na 12 — bramka MUSI biec lokalnie przed każdym PR-em
 # z kodem i w przelocie ręcznym przed wydaniem. Kalibracja: testy/golden-migawka-proba-kontrolna.sh.
 golden

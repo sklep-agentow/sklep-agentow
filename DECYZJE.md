@@ -96,3 +96,31 @@ z niej wymaga wcześniejszego ustalenia dwóch okien: po jakim czasie sesja nie 
 domknięta przez reconciliation i jak długo musi być widoczna dla wniosku o dostęp do danych.
 Zmiana w tabeli obsługującej płatności, wprowadzona bez tych ustaleń, ryzykuje **zepsucie
 mechanizmu, który w audycie dostał najwyższą ocenę**. Świadomie odkładamy — z zapisanym powodem.
+
+## D41 — CI na wykonawcach GITHUBA; własne runnery ODPIĘTE; repo w organizacji (5.09)
+**Decyzja właściciela (5.09, słowa: „hetznera odpinamy, on nie ma mocy żebyś ty pracowała na nim
+i jeszcze testy; organizacja, darmowe testy githuba”).** Oba workflowy biegną na `ubuntu-latest`,
+runnery `hetzner-gosia` i `oracle-micro` zostają wyrejestrowane po pierwszym zielonym przebiegu
+w nowym miejscu, konto `ciuser` i katalog runnera (3,0 GB) skasowane. Repo przechodzi do
+organizacji `sklep-agentow` (Free), bo tylko tam istnieje rola **Read** — recenzent zewnętrzny
+czyta i komentuje, a nic jego nigdy nie wykonuje się na naszej maszynie (zamyka B-6 u źródła;
+na koncie osobistym współpracownik dostaje wyłącznie Write — B-13).
+**Liczby (5.09, przebiegi 33928250820 / 33928250824):** bramki 720 s (w tym 606 s przelot prób),
+recenzja 703 s; na jednym własnym wykonawcy PO KOLEI = 24 min na pchnięcie, z `main` w kolejce
+40+. Ostatnie PR-y: 7–10 rund recenzenta = 4 h CI na PR. Tydzień 29.08–5.09: 399 przebiegów,
+13 883 min ściennych.
+**Koszt i granica:** plan Free = 2000 min/mies. ≈ 80 pchnięć (24 min każde), powyżej 0,006 $/min.
+Przy tempie z tego tygodnia (~28 pchnięć/dzień) ≈ 100 $/mies. — tempo pchnięć to teraz pieniądze:
+scalamy przy ZERZE uwag krytycznych, WAŻNE idą do `audyt/CO-WISI.md` i jednym PR-em porządkowym.
+**Czego obraz GitHuba nie ma i jak to obsłużono:** PHP 8.4 (`setup-php` przypięty do sumy commita),
+kontener bazy stosu warsztatu (`BEZ_STOSU_WP=1` → `golden` i próby stawiające stos POMIJANE
+JAWNIE, tak jak dotąd na koncie bez Dockera; strażnik w `bramki-proba-kontrolna.sh`),
+`node_modules` warsztatu (`playwright-core@1.62.1` + chromium stawiane w workflow recenzenta).
+**Bezpieczeństwo (zmierzone przed decyzją):** gitleaks po pełnej historii (`--log-opts=--all`,
+580 commitów) — 0 wycieków; grep po wzorcach kluczy — 0; adres serwera — 0 w historii i drzewie;
+artefakt i log recenzenta — sekrety zamaskowane, 0 tokenów. Repo pozostaje PRYWATNE: w drzewie
+jest 120 plików z naszą kuchnią (metoda audytu, briefy, cytowany recenzent zewnętrzny) i 133
+opisy commitów — upublicznienie ujawniłoby je z historią, której nie da się wyczyścić bez
+przepisania 690 commitów.
+**Dług jawny:** `golden` w CI mógłby biec NAPRAWDĘ (obraz ma Dockera) — wymaga postawienia
+kontenera bazy w workflow; odłożone do osobnego PR-a z pomiarem czasu (`audyt/CO-WISI.md`).

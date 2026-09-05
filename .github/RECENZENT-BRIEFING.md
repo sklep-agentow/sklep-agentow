@@ -96,14 +96,17 @@ nie zbadałeś; do przypuszczeń trafia to, co podejrzewasz, a czego nie
 potwierdziłeś żadną z trzech form. Uwaga bez dowodu = autor ma prawo odrzucić
 ją adnotacją „bez dowodu" i nie wolno Ci jej powtarzać z wagą w kolejnej rundzie.
 
-URUCHAMIAJ BRAMKI, NIE CZYTAJ ICH. Runner ma zainstalowane PHP 8.4 i katalog
-`vendor/` (workflow robi `composer install` PRZED recenzją), a klon jest PEŁNY
+URUCHAMIAJ BRAMKI, NIE CZYTAJ ICH. Wykonawca GitHuba dostaje PHP 8.4 (`setup-php`), katalog
+`vendor/` (workflow robi `composer install` PRZED recenzją) i `node_modules/playwright-core`
+z chromium (workflow stawia je PRZED recenzją), a klon jest PEŁNY
 (`fetch-depth: 0`), więc historia gita jest do dyspozycji. Masz z tego korzystać:
 
 - `vendor/bin/phpcs` — styl WPCS,
 - `vendor/bin/phpstan analyse --memory-limit=1G --no-progress` — statyka,
-- ⚠️ PRZED `dokumentacja-zgodnosc.sh`: `ln -s /root/praca/zlecenia/sklep-agentow/node_modules node_modules` (katalog
-  roboczy akcji nie ma `node_modules`; bez nich sekcja O tego testu celowo dolicza błąd — EXIT=1 ze środowiska, nie z treści).
+- ⚠️ `dokumentacja-zgodnosc.sh` potrzebuje `node_modules/playwright-core` i chromium — workflow
+  stawia je przed Tobą (do 5.09 trzeba było dowiązywać katalog warsztatu; ta komenda już nie istnieje).
+  Gdyby sekcja O tego testu mimo to doliczyła błąd środowiska (EXIT=1 „brak chromium”), napisz to
+  WPROST jako wadę stanowiska, nie treści.
 - `bash testy/dokumentacja-zgodnosc.sh`,
   `bash testy/dokumentacja-zgodnosc-segregator.sh` oraz
   `bash testy/dokumentacja-zgodnosc-sklep.sh` — czy dokumentacja nie kłamie

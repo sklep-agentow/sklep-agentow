@@ -76,10 +76,16 @@ concurrency:
 
 jobs:
   recenzja:
-    # Własny wykonawca na naszym serwerze (20.08). Recenzent zostaje na KAŻDYM
-    # pchnięciu — to najlepsza kontrola, jaką mamy, a teraz jest za darmo.
-    runs-on: [self-hosted, linux, x64]
-    timeout-minutes: 40   # 2.09: padnieta recenzja Dependabota #248 wisiala 1 h 27 min; udane trwaja 6-11 min (pomiar artefaktow)
+    # 5.09 (DECYZJE.md D41): WYKONAWCA GITHUBA — powód i liczby w quality.yml. Recenzent
+    # zostaje na KAŻDYM pchnięciu, ale od dziś każde pchnięcie kosztuje ~12 min z puli
+    # 2000 min/mies. — pchnięcia „na próbę” to pieniądze.
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      # To samo co w quality.yml: recenzent URUCHAMIA `bramki.sh`, a obraz GitHuba widzi Dockera
+      # bez stosu WP — bez tej deklaracji golden świeciłby mu czerwono i recenzja oskarżałaby
+      # produkt o wadę stanowiska.
+      BEZ_STOSU_WP: "1"   # 2.09: padnieta recenzja Dependabota #248 wisiala 1 h 27 min; udane trwaja 6-11 min (pomiar artefaktow)
     permissions:
       contents: read
       pull-requests: write
@@ -126,13 +132,15 @@ jobs:
       # PHP + vendor/ PRZED recenzja: recenzent ma URUCHAMIAC bramki (phpcs,
       # phpstan, skrypty zgodnosci), a nie czytac je i zgadywac wynik.
       #
-      # ⛔ `setup-php` USUNIĘTY 1.09 z tego samego powodu co w quality.yml:
-      #    po przeniesieniu wykonawcy na konto `ciuser` (B-3) akcja wpada
-      #    w nieskonczona petle `sudo: a password is required` i przebieg
-      #    nie konczy sie nigdy (zmierzone: 40 minut, zero procesora).
-      #    PHP 8.4.24 i Composer stoja systemowo — pelne uzasadnienie
-      #    i zakaz przywracania: komentarz w .github/workflows/quality.yml.
-      - name: Kontrola srodowiska PHP (zamiast setup-php)
+      # 5.09 (D41): `setup-php` wraca razem z wykonawca GitHuba — uzasadnienie i historia
+      #    (1.09: petla `sudo` na wlasnym wykonawcy) w quality.yml. Bramka wersji zostaje.
+      - name: PHP 8.4 (wykonawca GitHuba)
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2.37.2
+        with:
+          php-version: '8.4'
+          tools: composer:v2
+
+      - name: Kontrola srodowiska PHP (bramka wersji)
         run: |
           php -v | head -1
           WERSJA=$(php -r 'echo PHP_MAJOR_VERSION . "." . PHP_MINOR_VERSION;')
@@ -146,6 +154,17 @@ jobs:
 
       - name: Zaleznosci QA (composer)
         run: composer install --no-interaction --no-progress --no-scripts
+
+      # 5.09 (D41): `dokumentacja-zgodnosc.sh` mierzy ramki tekstow w SVG Playwrightem
+      # (testy/lib/chromium.js). Na wlasnym wykonawcy recenzent dowiazywal `node_modules`
+      # z katalogu warsztatu (`ln -s /root/praca/...`) — na wykonawcy GitHuba tego katalogu
+      # nie ma, wiec stawiamy zaleznosc wprost, ta sama wersja co lokalnie (1.62.1).
+      # Bez tego sekcja O testu dolicza blad srodowiska (EXIT=1) i recenzja oskarza tresc.
+      - name: Playwright + chromium (dla dokumentacja-zgodnosc.sh)
+        run: |
+          npm install --no-save --no-audit --no-fund playwright-core@1.62.1
+          npx playwright-core install chromium
+          node testy/lib/chromium.js
 
       # Znacznik czasu SPRZED recenzji. Bramka niżej liczy z niego, jak długo
       # recenzent naprawdę pracował — dwadzieścia sekund to nie recenzja.
@@ -202,7 +221,7 @@ jobs:
           claude_args: |
             --model claude-opus-5
             --max-turns 120
-            --allowedTools "Read,Glob,Grep,LS,mcp__github_comment__update_claude_comment,mcp__github_ci__get_ci_status,mcp__github_ci__get_workflow_run_details,mcp__github_ci__download_job_log,Bash(composer install --no-interaction --no-progress --no-scripts),Bash(vendor/bin/phpcs),Bash(vendor/bin/phpcs:*),Bash(vendor/bin/phpstan:*),Bash(php -l:*),Bash(ln -s /root/praca/zlecenia/sklep-agentow/node_modules node_modules),Bash(bash testy/dokumentacja-zgodnosc.sh),Bash(bash testy/dokumentacja-zgodnosc-segregator.sh),Bash(bash testy/dokumentacja-zgodnosc-sklep.sh),Bash(bash testy/dokumentacja-zgodnosc-sklep-proba-kontrolna.sh),Bash(bash narzedzia-qa/k7-koniec.sh),Bash(bash narzedzia-qa/k7-koniec.sh:*),Bash(bash narzedzia-qa/k7-koniec-proba-kontrolna.sh),Bash(bash narzedzia-qa/mapa-licznik.sh audyt/sklep/material/06-mapa-polowania.md --tylko-licz),Bash(bash narzedzia-qa/mapa-licznik.sh audyt/sklep/material/06-mapa-polowania.md --sprawdz-zamrozenie),Bash(bash narzedzia-qa/sprawdz-manifest.sh),Bash(bash testy/blad-klucza-proba-kontrolna.sh),Bash(bash testy/ip-za-proxy-proba-kontrolna.sh),Bash(bash testy/kalibracja-mutantem.sh),Bash(bash testy/licznik-trafien-proba-kontrolna.sh),Bash(bash testy/nonce-proba-kontrolna.sh),Bash(bash testy/nota-zapisu-proba-kontrolna.sh),Bash(bash testy/pamiec-rozmowy-proba-kontrolna.sh),Bash(bash testy/przejecie-proba-kontrolna.sh),Bash(bash testy/pulapka-proba-kontrolna.sh),Bash(bash testy/rodo-proba-kontrolna.sh),Bash(bash testy/statystyki-proba-kontrolna.sh),Bash(bash testy/stronicowanie-proba-kontrolna.sh),Bash(bash testy/svg-proba-kontrolna.sh),Bash(bash testy/tokeny-koszt-proba-kontrolna.sh),Bash(bash testy/wskaznik-pisania-proba-kontrolna.sh),Bash(bash testy/wybor-modelu-proba-kontrolna.sh),Bash(bash testy/zgodnosc-proba-kontrolna.sh),Bash(bash narzedzia-qa/bramka-recenzji-proba-kontrolna.sh),Bash(bash narzedzia-qa/bramki-proba-kontrolna.sh),Bash(bash narzedzia-qa/bramka-poswiadczenia.sh),Bash(bash narzedzia-qa/bramka-poswiadczenia-proba-kontrolna.sh),Bash(bash narzedzia-qa/gitleaks-proba-kontrolna.sh),Bash(bash narzedzia-qa/paczka-zgodnosc-proba-kontrolna.sh),Bash(bash narzedzia-qa/stos-proba-kontrolna.sh),Bash(bash narzedzia-qa/test-php-proba-kontrolna.sh),Bash(bash narzedzia-qa/test-php.sh:*),Bash(bash narzedzia-qa/bramki.sh),Bash(bash narzedzia-qa/bramki.sh:*),Bash(bash narzedzia-qa/stos.sh:*),Bash(bash narzedzia-qa/paczka-zgodnosc.sh:*),Bash(bash testy/instrukcja-liczby-segregator.sh),Bash(git log:*),Bash(git diff:*),Bash(git show:*),Bash(git rev-list:*),WebFetch(domain:developer.wordpress.org),WebFetch(domain:wordpress.org),WebFetch(domain:php.net),WebFetch(domain:rfc-editor.org),WebFetch(domain:datatracker.ietf.org),WebFetch(domain:docs.anthropic.com),WebFetch(domain:docs.claude.com)"
+            --allowedTools "Read,Glob,Grep,LS,mcp__github_comment__update_claude_comment,mcp__github_ci__get_ci_status,mcp__github_ci__get_workflow_run_details,mcp__github_ci__download_job_log,Bash(composer install --no-interaction --no-progress --no-scripts),Bash(vendor/bin/phpcs),Bash(vendor/bin/phpcs:*),Bash(vendor/bin/phpstan:*),Bash(php -l:*),Bash(bash testy/dokumentacja-zgodnosc.sh),Bash(bash testy/dokumentacja-zgodnosc-segregator.sh),Bash(bash testy/dokumentacja-zgodnosc-sklep.sh),Bash(bash testy/dokumentacja-zgodnosc-sklep-proba-kontrolna.sh),Bash(bash narzedzia-qa/k7-koniec.sh),Bash(bash narzedzia-qa/k7-koniec.sh:*),Bash(bash narzedzia-qa/k7-koniec-proba-kontrolna.sh),Bash(bash narzedzia-qa/mapa-licznik.sh audyt/sklep/material/06-mapa-polowania.md --tylko-licz),Bash(bash narzedzia-qa/mapa-licznik.sh audyt/sklep/material/06-mapa-polowania.md --sprawdz-zamrozenie),Bash(bash narzedzia-qa/sprawdz-manifest.sh),Bash(bash testy/blad-klucza-proba-kontrolna.sh),Bash(bash testy/ip-za-proxy-proba-kontrolna.sh),Bash(bash testy/kalibracja-mutantem.sh),Bash(bash testy/licznik-trafien-proba-kontrolna.sh),Bash(bash testy/nonce-proba-kontrolna.sh),Bash(bash testy/nota-zapisu-proba-kontrolna.sh),Bash(bash testy/pamiec-rozmowy-proba-kontrolna.sh),Bash(bash testy/przejecie-proba-kontrolna.sh),Bash(bash testy/pulapka-proba-kontrolna.sh),Bash(bash testy/rodo-proba-kontrolna.sh),Bash(bash testy/statystyki-proba-kontrolna.sh),Bash(bash testy/stronicowanie-proba-kontrolna.sh),Bash(bash testy/svg-proba-kontrolna.sh),Bash(bash testy/tokeny-koszt-proba-kontrolna.sh),Bash(bash testy/wskaznik-pisania-proba-kontrolna.sh),Bash(bash testy/wybor-modelu-proba-kontrolna.sh),Bash(bash testy/zgodnosc-proba-kontrolna.sh),Bash(bash narzedzia-qa/bramka-recenzji-proba-kontrolna.sh),Bash(bash narzedzia-qa/bramki-proba-kontrolna.sh),Bash(bash narzedzia-qa/bramka-poswiadczenia.sh),Bash(bash narzedzia-qa/bramka-poswiadczenia-proba-kontrolna.sh),Bash(bash narzedzia-qa/gitleaks-proba-kontrolna.sh),Bash(bash narzedzia-qa/paczka-zgodnosc-proba-kontrolna.sh),Bash(bash narzedzia-qa/stos-proba-kontrolna.sh),Bash(bash narzedzia-qa/test-php-proba-kontrolna.sh),Bash(bash narzedzia-qa/test-php.sh:*),Bash(bash narzedzia-qa/bramki.sh),Bash(bash narzedzia-qa/bramki.sh:*),Bash(bash narzedzia-qa/stos.sh:*),Bash(bash narzedzia-qa/paczka-zgodnosc.sh:*),Bash(bash testy/instrukcja-liczby-segregator.sh),Bash(git log:*),Bash(git diff:*),Bash(git show:*),Bash(git rev-list:*),WebFetch(domain:developer.wordpress.org),WebFetch(domain:wordpress.org),WebFetch(domain:php.net),WebFetch(domain:rfc-editor.org),WebFetch(domain:datatracker.ietf.org),WebFetch(domain:docs.anthropic.com),WebFetch(domain:docs.claude.com)"
 
       # Sonda błędu: pełny zapis wykonania CLI (stream NDJSON) — jedyne miejsce,
       # gdzie ląduje treść błędu przy „niemym zgonie" (log pokazuje tylko is_error).
