@@ -12,6 +12,7 @@
 # i nikt go po cichu nie usunal.
 #
 # Uzycie: bash narzedzia-qa/bramka-znaleziska.sh   (z katalogu repo)
+# shellcheck disable=SC2016  # odwrotne apostrofy we wzorcach grep sa CELOWO w apostrofach (znaki tabeli, nie podstawienia)
 set -u
 
 REJ=audyt/REJESTR-ZNALEZISK.md
@@ -144,6 +145,16 @@ if [ "$ZLE_STATUSY" != "0" ]; then
 	zglos "znalezisk z nieznanym statusem: $ZLE_STATUSY (dozwolone: OTWARTE, W NAPRAWIE, ZAMKNIETE)"
 else
 	ok "wszystkie statusy sa ze znanego zbioru"
+fi
+
+# Rejestr INFRA liczy sam siebie i pokrywa sekcje dlugu CO-WISI (I-23; #296 r1 KRYT 1 i WAZNA 4: przelot prob omija
+# jawnie PR-y ruszajace wylacznie audyt/, a wlasnie takie PR-y psuly liczniki — ta bramka biegnie na kazdym PR).
+licz
+_rej=$(bash narzedzia-qa/rejestr-liczniki-proba-kontrolna.sh 2>&1); _kod=$?
+if [ "$_kod" -eq 0 ]; then
+	ok "rejestr INFRA: $(printf '%s' "$_rej" | tail -1)"
+else
+	zglos "rejestr INFRA (rejestr-liczniki-proba-kontrolna.sh EXIT=$_kod): $(printf '%s' "$_rej" | grep -E 'ZLE|KOTWICA|EXIT=' | tr '\n' ' ')"
 fi
 
 echo

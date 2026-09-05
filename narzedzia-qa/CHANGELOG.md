@@ -14,12 +14,18 @@ wstecz nie dopisuję, bo nie umiałbym jej odtworzyć uczciwie. Ich zmiany od te
 pory lądują tutaj.
 
 ## [Niewydane]
-- **`stanowisko/sprzatnij-zamowienia-testowe.sh` — NOWY (I-22): lista / `--kasuj` zamówień testowych ze stanowiska (domeny
-  `test.local`, `example.com`, pusty e-mail) po zrzucie do JSON, razem ze zdarzeniami, opiniami i sesjami.** Nasze testy zostawiały
-  zamówienia po 149 zł, które liczyły się do przychodu na Pulpicie; 5.09 usunięto 20. Pierwsza wersja skryptu dawała FAŁSZYWE
-  ZERO (cudzysłowy SQL rozrywały string PHP) — złapane próbą na żywo, zapisane w komentarzu.
+- **`stanowisko/sprzatnij-zamowienia-testowe.sh` — NOWY (I-22): lista / `--kasuj` zamówień testowych ze stanowiska (domena
+  `test.local`/`example.com` albo pusty e-mail ORAZ sesja Stripe `cs\_test\_`) po zrzucie do JSON, razem ze zdarzeniami, opiniami
+  i sesjami.** Nasze testy zostawiały zamówienia po 149 zł, które liczyły się do przychodu na Pulpicie; 5.09 usunięto 20 (zrzut
+  sprawdzony po #296 r1 WAŻNA 1: 2 z pustym e-mailem, wszystkie 20 z `cs_test_`). Pierwsza wersja dawała FAŁSZYWE ZERO
+  (cudzysłowy SQL rozrywały string PHP) — od r2 kontrola dodatnia: pomiar musi oddać liczbę WSZYSTKICH zamówień, inaczej kod 2
+  (WAŻNA 2); pusty e-mail sam nie jest znacznikiem testu, bo domknięcie sesji zapisuje go przy prawdziwym zakupie (WAŻNA 1);
+  lista przed kasowaniem bez ucięcia (DROBNA 3); nota o sprzątaniu także w `przelot2.js` (WAŻNA 3).
 - **`rejestr-liczniki-proba-kontrolna.sh` — NOWA (I-23): rejestr INFRA liczy sam siebie i coś go pilnuje** — nagłówek == pomiar
-  komendą pliku, suma statusów == wiersze, zero przecięć; mutanty (nagłówek +1, wiersz o dwóch statusach) złapane. W przelocie prób.
+  komendą pliku, suma statusów == wiersze, zero przecięć; od r2 także DRUGI rejestr: każdy kod OTWARTY musi być w sekcji „ŚWIADOMY
+  DŁUG NA WYDANIE” w `audyt/CO-WISI.md` (#296 r1 KRYT 1: sekcja mówiła „~20”, pomiar 30). Mutanty: nagłówek +1, wiersz o dwóch
+  statusach, kod wycięty z CO-WISI — złapane. Biegnie z **`bramka-znaleziska.sh`** na KAŻDYM PR (WAŻNA 4: przelot prób omija
+  jawnie PR-y ruszające wyłącznie `audyt/`).
 - **`proby-kontrolne-przelot.sh` — sufit pominięć i PODŁOGA uruchomionych per odłamek; przelot biegnie też dla zmian w `testy/`
   i `boty/`; podłoga obowiązuje TYLKO dla zakresów, dla których została policzona (`.` i `narzedzia-qa`) — inny zakres
   (np. zagnieżdżony przelot dwuplikowy w `przelot-brak-zip-proba-kontrolna.sh`) dostaje jawny wiersz `PODLOGA: brak`
