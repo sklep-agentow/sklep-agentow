@@ -4,7 +4,7 @@ Tags: chat, chatbot, faq, kontakt, wsparcie
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.5.15
+Stable tag: 1.5.16
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -152,6 +152,9 @@ w ustawieniach. Klucz API jest kasowany zawsze, niezależnie od tego przełączn
 
 Pełna historia zmian, z opisem każdej pozycji, jest w pliku `CHANGELOG.md`
 w paczce. Poniżej skrót.
+
+= 1.5.16 =
+* Porządek w kodzie: komentarze w skrypcie i stylach okna czatu oraz w obsłudze operatora nie zawierają już naszych wewnętrznych oznaczeń zgłoszeń — niosą powód. Bez zmian w działaniu.
 
 = 1.5.15 =
 * Niewysłana odpowiedź operatora wraca do pola po odmowie „za długa wiadomość”. Żeby to było możliwe, wtyczka odkłada ją na serwerze najwyżej na 5 minut, osobno dla każdego operatora i każdej rozmowy; szkic znika po pierwszym odczycie; deinstalacja kasuje wszystkie takie wpisy tylko przy włączonym przełączniku „usuń wszystkie dane” (domyślnie wyłączony — jak reszta danych wtyczki).

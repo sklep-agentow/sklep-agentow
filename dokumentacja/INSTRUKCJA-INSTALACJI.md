@@ -138,9 +138,10 @@ powstaje zamówienie i mail. Skąd wziąć sekret webhooka:
    Ustawieniach sklepu.
 
 **B. Komputer lokalny / środowisko testowe bez publicznego adresu:**
-Serwery Stripe nie widzą localhosta — użyj oficjalnego Stripe CLI:
+Serwery Stripe nie dosięgną komputera bez publicznego adresu — użyj oficjalnego Stripe CLI,
+podając adres, pod którym Twoja instalacja odpowiada w przeglądarce:
 ```
-stripe listen --forward-to http://localhost:PORT/wp-json/sklepag/v1/webhook
+stripe listen --forward-to http://ADRES-TWOJEJ-INSTALACJI/wp-json/sklepag/v1/webhook
 ```
 Sekret webhooka pokaże `stripe listen --print-secret` (⚠️ to INNY sekret niż
 z Dashboardu — wklej ten z CLI).
@@ -244,7 +245,7 @@ Włącz. Dalej prowadzą instrukcje W paczkach botów (konfiguracja w kwadrans).
   Edytor plików motywu) przed zapisem sprawdza, czy strona odpowiada sama
   sobie — na świeżym serwerze bez tej pętli zwrotnej pokazuje „Unable to
   communicate back with site” i **cofa zapis bez śladu** (tak wyszło w teście
-  instalacji K10). Fragmenty do wklejenia:
+  instalacji od zera na czystym serwerze). Fragmenty do wklejenia:
 
   Nawigacja główna (desktop), zaraz po `<li>` z FAQ:
 

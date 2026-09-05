@@ -96,17 +96,16 @@ function sklepag_ostrzez_strony_prawne() {
 		return;
 	}
 	// ⛔ Zdanie koncowe MUSI pasowac do tego, co naprawde brakuje. Jedno zdanie na wszystkie przypadki
-	//    kazalo OPUBLIKOWAC strone, ktora nawias obok nazywal juz opublikowana — sprzecznosc wewnatrz
-	//    jednego komunikatu, czyli ta sama klasa, ktora ten PR naprawia. Liczba mnoga tez byla stala,
-	//    wiec przy jednej stronie komunikat mowil o "stronach".
-	// ⛔ PRZELACZNIK LICZY POWODY, NIE PYTA „CZY ISTNIEJE JAKIS”. Runda 5 rozdzielila zdanie
-	//    koncowe na dwie galezie, ale przelacznikiem byla ALTERNATYWA po calej liscie
-	//    (`in_array`). W stanie MIESZANYM — jedna strona robocza, druga opublikowana z zaslepka —
-	//    `$sa_robocze` bylo prawda, wiec komunikat mowil „opublikuj te strony” takze o stronie,
-	//    ktora nawias obok nazywal „opublikowana”. Sprzecznosc w JEDNYM akapicie, czyli ta sama
-	//    klasa, ktora ten PR mial zamknac. Stan mieszany nie jest egzotyczny: `sklepag_utworz_strony()` w `aktywacja.php`
-	//    zaklada obie strony jako `draft` z „(SZABLON)” w TYTULE, wiec wlasciciel idzie strona po
-	//    stronie i miedzy jedna a druga JEST w tym stanie.
+	//    potrafilo kazac OPUBLIKOWAC strone, ktora nawias obok nazywal juz opublikowana — sprzecznosc
+	//    wewnatrz jednego komunikatu. Liczba mnoga tez byla stala, wiec przy jednej stronie komunikat
+	//    mowil o "stronach".
+	// ⛔ PRZELACZNIK LICZY POWODY, NIE PYTA „CZY ISTNIEJE JAKIS”. Rozdzielenie zdania koncowego na
+	//    dwie galezie NIE WYSTARCZY, gdy przelacznikiem jest ALTERNATYWA po calej liscie (`in_array`).
+	//    W stanie MIESZANYM — jedna strona robocza, druga opublikowana z zaslepka — `$sa_robocze` bylo
+	//    prawda, wiec komunikat mowil „opublikuj te strony” takze o stronie, ktora nawias obok nazywal
+	//    „opublikowana”. Sprzecznosc w JEDNYM akapicie. Stan mieszany nie jest egzotyczny:
+	//    `sklepag_utworz_strony()` w `aktywacja.php` zaklada obie strony jako `draft` z „(SZABLON)”
+	//    w TYTULE, wiec wlasciciel idzie strona po stronie i miedzy jedna a druga JEST w tym stanie.
 	//    Teraz zdanie koncowe mowi osobno o kazdej grupie i tylko wtedy, gdy ta grupa istnieje.
 	$ile           = count( $do_uzupelnienia );
 	$ile_roboczych = count( array_keys( $powody, 'nieopublikowana', true ) );

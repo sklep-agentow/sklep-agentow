@@ -15,7 +15,7 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 // 0. Sekrety ZAWSZE out — martwa wtyczka nie zostawia poświadczeń w bazie.
 delete_option( 'sklepag_stripe_klucz_sekretny' );
 delete_option( 'sklepag_stripe_webhook_sekret' );
-delete_option( 'sklepag_schemat_blad' ); // diagnostyka niekompletnego schematu (A6-F1) — bez danych, zawsze do skasowania
+delete_option( 'sklepag_schemat_blad' ); // diagnostyka niekompletnego schematu — bez danych, zawsze do skasowania
 
 // Cron też ZAWSZE out, PRZED wczesnym return (ta sama klasa co w Segregatorze):
 // harmonogram to nie dane sprzedaży, a martwy wpis w cronie bez wtyczki
