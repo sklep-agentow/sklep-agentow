@@ -14,6 +14,10 @@ wstecz nie dopisuję, bo nie umiałbym jej odtworzyć uczciwie. Ich zmiany od te
 pory lądują tutaj.
 
 ## [Niewydane]
+- **`slady-wewnetrzne.sh` 1.4.1 — wzorzec „nasz obieg pracy” łapie też gołe „ten/tego PR” i „Runda N” (#291 WAŻNA 3, klasa 5 + 8).**
+  Trzy komentarze w `includes/admin.php` cytowały nasz proces i jechały do klienta przy zielonej bramce `slady`, bo wzorzec
+  wymagał „PR #N” albo słowa recenzent/koordynator/builder. Nowy przypadek w `paczka-zgodnosc-proba-kontrolna.sh`
+  (`psuj_obieg_pracy_ten_pr`): pada na podłożonym zdaniu (EXIT=1), przechodzi na czystym (EXIT=0); cała próba 22/22, EXIT=0.
 - **`pakuj-dla-klienta.sh` 1.2.0 — nagłówek zna `zrzuty/`, i dołożona kontrola sum między dwiema
   kopiami zrzutów (#283 r1, WAŻNE 3/4).** Nagłówek skryptu wymieniał zawartość paczki bez katalogu
   `zrzuty/`, mimo że jedzie do klienta od recenzji #280 — dopisany. Ważniejsze: `wtyczki/sklep-agentow/zrzuty/`

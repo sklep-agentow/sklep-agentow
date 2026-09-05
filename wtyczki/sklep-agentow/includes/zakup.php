@@ -173,7 +173,7 @@ function sklepag_obsluz_kup() {
 	// firmy wymaga nazwy, NIP-u i adresu nabywcy (ustawa o VAT art. 106e ust. 1 pkt 3), więc albo komplet,
 	// albo wszystkie puste — sam NIP dawałby właścicielowi fałszywe „mam dane do faktury”. Zły NIP = odmowa
 	// z komunikatem (kupujący poprawia). ⛔ Podanie NIP-u NICZEGO nie zmienia w prawach kupującego (zgoda z art. 38,
-	// gwarancja, reklamacje): art. 38a ustawy o prawach konsumenta wiąże ochronę z charakterem zakupu, nie z NIP-em.
+	// gwarancja, reklamacje): art. 7aa ustawy o prawach konsumenta wiąże ochronę z charakterem zakupu, nie z NIP-em.
 	$faktura      = array(
 		'nazwa' => isset( $_POST['faktura_nazwa'] ) ? sanitize_text_field( wp_unslash( $_POST['faktura_nazwa'] ) ) : '',
 		'nip'   => isset( $_POST['faktura_nip'] ) ? preg_replace( '/[\s-]/', '', sanitize_text_field( wp_unslash( $_POST['faktura_nip'] ) ) ) : '',

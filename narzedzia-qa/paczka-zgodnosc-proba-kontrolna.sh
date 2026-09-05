@@ -279,6 +279,8 @@ psuj_obieg_pracy()        { dopisz_slad "$1" "// uwaga recenzenta do PR #99 — 
 psuj_numer_goly()         { dopisz_slad "$1" "// martwy wpis w harmonogramie sypie bledami — #170)"; }
 # Kod znaleziska z naszego rejestru audytowego (D-4) — bramka nie znała formatu litera(y)-myślnik-numer.
 psuj_kod_znaleziska()     { dopisz_slad "$1" "// naprawiono zgodnie ze zgloszeniem A7b-F2"; }
+# „ten PR"/„Runda N" bez slowa PR #N i bez recenzent/koordynator/builder — wzorzec 1.4.0 tego nie widzial.
+psuj_obieg_pracy_ten_pr() { dopisz_slad "$1" "// klasa, ktora ten PR mial zamknac. Runda 5 rozdzielila zdanie"; }
 
 psuj_doktech() {
 	# Szóste miejsce wersji (nagłówek DOKUMENTACJA-TECHNICZNA.md) — dopisane
@@ -325,6 +327,7 @@ sprawdz "sciezka naszego drzewa roboczego w paczce"          1 psuj_sciezke_robo
 sprawdz "numer PR-a i recenzent w paczce"                    1 psuj_obieg_pracy           "nasz obieg pracy"
 sprawdz "goly numer zgloszenia (— #170) bez slowa PR"        1 psuj_numer_goly            "nasz obieg pracy"
 sprawdz "kod znaleziska audytu (A7b-F2) w paczce"            1 psuj_kod_znaleziska        "kod znaleziska audytu"
+sprawdz "ten PR/Runda N bez slowa PR #N w paczce"            1 psuj_obieg_pracy_ten_pr    "nasz obieg pracy"
 
 echo
 echo

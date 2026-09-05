@@ -1,5 +1,5 @@
 #!/bin/bash
-# slady-wewnetrzne.sh — czy to, co dostaje kupujący, wiezie NASZE ślady.   WERSJA 1.4.0
+# slady-wewnetrzne.sh — czy to, co dostaje kupujący, wiezie NASZE ślady.   WERSJA 1.4.1
 #
 # PO CO TO POWSTAŁO: przy zamrażaniu ChatBota 1.5.7 okazało się, że paczka wiozła
 # klientowi 20 śladów w 8 plikach — odsyłacze do plików, których kupujący nie
@@ -29,7 +29,7 @@
 #               2 = zła liczba argumentów / nie ma katalogu
 set -u
 
-WERSJA_NARZEDZIA=1.4.0
+WERSJA_NARZEDZIA=1.4.1
 
 ETYKIETA="${1:-}"
 KATALOG="${2:-}"
@@ -79,7 +79,13 @@ SLADY=(
 	# wp-env, vagrant, ddev — zostaje.
 	"adres maszyny dev|localhost|127\.0\.0\.1|:8890|:8025|mailpit|ngrok|wp-env|vagrant|\.ddev\b"
 	"ścieżka naszego drzewa roboczego|/root/praca|(^|[^a-zA-Z0-9/._-])(testy|boty|audyt|narzedzia-qa|wtyczki)/"
-	"nasz obieg pracy|PR #[0-9]|recenzent|recenzj|koordynator|builder[0-9]|prób[ay] kontroln|proba-kontrolna|mutant|\\bkrytyk|egzaminator|[Dd]zid|(—|–|\\(|\\bnr\\.?|zgłoszeni[ae]|uwag[ai])[[:space:]]*#[0-9]{2,4}([^[:alnum:]]|$)"
+	# 1.4.1 — „ten PR"/„tego PR" i „Runda N" jeżdżą do klienta BEZ numeru zgłoszenia
+	# i bez żadnego słowa z listy wyżej — znaleziono zdania „ten PR naprawia",
+	# „Runda 5 rozdzieliła zdanie" i „klasa, którą ten PR miał zamknąć" w komentarzu,
+	# a żadne z nich nie zawierało ani „PR #N", ani „recenzent/koordynator/builder".
+	# Wzorzec wymaga wielkiej litery (`PR`, `Runda`) — sama „ten próg" czy „po trzech
+	# rundach" (małe „r", bez cyfry) zostają: to zwykłe polskie słowa, nie nasz obieg pracy.
+	"nasz obieg pracy|PR #[0-9]|recenzent|recenzj|koordynator|builder[0-9]|prób[ay] kontroln|proba-kontrolna|mutant|\\bkrytyk|egzaminator|[Dd]zid|\\bt(en|ego) PR\\b|\\bRunda [0-9]+\\b|(—|–|\\(|\\bnr\\.?|zgłoszeni[ae]|uwag[ai])[[:space:]]*#[0-9]{2,4}([^[:alnum:]]|$)"
 	# 1.3.0 — numeracja NASZYCH dokumentów roboczych w paczce klienta (znalezisko SK-L5-001):
 	# „(kryterium #7)" było WIDOCZNE w wp-admin, a 54 komentarze cytowały plan/decyzje/kroki.
 	# Klient dostaje kod ze wskazówkami do dokumentów, których nigdy nie zobaczy. Komentarz ma
