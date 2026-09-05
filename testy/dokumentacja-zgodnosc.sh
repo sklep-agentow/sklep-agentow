@@ -278,7 +278,11 @@ spr "zero twardych limitow list"  "0"  "grep -c 'ORDER BY id DESC LIMIT 200\\|OR
 echo
 echo "=== K. Bezpieczenstwo: to, co dokumentacja obiecuje ==="
 spr "regex sesji"                 "1"  "grep -c \"a-zA-Z0-9-]{8,64}\" $W/includes/front.php"
-spr "znaki neutralizowane w CSV"  "1"  "grep -c \"array( '=', '+', '-', '@' )\" $W/includes/csv.php"
+# 1.5.17 (#298): jeden zestaw 7 znakow (jak sklep) w stalej, import czyta TE SAMA stala — mierzymy definicje
+# i uzycie po obu stronach; sam sklad zestawu pilnuje testy/chatbot-csv-formula-test.php (z proba kontrolna).
+spr "jeden zestaw znakow CSV (stala)"     "1"  "grep -c '^const CHATL_CSV_ZNAKI_FORMULY = array(' $W/includes/csv.php"
+spr "eksport uzywa tej stalej"           "1"  "grep -cF 'in_array( \$wartosc[0], CHATL_CSV_ZNAKI_FORMULY, true )' $W/includes/csv.php"
+spr "import uzywa tej samej stalej"      "1"  "grep -cF 'in_array( \$wartosc[1], CHATL_CSV_ZNAKI_FORMULY, true )' $W/includes/import.php"
 spr "BOM UTF-8 w eksporcie"       "1"  "grep -c 'xEF.xBB.xBF' $W/includes/csv.php"
 spr "widget bez uzycia innerHTML"  "0"  "grep -c '\\.innerHTML' $W/assets/widget.js"
 # ⛔ DOKUMENT KLIENTA OBIECUJE LICZNIK I OSTRZEZENIE DLA **OBU** POL (readme.txt sekcja 1.5.15:

@@ -395,7 +395,7 @@ function segm_filtry_outlook( $dane ) {
  * kiedy właściciel woli zobaczyć wyniki, zanim cokolwiek zaimportuje.
  *
  * Ten plik otwiera się w arkuszu, więc obowiązuje ta sama obrona co przy
- * eksporcie raportu: komórka od =, +, -, @ przechodzi przez segm_csv_komorka()
+ * eksporcie raportu: komórka od =, +, -, @, tabulatora, CR przechodzi przez segm_csv_komorka()
  * (OWASP CSV injection). Tu nie jest to teoria — kolumna z zapytaniem potrafi
  * zaczynać się od nawiasu albo minusa, a nazwy kategorii i wzorce pisze
  * użytkownik.

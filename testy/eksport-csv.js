@@ -1,6 +1,6 @@
 /* P2.1 — sprawdza eksport CSV zgłoszeń i historii rozmów: dostęp tylko dla
    zalogowanego admina z noncem, poprawne nagłówki pliku, BOM UTF-8 (Excel PL)
-   i neutralizacja formuł arkuszy (komórka od =,+,-,@ dostaje apostrof).
+   i neutralizacja formuł arkuszy (komórka od znaku z CHATL_CSV_ZNAKI_FORMULY: =,+,-,@, tabulator, CR, apostrof — dostaje apostrof; ten test mierzy przypadek „=”).
    Wymaga playwright-core + WP_ADMIN_USER/WP_ADMIN_PASS w env.
    Użycie: node testy/eksport-csv.js [adres] */
 const { chromium } = require('playwright-core');
