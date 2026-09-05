@@ -1217,3 +1217,31 @@ doskonalenie go ustępuje pierwszeństwa wydaniu. Recenzja: PR #282, komentarz `
 
 ⚠️ Recenzent NIE URUCHOMIŁ tego skryptu (`This command requires approval` — brak w `--allowedTools`,
 `recenzent.yml:205`), więc obie uwagi stoją na cytatach kodu i `grep`, nie na przebiegu.
+
+
+### #283 r1 (zrzuty i obrazki) — 3 WAŻNE, 3 DROBNE · ⛔ ŚWIADOMIE ODŁOŻONE 5.09
+⛔ **Zamknięte w PR-ze:** KRYTYCZNA 1 (oś czasu z `admin_roboczy` i IP stosu poza kadrem),
+DROBNA 3 (klucz publikowalny naszego konta → wzorcowy; przełącznik czyszczenia na domyślny),
+WAŻNA 2 (cztery podpisy opisują to, co w kadrze jest). Poniższe **nie dotyczą tego, co jedzie
+do klienta w obrazie** — to spójność narzędzi i dokumentacji. Ósma runda poprawek narzędzi
+w jedną noc; przelot prób i wydanie mają pierwszeństwo.
+
+- **WAŻNA 1 (klasa 11) — nowa bramka nazywa się szerzej, niż sprawdza.** Kontrola „każdy obrazek
+  z instrukcji istnieje w paczce” nie złapałaby wady, którą ten PR opisuje (obraz z danymi
+  wewnętrznymi): sprawdza obecność pliku, nie jego treść. ⇒ Albo zawęzić nazwę, albo dołożyć
+  kontrolę na treść obrazu (trudne — patrz niżej).
+- **WAŻNA 3 — spis treści paczki nie wymienia zrzutów.** `narzedzia-qa/pakuj-dla-klienta.sh:2`
+  nadal wylicza zawartość bez `zrzuty/`, mimo że katalog jedzie do klienta. ⇒ Dopisać do nagłówka
+  i podbić `WERSJA`.
+- **WAŻNA 4 (ekspozycja na klasę 8) — dwie kopie tych samych zrzutów, nic nie pilnuje, że są
+  równe.** `wtyczki/sklep-agentow/zrzuty/` i `dokumentacja/zrzuty/` trzymają te same pliki;
+  rozjazd jest możliwy i cichy. ⇒ Bramka porównująca sumy, albo jedno źródło i kopiowanie przy
+  pakowaniu.
+- DROBNA 1 (komunikat błędu podpowiada komendę, która nie wytworzy brakującego pliku),
+  DROBNA 2 (nagłówek skryptu pakującego nie nadąża), DROBNA 4 (obie nowe kontrole są poza CI —
+  `BRAMKI=` ich nie zna, więc chodzą tylko przy ręcznym pakowaniu).
+
+⭐ **Reguła, która z tej recenzji weszła do klasy 139:** żadna bramka nie złapie danych na
+ZDJĘCIU, bo skanery czytają tekst, nie obrazy — `paczka-zgodnosc.sh` meldował „w 69 plikach
+paczki nie ma śladów wewnętrznych” na paczce z nazwą konta i IP na obrazku. Jedyna kontrola,
+która działa, to **człowiek otwierający plik**.
