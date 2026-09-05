@@ -400,3 +400,14 @@ zainstalowane jako wtyczki) mają KAŻDY własną opcję „usuń wszystkie dane
 we WŁASNYCH ustawieniach — opcja sklepu ich nie obejmuje. Bez włączenia
 tych opcji boty zostawią swoje tabele w bazie (dane demo, historia rozmów,
 przebiegi). Klucz API każdego bota jest usuwany ZAWSZE, jak w sklepie.
+
+## Hosting: dwie rzeczy do sprawdzenia przed pierwszą sprzedażą
+
+- **`admin-post.php` musi być dostępny dla niezalogowanych.** Link do pobrania z maila i link „oceń bota” prowadzą przez
+  `/wp-admin/admin-post.php` (tak działa WordPress, nie jest to logowanie do panelu). Część hostingów i wtyczek „zabezpieczających”
+  blokuje ten adres dla gości — wtedy kupujący widzi stronę logowania zamiast pliku. Test: otwórz link z maila po zakupie testowym
+  w oknie prywatnym (niezalogowany). Jeśli pada, odblokuj `admin-post.php` w panelu hostingu / wtyczce.
+- **Strona za Cloudflare, proxy albo load balancerem:** włącz *Sklep Agentów → Ustawienia → Bezpieczeństwo → Strona za Cloudflare / proxy*.
+  Bez tego wszyscy goście liczą się jako jeden adres (limity zakupów i pobrań na całą witrynę, a boty próbujące haseł mogą
+  na minutę zablokować Twoje logowanie). Bez proxy przełącznik ma zostać wyłączony.
+
