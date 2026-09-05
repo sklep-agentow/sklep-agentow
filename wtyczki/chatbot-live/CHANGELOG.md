@@ -16,6 +16,15 @@ Nic jeszcze.
 
 ---
 
+## [1.5.16] — 2026-09-05 · schemat bazy bez zmian (8)
+
+### Zmienione
+- **Komentarze w `assets/widget.js`, `assets/widget.css`, `includes/front.php` i `includes/operator.php` bez naszych
+  wewnętrznych oznaczeń zgłoszeń** — niosą powód, nie numer. Zero zmian w zachowaniu; paczka przebudowana, żeby artefakt
+  zgadzał się z drzewem co do bajtu (kontrola `paczka-zgodnosc`).
+
+---
+
 ## [1.5.15] — 2026-09-02
 
 ### Naprawione
