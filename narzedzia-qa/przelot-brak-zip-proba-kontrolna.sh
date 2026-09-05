@@ -65,9 +65,16 @@ for N in k7-koniec-proba-kontrolna.sh paczka-zgodnosc-proba-kontrolna.sh; do
 	cp "$KORZEN/narzedzia-qa/$N" "$ROBOCZY/$N"
 done
 
+# ⛔ PRZELOT_ODLAMEK JAWNIE WYCZYSZCZONY (recenzja #287 WAZNA 2 c.d.). Ta proba mierzy
+# przelot na WLASNYM, prowizorycznym ZAKRESIE ($ROBOCZY, nie „narzedzia-qa"), a od tego PR-a
+# odlamek wymaga zakresu „narzedzia-qa" pod rygorem odmowy. W CI zadanie `proby` ustawia
+# PRZELOT_ODLAMEK na poziomie JOBA (quality.yml), wiec kazdy proces w tym jobie — w tym ten
+# zagniezdzony przelot — dziedziczy je ze srodowiska. Bez czyszczenia ta proba, uruchomiona
+# jako CZLONEK odlamka `reszta`, odziedziczylaby PRZELOT_ODLAMEK=reszta i zagniezdzony przelot
+# odmawialby pracy (EXIT=2) na WLASNYM, prawidlowym zakresie — zlapane lokalnie PRZED CI.
 uruchom() { # uruchom <plik_logu> [skrypt] -> wypelnia WY_OUT, WY_ERR, WY_KOD
 	local log="$1" skrypt="${2:-$PRZELOT}"
-	WY_OUT="$(cd "$KORZEN" && PATH="$ATRAPA" bash "$skrypt" "$log" "$ROBOCZY" 2> "$ROBOCZY/err.txt")"
+	WY_OUT="$(cd "$KORZEN" && PATH="$ATRAPA" PRZELOT_ODLAMEK= bash "$skrypt" "$log" "$ROBOCZY" 2> "$ROBOCZY/err.txt")"
 	WY_KOD=$?
 	WY_ERR="$(cat "$ROBOCZY/err.txt")"
 }
@@ -106,6 +113,18 @@ fi
 
 echo "--- czysty kod (EXIT=$CZYSTY_KOD) ---"
 echo "$WSZYSTKO" | grep -i 'pomijam\|POMINIETO' | head -2 | sed 's/^/      /'
+
+# ⛔ ASERCJA NA KOD WYJSCIA, NIE TYLKO NA KOD 2 (recenzja #290 WAZNA 1). Do tej rundy ta
+# galaz obslugiwala WYLACZNIE `CZYSTY_KOD -eq 2` (brak warunkow wstepnych) — kod 1 (przelot
+# NAPRAWDE PADL) przelatywal bez zadnej asercji, wiec podloga stosowana do zlego zakresu
+# (klasa naprawiona w proby-kontrolne-przelot.sh:243-249) dawala tu falszywa zielen: przelot
+# konczyl sie EXIT=1 na CZYSTYM kodzie, a ta proba tego NIE WIDZIALA. Kod 1 jest teraz FAIL.
+if [ "$CZYSTY_KOD" -ne 0 ]; then
+	printf '  BLAD przelot na CZYSTYM kodzie (bez zip) konczy sie EXIT=%s, nie EXIT=0\n' "$CZYSTY_KOD"
+	BLEDY=$((BLEDY + 1))
+else
+	printf '  OK   przelot na CZYSTYM kodzie (bez zip) konczy sie EXIT=0\n'
+fi
 
 if echo "$WSZYSTKO" | grep -q 'POMINIETO'; then
 	sprawdz "proby z WYMAGA_ZIP sa POMIJANE, nie liczone jako porazka" 0
@@ -186,7 +205,7 @@ echo "  (oryginal NIETKNIETY — mutant to osobny plik, kasowany przy wyjsciu)"
 # ⭐ Dlatego mierzymy ja WPROST, wskazujac ENV_ADMIN na plik, ktorego nie ma.
 echo
 echo "--- galaz BRAK DANYCH LOGOWANIA (mierzona wprost, nie przez przypadek) ---"
-WY_OUT="$(cd "$KORZEN" && ENV_ADMIN_PROBA="$ROBOCZY/nie-ma-takiego-pliku.env" PATH="$ATRAPA" \
+WY_OUT="$(cd "$KORZEN" && ENV_ADMIN_PROBA="$ROBOCZY/nie-ma-takiego-pliku.env" PATH="$ATRAPA" PRZELOT_ODLAMEK= \
 	bash "$PRZELOT" "$ROBOCZY/bezlog.log" "$ROBOCZY" 2> "$ROBOCZY/err-bezlog.txt")"
 B_KOD=$?
 B_ERR="$(cat "$ROBOCZY/err-bezlog.txt")"
@@ -221,7 +240,7 @@ if [ "$M_PRZED" = "$M_PO" ]; then
 	echo "  BLAD mutacja NIE weszla do pliku (ZGNILA KOTWICA sed): whoami w galezi bez logowania"
 	NIETRAFIONE=$((NIETRAFIONE + 1))
 else
-	WY_OUT="$(cd "$KORZEN" && ENV_ADMIN_PROBA="$ROBOCZY/nie-ma-takiego-pliku.env" PATH="$ATRAPA" \
+	WY_OUT="$(cd "$KORZEN" && ENV_ADMIN_PROBA="$ROBOCZY/nie-ma-takiego-pliku.env" PATH="$ATRAPA" PRZELOT_ODLAMEK= \
 		bash "$MUT_LOG" "$ROBOCZY/bezlog-mut.log" "$ROBOCZY" 2> "$ROBOCZY/err-bezlog-mut.txt")"
 	MB_ERR="$(cat "$ROBOCZY/err-bezlog-mut.txt")"
 	if echo "$MB_ERR" | grep -q 'command not found'; then
