@@ -126,8 +126,13 @@ jobs:
   # ⛔ 5.09 (D41 c.d., Dzidek: „więcej czekania na bramki niż roboty”): PRZELOT PRÓB WARUNKOWY
   # I RÓWNOLEGŁY. Zmierzone na #285: bramki 112 s, przelot prób 718 s, recenzja 703 s. Przelot
   # mierzy NARZĘDZIA (czy bramki widzą podłożoną wadę), nie produkt — dla PR-a, który nie rusza
-  # `narzedzia-qa/` ani `.github/`, narzędzia są dokładnie te same co na `main`, gdzie przelot
-  # biegnie ZAWSZE. Dlatego: (1) PR produktowy = bramki ‖ recenzja, czekanie ~12 min zamiast 26;
+  # `narzedzia-qa/`, `testy/`, `boty/` ani `.github/`, narzędzia są dokładnie te same co na `main`,
+  # gdzie przelot biegnie ZAWSZE. Trzy pierwsze katalogi razem, bo próby z `narzedzia-qa/` mierzą
+  # narzędzia LEŻĄCE w `testy/` i `boty/` (recenzja #287 WAŻNA 1: `paczka-obejmuje-kazdy-plik-wtyczki-proba-kontrolna.sh`
+  # kopiuje `testy/paczka-obejmuje-kazdy-plik-wtyczki-test.sh` i `boty/buduj-paczki.sh`; `spoza-repo-proba-kontrolna.sh`
+  # iteruje `testy/*.sh`; `liczniki-zywe-proba-kontrolna.sh` skanuje `testy/` — PR zmieniający wyłącznie
+  # jeden z tych plików pomijał przelot z nieprawdziwym uzasadnieniem „narzędzia są identyczne z main").
+  # Dlatego: (1) PR produktowy = bramki ‖ recenzja, czekanie ~12 min zamiast 26;
   # (2) gdy przelot ma biec, biegnie w TRZECH odłamkach naraz (nazwane w samym przelocie, próba
   # kontrolna pilnuje, że ich suma to pełna lista) — czekanie ≈ najdłuższa próba (~10 min).
   # ⛔ BEZ `if:` NA ZADANIU ANI KROKU — bramka `manifest` (sprawdz-manifest.sh) tego zabrania i ma
@@ -207,13 +212,13 @@ jobs:
           # Decyzja WEWNATRZ kroku (bez if:), wypisana — patrz komentarz przy zadaniu `proby`.
           if [ "$ZDARZENIE" != push ]; then
             ZMIENIONE=$(git diff --name-only "origin/$BAZA" HEAD)
-            if ! printf '%s\n' "$ZMIENIONE" | grep -qE '^(narzedzia-qa|\.github)/'; then
-              echo "PRZELOT PROB (odlamek $PRZELOT_ODLAMEK): POMINIETY JAWNIE — zmiana nie dotyka narzedzia-qa/ ani .github/;"
-              echo "  proby mierza NARZEDZIA, a te sa identyczne z main, gdzie przelot biegnie zawsze. Zmienione pliki:"
+            if ! printf '%s\n' "$ZMIENIONE" | grep -qE '^(narzedzia-qa|testy|boty|\.github)/'; then
+              echo "PRZELOT PROB (odlamek $PRZELOT_ODLAMEK): POMINIETY JAWNIE — zmiana nie dotyka narzedzia-qa/, testy/, boty/ ani .github/;"
+              echo "  proby mierza NARZEDZIA (takze te lezace w testy/ i boty/), a te sa identyczne z main, gdzie przelot biegnie zawsze. Zmienione pliki:"
               printf '%s\n' "$ZMIENIONE" | sed 's/^/  /'
               exit 0
             fi
-            echo "PRZELOT PROB (odlamek $PRZELOT_ODLAMEK): BIEGNIE — zmiana dotyka narzedzia-qa/ albo .github/"
+            echo "PRZELOT PROB (odlamek $PRZELOT_ODLAMEK): BIEGNIE — zmiana dotyka narzedzia-qa/, testy/, boty/ albo .github/"
           else
             echo "PRZELOT PROB (odlamek $PRZELOT_ODLAMEK): BIEGNIE — push na main, zawsze"
           fi

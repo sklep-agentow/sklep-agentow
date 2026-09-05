@@ -18,6 +18,27 @@ pory lądują tutaj.
   `paczka-klienta`), nie własny grep z 9 alternatyw (znalezisko Q-3: własny wzorzec przepuszczał imię właściciela, numer PR-a,
   „recenzent”, „koordynator”).** NOWA `pakuj-slady-proba-kontrolna.sh`: wpięcie (skrypt woła skaner, stary wzorzec zniknął)
   + skutek (kopia dokumentów czysta → 0; z podłożonym „koordynatorka / PR #123 / recenzent” → 1).
+- **`proby-kontrolne-przelot.sh` — sufit pominięć i PODŁOGA uruchomionych per odłamek; przelot biegnie też dla zmian w `testy/`
+  i `boty/`; podłoga obowiązuje TYLKO dla zakresów, dla których została policzona (`.` i `narzedzia-qa`) — inny zakres
+  (np. zagnieżdżony przelot dwuplikowy w `przelot-brak-zip-proba-kontrolna.sh`) dostaje jawny wiersz `PODLOGA: brak`
+  (#290 WAŻNA 1).** Literały podłogi przeliczone (58 prób w repo → 48; 22 w `narzedzia-qa` → 15).
+- **`przelot-bramy-proba-kontrolna.sh` — NOWA, trwała próba bram przelotu (#290 WAŻNA 2):** kopia przelotu z ATRAPAMI
+  prób, bez uruchamiania prawdziwych; A (równo podłoga → 0), B (za mało → 1 z wierszem o podłodze), C (odłamek `bramki`
+  z jedną atrapą kod 2 → 1, sufit 0), D (mutant `MIN_URUCHOMIONYCH_ZAKRES=0` → B przestaje padać → ŚLEPY). Podłoga
+  czytana z przelotu, kotwica mutanta po wzorcu — literał zmienił się 14→15 tego samego dnia i sztywna liczba już raz zgniła.
+- **`przelot-brak-zip-proba-kontrolna.sh` — czysty kod musi dać kod 0** (dotąd asertowany był tylko kod 2, więc kod 1
+  z podłogi przelatywał bez śladu).
+- **`bramki.sh` — bramka `actionlint` zapewnia pinowany shellcheck** (suma, cache) zamiast polegać na binarce z obrazu.
+- **`gitleaks-proba-kontrolna.sh` 1.1.2 — binarka ZAWSZE przez `zapewnij_narzedzie` (suma sprawdzana także dla trafienia
+  z cache), nie „jeśli plik w /tmp jest wykonywalny, bierz” (#287 DROBNA 1, znalezisko B-5: cache w /tmp zapisywalnym dla
+  każdego).**
+- **`przelot-odlamki-proba-kontrolna.sh` — drugi mutant: literówka w `FILTR_BEZ` odłamka `reszta`** (#287 DROBNA 2; dotąd
+  mutowany był tylko filtr typu TYLKO).
+- **`recenzent.yml` — allowlista recenzenta obejmuje przelot i jego próby** (`proby-kontrolne-przelot.sh`,
+  `przelot-odlamki-`, `przelot-brak-zip-`, `przelot-bramy-`, `bramki-narzedzia-proba-kontrolna.sh`) — #290 WAŻNA 4,
+  #287 DROBNA 3: recenzent nie mógł uruchomić niczego, co mierzy zmiany w przelocie.
+- **`stanowisko/README.md` + `audyt/LINIA-BAZOWA-TESTOW.md` — sprawdzenie crona z POPRAWNYM kodem wyjścia** (#293 WAŻNA 1,
+  klasa 8): `grep -c` przy zerze trafień kończy kodem 1, więc stan zdrowy dawał EXIT 1; teraz `[ "$(… | grep -c ',now$')" = 0 ]`.
 - **`stanowisko/wp-cron-stanowisko.sh` 1.0.1 — padnięty `docker ps` nie udaje zgaszonego kontenera (#289 DROBNA 2),
   kody wyjścia opisane zgodnie z `docker exec` (DROBNA 1), kontrola crona nazwana uczciwie: liczy zaległe TERAZ,
   bez progu wieku (WAŻNA 5, klasa 11).** Status listy kontenerów bierze się teraz z `docker ps`, nie z `grep` za potokiem;
@@ -41,7 +62,10 @@ pory lądują tutaj.
   wcześniejsza próba, w odłamku `reszta` nikt — próba oddawała kod 2, przelot padał na suficie niezmierzonych (0).
   Dowód: z pustym `TMPDIR` (jak świeży wykonawca) próba pobiera, weryfikuje sumę i przechodzi (EXIT=0); z pełnym cache
   bez zmian (EXIT=0).
-- **`quality.yml` — blok `run:` kroku przelotu przechodzi shellcheck (SC2086).** Obraz GitHuba ma `shellcheck`, więc
+- **`quality.yml` — blok `run:` kroku przelotu przechodzi shellcheck (SC2086).** ⚠️ STAN PO #290: bramka `actionlint`
+  w `bramki.sh` SAMA zapewnia pinowaną binarkę shellchecka (`zapewnij_narzedzie`, suma SHA-256; shellcheck z obrazu
+  o innej sumie jest ODRZUCANY i pobierany własny), więc zdania niżej o „shellchecku z obrazu GitHuba” i „ręcznym
+  parytecie w `/tmp/bramki-narzedzia`” opisują stan sprzed #290 (recenzja #290 WAŻNA 3, klasa 3). Obraz GitHuba ma `shellcheck`, więc
   bramka `actionlint` sprawdza tam także skrypty w `run:`; lokalnie shellchecka nie było i actionlint milczał (#287 r1:
   `BRAMKA actionlint: EXIT=1`). Parytet lokalny: `shellcheck` w `/tmp/bramki-narzedzia` obok actionlinta — stara wersja
   pliku pada lokalnie tak samo jak w CI (EXIT=1), nowa przechodzi.

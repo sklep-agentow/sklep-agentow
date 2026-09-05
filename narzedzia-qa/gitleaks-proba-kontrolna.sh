@@ -1,5 +1,5 @@
 #!/bin/bash
-# gitleaks-proba-kontrolna.sh — dowód, że bramka gitleaks w bramki.sh skanuje HISTORIĘ HEAD-a,        WERSJA 1.1.1
+# gitleaks-proba-kontrolna.sh — dowód, że bramka gitleaks w bramki.sh skanuje HISTORIĘ HEAD-a,        WERSJA 1.1.2
 # a nie wszystkie referencje (recenzja #195 W1: refs/pull/194/merge ze skasowanej gałęzi paliło bramkę).
 # Komendę gitleaks bierze Z bramki.sh (grep), więc kalibruje BRAMKĘ, nie własną kopię. Buduje w /tmp repo: czysty HEAD + OSOBNA gałąź z podłożonym kluczem Stripe → bramka MUSI przejść (0);
 # potem ten sam klucz w commicie NA HEAD → bramka MUSI paść (1). Kontrola odwrotna jest pierwsza.
@@ -15,13 +15,16 @@ echo "  komenda bramki: $KOMENDA"
 # w pełnym przelocie robiła to przypadkiem wcześniejsza próba, a w osobnym odłamku CI nikt, więc próba oddawała kod 2
 # i przelot padał na suficie niezmierzonych. Ukryta zależność od KOLEJNOŚCI, którą podział na odłamki ujawnił.
 # Bierzemy PRAWDZIWĄ `zapewnij_narzedzie` z bramki.sh (tryb samych definicji), nie kopię — ta sama wersja, ta sama suma.
-if [ ! -x "$BIN" ]; then
+# ⛔ ZAWSZE przez zapewnij_narzedzie, także gdy plik w cache już leży: ona sprawdza sumę TAKŻE dla trafienia z cache.
+#    Warunek „jeśli wykonywalny, bierz” brał z /tmp (zapisywalnego dla każdego) plik po samej nazwie — znalezisko B-5,
+#    #287 DROBNA 1. GITLEAKS_BIN z zewnątrz nadal ma pierwszeństwo (świadome wskazanie binarki przez wołającego).
+if [ -z "${GITLEAKS_BIN:-}" ]; then
 	# shellcheck source=narzedzia-qa/bramki.sh
 	BRAMKI_TYLKO_FUNKCJE=1 . "$KORZEN/narzedzia-qa/bramki.sh"
 	BIN=$(zapewnij_narzedzie gitleaks \
 		"https://github.com/gitleaks/gitleaks/releases/download/v${WERSJA_GITLEAKS}/gitleaks_${WERSJA_GITLEAKS}_linux_x64.tar.gz" \
 		gitleaks "$SUMA_GITLEAKS") || { echo "gitleaks-proba: nie udało się zapewnić gitleaks ${WERSJA_GITLEAKS} (sieć? suma?)" >&2; exit 2; }
-	echo "  gitleaks pobrany/zweryfikowany przez zapewnij_narzedzie z bramki.sh: $BIN"
+	echo "  gitleaks zapewniony (suma sprawdzona, także z cache) przez zapewnij_narzedzie z bramki.sh: $BIN"
 fi
 R="$(mktemp -d)"; trap 'rm -rf "$R"' EXIT; BLEDY=0
 # Klucz-atrapa składany W LOCIE z dwóch części: dosłowny `sk_test_…` w tym pliku paliłby gitleaks i bramkę poświadczeń

@@ -178,6 +178,15 @@ MAX_POMINIETYCH_ZAKRES=8   # 5.09: +1 (prawne-migracja, obszar C); POLICZONE na 
                     #    dockerowa albo zipowa ja przesuwa. Policz komenda na scalonym drzewie.
 MAX_POMINIETYCH_PELNY=11   # +1 (prawne-migracja, obszar C); ta sama arytmetyka, sciezka BEZ zakresu (tak wola `k7-koniec`)
 
+# ⛔ PODLOGA URUCHOMIONYCH (recenzja #287 WAZNA 2, druga polowa tej samej wady). Sufit
+# pominiec sam w sobie NIE chroni: gdyby ktos podniosl go "swiadomie" nie licząc, ile prob
+# w ogole jest w zakresie, POMINIETO moglby zjesc caly zestaw i przelot dalej konczylby sie
+# zielono, nie zmierzywszy niczego. Podloga jest DRUGA, NIEZALEZNA brama na tej samej
+# liczbie: minimalna liczba prob, ktore MUSZA sie faktycznie wykonac (ILE = N - POMINIETO).
+# Literaly, ta sama arytmetyka co MAX_POMINIETYCH_* wyzej (N minus maksymalne pominiecie).
+MIN_URUCHOMIONYCH_PELNY=50    # 61 prob w calym repo minus MAX_POMINIETYCH_PELNY(11)  (5.09 obszar C po scaleniu E: +prawne-migracja, +pakuj-slady, +polityka; POLICZONE: ls narzedzia-qa/*proba-kontrolna*.sh testy/*proba-kontrolna*.sh | wc -l)
+MIN_URUCHOMIONYCH_ZAKRES=16   # 24 prob w narzedzia-qa minus MAX_POMINIETYCH_ZAKRES(8)  (5.09 obszar C po scaleniu E; przy scalaniu po #291 przeliczyc ponownie: A wnosi +2 dockerowe i sufity 9/12)
+
 # Tryb LISTY (PRZELOT_LISTA=1) niczego nie uruchamia i nie pisze logu — nie jest dowodem, więc brudne
 # drzewo mu nie przeszkadza (próba kontrolna odłamków woła go na kopii przelotu w trakcie pracy).
 if [ "${PRZELOT_LISTA:-}" != 1 ] && [ -n "$(git status --porcelain -uno 2>/dev/null)" ]; then
@@ -187,8 +196,6 @@ if [ "${PRZELOT_LISTA:-}" != 1 ] && [ -n "$(git status --porcelain -uno 2>/dev/n
 fi
 
 ZAKRES="${2:-.}"
-# ⛔ Sufit dobierany do ZAKRESU, nie maksimum z obu — patrz komentarz przy stalych.
-if [ "$ZAKRES" = "." ]; then MAX_POMINIETYCH="$MAX_POMINIETYCH_PELNY"; else MAX_POMINIETYCH="$MAX_POMINIETYCH_ZAKRES"; fi
 [ -d "$ZAKRES" ] || { echo "PRZELOT: katalog zakresu [$ZAKRES] nie istnieje." >&2; exit 2; }
 mapfile -t PROBY < <(find "$ZAKRES" -name '*proba-kontrolna*.sh' -not -path './.git/*' | sed 's|^\./||' | sort)
 
@@ -206,6 +213,55 @@ case "$ODLAMEK" in
 	poswiadczenia) FILTR_TYLKO='^bramka-poswiadczenia-proba-kontrolna[.]sh$' ;;
 	reszta)        FILTR_BEZ='^(bramki|bramka-poswiadczenia)-proba-kontrolna[.]sh$' ;;
 	*) echo "PRZELOT: nieznany odłamek [$ODLAMEK] — znam: bramki, poswiadczenia, reszta." >&2; exit 2 ;;
+esac
+
+# ⛔ SUFIT I PODLOGA PER ODLAMEK (recenzja #287 WAZNA 2). MAX_POMINIETYCH_ZAKRES(7) byl
+# policzony dla JEDNEGO przelotu po calym `narzedzia-qa` — odlamki `bramki` i `poswiadczenia`
+# maja po JEDNEJ probie, wiec ten sufit nie zapali sie u nich NIGDY. Kazdy odlamek dostaje
+# wiec WLASNY literal (ta sama arytmetyka — N prob w odlamku minus prawdopodobne pominiecia
+# Dockera/zip/bezwarunkowe — patrz komentarz przy MAX_POMINIETYCH_ZAKRES) i WLASNA podloge
+# na liczbe faktycznie URUCHOMIONYCH (ILE = N - POMINIETO) — druga, niezalezna brama: gdyby
+# ktos kiedys podniosl sufit pominiec nie licząc N, podloga dalej lapie zestaw, ktory nic
+# nie zmierzyl. Odlamki istnieja WYLACZNIE dla zakresu `narzedzia-qa` (tak wola quality.yml);
+# z innym zakresem te literaly znacza co innego, wiec odmawiamy zamiast zgadywac.
+if [ -n "$ODLAMEK" ] && [ "$ZAKRES" != "narzedzia-qa" ]; then
+	echo "PRZELOT: odlamek [$ODLAMEK] jest policzony wylacznie dla zakresu 'narzedzia-qa' (tak wola quality.yml) — zakres [$ZAKRES] dalby bledny sufit/podloge." >&2
+	exit 2
+fi
+case "$ODLAMEK" in
+	bramki)
+		MAX_POMINIETYCH=0        # 1 proba w odlamku (bramki-proba-kontrolna.sh) — zaden Docker/zip/bezwarunkowe jej nie dotyczy
+		MIN_URUCHOMIONYCH=1      # 1 - 0
+		;;
+	poswiadczenia)
+		MAX_POMINIETYCH=0        # 1 proba w odlamku (bramka-poswiadczenia-proba-kontrolna.sh), jw.
+		MIN_URUCHOMIONYCH=1      # 1 - 0
+		;;
+	reszta)
+		MAX_POMINIETYCH=7        # 19 prob w odlamku (21 w narzedzia-qa minus bramki/poswiadczenia);
+		                          # bramki/poswiadczenia nie wnosza pominiec, wiec to ta sama liczba co MAX_POMINIETYCH_ZAKRES
+		MIN_URUCHOMIONYCH=12     # 19 - 7
+		;;
+	"")
+		# ⛔ PODLOGA TYLKO DLA ZAKRESOW, DLA KTORYCH ZOSTALA POLICZONA (recenzja #290 WAZNA 1).
+		# MIN_URUCHOMIONYCH_ZAKRES=15 jest policzone dla JEDNEGO konkretnego katalogu
+		# (`narzedzia-qa`, 21 prob). Stosowana wczesniej do KAZDEGO zakresu != "." — czyli
+		# takze do zagniezdzonych przelotow na prowizorycznych katalogach (np.
+		# `przelot-brak-zip-proba-kontrolna.sh`, ktory kopiuje 2 pliki do ROBOCZY) — dawala
+		# tam ILE=0 < 14 i EXIT=1 na CZYSTYM kodzie. Ta sama logika co odmowa odlamkow dla
+		# nieznanego zakresu wyzej (linie 224-228), ale TU NIE ODMAWIAMY: zagniezdzone
+		# przeloty na dowolnym katalogu sa legalne, tylko podloga dla nich nie ma sensu —
+		# sufit pominiec (MAX_POMINIETYCH_ZAKRES) zostaje, bo on jest gorna granica, nie
+		# policzonym literalem specyficznym dla `narzedzia-qa`.
+		if [ "$ZAKRES" = "." ]; then
+			MAX_POMINIETYCH="$MAX_POMINIETYCH_PELNY"; MIN_URUCHOMIONYCH="$MIN_URUCHOMIONYCH_PELNY"
+		elif [ "$ZAKRES" = "narzedzia-qa" ]; then
+			MAX_POMINIETYCH="$MAX_POMINIETYCH_ZAKRES"; MIN_URUCHOMIONYCH="$MIN_URUCHOMIONYCH_ZAKRES"
+		else
+			MAX_POMINIETYCH="$MAX_POMINIETYCH_ZAKRES"; MIN_URUCHOMIONYCH=0
+			echo "PODLOGA: brak (zakres $ZAKRES nie jest policzony)" >&2
+		fi
+		;;
 esac
 if [ -n "$FILTR_TYLKO" ]; then
 	mapfile -t PROBY < <(printf '%s\n' "${PROBY[@]}" | awk -F/ -v re="$FILTR_TYLKO" '$NF ~ re')
@@ -302,6 +358,15 @@ fi
 if [ "$POMINIETO" -gt "$MAX_POMINIETYCH" ]; then
 	printf 'PRZELOT: pominiętych %s przy suficie %s — lista pominięć ROŚNIE.\n' "$POMINIETO" "$MAX_POMINIETYCH" >&2
 	printf '         To awaria pokrycia, nie sukces. Podnieś sufit ŚWIADOMIE w commicie albo napraw próbę.\n' >&2
+	exit 1
+fi
+
+# ⛔ PODLOGA URUCHOMIONYCH — druga, NIEZALEZNA brama (recenzja #287 WAZNA 2). Sufit wyzej
+# pilnuje POMINIETO; ta brama pilnuje ILE wprost, wiec gdyby ktos kiedys podniosl sufit
+# nie licząc N prob w zakresie/odlamku, zestaw, ktory nic nie zmierzyl (ILE=0), dalej pada TU.
+if [ "$ILE" -lt "$MIN_URUCHOMIONYCH" ]; then
+	printf 'PRZELOT: uruchomiono %s prob przy podlodze %s — zestaw zmierzyl za malo, zeby cokolwiek powiedziec.\n' "$ILE" "$MIN_URUCHOMIONYCH" >&2
+	printf '         To awaria pokrycia (mozliwe: pominiecia zjadly caly odlamek), nie sukces.\n' >&2
 	exit 1
 fi
 

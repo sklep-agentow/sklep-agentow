@@ -67,7 +67,7 @@ oznacza odmowę, nie zgodę.
 
 ## Gdzie szukać wiedzy
 `PLAN-PROJEKTU.md` (§7 bezpieczeństwo, §12 kryteria GOTOWE) · `ZROZUMIENIE.md` ·
-`DECYZJE.md` (D1-D38 — rzeczy ŚWIADOMIE nierobione, nie żądaj ich; ⛔ zakres LICZ z pliku: `grep -oE '^\| D[0-9]+ \|' DECYZJE.md | grep -oE 'D[0-9]+' | sort -t D -k2 -n | tail -1`) ·
+`DECYZJE.md` (D1-D38 — rzeczy ŚWIADOMIE nierobione, nie żądaj ich; ⛔ zakres LICZ z pliku: `grep -oE '^(\| D[0-9]+ \||## D[0-9]+)' DECYZJE.md | grep -oE 'D[0-9]+' | sort -t D -k2 -n | tail -1`) ·
 `audyt/SCIAGA-EGZAMINATORA.md` (7 klas powyżej, źródło) ·
 `boty/KOLEJKA-CHATBOT.md` · `boty/LUKI-SWIEZA-GLOWA-20-08.md` ·
 `wtyczki/*/DOKUMENTACJA-TECHNICZNA.md` · `.github/RECENZENT-BRIEFING.md`.
