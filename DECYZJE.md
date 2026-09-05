@@ -131,3 +131,7 @@ dzielony na **trzy odłamki równoległe** nazwane w samym przelocie (`PRZELOT_O
 kontrolna `przelot-odlamki-proba-kontrolna.sh` pilnuje, że suma odłamków = pełna lista. Zmierzone
 5.09: PR produktowy czeka ~12 min (recenzja) zamiast 26; PR narzędziowy ~10 min zamiast 14.
 Świadomie NIE ruszone: czas samej `bramki-proba-kontrolna.sh` (~590 s) — przebudowa testu po oddaniu.
+**Uzupełnienie 5.09 (recenzja #287 WAŻNA 1):** warunek rozszerzony o `testy/` i `boty/` — próby z
+`narzedzia-qa/` mierzą narzędzia leżące fizycznie w tych dwóch katalogach (kopie plików w piaskownicy,
+pętle `for … in testy/*.sh`), więc PR zmieniający wyłącznie plik w `testy/` albo `boty/` pomijał przelot
+z nieprawdziwym uzasadnieniem „narzędzia są identyczne z main”.

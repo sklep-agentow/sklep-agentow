@@ -54,6 +54,7 @@ PROG_TEKSTOWY=7
 # „najnowsza" w bramce oznacza, że CI potrafi zmienić zdanie bez naszej zmiany.
 WERSJA_ACTIONLINT=1.7.7
 WERSJA_GITLEAKS=8.24.3
+WERSJA_SHELLCHECK=0.10.0
 # ⛔ SUMY SHA256 SAMYCH BINAREK (nie archiwow) dla wersji pinowanych wyzej.
 # POWOD (znalezisko B-5, 31.08): skrypt pobieral narzedzie curlem i od razu robil
 # `chmod +x`, bez jednego sprawdzenia. Do tego cache lezy w /tmp — katalogu
@@ -66,6 +67,12 @@ WERSJA_GITLEAKS=8.24.3
 # Przy podnoszeniu WERSJA_* trzeba podniesc TE sumy — inaczej bramka padnie.
 SUMA_ACTIONLINT=9f7dedb4e23f89f2922073d1a6720405b7b520d4f5832ebb96f0d55a2958886c
 SUMA_GITLEAKS=e18325d568268b6efb6cd0cc721f8bea5667f4cd1c8d03618ab61987f41269ad
+# SHELLCHECK: wydanie v0.10.0 NIE publikuje pliku `*_checksums.txt` (sprawdzone na
+# api.github.com/repos/koalaman/shellcheck/releases/tags/v0.10.0 — nazwy assetow,
+# 5.09) — inaczej niz actionlint/gitleaks wyzej. Suma jest wlasnym pomiarem: pobrane
+# `shellcheck-v0.10.0.linux.x86_64.tar.xz`, wypakowana binarka `shellcheck-v0.10.0/shellcheck`,
+# `sha256sum` na wyniku (5.09). Przy podnoszeniu WERSJA_SHELLCHECK policz na nowo tak samo.
+SUMA_SHELLCHECK=f35ae15a4677945428bdfe61ccc297490d89dd1e544cc06317102637638c6deb
 CACHE="${TMPDIR:-/tmp}/bramki-narzedzia"
 
 TRYB=auto
@@ -123,7 +130,10 @@ zapewnij_narzedzie() {
 	if ! curl -sSfL "$url" -o "$CACHE/paczka.tgz" 2> /dev/null; then
 		return 1
 	fi
-	if ! tar xzf "$CACHE/paczka.tgz" -C "$CACHE" "$plik_w_archiwum" 2> /dev/null; then
+	# `tar xf` (bez `z`) — auto-wykrywa kompresje z zawartosci pliku, dziala i na
+	# .tar.gz (actionlint, gitleaks), i na .tar.xz (shellcheck) pod tym samym imieniem
+	# "paczka.tgz"; zmierzone 5.09, sumy binarek identyczne jak przy jawnym `xzf`.
+	if ! tar xf "$CACHE/paczka.tgz" -C "$CACHE" "$plik_w_archiwum" 2> /dev/null; then
 		return 1
 	fi
 	if ! suma_zgodna "$CACHE/$plik_w_archiwum" "$suma"; then
@@ -272,11 +282,21 @@ bramka() {
 # --- implementacje bramek (te same polecenia co w sześciu starych zadaniach) ---
 
 uruchom_actionlint() {
-	local bin
+	local bin sc_bin
 	bin="$(zapewnij_narzedzie actionlint \
 		"https://github.com/rhysd/actionlint/releases/download/v${WERSJA_ACTIONLINT}/actionlint_${WERSJA_ACTIONLINT}_linux_amd64.tar.gz" \
 		actionlint "$SUMA_ACTIONLINT")" || { echo "BRAK actionlinta albo niezgodna suma — bramka pada" >&2; return 1; }
-	"$bin" .github/workflows/*.yml
+	# ⛔ PARYTET Z CI (recenzja #287 WAZNA 3): actionlint sam wola binarke "shellcheck"
+	# z PATH, zeby sprawdzic tresc blokow `run:` (integracja wbudowana — flaga
+	# `-shellcheck` domyslnie ma wartosc "shellcheck", szukane command-em). Bez tego
+	# kroku ten sam actionlint w tym samym repo NIC nie mowi o SC-kodach w `run:` —
+	# bramka.sh --tryb pelny swiecil zielono na PR-ze z podlozonym SC2086 (probne
+	# uruchomienie 5.09), bo lokalnie shellchecka po prostu nie bylo w PATH. Zapewniamy
+	# go TAK SAMO jak actionlinta (`zapewnij_narzedzie` + pinowana wersja i suma).
+	sc_bin="$(zapewnij_narzedzie shellcheck \
+		"https://github.com/koalaman/shellcheck/releases/download/v${WERSJA_SHELLCHECK}/shellcheck-v${WERSJA_SHELLCHECK}.linux.x86_64.tar.xz" \
+		"shellcheck-v${WERSJA_SHELLCHECK}/shellcheck" "$SUMA_SHELLCHECK")" || { echo "BRAK shellchecka albo niezgodna suma — bramka pada" >&2; return 1; }
+	PATH="$(dirname "$sc_bin"):$PATH" "$bin" .github/workflows/*.yml
 }
 
 uruchom_manifest() {
