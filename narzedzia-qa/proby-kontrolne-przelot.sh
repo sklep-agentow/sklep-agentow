@@ -91,6 +91,10 @@ WYMAGA_DOCKERA=(
 	# Dockera nie ma czym mierzyc. Nie dalo sie jej dopisac wczesniej: w #272 plik
 	# jeszcze nie istnial, a w #274 ten plik byl zmieniany przez #272 (konflikt).
 	schemat-wersja-po-sprawdzeniu-proba-kontrolna.sh
+	# 5.09: doszla w #291 (A7b-F2). Stawia WLASNY stos probny (lib-stos-probny) i wgrywa
+	# kod z drzewa — bez stosu WP oddaje 2, a sufit niezmierzonych to 0: pierwszy przebieg
+	# #291 na wykonawcy GitHuba padl wlasnie na tym (odlamek `reszta`, EXIT=1).
+	panel-link-wygasa-czas-lokalny-proba-kontrolna.sh
 )
 # 5.09 (D41): wykonawca GitHuba Dockera MA, ale stosu WP (kontenera bazy) nie ma — workflow
 # deklaruje to jawnie przez `BEZ_STOSU_WP=1`. Ta sama sciezka pominiecia co bez Dockera:
@@ -159,22 +163,23 @@ MAX_NIEZMIERZONYCH=0   # 4.09: TWARDE ZERO. Podniesienie = swiadoma decyzja w co
 #    bo CI wola przelot Z ZAKRESEM `narzedzia-qa`, gdzie wiecej niz 7 pominiec jest
 #    NIEMOZLIWE. Przy jednej liczbie mozna dopisac TRZY nazwy do POMIJANE i przejdzie
 #    bez sladu — dokladnie ta klasa, dla ktorej ten sufit powstal.
-MAX_POMINIETYCH_ZAKRES=7   # 5.09: POLICZONE na scalonej tresci (#272 + #274 + #278), nie przepisane.
+MAX_POMINIETYCH_ZAKRES=8   # 5.09: POLICZONE na scalonej tresci (#272 + #274 + #278), nie przepisane;
+                    #      +1 w #291 (panel-link-wygasa-czas-lokalny, dockerowa, w `narzedzia-qa/`).
                     # ⛔ Rachunek na OBU zakresach, bo sufit obowiazuje oba, a CI liczy inaczej
                     #    niz wydanie. Scenariusz, ktorego sufit dotyczy: wykonawca BEZ Dockera
                     #    I BEZ `zip` (na maszynie z obydwoma pominiecie jest tylko 1 — dlatego
                     #    sam przelot tutaj NIE mierzy tego, przed czym sufit chroni):
-                    #      WYMAGA_DOCKERA 7 + WYMAGA_ZIP 4, wspolne 2  ⇒ unia 9
-                    #        z tego w `narzedzia-qa/` 6, w `testy/` 3
+                    #      WYMAGA_DOCKERA 8 + WYMAGA_ZIP 4, wspolne 2  ⇒ unia 10
+                    #        z tego w `narzedzia-qa/` 7, w `testy/` 3   (#291: +1 dockerowa w narzedzia-qa)
                     #      + 1 pomijana BEZWARUNKOWO (`dowod-zachowania-segregator`,
                     #        deinstaluje wtyczke ze stosu; lezy w `narzedzia-qa/`)
-                    #      zakres `narzedzia-qa` (tak wola CI):     6 + 1 =  7
-                    #      BEZ zakresu (tak wola `k7-koniec`):      9 + 1 = 10
-                    #    Sufit = maksimum z obu = 10. Przy 9 przelot bez zakresu — czyli ten,
+                    #      zakres `narzedzia-qa` (tak wola CI):     7 + 1 =  8
+                    #      BEZ zakresu (tak wola `k7-koniec`):     10 + 1 = 11
+                    #    Sufit = maksimum z obu = 11. Przy 10 przelot bez zakresu — czyli ten,
                     #    ktorego zada bramka wydania — wywalilby sie na WLASNEJ poprawce.
                     # ⛔ NIE przepisuj tej liczby przy nastepnym scaleniu: kazda nowa proba
                     #    dockerowa albo zipowa ja przesuwa. Policz komenda na scalonym drzewie.
-MAX_POMINIETYCH_PELNY=10   # ta sama arytmetyka, sciezka BEZ zakresu (tak wola `k7-koniec`)
+MAX_POMINIETYCH_PELNY=11   # ta sama arytmetyka, sciezka BEZ zakresu (tak wola `k7-koniec`)
 
 # Tryb LISTY (PRZELOT_LISTA=1) niczego nie uruchamia i nie pisze logu — nie jest dowodem, więc brudne
 # drzewo mu nie przeszkadza (próba kontrolna odłamków woła go na kopii przelotu w trakcie pracy).
