@@ -14,6 +14,11 @@ wstecz nie dopisuję, bo nie umiałbym jej odtworzyć uczciwie. Ich zmiany od te
 pory lądują tutaj.
 
 ## [Niewydane]
+- **`rodo-anonimizacja-ip-proba-kontrolna.sh` — NOWA: dowód dla `P-5` (czyszczenie IP z dziennika przy anonimizacji kupującego)
+  jest odtwarzalny (#291 WAŻNA 4, DROBNA 5).** Stos jednorazowy, kod z drzewa, mutant w kopii w kontenerze (EXIT=1), przypadek
+  BEZ wady: wpis IP obcego zamówienia zostaje nietknięty w obu kierunkach. DROBNA 6 (`zakup.php:410` zapisuje IP bez
+  `zamowienie_id`, czyszczenie po `zamowienie_id` go nie obejmie) — nazwana komentarzem w kodzie, bez zmiany zachowania:
+  numer zamówienia w tym miejscu nie jest jeszcze znany. Lista „wymaga stosu WP” +1, sufity pominięć 9 / 12 (przeliczone).
 - **`slady-wewnetrzne.sh` 1.4.1 — wzorzec „nasz obieg pracy” łapie też gołe „ten/tego PR” i „Runda N” (#291 WAŻNA 3, klasa 5 + 8).**
   Trzy komentarze w `includes/admin.php` cytowały nasz proces i jechały do klienta przy zielonej bramce `slady`, bo wzorzec
   wymagał „PR #N” albo słowa recenzent/koordynator/builder. Nowy przypadek w `paczka-zgodnosc-proba-kontrolna.sh`

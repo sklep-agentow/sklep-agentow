@@ -407,6 +407,13 @@ function sklepag_webhook( WP_REST_Request $zadanie ) {
 	$sekret   = (string) get_option( 'sklepag_stripe_webhook_sekret', '' );
 
 	if ( ! sklepag_stripe_weryfikuj_podpis( $body, (string) $naglowek, $sekret ) ) {
+		/* ⛔ ZNANA LUKA: ten adres IP nie jest czyszczony przy anonimizacji ŻADNEGO zamówienia
+		 * (RODO), bo `zamowienie_id` jest tu `null` — podpis pada ZANIM treść body zostaje
+		 * zdekodowana, więc w tym miejscu nie wiadomo jeszcze, którego zamówienia dotyczyłby
+		 * webhook (a często nie dotyczy żadnego: to adres WOŁAJĄCEGO ze złym podpisem, nie
+		 * adres kupującego). Dowiązanie do zamówienia byłoby zgadywaniem; wpis wygasa
+		 * wyłącznie przez retencję 90 dni.
+		 */
 		sklepag_zdarzenie( null, 'webhook_zly_podpis', 'odrzucono (ip ' . sklepag_ip() . ')' );
 		return new WP_REST_Response( array( 'blad' => 'zly podpis' ), 400 );
 	}
