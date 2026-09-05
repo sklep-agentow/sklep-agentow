@@ -16,6 +16,10 @@ wydany osobno (podbicie pośrednie wewnątrz jednej zmiany).
 
 ## [Niewydane]
 
+Nic jeszcze.
+
+---
+
 ## [0.9.41] — 2026-09-05 · schemat bazy bez zmian (10)
 
 ### Naprawione

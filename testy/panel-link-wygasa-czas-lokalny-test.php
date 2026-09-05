@@ -53,6 +53,14 @@ if ( ! function_exists( 'sklepag_admin_zamowienie' ) ) {
 // Wymuszona strefa z NIEZEROWYM przesunięciem — na UTC test nie odróżniłby dobrego
 // zachowania od złego (obie wersje wyglądałyby tak samo). Odczyt UTC/lokalny zależy
 // od tej opcji poprzez `get_date_from_gmt()` i `wp_timezone_string()`.
+// ⛔ Test bywa puszczany na WSPÓLNYM stanowisku (test-php.sh), więc strefę PRZYWRACA na każdej ścieżce
+//    wyjścia — także po exit(1)/exit(2) — inaczej zostawia stos w innej strefie, niż zastał (recenzja #291 r3 W3).
+$strefa_przed = array( get_option( 'timezone_string' ), get_option( 'gmt_offset' ) );
+register_shutdown_function( function () use ( $strefa_przed ) {
+	update_option( 'timezone_string', $strefa_przed[0] );
+	update_option( 'gmt_offset', $strefa_przed[1] );
+	echo 'STREFA_PRZYWROCONA=' . ( get_option( 'timezone_string' ) === $strefa_przed[0] && (string) get_option( 'gmt_offset' ) === (string) $strefa_przed[1] ? '1' : '0' ) . "\n";
+} );
 update_option( 'timezone_string', 'Europe/Warsaw' );
 update_option( 'gmt_offset', '' ); // WP: albo timezone_string, albo gmt_offset — nie oba naraz.
 

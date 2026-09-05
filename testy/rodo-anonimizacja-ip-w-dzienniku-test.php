@@ -92,6 +92,13 @@ foreach ( $po as $w ) {
 }
 $ip_po = $licz_ip( $po );
 echo "IP_PO=$ip_po\n";
+// Przypadek BEZ wady W OBRĘBIE czyszczonego wiersza (#291 r1 D5 / r3 D4): czyszczenie ma usunąć ADRES, nie cały opis.
+// „Naprawa”, która kasuje cały `opis`, dawałaby IP_PO=0 i przechodziła — dlatego osobna asercja na treść obok adresu.
+$tresc_zostala = false;
+foreach ( $po as $w ) {
+	if ( false !== strpos( (string) $w->opis, 'status oczekuje' ) ) { $tresc_zostala = true; }
+}
+echo 'TRESC_OBOK_IP_ZOSTALA=' . ( $tresc_zostala ? '1' : '0' ) . "\n";
 
 echo "=== PO anonimizacji (zamowienie OBCE — nie dotyczylo go zadanie) ===\n";
 $po_obcy       = $wpdb->get_results( $wpdb->prepare( "SELECT typ, opis FROM {$pe} WHERE zamowienie_id = %d ORDER BY id", $id_obcy ) );
@@ -107,7 +114,7 @@ $wpdb->delete( $pz, array( 'id' => $id ) );
 $wpdb->delete( $pz, array( 'id' => $id_obcy ) );
 echo "SPRZATANIE=OK\n";
 
-if ( 0 === $ip_po && true === $wynik['ok'] && $obcy_nietkniety ) {
+if ( 0 === $ip_po && true === $wynik['ok'] && $obcy_nietkniety && $tresc_zostala ) {
 	echo "WYNIK=PASS\n";
 	exit( 0 );
 }
