@@ -1050,6 +1050,28 @@ z tą samą listą wzorców co skaner — po oddaniu, jeśli zrzutów przybędzi
   `wp_mail` na stosie próbnym pada „Could not instantiate mail function” i E2E kończy się
   `mail_blad`, choć kod jest dobry. Do `lib-stos-probny.sh` dopisać ten krok (dług narzędzia).
 
+## 🟡 UWAGI Z RECENZJI `#294` (obszar C, r3–r7) — ODŁOŻONE ŚWIADOMIE, NIE PRZEOCZONE (5.09; #294 r7 W2 wytknęła brak śladu)
+
+Reguła dnia 5.09 (10:15): przy ZERZE KRYT scalamy, uwagi o narzędziach/dokumentach nie idą rundami. Co z tego zostało i gdzie:
+- **NAPRAWIONE w PR `fix/kompensacja-znacznik-po-nieudanym-insert` (po scaleniu #294):** r7 W1 (kompensacja: nieudany `wp_insert_post`
+  w gałęzi (a) kasuje znacznik — test C8c), r5 W2 (zaślepka „w przygotowaniu” tylko pod ścieżką strony głównej + `noindex`;
+  dwie asercje HTTP w `prawne-migracja-stos-probny.sh`), r5 W3 (CHANGELOG sklepu: jeden nagłówek „Naprawione”, osierocona kropka),
+  r7 W3 (rachunek pod sufitem przelotu zgodny z tablicą; „obie wady” → cztery mutanty).
+  Z rund samego `#299`: r1 W1 (kotwica bez `sanitize_text_field`), r2 W1 (kotwica po SUROWEJ ścieżce, odrzuca `%`, asercja HTTP `/%2F`),
+  r1 W2 + r2 W2/W3 (oba `wp_update_post` sprawdzane, meldunek z NAZWAMI sekcji, test C8d mierzy wyłącznie gałąź (b)),
+  r1 W3 (nagłówek spustu z czterema mutantami), r1 D1/r2 D3 (komenda w komentarzu liczy nazwy prób).
+- **ZOSTAJE długiem (narzędzia/teksty, nie zachowanie produktu):**
+  - r5 W4 — `testy/regulamin-pokrycie-art12-test.php` sprawdza 7 literałów nagłówków przez `strpos` (samo `Cena:` z pustą treścią
+    przechodzi); `testy/polityka-sprzatanie-warunkowe-test.php` analogicznie. Kształt roboty: asercja na TREŚĆ pod nagłówkiem (≥ 1 zdanie / `[UZUPEŁNIJ]`).
+  - r3 W7 — `includes/admin.php:239` każe „dopisz je ręcznie”, a lista nowych sekcji nie przelicza się do następnego podbicia
+    `SKLEPAG_WERSJA_STRON`; klucz meldunku wchodzi po jednym literale (`aktywacja.php`, `strpos`). Kształt roboty: przeliczać listę przy każdym otwarciu panelu.
+  - r3 W8 — pozostała uwaga rundy 3 (treść w wątku recenzji #294, komentarz r3) — do rozpisania przy PR-ze porządkowym, gdy wchodzi ten plik.
+  - r7 W4 — opis PR-a nie opisywał commita na czubku (merge main) — zasada dowodu; proceduralne, bez roboty w kodzie.
+  - #299 r1 D2 — dwie asercje HTTP spustu (`noindex`, kotwica adresu w `prawne-migracja-stos-probny.sh`) nie mają mutanta w
+    `prawne-migracja-proba-kontrolna.sh` (lista: blok-sprzedawcy, sekcje, podmiana-wlasny, front). Kształt roboty: mutant `kotwica`
+    (wycina warunek na ścieżkę) i `noindex` (wycina meta) w kopii kodu w kontenerze — PR porządkowy.
+- Klasa dla ściągi: **naprawa egzemplarza zamiast klasy w tym samym pliku 150 linii wyżej** (r4 W4 → r7 W1) — kandydat do rejestru klas.
+
 ## 🟡 DŁUGI Z RECENZJI #220 RUNDA 3 (30.08, po scaleniu 0.9.24 — 0 WAŻNYCH, 3 DROBNE, reguła rund: produkt czysty → dług)
 
 - **CHANGELOG 0.9.24 mówi „25 sprawdzeń” strażnika maila, test ma 26** (asercja C2b doszła w rundzie 1, liczba

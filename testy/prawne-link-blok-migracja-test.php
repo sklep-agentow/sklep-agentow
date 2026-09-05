@@ -352,6 +352,58 @@ $sprawdz( 'zadna strona prawna nie powstala (opcje puste)', 0 === (int) get_opti
 foreach ( array( 'sklepag_strona_regulamin' => $id_reg_na_bok2, 'sklepag_strona_polityka' => $id_pol_na_bok2 ) as $o_b => $i_b ) {
 	if ( $i_b ) { update_option( $o_b, $i_b, false ); } else { delete_option( $o_b ); }
 }
+echo "=== C8c. KOMPENSACJA: nieudane wp_insert_post w galezi (a) KASUJE znacznik, zeby nastepny bieg sprobowal znowu (#294 r7 W1) ===\n";
+$id_reg_na_bok3 = (int) get_option( 'sklepag_strona_regulamin', 0 );
+$id_pol_na_bok3 = (int) get_option( 'sklepag_strona_polityka', 0 );
+$znacznik_na_bok3 = get_option( 'sklepag_wersja_stron', null );
+delete_option( 'sklepag_strona_regulamin' );
+delete_option( 'sklepag_strona_polityka' );
+update_option( 'sklepag_wersja_stron', SKLEPAG_WERSJA_STRON - 1, true ); // stara instalacja: kompensacja MA wejsc
+add_filter( 'wp_insert_post_empty_content', '__return_true' );
+sklepag_kompensuj_strony_prawne();
+remove_filter( 'wp_insert_post_empty_content', '__return_true' );
+$sprawdz( 'kompensacja: po nieudanym zalozeniu strony znacznik NIE zostaje na biezacej wersji', (int) get_option( 'sklepag_wersja_stron', 0 ) !== SKLEPAG_WERSJA_STRON, 'znacznik: ' . var_export( get_option( 'sklepag_wersja_stron', null ), true ) );
+$sprawdz( 'kompensacja: zadna strona nie powstala (opcje puste)', 0 === (int) get_option( 'sklepag_strona_regulamin', 0 ) && 0 === (int) get_option( 'sklepag_strona_polityka', 0 ) );
+// kontrola dodatnia: ten sam bieg BEZ awarii zaklada strony i ustawia znacznik
+sklepag_kompensuj_strony_prawne();
+$id_reg_c8c = (int) get_option( 'sklepag_strona_regulamin', 0 );
+$id_pol_c8c = (int) get_option( 'sklepag_strona_polityka', 0 );
+$sprawdz( 'kompensacja: nastepny bieg zaklada obie strony i ustawia znacznik', $id_reg_c8c > 0 && $id_pol_c8c > 0 && (int) get_option( 'sklepag_wersja_stron', 0 ) === SKLEPAG_WERSJA_STRON );
+foreach ( array( $id_reg_c8c, $id_pol_c8c ) as $i_c ) { if ( $i_c ) { wp_delete_post( $i_c, true ); } }
+foreach ( array( 'sklepag_strona_regulamin' => $id_reg_na_bok3, 'sklepag_strona_polityka' => $id_pol_na_bok3 ) as $o_b => $i_b ) {
+	if ( $i_b ) { update_option( $o_b, $i_b, false ); } else { delete_option( $o_b ); }
+}
+if ( null === $znacznik_na_bok3 ) { delete_option( 'sklepag_wersja_stron' ); } else { update_option( 'sklepag_wersja_stron', $znacznik_na_bok3, true ); }
+echo "=== C8d. KOMPENSACJA galaz (b): nieudany wp_update_post przy dopisywaniu sekcji KASUJE znacznik i melduje NAZWY sekcji (przygotowanie: obie strony szablonami, wiec galaz (a) nie wchodzi; pomiar znacznika, tresci, opcji, meldunku; kontrola dodatnia) ===\n";
+delete_option( 'sklepag_strony_nowe_sekcje' ); // czysty meldunek PRZED pomiarem — jak w blizniakach wyzej (klasa 8 w tescie)
+$id_reg_na_bok4 = (int) get_option( 'sklepag_strona_regulamin', 0 );
+$id_pol_na_bok4 = (int) get_option( 'sklepag_strona_polityka', 0 );
+$znacznik_na_bok4 = get_option( 'sklepag_wersja_stron', null );
+$id_reg_c8d = wp_insert_post( array( 'post_title' => 'Regulamin sklepu (SZABLON)', 'post_content' => "SZABLON — tresc do uzupelnienia\n", 'post_status' => 'draft', 'post_type' => 'page' ) );
+$id_pol_c8d = wp_insert_post( array( 'post_title' => 'Polityka prywatnosci (SZABLON)', 'post_content' => "SZABLON — tresc do uzupelnienia\n", 'post_status' => 'draft', 'post_type' => 'page' ) );
+$sprawdz( 'C8d przygotowanie: obie strony-szablony zalozone (galaz (a) nie ma czego zakladac)', $id_reg_c8d > 0 && $id_pol_c8d > 0 );
+update_option( 'sklepag_strona_regulamin', $id_reg_c8d, false );
+update_option( 'sklepag_strona_polityka', $id_pol_c8d, false );
+update_option( 'sklepag_wersja_stron', SKLEPAG_WERSJA_STRON - 1, true );
+add_filter( 'wp_insert_post_empty_content', '__return_true' ); // wp_update_post woła wp_insert_post — ten sam filtr daje 0
+sklepag_kompensuj_strony_prawne();
+remove_filter( 'wp_insert_post_empty_content', '__return_true' );
+$sprawdz( 'galaz (b): po nieudanym dopisaniu sekcji znacznik NIE zostaje na biezacej wersji', (int) get_option( 'sklepag_wersja_stron', 0 ) !== SKLEPAG_WERSJA_STRON, 'znacznik: ' . var_export( get_option( 'sklepag_wersja_stron', null ), true ) );
+$tresc_reg_c8d = (string) get_post_field( 'post_content', $id_reg_c8d );
+$tresc_pol_c8d = (string) get_post_field( 'post_content', $id_pol_c8d );
+$sprawdz( 'galaz (b): tresc OBU szablonow nietknieta (zapis padl, nic nie udaje sukcesu)', false === strpos( $tresc_reg_c8d, 'Cena' ) && false === strpos( $tresc_pol_c8d, 'Zakres' ), 'reg: ' . substr( $tresc_reg_c8d, 0, 40 ) );
+$sprawdz( 'galaz (b): opcje stron NIE zmienione (galaz (a) nie biegla)', (int) get_option( 'sklepag_strona_regulamin', 0 ) === $id_reg_c8d && (int) get_option( 'sklepag_strona_polityka', 0 ) === $id_pol_c8d );
+$meldunek_c8d = get_option( 'sklepag_strony_nowe_sekcje', array() );
+$plaski_c8d = is_array( $meldunek_c8d ) ? implode( ' | ', array_map( 'implode', array_fill( 0, count( $meldunek_c8d ), ',' ), array_values( $meldunek_c8d ) ) ) : '';
+$sprawdz( 'galaz (b): meldunek dla wlasciciela niesie NAZWY sekcji, nie cale linie szablonu', '' !== $plaski_c8d && false === strpos( $plaski_c8d, '[UZUPE' ), 'meldunek: ' . substr( $plaski_c8d, 0, 80 ) );
+// kontrola dodatnia: bieg BEZ awarii dopisuje sekcje i ustawia znacznik
+sklepag_kompensuj_strony_prawne();
+$sprawdz( 'galaz (b): nastepny bieg dopisuje sekcje i ustawia znacznik', (int) get_option( 'sklepag_wersja_stron', 0 ) === SKLEPAG_WERSJA_STRON && (string) get_post_field( 'post_content', $id_reg_c8d ) !== $tresc_reg_c8d );
+foreach ( array( $id_reg_c8d, $id_pol_c8d ) as $i_c ) { if ( $i_c ) { wp_delete_post( $i_c, true ); } }
+foreach ( array( 'sklepag_strona_regulamin' => $id_reg_na_bok4, 'sklepag_strona_polityka' => $id_pol_na_bok4 ) as $o_b => $i_b ) {
+	if ( $i_b ) { update_option( $o_b, $i_b, false ); } else { delete_option( $o_b ); }
+}
+if ( null === $znacznik_na_bok4 ) { delete_option( 'sklepag_wersja_stron' ); } else { update_option( 'sklepag_wersja_stron', $znacznik_na_bok4, true ); }
 echo "=== C7. KONTROLA PRZYRZADU: test biegnie pod WP-CLI (brame frontu mierzy spust zadaniem HTTP, nie ten test — r4 W2) ===\n";
 $sprawdz( 'kontrola przyrzadu: test biegnie pod WP-CLI (dlatego C1-C6 mogly pracowac)', defined( 'WP_CLI' ) && WP_CLI );
 update_option( 'sklepag_strona_polityka', $id_pol_przed, false );

@@ -14,7 +14,11 @@
 #   --proba-kontrolna blok-sprzedawcy  → wycina wywołanie bloku sprzedawcy w formularzu zakupu
 #                                        (musi paść przypadek B);
 #   --proba-kontrolna sekcje           → wyłącza krok (b) kompensacji: dopisywanie brakujących
-#                                        sekcji do strony-szablonu (musi paść przypadek C2).
+#                                        sekcji do strony-szablonu (musi paść przypadek C2);
+#   --proba-kontrolna podmiana-wlasny  → podmiana zdań wchodzi także we WŁASNY dokument właściciela
+#                                        (musi paść przypadek C5d);
+#   --proba-kontrolna front            → zdejmuje bramę „nie na froncie” (musi paść pomiar HTTP: front robi pracę).
+# (Lista mutantów = case niżej; nagłówek i case mają się zgadzać — #299 r1 W3, klasa 8.)
 # Przy każdej z nich spust ODWRACA znaczenie kodu wyjścia: EXIT 0 = wada ZOSTAŁA ZŁAPANA.
 set -u
 
@@ -105,6 +109,25 @@ if grep -q 'w przygotowaniu' /tmp/prawne-w-przygotowaniu.html; then
 	printf '  ✅ WYSZLO      tresc mowi po polsku, ze dokument jest w przygotowaniu\n'
 else
 	printf '  ⛔ NIE WYSZLO  brak zdania o przygotowaniu; poczatek odpowiedzi:\n'; head -c 200 /tmp/prawne-w-przygotowaniu.html; echo; KOD=1
+fi
+# #294 r5 W2 / r7: zaślepka ma noindex i NIE odpowiada pod cudzym adresem (kotwica na ścieżce strony głównej).
+if grep -q 'name="robots" content="noindex' /tmp/prawne-w-przygotowaniu.html; then
+	printf '  ✅ WYSZLO      zaslepka ma meta robots noindex\n'
+else
+	printf '  ⛔ NIE WYSZLO  zaslepka bez noindex — robot zaindeksuje „w przygotowaniu"\n'; KOD=1
+fi
+ODP_CUDZY="$(curl -s -o /tmp/prawne-cudzy-adres.html -w '%{http_code}' "$ADRES/dowolny-wpis-ktorego-nie-ma/?sklepag_prawne=regulamin")"
+# Sciezka z sekwencja procentowa (`/%2F` = zakodowany ukosnik): kotwica porownuje SUROWA sciezke i odrzuca kazda z '%'.
+ODP_PROC="$(curl -s -o /tmp/prawne-procent-adres.html -w '%{http_code}' "$ADRES/%2F?sklepag_prawne=regulamin")"
+if grep -q 'w przygotowaniu' /tmp/prawne-procent-adres.html; then
+	printf '  ⛔ NIE WYSZLO  adres z sekwencja procentowa /%%2F (HTTP %s) dostal zaslepke — kotwice da sie obejsc kodowaniem\n' "$ODP_PROC"; KOD=1
+else
+	printf '  ✅ WYSZLO      adres z sekwencja procentowa /%%2F nie dostaje zaslepki (HTTP %s)\n' "$ODP_PROC"
+fi
+if grep -q 'w przygotowaniu' /tmp/prawne-cudzy-adres.html; then
+	printf '  ⛔ NIE WYSZLO  cudzy adres (%s) dostal zaslepke — duplikat pod kazdym adresem sklepu\n' "$ODP_CUDZY"; KOD=1
+else
+	printf '  ✅ WYSZLO      cudzy adres nie dostaje zaslepki (HTTP %s, bez tresci „w przygotowaniu")\n' "$ODP_CUDZY"
 fi
 if grep -q 'SZABLON' /tmp/prawne-w-przygotowaniu.html; then
 	printf '  ⛔ NIE WYSZLO  kupujacy widzi zaslepke SZABLON\n'; KOD=1
