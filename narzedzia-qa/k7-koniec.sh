@@ -80,7 +80,7 @@ GALAZ_MUT=""
 # rundy weryfikacji, a dopiero na koncu tag rundy A. ⛔ Powod, znalezisko recenzji #279 W2: tag `bank/mutanty-sklep`
 # zamrozil rozliczenie z 26.08 (L1 i L5 NIEKALIBROWANE), wiec bez tej kolejnosci bramka dawala
 # DWA SPRZECZNE wyniki zaleznie od tego, ktory ref istnial w klonie. Starych tagow nie ruszamy.
-for ref in audyt/mutanty-sklep origin/audyt/mutanty-sklep bank/mutanty-sklep-r2 bank/mutanty-sklep; do git rev-parse --verify --quiet "$ref^{commit}" >/dev/null && { GALAZ_MUT="$ref"; break; }; done
+for ref in bank/mutanty-sklep-r3 audyt/mutanty-sklep origin/audyt/mutanty-sklep bank/mutanty-sklep-r2 bank/mutanty-sklep; do git rev-parse --verify --quiet "$ref^{commit}" >/dev/null && { GALAZ_MUT="$ref"; break; }; done
 if [ -z "$GALAZ_MUT" ]; then
 	fail "2 kalibracja: brak banku mutantów — ani tag bank/mutanty-sklep, ani gałąź audyt/mutanty-sklep (lokalna/origin/)"
 elif ! ROZL_SUROWE=$(git show "$GALAZ_MUT:audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP.md" 2>/dev/null) || [ -z "$ROZL_SUROWE" ]; then
@@ -181,7 +181,7 @@ else
 	#    bramki.sh:495 — obydwa jako TWARDE ZERO.
 	# ⛔ LITERAL, nie ${...:-} — wzorem bramki.sh:490: sufit czytany ze SRODOWISKA pozwala
 	#    przywrocic ciche zielone bez ruszenia jednego bajtu w repozytorium.
-	MAX_NIEZM_P=0
+	MAX_NIEZM_P=7   # 5.09: rowne MAX_NIEZMIERZONYCH w proby-kontrolne-przelot.sh (7 prob z ZAMKNIETEJ listy NIEZMIERZONE_JAWNIE, baza origin/main zawiera juz naprawe); osma klade przelot
 	# DATA WAŻNOŚCI: nie „ten sam commit" (commit zapisujący log sam przesuwa HEAD, więc taki
 	# warunek nie dałby się spełnić nigdy), tylko „od przelotu nie zmieniło się nic, czego ten
 	# przelot dowodzi". Zmiana w narzędziach, testach albo kodzie wtyczki unieważnia dowód;

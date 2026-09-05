@@ -156,8 +156,20 @@ fi
 # ale gdyby rosl bez sufitu, zestaw kurczylby sie po cichu, a przelot dalej swiecilby
 # zielono. To ta sama klasa co sufit ponizej i ten sam mechanizm, co `MAX_NIEZMIERZONYCH`
 # w `bramki.sh` (klasa 128) — siostrzane narzedzia maja mowic jednym glosem.
-MAX_NIEZMIERZONYCH=0   # 4.09: TWARDE ZERO. Podniesienie = swiadoma decyzja w commicie,
-                       # z nazwa proby i powodem, dla ktorego nie da sie jej zmierzyc.
+MAX_NIEZMIERZONYCH=7   # 5.09 (wydanie 0.9.42, swiadoma decyzja w commicie): DOKLADNIE siedem prob ponizej konczy EXIT=2
+                       # Z KONSTRUKCJI: kazda kalibruje straznika na kodzie sprzed naprawy rownym origin/main, a naprawa jest
+                       # juz na main, wiec przyrzad nie ma czego pokazac (to nie brak srodowiska). Straznicy, ktore kalibruja,
+                       # biegna dalej i przechodza. Lista jest ZAMKNIETA: osma niezmierzona proba = pad przelotu.
+                       # Ksztalt naprawy (dlug nazwany w audyt/CO-WISI.md): mutant w KOPII zamiast origin/main jako bazy.
+NIEZMIERZONE_JAWNIE=(
+	anonimizacja-zachowuje-fakture-proba-kontrolna.sh
+	chatbot-pytanie-limit-proba-kontrolna.sh
+	csv-bez-formuly-proba-kontrolna.sh
+	idem-okno-per-kupujacy-proba-kontrolna.sh
+	limit-uploadu-proba-kontrolna.sh
+	pobranie-po-zwrocie-proba-kontrolna.sh
+	schemat-wersja-po-sprawdzeniu-proba-kontrolna.sh
+)
 
 # ⛔ SUFIT POMINIĘĆ. Bez niego lista pominięć rośnie po cichu i przelot świeci
 # zielono, sprawdzając coraz mniej — dokładnie ta klasa błędu, dla której ten
@@ -318,7 +330,13 @@ for SCIEZKA in "${PROBY[@]}"; do
 		:
 	elif [ "$KOD" -eq 2 ]; then
 		NIEZMIERZONE=$((NIEZMIERZONE + 1)); NIEZMIERZONE_NAZWY+=( "$NAZWA" )
-		printf '  NIE ZMIERZONO %s (EXIT=2 — brak warunkow wstepnych, NIE wada)\n' "$NAZWA"
+		JAWNA=0; for _j in "${NIEZMIERZONE_JAWNIE[@]}"; do [ "$_j" = "$NAZWA" ] && JAWNA=1; done
+		if [ "$JAWNA" -eq 1 ]; then
+			printf '  NIE ZMIERZONO %s (EXIT=2 — wyjatek JAWNY z listy NIEZMIERZONE_JAWNIE: baza origin/main zawiera juz naprawe)\n' "$NAZWA"
+		else
+			printf '  NIE ZMIERZONO %s (EXIT=2 — brak warunkow wstepnych, SPOZA listy jawnych wyjatkow = pad)\n' "$NAZWA"
+			ZLE=$((ZLE + 1)); ZLE_NAZWY+=( "$NAZWA (EXIT=2 spoza listy jawnych)" )
+		fi
 	else
 		ZLE=$((ZLE + 1)); ZLE_NAZWY+=( "$NAZWA (EXIT=$KOD)" )
 		printf '  PADLA       %s (EXIT=%s)\n' "$NAZWA" "$KOD"
