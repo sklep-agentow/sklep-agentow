@@ -65,6 +65,7 @@ ZNACZNIK='WYGENEROWANE-PRZEZ: narzedzia-qa/proby-kontrolne-przelot.sh'
 # jak „sprawdzono wszystko", dlatego pominięcia lądują w logu, nie w komentarzu w kodzie.
 declare -A POMIJANE=(
 	[dowod-zachowania-segregator-proba-kontrolna.sh]="deinstaluje wtyczkę ze stosu — do przelotu ręcznego przed wydaniem"
+	[nonce-proba-kontrolna.sh]="próba z przeglądarką pada LOSOWO w ok. połowie biegów w serii na tym stosie (5.09: 4 z 7 przelotów, kontrola odwrotna albo 1. mutant), także na pustej maszynie; bezpośrednio EXIT=0 x3; klasa 154 — do naprawy przyrządu; przelot ręczny: bash testy/nonce-proba-kontrolna.sh"
 )
 
 # ⛔ PRÓBY WYMAGAJĄCE DOCKERA (1.09; od 2.09 jest ich PIĘĆ). Te próby stawiają stos próbny albo wołają
@@ -179,7 +180,7 @@ NIEZMIERZONE_JAWNIE=(
 #    bo CI wola przelot Z ZAKRESEM `narzedzia-qa`, gdzie wiecej niz 7 pominiec jest
 #    NIEMOZLIWE. Przy jednej liczbie mozna dopisac TRZY nazwy do POMIJANE i przejdzie
 #    bez sladu — dokladnie ta klasa, dla ktorej ten sufit powstal.
-MAX_POMINIETYCH_ZAKRES=10  # 5.09 po scaleniu #291 do C: 9 z main (+2 dockerowe #291) + 1 prawne-migracja (obszar C); POLICZONE na scalonej tresci, nie przepisane.
+MAX_POMINIETYCH_ZAKRES=11  # 5.09 wieczór: +1 nonce (POMIJANE, klasa 154); 5.09 po scaleniu #291 do C: 9 z main (+2 dockerowe #291) + 1 prawne-migracja (obszar C); POLICZONE na scalonej tresci, nie przepisane.
                     # ⛔ Rachunek na OBU zakresach, bo sufit obowiazuje oba, a CI liczy inaczej
                     #    niz wydanie. Scenariusz, ktorego sufit dotyczy: wykonawca BEZ Dockera
                     #    I BEZ `zip` (na maszynie z obydwoma pominiecie jest tylko 1 — dlatego
@@ -196,7 +197,7 @@ MAX_POMINIETYCH_ZAKRES=10  # 5.09 po scaleniu #291 do C: 9 z main (+2 dockerowe 
                     #    ktorego zada bramka wydania — wywalilby sie na WLASNEJ poprawce.
                     # ⛔ NIE przepisuj tej liczby przy nastepnym scaleniu: kazda nowa proba
                     #    dockerowa albo zipowa ja przesuwa. Policz komenda na scalonym drzewie.
-MAX_POMINIETYCH_PELNY=13   # ta sama arytmetyka, sciezka BEZ zakresu (tak wola `k7-koniec`): 12 z main + 1 prawne-migracja
+MAX_POMINIETYCH_PELNY=14   # 5.09 wieczór: +1 nonce (POMIJANE, klasa 154); ta sama arytmetyka, sciezka BEZ zakresu (tak wola `k7-koniec`): 12 z main + 1 prawne-migracja
 
 # ⛔ PODLOGA URUCHOMIONYCH (recenzja #287 WAZNA 2, druga polowa tej samej wady). Sufit
 # pominiec sam w sobie NIE chroni: gdyby ktos podniosl go "swiadomie" nie licząc, ile prob

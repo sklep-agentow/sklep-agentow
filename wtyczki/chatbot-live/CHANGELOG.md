@@ -14,6 +14,8 @@ migracja odpala się sama przy pierwszym wejściu do panelu po aktualizacji
 
 Nic jeszcze.
 
+---
+
 ## [1.5.18] — 2026-09-05 · schemat bazy bez zmian
 
 ### Zmienione
