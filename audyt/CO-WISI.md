@@ -1196,3 +1196,52 @@ Każda pozycja = tania poprawka tekstowa do wzięcia przy najbliższym PR-ze w t
 - DROBNA 1: krok render sam podaje `faktura=1` — asercja mierzy własne wejście; poprawka: brać parametr z prawdziwego REDIRECT z WY_A.
 - DROBNA 2: opis w sekcji RODO PRZED kliknięciem obiecuje zachowanie faktury także przy zakupie prywatnym (pusta kolumna) — warunek `$ma_fakture` także w tekście przed operacją.
 - DROBNA 3 (klasa 11): `testy/anonimizacja-zachowuje-fakture-proba-kontrolna.sh` (⚠️ plik istnieje TYLKO na gałęzi PR #270, nie na `main`) — komunikat obiecuje rozróżnienie, którego warunek nie robi; bliźniak w bazie robi poprawnie.
+
+
+### #282 r1 (strażnik liczników) — 2 WAŻNE, 5 DROBNYCH · ⛔ ŚWIADOMIE ODŁOŻONE 5.09
+⛔ **Decyzja i jej powód:** to była **siódma runda poprawek NARZĘDZIA testowego**, przy nietkniętym
+kodzie produktu i czekającym przelocie oraz wydaniu. Strażnik **działa** — próba dwukierunkowa zdana
+(`EXIT=0` czysto, `EXIT=1` z podłożonym martwym licznikiem, wskazuje właściwy plik). Dalsze
+doskonalenie go ustępuje pierwszeństwa wydaniu. Recenzja: PR #282, komentarz `claude[bot]`.
+
+- **WAŻNA 1 — werdykt kierunku negatywnego nie jest zakotwiczony w PODŁOŻONEJ wadzie**
+  (`liczniki-zywe-proba-kontrolna.sh:142`). Warunek `KOD -eq 1 && grep -qF "$OFIARA"` przechodzi także
+  wtedy, gdy strażnik wypisał `OFIARA` z INNEGO powodu niż podłożona atrapa — np. gdy ten sam plik ma
+  już prawdziwy martwy licznik. Wtedy kierunek negatywny „przechodzi na pusto”.
+  ⇒ Poprawka: asercja na KONKRETNY licznik z atrapy (`ODWROTNA`), nie na samą nazwę pliku.
+- **WAŻNA 2 — kontrola wycięcia (`:135-139`) nie odróżnia „wycięto sekcję” od „wycięto sekcję i CAŁĄ
+  resztę pliku”.** `sed` z zakresem od znacznika do znacznika przy braku znacznika końca tnie do końca
+  pliku; `grep -qF 'KIERUNEK NEGATYWNY'` wykryje brak sekcji w obu przypadkach jednakowo.
+  ⇒ Poprawka: porównać liczbę linii kopii przed/po wycięciu z oczekiwanym zakresem.
+- 5 DROBNYCH: w komentarzu recenzenta na PR #282 (nie przepisuję — czytać u źródła).
+
+⚠️ Recenzent NIE URUCHOMIŁ tego skryptu (`This command requires approval` — brak w `--allowedTools`,
+`recenzent.yml:205`), więc obie uwagi stoją na cytatach kodu i `grep`, nie na przebiegu.
+
+
+### #283 r1 (zrzuty i obrazki) — 3 WAŻNE, 3 DROBNE · ⛔ ŚWIADOMIE ODŁOŻONE 5.09
+⛔ **Zamknięte w PR-ze:** KRYTYCZNA 1 (oś czasu z `admin_roboczy` i IP stosu poza kadrem),
+DROBNA 3 (klucz publikowalny naszego konta → wzorcowy; przełącznik czyszczenia na domyślny),
+WAŻNA 2 (cztery podpisy opisują to, co w kadrze jest). Poniższe **nie dotyczą tego, co jedzie
+do klienta w obrazie** — to spójność narzędzi i dokumentacji. Ósma runda poprawek narzędzi
+w jedną noc; przelot prób i wydanie mają pierwszeństwo.
+
+- **WAŻNA 1 (klasa 11) — nowa bramka nazywa się szerzej, niż sprawdza.** Kontrola „każdy obrazek
+  z instrukcji istnieje w paczce” nie złapałaby wady, którą ten PR opisuje (obraz z danymi
+  wewnętrznymi): sprawdza obecność pliku, nie jego treść. ⇒ Albo zawęzić nazwę, albo dołożyć
+  kontrolę na treść obrazu (trudne — patrz niżej).
+- **WAŻNA 3 — spis treści paczki nie wymienia zrzutów.** `narzedzia-qa/pakuj-dla-klienta.sh:2`
+  nadal wylicza zawartość bez `zrzuty/`, mimo że katalog jedzie do klienta. ⇒ Dopisać do nagłówka
+  i podbić `WERSJA`.
+- **WAŻNA 4 (ekspozycja na klasę 8) — dwie kopie tych samych zrzutów, nic nie pilnuje, że są
+  równe.** `wtyczki/sklep-agentow/zrzuty/` i `dokumentacja/zrzuty/` trzymają te same pliki;
+  rozjazd jest możliwy i cichy. ⇒ Bramka porównująca sumy, albo jedno źródło i kopiowanie przy
+  pakowaniu.
+- DROBNA 1 (komunikat błędu podpowiada komendę, która nie wytworzy brakującego pliku),
+  DROBNA 2 (nagłówek skryptu pakującego nie nadąża), DROBNA 4 (obie nowe kontrole są poza CI —
+  `BRAMKI=` ich nie zna, więc chodzą tylko przy ręcznym pakowaniu).
+
+⭐ **Reguła, która z tej recenzji weszła do klasy 139:** żadna bramka nie złapie danych na
+ZDJĘCIU, bo skanery czytają tekst, nie obrazy — `paczka-zgodnosc.sh` meldował „w 69 plikach
+paczki nie ma śladów wewnętrznych” na paczce z nazwą konta i IP na obrazku. Jedyna kontrola,
+która działa, to **człowiek otwierający plik**.
