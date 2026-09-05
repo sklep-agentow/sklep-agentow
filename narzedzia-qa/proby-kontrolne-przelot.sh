@@ -189,8 +189,8 @@ MAX_POMINIETYCH_PELNY=12   # ta sama arytmetyka, sciezka BEZ zakresu (tak wola `
 # zielono, nie zmierzywszy niczego. Podloga jest DRUGA, NIEZALEZNA brama na tej samej
 # liczbie: minimalna liczba prob, ktore MUSZA sie faktycznie wykonac (ILE = N - POMINIETO).
 # Literaly, ta sama arytmetyka co MAX_POMINIETYCH_* wyzej (N minus maksymalne pominiecie).
-MIN_URUCHOMIONYCH_PELNY=50    # 62 prob w calym repo (25 narzedzia-qa + 37 testy; `ls narzedzia-qa/*proba-kontrolna*.sh testy/*proba-kontrolna*.sh | wc -l`) minus MAX_POMINIETYCH_PELNY(12)  (5.09 po scaleniu #291 do #297: +1 segregator-mime-ci, czysty PHP — nigdy pomijana)
-MIN_URUCHOMIONYCH_ZAKRES=16   # 25 prob w narzedzia-qa minus MAX_POMINIETYCH_ZAKRES(9)  (5.09 po scaleniu #291 do #297: +1 segregator-mime-ci, czysty PHP — nigdy pomijana)
+MIN_URUCHOMIONYCH_PELNY=51    # 63 prob w calym repo (26 narzedzia-qa + 37 testy; `ls narzedzia-qa/*proba-kontrolna*.sh testy/*proba-kontrolna*.sh | wc -l`) minus MAX_POMINIETYCH_PELNY(12)  (5.09 po scaleniu #297 do #296: +1 rejestr-liczniki, bez Dockera — nigdy pomijana)
+MIN_URUCHOMIONYCH_ZAKRES=17   # 26 prob w narzedzia-qa minus MAX_POMINIETYCH_ZAKRES(9)  (5.09 po scaleniu #297 do #296: +1 rejestr-liczniki, bez Dockera — nigdy pomijana)
 
 # Tryb LISTY (PRZELOT_LISTA=1) niczego nie uruchamia i nie pisze logu — nie jest dowodem, więc brudne
 # drzewo mu nie przeszkadza (próba kontrolna odłamków woła go na kopii przelotu w trakcie pracy).
