@@ -44,7 +44,7 @@ segm_test_ok( 'kasownik zarejestrowany w WP', isset( apply_filters( 'wp_privacy_
 $wpdb->insert( $tm, array( 'zrodlo' => 'test', 'nadawca' => $adres, 'temat' => 'Temat A', 'tresc' => 'Tresc A', 'utworzono' => $teraz ) );
 $wpdb->insert( $tm, array( 'zrodlo' => 'test', 'nadawca' => strtoupper( $adres ), 'temat' => 'Temat B', 'tresc' => 'Tresc B', 'utworzono' => $teraz ) );
 $wpdb->insert( $tm, array( 'zrodlo' => 'test', 'nadawca' => 'inna-osoba@example.test', 'temat' => 'Cudzy', 'tresc' => 'Cudza tresc', 'utworzono' => $teraz ) );
-$wpdb->insert( $tr, array( 'przebieg_id' => 0, 'nadawca' => $adres, 'temat' => 'Ruch A', 'folder_z' => 'INBOX', 'folder_do' => 'Faktury', 'stan' => 'ok', 'komunikat' => '', 'utworzono' => $teraz ) );
+$wpdb->insert( $tr, array( 'przebieg_id' => 0, 'nadawca' => $adres, 'temat' => 'Ruch A', 'message_id' => '<msg-rodo-a@example.test>', 'folder_z' => 'INBOX', 'folder_do' => 'Faktury', 'stan' => 'ok', 'komunikat' => '', 'utworzono' => $teraz ) );
 $ruch_id = (int) $wpdb->insert_id;
 // + 1 raport przebiegu z tą osobą (2 wpisy, różna wielkość liter) i cudzym wpisem + 1 raport BEZ tej osoby (nie wolno go ruszyć).
 $wyniki_a = array(
@@ -68,6 +68,8 @@ try {
 	segm_test_ok( 'eksport: grupa raportów ma 2 pozycje (obie wielkości liter), z tematem i nadaną kategorią', 2 === ( $grupy['segm-przebiegi'] ?? 0 ) && in_array( 'Raport B', array_map( function ( $p ) { return $p['data'][1]['value']; }, $eks['data'] ), true ), 'jest ' . ( $grupy['segm-przebiegi'] ?? 0 ) );
 	segm_test_ok( 'eksport: done = true', ! empty( $eks['done'] ) );
 	$tematy = array_map( function ( $p ) { return $p['data'][1]['value']; }, $eks['data'] );
+	$msgid = array_filter( array_map( function ( $p ) { return 'segm-ruchy' === $p['group_id'] ? end( $p['data'] )['value'] : null; }, $eks['data'] ) );
+	segm_test_ok( 'eksport: ruch niesie Message-ID (to, co trzymamy z jej wiadomości)', in_array( '<msg-rodo-a@example.test>', $msgid, true ), wp_json_encode( $msgid ) );
 	segm_test_ok( 'eksport: niesie temat i nie niesie cudzych (ani z próbki, ani z raportu)', in_array( 'Temat A', $tematy, true ) && ! in_array( 'Cudzy', $tematy, true ) && ! in_array( 'Cudzy raport', $tematy, true ) && ! in_array( 'Tylko cudzy', $tematy, true ) );
 	$obcy = segm_rodo_eksporter( 'nikt-taki@example.test', 1 );
 	segm_test_ok( 'eksport nieznanego adresu: 0 pozycji, done', 0 === count( $obcy['data'] ) && ! empty( $obcy['done'] ) );
@@ -80,8 +82,8 @@ try {
 	segm_test_ok( 'SKUTEK: 0 maili tej osoby w bazie', 0 === $zostalo, 'jest ' . $zostalo );
 	$cudzy = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$tm} WHERE nadawca = 'inna-osoba@example.test'" );
 	segm_test_ok( 'SKUTEK: cudzy mail nietknięty', 1 === $cudzy );
-	$ruch = $wpdb->get_row( $wpdb->prepare( "SELECT nadawca, temat, folder_do FROM {$tr} WHERE id = %d", $ruch_id ) );
-	segm_test_ok( 'SKUTEK: ruch zostaje z pustym nadawcą i tematem [usunięto na żądanie], folder bez zmian', $ruch && '' === $ruch->nadawca && '[usunięto na żądanie]' === $ruch->temat && 'Faktury' === $ruch->folder_do );
+	$ruch = $wpdb->get_row( $wpdb->prepare( "SELECT nadawca, temat, message_id, folder_do FROM {$tr} WHERE id = %d", $ruch_id ) );
+	segm_test_ok( 'SKUTEK: ruch zostaje z pustym nadawcą, tematem [usunięto na żądanie] i pustym Message-ID, folder bez zmian', $ruch && '' === $ruch->nadawca && '[usunięto na żądanie]' === $ruch->temat && '' === $ruch->message_id && 'Faktury' === $ruch->folder_do, wp_json_encode( $ruch ) );
 	$rap_a = json_decode( (string) $wpdb->get_var( $wpdb->prepare( "SELECT wyniki FROM {$tp} WHERE id = %d", $przebieg_a ) ), true );
 	segm_test_ok( 'SKUTEK: w raporcie oba wpisy tej osoby bez nadawcy i z tematem [usunięto na żądanie], kategoria i trafienie bez zmian', is_array( $rap_a ) && 3 === count( $rap_a ) && '' === $rap_a[0]['nadawca'] && '[usunięto na żądanie]' === $rap_a[0]['temat'] && 'Faktury' === $rap_a[0]['kategoria'] && '' === $rap_a[1]['nadawca'] && '[usunięto na żądanie]' === $rap_a[1]['temat'] && true === $rap_a[1]['trafiony'], wp_json_encode( $rap_a ) );
 	segm_test_ok( 'SKUTEK: cudzy wpis w tym samym raporcie nietknięty', is_array( $rap_a ) && 'inna-osoba@example.test' === $rap_a[2]['nadawca'] && 'Cudzy raport' === $rap_a[2]['temat'] );

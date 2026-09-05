@@ -15,10 +15,16 @@ Nic jeszcze.
 
 ### Dodane
 - **Eksporter i kasownik danych osobowych** dla narzędzi prywatności WordPressa (Narzędzia → Eksport / Usuń dane
-  osobowe): klucz osoby = adres nadawcy; wiadomości z próbki znikają w całości, w dzienniku ruchów i w raportach
-  przebiegów (kolumna z wynikami, widoczna w panelu i w eksporcie CSV) zostaje ślad bez nadawcy i tematu.
+  osobowe): klucz osoby = adres nadawcy; wiadomości z próbki znikają w całości, w dzienniku ruchów zostaje ślad bez
+  nadawcy, tematu i Message-ID, w raportach przebiegów (kolumna z wynikami, widoczna w panelu i w eksporcie CSV) —
+  bez nadawcy i tematu.
   Sklep i ChatBot miały to od dawna, Segregator — trzymający cudzą korespondencję w trzech tabelach — nie.
 - Podpowiedź do Polityki prywatności (co przetwarzamy, dokąd idzie w trybie AI, jak złożyć wniosek).
+
+### Naprawione
+- **Klient poczty ma sufity na to, ile przyjmie od serwera** (linia 64 KB, literał 1 MB, odpowiedź 20 000 linii / 8 MB).
+  Dotąd rozmiar dyktował serwer: jedna linia zapowiadająca 900 MB danych kończyła proces PHP błędem pamięci zamiast
+  komunikatem po polsku. Teraz przekroczenie sufitu przerywa połączenie z jasnym powodem w dzienniku i w panelu.
 
 ---
 

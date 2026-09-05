@@ -414,8 +414,22 @@ function chatl_post_operator_wyslij() {
 		);
 	}
 	// Pisanie do rozmowy, której się nie przejęło, dałoby gościowi dwa głosy naraz.
-	if ( 'czlowiek' !== chatl_stan_rozmowy( $sesja ) ) {
-		chatl_przekieruj_blad( 'chatl-rozmowy', 'Najpierw przejmij rozmowę — bez tego odpowiadałby też bot.' );
+	// ⛔ Stan czytamy Z BAZY (`chatl_sesja_wiersz`), nie przez `chatl_stan_rozmowy()`: tamta
+	// funkcja przy okazji WYGASZA przejęcie po ciszy operatora — a operator, który właśnie
+	// klika „Wyślij”, nie milczy. Do 1.5.18 znacznik aktywności odświeżał się tylko przy
+	// wysyłce, więc pisanie odpowiedzi dłużej niż CHATL_PRZEJECIE_CISZA kończyło się tak:
+	// kliknięcie oddawało rozmowę botowi, handler odrzucał wiadomość, a tekst ginął
+	// (czwarty egzemplarz klasy „odrzut kasuje wpisane”, tej samej, którą zamyka
+	// przechowalnia 9 linii wyżej). Wysyłka SAMA odświeża znacznik (chatl_operator_wiadomosc),
+	// więc rozmowa zostaje przy człowieku. Gdy rozmowę oddało już botowi wcześniejsze
+	// odpytanie gościa, odmawiamy — ale treść czeka w polu, a komunikat mówi, co zrobić.
+	$wiersz = chatl_sesja_wiersz( $sesja );
+	if ( ! is_array( $wiersz ) || 'czlowiek' !== $wiersz['stan'] ) {
+		chatl_odloz_szkic_operatora( $sesja, $tresc );
+		chatl_przekieruj_blad(
+			'chatl-rozmowy&sesja=' . rawurlencode( $sesja ),
+			'Rozmowa nie jest przy Tobie (wróciła do bota po ciszy albo została zakończona) — przejmij ją ponownie i wyślij jeszcze raz. Nic nie zostało wysłane, treść czeka w polu.'
+		);
 	}
 	// 0 = wiadomość NIE trafiła do bazy, więc gość jej nie zobaczy — operator ma
 	// to wiedzieć teraz, nie po ciszy po drugiej stronie.

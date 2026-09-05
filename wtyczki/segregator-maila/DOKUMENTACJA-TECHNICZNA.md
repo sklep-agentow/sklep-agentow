@@ -70,7 +70,7 @@ leży w pliku `LICENSE` w katalogu wtyczki i wchodzi do paczki produktowej.
 | `includes/admin.php` | 1504 | panel: przebiegi i raporty, reguły, kategorie, próbka, ustawienia, baner powitalny, paski błędu AI i błędu bazy |
 | `includes/konfiguracja.php` | 360 | eksport i import własnej konfiguracji (kategorie + reguły) w JSON-ie |
 | `includes/filtry.php` | 588 | eksport reguł do filtrów Gmaila (XML) i reguł Outlooka |
-| `includes/class-segm-imap.php` | 1123 | **klient IMAP4rev1 w czystym PHP** — gniazdo, TLS, protokół |
+| `includes/class-segm-imap.php` | 1202 | **klient IMAP4rev1 w czystym PHP** — gniazdo, TLS, protokół |
 | `includes/skrzynka.php` | 849 | konfiguracja skrzynki, hasło, diagnostyka, „Sprawdź połączenie", rozbiór nagłówków i treści |
 | `includes/skrzynka-przebieg.php` | 741 | przebieg na żywej skrzynce, historia, cofanie, harmonogramy WP-Cron |
 | `includes/admin-skrzynka.php` | 766 | panel zakładki *Skrzynka (IMAP)* i obsługa jej formularzy |
@@ -208,6 +208,10 @@ więc deinstalacja kasuje go zapytaniem `LIKE` po `wp_options` (razem z wierszam
 | `SEGM_SKRZ_LIMIT_CZASU` | `20` | `skrzynka.php` | twardy limit czasu jednego przebiegu na skrzynce (s) |
 | `SEGM_SKRZ_LIMIT_GNIAZDA` | `15` | `skrzynka.php` | limit czasu pojedynczej operacji sieciowej (s) |
 | `SEGM_SKRZ_GLEBOKOSC_MIME` | `5` | `skrzynka.php` | do ilu poziomów zagnieżdżenia rozbieramy wiadomość wieloczęściową (spreparowany mail nie zapętli rozbioru) |
+| `Segm_Imap::MAX_LINIA_BAJTOW` | `65536` (64 KB) | `class-segm-imap.php` | sufit jednej linii odpowiedzi serwera IMAP (bez niego linia bez końca rosła w pamięci do fatala) |
+| `Segm_Imap::MAX_LITERAL_BAJTOW` | `1048576` (1 MB) | `class-segm-imap.php` | sufit jednego literału `{n}` — rozmiar podaje serwer, więc bez sufitu jedna linia `{943718400}` kończyła proces |
+| `Segm_Imap::MAX_LINII_ODPOWIEDZI` | `20000` | `class-segm-imap.php` | sufit linii nietagowanych na jedno polecenie |
+| `Segm_Imap::MAX_ODPOWIEDZ_BAJTOW` | `8388608` (8 MB) | `class-segm-imap.php` | sufit łącznej odpowiedzi na jedno polecenie; przekroczenie = zamknięcie gniazda i komunikat po polsku |
 | `SEGM_SKRZ_CZESCI_MIME` | `40` | `skrzynka.php` | ile części jednej wiadomości oglądamy, zanim przestaniemy szukać tekstu |
 | `SEGM_AI_MODEL` | `claude-haiku-4-5` | `ai.php` | model **domyślny**; nadpisuje go ustawienie `ai_model`, a na końcu filtr `segm_ai_model` |
 | `SEGM_AI_MODEL_WZORZEC` | `/^[a-z0-9][a-z0-9._-]{2,63}$/` | `ai.php` | dopuszczalny kształt nazwy modelu |

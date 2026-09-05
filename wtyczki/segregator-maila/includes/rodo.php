@@ -14,7 +14,7 @@
  * Klucz osoby = adres e-mail nadawcy (porównanie bez rozróżniania wielkości liter).
  * Kasowanie: wiersze `segm_maile` znikają w całości (to treść korespondencji tej osoby);
  * w `segm_skrz_ruchy` i w JSON-ie raportów `segm_przebiegi` zostaje sam ślad (folder z → do,
- * stan, nadana kategoria) z wyczyszczonym nadawcą i tematem — dziennik i raport mają dowodzić,
+ * stan, uid, nadana kategoria) z wyczyszczonym nadawcą, tematem i Message-ID — dziennik i raport mają dowodzić,
  * CO segregator zrobił, nie KTO pisał. Wynik mierzony po skutku (rows_affected), nie po wywołaniu.
  * Raporty przeszukujemy po JSON-ie (LIKE po adresie zakodowanym tak, jak go zapisał
  * wp_json_encode), a dopasowanie osoby rozstrzyga porównanie pola `nadawca` w PHP.
@@ -122,7 +122,7 @@ function segm_rodo_eksporter( $email, $strona = 1 ) {
 
 	$ruchy = $wpdb->get_results(
 		$wpdb->prepare(
-			"SELECT id, temat, folder_z, folder_do, stan, utworzono FROM {$wpdb->prefix}segm_skrz_ruchy WHERE LOWER(nadawca) = %s ORDER BY id ASC LIMIT %d OFFSET %d",
+			"SELECT id, temat, message_id, folder_z, folder_do, stan, utworzono FROM {$wpdb->prefix}segm_skrz_ruchy WHERE LOWER(nadawca) = %s ORDER BY id ASC LIMIT %d OFFSET %d",
 			$email,
 			SEGM_RODO_STRONA,
 			$od
@@ -158,6 +158,10 @@ function segm_rodo_eksporter( $email, $strona = 1 ) {
 				array(
 					'name'  => 'Zapisano',
 					'value' => (string) $r->utworzono,
+				),
+				array(
+					'name'  => 'Message-ID',
+					'value' => (string) $r->message_id,
 				),
 			),
 		);
@@ -211,7 +215,8 @@ function segm_rodo_eksporter( $email, $strona = 1 ) {
 }
 
 /**
- * Kasownik: maile tej osoby znikają, w ruchach i w raportach przebiegów zostaje ślad bez nadawcy i tematu.
+ * Kasownik: maile tej osoby znikają, w ruchach zostaje ślad bez nadawcy, tematu i Message-ID (nagłówek z jej
+ * wiadomości), w raportach przebiegów — bez nadawcy i tematu.
  * Liczby z pomiaru skutku (`rows_affected`), błąd bazy = `done` = false z komunikatem,
  * żeby WordPress nie zgłosił właścicielowi „usunięto”, gdy nic nie usunął.
  *
@@ -236,7 +241,7 @@ function segm_rodo_kasownik( $email, $strona = 1 ) { // phpcs:ignore Generic.Cod
 
 	$w2 = $wpdb->query(
 		$wpdb->prepare(
-			"UPDATE {$wpdb->prefix}segm_skrz_ruchy SET nadawca = '', temat = '[usunięto na żądanie]' WHERE LOWER(nadawca) = %s",
+			"UPDATE {$wpdb->prefix}segm_skrz_ruchy SET nadawca = '', temat = '[usunięto na żądanie]', message_id = '' WHERE LOWER(nadawca) = %s",
 			$email
 		)
 	);

@@ -23,6 +23,10 @@ Nic jeszcze.
   licznik, a licznik rósł po odpowiedzi API — N równoczesnych gości przy ostatnim slocie wszyscy przechodzili kontrolę
   i wszyscy płacili u dostawcy (limit przekraczany o N). Teraz `chatl_ai_zarezerwuj()` (ten sam wzorzec co limit żądań),
   brak odpowiedzi 200 zwalnia slot.
+- **Operator, który pisze odpowiedź dłużej niż 5 minut, nie traci tekstu.** Do 1.5.17 kliknięcie „Wyślij” po takiej
+  ciszy samo oddawało rozmowę botowi (sprawdzenie stanu wygaszało przejęcie), a potem odrzucało wiadomość i czyściło
+  pole. Teraz wysyłka liczy się jako aktywność operatora i rozmowa zostaje przy człowieku; gdy rozmowa naprawdę
+  wróciła już do bota, odmowa mówi, co zrobić, a treść czeka w polu.
 
 ### Zmienione
 - Podpowiedź do Polityki prywatności mówi, gdzie trafiają dane w trybie AI (Anthropic PBC, serwery w USA, tryb do
