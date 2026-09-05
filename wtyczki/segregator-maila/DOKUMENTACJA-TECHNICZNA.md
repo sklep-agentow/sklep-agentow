@@ -1,6 +1,6 @@
 # Segregator maila — dokumentacja techniczna
 
-**Wersja wtyczki: 1.3.6 · wersja schematu bazy: 4 · WordPress 6.0+ · PHP 8.1+**
+**Wersja wtyczki: 1.3.7 · wersja schematu bazy: 4 · WordPress 6.0+ · PHP 8.1+**
 
 > **Po co ten dokument.** To jest **mapa systemu dla audytora i programisty**, nie ulotka.
 > Każda liczba i każda nazwa tutaj jest wzięta z kodu, nie z pamięci — jeśli coś się
@@ -70,7 +70,7 @@ leży w pliku `LICENSE` w katalogu wtyczki i wchodzi do paczki produktowej.
 | `includes/konfiguracja.php` | 360 | eksport i import własnej konfiguracji (kategorie + reguły) w JSON-ie |
 | `includes/filtry.php` | 588 | eksport reguł do filtrów Gmaila (XML) i reguł Outlooka |
 | `includes/class-segm-imap.php` | 1123 | **klient IMAP4rev1 w czystym PHP** — gniazdo, TLS, protokół |
-| `includes/skrzynka.php` | 534 | konfiguracja skrzynki, hasło, diagnostyka, „Sprawdź połączenie", rozbiór nagłówków i treści |
+| `includes/skrzynka.php` | 849 | konfiguracja skrzynki, hasło, diagnostyka, „Sprawdź połączenie", rozbiór nagłówków i treści |
 | `includes/skrzynka-przebieg.php` | 741 | przebieg na żywej skrzynce, historia, cofanie, harmonogramy WP-Cron |
 | `includes/admin-skrzynka.php` | 766 | panel zakładki *Skrzynka (IMAP)* i obsługa jej formularzy |
 | `includes/admin-powitanie.php` | 143 | ekran powitalny pokazywany raz po aktywacji |
@@ -190,7 +190,7 @@ więc deinstalacja kasuje go zapytaniem `LIKE` po `wp_options` (razem z wierszam
 
 | Stała | Wartość | Gdzie | Znaczenie |
 |---|---|---|---|
-| `SEGM_WERSJA` | `1.3.6` | plik główny | wersja wtyczki |
+| `SEGM_WERSJA` | `1.3.7` | plik główny | wersja wtyczki |
 | `SEGM_WERSJA_SCHEMATU` | `4` | plik główny | wyzwala migrację tabel |
 | `SEGM_RETENCJA_DNI` | `90` | plik główny | po tylu dniach cron kasuje cudzą korespondencję |
 | `SEGM_BLOKADA` | `segm_operacja_w_toku` | plik główny | nazwa znacznika „operacja trwa" |
@@ -206,6 +206,8 @@ więc deinstalacja kasuje go zapytaniem `LIKE` po `wp_options` (razem z wierszam
 | `SEGM_SKRZ_TRESC_BAJTOW` | `4096` | `skrzynka.php` | ile bajtów treści maila pobieramy do dopasowania reguł |
 | `SEGM_SKRZ_LIMIT_CZASU` | `20` | `skrzynka.php` | twardy limit czasu jednego przebiegu na skrzynce (s) |
 | `SEGM_SKRZ_LIMIT_GNIAZDA` | `15` | `skrzynka.php` | limit czasu pojedynczej operacji sieciowej (s) |
+| `SEGM_SKRZ_GLEBOKOSC_MIME` | `5` | `skrzynka.php` | do ilu poziomów zagnieżdżenia rozbieramy wiadomość wieloczęściową (spreparowany mail nie zapętli rozbioru) |
+| `SEGM_SKRZ_CZESCI_MIME` | `40` | `skrzynka.php` | ile części jednej wiadomości oglądamy, zanim przestaniemy szukać tekstu |
 | `SEGM_AI_MODEL` | `claude-haiku-4-5` | `ai.php` | model **domyślny**; nadpisuje go ustawienie `ai_model`, a na końcu filtr `segm_ai_model` |
 | `SEGM_AI_MODEL_WZORZEC` | `/^[a-z0-9][a-z0-9._-]{2,63}$/` | `ai.php` | dopuszczalny kształt nazwy modelu |
 | `SEGM_AI_TIMEOUT` | `9` | `ai.php` | limit czasu wywołania API (s), jeden retry |
@@ -787,9 +789,16 @@ czy liczba wierszy się nie zmieniła.
 - **Nie obsługuje OAuth2** — a więc nie obsłuży Microsoft 365 ani Outlook.com (§10).
 - **Nie nadaje etykiet Gmaila** — przenosi między folderami; w Gmailu folder to
   etykieta, więc skutek jest zbliżony, ale nie identyczny.
-- **Nie robi pełnego rozbioru MIME.** Do reguł „treść zawiera" bierzemy pierwsze
-  4096 bajtów sekcji `TEXT` i rozkodowujemy base64 / quoted-printable dla wiadomości
-  jednoczęściowych. Przy wiadomości wieloczęściowej w tekście zostaną granice części.
+- **Nie robi PEŁNEGO rozbioru MIME** — ale rozbiera tyle, ile potrzebuje reguła.
+  Do reguł „treść zawiera" bierzemy pierwsze 4096 bajtów sekcji `TEXT`, rozkładamy je
+  na części po granicy z nagłówka `Content-Type` (RFC 2046 §5.1, także zagnieżdżone:
+  `multipart/alternative` w `multipart/mixed`, do 5 poziomów) i bierzemy część
+  `text/plain`, a gdy jej nie ma — `text/html` bez znaczników. Każda część jest
+  rozkodowana JEJ WŁASNYM `Content-Transfer-Encoding` (`base64`, `quoted-printable`,
+  `7bit`/`8bit`) i sprowadzona do UTF-8 JEJ WŁASNYM `charset` — z listy prawdziwych
+  zestawów znaków, bo nazwę podaje nadawca. **Granice i nagłówki części NIE trafiają
+  do tekstu**, więc reguła dopasowuje to, co człowiek widzi w programie pocztowym.
+  Czego nadal nie ma: załączników i sklejania części `message/partial`.
 - **Nie pobiera załączników.**
 - **Nie ma widoku publicznego** — żadnych skrótów, żadnych tras REST, żadnych zasobów
   na froncie.
@@ -822,7 +831,7 @@ czy liczba wierszy się nie zmieniła.
 | 7 | limit czasu przebiegu | `SEGM_SKRZ_LIMIT_CZASU` | co się dzieje z wiadomościami, których przebieg nie zdążył ruszyć? Czy następny przebieg weźmie je poprawnie, czy pominie? |
 | 8 | weryfikacja certyfikatu | `class-segm-imap.php::polacz()` | czy `ufaj_bez_cert` da się włączyć niechcący? Czy przy wyłączonej weryfikacji ostrzeżenie jest widoczne w miejscu decyzji, czy tylko w instrukcji? |
 | 9 | nazwy folderów z polskimi znakami | `Segm_Imap::do_utf7()` | co się stanie, gdy `mbstring` nie zna `UTF7-IMAP`? Czy powstanie folder o przekręconej nazwie, czy operacja padnie z komunikatem? |
-| 10 | dopasowanie na treści | `segm_skrzynka_tresc_tekstem()` | czy przycięcie do 4096 bajtów i brak rozbioru MIME mogą dać **fałszywe trafienie** (np. słowo z nagłówka podczęści)? Czy właściciel wie, że tak może być? |
+| 10 | dopasowanie na treści | `segm_skrzynka_tresc_tekstem()` | czy przycięcie do 4096 bajtów może urwać słowo reguły? Czy nagłówki i granice części na pewno NIE trafiają do tekstu (mail z Gmaila i Outlooka jest wieloczęściowy)? Czy właściciel wie, gdzie kończy się rozbiór MIME? |
 | 11 | retencja RODO | `segm_czyszczenie_probki()` | czy po 90 dniach naprawdę znika **cała** cudza korespondencja ze wszystkich czterech tabel? Czy `wyniki` w `segm_przebiegi` na pewno są kasowane razem z próbką? |
 | 12 | deinstalacja | `uninstall.php` | czy diff bazy przed instalacją i po odinstalowaniu jest pusty **obiema ścieżkami**? Czy zostają sieroty: transienty, `_transient_timeout_*`, metadane użytkowników? |
 | 13 | zgoda na wysyłkę do AI | `segm_zgoda_ai()` | czy istnieje ścieżka, którą treść cudzych maili wychodzi do dostawcy modelu **bez** zapisanej zgody? Co przy błędzie zapisu zgody? |

@@ -190,8 +190,8 @@ MAX_POMINIETYCH_PELNY=13   # ta sama arytmetyka, sciezka BEZ zakresu (tak wola `
 # zielono, nie zmierzywszy niczego. Podloga jest DRUGA, NIEZALEZNA brama na tej samej
 # liczbie: minimalna liczba prob, ktore MUSZA sie faktycznie wykonac (ILE = N - POMINIETO).
 # Literaly, ta sama arytmetyka co MAX_POMINIETYCH_* wyzej (N minus maksymalne pominiecie).
-MIN_URUCHOMIONYCH_PELNY=50    # 63 prob w calym repo (26 narzedzia-qa + 37 testy; `ls narzedzia-qa/*proba-kontrolna*.sh testy/*proba-kontrolna*.sh | wc -l`) minus MAX_POMINIETYCH_PELNY(13)  (5.09 po scaleniu #291 do C: +prawne-migracja, +pakuj-slady, +polityka z C; +2 dockerowe z #291)
-MIN_URUCHOMIONYCH_ZAKRES=16   # 26 prob w narzedzia-qa minus MAX_POMINIETYCH_ZAKRES(10)  (5.09 po scaleniu #291 do C: +prawne-migracja, +pakuj-slady, +polityka z C; +2 dockerowe z #291)
+MIN_URUCHOMIONYCH_PELNY=52    # 65 prob w calym repo (27 narzedzia-qa + 38 testy; `ls narzedzia-qa/*proba-kontrolna*.sh testy/*proba-kontrolna*.sh | wc -l`) minus MAX_POMINIETYCH_PELNY(13)  (5.09 po scaleniu #297 do C: +segregator-mime-ci z main; C: prawne-migracja, pakuj-slady, polityka)
+MIN_URUCHOMIONYCH_ZAKRES=17   # 27 prob w narzedzia-qa minus MAX_POMINIETYCH_ZAKRES(10)  (5.09 po scaleniu #297 do C: +segregator-mime-ci z main; C: prawne-migracja, pakuj-slady, polityka)
 
 # Tryb LISTY (PRZELOT_LISTA=1) niczego nie uruchamia i nie pisze logu — nie jest dowodem, więc brudne
 # drzewo mu nie przeszkadza (próba kontrolna odłamków woła go na kopii przelotu w trakcie pracy).
@@ -244,9 +244,9 @@ case "$ODLAMEK" in
 		MIN_URUCHOMIONYCH=1      # 1 - 0
 		;;
 	reszta)
-		MAX_POMINIETYCH=10       # 24 prob w odlamku (26 w narzedzia-qa minus bramki/poswiadczenia; `ls narzedzia-qa/*proba-kontrolna*.sh | wc -l`);
-		                          # bramki/poswiadczenia nie wnosza pominiec, wiec to ta sama liczba co MAX_POMINIETYCH_ZAKRES (10) — 5.09 po scaleniu #291 do C
-		MIN_URUCHOMIONYCH=14     # 24 - 10
+		MAX_POMINIETYCH=10       # 25 prob w odlamku (27 w narzedzia-qa minus bramki/poswiadczenia; `ls narzedzia-qa/*proba-kontrolna*.sh | wc -l`);
+		                          # bramki/poswiadczenia nie wnosza pominiec, wiec to ta sama liczba co MAX_POMINIETYCH_ZAKRES (10) — 5.09 po scaleniu #297 do C
+		MIN_URUCHOMIONYCH=15     # 25 - 10
 		;;
 	"")
 		# ⛔ PODLOGA TYLKO DLA ZAKRESOW, DLA KTORYCH ZOSTALA POLICZONA (recenzja #290 WAZNA 1).
