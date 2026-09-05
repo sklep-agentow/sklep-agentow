@@ -561,7 +561,7 @@ dokładnie jak przy braku klucza.
 | SQL | `$wpdb->prepare()` przy każdej wartości od użytkownika; `esc_like()` przy `LIKE` |
 | Wyjście HTML | `esc_html`, `esc_attr`, `esc_url`, `esc_textarea` w panelu; widget wstawia treści **wyłącznie** przez `textContent` — zero `innerHTML` |
 | Zgoda | checkbox w przeglądarce **oraz** sprawdzenie po stronie serwera — bez zgody żądanie nie dochodzi do zapisu |
-| CSV | komórka zaczynająca się od `=`, `+`, `-`, `@` dostaje apostrof (wstrzyknięcie formuły arkusza) |
+| CSV | komórka zaczynająca się od `=`, `+`, `-`, `@`, tabulatora, powrotu karetki albo apostrofu dostaje apostrof (wstrzyknięcie formuły arkusza); eksport i import czytają JEDNĄ stałą `CHATL_CSV_ZNAKI_FORMULY`, więc runda eksport→import jest odwracalna (wartość od apostrofu dostaje drugi, import zdejmuje dokładnie jeden) |
 | Sekret | klucz API bez autoloadu, nigdy nie wraca do formularza, kasowany przy każdej deinstalacji; zalecane trzymanie w `wp-config.php` |
 
 Klucz API **nie jest szyfrowany w bazie** i jest to decyzja świadoma: klucz szyfrujący musiałby

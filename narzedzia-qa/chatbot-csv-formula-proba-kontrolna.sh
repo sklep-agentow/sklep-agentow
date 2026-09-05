@@ -53,15 +53,20 @@ probuj() {
 
 echo "=== PROBA KONTROLNA: czy straznik CSV ChatBota widzi podlozone bledy ==="
 # A — eksport znów nie zna tabulatora (stan sprzed naprawy: lista = + - @ tylko)
-probuj "A. eksport bez tabulatora w liscie znakow formuly" csv.php \
-	"array( '=', '+', '-', '@', \"\\t\", \"\\r\" )" \
-	"s/array( '=', '+', '-', '@', \"\\\\t\", \"\\\\r\" )/array( '=', '+', '-', '@', \"\\\\r\" )/" \
+probuj "A. eksport bez tabulatora w zestawie znakow formuly (stala)" csv.php \
+	"array( '=', '+', '-', '@', \"\\t\", \"\\r\", \"'\" )" \
+	"s/array( '=', '+', '-', '@', \"\\\\t\", \"\\\\r\", \"'\" )/array( '=', '+', '-', '@', \"\\\\r\", \"'\" )/" \
 	'eksport: komorka od "\\t" dostaje apostrof'
-# B — import znów nie zna CR (naprawa tylko po stronie eksportu = runda nieodwracalna)
-probuj "B. import bez CR w liscie znakow formuly" import.php \
-	"array( '=', '+', '-', '@', \"\\t\", \"\\r\" )" \
-	"s/array( '=', '+', '-', '@', \"\\\\t\", \"\\\\r\" )/array( '=', '+', '-', '@', \"\\\\t\" )/" \
+
+probuj "B. import z WLASNA lista bez CR zamiast wspolnej stalej (rozjazd stron)" import.php \
+	'in_array( $wartosc[1], CHATL_CSV_ZNAKI_FORMULY, true )' \
+	"s/in_array( \\\$wartosc\\[1\\], CHATL_CSV_ZNAKI_FORMULY, true )/in_array( \\\$wartosc[1], array( '=', '+', '-', '@', \"\\\\t\" ), true )/" \
 	'odwracalna dla "\\r"'
+
+probuj "C. eksport bez apostrofu w zestawie (runda nieodwracalna dla komorki od apostrofu)" csv.php \
+	"\"\\r\", \"'\" )" \
+	"s/\"\\\\r\", \"'\" )/\"\\\\r\" )/" \
+	'komorka od apostrofu dostaje DRUGI apostrof'
 
 echo "=== KONTROLA ODWROTNA — czysty kod MA przejsc ==="
 wgraj_czysty; kod=0

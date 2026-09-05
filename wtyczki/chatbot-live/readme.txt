@@ -154,7 +154,7 @@ Pełna historia zmian, z opisem każdej pozycji, jest w pliku `CHANGELOG.md`
 w paczce. Poniżej skrót.
 
 = 1.5.17 =
-* Naprawione: eksport CSV z rozmów chroni arkusz przed formułą także wtedy, gdy komórka zaczyna się od tabulatora albo powrotu karetki (te same znaki, co w sklepie i segregatorze); import zdejmuje ochronę symetrycznie, więc eksport i import pozostają odwracalne.
+* Naprawione: eksport CSV z rozmów chroni arkusz przed formułą także wtedy, gdy komórka zaczyna się od tabulatora, powrotu karetki albo apostrofu (ten sam zestaw siedmiu znaków, co w sklepie); eksport i import czytają jedną wspólną listę, więc import zawsze zdejmuje dokładnie jeden apostrof i odzyskuje oryginał.
 
 = 1.5.16 =
 * Porządek w kodzie: komentarze w skrypcie i stylach okna czatu oraz w obsłudze operatora nie zawierają już naszych wewnętrznych oznaczeń zgłoszeń — niosą powód. Bez zmian w działaniu.

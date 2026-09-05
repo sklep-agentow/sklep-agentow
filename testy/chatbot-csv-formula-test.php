@@ -17,7 +17,13 @@
  * Uruchomienie:  php testy/chatbot-csv-formula-test.php
  * Kod wyjścia 0 = wszystkie asercje przeszły, 1 = któraś nie, 2 = nie znalazłam plików wtyczki.
  */
-define( 'ABSPATH', __DIR__ );
+// Pod `wp eval-file` (narzedzia-qa/test-php.sh) WordPress i wtyczka juz sa zaladowane — wtedy
+// mierzymy funkcje zywej wtyczki i NIE ladujemy plikow drugi raz (staly i funkcji nie da sie
+// zadeklarowac ponownie). Z wiersza polecen (`php testy/...`, proba kontrolna z mutantem w KOPII)
+// ladujemy pliki sami.
+if ( ! defined( 'ABSPATH' ) ) {
+	define( 'ABSPATH', __DIR__ );
+}
 if ( ! function_exists( 'add_action' ) ) {
 	function add_action() {}
 }
@@ -30,8 +36,12 @@ if ( ! is_file( $katalog . 'csv.php' ) || ! is_file( $katalog . 'import.php' ) )
 	fwrite( STDERR, "BLAD nie znalazlem csv.php/import.php w: $katalog\n" );
 	exit( 2 );
 }
-require $katalog . 'csv.php';
-require $katalog . 'import.php';
+if ( ! function_exists( 'chatl_csv_komorka' ) ) {
+	require_once $katalog . 'csv.php';
+}
+if ( ! function_exists( 'chatl_import_odapostrofuj' ) ) {
+	require_once $katalog . 'import.php';
+}
 
 $bledy = 0;
 function krok( $ok, $opis, $szczegol = '' ) {
@@ -47,8 +57,10 @@ function widoczny( $s ) {
 
 echo "=== CHATBOT / CSV: komorka zaczynajaca sie od znaku formuly dostaje apostrof, import go zdejmuje ===\n\n";
 
-// Każdy znak, który arkusz kalkulacyjny potrafi uznać za początek formuły — ten sam zestaw, co w sklepie i segregatorze.
-$niebezpieczne = array( '=', '+', '-', '@', "\t", "\r" );
+// Każdy znak, który arkusz potrafi uznać za początek formuły, PLUS apostrof (dla odwracalności) — ten sam
+// zestaw siedmiu znaków, co SKLEPAG_CSV_ZNAKI_FORMULY w sklepie. Lista wpisana tu NA SZTYWNO celowo:
+// gdyby test czytał stałą z kodu, mutant usuwający znak ze stałej przeszedłby niezauważony.
+$niebezpieczne = array( '=', '+', '-', '@', "\t", "\r", "'" );
 foreach ( $niebezpieczne as $z ) {
 	$surowe = $z . 'SUM(A1:A9)';
 	$eksport = chatl_csv_komorka( $surowe );
@@ -64,6 +76,16 @@ foreach ( array( 'Dzien dobry', '149,00', 'abc=def' ) as $zwykly ) {
 }
 // Apostrof, który wpisał CZŁOWIEK (nie nasz), zostaje: "'abc" nie zaczyna się od znaku formuły po apostrofie.
 krok( chatl_import_odapostrofuj( "'abc" ) === "'abc", 'import: cudzy apostrof przed zwyklym tekstem zostaje' );
+// Komórka od apostrofu + znak formuły (recenzja #298 W4): eksport MUSI dołożyć drugi apostrof, inaczej
+// import zdjąłby znak, którego eksport nie dołożył, i zamienił martwy literał "'=SUM(A1)" w żywą formułę.
+foreach ( array( "'=SUM(A1)", "'+1", "'@x", "'-2", "''podwojny", "'abc" ) as $od_apostrofu ) {
+	$eksport = chatl_csv_komorka( $od_apostrofu );
+	krok( "'" . $od_apostrofu === $eksport, 'eksport: komorka od apostrofu dostaje DRUGI apostrof', $eksport );
+	krok( chatl_import_odapostrofuj( $eksport ) === $od_apostrofu, 'import: runda odwracalna dla komorki od apostrofu', $od_apostrofu );
+}
+// Surowy plik z cudzej ręki: "'=SUM(A1)" bez naszego drugiego apostrofu — import zdejmuje jeden znak, jak w sklepie.
+// To ŚWIADOME: taka komórka nie pochodzi z naszego eksportu, a po zdjęciu trafia do bazy jako tekst, nie do arkusza.
+krok( chatl_import_odapostrofuj( "'=SUM(A1)" ) === '=SUM(A1)', 'import: cudzy pojedynczy apostrof przed formula zdjety (jak sklep)' );
 krok( chatl_csv_komorka( '' ) === '' && chatl_import_odapostrofuj( '' ) === '', 'pusta komorka w obie strony pusta' );
 
 echo "\n";

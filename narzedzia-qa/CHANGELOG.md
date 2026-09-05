@@ -14,6 +14,15 @@ wstecz nie dopisuję, bo nie umiałbym jej odtworzyć uczciwie. Ich zmiany od te
 pory lądują tutaj.
 
 ## [Niewydane]
+- **`csv-neutralizacja-blizniaki-proba-kontrolna.sh` — NOWA: spust i kalibracja strażnika klasy 107
+  `testy/csv-neutralizacja-blizniaki-test.sh` (#298 r1 WAŻNA 3, DROBNA 8).** Strażnik istniał bez wołającego (klasa 105) i bez
+  próby; teraz przelot CI bierze próbę, a ona podkłada 3 mutanty w KOPII trzech plików (segregator bez tabulatora, stała ChatBota
+  bez CR, kopia ChatBota usunięta → PODŁOGA `MIN_KOPII=3`) — każdy MUSI położyć strażnika (EXIT=1), czysta kopia MUSI przejść
+  (EXIT=0, „kopii: 3”). Strażnik dostał `CSV_BLIZNIAKI_KORZEN` (katalog do zmierzenia; domyślnie repo) i podłogę liczby kopii
+  (klasa 11: kopia, która przestanie pasować do wzorca, nie wypada z pomiaru bez śladu). Sufity przelotu: 27 w `narzedzia-qa`, 64 razem.
+- **`chatbot-csv-formula-proba-kontrolna.sh` — mutanty po nowym kształcie kodu (jedna stała `CHATL_CSV_ZNAKI_FORMULY`,
+  7 znaków jak sklep; #298 r1 KRYT 1, WAŻNA 4):** A. stała bez tabulatora, B. import z WŁASNĄ listą zamiast wspólnej stałej
+  (rozjazd stron), C. stała bez apostrofu (runda nieodwracalna dla komórki od apostrofu) — 3/3 padają, czysty kod 35/35 asercji.
 - **`rodo-anonimizacja-ip-proba-kontrolna.sh` — NOWA: dowód dla `P-5` (czyszczenie IP z dziennika przy anonimizacji kupującego)
   jest odtwarzalny (#291 WAŻNA 4, DROBNA 5).** Stos jednorazowy, kod z drzewa, mutant w kopii w kontenerze (EXIT=1), przypadek
   BEZ wady: wpis IP obcego zamówienia zostaje nietknięty w obu kierunkach. DROBNA 6 (`zakup.php:410` zapisuje IP bez

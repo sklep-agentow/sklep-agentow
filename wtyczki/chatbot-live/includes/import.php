@@ -136,16 +136,18 @@ function chatl_import_separator( $naglowek ) {
 /**
  * Zdjęcie apostrofu, którym eksport neutralizuje formuły arkuszy.
  *
- * chatl_csv_komorka() dokleja apostrof przed =,+,-,@ (OWASP CSV injection).
+ * chatl_csv_komorka() dokleja apostrof przed znakiem z CHATL_CSV_ZNAKI_FORMULY
+ * (=, +, -, @, tabulator, powrót karetki, apostrof — OWASP CSV injection).
  * Gdyby import go nie zdejmował, każde okrążenie eksport→import doklejałoby
  * kolejny apostrof i po trzech rundach odpowiedź zaczynałaby się od "'''".
+ * Import czyta TĘ SAMĄ stałą co eksport (csv.php) — jedna lista, zero rozjazdu.
  *
  * @param string $wartosc Komórka z pliku.
  * @return string
  */
 function chatl_import_odapostrofuj( $wartosc ) {
 	$wartosc = (string) $wartosc;
-	if ( 2 <= strlen( $wartosc ) && "'" === $wartosc[0] && in_array( $wartosc[1], array( '=', '+', '-', '@', "\t", "\r" ), true ) ) {
+	if ( 2 <= strlen( $wartosc ) && "'" === $wartosc[0] && in_array( $wartosc[1], CHATL_CSV_ZNAKI_FORMULY, true ) ) {
 		return substr( $wartosc, 1 );
 	}
 	return $wartosc;

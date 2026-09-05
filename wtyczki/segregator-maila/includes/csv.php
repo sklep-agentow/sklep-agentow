@@ -2,7 +2,7 @@
 /**
  * Import próbki z CSV + eksport wyników przebiegu do CSV.
  * CSV to wejście NIEZAUFANE: sanitize każdej komórki, limity, a przy eksporcie
- * neutralizacja formuł arkuszy (OWASP CSV injection: komórka od =,+,-,@).
+ * neutralizacja formuł arkuszy (OWASP CSV injection: komórka od =,+,-,@, tabulatora, CR).
  */
 
 if ( ! defined( 'ABSPATH' ) ) {

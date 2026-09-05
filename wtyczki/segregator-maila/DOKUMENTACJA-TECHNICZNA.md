@@ -757,7 +757,7 @@ domyślnie wyłączonej): 7 tabel, `segm_ustawienia`, `segm_skrzynka`,
 | Wynik zapisu | każde `insert`/`update`/`query` porównane z `false`; opcje przez `segm_zapisz_opcje()` (odczyt po zapisie); porażka = komunikat błędu, nigdy „Zapisano" | całość |
 | Puste pole liczbowe | `segm_liczba_z_pola()`: pole puste, nie-liczba albo poza zakresem NIE nadpisuje poprzedniej wartości (port, limit wiadomości, dzienny limit AI) — właściciel dostaje komunikat ostrzegawczy zamiast „Zapisano" | plik główny, `admin.php`, `admin-skrzynka.php` |
 | Wyjście | `esc_html` / `esc_attr` / `esc_url`; dziennik protokołu przez `esc_html` w `<pre>` | panel |
-| Wstrzyknięcie formuły do arkusza | pola zaczynające się od `=`, `+`, `-`, `@` poprzedzane apostrofem przy eksporcie CSV | `csv.php` |
+| Wstrzyknięcie formuły do arkusza | pola zaczynające się od `=`, `+`, `-`, `@`, tabulatora albo powrotu karetki poprzedzane apostrofem przy eksporcie CSV (bez apostrofu w zestawie — Segregator nie ma importu, więc odwracalność nie jest potrzebna) | `csv.php` |
 | Import pliku | limit rozmiaru (5 MB), limit wierszy (500, **z przerwaniem czytania**), limit długości pola (2000), wykrywanie kodowania | `csv.php` |
 | Wyścig operacji | zamek `segm_operacja_w_toku` zajmowany atomowo (`INSERT IGNORE` po kluczu unikalnym `option_name`, wynik = liczba wierszy), odczyt stanu prosto z bazy z pominięciem cache opcji, termin ważności 120 s | plik główny |
 | Certyfikat TLS | `verify_peer` i `verify_peer_name` **włączone domyślnie**; wyłączenie to świadomy przełącznik z ostrzeżeniem | `class-segm-imap.php` |

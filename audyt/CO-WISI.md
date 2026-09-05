@@ -71,7 +71,7 @@ uruchamiać strażnika WYŁĄCZNIE na stosie próbnym (`probny_wp`), gdzie cudzy
 na „stos próbny albo pełna świadomość okna". **Jedzie do klienta:** NIE — narzędzie testowe, poza paczką.
 
 
-## ✅ ROZLICZONE 5.09 — ASYMETRIA NEUTRALIZACJI CSV: ChatBot dostał brakujące `\t` i `\r` w OBU kopiach (`csv.php`, `import.php`), test `testy/csv-neutralizacja-blizniaki-test.sh` mierzy komplet w 4 kopiach (EXIT=0) — PR po scaleniu #291 (ChatBot 1.5.17)
+## ✅ ROZLICZONE 5.09 — ASYMETRIA NEUTRALIZACJI CSV: ChatBot ma JEDNĄ stałą `CHATL_CSV_ZNAKI_FORMULY` (7 znaków, jak sklep; import czyta tę samą), strażnik `testy/csv-neutralizacja-blizniaki-test.sh` mierzy 3 kopie z podłogą `MIN_KOPII=3` i ma spust: `narzedzia-qa/csv-neutralizacja-blizniaki-proba-kontrolna.sh` w przelocie CI (3 mutanty padają, czysta kopia przechodzi) — PR #298 (ChatBot 1.5.17). Segregator zostaje przy 6 znakach (bez apostrofu — nie ma importu, odwracalność niepotrzebna; zapisane w jego DOKUMENTACJA-TECHNICZNA.md).
 
 ## 🟡 (archiwum) ASYMETRIA NEUTRALIZACJI CSV MIĘDZY TRZEMA WTYCZKAMI (2.09, recenzja `#264` r1 i r3) — dług nazwany, nie naprawiony
 

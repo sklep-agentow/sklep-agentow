@@ -19,14 +19,24 @@ if ( ! defined( 'ABSPATH' ) ) {
 const CHATL_CSV_PORCJA = 500;
 
 /**
- * Neutralizacja komórki na eksport (arkusze wykonują komórki od =,+,-,@).
+ * JEDEN zestaw znaków dla eksportu (chatl_csv_komorka) i importu (chatl_import_odapostrofuj):
+ * =, +, -, @ arkusz wykonuje jako formułę; wiodący tabulator i powrót karetki zjada i wykonuje
+ * to, co za nimi; apostrof jest w zestawie dla ODWRACALNOŚCI — wartość od apostrofu dostaje
+ * drugi, więc import zawsze odzyska oryginał zdjęciem dokładnie jednego znaku (tak samo jak
+ * SKLEPAG_CSV_ZNAKI_FORMULY w sklepie). Import czyta TĘ SAMĄ stałą, żeby obie strony nie
+ * mogły się rozjechać.
+ */
+const CHATL_CSV_ZNAKI_FORMULY = array( '=', '+', '-', '@', "\t", "\r", "'" );
+
+/**
+ * Neutralizacja komórki na eksport: komórka od znaku z CHATL_CSV_ZNAKI_FORMULY dostaje apostrof.
  *
  * @param string $wartosc Surowa wartość.
  * @return string Wartość bezpieczna do wstawienia w arkusz.
  */
 function chatl_csv_komorka( $wartosc ) {
 	$wartosc = (string) $wartosc;
-	if ( '' !== $wartosc && in_array( $wartosc[0], array( '=', '+', '-', '@', "\t", "\r" ), true ) ) {
+	if ( '' !== $wartosc && in_array( $wartosc[0], CHATL_CSV_ZNAKI_FORMULY, true ) ) {
 		$wartosc = "'" . $wartosc;
 	}
 	return $wartosc;
