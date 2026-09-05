@@ -67,7 +67,12 @@ spr "SHA256SUMS.txt zgadza się po rozpakowaniu"    "sha256sum -c --quiet SHA256
 spr "sumy obejmują KAŻDY plik paczki"              "[ \$(find . -type f ! -name SHA256SUMS.txt | wc -l) -eq \$(wc -l < SHA256SUMS.txt) ]"
 spr "wersja sklepu w nazwie paczki == nagłówek"    "[ -f sklep-agentow-$WER.zip ]"
 # ślady wewnętrzne w DOKUMENTACH paczki (zipy wtyczek sprawdza osobno paczka-zgodnosc.sh)
-spr "brak śladów wewnętrznych w dokumentach paczki" "[ -f PRZECZYTAJ-MNIE.txt ] && [ -f INSTRUKCJA-INSTALACJI.md ] && ! grep -lE 'localhost:[0-9]+|/root/|scratchpad|PLAN-PROJEKTU|CO-WISI|SCIAGA|SECURITY\.md|CONTRIBUTING|RECENZENT-BRIEFING' PRZECZYTAJ-MNIE.txt INSTRUKCJA-INSTALACJI.md"
+# ⛔ Q-3: KANONICZNY skaner (slady-wewnetrzne.sh, 5 klas, jedno zrodlo wzorcow), nie wlasny grep — wlasny wzorzec
+#    z 9 alternatyw przepuszczal imie wlasciciela, numer PR-a, „recenzent”, „koordynator”. Skaner dostaje KOPIE samych
+#    dokumentow (zipy i PNG sprawdza osobno paczka-zgodnosc.sh; skaner czyta tekst).
+DOK_KOPIA="$(mktemp -d)"; cp PRZECZYTAJ-MNIE.txt INSTRUKCJA-INSTALACJI.md "$DOK_KOPIA/" 2>/dev/null
+spr "brak śladów wewnętrznych w dokumentach paczki (kanoniczny skaner)" "bash '$KORZEN/narzedzia-qa/slady-wewnetrzne.sh' paczka-klienta '$DOK_KOPIA' > /dev/null"
+rm -rf "$DOK_KOPIA"
 # zipy wtyczek: nie tylko nazwa — treść (klasa 10: zip o dobrej nazwie zamrożony na starej treści)
 for z in *.zip; do
 	w="${z%-*}"; v="${z##*-}"; v="${v%.zip}"

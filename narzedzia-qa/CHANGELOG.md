@@ -14,6 +14,10 @@ wstecz nie dopisuję, bo nie umiałbym jej odtworzyć uczciwie. Ich zmiany od te
 pory lądują tutaj.
 
 ## [Niewydane]
+- **`pakuj-dla-klienta.sh` — dokumenty paczki klienta sprawdza KANONICZNY skaner `slady-wewnetrzne.sh` (etykieta
+  `paczka-klienta`), nie własny grep z 9 alternatyw (znalezisko Q-3: własny wzorzec przepuszczał imię właściciela, numer PR-a,
+  „recenzent”, „koordynator”).** NOWA `pakuj-slady-proba-kontrolna.sh`: wpięcie (skrypt woła skaner, stary wzorzec zniknął)
+  + skutek (kopia dokumentów czysta → 0; z podłożonym „koordynatorka / PR #123 / recenzent” → 1).
 - **`stanowisko/wp-cron-stanowisko.sh` 1.0.1 — padnięty `docker ps` nie udaje zgaszonego kontenera (#289 DROBNA 2),
   kody wyjścia opisane zgodnie z `docker exec` (DROBNA 1), kontrola crona nazwana uczciwie: liczy zaległe TERAZ,
   bez progu wieku (WAŻNA 5, klasa 11).** Status listy kontenerów bierze się teraz z `docker ps`, nie z `grep` za potokiem;

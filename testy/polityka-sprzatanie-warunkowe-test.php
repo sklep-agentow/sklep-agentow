@@ -6,7 +6,8 @@
  * (mechanizm jest warunkowy — gdy WP-Cron stoi, nic nie znika), a opis dziennika „usuwane automatycznie”.
  *
  * Strażnik czyta ŹRÓDŁO PHP wprost (literały w kodzie), więc próba kontrolna nie wymaga stosu.
- * Uczciwie nazwane: mierzy OBECNOŚĆ zdań w szablonie, nie działanie sprzątania (to mierzy cron).
+ * Uczciwie nazwane: mierzy OBECNOŚĆ zdań w szablonie i w bliźniakach (prywatnosc.php, admin-dziennik.php, readme.txt,
+ * INSTRUKCJA.md), nie działanie sprzątania (to mierzy cron).
  *
  * Uruchomienie:  php testy/polityka-sprzatanie-warunkowe-test.php
  *   SKLEPAG_KATALOG_INCLUDES=<katalog> — próba kontrolna podkłada KOPIĘ z wadą (drzewo nietknięte).
@@ -48,6 +49,19 @@ echo "=== B. Opis dziennika w panelu — ta sama prawda ===\n";
 spr( 'opis dziennika nazywa WP-Cron', false !== strpos( $dziennik, 'WP-Cron' ) );
 spr( 'opis dziennika ma warunek harmonogramu', false !== strpos( $dziennik, 'gdy harmonogram WordPressa działa' ) );
 spr( 'opis dziennika nie mówi już „usuwane automatycznie”', false === strpos( $dziennik, 'usuwane automatycznie' ) );
+
+echo "=== D. BLIŹNIAKI (klasa 8): żadne inne miejsce nie obiecuje bezwarunkowego kasowania (#294 r2 W1) ===\n";
+$blizniaki = array( "$katalog/prywatnosc.php", "$katalog/admin-dziennik.php", "$katalog/../readme.txt", "$katalog/../INSTRUKCJA.md" );
+$zle_frazy = array( 'usuwane automatycznie', 'usuwa je retencja', 'Retencja 90 dni.', 'dni** znikają', 'dni znikają same' );
+foreach ( $blizniaki as $b ) {
+	if ( ! is_file( $b ) ) { fwrite( STDERR, "PRZYRZAD: brak pliku $b\n" ); exit( 2 ); }
+	$tb = file_get_contents( $b );
+	foreach ( $zle_frazy as $f ) {
+		spr( basename( $b ) . ' bez frazy „' . $f . '”', false === strpos( $tb, $f ) );
+	}
+}
+spr( 'prywatnosc.php (tekst do polityki WP) nazywa WP-Cron i warunek', false !== strpos( file_get_contents( "$katalog/prywatnosc.php" ), 'WP-Cron' ) && false !== strpos( file_get_contents( "$katalog/prywatnosc.php" ), 'gdy harmonogram WordPressa działa' ) );
+spr( 'readme.txt nazywa WP-Cron przy 90 dniach', false !== strpos( file_get_contents( "$katalog/../readme.txt" ), 'usuwa zadanie WP-Cron sklepu' ) );
 
 echo "=== C. Kontrola dodatnia przyrządu (musi być prawdą zawsze) ===\n";
 spr( 'szablon polityki ma administratora danych (literał odczytany naprawdę)', false !== strpos( $polityka, 'Administrator danych' ) );

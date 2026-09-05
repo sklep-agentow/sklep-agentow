@@ -7,7 +7,7 @@
 set -u
 cd "$(dirname "$0")/.." || exit 2
 TEST=testy/polityka-sprzatanie-warunkowe-test.php
-ZRODLO=wtyczki/sklep-agentow/includes
+ZRODLO=wtyczki/sklep-agentow   # KOPIA CALEJ wtyczki: test czyta tez readme.txt i INSTRUKCJA.md obok includes/ (klasa 142: zakres kopii = zakres pomiaru)
 [ -f "$TEST" ] || { echo "brak $TEST" >&2; exit 2; }
 command -v php > /dev/null 2>&1 || { echo "brak php — nie zmierzono" >&2; exit 2; }
 T="$(mktemp -d)"; trap 'rm -rf "$T"' EXIT
@@ -24,18 +24,19 @@ mutant() { # nazwa, plik, kotwica_sed_szukaj, zamien
 	fi
 	sed -i "s|$szukaj|$zamien|" "$T/m/$plik"
 	if cmp -s "$ZRODLO/$plik" "$T/m/$plik"; then echo "  KOTWICA  $nazwa — sed nie zmienił pliku"; KOTWICE=$((KOTWICE+1)); return; fi
-	SKLEPAG_KATALOG_INCLUDES="$T/m" php "$TEST" > "$T/wyj.txt" 2>&1; local kod=$?
-	if [ "$kod" -eq 1 ]; then echo "  OK   $nazwa — strażnik pada (EXIT=1)"; else echo "  ZLE  $nazwa — strażnik NIE zauważył (EXIT=$kod)"; BLEDY=$((BLEDY+1)); fi
+	SKLEPAG_KATALOG_INCLUDES="$T/m/includes" php "$TEST" > "$T/wyj.txt" 2>&1; local kod=$?
+	if [ "$kod" -eq 1 ]; then echo "  OK   $nazwa — strażnik pada (EXIT=1)"; elif [ "$kod" -eq 2 ]; then echo "  KOTWICA  $nazwa — przyrząd nie zmierzył (EXIT=2)"; grep -m1 PRZYRZAD "$T/wyj.txt" | sed "s/^/           /"; KOTWICE=$((KOTWICE+1)); else echo "  ZLE  $nazwa — strażnik NIE zauważył (EXIT=$kod)"; BLEDY=$((BLEDY+1)); fi
 }
 echo "=== MUTANTY (w kopii) — strażnik ma PAŚĆ ==="
-mutant "M1: polityka bez słowa WARUNKOWE"                      aktywacja.php     "sprzątanie jest WARUNKOWE:" "sprzątanie jest:"
-mutant "M2: polityka bez warunku harmonogramu"                 aktywacja.php     "gdy harmonogram WordPressa działa" "zawsze"
-mutant "M3: polityka: zamówienia bez zdania o braku kasowania"  aktywacja.php     "NIE są usuwane po czasie" "są usuwane po czasie"
-mutant "M4: opis dziennika wraca do -usuwane automatycznie-"   admin-dziennik.php "usuwa zadanie WP-Cron sklepu (co 10 minut)" "są usuwane automatycznie"
-mutant "M5: liczba dni w szablonie inna niż stała"              aktywacja.php     "starsze niż 90 dni usuwa" "starsze niż 30 dni usuwa"
+mutant "M1: polityka bez słowa WARUNKOWE"                      includes/aktywacja.php     "sprzątanie jest WARUNKOWE:" "sprzątanie jest:"
+mutant "M2: polityka bez warunku harmonogramu"                 includes/aktywacja.php     "gdy harmonogram WordPressa działa" "zawsze"
+mutant "M3: polityka: zamówienia bez zdania o braku kasowania"  includes/aktywacja.php     "NIE są usuwane po czasie" "są usuwane po czasie"
+mutant "M4: opis dziennika wraca do -usuwane automatycznie-"   includes/admin-dziennik.php "usuwa zadanie WP-Cron sklepu (co 10 minut)" "są usuwane automatycznie"
+mutant "M5: liczba dni w szablonie inna niż stała"              includes/aktywacja.php     "starsze niż 90 dni usuwa" "starsze niż 30 dni usuwa"
+mutant "M6: blizniak w prywatnosc.php wraca do -usuwane automatycznie-" includes/prywatnosc.php "usuwa zadanie WP-Cron sklepu po %d dniach (co 10 minut, tylko gdy harmonogram WordPressa działa; gdy stoi, wpisy zostają do jego wznowienia)" "są usuwane automatycznie po %d dniach"
 
 echo
 if [ "$ODWROTNA" -gt 0 ]; then echo "POLITYKA-PROBA: kontrola odwrotna PADLA — licznik BLEDY=$BLEDY NIEWIARYGODNY. EXIT=2"; exit 2; fi
 if [ "$KOTWICE" -gt 0 ]; then echo "POLITYKA-PROBA: $KOTWICE mutacji NIE WESZLO. EXIT=2"; exit 2; fi
 if [ "$BLEDY" -gt 0 ]; then echo "POLITYKA-PROBA: STRAZNIK SLEPY NA $BLEDY. EXIT=1"; exit 1; fi
-echo "POLITYKA-PROBA: czysty 0, 5/5 mutantów złapanych. EXIT=0"; exit 0
+echo "POLITYKA-PROBA: czysty 0, 6/6 mutantów złapanych. EXIT=0"; exit 0

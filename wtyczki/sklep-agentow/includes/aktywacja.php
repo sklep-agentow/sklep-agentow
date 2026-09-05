@@ -481,6 +481,14 @@ function sklepag_kompensuj_strony_prawne() {
 	if ( (int) get_option( 'sklepag_wersja_stron', 0 ) === SKLEPAG_WERSJA_STRON ) {
 		return;
 	}
+	// ⛔ NIE na froncie: praca (wp_insert_post/wp_update_post na dokumencie prawnym) biegnie tylko z panelu,
+	//    crona albo WP-CLI — jak self-heal katalogu chronionego w sklepag_start(). Front tylko czyta.
+	if ( ! is_admin() && ! wp_doing_cron() && ! ( defined( 'WP_CLI' ) && WP_CLI ) ) {
+		return;
+	}
+	// Znacznik PRZED pracą: drugie równoległe żądanie wraca na bramie wyżej, zamiast założyć drugą stronę
+	//    „Regulamin sklepu (SZABLON)” (read-modify-write ze znacznikiem na końcu).
+	update_option( 'sklepag_wersja_stron', SKLEPAG_WERSJA_STRON, true );
 	$definicje = sklepag_definicje_stron();
 	$nowe      = array();
 
@@ -508,10 +516,40 @@ function sklepag_kompensuj_strony_prawne() {
 			continue;
 		}
 
+		// Zmiany WEWNĄTRZ istniejącej sekcji (nie nowa sekcja): nasze własne zdanie w starym brzmieniu
+		// podmieniamy na nowe — tylko gdy stoi w dokumencie SŁOWO W SŁOWO (właściciel go nie ruszał).
+		// Dokument z przepisanym zdaniem zostaje nietknięty i dostaje meldunek (niżej).
+		$tresc_biezaca = (string) $wpis->post_content;
+		foreach ( sklepag_podmiany_w_szablonie( $opcja ) as $stare => $nowe_zdanie ) {
+			if ( false !== strpos( $tresc_biezaca, $stare ) ) {
+				$tresc_biezaca = str_replace( $stare, $nowe_zdanie, $tresc_biezaca );
+			}
+		}
+		if ( $tresc_biezaca !== (string) $wpis->post_content ) {
+			wp_update_post(
+				array(
+					'ID'           => $wpis->ID,
+					'post_content' => $tresc_biezaca,
+				)
+			);
+			clean_post_cache( $wpis->ID );
+			$wpis = get_post( $wpis->ID );
+		}
 		$brakujace = array();
 		foreach ( sklepag_sekcje_szablonu( $dane[1] ) as $nazwa => $linia ) {
-			if ( false === stripos( $wpis->post_content, $nazwa ) ) {
+			// Sekcja „jest”, gdy jej NAZWA stoi na początku linii z dwukropkiem (jak w szablonie) — dopuszczamy
+			// znaczniki bloków/akapitów przed nazwą, ale nie samo słowo gdziekolwiek w zdaniu (uwaga z odbioru:
+			// „cena” w dowolnym zdaniu udawała sekcję „Cena”).
+			$wzor = '/^(?:\s|<[^>]+>)*' . preg_quote( $nazwa, '/' ) . '(?:\s*\[[^\]]*\])?\s*:/miu';
+			if ( ! preg_match( $wzor, (string) $wpis->post_content ) ) {
 				$brakujace[ $nazwa ] = $linia;
+			}
+		}
+		// Zdanie, którego nie dało się podmienić (właściciel je przepisał), też idzie do meldunku.
+		foreach ( sklepag_podmiany_w_szablonie( $opcja ) as $stare => $nowe_zdanie ) {
+			$klucz = sklepag_klucz_zdania( $nowe_zdanie );
+			if ( '' !== $klucz && false === strpos( (string) $wpis->post_content, $klucz ) ) {
+				$brakujace['Zakres (zdanie o sprzątaniu: warunkowe, WP-Cron)'] = '';
 			}
 		}
 		if ( ! $brakujace ) {
@@ -523,10 +561,19 @@ function sklepag_kompensuj_strony_prawne() {
 
 		if ( $jest_szablonem ) {
 			// (b) dopisujemy TYLKO brakujące linie, na koniec, bez dotykania reszty treści.
+			$do_dopisania = array_filter(
+				$brakujace,
+				static function ( $linia ) {
+					return '' !== (string) $linia; // meldunki bez linii szablonu (zdanie do przepisania) nie są dopisywane
+				}
+			);
+			if ( ! $do_dopisania ) {
+				continue;
+			}
 			wp_update_post(
 				array(
 					'ID'           => $wpis->ID,
-					'post_content' => rtrim( $wpis->post_content ) . "\n" . implode( "\n", $brakujace ),
+					'post_content' => rtrim( $wpis->post_content ) . "\n" . implode( "\n", $do_dopisania ),
 				)
 			);
 			clean_post_cache( $wpis->ID );
@@ -542,7 +589,36 @@ function sklepag_kompensuj_strony_prawne() {
 	} else {
 		delete_option( 'sklepag_strony_nowe_sekcje' );
 	}
-	// Znacznik podbijamy ZAWSZE, także po biegu bez zmian — inaczej instalacja, na której
-	// nie ma nic do zrobienia, liczyłaby sekcje przy każdym żądaniu.
-	update_option( 'sklepag_wersja_stron', SKLEPAG_WERSJA_STRON, true );
+	// Znacznik został podbity na WEJŚCIU (patrz góra funkcji) — tu nic więcej.
+}
+
+/**
+ * Zdania szablonu, które zmieniły BRZMIENIE wewnątrz istniejącej sekcji (nie są nową sekcją, więc
+ * kompensacja po nazwach sekcji ich nie widzi). Klucz = stare zdanie SŁOWO W SŁOWO,
+ * wartość = nowe. Podmiana wchodzi tylko wtedy, gdy stare zdanie stoi w dokumencie dosłownie.
+ * ⛔ Zmiany sprzed 0.9.42 (0.9.23 dane do faktury, 0.9.40 opinie) nie mają tu wpisu — ich stare brzmienie
+ *    nie jest odtwarzalne z tego kodu; właściciel dopisuje je ręcznie wg INSTRUKCJA.md.
+ *
+ * @param string $opcja Klucz strony (np. 'sklepag_strona_polityka').
+ * @return array<string,string>
+ */
+function sklepag_podmiany_w_szablonie( $opcja ) {
+	if ( 'sklepag_strona_polityka' !== $opcja ) {
+		return array();
+	}
+	return array(
+		// 0.9.40 → 0.9.42 (F4-F2): sprzątanie nazwane warunkowym, zakres i wyjątek podatkowy.
+		'dziennik zdarzeń (90 dni, w tym adres IP przy każdym pobraniu pliku);' =>
+			'dziennik zdarzeń i historia logowań do panelu (w dzienniku także adres IP przy każdym pobraniu pliku). Sprzątanie dziennika i historii logowań: wpisy starsze niż 90 dni usuwa zadanie WP-Cron sklepu uruchamiane co 10 minut — sprzątanie jest WARUNKOWE: biegnie tylko wtedy, gdy harmonogram WordPressa działa; gdy stoi, wpisy pozostają do jego wznowienia. Dane zamówień (w tym dane do faktury) NIE są usuwane po czasie — obowiązek podatkowy;',
+	);
+}
+
+/**
+ * Krótki, charakterystyczny fragment nowego zdania — po nim poznajemy, czy dokument je już ma.
+ *
+ * @param string $zdanie Nowe zdanie z sklepag_podmiany_w_szablonie().
+ * @return string
+ */
+function sklepag_klucz_zdania( $zdanie ) {
+	return false !== strpos( (string) $zdanie, 'WP-Cron' ) ? 'WP-Cron' : '';
 }

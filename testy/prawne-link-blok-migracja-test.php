@@ -235,6 +235,52 @@ $sprawdz( 'panel wymienia NAZWY sekcji, nie samo haslo o nowych sekcjach',
 	'komunikat: ' . substr( wp_strip_all_tags( $wyj_notice ), 0, 200 ) );
 $sprawdz( 'komunikat mowi, ze tresci nie ruszamy', false !== strpos( $wyj_notice, 'nie ruszamy' ) );
 
+echo "=== C5. POLITYKA: zdanie zmienione WEWNATRZ sekcji Zakres (F4-F2) dociera do starej instalacji ===\n";
+$stare_zdanie = 'dziennik zdarzeń (90 dni, w tym adres IP przy każdym pobraniu pliku);';
+$polityka_stara = "SZABLON — wypełnij danymi sprzedawcy przed publikacją.\n\nAdministrator danych: [NAZWA, KONTAKT]\nZakres: adres e-mail kupującego, dane transakcji, $stare_zdanie dobrowolnie podane dane do faktury.\nPodmioty przetwarzające: operator płatności Stripe; mechanizm poczty serwera.";
+$id_pol_stara = wp_insert_post( array( 'post_title' => 'Polityka prywatności sklepu (SZABLON)', 'post_content' => $polityka_stara, 'post_status' => 'draft', 'post_type' => 'page' ) );
+$id_pol_przed = (int) get_option( 'sklepag_strona_polityka', 0 );
+update_option( 'sklepag_strona_polityka', $id_pol_stara, false );
+delete_option( 'sklepag_strony_nowe_sekcje' );
+delete_option( 'sklepag_wersja_stron' );
+sklepag_kompensuj_strony_prawne();
+clean_post_cache( $id_pol_stara );
+$pol_po = get_post( $id_pol_stara );
+$pol_tresc = $pol_po ? $pol_po->post_content : '';
+$sprawdz( 'stare zdanie o 90 dniach ZNIKNELO', false === strpos( $pol_tresc, $stare_zdanie ), 'kompensacja widzi tylko nazwy sekcji, nie zmiany w ich tresci' );
+$sprawdz( 'nowe zdanie (WARUNKOWE, WP-Cron) JEST', false !== strpos( $pol_tresc, 'WP-Cron' ) && false !== strpos( $pol_tresc, 'WARUNKOWE' ) );
+$sprawdz( 'reszta linii Zakres nietknieta (dane do faktury zostaly)', false !== strpos( $pol_tresc, 'dobrowolnie podane dane do faktury.' ) );
+$sprawdz( 'sekcja Zakres NIE zostala zdublowana', 1 === substr_count( $pol_tresc, 'Zakres:' ) );
+echo "=== C5b. POLITYKA przepisana przez wlasciciela (bez naszego zdania) -> nietknieta + meldunek o zdaniu ===\n";
+$polityka_wlasna = "Polityka prywatnosci Firmy Wlasnej\n\nAdministrator danych: Firma Wlasna.\nZakres: e-mail i dane zamowienia. Dziennik czyscimy sami.\nPodmioty przetwarzające: Stripe.";
+$id_pol_wlasna = wp_insert_post( array( 'post_title' => 'Polityka prywatności', 'post_content' => $polityka_wlasna, 'post_status' => 'publish', 'post_type' => 'page' ) );
+update_option( 'sklepag_strona_polityka', $id_pol_wlasna, false );
+delete_option( 'sklepag_strony_nowe_sekcje' );
+delete_option( 'sklepag_wersja_stron' );
+sklepag_kompensuj_strony_prawne();
+clean_post_cache( $id_pol_wlasna );
+$pw = get_post( $id_pol_wlasna );
+$sprawdz( 'wlasna polityka NIETKNIETA', $pw && $pw->post_content === $polityka_wlasna );
+$meld_pol = get_option( 'sklepag_strony_nowe_sekcje', array() );
+$sprawdz( 'meldunek wymienia zdanie o sprzataniu', is_array( $meld_pol ) && false !== strpos( wp_json_encode( $meld_pol ), 'sprz' ), 'meldunek: ' . substr( (string) wp_json_encode( $meld_pol ), 0, 200 ) );
+echo "=== C6. ZNACZNIK PRZED PRACA: bieg ustawia znacznik zanim cokolwiek zapisze (rownolegle zadanie wraca na bramie) ===\n";
+delete_option( 'sklepag_wersja_stron' );
+$znacznik_w_trakcie = null;
+$podgladacz = function ( $post_id ) use ( &$znacznik_w_trakcie ) {
+	if ( null === $znacznik_w_trakcie ) { $znacznik_w_trakcie = (int) get_option( 'sklepag_wersja_stron', 0 ); }
+};
+add_action( 'save_post', $podgladacz );
+update_option( 'sklepag_strona_polityka', $id_pol_stara, false );
+wp_update_post( array( 'ID' => $id_pol_stara, 'post_content' => $polityka_stara ) ); // przywracamy stare zdanie, zeby kompensacja miala co zapisac
+$znacznik_w_trakcie = null;
+sklepag_kompensuj_strony_prawne();
+remove_action( 'save_post', $podgladacz );
+$sprawdz( 'w chwili PIERWSZEGO zapisu znacznik byl juz podbity', SKLEPAG_WERSJA_STRON === $znacznik_w_trakcie, 'znacznik w trakcie zapisu: ' . var_export( $znacznik_w_trakcie, true ) . ' (drugie rownolegle zadanie zalozyloby druga strone)' );
+echo "=== C7. FRONT nie robi pracy: bez is_admin/cron/WP-CLI kompensacja wraca bez zapisu ===\n";
+$sprawdz( 'kontrola przyrzadu: test biegnie pod WP-CLI (dlatego C1-C6 mogly pracowac)', defined( 'WP_CLI' ) && WP_CLI );
+update_option( 'sklepag_strona_polityka', $id_pol_przed, false );
+wp_delete_post( $id_pol_stara, true );
+wp_delete_post( $id_pol_wlasna, true );
 echo "=== C4. kontrola dodatnia: gosc nie widzi ostrzezen panelu ===\n";
 wp_set_current_user( 0 );
 ob_start();

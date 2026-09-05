@@ -58,7 +58,7 @@ karty musi być ramką Stripe, nie naszym kodem.
   w panelu. Bez ocen od anonimowych gości i bez zbiorczej średniej.
 * Dziennik logowań administratorów: po nieudanych próbach odpowiedź jest
   wykładniczo opóźniana, liczba prób z jednego adresu ograniczona, wpisy
-  starsze niż 90 dni usuwane automatycznie.
+  starsze niż 90 dni usuwa zadanie WP-Cron sklepu (co 10 minut) — tylko gdy harmonogram WordPressa działa.
 * SEO stron sklepu: tytuły i opisy, znaczniki Open Graph, dane strukturalne
   (produkt, okruszki, pytania i odpowiedzi), mapa witryny produktów.
 * Kopie danych produktu w zamówieniu — późniejsza zmiana ceny czy nazwy nie

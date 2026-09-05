@@ -145,7 +145,7 @@ prosto do nich.
 - **Treść wysłanego maila** — dokładnie to, co dostał kupujący, z przyciskiem **Wyślij ponownie**,
 - **Dane osobowe (RODO)** — przycisk anonimizacji (rozdział 6),
 - **Oś czasu** — każde zdarzenie tego zamówienia: płatność, wysyłki, pobrania, zwroty, kto co zrobił.
-  Wpisy starsze niż **90 dni** znikają same (tak jak cały Dziennik, rozdział 7) — jeśli potrzebujesz
+  Wpisy starsze niż **90 dni** usuwa zadanie WP-Cron sklepu co 10 minut — tylko gdy harmonogram WordPressa działa (tak jak cały Dziennik, rozdział 7) — jeśli potrzebujesz
   zapisu na dłużej (np. do sporu), zapisz go wcześniej; kwoty i statusy zamówień zostają na zawsze.
 
 **„Dociągnij zaległe teraz”** (Pulpit, prawy górny róg). Zakup domyka się dwiema drogami:
@@ -268,7 +268,7 @@ zaczniesz sprzedawać naprawdę — dopóki tego nie zrobisz, w panelu wisi czer
 a linki „regulamin sklepu” i „polityka prywatności” przy przycisku zakupu prowadzą kupującego
 na stronę „w przygotowaniu” (nigdy na szkic z zaślepką i nigdy na błąd 404).
 
-**Co robi sama wtyczka po aktualizacji** (od 0.9.40; wcześniej strony powstawały wyłącznie przy
+**Co robi sama wtyczka po aktualizacji** (od 0.9.42; wcześniej strony powstawały wyłącznie przy
 pierwszej instalacji, więc sklep zaktualizowany „w miejscu” nie dostawał ich nigdy): przy
 pierwszym wejściu na sklep po aktualizacji wtyczka ogląda obie strony i zależnie od ich stanu:
 
@@ -310,8 +310,8 @@ sekcją — dopisz je sam, jeśli publikowałeś dokumenty z wcześniejszych wer
 - **Zdarzenia** — to samo, co osie czasu wszystkich zamówień, w jednym miejscu: płatności,
   wysyłki, pobrania, zwroty, spory, anonimizacje, eksporty CSV.
 
-W **obu** zakładkach — a więc także w osiach czasu zamówień — wpisy starsze niż **90 dni** znikają
-same (sprzątanie co 10 minut). Zamówienia, kwoty i statusy zostają.
+W **obu** zakładkach — a więc także w osiach czasu zamówień — wpisy starsze niż **90 dni** usuwa
+zadanie WP-Cron sklepu (sprzątanie co 10 minut) — tylko gdy harmonogram WordPressa działa; gdy stoi, wpisy zostają. Zamówienia, kwoty i statusy zostają.
 
 ---
 
