@@ -1,6 +1,6 @@
 #!/bin/bash
 # pakuj-dla-klienta.sh — ZBIORCZA PACZKA DLA KLIENTA: 3 zipy wtyczek + PRZECZYTAJ-MNIE + instrukcja instalacji
-# + diagramy PNG + zrzuty PNG + SHA256SUMS.txt, złożone JEDNYM poleceniem.  WERSJA 1.2.0
+# + diagramy PNG + zrzuty PNG + SHA256SUMS.txt, złożone JEDNYM poleceniem.  WERSJA 1.2.1
 #
 # PO CO TO POWSTAŁO (30.08): zamówienie mówi „zipy 3 wtyczek + sumy kontrolne”, a do dziś każdy zip leżał osobno,
 # sum nie było, a co składa się na wydanie, wiedziała tylko głowa. Czego nie da się odtworzyć jednym poleceniem,
@@ -12,6 +12,9 @@
 # 1.1.0 (recenzja PR o README, D3–D5): samokontrola OTWIERA zipy wtyczek (unzip -t, nagłówek Version == wersja z nazwy,
 # INSTRUKCJA.md w każdym, PONAD-SPECYFIKACJE.md w sklepie), kontrola śladów wymaga istnienia plików, oba katalogi
 # tymczasowe sprzątane trapem także przy porażce.
+# 1.2.1 (#291 r6 WAŻNA 2, klasa 11): kontrola śladów w DOKUMENTACH paczki biegnie TYM SAMYM skanerem, co zipy wtyczek
+# (narzedzia-qa/slady-wewnetrzne.sh) — ręczna lista 9 wzorców nie znała ani jednego wzorca skanera, a nazwa asercji
+# obiecywała „brak śladów wewnętrznych”. Skaner dostaje kopię obu dokumentów w osobnym katalogu (zipy i PNG są binarne).
 #
 # Użycie: bash narzedzia-qa/pakuj-dla-klienta.sh            → wydanie/sklep-agentow-KLIENT-<wersja sklepu>.zip
 #   EXIT 0 = paczka złożona i SAMOKONTROLA przeszła (komplet plików, sumy zgadzają się po rozpakowaniu,
@@ -78,8 +81,12 @@ spr "kazdy obrazek z instrukcji ma PLIK o tej nazwie w paczce (obecność, nie t
 spr "SHA256SUMS.txt zgadza się po rozpakowaniu"    "sha256sum -c --quiet SHA256SUMS.txt"
 spr "sumy obejmują KAŻDY plik paczki"              "[ \$(find . -type f ! -name SHA256SUMS.txt | wc -l) -eq \$(wc -l < SHA256SUMS.txt) ]"
 spr "wersja sklepu w nazwie paczki == nagłówek"    "[ -f sklep-agentow-$WER.zip ]"
-# ślady wewnętrzne w DOKUMENTACH paczki (zipy wtyczek sprawdza osobno paczka-zgodnosc.sh)
-spr "brak śladów wewnętrznych w dokumentach paczki" "[ -f PRZECZYTAJ-MNIE.txt ] && [ -f INSTRUKCJA-INSTALACJI.md ] && ! grep -lE 'localhost:[0-9]+|/root/|scratchpad|PLAN-PROJEKTU|CO-WISI|SCIAGA|SECURITY\.md|CONTRIBUTING|RECENZENT-BRIEFING' PRZECZYTAJ-MNIE.txt INSTRUKCJA-INSTALACJI.md"
+# ślady wewnętrzne w DOKUMENTACH paczki — TYM SAMYM skanerem, co zipy wtyczek (paczka-zgodnosc.sh) i drzewo (bramka `slady`);
+# 1.2.1: wcześniej ręczna lista 9 wzorców, obca skanerowi (#291 r6 WAŻNA 2). Skaner: EXIT 0 = czysto, 1 = ślad, 2 = nie zmierzył
+# (np. pusty katalog) — oba niezerowe = asercja pada. Kopia dokumentów w osobnym katalogu pod $ROB (sprzątany trapem),
+# bo zipy i PNG obok są binarne.
+DOK="$ROB/dokumenty-paczki"; mkdir -p "$DOK"; cp PRZECZYTAJ-MNIE.txt INSTRUKCJA-INSTALACJI.md "$DOK/" 2> /dev/null || true
+spr "brak śladów wewnętrznych w dokumentach paczki (slady-wewnetrzne.sh, te same wzorce co dla zipów)" "bash '$KORZEN/narzedzia-qa/slady-wewnetrzne.sh' dokumenty-paczki '$DOK'"
 # zipy wtyczek: nie tylko nazwa — treść (klasa 10: zip o dobrej nazwie zamrożony na starej treści)
 for z in *.zip; do
 	w="${z%-*}"; v="${z##*-}"; v="${v%.zip}"

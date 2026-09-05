@@ -23,6 +23,11 @@ pory lądują tutaj.
   Trzy komentarze w `includes/admin.php` cytowały nasz proces i jechały do klienta przy zielonej bramce `slady`, bo wzorzec
   wymagał „PR #N” albo słowa recenzent/koordynator/builder. Nowy przypadek w `paczka-zgodnosc-proba-kontrolna.sh`
   (`psuj_obieg_pracy_ten_pr`): pada na podłożonym zdaniu (EXIT=1), przechodzi na czystym (EXIT=0); cała próba 22/22, EXIT=0.
+- **`pakuj-dla-klienta.sh` 1.2.1 — kontrola śladów w dokumentach paczki TYM SAMYM skanerem, co zipy (#291 r6 WAŻNA 2,
+  klasa 11).** Asercja „brak śladów wewnętrznych w dokumentach paczki” miała własną listę 9 wzorców, obcą
+  `slady-wewnetrzne.sh` 1.4.1 (zero wspólnych), a `PRZECZYTAJ-MNIE.txt` i `INSTRUKCJA-INSTALACJI.md` jadą do kupującego.
+  Teraz skaner dostaje kopię obu dokumentów w osobnym katalogu (EXIT 1 = ślad, 2 = nie zmierzył — oba padają).
+  Próba z podłożonym śladem („recenzent”) w PRZECZYTAJ-MNIE.txt → asercja PADA; bez → przechodzi.
 - **`pakuj-dla-klienta.sh` 1.2.0 — nagłówek zna `zrzuty/`, i dołożona kontrola sum między dwiema
   kopiami zrzutów (#283 r1, WAŻNE 3/4).** Nagłówek skryptu wymieniał zawartość paczki bez katalogu
   `zrzuty/`, mimo że jedzie do klienta od recenzji #280 — dopisany. Ważniejsze: `wtyczki/sklep-agentow/zrzuty/`

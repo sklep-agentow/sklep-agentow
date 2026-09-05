@@ -138,9 +138,10 @@ powstaje zamówienie i mail. Skąd wziąć sekret webhooka:
    Ustawieniach sklepu.
 
 **B. Komputer lokalny / środowisko testowe bez publicznego adresu:**
-Serwery Stripe nie widzą localhosta — użyj oficjalnego Stripe CLI:
+Serwery Stripe nie dosięgną komputera bez publicznego adresu — użyj oficjalnego Stripe CLI,
+podając adres, pod którym Twoja instalacja odpowiada w przeglądarce:
 ```
-stripe listen --forward-to http://localhost:PORT/wp-json/sklepag/v1/webhook
+stripe listen --forward-to http://ADRES-TWOJEJ-INSTALACJI/wp-json/sklepag/v1/webhook
 ```
 Sekret webhooka pokaże `stripe listen --print-secret` (⚠️ to INNY sekret niż
 z Dashboardu — wklej ten z CLI).
