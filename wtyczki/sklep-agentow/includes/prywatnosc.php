@@ -105,6 +105,38 @@ function sklepag_kandydaci_z_dziennika( $postacie ) {
 }
 
 /**
+ * Wiersze dziennika NIOSĄCE ADRES IP, przypisane do TEGO zamówienia.
+ *
+ * ⛔ CZYSZCZENIE PO PRZYPISANIU (`zamowienie_id`), NIE PO TREŚCI adresu — w odróżnieniu od
+ * adresu e-mail wyżej. Adres IP kupującego nie jest w chwili anonimizacji nigdzie znany
+ * (żądanie RODO przychodzi mailem, nie z tej samej sesji przeglądarki, z której było
+ * pobranie), więc nie ma czego szukać po treści. `pobieranie.php` zapisuje go dosłownie
+ * jako `„ip 203.0.113.7"` w zdarzeniach `pobranie` i `pobranie_odmowa_zwrot` — oba MAJĄ
+ * `zamowienie_id`, więc przypisanie wystarcza za klucz.
+ *
+ * @param int $id Id zamówienia.
+ * @return object[] Wiersze (id, opis) ze śladem adresu IP.
+ */
+function sklepag_kandydaci_ip_w_dzienniku( $id ) {
+	global $wpdb;
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- LIKE bez znaków specjalnych ('ip ' to stały literał, nie dana wejściowa).
+	return (array) $wpdb->get_results(
+		$wpdb->prepare(
+			"SELECT id, opis FROM {$wpdb->prefix}sklepag_zdarzenia WHERE zamowienie_id = %d AND opis LIKE %s",
+			(int) $id,
+			'%ip %'
+		)
+	);
+}
+
+/**
+ * Wzorzec adresu IP w opisie zdarzenia — JEDNO źródło dla czyszczenia i dla pomiaru,
+ * z tego samego powodu co `sklepag_wzorce_w_dzienniku()`: pomiar z własnym wzorcem
+ * dziedziczyłby ślepotę czyszczenia i nie miałby jak jej zobaczyć.
+ */
+const SKLEPAG_WZORZEC_IP = '/\bip [0-9A-Fa-f.:]+/';
+
+/**
  * Anonimizacja kupującego przy JEDNYM zamówieniu (RODO).
  *
  * Kolejność jest kontraktem, nie stylem: najpierw ślady WTÓRNE (adres w opisach zdarzeń,
@@ -152,7 +184,7 @@ function sklepag_kandydaci_z_dziennika( $postacie ) {
  *
  * @param int  $id                    Id zamówienia.
  * @param bool $zachowaj_dane_faktury Czy zostawić kolumnę `dane_faktury` (wymóg podatkowy).
- * @return array{ok:bool,etap:string,powod:string,zachowana_faktura:bool,slady_dziennik:int,slady_opinia:int}
+ * @return array{ok:bool,etap:string,powod:string,zachowana_faktura:bool,slady_dziennik:int,slady_opinia:int,slady_ip:int}
  */
 function sklepag_anonimizuj_zamowienie( $id, $zachowaj_dane_faktury = true ) {
 	global $wpdb;
@@ -169,6 +201,7 @@ function sklepag_anonimizuj_zamowienie( $id, $zachowaj_dane_faktury = true ) {
 			'zachowana_faktura' => false,
 			'slady_dziennik'    => 0,
 			'slady_opinia'      => 0,
+			'slady_ip'          => 0,
 		);
 	}
 
@@ -236,6 +269,28 @@ function sklepag_anonimizuj_zamowienie( $id, $zachowaj_dane_faktury = true ) {
 	}
 
 	/*
+	 * ⛔ ADRES IP ZOSTAWAL W DZIENNIKU PO ANONIMIZACJI. Blok wyżej czyści adres e-mail
+	 * PO TREŚCI; adres IP przy pobraniu pliku (`pobieranie.php`: zdarzenia `pobranie` i
+	 * `pobranie_odmowa_zwrot`) czyścimy PO PRZYPISANIU do zamówienia — patrz komentarz
+	 * `sklepag_kandydaci_ip_w_dzienniku()`. Ten sam gate `$ok_zdarzenia`: awaria czyszczenia IP
+	 * blokuje czyszczenie źródła dokładnie tak, jak awaria czyszczenia e-maila.
+	 */
+	foreach ( sklepag_kandydaci_ip_w_dzienniku( $id ) as $k ) {
+		$nowy = preg_replace( SKLEPAG_WZORZEC_IP, 'ip [usunięto — RODO]', (string) $k->opis );
+		if ( null === $nowy ) {
+			// ⛔ `null` to AWARIA silnika wyrazen, nie „brak dopasowania" — patrz analogiczny komentarz wyżej.
+			$ok_zdarzenia = false;
+			continue;
+		}
+		if ( $nowy === (string) $k->opis ) {
+			continue;
+		}
+		if ( false === $wpdb->update( $wpdb->prefix . 'sklepag_zdarzenia', array( 'opis' => $nowy ), array( 'id' => (int) $k->id ) ) ) {
+			$ok_zdarzenia = false;
+		}
+	}
+
+	/*
 	 * ⛔ PRZERWANIE PRZED ZRODLEM, gdy slad wtorny nie zostal usuniety.
 	 *
 	 * Sama kolejnosc nie wystarcza: gdyby kod poleciał dalej i wyczyscil adres
@@ -252,6 +307,7 @@ function sklepag_anonimizuj_zamowienie( $id, $zachowaj_dane_faktury = true ) {
 			'zachowana_faktura' => false,
 			'slady_dziennik'    => 0,
 			'slady_opinia'      => 0,
+			'slady_ip'          => 0,
 		);
 	}
 
@@ -317,6 +373,16 @@ function sklepag_anonimizuj_zamowienie( $id, $zachowaj_dane_faktury = true ) {
 			$id
 		)
 	);
+
+	/* ⛔ POMIAR PYTA DOKLADNIE O TO, CO CZYSCILISMY: ta sama funkcja wybierajaca
+		kandydatow po zamowienie_id, ten sam wzorzec SKLEPAG_WZORZEC_IP. */
+	$slady_ip = 0;
+	foreach ( sklepag_kandydaci_ip_w_dzienniku( $id ) as $k ) {
+		$trafienie = preg_match( SKLEPAG_WZORZEC_IP, (string) $k->opis );
+		if ( false === $trafienie || 1 === $trafienie ) {
+			++$slady_ip;
+		}
+	}
 	// phpcs:enable
 
 	/* Pomiar TAK SZEROKI jak czyszczenie (v9): tokeny, ORYGINAŁ treści maila i ślad dor_*
@@ -349,7 +415,8 @@ function sklepag_anonimizuj_zamowienie( $id, $zachowaj_dane_faktury = true ) {
 		&& '' === (string) $po->dor_mail_tresc
 		&& '' === (string) $po->dor_opinia_hash
 		&& 0 === $slady_dziennik
-		&& 0 === $slady_opinia;
+		&& 0 === $slady_opinia
+		&& 0 === $slady_ip;
 
 	if ( false === $ok_zam || ! $skutek_ok ) {
 		sklepag_zdarzenie(
@@ -363,6 +430,7 @@ function sklepag_anonimizuj_zamowienie( $id, $zachowaj_dane_faktury = true ) {
 			. ( $zachowaj_dane_faktury ? '' : ', dane do faktury: ' . ( $faktura_ok ? 'usunięte' : 'ZOSTAŁY' ) )
 			. ', ślady w dzienniku: ' . (int) $slady_dziennik
 			. ', dane opinii: ' . (int) $slady_opinia
+			. ', ślady adresu IP: ' . (int) $slady_ip
 		);
 		return array(
 			'ok'                => false,
@@ -371,6 +439,7 @@ function sklepag_anonimizuj_zamowienie( $id, $zachowaj_dane_faktury = true ) {
 			'zachowana_faktura' => false,
 			'slady_dziennik'    => (int) $slady_dziennik,
 			'slady_opinia'      => (int) $slady_opinia,
+			'slady_ip'          => (int) $slady_ip,
 		);
 	}
 
@@ -390,6 +459,7 @@ function sklepag_anonimizuj_zamowienie( $id, $zachowaj_dane_faktury = true ) {
 		'zachowana_faktura' => $zachowana_faktura,
 		'slady_dziennik'    => 0,
 		'slady_opinia'      => 0,
+		'slady_ip'          => 0,
 	);
 }
 

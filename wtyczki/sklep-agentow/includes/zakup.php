@@ -173,7 +173,7 @@ function sklepag_obsluz_kup() {
 	// firmy wymaga nazwy, NIP-u i adresu nabywcy (ustawa o VAT art. 106e ust. 1 pkt 3), więc albo komplet,
 	// albo wszystkie puste — sam NIP dawałby właścicielowi fałszywe „mam dane do faktury”. Zły NIP = odmowa
 	// z komunikatem (kupujący poprawia). ⛔ Podanie NIP-u NICZEGO nie zmienia w prawach kupującego (zgoda z art. 38,
-	// gwarancja, reklamacje): art. 38a ustawy o prawach konsumenta wiąże ochronę z charakterem zakupu, nie z NIP-em.
+	// gwarancja, reklamacje): art. 7aa ustawy o prawach konsumenta wiąże ochronę z charakterem zakupu, nie z NIP-em.
 	$faktura      = array(
 		'nazwa' => isset( $_POST['faktura_nazwa'] ) ? sanitize_text_field( wp_unslash( $_POST['faktura_nazwa'] ) ) : '',
 		'nip'   => isset( $_POST['faktura_nip'] ) ? preg_replace( '/[\s-]/', '', sanitize_text_field( wp_unslash( $_POST['faktura_nip'] ) ) ) : '',
@@ -407,6 +407,13 @@ function sklepag_webhook( WP_REST_Request $zadanie ) {
 	$sekret   = (string) get_option( 'sklepag_stripe_webhook_sekret', '' );
 
 	if ( ! sklepag_stripe_weryfikuj_podpis( $body, (string) $naglowek, $sekret ) ) {
+		/* ⛔ ZNANA LUKA: ten adres IP nie jest czyszczony przy anonimizacji ŻADNEGO zamówienia
+		 * (RODO), bo `zamowienie_id` jest tu `null` — podpis pada ZANIM treść body zostaje
+		 * zdekodowana, więc w tym miejscu nie wiadomo jeszcze, którego zamówienia dotyczyłby
+		 * webhook (a często nie dotyczy żadnego: to adres WOŁAJĄCEGO ze złym podpisem, nie
+		 * adres kupującego). Dowiązanie do zamówienia byłoby zgadywaniem; wpis wygasa
+		 * wyłącznie przez retencję 90 dni.
+		 */
 		sklepag_zdarzenie( null, 'webhook_zly_podpis', 'odrzucono (ip ' . sklepag_ip() . ')' );
 		return new WP_REST_Response( array( 'blad' => 'zly podpis' ), 400 );
 	}
@@ -1392,7 +1399,7 @@ function sklepag_dociagnij_zalegle( $budzet_s = 0, $wymus = false ) {
 		return $budzet_s > 0 && ( microtime( true ) - $start ) >= $budzet_s;
 	};
 
-	// Wynik dla wołającego (przycisk w panelu pokazuje go właścicielowi). K10 (30.08): tester kliknął
+	// Wynik dla wołającego (przycisk w panelu pokazuje go właścicielowi). Test na czystej instalacji:
 	// „Dociągnij zaległe” 71 s po zapłacie, sesja była młodsza niż 120 s, przycisk pominął ją BEZ SŁOWA,
 	// cron na tym hostingu nie chodził (zepsuta pętla zwrotna) — i zakup „wisiał” 20 minut mimo opłacenia.
 	$wynik = array(

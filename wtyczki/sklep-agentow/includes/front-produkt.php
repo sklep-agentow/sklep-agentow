@@ -611,7 +611,7 @@ function sklepag_formularz_zakupu( $p ) {
 	// strona produktu NIE wysyła `nocache_headers()` — jedyne wywołanie w tym pliku siedzi w gałęzi
 	// 404 (`sklepag_status_404_wczesnie()`, odpala się TYLKO gdy produktu nie ma), więc pod
 	// pełnostronicowym cache'em wszystkie przeglądarki dostałyby TEN SAM render i TEN SAM znacznik,
-	// czyli wróciłby dokładnie błąd Q-5: druga osoba za jednym adresem dostaje cudzy checkout Stripe.
+	// czyli druga osoba za jednym adresem dostałaby cudzy checkout Stripe.
 	// Podwójny klik wysyła ten sam formularz = ten sam znacznik; druga osoba ma własny.
 	// Bez JavaScriptu zostaje wartość z renderu — jak przed tym wydaniem, ani lepiej, ani gorzej.
 	$html .= '<input type="hidden" name="okno" value="' . esc_attr( wp_generate_password( 24, false, false ) ) . '">';
@@ -1001,7 +1001,7 @@ function sklepag_render_produkt( $slug ) {
 	}
 	$html .= sklepag_formularz_zakupu( $p );
 	// Panel niesie WYŁĄCZNIE to, czego nie ma nigdzie indziej w kadrze ani w sekcji
-	// „W PACZCE" wyżej (runda 2: panel powtarzał jej nazwę i dwa punkty) — przebieg
+	// „W PACZCE" wyżej (bo panel powtarzał jej nazwę i dwa punkty) — przebieg
 	// zakupu i prawa kupionej kopii, liczby ze stałych wtyczki.
 	$html .= '</div><aside class="sklepag-zakup-aside" aria-label="Co się dzieje po zakupie">';
 	$html .= '<p class="sklepag-mono-etykieta">[ PO ZAKUPIE ]</p><ul class="sklepag-zakup-aside-lista">';

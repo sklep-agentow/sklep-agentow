@@ -26,6 +26,47 @@ pory lądują tutaj.
   DŁUG NA WYDANIE” w `audyt/CO-WISI.md` (#296 r1 KRYT 1: sekcja mówiła „~20”, pomiar 30). Mutanty: nagłówek +1, wiersz o dwóch
   statusach, kod wycięty z CO-WISI — złapane. Biegnie z **`bramka-znaleziska.sh`** na KAŻDYM PR (WAŻNA 4: przelot prób omija
   jawnie PR-y ruszające wyłącznie `audyt/`).
+- **`rodo-anonimizacja-ip-proba-kontrolna.sh` — NOWA: dowód dla `P-5` (czyszczenie IP z dziennika przy anonimizacji kupującego)
+  jest odtwarzalny (#291 WAŻNA 4, DROBNA 5).** Stos jednorazowy, kod z drzewa, mutant w kopii w kontenerze (EXIT=1), przypadek
+  BEZ wady: wpis IP obcego zamówienia zostaje nietknięty w obu kierunkach. DROBNA 6 (`zakup.php:410` zapisuje IP bez
+  `zamowienie_id`, czyszczenie po `zamowienie_id` go nie obejmie) — nazwana komentarzem w kodzie, bez zmiany zachowania:
+  numer zamówienia w tym miejscu nie jest jeszcze znany. Lista „wymaga stosu WP” +1, sufity pominięć 9 / 12 (przeliczone).
+- **`slady-wewnetrzne.sh` 1.4.1 — wzorzec „nasz obieg pracy” łapie też gołe „ten/tego PR” i „Runda N” (#291 WAŻNA 3, klasa 5 + 8).**
+  Trzy komentarze w `includes/admin.php` cytowały nasz proces i jechały do klienta przy zielonej bramce `slady`, bo wzorzec
+  wymagał „PR #N” albo słowa recenzent/koordynator/builder. Nowy przypadek w `paczka-zgodnosc-proba-kontrolna.sh`
+  (`psuj_obieg_pracy_ten_pr`): pada na podłożonym zdaniu (EXIT=1), przechodzi na czystym (EXIT=0); cała próba 22/22, EXIT=0.
+- **`pakuj-dla-klienta.sh` 1.2.1 — kontrola śladów w dokumentach paczki TYM SAMYM skanerem, co zipy (#291 r6 WAŻNA 2,
+  klasa 11).** Asercja „brak śladów wewnętrznych w dokumentach paczki” miała własną listę 9 wzorców, obcą
+  `slady-wewnetrzne.sh` 1.4.1 (zero wspólnych), a `PRZECZYTAJ-MNIE.txt` i `INSTRUKCJA-INSTALACJI.md` jadą do kupującego.
+  Teraz skaner dostaje kopię obu dokumentów w osobnym katalogu (EXIT 1 = ślad, 2 = nie zmierzył — oba padają).
+  Próba z podłożonym śladem („recenzent”) w PRZECZYTAJ-MNIE.txt → asercja PADA; bez → przechodzi.
+- **`pakuj-dla-klienta.sh` 1.2.0 — nagłówek zna `zrzuty/`, i dołożona kontrola sum między dwiema
+  kopiami zrzutów (#283 r1, WAŻNE 3/4).** Nagłówek skryptu wymieniał zawartość paczki bez katalogu
+  `zrzuty/`, mimo że jedzie do klienta od recenzji #280 — dopisany. Ważniejsze: `wtyczki/sklep-agentow/zrzuty/`
+  (kopia dla wpisu na WordPress.org) i `dokumentacja/zrzuty/` (źródło pakowania) trzymają te same pliki,
+  a nic nie pilnowało, że są równe — rozjazd byłby cichy (klasa 8, bliźniak). Skrypt teraz porównuje
+  sumy `sha256sum` obu kopii PRZED złożeniem paczki i kończy `EXIT=2`, gdy się różnią albo gdy bliźniak
+  brakuje. Dowód: podłożony 1 bajt różnicy w `wtyczki/sklep-agentow/zrzuty/sklep-front.png` →
+  „PAKUJ: rozjazd kopii zrzutów”, `EXIT=2`; po przywróceniu bajtu — pełna samokontrola PRZESZŁA
+  (19/19), `EXIT=0`.
+  Przy okazji (WAŻNA 1): kontrola „każdy obrazek z instrukcji istnieje w paczce” zmieniła nazwę na
+  „…ma PLIK o tej nazwie w paczce (obecność, nie treść)” — sprawdzała i nadal sprawdza wyłącznie
+  obecność pliku pod daną nazwą, nie zawartość obrazu (na treść zdjęcia patrzy tylko człowiek,
+  klasa 11 — nazwa bramki węższa niż mogłaby sugerować pełne pokrycie).
+- **`slady-wewnetrzne.sh` 1.4.0 — nowy wzorzec: kod naszego rejestru znalezisk w paczce klienta (D-4).**
+  72 pliki w 12 z 29 archiwów `boty/paczki/` niosły oznaczenia audytu (np. `A6-F1`, `Q-5`, `CZ-1`,
+  `K10`, „runda 2”, „klasa 8”) — komentarz cytował kod zamiast nieść powód. Dołożony wzorzec łapie
+  format „litera(y)-myślnik-numer” (`A7b-F2`, `B-6`, `D-4`, `CZ-1`…), wymaga MYŚLNIKA — bez tego
+  warunku łapał fragmenty regeksów (`[a-zA-Z0-9]` widziane jako „Z0-9”) i współrzędne SVG (`M100`).
+  Świadomie NIE łapie gołych kodów bez myślnika (`K10`, `C3`) ani słów prozy („klasa N”, „runda N”,
+  „znalezisko”) — oba warianty dały fałszywe trafienia na tym repo (SVG/regeksy, zwykłe zdania);
+  to zostaje jako otwarty gap, nie cichy dopisek. Ta sama funkcja obsługuje bramkę `slady` (każdy PR)
+  i `paczka-zgodnosc.sh` (zamrożenie) — jedno źródło wzorców.
+  Dowód: `narzedzia-qa/paczka-zgodnosc-proba-kontrolna.sh` — nowy przypadek „kod znaleziska audytu
+  (A7b-F2) w paczce” EXIT=1 z naprawą; ten sam przypadek na kodzie SPRZED naprawy EXIT=0 (BLAD,
+  próba kontrolna skalibrowana); czysta paczka nadal EXIT=0. Realna paczka złożona
+  `narzedzia-qa/pakuj-dla-klienta.sh` z bieżącego źródła, rozpakowana: 0 trafień wzorca, kontrola
+  dodatnia (pliki `.php` z `<?php`) = 54/54.
 - **`proby-kontrolne-przelot.sh` — sufit pominięć i PODŁOGA uruchomionych per odłamek; przelot biegnie też dla zmian w `testy/`
   i `boty/`; podłoga obowiązuje TYLKO dla zakresów, dla których została policzona (`.` i `narzedzia-qa`) — inny zakres
   (np. zagnieżdżony przelot dwuplikowy w `przelot-brak-zip-proba-kontrolna.sh`) dostaje jawny wiersz `PODLOGA: brak`
