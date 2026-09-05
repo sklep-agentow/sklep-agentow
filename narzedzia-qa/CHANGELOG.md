@@ -19,10 +19,14 @@ pory lądują tutaj.
   próby; teraz przelot CI bierze próbę, a ona podkłada 3 mutanty w KOPII trzech plików (segregator bez tabulatora, stała ChatBota
   bez CR, kopia ChatBota usunięta → PODŁOGA `MIN_KOPII=3`) — każdy MUSI położyć strażnika (EXIT=1), czysta kopia MUSI przejść
   (EXIT=0, „kopii: 3”). Strażnik dostał `CSV_BLIZNIAKI_KORZEN` (katalog do zmierzenia; domyślnie repo) i podłogę liczby kopii
-  (klasa 11: kopia, która przestanie pasować do wzorca, nie wypada z pomiaru bez śladu). Sufity przelotu: 27 w `narzedzia-qa`, 64 razem.
+  (klasa 11: kopia, która przestanie pasować do wzorca, nie wypada z pomiaru bez śladu). Liczba prób po scaleniu main (#294, #296): 30 w `narzedzia-qa`, 68 razem — progi `MIN_URUCHOMIONYCH_*` w `proby-kontrolne-przelot.sh` policzone z `ls`, nie przepisane (sufity pominięć `MAX_POMINIETYCH_*` = 10 / 13; #298 r4 D2).
 - **`chatbot-csv-formula-proba-kontrolna.sh` — mutanty po nowym kształcie kodu (jedna stała `CHATL_CSV_ZNAKI_FORMULY`,
   7 znaków jak sklep; #298 r1 KRYT 1, WAŻNA 4):** A. stała bez tabulatora, B. import z WŁASNĄ listą zamiast wspólnej stałej
   (rozjazd stron), C. stała bez apostrofu (runda nieodwracalna dla komórki od apostrofu) — 3/3 padają, czysty kod 35/35 asercji.
+- **`pakuj-dla-klienta.sh` 1.2.2 — dokumenty paczki klienta sprawdza KANONICZNY skaner `slady-wewnetrzne.sh` (etykieta
+  `paczka-klienta`), nie własny grep z 9 alternatyw (znalezisko Q-3: własny wzorzec przepuszczał imię właściciela, numer PR-a,
+  „recenzent”, „koordynator”).** NOWA `pakuj-slady-proba-kontrolna.sh`: wpięcie (skrypt woła skaner, stary wzorzec zniknął)
+  + skutek (kopia dokumentów czysta → 0; z podłożonym „koordynatorka / PR #123 / recenzent” → 1).
 - **`stanowisko/sprzatnij-zamowienia-testowe.sh` — NOWY (I-22): lista / `--kasuj` zamówień testowych ze stanowiska (domena
   `test.local`/`example.com` ORAZ sesja Stripe `cs\_test\_`; pusty e-mail NIGDY — r3 po #296 r2 WAŻNA 1: na stanowisku `cs_test_`
   ma każde zamówienie, więc nie odróżnia testów od ręcznych zakupów; wiersze bez e-maila są wypisywane osobno, bez kasowania)

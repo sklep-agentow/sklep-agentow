@@ -145,6 +145,7 @@ for t in testy/*.php; do
 	# Z REPO do kontenera); wołany wprost sam odmawia biegu (EXIT=1), bo
 	# kopia wtyczki na stosie nie jest źródłem prawdy — to nie jest wada.
 	case "$t" in *segregator-deklaracja-vs-ladunek-ai.php) echo "POMINIĘTE (silnik strażnika A3-3 — uruchamia go wrapper .sh): $t"; printf '%s\tPOMINIETE\t0\n' "$t" >> "$TSV"; continue;; esac
+	case "$t" in *chatbot-csv-formula-test.php|*segregator-mime-test.php) echo "POMINIĘTE (czysty PHP CLI: liczy ścieżkę wtyczki od własnego położenia, pod wp eval-file z /tmp kończy EXIT=2 — klasa 141; uruchamiaj: php testy/<plik>): $t"; printf '%s\tPOMINIETE\t0\n' "$t" >> "$TSV"; continue;; esac
 	# ⛔ Strażnik A6-F1 NISZCZY STAN: `DROP TABLE` na tabeli opinii i `sklepag_aktywacja()`
 	#    (tworzy strony, katalog, zadanie cykliczne, przebudowuje reguły adresów). Jego własny
 	#    nagłówek mówi „uruchamiać na STOSIE PRÓBNYM, nie na stosie z danymi”, a ta pętla jedzie

@@ -1,7 +1,7 @@
 # Sklep Agentów
 
 [![Kontrole jakości](https://github.com/sklep-agentow/sklep-agentow/actions/workflows/quality.yml/badge.svg?branch=main)](https://github.com/sklep-agentow/sklep-agentow/actions/workflows/quality.yml)
-[![Wydanie](https://img.shields.io/badge/wydanie-v0.9.41-blue)](https://github.com/sklep-agentow/sklep-agentow/releases/latest)
+[![Wydanie](https://img.shields.io/badge/wydanie-v0.9.42-blue)](https://github.com/sklep-agentow/sklep-agentow/releases/latest)
 [![Licencja](https://img.shields.io/badge/licencja-GPL--2.0--or--later-blue)](LICENSE)
 [![WordPress](https://img.shields.io/badge/WordPress-6.7%2B-blue)](#wymagania)
 [![PHP](https://img.shields.io/badge/PHP-8.1%2B-blue)](#wymagania)

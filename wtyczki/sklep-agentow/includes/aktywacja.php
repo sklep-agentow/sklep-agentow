@@ -290,6 +290,12 @@ function sklepag_deaktywacja() {
  * próba zostawiła braki, wersja jest stara, więc brama przepuszcza i próbujemy znowu.
  */
 function sklepag_migruj_schemat_jesli_trzeba() {
+	// strony prawne PRZED brama wersji schematu. Szablon zmienia sie niezaleznie od
+	// tabel -- instalacja z aktualnym schematem i starym szablonem to najczestszy przypadek
+	// aktualizacji w miejscu, a za brama nic by sie tam nie wydarzylo. Funkcja ma wlasny
+	// znacznik i przy aktualnym wraca natychmiast (jedno get_option na zadanie).
+	sklepag_kompensuj_strony_prawne();
+
 	if ( (int) get_option( 'sklepag_wersja_schematu', 0 ) === SKLEPAG_WERSJA_SCHEMATU ) {
 		return;
 	}
@@ -310,20 +316,49 @@ function sklepag_migruj_schemat_jesli_trzeba() {
 }
 
 /**
- * Strony wtyczki. Sklep i Dziękujemy publikowane; Regulamin i Polityka jako
- * SZKICE-szablony (właściciel wypełnia danymi sprzedawcy i sam publikuje).
+ * Definicje stron wtyczki — JEDNO źródło dla hooka aktywacji i dla kompensacji na
+ * instalacjach aktualizowanych w miejscu (`sklepag_kompensuj_strony_prawne()` niżej).
+ * Sklep i Dziękujemy publikowane; Regulamin i Polityka jako SZKICE-szablony
+ * (właściciel wypełnia danymi sprzedawcy i sam publikuje — wtyczka nie pisze treści prawnej za sprzedawcę).
+ *
+ * ⛔ POWÓD WYDZIELENIA : treść szablonu rośnie (sekcje z art. 12 dołożyły ich sześć), a
+ * aktualizacja „w miejscu” NIE odpala hooka aktywacji. Gdyby kompensacja miała własną
+ * kopię tekstu, obie zaczęłyby się rozjeżdżać przy pierwszej poprawce szablonu i stara
+ * instalacja dostawałaby sekcje, których nowa już nie ma (albo odwrotnie).
+ *
+ * @return array<string, array{0:string,1:string,2:string}> opcja => [tytuł, treść, status]
  */
-function sklepag_utworz_strony() {
-	$strony = array(
+function sklepag_definicje_stron() {
+	return array(
 		'sklepag_strona_sklep'      => array( 'Sklep', '[sklepag_sklep]', 'publish' ),
 		'sklepag_strona_dziekujemy' => array( 'Dziękujemy za zakup', '[sklepag_dziekujemy]', 'publish' ),
-		'sklepag_strona_regulamin'  => array( 'Regulamin sklepu (SZABLON)', "SZABLON — wypełnij danymi sprzedawcy przed publikacją.\n\nSprzedawca: [NAZWA, ADRES, KONTAKT]\nProdukty: treści cyfrowe (wtyczki WordPressa) dostarczane natychmiast po opłaceniu.\nZgoda na natychmiastowe dostarczenie: kupujący wyraża ją przy zakupie i przyjmuje utratę prawa odstąpienia (art. 38 ustawy o prawach konsumenta).\nGwarancja satysfakcji [ILE DNI — domyślnie 14]: NIEZALEŻNIE od powyższego sprzedawca zobowiązuje się dobrowolnie zwrócić pieniądze na wniosek kupującego złożony w tym terminie. To zobowiązanie PONAD ustawę, nie ustawowe prawo odstąpienia — strona produktu je obiecuje, więc regulamin musi je potwierdzać. Zwrot oznacza wygaśnięcie prawa do aktualizacji i wsparcia dla kupionej kopii.\nReklamacje: [MAIL WŁAŚCICIELA].", 'draft' ),
-		'sklepag_strona_polityka'   => array( 'Polityka prywatności sklepu (SZABLON)', "SZABLON — wypełnij danymi sprzedawcy przed publikacją.\n\nAdministrator danych: [NAZWA, KONTAKT]\nZakres: adres e-mail kupującego, dane transakcji, dziennik zdarzeń (90 dni, w tym adres IP przy każdym pobraniu pliku); dobrowolnie podane dane do faktury (nazwa firmy, NIP, adres — cel: wystawienie faktury, podstawa: obowiązek prawny z ustawy o VAT); przy dobrowolnej opinii — imię i treść opinii, publikowane na stronie produktu wyłącznie za wyrażoną w formularzu zgodą (usunięcie/anonimizację można wykonać na żądanie).\nPodmioty przetwarzające: operator płatności Stripe; mechanizm poczty serwera.\nBoty w trybie AI wysyłają treść zapytań do dostawcy API — [UZUPEŁNIJ po włączeniu].", 'draft' ),
+		// ⛔ Do 0.9.40 szablon miał 5 linii i pokrywał TYLKO pkt 2 (częściowo), 12 i 14
+		// z art. 12 ust. 1 ustawy o prawach konsumenta — po wypełnieniu wypełniaczy nadal nie
+		// był regulaminem. Sekcje niżej dopisują pkt 5 (cena z podatkami), 7 (termin zapłaty),
+		// 8 (procedura reklamacyjna z terminem), 13 (zgodność świadczenia), 19/20 (funkcjonalność
+		// i kompatybilność) i 21 (ODR) — treści prawnej NIE wymyślamy, tylko nazywamy sekcję
+		// i zostawiamy wypełniacz + jedno zdanie instrukcji — właściciel ma wiedzieć, CO wpisać, a nie dostać gotowca.
+		'sklepag_strona_regulamin'  => array( 'Regulamin sklepu (SZABLON)', "SZABLON — wypełnij danymi sprzedawcy przed publikacją. Braki oznaczone [W NAWIASACH] zostały dopisane, żeby dokument pokrywał art. 12 ust. 1 ustawy o prawach konsumenta — treści prawnej nie wymyślamy za Ciebie, wskazujemy tylko, gdzie ma stanąć.\n\nSprzedawca: [NAZWA, ADRES, KONTAKT, ORGAN REJESTROWY I NUMER — np. wpis do CEIDG albo numer KRS].\nProdukty: treści cyfrowe (wtyczki WordPressa) dostarczane natychmiast po opłaceniu.\nCena: [PODAJ, CZY CENA NA STRONIE SKLEPU ZAWIERA PODATKI I JAKĄ STAWKĘ — łączna cena wraz z podatkami jest obowiązkowym elementem informacji przedumownej].\nSposób i termin zapłaty: [DOMYŚLNIE: kartą przez Stripe, z góry, przed dostarczeniem — zmień, jeśli oferujesz inny sposób płatności].\nZgoda na natychmiastowe dostarczenie: kupujący wyraża ją przy zakupie i przyjmuje utratę prawa odstąpienia (art. 38 ustawy o prawach konsumenta).\nGwarancja satysfakcji [ILE DNI — domyślnie 14]: NIEZALEŻNIE od powyższego sprzedawca zobowiązuje się dobrowolnie zwrócić pieniądze na wniosek kupującego złożony w tym terminie. To zobowiązanie PONAD ustawę, nie ustawowe prawo odstąpienia — strona produktu je obiecuje, więc regulamin musi je potwierdzać. Zwrot oznacza wygaśnięcie prawa do aktualizacji i wsparcia dla kupionej kopii.\nProcedura reklamacyjna: reklamacje przyjmujemy na adres [MAIL WŁAŚCICIELA] i rozpatrujemy w terminie [ILE DNI — domyślnie 14 dni od zgłoszenia].\nOdpowiedzialność za zgodność świadczenia z umową: [UZUPEŁNIJ — sprzedawca odpowiada wobec konsumenta za zgodność treści cyfrowej z umową na zasadach ustawy o prawach konsumenta; opisz, jak zgłosić niezgodność i czego może żądać kupujący].\nFunkcjonalność i kompatybilność treści cyfrowej: [UZUPEŁNIJ WYMAGANIA TECHNICZNE — np. wersja WordPressa i PHP, z którą produkt współpracuje, znane ograniczenia].\nPozasądowe rozwiązywanie sporów: konsument może skorzystać z unijnej platformy ODR (ec.europa.eu/consumers/odr) oraz z [UZUPEŁNIJ WŁAŚCIWY PODMIOT ADR LUB RZECZNIKA KONSUMENTÓW].", 'draft' ),
+		'sklepag_strona_polityka'   => array( 'Polityka prywatności sklepu (SZABLON)', "SZABLON — wypełnij danymi sprzedawcy przed publikacją.\n\nAdministrator danych: [NAZWA, KONTAKT]\nZakres: adres e-mail kupującego, dane transakcji, dziennik zdarzeń i historia logowań do panelu (w dzienniku także adres IP przy każdym pobraniu pliku). Sprzątanie dziennika i historii logowań: wpisy starsze niż 90 dni usuwa zadanie WP-Cron sklepu uruchamiane co 10 minut — sprzątanie jest WARUNKOWE: biegnie tylko wtedy, gdy harmonogram WordPressa działa; gdy stoi, wpisy pozostają do jego wznowienia. Dane zamówień (w tym dane do faktury) NIE są usuwane po czasie — obowiązek podatkowy; dobrowolnie podane dane do faktury (nazwa firmy, NIP, adres — cel: wystawienie faktury, podstawa: obowiązek prawny z ustawy o VAT); przy dobrowolnej opinii — imię i treść opinii, publikowane na stronie produktu wyłącznie za wyrażoną w formularzu zgodą (usunięcie/anonimizację można wykonać na żądanie).\nPodmioty przetwarzające: operator płatności Stripe; mechanizm poczty serwera.\nBoty w trybie AI wysyłają treść zapytań do dostawcy API — [UZUPEŁNIJ po włączeniu].", 'draft' ),
 	);
+}
+
+/**
+ * Zakłada brakujące strony wtyczki. Woła to hook aktywacji; pojedyncze strony prawne
+ * na instalacji aktualizowanej w miejscu dokłada `sklepag_kompensuj_strony_prawne()`.
+ */
+function sklepag_utworz_strony() {
+	$wszystkie_z_tego_szablonu = true;
+	$strony                    = sklepag_definicje_stron();
 
 	foreach ( $strony as $opcja => $dane ) {
 		$id = (int) get_option( $opcja, 0 );
 		if ( $id && get_post( $id ) ) {
+			// Strona PRAWNA zastana — nie wiemy, z którego szablonu; kompensacja ma ją obejrzeć. Sklep i Dziękujemy
+			// nie mają szablonu do kompensowania, więc ich obecność o znaczniku nie decyduje.
+			if ( in_array( $opcja, array( 'sklepag_strona_regulamin', 'sklepag_strona_polityka' ), true ) ) {
+				$wszystkie_z_tego_szablonu = false;
+			}
 			continue;
 		}
 		$id = wp_insert_post(
@@ -337,7 +372,20 @@ function sklepag_utworz_strony() {
 		// Bez 4. argumentu $wp_error wp_insert_post zwraca int (0 = porażka) — is_wp_error tu martwe (phpstan).
 		if ( $id ) {
 			update_option( $opcja, $id, false );
+		} else {
+			// Strona NIE powstała — znacznik zostałby ustawiony „na wyrost”, a kompensacja przy najbliższym
+			// otwarciu panelu nie miałaby powodu wrócić (przypadek (a) w sklepag_kompensuj_strony_prawne()).
+			$wszystkie_z_tego_szablonu = false;
 		}
+	}
+	// Znacznik szablonu TYLKO wtedy, gdy KAŻDA strona powstała z tego szablonu w tym biegu. Strona zastana
+	// (deaktywuj → aktywuj na starej instalacji) może być ze starego szablonu — wtedy znacznik kasujemy,
+	// żeby kompensacja przy najbliższym otwarciu panelu obejrzała obie strony (bez tego „deaktywuj i aktywuj”
+	// zabijało kompensację na zawsze).
+	if ( $wszystkie_z_tego_szablonu ) {
+		update_option( 'sklepag_wersja_stron', SKLEPAG_WERSJA_STRON, true );
+	} else {
+		delete_option( 'sklepag_wersja_stron' );
 	}
 }
 
@@ -388,4 +436,247 @@ function sklepag_utworz_katalog_chroniony() {
 
 	update_option( 'sklepag_katalog_chroniony', $sciezka, false );
 	delete_option( 'sklepag_katalog_chroniony_blad' );
+}
+
+/**
+ * Sekcje szablonu strony prawnej: etykieta przed dwukropkiem na początku linii.
+ *
+ * Szablon regulaminu jest listą linii „Nazwa sekcji: treść albo wypełniacz”, więc nazwa
+ * sekcji jest tym, po czym da się poznać, że danej sekcji w dokumencie właściciela NIE MA.
+ * Wypełniacz w nawiasie kwadratowym odcinamy — właściciel go wykasuje, wypełniając sekcję
+ * („Gwarancja satysfakcji [ILE DNI — domyślnie 14]” zostaje „Gwarancja satysfakcji”), a
+ * porównanie po nazwie z wypełniaczem uznałoby wypełnioną sekcję za brakującą i dopisało
+ * ją drugi raz.
+ *
+ * @param string $tresc Treść szablonu.
+ * @return array<string,string> nazwa sekcji => cała linia szablonu
+ */
+function sklepag_sekcje_szablonu( $tresc ) {
+	$sekcje = array();
+	$linie  = preg_split( '/\R/u', (string) $tresc );
+	foreach ( (array) $linie as $linia ) {
+		if ( ! preg_match( '/^([^:]{3,60}):\s/u', (string) $linia, $trafienie ) ) {
+			continue;
+		}
+		$nazwa = trim( (string) preg_replace( '/\s*\[.*$/u', '', $trafienie[1] ) );
+		if ( '' !== $nazwa && ! isset( $sekcje[ $nazwa ] ) ) {
+			$sekcje[ $nazwa ] = trim( (string) $linia );
+		}
+	}
+	return $sekcje;
+}
+
+/**
+ * KOMPENSACJA DLA INSTALACJI AKTUALIZOWANYCH W MIEJSCU.
+ *
+ * ⛔ POWÓD: `sklepag_utworz_strony()` woła się WYŁĄCZNIE z hooka aktywacji, a „Aktualizuj
+ * teraz” w panelu WordPressa aktywacji nie odpala. Sklep, który stoi od poprzedniej wersji,
+ * nigdy nie dostawał ani brakujących stron prawnych, ani sekcji dołożonych do szablonu
+ * (sekcje z art. 12 dołożyły ich sześć). Właściciel widział ostrzeżenie „uzupełnij regulamin”, otwierał
+ * dokument i miał w nim STARY, pięciolinijkowy szablon — czyli dokument, który po wypełnieniu
+ * nadal nie pokrywał art. 12 ust. 1 ustawy o prawach konsumenta. To ta sama klasa co przy
+ * cronie i katalogu chronionym: zasób zakładany tylko przy aktywacji nie ma drogi powrotu.
+ *
+ * Trzy sytuacje i trzy różne odpowiedzi — bo tylko pierwsza z nich jest naprawdę nasza:
+ *   (a) strony nie ma (opcja pusta albo wpis skasowany/w koszu) → zakładamy ją jak aktywacja:
+ *       `draft` z zaślepką SZABLON (treści prawnej nie piszemy za właściciela);
+ *   (b) strona istnieje i NADAL jest szablonem (zaślepka „SZABLON” w tytule albo w treści) →
+ *       dopisujemy BRAKUJĄCE sekcje na koniec. Sekcji już obecnych nie ruszamy, więc tekst
+ *       wpisany przez właściciela zostaje nietknięty;
+ *   (c) strona jest już własnym dokumentem właściciela (zaślepki nie ma) → ⛔ NIE DOTYKAMY
+ *       TREŚCI. Dopisanie naszych linii do gotowego regulaminu byłoby zmianą dokumentu
+ *       prawnego bez wiedzy sprzedawcy. Zamiast tego zapisujemy listę nazw sekcji, których
+ *       tam nie widać, i pokazujemy ją w panelu (`sklepag_ostrzez_nowe_sekcje_szablonu()`).
+ *
+ * Bieg jest bramkowany WŁASNYM znacznikiem `sklepag_wersja_stron`, nie wersją schematu bazy:
+ * szablon zmienia się niezależnie od tabel, a znacznik schematu bywa aktualny wtedy, gdy
+ * szablon właśnie się zmienił. Znacznik podbijamy NA WEJŚCIU biegu, zanim cokolwiek zapiszemy —
+ * drugie równoległe żądanie wraca na bramie, zamiast zakładać drugą stronę. Bieg pracuje tylko
+ * z panelu, crona albo WP-CLI (front tylko czyta).
+ */
+function sklepag_kompensuj_strony_prawne() {
+	if ( (int) get_option( 'sklepag_wersja_stron', 0 ) === SKLEPAG_WERSJA_STRON ) {
+		return;
+	}
+	// ⛔ NIE na froncie: praca (wp_insert_post/wp_update_post na dokumencie prawnym) biegnie tylko z panelu,
+	//    crona albo WP-CLI — jak self-heal katalogu chronionego w sklepag_start(). Front tylko czyta.
+	if ( ! is_admin() && ! wp_doing_cron() && ! ( defined( 'WP_CLI' ) && WP_CLI ) ) {
+		return;
+	}
+	// Znacznik PRZED pracą: drugie równoległe żądanie wraca na bramie wyżej, zamiast założyć drugą stronę
+	//    „Regulamin sklepu (SZABLON)” (read-modify-write ze znacznikiem na końcu).
+	update_option( 'sklepag_wersja_stron', SKLEPAG_WERSJA_STRON, true );
+	$definicje = sklepag_definicje_stron();
+	$nowe      = array();
+
+	foreach ( array( 'sklepag_strona_regulamin', 'sklepag_strona_polityka' ) as $opcja ) {
+		if ( ! isset( $definicje[ $opcja ] ) ) {
+			continue;
+		}
+		$dane = $definicje[ $opcja ];
+		$id   = (int) get_option( $opcja, 0 );
+		$wpis = $id > 0 ? get_post( $id ) : null;
+
+		// (a) nie ma czego uzupełniać — zakładamy stronę tak samo jak hook aktywacji.
+		if ( ! $wpis || 'trash' === $wpis->post_status ) {
+			$nowy = wp_insert_post(
+				array(
+					'post_title'   => $dane[0],
+					'post_content' => $dane[1],
+					'post_status'  => $dane[2],
+					'post_type'    => 'page',
+				)
+			);
+			if ( $nowy ) {
+				update_option( $opcja, $nowy, false );
+			}
+			continue;
+		}
+
+		// Szablon poznajemy PRZED jakimkolwiek zapisem: podmiany zdań wchodzą TYLKO w szablonie (b).
+		// Własny dokument właściciela (c) zostaje nietknięty także wtedy, gdy stoi w nim nasze stare zdanie
+		// słowo w słowo — instrukcja obiecuje „ani znaku”; zdanie idzie wtedy do meldunku (niżej).
+		$jest_szablonem = ( false !== strpos( $wpis->post_title, 'SZABLON' )
+			|| false !== strpos( $wpis->post_content, 'SZABLON' ) );
+		// Zmiany WEWNĄTRZ istniejącej sekcji (nie nowa sekcja): nasze własne zdanie w starym brzmieniu
+		// podmieniamy na nowe — tylko gdy stoi w dokumencie SŁOWO W SŁOWO (właściciel go nie ruszał).
+		$tresc_biezaca = (string) $wpis->post_content;
+		if ( $jest_szablonem && '' !== $tresc_biezaca ) {
+			foreach ( sklepag_podmiany_w_szablonie( $opcja ) as $stare => $nowe_zdanie ) {
+				if ( false !== strpos( $tresc_biezaca, $stare ) ) {
+					$tresc_biezaca = str_replace( $stare, $nowe_zdanie, $tresc_biezaca );
+				}
+			}
+		}
+		if ( $tresc_biezaca !== (string) $wpis->post_content ) {
+			wp_update_post(
+				array(
+					'ID'           => $wpis->ID,
+					'post_content' => $tresc_biezaca,
+				)
+			);
+			clean_post_cache( $wpis->ID );
+			$wpis = get_post( $wpis->ID );
+		}
+		$brakujace = array();
+		foreach ( sklepag_sekcje_szablonu( $dane[1] ) as $nazwa => $linia ) {
+			// Sekcja „jest”, gdy jej NAZWA stoi na początku linii z dwukropkiem (jak w szablonie) — dopuszczamy
+			// znaczniki bloków/akapitów przed nazwą, ale nie samo słowo gdziekolwiek w zdaniu (uwaga z odbioru:
+			// „cena” w dowolnym zdaniu udawała sekcję „Cena”).
+			$wzor = '/^(?:\s|<[^>]+>)*' . preg_quote( $nazwa, '/' ) . '(?:\s*\[[^\]]*\])?\s*:/miu';
+			if ( ! preg_match( $wzor, (string) $wpis->post_content ) ) {
+				$brakujace[ $nazwa ] = $linia;
+			}
+		}
+		// Zdanie, którego nie dało się podmienić (właściciel je przepisał), też idzie do meldunku.
+		foreach ( sklepag_podmiany_w_szablonie( $opcja ) as $stare => $nowe_zdanie ) {
+			$klucz = sklepag_klucz_zdania( $nowe_zdanie );
+			if ( '' !== $klucz && false === strpos( (string) $wpis->post_content, $klucz ) ) {
+				$brakujace['Zakres (zdanie o sprzątaniu: warunkowe, WP-Cron; dane do faktury; opinie)'] = '';
+			}
+		}
+		if ( ! $brakujace ) {
+			continue;
+		}
+
+		if ( $jest_szablonem ) {
+			// (b) dopisujemy TYLKO brakujące linie, na koniec, bez dotykania reszty treści.
+			$do_dopisania = array_filter(
+				$brakujace,
+				static function ( $linia ) {
+					return '' !== (string) $linia; // meldunki bez linii szablonu (zdanie do przepisania) nie są dopisywane
+				}
+			);
+			// Zdanie przepisane przez właściciela w szablonie: nie podmieniamy (to jego słowa), ale MELDUJEMY —
+			// tak samo jak dla własnego dokumentu (c). Bez tego szablon z przepisanym zdaniem nie dostawał ani
+			// podmiany, ani meldunku.
+			$do_meldunku = array_keys( array_diff_key( $brakujace, $do_dopisania ) );
+			if ( $do_meldunku ) {
+				$nowe[ $wpis->post_title ] = $do_meldunku;
+			}
+			if ( ! $do_dopisania ) {
+				continue;
+			}
+			wp_update_post(
+				array(
+					'ID'           => $wpis->ID,
+					'post_content' => rtrim( $wpis->post_content ) . "\n" . implode( "\n", $do_dopisania ),
+				)
+			);
+			clean_post_cache( $wpis->ID );
+			continue;
+		}
+
+		// (c) własny dokument właściciela — tylko meldunek, zero zmian w treści.
+		$nowe[ $wpis->post_title ] = array_keys( $brakujace );
+	}
+
+	if ( $nowe ) {
+		update_option( 'sklepag_strony_nowe_sekcje', $nowe, false );
+	} else {
+		delete_option( 'sklepag_strony_nowe_sekcje' );
+	}
+	// Znacznik został podbity na WEJŚCIU (patrz góra funkcji) — tu nic więcej.
+}
+
+/**
+ * Zdania szablonu, które zmieniły BRZMIENIE wewnątrz istniejącej sekcji (nie są nową sekcją, więc
+ * kompensacja po nazwach sekcji ich nie widzi). Klucz = stare zdanie SŁOWO W SŁOWO,
+ * wartość = nowe. Podmiana wchodzi tylko wtedy, gdy stare zdanie stoi w dokumencie dosłownie —
+ * i tylko w SZABLONIE (własnego dokumentu właściciela nie ruszamy; dostaje meldunek).
+ *
+ * Linia „Zakres:” polityki miała CZTERY historyczne brzmienia (z historii repozytorium, `git log -G 'Zakres: '`):
+ *   0.9.0  — bez opinii i bez danych do faktury · 0.9.8 — opinie · 0.9.2x — adres IP w dzienniku ·
+ *   0.9.25 — dane do faktury · 0.9.42 — sprzątanie warunkowe (WP-Cron) i wyjątek podatkowy (aktualne).
+ * Każde stare brzmienie CAŁEJ linii jest podmieniane na aktualną linię z szablonu — polityka ze starej
+ * instalacji dostaje dane do faktury i opinie w jednym kroku (polityka ze starej instalacji „nie wiedziała ani o fakturze, ani o opiniach”).
+ * Na końcu wpis dla samego FRAGMENTU o dzienniku (0.9.40 → 0.9.42) — gdy właściciel zmienił resztę linii,
+ * ale nasze zdanie o dzienniku zostawił słowo w słowo.
+ *
+ * @param string $opcja Klucz strony (np. 'sklepag_strona_polityka').
+ * @return array<string,string>
+ */
+function sklepag_podmiany_w_szablonie( $opcja ) {
+	if ( 'sklepag_strona_polityka' !== $opcja ) {
+		return array();
+	}
+	$definicje = sklepag_definicje_stron();
+	$aktualna  = '';
+	if ( isset( $definicje[ $opcja ][1] ) && preg_match( '/^Zakres: .*$/mu', (string) $definicje[ $opcja ][1], $m ) ) {
+		$aktualna = $m[0];
+	}
+	$podmiany = array();
+	if ( '' !== $aktualna ) {
+		$historyczne = array(
+			// 0.9.0
+			'Zakres: adres e-mail kupującego, dane transakcji, dziennik zdarzeń (90 dni).',
+			// 0.9.8 (opinie)
+			'Zakres: adres e-mail kupującego, dane transakcji, dziennik zdarzeń (90 dni); przy dobrowolnej opinii — imię i treść opinii, publikowane na stronie produktu wyłącznie za wyrażoną w formularzu zgodą (usunięcie/anonimizację można wykonać na żądanie).',
+			// 0.9.2x (adres IP w dzienniku)
+			'Zakres: adres e-mail kupującego, dane transakcji, dziennik zdarzeń (90 dni, w tym adres IP przy każdym pobraniu pliku); przy dobrowolnej opinii — imię i treść opinii, publikowane na stronie produktu wyłącznie za wyrażoną w formularzu zgodą (usunięcie/anonimizację można wykonać na żądanie).',
+			// 0.9.25 (dane do faktury)
+			'Zakres: adres e-mail kupującego, dane transakcji, dziennik zdarzeń (90 dni, w tym adres IP przy każdym pobraniu pliku); dobrowolnie podane dane do faktury (nazwa firmy, NIP, adres — cel: wystawienie faktury, podstawa: obowiązek prawny z ustawy o VAT); przy dobrowolnej opinii — imię i treść opinii, publikowane na stronie produktu wyłącznie za wyrażoną w formularzu zgodą (usunięcie/anonimizację można wykonać na żądanie).',
+		);
+		foreach ( $historyczne as $stara ) {
+			if ( $stara !== $aktualna ) {
+				$podmiany[ $stara ] = $aktualna;
+			}
+		}
+	}
+	$fragment = array(
+		// 0.9.40 → 0.9.42 : sprzątanie nazwane warunkowym, zakres i wyjątek podatkowy.
+		'dziennik zdarzeń (90 dni, w tym adres IP przy każdym pobraniu pliku);' =>
+			'dziennik zdarzeń i historia logowań do panelu (w dzienniku także adres IP przy każdym pobraniu pliku). Sprzątanie dziennika i historii logowań: wpisy starsze niż 90 dni usuwa zadanie WP-Cron sklepu uruchamiane co 10 minut — sprzątanie jest WARUNKOWE: biegnie tylko wtedy, gdy harmonogram WordPressa działa; gdy stoi, wpisy pozostają do jego wznowienia. Dane zamówień (w tym dane do faktury) NIE są usuwane po czasie — obowiązek podatkowy;',
+	);
+	return $podmiany + $fragment;
+}
+
+/**
+ * Krótki, charakterystyczny fragment nowego zdania — po nim poznajemy, czy dokument je już ma.
+ *
+ * @param string $zdanie Nowe zdanie z sklepag_podmiany_w_szablonie().
+ * @return string
+ */
+function sklepag_klucz_zdania( $zdanie ) {
+	return false !== strpos( (string) $zdanie, 'WP-Cron' ) ? 'WP-Cron' : '';
 }

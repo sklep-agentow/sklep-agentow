@@ -1,6 +1,6 @@
 # Sklep Agentów — dokumentacja techniczna
 
-**Wersja wtyczki: 0.9.41 · wersja schematu bazy: 10 · WordPress 6.7+ · PHP 8.1+**
+**Wersja wtyczki: 0.9.42 · wersja schematu bazy: 10 · WordPress 6.7+ · PHP 8.1+**
 
 > **Po co ten dokument.** To jest **mapa systemu dla audytora i programisty**, nie ulotka.
 > Każda liczba i nazwa tutaj jest wzięta z kodu, nie z pamięci — jeśli coś się rozjedzie,
@@ -49,12 +49,33 @@ wyłącznie ustawienia i klucze — nigdy liczniki ani stan zamówień.
 | Tabela | Po co jest | Kto zapisuje |
 |---|---|---|
 | `produkty` | katalog: nazwa, adres, opis, cena, plik, aktywność | panel (CRUD) |
-| `sesje_checkout` | ślad rozpoczętych płatności; kolumna `stan` **współrozstrzyga**, czy powtórne kliknięcie zakupu dostaje zapamiętany adres checkoutu, czy nowy; kolumny `produkt_*` niosą **migawkę produktu z chwili zapłaty** (patrz niżej) | rozpoczęcie zakupu |
+| `sesje_checkout` | ślad rozpoczętych płatności; kolumna `stan` **współrozstrzyga**, czy powtórne kliknięcie zakupu dostaje zapamiętany adres checkoutu, czy nowy; kolumny `produkt_*` niosą **migawkę produktu z chwili zapłaty** (patrz niżej). ⚠️ **Rośnie bez końca** — żadne sprzątanie jej nie obejmuje (patrz „Utrzymanie `sesje_checkout`” niżej) | rozpoczęcie zakupu |
 | `zamowienia` | ⭐ **jedyne źródło prawdy o stanie zakupu** | webhook + reconciliation |
 | `zdarzenia` | dziennik zdarzeń zamówienia (audyt ścieżki); retencja 90 dni — kasuje krok 4 crona `sklepag_dociagnij_zalegle` (`zakup.php`) | wszystkie moduły zakupu |
 | `logowania` | kto i kiedy logował się do panelu, z jakim skutkiem; retencja 90 dni (ten sam cron) | zaczepy logowania WP |
 | `rate_limit` | okna limitów żądań | brama zakupu i logowania |
 | `opinie` | mechanizm opinii kupujących: zalążek+token przy mailu, treść z formularza, statusy moderacji | mail zakupowy → formularz kupującego → panel (moderacja) |
+
+### Tabela `sesje_checkout` — utrzymanie (rośnie bez końca, świadomie)
+
+Każde kliknięcie „Kup teraz” dodaje wiersz (`utworzono`, `stan`, migawka produktu, `stripe_session_id`); wiersz zostaje na zawsze —
+wtyczka nie ma dla tej tabeli retencji, bo czytają ją **dociąganie zaległych płatności** (`sklepag_dociagnij_zalegle`, co 10 min)
+i **obsługa wniosków RODO** (eksporter liczy sesje powiązane z adresem kupującego). Kasowanie wymaga dwóch okien, których wtyczka
+nie rozstrzyga sama: (1) po jakim czasie sesja nie może już zostać domknięta przez reconciliation, (2) jak długo ma być widoczna
+dla wniosku o dostęp do danych. Skala (zmierzone 5.09 na stanowisku warsztatowym: 52 wiersze, średnio 315 B na wiersz, 48 KB z indeksami):
+10 000 rozpoczętych zakupów to rząd 3–5 MB — nie problem dyskowy, ale dług porządkowy.
+
+**Ręczne sprzątanie (właściciel, po własnej decyzji o oknach):** najpierw podgląd, potem kasowanie WYŁĄCZNIE sesji, które nie
+zakończyły się zamówieniem i są starsze niż przyjęte okno (przykład: 90 dni — dłużej niż jakiekolwiek okno reconciliation):
+
+```
+wp db query "SELECT stan, COUNT(*) FROM wp_sklepag_sesje_checkout WHERE utworzono < NOW() - INTERVAL 90 DAY GROUP BY stan"
+wp db query "DELETE s FROM wp_sklepag_sesje_checkout s LEFT JOIN wp_sklepag_zamowienia z ON z.stripe_session_id = s.stripe_session_id WHERE z.id IS NULL AND s.utworzono < NOW() - INTERVAL 90 DAY"
+```
+
+⛔ Nie kasuj sesji, które mają zamówienie (`JOIN` wyżej je chroni) — ślad sesji jest częścią historii zakupu i eksportu RODO.
+⛔ Nie kasuj młodszych niż okno reconciliation — dociąganie zaległych mogłoby zgubić płatność, która dopiero się domyka.
+Prefiks `wp_` zamień na prefiks swojej instalacji.
 
 ### Tabela `opinie` — obieg
 
@@ -242,7 +263,7 @@ po stronie serwera. To jest świadome ograniczenie, nie przeoczenie.
 
 | Stała | Wartość | Znaczenie |
 |---|---|---|
-| `SKLEPAG_WERSJA` | 0.9.41 | wersja wtyczki (assety, cache) |
+| `SKLEPAG_WERSJA` | 0.9.42 | wersja wtyczki (assety, cache) |
 | `SKLEPAG_WERSJA_SCHEMATU` | 10 | wersja schematu bazy (migracje) |
 | `SKLEPAG_LIMIT_POBRAN` | 10 | ile razy można pobrać plik z jednego wydanego linku (zerowane przy świeżym linku) |
 | `SKLEPAG_LINK_GODZIN` | 72 | ważność linku pobrania |

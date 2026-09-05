@@ -91,6 +91,8 @@ WYMAGA_DOCKERA=(
 	# Dockera nie ma czym mierzyc. Nie dalo sie jej dopisac wczesniej: w #272 plik
 	# jeszcze nie istnial, a w #274 ten plik byl zmieniany przez #272 (konflikt).
 	schemat-wersja-po-sprawdzeniu-proba-kontrolna.sh
+	# 5.09 (obszar C, F5-F4): opakowanie spustu prawne-migracja-stos-probny.sh — wlasny stos probny.
+	prawne-migracja-proba-kontrolna.sh
 	# 5.09: doszla w #291 (A7b-F2). Stawia WLASNY stos probny (lib-stos-probny) i wgrywa
 	# kod z drzewa — bez stosu WP oddaje 2, a sufit niezmierzonych to 0: pierwszy przebieg
 	# #291 na wykonawcy GitHuba padl wlasnie na tym (odlamek `reszta`, EXIT=1).
@@ -165,8 +167,7 @@ MAX_NIEZMIERZONYCH=0   # 4.09: TWARDE ZERO. Podniesienie = swiadoma decyzja w co
 #    bo CI wola przelot Z ZAKRESEM `narzedzia-qa`, gdzie wiecej niz 7 pominiec jest
 #    NIEMOZLIWE. Przy jednej liczbie mozna dopisac TRZY nazwy do POMIJANE i przejdzie
 #    bez sladu — dokladnie ta klasa, dla ktorej ten sufit powstal.
-MAX_POMINIETYCH_ZAKRES=9   # 5.09: POLICZONE na scalonej tresci (#272 + #274 + #278), nie przepisane;
-                    #      +2 w #291 (panel-link-wygasa-czas-lokalny, rodo-anonimizacja-ip — dockerowe, w `narzedzia-qa/`).
+MAX_POMINIETYCH_ZAKRES=10  # 5.09 po scaleniu #291 do C: 9 z main (+2 dockerowe #291) + 1 prawne-migracja (obszar C); POLICZONE na scalonej tresci, nie przepisane.
                     # ⛔ Rachunek na OBU zakresach, bo sufit obowiazuje oba, a CI liczy inaczej
                     #    niz wydanie. Scenariusz, ktorego sufit dotyczy: wykonawca BEZ Dockera
                     #    I BEZ `zip` (na maszynie z obydwoma pominiecie jest tylko 1 — dlatego
@@ -181,7 +182,7 @@ MAX_POMINIETYCH_ZAKRES=9   # 5.09: POLICZONE na scalonej tresci (#272 + #274 + #
                     #    ktorego zada bramka wydania — wywalilby sie na WLASNEJ poprawce.
                     # ⛔ NIE przepisuj tej liczby przy nastepnym scaleniu: kazda nowa proba
                     #    dockerowa albo zipowa ja przesuwa. Policz komenda na scalonym drzewie.
-MAX_POMINIETYCH_PELNY=12   # ta sama arytmetyka, sciezka BEZ zakresu (tak wola `k7-koniec`)
+MAX_POMINIETYCH_PELNY=13   # ta sama arytmetyka, sciezka BEZ zakresu (tak wola `k7-koniec`): 12 z main + 1 prawne-migracja
 
 # ⛔ PODLOGA URUCHOMIONYCH (recenzja #287 WAZNA 2, druga polowa tej samej wady). Sufit
 # pominiec sam w sobie NIE chroni: gdyby ktos podniosl go "swiadomie" nie licząc, ile prob
@@ -189,8 +190,8 @@ MAX_POMINIETYCH_PELNY=12   # ta sama arytmetyka, sciezka BEZ zakresu (tak wola `
 # zielono, nie zmierzywszy niczego. Podloga jest DRUGA, NIEZALEZNA brama na tej samej
 # liczbie: minimalna liczba prob, ktore MUSZA sie faktycznie wykonac (ILE = N - POMINIETO).
 # Literaly, ta sama arytmetyka co MAX_POMINIETYCH_* wyzej (N minus maksymalne pominiecie).
-MIN_URUCHOMIONYCH_PELNY=53    # 65 prob w calym repo (28 narzedzia-qa + 37 testy; `ls narzedzia-qa/*proba-kontrolna*.sh testy/*proba-kontrolna*.sh | wc -l`) minus MAX_POMINIETYCH_PELNY(12)  (5.09 po scaleniu main z #296 do #298: +rejestr-liczniki (B) + chatbot-csv-formula, csv-neutralizacja-blizniaki (D) — czysty bash/PHP, nigdy pomijane)
-MIN_URUCHOMIONYCH_ZAKRES=19   # 28 prob w narzedzia-qa minus MAX_POMINIETYCH_ZAKRES(9)  (5.09 po scaleniu main z #296 do #298: +rejestr-liczniki (B) + chatbot-csv-formula, csv-neutralizacja-blizniaki (D) — czysty bash/PHP, nigdy pomijane)
+MIN_URUCHOMIONYCH_PELNY=55    # 68 prob w calym repo (30 narzedzia-qa + 38 testy; `ls narzedzia-qa/*proba-kontrolna*.sh testy/*proba-kontrolna*.sh | wc -l`) minus MAX_POMINIETYCH_PELNY(13)  (5.09 po scaleniu main z #294 do #298: +chatbot-csv-formula, csv-neutralizacja-blizniaki (D, czysty bash/PHP — nigdy pomijane) + rejestr-liczniki (B) + prawne-migracja/pakuj-slady/polityka (C))
+MIN_URUCHOMIONYCH_ZAKRES=20   # 30 prob w narzedzia-qa minus MAX_POMINIETYCH_ZAKRES(10)  (5.09 po scaleniu main z #294 do #298: +chatbot-csv-formula, csv-neutralizacja-blizniaki (D, czysty bash/PHP — nigdy pomijane) + rejestr-liczniki (B) + prawne-migracja/pakuj-slady/polityka (C))
 
 # Tryb LISTY (PRZELOT_LISTA=1) niczego nie uruchamia i nie pisze logu — nie jest dowodem, więc brudne
 # drzewo mu nie przeszkadza (próba kontrolna odłamków woła go na kopii przelotu w trakcie pracy).
@@ -243,9 +244,9 @@ case "$ODLAMEK" in
 		MIN_URUCHOMIONYCH=1      # 1 - 0
 		;;
 	reszta)
-		MAX_POMINIETYCH=7        # 19 prob w odlamku (21 w narzedzia-qa minus bramki/poswiadczenia);
-		                          # bramki/poswiadczenia nie wnosza pominiec, wiec to ta sama liczba co MAX_POMINIETYCH_ZAKRES
-		MIN_URUCHOMIONYCH=12     # 19 - 7
+		MAX_POMINIETYCH=10       # 25 prob w odlamku (27 w narzedzia-qa minus bramki/poswiadczenia; `ls narzedzia-qa/*proba-kontrolna*.sh | wc -l`);
+		                          # bramki/poswiadczenia nie wnosza pominiec, wiec to ta sama liczba co MAX_POMINIETYCH_ZAKRES (10) — 5.09 po scaleniu #297 do C
+		MIN_URUCHOMIONYCH=15     # 25 - 10
 		;;
 	"")
 		# ⛔ PODLOGA TYLKO DLA ZAKRESOW, DLA KTORYCH ZOSTALA POLICZONA (recenzja #290 WAZNA 1).

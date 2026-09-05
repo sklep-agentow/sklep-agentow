@@ -822,7 +822,7 @@ function sklepag_rodo_kasownik( $email, $strona = 1 ) {
 		. 'Same w sobie nie zawierają imienia, adresu ani e-maila; dane po stronie operatora płatności usuwa się wnioskiem złożonym u niego.';
 	$komunikaty[] = sprintf(
 		'Poza tym zamówienie zostaje w statystykach bez danych osobowych (kwota, data, nazwa produktu). Adresy IP w dzienniku zdarzeń i w dzienniku logowań nie są powiązane z adresem e-mail — '
-		. 'usuwa je retencja po %d dniach.',
+		. 'usuwa je zadanie WP-Cron sklepu po %d dniach — tylko gdy harmonogram WordPressa działa; gdy stoi, wpisy zostają do jego wznowienia.',
 		SKLEPAG_RETENCJA_DNI
 	);
 	if ( $nieudane ) {
@@ -885,7 +885,7 @@ function sklepag_polityka_prywatnosci() {
 	}
 	$tresc  = '<p>' . esc_html( 'Sklep zapisuje adres e-mail kupującego, dane zamówienia (produkt, kwota, data, status płatności) oraz — jeśli zostały podane dobrowolnie — dane do faktury: nazwę, NIP i adres. Płatność obsługuje Stripe jako osobny podmiot przetwarzający; sklep przechowuje identyfikator sesji płatności.' ) . '</p>';
 	$tresc .= '<p>' . esc_html( 'Przy dobrowolnej opinii zapisywany jest podpis (imię) i treść opinii — publikowane na stronie produktu wyłącznie za zgodą wyrażoną w formularzu.' ) . '</p>';
-	$tresc .= '<p>' . esc_html( sprintf( 'Dziennik zdarzeń i dziennik logowań (w tym adresy IP przy pobraniu pliku) są usuwane automatycznie po %d dniach.', SKLEPAG_RETENCJA_DNI ) ) . '</p>';
+	$tresc .= '<p>' . esc_html( sprintf( 'Dziennik zdarzeń i dziennik logowań (w tym adresy IP przy pobraniu pliku) usuwa zadanie WP-Cron sklepu po %d dniach (co 10 minut, tylko gdy harmonogram WordPressa działa; gdy stoi, wpisy zostają do jego wznowienia). Dane zamówień nie są usuwane po czasie — obowiązek podatkowy.', SKLEPAG_RETENCJA_DNI ) ) . '</p>';
 	$tresc .= '<p>' . esc_html( 'Podstawy: wykonanie umowy sprzedaży (art. 6 ust. 1 lit. b RODO) oraz obowiązek prawny (art. 6 ust. 1 lit. c RODO) — ustawa o VAT wymaga zachowania danych nabywcy z faktury, więc te dane pozostają także po wniosku o usunięcie.' ) . '</p>';
 	$tresc .= '<p>' . esc_html( 'Można poprosić o kopię swoich danych albo o ich usunięcie — administrator obsłuży wniosek wbudowanymi narzędziami WordPressa (Narzędzia → Eksportuj / Usuń dane osobowe).' ) . '</p>';
 	wp_add_privacy_policy_content( 'Sklep Agentów', $tresc );
