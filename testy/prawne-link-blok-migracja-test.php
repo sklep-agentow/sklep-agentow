@@ -374,7 +374,8 @@ foreach ( array( 'sklepag_strona_regulamin' => $id_reg_na_bok3, 'sklepag_strona_
 	if ( $i_b ) { update_option( $o_b, $i_b, false ); } else { delete_option( $o_b ); }
 }
 if ( null === $znacznik_na_bok3 ) { delete_option( 'sklepag_wersja_stron' ); } else { update_option( 'sklepag_wersja_stron', $znacznik_na_bok3, true ); }
-echo "=== C8d. KOMPENSACJA galaz (b): nieudany wp_update_post przy dopisywaniu sekcji KASUJE znacznik (drugi egzemplarz klasy z C8c; OBIE strony sa szablonami, wiec galaz (a) NIE wchodzi) ===\n";
+echo "=== C8d. KOMPENSACJA galaz (b): nieudany wp_update_post przy dopisywaniu sekcji KASUJE znacznik i melduje NAZWY sekcji (przygotowanie: obie strony szablonami, wiec galaz (a) nie wchodzi; pomiar znacznika, tresci, opcji, meldunku; kontrola dodatnia) ===\n";
+delete_option( 'sklepag_strony_nowe_sekcje' ); // czysty meldunek PRZED pomiarem — jak w blizniakach wyzej (klasa 8 w tescie)
 $id_reg_na_bok4 = (int) get_option( 'sklepag_strona_regulamin', 0 );
 $id_pol_na_bok4 = (int) get_option( 'sklepag_strona_polityka', 0 );
 $znacznik_na_bok4 = get_option( 'sklepag_wersja_stron', null );

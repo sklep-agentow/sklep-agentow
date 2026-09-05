@@ -117,6 +117,13 @@ else
 	printf '  ⛔ NIE WYSZLO  zaslepka bez noindex — robot zaindeksuje „w przygotowaniu"\n'; KOD=1
 fi
 ODP_CUDZY="$(curl -s -o /tmp/prawne-cudzy-adres.html -w '%{http_code}' "$ADRES/dowolny-wpis-ktorego-nie-ma/?sklepag_prawne=regulamin")"
+# Sciezka z sekwencja procentowa (`/%2F` = zakodowany ukosnik): kotwica porownuje SUROWA sciezke i odrzuca kazda z '%'.
+ODP_PROC="$(curl -s -o /tmp/prawne-procent-adres.html -w '%{http_code}' "$ADRES/%2F?sklepag_prawne=regulamin")"
+if grep -q 'w przygotowaniu' /tmp/prawne-procent-adres.html; then
+	printf '  ⛔ NIE WYSZLO  adres z sekwencja procentowa /%%2F (HTTP %s) dostal zaslepke — kotwice da sie obejsc kodowaniem\n' "$ODP_PROC"; KOD=1
+else
+	printf '  ✅ WYSZLO      adres z sekwencja procentowa /%%2F nie dostaje zaslepki (HTTP %s)\n' "$ODP_PROC"
+fi
 if grep -q 'w przygotowaniu' /tmp/prawne-cudzy-adres.html; then
 	printf '  ⛔ NIE WYSZLO  cudzy adres (%s) dostal zaslepke — duplikat pod kazdym adresem sklepu\n' "$ODP_CUDZY"; KOD=1
 else

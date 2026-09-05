@@ -1051,6 +1051,9 @@ Reguła dnia 5.09 (10:15): przy ZERZE KRYT scalamy, uwagi o narzędziach/dokumen
   w gałęzi (a) kasuje znacznik — test C8c), r5 W2 (zaślepka „w przygotowaniu” tylko pod ścieżką strony głównej + `noindex`;
   dwie asercje HTTP w `prawne-migracja-stos-probny.sh`), r5 W3 (CHANGELOG sklepu: jeden nagłówek „Naprawione”, osierocona kropka),
   r7 W3 (rachunek pod sufitem przelotu zgodny z tablicą; „obie wady” → cztery mutanty).
+  Z rund samego `#299`: r1 W1 (kotwica bez `sanitize_text_field`), r2 W1 (kotwica po SUROWEJ ścieżce, odrzuca `%`, asercja HTTP `/%2F`),
+  r1 W2 + r2 W2/W3 (oba `wp_update_post` sprawdzane, meldunek z NAZWAMI sekcji, test C8d mierzy wyłącznie gałąź (b)),
+  r1 W3 (nagłówek spustu z czterema mutantami), r1 D1/r2 D3 (komenda w komentarzu liczy nazwy prób).
 - **ZOSTAJE długiem (narzędzia/teksty, nie zachowanie produktu):**
   - r5 W4 — `testy/regulamin-pokrycie-art12-test.php` sprawdza 7 literałów nagłówków przez `strpos` (samo `Cena:` z pustą treścią
     przechodzi); `testy/polityka-sprzatanie-warunkowe-test.php` analogicznie. Kształt roboty: asercja na TREŚĆ pod nagłówkiem (≥ 1 zdanie / `[UZUPEŁNIJ]`).
