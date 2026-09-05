@@ -108,7 +108,7 @@ function przywrocPolityke() {
   console.log('\n[6] widget nadal nie uzywa innerHTML (nota sklada sie z wezlow)');
   /* Szukamy UZYCIA wlasciwosci (kropka przed nazwa), nie samego slowa — inaczej
      liczy sie tez komentarz "bez innerHTML" i test padal na wlasnym opisie.
-     Ten sam wzorzec ma bramka dokumentacja-zgodnosc.sh, wiec obie licza to samo. */
+     Ten sam wzorzec ma kontrola dokumentacja-zgodnosc.sh (nie bramka CI), wiec obie licza to samo. */
   let uzycia = '0';
   try {
     uzycia = execFileSync('docker', ['exec', KONTENER, 'grep', '-c', '\\.innerHTML',

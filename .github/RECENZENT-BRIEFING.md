@@ -110,7 +110,7 @@ z chromium (workflow stawia je PRZED recenzją), a klon jest PEŁNY
 - `bash testy/dokumentacja-zgodnosc.sh`,
   `bash testy/dokumentacja-zgodnosc-segregator.sh` oraz
   `bash testy/dokumentacja-zgodnosc-sklep.sh` — czy dokumentacja nie kłamie
-  względem kodu (trzy wtyczki, trzy bramki; każda ma próbę kontrolną `*-proba-kontrolna.sh`),
+  względem kodu (trzy wtyczki, trzy kontrole — nie bramki CI, biegną tu u Ciebie i w przelocie ręcznym; każda ma próbę kontrolną `*-proba-kontrolna.sh`),
 - `bash narzedzia-qa/bramki.sh --tryb pelny` — składnia PHP (bramka `php-lint`) razem
   z resztą bramek; ⛔ `find` NIE jest już dozwolony (`find -exec` uruchamia dowolną komendę),
 - `git log`, `git diff`, `git show` — historia i pełny diff względem bazy.
