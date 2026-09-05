@@ -139,9 +139,12 @@ function sklepag_strona_prawna_wczesnie() {
 	//    tylko pod ścieżką strony głównej. Bez tego `/dowolny-wpis/?sklepag_prawne=regulamin` oddawałby 200 z zaślepką
 	//    zamiast treści tamtego wpisu — indeksowalny duplikat pod każdym adresem sklepu (bliźniak kotwicy
 	//    w sklepag_status_404_wczesnie(), która sprawdza stronę sklepu z opcji).
-	$sciezka_zadania = isset( $_SERVER['REQUEST_URI'] ) ? (string) wp_parse_url( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ), PHP_URL_PATH ) : '/';
+	//    Porównanie idzie po ścieżce ZDEKODOWANEJ po obu stronach (rawurldecode) — bez sanitize_text_field(),
+	//    bo ten kasuje sekwencje %XX i `/%2F?sklepag_prawne=…` udawałoby stronę główną. esc_url_raw() tylko
+	//    oczyszcza wejście (wynik idzie wyłącznie do ===, nigdy na wyjście).
+	$sciezka_zadania = isset( $_SERVER['REQUEST_URI'] ) ? (string) wp_parse_url( esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ), PHP_URL_PATH ) : '/';
 	$sciezka_domu    = (string) wp_parse_url( home_url( '/' ), PHP_URL_PATH );
-	if ( untrailingslashit( $sciezka_zadania ) !== untrailingslashit( $sciezka_domu ) ) {
+	if ( untrailingslashit( rawurldecode( $sciezka_zadania ) ) !== untrailingslashit( rawurldecode( $sciezka_domu ) ) ) {
 		return;
 	}
 	$nazwa = $nazwy[ $ktore ];

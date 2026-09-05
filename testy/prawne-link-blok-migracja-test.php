@@ -374,6 +374,24 @@ foreach ( array( 'sklepag_strona_regulamin' => $id_reg_na_bok3, 'sklepag_strona_
 	if ( $i_b ) { update_option( $o_b, $i_b, false ); } else { delete_option( $o_b ); }
 }
 if ( null === $znacznik_na_bok3 ) { delete_option( 'sklepag_wersja_stron' ); } else { update_option( 'sklepag_wersja_stron', $znacznik_na_bok3, true ); }
+echo "=== C8d. KOMPENSACJA galaz (b): nieudany wp_update_post przy dopisywaniu sekcji KASUJE znacznik (klasa z C8c, drugi egzemplarz) ===\n";
+$id_reg_na_bok4 = (int) get_option( 'sklepag_strona_regulamin', 0 );
+$znacznik_na_bok4 = get_option( 'sklepag_wersja_stron', null );
+$id_szablon_c8d = wp_insert_post( array( 'post_title' => 'Regulamin sklepu (SZABLON)', 'post_content' => "SZABLON — tresc do uzupelnienia\n", 'post_status' => 'draft', 'post_type' => 'page' ) );
+update_option( 'sklepag_strona_regulamin', $id_szablon_c8d, false );
+update_option( 'sklepag_wersja_stron', SKLEPAG_WERSJA_STRON - 1, true );
+add_filter( 'wp_insert_post_empty_content', '__return_true' ); // wp_update_post woła wp_insert_post — ten sam filtr daje 0
+sklepag_kompensuj_strony_prawne();
+remove_filter( 'wp_insert_post_empty_content', '__return_true' );
+$sprawdz( 'galaz (b): po nieudanym dopisaniu sekcji znacznik NIE zostaje na biezacej wersji', (int) get_option( 'sklepag_wersja_stron', 0 ) !== SKLEPAG_WERSJA_STRON, 'znacznik: ' . var_export( get_option( 'sklepag_wersja_stron', null ), true ) );
+$tresc_c8d = (string) get_post_field( 'post_content', $id_szablon_c8d );
+$sprawdz( 'galaz (b): tresc szablonu NIE zmieniona (zapis padl, nic nie udaje sukcesu)', false === strpos( $tresc_c8d, 'Cena' ), 'tresc: ' . substr( $tresc_c8d, 0, 60 ) );
+// kontrola dodatnia: bieg BEZ awarii dopisuje sekcje i ustawia znacznik
+sklepag_kompensuj_strony_prawne();
+$sprawdz( 'galaz (b): nastepny bieg dopisuje sekcje i ustawia znacznik', (int) get_option( 'sklepag_wersja_stron', 0 ) === SKLEPAG_WERSJA_STRON && (string) get_post_field( 'post_content', $id_szablon_c8d ) !== $tresc_c8d );
+wp_delete_post( $id_szablon_c8d, true );
+if ( $id_reg_na_bok4 ) { update_option( 'sklepag_strona_regulamin', $id_reg_na_bok4, false ); } else { delete_option( 'sklepag_strona_regulamin' ); }
+if ( null === $znacznik_na_bok4 ) { delete_option( 'sklepag_wersja_stron' ); } else { update_option( 'sklepag_wersja_stron', $znacznik_na_bok4, true ); }
 echo "=== C7. KONTROLA PRZYRZADU: test biegnie pod WP-CLI (brame frontu mierzy spust zadaniem HTTP, nie ten test — r4 W2) ===\n";
 $sprawdz( 'kontrola przyrzadu: test biegnie pod WP-CLI (dlatego C1-C6 mogly pracowac)', defined( 'WP_CLI' ) && WP_CLI );
 update_option( 'sklepag_strona_polityka', $id_pol_przed, false );

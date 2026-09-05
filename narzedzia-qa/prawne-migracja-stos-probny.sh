@@ -14,7 +14,11 @@
 #   --proba-kontrolna blok-sprzedawcy  → wycina wywołanie bloku sprzedawcy w formularzu zakupu
 #                                        (musi paść przypadek B);
 #   --proba-kontrolna sekcje           → wyłącza krok (b) kompensacji: dopisywanie brakujących
-#                                        sekcji do strony-szablonu (musi paść przypadek C2).
+#                                        sekcji do strony-szablonu (musi paść przypadek C2);
+#   --proba-kontrolna podmiana-wlasny  → podmiana zdań wchodzi także we WŁASNY dokument właściciela
+#                                        (musi paść przypadek C5d);
+#   --proba-kontrolna front            → zdejmuje bramę „nie na froncie” (musi paść pomiar HTTP: front robi pracę).
+# (Lista mutantów = case niżej; nagłówek i case mają się zgadzać — #299 r1 W3, klasa 8.)
 # Przy każdej z nich spust ODWRACA znaczenie kodu wyjścia: EXIT 0 = wada ZOSTAŁA ZŁAPANA.
 set -u
 

@@ -172,8 +172,8 @@ MAX_POMINIETYCH_ZAKRES=10  # 5.09 po scaleniu #291 do C: 9 z main (+2 dockerowe 
                     #    niz wydanie. Scenariusz, ktorego sufit dotyczy: wykonawca BEZ Dockera
                     #    I BEZ `zip` (na maszynie z obydwoma pominiecie jest tylko 1 — dlatego
                     #    sam przelot tutaj NIE mierzy tego, przed czym sufit chroni):
-                    #      WYMAGA_DOCKERA 10 + WYMAGA_ZIP 4, wspolne 2  ⇒ unia 12   (5.09 #294 r7 W3: przeliczone
-                    #        z tablicy: `grep -c` po WYMAGA_DOCKERA daje 10 — #291 +2, C +1 prawne-migracja)
+                    #      WYMAGA_DOCKERA 10 + WYMAGA_ZIP 4, wspolne 2  ⇒ unia 12   (5.09: przeliczone z tablicy;
+                    #        komenda: `sed -n '/^WYMAGA_DOCKERA=(/,/^)/p' narzedzia-qa/proby-kontrolne-przelot.sh | grep -c 'proba-kontrolna.sh'` → 10)
                     #        z tego w `narzedzia-qa/` 9, w `testy/` 3
                     #      + 1 pomijana BEZWARUNKOWO (`dowod-zachowania-segregator`,
                     #        deinstaluje wtyczke ze stosu; lezy w `narzedzia-qa/`)
