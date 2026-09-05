@@ -181,7 +181,16 @@ else
 	#    bramki.sh:495 — obydwa jako TWARDE ZERO.
 	# ⛔ LITERAL, nie ${...:-} — wzorem bramki.sh:490: sufit czytany ze SRODOWISKA pozwala
 	#    przywrocic ciche zielone bez ruszenia jednego bajtu w repozytorium.
-	MAX_NIEZM_P=7   # 5.09: rowne MAX_NIEZMIERZONYCH w proby-kontrolne-przelot.sh (7 prob z ZAMKNIETEJ listy NIEZMIERZONE_JAWNIE, baza origin/main zawiera juz naprawe); osma klade przelot
+	# ⛔ PO NAZWIE, NIE PO LICZBIE (5.09, przelot na galezi k7-go). Sufit liczbowy 7 puszczal
+	#    DOWOLNE siedem prob z EXIT=2 — zestaw mogl kurczyc sie po cichu w granicy sufitu, a proba
+	#    kontrolna k7 (1 obcy EXIT=2 → NO-GO) to wylapala. Lista zamknieta zyje w JEDNYM miejscu:
+	#    proby-kontrolne-przelot.sh (NIEZMIERZONE_JAWNIE); k7 czyta ja z pliku w repo, wiec kazda
+	#    zmiana listy to commit w narzedzia-qa, ktory kontrola 6 i tak widzi (data waznosci dowodu).
+	#    Brak pliku = pusta lista = KAZDY EXIT=2 zatrzymuje wydanie. Sufit liczbowy = dlugosc listy.
+	LISTA_JAWNA=$(sed -n '/^NIEZMIERZONE_JAWNIE=(/,/^)/p' "$KORZEN/narzedzia-qa/proby-kontrolne-przelot.sh" 2>/dev/null | grep -oE '^[[:space:]]*[A-Za-z0-9_.-]+\.sh' | sed 's/^[[:space:]]*//')
+	MAX_NIEZM_P=$(printf '%s\n' "$LISTA_JAWNA" | grep -c '\.sh$')
+	# -x: pusta linia wzorca NIE moze dopasowac wszystkiego; wartownik __brak__ trzyma plik wzorcow niepusty.
+	NIEZM_OBCE=$(grep -E '^[A-Za-z0-9_.-]+\.sh EXIT=2 ' "$PROBY" | cut -d' ' -f1 | grep -vxF -f <(printf '%s\n' "$LISTA_JAWNA" '__brak__') | tr '\n' ' ')
 	# DATA WAŻNOŚCI: nie „ten sam commit" (commit zapisujący log sam przesuwa HEAD, więc taki
 	# warunek nie dałby się spełnić nigdy), tylko „od przelotu nie zmieniło się nic, czego ten
 	# przelot dowodzi". Zmiana w narzędziach, testach albo kodzie wtyczki unieważnia dowód;
@@ -193,6 +202,8 @@ else
 		fail "6 próby kontrolne: po przelocie ($P_COMMIT) zmieniło się to, czego on dowodzi — $POTEM… — dowód przeterminowany (uruchom: bash narzedzia-qa/proby-kontrolne-przelot.sh)"
 	elif [ "$ILE_P" -lt 26 ]; then
 		fail "6 próby kontrolne: uruchomionych tylko $ILE_P (wymagane ≥26) — zakres zawężony, pominiętych $POM_P"
+	elif [ -n "$NIEZM_OBCE" ]; then
+		fail "6 próby kontrolne: NIC NIE ZMIERZYŁO (EXIT=2) POZA zamkniętą listą NIEZMIERZONE_JAWNIE: ${NIEZM_OBCE}— zestaw kurczy się po cichu; przelot na $P_COMMIT (uruchom: bash narzedzia-qa/proby-kontrolne-przelot.sh)"
 	elif [ "$NIEZM_P" -gt "$MAX_NIEZM_P" ]; then
 		fail "6 próby kontrolne: $NIEZM_P z $ILE_P NIC NIE ZMIERZYŁO (EXIT=2, sufit: $MAX_NIEZM_P) — zestaw kurczy się po cichu; przelot na $P_COMMIT (uruchom: bash narzedzia-qa/proby-kontrolne-przelot.sh)"
 	elif [ "$ZLE_P" -ne 0 ]; then

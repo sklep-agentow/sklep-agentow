@@ -125,6 +125,17 @@ psuj_proby_log_21() { sed -i 's/proba-07.sh EXIT=0/proba-07.sh EXIT=21/' "$1/aud
 # zmierzywszy niczego. Ta atrapa psuje DOKLADNIE jeden warunek: zamienia kody 0 na 2,
 # nie ruszajac ani liczby wierszy, ani znacznika, ani commitu.
 psuj_proby_niezmierzone() { sed -i 's/\.sh EXIT=0 /.sh EXIT=2 /' "$1/audyt/sklep/PROBY-KONTROLNE.log"; }
+# EXIT=2 tylko PO NAZWIE z zamknietej listy NIEZMIERZONE_JAWNIE (5.09). Atrapa: kopiuje skrypt
+# przelotu (nosnik listy) do fixture i nadaje JEDNEJ probie pierwsza nazwe z listy z EXIT=2.
+# Bez skryptu przelotu w fixture (przypadki wyzej) lista jest pusta i KAZDY EXIT=2 zatrzymuje.
+psuj_proby_niezm_jawna() {
+	cp "$KORZEN/narzedzia-qa/proby-kontrolne-przelot.sh" "$1/narzedzia-qa/"
+	local n; n=$(sed -n '/^NIEZMIERZONE_JAWNIE=(/,/^)/p' "$KORZEN/narzedzia-qa/proby-kontrolne-przelot.sh" | grep -oE '[A-Za-z0-9_.-]+\.sh' | head -1)
+	[ -n "$n" ] || { echo "BLAD atrapy: pusta lista NIEZMIERZONE_JAWNIE w przelocie"; exit 3; }
+	sed -i "s/^proba-07\.sh EXIT=0 /$n EXIT=2 /" "$1/audyt/sklep/PROBY-KONTROLNE.log"
+}
+# Obca nazwa z EXIT=2 OBOK skryptu przelotu w fixture — lista istnieje, nazwa spoza niej → NO-GO.
+psuj_proby_niezm_obca() { cp "$KORZEN/narzedzia-qa/proby-kontrolne-przelot.sh" "$1/narzedzia-qa/"; psuj_proby_log_niezm "$1"; }
 # Dwa psucia dla DATY WAŻNOŚCI dowodu (recenzja #198 runda 3, W3). Każde psuje DOKŁADNIE
 # jeden warunek: pierwsze odbiera logowi znacznik maszynowy, drugie zostawia znacznik,
 # a przesuwa commit — inaczej nie wiadomo, który warunek bramkę zatrzymał.
@@ -182,6 +193,8 @@ sprawdz "6 proba kontrolna EXIT=1 w logu"                 1 psuj_proby_log   "PA
 sprawdz "6 EXIT=2 daje NO-GO, ale mowi NIC NIE ZMIERZYLO (nie PADLO)" 1 psuj_proby_log_niezm "NIC NIE ZMIERZYŁO"
 sprawdz "6 EXIT=21 to PADNIECIE, nie \"nie zmierzono\" (#280 D6)" 1 psuj_proby_log_21 "PADŁO"
 sprawdz "6 WSZYSTKIE proby EXIT=2 -> NO-GO, nie GO (#280 r3 W1)" 1 psuj_proby_niezmierzone "NIC NIE ZMIERZYŁO"
+sprawdz "6 EXIT=2 z NAZWA z listy jawnej przelotu -> GO, liczba w komunikacie" 0 psuj_proby_niezm_jawna "nie zmierzono: 1"
+sprawdz "6 EXIT=2 z nazwa SPOZA listy jawnej (lista obecna) -> NO-GO" 1 psuj_proby_niezm_obca "POZA zamkniętą listą"
 sprawdz "6 log BEZ znacznika przelotu (pisany recznie)"   1 psuj_proby_znacznik "bez znacznika przelotu"
 sprawdz "6 log z commitu spoza historii HEAD"              1 psuj_proby_commit   "dowód z innej linii"
 sprawdz "6 narzedzie zmienione PO przelocie"               1 psuj_proby_po      "przeterminowany"

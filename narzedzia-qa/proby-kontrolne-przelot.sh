@@ -301,6 +301,11 @@ START=$(date '+%Y-%m-%d %H:%M')
 TMP="$(mktemp)"
 trap 'rm -f "$TMP"' EXIT
 ZLE=0; ILE=0; POMINIETO=0; NIEZMIERZONE=0; ZLE_NAZWY=(); NIEZMIERZONE_NAZWY=()
+# ⛔ WYJSCIE KAZDEJ PROBY ZOSTAJE (5.09). Do tej pory szlo do /dev/null: „PADLA przejecie" w serii,
+#    PASS bezposrednio — i ani jednej linii, ktora by powiedziala, KTORA asercja padla w serii.
+#    Katalog TYMCZASOWY poza repo (nie obok logu: log w audyt/ idzie do repo, wyjscia sa robocze
+#    i moga niesc sciezki /tmp — to pomoc w diagnozie, nie dowod). Sciezka na stdout, nie w logu.
+WYJ="$(mktemp -d /tmp/proby-wyjscia-XXXXXX)"; echo "  wyjscia prob: $WYJ"
 
 for SCIEZKA in "${PROBY[@]}"; do
 	NAZWA="${SCIEZKA##*/}"
@@ -312,7 +317,7 @@ for SCIEZKA in "${PROBY[@]}"; do
 	fi
 	echo "  uruchamiam  $NAZWA"
 	T0=$SECONDS
-	bash "$SCIEZKA" > /dev/null 2>&1
+	bash "$SCIEZKA" > "$WYJ/${NAZWA%.sh}.out" 2>&1
 	KOD=$?
 	CZAS=$((SECONDS - T0))
 	printf '%s EXIT=%s %ss\n' "$NAZWA" "$KOD" "$CZAS" >> "$TMP"
@@ -340,6 +345,7 @@ for SCIEZKA in "${PROBY[@]}"; do
 	else
 		ZLE=$((ZLE + 1)); ZLE_NAZWY+=( "$NAZWA (EXIT=$KOD)" )
 		printf '  PADLA       %s (EXIT=%s)\n' "$NAZWA" "$KOD"
+		grep -E 'BLAD|FAIL|ODWROTNA|KOTWIC' "$WYJ/${NAZWA%.sh}.out" | head -4 | sed 's/^/         | /'; printf '         | pelne wyjscie: %s\n' "$WYJ/${NAZWA%.sh}.out"
 	fi
 done
 
