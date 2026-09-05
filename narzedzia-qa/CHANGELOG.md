@@ -14,6 +14,19 @@ wstecz nie dopisuję, bo nie umiałbym jej odtworzyć uczciwie. Ich zmiany od te
 pory lądują tutaj.
 
 ## [Niewydane]
+- **`pakuj-dla-klienta.sh` 1.2.0 — nagłówek zna `zrzuty/`, i dołożona kontrola sum między dwiema
+  kopiami zrzutów (#283 r1, WAŻNE 3/4).** Nagłówek skryptu wymieniał zawartość paczki bez katalogu
+  `zrzuty/`, mimo że jedzie do klienta od recenzji #280 — dopisany. Ważniejsze: `wtyczki/sklep-agentow/zrzuty/`
+  (kopia dla wpisu na WordPress.org) i `dokumentacja/zrzuty/` (źródło pakowania) trzymają te same pliki,
+  a nic nie pilnowało, że są równe — rozjazd byłby cichy (klasa 8, bliźniak). Skrypt teraz porównuje
+  sumy `sha256sum` obu kopii PRZED złożeniem paczki i kończy `EXIT=2`, gdy się różnią albo gdy bliźniak
+  brakuje. Dowód: podłożony 1 bajt różnicy w `wtyczki/sklep-agentow/zrzuty/sklep-front.png` →
+  „PAKUJ: rozjazd kopii zrzutów”, `EXIT=2`; po przywróceniu bajtu — pełna samokontrola PRZESZŁA
+  (19/19), `EXIT=0`.
+  Przy okazji (WAŻNA 1): kontrola „każdy obrazek z instrukcji istnieje w paczce” zmieniła nazwę na
+  „…ma PLIK o tej nazwie w paczce (obecność, nie treść)” — sprawdzała i nadal sprawdza wyłącznie
+  obecność pliku pod daną nazwą, nie zawartość obrazu (na treść zdjęcia patrzy tylko człowiek,
+  klasa 11 — nazwa bramki węższa niż mogłaby sugerować pełne pokrycie).
 - **`slady-wewnetrzne.sh` 1.4.0 — nowy wzorzec: kod naszego rejestru znalezisk w paczce klienta (D-4).**
   72 pliki w 12 z 29 archiwów `boty/paczki/` niosły oznaczenia audytu (np. `A6-F1`, `Q-5`, `CZ-1`,
   `K10`, „runda 2”, „klasa 8”) — komentarz cytował kod zamiast nieść powód. Dołożony wzorzec łapie

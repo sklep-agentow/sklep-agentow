@@ -360,7 +360,7 @@ function sklepag_admin_zamowienie() {
 	echo '<tr><td>Sesja Stripe</td><td><code>' . esc_html( $zam->stripe_session_id ) . '</code></td></tr>';
 	// Kolumna link_wygasa jest zapisywana w GMT (gmdate() w zakup.php i tu obok) — te same dwie linie
 	// niżej konwertują zgoda_czas z GMT na czas lokalny; bez tego panel pokazywał termin o godzinę/dwie
-	// wcześniejszy niż prawdziwy (A7b-F2). Sam warunek odmowy w pobieranie.php porównuje UTC z UTC i jest OK —
+	// wcześniejszy niż prawdziwy. Sam warunek odmowy w pobieranie.php porównuje UTC z UTC i jest OK —
 	// to wyłącznie naprawa WYŚWIETLANIA, zapis w bazie zostaje nietknięty.
 	echo '<tr><td>Pobrania</td><td>' . esc_html( (int) $zam->pobrania_uzyte . ' / ' . (int) $zam->pobrania_limit ) . ( $zam->link_wygasa ? ' · link ważny do ' . esc_html( get_date_from_gmt( $zam->link_wygasa, 'd.m.Y H:i' ) ) . ' (czas lokalny)' : ' · link unieważniony' ) . '</td></tr>';
 	// Kolumna zgoda_czas jest w GMT — panel pokazuje czas lokalny strony, ten sam, który dostaje kupujący w mailu.

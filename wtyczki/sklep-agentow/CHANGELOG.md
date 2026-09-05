@@ -16,7 +16,18 @@ wydany osobno (podbicie pośrednie wewnątrz jednej zmiany).
 
 ## [Niewydane]
 
-Nic jeszcze.
+### Naprawione
+- **Nasze wewnętrzne oznaczenia procesu audytowego nie jadą już do klienta w paczce.** Komentarze
+  i dokumenty niosące skrótowe oznaczenia zgłoszeń wyczyszczone — zero zmian logiki, sam tekst.
+- **Anonimizacja kupującego czyści też adresy IP z dziennika zdarzeń** (wpisy „pobranie”
+  i pokrewne). Wcześniej żądanie RODO usuwało dane osobowe z zamówienia, a IP w dzienniku zostawało.
+- **Panel pokazuje termin ważności linku pobrania w czasie witryny, z etykietą, zamiast
+  w surowym UTC.** `link_wygasa` była jedyną kolumną odczytywaną bez konwersji; teraz przeliczana
+  jak sąsiednie daty (np. `zgoda_czas`), z dopiskiem „(czas lokalny)”. Zapis w bazie nietknięty.
+- **Instrukcja dla klienta nie powołuje się już na uchylony przepis ustawy o prawach konsumenta.**
+  Podstawa prawna ochrony jednoosobowej działalności poza jej specjalnością to dziś art. 7aa
+  (`INSTRUKCJA.md`). Przy okazji poprawiona literówka w szablonie regulaminu: „art. 38 ust.
+  o prawach konsumenta” → „art. 38 ustawy o prawach konsumenta” (`aktywacja.php`).
 
 ## [0.9.40] — 2026-09-03
 

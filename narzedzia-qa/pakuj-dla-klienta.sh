@@ -1,6 +1,6 @@
 #!/bin/bash
 # pakuj-dla-klienta.sh — ZBIORCZA PACZKA DLA KLIENTA: 3 zipy wtyczek + PRZECZYTAJ-MNIE + instrukcja instalacji
-# + diagramy PNG + SHA256SUMS.txt, złożone JEDNYM poleceniem.  WERSJA 1.1.0
+# + diagramy PNG + zrzuty PNG + SHA256SUMS.txt, złożone JEDNYM poleceniem.  WERSJA 1.2.0
 #
 # PO CO TO POWSTAŁO (30.08): zamówienie mówi „zipy 3 wtyczek + sumy kontrolne”, a do dziś każdy zip leżał osobno,
 # sum nie było, a co składa się na wydanie, wiedziała tylko głowa. Czego nie da się odtworzyć jednym poleceniem,
@@ -42,6 +42,16 @@ cp dokumentacja/diagramy/*.png "$ROB/paczka/diagramy/"; echo "  + dokumentacja/d
 #    obrazka, przy wzorcu rynkowym 5-6 dla wtyczek). Instrukcja odwoluje sie do nich sciezka
 #    `zrzuty/...`, wiec katalog MUSI trafic do paczki obok INSTRUKCJA-INSTALACJI.md.
 if ! ls dokumentacja/zrzuty/*.png > /dev/null 2>&1; then echo "PAKUJ: brak dokumentacja/zrzuty/*.png — najpierw: node testy/zrzuty-panelu.js" >&2; exit 2; fi
+# ⛔ WAŻNA 4 (klasa 8 — bliźniak): te same zrzuty leżą DRUGI RAZ w wtyczki/sklep-agentow/zrzuty/
+# (kopia dla wpisu na WordPress.org). Nic dotąd nie pilnowało, że obie kopie są równe — rozjazd
+# byłby cichy, bo pakujemy tylko z dokumentacja/zrzuty/. Sumy porównane PRZED kopiowaniem do paczki.
+if [ -d wtyczki/sklep-agentow/zrzuty ]; then
+	for f in dokumentacja/zrzuty/*.png; do
+		n="$(basename "$f")"; bliz="wtyczki/sklep-agentow/zrzuty/$n"
+		[ -f "$bliz" ] || { echo "PAKUJ: rozjazd kopii zrzutów — $n jest w dokumentacja/zrzuty/, brak bliźniaka w wtyczki/sklep-agentow/zrzuty/" >&2; exit 2; }
+		[ "$(sha256sum < "$f")" = "$(sha256sum < "$bliz")" ] || { echo "PAKUJ: rozjazd kopii zrzutów — $n różni się treścią między dokumentacja/zrzuty/ i wtyczki/sklep-agentow/zrzuty/" >&2; exit 2; }
+	done
+fi
 mkdir -p "$ROB/paczka/zrzuty"
 cp dokumentacja/zrzuty/*.png "$ROB/paczka/zrzuty/"; echo "  + dokumentacja/zrzuty/ ($(ls dokumentacja/zrzuty/*.png | wc -l) PNG)"
 
@@ -60,9 +70,11 @@ spr "3 zipy wtyczek w paczce"                      "[ \$(ls *.zip | wc -l) -eq 3
 spr "PRZECZYTAJ-MNIE.txt i INSTRUKCJA-INSTALACJI.md" "[ -f PRZECZYTAJ-MNIE.txt ] && [ -f INSTRUKCJA-INSTALACJI.md ]"
 spr "diagramy: 3 PNG"                              "[ \$(ls diagramy/*.png | wc -l) -eq 3 ]"
 spr "zrzuty do instrukcji: 5 PNG"                  "[ \$(ls zrzuty/*.png | wc -l) -eq 5 ]"
-# ⛔ Kontrola NA TRESCI, nie na istnieniu: kazdy obrazek, do ktorego instrukcja sie odwoluje,
-#    musi w paczce ISTNIEC. Inaczej klient dostaje polamane odnosniki, a plik i tak sie zgadza.
-spr "kazdy obrazek z instrukcji istnieje w paczce" "! grep -oE '\\]\\((zrzuty|diagramy)/[^)]+\\)' INSTRUKCJA-INSTALACJI.md | tr -d ')' | sed 's/^](//' | while read -r o; do [ -f \"\$o\" ] || echo BRAK; done | grep -q BRAK"
+# ⛔ Kontrola NA OBECNOSCI PLIKU, nie na tresci obrazu: kazdy obrazek, do ktorego instrukcja
+#    sie odwoluje, musi w paczce ISTNIEC pod ta sama nazwa. Inaczej klient dostaje polamane
+#    odnosniki. Nie zlapie za to obrazu z danymi wewnetrznymi pod poprawna nazwa (klasa 11 —
+#    nazwa bramki wezsza niz mogloby sie wydawac; na tresc zdjecia patrzy tylko czlowiek).
+spr "kazdy obrazek z instrukcji ma PLIK o tej nazwie w paczce (obecność, nie treść)" "! grep -oE '\\]\\((zrzuty|diagramy)/[^)]+\\)' INSTRUKCJA-INSTALACJI.md | tr -d ')' | sed 's/^](//' | while read -r o; do [ -f \"\$o\" ] || echo BRAK; done | grep -q BRAK"
 spr "SHA256SUMS.txt zgadza się po rozpakowaniu"    "sha256sum -c --quiet SHA256SUMS.txt"
 spr "sumy obejmują KAŻDY plik paczki"              "[ \$(find . -type f ! -name SHA256SUMS.txt | wc -l) -eq \$(wc -l < SHA256SUMS.txt) ]"
 spr "wersja sklepu w nazwie paczki == nagłówek"    "[ -f sklep-agentow-$WER.zip ]"

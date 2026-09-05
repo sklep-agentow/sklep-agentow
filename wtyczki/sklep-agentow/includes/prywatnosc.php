@@ -269,7 +269,7 @@ function sklepag_anonimizuj_zamowienie( $id, $zachowaj_dane_faktury = true ) {
 	}
 
 	/*
-	 * ⛔ ADRES IP ZOSTAWAL W DZIENNIKU PO ANONIMIZACJI (P-5). Blok wyżej czyści adres e-mail
+	 * ⛔ ADRES IP ZOSTAWAL W DZIENNIKU PO ANONIMIZACJI. Blok wyżej czyści adres e-mail
 	 * PO TREŚCI; adres IP przy pobraniu pliku (`pobieranie.php`: zdarzenia `pobranie` i
 	 * `pobranie_odmowa_zwrot`) czyścimy PO PRZYPISANIU do zamówienia — patrz komentarz
 	 * `sklepag_kandydaci_ip_w_dzienniku()`. Ten sam gate `$ok_zdarzenia`: awaria czyszczenia IP
@@ -374,7 +374,7 @@ function sklepag_anonimizuj_zamowienie( $id, $zachowaj_dane_faktury = true ) {
 		)
 	);
 
-	/* ⛔ POMIAR PYTA DOKLADNIE O TO, CO CZYSCILISMY (P-5): ta sama funkcja wybierajaca
+	/* ⛔ POMIAR PYTA DOKLADNIE O TO, CO CZYSCILISMY: ta sama funkcja wybierajaca
 		kandydatow po zamowienie_id, ten sam wzorzec SKLEPAG_WZORZEC_IP. */
 	$slady_ip = 0;
 	foreach ( sklepag_kandydaci_ip_w_dzienniku( $id ) as $k ) {
