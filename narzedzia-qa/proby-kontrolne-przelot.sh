@@ -192,6 +192,15 @@ MAX_POMINIETYCH_PELNY=12   # ta sama arytmetyka, sciezka BEZ zakresu (tak wola `
 MIN_URUCHOMIONYCH_PELNY=48    # 58 prob w calym repo minus MAX_POMINIETYCH_PELNY(10)  (5.09: +1 przelot-bramy-proba-kontrolna)
 MIN_URUCHOMIONYCH_ZAKRES=15   # 22 prob w narzedzia-qa minus MAX_POMINIETYCH_ZAKRES(7)  (5.09: +1 przelot-bramy-proba-kontrolna)
 
+# ⛔ PODLOGA URUCHOMIONYCH (recenzja #287 WAZNA 2, druga polowa tej samej wady). Sufit
+# pominiec sam w sobie NIE chroni: gdyby ktos podniosl go "swiadomie" nie licząc, ile prob
+# w ogole jest w zakresie, POMINIETO moglby zjesc caly zestaw i przelot dalej konczylby sie
+# zielono, nie zmierzywszy niczego. Podloga jest DRUGA, NIEZALEZNA brama na tej samej
+# liczbie: minimalna liczba prob, ktore MUSZA sie faktycznie wykonac (ILE = N - POMINIETO).
+# Literaly, ta sama arytmetyka co MAX_POMINIETYCH_* wyzej (N minus maksymalne pominiecie).
+MIN_URUCHOMIONYCH_PELNY=48    # 58 prob w calym repo minus MAX_POMINIETYCH_PELNY(10)  (5.09: +1 przelot-bramy-proba-kontrolna)
+MIN_URUCHOMIONYCH_ZAKRES=15   # 22 prob w narzedzia-qa minus MAX_POMINIETYCH_ZAKRES(7)  (5.09: +1 przelot-bramy-proba-kontrolna)
+
 # Tryb LISTY (PRZELOT_LISTA=1) niczego nie uruchamia i nie pisze logu — nie jest dowodem, więc brudne
 # drzewo mu nie przeszkadza (próba kontrolna odłamków woła go na kopii przelotu w trakcie pracy).
 if [ "${PRZELOT_LISTA:-}" != 1 ] && [ -n "$(git status --porcelain -uno 2>/dev/null)" ]; then
