@@ -877,7 +877,7 @@ function sklepag_zaksieguj_spor( $typ, $obiekt ) {
 		}
 		$powrot = '' !== (string) $zam->status_przed_sporem ? (string) $zam->status_przed_sporem : 'oplacone';
 		$reszta = max( 0, (int) $zam->zwrocono_grosze - $kwota ); // prawdziwy zwrot częściowy sprzed sporu zostaje
-		$zapis = $wpdb->query(
+		$zapis  = $wpdb->query(
 			$wpdb->prepare(
 				// status-bez-warunku: $powrot wyliczony wyżej z `status_przed_sporem`, czyli
 				// z zapamiętanego stanu poprzedniego — nie jest stałą.
