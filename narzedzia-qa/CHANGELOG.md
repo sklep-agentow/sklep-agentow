@@ -14,6 +14,28 @@ wstecz nie dopisuję, bo nie umiałbym jej odtworzyć uczciwie. Ich zmiany od te
 pory lądują tutaj.
 
 ## [Niewydane]
+- **`gitleaks-proba-kontrolna.sh` 1.1.1 — SAMOWYSTARCZALNA: sama zapewnia binarkę gitleaks (prawdziwą `zapewnij_narzedzie`
+  z `bramki.sh`, tryb samych definicji), zamiast żądać „uruchom najpierw bramki.sh”.** Ukryta zależność od KOLEJNOŚCI,
+  którą ujawnił podział przelotu na odłamki (#287, pierwszy przebieg): w pełnym przelocie binarkę pobierała przypadkiem
+  wcześniejsza próba, w odłamku `reszta` nikt — próba oddawała kod 2, przelot padał na suficie niezmierzonych (0).
+  Dowód: z pustym `TMPDIR` (jak świeży wykonawca) próba pobiera, weryfikuje sumę i przechodzi (EXIT=0); z pełnym cache
+  bez zmian (EXIT=0).
+- **`quality.yml` — blok `run:` kroku przelotu przechodzi shellcheck (SC2086).** Obraz GitHuba ma `shellcheck`, więc
+  bramka `actionlint` sprawdza tam także skrypty w `run:`; lokalnie shellchecka nie było i actionlint milczał (#287 r1:
+  `BRAMKA actionlint: EXIT=1`). Parytet lokalny: `shellcheck` w `/tmp/bramki-narzedzia` obok actionlinta — stara wersja
+  pliku pada lokalnie tak samo jak w CI (EXIT=1), nowa przechodzi.
+- **`proby-kontrolne-przelot.sh` — ODŁAMKI (`PRZELOT_ODLAMEK=bramki|poswiadczenia|reszta`) i tryb listy (`PRZELOT_LISTA=1`).**
+  CI biegnie trzema odłamkami RÓWNOLEGLE (D41 c.d., 5.09): dwie próby zjadały ~80 % przelotu (590 s + 310 s z 15),
+  reszta ~30 s. Odłamki nazwane W SKRYPCIE, nie w workflow — jedno źródło prawdy; nieznana nazwa albo odłamek
+  bez trafień = ODMOWA (kod 2), nie zielone. Log niesie wiersz `ODLAMEK:`, żeby logu odłamka nie wziąć za pełny.
+  Bez nazwy odłamka zachowanie bez zmian (`k7-koniec`, przelot ręczny).
+- **`bramki-proba-kontrolna.sh` — uzupełnienie zapisu incydentu z #286 (recenzja r2, DROBNA 4, klasa 11).** Zależność
+  od diffu gałęzi dawała nie tylko fałszywą CZERWIEŃ (0 zamiast 1), ale i fałszywą ZIELEŃ dwóch asercji „ma być 0”
+  (docker+unzip, docker bez unzip) — one przechodziły z tego samego powodu, dla którego trzecia padała, czyli
+  niczego nie mierzyły. `--tryb pelny` naprawia oba kierunki naraz; wpis wyżej mówił tylko o czerwieni.
+- **`przelot-odlamki-proba-kontrolna.sh` — NOWA, dwukierunkowo.** Suma trzech odłamków = pełna lista (na kopii
+  przelotu, bez uruchamiania prób); nieznany odłamek → kod 2; mutant z literówką w filtrze odłamka → suma ≠ pełna,
+  złapane. Bez tej próby literówka w jednym filtrze kurczyłaby zestaw po cichu — klasa I-2 (mianownik zero).
 - **`bramki-proba-kontrolna.sh` — pomiary pominięcia goldena wymuszają `--tryb pelny` (5.09, #286).** Zapowiedź
   „golden bedzie POMINIETA” pada tylko w trybie pełnym, a `bramki.sh` bez flagi wykrywa tryb z diffu gałęzi — PR
   zmieniający same pliki tekstowe wpadał w tryb tekstowy i trzy pomiary (docker+unzip / bez dockera / docker bez

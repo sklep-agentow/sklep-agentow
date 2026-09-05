@@ -1256,7 +1256,17 @@ która działa, to **człowiek otwierający plik**.
 - **Minuty GitHuba są teraz kosztem.** 2000 min/mies. ≈ 80 pchnięć; tydzień 29.08–5.09 miał ich
   ~200. ⇒ Budżet z twardym stopem w GitHubie (Budgets and alerts) — ustawia właściciel; oraz
   reguła tempa: scalać przy ZERZE uwag krytycznych, WAŻNE tu, jednym PR-em porządkowym.
-- ~~**Po transferze repo do organizacji `sklep-agentow`:**~~ ✅ ZAMKNIĘTE 5.09 (PR porządkowy po #285): odznaki i odnośniki w `README.md` (3 wiersze
+- ~~**Po transferze repo do organizacji `sklep-agentow`:**~~ ✅ ZAMKNIĘTE 5.09 (PR porządkowy po #285; ⛔ `narzedzia-qa/bramka-recenzji-proba-kontrolna.sh:45` ZOSTAJE CELOWO — to LOGIN użytkownika w atrapie komentarza, nie adres repo, a login się nie zmienił; recenzja #286 DROBNA 2): odznaki i odnośniki w `README.md` (3 wiersze
   z `szydlowskikonrad95-art`), `narzedzia-qa/bramka-recenzji-proba-kontrolna.sh` (1),
   `boty/BRIEFING-BUILDERA-BOTY.md` (1) wskazują starego właściciela — GitHub przekierowuje, ale
   odznaka `badge.svg` pod starym adresem może przestać się odświeżać. ⇒ Commit porządkowy po transferze.
+
+### ZGUBIONE Z LIST — Dzidek przypomniał 5.09 04:40 (było tylko w `do-panelu/PORZADKOWY-SZKIELET.md:134-166`)
+- **`narzedzia-qa/przeglad-strony-repo.sh` NIE ISTNIEJE.** Szkielet obiecał bramkę z CZTEREMA mierzalnymi
+  kontrolami strony repo — m.in. odznaka wersji w `README.md` kontra `/releases/latest` (zrzuty Dzidka 5.09:
+  README `v0.9.38`, „latest” `v0.9.28`; grep tego nie widzi, bo to nie jest w kodzie). ⇒ Budowa PRZED wydaniem
+  0.9.40, z próbą kontrolną (podłożona rozbieżność wersji → EXIT≠0).
+- **Claude w Chrome na maszynie Dzidka — oględziny „oczami klienta”.** To, czego skrypt nie zmierzy: czy zrzuty
+  w README pokazują aktualny produkt, czy strona sklepu wygląda jak coś, za co ktoś zapłaci. Osobna sesja, nie
+  widzi naszego stanu — dostaje kartkę z listą ekranów. ⇒ Po wydaniu 0.9.40, przed oddaniem; wynik = lista uwag
+  do `REJESTR-ZNALEZISK`, nie „ok”.
