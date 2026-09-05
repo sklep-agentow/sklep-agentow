@@ -1,3 +1,5 @@
+// ⛔ SPRZĄTANIE PO BIEGU (I-22): ten przelot zostawia na WSPÓLNYM stanowisku prawdziwe zamówienie kupujacy-e2e@test.local,
+//    które liczy się do przychodu na Pulpicie. Po każdym biegu: bash narzedzia-qa/stanowisko/sprzatnij-zamowienia-testowe.sh --kasuj
 /* E2E kości v2: akordeon "card" + pola karty w iframe'ach Elements. */
 const { chromium } = require('playwright-core');
 const { wymagajChromium } = require('../lib/chromium');
