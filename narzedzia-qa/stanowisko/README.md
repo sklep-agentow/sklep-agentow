@@ -21,7 +21,10 @@ Ustawione:
 
 Sprawdzenie (nie może być zaległych starszych niż ~2 min):
 
-    docker exec strona_wp_wordpress wp --allow-root --path=/var/www/html cron event list --fields=hook,next_run_relative --format=csv | grep -c ',now$'
+    [ "$(docker exec strona_wp_wordpress wp --allow-root --path=/var/www/html cron event list --fields=hook,next_run_relative --format=csv | grep -c ',now$')" = 0 ]
+
+⛔ Nie samo `… | grep -c ',now$'` jako przejdź/padnij: `grep -c` przy ZERZE trafień kończy kodem 1, więc stan zdrowy
+dawałby EXIT 1, a chory EXIT 0 (recenzja #293 WAŻNA 1). Porównanie liczby z `0` ma kod 0 = zdrowy, 1 = zaległe.
 
 Próba kontrolna (wada = wyjęty wpis crona): `mv /etc/cron.d/stanowisko-wp-cron /tmp/` →
 zaplanuj zdarzenie w przeszłości (`wp cron event schedule proba "-300 seconds"`) → po 140 s
