@@ -48,7 +48,9 @@ if [ -z "$L" ]; then echo "  KOTWICA  brak wiersza OTWARTE do zmutowania"; KOTWI
 	elif zmierz "$T/b.md" > /dev/null; then echo "  ZLE  wiersz z dwoma statusami PRZESZEDL — proba slepa"; BLEDY=$((BLEDY+1)); else echo "  OK   przeciecie statusow ZLAPANE"; fi
 fi
 
-sekcja_dlugu() { awk '/^## .*ŚWIADOMY DŁUG NA WYDANIE/{f=1; print; next} f && /^## /{exit} f' "$1"; }
+# WSZYSTKIE sekcje „ŚWIADOMY DŁUG NA WYDANIE …” (nie tylko pierwsza): druga sekcja pod obecną, dla następnego wydania,
+# też liczy się do pokrycia (#296 r2 DROBNA 1). Inny nagłówek `## ` zamyka sekcję, kolejna sekcja długu otwiera ją znowu.
+sekcja_dlugu() { awk '/^## .*ŚWIADOMY DŁUG NA WYDANIE/{f=1; print; next} /^## /{f=0} f' "$1"; }
 pokrycie() { # rejestr, co-wisi → drukuje brakujace kody; kod 0 = kazdy kod OTWARTY z rejestru jest w sekcji dlugu
 	local r="$1" c="$2" s k brak=0
 	s=$(sekcja_dlugu "$c")

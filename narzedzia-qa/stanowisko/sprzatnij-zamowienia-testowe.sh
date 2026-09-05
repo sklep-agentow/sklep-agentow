@@ -3,13 +3,16 @@
 # (znalezisko I-22: nasz własny test produkował fałszywy przychód na Pulpicie — sześć zamówień po 149,00 PLN
 # ze statusem mail_wyslany liczyło się do przychodu, który ogląda właściciel).
 #
-# Kogo uznajemy za testowego — DWA warunki naraz: e-mail kupującego z domeny `test.local` albo `example.com`, albo
-# PUSTY; ORAZ sesja Stripe `cs_test_…` (tryb testowy Stripe — prawdziwy, opłacony zakup ma `cs_live_…`). Pusty e-mail
-# SAM nie wystarcza: zakup.php (domknięcie sesji) zapisuje pusty e-mail, gdy Stripe nie odda adresu, i taki wiersz
-# przechodzi na `oplacone` — to normalne zamówienie, nie sierota (#296 r1 WAŻNA 1). Zrzut z 5.09 sprawdzony po tej
-# uwadze: 20 skasowanych wierszy, 2 z pustym e-mailem, WSZYSTKIE 20 z `cs_test_` — nic prawdziwego nie przepadło.
+# Kogo uznajemy za testowego — DWA warunki naraz: e-mail kupującego z domeny `test.local` albo `example.com`
+# ORAZ sesja Stripe `cs_test_…`. ⛔ PUSTY e-mail NIGDY nie kwalifikuje do skasowania: zakup.php (domknięcie sesji)
+# zapisuje pusty e-mail, gdy Stripe nie odda adresu, i taki wiersz przechodzi na `oplacone` — to normalne
+# zamówienie, nie sierota (#296 r1 WAŻNA 1). A na tym stanowisku `cs_test_` ma KAŻDE zamówienie (Stripe w trybie
+# testowym, także zakupy przechodzące przez prawdziwe przekierowanie Stripe), więc `cs_test_` nie odróżnia
+# „naszych testów” od „ręcznych zakupów właściciela” (#296 r2 WAŻNA 1) — odróżnia je wyłącznie DOMENA e-maila.
+# Wiersze z pustym e-mailem są WYPISYWANE osobno do ręcznej oceny, bez kasowania.
+# Zrzut z 5.09 sprawdzony po r1: 20 skasowanych wierszy, 2 z pustym e-mailem, wszystkie 20 z `cs_test_`.
 # Domeny: `example.com` rezerwuje RFC 2606; `test.local` to NASZA konwencja z testów (kupujacy-e2e, kupujacy-osadzony,
-# audyt-*, opinie-test), nie rezerwacja z RFC — dlatego drugi warunek `cs_test_` jest obowiązkowy.
+# audyt-*, opinie-test), nie rezerwacja z RFC.
 #
 # Użycie: bash narzedzia-qa/stanowisko/sprzatnij-zamowienia-testowe.sh            # tylko LISTA (nic nie kasuje)
 #         bash narzedzia-qa/stanowisko/sprzatnij-zamowienia-testowe.sh --kasuj    # kasuje, po ZRZUCIE do pliku
@@ -27,7 +30,7 @@ if ! docker ps --format '{{.Names}}' | grep -qx "$KONTENER"; then echo "SPRZATNI
 # SQL w apostrofach: warunek wchodzi do PHP-owego stringu w cudzyslowach (pierwsza wersja z cudzyslowami w SQL
 # rozrywala string PHP i dawala FALSZYWE ZERO — „0 zamowien” przy 20 na stanowisku; zlapane proba na zywo).
 # `\\_` → w SQL `\_` = dosłowny podkreślnik (klasa 2 ze ściągi: goły `_` w LIKE to „dowolny znak”).
-WARUNEK="(email_kupujacego LIKE '%@test.local' OR email_kupujacego LIKE '%@example.com' OR email_kupujacego = '') AND stripe_session_id LIKE 'cs\\_test\\_%'"
+WARUNEK="(email_kupujacego LIKE '%@test.local' OR email_kupujacego LIKE '%@example.com') AND stripe_session_id LIKE 'cs\\_test\\_%'"
 
 # KONTROLA DODATNIA (#296 r1 WAŻNA 2): zanim uwierzymy w „0 testowych”, pomiar musi oddać LICZBĘ wszystkich zamówień.
 # Bez tego każda awaria pomiaru (fatal PHP, brak tabeli, inny prefiks) wyglądała jak „nic do zrobienia”.
@@ -36,7 +39,8 @@ case "$RAZEM" in ''|*[!0-9]*) echo "SPRZATNIJ: pomiar nie dal liczby (odpowiedz:
 LISTA=$($WP eval "global \$wpdb; \$p=\$wpdb->prefix.'sklepag_zamowienia'; foreach (\$wpdb->get_results(\"SELECT id, email_kupujacego e, kwota_grosze k, status s, utworzono u FROM \$p WHERE $WARUNEK ORDER BY id\") as \$z) printf(\"%s|%s|%s|%s|%s\n\", \$z->id, \$z->e, \$z->k, \$z->s, \$z->u);" 2>/dev/null) || { echo "SPRZATNIJ: zapytanie o testowe padlo — nic nie zmierzono" >&2; exit 2; }
 if printf '%s' "$LISTA" | grep -q . && printf '%s\n' "$LISTA" | grep -qvE '^[0-9]+\|'; then echo "SPRZATNIJ: odpowiedz nie jest lista wierszy: $(printf '%s' "$LISTA" | head -2)" >&2; exit 2; fi
 ILE=$(printf '%s' "$LISTA" | grep -c .)
-echo "SPRZATNIJ: zamowien razem na $KONTENER: $RAZEM, testowych (domena/pusty e-mail ORAZ cs_test_): $ILE"
+OSIEROCONE=$($WP eval "global \$wpdb; \$p=\$wpdb->prefix.'sklepag_zamowienia'; echo (int)\$wpdb->get_var(\"SELECT COUNT(*) FROM \$p WHERE email_kupujacego = ''\");" 2>/dev/null | tail -1)
+echo "SPRZATNIJ: zamowien razem na $KONTENER: $RAZEM, testowych (domena test.local/example.com ORAZ cs_test_): $ILE, z pustym e-mailem (NIE kasowane, do recznej oceny): ${OSIEROCONE:-?}"
 [ -n "$LISTA" ] && printf '%s\n' "$LISTA" | sed 's/^/  /'
 [ "$ILE" -gt 0 ] || { echo "SPRZATNIJ: nic do zrobienia"; exit 0; }
 [ "$TRYB" = "--kasuj" ] || { echo "SPRZATNIJ: tryb LISTA — dodaj --kasuj, zeby usunac (po zrzucie)"; exit 0; }

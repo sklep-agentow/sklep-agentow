@@ -15,8 +15,9 @@ pory lądują tutaj.
 
 ## [Niewydane]
 - **`stanowisko/sprzatnij-zamowienia-testowe.sh` — NOWY (I-22): lista / `--kasuj` zamówień testowych ze stanowiska (domena
-  `test.local`/`example.com` albo pusty e-mail ORAZ sesja Stripe `cs\_test\_`) po zrzucie do JSON, razem ze zdarzeniami, opiniami
-  i sesjami.** Nasze testy zostawiały zamówienia po 149 zł, które liczyły się do przychodu na Pulpicie; 5.09 usunięto 20 (zrzut
+  `test.local`/`example.com` ORAZ sesja Stripe `cs\_test\_`; pusty e-mail NIGDY — r3 po #296 r2 WAŻNA 1: na stanowisku `cs_test_`
+  ma każde zamówienie, więc nie odróżnia testów od ręcznych zakupów; wiersze bez e-maila są wypisywane osobno, bez kasowania)
+  po zrzucie do JSON, razem ze zdarzeniami, opiniami i sesjami.** Nasze testy zostawiały zamówienia po 149 zł, które liczyły się do przychodu na Pulpicie; 5.09 usunięto 20 (zrzut
   sprawdzony po #296 r1 WAŻNA 1: 2 z pustym e-mailem, wszystkie 20 z `cs_test_`). Pierwsza wersja dawała FAŁSZYWE ZERO
   (cudzysłowy SQL rozrywały string PHP) — od r2 kontrola dodatnia: pomiar musi oddać liczbę WSZYSTKICH zamówień, inaczej kod 2
   (WAŻNA 2); pusty e-mail sam nie jest znacznikiem testu, bo domknięcie sesji zapisuje go przy prawdziwym zakupie (WAŻNA 1);
