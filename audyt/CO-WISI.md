@@ -41,7 +41,7 @@ nie odświeżano wobec dzisiejszego `HEAD`.
 
 ## 🟡 ŚWIADOMY DŁUG NA WYDANIE 0.9.42 — co ZOSTAJE otwarte w rejestrze INFRA po rundzie 5.09 i DLACZEGO (5.09, koordynatorka)
 
-Stan NA TEJ GAŁĘZI po scaleniu #291, #297, #296 i obszaru C (#294) (5.09), policzony komendą rejestru (`grep -cE '^\| `[^`]+` \|.*OTWARTE' audyt/REJESTR-ZNALEZISK-INFRA.md`): **16 OTWARTYCH**
+Stan NA TEJ GAŁĘZI po scaleniu #291, #297, #296 i obszaru C (#294) (5.09), policzony komendą rejestru (`grep -cE '^\| `[^`]+` \|.*OTWARTE' audyt/REJESTR-ZNALEZISK-INFRA.md`): **15 OTWARTYCH**
 (plus WSZYSTKIE 2 pozycje W NAPRAWIE wymienione dla kompletu: `F4-F4`, `P-1` — #296 r5 WAŻNA 2: wcześniej 2 z 3; oraz 1 WYCOFANE: `B-12`). Poniżej WSZYSTKIE, każda z kodem w odwrotnych apostrofach — `bramka-znaleziska.sh` (krok „rejestr INFRA”, przez
 `rejestr-liczniki-proba-kontrolna.sh`) sprawdza na każdym PR, że KAŻDY kod OTWARTY w rejestrze występuje w tej sekcji. Powód: #296 r1
 KRYT 1 — „~20” było liczbą przepisaną, pomiar dawał 30, a sekcja gubiła jedyne KRYT rejestru (klasa I-23: dwa rejestry, jeden nie

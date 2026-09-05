@@ -30,7 +30,7 @@
 > `narzedzia-qa/bramka-znaleziska.sh` (dziś bramka czyta TYLKO tamten plik — patrz DŁUG poniżej).
 > ⛔ Znaleziska produktu NIE wchodzą tutaj; tu wyłącznie infrastruktura, CI, wydanie i dokumenty.
 
-## Liczba znalezisk OTWARTYCH: 16
+## Liczba znalezisk OTWARTYCH: 15
 Kontrola sumy 5.09 (metoda „POMIAR BEZPOSREDNI” z tego pliku, uruchomiona po zamknięciach tego PR-a — recenzja #288 KRYTYCZNA: nagłówek mówił 43, komenda liczyła 35):
 `grep -cE '^\| `[^`]+` \|.*OTWARTE' audyt/REJESTR-ZNALEZISK-INFRA.md` → **15** · `ZAMKNI[EĘ]TE` → **71** · `W NAPRAWIE|ZAPARKOWANE|WYCOFANE` → **3** · razem **89** = `grep -cE '^\| `[^`]+` \|'` → 89 wierszy; przecięcia 0. Było 43 na `main`, ten PR zamknął 8. `I-23` (skrypt liczący, nie ręczny grep) zostaje OTWARTE. ⭐ Przeliczone ponownie 5.09 po scaleniu #289 (PR porządkowy, recenzja #289 W1): `I-25` i `I-27` ZAMKNIETE, `I-26` W NAPRAWIE → 32 · 53 · 4 = 89, przecięcia 0. ⭐ Przeliczone 5.09 po #291 (D-4, P-5, A7b-F2 ZAMKNIETE): 29 · 56 · 4 = 89. ⭐ Po F5-F5 (#291 r5): 28 · 57 · 4 = 89. ⭐ Po A7b-F1 ZAMKNIĘTE (5.09, #301 r2): 15 · 71 · 3 = 89, przecięcia 0.
 <!-- ⛔ LICZ KOMENDĄ, NIGDY Z GŁOWY — patrz I-23. Stan 2.09 po UZGODNIENIU rejestru ze stanem main (ten PR):
