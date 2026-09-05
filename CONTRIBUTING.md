@@ -43,7 +43,11 @@ wyczyszczenie kontekstu, są w `CLAUDE.md`; to, według czego recenzent ocenia P
 - **Commity:** Conventional Commits z zakresem wtyczki: `fix(sklep): …`, `feat(chatbot): …`,
   `docs(audyt): …`. Wiadomość mówi, **co się psuło i dlaczego**, nie tylko co zmieniono.
 - **Wersja:** nagłówek wtyczki = stała `*_WERSJA` w kodzie = `Stable tag` w `readme.txt` =
-  wpis w `CHANGELOG.md` (Keep a Changelog). Bramka `testy/dokumentacja-zgodnosc*.sh` to sprawdza.
+  wpis w `CHANGELOG.md` (Keep a Changelog). `testy/dokumentacja-zgodnosc*.sh` to sprawdza —
+  ⚠️ dziś jako narzędzie w allowliście recenzenta AI (`.github/workflows/recenzent.yml`), NIE
+  jako twarda bramka CI: brak wpisu w `BRAMKI=()` (`narzedzia-qa/bramki.sh`), więc PR z rozjazdem
+  może dostać zielone bramki, jeśli recenzent go nie uruchomi albo nie zgłosi (D-2, zapisane
+  5.09; wpięcie do `BRAMKI=()` to zmiana narzędzia CI — osobny PR do `narzedzia-qa/`).
 - **Nowa tabela lub opcja = trzy miejsca w tym samym PR:** aktywacja (`dbDelta`),
   `uninstall.php`, ścieżka podniesienia schematu.
 - **Kod robi więcej niż zamówienie?** Dopisz z powodem: sklep → `wtyczki/sklep-agentow/PONAD-SPECYFIKACJE.md`,
