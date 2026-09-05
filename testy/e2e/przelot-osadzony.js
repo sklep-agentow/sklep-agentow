@@ -1,3 +1,5 @@
+// ⛔ SPRZĄTANIE PO BIEGU (I-22): ten przelot zostawia na WSPÓLNYM stanowisku prawdziwe zamówienie kupujacy-osadzony@test.local,
+//    które liczy się do przychodu na Pulpicie. Po każdym biegu: bash narzedzia-qa/stanowisko/sprzatnij-zamowienia-testowe.sh --kasuj
 /* E2E płatności OSADZONEJ (0.9.25): zakup kartą testową w formularzu na NASZEJ stronie produktu.
    Wymaga klucza publikowalnego w Ustawieniach stosu i Stripe.js. Pola e-mail/karta żyją w ramkach
    Stripe — wypełniane przez page.frames(). Bez webhooka na stosie status domyka reconciliation

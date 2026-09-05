@@ -182,8 +182,8 @@ MAX_POMINIETYCH_PELNY=10   # ta sama arytmetyka, sciezka BEZ zakresu (tak wola `
 # zielono, nie zmierzywszy niczego. Podloga jest DRUGA, NIEZALEZNA brama na tej samej
 # liczbie: minimalna liczba prob, ktore MUSZA sie faktycznie wykonac (ILE = N - POMINIETO).
 # Literaly, ta sama arytmetyka co MAX_POMINIETYCH_* wyzej (N minus maksymalne pominiecie).
-MIN_URUCHOMIONYCH_PELNY=48    # 58 prob w calym repo minus MAX_POMINIETYCH_PELNY(10)  (5.09: +1 przelot-bramy-proba-kontrolna)
-MIN_URUCHOMIONYCH_ZAKRES=15   # 22 prob w narzedzia-qa minus MAX_POMINIETYCH_ZAKRES(7)  (5.09: +1 przelot-bramy-proba-kontrolna)
+MIN_URUCHOMIONYCH_PELNY=49    # 59 prob w calym repo minus MAX_POMINIETYCH_PELNY(10) (5.09: +rejestr-liczniki)  (5.09: +1 przelot-bramy-proba-kontrolna)
+MIN_URUCHOMIONYCH_ZAKRES=16   # 23 prob w narzedzia-qa minus MAX_POMINIETYCH_ZAKRES(7) (5.09: +rejestr-liczniki)  (5.09: +1 przelot-bramy-proba-kontrolna)
 
 # Tryb LISTY (PRZELOT_LISTA=1) niczego nie uruchamia i nie pisze logu — nie jest dowodem, więc brudne
 # drzewo mu nie przeszkadza (próba kontrolna odłamków woła go na kopii przelotu w trakcie pracy).

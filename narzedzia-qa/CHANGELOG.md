@@ -14,6 +14,12 @@ wstecz nie dopisuję, bo nie umiałbym jej odtworzyć uczciwie. Ich zmiany od te
 pory lądują tutaj.
 
 ## [Niewydane]
+- **`stanowisko/sprzatnij-zamowienia-testowe.sh` — NOWY (I-22): lista / `--kasuj` zamówień testowych ze stanowiska (domeny
+  `test.local`, `example.com`, pusty e-mail) po zrzucie do JSON, razem ze zdarzeniami, opiniami i sesjami.** Nasze testy zostawiały
+  zamówienia po 149 zł, które liczyły się do przychodu na Pulpicie; 5.09 usunięto 20. Pierwsza wersja skryptu dawała FAŁSZYWE
+  ZERO (cudzysłowy SQL rozrywały string PHP) — złapane próbą na żywo, zapisane w komentarzu.
+- **`rejestr-liczniki-proba-kontrolna.sh` — NOWA (I-23): rejestr INFRA liczy sam siebie i coś go pilnuje** — nagłówek == pomiar
+  komendą pliku, suma statusów == wiersze, zero przecięć; mutanty (nagłówek +1, wiersz o dwóch statusach) złapane. W przelocie prób.
 - **`proby-kontrolne-przelot.sh` — sufit pominięć i PODŁOGA uruchomionych per odłamek; przelot biegnie też dla zmian w `testy/`
   i `boty/`; podłoga obowiązuje TYLKO dla zakresów, dla których została policzona (`.` i `narzedzia-qa`) — inny zakres
   (np. zagnieżdżony przelot dwuplikowy w `przelot-brak-zip-proba-kontrolna.sh`) dostaje jawny wiersz `PODLOGA: brak`

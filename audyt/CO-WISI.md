@@ -39,6 +39,31 @@ zakwalifikowano po katalogu (`testy/`, `narzedzia-qa/`, `audyt/` są poza allowl
 zawartość pięciu obrazów sprawdzono co do liczby plików, nie co do treści; numerów linii w wierszu „asymetria CSV"
 nie odświeżano wobec dzisiejszego `HEAD`.
 
+## 🟡 ŚWIADOMY DŁUG NA WYDANIE 0.9.42 — co ZOSTAJE otwarte w rejestrze INFRA po rundzie 5.09 i DLACZEGO (5.09, koordynatorka)
+
+Stan po scaleniach obszarów A–E, C, klas 140–143, porządków #293/#296: rejestr INFRA z 32 otwartych → ~20. Poniżej każda pozycja,
+która ZOSTAJE, z powodem — żeby przy oddaniu nikt nie musiał zgadywać, czy to przeoczenie. Decyzja o tym, co z tej listy
+jedzie do klienta jako „znane ograniczenie”, należy do właściciela (sekcja „CO Z TEGO DŁUGU JEDZIE DO KLIENTA” wyżej).
+
+**Narzędzia procesu (nie kod wtyczek, klient ich nie dostaje):**
+- `I-3` kalibrator-straznikow.sh, `I-4` licznik-odstepstw.sh, `I-8` adresy-w-dokumencie.sh + waga-znaleziska.sh — sieroty planu audytów v3.
+  Wpięcie wymaga DECYZJI (lista mutantów do kalibracji; etykiety issue `odstepstwo`/`waga:duza` na GitHubie), nie jednej linii.
+  Do rozstrzygnięcia przy następnym zleceniu: wpiąć w `k7-koniec.sh` albo skreślić z planu jako niewdrożone.
+- `I-9` dwa `pre-push`, `I-10` k7-stare-wersje pisze poza repo, `I-11` konwencja rc=0 przy braku argumentów — MALE, maszyna warsztatu.
+- `W-1` pokrycie hooków warsztatu próbami 2/23, `W-2` „push --force zablokowany” nieprawda dla repo klienta, `W-3` slepa-plama-guard — WARSZTAT, nie repo klienta; wątek `warsztat`.
+- `F4-F4` W NAPRAWIE — kod na main od 0.9.37; zostaje przyrząd (`anonimizacja-zachowuje-fakture-proba-kontrolna.sh` porównuje z `origin/main`, klasa 142) do przerobienia na mutanta w kopii.
+
+**Produkt — świadomie NIE w tym wydaniu:**
+- `F4-F1` retencja danych zamówień — D40: dokument księgowy, kasowanie byłoby BŁĘDEM; polityka mówi to wprost od 0.9.42.
+- `A7b-F1` klient poczty segregatora bez górnej granicy na to, ile przyjmie od serwera (SRED) — osobny PR po A7c-F1; nie dotyka sklepu.
+- `A4b-F3` strona „Dziękujemy” przy dwóch rzadkich statusach, `A4b-F4` pigułka „Kup teraz” w chwili płatności — MALE, front; kandydaci po oddaniu.
+- `A7-F2` statyka pod PHP 8.1 vs produkt na 8.4, `A7-F3` trzy niewołane funkcje — MALE, porządek kodu.
+- `I-26` W NAPRAWIE — droga instalacyjna 7 kroków PRZEZ PANEL na `probny_wp` NIEZMIERZONA (limity 64M są). ⛔ To jedyna pozycja z listy,
+  która dotyka tego, co klient zrobi pierwszego dnia — do przejścia ręcznie przed oddaniem (ogon wydania), nie po.
+
+**Z recenzji #289 (obszar D), dług narzędziowy:** W2 próba spustu crona tylko prozą · W3 bliźniak `lib-stos-probny.sh` bez `DISABLE_WP_CRON` ·
+W7 kopia spustu na hoście bez `cmp` · D3 „98 wiadomości” bez pomiaru — patrz sekcja „UWAGI WAŻNE Z RECENZJI #288 r3 I #289”.
+
 ## 🟡 UWAGI WAŻNE Z RECENZJI `#288` r3 I `#289` — co poprawione PR-em porządkowym, co zostaje długiem (5.09)
 
 Zasada z 5.09: WAŻNE nie idą rundami w PR-ze obszaru, tylko do JEDNEGO PR-a porządkowego po scaleniu.
