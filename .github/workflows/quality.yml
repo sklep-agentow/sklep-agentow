@@ -41,15 +41,27 @@ permissions:
   contents: read
 
 jobs:
-  # JEDNO zadanie na wszystkie bramki. Powód nie zniknął po postawieniu
-  # własnego wykonawcy (20.08): jeden wykonawca bierze JEDNO zadanie naraz, więc
-  # sześć zadań czekałoby jedno za drugim zamiast biec jednym ciągiem.
+  # JEDNO zadanie na wszystkie bramki. Powód z 20.08 (zaokrąglanie każdego zadania
+  # do pełnej minuty) wraca w całości, bo od 5.09 znów płacimy minutami GitHuba.
   bramki:
-    # Własny wykonawca na naszym serwerze — minuty w chmurze nas nie kosztują.
-    runs-on: [self-hosted, linux, x64]
+    # ⛔ 5.09 (DECYZJE.md D41): WYKONAWCA GITHUBA zamiast własnego. Własny (Hetzner, 2 vCPU)
+    # brał JEDNO zadanie naraz, więc bramki i recenzja stały w jednej kolejce: zmierzone
+    # 12 min + 12 min PO KOLEI = 24 min na pchnięcie, z kolejką za `main` 40+. Tu 20 zadań
+    # równolegle (limit planu Free), a serwer wraca do roboty warsztatu. Koszt: 2000 min/mies.
+    # w planie Free ≈ 80 pchnięć, powyżej płatne — tempo pchnięć to teraz też pieniądze.
+    # ⛔ Własnego wykonawcy NIE podpinać z powrotem bez decyzji właściciela (B-6: kod z cudzej
+    # gałęzi na naszej maszynie).
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       pull-requests: read
+    env:
+      # Obraz GitHuba MA Dockera, ale NIE MA kontenera bazy stosu warsztatu (`strona_wp_db`),
+      # więc bramka `golden` i próby stawiające stos nie mają gdzie wystartować. Bez tej
+      # deklaracji widziałyby Dockera i świeciły CZERWONO jako „wada stanowiska” na każdym PR-ze.
+      # Pominięcie jest JAWNE (log + podsumowanie), policzone i pod sufitem — dokładnie tak,
+      # jak było na koncie `ciuser` bez Dockera. Jedyne miejsce, które to ustawia.
+      BEZ_STOSU_WP: "1"
     steps:
       # Pełna historia: gitleaks skanuje commity, nie tylko drzewo robocze.
       # ⛔ PRZYPIETE DO SUMY COMMITA, nie do ruchomego taga — patrz komentarz
@@ -58,7 +70,18 @@ jobs:
         with:
           fetch-depth: 0
 
-      # ⛔ `setup-php` USUNIĘTY 1.09 — ta akcja ZAWIESZAŁA CAŁE CI.
+      # 5.09 (D41): `setup-php` WRACA, bo wraca środowisko, w którym działa — wykonawca
+      # GitHuba ma `sudo`, a jego obraz (`ubuntu-24.04`) niesie PHP 8.3, nie 8.4 (README obrazu:
+      # „PHP 8.3.6”). Kontrola wersji niżej ZOSTAJE jako bramka: gdyby akcja cicho postawiła
+      # inną wersję, pada ona, nie phpstan gdzieś dalej. Przypięte do sumy commita jak reszta.
+      - name: PHP 8.4 (wykonawca GitHuba)
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2.37.2
+        with:
+          php-version: '8.4'
+          tools: composer:v2
+
+      # ⛔ HISTORIA: `setup-php` był USUNIĘTY 1.09 — na WŁASNYM wykonawcy ZAWIESZAŁ CAŁE CI.
+      #    (Zostawiam, bo to mierzona pułapka na wypadek powrotu własnego wykonawcy.)
       #
       #    Działała, dopóki wykonawca chodził jako administrator: przy pierwszym
       #    przebiegu (20.08) doinstalowała 167 pakietów systemowych i przestawiła
@@ -77,7 +100,7 @@ jobs:
       #    to ta sama gwarancja co wcześniej, bez uprawnień administratora.
       #    ⛔ Nie przywracać `setup-php` bez nadania `ciuser` praw sudo, a tego
       #    robić nie wolno: to unieważnia całą naprawę B-3.
-      - name: Kontrola srodowiska PHP (zamiast setup-php)
+      - name: Kontrola srodowiska PHP (bramka wersji)
         run: |
           php -v | head -1
           WERSJA=$(php -r 'echo PHP_MAJOR_VERSION . "." . PHP_MINOR_VERSION;')

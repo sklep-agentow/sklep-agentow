@@ -1245,3 +1245,18 @@ w jedną noc; przelot prób i wydanie mają pierwszeństwo.
 ZDJĘCIU, bo skanery czytają tekst, nie obrazy — `paczka-zgodnosc.sh` meldował „w 69 plikach
 paczki nie ma śladów wewnętrznych” na paczce z nazwą konta i IP na obrazku. Jedyna kontrola,
 która działa, to **człowiek otwierający plik**.
+
+### D41 (CI na wykonawcach GitHuba, 5.09) — dług JAWNY z przejścia
+- **`golden` w CI mógłby biec NAPRAWDĘ.** Obraz `ubuntu-latest` ma Dockera; brakuje tylko kontenera
+  bazy (`strona_wp_db`), którego `lib-stos-probny.sh` oczekuje po nazwie. Dziś `BEZ_STOSU_WP=1`
+  pomija goldena i siedem prób z `WYMAGA_DOCKERA` JAWNIE — dokładnie jak dotąd na koncie bez Dockera,
+  więc pokrycie CI nie zmalało, ale też nie wzrosło, choć mogłoby. ⇒ Osobny PR: krok stawiający
+  `mariadb` pod tą nazwą + pomiar czasu (obraz WP ~250 MB do pobrania przy każdym przebiegu; to
+  minuty z puli 2000). Decyzja po pomiarze, nie przed.
+- **Minuty GitHuba są teraz kosztem.** 2000 min/mies. ≈ 80 pchnięć; tydzień 29.08–5.09 miał ich
+  ~200. ⇒ Budżet z twardym stopem w GitHubie (Budgets and alerts) — ustawia właściciel; oraz
+  reguła tempa: scalać przy ZERZE uwag krytycznych, WAŻNE tu, jednym PR-em porządkowym.
+- **Po transferze repo do organizacji `sklep-agentow`:** odznaki i odnośniki w `README.md` (3 wiersze
+  z `szydlowskikonrad95-art`), `narzedzia-qa/bramka-recenzji-proba-kontrolna.sh` (1),
+  `boty/BRIEFING-BUILDERA-BOTY.md` (1) wskazują starego właściciela — GitHub przekierowuje, ale
+  odznaka `badge.svg` pod starym adresem może przestać się odświeżać. ⇒ Commit porządkowy po transferze.

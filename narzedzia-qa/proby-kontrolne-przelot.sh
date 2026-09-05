@@ -92,14 +92,23 @@ WYMAGA_DOCKERA=(
 	# jeszcze nie istnial, a w #274 ten plik byl zmieniany przez #272 (konflikt).
 	schemat-wersja-po-sprawdzeniu-proba-kontrolna.sh
 )
+# 5.09 (D41): wykonawca GitHuba Dockera MA, ale stosu WP (kontenera bazy) nie ma — workflow
+# deklaruje to jawnie przez `BEZ_STOSU_WP=1`. Ta sama sciezka pominiecia co bez Dockera:
+# z powodem w logu, policzona, pod sufitem. Bez deklaracji te proby ruszalyby i padaly na
+# braku bazy, udajac wade produktu.
 if ! docker ps >/dev/null 2>&1; then
 	for N in "${WYMAGA_DOCKERA[@]}"; do
 		POMIJANE[$N]="wymaga Dockera, a to konto go nie widzi (wykonawca CI bez roota, B-3) — przelot ręczny przed wydaniem"
 	done
+elif [ "${BEZ_STOSU_WP:-}" = 1 ]; then
+	for N in "${WYMAGA_DOCKERA[@]}"; do
+		POMIJANE[$N]="wymaga stosu WP, a ten wykonawca go nie ma (BEZ_STOSU_WP=1, wykonawca GitHuba, D41) — przelot ręczny przed wydaniem"
+	done
 fi
 
-# ⛔ PRÓBY WYMAGAJĄCE `zip` (3.09). Powód zmierzony, nie przewidziany z góry: mamy DWA runnery
-# (`hetzner-gosia`, `oracle-micro`) i one NIE SĄ IDENTYCZNE. Porównanie narzędzie po narzędziu:
+# ⛔ PRÓBY WYMAGAJĄCE `zip` (3.09). Powód zmierzony, nie przewidziany z góry: do 5.09 mieliśmy
+# DWA własne runnery (`hetzner-gosia`, `oracle-micro`) i one NIE BYŁY IDENTYCZNE (od D41 biegnie
+# jeden obraz GitHuba, który `zip` ma — warunek zostaje, bo lokalne maszyny dalej się różnią):
 #   zip     hetzner TAK · micro NIE      <- to
 #   docker  hetzner TAK · micro NIE      <- to było przewidziane wyżej
 #   unzip, jq, git, curl, php, composer, node — na obu tak samo

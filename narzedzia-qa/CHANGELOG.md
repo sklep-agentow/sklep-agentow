@@ -14,6 +14,19 @@ wstecz nie dopisuję, bo nie umiałbym jej odtworzyć uczciwie. Ich zmiany od te
 pory lądują tutaj.
 
 ## [Niewydane]
+- **`bramki.sh` — druga jawna odpowiedź na pytanie „czy golden ma gdzie wystartować”: `BEZ_STOSU_WP=1` (D41, 5.09).**
+  Wykonawca GitHuba (`ubuntu-latest`) Dockera MA, a kontenera bazy stosu warsztatu NIE — bez deklaracji golden
+  widziałby Dockera i świecił czerwono jako „wada stanowiska” na każdym PR-ze. Deklaracja stoi wyłącznie w
+  workflow (`env:`), lokalnie golden biegnie jak dotąd. Ta sama ścieżka pominięcia: log, podsumowanie, próg o jeden.
+- **`bramki-proba-kontrolna.sh` — nowy przypadek dla `BEZ_STOSU_WP=1`, DWUKIERUNKOWO i z mutantem.** Z deklaracją
+  1 pominięcie i powód nazywający zmienną; bez deklaracji na koncie z Dockerem 0; mutant z wyciętą gałęzią
+  deklaracji ma być złapany (powód znika). ⛔ Stary przypadek „pominięcie tylko przy braku Dockera” odcina
+  teraz deklarację (`env -u BEZ_STOSU_WP`) — na wykonawcy GitHuba stoi ona w środowisku całego joba i bez
+  odcięcia pomiar „docker+unzip” liczył 1 zamiast 0. Złapane pierwszym przelotem prób pod `BEZ_STOSU_WP=1`
+  (próba samodzielnie EXIT=0, pod deklaracją EXIT=1); pomiar celowany po naprawie: z odcięciem 0, bez 1.
+- **`proby-kontrolne-przelot.sh` — próby z `WYMAGA_DOCKERA` pomijane także przy `BEZ_STOSU_WP=1`, z własnym powodem
+  w logu.** Bez tego na wykonawcy GitHuba ruszałyby i padały na braku bazy, a przelot liczyłby to jako porażki
+  produktu. Komentarz o „dwóch runnerach” przeniesiony w czas przeszły — od D41 biegnie jeden obraz GitHuba.
 - **`k7-koniec.sh` 1.4.0 — warunek 2 (kalibracja) przestaje żądać stanu NIEOSIĄGALNEGO.** Reguła
   `PLAN-K7 §5` mówi „dwie próby i koniec, potem NIEKALIBROWANA”, a bramka wymagała `PASS`
   w KAŻDYM wierszu **oraz** `proby ≤ 2` — razem: soczewka raz oblana nie miała żadnej drogi do

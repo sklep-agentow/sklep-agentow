@@ -183,8 +183,13 @@ esac
 # kod z drzewa; wykonawca CI (`ciuser`, B-3) Dockera nie widzi i widziec nie moze. Bez Dockera
 # bramka jest POMINIETA JAWNIE (w logu i w podsumowaniu), a prog pelnego trybu schodzi o JEDEN,
 # nie „o ile trzeba”. Lokalnie i na kazdym koncie z Dockerem golden BIEGNIE (~15 s).
-# ⛔ POMINIECIE MA POKRYWAC DOKLADNIE JEDEN POWOD: konto nie widzi Dockera (wykonawca CI
-# `ciuser`, B-3 — dostepu dac NIE MOZNA, grupa `docker` jest rownowaznikiem roota). Kazdy INNY
+# ⛔ POMINIECIE MA POKRYWAC DOKLADNIE JEDNO PYTANIE: czy golden ma GDZIE wystartowac. Dwie
+# odpowiedzi „nie”, obie jawne: (1) konto nie widzi Dockera (do 5.09 wykonawca CI `ciuser`, B-3 —
+# dostepu dac NIE MOZNA, grupa `docker` jest rownowaznikiem roota); (2) `BEZ_STOSU_WP=1` —
+# wykonawca GitHuba (D41, 5.09): obraz `ubuntu-latest` Dockera MA, ale kontenera bazy stosu
+# warsztatu (`strona_wp_db`) nie ma i miec nie bedzie, wiec bez tej deklaracji golden widzialby
+# Dockera i swiecil CZERWONO jako „wada stanowiska” na kazdym PR-ze. Deklaracja stoi w workflow
+# (`.github/workflows/quality.yml`, `env:`), nie w tym pliku — lokalnie golden BIEGNIE. Kazdy INNY
 # brak — brak `unzip`, nieodczytany `KONTENER_DB`, niechodzacy kontener bazy — to WADA STANOWISKA
 # na koncie, ktore Dockera WIDZI, i ma swiecic CZERWONO przez `wymagaj_narzedzi`
 # (narzedzia-qa/lib-stos-probny.sh:65), a nie znikac jako pominiecie.
@@ -200,6 +205,12 @@ POWOD_BEZ_GOLDENA=""
 if ! docker ps > /dev/null 2>&1; then
 	DOCKER_WIDOCZNY=nie
 	POWOD_BEZ_GOLDENA="to konto nie widzi Dockera"
+fi
+# Wykonawca GitHuba (D41): Docker widoczny, stosu nie ma. Jawna deklaracja z workflow, ta sama
+# sciezka pominiecia (log + podsumowanie + prog o jeden). Straznik: bramki-proba-kontrolna.sh.
+if [ "${BEZ_STOSU_WP:-}" = 1 ]; then
+	DOCKER_WIDOCZNY=nie
+	POWOD_BEZ_GOLDENA="BEZ_STOSU_WP=1 — wykonawca bez stosu WP (Docker jest, kontenera bazy nie ma)"
 fi
 if [ "$DOCKER_WIDOCZNY" = nie ] && [ "$TRYB" = pelny ]; then
 	PROG=$((PROG - 1))

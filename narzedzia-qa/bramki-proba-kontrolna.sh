@@ -307,7 +307,11 @@ elif ! PATH="$BEZ_UNZIP" command -v docker > /dev/null 2>&1; then
 elif PATH="$ATRAPA_D:$PATH" docker ps > /dev/null 2>&1; then
 	echo "  BLAD atrapa dockera nie udaje slepego konta — proba nic nie mierzy"; BLEDY=$((BLEDY+1))
 else
-	ile_pominiec() { env "$@" BRAMKI_TYLKO_FUNKCJE=1 bash "$BRAMKI" 2>&1 | grep -c "bramka golden bedzie POMINIETA"; }
+	# ⛔ `env -u BEZ_STOSU_WP`: ten przypadek mierzy sciezke DOCKEROWA, a na wykonawcy GitHuba
+	# (D41) deklaracja stoi w srodowisku calego joba — bez odciecia dziedziczy ja kazdy z trzech
+	# pomiarow i „docker+unzip” liczy 1 zamiast 0. Zlapane przelotem prob z BEZ_STOSU_WP=1 (5.09):
+	# proba samodzielnie EXIT=0, pod deklaracja EXIT=1. Deklaracje mierzy osobny przypadek nizej.
+	ile_pominiec() { env -u BEZ_STOSU_WP "$@" BRAMKI_TYLKO_FUNKCJE=1 bash "$BRAMKI" 2>&1 | grep -c "bramka golden bedzie POMINIETA"; }
 
 	_a=$(ile_pominiec PATH="$PATH")
 	_b=$(ile_pominiec PATH="$ATRAPA_D:$PATH")
@@ -343,6 +347,49 @@ PYMUT
 	fi
 	przywroc
 fi
+
+echo
+echo "=== DEKLARACJA BEZ_STOSU_WP=1 POMIJA goldena JAWNIE, Z WLASNYM POWODEM (D41, 5.09) ==="
+# Wykonawca GitHuba Dockera MA, a stosu nie — bez tej deklaracji golden swiecilby czerwono na
+# kazdym PR-ze. Mierzone DWUKIERUNKOWO: z deklaracja 1 pominiecie i powod z nazwa zmiennej,
+# bez deklaracji zero (na koncie z Dockerem) — a mutant bez tej galezi ma byc ZLAPANY.
+# Ten przypadek nie potrzebuje Dockera: deklaracja ma dzialac takze tam, gdzie go nie ma
+# (wtedy pominiecie i tak jest jedno, tylko powod dockerowy zostaje nadpisany deklaracja).
+_pom_z=$(BEZ_STOSU_WP=1 BRAMKI_TYLKO_FUNKCJE=1 bash "$BRAMKI" 2>&1 | grep -c "bramka golden bedzie POMINIETA")
+_powod=$(BEZ_STOSU_WP=1 BRAMKI_TYLKO_FUNKCJE=1 bash "$BRAMKI" 2>&1 | grep -c "BEZ_STOSU_WP=1 — wykonawca bez stosu WP")
+if [ "$_pom_z" = 1 ] && [ "$_powod" = 1 ]; then
+	echo "  OK   BEZ_STOSU_WP=1 → 1 pominiecie, powod nazywa deklaracje"
+else
+	echo "  BLAD BEZ_STOSU_WP=1: pominiec=$_pom_z (ma byc 1), powod z nazwa=$_powod (ma byc 1)"; BLEDY=$((BLEDY+1))
+fi
+if docker ps > /dev/null 2>&1; then
+	_pom_bez=$(env -u BEZ_STOSU_WP BRAMKI_TYLKO_FUNKCJE=1 bash "$BRAMKI" 2>&1 | grep -c "bramka golden bedzie POMINIETA")
+	if [ "$_pom_bez" = 0 ]; then
+		echo "  OK   bez deklaracji na koncie z Dockerem golden NIE jest pomijany"
+	else
+		echo "  BLAD bez deklaracji pominiec=$_pom_bez (ma byc 0) — deklaracja wycieka albo Docker niewidoczny"; BLEDY=$((BLEDY+1))
+	fi
+fi
+# Mutant: galaz deklaracji USUNIETA — deklaracja ma przestac dzialac i ma to byc widac.
+przywroc
+python3 - "$BRAMKI" <<'PYMUT'
+import io, sys
+P = sys.argv[1]
+s = io.open(P, encoding='utf-8').read()
+kot = 'if [ "${BEZ_STOSU_WP:-}" = 1 ]; then\n\tDOCKER_WIDOCZNY=nie\n\tPOWOD_BEZ_GOLDENA="BEZ_STOSU_WP=1 — wykonawca bez stosu WP (Docker jest, kontenera bazy nie ma)"\nfi\n'
+if kot in s:
+    io.open(P, 'w', encoding='utf-8').write(s.replace(kot, '', 1))
+    print('MUTACJA_OK')
+else:
+    print('MUTACJA_NIEUDANA')
+PYMUT
+_pom_mut=$(BEZ_STOSU_WP=1 BRAMKI_TYLKO_FUNKCJE=1 bash "$BRAMKI" 2>&1 | grep -c "BEZ_STOSU_WP=1 — wykonawca bez stosu WP")
+if [ "$_pom_mut" = 0 ]; then
+	echo "  OK   zlapane: bez galezi deklaracji powod z nazwa znika ($_pom_mut)"
+else
+	echo "  BLAD PRZESZLO NIEZAUWAZONE: mutant bez galezi deklaracji dalej drukuje powod ($_pom_mut)"; BLEDY=$((BLEDY+1))
+fi
+przywroc
 
 echo
 # ⛔ PRZYPADEK NA CALY SKRYPT, NIE NA SAMA FUNKCJE (runda 11). Powyzsze przypadki mierza
