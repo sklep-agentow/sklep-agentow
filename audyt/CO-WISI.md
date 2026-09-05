@@ -1058,6 +1058,9 @@ Reguła dnia 5.09 (10:15): przy ZERZE KRYT scalamy, uwagi o narzędziach/dokumen
     `SKLEPAG_WERSJA_STRON`; klucz meldunku wchodzi po jednym literale (`aktywacja.php`, `strpos`). Kształt roboty: przeliczać listę przy każdym otwarciu panelu.
   - r3 W8 — pozostała uwaga rundy 3 (treść w wątku recenzji #294, komentarz r3) — do rozpisania przy PR-ze porządkowym, gdy wchodzi ten plik.
   - r7 W4 — opis PR-a nie opisywał commita na czubku (merge main) — zasada dowodu; proceduralne, bez roboty w kodzie.
+  - #299 r1 D2 — dwie asercje HTTP spustu (`noindex`, kotwica adresu w `prawne-migracja-stos-probny.sh`) nie mają mutanta w
+    `prawne-migracja-proba-kontrolna.sh` (lista: blok-sprzedawcy, sekcje, podmiana-wlasny, front). Kształt roboty: mutant `kotwica`
+    (wycina warunek na ścieżkę) i `noindex` (wycina meta) w kopii kodu w kontenerze — PR porządkowy.
 - Klasa dla ściągi: **naprawa egzemplarza zamiast klasy w tym samym pliku 150 linii wyżej** (r4 W4 → r7 W1) — kandydat do rejestru klas.
 
 ## 🟡 DŁUGI Z RECENZJI #220 RUNDA 3 (30.08, po scaleniu 0.9.24 — 0 WAŻNYCH, 3 DROBNE, reguła rund: produkt czysty → dług)

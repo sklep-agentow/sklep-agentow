@@ -618,7 +618,7 @@ function sklepag_kompensuj_strony_prawne() {
 				// Porażka zapisu (0): sekcje z art. 12 NIE weszły — kasujemy znacznik (jak w gałęzi (a)), żeby następny
 				// bieg spróbował znowu, i meldujemy właścicielowi brakujące sekcje zamiast milczeć.
 				delete_option( 'sklepag_wersja_stron' );
-				$nowe[ $wpis->post_title ] = array_merge( isset( $nowe[ $wpis->post_title ] ) ? $nowe[ $wpis->post_title ] : array(), $do_dopisania );
+				$nowe[ $wpis->post_title ] = array_values( array_unique( array_merge( isset( $nowe[ $wpis->post_title ] ) ? $nowe[ $wpis->post_title ] : array(), array_keys( $do_dopisania ) ) ) );
 				continue;
 			}
 			clean_post_cache( $wpis->ID );

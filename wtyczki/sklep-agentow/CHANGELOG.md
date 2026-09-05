@@ -44,7 +44,8 @@ wydany osobno (podbicie pośrednie wewnątrz jednej zmiany).
 - **Kupujący dostaje link do regulaminu i polityki prywatności PRZED zakupem, nie tylko po nim.** Nowa `sklepag_link_prawny('regulamin'|'polityka')` zwraca permalink strony, gdy jest
   opublikowana i bez zaślepki „SZABLON" — w przeciwnym razie prowadzi na `?sklepag_prawne=…`
   (`template_redirect`), który renderuje „Regulamin w przygotowaniu — sprzedawca uzupełnia treść"
-  (HTTP 200, nigdy 404, nigdy treść szkicu). Link stoi na stronie produktu przed przyciskiem „Kup
+  (HTTP 200, nigdy 404, nigdy treść szkicu; zaślepka odpowiada WYŁĄCZNIE pod adresem strony głównej, na którym stoi
+  link, i ma `noindex` — pod innymi adresami sklepu nie tworzy duplikatu). Link stoi na stronie produktu przed przyciskiem „Kup
   teraz" oraz w stopce maila potwierdzenia (wersja tekstowa i HTML) — jedna definicja „gotowe" dla
   wszystkich trzech miejsc.
 - **Dane sprzedawcy widoczne PRZED zakupem, nie tylko w mailu po nim.** Formularz zakupu

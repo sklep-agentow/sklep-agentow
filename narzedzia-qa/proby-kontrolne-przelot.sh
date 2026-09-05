@@ -173,7 +173,8 @@ MAX_POMINIETYCH_ZAKRES=10  # 5.09 po scaleniu #291 do C: 9 z main (+2 dockerowe 
                     #    I BEZ `zip` (na maszynie z obydwoma pominiecie jest tylko 1 — dlatego
                     #    sam przelot tutaj NIE mierzy tego, przed czym sufit chroni):
                     #      WYMAGA_DOCKERA 10 + WYMAGA_ZIP 4, wspolne 2  ⇒ unia 12   (5.09: przeliczone z tablicy;
-                    #        komenda: `sed -n '/^WYMAGA_DOCKERA=(/,/^)/p' narzedzia-qa/proby-kontrolne-przelot.sh | grep -c 'proba-kontrolna.sh'` → 10)
+                    #        komenda: `sed -n '/^WYMAGA_DOCKERA=(/,/^)/p' narzedzia-qa/proby-kontrolne-przelot.sh | grep -cE '^[[:space:]]*[a-z0-9-]+-proba-kontrolna[.]sh$'` → 10
+                    #        — liczy NAZWY prob (po jednej w linii), komentarz z nazwą wewnątrz tablicy nie zawyży wyniku)
                     #        z tego w `narzedzia-qa/` 9, w `testy/` 3
                     #      + 1 pomijana BEZWARUNKOWO (`dowod-zachowania-segregator`,
                     #        deinstaluje wtyczke ze stosu; lezy w `narzedzia-qa/`)

@@ -139,12 +139,14 @@ function sklepag_strona_prawna_wczesnie() {
 	//    tylko pod ścieżką strony głównej. Bez tego `/dowolny-wpis/?sklepag_prawne=regulamin` oddawałby 200 z zaślepką
 	//    zamiast treści tamtego wpisu — indeksowalny duplikat pod każdym adresem sklepu (bliźniak kotwicy
 	//    w sklepag_status_404_wczesnie(), która sprawdza stronę sklepu z opcji).
-	//    Porównanie idzie po ścieżce ZDEKODOWANEJ po obu stronach (rawurldecode) — bez sanitize_text_field(),
-	//    bo ten kasuje sekwencje %XX i `/%2F?sklepag_prawne=…` udawałoby stronę główną. esc_url_raw() tylko
-	//    oczyszcza wejście (wynik idzie wyłącznie do ===, nigdy na wyjście).
+	//    Porównanie idzie po SUROWEJ ścieżce żądania, bez żadnego dekodowania i bez sanitize_text_field()
+	//    (kasuje %XX): link zawsze ma dokładnie ścieżkę home_url('/'), więc każda inna postać — także
+	//    `/%2F`, `/./`, `/wpis/` — to NIE jest adres z linku i nie dostaje zaślepki (WordPress obsłuży ją
+	//    po swojemu). Dekodowanie po którejkolwiek stronie otwierało obejścia (np. `/%2F` → `//` → „/”).
+	//    esc_url_raw() tylko oczyszcza wejście — wynik idzie wyłącznie do ===, nigdy na wyjście.
 	$sciezka_zadania = isset( $_SERVER['REQUEST_URI'] ) ? (string) wp_parse_url( esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ), PHP_URL_PATH ) : '/';
 	$sciezka_domu    = (string) wp_parse_url( home_url( '/' ), PHP_URL_PATH );
-	if ( untrailingslashit( rawurldecode( $sciezka_zadania ) ) !== untrailingslashit( rawurldecode( $sciezka_domu ) ) ) {
+	if ( false !== strpos( $sciezka_zadania, '%' ) || untrailingslashit( $sciezka_zadania ) !== untrailingslashit( $sciezka_domu ) ) {
 		return;
 	}
 	$nazwa = $nazwy[ $ktore ];
