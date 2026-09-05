@@ -125,6 +125,7 @@ rowne( 'brak pola usage nie wywraca zapisu', 0, chatl_ai_usage( array() )['token
 
 echo "\n=== C. Udane wywołanie ZAPISUJE tokeny, nie tylko wywołanie ===\n";
 chatl_test_odpowiedz_api( 1500, 120 );
+chatl_ai_zarezerwuj(); // jak front.php:566 — od 1.5.18 licznik wywołań podbija REZERWACJA przed płatnym wywołaniem, nie chatl_ai_zuzyj()
 chatl_ai_odpowiedz( 'pytanie testowe' );
 $d = chatl_ai_zuzycie_dnia();
 rowne( 'wywołania +1', 1, $d['wywolania'] );
@@ -134,6 +135,7 @@ rowne( 'tokeny płatne to suma we+wy+zapis cache', 1620, chatl_ai_tokeny_dzis() 
 
 echo "\n=== D. Kolejne wywołania SUMUJĄ się w tym samym dniu ===\n";
 chatl_test_odpowiedz_api( 500, 80, 0, 900 );
+chatl_ai_zarezerwuj(); // jak front.php:566 — od 1.5.18 licznik wywołań podbija REZERWACJA przed płatnym wywołaniem, nie chatl_ai_zuzyj()
 chatl_ai_odpowiedz( 'drugie pytanie' );
 $d = chatl_ai_zuzycie_dnia();
 rowne( 'wywołania +1 (razem 2)', 2, $d['wywolania'] );
@@ -168,6 +170,7 @@ sprawdz( 'próg jest zapasowy względem 4096 tokenów', CHATL_AI_CACHE_PROG_ZNAK
 
 echo "\n=== G. Instrukcja naprawdę leci jako tablica bloków ===\n";
 chatl_test_odpowiedz_api( 10, 10 );
+chatl_ai_zarezerwuj(); // jak front.php:566 — od 1.5.18 licznik wywołań podbija REZERWACJA przed płatnym wywołaniem, nie chatl_ai_zuzyj()
 chatl_ai_odpowiedz( 'trzecie pytanie' );
 $cialo = json_decode( $GLOBALS['chatl_test_body'], true );
 sprawdz( 'pole system w żądaniu jest tablicą', is_array( $cialo ) && isset( $cialo['system'] ) && is_array( $cialo['system'] ) );
@@ -188,6 +191,7 @@ chatl_test_odpowiedz_cialo( wp_json_encode( array(
 	'content'     => array( array( 'type' => 'text', 'text' => 'nie moge' ) ),
 	'usage'       => array( 'input_tokens' => 700, 'output_tokens' => 30 ),
 ) ) );
+chatl_ai_zarezerwuj(); // jak front.php:566 — od 1.5.18 licznik wywołań podbija REZERWACJA przed płatnym wywołaniem, nie chatl_ai_zuzyj()
 $wynik = chatl_ai_odpowiedz( 'pytanie, ktore model odrzuci' );
 $d     = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$tabela} WHERE dzien = %s", $dzis ), ARRAY_A );
 rowne( 'odmowa modelu daje sentinel BRAK_ODPOWIEDZI', CHATL_AI_BRAK, $wynik );
@@ -200,6 +204,7 @@ chatl_test_odpowiedz_cialo( wp_json_encode( array(
 	'content' => array( array( 'type' => 'text', 'text' => '   ' ) ),
 	'usage'   => array( 'input_tokens' => 500, 'output_tokens' => 10 ),
 ) ) );
+chatl_ai_zarezerwuj(); // jak front.php:566 — od 1.5.18 licznik wywołań podbija REZERWACJA przed płatnym wywołaniem, nie chatl_ai_zuzyj()
 $wynik = chatl_ai_odpowiedz( 'pytanie, na ktore model nic nie powie' );
 $d     = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$tabela} WHERE dzien = %s", $dzis ), ARRAY_A );
 rowne( 'pusty tekst zjezdza do regul (null)', null, $wynik );
@@ -210,6 +215,7 @@ sprawdz( 'pusty tekst ZOSTAWIA slad dla wlasciciela', is_array( get_option( 'cha
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$tabela} WHERE dzien = %s", $dzis ) );
 delete_option( 'chatl_blad_ai' );
 chatl_test_odpowiedz_cialo( '<html>brama zgodnosci zjadla odpowiedz</html>' );
+chatl_ai_zarezerwuj(); // jak front.php:566 — od 1.5.18 licznik wywołań podbija REZERWACJA przed płatnym wywołaniem, nie chatl_ai_zuzyj()
 $wynik = chatl_ai_odpowiedz( 'pytanie, ktoremu proxy podmienilo odpowiedz' );
 $d     = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$tabela} WHERE dzien = %s", $dzis ), ARRAY_A );
 rowne( 'cialo nie do odczytania zjezdza do regul', null, $wynik );

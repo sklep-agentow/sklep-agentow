@@ -68,7 +68,7 @@ done
 # nie zostal nigdzie dolaczony, tylko podpada pod istniejacy od dawna wzorzec
 # `*-proba-kontrolna.sh` (linia-bazowa.sh:27). Nic go do listy nie dopisywalo.
 MIN_URUCHAMIANYCH=16   # 5.09 zmierzone po #298 (testy/*.sh = 58: 16 uruchamianych + 42 pomijanych); #298 r6 D2
-MAX_POMIJANYCH=42   # 5.09 zmierzone po scaleniu main z #294 (testy/*.sh = 58: 16 uruchamianych + 42 pomijanych wzorcami z linia-bazowa.sh); #298 r5 W2: testy .php i proby z narzedzia-qa NIE wchodza do tego zbioru
+MAX_POMIJANYCH=43   # 5.09 wieczor po v0.9.43 (testy/*.sh = 59: 16 uruchamianych + 43 pomijanych): doszla testy/segregator-imap-sufity-proba-kontrolna.sh (*-proba-kontrolna.sh — biegnie w przelocie prob, nie w linii bazowej; #301 r3). Wczesniej 42 (5.09 po #294: 58 = 16 + 42); #298 r5 W2: testy .php i proby z narzedzia-qa NIE wchodza do tego zbioru
 [ "$ILE" -ge "$MIN_URUCHAMIANYCH" ] || { echo "  ⛔ URUCHAMIANYCH $ILE, prog $MIN_URUCHAMIANYCH — z linii bazowej UBYLY testy"; BLEDY=$((BLEDY+1)); }
 [ "$ILE" -ge 1 ] || { echo "  ⛔ ZERO testów do uruchomienia — kontrola dodatnia pusta, pomiar nic nie znaczy"; BLEDY=$((BLEDY+1)); }
 # ⛔ SUFIT POMIJANYCH — druga strona tego samego podzialu (patrz komentarz wyzej).
