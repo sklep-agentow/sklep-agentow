@@ -182,8 +182,8 @@ MAX_POMINIETYCH_PELNY=10   # ta sama arytmetyka, sciezka BEZ zakresu (tak wola `
 # zielono, nie zmierzywszy niczego. Podloga jest DRUGA, NIEZALEZNA brama na tej samej
 # liczbie: minimalna liczba prob, ktore MUSZA sie faktycznie wykonac (ILE = N - POMINIETO).
 # Literaly, ta sama arytmetyka co MAX_POMINIETYCH_* wyzej (N minus maksymalne pominiecie).
-MIN_URUCHOMIONYCH_PELNY=47    # 57 prob w calym repo minus MAX_POMINIETYCH_PELNY(10)
-MIN_URUCHOMIONYCH_ZAKRES=14   # 21 prob w narzedzia-qa minus MAX_POMINIETYCH_ZAKRES(7)
+MIN_URUCHOMIONYCH_PELNY=48    # 58 prob w calym repo minus MAX_POMINIETYCH_PELNY(10)  (5.09: +1 przelot-bramy-proba-kontrolna)
+MIN_URUCHOMIONYCH_ZAKRES=15   # 22 prob w narzedzia-qa minus MAX_POMINIETYCH_ZAKRES(7)  (5.09: +1 przelot-bramy-proba-kontrolna)
 
 # Tryb LISTY (PRZELOT_LISTA=1) niczego nie uruchamia i nie pisze logu — nie jest dowodem, więc brudne
 # drzewo mu nie przeszkadza (próba kontrolna odłamków woła go na kopii przelotu w trakcie pracy).
@@ -241,10 +241,23 @@ case "$ODLAMEK" in
 		MIN_URUCHOMIONYCH=12     # 19 - 7
 		;;
 	"")
+		# ⛔ PODLOGA TYLKO DLA ZAKRESOW, DLA KTORYCH ZOSTALA POLICZONA (recenzja #290 WAZNA 1).
+		# MIN_URUCHOMIONYCH_ZAKRES=15 jest policzone dla JEDNEGO konkretnego katalogu
+		# (`narzedzia-qa`, 21 prob). Stosowana wczesniej do KAZDEGO zakresu != "." — czyli
+		# takze do zagniezdzonych przelotow na prowizorycznych katalogach (np.
+		# `przelot-brak-zip-proba-kontrolna.sh`, ktory kopiuje 2 pliki do ROBOCZY) — dawala
+		# tam ILE=0 < 14 i EXIT=1 na CZYSTYM kodzie. Ta sama logika co odmowa odlamkow dla
+		# nieznanego zakresu wyzej (linie 224-228), ale TU NIE ODMAWIAMY: zagniezdzone
+		# przeloty na dowolnym katalogu sa legalne, tylko podloga dla nich nie ma sensu —
+		# sufit pominiec (MAX_POMINIETYCH_ZAKRES) zostaje, bo on jest gorna granica, nie
+		# policzonym literalem specyficznym dla `narzedzia-qa`.
 		if [ "$ZAKRES" = "." ]; then
 			MAX_POMINIETYCH="$MAX_POMINIETYCH_PELNY"; MIN_URUCHOMIONYCH="$MIN_URUCHOMIONYCH_PELNY"
-		else
+		elif [ "$ZAKRES" = "narzedzia-qa" ]; then
 			MAX_POMINIETYCH="$MAX_POMINIETYCH_ZAKRES"; MIN_URUCHOMIONYCH="$MIN_URUCHOMIONYCH_ZAKRES"
+		else
+			MAX_POMINIETYCH="$MAX_POMINIETYCH_ZAKRES"; MIN_URUCHOMIONYCH=0
+			echo "PODLOGA: brak (zakres $ZAKRES nie jest policzony)" >&2
 		fi
 		;;
 esac

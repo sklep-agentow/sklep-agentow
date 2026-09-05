@@ -114,6 +114,18 @@ fi
 echo "--- czysty kod (EXIT=$CZYSTY_KOD) ---"
 echo "$WSZYSTKO" | grep -i 'pomijam\|POMINIETO' | head -2 | sed 's/^/      /'
 
+# ⛔ ASERCJA NA KOD WYJSCIA, NIE TYLKO NA KOD 2 (recenzja #290 WAZNA 1). Do tej rundy ta
+# galaz obslugiwala WYLACZNIE `CZYSTY_KOD -eq 2` (brak warunkow wstepnych) — kod 1 (przelot
+# NAPRAWDE PADL) przelatywal bez zadnej asercji, wiec podloga stosowana do zlego zakresu
+# (klasa naprawiona w proby-kontrolne-przelot.sh:243-249) dawala tu falszywa zielen: przelot
+# konczyl sie EXIT=1 na CZYSTYM kodzie, a ta proba tego NIE WIDZIALA. Kod 1 jest teraz FAIL.
+if [ "$CZYSTY_KOD" -ne 0 ]; then
+	printf '  BLAD przelot na CZYSTYM kodzie (bez zip) konczy sie EXIT=%s, nie EXIT=0\n' "$CZYSTY_KOD"
+	BLEDY=$((BLEDY + 1))
+else
+	printf '  OK   przelot na CZYSTYM kodzie (bez zip) konczy sie EXIT=0\n'
+fi
+
 if echo "$WSZYSTKO" | grep -q 'POMINIETO'; then
 	sprawdz "proby z WYMAGA_ZIP sa POMIJANE, nie liczone jako porazka" 0
 else
