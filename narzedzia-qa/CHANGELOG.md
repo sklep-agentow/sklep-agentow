@@ -20,7 +20,10 @@ pory lądują tutaj.
   workflow (`env:`), lokalnie golden biegnie jak dotąd. Ta sama ścieżka pominięcia: log, podsumowanie, próg o jeden.
 - **`bramki-proba-kontrolna.sh` — nowy przypadek dla `BEZ_STOSU_WP=1`, DWUKIERUNKOWO i z mutantem.** Z deklaracją
   1 pominięcie i powód nazywający zmienną; bez deklaracji na koncie z Dockerem 0; mutant z wyciętą gałęzią
-  deklaracji ma być złapany (powód znika).
+  deklaracji ma być złapany (powód znika). ⛔ Stary przypadek „pominięcie tylko przy braku Dockera” odcina
+  teraz deklarację (`env -u BEZ_STOSU_WP`) — na wykonawcy GitHuba stoi ona w środowisku całego joba i bez
+  odcięcia pomiar „docker+unzip” liczył 1 zamiast 0. Złapane pierwszym przelotem prób pod `BEZ_STOSU_WP=1`
+  (próba samodzielnie EXIT=0, pod deklaracją EXIT=1); pomiar celowany po naprawie: z odcięciem 0, bez 1.
 - **`proby-kontrolne-przelot.sh` — próby z `WYMAGA_DOCKERA` pomijane także przy `BEZ_STOSU_WP=1`, z własnym powodem
   w logu.** Bez tego na wykonawcy GitHuba ruszałyby i padały na braku bazy, a przelot liczyłby to jako porażki
   produktu. Komentarz o „dwóch runnerach” przeniesiony w czas przeszły — od D41 biegnie jeden obraz GitHuba.

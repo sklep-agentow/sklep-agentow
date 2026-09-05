@@ -307,7 +307,11 @@ elif ! PATH="$BEZ_UNZIP" command -v docker > /dev/null 2>&1; then
 elif PATH="$ATRAPA_D:$PATH" docker ps > /dev/null 2>&1; then
 	echo "  BLAD atrapa dockera nie udaje slepego konta — proba nic nie mierzy"; BLEDY=$((BLEDY+1))
 else
-	ile_pominiec() { env "$@" BRAMKI_TYLKO_FUNKCJE=1 bash "$BRAMKI" 2>&1 | grep -c "bramka golden bedzie POMINIETA"; }
+	# ⛔ `env -u BEZ_STOSU_WP`: ten przypadek mierzy sciezke DOCKEROWA, a na wykonawcy GitHuba
+	# (D41) deklaracja stoi w srodowisku calego joba — bez odciecia dziedziczy ja kazdy z trzech
+	# pomiarow i „docker+unzip” liczy 1 zamiast 0. Zlapane przelotem prob z BEZ_STOSU_WP=1 (5.09):
+	# proba samodzielnie EXIT=0, pod deklaracja EXIT=1. Deklaracje mierzy osobny przypadek nizej.
+	ile_pominiec() { env -u BEZ_STOSU_WP "$@" BRAMKI_TYLKO_FUNKCJE=1 bash "$BRAMKI" 2>&1 | grep -c "bramka golden bedzie POMINIETA"; }
 
 	_a=$(ile_pominiec PATH="$PATH")
 	_b=$(ile_pominiec PATH="$ATRAPA_D:$PATH")
