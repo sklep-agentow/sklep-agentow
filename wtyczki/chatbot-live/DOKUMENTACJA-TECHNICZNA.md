@@ -126,7 +126,7 @@ całą historię przy każdym wejściu.
 | Kolumna | Typ | Po co jest |
 |---|---|---|
 | `dzien` | `date`, PK | Doba, której dotyczy licznik. Klucz główny, więc jeden wiersz na dobę i inkrement idzie atomowo przez `ON DUPLICATE KEY UPDATE`. |
-| `wywolania` | `int(10) unsigned`, domyślnie `0` | Ile **udanych** wywołań API poszło tego dnia. Licznik rośnie dopiero PO sukcesie (`chatl_ai_zuzyj()` wołane na końcu `chatl_ai_odpowiedz()`), więc nieudane próby nie zjadają limitu właściciela. |
+| `wywolania` | `int(10) unsigned`, domyślnie `0` | Ile wywołań API poszło tego dnia. Slot jest rezerwowany ATOMOWO PRZED wywołaniem (`chatl_ai_zarezerwuj()`: INSERT … ON DUPLICATE KEY UPDATE `LAST_INSERT_ID(wywolania+1)`, ponad limit = cofnięcie i odmowa), a przy braku odpowiedzi 200 zwalniany (`chatl_ai_zwolnij()`), więc nieudane próby nie zjadają limitu, a N równoczesnych gości przy ostatnim slocie nie przekracza go o N; tokeny dopisuje `chatl_ai_zuzyj()` po odpowiedzi 200. |
 
 ### 3.5. `{prefix}chatl_zdarzenia` — zdarzenia strażnika wejścia
 

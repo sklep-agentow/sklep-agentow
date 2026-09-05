@@ -2,7 +2,7 @@
 /**
  * Sklep — adres gościa za proxy, limity na adres, dziennik logowań. Test-strażnik: EXIT 1 przy porażce.
  *
- * Co się psuło (audyt niezależny 5.09, D1/S3): `sklepag_ip()` brało wyłącznie `REMOTE_ADDR`, więc za
+ * Co się psuło (audyt niezależny 5.09): `sklepag_ip()` brało wyłącznie `REMOTE_ADDR`, więc za
  * Cloudflare/proxy wszyscy goście liczyli się jako jeden adres — limit logowań 6/min (cały WordPress)
  * wyrzucał właściciela z wp-admin, sprzedaż miała sufit 10 zakupów/min na całą witrynę. Dziennik logowań
  * zapisywał każdy wpisany ciąg (hasło wpisane w pole loginu lądowało w bazie).
@@ -83,7 +83,7 @@ sklepag_rate_limit( $akcja2, 3 );
 sklepag_rate_limit( $akcja2, 3 );
 sklepag_rate_limit( $akcja2, 3 );
 naglowki( '203.0.113.7', '198.51.100.22' );
-sprawdz( 'gość B dostaje odmowę przez ruch gościa A — dokładnie D1 z audytu', ! sklepag_rate_limit( $akcja2, 3 ) );
+sprawdz( 'gość B dostaje odmowę przez ruch gościa A — dokładnie wada z audytu niezależnego', ! sklepag_rate_limit( $akcja2, 3 ) );
 
 echo "\n=== E. Filtr: furtka na nietypowy nagłówek; śmieć z filtra = REMOTE_ADDR, nie pusty kubeł ===\n";
 update_option( 'sklepag_za_proxy', false );
@@ -95,7 +95,7 @@ add_filter( 'sklepag_ip', function () { return 'bzdura'; } );
 rowne( 'filtr zwracający śmieć = REMOTE_ADDR', '203.0.113.7', sklepag_ip() );
 remove_all_filters( 'sklepag_ip' );
 
-echo "\n=== F. Dziennik logowań: nieistniejący login NIE trafia do bazy (S3) ===\n";
+echo "\n=== F. Dziennik logowań: nieistniejący login NIE trafia do bazy ===\n";
 $admin = get_users( array( 'role' => 'administrator', 'number' => 1, 'fields' => array( 'user_login' ) ) );
 $login_admina = $admin ? (string) $admin[0]->user_login : '';
 sprawdz( 'jest konto administratora do próby', '' !== $login_admina );
@@ -103,7 +103,7 @@ rowne( 'istniejący login zapisuje się jak wpisany', $login_admina, sklepag_log
 rowne( 'hasło wpisane w pole loginu → „[nieistniejący]”', '[nieistniejący]', sklepag_login_do_dziennika( 'Kot!2026#' ) );
 rowne( 'pusty login → pusty (nie liczy się)', '', sklepag_login_do_dziennika( '' ) );
 
-echo "\n=== G. Sufit opóźnienia 2 s (S1) ===\n";
+echo "\n=== G. Sufit opóźnienia 2 s ===\n";
 rowne( 'SKLEPAG_OPOZNIENIE_SUFIT_S = 2', 2, SKLEPAG_OPOZNIENIE_SUFIT_S );
 
 if ( null === $stara_opcja ) {

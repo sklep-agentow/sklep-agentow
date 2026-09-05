@@ -77,6 +77,12 @@ widzi drugiego). Decyzja o tym, co z tej listy jedzie do klienta jako „znane o
 **Z recenzji #289 (obszar D), dług narzędziowy:** W2 próba spustu crona tylko prozą · W3 bliźniak `lib-stos-probny.sh` bez `DISABLE_WP_CRON` ·
 W7 kopia spustu na hoście bez `cmp` · D3 „98 wiadomości” bez pomiaru — patrz sekcja „UWAGI WAŻNE Z RECENZJI #288 r3 I #289”.
 
+## 🟡 DŁUG Z AUDYTU NIEZALEŻNEGO I RECENZJI ŁATY (5.09 wieczór, wydanie 0.9.43)
+- O2 (Maya): deduplikacja zdarzeń Stripe po dzienniku z retencją 90 dni zamiast rejestru `event.id` UNIQUE — okno 90 dni > ponowienia Stripe (3/15/30 dni), więc skutek teoretyczny; jedna kolumna załatwia klasę.
+- O7 (Maya, 2. przejście): cytowanie łańcuchów IMAP w Segregatorze nie odrzuca znaku nowej linii — tylko wartości wpisane przez admina, waga niska.
+- Recenzja łaty (świeże okno): `wp_mail()` synchronicznie w ścieżce webhooka (`sklepag_powiadom_wlasciciela`, raz na godzinę na rodzaj) — przy padniętym SMTP wydłuża odpowiedź do Stripe (skutek: dodatkowe ponowienie); `sklepag_zdarzenie()` nie sprawdza własnego `insert` (dziennik z dziurą, gdy baza leży — mail do właściciela idzie niezależnie).
+- Segregator: stop-loss AI liczony po sukcesie (jak ChatBot do 1.5.17); przebiegi są szeregowe (zamek), więc wyścig nie występuje — do wyrównania z ChatBotem przy następnej zmianie `ai.php`.
+
 ## 🟡 SIEDEM PRÓB KALIBRACYJNYCH Z BAZĄ `origin/main` — NIEZMIERZONE JAWNIE, LISTA ZAMKNIĘTA (5.09, wydanie 0.9.43)
 `anonimizacja-zachowuje-fakture`, `chatbot-pytanie-limit`, `csv-bez-formuly`, `idem-okno-per-kupujacy`, `limit-uploadu`, `pobranie-po-zwrocie`,
 `schemat-wersja-po-sprawdzeniu` (`*-proba-kontrolna.sh`): każda kalibruje strażnika na „kodzie sprzed naprawy = `origin/main`”, więc po

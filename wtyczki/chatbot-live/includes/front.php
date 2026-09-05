@@ -557,7 +557,8 @@ function chatl_ajax_pytanie() {
 
 	// HYBRYDA: najpierw AI (jest klucz + limit dzienny globalny i per IP
 	// niewyczerpany); błąd/timeout/brak klucza => zjazd do trybu regułowego.
-	if ( chatl_ai_dostepny() && chatl_limit_ai_ip_ok() ) {
+	// Kolejność: odczyt (tanio) → limit per IP → ATOMOWA rezerwacja slotu dobowego (ostatni, bo zajmuje slot).
+	if ( chatl_ai_dostepny() && chatl_limit_ai_ip_ok() && chatl_ai_zarezerwuj() ) {
 		// Historia BIEŻĄCEJ rozmowy: bez niej model nie wiedział, o czym mowa
 		// przy dopytaniu. Bierzemy wiersze STARSZE niż właśnie zapisane pytanie,
 		// żeby nie wysłać go dwa razy.

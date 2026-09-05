@@ -108,8 +108,8 @@ function sklepag_ip() {
 	 *
 	 * @param string $ip Ustalony adres.
 	 */
-	$z = apply_filters( 'sklepag_ip', $ip );
-	return ( is_string( $z ) && filter_var( $z, FILTER_VALIDATE_IP ) ) ? $z : $remote;
+	$z = (string) apply_filters( 'sklepag_ip', $ip );
+	return filter_var( $z, FILTER_VALIDATE_IP ) ? $z : $remote;
 }
 
 function sklepag_rate_limit( $akcja, $prog = 10 ) {

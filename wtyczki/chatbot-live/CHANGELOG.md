@@ -18,6 +18,12 @@ Nic jeszcze.
 
 ## [1.5.18] — 2026-09-05 · schemat bazy bez zmian
 
+### Naprawione
+- **Dobowy stop-loss AI: slot rezerwowany atomowo PRZED płatnym wywołaniem.** Do 1.5.17 kontrola limitu tylko czytała
+  licznik, a licznik rósł po odpowiedzi API — N równoczesnych gości przy ostatnim slocie wszyscy przechodzili kontrolę
+  i wszyscy płacili u dostawcy (limit przekraczany o N). Teraz `chatl_ai_zarezerwuj()` (ten sam wzorzec co limit żądań),
+  brak odpowiedzi 200 zwalnia slot.
+
 ### Zmienione
 - Podpowiedź do Polityki prywatności mówi, gdzie trafiają dane w trybie AI (Anthropic PBC, serwery w USA, tryb do
   wyłączenia) i że okno czatu trzyma identyfikator rozmowy w `sessionStorage` na czas otwartej karty.
