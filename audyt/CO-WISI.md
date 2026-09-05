@@ -71,7 +71,9 @@ uruchamiać strażnika WYŁĄCZNIE na stosie próbnym (`probny_wp`), gdzie cudzy
 na „stos próbny albo pełna świadomość okna". **Jedzie do klienta:** NIE — narzędzie testowe, poza paczką.
 
 
-## 🟡 ASYMETRIA NEUTRALIZACJI CSV MIĘDZY TRZEMA WTYCZKAMI (2.09, recenzja `#264` r1 i r3) — dług nazwany, nie naprawiony
+## ✅ ROZLICZONE 5.09 — ASYMETRIA NEUTRALIZACJI CSV: ChatBot dostał brakujące `\t` i `\r` w OBU kopiach (`csv.php`, `import.php`), test `testy/csv-neutralizacja-blizniaki-test.sh` mierzy komplet w 4 kopiach (EXIT=0) — PR po scaleniu #291 (ChatBot 1.5.17)
+
+## 🟡 (archiwum) ASYMETRIA NEUTRALIZACJI CSV MIĘDZY TRZEMA WTYCZKAMI (2.09, recenzja `#264` r1 i r3) — dług nazwany, nie naprawiony
 
 Trzy wtyczki mają po kopii tej samej obrony (`*_csv_komorka()`, trzy kopie są uzasadnione — instalują
 się osobno), ale **listy znaków różnią się** i żaden grep po nazwie funkcji tego nie pokaże:
@@ -190,7 +192,9 @@ bo dotyczy naszego oprzyrządowania, nie produktu.
 
 ---
 
-## 🔴 STRAŻNIK PACZEK ISTNIEJE, ALE NIE STRZELA SAM — wymaga PR-a manifestowego (29.08, z recenzji #208 r1)
+## ✅ ROZLICZONE (zmierzone 5.09) — STRAŻNIK PACZEK STRZELA SAM: `paczka` jest w `BRAMKI=()` w `narzedzia-qa/bramki.sh:47` (bieg 13 z 13 na każdym PR-ze w CI); `paczka-zgodnosc.sh` dodatkowo w briefingu recenzenta
+
+## 🔴 (archiwum) STRAŻNIK PACZEK ISTNIEJE, ALE NIE STRZELA SAM — wymaga PR-a manifestowego (29.08, z recenzji #208 r1)
 
 `narzedzia-qa/paczka-zgodnosc.sh` wykrywa rozjazd paczki z repo i **pada poprawnie** (kod 1 na
 `f310eec` dla obu botów, kod 0 po naprawie). Ale nie ma go w `BRAMKI=()` w `narzedzia-qa/bramki.sh`
@@ -214,7 +218,9 @@ po commicie budującym aktualny zip **ORAZ** wersja nie podbita* → PAD.
 
 ---
 
-## 🟡 KLASA 5 (ślady wewnętrzne w paczce) NIE JEST DOMKNIĘTA — 47 trafień rodziny, której skaner nie widzi (29.08, z recenzji #208 r1)
+## ✅ ROZLICZONE 5.09 (#291) — KLASA 5: skaner 1.4.0/1.4.1 zna formy litera-myślnik-numer (`A2-F3`, `P2-Z1`, `DK-5`, `WK-13`) i „ten/tego PR”/„Runda N”; drzewo i nowe paczki 0 śladów (`paczka-zgodnosc.sh` EXIT=0 ×3); stare wydane archiwa zostają (klasa 10)
+
+## 🟡 (archiwum) KLASA 5 (ślady wewnętrzne w paczce) NIE JEST DOMKNIĘTA — 47 trafień rodziny, której skaner nie widzi (29.08, z recenzji #208 r1)
 
 `#208` usunął z paczek jeden ślad (`zasada D22`). Skaner `narzedzia-qa/slady-wewnetrzne.sh`
 zna wzorce `\bD[0-9]{1,2}\b` i `\bK[0-9]\b` (linia 77) — i dlatego zobaczył `D22`. **Nie zna**
@@ -429,7 +435,7 @@ prawdziwym wdrożeniu.
 - ⛔ WRACA ⇒ kasujesz ten wpis i przestawiasz L6-01 na ✅ z wynikiem z hostingu klienta.
 
 
-## 🟡 DŁUG ZASTANY — okno idempotencji nie obejmuje JEDNOCZESNEGO podwójnego kliknięcia
+## 🟡 DŁUG ZASTANY — okno idempotencji nie obejmuje JEDNOCZESNEGO podwójnego kliknięcia (5.09: po stronie przeglądarki przycisk JEST blokowany po wysłaniu — `assets/platnosc.js:146`; zostaje wyścig dwóch żądań spoza przeglądarki, dług nie błąd klienta)
 (z recenzji #199 r2, DROBNA 5 — NIE regresja z tego PR, mechanizm istnieje od 0.9.0)
 - Odczyt okna (`zakup.php` `get_transient`) i jego zapis (`set_transient`) dzieli wyjście do
   sieci: `sklepag_stripe_utworz_sesje()`. Dwa żądania wysłane NAPRAWDĘ jednocześnie przechodzą
