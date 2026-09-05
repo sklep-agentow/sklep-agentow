@@ -78,6 +78,25 @@ else
 	echo "  BLAD mutacja NIE weszła: w przelocie nie ma filtra [$KOT]"; BLEDY=$((BLEDY+1))
 fi
 
+echo "=== E. MUTANT 2: literówka w filtrze WYKLUCZAJĄCYM (FILTR_BEZ) odłamka reszta (#287 DROBNA 2) ==="
+KOT2="FILTR_BEZ='^(bramki|bramka-poswiadczenia)-proba-kontrolna[.]sh\$'"
+if grep -qF -- "$KOT2" "$KOPIA"; then
+	sed "s/FILTR_BEZ='\^(bramki|bramka-poswiadczenia)-proba-kontrolna\[/FILTR_BEZ='^(bramkiX|bramka-poswiadczenia)-proba-kontrolna[/" "$KOPIA" > "$MUTANT"
+	: > "$T/suma-m2.raw"
+	for O in bramki poswiadczenia reszta; do lista "$O" "$MUTANT" "$T/m2-$O"; cat "$T/m2-$O" >> "$T/suma-m2.raw"; done
+	sort -u "$T/suma-m2.raw" > "$T/suma-m2"
+	# zepsute wykluczenie → `bramki-proba-kontrolna.sh` wpada do DWÓCH odłamków; suma (unikalna) nadal = pełna,
+	# więc rozstrzyga PODWÓJNE liczenie: suma długości odłamków > długość pełnej listy.
+	DL_M2=$(grep -c . "$T/suma-m2.raw"); DL_P=$(grep -c . "$T/pelna")
+	if [ "$DL_M2" -gt "$DL_P" ] && grep -qx 'bramki-proba-kontrolna.sh' "$T/m2-reszta"; then
+		echo "  OK   złapane: zepsute FILTR_BEZ → bramki-proba-kontrolna.sh biegnie w DWÓCH odłamkach ($DL_M2 wpisów na $DL_P prób)"
+	else
+		echo "  BLAD PRZESZLO NIEZAUWAZONE: mutant FILTR_BEZ — wpisów $DL_M2 na $DL_P prób, w reszcie bramki: $(grep -cx 'bramki-proba-kontrolna.sh' "$T/m2-reszta")"; BLEDY=$((BLEDY+1))
+	fi
+else
+	echo "  BLAD mutacja NIE weszła: w przelocie nie ma filtra [$KOT2]"; BLEDY=$((BLEDY+1))
+fi
+
 echo
-if [ "$BLEDY" -eq 0 ]; then echo "ODLAMKI-PROBA: suma odłamków = pełna lista, odmowy działają, mutant złapany"; exit 0; fi
+if [ "$BLEDY" -eq 0 ]; then echo "ODLAMKI-PROBA: suma odłamków = pełna lista, odmowy działają, oba mutanty (TYLKO i BEZ) złapane"; exit 0; fi
 echo "ODLAMKI-PROBA: BLEDY=$BLEDY" >&2; exit 1

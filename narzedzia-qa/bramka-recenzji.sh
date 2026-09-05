@@ -25,9 +25,11 @@
 #   (b) CLI recenzenta w ogóle nie wystartowało (brak pliku z wyjściem).
 # Sam fakt, że PR dotyka CI, NIE wystarcza. Gdyby wystarczał, prawdziwy niemy
 # zgon na PR-ze do CI przechodziłby bokiem — a to jedyne miejsce, gdzie i tak
-# nikt nas nie sprawdzi. Warunek (b) jest przy okazji odporny na to, czego
-# nie wiemy na pewno: czy walidacja workflow patrzy tylko na recenzent.yml,
-# czy na wszystkie pliki workflow. W obu światach klasyfikacja wychodzi ta sama.
+# nikt nas nie sprawdzi. Warunek (b) jest przy okazji odporny na to, co do 5.09
+# było niepewne: czy walidacja workflow patrzy tylko na recenzent.yml, czy na
+# wszystkie pliki workflow. ZMIERZONE 5.09 (#290 ruszył quality.yml, recenzent
+# zrecenzował normalnie): walidacja patrzy TYLKO na recenzent.yml. Warunek (b)
+# zostaje, bo klasyfikacja wychodzi ta sama w obu światach.
 #
 # Ten sam plik biegnie w CI i na maszynie buildera — źródła danych da się
 # podstawić plikami, żeby próba kontrolna nie musiała pukać do GitHuba.

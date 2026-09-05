@@ -13,7 +13,7 @@ Przebieg: 28.08.2026, commit `98133e3`, gałąź `domkniecie-przelotu-0.9.20`.
 
 | bramka | co obiecuje nazwa | co MIERZY naprawdę | rozjazd |
 |---|---|---|---|
-| `actionlint` | workflowy CI są poprawne | `actionlint .github/workflows/*.yml` | ⚠️ wzorzec łapie **tylko `*.yml`**; plik `*.yaml` przeszedłby niesprawdzony, tak samo `.github/actions/` |
+| `actionlint` | workflowy CI są poprawne | `actionlint .github/workflows/*.yml` **+ od #290 shellcheck nad blokami `run:`** (pinowana binarka przez `zapewnij_narzedzie`, więc pomiar jest ten sam lokalnie i w CI) | ⚠️ wzorzec łapie **tylko `*.yml`**; plik `*.yaml` przeszedłby niesprawdzony, tak samo `.github/actions/` |
 | `manifest` | strażnik strażników — bramki nie znikają | `sprawdz-manifest.sh`: lista bramek zgadza się z tym, co przebieg naprawdę odpala | ✅ zgodne z nazwą |
 | `slady` | w tym, co jedzie do klienta, nie ma naszych śladów wewnętrznych | pętla po `wtyczki/*/` i tylko po nich | ⚠️ `dokumentacja/INSTRUKCJA-INSTALACJI.md` **też jedzie do klienta** (readme odsyła do niej jako „obok paczek”) i NIE jest skanowana |
 | `znaleziska` | znaleziska audytu są rozliczone | księgowość rejestru: każde ma test, status, SHA. ⛔ **Nie uruchamia testów** | ✅ rozjazd zadeklarowany wprost w nagłówku `bramka-znaleziska.sh` |
