@@ -164,3 +164,9 @@ Koordynatorka 5.09, z rozpoznania `audyt/plamy/C12-RAPORT.md`.
 korekta wchodzi osobnym PR-em (`§12` planu: „korekta po zamrożeniu — wyłącznie osobnym PR z wpisem w DECYZJE.md”). Powód: 69 PR-ów od 0.9.28, druga próba
 egzaminu; rubryka bez delty opisywałaby wydanie sprzed dwóch tygodni, a bramka `oddanie-guard` czyta liczniki z nagłówka raportu (kod nowszy od raportu = raport nieważny).
 **Skutek:** liczniki w nagłówku raportu są Z POMIARU na `main` po ostatnim scaleniu (sha w raporcie); DUŻE w rejestrze INFRA, które nie są wadą wtyczek, są wymienione z powodem, nie ukryte.
+
+## D44 — Minuty CI: gdy darmowa pula się skończy, repo PUBLICZNE tylko na czas braku testów, potem z powrotem prywatne (5.09, właściciel)
+**Decyzja (Dzidek 5.09 19:20 i 19:24):** plan Free daje 2000 min/mies. Actions na prywatnym repo; 5.09 o 19:18 zużyte 1895 (API rozliczeń organizacji, `Actions Linux`), przebieg na PR ≈ 15–25 min. Gdy GitHub przestanie uruchamiać CI z braku minut — repo od razu publiczne (kod GPL), BEZ kombinowania; po zamknięciu prac wraca na prywatne. Hetzner jako runner odpięty (rejestr runnerów repo/org: 0, brak procesu i katalogu runnera).
+**Skutek do nazwania klientowi jednym zdaniem:** publiczne staje się całe repo, także raporty audytu i CO-WISI; historia czysta wg gitleaks (cała historia), ale kopia zrobiona w oknie publicznym nie znika po powrocie na prywatne.
+**Odrzucone alternatywy:** GitHub Pro / limit wydatków (płatne, poza zakresem zlecenia); własny runner (Dzidek 5.09: „serio przesada, że tyle czekamy” — dwa runnery spowalniały).
+Koordynatorka 5.09 (Gosia-52), z audytu niezależnego I1/I2.
