@@ -14,6 +14,14 @@ wstecz nie dopisuję, bo nie umiałbym jej odtworzyć uczciwie. Ich zmiany od te
 pory lądują tutaj.
 
 ## [Niewydane]
+- **`stanowisko/wp-cron-stanowisko.sh` 1.0.1 — padnięty `docker ps` nie udaje zgaszonego kontenera (#289 DROBNA 2),
+  kody wyjścia opisane zgodnie z `docker exec` (DROBNA 1), kontrola crona nazwana uczciwie: liczy zaległe TERAZ,
+  bez progu wieku (WAŻNA 5, klasa 11).** Status listy kontenerów bierze się teraz z `docker ps`, nie z `grep` za potokiem;
+  demon, który nie odpowiada, kończy kodem 3 z komunikatem na stderr. Dowód: podstawiony `docker` padający kodem 1 → skrypt
+  `EXIT=3`; prawdziwy Docker z żywym kontenerem → `EXIT=0`. ⛔ Kopia na hoście (`/usr/local/sbin/`) NIE aktualizuje się sama
+  (#289 WAŻNA 7, dług w `audyt/CO-WISI.md`) — po scaleniu: `bash narzedzia-qa/stanowisko/instaluj-spust-crona.sh`.
+- **`stanowisko/README.md` — rozmiar paczki 0.9.40 poprawiony na zmierzony (4 859 567 B, `ls -l`; poprzednia liczba
+  9 098 363 B nie miała pokrycia — #289 WAŻNA 6, klasa 3).**
 - **`stanowisko/wp-cron-stanowisko.sh` 1.0.0 + `stanowisko/instaluj-spust-crona.sh` 1.0.0 — WP-Cron stanowiska ma ZEWNETRZNY spust
   (znalezisko `I-25`).** Przyczyna nie jest brak ruchu: `siteurl` to `http://localhost:8890`, a w kontenerze na 8890 nikt
   nie slucha (apache na :80), wiec petla zwrotna `wp-cron.php` konczy sie odmowa polaczenia (kod 000, curl exit 7) i WP-Cron
