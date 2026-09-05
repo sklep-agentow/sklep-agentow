@@ -103,6 +103,7 @@ ALLOWLIST_SEGREGATOR=(
 	"segregator-maila/includes/instalator.php"
 	"segregator-maila/includes/silnik.php"
 	"segregator-maila/includes/ai.php"
+	"segregator-maila/includes/rodo.php"
 	"segregator-maila/includes/csv.php"
 	"segregator-maila/includes/admin.php"
 	"segregator-maila/includes/admin-skrzynka.php"

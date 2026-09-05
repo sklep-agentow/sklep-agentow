@@ -489,7 +489,12 @@ function chatl_ajax_pytanie() {
 	$pytanie = isset( $_POST['pytanie'] ) ? sanitize_textarea_field( wp_unslash( $_POST['pytanie'] ) ) : '';
 	$sesja   = isset( $_POST['sesja'] ) ? chatl_waliduj_sesje( wp_unslash( $_POST['sesja'] ) ) : '';
 
-	if ( '' === $pytanie || '' === $sesja ) {
+	// Dwa różne powody, dwa różne zdania: dotąd zła sesja też kończyła się „Puste pytanie.”,
+	// a gość z wpisanym pytaniem nie rozumiał, co ma poprawić.
+	if ( '' === $sesja ) {
+		wp_send_json_error( array( 'komunikat' => 'Sesja czatu jest nieprawidłowa — odśwież stronę i napisz jeszcze raz.' ), 400 );
+	}
+	if ( '' === $pytanie ) {
 		wp_send_json_error( array( 'komunikat' => 'Puste pytanie.' ), 400 );
 	}
 
@@ -557,7 +562,8 @@ function chatl_ajax_pytanie() {
 
 	// HYBRYDA: najpierw AI (jest klucz + limit dzienny globalny i per IP
 	// niewyczerpany); błąd/timeout/brak klucza => zjazd do trybu regułowego.
-	if ( chatl_ai_dostepny() && chatl_limit_ai_ip_ok() ) {
+	// Kolejność: odczyt (tanio) → limit per IP → ATOMOWA rezerwacja slotu dobowego (ostatni, bo zajmuje slot).
+	if ( chatl_ai_dostepny() && chatl_limit_ai_ip_ok() && chatl_ai_zarezerwuj() ) {
 		// Historia BIEŻĄCEJ rozmowy: bez niej model nie wiedział, o czym mowa
 		// przy dopytaniu. Bierzemy wiersze STARSZE niż właśnie zapisane pytanie,
 		// żeby nie wysłać go dwa razy.

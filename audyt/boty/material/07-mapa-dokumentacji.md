@@ -24,7 +24,7 @@
 - **Co już wiemy o błędach** → `audyt/SCIAGA-EGZAMINATORA.md` (klasy od egzaminatora) · `audyt/boty/SLEPE-PLAMY-NASZEGO-AUDYTU.md` (czego nasze audyty NIE łapały) · ⭐ `audyt/PETLA-UCZENIA-AUDYTU.md` (klasy zmierzone u nas + jak nie dopuścić do powtórki)
 - **Co i czym zweryfikowano** → `audyt/REJESTR-WERYFIKACJI.md` (kolumna „czym sprawdzone"; wpis bez dowodu = wrażenie, nie fakt)
 - **Jakie są reguły branży** → `material/05-reguly-branzy.md` (⛔ z oficjalnych źródeł, nie z głowy)
-- **Co jest do zrobienia / co wisi** → `boty/NA-OSTATNI-GUZIK-BOTY.md` · `boty/KOLEJKA-CHATBOT.md` · `audyt/CO-WISI.md`
+- **Co jest do zrobienia / co wisi** → `boty/NA-OSTATNI-GUZIK-BOTY.md` · (`boty/KOLEJKA-CHATBOT.md` — notatka robocza, wyniesiona z repo 5.09) · `audyt/CO-WISI.md`
 - **Jak działa nasze QA** → `narzedzia-qa/` (skrypty + `CHANGELOG.md`) · `.github/RECENZENT-BRIEFING.md`
 
 ## ⛔ ARCHIWALNE — NIE traktuj jako stanu dzisiejszego

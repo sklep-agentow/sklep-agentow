@@ -41,8 +41,8 @@ nie odświeżano wobec dzisiejszego `HEAD`.
 
 ## 🟡 ŚWIADOMY DŁUG NA WYDANIE 0.9.42 — co ZOSTAJE otwarte w rejestrze INFRA po rundzie 5.09 i DLACZEGO (5.09, koordynatorka)
 
-Stan NA TEJ GAŁĘZI po scaleniu #291, #297, #296 i obszaru C (#294) (5.09), policzony komendą rejestru (`grep -cE '^\| `[^`]+` \|.*OTWARTE' audyt/REJESTR-ZNALEZISK-INFRA.md`): **16 OTWARTYCH**
-(plus WSZYSTKIE 3 pozycje W NAPRAWIE wymienione dla kompletu: `F4-F4`, `I-26`, `P-1` — #296 r5 WAŻNA 2: wcześniej 2 z 3; oraz 1 WYCOFANE: `B-12`). Poniżej WSZYSTKIE, każda z kodem w odwrotnych apostrofach — `bramka-znaleziska.sh` (krok „rejestr INFRA”, przez
+Stan NA TEJ GAŁĘZI po scaleniu #291, #297, #296 i obszaru C (#294) (5.09), policzony komendą rejestru (`grep -cE '^\| `[^`]+` \|.*OTWARTE' audyt/REJESTR-ZNALEZISK-INFRA.md`): **13 OTWARTYCH**
+(plus WSZYSTKIE 2 pozycje W NAPRAWIE wymienione dla kompletu: `F4-F4`, `P-1` — #296 r5 WAŻNA 2: wcześniej 2 z 3; oraz 1 WYCOFANE: `B-12`). Poniżej WSZYSTKIE, każda z kodem w odwrotnych apostrofach — `bramka-znaleziska.sh` (krok „rejestr INFRA”, przez
 `rejestr-liczniki-proba-kontrolna.sh`) sprawdza na każdym PR, że KAŻDY kod OTWARTY w rejestrze występuje w tej sekcji. Powód: #296 r1
 KRYT 1 — „~20” było liczbą przepisaną, pomiar dawał 30, a sekcja gubiła jedyne KRYT rejestru (klasa I-23: dwa rejestry, jeden nie
 widzi drugiego). Decyzja o tym, co z tej listy jedzie do klienta jako „znane ograniczenie”, należy do właściciela (sekcja
@@ -54,7 +54,7 @@ widzi drugiego). Decyzja o tym, co z tej listy jedzie do klienta jako „znane o
 - `#291` obszar A — **SCALONY 5.09 09:57**: `P-5`, `A7b-F2`, `D-4`, `F5-F5` są już ZAMKNIETE w rejestrze na tej gałęzi (wiersze zostają tu, żeby lista była pełna).
 - `#297` segregator — **SCALONY 5.09 10:31**: `A7c-F1` ZAMKNIETE w rejestrze na tej gałęzi.
 
-**Zostaje — 16 OTWARTYCH + 3 W NAPRAWIE (`F4-F4`, `I-26`, `P-1`):**
+**Zostaje — 16 OTWARTYCH + 2 W NAPRAWIE (`F4-F4`, `P-1`):**
 
 **Narzędzia procesu (nie kod wtyczek, klient ich nie dostaje):**
 - `I-3` kalibrator-straznikow.sh, `I-4` licznik-odstepstw.sh, `I-8` adresy-w-dokumencie.sh + waga-znaleziska.sh — sieroty planu audytów v3.
@@ -68,14 +68,33 @@ widzi drugiego). Decyzja o tym, co z tej listy jedzie do klienta jako „znane o
 - `F4-F1` retencja danych zamówień — D40: dokument księgowy, kasowanie byłoby BŁĘDEM; polityka mówi to wprost od 0.9.42.
 - `F4-*` SRED — automatyczne czyszczenie obejmuje 2 z 7 tabel; retencja zamówień rozstrzygnięta (D40), pozostałe tabele bez decyzji
   o retencji (`audyt/plamy/F4-RAPORT.md`) — do rozstrzygnięcia po oddaniu, nie w tym wydaniu.
-- `A7b-F1` klient poczty segregatora bez górnej granicy na to, ile przyjmie od serwera (SRED) — osobny PR po A7c-F1; nie dotyka sklepu.
+- ~~`A7b-F1` klient poczty segregatora bez górnej granicy na to, ile przyjmie od serwera (SRED)~~ — **ZAMKNIĘTE 5.09 (Segregator 1.3.8, PR #301):** sufity `Segm_Imap::MAX_*` (linia 64 KB, literał 1 MB, 20 000 linii / 8 MB), sonda `audyt/plamy/A7b-sonda-imap.sh` 7/7 bez fatala (przed: 4 FATAL), `segregator-skrzynka-test` na żywym `segm_imap` EXIT=0.
 - `A4b-F3` strona „Dziękujemy” przy dwóch rzadkich statusach, `A4b-F4` pigułka „Kup teraz” w chwili płatności — MALE, front; kandydaci po oddaniu.
 - `A7-F2` statyka pod PHP 8.1 vs produkt na 8.4, `A7-F3` trzy niewołane funkcje — MALE, porządek kodu.
-- `I-26` W NAPRAWIE — droga instalacyjna 7 kroków PRZEZ PANEL na `probny_wp` NIEZMIERZONA (limity 64M są). ⛔ To jedyna pozycja z listy,
+- `I-26` ZAMKNIĘTE 5.09 — Krok 1 instrukcji PRZEZ PANEL zmierzony na stosie próbnym od zera (`narzedzia-qa/stanowisko/instalacja-przez-panel-probny.sh`): 2 MB → odmowa komunikatem z instrukcji, 8 MB → wgrane, aktywne, 4 strony, EXIT=0.
   która dotyka tego, co klient zrobi pierwszego dnia — do przejścia ręcznie przed oddaniem (ogon wydania), nie po.
 
 **Z recenzji #289 (obszar D), dług narzędziowy:** W2 próba spustu crona tylko prozą · W3 bliźniak `lib-stos-probny.sh` bez `DISABLE_WP_CRON` ·
 W7 kopia spustu na hoście bez `cmp` · D3 „98 wiadomości” bez pomiaru — patrz sekcja „UWAGI WAŻNE Z RECENZJI #288 r3 I #289”.
+
+## 🟡 DŁUG Z AUDYTU NIEZALEŻNEGO I RECENZJI ŁATY (5.09 wieczór, wydanie 0.9.43)
+- O2 (Maya): deduplikacja zdarzeń Stripe po dzienniku z retencją 90 dni zamiast rejestru `event.id` UNIQUE — okno 90 dni > ponowienia Stripe (3/15/30 dni), więc skutek teoretyczny; jedna kolumna załatwia klasę.
+- ~~O7 (Maya, 2. przejście): cytowanie łańcuchów IMAP nie odrzuca znaku nowej linii~~ — **ZAMKNIĘTE 5.09:** `Segm_Imap::tekst()` odcina CR/LF (`segregator-skrzynka-test` na żywym IMAP EXIT=0).
+- Recenzja łaty (świeże okno): `wp_mail()` synchronicznie w ścieżce webhooka (`sklepag_powiadom_wlasciciela`, raz na godzinę na rodzaj) — przy padniętym SMTP wydłuża odpowiedź do Stripe (skutek: dodatkowe ponowienie); ~~`sklepag_zdarzenie()` nie sprawdza własnego `insert`~~ **ZAMKNIĘTE 5.09** (wynik mierzony, przy błędzie ślad w logu PHP i 0 dla wołającego); wcześniej: dziennik z dziurą, gdy baza leży — mail do właściciela idzie niezależnie).
+- ~~O9 import konfiguracji przez `WP_Filesystem`~~ **ZAMKNIĘTE 5.09** (`konfiguracja.php` czyta `file_get_contents` jak import CSV). O10–O12 (Maya, 3. przejście): wskaźnik „Kupujący” na pulpicie liczy zanonimizowane zamówienia jako jednego kupującego (statystyka); dwie opcje bez `autoload` czytane na każdym wejściu (2 zapytania SQL); linki pobrania i opinii idą przez `admin-post.php`, który część hostingów blokuje dla niezalogowanych — zdanie w INSTRUKCJA-INSTALACJI dopisane 5.09.
+- Segregator: stop-loss AI liczony po sukcesie (jak ChatBot do 1.5.17); przebiegi są szeregowe (zamek), więc wyścig nie występuje — do wyrównania z ChatBotem przy następnej zmianie `ai.php`.
+- **Infrastruktura z audytu niezależnego (Maya, raport v4, I1–I7) — decyzje WŁAŚCICIELA, nie audytu:** I1 gałąź `main` bez ochrony po stronie GitHuba (plan Free + repo prywatne: API odpowiada 403 „Upgrade to GitHub Pro or make this repository public”; jedyny strażnik = lokalny hook `.githooks/pre-push`; scalenie przy czerwonym CI jest możliwe). I2 minuty CI: zmierzone 5.09 przez API rozliczeń organizacji — **1825 z 2000** darmowych minut zużyte od 1.09 (`Actions Linux`, przebieg na PR ≈ 15–25 min); po wyczerpaniu CI na prywatnym repo przestaje startować do 1.10. Jedna decyzja zamyka I1 i I2: repo publiczne (kod GPL — pytanie do klienta) albo GitHub Pro / limit wydatków. I6 stanowisko testowe (definicja stosu, zamki, poświadczenia, 13 skryptów z twardymi ścieżkami) poza repo — dowód wydania odtwarzalny tylko na jednej maszynie. I7 paczka zbiorcza nie jest bitowo powtarzalna (te same pliki, inne czasy w zipie) — bez znaczenia dla klienta.
+- **Dogrywka audytu niezależnego (Maya, raport v5, JS+CSS zderzone z PHP; kopia v5 na laptopie, tu streszczenie właściciela):** S4 ŚREDNI = operator traci tekst po 5 min ciszy (`operator.php`) — **naprawione w ChatBot 1.5.18** (strażnik `testy/chatbot-operator-wysylka-po-ciszy-test.php` 9/9, na kodzie sprzed naprawy 7 asercji pada). **O13–O16 ZAMKNIĘTE 5.09 w tej samej paczce** (decyzja właściciela 19:26: „nie wisi z uzasadnieniem, naprawiamy”): O13 panel operatora po `-1`/`success:false` pokazuje komunikat i odświeża stronę (`operator.js`); O14 odpowiedź bez `stan` planuje kolejne odpytanie za 30 s (`widget.js`); O15 zła sesja ma własne zdanie (`front.php`); O16 `platnosc.js` czyta odpowiedź jako tekst i przy nie-JSON pokazuje zdanie z kodem HTTP. Dowód: `node --check` ×3, `przejecie-test` EXIT=0; zachowania JS bez testu automatycznego (przeglądarkowe — do e2e przy następnej okazji).
+- **I3 (Maya): recenzent AI pada na każdym PR-ze Dependabota** (`pull_request` z Dependabota nie dostaje sekretów repo; `#248` wisiał 1 h 27 min i został zamknięty ręcznie). Naprawa tania i moja: `if: github.actor != 'dependabot[bot]'` na jobie `recenzja` w `.github/workflows/recenzent.yml` — PR porządkowy po wydaniu 0.9.43.
+- **Recenzja `#301` r1 — pozostawione świadomie:** WAŻNA 1, 2 i DROBNE 3–4 naprawione w paczce; „nieodtworzone przypuszczenie” recenzenta (WordPress przy `done = false` kasownika może ponawiać strony bez końca) — kasownik Segregatora zwraca `done = false` tylko przy błędzie bazy, wtedy WP pokazuje komunikat z `messages`; nie mierzone, nazwane.
+
+## 🟡 SIEDEM PRÓB KALIBRACYJNYCH Z BAZĄ `origin/main` — NIEZMIERZONE JAWNIE, LISTA ZAMKNIĘTA (5.09, wydanie 0.9.43)
+`anonimizacja-zachowuje-fakture`, `chatbot-pytanie-limit`, `csv-bez-formuly`, `idem-okno-per-kupujacy`, `limit-uploadu`, `pobranie-po-zwrocie`,
+`schemat-wersja-po-sprawdzeniu` (`*-proba-kontrolna.sh`): każda kalibruje strażnika na „kodzie sprzed naprawy = `origin/main`”, więc po
+scaleniu naprawy kończy `EXIT=2` z konstrukcji („origin/main ZAWIERA już naprawę”). Strażnicy, które kalibrują, biegną i przechodzą.
+Stan zapisany w kodzie: lista `NIEZMIERZONE_JAWNIE` w `narzedzia-qa/proby-kontrolne-przelot.sh` (sufit 7; ósma niezmierzona kładzie przelot)
+a `k7-koniec.sh` czyta tę listę PO NAZWIE z tego samego pliku (EXIT=2 spoza listy = NO-GO). **Kształt naprawy:** mutant podkładany w KOPII kodu (jak `chatbot-csv-formula-proba-kontrolna.sh`)
+zamiast `origin/main` jako bazy — wtedy lista wraca do zera. Dług narzędziowy, nie wada wtyczek.
 
 ## 🟡 DŁUG NAZWANY ZE SCALEŃ 5.09 PRZY ZERZE KRYT (reguła 10:15: uwagi o narzędziach/dokumentach nie idą rundami) — ODŁOŻONE ŚWIADOMIE, NIE PRZEOCZONE
 
@@ -748,9 +767,11 @@ prawdziwym wdrożeniu.
   zrzuty-dowody); świadome odstępstwa w WZORCE-DASHBOARD-K3 §8. Sędzia #2 w toku.
 - Zrzuty panelu (10 szt.) ⛔ scratchpad tamtej sesji JUŻ NIE ISTNIEJE; odtwarza je `testy/zrzuty-panelu.js` — skrypt jest w repo, więc dowód jest ODTWARZALNY, choć pliki przepadły.
 
-## Blokuje wydanie
-- (nic pilnego) — Live-smoke AI na żywym api.anthropic.com w ODWODZIE (~5$ za zgodą
-  właściciela), gdyby próba 1 chciała żywe AI; egzamin trybem regułowym 0 zł.
+## Blokuje wydanie (stan 5.09, wydanie 0.9.43 / 1.5.18 / 1.3.8)
+- Nic. Poprzedni wpis („próba 1”, live-smoke AI w odwodzie) był reliktem: żywe AI dalej
+  nie jest warunkiem wydania (egzamin trybem regułowym, 0 zł). Werdykt bramki wydania
+  (`k7-koniec.sh`) i przelot prób są w nagłówku `AUDYT-RAPORT.md` — tam jest aktualna blokada
+  albo jej brak; ta sekcja ma nie mówić czego innego niż nagłówek raportu (klasa 149).
 
 ## Nie zaczęte (kolejność planu)
 - **Nazwany dług (recenzja #49, drobna):** przy podmianie zipa na produkcie BEZ

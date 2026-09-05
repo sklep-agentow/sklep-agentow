@@ -61,6 +61,13 @@ switch ( $scen ) {
 		while ( true ) { if ( false === @fwrite( $k, "* 1 EXISTS\r\n" ) ) { break; } }
 		break;
 
+	case 'search-40k':
+		// KONTROLA DODATNIA W SKALI: poprawna odpowiedz na UID SEARCH ALL dla 40 000 wiadomosci
+		// — JEDNA linia ok. 240 KB (RFC 3501 7.2.5). Sufit na linie MUSI ja przepuscic.
+		w( $k, '* SEARCH ' . implode( ' ', range( 1, 40000 ) ) . "\r\n" );
+		w( $k, "$tag OK SEARCH completed\r\n" );
+		break;
+
 	case 'linia-ogromna':
 		// JEDNA linia bez konca, rosnaca bez konca (fgets bez limitu)
 		$blok = str_repeat( 'B', 65536 );

@@ -47,6 +47,21 @@ class Segm_Imap {
 	const DZIENNIK_ZNAKOW = 300;
 
 	/**
+	 * Sufity na to, ile przyjmujemy OD SERWERA. Bez nich rozmiar odpowiedzi dyktuje
+	 * serwer: jedna linia „{943718400}” kończyła proces PHP fatalem (brak pamięci)
+	 * z pominięciem całego aparatu komunikatów po polsku. Najdłuższa POPRAWNA linia
+	 * protokołu, o którą wtyczka sama prosi, to `* SEARCH` z listą WSZYSTKICH UID-ów
+	 * (`UID SEARCH ALL` przed obcięciem do limitu): przy 40 000 wiadomości ok. 240 KB,
+	 * przy 500 000 ok. 3,5 MB — stąd 4 MB na linię (sufit 64 KB odcinał skrzynki od
+	 * ok. 11 000 maili). Nagłówki i pierwsze SEGM_SKRZ_TRESC_BAJTOW
+	 * treści mieszczą się w literale 1 MB; całość i tak o rząd poniżej limitu pamięci PHP.
+	 */
+	const MAX_LINIA_BAJTOW     = 4194304;  // jedna linia odpowiedzi (4 MB; `* SEARCH` na dużej skrzynce)
+	const MAX_LITERAL_BAJTOW   = 1048576;  // jeden literał {n} (1 MB)
+	const MAX_LINII_ODPOWIEDZI = 20000;    // linii nietagowanych na jedno polecenie
+	const MAX_ODPOWIEDZ_BAJTOW = 8388608;  // łącznie na jedno polecenie (8 MB)
+
+	/**
 	 * Gniazdo do serwera.
 	 *
 	 * @var resource|null
@@ -94,6 +109,14 @@ class Segm_Imap {
 	 * @var int
 	 */
 	private $limit_czasu;
+
+	/**
+	 * Powód przerwania odczytu z winy rozmiaru odpowiedzi (pusty = brak).
+	 * Ustawiany przy przekroczeniu sufitu MAX_*; czytany przez powod_przerwania().
+	 *
+	 * @var string
+	 */
+	private $powod_limitu = '';
 
 	/**
 	 * Ostrzeżenia PHP przechwycone przy ostatniej operacji sieciowej.
@@ -800,7 +823,9 @@ class Segm_Imap {
 			return null;
 		}
 
-		$linie = array();
+		$this->powod_limitu = '';
+		$linie              = array();
+		$bajtow             = 0;
 		while ( true ) {
 			$linia = $this->czytaj_linie();
 			if ( null === $linia ) {
@@ -808,6 +833,15 @@ class Segm_Imap {
 				return null;
 			}
 			$this->zapisz_dziennik( 'S: ' . $linia['tekst'] );
+
+			// Sufit na CAŁĄ odpowiedź: liczba linii i bajtów. Serwer, który nigdy nie
+			// przysyła linii ze znacznikiem, bez tego zapełniałby pamięć bez końca.
+			$bajtow += strlen( $linia['tekst'] ) + (int) array_sum( array_map( 'strlen', $linia['literaly'] ) );
+			if ( count( $linie ) >= self::MAX_LINII_ODPOWIEDZI || $bajtow > self::MAX_ODPOWIEDZ_BAJTOW ) {
+				$this->przerwij_za_rozmiar( 'przysłał odpowiedź ponad limit bezpieczeństwa wtyczki (' . count( $linie ) . ' linii, ' . round( $bajtow / 1048576, 1 ) . ' MB)' );
+				$this->blad = 'Serwer poczty ' . $this->powod_przerwania() . ' w trakcie polecenia ' . strtok( $polecenie, ' ' ) . '.';
+				return null;
+			}
 
 			if ( 0 === strpos( $linia['tekst'], $znacznik . ' ' ) ) {
 				$ogon   = trim( substr( $linia['tekst'], strlen( $znacznik ) + 1 ) );
@@ -875,6 +909,9 @@ class Segm_Imap {
 	 * @return string
 	 */
 	private function powod_przerwania() {
+		if ( '' !== $this->powod_limitu ) {
+			return $this->powod_limitu;
+		}
 		if ( ! is_resource( $this->gniazdo ) ) {
 			return 'zamknął połączenie';
 		}
@@ -898,15 +935,20 @@ class Segm_Imap {
 	 * @return array{tekst: string, literaly: array<int, string>}|null
 	 */
 	private function czytaj_linie() {
-		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fgets -- odczyt z gniazda TCP, nie z pliku.
-		$tekst = fgets( $this->gniazdo );
-		if ( false === $tekst ) {
+		$tekst = $this->czytaj_jedna_linie();
+		if ( null === $tekst ) {
 			return null;
 		}
 		$literaly = array();
 
 		while ( preg_match( '/\{(\d+)\}\r?\n$/', $tekst, $m ) ) {
-			$ile     = (int) $m[1];
+			$ile = (int) $m[1];
+			// Rozmiar literału PODAJE SERWER — bez sufitu jedna linia „{943718400}”
+			// kończyła proces fatalem na samej alokacji, zanim nadszedł jakikolwiek bajt.
+			if ( $ile > self::MAX_LITERAL_BAJTOW ) {
+				$this->przerwij_za_rozmiar( 'zapowiedział dane o rozmiarze ' . round( $ile / 1048576, 1 ) . ' MB, ponad limit bezpieczeństwa wtyczki (' . ( self::MAX_LITERAL_BAJTOW / 1048576 ) . ' MB)' );
+				return null;
+			}
 			$dane    = '';
 			$pobrane = 0;
 			while ( $pobrane < $ile ) {
@@ -920,10 +962,9 @@ class Segm_Imap {
 			}
 			$literaly[] = $dane;
 
-			$tekst = rtrim( $tekst, "\r\n" );
-			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fgets -- odczyt z gniazda TCP, nie z pliku.
-			$reszta = fgets( $this->gniazdo );
-			if ( false === $reszta ) {
+			$tekst  = rtrim( $tekst, "\r\n" );
+			$reszta = $this->czytaj_jedna_linie();
+			if ( null === $reszta ) {
 				return null;
 			}
 			$tekst .= $reszta;
@@ -933,6 +974,46 @@ class Segm_Imap {
 			'tekst'    => rtrim( $tekst, "\r\n" ),
 			'literaly' => $literaly,
 		);
+	}
+
+	/**
+	 * Jedna surowa linia z gniazda z sufitem długości.
+	 *
+	 * fgets() bez argumentu długości czyta „do końca linii” — serwer, który końca
+	 * linii nie przysyła, rósł w pamięci aż do fatala. Z argumentem fgets() oddaje
+	 * najwyżej MAX_LINIA_BAJTOW bajtów; brak końca linii w tym kawałku = linia za
+	 * długa = przerywamy z komunikatem, nie czekamy na resztę.
+	 *
+	 * @return string|null Linia razem z końcem linii; null = koniec/limit.
+	 */
+	private function czytaj_jedna_linie() {
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fgets -- odczyt z gniazda TCP, nie z pliku.
+		$tekst = fgets( $this->gniazdo, self::MAX_LINIA_BAJTOW + 1 );
+		if ( false === $tekst ) {
+			return null;
+		}
+		if ( strlen( $tekst ) >= self::MAX_LINIA_BAJTOW && "\n" !== substr( $tekst, -1 ) ) {
+			$this->przerwij_za_rozmiar( 'przysłał linię dłuższą niż ' . ( self::MAX_LINIA_BAJTOW / 1048576 ) . ' MB (limit bezpieczeństwa wtyczki)' );
+			return null;
+		}
+		return $tekst;
+	}
+
+	/**
+	 * Przerwanie z winy rozmiaru: zapamiętaj powód i zamknij gniazdo BEZ LOGOUT
+	 * (rozlacz() rozmawiałaby dalej z serwerem, który właśnie przekroczył sufit).
+	 *
+	 * @param string $powod Zdanie do komunikatu po polsku.
+	 * @return void
+	 */
+	private function przerwij_za_rozmiar( $powod ) {
+		$this->powod_limitu = $powod;
+		$this->zapisz_dziennik( '! ' . $powod );
+		if ( is_resource( $this->gniazdo ) ) {
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- gniazdo TCP, nie plik.
+			fclose( $this->gniazdo );
+		}
+		$this->gniazdo = null;
 	}
 
 	/**
@@ -1063,7 +1144,10 @@ class Segm_Imap {
 	 * @return string
 	 */
 	private function tekst( $wartosc ) {
-		return '"' . str_replace( array( '\\', '"' ), array( '\\\\', '\\"' ), (string) $wartosc ) . '"';
+		// Koniec linii w cytowanym łańcuchu (RFC 3501 4.3 zabrania CR/LF w quoted) = serwer czytałby
+		// resztę jako NOWE polecenie. Wartości pochodzą z panelu admina, ale i tak je odcinamy.
+		$wartosc = str_replace( array( "\r", "\n" ), '', (string) $wartosc );
+		return '"' . str_replace( array( '\\', '"' ), array( '\\\\', '\\"' ), $wartosc ) . '"';
 	}
 
 	/**

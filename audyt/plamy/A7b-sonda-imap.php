@@ -35,6 +35,11 @@ if ( ! $k->polacz( '127.0.0.1', $port, 'brak', false ) ) {
 	echo "POLACZENIE: NIE — " . $k->blad() . "\n"; exit( 1 );
 }
 echo "POLACZENIE: tak\n";
-$r = $k->naglowki( 42 );   // UID FETCH … (BODY.PEEK[HEADER])
-echo 'NAGLOWKI: ' . ( null === $r ? 'null' : 'string(' . strlen( $r ) . ')' ) . "\n";
+if ( 'search-40k' === $scen ) {
+	$u = $k->uidy( 'ALL' );  // UID SEARCH ALL — jedna linia z 40 000 UID-ow
+	echo 'UIDY: ' . ( is_array( $u ) ? count( $u ) : 'null' ) . "\n";
+} else {
+	$r = $k->naglowki( 42 );   // UID FETCH … (BODY.PEEK[HEADER])
+	echo 'NAGLOWKI: ' . ( null === $r ? 'null' : 'string(' . strlen( $r ) . ')' ) . "\n";
+}
 echo 'BLAD: ' . ( '' === $k->blad() ? '(brak)' : $k->blad() ) . "\n";

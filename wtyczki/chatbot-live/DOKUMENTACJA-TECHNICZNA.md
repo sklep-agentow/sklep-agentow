@@ -1,6 +1,6 @@
 # ChatBot LIVE — dokumentacja techniczna
 
-Wersja wtyczki: **1.5.17** · schemat bazy: **8** · licencja: **GPL-2.0-or-later**
+Wersja wtyczki: **1.5.18** · schemat bazy: **8** · licencja: **GPL-2.0-or-later**
 
 Dokument opisuje **kod, który jest**, nie plan. Każda liczba i nazwa poniżej ma pokrycie
 w źródle — przy każdej podano plik i symbol, żeby dało się to sprawdzić `grep`-em, a nie
@@ -126,7 +126,7 @@ całą historię przy każdym wejściu.
 | Kolumna | Typ | Po co jest |
 |---|---|---|
 | `dzien` | `date`, PK | Doba, której dotyczy licznik. Klucz główny, więc jeden wiersz na dobę i inkrement idzie atomowo przez `ON DUPLICATE KEY UPDATE`. |
-| `wywolania` | `int(10) unsigned`, domyślnie `0` | Ile **udanych** wywołań API poszło tego dnia. Licznik rośnie dopiero PO sukcesie (`chatl_ai_zuzyj()` wołane na końcu `chatl_ai_odpowiedz()`), więc nieudane próby nie zjadają limitu właściciela. |
+| `wywolania` | `int(10) unsigned`, domyślnie `0` | Ile wywołań API poszło tego dnia. Slot jest rezerwowany ATOMOWO PRZED wywołaniem (`chatl_ai_zarezerwuj()`: INSERT … ON DUPLICATE KEY UPDATE `LAST_INSERT_ID(wywolania+1)`, ponad limit = cofnięcie i odmowa), a przy braku odpowiedzi 200 zwalniany (`chatl_ai_zwolnij()`), więc nieudane próby nie zjadają limitu, a N równoczesnych gości przy ostatnim slocie nie przekracza go o N; tokeny dopisuje `chatl_ai_zuzyj()` po odpowiedzi 200. |
 
 ### 3.5. `{prefix}chatl_zdarzenia` — zdarzenia strażnika wejścia
 
@@ -209,7 +209,7 @@ Wszystkie liczby, którymi wtyczka się rządzi, są stałymi — nie ma ich roz
 
 | Stała | Wartość | Plik | Do czego |
 |---|---|---|---|
-| `CHATL_WERSJA` | `1.5.17` | `chatbot-live.php` | wersja wtyczki; służy też jako `?ver=` assetów (przeglądarka nie poda starego pliku po aktualizacji) |
+| `CHATL_WERSJA` | `1.5.18` | `chatbot-live.php` | wersja wtyczki; służy też jako `?ver=` assetów (przeglądarka nie poda starego pliku po aktualizacji) |
 | `CHATL_WERSJA_SCHEMATU` | `8` | `chatbot-live.php` | wyzwalacz migracji schematu |
 | `CHATL_KATALOG`, `CHATL_URL` | ścieżka i adres wtyczki | `chatbot-live.php` | `require` i adresy assetów |
 | `CHATL_MAX_PYTANIE` | `500` | `includes/front.php` | maksymalna długość pytania gościa (nadmiar jest **odrzucany** z komunikatem i kodem `za_dlugie`, HTTP 413; we wcześniejszych wydaniach był przycinany po cichu). **Jedno źródło** — do widgetu idzie przez `wp_localize_script` (`chatlDane.limitPytania`), tak jak `CHATL_RETENCJA_DNI` |

@@ -16,6 +16,29 @@ Nic jeszcze.
 
 ---
 
+## [1.5.18] — 2026-09-05 · schemat bazy bez zmian
+
+### Naprawione
+- **Dobowy stop-loss AI: slot rezerwowany atomowo PRZED płatnym wywołaniem.** Do 1.5.17 kontrola limitu tylko czytała
+  licznik, a licznik rósł po odpowiedzi API — N równoczesnych gości przy ostatnim slocie wszyscy przechodzili kontrolę
+  i wszyscy płacili u dostawcy (limit przekraczany o N). Teraz `chatl_ai_zarezerwuj()` (ten sam wzorzec co limit żądań),
+  brak odpowiedzi 200 zwalnia slot.
+- **Operator, który pisze odpowiedź dłużej niż 5 minut, nie traci tekstu.** Do 1.5.17 kliknięcie „Wyślij” po takiej
+  ciszy samo oddawało rozmowę botowi (sprawdzenie stanu wygaszało przejęcie), a potem odrzucało wiadomość i czyściło
+  pole. Teraz wysyłka liczy się jako aktywność operatora i rozmowa zostaje przy człowieku; gdy rozmowa naprawdę
+  wróciła już do bota, odmowa mówi, co zrobić, a treść czeka w polu.
+- **Panel operatora nie głuchnie po wygaśnięciu sesji.** Nonce panelu żyje 12–24 h; po tym czasie odpytywanie dostawało
+  odmowę i panel cicho przestawał pokazywać nowe wiadomości. Teraz pokazuje komunikat i odświeża stronę.
+- **Okno czatu nie przestaje odpytywać po odpowiedzi bez stanu** (limit żądań 429, blokada REST na hostingu, komunikat
+  błędu WordPressa) — próbuje dalej co 30 s, jak przy błędzie sieci, zamiast głucho czekać na operatora na zawsze.
+- Nieprawidłowa sesja czatu ma własny komunikat („odśwież stronę”) zamiast mylącego „Puste pytanie.”.
+
+### Zmienione
+- Podpowiedź do Polityki prywatności mówi, gdzie trafiają dane w trybie AI (Anthropic PBC, serwery w USA, tryb do
+  wyłączenia) i że okno czatu trzyma identyfikator rozmowy w `sessionStorage` na czas otwartej karty.
+
+---
+
 ## [1.5.17] — 2026-09-05 · schemat bazy bez zmian (8)
 
 ### Naprawione

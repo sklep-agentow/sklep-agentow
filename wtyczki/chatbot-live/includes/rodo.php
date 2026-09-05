@@ -617,8 +617,9 @@ function chatl_polityka_prywatnosci() {
 			(int) CHATL_RETENCJA_DNI
 		)
 	) . '</p>';
-	$tresc .= '<p>' . esc_html( 'Jeśli włączony jest tryb AI, treść pytania wraz z opisem firmy i bazą pytań jest wysyłana do dostawcy modelu (Anthropic) w celu wygenerowania odpowiedzi.' ) . '</p>';
+	$tresc .= '<p>' . esc_html( 'Jeśli włączony jest tryb AI, treść pytania wraz z opisem firmy i bazą pytań jest wysyłana do dostawcy modelu (Anthropic PBC, serwery w Stanach Zjednoczonych) w celu wygenerowania odpowiedzi; tryb AI można wyłączyć w ustawieniach wtyczki.' ) . '</p>';
 	$tresc .= '<p>' . esc_html( 'Możesz poprosić o kopię swoich danych albo o ich usunięcie — administrator obsłuży wniosek wbudowanymi narzędziami WordPressa (Narzędzia → Eksport/Usuwanie danych osobowych).' ) . '</p>';
+	$tresc .= '<p>' . esc_html( 'Okno czatu zapamiętuje identyfikator bieżącej rozmowy w pamięci przeglądarki (sessionStorage) na czas otwartej karty, żeby odpowiedzi trafiały do właściwego okna; nie służy on do śledzenia i znika po zamknięciu karty.' ) . '</p>';
 	wp_add_privacy_policy_content( 'ChatBot LIVE', $tresc );
 }
 add_action( 'admin_init', 'chatl_polityka_prywatnosci' );

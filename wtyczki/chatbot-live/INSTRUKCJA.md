@@ -396,6 +396,9 @@ toczą się w tej chwili, wraz z tym, co gość napisał. Przycisk **Przejmij** 
 rozmowę Tobie — gość widzi „Do rozmowy dołączył konsultant…", a **bot od tej chwili
 milczy**: pytania gościa są zapisywane, żebyś je przeczytał, ale automat nie wpada
 Ci w słowo (i nie zużywa limitu AI). Przycisk **Zakończ** oddaje rozmowę botowi.
+Gdy na stronie pracuje kilku konsultantów: **Przejmij** kliknięte przez drugą osobę
+przepisuje rozmowę na nią od razu, bez pytania i bez ostrzeżenia dla pierwszej —
+umówcie się, kto bierze którą rozmowę (lista pokazuje, kto ją prowadzi).
 Jeśli nie odpiszesz przez **5 minut**, rozmowa wraca do bota sama, a gość dostaje
 komunikat „Konsultant nie odpowiada…" — po to, żeby nikt nie został przy milczącym
 oknie.

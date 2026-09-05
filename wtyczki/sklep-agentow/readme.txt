@@ -4,7 +4,7 @@ Tags: sklep, stripe, pliki cyfrowe, sprzedaz wtyczek, pobieranie
 Requires at least: 6.7
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.9.42
+Stable tag: 0.9.43
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -160,6 +160,15 @@ Nie. Zakup jest bez konta: adres e-mail podany na stronie płatności Stripe,
 link do pobrania w mailu, jednorazowy link do opinii.
 
 == Changelog ==
+
+= 0.9.43 =
+* Naprawione: blad serwera przy rozpoczynaniu platnosci (strona bledu hostingu zamiast JSON) pokazuje zdanie po polsku z kodem HTTP, nie surowy SyntaxError; dziennik zdarzen zamowienia mierzy wlasny zapis.
+* Naprawione: zapisy do bazy na sciezce platnosci sa sprawdzane po skutku - brak zapisu migawki sesji = link do platnosci nie jest wydawany, brak zapisu nowego linku = mail nie idzie (poprzedni link zostaje), brak zapisu zwrotu/sporu = Stripe ponawia powiadomienie zamiast dostac puste "ok".
+* Dodane: mail do wlasciciela sklepu przy awarii, po ktorej kupujacy czeka na czlowieka (Stripe nie odpowiada, mail z linkiem nie wyszedl, plik produktu nie istnieje, zapis po oplaceniu padl, ksiegowanie nie przeszlo) - najwyzej raz na godzine dla danego rodzaju.
+* Naprawione: adres goscia za Cloudflare/proxy - przelacznik "Strona za Cloudflare / proxy" (Ustawienia -> Bezpieczenstwo): bez niego za proxy wszyscy goscie byli jednym adresem, limity obejmowaly cala witryne, a boty probujace hasel mogly zablokowac logowanie wlasciciela. Do tego wylacznik limitu prob logowania.
+* Naprawione: opoznienie po nieudanych logowaniach ma sufit 2 s zamiast 60 s (usypianie do minuty zajmowalo workery PHP z jednego adresu).
+* Naprawione: dziennik logowan nie zapisuje nieistniejacych loginow (haslo wpisane omylkowo w pole loginu nie trafia do bazy).
+* Zmienione: szablony Regulaminu i Polityki prywatnosci nazywaja uprawnienia sprzedawcy i automaty (72 h / 10 pobran z przerwanymi, blokada po zwrocie calosci lub obciazeniu zwrotnym, anonimizacja zamiast usuwania zamowien, retencja dziennikow 90 dni).
 
 = 0.9.42 =
 * Naprawione: kupujący widzi link do regulaminu i polityki prywatności oraz dane sprzedawcy PRZED zakupem (strona produktu, formularz), nie tylko w mailu po nim; nieopublikowany regulamin prowadzi na stronę „w przygotowaniu”, nigdy na 404.

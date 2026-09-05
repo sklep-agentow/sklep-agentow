@@ -234,6 +234,67 @@ function chatl_ai_usage( $dane ) {
  * @param array $usage Wynik chatl_ai_usage(); brak = same wywołania.
  * @return void
  */
+/**
+ * ATOMOWA rezerwacja slotu dobowego stop-lossu — PRZED płatnym wywołaniem API.
+ *
+ * ⛔ Do 1.5.17 `chatl_ai_dostepny()` tylko CZYTAŁO licznik, a licznik rósł dopiero po odpowiedzi
+ * API — klasyczne check-then-act: N równoczesnych żądań przy ostatnim slocie wszystkie przechodziły
+ * kontrolę i wszystkie odpalały płatne wywołanie (limit przekraczany o N). `chatl_rate_limit()`
+ * w tym samym pliku miało już atomowy INSERT … ON DUPLICATE KEY UPDATE LAST_INSERT_ID(licznik+1);
+ * stop-loss — mechanizm chroniący BUDŻET właściciela — tej naprawy nie dostał.
+ * Rezerwacja inkrementuje `wywolania` i czyta WŁASNĄ wartość; ponad limit = cofnięcie i odmowa.
+ * Brak odpowiedzi 200 zwalnia slot (`chatl_ai_zwolnij()`), więc nieudane próby nadal nie zjadają limitu.
+ * Licznik nie do zapisania = nie wiemy, ile poszło = odmowa (fail-closed, jak w `chatl_ai_dostepny()`).
+ *
+ * @return bool true = slot zarezerwowany, wolno wołać API.
+ */
+function chatl_ai_zarezerwuj() {
+	global $wpdb;
+	$tabela = $wpdb->prefix . 'chatl_ai_uzycie';
+	$ust    = chatl_ustawienia();
+	$limit  = (int) $ust['ai_limit_dzienny'];
+	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- nazwa tabeli z $wpdb->prefix, wartości przez prepare().
+	$wynik = $wpdb->query(
+		$wpdb->prepare(
+			"INSERT INTO {$tabela} (dzien, wywolania, tokeny_wejscia, tokeny_wyjscia, tokeny_cache_zapis, tokeny_cache_odczyt)
+			VALUES (%s, 1, 0, 0, 0, 0)
+			ON DUPLICATE KEY UPDATE wywolania = LAST_INSERT_ID(wywolania + 1)",
+			current_time( 'Y-m-d' )
+		)
+	);
+	if ( 1 === $wynik ) {
+		$n = 1; // Świeży wiersz dnia (INSERT zwraca 1).
+	} elseif ( 2 === $wynik ) {
+		$n = (int) $wpdb->get_var( 'SELECT LAST_INSERT_ID()' ); // Inkrement (ODKU zwraca 2).
+	} else {
+		$n = 0;
+	}
+	// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	if ( 0 === $n ) {
+		chatl_log_bledu_bazy( 'chatl_ai_zarezerwuj', 'rezerwacja slotu dziennego licznika AI (stop-loss nie liczy — odmowa)' );
+		return false;
+	}
+	if ( $n > $limit ) {
+		chatl_ai_zwolnij();
+		return false;
+	}
+	return true;
+}
+
+/**
+ * Zwolnienie zarezerwowanego slotu (brak odpowiedzi 200 = dostawca nie policzył wywołania).
+ */
+function chatl_ai_zwolnij() {
+	global $wpdb;
+	$tabela = $wpdb->prefix . 'chatl_ai_uzycie';
+	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- nazwa tabeli z $wpdb->prefix.
+	$wynik = $wpdb->query( $wpdb->prepare( "UPDATE {$tabela} SET wywolania = wywolania - 1 WHERE dzien = %s AND wywolania > 0", current_time( 'Y-m-d' ) ) );
+	// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	if ( false === $wynik ) {
+		chatl_log_bledu_bazy( 'chatl_ai_zwolnij', 'zwolnienie slotu dziennego licznika AI (slot zostaje policzony — strona bezpieczna)' );
+	}
+}
+
 function chatl_ai_zuzyj( $usage = array() ) {
 	global $wpdb;
 	$tabela = $wpdb->prefix . 'chatl_ai_uzycie';
@@ -242,15 +303,14 @@ function chatl_ai_zuzyj( $usage = array() ) {
 	$cz     = isset( $usage['tokeny_cache_zapis'] ) ? (int) $usage['tokeny_cache_zapis'] : 0;
 	$co     = isset( $usage['tokeny_cache_odczyt'] ) ? (int) $usage['tokeny_cache_odczyt'] : 0;
 
-	// Padnięty inkrement = stop-loss przestaje liczyć, a rachunek za API rośnie
-	// dalej. Ślad w logu jest tu jedynym sygnałem (gość nie może tego zobaczyć).
+	// Samo wywołanie policzyła już rezerwacja (chatl_ai_zarezerwuj) — tu dopisujemy TOKENY.
+	// Padnięty zapis = drugi stop-loss (tokeny) przestaje liczyć; ślad w logu jest jedynym sygnałem.
 	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- nazwa tabeli z $wpdb->prefix, wszystkie wartości przez prepare().
 	$wynik = $wpdb->query(
 		$wpdb->prepare(
 			"INSERT INTO {$tabela} (dzien, wywolania, tokeny_wejscia, tokeny_wyjscia, tokeny_cache_zapis, tokeny_cache_odczyt)
-			VALUES (%s, 1, %d, %d, %d, %d)
+			VALUES (%s, 0, %d, %d, %d, %d)
 			ON DUPLICATE KEY UPDATE
-				wywolania = wywolania + 1,
 				tokeny_wejscia = tokeny_wejscia + %d,
 				tokeny_wyjscia = tokeny_wyjscia + %d,
 				tokeny_cache_zapis = tokeny_cache_zapis + %d,
@@ -720,6 +780,9 @@ function chatl_ai_modele() {
  *                     albo null przy błędzie => zjazd do trybu regułowego.
  */
 function chatl_ai_odpowiedz( $pytanie, $historia = array() ) {
+	// Slot stop-lossu jest ZAREZERWOWANY przez wywołującego (front.php: chatl_ai_zarezerwuj() w warunku
+	// hybrydy) — tu tylko zwalniamy go, gdy dostawca nie odpowiedział 200. Bez rezerwacji przed wejściem
+	// N równoczesnych gości przy ostatnim slocie wszyscy płacili u dostawcy.
 	$odp = chatl_ai_zapytaj( $pytanie, $historia );
 
 	// JEDEN retry: tylko błąd połączenia/timeout albo 5xx/przeciążenie (nie 4xx).
@@ -729,6 +792,7 @@ function chatl_ai_odpowiedz( $pytanie, $historia = array() ) {
 		$kod = is_wp_error( $odp ) ? 0 : (int) wp_remote_retrieve_response_code( $odp );
 	}
 	if ( is_wp_error( $odp ) || 200 !== $kod ) {
+		chatl_ai_zwolnij(); // Dostawca nie policzył (brak 200) — slot wraca do puli.
 		// Zjazd do reguł MA być cichy dla gościa, ale nie dla właściciela:
 		// bez tego wpisu wtyczka miesiącami „działa" w trybie AI, odpowiadając
 		// wyłącznie z reguł, bo API odrzuca każde żądanie (tak zniknął błąd

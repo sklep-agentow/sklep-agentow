@@ -69,8 +69,47 @@ function sklepag_znacznik_okna_z_post() {
  */
 const SKLEPAG_IDEM_OKNO_S = 5;
 
+/**
+ * Adres IP gościa — z przełącznikiem „strona za proxy” (Ustawienia → Bezpieczeństwo).
+ *
+ * ⛔ Do 0.9.42 sklep brał WYŁĄCZNIE `REMOTE_ADDR`. Za Cloudflare, reverse-proxy hostingu albo
+ * load balancerem to adres PROXY, jeden dla wszystkich gości: limit logowań 6/min (obejmuje cały
+ * WordPress) wyrzucał właściciela z wp-admin, gdy boty próbowały haseł, a sprzedaż miała sufit
+ * 10 zakupów/min na CAŁĄ witrynę. ChatBot LIVE miał tę naprawę od dawna (`chatl_ip_goscia()`),
+ * sklep nie — rozjazd między modułami (audyt niezależny 5.09).
+ * Nagłówkom ufamy TYLKO na wyraźną decyzję właściciela: bez proxy każdy mógłby je podrobić
+ * i obejść limity. Kolejność: CF-Connecting-IP → pierwszy adres z X-Forwarded-For → REMOTE_ADDR;
+ * wartość spoza FILTER_VALIDATE_IP = REMOTE_ADDR (śmieć w nagłówku nie wyłącza limitu).
+ * Filtr `sklepag_ip` zostawia furtkę na nietypowy nagłówek hostingu; śmieć z filtra = REMOTE_ADDR.
+ * Jedna definicja dla limitów (kup/pobierz/status/login), dziennika logowań i zdarzeń webhooka.
+ */
 function sklepag_ip() {
-	return isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '0.0.0.0';
+	$remote = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '0.0.0.0';
+	$ip     = '';
+	if ( get_option( 'sklepag_za_proxy', false ) ) {
+		// phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotValidated -- każdy odczyt niżej przechodzi filter_var( ..., FILTER_VALIDATE_IP ).
+		if ( ! empty( $_SERVER['HTTP_CF_CONNECTING_IP'] ) ) {
+			$ip = sanitize_text_field( wp_unslash( $_SERVER['HTTP_CF_CONNECTING_IP'] ) );
+		} elseif ( ! empty( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) {
+			// X-Forwarded-For to LISTA: „gość, proxy1, proxy2” — liczy się pierwszy.
+			$lista = explode( ',', sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) );
+			$ip    = trim( (string) $lista[0] );
+		}
+		// phpcs:enable WordPress.Security.ValidatedSanitizedInput.InputNotValidated
+		if ( ! filter_var( $ip, FILTER_VALIDATE_IP ) ) {
+			$ip = '';
+		}
+	}
+	if ( '' === $ip ) {
+		$ip = $remote;
+	}
+	/**
+	 * Ostatnie słowo dla integratora (hosting za nietypowym nagłówkiem).
+	 *
+	 * @param string $ip Ustalony adres.
+	 */
+	$z = (string) apply_filters( 'sklepag_ip', $ip );
+	return filter_var( $z, FILTER_VALIDATE_IP ) ? $z : $remote;
 }
 
 function sklepag_rate_limit( $akcja, $prog = 10 ) {
@@ -248,6 +287,7 @@ function sklepag_obsluz_kup() {
 	$brak = is_wp_error( $sesja ) || empty( $sesja['id'] ) || ( $osadzona ? empty( $sesja['client_secret'] ) : empty( $sesja['url'] ) );
 	if ( $brak ) {
 		sklepag_zdarzenie( null, 'checkout_blad', is_wp_error( $sesja ) ? $sesja->get_error_message() : ( $osadzona ? 'brak id/client_secret w odpowiedzi' : 'brak id/url w odpowiedzi' ) );
+		sklepag_powiadom_wlasciciela( 'checkout_blad', 'nie udało się rozpocząć płatności (Stripe)', 'Utworzenie sesji Stripe nie powiodło się: ' . ( is_wp_error( $sesja ) ? $sesja->get_error_message() : 'niepełna odpowiedź Stripe' ) . '. Kupujący zobaczył prośbę o ponowną próbę. Sprawdź klucze Stripe i dziennik zdarzeń.' );
 		if ( $osadzona ) {
 			wp_send_json( array( 'blad' => 'Nie udało się rozpocząć płatności. Spróbuj ponownie za chwilę.' ), 502 );
 		}
@@ -268,7 +308,7 @@ function sklepag_obsluz_kup() {
 	 * nie nadpisuje starej sciezki, tylko tworzy nowa.
 	 */
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery
-	$wpdb->query(
+	$migawka = $wpdb->query(
 		$wpdb->prepare(
 			"INSERT IGNORE INTO {$wpdb->prefix}sklepag_sesje_checkout
 			 (stripe_session_id, produkt_id, produkt_nazwa, produkt_slug, produkt_cena_grosze, produkt_waluta, produkt_plik, stan, utworzono)
@@ -283,6 +323,21 @@ function sklepag_obsluz_kup() {
 			current_time( 'mysql' )
 		)
 	);
+
+	// ⛔ MIGAWKA NIE ZAPISANA = NIE WYDAJEMY LINKU DO PŁATNOŚCI. Bez wiersza w `sesje_checkout`
+	// webhook uzna opłaconą sesję za obcą/testową (przyjmie, zaloguje, NIE każe Stripe ponowić):
+	// kupujący zapłaciłby, a zamówienie nigdy by nie powstało — i nikt poza dziennikiem by nie
+	// wiedział. Sesja Stripe bez płatności wygasa sama. Sprawdzamy `false` (błąd bazy); 0 wierszy
+	// przy INSERT IGNORE oznaczałoby duplikat świeżo nadanego id sesji — Stripe takich nie wydaje.
+	if ( false === $migawka ) {
+		$powod = '' !== (string) $wpdb->last_error ? (string) $wpdb->last_error : 'bez komunikatu bazy';
+		sklepag_zdarzenie( null, 'checkout_blad', 'zapis migawki sesji ' . $sesja['id'] . ' padł: ' . $powod . ' — link do płatności NIE wydany' );
+		sklepag_powiadom_wlasciciela( 'checkout_blad_zapis', 'nie udało się rozpocząć płatności (zapis do bazy)', 'Zapis migawki sesji Stripe ' . $sesja['id'] . ' nie powiódł się (' . $powod . '). Kupujący zobaczył prośbę o ponowną próbę, płatność nie ruszyła. Sprawdź bazę danych.' );
+		if ( $osadzona ) {
+			wp_send_json( array( 'blad' => 'Nie udało się rozpocząć płatności. Spróbuj ponownie za chwilę.' ), 502 );
+		}
+		wp_die( 'Nie udało się rozpocząć płatności. Spróbuj ponownie za chwilę.', 'Sklep Agentów', 502 );
+	}
 
 	set_transient(
 		$okno,
@@ -362,7 +417,7 @@ function sklepag_zdarzenie( $zamowienie_id, $typ, $opis ) {
 	global $wpdb;
 	$uzytkownik = is_user_logged_in() ? wp_get_current_user()->user_login : '';
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery
-	$wpdb->insert(
+	$wynik = $wpdb->insert(
 		$wpdb->prefix . 'sklepag_zdarzenia',
 		array(
 			'zamowienie_id' => $zamowienie_id,
@@ -373,6 +428,45 @@ function sklepag_zdarzenie( $zamowienie_id, $typ, $opis ) {
 		),
 		array( '%d', '%s', '%s', '%s', '%s' )
 	);
+	// Dziennik z dziurą, gdy baza leży, jest gorszy niż brak dziennika: właściciel szuka śladu
+	// zdarzenia, którego „nie było”. Zapis mierzymy po skutku; przy błędzie zostaje ślad w logu
+	// PHP (jedyne miejsce poza bazą) i wynik dla wołającego (0 = nie zapisano).
+	if ( false === $wynik ) {
+		// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- baza odrzuciła zapis dziennika; log PHP to jedyne miejsce, gdzie ślad może zostać.
+		error_log( 'sklep-agentow: zapis zdarzenia „' . $typ . '” dla zamówienia #' . (int) $zamowienie_id . ' padł: ' . (string) $wpdb->last_error );
+		return 0;
+	}
+	return (int) $wpdb->insert_id;
+}
+
+/**
+ * Mail do właściciela sklepu o awarii, po której KUPUJĄCY CZEKA NA CZŁOWIEKA.
+ *
+ * Dziennik zdarzeń i czerwone pole w panelu są „głośne” tylko dla kogoś, kto do panelu
+ * zagląda. Właściciel, który nie zagląda, dowiadywał się o awarii od klienta — kupujący
+ * widział „skontaktuj się ze sprzedawcą”, a sprzedawca nie wiedział, że jest z kim.
+ * Ogranicznik: jeden mail na rodzaj awarii na godzinę (transient), żeby seria zdarzeń
+ * nie zalała skrzynki. Adres: `admin_email` WordPressa. Gdy pada sama poczta (mail_blad),
+ * ten mail też może nie wyjść — wtedy zostaje dziennik, jak dotąd. Zwraca wynik `wp_mail`.
+ *
+ * @param string $klucz Rodzaj awarii (klucz ogranicznika).
+ * @param string $temat Temat bez prefiksu.
+ * @param string $tresc Treść (tekst).
+ * @return bool
+ */
+function sklepag_powiadom_wlasciciela( $klucz, $temat, $tresc ) {
+	$klucz_tr = 'sklepag_powiadom_' . md5( (string) $klucz );
+	if ( false !== get_transient( $klucz_tr ) ) {
+		return false;
+	}
+	set_transient( $klucz_tr, 1, HOUR_IN_SECONDS );
+	$adres = sanitize_email( (string) get_option( 'admin_email', '' ) );
+	if ( '' === $adres || ! is_email( $adres ) ) {
+		return false;
+	}
+	$stopka = "\n\nPanel WordPress: " . admin_url() . "\nSzczegóły: Sklep Agentów → zamówienia → dziennik zdarzeń."
+		. "\nTa wiadomość jest wysyłana najwyżej raz na godzinę dla danego rodzaju awarii.";
+	return (bool) wp_mail( $adres, '[Sklep Agentów] ' . (string) $temat, (string) $tresc . $stopka );
 }
 
 /* ---------- WEBHOOK (REST; autoryzacja = podpis; POZA rate-limiterem) ---------- */
@@ -660,8 +754,7 @@ function sklepag_zaksieguj_zwrot( $typ, $obiekt ) {
 			return true; // tego zwrotu nigdy nie policzyliśmy — nie ma czego cofać.
 		}
 		$kwota = max( 0, $juz - (int) ( $obiekt['amount'] ?? 0 ) );
-		sklepag_zapisz_zwrot( $zam, $kwota, 'zwrot_nieudany', 'zwrot ' . $refund_id . ' odrzucony (' . $stan_zwrotu . ') — pieniądze wracają do przychodu' );
-		return true;
+		return sklepag_zapisz_zwrot( $zam, $kwota, 'zwrot_nieudany', 'zwrot ' . $refund_id . ' odrzucony (' . $stan_zwrotu . ') — pieniądze wracają do przychodu' );
 	} elseif ( '' === $refund_id ) {
 		// Zdarzenie bez identyfikatora zwrotu: nie da się odróżnić NOWEGO zwrotu od powtórki
 		// tego samego. Liczymy ostrożnie — bierzemy większą z wartości zamiast dodawać, żeby
@@ -679,7 +772,7 @@ function sklepag_zaksieguj_zwrot( $typ, $obiekt ) {
 		return true;
 	}
 	$pelny = ( $kwota >= (int) $zam->kwota_grosze );
-	sklepag_zapisz_zwrot(
+	return sklepag_zapisz_zwrot(
 		$zam,
 		$kwota,
 		$pelny ? 'zwrot_pelny' : 'zwrot_czesciowy',
@@ -687,7 +780,6 @@ function sklepag_zaksieguj_zwrot( $typ, $obiekt ) {
 		' z ' . number_format_i18n( (int) $zam->kwota_grosze / 100, 2 ) . ' ' . $zam->waluta .
 		' (' . $typ . ( '' !== $refund_id ? ', zwrot ' . $refund_id : '' ) . ')'
 	);
-	return true;
 }
 
 /**
@@ -756,7 +848,7 @@ function sklepag_zapisz_zwrot( $zam, $kwota, $typ_wpisu, $opis ) {
 		$status = (string) $zam->status;
 	}
 	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
-	$wpdb->query(
+	$zapis = $wpdb->query(
 		$wpdb->prepare(
 			// status-bez-warunku: $status wyliczony wyżej z `$zam->status` i `$przed`, z jawną
 			// gałęzią dla cofnięcia zwrotu — to jest właśnie ochrona stanu poprzedniego.
@@ -770,7 +862,15 @@ function sklepag_zapisz_zwrot( $zam, $kwota, $typ_wpisu, $opis ) {
 		)
 	);
 	// phpcs:enable
+	// ⛔ Zapis księgowania NIE przeszedł = NIE mówimy Stripe „ok”. Dotąd funkcja nic nie zwracała,
+	// a wywołujący odpowiadał Stripe 200 bez ponowienia: pulpit pokazywałby stary przychód na stałe.
+	if ( false === $zapis ) {
+		sklepag_zdarzenie( (int) $zam->id, 'ksiegowanie_blad', 'zapis zwrotu padł (' . (string) $wpdb->last_error . ') — Stripe ponowi powiadomienie' );
+		sklepag_powiadom_wlasciciela( 'ksiegowanie_blad', 'nie udało się zaksięgować zwrotu', 'Zamówienie #' . (int) $zam->id . ': zapis zwrotu w bazie nie powiódł się. Stripe ponowi powiadomienie; jeśli błąd się powtarza, sprawdź bazę danych.' );
+		return false;
+	}
 	sklepag_zdarzenie( (int) $zam->id, $typ_wpisu, $opis );
+	return true;
 }
 
 /**
@@ -825,7 +925,7 @@ function sklepag_zaksieguj_spor( $typ, $obiekt ) {
 		}
 		$powrot = '' !== (string) $zam->status_przed_sporem ? (string) $zam->status_przed_sporem : 'oplacone';
 		$reszta = max( 0, (int) $zam->zwrocono_grosze - $kwota ); // prawdziwy zwrot częściowy sprzed sporu zostaje
-		$wpdb->query(
+		$zapis  = $wpdb->query(
 			$wpdb->prepare(
 				// status-bez-warunku: $powrot wyliczony wyżej z `status_przed_sporem`, czyli
 				// z zapamiętanego stanu poprzedniego — nie jest stałą.
@@ -837,6 +937,11 @@ function sklepag_zaksieguj_spor( $typ, $obiekt ) {
 				(int) $zam->id
 			)
 		);
+		if ( false === $zapis ) {
+			sklepag_zdarzenie( (int) $zam->id, 'ksiegowanie_blad', 'zapis sporu (' . $typ . ') padł (' . (string) $wpdb->last_error . ') — Stripe ponowi powiadomienie' );
+			sklepag_powiadom_wlasciciela( 'ksiegowanie_blad', 'nie udało się zaksięgować sporu', 'Zamówienie #' . (int) $zam->id . ': zapis zdarzenia Stripe ' . $typ . ' w bazie nie powiódł się. Stripe ponowi powiadomienie; jeśli błąd się powtarza, sprawdź bazę danych.' );
+			return false;
+		}
 		sklepag_zdarzenie( (int) $zam->id, 'spor_wygrany', 'pieniądze wracają do przychodu (' . $typ . ', status ' . $wynik . '); zamówienie wraca do stanu „' . $powrot . '"' );
 		return true;
 	}
@@ -852,7 +957,7 @@ function sklepag_zaksieguj_spor( $typ, $obiekt ) {
 	}
 
 	$przed = '' !== (string) $zam->status_przed_sporem ? (string) $zam->status_przed_sporem : (string) $zam->status;
-	$wpdb->query(
+	$zapis = $wpdb->query(
 		$wpdb->prepare(
 			// status-bez-warunku: 'sporne' ustawiamy świadomie, a stan sprzed zapisujemy w tym
 			// samym zapytaniu do `status_przed_sporem` (wyliczony wyżej z `$zam->status`).
@@ -865,6 +970,11 @@ function sklepag_zaksieguj_spor( $typ, $obiekt ) {
 		)
 	);
 	// phpcs:enable
+	if ( false === $zapis ) {
+		sklepag_zdarzenie( (int) $zam->id, 'ksiegowanie_blad', 'zapis sporu (' . $typ . ') padł (' . (string) $wpdb->last_error . ') — Stripe ponowi powiadomienie' );
+		sklepag_powiadom_wlasciciela( 'ksiegowanie_blad', 'nie udało się zaksięgować sporu', 'Zamówienie #' . (int) $zam->id . ': zapis zdarzenia Stripe ' . $typ . ' w bazie nie powiódł się. Stripe ponowi powiadomienie; jeśli błąd się powtarza, sprawdź bazę danych.' );
+		return false;
+	}
 	sklepag_zdarzenie(
 		(int) $zam->id,
 		'charge.dispute.closed' === $typ ? 'spor_przegrany' : 'spor_otwarty',
@@ -983,6 +1093,7 @@ function sklepag_domknij_zakup( $sesja ) {
 	if ( ! $zamowienie_jest ) {
 		$powod = '' !== (string) $wpdb->last_error ? (string) $wpdb->last_error : 'brak wiersza po INSERT/UPDATE';
 		sklepag_zdarzenie( null, 'domkniecie_blad_zapisu', $sid . ': ' . $powod );
+		sklepag_powiadom_wlasciciela( 'domkniecie_blad_zapisu', 'zakup opłacony, zamówienie nie zapisane w bazie', 'Sesja ' . $sid . ': po opłaceniu nie udało się zapisać zamówienia (' . $powod . '). Reconciliation i ponowienie webhooka spróbują ponownie; jeśli błąd się powtarza, sprawdź bazę danych.' );
 		// Sesja zostaje 'utworzona' → dociągnie ją reconciliation, a webhook Stripe ponowi.
 		return false;
 	}
@@ -1051,7 +1162,7 @@ function sklepag_domknij_zakup( $sesja ) {
 	// żaden mail — link z ostatniego doręczonego maila umierał; CO-WISI „kompensacja w cronie”).
 	$przed_rotacja = $wpdb->get_row( $wpdb->prepare( "SELECT token_pobrania, link_wygasa, pobrania_uzyte, mail_tresc FROM {$pz} WHERE stripe_session_id=%s", $sid ) );
 	$token         = bin2hex( random_bytes( 32 ) );
-	$wpdb->query(
+	$rotacja       = $wpdb->query(
 		$wpdb->prepare(
 			"UPDATE {$pz} SET token_pobrania=%s, link_wygasa=%s, pobrania_uzyte=0, zmieniono=%s WHERE stripe_session_id=%s AND status='mail_w_toku'",
 			hash( 'sha256', $token ),
@@ -1060,6 +1171,21 @@ function sklepag_domknij_zakup( $sesja ) {
 			$sid
 		)
 	);
+
+	// ⛔ ROTACJA NIE ZAPISANA = MAIL NIE IDZIE. `false` = błąd bazy: mail niósłby link, którego
+	// skrót nie leży w bazie (403 od pierwszego kliknięcia), a status zostałby „wysłano”.
+	// 0 wierszy = claim `mail_w_toku` odebrany w międzyczasie (stale-claim) — wysyłkę prowadzi
+	// inny proces, nasz się wycofuje bez maila. Przy błędzie bazy zwalniamy claim, żeby
+	// ponowienie webhooka / reconciliation mogło dokończyć od razu, nie po 5 minutach.
+	if ( false === $rotacja || 0 === (int) $rotacja ) {
+		$powod = false === $rotacja ? (string) $wpdb->last_error : '0 wierszy — claim mail_w_toku odebrany';
+		sklepag_zdarzenie( null, 'domkniecie_blad_zapisu', $sid . ': rotacja tokenu pobrania padła (' . $powod . ') — mail NIE wysłany, do ponowienia' );
+		if ( false === $rotacja ) {
+			$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET status='oplacone', zmieniono=%s WHERE stripe_session_id=%s AND status='mail_w_toku'", $teraz, $sid ) );
+			sklepag_powiadom_wlasciciela( 'domkniecie_blad_zapisu', 'zakup opłacony, mail z linkiem nie wyszedł (zapis do bazy)', 'Sesja ' . $sid . ': nie udało się zapisać nowego linku pobrania (' . $powod . '). Zamówienie wraca do stanu „opłacone”; ponowienie webhooka albo reconciliation dokończy wysyłkę. Sprawdź bazę danych.' );
+		}
+		return false;
+	}
 
 	$zam = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$pz} WHERE stripe_session_id=%s", $sid ) );
 
@@ -1102,7 +1228,13 @@ function sklepag_domknij_zakup( $sesja ) {
 		// z bieżącego wiersza (dokładnie to poszło w mailu) + skrót opinii po rotacji zalążka.
 		// Kompensacja każdej PRZYSZŁEJ nieudanej rotacji przywraca TEN stan, nie „zastany"
 		// (wada #228 r5 u1: snapshot zastanego przywracał token, którego nie niósł żaden mail).
-		$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET status='mail_wyslany', dor_token_pobrania=token_pobrania, dor_link_wygasa=link_wygasa, dor_mail_tresc=mail_tresc, dor_opinia_hash=%s, zmieniono=%s WHERE stripe_session_id=%s AND status='mail_w_toku'", $opinia_hash_po, $teraz, $sid ) );
+		$zapis_stanu = $wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET status='mail_wyslany', dor_token_pobrania=token_pobrania, dor_link_wygasa=link_wygasa, dor_mail_tresc=mail_tresc, dor_opinia_hash=%s, zmieniono=%s WHERE stripe_session_id=%s AND status='mail_w_toku'", $opinia_hash_po, $teraz, $sid ) );
+		if ( false === $zapis_stanu ) {
+			// Mail DOSZEDŁ, a stan „wysłano” nie wszedł do bazy: panel pokazałby zamówienie jako
+			// czekające, reconciliation mogłaby wysłać mail drugi raz. Dziennik ma to nazwać wprost.
+			sklepag_zdarzenie( (int) $zam->id, 'zapis_blad', 'mail doręczony, ale status mail_wyslany NIE zapisany (' . (string) $wpdb->last_error . ') — możliwa ponowna wysyłka' );
+			sklepag_powiadom_wlasciciela( 'zapis_blad', 'mail doręczony, ale stan zamówienia nie zapisany', 'Zamówienie #' . (int) $zam->id . ': kupujący dostał link, ale zapis stanu w bazie nie powiódł się. Sprawdź bazę danych; kupujący może dostać mail ponownie.' );
+		}
 		sklepag_zdarzenie( (int) $zam->id, 'mail_wyslany', 'do: ' . $email );
 		return true;
 	}
@@ -1162,6 +1294,7 @@ function sklepag_domknij_zakup( $sesja ) {
 	// jest aktualny, więc wpis „mail_blad" kłamałby właścicielowi w panelu.
 	if ( $blad_zapisany > 0 ) {
 		sklepag_zdarzenie( (int) $zam->id, 'mail_blad', '' === $email ? 'brak adresu email w sesji' : 'wp_mail zwrocil false' );
+		sklepag_powiadom_wlasciciela( 'mail_blad', 'mail z linkiem do pobrania nie wyszedł', 'Zamówienie #' . (int) $zam->id . ': wysyłka maila do kupującego nie powiodła się (' . ( '' === $email ? 'brak adresu e-mail' : 'poczta serwera zwróciła błąd' ) . '). Kupujący zapłacił i czeka na link. Sprawdź konfigurację poczty, a w panelu zamówienia użyj „Wyślij ponownie”.' );
 	} else {
 		sklepag_zdarzenie( (int) $zam->id, 'mail_przejety', 'nieudana wysyłka przegranego procesu — wysyłkę przejął inny proces, statusu nie ruszamy' );
 	}

@@ -4,7 +4,7 @@
 # PO CO: plan K7 v1 mówił „GO/NO-GO = trzy liczby liczone skryptem”, a skryptu nie było
 # (krytyka r1: nasz krytyk K1, C2 #15, C3 #11). Bez maszyny koniec rozstrzyga pamięć
 # koordynatorki — dokładnie to, czemu plan miał zapobiec. Ten skrypt sprawdza OSIEM
-# warunków zamknięcia (PLAN-K7 §2 zasada 5, §8b) rozpisanych na 13 KONTROLI (1a,1b,2,3a–3d,4,5,6,7a,7b,8)
+# warunków zamknięcia (PLAN-K7 §2 zasada 5, §8b) rozpisanych na 14 KONTROLI (1a,1b,2,3a–3d,4,5,6,7a,7b,8,9)
 # i wypisuje trzy liczby dla właściciela. Wynik liczy KONTROLE, nie warunki (recenzja #191 D1).
 #
 # Użycie: bash narzedzia-qa/k7-koniec.sh [--korzen <repo>] [--bez-zamrozenia-mapy]
@@ -80,7 +80,7 @@ GALAZ_MUT=""
 # rundy weryfikacji, a dopiero na koncu tag rundy A. ⛔ Powod, znalezisko recenzji #279 W2: tag `bank/mutanty-sklep`
 # zamrozil rozliczenie z 26.08 (L1 i L5 NIEKALIBROWANE), wiec bez tej kolejnosci bramka dawala
 # DWA SPRZECZNE wyniki zaleznie od tego, ktory ref istnial w klonie. Starych tagow nie ruszamy.
-for ref in audyt/mutanty-sklep origin/audyt/mutanty-sklep bank/mutanty-sklep-r2 bank/mutanty-sklep; do git rev-parse --verify --quiet "$ref^{commit}" >/dev/null && { GALAZ_MUT="$ref"; break; }; done
+for ref in bank/mutanty-sklep-r3 audyt/mutanty-sklep origin/audyt/mutanty-sklep bank/mutanty-sklep-r2 bank/mutanty-sklep; do git rev-parse --verify --quiet "$ref^{commit}" >/dev/null && { GALAZ_MUT="$ref"; break; }; done
 if [ -z "$GALAZ_MUT" ]; then
 	fail "2 kalibracja: brak banku mutantów — ani tag bank/mutanty-sklep, ani gałąź audyt/mutanty-sklep (lokalna/origin/)"
 elif ! ROZL_SUROWE=$(git show "$GALAZ_MUT:audyt/sklep/ROZLICZENIE-MUTANTOW-SKLEP.md" 2>/dev/null) || [ -z "$ROZL_SUROWE" ]; then
@@ -181,7 +181,16 @@ else
 	#    bramki.sh:495 — obydwa jako TWARDE ZERO.
 	# ⛔ LITERAL, nie ${...:-} — wzorem bramki.sh:490: sufit czytany ze SRODOWISKA pozwala
 	#    przywrocic ciche zielone bez ruszenia jednego bajtu w repozytorium.
-	MAX_NIEZM_P=0
+	# ⛔ PO NAZWIE, NIE PO LICZBIE (5.09, przelot na galezi k7-go). Sufit liczbowy 7 puszczal
+	#    DOWOLNE siedem prob z EXIT=2 — zestaw mogl kurczyc sie po cichu w granicy sufitu, a proba
+	#    kontrolna k7 (1 obcy EXIT=2 → NO-GO) to wylapala. Lista zamknieta zyje w JEDNYM miejscu:
+	#    proby-kontrolne-przelot.sh (NIEZMIERZONE_JAWNIE); k7 czyta ja z pliku w repo, wiec kazda
+	#    zmiana listy to commit w narzedzia-qa, ktory kontrola 6 i tak widzi (data waznosci dowodu).
+	#    Brak pliku = pusta lista = KAZDY EXIT=2 zatrzymuje wydanie. Sufit liczbowy = dlugosc listy.
+	LISTA_JAWNA=$(sed -n '/^NIEZMIERZONE_JAWNIE=(/,/^)/p' "$KORZEN/narzedzia-qa/proby-kontrolne-przelot.sh" 2>/dev/null | grep -oE '^[[:space:]]*[A-Za-z0-9_.-]+\.sh' | sed 's/^[[:space:]]*//')
+	MAX_NIEZM_P=$(printf '%s\n' "$LISTA_JAWNA" | grep -c '\.sh$')
+	# -x: pusta linia wzorca NIE moze dopasowac wszystkiego; wartownik __brak__ trzyma plik wzorcow niepusty.
+	NIEZM_OBCE=$(grep -E '^[A-Za-z0-9_.-]+\.sh EXIT=2 ' "$PROBY" | cut -d' ' -f1 | grep -vxF -f <(printf '%s\n' "$LISTA_JAWNA" '__brak__') | tr '\n' ' ')
 	# DATA WAŻNOŚCI: nie „ten sam commit" (commit zapisujący log sam przesuwa HEAD, więc taki
 	# warunek nie dałby się spełnić nigdy), tylko „od przelotu nie zmieniło się nic, czego ten
 	# przelot dowodzi". Zmiana w narzędziach, testach albo kodzie wtyczki unieważnia dowód;
@@ -193,6 +202,8 @@ else
 		fail "6 próby kontrolne: po przelocie ($P_COMMIT) zmieniło się to, czego on dowodzi — $POTEM… — dowód przeterminowany (uruchom: bash narzedzia-qa/proby-kontrolne-przelot.sh)"
 	elif [ "$ILE_P" -lt 26 ]; then
 		fail "6 próby kontrolne: uruchomionych tylko $ILE_P (wymagane ≥26) — zakres zawężony, pominiętych $POM_P"
+	elif [ -n "$NIEZM_OBCE" ]; then
+		fail "6 próby kontrolne: NIC NIE ZMIERZYŁO (EXIT=2) POZA zamkniętą listą NIEZMIERZONE_JAWNIE: ${NIEZM_OBCE}— zestaw kurczy się po cichu; przelot na $P_COMMIT (uruchom: bash narzedzia-qa/proby-kontrolne-przelot.sh)"
 	elif [ "$NIEZM_P" -gt "$MAX_NIEZM_P" ]; then
 		fail "6 próby kontrolne: $NIEZM_P z $ILE_P NIC NIE ZMIERZYŁO (EXIT=2, sufit: $MAX_NIEZM_P) — zestaw kurczy się po cichu; przelot na $P_COMMIT (uruchom: bash narzedzia-qa/proby-kontrolne-przelot.sh)"
 	elif [ "$ZLE_P" -ne 0 ]; then

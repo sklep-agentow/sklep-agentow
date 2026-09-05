@@ -25,12 +25,14 @@ add_action( 'admin_post_sklepag_resend', 'sklepag_obsluz_resend' );
  * mail niesie martwy link — naprawialne kolejnym resendem, akceptowalne dla akcji ręcznej.
  */
 /*
- * ⛔ DŁUG NAZWANY, NIE UKRYTY: ta ścieżka ma PIĘĆ zapisów `$wpdb->query()`, których wynik
- * nie jest sprawdzany (rotacja tokenu przed wysyłką, status po sukcesie, status mail_blad,
- * przywrót treści maila, przywrót skrótu opinii). Zapis KOMPENSACJI tokenu jest od 0.9.28
- * mierzony (`$przywrocono` steruje statusem, treścią wpisu dziennika i przywrotami) —
- * pozostałe wciąż zapisują skutek bez pomiaru; ta sama klasa co naprawiona niżej
- * w anonimizacji, spłacona częściowo. Do tego samego długu należy kompensacja licznika pobrań po
+ * ⛔ ZAPISY MIERZONE PO SKUTKU (od 0.9.43; do 0.9.42 pięć zapisów `$wpdb->query()` szło bez
+ * sprawdzenia wyniku — klasa „zapisujemy skutek bez sprawdzenia, czy operacja się udała”):
+ * rotacja tokenu PRZED wysyłką (`$rotacja`: błąd bazy = mail NIE idzie, poprzedni link zostaje),
+ * status po doręczeniu (`$zapis_stanu`: błąd = wpis `zapis_blad` + mail do właściciela),
+ * status mail_blad po nieudanej wysyłce (`$zapis_bledu`: błąd = wpis `zapis_blad`). Zapis
+ * KOMPENSACJI tokenu jest mierzony od 0.9.28 (`$przywrocono`). Świadomie BEZ pomiaru zostają
+ * dwa zapisy kosmetyczne: przywrót treści maila do podglądu i przywrót skrótu opinii — ich
+ * padnięcie nie zmienia tego, co ma kupujący. Do tego samego długu należy kompensacja licznika pobrań po
  * nieudanej wysyłce: przywraca wartość ze zdjęcia `$zam` z wejścia, nie ze stanu bazy — pobranie,
  * które trafi w okno między odczytem a zapisem (stary link jeszcze żyje), ginie z licznika
  * (kupujący dostaje jedno pobranie ponad limit). Okno wąskie, skutek mały, klasa ta sama.
@@ -101,7 +103,7 @@ function sklepag_obsluz_resend() {
 	// Świeży link = świeży termin ORAZ świeży limit pobrań. Instrukcja kieruje po ten przycisk
 	// kupującego z WYCZERPANYM limitem — bez zerowania `pobrania_uzyte` nowy link dawał 410
 	// od pierwszego kliknięcia, a mail obiecywał „pozwala na 10 pobrań".
-	$wpdb->query(
+	$rotacja = $wpdb->query(
 		$wpdb->prepare(
 			"UPDATE {$pz} SET token_pobrania=%s, link_wygasa=%s, pobrania_uzyte=0, mail_tresc=%s, zmieniono=%s WHERE id=%d",
 			hash( 'sha256', $token ),
@@ -111,6 +113,17 @@ function sklepag_obsluz_resend() {
 			(int) $zam->id
 		)
 	);
+
+	// ⛔ NOWY LINK NIE W BAZIE = NIC NIE WYSYŁAMY. Mail niósłby link dający 403 od pierwszego
+	// kliknięcia, a panel mówiłby „wysłano”. Zapis padł w całości, więc poprzedni stan (i poprzedni
+	// link, jeśli działał) zostaje nietknięty. Właściciel widzi komunikat o BAZIE (nie o poczcie —
+	// poczta nie została tknięta, więc „sprawdź konfigurację poczty” wysłałoby go w złe miejsce) i dostaje mail.
+	if ( false === $rotacja ) {
+		sklepag_zdarzenie( (int) $zam->id, 'mail_blad', 'ręczna ponowna wysyłka: zapis nowego linku padł (' . (string) $wpdb->last_error . ') — mail NIE wysłany, poprzedni link bez zmian' );
+		sklepag_powiadom_wlasciciela( 'mail_resend_blad', 'ponowna wysyłka nie powiodła się (zapis do bazy)', 'Zamówienie #' . (int) $zam->id . ': nie udało się zapisać nowego linku pobrania, mail nie został wysłany. Sprawdź bazę danych i spróbuj ponownie.' );
+		wp_safe_redirect( add_query_arg( 'sklepag_resend', 'blad_zapisu', sklepag_url_zamowienia( (int) $zam->id ) ) );
+		exit;
+	}
 
 	$wyslano = sklepag_wyslij_mail_sklepu(
 		$zam->email_kupujacego,
@@ -127,7 +140,11 @@ function sklepag_obsluz_resend() {
 		// DORĘCZONE — ślad dor_* (schemat v9) zapisany razem ze statusem, jak w zakup.php:
 		// kompensacja przyszłej nieudanej rotacji przywraca stan z maila, który DOSZEDŁ.
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- SKLEPAG_STATUSY_ZAMKNIETE to stała wtyczki, nie wejście użytkownika (jak SKLEPAG_STATUSY_OPLACONE w admin-dashboard.php).
-		$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET status='mail_wyslany', dor_token_pobrania=token_pobrania, dor_link_wygasa=link_wygasa, dor_mail_tresc=mail_tresc, dor_opinia_hash=%s, zmieniono=%s WHERE id=%d AND status NOT IN (" . SKLEPAG_STATUSY_ZAMKNIETE . ')', $opinia_hash_po, $teraz, (int) $zam->id ) );
+		$zapis_stanu = $wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET status='mail_wyslany', dor_token_pobrania=token_pobrania, dor_link_wygasa=link_wygasa, dor_mail_tresc=mail_tresc, dor_opinia_hash=%s, zmieniono=%s WHERE id=%d AND status NOT IN (" . SKLEPAG_STATUSY_ZAMKNIETE . ')', $opinia_hash_po, $teraz, (int) $zam->id ) );
+		if ( false === $zapis_stanu ) {
+			sklepag_zdarzenie( (int) $zam->id, 'zapis_blad', 'mail doręczony (ponowna wysyłka), ale status mail_wyslany NIE zapisany (' . (string) $wpdb->last_error . ')' );
+			sklepag_powiadom_wlasciciela( 'zapis_blad', 'mail doręczony, ale stan zamówienia nie zapisany', 'Zamówienie #' . (int) $zam->id . ': kupujący dostał link (ponowna wysyłka), ale zapis stanu w bazie nie powiódł się. Sprawdź bazę danych.' );
+		}
 		sklepag_zdarzenie( (int) $zam->id, 'mail_resend', 'ręczna ponowna wysyłka do: ' . $zam->email_kupujacego . ' (świeży link)' );
 	} else {
 		// KOMPENSACJA: nowy token wszedł do bazy PRZED wysyłką, więc nieudany mail zostawiłby
@@ -176,7 +193,7 @@ function sklepag_obsluz_resend() {
 		// Stan i licznik prób osobno od kompensacji tokenu — status wolno ruszyć tylko na
 		// zamówieniu nie-zamkniętym finansowo (druga warstwa po bramce 409) i tylko pod
 		// dowodem własności tokenu (nie przestawiamy statusu cudzej, doręczonej wysyłki).
-		$wpdb->query(
+		$zapis_bledu = $wpdb->query(
 			$wpdb->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- SKLEPAG_STATUSY_ZAMKNIETE to stała wtyczki, nie wejście użytkownika (jak SKLEPAG_STATUSY_OPLACONE w admin-dashboard.php).
 				"UPDATE {$pz} SET status='mail_blad', mail_proby=mail_proby+1, zmieniono=%s WHERE id=%d AND status NOT IN (" . SKLEPAG_STATUSY_ZAMKNIETE . ') AND token_pobrania=%s',
@@ -185,6 +202,9 @@ function sklepag_obsluz_resend() {
 				$token_wlasnosci
 			)
 		);
+		if ( false === $zapis_bledu ) {
+			sklepag_zdarzenie( (int) $zam->id, 'zapis_blad', 'ponowna wysyłka nieudana i status mail_blad NIE zapisany (' . (string) $wpdb->last_error . ') — panel może pokazywać stary stan' );
+		}
 		// Treść maila i skrót opinii też wracają — ale wyłącznie gdy kompensacja tokenu przeszła
 		// (własność potwierdzona): panel ma pokazywać treść maila, który DOSZEDŁ.
 		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
@@ -201,6 +221,7 @@ function sklepag_obsluz_resend() {
 		// — inaczej panel twierdziłby, że kupujący ma link, którego w bazie nie ma.
 		if ( $przywrocono > 0 ) {
 			sklepag_zdarzenie( (int) $zam->id, 'mail_blad', 'ręczna ponowna wysyłka nieudana (wp_mail zwrócił false) — przywrócony stan ostatniej doręczonej wysyłki (link pobrania, treść maila, link do opinii)' );
+			sklepag_powiadom_wlasciciela( 'mail_blad', 'ponowna wysyłka maila nie powiodła się', 'Zamówienie #' . (int) $zam->id . ': poczta serwera zwróciła błąd przy ponownej wysyłce. Kupujący nadal czeka na link. Sprawdź konfigurację poczty.' );
 		} else {
 			sklepag_zdarzenie( (int) $zam->id, 'mail_przejety', 'ręczna ponowna wysyłka nieudana, a token przejął w międzyczasie inny proces — jego stan jest aktualny, niczego nie przywrócono' );
 		}
@@ -319,9 +340,13 @@ function sklepag_admin_zamowienie() {
 	// Komunikaty po akcjach (redirect z admin-post).
 	// phpcs:disable WordPress.Security.NonceVerification.Recommended -- komunikaty po redirekcie, bez mutacji.
 	if ( isset( $_GET['sklepag_resend'] ) ) {
-		echo 'ok' === $_GET['sklepag_resend']
-			? '<div class="notice notice-success is-dismissible"><p>Mail wysłany ponownie ze świeżym linkiem pobrania (ważny ' . (int) round( SKLEPAG_LINK_GODZIN / 24 ) . ' dni).</p></div>'
-			: '<div class="notice notice-error"><p>Ponowna wysyłka NIE powiodła się — sprawdź konfigurację poczty serwera.</p></div>';
+		if ( 'ok' === $_GET['sklepag_resend'] ) {
+			echo '<div class="notice notice-success is-dismissible"><p>Mail wysłany ponownie ze świeżym linkiem pobrania (ważny ' . (int) round( SKLEPAG_LINK_GODZIN / 24 ) . ' dni).</p></div>';
+		} elseif ( 'blad_zapisu' === $_GET['sklepag_resend'] ) {
+			echo '<div class="notice notice-error"><p>Ponowna wysyłka NIE powiodła się — nie udało się zapisać nowego linku w bazie danych, mail nie został wysłany, poprzedni link bez zmian. Sprawdź bazę danych i spróbuj ponownie.</p></div>';
+		} else {
+			echo '<div class="notice notice-error"><p>Ponowna wysyłka NIE powiodła się — sprawdź konfigurację poczty serwera.</p></div>';
+		}
 	}
 	if ( isset( $_GET['sklepag_anonimizacja'] ) ) {
 		$faktura_zostala = isset( $_GET['faktura'] ) && '1' === $_GET['faktura'];

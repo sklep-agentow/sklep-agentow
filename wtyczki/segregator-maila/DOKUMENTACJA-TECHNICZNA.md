@@ -1,6 +1,6 @@
 # Segregator maila — dokumentacja techniczna
 
-**Wersja wtyczki: 1.3.7 · wersja schematu bazy: 4 · WordPress 6.0+ · PHP 8.1+**
+**Wersja wtyczki: 1.3.8 · wersja schematu bazy: 4 · WordPress 6.0+ · PHP 8.1+**
 
 > **Po co ten dokument.** To jest **mapa systemu dla audytora i programisty**, nie ulotka.
 > Każda liczba i każda nazwa tutaj jest wzięta z kodu, nie z pamięci — jeśli coś się
@@ -60,17 +60,18 @@ leży w pliku `LICENSE` w katalogu wtyczki i wchodzi do paczki produktowej.
 
 | Plik | Linii | Za co odpowiada |
 |---|---|---|
-| `segregator-maila.php` | 452 | nagłówek wtyczki, stałe, ładowanie plików, cron retencji, znacznik „operacja w toku", zgoda na AI, ustawienia ogólne |
+| `segregator-maila.php` | 453 | nagłówek wtyczki, stałe, ładowanie plików, cron retencji, znacznik „operacja w toku", zgoda na AI, ustawienia ogólne |
 | `uninstall.php` | 91 | deinstalacja — dwie ścieżki (§11.5) |
 | `includes/instalator.php` | 288 | `dbDelta` dla 7 tabel, aktywacja, deaktywacja, seed demo (5 kategorii, 8 reguł, 30 maili) |
 | `includes/silnik.php` | 248 | `segm_klasyfikuj_mail()` — jedyna reguła dopasowania w całej wtyczce; przebieg na próbce |
 | `includes/csv.php` | 352 | import próbki z CSV (wykrywanie kodowania, limity) i eksport raportu do CSV |
 | `includes/ai.php` | 588 | opcjonalna klasyfikacja modelem, licznik stop-loss |
+| `includes/rodo.php` | 223 | eksporter i kasownik danych osobowych dla narzędzi prywatności WP (nadawca = klucz osoby) + podpowiedź do Polityki prywatności |
 | `includes/admin.php` | 1504 | panel: przebiegi i raporty, reguły, kategorie, próbka, ustawienia, baner powitalny, paski błędu AI i błędu bazy |
 | `includes/konfiguracja.php` | 360 | eksport i import własnej konfiguracji (kategorie + reguły) w JSON-ie |
 | `includes/filtry.php` | 588 | eksport reguł do filtrów Gmaila (XML) i reguł Outlooka |
-| `includes/class-segm-imap.php` | 1123 | **klient IMAP4rev1 w czystym PHP** — gniazdo, TLS, protokół |
-| `includes/skrzynka.php` | 849 | konfiguracja skrzynki, hasło, diagnostyka, „Sprawdź połączenie", rozbiór nagłówków i treści |
+| `includes/class-segm-imap.php` | 1207 | **klient IMAP4rev1 w czystym PHP** — gniazdo, TLS, protokół |
+| `includes/skrzynka.php` | 860 | konfiguracja skrzynki, hasło, diagnostyka, „Sprawdź połączenie", rozbiór nagłówków i treści |
 | `includes/skrzynka-przebieg.php` | 741 | przebieg na żywej skrzynce, historia, cofanie, harmonogramy WP-Cron |
 | `includes/admin-skrzynka.php` | 766 | panel zakładki *Skrzynka (IMAP)* i obsługa jej formularzy |
 | `includes/admin-powitanie.php` | 143 | ekran powitalny pokazywany raz po aktywacji |
@@ -122,7 +123,7 @@ pobierana do pamięci na czas dopasowania reguł i nigdzie nie jest zapisywana.
 
 `plan` (tryb na sucho: tak by zrobił) · `w_toku` (zamiar zapisany, `UID MOVE` jeszcze
 niepotwierdzony — wiersz w tym stanie po zakończonym przebiegu znaczy, że proces urwał się
-między przeniesieniem a potwierdzeniem; cofanie szuka takiej wiadomości po `Message-ID`) ·
+między przeniesieniem a potwierdzeniem; cofanie szuka takiej wiadomości po `Message-ID` — poza wpisami osoby, która złożyła wniosek „usuń moje dane”: kasownik RODO czyści im także `Message-ID`, zostaje tylko droga po UID) ·
 `przeniesiony` · `pominiety` (żadna reguła nie pasuje albo folder docelowy = źródłowy) ·
 `blad` · `cofniety`.
 
@@ -190,7 +191,7 @@ więc deinstalacja kasuje go zapytaniem `LIKE` po `wp_options` (razem z wierszam
 
 | Stała | Wartość | Gdzie | Znaczenie |
 |---|---|---|---|
-| `SEGM_WERSJA` | `1.3.7` | plik główny | wersja wtyczki |
+| `SEGM_WERSJA` | `1.3.8` | plik główny | wersja wtyczki |
 | `SEGM_WERSJA_SCHEMATU` | `4` | plik główny | wyzwala migrację tabel |
 | `SEGM_RETENCJA_DNI` | `90` | plik główny | po tylu dniach cron kasuje cudzą korespondencję |
 | `SEGM_BLOKADA` | `segm_operacja_w_toku` | plik główny | nazwa znacznika „operacja trwa" |
@@ -207,6 +208,10 @@ więc deinstalacja kasuje go zapytaniem `LIKE` po `wp_options` (razem z wierszam
 | `SEGM_SKRZ_LIMIT_CZASU` | `20` | `skrzynka.php` | twardy limit czasu jednego przebiegu na skrzynce (s) |
 | `SEGM_SKRZ_LIMIT_GNIAZDA` | `15` | `skrzynka.php` | limit czasu pojedynczej operacji sieciowej (s) |
 | `SEGM_SKRZ_GLEBOKOSC_MIME` | `5` | `skrzynka.php` | do ilu poziomów zagnieżdżenia rozbieramy wiadomość wieloczęściową (spreparowany mail nie zapętli rozbioru) |
+| `Segm_Imap::MAX_LINIA_BAJTOW` | `4194304` (4 MB) | `class-segm-imap.php` | sufit jednej linii odpowiedzi serwera IMAP (bez niego linia bez końca rosła w pamięci do fatala); 4 MB, bo `* SEARCH` oddaje WSZYSTKIE UID-y w jednej linii (~240 KB przy 40 000 maili) |
+| `Segm_Imap::MAX_LITERAL_BAJTOW` | `1048576` (1 MB) | `class-segm-imap.php` | sufit jednego literału `{n}` — rozmiar podaje serwer, więc bez sufitu jedna linia `{943718400}` kończyła proces |
+| `Segm_Imap::MAX_LINII_ODPOWIEDZI` | `20000` | `class-segm-imap.php` | sufit linii nietagowanych na jedno polecenie |
+| `Segm_Imap::MAX_ODPOWIEDZ_BAJTOW` | `8388608` (8 MB) | `class-segm-imap.php` | sufit łącznej odpowiedzi na jedno polecenie; przekroczenie = zamknięcie gniazda i komunikat po polsku |
 | `SEGM_SKRZ_CZESCI_MIME` | `40` | `skrzynka.php` | ile części jednej wiadomości oglądamy, zanim przestaniemy szukać tekstu |
 | `SEGM_AI_MODEL` | `claude-haiku-4-5` | `ai.php` | model **domyślny**; nadpisuje go ustawienie `ai_model`, a na końcu filtr `segm_ai_model` |
 | `SEGM_AI_MODEL_WZORZEC` | `/^[a-z0-9][a-z0-9._-]{2,63}$/` | `ai.php` | dopuszczalny kształt nazwy modelu |

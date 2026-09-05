@@ -79,7 +79,22 @@
     var dane = new FormData(form);
     dane.set('osadzona', '1');
     return fetch(cfg.endpoint, { method: 'POST', body: dane, credentials: 'same-origin' })
-      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+      .then(function (r) {
+        /* Odpowiedź czytamy jako TEKST i dopiero próbujemy JSON-a: strona błędu hostingu (502, 503,
+           limit czasu — HTML, nie JSON) dawała kupującemu surowe „SyntaxError: Unexpected token <”.
+           Teraz dostaje zdanie po polsku z kodem HTTP, a przycisk wraca do „Kup teraz”. */
+        return r.text().then(function (t) {
+          var j = null;
+          try { j = JSON.parse(t); } catch (e) { j = null; }
+          if (!j && !r.ok) {
+            throw new Error('Serwer sklepu odpowiedział błędem (HTTP ' + r.status + '). Odczekaj chwilę i spróbuj ponownie.');
+          }
+          if (!j) {
+            throw new Error('Serwer sklepu odpowiedział w nieoczekiwany sposób. Odśwież stronę i spróbuj ponownie.');
+          }
+          return { ok: r.ok, j: j };
+        });
+      })
       .then(function (w) {
         if (!w.ok || !w.j || !w.j.clientSecret) {
           throw new Error((w.j && w.j.blad) || 'Nie udało się rozpocząć płatności. Spróbuj ponownie za chwilę.');

@@ -4,7 +4,7 @@ Tags: chat, chatbot, faq, kontakt, wsparcie
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.5.17
+Stable tag: 1.5.18
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -152,6 +152,12 @@ w ustawieniach. Klucz API jest kasowany zawsze, niezależnie od tego przełączn
 
 Pełna historia zmian, z opisem każdej pozycji, jest w pliku `CHANGELOG.md`
 w paczce. Poniżej skrót.
+
+= 1.5.18 =
+* Naprawione: dobowy limit wywolan AI rezerwuje slot atomowo PRZED platnym wywolaniem - kilku gosci naraz przy ostatnim slocie nie przekracza limitu wlasciciela.
+* Naprawione: operator piszacy odpowiedz dluzej niz 5 minut nie traci tekstu - wysylka liczy sie jako aktywnosc, a przy odmowie tresc czeka w polu.
+* Naprawione: panel operatora po wygasnieciu sesji (12-24 h) pokazuje komunikat i odswieza strone zamiast cicho gluchnac; okno czatu po odpowiedzi bez stanu (429, blokada REST) odpytuje dalej co 30 s; nieprawidlowa sesja ma wlasny komunikat.
+* Zmienione: podpowiedz do Polityki prywatnosci mowi, dokad trafiaja pytania w trybie AI (Anthropic PBC, serwery w USA, tryb do wylaczenia) i ze okno czatu trzyma identyfikator rozmowy w sessionStorage na czas otwartej karty.
 
 = 1.5.17 =
 * Naprawione: eksport CSV z rozmów chroni arkusz przed formułą także wtedy, gdy komórka zaczyna się od tabulatora, powrotu karetki albo apostrofu (ten sam zestaw siedmiu znaków, co w sklepie); eksport i import czytają jedną wspólną listę, więc import zawsze zdejmuje dokładnie jeden apostrof i odzyskuje oryginał.

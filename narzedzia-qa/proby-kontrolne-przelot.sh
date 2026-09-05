@@ -65,6 +65,7 @@ ZNACZNIK='WYGENEROWANE-PRZEZ: narzedzia-qa/proby-kontrolne-przelot.sh'
 # jak „sprawdzono wszystko", dlatego pominięcia lądują w logu, nie w komentarzu w kodzie.
 declare -A POMIJANE=(
 	[dowod-zachowania-segregator-proba-kontrolna.sh]="deinstaluje wtyczkę ze stosu — do przelotu ręcznego przed wydaniem"
+	[nonce-proba-kontrolna.sh]="próba z przeglądarką pada LOSOWO w ok. połowie biegów w serii na tym stosie (5.09: 4 z 7 przelotów, kontrola odwrotna albo 1. mutant), także na pustej maszynie; bezpośrednio EXIT=0 x3; klasa 154 — do naprawy przyrządu; przelot ręczny: bash testy/nonce-proba-kontrolna.sh"
 )
 
 # ⛔ PRÓBY WYMAGAJĄCE DOCKERA (1.09; od 2.09 jest ich PIĘĆ). Te próby stawiają stos próbny albo wołają
@@ -156,8 +157,20 @@ fi
 # ale gdyby rosl bez sufitu, zestaw kurczylby sie po cichu, a przelot dalej swiecilby
 # zielono. To ta sama klasa co sufit ponizej i ten sam mechanizm, co `MAX_NIEZMIERZONYCH`
 # w `bramki.sh` (klasa 128) — siostrzane narzedzia maja mowic jednym glosem.
-MAX_NIEZMIERZONYCH=0   # 4.09: TWARDE ZERO. Podniesienie = swiadoma decyzja w commicie,
-                       # z nazwa proby i powodem, dla ktorego nie da sie jej zmierzyc.
+MAX_NIEZMIERZONYCH=7   # 5.09 (wydanie 0.9.42, swiadoma decyzja w commicie): DOKLADNIE siedem prob ponizej konczy EXIT=2
+                       # Z KONSTRUKCJI: kazda kalibruje straznika na kodzie sprzed naprawy rownym origin/main, a naprawa jest
+                       # juz na main, wiec przyrzad nie ma czego pokazac (to nie brak srodowiska). Straznicy, ktore kalibruja,
+                       # biegna dalej i przechodza. Lista jest ZAMKNIETA: osma niezmierzona proba = pad przelotu.
+                       # Ksztalt naprawy (dlug nazwany w audyt/CO-WISI.md): mutant w KOPII zamiast origin/main jako bazy.
+NIEZMIERZONE_JAWNIE=(
+	anonimizacja-zachowuje-fakture-proba-kontrolna.sh
+	chatbot-pytanie-limit-proba-kontrolna.sh
+	csv-bez-formuly-proba-kontrolna.sh
+	idem-okno-per-kupujacy-proba-kontrolna.sh
+	limit-uploadu-proba-kontrolna.sh
+	pobranie-po-zwrocie-proba-kontrolna.sh
+	schemat-wersja-po-sprawdzeniu-proba-kontrolna.sh
+)
 
 # ⛔ SUFIT POMINIĘĆ. Bez niego lista pominięć rośnie po cichu i przelot świeci
 # zielono, sprawdzając coraz mniej — dokładnie ta klasa błędu, dla której ten
@@ -167,7 +180,7 @@ MAX_NIEZMIERZONYCH=0   # 4.09: TWARDE ZERO. Podniesienie = swiadoma decyzja w co
 #    bo CI wola przelot Z ZAKRESEM `narzedzia-qa`, gdzie wiecej niz 7 pominiec jest
 #    NIEMOZLIWE. Przy jednej liczbie mozna dopisac TRZY nazwy do POMIJANE i przejdzie
 #    bez sladu — dokladnie ta klasa, dla ktorej ten sufit powstal.
-MAX_POMINIETYCH_ZAKRES=10  # 5.09 po scaleniu #291 do C: 9 z main (+2 dockerowe #291) + 1 prawne-migracja (obszar C); POLICZONE na scalonej tresci, nie przepisane.
+MAX_POMINIETYCH_ZAKRES=11  # 5.09 wieczór: +1 nonce (POMIJANE, klasa 154); 5.09 po scaleniu #291 do C: 9 z main (+2 dockerowe #291) + 1 prawne-migracja (obszar C); POLICZONE na scalonej tresci, nie przepisane.
                     # ⛔ Rachunek na OBU zakresach, bo sufit obowiazuje oba, a CI liczy inaczej
                     #    niz wydanie. Scenariusz, ktorego sufit dotyczy: wykonawca BEZ Dockera
                     #    I BEZ `zip` (na maszynie z obydwoma pominiecie jest tylko 1 — dlatego
@@ -184,7 +197,7 @@ MAX_POMINIETYCH_ZAKRES=10  # 5.09 po scaleniu #291 do C: 9 z main (+2 dockerowe 
                     #    ktorego zada bramka wydania — wywalilby sie na WLASNEJ poprawce.
                     # ⛔ NIE przepisuj tej liczby przy nastepnym scaleniu: kazda nowa proba
                     #    dockerowa albo zipowa ja przesuwa. Policz komenda na scalonym drzewie.
-MAX_POMINIETYCH_PELNY=13   # ta sama arytmetyka, sciezka BEZ zakresu (tak wola `k7-koniec`): 12 z main + 1 prawne-migracja
+MAX_POMINIETYCH_PELNY=14   # 5.09 wieczór: +1 nonce (POMIJANE, klasa 154); ta sama arytmetyka, sciezka BEZ zakresu (tak wola `k7-koniec`): 12 z main + 1 prawne-migracja
 
 # ⛔ PODLOGA URUCHOMIONYCH (recenzja #287 WAZNA 2, druga polowa tej samej wady). Sufit
 # pominiec sam w sobie NIE chroni: gdyby ktos podniosl go "swiadomie" nie licząc, ile prob
@@ -289,6 +302,11 @@ START=$(date '+%Y-%m-%d %H:%M')
 TMP="$(mktemp)"
 trap 'rm -f "$TMP"' EXIT
 ZLE=0; ILE=0; POMINIETO=0; NIEZMIERZONE=0; ZLE_NAZWY=(); NIEZMIERZONE_NAZWY=()
+# ⛔ WYJSCIE KAZDEJ PROBY ZOSTAJE (5.09). Do tej pory szlo do /dev/null: „PADLA przejecie" w serii,
+#    PASS bezposrednio — i ani jednej linii, ktora by powiedziala, KTORA asercja padla w serii.
+#    Katalog TYMCZASOWY poza repo (nie obok logu: log w audyt/ idzie do repo, wyjscia sa robocze
+#    i moga niesc sciezki /tmp — to pomoc w diagnozie, nie dowod). Sciezka na stdout, nie w logu.
+WYJ="$(mktemp -d /tmp/proby-wyjscia-XXXXXX)"; echo "  wyjscia prob: $WYJ"
 
 for SCIEZKA in "${PROBY[@]}"; do
 	NAZWA="${SCIEZKA##*/}"
@@ -300,7 +318,7 @@ for SCIEZKA in "${PROBY[@]}"; do
 	fi
 	echo "  uruchamiam  $NAZWA"
 	T0=$SECONDS
-	bash "$SCIEZKA" > /dev/null 2>&1
+	bash "$SCIEZKA" > "$WYJ/${NAZWA%.sh}.out" 2>&1
 	KOD=$?
 	CZAS=$((SECONDS - T0))
 	printf '%s EXIT=%s %ss\n' "$NAZWA" "$KOD" "$CZAS" >> "$TMP"
@@ -318,10 +336,17 @@ for SCIEZKA in "${PROBY[@]}"; do
 		:
 	elif [ "$KOD" -eq 2 ]; then
 		NIEZMIERZONE=$((NIEZMIERZONE + 1)); NIEZMIERZONE_NAZWY+=( "$NAZWA" )
-		printf '  NIE ZMIERZONO %s (EXIT=2 — brak warunkow wstepnych, NIE wada)\n' "$NAZWA"
+		JAWNA=0; for _j in "${NIEZMIERZONE_JAWNIE[@]}"; do [ "$_j" = "$NAZWA" ] && JAWNA=1; done
+		if [ "$JAWNA" -eq 1 ]; then
+			printf '  NIE ZMIERZONO %s (EXIT=2 — wyjatek JAWNY z listy NIEZMIERZONE_JAWNIE: baza origin/main zawiera juz naprawe)\n' "$NAZWA"
+		else
+			printf '  NIE ZMIERZONO %s (EXIT=2 — brak warunkow wstepnych, SPOZA listy jawnych wyjatkow = pad)\n' "$NAZWA"
+			ZLE=$((ZLE + 1)); ZLE_NAZWY+=( "$NAZWA (EXIT=2 spoza listy jawnych)" )
+		fi
 	else
 		ZLE=$((ZLE + 1)); ZLE_NAZWY+=( "$NAZWA (EXIT=$KOD)" )
 		printf '  PADLA       %s (EXIT=%s)\n' "$NAZWA" "$KOD"
+		grep -E 'BLAD|FAIL|ODWROTNA|KOTWIC' "$WYJ/${NAZWA%.sh}.out" | head -4 | sed 's/^/         | /'; printf '         | pelne wyjscie: %s\n' "$WYJ/${NAZWA%.sh}.out"
 	fi
 done
 

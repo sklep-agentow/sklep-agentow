@@ -148,6 +148,25 @@ function sklepag_ustawienia_rejestracja() {
 			'default'           => false,
 		)
 	);
+	// Bezpieczeństwo (0.9.43, audyt niezależny): adres gościa za proxy + wyłącznik limitu logowań.
+	register_setting(
+		'sklepag_ustawienia',
+		'sklepag_za_proxy',
+		array(
+			'type'              => 'boolean',
+			'sanitize_callback' => 'rest_sanitize_boolean',
+			'default'           => false,
+		)
+	);
+	register_setting(
+		'sklepag_ustawienia',
+		'sklepag_limit_logowan',
+		array(
+			'type'              => 'boolean',
+			'sanitize_callback' => 'rest_sanitize_boolean',
+			'default'           => true,
+		)
+	);
 
 	// Tytuł sekcji mówi, w jakim trybie sklep JEST — a to wynika z wpisanego tu klucza, nie z osobnego
 	// przełącznika. Etykieta pola wymienia oba prefiksy, żeby nie sugerować, że produkcyjny jest błędem.
@@ -168,6 +187,10 @@ function sklepag_ustawienia_rejestracja() {
 
 	add_settings_section( 'sklepag_sekcja_sklep', 'Sklep', '__return_null', 'sklepag-ustawienia' );
 	add_settings_field( 'sklepag_waluta_domyslna', 'Domyślna waluta nowych produktów', 'sklepag_pole_waluta', 'sklepag-ustawienia', 'sklepag_sekcja_sklep', array( 'label_for' => 'sklepag_waluta_domyslna' ) );
+
+	add_settings_section( 'sklepag_sekcja_bezpieczenstwo', 'Bezpieczeństwo (adres gościa, limity logowania)', 'sklepag_sekcja_bezpieczenstwo_opis', 'sklepag-ustawienia' );
+	add_settings_field( 'sklepag_za_proxy', 'Strona za Cloudflare / proxy', 'sklepag_pole_za_proxy', 'sklepag-ustawienia', 'sklepag_sekcja_bezpieczenstwo', array( 'label_for' => 'sklepag_za_proxy' ) );
+	add_settings_field( 'sklepag_limit_logowan', 'Limit prób logowania', 'sklepag_pole_limit_logowan', 'sklepag-ustawienia', 'sklepag_sekcja_bezpieczenstwo', array( 'label_for' => 'sklepag_limit_logowan' ) );
 
 	add_settings_section( 'sklepag_sekcja_dane', 'Dane przy odinstalowaniu', 'sklepag_sekcja_dane_opis', 'sklepag-ustawienia' );
 	add_settings_field( 'sklepag_usun_dane_przy_odinstalowaniu', 'Pełne czyszczenie', 'sklepag_pole_usun_dane', 'sklepag-ustawienia', 'sklepag_sekcja_dane', array( 'label_for' => 'sklepag_usun_dane_przy_odinstalowaniu' ) );
@@ -395,6 +418,19 @@ function sklepag_pole_firma_nip() {
 
 function sklepag_pole_waluta() {
 	echo '<input type="text" id="sklepag_waluta_domyslna" name="sklepag_waluta_domyslna" value="' . esc_attr( (string) get_option( 'sklepag_waluta_domyslna', 'PLN' ) ) . '" class="small-text" maxlength="3" pattern="[A-Za-z]{3}">';
+}
+
+function sklepag_sekcja_bezpieczenstwo_opis() {
+	echo '<p>Limity sklepu (zakup 10/min, pobranie 30/min, logowanie do WordPressa 6/min) liczą się <strong>na adres gościa</strong>. Za Cloudflare, proxy hostingu albo load balancerem serwer widzi jeden adres dla wszystkich — wtedy bez pierwszego przełącznika limity obejmują całą witrynę, a próby haseł z botów mogą zablokować logowanie właściciela.</p>';
+}
+
+function sklepag_pole_za_proxy() {
+	echo '<label><input type="checkbox" id="sklepag_za_proxy" name="sklepag_za_proxy" value="1"' . checked( (bool) get_option( 'sklepag_za_proxy', false ), true, false ) . '> Adres gościa z nagłówka <code>CF-Connecting-IP</code> albo <code>X-Forwarded-For</code> (pierwszy adres). <strong>Włącz tylko, gdy strona naprawdę stoi za proxy</strong> — inaczej każdy mógłby podrobić adres i obejść limity.</label>';
+}
+
+function sklepag_pole_limit_logowan() {
+	$w = get_option( 'sklepag_limit_logowan', null );
+	echo '<label><input type="checkbox" id="sklepag_limit_logowan" name="sklepag_limit_logowan" value="1"' . checked( null === $w || (bool) $w, true, false ) . '> 6 prób na minutę z adresu i rosnące opóźnienie po błędach (do 2 s). Wyłącz, jeśli logowań pilnuje inna wtyczka albo hosting, albo strona stoi za proxy bez włączonego przełącznika wyżej.</label>';
 }
 
 function sklepag_pole_usun_dane() {

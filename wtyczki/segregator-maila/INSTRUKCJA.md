@@ -341,7 +341,9 @@ rozłożoną po folderach bez zapisu, co gdzie poszło.
 **Cofnij ostatni przebieg** przenosi wiadomości z powrotem do folderu, z którego
 wyszły. Wtyczka zapamiętuje nowy identyfikator każdej wiadomości (kod odpowiedzi
 `COPYUID`) razem z identyfikatorem folderu (`UIDVALIDITY`), a gdy serwer go nie
-poda, szuka wiadomości po nagłówku `Message-ID`. Liczy tylko wiadomości, które
+poda, szuka wiadomości po nagłówku `Message-ID` (wyjątek: wiadomości osoby, która
+złożyła wniosek „usuń moje dane” — jej wpisy w dzienniku tracą także `Message-ID`, więc
+cofnięcie ich działa tylko po identyfikatorze nadanym przez serwer). Liczy tylko wiadomości, które
 **naprawdę** wróciły: jeśli którąś w międzyczasie przeciągnąłeś ręcznie gdzie
 indziej albo skasowałeś folder kategorii, powie tego wprost przy tej pozycji —
 zamiast zgadywać i przenieść cudzy mail — a przebieg zostanie do cofnięcia

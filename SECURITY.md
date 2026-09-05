@@ -1,7 +1,7 @@
 # SECURITY.md — Sklep Agentów
 
-> Stan na 2026-09-05. Trzy wtyczki WordPressa: `sklep-agentow` (0.9.42),
-> `chatbot-live` (1.5.17), `segregator-maila` (1.3.7). Wersje wspierane: **najnowsze wydanie każdej
+> Stan na 2026-09-05. Trzy wtyczki WordPressa: `sklep-agentow` (0.9.43),
+> `chatbot-live` (1.5.18), `segregator-maila` (1.3.8). Wersje wspierane: **najnowsze wydanie każdej
 > wtyczki** z zakładki Releases — starsze nie dostają poprawek, tylko podniesienie wersji.
 >
 > <!-- ⛔ Te numery pilnuje `narzedzia-qa/security-wersje.sh`, wpięty w bramkę wydania.
@@ -128,5 +128,14 @@ znaną wadę (np. limit liczony z adresu proxy zamiast gościa, brak nonce) i sp
 ją widzi (`testy/*-proba-kontrolna.sh`). Odrzut webhooka ze złym lub brakującym podpisem dowodzą raporty
 audytu na żywym stosie (`audyt/sklep/raporty/A/L3.json`: podpis `v1=deadbeef` → HTTP 400 „zły podpis”;
 `A/L2.json`: znacznik czasu sprzed 400 s przy tolerancji 300 s → HTTP 400; `B/L3.json`: po rotacji sekretu
-stary podpis → HTTP 400) — osobnej próby kontrolnej strażnika dla podpisu nie ma (dług w `audyt/CO-WISI.md`). Audyty przed wydaniem:
+stary podpis → HTTP 400); próba kontrolna strażnika podpisu: `testy/webhook-podpis-proba-kontrolna.sh` (w przelocie prób, EXIT=0 5.09). Audyty przed wydaniem:
 `audyt/AUDYT-RAPORT.md`. Świadomie niezrobione rzeczy: `DECYZJE.md`; otwarte: `audyt/CO-WISI.md`.
+
+## Adres gościa i sekrety — co właściciel powinien wiedzieć (0.9.43)
+
+- **Limity liczą się na adres gościa.** Za Cloudflare, proxy hostingu albo load balancerem serwer widzi jeden adres dla wszystkich; wtedy trzeba włączyć
+  *Ustawienia → Bezpieczeństwo → Strona za Cloudflare / proxy* (nagłówek `CF-Connecting-IP` / `X-Forwarded-For`, walidacja `FILTER_VALIDATE_IP`, filtr `sklepag_ip`).
+  Bez proxy przełącznik ma być wyłączony — nagłówki da się podrobić. Limit prób logowania (6/min, opóźnienie do 2 s) ma osobny wyłącznik.
+- **Sekrety leżą w `wp_options` bez szyfrowania** (`autoload=no`): klucz sekretny Stripe, sekret webhooka, klucze API dostawcy AI (ChatBot, Segregator), hasło IMAP.
+  To standard WordPressa (rdzeń nie daje sejfu) — kopia bazy zawiera klucze. Kto ma dostęp do bazy albo do kopii, ma klucze; rotacja w panelu dostawcy.
+

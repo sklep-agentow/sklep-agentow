@@ -4,7 +4,7 @@
 # objawil sie szybko i BEZPIECZNIE, a nie zabral RAM maszyny.
 S="$(cd "$(dirname "$0")" && pwd)"
 PORT=${PORT:-14300}
-for scen in poprawny literal-sama-deklaracja literal-ogromny literal-obciety bez-crlf bez-znacznika linia-ogromna; do
+for scen in poprawny search-40k literal-sama-deklaracja literal-ogromny literal-obciety bez-crlf bez-znacznika linia-ogromna; do
   PORT=$((PORT+1))
   php "$S/A7b-sonda-imap-atrapa.php" "$PORT" "$scen" >/dev/null 2>&1 &
   ATR=$!

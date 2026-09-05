@@ -25,7 +25,7 @@
  *   docker exec -u www-data strona_wp_wordpress wp --path=/var/www/html eval-file /tmp/crr.php; echo EXIT=$?
  */
 
-global $wpdb;
+global $wpdb, $crr_mail, $crr_sesja; // ⛔ `global` PRZED przypisaniem: pod `wp eval-file` plik biegnie w funkcji, a crr_sprzataj() sięga po te zmienne przez `global` — bez tego kasowała po PUSTYM kluczu (klasa 158, recenzja #301 r2).
 require_once WP_PLUGIN_DIR . '/chatbot-live/includes/rodo.php';
 require_once WP_PLUGIN_DIR . '/chatbot-live/includes/csv.php';
 
