@@ -276,6 +276,34 @@ $znacznik_w_trakcie = null;
 sklepag_kompensuj_strony_prawne();
 remove_action( 'save_post', $podgladacz );
 $sprawdz( 'w chwili PIERWSZEGO zapisu znacznik byl juz podbity', SKLEPAG_WERSJA_STRON === $znacznik_w_trakcie, 'znacznik w trakcie zapisu: ' . var_export( $znacznik_w_trakcie, true ) . ' (drugie rownolegle zadanie zalozyloby druga strone)' );
+echo "=== C5c. SZABLON polityki z PRZEPISANYM zdaniem o sprzataniu -> nie podmieniamy, ale MELDUJEMY ===\n";
+$polityka_szablon_przepisana = "SZABLON — wypełnij danymi sprzedawcy przed publikacją.\n\nAdministrator danych: [NAZWA, KONTAKT]\nZakres: e-mail, dane zamowienia; dziennik czyscimy raz na kwartal recznie.\nPodmioty przetwarzające: Stripe.";
+$id_pol_sz = wp_insert_post( array( 'post_title' => 'Polityka prywatności sklepu (SZABLON)', 'post_content' => $polityka_szablon_przepisana, 'post_status' => 'draft', 'post_type' => 'page' ) );
+update_option( 'sklepag_strona_polityka', $id_pol_sz, false );
+delete_option( 'sklepag_strony_nowe_sekcje' );
+delete_option( 'sklepag_wersja_stron' );
+sklepag_kompensuj_strony_prawne();
+clean_post_cache( $id_pol_sz );
+$psz = get_post( $id_pol_sz );
+$sprawdz( 'przepisane zdanie w SZABLONIE nietkniete', $psz && false !== strpos( $psz->post_content, 'raz na kwartal recznie' ) );
+$meld_sz = get_option( 'sklepag_strony_nowe_sekcje', array() );
+$sprawdz( 'SZABLON z przepisanym zdaniem dostaje MELDUNEK o zdaniu', is_array( $meld_sz ) && false !== strpos( wp_json_encode( $meld_sz ), 'sprz' ), 'meldunek: ' . substr( (string) wp_json_encode( $meld_sz ), 0, 200 ) );
+wp_delete_post( $id_pol_sz, true );
+echo "=== C8. AKTYWACJA na starej instalacji (strony zastane) NIE deklaruje szablonu za aktualny ===\n";
+$id_zastany = wp_insert_post( array( 'post_title' => 'Regulamin sklepu (SZABLON)', 'post_content' => "SZABLON stary\nSprzedawca: [NAZWA]", 'post_status' => 'draft', 'post_type' => 'page' ) );
+update_option( 'sklepag_strona_regulamin', $id_zastany, false );
+update_option( 'sklepag_wersja_stron', SKLEPAG_WERSJA_STRON, true ); // stan po poprzedniej aktywacji
+sklepag_utworz_strony();
+$sprawdz( 'aktywacja ze strona zastana KASUJE znacznik (kompensacja obejrzy strony)', (int) get_option( 'sklepag_wersja_stron', 0 ) !== SKLEPAG_WERSJA_STRON, 'znacznik: ' . get_option( 'sklepag_wersja_stron', 'brak' ) . ' — deaktywuj/aktywuj zabijaloby kompensacje' );
+$sprawdz( 'aktywacja nie zdublowala zastanej strony', $id_zastany === (int) get_option( 'sklepag_strona_regulamin', 0 ) );
+wp_delete_post( $id_zastany, true );
+delete_option( 'sklepag_strona_regulamin' );
+$id_pol_na_bok = (int) get_option( 'sklepag_strona_polityka', 0 );
+delete_option( 'sklepag_strona_polityka' ); // obie strony maja powstac z TEGO szablonu
+sklepag_utworz_strony(); // swieze strony: znacznik ma byc ustawiony
+$sprawdz( 'aktywacja na czystej instalacji USTAWIA znacznik', (int) get_option( 'sklepag_wersja_stron', 0 ) === SKLEPAG_WERSJA_STRON );
+foreach ( array( 'sklepag_strona_regulamin', 'sklepag_strona_polityka' ) as $o_sw ) { $i_sw = (int) get_option( $o_sw, 0 ); if ( $i_sw ) { wp_delete_post( $i_sw, true ); } }
+update_option( 'sklepag_strona_polityka', $id_pol_na_bok, false );
 echo "=== C7. FRONT nie robi pracy: bez is_admin/cron/WP-CLI kompensacja wraca bez zapisu ===\n";
 $sprawdz( 'kontrola przyrzadu: test biegnie pod WP-CLI (dlatego C1-C6 mogly pracowac)', defined( 'WP_CLI' ) && WP_CLI );
 update_option( 'sklepag_strona_polityka', $id_pol_przed, false );

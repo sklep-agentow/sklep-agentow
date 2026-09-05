@@ -270,7 +270,8 @@ na stronę „w przygotowaniu” (nigdy na szkic z zaślepką i nigdy na błąd 
 
 **Co robi sama wtyczka po aktualizacji** (od 0.9.42; wcześniej strony powstawały wyłącznie przy
 pierwszej instalacji, więc sklep zaktualizowany „w miejscu” nie dostawał ich nigdy): przy
-pierwszym wejściu na sklep po aktualizacji wtyczka ogląda obie strony i zależnie od ich stanu:
+pierwszym otwarciu **panelu** (Kokpitu) po aktualizacji — albo przy najbliższym biegu zadania cyklicznego —
+wtyczka ogląda obie strony i zależnie od ich stanu (na stronie sklepu nic nie robi, żeby kupujący nie czekał):
 
 - **strony nie ma** (skasowałeś ją albo instalacja jest starsza niż wersja, w której szkice
   powstały) — zakłada ją od nowa, jako **wersję roboczą** z zaślepką SZABLON. Nie publikuje
@@ -288,11 +289,17 @@ sprawy opisane u siebie pod inną nazwą — jeśli tak, zignoruj; jeśli nie, d
 (wymaga ich art. 12 ust. 1 ustawy o prawach konsumenta). Wtyczka porównuje po nazwach sekcji
 i nie potrafi rozpoznać Twojego własnego nazewnictwa — dlatego pyta zamiast poprawiać.
 
-Dwie rzeczy, których ta samoobsługa nie wyłapie, bo są **wewnątrz** sekcji, a nie osobną
-sekcją — dopisz je sam, jeśli publikowałeś dokumenty z wcześniejszych wersji:
+Rzeczy **wewnątrz** sekcji (nie osobna sekcja) — tu samoobsługa działa tylko częściowo:
 
-- **Polityka prywatności** z wersji wcześniejszej niż 0.9.23: „dziennik zdarzeń (90 dni,
-  w tym adres IP przy każdym pobraniu pliku)” w opisie zakresu danych;
+- **Polityka prywatności — zdanie o sprzątaniu dziennika.** Jeśli w Twojej polityce stoi jeszcze brzmienie
+  z wersji 0.9.23–0.9.40 („dziennik zdarzeń (90 dni, w tym adres IP przy każdym pobraniu pliku)”), wtyczka
+  **sama** podmienia je na prawdziwe: sprzątanie jest warunkowe (zadanie WP-Cron co 10 minut, tylko gdy harmonogram
+  WordPressa działa), obejmuje dziennik zdarzeń i historię logowań, a dane zamówień nie są usuwane po czasie.
+  Jeśli to zdanie przepisałeś po swojemu, wtyczka go nie tknie — zobaczysz żółty komunikat „Zakres (zdanie
+  o sprzątaniu: warunkowe, WP-Cron)” i dopisujesz tę prawdę sam, własnymi słowami. ⛔ Nie wpisuj już starego
+  brzmienia „90 dni” bez warunku — było nieprawdziwe (gdy WP-Cron stoi, nic nie znika);
+- **Polityka prywatności** z wersji wcześniejszej niż 0.9.23: dane do faktury (nazwa, NIP, adres — cel: faktura,
+  podstawa: obowiązek prawny z ustawy o VAT) w opisie zakresu danych — tego wtyczka nie podmienia, dopisz sam;
 - **Regulamin** z wersji wcześniejszej niż 0.9.40: punkt o gwarancji satysfakcji — że jest to
   **dobrowolne zobowiązanie sprzedawcy PONAD ustawę**, niezależne od utraty prawa odstąpienia
   z art. 38 — bo strona produktu tę gwarancję obiecuje, więc regulamin musi ją potwierdzać.

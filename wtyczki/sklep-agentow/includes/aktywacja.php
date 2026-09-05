@@ -348,11 +348,17 @@ function sklepag_definicje_stron() {
  * na instalacji aktualizowanej w miejscu dokłada `sklepag_kompensuj_strony_prawne()`.
  */
 function sklepag_utworz_strony() {
-	$strony = sklepag_definicje_stron();
+	$wszystkie_z_tego_szablonu = true;
+	$strony                    = sklepag_definicje_stron();
 
 	foreach ( $strony as $opcja => $dane ) {
 		$id = (int) get_option( $opcja, 0 );
 		if ( $id && get_post( $id ) ) {
+			// Strona PRAWNA zastana — nie wiemy, z którego szablonu; kompensacja ma ją obejrzeć. Sklep i Dziękujemy
+			// nie mają szablonu do kompensowania, więc ich obecność o znaczniku nie decyduje.
+			if ( in_array( $opcja, array( 'sklepag_strona_regulamin', 'sklepag_strona_polityka' ), true ) ) {
+				$wszystkie_z_tego_szablonu = false;
+			}
 			continue;
 		}
 		$id = wp_insert_post(
@@ -368,9 +374,15 @@ function sklepag_utworz_strony() {
 			update_option( $opcja, $id, false );
 		}
 	}
-	// Swieza instalacja ma strony prosto z tego szablonu, wiec kompensacja nie ma tu nic do
-	// roboty -- znacznik zapisany tutaj oszczedza jej pierwszy przebieg.
-	update_option( 'sklepag_wersja_stron', SKLEPAG_WERSJA_STRON, true );
+	// Znacznik szablonu TYLKO wtedy, gdy KAŻDA strona powstała z tego szablonu w tym biegu. Strona zastana
+	// (deaktywuj → aktywuj na starej instalacji) może być ze starego szablonu — wtedy znacznik kasujemy,
+	// żeby kompensacja przy najbliższym otwarciu panelu obejrzała obie strony (bez tego „deaktywuj i aktywuj”
+	// zabijało kompensację na zawsze).
+	if ( $wszystkie_z_tego_szablonu ) {
+		update_option( 'sklepag_wersja_stron', SKLEPAG_WERSJA_STRON, true );
+	} else {
+		delete_option( 'sklepag_wersja_stron' );
+	}
 }
 
 /**
@@ -474,8 +486,9 @@ function sklepag_sekcje_szablonu( $tresc ) {
  *
  * Bieg jest bramkowany WŁASNYM znacznikiem `sklepag_wersja_stron`, nie wersją schematu bazy:
  * szablon zmienia się niezależnie od tabel, a znacznik schematu bywa aktualny wtedy, gdy
- * szablon właśnie się zmienił. Znacznik podbijamy na końcu biegu i to kończy sprawę do
- * następnej zmiany szablonu.
+ * szablon właśnie się zmienił. Znacznik podbijamy NA WEJŚCIU biegu, zanim cokolwiek zapiszemy —
+ * drugie równoległe żądanie wraca na bramie, zamiast zakładać drugą stronę. Bieg pracuje tylko
+ * z panelu, crona albo WP-CLI (front tylko czyta).
  */
 function sklepag_kompensuj_strony_prawne() {
 	if ( (int) get_option( 'sklepag_wersja_stron', 0 ) === SKLEPAG_WERSJA_STRON ) {
@@ -567,6 +580,13 @@ function sklepag_kompensuj_strony_prawne() {
 					return '' !== (string) $linia; // meldunki bez linii szablonu (zdanie do przepisania) nie są dopisywane
 				}
 			);
+			// Zdanie przepisane przez właściciela w szablonie: nie podmieniamy (to jego słowa), ale MELDUJEMY —
+			// tak samo jak dla własnego dokumentu (c). Bez tego szablon z przepisanym zdaniem nie dostawał ani
+			// podmiany, ani meldunku.
+			$do_meldunku = array_keys( array_diff_key( $brakujace, $do_dopisania ) );
+			if ( $do_meldunku ) {
+				$nowe[ $wpis->post_title ] = $do_meldunku;
+			}
 			if ( ! $do_dopisania ) {
 				continue;
 			}
