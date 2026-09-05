@@ -16,6 +16,8 @@ wydany osobno (podbicie pośrednie wewnątrz jednej zmiany).
 
 ## [Niewydane]
 
+## [0.9.41] — 2026-09-05 · schemat bazy bez zmian (10)
+
 ### Naprawione
 - **Nasze wewnętrzne oznaczenia procesu audytowego nie jadą już do klienta w paczce.** Komentarze
   i dokumenty niosące skrótowe oznaczenia zgłoszeń wyczyszczone — zero zmian logiki, sam tekst.
