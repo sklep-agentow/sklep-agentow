@@ -42,7 +42,7 @@ nie odświeżano wobec dzisiejszego `HEAD`.
 ## 🟡 ŚWIADOMY DŁUG NA WYDANIE 0.9.42 — co ZOSTAJE otwarte w rejestrze INFRA po rundzie 5.09 i DLACZEGO (5.09, koordynatorka)
 
 Stan NA TEJ GAŁĘZI po scaleniu #291, #297, #296 i obszaru C (#294) (5.09), policzony komendą rejestru (`grep -cE '^\| `[^`]+` \|.*OTWARTE' audyt/REJESTR-ZNALEZISK-INFRA.md`): **16 OTWARTYCH**
-(plus WSZYSTKIE 3 pozycje W NAPRAWIE wymienione dla kompletu: `F4-F4`, `I-26`, `P-1` — #296 r5 WAŻNA 2: wcześniej 2 z 3; oraz 1 WYCOFANE: `B-12`). Poniżej WSZYSTKIE, każda z kodem w odwrotnych apostrofach — `bramka-znaleziska.sh` (krok „rejestr INFRA”, przez
+(plus WSZYSTKIE 2 pozycje W NAPRAWIE wymienione dla kompletu: `F4-F4`, `P-1` — #296 r5 WAŻNA 2: wcześniej 2 z 3; oraz 1 WYCOFANE: `B-12`). Poniżej WSZYSTKIE, każda z kodem w odwrotnych apostrofach — `bramka-znaleziska.sh` (krok „rejestr INFRA”, przez
 `rejestr-liczniki-proba-kontrolna.sh`) sprawdza na każdym PR, że KAŻDY kod OTWARTY w rejestrze występuje w tej sekcji. Powód: #296 r1
 KRYT 1 — „~20” było liczbą przepisaną, pomiar dawał 30, a sekcja gubiła jedyne KRYT rejestru (klasa I-23: dwa rejestry, jeden nie
 widzi drugiego). Decyzja o tym, co z tej listy jedzie do klienta jako „znane ograniczenie”, należy do właściciela (sekcja
@@ -54,7 +54,7 @@ widzi drugiego). Decyzja o tym, co z tej listy jedzie do klienta jako „znane o
 - `#291` obszar A — **SCALONY 5.09 09:57**: `P-5`, `A7b-F2`, `D-4`, `F5-F5` są już ZAMKNIETE w rejestrze na tej gałęzi (wiersze zostają tu, żeby lista była pełna).
 - `#297` segregator — **SCALONY 5.09 10:31**: `A7c-F1` ZAMKNIETE w rejestrze na tej gałęzi.
 
-**Zostaje — 16 OTWARTYCH + 3 W NAPRAWIE (`F4-F4`, `I-26`, `P-1`):**
+**Zostaje — 16 OTWARTYCH + 2 W NAPRAWIE (`F4-F4`, `P-1`):**
 
 **Narzędzia procesu (nie kod wtyczek, klient ich nie dostaje):**
 - `I-3` kalibrator-straznikow.sh, `I-4` licznik-odstepstw.sh, `I-8` adresy-w-dokumencie.sh + waga-znaleziska.sh — sieroty planu audytów v3.
@@ -71,11 +71,19 @@ widzi drugiego). Decyzja o tym, co z tej listy jedzie do klienta jako „znane o
 - `A7b-F1` klient poczty segregatora bez górnej granicy na to, ile przyjmie od serwera (SRED) — osobny PR po A7c-F1; nie dotyka sklepu.
 - `A4b-F3` strona „Dziękujemy” przy dwóch rzadkich statusach, `A4b-F4` pigułka „Kup teraz” w chwili płatności — MALE, front; kandydaci po oddaniu.
 - `A7-F2` statyka pod PHP 8.1 vs produkt na 8.4, `A7-F3` trzy niewołane funkcje — MALE, porządek kodu.
-- `I-26` W NAPRAWIE — droga instalacyjna 7 kroków PRZEZ PANEL na `probny_wp` NIEZMIERZONA (limity 64M są). ⛔ To jedyna pozycja z listy,
+- `I-26` ZAMKNIĘTE 5.09 — Krok 1 instrukcji PRZEZ PANEL zmierzony na stosie próbnym od zera (`narzedzia-qa/stanowisko/instalacja-przez-panel-probny.sh`): 2 MB → odmowa komunikatem z instrukcji, 8 MB → wgrane, aktywne, 4 strony, EXIT=0.
   która dotyka tego, co klient zrobi pierwszego dnia — do przejścia ręcznie przed oddaniem (ogon wydania), nie po.
 
 **Z recenzji #289 (obszar D), dług narzędziowy:** W2 próba spustu crona tylko prozą · W3 bliźniak `lib-stos-probny.sh` bez `DISABLE_WP_CRON` ·
 W7 kopia spustu na hoście bez `cmp` · D3 „98 wiadomości” bez pomiaru — patrz sekcja „UWAGI WAŻNE Z RECENZJI #288 r3 I #289”.
+
+## 🟡 SIEDEM PRÓB KALIBRACYJNYCH Z BAZĄ `origin/main` — NIEZMIERZONE JAWNIE, LISTA ZAMKNIĘTA (5.09, wydanie 0.9.43)
+`anonimizacja-zachowuje-fakture`, `chatbot-pytanie-limit`, `csv-bez-formuly`, `idem-okno-per-kupujacy`, `limit-uploadu`, `pobranie-po-zwrocie`,
+`schemat-wersja-po-sprawdzeniu` (`*-proba-kontrolna.sh`): każda kalibruje strażnika na „kodzie sprzed naprawy = `origin/main`”, więc po
+scaleniu naprawy kończy `EXIT=2` z konstrukcji („origin/main ZAWIERA już naprawę”). Strażnicy, które kalibrują, biegną i przechodzą.
+Stan zapisany w kodzie: lista `NIEZMIERZONE_JAWNIE` w `narzedzia-qa/proby-kontrolne-przelot.sh` (sufit 7; ósma niezmierzona kładzie przelot)
+a `k7-koniec.sh` czyta tę listę PO NAZWIE z tego samego pliku (EXIT=2 spoza listy = NO-GO). **Kształt naprawy:** mutant podkładany w KOPII kodu (jak `chatbot-csv-formula-proba-kontrolna.sh`)
+zamiast `origin/main` jako bazy — wtedy lista wraca do zera. Dług narzędziowy, nie wada wtyczek.
 
 ## 🟡 DŁUG NAZWANY ZE SCALEŃ 5.09 PRZY ZERZE KRYT (reguła 10:15: uwagi o narzędziach/dokumentach nie idą rundami) — ODŁOŻONE ŚWIADOMIE, NIE PRZEOCZONE
 
