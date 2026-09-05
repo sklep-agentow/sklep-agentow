@@ -349,6 +349,12 @@ zadanie WP-Cron sklepu (sprzątanie co 10 minut) — tylko gdy harmonogram WordP
   konsumenta, art. 21), więc dopóki są puste, Pulpit pokazuje ostrzeżenie. NIP sklep sprawdza
   przy zapisie (10 cyfr z sumą kontrolną).
 - **Domyślna waluta nowych produktów.**
+- **Bezpieczeństwo.** *Strona za Cloudflare / proxy* — zaznacz, gdy Twoja strona stoi za Cloudflare,
+  proxy hostingu albo load balancerem: sklep bierze wtedy adres gościa z nagłówka, a nie adres proxy.
+  Bez tego wszyscy goście liczą się jako jeden adres: limity zakupów i pobrań obejmują całą witrynę,
+  a boty próbujące haseł mogą zablokować **Twoje** logowanie na minutę. Włącz tylko, gdy proxy naprawdę
+  jest — inaczej każdy mógłby podrobić adres. *Limit prób logowania* (6 na minutę z adresu, rosnące
+  opóźnienie po błędach do 2 s) możesz wyłączyć, gdy logowań pilnuje inna wtyczka albo hosting.
 - **Dane przy odinstalowaniu** — domyślnie po usunięciu wtyczki dane sprzedaży **zostają**
   w bazie (historia zamówień to nie śmieć). Zaznaczone „Pełne czyszczenie” usuwa przy
   odinstalowaniu tabele, ustawienia, strony sklepu i pliki chronione. Klucze Stripe

@@ -130,3 +130,12 @@ audytu na żywym stosie (`audyt/sklep/raporty/A/L3.json`: podpis `v1=deadbeef` �
 `A/L2.json`: znacznik czasu sprzed 400 s przy tolerancji 300 s → HTTP 400; `B/L3.json`: po rotacji sekretu
 stary podpis → HTTP 400); próba kontrolna strażnika podpisu: `testy/webhook-podpis-proba-kontrolna.sh` (w przelocie prób, EXIT=0 5.09). Audyty przed wydaniem:
 `audyt/AUDYT-RAPORT.md`. Świadomie niezrobione rzeczy: `DECYZJE.md`; otwarte: `audyt/CO-WISI.md`.
+
+## Adres gościa i sekrety — co właściciel powinien wiedzieć (0.9.43)
+
+- **Limity liczą się na adres gościa.** Za Cloudflare, proxy hostingu albo load balancerem serwer widzi jeden adres dla wszystkich; wtedy trzeba włączyć
+  *Ustawienia → Bezpieczeństwo → Strona za Cloudflare / proxy* (nagłówek `CF-Connecting-IP` / `X-Forwarded-For`, walidacja `FILTER_VALIDATE_IP`, filtr `sklepag_ip`).
+  Bez proxy przełącznik ma być wyłączony — nagłówki da się podrobić. Limit prób logowania (6/min, opóźnienie do 2 s) ma osobny wyłącznik.
+- **Sekrety leżą w `wp_options` bez szyfrowania** (`autoload=no`): klucz sekretny Stripe, sekret webhooka, klucze API dostawcy AI (ChatBot, Segregator), hasło IMAP.
+  To standard WordPressa (rdzeń nie daje sejfu) — kopia bazy zawiera klucze. Kto ma dostęp do bazy albo do kopii, ma klucze; rotacja w panelu dostawcy.
+

@@ -29,6 +29,16 @@ wydany osobno (podbicie pośrednie wewnątrz jednej zmiany).
   po opłaceniu padł, mail z linkiem nie wyszedł, plik produktu nie istnieje, księgowanie nie przeszło — najwyżej jeden
   mail na rodzaj awarii na godzinę (`admin_email`). Dotąd awaria była widoczna tylko w panelu.
 
+- **Adres gościa za Cloudflare / proxy** (audyt niezależny 5.09): nowy przełącznik *Strona za Cloudflare / proxy*
+  (Ustawienia → Bezpieczeństwo) — kolejność `CF-Connecting-IP` → pierwszy z `X-Forwarded-For` → `REMOTE_ADDR`, walidacja,
+  filtr `sklepag_ip`; ten sam wzorzec co w ChatBocie. Do 0.9.42 za proxy wszyscy goście byli jednym adresem: limity zakupów
+  i pobrań obejmowały całą witrynę, a limit 6 logowań/min (cały WordPress) mógł zablokować właściciela. Do tego wyłącznik
+  *Limit prób logowania*.
+- **Opóźnienie po nieudanych logowaniach: sufit 2 s zamiast 60 s**: `sleep()` do minuty przy 6 żądaniach/min zajmował
+  sześć workerów PHP z jednego adresu; nadmiar odbija limit 6/min, nie sen.
+- **Dziennik logowań nie zapisuje nieistniejących loginów**: hasło wpisane omyłkowo w pole „Nazwa użytkownika” nie trafia
+  do bazy ani do panelu — zapisuje się „[nieistniejący]”.
+
 ### Zmienione
 - **Regulamin i Polityka prywatności (szablony)** nazywają uprawnienia sprzedawcy i automaty, które sklep ma naprawdę:
   anonimizacja zamówienia, blokada pobrania po zwrocie/obciążeniu zwrotnym, ponowna wysyłka linku, retencja dzienników 90 dni.

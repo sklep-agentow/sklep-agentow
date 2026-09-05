@@ -69,8 +69,47 @@ function sklepag_znacznik_okna_z_post() {
  */
 const SKLEPAG_IDEM_OKNO_S = 5;
 
+/**
+ * Adres IP gościa — z przełącznikiem „strona za proxy” (Ustawienia → Bezpieczeństwo).
+ *
+ * ⛔ Do 0.9.42 sklep brał WYŁĄCZNIE `REMOTE_ADDR`. Za Cloudflare, reverse-proxy hostingu albo
+ * load balancerem to adres PROXY, jeden dla wszystkich gości: limit logowań 6/min (obejmuje cały
+ * WordPress) wyrzucał właściciela z wp-admin, gdy boty próbowały haseł, a sprzedaż miała sufit
+ * 10 zakupów/min na CAŁĄ witrynę. ChatBot LIVE miał tę naprawę od dawna (`chatl_ip_goscia()`),
+ * sklep nie — rozjazd między modułami (audyt niezależny 5.09).
+ * Nagłówkom ufamy TYLKO na wyraźną decyzję właściciela: bez proxy każdy mógłby je podrobić
+ * i obejść limity. Kolejność: CF-Connecting-IP → pierwszy adres z X-Forwarded-For → REMOTE_ADDR;
+ * wartość spoza FILTER_VALIDATE_IP = REMOTE_ADDR (śmieć w nagłówku nie wyłącza limitu).
+ * Filtr `sklepag_ip` zostawia furtkę na nietypowy nagłówek hostingu; śmieć z filtra = REMOTE_ADDR.
+ * Jedna definicja dla limitów (kup/pobierz/status/login), dziennika logowań i zdarzeń webhooka.
+ */
 function sklepag_ip() {
-	return isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '0.0.0.0';
+	$remote = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '0.0.0.0';
+	$ip     = '';
+	if ( get_option( 'sklepag_za_proxy', false ) ) {
+		// phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotValidated -- każdy odczyt niżej przechodzi filter_var( ..., FILTER_VALIDATE_IP ).
+		if ( ! empty( $_SERVER['HTTP_CF_CONNECTING_IP'] ) ) {
+			$ip = sanitize_text_field( wp_unslash( $_SERVER['HTTP_CF_CONNECTING_IP'] ) );
+		} elseif ( ! empty( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) {
+			// X-Forwarded-For to LISTA: „gość, proxy1, proxy2” — liczy się pierwszy.
+			$lista = explode( ',', sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) );
+			$ip    = trim( (string) $lista[0] );
+		}
+		// phpcs:enable WordPress.Security.ValidatedSanitizedInput.InputNotValidated
+		if ( ! filter_var( $ip, FILTER_VALIDATE_IP ) ) {
+			$ip = '';
+		}
+	}
+	if ( '' === $ip ) {
+		$ip = $remote;
+	}
+	/**
+	 * Ostatnie słowo dla integratora (hosting za nietypowym nagłówkiem).
+	 *
+	 * @param string $ip Ustalony adres.
+	 */
+	$z = apply_filters( 'sklepag_ip', $ip );
+	return ( is_string( $z ) && filter_var( $z, FILTER_VALIDATE_IP ) ) ? $z : $remote;
 }
 
 function sklepag_rate_limit( $akcja, $prog = 10 ) {

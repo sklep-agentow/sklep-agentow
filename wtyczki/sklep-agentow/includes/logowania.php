@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-const SKLEPAG_OPOZNIENIE_SUFIT_S = 60;      // Sufit opóźnienia; OPÓŹNIENIE, nie blokada (wspólne konta — nie wolno zablokować prawdziwego użytkownika).
+const SKLEPAG_OPOZNIENIE_SUFIT_S = 2;       // Sufit opóźnienia (do 0.9.42: 60 s — 6 żądań/min × 60 s zajmowało 6 workerów PHP z JEDNEGO adresu, `sleep()` nie liczy się do max_execution_time; audyt niezależny 5.09). Odbicie nadmiaru robi limit 6/min, nie sen. OPÓŹNIENIE, nie blokada (wspólne konta — nie wolno zablokować prawdziwego użytkownika).
 const SKLEPAG_OPOZNIENIE_OKNO_S  = 15 * 60; // Błędy starsze niż okno nie podbijają opóźnienia.
 
 add_action( 'wp_login', 'sklepag_loguj_udane', 10, 2 );
@@ -27,6 +27,29 @@ add_action( 'wp_authenticate', 'sklepag_opoznij_probe_logowania', 5, 1 );
  * @param string $login Login wpisany w formularzu (nie musi istnieć w WP).
  * @param string $wynik 'ok' albo 'blad'.
  */
+/**
+ * Login do dziennika: TYLKO login istniejącego konta (po loginie albo e-mailu), inaczej „[nieistniejący]”.
+ *
+ * ⛔ Do 0.9.42 dziennik zapisywał każdy wpisany ciąg. Użytkownik, który wpisze HASŁO w pole
+ * „Nazwa użytkownika” (autouzupełnianie, pomyłka pól), zostawiał je w bazie i na liście w panelu
+ * na 90 dni — klasa „hasło w polu loginu” (audyt niezależny 5.09; tak robią Wordfence i WP Activity Log).
+ * Opóźnienie po błędach liczy się dla tej samej wartości, więc próby na nieistniejące konta
+ * z jednego adresu też rosną w opóźnieniu (pod wspólnym kluczem).
+ *
+ * @param string $login Login z formularza.
+ * @return string Login konta, „[nieistniejący]” albo pusty string dla pustego wejścia.
+ */
+function sklepag_login_do_dziennika( $login ) {
+	$l = mb_substr( sanitize_user( (string) $login, true ), 0, 60 );
+	if ( '' === $l ) {
+		return '';
+	}
+	if ( get_user_by( 'login', $l ) || ( is_email( $l ) && get_user_by( 'email', $l ) ) ) {
+		return $l;
+	}
+	return '[nieistniejący]';
+}
+
 function sklepag_zapisz_logowanie( $login, $wynik ) {
 	global $wpdb;
 
@@ -37,7 +60,7 @@ function sklepag_zapisz_logowanie( $login, $wynik ) {
 		$wpdb->prefix . 'sklepag_logowania',
 		array(
 			'czas'          => current_time( 'mysql' ),
-			'login_wpisany' => mb_substr( sanitize_user( (string) $login, true ), 0, 60 ),
+			'login_wpisany' => sklepag_login_do_dziennika( $login ),
 			'wynik'         => $wynik,
 			'ip'            => sklepag_ip(),
 			'user_agent'    => mb_substr( $user_agent, 0, 255 ),
@@ -72,8 +95,8 @@ function sklepag_loguj_nieudane( $username, $error ) {
 /**
  * Opóźnienie wykładnicze PRZED sprawdzeniem hasła: po n nieudanych
  * próbach pary (login+IP) od ostatniego sukcesu następna próba czeka
- * min(2^n, 60) s. Sleep nie wlicza się do max_execution_time (zegar liczy
- * czas CPU skryptu), a sufit 60 s trzyma workera krótko.
+ * min(2^n, 2) s. Sleep nie wlicza się do max_execution_time (zegar liczy
+ * czas CPU skryptu) — dlatego sufit to 2 s, nie 60 (6 żądań/min × 60 s = 6 zajętych workerów z jednego adresu).
  *
  * ⛔ Amplifikacja przez równoległość: salwa równoczesnych
  * POST-ów na wp-login.php zajęłaby po workerze na sleep każda — dlatego
@@ -86,7 +109,14 @@ function sklepag_loguj_nieudane( $username, $error ) {
  * @param string $username Login z formularza (przez referencję w rdzeniu — tu tylko czytany).
  */
 function sklepag_opoznij_probe_logowania( $username ) {
-	$login = mb_substr( sanitize_user( (string) $username, true ), 0, 60 );
+	// Wyłącznik w panelu (Ustawienia → Bezpieczeństwo): gdy logowań pilnuje inna wtyczka albo hosting,
+	// albo strona stoi za proxy bez włączonego przełącznika „za proxy” (wtedy limit liczyłby całą witrynę).
+	// Brak opcji (nigdy nie zapisana) = włączone; zapisana pusta = wyłączone.
+	$limit = get_option( 'sklepag_limit_logowan', null );
+	if ( null !== $limit && ! $limit ) {
+		return;
+	}
+	$login = sklepag_login_do_dziennika( $username );
 	if ( '' === $login ) {
 		return; // Puste nie trafiają do dziennika — nie ma czego liczyć.
 	}
