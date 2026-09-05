@@ -14,6 +14,12 @@ migracja odpala się sama przy pierwszym wejściu do panelu po aktualizacji
 
 Nic jeszcze.
 
+## [1.5.18] — 2026-09-05 · schemat bazy bez zmian
+
+### Zmienione
+- Podpowiedź do Polityki prywatności mówi, gdzie trafiają dane w trybie AI (Anthropic PBC, serwery w USA, tryb do
+  wyłączenia) i że okno czatu trzyma identyfikator rozmowy w `sessionStorage` na czas otwartej karty.
+
 ---
 
 ## [1.5.17] — 2026-09-05 · schemat bazy bez zmian (8)

@@ -748,9 +748,11 @@ prawdziwym wdrożeniu.
   zrzuty-dowody); świadome odstępstwa w WZORCE-DASHBOARD-K3 §8. Sędzia #2 w toku.
 - Zrzuty panelu (10 szt.) ⛔ scratchpad tamtej sesji JUŻ NIE ISTNIEJE; odtwarza je `testy/zrzuty-panelu.js` — skrypt jest w repo, więc dowód jest ODTWARZALNY, choć pliki przepadły.
 
-## Blokuje wydanie
-- (nic pilnego) — Live-smoke AI na żywym api.anthropic.com w ODWODZIE (~5$ za zgodą
-  właściciela), gdyby próba 1 chciała żywe AI; egzamin trybem regułowym 0 zł.
+## Blokuje wydanie (stan 5.09, wydanie 0.9.43 / 1.5.18 / 1.3.8)
+- Nic. Poprzedni wpis („próba 1”, live-smoke AI w odwodzie) był reliktem: żywe AI dalej
+  nie jest warunkiem wydania (egzamin trybem regułowym, 0 zł). Werdykt bramki wydania
+  (`k7-koniec.sh`) i przelot prób są w nagłówku `AUDYT-RAPORT.md` — tam jest aktualna blokada
+  albo jej brak; ta sekcja ma nie mówić czego innego niż nagłówek raportu (klasa 149).
 
 ## Nie zaczęte (kolejność planu)
 - **Nazwany dług (recenzja #49, drobna):** przy podmianie zipa na produkcie BEZ

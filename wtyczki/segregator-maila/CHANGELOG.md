@@ -11,6 +11,16 @@ Nic jeszcze.
 
 ---
 
+## [1.3.8] — 2026-09-05 · schemat bazy bez zmian (4)
+
+### Dodane
+- **Eksporter i kasownik danych osobowych** dla narzędzi prywatności WordPressa (Narzędzia → Eksport / Usuń dane
+  osobowe): klucz osoby = adres nadawcy; wiadomości z próbki znikają w całości, w dzienniku ruchów zostaje ślad
+  bez nadawcy i tematu. Sklep i ChatBot miały to od dawna, Segregator — trzymający cudzą korespondencję — nie.
+- Podpowiedź do Polityki prywatności (co przetwarzamy, dokąd idzie w trybie AI, jak złożyć wniosek).
+
+---
+
 ## [1.3.7] — 2026-09-05 · schemat bazy bez zmian (4)
 
 ### Naprawione

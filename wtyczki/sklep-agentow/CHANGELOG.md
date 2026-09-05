@@ -16,6 +16,24 @@ wydany osobno (podbicie pośrednie wewnątrz jednej zmiany).
 
 ## [Niewydane]
 
+## [0.9.43] — 2026-09-05 · schemat bazy bez zmian (10)
+
+### Naprawione
+- **Zapis do bazy bez sprawdzenia wyniku na ścieżce pieniędzy** (klasa „moduł melduje ok mimo błędu zapisu”):
+  - migawka sesji checkout: gdy zapis padnie, sklep NIE wydaje linku do płatności (dotąd kupujący mógł zapłacić,
+    a webhook uznałby sesję za obcą i zamówienie nigdy by nie powstało);
+  - rotacja linku pobrania przed mailem (automat i „Wyślij ponownie”): błąd zapisu = mail nie idzie, poprzedni link zostaje;
+  - księgowanie zwrotu i sporu: błąd zapisu = odpowiedź 500 do Stripe (ponowi), zamiast cichego „ok”;
+  - status po doręczeniu maila i status `mail_blad`: błąd zapisu trafia do dziennika jako `zapis_blad`.
+- **Mail do właściciela przy awarii, po której kupujący czeka na człowieka:** Stripe nie odpowiada, zapis zamówienia
+  po opłaceniu padł, mail z linkiem nie wyszedł, plik produktu nie istnieje, księgowanie nie przeszło — najwyżej jeden
+  mail na rodzaj awarii na godzinę (`admin_email`). Dotąd awaria była widoczna tylko w panelu.
+
+### Zmienione
+- **Regulamin i Polityka prywatności (szablony)** nazywają uprawnienia sprzedawcy i automaty, które sklep ma naprawdę:
+  anonimizacja zamówienia, blokada pobrania po zwrocie/obciążeniu zwrotnym, ponowna wysyłka linku, retencja dzienników 90 dni.
+- INSTRUKCJA: każde rozpoczęte pobranie (także przerwane) zużywa jedno z 10.
+
 ## [0.9.42] — 2026-09-05 · schemat bazy bez zmian (10)
 
 ### Zmienione

@@ -168,7 +168,7 @@ problemy” w instrukcji instalacji).
 
 Po opłaceniu kupujący dostaje **jeden** mail (sklep pilnuje, żeby nie wysłać dwóch), a w nim:
 
-- link do pobrania — ważny **72 godziny**, do **10 pobrań**,
+- link do pobrania — ważny **72 godziny**, do **10 pobrań** (każde rozpoczęte pobranie liczy się jako jedno, także przerwane przez sieć — po wyczerpaniu wyślij link ponownie z panelu),
 - potwierdzenie zgody na dostarczenie treści cyfrowej (dosłowna treść i data),
 - krótką instrukcję instalacji wtyczki,
 - informację o gwarancji, jeśli produkt ją ma,

@@ -72,6 +72,7 @@ function sklepag_obsluz_pobranie() {
 	$plik = (string) $zam->produkt_plik_kupiony; // Snapshot z chwili zakupu.
 	if ( '' === $plik || ! file_exists( $plik ) ) {
 		sklepag_zdarzenie( (int) $zam->id, 'pobranie_brak_pliku', $plik );
+		sklepag_powiadom_wlasciciela( 'pobranie_brak_pliku', 'kupujący nie może pobrać pliku — plik nie istnieje', 'Zamówienie #' . (int) $zam->id . ': plik produktu (' . $plik . ') nie istnieje na dysku. Kupujący zobaczył „plik chwilowo niedostępny” z prośbą o kontakt. Wgraj plik ponownie w panelu produktu.' );
 		wp_die( 'Plik chwilowo niedostępny. ' . esc_html( $kontakt ), 'Sklep Agentów', 503 );
 	}
 

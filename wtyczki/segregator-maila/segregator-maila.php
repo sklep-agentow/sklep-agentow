@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Segregator maila
  * Description: Porządkuje firmową skrzynkę: łączy się z nią po IMAP i rozkłada pocztę do folderów według Twoich reguł. Domyślnie pracuje NA SUCHO — pokazuje, co by przeniósł, i nie rusza ani jednej wiadomości, dopóki sam tego nie włączysz. Do tego zadanie cykliczne, historia i cofnięcie ostatniego przebiegu.
- * Version: 1.3.7
+ * Version: 1.3.8
  * Requires at least: 6.0
  * Requires PHP: 8.1
  * Author: Automatic AI
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SEGM_WERSJA', '1.3.7' );
+define( 'SEGM_WERSJA', '1.3.8' );
 define( 'SEGM_WERSJA_SCHEMATU', '4' );
 define( 'SEGM_KATALOG', plugin_dir_path( __FILE__ ) );
 
@@ -158,6 +158,7 @@ register_deactivation_hook( __FILE__, 'segm_deaktywacja' );
  */
 require_once SEGM_KATALOG . 'includes/silnik.php';
 require_once SEGM_KATALOG . 'includes/ai.php';
+require_once SEGM_KATALOG . 'includes/rodo.php';
 require_once SEGM_KATALOG . 'includes/class-segm-imap.php';
 require_once SEGM_KATALOG . 'includes/skrzynka.php';
 require_once SEGM_KATALOG . 'includes/skrzynka-przebieg.php';
