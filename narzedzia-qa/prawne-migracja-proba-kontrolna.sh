@@ -10,7 +10,7 @@
 #   BLEDY    — strażnik NIE zauważył podłożonej wady (wada PRODUKTU pomiaru)   → EXIT 1
 #   KOTWICE  — spust nie umiał podłożyć wady / brak warunków (kod 2)             → EXIT 2
 #   ODWROTNA — czysty kod nie przechodzi (przebieg niewiarygodny)               → EXIT 2
-# EXIT 0 = czysty kod przechodzi, obie wady złapane.
+# EXIT 0 = czysty kod przechodzi, wszystkie cztery mutanty (blok-sprzedawcy, sekcje, podmiana-wlasny, front) złapane.
 # Wymaga Dockera i obrazu WP — na wykonawcy bez stosu WP przelot pomija ją JAWNIE (WYMAGA_DOCKERA).
 set -u
 cd "$(dirname "$0")/.." || exit 2

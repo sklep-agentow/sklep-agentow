@@ -529,6 +529,12 @@ function sklepag_kompensuj_strony_prawne() {
 			);
 			if ( $nowy ) {
 				update_option( $opcja, $nowy, false );
+			} else {
+				// Strona NIE powstała (0 = porażka bez $wp_error) — znacznik podbity na wejściu zostałby „na wyrost”
+				// i kompensacja nie wróciłaby do następnego podbicia SKLEPAG_WERSJA_STRON, a panel nie widzi strony,
+				// której nie ma (admin.php pomija puste opcje). Kasujemy znacznik: najbliższe otwarcie panelu /
+				// cron / WP-CLI spróbuje jeszcze raz. Ten sam kształt co w sklepag_utworz_strony() wyżej.
+				delete_option( 'sklepag_wersja_stron' );
 			}
 			continue;
 		}
@@ -549,12 +555,17 @@ function sklepag_kompensuj_strony_prawne() {
 			}
 		}
 		if ( $tresc_biezaca !== (string) $wpis->post_content ) {
-			wp_update_post(
+			$zapis_zdan = wp_update_post(
 				array(
 					'ID'           => $wpis->ID,
 					'post_content' => $tresc_biezaca,
 				)
 			);
+			if ( ! $zapis_zdan ) {
+				// Bez 2. argumentu $wp_error wp_update_post oddaje 0 przy porażce — ta sama klasa co gałąź (a):
+				// znacznik podbity na wejściu zostałby „na wyrost”, a stare zdanie w szablonie do następnego wydania.
+				delete_option( 'sklepag_wersja_stron' );
+			}
 			clean_post_cache( $wpis->ID );
 			$wpis = get_post( $wpis->ID );
 		}
@@ -597,12 +608,19 @@ function sklepag_kompensuj_strony_prawne() {
 			if ( ! $do_dopisania ) {
 				continue;
 			}
-			wp_update_post(
+			$zapis_sekcji = wp_update_post(
 				array(
 					'ID'           => $wpis->ID,
 					'post_content' => rtrim( $wpis->post_content ) . "\n" . implode( "\n", $do_dopisania ),
 				)
 			);
+			if ( ! $zapis_sekcji ) {
+				// Porażka zapisu (0): sekcje z art. 12 NIE weszły — kasujemy znacznik (jak w gałęzi (a)), żeby następny
+				// bieg spróbował znowu, i meldujemy właścicielowi brakujące sekcje zamiast milczeć.
+				delete_option( 'sklepag_wersja_stron' );
+				$nowe[ $wpis->post_title ] = array_values( array_unique( array_merge( isset( $nowe[ $wpis->post_title ] ) ? $nowe[ $wpis->post_title ] : array(), array_keys( $do_dopisania ) ) ) );
+				continue;
+			}
 			clean_post_cache( $wpis->ID );
 			continue;
 		}
