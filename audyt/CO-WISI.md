@@ -110,7 +110,7 @@ uruchamiać strażnika WYŁĄCZNIE na stosie próbnym (`probny_wp`), gdzie cudzy
 na „stos próbny albo pełna świadomość okna". **Jedzie do klienta:** NIE — narzędzie testowe, poza paczką.
 
 
-## ✅ ROZLICZONE 5.09 — ASYMETRIA NEUTRALIZACJI CSV: ChatBot ma JEDNĄ stałą `CHATL_CSV_ZNAKI_FORMULY` (7 znaków, jak sklep; import czyta tę samą), strażnik `testy/csv-neutralizacja-blizniaki-test.sh` mierzy 3 kopie z podłogą `MIN_KOPII=3` i ma spust: `narzedzia-qa/csv-neutralizacja-blizniaki-proba-kontrolna.sh` w przelocie CI (3 mutanty padają, czysta kopia przechodzi) — PR #298 (ChatBot 1.5.17). Segregator zostaje przy 6 znakach (bez apostrofu — nie ma importu, odwracalność niepotrzebna; zapisane w jego DOKUMENTACJA-TECHNICZNA.md).
+## ✅ ROZLICZONE 5.09 — ASYMETRIA NEUTRALIZACJI CSV: ChatBot ma JEDNĄ stałą `CHATL_CSV_ZNAKI_FORMULY` (7 znaków, jak sklep; import czyta tę samą), strażnik `testy/csv-neutralizacja-blizniaki-test.sh` mierzy 3 kopie z podłogą `MIN_KOPII=3` i ma spust: `narzedzia-qa/csv-neutralizacja-blizniaki-proba-kontrolna.sh` w przelocie CI (3 mutanty padają, czysta kopia przechodzi) — PR #298 (ChatBot 1.5.17). Segregator zostaje przy 6 znakach (bez apostrofu — świadomie: jego import CSV `segm_importuj_csv()` nie zdejmuje apostrofu, więc nie ma wady „import kasuje znak, którego eksport nie dołożył”; #298 r3 W3 sprostowała moje wcześniejsze, nieprawdziwe „nie ma importu”; zapisane w jego DOKUMENTACJA-TECHNICZNA.md).
 
 ## 🟡 (archiwum) ASYMETRIA NEUTRALIZACJI CSV MIĘDZY TRZEMA WTYCZKAMI (2.09, recenzja `#264` r1 i r3) — dług nazwany, nie naprawiony
 
@@ -231,7 +231,7 @@ bo dotyczy naszego oprzyrządowania, nie produktu.
 
 ---
 
-## ✅ ROZLICZONE (zmierzone 5.09) — STRAŻNIK PACZEK STRZELA SAM: `paczka` jest w `BRAMKI=()` w `narzedzia-qa/bramki.sh:47` (bieg 13 z 13 na każdym PR-ze w CI); `paczka-zgodnosc.sh` dodatkowo w briefingu recenzenta
+## 🟡 DŁUG NAZWANY (sprostowane 5.09, recenzja #298 r3 WAŻNA 2) — STRAŻNIK PACZEK NADAL NIE STRZELA SAM: bramka `paczka` w `BRAMKI=()` (`narzedzia-qa/bramki.sh:47`) uruchamia `testy/paczka-obejmuje-kazdy-plik-wtyczki-test.sh` — allowlista vs katalog wtyczki, ani bajta z zipa. `narzedzia-qa/paczka-zgodnosc.sh` (zip vs repo, wersje, ślady) biegnie TYLKO z ręki recenzenta (allowlista w `recenzent.yml`) i przy pakowaniu dla klienta; w `quality.yml` go nie ma, a `paczka-zgodnosc-proba-kontrolna.sh` przepakowuje zip z kopii, więc zamrożonego zipa z repo nie zobaczy z konstrukcji. Zmierzone 5.09: `bramki.sh --tryb pelny` EXIT=0 na commicie z zipem ChatBota sprzed poprawki (klasa 10, 3. wystąpienie), `paczka-zgodnosc.sh chatbot-live` EXIT=1. Do zrobienia (PR porządkowy): bramka `paczka-zgodnosc` w `BRAMKI=()` dla trzech wtyczek + próg 14 + próba w `bramki-proba-kontrolna.sh`. Wcześniejsze zdanie „STRZELA SAM” było nieprawdziwe.
 
 ## 🔴 (archiwum) STRAŻNIK PACZEK ISTNIEJE, ALE NIE STRZELA SAM — wymaga PR-a manifestowego (29.08, z recenzji #208 r1)
 

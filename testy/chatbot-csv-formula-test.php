@@ -15,6 +15,10 @@
  *    żeby podłożyć mutanta w KOPII, nie w repo.
  *
  * Uruchomienie:  php testy/chatbot-csv-formula-test.php
+ * ⛔ NIE przez narzedzia-qa/test-php.sh: to wgrywa plik do /tmp kontenera i mierzyłoby kod KONTENERA, nie
+ *    kod z drzewa roboczego (klasa 141 ze ściągi; ta sama notka w testy/segregator-mime-test.php). Test jest
+ *    czystym PHP CLI: liczy ścieżkę wtyczki od własnego położenia, a licznik trzyma w $GLOBALS, bo pod
+ *    `wp eval-file` plik jest włączany wewnątrz funkcji i zwykłe `global` wskazywałoby inną zmienną.
  * Kod wyjścia 0 = wszystkie asercje przeszły, 1 = któraś nie, 2 = nie znalazłam plików wtyczki.
  */
 // Pod `wp eval-file` (narzedzia-qa/test-php.sh) WordPress i wtyczka juz sa zaladowane — wtedy
@@ -43,12 +47,11 @@ if ( ! function_exists( 'chatl_import_odapostrofuj' ) ) {
 	require_once $katalog . 'import.php';
 }
 
-$bledy = 0;
+$GLOBALS['bledy'] = 0;
 function krok( $ok, $opis, $szczegol = '' ) {
-	global $bledy;
 	printf( "  %s %s%s\n", $ok ? 'OK  ' : 'BLAD', $opis, '' !== $szczegol ? " [$szczegol]" : '' );
 	if ( ! $ok ) {
-		++$bledy;
+		++$GLOBALS['bledy'];
 	}
 }
 function widoczny( $s ) {
@@ -89,9 +92,9 @@ krok( chatl_import_odapostrofuj( "'=SUM(A1)" ) === '=SUM(A1)', 'import: cudzy po
 krok( chatl_csv_komorka( '' ) === '' && chatl_import_odapostrofuj( '' ) === '', 'pusta komorka w obie strony pusta' );
 
 echo "\n";
-if ( 0 === $bledy ) {
+if ( 0 === $GLOBALS['bledy'] ) {
 	echo "WSZYSTKIE ASERCJE PRZESZLY — eksport chroni arkusz, import zdejmuje ochrone symetrycznie\n";
 	exit( 0 );
 }
-printf( "NIE PRZESZLO ASERCJI: %d\n", $bledy );
+printf( "NIE PRZESZLO ASERCJI: %d\n", $GLOBALS['bledy'] );
 exit( 1 );
