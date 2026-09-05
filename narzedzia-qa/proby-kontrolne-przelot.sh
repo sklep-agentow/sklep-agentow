@@ -190,8 +190,8 @@ MAX_POMINIETYCH_PELNY=13   # ta sama arytmetyka, sciezka BEZ zakresu (tak wola `
 # zielono, nie zmierzywszy niczego. Podloga jest DRUGA, NIEZALEZNA brama na tej samej
 # liczbie: minimalna liczba prob, ktore MUSZA sie faktycznie wykonac (ILE = N - POMINIETO).
 # Literaly, ta sama arytmetyka co MAX_POMINIETYCH_* wyzej (N minus maksymalne pominiecie).
-MIN_URUCHOMIONYCH_PELNY=52    # 65 prob w calym repo (27 narzedzia-qa + 38 testy; `ls narzedzia-qa/*proba-kontrolna*.sh testy/*proba-kontrolna*.sh | wc -l`) minus MAX_POMINIETYCH_PELNY(13)  (5.09 po scaleniu #297 do C: +segregator-mime-ci z main; C: prawne-migracja, pakuj-slady, polityka)
-MIN_URUCHOMIONYCH_ZAKRES=17   # 27 prob w narzedzia-qa minus MAX_POMINIETYCH_ZAKRES(10)  (5.09 po scaleniu #297 do C: +segregator-mime-ci z main; C: prawne-migracja, pakuj-slady, polityka)
+MIN_URUCHOMIONYCH_PELNY=53    # 66 prob w calym repo (28 narzedzia-qa + 38 testy; `ls narzedzia-qa/*proba-kontrolna*.sh testy/*proba-kontrolna*.sh | wc -l`) minus MAX_POMINIETYCH_PELNY(13)  (5.09 po scaleniu main z #296 do C: +rejestr-liczniki (B, bez Dockera — nigdy pomijana) + prawne-migracja/pakuj-slady/polityka (C))
+MIN_URUCHOMIONYCH_ZAKRES=18   # 28 prob w narzedzia-qa minus MAX_POMINIETYCH_ZAKRES(10)  (5.09 po scaleniu main z #296 do C: +rejestr-liczniki (B, bez Dockera — nigdy pomijana) + prawne-migracja/pakuj-slady/polityka (C))
 
 # Tryb LISTY (PRZELOT_LISTA=1) niczego nie uruchamia i nie pisze logu — nie jest dowodem, więc brudne
 # drzewo mu nie przeszkadza (próba kontrolna odłamków woła go na kopii przelotu w trakcie pracy).
