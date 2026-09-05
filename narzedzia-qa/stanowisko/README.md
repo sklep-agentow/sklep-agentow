@@ -19,7 +19,8 @@ Ustawione:
 - `/etc/cron.d/stanowisko-wp-cron` → `/usr/local/sbin/wp-cron-stanowisko.sh` co minutę
   (instaluje `narzedzia-qa/stanowisko/instaluj-spust-crona.sh`, źródło prawdy jest w repo).
 
-Sprawdzenie (nie może być zaległych starszych niż ~2 min):
+Sprawdzenie — liczy zdarzenia z `next_run_relative=now`, czyli zaległe W TEJ CHWILI (oczekiwane **0**);
+komenda NIE zna wieku zaległości, więc nie mierzy „starsze niż N minut” (nazwane uczciwie po #289 W5, klasa 11):
 
     [ "$(docker exec strona_wp_wordpress wp --allow-root --path=/var/www/html cron event list --fields=hook,next_run_relative --format=csv | grep -c ',now$')" = 0 ]
 
@@ -37,7 +38,7 @@ drugą drogę. Dlatego sprawdzenie wyżej należy do warunków wstępnych pomiar
 ## 2. Limity uploadu (I-26)
 
 Obraz dawał `upload_max_filesize=2M`, `post_max_size=8M`, a paczka klienta waży dziś
-9 098 363 B (0.9.40) — droga instalacyjna z `dokumentacja/INSTRUKCJA-INSTALACJI.md` Krok 1
+4 859 567 B (0.9.40; `ls -l boty/paczki/sklep-agentow-0.9.40.zip`) — droga instalacyjna z `dokumentacja/INSTRUKCJA-INSTALACJI.md` Krok 1
 (Kokpit → Wtyczki → Dodaj nową → Wyślij na serwer) nie miała prawa się udać.
 Definicja: `strona-wp/wp/php-stanowisko.ini` montowany do `/usr/local/etc/php/conf.d/`.
 

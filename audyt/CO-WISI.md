@@ -39,6 +39,27 @@ zakwalifikowano po katalogu (`testy/`, `narzedzia-qa/`, `audyt/` są poza allowl
 zawartość pięciu obrazów sprawdzono co do liczby plików, nie co do treści; numerów linii w wierszu „asymetria CSV"
 nie odświeżano wobec dzisiejszego `HEAD`.
 
+## 🟡 UWAGI WAŻNE Z RECENZJI `#288` r3 I `#289` — co poprawione PR-em porządkowym, co zostaje długiem (5.09)
+
+Zasada z 5.09: WAŻNE nie idą rundami w PR-ze obszaru, tylko do JEDNEGO PR-a porządkowego po scaleniu.
+Scalone z zerem KRYTYCZNYCH: `#288` (obszar B, r3: 1 × WAŻNA, 1 × DROBNA), `#289` (obszar D: 7 × WAŻNA, 3 × DROBNA).
+
+**Poprawione w PR porządkowym `porzadek/po-288-289` (dowody w opisie PR):**
+- `#288` W — niezaescapowane `|` w komórkach trzech wierszy (`DECYZJE.md` D29/D30, `E5-F2` w rejestrze INFRA).
+- `#289` W1 — rejestr INFRA: `I-25`, `I-27` ZAMKNIETE, `I-26` W NAPRAWIE; obalona przyczyna `I-25` przepisana; liczniki nagłówka przeliczone komendą pliku (32 · 53 · 4 = 89).
+- `#289` W4 — `LINIA-BAZOWA-TESTOW.md` mówi wprost, że `dowod-z-paczki.sh` NIE mierzy Kroku 1 (omija formularz „Wyślij na serwer”).
+- `#289` W5 — sprawdzenie crona nazwane uczciwie: liczy zaległe TERAZ, nie „starsze niż 2 min” (README + komentarz skryptu).
+- `#289` W6 — rozmiar paczki 0.9.40: **4 859 567 B** (`ls -l`), nie 9 098 363 B (README, linia bazowa, rejestr).
+- `#289` D1/D2 — `wp-cron-stanowisko.sh`: padnięty `docker ps` = kod 3 z komunikatem, nie „kontener zgaszony”; kody wyjścia opisane zgodnie z `docker exec`.
+
+**ZOSTAJE DŁUGIEM (każdy = jeden brief buildera, jeden PR):**
+- `#289` W2 — próba kontrolna spustu crona istnieje tylko PROZĄ (`stanowisko/README.md`); potrzebny `narzedzia-qa/stanowisko-cron-proba-kontrolna.sh` w formie repo (dwukierunkowo: wada = wyjęty wpis crona → FAIL; bez wady → PASS). Do tego czasu `I-25` liczy się jako „bez strażnika”.
+- `#289` W3 — BLIŹNIAK (klasa 8): `narzedzia-qa/lib-stos-probny.sh` stawia stos z `-p 8891:80` i `--url=http://localhost:8891` → ta sama martwa pętla zwrotna `wp-cron.php`; `grep -c DISABLE_WP_CRON lib-stos-probny.sh` → 0. Każdy test reconciliation na `probny_wp` mierzy stos bez działającego crona. Naprawa: `DISABLE_WP_CRON` + jawne `wp cron event run --due-now` w krokach testów albo spust w pętli stosu próbnego.
+- `#289` W7 — `instaluj-spust-crona.sh` kopiuje do `/usr/local/sbin/` i nic nie porównuje kopii ze źródłem; kolejny commit do skryptu nie dotrze na hosta po cichu. Kandydat: sprawdzenie `cmp` w `stos.sh stan` (warunek wstępny stanowiska) — do czasu naprawy po KAŻDEJ zmianie skryptu ręcznie `bash narzedzia-qa/stanowisko/instaluj-spust-crona.sh`.
+- `#289` D3 — „98 wiadomości przepadło” w README nie ma pomiaru utraty; zdanie do usunięcia albo pomiar.
+- `#289` W1 (reszta) — `I-26` domyka dopiero przejście 7 kroków instrukcji PRZEZ PANEL na `probny_wp` (pozycja 4 listy startowej w mózgu).
+- `#288` DROBNA — opis PR krótszy o jeden plik (`testy/nota-zapisu-test.js`, komentarz) — PR scalony, bez skutku; klasa „opis PR odświeżany PRZED pushem” zostaje w pamięci.
+
 ## 🟡 SPRZĄTANIE STRAŻNIKA LIMITU UPLOADU KASUJE WSZYSTKO, CO POWSTAŁO W TRAKCIE PRZEBIEGU (2.09, recenzja `#263` r3, DROBNA 4) — dług
 
 `testy/limit-uploadu-mowi-prawde.sh`: `DELETE … WHERE typ = 'upload_produktu_blad' AND id > ID_PRZED` kasuje po sobie

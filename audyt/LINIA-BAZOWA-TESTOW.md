@@ -552,4 +552,6 @@ Zdjęta została BARIERA (limity), sam przelot 7 kroków `dokumentacja/INSTRUKCJ
 NIE został wykonany. Świadomie: Krok 1 wgrywa paczkę przez panel, co NADPISAŁOBY wtyczkę
 `sklep-agentow` na WSPÓLNYM stanowisku, na którym w tym czasie mierzą inni builderzy
 (i podmieniłoby wersję pod ich pomiarami). Do przejścia na stosie próbnym
-(`narzedzia-qa/dowod-z-paczki.sh`) albo na wspólnym po umówieniu okna.
+albo na wspólnym po umówieniu okna. ⛔ `narzedzia-qa/dowod-z-paczki.sh` tego NIE zmierzy: instaluje przez
+`docker cp` + `wp plugin install`, czyli omija formularz „Wyślij na serwer” i limity uploadu, o które chodzi
+w `I-26` (#289 W4). Krok 1 musi przejść PRZEZ PANEL (przeglądarka, `probny_wp`).
