@@ -135,10 +135,22 @@ function sklepag_strona_prawna_wczesnie() {
 	if ( ! isset( $nazwy[ $ktore ] ) ) {
 		return;
 	}
+	// ⛔ KOTWICA ADRESU: link z sklepag_link_prawny() stoi ZAWSZE na home_url( '/' ), więc odpowiadamy
+	//    tylko pod ścieżką strony głównej. Bez tego `/dowolny-wpis/?sklepag_prawne=regulamin` oddawałby 200 z zaślepką
+	//    zamiast treści tamtego wpisu — indeksowalny duplikat pod każdym adresem sklepu (bliźniak kotwicy
+	//    w sklepag_status_404_wczesnie(), która sprawdza stronę sklepu z opcji).
+	$sciezka_zadania = isset( $_SERVER['REQUEST_URI'] ) ? (string) wp_parse_url( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ), PHP_URL_PATH ) : '/';
+	$sciezka_domu    = (string) wp_parse_url( home_url( '/' ), PHP_URL_PATH );
+	if ( untrailingslashit( $sciezka_zadania ) !== untrailingslashit( $sciezka_domu ) ) {
+		return;
+	}
 	$nazwa = $nazwy[ $ktore ];
 	status_header( 200 );
 	nocache_headers();
+	// noindex: to zaślepka „w przygotowaniu”, nie dokument — robot nie ma jej indeksować (funkcja kończy `exit`,
+	// więc wp_head i filtr wp_robots tu nie biegną; meta idzie wprost).
 	echo '<!DOCTYPE html><html lang="pl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
+		. '<meta name="robots" content="noindex, nofollow">'
 		. '<title>' . esc_html( $nazwa ) . ' w przygotowaniu</title></head><body>'
 		. '<h1>' . esc_html( $nazwa ) . ' w przygotowaniu</h1>'
 		. '<p>' . esc_html( $nazwa ) . ' w przygotowaniu — sprzedawca uzupełnia treść.</p>'

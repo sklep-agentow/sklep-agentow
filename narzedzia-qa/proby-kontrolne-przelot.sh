@@ -172,13 +172,14 @@ MAX_POMINIETYCH_ZAKRES=10  # 5.09 po scaleniu #291 do C: 9 z main (+2 dockerowe 
                     #    niz wydanie. Scenariusz, ktorego sufit dotyczy: wykonawca BEZ Dockera
                     #    I BEZ `zip` (na maszynie z obydwoma pominiecie jest tylko 1 — dlatego
                     #    sam przelot tutaj NIE mierzy tego, przed czym sufit chroni):
-                    #      WYMAGA_DOCKERA 9 + WYMAGA_ZIP 4, wspolne 2  ⇒ unia 11
-                    #        z tego w `narzedzia-qa/` 8, w `testy/` 3   (#291: +2 dockerowe w narzedzia-qa)
+                    #      WYMAGA_DOCKERA 10 + WYMAGA_ZIP 4, wspolne 2  ⇒ unia 12   (5.09 #294 r7 W3: przeliczone
+                    #        z tablicy: `grep -c` po WYMAGA_DOCKERA daje 10 — #291 +2, C +1 prawne-migracja)
+                    #        z tego w `narzedzia-qa/` 9, w `testy/` 3
                     #      + 1 pomijana BEZWARUNKOWO (`dowod-zachowania-segregator`,
                     #        deinstaluje wtyczke ze stosu; lezy w `narzedzia-qa/`)
-                    #      zakres `narzedzia-qa` (tak wola CI):     8 + 1 =  9
-                    #      BEZ zakresu (tak wola `k7-koniec`):     11 + 1 = 12
-                    #    Sufit = maksimum z obu = 12. Przy 11 przelot bez zakresu — czyli ten,
+                    #      zakres `narzedzia-qa` (tak wola CI):     9 + 1 = 10
+                    #      BEZ zakresu (tak wola `k7-koniec`):     12 + 1 = 13
+                    #    Sufit = maksimum z obu = 13. Przy 12 przelot bez zakresu — czyli ten,
                     #    ktorego zada bramka wydania — wywalilby sie na WLASNEJ poprawce.
                     # ⛔ NIE przepisuj tej liczby przy nastepnym scaleniu: kazda nowa proba
                     #    dockerowa albo zipowa ja przesuwa. Policz komenda na scalonym drzewie.

@@ -529,6 +529,12 @@ function sklepag_kompensuj_strony_prawne() {
 			);
 			if ( $nowy ) {
 				update_option( $opcja, $nowy, false );
+			} else {
+				// Strona NIE powstała (0 = porażka bez $wp_error) — znacznik podbity na wejściu zostałby „na wyrost”
+				// i kompensacja nie wróciłaby do następnego podbicia SKLEPAG_WERSJA_STRON, a panel nie widzi strony,
+				// której nie ma (admin.php pomija puste opcje). Kasujemy znacznik: najbliższe otwarcie panelu /
+				// cron / WP-CLI spróbuje jeszcze raz. Ten sam kształt co w sklepag_utworz_strony() wyżej.
+				delete_option( 'sklepag_wersja_stron' );
 			}
 			continue;
 		}

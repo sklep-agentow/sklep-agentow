@@ -106,6 +106,18 @@ if grep -q 'w przygotowaniu' /tmp/prawne-w-przygotowaniu.html; then
 else
 	printf '  ⛔ NIE WYSZLO  brak zdania o przygotowaniu; poczatek odpowiedzi:\n'; head -c 200 /tmp/prawne-w-przygotowaniu.html; echo; KOD=1
 fi
+# #294 r5 W2 / r7: zaślepka ma noindex i NIE odpowiada pod cudzym adresem (kotwica na ścieżce strony głównej).
+if grep -q 'name="robots" content="noindex' /tmp/prawne-w-przygotowaniu.html; then
+	printf '  ✅ WYSZLO      zaslepka ma meta robots noindex\n'
+else
+	printf '  ⛔ NIE WYSZLO  zaslepka bez noindex — robot zaindeksuje „w przygotowaniu"\n'; KOD=1
+fi
+ODP_CUDZY="$(curl -s -o /tmp/prawne-cudzy-adres.html -w '%{http_code}' "$ADRES/dowolny-wpis-ktorego-nie-ma/?sklepag_prawne=regulamin")"
+if grep -q 'w przygotowaniu' /tmp/prawne-cudzy-adres.html; then
+	printf '  ⛔ NIE WYSZLO  cudzy adres (%s) dostal zaslepke — duplikat pod kazdym adresem sklepu\n' "$ODP_CUDZY"; KOD=1
+else
+	printf '  ✅ WYSZLO      cudzy adres nie dostaje zaslepki (HTTP %s, bez tresci „w przygotowaniu")\n' "$ODP_CUDZY"
+fi
 if grep -q 'SZABLON' /tmp/prawne-w-przygotowaniu.html; then
 	printf '  ⛔ NIE WYSZLO  kupujacy widzi zaslepke SZABLON\n'; KOD=1
 else

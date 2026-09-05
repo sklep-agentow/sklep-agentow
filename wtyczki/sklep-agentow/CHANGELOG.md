@@ -36,14 +36,12 @@ wydany osobno (podbicie pośrednie wewnątrz jednej zmiany).
   jest szablonem (zaślepka SZABLON w treści) → dopisuje brakujące sekcje z aktualnego szablonu; strona
   uzupełniona przez właściciela → NIE dotyka treści, tylko melduje w panelu listę nowych sekcji do
   ręcznego dopisania. Opcje po deinstalacji są sprzątane.
-### Naprawione
 - **Szablon regulaminu ma sekcje wymagane przez art. 12 ust. 1 upk.** Brakowało ceny
   z podatkami, sposobu i terminu zapłaty, procedury reklamacyjnej, odpowiedzialności za zgodność
   świadczenia, funkcjonalności treści cyfrowej i informacji o pozasądowym rozstrzyganiu sporów
   (ODR). Każda sekcja to nagłówek + `[UZUPEŁNIJ]` + zdanie instrukcji, bez wymyślania treści
   prawnej za właściciela (strony prawne zostają szablonami w wersji roboczej, publikuje je sprzedawca).
-- **Kupujący dostaje link do regulaminu i polityki prywatności PRZED zakupem, nie tylko po nim
-.** Nowa `sklepag_link_prawny('regulamin'|'polityka')` zwraca permalink strony, gdy jest
+- **Kupujący dostaje link do regulaminu i polityki prywatności PRZED zakupem, nie tylko po nim.** Nowa `sklepag_link_prawny('regulamin'|'polityka')` zwraca permalink strony, gdy jest
   opublikowana i bez zaślepki „SZABLON" — w przeciwnym razie prowadzi na `?sklepag_prawne=…`
   (`template_redirect`), który renderuje „Regulamin w przygotowaniu — sprzedawca uzupełnia treść"
   (HTTP 200, nigdy 404, nigdy treść szkicu). Link stoi na stronie produktu przed przyciskiem „Kup
