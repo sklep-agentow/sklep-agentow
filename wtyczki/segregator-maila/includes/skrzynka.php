@@ -422,13 +422,337 @@ function segm_skrzynka_adres( $od ) {
 }
 
 /**
+ * Ile poziomów zagnieżdżenia MIME rozbieramy (multipart w multipart).
+ *
+ * Poczta z załącznikiem to zwykle `multipart/mixed`, a w środku
+ * `multipart/alternative` — dwa poziomy. Piąty poziom w prawdziwej poczcie
+ * nie występuje; limit jest po to, żeby spreparowana wiadomość nie zapętliła
+ * rozbioru.
+ */
+const SEGM_SKRZ_GLEBOKOSC_MIME = 5;
+
+/**
+ * Ile części jednej wiadomości oglądamy, zanim przestaniemy szukać tekstu.
+ */
+const SEGM_SKRZ_CZESCI_MIME = 40;
+
+/**
+ * Zestawy znaków, na które wolno przewalutować treść.
+ *
+ * ⛔ Tu NIE WOLNO użyć `mb_list_encodings()`: ta lista niesie także kodowania
+ * TRANSPORTOWE (`BASE64`, `QUOTED-PRINTABLE`, `7BIT`, `UUENCODE`,
+ * `HTML-ENTITIES`), a nazwę zestawu podaje NADAWCA w swoim `Content-Type`.
+ * Wystarczyło `charset=BASE64`, żeby czytelny tekst przeszedł przez dekoder
+ * base64 i wyszedł z niego bajtowy śmieć.
+ *
+ * @return array<int, string>
+ */
+function segm_skrzynka_zestawy_znakow() {
+	return array(
+		'UTF-8',
+		'US-ASCII',
+		'ISO-8859-1',
+		'ISO-8859-2',
+		'ISO-8859-3',
+		'ISO-8859-4',
+		'ISO-8859-5',
+		'ISO-8859-6',
+		'ISO-8859-7',
+		'ISO-8859-8',
+		'ISO-8859-9',
+		'ISO-8859-10',
+		'ISO-8859-13',
+		'ISO-8859-14',
+		'ISO-8859-15',
+		'ISO-8859-16',
+		'WINDOWS-1250',
+		'WINDOWS-1251',
+		'WINDOWS-1252',
+		'WINDOWS-1253',
+		'WINDOWS-1254',
+		'WINDOWS-1255',
+		'WINDOWS-1256',
+		'WINDOWS-1257',
+		'WINDOWS-1258',
+		'KOI8-R',
+		'KOI8-U',
+		'UTF-16',
+		'UTF-16BE',
+		'UTF-16LE',
+		'UTF-32',
+		'UTF-32BE',
+		'UTF-32LE',
+		'EUC-JP',
+		'SJIS',
+		'ISO-2022-JP',
+		'BIG5',
+		'GB18030',
+		'EUC-KR',
+	);
+}
+
+/**
+ * Wartość parametru z nagłówka typu (`charset`, `boundary`).
+ *
+ * @param string $naglowek Wartość nagłówka Content-Type.
+ * @param string $nazwa    Nazwa parametru.
+ * @return string Pusty łańcuch, gdy parametru nie ma.
+ */
+function segm_skrzynka_parametr_typu( $naglowek, $nazwa ) {
+	$wzor = '/;\s*' . preg_quote( $nazwa, '/' ) . '\s*=\s*(?:"([^"]*)"|([^;\s]+))/i';
+	if ( ! preg_match( $wzor, ';' . $naglowek, $m ) ) {
+		return '';
+	}
+	return trim( '' !== $m[1] ? $m[1] : ( isset( $m[2] ) ? $m[2] : '' ) );
+}
+
+/**
+ * Ładunek części rozkodowany wg JEJ WŁASNEGO Content-Transfer-Encoding.
+ *
+ * ⭐ Base64 bez `array_pop()`: poprzednia wersja odcinała ostatnią linię
+ * ZAWSZE — także wtedy, gdy nic nie było ucięte — więc krótki mail bez znaku
+ * końca linii tracił swoją JEDYNĄ linię i cała treść znikała. Tu zamiast
+ * kasować linię odrzucamy wyłącznie NIEPEŁNĄ czwórkę znaków na końcu: gdy
+ * treść przyszła w całości, reszta z dzielenia wynosi zero i nie ginie nic.
+ *
+ * @param string $cialo     Ładunek części.
+ * @param string $kodowanie Wartość Content-Transfer-Encoding części.
+ * @return string
+ */
+function segm_skrzynka_odkoduj_ladunek( $cialo, $kodowanie ) {
+	$kodowanie = strtolower( trim( (string) $kodowanie ) );
+
+	if ( 'base64' === $kodowanie ) {
+		$czysty = (string) preg_replace( '#[^A-Za-z0-9+/=]#', '', $cialo );
+		$reszta = strlen( $czysty ) % 4;
+		if ( 0 !== $reszta ) {
+			$czysty = substr( $czysty, 0, strlen( $czysty ) - $reszta );
+		}
+		// Tryb nieścisły (drugi argument false) pomija znaki spoza alfabetu
+		// base64 i NIGDY nie zwraca false — dlatego wynik idzie wprost.
+		return (string) base64_decode( $czysty, false ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- to nie zaciemnianie kodu, tylko odkodowanie treści maila zgodnie z nagłówkiem Content-Transfer-Encoding (RFC 2045).
+	}
+
+	if ( 'quoted-printable' === $kodowanie ) {
+		return quoted_printable_decode( $cialo );
+	}
+
+	return $cialo;
+}
+
+/**
+ * Treść sprowadzona do UTF-8 wg zestawu znaków TEJ CZĘŚCI.
+ *
+ * @param string $tekst  Rozkodowany ładunek.
+ * @param string $zestaw Nazwa zestawu z nagłówka części.
+ * @return string
+ */
+function segm_skrzynka_na_utf8( $tekst, $zestaw ) {
+	$zestaw = strtoupper( trim( (string) $zestaw ) );
+	if ( 'UTF8' === $zestaw ) {
+		$zestaw = 'UTF-8';
+	}
+	if ( 'ASCII' === $zestaw ) {
+		$zestaw = 'US-ASCII';
+	}
+	if ( '' === $zestaw || 'UTF-8' === $zestaw || 'US-ASCII' === $zestaw ) {
+		return $tekst;
+	}
+	if ( ! in_array( $zestaw, segm_skrzynka_zestawy_znakow(), true ) ) {
+		// Nazwa spoza listy ZESTAWÓW ZNAKÓW: zostawiamy tekst nietknięty.
+		// Ostatnia furtka niżej i tak sprowadzi go do poprawnego UTF-8.
+		return $tekst;
+	}
+	$przerobione = mb_convert_encoding( $tekst, 'UTF-8', $zestaw );
+	return is_string( $przerobione ) ? $przerobione : $tekst;
+}
+
+/**
+ * Znaczniki HTML zdjęte tak, żeby NIEDOMKNIĘTY `<` nie zjadał reszty treści.
+ *
+ * ⛔ Powód, dla którego nie ma tu `wp_strip_all_tags()`: `strip_tags()` traktuje
+ * `<` przed literą jako początek znacznika i kasuje wszystko do końca tekstu,
+ * gdy domknięcia nie ma. Mail „termin <piatek. Proszę o faktura pro forma"
+ * tracił w ten sposób wszystko po słowie „termin" — a człowiek widzi w nim
+ * całe zdanie. Tu zdejmujemy WYŁĄCZNIE znaczniki, które naprawdę się domykają.
+ *
+ * @param string $html Treść części text/html.
+ * @return string
+ */
+function segm_skrzynka_bez_znacznikow( $html ) {
+	// Skrypty i style razem z zawartością; `[^<>]*` zamiast `[^>]*?` nie
+	// pozwala wzorcowi nawracać po całym tekście przy niedomkniętym `<`.
+	$bez = preg_replace( '#<(script|style)\b[^<>]*>.*?</\1\s*>#is', ' ', (string) $html );
+	if ( ! is_string( $bez ) ) {
+		$bez = (string) $html;
+	}
+	// Znacznik = `<`, litera, cokolwiek bez nawiasów, `>`. Sam `<` przed
+	// literą bez domknięcia zostaje w tekście, bo człowiek też go widzi.
+	$bez = preg_replace( '#</?[A-Za-z][^<>]*>#', ' ', $bez );
+	if ( ! is_string( $bez ) ) {
+		$bez = (string) $html;
+	}
+	$bez = html_entity_decode( $bez, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+	$bez = preg_replace( '/[ \t]+/', ' ', $bez );
+	return trim( (string) $bez );
+}
+
+/**
+ * Nagłówki i ładunek jednej części rozdzielone pierwszą pustą linią.
+ *
+ * @param string $czesc Surowa część spomiędzy granic.
+ * @return array{0: string, 1: string} Nagłówki części, ładunek części.
+ */
+function segm_skrzynka_rozbij_czesc( $czesc ) {
+	if ( preg_match( '/\r\n\r\n|\n\n|\r\r/', $czesc, $m, PREG_OFFSET_CAPTURE ) ) {
+		$koniec = (int) $m[0][1] + strlen( $m[0][0] );
+		return array( substr( $czesc, 0, $koniec ), substr( $czesc, $koniec ) );
+	}
+	// Brak pustej linii: albo same nagłówki (część ucięta na 4 kB), albo sam
+	// ładunek (część bez nagłówków). Rozstrzyga kształt pierwszej linii.
+	if ( preg_match( '/^[A-Za-z][A-Za-z0-9\-]*:/', ltrim( $czesc, "\r\n" ) ) ) {
+		return array( $czesc, '' );
+	}
+	return array( '', $czesc );
+}
+
+/**
+ * Części wiadomości wieloczęściowej wycięte po granicy (RFC 2046 §5.1).
+ *
+ * @param string $cialo   Ładunek wiadomości wieloczęściowej.
+ * @param string $granica Wartość parametru boundary.
+ * @return array<int, string>
+ */
+function segm_skrzynka_czesci_mime( $cialo, $granica ) {
+	$znacznik = '--' . $granica;
+	$linie    = preg_split( '/\r\n|\n|\r/', $cialo );
+	$czesci   = array();
+	$biezaca  = null;
+
+	foreach ( (array) $linie as $linia ) {
+		$przyciete = rtrim( (string) $linia, " \t" );
+		if ( $znacznik . '--' === $przyciete ) {
+			if ( null !== $biezaca ) {
+				$czesci[] = implode( "\r\n", $biezaca );
+			}
+			$biezaca = null;
+			break;
+		}
+		if ( $znacznik === $przyciete ) {
+			if ( null !== $biezaca ) {
+				$czesci[] = implode( "\r\n", $biezaca );
+			}
+			$biezaca = array();
+			if ( count( $czesci ) >= SEGM_SKRZ_CZESCI_MIME ) {
+				$biezaca = null;
+				break;
+			}
+			continue;
+		}
+		if ( null !== $biezaca ) {
+			$biezaca[] = $linia;
+		}
+	}
+
+	if ( null !== $biezaca ) {
+		// Fragment urwany na SEGM_SKRZ_TRESC_BAJTOW: ostatnia część nie ma
+		// swojej granicy zamykającej, a i tak niesie tekst do dopasowania.
+		$czesci[] = implode( "\r\n", $biezaca );
+	}
+
+	return $czesci;
+}
+
+/**
+ * Jedna część MIME sprowadzona do tekstu widzianego przez człowieka.
+ *
+ * @param string $cialo      Ładunek części (bez jej nagłówków).
+ * @param string $naglowki   Nagłówki TEJ części (albo wiadomości, gdy to poziom 0).
+ * @param int    $glebokosc  Poziom zagnieżdżenia.
+ * @return array{tekst: string, zwykly: bool} `zwykly` = tekst pochodzi z text/plain.
+ */
+function segm_skrzynka_czesc_tekstem( $cialo, $naglowki, $glebokosc ) {
+	$pusto = array(
+		'tekst'  => '',
+		'zwykly' => false,
+	);
+	if ( '' === $cialo ) {
+		return $pusto;
+	}
+
+	$typ       = segm_skrzynka_naglowek( $naglowki, 'Content-Type' );
+	$kodowanie = segm_skrzynka_naglowek( $naglowki, 'Content-Transfer-Encoding' );
+	$glowny    = strtolower( trim( (string) strtok( $typ, ';' ) ) );
+
+	if ( 0 === strpos( $glowny, 'multipart/' ) && $glebokosc < SEGM_SKRZ_GLEBOKOSC_MIME ) {
+		$granica = segm_skrzynka_parametr_typu( $typ, 'boundary' );
+		if ( '' !== $granica ) {
+			$zwykly = '';
+			$bogaty = '';
+			foreach ( segm_skrzynka_czesci_mime( $cialo, $granica ) as $czesc ) {
+				list( $nag_czesci, $ladunek ) = segm_skrzynka_rozbij_czesc( $czesc );
+				$wynik                        = segm_skrzynka_czesc_tekstem( $ladunek, $nag_czesci, $glebokosc + 1 );
+				if ( '' === $wynik['tekst'] ) {
+					continue;
+				}
+				if ( $wynik['zwykly'] && '' === $zwykly ) {
+					$zwykly = $wynik['tekst'];
+				} elseif ( ! $wynik['zwykly'] && '' === $bogaty ) {
+					$bogaty = $wynik['tekst'];
+				}
+			}
+			if ( '' !== $zwykly ) {
+				return array(
+					'tekst'  => $zwykly,
+					'zwykly' => true,
+				);
+			}
+			return array(
+				'tekst'  => $bogaty,
+				'zwykly' => false,
+			);
+		}
+	}
+
+	// Część, która nie jest tekstem (załącznik, obrazek) nie ma czego wnieść
+	// do reguły „treść zawiera". Na poziomie 0 typu nieznanego nie odrzucamy:
+	// mail bez Content-Type to zwykły tekst (RFC 2045 §5.2).
+	if ( $glebokosc > 0 && '' !== $glowny && 0 !== strpos( $glowny, 'text/' ) ) {
+		return $pusto;
+	}
+
+	$tekst = segm_skrzynka_odkoduj_ladunek( $cialo, $kodowanie );
+	$tekst = segm_skrzynka_na_utf8( $tekst, segm_skrzynka_parametr_typu( $typ, 'charset' ) );
+
+	if ( 'text/html' === $glowny ) {
+		return array(
+			'tekst'  => segm_skrzynka_bez_znacznikow( $tekst ),
+			'zwykly' => false,
+		);
+	}
+
+	return array(
+		'tekst'  => trim( $tekst ),
+		'zwykly' => true,
+	);
+}
+
+/**
  * Treść maila sprowadzona do tekstu, na którym da się dopasować reguły.
  *
- * UCZCIWIE, co to jest: pierwsze SEGM_SKRZ_TRESC_BAJTOW bajtów sekcji TEXT,
- * rozkodowane, gdy mail deklaruje base64 albo quoted-printable, i sprowadzone
- * do UTF-8. To NIE jest pełny rozbiór MIME: przy wiadomości wieloczęściowej
- * w tekście zostaną linie z granicami części i nagłówki podczęści. Do reguł
- * typu „treść zawiera reklamacja" to wystarcza, do wyciągania załączników nie.
+ * KONTRAKT: oddajemy TEKST, KTÓRY WIDZI CZŁOWIEK w swoim programie pocztowym —
+ * pierwsze SEGM_SKRZ_TRESC_BAJTOW bajtów sekcji TEXT rozebrane na części MIME,
+ * z których bierzemy `text/plain` (a gdy jej nie ma — `text/html` bez
+ * znaczników). Każda część jest odkodowana JEJ WŁASNYM
+ * `Content-Transfer-Encoding` i sprowadzona do UTF-8 JEJ WŁASNYM `charset`.
+ *
+ * ⛔ Granice części i nagłówki części NIE TRAFIAJĄ do wyniku — inaczej reguła
+ * „treść zawiera charset" łapałaby każdy wieloczęściowy mail, a reguła na
+ * słowo z treści milczałaby przy poczcie z Gmaila, Outlooka i Thunderbirda
+ * (`multipart/alternative` to kształt, który wysyła każdy z nich).
+ *
+ * To nadal NIE jest pełny rozbiór MIME: nie wyciągamy załączników i nie
+ * sklejamy części `message/partial`.
  *
  * @param string $surowa    Surowy fragment sekcji TEXT.
  * @param string $naglowki  Surowe nagłówki wiadomości.
@@ -440,40 +764,16 @@ function segm_skrzynka_tresc_tekstem( $surowa, $naglowki ) {
 		return '';
 	}
 
-	$kodowanie  = strtolower( segm_skrzynka_naglowek( $naglowki, 'Content-Transfer-Encoding' ) );
-	$typ        = segm_skrzynka_naglowek( $naglowki, 'Content-Type' );
-	$wieloczesc = false !== stripos( $typ, 'multipart/' );
+	$wynik = segm_skrzynka_czesc_tekstem( $surowa, (string) $naglowki, 0 );
+	$tekst = $wynik['tekst'];
 
-	if ( ! $wieloczesc && 'base64' === $kodowanie ) {
-		// Pobraliśmy tylko początek, więc ostatnia linia base64 bywa ucięta —
-		// obcinamy ją, zamiast pozwolić dekoderowi zwrócić śmieci.
-		$linie = explode( "\n", str_replace( "\r", '', $surowa ) );
-		array_pop( $linie );
-		// Tryb nieścisły (drugi argument false) pomija znaki spoza alfabetu
-		// base64 i NIGDY nie zwraca false — dlatego wynik idzie wprost.
-		$surowa = base64_decode( implode( '', $linie ), false ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- to nie zaciemnianie kodu, tylko odkodowanie treści maila zgodnie z nagłówkiem Content-Transfer-Encoding (RFC 2045).
-	} elseif ( ! $wieloczesc && 'quoted-printable' === $kodowanie ) {
-		$surowa = quoted_printable_decode( $surowa );
+	if ( ! mb_check_encoding( $tekst, 'UTF-8' ) ) {
+		// Ostatnia furtka: cokolwiek przyszlo bez poprawnej deklaracji zestawu,
+		// ma wyjsc stad jako poprawny UTF-8 — regula dopasowuje na UTF-8.
+		$tekst = mb_convert_encoding( $tekst, 'UTF-8', 'ISO-8859-2' );
 	}
 
-	$zestaw = '';
-	if ( preg_match( '/charset\s*=\s*"?([A-Za-z0-9_\-]+)"?/i', $typ, $m ) ) {
-		$zestaw = strtoupper( $m[1] );
-	}
-	if ( '' !== $zestaw && 'UTF-8' !== $zestaw && in_array( $zestaw, array_map( 'strtoupper', mb_list_encodings() ), true ) ) {
-		$przerobione = mb_convert_encoding( $surowa, 'UTF-8', $zestaw );
-		if ( is_string( $przerobione ) ) {
-			$surowa = $przerobione;
-		}
-	}
-
-	// Znaczniki HTML zamieniamy na spacje, żeby reguła „treść zawiera" nie
-	// łapała słów schowanych w atrybutach.
-	$surowa = wp_strip_all_tags( $surowa );
-	if ( ! mb_check_encoding( $surowa, 'UTF-8' ) ) {
-		$surowa = mb_convert_encoding( $surowa, 'UTF-8', 'ISO-8859-2' );
-	}
-	return (string) $surowa;
+	return $tekst;
 }
 
 /**
