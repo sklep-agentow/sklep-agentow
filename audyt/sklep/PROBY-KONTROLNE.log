@@ -1,48 +1,48 @@
-# PRÓBY KONTROLNE NARZĘDZI — przelot 2026-09-05 17:38
+# PRÓBY KONTROLNE NARZĘDZI — przelot 2026-09-05 21:35
 #
 # Każda pozycja: skrypt podkłada narzędziu znaną wadę i sprawdza, czy narzędzie ją WIDZI.
 # Kod wyjścia zero znaczy: narzędzie zareagowało na podłożoną wadę i przepuściło czysty kod.
 #
 WYGENEROWANE-PRZEZ: narzedzia-qa/proby-kontrolne-przelot.sh
-COMMIT: c36e991
-GALAZ: fix/proba-3
+COMMIT: c5404a7
+GALAZ: porzadek/przelot-po-0-9-43
 ODLAMEK: pelny
-PODSUMOWANIE: uruchomionych 67, PADŁO: 2, NIE ZMIERZONO (EXIT=2): 8, pominiętych: 1
-NIE ZMIERZONO: anonimizacja-zachowuje-fakture-proba-kontrolna.sh chatbot-pytanie-limit-proba-kontrolna.sh csv-bez-formuly-proba-kontrolna.sh idem-okno-per-kupujacy-proba-kontrolna.sh limit-uploadu-proba-kontrolna.sh nonce-proba-kontrolna.sh pobranie-po-zwrocie-proba-kontrolna.sh schemat-wersja-po-sprawdzeniu-proba-kontrolna.sh
+PODSUMOWANIE: uruchomionych 67, PADŁO: 0, NIE ZMIERZONO (EXIT=2): 7, pominiętych: 2
+NIE ZMIERZONO: anonimizacja-zachowuje-fakture-proba-kontrolna.sh chatbot-pytanie-limit-proba-kontrolna.sh csv-bez-formuly-proba-kontrolna.sh idem-okno-per-kupujacy-proba-kontrolna.sh limit-uploadu-proba-kontrolna.sh pobranie-po-zwrocie-proba-kontrolna.sh schemat-wersja-po-sprawdzeniu-proba-kontrolna.sh
 #
 bramka-poswiadczenia-proba-kontrolna.sh EXIT=0 157s
-bramka-recenzji-proba-kontrolna.sh EXIT=0 0s
-bramka-status-bez-warunku-proba-kontrolna.sh EXIT=0 1s
+bramka-recenzji-proba-kontrolna.sh EXIT=0 1s
+bramka-status-bez-warunku-proba-kontrolna.sh EXIT=0 0s
 bramki-narzedzia-proba-kontrolna.sh EXIT=0 2s
-bramki-proba-kontrolna.sh EXIT=0 582s
+bramki-proba-kontrolna.sh EXIT=0 606s
 chatbot-csv-formula-proba-kontrolna.sh EXIT=0 1s
 csv-neutralizacja-blizniaki-proba-kontrolna.sh EXIT=0 0s
-dowod-aktualizacji-proba-kontrolna.sh EXIT=0 57s
+dowod-aktualizacji-proba-kontrolna.sh EXIT=0 58s
 POMINIETO dowod-zachowania-segregator-proba-kontrolna.sh — deinstaluje wtyczkę ze stosu — do przelotu ręcznego przed wydaniem
-dowod-z-paczki-proba-kontrolna.sh EXIT=0 83s
+dowod-z-paczki-proba-kontrolna.sh EXIT=0 82s
 gitleaks-proba-kontrolna.sh EXIT=0 1s
-k7-koniec-proba-kontrolna.sh EXIT=0 20s
+k7-koniec-proba-kontrolna.sh EXIT=0 19s
 liczniki-zywe-proba-kontrolna.sh EXIT=0 0s
-paczka-obejmuje-kazdy-plik-wtyczki-proba-kontrolna.sh EXIT=0 0s
+paczka-obejmuje-kazdy-plik-wtyczki-proba-kontrolna.sh EXIT=0 1s
 paczka-zgodnosc-proba-kontrolna.sh EXIT=0 10s
 pakuj-slady-proba-kontrolna.sh EXIT=0 0s
-panel-link-wygasa-czas-lokalny-proba-kontrolna.sh EXIT=0 8s
+panel-link-wygasa-czas-lokalny-proba-kontrolna.sh EXIT=0 7s
 prawne-migracja-proba-kontrolna.sh EXIT=0 56s
 przelot-brak-zip-proba-kontrolna.sh EXIT=0 0s
 przelot-bramy-proba-kontrolna.sh EXIT=0 1s
 przelot-odlamki-proba-kontrolna.sh EXIT=0 1s
 rejestr-liczniki-proba-kontrolna.sh EXIT=0 0s
 rodo-anonimizacja-ip-proba-kontrolna.sh EXIT=0 7s
-security-wersje-proba-kontrolna.sh EXIT=0 0s
-segregator-mime-ci-proba-kontrolna.sh EXIT=0 1s
+security-wersje-proba-kontrolna.sh EXIT=0 1s
+segregator-mime-ci-proba-kontrolna.sh EXIT=0 0s
 spoza-repo-proba-kontrolna.sh EXIT=0 0s
-sprawdz-manifest-proba-kontrolna.sh EXIT=0 2s
-stos-proba-kontrolna.sh EXIT=0 8s
+sprawdz-manifest-proba-kontrolna.sh EXIT=0 1s
+stos-proba-kontrolna.sh EXIT=0 9s
 test-php-proba-kontrolna.sh EXIT=0 1s
 zdarzenia-webhooka-proba-kontrolna.sh EXIT=0 1s
 anonimizacja-zachowuje-fakture-proba-kontrolna.sh EXIT=2 11s
-blad-klucza-proba-kontrolna.sh EXIT=0 91s
-chatbot-pytanie-limit-proba-kontrolna.sh EXIT=2 6s
+blad-klucza-proba-kontrolna.sh EXIT=0 90s
+chatbot-pytanie-limit-proba-kontrolna.sh EXIT=2 7s
 csv-bez-formuly-proba-kontrolna.sh EXIT=2 5s
 dokumentacja-zgodnosc-sklep-proba-kontrolna.sh EXIT=0 18s
 golden-migawka-proba-kontrolna.sh EXIT=0 28s
@@ -52,29 +52,30 @@ import-csv-proba-kontrolna.sh EXIT=0 7s
 ip-za-proxy-proba-kontrolna.sh EXIT=0 4s
 licznik-trafien-proba-kontrolna.sh EXIT=0 6s
 limit-uploadu-proba-kontrolna.sh EXIT=2 7s
-linia-bazowa-pomijane-proba-kontrolna.sh EXIT=0 1s
-nonce-proba-kontrolna.sh EXIT=2 63s
-nota-zapisu-proba-kontrolna.sh EXIT=0 29s
-pamiec-rozmowy-proba-kontrolna.sh EXIT=0 6s
+linia-bazowa-pomijane-proba-kontrolna.sh EXIT=0 0s
+POMINIETO nonce-proba-kontrolna.sh — próba z przeglądarką pada LOSOWO w ok. połowie biegów w serii na tym stosie (5.09: 4 z 7 przelotów, kontrola odwrotna albo 1. mutant), także na pustej maszynie; bezpośrednio EXIT=0 x3; klasa 154 — do naprawy przyrządu; przelot ręczny: bash testy/nonce-proba-kontrolna.sh
+nota-zapisu-proba-kontrolna.sh EXIT=0 31s
+pamiec-rozmowy-proba-kontrolna.sh EXIT=0 5s
 pobranie-po-zwrocie-proba-kontrolna.sh EXIT=2 6s
 polityka-sprzatanie-warunkowe-proba-kontrolna.sh EXIT=0 0s
 produkt-404-proba-kontrolna.sh EXIT=0 47s
 przejecie-proba-kontrolna.sh EXIT=0 38s
 pulapka-proba-kontrolna.sh EXIT=0 8s
-rodo-anonimizacja-postacie-proba-kontrolna.sh EXIT=0 16s
+rodo-anonimizacja-postacie-proba-kontrolna.sh EXIT=0 15s
 rodo-proba-kontrolna.sh EXIT=0 11s
 schemat-wersja-po-sprawdzeniu-proba-kontrolna.sh EXIT=2 6s
+segregator-imap-sufity-proba-kontrolna.sh EXIT=0 20s
 segregator-mime-proba-kontrolna.sh EXIT=0 1s
-segregator-skrzynka-proba-kontrolna.sh EXIT=0 63s
+segregator-skrzynka-proba-kontrolna.sh EXIT=0 67s
 seo-canonical-proba-kontrolna.sh EXIT=0 3s
 statystyki-proba-kontrolna.sh EXIT=0 4s
 stronicowanie-proba-kontrolna.sh EXIT=0 6s
 strony-prawne-proba-kontrolna.sh EXIT=0 12s
 svg-proba-kontrolna.sh EXIT=0 7s
 tokeny-koszt-proba-kontrolna.sh EXIT=0 6s
-tryb-testowy-proba-kontrolna.sh EXIT=0 7s
+tryb-testowy-proba-kontrolna.sh EXIT=0 8s
 webhook-podpis-proba-kontrolna.sh EXIT=0 2s
-wskaznik-pisania-proba-kontrolna.sh EXIT=0 41s
-wybor-modelu-proba-kontrolna.sh EXIT=0 4s
-zamek-stosu-probnego-proba-kontrolna.sh EXIT=0 17s
-zgodnosc-proba-kontrolna.sh EXIT=1 17s
+wskaznik-pisania-proba-kontrolna.sh EXIT=0 42s
+wybor-modelu-proba-kontrolna.sh EXIT=0 3s
+zamek-stosu-probnego-proba-kontrolna.sh EXIT=0 18s
+zgodnosc-proba-kontrolna.sh EXIT=0 17s
