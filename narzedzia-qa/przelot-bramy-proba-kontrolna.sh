@@ -119,7 +119,7 @@ if [ "$KOD_A" -eq 0 ]; then
 else
 	echo "  BLAD przelot na komplecie konczy sie EXIT=$KOD_A (ma byc 0) — kontrola pozytywna PADLA"
 	echo "$URUCHOM_ERR" | head -5 | sed 's/^/         /'
-	ODWROTNA=$((ODWROTNA + 1))
+	ODWROTNA=$((ODWROTNA+1))
 fi
 
 # --- B. za malo atrap (PODLOGA-4 < podloga) ---------------------------------------------
@@ -138,7 +138,7 @@ if [ "$KOD_B" -eq 1 ] && printf '%s' "$URUCHOM_ERR" | grep -qF 'podlodze'; then
 else
 	echo "  BLAD przelot konczy sie EXIT=$KOD_B (ma byc 1, z wierszem o podlodze) — brama SLEPA"
 	echo "$URUCHOM_ERR" | head -5 | sed 's/^/         /'
-	BLEDY=$((BLEDY + 1))
+	BLEDY=$((BLEDY+1))
 fi
 
 # --- C. odlamek `bramki` (sufit 0), jedna atrapa exit 2 ---------------------------------
@@ -153,7 +153,7 @@ if [ "$KOD_C" -eq 1 ]; then
 else
 	echo "  BLAD przelot na odlamku 'bramki' konczy sie EXIT=$KOD_C (ma byc 1) — sufit SLEPY"
 	echo "$URUCHOM_ERR" | head -5 | sed 's/^/         /'
-	BLEDY=$((BLEDY + 1))
+	BLEDY=$((BLEDY+1))
 fi
 
 # --- D. MUTANT: MIN_URUCHOMIONYCH_ZAKRES=<N> -> =0 w kopii z przypadku B -----------------
@@ -164,13 +164,13 @@ KOTWICA='^MIN_URUCHOMIONYCH_ZAKRES=[0-9]+'
 PRZED_N=$(grep -cE "$KOTWICA" "$SKRYPT_B")
 if [ "$PRZED_N" -eq 0 ]; then
 	echo "  BLAD mutacja NIE weszla: kotwica [$KOTWICA] nie istnieje juz w przelocie — wzorzec sie zestarzal"
-	KOTWICE=$((KOTWICE + 1))
+	KOTWICE=$((KOTWICE+1))
 else
 	sed -i -E "s/${KOTWICA}/MIN_URUCHOMIONYCH_ZAKRES=0/" "$SKRYPT_B"
 	PO_N=$(grep -cF 'MIN_URUCHOMIONYCH_ZAKRES=0' "$SKRYPT_B")
 	if [ "$PO_N" -eq 0 ]; then
 		echo "  BLAD mutacja NIE weszla do pliku (kotwica sed zgnila)"
-		KOTWICE=$((KOTWICE + 1))
+		KOTWICE=$((KOTWICE+1))
 	else
 		uruchom_kopie "$SKRYPT_B" narzedzia-qa
 		KOD_D=$?
@@ -178,7 +178,7 @@ else
 			echo "  OK   z podloga=0 przypadek B przestaje padac (EXIT=0) — podloga realnie chroni, mutant zlapany"
 		else
 			echo "  BLAD z podloga=0 przypadek B DALEJ pada (EXIT=$KOD_D) — ta proba nie mierzy podlogi, ktora twierdzi ze mierzy"
-			BLEDY=$((BLEDY + 1))
+			BLEDY=$((BLEDY+1))
 		fi
 	fi
 fi
