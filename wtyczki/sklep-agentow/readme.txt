@@ -4,7 +4,7 @@ Tags: sklep, stripe, pliki cyfrowe, sprzedaz wtyczek, pobieranie
 Requires at least: 6.7
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.9.40
+Stable tag: 0.9.42
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -160,6 +160,13 @@ Nie. Zakup jest bez konta: adres e-mail podany na stronie płatności Stripe,
 link do pobrania w mailu, jednorazowy link do opinii.
 
 == Changelog ==
+
+= 0.9.42 =
+* Naprawione: kupujący widzi link do regulaminu i polityki prywatności oraz dane sprzedawcy PRZED zakupem (strona produktu, formularz), nie tylko w mailu po nim; nieopublikowany regulamin prowadzi na stronę „w przygotowaniu”, nigdy na 404.
+* Naprawione: szablon regulaminu ma sekcje wymagane przez art. 12 ust. 1 ustawy o prawach konsumenta (cena z podatkami, zapłata, reklamacje, zgodność, funkcjonalności treści cyfrowej, ODR) z wypełniaczami do uzupełnienia.
+* Naprawione: sklep zaktualizowany w miejscu (nie tylko świeżo aktywowany) dostaje brakujące strony prawne jako szkice i nowe sekcje szablonu; treść uzupełniona przez sprzedawcę nie jest ruszana, panel melduje, co dopisać.
+* Zmienione: polityka prywatności i opis dziennika mówią prawdę o sprzątaniu — warunkowe, przez zadanie WP-Cron co 10 minut, po 90 dniach, tylko dziennik i historia logowań; dane zamówień nie są usuwane po czasie.
+* Zmienione: dokumentacja techniczna opisuje, że tabela sesji zakupu rośnie bez końca, dlaczego świadomie, i jak sprzedawca sprząta ją ręcznie bez ryzyka dla płatności w toku.
 
 = 0.9.40 =
 * Naprawione: gwarancja satysfakcji przestała wyglądać na sprzeczność z warunkami zakupu. Strona produktu obiecywała „14 dni na zwrot — bez pytań”, a zgoda przy zakupie mówi o utracie prawa odstąpienia (art. 38 ustawy o prawach konsumenta). Tekst nazywa teraz swoją podstawę — gwarancja to dobrowolne zobowiązanie sprzedawcy PONAD ustawę — a obietnica 14 dni nie zmienia się. Ten sam tekst jedzie do maila po zakupie. Szablon Regulaminu dostał osobny punkt o gwarancji; szkice stron powstają tylko przy pierwszej instalacji, więc przy sklepie zainstalowanym wcześniej niż 0.9.40 trzeba dopisać ten punkt do Regulaminu samodzielnie (patrz INSTRUKCJA.md).

@@ -16,6 +16,17 @@ wydany osobno (podbicie pośrednie wewnątrz jednej zmiany).
 
 ## [Niewydane]
 
+## [0.9.42] — 2026-09-05 · schemat bazy bez zmian (10)
+
+### Zmienione
+- **Polityka prywatności (szablon) i opis dziennika mówią PRAWDĘ o sprzątaniu (F4-F2):** wpisy dziennika i historii logowań
+  starsze niż 90 dni usuwa zadanie WP-Cron sklepu co 10 minut — sprzątanie jest warunkowe (biegnie tylko, gdy harmonogram
+  WordPressa działa), a dane zamówień nie są usuwane po czasie (obowiązek podatkowy). Dotąd szablon obiecywał „90 dni” bez
+  warunku, a opis dziennika „usuwane automatycznie”.
+- **Dokumentacja techniczna opisuje, że `sesje_checkout` rośnie bez końca, dlaczego świadomie, i jak właściciel sprząta ją
+  ręcznie (F4-F3):** podgląd i kasowanie tylko sesji bez zamówienia, starszych niż przyjęte okno, z ostrzeżeniem o oknach
+  reconciliation i wniosków RODO. Bez kodu kasującego — decyzja o oknach należy do właściciela.
+
 ### Naprawione
 - **Stara instalacja DOSTAJE strony prawne i nowe sekcje szablonu przy aktualizacji, nie tylko przy
   aktywacji (F5-F4).** `sklepag_utworz_strony()` wołało się wyłącznie z hooka aktywacji, więc sklep

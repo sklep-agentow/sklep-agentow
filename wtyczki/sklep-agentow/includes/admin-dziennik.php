@@ -47,7 +47,7 @@ function sklepag_admin_dziennik() {
 	echo '</form>';
 
 	if ( 'logowania' === $zakladka ) {
-		echo '<p class="description">Wpisy starsze niż 90 dni są usuwane automatycznie (retencja — polityka prywatności). Po kolejnych nieudanych próbach logowania odpowiedź jest wykładniczo opóźniana (do ' . (int) SKLEPAG_OPOZNIENIE_SUFIT_S . ' s), bez twardej blokady konta.</p>';
+		echo '<p class="description">Wpisy starsze niż 90 dni usuwa zadanie WP-Cron sklepu (co 10 minut) — tylko gdy harmonogram WordPressa działa; gdy stoi, wpisy zostają do jego wznowienia (retencja — polityka prywatności). Po kolejnych nieudanych próbach logowania odpowiedź jest wykładniczo opóźniana (do ' . (int) SKLEPAG_OPOZNIENIE_SUFIT_S . ' s), bez twardej blokady konta.</p>';
 	} else {
 		echo '<p class="description">Oś czasu: akcje adminów (CRUD produktów, ponowne wysyłki, eksporty) i zdarzenia systemowe (webhooki, maile, pobrania). Retencja 90 dni.</p>';
 	}
