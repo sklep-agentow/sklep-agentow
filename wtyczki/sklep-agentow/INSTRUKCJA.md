@@ -293,9 +293,11 @@ Rzeczy **wewnątrz** sekcji (nie osobna sekcja) — tu samoobsługa działa tylk
 
 - **Polityka prywatności — zdanie o sprzątaniu dziennika.** Jeśli w Twojej polityce stoi jeszcze brzmienie
   z wersji 0.9.23–0.9.40 („dziennik zdarzeń (90 dni, w tym adres IP przy każdym pobraniu pliku)”), wtyczka
-  **sama** podmienia je na prawdziwe: sprzątanie jest warunkowe (zadanie WP-Cron co 10 minut, tylko gdy harmonogram
+  **sama** podmienia je na prawdziwe — **ale tylko wtedy, gdy strona jest nadal szablonem** (słowo SZABLON w tytule
+  albo w treści): sprzątanie jest warunkowe (zadanie WP-Cron co 10 minut, tylko gdy harmonogram
   WordPressa działa), obejmuje dziennik zdarzeń i historię logowań, a dane zamówień nie są usuwane po czasie.
-  Jeśli to zdanie przepisałeś po swojemu, wtyczka go nie tknie — zobaczysz żółty komunikat „Zakres (zdanie
+  Jeśli to już **Twój dokument** (zaślepki SZABLON nie ma) — nawet gdy nasze stare zdanie stoi w nim słowo w słowo —
+  albo jeśli to zdanie przepisałeś po swojemu, wtyczka go nie tknie — zobaczysz żółty komunikat „Zakres (zdanie
   o sprzątaniu: warunkowe, WP-Cron; dane do faktury; opinie)” i dopisujesz tę prawdę sam, własnymi słowami. ⛔ Nie wpisuj już starego
   brzmienia „90 dni” bez warunku — było nieprawdziwe (gdy WP-Cron stoi, nic nie znika);
 - **Polityka prywatności** z wersji wcześniejszej niż 0.9.25 (dane do faktury: nazwa, NIP, adres — cel: faktura,
