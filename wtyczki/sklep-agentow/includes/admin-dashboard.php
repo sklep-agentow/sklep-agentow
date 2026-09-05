@@ -238,7 +238,8 @@ function sklepag_obsluz_dociagnij() {
 	sklepag_zdarzenie( null, 'reconciliation_wynik', sprintf( 'domknięte %d · młodsze niż 2 min (pominięte) %d · sprawdzone teraz, nieopłacone %d · sprawdzone chwilę temu (z przerwą) %d · błędy %d', (int) ( $w['domkniete'] ?? 0 ), (int) ( $w['pominiete_mlode'] ?? 0 ), (int) ( $w['sprawdzone_otwarte'] ?? 0 ), (int) ( $w['z_przerwa'] ?? 0 ), (int) ( $w['bledy'] ?? 0 ) ) );
 
 	// Liczby jadą w adresie, żeby Pulpit powiedział właścicielowi, CO się stało — „pominięto młodsze”
-	// to jedyna wskazówka, że trzeba kliknąć jeszcze raz za chwilę (K10: cisza = 20 min czekania).
+	// to jedyna wskazówka, że trzeba kliknąć jeszcze raz za chwilę — bez niej cisza po kliknięciu
+	// potrafi trwać nawet 20 minut, zanim WP-Cron sam dociągnie zaległe.
 	wp_safe_redirect(
 		add_query_arg(
 			array(
@@ -384,7 +385,7 @@ function sklepag_obsluz_eksport_csv() {
 /* ---------- Render dashboardu ---------- */
 
 /**
- * Komunikat o NIEKOMPLETNYM schemacie bazy (A6-F1): aktywacja/migracja zmierzyła braki po `dbDelta`,
+ * Komunikat o NIEKOMPLETNYM schemacie bazy: aktywacja/migracja zmierzyła braki po `dbDelta`,
  * wersja nie została podniesiona, sklep ponowi próbę sam — nie przy każdym żądaniu, tylko
  * najwyżej raz na 5 minut (dławik `sklepag_schemat_ponowienie`, `aktywacja.php:302-308`); aktywacja
  * wtyczki kasuje znacznik, więc „deaktywuj i aktywuj" działa natychmiast. Przyczyna
