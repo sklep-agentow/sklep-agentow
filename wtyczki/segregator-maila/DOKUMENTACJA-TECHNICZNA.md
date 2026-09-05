@@ -70,7 +70,7 @@ leży w pliku `LICENSE` w katalogu wtyczki i wchodzi do paczki produktowej.
 | `includes/konfiguracja.php` | 360 | eksport i import własnej konfiguracji (kategorie + reguły) w JSON-ie |
 | `includes/filtry.php` | 588 | eksport reguł do filtrów Gmaila (XML) i reguł Outlooka |
 | `includes/class-segm-imap.php` | 1123 | **klient IMAP4rev1 w czystym PHP** — gniazdo, TLS, protokół |
-| `includes/skrzynka.php` | 834 | konfiguracja skrzynki, hasło, diagnostyka, „Sprawdź połączenie", rozbiór nagłówków i treści |
+| `includes/skrzynka.php` | 849 | konfiguracja skrzynki, hasło, diagnostyka, „Sprawdź połączenie", rozbiór nagłówków i treści |
 | `includes/skrzynka-przebieg.php` | 741 | przebieg na żywej skrzynce, historia, cofanie, harmonogramy WP-Cron |
 | `includes/admin-skrzynka.php` | 766 | panel zakładki *Skrzynka (IMAP)* i obsługa jej formularzy |
 | `includes/admin-powitanie.php` | 143 | ekran powitalny pokazywany raz po aktywacji |
@@ -206,6 +206,8 @@ więc deinstalacja kasuje go zapytaniem `LIKE` po `wp_options` (razem z wierszam
 | `SEGM_SKRZ_TRESC_BAJTOW` | `4096` | `skrzynka.php` | ile bajtów treści maila pobieramy do dopasowania reguł |
 | `SEGM_SKRZ_LIMIT_CZASU` | `20` | `skrzynka.php` | twardy limit czasu jednego przebiegu na skrzynce (s) |
 | `SEGM_SKRZ_LIMIT_GNIAZDA` | `15` | `skrzynka.php` | limit czasu pojedynczej operacji sieciowej (s) |
+| `SEGM_SKRZ_GLEBOKOSC_MIME` | `5` | `skrzynka.php` | do ilu poziomów zagnieżdżenia rozbieramy wiadomość wieloczęściową (spreparowany mail nie zapętli rozbioru) |
+| `SEGM_SKRZ_CZESCI_MIME` | `40` | `skrzynka.php` | ile części jednej wiadomości oglądamy, zanim przestaniemy szukać tekstu |
 | `SEGM_AI_MODEL` | `claude-haiku-4-5` | `ai.php` | model **domyślny**; nadpisuje go ustawienie `ai_model`, a na końcu filtr `segm_ai_model` |
 | `SEGM_AI_MODEL_WZORZEC` | `/^[a-z0-9][a-z0-9._-]{2,63}$/` | `ai.php` | dopuszczalny kształt nazwy modelu |
 | `SEGM_AI_TIMEOUT` | `9` | `ai.php` | limit czasu wywołania API (s), jeden retry |

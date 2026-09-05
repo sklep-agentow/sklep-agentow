@@ -165,6 +165,20 @@ krok( regula( $t, 'faktura' ), 'D3. multipart tylko z text/html -> regula TRAFIA
 krok( ! regula( $t, 'body' ), 'D3. znaczniki HTML zdjete (regula "body" nie lapie)' );
 krok( ! regula( $t, 'charset' ), 'D3. naglowki MIME NIE trafiaja do tekstu' );
 
+// multipart/mixed: TRESC tylko w text/html + ZALACZNIK text/plain (newsletter/CRM z plikiem .txt/.csv/.ics) — #297 r1 WAZNA 1:
+// zalacznik tekstowy WYGRYWAL z trescia, bo pierwsza czesc text/plain bila kazda text/html.
+$zal = "--zewn\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Transfer-Encoding: 7bit\r\n\r\n<p>Dzien dobry, w zalaczniku Faktura nr 7/2026.</p>\r\n"
+	. "--zewn\r\nContent-Type: text/plain; charset=UTF-8; name=\"notatka.txt\"\r\nContent-Disposition: attachment; filename=\"notatka.txt\"\r\nContent-Transfer-Encoding: 7bit\r\n\r\nZALACZNIKOWESLOWO nie jest trescia listu\r\n"
+	. "--zewn--\r\n";
+$t   = widzi( $zal, "From: klient@example.com\r\nContent-Type: multipart/mixed; boundary=zewn\r\n\r\n" );
+krok( regula( $t, 'faktura' ), 'M. tresc HTML + zalacznik text/plain -> regula widzi TRESC listu (HTML bez znacznikow)', podglad( $t ) );
+krok( ! regula( $t, 'zalacznikoweslowo' ), 'M. zalacznik text/plain (Content-Disposition: attachment) NIE wygrywa z trescia' );
+
+// multipart BEZ boundary (poczta wadliwa/spreparowana): nie da sie wyciac czesci — do reguly NIE idzie surowe MIME (DROBNA 1).
+$t = widzi( $multi_7bit, "From: klient@example.com\r\nContent-Type: multipart/alternative\r\n\r\n" );
+krok( '' === $t, 'N. multipart bez boundary -> pusty tekst, nie surowe MIME', podglad( $t ) );
+krok( ! regula( $t, 'gr4nica' ) && ! regula( $t, 'content-type' ), 'N. granica i naglowki czesci NIE trafiaja do tekstu' );
+
 // ---------------------------------------------------------------- droga ③
 echo "\nDROGA 3 — charset to ZESTAW ZNAKOW, nie kodowanie transportowe\n";
 $t = widzi( $widoczny, $nag( 'text/plain; charset=BASE64', '7bit' ) );
@@ -176,6 +190,13 @@ $pl_8859  = (string) mb_convert_encoding( $pl_utf, 'ISO-8859-2', 'UTF-8' );
 $t        = widzi( $pl_8859, $nag( 'text/plain; charset=ISO-8859-2', '8bit' ) );
 krok( $t === $pl_utf, 'G3. PRAWDZIWY zestaw znakow (ISO-8859-2) nadal przewalutowany na UTF-8', podglad( $t ) );
 krok( mb_check_encoding( $t, 'UTF-8' ), 'G3. wynik jest poprawnym UTF-8' );
+// nazwy z IANA, ktorymi nadawcy NAPRAWDE sie przedstawiaja (DROBNA 2): Shift_JIS (RFC 1554), GB2312 (RFC 1922)
+$jp = 'Faktura nr 7/2026 請求書'; // bez polpauzy: nie istnieje w Shift_JIS, konwersja tam i z powrotem nie bylaby rowna
+$t  = widzi( (string) mb_convert_encoding( $jp, 'SJIS', 'UTF-8' ), $nag( 'text/plain; charset=Shift_JIS', '8bit' ) );
+krok( $t === $jp, 'G4. charset=Shift_JIS (nazwa IANA, nie alias SJIS) przewalutowany na UTF-8', podglad( $t ) );
+$cn = 'Faktura nr 7/2026 发票';
+$t  = widzi( (string) mb_convert_encoding( $cn, 'GB2312', 'UTF-8' ), $nag( 'text/plain; charset=GB2312', '8bit' ) );
+krok( $t === $cn, 'G5. charset=GB2312 (nazwa IANA) przewalutowany na UTF-8', podglad( $t ) );
 
 // ---------------------------------------------------------------- droga ④
 echo "\nDROGA 4 — niedomkniety znak mniejszosci nie zjada reszty tresci\n";

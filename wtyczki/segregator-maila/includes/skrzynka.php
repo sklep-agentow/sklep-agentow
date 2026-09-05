@@ -484,9 +484,11 @@ function segm_skrzynka_zestawy_znakow() {
 		'UTF-32LE',
 		'EUC-JP',
 		'SJIS',
+		'SHIFT_JIS', // nazwa zarejestrowana w IANA (RFC 1554) — tak przedstawia się nadawca; SJIS to alias mbstring
 		'ISO-2022-JP',
 		'BIG5',
 		'GB18030',
+		'GB2312', // nazwa z IANA (RFC 1922), w nagłówkach poczty częstsza niż GB18030
 		'EUC-KR',
 	);
 }
@@ -686,32 +688,42 @@ function segm_skrzynka_czesc_tekstem( $cialo, $naglowki, $glebokosc ) {
 
 	if ( 0 === strpos( $glowny, 'multipart/' ) && $glebokosc < SEGM_SKRZ_GLEBOKOSC_MIME ) {
 		$granica = segm_skrzynka_parametr_typu( $typ, 'boundary' );
-		if ( '' !== $granica ) {
-			$zwykly = '';
-			$bogaty = '';
-			foreach ( segm_skrzynka_czesci_mime( $cialo, $granica ) as $czesc ) {
-				list( $nag_czesci, $ladunek ) = segm_skrzynka_rozbij_czesc( $czesc );
-				$wynik                        = segm_skrzynka_czesc_tekstem( $ladunek, $nag_czesci, $glebokosc + 1 );
-				if ( '' === $wynik['tekst'] ) {
-					continue;
-				}
-				if ( $wynik['zwykly'] && '' === $zwykly ) {
-					$zwykly = $wynik['tekst'];
-				} elseif ( ! $wynik['zwykly'] && '' === $bogaty ) {
-					$bogaty = $wynik['tekst'];
-				}
+		if ( '' === $granica ) {
+			// multipart BEZ boundary (poczta wadliwa albo spreparowana): nie da się wyciąć części, a oddanie
+			// surowego MIME do reguły to dokładnie droga ① z nagłówka tego pliku. Nie ma czego dopasować.
+			return $pusto;
+		}
+		$zwykly = '';
+		$bogaty = '';
+		foreach ( segm_skrzynka_czesci_mime( $cialo, $granica ) as $czesc ) {
+			list( $nag_czesci, $ladunek ) = segm_skrzynka_rozbij_czesc( $czesc );
+			// ZAŁĄCZNIK (Content-Disposition: attachment) nie jest treścią listu, choćby był text/plain — człowiek
+			// widzi go jako plik. Bez tego warunku załącznik .txt/.csv/.ics WYGRYWAŁ z treścią HTML newslettera
+			// — wbrew kontraktowi „oddajemy tekst, który widzi człowiek” (plik .txt/.csv/.ics z CRM-ów i newsletterów).
+			$dyspozycja = strtolower( trim( (string) strtok( segm_skrzynka_naglowek( $nag_czesci, 'Content-Disposition' ), ';' ) ) );
+			if ( 'attachment' === $dyspozycja ) {
+				continue;
 			}
-			if ( '' !== $zwykly ) {
-				return array(
-					'tekst'  => $zwykly,
-					'zwykly' => true,
-				);
+			$wynik = segm_skrzynka_czesc_tekstem( $ladunek, $nag_czesci, $glebokosc + 1 );
+			if ( '' === $wynik['tekst'] ) {
+				continue;
 			}
+			if ( $wynik['zwykly'] && '' === $zwykly ) {
+				$zwykly = $wynik['tekst'];
+			} elseif ( ! $wynik['zwykly'] && '' === $bogaty ) {
+				$bogaty = $wynik['tekst'];
+			}
+		}
+		if ( '' !== $zwykly ) {
 			return array(
-				'tekst'  => $bogaty,
-				'zwykly' => false,
+				'tekst'  => $zwykly,
+				'zwykly' => true,
 			);
 		}
+		return array(
+			'tekst'  => $bogaty,
+			'zwykly' => false,
+		);
 	}
 
 	// Część, która nie jest tekstem (załącznik, obrazek) nie ma czego wnieść
@@ -751,8 +763,11 @@ function segm_skrzynka_czesc_tekstem( $cialo, $naglowki, $glebokosc ) {
  * słowo z treści milczałaby przy poczcie z Gmaila, Outlooka i Thunderbirda
  * (`multipart/alternative` to kształt, który wysyła każdy z nich).
  *
- * To nadal NIE jest pełny rozbiór MIME: nie wyciągamy załączników i nie
- * sklejamy części `message/partial`.
+ * To nadal NIE jest pełny rozbiór MIME: załączników nie wyciągamy — część
+ * z `Content-Disposition: attachment` jest POMIJANA przy wyborze tekstu, nawet
+ * gdy jest `text/plain` (plik .txt nie jest treścią listu) — i nie sklejamy
+ * części `message/partial`. `multipart` bez `boundary` nie ma treści (nie
+ * oddajemy surowego MIME).
  *
  * @param string $surowa    Surowy fragment sekcji TEXT.
  * @param string $naglowki  Surowe nagłówki wiadomości.

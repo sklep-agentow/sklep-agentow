@@ -148,6 +148,7 @@ Pełna historia zmian jest w pliku `CHANGELOG.md` w katalogu wtyczki.
 * Naprawione: krótki mail zakodowany base64 nie znika (ostatnia linia nie jest odcinana bezwarunkowo).
 * Naprawione: błędna nazwa zestawu znaków od nadawcy (np. „charset=BASE64”) nie zamienia treści w śmieci.
 * Naprawione: z części tekstowej nie są już zdejmowane znaczniki HTML — tylko z części HTML, i tylko domykające się.
+* Naprawione: załącznik tekstowy (.txt, .csv, .ics) nie udaje treści listu; wiadomość wieloczęściowa bez parametru boundary nie oddaje regule surowego MIME; rozpoznawane nazwy zestawów znaków Shift_JIS i GB2312.
 
 = 1.3.6 =
 * Wydanie porządkowe: z komentarzy w kodzie i z dokumentacji usunięte wewnętrzne oznaczenia naszych raportów. Zero zmian w działaniu.

@@ -26,6 +26,11 @@ Nic jeszcze.
   i podobne kodowania transportowe nie są już traktowane jak zestaw znaków.
 - **Znak `<` w zdaniu nie zjada reszty treści.** „termin <piątek" zostaje w całości;
   znaczniki zdejmujemy tylko z części HTML i tylko te, które naprawdę się domykają.
+- **Załącznik tekstowy nie udaje treści listu.** Część oznaczona `Content-Disposition: attachment`
+  (plik .txt, .csv, .ics) jest pomijana przy wyborze tekstu, nawet gdy jest `text/plain` — reguła
+  czyta treść, którą widzi człowiek, a nie zawartość załącznika.
+- **Wiadomość wieloczęściowa bez `boundary`** (wadliwa albo spreparowana) nie oddaje regule surowego MIME.
+- Nazwy zestawów znaków `Shift_JIS` i `GB2312` (tak, jak podają je nadawcy) są rozpoznawane obok `SJIS` i `GB18030`.
 
 ---
 

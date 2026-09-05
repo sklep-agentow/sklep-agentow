@@ -29,6 +29,7 @@ ROBOCZY="$(mktemp -d)"
 BLEDY=0
 KOTWICE=0
 ODWROTNA=0
+PODLOZONE=0   # ile mutantow probowano — liczba w podsumowaniu jest z licznika, nie wpisana (klasa 142)
 
 sprzataj() {
 	# `rm -rf` wylacznie na katalogu z mktemp, nigdy na sciezce z repo.
@@ -71,6 +72,7 @@ wgraj_czysty() {
 # probuj "opis" "kotwica (dokladny fragment)" "wyrazenie sed" "fragment asercji, ktora ma paść"
 probuj() {
 	local opis="$1" kotwica="$2" mutacja="$3" asercja="$4"
+	PODLOZONE=$(( PODLOZONE + 1 ))
 	wgraj_czysty
 	local przed po wyjscie kod=0 ile
 
@@ -140,6 +142,22 @@ probuj "4. text/plain znow przez wp_strip_all_tags()" \
 	"s/'tekst'  => trim( \$tekst ),/'tekst'  => wp_strip_all_tags( \$tekst ),/" \
 	"zostaje w calosci"
 
+# #297 r1 WAZNA 1 — zalacznik text/plain (Content-Disposition: attachment) znow bierze udzial
+# w wyborze tekstu i WYGRYWA z trescia HTML newslettera.
+probuj "5. zalacznik text/plain znow wygrywa z trescia listu" \
+	"if ( 'attachment' === \$dyspozycja ) {" \
+	"s/if ( 'attachment' === \$dyspozycja ) {/if ( false ) {/" \
+	"NIE wygrywa z trescia"
+
+# #297 r1 DROBNA 1 — multipart BEZ boundary znow oddaje regule surowe MIME (droga 1 tylnymi drzwiami).
+# Mutant odtwarza STARE przejscie: multipart bez boundary traktowany jak zwykly tekst (blok multipart
+# omijany), wiec do reguly wraca surowe MIME. (Samo wyciecie wczesnego powrotu NIE odtwarza wady —
+# rozbior z pusta granica i tak nie znajduje czesci i oddaje pusto; zmierzone 5.09.)
+probuj "6. multipart bez boundary znow oddaje surowe MIME" \
+	"0 === strpos( \$glowny, 'multipart/' ) && \$glebokosc < SEGM_SKRZ_GLEBOKOSC_MIME" \
+	"s/0 === strpos( \$glowny, 'multipart\/' ) \&\& \$glebokosc < SEGM_SKRZ_GLEBOKOSC_MIME/0 === strpos( \$glowny, 'multipart\/' ) \&\& '' !== segm_skrzynka_parametr_typu( \$typ, 'boundary' ) \&\& \$glebokosc < SEGM_SKRZ_GLEBOKOSC_MIME/" \
+	"pusty tekst, nie surowe MIME"
+
 echo
 echo "=== KONTROLA ODWROTNA — czysty kod MA przejsc ==="
 wgraj_czysty
@@ -155,4 +173,4 @@ else
 fi
 
 echo
-podsumowanie_proby "STRAZNIK MIME JEST SKALIBROWANY — kazdy z pieciu podlozonych bledow zlapany, czysty kod przechodzi"
+podsumowanie_proby "STRAZNIK MIME JEST SKALIBROWANY — kazdy z $PODLOZONE podlozonych bledow zlapany, czysty kod przechodzi"
