@@ -124,3 +124,10 @@ opisy commitów — upublicznienie ujawniłoby je z historią, której nie da si
 przepisania 690 commitów.
 **Dług jawny:** `golden` w CI mógłby biec NAPRAWDĘ (obraz ma Dockera) — wymaga postawienia
 kontenera bazy w workflow; odłożone do osobnego PR-a z pomiarem czasu (`audyt/CO-WISI.md`).
+**Uzupełnienie 5.09 (Dzidek: „skracamy czekanie na maks, więcej czekania na bramki niż roboty”):**
+przelot prób biegnie na PR-ze **tylko, gdy zmiana rusza `narzedzia-qa/` albo `.github/`** (na `main`
+zawsze) — próby mierzą narzędzia, nie produkt, a narzędzia są identyczne z `main`; gdy biegnie, jest
+dzielony na **trzy odłamki równoległe** nazwane w samym przelocie (`PRZELOT_ODLAMEK`), a próba
+kontrolna `przelot-odlamki-proba-kontrolna.sh` pilnuje, że suma odłamków = pełna lista. Zmierzone
+5.09: PR produktowy czeka ~12 min (recenzja) zamiast 26; PR narzędziowy ~10 min zamiast 14.
+Świadomie NIE ruszone: czas samej `bramki-proba-kontrolna.sh` (~590 s) — przebudowa testu po oddaniu.
