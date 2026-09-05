@@ -3050,7 +3050,7 @@ html.sklepag-lightbox-otwarty {
 }
 .sklepag-faktura-pola textarea:focus { outline: none; border-color: var(--sklepag-limonka); }
 
-/* F5-F3 / F5-F1 (0.9.42): blok sprzedawcy i zdanie z linkami prawnymi przed przyciskiem zakupu — te same
+/* 0.9.42: blok sprzedawcy i zdanie z linkami prawnymi przed przyciskiem zakupu — te same
    tokeny co reszta formularza; bez własnych reguł wychodziły kupującemu bez stylu. */
 .sklepag-sprzedawca-przed-zakupem {
 	margin: 1em 0 0.75em;

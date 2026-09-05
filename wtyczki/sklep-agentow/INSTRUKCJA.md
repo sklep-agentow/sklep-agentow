@@ -296,10 +296,12 @@ Rzeczy **wewnątrz** sekcji (nie osobna sekcja) — tu samoobsługa działa tylk
   **sama** podmienia je na prawdziwe: sprzątanie jest warunkowe (zadanie WP-Cron co 10 minut, tylko gdy harmonogram
   WordPressa działa), obejmuje dziennik zdarzeń i historię logowań, a dane zamówień nie są usuwane po czasie.
   Jeśli to zdanie przepisałeś po swojemu, wtyczka go nie tknie — zobaczysz żółty komunikat „Zakres (zdanie
-  o sprzątaniu: warunkowe, WP-Cron)” i dopisujesz tę prawdę sam, własnymi słowami. ⛔ Nie wpisuj już starego
+  o sprzątaniu: warunkowe, WP-Cron; dane do faktury; opinie)” i dopisujesz tę prawdę sam, własnymi słowami. ⛔ Nie wpisuj już starego
   brzmienia „90 dni” bez warunku — było nieprawdziwe (gdy WP-Cron stoi, nic nie znika);
-- **Polityka prywatności** z wersji wcześniejszej niż 0.9.23: dane do faktury (nazwa, NIP, adres — cel: faktura,
-  podstawa: obowiązek prawny z ustawy o VAT) w opisie zakresu danych — tego wtyczka nie podmienia, dopisz sam;
+- **Polityka prywatności** z wersji wcześniejszej niż 0.9.25 (dane do faktury: nazwa, NIP, adres — cel: faktura,
+  podstawa: obowiązek prawny z ustawy o VAT) albo niż 0.9.8 (opinie): jeśli strona jest **nadal szablonem**, wtyczka
+  podmienia całą linię „Zakres:” na aktualną (zna cztery historyczne brzmienia tej linii); jeśli to już **Twój
+  dokument** — dostajesz żółty komunikat „Zakres (…)” i dopisujesz te dane sam;
 - **Regulamin** z wersji wcześniejszej niż 0.9.40: punkt o gwarancji satysfakcji — że jest to
   **dobrowolne zobowiązanie sprzedawcy PONAD ustawę**, niezależne od utraty prawa odstąpienia
   z art. 38 — bo strona produktu tę gwarancję obiecuje, więc regulamin musi ją potwierdzać.

@@ -481,9 +481,9 @@ function sklepag_admin_dashboard() {
 
 	// DANE SPRZEDAWCY: bez nazwy firmy i adresu stopka maila po zakupie nie spełnia art. 21 ustawy
 	// o prawach konsumenta (potwierdzenie na trwałym nośniku ma nieść dane przedsiębiorcy).
-	// ⛔ ROZSZERZONE (F5-F3): ten sam warunek teraz decyduje TAKŻE o bloku sprzedawcy na stronie
+	// ⛔ ROZSZERZONE : ten sam warunek teraz decyduje TAKŻE o bloku sprzedawcy na stronie
 	// produktu (sklepag_formularz_zakupu() w front-produkt.php) — puste pola nic tam nie rysują
-	// kupującemu (zaślepka byłaby gorsza niż brak, ta sama klasa co F5-F2), więc komunikat musi
+	// kupującemu (zaślepka byłaby gorsza niż brak, ta sama klasa: zaślepka udająca gotowy dokument), więc komunikat musi
 	// mówić o OBU miejscach, nie tylko o mailu, inaczej właściciel nie wie, że brakuje mu też
 	// obowiązku informacyjnego SPRZED zakupu (art. 12 ust. 1), nie tylko potwierdzenia PO nim.
 	if ( function_exists( 'sklepag_sprzedawca' ) && ! sklepag_sprzedawca()['kompletne'] ) {

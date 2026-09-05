@@ -263,6 +263,19 @@ $pw = get_post( $id_pol_wlasna );
 $sprawdz( 'wlasna polityka NIETKNIETA', $pw && $pw->post_content === $polityka_wlasna );
 $meld_pol = get_option( 'sklepag_strony_nowe_sekcje', array() );
 $sprawdz( 'meldunek wymienia zdanie o sprzataniu', is_array( $meld_pol ) && false !== strpos( wp_json_encode( $meld_pol ), 'sprz' ), 'meldunek: ' . substr( (string) wp_json_encode( $meld_pol ), 0, 200 ) );
+echo "=== C5d. WLASNY dokument (bez SZABLON) z NASZYM starym zdaniem slowo w slowo -> NIETKNIETY + meldunek (r4 W1) ===\n";
+$polityka_wlasna_stare = "Polityka prywatnosci Firmy Wlasnej\n\nAdministrator danych: Firma Wlasna.\nZakres: e-mail, dane zamowienia, " . $stare_zdanie . "\nPodmioty przetwarzajace: Stripe.\n";
+$id_pol_wl2 = wp_insert_post( array( 'post_title' => 'Polityka prywatności', 'post_content' => $polityka_wlasna_stare, 'post_status' => 'publish', 'post_type' => 'page' ) );
+update_option( 'sklepag_strona_polityka', $id_pol_wl2, false );
+delete_option( 'sklepag_strony_nowe_sekcje' );
+delete_option( 'sklepag_wersja_stron' );
+sklepag_kompensuj_strony_prawne();
+clean_post_cache( $id_pol_wl2 );
+$pw2 = get_post( $id_pol_wl2 );
+$sprawdz( 'wlasny dokument ze starym zdaniem NIETKNIETY (instrukcja: ani znaku)', $pw2 && $pw2->post_content === $polityka_wlasna_stare, 'kompensacja podmienila zdanie w cudzym dokumencie prawnym' );
+$meld_wl2 = get_option( 'sklepag_strony_nowe_sekcje', array() );
+$sprawdz( 'wlasny dokument dostaje MELDUNEK o zdaniu do przepisania', is_array( $meld_wl2 ) && false !== strpos( wp_json_encode( $meld_wl2 ), 'sprz' ), 'meldunek: ' . substr( (string) wp_json_encode( $meld_wl2 ), 0, 160 ) );
+wp_delete_post( $id_pol_wl2, true );
 echo "=== C6. ZNACZNIK PRZED PRACA: bieg ustawia znacznik zanim cokolwiek zapisze (rownolegle zadanie wraca na bramie) ===\n";
 delete_option( 'sklepag_wersja_stron' );
 $znacznik_w_trakcie = null;
@@ -289,6 +302,27 @@ $sprawdz( 'przepisane zdanie w SZABLONIE nietkniete', $psz && false !== strpos( 
 $meld_sz = get_option( 'sklepag_strony_nowe_sekcje', array() );
 $sprawdz( 'SZABLON z przepisanym zdaniem dostaje MELDUNEK o zdaniu', is_array( $meld_sz ) && false !== strpos( wp_json_encode( $meld_sz ), 'sprz' ), 'meldunek: ' . substr( (string) wp_json_encode( $meld_sz ), 0, 200 ) );
 wp_delete_post( $id_pol_sz, true );
+echo "=== C5e/C5f. SZABLON polityki z HISTORYCZNA linia Zakres (0.9.8 / 0.9.0) -> cala linia podmieniona: faktura + opinie + WP-Cron (r4 W3) ===\n";
+foreach ( array(
+	'0.9.8 (opinie, bez faktury)'  => 'Zakres: adres e-mail kupującego, dane transakcji, dziennik zdarzeń (90 dni); przy dobrowolnej opinii — imię i treść opinii, publikowane na stronie produktu wyłącznie za wyrażoną w formularzu zgodą (usunięcie/anonimizację można wykonać na żądanie).',
+	'0.9.0 (bez opinii i faktury)' => 'Zakres: adres e-mail kupującego, dane transakcji, dziennik zdarzeń (90 dni).',
+) as $etykieta => $linia_hist ) {
+	$pol_hist = "SZABLON — wypełnij danymi sprzedawcy przed publikacją.\n\nAdministrator danych: [NAZWA, KONTAKT]\n" . $linia_hist . "\nPodmioty przetwarzające: operator płatności Stripe; mechanizm poczty serwera.\n";
+	$id_h     = wp_insert_post( array( 'post_title' => 'Polityka prywatności sklepu (SZABLON)', 'post_content' => $pol_hist, 'post_status' => 'draft', 'post_type' => 'page' ) );
+	update_option( 'sklepag_strona_polityka', $id_h, false );
+	delete_option( 'sklepag_strony_nowe_sekcje' );
+	delete_option( 'sklepag_wersja_stron' );
+	sklepag_kompensuj_strony_prawne();
+	clean_post_cache( $id_h );
+	$ph = get_post( $id_h );
+	$th = $ph ? $ph->post_content : '';
+	$sprawdz( "$etykieta: stara linia Zakres ZNIKNELA", false === strpos( $th, $linia_hist ) );
+	$sprawdz( "$etykieta: nowa linia ma dane do faktury", false !== strpos( $th, 'dane do faktury (nazwa firmy, NIP' ) );
+	$sprawdz( "$etykieta: nowa linia ma opinie", false !== strpos( $th, 'przy dobrowolnej opinii' ) );
+	$sprawdz( "$etykieta: nowa linia ma sprzatanie warunkowe (WP-Cron)", false !== strpos( $th, 'WP-Cron' ) );
+	$sprawdz( "$etykieta: sekcja Zakres NIE zdublowana", 1 === substr_count( $th, 'Zakres:' ), 'Zakres: x' . substr_count( $th, 'Zakres:' ) );
+	wp_delete_post( $id_h, true );
+}
 echo "=== C8. AKTYWACJA na starej instalacji (strony zastane) NIE deklaruje szablonu za aktualny ===\n";
 $id_zastany = wp_insert_post( array( 'post_title' => 'Regulamin sklepu (SZABLON)', 'post_content' => "SZABLON stary\nSprzedawca: [NAZWA]", 'post_status' => 'draft', 'post_type' => 'page' ) );
 update_option( 'sklepag_strona_regulamin', $id_zastany, false );
@@ -304,7 +338,21 @@ sklepag_utworz_strony(); // swieze strony: znacznik ma byc ustawiony
 $sprawdz( 'aktywacja na czystej instalacji USTAWIA znacznik', (int) get_option( 'sklepag_wersja_stron', 0 ) === SKLEPAG_WERSJA_STRON );
 foreach ( array( 'sklepag_strona_regulamin', 'sklepag_strona_polityka' ) as $o_sw ) { $i_sw = (int) get_option( $o_sw, 0 ); if ( $i_sw ) { wp_delete_post( $i_sw, true ); } }
 update_option( 'sklepag_strona_polityka', $id_pol_na_bok, false );
-echo "=== C7. FRONT nie robi pracy: bez is_admin/cron/WP-CLI kompensacja wraca bez zapisu ===\n";
+echo "=== C8b. AKTYWACJA: nieudane wp_insert_post NIE ustawia znacznika szablonu (r4 W4) ===\n";
+$id_reg_na_bok2 = (int) get_option( 'sklepag_strona_regulamin', 0 );
+$id_pol_na_bok2 = (int) get_option( 'sklepag_strona_polityka', 0 );
+delete_option( 'sklepag_strona_regulamin' );
+delete_option( 'sklepag_strona_polityka' );
+delete_option( 'sklepag_wersja_stron' );
+add_filter( 'wp_insert_post_empty_content', '__return_true' ); // WordPress uznaje tresc za pusta -> wp_insert_post oddaje 0 (bez $wp_error)
+sklepag_utworz_strony();
+remove_filter( 'wp_insert_post_empty_content', '__return_true' );
+$sprawdz( 'przy nieudanym zalozeniu stron znacznik NIE jest ustawiony', (int) get_option( 'sklepag_wersja_stron', 0 ) !== SKLEPAG_WERSJA_STRON, 'znacznik: ' . var_export( get_option( 'sklepag_wersja_stron', null ), true ) );
+$sprawdz( 'zadna strona prawna nie powstala (opcje puste)', 0 === (int) get_option( 'sklepag_strona_regulamin', 0 ) && 0 === (int) get_option( 'sklepag_strona_polityka', 0 ) );
+foreach ( array( 'sklepag_strona_regulamin' => $id_reg_na_bok2, 'sklepag_strona_polityka' => $id_pol_na_bok2 ) as $o_b => $i_b ) {
+	if ( $i_b ) { update_option( $o_b, $i_b, false ); } else { delete_option( $o_b ); }
+}
+echo "=== C7. KONTROLA PRZYRZADU: test biegnie pod WP-CLI (brame frontu mierzy spust zadaniem HTTP, nie ten test — r4 W2) ===\n";
 $sprawdz( 'kontrola przyrzadu: test biegnie pod WP-CLI (dlatego C1-C6 mogly pracowac)', defined( 'WP_CLI' ) && WP_CLI );
 update_option( 'sklepag_strona_polityka', $id_pol_przed, false );
 wp_delete_post( $id_pol_stara, true );

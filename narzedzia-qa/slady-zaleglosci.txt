@@ -31,5 +31,3 @@
 # na czerwono. Kolejność scalania nie ma znaczenia, ważne, która wersja zostaje.
 # 5.09 (Q-3): dokumenty paczki klienta sprawdza kanoniczny skaner. Dwie linie instrukcji Stripe CLI dla KLIENTA testujacego
 #   lokalnie — „localhost” jest tu tresc instrukcji, nie adres naszej maszyny (zadnego portu warsztatu, PORT to zaslepka).
-paczka-klienta|INSTRUKCJA-INSTALACJI.md|Serwery Stripe nie widzą localhosta — użyj oficjalnego Stripe CLI:
-paczka-klienta|INSTRUKCJA-INSTALACJI.md|stripe listen --forward-to http://localhost:PORT/wp-json/sklepag/v1/webhook

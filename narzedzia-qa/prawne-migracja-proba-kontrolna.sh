@@ -3,9 +3,10 @@
 # blok sprzedawcy, kompensacja stron prawnych w migracji) — OPAKOWANIE spustu
 # `narzedzia-qa/prawne-migracja-stos-probny.sh`, żeby przelot prób (`*proba-kontrolna*.sh`) ją widział.
 #
-# Spust sam stawia STOS JEDNORAZOWY (lib-stos-probny, zamek stosu) i ma wbudowane dwie próby kontrolne,
-# z których każda psuje DOKŁADNIE JEDEN warunek w kopii kodu WEWNĄTRZ kontenera (drzewo nietknięte).
-# Ten plik uruchamia trzy biegi i liczy je trzema licznikami (klasa 138 ściągi):
+# Spust sam stawia STOS JEDNORAZOWY (lib-stos-probny, zamek stosu) i ma wbudowane próby kontrolne
+# (blok-sprzedawcy, sekcje, podmiana-wlasny, front), z których każda psuje DOKŁADNIE JEDEN warunek w kopii
+# kodu WEWNĄTRZ kontenera (drzewo nietknięte). Ten plik uruchamia bieg czysty + po jednym na wadę i liczy
+# je trzema licznikami (klasa 138 ściągi):
 #   BLEDY    — strażnik NIE zauważył podłożonej wady (wada PRODUKTU pomiaru)   → EXIT 1
 #   KOTWICE  — spust nie umiał podłożyć wady / brak warunków (kod 2)             → EXIT 2
 #   ODWROTNA — czysty kod nie przechodzi (przebieg niewiarygodny)               → EXIT 2
@@ -17,9 +18,10 @@ SPUST=narzedzia-qa/prawne-migracja-stos-probny.sh
 [ -f "$SPUST" ] || { echo "brak $SPUST" >&2; exit 2; }
 command -v docker > /dev/null 2>&1 || { echo "brak dockera — nie zmierzono" >&2; exit 2; }
 
-BLEDY=0; KOTWICE=0; ODWROTNA=0
+BLEDY=0; KOTWICE=0; ODWROTNA=0; WADY=0
 bieg() { # nazwa, oczekiwany kod, argumenty...
 	local nazwa="$1" ocz="$2"; shift 2
+	[ "$#" -gt 0 ] && WADY=$((WADY+1))   # liczba wad w podsumowaniu jest z licznika, nie wpisana (klasa 142)
 	local kod
 	bash "$SPUST" "$@" > /tmp/prawne-migracja-proba.$$.txt 2>&1; kod=$?
 	if [ "$kod" -eq 2 ]; then
@@ -40,6 +42,8 @@ bieg "czysty kod" 0
 echo "=== WADY W KOPII W KONTENERZE — straznik ma PASC (spust odwraca kod: 0 = zlapana) ==="
 bieg "wada: blok sprzedawcy wyciety z formularza" 0 --proba-kontrolna blok-sprzedawcy
 bieg "wada: krok (b) kompensacji (dopisywanie sekcji) wylaczony" 0 --proba-kontrolna sekcje
+bieg "wada: podmiana zdan takze we WLASNYM dokumencie wlasciciela (brama szablonu wycieta; r4 W1)" 0 --proba-kontrolna podmiana-wlasny
+bieg "wada: brama frontu wycieta — zadanie goscia wykonuje kompensacje (r4 W2)" 0 --proba-kontrolna front
 
 echo
 if [ "$ODWROTNA" -gt 0 ]; then
@@ -51,4 +55,4 @@ fi
 if [ "$BLEDY" -gt 0 ]; then
 	echo "PRAWNE-MIGRACJA-PROBA: STRAZNIK SLEPY NA $BLEDY wad(y). EXIT=1"; exit 1
 fi
-echo "PRAWNE-MIGRACJA-PROBA: czysty kod przechodzi, 2/2 wady zlapane. EXIT=0"; exit 0
+echo "PRAWNE-MIGRACJA-PROBA: czysty kod przechodzi, $WADY/$WADY wady zlapane. EXIT=0"; exit 0

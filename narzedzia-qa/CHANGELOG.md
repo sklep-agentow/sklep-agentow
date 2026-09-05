@@ -14,7 +14,7 @@ wstecz nie dopisuję, bo nie umiałbym jej odtworzyć uczciwie. Ich zmiany od te
 pory lądują tutaj.
 
 ## [Niewydane]
-- **`pakuj-dla-klienta.sh` — dokumenty paczki klienta sprawdza KANONICZNY skaner `slady-wewnetrzne.sh` (etykieta
+- **`pakuj-dla-klienta.sh` 1.2.2 — dokumenty paczki klienta sprawdza KANONICZNY skaner `slady-wewnetrzne.sh` (etykieta
   `paczka-klienta`), nie własny grep z 9 alternatyw (znalezisko Q-3: własny wzorzec przepuszczał imię właściciela, numer PR-a,
   „recenzent”, „koordynator”).** NOWA `pakuj-slady-proba-kontrolna.sh`: wpięcie (skrypt woła skaner, stary wzorzec zniknął)
   + skutek (kopia dokumentów czysta → 0; z podłożonym „koordynatorka / PR #123 / recenzent” → 1).

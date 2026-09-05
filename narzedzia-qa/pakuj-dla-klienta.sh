@@ -1,6 +1,6 @@
 #!/bin/bash
 # pakuj-dla-klienta.sh — ZBIORCZA PACZKA DLA KLIENTA: 3 zipy wtyczek + PRZECZYTAJ-MNIE + instrukcja instalacji
-# + diagramy PNG + zrzuty PNG + SHA256SUMS.txt, złożone JEDNYM poleceniem.  WERSJA 1.2.1
+# + diagramy PNG + zrzuty PNG + SHA256SUMS.txt, złożone JEDNYM poleceniem.  WERSJA 1.2.2
 #
 # PO CO TO POWSTAŁO (30.08): zamówienie mówi „zipy 3 wtyczek + sumy kontrolne”, a do dziś każdy zip leżał osobno,
 # sum nie było, a co składa się na wydanie, wiedziała tylko głowa. Czego nie da się odtworzyć jednym poleceniem,
@@ -12,9 +12,13 @@
 # 1.1.0 (recenzja PR o README, D3–D5): samokontrola OTWIERA zipy wtyczek (unzip -t, nagłówek Version == wersja z nazwy,
 # INSTRUKCJA.md w każdym, PONAD-SPECYFIKACJE.md w sklepie), kontrola śladów wymaga istnienia plików, oba katalogi
 # tymczasowe sprzątane trapem także przy porażce.
+# 1.2.0: nagłówek zna `zrzuty/`; kontrola sum między dwiema kopiami zrzutów (#283).
 # 1.2.1 (#291 r6 WAŻNA 2, klasa 11): kontrola śladów w DOKUMENTACH paczki biegnie TYM SAMYM skanerem, co zipy wtyczek
 # (narzedzia-qa/slady-wewnetrzne.sh) — ręczna lista 9 wzorców nie znała ani jednego wzorca skanera, a nazwa asercji
 # obiecywała „brak śladów wewnętrznych”. Skaner dostaje kopię obu dokumentów w osobnym katalogu (zipy i PNG są binarne).
+# 1.2.2 (Q-3, obszar C — scalone z 1.2.1 z #291, które zrobiło to samo równolegle): etykieta skanera `paczka-klienta`
+# i PRÓBA KONTROLNA `pakuj-slady-proba-kontrolna.sh` (wpięcie + skutek z podłożonym śladem) — #291 r7 WAŻNA 1: asercja
+# bez próby i bez wołającego nic nie utrzyma skalibrowanej.
 #
 # Użycie: bash narzedzia-qa/pakuj-dla-klienta.sh            → wydanie/sklep-agentow-KLIENT-<wersja sklepu>.zip
 #   EXIT 0 = paczka złożona i SAMOKONTROLA przeszła (komplet plików, sumy zgadzają się po rozpakowaniu,

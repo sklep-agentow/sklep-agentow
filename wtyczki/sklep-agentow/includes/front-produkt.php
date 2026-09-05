@@ -79,14 +79,14 @@ add_action( 'template_redirect', 'sklepag_status_404_wczesnie' );
 
 /**
  * Link do strony prawnej (regulamin|polityka) — JEDNO miejsce, z którego korzysta strona
- * produktu (przed przyciskiem, F5-F3), stopka maila (tekst i HTML) i każde przyszłe miejsce
+ * produktu (przed przyciskiem), stopka maila (tekst i HTML) i każde przyszłe miejsce
  * decyzji kupującego.
  *
- * ⛔ POWÓD (F5-F1): opcje `sklepag_strona_regulamin`/`_polityka` wskazują strony, które
+ * ⛔ POWÓD : opcje `sklepag_strona_regulamin`/`_polityka` wskazują strony, które
  * aktywacja zakłada jako `draft` z zaślepką „SZABLON" (treści prawnej nie piszemy za sprzedawcę) — kupujący prowadzony wprost
  * na taki wpis dostałby albo 404 (draft bez publicznego adresu), albo — po opublikowaniu
  * przez właściciela BEZ wypełnienia — dokument z „[NAZWA, ADRES, KONTAKT]" w treści, czyli
- * fałszywe poczucie załatwionej sprawy (ta sama klasa, co przy F5-F2). Warunek „gotowe" jest
+ * fałszywe poczucie załatwionej sprawy (ta sama klasa: zaślepka udająca gotowy dokument). Warunek „gotowe" jest
  * TAKI SAM jak w `sklepag_ostrzez_strony_prawne()` (admin.php): opublikowana I bez SZABLON
  * w tytule/treści — jedna definicja dla właściciela i dla kupującego, żeby link mówił co
  * innego niż ostrzeżenie w panelu.
@@ -122,7 +122,7 @@ function sklepag_link_prawny( $ktore ) {
  *
  * ⛔ Kupujący, który kliknął link PRZED zakupem, ma dostać ODPOWIEDŹ: HTTP 200 i zdanie po
  * polsku — nigdy 404 (dokument formalnie nie istnieje pod tym adresem) i nigdy treść szkicu
- * z zaślepką „SZABLON" (F5-F2: to gorsze niż brak dokumentu). Adres jest luźny query-stringiem
+ * z zaślepką „SZABLON" (to gorsze niż brak dokumentu). Adres jest luźny query-stringiem
  * (`?sklepag_prawne=…`), więc nie potrzebuje rewrite ani realnego wpisu WP — działa też
  * bez ładnych odnośników, tak jak `?sklepag_produkt=` obok.
  */
@@ -703,12 +703,12 @@ function sklepag_formularz_zakupu( $p ) {
 			i gdzie kupujacy ma sie upomniec, skoro sklep sam faktury nie wysle. */
 		. '<p class="sklepag-faktura-notka">Pola nieobowiązkowe — wypełnij wszystkie trzy, jeśli chcesz fakturę na firmę. Sklep zapisuje te dane przy zamówieniu i pokazuje je w potwierdzeniu zakupu; <strong>fakturę wystawia sprzedawca poza sklepem</strong> i przesyła ją osobno. Jeśli nie dotrze, odpisz na maila z potwierdzeniem zakupu. Podanie NIP-u nie zmienia Twoich praw kupującego.</p>'
 		. '</div></details>';
-	/* F5-F3: dane sprzedawcy PRZED zakupem, nie tylko w mailu po nim (art. 12 ust. 1 upk każe
+	/* dane sprzedawcy PRZED zakupem, nie tylko w mailu po nim (art. 12 ust. 1 upk każe
 		podać je „najpóźniej w chwili wyrażenia woli związania się umową” — czyli tu, przy
 		przycisku, a nie w potwierdzeniu). Ten sam sklepag_sprzedawca(), którego stopka maila
 		już używa (zakup.php) — jedno źródło danych, dwa miejsca render.
 		⛔ Gdy pola puste (nazwa/adres) — NIC nie rysujemy kupującemu: pusty blok albo
-		wypełniacze wyglądałyby na sprzedawcę, którego nie ma (ta sama klasa co F5-F2 —
+		wypełniacze wyglądałyby na sprzedawcę, którego nie ma (ta sama klasa: zaślepka udająca gotowy dokument —
 		zaślepka gorsza niż brak). Właściciel dostaje ostrzeżenie w panelu (admin-dashboard.php,
 		notice rozszerzony o tę ścieżkę), kupujący — po prostu nic nie widzi. */
 	$sprzedawca = function_exists( 'sklepag_sprzedawca' ) ? sklepag_sprzedawca() : array( 'kompletne' => false );
@@ -727,7 +727,7 @@ function sklepag_formularz_zakupu( $p ) {
 		$html .= '<div class="sklepag-sprzedawca-przed-zakupem"><p class="sklepag-mono-etykieta">[ SPRZEDAWCA ]</p>'
 			. '<p>' . implode( '<br>', $linie_sprzedawcy ) . '</p></div>';
 	}
-	/* F5-F1: link do regulaminu i polityki z miejsca decyzji kupującego. sklepag_link_prawny()
+	/* link do regulaminu i polityki z miejsca decyzji kupującego. sklepag_link_prawny()
 		(front-produkt.php, wyżej) sam wybiera między permalinkiem gotowej strony a stroną
 		„w przygotowaniu” — tu nie sprawdzamy stanu, tylko linkujemy. */
 	$html .= '<p class="sklepag-linki-prawne">Kupując, akceptujesz <a href="' . esc_url( sklepag_link_prawny( 'regulamin' ) ) . '">regulamin sklepu</a> '

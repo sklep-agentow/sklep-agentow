@@ -19,37 +19,37 @@ wydany osobno (podbicie pośrednie wewnątrz jednej zmiany).
 ## [0.9.42] — 2026-09-05 · schemat bazy bez zmian (10)
 
 ### Zmienione
-- **Polityka prywatności (szablon) i opis dziennika mówią PRAWDĘ o sprzątaniu (F4-F2):** wpisy dziennika i historii logowań
+- **Polityka prywatności (szablon) i opis dziennika mówią PRAWDĘ o sprzątaniu :** wpisy dziennika i historii logowań
   starsze niż 90 dni usuwa zadanie WP-Cron sklepu co 10 minut — sprzątanie jest warunkowe (biegnie tylko, gdy harmonogram
   WordPressa działa), a dane zamówień nie są usuwane po czasie (obowiązek podatkowy). Dotąd szablon obiecywał „90 dni” bez
   warunku, a opis dziennika „usuwane automatycznie”.
 - **Dokumentacja techniczna opisuje, że `sesje_checkout` rośnie bez końca, dlaczego świadomie, i jak właściciel sprząta ją
-  ręcznie (F4-F3):** podgląd i kasowanie tylko sesji bez zamówienia, starszych niż przyjęte okno, z ostrzeżeniem o oknach
+  ręcznie :** podgląd i kasowanie tylko sesji bez zamówienia, starszych niż przyjęte okno, z ostrzeżeniem o oknach
   reconciliation i wniosków RODO. Bez kodu kasującego — decyzja o oknach należy do właściciela.
 
 ### Naprawione
 - **Stara instalacja DOSTAJE strony prawne i nowe sekcje szablonu przy aktualizacji, nie tylko przy
-  aktywacji (F5-F4).** `sklepag_utworz_strony()` wołało się wyłącznie z hooka aktywacji, więc sklep
-  zaktualizowany w miejscu nie miał ani brakujących stron, ani sześciu sekcji z F5-F2. Migracja
+  aktywacji.** `sklepag_utworz_strony()` wołało się wyłącznie z hooka aktywacji, więc sklep
+  zaktualizowany w miejscu nie miał ani brakujących stron, ani sześciu sekcji z art. 12. Migracja
   (`sklepag_kompensuj_strony_prawne()`, przed bramą wersji schematu, własny licznik `SKLEPAG_WERSJA_STRON`)
   robi trzy rzeczy: brak strony (także w koszu) → tworzy szkic SZABLON jak przy aktywacji; strona nadal
   jest szablonem (zaślepka SZABLON w treści) → dopisuje brakujące sekcje z aktualnego szablonu; strona
   uzupełniona przez właściciela → NIE dotyka treści, tylko melduje w panelu listę nowych sekcji do
   ręcznego dopisania. Opcje po deinstalacji są sprzątane.
 ### Naprawione
-- **Szablon regulaminu ma sekcje wymagane przez art. 12 ust. 1 upk (F5-F2).** Brakowało ceny
+- **Szablon regulaminu ma sekcje wymagane przez art. 12 ust. 1 upk.** Brakowało ceny
   z podatkami, sposobu i terminu zapłaty, procedury reklamacyjnej, odpowiedzialności za zgodność
   świadczenia, funkcjonalności treści cyfrowej i informacji o pozasądowym rozstrzyganiu sporów
   (ODR). Każda sekcja to nagłówek + `[UZUPEŁNIJ]` + zdanie instrukcji, bez wymyślania treści
   prawnej za właściciela (strony prawne zostają szablonami w wersji roboczej, publikuje je sprzedawca).
 - **Kupujący dostaje link do regulaminu i polityki prywatności PRZED zakupem, nie tylko po nim
-  (F5-F1).** Nowa `sklepag_link_prawny('regulamin'|'polityka')` zwraca permalink strony, gdy jest
+.** Nowa `sklepag_link_prawny('regulamin'|'polityka')` zwraca permalink strony, gdy jest
   opublikowana i bez zaślepki „SZABLON" — w przeciwnym razie prowadzi na `?sklepag_prawne=…`
   (`template_redirect`), który renderuje „Regulamin w przygotowaniu — sprzedawca uzupełnia treść"
   (HTTP 200, nigdy 404, nigdy treść szkicu). Link stoi na stronie produktu przed przyciskiem „Kup
   teraz" oraz w stopce maila potwierdzenia (wersja tekstowa i HTML) — jedna definicja „gotowe" dla
   wszystkich trzech miejsc.
-- **Dane sprzedawcy widoczne PRZED zakupem, nie tylko w mailu po nim (F5-F3).** Formularz zakupu
+- **Dane sprzedawcy widoczne PRZED zakupem, nie tylko w mailu po nim.** Formularz zakupu
   pokazuje teraz blok z danymi sprzedawcy (`sklepag_sprzedawca()`) przed przyciskiem — te same
   dane, które dotąd szły wyłącznie do stopki maila. Gdy nazwa lub adres są puste, blok się nie
   renderuje (zaślepka byłaby gorsza niż jej brak); ostrzeżenie w panelu (dashboard) rozszerzone

@@ -20,7 +20,7 @@ add_action( 'admin_menu', 'sklepag_admin_menu' );
 add_action( 'admin_enqueue_scripts', 'sklepag_admin_assety' );
 add_action( 'admin_notices', 'sklepag_ostrzez_permalinki' );
 add_action( 'admin_notices', 'sklepag_ostrzez_strony_prawne' );
-add_action( 'admin_notices', 'sklepag_ostrzez_nowe_sekcje_szablonu' ); // F5-F4: sekcje dolozone przez aktualizacje do WLASNEGO dokumentu wlasciciela.
+add_action( 'admin_notices', 'sklepag_ostrzez_nowe_sekcje_szablonu' ); // sekcje dolozone przez aktualizacje do WLASNEGO dokumentu wlasciciela.
 
 /**
  * Świeży WordPress ma bezpośrednie odnośniki „Zwykłe" — wtedy /sklep/ po cichu
@@ -56,7 +56,7 @@ function sklepag_ostrzez_permalinki() {
  * Warunek jest SZERSZY niż „wersja robocza", bo opublikowanie nie znaczy „gotowe": strona
  * z „SZABLON" w tytule albo z niewypełnioną zaślepką w treści jest tak samo niegotowa.
  * Brak strony (opcja pusta lub wpis skasowany) NIE jest ostrzegany TUTAJ — właściciel mógł ją skasować
- * świadomie, bo ma własny regulamin gdzie indziej. Od F5-F4 migracja (`sklepag_kompensuj_strony_prawne()`
+ * świadomie, bo ma własny regulamin gdzie indziej. Od 0.9.42 migracja (`sklepag_kompensuj_strony_prawne()`
  * w `aktywacja.php`) odtwarza brakującą stronę jako SZKIC z zaślepką SZABLON — nic nie publikuje,
  * a odtworzony szkic wpada pod TO ostrzeżenie jak każda strona niegotowa. Kupujący do tego czasu
  * widzi stronę „w przygotowaniu” (`sklepag_link_prawny()`), nigdy 404.
@@ -202,7 +202,7 @@ function sklepag_admin_assety( $hook ) {
 // diagnostykę katalogu chronionego przejął notice w sklepag_admin_dashboard().
 
 /**
- * F5-F4, przypadek (c): właściciel ma WŁASNY regulamin/politykę (zaślepki SZABLON już nie ma),
+ * Przypadek (c): właściciel ma WŁASNY regulamin/politykę (zaślepki SZABLON już nie ma),
  * a aktualizacja wtyczki dołożyła do szablonu sekcje, których w jego dokumencie nie widać.
  *
  * ⛔ Dopisanie ich do gotowego dokumentu prawnego byłoby zmianą treści bez wiedzy sprzedawcy —
