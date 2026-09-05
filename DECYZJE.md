@@ -158,3 +158,9 @@ myląca — sugeruje ochronę, której nie ma); upgrade do GitHub Pro wyłączni
 **Dowód:** `git log --all --diff-filter=A -- '*CODEOWNERS'` → 0 (plik nigdy nie istniał w repo);
 `gh api repos/sklep-agentow/sklep-agentow/branches/main/protection` → `403`.
 Koordynatorka 5.09, z rozpoznania `audyt/plamy/C12-RAPORT.md`.
+
+## D43 — Korekta rubryki GOTOWE i raportu audytu po zamrożeniu — jednym PR-em porządkowym przed wydaniem 0.9.42 (5.09)
+**Decyzja:** `rubryka-GOTOWE.md` (zamrożona 30.08 dla 0.9.23) i `AUDYT-RAPORT.md` (0.9.28) dostają sekcje DELTY dla 0.9.42, nie są przepisywane od nowa;
+korekta wchodzi osobnym PR-em (`§12` planu: „korekta po zamrożeniu — wyłącznie osobnym PR z wpisem w DECYZJE.md”). Powód: 69 PR-ów od 0.9.28, druga próba
+egzaminu; rubryka bez delty opisywałaby wydanie sprzed dwóch tygodni, a bramka `oddanie-guard` czyta liczniki z nagłówka raportu (kod nowszy od raportu = raport nieważny).
+**Skutek:** liczniki w nagłówku raportu są Z POMIARU na `main` po ostatnim scaleniu (sha w raporcie); DUŻE w rejestrze INFRA, które nie są wadą wtyczek, są wymienione z powodem, nie ukryte.

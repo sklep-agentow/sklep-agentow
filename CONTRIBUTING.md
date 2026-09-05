@@ -78,6 +78,23 @@ wyczyszczenie kontekstu, są w `CLAUDE.md`; to, według czego recenzent ocenia P
   adresy dev) — skaner `slady` pada. Komentarz w kodzie niesie **powód**, nie numer PR-a.
 - Bramka wydania `narzedzia-qa/k7-koniec.sh` przed każdym Release.
 
+## Automaty, które pracują w tym repozytorium
+
+- **Dependabot** (`.github/dependabot.yml`) — co tydzień sprawdza wersje akcji GitHub i pakietów Composera i otwiera PR-y
+  z podniesieniem wersji. Taki PR przechodzi te same bramki i tę samą recenzję, co każdy inny; scalamy go dopiero, gdy
+  `quality.yml` jest zielony i recenzent nie zgłasza uwag. Wersji narzędzi w `narzedzia-qa/bramki.sh` (actionlint, gitleaks,
+  shellcheck — pinowane z sumami SHA-256) Dependabot NIE rusza: podnosi się je ręcznie, razem z sumą.
+- **Recenzent Claude** (`.github/workflows/recenzent.yml`, akcja `claude-code-action`) — czyta każdy PR według
+  `.github/RECENZENT-BRIEFING.md`, uruchamia narzędzia z allowlisty (bramki, próby kontrolne, testy dokumentacji) i pisze
+  komentarz z werdyktem: KRYTYCZNA / WAŻNA / DROBNA, każda z plikiem, linią i wynikiem uruchomienia. PR bez dowodu w opisie
+  dostaje uwagę zamiast zgody. **Zero KRYTYCZNYCH = można scalać**; WAŻNE i DROBNE, które nie dotyczą kodu produktu, mogą
+  zostać nazwanym długiem (`audyt/CO-WISI.md`) i wejść PR-em porządkowym. Recenzent nie scala sam — scala osoba wskazana
+  w `CLAUDE.md`.
+- **Bramki jakości** (`.github/workflows/quality.yml`) — opisane wyżej w „Kontrole, które zatrzymają PR”.
+
+Wdrożeń (GitHub Deployments) w tym repozytorium nie ma: paczki dla klienta powstają z `narzedzia-qa/pakuj-dla-klienta.sh`
+i jadą jako Release, nie przez środowiska GitHuba.
+
 ## Czego nie robić
 
 - Nie scalaj własnego PR-a bez przeczytania recenzji; nie kasuj gałęzi przed `state=MERGED`.

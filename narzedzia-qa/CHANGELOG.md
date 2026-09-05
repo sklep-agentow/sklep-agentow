@@ -14,6 +14,7 @@ wstecz nie dopisuję, bo nie umiałbym jej odtworzyć uczciwie. Ich zmiany od te
 pory lądują tutaj.
 
 ## [Niewydane]
+- **`testy/zamek-stosu-probnego-proba-kontrolna.sh` — licznik użytkowników stosu próbnego z pomiaru: dziewiętnastu (było: szesnastu; obszary C i D dołożyły trzech wołających `postaw_stos`).** Słowo pilnowane w trzech dokumentach: `testy/lib-golden-stos.sh`, `narzedzia-qa/lib-stos-probny.sh` i ten wpis; wpisy historyczne (1.0.2) zostają z liczbą z dnia wydania.
 - **`csv-neutralizacja-blizniaki-proba-kontrolna.sh` — NOWA: spust i kalibracja strażnika klasy 107
   `testy/csv-neutralizacja-blizniaki-test.sh` (#298 r1 WAŻNA 3, DROBNA 8).** Strażnik istniał bez wołającego (klasa 105) i bez
   próby; teraz przelot CI bierze próbę, a ona podkłada 3 mutanty w KOPII trzech plików (segregator bez tabulatora, stała ChatBota

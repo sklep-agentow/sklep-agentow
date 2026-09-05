@@ -13,6 +13,8 @@
 #   B. stała ChatBota bez powrotu karetki             → strażnik MUSI paść (EXIT=1, „BRAK … CR")
 #   C. kopia ChatBota wypada z pomiaru (plik bez listy) → strażnik MUSI paść na PODŁODZE (EXIT=1, „PODLOGA")
 #   kontrola odwrotna: czysta kopia trzech plików     → EXIT=0, „kopii: 3"
+#   kontrola na PRAWDZIWYM repo (bez CSV_BLIZNIAKI_KORZEN) → EXIT=0 i liczba kopii z wyjścia strażnika; bez mutanta
+#   (mutant tej gałęzi = C na kopii: strażnik pada na podłodze, gdy kopii ubędzie)
 #
 # Nie wymaga stosu, Dockera ani PHP — strażnik czyta pliki grepem.
 # EXIT 0 = strażnik skalibrowany · 1 = któryś mutant przeszedł niezauważony albo czysty kod padł · 2 = przyrząd
@@ -79,6 +81,19 @@ probuj "B. stala ChatBota bez powrotu karetki" "wtyczki/chatbot-live/includes/cs
 # C. kopia ChatBota znika z pomiaru → podłoga liczby kopii
 probuj "C. kopia ChatBota wypada z pomiaru (podloga MIN_KOPII)" "wtyczki/chatbot-live/includes/csv.php" \
 	"" "USUN" "PODLOGA"
+
+echo "=== KONTROLA NA PRAWDZIWYM REPOZYTORIUM — straznik mierzy wtyczki/ z drzewa, nie kopie (#298 r6 W1) ==="
+# Mutanty wyzej biegna na KOPII trzech nazwanych plikow; to, czego strazniK ma pilnowac naprawde — „czwarta kopia
+# dopisana pod inna nazwa" w CALYM wtyczki/ — jest mierzone tylko tutaj: bieg bez CSV_BLIZNIAKI_KORZEN, na repo.
+kod=0; wyjscie="$( bash "$STRAZNIK" 2>&1 )" || kod=$?
+ile_repo="$( printf '%s\n' "$wyjscie" | grep -oE '^kopii: [0-9]+' | grep -oE '[0-9]+' )"
+# Strażnik sam egzekwuje podłogę (MIN_KOPII → EXIT=1), więc tu rozstrzyga kod wyjścia; liczba kopii jest meldowana, nie oceniana.
+if [ "$kod" -eq 0 ] && [ -n "$ile_repo" ]; then
+	echo "  OK   repozytorium: EXIT=0, kopii: $ile_repo (podłogę egzekwuje strażnik), wszystkie z kompletem"
+else
+	echo "  BLAD repozytorium: EXIT=$kod, kopii: ${ile_repo:-?} — rozjazd albo kopia poza pomiarem"; printf '%s\n' "$wyjscie" | tail -4 | sed 's/^/         /'
+	BLEDY=$(( BLEDY + 1 ))
+fi
 
 echo "=== KONTROLA ODWROTNA — czysta kopia MA przejsc ==="
 wgraj_czysty; kod=0

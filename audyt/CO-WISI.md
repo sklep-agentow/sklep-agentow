@@ -77,6 +77,44 @@ widzi drugiego). Decyzja o tym, co z tej listy jedzie do klienta jako „znane o
 **Z recenzji #289 (obszar D), dług narzędziowy:** W2 próba spustu crona tylko prozą · W3 bliźniak `lib-stos-probny.sh` bez `DISABLE_WP_CRON` ·
 W7 kopia spustu na hoście bez `cmp` · D3 „98 wiadomości” bez pomiaru — patrz sekcja „UWAGI WAŻNE Z RECENZJI #288 r3 I #289”.
 
+## 🟡 DŁUG NAZWANY ZE SCALEŃ 5.09 PRZY ZERZE KRYT (reguła 10:15: uwagi o narzędziach/dokumentach nie idą rundami) — ODŁOŻONE ŚWIADOMIE, NIE PRZEOCZONE
+
+Każda pozycja = nagłówek uwagi recenzenta (treść i dowód w wątku PR-a). Nic z tej listy nie jest wadą zachowania wtyczek widoczną dla kupującego;
+wady produktu z tych rund poszły do gałęzi (#298 r1–r4) albo do #299 (#294 r5 W2, r7 W1). Wpięcie `paczka-zgodnosc.sh` do `BRAMKI=()` — patrz osobny wpis wyżej.
+
+
+**#297 r2 (Segregator 1.3.7)**
+- DROBNA 1 · Nagłówek próby kontrolnej mówi „pięć mutantów", w pliku jest siedem
+- DROBNA 2 · Dwie nowe granice zachowania są w kodzie i w CHANGELOG-u, ale nie ma ich tam, gdzie właściciel czyta kontrakt rozbioru MIME
+
+**#296 r3 (porządek)**
+- ⚠️ WAŻNA 1 — sprzątacz nie widzi największego generatora fałszywego przychodu na stanowisku (`@seed.local`), a rejestr ogłasza `I-22` zamknięte zdaniem „24 prawdziwe wiersze”
+- ⚠️ WAŻNA 2 — dwa wiersze skasowane 5.09 pod kryterium, które ta runda uznała za błędne; nagłówek i CHANGELOG podają ten fakt jako **uspokojenie**
+- 🔹 DROBNA 1 — „Dowód” pod `I-23` jest cytatem, którego w wyjściu nie ma
+- 🔹 DROBNA 2 — strażnik pilnuje KODÓW w sekcji długu, ale nie pilnuje LICZB, którymi ta sekcja się zaczyna
+- 🔹 DROBNA 3 — `F5-F5` stoi w liście „zamykane otwartymi PR-ami”, trzy linie nad zdaniem, że jest już zamknięty
+- 🔹 DROBNA 4 — `opinie-test` wpisane w konwencję `test.local`, a to adres `@example.com`
+
+**#291 r7 (scalone 09:57)**
+- 🟠 WAŻNA 1 — nowa asercja śladów w dokumentach paczki nie ma ani próby kontrolnej, ani żadnego wołającego: nic jej nie utrzyma skalibrowanej i nic jej nie uruchomi
+- 🔵 DROBNA 2 — rozkład 33 archiwów w wierszu `↳ D-4` liczy `0.9.40` dwa razy i gubi paczkę ChatBota (klasa 3)
+- 🔵 DROBNA 3 — blok historii w `pakuj-dla-klienta.sh` przeskakuje z 1.1.0 na 1.2.1; wpisu 1.2.0 nie ma (klasa 3)
+- W2 · DROBNA — strona „w przygotowaniu” przechwytuje KAŻDY adres sklepu, bo nie ma kotwicy, którą ma jej sąsiad; do tego nadal bez `noindex`
+- W3 · DROBNA — dwa nagłówki „### Naprawione” w jednym wydaniu i pusty „[Niewydane]” w CHANGELOG-u, który jedzie do klienta (klasa 4)
+- W4 · DROBNA — dwa strażniki mają nazwę i linię werdyktu szersze niż to, co mierzą (klasa 11, próg = 1)
+
+**#296 r5 (commit 2002c9d, scalane przy ZERZE KRYT — 10:59)**
+- ⚠️ WAŻNA 1 — wiersz `I-22` ogłasza zamknięcie zdaniem „przychód na Pulpicie liczy teraz tylko **24 prawdziwe wiersze**”, a z pomiaru tego samego PR-a wynika, że tych 24 to **właśnie demo `@seed.local`**, czyli fałszywy przychód, który ten PR świadomie zostawia
+- ⚠️ WAŻNA 2 — sekcja długu obiecuje wymienić pozycje `W NAPRAWIE` „dla kompletu” i wymienia **2 z 3**; nowy strażnik tej luki nie widzi z założenia, bo iteruje wyłącznie po `OTWARTE`
+- ⚠️ WAŻNA 3 — zrzut do JSON, jedyne zabezpieczenie przed nieodwracalnym kasowaniem, obejmuje **1 z 4** tabel, z których skrypt kasuje; „PRZYWRÓCONE ze zrzutu” z rundy 4 to przywrócenie samego zamówienia, bez jego osi czasu
+- 🔹 DROBNA 1 — nagłówek rejestru nadal mówi „dziś bramka czyta TYLKO tamten plik”, a ten commit właśnie to zmienia
+- 🔹 DROBNA 2 — połowa (b) uwagi r4 WAŻNA 2 nie została zrobiona: nagłówek skryptu i CHANGELOG nadal podają „wszystkie 20 z `cs_test_`” jako uspokojenie i **nie mówią o przywróceniu** (klasa 8: poprawka w 1 z 3 egzemplarzy)
+- 🔹 DROBNA 3 — `--z-seedem` działa wyłącznie jako **drugi** argument, a licznik przy nim opisuje inne kryterium, niż liczy
+- 🔹 DROBNA 4 — `ZOSTALO` rozstrzyga o kodzie wyjścia bez `tail -1`, którym utwardzone są trzy pozostałe pomiary
+
+**#298 r3 (5.09 11:35) — W2 → PR porzadkowy**
+- ⚠️ WAŻNA 2 — paczka-zgodnosc.sh NIE w BRAMKI=() (bramka `paczka` = allowlista vs katalog); wpiąć dla 3 wtyczek, próg 14, próba w bramki-proba-kontrolna.sh; CO-WISI wpis cofnięty do 🟡
+
 ## 🟡 UWAGI WAŻNE Z RECENZJI `#288` r3 I `#289` — co poprawione PR-em porządkowym, co zostaje długiem (5.09)
 
 Zasada z 5.09: WAŻNE nie idą rundami w PR-ze obszaru, tylko do JEDNEGO PR-a porządkowego po scaleniu.
