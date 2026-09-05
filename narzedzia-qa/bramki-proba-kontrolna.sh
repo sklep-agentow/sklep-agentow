@@ -311,7 +311,13 @@ else
 	# (D41) deklaracja stoi w srodowisku calego joba — bez odciecia dziedziczy ja kazdy z trzech
 	# pomiarow i „docker+unzip” liczy 1 zamiast 0. Zlapane przelotem prob z BEZ_STOSU_WP=1 (5.09):
 	# proba samodzielnie EXIT=0, pod deklaracja EXIT=1. Deklaracje mierzy osobny przypadek nizej.
-	ile_pominiec() { env -u BEZ_STOSU_WP "$@" BRAMKI_TYLKO_FUNKCJE=1 bash "$BRAMKI" 2>&1 | grep -c "bramka golden bedzie POMINIETA"; }
+	# ⛔ `--tryb pelny` WYMUSZONY (5.09, #286): zapowiedz pominiecia goldena pada TYLKO w trybie pelnym,
+	# a bramki.sh bez flagi wykrywa tryb z diffu galezi — na PR-ze zmieniajacym same pliki tekstowe
+	# wchodzil w tryb tekstowy i WSZYSTKIE trzy pomiary dawaly 0 (proba czerwona na PR-ze do README).
+	# Na koncie bez Dockera (ciuser) caly przypadek byl pomijany, wiec zaleznosc od diffu nie miala
+	# jak wyjsc; na wykonawcy GitHuba (Docker widoczny) ruszyl pierwszy raz i padl. Proba mierzy
+	# SCIEZKE goldena, nie tresc akurat tego PR-a — tryb musi byc staly. Pomiar celowany: auto 0, pelny 1.
+	ile_pominiec() { env -u BEZ_STOSU_WP "$@" BRAMKI_TYLKO_FUNKCJE=1 bash "$BRAMKI" --tryb pelny 2>&1 | grep -c "bramka golden bedzie POMINIETA"; }
 
 	_a=$(ile_pominiec PATH="$PATH")
 	_b=$(ile_pominiec PATH="$ATRAPA_D:$PATH")
@@ -355,15 +361,15 @@ echo "=== DEKLARACJA BEZ_STOSU_WP=1 POMIJA goldena JAWNIE, Z WLASNYM POWODEM (D4
 # bez deklaracji zero (na koncie z Dockerem) — a mutant bez tej galezi ma byc ZLAPANY.
 # Ten przypadek nie potrzebuje Dockera: deklaracja ma dzialac takze tam, gdzie go nie ma
 # (wtedy pominiecie i tak jest jedno, tylko powod dockerowy zostaje nadpisany deklaracja).
-_pom_z=$(BEZ_STOSU_WP=1 BRAMKI_TYLKO_FUNKCJE=1 bash "$BRAMKI" 2>&1 | grep -c "bramka golden bedzie POMINIETA")
-_powod=$(BEZ_STOSU_WP=1 BRAMKI_TYLKO_FUNKCJE=1 bash "$BRAMKI" 2>&1 | grep -c "BEZ_STOSU_WP=1 — wykonawca bez stosu WP")
+_pom_z=$(BEZ_STOSU_WP=1 BRAMKI_TYLKO_FUNKCJE=1 bash "$BRAMKI" --tryb pelny 2>&1 | grep -c "bramka golden bedzie POMINIETA")
+_powod=$(BEZ_STOSU_WP=1 BRAMKI_TYLKO_FUNKCJE=1 bash "$BRAMKI" --tryb pelny 2>&1 | grep -c "BEZ_STOSU_WP=1 — wykonawca bez stosu WP")
 if [ "$_pom_z" = 1 ] && [ "$_powod" = 1 ]; then
 	echo "  OK   BEZ_STOSU_WP=1 → 1 pominiecie, powod nazywa deklaracje"
 else
 	echo "  BLAD BEZ_STOSU_WP=1: pominiec=$_pom_z (ma byc 1), powod z nazwa=$_powod (ma byc 1)"; BLEDY=$((BLEDY+1))
 fi
 if docker ps > /dev/null 2>&1; then
-	_pom_bez=$(env -u BEZ_STOSU_WP BRAMKI_TYLKO_FUNKCJE=1 bash "$BRAMKI" 2>&1 | grep -c "bramka golden bedzie POMINIETA")
+	_pom_bez=$(env -u BEZ_STOSU_WP BRAMKI_TYLKO_FUNKCJE=1 bash "$BRAMKI" --tryb pelny 2>&1 | grep -c "bramka golden bedzie POMINIETA")
 	if [ "$_pom_bez" = 0 ]; then
 		echo "  OK   bez deklaracji na koncie z Dockerem golden NIE jest pomijany"
 	else
@@ -383,7 +389,7 @@ if kot in s:
 else:
     print('MUTACJA_NIEUDANA')
 PYMUT
-_pom_mut=$(BEZ_STOSU_WP=1 BRAMKI_TYLKO_FUNKCJE=1 bash "$BRAMKI" 2>&1 | grep -c "BEZ_STOSU_WP=1 — wykonawca bez stosu WP")
+_pom_mut=$(BEZ_STOSU_WP=1 BRAMKI_TYLKO_FUNKCJE=1 bash "$BRAMKI" --tryb pelny 2>&1 | grep -c "BEZ_STOSU_WP=1 — wykonawca bez stosu WP")
 if [ "$_pom_mut" = 0 ]; then
 	echo "  OK   zlapane: bez galezi deklaracji powod z nazwa znika ($_pom_mut)"
 else

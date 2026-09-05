@@ -14,6 +14,13 @@ wstecz nie dopisuję, bo nie umiałbym jej odtworzyć uczciwie. Ich zmiany od te
 pory lądują tutaj.
 
 ## [Niewydane]
+- **`bramki-proba-kontrolna.sh` — pomiary pominięcia goldena wymuszają `--tryb pelny` (5.09, #286).** Zapowiedź
+  „golden bedzie POMINIETA” pada tylko w trybie pełnym, a `bramki.sh` bez flagi wykrywa tryb z diffu gałęzi — PR
+  zmieniający same pliki tekstowe wpadał w tryb tekstowy i trzy pomiary (docker+unzip / bez dockera / docker bez
+  unzip) oraz nowy przypadek `BEZ_STOSU_WP=1` dawały 0 zamiast 0/1/0/1 → próba czerwona, choć kod bramki zdrowy.
+  Klasa L38 („gałąź, w którą środowisko nie wchodzi”): na `ciuser` bez Dockera cały przypadek był pomijany, więc
+  zależność od diffu nie miała jak wyjść przez tydzień; na wykonawcy GitHuba (Docker widoczny) ruszył pierwszy raz.
+  Dowód: pomiar celowany na gałęzi tekstowej — auto 0, `--tryb pelny` 1; pełna próba po naprawie w opisie PR-a.
 - **`bramki.sh` — druga jawna odpowiedź na pytanie „czy golden ma gdzie wystartować”: `BEZ_STOSU_WP=1` (D41, 5.09).**
   Wykonawca GitHuba (`ubuntu-latest`) Dockera MA, a kontenera bazy stosu warsztatu NIE — bez deklaracji golden
   widziałby Dockera i świecił czerwono jako „wada stanowiska” na każdym PR-ze. Deklaracja stoi wyłącznie w

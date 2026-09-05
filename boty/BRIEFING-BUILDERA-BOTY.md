@@ -9,7 +9,7 @@ albo zmienia zakres.
 ## GDZIE PRACUJESZ
 - Worktree: `/root/praca/zlecenia/sklep-agentow-boty` (gałęzie `b1/...`).
   ⛔ TYLKO tam — nigdy w głównym klonie.
-- Repo: `szydlowskikonrad95-art/sklep-agentow`, base branch `main`.
+- Repo: `sklep-agentow/sklep-agentow` (od 5.09 w organizacji; wcześniej `szydlowskikonrad95-art/sklep-agentow`), base branch `main`.
 
 ## GRANICA MODUŁU (podział po modułach — kolizja ma być NIEMOŻLIWA)
 - ✅ Twoje: `wtyczki/chatbot-live/` · `wtyczki/segregator-maila/` · `boty/` (dokumenty).

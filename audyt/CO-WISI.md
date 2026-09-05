@@ -1256,7 +1256,7 @@ która działa, to **człowiek otwierający plik**.
 - **Minuty GitHuba są teraz kosztem.** 2000 min/mies. ≈ 80 pchnięć; tydzień 29.08–5.09 miał ich
   ~200. ⇒ Budżet z twardym stopem w GitHubie (Budgets and alerts) — ustawia właściciel; oraz
   reguła tempa: scalać przy ZERZE uwag krytycznych, WAŻNE tu, jednym PR-em porządkowym.
-- **Po transferze repo do organizacji `sklep-agentow`:** odznaki i odnośniki w `README.md` (3 wiersze
+- ~~**Po transferze repo do organizacji `sklep-agentow`:**~~ ✅ ZAMKNIĘTE 5.09 (PR porządkowy po #285): odznaki i odnośniki w `README.md` (3 wiersze
   z `szydlowskikonrad95-art`), `narzedzia-qa/bramka-recenzji-proba-kontrolna.sh` (1),
   `boty/BRIEFING-BUILDERA-BOTY.md` (1) wskazują starego właściciela — GitHub przekierowuje, ale
   odznaka `badge.svg` pod starym adresem może przestać się odświeżać. ⇒ Commit porządkowy po transferze.

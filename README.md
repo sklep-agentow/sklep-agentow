@@ -1,7 +1,7 @@
 # Sklep Agentów
 
-[![Kontrole jakości](https://github.com/szydlowskikonrad95-art/sklep-agentow/actions/workflows/quality.yml/badge.svg?branch=main)](https://github.com/szydlowskikonrad95-art/sklep-agentow/actions/workflows/quality.yml)
-[![Wydanie](https://img.shields.io/badge/wydanie-v0.9.40-blue)](https://github.com/szydlowskikonrad95-art/sklep-agentow/releases/latest)
+[![Kontrole jakości](https://github.com/sklep-agentow/sklep-agentow/actions/workflows/quality.yml/badge.svg?branch=main)](https://github.com/sklep-agentow/sklep-agentow/actions/workflows/quality.yml)
+[![Wydanie](https://img.shields.io/badge/wydanie-v0.9.40-blue)](https://github.com/sklep-agentow/sklep-agentow/releases/latest)
 [![Licencja](https://img.shields.io/badge/licencja-GPL--2.0--or--later-blue)](LICENSE)
 [![WordPress](https://img.shields.io/badge/WordPress-6.7%2B-blue)](#wymagania)
 [![PHP](https://img.shields.io/badge/PHP-8.1%2B-blue)](#wymagania)
@@ -9,7 +9,7 @@
 Sklep z wtyczkami-botami AI, działający w całości na Twoim WordPressie — **trzy wtyczki**:
 sklep oraz dwa produkty, które sklep sprzedaje.
 
-> **Chcesz tylko zainstalować?** Pobierz paczkę z **[najnowszego wydania](https://github.com/szydlowskikonrad95-art/sklep-agentow/releases/latest)**
+> **Chcesz tylko zainstalować?** Pobierz paczkę z **[najnowszego wydania](https://github.com/sklep-agentow/sklep-agentow/releases/latest)**
 > i zacznij od pliku `PRZECZYTAJ-MNIE.txt`, a potem `INSTRUKCJA-INSTALACJI.md` — krok po kroku, bez wiedzy
 > programistycznej. Reszta tego dokumentu opisuje system od strony technicznej.
 
