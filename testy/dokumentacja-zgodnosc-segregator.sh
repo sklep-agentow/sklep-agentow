@@ -80,7 +80,7 @@ spr "stalych wyliczanych ze stalych (pominiete w porownaniu)" "1" "echo $WYLICZA
 
 # Bez tej kontroli petla, ktora przestala cokolwiek dopasowywac (zmiana ukladu tabeli),
 # bylaby cicho pusta i sekcja swiecilaby na zielono nie sprawdziwszy niczego.
-spr "stalych sprawdzonych z tabeli dokumentacji" "28" "echo $STALYCH"
+spr "stalych sprawdzonych z tabeli dokumentacji" "30" "echo $STALYCH"
 
 spr "LICENSE istnieje"               "1" "test -f $W/LICENSE && echo 1 || echo 0"
 spr "LICENSE zaczyna sie GPL"        "1" "head -1 $W/LICENSE | grep -c 'GNU GENERAL PUBLIC LICENSE'"
