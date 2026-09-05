@@ -16,6 +16,18 @@ Nic jeszcze.
 
 ---
 
+## [1.5.17] — 2026-09-05 · schemat bazy bez zmian (8)
+
+### Naprawione
+- **Eksport CSV z rozmów: obrona przed formułą w arkuszu dostaje brakujące dwa znaki po OBU stronach.** Komórka
+  zaczynająca się od tabulatora albo powrotu karetki (znaki, które arkusz kalkulacyjny potrafi zinterpretować jako
+  początek formuły tak samo jak `=`, `+`, `-`, `@`) dostaje apostrof ochronny przy eksporcie, a import zdejmuje go
+  symetrycznie — runda eksport→import pozostaje odwracalna. Ta sama obrona żyła w trzech wtyczkach w trzech różnych
+  zestawach znaków; kopia ChatBota była najsłabsza, a obsługiwała dane najmniej zaufane (treść wpisana w oknie czatu
+  przez anonimowego gościa). Osobny strażnik w repozytorium pilnuje, żeby te kopie nie rozjechały się ponownie.
+
+---
+
 ## [1.5.16] — 2026-09-05 · schemat bazy bez zmian (8)
 
 ### Zmienione
