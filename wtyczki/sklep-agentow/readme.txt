@@ -161,6 +161,11 @@ link do pobrania w mailu, jednorazowy link do opinii.
 
 == Changelog ==
 
+= 0.9.43 =
+* Naprawione: zapisy do bazy na sciezce platnosci sa sprawdzane po skutku - brak zapisu migawki sesji = link do platnosci nie jest wydawany, brak zapisu nowego linku = mail nie idzie (poprzedni link zostaje), brak zapisu zwrotu/sporu = Stripe ponawia powiadomienie zamiast dostac puste "ok".
+* Dodane: mail do wlasciciela sklepu przy awarii, po ktorej kupujacy czeka na czlowieka (Stripe nie odpowiada, mail z linkiem nie wyszedl, plik produktu nie istnieje, zapis po oplaceniu padl, ksiegowanie nie przeszlo) - najwyzej raz na godzine dla danego rodzaju.
+* Zmienione: szablony Regulaminu i Polityki prywatnosci nazywaja uprawnienia sprzedawcy i automaty (72 h / 10 pobran z przerwanymi, blokada po zwrocie calosci lub obciazeniu zwrotnym, anonimizacja zamiast usuwania zamowien, retencja dziennikow 90 dni).
+
 = 0.9.42 =
 * Naprawione: kupujący widzi link do regulaminu i polityki prywatności oraz dane sprzedawcy PRZED zakupem (strona produktu, formularz), nie tylko w mailu po nim; nieopublikowany regulamin prowadzi na stronę „w przygotowaniu”, nigdy na 404.
 * Naprawione: szablon regulaminu ma sekcje wymagane przez art. 12 ust. 1 ustawy o prawach konsumenta (cena z podatkami, zapłata, reklamacje, zgodność, funkcjonalności treści cyfrowej, ODR) z wypełniaczami do uzupełnienia.

@@ -1,6 +1,6 @@
 # Segregator maila — dokumentacja techniczna
 
-**Wersja wtyczki: 1.3.7 · wersja schematu bazy: 4 · WordPress 6.0+ · PHP 8.1+**
+**Wersja wtyczki: 1.3.8 · wersja schematu bazy: 4 · WordPress 6.0+ · PHP 8.1+**
 
 > **Po co ten dokument.** To jest **mapa systemu dla audytora i programisty**, nie ulotka.
 > Każda liczba i każda nazwa tutaj jest wzięta z kodu, nie z pamięci — jeśli coś się
@@ -60,13 +60,13 @@ leży w pliku `LICENSE` w katalogu wtyczki i wchodzi do paczki produktowej.
 
 | Plik | Linii | Za co odpowiada |
 |---|---|---|
-| `segregator-maila.php` | 452 | nagłówek wtyczki, stałe, ładowanie plików, cron retencji, znacznik „operacja w toku", zgoda na AI, ustawienia ogólne |
+| `segregator-maila.php` | 453 | nagłówek wtyczki, stałe, ładowanie plików, cron retencji, znacznik „operacja w toku", zgoda na AI, ustawienia ogólne |
 | `uninstall.php` | 91 | deinstalacja — dwie ścieżki (§11.5) |
 | `includes/instalator.php` | 288 | `dbDelta` dla 7 tabel, aktywacja, deaktywacja, seed demo (5 kategorii, 8 reguł, 30 maili) |
 | `includes/silnik.php` | 248 | `segm_klasyfikuj_mail()` — jedyna reguła dopasowania w całej wtyczce; przebieg na próbce |
 | `includes/csv.php` | 352 | import próbki z CSV (wykrywanie kodowania, limity) i eksport raportu do CSV |
 | `includes/ai.php` | 588 | opcjonalna klasyfikacja modelem, licznik stop-loss |
-| `includes/rodo.php` | 170 | eksporter i kasownik danych osobowych dla narzędzi prywatności WP (nadawca = klucz osoby) + podpowiedź do Polityki prywatności |
+| `includes/rodo.php` | 187 | eksporter i kasownik danych osobowych dla narzędzi prywatności WP (nadawca = klucz osoby) + podpowiedź do Polityki prywatności |
 | `includes/admin.php` | 1504 | panel: przebiegi i raporty, reguły, kategorie, próbka, ustawienia, baner powitalny, paski błędu AI i błędu bazy |
 | `includes/konfiguracja.php` | 360 | eksport i import własnej konfiguracji (kategorie + reguły) w JSON-ie |
 | `includes/filtry.php` | 588 | eksport reguł do filtrów Gmaila (XML) i reguł Outlooka |
@@ -191,7 +191,7 @@ więc deinstalacja kasuje go zapytaniem `LIKE` po `wp_options` (razem z wierszam
 
 | Stała | Wartość | Gdzie | Znaczenie |
 |---|---|---|---|
-| `SEGM_WERSJA` | `1.3.7` | plik główny | wersja wtyczki |
+| `SEGM_WERSJA` | `1.3.8` | plik główny | wersja wtyczki |
 | `SEGM_WERSJA_SCHEMATU` | `4` | plik główny | wyzwala migrację tabel |
 | `SEGM_RETENCJA_DNI` | `90` | plik główny | po tylu dniach cron kasuje cudzą korespondencję |
 | `SEGM_BLOKADA` | `segm_operacja_w_toku` | plik główny | nazwa znacznika „operacja trwa" |

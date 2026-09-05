@@ -225,7 +225,7 @@ ten sprzedawany.
 
 ### D10 Obietnica sprzedażowa vs to, co działa na skrzynce
 
-Pozycja L8 z `boty/LUKI-SWIEZA-GLOWA-20-08.md`: przebieg na żywej skrzynce klasyfikuje
+Pozycja L8 z `boty/LUKI-SWIEZA-GLOWA-20-08.md` (notatka robocza, wyniesiona z repo 5.09): przebieg na żywej skrzynce klasyfikuje
 **wyłącznie regułami** — tryb AI żyje tylko w przebiegu po próbce CSV. Kupujący,
 który bierze bota „dla AI", dostaje AI wyłącznie w laboratorium. A6 sprawdza „dok vs
 kod", ale nikt nie sprawdza **strony produktu vs kod**, a to tam pada obietnica zakupu.

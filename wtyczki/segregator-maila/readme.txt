@@ -143,6 +143,9 @@ z serwerem. Hasło jest w nim zamaskowane.
 
 Pełna historia zmian jest w pliku `CHANGELOG.md` w katalogu wtyczki.
 
+= 1.3.8 =
+* Dodane: eksporter i kasownik danych osobowych dla narzedzi prywatnosci WordPressa (Narzedzia -> Eksport / Usun dane osobowe); klucz osoby = adres nadawcy. Podpowiedz do Polityki prywatnosci.
+
 = 1.3.7 =
 * Naprawione: reguły „treść zawiera” działają na zwykłej poczcie — wiadomość wieloczęściowa (Gmail, Outlook, Thunderbird) jest rozbierana na części, do reguły idzie tekst rozkodowany kodowaniem tej części, a granice i nagłówki części nie trafiają do dopasowania.
 * Naprawione: krótki mail zakodowany base64 nie znika (ostatnia linia nie jest odcinana bezwarunkowo).
