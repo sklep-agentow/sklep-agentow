@@ -51,12 +51,30 @@ function segm_rodo_eksporter( $email, $strona = 1 ) {
 			'group_label' => 'Segregator maila — wiadomości',
 			'item_id'     => 'segm-mail-' . (int) $m->id,
 			'data'        => array(
-				array( 'name' => 'Nadawca', 'value' => $email ),
-				array( 'name' => 'Temat', 'value' => (string) $m->temat ),
-				array( 'name' => 'Treść', 'value' => (string) $m->tresc ),
-				array( 'name' => 'Źródło', 'value' => (string) $m->zrodlo ),
-				array( 'name' => 'Kategoria', 'value' => (string) $m->kategoria_oczekiwana ),
-				array( 'name' => 'Zapisano', 'value' => (string) $m->utworzono ),
+				array(
+					'name'  => 'Nadawca',
+					'value' => $email,
+				),
+				array(
+					'name'  => 'Temat',
+					'value' => (string) $m->temat,
+				),
+				array(
+					'name'  => 'Treść',
+					'value' => (string) $m->tresc,
+				),
+				array(
+					'name'  => 'Źródło',
+					'value' => (string) $m->zrodlo,
+				),
+				array(
+					'name'  => 'Kategoria',
+					'value' => (string) $m->kategoria_oczekiwana,
+				),
+				array(
+					'name'  => 'Zapisano',
+					'value' => (string) $m->utworzono,
+				),
 			),
 		);
 	}
@@ -76,12 +94,30 @@ function segm_rodo_eksporter( $email, $strona = 1 ) {
 			'group_label' => 'Segregator maila — ruchy w skrzynce',
 			'item_id'     => 'segm-ruch-' . (int) $r->id,
 			'data'        => array(
-				array( 'name' => 'Nadawca', 'value' => $email ),
-				array( 'name' => 'Temat', 'value' => (string) $r->temat ),
-				array( 'name' => 'Z folderu', 'value' => (string) $r->folder_z ),
-				array( 'name' => 'Do folderu', 'value' => (string) $r->folder_do ),
-				array( 'name' => 'Stan', 'value' => (string) $r->stan ),
-				array( 'name' => 'Zapisano', 'value' => (string) $r->utworzono ),
+				array(
+					'name'  => 'Nadawca',
+					'value' => $email,
+				),
+				array(
+					'name'  => 'Temat',
+					'value' => (string) $r->temat,
+				),
+				array(
+					'name'  => 'Z folderu',
+					'value' => (string) $r->folder_z,
+				),
+				array(
+					'name'  => 'Do folderu',
+					'value' => (string) $r->folder_do,
+				),
+				array(
+					'name'  => 'Stan',
+					'value' => (string) $r->stan,
+				),
+				array(
+					'name'  => 'Zapisano',
+					'value' => (string) $r->utworzono,
+				),
 			),
 		);
 	}
@@ -104,8 +140,8 @@ function segm_rodo_eksporter( $email, $strona = 1 ) {
  */
 function segm_rodo_kasownik( $email, $strona = 1 ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- sygnatura filtra WP.
 	global $wpdb;
-	$email     = strtolower( trim( (string) $email ) );
-	$usuniete  = 0;
+	$email      = strtolower( trim( (string) $email ) );
+	$usuniete   = 0;
 	$zostawione = 0;
 	$komunikaty = array();
 

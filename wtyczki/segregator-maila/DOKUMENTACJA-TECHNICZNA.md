@@ -66,7 +66,7 @@ leży w pliku `LICENSE` w katalogu wtyczki i wchodzi do paczki produktowej.
 | `includes/silnik.php` | 248 | `segm_klasyfikuj_mail()` — jedyna reguła dopasowania w całej wtyczce; przebieg na próbce |
 | `includes/csv.php` | 352 | import próbki z CSV (wykrywanie kodowania, limity) i eksport raportu do CSV |
 | `includes/ai.php` | 588 | opcjonalna klasyfikacja modelem, licznik stop-loss |
-| `includes/rodo.php` | 187 | eksporter i kasownik danych osobowych dla narzędzi prywatności WP (nadawca = klucz osoby) + podpowiedź do Polityki prywatności |
+| `includes/rodo.php` | 223 | eksporter i kasownik danych osobowych dla narzędzi prywatności WP (nadawca = klucz osoby) + podpowiedź do Polityki prywatności |
 | `includes/admin.php` | 1504 | panel: przebiegi i raporty, reguły, kategorie, próbka, ustawienia, baner powitalny, paski błędu AI i błędu bazy |
 | `includes/konfiguracja.php` | 360 | eksport i import własnej konfiguracji (kategorie + reguły) w JSON-ie |
 | `includes/filtry.php` | 588 | eksport reguł do filtrów Gmaila (XML) i reguł Outlooka |
