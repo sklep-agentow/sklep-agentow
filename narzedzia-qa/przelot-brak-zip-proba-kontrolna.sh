@@ -65,9 +65,16 @@ for N in k7-koniec-proba-kontrolna.sh paczka-zgodnosc-proba-kontrolna.sh; do
 	cp "$KORZEN/narzedzia-qa/$N" "$ROBOCZY/$N"
 done
 
+# ⛔ PRZELOT_ODLAMEK JAWNIE WYCZYSZCZONY (recenzja #287 WAZNA 2 c.d.). Ta proba mierzy
+# przelot na WLASNYM, prowizorycznym ZAKRESIE ($ROBOCZY, nie „narzedzia-qa"), a od tego PR-a
+# odlamek wymaga zakresu „narzedzia-qa" pod rygorem odmowy. W CI zadanie `proby` ustawia
+# PRZELOT_ODLAMEK na poziomie JOBA (quality.yml), wiec kazdy proces w tym jobie — w tym ten
+# zagniezdzony przelot — dziedziczy je ze srodowiska. Bez czyszczenia ta proba, uruchomiona
+# jako CZLONEK odlamka `reszta`, odziedziczylaby PRZELOT_ODLAMEK=reszta i zagniezdzony przelot
+# odmawialby pracy (EXIT=2) na WLASNYM, prawidlowym zakresie — zlapane lokalnie PRZED CI.
 uruchom() { # uruchom <plik_logu> [skrypt] -> wypelnia WY_OUT, WY_ERR, WY_KOD
 	local log="$1" skrypt="${2:-$PRZELOT}"
-	WY_OUT="$(cd "$KORZEN" && PATH="$ATRAPA" bash "$skrypt" "$log" "$ROBOCZY" 2> "$ROBOCZY/err.txt")"
+	WY_OUT="$(cd "$KORZEN" && PATH="$ATRAPA" PRZELOT_ODLAMEK= bash "$skrypt" "$log" "$ROBOCZY" 2> "$ROBOCZY/err.txt")"
 	WY_KOD=$?
 	WY_ERR="$(cat "$ROBOCZY/err.txt")"
 }
@@ -186,7 +193,7 @@ echo "  (oryginal NIETKNIETY — mutant to osobny plik, kasowany przy wyjsciu)"
 # ⭐ Dlatego mierzymy ja WPROST, wskazujac ENV_ADMIN na plik, ktorego nie ma.
 echo
 echo "--- galaz BRAK DANYCH LOGOWANIA (mierzona wprost, nie przez przypadek) ---"
-WY_OUT="$(cd "$KORZEN" && ENV_ADMIN_PROBA="$ROBOCZY/nie-ma-takiego-pliku.env" PATH="$ATRAPA" \
+WY_OUT="$(cd "$KORZEN" && ENV_ADMIN_PROBA="$ROBOCZY/nie-ma-takiego-pliku.env" PATH="$ATRAPA" PRZELOT_ODLAMEK= \
 	bash "$PRZELOT" "$ROBOCZY/bezlog.log" "$ROBOCZY" 2> "$ROBOCZY/err-bezlog.txt")"
 B_KOD=$?
 B_ERR="$(cat "$ROBOCZY/err-bezlog.txt")"
@@ -221,7 +228,7 @@ if [ "$M_PRZED" = "$M_PO" ]; then
 	echo "  BLAD mutacja NIE weszla do pliku (ZGNILA KOTWICA sed): whoami w galezi bez logowania"
 	NIETRAFIONE=$((NIETRAFIONE + 1))
 else
-	WY_OUT="$(cd "$KORZEN" && ENV_ADMIN_PROBA="$ROBOCZY/nie-ma-takiego-pliku.env" PATH="$ATRAPA" \
+	WY_OUT="$(cd "$KORZEN" && ENV_ADMIN_PROBA="$ROBOCZY/nie-ma-takiego-pliku.env" PATH="$ATRAPA" PRZELOT_ODLAMEK= \
 		bash "$MUT_LOG" "$ROBOCZY/bezlog-mut.log" "$ROBOCZY" 2> "$ROBOCZY/err-bezlog-mut.txt")"
 	MB_ERR="$(cat "$ROBOCZY/err-bezlog-mut.txt")"
 	if echo "$MB_ERR" | grep -q 'command not found'; then
