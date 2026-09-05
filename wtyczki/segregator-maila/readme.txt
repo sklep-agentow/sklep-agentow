@@ -4,7 +4,7 @@ Tags: email, imap, inbox, automation, rules
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.3.6
+Stable tag: 1.3.7
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -142,6 +142,13 @@ z serwerem. Hasło jest w nim zamaskowane.
 == Changelog ==
 
 Pełna historia zmian jest w pliku `CHANGELOG.md` w katalogu wtyczki.
+
+= 1.3.7 =
+* Naprawione: reguły „treść zawiera” działają na zwykłej poczcie — wiadomość wieloczęściowa (Gmail, Outlook, Thunderbird) jest rozbierana na części, do reguły idzie tekst rozkodowany kodowaniem tej części, a granice i nagłówki części nie trafiają do dopasowania.
+* Naprawione: krótki mail zakodowany base64 nie znika (ostatnia linia nie jest odcinana bezwarunkowo).
+* Naprawione: błędna nazwa zestawu znaków od nadawcy (np. „charset=BASE64”) nie zamienia treści w śmieci.
+* Naprawione: z części tekstowej nie są już zdejmowane znaczniki HTML — tylko z części HTML, i tylko domykające się.
+* Naprawione: załącznik tekstowy (.txt, .csv, .ics) nie udaje treści listu; wiadomość wieloczęściowa bez parametru boundary nie oddaje regule surowego MIME; rozpoznawane nazwy zestawów znaków Shift_JIS i GB2312.
 
 = 1.3.6 =
 * Wydanie porządkowe: z komentarzy w kodzie i z dokumentacji usunięte wewnętrzne oznaczenia naszych raportów. Zero zmian w działaniu.

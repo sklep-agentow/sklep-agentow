@@ -17,7 +17,7 @@ pory lądują tutaj.
 - **`stanowisko/sprzatnij-zamowienia-testowe.sh` — NOWY (I-22): lista / `--kasuj` zamówień testowych ze stanowiska (domena
   `test.local`/`example.com` ORAZ sesja Stripe `cs\_test\_`; pusty e-mail NIGDY — r3 po #296 r2 WAŻNA 1: na stanowisku `cs_test_`
   ma każde zamówienie, więc nie odróżnia testów od ręcznych zakupów; wiersze bez e-maila są wypisywane osobno, bez kasowania)
-  po zrzucie do JSON, razem ze zdarzeniami, opiniami i sesjami.** Nasze testy zostawiały zamówienia po 149 zł, które liczyły się do przychodu na Pulpicie; 5.09 usunięto 20 (zrzut
+  po zrzucie do JSON, razem ze zdarzeniami, opiniami i sesjami; demo `@seed.local` wypisywane osobno, kasowane tylko z `--kasuj --z-seedem` — r4 W1).** Nasze testy zostawiały zamówienia po 149 zł, które liczyły się do przychodu na Pulpicie; 5.09 usunięto 20 (zrzut
   sprawdzony po #296 r1 WAŻNA 1: 2 z pustym e-mailem, wszystkie 20 z `cs_test_`). Pierwsza wersja dawała FAŁSZYWE ZERO
   (cudzysłowy SQL rozrywały string PHP) — od r2 kontrola dodatnia: pomiar musi oddać liczbę WSZYSTKICH zamówień, inaczej kod 2
   (WAŻNA 2); pusty e-mail sam nie jest znacznikiem testu, bo domknięcie sesji zapisuje go przy prawdziwym zakupie (WAŻNA 1);
@@ -25,7 +25,7 @@ pory lądują tutaj.
 - **`rejestr-liczniki-proba-kontrolna.sh` — NOWA (I-23): rejestr INFRA liczy sam siebie i coś go pilnuje** — nagłówek == pomiar
   komendą pliku, suma statusów == wiersze, zero przecięć; od r2 także DRUGI rejestr: każdy kod OTWARTY musi być w sekcji „ŚWIADOMY
   DŁUG NA WYDANIE” w `audyt/CO-WISI.md` (#296 r1 KRYT 1: sekcja mówiła „~20”, pomiar 30). Mutanty: nagłówek +1, wiersz o dwóch
-  statusach, kod wycięty z CO-WISI — złapane. Biegnie z **`bramka-znaleziska.sh`** na KAŻDYM PR (WAŻNA 4: przelot prób omija
+  statusach, kod wycięty z CO-WISI, liczba „**N OTWARTYCH**” w sekcji zawyżona (r4 DROBNA 2) — złapane. Biegnie z **`bramka-znaleziska.sh`** na KAŻDYM PR (WAŻNA 4: przelot prób omija
   jawnie PR-y ruszające wyłącznie `audyt/`).
 - **`rodo-anonimizacja-ip-proba-kontrolna.sh` — NOWA: dowód dla `P-5` (czyszczenie IP z dziennika przy anonimizacji kupującego)
   jest odtwarzalny (#291 WAŻNA 4, DROBNA 5).** Stos jednorazowy, kod z drzewa, mutant w kopii w kontenerze (EXIT=1), przypadek

@@ -11,6 +11,29 @@ Nic jeszcze.
 
 ---
 
+## [1.3.7] — 2026-09-05 · schemat bazy bez zmian (4)
+
+### Naprawione
+- **Reguły „treść zawiera" działają na zwykłej poczcie, nie tylko na próbce demo.**
+  Wiadomość wieloczęściowa (czyli każda sformatowana poczta z Gmaila, Outlooka
+  i Thunderbirda) jest teraz rozbierana na części: do reguły idzie część tekstowa
+  rozkodowana JEJ WŁASNYM `Content-Transfer-Encoding` i `charset`, a granice
+  i nagłówki części nie trafiają już do dopasowania. Wcześniej reguła widziała
+  surowe MIME, więc milczała na poczcie, w której właściciel czyta swoje słowo.
+- **Krótki mail zakodowany base64 nie znika.** Ostatnia linia nie jest już odcinana
+  bezwarunkowo — odrzucamy wyłącznie niepełną końcówkę, gdy treść naprawdę urwano.
+- **Nazwa zestawu znaków od nadawcy nie zamienia treści w śmieć.** `charset=BASE64`
+  i podobne kodowania transportowe nie są już traktowane jak zestaw znaków.
+- **Znak `<` w zdaniu nie zjada reszty treści.** „termin <piątek" zostaje w całości;
+  znaczniki zdejmujemy tylko z części HTML i tylko te, które naprawdę się domykają.
+- **Załącznik tekstowy nie udaje treści listu.** Część oznaczona `Content-Disposition: attachment`
+  (plik .txt, .csv, .ics) jest pomijana przy wyborze tekstu, nawet gdy jest `text/plain` — reguła
+  czyta treść, którą widzi człowiek, a nie zawartość załącznika.
+- **Wiadomość wieloczęściowa bez `boundary`** (wadliwa albo spreparowana) nie oddaje regule surowego MIME.
+- Nazwy zestawów znaków `Shift_JIS` i `GB2312` (tak, jak podają je nadawcy) są rozpoznawane obok `SJIS` i `GB18030`.
+
+---
+
 ## [1.3.6] — 2026-08-29
 
 ### Zmienione

@@ -74,8 +74,20 @@ if [ -z "$K" ]; then echo "  KOTWICA  brak kodu OTWARTE bez gwiazdki"; KOTWICE=$
 	elif pokrycie "$R" "$T/c.md" > /dev/null; then echo "  ZLE  wyciety kod $K PRZESZEDL — proba slepa"; BLEDY=$((BLEDY+1)); else echo "  OK   wyciety kod $K ZLAPANY"; fi
 fi
 
+liczba_w_sekcji() { sekcja_dlugu "$1" | grep -oE '\*\*[0-9]+ OTWARTYCH\*\*' | head -1 | grep -oE '[0-9]+'; }
+echo "=== 6. LICZBA w sekcji dlugu (**N OTWARTYCH**) == pomiar rejestru (#296 r4 DROBNA 2) ==="
+LS=$(liczba_w_sekcji "$CW")
+if [ -n "$LS" ] && [ "$LS" -eq "$OTW" ]; then echo "  OK   sekcja mowi $LS, pomiar $OTW"; else echo "  ZLE  sekcja mowi '${LS:-BRAK}', pomiar $OTW — liczba przepisana, nie policzona (klasa 142)"; ODWROTNA=$((ODWROTNA+1)); fi
+echo "=== 7. MUTANT D: liczba w KOPII sekcji zawyzona o 1 ==="
+cp "$CW" "$T/d.md"
+if [ -z "$LS" ]; then echo "  KOTWICA  brak liczby w sekcji"; KOTWICE=$((KOTWICE+1)); else
+	sed -i "0,/\*\*$LS OTWARTYCH\*\*/s//**$((LS+1)) OTWARTYCH**/" "$T/d.md"
+	if cmp -s "$CW" "$T/d.md"; then echo "  KOTWICA  sed nie zmienil kopii"; KOTWICE=$((KOTWICE+1));
+	elif [ "$(liczba_w_sekcji "$T/d.md")" -eq "$OTW" ]; then echo "  ZLE  zawyzona liczba PRZESZLA — proba slepa"; BLEDY=$((BLEDY+1)); else echo "  OK   zawyzona liczba ($((LS+1)) vs $OTW) ZLAPANA"; fi
+fi
+
 echo
 if [ "$ODWROTNA" -gt 0 ]; then echo "REJESTR-LICZNIKI-PROBA: prawdziwy rejestr/CO-WISI NIESPOJNE — mutanty niewiarygodne. EXIT=2"; exit 2; fi
 if [ "$KOTWICE" -gt 0 ]; then echo "REJESTR-LICZNIKI-PROBA: $KOTWICE mutacji nie weszlo. EXIT=2"; exit 2; fi
 if [ "$BLEDY" -gt 0 ]; then echo "REJESTR-LICZNIKI-PROBA: SLEPA NA $BLEDY. EXIT=1"; exit 1; fi
-echo "REJESTR-LICZNIKI-PROBA: rejestr spojny, CO-WISI pokrywa OTWARTE, trzy mutanty zlapane. EXIT=0"; exit 0
+echo "REJESTR-LICZNIKI-PROBA: rejestr spojny, sekcja dlugu pokrywa kody i liczbe, cztery mutanty zlapane. EXIT=0"; exit 0

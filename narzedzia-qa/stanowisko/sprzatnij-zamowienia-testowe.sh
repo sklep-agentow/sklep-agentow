@@ -11,11 +11,15 @@
 # „naszych testów” od „ręcznych zakupów właściciela” (#296 r2 WAŻNA 1) — odróżnia je wyłącznie DOMENA e-maila.
 # Wiersze z pustym e-mailem są WYPISYWANE osobno do ręcznej oceny, bez kasowania.
 # Zrzut z 5.09 sprawdzony po r1: 20 skasowanych wierszy, 2 z pustym e-mailem, wszystkie 20 z `cs_test_`.
-# Domeny: `example.com` rezerwuje RFC 2606; `test.local` to NASZA konwencja z testów (kupujacy-e2e, kupujacy-osadzony,
-# audyt-*, opinie-test), nie rezerwacja z RFC.
+# Domeny: `example.com` rezerwuje RFC 2606 (u nas: opinie-test@example.com); `test.local` to NASZA konwencja z testów
+# (kupujacy-e2e, kupujacy-osadzony, audyt-*), nie rezerwacja z RFC.
+# `@seed.local` = zamówienia DEMO z testy/seed-demo.sh — fałszywy przychód Z ZAŁOŻENIA (demo panelu dla właściciela stanowiska),
+# największy generator na stanowisku (#296 r4 WAŻNA 1). Domyślnie tylko WYPISYWANE osobno; kasowane wyłącznie z jawną flagą
+# `--kasuj --z-seedem` — decyzja właściciela stanowiska, nie skryptu.
 #
 # Użycie: bash narzedzia-qa/stanowisko/sprzatnij-zamowienia-testowe.sh            # tylko LISTA (nic nie kasuje)
-#         bash narzedzia-qa/stanowisko/sprzatnij-zamowienia-testowe.sh --kasuj    # kasuje, po ZRZUCIE do pliku
+#         bash narzedzia-qa/stanowisko/sprzatnij-zamowienia-testowe.sh --kasuj    # kasuje testowe, po ZRZUCIE do pliku
+#         bash narzedzia-qa/stanowisko/sprzatnij-zamowienia-testowe.sh --kasuj --z-seedem   # + zamówienia demo @seed.local
 #         KONTENER_WP=inny bash …                                                  # domyślnie strona_wp_wordpress
 # ⛔ Zawsze najpierw zrzut wierszy do /tmp/zamowienia-testowe-<data>.json — kasowanie jest nieodwracalne.
 # Kasuje razem: zdarzenia (zamowienie_id), opinie (zamowienie_id), sesje_checkout (stripe_session_id) — tak jak
@@ -25,12 +29,15 @@
 set -u
 KONTENER="${KONTENER_WP:-strona_wp_wordpress}"
 TRYB="${1:-lista}"
+Z_SEEDEM="${2:-}"   # --z-seedem: kasowanie obejmuje też demo @seed.local (domyślnie NIE)
 WP="docker exec $KONTENER wp --allow-root --path=/var/www/html"
 if ! docker ps --format '{{.Names}}' | grep -qx "$KONTENER"; then echo "SPRZATNIJ: kontener $KONTENER nie chodzi — nic nie zmierzono" >&2; exit 2; fi
 # SQL w apostrofach: warunek wchodzi do PHP-owego stringu w cudzyslowach (pierwsza wersja z cudzyslowami w SQL
 # rozrywala string PHP i dawala FALSZYWE ZERO — „0 zamowien” przy 20 na stanowisku; zlapane proba na zywo).
 # `\\_` → w SQL `\_` = dosłowny podkreślnik (klasa 2 ze ściągi: goły `_` w LIKE to „dowolny znak”).
 WARUNEK="(email_kupujacego LIKE '%@test.local' OR email_kupujacego LIKE '%@example.com') AND stripe_session_id LIKE 'cs\\_test\\_%'"
+WARUNEK_SEED="email_kupujacego LIKE '%@seed.local'"
+if [ "$Z_SEEDEM" = "--z-seedem" ]; then WARUNEK="($WARUNEK) OR ($WARUNEK_SEED)"; fi
 
 # KONTROLA DODATNIA (#296 r1 WAŻNA 2): zanim uwierzymy w „0 testowych”, pomiar musi oddać LICZBĘ wszystkich zamówień.
 # Bez tego każda awaria pomiaru (fatal PHP, brak tabeli, inny prefiks) wyglądała jak „nic do zrobienia”.
@@ -40,7 +47,9 @@ LISTA=$($WP eval "global \$wpdb; \$p=\$wpdb->prefix.'sklepag_zamowienia'; foreac
 if printf '%s' "$LISTA" | grep -q . && printf '%s\n' "$LISTA" | grep -qvE '^[0-9]+\|'; then echo "SPRZATNIJ: odpowiedz nie jest lista wierszy: $(printf '%s' "$LISTA" | head -2)" >&2; exit 2; fi
 ILE=$(printf '%s' "$LISTA" | grep -c .)
 OSIEROCONE=$($WP eval "global \$wpdb; \$p=\$wpdb->prefix.'sklepag_zamowienia'; echo (int)\$wpdb->get_var(\"SELECT COUNT(*) FROM \$p WHERE email_kupujacego = ''\");" 2>/dev/null | tail -1)
-echo "SPRZATNIJ: zamowien razem na $KONTENER: $RAZEM, testowych (domena test.local/example.com ORAZ cs_test_): $ILE, z pustym e-mailem (NIE kasowane, do recznej oceny): ${OSIEROCONE:-?}"
+SEEDOWE=$($WP eval "global \$wpdb; \$p=\$wpdb->prefix.'sklepag_zamowienia'; echo (int)\$wpdb->get_var(\"SELECT COUNT(*) FROM \$p WHERE $WARUNEK_SEED\");" 2>/dev/null | tail -1)
+echo "SPRZATNIJ: zamowien razem na $KONTENER: $RAZEM, testowych (domena test.local/example.com ORAZ cs_test_): $ILE, demo @seed.local (kasowane TYLKO z --z-seedem): ${SEEDOWE:-?}, z pustym e-mailem (NIGDY nie kasowane): ${OSIEROCONE:-?}"
+[ "$Z_SEEDEM" = "--z-seedem" ] && echo "SPRZATNIJ: --z-seedem: do kasowania wchodza TAKZE zamowienia demo @seed.local"
 [ -n "$LISTA" ] && printf '%s\n' "$LISTA" | sed 's/^/  /'
 [ "$ILE" -gt 0 ] || { echo "SPRZATNIJ: nic do zrobienia"; exit 0; }
 [ "$TRYB" = "--kasuj" ] || { echo "SPRZATNIJ: tryb LISTA — dodaj --kasuj, zeby usunac (po zrzucie)"; exit 0; }
