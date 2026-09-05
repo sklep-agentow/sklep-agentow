@@ -89,7 +89,7 @@ wyczyszczenie kontekstu, są w `CLAUDE.md`; to, według czego recenzent ocenia P
   komentarz z werdyktem: KRYTYCZNA / WAŻNA / DROBNA, każda z plikiem, linią i wynikiem uruchomienia. PR bez dowodu w opisie
   dostaje uwagę zamiast zgody. **Zero KRYTYCZNYCH = można scalać**; WAŻNE i DROBNE, które nie dotyczą kodu produktu, mogą
   zostać nazwanym długiem (`audyt/CO-WISI.md`) i wejść PR-em porządkowym. Recenzent nie scala sam — scala osoba wskazana
-  w `CLAUDE.md`. Uwaga: PR zmieniający `.github/workflows/` czyta koordynator ręcznie (patrz `SECURITY.md`).
+  w `CLAUDE.md`.
 - **Bramki jakości** (`.github/workflows/quality.yml`) — opisane wyżej w „Kontrole, które zatrzymają PR”.
 
 Wdrożeń (GitHub Deployments) w tym repozytorium nie ma: paczki dla klienta powstają z `narzedzia-qa/pakuj-dla-klienta.sh`

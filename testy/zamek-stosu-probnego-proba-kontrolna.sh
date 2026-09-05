@@ -105,7 +105,7 @@ done
 # porownywal policzona liczbe z WLASNYM literalem, a komentarz obok obiecywal porownanie
 # „z liczba w CHANGELOG-u i lib-golden-stos.sh:27". Dokumenty niosa te liczbe SLOWNIE, wiec
 # ponizej sprawdzam takze, czy oba naprawde mowia to samo slowo. Zmiana liczby wymaga wtedy
-# ruszenia WSZYSTKICH trzech miejsc — inaczej ta proba pada.
+# ruszenia WSZYSTKICH czterech miejsc (ten literal + 3 dokumenty w petli nizej) — inaczej ta proba pada.
 OCZEKIWANI_UZYTKOWNICY=19   # 5.09 po #294/#298: +3 uzytkownikow z obszarow C i D — POLICZONE punktem G tej proby (19), slowo w obu dokumentach z tej samej liczby
 case "$OCZEKIWANI_UZYTKOWNICY" in
 	7) SLOWO_UZYTKOWNIKOW=siedmiu ;;
@@ -121,7 +121,7 @@ if [ -z "$SLOWO_UZYTKOWNIKOW" ]; then
 	printf "  ZLE  nie znam slownej postaci liczby %s — dopisz ja do case, inaczej dokumenty nie sa sprawdzane\n" "$OCZEKIWANI_UZYTKOWNICY"
 	BLEDY=$((BLEDY+1))
 else
-	for _d in testy/lib-golden-stos.sh narzedzia-qa/CHANGELOG.md; do
+	for _d in testy/lib-golden-stos.sh narzedzia-qa/CHANGELOG.md narzedzia-qa/lib-stos-probny.sh; do
 		if grep -q "$SLOWO_UZYTKOWNIKOW" "$_d"; then
 			printf "  OK   %s mowi '%s' — zgodnie z licznikiem\n" "$_d" "$SLOWO_UZYTKOWNIKOW"
 		else
