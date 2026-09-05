@@ -184,7 +184,7 @@ i w szczegółach zamówienia. Firmie fakturę musisz wystawić (ustawa o VAT: d
 osobie prywatnej — na jej żądanie zgłoszone w 3 miesiące. ⛔ Podanie NIP-u przez kupującego **nie odbiera mu
 praw kupującego** (zgoda, gwarancja, reklamacje działają tak samo) — nie traktuj „jest NIP” jako „to firma,
 bez zwrotów”: osoba prowadząca jednoosobową działalność, która kupuje poza swoją specjalnością, ma ochronę
-konsumenta (art. 38a ustawy o prawach konsumenta).
+konsumenta (art. 7aa ustawy o prawach konsumenta).
 
 Mail jest w wersji graficznej — nazwa sklepu w nagłówku, okładka produktu, przycisk „Pobierz”,
 kolory strony — a w tej samej wiadomości jedzie wersja tekstowa dla programów pocztowych bez

@@ -282,9 +282,9 @@
 		f.appendChild(tresc);
 
 		/*
-		 * ZGLOSZENIE dostaje ten sam licznik i to samo ostrzezenie co pytanie (CZ-1, klasa 8).
+		 * ZGLOSZENIE dostaje ten sam licznik i to samo ostrzezenie co pytanie.
 		 * Do 1.5.15 pole mialo SAM `maxLength`, wiec wklejka 3000 znakow byla ucinana PO CICHU —
-		 * dokladnie wada, ktora CZ-1 nazwal przy pytaniu, tylko w polu obok. Wlasciciel dostawal
+		 * dokladnie ta sama wada co przy pytaniu, tylko w polu obok. Wlasciciel dostawal
 		 * urwane zgloszenie i nie wiedzial, ze czegos brakuje.
 		 */
 		var licznikTresci = el('div', 'chatl-licznik');
@@ -434,7 +434,7 @@
 		formPytania.appendChild(wyslijBtn);
 
 		/*
-		 * LIMIT 500 ZNAKOW JAWNY (CZ-1). `maxLength` ucina wklejony tekst PO CICHU — gosc nie wie,
+		 * LIMIT 500 ZNAKOW JAWNY. `maxLength` ucina wklejony tekst PO CICHU — gosc nie wie,
 		 * ze bot dostal pol pytania. Licznik pokazuje sie od 400 znakow, a wklejka ponad limit
 		 * dostaje zdanie wprost. Przez to pole nigdy nie wysle ponad 500 znakow; odmowa serwera (kod `za_dlugie`)
 		 * to zabezpieczenie na obcy klient albo zmiane limitu po stronie serwera — wtedy tresc zostaje w polu.

@@ -681,7 +681,7 @@ function chatl_ajax_zgloszenie() {
 			400
 		);
 	}
-	// Bliźniak limitu pytania (CZ-1): za długa wiadomość = ODMOWA z liczbą, nie ciche cięcie —
+	// Bliźniak limitu pytania: za długa wiadomość = ODMOWA z liczbą, nie ciche cięcie —
 	// właściciel dostawałby urwane zgłoszenie i nie wiedziałby, że gość napisał więcej.
 	$dlugosc_w = mb_strlen( $wiadomosc );
 	if ( $dlugosc_w > CHATL_MAX_WIADOMOSC ) {

@@ -212,9 +212,9 @@ function sklepag_schemat_braki() {
  *
  * ⛔ Znacznik wersji idzie w górę TYLKO po zmierzeniu skutku: `dbDelta()` może nie zdążyć, trafić
  *    na brak prawa ALTER albo na cudzą tabelę o tej samej nazwie — a brama „wersja == stała” zamykała
- *    się wtedy na zawsze i nieudana migracja nie powtarzała się już nigdy (A6-F1). Teraz przy brakach
+ *    się wtedy na zawsze i nieudana migracja nie powtarzała się już nigdy. Teraz przy brakach
  *    wersja zostaje stara (ponowienie po odstępie 5 minut, znacznik `sklepag_schemat_ponowienie`; aktywacja wtyczki kasuje znacznik), a właściciel dostaje na Pulpicie listę
- *    braków i ostatni błąd bazy. Przyczyna-matka H: nie zapisuj skutku, którego nie zmierzyłeś.
+ *    braków i ostatni błąd bazy. Zasada: nie zapisuj skutku, którego nie zmierzyłeś.
  *
  * @return bool true = schemat kompletny (wersja zapisana), false = braki (wersja NIE zapisana).
  */
