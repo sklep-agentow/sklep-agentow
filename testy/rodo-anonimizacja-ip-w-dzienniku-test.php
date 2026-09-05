@@ -32,6 +32,17 @@ $wpdb->insert(
 	)
 );
 $id = (int) $wpdb->insert_id;
+$id_obcy = 0;
+// Sprzątanie na KAŻDEJ ścieżce wyjścia (także exit(2) przed końcem) — test bywa puszczany na WSPÓLNYM stosie (#291 r5 D4).
+register_shutdown_function( function () use ( $wpdb, $pz, $pe, &$id, &$id_obcy ) {
+	foreach ( array( $id, $id_obcy ) as $i ) {
+		if ( $i > 0 ) {
+			$wpdb->delete( $pe, array( 'zamowienie_id' => $i ) );
+			$wpdb->delete( $pz, array( 'id' => $i ) );
+		}
+	}
+	echo "SPRZATANIE_SHUTDOWN=OK\n";
+} );
 if ( ! $id ) {
 	echo "PRZYRZAD=NIE-UDALO-SIE-UTWORZYC-ZAMOWIENIA\n";
 	exit( 2 );
@@ -108,10 +119,7 @@ foreach ( $po_obcy as $w ) {
 }
 echo 'OBCY_NIETKNIETY=' . ( $obcy_nietkniety ? '1' : '0' ) . "\n";
 
-$wpdb->delete( $pe, array( 'zamowienie_id' => $id ) );
-$wpdb->delete( $pe, array( 'zamowienie_id' => $id_obcy ) );
-$wpdb->delete( $pz, array( 'id' => $id ) );
-$wpdb->delete( $pz, array( 'id' => $id_obcy ) );
+// Sprzątanie właściwe robi register_shutdown_function (wyżej) — także po wcześniejszym exit(2).
 echo "SPRZATANIE=OK\n";
 
 if ( 0 === $ip_po && true === $wynik['ok'] && $obcy_nietkniety && $tresc_zostala ) {
