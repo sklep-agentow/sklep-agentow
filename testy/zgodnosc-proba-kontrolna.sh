@@ -1,4 +1,6 @@
 #!/bin/bash
+# ⛔ SLOWO „bramka” W TYM PLIKU = skrypt, ktory ma PASC przy podlozonej wadzie (rola w tej probie) — to NIE jest bramka CI:
+#    quality.yml go nie wola (D-2, CONTRIBUTING.md); biegnie u recenzenta i w przelocie recznym przed wydaniem.
 # Proba kontrolna bramki zgodnosci dokumentacji (zasada D14: kontrola, ktora nie
 # znajdzie PODLOZONEGO bledu, jest slepa).
 #
