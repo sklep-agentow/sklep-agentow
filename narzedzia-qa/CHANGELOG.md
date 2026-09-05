@@ -14,6 +14,15 @@ wstecz nie dopisuję, bo nie umiałbym jej odtworzyć uczciwie. Ich zmiany od te
 pory lądują tutaj.
 
 ## [Niewydane]
+- **`stanowisko/wp-cron-stanowisko.sh` 1.0.0 + `stanowisko/instaluj-spust-crona.sh` 1.0.0 — WP-Cron stanowiska ma ZEWNETRZNY spust
+  (znalezisko `I-25`).** Przyczyna nie jest brak ruchu: `siteurl` to `http://localhost:8890`, a w kontenerze na 8890 nikt
+  nie slucha (apache na :80), wiec petla zwrotna `wp-cron.php` konczy sie odmowa polaczenia (kod 000, curl exit 7) i WP-Cron
+  nie ma jak wystartowac SAM. Ustawione: `DISABLE_WP_CRON` w `wp-config.php` + wpis `/etc/cron.d/stanowisko-wp-cron` co minute.
+  Dowod: zaleglych 8 z 15 przed, 0 po. Proba kontrolna (wada = wyjety wpis crona): zdarzenie zaplanowane 5 min wstecz wisi
+  po 140 s (FAIL); po przywroceniu wpisu wykonuje sie w 54 s (PASS).
+- **`stanowisko/README.md` — opis warunkow wstepnych stanowiska i ich prob kontrolnych** (cron, limity uploadu, trwala baza
+  lapacza maili, wp-cli montowany z hosta). Zmiany w definicji stosu siedza w `/root/praca/zlecenia/strona-wp/docker-compose.yml`
+  i `strona-wp/wp/php-stanowisko.ini` (limity 2M/8M -> 64M/64M, `I-26`; `MP_DATABASE=/data/mailpit.db` + wolumen `mailpit_data`, `I-27`).
 - **`gitleaks-proba-kontrolna.sh` 1.1.1 — SAMOWYSTARCZALNA: sama zapewnia binarkę gitleaks (prawdziwą `zapewnij_narzedzie`
   z `bramki.sh`, tryb samych definicji), zamiast żądać „uruchom najpierw bramki.sh”.** Ukryta zależność od KOLEJNOŚCI,
   którą ujawnił podział przelotu na odłamki (#287, pierwszy przebieg): w pełnym przelocie binarkę pobierała przypadkiem
