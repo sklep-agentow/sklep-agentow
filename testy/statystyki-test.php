@@ -184,6 +184,14 @@ $wiersze = array(
 	array( 'test-stat-2', 'gosc', 'reguly', 'Czy pracujecie w soboty?', 0 ),
 	array( 'test-stat-2', 'bot', 'reguly', 'Nie znam odpowiedzi.', 0 ),
 );
+// ⛔ 41 wierszy bez znacznika, nie 1. Mutant „nieoznaczone wpadają do mianownika skuteczności”
+// zmienia zwracany procent o odpowiedziano×nieozn/(d·(d+nieozn)); przy JEDNYM wierszu i bazie stosu
+// z setkami dzisiejszych wierszy (po dniu testów) różnica znikała w zaokrągleniu do 0,1 % i próba
+// kontrolna meldowała „TEST ŚLEPY” (5.09 21:32 — o 20:28 na mniejszej bazie przechodziła).
+// 41 wierszy trzyma mutant widocznym do ok. 40 000 wierszy dziennie. Klasa: kontrola w SKALI.
+for ( $i = 0; $i < 40; $i++ ) {
+	$wiersze[] = array( 'test-stat-1', 'bot', 'reguly', 'Wiersz sprzed 1.3.0 — bez znacznika (' . $i . ').', null );
+}
 foreach ( $wiersze as $w ) {
 	$dane   = array(
 		'sesja'     => $w[0],
@@ -218,7 +226,7 @@ echo "\n=== B1. Liczby zbiorcze (różnica po dołożeniu 6 pytań) ===\n";
 rowne( 'pytań gości +6', 6, $po['pytania'] - $przed['pytania'] );
 rowne( 'odpowiedzi bota +2', 2, $po['odpowiedziano'] - $przed['odpowiedziano'] );
 rowne( 'bez odpowiedzi +4', 4, $po['bez_odpowiedzi'] - $przed['bez_odpowiedzi'] );
-rowne( 'wierszy bez znacznika (sprzed 1.3.0) +1', 1, $po['nieoznaczone'] - $przed['nieoznaczone'] );
+rowne( 'wierszy bez znacznika (sprzed 1.3.0) +41', 41, $po['nieoznaczone'] - $przed['nieoznaczone'] );
 rowne( 'odpowiedzi z reguł +1', 1, $po['z_regul'] - $przed['z_regul'] );
 rowne( 'odpowiedzi z AI +1', 1, $po['z_ai'] - $przed['z_ai'] );
 rowne( 'rozmów +2', 2, $po['rozmowy'] - $przed['rozmowy'] );
@@ -233,7 +241,7 @@ $tylko_nasze = chatl_procent( $po['odpowiedziano'] - $przed['odpowiedziano'], ( 
 rowne( 'skuteczność samej porcji testowej = 33.3%', 33.3, $tylko_nasze );
 sprawdz(
 	'wiersz NULL nie wpadł ani do trafionych, ani do nietrafionych',
-	1 === ( $po['nieoznaczone'] - $przed['nieoznaczone'] )
+	41 === ( $po['nieoznaczone'] - $przed['nieoznaczone'] )
 	&& 6 === ( ( $po['odpowiedziano'] - $przed['odpowiedziano'] ) + ( $po['bez_odpowiedzi'] - $przed['bez_odpowiedzi'] ) )
 );
 /*
