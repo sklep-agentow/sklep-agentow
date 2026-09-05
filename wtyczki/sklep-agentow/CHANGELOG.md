@@ -325,9 +325,9 @@ Nic jeszcze.
   szczegółach zamówienia; anonimizacja RODO czyści je razem z e-mailem; szkic Polityki prywatności wymienia cel
   i podstawę. ⛔ Podanie NIP-u nie zmienia praw kupującego (art. 38a ustawy o prawach konsumenta).
 - Mail bez danych do faktury: „chcesz fakturę? odpisz w ciągu 3 miesięcy” (art. 106b ust. 3 ustawy o VAT).
-- Strażnik maila: C3 (termin 3 miesięcy), C3b (dane do faktury w obu wersjach) — 28 sprawdzeń.
+- Strażnik maila: termin 3 miesięcy, dane do faktury w obu wersjach — 28 sprawdzeń.
 
-### Naprawione (K10 — instalacja od zera przez niezależnego testera, 30.08)
+### Naprawione (instalacja od zera przez niezależnego testera, 30.08)
 - **„Dociągnij zaległe teraz” milczało o pominiętych sesjach**: kliknięte 71 s po zapłacie pomijało sesję młodszą niż
   2 minuty bez słowa, a na hostingu bez działającego WP-Cron (zepsuta pętla zwrotna) opłacony zakup „wisiał”
   20 minut. Teraz przycisk mówi: domknięte / pominięte jako młodsze niż 2 min (kliknij ponownie) / sprawdzone

@@ -244,7 +244,7 @@ Włącz. Dalej prowadzą instrukcje W paczkach botów (konfiguracja w kwadrans).
   Edytor plików motywu) przed zapisem sprawdza, czy strona odpowiada sama
   sobie — na świeżym serwerze bez tej pętli zwrotnej pokazuje „Unable to
   communicate back with site” i **cofa zapis bez śladu** (tak wyszło w teście
-  instalacji K10). Fragmenty do wklejenia:
+  instalacji od zera na czystym serwerze). Fragmenty do wklejenia:
 
   Nawigacja główna (desktop), zaraz po `<li>` z FAQ:
 

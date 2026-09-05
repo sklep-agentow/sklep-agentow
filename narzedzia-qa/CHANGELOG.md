@@ -14,6 +14,20 @@ wstecz nie dopisuję, bo nie umiałbym jej odtworzyć uczciwie. Ich zmiany od te
 pory lądują tutaj.
 
 ## [Niewydane]
+- **`slady-wewnetrzne.sh` 1.4.0 — nowy wzorzec: kod naszego rejestru znalezisk w paczce klienta (D-4).**
+  72 pliki w 12 z 29 archiwów `boty/paczki/` niosły oznaczenia audytu (np. `A6-F1`, `Q-5`, `CZ-1`,
+  `K10`, „runda 2”, „klasa 8”) — komentarz cytował kod zamiast nieść powód. Dołożony wzorzec łapie
+  format „litera(y)-myślnik-numer” (`A7b-F2`, `B-6`, `D-4`, `CZ-1`…), wymaga MYŚLNIKA — bez tego
+  warunku łapał fragmenty regeksów (`[a-zA-Z0-9]` widziane jako „Z0-9”) i współrzędne SVG (`M100`).
+  Świadomie NIE łapie gołych kodów bez myślnika (`K10`, `C3`) ani słów prozy („klasa N”, „runda N”,
+  „znalezisko”) — oba warianty dały fałszywe trafienia na tym repo (SVG/regeksy, zwykłe zdania);
+  to zostaje jako otwarty gap, nie cichy dopisek. Ta sama funkcja obsługuje bramkę `slady` (każdy PR)
+  i `paczka-zgodnosc.sh` (zamrożenie) — jedno źródło wzorców.
+  Dowód: `narzedzia-qa/paczka-zgodnosc-proba-kontrolna.sh` — nowy przypadek „kod znaleziska audytu
+  (A7b-F2) w paczce” EXIT=1 z naprawą; ten sam przypadek na kodzie SPRZED naprawy EXIT=0 (BLAD,
+  próba kontrolna skalibrowana); czysta paczka nadal EXIT=0. Realna paczka złożona
+  `narzedzia-qa/pakuj-dla-klienta.sh` z bieżącego źródła, rozpakowana: 0 trafień wzorca, kontrola
+  dodatnia (pliki `.php` z `<?php`) = 54/54.
 - **`bramki-proba-kontrolna.sh` — pomiary pominięcia goldena wymuszają `--tryb pelny` (5.09, #286).** Zapowiedź
   „golden bedzie POMINIETA” pada tylko w trybie pełnym, a `bramki.sh` bez flagi wykrywa tryb z diffu gałęzi — PR
   zmieniający same pliki tekstowe wpadał w tryb tekstowy i trzy pomiary (docker+unzip / bez dockera / docker bez

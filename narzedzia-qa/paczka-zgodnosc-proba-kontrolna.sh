@@ -277,6 +277,8 @@ psuj_sciezke_robocza()    { dopisz_slad "$1" "// liczbe pilnuje testy/statystyki
 psuj_obieg_pracy()        { dopisz_slad "$1" "// uwaga recenzenta do PR #99 — zostawiamy swiadomie"; }
 # Goły numer zgłoszenia, bez słowa „PR" (recenzja #182 — wzorzec 1.1.1 tego nie widział).
 psuj_numer_goly()         { dopisz_slad "$1" "// martwy wpis w harmonogramie sypie bledami — #170)"; }
+# Kod znaleziska z naszego rejestru audytowego (D-4) — bramka nie znała formatu litera(y)-myślnik-numer.
+psuj_kod_znaleziska()     { dopisz_slad "$1" "// naprawiono zgodnie ze zgloszeniem A7b-F2"; }
 
 psuj_doktech() {
 	# Szóste miejsce wersji (nagłówek DOKUMENTACJA-TECHNICZNA.md) — dopisane
@@ -322,6 +324,7 @@ sprawdz "adres maszyny dev w paczce (localhost:8890)"        1 psuj_adres_dev   
 sprawdz "sciezka naszego drzewa roboczego w paczce"          1 psuj_sciezke_robocza       "ścieżka naszego drzewa roboczego"
 sprawdz "numer PR-a i recenzent w paczce"                    1 psuj_obieg_pracy           "nasz obieg pracy"
 sprawdz "goly numer zgloszenia (— #170) bez slowa PR"        1 psuj_numer_goly            "nasz obieg pracy"
+sprawdz "kod znaleziska audytu (A7b-F2) w paczce"            1 psuj_kod_znaleziska        "kod znaleziska audytu"
 
 echo
 echo

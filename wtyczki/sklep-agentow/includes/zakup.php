@@ -1392,7 +1392,7 @@ function sklepag_dociagnij_zalegle( $budzet_s = 0, $wymus = false ) {
 		return $budzet_s > 0 && ( microtime( true ) - $start ) >= $budzet_s;
 	};
 
-	// Wynik dla wołającego (przycisk w panelu pokazuje go właścicielowi). K10 (30.08): tester kliknął
+	// Wynik dla wołającego (przycisk w panelu pokazuje go właścicielowi). Test na czystej instalacji:
 	// „Dociągnij zaległe” 71 s po zapłacie, sesja była młodsza niż 120 s, przycisk pominął ją BEZ SŁOWA,
 	// cron na tym hostingu nie chodził (zepsuta pętla zwrotna) — i zakup „wisiał” 20 minut mimo opłacenia.
 	$wynik = array(
