@@ -91,6 +91,8 @@ WYMAGA_DOCKERA=(
 	# Dockera nie ma czym mierzyc. Nie dalo sie jej dopisac wczesniej: w #272 plik
 	# jeszcze nie istnial, a w #274 ten plik byl zmieniany przez #272 (konflikt).
 	schemat-wersja-po-sprawdzeniu-proba-kontrolna.sh
+	# 5.09 (obszar C, F5-F4): opakowanie spustu prawne-migracja-stos-probny.sh — wlasny stos probny.
+	prawne-migracja-proba-kontrolna.sh
 )
 # 5.09 (D41): wykonawca GitHuba Dockera MA, ale stosu WP (kontenera bazy) nie ma — workflow
 # deklaruje to jawnie przez `BEZ_STOSU_WP=1`. Ta sama sciezka pominiecia co bez Dockera:
@@ -159,7 +161,7 @@ MAX_NIEZMIERZONYCH=0   # 4.09: TWARDE ZERO. Podniesienie = swiadoma decyzja w co
 #    bo CI wola przelot Z ZAKRESEM `narzedzia-qa`, gdzie wiecej niz 7 pominiec jest
 #    NIEMOZLIWE. Przy jednej liczbie mozna dopisac TRZY nazwy do POMIJANE i przejdzie
 #    bez sladu — dokladnie ta klasa, dla ktorej ten sufit powstal.
-MAX_POMINIETYCH_ZAKRES=7   # 5.09: POLICZONE na scalonej tresci (#272 + #274 + #278), nie przepisane.
+MAX_POMINIETYCH_ZAKRES=8   # 5.09: +1 (prawne-migracja, obszar C); POLICZONE na scalonej tresci (#272 + #274 + #278), nie przepisane.
                     # ⛔ Rachunek na OBU zakresach, bo sufit obowiazuje oba, a CI liczy inaczej
                     #    niz wydanie. Scenariusz, ktorego sufit dotyczy: wykonawca BEZ Dockera
                     #    I BEZ `zip` (na maszynie z obydwoma pominiecie jest tylko 1 — dlatego
@@ -174,7 +176,7 @@ MAX_POMINIETYCH_ZAKRES=7   # 5.09: POLICZONE na scalonej tresci (#272 + #274 + #
                     #    ktorego zada bramka wydania — wywalilby sie na WLASNEJ poprawce.
                     # ⛔ NIE przepisuj tej liczby przy nastepnym scaleniu: kazda nowa proba
                     #    dockerowa albo zipowa ja przesuwa. Policz komenda na scalonym drzewie.
-MAX_POMINIETYCH_PELNY=10   # ta sama arytmetyka, sciezka BEZ zakresu (tak wola `k7-koniec`)
+MAX_POMINIETYCH_PELNY=11   # +1 (prawne-migracja, obszar C); ta sama arytmetyka, sciezka BEZ zakresu (tak wola `k7-koniec`)
 
 if [ -n "$(git status --porcelain -uno 2>/dev/null)" ]; then
 	echo "PRZELOT: drzewo robocze BRUDNE — dowód powstałby na kodzie, którego nie ma w historii." >&2

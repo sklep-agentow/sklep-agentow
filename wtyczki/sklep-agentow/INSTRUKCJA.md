@@ -262,14 +262,40 @@ pokazuje błąd, nie potwierdza usunięcia (dane mogą nadal być w bazie — ni
 usunięcia osobie, która o to prosiła), w osi czasu pojawia się zdarzenie błędu, a Ty powtarzasz
 operację, aż przejdzie.
 
-Przy instalacji powstały dwa szkice stron: **Regulamin sklepu** i **Polityka prywatności
-sklepu**. Uzupełnij je swoimi danymi sprzedawcy i opublikuj, zanim zaczniesz sprzedawać naprawdę.
-Szkice powstają tylko raz, przy pierwszej instalacji — jeśli opublikowałeś Politykę z wersji
-wcześniejszej niż 0.9.23, dopisz do niej sam: „dziennik zdarzeń (90 dni, w tym adres IP przy
-każdym pobraniu pliku)”. Tak samo z **Regulaminem**: jeśli opublikowałeś go z wersji
-wcześniejszej niż 0.9.40, dopisz do niego sam punkt o gwarancji satysfakcji — że jest to
-**dobrowolne zobowiązanie sprzedawcy PONAD ustawę**, niezależne od utraty prawa odstąpienia
-z art. 38 — bo strona produktu tę gwarancję obiecuje, więc regulamin musi ją potwierdzać.
+Przy instalacji powstają dwa szkice stron: **Regulamin sklepu (SZABLON)** i **Polityka
+prywatności sklepu (SZABLON)**. Uzupełnij je swoimi danymi sprzedawcy i opublikuj, zanim
+zaczniesz sprzedawać naprawdę — dopóki tego nie zrobisz, w panelu wisi czerwone ostrzeżenie,
+a linki „regulamin sklepu” i „polityka prywatności” przy przycisku zakupu prowadzą kupującego
+na stronę „w przygotowaniu” (nigdy na szkic z zaślepką i nigdy na błąd 404).
+
+**Co robi sama wtyczka po aktualizacji** (od 0.9.40; wcześniej strony powstawały wyłącznie przy
+pierwszej instalacji, więc sklep zaktualizowany „w miejscu” nie dostawał ich nigdy): przy
+pierwszym wejściu na sklep po aktualizacji wtyczka ogląda obie strony i zależnie od ich stanu:
+
+- **strony nie ma** (skasowałeś ją albo instalacja jest starsza niż wersja, w której szkice
+  powstały) — zakłada ją od nowa, jako **wersję roboczą** z zaślepką SZABLON. Nie publikuje
+  jej za Ciebie: treści prawnej nikt nie napisze za sprzedawcę;
+- **strona nadal jest szablonem** (słowo SZABLON zostało w tytule albo w treści) — dopisuje na
+  jej końcu **tylko te sekcje wzoru, których w niej nie ma**. Tego, co już wpisałeś, nie rusza
+  i niczego nie dubluje;
+- **strona jest już Twoim dokumentem** (zaślepki SZABLON w niej nie ma) — **wtyczka nie zmienia
+  w niej ani znaku**. Zamiast tego pokazuje w panelu żółty komunikat z **nazwami sekcji**,
+  których u Ciebie nie widzi (np. „Cena”, „Procedura reklamacyjna”).
+
+**Co robisz sam.** Wypełnij miejsca w nawiasach kwadratowych, usuń słowo SZABLON z tytułu
+i treści, opublikuj. Gdy zobaczysz żółty komunikat o nowych sekcjach: sprawdź, czy masz te
+sprawy opisane u siebie pod inną nazwą — jeśli tak, zignoruj; jeśli nie, dopisz je ręcznie
+(wymaga ich art. 12 ust. 1 ustawy o prawach konsumenta). Wtyczka porównuje po nazwach sekcji
+i nie potrafi rozpoznać Twojego własnego nazewnictwa — dlatego pyta zamiast poprawiać.
+
+Dwie rzeczy, których ta samoobsługa nie wyłapie, bo są **wewnątrz** sekcji, a nie osobną
+sekcją — dopisz je sam, jeśli publikowałeś dokumenty z wcześniejszych wersji:
+
+- **Polityka prywatności** z wersji wcześniejszej niż 0.9.23: „dziennik zdarzeń (90 dni,
+  w tym adres IP przy każdym pobraniu pliku)” w opisie zakresu danych;
+- **Regulamin** z wersji wcześniejszej niż 0.9.40: punkt o gwarancji satysfakcji — że jest to
+  **dobrowolne zobowiązanie sprzedawcy PONAD ustawę**, niezależne od utraty prawa odstąpienia
+  z art. 38 — bo strona produktu tę gwarancję obiecuje, więc regulamin musi ją potwierdzać.
 
 ---
 

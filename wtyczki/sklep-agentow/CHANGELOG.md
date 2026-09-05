@@ -17,6 +17,16 @@ wydany osobno (podbicie pośrednie wewnątrz jednej zmiany).
 ## [Niewydane]
 
 ### Naprawione
+- **Stara instalacja DOSTAJE strony prawne i nowe sekcje szablonu przy aktualizacji, nie tylko przy
+  aktywacji (F5-F4).** `sklepag_utworz_strony()` wołało się wyłącznie z hooka aktywacji, więc sklep
+  zaktualizowany w miejscu nie miał ani brakujących stron, ani sześciu sekcji z F5-F2. Migracja
+  (`sklepag_kompensuj_strony_prawne()`, przed bramą wersji schematu, własny licznik `SKLEPAG_WERSJA_STRON`)
+  robi trzy rzeczy: brak strony (także w koszu) → tworzy szkic SZABLON jak przy aktywacji; strona nadal
+  jest szablonem (zaślepka SZABLON w treści) → dopisuje brakujące sekcje z aktualnego szablonu; strona
+  uzupełniona przez właściciela → NIE dotyka treści, tylko melduje w panelu listę nowych sekcji do
+  ręcznego dopisania. Opcje sprzątane w `uninstall.php`. Dowód: `narzedzia-qa/prawne-migracja-stos-probny.sh`
+  na stosie jednorazowym (przypadki A–C + próby kontrolne `blok-sprzedawcy`, `sekcje`).
+### Naprawione
 - **Szablon regulaminu ma sekcje wymagane przez art. 12 ust. 1 upk (F5-F2).** Brakowało ceny
   z podatkami, sposobu i terminu zapłaty, procedury reklamacyjnej, odpowiedzialności za zgodność
   świadczenia, funkcjonalności treści cyfrowej i informacji o pozasądowym rozstrzyganiu sporów

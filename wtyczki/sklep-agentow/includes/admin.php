@@ -20,6 +20,7 @@ add_action( 'admin_menu', 'sklepag_admin_menu' );
 add_action( 'admin_enqueue_scripts', 'sklepag_admin_assety' );
 add_action( 'admin_notices', 'sklepag_ostrzez_permalinki' );
 add_action( 'admin_notices', 'sklepag_ostrzez_strony_prawne' );
+add_action( 'admin_notices', 'sklepag_ostrzez_nowe_sekcje_szablonu' ); // F5-F4: sekcje dolozone przez aktualizacje do WLASNEGO dokumentu wlasciciela.
 
 /**
  * Świeży WordPress ma bezpośrednie odnośniki „Zwykłe" — wtedy /sklep/ po cichu
@@ -54,8 +55,11 @@ function sklepag_ostrzez_permalinki() {
  *
  * Warunek jest SZERSZY niż „wersja robocza", bo opublikowanie nie znaczy „gotowe": strona
  * z „SZABLON" w tytule albo z niewypełnioną zaślepką w treści jest tak samo niegotowa.
- * Brak strony (opcja pusta lub wpis skasowany) NIE jest ostrzegany — właściciel mógł ją skasować
- * świadomie, bo ma własny regulamin gdzie indziej, i nie naszą rzeczą jest to podważać.
+ * Brak strony (opcja pusta lub wpis skasowany) NIE jest ostrzegany TUTAJ — właściciel mógł ją skasować
+ * świadomie, bo ma własny regulamin gdzie indziej. Od F5-F4 migracja (`sklepag_kompensuj_strony_prawne()`
+ * w `aktywacja.php`) odtwarza brakującą stronę jako SZKIC z zaślepką SZABLON — nic nie publikuje,
+ * a odtworzony szkic wpada pod TO ostrzeżenie jak każda strona niegotowa. Kupujący do tego czasu
+ * widzi stronę „w przygotowaniu” (`sklepag_link_prawny()`), nigdy 404.
  */
 function sklepag_ostrzez_strony_prawne() {
 	if ( ! current_user_can( 'manage_options' ) ) {
@@ -197,3 +201,40 @@ function sklepag_admin_assety( $hook ) {
 
 // Szkielet-liczniki z kości zastąpił pełny dashboard (includes/admin-dashboard.php);
 // diagnostykę katalogu chronionego przejął notice w sklepag_admin_dashboard().
+
+/**
+ * F5-F4, przypadek (c): właściciel ma WŁASNY regulamin/politykę (zaślepki SZABLON już nie ma),
+ * a aktualizacja wtyczki dołożyła do szablonu sekcje, których w jego dokumencie nie widać.
+ *
+ * ⛔ Dopisanie ich do gotowego dokumentu prawnego byłoby zmianą treści bez wiedzy sprzedawcy —
+ * dlatego kompensacja (`sklepag_kompensuj_strony_prawne()` w `aktywacja.php`) zapisuje w tym
+ * przypadku SAMĄ LISTĘ NAZW, a decyzję zostawia człowiekowi. Komunikat wymienia nazwy sekcji,
+ * bo „szablon ma nowe sekcje” bez ich wypisania nie mówi właścicielowi, czego szukać.
+ *
+ * Komunikat znika, gdy właściciel doda brakujące nazwy do dokumentu (kolejny bieg kompensacji
+ * po podbiciu SKLEPAG_WERSJA_STRON) albo gdy skasuje opcję. Świadomie NIE jest zamykalny
+ * krzyżykiem: to ten sam rodzaj ryzyka prawnego co ostrzeżenie o niegotowych dokumentach.
+ */
+function sklepag_ostrzez_nowe_sekcje_szablonu() {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		return;
+	}
+	$nowe = get_option( 'sklepag_strony_nowe_sekcje', array() );
+	if ( ! is_array( $nowe ) || ! $nowe ) {
+		return;
+	}
+	$wiersze = array();
+	foreach ( $nowe as $tytul => $sekcje ) {
+		if ( ! is_array( $sekcje ) || ! $sekcje ) {
+			continue;
+		}
+		$wiersze[] = '<strong>' . esc_html( (string) $tytul ) . '</strong>: '
+			. esc_html( implode( ', ', array_map( 'strval', $sekcje ) ) );
+	}
+	if ( ! $wiersze ) {
+		return;
+	}
+	echo '<div class="notice notice-warning"><p><strong>Sklep Agentów:</strong> aktualizacja dołożyła do wzoru dokumentów sekcje, których nie widać w Twoich stronach — '
+		. wp_kses( implode( ' oraz ', $wiersze ), array( 'strong' => array() ) )
+		. '. Twojej treści nie ruszamy: to Twój dokument, nie nasz szablon. Sprawdź, czy te sprawy są u Ciebie opisane pod inną nazwą — jeśli nie, dopisz je ręcznie (wymaga ich art. 12 ust. 1 ustawy o prawach konsumenta).</p></div>';
+}

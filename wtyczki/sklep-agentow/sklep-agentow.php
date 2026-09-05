@@ -31,6 +31,7 @@ define( 'SKLEPAG_WERSJA_SCHEMATU', 10 ); // v10: sesje_checkout.produkt_* — MI
 	dopuszcza w czesci lokalnej. Wezszy zbior przepuszczalby sasiedztwo i podmiana
 	przepisywalaby wpisy INNEGO kupujacego. Jedna definicja — czyszczenie i pomiar musza
 	dopasowywac identycznie. */
+define( 'SKLEPAG_WERSJA_STRON', 2 ); // v2: szablon regulaminu z sekcjami art. 12 ust. 1 upk (F5-F2). Podbij, gdy zmienisz tresc szablonu w sklepag_definicje_stron() -- to jedyny sygnal, po ktorym instalacja aktualizowana W MIEJSCU dostanie nowe sekcje (aktywacja sie tam nie odpala).
 define( 'SKLEPAG_GRANICA_ADRESU', '[A-Za-z0-9!#$%&\'*+\/=?^_`{|}~.-]' );
 
 define( 'SKLEPAG_BLAD_ZGODA_ZAKUP', 'Zaznacz zgodę, żeby przejść do płatności.' );
