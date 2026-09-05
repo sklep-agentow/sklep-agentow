@@ -210,7 +210,7 @@ jobs:
             if ! printf '%s\n' "$ZMIENIONE" | grep -qE '^(narzedzia-qa|\.github)/'; then
               echo "PRZELOT PROB (odlamek $PRZELOT_ODLAMEK): POMINIETY JAWNIE — zmiana nie dotyka narzedzia-qa/ ani .github/;"
               echo "  proby mierza NARZEDZIA, a te sa identyczne z main, gdzie przelot biegnie zawsze. Zmienione pliki:"
-              printf '  %s\n' $ZMIENIONE
+              printf '%s\n' "$ZMIENIONE" | sed 's/^/  /'
               exit 0
             fi
             echo "PRZELOT PROB (odlamek $PRZELOT_ODLAMEK): BIEGNIE — zmiana dotyka narzedzia-qa/ albo .github/"

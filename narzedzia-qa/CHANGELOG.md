@@ -14,6 +14,16 @@ wstecz nie dopisuję, bo nie umiałbym jej odtworzyć uczciwie. Ich zmiany od te
 pory lądują tutaj.
 
 ## [Niewydane]
+- **`gitleaks-proba-kontrolna.sh` 1.1.1 — SAMOWYSTARCZALNA: sama zapewnia binarkę gitleaks (prawdziwą `zapewnij_narzedzie`
+  z `bramki.sh`, tryb samych definicji), zamiast żądać „uruchom najpierw bramki.sh”.** Ukryta zależność od KOLEJNOŚCI,
+  którą ujawnił podział przelotu na odłamki (#287, pierwszy przebieg): w pełnym przelocie binarkę pobierała przypadkiem
+  wcześniejsza próba, w odłamku `reszta` nikt — próba oddawała kod 2, przelot padał na suficie niezmierzonych (0).
+  Dowód: z pustym `TMPDIR` (jak świeży wykonawca) próba pobiera, weryfikuje sumę i przechodzi (EXIT=0); z pełnym cache
+  bez zmian (EXIT=0).
+- **`quality.yml` — blok `run:` kroku przelotu przechodzi shellcheck (SC2086).** Obraz GitHuba ma `shellcheck`, więc
+  bramka `actionlint` sprawdza tam także skrypty w `run:`; lokalnie shellchecka nie było i actionlint milczał (#287 r1:
+  `BRAMKA actionlint: EXIT=1`). Parytet lokalny: `shellcheck` w `/tmp/bramki-narzedzia` obok actionlinta — stara wersja
+  pliku pada lokalnie tak samo jak w CI (EXIT=1), nowa przechodzi.
 - **`proby-kontrolne-przelot.sh` — ODŁAMKI (`PRZELOT_ODLAMEK=bramki|poswiadczenia|reszta`) i tryb listy (`PRZELOT_LISTA=1`).**
   CI biegnie trzema odłamkami RÓWNOLEGLE (D41 c.d., 5.09): dwie próby zjadały ~80 % przelotu (590 s + 310 s z 15),
   reszta ~30 s. Odłamki nazwane W SKRYPCIE, nie w workflow — jedno źródło prawdy; nieznana nazwa albo odłamek
