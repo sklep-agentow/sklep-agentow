@@ -83,7 +83,7 @@ add_action( 'template_redirect', 'sklepag_status_404_wczesnie' );
  * decyzji kupującego.
  *
  * ⛔ POWÓD (F5-F1): opcje `sklepag_strona_regulamin`/`_polityka` wskazują strony, które
- * aktywacja zakłada jako `draft` z zaślepką „SZABLON" (D39) — kupujący prowadzony wprost
+ * aktywacja zakłada jako `draft` z zaślepką „SZABLON" (treści prawnej nie piszemy za sprzedawcę) — kupujący prowadzony wprost
  * na taki wpis dostałby albo 404 (draft bez publicznego adresu), albo — po opublikowaniu
  * przez właściciela BEZ wypełnienia — dokument z „[NAZWA, ADRES, KONTAKT]" w treści, czyli
  * fałszywe poczucie załatwionej sprawy (ta sama klasa, co przy F5-F2). Warunek „gotowe" jest

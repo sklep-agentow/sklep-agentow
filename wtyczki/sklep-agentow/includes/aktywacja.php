@@ -319,7 +319,7 @@ function sklepag_migruj_schemat_jesli_trzeba() {
  * Definicje stron wtyczki — JEDNO źródło dla hooka aktywacji i dla kompensacji na
  * instalacjach aktualizowanych w miejscu (`sklepag_kompensuj_strony_prawne()` niżej).
  * Sklep i Dziękujemy publikowane; Regulamin i Polityka jako SZKICE-szablony
- * (właściciel wypełnia danymi sprzedawcy i sam publikuje — D39).
+ * (właściciel wypełnia danymi sprzedawcy i sam publikuje — wtyczka nie pisze treści prawnej za sprzedawcę).
  *
  * ⛔ POWÓD WYDZIELENIA (F5-F4): treść szablonu rośnie (F5-F2 dołożyła 6 sekcji), a
  * aktualizacja „w miejscu” NIE odpala hooka aktywacji. Gdyby kompensacja miała własną
@@ -337,7 +337,7 @@ function sklepag_definicje_stron() {
 		// był regulaminem. Sekcje niżej dopisują pkt 5 (cena z podatkami), 7 (termin zapłaty),
 		// 8 (procedura reklamacyjna z terminem), 13 (zgodność świadczenia), 19/20 (funkcjonalność
 		// i kompatybilność) i 21 (ODR) — treści prawnej NIE wymyślamy, tylko nazywamy sekcję
-		// i zostawiamy wypełniacz + jedno zdanie instrukcji (audyt: `audyt/plamy/F5-RAPORT.md` §②).
+		// i zostawiamy wypełniacz + jedno zdanie instrukcji — właściciel ma wiedzieć, CO wpisać, a nie dostać gotowca.
 		'sklepag_strona_regulamin'  => array( 'Regulamin sklepu (SZABLON)', "SZABLON — wypełnij danymi sprzedawcy przed publikacją. Braki oznaczone [W NAWIASACH] zostały dopisane, żeby dokument pokrywał art. 12 ust. 1 ustawy o prawach konsumenta — treści prawnej nie wymyślamy za Ciebie, wskazujemy tylko, gdzie ma stanąć.\n\nSprzedawca: [NAZWA, ADRES, KONTAKT, ORGAN REJESTROWY I NUMER — np. wpis do CEIDG albo numer KRS].\nProdukty: treści cyfrowe (wtyczki WordPressa) dostarczane natychmiast po opłaceniu.\nCena: [PODAJ, CZY CENA NA STRONIE SKLEPU ZAWIERA PODATKI I JAKĄ STAWKĘ — łączna cena wraz z podatkami jest obowiązkowym elementem informacji przedumownej].\nSposób i termin zapłaty: [DOMYŚLNIE: kartą przez Stripe, z góry, przed dostarczeniem — zmień, jeśli oferujesz inny sposób płatności].\nZgoda na natychmiastowe dostarczenie: kupujący wyraża ją przy zakupie i przyjmuje utratę prawa odstąpienia (art. 38 ustawy o prawach konsumenta).\nGwarancja satysfakcji [ILE DNI — domyślnie 14]: NIEZALEŻNIE od powyższego sprzedawca zobowiązuje się dobrowolnie zwrócić pieniądze na wniosek kupującego złożony w tym terminie. To zobowiązanie PONAD ustawę, nie ustawowe prawo odstąpienia — strona produktu je obiecuje, więc regulamin musi je potwierdzać. Zwrot oznacza wygaśnięcie prawa do aktualizacji i wsparcia dla kupionej kopii.\nProcedura reklamacyjna: reklamacje przyjmujemy na adres [MAIL WŁAŚCICIELA] i rozpatrujemy w terminie [ILE DNI — domyślnie 14 dni od zgłoszenia].\nOdpowiedzialność za zgodność świadczenia z umową: [UZUPEŁNIJ — sprzedawca odpowiada wobec konsumenta za zgodność treści cyfrowej z umową na zasadach ustawy o prawach konsumenta; opisz, jak zgłosić niezgodność i czego może żądać kupujący].\nFunkcjonalność i kompatybilność treści cyfrowej: [UZUPEŁNIJ WYMAGANIA TECHNICZNE — np. wersja WordPressa i PHP, z którą produkt współpracuje, znane ograniczenia].\nPozasądowe rozwiązywanie sporów: konsument może skorzystać z unijnej platformy ODR (ec.europa.eu/consumers/odr) oraz z [UZUPEŁNIJ WŁAŚCIWY PODMIOT ADR LUB RZECZNIKA KONSUMENTÓW].", 'draft' ),
 		'sklepag_strona_polityka'   => array( 'Polityka prywatności sklepu (SZABLON)', "SZABLON — wypełnij danymi sprzedawcy przed publikacją.\n\nAdministrator danych: [NAZWA, KONTAKT]\nZakres: adres e-mail kupującego, dane transakcji, dziennik zdarzeń (90 dni, w tym adres IP przy każdym pobraniu pliku); dobrowolnie podane dane do faktury (nazwa firmy, NIP, adres — cel: wystawienie faktury, podstawa: obowiązek prawny z ustawy o VAT); przy dobrowolnej opinii — imię i treść opinii, publikowane na stronie produktu wyłącznie za wyrażoną w formularzu zgodą (usunięcie/anonimizację można wykonać na żądanie).\nPodmioty przetwarzające: operator płatności Stripe; mechanizm poczty serwera.\nBoty w trybie AI wysyłają treść zapytań do dostawcy API — [UZUPEŁNIJ po włączeniu].", 'draft' ),
 	);
@@ -463,7 +463,7 @@ function sklepag_sekcje_szablonu( $tresc ) {
  *
  * Trzy sytuacje i trzy różne odpowiedzi — bo tylko pierwsza z nich jest naprawdę nasza:
  *   (a) strony nie ma (opcja pusta albo wpis skasowany/w koszu) → zakładamy ją jak aktywacja:
- *       `draft` z zaślepką SZABLON (D39 — treści prawnej nie piszemy za właściciela);
+ *       `draft` z zaślepką SZABLON (treści prawnej nie piszemy za właściciela);
  *   (b) strona istnieje i NADAL jest szablonem (zaślepka „SZABLON” w tytule albo w treści) →
  *       dopisujemy BRAKUJĄCE sekcje na koniec. Sekcji już obecnych nie ruszamy, więc tekst
  *       wpisany przez właściciela zostaje nietknięty;

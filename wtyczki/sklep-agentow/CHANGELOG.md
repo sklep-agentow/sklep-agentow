@@ -24,14 +24,13 @@ wydany osobno (podbicie pośrednie wewnątrz jednej zmiany).
   robi trzy rzeczy: brak strony (także w koszu) → tworzy szkic SZABLON jak przy aktywacji; strona nadal
   jest szablonem (zaślepka SZABLON w treści) → dopisuje brakujące sekcje z aktualnego szablonu; strona
   uzupełniona przez właściciela → NIE dotyka treści, tylko melduje w panelu listę nowych sekcji do
-  ręcznego dopisania. Opcje sprzątane w `uninstall.php`. Dowód: `narzedzia-qa/prawne-migracja-stos-probny.sh`
-  na stosie jednorazowym (przypadki A–C + próby kontrolne `blok-sprzedawcy`, `sekcje`).
+  ręcznego dopisania. Opcje po deinstalacji są sprzątane.
 ### Naprawione
 - **Szablon regulaminu ma sekcje wymagane przez art. 12 ust. 1 upk (F5-F2).** Brakowało ceny
   z podatkami, sposobu i terminu zapłaty, procedury reklamacyjnej, odpowiedzialności za zgodność
   świadczenia, funkcjonalności treści cyfrowej i informacji o pozasądowym rozstrzyganiu sporów
   (ODR). Każda sekcja to nagłówek + `[UZUPEŁNIJ]` + zdanie instrukcji, bez wymyślania treści
-  prawnej za właściciela (D39: strony prawne zostają szablonami w wersji roboczej).
+  prawnej za właściciela (strony prawne zostają szablonami w wersji roboczej, publikuje je sprzedawca).
 - **Kupujący dostaje link do regulaminu i polityki prywatności PRZED zakupem, nie tylko po nim
   (F5-F1).** Nowa `sklepag_link_prawny('regulamin'|'polityka')` zwraca permalink strony, gdy jest
   opublikowana i bez zaślepki „SZABLON" — w przeciwnym razie prowadzi na `?sklepag_prawne=…`
