@@ -4,7 +4,7 @@ Tags: chat, chatbot, faq, kontakt, wsparcie
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.5.16
+Stable tag: 1.5.17
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -152,6 +152,9 @@ w ustawieniach. Klucz API jest kasowany zawsze, niezależnie od tego przełączn
 
 Pełna historia zmian, z opisem każdej pozycji, jest w pliku `CHANGELOG.md`
 w paczce. Poniżej skrót.
+
+= 1.5.17 =
+* Naprawione: eksport CSV z rozmów chroni arkusz przed formułą także wtedy, gdy komórka zaczyna się od tabulatora, powrotu karetki albo apostrofu (ten sam zestaw siedmiu znaków, co w sklepie); eksport i import czytają jedną wspólną listę, więc import zawsze zdejmuje dokładnie jeden apostrof i odzyskuje oryginał.
 
 = 1.5.16 =
 * Porządek w kodzie: komentarze w skrypcie i stylach okna czatu oraz w obsłudze operatora nie zawierają już naszych wewnętrznych oznaczeń zgłoszeń — niosą powód. Bez zmian w działaniu.

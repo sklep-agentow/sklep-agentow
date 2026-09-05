@@ -1,6 +1,6 @@
 # ChatBot LIVE — dokumentacja techniczna
 
-Wersja wtyczki: **1.5.16** · schemat bazy: **8** · licencja: **GPL-2.0-or-later**
+Wersja wtyczki: **1.5.17** · schemat bazy: **8** · licencja: **GPL-2.0-or-later**
 
 Dokument opisuje **kod, który jest**, nie plan. Każda liczba i nazwa poniżej ma pokrycie
 w źródle — przy każdej podano plik i symbol, żeby dało się to sprawdzić `grep`-em, a nie
@@ -209,7 +209,7 @@ Wszystkie liczby, którymi wtyczka się rządzi, są stałymi — nie ma ich roz
 
 | Stała | Wartość | Plik | Do czego |
 |---|---|---|---|
-| `CHATL_WERSJA` | `1.5.16` | `chatbot-live.php` | wersja wtyczki; służy też jako `?ver=` assetów (przeglądarka nie poda starego pliku po aktualizacji) |
+| `CHATL_WERSJA` | `1.5.17` | `chatbot-live.php` | wersja wtyczki; służy też jako `?ver=` assetów (przeglądarka nie poda starego pliku po aktualizacji) |
 | `CHATL_WERSJA_SCHEMATU` | `8` | `chatbot-live.php` | wyzwalacz migracji schematu |
 | `CHATL_KATALOG`, `CHATL_URL` | ścieżka i adres wtyczki | `chatbot-live.php` | `require` i adresy assetów |
 | `CHATL_MAX_PYTANIE` | `500` | `includes/front.php` | maksymalna długość pytania gościa (nadmiar jest **odrzucany** z komunikatem i kodem `za_dlugie`, HTTP 413; we wcześniejszych wydaniach był przycinany po cichu). **Jedno źródło** — do widgetu idzie przez `wp_localize_script` (`chatlDane.limitPytania`), tak jak `CHATL_RETENCJA_DNI` |
@@ -561,7 +561,7 @@ dokładnie jak przy braku klucza.
 | SQL | `$wpdb->prepare()` przy każdej wartości od użytkownika; `esc_like()` przy `LIKE` |
 | Wyjście HTML | `esc_html`, `esc_attr`, `esc_url`, `esc_textarea` w panelu; widget wstawia treści **wyłącznie** przez `textContent` — zero `innerHTML` |
 | Zgoda | checkbox w przeglądarce **oraz** sprawdzenie po stronie serwera — bez zgody żądanie nie dochodzi do zapisu |
-| CSV | komórka zaczynająca się od `=`, `+`, `-`, `@` dostaje apostrof (wstrzyknięcie formuły arkusza) |
+| CSV | komórka zaczynająca się od `=`, `+`, `-`, `@`, tabulatora, powrotu karetki albo apostrofu dostaje apostrof (wstrzyknięcie formuły arkusza); eksport i import czytają JEDNĄ stałą `CHATL_CSV_ZNAKI_FORMULY`, więc runda eksport→import jest odwracalna (wartość od apostrofu dostaje drugi, import zdejmuje dokładnie jeden) |
 | Sekret | klucz API bez autoloadu, nigdy nie wraca do formularza, kasowany przy każdej deinstalacji; zalecane trzymanie w `wp-config.php` |
 
 Klucz API **nie jest szyfrowany w bazie** i jest to decyzja świadoma: klucz szyfrujący musiałby

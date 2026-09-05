@@ -15,7 +15,7 @@ plików paczki, nie przez nazwę katalogu.
 | co | gdzie w kodzie | dlaczego jedzie | status |
 |---|---|---|---|
 | pola `required` bez polskiego komunikatu | `admin-produkty.php:319,322` · `admin-ustawienia.php` | właściciel zobaczy przy pierwszym pustym zapisie produktu | otwarte, tanie |
-| asymetria list znaków w eksporcie CSV | `admin-dashboard.php:269` · `segregator/csv.php:310` · `chatbot/csv.php:29` | sklep chroni 7 znaków, segregator 6 (bez apostrofu), chatbot 4 — ciche uszkodzenie danych, nie awaria | otwarte |
+| asymetria list znaków w eksporcie CSV | `sklep-agentow/includes/admin-dashboard.php:270` · `segregator-maila/includes/csv.php:310` · `chatbot-live/includes/csv.php:29` | BYŁO: sklep 7, segregator 6, chatbot 4 — ciche uszkodzenie danych | ✅ ROZLICZONE #298 (5.09): ChatBot 7 znaków jedną stałą po obu stronach + strażnik bliźniaków z podłogą; Segregator świadomie 6 (import nie zdejmuje apostrofu) — nic nie jedzie do klienta jako wada |
 | status „zamknięty" w trzech składniach | `sklep-agentow.php:44` · `admin-zamowienie.php` (5 miejsc) | dziś śpi; obudzi się przy dodaniu nowego statusu — np. „Wyślij ponownie" po obciążeniu zwrotnym | otwarte |
 | pięć zapisów w ponownej wysyłce bez sprawdzonego wyniku | `admin-zamowienie.php:104,130,179,194,196` | ta sama klasa, którą naprawialiśmy w anonimizacji | ⭐ **dług NAZWANY** — `admin-zamowienie.php:28` niesie nasze własne przyznanie się |
 | luki w instrukcji instalacji | `dokumentacja/INSTRUKCJA-INSTALACJI.md` | **zero obrazów** (kontrola wzorca: instrukcje wtyczek mają 6/5/6), myląca numeracja menu, ewidencja kasy fiskalnej, retencja faktur, zachowanie przy złym NIP-ie | otwarte, tekst |
@@ -109,7 +109,9 @@ uruchamiać strażnika WYŁĄCZNIE na stosie próbnym (`probny_wp`), gdzie cudzy
 na „stos próbny albo pełna świadomość okna". **Jedzie do klienta:** NIE — narzędzie testowe, poza paczką.
 
 
-## 🟡 ASYMETRIA NEUTRALIZACJI CSV MIĘDZY TRZEMA WTYCZKAMI (2.09, recenzja `#264` r1 i r3) — dług nazwany, nie naprawiony
+## ✅ ROZLICZONE 5.09 — ASYMETRIA NEUTRALIZACJI CSV: ChatBot ma JEDNĄ stałą `CHATL_CSV_ZNAKI_FORMULY` (7 znaków, jak sklep; import czyta tę samą), strażnik `testy/csv-neutralizacja-blizniaki-test.sh` mierzy 3 kopie z podłogą `MIN_KOPII=3` i ma spust: `narzedzia-qa/csv-neutralizacja-blizniaki-proba-kontrolna.sh` w przelocie CI (3 mutanty padają, czysta kopia przechodzi) — PR #298 (ChatBot 1.5.17). Segregator zostaje przy 6 znakach (bez apostrofu — świadomie: jego import CSV `segm_importuj_csv()` nie zdejmuje apostrofu, więc nie ma wady „import kasuje znak, którego eksport nie dołożył”; #298 r3 W3 sprostowała moje wcześniejsze, nieprawdziwe „nie ma importu”; zapisane w jego DOKUMENTACJA-TECHNICZNA.md).
+
+## 🟡 (archiwum) ASYMETRIA NEUTRALIZACJI CSV MIĘDZY TRZEMA WTYCZKAMI (2.09, recenzja `#264` r1 i r3) — dług nazwany, nie naprawiony
 
 Trzy wtyczki mają po kopii tej samej obrony (`*_csv_komorka()`, trzy kopie są uzasadnione — instalują
 się osobno), ale **listy znaków różnią się** i żaden grep po nazwie funkcji tego nie pokaże:
@@ -228,7 +230,9 @@ bo dotyczy naszego oprzyrządowania, nie produktu.
 
 ---
 
-## 🔴 STRAŻNIK PACZEK ISTNIEJE, ALE NIE STRZELA SAM — wymaga PR-a manifestowego (29.08, z recenzji #208 r1)
+## 🟡 DŁUG NAZWANY (sprostowane 5.09, recenzja #298 r3 WAŻNA 2) — STRAŻNIK PACZEK NADAL NIE STRZELA SAM: bramka `paczka` w `BRAMKI=()` (`narzedzia-qa/bramki.sh:47`) uruchamia `testy/paczka-obejmuje-kazdy-plik-wtyczki-test.sh` — allowlista vs katalog wtyczki, ani bajta z zipa. `narzedzia-qa/paczka-zgodnosc.sh` (zip vs repo, wersje, ślady) biegnie TYLKO z ręki recenzenta (allowlista w `recenzent.yml`) i przy pakowaniu dla klienta; w `quality.yml` go nie ma, a `paczka-zgodnosc-proba-kontrolna.sh` przepakowuje zip z kopii, więc zamrożonego zipa z repo nie zobaczy z konstrukcji. Zmierzone 5.09: `bramki.sh --tryb pelny` EXIT=0 na commicie z zipem ChatBota sprzed poprawki (klasa 10, 3. wystąpienie), `paczka-zgodnosc.sh chatbot-live` EXIT=1. Do zrobienia (PR porządkowy): bramka `paczka-zgodnosc` w `BRAMKI=()` dla trzech wtyczek + próg 14 + próba w `bramki-proba-kontrolna.sh`. Wcześniejsze zdanie „STRZELA SAM” było nieprawdziwe.
+
+## 🔴 (archiwum) STRAŻNIK PACZEK ISTNIEJE, ALE NIE STRZELA SAM — wymaga PR-a manifestowego (29.08, z recenzji #208 r1)
 
 `narzedzia-qa/paczka-zgodnosc.sh` wykrywa rozjazd paczki z repo i **pada poprawnie** (kod 1 na
 `f310eec` dla obu botów, kod 0 po naprawie). Ale nie ma go w `BRAMKI=()` w `narzedzia-qa/bramki.sh`
@@ -252,7 +256,9 @@ po commicie budującym aktualny zip **ORAZ** wersja nie podbita* → PAD.
 
 ---
 
-## 🟡 KLASA 5 (ślady wewnętrzne w paczce) NIE JEST DOMKNIĘTA — 47 trafień rodziny, której skaner nie widzi (29.08, z recenzji #208 r1)
+## ✅ ROZLICZONE 5.09 (#291) — KLASA 5: skaner 1.4.0/1.4.1 zna formy litera-myślnik-numer (`A2-F3`, `P2-Z1`, `DK-5`, `WK-13`) i „ten/tego PR”/„Runda N”; drzewo i nowe paczki 0 śladów (`paczka-zgodnosc.sh` EXIT=0 ×3); stare wydane archiwa zostają (klasa 10)
+
+## 🟡 (archiwum) KLASA 5 (ślady wewnętrzne w paczce) NIE JEST DOMKNIĘTA — 47 trafień rodziny, której skaner nie widzi (29.08, z recenzji #208 r1)
 
 `#208` usunął z paczek jeden ślad (`zasada D22`). Skaner `narzedzia-qa/slady-wewnetrzne.sh`
 zna wzorce `\bD[0-9]{1,2}\b` i `\bK[0-9]\b` (linia 77) — i dlatego zobaczył `D22`. **Nie zna**
@@ -467,7 +473,7 @@ prawdziwym wdrożeniu.
 - ⛔ WRACA ⇒ kasujesz ten wpis i przestawiasz L6-01 na ✅ z wynikiem z hostingu klienta.
 
 
-## 🟡 DŁUG ZASTANY — okno idempotencji nie obejmuje JEDNOCZESNEGO podwójnego kliknięcia
+## 🟡 DŁUG ZASTANY — okno idempotencji nie obejmuje JEDNOCZESNEGO podwójnego kliknięcia (5.09: po stronie przeglądarki przycisk JEST blokowany po wysłaniu — `assets/platnosc.js:146`; zostaje wyścig dwóch żądań spoza przeglądarki, dług nie błąd klienta)
 (z recenzji #199 r2, DROBNA 5 — NIE regresja z tego PR, mechanizm istnieje od 0.9.0)
 - Odczyt okna (`zakup.php` `get_transient`) i jego zapis (`set_transient`) dzieli wyjście do
   sieci: `sklepag_stripe_utworz_sesje()`. Dwa żądania wysłane NAPRAWDĘ jednocześnie przechodzą
