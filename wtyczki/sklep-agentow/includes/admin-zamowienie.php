@@ -116,11 +116,12 @@ function sklepag_obsluz_resend() {
 
 	// ⛔ NOWY LINK NIE W BAZIE = NIC NIE WYSYŁAMY. Mail niósłby link dający 403 od pierwszego
 	// kliknięcia, a panel mówiłby „wysłano”. Zapis padł w całości, więc poprzedni stan (i poprzedni
-	// link, jeśli działał) zostaje nietknięty. Właściciel widzi komunikat „blad” i dostaje mail.
+	// link, jeśli działał) zostaje nietknięty. Właściciel widzi komunikat o BAZIE (nie o poczcie —
+	// poczta nie została tknięta, więc „sprawdź konfigurację poczty” wysłałoby go w złe miejsce) i dostaje mail.
 	if ( false === $rotacja ) {
 		sklepag_zdarzenie( (int) $zam->id, 'mail_blad', 'ręczna ponowna wysyłka: zapis nowego linku padł (' . (string) $wpdb->last_error . ') — mail NIE wysłany, poprzedni link bez zmian' );
 		sklepag_powiadom_wlasciciela( 'mail_resend_blad', 'ponowna wysyłka nie powiodła się (zapis do bazy)', 'Zamówienie #' . (int) $zam->id . ': nie udało się zapisać nowego linku pobrania, mail nie został wysłany. Sprawdź bazę danych i spróbuj ponownie.' );
-		wp_safe_redirect( add_query_arg( 'sklepag_resend', 'blad', sklepag_url_zamowienia( (int) $zam->id ) ) );
+		wp_safe_redirect( add_query_arg( 'sklepag_resend', 'blad_zapisu', sklepag_url_zamowienia( (int) $zam->id ) ) );
 		exit;
 	}
 
@@ -339,9 +340,13 @@ function sklepag_admin_zamowienie() {
 	// Komunikaty po akcjach (redirect z admin-post).
 	// phpcs:disable WordPress.Security.NonceVerification.Recommended -- komunikaty po redirekcie, bez mutacji.
 	if ( isset( $_GET['sklepag_resend'] ) ) {
-		echo 'ok' === $_GET['sklepag_resend']
-			? '<div class="notice notice-success is-dismissible"><p>Mail wysłany ponownie ze świeżym linkiem pobrania (ważny ' . (int) round( SKLEPAG_LINK_GODZIN / 24 ) . ' dni).</p></div>'
-			: '<div class="notice notice-error"><p>Ponowna wysyłka NIE powiodła się — sprawdź konfigurację poczty serwera.</p></div>';
+		if ( 'ok' === $_GET['sklepag_resend'] ) {
+			echo '<div class="notice notice-success is-dismissible"><p>Mail wysłany ponownie ze świeżym linkiem pobrania (ważny ' . (int) round( SKLEPAG_LINK_GODZIN / 24 ) . ' dni).</p></div>';
+		} elseif ( 'blad_zapisu' === $_GET['sklepag_resend'] ) {
+			echo '<div class="notice notice-error"><p>Ponowna wysyłka NIE powiodła się — nie udało się zapisać nowego linku w bazie danych, mail nie został wysłany, poprzedni link bez zmian. Sprawdź bazę danych i spróbuj ponownie.</p></div>';
+		} else {
+			echo '<div class="notice notice-error"><p>Ponowna wysyłka NIE powiodła się — sprawdź konfigurację poczty serwera.</p></div>';
+		}
 	}
 	if ( isset( $_GET['sklepag_anonimizacja'] ) ) {
 		$faktura_zostala = isset( $_GET['faktura'] ) && '1' === $_GET['faktura'];
