@@ -2,7 +2,7 @@
 # Proba kontrolna bramki zgodnosci dokumentacji (zasada D14: kontrola, ktora nie
 # znajdzie PODLOZONEGO bledu, jest slepa).
 #
-# Po co osobno: bramka testy/dokumentacja-zgodnosc.sh przez dlugi czas
+# Po co osobno: kontrola testy/dokumentacja-zgodnosc.sh (nie bramka CI — biegnie u recenzenta i w przelocie recznym) przez dlugi czas
 # porownywala KOD z liczba wpisana w SAMEJ SOBIE, a nie z dokumentacja. Wiersz
 # "numer schematu, obecnie 3" przy schemacie 4 przeszedl przez nia na zielono
 # i zlapal go dopiero recenzent (PR #73) — a rozjazd dokumentacji z kodem to
