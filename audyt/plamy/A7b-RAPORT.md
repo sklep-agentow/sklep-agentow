@@ -20,7 +20,7 @@ w normalnej pracy nigdy nie zobaczy. Przyrząd leży w repo i powtarza się jedn
 ```
 bash audyt/plamy/A7b-sonda-imap.sh
 ```
-`A7b-sonda-imap-atrapa.php` (serwer-atrapa, siedem scenariuszy) · `A7b-sonda-imap.php` (sonda:
+`A7b-sonda-imap-atrapa.php` (serwer-atrapa, siedem scenariuszy; od 5.09 osiem — `search-40k`, kontrola dodatnia W SKALI dopisana po #301 r3, gdy sufit 64 KB odcinał `* SEARCH` dużej skrzynki; sonda jest od tej pory silnikiem strażnika `testy/segregator-imap-sufity-proba-kontrolna.sh`) · `A7b-sonda-imap.php` (sonda:
 łączy `Segm_Imap`, woła `naglowki()`, mierzy czas, szczyt pamięci i fatala) · `A7b-sonda-imap.sh`
 (przelot). Sonda **mierzy i drukuje** — nie jest strażnikiem i nie należy do bramek.
 

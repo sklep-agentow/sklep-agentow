@@ -62,3 +62,9 @@ Próba kontrolna (5.09): łapacz BEZ wolumenu — 1 wiadomość przed restartem,
 definicji zabrało go razem z warstwą i `stos.sh`/`test-php.sh` przestały działać
 (komunikat: executable file not found in $PATH). Teraz montuje się z hosta: `./wp/bin/wp`
 (phar wyjęty z obrazu `wordpress:cli-php8.4`).
+
+## 5. OPcache WYŁĄCZONY na stosie warsztatowym (5.09)
+`strona-wp/wp/php-stanowisko.ini` ma `opcache.enable=0`. Powód zmierzony 5.09: przy `opcache.revalidate_freq=2` kontener serwował
+przez kilka sekund STARY kod mutanta — próba kontrolna „niezłapana w serii, PASS bezpośrednio”. Na produkcji OPcache zostaje włączony
+(to ustawienie stanowiska, nie wtyczek). Kod do kontenera trafia przez `docker cp` (brak montowania katalogu wtyczek) — po każdej
+zmianie pliku w repo skopiuj go ponownie, inaczej test mierzy kod sprzed zmiany.

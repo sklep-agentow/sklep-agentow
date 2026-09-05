@@ -2,9 +2,10 @@
 /**
  * SONDA AUDYTOWA A7b — co robi Segm_Imap z wejsciem wrogim albo obcietym.
  *
- * Nie jest strazniekiem i nie nalezy do bramek: mierzy i DRUKUJE, werdykt
- * wystawia czlowiek. Uruchamiac przez A7b-sonda-imap.sh, ktory stawia atrape
- * (A7b-sonda-imap-atrapa.php) i podaje port oraz nazwe scenariusza.
+ * Sama mierzy i DRUKUJE (werdykt z tego pliku wystawia czlowiek), ale od 5.09 jest
+ * SILNIKIEM straznika `testy/segregator-imap-sufity-proba-kontrolna.sh` (exit 1),
+ * ktory biegnie w przelocie prob kontrolnych. Uruchamiac przez A7b-sonda-imap.sh,
+ * ktory stawia atrape (A7b-sonda-imap-atrapa.php) i podaje port oraz scenariusz.
  *
  * ⛔ Limit pamieci ustawia wolajacy (skrypt daje -d memory_limit=64M), zeby
  * brak ograniczenia po stronie klienta objawil sie SZYBKO i bezpiecznie,

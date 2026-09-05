@@ -205,7 +205,7 @@ MAX_POMINIETYCH_PELNY=14   # 5.09 wieczór: +1 nonce (POMIJANE, klasa 154); ta s
 # zielono, nie zmierzywszy niczego. Podloga jest DRUGA, NIEZALEZNA brama na tej samej
 # liczbie: minimalna liczba prob, ktore MUSZA sie faktycznie wykonac (ILE = N - POMINIETO).
 # Literaly, ta sama arytmetyka co MAX_POMINIETYCH_* wyzej (N minus maksymalne pominiecie).
-MIN_URUCHOMIONYCH_PELNY=55    # 68 prob w calym repo (30 narzedzia-qa + 38 testy; `ls narzedzia-qa/*proba-kontrolna*.sh testy/*proba-kontrolna*.sh | wc -l`) minus MAX_POMINIETYCH_PELNY(13)  (5.09 po scaleniu main z #294 do #298: +chatbot-csv-formula, csv-neutralizacja-blizniaki (D, czysty bash/PHP — nigdy pomijane) + rejestr-liczniki (B) + prawne-migracja/pakuj-slady/polityka (C))
+MIN_URUCHOMIONYCH_PELNY=55    # 69 prob w calym repo (30 narzedzia-qa + 39 testy; `ls narzedzia-qa/*proba-kontrolna*.sh testy/*proba-kontrolna*.sh | wc -l`) minus MAX_POMINIETYCH_PELNY(13)  (5.09 po scaleniu main z #294 do #298: +chatbot-csv-formula, csv-neutralizacja-blizniaki (D, czysty bash/PHP — nigdy pomijane) + rejestr-liczniki (B) + prawne-migracja/pakuj-slady/polityka (C))
 MIN_URUCHOMIONYCH_ZAKRES=20   # 30 prob w narzedzia-qa minus MAX_POMINIETYCH_ZAKRES(10)  (5.09 po scaleniu main z #294 do #298: +chatbot-csv-formula, csv-neutralizacja-blizniaki (D, czysty bash/PHP — nigdy pomijane) + rejestr-liczniki (B) + prawne-migracja/pakuj-slady/polityka (C))
 
 # Tryb LISTY (PRZELOT_LISTA=1) niczego nie uruchamia i nie pisze logu — nie jest dowodem, więc brudne

@@ -77,6 +77,10 @@ concurrency:
 
 jobs:
   recenzja:
+    # 5.09 (audyt niezależny I3): PR z Dependabota NIE dostaje sekretów repo (ANTHROPIC_API_KEY,
+    # token aplikacji), więc recenzent na nim ZAWSZE padał — #248 wisiał 1 h 27 min i został zamknięty
+    # ręcznie. Bramki Quality na PR-ach Dependabota biegną dalej (quality.yml bez tego warunku).
+    if: github.actor != 'dependabot[bot]'
     # 5.09 (DECYZJE.md D41): WYKONAWCA GITHUBA — powód i liczby w quality.yml. Recenzent
     # zostaje na KAŻDYM pchnięciu, ale od dziś każde pchnięcie kosztuje ~12 min z puli
     # 2000 min/mies. — pchnięcia „na próbę” to pieniądze.
