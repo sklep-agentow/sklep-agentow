@@ -4,7 +4,7 @@ Tags: sklep, stripe, pliki cyfrowe, sprzedaz wtyczek, pobieranie
 Requires at least: 6.7
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.9.41
+Stable tag: 0.9.42
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -58,7 +58,7 @@ karty musi być ramką Stripe, nie naszym kodem.
   w panelu. Bez ocen od anonimowych gości i bez zbiorczej średniej.
 * Dziennik logowań administratorów: po nieudanych próbach odpowiedź jest
   wykładniczo opóźniana, liczba prób z jednego adresu ograniczona, wpisy
-  starsze niż 90 dni usuwane automatycznie.
+  starsze niż 90 dni usuwa zadanie WP-Cron sklepu (co 10 minut) — tylko gdy harmonogram WordPressa działa.
 * SEO stron sklepu: tytuły i opisy, znaczniki Open Graph, dane strukturalne
   (produkt, okruszki, pytania i odpowiedzi), mapa witryny produktów.
 * Kopie danych produktu w zamówieniu — późniejsza zmiana ceny czy nazwy nie
@@ -161,6 +161,12 @@ link do pobrania w mailu, jednorazowy link do opinii.
 
 == Changelog ==
 
+= 0.9.42 =
+* Naprawione: kupujący widzi link do regulaminu i polityki prywatności oraz dane sprzedawcy PRZED zakupem (strona produktu, formularz), nie tylko w mailu po nim; nieopublikowany regulamin prowadzi na stronę „w przygotowaniu”, nigdy na 404.
+* Naprawione: szablon regulaminu ma sekcje wymagane przez art. 12 ust. 1 ustawy o prawach konsumenta (cena z podatkami, zapłata, reklamacje, zgodność, funkcjonalności treści cyfrowej, ODR) z wypełniaczami do uzupełnienia.
+* Naprawione: sklep zaktualizowany w miejscu (nie tylko świeżo aktywowany) dostaje brakujące strony prawne jako szkice i nowe sekcje szablonu; treść uzupełniona przez sprzedawcę nie jest ruszana, panel melduje, co dopisać.
+* Zmienione: polityka prywatności i opis dziennika mówią prawdę o sprzątaniu — warunkowe, przez zadanie WP-Cron co 10 minut, po 90 dniach, tylko dziennik i historia logowań; dane zamówień nie są usuwane po czasie.
+* Zmienione: dokumentacja techniczna opisuje, że tabela sesji zakupu rośnie bez końca, dlaczego świadomie, i jak sprzedawca sprząta ją ręcznie bez ryzyka dla płatności w toku.
 = 0.9.41 =
 * Naprawione: nasze wewnętrzne oznaczenia procesu audytowego nie jadą już do klienta w paczce — komentarze niosą powód, nie numer zgłoszenia.
 * Naprawione: anonimizacja kupującego czyści też adresy IP z dziennika zdarzeń (wpisy pobrań), a dowód tego jest odtwarzalny próbą kontrolną.

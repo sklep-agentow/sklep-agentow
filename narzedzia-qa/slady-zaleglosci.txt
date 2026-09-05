@@ -29,3 +29,5 @@
 # ZAMIERZONY — bierze się wersję z TEGO PR-a (35 pozycji). Wzięcie tamtej zostawi
 # siedem wpisów, które do niczego nie pasują, a martwy wpis zapala bramkę `slady`
 # na czerwono. Kolejność scalania nie ma znaczenia, ważne, która wersja zostaje.
+# 5.09 (Q-3): dokumenty paczki klienta sprawdza kanoniczny skaner. Dwie linie instrukcji Stripe CLI dla KLIENTA testujacego
+#   lokalnie — „localhost” jest tu tresc instrukcji, nie adres naszej maszyny (zadnego portu warsztatu, PORT to zaslepka).

@@ -1303,6 +1303,12 @@ function sklepag_stopka_sprzedawcy_tekst() {
 	if ( '' !== $kontakt && is_email( $kontakt ) ) {
 		$linie[] = 'Reklamacje i faktury: ' . $kontakt;
 	}
+	// mail dostaje link do regulaminu tym samym sklepag_link_prawny(), którego używa
+	// strona produktu — jedna definicja „gotowe/nie gotowe", nigdy dwa różne adresy tego samego dokumentu.
+	if ( function_exists( 'sklepag_link_prawny' ) ) {
+		$linie[] = 'Regulamin: ' . sklepag_link_prawny( 'regulamin' );
+		$linie[] = 'Polityka prywatności: ' . sklepag_link_prawny( 'polityka' );
+	}
 	return "SPRZEDAWCA:\n" . implode( "\n", $linie ) . "\n";
 }
 
@@ -1493,8 +1499,7 @@ function sklepag_dociagnij_zalegle( $budzet_s = 0, $wymus = false ) {
 	// 3) Sprzątanie liczników rate-limit po oknie (tabela techniczna, wiersz żyje ~2 min).
 	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
 	$wpdb->query( "DELETE FROM {$wpdb->prefix}sklepag_rate_limit WHERE okno_do < UTC_TIMESTAMP()" );
-
-	// 4) Retencja 90 dni (polityka deklaruje „dziennik zdarzeń (90 dni)"):
+	// 4) Retencja 90 dni — WARUNKOWA: biegnie tylko z tym cronem (polityka i opis dziennika mówią to wprost od 0.9.42):
 	// logowania i zdarzenia starsze wypadają. Historia SPRZEDAŻY żyje w `zamowienia`
 	// (status, kwoty, mail_tresc) — jej retencja to osobna decyzja właściciela, nie ten krok.
 	$retencja = gmdate( 'Y-m-d H:i:s', strtotime( current_time( 'mysql' ) ) - SKLEPAG_RETENCJA_DNI * DAY_IN_SECONDS );

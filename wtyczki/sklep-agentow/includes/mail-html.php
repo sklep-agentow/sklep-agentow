@@ -187,6 +187,12 @@ function sklepag_zbuduj_mail_html( $produkt, $zam, $link, $link_opinii = '' ) {
 	if ( '' !== $kontakt ) {
 		$stopka[] = 'Reklamacje i faktury: <a href="mailto:' . esc_attr( $kontakt ) . '" style="color:' . $stal . ';">' . esc_html( $kontakt ) . '</a>';
 	}
+	// ten sam link, tą samą funkcją, co stopka tekstowa (zakup.php) i strona produktu —
+	// jedna definicja „gotowe/nie gotowe" dla wszystkich trzech miejsc.
+	if ( function_exists( 'sklepag_link_prawny' ) ) {
+		$stopka[] = '<a href="' . esc_url( sklepag_link_prawny( 'regulamin' ) ) . '" style="color:' . $stal . ';">Regulamin</a>';
+		$stopka[] = '<a href="' . esc_url( sklepag_link_prawny( 'polityka' ) ) . '" style="color:' . $stal . ';">Polityka prywatności</a>';
+	}
 	$stopka[] = '<a href="' . esc_url( $strona ) . '" style="color:' . $stal . ';">' . esc_html( $strona_t ) . '</a>';
 	$h[]      = '<tr><td style="padding:20px 32px 28px 32px;border-top:1px solid ' . $lin . ';">'
 		. '<p style="margin:0 0 6px 0;' . $mono . 'color:' . $stal . ';font-size:11px;letter-spacing:0.14em;text-transform:uppercase;">Sprzedawca</p>'

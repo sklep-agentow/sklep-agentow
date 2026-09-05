@@ -3,7 +3,7 @@
  * Plugin Name: Sklep Agentów
  * Plugin URI: https://automaticai.pl/sklep/
  * Description: Sprzedawaj wtyczki-boty AI bezpośrednio ze swojej strony: płatność kartą, automatyczny mail z linkiem do pobrania, panel zamówień ze statystykami i dziennikiem logowań. Zamówienia, produkty i pliki zostają w Twojej bazie i na Twoim serwerze — bez abonamentu. Płatność obsługuje Stripe.
- * Version: 0.9.41
+ * Version: 0.9.42
  * Requires at least: 6.7
  * Requires PHP: 8.1
  * Author: Automatic AI
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SKLEPAG_WERSJA', '0.9.41' );
+define( 'SKLEPAG_WERSJA', '0.9.42' );
 define( 'SKLEPAG_WERSJA_SCHEMATU', 10 ); // v10: sesje_checkout.produkt_* — MIGAWKA produktu z chwili utworzenia platnosci (kupujacy dostaje to, co kupil, a nie to, co wlasciciel podmienil w miedzyczasie); v9: zamowienia.dor_* — ślad ostatniej DORĘCZONEJ wysyłki (token, termin, treść maila, skrót opinii); kompensacja po nieudanej wysyłce przywraca stan doręczony, nie zastany (0.9.28); v8: zamowienia.dane_faktury (firma + NIP podane przez kupującego przy zakupie, 0.9.25); v7: status_przed_sporem (punkt powrotu po zdarzeniu finansowym — sporze LUB zwrocie — bez zmyślania stanu wysyłki); v6: kolumny zwrotu (payment_intent_id, zwrocono_grosze, zwrot_czas); v5: tabela opinii; v4: kolumna zamowienia.usunieto_dnia (anonimizacja RODO); v3: indeks para_logowania.
 
 /* Komunikaty blokady pol wymaganych — po POLSKU.
@@ -31,6 +31,7 @@ define( 'SKLEPAG_WERSJA_SCHEMATU', 10 ); // v10: sesje_checkout.produkt_* — MI
 	dopuszcza w czesci lokalnej. Wezszy zbior przepuszczalby sasiedztwo i podmiana
 	przepisywalaby wpisy INNEGO kupujacego. Jedna definicja — czyszczenie i pomiar musza
 	dopasowywac identycznie. */
+define( 'SKLEPAG_WERSJA_STRON', 2 ); // v2: szablon regulaminu z sekcjami art. 12 ust. 1 upk. Podbij, gdy zmienisz tresc szablonu w sklepag_definicje_stron() -- to jedyny sygnal, po ktorym instalacja aktualizowana W MIEJSCU dostanie nowe sekcje (aktywacja sie tam nie odpala).
 define( 'SKLEPAG_GRANICA_ADRESU', '[A-Za-z0-9!#$%&\'*+\/=?^_`{|}~.-]' );
 
 define( 'SKLEPAG_BLAD_ZGODA_ZAKUP', 'Zaznacz zgodę, żeby przejść do płatności.' );

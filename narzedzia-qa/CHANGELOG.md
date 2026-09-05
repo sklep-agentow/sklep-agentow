@@ -14,6 +14,10 @@ wstecz nie dopisuję, bo nie umiałbym jej odtworzyć uczciwie. Ich zmiany od te
 pory lądują tutaj.
 
 ## [Niewydane]
+- **`pakuj-dla-klienta.sh` 1.2.2 — dokumenty paczki klienta sprawdza KANONICZNY skaner `slady-wewnetrzne.sh` (etykieta
+  `paczka-klienta`), nie własny grep z 9 alternatyw (znalezisko Q-3: własny wzorzec przepuszczał imię właściciela, numer PR-a,
+  „recenzent”, „koordynator”).** NOWA `pakuj-slady-proba-kontrolna.sh`: wpięcie (skrypt woła skaner, stary wzorzec zniknął)
+  + skutek (kopia dokumentów czysta → 0; z podłożonym „koordynatorka / PR #123 / recenzent” → 1).
 - **`stanowisko/sprzatnij-zamowienia-testowe.sh` — NOWY (I-22): lista / `--kasuj` zamówień testowych ze stanowiska (domena
   `test.local`/`example.com` ORAZ sesja Stripe `cs\_test\_`; pusty e-mail NIGDY — r3 po #296 r2 WAŻNA 1: na stanowisku `cs_test_`
   ma każde zamówienie, więc nie odróżnia testów od ręcznych zakupów; wiersze bez e-maila są wypisywane osobno, bez kasowania)

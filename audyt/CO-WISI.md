@@ -41,21 +41,20 @@ nie odświeżano wobec dzisiejszego `HEAD`.
 
 ## 🟡 ŚWIADOMY DŁUG NA WYDANIE 0.9.42 — co ZOSTAJE otwarte w rejestrze INFRA po rundzie 5.09 i DLACZEGO (5.09, koordynatorka)
 
-Stan NA TEJ GAŁĘZI po scaleniu #291 i #297 (5.09 10:31), policzony komendą rejestru (`grep -cE '^\| `[^`]+` \|.*OTWARTE' audyt/REJESTR-ZNALEZISK-INFRA.md`): **25 OTWARTYCH**.
-Z tego **9 zamyka otwarty PR** #294 (lista niżej; status w rejestrze zmieni się przy jego scaleniu), zostaje **16 OTWARTYCH**
-(plus 2 pozycje W NAPRAWIE wymienione dla kompletu: `F4-F4`, `I-26`). Poniżej WSZYSTKIE, każda z kodem w odwrotnych apostrofach — `bramka-znaleziska.sh` (krok „rejestr INFRA”, przez
+Stan NA TEJ GAŁĘZI po scaleniu #291, #297, #296 i obszaru C (#294) (5.09), policzony komendą rejestru (`grep -cE '^\| `[^`]+` \|.*OTWARTE' audyt/REJESTR-ZNALEZISK-INFRA.md`): **16 OTWARTYCH**
+(plus WSZYSTKIE 3 pozycje W NAPRAWIE wymienione dla kompletu: `F4-F4`, `I-26`, `P-1` — #296 r5 WAŻNA 2: wcześniej 2 z 3; oraz 1 WYCOFANE: `B-12`). Poniżej WSZYSTKIE, każda z kodem w odwrotnych apostrofach — `bramka-znaleziska.sh` (krok „rejestr INFRA”, przez
 `rejestr-liczniki-proba-kontrolna.sh`) sprawdza na każdym PR, że KAŻDY kod OTWARTY w rejestrze występuje w tej sekcji. Powód: #296 r1
 KRYT 1 — „~20” było liczbą przepisaną, pomiar dawał 30, a sekcja gubiła jedyne KRYT rejestru (klasa I-23: dwa rejestry, jeden nie
 widzi drugiego). Decyzja o tym, co z tej listy jedzie do klienta jako „znane ograniczenie”, należy do właściciela (sekcja
 „CO Z TEGO DŁUGU JEDZIE DO KLIENTA” wyżej).
 
-**Zamykane OTWARTYM PR-em (9) — nie dług, tylko kolejność scaleń (status sprawdzony w rejestrze na gałęzi C):**
-- `#294` obszar C: `F5-*` (KRYT — rozpisane na F5-F1…F5-F5: link i dane sprzedawcy przed zakupem, sekcje art. 12, kompensacja
+**Zamknięte PR-ami z tej rundy (nie dług, tylko kolejność scaleń — statusy ZAMKNIETE w rejestrze na tej gałęzi):**
+- `#294` obszar C (ta gałąź): `F5-*` (KRYT — rozpisane na F5-F1…F5-F5: link i dane sprzedawcy przed zakupem, sekcje art. 12, kompensacja
   w migracji), `F5-F1`, `F5-F2`, `F5-F3`, `F5-F4`, `F4-F2`, `F4-F3`, `Q-3`, `C13-F1` (`F5-F5` już ZAMKNIETE przez #291 — r4 DROBNA 3).
 - `#291` obszar A — **SCALONY 5.09 09:57**: `P-5`, `A7b-F2`, `D-4`, `F5-F5` są już ZAMKNIETE w rejestrze na tej gałęzi (wiersze zostają tu, żeby lista była pełna).
 - `#297` segregator — **SCALONY 5.09 10:31**: `A7c-F1` ZAMKNIETE w rejestrze na tej gałęzi.
 
-**Zostaje — 16 OTWARTYCH + 2 W NAPRAWIE (`F4-F4`, `I-26`):**
+**Zostaje — 16 OTWARTYCH + 3 W NAPRAWIE (`F4-F4`, `I-26`, `P-1`):**
 
 **Narzędzia procesu (nie kod wtyczek, klient ich nie dostaje):**
 - `I-3` kalibrator-straznikow.sh, `I-4` licznik-odstepstw.sh, `I-8` adresy-w-dokumencie.sh + waga-znaleziska.sh — sieroty planu audytów v3.

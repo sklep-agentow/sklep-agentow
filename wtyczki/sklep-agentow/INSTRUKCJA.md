@@ -145,7 +145,7 @@ prosto do nich.
 - **Treść wysłanego maila** — dokładnie to, co dostał kupujący, z przyciskiem **Wyślij ponownie**,
 - **Dane osobowe (RODO)** — przycisk anonimizacji (rozdział 6),
 - **Oś czasu** — każde zdarzenie tego zamówienia: płatność, wysyłki, pobrania, zwroty, kto co zrobił.
-  Wpisy starsze niż **90 dni** znikają same (tak jak cały Dziennik, rozdział 7) — jeśli potrzebujesz
+  Wpisy starsze niż **90 dni** usuwa zadanie WP-Cron sklepu co 10 minut — tylko gdy harmonogram WordPressa działa (tak jak cały Dziennik, rozdział 7) — jeśli potrzebujesz
   zapisu na dłużej (np. do sporu), zapisz go wcześniej; kwoty i statusy zamówień zostają na zawsze.
 
 **„Dociągnij zaległe teraz”** (Pulpit, prawy górny róg). Zakup domyka się dwiema drogami:
@@ -262,14 +262,51 @@ pokazuje błąd, nie potwierdza usunięcia (dane mogą nadal być w bazie — ni
 usunięcia osobie, która o to prosiła), w osi czasu pojawia się zdarzenie błędu, a Ty powtarzasz
 operację, aż przejdzie.
 
-Przy instalacji powstały dwa szkice stron: **Regulamin sklepu** i **Polityka prywatności
-sklepu**. Uzupełnij je swoimi danymi sprzedawcy i opublikuj, zanim zaczniesz sprzedawać naprawdę.
-Szkice powstają tylko raz, przy pierwszej instalacji — jeśli opublikowałeś Politykę z wersji
-wcześniejszej niż 0.9.23, dopisz do niej sam: „dziennik zdarzeń (90 dni, w tym adres IP przy
-każdym pobraniu pliku)”. Tak samo z **Regulaminem**: jeśli opublikowałeś go z wersji
-wcześniejszej niż 0.9.40, dopisz do niego sam punkt o gwarancji satysfakcji — że jest to
-**dobrowolne zobowiązanie sprzedawcy PONAD ustawę**, niezależne od utraty prawa odstąpienia
-z art. 38 — bo strona produktu tę gwarancję obiecuje, więc regulamin musi ją potwierdzać.
+Przy instalacji powstają dwa szkice stron: **Regulamin sklepu (SZABLON)** i **Polityka
+prywatności sklepu (SZABLON)**. Uzupełnij je swoimi danymi sprzedawcy i opublikuj, zanim
+zaczniesz sprzedawać naprawdę — dopóki tego nie zrobisz, w panelu wisi czerwone ostrzeżenie,
+a linki „regulamin sklepu” i „polityka prywatności” przy przycisku zakupu prowadzą kupującego
+na stronę „w przygotowaniu” (nigdy na szkic z zaślepką i nigdy na błąd 404).
+
+**Co robi sama wtyczka po aktualizacji** (od 0.9.42; wcześniej strony powstawały wyłącznie przy
+pierwszej instalacji, więc sklep zaktualizowany „w miejscu” nie dostawał ich nigdy): przy
+pierwszym otwarciu **panelu** (Kokpitu) po aktualizacji — albo przy najbliższym biegu zadania cyklicznego —
+wtyczka ogląda obie strony i zależnie od ich stanu (na stronie sklepu nic nie robi, żeby kupujący nie czekał):
+
+- **strony nie ma** (skasowałeś ją albo instalacja jest starsza niż wersja, w której szkice
+  powstały) — zakłada ją od nowa, jako **wersję roboczą** z zaślepką SZABLON. Nie publikuje
+  jej za Ciebie: treści prawnej nikt nie napisze za sprzedawcę;
+- **strona nadal jest szablonem** (słowo SZABLON zostało w tytule albo w treści) — dopisuje na
+  jej końcu **tylko te sekcje wzoru, których w niej nie ma**. Tego, co już wpisałeś, nie rusza
+  i niczego nie dubluje;
+- **strona jest już Twoim dokumentem** (zaślepki SZABLON w niej nie ma) — **wtyczka nie zmienia
+  w niej ani znaku**. Zamiast tego pokazuje w panelu żółty komunikat z **nazwami sekcji**,
+  których u Ciebie nie widzi (np. „Cena”, „Procedura reklamacyjna”).
+
+**Co robisz sam.** Wypełnij miejsca w nawiasach kwadratowych, usuń słowo SZABLON z tytułu
+i treści, opublikuj. Gdy zobaczysz żółty komunikat o nowych sekcjach: sprawdź, czy masz te
+sprawy opisane u siebie pod inną nazwą — jeśli tak, zignoruj; jeśli nie, dopisz je ręcznie
+(wymaga ich art. 12 ust. 1 ustawy o prawach konsumenta). Wtyczka porównuje po nazwach sekcji
+i nie potrafi rozpoznać Twojego własnego nazewnictwa — dlatego pyta zamiast poprawiać.
+
+Rzeczy **wewnątrz** sekcji (nie osobna sekcja) — tu samoobsługa działa tylko częściowo:
+
+- **Polityka prywatności — zdanie o sprzątaniu dziennika.** Jeśli w Twojej polityce stoi jeszcze brzmienie
+  z wersji 0.9.23–0.9.40 („dziennik zdarzeń (90 dni, w tym adres IP przy każdym pobraniu pliku)”), wtyczka
+  **sama** podmienia je na prawdziwe — **ale tylko wtedy, gdy strona jest nadal szablonem** (słowo SZABLON w tytule
+  albo w treści): sprzątanie jest warunkowe (zadanie WP-Cron co 10 minut, tylko gdy harmonogram
+  WordPressa działa), obejmuje dziennik zdarzeń i historię logowań, a dane zamówień nie są usuwane po czasie.
+  Jeśli to już **Twój dokument** (zaślepki SZABLON nie ma) — nawet gdy nasze stare zdanie stoi w nim słowo w słowo —
+  albo jeśli to zdanie przepisałeś po swojemu, wtyczka go nie tknie — zobaczysz żółty komunikat „Zakres (zdanie
+  o sprzątaniu: warunkowe, WP-Cron; dane do faktury; opinie)” i dopisujesz tę prawdę sam, własnymi słowami. ⛔ Nie wpisuj już starego
+  brzmienia „90 dni” bez warunku — było nieprawdziwe (gdy WP-Cron stoi, nic nie znika);
+- **Polityka prywatności** z wersji wcześniejszej niż 0.9.25 (dane do faktury: nazwa, NIP, adres — cel: faktura,
+  podstawa: obowiązek prawny z ustawy o VAT) albo niż 0.9.8 (opinie): jeśli strona jest **nadal szablonem**, wtyczka
+  podmienia całą linię „Zakres:” na aktualną (zna cztery historyczne brzmienia tej linii); jeśli to już **Twój
+  dokument** — dostajesz żółty komunikat „Zakres (…)” i dopisujesz te dane sam;
+- **Regulamin** z wersji wcześniejszej niż 0.9.40: punkt o gwarancji satysfakcji — że jest to
+  **dobrowolne zobowiązanie sprzedawcy PONAD ustawę**, niezależne od utraty prawa odstąpienia
+  z art. 38 — bo strona produktu tę gwarancję obiecuje, więc regulamin musi ją potwierdzać.
 
 ---
 
@@ -284,8 +321,8 @@ z art. 38 — bo strona produktu tę gwarancję obiecuje, więc regulamin musi j
 - **Zdarzenia** — to samo, co osie czasu wszystkich zamówień, w jednym miejscu: płatności,
   wysyłki, pobrania, zwroty, spory, anonimizacje, eksporty CSV.
 
-W **obu** zakładkach — a więc także w osiach czasu zamówień — wpisy starsze niż **90 dni** znikają
-same (sprzątanie co 10 minut). Zamówienia, kwoty i statusy zostają.
+W **obu** zakładkach — a więc także w osiach czasu zamówień — wpisy starsze niż **90 dni** usuwa
+zadanie WP-Cron sklepu (sprzątanie co 10 minut) — tylko gdy harmonogram WordPressa działa; gdy stoi, wpisy zostają. Zamówienia, kwoty i statusy zostają.
 
 ---
 
