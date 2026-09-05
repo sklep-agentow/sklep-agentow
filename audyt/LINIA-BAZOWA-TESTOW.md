@@ -533,3 +533,25 @@ Logi: `/root/praca/zlecenia/wymiana/linia-bazowa-logi/etap3-final/`. Plik porów
 | `testy/e2e/` | POMINIETE | 0 |
 
 Logi: `/root/praca/zlecenia/wymiana/linia-bazowa-logi/po-198/`. Plik porównań: `audyt/linia-bazowa/po-198.tsv`.
+
+## Warunki wstępne stanowiska — zmierzone 5.09 (I-25, I-26, I-27)
+
+Nie testy produktu, tylko stan STANOWISKA, bez którego część pomiarów jest niemożliwa.
+Opis i próby kontrolne: `narzedzia-qa/stanowisko/README.md`.
+
+| co | przed (1–5.09) | po naprawie (5.09) | komenda |
+|---|---|---|---|
+| WP-Cron: zadania zaległe | 8 z 15 (najstarsze `sklepag_dociagnij_zalegle` z 4.09 22:19 GMT); pętla zwrotna `wp-cron.php` = kod 000, curl exit 7 | 0 zaległych; `sklepag_dociagnij_zalegle` przeplanowane w przyszłość | `docker exec strona_wp_wordpress wp --allow-root --path=/var/www/html cron event list --fields=hook,next_run_relative --format=csv \| grep -c ',now$'` |
+| limity uploadu | `upload_max_filesize=2M`, `post_max_size=8M` (paczka klienta 0.9.40 waży 4 859 567 B — `ls -l boty/paczki/sklep-agentow-0.9.40.zip`; wcześniejszy zapis 9 098 363 B nie miał pokrycia, #289 W6) | `64M` / `64M` | `docker exec strona_wp_wordpress php -i \| grep -E '^upload_max_filesize\|^post_max_size'` |
+| baza łapacza maili | `/tmp/mailpit-*.db` w kontenerze, bez wolumenu (restart kasuje) | `/data/mailpit.db` na wolumenie `mailpit_data`; 2 wiadomości przetrwały `docker restart` | `curl -s http://127.0.0.1:8025/api/v1/info` |
+| wp-cli w kontenerze | wgrany ręcznie w warstwę kontenera (ginie przy odtworzeniu) | montowany z hosta `./wp/bin/wp` | `docker exec strona_wp_wordpress wp --allow-root --path=/var/www/html option get siteurl` |
+
+### Droga instalacyjna z instrukcji klienta — NADAL NIEZMIERZONA (stan 5.09)
+
+Zdjęta została BARIERA (limity), sam przelot 7 kroków `dokumentacja/INSTRUKCJA-INSTALACJI.md`
+NIE został wykonany. Świadomie: Krok 1 wgrywa paczkę przez panel, co NADPISAŁOBY wtyczkę
+`sklep-agentow` na WSPÓLNYM stanowisku, na którym w tym czasie mierzą inni builderzy
+(i podmieniłoby wersję pod ich pomiarami). Do przejścia na stosie próbnym
+albo na wspólnym po umówieniu okna. ⛔ `narzedzia-qa/dowod-z-paczki.sh` tego NIE zmierzy: instaluje przez
+`docker cp` + `wp plugin install`, czyli omija formularz „Wyślij na serwer” i limity uploadu, o które chodzi
+w `I-26` (#289 W4). Krok 1 musi przejść PRZEZ PANEL (przeglądarka, `probny_wp`).

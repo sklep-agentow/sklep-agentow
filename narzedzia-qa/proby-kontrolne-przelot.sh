@@ -178,7 +178,9 @@ MAX_POMINIETYCH_ZAKRES=8   # 5.09: +1 (prawne-migracja, obszar C); POLICZONE na 
                     #    dockerowa albo zipowa ja przesuwa. Policz komenda na scalonym drzewie.
 MAX_POMINIETYCH_PELNY=11   # +1 (prawne-migracja, obszar C); ta sama arytmetyka, sciezka BEZ zakresu (tak wola `k7-koniec`)
 
-if [ -n "$(git status --porcelain -uno 2>/dev/null)" ]; then
+# Tryb LISTY (PRZELOT_LISTA=1) niczego nie uruchamia i nie pisze logu — nie jest dowodem, więc brudne
+# drzewo mu nie przeszkadza (próba kontrolna odłamków woła go na kopii przelotu w trakcie pracy).
+if [ "${PRZELOT_LISTA:-}" != 1 ] && [ -n "$(git status --porcelain -uno 2>/dev/null)" ]; then
 	echo "PRZELOT: drzewo robocze BRUDNE — dowód powstałby na kodzie, którego nie ma w historii." >&2
 	echo "         Zacommituj zmiany i powtórz (log niesie COMMIT i jest po nim sprawdzany)." >&2
 	exit 2
@@ -189,9 +191,33 @@ ZAKRES="${2:-.}"
 if [ "$ZAKRES" = "." ]; then MAX_POMINIETYCH="$MAX_POMINIETYCH_PELNY"; else MAX_POMINIETYCH="$MAX_POMINIETYCH_ZAKRES"; fi
 [ -d "$ZAKRES" ] || { echo "PRZELOT: katalog zakresu [$ZAKRES] nie istnieje." >&2; exit 2; }
 mapfile -t PROBY < <(find "$ZAKRES" -name '*proba-kontrolna*.sh' -not -path './.git/*' | sed 's|^\./||' | sort)
-# ⛔ Zero prób to ODMOWA, nie sukces: zawężony zakres, który nic nie łapie, wyglądałby
-# dokładnie jak przelot bez uwag. Ta sama klasa co mianownik zero w I-2.
-[ "${#PROBY[@]}" -ge 1 ] || { echo "PRZELOT: nie znalazłem żadnej próby kontrolnej w [$ZAKRES]." >&2; exit 2; }
+
+# ⛔ ODŁAMKI (D41 c.d., 5.09): CI dzieli przelot na joby RÓWNOLEGŁE, bo dwie próby zjadają ~80 % czasu
+# (`bramki-proba-kontrolna.sh` ~590 s, `bramka-poswiadczenia-proba-kontrolna.sh` ~310 s; pozostałe
+# trzynaście razem ~30 s — zmierzone 5.09). Czekanie spada do najdłuższej próby, koszt minut bez zmian.
+# Odłamki są NAZWANE TUTAJ, nie w workflow — jedno źródło prawdy, które próba kontrolna
+# (`przelot-odlamki-proba-kontrolna.sh`) sprawdza: suma trzech odłamków MUSI równać się pełnej liście.
+# Bez nazwy odłamka przelot biegnie w całości, jak dotąd (`k7-koniec`, przelot ręczny).
+ODLAMEK="${PRZELOT_ODLAMEK:-}"
+FILTR_TYLKO=""; FILTR_BEZ=""
+case "$ODLAMEK" in
+	"") ;;
+	bramki)        FILTR_TYLKO='^bramki-proba-kontrolna[.]sh$' ;;
+	poswiadczenia) FILTR_TYLKO='^bramka-poswiadczenia-proba-kontrolna[.]sh$' ;;
+	reszta)        FILTR_BEZ='^(bramki|bramka-poswiadczenia)-proba-kontrolna[.]sh$' ;;
+	*) echo "PRZELOT: nieznany odłamek [$ODLAMEK] — znam: bramki, poswiadczenia, reszta." >&2; exit 2 ;;
+esac
+if [ -n "$FILTR_TYLKO" ]; then
+	mapfile -t PROBY < <(printf '%s\n' "${PROBY[@]}" | awk -F/ -v re="$FILTR_TYLKO" '$NF ~ re')
+fi
+if [ -n "$FILTR_BEZ" ]; then
+	mapfile -t PROBY < <(printf '%s\n' "${PROBY[@]}" | awk -F/ -v re="$FILTR_BEZ" '$NF !~ re')
+fi
+# ⛔ Zero prób to ODMOWA, nie sukces: zawężony zakres (albo odłamek z literówką), który nic nie
+# łapie, wyglądałby dokładnie jak przelot bez uwag. Ta sama klasa co mianownik zero w I-2.
+[ "${#PROBY[@]}" -ge 1 ] || { echo "PRZELOT: nie znalazłem żadnej próby kontrolnej w [$ZAKRES] (odłamek: [${ODLAMEK:-pełny}])." >&2; exit 2; }
+# Tryb LISTY (dla próby kontrolnej odłamków): same nazwy, nic nie uruchamia.
+if [ "${PRZELOT_LISTA:-}" = 1 ]; then printf '%s\n' "${PROBY[@]##*/}"; exit 0; fi
 
 COMMIT=$(git rev-parse --short=7 HEAD)
 GALAZ=$(git rev-parse --abbrev-ref HEAD)
@@ -246,6 +272,7 @@ mkdir -p "$(dirname "$LOG")"
 	printf '%s\n' "$ZNACZNIK"
 	printf 'COMMIT: %s\n' "$COMMIT"
 	printf 'GALAZ: %s\n' "$GALAZ"
+	printf 'ODLAMEK: %s\n' "${ODLAMEK:-pelny}"
 	printf 'PODSUMOWANIE: uruchomionych %s, PADŁO: %s, NIE ZMIERZONO (EXIT=2): %s, pominiętych: %s\n' "$ILE" "$ZLE" "$NIEZMIERZONE" "$POMINIETO"
 	[ "$NIEZMIERZONE" -gt 0 ] && printf 'NIE ZMIERZONO: %s\n' "${NIEZMIERZONE_NAZWY[*]}"
 	printf '#\n'

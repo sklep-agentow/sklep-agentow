@@ -39,6 +39,27 @@ zakwalifikowano po katalogu (`testy/`, `narzedzia-qa/`, `audyt/` są poza allowl
 zawartość pięciu obrazów sprawdzono co do liczby plików, nie co do treści; numerów linii w wierszu „asymetria CSV"
 nie odświeżano wobec dzisiejszego `HEAD`.
 
+## 🟡 UWAGI WAŻNE Z RECENZJI `#288` r3 I `#289` — co poprawione PR-em porządkowym, co zostaje długiem (5.09)
+
+Zasada z 5.09: WAŻNE nie idą rundami w PR-ze obszaru, tylko do JEDNEGO PR-a porządkowego po scaleniu.
+Scalone z zerem KRYTYCZNYCH: `#288` (obszar B, r3: 1 × WAŻNA, 1 × DROBNA), `#289` (obszar D: 7 × WAŻNA, 3 × DROBNA).
+
+**Poprawione w PR porządkowym `porzadek/po-288-289` (dowody w opisie PR):**
+- `#288` W — niezaescapowane `|` w komórkach trzech wierszy (`DECYZJE.md` D29/D30, `E5-F2` w rejestrze INFRA).
+- `#289` W1 — rejestr INFRA: `I-25`, `I-27` ZAMKNIETE, `I-26` W NAPRAWIE; obalona przyczyna `I-25` przepisana; liczniki nagłówka przeliczone komendą pliku (32 · 53 · 4 = 89).
+- `#289` W4 — `LINIA-BAZOWA-TESTOW.md` mówi wprost, że `dowod-z-paczki.sh` NIE mierzy Kroku 1 (omija formularz „Wyślij na serwer”).
+- `#289` W5 — sprawdzenie crona nazwane uczciwie: liczy zaległe TERAZ, nie „starsze niż 2 min” (README + komentarz skryptu).
+- `#289` W6 — rozmiar paczki 0.9.40: **4 859 567 B** (`ls -l`), nie 9 098 363 B (README, linia bazowa, rejestr).
+- `#289` D1/D2 — `wp-cron-stanowisko.sh`: padnięty `docker ps` = kod 3 z komunikatem, nie „kontener zgaszony”; kody wyjścia opisane zgodnie z `docker exec`.
+
+**ZOSTAJE DŁUGIEM (każdy = jeden brief buildera, jeden PR):**
+- `#289` W2 — próba kontrolna spustu crona istnieje tylko PROZĄ (`stanowisko/README.md`); potrzebny `narzedzia-qa/stanowisko-cron-proba-kontrolna.sh` w formie repo (dwukierunkowo: wada = wyjęty wpis crona → FAIL; bez wady → PASS). Do tego czasu `I-25` liczy się jako „bez strażnika”.
+- `#289` W3 — BLIŹNIAK (klasa 8): `narzedzia-qa/lib-stos-probny.sh` stawia stos z `-p 8891:80` i `--url=http://localhost:8891` → ta sama martwa pętla zwrotna `wp-cron.php`; `grep -c DISABLE_WP_CRON lib-stos-probny.sh` → 0. Każdy test reconciliation na `probny_wp` mierzy stos bez działającego crona. Naprawa: `DISABLE_WP_CRON` + jawne `wp cron event run --due-now` w krokach testów albo spust w pętli stosu próbnego.
+- `#289` W7 — `instaluj-spust-crona.sh` kopiuje do `/usr/local/sbin/` i nic nie porównuje kopii ze źródłem; kolejny commit do skryptu nie dotrze na hosta po cichu. Kandydat: sprawdzenie `cmp` w `stos.sh stan` (warunek wstępny stanowiska) — do czasu naprawy po KAŻDEJ zmianie skryptu ręcznie `bash narzedzia-qa/stanowisko/instaluj-spust-crona.sh`.
+- `#289` D3 — „98 wiadomości przepadło” w README nie ma pomiaru utraty; zdanie do usunięcia albo pomiar.
+- `#289` W1 (reszta) — `I-26` domyka dopiero przejście 7 kroków instrukcji PRZEZ PANEL na `probny_wp` (pozycja 4 listy startowej w mózgu).
+- `#288` DROBNA — opis PR krótszy o jeden plik (`testy/nota-zapisu-test.js`, komentarz) — PR scalony, bez skutku; klasa „opis PR odświeżany PRZED pushem” zostaje w pamięci.
+
 ## 🟡 SPRZĄTANIE STRAŻNIKA LIMITU UPLOADU KASUJE WSZYSTKO, CO POWSTAŁO W TRAKCIE PRZEBIEGU (2.09, recenzja `#263` r3, DROBNA 4) — dług
 
 `testy/limit-uploadu-mowi-prawde.sh`: `DELETE … WHERE typ = 'upload_produktu_blad' AND id > ID_PRZED` kasuje po sobie
@@ -1256,7 +1277,17 @@ która działa, to **człowiek otwierający plik**.
 - **Minuty GitHuba są teraz kosztem.** 2000 min/mies. ≈ 80 pchnięć; tydzień 29.08–5.09 miał ich
   ~200. ⇒ Budżet z twardym stopem w GitHubie (Budgets and alerts) — ustawia właściciel; oraz
   reguła tempa: scalać przy ZERZE uwag krytycznych, WAŻNE tu, jednym PR-em porządkowym.
-- ~~**Po transferze repo do organizacji `sklep-agentow`:**~~ ✅ ZAMKNIĘTE 5.09 (PR porządkowy po #285): odznaki i odnośniki w `README.md` (3 wiersze
+- ~~**Po transferze repo do organizacji `sklep-agentow`:**~~ ✅ ZAMKNIĘTE 5.09 (PR porządkowy po #285; ⛔ `narzedzia-qa/bramka-recenzji-proba-kontrolna.sh:45` ZOSTAJE CELOWO — to LOGIN użytkownika w atrapie komentarza, nie adres repo, a login się nie zmienił; recenzja #286 DROBNA 2): odznaki i odnośniki w `README.md` (3 wiersze
   z `szydlowskikonrad95-art`), `narzedzia-qa/bramka-recenzji-proba-kontrolna.sh` (1),
   `boty/BRIEFING-BUILDERA-BOTY.md` (1) wskazują starego właściciela — GitHub przekierowuje, ale
   odznaka `badge.svg` pod starym adresem może przestać się odświeżać. ⇒ Commit porządkowy po transferze.
+
+### ZGUBIONE Z LIST — Dzidek przypomniał 5.09 04:40 (było tylko w `do-panelu/PORZADKOWY-SZKIELET.md:134-166`)
+- **`narzedzia-qa/przeglad-strony-repo.sh` NIE ISTNIEJE.** Szkielet obiecał bramkę z CZTEREMA mierzalnymi
+  kontrolami strony repo — m.in. odznaka wersji w `README.md` kontra `/releases/latest` (zrzuty Dzidka 5.09:
+  README `v0.9.38`, „latest” `v0.9.28`; grep tego nie widzi, bo to nie jest w kodzie). ⇒ Budowa PRZED wydaniem
+  0.9.40, z próbą kontrolną (podłożona rozbieżność wersji → EXIT≠0).
+- **Claude w Chrome na maszynie Dzidka — oględziny „oczami klienta”.** To, czego skrypt nie zmierzy: czy zrzuty
+  w README pokazują aktualny produkt, czy strona sklepu wygląda jak coś, za co ktoś zapłaci. Osobna sesja, nie
+  widzi naszego stanu — dostaje kartkę z listą ekranów. ⇒ Po wydaniu 0.9.40, przed oddaniem; wynik = lista uwag
+  do `REJESTR-ZNALEZISK`, nie „ok”.
