@@ -244,9 +244,9 @@ case "$ODLAMEK" in
 		MIN_URUCHOMIONYCH=1      # 1 - 0
 		;;
 	reszta)
-		MAX_POMINIETYCH=7        # 19 prob w odlamku (21 w narzedzia-qa minus bramki/poswiadczenia);
-		                          # bramki/poswiadczenia nie wnosza pominiec, wiec to ta sama liczba co MAX_POMINIETYCH_ZAKRES
-		MIN_URUCHOMIONYCH=12     # 19 - 7
+		MAX_POMINIETYCH=10       # 24 prob w odlamku (26 w narzedzia-qa minus bramki/poswiadczenia; `ls narzedzia-qa/*proba-kontrolna*.sh | wc -l`);
+		                          # bramki/poswiadczenia nie wnosza pominiec, wiec to ta sama liczba co MAX_POMINIETYCH_ZAKRES (10) — 5.09 po scaleniu #291 do C
+		MIN_URUCHOMIONYCH=14     # 24 - 10
 		;;
 	"")
 		# ⛔ PODLOGA TYLKO DLA ZAKRESOW, DLA KTORYCH ZOSTALA POLICZONA (recenzja #290 WAZNA 1).
