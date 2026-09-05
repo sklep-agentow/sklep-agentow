@@ -4,7 +4,7 @@ Tags: sklep, stripe, pliki cyfrowe, sprzedaz wtyczek, pobieranie
 Requires at least: 6.7
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.9.40
+Stable tag: 0.9.41
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -160,6 +160,12 @@ Nie. Zakup jest bez konta: adres e-mail podany na stronie płatności Stripe,
 link do pobrania w mailu, jednorazowy link do opinii.
 
 == Changelog ==
+
+= 0.9.41 =
+* Naprawione: nasze wewnętrzne oznaczenia procesu audytowego nie jadą już do klienta w paczce — komentarze niosą powód, nie numer zgłoszenia.
+* Naprawione: anonimizacja kupującego czyści też adresy IP z dziennika zdarzeń (wpisy pobrań), a dowód tego jest odtwarzalny próbą kontrolną.
+* Naprawione: panel pokazuje termin ważności linku pobrania w czasie witryny, z etykietą strefy, zamiast w czasie serwera.
+* Naprawione: instrukcja i komentarze nie powołują się na uchylony art. 38a ustawy o prawach konsumenta — jest art. 7aa.
 
 = 0.9.40 =
 * Naprawione: gwarancja satysfakcji przestała wyglądać na sprzeczność z warunkami zakupu. Strona produktu obiecywała „14 dni na zwrot — bez pytań”, a zgoda przy zakupie mówi o utracie prawa odstąpienia (art. 38 ustawy o prawach konsumenta). Tekst nazywa teraz swoją podstawę — gwarancja to dobrowolne zobowiązanie sprzedawcy PONAD ustawę — a obietnica 14 dni nie zmienia się. Ten sam tekst jedzie do maila po zakupie. Szablon Regulaminu dostał osobny punkt o gwarancji; szkice stron powstają tylko przy pierwszej instalacji, więc przy sklepie zainstalowanym wcześniej niż 0.9.40 trzeba dopisać ten punkt do Regulaminu samodzielnie (patrz INSTRUKCJA.md).

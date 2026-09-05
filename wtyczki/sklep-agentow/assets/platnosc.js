@@ -17,7 +17,7 @@
   /* ⛔ ETYKIETY BIERZEMY Z DOM-u, NIE Z KODU. Skrypt nadpisuje napisy na przyciskach („Otwieram
      płatność…", „Przetwarzam…") i musi je potem ODTWORZYĆ. Dopóki odtwarzał je z własnych literałów,
      niósł drugą kopię tekstu: serwer mógł przysłać „Kup teraz", a przeglądarka i tak wpisywała
-     „Kup teraz (płatność testowa)". Poprawka po stronie PHP była tam cofana w locie — klasa A4b-F2.
+     „Kup teraz (płatność testowa)". Poprawka po stronie PHP była tam cofana w locie.
      Zapamiętane raz, przy starcie, zanim cokolwiek je zmieni. */
   var przyciskKup = form.querySelector('.sklepag-kup');
   var etykietaKup = przyciskKup ? przyciskKup.textContent : '';

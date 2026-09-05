@@ -403,7 +403,7 @@
 	pointer-events: none;
 }
 
-/* Licznik znakow pytania (CZ-1): pusty do 400 znakow, czerwony przy limicie i po wklejce ponad limit. */
+/* Licznik znakow pytania: pusty do 400 znakow, czerwony przy limicie i po wklejce ponad limit. */
 .chatl-licznik {
 	font-size: 11px;
 	line-height: 1.3;

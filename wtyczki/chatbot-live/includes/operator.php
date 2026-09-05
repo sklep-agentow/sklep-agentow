@@ -348,8 +348,9 @@ add_action( 'admin_post_chatl_zakoncz', 'chatl_post_zakoncz' );
 
 /**
  * Przechowalnia szkicu operatora na czas przekierowania po odmowie (5 minut, per użytkownik
- * i per rozmowa). Wzorzec przeniesiony ze sklepu (`admin-produkty.php:384`, znaleziska CZ-2/CZ-3):
- * odrzut walidacji nie ma prawa kasować tego, co człowiek napisał.
+ * i per rozmowa). Wzorzec przeniesiony ze sklepu (`admin-produkty.php:384`), ten sam co przy
+ * formularzu produktu i formularzu opinii: odrzut walidacji nie ma prawa kasować tego,
+ * co człowiek napisał.
  *
  * @param string $sesja Identyfikator rozmowy.
  * @param string $tresc Treść wpisana przez operatora.
@@ -375,7 +376,7 @@ function chatl_klucz_szkicu_operatora( $sesja ) {
  *
  * Waliduje uprawnienia, nonce i długość treści. Przy odrzucie z powodu limitu ODKŁADA
  * treść przez chatl_odloz_szkic_operatora(), żeby przekierowanie nie skasowało tego,
- * co człowiek napisał (znaleziska CZ-2/CZ-3). Render rozmowy odczytuje szkic JEDEN raz
+ * co człowiek napisał. Render rozmowy odczytuje szkic JEDEN raz
  * i od razu kasuje przechowalnię.
  *
  * @return void
@@ -393,7 +394,7 @@ function chatl_post_operator_wyslij() {
 	if ( '' === $sesja || '' === trim( $tresc ) ) {
 		chatl_przekieruj_blad( 'chatl-rozmowy', 'Pusta wiadomość albo nieprawidłowa rozmowa.' );
 	}
-	// Trzeci egzemplarz tej samej klasy co CZ-1: ciche `mb_substr` wyglądało dla operatora
+	// Ten sam wzorzec co przy limicie pytania gościa: ciche `mb_substr` wyglądało dla operatora
 	// jak sukces (przekierowanie bez błędu), a gość dostawał urwane zdanie. Odmowa mówi
 	// liczbę i limit — dokładnie jak gościowi w `front.php`.
 	$dlugosc = mb_strlen( $tresc );
@@ -401,8 +402,8 @@ function chatl_post_operator_wyslij() {
 		// ⛔ TREŚĆ WRACA DO POLA. Handler stoi za `admin-post` i kończy błąd przekierowaniem,
 		// więc formularz rysuje się od nowa z pustym `textarea` — bez przechowalni operator
 		// traciłby wszystko, co napisał, a komunikat kazałby mu „skrócić” coś, czego już nie ma.
-		// To ta sama klasa, którą sklep zamknął jako CZ-2 (formularz produktu) i CZ-3 (opinia
-		// kupującego). Wzorzec: przechowalnia per użytkownik i per rozmowa na 5 minut, odczytana
+		// To ten sam wzorzec, którym sklep zamknął odrzuty formularza produktu i formularza
+		// opinii. Wzorzec: przechowalnia per użytkownik i per rozmowa na 5 minut, odczytana
 		// przy renderze JEDEN raz. Widżet gościa nie traci treści (`assets/widget.js` — pole
 		// z `maxLength` skraca wklejkę z ostrzeżeniem, a przy odmowie serwera treść zostaje w polu),
 		// więc operator nie może mieć gorzej.
