@@ -113,7 +113,7 @@ pozostałe kroki przejścia na produkcję opisuje `INSTRUKCJA-INSTALACJI.md`, ro
 - **Strażnicy z próbami kontrolnymi**: strażniki wymienione w `narzedzia-qa/proby-kontrolne-przelot.sh` mają
   test, który podkłada im znaną wadę i sprawdza, czy ją widzą (`testy/*-proba-kontrolna.sh`); które jeszcze
   nie mają — stoi w `audyt/CO-WISI.md`.
-- **Audyt końcowy z kalibracją mutantami** i bramką `narzedzia-qa/k7-koniec.sh` (13 kontroli); Plugin Check
+- **Audyt końcowy z kalibracją mutantami** i bramką `narzedzia-qa/k7-koniec.sh` (14 kontroli); Plugin Check
   WordPress.org na paczkach: `audyt/PLUGIN-CHECK-30-08.md`.
 
 Po sklonowaniu, jednorazowo: `git config core.hooksPath .githooks` — włącza strażnika pre-push

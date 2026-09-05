@@ -4,7 +4,7 @@
 # PO CO: plan K7 v1 mówił „GO/NO-GO = trzy liczby liczone skryptem”, a skryptu nie było
 # (krytyka r1: nasz krytyk K1, C2 #15, C3 #11). Bez maszyny koniec rozstrzyga pamięć
 # koordynatorki — dokładnie to, czemu plan miał zapobiec. Ten skrypt sprawdza OSIEM
-# warunków zamknięcia (PLAN-K7 §2 zasada 5, §8b) rozpisanych na 13 KONTROLI (1a,1b,2,3a–3d,4,5,6,7a,7b,8)
+# warunków zamknięcia (PLAN-K7 §2 zasada 5, §8b) rozpisanych na 14 KONTROLI (1a,1b,2,3a–3d,4,5,6,7a,7b,8,9)
 # i wypisuje trzy liczby dla właściciela. Wynik liczy KONTROLE, nie warunki (recenzja #191 D1).
 #
 # Użycie: bash narzedzia-qa/k7-koniec.sh [--korzen <repo>] [--bez-zamrozenia-mapy]
