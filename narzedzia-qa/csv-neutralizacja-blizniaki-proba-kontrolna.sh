@@ -80,6 +80,18 @@ probuj "B. stala ChatBota bez powrotu karetki" "wtyczki/chatbot-live/includes/cs
 probuj "C. kopia ChatBota wypada z pomiaru (podloga MIN_KOPII)" "wtyczki/chatbot-live/includes/csv.php" \
 	"" "USUN" "PODLOGA"
 
+echo "=== KONTROLA NA PRAWDZIWYM REPOZYTORIUM — straznik mierzy wtyczki/ z drzewa, nie kopie (#298 r6 W1) ==="
+# Mutanty wyzej biegna na KOPII trzech nazwanych plikow; to, czego strazniK ma pilnowac naprawde — „czwarta kopia
+# dopisana pod inna nazwa" w CALYM wtyczki/ — jest mierzone tylko tutaj: bieg bez CSV_BLIZNIAKI_KORZEN, na repo.
+kod=0; wyjscie="$( bash "$STRAZNIK" 2>&1 )" || kod=$?
+ile_repo="$( printf '%s\n' "$wyjscie" | grep -oE '^kopii: [0-9]+' | grep -oE '[0-9]+' )"
+if [ "$kod" -eq 0 ] && [ "${ile_repo:-0}" -ge 3 ]; then
+	echo "  OK   repozytorium: EXIT=0, kopii: $ile_repo (>= 3), wszystkie z kompletem"
+else
+	echo "  BLAD repozytorium: EXIT=$kod, kopii: ${ile_repo:-?} — rozjazd albo kopia poza pomiarem"; printf '%s\n' "$wyjscie" | tail -4 | sed 's/^/         /'
+	BLEDY=$(( BLEDY + 1 ))
+fi
+
 echo "=== KONTROLA ODWROTNA — czysta kopia MA przejsc ==="
 wgraj_czysty; kod=0
 wyjscie="$( CSV_BLIZNIAKI_KORZEN="$ROBOCZY" bash "$STRAZNIK" 2>&1 )" || kod=$?
