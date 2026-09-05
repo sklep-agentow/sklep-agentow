@@ -16,7 +16,25 @@ wydany osobno (podbicie pośrednie wewnątrz jednej zmiany).
 
 ## [Niewydane]
 
-Nic jeszcze.
+### Naprawione
+- **Szablon regulaminu ma sekcje wymagane przez art. 12 ust. 1 upk (F5-F2).** Brakowało ceny
+  z podatkami, sposobu i terminu zapłaty, procedury reklamacyjnej, odpowiedzialności za zgodność
+  świadczenia, funkcjonalności treści cyfrowej i informacji o pozasądowym rozstrzyganiu sporów
+  (ODR). Każda sekcja to nagłówek + `[UZUPEŁNIJ]` + zdanie instrukcji, bez wymyślania treści
+  prawnej za właściciela (D39: strony prawne zostają szablonami w wersji roboczej).
+- **Kupujący dostaje link do regulaminu i polityki prywatności PRZED zakupem, nie tylko po nim
+  (F5-F1).** Nowa `sklepag_link_prawny('regulamin'|'polityka')` zwraca permalink strony, gdy jest
+  opublikowana i bez zaślepki „SZABLON" — w przeciwnym razie prowadzi na `?sklepag_prawne=…`
+  (`template_redirect`), który renderuje „Regulamin w przygotowaniu — sprzedawca uzupełnia treść"
+  (HTTP 200, nigdy 404, nigdy treść szkicu). Link stoi na stronie produktu przed przyciskiem „Kup
+  teraz" oraz w stopce maila potwierdzenia (wersja tekstowa i HTML) — jedna definicja „gotowe" dla
+  wszystkich trzech miejsc.
+- **Dane sprzedawcy widoczne PRZED zakupem, nie tylko w mailu po nim (F5-F3).** Formularz zakupu
+  pokazuje teraz blok z danymi sprzedawcy (`sklepag_sprzedawca()`) przed przyciskiem — te same
+  dane, które dotąd szły wyłącznie do stopki maila. Gdy nazwa lub adres są puste, blok się nie
+  renderuje (zaślepka byłaby gorsza niż jej brak); ostrzeżenie w panelu (dashboard) rozszerzone
+  o tę ścieżkę, żeby właściciel wiedział, że brakuje mu obowiązku informacyjnego SPRZED zakupu,
+  nie tylko potwierdzenia po nim.
 
 ## [0.9.40] — 2026-09-03
 

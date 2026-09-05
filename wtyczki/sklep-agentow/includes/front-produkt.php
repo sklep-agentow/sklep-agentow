@@ -21,6 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 function sklepag_query_vars( $vars ) {
 	$vars[] = 'sklepag_produkt';
+	$vars[] = 'sklepag_prawne';
 	return $vars;
 }
 add_filter( 'query_vars', 'sklepag_query_vars' );
@@ -75,6 +76,76 @@ function sklepag_status_404_wczesnie() {
 	}
 }
 add_action( 'template_redirect', 'sklepag_status_404_wczesnie' );
+
+/**
+ * Link do strony prawnej (regulamin|polityka) — JEDNO miejsce, z którego korzysta strona
+ * produktu (przed przyciskiem, F5-F3), stopka maila (tekst i HTML) i każde przyszłe miejsce
+ * decyzji kupującego.
+ *
+ * ⛔ POWÓD (F5-F1): opcje `sklepag_strona_regulamin`/`_polityka` wskazują strony, które
+ * aktywacja zakłada jako `draft` z zaślepką „SZABLON" (D39) — kupujący prowadzony wprost
+ * na taki wpis dostałby albo 404 (draft bez publicznego adresu), albo — po opublikowaniu
+ * przez właściciela BEZ wypełnienia — dokument z „[NAZWA, ADRES, KONTAKT]" w treści, czyli
+ * fałszywe poczucie załatwionej sprawy (ta sama klasa, co przy F5-F2). Warunek „gotowe" jest
+ * TAKI SAM jak w `sklepag_ostrzez_strony_prawne()` (admin.php): opublikowana I bez SZABLON
+ * w tytule/treści — jedna definicja dla właściciela i dla kupującego, żeby link mówił co
+ * innego niż ostrzeżenie w panelu.
+ *
+ * @param string $ktore 'regulamin' albo 'polityka'.
+ * @return string URL: permalink gotowej strony, albo `?sklepag_prawne=…` (obsługiwany przez
+ *                sklepag_strona_prawna_wczesnie() niżej) — nigdy 404, nigdy szkic z zaślepką.
+ */
+function sklepag_link_prawny( $ktore ) {
+	$opcje = array(
+		'regulamin' => 'sklepag_strona_regulamin',
+		'polityka'  => 'sklepag_strona_polityka',
+	);
+	if ( ! isset( $opcje[ $ktore ] ) ) {
+		return '';
+	}
+	$id = (int) get_option( $opcje[ $ktore ], 0 );
+	if ( $id > 0 ) {
+		$wpis = get_post( $id );
+		if ( $wpis && 'publish' === $wpis->post_status
+			&& false === strpos( $wpis->post_title, 'SZABLON' )
+			&& false === strpos( $wpis->post_content, 'SZABLON' ) ) {
+			return get_permalink( $id );
+		}
+	}
+	return add_query_arg( 'sklepag_prawne', $ktore, home_url( '/' ) );
+}
+
+/**
+ * Strona „w przygotowaniu" dla regulaminu/polityki (fallback z sklepag_link_prawny() wyżej),
+ * WCZEŚNIE (template_redirect) jak sklepag_status_404_wczesnie() obok — zanim WP spróbuje
+ * dopasować adres do jakiejkolwiek strony/wpisu.
+ *
+ * ⛔ Kupujący, który kliknął link PRZED zakupem, ma dostać ODPOWIEDŹ: HTTP 200 i zdanie po
+ * polsku — nigdy 404 (dokument formalnie nie istnieje pod tym adresem) i nigdy treść szkicu
+ * z zaślepką „SZABLON" (F5-F2: to gorsze niż brak dokumentu). Adres jest luźny query-stringiem
+ * (`?sklepag_prawne=…`), więc nie potrzebuje rewrite ani realnego wpisu WP — działa też
+ * bez ładnych odnośników, tak jak `?sklepag_produkt=` obok.
+ */
+function sklepag_strona_prawna_wczesnie() {
+	$nazwy = array(
+		'regulamin' => 'Regulamin',
+		'polityka'  => 'Polityka prywatności',
+	);
+	$ktore = (string) get_query_var( 'sklepag_prawne' );
+	if ( ! isset( $nazwy[ $ktore ] ) ) {
+		return;
+	}
+	$nazwa = $nazwy[ $ktore ];
+	status_header( 200 );
+	nocache_headers();
+	echo '<!DOCTYPE html><html lang="pl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
+		. '<title>' . esc_html( $nazwa ) . ' w przygotowaniu</title></head><body>'
+		. '<h1>' . esc_html( $nazwa ) . ' w przygotowaniu</h1>'
+		. '<p>' . esc_html( $nazwa ) . ' w przygotowaniu — sprzedawca uzupełnia treść.</p>'
+		. '</body></html>';
+	exit;
+}
+add_action( 'template_redirect', 'sklepag_strona_prawna_wczesnie' );
 
 /**
  * Adres strony produktu: ładny przy permalinkach, query var bez nich.
@@ -632,6 +703,35 @@ function sklepag_formularz_zakupu( $p ) {
 			i gdzie kupujacy ma sie upomniec, skoro sklep sam faktury nie wysle. */
 		. '<p class="sklepag-faktura-notka">Pola nieobowiązkowe — wypełnij wszystkie trzy, jeśli chcesz fakturę na firmę. Sklep zapisuje te dane przy zamówieniu i pokazuje je w potwierdzeniu zakupu; <strong>fakturę wystawia sprzedawca poza sklepem</strong> i przesyła ją osobno. Jeśli nie dotrze, odpisz na maila z potwierdzeniem zakupu. Podanie NIP-u nie zmienia Twoich praw kupującego.</p>'
 		. '</div></details>';
+	/* F5-F3: dane sprzedawcy PRZED zakupem, nie tylko w mailu po nim (art. 12 ust. 1 upk każe
+		podać je „najpóźniej w chwili wyrażenia woli związania się umową” — czyli tu, przy
+		przycisku, a nie w potwierdzeniu). Ten sam sklepag_sprzedawca(), którego stopka maila
+		już używa (zakup.php) — jedno źródło danych, dwa miejsca render.
+		⛔ Gdy pola puste (nazwa/adres) — NIC nie rysujemy kupującemu: pusty blok albo
+		wypełniacze wyglądałyby na sprzedawcę, którego nie ma (ta sama klasa co F5-F2 —
+		zaślepka gorsza niż brak). Właściciel dostaje ostrzeżenie w panelu (admin-dashboard.php,
+		notice rozszerzony o tę ścieżkę), kupujący — po prostu nic nie widzi. */
+	$sprzedawca = function_exists( 'sklepag_sprzedawca' ) ? sklepag_sprzedawca() : array( 'kompletne' => false );
+	if ( ! empty( $sprzedawca['kompletne'] ) ) {
+		$linie_sprzedawcy = array( '<strong>' . esc_html( $sprzedawca['nazwa'] ) . '</strong>' );
+		if ( '' !== $sprzedawca['adres'] ) {
+			$linie_sprzedawcy[] = nl2br( esc_html( str_replace( array( "\r\n", "\r" ), "\n", $sprzedawca['adres'] ) ) );
+		}
+		if ( '' !== $sprzedawca['nip'] ) {
+			$linie_sprzedawcy[] = 'NIP ' . esc_html( $sprzedawca['nip'] );
+		}
+		$kontakt_sprzedawcy = (string) get_option( 'sklepag_email_kontaktowy', '' );
+		if ( '' !== $kontakt_sprzedawcy && is_email( $kontakt_sprzedawcy ) ) {
+			$linie_sprzedawcy[] = 'Kontakt: <a href="mailto:' . esc_attr( $kontakt_sprzedawcy ) . '">' . esc_html( $kontakt_sprzedawcy ) . '</a>';
+		}
+		$html .= '<div class="sklepag-sprzedawca-przed-zakupem"><p class="sklepag-mono-etykieta">[ SPRZEDAWCA ]</p>'
+			. '<p>' . implode( '<br>', $linie_sprzedawcy ) . '</p></div>';
+	}
+	/* F5-F1: link do regulaminu i polityki z miejsca decyzji kupującego. sklepag_link_prawny()
+		(front-produkt.php, wyżej) sam wybiera między permalinkiem gotowej strony a stroną
+		„w przygotowaniu” — tu nie sprawdzamy stanu, tylko linkujemy. */
+	$html .= '<p class="sklepag-linki-prawne">Kupując, akceptujesz <a href="' . esc_url( sklepag_link_prawny( 'regulamin' ) ) . '">regulamin sklepu</a> '
+		. 'i <a href="' . esc_url( sklepag_link_prawny( 'polityka' ) ) . '">politykę prywatności</a>.</p>';
 	/* ⛔ „(płatność testowa)" i notka z kartą testową to OBIETNICA wobec kupującego, nie ozdoba.
 		Na kluczu produkcyjnym przycisk mówi po prostu „Kup teraz", a notka znika — inaczej sklep
 		zapewniałby, że nie pobiera pieniędzy, pobierając je. Tryb pyta jedno źródło. */

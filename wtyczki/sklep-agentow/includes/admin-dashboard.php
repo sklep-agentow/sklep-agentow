@@ -480,9 +480,14 @@ function sklepag_admin_dashboard() {
 
 	// DANE SPRZEDAWCY: bez nazwy firmy i adresu stopka maila po zakupie nie spełnia art. 21 ustawy
 	// o prawach konsumenta (potwierdzenie na trwałym nośniku ma nieść dane przedsiębiorcy).
+	// ⛔ ROZSZERZONE (F5-F3): ten sam warunek teraz decyduje TAKŻE o bloku sprzedawcy na stronie
+	// produktu (sklepag_formularz_zakupu() w front-produkt.php) — puste pola nic tam nie rysują
+	// kupującemu (zaślepka byłaby gorsza niż brak, ta sama klasa co F5-F2), więc komunikat musi
+	// mówić o OBU miejscach, nie tylko o mailu, inaczej właściciel nie wie, że brakuje mu też
+	// obowiązku informacyjnego SPRZED zakupu (art. 12 ust. 1), nie tylko potwierdzenia PO nim.
 	if ( function_exists( 'sklepag_sprzedawca' ) && ! sklepag_sprzedawca()['kompletne'] ) {
-		echo '<div class="notice notice-warning"><p><strong>Mail po zakupie idzie bez danych sprzedawcy.</strong> '
-			. 'Kupujący nie ma w potwierdzeniu nazwy firmy i adresu do reklamacji — '
+		echo '<div class="notice notice-warning"><p><strong>Kupujący nie widzi danych sprzedawcy — ani przed zakupem, ani w potwierdzeniu.</strong> '
+			. 'Formularz zakupu nie pokazuje bloku sprzedawcy (dopóki pola są puste, nic tam nie rysujemy), a mail po zakupie idzie bez nazwy firmy i adresu do reklamacji — '
 			. '<a href="' . esc_url( admin_url( 'admin.php?page=sklepag-ustawienia' ) ) . '">uzupełnij „Dane sprzedawcy” w Ustawieniach</a>.</p></div>';
 	}
 

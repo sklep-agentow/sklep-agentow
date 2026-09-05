@@ -1296,6 +1296,11 @@ function sklepag_stopka_sprzedawcy_tekst() {
 	if ( '' !== $kontakt && is_email( $kontakt ) ) {
 		$linie[] = 'Reklamacje i faktury: ' . $kontakt;
 	}
+	// F5-F1: mail dostaje link do regulaminu tym samym sklepag_link_prawny(), którego używa
+	// strona produktu — jedna definicja „gotowe/nie gotowe", nigdy dwa różne adresy tego samego dokumentu.
+	if ( function_exists( 'sklepag_link_prawny' ) ) {
+		$linie[] = 'Regulamin: ' . sklepag_link_prawny( 'regulamin' );
+	}
 	return "SPRZEDAWCA:\n" . implode( "\n", $linie ) . "\n";
 }
 
