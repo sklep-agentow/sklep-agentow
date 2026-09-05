@@ -123,6 +123,42 @@ jobs:
       - name: Bramki jakosci
         run: bash narzedzia-qa/bramki.sh
 
+  # ⛔ 5.09 (D41 c.d., Dzidek: „więcej czekania na bramki niż roboty”): PRZELOT PRÓB WARUNKOWY
+  # I RÓWNOLEGŁY. Zmierzone na #285: bramki 112 s, przelot prób 718 s, recenzja 703 s. Przelot
+  # mierzy NARZĘDZIA (czy bramki widzą podłożoną wadę), nie produkt — dla PR-a, który nie rusza
+  # `narzedzia-qa/` ani `.github/`, narzędzia są dokładnie te same co na `main`, gdzie przelot
+  # biegnie ZAWSZE. Dlatego: (1) PR produktowy = bramki ‖ recenzja, czekanie ~12 min zamiast 26;
+  # (2) gdy przelot ma biec, biegnie w TRZECH odłamkach naraz (nazwane w samym przelocie, próba
+  # kontrolna pilnuje, że ich suma to pełna lista) — czekanie ≈ najdłuższa próba (~10 min).
+  # ⛔ BEZ `if:` NA ZADANIU ANI KROKU — bramka `manifest` (sprawdz-manifest.sh) tego zabrania i ma
+  # rację: zadanie warunkowe potrafi cicho nie wystartować. Decyzja „czy przelot ma biec” zapada
+  # WEWNĄTRZ kroku, jest WYPISANA z listą zmienionych plików i powodem — dokładnie jak bramki.sh
+  # pomija bramki PHP przy zmianach tekstowych (wewnątrz skryptu, wypisane, policzone).
+  # Koszt: trzy zadania startują zawsze (checkout + PHP ≈ 20 s każde, zaokrąglane do minuty), więc
+  # PR produktowy płaci ~3 min za pominięty przelot — świadomie, za bramkę bez furtki.
+  proby:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        odlamek: [bramki, poswiadczenia, reszta]
+    env:
+      BEZ_STOSU_WP: "1"            # jak w zadaniu `bramki` — obraz ma Dockera, stosu WP nie ma
+      PRZELOT_ODLAMEK: ${{ matrix.odlamek }}
+      BAZA: ${{ github.base_ref }}
+      ZDARZENIE: ${{ github.event_name }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: PHP 8.4 (wykonawca GitHuba)
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2.37.2
+        with:
+          php-version: '8.4'
+          tools: composer:v2
+      - name: Zaleznosci QA
+        run: composer install --no-interaction --no-progress --no-scripts
+
       # ⛔ PROBY KONTROLNE BRAMEK — znalezisko I-6 (31.08). Do dzis chodzily
       # WYLACZNIE recznie i w bramce wydania, wiec regres w SAMEJ BRAMCE byl
       # niewidzialny miedzy przelotami: bramka mogla przestac cokolwiek widziec,
@@ -166,5 +202,19 @@ jobs:
       # WAŻNA 1 — ta sama nieprawda stała też w narzedzia-qa/linia-bazowa.sh, w komentarzu
       # „GDZIE TEN STRAZNIK NAPRAWDE BIEGNIE”, w członie o ręcznym spuście; odsyłam po
       # TREŚCI, bo numer linii przesuwa się przy każdej poprawce — recenzja #274 r15, WAŻNA 3).
-      - name: Proby kontrolne bramek
-        run: bash narzedzia-qa/proby-kontrolne-przelot.sh "${RUNNER_TEMP}/PROBY-KONTROLNE.log" narzedzia-qa
+      - name: Proby kontrolne bramek (odlamek ${{ matrix.odlamek }})
+        run: |
+          # Decyzja WEWNATRZ kroku (bez if:), wypisana — patrz komentarz przy zadaniu `proby`.
+          if [ "$ZDARZENIE" != push ]; then
+            ZMIENIONE=$(git diff --name-only "origin/$BAZA" HEAD)
+            if ! printf '%s\n' "$ZMIENIONE" | grep -qE '^(narzedzia-qa|\.github)/'; then
+              echo "PRZELOT PROB (odlamek $PRZELOT_ODLAMEK): POMINIETY JAWNIE — zmiana nie dotyka narzedzia-qa/ ani .github/;"
+              echo "  proby mierza NARZEDZIA, a te sa identyczne z main, gdzie przelot biegnie zawsze. Zmienione pliki:"
+              printf '%s\n' "$ZMIENIONE" | sed 's/^/  /'
+              exit 0
+            fi
+            echo "PRZELOT PROB (odlamek $PRZELOT_ODLAMEK): BIEGNIE — zmiana dotyka narzedzia-qa/ albo .github/"
+          else
+            echo "PRZELOT PROB (odlamek $PRZELOT_ODLAMEK): BIEGNIE — push na main, zawsze"
+          fi
+          bash narzedzia-qa/proby-kontrolne-przelot.sh "${RUNNER_TEMP}/PROBY-KONTROLNE-${PRZELOT_ODLAMEK}.log" narzedzia-qa
