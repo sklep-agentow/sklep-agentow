@@ -109,6 +109,7 @@ echo 'PONOWIENIE: WYNIK=' . ( $pass_b ? 'PASS' : 'FAIL - ponowienie nie domyka z
  * Oczekiwane: ZERO maili-alarmów i ZERO wpisów domkniecie_blad_zapisu (byłyby sprzeczne z odczytanym statusem),
  * JEDEN wpis domkniecie_przejscie_inny_silnik, funkcja idzie dalej (nie false), zamówienie zostaje w mail_wyslany. */
 $maile   = 0;
+delete_transient( $ogranicznik ); // scenariusz 1 ustawił ogranicznik — bez zerowania asercja „0 maili” byłaby ślepa (r6 DROBNA 3)
 $blad_p  = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$pd} WHERE typ='domkniecie_blad_zapisu' AND opis LIKE %s", $wpdb->esc_like( $sid_a ) . '%' ) );
 add_filter( 'query', $psuj_update_statusu );
 $ok_d = sklepag_domknij_zakup( $sesja );
@@ -116,12 +117,14 @@ remove_filter( 'query', $psuj_update_statusu );
 $blad_po   = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$pd} WHERE typ='domkniecie_blad_zapisu' AND opis LIKE %s", $wpdb->esc_like( $sid_a ) . '%' ) );
 $inny      = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$pd} WHERE typ='domkniecie_przejscie_inny_silnik' AND opis LIKE %s", $wpdb->esc_like( $sid_a ) . '%' ) );
 $status_d  = (string) $wpdb->get_var( $wpdb->prepare( "SELECT status FROM {$pz} WHERE stripe_session_id=%s", $sid_a ) );
+$alarm_pr  = ( false !== get_transient( $ogranicznik ) ); // ogranicznik ustawia się przy KAŻDEJ próbie alarmu, nawet bez wp_mail
+echo "INNY_SILNIK: alarm_probowany=" . ( $alarm_pr ? 'tak' : 'nie' ) . " (OCZEKIWANE: nie)\n";
 echo "INNY_SILNIK: zwrocil=" . ( $ok_d ? 'true' : 'false' ) . " (OCZEKIWANE: true — zamowienie jest w porzadku)\n";
 echo "INNY_SILNIK: maile_do_wlasciciela=$maile (OCZEKIWANE: 0)\n";
 echo "INNY_SILNIK: nowe_wpisy_blad_zapisu=" . ( $blad_po - $blad_p ) . " (OCZEKIWANE: 0)\n";
 echo "INNY_SILNIK: wpisy_przejscie_inny_silnik=$inny (OCZEKIWANE: 1)\n";
 echo "INNY_SILNIK: status=$status_d (OCZEKIWANE: mail_wyslany)\n";
-$pass_d = ( true === $ok_d && 0 === $maile && $blad_po === $blad_p && 1 === $inny && 'mail_wyslany' === $status_d );
+$pass_d = ( true === $ok_d && 0 === $maile && ! $alarm_pr && $blad_po === $blad_p && 1 === $inny && 'mail_wyslany' === $status_d );
 echo 'INNY_SILNIK: WYNIK=' . ( $pass_d ? 'PASS' : 'FAIL - alarm albo blad przy zamowieniu, ktore inny silnik juz domknal' ) . "\n";
 
 /* ---------- 3) KONTROLA: zdrowy zakup bez filtra ---------- */

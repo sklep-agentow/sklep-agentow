@@ -1184,8 +1184,9 @@ function sklepag_domknij_zakup( $sesja ) {
 	$waluta = isset( $sesja['currency'] ) ? strtoupper( (string) $sesja['currency'] ) : $produkt->waluta;
 	$teraz  = current_time( 'mysql' );
 
-	// 1) UTWORZENIE wiersza — INSERT IGNORE (UNIQUE stripe_session_id chroni tylko utworzenie).
-	$wpdb->query(
+	// 1) UTWORZENIE wiersza — INSERT IGNORE (UNIQUE stripe_session_id chroni tylko utworzenie). Wynik czytany:
+	// `false` = błąd bazy (zapamiętany, bo last_error znika przy następnym zapytaniu), `0` = wiersz już był.
+	$wstawiono = $wpdb->query(
 		$wpdb->prepare(
 			"INSERT IGNORE INTO {$pz}
 		 (stripe_session_id, produkt_id, produkt_nazwa_kupiona, produkt_cena_kupiona, produkt_plik_kupiony,
@@ -1210,6 +1211,7 @@ function sklepag_domknij_zakup( $sesja ) {
 			$teraz
 		)
 	);
+	$blad_wstawienia = ( false === $wstawiono ) ? (string) $wpdb->last_error : '';
 
 	// 2) CAS: oczekuje -> oplacone. WYNIK CZYTAMY (6.09.2026): `false` = błąd bazy na TYM
 	// zapytaniu (wiersz istnieje, ale został w `oczekuje`); `0` = ktoś już przestawił (drugi silnik) — to nie
@@ -1233,7 +1235,7 @@ function sklepag_domknij_zakup( $sesja ) {
 	}
 	if ( ! $zamowienie_jest || 'oczekuje' === (string) $zamowienie_jest->status ) {
 		if ( ! $zamowienie_jest ) {
-			$powod = '' !== $blad_przejscia ? $blad_przejscia : ( '' !== (string) $wpdb->last_error ? (string) $wpdb->last_error : 'brak wiersza po INSERT/UPDATE' );
+			$powod = '' !== $blad_wstawienia ? 'INSERT padł: ' . $blad_wstawienia : ( '' !== $blad_przejscia ? $blad_przejscia : ( '' !== (string) $wpdb->last_error ? (string) $wpdb->last_error : 'brak wiersza po INSERT/UPDATE' ) );
 		} else {
 			$powod = 'zamówienie zostało w oczekuje — przejście stanu nie zapisało się' . ( '' !== $blad_przejscia ? ' (' . $blad_przejscia . ')' : '' );
 		}
