@@ -6,7 +6,8 @@
  *   zwrot <refund_id> <kwota> [opoznij]  → księguje `refund.created`; z `opoznij` śpi 1,5 s
  *                                          tuż PRZED UPDATE-em sumy (filtr `query`), już PO odczycie —
  *                                          to jest okno wyścigu odczyt-zmiana-zapis, wymuszone deterministycznie
- *   odczyt                       → drukuje `zwrocono=<grosze>`
+ *   odczyt                       → drukuje `zwrocono=<grosze> status=<status>`
+ *   status <status>              → przestawia status POZA zamkiem (udaje silnik domykania zakupu)
  *   sprzataj                     → kasuje zamówienie i zdarzenia
  */
 global $wpdb;
@@ -54,7 +55,14 @@ if ( 'zwrot' === $tryb ) {
 	exit( 0 );
 }
 if ( 'odczyt' === $tryb ) {
-	echo 'zwrocono=' . (int) $wpdb->get_var( $wpdb->prepare( "SELECT zwrocono_grosze FROM {$pz} WHERE stripe_session_id=%s", $sid ) ) . "\n";
+	$w = $wpdb->get_row( $wpdb->prepare( "SELECT zwrocono_grosze, status FROM {$pz} WHERE stripe_session_id=%s", $sid ) );
+	echo 'zwrocono=' . ( $w ? (int) $w->zwrocono_grosze : 0 ) . ' status=' . ( $w ? (string) $w->status : 'brak' ) . "\n";
+	exit( 0 );
+}
+if ( 'status' === $tryb ) {
+	// Udaje DRUGI silnik (domykanie zakupu), który pisze `status` POZA zamkiem księgowania.
+	$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET status=%s, zmieniono=NOW() WHERE stripe_session_id=%s", (string) $args[1], $sid ) );
+	echo 'status=' . (string) $args[1] . "\n";
 	exit( 0 );
 }
 if ( 'sprzataj' === $tryb ) {

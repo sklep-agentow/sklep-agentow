@@ -625,6 +625,24 @@ function sklepag_zamek_zwolnij( $zamowienie_id ) {
 }
 
 /**
+ * Po UPDATE z warunkiem `AND status=%s` (status odczytany pod zamkiem): 0 wierszy znaczy ALBO „nic się nie zmieniło”,
+ * ALBO ktoś przestawił status POZA zamkiem (silnik domykania zakupu: `oplacone → mail_w_toku → mail_wyslany` nie bierze
+ * zamka księgowania). Rozstrzyga ponowny odczyt: status inny niż odczytany = wyścig → oddajemy false, Stripe ponowi,
+ * a następne doręczenie czyta świeży stan pod zamkiem. Bez warunku zapis zwrotu potrafił cofnąć `mail_wyslany` do
+ * `mail_w_toku` i po 5 min wywołać drugi mail z linkiem (6.09.2026).
+ */
+function sklepag_status_przestawiony_poza_zamkiem( $zam, $typ ) {
+	global $wpdb;
+	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
+	$teraz_status = (string) $wpdb->get_var( $wpdb->prepare( "SELECT status FROM {$wpdb->prefix}sklepag_zamowienia WHERE id=%d", (int) $zam->id ) );
+	if ( $teraz_status === (string) $zam->status ) {
+		return false; // ten sam stan, po prostu nic do zmiany
+	}
+	sklepag_zdarzenie( (int) $zam->id, 'ksiegowanie_wyscig', $typ . ': status zmienił się z „' . (string) $zam->status . '” na „' . $teraz_status . '” w trakcie księgowania — zapis wstrzymany, Stripe ponowi' );
+	return true;
+}
+
+/**
  * Świeży wiersz zamówienia PO zdobyciu zamka — to, co wczytano przed zamkiem, mogło się zmienić w kolejce.
  */
 function sklepag_zamowienie_swieze( $zam ) {
@@ -926,20 +944,24 @@ function sklepag_zapisz_zwrot( $zam, $kwota, $typ_wpisu, $opis ) {
 		$status = (string) $zam->status;
 	}
 	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
+	// Warunek `AND status=%s` = status odczytany pod zamkiem: silnik domykania zakupu pisze tę kolumnę
+	// poza zamkiem, więc zapis zwrotu nie może nadpisać jego świeższego stanu (6.09.2026).
 	$zapis = $wpdb->query(
 		$wpdb->prepare(
-			// status-bez-warunku: $status wyliczony wyżej z `$zam->status` i `$przed`, z jawną
-			// gałęzią dla cofnięcia zwrotu — to jest właśnie ochrona stanu poprzedniego.
-			"UPDATE {$pz} SET zwrocono_grosze=%d, zwrot_czas=%s, status=%s, status_przed_sporem=%s, zmieniono=%s WHERE id=%d",
+			"UPDATE {$pz} SET zwrocono_grosze=%d, zwrot_czas=%s, status=%s, status_przed_sporem=%s, zmieniono=%s WHERE id=%d AND status=%s",
 			(int) $kwota,
 			$kwota > 0 ? $teraz : null,
 			$status,
 			$przed,
 			$teraz,
-			(int) $zam->id
+			(int) $zam->id,
+			(string) $zam->status
 		)
 	);
 	// phpcs:enable
+	if ( 0 === $zapis && sklepag_status_przestawiony_poza_zamkiem( $zam, $typ_wpisu ) ) {
+		return false;
+	}
 	// ⛔ Zapis księgowania NIE przeszedł = NIE mówimy Stripe „ok”. Dotąd funkcja nic nie zwracała,
 	// a wywołujący odpowiadał Stripe 200 bez ponowienia: pulpit pokazywałby stary przychód na stałe.
 	if ( false === $zapis ) {
@@ -1012,16 +1034,18 @@ function sklepag_zaksieguj_spor( $typ, $obiekt ) {
 			$reszta = max( 0, (int) $zam->zwrocono_grosze - $kwota ); // prawdziwy zwrot częściowy sprzed sporu zostaje
 			$zapis  = $wpdb->query(
 				$wpdb->prepare(
-					// status-bez-warunku: $powrot wyliczony wyżej z `status_przed_sporem`, czyli
-					// z zapamiętanego stanu poprzedniego — nie jest stałą.
-					"UPDATE {$pz} SET zwrocono_grosze=%d, zwrot_czas=%s, status=%s, status_przed_sporem='', zmieniono=%s WHERE id=%d",
+					"UPDATE {$pz} SET zwrocono_grosze=%d, zwrot_czas=%s, status=%s, status_przed_sporem='', zmieniono=%s WHERE id=%d AND status=%s",
 					$reszta,
 					$reszta > 0 ? $zam->zwrot_czas : null,
 					$powrot,
 					$teraz,
-					(int) $zam->id
+					(int) $zam->id,
+					(string) $zam->status
 				)
 			);
+			if ( 0 === $zapis && sklepag_status_przestawiony_poza_zamkiem( $zam, $typ ) ) {
+				return false;
+			}
 			if ( false === $zapis ) {
 				sklepag_zdarzenie( (int) $zam->id, 'ksiegowanie_blad', 'zapis sporu (' . $typ . ') padł (' . (string) $wpdb->last_error . ') — Stripe ponowi powiadomienie' );
 				sklepag_powiadom_wlasciciela( 'ksiegowanie_blad', 'nie udało się zaksięgować sporu', 'Zamówienie #' . (int) $zam->id . ': zapis zdarzenia Stripe ' . $typ . ' w bazie nie powiódł się. Stripe ponowi powiadomienie; jeśli błąd się powtarza, sprawdź bazę danych.' );
@@ -1044,17 +1068,19 @@ function sklepag_zaksieguj_spor( $typ, $obiekt ) {
 		$przed = '' !== (string) $zam->status_przed_sporem ? (string) $zam->status_przed_sporem : (string) $zam->status;
 		$zapis = $wpdb->query(
 			$wpdb->prepare(
-				// status-bez-warunku: 'sporne' ustawiamy świadomie, a stan sprzed zapisujemy w tym
-				// samym zapytaniu do `status_przed_sporem` (wyliczony wyżej z `$zam->status`).
-				"UPDATE {$pz} SET zwrocono_grosze=%d, zwrot_czas=%s, status='sporne', status_przed_sporem=%s, zmieniono=%s WHERE id=%d",
+				"UPDATE {$pz} SET zwrocono_grosze=%d, zwrot_czas=%s, status='sporne', status_przed_sporem=%s, zmieniono=%s WHERE id=%d AND status=%s",
 				max( (int) $zam->zwrocono_grosze, $kwota ),
 				$teraz,
 				'sporne' === $przed ? '' : $przed,
 				$teraz,
-				(int) $zam->id
+				(int) $zam->id,
+				(string) $zam->status
 			)
 		);
 		// phpcs:enable
+		if ( 0 === $zapis && sklepag_status_przestawiony_poza_zamkiem( $zam, $typ ) ) {
+			return false;
+		}
 		if ( false === $zapis ) {
 			sklepag_zdarzenie( (int) $zam->id, 'ksiegowanie_blad', 'zapis sporu (' . $typ . ') padł (' . (string) $wpdb->last_error . ') — Stripe ponowi powiadomienie' );
 			sklepag_powiadom_wlasciciela( 'ksiegowanie_blad', 'nie udało się zaksięgować sporu', 'Zamówienie #' . (int) $zam->id . ': zapis zdarzenia Stripe ' . $typ . ' w bazie nie powiódł się. Stripe ponowi powiadomienie; jeśli błąd się powtarza, sprawdź bazę danych.' );
@@ -1183,7 +1209,13 @@ function sklepag_domknij_zakup( $sesja ) {
 	// zamówienia, a sklepag_dociagnij_zalegle() bierze tylko stan='utworzona' — opłacony
 	// zakup ginął bez śladu i bez sygnału dla właściciela.
 	$zamowienie_jest = $wpdb->get_row( $wpdb->prepare( "SELECT status FROM {$pz} WHERE stripe_session_id=%s", $sid ) );
-	if ( ! $zamowienie_jest || false === $przejscie || 'oczekuje' === (string) $zamowienie_jest->status ) {
+	if ( $zamowienie_jest && false === $przejscie && 'oczekuje' !== (string) $zamowienie_jest->status ) {
+		// UPDATE tej próby padł, ale status przestawił już inny silnik (drugie doręczenie, reconciliation) —
+		// zamówienie jest w porządku, jedziemy dalej; ślad zostaje, alarm do właściciela NIE (6.09.2026: komunikat
+		// „zostało w oczekuje” byłby sprzeczny z odczytanym statusem).
+		sklepag_zdarzenie( null, 'domkniecie_przejscie_inny_silnik', $sid . ': UPDATE statusu tej próby padł (' . $blad_przejscia . '), ale zamówienie jest już w „' . (string) $zamowienie_jest->status . '”' );
+	}
+	if ( ! $zamowienie_jest || 'oczekuje' === (string) $zamowienie_jest->status ) {
 		if ( ! $zamowienie_jest ) {
 			$powod = '' !== (string) $wpdb->last_error ? (string) $wpdb->last_error : 'brak wiersza po INSERT/UPDATE';
 		} else {

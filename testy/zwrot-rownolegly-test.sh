@@ -7,7 +7,7 @@
 # Wyścig wymuszany DETERMINISTYCZNIE: robotnik A śpi 1,5 s tuż przed swoim UPDATE-em (po odczycie),
 # robotnik B startuje 0,5 s po A i kończy w tym oknie. Dwa procesy PHP w kontenerze (`wp eval-file`).
 # Uruchomienie: bash testy/zwrot-rownolegly-test.sh [kontener=strona_wp_wordpress]; echo $?
-# PASS = zwrocono == 5000 (oba zwroty policzone) i sekwencyjnie też 5000. FAIL = jeden zwrot zgubiony.
+# PASS = zwrocono == 5000 (oba zwroty policzone), sekwencyjnie 5000, duplikat raz, status z drugiego silnika nie cofnięty. FAIL = jeden zwrot zgubiony albo status nadpisany.
 set -u
 K="${1:-strona_wp_wordpress}"
 TU="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -46,6 +46,26 @@ wait "$PE"
 R3=$(wp odczyt | grep -oE 'zwrocono=[0-9]+' | cut -d= -f2)
 echo "DUPLIKAT_ROWNOLEGLY: zwrocono=${R3:-brak} (OCZEKIWANE: 3000 — jeden zwrot, dwa doreczenia)"
 if [ "${R3:-0}" -eq 3000 ]; then echo "DUPLIKAT_ROWNOLEGLY: WYNIK=PASS"; else echo "DUPLIKAT_ROWNOLEGLY: WYNIK=FAIL - duplikat policzony dwa razy"; BLED=1; fi
+
+# 4) STATUS PISANY PRZEZ DRUGI SILNIK W OKNIE KSIĘGOWANIA (recenzja #307 r4): zwrot częściowy czyta pod zamkiem
+#    `mail_w_toku`, w oknie domykanie kończy wysyłkę (`mail_wyslany`) POZA zamkiem; zapis zwrotu NIE MOŻE cofnąć statusu
+#    (przed naprawą cofał → po 5 min drugi mail). Oczekiwane: status zostaje mail_wyslany, zwrot wstrzymany (false),
+#    ponowienie księguje 3000 przy mail_wyslany.
+wp zaloz >/dev/null
+wp status mail_w_toku >/dev/null
+wp zwrot re_rown_S 3000 opoznij > /tmp/zwrot-rown-S.log 2>&1 &
+PS=$!
+sleep 0.5
+wp status mail_wyslany >/dev/null
+wait "$PS"
+sed 's/^/  robotnik: /' /tmp/zwrot-rown-S.log
+O4=$(wp odczyt); R4=$(echo "$O4" | grep -oE 'zwrocono=[0-9]+' | cut -d= -f2); S4=$(echo "$O4" | grep -oE 'status=[a-z_]+' | cut -d= -f2)
+echo "STATUS_INNY_SILNIK: status=${S4:-brak} zwrocono=${R4:-brak} (OCZEKIWANE: mail_wyslany, 0 — zapis zwrotu wstrzymany, nie cofnal statusu)"
+if [ "${S4:-}" = "mail_wyslany" ] && [ "${R4:-0}" -eq 0 ] && grep -q -- '-> false' /tmp/zwrot-rown-S.log; then echo "STATUS_INNY_SILNIK: WYNIK=PASS"; else echo "STATUS_INNY_SILNIK: WYNIK=FAIL - zapis zwrotu nadpisal status z drugiego silnika albo nie oddal false"; BLED=1; fi
+wp zwrot re_rown_S 3000 >/dev/null
+O5=$(wp odczyt); R5=$(echo "$O5" | grep -oE 'zwrocono=[0-9]+' | cut -d= -f2); S5=$(echo "$O5" | grep -oE 'status=[a-z_]+' | cut -d= -f2)
+echo "PONOWIENIE_PO_WYSCIGU: status=${S5:-brak} zwrocono=${R5:-brak} (OCZEKIWANE: mail_wyslany, 3000)"
+if [ "${S5:-}" = "mail_wyslany" ] && [ "${R5:-0}" -eq 3000 ]; then echo "PONOWIENIE_PO_WYSCIGU: WYNIK=PASS"; else echo "PONOWIENIE_PO_WYSCIGU: WYNIK=FAIL - ponowienie nie zaksiegowalo zwrotu po wyscigu"; BLED=1; fi
 
 wp sprzataj >/dev/null
 docker exec "$K" rm -f "$W" 2>/dev/null

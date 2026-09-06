@@ -57,7 +57,12 @@ nie odświeżano wobec dzisiejszego `HEAD`.
   i przy zerwaniu połączenia; ale `wpdb::check_connection()` potrafi po cichu odnowić połączenie w trakcie żądania — wtedy zamek
   przepada bez sygnału. Bez próby; na hostingu współdzielonym ryzyko realne tylko przy zerwanym połączeniu w środku księgowania.
 - **Bramka `status-bez-warunku`** (klasa 164 pkt 3): adnotacja zwalniająca musi wskazywać PRÓBĘ, nie powód; bramka ślepa na
-  kolumny kwot. Dziś 3 adnotacje na ścieżce zwrotów przeszły bez próby.
+  kolumny kwot. Przed r4 recenzji 3 adnotacje na ścieżce zwrotów przechodziły bez próby; **po r4: 0 adnotacji** — trzy zapisy
+  dostały `AND status=%s` (status odczytany pod zamkiem) i próbę STATUS_INNY_SILNIK. Zmiana zakresu bramki (kolumny kwot,
+  adnotacja → próba) zostaje długiem.
+- **Bramka `zdarzenia-webhooka` liczy `DECYZJE.md` jako „dokument z listą”** (recenzja r4 DROBNA 2): jedna dosłowna nazwa
+  zdarzenia w decyzji wymusza pełną listę 11 nazw. Obejście w #307 = przeredagowane zdanie; docelowo `DECYZJE.md` do wykluczeń
+  bramki (jak `audyt/`), z próbą kontrolną.
 
 ## 🟡 ŚWIADOMY DŁUG NA WYDANIE 0.9.42 — co ZOSTAJE otwarte w rejestrze INFRA po rundzie 5.09 i DLACZEGO (5.09, koordynatorka)
 

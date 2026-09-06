@@ -27,7 +27,11 @@ wydany osobno (podbicie pośrednie wewnątrz jednej zmiany).
 - **Dwa równoległe zwroty nie gubią jednego** (zgłoszenie z przeglądu 6.09). Suma zwrotów była liczona jako
   odczyt → dodanie → zapis bez blokady; dwa zdarzenia naraz czytały tę samą sumę i jedno nadpisywało drugie. Teraz każde
   księgowanie zwrotu i sporu biegnie pod zamkiem bazy na to zamówienie (`GET_LOCK`), z ponownym odczytem po zamku;
-  równoległy duplikat tego samego zdarzenia też liczy się raz.
+  równoległy duplikat tego samego zdarzenia też liczy się raz. Zapis zwrotu i sporu zmienia status zamówienia tylko wtedy,
+  gdy status jest nadal taki, jaki odczytano pod zamkiem — domykanie zakupu (wysyłka maila) pisze status osobno i jego
+  świeższy stan nie może zostać cofnięty; przy takim zbiegu Stripe dostaje „ponów”.
+- **Mail do właściciela o niezapisanym zamówieniu idzie tylko wtedy, gdy zamówienie naprawdę zostało w „oczekuje”.** Gdy
+  przejście stanu zapisał już inny mechanizm, a błąd dotknął tylko powtórnej próby, zostaje wpis w dzienniku, bez alarmu.
 - **Ten sam zwrot w dwóch zdarzeniach w odwrotnej kolejności liczy się raz.** `charge.refunded` (suma) przychodzące PRZED
   `refund.created` tego samego zwrotu podwajało kwotę. Teraz identyfikatory zwrotów z obiektu charge trafiają do śladu,
   a `refund.created` pokryte już sumą z charge nie dopisuje się drugi raz (wpis `zwrot_pokryty_suma` w dzienniku).
