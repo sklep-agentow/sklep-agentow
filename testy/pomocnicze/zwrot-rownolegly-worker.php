@@ -8,6 +8,9 @@
  *                                          to jest okno wyścigu odczyt-zmiana-zapis, wymuszone deterministycznie
  *   odczyt                       → drukuje `zwrocono=<grosze> status=<status>`
  *   status <status>              → przestawia status POZA zamkiem (udaje silnik domykania zakupu)
+ *   zwrot … opoznij2             → 3 s przed UPDATE-em i 3 s przed odczytem dowodu skutku (znacznik /tmp/zwrot-rown-po-update)
+ *   spor <kwota> [opoznij]       → księguje `charge.dispute.created` (spór, status sporne)
+ *   slady <refund_id>            → ile wpisów zwrot_* w dzienniku wspomina identyfikator
  *   sprzataj                     → kasuje zamówienie i zdarzenia
  */
 global $wpdb;
@@ -39,12 +42,23 @@ if ( 'zaloz' === $tryb ) {
 if ( 'zwrot' === $tryb ) {
 	$rid = (string) $args[1];
 	$am  = (int) $args[2];
-	if ( isset( $args[3] ) && 'opoznij' === $args[3] ) {
+	$op = isset( $args[3] ) ? (string) $args[3] : '';
+	if ( 'opoznij' === $op || 'opoznij2' === $op ) {
 		add_filter(
 			'query',
-			static function ( $q ) {
+			static function ( $q ) use ( $op ) {
+				static $po_update = false;
 				if ( false !== strpos( $q, 'zwrocono_grosze' ) && 0 === strpos( ltrim( $q ), 'UPDATE' ) ) {
-					usleep( 1500000 ); // 1,5 s: drugi robotnik zdąży odczytać i zapisać w tym oknie
+					usleep( 'opoznij2' === $op ? 3000000 : 1500000 ); // okno: drugi silnik zdąży zmienić status
+					$po_update = true;
+				}
+				// opoznij2: po UPDATE (0 wierszy) kod czyta wiersz zamówienia dla rozstrzygnięcia — tu drugie okno (A→B→A):
+				// znacznik mówi próbie „UPDATE już był”, potem 3 s na przestawienie statusu Z POWROTEM. Łapiemy KAŻDY
+				// odczyt wiersza po UPDATE (sam status albo status+kwota), żeby próba widziała wadę także w starszym kodzie.
+				if ( 'opoznij2' === $op && $po_update && 0 === strpos( ltrim( $q ), 'SELECT' ) && false !== strpos( $q, 'sklepag_zamowienia' ) && false !== strpos( $q, 'WHERE id=' ) ) {
+					$po_update = false;
+					file_put_contents( '/tmp/zwrot-rown-po-update', '1' );
+					usleep( 3000000 );
 				}
 				return $q;
 			}
@@ -52,6 +66,29 @@ if ( 'zwrot' === $tryb ) {
 	}
 	$ok = sklepag_zaksieguj_zwrot( 'refund.created', array( 'id' => $rid, 'payment_intent' => $pi, 'amount' => $am, 'status' => 'succeeded' ) );
 	echo 'zwrot ' . $rid . ' ' . $am . ' -> ' . ( $ok ? 'true' : 'false' ) . "\n";
+	exit( 0 );
+}
+if ( 'spor' === $tryb ) {
+	$am = (int) $args[1];
+	if ( isset( $args[2] ) && 'opoznij' === $args[2] ) {
+		add_filter(
+			'query',
+			static function ( $q ) {
+				if ( false !== strpos( $q, 'zwrocono_grosze' ) && 0 === strpos( ltrim( $q ), 'UPDATE' ) ) {
+					usleep( 1500000 );
+				}
+				return $q;
+			}
+		);
+	}
+	$ok = sklepag_zaksieguj_spor( 'charge.dispute.created', array( 'id' => 'dp_test_rownolegly', 'payment_intent' => $pi, 'amount' => $am, 'status' => 'needs_response' ) );
+	echo 'spor ' . $am . ' -> ' . ( $ok ? 'true' : 'false' ) . "\n";
+	exit( 0 );
+}
+if ( 'slady' === $tryb ) {
+	// ile wpisów dziennika typu zwrot_* wspomina dany identyfikator (0 = zwrot NIE został ogłoszony jako zaksięgowany)
+	$id = (int) $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$pz} WHERE stripe_session_id=%s", $sid ) );
+	echo 'slady=' . (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$pd} WHERE zamowienie_id=%d AND typ LIKE %s AND opis LIKE %s", $id, $wpdb->esc_like( 'zwrot_' ) . '%', '%' . $wpdb->esc_like( (string) $args[1] ) . '%' ) ) . "\n";
 	exit( 0 );
 }
 if ( 'odczyt' === $tryb ) {

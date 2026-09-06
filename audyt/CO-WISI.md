@@ -60,6 +60,11 @@ nie odświeżano wobec dzisiejszego `HEAD`.
   kolumny kwot. Przed r4 recenzji 3 adnotacje na ścieżce zwrotów przechodziły bez próby; **po r4: 0 adnotacji** — trzy zapisy
   dostały `AND status=%s` (status odczytany pod zamkiem) i próbę STATUS_INNY_SILNIK. Zmiana zakresu bramki (kolumny kwot,
   adnotacja → próba) zostaje długiem.
+- **Paczka klienta buduje się PO ostatniej zmianie treści, w OSTATNIM commicie PR-a** (r5 KRYTYCZNA, klasa 10 ×2): zip 0.9.44
+  z `b79e656` nie zawierał naprawy r4 z `7807ce2`, a bramka `paczka` w `bramki.sh` mierzy tylko komplet plików, nie treść —
+  treść mierzy dopiero `paczka-zgodnosc.sh <wtyczka>` (w CI jako próba). Dług: bramka `paczka` w `bramki.sh` powinna wołać też
+  `paczka-zgodnosc.sh` dla wtyczki z podbitą wersją (albo nazywać się „paczka-komplet”). Reguła w opisie PR: świeży wynik
+  `paczka-zgodnosc.sh` z HEAD, nie sprzed commitów.
 - **Bramka `zdarzenia-webhooka` liczy `DECYZJE.md` jako „dokument z listą”** (recenzja r4 DROBNA 2): jedna dosłowna nazwa
   zdarzenia w decyzji wymusza pełną listę 11 nazw. Obejście w #307 = przeredagowane zdanie; docelowo `DECYZJE.md` do wykluczeń
   bramki (jak `audyt/`), z próbą kontrolną.

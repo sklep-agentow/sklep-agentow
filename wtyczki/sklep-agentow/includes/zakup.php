@@ -612,33 +612,49 @@ function sklepag_oznacz_sesje( $sesja_id, $stan ) {
  * albo „when the connection terminates (either normally or abnormally)” — https://mariadb.com/kb/en/get_lock/
  * Zwraca 1 = zamek nasz, 0 = czas minął, NULL = błąd. Przy 0/NULL oddajemy false → webhook 500 → Stripe ponowi.
  */
+/**
+ * Nazwa zamka: GET_LOCK jest globalny dla SERWERA bazy, więc dwie instalacje sklepu na jednym serwerze (inna baza albo
+ * inny prefiks tabel) miałyby te same `zam_<id>` i blokowałyby się nawzajem. Sygnatura bazy i prefiksu (12 znaków md5)
+ * trzyma nazwę poniżej limitu 64 znaków.
+ */
+function sklepag_nazwa_zamka( $zamowienie_id ) {
+	global $wpdb;
+	return 'sklepag_' . substr( md5( (string) $wpdb->dbname . '|' . $wpdb->prefix ), 0, 12 ) . '_zam_' . (int) $zamowienie_id;
+}
 function sklepag_zamek_zamowienia( $zamowienie_id, $sekundy = 5 ) {
 	global $wpdb;
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery
-	$w = $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, %d)', 'sklepag_zam_' . (int) $zamowienie_id, (int) $sekundy ) );
+	$w = $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, %d)', sklepag_nazwa_zamka( $zamowienie_id ), (int) $sekundy ) );
 	return '1' === (string) $w;
 }
 function sklepag_zamek_zwolnij( $zamowienie_id ) {
 	global $wpdb;
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery
-	$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', 'sklepag_zam_' . (int) $zamowienie_id ) );
+	$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', sklepag_nazwa_zamka( $zamowienie_id ) ) );
 }
 
 /**
- * Po UPDATE z warunkiem `AND status=%s` (status odczytany pod zamkiem): 0 wierszy znaczy ALBO „nic się nie zmieniło”,
- * ALBO ktoś przestawił status POZA zamkiem (silnik domykania zakupu: `oplacone → mail_w_toku → mail_wyslany` nie bierze
- * zamka księgowania). Rozstrzyga ponowny odczyt: status inny niż odczytany = wyścig → oddajemy false, Stripe ponowi,
- * a następne doręczenie czyta świeży stan pod zamkiem. Bez warunku zapis zwrotu potrafił cofnąć `mail_wyslany` do
- * `mail_w_toku` i po 5 min wywołać drugi mail z linkiem (6.09.2026).
+ * Po UPDATE z warunkiem `AND status=%s` (status odczytany pod zamkiem) 0 wierszy znaczy ALBO „wiersz już ma dokładnie
+ * to, co chcieliśmy zapisać”, ALBO ktoś przestawił status POZA zamkiem (silnik domykania zakupu: `oplacone → mail_w_toku →
+ * mail_wyslany`, a przy padniętej rotacji linku z powrotem `oplacone`, nie bierze zamka księgowania). Rozstrzyga DOWÓD
+ * SKUTKU, nie odczyt statusu: wiersz ma docelową kwotę i docelowy status → nic do zmiany; cokolwiek innego → wyścig,
+ * oddajemy false, Stripe ponowi, następne doręczenie czyta świeży stan pod zamkiem. Sam odczyt statusu nie wystarczał:
+ * status potrafi wrócić do tej samej wartości (A→B→A) między UPDATE-em a odczytem, a kwota zostaje niezapisana —
+ * wtedy wpis w dzienniku „zwrócono” zamykałby zwrot na stałe bez pieniędzy w bazie (6.09.2026).
  */
-function sklepag_status_przestawiony_poza_zamkiem( $zam, $typ ) {
+function sklepag_zapis_bez_skutku( $zam, $typ, $kwota_docelowa, $status_docelowy ) {
 	global $wpdb;
 	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
-	$teraz_status = (string) $wpdb->get_var( $wpdb->prepare( "SELECT status FROM {$wpdb->prefix}sklepag_zamowienia WHERE id=%d", (int) $zam->id ) );
-	if ( $teraz_status === (string) $zam->status ) {
-		return false; // ten sam stan, po prostu nic do zmiany
+	$teraz = $wpdb->get_row( $wpdb->prepare( "SELECT zwrocono_grosze, status FROM {$wpdb->prefix}sklepag_zamowienia WHERE id=%d", (int) $zam->id ) );
+	if ( $teraz && (int) $teraz->zwrocono_grosze === (int) $kwota_docelowa && (string) $teraz->status === (string) $status_docelowy ) {
+		return false; // wiersz ma już docelowy stan — nic do zmiany, to nie wyścig
 	}
-	sklepag_zdarzenie( (int) $zam->id, 'ksiegowanie_wyscig', $typ . ': status zmienił się z „' . (string) $zam->status . '” na „' . $teraz_status . '” w trakcie księgowania — zapis wstrzymany, Stripe ponowi' );
+	sklepag_zdarzenie(
+		(int) $zam->id,
+		'ksiegowanie_wyscig',
+		$typ . ': zapis nie odniósł skutku (status odczytany „' . (string) $zam->status . '”, teraz „' . ( $teraz ? (string) $teraz->status : 'brak wiersza' ) .
+		'”, kwota ' . ( $teraz ? (int) $teraz->zwrocono_grosze : 0 ) . ' zamiast ' . (int) $kwota_docelowa . ') — zapis wstrzymany, Stripe ponowi'
+	);
 	return true;
 }
 
@@ -959,7 +975,7 @@ function sklepag_zapisz_zwrot( $zam, $kwota, $typ_wpisu, $opis ) {
 		)
 	);
 	// phpcs:enable
-	if ( 0 === $zapis && sklepag_status_przestawiony_poza_zamkiem( $zam, $typ_wpisu ) ) {
+	if ( 0 === $zapis && sklepag_zapis_bez_skutku( $zam, $typ_wpisu, (int) $kwota, $status ) ) {
 		return false;
 	}
 	// ⛔ Zapis księgowania NIE przeszedł = NIE mówimy Stripe „ok”. Dotąd funkcja nic nie zwracała,
@@ -1043,7 +1059,7 @@ function sklepag_zaksieguj_spor( $typ, $obiekt ) {
 					(string) $zam->status
 				)
 			);
-			if ( 0 === $zapis && sklepag_status_przestawiony_poza_zamkiem( $zam, $typ ) ) {
+			if ( 0 === $zapis && sklepag_zapis_bez_skutku( $zam, $typ, $reszta, $powrot ) ) {
 				return false;
 			}
 			if ( false === $zapis ) {
@@ -1078,7 +1094,7 @@ function sklepag_zaksieguj_spor( $typ, $obiekt ) {
 			)
 		);
 		// phpcs:enable
-		if ( 0 === $zapis && sklepag_status_przestawiony_poza_zamkiem( $zam, $typ ) ) {
+		if ( 0 === $zapis && sklepag_zapis_bez_skutku( $zam, $typ, max( (int) $zam->zwrocono_grosze, $kwota ), 'sporne' ) ) {
 			return false;
 		}
 		if ( false === $zapis ) {
@@ -1217,7 +1233,7 @@ function sklepag_domknij_zakup( $sesja ) {
 	}
 	if ( ! $zamowienie_jest || 'oczekuje' === (string) $zamowienie_jest->status ) {
 		if ( ! $zamowienie_jest ) {
-			$powod = '' !== (string) $wpdb->last_error ? (string) $wpdb->last_error : 'brak wiersza po INSERT/UPDATE';
+			$powod = '' !== $blad_przejscia ? $blad_przejscia : ( '' !== (string) $wpdb->last_error ? (string) $wpdb->last_error : 'brak wiersza po INSERT/UPDATE' );
 		} else {
 			$powod = 'zamówienie zostało w oczekuje — przejście stanu nie zapisało się' . ( '' !== $blad_przejscia ? ' (' . $blad_przejscia . ')' : '' );
 		}

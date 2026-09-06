@@ -67,7 +67,45 @@ O5=$(wp odczyt); R5=$(echo "$O5" | grep -oE 'zwrocono=[0-9]+' | cut -d= -f2); S5
 echo "PONOWIENIE_PO_WYSCIGU: status=${S5:-brak} zwrocono=${R5:-brak} (OCZEKIWANE: mail_wyslany, 3000)"
 if [ "${S5:-}" = "mail_wyslany" ] && [ "${R5:-0}" -eq 3000 ]; then echo "PONOWIENIE_PO_WYSCIGU: WYNIK=PASS"; else echo "PONOWIENIE_PO_WYSCIGU: WYNIK=FAIL - ponowienie nie zaksiegowalo zwrotu po wyscigu"; BLED=1; fi
 
+# 5) A→B→A (recenzja r5): status wraca do tej samej wartości MIĘDZY UPDATE-em (0 wierszy) a odczytem kontrolnym.
+#    Sam odczyt statusu mówił „nic się nie zmieniło” i kod ogłaszał zwrot zaksięgowany (wpis zwrot_*), choć kwoty nie zapisał —
+#    wpis blokował potem ponowienie na stałe. Oczekiwane: false, zwrocono 0, ZERO wpisów zwrot_* z tym id; ponowienie → 3000.
+wp zaloz >/dev/null
+docker exec "$K" rm -f /tmp/zwrot-rown-po-update
+wp zwrot re_rown_ABA 3000 opoznij2 > /tmp/zwrot-rown-ABA.log 2>&1 &
+PABA=$!
+sleep 1.0
+wp status oplacone >/dev/null            # B — w oknie przed UPDATE-em robotnika
+i=0; until docker exec "$K" test -f /tmp/zwrot-rown-po-update || [ $i -ge 60 ]; do sleep 0.2; i=$((i+1)); done
+wp status mail_wyslany >/dev/null        # z powrotem A — w oknie przed odczytem kontrolnym
+wait "$PABA"
+sed 's/^/  robotnik: /' /tmp/zwrot-rown-ABA.log
+O6=$(wp odczyt); R6=$(echo "$O6" | grep -oE 'zwrocono=[0-9]+' | cut -d= -f2); L6=$(wp slady re_rown_ABA | grep -oE 'slady=[0-9]+' | cut -d= -f2)
+echo "STATUS_A_B_A: zwrocono=${R6:-brak} slady_zwrot=${L6:-brak} (OCZEKIWANE: 0 i 0 — zapis bez skutku NIE oglasza zwrotu)"
+if [ "${R6:-1}" -eq 0 ] && [ "${L6:-1}" -eq 0 ] && grep -q -- '-> false' /tmp/zwrot-rown-ABA.log; then echo "STATUS_A_B_A: WYNIK=PASS"; else echo "STATUS_A_B_A: WYNIK=FAIL - zwrot oglaszony jako zaksiegowany bez zapisu kwoty (A->B->A)"; BLED=1; fi
+wp zwrot re_rown_ABA 3000 >/dev/null
+R7=$(wp odczyt | grep -oE 'zwrocono=[0-9]+' | cut -d= -f2)
+echo "PONOWIENIE_PO_A_B_A: zwrocono=${R7:-brak} (OCZEKIWANE: 3000)"
+if [ "${R7:-0}" -eq 3000 ]; then echo "PONOWIENIE_PO_A_B_A: WYNIK=PASS"; else echo "PONOWIENIE_PO_A_B_A: WYNIK=FAIL - ponowienie nie zaksiegowalo zwrotu"; BLED=1; fi
+
+# 6) SPÓR w oknie drugiego silnika (bliźniak scenariusza 4 dla sklepag_zaksieguj_spor): status zmienia się poza zamkiem
+#    między odczytem a zapisem sporu → zapis wstrzymany (false), status z drugiego silnika zostaje; ponowienie → sporne.
+wp zaloz >/dev/null
+wp spor 9900 opoznij > /tmp/zwrot-rown-SP.log 2>&1 &
+PSP=$!
+sleep 1.0
+wp status mail_w_toku >/dev/null
+wait "$PSP"
+sed 's/^/  robotnik: /' /tmp/zwrot-rown-SP.log
+O8=$(wp odczyt); S8=$(echo "$O8" | grep -oE 'status=[a-z_]+' | cut -d= -f2); R8=$(echo "$O8" | grep -oE 'zwrocono=[0-9]+' | cut -d= -f2)
+echo "SPOR_INNY_SILNIK: status=${S8:-brak} zwrocono=${R8:-brak} (OCZEKIWANE: mail_w_toku, 0 — zapis sporu wstrzymany)"
+if [ "${S8:-}" = "mail_w_toku" ] && [ "${R8:-1}" -eq 0 ] && grep -q -- '-> false' /tmp/zwrot-rown-SP.log; then echo "SPOR_INNY_SILNIK: WYNIK=PASS"; else echo "SPOR_INNY_SILNIK: WYNIK=FAIL - zapis sporu nadpisal status z drugiego silnika albo nie oddal false"; BLED=1; fi
+wp spor 9900 >/dev/null
+S9=$(wp odczyt | grep -oE 'status=[a-z_]+' | cut -d= -f2)
+echo "PONOWIENIE_SPORU: status=${S9:-brak} (OCZEKIWANE: sporne)"
+if [ "${S9:-}" = "sporne" ]; then echo "PONOWIENIE_SPORU: WYNIK=PASS"; else echo "PONOWIENIE_SPORU: WYNIK=FAIL - ponowienie nie zaksiegowalo sporu"; BLED=1; fi
+
 wp sprzataj >/dev/null
-docker exec "$K" rm -f "$W" 2>/dev/null
+docker exec "$K" rm -f "$W" /tmp/zwrot-rown-po-update 2>/dev/null
 [ "$BLED" -eq 0 ] && { echo "RAZEM: WYNIK=PASS"; exit 0; }
 echo "RAZEM: WYNIK=FAIL"; exit 1

@@ -20,7 +20,8 @@
  *
  * PASS = przy padniętym UPDATE: funkcja zwraca false, sesja ZOSTAJE 'utworzona', jest ślad
  *        `domkniecie_blad_zapisu` i próba maila do właściciela; ponowienie (Stripe/reconciliation)
- *        domyka zakup; zdrowy zakup działa jak dotąd.
+ *        domyka zakup; padnięty UPDATE przy zamówieniu domkniętym przez inny silnik = ślad bez alarmu;
+ *        zdrowy zakup działa jak dotąd.
  * FAIL = sesja 'oplacona' przy zamówieniu w 'oczekuje' (zakup uwięziony) albo brak śladu/maila.
  */
 
@@ -104,6 +105,25 @@ echo "PONOWIENIE: zamowien=$ile_b (OCZEKIWANE: 1 — bez duplikatu)\n";
 $pass_b = ( 'oplacona' === $stan_b && 'oczekuje' !== $status_b && 1 === $ile_b );
 echo 'PONOWIENIE: WYNIK=' . ( $pass_b ? 'PASS' : 'FAIL - ponowienie nie domyka zakupu po awarii' ) . "\n";
 
+/* ---------- 2b) UPDATE tej próby pada, ale status przestawił już INNY silnik (zamówienie jest w mail_wyslany po scenariuszu 2) ----------
+ * Oczekiwane: ZERO maili-alarmów i ZERO wpisów domkniecie_blad_zapisu (byłyby sprzeczne z odczytanym statusem),
+ * JEDEN wpis domkniecie_przejscie_inny_silnik, funkcja idzie dalej (nie false), zamówienie zostaje w mail_wyslany. */
+$maile   = 0;
+$blad_p  = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$pd} WHERE typ='domkniecie_blad_zapisu' AND opis LIKE %s", $wpdb->esc_like( $sid_a ) . '%' ) );
+add_filter( 'query', $psuj_update_statusu );
+$ok_d = sklepag_domknij_zakup( $sesja );
+remove_filter( 'query', $psuj_update_statusu );
+$blad_po   = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$pd} WHERE typ='domkniecie_blad_zapisu' AND opis LIKE %s", $wpdb->esc_like( $sid_a ) . '%' ) );
+$inny      = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$pd} WHERE typ='domkniecie_przejscie_inny_silnik' AND opis LIKE %s", $wpdb->esc_like( $sid_a ) . '%' ) );
+$status_d  = (string) $wpdb->get_var( $wpdb->prepare( "SELECT status FROM {$pz} WHERE stripe_session_id=%s", $sid_a ) );
+echo "INNY_SILNIK: zwrocil=" . ( $ok_d ? 'true' : 'false' ) . " (OCZEKIWANE: true — zamowienie jest w porzadku)\n";
+echo "INNY_SILNIK: maile_do_wlasciciela=$maile (OCZEKIWANE: 0)\n";
+echo "INNY_SILNIK: nowe_wpisy_blad_zapisu=" . ( $blad_po - $blad_p ) . " (OCZEKIWANE: 0)\n";
+echo "INNY_SILNIK: wpisy_przejscie_inny_silnik=$inny (OCZEKIWANE: 1)\n";
+echo "INNY_SILNIK: status=$status_d (OCZEKIWANE: mail_wyslany)\n";
+$pass_d = ( true === $ok_d && 0 === $maile && $blad_po === $blad_p && 1 === $inny && 'mail_wyslany' === $status_d );
+echo 'INNY_SILNIK: WYNIK=' . ( $pass_d ? 'PASS' : 'FAIL - alarm albo blad przy zamowieniu, ktore inny silnik juz domknal' ) . "\n";
+
 /* ---------- 3) KONTROLA: zdrowy zakup bez filtra ---------- */
 $sid_c  = 'cs_test_straznik_update_zdrowy';
 $sesja2 = $zbuduj_sesje( $sid_c );
@@ -128,6 +148,6 @@ foreach ( array( $sid_a, $sid_c ) as $s ) {
 }
 
 delete_transient( $ogranicznik ); // nie zostawiamy blokady na godzinę dla prawdziwej awarii na stosie
-$straznik_ok = ( $pass_a && $pass_b && $pass_c );
+$straznik_ok = ( $pass_a && $pass_b && $pass_c && $pass_d );
 echo 'RAZEM: WYNIK=' . ( $straznik_ok ? 'PASS' : 'FAIL' ) . "\n";
 exit( $straznik_ok ? 0 : 1 );
