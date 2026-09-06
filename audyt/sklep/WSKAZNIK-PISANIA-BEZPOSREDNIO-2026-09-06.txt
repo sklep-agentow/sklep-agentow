@@ -1,0 +1,59 @@
+# SUROWE WYJŚCIE testy/wskaznik-pisania-proba-kontrolna.sh — 2. egzemplarz klasy 154 (przyrząd przeglądarkowy pada w serii)
+# Kod: 2851c91 (main po scaleniu #307), żywy stos warsztatowy, maszyna 2 vCPU. Czasy = mtime plików wyjścia (czas lokalny serwera, UTC+2).
+# Zapisane przez koordynatorkę PO biegach (kopia plików wyjścia, bez edycji treści) na uwagę 3 recenzji PR #308: zdanie uchylające NO-GO musi mieć artefakt.
+#
+# ===== BIEG 0 — W SERII przelotu (narzedzia-qa/proby-kontrolne-przelot.sh, 67 prób), plik /tmp/proby-wyjscia-YqkSFc/wskaznik-pisania-proba-kontrolna.out, 2026-09-06 14:29:05 — EXIT=2 (kontrola odwrotna padła) =====
+=== PROBA KONTROLNA: czy straznik wskaznika widzi podlozone bledy ===
+  OK   straznik PADL na: brak dymka pisania (stan sprzed naprawy)             (EXIT=1)
+           BLAD pojawil sie dymek "bot pisze"
+  OK   straznik PADL na: pole i przycisk NIE blokowane                        (EXIT=1)
+           BLAD pole pytania ZABLOKOWANE
+  OK   straznik PADL na: brak strazy przed podwojnym wyslaniem                (EXIT=1)
+           BLAD licznik zadan nie wzrosl w trakcie oczekiwania
+  OK   straznik PADL na: dymek nie jest sprzatany po odpowiedzi               (EXIT=1)
+           BLAD dymek pisania zniknal
+  OK   straznik PADL na: dymek bez etykiety dla czytnika ekranu               (EXIT=1)
+           BLAD dymek ma etykiete dla czytnika ekranu
+
+=== KONTROLA ODWROTNA: czysty kod ma przechodzic ===
+  BLAD czysty kod NIE przechodzi — straznik pada zawsze, wiec nic nie znaczy
+
+KONTROLA ODWROTNA PADLA (1) — czysty kod NIE przechodzi, wiec proba NIC nie znaczy.
+  Licznik BLEDY=0 jest NIEWIARYGODNY i NIE jest werdyktem o produkcie.
+  Sprawdz warunki wstepne (zaleznosci, stos, dane logowania), potem powtorz.
+#
+# ===== BIEG 1 — BEZPOŚREDNIO: bash testy/wskaznik-pisania-proba-kontrolna.sh — 2026-09-06 14:33:28 — EXIT=0 =====
+=== PROBA KONTROLNA: czy straznik wskaznika widzi podlozone bledy ===
+  OK   straznik PADL na: brak dymka pisania (stan sprzed naprawy)             (EXIT=1)
+           BLAD pojawil sie dymek "bot pisze"
+  OK   straznik PADL na: pole i przycisk NIE blokowane                        (EXIT=1)
+           BLAD pole pytania ZABLOKOWANE
+  OK   straznik PADL na: brak strazy przed podwojnym wyslaniem                (EXIT=1)
+           BLAD licznik zadan nie wzrosl w trakcie oczekiwania
+  OK   straznik PADL na: dymek nie jest sprzatany po odpowiedzi               (EXIT=1)
+           BLAD dymek pisania zniknal
+  OK   straznik PADL na: dymek bez etykiety dla czytnika ekranu               (EXIT=1)
+           BLAD dymek ma etykiete dla czytnika ekranu
+
+=== KONTROLA ODWROTNA: czysty kod ma przechodzic ===
+  OK   czysty kod przechodzi (EXIT=0)
+
+STRAZNIK WIDZI WSZYSTKIE PIEC PODLOZONYCH BLEDOW
+#
+# ===== BIEG 2 — BEZPOŚREDNIO: bash testy/wskaznik-pisania-proba-kontrolna.sh — 2026-09-06 14:36:09 — EXIT=0 =====
+=== PROBA KONTROLNA: czy straznik wskaznika widzi podlozone bledy ===
+  OK   straznik PADL na: brak dymka pisania (stan sprzed naprawy)             (EXIT=1)
+           BLAD pojawil sie dymek "bot pisze"
+  OK   straznik PADL na: pole i przycisk NIE blokowane                        (EXIT=1)
+           BLAD pole pytania ZABLOKOWANE
+  OK   straznik PADL na: brak strazy przed podwojnym wyslaniem                (EXIT=1)
+           BLAD licznik zadan nie wzrosl w trakcie oczekiwania
+  OK   straznik PADL na: dymek nie jest sprzatany po odpowiedzi               (EXIT=1)
+           BLAD dymek pisania zniknal
+  OK   straznik PADL na: dymek bez etykiety dla czytnika ekranu               (EXIT=1)
+           BLAD dymek ma etykiete dla czytnika ekranu
+
+=== KONTROLA ODWROTNA: czysty kod ma przechodzic ===
+  OK   czysty kod przechodzi (EXIT=0)
+
+STRAZNIK WIDZI WSZYSTKIE PIEC PODLOZONYCH BLEDOW
