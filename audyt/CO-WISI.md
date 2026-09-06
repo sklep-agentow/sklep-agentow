@@ -68,6 +68,13 @@ nie odświeżano wobec dzisiejszego `HEAD`.
 - **Bramka `zdarzenia-webhooka` liczy `DECYZJE.md` jako „dokument z listą”** (recenzja r4 DROBNA 2): jedna dosłowna nazwa
   zdarzenia w decyzji wymusza pełną listę 11 nazw. Obejście w #307 = przeredagowane zdanie; docelowo `DECYZJE.md` do wykluczeń
   bramki (jak `audyt/`), z próbą kontrolną.
+- **Próba `testy/wskaznik-pisania-proba-kontrolna.sh` = DRUGI egzemplarz klasy 154 (przyrząd przeglądarkowy pada w serii).** Przelot
+  6.09 na `2851c91` (67 prób): 5/5 mutantów wykrytych, ale kontrola odwrotna PADŁA (czysty kod nie przeszedł) → EXIT=2 spoza listy
+  `NIEZMIERZONE_JAWNIE` → K7 kontrola 6 FAIL, **NO-GO 13/14**. Ten sam skrypt bezpośrednio na tym samym kodzie, tuż po przelocie:
+  2× EXIT=0 (5/5 + odwrotna PASS, 45 s). Wydanie 0.9.44 poszło przy NO-GO kontroli 6 **decyzją koordynatorki** (Dzidek nieobecny,
+  słowo 13:58 „scalaj, rób wydanie”), zapisane w `AUDYT-RAPORT.md` i rubryce. Dług: naprawić PRZYRZĄD (czekanie na element / próg
+  czasu pod obciążeniem, wspólnie z `nonce`), aż przelot w serii da EXIT=0 ×3; do tego czasu ⛔ NIE dopisywać do `NIEZMIERZONE_JAWNIE`
+  (bramka zwalniana komentarzem = lekcja oblanego egzaminu, klasa 8).
 
 ## 🟡 ŚWIADOMY DŁUG NA WYDANIE 0.9.42 — co ZOSTAJE otwarte w rejestrze INFRA po rundzie 5.09 i DLACZEGO (5.09, koordynatorka)
 

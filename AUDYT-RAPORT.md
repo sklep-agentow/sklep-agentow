@@ -1,4 +1,4 @@
-# AUDYT-RAPORT — Sklep Agentów, wydanie `v0.9.43` (delta nad `v0.9.28`; ChatBot LIVE 1.5.18, Segregator maila 1.3.8)
+# AUDYT-RAPORT — Sklep Agentów, wydanie `v0.9.44` (poprawka po egzaminie 6.09 nad `v0.9.43`; ChatBot LIVE 1.5.18, Segregator maila 1.3.8 bez zmian)
 
 Data: 2026-09-05 · Zakres: DRUGA RUNDA AUDYTU po egzaminie z 31.08 (próba 1 niezaliczona) — 69 PR-ów scalonych od tagu `v0.9.28`
 (`#229`–`#298` + ten), w tym: obszary audytu A (paczka i front, `#291`, 7 rund), B (rejestry, `#288`/`#293`), C (prawne i retencja, `#294`,
@@ -70,6 +70,35 @@ r6 — panel pisał „zamówienie niedomknięte" przy zanonimizowanym doręczon
 `sha256sum` zipa z klonu = `23a5273773e3946ef5883f2f13a58f6dee59edacba7ed3f823f6090a6f10c7fb` = digest assetu Release
 (4 assety, digesty 4/4 zgodne z lokalnymi sumami; Release oznaczony Latest) · `dokumentacja-zgodnosc-sklep.sh` 0 rozjazdów
 EXIT=0 · `paczka-zgodnosc.sh` „można zamrażać" EXIT=0. WSZYSTKO ZGODNE — bez rozjazdów.
+
+## Delta 0.9.43 → 0.9.44 (6.09.2026) — poprawka po OBLANYM egzaminie: ścieżka pieniędzy w `includes/zakup.php`
+
+**Skąd:** egzamin (trzecia, ostatnia próba) padł na dwóch uwagach recenzenta zewnętrznego: DUŻY — wynik UPDATE `oczekuje→oplacone` ignorowany,
+sesja oznaczana `oplacona` przed dowodem statusu (zakup mógł utknąć w `oczekuje` z pobranymi pieniędzmi, bez maila); ŚREDNI — lost update na
+`zwrocono_grosze` (dwa równoległe zwroty gubiły jeden). Trzecia wada z własnego sprawdzenia: zdarzenie SUMARYCZNE z charge doręczone przed zdarzeniem utworzenia zwrotu liczyło
+zwrot dwa razy. Klasy 163–165 w `audyt/SCIAGA-EGZAMINATORA.md`, znaleziska `M-1`/`M-2`/`G-1` w `audyt/REJESTR-ZNALEZISK.md` (ZAMKNIETE), decyzja D45.
+**Co zrobiono (PR #307, 9 commitów, HEAD `2851c91`):** wynik każdego zapisu na ścieżce pieniędzy czytany (INSERT, CAS statusu, zwrot, spór);
+status sprawdzany PRZED znacznikiem sesji; księgowanie zwrotów i sporów pod zamkiem bazy na zamówienie (`GET_LOCK`, nazwa z sygnaturą bazy
+i prefiksu) z ponownym odczytem po zamku; `AND status=%s` na trzech zapisach + przy 0 wierszach DOWÓD SKUTKU (kwota i status vs docelowe),
+inaczej `false` → Stripe ponawia; identyfikatory z `refunds.data` w śladzie i reguła „suma z charge już pokrywa”; powód alarmu do właściciela
+z zapamiętanego błędu bazy. Adnotacje `status-bez-warunku:` 3 → 0.
+**Próby (każda PADA na kodzie sprzed naprawy, przechodzi po):** `testy/domkniecie-update-statusu-padl-test.php` (4 scenariusze: awaria
+UPDATE, ponowienie, inny silnik, kontrola), `testy/zwrot-rownolegly-test.sh` + `testy/pomocnicze/zwrot-rownolegly-worker.php` (10 scenariuszy
+z DWOMA procesami: lost update, duplikat, status z drugiego silnika, A→B→A, spór w oknie), `testy/zwrot-charge-przed-refund-test.php`
+(4 kolejności). Kalibracja w opisie PR #307 (PRZED/PO, kody wyjścia).
+**Recenzja automatyczna:** 7 rund (r1–r3 bramki repo i brak minut CI; r4 1 WAŻNA — status pisany bez warunku; r5 1 KRYTYCZNA — paczka
+zbudowana przed ostatnią poprawką (klasa 10) + 2 WAŻNE — dowód skutku, brak prób; r6 3 DROBNE; r7 2 DROBNE = dług). Wszystkie KRYT/WAŻNE
+naprawione w PR-ze z próbami. Krytyk na zimno (most ChatGPT, pytanie ogólne bez kodu): zamek OK, heurystyka pokrycia = chwilowy niedomiar,
+docelowo księga zwrotów `UNIQUE(refund_id)` — dług w CO-WISI.
+**Bramki na HEAD:** `bramki.sh --tryb pelny` 13/13 ZIELONE lokalnie; CI 7. przebieg 5/5 zielone (bramki, próby ×3, recenzja);
+`paczka-zgodnosc.sh sklep-agentow 0.9.44` EXIT=0 (7 miejsc wersji, 69/69 sum SHA-256, zip zbudowany PO ostatniej zmianie treści);
+`dokumentacja-zgodnosc-sklep.sh` EXIT=0; `bramka-znaleziska` EXIT=0; `rejestr-liczniki` EXIT=0.
+**Przelot prób kontrolnych na kodzie wydania (`2851c91`, 6.09, tryb pełny na żywym stosie, log `audyt/sklep/PROBY-KONTROLNE.log`):** uruchomionych 67, z EXIT≠0: 1, pominiętych jawnie 2 (`dowod-zachowania-segregator`, `nonce`); 7 z listy `NIEZMIERZONE_JAWNIE` EXIT=2 z konstrukcji; jedyna spoza listy: `wskaznik-pisania-proba-kontrolna.sh` EXIT=2 — 5/5 mutantów wykrytych, kontrola ODWROTNA padła w serii; ten sam skrypt bezpośrednio na tym samym kodzie tuż po przelocie 2× EXIT=0 (5/5 + odwrotna PASS) = przyrząd przeglądarkowy, klasa 154 (2. egzemplarz, jak `nonce` 5.09), nie produkt.
+**K7 (`narzedzia-qa/k7-koniec.sh`) na `2851c91`:** NO-GO · kontroli FAIL: 1 (z 14) · EXIT=1 · KRYTYCZNE otwarte: 0 · DUŻE otwarte: 0. Jedyna FAIL = kontrola 6 (próba `wskaznik-pisania` EXIT=2 spoza listy jawnych wyjątków); 13 PASS: mapa 104 celów 0 ⬜ i zamrożona, kalibracja 6 soczewek, rejestr 0 KRYT/DUŻE i 0 DO WERYFIKACJI, każde ZAMKNIETE ze strażnikiem, 0 anomalii, przelot człowieka 27/27, paczka sha256, tag zamrożenia, 15 raportów, SECURITY 3/3. **Decyzja koordynatorki (6.09, właściciel nieobecny — słowo 13:58 „scalaj, rób wydanie”): wydaję przy NO-GO kontroli 6**, bo padła kontrola odwrotna PRZYRZĄDU w serii (klasa 154), a bezpośrednio na tym samym kodzie próba dała 2× EXIT=0; listy `NIEZMIERZONE_JAWNIE` NIE poszerzam (bramka zwalniana komentarzem = lekcja oblanego egzaminu), naprawa przyrządu = dług w `audyt/CO-WISI.md`.
+**Dług nazwany na to wydanie (CO-WISI, sekcja „PO EGZAMINIE 6.09”), żaden nie jest KRYT/DUŻE:** stary snapshot charge może obniżyć nowszą sumę
+(bez próby); heurystyka pokrycia = niedomiar do własnego zdarzenia sumarycznego; księga zwrotów ze schematem 11; `check_connection()` a zamek;
+bramka `status-bez-warunku` (adnotacja → próba, kolumny kwot); bramka `paczka` mierzy tylko komplet; `zdarzenia-webhooka` a DECYZJE; próba
+psująca INSERT; dwa zapisy `payment_intent_id` bez odczytu wyniku.
 
 ## Delta 0.9.42 → 0.9.43 (5.09.2026, próba 3) — dziewięć okien audytu w skali recenzenta
 
