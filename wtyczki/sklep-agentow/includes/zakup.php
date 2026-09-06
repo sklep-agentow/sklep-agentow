@@ -792,7 +792,7 @@ function sklepag_zaksieguj_zwrot( $typ, $obiekt ) {
 		return false;
 	}
 	try {
-		$zam = sklepag_zamowienie_swieze( $zam );
+		$zam         = sklepag_zamowienie_swieze( $zam );
 		$juz         = (int) $zam->zwrocono_grosze;
 		$refund_id   = isset( $obiekt['id'] ) && is_string( $obiekt['id'] ) ? (string) $obiekt['id'] : '';
 		$stan_zwrotu = isset( $obiekt['status'] ) ? (string) $obiekt['status'] : '';
@@ -1174,8 +1174,8 @@ function sklepag_domknij_zakup( $sesja ) {
 	// błąd, rozstrzyga odczyt statusu niżej. Dotąd wynik był ignorowany, a kontrola pod spodem sprawdzała
 	// tylko ISTNIENIE wiersza, więc sesja dostawała 'oplacona' przy zamówieniu w `oczekuje` — reconciliation
 	// (bierze wyłącznie stan='utworzona') już jej nie widziało, a po ponowieniach Stripe zakup wisiał na zawsze.
-	$przejscie       = $wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET status='oplacone', zmieniono=%s WHERE stripe_session_id=%s AND status='oczekuje'", $teraz, $sid ) );
-	$blad_przejscia  = ( false === $przejscie ) ? (string) $wpdb->last_error : ''; // last_error znika przy następnym zapytaniu
+	$przejscie      = $wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET status='oplacone', zmieniono=%s WHERE stripe_session_id=%s AND status='oczekuje'", $teraz, $sid ) );
+	$blad_przejscia = ( false === $przejscie ) ? (string) $wpdb->last_error : ''; // last_error znika przy następnym zapytaniu
 
 	// DOWÓD SKUTKU PRZED FLAGĄ STANU. Sesję wolno oznaczyć jako obsłużoną DOPIERO gdy
 	// zamówienie naprawdę jest w bazie. Wcześniej flaga szła bezwarunkowo: awaria zapisu
