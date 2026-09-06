@@ -16,6 +16,26 @@ wydany osobno (podbicie pośrednie wewnątrz jednej zmiany).
 
 ## [Niewydane]
 
+## [0.9.44] — 2026-09-06 · schemat bazy bez zmian (10)
+
+### Naprawione
+- **Opłacony zakup nie może utknąć w „oczekuje” po błędzie bazy** (zgłoszenie z przeglądu 6.09). Wynik zapytania
+  przestawiającego zamówienie na „opłacone” był ignorowany, a sesja płatności dostawała znacznik „opłacona” zanim status
+  był dowiedziony — mechanizm dociągania zaległych już jej nie widział, a właściciel nie dostawał maila. Teraz: wynik jest
+  czytany, status sprawdzany PRZED znacznikiem sesji, przy błędzie wpis w dzienniku, mail do właściciela i odpowiedź 500
+  (Stripe i dociąganie zaległych ponawiają i domykają zakup).
+- **Dwa równoległe zwroty nie gubią jednego** (zgłoszenie z przeglądu 6.09). Suma zwrotów była liczona jako
+  odczyt → dodanie → zapis bez blokady; dwa zdarzenia naraz czytały tę samą sumę i jedno nadpisywało drugie. Teraz każde
+  księgowanie zwrotu i sporu biegnie pod zamkiem bazy na to zamówienie (`GET_LOCK`), z ponownym odczytem po zamku;
+  równoległy duplikat tego samego zdarzenia też liczy się raz.
+- **Ten sam zwrot w dwóch zdarzeniach w odwrotnej kolejności liczy się raz.** `charge.refunded` (suma) przychodzące PRZED
+  `refund.created` tego samego zwrotu podwajało kwotę. Teraz identyfikatory zwrotów z obiektu charge trafiają do śladu,
+  a `refund.created` pokryte już sumą z charge nie dopisuje się drugi raz (wpis `zwrot_pokryty_suma` w dzienniku).
+
+### Testy
+- Trzy nowe strażniki regresji w repozytorium: awaria pojedynczego zapytania przejścia stanu (sesja, ślad, mail,
+  domknięcie przez ponowienie), wyścig dwóch procesów księgujących zwroty z wymuszonym oknem, cztery kolejności zdarzeń zwrotu.
+
 ## [0.9.43] — 2026-09-05 · schemat bazy bez zmian (10)
 
 ### Naprawione

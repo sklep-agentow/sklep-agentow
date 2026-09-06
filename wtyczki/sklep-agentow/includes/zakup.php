@@ -601,6 +601,57 @@ function sklepag_oznacz_sesje( $sesja_id, $stan ) {
 /* ---------- ZWROTY I OBCIĄŻENIA ZWROTNE (księgowość panelu) ---------- */
 
 /**
+ * Zamek nazwany bazy na JEDNO zamówienie — wokół każdego księgowania pieniędzy (zwrot, spór).
+ *
+ * 6.09.2026: suma `zwrocono_grosze` była liczona jako odczyt → dodanie → zapis bez warunku,
+ * więc dwa równoległe `refund.created` (30 zł i 20 zł) czytały to samo 0 i zapisywały 30 albo 20 zamiast 50
+ * (lost update); ten sam wyścig miało odsiewanie duplikatów po identyfikatorze zwrotu (SELECT, potem INSERT).
+ * Wzorzec ochrony był już na `status`, na kolumnie z pieniędzmi nie.
+ *
+ * GET_LOCK: „blocks any request by another client for a lock with the same name”; zwalniany RELEASE_LOCK()
+ * albo „when the connection terminates (either normally or abnormally)” — https://mariadb.com/kb/en/get_lock/
+ * Zwraca 1 = zamek nasz, 0 = czas minął, NULL = błąd. Przy 0/NULL oddajemy false → webhook 500 → Stripe ponowi.
+ */
+function sklepag_zamek_zamowienia( $zamowienie_id, $sekundy = 5 ) {
+	global $wpdb;
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+	$w = $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, %d)', 'sklepag_zam_' . (int) $zamowienie_id, (int) $sekundy ) );
+	return '1' === (string) $w;
+}
+function sklepag_zamek_zwolnij( $zamowienie_id ) {
+	global $wpdb;
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+	$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', 'sklepag_zam_' . (int) $zamowienie_id ) );
+}
+
+/**
+ * Świeży wiersz zamówienia PO zdobyciu zamka — to, co wczytano przed zamkiem, mogło się zmienić w kolejce.
+ */
+function sklepag_zamowienie_swieze( $zam ) {
+	global $wpdb;
+	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
+	$swiezy = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}sklepag_zamowienia WHERE id=%d", (int) $zam->id ) );
+	return $swiezy ? $swiezy : $zam;
+}
+
+/**
+ * Czy OSTATNI zapis zwrotu tego zamówienia pochodził z obiektu `charge` (suma autorytatywna)?
+ *
+ * 6.09.2026: `charge.refunded` niesie `amount_refunded` = SUMĘ wszystkich zwrotów i przychodzi też
+ * PRZED `refund.created` tego samego zwrotu (Stripe: „doesn’t guarantee the delivery of events in the order
+ * that they’re generated” — https://docs.stripe.com/webhooks#event-ordering). Identyfikator z obiektu charge
+ * to `ch_…`, więc późniejsze `refund.created` (`re_…`) nie znajdowało swojego śladu i DODAWAŁO kwotę do sumy,
+ * która ją już zawierała. Gdy ostatnia suma jest z charge i pokrywa kwotę zwrotu, zwrot uznajemy za policzony;
+ * jeśli to jednak był inny zwrot, jego własne `charge.refunded` podniesie sumę (docs: wysyłane „including partial refunds”).
+ */
+function sklepag_ostatni_zapis_zwrotu_z_charge( $zamowienie_id ) {
+	global $wpdb;
+	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
+	$opis = (string) $wpdb->get_var( $wpdb->prepare( "SELECT opis FROM {$wpdb->prefix}sklepag_zdarzenia WHERE zamowienie_id=%d AND typ IN ('zwrot_pelny','zwrot_czesciowy') ORDER BY id DESC LIMIT 1", (int) $zamowienie_id ) );
+	return false !== strpos( $opis, '(charge.' );
+}
+
+/**
  * Identyfikator płatności ze zdarzenia o zwrocie/sporze. Obiekty `refund`, `charge`
  * i `dispute` niosą `payment_intent`; identyfikatora sesji checkout NIE niesie żaden.
  */
@@ -734,52 +785,79 @@ function sklepag_zaksieguj_zwrot( $typ, $obiekt ) {
 		return sklepag_zwrot_nieprzypisany( $typ, $pi, $powod );
 	}
 
-	$juz         = (int) $zam->zwrocono_grosze;
-	$refund_id   = isset( $obiekt['id'] ) && is_string( $obiekt['id'] ) ? (string) $obiekt['id'] : '';
-	$stan_zwrotu = isset( $obiekt['status'] ) ? (string) $obiekt['status'] : '';
-	$nieudany    = in_array( $stan_zwrotu, array( 'failed', 'canceled' ), true );
+	// Całe księgowanie POD ZAMKIEM zamówienia (odczyt sumy, odsiew duplikatu, zapis) — bez zamka dwa
+	// równoległe zdarzenia czytały tę samą sumę i jedno nadpisywało drugie.
+	if ( ! sklepag_zamek_zamowienia( (int) $zam->id ) ) {
+		sklepag_zdarzenie( (int) $zam->id, 'ksiegowanie_zamek', $typ . ': zamówienie zajęte przez inne księgowanie — Stripe ponowi' );
+		return false;
+	}
+	try {
+		$zam = sklepag_zamowienie_swieze( $zam );
+		$juz         = (int) $zam->zwrocono_grosze;
+		$refund_id   = isset( $obiekt['id'] ) && is_string( $obiekt['id'] ) ? (string) $obiekt['id'] : '';
+		$stan_zwrotu = isset( $obiekt['status'] ) ? (string) $obiekt['status'] : '';
+		$nieudany    = in_array( $stan_zwrotu, array( 'failed', 'canceled' ), true );
 
-	if ( isset( $obiekt['amount_refunded'] ) ) {
-		// Obiekt charge — suma wszystkich zwrotów, także po korekcie w dół.
-		$kwota = (int) $obiekt['amount_refunded'];
-	} elseif ( $nieudany ) {
-		// Zwrot odrzucony: pieniądze zostają u sprzedawcy. Odejmujemy, jeśli był policzony.
-		// KOLEJNOŚĆ MA ZNACZENIE: najpierw pytamy o WŁASNY wpis cofnięcia, bo po pierwszym
-		// cofnięciu wpis `zwrot_nieudany` sam pasuje do wzorca `zwrot_%` i drugie pytanie
-		// odpowiedziałoby „tak, było" także przy powtórce.
-		if ( sklepag_zwrot_juz_zaksiegowany( (int) $zam->id, $refund_id, 'zwrot_nieudany' ) ) {
-			return true; // to cofnięcie już policzyliśmy — powtórka powiadomienia.
+		$ids_z_charge = array();
+		if ( isset( $obiekt['amount_refunded'] ) ) {
+			// Obiekt charge — suma wszystkich zwrotów, także po korekcie w dół.
+			$kwota = (int) $obiekt['amount_refunded'];
+			// Identyfikatory zwrotów z listy `refunds.data` (gdy API ją rozwija) trafią do opisu wpisu,
+			// żeby późniejsze `refund.created` tych zwrotów odsiało się po identyfikatorze.
+			if ( isset( $obiekt['refunds']['data'] ) && is_array( $obiekt['refunds']['data'] ) ) {
+				foreach ( $obiekt['refunds']['data'] as $r ) {
+					if ( is_array( $r ) && isset( $r['id'] ) && is_string( $r['id'] ) && '' !== $r['id'] ) {
+						$ids_z_charge[] = sanitize_text_field( $r['id'] );
+					}
+				}
+			}
+		} elseif ( $nieudany ) {
+			// Zwrot odrzucony: pieniądze zostają u sprzedawcy. Odejmujemy, jeśli był policzony.
+			// KOLEJNOŚĆ MA ZNACZENIE: najpierw pytamy o WŁASNY wpis cofnięcia, bo po pierwszym
+			// cofnięciu wpis `zwrot_nieudany` sam pasuje do wzorca `zwrot_%` i drugie pytanie
+			// odpowiedziałoby „tak, było" także przy powtórce.
+			if ( sklepag_zwrot_juz_zaksiegowany( (int) $zam->id, $refund_id, 'zwrot_nieudany' ) ) {
+				return true; // to cofnięcie już policzyliśmy — powtórka powiadomienia.
+			}
+			if ( ! sklepag_zwrot_juz_zaksiegowany( (int) $zam->id, $refund_id ) ) {
+				return true; // tego zwrotu nigdy nie policzyliśmy — nie ma czego cofać.
+			}
+			$kwota = max( 0, $juz - (int) ( $obiekt['amount'] ?? 0 ) );
+			return sklepag_zapisz_zwrot( $zam, $kwota, 'zwrot_nieudany', 'zwrot ' . $refund_id . ' odrzucony (' . $stan_zwrotu . ') — pieniądze wracają do przychodu' );
+		} elseif ( '' === $refund_id ) {
+			// Zdarzenie bez identyfikatora zwrotu: nie da się odróżnić NOWEGO zwrotu od powtórki
+			// tego samego. Liczymy ostrożnie — bierzemy większą z wartości zamiast dodawać, żeby
+			// powtórzone powiadomienie nie odjęło pieniędzy drugi raz.
+			$kwota = max( $juz, (int) ( $obiekt['amount'] ?? 0 ) );
+		} else {
+			// Obiekt refund z identyfikatorem — kwota jednego zwrotu, liczona raz na identyfikator.
+			if ( sklepag_zwrot_juz_zaksiegowany( (int) $zam->id, $refund_id ) ) {
+				return true;
+			}
+			// Ostatnia suma pochodzi z obiektu charge i już pokrywa tę kwotę — `charge.refunded` przyszło
+			// PRZED tym `refund.created`. Odnotowujemy identyfikator (dla `refund.updated`), sumy nie ruszamy.
+			if ( $juz >= (int) ( $obiekt['amount'] ?? 0 ) && sklepag_ostatni_zapis_zwrotu_z_charge( (int) $zam->id ) ) {
+				sklepag_zdarzenie( (int) $zam->id, 'zwrot_pokryty_suma', 'zwrot ' . $refund_id . ' (' . number_format_i18n( (int) ( $obiekt['amount'] ?? 0 ) / 100, 2 ) . ' ' . $zam->waluta . ') zawiera się w sumie z charge.refunded — bez podwójnego liczenia (' . $typ . ')' );
+				return true;
+			}
+			$kwota = $juz + (int) ( $obiekt['amount'] ?? 0 );
 		}
-		if ( ! sklepag_zwrot_juz_zaksiegowany( (int) $zam->id, $refund_id ) ) {
-			return true; // tego zwrotu nigdy nie policzyliśmy — nie ma czego cofać.
-		}
-		$kwota = max( 0, $juz - (int) ( $obiekt['amount'] ?? 0 ) );
-		return sklepag_zapisz_zwrot( $zam, $kwota, 'zwrot_nieudany', 'zwrot ' . $refund_id . ' odrzucony (' . $stan_zwrotu . ') — pieniądze wracają do przychodu' );
-	} elseif ( '' === $refund_id ) {
-		// Zdarzenie bez identyfikatora zwrotu: nie da się odróżnić NOWEGO zwrotu od powtórki
-		// tego samego. Liczymy ostrożnie — bierzemy większą z wartości zamiast dodawać, żeby
-		// powtórzone powiadomienie nie odjęło pieniędzy drugi raz.
-		$kwota = max( $juz, (int) ( $obiekt['amount'] ?? 0 ) );
-	} else {
-		// Obiekt refund z identyfikatorem — kwota jednego zwrotu, liczona raz na identyfikator.
-		if ( sklepag_zwrot_juz_zaksiegowany( (int) $zam->id, $refund_id ) ) {
+
+		if ( $kwota === $juz ) {
 			return true;
 		}
-		$kwota = $juz + (int) ( $obiekt['amount'] ?? 0 );
+		$pelny = ( $kwota >= (int) $zam->kwota_grosze );
+		return sklepag_zapisz_zwrot(
+			$zam,
+			$kwota,
+			$pelny ? 'zwrot_pelny' : 'zwrot_czesciowy',
+			'zwrócono łącznie ' . number_format_i18n( $kwota / 100, 2 ) . ' ' . $zam->waluta .
+			' z ' . number_format_i18n( (int) $zam->kwota_grosze / 100, 2 ) . ' ' . $zam->waluta .
+			' (' . $typ . ( '' !== $refund_id ? ', zwrot ' . $refund_id : '' ) . ( $ids_z_charge ? ', zwroty ' . implode( ' ', $ids_z_charge ) : '' ) . ')'
+		);
+	} finally {
+		sklepag_zamek_zwolnij( (int) $zam->id );
 	}
-
-	if ( $kwota === $juz ) {
-		return true;
-	}
-	$pelny = ( $kwota >= (int) $zam->kwota_grosze );
-	return sklepag_zapisz_zwrot(
-		$zam,
-		$kwota,
-		$pelny ? 'zwrot_pelny' : 'zwrot_czesciowy',
-		'zwrócono łącznie ' . number_format_i18n( $kwota / 100, 2 ) . ' ' . $zam->waluta .
-		' z ' . number_format_i18n( (int) $zam->kwota_grosze / 100, 2 ) . ' ' . $zam->waluta .
-		' (' . $typ . ( '' !== $refund_id ? ', zwrot ' . $refund_id : '' ) . ')'
-	);
 }
 
 /**
@@ -905,83 +983,93 @@ function sklepag_zaksieguj_spor( $typ, $obiekt ) {
 		// zabrane przez bank w przychodzie na zawsze.
 		return sklepag_zwrot_nieprzypisany( $typ, $pi, $powod, 'spor' );
 	}
+	// Bliźniak ścieżki zwrotu — spór też czyta i pisze `zwrocono_grosze`/status, więc pod tym samym zamkiem.
+	if ( ! sklepag_zamek_zamowienia( (int) $zam->id ) ) {
+		sklepag_zdarzenie( (int) $zam->id, 'ksiegowanie_zamek', $typ . ': zamówienie zajęte przez inne księgowanie — Stripe ponowi' );
+		return false;
+	}
+	try {
+		$zam = sklepag_zamowienie_swieze( $zam );
 
-	$wynik = isset( $obiekt['status'] ) ? (string) $obiekt['status'] : '';
-	$kwota = isset( $obiekt['amount'] ) ? (int) $obiekt['amount'] : (int) $zam->kwota_grosze;
-	$teraz = current_time( 'mysql' );
+		$wynik = isset( $obiekt['status'] ) ? (string) $obiekt['status'] : '';
+		$kwota = isset( $obiekt['amount'] ) ? (int) $obiekt['amount'] : (int) $zam->kwota_grosze;
+		$teraz = current_time( 'mysql' );
 
-	$tylko_pytanie     = in_array( $wynik, array( 'warning_needs_response', 'warning_under_review' ), true );
-	$pieniadze_zeszly  = ( 'charge.dispute.funds_withdrawn' === $typ )
-		|| ( 'charge.dispute.created' === $typ && ! $tylko_pytanie )
-		|| ( 'charge.dispute.closed' === $typ && 'lost' === $wynik );
-	$pieniadze_wrocily = ( 'charge.dispute.funds_reinstated' === $typ )
-		|| ( 'charge.dispute.closed' === $typ && in_array( $wynik, array( 'won', 'warning_closed' ), true ) );
+		$tylko_pytanie     = in_array( $wynik, array( 'warning_needs_response', 'warning_under_review' ), true );
+		$pieniadze_zeszly  = ( 'charge.dispute.funds_withdrawn' === $typ )
+			|| ( 'charge.dispute.created' === $typ && ! $tylko_pytanie )
+			|| ( 'charge.dispute.closed' === $typ && 'lost' === $wynik );
+		$pieniadze_wrocily = ( 'charge.dispute.funds_reinstated' === $typ )
+			|| ( 'charge.dispute.closed' === $typ && in_array( $wynik, array( 'won', 'warning_closed' ), true ) );
 
-	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
-	if ( $pieniadze_wrocily ) {
-		if ( 'sporne' !== $zam->status && 0 === (int) $zam->zwrocono_grosze ) {
-			sklepag_zdarzenie( (int) $zam->id, 'spor_zamkniety', 'bank zamknął sprawę (' . $typ . ', status ' . $wynik . ') — zamówienie i tak nie było w sporze' );
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
+		if ( $pieniadze_wrocily ) {
+			if ( 'sporne' !== $zam->status && 0 === (int) $zam->zwrocono_grosze ) {
+				sklepag_zdarzenie( (int) $zam->id, 'spor_zamkniety', 'bank zamknął sprawę (' . $typ . ', status ' . $wynik . ') — zamówienie i tak nie było w sporze' );
+				return true;
+			}
+			$powrot = '' !== (string) $zam->status_przed_sporem ? (string) $zam->status_przed_sporem : 'oplacone';
+			$reszta = max( 0, (int) $zam->zwrocono_grosze - $kwota ); // prawdziwy zwrot częściowy sprzed sporu zostaje
+			$zapis  = $wpdb->query(
+				$wpdb->prepare(
+					// status-bez-warunku: $powrot wyliczony wyżej z `status_przed_sporem`, czyli
+					// z zapamiętanego stanu poprzedniego — nie jest stałą.
+					"UPDATE {$pz} SET zwrocono_grosze=%d, zwrot_czas=%s, status=%s, status_przed_sporem='', zmieniono=%s WHERE id=%d",
+					$reszta,
+					$reszta > 0 ? $zam->zwrot_czas : null,
+					$powrot,
+					$teraz,
+					(int) $zam->id
+				)
+			);
+			if ( false === $zapis ) {
+				sklepag_zdarzenie( (int) $zam->id, 'ksiegowanie_blad', 'zapis sporu (' . $typ . ') padł (' . (string) $wpdb->last_error . ') — Stripe ponowi powiadomienie' );
+				sklepag_powiadom_wlasciciela( 'ksiegowanie_blad', 'nie udało się zaksięgować sporu', 'Zamówienie #' . (int) $zam->id . ': zapis zdarzenia Stripe ' . $typ . ' w bazie nie powiódł się. Stripe ponowi powiadomienie; jeśli błąd się powtarza, sprawdź bazę danych.' );
+				return false;
+			}
+			sklepag_zdarzenie( (int) $zam->id, 'spor_wygrany', 'pieniądze wracają do przychodu (' . $typ . ', status ' . $wynik . '); zamówienie wraca do stanu „' . $powrot . '"' );
 			return true;
 		}
-		$powrot = '' !== (string) $zam->status_przed_sporem ? (string) $zam->status_przed_sporem : 'oplacone';
-		$reszta = max( 0, (int) $zam->zwrocono_grosze - $kwota ); // prawdziwy zwrot częściowy sprzed sporu zostaje
-		$zapis  = $wpdb->query(
+
+		if ( ! $pieniadze_zeszly ) {
+			// Zapytanie z banku: odnotowujemy, ale NIE ruszamy ani statusu, ani przychodu.
+			sklepag_zdarzenie(
+				(int) $zam->id,
+				'spor_zapytanie',
+				'bank prosi o wyjaśnienia (' . $typ . ', status ' . $wynik . ') — pieniądze na razie zostają; odpowiedz w panelu Stripe'
+			);
+			return true;
+		}
+
+		$przed = '' !== (string) $zam->status_przed_sporem ? (string) $zam->status_przed_sporem : (string) $zam->status;
+		$zapis = $wpdb->query(
 			$wpdb->prepare(
-				// status-bez-warunku: $powrot wyliczony wyżej z `status_przed_sporem`, czyli
-				// z zapamiętanego stanu poprzedniego — nie jest stałą.
-				"UPDATE {$pz} SET zwrocono_grosze=%d, zwrot_czas=%s, status=%s, status_przed_sporem='', zmieniono=%s WHERE id=%d",
-				$reszta,
-				$reszta > 0 ? $zam->zwrot_czas : null,
-				$powrot,
+				// status-bez-warunku: 'sporne' ustawiamy świadomie, a stan sprzed zapisujemy w tym
+				// samym zapytaniu do `status_przed_sporem` (wyliczony wyżej z `$zam->status`).
+				"UPDATE {$pz} SET zwrocono_grosze=%d, zwrot_czas=%s, status='sporne', status_przed_sporem=%s, zmieniono=%s WHERE id=%d",
+				max( (int) $zam->zwrocono_grosze, $kwota ),
+				$teraz,
+				'sporne' === $przed ? '' : $przed,
 				$teraz,
 				(int) $zam->id
 			)
 		);
+		// phpcs:enable
 		if ( false === $zapis ) {
 			sklepag_zdarzenie( (int) $zam->id, 'ksiegowanie_blad', 'zapis sporu (' . $typ . ') padł (' . (string) $wpdb->last_error . ') — Stripe ponowi powiadomienie' );
 			sklepag_powiadom_wlasciciela( 'ksiegowanie_blad', 'nie udało się zaksięgować sporu', 'Zamówienie #' . (int) $zam->id . ': zapis zdarzenia Stripe ' . $typ . ' w bazie nie powiódł się. Stripe ponowi powiadomienie; jeśli błąd się powtarza, sprawdź bazę danych.' );
 			return false;
 		}
-		sklepag_zdarzenie( (int) $zam->id, 'spor_wygrany', 'pieniądze wracają do przychodu (' . $typ . ', status ' . $wynik . '); zamówienie wraca do stanu „' . $powrot . '"' );
-		return true;
-	}
-
-	if ( ! $pieniadze_zeszly ) {
-		// Zapytanie z banku: odnotowujemy, ale NIE ruszamy ani statusu, ani przychodu.
 		sklepag_zdarzenie(
 			(int) $zam->id,
-			'spor_zapytanie',
-			'bank prosi o wyjaśnienia (' . $typ . ', status ' . $wynik . ') — pieniądze na razie zostają; odpowiedz w panelu Stripe'
+			'charge.dispute.closed' === $typ ? 'spor_przegrany' : 'spor_otwarty',
+			'obciążenie zwrotne (' . $typ . ( '' !== $wynik ? ', status ' . $wynik : '' ) . '): ' .
+			number_format_i18n( $kwota / 100, 2 ) . ' ' . $zam->waluta . ' poza przychodem'
 		);
 		return true;
+	} finally {
+		sklepag_zamek_zwolnij( (int) $zam->id );
 	}
-
-	$przed = '' !== (string) $zam->status_przed_sporem ? (string) $zam->status_przed_sporem : (string) $zam->status;
-	$zapis = $wpdb->query(
-		$wpdb->prepare(
-			// status-bez-warunku: 'sporne' ustawiamy świadomie, a stan sprzed zapisujemy w tym
-			// samym zapytaniu do `status_przed_sporem` (wyliczony wyżej z `$zam->status`).
-			"UPDATE {$pz} SET zwrocono_grosze=%d, zwrot_czas=%s, status='sporne', status_przed_sporem=%s, zmieniono=%s WHERE id=%d",
-			max( (int) $zam->zwrocono_grosze, $kwota ),
-			$teraz,
-			'sporne' === $przed ? '' : $przed,
-			$teraz,
-			(int) $zam->id
-		)
-	);
-	// phpcs:enable
-	if ( false === $zapis ) {
-		sklepag_zdarzenie( (int) $zam->id, 'ksiegowanie_blad', 'zapis sporu (' . $typ . ') padł (' . (string) $wpdb->last_error . ') — Stripe ponowi powiadomienie' );
-		sklepag_powiadom_wlasciciela( 'ksiegowanie_blad', 'nie udało się zaksięgować sporu', 'Zamówienie #' . (int) $zam->id . ': zapis zdarzenia Stripe ' . $typ . ' w bazie nie powiódł się. Stripe ponowi powiadomienie; jeśli błąd się powtarza, sprawdź bazę danych.' );
-		return false;
-	}
-	sklepag_zdarzenie(
-		(int) $zam->id,
-		'charge.dispute.closed' === $typ ? 'spor_przegrany' : 'spor_otwarty',
-		'obciążenie zwrotne (' . $typ . ( '' !== $wynik ? ', status ' . $wynik : '' ) . '): ' .
-		number_format_i18n( $kwota / 100, 2 ) . ' ' . $zam->waluta . ' poza przychodem'
-	);
-	return true;
 }
 
 /* ---------- SILNIK DOMYKANIA — jeden dla webhooka i reconciliation ---------- */
@@ -1081,8 +1169,13 @@ function sklepag_domknij_zakup( $sesja ) {
 		)
 	);
 
-	// 2) CAS: oczekuje -> oplacone.
-	$wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET status='oplacone', zmieniono=%s WHERE stripe_session_id=%s AND status='oczekuje'", $teraz, $sid ) );
+	// 2) CAS: oczekuje -> oplacone. WYNIK CZYTAMY (6.09.2026): `false` = błąd bazy na TYM
+	// zapytaniu (wiersz istnieje, ale został w `oczekuje`); `0` = ktoś już przestawił (drugi silnik) — to nie
+	// błąd, rozstrzyga odczyt statusu niżej. Dotąd wynik był ignorowany, a kontrola pod spodem sprawdzała
+	// tylko ISTNIENIE wiersza, więc sesja dostawała 'oplacona' przy zamówieniu w `oczekuje` — reconciliation
+	// (bierze wyłącznie stan='utworzona') już jej nie widziało, a po ponowieniach Stripe zakup wisiał na zawsze.
+	$przejscie       = $wpdb->query( $wpdb->prepare( "UPDATE {$pz} SET status='oplacone', zmieniono=%s WHERE stripe_session_id=%s AND status='oczekuje'", $teraz, $sid ) );
+	$blad_przejscia  = ( false === $przejscie ) ? (string) $wpdb->last_error : ''; // last_error znika przy następnym zapytaniu
 
 	// DOWÓD SKUTKU PRZED FLAGĄ STANU. Sesję wolno oznaczyć jako obsłużoną DOPIERO gdy
 	// zamówienie naprawdę jest w bazie. Wcześniej flaga szła bezwarunkowo: awaria zapisu
@@ -1090,8 +1183,12 @@ function sklepag_domknij_zakup( $sesja ) {
 	// zamówienia, a sklepag_dociagnij_zalegle() bierze tylko stan='utworzona' — opłacony
 	// zakup ginął bez śladu i bez sygnału dla właściciela.
 	$zamowienie_jest = $wpdb->get_row( $wpdb->prepare( "SELECT status FROM {$pz} WHERE stripe_session_id=%s", $sid ) );
-	if ( ! $zamowienie_jest ) {
-		$powod = '' !== (string) $wpdb->last_error ? (string) $wpdb->last_error : 'brak wiersza po INSERT/UPDATE';
+	if ( ! $zamowienie_jest || false === $przejscie || 'oczekuje' === (string) $zamowienie_jest->status ) {
+		if ( ! $zamowienie_jest ) {
+			$powod = '' !== (string) $wpdb->last_error ? (string) $wpdb->last_error : 'brak wiersza po INSERT/UPDATE';
+		} else {
+			$powod = 'zamówienie zostało w oczekuje — przejście stanu nie zapisało się' . ( '' !== $blad_przejscia ? ' (' . $blad_przejscia . ')' : '' );
+		}
 		sklepag_zdarzenie( null, 'domkniecie_blad_zapisu', $sid . ': ' . $powod );
 		sklepag_powiadom_wlasciciela( 'domkniecie_blad_zapisu', 'zakup opłacony, zamówienie nie zapisane w bazie', 'Sesja ' . $sid . ': po opłaceniu nie udało się zapisać zamówienia (' . $powod . '). Reconciliation i ponowienie webhooka spróbują ponownie; jeśli błąd się powtarza, sprawdź bazę danych.' );
 		// Sesja zostaje 'utworzona' → dociągnie ją reconciliation, a webhook Stripe ponowi.
