@@ -4,7 +4,7 @@ Tags: sklep, stripe, pliki cyfrowe, sprzedaz wtyczek, pobieranie
 Requires at least: 6.7
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.9.43
+Stable tag: 0.9.44
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -160,6 +160,11 @@ Nie. Zakup jest bez konta: adres e-mail podany na stronie płatności Stripe,
 link do pobrania w mailu, jednorazowy link do opinii.
 
 == Changelog ==
+
+= 0.9.44 =
+* Naprawione: oplacony zakup nie moze utknac w stanie "oczekuje" po bledzie bazy - wynik zapisu statusu jest sprawdzany przed oznaczeniem sesji platnosci, przy bledzie wpis w dzienniku, mail do wlasciciela i ponowienie ze Stripe.
+* Naprawione: dwa rownolegle zwroty tej samej platnosci nie gubia jednego - ksiegowanie zwrotu i sporu biegnie pod zamkiem bazy na zamowienie.
+* Naprawione: to samo zdarzenie zwrotu w dwoch powiadomieniach w odwrotnej kolejnosci liczy sie raz.
 
 = 0.9.43 =
 * Naprawione: blad serwera przy rozpoczynaniu platnosci (strona bledu hostingu zamiast JSON) pokazuje zdanie po polsku z kodem HTTP, nie surowy SyntaxError; dziennik zdarzen zamowienia mierzy wlasny zapis.

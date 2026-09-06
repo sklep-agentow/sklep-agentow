@@ -39,6 +39,36 @@ zakwalifikowano po katalogu (`testy/`, `narzedzia-qa/`, `audyt/` są poza allowl
 zawartość pięciu obrazów sprawdzono co do liczby plików, nie co do treści; numerów linii w wierszu „asymetria CSV"
 nie odświeżano wobec dzisiejszego `HEAD`.
 
+## 🟡 DŁUG NAZWANY PO EGZAMINIE 6.09 (PR #307, 0.9.44) — granice naprawy księgowania zwrotów wg krytyka na zimno (most ChatGPT, pytanie ogólne bez kodu)
+
+**Co #307 domyka:** lost update i wyścig duplikatów na `zwrocono_grosze` (zamek `GET_LOCK` na zamówienie, D45), wynik CAS `oczekuje→oplacone`,
+`charge.refunded` przed `refund.created` tego samego zwrotu. **Co ZOSTAJE (nazwane, nie przeoczone):**
+- **Stary snapshot charge może cofnąć nowszą sumę.** `charge.refunded` niesie `amount_refunded` z chwili wygenerowania zdarzenia i jest
+  zapisywany BEZ warunku (tak było już w 0.9.43 — „wolno jej zejść w dół” dla odrzuconych zwrotów). Przy doręczeniu poza kolejnością
+  (Stripe: „doesn’t guarantee the delivery of events in the order that they’re generated”) `charge(100)` po `charge(150)` zapisze 100
+  i nic już tego nie podniesie. Wymaga dwóch zwrotów w kilka sekund i odwróconego doręczenia — mało prawdopodobne, ale trwałe. Bez próby.
+- **Reguła „suma z charge już pokrywa `refund.created`” jest heurystyką, nie idempotencją.** Sekwencja krytyka: A=50, B=50, `charge(100)`,
+  potem `refund.created` C=50 zanim przyjdzie `charge(150)` → C uznany za policzony, suma 100 do czasu `charge(150)` (Stripe wysyła
+  `charge.refunded` „including partial refunds”, więc niedomiar jest CHWILOWY — ale zależy od tego, że to zdarzenie dojdzie).
+- **Docelowo (następny PR, nie ten):** tabela-księga zwrotów z `UNIQUE(refund_id)` — duplikat odsiewa BAZA, suma = `SUM` z księgi,
+  a `charge.amount_refunded` służy do UZGADNIANIA (sygnał kontrolny, nigdy „nadpisz”). Wtedy obie powyższe rzeczy znikają.
+  Wymaga migracji schematu (11) — dlatego nie w PR-ze naprawczym po egzaminie.
+- **`GET_LOCK` jest stanem SESJI bazy, nie procesu PHP.** `$wpdb` trzyma jedno połączenie na żądanie i zamek zwalnia się w `finally`
+  i przy zerwaniu połączenia; ale `wpdb::check_connection()` potrafi po cichu odnowić połączenie w trakcie żądania — wtedy zamek
+  przepada bez sygnału. Bez próby; na hostingu współdzielonym ryzyko realne tylko przy zerwanym połączeniu w środku księgowania.
+- **Bramka `status-bez-warunku`** (klasa 164 pkt 3): adnotacja zwalniająca musi wskazywać PRÓBĘ, nie powód; bramka ślepa na
+  kolumny kwot. Przed r4 recenzji 3 adnotacje na ścieżce zwrotów przechodziły bez próby; **po r4: 0 adnotacji** — trzy zapisy
+  dostały `AND status=%s` (status odczytany pod zamkiem) i próbę STATUS_INNY_SILNIK. Zmiana zakresu bramki (kolumny kwot,
+  adnotacja → próba) zostaje długiem.
+- **Paczka klienta buduje się PO ostatniej zmianie treści, w OSTATNIM commicie PR-a** (r5 KRYTYCZNA, klasa 10 ×2): zip 0.9.44
+  z `b79e656` nie zawierał naprawy r4 z `7807ce2`, a bramka `paczka` w `bramki.sh` mierzy tylko komplet plików, nie treść —
+  treść mierzy dopiero `paczka-zgodnosc.sh <wtyczka>` (w CI jako próba). Dług: bramka `paczka` w `bramki.sh` powinna wołać też
+  `paczka-zgodnosc.sh` dla wtyczki z podbitą wersją (albo nazywać się „paczka-komplet”). Reguła w opisie PR: świeży wynik
+  `paczka-zgodnosc.sh` z HEAD, nie sprzed commitów.
+- **Bramka `zdarzenia-webhooka` liczy `DECYZJE.md` jako „dokument z listą”** (recenzja r4 DROBNA 2): jedna dosłowna nazwa
+  zdarzenia w decyzji wymusza pełną listę 11 nazw. Obejście w #307 = przeredagowane zdanie; docelowo `DECYZJE.md` do wykluczeń
+  bramki (jak `audyt/`), z próbą kontrolną.
+
 ## 🟡 ŚWIADOMY DŁUG NA WYDANIE 0.9.42 — co ZOSTAJE otwarte w rejestrze INFRA po rundzie 5.09 i DLACZEGO (5.09, koordynatorka)
 
 Stan NA TEJ GAŁĘZI po scaleniu #291, #297, #296 i obszaru C (#294) (5.09), policzony komendą rejestru (`grep -cE '^\| `[^`]+` \|.*OTWARTE' audyt/REJESTR-ZNALEZISK-INFRA.md`): **13 OTWARTYCH**
